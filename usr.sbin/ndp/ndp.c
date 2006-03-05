@@ -1,5 +1,5 @@
-/*	$NetBSD: ndp.c,v 1.33 2006/01/21 00:15:35 rpaulo Exp $	*/
-/*	$KAME: ndp.c,v 1.104 2003/06/27 07:48:39 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.34 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -881,22 +881,26 @@ rtmsg(cmd)
 			rtm->rtm_inits = RTV_EXPIRE;
 		}
 		rtm->rtm_flags |= (RTF_HOST | RTF_STATIC);
+#if 0	/* we don't support ipv6addr/128 type proxying. */
 		if (rtm->rtm_flags & RTF_ANNOUNCE) {
 			rtm->rtm_flags &= ~RTF_HOST;
 			rtm->rtm_addrs |= RTA_NETMASK;
 		}
+#endif
 		/* FALLTHROUGH */
 	case RTM_GET:
 		rtm->rtm_addrs |= RTA_DST;
 	}
 #define NEXTADDR(w, s) \
 	if (rtm->rtm_addrs & (w)) { \
-		bcopy((char *)&s, cp, sizeof(s)); cp += sizeof(s);}
+		bcopy((char *)&s, cp, sizeof(s)); ADVANCE(cp, (struct sockaddr *)&s); }
 
 	NEXTADDR(RTA_DST, sin_m);
 	NEXTADDR(RTA_GATEWAY, sdl_m);
+#if 0	/* we don't support ipv6addr/128 type proxying. */
 	memset(&so_mask.sin6_addr, 0xff, sizeof(so_mask.sin6_addr));
 	NEXTADDR(RTA_NETMASK, so_mask);
+#endif
 
 	rtm->rtm_msglen = cp - (char *)&m_rtmsg;
 doit:
@@ -961,6 +965,30 @@ ifinfo(ifname, argc, argv)
 				newflags |= (f);\
 		}\
 	} while (0)
+/*
+ * XXX: this macro is not 100% correct, in that it matches "nud" against
+ *      "nudbogus".  But we just let it go since this is minor.
+ */
+#define SETVALUE(f, v) \
+	do { \
+		char *valptr; \
+		unsigned long newval; \
+		v = 0; /* unspecified */ \
+		if (strncmp(cp, f, strlen(f)) == 0) { \
+			valptr = strchr(cp, '='); \
+			if (valptr == NULL) \
+				err(1, "syntax error in %s field", (f)); \
+			errno = 0; \
+			newval = strtoul(++valptr, NULL, 0); \
+			if (errno) \
+				err(1, "syntax error in %s's value", (f)); \
+			v = newval; \
+		} \
+	} while (0)
+
+#ifdef ND6_IFF_IFDISABLED
+		SETFLAG("disabled", ND6_IFF_IFDISABLED);
+#endif
 		SETFLAG("nud", ND6_IFF_PERFORMNUD);
 #ifdef ND6_IFF_ACCEPT_RTADV
 		SETFLAG("accept_rtadv", ND6_IFF_ACCEPT_RTADV);
@@ -968,13 +996,27 @@ ifinfo(ifname, argc, argv)
 #ifdef ND6_IFF_PREFER_SOURCE
 		SETFLAG("prefer_source", ND6_IFF_PREFER_SOURCE);
 #endif
+#ifdef ND6_IFF_DONT_SET_IFROUTE
+		SETFLAG("dont_set_ifroute", ND6_IFF_DONT_SET_IFROUTE);
+#endif
+		SETVALUE("basereachable", ND.basereachable);
+		SETVALUE("retrans", ND.retrans);
+		SETVALUE("curhlim", ND.chlim);
 
 		ND.flags = newflags;
+#ifdef SIOCSIFINFO_IN6
+		if (ioctl(s, SIOCSIFINFO_IN6, (caddr_t)&nd) < 0) {
+			err(1, "ioctl(SIOCSIFINFO_IN6)");
+			/* NOTREACHED */
+		}
+#else
 		if (ioctl(s, SIOCSIFINFO_FLAGS, (caddr_t)&nd) < 0) {
 			err(1, "ioctl(SIOCSIFINFO_FLAGS)");
 			/* NOTREACHED */
 		}
+#endif
 #undef SETFLAG
+#undef SETVALUE
 	}
 
 	if (!ND.initialized) {
@@ -982,7 +1024,12 @@ ifinfo(ifname, argc, argv)
 		/* NOTREACHED */
 	}
 
+	if (ioctl(s, SIOCGIFINFO_IN6, (caddr_t)&nd) < 0) {
+		err(1, "ioctl(SIOCGIFINFO_IN6)");
+		/* NOTREACHED */
+	}
 	printf("linkmtu=%d", ND.linkmtu);
+	printf(", maxmtu=%d", ND.maxmtu);
 	printf(", curhlim=%d", ND.chlim);
 	printf(", basereachable=%ds%dms",
 	    ND.basereachable / 1000, ND.basereachable % 1000);
@@ -1008,6 +1055,8 @@ ifinfo(ifname, argc, argv)
 				printf("\nRandom ID:      ");
 				rbuf = ND.randomid;
 				break;
+			default:
+				errx(1, "impossible case for tempaddr display");
 			}
 			for (j = 0; j < 8; j++)
 				printf("%02x", rbuf[j]);
@@ -1018,6 +1067,10 @@ ifinfo(ifname, argc, argv)
 		printf("\nFlags: ");
 		if ((ND.flags & ND6_IFF_PERFORMNUD))
 			printf("nud ");
+#ifdef ND6_IFF_IFDISABLED
+		if ((ND.flags & ND6_IFF_IFDISABLED))
+			printf("disabled ");
+#endif
 #ifdef ND6_IFF_ACCEPT_RTADV
 		if ((ND.flags & ND6_IFF_ACCEPT_RTADV))
 			printf("accept_rtadv ");
@@ -1051,6 +1104,8 @@ rtrlist()
 		err(1, "sysctl(ICMPV6CTL_ND6_DRLIST)");
 		/*NOTREACHED*/
 	}
+	if (l == 0)
+		return;
 	buf = malloc(l);
 	if (!buf) {
 		err(1, "malloc");
