@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: syscall.c,v 1.6 2006/03/05 07:21:38 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2006/03/05 07:21:38 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -201,7 +201,10 @@ syscall_intern(struct proc *p)
 		return;
 	}
 #endif
-	p->p_md.md_syscall = syscall_plain;
+	if (ISSET(p->p_flag, P_SYSCALL))
+		p->p_md.md_syscall = syscall_fancy;
+	else
+		p->p_md.md_syscall = syscall_plain;
 }
 
 /*

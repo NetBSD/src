@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.1 2006/02/09 19:18:56 manu Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.2 2006/03/05 07:21:37 christos Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.1 2006/02/09 19:18:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.2 2006/03/05 07:21:37 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -50,7 +50,10 @@ linux32_syscall_intern(p)
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = linux32_syscall_plain;
+	if (ISSET(p->p_flag, P_SYSCALL))
+		p->p_md.md_syscall = linux32_syscall_fancy;
+	else
+		p->p_md.md_syscall = linux32_syscall_plain;
 }
 
 void

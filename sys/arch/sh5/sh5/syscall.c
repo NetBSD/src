@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.15 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.16 2006/03/05 07:21:38 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2006/03/05 07:21:38 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -166,15 +166,20 @@ syscall_intern(struct proc *p)
 {
 
 #ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
 		p->p_md.md_syscall = syscall_fancy;
-	else
+		return;
+	}
 #endif
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		p->p_md.md_syscall = syscall_fancy;
+		return;
+	}
+#endif
+	if (ISSET(p->p_flag, P_SYSCALL))
 		p->p_md.md_syscall = syscall_fancy;
 	else
-#endif
 		p->p_md.md_syscall = syscall_plain;
 }
 

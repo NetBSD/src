@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.213 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.214 2006/03/05 07:21:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -284,6 +284,7 @@ struct proc {
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
 #define	P_CONTROLT	0x00000002 /* Has a controlling terminal */
+#define	P_SYSCALL	0x00000004 /* process has PT_SYSCALL enabled */
 #define	P_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
 #define	P_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	P_PROFIL	0x00000020 /* Has started profiling */

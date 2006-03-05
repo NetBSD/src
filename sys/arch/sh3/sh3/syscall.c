@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2006/03/05 07:21:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -122,7 +122,10 @@ syscall_intern(struct proc *p)
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = syscall_plain;
+	if (ISSET(p->p_flag, P_SYSCALL))
+		p->p_md.md_syscall = syscall_fancy;
+	else
+		p->p_md.md_syscall = syscall_plain;
 }
 
 

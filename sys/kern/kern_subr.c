@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.127 2006/03/01 22:12:09 cube Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.128 2006/03/05 07:21:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.127 2006/03/01 22:12:09 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.128 2006/03/05 07:21:38 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.127 2006/03/01 22:12:09 cube Exp $")
 #include <sys/queue.h>
 #include <sys/systrace.h>
 #include <sys/ktrace.h>
+#include <sys/ptrace.h>
 #include <sys/fcntl.h>
 
 #include <uvm/uvm_extern.h>
@@ -1342,6 +1343,9 @@ trace_enter(struct lwp *l, register_t code,
 		ktrsyscall(l, code, realcode, callp, args);
 #endif /* KTRACE */
 
+	if ((p->p_flag & (P_SYSCALL|P_TRACED)) == (P_SYSCALL|P_TRACED))
+		process_stoptrace(l);
+
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		return systrace_enter(p, code, args);
@@ -1375,6 +1379,9 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif /* KTRACE */
+	
+	if ((p->p_flag & (P_SYSCALL|P_TRACED)) == (P_SYSCALL|P_TRACED))
+		process_stoptrace(l);
 
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
