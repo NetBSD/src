@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.33 2006/03/05 07:21:38 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.34 2006/03/05 12:31:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.33 2006/03/05 07:21:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.34 2006/03/05 12:31:23 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -92,7 +92,7 @@ linux_syscall_intern(p)
 		return;
 	} 
 #endif
-	if (ISSET(p->p_flag, P_SYSCALL))
+	if ((p->p_flag & P_SYSCALL) != 0)
 		p->p_md.md_syscall = linux_syscall_fancy;
 	else
 		p->p_md.md_syscall = linux_syscall_plain;
