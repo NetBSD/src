@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.189 2006/02/24 19:26:50 drochner Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.190 2006/03/05 00:32:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.189 2006/02/24 19:26:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.190 2006/03/05 00:32:43 yamt Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -1532,9 +1532,9 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		 * looks good, so pop it into place and zero the rest.
 		 */
 		if (len > 0)
-			memcpy(rnode->sysctl_data, newbuf, len);
+			memcpy(d, newbuf, len);
 		if (sz != len)
-			memset((char*)rnode->sysctl_data + len, 0, sz - len);
+			memset((char*)d + len, 0, sz - len);
 		free(newbuf, M_SYSCTLDATA);
 		break;
 	}
