@@ -50,7 +50,10 @@
 
 enum {
 	MAX_TGT_NAME_SIZE = 512,
-	MAX_INITIATOR_ADDRESS_SIZE = 256
+	MAX_INITIATOR_ADDRESS_SIZE = 256,
+
+	ISCSI_IPv4 = 4,
+	ISCSI_IPv6 = 6
 };
 
 /* global variables, moved from target.c */
@@ -63,6 +66,7 @@ typedef struct globals_t {
 	volatile int    listener_listening;			/* whether a listener is listening */
 	char     	targetaddress[MAX_TGT_NAME_SIZE];	/* iSCSI TargetAddress set after iscsi_sock_accept() */
 	targv_t		*tv;					/* array of target devices */
+	int		address_family;				/* IP address family */
 } globals_t;
 
 typedef struct target_session_t {
@@ -85,6 +89,7 @@ typedef struct target_session_t {
 	iscsi_parameter_t *params;
 	iscsi_sess_param_t sess_params;
 	char		initiator[MAX_INITIATOR_ADDRESS_SIZE];
+	int		address_family;
 }               target_session_t;
 
 typedef struct target_cmd_t {

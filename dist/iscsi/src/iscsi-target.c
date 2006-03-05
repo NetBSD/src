@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.5 2006/03/04 21:56:11 agc Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.6 2006/03/05 23:50:46 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -81,10 +81,11 @@ main(int argc, char **argv)
 	(void) strlcpy(TargetName, DEFAULT_TARGET_NAME, sizeof(TargetName));
 	detach_me_harder = 1;
 	g.port = ISCSI_PORT;
+	g.address_family = ISCSI_IPv4;
 
 	cf = _PATH_ISCSI_TARGETS;
 
-	while ((i = getopt(argc, argv, "DVb:f:p:t:v:")) != -1) {
+	while ((i = getopt(argc, argv, "DV46b:f:p:t:v:")) != -1) {
 		switch (i) {
 		case 'D':
 			detach_me_harder = 0;
@@ -93,6 +94,12 @@ main(int argc, char **argv)
 			(void) printf("\"%s\" %s\nPlease send all bug reports to %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
 			exit(EXIT_SUCCESS);
 			/* NOTREACHED */
+		case '4':
+			g.address_family = ISCSI_IPv4;
+			break;
+		case '6':
+			g.address_family = ISCSI_IPv6;
+			break;
 		case 'b':
 			device_set_var("blocklen", optarg);
 			break;
