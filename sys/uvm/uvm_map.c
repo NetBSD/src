@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.215 2006/03/01 12:38:44 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.215.2.1 2006/03/05 12:51:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.215 2006/03/01 12:38:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.215.2.1 2006/03/05 12:51:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.215 2006/03/01 12:38:44 yamt Exp $");
 
 #else /* defined(UVMMAP_NOCOUNTERS) */
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #define	UVMMAP_EVCNT_DEFINE(name) \
 struct evcnt uvmmap_evcnt_##name = EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, \
     "uvmmap", #name); \
@@ -4563,11 +4563,8 @@ uvm_object_printit(struct uvm_object *uobj, boolean_t full,
  * uvm_page_printit: actually print the page
  */
 
-static const char page_flagbits[] =
-	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5PAGEOUT\6RELEASED\7FAKE\10RDONLY"
-	"\11ZERO\15PAGER1";
-static const char page_pqflagbits[] =
-	"\20\1FREE\2INACTIVE\3ACTIVE\5ANON\6AOBJ";
+static const char page_flagbits[] = UVM_PGFLAGBITS;
+static const char page_pqflagbits[] = UVM_PQFLAGBITS;
 
 void
 uvm_page_printit(struct vm_page *pg, boolean_t full,
@@ -4630,10 +4627,6 @@ uvm_page_printit(struct vm_page *pg, boolean_t full,
 		int color = VM_PGCOLOR_BUCKET(pg);
 		pgl = &uvm.page_free[fl].pgfl_buckets[color].pgfl_queues[
 		    ((pg)->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN];
-	} else if (pg->pqflags & PQ_INACTIVE) {
-		pgl = &uvm.page_inactive;
-	} else if (pg->pqflags & PQ_ACTIVE) {
-		pgl = &uvm.page_active;
 	} else {
 		pgl = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.43 2006/02/11 12:45:07 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.43.2.1 2006/03/05 12:51:09 yamt Exp $	*/
 
 /*
  *
@@ -62,6 +62,7 @@
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pager.h>
 #include <uvm/uvm_pdaemon.h>
+#include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_swap.h>
 
 #ifdef _KERNEL
@@ -82,8 +83,6 @@ struct uvm {
 		/* vm_page queues */
 	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
 	int page_free_nextcolor;	/* next color to allocate from */
-	struct pglist page_active;	/* allocated pages, in use */
-	struct pglist page_inactive;	/* pages between the clock hands */
 	struct simplelock pageqlock;	/* lock for active/inactive page q */
 	struct simplelock fpageqlock;	/* lock for free page q */
 	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
@@ -176,7 +175,7 @@ do {									\
 do {									\
 	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||		\
 	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&		\
-	     uvmexp.inactive < uvmexp.inactarg)) {			\
+	     uvmpdpol_needsscan_p())) {					\
 		wakeup(&uvm.pagedaemon);				\
 	}								\
 } while (/*CONSTCOND*/0)

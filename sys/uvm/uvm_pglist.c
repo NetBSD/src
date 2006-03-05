@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.34 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.34.8.1 2006/03/05 12:51:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.34 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.34.8.1 2006/03/05 12:51:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,7 +443,7 @@ uvm_pglistfree(struct pglist *list)
 	while ((pg = TAILQ_FIRST(list)) != NULL) {
 		boolean_t iszero;
 
-		KASSERT((pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
+		KASSERT(!uvmpdpol_pageisqueued_p(pg));
 		TAILQ_REMOVE(list, pg, pageq);
 		iszero = (pg->flags & PG_ZERO);
 		pg->pqflags = PQ_FREE;
