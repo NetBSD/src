@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.860 2006/03/02 22:21:38 wiz Exp $
+# $NetBSD: mi,v 1.861 2006/03/05 00:04:13 rumble Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1191,6 +1191,7 @@
 ./usr/share/man/cat4/sgimips/dpclock.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/dsclock.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/gio.0		man-sys-catman		.cat
+./usr/share/man/cat4/sgimips/grtwo.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/haltwo.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/hpc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/imc.0		man-sys-catman		.cat
@@ -3496,6 +3497,7 @@
 ./usr/share/man/man4/sgimips/dpclock.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/dsclock.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/gio.4		man-sys-man		.man
+./usr/share/man/man4/sgimips/grtwo.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/haltwo.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/hpc.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/imc.4		man-sys-man		.man
