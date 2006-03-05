@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.179 2005/12/26 18:45:27 perry Exp $	*/
+/*	$NetBSD: tty.c,v 1.180 2006/03/05 16:57:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.179 2005/12/26 18:45:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.180 2006/03/05 16:57:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,11 +161,6 @@ unsigned char const char_type[] = {
 #undef	NO
 #undef	TB
 #undef	VT
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~((unsigned)(f))
-#define	ISSET(t, f)	((t) & (f))
 
 struct simplelock ttylist_slock = SIMPLELOCK_INITIALIZER;
 struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);

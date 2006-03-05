@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.99 2006/03/05 07:21:38 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.100 2006/03/05 16:57:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99 2006/03/05 07:21:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.100 2006/03/05 16:57:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,11 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99 2006/03/05 07:21:38 christos Ex
 #include <uvm/uvm_extern.h>
 
 #include <machine/reg.h>
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 /*
  * Process debugging system call.
