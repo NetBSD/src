@@ -1,4 +1,4 @@
-/* $NetBSD: udf_osta.h,v 1.2 2006/02/02 16:14:26 reinoud Exp $ */
+/* $NetBSD: udf_osta.h,v 1.3 2006/03/05 16:55:44 christos Exp $ */
 
 /*
  * Prototypes for the OSTA functions
@@ -38,4 +38,3 @@ int UnicodeLength(unicode_t *string);
 
 
 #endif /* _FS_UDF_OSTA_H_ */
-
