@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.h,v 1.10 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.h,v 1.11 2006/03/05 04:05:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ private:
 public:
 	enum consoleSelect { VIDEO, SERIAL };
 	struct console_info {
-		u_int32_t cpu, machine;
+		uint32_t cpu, machine;
 		print_func_t print;
 		int16_t serial_console;
 		int16_t video_console;

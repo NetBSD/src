@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.cpp,v 1.8 2006/02/20 03:07:33 uwe Exp $	*/
+/*	$NetBSD: memory.cpp,v 1.9 2006/03/05 04:05:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ MemoryManager::getTaggedPage(vaddr_t &v, paddr_t &p,
 }
 
 vaddr_t
-MemoryManager::mapPhysicalPage(paddr_t paddr, psize_t size, u_int32_t flags)
+MemoryManager::mapPhysicalPage(paddr_t paddr, psize_t size, uint32_t flags)
 {
 	paddr_t pstart = truncPage(paddr);
 	paddr_t pend = roundPage(paddr + size);
@@ -239,11 +239,11 @@ MemoryManager::unmapPhysicalPage(vaddr_t vaddr)
 		DPRINTF((TEXT("can't release memory\n")));
 }
 
-u_int32_t
+uint32_t
 MemoryManager::readPhysical4(paddr_t paddr)
 {
 	vaddr_t v = mapPhysicalPage(paddr, 4, PAGE_READONLY);
-	u_int32_t val = *(u_int32_t *)v;
+	uint32_t val = *(uint32_t *)v;
 	unmapPhysicalPage(v);
 	return val;
 }

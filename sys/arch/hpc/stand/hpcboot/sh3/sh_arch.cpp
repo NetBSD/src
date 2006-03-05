@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_arch.cpp,v 1.13 2006/02/25 02:28:56 wiz Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.14 2006/03/05 04:05:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -146,10 +146,10 @@ SHArchitecture::jump(paddr_t info, paddr_t pvec)
 }
 
 // disable external interrupt and save its priority.
-u_int32_t
+uint32_t
 suspendIntr()
 {
-	u_int32_t sr;
+	uint32_t sr;
 
 	__asm(
 	    "stc	sr, r0\n"
@@ -161,7 +161,7 @@ suspendIntr()
 
 // resume external interrupt priority.
 void
-resumeIntr(u_int32_t s)
+resumeIntr(uint32_t s)
 {
 
 	__asm(
