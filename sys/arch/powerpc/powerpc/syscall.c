@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.25 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.26 2006/03/05 07:21:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -69,7 +69,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.26 2006/03/05 07:21:38 christos Exp $");
 
 void
 child_return(void *arg)
@@ -339,5 +339,8 @@ EMULNAME(syscall_intern)(struct proc *p)
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = EMULNAME(syscall_plain);
+	if (ISSET(p->p_flag, P_SYSCALL))
+		p->p_md.md_syscall = EMULNAME(syscall_fancy);
+	else
+		p->p_md.md_syscall = EMULNAME(syscall_plain);
 }

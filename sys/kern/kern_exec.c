@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.213 2006/02/09 19:18:57 manu Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.214 2006/03/05 07:21:38 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.213 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214 2006/03/05 07:21:38 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -831,7 +831,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
-	if (p->p_flag & P_TRACED)
+	if ((p->p_flag & (P_TRACED|P_SYSCALL)) == P_TRACED)
 		psignal(p, SIGTRAP);
 
 	free(pack.ep_hdr, M_EXEC);

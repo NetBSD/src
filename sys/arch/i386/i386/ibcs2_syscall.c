@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.28 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.29 2006/03/05 07:21:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.28 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.29 2006/03/05 07:21:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -91,7 +91,10 @@ ibcs2_syscall_intern(p)
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = ibcs2_syscall_plain;
+	if (ISSET(p->p_flag, P_SYSCALL))
+		p->p_md.md_syscall = ibcs2_syscall_fancy;
+	else
+		p->p_md.md_syscall = ibcs2_syscall_plain;
 }
 
 /*

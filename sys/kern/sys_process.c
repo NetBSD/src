@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.98 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.99 2006/03/05 07:21:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.98 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99 2006/03/05 07:21:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	case  PT_KILL:
 	case  PT_DETACH:
 	case  PT_LWPINFO:
+	case  PT_SYSCALL:
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
@@ -381,7 +382,20 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 */
 #endif
 	case  PT_CONTINUE:
+	case  PT_SYSCALL:
 	case  PT_DETACH:
+		if (SCARG(uap, req) == PT_SYSCALL) {
+			if (!ISSET(t->p_flag, P_SYSCALL)) {
+				SET(t->p_flag, P_SYSCALL);
+				(*t->p_emul->e_syscall_intern)(t);
+			}
+		} else {
+			if (ISSET(t->p_flag, P_SYSCALL)) {
+				CLR(t->p_flag, P_SYSCALL);
+				(*t->p_emul->e_syscall_intern)(t);
+			}
+		}
+
 		/*
 		 * From the 4.4BSD PRM:
 		 * "The data argument is taken as a signal number and the
@@ -427,7 +441,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			/* not being traced any more */
 			t->p_opptr = NULL;
 			proclist_unlock_write(s);
-			CLR(t->p_flag, P_TRACED|P_WAITED);
+			CLR(t->p_flag, P_TRACED|P_WAITED|P_SYSCALL|P_FSTRACE);
 		}
 
 	sendsig:
@@ -807,4 +821,30 @@ process_checkioperm(struct lwp *l, struct proc *t)
 		return (EPERM);
 
 	return (0);
+}
+
+void
+process_stoptrace(struct lwp *l)
+{
+	int s = 0, dolock = (l->l_flag & L_SINTR) == 0;
+	struct proc *p = l->l_proc, *pp = p->p_pptr;
+
+	if (pp->p_pid == 1) {
+		CLR(p->p_flag, P_SYSCALL);
+		return;
+	}
+
+	p->p_xstat = SIGTRAP;
+	child_psignal(pp, dolock);
+
+	if (dolock)
+		SCHED_LOCK(s);
+
+	proc_stop(p, 1);
+
+	mi_switch(l, NULL);
+	SCHED_ASSERT_UNLOCKED();
+
+	if (dolock)
+		splx(s);
 }

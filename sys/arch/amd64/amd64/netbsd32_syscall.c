@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.8 2006/01/20 00:10:33 cube Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.9 2006/03/05 07:21:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.8 2006/01/20 00:10:33 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.9 2006/03/05 07:21:38 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -84,7 +84,10 @@ netbsd32_syscall_intern(p)
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = netbsd32_syscall_plain;
+	if (ISSET(p->p_flag, P_SYSCALL))
+		p->p_md.md_syscall = netbsd32_syscall_fancy;
+	else
+		p->p_md.md_syscall = netbsd32_syscall_plain;
 }
 
 void
