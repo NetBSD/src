@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.18 2006/02/27 19:25:45 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.19 2006/03/05 22:06:46 xtraeme Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.18 2006/02/27 19:25:45 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.19 2006/03/05 22:06:46 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,11 +337,11 @@ static const struct fq_info pentium_m_n755[] = {
 
 /* Intel Pentium M processor 760 2.0Ghz */
 static const struct fq_info pentium_m_n760[] = {
-	{ 2000, 1356 },
-	{ 1600, 1244 },
-	{ 1333, 1164 },
-	{ 1066, 1084 },
-	{  800,  988 }
+	{ 1500, 1356 },
+	{ 1200, 1244 },
+	{ 1000, 1164 },
+	{  800, 1084 },
+	{  600,  988 }
 };
 
 /* Intel Pentium M processor 765 2.1 GHz */
@@ -520,7 +520,8 @@ est_init(struct cpu_info *ci)
 			len = strlen(fql->brand_tag);
 			if (!strncmp(fql->brand_tag, tag, len) &&
 			    !strcmp(ccpu->brand_suffix, tag + len) &&
-			    (fql->cpu_id == 0 || fql->cpu_id == ci->ci_cpuid)) {
+			    (fql->cpu_id == 0 ||
+			     fql->cpu_id == ci->ci_signature)) {
 				est_fqlist = fql;
 				break;
 			}
