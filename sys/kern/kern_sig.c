@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.215 2006/02/04 12:09:50 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.216 2006/03/05 07:21:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.215 2006/02/04 12:09:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.216 2006/03/05 07:21:38 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.215 2006/02/04 12:09:50 yamt Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
-static void	child_psignal(struct proc *, int);
 static int	build_corename(struct proc *, char *, const char *, size_t);
 static void	ksiginfo_exithook(struct proc *, void *);
 static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
@@ -957,7 +956,7 @@ trapsignal(struct lwp *l, const ksiginfo_t *ksi)
 /*
  * Fill in signal information and signal the parent for a child status change.
  */
-static void
+void
 child_psignal(struct proc *p, int dolock)
 {
 	ksiginfo_t ksi;

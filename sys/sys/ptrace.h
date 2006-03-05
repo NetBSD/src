@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.35 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.36 2006/03/05 07:21:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -46,6 +46,7 @@
 #define	PT_IO		11	/* do I/O to/from the stopped process */
 #define	PT_DUMPCORE	12	/* make the child generate a core dump */
 #define	PT_LWPINFO	13	/* get info about the LWP */
+#define	PT_SYSCALL	14	/* stop on syscall entry/exit */
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
 
@@ -94,6 +95,8 @@ int	process_validfpregs(struct lwp *);
 
 int	process_domem(struct lwp *, struct lwp *, struct uio *);
 int	process_checkioperm(struct lwp *, struct proc *);
+
+void	process_stoptrace(struct lwp *);
 
 void	proc_reparent(struct proc *, struct proc *);
 #ifdef PT_GETFPREGS
