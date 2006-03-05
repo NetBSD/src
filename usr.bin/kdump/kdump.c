@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.83 2005/12/11 11:31:34 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.84 2006/03/05 17:03:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.83 2005/12/11 11:31:34 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.84 2006/03/05 17:03:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ static const char * const ptrace_ops[] = {
 	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
 	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
 	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",	"PT_IO",
-	"PT_DUMPCORE",	"PT_LWPINFO"
+	"PT_DUMPCORE",	"PT_LWPINFO", 	"PT_SYSCALL",
 };
 
 #ifdef PT_MACHDEP_STRINGS
