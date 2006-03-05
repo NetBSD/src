@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.12 2006/03/05 07:21:38 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.13 2006/03/05 19:08:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2006/03/05 07:21:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2006/03/05 19:08:39 christos Exp $");
 
 #define NEW_FPSTATE
 
@@ -256,19 +256,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 void
 syscall_intern(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	} 
-#endif
-	if (ISSET(p->p_flag, P_SYSCALL))
+	if (proc_is_traced_p(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
 		p->p_md.md_syscall = syscall_plain;

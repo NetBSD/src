@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.11 2006/03/05 07:21:38 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.12 2006/03/05 19:08:38 christos Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.11 2006/03/05 07:21:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.12 2006/03/05 19:08:38 christos Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -145,20 +145,7 @@ static void linux_syscall_fancy(register_t, struct lwp *, struct frame *);
 void
 linux_syscall_intern(struct proc *p)
 {
-
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = linux_syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = linux_syscall_fancy;
-		return;
-	}
-#endif
-	if (ISSET(p->p_flag, P_SYSCALL))
+	if (proc_is_traced_p(p))
 		p->p_md.md_syscall = linux_syscall_fancy;
 	else
 		p->p_md.md_syscall = linux_syscall_plain;
