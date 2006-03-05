@@ -1,7 +1,7 @@
-/*	$NetBSD: j6x0pwr.c,v 1.11 2006/03/04 17:35:31 peter Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.12 2006/03/05 02:17:47 uwe Exp $ */
 
 /*
- * Copyright (c) 2003 Valeriy E. Ushakov
+ * Copyright (c) 2003, 2006 Valeriy E. Ushakov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.11 2006/03/04 17:35:31 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.12 2006/03/05 02:17:47 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -237,7 +237,7 @@ j6x0pwr_intr(void *self)
 
 
 static int
-j6x0pwr_clear_interrupt()
+j6x0pwr_clear_interrupt(void)
 {
 	uint8_t irr0;
 
