@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.12 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.13 2006/03/05 04:05:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ public:
 		TCHAR	boot_extra[MAX_BOOT_STR];
 	};
 	struct support_status {
-		u_int32_t cpu, machine;
+		uint32_t cpu, machine;
 		const TCHAR *cause;
 	};
 	static struct support_status _unsupported[];
