@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_ufs.h,v 1.3 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: file_ufs.h,v 1.4 2006/03/05 04:05:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ public:
 	virtual ~UfsFile(void);
 
 	BOOL setRoot(TCHAR *);
-	BOOL open(const TCHAR *, u_int32_t);
+	BOOL open(const TCHAR *, uint32_t);
 	size_t size(void);
 	BOOL close(void);
 	size_t read(void *, size_t, off_t = -1);
