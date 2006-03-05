@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.69 2005/11/17 16:12:21 tsutsui Exp $	*/
+/*	$NetBSD: types.h,v 1.70 2006/03/05 16:57:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -311,6 +311,12 @@ struct	file;
 struct	buf;
 struct	tty;
 struct	uio;
+#endif
+
+#ifdef _KERNEL
+#define SET(t, f)	((t) |= (f))
+#define	ISSET(t, f)	((t) & (f))
+#define	CLR(t, f)	((t) &= ~(f))
 #endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
