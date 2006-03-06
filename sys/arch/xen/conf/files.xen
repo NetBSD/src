@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.35 2006/03/06 20:34:09 bouyer Exp $
+#	$NetBSD: files.xen,v 1.36 2006/03/06 20:36:12 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -146,8 +146,10 @@ defpseudo xenevt
 
 # Xen Network driver
 device	xennet: arp, ether, ifnet
-attach	xennet at xendevbus
-file	arch/xen/xen/if_xennet.c	xennet needs-flag
+attach xennet at xendevbus with xennet_hypervisor
+attach xennet at xenbus with xennet_xenbus
+file   arch/xen/xen/if_xennet_xenbus.c xennet_xenbus
+file   arch/xen/xen/if_xennet.c        xennet_hypervisor needs-flag
 
 # Xen Block device driver and wd/sd/cd identities
 device	xbd: disk
