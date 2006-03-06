@@ -101,8 +101,8 @@ typedef uint32_t XENSTORE_RING_IDX;
 struct xenstore_domain_interface {
     char req[XENSTORE_RING_SIZE]; /* Requests to xenstore daemon. */
     char rsp[XENSTORE_RING_SIZE]; /* Replies and async watch events. */
-    XENSTORE_RING_IDX req_cons, req_prod;
-    XENSTORE_RING_IDX rsp_cons, rsp_prod;
+    volatile XENSTORE_RING_IDX req_cons, req_prod;
+    volatile XENSTORE_RING_IDX rsp_cons, rsp_prod;
 };
 
 #endif /* _XS_WIRE_H */
