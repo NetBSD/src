@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.49 2006/03/05 01:28:20 cube Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.50 2006/03/06 14:40:55 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -320,6 +320,7 @@ struct netbsd32_semid_ds14 {
 };
 
 typedef u_int32_t netbsd32_semunu_t;
+typedef netbsd32_pointer_t netbsd32_semunp_t;
 union netbsd32_semun {
 	int	val;		/* value for SETVAL */
 	netbsd32_semid_dsp_t buf; /* buffer for IPC_STAT & IPC_SET */
