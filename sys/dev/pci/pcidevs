@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.769 2006/03/01 22:22:36 dogcow Exp $
+$NetBSD: pcidevs,v 1.770 2006/03/06 08:23:00 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -538,6 +538,7 @@ vendor SIIG		0x131f	Siig
 vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media
 vendor NETGEAR		0x1385	Netgear
+vendor MOXA		0x1393	Moxa
 vendor LEVELONE		0x1394	Level One
 vendor COLOGNECHIP	0x1397	Cologne Chip Designs
 vendor HIFN		0x13a3	Hifn
@@ -2150,6 +2151,12 @@ product MOT MPC8245	0x0006	MPC8245 \"Kahlua II\" Host Bridge
 product MOT RAVEN	0x4801	Raven Host Bridge & Multi-Processor Interrupt Controller
 product MOT FALCON	0x4802	Falcon ECC Memory Controller Chip Set
 product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
+
+/* Moxa products */
+product	MOXA CP114		0x1141	CP-114
+product	MOXA C104H		0x1040	C104H
+product	MOXA CP104		0x1041	CP-104UL
+product	MOXA C168H		0x1680	C168H
 
 /* Mutech products */
 product MUTECH MV1000	0x0001	MV1000
