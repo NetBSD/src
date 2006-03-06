@@ -1,3 +1,4 @@
+/* $NetBSD: xenbus_xs.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -28,23 +29,34 @@
  * IN THE SOFTWARE.
  */
 
-#include <linux/unistd.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/uio.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/fcntl.h>
-#include <linux/kthread.h>
-#include <asm-xen/xenbus.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $");
+
+#if 0
+#define DPRINTK(fmt, args...) \
+    printf("xenbus_xs (%s:%d) " fmt ".\n", __FUNCTION__, __LINE__, ##args)
+#else
+#define DPRINTK(fmt, args...) ((void)0)
+#endif 
+
+#include <sys/types.h>
+#include <sys/null.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/kthread.h>
+
+#include <machine/stdarg.h>
+
+#include <machine/xenbus.h>
 #include "xenbus_comms.h"
 
 #define streq(a, b) (strcmp((a), (b)) == 0)
 
 struct xs_stored_msg {
-	struct list_head list;
+	SIMPLEQ_ENTRY(xs_stored_msg) msg_next;
 
 	struct xsd_sockmsg hdr;
 
@@ -65,44 +77,32 @@ struct xs_stored_msg {
 
 struct xs_handle {
 	/* A list of replies. Currently only one will ever be outstanding. */
-	struct list_head reply_list;
-	spinlock_t reply_lock;
-	wait_queue_head_t reply_waitq;
+	SIMPLEQ_HEAD(, xs_stored_msg) reply_list;
+	struct simplelock reply_lock;
+	int suspend_spl;
 
-	/* One request at a time. */
-	struct semaphore request_mutex;
-
-	/* Protect transactions against save/restore. */
-	struct rw_semaphore suspend_mutex;
 };
 
 static struct xs_handle xs_state;
 
 /* List of registered watches, and a lock to protect it. */
-static LIST_HEAD(watches);
-static DEFINE_SPINLOCK(watches_lock);
+static SLIST_HEAD(, xenbus_watch) watches =
+    SLIST_HEAD_INITIALIZER(watches);
+static struct simplelock watches_lock = SIMPLELOCK_INITIALIZER;
 
 /* List of pending watch callback events, and a lock to protect it. */
-static LIST_HEAD(watch_events);
-static DEFINE_SPINLOCK(watch_events_lock);
+static SIMPLEQ_HEAD(, xs_stored_msg) watch_events =
+    SIMPLEQ_HEAD_INITIALIZER(watch_events);
+static struct simplelock watch_events_lock = SIMPLELOCK_INITIALIZER;
 
-/*
- * Details of the xenwatch callback kernel thread. The thread waits on the
- * watch_events_waitq for work to do (queued on watch_events list). When it
- * wakes up it acquires the xenwatch_mutex before reading the list and
- * carrying out work.
- */
-static pid_t xenwatch_pid;
-/* static */ DECLARE_MUTEX(xenwatch_mutex);
-static DECLARE_WAIT_QUEUE_HEAD(watch_events_waitq);
-
-static int get_error(const char *errorstring)
+static int
+get_error(const char *errorstring)
 {
 	unsigned int i;
 
 	for (i = 0; !streq(errorstring, xsd_errors[i].errstring); i++) {
-		if (i == ARRAY_SIZE(xsd_errors) - 1) {
-			printk(KERN_WARNING
+		if (i == (sizeof(xsd_errors) / sizeof(xsd_errors[0]) - 1)) {
+			printf(
 			       "XENBUS xen store gave: unknown error %s",
 			       errorstring);
 			return EINVAL;
@@ -111,156 +111,153 @@ static int get_error(const char *errorstring)
 	return xsd_errors[i].errnum;
 }
 
-static void *read_reply(enum xsd_sockmsg_type *type, unsigned int *len)
+static void *
+read_reply(enum xsd_sockmsg_type *type, unsigned int *len)
 {
 	struct xs_stored_msg *msg;
 	char *body;
+	int s;
 
-	spin_lock(&xs_state.reply_lock);
+	simple_lock(&xs_state.reply_lock);
+	s = spltty();
 
-	while (list_empty(&xs_state.reply_list)) {
-		spin_unlock(&xs_state.reply_lock);
-		wait_event_interruptible(xs_state.reply_waitq,
-					 !list_empty(&xs_state.reply_list));
-		spin_lock(&xs_state.reply_lock);
+	while (SIMPLEQ_EMPTY(&xs_state.reply_list)) {
+		ltsleep(&xs_state.reply_list, PRIBIO, "rplq", 0,
+		    &xs_state.reply_lock);
 	}
 
-	msg = list_entry(xs_state.reply_list.next,
-			 struct xs_stored_msg, list);
-	list_del(&msg->list);
+	msg = SIMPLEQ_FIRST(&xs_state.reply_list);
+	SIMPLEQ_REMOVE_HEAD(&xs_state.reply_list, msg_next);
 
-	spin_unlock(&xs_state.reply_lock);
+	splx(s);
+	simple_unlock(&xs_state.reply_lock);
 
 	*type = msg->hdr.type;
 	if (len)
 		*len = msg->hdr.len;
 	body = msg->u.reply.body;
 
-	kfree(msg);
+	free(msg, M_DEVBUF);
 
 	return body;
 }
 
+#if 0
 /* Emergency write. */
-void xenbus_debug_write(const char *str, unsigned int count)
+void
+xenbus_debug_write(const char *str, unsigned int count)
 {
 	struct xsd_sockmsg msg = { 0 };
 
 	msg.type = XS_DEBUG;
 	msg.len = sizeof("print") + count + 1;
 
-	down(&xs_state.request_mutex);
 	xb_write(&msg, sizeof(msg));
 	xb_write("print", sizeof("print"));
 	xb_write(str, count);
 	xb_write("", 1);
-	up(&xs_state.request_mutex);
 }
+#endif
 
-void *xenbus_dev_request_and_reply(struct xsd_sockmsg *msg)
+int
+xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void**reply)
 {
-	void *ret;
-	struct xsd_sockmsg req_msg = *msg;
-	int err;
+	int err = 0, s;
 
-	if (req_msg.type == XS_TRANSACTION_START)
-		down_read(&xs_state.suspend_mutex);
-
-	down(&xs_state.request_mutex);
+	s = spltty();
 
 	err = xb_write(msg, sizeof(*msg) + msg->len);
 	if (err) {
 		msg->type = XS_ERROR;
-		ret = ERR_PTR(err);
+		*reply = NULL;
 	} else {
-		ret = read_reply(&msg->type, &msg->len);
+		*reply = read_reply(&msg->type, &msg->len);
 	}
 
-	up(&xs_state.request_mutex);
+	splx(s);
 
-	if ((msg->type == XS_TRANSACTION_END) ||
-	    ((req_msg.type == XS_TRANSACTION_START) &&
-	     (msg->type == XS_ERROR)))
-		up_read(&xs_state.suspend_mutex);
-
-	return ret;
+	return err;
 }
 
 /* Send message to xs, get kmalloc'ed reply.  ERR_PTR() on error. */
-static void *xs_talkv(struct xenbus_transaction *t,
+static int
+xs_talkv(struct xenbus_transaction *t,
 		      enum xsd_sockmsg_type type,
-		      const struct kvec *iovec,
+		      const struct iovec *iovec,
 		      unsigned int num_vecs,
-		      unsigned int *len)
+		      unsigned int *len,
+		      char **retbuf)
 {
 	struct xsd_sockmsg msg;
-	void *ret = NULL;
 	unsigned int i;
-	int err;
+	int err, s;
+	void *ret;
 
-	msg.tx_id = (u32)(unsigned long)t;
+	msg.tx_id = (uint32_t)(unsigned long)t;
 	msg.req_id = 0;
 	msg.type = type;
 	msg.len = 0;
 	for (i = 0; i < num_vecs; i++)
 		msg.len += iovec[i].iov_len;
 
-	down(&xs_state.request_mutex);
+	s = spltty();
 
+	DPRINTK("write msg");
 	err = xb_write(&msg, sizeof(msg));
+	DPRINTK("write msg err %d", err);
 	if (err) {
-		up(&xs_state.request_mutex);
-		return ERR_PTR(err);
+		splx(s);
+		return (err);
 	}
 
 	for (i = 0; i < num_vecs; i++) {
+		DPRINTK("write iovect");
 		err = xb_write(iovec[i].iov_base, iovec[i].iov_len);;
+		DPRINTK("write iovect err %d", err);
 		if (err) {
-			up(&xs_state.request_mutex);
-			return ERR_PTR(err);
+			splx(s);
+			return (err);
 		}
 	}
 
+	DPRINTK("read");
 	ret = read_reply(&msg.type, len);
+	DPRINTK("read done");
 
-	up(&xs_state.request_mutex);
-
-	if (IS_ERR(ret))
-		return ret;
+	splx(s);
 
 	if (msg.type == XS_ERROR) {
 		err = get_error(ret);
-		kfree(ret);
-		return ERR_PTR(-err);
+		free(ret, M_DEVBUF);
+		return (err);
 	}
 
-	BUG_ON(msg.type != type);
-	return ret;
-}
-
-/* Simplified version of xs_talkv: single message. */
-static void *xs_single(struct xenbus_transaction *t,
-		       enum xsd_sockmsg_type type,
-		       const char *string,
-		       unsigned int *len)
-{
-	struct kvec iovec;
-
-	iovec.iov_base = (void *)string;
-	iovec.iov_len = strlen(string) + 1;
-	return xs_talkv(t, type, &iovec, 1, len);
-}
-
-/* Many commands only need an ack, don't care what it says. */
-static int xs_error(char *reply)
-{
-	if (IS_ERR(reply))
-		return PTR_ERR(reply);
-	kfree(reply);
+	KASSERT(msg.type == type);
+	if (retbuf != NULL)
+		*retbuf = ret;
+	else
+		free(ret, M_DEVBUF);
 	return 0;
 }
 
-static unsigned int count_strings(const char *strings, unsigned int len)
+/* Simplified version of xs_talkv: single message. */
+static int
+xs_single(struct xenbus_transaction *t,
+		       enum xsd_sockmsg_type type,
+		       const char *string,
+		       unsigned int *len,
+		       char **ret)
+{
+	struct iovec iovec;
+
+	/* xs_talkv only reads iovec */
+	iovec.iov_base = __UNCONST(string);
+	iovec.iov_len = strlen(string) + 1;
+	return xs_talkv(t, type, &iovec, 1, len, ret);
+}
+
+static unsigned int
+count_strings(const char *strings, unsigned int len)
 {
 	unsigned int num;
 	const char *p;
@@ -272,14 +269,15 @@ static unsigned int count_strings(const char *strings, unsigned int len)
 }
 
 /* Return the path to dir with /name appended. Buffer must be kfree()'ed. */ 
-static char *join(const char *dir, const char *name)
+static char *
+join(const char *dir, const char *name)
 {
 	char *buffer;
 
-	buffer = kmalloc(strlen(dir) + strlen("/") + strlen(name) + 1,
-			 GFP_KERNEL);
+	buffer = malloc(strlen(dir) + strlen("/") + strlen(name) + 1,
+			 M_DEVBUF, M_NOWAIT);
 	if (buffer == NULL)
-		return ERR_PTR(-ENOMEM);
+		return NULL;
 
 	strcpy(buffer, dir);
 	if (!streq(name, "")) {
@@ -290,7 +288,8 @@ static char *join(const char *dir, const char *name)
 	return buffer;
 }
 
-static char **split(char *strings, unsigned int len, unsigned int *num)
+static char **
+split(char *strings, unsigned int len, unsigned int *num)
 {
 	char *p, **ret;
 
@@ -298,13 +297,13 @@ static char **split(char *strings, unsigned int len, unsigned int *num)
 	*num = count_strings(strings, len);
 
 	/* Transfer to one big alloc for easy freeing. */
-	ret = kmalloc(*num * sizeof(char *) + len, GFP_KERNEL);
+	ret = malloc(*num * sizeof(char *) + len, M_DEVBUF, M_NOWAIT);
 	if (!ret) {
-		kfree(strings);
-		return ERR_PTR(-ENOMEM);
+		free(strings, M_DEVBUF);
+		return NULL;
 	}
 	memcpy(&ret[*num], strings, len);
-	kfree(strings);
+	free(strings, M_DEVBUF);
 
 	strings = (char *)&ret[*num];
 	for (p = strings, *num = 0; p < strings + len; p += strlen(p) + 1)
@@ -313,101 +312,109 @@ static char **split(char *strings, unsigned int len, unsigned int *num)
 	return ret;
 }
 
-char **xenbus_directory(struct xenbus_transaction *t,
-			const char *dir, const char *node, unsigned int *num)
+int
+xenbus_directory(struct xenbus_transaction *t,
+			const char *dir, const char *node, unsigned int *num,
+			char ***retbuf)
 {
 	char *strings, *path;
 	unsigned int len;
+	int err;
 
 	path = join(dir, node);
-	if (IS_ERR(path))
-		return (char **)path;
+	if (path == NULL) 
+		return ENOMEM;
 
-	strings = xs_single(t, XS_DIRECTORY, path, &len);
-	kfree(path);
-	if (IS_ERR(strings))
-		return (char **)strings;
+	err = xs_single(t, XS_DIRECTORY, path, &len, &strings);
+	DPRINTK("xs_single %d %d", err, len);
+	free(path, M_DEVBUF);
+	if (err)
+		return err;
 
-	return split(strings, len, num);
+	DPRINTK("xs_single strings %s", strings);
+	*retbuf = split(strings, len, num);
+	if (*retbuf == NULL)
+		return ENOMEM;
+	return 0;
 }
-EXPORT_SYMBOL(xenbus_directory);
 
 /* Check if a path exists. Return 1 if it does. */
-int xenbus_exists(struct xenbus_transaction *t,
+int
+xenbus_exists(struct xenbus_transaction *t,
 		  const char *dir, const char *node)
 {
 	char **d;
-	int dir_n;
+	int dir_n, err;
 
-	d = xenbus_directory(t, dir, node, &dir_n);
-	if (IS_ERR(d))
+	err = xenbus_directory(t, dir, node, &dir_n, &d);
+	if (err)
 		return 0;
-	kfree(d);
+	free(d, M_DEVBUF);
 	return 1;
 }
-EXPORT_SYMBOL(xenbus_exists);
 
 /* Get the value of a single file.
  * Returns a kmalloced value: call free() on it after use.
  * len indicates length in bytes.
  */
-void *xenbus_read(struct xenbus_transaction *t,
-		  const char *dir, const char *node, unsigned int *len)
+int
+xenbus_read(struct xenbus_transaction *t,
+		  const char *dir, const char *node, unsigned int *len,
+		  char **ret)
 {
 	char *path;
-	void *ret;
+	int err;
 
 	path = join(dir, node);
-	if (IS_ERR(path))
-		return (void *)path;
+	if (path == NULL)
+		return ENOMEM;
 
-	ret = xs_single(t, XS_READ, path, len);
-	kfree(path);
-	return ret;
+	err = xs_single(t, XS_READ, path, len, ret);
+	free(path, M_DEVBUF);
+	return err;
 }
-EXPORT_SYMBOL(xenbus_read);
 
 /* Write the value of a single file.
  * Returns -err on failure.
  */
-int xenbus_write(struct xenbus_transaction *t,
+int
+xenbus_write(struct xenbus_transaction *t,
 		 const char *dir, const char *node, const char *string)
 {
 	const char *path;
-	struct kvec iovec[2];
+	struct iovec iovec[2];
 	int ret;
 
 	path = join(dir, node);
-	if (IS_ERR(path))
-		return PTR_ERR(path);
+	if (path == NULL)
+		return ENOMEM;
 
-	iovec[0].iov_base = (void *)path;
+	/* xs_talkv only reads iovec */
+	iovec[0].iov_base = __UNCONST(path);
 	iovec[0].iov_len = strlen(path) + 1;
-	iovec[1].iov_base = (void *)string;
+	iovec[1].iov_base = __UNCONST(string);
 	iovec[1].iov_len = strlen(string);
 
-	ret = xs_error(xs_talkv(t, XS_WRITE, iovec, ARRAY_SIZE(iovec), NULL));
-	kfree(path);
+	ret = xs_talkv(t, XS_WRITE, iovec, 2, NULL, NULL);
 	return ret;
 }
-EXPORT_SYMBOL(xenbus_write);
 
 /* Create a new directory. */
-int xenbus_mkdir(struct xenbus_transaction *t,
+int
+xenbus_mkdir(struct xenbus_transaction *t,
 		 const char *dir, const char *node)
 {
 	char *path;
 	int ret;
 
 	path = join(dir, node);
-	if (IS_ERR(path))
-		return PTR_ERR(path);
+	if (path == NULL)
+		return ENOMEM;
 
-	ret = xs_error(xs_single(t, XS_MKDIR, path, NULL));
-	kfree(path);
+	ret = xs_single(t, XS_MKDIR, path, NULL, NULL);
+	free(path, M_DEVBUF);
 	return ret;
 }
-EXPORT_SYMBOL(xenbus_mkdir);
 
 /* Destroy a file or directory (directories must be empty). */
 int xenbus_rm(struct xenbus_transaction *t, const char *dir, const char *node)
@@ -416,40 +423,38 @@ int xenbus_rm(struct xenbus_transaction *t, const char *dir, const char *node)
 	int ret;
 
 	path = join(dir, node);
-	if (IS_ERR(path))
-		return PTR_ERR(path);
+	if (path == NULL)
+		return ENOMEM;
 
-	ret = xs_error(xs_single(t, XS_RM, path, NULL));
-	kfree(path);
+	ret = xs_single(t, XS_RM, path, NULL, NULL);
+	free(path, M_DEVBUF);
 	return ret;
 }
-EXPORT_SYMBOL(xenbus_rm);
 
 /* Start a transaction: changes by others will not be seen during this
  * transaction, and changes will not be visible to others until end.
+ * MUST BE CALLED AT IPL_TTY !
  */
-struct xenbus_transaction *xenbus_transaction_start(void)
+struct xenbus_transaction *
+xenbus_transaction_start(void)
 {
 	char *id_str;
-	unsigned long id;
+	unsigned long id, err;
 
-	down_read(&xs_state.suspend_mutex);
-
-	id_str = xs_single(NULL, XS_TRANSACTION_START, "", NULL);
-	if (IS_ERR(id_str)) {
-		up_read(&xs_state.suspend_mutex);
-		return (struct xenbus_transaction *)id_str;
+	err = xs_single(NULL, XS_TRANSACTION_START, "", NULL, &id_str);
+	if (err) {
+		return NULL;
 	}
 
-	id = simple_strtoul(id_str, NULL, 0);
-	kfree(id_str);
+	id = strtoul(id_str, NULL, 0);
+	free(id_str, M_DEVBUF);
 
 	return (struct xenbus_transaction *)id;
 }
-EXPORT_SYMBOL(xenbus_transaction_start);
 
 /* End a transaction.
  * If abandon is true, transaction is discarded instead of committed.
+ * MUST BE CALLED AT IPL_TTY !
  */
 int xenbus_transaction_end(struct xenbus_transaction *t, int abort)
 {
@@ -461,39 +466,36 @@ int xenbus_transaction_end(struct xenbus_transaction *t, int abort)
 	else
 		strcpy(abortstr, "T");
 
-	err = xs_error(xs_single(t, XS_TRANSACTION_END, abortstr, NULL));
-
-	up_read(&xs_state.suspend_mutex);
+	err = xs_single(t, XS_TRANSACTION_END, abortstr, NULL, NULL);
 
 	return err;
 }
-EXPORT_SYMBOL(xenbus_transaction_end);
 
 /* Single read and scanf: returns -errno or num scanned. */
-int xenbus_scanf(struct xenbus_transaction *t,
+int
+xenbus_scanf(struct xenbus_transaction *t,
 		 const char *dir, const char *node, const char *fmt, ...)
 {
 	va_list ap;
 	int ret;
 	char *val;
 
-	val = xenbus_read(t, dir, node, NULL);
-	if (IS_ERR(val))
-		return PTR_ERR(val);
+	ret = xenbus_read(t, dir, node, NULL, &val);
+	if (ret)
+		return ret;
 
 	va_start(ap, fmt);
-	ret = vsscanf(val, fmt, ap);
+	//ret = vsscanf(val, fmt, ap);
+	ret = ENXIO;
+	printf("xb_scanf format %s in %s\n", fmt, val);
 	va_end(ap);
-	kfree(val);
-	/* Distinctive errno. */
-	if (ret == 0)
-		return -ERANGE;
+	free(val, M_DEVBUF);
 	return ret;
 }
-EXPORT_SYMBOL(xenbus_scanf);
 
 /* Single printf and write: returns -errno or 0. */
-int xenbus_printf(struct xenbus_transaction *t,
+int
+xenbus_printf(struct xenbus_transaction *t,
 		  const char *dir, const char *node, const char *fmt, ...)
 {
 	va_list ap;
@@ -501,25 +503,25 @@ int xenbus_printf(struct xenbus_transaction *t,
 #define PRINTF_BUFFER_SIZE 4096
 	char *printf_buffer;
 
-	printf_buffer = kmalloc(PRINTF_BUFFER_SIZE, GFP_KERNEL);
+	printf_buffer = malloc(PRINTF_BUFFER_SIZE, M_DEVBUF, M_NOWAIT);
 	if (printf_buffer == NULL)
-		return -ENOMEM;
+		return ENOMEM;
 
 	va_start(ap, fmt);
 	ret = vsnprintf(printf_buffer, PRINTF_BUFFER_SIZE, fmt, ap);
 	va_end(ap);
 
-	BUG_ON(ret > PRINTF_BUFFER_SIZE-1);
+	KASSERT(ret < PRINTF_BUFFER_SIZE);
 	ret = xenbus_write(t, dir, node, printf_buffer);
 
-	kfree(printf_buffer);
+	free(printf_buffer, M_DEVBUF);
 
 	return ret;
 }
-EXPORT_SYMBOL(xenbus_printf);
 
 /* Takes tuples of names, scanf-style args, and void **, NULL terminated. */
-int xenbus_gather(struct xenbus_transaction *t, const char *dir, ...)
+int
+xenbus_gather(struct xenbus_transaction *t, const char *dir, ...)
 {
 	va_list ap;
 	const char *name;
@@ -531,287 +533,296 @@ int xenbus_gather(struct xenbus_transaction *t, const char *dir, ...)
 		void *result = va_arg(ap, void *);
 		char *p;
 
-		p = xenbus_read(t, dir, name, NULL);
-		if (IS_ERR(p)) {
-			ret = PTR_ERR(p);
+		ret = xenbus_read(t, dir, name, NULL, &p);
+		if (ret)
 			break;
-		}
 		if (fmt) {
-			if (sscanf(p, fmt, result) == 0)
+			// XXX if (sscanf(p, fmt, result) == 0)
 				ret = -EINVAL;
-			kfree(p);
+			free(p, M_DEVBUF);
 		} else
 			*(char **)result = p;
 	}
 	va_end(ap);
 	return ret;
 }
-EXPORT_SYMBOL(xenbus_gather);
 
-static int xs_watch(const char *path, const char *token)
+static int
+xs_watch(const char *path, const char *token)
 {
-	struct kvec iov[2];
+	struct iovec iov[2];
 
-	iov[0].iov_base = (void *)path;
+	/* xs_talkv only reads iovec */
+	iov[0].iov_base = __UNCONST(path);
 	iov[0].iov_len = strlen(path) + 1;
-	iov[1].iov_base = (void *)token;
+	iov[1].iov_base = __UNCONST(token);
 	iov[1].iov_len = strlen(token) + 1;
 
-	return xs_error(xs_talkv(NULL, XS_WATCH, iov,
-				 ARRAY_SIZE(iov), NULL));
+	return xs_talkv(NULL, XS_WATCH, iov, 2, NULL, NULL);
 }
 
-static int xs_unwatch(const char *path, const char *token)
+static int
+xs_unwatch(const char *path, const char *token)
 {
-	struct kvec iov[2];
+	struct iovec iov[2];
 
-	iov[0].iov_base = (char *)path;
+	/* xs_talkv only reads iovec */
+	iov[0].iov_base = __UNCONST(path);
 	iov[0].iov_len = strlen(path) + 1;
-	iov[1].iov_base = (char *)token;
+	iov[1].iov_base = __UNCONST(token);
 	iov[1].iov_len = strlen(token) + 1;
 
-	return xs_error(xs_talkv(NULL, XS_UNWATCH, iov,
-				 ARRAY_SIZE(iov), NULL));
+	return xs_talkv(NULL, XS_UNWATCH, iov, 2, NULL, NULL);
 }
 
-static struct xenbus_watch *find_watch(const char *token)
+static struct xenbus_watch *
+find_watch(const char *token)
 {
 	struct xenbus_watch *i, *cmp;
 
-	cmp = (void *)simple_strtoul(token, NULL, 16);
+	cmp = (void *)strtoul(token, NULL, 16);
 
-	list_for_each_entry(i, &watches, list)
+	SLIST_FOREACH(i, &watches, watch_next) {
 		if (i == cmp)
 			return i;
+	}
 
 	return NULL;
 }
 
 /* Register callback to watch this node. */
-int register_xenbus_watch(struct xenbus_watch *watch)
+int
+register_xenbus_watch(struct xenbus_watch *watch)
 {
 	/* Pointer in ascii is the token. */
 	char token[sizeof(watch) * 2 + 1];
 	int err;
+	int s;
 
 	sprintf(token, "%lX", (long)watch);
 
-	down_read(&xs_state.suspend_mutex);
+	s = spltty();
 
-	spin_lock(&watches_lock);
-	BUG_ON(find_watch(token));
-	list_add(&watch->list, &watches);
-	spin_unlock(&watches_lock);
+	simple_lock(&watches_lock);
+	KASSERT(find_watch(token) == 0);
+	SLIST_INSERT_HEAD(&watches, watch, watch_next);
+	simple_unlock(&watches_lock);
 
 	err = xs_watch(watch->node, token);
 
 	/* Ignore errors due to multiple registration. */
-	if ((err != 0) && (err != -EEXIST)) {
-		spin_lock(&watches_lock);
-		list_del(&watch->list);
-		spin_unlock(&watches_lock);
+	if ((err != 0) && (err != EEXIST)) {
+		simple_lock(&watches_lock);
+		SLIST_REMOVE(&watches, watch, xenbus_watch, watch_next);
+		simple_unlock(&watches_lock);
 	}
 
-	up_read(&xs_state.suspend_mutex);
+	splx(s);
 
 	return err;
 }
-EXPORT_SYMBOL(register_xenbus_watch);
 
-void unregister_xenbus_watch(struct xenbus_watch *watch)
+void
+unregister_xenbus_watch(struct xenbus_watch *watch)
 {
-	struct xs_stored_msg *msg, *tmp;
+	struct xs_stored_msg *msg;
 	char token[sizeof(watch) * 2 + 1];
-	int err;
+	int err, s;
 
 	sprintf(token, "%lX", (long)watch);
 
-	down_read(&xs_state.suspend_mutex);
+	s = spltty();
 
-	spin_lock(&watches_lock);
-	BUG_ON(!find_watch(token));
-	list_del(&watch->list);
-	spin_unlock(&watches_lock);
+	simple_lock(&watches_lock);
+	KASSERT(find_watch(token));
+	SLIST_REMOVE(&watches, watch, xenbus_watch, watch_next);
+	simple_unlock(&watches_lock);
 
 	err = xs_unwatch(watch->node, token);
 	if (err)
-		printk(KERN_WARNING
+		printf(
 		       "XENBUS Failed to release watch %s: %i\n",
 		       watch->node, err);
 
-	up_read(&xs_state.suspend_mutex);
+	splx(s);
 
 	/* Cancel pending watch events. */
-	spin_lock(&watch_events_lock);
-	list_for_each_entry_safe(msg, tmp, &watch_events, list) {
+	simple_lock(&watch_events_lock);
+	while (!SIMPLEQ_EMPTY(&watch_events)) {
+		msg = SIMPLEQ_FIRST(&watch_events);
 		if (msg->u.watch.handle != watch)
 			continue;
-		list_del(&msg->list);
-		kfree(msg->u.watch.vec);
-		kfree(msg);
+		SIMPLEQ_REMOVE_HEAD(&watch_events, msg_next);
+		free(msg->u.watch.vec, M_DEVBUF);
+		free(msg, M_DEVBUF);
 	}
-	spin_unlock(&watch_events_lock);
+	simple_unlock(&watch_events_lock);
 
-	/* Flush any currently-executing callback, unless we are it. :-) */
-	if (current->pid != xenwatch_pid) {
-		down(&xenwatch_mutex);
-		up(&xenwatch_mutex);
-	}
 }
-EXPORT_SYMBOL(unregister_xenbus_watch);
 
-void xs_suspend(void)
+void
+xs_suspend(void)
 {
-	down_write(&xs_state.suspend_mutex);
-	down(&xs_state.request_mutex);
+	xs_state.suspend_spl = spltty();
 }
 
-void xs_resume(void)
+void
+xs_resume(void)
 {
 	struct xenbus_watch *watch;
 	char token[sizeof(watch) * 2 + 1];
-
-	up(&xs_state.request_mutex);
-
 	/* No need for watches_lock: the suspend_mutex is sufficient. */
-	list_for_each_entry(watch, &watches, list) {
+	SLIST_FOREACH(watch, &watches, watch_next) {
 		sprintf(token, "%lX", (long)watch);
 		xs_watch(watch->node, token);
 	}
 
-	up_write(&xs_state.suspend_mutex);
+	splx(xs_state.suspend_spl);
 }
 
-static int xenwatch_thread(void *unused)
+static void
+xenwatch_thread(void *unused)
 {
-	struct list_head *ent;
 	struct xs_stored_msg *msg;
+	int s;
 
 	for (;;) {
-		wait_event_interruptible(watch_events_waitq,
-					 !list_empty(&watch_events));
+		tsleep(&watch_events, PRIBIO, "evtsq", 0);
+		s = spltty(); /* to block IPL_CTRL */
+		while (!SIMPLEQ_EMPTY(&watch_events)) {
+			msg = SIMPLEQ_FIRST(&watch_events);
 
-		down(&xenwatch_mutex);
+			simple_lock(&watch_events_lock);
+			SIMPLEQ_REMOVE_HEAD(&watch_events, msg_next);
+			simple_unlock(&watch_events_lock);
 
-		spin_lock(&watch_events_lock);
-		ent = watch_events.next;
-		if (ent != &watch_events)
-			list_del(ent);
-		spin_unlock(&watch_events_lock);
-
-		if (ent != &watch_events) {
-			msg = list_entry(ent, struct xs_stored_msg, list);
 			msg->u.watch.handle->callback(
 				msg->u.watch.handle,
 				(const char **)msg->u.watch.vec,
 				msg->u.watch.vec_size);
-			kfree(msg->u.watch.vec);
-			kfree(msg);
+			free(msg->u.watch.vec, M_DEVBUF);
+			free(msg, M_DEVBUF);
 		}
 
-		up(&xenwatch_mutex);
+		splx(s);
 	}
 }
 
-static int process_msg(void)
+static int
+process_msg(void)
 {
 	struct xs_stored_msg *msg;
 	char *body;
-	int err;
+	int err, s;
 
-	msg = kmalloc(sizeof(*msg), GFP_KERNEL);
+	msg = malloc(sizeof(*msg), M_DEVBUF, M_NOWAIT);
 	if (msg == NULL)
-		return -ENOMEM;
+		return ENOMEM;
 
 	err = xb_read(&msg->hdr, sizeof(msg->hdr));
+	DPRINTK("xb_read hdr %d", err);
 	if (err) {
-		kfree(msg);
+		free(msg, M_DEVBUF);
 		return err;
 	}
 
-	body = kmalloc(msg->hdr.len + 1, GFP_KERNEL);
+	body = malloc(msg->hdr.len + 1, M_DEVBUF, M_NOWAIT);
 	if (body == NULL) {
-		kfree(msg);
-		return -ENOMEM;
+		free(msg, M_DEVBUF);
+		return ENOMEM;
 	}
 
 	err = xb_read(body, msg->hdr.len);
+	DPRINTK("xb_read body %d", err);
 	if (err) {
-		kfree(body);
-		kfree(msg);
+		free(body, M_DEVBUF);
+		free(msg, M_DEVBUF);
 		return err;
 	}
 	body[msg->hdr.len] = '\0';
 
 	if (msg->hdr.type == XS_WATCH_EVENT) {
+		DPRINTK("process_msg: XS_WATCH_EVENT");
 		msg->u.watch.vec = split(body, msg->hdr.len,
 					 &msg->u.watch.vec_size);
-		if (IS_ERR(msg->u.watch.vec)) {
-			kfree(msg);
-			return PTR_ERR(msg->u.watch.vec);
+		if (msg->u.watch.vec == NULL) {
+			free(msg, M_DEVBUF);
+			return ENOMEM;
 		}
 
-		spin_lock(&watches_lock);
+		simple_lock(&watches_lock);
+		s = spltty();
 		msg->u.watch.handle = find_watch(
 			msg->u.watch.vec[XS_WATCH_TOKEN]);
 		if (msg->u.watch.handle != NULL) {
-			spin_lock(&watch_events_lock);
-			list_add_tail(&msg->list, &watch_events);
-			wake_up(&watch_events_waitq);
-			spin_unlock(&watch_events_lock);
+			simple_lock(&watch_events_lock);
+			SIMPLEQ_INSERT_TAIL(&watch_events, msg, msg_next);
+			wakeup(&watch_events);
+			simple_unlock(&watch_events_lock);
 		} else {
-			kfree(msg->u.watch.vec);
-			kfree(msg);
+			free(msg->u.watch.vec, M_DEVBUF);
+			free(msg, M_DEVBUF);
 		}
-		spin_unlock(&watches_lock);
+		splx(s);
+		simple_unlock(&watches_lock);
 	} else {
+		DPRINTK("process_msg: type %d", msg->hdr.type);
 		msg->u.reply.body = body;
-		spin_lock(&xs_state.reply_lock);
-		list_add_tail(&msg->list, &xs_state.reply_list);
-		spin_unlock(&xs_state.reply_lock);
-		wake_up(&xs_state.reply_waitq);
+		simple_lock(&xs_state.reply_lock);
+		s = spltty();
+		SIMPLEQ_INSERT_TAIL(&xs_state.reply_list, msg, msg_next);
+		splx(s);
+		simple_unlock(&xs_state.reply_lock);
+		wakeup(&xs_state.reply_list);
 	}
 
 	return 0;
 }
 
-static int xenbus_thread(void *unused)
+static void
+xenbus_thread(void *unused)
 {
 	int err;
 
 	for (;;) {
 		err = process_msg();
 		if (err)
-			printk(KERN_WARNING "XENBUS error %d while reading "
-			       "message\n", err);
+			printk("XENBUS error %d while reading message\n", err);
 	}
 }
 
-int xs_init(void)
+static void
+xenwatch_create_thread(void *unused)
 {
+	struct proc *p;
 	int err;
-	struct task_struct *task;
 
-	INIT_LIST_HEAD(&xs_state.reply_list);
-	spin_lock_init(&xs_state.reply_lock);
-	init_waitqueue_head(&xs_state.reply_waitq);
-
-	init_MUTEX(&xs_state.request_mutex);
-	init_rwsem(&xs_state.suspend_mutex);
-
-	/* Initialize the shared memory rings to talk to xenstored */
-	err = xb_init_comms();
+	err = kthread_create1(xenwatch_thread, unused, &p, "xenwatch");
 	if (err)
-		return err;
+		printf("kthread_create1(xenwatch): %d\n", err);
+}
 
-	task = kthread_run(xenwatch_thread, NULL, "xenwatch");
-	if (IS_ERR(task))
-		return PTR_ERR(task);
-	xenwatch_pid = task->pid;
+static void
+xenbus_create_thread(void *unused)
+{
+	struct proc *p;
+	int err;
 
-	task = kthread_run(xenbus_thread, NULL, "xenbus");
-	if (IS_ERR(task))
-		return PTR_ERR(task);
+	err = kthread_create1(xenbus_thread, unused, &p, "xenbus");
+	if (err)
+		printf("kthread_create1(xenbus): %d\n", err);
+}
+
+
+int
+xs_init(void)
+{
+	SIMPLEQ_INIT(&xs_state.reply_list);
+	simple_lock_init(&xs_state.reply_lock);
+
+	kthread_create(xenwatch_create_thread, NULL);
+
+	kthread_create(xenbus_create_thread, NULL);
 
 	return 0;
 }
