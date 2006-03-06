@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.60 2006/02/13 14:12:04 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.61 2006/03/06 21:11:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.60 2006/02/13 14:12:04 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.61 2006/03/06 21:11:03 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -202,6 +202,7 @@ _move_history(int op)
  * read one key from user defined input function
  */
 static int
+/*ARGSUSED*/
 _getc_function(EditLine *el, char *c)
 {
 	int i;
@@ -1635,7 +1636,7 @@ rl_callback_read_char()
 
 	if (buf == NULL || count-- <= 0)
 		return;
-	if (count == 0 && buf[0] == CTRL('d'))
+	if (count == 0 && buf[0] == e->el_tty.t_c[TS_IO][C_EOF])
 		done = 1;
 	if (buf[count] == '\n' || buf[count] == '\r')
 		done = 2;
@@ -1675,7 +1676,7 @@ void
 rl_redisplay(void)
 {
 	char a[2];
-	a[0] = CTRL('r');
+	a[0] = e->el_tty.t_c[TS_IO][C_REPRINT];
 	a[1] = '\0';
 	el_push(e, a);
 }
