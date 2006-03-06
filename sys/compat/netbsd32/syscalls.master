@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42 2006/03/05 01:28:20 cube Exp $
+	$NetBSD: syscalls.master,v 1.43 2006/03/06 14:40:55 cube Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -495,7 +495,7 @@
 			    netbsd32_statp_t buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
 301	STD		{ int netbsd32___semctl14(int semid, int semnum, int cmd, \
-			    union netbsd32_semun3* arg); }
+			    ... netbsd32_semunp_t arg); }
 #else
 301	EXCL		__semctl14
 #endif
