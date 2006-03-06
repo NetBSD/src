@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.12 2006/03/06 20:10:51 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.13 2006/03/06 20:12:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.12 2006/03/06 20:10:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.13 2006/03/06 20:12:09 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -600,7 +600,7 @@ xenconscn_getc(dev_t dev)
 	if (xen_start_info.flags & SIF_INITDOMAIN) {
 		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
 			;
-		//cn_check_magic(dev, c, xencons_cnm_state);
+		cn_check_magic(dev, c, xencons_cnm_state);
 		return c;
 	}
 
