@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.143 2006/02/04 18:37:58 wiz Exp $
+.\"	$NetBSD: sysctl.8,v 1.144 2006/03/06 00:51:48 christos Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd February 2, 2006
+.Dd March 5, 2006
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -289,6 +289,7 @@ privilege can change the value.
 .It kern.consdev	integer	no
 .It kern.cp_id	struct	no
 .It kern.cp_time	struct	no
+.It kern.cryptodevallowsoft	int	yes
 .It kern.defcorename	string	yes
 .It kern.domainname	string	yes
 .It kern.dump_on_panic	integer	yes
@@ -365,6 +366,8 @@ privilege can change the value.
 .It kern.tkstat.nout	quad	no
 .It kern.tkstat.rawcc	quad	no
 .It kern.urandom	integer	no
+.It kern.userasymcrypto	int	yes
+.It kern.usercrypto	int	yes
 .It kern.veriexec.verbose	integer	yes
 .It kern.veriexec.strict	integer	raise only
 .It kern.veriexec.algorithms	string	no
