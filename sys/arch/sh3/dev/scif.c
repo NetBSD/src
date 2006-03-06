@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.44 2006/02/20 16:50:36 thorpej Exp $ */
+/*	$NetBSD: scif.c,v 1.45 2006/03/06 15:01:45 he Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.44 2006/02/20 16:50:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.45 2006/03/06 15:01:45 he Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -221,11 +221,6 @@ void	scifdiag(void *);
 
 #define	SCIFUNIT(x)	(minor(x) & SCIFUNIT_MASK)
 #define	SCIFDIALOUT(x)	(minor(x) & SCIFDIALOUT_MASK)
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 /* Hardware flag masks */
 #define	SCIF_HW_NOIEN	0x01
