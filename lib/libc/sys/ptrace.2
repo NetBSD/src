@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.26 2005/01/09 17:41:19 christos Exp $
+.\"	$NetBSD: ptrace.2,v 1.27 2006/03/06 15:47:42 christos Exp $
 .\"
 .\" This file is in the public domain.
-.Dd January 9, 2005
+.Dd March 6, 2006
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -241,6 +241,56 @@ will return
 .Li \-1
 and set
 .Va errno .
+.It PT_DUMPCORE
+Makes the process specified in the
+.Fa pid
+pid generate a core dump.
+The 
+.Fa addr
+argument should contain the name of the core file to be generated
+and the
+.Fa data
+argument should contain the length of the core filename.
+This
+.Nm 
+call currently does not stop the child process so it can generate
+inconsistent data.
+.It PT_LWPINFO
+Returns information about the specific thread from the process specified
+in the
+.Fa pid
+argument.
+The
+.Fa addr
+argument should contain a
+.Dq Li "struct ptrace_lwpinfo"
+defined as:
+.Bd -literal -offset indent
+struct ptrace_io_desc {
+	lwpid_t pl_lwpid;
+	int pl_event;
+};
+.Ed
+.Pp
+Where
+.Fa pl_lwpid
+contains the thread to get info for.
+Upon return
+.Fa pl_event
+contains the event that stopped the thread.
+Possible
+values are:
+.Bl -tag -width 30n
+.It Dv PL_EVENT_NONE
+.It Dv PL_EVENT_SIGNAL
+.El
+.Pp
+The
+.Fa data
+argument should contain
+.Dq Li "sizeof(struct ptrace_lwpinfo)" .
+.It PT_SYSCALL
+Stops a process before and after executing each system call.
 .El
 .Pp
 Additionally, the following requests exist but are
