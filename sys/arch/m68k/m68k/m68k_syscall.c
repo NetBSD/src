@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.20 2006/03/05 22:34:34 rjs Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.21 2006/03/06 08:05:06 he Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.20 2006/03/05 22:34:34 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.21 2006/03/06 08:05:06 he Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -183,9 +183,11 @@ syscall(register_t code, struct frame frame)
 void
 syscall_intern(struct proc *p)
 {
+#if defined(KTRACE) || defined(SYSTRACE)
 	if (proc_is_traced_p(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
+#endif
 		p->p_md.md_syscall = syscall_plain;
 }
 
