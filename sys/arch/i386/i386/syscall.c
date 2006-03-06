@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.37 2006/03/06 05:40:28 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.38 2006/03/06 10:08:58 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.37 2006/03/06 05:40:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.38 2006/03/06 10:08:58 tron Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -290,7 +290,6 @@ out:
 
 	userret(l);
 }
-#endif
 
 #ifdef VM86
 void
@@ -314,6 +313,7 @@ syscall_vm86(frame)
 	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }
+#endif
 
 void
 child_return(arg)
