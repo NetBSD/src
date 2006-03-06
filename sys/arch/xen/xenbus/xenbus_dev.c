@@ -1,3 +1,4 @@
+/* $NetBSD: xenbus_dev.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -29,69 +30,128 @@
  * IN THE SOFTWARE.
  */
 
-#include <linux/config.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/uio.h>
-#include <linux/notifier.h>
-#include <linux/wait.h>
-#include <linux/fs.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $");
 
+#include "opt_xen.h"
+
+#include <sys/types.h>
+#include <sys/null.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/dirent.h>
+#include <sys/stat.h>
+#include <sys/tree.h> 
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h>
+#include <miscfs/kernfs/kernfs.h>
+#include <machine/kernfs_machdep.h>
+
+#include <machine/hypervisor.h>
+#include <machine/xenbus.h>
 #include "xenbus_comms.h"
 
-#include <asm/uaccess.h>
-#include <asm/hypervisor.h>
-#include <asm-xen/xenbus.h>
-#include <asm-xen/xen_proc.h>
-#include <asm/hypervisor.h>
+static int xenbus_dev_read(void *);
+static int xenbus_dev_write(void *);
+static int xenbus_dev_open(void *);
+static int xenbus_dev_close(void *);
 
 struct xenbus_dev_transaction {
-	struct list_head list;
+	SLIST_ENTRY(xenbus_dev_transaction) trans_next;
 	struct xenbus_transaction *handle;
 };
 
+#define DIR_MODE	 (S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
+#define PRIVCMD_MODE    (S_IRUSR | S_IWUSR)
+static const struct kernfs_fileop xenbus_fileops[] = {
+  { .kf_fileop = KERNFS_FILEOP_OPEN, .kf_vop = xenbus_dev_open },
+  { .kf_fileop = KERNFS_FILEOP_CLOSE, .kf_vop = xenbus_dev_close },
+  { .kf_fileop = KERNFS_FILEOP_READ, .kf_vop = xenbus_dev_read },
+  { .kf_fileop = KERNFS_FILEOP_WRITE, .kf_vop = xenbus_dev_write },
+};
+
+
+void
+xenbus_kernfs_init()
+{
+	kernfs_entry_t *dkt;
+	kfstype kfst;
+
+	kfst = KERNFS_ALLOCTYPE(xenbus_fileops);
+	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+	KERNFS_INITENTRY(dkt, DT_REG, "xenbus", NULL, kfst, VREG,
+	    PRIVCMD_MODE);
+	kernfs_addentry(kernxen_pkt, dkt);
+}
+
 struct xenbus_dev_data {
+#define BUFFER_SIZE (PAGE_SIZE)
+#define MASK_READ_IDX(idx) ((idx)&(BUFFER_SIZE-1))
 	/* In-progress transaction. */
-	struct list_head transactions;
+	SLIST_HEAD(, xenbus_dev_transaction) transactions;
 
 	/* Partial request. */
 	unsigned int len;
 	union {
 		struct xsd_sockmsg msg;
-		char buffer[PAGE_SIZE];
+		char buffer[BUFFER_SIZE];
 	} u;
 
 	/* Response queue. */
-#define MASK_READ_IDX(idx) ((idx)&(PAGE_SIZE-1))
-	char read_buffer[PAGE_SIZE];
+	char read_buffer[BUFFER_SIZE];
 	unsigned int read_cons, read_prod;
-	wait_queue_head_t read_waitq;
 };
 
-static struct proc_dir_entry *xenbus_dev_intf;
-
-static ssize_t xenbus_dev_read(struct file *filp,
-			       char __user *ubuf,
-			       size_t len, loff_t *ppos)
+static int
+xenbus_dev_read(void *v)
 {
-	struct xenbus_dev_data *u = filp->private_data;
-	int i;
+	struct vop_read_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int  a_ioflag;
+		struct ucred *a_cred;
+	} */ *ap = v;
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
+	struct uio *uio = ap->a_uio;
+	struct xenbus_dev_data *u = kfs->kfs_v;
+	int err;
+	off_t offset;
+	int s = spltty();
 
-	if (wait_event_interruptible(u->read_waitq,
-				     u->read_prod != u->read_cons))
-		return -EINTR;
-
-	for (i = 0; i < len; i++) {
-		if (u->read_cons == u->read_prod)
-			break;
-		put_user(u->read_buffer[MASK_READ_IDX(u->read_cons)], ubuf+i);
-		u->read_cons++;
+	while (u->read_prod == u->read_cons) {
+		err = tsleep(u, PRIBIO | PCATCH, "xbrd", 0);
+		if (err)
+			goto end;
 	}
+	if (uio->uio_offset != 0) {
+		err = EINVAL;
+		goto end;
+	}
+	offset = 0;
 
-	return i;
+	if (u->read_cons > u->read_prod) {
+		err = uiomove(&u->read_buffer[MASK_READ_IDX(u->read_cons)],
+		    0U - u->read_cons, uio);
+		if (err)
+			goto end;
+		u->read_cons += uio->uio_offset;
+		offset = uio->uio_offset;
+	}
+	err = uiomove(&u->read_buffer[MASK_READ_IDX(u->read_cons)],
+	    u->read_prod - u->read_cons, uio);
+	if (err == 0)
+		u->read_cons += uio->uio_offset - offset;
+
+end:
+	splx(s);
+	return err;
 }
 
-static void queue_reply(struct xenbus_dev_data *u,
+static void
+queue_reply(struct xenbus_dev_data *u,
 			char *data, unsigned int len)
 {
 	int i;
@@ -99,29 +159,43 @@ static void queue_reply(struct xenbus_dev_data *u,
 	for (i = 0; i < len; i++, u->read_prod++)
 		u->read_buffer[MASK_READ_IDX(u->read_prod)] = data[i];
 
-	BUG_ON((u->read_prod - u->read_cons) > sizeof(u->read_buffer));
+	KASSERT((u->read_prod - u->read_cons) <= sizeof(u->read_buffer));
 
-	wake_up(&u->read_waitq);
+	wakeup(&u);
 }
 
-static ssize_t xenbus_dev_write(struct file *filp,
-				const char __user *ubuf,
-				size_t len, loff_t *ppos)
+static int
+xenbus_dev_write(void *v)
 {
-	struct xenbus_dev_data *u = filp->private_data;
+	struct vop_write_args /* {    
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int  a_ioflag;
+		struct ucred *a_cred;
+	} */ *ap = v;
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
+	struct uio *uio = ap->a_uio;
+
+	struct xenbus_dev_data *u = kfs->kfs_v;
 	struct xenbus_dev_transaction *trans;
 	void *reply;
-	int err = 0;
+	int err;
+	size_t size;
 
-	if ((len + u->len) > sizeof(u->u.buffer))
-		return -EINVAL;
+	if (uio->uio_offset < 0)
+		return EINVAL;
+	size = uio->uio_resid;
 
-	if (copy_from_user(u->u.buffer + u->len, ubuf, len) != 0)
-		return -EFAULT;
+	if ((size + u->len) > sizeof(u->u.buffer))
+		return EINVAL;
 
-	u->len += len;
+	err = uiomove(u->u.buffer + u->len, sizeof(u->u.buffer) -  u->len, uio);
+	if (err)
+		return err;
+
+	u->len += size;
 	if (u->len < (sizeof(u->u.msg) + u->u.msg.len))
-		return len;
+		return 0;
 
 	switch (u->u.msg.type) {
 	case XS_TRANSACTION_START:
@@ -135,100 +209,99 @@ static ssize_t xenbus_dev_write(struct file *filp,
 	case XS_MKDIR:
 	case XS_RM:
 	case XS_SET_PERMS:
-		reply = xenbus_dev_request_and_reply(&u->u.msg);
-		if (IS_ERR(reply)) {
-			err = PTR_ERR(reply);
-		} else {
+		err = xenbus_dev_request_and_reply(&u->u.msg, &reply);
+		if (err == 0) {
 			if (u->u.msg.type == XS_TRANSACTION_START) {
-				trans = kmalloc(sizeof(*trans), GFP_KERNEL);
+				trans = malloc(sizeof(*trans), M_DEVBUF,
+				    M_WAITOK);
 				trans->handle = (struct xenbus_transaction *)
-					simple_strtoul(reply, NULL, 0);
-				list_add(&trans->list, &u->transactions);
+					strtoul(reply, NULL, 0);
+				SLIST_INSERT_HEAD(&u->transactions,
+				    trans, trans_next);
 			} else if (u->u.msg.type == XS_TRANSACTION_END) {
-				list_for_each_entry(trans, &u->transactions,
-						    list)
+				SLIST_FOREACH(trans, &u->transactions,
+						    trans_next) {
 					if ((unsigned long)trans->handle ==
 					    (unsigned long)u->u.msg.tx_id)
 						break;
-				BUG_ON(&trans->list == &u->transactions);
-				list_del(&trans->list);
-				kfree(trans);
+				}
+				KASSERT(trans != NULL);
+				SLIST_REMOVE(&u->transactions, trans, 
+				    xenbus_dev_transaction, trans_next);
+				free(trans, M_DEVBUF);
 			}
 			queue_reply(u, (char *)&u->u.msg, sizeof(u->u.msg));
 			queue_reply(u, (char *)reply, u->u.msg.len);
-			kfree(reply);
+			free(reply, M_DEVBUF);
 		}
 		break;
 
 	default:
-		err = -EINVAL;
+		err = EINVAL;
 		break;
 	}
 
 	if (err == 0) {
 		u->len = 0;
-		err = len;
 	}
 
 	return err;
 }
 
-static int xenbus_dev_open(struct inode *inode, struct file *filp)
+static int
+xenbus_dev_open(void *v)
 {
+	struct vop_open_args /* {
+		struct vnode *a_vp;
+		int a_mode;
+		struct ucred *a_cred;
+		struct lwp *a_l;
+	} */ *ap = v;
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);    
+
 	struct xenbus_dev_data *u;
 
-	if (xen_start_info->store_evtchn == 0)
-		return -ENOENT;
+	if (xen_start_info.store_evtchn == 0)
+		return ENOENT;
 
-	nonseekable_open(inode, filp);
-
-	u = kmalloc(sizeof(*u), GFP_KERNEL);
+	u = malloc(sizeof(*u), M_DEVBUF, M_WAITOK);
 	if (u == NULL)
-		return -ENOMEM;
+		return ENOMEM;
 
 	memset(u, 0, sizeof(*u));
-	INIT_LIST_HEAD(&u->transactions);
-	init_waitqueue_head(&u->read_waitq);
+	SLIST_INIT(&u->transactions);
 
-	filp->private_data = u;
+	kfs->kfs_v = u;
 
 	return 0;
 }
 
-static int xenbus_dev_release(struct inode *inode, struct file *filp)
+static int
+xenbus_dev_close(void *v)
 {
-	struct xenbus_dev_data *u = filp->private_data;
-	struct xenbus_dev_transaction *trans, *tmp;
+	struct vop_close_args /* {
+		struct vnode *a_vp;
+		int a_fflag;
+		struct ucred *a_cred;
+		struct lwp *a_l;
+	} */ *ap = v;
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);    
 
-	list_for_each_entry_safe(trans, tmp, &u->transactions, list) {
+	struct xenbus_dev_data *u = kfs->kfs_v;
+	struct xenbus_dev_transaction *trans;
+
+	while (!SLIST_EMPTY(&u->transactions)) {
+		trans = SLIST_FIRST(&u->transactions);
 		xenbus_transaction_end(trans->handle, 1);
-		list_del(&trans->list);
-		kfree(trans);
+		SLIST_REMOVE_HEAD(&u->transactions, trans_next);
+		free(trans, M_DEVBUF);
 	}
 
-	kfree(u);
+	free(u, M_DEVBUF);
+	kfs->kfs_v = NULL;
 
 	return 0;
 }
-
-static struct file_operations xenbus_dev_file_ops = {
-	.read = xenbus_dev_read,
-	.write = xenbus_dev_write,
-	.open = xenbus_dev_open,
-	.release = xenbus_dev_release,
-};
-
-static int __init
-xenbus_dev_init(void)
-{
-	xenbus_dev_intf = create_xen_proc_entry("xenbus", 0400);
-	if (xenbus_dev_intf)
-		xenbus_dev_intf->proc_fops = &xenbus_dev_file_ops;
-
-	return 0;
-}
-
-__initcall(xenbus_dev_init);
 
 /*
  * Local variables:
