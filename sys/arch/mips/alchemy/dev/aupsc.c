@@ -1,4 +1,4 @@
-/* $NetBSD: aupsc.c,v 1.3 2006/03/06 21:29:23 simonb Exp $ */
+/* $NetBSD: aupsc.c,v 1.4 2006/03/06 23:06:17 shige Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.3 2006/03/06 21:29:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.4 2006/03/06 23:06:17 shige Exp $");
 
 #include "locators.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.3 2006/03/06 21:29:23 simonb Exp $");
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/dev/aupscreg.h>
 #include <mips/alchemy/dev/aupscvar.h>
-#include <mips/alchemy/dev/smbusreg.h>
+#include <mips/alchemy/dev/ausmbus_pscreg.h>
 
 struct aupsc_softc {
 	struct device		sc_dev;

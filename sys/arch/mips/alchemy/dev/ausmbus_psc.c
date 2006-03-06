@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.2 2006/03/06 17:22:38 shige Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.3 2006/03/06 23:06:17 shige Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.2 2006/03/06 17:22:38 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.3 2006/03/06 23:06:17 shige Exp $");
 
 #include "locators.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.2 2006/03/06 17:22:38 shige Exp $"
 
 #include <mips/alchemy/dev/aupscreg.h>
 #include <mips/alchemy/dev/aupscvar.h>
-#include <mips/alchemy/dev/smbusreg.h>
+#include <mips/alchemy/dev/ausmbus_pscreg.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
@@ -444,7 +444,6 @@ ausmbus_read_byte(void *arg, uint8_t *vp, int flags)
 
 	v = ausmbus_reg_read(sc, AUPSC_SMBTXRX);
 	*vp = v & SMBUS_TXRX_ADDRDATA;
-	printf("read byte: 0x%02x\n", v);
 
 	return 0;
 }
