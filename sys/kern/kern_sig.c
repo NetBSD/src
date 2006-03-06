@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.216 2006/03/05 07:21:38 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.217 2006/03/06 21:53:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.216 2006/03/05 07:21:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.217 2006/03/06 21:53:29 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2071,8 +2071,13 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 	    io->io_offset, segflg,
 	    IO_NODELOCKED|IO_UNIT, io->io_cred, NULL,
 	    segflg == UIO_USERSPACE ? io->io_lwp : NULL);
-	if (error)
+	if (error) {
+		printf("pid %d (%s): %s write of %zu@%p at %lld failed: %d\n",
+		    io->io_lwp->l_proc->p_pid, io->io_lwp->l_proc->p_comm,
+		    segflg == UIO_USERSPACE ? "user" : "system",
+		    len, data, (long long) io->io_offset, error);
 		return (error);
+	}
 
 	io->io_offset += len;
 	return (0);
