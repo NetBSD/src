@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.98 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: in6.c,v 1.99 2006/03/06 20:33:52 rpaulo Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.98 2006/03/05 23:47:08 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.99 2006/03/06 20:33:52 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -777,7 +777,7 @@ in6_update_ifa(ifp, ifra, ia, flags)
 	struct in6_multi_mship *imm;
 	struct in6_multi *in6m_sol;
 	struct rtentry *rt;
-	int delay;
+	int dad_delay;
 
 	in6m_sol = NULL;
 
@@ -1062,7 +1062,7 @@ in6_update_ifa(ifp, ifra, ia, flags)
 			    "in6_setscope failed\n");
 			goto cleanup;
 		}
-		delay = 0;
+		dad_delay = 0;
 		if ((flags & IN6_IFAUPDATE_DADDELAY)) {
 			/*
 			 * We need a random delay for DAD on the address
@@ -1071,13 +1071,13 @@ in6_update_ifa(ifp, ifra, ia, flags)
 			 * avoid report collision.
 			 * [draft-ietf-ipv6-rfc2462bis-02.txt]
 			 */
-			delay = arc4random() %
+			dad_delay = arc4random() %
 			    (MAX_RTR_SOLICITATION_DELAY * hz);
 		}
 
 #define	MLTMASK_LEN  4	/* mltmask's masklen (=32bit=4octet) */
 		/* join solicited multicast addr for new host id */
-		imm = in6_joingroup(ifp, &llsol, &error, delay);
+		imm = in6_joingroup(ifp, &llsol, &error, dad_delay);
 		if (!imm) {
 			nd6log((LOG_ERR,
 			    "in6_update_ifa: addmulti "
@@ -1152,18 +1152,18 @@ in6_update_ifa(ifp, ifra, ia, flags)
 		/*
 		 * join node information group address
 		 */
-		delay = 0;
+		dad_delay = 0;
 		if ((flags & IN6_IFAUPDATE_DADDELAY)) {
 			/*
 			 * The spec doesn't say anything about delay for this
 			 * group, but the same logic should apply.
 			 */
-			delay = arc4random() %
+			dad_delay = arc4random() %
 			    (MAX_RTR_SOLICITATION_DELAY * hz);
 		}
 		if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) == 0) {
 			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error,
-			    delay); /* XXX jinmei */
+			    dad_delay); /* XXX jinmei */
 			if (!imm) {
 				nd6log((LOG_WARNING, "in6_update_ifa: "
 				    "addmulti failed for %s on %s (errno=%d)\n",
@@ -1239,7 +1239,7 @@ in6_update_ifa(ifp, ifra, ia, flags)
 	{
 		int mindelay, maxdelay;
 
-		delay = 0;
+		dad_delay = 0;
 		if ((flags & IN6_IFAUPDATE_DADDELAY)) {
 			/*
 			 * We need to impose a delay before sending an NS
@@ -1256,14 +1256,14 @@ in6_update_ifa(ifp, ifra, ia, flags)
 			}
 			maxdelay = MAX_RTR_SOLICITATION_DELAY * hz;
 			if (maxdelay - mindelay == 0)
-				delay = 0;
+				dad_delay = 0;
 			else {
-				delay =
+				dad_delay =
 				    (arc4random() % (maxdelay - mindelay)) +
 				    mindelay;
 			}
 		}
-		nd6_dad_start((struct ifaddr *)ia, delay);
+		nd6_dad_start((struct ifaddr *)ia, dad_delay);
 	}
 
 	return (error);
