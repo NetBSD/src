@@ -250,6 +250,10 @@ void	set_debug(const char *);
 #define ISCSI_GETPID getpid()
 #endif
 
+#ifndef HAVE_SOCKLEN_T
+typedef int	socklen_t;
+#endif
+
 /*
  * Sleeping
  */

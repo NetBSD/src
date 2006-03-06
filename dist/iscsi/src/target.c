@@ -1526,14 +1526,14 @@ target_shutdown(globals_t *gp)
 int 
 target_listen(globals_t *gp)
 {
-	target_session_t *sess;
-	int             one = 1;
-	int             localAddrLen;
-	struct sockaddr_in localAddrStorage;
-	int             remoteAddrLen;
-	struct sockaddr_in remoteAddrStorage;
-	char            local[1024];
-	char            remote[1024];
+	struct sockaddr_in	remoteAddrStorage;
+	struct sockaddr_in	localAddrStorage;
+	target_session_t	*sess;
+	socklen_t		remoteAddrLen;
+	socklen_t		localAddrLen;
+	char			remote[1024];
+	char			local[1024];
+	int			one = 1;
 
 	ISCSI_THREAD_START("listen_thread");
 	gp->listener_pid = ISCSI_GETPID;

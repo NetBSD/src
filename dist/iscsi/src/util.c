@@ -474,8 +474,7 @@ int
 iscsi_sock_accept(iscsi_socket_t sock, iscsi_socket_t * newsock)
 {
 	struct sockaddr_in remoteAddr;
-	int             remoteAddrLen;
-	/* XXX - socklen_t */
+	socklen_t	remoteAddrLen;
 
 	remoteAddrLen = sizeof(remoteAddr);
 	(void) memset(&remoteAddr, 0, sizeof(remoteAddr));
