@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.1 2006/03/06 17:16:45 shige Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.2 2006/03/06 17:22:38 shige Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.1 2006/03/06 17:16:45 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.2 2006/03/06 17:22:38 shige Exp $");
 
 #include "locators.h"
 
@@ -129,27 +129,6 @@ ausmbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_exec = ausmbus_exec;
 	sc->sc_smbus_timeout = 10;
 	
-	{
-	uint8_t cmd[1];
-	uint8_t vbuf[1];
-
-#if 1
-	ausmbus_acquire_bus(sc, 0);
-	cmd[0] = 0x50;
-	vbuf[0] = 0x86;
-	ausmbus_exec(sc, I2C_OP_WRITE_WITH_STOP, 0x33, cmd,1, vbuf,1, 0);
-	ausmbus_release_bus(sc, 0);
-#endif
-
-	ausmbus_acquire_bus(sc, 0);
-	cmd[0] = 0x50;
-	vbuf[0] = 0x0;
-	ausmbus_exec(sc, I2C_OP_READ_WITH_STOP, 0x32, cmd,1, &vbuf[0],1, 0);
-	printf("iic_exec: vbuf[0]=0x%x\n", vbuf[0]);
-	ausmbus_release_bus(sc, 0);
-
-	}
-
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found(&sc->sc_dev, &iba, iicbus_print);
