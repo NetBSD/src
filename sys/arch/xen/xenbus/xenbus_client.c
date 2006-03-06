@@ -1,3 +1,4 @@
+/* $NetBSD: xenbus_client.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -27,6 +28,8 @@
  * IN THE SOFTWARE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -35,13 +38,21 @@
 #define DPRINTK(fmt, args...) ((void)0)
 #endif
 
+#include <sys/types.h>
+#include <sys/null.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 
-#include <asm-xen/evtchn.h>
-#include <asm-xen/gnttab.h>
-#include <asm-xen/xenbus.h>
+#include <machine/stdarg.h>
+
+#include <machine/evtchn.h>
+#include <machine/xenbus.h>
+#include <machine/granttables.h>
 
 
-int xenbus_watch_path(struct xenbus_device *dev, const char *path,
+int
+xenbus_watch_path(struct xenbus_device *dev, char *path,
 		      struct xenbus_watch *watch, 
 		      void (*callback)(struct xenbus_watch *,
 				       const char **, unsigned int))
@@ -61,20 +72,20 @@ int xenbus_watch_path(struct xenbus_device *dev, const char *path,
 
 	return err;
 }
-EXPORT_SYMBOL(xenbus_watch_path);
 
-
-int xenbus_watch_path2(struct xenbus_device *dev, const char *path,
+int
+xenbus_watch_path2(struct xenbus_device *dev, const char *path,
 		       const char *path2, struct xenbus_watch *watch, 
 		       void (*callback)(struct xenbus_watch *,
 					const char **, unsigned int))
 {
 	int err;
 	char *state =
-		kmalloc(strlen(path) + 1 + strlen(path2) + 1, GFP_KERNEL);
+		malloc(strlen(path) + 1 + strlen(path2) + 1, M_DEVBUF,
+		    M_NOWAIT);
 	if (!state) {
-		xenbus_dev_fatal(dev, -ENOMEM, "allocating path for watch");
-		return -ENOMEM;
+		xenbus_dev_fatal(dev, ENOMEM, "allocating path for watch");
+		return ENOMEM;
 	}
 	strcpy(state, path);
 	strcat(state, "/");
@@ -83,14 +94,14 @@ int xenbus_watch_path2(struct xenbus_device *dev, const char *path,
 	err = xenbus_watch_path(dev, state, watch, callback);
 
 	if (err) {
-		kfree(state);
+		free(state, M_DEVBUF);
 	}
 	return err;
 }
-EXPORT_SYMBOL(xenbus_watch_path2);
 
 
-int xenbus_switch_state(struct xenbus_device *dev,
+int
+xenbus_switch_state(struct xenbus_device *dev,
 			struct xenbus_transaction *xbt,
 			XenbusState state)
 {
@@ -104,42 +115,43 @@ int xenbus_switch_state(struct xenbus_device *dev,
 
 	int current_state;
 
-	int err = xenbus_scanf(xbt, dev->nodename, "state", "%d",
+	int err = xenbus_scanf(xbt, dev->xbusd_path, "state", "%d",
 			       &current_state);
 	if ((err == 1 && (XenbusState)current_state == state) ||
-	    err == -ENOENT)
+	    err == 0)
 		return 0;
 
-	err = xenbus_printf(xbt, dev->nodename, "state", "%d", state);
+	err = xenbus_printf(xbt, dev->xbusd_path, "state", "%d", state);
 	if (err) {
 		xenbus_dev_fatal(dev, err, "writing new state");
 		return err;
 	}
 	return 0;
 }
-EXPORT_SYMBOL(xenbus_switch_state);
 
 
 /**
  * Return the path to the error node for the given device, or NULL on failure.
  * If the value returned is non-NULL, then it is the caller's to kfree.
  */
-static char *error_path(struct xenbus_device *dev)
+static char *
+error_path(struct xenbus_device *dev)
 {
-	char *path_buffer = kmalloc(strlen("error/") + strlen(dev->nodename) +
-				    1, GFP_KERNEL);
+	char *path_buffer = malloc(strlen("error/") + strlen(dev->xbusd_path) +
+				    1, M_DEVBUF, M_NOWAIT);
 	if (path_buffer == NULL) {
 		return NULL;
 	}
 
 	strcpy(path_buffer, "error/");
-	strcpy(path_buffer + strlen("error/"), dev->nodename);
+	strcpy(path_buffer + strlen("error/"), dev->xbusd_path);
 
 	return path_buffer;
 }
 
 
-void _dev_error(struct xenbus_device *dev, int err, const char *fmt,
+static void
+_dev_error(struct xenbus_device *dev, int err, const char *fmt,
 		va_list ap)
 {
 	int ret;
@@ -147,39 +159,40 @@ void _dev_error(struct xenbus_device *dev, int err, const char *fmt,
 	char *printf_buffer = NULL, *path_buffer = NULL;
 
 #define PRINTF_BUFFER_SIZE 4096
-	printf_buffer = kmalloc(PRINTF_BUFFER_SIZE, GFP_KERNEL);
+	printf_buffer = malloc(PRINTF_BUFFER_SIZE, M_DEVBUF, M_NOWAIT);
 	if (printf_buffer == NULL)
 		goto fail;
 
 	len = sprintf(printf_buffer, "%i ", -err);
 	ret = vsnprintf(printf_buffer+len, PRINTF_BUFFER_SIZE-len, fmt, ap);
 
-	BUG_ON(len + ret > PRINTF_BUFFER_SIZE-1);
-	dev->has_error = 1;
+	KASSERT(len + ret < PRINTF_BUFFER_SIZE);
+	dev->xbusd_has_error = 1;
 
 	path_buffer = error_path(dev);
 
 	if (path_buffer == NULL) {
 		printk("xenbus: failed to write error node for %s (%s)\n",
-		       dev->nodename, printf_buffer);
+		       dev->xbusd_path, printf_buffer);
 		goto fail;
 	}
 
 	if (xenbus_write(NULL, path_buffer, "error", printf_buffer) != 0) {
 		printk("xenbus: failed to write error node for %s (%s)\n",
-		       dev->nodename, printf_buffer);
+		       dev->xbusd_path, printf_buffer);
 		goto fail;
 	}
 
 fail:
 	if (printf_buffer)
-		kfree(printf_buffer);
+		free(printf_buffer, M_DEVBUF);
 	if (path_buffer)
-		kfree(path_buffer);
+		free(path_buffer, M_DEVBUF);
 }
 
 
-void xenbus_dev_error(struct xenbus_device *dev, int err, const char *fmt,
+void
+xenbus_dev_error(struct xenbus_device *dev, int err, const char *fmt,
 		      ...)
 {
 	va_list ap;
@@ -188,10 +201,10 @@ void xenbus_dev_error(struct xenbus_device *dev, int err, const char *fmt,
 	_dev_error(dev, err, fmt, ap);
 	va_end(ap);
 }
-EXPORT_SYMBOL(xenbus_dev_error);
 
 
-void xenbus_dev_fatal(struct xenbus_device *dev, int err, const char *fmt,
+void
+xenbus_dev_fatal(struct xenbus_device *dev, int err, const char *fmt,
 		      ...)
 {
 	va_list ap;
@@ -202,25 +215,27 @@ void xenbus_dev_fatal(struct xenbus_device *dev, int err, const char *fmt,
 	
 	xenbus_switch_state(dev, NULL, XenbusStateClosing);
 }
-EXPORT_SYMBOL(xenbus_dev_fatal);
 
 
-int xenbus_grant_ring(struct xenbus_device *dev, unsigned long ring_mfn)
+int
+xenbus_grant_ring(struct xenbus_device *dev, paddr_t ring_pa,
+    grant_ref_t *entryp)
 {
-	int err = gnttab_grant_foreign_access(dev->otherend_id, ring_mfn, 0);
-	if (err < 0)
+	int err = xengnt_grant_access(dev->xbusd_otherend_id, ring_pa,
+	    0, entryp);
+	if (err != 0)
 		xenbus_dev_fatal(dev, err, "granting access to ring page");
 	return err;
 }
-EXPORT_SYMBOL(xenbus_grant_ring);
 
 
-int xenbus_alloc_evtchn(struct xenbus_device *dev, int *port)
+int
+xenbus_alloc_evtchn(struct xenbus_device *dev, int *port)
 {
 	evtchn_op_t op = {
 		.cmd = EVTCHNOP_alloc_unbound,
 		.u.alloc_unbound.dom = DOMID_SELF,
-		.u.alloc_unbound.remote_dom = dev->otherend_id };
+		.u.alloc_unbound.remote_dom = dev->xbusd_otherend_id };
 
 	int err = HYPERVISOR_event_channel_op(&op);
 	if (err)
@@ -229,10 +244,10 @@ int xenbus_alloc_evtchn(struct xenbus_device *dev, int *port)
 		*port = op.u.alloc_unbound.port;
 	return err;
 }
-EXPORT_SYMBOL(xenbus_alloc_evtchn);
 
 
-XenbusState xenbus_read_driver_state(const char *path)
+XenbusState
+xenbus_read_driver_state(const char *path)
 {
 	XenbusState result;
 
@@ -242,7 +257,6 @@ XenbusState xenbus_read_driver_state(const char *path)
 
 	return result;
 }
-EXPORT_SYMBOL(xenbus_read_driver_state);
 
 
 /*
