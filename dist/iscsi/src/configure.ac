@@ -19,7 +19,14 @@ AC_CHECK_HEADERS(ctype.h errno.h fcntl.h pthread.h pwd.h signal.h stdlib.h syslo
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_SIZE_T
+AC_CHECK_TYPES(socklen_t,,,[
+#include <sys/socket.h>
+#include <arpa/inet.h>
+])
 AC_CHECK_TYPES([long long, unsigned long long])
+AC_DEFINE_UNQUOTED(HAVE_SOCKLEN_T, $ac_cv_type_socklen_t)
+AC_DEFINE_UNQUOTED(HAVE_LONG_LONG, $ac_cv_type_long_long)
+AC_DEFINE_UNQUOTED(HAVE_UNSIGNED_LONG_LONG, $ac_cv_type_unsigned_long_long)
 
 dnl Check for functionality
 AC_CHECK_FUNCS(asprintf asnprintf bswap64 snprintf strlcpy strtoll daemon vasprintf vasnprintf vsnprintf)
