@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.31 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: mld6.c,v 1.32 2006/03/06 20:33:52 rpaulo Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.31 2006/03/05 23:47:08 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.32 2006/03/06 20:33:52 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -626,10 +626,10 @@ mld_allocbuf(mh, len, in6m, type)
  * Add an address to the list of IP6 multicast addresses for a given interface.
  */
 struct	in6_multi *
-in6_addmulti(maddr6, ifp, errorp, delay)
+in6_addmulti(maddr6, ifp, errorp, timer)
 	struct in6_addr *maddr6;
 	struct ifnet *ifp;
-	int *errorp, delay;
+	int *errorp, timer;
 {
 	struct	in6_ifaddr *ia;
 	struct	in6_ifreq ifr;
@@ -705,7 +705,7 @@ in6_addmulti(maddr6, ifp, errorp, delay)
 		}
 
 		callout_init(in6m->in6m_timer_ch);
-		in6m->in6m_timer = delay;
+		in6m->in6m_timer = timer;
 		if (in6m->in6m_timer > 0) {
 			in6m->in6m_state = MLD_REPORTPENDING;
 			mld_starttimer(in6m);
@@ -783,10 +783,10 @@ in6_delmulti(in6m)
 
 
 struct in6_multi_mship *
-in6_joingroup(ifp, addr, errorp, delay)
+in6_joingroup(ifp, addr, errorp, timer)
 	struct ifnet *ifp;
 	struct in6_addr *addr;
-	int *errorp, delay;
+	int *errorp, timer;
 {
 	struct in6_multi_mship *imm;
 
@@ -797,7 +797,7 @@ in6_joingroup(ifp, addr, errorp, delay)
 	}
 
 	memset(imm, 0, sizeof(*imm));
-	imm->i6mm_maddr = in6_addmulti(addr, ifp, errorp, delay);
+	imm->i6mm_maddr = in6_addmulti(addr, ifp, errorp, timer);
 	if (!imm->i6mm_maddr) {
 		/* *errorp is alrady set */
 		free(imm, M_IPMADDR);
