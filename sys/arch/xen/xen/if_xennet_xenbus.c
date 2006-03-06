@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.2 2006/03/06 22:04:18 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.3 2006/03/06 22:10:28 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.2 2006/03/06 22:04:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.3 2006/03/06 22:10:28 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -315,10 +315,10 @@ xennet_xenbus_resume(void *p)
 
 
 	/* setup device: alloc event channel and shared rings */
-	tx_ring =
-	    (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_ZERO);
-	rx_ring =
-	    (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_ZERO);
+	tx_ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	     UVM_KMF_WIRED | UVM_KMF_ZERO);
+	rx_ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO);
 	if (tx_ring == NULL || rx_ring == NULL)
 		panic("xennet_xenbus_resume: can't alloc rings");
 
