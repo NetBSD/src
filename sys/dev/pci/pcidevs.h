@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.770 2006/03/01 22:23:21 dogcow Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.771 2006/03/06 08:24:13 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.769 2006/03/01 22:22:36 dogcow Exp
+ *	NetBSD: pcidevs,v 1.770 2006/03/06 08:23:00 martin Exp
  */
 
 /*
@@ -545,6 +545,7 @@
 #define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
+#define	PCI_VENDOR_MOXA	0x1393		/* Moxa */
 #define	PCI_VENDOR_LEVELONE	0x1394		/* Level One */
 #define	PCI_VENDOR_COLOGNECHIP	0x1397		/* Cologne Chip Designs */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
@@ -2157,6 +2158,12 @@
 #define	PCI_PRODUCT_MOT_RAVEN	0x4801		/* Raven Host Bridge & Multi-Processor Interrupt Controller */
 #define	PCI_PRODUCT_MOT_FALCON	0x4802		/* Falcon ECC Memory Controller Chip Set */
 #define	PCI_PRODUCT_MOT_HAWK	0x4803		/* Hawk System Memory Controller & PCI Host Bridge */
+
+/* Moxa products */
+#define	PCI_PRODUCT_MOXA_CP114	0x1141		/* CP-114 */
+#define	PCI_PRODUCT_MOXA_C104H	0x1040		/* C104H */
+#define	PCI_PRODUCT_MOXA_CP104	0x1041		/* CP-104UL */
+#define	PCI_PRODUCT_MOXA_C168H	0x1680		/* C168H */
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
