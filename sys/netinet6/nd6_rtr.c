@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.56 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.57 2006/03/06 20:33:52 rpaulo Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.56 2006/03/05 23:47:08 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.57 2006/03/06 20:33:52 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1898,9 +1898,9 @@ in6_ifadd(pr, mcast)
 }
 
 int
-in6_tmpifadd(ia0, forcegen, delay)
+in6_tmpifadd(ia0, forcegen, dad_delay)
 	const struct in6_ifaddr *ia0; /* corresponding public address */
-	int forcegen, delay;
+	int forcegen, dad_delay;
 {
 	struct ifnet *ifp = ia0->ia_ifa.ifa_ifp;
 	struct in6_ifaddr *newia, *ia;
@@ -1999,7 +1999,7 @@ in6_tmpifadd(ia0, forcegen, delay)
 
 	/* allocate ifaddr structure, link into chain, etc. */
 	updateflags = 0;
-	if (delay)
+	if (dad_delay)
 		updateflags |= IN6_IFAUPDATE_DADDELAY;
 	if ((error = in6_update_ifa(ifp, &ifra, NULL, updateflags)) != 0)
 		return (error);
