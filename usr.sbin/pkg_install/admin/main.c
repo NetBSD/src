@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 2005/11/05 13:11:02 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2006/03/06 20:00:10 reed Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.50 2005/11/05 13:11:02 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.51 2006/03/06 20:00:10 reed Exp $");
 #endif
 
 /*
@@ -617,7 +617,7 @@ main(int argc, char *argv[])
 			fchdir(saved_wd);
 			rc = chdir(dir);
 			if (rc == -1)
-				err(EXIT_FAILURE, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
+				err(EXIT_FAILURE, "Cannot chdir to %s", dir);
 
 			if (getcwd(cwd, sizeof(cwd)) == NULL)
 				err(EXIT_FAILURE, "getcwd");
@@ -660,7 +660,7 @@ main(int argc, char *argv[])
 			fchdir(saved_wd);
 			rc = chdir(dir);
 			if (rc == -1)
-				err(EXIT_FAILURE, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
+				err(EXIT_FAILURE, "Cannot chdir to %s", dir);
 
 			if (getcwd(cwd, sizeof(cwd)) == NULL)
 				err(EXIT_FAILURE, "getcwd");
