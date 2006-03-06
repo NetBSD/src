@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.37 2005/07/15 17:49:43 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.38 2006/03/06 00:09:22 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.37 2005/07/15 17:49:43 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.38 2006/03/06 00:09:22 aymeric Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,6 +336,13 @@ histcmd(int argc, char **argv)
 		*repl++ = '\0';
 		argc--, argv++;
 	}
+
+	/*
+	 * If -s is specified, accept only one operand
+	 */
+	if (sflg && argc >= 2)
+		error("too many args");
+
 	/*
 	 * determine [first] and [last]
 	 */
@@ -421,6 +428,8 @@ histcmd(int argc, char **argv)
 					 */
 					history(hist, &he, H_ENTER, s);
 				}
+
+				break;
 			} else
 				fputs(s, efp);
 		}
