@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.20 2006/03/06 20:34:09 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.21 2006/03/06 22:04:18 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.20 2006/03/06 20:34:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.21 2006/03/06 22:04:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.20 2006/03/06 20:34:09 bouyer Exp $
 
 #include "xenbus.h"
 #include "xencons.h"
-#include "xennet.h"
+#include "xennet_hypervisor.h"
 #include "xbd.h"
 #include "npx.h"
 #include "isa.h"
@@ -104,9 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.20 2006/03/06 20:34:09 bouyer Exp $
 #ifdef XEN3
 #include <machine/granttables.h>
 #endif
+#if NXENBUS > 0
+#include <machine/xenbus.h>
+#endif
 
-
-#if NXENNET > 0
+#if NXENNET_HYPERVISOR > 0
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
@@ -137,7 +139,7 @@ union hypervisor_attach_cookie {
 #if NXENBUS > 0
 	struct xenbus_attach_args hac_xenbus;
 #endif
-#if NXENNET > 0
+#if NXENNET_HYPERVISOR > 0
 	struct xennet_attach_args hac_xennet;
 #endif
 #if NXBD > 0
@@ -224,7 +226,7 @@ hypervisor_attach(parent, self, aux)
 	hac.hac_xencons.xa_device = "xencons";
 	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
 #endif
-#if NXENNET > 0
+#if NXENNET_HYPERVISOR > 0
 	hac.hac_xennet.xa_device = "xennet";
 	xennet_scan(self, &hac.hac_xennet, hypervisor_print);
 #endif

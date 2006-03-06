@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.1 2006/03/06 20:36:12 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.2 2006/03/06 22:04:18 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,9 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.1 2006/03/06 20:36:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.2 2006/03/06 22:04:18 bouyer Exp $");
 
 #include "opt_xen.h"
+#include "opt_nfs_boot.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -78,6 +79,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.1 2006/03/06 20:36:12 bouyer 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+
+#if defined(NFS_BOOT_BOOTSTATIC)
+#include <sys/fstypes.h>
+#include <sys/mount.h>
+#include <sys/statvfs.h>
+#include <netinet/in.h>
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
+#include <nfs/nfsdiskless.h>
+#include <machine/if_xennetvar.h>
+#endif /* defined(NFS_BOOT_BOOTSTATIC) */
 
 #include <uvm/uvm.h>
 
@@ -531,7 +545,7 @@ again:
 	for (i = sc->sc_rx_ring.rsp_cons; i != resp_prod; i++) {
 		netif_rx_response_t *rx = RING_GET_RESPONSE(&sc->sc_rx_ring, i);
 		req = &sc->sc_rxreqs[rx->id];
-		KASSERT(req->xennet_req_gnttref != GRANT_INVALID_REF);
+		KASSERT(req->rxreq_gntref != GRANT_INVALID_REF);
 		ma = xengnt_revoke_transfer(req->rxreq_gntref);
 		if (ma == 0) {
 			/*
@@ -906,6 +920,39 @@ xennet_reset(struct xennet_xenbus_softc *sc)
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_reset()\n", sc->sc_dev.dv_xname));
 }
+
+#if defined(NFS_BOOT_BOOTSTATIC)
+int
+xennet_bootstatic_callback(struct nfs_diskless *nd)
+{
+#if 0
+	struct ifnet *ifp = nd->nd_ifp;
+	struct xennet_xenbus_softc *sc =
+	    (struct xennet_xenbus_softc *)ifp->if_softc;
+#endif
+	union xen_cmdline_parseinfo xcp;
+	struct sockaddr_in *sin;
+
+	memset(&xcp, 0, sizeof(xcp.xcp_netinfo));
+	xcp.xcp_netinfo.xi_ifno = /* XXX sc->sc_ifno */ 0;
+	xcp.xcp_netinfo.xi_root = nd->nd_root.ndm_host;
+	xen_parse_cmdline(XEN_PARSE_NETINFO, &xcp);
+
+	nd->nd_myip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[0]);
+	nd->nd_gwip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[2]);
+	nd->nd_mask.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[3]);
+
+	sin = (struct sockaddr_in *) &nd->nd_root.ndm_saddr;
+	memset((caddr_t)sin, 0, sizeof(*sin));
+	sin->sin_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
+
+	return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
+	    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
+	    NFS_BOOTSTATIC_HAS_SERVER);
+}
+#endif /* defined(NFS_BOOT_BOOTSTATIC) */
 
 #ifdef XENNET_DEBUG_DUMP
 #define XCHR(x) hexdigits[(x) & 0xf]
