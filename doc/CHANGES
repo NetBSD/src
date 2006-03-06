@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.593 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.594 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -220,3 +220,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel: Add support for PT_SYSCALL, a ptrace call that allows processes
 		to stop on syscall entry and exit. Used by tools like
 		strace/truss [christos 20060305]
+	svwsata(4): Driver for Serverworks K2 SATA controllers. From
+		OpenBSD via Joerg Sonnenberger [bouyer 20060306]

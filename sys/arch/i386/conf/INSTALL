@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.280 2006/02/05 05:01:55 cube Exp $
+#	$NetBSD: INSTALL,v 1.281 2006/03/06 18:35:24 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -435,6 +435,7 @@ rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 
