@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.769 2006/03/01 22:23:21 dogcow Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.770 2006/03/06 08:24:13 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.769 2006/03/01 22:22:36 dogcow Exp
+ *	NetBSD: pcidevs,v 1.770 2006/03/06 08:23:00 martin Exp
  */
 
 /*
@@ -1992,6 +1992,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Netgear",
 	},
 	{
+	    PCI_VENDOR_MOXA,
+	    "Moxa",
+	},
+	{
 	    PCI_VENDOR_LEVELONE,
 	    "Level One",
 	},
@@ -2332,7 +2336,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 573;
+const int pci_nvendors = 574;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -7348,6 +7352,22 @@ static const struct pci_product pci_products[] = {
 	    "Hawk System Memory Controller & PCI Host Bridge",
 	},
 	{
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP114,
+	    "CP-114",
+	},
+	{
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C104H,
+	    "C104H",
+	},
+	{
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP104,
+	    "CP-104UL",
+	},
+	{
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C168H,
+	    "C168H",
+	},
+	{
 	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
 	    "MV1000",
 	},
@@ -10836,4 +10856,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2125;
+const int pci_nproducts = 2129;
