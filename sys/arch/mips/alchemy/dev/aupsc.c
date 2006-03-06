@@ -1,4 +1,4 @@
-/* $NetBSD: aupsc.c,v 1.2 2006/03/06 17:15:03 shige Exp $ */
+/* $NetBSD: aupsc.c,v 1.3 2006/03/06 21:29:23 simonb Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.2 2006/03/06 17:15:03 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupsc.c,v 1.3 2006/03/06 21:29:23 simonb Exp $");
 
 #include "locators.h"
 
@@ -68,7 +68,6 @@ const struct aupsc_proto {
 #if 0
 	{ "auaudio" },
 	{ "aui2s" },
-	{ "ausmbus" },
 	{ "auspi" },
 #endif
 	{ NULL, AUPSC_SEL_DISABLE, 0, 0 }
