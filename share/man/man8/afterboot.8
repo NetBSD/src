@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.23 2006/02/08 13:51:44 christos Exp $
+.\"	$NetBSD: afterboot.8,v 1.24 2006/03/06 23:16:44 jnemeth Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -123,6 +123,9 @@ Upon successful login on the console, you may see the message
 .Dq We recommend creating a non-root account... .
 For security reasons, it is bad practice to login as root during
 regular use and maintenance of the system.
+In fact, the system will only let you login as root on a secure
+terminal.
+By default, only the console is considered to be a secure terminal.
 Instead, administrators are encouraged to add a
 .Dq regular
 user, add said user to the
