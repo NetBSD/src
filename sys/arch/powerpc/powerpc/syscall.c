@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.28 2006/03/05 22:34:34 rjs Exp $	*/
+/*	$NetBSD: syscall.c,v 1.29 2006/03/06 08:05:06 he Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -69,7 +69,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2006/03/05 22:34:34 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2006/03/06 08:05:06 he Exp $");
 
 void
 child_return(void *arg)
@@ -325,8 +325,10 @@ void EMULNAME(syscall_intern)(struct proc *);
 void
 EMULNAME(syscall_intern)(struct proc *p)
 {
+#if defined(KTRACE) || defined(SYSTRACE)
 	if (proc_is_traced_p(p))
 		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 	else
+#endif
 		p->p_md.md_syscall = EMULNAME(syscall_plain);
 }
