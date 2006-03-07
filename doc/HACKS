@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.53 2006/01/31 10:57:43 scw Exp $
+# $NetBSD: HACKS,v 1.54 2006/03/07 18:24:13 he Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -220,6 +220,22 @@ port	vax
 	descr
 		We cannot use "-std=c99" for compiler warning level 4 and above
 		because gcc 2.95.3 doesn't support that option.
+	kcah
+
+	hack	declare boolean_t in two IPF user-mode programs
+	cdate	Tue Mar  7 19:19:20 CET 2006
+	who	he
+	file	dist/ipf/ipsend/iptests.c : 1.8
+		dist/ipf/ipsend/sock.c : 1.7
+	descr
+		The IPF user-mode programs ipsend and iptest first
+		include <sys/types.h> without _KERNEL defined, and
+		later include <sys/file.h> with _KERNEL defined.
+		This causes a build failure when building for vax,
+		since <sys/device.h> ends up being included without
+		bollean_t being defined by <sys/types.h>.
+		Build failure and further details documented in
+		PR#32907.
 	kcah
 
 port	sparc64
@@ -507,3 +523,4 @@ port	mips
 		fix is to check the first loadable psection instead of
 		just the first psection.
 	kcah
+
