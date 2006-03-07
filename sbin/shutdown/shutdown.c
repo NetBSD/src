@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.45 2005/06/27 01:00:06 christos Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.46 2006/03/07 22:19:55 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.45 2005/06/27 01:00:06 christos Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.46 2006/03/07 22:19:55 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,6 +225,7 @@ main(int argc, char *argv[])
 			(void)printf("shutdown: [pid %d]\n", forkpid);
 			exit(0);
 		}
+		(void)setsid();
 	}
 #endif
 	openlog("shutdown", LOG_CONS, LOG_AUTH);
