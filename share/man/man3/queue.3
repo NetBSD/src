@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.32 2005/12/15 11:41:58 pooka Exp $
+.\"	$NetBSD: queue.3,v 1.33 2006/03/07 18:13:43 pooka Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd April 18, 2004
+.Dd March 7, 2006
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -145,7 +145,9 @@
 .Nm CIRCLEQ_FIRST ,
 .Nm CIRCLEQ_LAST ,
 .Nm CIRCLEQ_NEXT ,
-.Nm CIRCLEQ_PREV
+.Nm CIRCLEQ_PREV ,
+.Nm CIRCLEQ_LOOP_NEXT ,
+.Nm CIRCLEQ_LOOP_PREV
 .Nd "implementations of singly-linked lists, simple queues, lists, tail queues, and circular queues"
 .Sh SYNOPSIS
 .In sys/queue.h
@@ -259,6 +261,10 @@
 .Fn CIRCLEQ_NEXT "TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Ft TYPE *
 .Fn CIRCLEQ_PREV "TYPE *elm" "CIRCLEQ_ENTRY NAME"
+.Ft TYPE *
+.Fn CIRCLEQ_LOOP_NEXT "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
+.Ft TYPE *
+.Fn CIRCLEQ_LOOP_PREV "CIRCLEQ_HEAD *head" "TYPE *elm" "CIRCLEQ_ENTRY NAME"
 .Sh DESCRIPTION
 These macros define and operate on five types of data structures:
 singly-linked lists, simple queues, lists, tail queues, and circular queues.
@@ -1074,6 +1080,22 @@ The macro
 .Nm CIRCLEQ_PREV
 returns the element before the element
 .Fa elm .
+.Pp
+The macro
+.Nm CIRCLEQ_LOOP_NEXT
+returns the element after the element
+.Fa elm .
+If
+.Fa elm
+was the last element in the queue, the first element is returned.
+.Pp
+The macro
+.Nm CIRCLEQ_LOOP_PREV
+returns the element before the element
+.Fa elm .
+If
+.Fa elm
+was the first element in the queue, the last element is returned.
 .Sh CIRCULAR QUEUE EXAMPLE
 .Bd -literal
 CIRCLEQ_HEAD(circleq, entry) head;
