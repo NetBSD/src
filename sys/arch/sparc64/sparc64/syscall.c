@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 2006/03/07 03:32:05 thorpej Exp $ */
+/*	$NetBSD: syscall.c,v 1.15 2006/03/07 07:21:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,11 +86,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2006/03/07 07:21:51 thorpej Exp $");
 
 #define NEW_FPSTATE
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>
@@ -294,13 +293,6 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	const struct sysent *callp;
 	struct lwp *l = curlwp;
 	union args args;
-#ifdef SYSCALL_DEBUG
-	union args *ap = NULL;
-#ifdef __arch64__
-	union args args64;
-	int i;
-#endif
-#endif
 	struct proc *p = l->l_proc;
 	int error, new;
 	register_t rval[2];
@@ -325,21 +317,6 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 
 	if ((error = getargs(p, tf, &code, &callp, &args, &s64)) != 0)
 		goto bad;
-
-#ifdef SYSCALL_DEBUG
-#ifdef __arch64__
-	if (s64)
-		ap = &args;
-	else {
-		for (i = 0; i < callp->sy_narg; i++)
-			args64.l[i] = args.i[i];
-		ap = &args64;
-	}
-#else
-	ap = &args;
-#endif
-	scdebug_call(l, code, ap->r);
-#endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
@@ -384,11 +361,6 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 		tf->tf_npc = tf->tf_pc + 4;
 		break;
 	}
-
-#ifdef SYSCALL_DEBUG
-	if (ap)
-		scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);

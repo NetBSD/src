@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.20 2006/03/07 03:32:04 thorpej Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.21 2006/03/07 07:21:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,13 +94,9 @@
  * rights to redistribute these changes.
  */
 
-#if defined(_KERNEL_OPT)
-#include "opt_syscall_debug.h"
-#endif
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.20 2006/03/07 03:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.21 2006/03/07 07:21:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,10 +203,6 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	}
 	args += hidden;
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
@@ -234,9 +226,6 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif
 	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }

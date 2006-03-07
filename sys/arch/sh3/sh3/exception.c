@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.24 2006/03/07 03:32:05 thorpej Exp $	*/
+/*	$NetBSD: exception.c,v 1.25 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,11 +79,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.24 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.25 2006/03/07 07:21:50 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>

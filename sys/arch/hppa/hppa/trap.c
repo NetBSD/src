@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 2006/03/07 03:32:05 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,14 +69,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.31 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 2006/03/07 07:21:50 thorpej Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 /* #define USERTRACE */
 
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>
