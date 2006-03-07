@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.11 2006/03/05 19:08:38 christos Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.12 2006/03/07 03:32:05 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,12 +110,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.11 2006/03/05 19:08:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.12 2006/03/07 03:32:05 thorpej Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,12 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.11 2006/03/05 19:08:38 christos 
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -148,7 +140,8 @@ static void sunos_syscall_fancy(register_t, struct lwp *, struct frame *);
 void
 sunos_syscall_intern(struct proc *p)
 {
-	if (proc_is_traced_p(p))
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = sunos_syscall_fancy;
 	else
 		p->p_md.md_syscall = sunos_syscall_plain;

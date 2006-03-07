@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.17 2006/03/05 19:08:38 christos Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.18 2006/03/07 03:32:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,12 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.17 2006/03/05 19:08:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.18 2006/03/07 03:32:05 thorpej Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,12 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.17 2006/03/05 19:08:38 christos E
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/savar.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -74,7 +66,8 @@ extern struct sysent mach_sysent[];
 void
 mach_syscall_intern(struct proc *p)
 {
-	if (proc_is_traced_p(p))
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = mach_syscall_fancy;
 	else
 		p->p_md.md_syscall = mach_syscall_plain;

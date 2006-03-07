@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.23 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: exception.c,v 1.24 2006/03/07 03:32:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,13 +79,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.24 2006/03/07 03:32:05 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23 2005/12/11 12:19:00 christos Exp 
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #ifdef DDB
 #include <sh3/db_machdep.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.215 2006/03/05 19:08:38 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.216 2006/03/07 03:32:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -477,20 +477,6 @@ void	cpu_lwp_free(struct lwp *, int);
 #ifdef __HAVE_SYSCALL_INTERN
 void	syscall_intern(struct proc *);
 #endif
-
-#ifdef SYSTRACE
-#define	proc_is_systraced_p(p) ISSET((p)->p_flag, P_SYSTRACE)
-#else
-#define proc_is_systraced_p(p) 0
-#endif
-#ifdef KTRACE
-#define proc_is_ktraced_p(p) ((p)->p_traceflag & (KTRFAC_SYSCALL|KTRFAC_SYSRET))
-#else
-#define proc_is_ktraced_p(p) 0
-#endif
-
-#define proc_is_traced_p(p) (proc_is_systraced_p(p) || proc_is_ktraced_p(p) || \
-	ISSET((p)->p_flag, P_SYSCALL))
 
 void	child_return(void *);
 

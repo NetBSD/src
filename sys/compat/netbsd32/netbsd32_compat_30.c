@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.4 2005/12/12 02:51:07 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.5 2006/03/07 03:32:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,11 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.4 2005/12/12 02:51:07 christos Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.5 2006/03/07 03:32:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
