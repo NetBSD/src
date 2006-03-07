@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.772 2006/03/07 08:56:44 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.773 2006/03/07 22:12:14 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.771 2006/03/06 18:35:24 bouyer Exp
+ *	NetBSD: pcidevs,v 1.772 2006/03/07 22:11:25 bouyer Exp
  */
 
 /*
@@ -2668,6 +2668,9 @@
 #define	PCI_PRODUCT_SERVERWORKS_CSB5_LPC	0x0225		/* CSB5 ISA/LPC bridge */
 #define	PCI_PRODUCT_SERVERWORKS_CSB6_LPC	0x0227		/* CSB6 ISA/LPC bridge */
 #define	PCI_PRODUCT_SERVERWORKS_K2_SATA	0x0240		/* K2 SATA */
+#define	PCI_PRODUCT_SERVERWORKS_FRODO4_SATA	0x0241		/* Frodo4 SATA */
+#define	PCI_PRODUCT_SERVERWORKS_FRODO8_SATA	0x0242		/* Frodo8 SATA */
+#define	PCI_PRODUCT_SERVERWORKS_HT1000_SATA	0x024a		/* HT-1000 SATA */
 #define	PCI_PRODUCT_SERVERWORKS_BCM5714	0x0103		/* bcm5714/bcm5715 integral PCI-E to PCI-X bridge */
 
 /* SGI products */
