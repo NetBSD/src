@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.18 2006/03/07 03:32:05 thorpej Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.19 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.18 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.19 2006/03/07 07:21:50 thorpej Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_vm86.h"
 
 #include <sys/param.h>
@@ -136,10 +135,6 @@ mach_syscall_plain(frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif /* SYSCALL_DEBUG */
-
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
@@ -167,9 +162,6 @@ mach_syscall_plain(frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 	userret(l);
 }
 

@@ -1,9 +1,8 @@
-/*	$NetBSD: linux32_syscall.c,v 1.4 2006/03/07 03:32:04 thorpej Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.5 2006/03/07 07:21:50 thorpej Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.4 2006/03/07 03:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.5 2006/03/07 07:21:50 thorpej Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
 
@@ -115,9 +114,6 @@ linux32_syscall_plain(frame)
 			break;
 		}
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -152,9 +148,6 @@ out:
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.128 2006/03/07 03:32:05 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.129 2006/03/07 07:21:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,12 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.128 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129 2006/03/07 07:21:51 thorpej Exp $");
 
 #define NEW_FPSTATE
 
 #include "opt_ddb.h"
-#include "opt_syscall_debug.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 

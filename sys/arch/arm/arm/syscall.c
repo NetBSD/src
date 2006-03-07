@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.32 2006/03/07 03:32:04 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.33 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -77,11 +77,10 @@
  */
 
 #include "opt_ktrace.h"
-#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2006/03/07 03:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33 2006/03/07 07:21:50 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>

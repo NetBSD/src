@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.23 2006/03/07 03:32:05 thorpej Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.24 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.23 2006/03/07 03:32:05 thorpej Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_syscall_debug.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.24 2006/03/07 07:21:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,10 +125,6 @@ freebsd_syscall_plain(frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif /* SYSCALL_DEBUG */
-
 	rval[0] = 0;
 	rval[1] = frame->tf_edx; /* need to keep edx for shared FreeBSD bins */
 
@@ -164,9 +156,6 @@ freebsd_syscall_plain(frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 	userret(l);
 }
 

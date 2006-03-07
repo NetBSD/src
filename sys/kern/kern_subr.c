@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.130 2006/03/07 03:32:06 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.131 2006/03/07 07:21:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.130 2006/03/07 03:32:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.131 2006/03/07 07:21:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1325,6 +1325,9 @@ format_bytes(char *buf, size_t len, uint64_t bytes)
 boolean_t
 trace_is_enabled(struct proc *p)
 {
+#ifdef SYSCALL_DEBUG
+	return (TRUE);
+#endif
 #ifdef KTRACE
 	if (ISSET(p->p_traceflag, (KTRFAC_SYSCALL | KTRFAC_SYSRET)))
 		return (TRUE);

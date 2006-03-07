@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.8 2006/03/07 03:32:05 thorpej Exp $ */
+/*	$NetBSD: syscall.c,v 1.9 2006/03/07 07:21:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,9 +49,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2006/03/07 07:21:51 thorpej Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -226,9 +225,6 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args.i);
-#endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
@@ -278,10 +274,6 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 		tf->tf_npc = i + 4;
 		break;
 	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);

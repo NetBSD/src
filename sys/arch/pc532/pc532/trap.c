@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 2006/03/07 03:32:05 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.72 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2006/03/07 07:21:50 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_ns381.h"
 
