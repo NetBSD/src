@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.6 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: sock.c,v 1.7 2006/03/07 18:18:06 he Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -14,6 +14,14 @@ static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.1 2004/03/23 12:58:06 darren
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#if defined(__NetBSD__) && defined(__vax__)
+/* 
+ * XXX need to declare boolean_t for _KERNEL <sys/files.h>
+ * which ends up including <sys/device.h> for vax.  See PR#32907
+ * for further details.
+ */
+typedef int	boolean_t;
+#endif
 #ifndef	ultrix
 #include <fcntl.h>
 #endif
