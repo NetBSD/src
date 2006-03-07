@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.16 2006/02/26 05:31:54 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.17 2006/03/07 22:12:05 he Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.16 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.17 2006/03/07 22:12:05 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -161,15 +161,6 @@ __KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.16 2006/02/26 05:31:54 thorpej Exp $");
 ** Macro to extract the minor device number from the device Identifier 
 */
 #define SCRUNIT(x)      (minor(x))
-
-/* 
-** Macros to clear/set/test bit flags. 
-*/
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
-#define ISCLR(t, f)     ( ((t) & (f)) == 0)
-
 
 /*
 ** some macros to assist in debugging
@@ -2494,7 +2485,7 @@ static void ATRSM (struct scr_softc * sc,int cmd)
                         sc->atrKCount = 1;
     
                         /* if there are no TDx following set T0 protocol */
-                        if (ISCLR(sc->atrY,ATR_Y_TD))
+                        if (!ISSET(sc->atrY,ATR_Y_TD))
                         {
                             sc->protocolType    = PROTOCOL_T0;      
                         }
