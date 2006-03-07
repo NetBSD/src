@@ -34,6 +34,18 @@
 #define EF_SH3E		   8
 #define EF_SH4		   9
 
+/* New flags from binutils 2.16 */
+#define EF_SH4_NOFPU	   16
+#define EF_SH4A_NOFPU	   17
+#define EF_SH4_NOMMU_NOFPU 18
+#define EF_SH2A_NOFPU      19
+#define EF_SH3_NOMMU       20
+
+#define EF_SH2A_SH4_NOFPU  21
+#define EF_SH2A_SH3_NOFPU  22
+#define EF_SH2A_SH4        23
+#define EF_SH2A_SH3E       24
+
 /* This one can only mix in objects from other EF_SH5 objects.  */
 #define EF_SH5		  10
 
