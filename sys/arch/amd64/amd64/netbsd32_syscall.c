@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.11 2006/03/07 03:32:04 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.12 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.11 2006/03/07 03:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.12 2006/03/07 07:21:50 thorpej Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
 
@@ -128,10 +127,6 @@ netbsd32_syscall_plain(frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, (register_t *)args);
-#endif /* SYSCALL_DEBUG */
-
 	rval[0] = 0;
 	rval[1] = 0;
 #if 0
@@ -166,9 +161,6 @@ netbsd32_syscall_plain(frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 	userret(l);
 }
 

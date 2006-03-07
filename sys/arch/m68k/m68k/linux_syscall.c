@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.13 2006/03/07 03:32:05 thorpej Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.14 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,9 +110,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.13 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.14 2006/03/07 07:21:50 thorpej Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 
 #include <sys/param.h>
@@ -187,10 +186,6 @@ linux_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
 	error = (*callp->sy_call)(l, args, rval);
@@ -223,10 +218,6 @@ linux_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		frame->f_sr |= PSL_C;	/* carry bit */
 		break;
 	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
 }
 
 static void

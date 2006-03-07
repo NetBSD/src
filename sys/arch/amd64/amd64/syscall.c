@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18 2006/03/07 03:32:04 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.19 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2006/03/07 03:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2006/03/07 07:21:50 thorpej Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 
 #include <sys/param.h>
@@ -168,10 +167,6 @@ syscall_plain(struct trapframe *frame)
 		}
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, argp);
-#endif /* SYSCALL_DEBUG */
-
 	rval[0] = 0;
 	rval[1] = 0;
 	KERNEL_PROC_LOCK(l);
@@ -204,9 +199,6 @@ syscall_plain(struct trapframe *frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 	userret(l);
 }
 

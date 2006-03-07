@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.17 2006/03/07 03:32:04 thorpej Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.18 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -74,11 +74,9 @@
  * ARMLinux emulation: syscall entry handling
  */
 
-#include "opt_syscall_debug.h"
-
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.17 2006/03/07 03:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18 2006/03/07 07:21:50 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>

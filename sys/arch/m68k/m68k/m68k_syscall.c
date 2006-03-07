@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.22 2006/03/07 03:32:05 thorpej Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.23 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,9 +110,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.22 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.23 2006/03/07 07:21:50 thorpej Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
@@ -265,10 +264,6 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
 	error = (*callp->sy_call)(l, args, rval);
@@ -319,10 +314,6 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		frame->f_sr |= PSL_C;	/* carry bit */
 		break;
 	}
-
-#ifdef SYSCALL_DEBUG
-        scdebug_ret(p, code, error, rval)
-#endif
 }
 
 static void
