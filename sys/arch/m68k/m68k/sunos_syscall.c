@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.12 2006/03/07 03:32:05 thorpej Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.13 2006/03/07 07:21:50 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,9 +110,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.12 2006/03/07 03:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.13 2006/03/07 07:21:50 thorpej Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
 
 #include <sys/param.h>
@@ -212,10 +211,6 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
 	error = (*callp->sy_call)(l, args, rval);
@@ -254,10 +249,6 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		if (error == ERESTART)
 			frame->f_regs[SP] -= sizeof (int);
 	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval)
-#endif
 }
 
 static void
