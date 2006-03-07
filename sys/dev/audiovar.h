@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.33 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.34 2006/03/07 15:17:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -206,6 +206,7 @@ struct audio_softc {
 	int		sc_monitor_port;
 
 	int		sc_refcnt;
+	int		sc_opencnt;
 	boolean_t	sc_dying;
 
 #ifdef AUDIO_INTR_TIME
