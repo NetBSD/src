@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.71 2006/03/07 03:32:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,13 +77,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2006/03/07 03:32:05 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_ns381.h"
 
 #include <sys/param.h>
@@ -98,9 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2005/12/24 20:07:24 perry Exp $");
 #include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
 #ifdef KGDB
