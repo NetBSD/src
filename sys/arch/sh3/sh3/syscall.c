@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2006/03/05 19:08:39 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5 2006/03/07 03:32:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -78,21 +78,13 @@
  * T.Horiuchi 1998.06.8
  */
 
-#include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <sh3/userret.h>
@@ -101,15 +93,14 @@
 
 
 static void syscall_plain(struct lwp *, struct trapframe *);
-#if defined(KTRACE) || defined(SYSTRACE)
 static void syscall_fancy(struct lwp *, struct trapframe *);
-#endif
 
 
 void
 syscall_intern(struct proc *p)
 {
-	if (proc_is_traced_p(p))
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
 		p->p_md.md_syscall = syscall_plain;
@@ -251,7 +242,6 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 }
 
 
-#if defined(KTRACE) || defined(SYSTRACE)
 /*
  * Like syscall_plain but with trace_enter/trace_exit.
  */
@@ -389,4 +379,3 @@ out:
 
 	userret(l);
 }
-#endif /* KTRACE || SYSTRACE */
