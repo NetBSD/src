@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.20 2006/03/07 02:16:04 dogcow Exp $	*/
+/*	$NetBSD: est.c,v 1.21 2006/03/07 18:20:54 rpaulo Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.20 2006/03/07 02:16:04 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.21 2006/03/07 18:20:54 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,6 +296,15 @@ static const struct fq_info pentium_m_n725[] = {
 	{  600,  988 }
 };
 
+/* Intel Pentium M processor 730 1.6 GHz */
+static const struct fq_info pentium_m_n730[] = {
+       { 1596, 1308 },
+       { 1330, 1260 }, 
+       { 1197, 1212 },
+       { 1064, 1180 },
+       {  798,  988 }
+};     
+
 /* Intel Pentium M processor 735 1.7 GHz */
 static const struct fq_info pentium_m_n735[] = {
 	{ 1700, 1340 },
@@ -411,6 +420,7 @@ static const struct fqlist pentium_m_dothan[] = {
 	ENTRY("1.50", 0x06d6, pentium_m_n715),
 	ENTRY("1.50", 0x06d8, pentium_m_n758),
 	ENTRY("1.60", 0x06d6, pentium_m_n725),
+	ENTRY("1.60", 0, pentium_m_n730),
 	ENTRY("1.60", 0x06d8, pentium_m_n778),
 	ENTRY("1.70", 0x06d6, pentium_m_n735),
 	ENTRY("1.73", 0x06d8, pentium_m_n740),
