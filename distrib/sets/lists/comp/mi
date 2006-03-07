@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.857 2006/03/07 17:22:10 pooka Exp $
+#	$NetBSD: mi,v 1.858 2006/03/07 18:16:46 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2327,6 +2327,8 @@
 ./usr/share/man/cat3/CIRCLEQ_INSERT_HEAD.0	comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_INSERT_TAIL.0	comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_LAST.0		comp-c-catman		.cat
+./usr/share/man/cat3/CIRCLEQ_LOOP_NEXT.0	comp-c-catman		.cat
+./usr/share/man/cat3/CIRCLEQ_LOOP_PREV.0	comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_NEXT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_PREV.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_REMOVE.0		comp-c-catman		.cat
@@ -6282,6 +6284,8 @@
 ./usr/share/man/man3/CIRCLEQ_INSERT_HEAD.3	comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_INSERT_TAIL.3	comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_LAST.3		comp-c-man		.man
+./usr/share/man/man3/CIRCLEQ_LOOP_NEXT.3	comp-c-man		.man
+./usr/share/man/man3/CIRCLEQ_LOOP_PREV.3	comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_NEXT.3		comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_PREV.3		comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_REMOVE.3		comp-c-man		.man
