@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.771 2006/03/07 08:56:44 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.772 2006/03/07 22:12:14 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.771 2006/03/06 18:35:24 bouyer Exp
+ *	NetBSD: pcidevs,v 1.772 2006/03/07 22:11:25 bouyer Exp
  */
 
 /*
@@ -8972,6 +8972,18 @@ static const struct pci_product pci_products[] = {
 	    "K2 SATA",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_FRODO4_SATA,
+	    "Frodo4 SATA",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_FRODO8_SATA,
+	    "Frodo8 SATA",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA,
+	    "HT-1000 SATA",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_BCM5714,
 	    "bcm5714/bcm5715 integral PCI-E to PCI-X bridge",
 	},
@@ -10860,4 +10872,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2130;
+const int pci_nproducts = 2133;
