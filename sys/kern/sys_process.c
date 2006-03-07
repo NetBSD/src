@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.100 2006/03/05 16:57:16 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.101 2006/03/07 07:19:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.100 2006/03/05 16:57:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.101 2006/03/07 07:19:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,12 +382,16 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		if (SCARG(uap, req) == PT_SYSCALL) {
 			if (!ISSET(t->p_flag, P_SYSCALL)) {
 				SET(t->p_flag, P_SYSCALL);
+#ifdef __HAVE_SYSCALL_INTERN
 				(*t->p_emul->e_syscall_intern)(t);
+#endif
 			}
 		} else {
 			if (ISSET(t->p_flag, P_SYSCALL)) {
 				CLR(t->p_flag, P_SYSCALL);
+#ifdef __HAVE_SYSCALL_INTERN
 				(*t->p_emul->e_syscall_intern)(t);
+#endif
 			}
 		}
 
