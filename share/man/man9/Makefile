@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.192 2006/02/24 12:47:18 pooka Exp $
+#       $NetBSD: Makefile,v 1.193 2006/03/07 17:22:11 pooka Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -200,7 +200,6 @@ MLINKS+=filedesc.9 falloc.9 \
 	filedesc.9 fd_getfile.9 \
 	filedesc.9 dupfdopen.9 \
 	filedesc.9 fdalloc.9 \
-	filedesc.9 fdavail.9 \
 	filedesc.9 fdcheckstd.9 \
 	filedesc.9 fdclear.9 \
 	filedesc.9 fdclone.9 \

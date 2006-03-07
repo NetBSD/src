@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.856 2006/02/25 01:44:15 christos Exp $
+#	$NetBSD: mi,v 1.857 2006/03/07 17:22:10 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5234,7 +5234,7 @@
 ./usr/share/man/cat9/falloc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fd_getfile.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fdalloc.0			comp-sys-catman		.cat
-./usr/share/man/cat9/fdavail.0			comp-sys-catman		.cat
+./usr/share/man/cat9/fdavail.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/fdcheckstd.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fdclear.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fdclone.0			comp-sys-catman		.cat
@@ -9183,7 +9183,7 @@
 ./usr/share/man/man9/falloc.9			comp-sys-man		.man
 ./usr/share/man/man9/fd_getfile.9		comp-sys-man		.man
 ./usr/share/man/man9/fdalloc.9			comp-sys-man		.man
-./usr/share/man/man9/fdavail.9			comp-sys-man		.man
+./usr/share/man/man9/fdavail.9			comp-obsolete		obsolete
 ./usr/share/man/man9/fdcheckstd.9		comp-sys-man		.man
 ./usr/share/man/man9/fdclear.9			comp-sys-man		.man
 ./usr/share/man/man9/fdclone.9			comp-sys-man		.man
