@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2006/03/05 19:08:39 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.8 2006/03/07 03:32:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,11 +49,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2006/03/05 19:08:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2006/03/07 03:32:05 thorpej Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
 
@@ -66,9 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2006/03/05 19:08:39 christos Exp $")
 #include <sys/syscall.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -189,7 +185,8 @@ save_fpu(struct trapframe *tf)
 void
 syscall_intern(struct proc *p)
 {
-	if (proc_is_traced_p(p))
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
 		p->p_md.md_syscall = syscall_plain;

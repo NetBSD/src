@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2005/12/24 20:07:41 perry Exp $     */
+/*	$NetBSD: trap.c,v 1.99 2006/03/07 03:32:06 thorpej Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,11 +33,10 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2006/03/07 03:32:06 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
@@ -67,9 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2005/12/24 20:07:41 perry Exp $");
 #include <kern/syscalls.c>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 
 #ifdef TRAPDEBUG

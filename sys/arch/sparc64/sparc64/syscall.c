@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.13 2006/03/05 19:08:39 christos Exp $ */
+/*	$NetBSD: syscall.c,v 1.14 2006/03/07 03:32:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,13 +86,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2006/03/05 19:08:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2006/03/07 03:32:05 thorpej Exp $");
 
 #define NEW_FPSTATE
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2006/03/05 19:08:39 christos Exp $"
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
 
@@ -256,7 +252,8 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 void
 syscall_intern(struct proc *p)
 {
-	if (proc_is_traced_p(p))
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
 		p->p_md.md_syscall = syscall_plain;

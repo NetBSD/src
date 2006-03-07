@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.3 2006/03/05 19:08:38 christos Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.4 2006/03/07 03:32:04 thorpej Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.3 2006/03/05 19:08:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.4 2006/03/07 03:32:04 thorpej Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -37,7 +37,8 @@ void linux32_syscall_fancy(struct trapframe *);
 void
 linux32_syscall_intern(struct proc *p)
 {
-	if (proc_is_traced_p(p))
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = linux32_syscall_fancy;
 	else
 		p->p_md.md_syscall = linux32_syscall_plain;

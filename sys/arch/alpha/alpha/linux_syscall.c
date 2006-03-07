@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.17 2006/03/05 19:08:38 christos Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.18 2006/03/07 03:32:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,13 +96,11 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
 #endif
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.17 2006/03/05 19:08:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18 2006/03/07 03:32:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,12 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.17 2006/03/05 19:08:38 christos 
 #include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -140,7 +132,8 @@ void	linux_syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
 void
 linux_syscall_intern(struct proc *p)
 {
-	if (proc_is_traced_p(p))
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = linux_syscall_fancy;
 	else
 		p->p_md.md_syscall = linux_syscall_plain;

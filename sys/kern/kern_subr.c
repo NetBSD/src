@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.129 2006/03/06 02:17:53 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.130 2006/03/07 03:32:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.129 2006/03/06 02:17:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.130 2006/03/07 03:32:06 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1317,6 +1317,26 @@ format_bytes(char *buf, size_t len, uint64_t bytes)
 			buf[nlen] = '\0';
 	}
 	return (rv);
+}
+
+/*
+ * Return TRUE if system call tracing is enabled for the specified process.
+ */
+boolean_t
+trace_is_enabled(struct proc *p)
+{
+#ifdef KTRACE
+	if (ISSET(p->p_traceflag, (KTRFAC_SYSCALL | KTRFAC_SYSRET)))
+		return (TRUE);
+#endif
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		return (TRUE);
+#endif
+	if (ISSET(p->p_flag, P_SYSCALL))
+		return (TRUE);
+
+	return (FALSE);
 }
 
 /*
