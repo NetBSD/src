@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.34 2005/12/20 19:53:14 rpaulo Exp $
+.\"	$NetBSD: audio.9,v 1.35 2006/03/07 15:18:11 jmcneill Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,6 +94,9 @@ struct audio_hw_if {
 	int	(*trigger_input)(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
 	int	(*dev_ioctl)(void *, u_long, caddr_t, int, struct lwp *);
+	int	(*powerstate)(void *, int);
+#define	AUDIOPOWER_ON	1
+#define	AUDIOPOWER_OFF	0
 };
 
 typedef struct audio_params {
@@ -509,6 +512,13 @@ optional, is called when an
 .Xr ioctl 2
 is not recognized by the generic audio driver.
 Return 0 on success, otherwise an error code.
+.It Dv int powerstate(void *hdl, int state)
+.br
+optional, is called on the first open and last close of the audio
+device.
+.Va state
+may be one of AUDIOPOWER_ON or AUDIOPOWER_OFF. Returns 0 on success,
+otherwise an error code.
 .El
 .Pp
 The
