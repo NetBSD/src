@@ -1,7 +1,7 @@
-/*	$NetBSD: icmp6.h,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.4 2006/03/07 18:15:28 wiz Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/icmp6.h,v 1.14 2002/12/11 07:13:52 guy Exp (LBL) */
-/*	$NetBSD: icmp6.h,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.4 2006/03/07 18:15:28 wiz Exp $	*/
 /*	$KAME: icmp6.h,v 1.22 2000/08/03 15:25:16 jinmei Exp $	*/
 
 /*
@@ -102,9 +102,9 @@ struct icmp6_hdr {
 #define MLD6_LISTENER_DONE		132	/* multicast listener done */
 
 #define ND_ROUTER_SOLICIT		133	/* router solicitation */
-#define ND_ROUTER_ADVERT		134	/* router advertisment */
+#define ND_ROUTER_ADVERT		134	/* router advertisement */
 #define ND_NEIGHBOR_SOLICIT		135	/* neighbor solicitation */
-#define ND_NEIGHBOR_ADVERT		136	/* neighbor advertisment */
+#define ND_NEIGHBOR_ADVERT		136	/* neighbor advertisement */
 #define ND_REDIRECT			137	/* redirect */
 
 #define ICMP6_ROUTER_RENUMBERING	138	/* router renumbering */
