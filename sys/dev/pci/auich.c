@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.102 2006/03/07 15:18:59 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.103 2006/03/07 23:16:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.102 2006/03/07 15:18:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.103 2006/03/07 23:16:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1539,6 +1539,11 @@ auich_powerhook(int why, void *addr)
 	case PWR_STANDBY:
 		/* Power down */
 		DPRINTF(1, ("%s: power down\n", sc->sc_dev.dv_xname));
+
+		/* if we're already asleep, don't try to sleep again */
+		if (sc->sc_suspend == PWR_SUSPEND ||
+		    sc->sc_suspend == PWR_STANDBY)
+			break;
 		sc->sc_suspend = why;
 
 		DELAY(1000);
