@@ -1,4 +1,0 @@
-# $NetBSD: charset.pivot.GB.src,v 1.1 2003/06/27 08:40:31 tshiozak Exp $
-
-GB2312			UCS			1
-UCS			GB2312			1
