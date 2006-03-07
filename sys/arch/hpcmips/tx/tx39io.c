@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.18 2005/12/11 12:17:34 christos Exp $ */
+/*	$NetBSD: tx39io.c,v 1.19 2006/03/07 23:26:24 he Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.18 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.19 2006/03/07 23:26:24 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.18 2005/12/11 12:17:34 christos Exp $")
 #endif
 #include <machine/debug.h>
 
+#ifdef ISSET
+#undef ISSET
+#endif
 #define	ISSET(x, s)	((x) & (1 << (s)))
 
 int	tx39io_match(struct device *, struct cfdata *, void *);
