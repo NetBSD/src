@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.29 2006/03/06 08:05:06 he Exp $	*/
+/*	$NetBSD: syscall.c,v 1.30.2.2 2006/03/07 03:32:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -34,7 +34,6 @@
 
 #include "opt_altivec.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 /* DO NOT INCLUDE opt_compat_XXX.h */
 /* If needed, they will be included by file that includes this one */
@@ -48,9 +47,6 @@
 #include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -69,7 +65,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2006/03/06 08:05:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.2.2 2006/03/07 03:32:06 thorpej Exp $");
 
 void
 child_return(void *arg)
@@ -325,10 +321,9 @@ void EMULNAME(syscall_intern)(struct proc *);
 void
 EMULNAME(syscall_intern)(struct proc *p)
 {
-#if defined(KTRACE) || defined(SYSTRACE)
-	if (proc_is_traced_p(p))
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 	else
-#endif
 		p->p_md.md_syscall = EMULNAME(syscall_plain);
 }
