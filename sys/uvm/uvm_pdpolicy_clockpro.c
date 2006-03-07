@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.1 2006/03/06 12:53:44 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.2 2006/03/07 13:41:02 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.1 2006/03/06 12:53:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.2 2006/03/07 13:41:02 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.1 2006/03/06 12:53:4
 #undef	ADAPTIVE
 
 #endif /* defined(PDSIM) */
-
-#define	NEWQ
 
 #if !defined(CLOCKPRO_COLDPCT)
 #define	CLOCKPRO_COLDPCT	10
@@ -684,15 +682,15 @@ clockpro___enqueuetail(struct vm_page *pg)
 	KASSERT(clockpro_getq(pg) == CLOCKPRO_NOQUEUE);
 
 	check_sanity();
-#if defined(NEWQ) && !defined(USEONCE2)
+#if !defined(USEONCE2)
 	clockpro_insert_tail(s, CLOCKPRO_NEWQ, pg);
 	clockpro_newqrotate();
-#else /* defined(NEWQ) && !defined(USEONCE2) */
+#else /* !defined(USEONCE2) */
 #if defined(LISTQ)
 	KASSERT((pg->pqflags & PQ_REFERENCED) == 0);
 #endif /* defined(LISTQ) */
 	clockpro_insert_tail(s, CLOCKPRO_COLDQ, pg);
-#endif /* defined(NEWQ) && !defined(USEONCE2) */
+#endif /* !defined(USEONCE2) */
 	check_sanity();
 }
 
