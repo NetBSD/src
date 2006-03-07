@@ -1,0 +1,18 @@
+This is the kernel authorization branch.
+
+The purpose of this work is to replace the way credentials are stored
+and managed in NetBSD. It's based on a clean-room implementation of
+a subsystem of the same name available from Apple, as described in
+Apple TN2127.
+
+Some basic things you should know about this tree when working with
+it:
+
+  - suser(cred, &acflag) -> generic_authorize(cred, KAUTH_GENERIC_ISSUSER, &acflag);
+  - struct ucred and struct pcred are now merged and appear as kauth_cred_t.
+  - You have to use the accessor/mutator functions provided by the kernel
+    authorization KPI.
+  - KPI means Kernel Programming Interface and I didn't know there was a term
+    like that before I saw it in Apple's documentation.
+
+More to come...
