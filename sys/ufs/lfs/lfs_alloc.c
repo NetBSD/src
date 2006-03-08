@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.86 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.86.10.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.10.1 2006/03/08 01:39:12 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86 2005/12/11 12:25:26 christos Exp 
 
 extern struct lock ufs_hashlock;
 
-static int extend_ifile(struct lfs *, struct ucred *);
+static int extend_ifile(struct lfs *, kauth_cred_t);
 static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
     struct vnode **);
 
@@ -221,7 +221,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
  * Called with the segment lock held.
  */
 static int
-extend_ifile(struct lfs *fs, struct ucred *cred)
+extend_ifile(struct lfs *fs, kauth_cred_t cred)
 {
 	struct vnode *vp;
 	struct inode *ip;
@@ -284,7 +284,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 /* ARGSUSED */
 /* VOP_BWRITE 2i times */
 int
-lfs_valloc(struct vnode *pvp, int mode, struct ucred *cred, struct vnode **vpp)
+lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, struct vnode **vpp)
 {
 	struct lfs *fs;
 	struct buf *bp, *cbp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.157 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.157.10.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.10.1 2006/03/08 01:39:12 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ lfs_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
@@ -296,7 +296,7 @@ lfs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		error = VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-				  ap->a_l->l_proc->p_ucred, ap->a_l);
+				  ap->a_l->l_proc->p_cred, ap->a_l);
 	}
 	if (wait && !VPISEMPTY(vp))
 		LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
@@ -852,7 +852,7 @@ lfs_getattr(void *v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -901,7 +901,7 @@ lfs_setattr(void *v)
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -924,7 +924,7 @@ lfs_close(void *v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -951,7 +951,7 @@ lfsspec_close(void *v)
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
 		int		a_fflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
@@ -976,7 +976,7 @@ lfsfifo_close(void *v)
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
 		int		a_fflag;
-		struct ucred	*a_cred;
+		kauth_cred_	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
@@ -1224,7 +1224,7 @@ lfs_fcntl(void *v)
 		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct timeval *tvp;
@@ -1279,7 +1279,8 @@ lfs_fcntl(void *v)
 
 	    case LFCNBMAPV:
 	    case LFCNMARKV:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 			return (error);
 		blkvp = *(struct lfs_fcntl_markv *)ap->a_data;
 
@@ -1343,7 +1344,9 @@ lfs_fcntl(void *v)
 
 	    case LFCNIFILEFH:
 		/* Return the filehandle of the Ifile */
-		if ((error = suser(ap->a_l->l_proc->p_ucred, &ap->a_l->l_proc->p_acflag)) != 0)
+		if ((error = generic_authorize(ap->a_l->l_proc->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &ap->a_l->l_proc->p_acflag)) != 0)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
@@ -2017,7 +2020,7 @@ lfs_mmap(void *v)
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int a_fflags;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 
