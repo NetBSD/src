@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.1.2.3 2006/03/08 17:17:46 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.1.2.4 2006/03/08 17:31:56 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -146,5 +146,7 @@ void kauth_cred_convert(kauth_cred_t, const struct uucred *);
 int kauth_cred_compare(kauth_cred_t, const struct uucred *);
 void kauth_cred_toucred(kauth_cred_t, struct ucred *);
 void kauth_cred_topcred(kauth_cred_t, struct pcred *);
+
+kauth_cred_t kauth_cred_get(void);
 
 #endif	/* !_SYS_KAUTH_H_ */

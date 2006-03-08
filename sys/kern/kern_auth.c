@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.4 2006/03/08 16:44:57 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.5 2006/03/08 17:31:56 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -575,6 +575,15 @@ kauth_cred_topcred(kauth_cred_t cred, struct pcred *pc)
 	pc->p_rgid = cred->cr_gid;
 	pc->p_svgid = cred->cr_svgid;
 	pc->p_refcnt = cred->cr_refcnt;
+}
+
+/*
+ * Return kauth_cred_t for the current process.
+ */
+kauth_cred_t
+kauth_cred_get(void)
+{
+	return (curproc->p_cred);
 }
 
 /*
