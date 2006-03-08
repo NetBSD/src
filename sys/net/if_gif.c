@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.57 2005/12/28 09:08:20 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.57.10.1 2006/03/08 01:11:55 elad Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.57 2005/12/28 09:08:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.57.10.1 2006/03/08 01:11:55 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -601,7 +601,9 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFMTU:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = generic_authorize(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					        &p->p_acflag)) != 0)
 			break;
 		mtu = ifr->ifr_mtu;
 		if (mtu < GIF_MTU_MIN || mtu > GIF_MTU_MAX)
@@ -617,7 +619,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFPHYADDR_IN6:
 #endif /* INET6 */
 	case SIOCSLIFPHYADDR:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		switch (cmd) {
 #ifdef INET
@@ -706,7 +708,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 #ifdef SIOCDIFPHYADDR
 	case SIOCDIFPHYADDR:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 		gif_delete_tunnel(&sc->gif_if);
 		break;

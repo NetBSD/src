@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.8.1 2006/03/08 01:19:40 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -904,7 +904,8 @@ in6_pcbsetport(laddr, in6p, p)
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
+		if (p == 0 || (generic_authorize(p->p_cred,
+					KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0))
 			return (EACCES);
 #endif
 		minport = ip6_lowportmin;

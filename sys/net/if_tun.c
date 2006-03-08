@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.82 2006/03/03 19:57:37 rpaulo Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.82.4.1 2006/03/08 01:11:55 elad Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82 2006/03/03 19:57:37 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.4.1 2006/03/08 01:11:55 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -279,7 +279,7 @@ tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tun_softc *tp;
 	int	s, error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	s = splnet();

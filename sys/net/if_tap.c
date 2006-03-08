@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.13 2006/02/24 12:54:48 pooka Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.13.4.1 2006/03/08 01:11:55 elad Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.13 2006/02/24 12:54:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.13.4.1 2006/03/08 01:11:55 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -141,9 +141,9 @@ static int	tap_dev_kqfilter(int, struct knote *);
 /* Fileops access routines */
 static int	tap_fops_close(struct file *, struct lwp *);
 static int	tap_fops_read(struct file *, off_t *, struct uio *,
-    struct ucred *, int);
+    kauth_cred_t, int);
 static int	tap_fops_write(struct file *, off_t *, struct uio *,
-    struct ucred *, int);
+    kauth_cred_t, int);
 static int	tap_fops_ioctl(struct file *, u_long, void *,
     struct lwp *);
 static int	tap_fops_poll(struct file *, int, struct lwp *);
@@ -807,7 +807,7 @@ tap_cdev_read(dev_t dev, struct uio *uio, int flags)
 
 static int
 tap_fops_read(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	return tap_dev_read((intptr_t)fp->f_data, uio, flags);
 }
@@ -906,7 +906,7 @@ tap_cdev_write(dev_t dev, struct uio *uio, int flags)
 
 static int
 tap_fops_write(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	return tap_dev_write((intptr_t)fp->f_data, uio, flags);
 }
