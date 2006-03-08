@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.3 2006/03/08 09:15:10 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.4 2006/03/08 16:44:57 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -125,6 +125,9 @@ void
 kauth_cred_destroy(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+
+	if (simple_lock_held(&cred->cr_lock))	/* XXX elad */
+		simple_unlock(&cred->cr_lock);
 
 	/* XXX: For debugging. */
 	memset(cred, 0, sizeof(*cred));
@@ -611,17 +614,22 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 	if (id == NULL || callback == NULL)
 		return (NULL);
 
+	/* Allocate space for a new scope and listener. */
+	scope = pool_get(&kauth_scope_pool, PR_WAITOK);
+	listener = pool_get(&kauth_listener_pool, PR_WAITOK);
+
 	/* Acquire scope list lock. */
 	simple_lock(&scopes_lock);
 
 	/* Check we don't already have a scope with the same id */
 	if (kauth_ifindscope(id) != NULL) {
 		simple_unlock(&scopes_lock);
+
+		pool_put(&kauth_scope_pool, scope);
+		pool_put(&kauth_listener_pool, listener);
+
 		return (NULL);
 	}
-
-	/* Allocate space for a new scope */
-	scope = pool_get(&kauth_scope_pool, PR_WAITOK);
 
 	/* Initialize new scope with parameters */
 	scope->id = id;
@@ -629,7 +637,6 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 	scope->nlisteners = 1;
 
 	/* Add default listener */
-	listener = pool_get(&kauth_listener_pool, PR_WAITOK);
 	listener->func = callback;
 	listener->scope = scope;
 	listener->refcnt = 0;
