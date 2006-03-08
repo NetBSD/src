@@ -1,4 +1,4 @@
-/*	$NetBSD: geodereg.h,v 1.4 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: geodereg.h,v 1.5 2006/03/08 00:24:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -41,50 +41,7 @@
 #ifndef _I386_PCI_GEODEREG_H_
 #define	_I386_PCI_GEODEREG_H_
 
-/* Macros for bit twiddling. */
-
-#ifndef _BIT_TWIDDLE
-#define _BIT_TWIDDLE
-/* nth bit, BIT(0) == 0x1. */
-#define BIT(n) (((n) == 32) ? 0 : ((uint32_t) 1 << (n)))
-
-/* bits m through n, m < n. */
-#define BITS(m, n) ((BIT(MAX((m), (n)) + 1) - 1) ^ (BIT(MIN((m), (n))) - 1))
-
-/* find least significant bit that is set */
-#define LOWEST_SET_BIT(x) ((((x) - 1) & (x)) ^ (x))
-
-/* for x a power of two and p a non-negative integer, is x a greater power than 2**p? */
-#define GTEQ_POWER(x, p) (((u_long)(x) >> (p)) != 0)
-
-#define MASK_TO_SHIFT2(m) (GTEQ_POWER(LOWEST_SET_BIT((m)), 1) ? 1 : 0)
-
-#define MASK_TO_SHIFT4(m) \
-	(GTEQ_POWER(LOWEST_SET_BIT((m)), 2) \
-	    ? 2 + MASK_TO_SHIFT2((m) >> 2) \
-	    : MASK_TO_SHIFT2((m)))
-
-#define MASK_TO_SHIFT8(m) \
-	(GTEQ_POWER(LOWEST_SET_BIT((m)), 4) \
-	    ? 4 + MASK_TO_SHIFT4((m) >> 4) \
-	    : MASK_TO_SHIFT4((m)))
-
-#define MASK_TO_SHIFT16(m) \
-	(GTEQ_POWER(LOWEST_SET_BIT((m)), 8) \
-	    ? 8 + MASK_TO_SHIFT8((m) >> 8) \
-	    : MASK_TO_SHIFT8((m)))
-
-#define MASK_TO_SHIFT(m) \
-	(GTEQ_POWER(LOWEST_SET_BIT((m)), 16) \
-	    ? 16 + MASK_TO_SHIFT16((m) >> 16) \
-	    : MASK_TO_SHIFT16((m)))
-
-#define MASK_AND_RSHIFT(x, mask) (((x) & (mask)) >> MASK_TO_SHIFT(mask))
-#define LSHIFT(x, mask) ((x) << MASK_TO_SHIFT(mask))
-#define MASK_AND_REPLACE(reg, val, mask) ((reg & ~mask) | LSHIFT(val, mask))
-#define PRESHIFT(m) MASK_AND_RSHIFT((m), (m))
-
-#endif /* _BIT_TWIDDLE */
+#include <lib/libkern/libkern.h>
 
 /* AMD Geode SC1100 X-Bus PCI Configuration Register: General
  * Configuration Block Scratchpad.  Set to 0x00000000 after chip reset.
@@ -115,15 +72,15 @@
 #define	SC1100_WDCNFG_WDTYPE2_MASK	BITS(7,6)
 #define	SC1100_WDCNFG_WDTYPE1_MASK	BITS(5,4)
 
-#define	SC1100_WDCNFG_WDTYPE2_NOACTION	LSHIFT(0, SC1100_WDCNFG_WDTYPE2_MASK)
-#define	SC1100_WDCNFG_WDTYPE2_INTERRUPT	LSHIFT(1, SC1100_WDCNFG_WDTYPE2_MASK)
-#define	SC1100_WDCNFG_WDTYPE2_SMI	LSHIFT(2, SC1100_WDCNFG_WDTYPE2_MASK)
-#define	SC1100_WDCNFG_WDTYPE2_RESET	LSHIFT(3, SC1100_WDCNFG_WDTYPE2_MASK)
+#define	SC1100_WDCNFG_WDTYPE2_NOACTION	SHIFTIN(0, SC1100_WDCNFG_WDTYPE2_MASK)
+#define	SC1100_WDCNFG_WDTYPE2_INTERRUPT	SHIFTIN(1, SC1100_WDCNFG_WDTYPE2_MASK)
+#define	SC1100_WDCNFG_WDTYPE2_SMI	SHIFTIN(2, SC1100_WDCNFG_WDTYPE2_MASK)
+#define	SC1100_WDCNFG_WDTYPE2_RESET	SHIFTIN(3, SC1100_WDCNFG_WDTYPE2_MASK)
 
-#define	SC1100_WDCNFG_WDTYPE1_NOACTION	LSHIFT(0, SC1100_WDCNFG_WDTYPE1_MASK)
-#define	SC1100_WDCNFG_WDTYPE1_INTERRUPT	LSHIFT(1, SC1100_WDCNFG_WDTYPE1_MASK)
-#define	SC1100_WDCNFG_WDTYPE1_SMI	LSHIFT(2, SC1100_WDCNFG_WDTYPE1_MASK)
-#define	SC1100_WDCNFG_WDTYPE1_RESET	LSHIFT(3, SC1100_WDCNFG_WDTYPE1_MASK)
+#define	SC1100_WDCNFG_WDTYPE1_NOACTION	SHIFTIN(0, SC1100_WDCNFG_WDTYPE1_MASK)
+#define	SC1100_WDCNFG_WDTYPE1_INTERRUPT	SHIFTIN(1, SC1100_WDCNFG_WDTYPE1_MASK)
+#define	SC1100_WDCNFG_WDTYPE1_SMI	SHIFTIN(2, SC1100_WDCNFG_WDTYPE1_MASK)
+#define	SC1100_WDCNFG_WDTYPE1_RESET	SHIFTIN(3, SC1100_WDCNFG_WDTYPE1_MASK)
 
 /* Watchdog timer prescaler
  *

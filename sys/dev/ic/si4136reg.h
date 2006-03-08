@@ -1,4 +1,4 @@
-/* $NetBSD: si4136reg.h,v 1.2 2005/12/11 12:21:28 christos Exp $ */
+/* $NetBSD: si4136reg.h,v 1.3 2006/03/08 00:24:06 dyoung Exp $ */
 
 /*
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -46,11 +46,11 @@
 #define SI4126_MAIN	0	/* main configuration */
 #define	SI4126_MAIN_AUXSEL_MASK	BITS(13, 12)	/* aux. output pin function */
 /* reserved */
-#define	SI4126_MAIN_AUXSEL_RSVD		LSHIFT(0x0, SI4126_MAIN_AUXSEL_MASK)
+#define	SI4126_MAIN_AUXSEL_RSVD		SHIFTIN(0x0, SI4126_MAIN_AUXSEL_MASK)
 /* force low */
-#define	SI4126_MAIN_AUXSEL_FRCLOW	LSHIFT(0x1, SI4126_MAIN_AUXSEL_MASK)
+#define	SI4126_MAIN_AUXSEL_FRCLOW	SHIFTIN(0x1, SI4126_MAIN_AUXSEL_MASK)
 /* Lock Detect (LDETB) */
-#define	SI4126_MAIN_AUXSEL_LDETB	LSHIFT(0x3, SI4126_MAIN_AUXSEL_MASK)
+#define	SI4126_MAIN_AUXSEL_LDETB	SHIFTIN(0x3, SI4126_MAIN_AUXSEL_MASK)
 
 #define	SI4126_MAIN_IFDIV_MASK	BITS(11, 10)	/* IFOUT = IFVCO
 						 * frequency / 2**IFDIV.
