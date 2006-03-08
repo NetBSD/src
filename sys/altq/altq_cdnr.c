@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.10 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.10.10.1 2006/03/08 00:23:46 elad Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.10 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.10.10.1 2006/03/08 00:23:46 elad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -1260,7 +1260,9 @@ cdnrioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		if ((error = suser(p)) != 0)
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = generic_authorize(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 #endif
 			return (error);
 		break;

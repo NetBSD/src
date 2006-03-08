@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.12 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.12.10.1 2006/03/08 00:23:46 elad Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12.10.1 2006/03/08 00:23:46 elad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -177,7 +177,9 @@ blueioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = generic_authorize(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;
