@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.21 2006/03/07 18:20:54 rpaulo Exp $	*/
+/*	$NetBSD: est.c,v 1.22 2006/03/08 23:46:23 lukem Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.21 2006/03/07 18:20:54 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.22 2006/03/08 23:46:23 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ static const struct fq_info pentium_m_n778[] = {
 	{  600,  988 } 
 };
 
-/* Intel Pentium M processor 710 1.4 Ghz */
+/* Intel Pentium M processor 710 1.4 GHz */
 static const struct fq_info pentium_m_n710[] = {
 	{ 1400, 1340 },
 	{ 1200, 1228 },
@@ -352,7 +352,7 @@ static const struct fq_info pentium_m_n755[] = {
 	{  600,  988 }
 };
 
-/* Intel Pentium M processor 760 2.0Ghz */
+/* Intel Pentium M processor 760 2.0 GHz */
 static const struct fq_info pentium_m_n760[] = {
 	{ 2000, 1356 },
 	{ 1600, 1244 },
@@ -394,7 +394,7 @@ struct fqlist {
 
 struct cpufsbmult {
 	const int cpu_id;
-	const int multiplier; /* FSB multiplier, in 133mhz increments */
+	const int multiplier; /* FSB multiplier, in 133 MHz increments */
 };
 
 #define ENTRY(s, i, v)	{ s, i, sizeof(v) / sizeof((v)[0]), v }
@@ -434,7 +434,7 @@ static const struct fqlist pentium_m_dothan[] = {
 #undef ENTRY
 
 static const struct cpufsbmult cpuidtofsb[] = {
-	{      0, 3 }, /* default to 400Mhz FSB */
+	{      0, 3 }, /* default to 400 MHz FSB */
 	{ 0x0695, 3 },
 	{ 0x06d6, 3 },
 	{ 0x06d8, 4 }
@@ -468,7 +468,7 @@ static const struct est_cpu est_cpus[] = {
 #define MSR2MHZ(msr)	((((int) (msr) >> 8) & 0xff) * 100 * fsbmult / 3)
 #define MV2MSR(mv)	((((int) (mv) - 700) >> 4) & 0xff)
 #define MHZ2MSR(mhz)	(((3 * (mhz + 30) / (100 * fsbmult)) & 0xff) << 8)
-/* XXX 30 is slop to deal with the 33.333mhz roundoff values */
+/* XXX 30 is slop to deal with the 33.333 MHz roundoff values */
 
 static const struct fqlist *est_fqlist;	/* not NULL if functional */
 static int	est_node_target, est_node_current;
@@ -589,7 +589,7 @@ est_init(struct cpu_info *ci)
 	/*
 	 * OK, tell the user the available frequencies.
 	 */
-	aprint_normal("%d Mhz\n", est_fqlist->table[i].mhz);
+	aprint_normal("%d MHz\n", est_fqlist->table[i].mhz);
 	
 	freq_len = est_fqlist->tablec * (sizeof("9999 ")-1) + 1;
 	freq_names = malloc(freq_len, M_SYSCTLDATA, M_WAITOK);
