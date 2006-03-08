@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.42 2006/02/10 00:53:04 simonb Exp $	*/
+/*	$NetBSD: namei.h,v 1.42.4.1 2006/03/08 01:01:13 elad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -35,6 +35,7 @@
 #define	_SYS_NAMEI_H_
 
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 /*
  * Encapsulation of namei parameters.
@@ -51,7 +52,7 @@ struct nameidata {
 	/*
 	 * Arguments to lookup.
 	 */
-     /* struct	ucred *ni_cred;		   credentials */
+     /* kauth_cred_t ni_cred;		   credentials */
 	struct	vnode *ni_startdir;	/* starting directory */
 	struct	vnode *ni_rootdir;	/* logical root directory */
 	/*
@@ -77,7 +78,7 @@ struct nameidata {
 		u_long	cn_nameiop;	/* namei operation */
 		u_long	cn_flags;	/* flags to namei */
 		struct	lwp *cn_lwp;	/* lwp requesting lookup */
-		struct	ucred *cn_cred;	/* credentials */
+		kauth_cred_t cn_cred;	/* credentials */
 		/*
 		 * Shared between lookup and commit routines.
 		 */
@@ -146,7 +147,7 @@ struct nameidata {
 	(ndp)->ni_segflg = segflg; \
 	(ndp)->ni_dirp = namep; \
 	(ndp)->ni_cnd.cn_lwp = l; \
-	(ndp)->ni_cnd.cn_cred = l->l_proc->p_ucred; \
+	(ndp)->ni_cnd.cn_cred = l->l_proc->p_cred; \
 }
 #endif
 

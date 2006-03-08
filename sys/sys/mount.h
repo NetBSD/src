@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.138 2006/03/06 22:47:13 simonb Exp $	*/
+/*	$NetBSD: mount.h,v 1.138.2.1 2006/03/08 01:01:13 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -45,6 +45,7 @@
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/statvfs.h>
+#include <sys/kauth.h>
 
 /*
  * file system statistics
@@ -192,7 +193,7 @@ struct vfsops {
 				    struct lwp *);
 	int	(*vfs_statvfs)	(struct mount *, struct statvfs *,
 				    struct lwp *);
-	int	(*vfs_sync)	(struct mount *, int, struct ucred *,
+	int	(*vfs_sync)	(struct mount *, int, kauth_cred_t,
 				    struct lwp *);
 	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
 	int	(*vfs_fhtovp)	(struct mount *, struct fid *,

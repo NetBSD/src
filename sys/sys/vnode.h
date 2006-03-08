@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.153 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: vnode.h,v 1.153.4.1 2006/03/08 01:01:13 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,7 @@
 #include <sys/event.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 /* XXX: clean up includes later */
 #include <uvm/uvm_param.h>	/* XXX */
@@ -528,7 +529,7 @@ struct vnode *
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
 	    struct vnode **);
 void	ungetnewvnode(struct vnode *);
-int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
+int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);
 int 	vcount(struct vnode *);
 void	vdevgone(int, int, int, enum vtype);
@@ -538,7 +539,7 @@ void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
 void 	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct lwp *);
-int	vinvalbuf(struct vnode *, int, struct ucred *,
+int	vinvalbuf(struct vnode *, int, kauth_cred_t,
 	    struct lwp *, int, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
@@ -549,14 +550,14 @@ void	vwakeup(struct buf *);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
-int 	vn_close(struct vnode *, int, struct ucred *, struct lwp *);
+int 	vn_close(struct vnode *, int, kauth_cred_t, struct lwp *);
 int	vn_isunder(struct vnode *, struct vnode *, struct lwp *);
 int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *, int, int);
 int 	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t, enum uio_seg,
-	    int, struct ucred *, size_t *, struct lwp *);
+	    int, kauth_cred_t, size_t *, struct lwp *);
 int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
 	    off_t **, int *);
 void	vn_restorerecurse(struct vnode *, u_int);
