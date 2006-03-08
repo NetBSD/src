@@ -1,3 +1,5 @@
+# $NetBSD: README.kernelauth,v 1.1.2.2 2006/03/08 01:50:40 elad Exp $
+
 This is the kernel authorization branch.
 
 The purpose of this work is to replace the way credentials are stored
