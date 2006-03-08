@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.51.8.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.51.8.2 2006/03/08 18:47:24 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,6 +33,8 @@
 
 #ifndef _UFS_FFS_FFS_EXTERN_H_
 #define _UFS_FFS_FFS_EXTERN_H_
+
+#include <sys/kauth.h>
 
 /*
  * Sysctl values for the fast filesystem.
