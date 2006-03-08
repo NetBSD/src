@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.1.2.2 2006/03/08 06:55:49 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.1.2.3 2006/03/08 17:17:46 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -28,6 +28,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * This is based on Apple TN2127, available online at
+ * http://developer.apple.com/technotes/tn2005/tn2127.html
  */
 
 #ifndef _SYS_KAUTH_H_
