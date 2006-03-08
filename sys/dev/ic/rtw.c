@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.68 2006/03/08 00:24:06 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.69 2006/03/08 08:26:50 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.68 2006/03/08 00:24:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.69 2006/03/08 08:26:50 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1139,13 +1139,13 @@ rtw_identify_sta(struct rtw_regs *regs, uint8_t (*addr)[IEEE80211_ADDR_LEN],
 	uint32_t idr0 = RTW_READ(regs, RTW_IDR0),
 	          idr1 = RTW_READ(regs, RTW_IDR1);
 
-	(*addr)[0] = SHIFTOUT(idr0, BITS(0,  7));
-	(*addr)[1] = SHIFTOUT(idr0, BITS(8,  15));
-	(*addr)[2] = SHIFTOUT(idr0, BITS(16, 23));
-	(*addr)[3] = SHIFTOUT(idr0, BITS(24 ,31));
+	(*addr)[0] = SHIFTOUT(idr0, __BITS(0,  7));
+	(*addr)[1] = SHIFTOUT(idr0, __BITS(8,  15));
+	(*addr)[2] = SHIFTOUT(idr0, __BITS(16, 23));
+	(*addr)[3] = SHIFTOUT(idr0, __BITS(24 ,31));
 
-	(*addr)[4] = SHIFTOUT(idr1, BITS(0,  7));
-	(*addr)[5] = SHIFTOUT(idr1, BITS(8, 15));
+	(*addr)[4] = SHIFTOUT(idr1, __BITS(0,  7));
+	(*addr)[5] = SHIFTOUT(idr1, __BITS(8, 15));
 
 	if (IEEE80211_ADDR_EQ(addr, empty_macaddr)) {
 		printf("%s: could not get mac address, attach failed\n",

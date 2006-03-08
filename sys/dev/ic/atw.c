@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.111 2006/03/08 00:26:43 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.112 2006/03/08 08:26:50 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.111 2006/03/08 00:26:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.112 2006/03/08 08:26:50 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1930,7 +1930,7 @@ atw_si4126_write(struct atw_softc *sc, u_int addr, u_int val)
 	ATW_WRITE(sc, ATW_SYNRF, reg | ATW_SYNRF_LEIF);
 	ATW_WRITE(sc, ATW_SYNRF, reg);
 
-	for (mask = BIT(nbits - 1); mask != 0; mask >>= 1) {
+	for (mask = __BIT(nbits - 1); mask != 0; mask >>= 1) {
 		if ((bits & mask) != 0)
 			reg |= ATW_SYNRF_SYNDATA;
 		else
@@ -1996,7 +1996,7 @@ atw_si4126_read(struct atw_softc *sc, u_int addr, u_int *val)
 
 /* XXX is the endianness correct? test. */
 #define	atw_calchash(addr) \
-	(ether_crc32_le((addr), IEEE80211_ADDR_LEN) & BITS(5, 0))
+	(ether_crc32_le((addr), IEEE80211_ADDR_LEN) & __BITS(5, 0))
 
 /*
  * atw_filter_setup:
