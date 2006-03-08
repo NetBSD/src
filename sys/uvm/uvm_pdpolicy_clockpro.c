@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.4 2006/03/08 14:01:33 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.5 2006/03/08 14:21:03 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.4 2006/03/08 14:01:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.5 2006/03/08 14:21:03 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -127,7 +127,7 @@ PDPOL_EVCNT_DEFINE(speculativemiss)
 #define	PQ_SPECULATIVE	PQ_PRIVATE8
 
 #define	CLOCKPRO_NOQUEUE	0
-#define	CLOCKPRO_NEWQ		1
+#define	CLOCKPRO_NEWQ		1	/* small queue to clear initial ref. */
 #if defined(LISTQ)
 #define	CLOCKPRO_COLDQ		2
 #define	CLOCKPRO_HOTQ		3
@@ -871,6 +871,10 @@ again:
 
 	KASSERT(clockpro_pagequeue(pg) == hotq);
 
+	/*
+	 * terminate test period of nonresident pages by cycling them.
+	 */
+
 	cycle_target_frac += BUCKETSIZE;
 	hotqlen = pageq_len(hotq);
 	while (cycle_target_frac >= hotqlen) {
@@ -889,6 +893,13 @@ again:
 	KASSERT((pg->pqflags & PQ_TEST) == 0);
 	KASSERT((pg->pqflags & PQ_INITIALREF) == 0);
 	KASSERT((pg->pqflags & PQ_SPECULATIVE) == 0);
+
+	/*
+	 * once we met our target,
+	 * stop at a hot page so that no cold pages in test period
+	 * have larger recency than any hot pages.
+	 */
+
 	if (s->s_ncold >= s->s_coldtarget) {
 		dump("hot done");
 		return;
@@ -1213,6 +1224,8 @@ uvmpdpol_tune(void)
 void
 uvmpdpol_sysctlsetup(void)
 {
+
+	/* nothing */
 }
 
 #if defined(DDB)
