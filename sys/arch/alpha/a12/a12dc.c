@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.14 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: a12dc.c,v 1.14.10.1 2006/03/08 00:43:04 elad Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.14 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.14.10.1 2006/03/08 00:43:04 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,7 +163,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.14 $");
+	printf(": driver %s\n", "$Revision: 1.14.10.1 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -286,7 +286,7 @@ a12dcopen(dev, flag, mode, p)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return EBUSY;
 
 	s = spltty();

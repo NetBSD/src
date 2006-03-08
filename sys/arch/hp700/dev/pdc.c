@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.15 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: pdc.c,v 1.15.10.1 2006/03/08 00:43:06 elad Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.15 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.15.10.1 2006/03/08 00:43:06 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ pdcopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		setuptimeout = 1;
 	} else if ((tp->t_state&TS_XCLUDE) &&
-		    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) {
+		    generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) {
 		splx(s);
 		return EBUSY;
 	} else

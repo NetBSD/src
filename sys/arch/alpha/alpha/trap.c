@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.104 2006/02/22 22:11:44 drochner Exp $ */
+/* $NetBSD: trap.c,v 1.104.4.1 2006/03/08 00:43:05 elad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2006/02/22 22:11:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104.4.1 2006/03/08 00:43:05 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,8 +547,8 @@ do_fault:
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n", l->l_proc->p_pid,
 				       l->l_proc->p_comm,
-				       l->l_proc->p_cred && l->l_proc->p_ucred ?
-				       l->l_proc->p_ucred->cr_uid : -1);
+				       l->l_proc->p_cred ?
+				       kauth_cred_geteuid(l->l_proc->p_cred) : -1);
 				ksi.ksi_signo = SIGKILL;
 			} else
 				ksi.ksi_signo = SIGSEGV;

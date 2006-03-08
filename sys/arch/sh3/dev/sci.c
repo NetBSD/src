@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.45.2.1 2006/03/08 00:43:13 elad Exp $ */
+/* $NetBSD: sci.c,v 1.41.2.2 2006/03/08 00:43:13 elad Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,10 +100,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.45.2.1 2006/03/08 00:43:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.41.2.2 2006/03/08 00:43:13 elad Exp $");
 
 #include "opt_kgdb.h"
-#include "opt_scif.h"
+#include "opt_sci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,36 +115,30 @@ __KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.45.2.1 2006/03/08 00:43:13 elad Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/kgdb.h>
 
 #include <dev/cons.h>
 
 #include <sh3/clock.h>
+#include <sh3/scireg.h>
+#include <sh3/pfcreg.h>
+#include <sh3/tmureg.h>
 #include <sh3/exception.h>
-#include <sh3/scifreg.h>
 #include <machine/intr.h>
 
-#include <sh3/dev/scifvar.h>
+static void	scistart(struct tty *);
+static int	sciparam(struct tty *, struct termios *);
 
-#include "locators.h"
+void scicnprobe(struct consdev *);
+void scicninit(struct consdev *);
+void scicnputc(dev_t, int);
+int scicngetc(dev_t);
+void scicnpoolc(dev_t, int);
+int sciintr(void *);
 
-static void	scifstart(struct tty *);
-static int	scifparam(struct tty *, struct termios *);
-static int kgdb_attached;
-
-void scifcnprobe(struct consdev *);
-void scifcninit(struct consdev *);
-void scifcnputc(dev_t, int);
-int scifcngetc(dev_t);
-void scifcnpoolc(dev_t, int);
-void scif_intr_init(void);
-int scifintr(void *);
-
-struct scif_softc {
+struct sci_softc {
 	struct device sc_dev;		/* boilerplate */
 	struct tty *sc_tty;
 	void *sc_si;
-
 	struct callout sc_diag_ch;
 
 #if 0
@@ -163,7 +157,7 @@ struct scif_softc {
 
 	int sc_hwflags;
 	int sc_swflags;
-	u_int sc_fifolen;
+	u_int sc_fifolen;		/* XXX always 0? */
 
 	u_int sc_r_hiwat,
 	      sc_r_lowat;
@@ -177,7 +171,7 @@ struct scif_softc {
  	u_int sc_tbc,			/* transmit byte count */
 	      sc_heldtbc;
 
-	volatile u_char sc_rx_flags,
+	volatile u_char sc_rx_flags,	/* receiver blocked */
 #define	RX_TTY_BLOCKED		0x01
 #define	RX_TTY_OVERFLOWED	0x02
 #define	RX_IBUF_BLOCKED		0x04
@@ -193,331 +187,256 @@ struct scif_softc {
 };
 
 /* controller driver configuration */
-static int scif_match(struct device *, struct cfdata *, void *);
-static void scif_attach(struct device *, struct device *, void *);
+static int sci_match(struct device *, struct cfdata *, void *);
+static void sci_attach(struct device *, struct device *, void *);
 
-void	scif_break(struct scif_softc *, int);
-void	scif_iflush(struct scif_softc *);
+void	sci_break(struct sci_softc *, int);
+void	sci_iflush(struct sci_softc *);
 
 #define	integrate	static inline
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-void 	scifsoft(void *);
+void 	scisoft(void *);
 #else
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
-void 	scifsoft(void);
+void 	scisoft(void);
 #else
-void 	scifsoft(void *);
+void 	scisoft(void *);
 #endif
 #endif
-integrate void scif_rxsoft(struct scif_softc *, struct tty *);
-integrate void scif_txsoft(struct scif_softc *, struct tty *);
-integrate void scif_stsoft(struct scif_softc *, struct tty *);
-integrate void scif_schedrx(struct scif_softc *);
-void	scifdiag(void *);
+integrate void sci_rxsoft(struct sci_softc *, struct tty *);
+integrate void sci_txsoft(struct sci_softc *, struct tty *);
+integrate void sci_stsoft(struct sci_softc *, struct tty *);
+integrate void sci_schedrx(struct sci_softc *);
+void	scidiag(void *);
 
+#define	SCIUNIT_MASK		0x7ffff
+#define	SCIDIALOUT_MASK	0x80000
 
-#define	SCIFUNIT_MASK		0x7ffff
-#define	SCIFDIALOUT_MASK	0x80000
-
-#define	SCIFUNIT(x)	(minor(x) & SCIFUNIT_MASK)
-#define	SCIFDIALOUT(x)	(minor(x) & SCIFDIALOUT_MASK)
+#define	SCIUNIT(x)	(minor(x) & SCIUNIT_MASK)
+#define	SCIDIALOUT(x)	(minor(x) & SCIDIALOUT_MASK)
 
 /* Hardware flag masks */
-#define	SCIF_HW_NOIEN	0x01
-#define	SCIF_HW_FIFO	0x02
-#define	SCIF_HW_FLOW	0x08
-#define	SCIF_HW_DEV_OK	0x20
-#define	SCIF_HW_CONSOLE	0x40
-#define	SCIF_HW_KGDB	0x80
+#define	SCI_HW_NOIEN	0x01
+#define	SCI_HW_FIFO	0x02
+#define	SCI_HW_FLOW	0x08
+#define	SCI_HW_DEV_OK	0x20
+#define	SCI_HW_CONSOLE	0x40
+#define	SCI_HW_KGDB	0x80
 
 /* Buffer size for character buffer */
-#define	SCIF_RING_SIZE	2048
+#define	SCI_RING_SIZE	2048
 
 /* Stop input when 3/4 of the ring is full; restart when only 1/4 is full. */
-u_int scif_rbuf_hiwat = (SCIF_RING_SIZE * 1) / 4;
-u_int scif_rbuf_lowat = (SCIF_RING_SIZE * 3) / 4;
+u_int sci_rbuf_hiwat = (SCI_RING_SIZE * 1) / 4;
+u_int sci_rbuf_lowat = (SCI_RING_SIZE * 3) / 4;
 
 #define	CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-int scifconscflag = CONMODE;
-int scifisconsole = 0;
+int sciconscflag = CONMODE;
+int sciisconsole = 0;
 
-#ifdef SCIFCN_SPEED
-unsigned int scifcn_speed = SCIFCN_SPEED;
+#ifdef SCICN_SPEED
+int scicn_speed = SCICN_SPEED;
 #else
-unsigned int scifcn_speed = 9600;
+int scicn_speed = 9600;
 #endif
 
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
-volatile int	scif_softintr_scheduled;
-struct callout scif_soft_ch = CALLOUT_INITIALIZER;
+volatile int	sci_softintr_scheduled;
+struct callout sci_soft_ch = CALLOUT_INITIALIZER;
 #endif
 #endif
 
-u_int scif_rbuf_size = SCIF_RING_SIZE;
+u_int sci_rbuf_size = SCI_RING_SIZE;
 
-CFATTACH_DECL(scif, sizeof(struct scif_softc),
-    scif_match, scif_attach, NULL, NULL);
+CFATTACH_DECL(sci, sizeof(struct sci_softc),
+    sci_match, sci_attach, NULL, NULL);
 
-extern struct cfdriver scif_cd;
+extern struct cfdriver sci_cd;
 
-static int scif_attached;
+static int sci_attached;
 
-dev_type_open(scifopen);
-dev_type_close(scifclose);
-dev_type_read(scifread);
-dev_type_write(scifwrite);
-dev_type_ioctl(scifioctl);
-dev_type_stop(scifstop);
-dev_type_tty(sciftty);
-dev_type_poll(scifpoll);
+dev_type_open(sciopen);
+dev_type_close(sciclose);
+dev_type_read(sciread);
+dev_type_write(sciwrite);
+dev_type_ioctl(sciioctl);
+dev_type_stop(scistop);
+dev_type_tty(scitty);
+dev_type_poll(scipoll);
 
-const struct cdevsw scif_cdevsw = {
-	scifopen, scifclose, scifread, scifwrite, scifioctl,
-	scifstop, sciftty, scifpoll, nommap, ttykqfilter, D_TTY
+const struct cdevsw sci_cdevsw = {
+	sciopen, sciclose, sciread, sciwrite, sciioctl,
+	scistop, scitty, scipoll, nommap, ttykqfilter, D_TTY
 };
 
-void InitializeScif (unsigned int);
+void InitializeSci (unsigned int);
 
 /*
  * following functions are debugging prupose only
  */
 #define	CR      0x0D
+#define	I2C_ADRS (*(volatile unsigned int *)0xa8000000)
 #define	USART_ON (unsigned int)~0x08
 
-void scif_putc(unsigned char);
-unsigned char scif_getc(void);
-int ScifErrCheck(void);
-
-
-/* XXX: uwe
- * Prepare for bus_spacification.  The difference in access widths is
- * still handled by the magic definitions in scifreg.h
- */
-#define scif_smr_read()		SHREG_SCSMR2
-#define scif_smr_write(v)	(SHREG_SCSMR2 = (v))
-
-#define scif_brr_read()		SHREG_SCBRR2
-#define scif_brr_write(v)	(SHREG_SCBRR2 = (v))
-
-#define scif_scr_read()		SHREG_SCSCR2
-#define scif_scr_write(v)	(SHREG_SCSCR2 = (v))
-
-#define scif_ftdr_write(v)	(SHREG_SCFTDR2 = (v))
-
-#define scif_ssr_read()		SHREG_SCSSR2
-#define scif_ssr_write(v)	(SHREG_SCSSR2 = (v))
-
-#define scif_frdr_read()	SHREG_SCFRDR2
-
-#define scif_fcr_read()		SHREG_SCFCR2
-#define scif_fcr_write(v)	(SHREG_SCFCR2 = (v))
-
-#define scif_fdr_read()		SHREG_SCFDR2
-
-#ifdef SH4 /* additional registers in sh4 */
-
-#define scif_sptr_read()	SHREG_SCSPTR2
-#define scif_sptr_write(v)	(SHREG_SCSPTR2 = (v))
-
-#define scif_lsr_read()		SHREG_SCLSR2
-#define scif_lsr_write(v)	(SHREG_SCLSR2 = (v))
-
-#endif /* SH4 */
-
+void sci_putc(unsigned char);
+unsigned char sci_getc(void);
+int SciErrCheck(void);
 
 /*
- * InitializeScif
+ * InitializeSci
  * : unsigned int bps;
- * : SCIF(Serial Communication Interface)
+ * : SCI(Serial Communication Interface)
  */
 
 void
-InitializeScif(unsigned int bps)
+InitializeSci(unsigned int bps)
 {
 
 	/* Initialize SCR */
-	scif_scr_write(0x00);
+	SHREG_SCSCR = 0x00;
 
-#if 0
-	scif_fcr_write(SCFCR2_TFRST | SCFCR2_RFRST | SCFCR2_MCE);
-#else
-	scif_fcr_write(SCFCR2_TFRST | SCFCR2_RFRST);
-#endif
 	/* Serial Mode Register */
-	scif_smr_write(0x00);	/* 8bit,NonParity,Even,1Stop */
+	SHREG_SCSMR = 0x00;	/* Async,8bit,NonParity,Even,1Stop,NoMulti */
 
 	/* Bit Rate Register */
-	scif_brr_write(divrnd(sh_clock_get_pclock(), 32 * bps) - 1);
+	SHREG_SCBRR = divrnd(sh_clock_get_pclock(), 32 * bps) - 1;
 
 	/*
-	 * wait 2m Sec, because Send/Recv must begin 1 bit period after
+	 * wait 1mSec, because Send/Recv must begin 1 bit period after
 	 * BRR is set.
 	 */
-	delay(2000);
-
-#if 0
-	scif_fcr_write(FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1 | SCFCR2_MCE);
-#else
-	scif_fcr_write(FIFO_RCV_TRIGGER_14 | FIFO_XMT_TRIGGER_1);
-#endif
+	delay(1000);
 
 	/* Send permission, Receive permission ON */
-	scif_scr_write(SCSCR2_TE | SCSCR2_RE);
+	SHREG_SCSCR = SCSCR_TE | SCSCR_RE;
 
 	/* Serial Status Register */
-	scif_ssr_write(scif_ssr_read() & SCSSR2_TDFE); /* Clear Status */
+	SHREG_SCSSR &= SCSSR_TDRE;	/* Clear Status */
+
+#if 0
+	I2C_ADRS &= ~0x08;	/* enable RS-232C */
+#endif
 }
 
 
 /*
- * scif_putc
+ * sci_putc
  *  : unsigned char c;
  */
-
 void
-scif_putc(unsigned char c)
+sci_putc(unsigned char c)
 {
 
 	/* wait for ready */
-	while ((scif_fdr_read() & SCFDR2_TXCNT) == SCFDR2_TXF_FULL)
-		continue;
+	while ((SHREG_SCSSR & SCSSR_TDRE) == 0)
+		;
 
 	/* write send data to send register */
-	scif_ftdr_write(c);
+	SHREG_SCTDR = c;
 
 	/* clear ready flag */
-	scif_ssr_write(scif_ssr_read() & ~(SCSSR2_TDFE | SCSSR2_TEND));
+	SHREG_SCSSR &= ~SCSSR_TDRE;
 }
 
 /*
- * : ScifErrCheck
- *	0x80 = error
- *	0x08 = frame error
- *	0x04 = parity error
+ * : SciErrCheck
+ *	0x20 = over run
+ *	0x10 = frame error
+ *	0x80 = parity error
  */
 int
-ScifErrCheck(void)
+SciErrCheck(void)
 {
 
-	return (scif_ssr_read() & (SCSSR2_ER | SCSSR2_FER | SCSSR2_PER));
+	return(SHREG_SCSSR & (SCSSR_ORER | SCSSR_FER | SCSSR_PER));
 }
 
 /*
- * scif_getc
+ * sci_getc
  */
 unsigned char
-scif_getc(void)
+sci_getc(void)
 {
 	unsigned char c, err_c;
-#ifdef SH4
-	unsigned short err_c2 = 0; /* XXXGCC: -Wuninitialized */
-#endif
 
-	for (;;) {
-		/* wait for ready */
-		while ((scif_fdr_read() & SCFDR2_RECVCNT) == 0)
-			continue;
-
-		c = scif_frdr_read();
-		err_c = scif_ssr_read();
-		scif_ssr_write(scif_ssr_read()
-			& ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_RDF | SCSSR2_DR));
-#ifdef SH4
-		if (CPU_IS_SH4) {
-			err_c2 = scif_lsr_read();
-			scif_lsr_write(scif_lsr_read() & ~SCLSR2_ORER);
-		}
-#endif
-		if ((err_c & (SCSSR2_ER | SCSSR2_BRK | SCSSR2_FER
-		    | SCSSR2_PER)) == 0) {
-#ifdef SH4
-			if (CPU_IS_SH4 && ((err_c2 & SCLSR2_ORER) == 0))
-#endif
-			return(c);
-		}
+	while (((err_c = SHREG_SCSSR)
+		& (SCSSR_RDRF | SCSSR_ORER | SCSSR_FER | SCSSR_PER)) == 0)
+		;
+	if ((err_c & (SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0) {
+		SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_FER | SCSSR_PER);
+		return(err_c |= 0x80);
 	}
 
+	c = SHREG_SCRDR;
+
+	SHREG_SCSSR &= ~SCSSR_RDRF;
+
+	return(c);
 }
 
 static int
-scif_match(struct device *parent, struct cfdata *cfp, void *aux)
+sci_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_name, "scif") || scif_attached)
+	if (strcmp(cfp->cf_name, "sci") || sci_attached)
 		return 0;
 
 	return 1;
 }
 
 static void
-scif_attach(struct device *parent, struct device *self, void *aux)
+sci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct scif_softc *sc = (struct scif_softc *)self;
+	struct sci_softc *sc = (struct sci_softc *)self;
 	struct tty *tp;
 
-	scif_attached = 1;
+	sci_attached = 1;
 
 	sc->sc_hwflags = 0;	/* XXX */
 	sc->sc_swflags = 0;	/* XXX */
-	sc->sc_fifolen = 16;
+	sc->sc_fifolen = 0;	/* XXX */
 
-	if (scifisconsole || kgdb_attached) {
-		/* InitializeScif(scifcn_speed); */
-		SET(sc->sc_hwflags, SCIF_HW_CONSOLE);
+	if (sciisconsole) {
+		SET(sc->sc_hwflags, SCI_HW_CONSOLE);
 		SET(sc->sc_swflags, TIOCFLAG_SOFTCAR);
-		if (kgdb_attached) {
-			SET(sc->sc_hwflags, SCIF_HW_KGDB);
-			printf("\n%s: kgdb\n", sc->sc_dev.dv_xname);
-		} else {
-			printf("\n%s: console\n", sc->sc_dev.dv_xname);
-		}
+		printf("\n%s: console\n", sc->sc_dev.dv_xname);
 	} else {
-		InitializeScif(9600);
+		InitializeSci(9600);
 		printf("\n");
 	}
 
 	callout_init(&sc->sc_diag_ch);
-#ifdef SH4
-	intc_intr_establish(SH4_INTEVT_SCIF_ERI, IST_LEVEL, IPL_SERIAL,
-	    scifintr, sc);
-	intc_intr_establish(SH4_INTEVT_SCIF_RXI, IST_LEVEL, IPL_SERIAL,
-	    scifintr, sc);
-	intc_intr_establish(SH4_INTEVT_SCIF_BRI, IST_LEVEL, IPL_SERIAL,
-	    scifintr, sc);
-	intc_intr_establish(SH4_INTEVT_SCIF_TXI, IST_LEVEL, IPL_SERIAL,
-	    scifintr, sc);
-#else
-	intc_intr_establish(SH7709_INTEVT2_SCIF_ERI, IST_LEVEL, IPL_SERIAL,
-	    scifintr, sc);
-	intc_intr_establish(SH7709_INTEVT2_SCIF_RXI, IST_LEVEL, IPL_SERIAL,
-	    scifintr, sc);
-	intc_intr_establish(SH7709_INTEVT2_SCIF_BRI, IST_LEVEL, IPL_SERIAL,
-	    scifintr, sc);
-	intc_intr_establish(SH7709_INTEVT2_SCIF_TXI, IST_LEVEL, IPL_SERIAL,
-	    scifintr, sc);
-#endif
+
+	intc_intr_establish(SH_INTEVT_SCI_ERI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
+	intc_intr_establish(SH_INTEVT_SCI_RXI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
+	intc_intr_establish(SH_INTEVT_SCI_TXI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
+	intc_intr_establish(SH_INTEVT_SCI_TEI, IST_LEVEL, IPL_SERIAL, sciintr,
+	    sc);
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, scifsoft, sc);
+	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, scisoft, sc);
 #endif
-	SET(sc->sc_hwflags, SCIF_HW_DEV_OK);
+	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
 
 	tp = ttymalloc();
-	tp->t_oproc = scifstart;
-	tp->t_param = scifparam;
+	tp->t_oproc = scistart;
+	tp->t_param = sciparam;
 	tp->t_hwiflow = NULL;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(scif_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
+	sc->sc_rbuf = malloc(sci_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_rbuf == NULL) {
 		printf("%s: unable to allocate ring buffer\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	sc->sc_ebuf = sc->sc_rbuf + (scif_rbuf_size << 1);
+	sc->sc_ebuf = sc->sc_rbuf + (sci_rbuf_size << 1);
 
 	tty_attach(tp);
 }
@@ -526,9 +445,9 @@ scif_attach(struct device *parent, struct device *self, void *aux)
  * Start or restart transmission.
  */
 static void
-scifstart(struct tty *tp)
+scistart(struct tty *tp)
 {
-	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(tp->t_dev)];
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
 	int s;
 
 	s = spltty();
@@ -565,25 +484,15 @@ scifstart(struct tty *tp)
 	sc->sc_tx_busy = 1;
 
 	/* Enable transmit completion interrupts if necessary. */
-	scif_scr_write(scif_scr_read() | SCSCR2_TIE | SCSCR2_RIE);
+	SHREG_SCSCR |= SCSCR_TIE | SCSCR_RIE;
 
-	/* Output the first chunk of the contiguous buffer. */
+	/* Output the first byte of the contiguous buffer. */
 	{
-		int n;
-		int maxchars;
-		int i;
-
-		n = sc->sc_tbc;
-		maxchars = sc->sc_fifolen
-			- ((scif_fdr_read() & SCFDR2_TXCNT) >> 8);
-		if (n > maxchars)
-			n = maxchars;
-
-		for (i = 0; i < n; i++) {
-			scif_putc(*(sc->sc_tba));
+		if (sc->sc_tbc > 0) {
+			sci_putc(*(sc->sc_tba));
 			sc->sc_tba++;
+			sc->sc_tbc--;
 		}
-		sc->sc_tbc -= n;
 	}
 out:
 	splx(s);
@@ -591,14 +500,14 @@ out:
 }
 
 /*
- * Set SCIF tty parameters from termios.
+ * Set SCI tty parameters from termios.
  * XXX - Should just copy the whole termios after
  * making sure all the changes could be done.
  */
 static int
-scifparam(struct tty *tp, struct termios *t)
+sciparam(struct tty *tp, struct termios *t)
 {
-	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(tp->t_dev)];
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
 	int ospeed = t->c_ospeed;
 	int s;
 
@@ -616,7 +525,7 @@ scifparam(struct tty *tp, struct termios *t)
 	 * is always active.
 	 */
 	if (ISSET(sc->sc_swflags, TIOCFLAG_SOFTCAR) ||
-	    ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
+	    ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {
 		SET(t->c_cflag, CLOCAL);
 		CLR(t->c_cflag, HUPCL);
 	}
@@ -638,18 +547,6 @@ scifparam(struct tty *tp, struct termios *t)
 	s = splserial();
 
 	/*
-	 * Set the flow control pins depending on the current flow control
-	 * mode.
-	 */
-	if (ISSET(t->c_cflag, CRTSCTS)) {
-		scif_fcr_write(scif_fcr_read() | SCFCR2_MCE);
-	} else {
-		scif_fcr_write(scif_fcr_read() & ~SCFCR2_MCE);
-	}
-
-	scif_brr_write(divrnd(sh_clock_get_pclock(), 32 * ospeed) -1);
-
-	/*
 	 * Set the FIFO threshold based on the receive speed.
 	 *
 	 *  * If it's a low speed, it's probably a mouse or some other
@@ -660,9 +557,9 @@ scifparam(struct tty *tp, struct termios *t)
 	 */
 #if 0
 /* XXX (msaitoh) */
-	if (ISSET(sc->sc_hwflags, SCIF_HW_HAYESP))
+	if (ISSET(sc->sc_hwflags, SCI_HW_HAYESP))
 		sc->sc_fifo = FIFO_DMA_MODE | FIFO_ENABLE | FIFO_TRIGGER_8;
-	else if (ISSET(sc->sc_hwflags, SCIF_HW_FIFO))
+	else if (ISSET(sc->sc_hwflags, SCI_HW_FIFO))
 		sc->sc_fifo = FIFO_ENABLE |
 		    (t->c_ospeed <= 1200 ? FIFO_TRIGGER_1 :
 		     t->c_ospeed <= 38400 ? FIFO_TRIGGER_8 : FIFO_TRIGGER_4);
@@ -684,7 +581,7 @@ scifparam(struct tty *tp, struct termios *t)
 #if 0
 /* XXX (msaitoh) */
 		else
-			scif_loadchannelregs(sc);
+			sci_loadchannelregs(sc);
 #endif
 	}
 
@@ -694,24 +591,24 @@ scifparam(struct tty *tp, struct termios *t)
 		sc->sc_r_lowat = 0;
 		if (ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED)) {
 			CLR(sc->sc_rx_flags, RX_TTY_OVERFLOWED);
-			scif_schedrx(sc);
+			sci_schedrx(sc);
 		}
 	} else {
-		sc->sc_r_hiwat = scif_rbuf_hiwat;
-		sc->sc_r_lowat = scif_rbuf_lowat;
+		sc->sc_r_hiwat = sci_rbuf_hiwat;
+		sc->sc_r_lowat = sci_rbuf_lowat;
 	}
 
 	splx(s);
 
-#ifdef SCIF_DEBUG
-	if (scif_debug)
-		scifstatus(sc, "scifparam ");
+#ifdef SCI_DEBUG
+	if (sci_debug)
+		scistatus(sc, "sciparam ");
 #endif
 
 	if (!ISSET(t->c_cflag, CHWFLOW)) {
 		if (sc->sc_tx_stopped) {
 			sc->sc_tx_stopped = 0;
-			scifstart(tp);
+			scistart(tp);
 		}
 	}
 
@@ -719,33 +616,38 @@ scifparam(struct tty *tp, struct termios *t)
 }
 
 void
-scif_iflush(struct scif_softc *sc)
+sci_iflush(struct sci_softc *sc)
 {
-	int i;
-	unsigned char c;
+	unsigned char err_c;
+	volatile unsigned char c;
 
-	i = scif_fdr_read() & SCFDR2_RECVCNT;
+	if (((err_c = SHREG_SCSSR)
+	     & (SCSSR_RDRF | SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0) {
 
-	while (i > 0) {
-		c = scif_frdr_read();
-		scif_ssr_write(scif_ssr_read() & ~(SCSSR2_RDF | SCSSR2_DR));
-		i--;
+		if ((err_c & (SCSSR_ORER | SCSSR_FER | SCSSR_PER)) != 0) {
+			SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_FER | SCSSR_PER);
+			return;
+		}
+
+		c = SHREG_SCRDR;
+
+		SHREG_SCSSR &= ~SCSSR_RDRF;
 	}
 }
 
 int
-scifopen(dev_t dev, int flag, int mode, struct lwp *l)
+sciopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	int unit = SCIFUNIT(dev);
-	struct scif_softc *sc;
+	int unit = SCIUNIT(dev);
+	struct sci_softc *sc;
 	struct tty *tp;
 	int s, s2;
 	int error;
 
-	if (unit >= scif_cd.cd_ndevs)
+	if (unit >= sci_cd.cd_ndevs)
 		return (ENXIO);
-	sc = scif_cd.cd_devs[unit];
-	if (sc == 0 || !ISSET(sc->sc_hwflags, SCIF_HW_DEV_OK) ||
+	sc = sci_cd.cd_devs[unit];
+	if (sc == 0 || !ISSET(sc->sc_hwflags, SCI_HW_DEV_OK) ||
 	    sc->sc_rbuf == NULL)
 		return (ENXIO);
 
@@ -756,9 +658,9 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 	/*
 	 * If this is the kgdb port, no other use is permitted.
 	 */
-	if (ISSET(sc->sc_hwflags, SCIF_HW_KGDB))
+	if (ISSET(sc->sc_hwflags, SCI_HW_KGDB))
 		return (EBUSY);
-#endif /* KGDB */
+#endif
 
 	tp = sc->sc_tty;
 
@@ -780,7 +682,7 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 		s2 = splserial();
 
 		/* Turn on interrupts. */
-		scif_scr_write(scif_scr_read() | SCSCR2_TIE | SCSCR2_RIE);
+		SHREG_SCSCR |= SCSCR_TIE | SCSCR_RIE;
 
 		splx(s2);
 
@@ -789,9 +691,9 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 * sticky bits from TIOCSFLAGS.
 		 */
 		t.c_ispeed = 0;
-		if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
-			t.c_ospeed = scifcn_speed;	/* XXX (msaitoh) */
-			t.c_cflag = scifconscflag;
+		if (ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {
+			t.c_ospeed = scicn_speed;
+			t.c_cflag = sciconscflag;
 		} else {
 			t.c_ospeed = TTYDEF_SPEED;
 			t.c_cflag = TTYDEF_CFLAG;
@@ -802,9 +704,9 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 			SET(t.c_cflag, CRTSCTS);
 		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
-		/* Make sure scifparam() will do something. */
+		/* Make sure sciparam() will do something. */
 		tp->t_ospeed = 0;
-		(void) scifparam(tp, &t);
+		(void) sciparam(tp, &t);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
@@ -815,17 +717,17 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		/* Clear the input ring, and unblock. */
 		sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
-		sc->sc_rbavail = scif_rbuf_size;
-		scif_iflush(sc);
+		sc->sc_rbavail = sci_rbuf_size;
+		sci_iflush(sc);
 		CLR(sc->sc_rx_flags, RX_ANY_BLOCK);
 #if 0
 /* XXX (msaitoh) */
-		scif_hwiflow(sc);
+		sci_hwiflow(sc);
 #endif
 
-#ifdef SCIF_DEBUG
-		if (scif_debug)
-			scifstatus(sc, "scifopen  ");
+#ifdef SCI_DEBUG
+		if (sci_debug)
+			scistatus(sc, "sciopen  ");
 #endif
 
 		splx(s2);
@@ -833,7 +735,7 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	splx(s);
 
-	error = ttyopen(tp, SCIFDIALOUT(dev), ISSET(flag, O_NONBLOCK));
+	error = ttyopen(tp, SCIDIALOUT(dev), ISSET(flag, O_NONBLOCK));
 	if (error)
 		goto bad;
 
@@ -849,9 +751,9 @@ bad:
 }
 
 int
-scifclose(dev_t dev, int flag, int mode, struct lwp *l)
+sciclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -868,45 +770,45 @@ scifclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-scifread(dev_t dev, struct uio *uio, int flag)
+sciread(dev_t dev, struct uio *uio, int flag)
 {
-	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
 int
-scifwrite(dev_t dev, struct uio *uio, int flag)
+sciwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
 int
-scifpoll(dev_t dev, int events, struct lwp *l)
+scipoll(dev_t dev, int events, struct lwp *l)
 {
-	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
-sciftty(dev_t dev)
+scitty(dev_t dev)
 {
-	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
 }
 
 int
-scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
-	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -928,11 +830,11 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case TIOCSBRK:
-		scif_break(sc, 1);
+		sci_break(sc, 1);
 		break;
 
 	case TIOCCBRK:
-		scif_break(sc, 0);
+		sci_break(sc, 0);
 		break;
 
 	case TIOCGFLAGS:
@@ -957,7 +859,7 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 integrate void
-scif_schedrx(struct scif_softc *sc)
+sci_schedrx(struct sci_softc *sc)
 {
 
 	sc->sc_rx_ready = 1;
@@ -969,22 +871,22 @@ scif_schedrx(struct scif_softc *sc)
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
 	setsoftserial();
 #else
-	if (!scif_softintr_scheduled) {
-		scif_softintr_scheduled = 1;
-		callout_reset(&scif_soft_ch, 1, scifsoft, NULL);
+	if (!sci_softintr_scheduled) {
+		sci_softintr_scheduled = 1;
+		callout_reset(&sci_soft_ch, 1, scisoft, NULL);
 	}
 #endif
 #endif
 }
 
 void
-scif_break(struct scif_softc *sc, int onoff)
+sci_break(struct sci_softc *sc, int onoff)
 {
 
 	if (onoff)
-		scif_ssr_write(scif_ssr_read() & ~SCSSR2_TDFE);
+		SHREG_SCSSR &= ~SCSSR_TDRE;
 	else
-		scif_ssr_write(scif_ssr_read() | SCSSR2_TDFE);
+		SHREG_SCSSR |= SCSSR_TDRE;
 
 #if 0	/* XXX */
 	if (!sc->sc_heldchange) {
@@ -993,7 +895,7 @@ scif_break(struct scif_softc *sc, int onoff)
 			sc->sc_tbc = 0;
 			sc->sc_heldchange = 1;
 		} else
-			scif_loadchannelregs(sc);
+			sci_loadchannelregs(sc);
 	}
 #endif
 }
@@ -1002,9 +904,9 @@ scif_break(struct scif_softc *sc, int onoff)
  * Stop output, e.g., for ^S or output flush.
  */
 void
-scifstop(struct tty *tp, int flag)
+scistop(struct tty *tp, int flag)
 {
-	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(tp->t_dev)];
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(tp->t_dev)];
 	int s;
 
 	s = splserial();
@@ -1019,15 +921,9 @@ scifstop(struct tty *tp, int flag)
 }
 
 void
-scif_intr_init()
+scidiag(void *arg)
 {
-	/* XXX */
-}
-
-void
-scifdiag(void *arg)
-{
-	struct scif_softc *sc = arg;
+	struct sci_softc *sc = arg;
 	int overflows, floods;
 	int s;
 
@@ -1046,32 +942,32 @@ scifdiag(void *arg)
 }
 
 integrate void
-scif_rxsoft(struct scif_softc *sc, struct tty *tp)
+sci_rxsoft(struct sci_softc *sc, struct tty *tp)
 {
 	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
-	u_char ssr2;
+	u_char ssr;
 	int code;
 	int s;
 
 	end = sc->sc_ebuf;
 	get = sc->sc_rbget;
-	scc = cc = scif_rbuf_size - sc->sc_rbavail;
+	scc = cc = sci_rbuf_size - sc->sc_rbavail;
 
-	if (cc == scif_rbuf_size) {
+	if (cc == sci_rbuf_size) {
 		sc->sc_floods++;
 		if (sc->sc_errors++ == 0)
-			callout_reset(&sc->sc_diag_ch, 60 * hz, scifdiag, sc);
+			callout_reset(&sc->sc_diag_ch, 60 * hz, scidiag, sc);
 	}
 
 	while (cc) {
 		code = get[0];
-		ssr2 = get[1];
-		if (ISSET(ssr2, SCSSR2_BRK | SCSSR2_FER | SCSSR2_PER)) {
-			if (ISSET(ssr2, SCSSR2_BRK | SCSSR2_FER))
+		ssr = get[1];
+		if (ISSET(ssr, SCSSR_FER | SCSSR_PER)) {
+			if (ISSET(ssr, SCSSR_FER))
 				SET(code, TTY_FE);
-			if (ISSET(ssr2, SCSSR2_PER))
+			if (ISSET(ssr, SCSSR_PER))
 				SET(code, TTY_PE);
 		}
 		if ((*rint)(code, tp) == -1) {
@@ -1088,13 +984,13 @@ scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 				 */
 				get += cc << 1;
 				if (get >= end)
-					get -= scif_rbuf_size << 1;
+					get -= sci_rbuf_size << 1;
 				cc = 0;
 			} else {
 				/*
 				 * Don't schedule any more receive processing
 				 * until the line discipline tells us there's
-				 * space available (through scifhwiflow()).
+				 * space available (through scihwiflow()).
 				 * Leave the rest of the data in the input
 				 * buffer.
 				 */
@@ -1116,12 +1012,12 @@ scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 		if (cc >= sc->sc_r_lowat) {
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
-				scif_scr_write(scif_scr_read() | SCSCR2_RIE);
+				SHREG_SCSCR |= SCSCR_RIE;
 			}
 #if 0
 			if (ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED)) {
 				CLR(sc->sc_rx_flags, RX_IBUF_BLOCKED);
-				scif_hwiflow(sc);
+				sci_hwiflow(sc);
 			}
 #endif
 		}
@@ -1130,7 +1026,9 @@ scif_rxsoft(struct scif_softc *sc, struct tty *tp)
 }
 
 integrate void
-scif_txsoft(struct scif_softc *sc, struct tty *tp)
+sci_txsoft(sc, tp)
+	struct sci_softc *sc;
+	struct tty *tp;
 {
 
 	CLR(tp->t_state, TS_BUSY);
@@ -1142,7 +1040,7 @@ scif_txsoft(struct scif_softc *sc, struct tty *tp)
 }
 
 integrate void
-scif_stsoft(struct scif_softc *sc, struct tty *tp)
+sci_stsoft(struct sci_softc *sc, struct tty *tp)
 {
 #if 0
 /* XXX (msaitoh) */
@@ -1172,18 +1070,18 @@ scif_stsoft(struct scif_softc *sc, struct tty *tp)
 		}
 	}
 
-#ifdef SCIF_DEBUG
-	if (scif_debug)
-		scifstatus(sc, "scif_stsoft");
+#ifdef SCI_DEBUG
+	if (sci_debug)
+		scistatus(sc, "sci_stsoft");
 #endif
 #endif
 }
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
-scifsoft(void *arg)
+scisoft(void *arg)
 {
-	struct scif_softc *sc = arg;
+	struct sci_softc *sc = arg;
 	struct tty *tp;
 
 	if (!device_is_active(&sc->sc_dev))
@@ -1193,24 +1091,24 @@ scifsoft(void *arg)
 #else
 void
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
-scifsoft()
+scisoft()
 #else
-scifsoft(void *arg)
+scisoft(void *arg)
 #endif
 {
-	struct scif_softc	*sc;
+	struct sci_softc	*sc;
 	struct tty	*tp;
 	int	unit;
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 	int s;
 
 	s = splsoftserial();
-	scif_softintr_scheduled = 0;
+	sci_softintr_scheduled = 0;
 #endif
 
-	for (unit = 0; unit < scif_cd.cd_ndevs; unit++) {
-		sc = scif_cd.cd_devs[unit];
-		if (sc == NULL || !ISSET(sc->sc_hwflags, SCIF_HW_DEV_OK))
+	for (unit = 0; unit < sci_cd.cd_ndevs; unit++) {
+		sc = sci_cd.cd_devs[unit];
+		if (sc == NULL || !ISSET(sc->sc_hwflags, SCI_HW_DEV_OK))
 			continue;
 
 		if (!device_is_active(&sc->sc_dev))
@@ -1226,19 +1124,19 @@ scifsoft(void *arg)
 
 		if (sc->sc_rx_ready) {
 			sc->sc_rx_ready = 0;
-			scif_rxsoft(sc, tp);
+			sci_rxsoft(sc, tp);
 		}
 
 #if 0
 		if (sc->sc_st_check) {
 			sc->sc_st_check = 0;
-			scif_stsoft(sc, tp);
+			sci_stsoft(sc, tp);
 		}
 #endif
 
 		if (sc->sc_tx_done) {
 			sc->sc_tx_done = 0;
-			scif_txsoft(sc, tp);
+			sci_txsoft(sc, tp);
 		}
 	}
 
@@ -1250,13 +1148,12 @@ scifsoft(void *arg)
 }
 
 int
-scifintr(void *arg)
+sciintr(void *arg)
 {
-	struct scif_softc *sc = arg;
+	struct sci_softc *sc = arg;
 	u_char *put, *end;
 	u_int cc;
-	u_short ssr2;
-	int count;
+	u_short ssr;
 
 	if (!device_is_active(&sc->sc_dev))
 		return (0);
@@ -1266,91 +1163,85 @@ scifintr(void *arg)
 	cc = sc->sc_rbavail;
 
 	do {
-		ssr2 = scif_ssr_read();
-		if (ISSET(ssr2, SCSSR2_BRK)) {
-			scif_ssr_write(scif_ssr_read()
-				& ~(SCSSR2_ER | SCSSR2_BRK | SCSSR2_DR));
-#ifdef DDB
-			if (ISSET(sc->sc_hwflags, SCIF_HW_CONSOLE)) {
-				console_debugger();
-			}
-#endif /* DDB */
-#ifdef KGDB
-			if (ISSET(sc->sc_hwflags, SCIF_HW_KGDB)) {
-				kgdb_connect(1);
-			}
-#endif /* KGDB */
-		}
-		count = scif_fdr_read() & SCFDR2_RECVCNT;
-		if (count != 0) {
-			for (;;) {
-				u_char c = scif_frdr_read();
-				u_char err = (u_char)(scif_ssr_read() & 0x00ff);
-
-				scif_ssr_write(scif_ssr_read()
-				    & ~(SCSSR2_ER | SCSSR2_RDF | SCSSR2_DR));
+		ssr = SHREG_SCSSR;
+		if (ISSET(ssr, SCSSR_FER)) {
+			SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_PER | SCSSR_FER);
+#if defined(DDB) || defined(KGDB)
 #ifdef SH4
-				if (CPU_IS_SH4)
-					scif_lsr_write(scif_lsr_read()
-						       & ~SCLSR2_ORER);
+			if ((SHREG_SCSPTR & SCSPTR_SPB0DT) != 0) {
+#else
+			if ((SHREG_SCSPDR & SCSPDR_SCP0DT) != 0) {
 #endif
-				if ((cc > 0) && (count > 0)) {
-					put[0] = c;
-					put[1] = err;
-					put += 2;
-					if (put >= end)
-						put = sc->sc_rbuf;
-					cc--;
-					count--;
-				} else
-					break;
+#ifdef DDB
+				if (ISSET(sc->sc_hwflags, SCI_HW_CONSOLE)) {
+					console_debugger();
+				}
+#endif
+#ifdef KGDB
+				if (ISSET(sc->sc_hwflags, SCI_HW_KGDB)) {
+					kgdb_connect(1);
+				}
+#endif
+			}
+#endif /* DDB || KGDB */
+		}
+		if ((SHREG_SCSSR & SCSSR_RDRF) != 0) {
+			if (cc > 0) {
+				put[0] = SHREG_SCRDR;
+				put[1] = SHREG_SCSSR & 0x00ff;
+
+				put += 2;
+				if (put >= end)
+					put = sc->sc_rbuf;
+				cc--;
 			}
 
-			/*
-			 * Current string of incoming characters ended because
-			 * no more data was available or we ran out of space.
-			 * Schedule a receive event if any data was received.
-			 * If we're out of space, turn off receive interrupts.
-			 */
+			SHREG_SCSSR &= ~(SCSSR_ORER | SCSSR_FER | SCSSR_PER |
+			    SCSSR_RDRF);
+
+				/*
+				 * Current string of incoming characters ended because
+				 * no more data was available or we ran out of space.
+				 * Schedule a receive event if any data was received.
+				 * If we're out of space, turn off receive interrupts.
+				 */
 			sc->sc_rbput = put;
 			sc->sc_rbavail = cc;
 			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
 				sc->sc_rx_ready = 1;
 
-			/*
-			 * See if we are in danger of overflowing a buffer. If
-			 * so, use hardware flow control to ease the pressure.
-			 */
+				/*
+				 * See if we are in danger of overflowing a buffer. If
+				 * so, use hardware flow control to ease the pressure.
+				 */
 			if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
 			    cc < sc->sc_r_hiwat) {
 				SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 #if 0
-				scif_hwiflow(sc);
+				sci_hwiflow(sc);
 #endif
 			}
 
-			/*
-			 * If we're out of space, disable receive interrupts
-			 * until the queue has drained a bit.
-			 */
+				/*
+				 * If we're out of space, disable receive interrupts
+				 * until the queue has drained a bit.
+				 */
 			if (!cc) {
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
-				scif_scr_write(scif_scr_read() & ~SCSCR2_RIE);
+				SHREG_SCSCR &= ~SCSCR_RIE;
 			}
 		} else {
-			if (scif_ssr_read() & (SCSSR2_RDF | SCSSR2_DR)) {
-				scif_scr_write(scif_scr_read()
-					       & ~(SCSCR2_TIE | SCSCR2_RIE));
+			if (SHREG_SCSSR & SCSSR_RDRF) {
+				SHREG_SCSCR &= ~(SCSCR_TIE | SCSCR_RIE);
 				delay(10);
-				scif_scr_write(scif_scr_read()
-					       | SCSCR2_TIE | SCSCR2_RIE);
+				SHREG_SCSCR |= SCSCR_TIE | SCSCR_RIE;
 				continue;
 			}
 		}
-	} while (scif_ssr_read() & (SCSSR2_RDF | SCSSR2_DR));
+	} while (SHREG_SCSSR & SCSSR_RDRF);
 
 #if 0
-	msr = bus_space_read_1(iot, ioh, scif_msr);
+	msr = bus_space_read_1(iot, ioh, sci_msr);
 	delta = msr ^ sc->sc_msr;
 	sc->sc_msr = msr;
 	if (ISSET(delta, sc->sc_msr_mask)) {
@@ -1412,9 +1303,9 @@ scifintr(void *arg)
 		if (ISSET(~msr, sc->sc_msr_mask)) {
 			sc->sc_tbc = 0;
 			sc->sc_heldtbc = 0;
-#ifdef SCIF_DEBUG
-			if (scif_debug)
-				scifstatus(sc, "scifintr  ");
+#ifdef SCI_DEBUG
+			if (sci_debug)
+				scistatus(sc, "sciintr  ");
 #endif
 		}
 
@@ -1427,7 +1318,7 @@ scifintr(void *arg)
 	 * transmitted as well. Schedule tx done event if no data left
 	 * and tty was marked busy.
 	 */
-	if (((scif_fdr_read() & SCFDR2_TXCNT) >> 8) != 16) { /* XXX (msaitoh) */
+	if ((SHREG_SCSSR & SCSSR_TDRE) != 0) {
 		/*
 		 * If we've delayed a parameter change, do it now, and restart
 		 * output.
@@ -1440,27 +1331,15 @@ scifintr(void *arg)
 
 		/* Output the next chunk of the contiguous buffer, if any. */
 		if (sc->sc_tbc > 0) {
-			int n;
-			int maxchars;
-			int i;
-
-			n = sc->sc_tbc;
-			maxchars = sc->sc_fifolen -
-				((scif_fdr_read() & SCFDR2_TXCNT) >> 8);
-			if (n > maxchars)
-				n = maxchars;
-
-			for (i = 0; i < n; i++) {
-				scif_putc(*(sc->sc_tba));
-				sc->sc_tba++;
-			}
-			sc->sc_tbc -= n;
+			sci_putc(*(sc->sc_tba));
+			sc->sc_tba++;
+			sc->sc_tbc--;
 		} else {
 			/* Disable transmit completion interrupts if necessary. */
 #if 0
 			if (ISSET(sc->sc_ier, IER_ETXRDY))
 #endif
-				scif_scr_write(scif_scr_read() & ~SCSCR2_TIE);
+				SHREG_SCSCR &= ~SCSCR_TIE;
 
 			if (sc->sc_tx_busy) {
 				sc->sc_tx_busy = 0;
@@ -1476,14 +1355,14 @@ scifintr(void *arg)
 #ifndef __NO_SOFT_SERIAL_INTERRUPT
 	setsoftserial();
 #else
-	if (!scif_softintr_scheduled) {
-		scif_softintr_scheduled = 1;
-		callout_reset(&scif_soft_ch, 1, scifsoft, NULL);
+	if (!sci_softintr_scheduled) {
+		sci_softintr_scheduled = 1;
+		callout_reset(&sci_soft_ch, 1, scisoft, 1);
 	}
 #endif
 #endif
 
-#if NRND > 0 && defined(RND_SCIF)
+#if NRND > 0 && defined(RND_SCI)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 
@@ -1491,16 +1370,17 @@ scifintr(void *arg)
 }
 
 void
-scifcnprobe(struct consdev *cp)
+scicnprobe(cp)
+	struct consdev *cp;
 {
 	int maj;
 
 	/* locate the major number */
-	maj = cdevsw_lookup_major(&scif_cdevsw);
+	maj = cdevsw_lookup_major(&sci_cdevsw);
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);
-#ifdef SCIFCONSOLE
+#ifdef SCICONSOLE
 	cp->cn_pri = CN_REMOTE;
 #else
 	cp->cn_pri = CN_NORMAL;
@@ -1508,54 +1388,32 @@ scifcnprobe(struct consdev *cp)
 }
 
 void
-scifcninit(struct consdev *cp)
+scicninit(struct consdev *cp)
 {
 
-	InitializeScif(scifcn_speed);
-	scifisconsole = 1;
+	InitializeSci(scicn_speed);
+	sciisconsole = 1;
 }
 
 int
-scifcngetc(dev_t dev)
+scicngetc(dev_t dev)
 {
 	int c;
 	int s;
 
 	s = splserial();
-	c = scif_getc();
+	c = sci_getc();
 	splx(s);
 
 	return (c);
 }
 
 void
-scifcnputc(dev_t dev, int c)
+scicnputc(dev_t dev, int c)
 {
 	int s;
 
 	s = splserial();
-	scif_putc((u_char)c);
+	sci_putc((u_char)c);
 	splx(s);
 }
-
-#ifdef KGDB
-int
-scif_kgdb_init()
-{
-
-	if (strcmp(kgdb_devname, "scif") != 0)
-		return (1);
-
-	if (scifisconsole)
-		return (1);	/* can't share with console */
-
-	InitializeScif(kgdb_rate);
-
-	kgdb_attach((int (*)(void *))scifcngetc,
-	    (void (*)(void *, int))scifcnputc, NULL);
-	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
-	kgdb_attached = 1;
-
-	return (0);
-}
-#endif /* KGDB */

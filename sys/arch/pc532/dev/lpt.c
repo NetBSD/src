@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.42 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.42.10.1 2006/03/08 00:43:07 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42.10.1 2006/03/08 00:43:07 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -639,7 +639,7 @@ plipioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFMTU:
-        	if ((error = suser(p->p_ucred, &p->p_acflag)))
+        	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
             		return(error);
 		if (ifp->if_mtu != ifr->ifr_mtu) {
 		        ifp->if_mtu = ifr->ifr_mtu;
