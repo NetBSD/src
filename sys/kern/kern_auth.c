@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.6 2006/03/08 18:49:38 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.7 2006/03/08 19:18:35 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -126,9 +126,6 @@ kauth_cred_destroy(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
 
-	if (simple_lock_held(&cred->cr_lock))	/* XXX elad */
-		simple_unlock(&cred->cr_lock);
-
 	/* XXX: For debugging. */
 	memset(cred, 0, sizeof(*cred));
 
@@ -142,10 +139,10 @@ kauth_cred_free(kauth_cred_t cred) {
 
 	simple_lock(&cred->cr_lock);
 	cred->cr_refcnt--;
+	simple_unlock(&cred->cr_lock);
+
 	if (cred->cr_refcnt == 0)
 		kauth_cred_destroy(cred);
-	else
-		simple_unlock(&cred->cr_lock);
 }
 
 void
