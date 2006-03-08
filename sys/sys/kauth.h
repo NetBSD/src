@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.1.2.1 2006/03/07 23:23:56 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.1.2.2 2006/03/08 06:55:49 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -55,8 +55,8 @@ typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
 /*
  * Scopes.
  */
-#define	KAUTH_SCOPE_GENERIC	"security.kauth.generic"
-#define	KAUTH_SCOPE_PROCESS	"security.kauth.process"
+#define	KAUTH_SCOPE_GENERIC	"org.netbsd.kauth.generic"
+#define	KAUTH_SCOPE_PROCESS	"org.netbsd.kauth.process"
 
 /*
  * Process scope - actions.
