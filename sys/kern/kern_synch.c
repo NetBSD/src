@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.160 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.160.10.1 2006/03/08 00:53:40 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.160 2005/12/27 04:06:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.160.10.1 2006/03/08 00:53:40 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -969,8 +969,8 @@ mi_switch(struct lwp *l, struct lwp *newl)
 				rlim->rlim_cur += 5;
 		}
 	}
-	if (autonicetime && s > autonicetime && p->p_ucred->cr_uid &&
-	    p->p_nice == NZERO) {
+	if (autonicetime && s > autonicetime &&
+	    kauth_cred_geteuid(p->p_cred) && p->p_nice == NZERO) {
 		p->p_nice = autoniceval + NZERO;
 		resetpriority(l);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.86 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.86.4.1 2006/03/08 00:53:40 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86.4.1 2006/03/08 00:53:40 elad Exp $");
 
 #include "opt_kstack.h"
 
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86 2006/03/01 12:38:21 yamt Exp $");
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -163,7 +164,7 @@ struct session session0;
 struct pgrp pgrp0;
 struct proc proc0;
 struct lwp lwp0;
-struct pcred cred0;
+kauth_cred_t cred0;
 struct filedesc0 filedesc0;
 struct cwdinfo cwdi0;
 struct plimit limit0;
@@ -329,10 +330,9 @@ proc0_init(void)
 	callout_init(&l->l_tsleep_ch);
 
 	/* Create credentials. */
-	cred0.p_refcnt = 1;
-	p->p_cred = &cred0;
-	p->p_ucred = crget();
-	p->p_ucred->cr_ngroups = 1;	/* group 0 */
+	cred0 = kauth_cred_alloc();
+	p->p_cred = cred0;
+	kauth_cred_setngroups(p->p_cred, 1);
 
 	/* Create the CWD info. */
 	p->p_cwdi = &cwdi0;
@@ -1248,3 +1248,15 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 
 	return 0;
 }
+
+/*
+ * Process scope authorization wrapper.
+ */
+int
+process_authorize(kauth_cred_t cred, kauth_action_t action, struct proc *p,
+	       void *arg1, void *arg2, void *arg3)
+{
+	return (kauth_authorize_action(builtin_process, cred, action, p, arg1,
+				       arg2, arg3));
+}
+

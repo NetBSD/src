@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.155 2006/03/05 07:21:38 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.155.4.1 2006/03/08 00:53:40 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.155 2006/03/05 07:21:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.155.4.1 2006/03/08 00:53:40 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -151,7 +151,7 @@ exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 	 * we fill those in, even for non-SIGCHLD.
 	 */
 	ksi->ksi_pid = p->p_pid;
-	ksi->ksi_uid = p->p_ucred->cr_uid;
+	ksi->ksi_uid = kauth_cred_geteuid(p->p_cred);
 	ksi->ksi_status = p->p_xstat;
 	/* XXX: is this still valid? */
 	ksi->ksi_utime = p->p_ru->ru_utime.tv_sec;
@@ -843,15 +843,12 @@ proc_free(struct proc *p)
 	/*
 	 * Decrement the count of procs running with this uid.
 	 */
-	(void)chgproccnt(p->p_cred->p_ruid, -1);
+	(void)chgproccnt(kauth_cred_getuid(p->p_cred), -1);
 
 	/*
 	 * Free up credentials.
 	 */
-	if (--p->p_cred->p_refcnt == 0) {
-		crfree(p->p_cred->pc_ucred);
-		pool_put(&pcred_pool, p->p_cred);
-	}
+	kauth_cred_free(p->p_cred);
 
 	/*
 	 * Release reference to text vnode

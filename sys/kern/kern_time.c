@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.98 2005/12/05 00:16:34 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.98.10.1 2006/03/08 00:53:40 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98 2005/12/05 00:16:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.10.1 2006/03/08 00:53:40 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -141,7 +141,7 @@ settime(struct proc *p, struct timespec *ts)
 		log(LOG_WARNING, "pid %d (%s) "
 		    "invoked by uid %d ppid %d (%s) "
 		    "tried to set clock forward to %ld\n",
-		    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
+		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, (long)ts->tv_sec);
 		return (EPERM);
 	}
@@ -223,7 +223,8 @@ sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)) != 0)
 		return (error);
 
 	return (clock_settime1(p, SCARG(uap, clock_id), SCARG(uap, tp)));
@@ -381,7 +382,8 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)) != 0)
 		return (error);
 
 	return settimeofday1(SCARG(uap, tv), SCARG(uap, tzp), p);
@@ -429,7 +431,8 @@ sys_adjtime(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)) != 0)
 		return (error);
 
 	return adjtime1(SCARG(uap, delta), SCARG(uap, olddelta), p);
@@ -574,7 +577,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_info.ksi_errno = 0;
 	pt->pt_info.ksi_code = 0;
 	pt->pt_info.ksi_pid = p->p_pid;
-	pt->pt_info.ksi_uid = p->p_cred->p_ruid;
+	pt->pt_info.ksi_uid = kauth_cred_getuid(p->p_cred);
 	pt->pt_info.ksi_sigval = pt->pt_ev.sigev_value;
 
 	pt->pt_type = id;
