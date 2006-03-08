@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.3 2006/03/08 13:31:12 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.4 2006/03/08 14:01:33 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.3 2006/03/08 13:31:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.4 2006/03/08 14:01:33 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -108,6 +108,7 @@ PDPOL_EVCNT_DEFINE(hcoldunref)
 PDPOL_EVCNT_DEFINE(hcoldreftest)
 PDPOL_EVCNT_DEFINE(hcoldunreftest)
 PDPOL_EVCNT_DEFINE(hcoldunreftestspeculative)
+PDPOL_EVCNT_DEFINE(hcoldhot)
 
 PDPOL_EVCNT_DEFINE(speculativeenqueue)
 PDPOL_EVCNT_DEFINE(speculativehit1)
@@ -964,6 +965,7 @@ handcold_advance(void)
 		}
 		KASSERT((pg->pqflags & PQ_INITIALREF) == 0);
 		if ((pg->pqflags & PQ_HOT) != 0) {
+			PDPOL_EVCNT_INCR(hcoldhot);
 			pageq_remove(coldq, pg);
 			clockpro_insert_tail(s, CLOCKPRO_HOTQ, pg);
 			check_sanity();
