@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.77 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.77.4.1 2006/03/08 01:48:37 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.77 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.77.4.1 2006/03/08 01:48:37 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1207,7 +1207,7 @@ ibcs2_sys_plock(l, v, retval)
 #define IBCS2_DATALOCK	4
 
 
-        if (suser(p->p_ucred, &p->p_acflag) != 0)
+        if (generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
                 return EPERM;
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_UNLOCK:
@@ -1252,7 +1252,7 @@ ibcs2_sys_uadmin(l, v, retval)
 #define SCO_AD_GETCMAJ      1
 
 	/* XXX: is this the right place for this call? */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	switch(SCARG(uap, cmd)) {

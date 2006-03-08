@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.2 2006/02/24 06:39:47 manu Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.2.4.1 2006/03/08 01:48:38 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.2 2006/02/24 06:39:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.2.4.1 2006/03/08 01:48:38 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -201,7 +201,7 @@ linux32_sys_stime(l, v, retval)
 	linux32_time_t tt32;
 	int error;
 	
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin(&tt32, 

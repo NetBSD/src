@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.103 2006/03/05 19:10:30 rjs Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.103.2.1 2006/03/08 01:44:49 elad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.103 2006/03/05 19:10:30 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.103.2.1 2006/03/08 01:44:49 elad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -155,6 +155,7 @@ __KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.103 2006/03/05 19:10:30 rjs Exp $");
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -577,7 +578,8 @@ zsopen(dev, flags, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+			      &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -821,7 +823,8 @@ zsioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					  &p->p_acflag);
 		if (error)
 			break;
 		zst->zst_swflags = *(int *)data;
