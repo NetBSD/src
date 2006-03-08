@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.61 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: ucom.c,v 1.61.4.1 2006/03/08 01:44:49 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.4.1 2006/03/08 01:44:49 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -657,7 +657,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

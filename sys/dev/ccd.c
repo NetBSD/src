@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.108 2006/02/16 23:25:18 lukem Exp $	*/
+/*	$NetBSD: ccd.c,v 1.108.4.1 2006/03/08 01:44:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.108 2006/02/16 23:25:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.108.4.1 2006/03/08 01:44:48 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		/*
 		 * XXX: Cache the component's dev_t.
 		 */
-		if ((error = VOP_GETATTR(vpp[ix], &va, l->l_proc->p_ucred, l)) != 0) {
+		if ((error = VOP_GETATTR(vpp[ix], &va, l->l_proc->p_cred, l)) != 0) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 				printf("%s: %s: getattr failed %s = %d\n",
@@ -338,7 +338,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		 * Get partition information for the component.
 		 */
 		error = VOP_IOCTL(vpp[ix], DIOCGPART, &dpart,
-		    FREAD, l->l_proc->p_ucred, l);
+		    FREAD, l->l_proc->p_cred, l);
 		if (error) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
@@ -988,7 +988,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int part, pmask;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
-	struct ucred *uc;
+	kauth_cred_t uc;
 	char **cpp;
 	struct vnode **vpp;
 	struct proc *p = l->l_proc;
@@ -1097,7 +1097,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			if ((error = ccdlookup(cpp[i], l, &vpp[i])) != 0) {
 				for (j = 0; j < lookedup; ++j)
 					(void)vn_close(vpp[j], FREAD|FWRITE,
-					    p->p_ucred, l);
+					    p->p_cred, l);
 				free(vpp, M_DEVBUF);
 				free(cpp, M_DEVBUF);
 				goto out;
@@ -1111,7 +1111,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if ((error = ccdinit(cs, cpp, vpp, l)) != 0) {
 			for (j = 0; j < lookedup; ++j)
 				(void)vn_close(vpp[j], FREAD|FWRITE,
-				    p->p_ucred, l);
+				    p->p_cred, l);
 			free(vpp, M_DEVBUF);
 			free(cpp, M_DEVBUF);
 			goto out;
@@ -1179,7 +1179,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 				    cs->sc_cinfo[i].ci_vp);
 #endif
 			(void)vn_close(cs->sc_cinfo[i].ci_vp, FREAD|FWRITE,
-			    p->p_ucred, l);
+			    p->p_cred, l);
 			free(cs->sc_cinfo[i].ci_path, M_DEVBUF);
 		}
 
@@ -1226,7 +1226,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		 * We pass this call down to all components and report
 		 * the first error we encounter.
 		 */
-		uc = (p != NULL) ? p->p_ucred : NOCRED;
+		uc = (p != NULL) ? p->p_cred : NOCRED;
 		for (error = 0, i = 0; i < cs->sc_nccdisks; i++) {
 			j = VOP_IOCTL(cs->sc_cinfo[i].ci_vp, cmd, data,
 				      flag, uc, l);
@@ -1377,24 +1377,24 @@ ccdlookup(char *path, struct lwp *l, struct vnode **vpp /* result */)
 
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (EBUSY);
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
 #ifdef DEBUG
 		if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 			printf("ccdlookup: getattr error = %d\n", error);
 #endif
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (error);
 	}
 
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (ENOTBLK);
 	}
 

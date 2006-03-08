@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.4 2005/12/18 23:57:07 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.4.10.1 2006/03/08 01:44:48 elad Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.4 2005/12/18 23:57:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.4.10.1 2006/03/08 01:44:48 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -300,7 +300,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 	struct hpf1275a_softc *sc;
 	int error, s;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	s = spltty();

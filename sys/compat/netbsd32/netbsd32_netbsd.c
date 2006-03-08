@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.100 2006/02/09 19:18:57 manu Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.100.4.1 2006/03/08 01:48:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.1 2006/03/08 01:48:38 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -952,21 +952,27 @@ netbsd32_getgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
-	struct pcred *pc = l->l_proc->p_cred;
+	kauth_cred_t pc = l->l_proc->p_cred;
 	int ngrp;
 	int error;
+	gid_t *grbuf;
+	int i;
 
 	ngrp = SCARG(uap, gidsetsize);
 	if (ngrp == 0) {
-		*retval = pc->pc_ucred->cr_ngroups;
+		*retval = kauth_cred_ngroups(pc);
 		return (0);
 	}
-	if (ngrp < pc->pc_ucred->cr_ngroups)
+	if (ngrp < kauth_cred_ngroups(pc))
 		return (EINVAL);
-	ngrp = pc->pc_ucred->cr_ngroups;
+	ngrp = kauth_cred_ngroups(pc);
 	/* Should convert gid_t to netbsd32_gid_t, but they're the same */
-	error = copyout((caddr_t)pc->pc_ucred->cr_groups,
-	    (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)), ngrp * sizeof(gid_t));
+	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
+	for (i = 0; i < ngrp; i++)
+		grbuf[i] = kauth_cred_group(pc, i);
+	error = copyout(grbuf, (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)),
+			ngrp * sizeof(*grbuf));
+	free(grbuf, M_TEMP);
 	if (error)
 		return (error);
 	*retval = ngrp;

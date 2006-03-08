@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.59 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.59.10.1 2006/03/08 01:44:49 elad Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.59 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.59.10.1 2006/03/08 01:44:49 elad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -615,11 +615,11 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 	if (diskPtr->status == rf_ds_optimal) {
 
 		if ((error = VOP_GETATTR(vp, &va,
-		    l->l_proc->p_ucred, l)) != 0) {
+		    l->l_proc->p_cred, l)) != 0) {
 			return (error);
 		}
 		error = VOP_IOCTL(vp, DIOCGPART, &dpart,
-				  FREAD, l->l_proc->p_ucred, l);
+				  FREAD, l->l_proc->p_cred, l);
 		if (error) {
 			return (error);
 		}
