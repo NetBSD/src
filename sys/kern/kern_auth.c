@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.2 2006/03/08 09:06:05 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.3 2006/03/08 09:15:10 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -699,9 +699,9 @@ kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
 	kauth_listener_t listener;
 
 	/* Find scope struct */
-	simple_lock(&scope_list);
+	simple_lock(&scopes_lock);
 	scope = kauth_ifindscope(id);
-	simple_unlock(&scope_list);
+	simple_unlock(&scopes_lock);
 	if (scope == NULL)
 		return (NULL);
 
