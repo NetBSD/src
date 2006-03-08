@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.2.8.1 2006/03/08 01:31:33 elad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.2.8.1 2006/03/08 01:31:33 elad Exp $");
 #endif /* not lint */
 
 
@@ -89,10 +89,10 @@ int udf_unmount(struct mount *, int, struct lwp *);
 int udf_root(struct mount *, struct vnode **);
 int udf_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 int udf_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int udf_sync(struct mount *, int, struct ucred *, struct lwp *);
+int udf_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int udf_vget(struct mount *, ino_t, struct vnode **);
 int udf_fhtovp(struct mount *, struct fid *, struct vnode **);
-int udf_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
+int udf_checkexp(struct mount *, struct mbuf *, int *, kauth_cred_t *);
 int udf_vptofh(struct vnode *, struct fid *);
 int udf_snapshot(struct mount *, struct vnode *, struct timespec *);
 
@@ -307,11 +307,11 @@ udf_mount(struct mount *mp, const char *path,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (kauth_cred_geteuid(p->p_cred) != 0) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
 		if (error) {
 			vput(devvp);
 			return (error);
@@ -483,7 +483,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	int    num_anchors, error, lst;
 
 	/* flush out any old buffers remaining from a previous use. */
-	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0);
 	if (error)
 		return error;
 
@@ -691,7 +691,7 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 /* --------------------------------------------------------------------- */
 
 int
-udf_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *p)
+udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *p)
 {
 	DPRINTF(CALL, ("udf_sync called\n"));
 	/* nothing to be done as upto now read-only */

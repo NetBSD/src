@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.18 2006/02/16 14:57:50 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.18.4.1 2006/03/08 01:31:33 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.18 2006/02/16 14:57:50 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.18.4.1 2006/03/08 01:31:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -954,7 +954,7 @@ tmpfs_mem_info(boolean_t total)
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chflags(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
+tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct proc *p)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -971,7 +971,8 @@ tmpfs_chflags(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
 	if (cred->cr_uid != node->tn_uid &&
-	    (error = suser(cred, &p->p_acflag)))
+	    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)))
 		return error;
 	if (cred->cr_uid == 0) {
 		/* The super-user is only allowed to change flags if the file
@@ -1009,7 +1010,7 @@ tmpfs_chflags(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
+tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -1030,7 +1031,8 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
 	if (cred->cr_uid != node->tn_uid &&
-	    (error = suser(cred, &p->p_acflag)))
+	    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)))
 		return error;
 	if (cred->cr_uid != 0) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
@@ -1060,7 +1062,7 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, struct ucred *cred, struct proc *p)
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
+tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     struct proc *p)
 {
 	int error;
@@ -1092,7 +1094,8 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	if ((cred->cr_uid != node->tn_uid || uid != node->tn_uid ||
 	    (gid != node->tn_gid && !(cred->cr_gid == node->tn_gid ||
 	     groupmember(gid, cred)))) &&
-	    ((error = suser(cred, &p->p_acflag)) != 0))
+	    ((error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+					&p->p_acflag)) != 0))
 		return error;
 
 	node->tn_uid = uid;
@@ -1114,7 +1117,7 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
  * The vnode must be locked on entry and remain locked on exit.
  */
 int
-tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
+tmpfs_chsize(struct vnode *vp, u_quad_t size, kauth_cred_t cred,
     struct proc *p)
 {
 	int error;
@@ -1172,7 +1175,7 @@ tmpfs_chsize(struct vnode *vp, u_quad_t size, struct ucred *cred,
  */
 int
 tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
-    int vaflags, struct ucred *cred, struct lwp *l)
+    int vaflags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 	struct tmpfs_node *node;
@@ -1193,7 +1196,8 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
 	if (cred->cr_uid != node->tn_uid &&
-	    (error = suser(cred, &l->l_proc->p_acflag)) &&
+	    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+				       &l->l_proc->p_acflag)) &&
 	    ((vaflags & VA_UTIMES_NULL) == 0 ||
 	    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 		return error;

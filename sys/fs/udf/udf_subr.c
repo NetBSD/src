@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.5 2006/03/01 12:38:21 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.5.4.1 2006/03/08 01:31:33 elad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.5 2006/03/01 12:38:21 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.5.4.1 2006/03/08 01:31:33 elad Exp $");
 #endif /* not lint */
 
 
@@ -1727,7 +1727,7 @@ udf_dispose_node(struct udf_node *node)
 
 static int
 udf_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
 	return 0;
 }

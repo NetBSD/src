@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.16 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.16.4.1 2006/03/08 01:31:33 elad Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.16 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.16.4.1 2006/03/08 01:31:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ void union_updatevp(struct union_node *, struct vnode *, struct vnode *);
 static int union_relookup(struct union_mount *, struct vnode *,
 			       struct vnode **, struct componentname *,
 			       struct componentname *, const char *, int);
-int union_vn_close(struct vnode *, int, struct ucred *, struct lwp *);
+int union_vn_close(struct vnode *, int, kauth_cred_t, struct lwp *);
 static void union_dircache_r(struct vnode *, struct vnode ***, int *);
 struct vnode *union_dircache(struct vnode *, struct lwp *);
 
@@ -621,7 +621,7 @@ int
 union_copyfile(fvp, tvp, cred, l)
 	struct vnode *fvp;
 	struct vnode *tvp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	char *tbuf;
@@ -692,7 +692,7 @@ int
 union_copyup(un, docopy, cred, l)
 	struct union_node *un;
 	int docopy;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	int error;
@@ -929,7 +929,7 @@ union_mkwhiteout(um, dvp, cnp, path)
 	}
 
 	/* VOP_LEASE: dvp is locked */
-	VOP_LEASE(dvp, l, l->l_proc->p_ucred, LEASE_WRITE);
+	VOP_LEASE(dvp, l, l->l_proc->p_cred, LEASE_WRITE);
 
 	error = VOP_WHITEOUT(dvp, &cn, CREATE);
 	if (error)
@@ -956,7 +956,7 @@ union_vn_create(vpp, un, l)
 	struct lwp *l;
 {
 	struct vnode *vp;
-	struct ucred *cred = l->l_proc->p_ucred;
+	kauth_cred_t cred = l->l_proc->p_cred;
 	struct vattr vat;
 	struct vattr *vap = &vat;
 	int fmode = FFLAGS(O_WRONLY|O_CREAT|O_TRUNC|O_EXCL);
@@ -983,7 +983,7 @@ union_vn_create(vpp, un, l)
 	cn.cn_nameiop = CREATE;
 	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
 	cn.cn_lwp = l;
-	cn.cn_cred = l->l_proc->p_ucred;
+	cn.cn_cred = l->l_proc->p_cred;
 	cn.cn_nameptr = cn.cn_pnbuf;
 	cn.cn_hash = un->un_hash;
 	cn.cn_consume = 0;
@@ -1034,7 +1034,7 @@ int
 union_vn_close(vp, fmode, cred, l)
 	struct vnode *vp;
 	int fmode;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 
@@ -1097,7 +1097,7 @@ union_lowervp(vp)
 int
 union_dowhiteout(un, cred, l)
 	struct union_node *un;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	struct vattr va;
