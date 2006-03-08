@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.25 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.25.10.1 2006/03/08 00:53:40 elad Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.10.1 2006/03/08 00:53:40 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,9 @@ static int	kqueue_scan(struct file *, size_t, struct kevent *,
     const struct timespec *, struct lwp *, register_t *,
     const struct kevent_ops *);
 static int	kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
-		    struct ucred *cred, int flags);
+		    kauth_cred_t cred, int flags);
 static int	kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
-		    struct ucred *cred, int flags);
+		    kauth_cred_t cred, int flags);
 static int	kqueue_ioctl(struct file *fp, u_long com, void *data,
 		    struct lwp *l);
 static int	kqueue_fcntl(struct file *fp, u_int com, void *data,
@@ -367,9 +367,10 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if ((p->p_cred->p_ruid != curproc->p_cred->p_ruid ||
+	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curproc->p_cred) ||
 		(p->p_flag & P_SUGID))
-	    && suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+	    && generic_authorize(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+				 &curproc->p_acflag) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;
@@ -1067,7 +1068,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 /*ARGSUSED*/
 static int
 kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
-	struct ucred *cred, int flags)
+	kauth_cred_t cred, int flags)
 {
 
 	return (ENXIO);
@@ -1080,7 +1081,7 @@ kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
 /*ARGSUSED*/
 static int
 kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
-	struct ucred *cred, int flags)
+	kauth_cred_t cred, int flags)
 {
 
 	return (ENXIO);

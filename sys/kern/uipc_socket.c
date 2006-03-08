@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.116 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.116.4.1 2006/03/08 00:53:41 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.116 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.116.4.1 2006/03/08 00:53:41 elad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -478,7 +478,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
 	if (l != NULL) {
-		uid = l->l_proc->p_ucred->cr_uid;
+		uid = kauth_cred_geteuid(l->l_proc->p_cred);
 	} else {
 		uid = 0;
 	}

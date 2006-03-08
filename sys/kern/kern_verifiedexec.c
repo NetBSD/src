@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.48 2005/12/12 16:26:33 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.48.10.1 2006/03/08 00:53:40 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.48 2005/12/12 16:26:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.48.10.1 2006/03/08 00:53:40 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -259,7 +259,7 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 #else
 				0,
 #endif
-				l->l_proc->p_ucred, &resid, NULL);
+				l->l_proc->p_cred, &resid, NULL);
 
 		if (error) {
 			if (do_perpage) {
@@ -599,7 +599,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 	struct vattr va;
 	int error;
 
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_ucred, l);
+	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
 	if (error)
 		return (error);
 
@@ -649,7 +649,7 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 	struct vattr va;
 	int error;
 
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_ucred, l);
+	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
 	if (error)
 		return (error);
 
@@ -658,7 +658,8 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 		       "of \"%s\" [%ld:%llu] to \"%s\", uid=%u, pid=%u: "
 		       "Lockdown mode.\n", from, va.va_fsid,
 		       (unsigned long long)va.va_fileid,
-		       to, l->l_proc->p_ucred->cr_uid, l->l_proc->p_pid);
+		       to, kauth_cred_geteuid(l->l_proc->p_cred),
+		       l->l_proc->p_pid);
 		return (EPERM);
 	}
 
@@ -670,7 +671,7 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 			       "uid=%u, pid=%u: IPS mode, file "
 			       "monitored.\n", from, va.va_fsid,
 			       (unsigned long long)va.va_fileid,
-			       to, l->l_proc->p_ucred->cr_uid,
+			       to, kauth_cred_geteuid(l->l_proc->p_cred),
 			       l->l_proc->p_pid);
 			return (EPERM);
 		}
@@ -678,7 +679,8 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to,
 		printf("Veriexec: veriexec_rename: Monitored file \"%s\" "
 		       "[%ld:%llu] renamed to \"%s\", uid=%u, pid=%u.\n",
 		       from, va.va_fsid, (unsigned long long)va.va_fileid, to,
-		       l->l_proc->p_ucred->cr_uid, l->l_proc->p_pid);
+		       kauth_cred_geteuid(l->l_proc->p_cred),
+		       l->l_proc->p_pid);
 	}
 
 	return (0);
