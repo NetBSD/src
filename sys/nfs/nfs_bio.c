@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.142 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.142.4.1 2006/03/08 01:06:28 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.142 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.142.4.1 2006/03/08 01:06:28 elad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -81,7 +81,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	struct vnode *vp;
 	struct uio *uio;
 	int ioflag, cflag;
-	struct ucred *cred;
+	kauth_cred_t cred;
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct buf *bp = NULL, *rabp;
@@ -495,13 +495,13 @@ nfs_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	struct lwp *l = curlwp;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
-	struct ucred *cred = ap->a_cred;
+	kauth_cred_t cred = ap->a_cred;
 	struct vattr vattr;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	void *win;
@@ -695,7 +695,7 @@ int
 nfs_vinvalbuf(vp, flags, cred, l, intrflg)
 	struct vnode *vp;
 	int flags;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 	int intrflg;
 {
@@ -758,7 +758,7 @@ nfs_vinvalbuf(vp, flags, cred, l, intrflg)
  */
 
 int
-nfs_flushstalebuf(struct vnode *vp, struct ucred *cred, struct lwp *l,
+nfs_flushstalebuf(struct vnode *vp, kauth_cred_t cred, struct lwp *l,
     int flags)
 {
 	struct nfsnode *np = VTONFS(vp);
@@ -982,7 +982,7 @@ nfs_doio_read(bp, uiop)
 #ifndef NFS_V2_ONLY
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
 			error = nfs_readdirplusrpc(vp, uiop,
-			    curlwp->l_proc->p_ucred);
+			    curlwp->l_proc->p_cred);
 			if (error == NFSERR_NOTSUPP)
 				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
 		}
@@ -991,7 +991,7 @@ nfs_doio_read(bp, uiop)
 #endif
 		if ((nmp->nm_flag & NFSMNT_RDIRPLUS) == 0)
 			error = nfs_readdirrpc(vp, uiop,
-			    curlwp->l_proc->p_ucred);
+			    curlwp->l_proc->p_cred);
 		if (!error) {
 			bp->b_dcookie = uiop->uio_offset;
 		}

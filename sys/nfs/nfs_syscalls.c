@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.88 2006/01/05 11:22:56 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.88.8.1 2006/03/08 01:06:28 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88 2006/01/05 11:22:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.8.1 2006/03/08 01:06:28 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -176,7 +176,8 @@ sys_nfssvc(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	error = suser(p->p_ucred, &p->p_acflag);
+	error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				  &p->p_acflag);
 	if (error)
 		return (error);
 
@@ -222,7 +223,7 @@ sys_nfssvc(l, v, retval)
 			(SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
 			return (0);
 		nmp->nm_iflag |= NFSMNT_MNTD;
-		error = nqnfs_clientd(nmp, p->p_ucred, &ncd, SCARG(uap, flag),
+		error = nqnfs_clientd(nmp, p->p_cred, &ncd, SCARG(uap, flag),
 			SCARG(uap, argp), l);
 #endif /* NFS */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
@@ -294,16 +295,16 @@ sys_nfssvc(l, v, retval)
 			 * First check to see if another nfsd has already
 			 * added this credential.
 			 */
-			LIST_FOREACH(nuidp, NUIDHASH(slp,nsd->nsd_cr.cr_uid),
+			LIST_FOREACH(nuidp, NUIDHASH(slp, nsd->nsd_cr.cr_uid),
 			    nu_hash) {
-				if (nuidp->nu_cr.cr_uid == nsd->nsd_cr.cr_uid &&
+				if (kauth_cred_geteuid(nuidp->nu_cr) == nsd->nsd_cr.cr_uid &&
 				    (!nfsd->nfsd_nd->nd_nam2 ||
 				     netaddr_match(NU_NETFAM(nuidp),
 				     &nuidp->nu_haddr, nfsd->nfsd_nd->nd_nam2)))
 					break;
 			}
 			if (nuidp) {
-			    nfsrv_setcred(&nuidp->nu_cr,&nfsd->nfsd_nd->nd_cr);
+			    nfsrv_setcred(nuidp->nu_cr,nfsd->nfsd_nd->nd_cr);
 			    nfsd->nfsd_nd->nd_flag |= ND_KERBFULL;
 			} else {
 			    /*
@@ -329,10 +330,12 @@ sys_nfssvc(l, v, retval)
 					m_freem(nuidp->nu_nam);
 			        }
 				nuidp->nu_flag = 0;
-				crcvt(&nuidp->nu_cr, &nsd->nsd_cr);
+				kauth_cred_convert(nuidp->nu_cr, &nsd->nsd_cr);
+#if 0 /* XXX elad - kernel auth makes sure this can't happen. */
 				if (nuidp->nu_cr.cr_ngroups > NGROUPS)
 				    nuidp->nu_cr.cr_ngroups = NGROUPS;
-				nuidp->nu_cr.cr_ref = 1;
+#endif /* XXX elad */
+				kauth_cred_setrefcnt(nuidp->nu_cr, 1);
 				nuidp->nu_timestamp = nsd->nsd_timestamp;
 				nuidp->nu_expire = time.tv_sec + nsd->nsd_ttl;
 				/*
@@ -364,8 +367,8 @@ sys_nfssvc(l, v, retval)
 					nu_lru);
 				LIST_INSERT_HEAD(NUIDHASH(slp, nsd->nsd_uid),
 					nuidp, nu_hash);
-				nfsrv_setcred(&nuidp->nu_cr,
-				    &nfsd->nfsd_nd->nd_cr);
+				nfsrv_setcred(nuidp->nu_cr,
+				    nfsd->nfsd_nd->nd_cr);
 				nfsd->nfsd_nd->nd_flag |= ND_KERBFULL;
 			    }
 			}
@@ -1192,7 +1195,7 @@ int
 nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	struct nfsmount *nmp;
 	struct nfsreq *rep;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	char **auth_str;
 	int *auth_len;
 	char *verf_str;
@@ -1216,7 +1219,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	nmp->nm_authlen = RPCAUTH_MAXSIZ;
 	nmp->nm_verfstr = verf_str;
 	nmp->nm_verflen = *verf_len;
-	nmp->nm_authuid = cred->cr_uid;
+	nmp->nm_authuid = kauth_cred_geteuid(cred);
 	wakeup((caddr_t)&nmp->nm_authstr);
 
 	/*
@@ -1253,7 +1256,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 int
 nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 	struct nfsmount *nmp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	char **auth_str;
 	int *auth_len;
 	char *verf_str;
@@ -1267,8 +1270,8 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 	if (verf_len < (4 * NFSX_UNSIGNED))
 		panic("nfs_getnickauth verf too small");
 #endif
-	LIST_FOREACH(nuidp, NMUIDHASH(nmp, cred->cr_uid), nu_hash) {
-		if (nuidp->nu_cr.cr_uid == cred->cr_uid)
+	LIST_FOREACH(nuidp, NMUIDHASH(nmp, kauth_cred_geteuid(cred)), nu_hash) {
+		if (kauth_cred_geteuid(nuidp->nu_cr) == kauth_cred_geteuid(cred))
 			break;
 	}
 	if (!nuidp || nuidp->nu_expire < time.tv_sec)
@@ -1320,7 +1323,7 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 int
 nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 	struct nfsmount *nmp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	int len;
 	NFSKERBKEY_T key;
 	struct mbuf **mdp;
@@ -1369,14 +1372,14 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 					nu_lru);
 			}
 			nuidp->nu_flag = 0;
-			nuidp->nu_cr.cr_uid = cred->cr_uid;
+			kauth_cred_seteuid(nuidp->nu_cr, kauth_cred_geteuid(cred));
 			nuidp->nu_expire = time.tv_sec + NFS_KERBTTL;
 			nuidp->nu_timestamp = ktvout;
 			nuidp->nu_nickname = nick;
 			memcpy(nuidp->nu_key, key, sizeof (NFSKERBKEY_T));
 			TAILQ_INSERT_TAIL(&nmp->nm_uidlruhead, nuidp,
 				nu_lru);
-			LIST_INSERT_HEAD(NMUIDHASH(nmp, cred->cr_uid),
+			LIST_INSERT_HEAD(NMUIDHASH(nmp, kauth_cred_geteuid(cred)),
 				nuidp, nu_hash);
 		}
 	} else
