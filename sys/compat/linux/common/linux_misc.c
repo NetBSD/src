@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.151.4.1 2006/03/08 01:48:38 elad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.151.4.2 2006/03/08 19:24:07 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151.4.1 2006/03/08 01:48:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151.4.2 2006/03/08 19:24:07 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1342,7 +1342,7 @@ linux_sys_setfsuid(l, v, retval)
 	 uid_t uid;
 
 	 uid = SCARG(uap, uid);
-	 if (p->p_cred->p_ruid != uid)
+	 if (kauth_cred_getuid(p->p_cred) != uid)
 		 return sys_nosys(l, v, retval);
 	 else
 		 return (0);
