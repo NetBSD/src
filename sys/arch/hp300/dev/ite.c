@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.69 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.69.10.1 2006/03/08 00:43:06 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.10.1 2006/03/08 00:43:06 elad Exp $");
 
 #include "hil.h"
 
@@ -399,7 +399,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	} else
 		tp = ip->tty;
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    && generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(ip, 0);

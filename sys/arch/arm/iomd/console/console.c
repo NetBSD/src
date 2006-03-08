@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.14 2005/12/11 12:16:50 christos Exp $	*/
+/*	$NetBSD: console.c,v 1.14.10.1 2006/03/08 00:43:05 elad Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14 2005/12/11 12:16:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14.10.1 2006/03/08 00:43:05 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -405,7 +405,7 @@ physconopen(dev, flag, mode, l)
 		physconparam(TP, &TP->t_termios);
 		ttsetwater(TP);
 	} else if (TP->t_state&TS_XCLUDE &&
-		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+		   generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 	TP->t_state |= TS_CARR_ON;
 

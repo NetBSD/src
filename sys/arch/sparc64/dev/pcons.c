@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.20 2006/02/13 21:47:12 cdi Exp $	*/
+/*	$NetBSD: pcons.c,v 1.20.4.1 2006/03/08 00:43:13 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.20 2006/02/13 21:47:12 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.20.4.1 2006/03/08 00:43:13 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -146,7 +146,8 @@ pconsopen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pconsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
+	} else if ((tp->t_state&TS_XCLUDE) &&
+		   generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.19.10.1 2006/03/08 00:43:13 elad Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19.10.1 2006/03/08 00:43:13 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if (!__mm_mem_addr(off) && suser(p->p_ucred, &p->p_acflag) != 0)
+	if (!__mm_mem_addr(off) &&
+	    generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER< &p->p_acflag) != 0)
 		return (-1);
 	return (sh3_btop((paddr_t)off));
 }
