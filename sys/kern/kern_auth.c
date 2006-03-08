@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.5 2006/03/08 17:31:56 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.6 2006/03/08 18:49:38 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -861,7 +861,7 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 		to = arg2;
 		signum = (int)(unsigned long)arg3;
 
-		if ((kauth_cred_uidmatch(cred, cred2) == 0) ||
+		if (kauth_cred_uidmatch(cred, cred2)  ||
 		    (signum == SIGCONT && (p->p_session == to->p_session)))
 			error = KAUTH_RESULT_ALLOW;
 		else
@@ -871,14 +871,14 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 		}
 
 	case KAUTH_PROCESS_CANPTRACE:
-		if (kauth_cred_uidmatch(cred, cred2) == 0)
+		if (kauth_cred_uidmatch(cred, cred2))
 			error = KAUTH_RESULT_ALLOW;
 		else
 			error = KAUTH_RESULT_DENY;
 		break;
 
 	case KAUTH_PROCESS_CANSEE:
-		if (kauth_cred_uidmatch(cred, cred2) == 0)
+		if (kauth_cred_uidmatch(cred, cred2))
 			error = KAUTH_RESULT_ALLOW;
 		else
 			error = KAUTH_RESULT_DENY;
