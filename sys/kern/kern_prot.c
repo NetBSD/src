@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.88.10.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.88.10.2 2006/03/08 22:12:35 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.2 2006/03/08 22:12:35 elad Exp $");
 
 #include "opt_compat_43.h"
 
@@ -366,8 +366,9 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 		kauth_cred_setsvuid(cred, sv);
 	if (e != -1 && e != kauth_cred_geteuid(cred)) {
 		/* Update a clone of the current credentials */
-		/* XXX elad cred = kauth_cred_copy(cred); */
+		cred = kauth_cred_copy(cred);
 		kauth_cred_seteuid(cred, e);
+		p->p_cred = cred;
 	}
 
 	/* Mark process as having changed credentials, stops tracing etc */
@@ -422,9 +423,9 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 		kauth_cred_setsvgid(cred, sv);
 	if (e != -1 && e != kauth_cred_getegid(cred)) {
 		/* Update a clone of the current credentials */
-		/* XXX elad cred = kauth_cred_copy(cred); */
-		kauth_cred_setrefcnt(cred, 1);
+		cred = kauth_cred_copy(cred);
 		kauth_cred_setegid(cred, e);
+		p->p_cred = cred;
 	}
 
 	/* Mark process as having changed credentials, stops tracing etc */
