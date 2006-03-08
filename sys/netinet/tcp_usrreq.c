@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.113 2005/12/11 12:24:58 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.113.10.1 2006/03/08 01:19:40 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113 2005/12/11 12:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.10.1 2006/03/08 01:19:40 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1250,8 +1250,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 		if (inph->inph_af != pf)
 			continue;
 
-		if (CURTAIN(l->l_proc->p_ucred->cr_uid,
-			    inph->inph_socket->so_uidinfo->ui_uid))
+		if (CURTAIN(kauth_cred_getuid(l->l_proc->p_cred),
+			    inph->inph_socket->so_uidinfo->ui_uid)) /* XXX elad */
 			continue;
 
 		memset(&pcb, 0, sizeof(pcb));

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.101 2005/11/15 18:39:46 dsl Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.101.10.1 2006/03/08 01:19:40 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.101 2005/11/15 18:39:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.101.10.1 2006/03/08 01:19:40 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -266,7 +266,7 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 #ifndef IPNOPRIVPORTS
 		/* GROSS */
 		if (ntohs(lport) < IPPORT_RESERVED &&
-		    (p == 0 || suser(p->p_ucred, &p->p_acflag)))
+		    (p == 0 || generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			return (EACCES);
 #endif
 #ifdef INET6
@@ -307,7 +307,8 @@ noname:
 
 		if (inp->inp_flags & INP_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
+			if (p == 0 || generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+							&p->p_acflag))
 				return (EACCES);
 #endif
 			mymin = lowportmin;

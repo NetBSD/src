@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.115 2005/12/26 15:45:48 rpaulo Exp $	*/
+/*	$NetBSD: bpf.c,v 1.115.10.1 2006/03/08 01:11:55 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115 2005/12/26 15:45:48 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.10.1 2006/03/08 01:11:55 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,9 +141,9 @@ static void	reset_d(struct bpf_d *);
 static int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
 static int	bpf_setdlt(struct bpf_d *, u_int);
 
-static int	bpf_read(struct file *, off_t *, struct uio *, struct ucred *,
+static int	bpf_read(struct file *, off_t *, struct uio *, kauth_cred_t,
     int);
-static int	bpf_write(struct file *, off_t *, struct uio *, struct ucred *,
+static int	bpf_write(struct file *, off_t *, struct uio *, kauth_cred_t,
     int);
 static int	bpf_ioctl(struct file *, u_long, void *, struct lwp *);
 static int	bpf_poll(struct file *, int, struct lwp *);
@@ -455,7 +455,7 @@ bpf_close(struct file *fp, struct lwp *l)
  */
 static int
 bpf_read(struct file *fp, off_t *offp, struct uio *uio,
-	 struct ucred *cred, int flags)
+	 kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	int timed_out;
@@ -584,7 +584,7 @@ bpf_timed_out(void *arg)
 
 static int
 bpf_write(struct file *fp, off_t *offp, struct uio *uio,
-	  struct ucred *cred, int flags)
+	  kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	struct ifnet *ifp;
@@ -1700,7 +1700,9 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	if (namelen != 2)
 		return (EINVAL);
 
-	if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)))
+	if ((error = generic_authorize(l->l_proc->p_cred,
+				       KAUTH_GENERIC_ISSUSER,
+				       &l->l_proc->p_acflag)))
 		return (error);
 
 	len = (oldp != NULL) ? *oldlenp : 0;

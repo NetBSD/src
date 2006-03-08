@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.12 2006/01/28 01:49:58 rpaulo Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.12.8.1 2006/03/08 01:11:55 elad Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
  *	NetBSD
  *		struct lwp *l;
  *		if (l->l_proc && 
- *		    !suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
+ *		    !generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag))
  *			privileged;
  *	FreeBSD 3
  *		struct proc *p;

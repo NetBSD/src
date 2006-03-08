@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.27 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.27.10.1 2006/03/08 01:16:45 elad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.27 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.27.10.1 2006/03/08 01:16:45 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,7 +414,9 @@ pk_control(so, cmd, data, ifp, p)
 		return (0);
 
 	case SIOCSIFCONF_X25:
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (p == 0 || (error = generic_authorize(p->p_cred,
+							 KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag)))
 			return (EPERM);
 		if (ifp == 0)
 			panic("pk_control");
@@ -493,7 +495,8 @@ pk_ctloutput(cmd, so, level, optname, mp)
 			return (0);
 
 		case PK_ACCTFILE:
-			if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+			if (p == 0 || (error = generic_authorize(p->p_cred,
+						KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 				error = EPERM;
 			else if (m->m_len)
 				error = pk_accton(mtod(m, char *));
