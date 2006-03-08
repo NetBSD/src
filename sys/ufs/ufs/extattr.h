@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.3 2005/12/23 23:20:00 rpaulo Exp $	*/
+/*	$NetBSD: extattr.h,v 1.3.10.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -99,7 +99,7 @@ struct ucred;
 struct ufs_extattr_per_mount {
 	struct lock			uepm_lock;
 	struct ufs_extattr_list_head	uepm_list;
-	struct ucred			*uepm_ucred;
+	kauth_cred_t			uepm_ucred;
 	int				uepm_flags;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.48 2006/01/14 17:41:18 yamt Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.48.8.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -117,7 +117,7 @@ void	ufs_ihashrem(struct inode *);
 
 /* ufs_inode.c */
 int	ufs_reclaim(struct vnode *, struct lwp *);
-int	ufs_balloc_range(struct vnode *, off_t, off_t, struct ucred *, int);
+int	ufs_balloc_range(struct vnode *, off_t, off_t, kauth_cred_t, int);
 
 /* ufs_lookup.c */
 void	ufs_dirbad(struct inode *, doff_t, const char *);
@@ -128,16 +128,16 @@ int	ufs_direnter(struct vnode *, struct vnode *, struct direct *,
 		     struct componentname *, struct buf *);
 int	ufs_dirremove(struct vnode *, struct inode *, int, int);
 int	ufs_dirrewrite(struct inode *, struct inode *, ino_t, int, int, int);
-int	ufs_dirempty(struct inode *, ino_t, struct ucred *);
-int	ufs_checkpath(struct inode *, struct inode *, struct ucred *);
+int	ufs_dirempty(struct inode *, ino_t, kauth_cred_t);
+int	ufs_checkpath(struct inode *, struct inode *, kauth_cred_t);
 int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **);
 
 /* ufs_quota.c */
 int	getinoquota(struct inode *);
-int	chkdq(struct inode *, int64_t, struct ucred *, int);
-int	chkdqchg(struct inode *, int64_t, struct ucred *, int);
-int	chkiq(struct inode *, int32_t, struct ucred *, int);
-int	chkiqchg(struct inode *, int32_t, struct ucred *, int);
+int	chkdq(struct inode *, int64_t, kauth_cred_t, int);
+int	chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
+int	chkiq(struct inode *, int32_t, kauth_cred_t, int);
+int	chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
 void	chkdquot(struct inode *);
 int	quotaon(struct lwp *, struct mount *, int, caddr_t);
 int	quotaoff(struct lwp *, struct mount *, int);
@@ -165,7 +165,7 @@ void	ufs_vinit(struct mount *, int (**)(void *),
 		  int (**)(void *), struct vnode **);
 int	ufs_makeinode(int, struct vnode *, struct vnode **,
 		      struct componentname *);
-int	ufs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+int	ufs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void	ufs_gop_markupdate(struct vnode *, int);
 
 /*

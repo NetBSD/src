@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.57 2005/12/23 23:20:00 rpaulo Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.57.10.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.57 2005/12/23 23:20:00 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.57.10.1 2006/03/08 01:39:12 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -198,7 +198,7 @@ ufs_reclaim(struct vnode *vp, struct lwp *l)
  */
 
 int
-ufs_balloc_range(struct vnode *vp, off_t off, off_t len, struct ucred *cred,
+ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
     int flags)
 {
 	off_t oldeof, neweof, oldeob, oldeop, neweob, pagestart;

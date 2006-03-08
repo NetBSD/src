@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.77 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.77.10.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.77 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.77.10.1 2006/03/08 01:39:12 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ ffs_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t a_offlo;
 		off_t a_offhi;
@@ -322,7 +322,7 @@ ffs_fsync(void *v)
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int l = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &l, FWRITE,
-			ap->a_l->l_proc->p_ucred, ap->a_l);
+			ap->a_l->l_proc->p_cred, ap->a_l);
 	}
 
 	return error;
@@ -337,7 +337,7 @@ ffs_full_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t a_offlo;
 		off_t a_offhi;
@@ -461,7 +461,7 @@ loop:
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
 		int i = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
-			ap->a_l->l_proc->p_ucred, ap->a_l);
+			ap->a_l->l_proc->p_cred, ap->a_l);
 	}
 
 	return error;
@@ -564,7 +564,7 @@ ffs_openextattr(void *v)
 {
 	struct vop_openextattr_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
@@ -584,7 +584,7 @@ ffs_closeextattr(void *v)
 	struct vop_closeextattr_args /* {
 		struct vnode *a_vp;
 		int a_commit;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
@@ -607,7 +607,7 @@ ffs_getextattr(void *v)
 		const char *a_name;
 		struct uio *a_uio;
 		size_t *a_size;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
@@ -633,7 +633,7 @@ ffs_setextattr(void *v)
 		int a_attrnamespace;
 		const char *a_name;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
@@ -659,7 +659,7 @@ ffs_listextattr(void *v)
 		int a_attrnamespace;
 		struct uio *a_uio;
 		size_t *a_size;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
@@ -679,7 +679,7 @@ ffs_deleteextattr(void *v)
 	struct vop_deleteextattr_args /* {
 		struct vnode *a_vp;
 		int a_attrnamespace;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.100 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.100.10.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100.10.1 2006/03/08 01:39:12 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -202,7 +202,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 
 int
 lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
-    struct ucred *cred, struct lwp *l)
+    kauth_cred_t cred, struct lwp *l)
 {
 	struct genfs_node *gp = VTOG(ovp);
 	daddr_t lastblock;

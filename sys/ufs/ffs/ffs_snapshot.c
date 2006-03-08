@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.24 2006/01/04 10:13:06 yamt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.24.8.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24 2006/01/04 10:13:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24.8.1 2006/03/08 01:39:12 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24 2006/01/04 10:13:06 yamt Exp $
 #include <ufs/ffs/ffs_extern.h>
 
 /* FreeBSD -> NetBSD conversion */
-#define KERNCRED	proc0.p_ucred
+#define KERNCRED	proc0.p_cred
 #define ufs1_daddr_t	int32_t
 #define ufs2_daddr_t	int64_t
 #define ufs_lbn_t	daddr_t
@@ -179,8 +179,9 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 		return EXDEV;
 	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
-	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0 &&
-	    VTOI(vp)->i_uid != l->l_proc->p_ucred->cr_uid)
+	if (generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+			      &l->l_proc->p_acflag) != 0 &&
+	    VTOI(vp)->i_uid != kauth_cred_geteuid(l->l_proc->p_cred))
 		return EACCES;
 
 	if (vp->v_size != 0) {
@@ -207,7 +208,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	blkno = ufs_rw64(blkno, ns);
 	error = vn_rdwr(UIO_WRITE, vp,
 	    (caddr_t)&blkno, sizeof(blkno), lblktosize(fs, (off_t)numblks),
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, l->l_proc->p_ucred, NULL, NULL);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, l->l_proc->p_cred, NULL, NULL);
 	if (error)
 		goto out;
 	/*
@@ -223,7 +224,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 */
 	for (blkno = NDADDR; blkno < numblks; blkno += NINDIR(fs)) {
 		error = ffs_balloc(vp, lblktosize(fs, (off_t)blkno),
-		    fs->fs_bsize, l->l_proc->p_ucred, B_METAONLY, &ibp);
+		    fs->fs_bsize, l->l_proc->p_cred, B_METAONLY, &ibp);
 		if (error)
 			goto out;
 		bawrite(ibp);
@@ -385,7 +386,7 @@ loop:
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);
 #endif
-		if (VOP_GETATTR(xvp, &vat, l->l_proc->p_ucred, l) == 0 &&
+		if (VOP_GETATTR(xvp, &vat, l->l_proc->p_cred, l) == 0 &&
 		    vat.va_nlink > 0) {
 			VOP_UNLOCK(xvp, 0);
 			MNT_ILOCK(mp);
@@ -578,7 +579,7 @@ out1:
 		snapblklist[i] = ufs_rw64(snapblklist[i], ns);
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)snapblklist,
 	    snaplistsize*sizeof(ufs2_daddr_t), lblktosize(fs, (off_t)numblks),
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, l->l_proc->p_ucred, NULL, NULL);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, l->l_proc->p_cred, NULL, NULL);
 	for (i = 0; i < snaplistsize; i++)
 		snapblklist[i] = ufs_rw64(snapblklist[i], ns);
 	if (error) {
@@ -1692,7 +1693,7 @@ ffs_snapshot_mount(struct mount *mp)
 		    (caddr_t)&snaplistsize, sizeof(snaplistsize),
 		    lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
 		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
-		    p->p_ucred, NULL, NULL);
+		    p->p_cred, NULL, NULL);
 		if (error) {
 			printf("ffs_snapshot_mount: read_1 failed %d\n", error);
 			snaplistsize = 1;
@@ -1707,7 +1708,7 @@ ffs_snapshot_mount(struct mount *mp)
 			    snaplistsize * sizeof(ufs2_daddr_t),
 			    lblktosize(fs, howmany(fs->fs_size, fs->fs_frag)),
 			    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT,
-			    p->p_ucred, NULL, NULL);
+			    p->p_cred, NULL, NULL);
 			for (i = 0; i < snaplistsize; i++)
 				snapblklist[i] = ufs_rw64(snapblklist[i], ns);
 			if (error) {

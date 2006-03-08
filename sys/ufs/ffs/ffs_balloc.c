@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.40 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.40.10.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.40 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.40.10.1 2006/03/08 01:39:12 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -66,9 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.40 2005/12/11 12:25:25 christos Exp
 
 #include <uvm/uvm.h>
 
-static int ffs_balloc_ufs1(struct vnode *, off_t, int, struct ucred *, int,
+static int ffs_balloc_ufs1(struct vnode *, off_t, int, kauth_cred_t, int,
     struct buf **);
-static int ffs_balloc_ufs2(struct vnode *, off_t, int, struct ucred *, int,
+static int ffs_balloc_ufs2(struct vnode *, off_t, int, kauth_cred_t, int,
     struct buf **);
 
 /*
@@ -78,7 +78,7 @@ static int ffs_balloc_ufs2(struct vnode *, off_t, int, struct ucred *, int,
  */
 
 int
-ffs_balloc(struct vnode *vp, off_t off, int size, struct ucred *cred, int flags,
+ffs_balloc(struct vnode *vp, off_t off, int size, kauth_cred_t cred, int flags,
     struct buf **bpp)
 {
 
@@ -89,7 +89,7 @@ ffs_balloc(struct vnode *vp, off_t off, int size, struct ucred *cred, int flags,
 }
 
 static int
-ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, struct ucred *cred,
+ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
     int flags, struct buf **bpp)
 {
 	daddr_t lbn, lastlbn;
@@ -525,7 +525,7 @@ fail:
 }
 
 static int
-ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, struct ucred *cred,
+ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
     int flags, struct buf **bpp)
 {
 	daddr_t lbn, lastlbn;

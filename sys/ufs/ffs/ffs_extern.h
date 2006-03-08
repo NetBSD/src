@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.51 2006/01/14 17:41:16 yamt Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.51.8.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -83,14 +83,14 @@ extern struct pool ffs_dinode2_pool;	/* memory pool for UFS2 dinodes */
 __BEGIN_DECLS
 
 /* ffs_alloc.c */
-int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, struct ucred *,
+int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, kauth_cred_t,
 		  daddr_t *);
 int	ffs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
-		      struct ucred *, struct buf **, daddr_t *);
+		      kauth_cred_t, struct buf **, daddr_t *);
 #if 0
 int	ffs_reallocblks(void *);
 #endif
-int	ffs_valloc(struct vnode *, int, struct ucred *, struct vnode **);
+int	ffs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
 daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int32_t *);
 daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int64_t *);
 void	ffs_blkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
@@ -99,7 +99,7 @@ void	ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 int	ffs_checkfreefile(struct fs *, struct vnode *, ino_t);
 
 /* ffs_balloc.c */
-int	ffs_balloc(struct vnode *, off_t, int, struct ucred *, int,
+int	ffs_balloc(struct vnode *, off_t, int, kauth_cred_t, int,
     struct buf **);
 
 /* ffs_bswap.c */
@@ -115,7 +115,7 @@ void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 /* ffs_inode.c */
 int	ffs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
-int	ffs_truncate(struct vnode *, off_t, int, struct ucred *, struct lwp *);
+int	ffs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
 
 /* ffs_subr.c */
 void	ffs_load_inode(struct buf *, struct inode *, struct fs *, ino_t);
@@ -135,12 +135,12 @@ void	ffs_done(void);
 int	ffs_mountroot(void);
 int	ffs_mount(struct mount *, const char *, void *, struct nameidata *,
 		  struct lwp *);
-int	ffs_reload(struct mount *, struct ucred *, struct lwp *);
+int	ffs_reload(struct mount *, kauth_cred_t, struct lwp *);
 int	ffs_mountfs(struct vnode *, struct mount *, struct lwp *);
 int	ffs_unmount(struct mount *, int, struct lwp *);
 int	ffs_flushfiles(struct mount *, int, struct lwp *);
 int	ffs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	ffs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int	ffs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	ffs_vget(struct mount *, ino_t, struct vnode **);
 int	ffs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	ffs_vptofh(struct vnode *, struct fid *);
@@ -195,7 +195,7 @@ void	ffs_snapgone(struct inode *);
 void	softdep_initialize(void);
 void	softdep_reinitialize(void);
 int	softdep_mount(struct vnode *, struct mount *, struct fs *,
-		      struct ucred *);
+		      kauth_cred_t);
 int	softdep_flushworklist(struct mount *, int *, struct lwp *);
 int	softdep_flushfiles(struct mount *, int, struct lwp *);
 void	softdep_update_inodeblock(struct inode *, struct buf *, int);

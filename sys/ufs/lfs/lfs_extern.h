@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.75 2006/01/14 17:41:17 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.75.8.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -135,11 +135,11 @@ __BEGIN_DECLS
 /* lfs_alloc.c */
 int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
-int lfs_valloc(struct vnode *, int, struct ucred *, struct vnode **);
+int lfs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
 int lfs_vfree(struct vnode *, ino_t, int);
 
 /* lfs_balloc.c */
-int lfs_balloc(struct vnode *, off_t, int, struct ucred *, int, struct buf **);
+int lfs_balloc(struct vnode *, off_t, int, kauth_cred_t, int, struct buf **);
 void lfs_register_block(struct vnode *, daddr_t);
 void lfs_deregister_block(struct vnode *, daddr_t);
 void lfs_deregister_all(struct vnode *);
@@ -176,7 +176,7 @@ void lfs_debug_log(int, const char *, ...);
 /* lfs_inode.c */
 int lfs_update(struct vnode *, const struct timespec *, const struct timespec *,
     int);
-int lfs_truncate(struct vnode *, off_t, int, struct ucred *, struct lwp *);
+int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 
 /* lfs_segment.c */
@@ -231,7 +231,7 @@ int lfs_mountroot(void);
 int lfs_mount(struct mount *, const char *, void *, struct nameidata *, struct lwp *);
 int lfs_unmount(struct mount *, int, struct lwp *);
 int lfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int lfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int lfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int lfs_vget(struct mount *, ino_t, struct vnode **);
 int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int lfs_vptofh(struct vnode *, struct fid *);
@@ -241,7 +241,7 @@ int lfs_resize_fs(struct lfs *, int);
 /* lfs_vnops.c */
 void lfs_mark_vnode(struct vnode *);
 void lfs_unmark_vnode(struct vnode *);
-int lfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+int lfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void lfs_gop_size(struct vnode *, off_t, off_t *, int);
 int lfs_putpages_ext(void *, int);
 int lfs_gatherpages(struct vnode *);

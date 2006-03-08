@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.79 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.79.10.1 2006/03/08 01:39:12 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.79 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.79.10.1 2006/03/08 01:39:12 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -163,7 +163,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
  * disk blocks.
  */
 int
-ffs_truncate(struct vnode *ovp, off_t length, int ioflag, struct ucred *cred,
+ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
     struct lwp *l)
 {
 	struct genfs_node *gp = VTOG(ovp);
