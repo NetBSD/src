@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.104 2006/02/11 20:58:53 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.105 2006/03/08 22:11:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.104 2006/02/11 20:58:53 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.105 2006/03/08 22:11:48 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.104 2006/02/11 20:58:53 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.105 2006/03/08 22:11:48 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -307,6 +307,8 @@ int	job_pipe[2] = { -1, -1 }; /* job server pipes. */
 
 static Job childExitJob;	/* child exit pseudo-job */
 int	exit_pipe[2] = { -1, -1 }; /* child exit signal pipe. */
+#define	CHILD_EXIT	"."
+#define	DO_JOB_RESTART	"R"
 
 #ifdef REMOTE
 # define TARG_FMT  "--- %s at %s ---\n" /* Default format */
@@ -471,7 +473,7 @@ JobCondPassSig(ClientData jobp, ClientData signop)
 static void
 JobChildSig(int signo __unused)
 {
-    write(exit_pipe[1], ".", 1);
+    write(exit_pipe[1], CHILD_EXIT, 1);
 }
 
 
@@ -495,7 +497,7 @@ JobChildSig(int signo __unused)
 static void
 JobContinueSig(int signo __unused)
 {
-    JobRestartJobs();
+    write(exit_pipe[1], DO_JOB_RESTART, 1);
 }
 #endif
 
@@ -2636,15 +2638,18 @@ Job_CatchOutput(void)
 	    return;
 	} else {
 	    sigset_t	mask;
-	    JobSigLock(&mask);
-	    if (Lst_Open(jobs) == FAILURE) {
-		Punt("Cannot open job table");
-	    }
 
 	    if (readyfd(&childExitJob)) {
 		char token;
 		(void)read(childExitJob.inPipe, &token, 1);
 		nready -= 1;
+		if (token == DO_JOB_RESTART[0])
+		    JobRestartJobs();
+	    }
+
+	    JobSigLock(&mask);
+	    if (Lst_Open(jobs) == FAILURE) {
+		Punt("Cannot open job table");
 	    }
 
 	    while (nready && (ln = Lst_Next(jobs)) != NILLNODE) {
