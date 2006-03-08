@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.2 2006/03/07 13:41:02 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.3 2006/03/08 13:31:12 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.2 2006/03/07 13:41:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.3 2006/03/08 13:31:12 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -107,12 +107,12 @@ PDPOL_EVCNT_DEFINE(hcoldref)
 PDPOL_EVCNT_DEFINE(hcoldunref)
 PDPOL_EVCNT_DEFINE(hcoldreftest)
 PDPOL_EVCNT_DEFINE(hcoldunreftest)
-PDPOL_EVCNT_DEFINE(hcoldunreftestspeculative);
+PDPOL_EVCNT_DEFINE(hcoldunreftestspeculative)
 
-PDPOL_EVCNT_DEFINE(speculativeenqueue);
-PDPOL_EVCNT_DEFINE(speculativehit1);
-PDPOL_EVCNT_DEFINE(speculativehit2);
-PDPOL_EVCNT_DEFINE(speculativemiss);
+PDPOL_EVCNT_DEFINE(speculativeenqueue)
+PDPOL_EVCNT_DEFINE(speculativehit1)
+PDPOL_EVCNT_DEFINE(speculativehit2)
+PDPOL_EVCNT_DEFINE(speculativemiss)
 
 #define	PQ_REFERENCED	PQ_PRIVATE1
 #define	PQ_HOT		PQ_PRIVATE2
