@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.110 2006/03/08 00:24:06 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.111 2006/03/08 00:26:43 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.110 2006/03/08 00:24:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.111 2006/03/08 00:26:43 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2242,7 +2242,7 @@ atw_write_wep(struct atw_softc *sc)
 	reg = ATW_READ(sc, ATW_MACTEST);
 	reg |= ATW_MACTEST_MMI_USETXCLK | ATW_MACTEST_FORCE_KEYID;
 	reg &= ~ATW_MACTEST_KEYID_MASK;
-	reg |= LSHIFT(ic->ic_def_txkey, ATW_MACTEST_KEYID_MASK);
+	reg |= SHIFTIN(ic->ic_def_txkey, ATW_MACTEST_KEYID_MASK);
 	ATW_WRITE(sc, ATW_MACTEST, reg);
 
 	if ((ic->ic_flags & IEEE80211_F_PRIVACY) != 0)
