@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.30 2006/03/01 12:38:21 yamt Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.30.4.1 2006/03/08 00:53:41 elad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.30 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.30.4.1 2006/03/08 00:53:41 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	struct vattr va;
 	struct vnode *uvp = NULL;
 	struct vnode *lvp = *lvpp;
-	struct ucred *ucred = l->l_proc->p_ucred;
+	kauth_cred_t cred = l->l_proc->p_cred;
 	struct componentname cn;
 	int len, reclen;
 	tries = 0;
@@ -118,7 +118,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	 * current directory is still locked.
 	 */
 	if (bufp != NULL) {
-		error = VOP_GETATTR(lvp, &va, ucred, l);
+		error = VOP_GETATTR(lvp, &va, cred, l);
 		if (error) {
 			vput(lvp);
 			*lvpp = NULL;
@@ -134,7 +134,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	cn.cn_nameiop = LOOKUP;
 	cn.cn_flags = ISLASTCN | ISDOTDOT | RDONLY;
 	cn.cn_lwp = l;
-	cn.cn_cred = ucred;
+	cn.cn_cred = cred;
 	cn.cn_pnbuf = NULL;
 	cn.cn_nameptr = "..";
 	cn.cn_namelen = 2;
@@ -186,7 +186,7 @@ unionread:
 
 		eofflag = 0;
 
-		error = VOP_READDIR(uvp, &uio, ucred, &eofflag, 0, 0);
+		error = VOP_READDIR(uvp, &uio, cred, &eofflag, 0, 0);
 
 		off = uio.uio_offset;
 
@@ -356,7 +356,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
     int limit, int flags, struct lwp *l)
 {
 	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-	struct ucred *ucred = l->l_proc->p_ucred;
+	kauth_cred_t cred = l->l_proc->p_cred;
 	struct vnode *uvp = NULL;
 	char *bp = NULL;
 	int error;
@@ -408,7 +408,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 		 * whether or not caller cares.
 		 */
 		if (flags & GETCWD_CHECK_ACCESS) {
-			error = VOP_ACCESS(lvp, perms, ucred, l);
+			error = VOP_ACCESS(lvp, perms, cred, l);
 			if (error)
 				goto out;
 			perms = VEXEC|VREAD;

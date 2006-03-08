@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.7 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.7.10.1 2006/03/08 00:53:41 elad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7.10.1 2006/03/08 00:53:41 elad Exp $");
 
 #include "opt_ptm.h"
 
@@ -112,7 +112,7 @@ pty_getfree(void)
 int
 pty_vn_open(struct vnode *vp, struct lwp *l)
 {
-	struct ucred *cred;
+	kauth_cred_t cred;
 	int error;
 
 	if (vp->v_type != VCHR) {
@@ -123,9 +123,9 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 	/*
 	 * Get us a fresh cred with root privileges.
 	 */
-	cred = crget();
+	cred = kauth_cred_alloc();
 	error = VOP_OPEN(vp, FREAD|FWRITE, cred, l);
-	crfree(cred);
+	kauth_cred_free(cred);
 
 	if (error) {
 		vput(vp);
@@ -216,12 +216,12 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 
 	if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		struct vattr vattr;
-		struct ucred *cred;
+		kauth_cred_t cred;
 		(*ptm->getvattr)(ptm, l->l_proc, &vattr);
 		/* Get a fake cred to pretend we're root. */
-		cred = crget();
+		cred = kauth_cred_alloc();
 		error = VOP_SETATTR(vp, &vattr, cred, l);
-		crfree(cred);
+		kauth_cred_free(cred);
 		if (error) {
 			DPRINTF(("setattr %d\n", error));
 			VOP_UNLOCK(vp, 0);
