@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.7 2006/03/08 19:18:35 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.8 2006/03/08 22:12:35 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -198,7 +198,7 @@ kauth_cred_copy(kauth_cred_t cred)
 
 	kauth_cred_clone(cred, new_cred);
 
-	kauth_cred_destroy(cred);
+	kauth_cred_free(cred);
 
 	return (new_cred);
 }
