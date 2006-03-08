@@ -1,4 +1,4 @@
-/*	$NetBSD: geodereg.h,v 1.5 2006/03/08 00:24:06 dyoung Exp $	*/
+/*	$NetBSD: geodereg.h,v 1.6 2006/03/08 08:26:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -57,10 +57,10 @@
 
 /* Watchdog configuration register, 16 bits. */
 #define	SC1100_GCB_WDCNFG		0x02
-#define	SC1100_WDCNFG_RESERVED		BITS(15,9)	/* write as read */
+#define	SC1100_WDCNFG_RESERVED		__BITS(15,9)	/* write as read */
 
 /* 32kHz clock power-down, 0: clock is enabled, 1: clock is disabled. */
-#define	SC1100_WDCNFG_WD32KPD		BIT(8)
+#define	SC1100_WDCNFG_WD32KPD		__BIT(8)
 
 /* Watchdog event type 1, and type 2
  *
@@ -69,8 +69,8 @@
  * 10: SMI
  * 11: system reset
  */
-#define	SC1100_WDCNFG_WDTYPE2_MASK	BITS(7,6)
-#define	SC1100_WDCNFG_WDTYPE1_MASK	BITS(5,4)
+#define	SC1100_WDCNFG_WDTYPE2_MASK	__BITS(7,6)
+#define	SC1100_WDCNFG_WDTYPE1_MASK	__BITS(5,4)
 
 #define	SC1100_WDCNFG_WDTYPE2_NOACTION	SHIFTIN(0, SC1100_WDCNFG_WDTYPE2_MASK)
 #define	SC1100_WDCNFG_WDTYPE2_INTERRUPT	SHIFTIN(1, SC1100_WDCNFG_WDTYPE2_MASK)
@@ -87,28 +87,28 @@
  * The prescaler divisor is 2**WDPRES.  1110 (0xe) and 1111 (0xf) are
  * reserved values.
  */
-#define	SC1100_WDCNFG_WDPRES_MASK	BITS(3,0)
+#define	SC1100_WDCNFG_WDPRES_MASK	__BITS(3,0)
 #define	SC1100_WDCNFG_WDPRES_MAX	0xd
 
 /* Watchdog status register, 8 bits. */
 #define	SC1100_GCB_WDSTS		0x04
-#define	SC1100_WDSTS_RESERVED		BIT(7,4)	/* write as read */
+#define	SC1100_WDSTS_RESERVED		__BIT(7,4)	/* write as read */
 /* Set to 1 when watchdog reset is asserted.  Read-only.  Reset either by
  * POR# (power-on reset) or by writing 0 to WDOVF.
  */
-#define	SC1100_WDSTS_WDRST		BIT(3)
+#define	SC1100_WDSTS_WDRST		__BIT(3)
 /* Set to 1 when watchdog SMI is asserted.  Read-only.  Reset either by
  * POR# (power-on reset) or by writing 0 to WDOVF.
  */
-#define	SC1100_WDSTS_WDSMI		BIT(2)
+#define	SC1100_WDSTS_WDSMI		__BIT(2)
 /* Set to 1 when watchdog interrupt is asserted.  Read-only.  Reset either by
  * POR# (power-on reset) or by writing 0 to WDOVF.
  */
-#define	SC1100_WDSTS_WDINT		BIT(1)
+#define	SC1100_WDSTS_WDINT		__BIT(1)
 /* Set to 1 when watchdog overflow is asserted.  Reset either by
  * POR# (power-on reset) or by writing 1 to this bit.
  */
-#define	SC1100_WDSTS_WDOVF		BIT(0)
+#define	SC1100_WDSTS_WDOVF		__BIT(0)
 
 /*
  * Helpful constants
