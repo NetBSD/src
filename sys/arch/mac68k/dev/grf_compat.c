@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.15 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.16 2006/03/08 23:37:15 scottr Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.15 2005/12/11 12:18:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.16 2006/03/08 23:37:15 scottr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,13 +301,10 @@ grfmmap(dev_t dev, off_t off, int prot)
 
 	dc = sc->mfb_sc->sc_dc;
 
-	if (off >= 0 &&
-	    off < m68k_round_page(dc->dc_offset + dc->dc_size))
-		addr = m68k_btop(dc->dc_paddr + off);
-	else
-		addr = (-1);	/* XXX bogus */
+	if ((u_int)off < m68k_round_page(dc->dc_offset + dc->dc_size))
+		return m68k_btop(dc->dc_paddr + off);
 
-	return addr;
+	return (-1);
 }
 
 int
