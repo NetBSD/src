@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.12 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.13 2006/03/08 00:24:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -47,50 +47,7 @@
  * EIFS   extended inter-frame space
  */
 
-/* Macros for bit twiddling. */
-
-#ifndef _BIT_TWIDDLE
-#define _BIT_TWIDDLE
-/* nth bit, BIT(0) == 0x1. */
-#define BIT(n) (((n) == 32) ? 0 : ((u_int32_t) 1 << (n)))
-
-/* bits m through n, m < n. */
-#define BITS(m, n) ((BIT(MAX((m), (n)) + 1) - 1) ^ (BIT(MIN((m), (n))) - 1))
-
-/* find least significant bit that is set */
-#define LOWEST_SET_BIT(x) ((((x) - 1) & (x)) ^ (x))
-
-/* for x a power of two and p a non-negative integer, is x a greater power than 2**p? */
-#define GTEQ_POWER(x, p) (((u_long)(x) >> (p)) != 0)
-
-#define MASK_TO_SHIFT2(m) (GTEQ_POWER(LOWEST_SET_BIT((m)), 1) ? 1 : 0)
-
-#define MASK_TO_SHIFT4(m) \
-	(GTEQ_POWER(LOWEST_SET_BIT((m)), 2) \
-	    ? 2 + MASK_TO_SHIFT2((m) >> 2) \
-	    : MASK_TO_SHIFT2((m)))
-
-#define MASK_TO_SHIFT8(m) \
-	(GTEQ_POWER(LOWEST_SET_BIT((m)), 4) \
-	    ? 4 + MASK_TO_SHIFT4((m) >> 4) \
-	    : MASK_TO_SHIFT4((m)))
-
-#define MASK_TO_SHIFT16(m) \
-	(GTEQ_POWER(LOWEST_SET_BIT((m)), 8) \
-	    ? 8 + MASK_TO_SHIFT8((m) >> 8) \
-	    : MASK_TO_SHIFT8((m)))
-
-#define MASK_TO_SHIFT(m) \
-	(GTEQ_POWER(LOWEST_SET_BIT((m)), 16) \
-	    ? 16 + MASK_TO_SHIFT16((m) >> 16) \
-	    : MASK_TO_SHIFT16((m)))
-
-#define MASK_AND_RSHIFT(x, mask) (((x) & (mask)) >> MASK_TO_SHIFT(mask))
-#define LSHIFT(x, mask) ((x) << MASK_TO_SHIFT(mask))
-#define MASK_AND_REPLACE(reg, val, mask) ((reg & ~mask) | LSHIFT(val, mask))
-#define PRESHIFT(m) MASK_AND_RSHIFT((m), (m))
-
-#endif /* _BIT_TWIDDLE */
+#include <lib/libkern/libkern.h>
 
 /* ADM8211 Host Control and Status Registers */
 
@@ -194,19 +151,19 @@
 #define ATW_PAR_CAL_MASK	BITS(14, 15)	/* cache alignment */
 #define		ATW_PAR_CAL_PBL		0x0
 						/* min(8 DW, PBL) */
-#define		ATW_PAR_CAL_8DW		LSHIFT(0x1, ATW_PAR_CAL_MASK)
+#define		ATW_PAR_CAL_8DW		SHIFTIN(0x1, ATW_PAR_CAL_MASK)
 						/* min(16 DW, PBL) */
-#define		ATW_PAR_CAL_16DW	LSHIFT(0x2, ATW_PAR_CAL_MASK)
+#define		ATW_PAR_CAL_16DW	SHIFTIN(0x2, ATW_PAR_CAL_MASK)
 						/* min(32 DW, PBL) */
-#define		ATW_PAR_CAL_32DW	LSHIFT(0x3, ATW_PAR_CAL_MASK)
+#define		ATW_PAR_CAL_32DW	SHIFTIN(0x3, ATW_PAR_CAL_MASK)
 #define ATW_PAR_PBL_MASK	BITS(8, 13)	/* programmable burst length */
 #define		ATW_PAR_PBL_UNLIMITED	0x0
-#define		ATW_PAR_PBL_1DW		LSHIFT(0x1, ATW_PAR_PBL_MASK)
-#define		ATW_PAR_PBL_2DW		LSHIFT(0x2, ATW_PAR_PBL_MASK)
-#define		ATW_PAR_PBL_4DW		LSHIFT(0x4, ATW_PAR_PBL_MASK)
-#define		ATW_PAR_PBL_8DW		LSHIFT(0x8, ATW_PAR_PBL_MASK)
-#define		ATW_PAR_PBL_16DW	LSHIFT(0x16, ATW_PAR_PBL_MASK)
-#define		ATW_PAR_PBL_32DW	LSHIFT(0x32, ATW_PAR_PBL_MASK)
+#define		ATW_PAR_PBL_1DW		SHIFTIN(0x1, ATW_PAR_PBL_MASK)
+#define		ATW_PAR_PBL_2DW		SHIFTIN(0x2, ATW_PAR_PBL_MASK)
+#define		ATW_PAR_PBL_4DW		SHIFTIN(0x4, ATW_PAR_PBL_MASK)
+#define		ATW_PAR_PBL_8DW		SHIFTIN(0x8, ATW_PAR_PBL_MASK)
+#define		ATW_PAR_PBL_16DW	SHIFTIN(0x16, ATW_PAR_PBL_MASK)
+#define		ATW_PAR_PBL_32DW	SHIFTIN(0x32, ATW_PAR_PBL_MASK)
 #define ATW_PAR_BLE		BIT(7)		/* big/little endian selection */
 #define ATW_PAR_DSL_MASK	BITS(2, 6)	/* descriptor skip length */
 #define ATW_PAR_BAR		BIT(1)		/* bus arbitration */
@@ -317,16 +274,16 @@
 						 * TX threshold
 						 */
 #define ATW_NAR_TR_MASK		BITS(14, 15)	/* TX threshold */
-#define		ATW_NAR_TR_L64		LSHIFT(0x0, ATW_NAR_TR_MASK)
-#define		ATW_NAR_TR_L160		LSHIFT(0x2, ATW_NAR_TR_MASK)
-#define		ATW_NAR_TR_L192		LSHIFT(0x3, ATW_NAR_TR_MASK)
-#define		ATW_NAR_TR_H96		LSHIFT(0x0, ATW_NAR_TR_MASK)
-#define		ATW_NAR_TR_H288		LSHIFT(0x2, ATW_NAR_TR_MASK)
-#define		ATW_NAR_TR_H544		LSHIFT(0x3, ATW_NAR_TR_MASK)
+#define		ATW_NAR_TR_L64		SHIFTIN(0x0, ATW_NAR_TR_MASK)
+#define		ATW_NAR_TR_L160		SHIFTIN(0x2, ATW_NAR_TR_MASK)
+#define		ATW_NAR_TR_L192		SHIFTIN(0x3, ATW_NAR_TR_MASK)
+#define		ATW_NAR_TR_H96		SHIFTIN(0x0, ATW_NAR_TR_MASK)
+#define		ATW_NAR_TR_H288		SHIFTIN(0x2, ATW_NAR_TR_MASK)
+#define		ATW_NAR_TR_H544		SHIFTIN(0x3, ATW_NAR_TR_MASK)
 #define ATW_NAR_ST		BIT(13)		/* start/stop transmit */
 #define ATW_NAR_OM_MASK		BITS(10, 11)	/* operating mode */
 #define		ATW_NAR_OM_NORMAL	0x0
-#define		ATW_NAR_OM_LOOPBACK	LSHIFT(0x1, ATW_NAR_OM_MASK)
+#define		ATW_NAR_OM_LOOPBACK	SHIFTIN(0x1, ATW_NAR_OM_MASK)
 #define ATW_NAR_MM		BIT(7)		/* RX any multicast */
 #define ATW_NAR_PR		BIT(6)		/* promiscuous mode */
 #define ATW_NAR_EA		BIT(5)		/* match ad hoc packets (?) */
@@ -385,20 +342,20 @@
 						 * debug only"
 						 */
 #define	ATW_TEST1_TXWP_MASK	BITS(27,25)	/* select ATW_WTDP content? */
-#define	ATW_TEST1_TXWP_TDBD	LSHIFT(0x0, ATW_TEST1_TXWP_MASK)
-#define	ATW_TEST1_TXWP_TDBH	LSHIFT(0x1, ATW_TEST1_TXWP_MASK)
-#define	ATW_TEST1_TXWP_TDBB	LSHIFT(0x2, ATW_TEST1_TXWP_MASK)
-#define	ATW_TEST1_TXWP_TDBP	LSHIFT(0x3, ATW_TEST1_TXWP_MASK)
+#define	ATW_TEST1_TXWP_TDBD	SHIFTIN(0x0, ATW_TEST1_TXWP_MASK)
+#define	ATW_TEST1_TXWP_TDBH	SHIFTIN(0x1, ATW_TEST1_TXWP_MASK)
+#define	ATW_TEST1_TXWP_TDBB	SHIFTIN(0x2, ATW_TEST1_TXWP_MASK)
+#define	ATW_TEST1_TXWP_TDBP	SHIFTIN(0x3, ATW_TEST1_TXWP_MASK)
 #define	ATW_TEST1_RSVD0_MASK	BITS(24,6)	/* reserved */
 #define	ATW_TEST1_TESTMODE_MASK	BITS(5,4)
 /* normal operation */
-#define	ATW_TEST1_TESTMODE_NORMAL	LSHIFT(0x0, ATW_TEST1_TESTMODE_MASK)
+#define	ATW_TEST1_TESTMODE_NORMAL	SHIFTIN(0x0, ATW_TEST1_TESTMODE_MASK)
 /* MAC-only mode */
-#define	ATW_TEST1_TESTMODE_MACONLY	LSHIFT(0x1, ATW_TEST1_TESTMODE_MASK)
+#define	ATW_TEST1_TESTMODE_MACONLY	SHIFTIN(0x1, ATW_TEST1_TESTMODE_MASK)
 /* normal operation */
-#define	ATW_TEST1_TESTMODE_NORMAL2	LSHIFT(0x2, ATW_TEST1_TESTMODE_MASK)
+#define	ATW_TEST1_TESTMODE_NORMAL2	SHIFTIN(0x2, ATW_TEST1_TESTMODE_MASK)
 /* monitor mode */
-#define	ATW_TEST1_TESTMODE_MONITOR	LSHIFT(0x3, ATW_TEST1_TESTMODE_MASK)
+#define	ATW_TEST1_TESTMODE_MONITOR	SHIFTIN(0x3, ATW_TEST1_TESTMODE_MASK)
 
 #define	ATW_TEST1_DUMP_MASK	BITS(3,0)		/* select dump signal
 							 * from dxfer (huh?)
@@ -414,48 +371,48 @@
 #define ATW_TEST0_TS_MASK	BITS(28, 26)	/* Transmit process state */
 
 /* Stopped */
-#define ATW_TEST0_TS_STOPPED		LSHIFT(0, ATW_TEST0_TS_MASK)
+#define ATW_TEST0_TS_STOPPED		SHIFTIN(0, ATW_TEST0_TS_MASK)
 /* Running - fetch transmit descriptor */
-#define ATW_TEST0_TS_FETCH		LSHIFT(1, ATW_TEST0_TS_MASK)
+#define ATW_TEST0_TS_FETCH		SHIFTIN(1, ATW_TEST0_TS_MASK)
 /* Running - wait for end of transmission */
-#define ATW_TEST0_TS_WAIT		LSHIFT(2, ATW_TEST0_TS_MASK)
+#define ATW_TEST0_TS_WAIT		SHIFTIN(2, ATW_TEST0_TS_MASK)
 /* Running - read buffer from memory and queue into FIFO */
-#define ATW_TEST0_TS_READING		LSHIFT(3, ATW_TEST0_TS_MASK)
-#define ATW_TEST0_TS_RESERVED1		LSHIFT(4, ATW_TEST0_TS_MASK)
-#define ATW_TEST0_TS_RESERVED2		LSHIFT(5, ATW_TEST0_TS_MASK)
+#define ATW_TEST0_TS_READING		SHIFTIN(3, ATW_TEST0_TS_MASK)
+#define ATW_TEST0_TS_RESERVED1		SHIFTIN(4, ATW_TEST0_TS_MASK)
+#define ATW_TEST0_TS_RESERVED2		SHIFTIN(5, ATW_TEST0_TS_MASK)
 /* Suspended */
-#define ATW_TEST0_TS_SUSPENDED		LSHIFT(6, ATW_TEST0_TS_MASK)
+#define ATW_TEST0_TS_SUSPENDED		SHIFTIN(6, ATW_TEST0_TS_MASK)
 /* Running - close transmit descriptor */
-#define ATW_TEST0_TS_CLOSE		LSHIFT(7, ATW_TEST0_TS_MASK)
+#define ATW_TEST0_TS_CLOSE		SHIFTIN(7, ATW_TEST0_TS_MASK)
 
 /* ADM8211C/CR registers */
 /* Suspended */
-#define ATW_C_TEST0_TS_SUSPENDED	LSHIFT(4, ATW_TEST0_TS_MASK)
+#define ATW_C_TEST0_TS_SUSPENDED	SHIFTIN(4, ATW_TEST0_TS_MASK)
 /* Descriptor write */
-#define ATW_C_TEST0_TS_CLOSE		LSHIFT(5, ATW_TEST0_TS_MASK)
+#define ATW_C_TEST0_TS_CLOSE		SHIFTIN(5, ATW_TEST0_TS_MASK)
 /* Last descriptor write */
-#define ATW_C_TEST0_TS_CLOSELAST	LSHIFT(6, ATW_TEST0_TS_MASK)
+#define ATW_C_TEST0_TS_CLOSELAST	SHIFTIN(6, ATW_TEST0_TS_MASK)
 /* FIFO full */
-#define ATW_C_TEST0_TS_FIFOFULL		LSHIFT(7, ATW_TEST0_TS_MASK)
+#define ATW_C_TEST0_TS_FIFOFULL		SHIFTIN(7, ATW_TEST0_TS_MASK)
 
 #define ATW_TEST0_RS_MASK	BITS(25, 23)	/* Receive process state */
 
 /* Stopped */
-#define	ATW_TEST0_RS_STOPPED		LSHIFT(0, ATW_TEST0_RS_MASK)
+#define	ATW_TEST0_RS_STOPPED		SHIFTIN(0, ATW_TEST0_RS_MASK)
 /* Running - fetch receive descriptor */
-#define	ATW_TEST0_RS_FETCH		LSHIFT(1, ATW_TEST0_RS_MASK)
+#define	ATW_TEST0_RS_FETCH		SHIFTIN(1, ATW_TEST0_RS_MASK)
 /* Running - check for end of receive */
-#define	ATW_TEST0_RS_CHECK		LSHIFT(2, ATW_TEST0_RS_MASK)
+#define	ATW_TEST0_RS_CHECK		SHIFTIN(2, ATW_TEST0_RS_MASK)
 /* Running - wait for packet */
-#define	ATW_TEST0_RS_WAIT		LSHIFT(3, ATW_TEST0_RS_MASK)
+#define	ATW_TEST0_RS_WAIT		SHIFTIN(3, ATW_TEST0_RS_MASK)
 /* Suspended */
-#define	ATW_TEST0_RS_SUSPENDED		LSHIFT(4, ATW_TEST0_RS_MASK)
+#define	ATW_TEST0_RS_SUSPENDED		SHIFTIN(4, ATW_TEST0_RS_MASK)
 /* Running - close receive descriptor */
-#define	ATW_TEST0_RS_CLOSE		LSHIFT(5, ATW_TEST0_RS_MASK)
+#define	ATW_TEST0_RS_CLOSE		SHIFTIN(5, ATW_TEST0_RS_MASK)
 /* Running - flush current frame from FIFO */
-#define	ATW_TEST0_RS_FLUSH		LSHIFT(6, ATW_TEST0_RS_MASK)
+#define	ATW_TEST0_RS_FLUSH		SHIFTIN(6, ATW_TEST0_RS_MASK)
 /* Running - queue current frame from FIFO into buffer */
-#define	ATW_TEST0_RS_QUEUE		LSHIFT(7, ATW_TEST0_RS_MASK)
+#define	ATW_TEST0_RS_QUEUE		SHIFTIN(7, ATW_TEST0_RS_MASK)
 
 #define ATW_TEST0_EPNE		BIT(18)		/* SEEPROM not detected */
 #define ATW_TEST0_EPSNM		BIT(17)		/* SEEPROM bad signature */
@@ -506,7 +463,7 @@
 
 #define ATW_BBPCTL_TWI			BIT(31)	/* Intersil 3-wire interface */
 #define ATW_BBPCTL_RF3KADDR_MASK	BITS(30, 24)	/* Address for RF3000 */
-#define ATW_BBPCTL_RF3KADDR_ADDR LSHIFT(0x20, ATW_BBPCTL_RF3KADDR_MASK)
+#define ATW_BBPCTL_RF3KADDR_ADDR SHIFTIN(0x20, ATW_BBPCTL_RF3KADDR_MASK)
 #define ATW_BBPCTL_NEGEDGE_DO		BIT(23)	/* data-out on negative edge */
 #define ATW_BBPCTL_NEGEDGE_DI		BIT(22)	/* data-in on negative edge */
 #define ATW_BBPCTL_CCA_ACTLO		BIT(21)	/* CCA low when busy */
@@ -561,10 +518,10 @@
 
 /* was magic 0x100E0C0A */
 #define ATW_MMIWADDR_INTERSIL			  \
-	(LSHIFT(0x0c, ATW_MMIWADDR_GAIN_MASK)	| \
-	 LSHIFT(0x0a, ATW_MMIWADDR_RATE_MASK)	| \
-	 LSHIFT(0x0e, ATW_MMIWADDR_LENHI_MASK)	| \
-	 LSHIFT(0x10, ATW_MMIWADDR_LENLO_MASK))
+	(SHIFTIN(0x0c, ATW_MMIWADDR_GAIN_MASK)	| \
+	 SHIFTIN(0x0a, ATW_MMIWADDR_RATE_MASK)	| \
+	 SHIFTIN(0x0e, ATW_MMIWADDR_LENHI_MASK)	| \
+	 SHIFTIN(0x10, ATW_MMIWADDR_LENLO_MASK))
 
 /* was magic 0x00009101
  *
@@ -573,8 +530,8 @@
  * Tx length (high) and Tx length (low) registers back-to-back.
  */
 #define ATW_MMIWADDR_RFMD						\
-	(LSHIFT(RF3000_TWI_AI|RF3000_GAINCTL, ATW_MMIWADDR_GAIN_MASK) | \
-	 LSHIFT(RF3000_CTL, ATW_MMIWADDR_RATE_MASK))
+	(SHIFTIN(RF3000_TWI_AI|RF3000_GAINCTL, ATW_MMIWADDR_GAIN_MASK) | \
+	 SHIFTIN(RF3000_CTL, ATW_MMIWADDR_RATE_MASK))
 
 #define	ATW_MMIRADDR1_RSVD_MASK		BITS(31, 24)
 #define	ATW_MMIRADDR1_PWRLVL_MASK	BITS(23, 16)
@@ -586,23 +543,23 @@
  * TBD document registers for Intersil 3861 baseband
  */
 #define ATW_MMIRADDR1_INTERSIL	\
-	(LSHIFT(0x7c, ATW_MMIRADDR1_RSSI_MASK) | \
-	 LSHIFT(0x7e, ATW_MMIRADDR1_RXSTAT_MASK))
+	(SHIFTIN(0x7c, ATW_MMIRADDR1_RSSI_MASK) | \
+	 SHIFTIN(0x7e, ATW_MMIRADDR1_RXSTAT_MASK))
 
 /* was magic 0x00000301 */
 #define ATW_MMIRADDR1_RFMD	\
-	(LSHIFT(RF3000_RSSI, ATW_MMIRADDR1_RSSI_MASK) | \
-	 LSHIFT(RF3000_RXSTAT, ATW_MMIRADDR1_RXSTAT_MASK))
+	(SHIFTIN(RF3000_RSSI, ATW_MMIRADDR1_RSSI_MASK) | \
+	 SHIFTIN(RF3000_RXSTAT, ATW_MMIRADDR1_RXSTAT_MASK))
 
 /* was magic 0x00100000 */
 #define ATW_MMIRADDR2_INTERSIL	\
-	(LSHIFT(0x0, ATW_MMIRADDR2_ID_MASK) | \
-	 LSHIFT(0x10, ATW_MMIRADDR2_RXPECNT_MASK))
+	(SHIFTIN(0x0, ATW_MMIRADDR2_ID_MASK) | \
+	 SHIFTIN(0x10, ATW_MMIRADDR2_RXPECNT_MASK))
 
 /* was magic 0x7e100000 */
 #define ATW_MMIRADDR2_RFMD	\
-	(LSHIFT(0x7e, ATW_MMIRADDR2_ID_MASK) | \
-	 LSHIFT(0x10, ATW_MMIRADDR2_RXPECNT_MASK))
+	(SHIFTIN(0x7e, ATW_MMIRADDR2_ID_MASK) | \
+	 SHIFTIN(0x10, ATW_MMIRADDR2_RXPECNT_MASK))
 
 #define	ATW_MMIRADDR2_ID_MASK	BITS(31, 24)	/* 1st element ID in WEP table
 						 * for Probe Response (huh?)
@@ -668,13 +625,13 @@
 #define ATW_CMDR_RTE		BIT(4)		/* enable Rx FIFO threshold */
 #define ATW_CMDR_DRT_MASK	BITS(3, 2)	/* drain Rx FIFO threshold */
 /* 32 bytes */
-#define ATW_CMDR_DRT_8DW	LSHIFT(0x0, ATW_CMDR_DRT_MASK)
+#define ATW_CMDR_DRT_8DW	SHIFTIN(0x0, ATW_CMDR_DRT_MASK)
 /* 64 bytes */
-#define ATW_CMDR_DRT_16DW	LSHIFT(0x1, ATW_CMDR_DRT_MASK)
+#define ATW_CMDR_DRT_16DW	SHIFTIN(0x1, ATW_CMDR_DRT_MASK)
 /* Store & Forward */
-#define ATW_CMDR_DRT_SF		LSHIFT(0x2, ATW_CMDR_DRT_MASK)
+#define ATW_CMDR_DRT_SF		SHIFTIN(0x2, ATW_CMDR_DRT_MASK)
 /* Reserved */
-#define ATW_CMDR_DRT_RSVD	LSHIFT(0x3, ATW_CMDR_DRT_MASK)
+#define ATW_CMDR_DRT_RSVD	SHIFTIN(0x3, ATW_CMDR_DRT_MASK)
 #define ATW_CMDR_SINT_MASK	BIT(1)		/* software interrupt---huh? */
 
 /* TBD PCIC */

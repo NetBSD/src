@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.55 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: libkern.h,v 1.56 2006/03/08 00:24:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -171,6 +171,19 @@ tolower(int ch)
 }
 #endif
 
+/* nth bit, BIT(0) == 0x1. */
+#define	BIT(n) (((n) == 32) ? 0 : ((uint32_t)1 << (n)))
+
+/* bits m through n, m < n. */
+#define	BITS(m, n) ((BIT(MAX((m), (n)) + 1) - 1) ^ (BIT(MIN((m), (n))) - 1))
+
+/* find least significant bit that is set */
+#define	_LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
+
+#define	SHIFTOUT(__x, __mask) (((__x) & (__mask)) / _LOWEST_SET_BIT(__mask))
+#define	SHIFTIN(__x, __mask) ((__x) * _LOWEST_SET_BIT(__mask))
+#define	SHIFTOUT_MASK(__mask) SHIFTOUT((__mask), (__mask))
+
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
 #else
@@ -245,6 +258,7 @@ void	*memset __P((void *, int, size_t));
 char	*strcpy __P((char *, const char *));
 int	 strcmp __P((const char *, const char *));
 size_t	 strlen __P((const char *));
+char	*strsep(char **, const char *);
 #if __GNUC_PREREQ__(2, 95)
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
