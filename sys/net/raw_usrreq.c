@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.25 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.25.10.1 2006/03/08 01:11:55 elad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.25 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.25.10.1 2006/03/08 01:11:55 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -194,7 +194,7 @@ raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * the appropriate raw interface routine.
 	 */
 	case PRU_ATTACH:
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+		if (p == 0 || (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}
