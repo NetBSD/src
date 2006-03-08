@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.13.10.1 2006/03/08 00:23:46 elad Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13.10.1 2006/03/08 00:23:46 elad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -271,7 +271,9 @@ redioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		if ((error = suser(p)) != 0)
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = generic_authorize(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 #endif
 			return (error);
 		break;
