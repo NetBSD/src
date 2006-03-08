@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.763 2006/03/01 22:12:09 cube Exp $
+#	$NetBSD: files,v 1.763.4.1 2006/03/08 00:29:19 elad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1205,6 +1205,7 @@ file	kern/init_main.c
 file	kern/init_sysctl.c
 file	kern/init_sysent.c
 file	kern/kern_acct.c
+file	kern/kern_auth.c
 file	kern/kern_clock.c
 file	kern/kern_descrip.c
 file	kern/kern_event.c
