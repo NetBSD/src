@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.17 2006/03/07 22:12:05 he Exp $	*/
+/*	$NetBSD: scr.c,v 1.18 2006/03/08 23:46:24 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -50,7 +50,7 @@
 **    ISO 7816-3 (the Smart Card spec)
 **
 **    This driver puts a high load on the system due to the need
-**    to interrupt at a high rate (up to 50 Khz) during bit detection.
+**    to interrupt at a high rate (up to 50 kHz) during bit detection.
 **     
 **
 **    The driver is dived into the standard top half ioctl, and bottom
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.17 2006/03/07 22:12:05 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.18 2006/03/08 23:46:24 lukem Exp $");
 
 #include "opt_ddb.h"
 

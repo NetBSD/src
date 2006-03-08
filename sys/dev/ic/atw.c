@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.112 2006/03/08 08:26:50 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.113 2006/03/08 23:46:24 lukem Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.112 2006/03/08 08:26:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.113 2006/03/08 23:46:24 lukem Exp $");
 
 #include "bpfilter.h"
 
@@ -1147,12 +1147,12 @@ atw_cfp_init(struct atw_softc *sc)
 static void
 atw_tofs0_init(struct atw_softc *sc)
 {
-	/* XXX I guess that the Cardbus clock is 22MHz?
+	/* XXX I guess that the Cardbus clock is 22 MHz?
 	 * I am assuming that the role of ATW_TOFS0_USCNT is
-	 * to divide the bus clock to get a 1MHz clock---the datasheet is not
+	 * to divide the bus clock to get a 1 MHz clock---the datasheet is not
 	 * very clear on this point. It says in the datasheet that it is
-	 * possible for the ADM8211 to accomodate bus speeds between 22MHz
-	 * and 33MHz; maybe this is the way? I see a binary-only driver write
+	 * possible for the ADM8211 to accomodate bus speeds between 22 MHz
+	 * and 33 MHz; maybe this is the way? I see a binary-only driver write
 	 * these values. These values are also the power-on default.
 	 */
 	ATW_WRITE(sc, ATW_TOFS0,
@@ -1169,7 +1169,7 @@ atw_ifs_init(struct atw_softc *sc)
 	 * Go figure.
 	 */
 	ifst = SHIFTIN(IEEE80211_DUR_DS_SLOT, ATW_IFST_SLOT_MASK) |
-	      SHIFTIN(22 * 5 /* IEEE80211_DUR_DS_SIFS */ /* # of 22MHz cycles */,
+	      SHIFTIN(22 * 5 /* IEEE80211_DUR_DS_SIFS */ /* # of 22 MHz cycles */,
 	             ATW_IFST_SIFS_MASK) |
 	      SHIFTIN(IEEE80211_DUR_DS_DIFS, ATW_IFST_DIFS_MASK) |
 	      SHIFTIN(0x64 /* IEEE80211_DUR_DS_EIFS */, ATW_IFST_EIFS_MASK);
@@ -1550,15 +1550,15 @@ atw_si4126_print(struct atw_softc *sc)
  * The RF/IF synthesizer produces two reference frequencies for
  * the RF2948B transceiver.  The first frequency the RF2948B requires
  * is two times the so-called "intermediate frequency" (IF). Since
- * a SAW filter on the radio fixes the IF at 374MHz, I program the
- * Si4126 to generate IF LO = 374MHz x 2 = 748MHz.  The second
+ * a SAW filter on the radio fixes the IF at 374 MHz, I program the
+ * Si4126 to generate IF LO = 374 MHz x 2 = 748 MHz.  The second
  * frequency required by the transceiver is the radio frequency
  * (RF). This is a superheterodyne transceiver; for f(chan) the
  * center frequency of the channel we are tuning, RF = f(chan) -
  * IF.
  *
  * XXX I am told by SiLabs that the Si4126 will accept a broader range
- * of XIN than the 2-25MHz mentioned by the datasheet, even *without*
+ * of XIN than the 2-25 MHz mentioned by the datasheet, even *without*
  * XINDIV2 = 1.  I've tried this (it is necessary to double R) and it
  * works, but I have still programmed for XINDIV2 = 1 to be safe.
  */
@@ -1579,12 +1579,12 @@ atw_si4126_tune(struct atw_softc *sc, u_int chan)
 	else
 		mhz = 2412 + 5 * (chan - 1);
 
-	/* Tune IF to 748MHz to suit the IF LO input of the
+	/* Tune IF to 748 MHz to suit the IF LO input of the
 	 * RF2494B, which is 2 x IF. No need to set an IF divider
-         * because an IF in 526MHz - 952MHz is allowed.
+         * because an IF in 526 MHz - 952 MHz is allowed.
 	 *
-	 * XIN is 44.000MHz, so divide it by two to get allowable
-	 * range of 2-25MHz. SiLabs tells me that this is not
+	 * XIN is 44.000 MHz, so divide it by two to get allowable
+	 * range of 2-25 MHz. SiLabs tells me that this is not
 	 * strictly necessary.
 	 */
 
@@ -1611,13 +1611,13 @@ atw_si4126_tune(struct atw_softc *sc, u_int chan)
 
 	atw_si4126_write(sc, SI4126_GAIN, gain);
 
-	/* XIN = 44MHz.
+	/* XIN = 44 MHz.
 	 *
 	 * If XINDIV2 = 1, IF = N/(2 * R) * XIN.  I choose N = 1496,
-	 * R = 44 so that 1496/(2 * 44) * 44MHz = 748MHz.
+	 * R = 44 so that 1496/(2 * 44) * 44 MHz = 748 MHz.
 	 *
 	 * If XINDIV2 = 0, IF = N/R * XIN.  I choose N = 1496, R = 88
-	 * so that 1496/88 * 44MHz = 748MHz.
+	 * so that 1496/88 * 44 MHz = 748 MHz.
 	 */
 	atw_si4126_write(sc, SI4126_IFN, 1496);
 
@@ -1633,8 +1633,8 @@ atw_si4126_tune(struct atw_softc *sc, u_int chan)
 	atw_si4126_write(sc, SI4126_RF1N, mhz - 374);
 #endif
 
-	/* N/R * XIN = RF. XIN = 44MHz. We desire RF = mhz - IF,
-	 * where IF = 374MHz.  Let's divide XIN to 1MHz. So R = 44.
+	/* N/R * XIN = RF. XIN = 44 MHz. We desire RF = mhz - IF,
+	 * where IF = 374 MHz.  Let's divide XIN to 1 MHz. So R = 44.
 	 * Now let's multiply it to mhz. So mhz - IF = N.
 	 */
 	atw_si4126_write(sc, SI4126_RF2R, R);

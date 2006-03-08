@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.17 2005/11/16 00:49:03 uwe Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.18 2006/03/08 23:46:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.17 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.18 2006/03/08 23:46:24 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,7 +168,7 @@ espattach_obio(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_glue = &esp_obio_glue;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	/*
