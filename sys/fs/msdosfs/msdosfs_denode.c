@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.12 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.12.10.1 2006/03/08 01:31:33 elad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.12 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.12.10.1 2006/03/08 01:31:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +389,7 @@ detrunc(dep, length, flags, cred, l)
 	struct denode *dep;
 	u_long length;
 	int flags;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	int error;
@@ -527,7 +527,7 @@ int
 deextend(dep, length, cred)
 	struct denode *dep;
 	u_long length;
-	struct ucred *cred;
+	kauth_cred_t cred;
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	u_long count, osize;
@@ -691,7 +691,7 @@ out:
 
 int
 msdosfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
 	return 0;
 }

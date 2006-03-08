@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.22 2006/02/21 03:19:45 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.22.4.1 2006/03/08 01:31:33 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.22 2006/02/21 03:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.22.4.1 2006/03/08 01:31:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -359,7 +359,7 @@ tmpfs_access(void *v)
 {
 	struct vnode *vp = ((struct vop_access_args *)v)->a_vp;
 	int mode = ((struct vop_access_args *)v)->a_mode;
-	struct ucred *cred = ((struct vop_access_args *)v)->a_cred;
+	kauth_cred_t cred = ((struct vop_access_args *)v)->a_cred;
 
 	int error;
 	struct tmpfs_node *node;
@@ -458,7 +458,7 @@ tmpfs_setattr(void *v)
 {
 	struct vnode *vp = ((struct vop_setattr_args *)v)->a_vp;
 	struct vattr *vap = ((struct vop_setattr_args *)v)->a_vap;
-	struct ucred *cred = ((struct vop_setattr_args *)v)->a_cred;
+	kauth_cred_t cred = ((struct vop_setattr_args *)v)->a_cred;
 	struct lwp *l = ((struct vop_setattr_args *)v)->a_l;
 
 	int error;

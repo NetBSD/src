@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.24 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.24.10.1 2006/03/08 01:24:59 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.24 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.24.10.1 2006/03/08 01:24:59 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ static MALLOC_DEFINE(M_SMBSTR, "smbstr", "SMB strings");
 MALLOC_DEFINE(M_SMBTEMP, "smbtemp", "Temp netsmb data");
 
 void
-smb_makescred(struct smb_cred *scred, struct lwp *l, struct ucred *cred)
+smb_makescred(struct smb_cred *scred, struct lwp *l, kauth_cred_t cred)
 {
 	struct proc *p;
 
@@ -71,7 +71,7 @@ smb_makescred(struct smb_cred *scred, struct lwp *l, struct ucred *cred)
 		p = l ? l->l_proc : NULL;
 
 		scred->scr_l = l;
-		scred->scr_cred = cred ? cred : p->p_ucred;
+		scred->scr_cred = cred ? cred : p->p_cred;
 	} else {
 		scred->scr_l = NULL;
 		scred->scr_cred = cred ? cred : NULL;

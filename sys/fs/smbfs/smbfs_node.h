@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.10 2005/12/03 17:34:44 christos Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.10.10.1 2006/03/08 01:31:33 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -88,8 +88,8 @@ int smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
 	struct smbfattr *fap, struct vnode **vpp);
 #define	smbfs_hash(x, y)	hash32_strn((x), (y), HASH32_STR_INIT)
 
-int  smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred);
-int  smbfs_writevnode(struct vnode *vp, struct uio *uiop, struct ucred *cred, int ioflag);
+int  smbfs_readvnode(struct vnode *vp, struct uio *uiop, kauth_cred_t cred);
+int  smbfs_writevnode(struct vnode *vp, struct uio *uiop, kauth_cred_t cred, int ioflag);
 void smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap);
 int  smbfs_attr_cachelookup(struct vnode *vp ,struct vattr *va);
 
