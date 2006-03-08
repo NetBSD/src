@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.9 2006/01/05 12:21:00 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.9.8.1 2006/03/08 01:06:28 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9 2006/01/05 12:21:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.8.1 2006/03/08 01:06:28 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -117,7 +117,7 @@ struct netcred {
 	struct	radix_node netc_rnodes[2];
 	int	netc_refcnt;
 	int	netc_exflags;
-	struct	ucred netc_anon;
+	kauth_cred_t netc_anon;
 };
 
 /*
@@ -228,7 +228,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	struct vnode *vp;
 	struct fid fid;
 
-	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	if (generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+			      &l->l_proc->p_acflag) != 0)
 		return EPERM;
 
 	/* Lookup the file system path. */
@@ -364,7 +365,7 @@ done:
 
 int
 netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
-    int *wh, struct ucred **anon)
+    int *wh, kauth_cred_t *anon)
 {
 	struct netexport *ne;
 	struct netcred *np;
@@ -380,7 +381,7 @@ netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
 
 	*mpp = ne->ne_mount;
 	*wh = np->netc_exflags;
-	*anon = &np->netc_anon;
+	*anon = np->netc_anon;
 
 	return 0;
 }
@@ -503,8 +504,10 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 			return EPERM;
 		np = &nep->ne_defexported;
 		np->netc_exflags = argp->ex_flags;
-		crcvt(&np->netc_anon, &argp->ex_anon);
-		np->netc_anon.cr_ref = 1;
+		if (np->netc_anon == NULL) /* XXX elad */
+			np->netc_anon = kauth_cred_alloc();
+		kauth_cred_convert(np->netc_anon, &argp->ex_anon);
+		/* XXX elad kauth_cred_setrefcnt(np->netc_anon, 1); */
 		mp->mnt_flag |= MNT_DEFEXPORTED;
 		return 0;
 	}
@@ -571,12 +574,14 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		enp->netc_refcnt = 1;
 
 	np->netc_exflags = argp->ex_flags;
-	crcvt(&np->netc_anon, &argp->ex_anon);
-	np->netc_anon.cr_ref = 1;
+	if (np->netc_anon == NULL) /* XXX elad */
+		np->netc_anon = kauth_cred_alloc();
+	kauth_cred_convert(np->netc_anon, &argp->ex_anon);
+	/* XXX elad - kauth_cred_setrefcnt(np->netc_anon, 1); */
 	return 0;
 check:
 	if (enp->netc_exflags != argp->ex_flags ||
-	    crcmp(&enp->netc_anon, &argp->ex_anon) != 0)
+	    kauth_cred_compare(enp->netc_anon, &argp->ex_anon) != 0)
 		error = EPERM;
 	else
 		error = 0;

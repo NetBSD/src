@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.55 2006/01/03 12:30:46 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.55.8.1 2006/03/08 01:06:28 elad Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -405,7 +405,7 @@ struct nfsuid {
 	LIST_ENTRY(nfsuid) nu_hash;	/* Hash list */
 	int		nu_flag;	/* Flags */
 	union nethostaddr nu_haddr;	/* Host addr. for dgram sockets */
-	struct ucred	nu_cr;		/* Cred uid mapped to */
+	kauth_cred_t	nu_cr;		/* Cred uid mapped to */
 	int		nu_expire;	/* Expiry time (sec) */
 	struct timeval	nu_timestamp;	/* Kerb. timestamp */
 	u_int32_t	nu_nickname;	/* Nickname on server */
@@ -513,7 +513,7 @@ struct nfsrv_descript {
 	u_int32_t		nd_duration;	/* Lease duration */
 	struct timeval		nd_starttime;	/* Time RPC initiated */
 	fhandle_t		nd_fh;		/* File handle */
-	struct ucred		nd_cr;		/* Credentials */
+	kauth_cred_t		nd_cr;		/* Credentials */
 };
 
 /* Bits for "nd_flag" */
@@ -544,10 +544,10 @@ extern int nfs_numasync;
 		((o)->nd_eoff >= (n)->nd_off && \
 		 !memcmp((caddr_t)&(o)->nd_fh, (caddr_t)&(n)->nd_fh, NFSX_V3FH))
 
+/* XXX elad NFSW_SAMECRED */
 #define NFSW_SAMECRED(o, n) \
 	(((o)->nd_flag & ND_KERBAUTH) == ((n)->nd_flag & ND_KERBAUTH) && \
- 	 !memcmp((caddr_t)&(o)->nd_cr, (caddr_t)&(n)->nd_cr, \
-		sizeof (struct ucred)))
+ 	 !kauth_cred_memcmp((o)->nd_cr, (n)->nd_cr))
 
 /*
  * Defines for WebNFS

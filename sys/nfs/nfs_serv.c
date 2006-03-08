@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.101 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.101.4.1 2006/03/08 01:06:28 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101.4.1 2006/03/08 01:06:28 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ nfsrv3_access(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct vnode *vp;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
@@ -173,7 +173,7 @@ nfsrv_getattr(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct nfs_fattr *fp;
 	struct vattr va;
 	struct vnode *vp;
@@ -219,7 +219,7 @@ nfsrv_setattr(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct vattr va, preat;
 	struct nfsv2_sattr *sp;
 	struct nfs_fattr *fp;
@@ -357,7 +357,7 @@ nfsrv_lookup(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct nfs_fattr *fp;
 	struct nameidata nd, ind, *ndp = &nd;
 	struct vnode *vp, *dirp;
@@ -478,7 +478,7 @@ nfsrv_readlink(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct iovec iv[(NFS_MAXPATHLEN+MLEN-1)/MLEN];
 	struct iovec *ivp = iv;
 	struct mbuf *mp;
@@ -579,7 +579,7 @@ nfsrv_read(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct mbuf *m;
 	struct nfs_fattr *fp;
 	u_int32_t *tl;
@@ -808,7 +808,7 @@ nfsrv_write(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct iovec *ivp;
 	int i, cnt;
 	struct mbuf *mp;
@@ -1006,7 +1006,7 @@ nfsrv_writegather(ndp, slp, lwp, mrq)
 	int i = 0;
 	struct iovec *iov;
 	struct nfsrvw_delayhash *wpp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct vattr va, forat;
 	u_int32_t *tl;
 	int32_t t1;
@@ -1027,7 +1027,7 @@ nfsrv_writegather(ndp, slp, lwp, mrq)
 	    mrep = nfsd->nd_mrep;
 	    md = nfsd->nd_md;
 	    dpos = nfsd->nd_dpos;
-	    cred = &nfsd->nd_cr;
+	    cred = nfsd->nd_cr;
 	    v3 = (nfsd->nd_flag & ND_NFSV3);
 	    LIST_INIT(&nfsd->nd_coalesce);
 	    nfsd->nd_mreq = NULL;
@@ -1157,7 +1157,7 @@ loop1:
 		splx(s);
 		mrep = nfsd->nd_mrep;
 		nfsd->nd_mrep = NULL;
-		cred = &nfsd->nd_cr;
+		cred = nfsd->nd_cr;
 		v3 = (nfsd->nd_flag & ND_NFSV3);
 		forat_ret = aftat_ret = 1;
 		error = nfsrv_fhtovp(&nfsd->nd_fh, 1, &vp, cred, slp,
@@ -1367,7 +1367,7 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct nfs_fattr *fp;
 	struct vattr va, dirfor, diraft;
 	struct nfsv2_sattr *sp;
@@ -1487,7 +1487,8 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 			if (va.va_type == VCHR && rdev == 0xffffffff)
 				va.va_type = VFIFO;
 			if (va.va_type != VFIFO &&
-			    (error = suser(cred, (u_short *)0))) {
+			    (error = generic_authorize(cred,
+				KAUTH_GENERIC_ISSUSER, (u_short *)0))) {
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
@@ -1598,7 +1599,7 @@ nfsrv_mknod(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct vattr va, dirfor, diraft;
 	u_int32_t *tl;
 	struct nameidata nd;
@@ -1681,7 +1682,8 @@ abort:
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 	} else {
 		if (va.va_type != VFIFO &&
-		    (error = suser(cred, (u_short *)0))) {
+		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+			(u_short *)0))) {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			goto out;
@@ -1746,7 +1748,7 @@ nfsrv_remove(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct nameidata nd;
 	u_int32_t *tl;
 	int32_t t1;
@@ -1785,7 +1787,8 @@ nfsrv_remove(nfsd, slp, lwp, mrq)
 	if (!error) {
 		vp = nd.ni_vp;
 		if (vp->v_type == VDIR &&
-		    (error = suser(cred, (u_short *)0)) != 0)
+		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+				(u_short *)0)) != 0)
 			goto out;
 		/*
 		 * The root of a mounted filesystem cannot be deleted.
@@ -1835,7 +1838,7 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
@@ -1871,7 +1874,7 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 	 * Remember our original uid so that we can reset cr_uid before
 	 * the second nfs_namei() call, in case it is remapped.
 	 */
-	saved_uid = cred->cr_uid;
+	saved_uid = kauth_cred_geteuid(cred);
 	fromnd.ni_cnd.cn_cred = cred;
 	fromnd.ni_cnd.cn_nameiop = DELETE;
 	fromnd.ni_cnd.cn_flags = WANTPARENT | SAVESTART;
@@ -1905,7 +1908,7 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 		/* NFSv2 */
 		nfsm_strsiz(len2, NFS_MAXNAMLEN);
 	}
-	cred->cr_uid = saved_uid;
+	kauth_cred_seteuid(cred, saved_uid);
 	tond.ni_cnd.cn_cred = cred;
 	tond.ni_cnd.cn_nameiop = RENAME;
 	tond.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART;
@@ -2055,7 +2058,7 @@ nfsrv_link(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct nameidata nd;
 	u_int32_t *tl;
 	int32_t t1;
@@ -2088,7 +2091,8 @@ nfsrv_link(nfsd, slp, lwp, mrq)
 		vn_finished_write(mp, 0);
 		return (0);
 	}
-	if (vp->v_type == VDIR && (error = suser(cred, (u_short *)0)) != 0)
+	if (vp->v_type == VDIR && (error = generic_authorize(cred,
+					KAUTH_GENERIC_ISSUSER, (u_short *)0)) != 0)
 		goto out1;
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
@@ -2159,7 +2163,7 @@ nfsrv_symlink(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct vattr va, dirfor, diraft;
 	struct nameidata nd;
 	u_int32_t *tl;
@@ -2304,7 +2308,7 @@ nfsrv_mkdir(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct vattr va, dirfor, diraft;
 	struct nfs_fattr *fp;
 	struct nameidata nd;
@@ -2426,7 +2430,7 @@ nfsrv_rmdir(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
@@ -2566,7 +2570,7 @@ nfsrv_readdir(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	char *bp, *be;
 	struct mbuf *mp;
 	struct dirent *dp;
@@ -2828,7 +2832,7 @@ nfsrv_readdirplus(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	char *bp, *be;
 	struct mbuf *mp;
 	struct dirent *dp;
@@ -3139,7 +3143,7 @@ nfsrv_commit(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct vattr bfor, aft;
 	struct vnode *vp;
 	nfsfh_t nfh;
@@ -3211,7 +3215,7 @@ nfsrv_statfs(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct statvfs *sf;
 	struct nfs_statfs *sfp;
 	u_int32_t *tl;
@@ -3286,7 +3290,7 @@ nfsrv_fsinfo(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	u_int32_t *tl;
 	struct nfsv3_fsinfo *sip;
 	int32_t t1;
@@ -3363,7 +3367,7 @@ nfsrv_pathconf(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	u_int32_t *tl;
 	struct nfsv3_pathconf *pc;
 	int32_t t1;
@@ -3484,7 +3488,7 @@ int
 nfsrv_access(vp, flags, cred, rdonly, lwp, override)
 	struct vnode *vp;
 	int flags;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	int rdonly;
 	struct lwp *lwp;
 {
@@ -3523,7 +3527,7 @@ nfsrv_access(vp, flags, cred, rdonly, lwp, override)
 	 * Allow certain operations for the owner (reads and writes
 	 * on files that are already open).
 	 */
-	if (override && error == EACCES && cred->cr_uid == vattr.va_uid)
+	if (override && error == EACCES && kauth_cred_geteuid(cred) == vattr.va_uid)
 		error = 0;
 	return error;
 }
