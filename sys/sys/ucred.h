@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.27 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: ucred.h,v 1.27.4.1 2006/03/08 01:01:13 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,8 +59,10 @@ struct ucred {
 	gid_t		cr_groups[NGROUPS];	/* groups */
 };
 
+#if 0
 #define NOCRED ((struct ucred *)-1)	/* no credential available */
 #define FSCRED ((struct ucred *)-2)	/* filesystem credential */
+#endif
 
 #ifdef _KERNEL
 static __inline void crhold(struct ucred *cr)
