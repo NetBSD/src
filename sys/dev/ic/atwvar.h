@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.20 2006/03/08 00:24:06 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.21 2006/03/08 08:26:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -347,14 +347,14 @@ struct atw_frame {
 #define atw_keyid	u.s1.keyid
 #define atw_ihdr	u.s2.ihdr
 
-#define ATW_HDRCTL_SHORT_PREAMBLE	BIT(0)	/* use short preamble */
-#define ATW_HDRCTL_RTSCTS		BIT(4)	/* send RTS */
-#define ATW_HDRCTL_WEP			BIT(5)
-#define ATW_HDRCTL_UNKNOWN1		BIT(15) /* MAC adds FCS? */
-#define ATW_HDRCTL_UNKNOWN2		BIT(8)
+#define ATW_HDRCTL_SHORT_PREAMBLE	__BIT(0)	/* use short preamble */
+#define ATW_HDRCTL_RTSCTS		__BIT(4)	/* send RTS */
+#define ATW_HDRCTL_WEP			__BIT(5)
+#define ATW_HDRCTL_UNKNOWN1		__BIT(15) /* MAC adds FCS? */
+#define ATW_HDRCTL_UNKNOWN2		__BIT(8)
 
-#define ATW_FRAGTHR_FRAGTHR_MASK	BITS(0, 11)
-#define ATW_FRAGNUM_FRAGNUM_MASK	BITS(4, 7)
+#define ATW_FRAGTHR_FRAGTHR_MASK	__BITS(0, 11)
+#define ATW_FRAGNUM_FRAGNUM_MASK	__BITS(4, 7)
 
 /* Values for sc_flags. */
 #define	ATWF_MRL		0x00000001	/* memory read line okay */
