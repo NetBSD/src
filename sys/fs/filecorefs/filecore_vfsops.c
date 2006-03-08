@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.23 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.23.4.1 2006/03/08 01:31:33 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.23 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.23.4.1 2006/03/08 01:31:33 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -236,9 +236,9 @@ filecore_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (kauth_cred_geteuid(p->p_cred) != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, VREAD, p->p_cred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -295,7 +295,7 @@ filecore_mountfs(devvp, mp, l, argp)
 		return error;
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return EBUSY;
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0))
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0))
 	    != 0)
 		return (error);
 
@@ -515,7 +515,7 @@ int
 filecore_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	return (0);

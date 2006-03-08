@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.27 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.27.10.1 2006/03/08 01:22:47 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.27 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.27.10.1 2006/03/08 01:22:47 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.27 2005/12/11 12:25:12 christos Exp 
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <netiso/tp_param.h>
 #include <netiso/tp_var.h>
@@ -500,7 +501,8 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 #define INA(t) (((struct inpcb *)(t->tp_npcb))->inp_laddr.s_addr)
 #define ISOA(t) (((struct isopcb *)(t->tp_npcb))->isop_laddr->siso_addr)
 
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+		if (p == 0 || (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag))) {
 			error = EPERM;
 		} else if (cmd != PRCO_SETOPT || tpcb->tp_state != TP_CLOSED ||
 			   (tpcb->tp_flags & TPF_GENERAL_ADDR) ||

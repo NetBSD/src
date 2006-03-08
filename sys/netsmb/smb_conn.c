@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.19 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.19.10.1 2006/03/08 01:24:59 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.19 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.19.10.1 2006/03/08 01:24:59 elad Exp $");
 
 /*
  * Connection engine.
@@ -382,7 +382,7 @@ smb_vc_create(struct smb_vcspec *vcspec,
 	struct smb_cred *scred, struct smb_vc **vcpp)
 {
 	struct smb_vc *vcp;
-	struct ucred *cred = scred->scr_cred;
+	kauth_cred_t cred = scred->scr_cred;
 	uid_t uid = vcspec->owner;
 	gid_t gid = vcspec->group;
 	uid_t realuid = cred->cr_uid;
@@ -544,7 +544,7 @@ smb_vc_unlock(struct smb_vc *vcp, int flags)
 int
 smb_vc_access(struct smb_vc *vcp, struct smb_cred *scred, mode_t mode)
 {
-	struct ucred *cred = scred->scr_cred;
+	kauth_cred_t cred = scred->scr_cred;
 
 	if (smb_suser(cred) == 0 || cred->cr_uid == vcp->vc_uid)
 		return 0;
@@ -687,7 +687,7 @@ smb_share_create(struct smb_vc *vcp, struct smb_sharespec *shspec,
 	struct smb_cred *scred, struct smb_share **sspp)
 {
 	struct smb_share *ssp;
-	struct ucred *cred = scred->scr_cred;
+	kauth_cred_t cred = scred->scr_cred;
 	uid_t realuid = cred->cr_uid;
 	uid_t uid = shspec->owner;
 	gid_t gid = shspec->group;
@@ -787,7 +787,7 @@ smb_share_unlock(struct smb_share *ssp, int flags)
 int
 smb_share_access(struct smb_share *ssp, struct smb_cred *scred, mode_t mode)
 {
-	struct ucred *cred = scred->scr_cred;
+	kauth_cred_t cred = scred->scr_cred;
 
 	if (smb_suser(cred) == 0 || cred->cr_uid == ssp->ss_uid)
 		return 0;
@@ -849,7 +849,7 @@ smb_sysctl_treedump(SYSCTL_HANDLER_ARGS)
 	struct smb_share_info ssi;
 	int error, itype;
 
-	smb_makescred(&scred, td, td->td_proc->p_ucred);
+	smb_makescred(&scred, td, td->td_proc->p_cred);
 	error = smb_sm_lockvclist(LK_SHARED);
 	if (error)
 		return error;

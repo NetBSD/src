@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.37 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.37.4.1 2006/03/08 01:31:33 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.4.1 2006/03/08 01:31:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ static int	ntfs_root(struct mount *, struct vnode **);
 static int	ntfs_start(struct mount *, int, struct lwp *);
 static int	ntfs_statvfs(struct mount *, struct statvfs *,
 				 struct lwp *);
-static int	ntfs_sync(struct mount *, int, struct ucred *,
+static int	ntfs_sync(struct mount *, int, kauth_cred_t,
 			       struct lwp *);
 static int	ntfs_unmount(struct mount *, int, struct lwp *);
 static int	ntfs_vget(struct mount *mp, ino_t ino,
@@ -103,7 +103,7 @@ static int	ntfs_mountroot(void);
 static int	ntfs_init(void);
 static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct mbuf *, struct vnode **,
-				 int *, struct ucred **);
+				 int *, kauth_cred_t *);
 #endif
 
 static const struct genfs_ops ntfs_genfsops = {
@@ -413,7 +413,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	 * Flush out any old buffers remaining from a previous use.
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0);
 	VOP_UNLOCK(devvp, 0);
 	if (error)
 		return (error);
@@ -754,7 +754,7 @@ static int
 ntfs_sync (
 	struct mount *mp,
 	int waitfor,
-	struct ucred *cred,
+	kauth_cred_t cred,
 	struct lwp *l)
 {
 	/*dprintf(("ntfs_sync():\n"));*/

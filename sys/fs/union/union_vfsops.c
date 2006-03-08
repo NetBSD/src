@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.32 2006/01/05 20:31:33 wrstuden Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.32.8.1 2006/03/08 01:31:33 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32 2006/01/05 20:31:33 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32.8.1 2006/03/08 01:31:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ int union_unmount(struct mount *, int, struct lwp *);
 int union_root(struct mount *, struct vnode **);
 int union_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 int union_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int union_sync(struct mount *, int, struct ucred *, struct lwp *);
+int union_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int union_vget(struct mount *, ino_t, struct vnode **);
 
 /*
@@ -120,7 +120,7 @@ union_mount(mp, path, data, ndp, l)
 	struct vnode *lowerrootvp = NULLVP;
 	struct vnode *upperrootvp = NULLVP;
 	struct union_mount *um = 0;
-	struct ucred *cred = 0;
+	kauth_cred_t cred = NULL;
 	const char *cp;
 	char *xp;
 	int len;
@@ -223,8 +223,8 @@ union_mount(mp, path, data, ndp, l)
 			goto bad;
 	}
 
-	um->um_cred = l->l_proc->p_ucred;
-	crhold(um->um_cred);
+	um->um_cred = l->l_proc->p_cred;
+	kauth_cred_hold(um->um_cred);
 	um->um_cmode = UN_DIRMODE &~ l->l_proc->p_cwdi->cwdi_cmask;
 
 	/*
@@ -302,7 +302,7 @@ bad:
 	if (um)
 		free(um, M_UFSMNT);
 	if (cred)
-		crfree(cred);
+		kauth_cred_free(cred);
 	if (upperrootvp)
 		vrele(upperrootvp);
 	if (lowerrootvp)
@@ -383,7 +383,7 @@ union_unmount(mp, mntflags, l)
 	if (um->um_lowervp)
 		vrele(um->um_lowervp);
 	vrele(um->um_uppervp);
-	crfree(um->um_cred);
+	kauth_cred_free(um->um_cred);
 	/*
 	 * Finally, throw away the union_mount structure
 	 */
@@ -514,7 +514,7 @@ int
 union_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 

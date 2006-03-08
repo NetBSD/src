@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.48 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.48.10.1 2006/03/08 01:31:33 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.48 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.48.10.1 2006/03/08 01:31:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ smbfs_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -219,7 +219,7 @@ smbfs_open(v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -308,7 +308,7 @@ smbfs_close(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	int error;
@@ -348,7 +348,7 @@ smbfs_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -387,7 +387,7 @@ smbfs_setattr(v)
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -450,7 +450,9 @@ smbfs_setattr(v)
 		atime = &vap->va_atime;
 	if (mtime != atime) {
                 if (ap->a_cred->cr_uid != VTOSMBFS(vp)->sm_args.uid &&
-                    (error = suser(ap->a_cred, &ap->a_l->l_proc->p_acflag)) &&
+                    (error = generic_authorize(ap->a_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &ap->a_l->l_proc->p_acflag)) &&
                     ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
                     (error = VOP_ACCESS(ap->a_vp, VWRITE, ap->a_cred, ap->a_l))))
                         return (error);
@@ -518,7 +520,7 @@ smbfs_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -536,7 +538,7 @@ smbfs_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
@@ -859,7 +861,7 @@ smbfs_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		u_long *a_cookies;
 		int a_ncookies;
@@ -951,7 +953,7 @@ smbfs_strategy(v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
-	struct ucred *cr;
+	kauth_cred_t cr;
 	struct proc *p;
 	struct lwp *l;
 	int error = 0;
@@ -968,7 +970,7 @@ smbfs_strategy(v)
 		p = l->l_proc;
 	}
 
-	cr = p->p_ucred; /* XXX */
+	cr = p->p_cred; /* XXX */
 
 	if ((bp->b_flags & B_ASYNC) == 0)
 		error = smbfs_doio(bp, cr, l);
@@ -984,14 +986,14 @@ smbfs_getextattr(struct vop_getextattr_args *ap)
         IN struct vnode *a_vp;
         IN char *a_name;
         INOUT struct uio *a_uio;
-        IN struct ucred *a_cred;
+        IN kauth_cred_t a_cred;
         IN struct lwp *l;
 };
 */
 {
 	struct vnode *vp = ap->a_vp;
 	struct lwp *l = ap->a_l;
-	struct ucred *cred = ap->a_cred;
+	kauth_cred_t cred = ap->a_cred;
 	struct uio *uio = ap->a_uio;
 	const char *name = ap->a_name;
 	struct smbnode *np = VTOSMB(vp);
@@ -1094,7 +1096,7 @@ smbfs_advlock(v)
 		end = start + oadd;
 	}
 	p = l ? l->l_proc : NULL;
-	smb_makescred(&scred, l, p ? p->p_ucred : NULL);
+	smb_makescred(&scred, l, p ? p->p_cred : NULL);
 	switch (ap->a_op) {
 	case F_SETLK:
 		switch (fl->l_type) {
