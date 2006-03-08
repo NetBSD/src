@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.1 2006/03/07 23:23:56 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.2 2006/03/08 09:06:05 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -391,16 +391,16 @@ kauth_cred_addgroup(kauth_cred_t cred, gid_t gid)
 	KASSERT(cred != NULL);
 	KASSERT(gid >= 0 && gid <= GID_MAX);
 
-	simple_lock(cred->cr_lock);
+	simple_lock(&cred->cr_lock);
 
 	if (cred->cr_ngroups >=
 	    (sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]))) {
-		simple_unlock(cred->cr_lock);
+		simple_unlock(&cred->cr_lock);
 		return (E2BIG);
 	}
 
 	if (kauth_cred_groupmember(cred, gid)) {
-		simple_unlock(cred->cr_lock);
+		simple_unlock(&cred->cr_lock);
 		return (0);
 	}
 
@@ -408,7 +408,7 @@ kauth_cred_addgroup(kauth_cred_t cred, gid_t gid)
 
 	kauth_cred_sortgroups(cred->cr_groups, cred->cr_ngroups);
 
-	simple_unlock(cred->cr_lock);
+	simple_unlock(&cred->cr_lock);
 		
 	return (0);
 }
@@ -420,10 +420,12 @@ kauth_cred_delgroup(kauth_cred_t cred, gid_t gid)
 	KASSERT(cred != NULL);
 	KASSERT(gid >= 0 && gid <= GID_MAX);
 
-	simple_lock(cred->cr_lock);
+	simple_lock(&cred->cr_lock);
 
-	if (!kauth_cred_groupmember(cred, gid))
+	if (!kauth_cred_groupmember(cred, gid)) {
+		simple_unlock(&cred->cr_lock);
 		return (0);
+	}
 
 	if (cred->cr_ngroups == 1)
 		cred->cr_groups[0] = (gid_t)-1; /* XXX */
@@ -441,7 +443,7 @@ kauth_cred_delgroup(kauth_cred_t cred, gid_t gid)
 
 	kauth_cred_sortgroups(cred->cr_groups, cred->cr_ngroups);
 
-	simple_unlock(cred->cr_lock);
+	simple_unlock(&cred->cr_lock);
 
 	return (0);
 }
