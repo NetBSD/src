@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.68 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: midway.c,v 1.68.10.1 2006/03/08 01:44:48 elad Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68.10.1 2006/03/08 01:44:48 elad Exp $");
 
 #include "opt_natm.h"
 
@@ -160,6 +160,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68 2005/12/11 12:21:27 christos Exp $")
 #include <sys/socketvar.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_atm.h>
@@ -1306,7 +1307,9 @@ caddr_t data;
 		if (ifp == &sc->enif) {
 		  struct ifnet *sifp;
 
-		  if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		  if ((error = generic_authorize(curproc->p_cred,
+						 KAUTH_GENERIC_ISSUSER,
+						 &curproc->p_acflag)) != 0)
 		    break;
 
 		  if ((sifp = en_pvcattach(ifp)) != NULL) {
@@ -1334,7 +1337,9 @@ caddr_t data;
 		break;
 
 	case SIOCSPVCTX:
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) == 0)
+		if ((error = generic_authorize(curproc->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) == 0)
 			error = en_pvctx(sc, (struct pvctxreq *)data);
 		break;
 

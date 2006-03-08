@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.24 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.24.4.1 2006/03/08 01:48:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.24 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.24.4.1 2006/03/08 01:48:38 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -365,13 +365,13 @@ change_utimes32(vp, tptr, l)
 		netbsd32_to_timeval(&tv32[0], &tv[0]);
 		netbsd32_to_timeval(&tv32[1], &tv[1]);
 	}
-	VOP_LEASE(vp, l, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(vp, l, p->p_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vattr.va_atime.tv_sec = tv[0].tv_sec;
 	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
 	vattr.va_mtime.tv_sec = tv[1].tv_sec;
 	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-	error = VOP_SETATTR(vp, &vattr, p->p_ucred, l);
+	error = VOP_SETATTR(vp, &vattr, p->p_cred, l);
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
@@ -556,7 +556,7 @@ netbsd32_fhstatvfs1(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, fhp)), &fh,

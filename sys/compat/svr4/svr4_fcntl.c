@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.48 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.48.10.1 2006/03/08 01:48:38 elad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.48 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.48.10.1 2006/03/08 01:48:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,11 +285,11 @@ fd_revoke(l, fd, retval)
 		goto out;
 	}
 
-	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_cred, l)) != 0)
 		goto out;
 
-	if (p->p_ucred->cr_uid != vattr.va_uid &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if (kauth_cred_geteuid(p->p_cred) != vattr.va_uid &&
+	    (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		goto out;
 
 	if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)
@@ -330,7 +330,7 @@ fd_truncate(l, fd, flp, retval)
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
 		return ESPIPE;
 
-	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_cred, l)) != 0)
 		return error;
 
 	length = vattr.va_size;

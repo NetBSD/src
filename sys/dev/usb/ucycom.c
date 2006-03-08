@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.8 2006/03/05 17:33:33 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.8.2.1 2006/03/08 01:44:49 elad Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.8 2006/03/05 17:33:33 christos Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.8.2.1 2006/03/08 01:44:49 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -769,7 +769,7 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		err = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		err = generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (err)
 			break;
 		sc->sc_swflags = *(int *)data;

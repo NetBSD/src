@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.241 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.241.4.1 2006/03/08 01:44:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.241 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.241.4.1 2006/03/08 01:44:48 elad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.241 2006/02/20 16:50:37 thorpej Exp $");
 #include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -827,7 +828,9 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+		generic_authorize(l->l_proc->p_cred,
+				  KAUTH_GENERIC_ISSUSER,
+				  &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1073,7 +1076,9 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = generic_authorize(p->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &p->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

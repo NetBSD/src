@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.90 2006/03/05 17:33:33 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.90.2.1 2006/03/08 01:44:50 elad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.90 2006/03/05 17:33:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.90.2.1 2006/03/08 01:44:50 elad Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -756,7 +756,8 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 			wsdisplayparam(tp, &tp->t_termios);
 			ttsetwater(tp);
 		} else if ((tp->t_state & TS_XCLUDE) != 0 &&
-			   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+			   generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+					     &l->l_proc->p_acflag) != 0)
 			return EBUSY;
 		tp->t_state |= TS_CARR_ON;
 

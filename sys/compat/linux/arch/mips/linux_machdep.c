@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.24 2005/12/11 12:20:16 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.24.10.1 2006/03/08 01:48:38 elad Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.24 2005/12/11 12:20:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.24.10.1 2006/03/08 01:48:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ linux_sys_sysmips(l, v, retval)
 		int name[2];
 		size_t len;
 
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return error;
 		if ((error = copyinstr((char *)SCARG(uap, arg1), nodename,
 		    LINUX___NEW_UTS_LEN, &len)) != 0)

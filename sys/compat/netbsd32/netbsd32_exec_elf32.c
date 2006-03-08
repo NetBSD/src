@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.24 2005/12/27 00:36:00 cube Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.24.10.1 2006/03/08 01:48:38 elad Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.24 2005/12/27 00:36:00 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.24.10.1 2006/03/08 01:48:38 elad Exp $");
 
 #define	ELFSIZE		32
 
@@ -180,19 +180,19 @@ netbsd32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 		a++;
 
 		a->a_type = AT_EUID;
-		a->a_v = p->p_ucred->cr_uid;
+		a->a_v = kauth_cred_geteuid(p->p_cred);
 		a++;
 
 		a->a_type = AT_RUID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = kauth_cred_getuid(p->p_cred);
 		a++;
 
 		a->a_type = AT_EGID;
-		a->a_v = p->p_ucred->cr_gid;
+		a->a_v = kauth_cred_getegid(p->p_cred);
 		a++;
 
 		a->a_type = AT_RGID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = kauth_cred_getgid(p->p_cred);
 		a++;
 
 		free((char *)ap, M_TEMP);

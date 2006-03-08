@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.16 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.16.10.1 2006/03/08 01:44:49 elad Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.16.10.1 2006/03/08 01:44:49 elad Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1739,7 +1739,8 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSLOADFW:
 		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = generic_authorize(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) != 0)
 			break;
 
 		error = ipw_cache_firmware(sc, ifr->ifr_data);
@@ -1747,7 +1748,8 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSKILLFW:
 		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = generic_authorize(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) != 0)
 			break;
 
 		ipw_reset(sc);
