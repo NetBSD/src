@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.47 2006/02/16 18:48:38 macallan Exp $	*/
+/*	$NetBSD: ofb.c,v 1.47.4.1 2006/03/08 00:43:06 elad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.47 2006/02/16 18:48:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.47.4.1 2006/03/08 00:43:06 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -434,7 +434,7 @@ ofb_mmap(void *v, off_t offset, int prot)
 	 */
 	me = __curproc();
 	if (me != NULL) {
-		if (suser(me->p_ucred, NULL) != 0) {
+		if (generic_authorize(me->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
 			return -1;
 		}

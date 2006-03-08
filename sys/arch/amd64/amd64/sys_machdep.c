@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5.10.1 2006/03/08 00:43:05 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5.10.1 2006/03/08 00:43:05 elad Exp $");
 
 #if 0
 #include "opt_user_ldt.h"
@@ -395,7 +395,7 @@ x86_64_iopl(l, args, retval)
 	if (securelevel > 1)
 		return EPERM;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -440,7 +440,7 @@ x86_64_set_ioperm(p, args, retval)
 	if (securelevel > 1)
 		return EPERM;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -487,7 +487,7 @@ x86_64_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = suser(p->p_ucred, &p->p_acflag);
+	error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 	if (error != 0)
 		return error;
 

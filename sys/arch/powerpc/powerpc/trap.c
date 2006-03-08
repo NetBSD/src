@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.109 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.109.10.1 2006/03/08 00:43:13 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109.10.1 2006/03/08 00:43:13 elad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -278,8 +278,8 @@ trap(struct trapframe *frame)
 			printf("UVM: pid %d.%d (%s), uid %d killed: "
 			       "out of swap\n",
 			       p->p_pid, l->l_lid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.105 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.105.10.1 2006/03/08 00:43:05 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105.10.1 2006/03/08 00:43:05 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,7 +533,7 @@ nogo:
 	if (rv == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 		       p->p_pid, p->p_comm,
-		       p->p_cred && p->p_ucred ? p->p_ucred->cr_uid : -1);
+		       p->p_cred ? kauth_cred_geteuid(p->p_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
 	} else {
 		ksi.ksi_signo = SIGSEGV;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.30 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.30.10.1 2006/03/08 00:43:14 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.30.10.1 2006/03/08 00:43:14 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -199,7 +199,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
+	if ((u_int)off > ctob(physmem) &&
+	    generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return (-1);
 	return (btop((u_int)off));
 }

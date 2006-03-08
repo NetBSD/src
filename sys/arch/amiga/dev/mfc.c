@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.38 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: mfc.c,v 1.38.10.1 2006/03/08 00:43:05 elad Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38.10.1 2006/03/08 00:43:05 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,7 +535,9 @@ mfcsopen(dev_t dev, int flag, int mode, struct lwp *l)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else if (tp->t_state & TS_XCLUDE &&
-		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
+		   generic_authorize(l->l_proc->p_cred,
+				     KAUTH_GENERIC_ISSUSER,
+				     &l->l_proc->p_acflag) != 0) {
 		splx(s);
 		return(EBUSY);
 	}
@@ -712,7 +714,9 @@ mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(int *)data = SWFLAGS(dev);
 		break;
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = generic_authorize(l->l_proc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &l->l_proc->p_acflag);
 		if (error != 0)
 			return(EPERM);
 

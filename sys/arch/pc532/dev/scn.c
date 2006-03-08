@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.68 2005/12/24 20:07:24 perry Exp $ */
+/*	$NetBSD: scn.c,v 1.68.10.1 2006/03/08 00:43:07 elad Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.10.1 2006/03/08 00:43:07 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1144,7 +1144,8 @@ scnopen(dev, flag, mode, l)
 			tp->t_state &= ~TS_CARR_ON;
 	} else {
 		if (tp->t_state & TS_XCLUDE &&
-		    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
+		    generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+				      &l->l_proc->p_acflag) != 0) {
 			splx(s);
 			return (EBUSY);
 		} else {
@@ -1789,7 +1790,9 @@ scnioctl(dev, cmd, data, flag, l)
 	case TIOCSFLAGS:{
 			int     userbits, driverbits = 0;
 
-			error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+			error = generic_authorize(l->l_proc->p_cred,
+						  KAUTH_GENERIC_ISSUSER,
+						  &l->l_proc->p_acflag);
 			if (error != 0)
 				return (EPERM);
 

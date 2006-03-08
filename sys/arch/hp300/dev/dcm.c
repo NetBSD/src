@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.68 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: dcm.c,v 1.68.10.1 2006/03/08 00:43:06 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.68 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.68.10.1 2006/03/08 00:43:06 elad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -551,7 +551,7 @@ dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1086,7 +1086,7 @@ dcmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TIOCSFLAGS: {
 		int userbits;
 
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			return (EPERM);
 
