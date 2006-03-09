@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.37 2006/03/07 18:57:40 macallan Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.38 2006/03/09 20:58:00 macallan Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -22,8 +22,8 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 #options 	BLINK
 
 # wsdisplay options
-#options 	WSEMUL_SUN
-options 	WSEMUL_VT100
+options 	WSEMUL_SUN
+#options 	WSEMUL_VT100
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_CUSTOM_OUTPUT		# wsconsctl(8)
 
@@ -343,6 +343,8 @@ pseudo-device	ipfilter
 
 ## /dev/audio support
 
+#options	DBRI_DEBUG	# noisy debug output from the dbri driver
+options		DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
 dbri0		at sbus0 slot ? offset ?		# SUNW,DBRI[s3|e]
 audio*		at audiobus?
 
