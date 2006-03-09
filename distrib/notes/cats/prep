@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8 2004/08/27 16:53:13 wiz Exp $
+.\"	$NetBSD: prep,v 1.9 2006/03/09 18:10:07 wiz Exp $
 .
 A \*M machine usually needs little or no preparation before installing
 .Nx ,
@@ -41,11 +41,11 @@ directory.
 .Lk http://www.NetBSD.org/mirrors/#iso
 .Pp
 Get and install cdrecord.
-This is available in the packages collection under pkgsrc/sysutils/cdrecord.
+This is available in the packages collection under pkgsrc/sysutils/cdrtools.
 Systems not supported by the packages
 collection should get it from the official website:
 .br
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrtools/README.html
 .br
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
