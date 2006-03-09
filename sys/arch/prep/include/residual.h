@@ -327,6 +327,9 @@ extern PnP_TAG_PACKET *PnP_find_small_vendor_packet(unsigned char *p,
 extern PnP_TAG_PACKET *PnP_find_large_vendor_packet(unsigned char *p,
 						    unsigned packet_type,
 						    int n);
+extern PPC_DEVICE *find_nth_pnp_device(const char *devid, int busid, int n);
+extern int count_pnp_devices(const char *devid);
+extern void pnp_devid_to_string(uint32_t devid, char *s);
 #endif /* __ASSEMBLY__ */
 #endif  /* ndef _RESIDUAL_ */
 
