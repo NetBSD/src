@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.82.2.2 2005/03/30 10:25:08 tron Exp $       */
+/*     $NetBSD: login.c,v 1.82.2.3 2006/03/09 16:48:46 tron Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.82.2.2 2005/03/30 10:25:08 tron Exp $");
+__RCSID("$NetBSD: login.c,v 1.82.2.3 2006/03/09 16:48:46 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 	 * -f is used to skip a second login authentication
 	 * -h is used by other servers to pass the name of the remote host to
 	 *    login so that it may be placed in utmp/utmpx and wtmp/wtmpx
-	 * -a in addition to -h, a server my supply -a to pass the actual
+	 * -a in addition to -h, a server may supply -a to pass the actual
 	 *    server address.
 	 * -s is used to force use of S/Key or equivalent.
 	 */
@@ -503,9 +503,8 @@ main(int argc, char *argv[])
 		 * but with insecure terminal, refuse the login attempt.
 		 */
 		if (pwd && !rval && rootlogin && !rootterm(tty)) {
-			(void)fprintf(stderr,
-			    "%s login refused on this terminal.\n",
-			    pwd->pw_name);
+			(void)printf("Login incorrect or refused on this "
+			    "terminal.\n");
 			if (hostname)
 				syslog(LOG_NOTICE,
 				    "LOGIN %s REFUSED FROM %s ON TTY %s",
@@ -520,7 +519,8 @@ main(int argc, char *argv[])
 		if (pwd && !rval)
 			break;
 
-		(void)printf("Login incorrect\n");
+		(void)printf("Login incorrect or refused on this "
+		    "terminal.\n");
 		failures++;
 		cnt++;
 		/* we allow 10 tries, but after 3 we start backing off */
