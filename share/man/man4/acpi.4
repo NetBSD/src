@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.18 2005/12/06 17:23:21 wiz Exp $
+.\" $NetBSD: acpi.4,v 1.19 2006/03/09 00:34:07 dogcow Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,6 +62,7 @@
 .Cd "options   ACPIVERBOSE"
 .Cd "options   ACPI_ACTIVATE_DEV"
 .Cd "options   ACPICA_PEDANTIC"
+.Cd "options   ACPI_DSDT_OVERRIDE"
 .Sh DESCRIPTION
 .Nx
 provides machine-independent bus support for
@@ -92,6 +93,11 @@ The default is off.
 Force strict conformance to the ACPI specification in the
 ACPI-CA.
 Do not enable this option unless you are debugging.
+.It Nm ACPI_DSDT_OVERRIDE
+.It Nm ACPI_DSDT_FILE="filename"
+Force a given DSDT instead of the BIOS-supplied version. If
+ACPI_DSDT_FILE is not specified, default to "dsdt.hex"
+in the build directory.
 .El
 .Sh SUPPORTED DEVICES
 .Nx
