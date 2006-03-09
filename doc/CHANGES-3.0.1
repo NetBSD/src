@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.22 2006/02/26 21:53:28 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.23 2006/03/09 17:07:21 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -209,4 +209,18 @@ sys/dev/pci/twe.c				1.74
 
 	Fix memory leak in the TWEIO_GET_PARAM ioctl.
 	[simonb, ticket #1182]
+
+usr.bin/login/login.c				1.87
+
+	Don't issue different message for root login on insecure terminal.
+	This fixes PR lib/31059.
+	[jnemeth, ticket #1198]
+
+lib/libpam/modules/pam_securetty/pam_securetty.c 1.5
+share/man/man8/afterboot.8			1.2
+usr.bin/login					1.13
+
+	Don't issue different message for root login on insecure terminal.
+	This fixes PR lib/30923.
+	[jnemeth, ticket #1199]
 
