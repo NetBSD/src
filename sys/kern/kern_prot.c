@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.88.10.2 2006/03/08 22:12:35 elad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.88.10.3 2006/03/09 23:48:23 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.2 2006/03/08 22:12:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.3 2006/03/09 23:48:23 elad Exp $");
 
 #include "opt_compat_43.h"
 
@@ -618,8 +618,8 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 
 	ngrp = grsortu(grp, ngrp);
 
-	/* XXX elad pc = kauth_cred_copy(pc); */
-	kauth_cred_setrefcnt(pc, 1);
+	pc = kauth_cred_copy(pc);
+	p->p_cred = pc;
 
 	do_ngroups = kauth_cred_ngroups(pc);
 
