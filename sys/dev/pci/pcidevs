@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.772 2006/03/07 22:11:25 bouyer Exp $
+$NetBSD: pcidevs,v 1.773 2006/03/09 15:06:45 hamajima Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -542,6 +542,7 @@ vendor MOXA		0x1393	Moxa
 vendor LEVELONE		0x1394	Level One
 vendor COLOGNECHIP	0x1397	Cologne Chip Designs
 vendor HIFN		0x13a3	Hifn
+vendor EXAR		0x13a8	EXAR
 vendor 3WARE		0x13c1	3ware
 vendor ABOCOM		0x13d1	AboCom Systems
 vendor NETBOOST		0x13dc	NetBoost
@@ -1535,6 +1536,11 @@ product O2MICRO OZ6972		0x6972	OZ6912/OZ6972 PCI-CardBus Bridge
 /* Evans & Sutherland products */
 product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
 
+/* EXAR products */
+product EXAR XR17D152	0x0152	dual-channel Universal PCI UART
+product EXAR XR17D154	0x0154	quad-channel Universal PCI UART
+product EXAR XR17D158	0x0158	octal-channel Universal PCI UART
+
 /* FORE products */
 product FORE PCA200	0x0210	ATM PCA-200
 product FORE PCA200E	0x0300	ATM PCA-200e
@@ -2318,7 +2324,7 @@ product NVIDIA	NFORCE4_SMBUS	0x0052	nForce4 SMBus
 product NVIDIA	NFORCE4_ATA133	0x0053	nForce4 ATA133 IDE
 product NVIDIA	NFORCE4_SATA1	0x0054	nForce4 Serial ATA 1
 product NVIDIA	NFORCE4_SATA2	0x0055	nForce4 Serial ATA 2
-product NVIDIA	NFORCE4_NET1	0x0057	nForce4 Ethernet
+product NVIDIA	NFORCE4_NET1	0x0056	nForce4 Ethernet
 product NVIDIA	NFORCE4_NET2	0x0057	nForce4 Ethernet
 product NVIDIA	NFORCE4_AC	0x0059	nForce4 AC-97
 product NVIDIA	NFORCE4_USB	0x005a	nForce4 USB Host Controller
