@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.16 2006/03/08 23:37:15 scottr Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.17 2006/03/09 18:50:17 he Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.16 2006/03/08 23:37:15 scottr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.17 2006/03/09 18:50:17 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,6 @@ grfmmap(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc *sc;
 	struct macfb_devconfig *dc;
-	paddr_t addr;
 	int unit = GRFUNIT(dev);
 
 	if (grf_softc == NULL || unit >= numgrf)
