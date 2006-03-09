@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_settime.c,v 1.6 2005/06/12 05:21:28 lukem Exp $ */
+/*	$NetBSD: clock_settime.c,v 1.7 2006/03/09 23:44:43 christos Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: clock_settime.c,v 1.6 2005/06/12 05:21:28 lukem Exp $");
+__RCSID("$NetBSD: clock_settime.c,v 1.7 2006/03/09 23:44:43 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: clock_settime.c,v 1.6 2005/06/12 05:21:28 lukem Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/syscall.h>
-#include <sys/systm.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -63,7 +62,7 @@ clock_settime(clock_id, tp)
 	clockid_t clock_id;
 	const struct timespec *tp;
 {
-	struct sys_clock_settime_args args;
+	struct clockctl_clock_settime args;
 	int error;
 	quad_t q;
 	int rv;
@@ -121,8 +120,8 @@ try_syscall:
 	 * If __clockctl_fd >=0, clockctl has already been open
 	 * and used, so we carry on using it.
 	 */
-	SCARG(&args, clock_id) = clock_id;
-	SCARG(&args, tp) = tp;
+	args.clock_id = clock_id;
+	args.tp = tp;
 	error = ioctl(__clockctl_fd, CLOCKCTL_CLOCK_SETTIME, &args);
 	return error;
 
