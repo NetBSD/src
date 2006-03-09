@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.773 2006/03/09 15:09:13 hamajima Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.774 2006/03/09 22:15:19 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.772 2006/03/07 22:11:25 bouyer Exp
+ *	NetBSD: pcidevs,v 1.774 2006/03/09 22:14:48 he Exp
  */
 
 /*
@@ -1892,6 +1892,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Intersil",
 	},
 	{
+	    PCI_VENDOR_NORTEL,
+	    "Nortel Networks (Northern Telecom)",
+	},
+	{
 	    PCI_VENDOR_SILMOTION,
 	    "Silicon Motion",
 	},
@@ -2340,7 +2344,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 575;
+const int pci_nvendors = 576;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -7780,6 +7784,10 @@ static const struct pci_product pci_products[] = {
 	    "NDR4600 Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_BAYSTACK_21,
+	    "Baystack 21 (Accton MPX EN5038)",
+	},
+	{
 	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128,
 	    "Imagine-128",
 	},
@@ -10888,4 +10896,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2136;
+const int pci_nproducts = 2137;
