@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.8 2006/03/08 22:12:35 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.9 2006/03/09 17:07:10 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -94,8 +94,8 @@ SIMPLEQ_HEAD(, kauth_scope) scope_list;
 struct simplelock scopes_lock;
 
 /* Built-in scopes: generic, process. */
-kauth_scope_t builtin_generic;
-kauth_scope_t builtin_process;
+static kauth_scope_t kauth_builtin_scope_generic;
+static kauth_scope_t kauth_builtin_scope_process;
 
 /* Allocate new, empty kauth credentials. */
 kauth_cred_t
@@ -672,14 +672,12 @@ kauth_init(void)
 	simple_lock_init(&scopes_lock);
 
 	/* Register generic scope. */
-	builtin_generic = kauth_register_scope(KAUTH_SCOPE_GENERIC,
-					       kauth_authorize_cb_generic,
-					       NULL);
+	kauth_builtin_scope_generic = kauth_register_scope(KAUTH_SCOPE_GENERIC,
+	    kauth_authorize_cb_generic, NULL);
 
 	/* Register process scope. */
-	builtin_process = kauth_register_scope(KAUTH_SCOPE_PROCESS,
-					       kauth_authorize_cb_process,
-					       NULL);
+	kauth_builtin_scope_process = kauth_register_scope(KAUTH_SCOPE_PROCESS,
+	    kauth_authorize_cb_process, NULL);
 }
 
 /*
@@ -829,8 +827,8 @@ kauth_authorize_cb_generic(kauth_cred_t cred, kauth_action_t action,
 int
 generic_authorize(kauth_cred_t cred, kauth_action_t action, void *arg0)
 {
-	return (kauth_authorize_action(builtin_generic, cred, action, arg0,
-				       NULL, NULL, NULL));
+	return (kauth_authorize_action(kauth_builtin_scope_generic, cred, 
+	    action, arg0, NULL, NULL, NULL));
 }
 
 /*
@@ -884,4 +882,15 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 	}
 
 	return (error);
+}
+
+/*
+ * Process scope authorization wrapper.
+ */
+int
+process_authorize(kauth_cred_t cred, kauth_action_t action, struct proc *p,
+	       void *arg1, void *arg2, void *arg3)
+{
+	return (kauth_authorize_action(kauth_builtin_scope_process, cred,
+	    action, p, arg1, arg2, arg3));
 }

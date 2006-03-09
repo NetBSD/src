@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.86.4.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.86.4.2 2006/03/09 17:07:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86.4.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86.4.2 2006/03/09 17:07:10 elad Exp $");
 
 #include "opt_kstack.h"
 
@@ -1248,15 +1248,3 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 
 	return 0;
 }
-
-/*
- * Process scope authorization wrapper.
- */
-int
-process_authorize(kauth_cred_t cred, kauth_action_t action, struct proc *p,
-	       void *arg1, void *arg2, void *arg3)
-{
-	return (kauth_authorize_action(builtin_process, cred, action, p, arg1,
-				       arg2, arg3));
-}
-
