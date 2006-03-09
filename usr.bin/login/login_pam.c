@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.4.2.4 2005/07/09 22:42:12 tron Exp $       */
+/*     $NetBSD: login_pam.c,v 1.4.2.4.2.1 2006/03/09 16:54:20 tron Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.4.2.4 2005/07/09 22:42:12 tron Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.4.2.4.2.1 2006/03/09 16:54:20 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -388,6 +388,12 @@ main(int argc, char *argv[])
 					PAM_END("pam_chauthtok");
 				break;
 
+			case PAM_AUTH_ERR:
+			case PAM_USER_UNKNOWN:
+			case PAM_MAXTRIES:
+				auth_passed = 0;
+				break;
+
 			default:
 				PAM_END("pam_acct_mgmt");
 				break;
@@ -415,7 +421,7 @@ skip_auth:
 		if (pwd && auth_passed)
 			break;
 
-		(void)printf("Login incorrect\n");
+		(void)printf("Login incorrect or refused on this terminal.\n");
 		failures++;
 		cnt++;
 		/* we allow 10 tries, but after 3 we start backing off */
