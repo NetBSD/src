@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2005/04/15 22:39:11 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2006/03/09 16:20:27 christos Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -45,9 +45,9 @@ SRCS+=	adddf3.S addsf3.S cmpdf2.S cmpsf2.S divdf3.S \
 	umodsi3.S umulsi3.S
 .endif
 
-SRCS+=	setjmp.S __setjmp14.S __longjmp14.c
+SRCS+=	setjmp.S longjmp.c
 SRCS+=	_setjmp.S
-SRCS+=	sigsetjmp.S __sigsetjmp14.S
+SRCS+=	sigsetjmp.S
 
 SRCS+=	makecontext.c resumecontext.S swapcontext.S
 
