@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.29 2005/06/04 23:24:40 heinz Exp $
+.\"	$NetBSD: install,v 1.30 2006/03/09 18:07:31 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -269,7 +269,7 @@ with
 Detailed instructions on netbooting can be found by visiting the
 .Nx
 \*M platform page:
-.Lk http://www.NetBSD.org/Ports/\*M
+.Lk http://www.NetBSD.org/Ports/\*M/
 .Pp
 At the time of this
 release, the URL for the netbooting instructions is:
