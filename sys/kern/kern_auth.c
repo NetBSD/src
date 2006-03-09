@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.9 2006/03/09 17:07:10 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.10 2006/03/09 23:47:07 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -125,9 +125,6 @@ void
 kauth_cred_destroy(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
-
-	/* XXX: For debugging. */
-	memset(cred, 0, sizeof(*cred));
 
 	pool_put(&kauth_cred_pool, cred);
 }
