@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.772 2006/03/07 22:12:14 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.773 2006/03/09 15:09:13 hamajima Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2008,6 +2008,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Hifn",
 	},
 	{
+	    PCI_VENDOR_EXAR,
+	    "EXAR",
+	},
+	{
 	    PCI_VENDOR_3WARE,
 	    "3ware",
 	},
@@ -2336,7 +2340,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 574;
+const int pci_nvendors = 575;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -5242,6 +5246,18 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
 	    "Freedom PCI-GBus Interface",
+	},
+	{
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17D152,
+	    "dual-channel Universal PCI UART",
+	},
+	{
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17D154,
+	    "quad-channel Universal PCI UART",
+	},
+	{
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17D158,
+	    "octal-channel Universal PCI UART",
 	},
 	{
 	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200,
@@ -10872,4 +10888,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2133;
+const int pci_nproducts = 2136;
