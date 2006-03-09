@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2004/09/26 21:13:27 jmmv Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2006/03/09 16:20:27 christos Exp $
 
 KMINCLUDES=	arch/m68k/DEFS.h arch/m68k/SYS.h
 KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S index.S rindex.S \
@@ -8,7 +8,7 @@ KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S index.S rindex.S \
 	ashldi3.S ashrdi3.S lshrdi3.S \
 	bswap16.S bswap32.S bswap64.S
 
-SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S __sigtramp2.S
+SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
 
 .if ${MKSOFTFLOAT} != "no"
 CPPFLAGS+= -DSOFTLOFLOAT_NEED_FIXUNS -DSOFTFLOAT -DSOFTFLOATM68K_FOR_GCC
