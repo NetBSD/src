@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.43 2006/03/01 17:17:38 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.44 2006/03/09 17:07:17 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -869,4 +869,18 @@ lib/libc/sys/statfs.c				1.4
 	The real problem behind PR lib/29919 was a stale weak_alias, so back
 	out the workaround.
 	[drochner, ticket #1187]
+
+usr.bin/login/login.c				1.87
+
+	Don't issue different message for root login on insecure terminal.
+	This fixes PR lib/31059.
+	[jnemeth, ticket #1198]
+
+lib/libpam/modules/pam_securetty/pam_securetty.c 1.5
+share/man/man8/afterboot.8			1.2
+usr.bin/login					1.13
+
+	Don't issue different message for root login on insecure terminal.
+	This fixes PR lib/30923.
+	[jnemeth, ticket #1199]
 
