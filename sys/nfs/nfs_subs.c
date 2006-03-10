@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158.4.1 2006/03/08 01:06:28 elad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.158.4.2 2006/03/10 21:43:19 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.1 2006/03/08 01:06:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.2 2006/03/10 21:43:19 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2592,9 +2592,6 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 		do_ngroups = kauth_cred_ngroups(credanon);
 		for (i = 0; i < do_ngroups && i < NGROUPS; i++)
 			kauth_cred_addgroup(cred, kauth_cred_group(credanon, i));
-#if 0 /* XXX elad - kernel auth managed ngroups by itself. */
-		cred->cr_ngroups = i;
-#endif /* XXX elad */
 	}
 	if (exflags & MNT_EXRDONLY)
 		*rdonlyp = 1;
@@ -2972,16 +2969,10 @@ nfsrv_setcred(incred, outcred)
 	kauth_cred_hold(outcred);
 	kauth_cred_seteuid(outcred, kauth_cred_geteuid(incred));
 	kauth_cred_setegid(outcred, kauth_cred_getegid(incred));
-#if 0 /* XXX elad - kernel auth manages ngroups by itself. */
-	outcred->cr_ngroups = incred->cr_ngroups;
-#endif /* XXX elad */
 
 	in_ngroups = kauth_cred_ngroups(incred);
 	for (i = 0; i < in_ngroups; i++)
 		kauth_cred_addgroup(outcred, kauth_cred_group(incred, i));
-#if 0 /* XXX elad - kernel auth sorts group by itself. */
-	nfsrvw_sort(outcred->cr_groups, outcred->cr_ngroups);
-#endif /* XXX elad */
 }
 
 u_int32_t
