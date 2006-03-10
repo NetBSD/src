@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.86.4.2 2006/03/09 17:07:10 elad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.86.4.3 2006/03/10 21:04:13 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86.4.2 2006/03/09 17:07:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86.4.3 2006/03/10 21:04:13 elad Exp $");
 
 #include "opt_kstack.h"
 
@@ -332,7 +332,6 @@ proc0_init(void)
 	/* Create credentials. */
 	cred0 = kauth_cred_alloc();
 	p->p_cred = cred0;
-	kauth_cred_setngroups(p->p_cred, 1);
 
 	/* Create the CWD info. */
 	p->p_cwdi = &cwdi0;
