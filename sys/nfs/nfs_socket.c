@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.4.1 2006/03/08 01:06:28 elad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.4.2 2006/03/10 21:41:32 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.1 2006/03/08 01:06:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.2 2006/03/10 21:41:32 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2028,11 +2028,6 @@ nfs_getreq(nd, nfsd, has_header)
 				tl++;
 		}
 
-#if 0 /* XXX elad - kernel auth sorts groups and adjusts ngroups appropriately. */
-		kauth_cred_setngroups(nd->nd_cr, (len > NGROUPS) ? NGROUPS : len);
-		if (kauth_cred_ngroups(nd->nd_cr) > 1)
-			nfsrvw_sort(nd->nd_cr.cr_groups, kauth_cred_ngroups(nd->nd_cr));
-#endif /* XXX elad */
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
 			m_freem(mrep);
