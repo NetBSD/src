@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.106.10.1 2006/03/08 01:19:40 elad Exp $	*/
+/*	$NetBSD: in.c,v 1.106.10.2 2006/03/10 15:20:54 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.106.10.1 2006/03/08 01:19:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.106.10.2 2006/03/10 15:20:54 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -320,7 +320,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 	switch (cmd) {
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
-		if (p == 0 || (error = generic_authorize(p->p_cred,
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
 					KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			return (EPERM);
 		/*fall through*/
@@ -376,7 +376,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		    (cmd == SIOCSIFNETMASK || cmd == SIOCSIFDSTADDR))
 			return (EADDRNOTAVAIL);
 
-		if (p == 0 || (error = generic_authorize(p->p_cred,
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
 						KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			return (EPERM);
 
@@ -406,7 +406,7 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		break;
 
 	case SIOCSIFBRDADDR:
-		if (p == 0 || (error = generic_authorize(p->p_cred,
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
 					KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			return (EPERM);
 		/* FALLTHROUGH */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.95.2.1 2006/03/08 01:19:40 elad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.95.2.2 2006/03/10 15:20:54 elad Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.95.2.1 2006/03/08 01:19:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.95.2.2 2006/03/10 15:20:54 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1392,7 +1392,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 				    m, so));
 			case IPV6_HOPOPTS:
 			case IPV6_DSTOPTS:
-				if (p == 0 || generic_authorize(p->p_cred,
+				if (p == 0 || kauth_authorize_generic(p->p_cred,
 						KAUTH_GENERIC_ISSUSER, &p->p_acflag)) {
 					error = EPERM;
 					break;
@@ -1534,7 +1534,7 @@ do { \
 				size_t len = 0;
 
 				int priv = 0;
-				if (p == 0 || generic_authorize(p->p_cred,
+				if (p == 0 || kauth_authorize_generic(p->p_cred,
 						KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 					priv = 0;
 				else
@@ -1577,7 +1577,7 @@ do { \
 
 			case IPV6_HOPOPTS:
 			case IPV6_DSTOPTS:
-				if (p == 0 || generic_authorize(p->p_cred,
+				if (p == 0 || kauth_authorize_generic(p->p_cred,
 						KAUTH_GENERIC_ISSUSER, &p->p_acflag)) {
 					error = EPERM;
 					break;
@@ -1813,7 +1813,7 @@ ip6_pcbopts(pktopt, m, so)
 	}
 
 	/*  set options specified by user. */
-	if (p && !generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+	if (p && !kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 		priv = 1;
 	if ((error = ip6_setpktoptions(m, opt, priv)) != 0) {
 		(void)m_free(m);
@@ -1939,7 +1939,7 @@ ip6_setmoptions(optname, im6op, m)
 			 * all multicast addresses. Only super user is allowed
 			 * to do this.
 			 */
-			if (generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+			if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 			{
 				error = EACCES;
 				break;
