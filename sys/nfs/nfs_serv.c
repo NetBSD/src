@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.101.4.1 2006/03/08 01:06:28 elad Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.101.4.2 2006/03/10 13:37:46 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101.4.1 2006/03/08 01:06:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101.4.2 2006/03/10 13:37:46 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1487,7 +1487,7 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 			if (va.va_type == VCHR && rdev == 0xffffffff)
 				va.va_type = VFIFO;
 			if (va.va_type != VFIFO &&
-			    (error = generic_authorize(cred,
+			    (error = kauth_authorize_generic(cred,
 				KAUTH_GENERIC_ISSUSER, (u_short *)0))) {
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
@@ -1682,7 +1682,7 @@ abort:
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 	} else {
 		if (va.va_type != VFIFO &&
-		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 			(u_short *)0))) {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
@@ -1787,7 +1787,7 @@ nfsrv_remove(nfsd, slp, lwp, mrq)
 	if (!error) {
 		vp = nd.ni_vp;
 		if (vp->v_type == VDIR &&
-		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				(u_short *)0)) != 0)
 			goto out;
 		/*
@@ -2091,7 +2091,7 @@ nfsrv_link(nfsd, slp, lwp, mrq)
 		vn_finished_write(mp, 0);
 		return (0);
 	}
-	if (vp->v_type == VDIR && (error = generic_authorize(cred,
+	if (vp->v_type == VDIR && (error = kauth_authorize_generic(cred,
 					KAUTH_GENERIC_ISSUSER, (u_short *)0)) != 0)
 		goto out1;
 	nd.ni_cnd.cn_cred = cred;
