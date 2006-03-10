@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.13 2006/03/10 19:11:50 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.14 2006/03/10 22:50:05 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -198,19 +198,6 @@ kauth_cred_copy(kauth_cred_t cred)
 	kauth_cred_free(cred);
 
 	return (new_cred);
-}
-
-/*
- * Zero a kauth_cred_t, and re-initialize the lock.
- * XXX: Is this needed? [kauth_cred_zero]
- */
-void
-kauth_cred_zero(kauth_cred_t cred)
-{
-	KASSERT(cred != NULL);
-
-	memset(cred, 0, sizeof(*cred));
-	simple_lock_init(&cred->cr_lock);
 }
 
 uid_t

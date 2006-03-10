@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.1.2.8 2006/03/10 19:11:51 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.1.2.9 2006/03/10 22:50:05 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -107,7 +107,6 @@ void kauth_cred_destroy(kauth_cred_t);
 void kauth_cred_clone(kauth_cred_t, kauth_cred_t);
 kauth_cred_t kauth_cred_dup(kauth_cred_t);
 kauth_cred_t kauth_cred_copy(kauth_cred_t);
-void kauth_cred_zero(kauth_cred_t);
 
 uid_t kauth_cred_getuid(kauth_cred_t);
 uid_t kauth_cred_geteuid(kauth_cred_t);
