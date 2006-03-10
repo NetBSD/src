@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158.4.2 2006/03/10 21:43:19 elad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.158.4.3 2006/03/10 22:38:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.2 2006/03/10 21:43:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.3 2006/03/10 22:38:09 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2961,18 +2961,28 @@ nfsrvw_sort(list, num)
  */
 void
 nfsrv_setcred(incred, outcred)
-	kauth_cred_t incred, outcred;
+	kauth_cred_t incred, *outcred;
 {
 	int i, in_ngroups;
 
-	kauth_cred_zero(outcred);
-	kauth_cred_hold(outcred);
-	kauth_cred_seteuid(outcred, kauth_cred_geteuid(incred));
-	kauth_cred_setegid(outcred, kauth_cred_getegid(incred));
+	/*
+	 * XXX elad: this is another case where the original code just
+	 *	     messed with the struct members, more specifically,
+	 *	     set the reference count. if we have more than one
+	 *	     reference, it means we have a user of these
+	 *	     credentials that didn't kauth_cred_hold().
+	 */
+#ifdef DIAGNOSTIC
+	if (kauth_cred_getrefcnt(*outcred) > 1)
+		panic("nfsrv_setcred: possible memory leak");
+#endif /* DIAGNOSTIC */
+
+	*outcred = kauth_cred_copy(*outcred);
+	kauth_cred_clone(incred, *outcred);
 
 	in_ngroups = kauth_cred_ngroups(incred);
 	for (i = 0; i < in_ngroups; i++)
-		kauth_cred_addgroup(outcred, kauth_cred_group(incred, i));
+		kauth_cred_addgroup(*outcred, kauth_cred_group(incred, i));
 }
 
 u_int32_t

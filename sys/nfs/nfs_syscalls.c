@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.88.8.3 2006/03/10 19:11:50 elad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.88.8.4 2006/03/10 22:38:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.8.3 2006/03/10 19:11:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.8.4 2006/03/10 22:38:09 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -304,7 +304,7 @@ sys_nfssvc(l, v, retval)
 					break;
 			}
 			if (nuidp) {
-			    nfsrv_setcred(nuidp->nu_cr,nfsd->nfsd_nd->nd_cr);
+			    nfsrv_setcred(nuidp->nu_cr, &nfsd->nfsd_nd->nd_cr);
 			    nfsd->nfsd_nd->nd_flag |= ND_KERBFULL;
 			} else {
 			    /*
@@ -367,7 +367,7 @@ sys_nfssvc(l, v, retval)
 				LIST_INSERT_HEAD(NUIDHASH(slp, nsd->nsd_uid),
 					nuidp, nu_hash);
 				nfsrv_setcred(nuidp->nu_cr,
-				    nfsd->nfsd_nd->nd_cr);
+				    &nfsd->nfsd_nd->nd_cr);
 				nfsd->nfsd_nd->nd_flag |= ND_KERBFULL;
 			    }
 			}
