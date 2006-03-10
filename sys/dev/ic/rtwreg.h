@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.18 2006/03/08 08:26:50 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.19 2006/03/10 23:37:35 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -961,7 +961,7 @@ struct rtw_rxdesc {
 				 RTW_RXSTAT_ICV)
 
 
-#define RTW_RXRSSI_VLAN		__BITS(32,16)	/* XXX from reference driver */
+#define RTW_RXRSSI_VLAN		__BITS(31,16)	/* XXX from reference driver */
 /* for Philips RF front-ends */
 #define RTW_RXRSSI_RSSI		__BITS(15,8)	/* RF energy at the PHY */
 /* for RF front-ends by Intersil, Maxim, RFMD */
