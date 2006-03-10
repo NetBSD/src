@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.5 2006/03/08 14:21:03 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.6 2006/03/10 13:01:19 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.5 2006/03/08 14:21:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.6 2006/03/10 13:01:19 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -522,8 +522,6 @@ nonresident_pagerecord(struct vm_page *pg)
 	struct bucket *b = nonresident_getbucket(obj, idx);
 	nonres_cookie_t cookie = calccookie(obj, idx);
 
-	PDPOL_EVCNT_INCR(nresrecord);
-
 #if defined(DEBUG)
 	int i;
 
@@ -533,6 +531,8 @@ nonresident_pagerecord(struct vm_page *pg)
 		}
 	}
 #endif /* defined(DEBUG) */
+
+	PDPOL_EVCNT_INCR(nresrecord);
 	nonresident_rotate(b);
 	if (b->pages[b->cur] != NONRES_COOKIE_INVAL) {
 		PDPOL_EVCNT_INCR(nresoverwritten);
