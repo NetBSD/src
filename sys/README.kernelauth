@@ -1,4 +1,4 @@
-# $NetBSD: README.kernelauth,v 1.1.2.3 2006/03/10 13:16:04 elad Exp $
+# $NetBSD: README.kernelauth,v 1.1.2.4 2006/03/10 15:34:11 elad Exp $
 
 This is the kernel authorization branch.
 
@@ -10,7 +10,8 @@ Apple TN2127.
 Some basic things you should know about this tree when working with
 it:
 
-  - suser(cred, &acflag) -> generic_authorize(cred, KAUTH_GENERIC_ISSUSER, &acflag);
+  - suser(cred, &acflag) ->
+        kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, &acflag);
   - struct ucred and struct pcred are now merged and appear as kauth_cred_t.
   - You have to use the accessor/mutator functions provided by the kernel
     authorization KPI.
@@ -18,7 +19,6 @@ it:
     like that before I saw it in Apple's documentation.
 
 Todo:
-  - generic_authorize -> kauth_authorize_generic
   - Write kauth(9)
   - KPI cleanup
   - kauth_cred_inherit() (for now just alloc & clone)
