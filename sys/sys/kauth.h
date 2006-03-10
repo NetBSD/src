@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.1.2.7 2006/03/10 13:21:54 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.1.2.8 2006/03/10 19:11:51 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -130,7 +130,6 @@ void kauth_cred_setngroups(kauth_cred_t, uint16_t);
 
 void kauth_cred_hold(kauth_cred_t);
 uint32_t kauth_cred_getrefcnt(kauth_cred_t);
-void kauth_cred_setrefcnt(kauth_cred_t, uint32_t);
 
 int kauth_cred_addgroup(kauth_cred_t, gid_t);
 int kauth_cred_delgroup(kauth_cred_t, gid_t);
