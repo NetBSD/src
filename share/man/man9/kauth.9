@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.2 2006/03/10 19:15:57 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.3 2006/03/10 22:51:25 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -313,9 +313,6 @@ Note that
 kernels will panic if you pass
 .Ar cred
 with a locked lock!
-.It Ft void Fn kauth_cred_zero "kauth_cred_t cred"
-Zeros memory associated with
-.Ar cred .
 .It Ft int Fn kauth_cred_memcmp "kauth_cred_t cred1" "kauth_cred_t cred2"
 Performs a
 .Xr memcmp 9
@@ -387,7 +384,6 @@ with the userland credentials in
 Common values that will be compared are effective user- and group-ids, and
 the group list.
 .El
-
 .Sh MISC. ROUTINES
 Other routines provided by
 .Nm
