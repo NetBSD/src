@@ -1,4 +1,4 @@
-# $NetBSD: XENU,v 1.1.2.3 2005/10/05 12:35:04 tron Exp $
+# $NetBSD: XENU,v 1.1.2.4 2006/03/10 13:14:13 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -158,15 +158,6 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
 #options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
-
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options 	WS_KERNEL_FG=WSCOL_GREEN
-options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
-options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
-options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-options 	WSDISPLAY_DEFAULTSCREENS=4
-options 	PCDISPLAY_SOFTCURSOR
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on wd0a type ffs
