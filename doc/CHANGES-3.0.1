@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.23 2006/03/09 17:07:21 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.24 2006/03/10 13:29:59 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -223,4 +223,28 @@ usr.bin/login					1.13
 	Don't issue different message for root login on insecure terminal.
 	This fixes PR lib/30923.
 	[jnemeth, ticket #1199]
+
+sys/arch/acorn26/acorn26/cpuswitch.c		1.7
+sys/arch/acorn26/acorn26/vm_machdep.c		1.10
+
+	Avoid panics under NetBSD/acorn26 whenever a process exits.
+	[bjh21, ticket #1191]
+
+sys/kern/subr_pool.c				1.112
+sys/sys/pool.h					1.48
+
+	Stop NetBSD-acorn26 from allocating eight times as much pool memory
+	as it needs, leading to a rapid exhaustion of physical memory. 
+	NetBSD-acorn26 now boots multi-user again.
+	[bjh21, ticket #1192]
+
+usr.bin/login/login.c				1.88
+
+	PR bin/23616: login might not back-off as expected.
+	[jnemeth, ticket #1200]
+
+usr.bin/login/login_pam.c			1.14
+
+	PR bin/23616: login might not back-off as expected.
+	[jnemeth, ticket #1201]
 
