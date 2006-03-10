@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.58.8.1 2006/03/08 01:06:28 elad Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.58.8.2 2006/03/10 22:38:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -298,7 +298,7 @@ void nfs_del_tobecommitted_range(struct vnode *, off_t, off_t);
 
 int nfsrv_errmap(struct nfsrv_descript *, int);
 void nfsrvw_sort(gid_t *, int);
-void nfsrv_setcred(kauth_cred_t, kauth_cred_t);
+void nfsrv_setcred(kauth_cred_t, kauth_cred_t *);
 void nfs_cookieheuristic(struct vnode *, int *, struct lwp *, kauth_cred_t);
 
 u_int32_t nfs_getxid(void);
