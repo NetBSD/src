@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.214.4.2 2006/03/08 22:12:35 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.214.4.3 2006/03/10 00:11:55 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.4.2 2006/03/08 22:12:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.4.3 2006/03/10 00:11:55 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -784,8 +784,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		}
 
 		p->p_cred = kauth_cred_copy(cred);
-		cred = p->p_cred; /* XXX elad */
-		kauth_cred_setrefcnt(p->p_cred, 1);
+		cred = p->p_cred;
 #ifdef KTRACE
 		/*
 		 * If process is being ktraced, turn off - unless
