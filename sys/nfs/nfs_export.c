@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.9.8.2 2006/03/10 13:37:46 elad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.9.8.3 2006/03/10 19:11:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.8.2 2006/03/10 13:37:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.8.3 2006/03/10 19:11:50 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -507,7 +507,6 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		if (np->netc_anon == NULL) /* XXX elad */
 			np->netc_anon = kauth_cred_alloc();
 		kauth_cred_convert(np->netc_anon, &argp->ex_anon);
-		/* XXX elad kauth_cred_setrefcnt(np->netc_anon, 1); */
 		mp->mnt_flag |= MNT_DEFEXPORTED;
 		return 0;
 	}
@@ -577,7 +576,6 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 	if (np->netc_anon == NULL) /* XXX elad */
 		np->netc_anon = kauth_cred_alloc();
 	kauth_cred_convert(np->netc_anon, &argp->ex_anon);
-	/* XXX elad - kauth_cred_setrefcnt(np->netc_anon, 1); */
 	return 0;
 check:
 	if (enp->netc_exflags != argp->ex_flags ||
