@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.36.8.1 2006/03/08 01:11:55 elad Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.36.8.2 2006/03/10 15:05:22 elad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.8.1 2006/03/08 01:11:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.8.2 2006/03/10 15:05:22 elad Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -478,7 +478,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		if (bc->bc_flags & BC_F_SUSER) {
-			error = generic_authorize(p->p_cred,
+			error = kauth_authorize_generic(p->p_cred,
 						  KAUTH_GENERIC_ISSUSER,
 						  &p->p_acflag);
 			if (error)

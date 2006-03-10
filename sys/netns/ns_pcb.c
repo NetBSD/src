@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.24.10.1 2006/03/08 01:24:59 elad Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.24.10.2 2006/03/10 15:14:17 elad Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.24.10.1 2006/03/08 01:24:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.24.10.2 2006/03/10 15:14:17 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ ns_pcbbind(struct nspcb *nsp, struct mbuf *nam, struct proc *p)
 	if (lport) {
 
 		if (ntohs(lport) < NSPORT_RESERVED &&
-		    (p == 0 || generic_authorize(p->p_cred,
+		    (p == 0 || kauth_authorize_generic(p->p_cred,
 						 KAUTH_GENERIC_ISSUSER,
 						 &p->p_acflag)))
 			return (EACCES);

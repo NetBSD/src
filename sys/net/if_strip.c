@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.64.10.1 2006/03/08 01:11:55 elad Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.64.10.2 2006/03/10 15:05:22 elad Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.64.10.1 2006/03/08 01:11:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.64.10.2 2006/03/10 15:05:22 elad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -481,7 +481,7 @@ stripopen(dev_t dev, struct tty *tp)
 	int s;
 #endif
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	if (tp->t_linesw == &strip_disc)

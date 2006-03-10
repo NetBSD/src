@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.30.4.1 2006/03/08 01:14:03 elad Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.30.4.2 2006/03/10 15:14:16 elad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.30.4.1 2006/03/08 01:14:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.30.4.2 2006/03/10 15:14:16 elad Exp $");
 #endif
 
 /*
@@ -358,7 +358,7 @@ ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		keys = (struct wi_ltv_keys *)&wreq;
 		/* do not show keys to non-root user */
-		error = generic_authorize(curproc->p_cred,
+		error = kauth_authorize_generic(curproc->p_cred,
 					  KAUTH_GENERIC_ISSUSER,
 					  &curproc->p_acflag);
 		if (error) {
@@ -883,7 +883,7 @@ ieee80211_ioctl_getkey(struct ieee80211com *ic, struct ieee80211req *ireq)
 	ik.ik_flags = wk->wk_flags & (IEEE80211_KEY_XMIT | IEEE80211_KEY_RECV);
 	if (wk->wk_keyix == ic->ic_def_txkey)
 		ik.ik_flags |= IEEE80211_KEY_DEFAULT;
-	if (generic_authorize(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+	if (kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
 			      &curproc->p_acflag) == 0) {
 		/* NB: only root can read key data */
 		ik.ik_keyrsc = wk->wk_keyrsc;
@@ -1354,7 +1354,7 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd, struct ieee80211re
 			return EINVAL;
 		len = (u_int) ic->ic_nw_keys[kid].wk_keylen;
 		/* NB: only root can read WEP keys */
-		if (generic_authorize(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+		if (kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
 				      &curproc->p_acflag) == 0) {
 			bcopy(ic->ic_nw_keys[kid].wk_key, tmpkey, len);
 		} else {
@@ -2610,7 +2610,7 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 				(struct ieee80211req *) data);
 		break;
 	case SIOCS80211:
-		if ((error = generic_authorize(curproc->p_cred,
+		if ((error = kauth_authorize_generic(curproc->p_cred,
 					       KAUTH_GENERIC_ISSUSER,
 					       &curproc->p_acflag)) != 0)
 			break;
@@ -2749,7 +2749,7 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 			if (nwkey->i_key[i].i_keydat == NULL)
 				continue;
 			/* do not show any keys to non-root user */
-			if ((error = generic_authorize(curproc->p_cred,
+			if ((error = kauth_authorize_generic(curproc->p_cred,
 			    KAUTH_GENERIC_ISSUSER, &curproc->p_acflag)) != 0)
 				break;
 			nwkey->i_key[i].i_keylen = ic->ic_nw_keys[i].wk_keylen;
@@ -2858,7 +2858,7 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 		error = ieee80211_cfgget(ic, cmd, data);
 		break;
 	case SIOCSIFGENERIC:
-		error = generic_authorize(curproc->p_cred,
+		error = kauth_authorize_generic(curproc->p_cred,
 					  KAUTH_GENERIC_ISSUSER,
 					  &curproc->p_acflag);
 		if (error)

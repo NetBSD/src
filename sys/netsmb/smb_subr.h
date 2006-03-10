@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.14.10.1 2006/03/08 01:24:59 elad Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.14.10.2 2006/03/10 15:14:17 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -72,7 +72,7 @@ void m_dumpm(struct mbuf *m);
 	 SIGISMEMBER(set, SIGHUP) || SIGISMEMBER(set, SIGKILL) ||	\
 	 SIGISMEMBER(set, SIGQUIT))
 
-#define	smb_suser(cred)	generic_authorize(cred, KAUTH_GENERIC_ISSUSER, NULL)
+#define	smb_suser(cred)	kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)
 
 /*
  * Compatibility wrappers for simple locks

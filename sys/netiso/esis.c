@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.35.10.1 2006/03/08 01:22:47 elad Exp $	*/
+/*	$NetBSD: esis.c,v 1.35.10.2 2006/03/10 15:14:17 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.35.10.1 2006/03/08 01:22:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.35.10.2 2006/03/10 15:14:17 elad Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -195,7 +195,7 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (p == 0 || (error = generic_authorize(p->p_cred,
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
 							 KAUTH_GENERIC_ISSUSER,
 							 &p->p_acflag))) {
 			error = EACCES;

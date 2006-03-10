@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.64.8.1 2006/03/08 01:11:55 elad Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.64.8.2 2006/03/10 15:05:22 elad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.8.1 2006/03/08 01:11:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.8.2 2006/03/10 15:05:22 elad Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -856,7 +856,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 	case PPPOESETPARMS:
 	{
 		struct pppoediscparms *parms = (struct pppoediscparms*)data;
-		if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return error;
 		if (parms->eth_ifname[0] != 0) {
 			sc->sc_eth_if = ifunit(parms->eth_ifname);

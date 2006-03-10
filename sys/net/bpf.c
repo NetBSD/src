@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.115.10.1 2006/03/08 01:11:55 elad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.115.10.2 2006/03/10 15:05:22 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.10.1 2006/03/08 01:11:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.10.2 2006/03/10 15:05:22 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1700,7 +1700,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	if (namelen != 2)
 		return (EINVAL);
 
-	if ((error = generic_authorize(l->l_proc->p_cred,
+	if ((error = kauth_authorize_generic(l->l_proc->p_cred,
 				       KAUTH_GENERIC_ISSUSER,
 				       &l->l_proc->p_acflag)))
 		return (error);
