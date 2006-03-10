@@ -1,0 +1,453 @@
+.\" $NetBSD: kauth.9,v 1.1.2.1 2006/03/10 18:41:50 elad Exp $
+.\"
+.\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Elad Efrat.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 10, 2006
+.Dt KAUTH 9
+.Os
+.Sh NAME
+.Nm kauth
+.Nd kernel authorization framework
+.Sh SYNOPSIS
+.In sys/kauth.h
+.Sh DESCRIPTION
+.Nm ,
+or kernel authorization, is subsystem managing all authorization requests
+inside the kernel. It manages user credentials and rights, and can be used
+to implement a system-wide security policy. It allows external modules to
+plug-in the authorization process.
+.Pp
+.Nm
+introduces some new concepts, namely
+.Dq scopes
+and
+.Dq listeners ,
+which will be detailed together with other useful information for kernel
+developers in this document.
+.Pp
+.Sh TYPES
+Some
+.Nm
+types include the following:
+.Bl -tag -width "123456"
+.It kauth_cred_t
+Representing credentials that can be associated with an object.
+Includes user- and group-ids (real, effective, and save) as well as group
+membership information.
+.It kauth_scope_t
+Describes a scope.
+.It kauth_listener_t
+Describes a listener.
+.El
+.Sh TERMINOLOGY
+.Nm
+operates in various
+.Dq scopes ,
+each scope holding a group of
+.Dq listeners .
+.Pp
+Each listener works as a callback for when an authorization request within the
+scope is made.
+When such a request is made, all listeners on the scope are passed common
+information such as the credentials of the request context, an identifier for
+the requested operation, and possibly other information as well.
+.Pp
+Every listener examines the passed information and returns its decision
+regarding the requested operation.
+It can either allow, deny, or defer the operation -- in which case, the
+decision is left to the other listeners.
+.Pp
+For an operation to be allowed, all listeners must not retuen any deny
+or defer decisions.
+.Pp
+Scopes manage listeners that operate in the same aspect of the system.
+.Sh SCOPES
+.Pp
+In the
+.Nx
+implementation, the following scopes are available:
+.Bl -tag -width "123456"
+.It Generic scope ( Dq org.netbsd.kauth.generic )
+Manages generic authorization requests in the kernel.
+The following operations are available for this scope:
+.Bl -tag -width "123456"
+.It KAUTH_GENERIC_ISSUSER
+Checks whether the credentials belong to the super-user.
+.El
+.It Process scope ( Dq org.netbsd.kauth.process )
+Manages authorization requsts related to processes in the system.
+The following operations are available for this scope:
+.Bl -tag -width "123456"
+.It KAUTH_PROCESS_CANPTRACE
+Checks whether an object with one set of credentials can use
+.Xr ptrace 2
+on another process, possibly with a different set of credentials.
+.It KAUTH_PROCESS_CANSIGNAL
+Checks whether an object with one set of credentials can post signals
+to another process.
+.It KAUTH_PROCESS_CANSEE
+Checks whether an object with one set of credentials can access
+information about another object, possibly with a different set of
+credentials.
+.El
+.El
+.Sh KERNEL PROGRAMMING INTERFACE
+.Nm
+exports a KPI that allows developers both of
+.Nx
+and third-party products to authorize requests, access and modify credentials,
+create and remove scopes and listeners, and perform other misc. operations on
+credentials.
+.Sh AUTHORIZATION REQUESTS
+.Nm
+provides a single authorization request routine, and a wrapper routine for
+each of the scopes. This wrapper makes it easier to call from various places
+by eliminating the need to specify the scope and/or cast values.
+.Pp
+.Bl -tag -width "123456"
+.It Ft int Fn kauth_authorize_action "kauth_scope_t scope" \
+"kauth_cred_t cred" "kauth_action_t op" "void *" "void *" "void *" "void *"
+Pass an authorization request
+.Ar op
+issued by an object with credentials
+.Ar cred
+to
+.Ar scope .
+.It Ft int Fn kauth_authorize_generic "kauth_cred_t cred" \
+"kauth_action_t op" "void *arg0"
+Passes an authorization request
+.Ar op
+issued by an object with credentials
+.Ar cred
+to the generic scope.
+.It Ft int Fn kauth_authorize_process "kauth_cred_t cred" \
+kauth_action_t op" "struct proc *p" "void *arg1" "void *arg2" "void *arg3"
+Passes an authorization request
+.Ar op
+issued by an object with credentials
+.Ar cred
+to the process scope.
+.Pp
+.El
+.Sh CREDENTIAL ACCESSORS AND MUTATORS
+.Nm
+has a variety of accessor and mutator routines to handle
+.Ft kauth_cred_t
+objects.
+.Pp
+The following routines can be used to access and modify the user- and
+group-ids in a
+.Ar kauth_cred_t :
+.Bl -tag -width "123456"
+.It Ft uid_t Fn kauth_cred_getuid "kauth_cred_t cred"
+Returns the real user-id from
+.Ar cred .
+.It Ft uid_t Fn kauth_cred_geteuid "kauth_cred_t cred"
+Returns the effective user-id from
+.Ar cred .
+.It Ft uid_t Fn kauth_cred_getsvuid "kauth_cred_t cred"
+Returns the saved user-id from
+.Ar cred .
+.It Ft void Fn kauth_cred_setuid "kauth_cred_t cred" "uid_t uid"
+Sets the real user-id in
+.Ar cred
+to
+.Ar uid .
+.It Ft void Fn kauth_cred_seteuid "kauth_cred_t cred" "uid_t uid"
+Sets the effective user-id in
+.Ar cred
+to
+.Ar uid .
+.It Ft void Fn kauth_cred_setsvuid "kauth_cred_t cred" "uid_t uid"
+Sets the saved user-id in
+.Ar cred
+to
+.Ar uid .
+.It Ft gid_t Fn kauth_cred_getgid "kauth_cred_t cred"
+Returns the real group-id from
+.Ar cred .
+.It Ft gid_t Fn kauth_cred_getegid "kauth_cred_t cred"
+Returns the effective group-id from
+.Ar cred .
+.It Ft gid_t Fn kauth_cred_getsvgid "kauth_cred_t cred"
+Returns the saved group-id from
+.Ar cred .
+.It Ft void Fn kauth_cred_setgid "kauth_cred_t cred" "gid_t gid"
+Sets the real group-id in
+.Ar cred
+to
+.Ar gid .
+.It Ft void Fn kauth_cred_setegid "kauth_cred_t cred" "gid_t gid"
+Sets the effective group-id in
+.Ar cred
+to
+.Ar gid .
+.It Ft void Fn kauth_cred_setsvgid "kauth_cred_t cred" "gid_t gid"
+Sets the saved group-id in
+.Ar cred
+to
+.Ar gid .
+.Pp
+.El
+The following routines can be used to access and modify the group
+list in a
+.Ar kauth_cred_t :
+.Bl -tag -width "123456"
+.It Ft int Fn kauth_cred_groupmember "kauth_cred_t cred" "gid_t gid"
+Checks if the group-id
+.Ar gid
+is a member in the group list of
+.Ar cred .
+.It Ft uint16_t Fn kauth_cred_ngroups "kauth_cred_t cred"
+Return the number of groups in the group list of
+.Ar cred .
+.It Ft int Fn kauth_cred_group "kauth_cred_t cred" "uint16_t idx"
+Return the group-id of the group at index
+.Ar idx
+in the group list of
+.Ar cred .
+.It Ft int Fn kauth_cred_addgroup "kauth_cred_t cred" "gid_t gid"
+Add group-id
+.Ar gid
+to the group list of
+.Ar cred .
+.Pp
+Duplicates will be avoided, and the group list will be sorted after
+the addition.
+.It Ft int Fn kauth_cred_delgroup "kauth_cred_t cred" "gid_t gid"
+Remove group-id
+.Ar gid
+from the group list of
+.Ar cred .
+.Pp
+The group list will be sorted after the removal.
+.El
+.El
+.Sh CREDENTIAL INHERITANCE REFERENCE COUNTING
+.Nm kauth
+provides a KPI for handling a
+.Ft kauth_cred_t
+in shared credentials situations and credential inheritance.
+.Pp
+When a
+.Ft kauth_cred_t
+is first allocated, its reference count is set to 1.
+However, with time, its reference count can grow as more objects (processes,
+files, etc.) reference it.
+One such case is during a
+.Xr fork 2
+where the child process inherits the credentials of the parent.
+.Pp
+To prevent freeing a
+.Ft kauth_cred_t
+while it's still referenced, the following routines are available to maintain
+its reference count:
+.Bl -tag -width "123456"
+.It Ft void Fn kauth_cred_hold "kauth_cred_t cred"
+Increases reference count to
+.Ar cred
+by one.
+.It Ft void Fn kauth_cred_free "kauth_cred_t cred"
+Decreases the reference count to
+.Ar cred
+by one.
+.Pp
+If the reference count dropped to zero, the memory used by
+.Ar cred
+will be returned back to the memory pool.
+.El
+.Sh CREDENTIALS MEMORY MANAGEMENT
+Data-structures for credentials, listeners, and scopes are allocated from
+memory pools managed by the
+.Xr pool 9
+subsystem.
+.Pp
+The
+.Ft kauth_cred_t
+objects have their own memory management routines:
+.Bl -tag -width "123456"
+.It Ft kauth_cred_t Fn kauth_cred_alloc "void"
+Allocates a new
+.Ft kauth_cred_t ,
+initializes its lock, and sets its reference count to one.
+.It Ft void Fn kauth_cred_destroy "kauth_cred_t cred"
+Frees memory associated with
+.Ar cred ,
+which must be unlocked.
+.Pp
+Usually this routine is not called directly, but rather from
+.Fn kauth_cred_free
+when the reference count drops to zero.
+.Pp
+Note that
+.Dq DIAGNOSTIC
+kernels will panic if you pass
+.Ar cred
+with a locked lock!
+.It Ft void Fn kauth_cred_zero "kauth_cred_t cred"
+Zeros memory associated with
+.Ar cred .
+.It Ft int Fn kauth_cred_memcmp "kauth_cred_t cred1" "kauth_cred_t cred2"
+Performs a
+.Xr memcmp 9
+on
+.Ar cred1
+and
+.Ar cred2 .
+.El
+.Sh CONVERSION ROUTINES
+Sometimes it might be necessary to convert a
+.Ft kauth_cred_t
+to a predecessing type, such as
+.Ft struct pcred
+or
+.Ft struct ucred ,
+or convert credentials passed from userland as a
+.Ft struct uucred
+to a
+.Ft kauth_cred_t .
+.Pp
+The following routines are available for these cases:
+.Bl -tag -width "123456"
+.It Ft void Fn kauth_cred_topcred "kauth_cred_t cred" "struct pcred *pcred"
+Convert a
+.Ft kauth_cred_t
+to a
+.Ft struct pcred .
+.Pp
+This includes real and saved user- and group-ids, a kernel-space pointer
+to a
+.Ft struct ucred
+(the address of
+.Ar cred
+is used for this), and reference count, copied from
+.Ar cred .
+.It Ft void Fn kauth_cred_toucred "kauth_cred_t cred" "struct ucred *ucred"
+Convert a
+.Ft kauth_cred_t
+to a
+.Ft struct ucred .
+.Pp
+This includes effective user- and group-ids, number of groups, and the group
+list from
+.Ar cred .
+.Pp
+Note that
+.Nm
+will try to copy as many groups as
+.Ar ucred
+can hold.
+.It Ft void Fn kauth_cred_convert "kauth_cred_t cred" "const struct uucred *uucred"
+Convert userland's view of credentials to a
+.Ft kauth_cred_t .
+.Pp
+This includes effective user- and group-ids, a number of groups, and a group
+list.
+.Pp
+Note that
+.Nm
+will try to copy as many groups as can be held inside a
+.Ft kauth_cred_t .
+The addition of groups will also guarantee order and no duplicates.
+.It Ft int Fn kauth_cred_compare "kauth_cred_t cred" "struct uucred *uucred"
+Compares
+.Ar cred
+with the userland credentials in
+.Ar uucred .
+.Pp
+Common values that will be compared are effective user- and group-ids, and
+the group list.
+.El
+
+.Sh MISC. ROUTINES
+Other routines provided by
+.Nm
+are:
+.Bl -tag -width "123456"
+.It Ft void Fn kauth_cred_clone "kauth_cred_t cred1" "kauth_cred_t cred2"
+Clone credentials from
+.Ar cred1
+to
+.Ar cred2 ,
+except for the lock and reference count.
+.Pp
+.It Ft kauth_cred_t Fn kauth_cred_dup "kauth_cred_t cred"
+Duplicate
+.Ar cred .
+.Pp
+What this routine does is call
+.Fn kauth_cred_alloc
+followed by a call to
+.Fn kauth_cred_clone .
+.It Ft kauth_cred_t Fn kauth_cred_copy "kauth_cred_t cred"
+Works like
+.Fn kauth_cred_dup ,
+except for a few differences.
+.Pp
+If
+.Ar cred
+already has a reference count of one, it will be returned.
+Otherwise, a new
+.Ft kauth_cred_t
+will be allocated and the credentials from
+.Ar cred
+will be cloned to it.
+Last, a call to
+.Fn kauth_cred_free
+for
+.Ar cred
+will be done.
+.It Ft kauth_cred_t Fn kauth_cred_get "void"
+Return the credentials associated with the current process.
+.El
+.\".Sh EXAMPLES
+.\" .Sh SEE ALSO
+.Sh HISTORY
+The kernel authorization framework first appeared in Mac OS X 10.4.
+.Pp
+The kernel authorization framework in
+.Nx
+first appeared in
+.Nx 5.0 ,
+and is a clean-room implementation based on Apple TN2127, available at
+http://developer.apple.com/technotes/tn2005/tn2127.html.
+.Sh AUTHORS
+Elad Efrat <elad@NetBSD.org> implemented the kernel authorization framework in
+.Nx .
+.Pp
+Jason R. Thorpe <thorpej@NetBSD.org> helped with some implementation details.
+.Sh CAVEATS
+The KPI still requires cleanup.
+.Pp
+Need to document scope and listener management, mention reference counting
+and garbage collection that should be done manually for listeners.
+.Pp
+Need to document locking convention.
+.Pp
+Need to document how each one of the arguments is used depending on the op.
