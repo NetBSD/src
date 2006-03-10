@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.9.8.1 2006/03/08 01:06:28 elad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.9.8.2 2006/03/10 13:37:46 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.8.1 2006/03/08 01:06:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.8.2 2006/03/10 13:37:46 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -228,7 +228,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	struct vnode *vp;
 	struct fid fid;
 
-	if (generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+	if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
 			      &l->l_proc->p_acflag) != 0)
 		return EPERM;
 
