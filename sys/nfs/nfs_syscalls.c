@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.88.8.2 2006/03/10 13:37:46 elad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.88.8.3 2006/03/10 19:11:50 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.8.2 2006/03/10 13:37:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.8.3 2006/03/10 19:11:50 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -335,7 +335,6 @@ sys_nfssvc(l, v, retval)
 				if (nuidp->nu_cr.cr_ngroups > NGROUPS)
 				    nuidp->nu_cr.cr_ngroups = NGROUPS;
 #endif /* XXX elad */
-				kauth_cred_setrefcnt(nuidp->nu_cr, 1);
 				nuidp->nu_timestamp = nsd->nsd_timestamp;
 				nuidp->nu_expire = time.tv_sec + nsd->nsd_ttl;
 				/*

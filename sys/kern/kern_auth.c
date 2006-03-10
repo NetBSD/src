@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.12 2006/03/10 13:21:54 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.13 2006/03/10 19:11:50 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -477,14 +477,6 @@ kauth_cred_getrefcnt(kauth_cred_t cred)
 	return (cred->cr_refcnt);
 }
 
-void
-kauth_cred_setrefcnt(kauth_cred_t cred, uint32_t refcnt)
-{
-	KASSERT(cred != NULL);
-
-	cred->cr_refcnt = refcnt;
-}
-
 /* XXX: memcmp() wrapper needed for NFSW_SAMECRED() in nfs/nfs.h */
 int
 kauth_cred_memcmp(kauth_cred_t cred1, kauth_cred_t cred2)
@@ -507,7 +499,7 @@ kauth_cred_convert(kauth_cred_t cred, const struct uucred *uuc)
 	KASSERT(cred != NULL);
 	KASSERT(uuc != NULL);
 
-	cred->cr_refcnt = 0;
+	cred->cr_refcnt = 1;
 	cred->cr_euid = uuc->cr_uid;
 	cred->cr_egid = uuc->cr_gid;
 	cred->cr_ngroups = min(uuc->cr_ngroups, NGROUPS);
