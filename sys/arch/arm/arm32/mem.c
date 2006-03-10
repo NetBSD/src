@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12.10.1 2006/03/08 00:43:05 elad Exp $	*/
+/*	$NetBSD: mem.c,v 1.12.10.2 2006/03/10 14:53:59 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.12.10.1 2006/03/08 00:43:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.12.10.2 2006/03/10 14:53:59 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -219,7 +219,7 @@ mmmmap(dev, off, prot)
 	/* minor device 0 is physical memory */
 
 	if (off >= ctob(physmem) &&
-	    generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return -1;
 	return arm_btop(off);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.33.4.1 2006/03/08 01:44:49 elad Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.33.4.2 2006/03/10 14:39:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.33.4.1 2006/03/08 01:44:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.33.4.2 2006/03/10 14:39:02 elad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1096,21 +1096,21 @@ cnw_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSCNWDOMAIN:
-		error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error)
 			break;
 		error = cnw_setdomain(sc, ifr->ifr_domain);
 		break;
 
 	case SIOCSCNWKEY:
-		error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error)
 			break;
 		error = cnw_setkey(sc, ifr->ifr_key);
 		break;
 
 	case SIOCGCNWSTATUS:
-		error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error)
 			break;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)

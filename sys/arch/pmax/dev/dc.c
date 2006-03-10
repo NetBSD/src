@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.82.10.1 2006/03/08 00:43:07 elad Exp $	*/
+/*	$NetBSD: dc.c,v 1.82.10.2 2006/03/10 14:54:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.82.10.1 2006/03/08 00:43:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.82.10.2 2006/03/10 14:54:02 elad Exp $");
 
 /*
  * devDC7085.c --
@@ -510,7 +510,7 @@ dcopen(dev, flag, mode, l)
 		(void) dcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE) &&
-		   generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 #ifdef HW_FLOW_CONTROL
 	(void) dcmctl(dev, DML_DTR | DML_RTS, DMSET);

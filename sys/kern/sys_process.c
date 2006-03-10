@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.101.2.2 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.101.2.3 2006/03/10 13:53:24 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.101.2.2 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.101.2.3 2006/03/10 13:53:24 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 */
 		if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
 			ISSET(t->p_flag, P_SUGID)) &&
-		    (error = generic_authorize(p->p_cred,
+		    (error = kauth_authorize_generic(p->p_cred,
 				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 
@@ -802,7 +802,7 @@ process_checkioperm(struct lwp *l, struct proc *t)
 	 */
 	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
 		ISSET(t->p_flag, P_SUGID)) &&
-	    (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 			&p->p_acflag)) != 0)
 		return (error);
 

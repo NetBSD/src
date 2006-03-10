@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.72.10.1 2006/03/08 00:43:06 elad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.72.10.2 2006/03/10 14:54:00 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.72.10.1 2006/03/08 00:43:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.72.10.2 2006/03/10 14:54:00 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -357,7 +357,7 @@ i386_iopl(l, args, retval)
 	if (securelevel > 1)
 		return EPERM;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -401,7 +401,7 @@ i386_set_ioperm(l, args, retval)
 	if (securelevel > 1)
 		return EPERM;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -446,7 +446,7 @@ i386_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 	if (error != 0)
 		return error;
 

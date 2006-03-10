@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.51.4.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.51.4.2 2006/03/10 13:53:24 elad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.4.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.4.2 2006/03/10 13:53:24 elad Exp $");
 
 #include "opt_systrace.h"
 
@@ -590,7 +590,7 @@ systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 	TAILQ_INIT(&fst->messages);
 	TAILQ_INIT(&fst->policies);
 
-	if (generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 			      &p->p_acflag) == 0)
 		fst->issuser = 1;
 	fst->p_ruid = kauth_cred_getuid(p->p_cred);
@@ -1252,7 +1252,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	 */
 	if ((kauth_cred_getuid(proc->p_cred) != kauth_cred_getuid(p->p_cred) ||
 		ISSET(proc->p_flag, P_SUGID)) &&
-	    (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		goto out;
 

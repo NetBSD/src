@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.19.4.1 2006/03/08 01:48:38 elad Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.19.4.2 2006/03/10 14:28:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.19.4.1 2006/03/08 01:48:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.19.4.2 2006/03/10 14:28:52 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -195,7 +195,7 @@ netbsd32_ntp_adjtime(l, v, retval)
 	 * the assumption the superuser should know what it is doing.
 	 */
 	modes = ntv.modes;
-	if (modes != 0 && (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+	if (modes != 0 && (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 		return (error);
 
 	s = splclock();
@@ -407,7 +407,7 @@ netbsd32_settimeofday(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	/* Verify all parameters before changing time. */
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	/*
@@ -447,7 +447,7 @@ netbsd32_adjtime(l, v, retval)
 	extern long bigadj, timedelta;
 	extern int tickdelta;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, delta)), &atv,
@@ -532,7 +532,7 @@ netbsd32_clock_settime(l, v, retval)
 	int error;
 	struct proc *p = l->l_proc;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	clock_id = SCARG(uap, clock_id);

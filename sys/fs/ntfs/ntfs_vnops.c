@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.28.4.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.28.4.2 2006/03/10 14:23:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.28.4.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.28.4.2 2006/03/10 14:23:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ ntfs_access(ap)
 	}
 
 	/* Otherwise, user id 0 always gets access. */
-	if (generic_authorize(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
 		return (0);
 
 	mask = 0;

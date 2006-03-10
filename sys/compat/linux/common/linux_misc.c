@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.151.4.2 2006/03/08 19:24:07 elad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.151.4.3 2006/03/10 14:28:52 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151.4.2 2006/03/08 19:24:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151.4.3 2006/03/10 14:28:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1497,7 +1497,7 @@ linux_sys_reboot(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return(error);
 
 	if (SCARG(uap, magic1) != LINUX_REBOOT_MAGIC1)

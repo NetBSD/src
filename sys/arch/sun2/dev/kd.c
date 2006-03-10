@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.11.10.1 2006/03/08 00:43:14 elad Exp $	*/
+/*	$NetBSD: kd.c,v 1.11.10.2 2006/03/10 14:54:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.11.10.1 2006/03/08 00:43:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.11.10.2 2006/03/10 14:54:50 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -222,7 +222,7 @@ static	int firstopen = 1;
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
 	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0) )
+	    && (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0) )
 	{
 		return (EBUSY);
 	}

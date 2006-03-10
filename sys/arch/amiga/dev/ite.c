@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.72.10.1 2006/03/08 00:43:05 elad Exp $ */
+/*	$NetBSD: ite.c,v 1.72.10.2 2006/03/10 14:53:59 elad Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.72.10.1 2006/03/08 00:43:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.72.10.2 2006/03/10 14:53:59 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -464,7 +464,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	} else
 		tp = ip->tp;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		ite_on(dev, 0);

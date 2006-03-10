@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.31.10.1 2006/03/08 01:44:49 elad Exp $	*/
+/*	$NetBSD: dl.c,v 1.31.10.2 2006/03/10 14:39:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.31.10.1 2006/03/08 01:44:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.31.10.2 2006/03/10 14:39:02 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ dlopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttsetwater(tp);
 
 	} else if ((tp->t_state & TS_XCLUDE) &&
-		   generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+		   kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return EBUSY;
 
 	return ((*tp->t_linesw->l_open)(dev, tp));

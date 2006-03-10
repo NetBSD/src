@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.2.4.1 2006/03/08 01:44:49 elad Exp $
+ * $NetBSD: if_lmc.h,v 1.2.4.2 2006/03/10 14:39:02 elad Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1023,7 +1023,7 @@ const char *ssi_cables[] =
 # define TOP_UNLOCK		simple_unlock  (&sc->top_lock)
 # define BOTTOM_TRYLOCK		simple_lock_try(&sc->bottom_lock)
 # define BOTTOM_UNLOCK		simple_unlock  (&sc->bottom_lock)
-# define CHECK_CAP		generic_authorize(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag)
+# define CHECK_CAP		kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag)
 # define DISABLE_INTR		int spl = splnet()
 # define ENABLE_INTR		splx(spl)
 # define IRQ_NONE		0

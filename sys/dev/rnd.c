@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.50.4.1 2006/03/08 01:44:48 elad Exp $	*/
+/*	$NetBSD: rnd.c,v 1.50.4.2 2006/03/10 14:39:01 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.50.4.1 2006/03/08 01:44:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.50.4.2 2006/03/10 14:39:01 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -511,7 +511,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETPOOLSTAT:
-		if ((ret = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		s = splsoftclock();
@@ -520,7 +520,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNUM:
-		if ((ret = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		rst = (rndstat_t *)addr;
@@ -563,7 +563,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDGETSRCNAME:
-		if ((ret = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -586,7 +586,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDCTL:
-		if ((ret = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		/*
@@ -630,7 +630,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		break;
 
 	case RNDADDDATA:
-		if ((ret = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+		if ((ret = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (ret);
 
 		rnddata = (rnddata_t *)addr;

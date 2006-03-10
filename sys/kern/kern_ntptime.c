@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.29.10.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.29.10.2 2006/03/10 13:53:24 elad Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.10.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.10.2 2006/03/10 13:53:24 elad Exp $");
 
 #include "opt_ntp.h"
 
@@ -207,7 +207,7 @@ sys_ntp_adjtime(l, v, retval)
 			sizeof(ntv))) != 0)
 		return (error);
 
-	if (ntv.modes != 0 && (error = generic_authorize(p->p_cred,
+	if (ntv.modes != 0 && (error = kauth_authorize_generic(p->p_cred,
 				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 

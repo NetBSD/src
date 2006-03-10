@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.20.4.1 2006/03/08 00:43:13 elad Exp $	*/
+/*	$NetBSD: pcons.c,v 1.20.4.2 2006/03/10 14:54:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.20.4.1 2006/03/08 00:43:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.20.4.2 2006/03/10 14:54:50 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -147,7 +147,7 @@ pconsopen(dev_t dev, int flag, int mode, struct lwp *l)
 		pconsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state&TS_XCLUDE) &&
-		   generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
+		   kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	

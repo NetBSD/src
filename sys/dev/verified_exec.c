@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.31.10.1 2006/03/08 01:44:48 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.31.10.2 2006/03/10 14:39:01 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.31.10.1 2006/03/08 01:44:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.31.10.2 2006/03/10 14:39:01 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.31.10.1 2006/03/08 01:44:48 elad Exp $\n$NetBSD: verified_exec.c,v 1.31.10.1 2006/03/08 01:44:48 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.31.10.2 2006/03/10 14:39:01 elad Exp $\n$NetBSD: verified_exec.c,v 1.31.10.2 2006/03/10 14:39:01 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -130,7 +130,7 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 		       l->l_proc->p_pid, dev);
 	}
 
-	if (generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+	if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
 			      &l->l_proc->p_acflag) != 0)
 		return (EPERM);
 

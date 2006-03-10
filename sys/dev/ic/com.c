@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.241.4.1 2006/03/08 01:44:48 elad Exp $	*/
+/*	$NetBSD: com.c,v 1.241.4.2 2006/03/10 14:39:01 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.241.4.1 2006/03/08 01:44:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.241.4.2 2006/03/10 14:39:01 elad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -828,7 +828,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		generic_authorize(l->l_proc->p_cred,
+		kauth_authorize_generic(l->l_proc->p_cred,
 				  KAUTH_GENERIC_ISSUSER,
 				  &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
@@ -1076,7 +1076,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = generic_authorize(p->p_cred,
+		error = kauth_authorize_generic(p->p_cred,
 					  KAUTH_GENERIC_ISSUSER,
 					  &p->p_acflag);
 		if (error)

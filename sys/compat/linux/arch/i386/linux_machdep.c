@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.112.10.1 2006/03/08 01:48:38 elad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.112.10.2 2006/03/10 14:28:51 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.112.10.1 2006/03/08 01:48:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.112.10.2 2006/03/10 14:28:51 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1139,7 +1139,7 @@ linux_sys_iopl(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct trapframe *fp = l->l_md.md_regs;
 
-	if (generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return EPERM;
 	fp->tf_eflags |= PSL_IOPL;
 	*retval = 0;
@@ -1164,7 +1164,7 @@ linux_sys_ioperm(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct trapframe *fp = l->l_md.md_regs;
 
-	if (generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
+	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return EPERM;
 	if (SCARG(uap, val))
 		fp->tf_eflags |= PSL_IOPL;

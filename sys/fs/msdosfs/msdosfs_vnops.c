@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.26.4.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.26.4.2 2006/03/10 14:23:39 elad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.26.4.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.26.4.2 2006/03/10 14:23:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +389,7 @@ msdosfs_setattr(v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
-		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					       &ap->a_l->l_proc->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_l))))
@@ -412,7 +412,7 @@ msdosfs_setattr(v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
-		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					       &ap->a_l->l_proc->p_acflag)))
 			return (error);
 		/* We ignore the read and execute bits. */
@@ -430,7 +430,7 @@ msdosfs_setattr(v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
-		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					     &ap->a_l->l_proc->p_acflag)))
 			return (error);
 		if (vap->va_flags & SF_ARCHIVED)
