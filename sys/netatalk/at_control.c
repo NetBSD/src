@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.11.10.1 2006/03/08 01:15:19 elad Exp $	 */
+/*	$NetBSD: at_control.c,v 1.11.10.2 2006/03/10 15:14:16 elad Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.11.10.1 2006/03/08 01:15:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.11.10.2 2006/03/10 15:14:16 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ at_control(cmd, data, ifp, p)
 		 * If we are not superuser, then we don't get to do these
 		 * ops.
 		 */
-		if (generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+		if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				      &p->p_acflag))
 			return (EPERM);
 
