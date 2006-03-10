@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.99.8.1 2005/06/18 11:13:12 tron Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.99.8.2 2006/03/10 13:19:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.99.8.1 2005/06/18 11:13:12 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.99.8.2 2006/03/10 13:19:42 tron Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -480,35 +480,19 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		flags |= PR_LOGGING;
 #endif
 
-#ifdef POOL_SUBPAGE
-	/*
-	 * XXX We don't provide a real `nointr' back-end
-	 * yet; all sub-pages come from a kmem back-end.
-	 * maybe some day...
-	 */
-	if (palloc == NULL) {
-		extern struct pool_allocator pool_allocator_kmem_subpage;
-		palloc = &pool_allocator_kmem_subpage;
-	}
-	/*
-	 * We'll assume any user-specified back-end allocator
-	 * will deal with sub-pages, or simply don't care.
-	 */
-#else
 	if (palloc == NULL)
 		palloc = &pool_allocator_kmem;
+#ifdef POOL_SUBPAGE
+	if (size > palloc->pa_pagesz) {
+		if (palloc == &pool_allocator_kmem)
+			palloc = &pool_allocator_kmem_fullpage;
+		else if (palloc == &pool_allocator_nointr)
+			palloc = &pool_allocator_nointr_fullpage;
+	}		
 #endif /* POOL_SUBPAGE */
 	if ((palloc->pa_flags & PA_INITIALIZED) == 0) {
-		if (palloc->pa_pagesz == 0) {
-#ifdef POOL_SUBPAGE
-			if (palloc == &pool_allocator_kmem)
-				palloc->pa_pagesz = PAGE_SIZE;
-			else
-				palloc->pa_pagesz = POOL_SUBPAGE;
-#else
+		if (palloc->pa_pagesz == 0)
 			palloc->pa_pagesz = PAGE_SIZE;
-#endif /* POOL_SUBPAGE */
-		}
 
 		TAILQ_INIT(&palloc->pa_list);
 
@@ -2136,23 +2120,42 @@ pool_cache_reclaim(struct pool_cache *pc, struct pool_pagelist *pq)
 void	*pool_page_alloc(struct pool *, int);
 void	pool_page_free(struct pool *, void *);
 
+#ifdef POOL_SUBPAGE
+struct pool_allocator pool_allocator_kmem_fullpage = {
+	pool_page_alloc, pool_page_free, 0,
+};
+#else
 struct pool_allocator pool_allocator_kmem = {
 	pool_page_alloc, pool_page_free, 0,
 };
+#endif
 
 void	*pool_page_alloc_nointr(struct pool *, int);
 void	pool_page_free_nointr(struct pool *, void *);
 
+#ifdef POOL_SUBPAGE
+struct pool_allocator pool_allocator_nointr_fullpage = {
+	pool_page_alloc_nointr, pool_page_free_nointr, 0,
+};
+#else
 struct pool_allocator pool_allocator_nointr = {
 	pool_page_alloc_nointr, pool_page_free_nointr, 0,
 };
+#endif
 
 #ifdef POOL_SUBPAGE
 void	*pool_subpage_alloc(struct pool *, int);
 void	pool_subpage_free(struct pool *, void *);
 
-struct pool_allocator pool_allocator_kmem_subpage = {
-	pool_subpage_alloc, pool_subpage_free, 0,
+struct pool_allocator pool_allocator_kmem = {
+	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
+};
+
+void	*pool_subpage_alloc_nointr(struct pool *, int);
+void	pool_subpage_free_nointr(struct pool *, void *);
+
+struct pool_allocator pool_allocator_nointr = {
+	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
 };
 #endif /* POOL_SUBPAGE */
 
@@ -2330,19 +2333,19 @@ pool_subpage_free(struct pool *pp, void *v)
 
 /* We don't provide a real nointr allocator.  Maybe later. */
 void *
-pool_page_alloc_nointr(struct pool *pp, int flags)
+pool_subpage_alloc_nointr(struct pool *pp, int flags)
 {
 
 	return (pool_subpage_alloc(pp, flags));
 }
 
 void
-pool_page_free_nointr(struct pool *pp, void *v)
+pool_subpage_free_nointr(struct pool *pp, void *v)
 {
 
 	pool_subpage_free(pp, v);
 }
-#else
+#endif /* POOL_SUBPAGE */
 void *
 pool_page_alloc_nointr(struct pool *pp, int flags)
 {
@@ -2358,4 +2361,3 @@ pool_page_free_nointr(struct pool *pp, void *v)
 
 	uvm_km_free_poolpage_cache(kernel_map, (vaddr_t) v);
 }
-#endif /* POOL_SUBPAGE */
