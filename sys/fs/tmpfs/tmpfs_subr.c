@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.18.4.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.18.4.2 2006/03/10 14:23:39 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.18.4.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.18.4.2 2006/03/10 14:23:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -971,7 +971,7 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct proc *p)
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
 	if (cred->cr_uid != node->tn_uid &&
-	    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)))
 		return error;
 	if (cred->cr_uid == 0) {
@@ -1031,7 +1031,7 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
 	if (cred->cr_uid != node->tn_uid &&
-	    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)))
 		return error;
 	if (cred->cr_uid != 0) {
@@ -1094,7 +1094,7 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if ((cred->cr_uid != node->tn_uid || uid != node->tn_uid ||
 	    (gid != node->tn_gid && !(cred->cr_gid == node->tn_gid ||
 	     groupmember(gid, cred)))) &&
-	    ((error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					&p->p_acflag)) != 0))
 		return error;
 
@@ -1196,7 +1196,7 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
 	if (cred->cr_uid != node->tn_uid &&
-	    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				       &l->l_proc->p_acflag)) &&
 	    ((vaflags & VA_UTIMES_NULL) == 0 ||
 	    (error = VOP_ACCESS(vp, VWRITE, cred, l))))

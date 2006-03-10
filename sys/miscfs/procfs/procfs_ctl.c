@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.31.2.1 2006/03/08 01:34:34 elad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.31.2.2 2006/03/10 13:57:49 elad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.31.2.1 2006/03/08 01:34:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.31.2.2 2006/03/10 13:57:49 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ procfs_control(curl, l, op, sig)
 		 */
 		if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curp->p_cred) ||
 			ISSET(p->p_flag, P_SUGID)) &&
-		    (error = generic_authorize(curp->p_cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(curp->p_cred, KAUTH_GENERIC_ISSUSER,
 					       &curp->p_acflag)) != 0)
 			return (error);
 

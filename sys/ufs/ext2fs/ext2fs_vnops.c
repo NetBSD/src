@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.64.10.1 2006/03/08 01:39:11 elad Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.64.10.2 2006/03/10 14:21:11 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64.10.1 2006/03/08 01:39:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64.10.2 2006/03/10 14:21:11 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ ext2fs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
-			(error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+			(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 						   &l->l_proc->p_acflag)))
 			return (error);
 #ifdef EXT2FS_SYSTEM_FLAGS
@@ -409,7 +409,7 @@ ext2fs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
-			(error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER, 
+			(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, 
 						   &l->l_proc->p_acflag)) &&
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 			(error = VOP_ACCESS(vp, VWRITE, cred, l))))
@@ -445,7 +445,7 @@ ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
 	int error;
 
 	if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
-		(error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					   &p->p_acflag)))
 		return (error);
 	if (kauth_cred_geteuid(cred)) {
@@ -485,7 +485,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if ((kauth_cred_geteuid(cred) != ip->i_e2fs_uid || uid != ip->i_e2fs_uid ||
 		(gid != ip->i_e2fs_gid &&
 		 !(kauth_cred_getegid(cred) == gid || kauth_cred_groupmember(cred, (gid_t)gid)))) &&
-		(error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					   &p->p_acflag)))
 		return (error);
 	ogid = ip->i_e2fs_gid;
@@ -1429,7 +1429,7 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->i_e2fs_nlink = 1;
 	if ((ip->i_e2fs_mode & ISGID) &&
 		!kauth_cred_groupmember(cnp->cn_cred, ip->i_e2fs_gid) &&
-	    generic_authorize(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL))
+	    kauth_authorize_generic(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL))
 		ip->i_e2fs_mode &= ~ISGID;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.77.4.1 2006/03/08 01:48:38 elad Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.77.4.2 2006/03/10 14:28:52 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.77.4.1 2006/03/08 01:48:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.77.4.2 2006/03/10 14:28:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,7 @@ linux_sys_stime(l, v, retval)
 	linux_time_t tt;
 	int error;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)

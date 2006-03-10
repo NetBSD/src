@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.98.10.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.98.10.2 2006/03/10 13:53:24 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.10.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.10.2 2006/03/10 13:53:24 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -223,7 +223,7 @@ sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return (error);
 
@@ -382,7 +382,7 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return (error);
 
@@ -431,7 +431,7 @@ sys_adjtime(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return (error);
 

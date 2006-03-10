@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.24.8.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.24.8.2 2006/03/10 14:21:11 elad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24.8.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24.8.2 2006/03/10 14:21:11 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -179,7 +179,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 		return EXDEV;
 	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
-	if (generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+	if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
 			      &l->l_proc->p_acflag) != 0 &&
 	    VTOI(vp)->i_uid != kauth_cred_geteuid(l->l_proc->p_cred))
 		return EACCES;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.13.10.1 2006/03/08 01:44:48 elad Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.13.10.2 2006/03/10 14:39:01 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13.10.1 2006/03/08 01:44:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.13.10.2 2006/03/10 14:39:01 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -433,7 +433,7 @@ cdttyopen(dev, flag, mode, p)
 	if (tp == NULL ||
 	    (ISSET(tp->t_state, TS_ISOPEN) &&
 	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	     kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 			       &p->p_acflag) != 0))
 		return (EBUSY);
 
@@ -655,7 +655,7 @@ cdttyioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSFLAGS:
-		error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 					  &p->p_acflag);
 		if (error)
 			return (error);

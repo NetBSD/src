@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.238.4.1 2006/03/08 00:53:41 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.238.4.2 2006/03/10 13:53:24 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238.4.1 2006/03/08 00:53:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238.4.2 2006/03/10 13:53:24 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -158,7 +158,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	}
 
 	if (dovfsusermount == 0 && (SCARG(uap, flags) & MNT_GETARGS) == 0 &&
-	    (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)))
 		return (error);
 	/*
@@ -212,7 +212,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 		 */
 		if ((mp->mnt_flag & MNT_GETARGS) == 0 &&
 		    mp->mnt_stat.f_owner != kauth_cred_geteuid(p->p_cred) &&
-		    (error = generic_authorize(p->p_cred,
+		    (error = kauth_authorize_generic(p->p_cred,
 					       KAUTH_GENERIC_ISSUSER,
 					       &p->p_acflag)) != 0) {
 			vput(vp);
@@ -249,7 +249,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	 */
 	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0 ||
 	    (va.va_uid != kauth_cred_geteuid(p->p_cred) &&
-		(error = generic_authorize(p->p_cred,
+		(error = kauth_authorize_generic(p->p_cred,
 					   KAUTH_GENERIC_ISSUSER,
 					   &p->p_acflag)) != 0)) {
 		vput(vp);
@@ -495,7 +495,7 @@ sys_unmount(struct lwp *l, void *v, register_t *retval)
 	 * permitted to unmount this filesystem.
 	 */
 	if ((mp->mnt_stat.f_owner != kauth_cred_geteuid(p->p_cred)) &&
-	    (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0) {
 		vput(vp);
 		return (error);
@@ -975,7 +975,7 @@ sys_fchroot(struct lwp *l, void *v, register_t *retval)
 	struct file	*fp;
 	int		 error;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return error;
 	/* getvnode() will use the descriptor for us */
@@ -1055,7 +1055,7 @@ sys_chroot(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
@@ -1211,7 +1211,7 @@ sys_getfh(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				  &p->p_acflag);
 	if (error)
 		return (error);
@@ -1262,7 +1262,7 @@ sys_fhopen(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)))
 		return (error);
 
@@ -1397,7 +1397,7 @@ sys_fhstat(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)))
 		return (error);
 
@@ -1437,7 +1437,7 @@ sys_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return error;
 
@@ -1480,7 +1480,7 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 	int whiteout = 0;
 	struct nameidata nd;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return (error);
 restart:
@@ -2367,7 +2367,7 @@ change_flags(struct vnode *vp, u_long flags, struct lwp *l)
 	 * Non-superusers cannot change the flags on devices, even if they
 	 * own them.
 	 */
-	if (generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 			      &p->p_acflag) != 0) {
 		if ((error = VOP_GETATTR(vp, &vattr, p->p_cred, l)) != 0)
 			goto out;
@@ -2663,7 +2663,7 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 		 * implementation-defined; we leave the set-user-id and set-
 		 * group-id settings intact in that case.
 		 */
-		if (generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+		if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				      NULL) != 0)
 			newmode &= ~(S_ISUID | S_ISGID);
 	} else {
@@ -3375,7 +3375,7 @@ sys_revoke(struct lwp *l, void *v, register_t *retval)
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_cred, l)) != 0)
 		goto out;
 	if (kauth_cred_geteuid(p->p_cred) != vattr.va_uid &&
-	    (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		goto out;
 	if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)

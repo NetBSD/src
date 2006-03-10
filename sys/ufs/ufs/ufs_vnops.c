@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.139.4.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.139.4.2 2006/03/10 14:21:11 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.139.4.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.139.4.2 2006/03/10 14:21:11 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -387,7 +387,7 @@ ufs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
-		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					       &l->l_proc->p_acflag)))
 			return (error);
 		if (kauth_cred_geteuid(cred) == 0) {
@@ -461,7 +461,7 @@ ufs_setattr(void *v)
 		if ((ip->i_flags & SF_SNAPSHOT) != 0)
 			return (EPERM);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
-		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					       &l->l_proc->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
@@ -506,7 +506,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
 
 	ip = VTOI(vp);
 	if (kauth_cred_geteuid(cred) != ip->i_uid &&
-	    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)))
 		return (error);
 	if (kauth_cred_geteuid(cred)) {
@@ -554,7 +554,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if ((kauth_cred_geteuid(cred) != ip->i_uid || uid != ip->i_uid ||
 	    (gid != ip->i_gid &&
 	     !(kauth_cred_getegid(cred) == gid || kauth_cred_groupmember(cred, (gid_t)gid)))) &&
-	    ((error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					&p->p_acflag)) != 0))
 		return (error);
 
@@ -2096,7 +2096,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		softdep_change_linkcnt(ip);
 	if ((ip->i_mode & ISGID) &&
 		!kauth_cred_groupmember(cnp->cn_cred, ip->i_gid) &&
-	    generic_authorize(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
+	    kauth_authorize_generic(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		ip->i_mode &= ~ISGID;
 		DIP_ASSIGN(ip, mode, ip->i_mode);
 	}

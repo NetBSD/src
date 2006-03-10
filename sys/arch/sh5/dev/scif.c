@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.18.2.1 2006/03/08 00:43:13 elad Exp $	*/
+/*	$NetBSD: scif.c,v 1.18.2.2 2006/03/10 14:54:02 elad Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.18.2.1 2006/03/08 00:43:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.18.2.2 2006/03/10 14:54:02 elad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -957,7 +957,7 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = generic_authorize(l->l_proc->p_cred,
+		error = kauth_authorize_generic(l->l_proc->p_cred,
 					  KAUTH_GENERIC_ISSUSER,
 					  &l->l_proc->p_acflag);
 		if (error)

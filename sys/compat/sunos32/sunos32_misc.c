@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.36.4.1 2006/03/08 01:48:38 elad Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.36.4.2 2006/03/10 14:28:52 elad Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.36.4.1 2006/03/08 01:48:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.36.4.2 2006/03/10 14:28:52 elad Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -1562,7 +1562,7 @@ sunos32_sys_reboot(l, v, retval)
 	int error, bsd_howto, sun_howto;
 	char *bootstr;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	/*

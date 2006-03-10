@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.88.10.3 2006/03/09 23:48:23 elad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.88.10.4 2006/03/10 13:53:24 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.3 2006/03/09 23:48:23 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.4 2006/03/10 13:53:24 elad Exp $");
 
 #include "opt_compat_43.h"
 
@@ -330,7 +330,7 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 	kauth_cred_t cred = p->p_cred;
 
 	/* Superuser can do anything it wants to.... */
-	error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 	if (error) {
 		/* Otherwise check new value is one of the allowed
 		   existing values. */
@@ -391,7 +391,7 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 	kauth_cred_t cred = p->p_cred;
 
 	/* Superuser can do anything it wants to.... */
-	error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+	error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 	if (error) {
 		/* Otherwise check new value is one of the allowed
 		   existing values. */
@@ -603,7 +603,7 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	size_t grsize;
 	int do_ngroups, i, j;
 
-	if ((error = generic_authorize(pc, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return (error);
 
@@ -813,7 +813,7 @@ sys___setlogin(struct lwp *l, void *v, register_t *retval)
 	char newname[sizeof s->s_login + 1];
 	int error;
 
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return (error);
 	error = copyinstr(SCARG(uap, namebuf), &newname, sizeof newname, NULL);

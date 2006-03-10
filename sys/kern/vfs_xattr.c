@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.5.4.1 2006/03/08 00:53:41 elad Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.5.4.2 2006/03/10 13:53:24 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.5.4.1 2006/03/08 00:53:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.5.4.2 2006/03/10 13:53:24 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ extattr_check_cred(struct vnode *vp, int attrnamespace,
 		 * Do we really want to allow this, or just require that
 		 * these requests come from kernel code (NOCRED case above)?
 		 */
-		return (generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		return (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					  &l->l_proc->p_acflag));
 
 	case EXTATTR_NAMESPACE_USER:
