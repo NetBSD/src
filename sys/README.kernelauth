@@ -1,4 +1,4 @@
-# $NetBSD: README.kernelauth,v 1.1.2.4 2006/03/10 15:34:11 elad Exp $
+# $NetBSD: README.kernelauth,v 1.1.2.5 2006/03/10 18:43:37 elad Exp $
 
 This is the kernel authorization branch.
 
@@ -19,7 +19,6 @@ it:
     like that before I saw it in Apple's documentation.
 
 Todo:
-  - Write kauth(9)
   - KPI cleanup
   - kauth_cred_inherit() (for now just alloc & clone)
     * should look at all aspects (f_cred?)
