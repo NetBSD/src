@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.217.2.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.217.2.2 2006/03/10 11:53:55 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.217.2.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.217.2.2 2006/03/10 11:53:55 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -783,8 +783,9 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 		/* kill single process */
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
-		if (process_authorize(pc, KAUTH_PROCESS_CANSIGNAL, cp,
-				      p->p_cred, p, (void *)(unsigned long)SCARG(uap, signum)) != 0)
+		if (kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL, cp,
+		    p->p_cred, p,
+		    (void *)(unsigned long)SCARG(uap, signum)) != 0)
 			return (EPERM);
 		if (SCARG(uap, signum))
 			kpsignal2(p, &ksi, 1);
@@ -824,8 +825,9 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
 			    p == cp ||
-			    process_authorize(pc, KAUTH_PROCESS_CANSIGNAL,
-					      cp, p->p_cred, p, (void *)(unsigned long)signum) != 0)
+			    kauth_authorize_process(pc,
+			    KAUTH_PROCESS_CANSIGNAL, cp, p->p_cred, p,
+			    (void *)(unsigned long)signum) != 0)
 				continue;
 			nfound++;
 			if (signum)
@@ -845,8 +847,9 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 		}
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    process_authorize(pc, KAUTH_PROCESS_CANSIGNAL,
-					      cp, p->p_cred, p, (void *)(unsigned long)signum) != 0)
+			    kauth_authorize_process(pc,
+			    KAUTH_PROCESS_CANSIGNAL, cp, p->p_cred, p,
+			    (void *)(unsigned long)signum) != 0)
 				continue;
 			nfound++;
 			if (signum && P_ZOMBIE(p) == 0)
