@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.71.10.1 2006/03/08 00:43:05 elad Exp $ */
+/*	$NetBSD: ser.c,v 1.71.10.2 2006/03/10 14:53:59 elad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.71.10.1 2006/03/08 00:43:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.71.10.2 2006/03/10 14:53:59 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    generic_authorize(l->l_proc->p_cred,
+	    kauth_authorize_generic(l->l_proc->p_cred,
 			      KAUTH_GENERIC_ISSUSER,
 			      &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
@@ -741,7 +741,7 @@ serioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(int *)data = serswflags;
 		break;
 	case TIOCSFLAGS:
-		error = generic_authorize(l->l_proc->p_cred,
+		error = kauth_authorize_generic(l->l_proc->p_cred,
 					  KAUTH_GENERIC_ISSUSER,
 					  &l->l_proc->p_acflag);
 		if (error != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.13.2.1 2006/03/08 00:43:19 elad Exp $	*/
+/*	$NetBSD: xencons.c,v 1.13.2.2 2006/03/10 14:54:51 elad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.13.2.1 2006/03/08 00:43:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.13.2.2 2006/03/10 14:54:51 elad Exp $");
 
 #include "opt_xen.h"
 
@@ -263,7 +263,7 @@ xencons_open(dev_t dev, int flag, int mode, struct lwp *l)
 		xencons_param(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE &&
-		   generic_authorize(l->l_proc->p_cred,
+		   kauth_authorize_generic(l->l_proc->p_cred,
 				     KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;

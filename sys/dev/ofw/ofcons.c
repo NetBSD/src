@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.24.10.1 2006/03/08 01:44:49 elad Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.24.10.2 2006/03/10 14:39:02 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24.10.1 2006/03/08 01:44:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24.10.2 2006/03/10 14:39:02 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -146,7 +146,7 @@ ofcons_open(dev, flag, mode, l)
 		ofcons_param(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state&TS_XCLUDE) &&
-	    generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag))
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 

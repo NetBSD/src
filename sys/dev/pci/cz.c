@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.35.2.1 2006/03/08 01:44:49 elad Exp $	*/
+/*	$NetBSD: cz.c,v 1.35.2.2 2006/03/10 14:39:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.35.2.1 2006/03/08 01:44:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.35.2.2 2006/03/10 14:39:02 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -961,7 +961,7 @@ czttyopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    generic_authorize(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1168,7 +1168,7 @@ czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

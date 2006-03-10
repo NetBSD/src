@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.12.10.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.12.10.2 2006/03/10 14:23:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.10.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.10.2 2006/03/10 14:23:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,10 +380,10 @@ ptyfs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return EROFS;
 		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
-		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					       &p->p_acflag)) != 0)
 			return error;
-		if (generic_authorize(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
+		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
 			if ((ptyfs->ptyfs_flags & (SF_IMMUTABLE | SF_APPEND)) &&
 			    securelevel > 0)
 				return EPERM;
@@ -428,7 +428,7 @@ ptyfs_setattr(void *v)
 		if ((ptyfs->ptyfs_flags & SF_SNAPSHOT) != 0)
 			return EPERM;
 		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
-		    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					       &p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0))
@@ -473,7 +473,7 @@ ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
 	int error;
 
 	if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
-	    (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
 		return error;
 	ptyfs->ptyfs_mode &= ~ALLPERMS;
@@ -505,7 +505,7 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if ((kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid || uid != ptyfs->ptyfs_uid ||
 	    (gid != ptyfs->ptyfs_gid &&
 	     !(kauth_cred_getegid(cred) == gid || kauth_cred_groupmember(cred, (gid_t)gid)))) &&
-	    ((error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				        &p->p_acflag)) != 0))
 		return error;
 

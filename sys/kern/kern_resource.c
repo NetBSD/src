@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.100.4.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.100.4.2 2006/03/10 13:53:24 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.100.4.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.100.4.2 2006/03/10 13:53:24 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ donice(struct proc *curp, struct proc *chgp, int n)
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
 	n += NZERO;
-	if (n < chgp->p_nice && generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	if (n < chgp->p_nice && kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 						  &curp->p_acflag))
 		return (EACCES);
 	chgp->p_nice = n;
@@ -260,7 +260,7 @@ dosetrlimit(struct proc *p, kauth_cred_t cred, int which, struct rlimit *limp)
 		return (EINVAL);
 	}
 	if (limp->rlim_max > alimp->rlim_max
-	    && (error = generic_authorize(cred, KAUTH_GENERIC_ISSUSER,
+	    && (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					  &p->p_acflag)) != 0)
 			return (error);
 
@@ -576,14 +576,14 @@ sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
 		 */
 		if (kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(ptmp->p_cred) ||
 		    kauth_cred_getuid(p->p_cred) != kauth_cred_getsvuid(ptmp->p_cred))
-			error = generic_authorize(p->p_cred,
+			error = kauth_authorize_generic(p->p_cred,
 				    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 
 		/*
 		 * sgid proc has sgid back to us temporarily
 		 */
 		else if (kauth_cred_getgid(ptmp->p_cred) != kauth_cred_getsvgid(ptmp->p_cred))
-			error = generic_authorize(p->p_cred,
+			error = kauth_authorize_generic(p->p_cred,
 			    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 
 		/*
@@ -600,7 +600,7 @@ sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
 					break;
 			}
 			if (i == kauth_cred_ngroups(p->p_cred))
-				error = generic_authorize(p->p_cred,
+				error = kauth_authorize_generic(p->p_cred,
 							  KAUTH_GENERIC_ISSUSER,
 							  &p->p_acflag);
 		}

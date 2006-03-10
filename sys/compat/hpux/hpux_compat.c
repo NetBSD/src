@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.73.10.1 2006/03/08 01:48:37 elad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.73.10.2 2006/03/10 14:28:51 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.73.10.1 2006/03/08 01:48:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.73.10.2 2006/03/10 14:28:51 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -545,7 +545,7 @@ hpux_sys_ulimit(l, v, retval)
 	case 2:
 		SCARG(uap, newlimit) *= 512;
 		if (SCARG(uap, newlimit) > limp->rlim_max &&
-		    (error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+		    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			break;
 		limp->rlim_cur = limp->rlim_max = SCARG(uap, newlimit);
 		/* else fall into... */
@@ -1204,7 +1204,7 @@ hpux_sys_stime_6x(l, v, retval)
 
 	tv.tv_sec = SCARG(uap, time);
 	tv.tv_usec = 0;
-	if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 		return (error);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */

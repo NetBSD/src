@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.14.4.1 2006/03/08 00:43:06 elad Exp $	*/
+/*	$NetBSD: plcom.c,v 1.14.4.2 2006/03/10 14:53:59 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.4.1 2006/03/08 00:43:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.4.2 2006/03/10 14:53:59 elad Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -640,7 +640,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		generic_authorize(l->l_proc->p_cred,
+		kauth_authorize_generic(l->l_proc->p_cred,
 				  KAUTH_GENERIC_ISSUSER,
 				  &l->l_proc->p_acflag) != 0)
 		return EBUSY;
@@ -884,7 +884,7 @@ plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = generic_authorize(l->l_proc->p_cred,
+		error = kauth_authorize_generic(l->l_proc->p_cred,
 					  KAUTH_GENERIC_ISSUSER,
 					  &l->l_proc->p_acflag); 
 		if (error)

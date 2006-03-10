@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.25.10.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.25.10.2 2006/03/10 13:53:24 elad Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.10.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.10.2 2006/03/10 13:53:24 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ filt_procattach(struct knote *kn)
 	 */
 	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curproc->p_cred) ||
 		(p->p_flag & P_SUGID))
-	    && generic_authorize(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+	    && kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
 				 &curproc->p_acflag) != 0)
 		return (EACCES);
 

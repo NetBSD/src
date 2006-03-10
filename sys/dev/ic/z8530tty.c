@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.103.2.1 2006/03/08 01:44:49 elad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.103.2.2 2006/03/10 14:39:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.103.2.1 2006/03/08 01:44:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.103.2.2 2006/03/10 14:39:02 elad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -578,7 +578,7 @@ zsopen(dev, flags, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 			      &p->p_acflag) != 0)
 		return (EBUSY);
 
@@ -823,7 +823,7 @@ zsioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 					  &p->p_acflag);
 		if (error)
 			break;

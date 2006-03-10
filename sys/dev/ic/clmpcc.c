@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.27.2.2 2006/03/08 01:44:48 elad Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.27.2.3 2006/03/10 14:39:01 elad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.27.2.2 2006/03/08 01:44:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.27.2.3 2006/03/10 14:39:01 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -525,7 +525,7 @@ clmpccopen(dev, flag, mode, l)
 
 	if ( ISSET(tp->t_state, TS_ISOPEN) &&
 	     ISSET(tp->t_state, TS_XCLUDE) &&
-	     generic_authorize(l->l_proc->p_cred,
+	     kauth_authorize_generic(l->l_proc->p_cred,
 			       KAUTH_GENERIC_ISSUSER,
 			       &l->l_proc->p_acflag) != 0 )
 		return EBUSY;
@@ -754,7 +754,7 @@ clmpccioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = generic_authorize(l->l_proc->p_cred,
+		error = kauth_authorize_generic(l->l_proc->p_cred,
 					  KAUTH_GENERIC_ISSUSER,
 					  &l->l_proc->p_acflag);
 		if ( error )

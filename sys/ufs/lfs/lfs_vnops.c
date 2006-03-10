@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.157.10.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.157.10.2 2006/03/10 14:21:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.10.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.10.2 2006/03/10 14:21:11 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1279,7 +1279,7 @@ lfs_fcntl(void *v)
 
 	    case LFCNBMAPV:
 	    case LFCNMARKV:
-		if ((error = generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 					       &p->p_acflag)) != 0)
 			return (error);
 		blkvp = *(struct lfs_fcntl_markv *)ap->a_data;
@@ -1344,7 +1344,7 @@ lfs_fcntl(void *v)
 
 	    case LFCNIFILEFH:
 		/* Return the filehandle of the Ifile */
-		if ((error = generic_authorize(ap->a_l->l_proc->p_cred,
+		if ((error = kauth_authorize_generic(ap->a_l->l_proc->p_cred,
 					       KAUTH_GENERIC_ISSUSER,
 					       &ap->a_l->l_proc->p_acflag)) != 0)
 			return (error);
