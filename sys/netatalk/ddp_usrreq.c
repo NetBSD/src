@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.14.10.1 2006/03/08 01:15:19 elad Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.14.10.2 2006/03/10 15:14:16 elad Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14.10.1 2006/03/08 01:15:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14.10.2 2006/03/10 15:14:16 elad Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -274,7 +274,7 @@ at_pcbsetaddr(ddp, addr, p)
 				return (EINVAL);
 
 			if (sat->sat_port < ATPORT_RESERVED &&
-			    generic_authorize(p->p_cred, KAUTH_GENERIC_ISSUSER,
+			    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
 					      &p->p_acflag))
 				return (EACCES);
 		}
