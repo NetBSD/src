@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.4.2 2006/03/10 21:41:32 elad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.4.3 2006/03/10 22:10:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.2 2006/03/10 21:41:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.3 2006/03/10 22:10:21 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2002,6 +2002,9 @@ nfs_getreq(nd, nfsd, has_header)
 	 * Handle auth_unix or auth_kerb.
 	 */
 	if (auth_type == rpc_auth_unix) {
+		uid_t uid;
+		gid_t gid;
+
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > NFS_MAXNAMLEN) {
 			m_freem(mrep);
@@ -2009,10 +2012,28 @@ nfs_getreq(nd, nfsd, has_header)
 		}
 		nfsm_adv(nfsm_rndup(len));
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-		kauth_cred_zero(nd->nd_cr);
-		kauth_cred_hold(nd->nd_cr);
-		kauth_cred_seteuid(nd->nd_cr, fxdr_unsigned(uid_t, *tl++));
-		kauth_cred_setegid(nd->nd_cr, fxdr_unsigned(gid_t, *tl++));
+
+		/*
+		 * XXX elad: could the previous nd_cr be referenced from
+		 *	     somewhere else? we might be leaking memory
+		 *	     here or causing other code to access freed
+		 *	     memory (or worse: re-allocated memory).
+		 */
+#ifdef DIAGNOSTIC
+		if (kauth_cred_getrefcnt(nd->nd_cr) > 1)
+			panic("nfs_req: possible memory leak");
+#endif /* DIAGNOSTIC */
+		nd->nd_cr = kauth_cred_copy(nd->nd_cr);
+
+		uid = fxdr_unsigned(uid_t, *tl++);
+		gid = fxdr_unsigned(gid_t, *tl++);
+		kauth_cred_setuid(nd->nd_cr, uid);
+		kauth_cred_setgid(nd->nd_cr, gid);
+		kauth_cred_seteuid(nd->nd_cr, uid);
+		kauth_cred_setsvuid(nd->nd_cr, gid);
+		kauth_cred_setegid(nd->nd_cr, uid);
+		kauth_cred_setsvgid(nd->nd_cr, gid);
+
 		len = fxdr_unsigned(int, *tl);
 		if (len < 0 || len > RPCAUTH_UNIXGIDS) {
 			m_freem(mrep);
