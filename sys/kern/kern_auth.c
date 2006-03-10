@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.11 2006/03/10 11:53:55 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.12 2006/03/10 13:21:54 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -822,7 +822,7 @@ kauth_authorize_cb_generic(kauth_cred_t cred, kauth_action_t action,
  * Generic scope authorization wrapper.
  */
 int
-generic_authorize(kauth_cred_t cred, kauth_action_t action, void *arg0)
+kauth_authorize_generic(kauth_cred_t cred, kauth_action_t action, void *arg0)
 {
 	return (kauth_authorize_action(kauth_builtin_scope_generic, cred, 
 	    action, arg0, NULL, NULL, NULL));
