@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_impl.h,v 1.1.2.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_impl.h,v 1.1.2.2 2006/03/10 13:03:59 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -28,6 +28,10 @@
 
 #ifndef _UVM_PDPOLICY_IMPL_H_
 #define _UVM_PDPOLICY_IMPL_H_
+
+/*
+ * definitions for page replacement policy implementations.
+ */
 
 #include <sys/evcnt.h>
 
