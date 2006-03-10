@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.1 2006/03/10 18:41:50 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.2 2006/03/10 19:15:57 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -248,6 +248,9 @@ from the group list of
 .Pp
 The group list will be sorted after the removal.
 .El
+.It Ft uint16_t Fn kauth_cred_getrefcnt "kauth_cred_t cred"
+Return the reference count for
+.Ar cred .
 .El
 .Sh CREDENTIAL INHERITANCE REFERENCE COUNTING
 .Nm kauth
@@ -368,7 +371,7 @@ Convert userland's view of credentials to a
 .Ft kauth_cred_t .
 .Pp
 This includes effective user- and group-ids, a number of groups, and a group
-list.
+list. The reference count is set to one.
 .Pp
 Note that
 .Nm
