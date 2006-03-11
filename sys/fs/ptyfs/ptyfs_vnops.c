@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.12.10.2 2006/03/10 14:23:39 elad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.12.10.3 2006/03/11 04:55:28 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.10.2 2006/03/10 14:23:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.10.3 2006/03/11 04:55:28 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,7 +490,7 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     struct proc *p)
 {
 	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
-	int		error;
+	int		error, ismember;
 
 	if (uid == (uid_t)VNOVAL)
 		uid = ptyfs->ptyfs_uid;
@@ -502,9 +502,12 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	 * the caller's credentials must imply super-user privilege
 	 * or the call fails.
 	 */
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error)
+		return (error);
 	if ((kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid || uid != ptyfs->ptyfs_uid ||
 	    (gid != ptyfs->ptyfs_gid &&
-	     !(kauth_cred_getegid(cred) == gid || kauth_cred_groupmember(cred, (gid_t)gid)))) &&
+	     !(kauth_cred_getegid(cred) == gid || ismember))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				        &p->p_acflag)) != 0))
 		return error;

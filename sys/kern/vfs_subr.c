@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.265.4.1 2006/03/08 00:53:41 elad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.265.4.2 2006/03/11 04:55:28 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.265.4.1 2006/03/08 00:53:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.265.4.2 2006/03/11 04:55:28 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2100,6 +2100,7 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
     mode_t acc_mode, kauth_cred_t cred)
 {
 	mode_t mask;
+	int error, ismember;
 
 	/*
 	 * Super-user always gets read/write access, but execute access depends
@@ -2126,7 +2127,10 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	}
 
 	/* Otherwise, check the groups. */
-	if (kauth_cred_getegid(cred) == gid || kauth_cred_groupmember(cred, gid)) {
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error)
+		return (error);
+	if (kauth_cred_getegid(cred) == gid || ismember) {
 		if (acc_mode & VEXEC)
 			mask |= S_IXGRP;
 		if (acc_mode & VREAD)
