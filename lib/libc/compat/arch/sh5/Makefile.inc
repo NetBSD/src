@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.2 2006/03/11 19:26:29 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2006/03/11 23:04:04 christos Exp $
 
-.include "${.CURDIR}/compat/arch/sh5/sys/Makefile.inc"
+.include "${COMPATARCHDIR}/sys/Makefile.inc"

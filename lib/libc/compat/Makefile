@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/03/11 21:07:18 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2006/03/11 23:04:03 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 
@@ -6,6 +6,7 @@
 
 LIB=		cold
 CPPFLAGS+=	-I${.CURDIR}/../include -I${.CURDIR}/..
+CPPFLAGS+=	-I${.CURDIR}/../arch/${ARCHSUBDIR}
 
 COMPATDIR=${.CURDIR}
 
