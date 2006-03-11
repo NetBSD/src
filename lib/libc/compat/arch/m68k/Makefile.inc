@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2006/03/09 16:20:55 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2006/03/11 23:04:03 christos Exp $
 
-.include "${.CURDIR}/compat/arch/m68k/gen/Makefile.inc"
-.include "${.CURDIR}/compat/arch/m68k/sys/Makefile.inc"
+.include "${COMPATARCHDIR}/gen/Makefile.inc"
+.include "${COMPATARCHDIR}/sys/Makefile.inc"
