@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.105 2006/03/08 22:11:48 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.106 2006/03/11 17:18:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.105 2006/03/08 22:11:48 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.106 2006/03/11 17:18:00 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.105 2006/03/08 22:11:48 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.106 2006/03/11 17:18:00 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -146,10 +146,8 @@ __RCSID("$NetBSD: job.c,v 1.105 2006/03/08 22:11:48 dsl Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
-#ifndef RMT_WILL_WATCH
 #ifndef USE_SELECT
 #include <poll.h>
-#endif
 #endif
 #include <signal.h>
 #include <stdio.h>
@@ -162,12 +160,7 @@ __RCSID("$NetBSD: job.c,v 1.105 2006/03/08 22:11:48 dsl Exp $");
 #include "job.h"
 #include "pathnames.h"
 #include "trace.h"
-#ifdef REMOTE
-#include "rmt.h"
-# define STATIC
-#else
 # define STATIC static
-#endif
 
 /*
  * error handling variables
@@ -275,9 +268,7 @@ static const char *shellArgv = NULL;		  /* Custom shell args */
 
 
 static int  	maxJobs;    	/* The most children we can run at once */
-static int  	maxLocal;    	/* The most local ones we can have */
 STATIC int     	nJobs;	    	/* The number of children currently running */
-STATIC int	nLocal;    	/* The number of local children */
 STATIC Lst     	jobs;		/* The structures that describe them */
 static Boolean	wantToken;	/* we want a token */
 
@@ -285,7 +276,6 @@ static Boolean	wantToken;	/* we want a token */
  * Set of descriptors of pipes connected to
  * the output channels of children
  */
-#ifndef RMT_WILL_WATCH
 static struct pollfd *fds = NULL;
 static Job **jobfds = NULL;
 static int nfds = 0;
@@ -295,7 +285,6 @@ static void clearfd(Job *);
 static int readyfd(Job *);
 #define JBSTART 256
 #define JBFACTOR 2
-#endif
 
 STATIC GNode   	*lastNode;	/* The node for which output was most recently
 				 * produced. */
@@ -308,17 +297,11 @@ int	job_pipe[2] = { -1, -1 }; /* job server pipes. */
 static Job childExitJob;	/* child exit pseudo-job */
 int	exit_pipe[2] = { -1, -1 }; /* child exit signal pipe. */
 #define	CHILD_EXIT	"."
-#define	DO_JOB_RESTART	"R"
+#define	DO_JOB_RESUME	"R"
 
-#ifdef REMOTE
-# define TARG_FMT  "--- %s at %s ---\n" /* Default format */
-# define MESSAGE(fp, gn) \
-	(void)fprintf(fp, targFmt, gn->name, gn->rem.hname)
-#else
-# define TARG_FMT  "--- %s ---\n" /* Default format */
-# define MESSAGE(fp, gn) \
+#define TARG_FMT  "--- %s ---\n" /* Default format */
+#define MESSAGE(fp, gn) \
 	(void)fprintf(fp, targFmt, gn->name)
-#endif
 
 /*
  * When JobStart attempts to run a job remotely but can't, and isn't allowed
@@ -365,15 +348,8 @@ static int JobCmpPid(ClientData, ClientData);
 static int JobPrintCommand(ClientData, ClientData);
 static int JobSaveCommand(ClientData, ClientData);
 static void JobClose(Job *);
-#ifdef REMOTE
-static int JobCmpRmtID(ClientData, ClientData);
-# ifdef RMT_WILL_WATCH
-static void JobLocalInput(int, Job *);
-# endif
-#else
 static void JobFinish(Job *, int *);
 static void JobExec(Job *, char **);
-#endif
 static void JobMakeArgv(Job *, char **);
 static int JobRestart(Job *);
 static int JobStart(GNode *, int, Job *);
@@ -431,17 +407,7 @@ JobCondPassSig(ClientData jobp, ClientData signop)
 {
     Job	*job = (Job *)jobp;
     int	signo = *(int *)signop;
-#ifdef RMT_WANTS_SIGNALS
-    if (job->flags & JOB_REMOTE) {
-	(void)Rmt_Signal(job, signo);
-    } else {
-	KILL(job->pid, signo);
-    }
-#else
-    /*
-     * Assume that sending the signal to job->pid will signal any remote
-     * job as well.
-     */
+
     if (DEBUG(JOB)) {
 	(void)fprintf(stdout,
 		       "JobCondPassSig passing signal %d to child %d.\n",
@@ -449,7 +415,6 @@ JobCondPassSig(ClientData jobp, ClientData signop)
 	(void)fflush(stdout);
     }
     KILL(job->pid, signo);
-#endif
     return 0;
 }
 
@@ -497,7 +462,7 @@ JobChildSig(int signo __unused)
 static void
 JobContinueSig(int signo __unused)
 {
-    write(exit_pipe[1], DO_JOB_RESTART, 1);
+    write(exit_pipe[1], DO_JOB_RESUME, 1);
 }
 #endif
 
@@ -608,31 +573,6 @@ JobCmpPid(ClientData job, ClientData pid)
 {
     return *(int *)pid - ((Job *)job)->pid;
 }
-
-#ifdef REMOTE
-/*-
- *-----------------------------------------------------------------------
- * JobCmpRmtID  --
- *	Compare the rmtID of the job with the given rmtID and return 0 if they
- *	are equal.
- *
- * Input:
- *	job		job to examine
- *	rmtID		remote id desired
- *
- * Results:
- *	0 if the rmtID's match
- *
- * Side Effects:
- *	None.
- *-----------------------------------------------------------------------
- */
-static int
-JobCmpRmtID(ClientData job, ClientData rmtID)
-{
-    return(*(int *)rmtID - ((Job *)job)->rmtID);
-}
-#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -925,11 +865,7 @@ static void
 JobClose(Job *job)
 {
     if (usePipes && (job->flags & JOB_FIRST)) {
-#ifdef RMT_WILL_WATCH
-	Rmt_Ignore(job->inPipe);
-#else
 	clearfd(job);
-#endif
 	if (job->outPipe != job->inPipe) {
 	   (void)close(job->outPipe);
 	}
@@ -985,19 +921,12 @@ JobFinish(Job *job, int *status)
 	 * cases, finish out the job's output before printing the exit
 	 * status...
 	 */
-#ifdef REMOTE
-	KILL(job->pid, SIGCONT);
-#endif
 	JobClose(job);
 	if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
 	   (void)fclose(job->cmdFILE);
 	   job->cmdFILE = NULL;
 	}
 	done = TRUE;
-#ifdef REMOTE
-	if (job->flags & JOB_REMOTE)
-	    Rmt_Done(job->rmtID, job->node);
-#endif
     } else if (WIFEXITED(*status)) {
 	/*
 	 * Deal with ignored errors in -B mode. We need to print a message
@@ -1014,10 +943,6 @@ JobFinish(Job *job, int *status)
 	 * stuff?
 	 */
 	JobClose(job);
-#ifdef REMOTE
-	if (job->flags & JOB_REMOTE)
-	    Rmt_Done(job->rmtID, job->node);
-#endif /* REMOTE */
     } else {
 	/*
 	 * No need to close things down or anything.
@@ -1081,36 +1006,29 @@ JobFinish(Job *job, int *status)
 		MESSAGE(out, job->node);
 		lastNode = job->node;
 	    }
-	    if (!(job->flags & JOB_REMIGRATE)) {
-		switch (WSTOPSIG(*status)) {
-		case SIGTSTP:
-		    (void)fprintf(out, "*** [%s] Suspended\n",
-				job->node->name);
-		    break;
-		case SIGSTOP:
-		    (void)fprintf(out, "*** [%s] Stopped\n",
-				job->node->name);
-		    break;
-		default:
-		    (void)fprintf(out, "*** [%s] Stopped -- signal %d\n",
-			job->node->name, WSTOPSIG(*status));
-		}
+	    switch (WSTOPSIG(*status)) {
+	    case SIGTSTP:
+		(void)fprintf(out, "*** [%s] Suspended\n",
+			    job->node->name);
+		break;
+	    case SIGSTOP:
+		(void)fprintf(out, "*** [%s] Stopped\n",
+			    job->node->name);
+		break;
+	    default:
+		(void)fprintf(out, "*** [%s] Stopped -- signal %d\n",
+		    job->node->name, WSTOPSIG(*status));
 	    }
 	    job->flags |= JOB_RESUME;
 	    (void)Lst_AtEnd(stoppedJobs, (ClientData)job);
-#ifdef REMOTE
-	    if (job->flags & JOB_REMIGRATE)
-		JobRestart(job);
-#endif
 	    (void)fflush(out);
 	    return;
-	} else if (WIFSTOPPED(*status) &&  WSTOPSIG(*status) == SIGCONT) {
+	} else if (WIFSTOPPED(*status) && WSTOPSIG(*status) == SIGCONT) {
 	    /*
 	     * If the beastie has continued, shift the Job from the stopped
-	     * list to the running one (or re-stop it if concurrency is
-	     * exceeded) and go and get another child.
+	     * list to the running one.
 	     */
-	    if (job->flags & (JOB_RESUME|JOB_REMIGRATE|JOB_RESTART)) {
+	    if (job->flags & JOB_RESUME) {
 		if (usePipes && job->node != lastNode) {
 		    MESSAGE(out, job->node);
 		    lastNode = job->node;
@@ -1124,27 +1042,14 @@ JobFinish(Job *job, int *status)
 			   job->pid, job->node->name);
 		    (void)fflush(stdout);
 		}
-#ifdef notdef
-		/*
-		 * We don't really want to restart a job from scratch just
-		 * because it continued, especially not without killing the
-		 * continuing process!  That's why this is ifdef'ed out.
-		 * FD - 9/17/90
-		 */
-		JobRestart(job);
-#endif
 	    }
 	    job->flags &= ~JOB_CONTINUING;
  	    Lst_AtEnd(jobs, (ClientData)job);
 	    nJobs += 1;
-	    if (!(job->flags & JOB_REMOTE)) {
-		if (DEBUG(JOB)) {
-		    (void)fprintf(stdout,
-				   "Process %d is continuing locally.\n",
-				   job->pid);
-		    (void)fflush(stdout);
-  		}
-		nLocal += 1;
+	    if (DEBUG(JOB)) {
+		(void)fprintf(stdout, "Process %d is continuing.\n",
+			       job->pid);
+		(void)fflush(stdout);
 	    }
 	    (void)fflush(out);
   	    return;
@@ -1166,7 +1071,7 @@ JobFinish(Job *job, int *status)
      * ok, it's ok. If there's an error, this puppy is done.
      */
     if (compatMake && (WIFEXITED(*status) &&
-	!Lst_IsAtEnd(job->node->commands))) {
+	    !Lst_IsAtEnd(job->node->commands))) {
 	switch (JobStart(job->node, job->flags & JOB_IGNDOTS, job)) {
 	case JOB_RUNNING:
 	    done = FALSE;
@@ -1395,31 +1300,6 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
     }
     return TRUE;
 }
-#ifdef RMT_WILL_WATCH
-/*-
- *-----------------------------------------------------------------------
- * JobLocalInput --
- *	Handle a pipe becoming readable. Callback function for Rmt_Watch
- *
- * Input:
- *	stream		Stream that's ready (ignored)
- *	job		Job to which the stream belongs
- *
- * Results:
- *	None
- *
- * Side Effects:
- *	JobDoOutput is called.
- *
- *-----------------------------------------------------------------------
- */
-/*ARGSUSED*/
-static void
-JobLocalInput(int stream, Job *job)
-{
-    JobDoOutput(job, FALSE);
-}
-#endif /* RMT_WILL_WATCH */
 
 /*-
  *-----------------------------------------------------------------------
@@ -1450,8 +1330,7 @@ JobExec(Job *job, char **argv)
     if (DEBUG(JOB)) {
 	int 	  i;
 
-	(void)fprintf(stdout, "Running %s %sly\n", job->node->name,
-		       job->flags&JOB_REMOTE?"remote":"local");
+	(void)fprintf(stdout, "Running %s %sly\n", job->node->name, "local");
 	(void)fprintf(stdout, "\tCommand: ");
 	for (i = 0; argv[i] != NULL; i++) {
 	    (void)fprintf(stdout, "%s ", argv[i]);
@@ -1467,16 +1346,10 @@ JobExec(Job *job, char **argv)
      * provide that feedback, even if nothing follows it.
      */
     if ((lastNode != job->node) && (job->flags & JOB_FIRST) &&
-	!(job->flags & JOB_SILENT)) {
+	    !(job->flags & JOB_SILENT)) {
 	MESSAGE(stdout, job->node);
 	lastNode = job->node;
     }
-
-#ifdef RMT_NO_EXEC
-    if (job->flags & JOB_REMOTE) {
-	goto jobExecFinish;
-    }
-#endif /* RMT_NO_EXEC */
 
     /* No interruptions until this job is on the `jobs' list */
     JobSigLock(&mask);
@@ -1560,15 +1433,8 @@ JobExec(Job *job, char **argv)
 # endif
 #endif /* USE_PGRP */
 
-#ifdef REMOTE
-	if (job->flags & JOB_REMOTE) {
-	    Rmt_Exec(shellPath, argv, FALSE);
-	} else
-#endif /* REMOTE */
-	{
-	   (void)execv(shellPath, argv);
-	   execError("exec", shellPath);
-	}
+	(void)execv(shellPath, argv);
+	execError("exec", shellPath);
 	_exit(1);
     } else {
 	job->pid = cpid;
@@ -1583,34 +1449,15 @@ JobExec(Job *job, char **argv)
 	     */
 	    job->curPos = 0;
 
-#ifdef RMT_WILL_WATCH
-	    Rmt_Watch(job->inPipe, JobLocalInput, job);
-#else
 	    watchfd(job);
-#endif /* RMT_WILL_WATCH */
 	}
 
-	if (job->flags & JOB_REMOTE) {
-#ifndef REMOTE
-	    job->rmtID = 0;
-#else
-	    job->rmtID = Rmt_LastID(job->pid);
-#endif /* REMOTE */
-	} else {
-	    nLocal += 1;
-	    /*
-	     * XXX: Used to not happen if REMOTE. Why?
-	     */
-	    if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
-		(void)fclose(job->cmdFILE);
-		job->cmdFILE = NULL;
-	    }
+	if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
+	    (void)fclose(job->cmdFILE);
+	    job->cmdFILE = NULL;
 	}
     }
 
-#ifdef RMT_NO_EXEC
-jobExecFinish:
-#endif
     /*
      * Now the job is actually running, add it to the table.
      */
@@ -1692,212 +1539,39 @@ JobMakeArgv(Job *job, char **argv)
 static int
 JobRestart(Job *job)
 {
-#ifdef REMOTE
-    int host;
-#endif
+    Boolean error;
+    int status;
 
-    if (job->flags & JOB_REMIGRATE) {
-	if (
-#ifdef REMOTE
-	    verboseRemigrates ||
-#endif
-	    DEBUG(JOB)) {
-	   (void)fprintf(stdout, "*** remigrating %x(%s)\n",
-			   job->pid, job->node->name);
+    /*
+     * The job has stopped and needs to be restarted. Why it stopped,
+     * we don't know...
+     */
+    if (DEBUG(JOB)) {
+       (void)fprintf(stdout, "Resuming %s...", job->node->name);
+       (void)fflush(stdout);
+    }
+
+    error = (KILL(job->pid, SIGCONT) != 0);
+
+    if (!error) {
+	/*
+	 * Make sure the user knows we've continued the beast and
+	 * actually put the thing in the job table.
+	 */
+	job->flags |= JOB_CONTINUING;
+	status = W_STOPCODE(SIGCONT);
+	JobFinish(job, &status);
+
+	job->flags &= ~(JOB_RESUME|JOB_CONTINUING);
+	if (DEBUG(JOB)) {
+	   (void)fprintf(stdout, "done\n");
 	   (void)fflush(stdout);
 	}
-
-#ifdef REMOTE
-	if (!Rmt_ReExport(job->pid, job->node, &host)) {
-	    if (verboseRemigrates || DEBUG(JOB)) {
-		(void)fprintf(stdout, "*** couldn't migrate...\n");
-		(void)fflush(stdout);
-	    }
-#endif
-	    if (nLocal != maxLocal) {
-		/*
-		 * Job cannot be remigrated, but there's room on the local
-		 * machine, so resume the job and note that another
-		 * local job has started.
-		 */
-		if (
-#ifdef REMOTE
-		    verboseRemigrates ||
-#endif
-		    DEBUG(JOB)) {
-		    (void)fprintf(stdout, "*** resuming on local machine\n");
-		    (void)fflush(stdout);
-		}
-		KILL(job->pid, SIGCONT);
-		nLocal +=1;
-#ifdef REMOTE
-		job->flags &= ~(JOB_REMIGRATE|JOB_RESUME|JOB_REMOTE);
-		job->flags |= JOB_CONTINUING;
-#else
-		job->flags &= ~(JOB_REMIGRATE|JOB_RESUME);
-#endif
-	    } else {
-		/*
-		 * Job cannot be restarted. Mark the table as full and
-		 * place the job back on the list of stopped jobs.
-		 */
-		if (
-#ifdef REMOTE
-		    verboseRemigrates ||
-#endif
-		    DEBUG(JOB)) {
-		   (void)fprintf(stdout, "*** holding\n");
-		   (void)fflush(stdout);
-  		}
-		(void)Lst_AtFront(stoppedJobs, (ClientData)job);
-		return 1;
-	    }
-#ifdef REMOTE
-	} else {
-	    /*
-	     * Clear out the remigrate and resume flags. Set the continuing
-	     * flag so we know later on that the process isn't exiting just
-	     * because of a signal.
-	     */
-	    job->flags &= ~(JOB_REMIGRATE|JOB_RESUME);
-	    job->flags |= JOB_CONTINUING;
-	    job->rmtID = host;
-	}
-#endif
-
-	(void)Lst_AtEnd(jobs, (ClientData)job);
-	nJobs += 1;
-    } else if (job->flags & JOB_RESTART) {
-	/*
-	 * Set up the control arguments to the shell. This is based on the
-	 * flags set earlier for this job. If the JOB_IGNERR flag is clear,
-	 * the 'exit' flag of the commandShell is used to cause it to exit
-	 * upon receiving an error. If the JOB_SILENT flag is clear, the
-	 * 'echo' flag of the commandShell is used to get it to start echoing
-	 * as soon as it starts processing commands.
-	 */
-	char	  *argv[10];
-
-	JobMakeArgv(job, argv);
-
-	if (DEBUG(JOB)) {
-	    (void)fprintf(stdout, "Restarting %s...", job->node->name);
-	    (void)fflush(stdout);
-	}
-#ifdef REMOTE
-	if ((job->node->type & OP_NOEXPORT) ||
- 	    (nLocal < maxLocal && runLocalFirst)
-# ifdef RMT_NO_EXEC
-	    || !Rmt_Export(shellPath, argv, job)
-# else
-	    || !Rmt_Begin(shellPath, argv, job->node)
-# endif
-	   )
-#endif
-	{
-	    if (((nLocal >= maxLocal) && !(job->flags & JOB_SPECIAL))) {
-		/*
-		 * Can't be exported and not allowed to run locally -- put it
-		 * back on the hold queue and mark the table full
-		 */
-		if (DEBUG(JOB)) {
-		    (void)fprintf(stdout, "holding\n");
-		    (void)fflush(stdout);
-		}
-		(void)Lst_AtFront(stoppedJobs, (ClientData)job);
-		return 1;
-	    } else {
-		/*
-		 * Job may be run locally.
-		 */
-		if (DEBUG(JOB)) {
-		    (void)fprintf(stdout, "running locally\n");
-		    (void)fflush(stdout);
-		}
-		job->flags &= ~JOB_REMOTE;
-	    }
-	}
-#ifdef REMOTE
-	else {
-	    /*
-	     * Can be exported. Hooray!
-	     */
-	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "exporting\n");
-		(void)fflush(stdout);
-	    }
-	    job->flags |= JOB_REMOTE;
-	}
-#endif
-	JobExec(job, argv);
     } else {
-	/*
-	 * The job has stopped and needs to be restarted. Why it stopped,
-	 * we don't know...
-	 */
-	if (DEBUG(JOB)) {
-	   (void)fprintf(stdout, "Resuming %s...", job->node->name);
-	   (void)fflush(stdout);
-	}
-	if ((nJobs != maxJobs) &&
-	    ((job->flags & JOB_REMOTE) ||
-	     (nLocal < maxLocal) ||
-	     ((maxLocal == 0) &&
-		((job->flags & JOB_SPECIAL)
-#ifdef REMOTE
-			&& (job->node->type & OP_NOEXPORT)
-#endif
-	    ))))
-	{
-	    /*
-	     * If the job is remote, it's ok to resume it as long as the
-	     * maximum concurrency won't be exceeded. If it's local and
-	     * we haven't reached the local concurrency limit already (or the
-	     * job must be run locally and maxLocal is 0), it's also ok to
-	     * resume it.
-	     */
-	    Boolean error;
-	    int status;
-
-#ifdef RMT_WANTS_SIGNALS
-	    if (job->flags & JOB_REMOTE) {
-		error = !Rmt_Signal(job, SIGCONT);
-	    } else
-#endif	/* RMT_WANTS_SIGNALS */
-		error = (KILL(job->pid, SIGCONT) != 0);
-
-	    if (!error) {
-		/*
-		 * Make sure the user knows we've continued the beast and
-		 * actually put the thing in the job table.
-		 */
-		job->flags |= JOB_CONTINUING;
-		status = W_STOPCODE(SIGCONT);
-		JobFinish(job, &status);
-
-		job->flags &= ~(JOB_RESUME|JOB_CONTINUING);
-		if (DEBUG(JOB)) {
-		   (void)fprintf(stdout, "done\n");
-		   (void)fflush(stdout);
-		}
-	    } else {
-		Error("couldn't resume %s: %s",
-		    job->node->name, strerror(errno));
-		status = W_EXITCODE(1, 0);
-		JobFinish(job, &status);
-	    }
-	} else {
-	    /*
-	     * Job cannot be restarted. Mark the table as full and
-	     * place the job back on the list of stopped jobs.
-	     */
-	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "table full\n");
-		(void)fflush(stdout);
-	    }
-	    (void)Lst_AtFront(stoppedJobs, (ClientData)job);
-	    return 1;
-	}
+	Error("couldn't resume %s: %s",
+	    job->node->name, strerror(errno));
+	status = W_EXITCODE(1, 0);
+	JobFinish(job, &status);
     }
     return 0;
 }
@@ -1930,12 +1604,11 @@ JobStart(GNode *gn, int flags, Job *previous)
     Job		  *job;       /* new job descriptor */
     char	  *argv[10];  /* Argument vector to shell */
     Boolean	  cmdsOK;     /* true if the nodes commands were all right */
-    Boolean 	  local;      /* Set true if the job was run locally */
     Boolean 	  noExec;     /* Set true if we decide not to run the job */
     int		  tfd;	      /* File descriptor to the temp file */
 
     if (previous != NULL) {
-	previous->flags &= ~(JOB_FIRST|JOB_IGNERR|JOB_SILENT|JOB_REMOTE);
+	previous->flags &= ~(JOB_FIRST|JOB_IGNERR|JOB_SILENT);
 	job = previous;
     } else {
 	job = emalloc(sizeof(Job));
@@ -1974,9 +1647,7 @@ JobStart(GNode *gn, int flags, Job *previous)
 	cmdsOK = TRUE;
     }
 
-#ifndef RMT_WILL_WATCH
     job->inPollfd = NULL;
-#endif
     /*
      * If the -n flag wasn't given, we open up OUR (not the child's)
      * temporary file to stuff commands in it. The thing is rd/wr so we don't
@@ -2180,43 +1851,7 @@ JobStart(GNode *gn, int flags, Job *previous)
 	}
     }
 
-#ifdef REMOTE
-    if (!(gn->type & OP_NOEXPORT) && !(runLocalFirst && nLocal < maxLocal)) {
-#ifdef RMT_NO_EXEC
-	local = !Rmt_Export(shellPath, argv, job);
-#else
-	local = !Rmt_Begin(shellPath, argv, job->node);
-#endif /* RMT_NO_EXEC */
-	if (!local) {
-	    job->flags |= JOB_REMOTE;
-	}
-    } else
-#endif
-	local = TRUE;
-
-    if (local && (((nLocal >= maxLocal) &&
-	!(job->flags & JOB_SPECIAL) &&
-#ifdef REMOTE
-	(!(gn->type & OP_NOEXPORT) || (maxLocal != 0))
-#else
-	(maxLocal != 0)
-#endif
-	)))
-    {
-	/*
-	 * The job can only be run locally, but we've hit the limit of
-	 * local concurrency, so put the job on hold until some other job
-	 * finishes. Note that the special jobs (.BEGIN, .INTERRUPT and .END)
-	 * may be run locally even when the local limit has been reached
-	 * (e.g. when maxLocal == 0), though they will be exported if at
-	 * all possible. In addition, any target marked with .NOEXPORT will
-	 * be run locally if maxLocal is 0.
-	 */
-	job->flags |= JOB_RESTART;
-	(void)Lst_AtEnd(stoppedJobs, (ClientData)job);
-    } else {
-	JobExec(job, argv);
-    }
+    JobExec(job, argv);
     return(JOB_RUNNING);
 }
 
@@ -2487,9 +2122,7 @@ JobRun(GNode *targ)
     JobStart(targ, JOB_SPECIAL, NULL);
     while (nJobs) {
 	Job_CatchOutput();
-#ifndef RMT_WILL_WATCH
 	Job_CatchChildren(!usePipes);
-#endif /* RMT_WILL_WATCH */
     }
 #else
     Compat_Make(targ, targ);
@@ -2533,7 +2166,7 @@ Job_CatchChildren(Boolean block)
     /*
      * Don't even bother if we know there's no one around.
      */
-    if (nLocal == 0) {
+    if (nJobs == 0) {
 	return;
     }
 
@@ -2564,18 +2197,6 @@ Job_CatchChildren(Boolean block)
 	    job = (Job *)Lst_Datum(jnode);
 	    (void)Lst_Remove(jobs, jnode);
 	    nJobs -= 1;
-#ifdef REMOTE
-	    if (!(job->flags & JOB_REMOTE)) {
-		if (DEBUG(JOB)) {
-		    (void)fprintf(stdout,
-			   "Job queue has one fewer local process.\n");
-		    (void)fflush(stdout);
-		}
-		nLocal -= 1;
-	    }
-#else
-	    nLocal -= 1;
-#endif
 	}
 
 	JobFinish(job, &status);
@@ -2604,34 +2225,8 @@ Job_CatchOutput(void)
     int           	  nready;
     LstNode		  ln;
     Job  	 	  *job;
-#ifdef RMT_WILL_WATCH
-    int	    	  	  pnJobs;   	/* Previous nJobs */
-#endif
 
     (void)fflush(stdout);
-#ifdef RMT_WILL_WATCH
-    pnJobs = nJobs;
-
-    /*
-     * It is possible for us to be called with nJobs equal to 0. This happens
-     * if all the jobs finish and a job that is stopped cannot be run
-     * locally (eg if maxLocal is 0) and cannot be exported. The job will
-     * be placed back on the stoppedJobs queue, Job_Empty() will return false,
-     * Make_Run will call us again when there's nothing for which to wait.
-     * nJobs never changes, so we loop forever. Hence the check. It could
-     * be argued that we should sleep for a bit so as not to swamp the
-     * exportation system with requests. Perhaps we should.
-     *
-     * NOTE: IT IS THE RESPONSIBILITY OF Rmt_Wait TO CALL Job_CatchChildren
-     * IN A TIMELY FASHION TO CATCH ANY LOCALLY RUNNING JOBS THAT EXIT.
-     * It may use the variable nLocal to determine if it needs to call
-     * Job_CatchChildren(if nLocal is 0, there's nothing for which to
-     * wait...)
-     */
-    while (nJobs != 0 && pnJobs == nJobs) {
-	Rmt_Wait();
-    }
-#else
     if (usePipes) {
 	if ((nready = poll((wantToken ? fds : (fds + 1)),
 	  		   (wantToken ? nfds : (nfds - 1)), POLL_MSEC)) <= 0) {
@@ -2643,7 +2238,7 @@ Job_CatchOutput(void)
 		char token;
 		(void)read(childExitJob.inPipe, &token, 1);
 		nready -= 1;
-		if (token == DO_JOB_RESTART[0])
+		if (token == DO_JOB_RESUME[0])
 		    JobRestartJobs();
 	    }
 
@@ -2663,7 +2258,6 @@ Job_CatchOutput(void)
 	    JobSigUnlock(&mask);
 	}
     }
-#endif /* RMT_WILL_WATCH */
 }
 
 /*-
@@ -2727,16 +2321,14 @@ Shell_Init()
  *-----------------------------------------------------------------------
  */
 void
-Job_Init(int maxproc, int maxlocal)
+Job_Init(int maxproc)
 {
     GNode         *begin;     /* node for commands to do at the very start */
 
     jobs =  	  Lst_Init(FALSE);
     stoppedJobs = Lst_Init(FALSE);
     maxJobs = 	  maxproc;
-    maxLocal = 	  maxlocal;
     nJobs = 	  0;
-    nLocal = 	  0;
     wantToken =	  FALSE;
 
     aborting = 	  0;
@@ -2744,11 +2336,7 @@ Job_Init(int maxproc, int maxlocal)
 
     lastNode =	  NILGNODE;
 
-    if (maxJobs == 1
-#ifdef REMOTE
-	|| noMessages
-#endif
-		     ) {
+    if (maxJobs == 1) {
 	/*
 	 * If only one job can run at a time, there's no need for a banner,
 	 * is there?
@@ -2795,7 +2383,7 @@ Job_Init(int maxproc, int maxlocal)
      * we're giving each job its own process group (since then it won't get
      * signals from the terminal driver as we own the terminal)
      */
-#if defined(RMT_WANTS_SIGNALS) || defined(USE_PGRP)
+#if defined(USE_PGRP)
     ADDSIG(SIGTSTP, JobPassSig)
     ADDSIG(SIGTTOU, JobPassSig)
     ADDSIG(SIGTTIN, JobPassSig)
@@ -2827,7 +2415,7 @@ static void JobSigReset(void)
     DELSIG(SIGHUP)
     DELSIG(SIGQUIT)
     DELSIG(SIGTERM)
-#if defined(RMT_WANTS_SIGNALS) || defined(USE_PGRP)
+#if defined(USE_PGRP)
     DELSIG(SIGTSTP)
     DELSIG(SIGTTOU)
     DELSIG(SIGTTIN)
@@ -3126,26 +2714,6 @@ JobInterrupt(int runINTERRUPT, int signo)
 		Error("*** %s removed", file);
 	    }
 	}
-#ifdef RMT_WANTS_SIGNALS
-	if (job->flags & JOB_REMOTE) {
-	    /*
-	     * If job is remote, let the Rmt module do the killing.
-	     */
-	    if (!Rmt_Signal(job, signo)) {
-		/*
-		 * If couldn't kill the thing, finish it out now with an
-		 * error code, since no exit report will come in likely.
-		 */
-		int status;
-
-		status.w_status = 0;
-		status.w_retcode = 1;
-		JobFinish(job, &status);
-	    }
-	} else if (job->pid) {
-	    KILL(job->pid, signo);
-	}
-#else
 	if (job->pid) {
 	    if (DEBUG(JOB)) {
 		(void)fprintf(stdout,
@@ -3155,71 +2723,8 @@ JobInterrupt(int runINTERRUPT, int signo)
 	    }
 	    KILL(job->pid, signo);
 	}
-#endif /* RMT_WANTS_SIGNALS */
     }
     Lst_Close(jobs);
-
-#ifdef REMOTE
-   (void)Lst_Open(stoppedJobs);
-    while ((ln = Lst_Next(stoppedJobs)) != NILLNODE) {
-	GNode *gn;
-
-	job = (Job *)Lst_Datum(ln);
-	gn = job->node;
-
-	if (job->flags & JOB_RESTART) {
-	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "%s%s",
-			       "JobInterrupt skipping job on stopped queue",
-			       "-- it was waiting to be restarted.\n");
-		(void)fflush(stdout);
-	    }
-	    continue;
-	}
-	if ((gn->type & (OP_JOIN|OP_PHONY)) == 0 && !Targ_Precious(gn)) {
-	    char *file = (gn->path == NULL ? gn->name : gn->path);
-	    if (eunlink(file) == 0) {
-		Error("*** %s removed", file);
-	    }
-	}
-	/*
-	 * Resume the thing so it will take the signal.
-	 */
-	if (DEBUG(JOB)) {
-	    (void)fprintf(stdout,
-			   "JobInterrupt passing CONT to stopped child %d.\n",
-			   job->pid);
-	    (void)fflush(stdout);
-	}
-	KILL(job->pid, SIGCONT);
-#ifdef RMT_WANTS_SIGNALS
-	if (job->flags & JOB_REMOTE) {
-	    /*
-	     * If job is remote, let the Rmt module do the killing.
-	     */
-	    if (!Rmt_Signal(job, SIGINT)) {
-		/*
-		 * If couldn't kill the thing, finish it out now with an
-		 * error code, since no exit report will come in likely.
-		 */
-		int status;
-		status.w_status = 0;
-		status.w_retcode = 1;
-		JobFinish(job, &status);
-	    }
-	} else if (job->pid) {
-	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout,
-		       "JobInterrupt passing interrupt to stopped child %d.\n",
-			       job->pid);
-		(void)fflush(stdout);
-	    }
-	    KILL(job->pid, SIGINT);
-	}
-#endif /* RMT_WANTS_SIGNALS */
-    }
-    Lst_Close(stoppedJobs);
-#endif /* REMOTE */
 
     JobSigUnlock(&mask);
 
@@ -3301,9 +2806,7 @@ Job_Wait(void)
     aborting = ABORT_WAIT;
     while (nJobs != 0) {
 	Job_CatchOutput();
-#ifndef RMT_WILL_WATCH
 	Job_CatchChildren(!usePipes);
-#endif /* RMT_WILL_WATCH */
     }
     aborting = 0;
 }
@@ -3343,18 +2846,8 @@ Job_AbortAll(void)
 	     * kill the child process with increasingly drastic signals to make
 	     * darn sure it's dead.
 	     */
-#ifdef RMT_WANTS_SIGNALS
-	    if (job->flags & JOB_REMOTE) {
-		(void)Rmt_Signal(job, SIGINT);
-		(void)Rmt_Signal(job, SIGKILL);
-	    } else {
-		KILL(job->pid, SIGINT);
-		KILL(job->pid, SIGKILL);
-	    }
-#else
 	    KILL(job->pid, SIGINT);
 	    KILL(job->pid, SIGKILL);
-#endif /* RMT_WANTS_SIGNALS */
 	}
 	Lst_Close(jobs);
 	JobSigUnlock(&mask);
@@ -3367,60 +2860,6 @@ Job_AbortAll(void)
 	continue;
 }
 
-#ifdef REMOTE
-/*-
- *-----------------------------------------------------------------------
- * JobFlagForMigration --
- *	Handle the eviction of a child. Called from RmtStatusChange.
- *	Flags the child as remigratable and then suspends it.
- *
- * Input:
- *	hostID		ID of host we used, for matching children
- *
- * Results:
- *	none.
- *
- * Side Effects:
- *	The job descriptor is flagged for remigration.
- *
- *-----------------------------------------------------------------------
- */
-void
-JobFlagForMigration(int hostID)
-{
-    Job		  *job;	    	/* job descriptor for dead child */
-    LstNode       jnode;    	/* list element for finding job */
-
-    if (DEBUG(JOB)) {
-	(void)fprintf(stdout, "JobFlagForMigration(%d) called.\n", hostID);
-	(void)fflush(stdout);
-    }
-    jnode = Lst_Find(jobs, (ClientData)&hostID, JobCmpRmtID);
-
-    if (jnode == NILLNODE) {
-	jnode = Lst_Find(stoppedJobs, (ClientData)hostID, JobCmpRmtID);
-		if (jnode == NILLNODE) {
-		    if (DEBUG(JOB)) {
-			Error("Evicting host(%d) not in table", hostID);
-		    }
-		    return;
-		}
-    }
-    job = (Job *)Lst_Datum(jnode);
-
-    if (DEBUG(JOB)) {
-	(void)fprintf(stdout,
-		       "JobFlagForMigration(%d) found job '%s'.\n", hostID,
-		       job->node->name);
-	(void)fflush(stdout);
-    }
-
-    KILL(job->pid, SIGSTOP);
-
-    job->flags |= JOB_REMIGRATE;
-}
-
-#endif
 
 /*-
  *-----------------------------------------------------------------------
@@ -3454,7 +2893,6 @@ JobRestartJobs(void)
     JobSigUnlock(&mask);
 }
 
-#ifndef RMT_WILL_WATCH
 static void
 watchfd(Job *job)
 {
@@ -3518,7 +2956,6 @@ readyfd(Job *job)
 	Punt("Polling unwatched job");
     return (job->inPollfd->revents & POLLIN) != 0;
 }
-#endif
 
 /*-
  *-----------------------------------------------------------------------
