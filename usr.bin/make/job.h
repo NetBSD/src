@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.24 2006/01/22 19:54:55 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.25 2006/03/11 17:18:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -76,7 +76,6 @@
 /*-
  * job.h --
  *	Definitions pertaining to the running of jobs in parallel mode.
- *	Exported from job.c for the use of remote-execution modules.
  */
 #ifndef _JOB_H_
 #define _JOB_H_
@@ -131,9 +130,7 @@ emul_poll(struct pollfd *fd, int nfd, int timeout);
  *	   maintained for each job. If, on the other hand, usePipes is false,
  *	   the output is routed to a temporary file and all that is kept
  *	   is the name of the file and the descriptor open to the file.
- *	6) An identifier provided by and for the exclusive use of the
- *	   Rmt module.
- *	7) A word of flags which determine how the module handles errors,
+ *	6) A word of flags which determine how the module handles errors,
  *	   echoing, etc. for the job
  *
  * The job "table" is kept as a linked Lst in 'jobs', with the number of
@@ -144,9 +141,7 @@ emul_poll(struct pollfd *fd, int nfd, int timeout);
  * parents of the node which was just remade. This takes care of the upward
  * traversal of the dependency graph.
  */
-#ifndef RMT_WILL_WATCH
 struct pollfd;
-#endif
 
 #define JOB_BUFSIZE	1024
 typedef struct Job {
@@ -156,7 +151,6 @@ typedef struct Job {
 			     * saved when the job has been run */
     FILE 	*cmdFILE;   /* When creating the shell script, this is
 			     * where the commands go */
-    int    	rmtID;     /* ID returned from Rmt module */
     short      	flags;	    /* Flags to control treatment of job */
 #define	JOB_IGNERR	0x001	/* Ignore non-zero exits */
 #define	JOB_SILENT	0x002	/* no output */
@@ -164,9 +158,7 @@ typedef struct Job {
 				 * if we can't export it and maxLocal is 0 */
 #define JOB_IGNDOTS	0x008  	/* Ignore "..." lines when processing
 				 * commands */
-#define JOB_REMOTE	0x010	/* Job is running remotely */
 #define JOB_FIRST	0x020	/* Job is first job for the node */
-#define JOB_REMIGRATE	0x040	/* Job needs to be remigrated */
 #define JOB_RESTART	0x080	/* Job needs to be completely restarted */
 #define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
 				 * for some reason */
@@ -179,9 +171,7 @@ typedef struct Job {
 	struct {
 	    int	  	op_inPipe;	/* Input side of pipe associated
 					 * with job's output channel */
-#ifndef RMT_WILL_WATCH
 	    struct pollfd *op_inPollfd;	/* pollfd associated with inPipe */
-#endif
 	    int   	op_outPipe;	/* Output side of pipe associated with
 					 * job's output channel */
 	    char  	op_outBuf[JOB_BUFSIZE + 1];
@@ -278,29 +268,13 @@ extern int	job_pipe[2];	/* token pipe for jobs. */
 extern int	jobTokensRunning; /* tokens currently "out" */
 extern int	not_parallel;	/* => only run one job */
 
-#ifdef REMOTE
-extern char 	*targFmt;   	/* Format string for banner that separates
-				 * output from multiple jobs. Contains a
-				 * single %s where the name of the node being
-				 * made should be put. */
-extern GNode	*lastNode;  	/* Last node for which a banner was printed.
-				 * If Rmt module finds it necessary to print
-				 * a banner, it should set this to the node
-				 * for which the banner was printed */
-extern int  	nJobs;	    	/* Number of jobs running (local and remote) */
-extern int  	nLocal;	    	/* Number of jobs running locally */
-extern Lst  	jobs;	    	/* List of active job descriptors */
-extern Lst  	stoppedJobs;	/* List of jobs that are stopped or didn't
-				 * quite get started */
-#endif
-
 void Shell_Init(void);
 void Job_Touch(GNode *, Boolean);
 Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
 void Job_CatchChildren(Boolean);
 void Job_CatchOutput(void);
 void Job_Make(GNode *);
-void Job_Init(int, int);
+void Job_Init(int);
 Boolean Job_Full(void);
 Boolean Job_Empty(void);
 ReturnStatus Job_ParseShell(char *);
