@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.858 2006/03/07 18:16:46 pooka Exp $
+#	$NetBSD: mi,v 1.859 2006/03/11 15:47:09 kleink Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5004,10 +5004,12 @@
 ./usr/share/man/cat9/audio.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/autoconf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bawrite.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bcdtobin.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bcmp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bcopy.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdwrite.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bintobcd.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/biodone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/biowait.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bitmask_snprintf.0		comp-sys-catman		.cat
@@ -8955,10 +8957,12 @@
 ./usr/share/man/man9/audio.9			comp-sys-man		.man
 ./usr/share/man/man9/autoconf.9			comp-sys-man		.man
 ./usr/share/man/man9/bawrite.9			comp-sys-man		.man
+./usr/share/man/man9/bcdtobin.9			comp-sys-man		.man
 ./usr/share/man/man9/bcmp.9			comp-sys-man		.man
 ./usr/share/man/man9/bcopy.9			comp-sys-man		.man
 ./usr/share/man/man9/bdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/bdwrite.9			comp-sys-man		.man
+./usr/share/man/man9/bintobcd.9			comp-sys-man		.man
 ./usr/share/man/man9/biodone.9			comp-sys-man		.man
 ./usr/share/man/man9/biowait.9			comp-sys-man		.man
 ./usr/share/man/man9/bitmask_snprintf.9		comp-sys-man		.man
