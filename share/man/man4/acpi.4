@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.19 2006/03/09 00:34:07 dogcow Exp $
+.\" $NetBSD: acpi.4,v 1.20 2006/03/11 11:57:18 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 4, 2005
+.Dd March 9, 2006
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -82,21 +82,27 @@ OS-neutral ACPI functionalities such as ACPI BIOS table support,
 an ACPI event framework and an AML (ACPI Machine Language) interpreter.
 .Pp
 Options:
-.Bl -tag -width ACPI_ACTIVATE_DEV -offset 3n
-.It Nm ACPI_DEBUG
+.Bl -tag -width ACPI_DSDT_FILE__filename_XX -offset 3n
+.It Dv ACPI_DEBUG
 Enable ACPI debugging message outputs.
-.It Nm ACPI_ACTIVATE_DEV
+.It Dv ACPI_ACTIVATE_DEV
 Determine if the ACPI driver should attempt to activate
 inactive devices.
 The default is off.
-.It Nm ACPICA_PEDANTIC
+.It Dv ACPICA_PEDANTIC
 Force strict conformance to the ACPI specification in the
 ACPI-CA.
 Do not enable this option unless you are debugging.
-.It Nm ACPI_DSDT_OVERRIDE
-.It Nm ACPI_DSDT_FILE="filename"
-Force a given DSDT instead of the BIOS-supplied version. If
-ACPI_DSDT_FILE is not specified, default to "dsdt.hex"
+.It Dv ACPI_DSDT_OVERRIDE
+Force a given DSDT instead of the BIOS-supplied version.
+Use
+.Dv ACPI_DSDT_FILE
+to specify a DSDT.
+.It Dv ACPI_DSDT_FILE="filename"
+If
+.Dv ACPI_DSDT_FILE
+is not specified, default to
+.Dq dsdt.hex
 in the build directory.
 .El
 .Sh SUPPORTED DEVICES
