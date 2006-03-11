@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsi-target.8,v 1.4 2006/03/05 23:50:46 agc Exp $
+.\" $NetBSD: iscsi-target.8,v 1.5 2006/03/11 11:58:53 wiz Exp $
 .\"
 .\" Copyright © 2006 Alistair Crooks.  All rights reserved.
 .\"
@@ -34,10 +34,7 @@
 .Nd service remote iSCSI requests
 .Sh SYNOPSIS
 .Nm
-.Op Fl D
-.Op Fl V
-.Op Fl 4
-.Op Fl 6
+.Op Fl 46DV
 .Op Fl b Ar block length
 .Op Fl f Ar configuration file
 .Op Fl p Ar port number
@@ -55,6 +52,15 @@ and responds to those requests appropriately.
 Options and operands available for
 .Nm iscsi-target :
 .Bl -tag -width Ds
+.It Fl 4
+.Nm
+will listen for IPv4 connections,
+and respond back using IPv4.
+This is the default address family.
+.It Fl 6
+.Nm
+will listen for IPv6 connections,
+and respond back using IPv6.
 .It Fl b Ar blocksize
 Specify the underlying block size for iSCSI storage which will be served.
 The possible sizes are: 512, 1024, 2048, and 4096 bytes, with the default
@@ -65,19 +71,6 @@ When this option is specified,
 will not detach itself from the controlling tty, and will
 not become a daemon.
 This can be useful for debugging purposes.
-.It Fl V
-.Nm
-will print the utility name and version number, 
-and the address for bug reports, and then exit.
-.It Fl 4
-.Nm
-will listen for IPv4 connections,
-and respond back using IPv4.
-This is the default address family.
-.It Fl 6
-.Nm
-will listen for IPv6 connections,
-and respond back using IPv6.
 .It Fl f Ar configfile
 Use the named file as the configuration file.
 The default file can be found in
@@ -92,6 +85,10 @@ initiators.
 .It Fl t Ar filename
 The target name (as it appears to the iSCSI initiator) can be specified
 using this flag.
+.It Fl V
+.Nm
+will print the utility name and version number, 
+and the address for bug reports, and then exit.
 .It Fl v Ar argument
 The amount of information shown can be varied by using this command.
 Possible values of
