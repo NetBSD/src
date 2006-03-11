@@ -1,4 +1,4 @@
-/* $NetBSD: gmisc.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: gmisc.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
 
 /****************************************************************
 
@@ -68,12 +68,13 @@ rshift(Bigint *b, int k)
 
  int
 #ifdef KR_headers
-trailz(b) Bigint *b;
+trailz(b) CONST Bigint *b;
 #else
-trailz(Bigint *b)
+trailz(CONST Bigint *b)
 #endif
 {
-	ULong L, *x, *xe;
+	ULong L;
+	CONST ULong *x, *xe;
 	int n = 0;
 
 	x = b->x;
