@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.4 2006/03/11 04:12:15 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.5 2006/03/11 04:59:36 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -219,11 +219,18 @@ The following routines can be used to access and modify the group
 list in a
 .Ar kauth_cred_t :
 .Bl -tag -width "123456"
-.It Ft int Fn kauth_cred_groupmember "kauth_cred_t cred" "gid_t gid"
+.It Ft int Fn kauth_cred_ismember_gid "kauth_cred_t cred" "gid_t gid" \
+"int *resultp"
 Checks if the group-id
 .Ar gid
 is a member in the group list of
 .Ar cred .
+.Pp
+If it is,
+.Ar resultp
+will be set to one, otherwise, to zero.
+.Pp
+The return value is an error code, or zero for success.
 .It Ft uint16_t Fn kauth_cred_ngroups "kauth_cred_t cred"
 Return the number of groups in the group list of
 .Ar cred .
