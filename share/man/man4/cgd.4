@@ -1,4 +1,4 @@
-.\" $NetBSD: cgd.4,v 1.7 2005/06/20 13:25:24 peter Exp $
+.\" $NetBSD: cgd.4,v 1.8 2006/03/11 08:04:48 elric Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,11 @@ The key passed to the kernel
 is 192 bits but the parity bits are ignored.
 .It blowfish-cbc
 Blowfish in CBC mode.
-Blowfish uses a 64 bit blocksize and can accept keys of length 128.
+Blowfish uses a 64 bit blocksize and can accept keys between 40 and
+448 bits in multiples of 8.
+It is strongly encouraged that keys be at least 128 bits long.
+There are no performance advantages of using shorter keys.
+The default key length is 128 bits.
 .El
 .Ss IV Methods
 Currently, the only IV Method supported is
