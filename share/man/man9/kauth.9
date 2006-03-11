@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.7 2006/03/11 17:57:17 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.8 2006/03/11 21:45:16 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -127,12 +127,21 @@ credentials.
 .Sh AUTHORIZATION REQUESTS
 .Nm
 provides a single authorization request routine, and a wrapper routine for
-each of the scopes. This wrapper makes it easier to call from various places
-by eliminating the need to specify the scope and/or cast values.
+each of the scopes.
+This wrapper makes it easier to call from various places by eliminating the
+need to specify the scope and/or cast values.
+.Pp
+An authorization request can return one of two possible values.
+Zero indicates the success, the operation is allowed, and one
+.Dq EPERM
+(see
+.Xr errno 2 )
+inidcates failure, the operation is denied.
 .Pp
 .Bl -tag -width "123456"
 .It Ft int Fn kauth_authorize_action "kauth_scope_t scope" \
-"kauth_cred_t cred" "kauth_action_t op" "void *" "void *" "void *" "void *"
+"kauth_cred_t cred" "kauth_action_t op" "void *arg0" "void *arg1" \
+"void *arg2" "void *arg3"
 Pass an authorization request
 .Ar op
 issued by an object with credentials
