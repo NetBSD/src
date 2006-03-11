@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.126 2006/01/25 15:43:01 kleink Exp $
+#	$NetBSD: Makefile,v 1.127 2006/03/11 21:07:18 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -17,62 +17,16 @@
 # The Hesiod functions are always in libc. To choose that getpwent() and friends
 # actually call the Hesiod functions, put -DHESIOD on the CPPFLAGS line below.
 
-USE_SHLIBDIR=	yes
+.include "Makefile.inc"
 
-.include <bsd.own.mk>
-
-WARNS=4
 LIB=		c
-CPPFLAGS+=	-D_LIBC -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT
 CPPFLAGS+=	-I${.CURDIR}/include -I${.CURDIR}
-
-.if (${USE_HESIOD} != "no")
-CPPFLAGS+=	-DHESIOD
-.endif
-
-.if (${USE_INET6} != "no")
-CPPFLAGS+=	-DINET6
-.endif
-
-CPPFLAGS+=	-DNLS
-
-.if (${USE_YP} != "no")
-CPPFLAGS+=	-DYP
-.endif
-
-.if ${MACHINE_ARCH} == "i386"
-# Set lint to exit on warnings
-LINTFLAGS+=	-w
-.endif
-# ignore 'empty translation unit' warnings.
-LINTFLAGS+=	-X 272
-
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH})
-ARCHSUBDIR=	${MACHINE_ARCH}
-.elif exists(${.CURDIR}/arch/${MACHINE_CPU}) 
-ARCHSUBDIR=	${MACHINE_CPU}
-.else
-.BEGIN:
-	@echo no ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
-	@false
-.endif
-
-ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
-AFLAGS+=	-I${ARCHDIR}
-.if defined(DESTDIR)
-AFLAGS+=	-nostdinc -idirafter ${DESTDIR}/usr/include
-.endif
-CLEANFILES+=	tags
-
-# Don't try to lint the C library against itself when creating llib-lc.ln
-LLIBS=
-
-INCSDIR=	/usr/include
 
 .if exists (${ARCHDIR}/Makefile.inc)
 .PATH:	${ARCHDIR}
 .include "${ARCHDIR}/Makefile.inc"
 .endif
+
 .if exists (${ARCHDIR}/genassym.cf)
 DPSRCS+=	assym.h
 CLEANFILES+=	assym.h assym.h.tmp
@@ -85,11 +39,22 @@ assym.h: ${ARCHDIR}/genassym.cf
 	mv -f assym.h.tmp assym.h
 .endif
 
+# The following controls how to build compatibility code for old NetBSD
+# binaries. If BUILDCOLD is yes, then we build a separate library; otherwise
+# we include the code in libc.
+BUILDCOLD?= no
+.if "${BUILDCOLD}" == "yes"
+SUBDIR=compat
+.include <bsd.subdir.mk>
+.else
+COMPATDIR=${.CURDIR}/compat
+.include "${.CURDIR}/compat/Makefile.inc"
+.endif
+
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
 .include "${.CURDIR}/db/Makefile.inc"
 .include "${.CURDIR}/citrus/Makefile.inc"
 .include "${.CURDIR}/compat-43/Makefile.inc"
-.include "${.CURDIR}/compat/Makefile.inc"
 .include "${.CURDIR}/dlfcn/Makefile.inc"
 .include "${.CURDIR}/gdtoa/Makefile.inc"
 .include "${.CURDIR}/gen/Makefile.inc"
@@ -123,43 +88,6 @@ assym.h: ${ARCHDIR}/genassym.cf
 
 NLS=	C.msg Pig.msg ca.msg cs.msg de.msg es.msg fi.msg fr.msg nl.msg \
 	no.msg pl.msg sk.msg sv.msg
-
-LIBKERN=	${NETBSDSRCDIR}/sys/lib/libkern
-
-KSRCS=	bcopy.c bcmp.c bswap16.c bswap32.c bswap64.c bzero.c ffs.c \
-	strcat.c strchr.c strcmp.c strcpy.c strlen.c \
-	strncmp.c strncpy.c strrchr.c \
-	htonl.c htons.c ntohl.c ntohs.c md5c.c \
-	memchr.c memcmp.c memcpy.c memmove.c memset.c \
-	index.c rindex.c
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "sparc64")
-KSRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
-	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
-	subdi3.c  ucmpdi2.c udivdi3.c umoddi3.c xordi3.c
-KINCLUDES+=	quad/quad.h
-.endif
-
-copy-to-libkern:	copy-to-libkern-machind copy-to-libkern-machdep
-
-copy-to-libkern-machind: ${KSRCS}
-	cp -p ${.ALLSRC} ${LIBKERN}
-.if defined(KINCLUDES) && !empty(KINCLUDES)
-	(cd ${.CURDIR} ; cp -p ${KINCLUDES} ${LIBKERN})
-.endif
-
-copy-to-libkern-machdep: ${KMSRCS}
-.if defined(KMSRCS) && !empty(KMSRCS)
-	cp -p ${.ALLSRC} ${LIBKERN}/arch/${ARCHSUBDIR}
-.endif
-.if defined(KMINCLUDES) && !empty(KMINCLUDES)
-	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/arch/${ARCHSUBDIR})
-.endif
-
-rm-from-libkern:
-	for i in ${KSRCS}; do rm -f ${LIBKERN}/$$i; done
-.if defined(KMSRCS) && !empty(KMSRCS)
-	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${ARCHSUBDIR}/$$i; done
-.endif
 
 realall: tags
 tags: ${SRCS}
