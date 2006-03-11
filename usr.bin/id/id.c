@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.25 2005/08/30 16:47:47 drochner Exp $");
+__RCSID("$NetBSD: id.c,v 1.26 2006/03/11 17:16:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,7 @@ group(struct passwd *pw, int nflag)
 	}
 	fmt = nflag ? "%s" : "%u";
 	for (lastid = -1, cnt = 0; cnt < ngroups; ++cnt) {
-		if (lastid == (id = glist[cnt]))
+		if (lastid == (id = glist[cnt]) || (cnt && id == glist[0]))
 			continue;
 		if (nflag) {
 			if ((gr = getgrgid(id)) != NULL)
