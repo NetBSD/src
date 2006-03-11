@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158.4.3 2006/03/10 22:38:09 elad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.158.4.4 2006/03/11 21:22:42 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.3 2006/03/10 22:38:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.4 2006/03/11 21:22:42 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2577,7 +2577,8 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	} else if (kerbflag) {
 		vput(*vpp);
 		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
-	} else if (kauth_cred_geteuid(cred) == 0 || (exflags & MNT_EXPORTANON)) {
+	} else if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) == 0 || (exflags & MNT_EXPORTANON)) {
 		int do_ngroups;
 
 		kauth_cred_seteuid(cred, kauth_cred_geteuid(credanon));
