@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.23 2005/04/15 22:39:11 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2006/03/11 19:34:40 christos Exp $
 
 # objects built from assembler sources (need lint stubs)
 ASSRCS+=alloca.S fabs.S modf.S
 
-ASSRCS+=__setjmp14.S
 ASSRCS+=_setjmp.S
-ASSRCS+=__sigsetjmp14.S
 
 ASSRCS+=resumecontext.S swapcontext.S
 
