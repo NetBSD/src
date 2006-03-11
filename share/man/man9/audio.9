@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.35 2006/03/07 15:18:11 jmcneill Exp $
+.\"	$NetBSD: audio.9,v 1.36 2006/03/11 11:52:17 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd March 7, 2006
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -176,9 +176,9 @@ structure and return 0 or, if there is no encoding with the
 given number, return EINVAL.
 .It Dv int set_params(void *hdl, int setmode, int usemode,
 .Dv "audio_params_t *play, audio_params_t *rec,"
-.br
+.Pp
 .Dv "stream_filter_list_t *pfil, stream_filter_list_t *rfil)"
-.br
+.Pp
 Called to set the audio encoding mode.
 .Va setmode
 is a combination of the
@@ -291,7 +291,7 @@ after the call to
 Return 0 on success, otherwise an error code.
 .It Dv int round_blocksize(void *hdl, int bs, int mode,
 .Dv "const audio_params_t *param)"
-.br
+.Pp
 optional, is called with the block size,
 .Va bs ,
 that has been computed by the upper layer,
@@ -332,7 +332,7 @@ It can be used to initialize looping DMA for hardware that needs that.
 Return 0 on success, otherwise an error code.
 .It Dv int start_output(void *hdl, void *block, int blksize,
 .Dv "void (*intr)(void*), void *intrarg)"
-.br
+.Pp
 is called to start the transfer of
 .Va blksize
 bytes from
@@ -351,7 +351,7 @@ will normally initiate another call to
 Return 0 on success, otherwise an error code.
 .It Dv int start_input(void *hdl, void *block, int blksize,
 .Dv "void (*intr)(void*), void *intrarg)"
-.br
+.Pp
 is called to start the transfer of
 .Va blksize
 bytes to
@@ -419,7 +419,7 @@ It should fill the
 struct.
 Return 0 on success, otherwise an error code.
 .It Dv "void *allocm(void *hdl, int direction, size_t size, struct malloc_type *type, int flags)"
-.br
+.Pp
 optional, is called to allocate the device buffers.
 If not present
 .Xr malloc 9
@@ -442,7 +442,7 @@ The upper layer supplies the suggested size in
 which the hardware driver can then change if needed.
 E.g., DMA on the ISA bus cannot exceed 65536 bytes.
 .It Dv "paddr_t mappage(void *hdl, void *addr, off_t offs, int prot)"
-.br
+.Pp
 optional, is called for
 .Xr mmap 2 .
 Should return the map value for the page at offset
@@ -458,9 +458,9 @@ Should return the device properties; i.e., a combination of
 AUDIO_PROP_xxx.
 .It Dv int trigger_output(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
-.br
+.Pp
 .Dv "const audio_params_t *param)"
-.br
+.Pp
 optional, is called to start the transfer of data from the circular buffer
 delimited by
 .Va start
@@ -482,9 +482,9 @@ Once started the transfer may be stopped using
 Return 0 on success, otherwise an error code.
 .It Dv int trigger_input(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
-.br
+.Pp
 .Dv "const audio_params_t *param)"
-.br
+.Pp
 optional, is called to start the transfer of data from the audio hardware,
 parameterized as in
 .Va param ,
@@ -505,20 +505,23 @@ Once started the transfer may be stopped using
 .Va halt_input .
 Return 0 on success, otherwise an error code.
 .It Dv int dev_ioctl(void *hdl, u_long cmd, caddr_t addr,
-.br
+.Pp
 .Dv "int flag, struct lwp *l)"
-.br
+.Pp
 optional, is called when an
 .Xr ioctl 2
 is not recognized by the generic audio driver.
 Return 0 on success, otherwise an error code.
 .It Dv int powerstate(void *hdl, int state)
-.br
+.Pp
 optional, is called on the first open and last close of the audio
 device.
 .Va state
-may be one of AUDIOPOWER_ON or AUDIOPOWER_OFF. Returns 0 on success,
-otherwise an error code.
+may be one of
+.Dv AUDIOPOWER_ON
+or
+.Dv AUDIOPOWER_OFF .
+Returns 0 on success, otherwise an error code.
 .El
 .Pp
 The
