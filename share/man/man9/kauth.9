@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.5 2006/03/11 04:59:36 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.6 2006/03/11 17:45:12 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -260,7 +260,7 @@ Return the reference count for
 .Ar cred .
 .El
 .Sh CREDENTIAL INHERITANCE REFERENCE COUNTING
-.Nm kauth
+.Nm
 provides a KPI for handling a
 .Ft kauth_cred_t
 in shared credentials situations and credential inheritance.
@@ -432,6 +432,67 @@ will be done.
 .It Ft kauth_cred_t Fn kauth_cred_get "void"
 Return the credentials associated with the current process.
 .El
+.Sh SCOPE MANAGEMENT
+.Nm
+provides routines to manage the creation and deletion of scopes on the
+system.
+.Pp
+Note that the built-in scopes, the
+.Dq generic
+scope and the
+.Dq process
+scope, can't be deleted.
+.Bl -tag -width "123456"
+.It Ft kauth_scope_t Fn kauth_register_scope "const char *id" \
+"kauth_scope_callback_t cb" "void *cookie"
+Register a new scope on the system.
+.Ar id
+is the name of the scope, usually in reverse DNS-like notation.
+For example,
+.Dq org.netbsd.kauth.myscope .
+.Ar cb
+is the default listener, to which authorization requests for this scope
+will be dispatched to.
+.Ar cookie
+is an optional user-data that will be passed to all listeners
+during authorization on the scope.
+.It Ft void Fn kauth_deregister_scope "kauth_scope_t scope"
+Deregister
+.Ar scope
+from the scopes available on the system.
+.El
+.Sh LISTENER MANAGEMENT
+Listeners in
+.Nm
+are authorization callbacks that are called during an authorization
+request in the scope which they belong to.
+.Pp
+When an authorization request is made, all listeners associated with
+a scope are called to allow, deny, or defer the request.
+.Pp
+It is enough for one listener to deny the request in order for the
+request to be denied; but all listeners are called during an authorization
+process none-the-less.
+All listeners are required to allow the request for it to be granted,
+and in a case where all listeners defer the request -- leaving the decision
+for other listeners -- the request is denied.
+.Pp
+The following KPI is provided for the management of listeners:
+.Bl -tag -width "123456"
+.It Ft kauth_listener_t Fn kauth_listen_scope "const char *id" \
+"kauth_scope_callback_t cb" "void *cookie"
+Create a new listener on the scope with the id
+.Ar id ,
+setting the default listener to
+.Ar cb .
+.Ar cookie
+is an optional user-data that will be passed to the listener when called
+during an authorization request.
+.It Ft void Fn kauth_unlisten_scope "kauth_listener_t listener"
+Remove
+.Ar listener
+from the scope which it belongs to.
+.El
 .\".Sh EXAMPLES
 .\" .Sh SEE ALSO
 .Sh HISTORY
@@ -452,8 +513,11 @@ about the Darwin implementations.
 .Sh CAVEATS
 The KPI still requires cleanup.
 .Pp
-Need to document scope and listener management, mention reference counting
-and garbage collection that should be done manually for listeners.
+Need to document what happens to running listeners when a scope is being
+deregistered.
+.Pp
+Need to document listener reference counting and garbage collection that
+should be done manually.
 .Pp
 Need to document locking convention.
 .Pp
