@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.14 2006/03/10 22:50:05 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.15 2006/03/11 03:21:16 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -337,16 +337,6 @@ kauth_cred_group(kauth_cred_t cred, uint16_t idx)
 	KASSERT(idx < cred->cr_ngroups);
 
 	return (cred->cr_groups[idx]);
-}
-
-/* XXX: Is this needed? [setngroups] */
-void
-kauth_cred_setngroups(kauth_cred_t cred, uint16_t ngroups)
-{
-	KASSERT(cred != NULL);
-	KASSERT(ngroups < NGROUPS);
-
-	cred->cr_ngroups = ngroups;
 }
 
 /* Sort len groups in grbuf. */
