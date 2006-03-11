@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.57 2006/03/08 08:26:51 dyoung Exp $	*/
+/*	$NetBSD: libkern.h,v 1.58 2006/03/11 15:40:07 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -290,6 +290,10 @@ int	 ffs __P((int));
 
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
+unsigned int
+	bcdtobin __P((unsigned int));
+unsigned int
+	bintobcd __P((unsigned int));
 u_int32_t
 	inet_addr __P((const char *));
 struct in_addr;
