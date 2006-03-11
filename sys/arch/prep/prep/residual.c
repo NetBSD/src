@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.8 2006/03/09 20:17:28 garbled Exp $     */
+/*      $NetBSD: residual.c,v 1.9 2006/03/11 20:12:49 kleink Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.8 2006/03/09 20:17:28 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.9 2006/03/11 20:12:49 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ print_residual_device_info(void)
 	int ncpu;
 	int first;
 	int i, j;
-	char deviceid[9], *d;
+	char deviceid[9];
 
 	if (!dump_residual_data)
 		return;
@@ -428,8 +428,7 @@ print_residual_device_info(void)
 			}
 		}
 		printf("\n");
-		d = deviceid;
-		pnp_devid_to_string(&d, id->DevId);
+		pnp_devid_to_string(id->DevId, deviceid);
 		printf("    DevId = 0x%08lx (%s)\n", id->DevId, deviceid);
 		printf("    SerialNum = 0x%08lx\n", be32toh(id->SerialNum));
 		l = be32toh(id->Flags);
