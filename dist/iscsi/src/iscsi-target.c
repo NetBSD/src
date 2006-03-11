@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.6 2006/03/05 23:50:46 agc Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.7 2006/03/11 11:58:22 wiz Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -85,15 +85,8 @@ main(int argc, char **argv)
 
 	cf = _PATH_ISCSI_TARGETS;
 
-	while ((i = getopt(argc, argv, "DV46b:f:p:t:v:")) != -1) {
+	while ((i = getopt(argc, argv, "46b:Df:p:t:Vv:")) != -1) {
 		switch (i) {
-		case 'D':
-			detach_me_harder = 0;
-			break;
-		case 'V':
-			(void) printf("\"%s\" %s\nPlease send all bug reports to %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
-			exit(EXIT_SUCCESS);
-			/* NOTREACHED */
 		case '4':
 			g.address_family = ISCSI_IPv4;
 			break;
@@ -102,6 +95,9 @@ main(int argc, char **argv)
 			break;
 		case 'b':
 			device_set_var("blocklen", optarg);
+			break;
+		case 'D':
+			detach_me_harder = 0;
 			break;
 		case 'f':
 			cf = optarg;
@@ -112,6 +108,10 @@ main(int argc, char **argv)
 		case 't':
 			(void) strlcpy(TargetName, optarg, sizeof(TargetName));
 			break;
+		case 'V':
+			(void) printf("\"%s\" %s\nPlease send all bug reports to %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
+			exit(EXIT_SUCCESS);
+			/* NOTREACHED */
 		case 'v':
 			if (strcmp(optarg, "net") == 0) {
 				set_debug("net");
