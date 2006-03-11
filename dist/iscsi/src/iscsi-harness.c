@@ -152,7 +152,7 @@ main(int argc, char **argv)
 		tgthi = target + 1;
 	}
 	if (argc == 1) {
-		(void) fprintf(stderr, "usage: %s [-h hostname] [-l lun] [-n iterations] [-t target]\n", *argv);
+		(void) fprintf(stderr, "usage: %s [-V] [-a auth-type] [-d digest-type] [-h hostname] [-l lun] [-n iterations] [-t target] [-u user]\n", *argv);
 		exit(EXIT_FAILURE);
 	}
 	for (j = 0; j < iterations; j++) {
