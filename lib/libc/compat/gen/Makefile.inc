@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2005/09/13 01:44:09 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2006/03/11 21:07:18 christos Exp $
 
-.PATH: ${.CURDIR}/compat/gen
+.PATH: ${COMPATDIR}/gen
 SRCS+=compat_errlist.c compat_fts.c compat___fts13.c compat_getmntinfo.c \
     compat_glob.c compat_opendir.c compat_readdir.c compat_scandir.c \
     compat_siglist.c compat_signame.c compat_sigsetops.c compat_times.c \
