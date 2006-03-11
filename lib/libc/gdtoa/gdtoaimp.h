@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
 
 /****************************************************************
 
@@ -577,9 +577,9 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern char *dtoa ANSI((double d, int mode, int ndigits,
 			int *decpt, int *sign, char **rve));
  extern char *g__fmt ANSI((char*, char*, char*, int, ULong));
- extern int gethex ANSI((CONST char**, FPI*, Long*, Bigint**, int));
+ extern int gethex ANSI((CONST char**, CONST FPI*, Long*, Bigint**, int));
  extern void hexdig_init_D2A(Void);
- extern int hexnan ANSI((CONST char**, FPI*, ULong*));
+ extern int hexnan ANSI((CONST char**, CONST FPI*, ULong*));
  extern int hi0bits_D2A ANSI((ULong));
  extern Bigint *i2b ANSI((int));
  extern Bigint *increment ANSI((Bigint*));
@@ -600,7 +600,7 @@ extern void memcpy_D2A ANSI((void*, const void*, size_t));
  extern int strtoIg ANSI((CONST char*, char**, FPI*, Long*, Bigint**, int*));
  extern double strtod ANSI((const char *s00, char **se));
  extern Bigint *sum ANSI((Bigint*, Bigint*));
- extern int trailz ANSI((Bigint*));
+ extern int trailz ANSI((CONST Bigint*));
  extern double ulp ANSI((double));
 
 #ifdef __cplusplus

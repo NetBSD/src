@@ -1,4 +1,4 @@
-/* $NetBSD: strtodg.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: strtodg.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
 
 /****************************************************************
 
@@ -126,12 +126,12 @@ decrement(Bigint *b)
 
  static int
 #ifdef KR_headers
-all_on(b, n) Bigint *b; int n;
+all_on(b, n) CONST Bigint *b; int n;
 #else
-all_on(Bigint *b, int n)
+all_on(CONST Bigint *b, int n)
 #endif
 {
-	ULong *x, *xe;
+	CONST ULong *x, *xe;
 
 	x = b->x;
 	xe = x + ((unsigned int)n >> kshift);
@@ -175,9 +175,9 @@ set_ones(Bigint *b, int n)
 rvOK
 #ifdef KR_headers
  (d, fpi, expt, bits, exact, rd, irv)
- double d; FPI *fpi; Long *expt; ULong *bits; int exact, rd, *irv;
+ double d; CONST FPI *fpi; Long *expt; ULong *bits; int exact, rd, *irv;
 #else
- (double d, FPI *fpi, Long *expt, ULong *bits, int exact, int rd, int *irv)
+ (double d, CONST FPI *fpi, Long *expt, ULong *bits, int exact, int rd, int *irv)
 #endif
 {
 	Bigint *b;
@@ -322,9 +322,9 @@ mantbits(double d)
 strtodg
 #ifdef KR_headers
 	(s00, se, fpi, expt, bits)
-	CONST char *s00; char **se; FPI *fpi; Long *expt; ULong *bits;
+	CONST char *s00; char **se; CONST FPI *fpi; Long *expt; ULong *bits;
 #else
-	(CONST char *s00, char **se, FPI *fpi, Long *expt, ULong *bits)
+	(CONST char *s00, char **se, CONST FPI *fpi, Long *expt, ULong *bits)
 #endif
 {
 	int abe, abits, asub;

@@ -1,4 +1,4 @@
-/* $NetBSD: strtord.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: strtord.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
 
 /****************************************************************
 
@@ -79,8 +79,9 @@ strtord(s, sp, rounding, d) CONST char *s; char **sp; int rounding; double *d;
 strtord(CONST char *s, char **sp, int rounding, double *d)
 #endif
 {
-	static FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
-	FPI *fpi, fpi1;
+	static CONST FPI fpi0 = { 53, 1-1023-53+1, 2046-1023-53+1, 1, SI };
+	CONST FPI *fpi;
+	FPI fpi1;
 	ULong bits[2];
 	Long expt;
 	int k;

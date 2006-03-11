@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.h,v 1.3 2006/01/26 11:17:38 kleink Exp $ */
+/* $NetBSD: gdtoa.h,v 1.4 2006/03/11 18:38:14 kleink Exp $ */
 
 /****************************************************************
 
@@ -116,7 +116,7 @@ extern char* gdtoa ANSI((FPI *fpi, int be, ULong *bits, int *kindp,
 extern void freedtoa ANSI((char*));
 extern float  strtof ANSI((CONST char *, char **));
 extern double strtod ANSI((CONST char *, char **));
-extern int strtodg ANSI((CONST char*, char**, FPI*, Long*, ULong*));
+extern int strtodg ANSI((CONST char*, char**, CONST FPI*, Long*, ULong*));
 
 extern char*	g_ddfmt  ANSI((char*, double*, int, unsigned));
 extern char*	g_dfmt   ANSI((char*, double*, int, unsigned));

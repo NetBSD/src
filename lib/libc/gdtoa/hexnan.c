@@ -1,4 +1,4 @@
-/* $NetBSD: hexnan.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: hexnan.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
 
 /****************************************************************
 
@@ -54,9 +54,9 @@ L_shift(ULong *x, ULong *x1, int i)
  int
 #ifdef KR_headers
 hexnan(sp, fpi, x0)
-	CONST char **sp; FPI *fpi; ULong *x0;
+	CONST char **sp; CONST FPI *fpi; ULong *x0;
 #else
-hexnan( CONST char **sp, FPI *fpi, ULong *x0)
+hexnan( CONST char **sp, CONST FPI *fpi, ULong *x0)
 #endif
 {
 	ULong c, h, *x, *x1, *xe;
