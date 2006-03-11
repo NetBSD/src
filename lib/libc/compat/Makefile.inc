@@ -1,17 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.1 2005/09/13 01:44:08 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2006/03/11 21:07:18 christos Exp $
 
-# compat sources
+.include "${COMPATDIR}/db/Makefile.inc"
+.include "${COMPATDIR}/gen/Makefile.inc"
+.include "${COMPATDIR}/stdlib/Makefile.inc"
+.include "${COMPATDIR}/sys/Makefile.inc"
 
-CPPFLAGS+=-I${NETBSDSRCDIR}/sys
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys
 
-.include "${.CURDIR}/compat/db/Makefile.inc"
-.include "${.CURDIR}/compat/gen/Makefile.inc"
-.include "${.CURDIR}/compat/stdlib/Makefile.inc"
-.include "${.CURDIR}/compat/sys/Makefile.inc"
-
-# XXX: Conditional until all archs are converted.
-.if exists(${.CURDIR}/compat/arch/${ARCHSUBDIR}/Makefile.inc)
-COMPATARCHDIR=${.CURDIR}/compat/arch/${ARCHSUBDIR}
+COMPATARCHDIR=${COMPATDIR}/arch/${ARCHSUBDIR}
 .PATH: ${COMPATARCHDIR}/gen ${COMPATARCHDIR}/sys
-.include "${.CURDIR}/compat/arch/${ARCHSUBDIR}/Makefile.inc"
-.endif
