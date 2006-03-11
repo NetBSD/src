@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.64.10.2 2006/03/10 14:21:11 elad Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.64.10.3 2006/03/11 04:55:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64.10.2 2006/03/10 14:21:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.64.10.3 2006/03/11 04:55:29 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,7 +442,7 @@ static int
 ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
 {
 	struct inode *ip = VTOI(vp);
-	int error;
+	int error, ismember;
 
 	if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
 		(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
@@ -451,7 +451,10 @@ ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct proc *p)
 	if (kauth_cred_geteuid(cred)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return (EFTYPE);
-		if (!kauth_cred_groupmember(cred, ip->i_e2fs_gid) && (mode & ISGID))
+		error = kauth_cred_ismember_gid(cred, ip->i_e2fs_gid, &ismember);
+		if (error)
+			return (error);
+		if (!ismember && (mode & ISGID))
 			return (EPERM);
 	}
 	ip->i_e2fs_mode &= ~ALLPERMS;
@@ -471,7 +474,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	struct inode *ip = VTOI(vp);
 	uid_t ouid;
 	gid_t ogid;
-	int error = 0;
+	int error = 0, ismember;
 
 	if (uid == (uid_t)VNOVAL)
 		uid = ip->i_e2fs_uid;
@@ -482,9 +485,12 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	 * of the file, or are not a member of the target group,
 	 * the caller must be superuser or the call fails.
 	 */
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error)
+		return (error);
 	if ((kauth_cred_geteuid(cred) != ip->i_e2fs_uid || uid != ip->i_e2fs_uid ||
 		(gid != ip->i_e2fs_gid &&
-		 !(kauth_cred_getegid(cred) == gid || kauth_cred_groupmember(cred, (gid_t)gid)))) &&
+		 !(kauth_cred_getegid(cred) == gid || ismember))) &&
 		(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					   &p->p_acflag)))
 		return (error);
@@ -1404,7 +1410,7 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 {
 	struct inode *ip, *pdir;
 	struct vnode *tvp;
-	int error;
+	int error, ismember;
 
 	pdir = VTOI(dvp);
 #ifdef DIAGNOSTIC
@@ -1427,8 +1433,10 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->i_e2fs_mode = mode;
 	tvp->v_type = IFTOVT(mode);	/* Rest init'd in getnewvnode(). */
 	ip->i_e2fs_nlink = 1;
-	if ((ip->i_e2fs_mode & ISGID) &&
-		!kauth_cred_groupmember(cnp->cn_cred, ip->i_e2fs_gid) &&
+	error = kauth_cred_ismember_gid(cnp->cn_cred, ip->i_e2fs_gid, &ismember);
+	if (error)
+		goto bad;
+	if ((ip->i_e2fs_mode & ISGID) && !ismember &&
 	    kauth_authorize_generic(cnp->cn_cred, KAUTH_GENERIC_ISSUSER, NULL))
 		ip->i_e2fs_mode &= ~ISGID;
 

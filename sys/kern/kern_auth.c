@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.15 2006/03/11 03:21:16 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.16 2006/03/11 04:55:28 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -304,16 +304,19 @@ kauth_cred_setsvgid(kauth_cred_t cred, gid_t gid)
 
 /* Checks if gid is a member of the groups in cred. */
 int
-kauth_cred_groupmember(kauth_cred_t cred, gid_t gid)
+kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 {
 	int i;
 
 	KASSERT(cred != NULL);
 	KASSERT(gid >= 0 && gid <= GID_MAX);
+	KASSERT(resultp != NULL);
+
+	*resultp = 0;
 
 	for (i = 0; i < cred->cr_ngroups; i++) {
 		if (cred->cr_groups[i] == gid)
-			return (1);
+			*resultp = 1;
 	}
 
 	return (0);
@@ -362,6 +365,8 @@ kauth_cred_sortgroups(gid_t *grbuf, size_t len)
 int
 kauth_cred_addgroup(kauth_cred_t cred, gid_t gid)
 {
+	int error, ismember;
+
 	KASSERT(cred != NULL);
 	KASSERT(gid >= 0 && gid <= GID_MAX);
 
@@ -373,7 +378,13 @@ kauth_cred_addgroup(kauth_cred_t cred, gid_t gid)
 		return (E2BIG);
 	}
 
-	if (kauth_cred_groupmember(cred, gid)) {
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error) {
+		simple_unlock(&cred->cr_lock);
+		return (error);
+	}
+
+	if (ismember) {
 		simple_unlock(&cred->cr_lock);
 		return (0);
 	}
@@ -391,12 +402,20 @@ kauth_cred_addgroup(kauth_cred_t cred, gid_t gid)
 int
 kauth_cred_delgroup(kauth_cred_t cred, gid_t gid)
 {
+	int error, ismember;
+
 	KASSERT(cred != NULL);
 	KASSERT(gid >= 0 && gid <= GID_MAX);
 
 	simple_lock(&cred->cr_lock);
 
-	if (!kauth_cred_groupmember(cred, gid)) {
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error) {
+		simple_unlock(&cred->cr_lock);
+		return (error);
+	}
+
+	if (!ismember) {
 		simple_unlock(&cred->cr_lock);
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.19.10.2 2006/03/08 19:08:33 elad Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.19.10.3 2006/03/11 04:55:28 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.19.10.2 2006/03/08 19:08:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.19.10.3 2006/03/11 04:55:28 elad Exp $");
 
 /*
  * Connection engine.
@@ -387,7 +387,7 @@ smb_vc_create(struct smb_vcspec *vcspec,
 	gid_t gid = vcspec->group;
 	uid_t realuid;
 	char *domain = vcspec->domain;
-	int error, isroot;
+	int error, isroot, ismember;
 
 	realuid = kauth_cred_geteuid(cred);
 	isroot = (smb_suser(cred) == 0);
@@ -396,8 +396,10 @@ smb_vc_create(struct smb_vcspec *vcspec,
 	 */
 	if (uid != SMBM_ANY_OWNER && uid != realuid && !isroot)
 		return EPERM;
-	if (gid != SMBM_ANY_GROUP && !kauth_cred_groupmember(cred, gid) &&
-	    !isroot)
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error)
+		return (error);
+	if (gid != SMBM_ANY_GROUP && !ismember && !isroot)
 		return EPERM;
 
 	vcp = smb_zmalloc(sizeof(*vcp), M_SMBCONN, M_WAITOK);
@@ -547,11 +549,15 @@ int
 smb_vc_access(struct smb_vc *vcp, struct smb_cred *scred, mode_t mode)
 {
 	kauth_cred_t cred = scred->scr_cred;
+	int error, ismember;
 
 	if (smb_suser(cred) == 0 || kauth_cred_geteuid(cred) == vcp->vc_uid)
 		return 0;
 	mode >>= 3;
-	if (!kauth_cred_groupmember(cred, vcp->vc_grp))
+	error = kauth_cred_ismember_gid(cred, vcp->vc_grp, &ismember);
+	if (error)
+		return (error);
+	if (!ismember)
 		mode >>= 3;
 	return (vcp->vc_mode & mode) == mode ? 0 : EACCES;
 }
@@ -693,7 +699,7 @@ smb_share_create(struct smb_vc *vcp, struct smb_sharespec *shspec,
 	uid_t realuid;
 	uid_t uid = shspec->owner;
 	gid_t gid = shspec->group;
-	int error, isroot;
+	int error, isroot, ismember;
 
 	realuid = kauth_cred_geteuid(cred);
 	isroot = smb_suser(cred) == 0;
@@ -702,8 +708,10 @@ smb_share_create(struct smb_vc *vcp, struct smb_sharespec *shspec,
 	 */
 	if (uid != SMBM_ANY_OWNER && uid != realuid && !isroot)
 		return EPERM;
-	if (gid != SMBM_ANY_GROUP && !kauth_cred_groupmember(cred, gid) &&
-	    !isroot)
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error)
+		return (error);
+	if (gid != SMBM_ANY_GROUP && !ismember && !isroot)
 		return EPERM;
 	error = smb_vc_lookupshare(vcp, shspec, scred, &ssp);
 	if (!error) {
@@ -792,11 +800,15 @@ int
 smb_share_access(struct smb_share *ssp, struct smb_cred *scred, mode_t mode)
 {
 	kauth_cred_t cred = scred->scr_cred;
+	int error, ismember;
 
 	if (smb_suser(cred) == 0 || kauth_cred_geteuid(cred) == ssp->ss_uid)
 		return 0;
 	mode >>= 3;
-	if (!kauth_cred_groupmember(cred, ssp->ss_grp))
+	error = kauth_cred_ismember_gid(cred, ssp->ss_grp, &ismember);
+	if (error)
+		return (error);
+	if (!ismember)
 		mode >>= 3;
 	return (ssp->ss_mode & mode) == mode ? 0 : EACCES;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.1.2.10 2006/03/11 03:21:16 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.1.2.11 2006/03/11 04:55:29 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -114,7 +114,7 @@ uid_t kauth_cred_getsvuid(kauth_cred_t);
 gid_t kauth_cred_getgid(kauth_cred_t);
 gid_t kauth_cred_getegid(kauth_cred_t);
 gid_t kauth_cred_getsvgid(kauth_cred_t);
-int kauth_cred_groupmember(kauth_cred_t, gid_t);
+int kauth_cred_ismember_gid(kauth_cred_t, gid_t, int *);
 uint16_t kauth_cred_ngroups(kauth_cred_t);
 gid_t kauth_cred_group(kauth_cred_t, uint16_t);
 
