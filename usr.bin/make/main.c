@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.120 2006/02/26 22:45:46 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.121 2006/03/11 17:18:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.120 2006/02/26 22:45:46 apb Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.121 2006/03/11 17:18:00 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.120 2006/02/26 22:45:46 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.121 2006/03/11 17:18:00 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -156,7 +156,6 @@ static Lst		makefiles;	/* ordered list of makefiles to read */
 static Boolean		printVars;	/* print value of one or more vars */
 static Lst		variables;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
-static int		maxLocal;	/* -L argument */
 Boolean			compatMake;	/* -B argument */
 int			debug;		/* -d argument */
 Boolean			noExecute;	/* -n flag */
@@ -213,11 +212,7 @@ MainParseArgs(int argc, char **argv)
 	Boolean inOption, dashDash = FALSE;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
-#ifdef REMOTE
-# define OPTFLAGS "BD:I:J:L:NPST:V:WXd:ef:ij:km:nqrst"
-#else
-# define OPTFLAGS "BD:I:J:NPST:V:WXd:ef:ij:km:nqrst"
-#endif
+#define OPTFLAGS "BD:I:J:NPST:V:WXd:ef:ij:km:nqrst"
 #undef optarg
 #define optarg argvalue	
 /* Can't actually use getopt(3) because rescanning is not portable */
@@ -297,7 +292,7 @@ rearg:
 			    (fcntl(job_pipe[1], F_GETFD, 0) < 0)) {
 #if 0
 			    (void)fprintf(stderr,
-				"%s: warning -- J descriptors were closed!\n",
+				"%s: ###### warning -- J descriptors were closed!\n",
 				progname);
 			    exit(2);
 #endif
@@ -310,18 +305,6 @@ rearg:
 			    jobServer = TRUE;
 			}
 			break;
-#ifdef REMOTE
-		case 'L':
-			maxLocal = strtol(optarg, &p, 0);
-			if (*p != '\0' || maxLocal < 1) {
-			    (void)fprintf(stderr, "%s: illegal argument to -L -- must be positive integer!\n",
-				progname);
-			    exit(1);
-			}
-			Var_Append(MAKEFLAGS, "-L", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
-			break;
-#endif
 		case 'N':
 			noExecute = TRUE;
 			noRecursiveExecute = TRUE;
@@ -443,9 +426,6 @@ rearg:
 				    progname);
 				exit(1);
 			}
-#ifndef REMOTE
-			maxLocal = maxJobs;
-#endif
 			Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -795,12 +775,7 @@ main(int argc, char **argv)
 	debug = 0;			/* No debug verbosity, please. */
 	jobsRunning = FALSE;
 
-	maxLocal = DEFMAXLOCAL;		/* Set default local max concurrency */
-#ifdef REMOTE
-	maxJobs = DEFMAXJOBS;		/* Set default max concurrency */
-#else
-	maxJobs = maxLocal;
-#endif
+	maxJobs = DEFMAXLOCAL;		/* Set default local max concurrency */
 	compatMake = FALSE;		/* No compat mode */
 
 
@@ -946,8 +921,8 @@ main(int argc, char **argv)
 	if (!jobServer && !compatMake)
 	    Job_ServerStart(maxJobs);
 	if (DEBUG(JOB))
-	    printf("job_pipe %d %d, maxjobs %d maxlocal %d compat %d\n", job_pipe[0], job_pipe[1], maxJobs,
-	           maxLocal, compatMake);
+	    printf("job_pipe %d %d, maxjobs %d compat %d\n",
+		    job_pipe[0], job_pipe[1], maxJobs, compatMake);
 
 	Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 
@@ -1041,9 +1016,7 @@ main(int argc, char **argv)
 		 * being executed should it exist).
 		 */
 		if (!queryFlag) {
-			if (maxLocal == -1)
-				maxLocal = maxJobs;
-			Job_Init(maxJobs, maxLocal);
+			Job_Init(maxJobs);
 			jobsRunning = TRUE;
 		}
 
