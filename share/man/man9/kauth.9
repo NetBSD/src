@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.6 2006/03/11 17:45:12 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.7 2006/03/11 17:57:17 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -454,7 +454,7 @@ For example,
 is the default listener, to which authorization requests for this scope
 will be dispatched to.
 .Ar cookie
-is an optional user-data that will be passed to all listeners
+is optional user-data that will be passed to all listeners
 during authorization on the scope.
 .It Ft void Fn kauth_deregister_scope "kauth_scope_t scope"
 Deregister
@@ -485,9 +485,9 @@ Create a new listener on the scope with the id
 .Ar id ,
 setting the default listener to
 .Ar cb .
-.Ar cookie
-is an optional user-data that will be passed to the listener when called
-during an authorization request.
+.\".Ar cookie
+.\"is optional user-data that will be passed to the listener when called
+.\"during an authorization request.
 .It Ft void Fn kauth_unlisten_scope "kauth_listener_t listener"
 Remove
 .Ar listener
