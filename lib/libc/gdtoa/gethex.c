@@ -1,4 +1,4 @@
-/* $NetBSD: gethex.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: gethex.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
 
 /****************************************************************
 
@@ -40,9 +40,9 @@ THIS SOFTWARE.
  int
 #ifdef KR_headers
 gethex(sp, fpi, expt, bp, sign)
-	CONST char **sp; FPI *fpi; Long *expt; Bigint **bp; int sign;
+	CONST char **sp; CONST FPI *fpi; Long *expt; Bigint **bp; int sign;
 #else
-gethex( CONST char **sp, FPI *fpi, Long *expt, Bigint **bp, int sign)
+gethex( CONST char **sp, CONST FPI *fpi, Long *expt, Bigint **bp, int sign)
 #endif
 {
 	Bigint *b;
