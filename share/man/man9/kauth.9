@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.8 2006/03/11 21:45:16 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.9 2006/03/11 23:36:56 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -222,7 +222,9 @@ Sets the saved group-id in
 .Ar cred
 to
 .Ar gid .
-.Pp
+.It Ft uint16_t Fn kauth_cred_getrefcnt "kauth_cred_t cred"
+Return the reference count for
+.Ar cred .
 .El
 The following routines can be used to access and modify the group
 list in a
@@ -263,10 +265,6 @@ from the group list of
 .Ar cred .
 .Pp
 The group list will be sorted after the removal.
-.El
-.It Ft uint16_t Fn kauth_cred_getrefcnt "kauth_cred_t cred"
-Return the reference count for
-.Ar cred .
 .El
 .Sh CREDENTIAL INHERITANCE REFERENCE COUNTING
 .Nm
