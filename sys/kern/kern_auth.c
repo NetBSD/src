@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.16 2006/03/11 04:55:28 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.17 2006/03/11 05:08:42 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -515,10 +515,19 @@ kauth_cred_compare(kauth_cred_t cred, const struct uucred *uuc)
 
 	if (cred->cr_euid == uuc->cr_uid &&
 	    cred->cr_egid == uuc->cr_gid &&
-	    cred->cr_ngroups == uuc->cr_ngroups &&
-	    !memcmp(cred->cr_groups, uuc->cr_groups,
-		    cred->cr_ngroups * sizeof(cred->cr_groups[0])))
+	    cred->cr_ngroups == uuc->cr_ngroups) {
+		/* Check if all groups from uuc appear in cred. */
+		for (i = 0; i < uuc->cr_ngroups; i++) {
+			int i, error, ismember;
+
+			error = kauth_cred_ismember_gid(cred,
+			    uuc->cr_ngroups[i], &ismember);
+			if (error || !ismember)
+				return (0);
+		}
+
 		return (1);
+	}
 
 	return (0);
 }
