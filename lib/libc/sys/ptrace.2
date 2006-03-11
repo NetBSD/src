@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.27 2006/03/06 15:47:42 christos Exp $
+.\"	$NetBSD: ptrace.2,v 1.28 2006/03/11 12:03:03 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd March 6, 2006
@@ -218,10 +218,10 @@ field specifies which type of I/O operation to perform.
 Possible
 values are:
 .Bl -tag -width 18n
-.It PIOD_READ_D
-.It PIOD_WRITE_D
-.It PIOD_READ_I
-.It PIOD_WRITE_I
+.It Dv PIOD_READ_D
+.It Dv PIOD_WRITE_D
+.It Dv PIOD_READ_I
+.It Dv PIOD_WRITE_I
 .El
 .Pp
 See the description of
@@ -241,21 +241,21 @@ will return
 .Li \-1
 and set
 .Va errno .
-.It PT_DUMPCORE
+.It Dv PT_DUMPCORE
 Makes the process specified in the
 .Fa pid
 pid generate a core dump.
-The 
+The
 .Fa addr
 argument should contain the name of the core file to be generated
 and the
 .Fa data
 argument should contain the length of the core filename.
 This
-.Nm 
+.Nm
 call currently does not stop the child process so it can generate
 inconsistent data.
-.It PT_LWPINFO
+.It Dv PT_LWPINFO
 Returns information about the specific thread from the process specified
 in the
 .Fa pid
@@ -272,9 +272,9 @@ struct ptrace_io_desc {
 };
 .Ed
 .Pp
-Where
+where
 .Fa pl_lwpid
-contains the thread to get info for.
+contains the thread for which to get info.
 Upon return
 .Fa pl_event
 contains the event that stopped the thread.
@@ -289,7 +289,7 @@ The
 .Fa data
 argument should contain
 .Dq Li "sizeof(struct ptrace_lwpinfo)" .
-.It PT_SYSCALL
+.It Dv PT_SYSCALL
 Stops a process before and after executing each system call.
 .El
 .Pp
@@ -444,7 +444,7 @@ argument is not
 it is taken to be the pathname of the core file to be generated and the
 .Fa data
 argument should contain the length of the pathname.
-The pathname may contain 
+The pathname may contain
 .Dv %
 patterns that are expanded as described in
 .Xr sysctl 8 .
