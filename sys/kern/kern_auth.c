@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.18 2006/03/11 05:17:51 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.19 2006/03/11 16:45:25 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -365,7 +365,7 @@ kauth_cred_sortgroups(gid_t *grbuf, size_t len)
 int
 kauth_cred_addgroup(kauth_cred_t cred, gid_t gid)
 {
-	int error, ismember;
+	int ismember = 0;
 
 	KASSERT(cred != NULL);
 	KASSERT(gid >= 0 && gid <= GID_MAX);
@@ -378,13 +378,7 @@ kauth_cred_addgroup(kauth_cred_t cred, gid_t gid)
 		return (E2BIG);
 	}
 
-	error = kauth_cred_ismember_gid(cred, gid, &ismember);
-	if (error) {
-		simple_unlock(&cred->cr_lock);
-		return (error);
-	}
-
-	if (ismember) {
+	if (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember) {
 		simple_unlock(&cred->cr_lock);
 		return (0);
 	}
@@ -402,20 +396,14 @@ kauth_cred_addgroup(kauth_cred_t cred, gid_t gid)
 int
 kauth_cred_delgroup(kauth_cred_t cred, gid_t gid)
 {
-	int error, ismember;
+	int ismember = 0;
 
 	KASSERT(cred != NULL);
 	KASSERT(gid >= 0 && gid <= GID_MAX);
 
 	simple_lock(&cred->cr_lock);
 
-	error = kauth_cred_ismember_gid(cred, gid, &ismember);
-	if (error) {
-		simple_unlock(&cred->cr_lock);
-		return (error);
-	}
-
-	if (!ismember) {
+	if (kauth_cred_ismember_gid(cred, gid, &ismember) != 0 || !ismember) {
 		simple_unlock(&cred->cr_lock);
 		return (0);
 	}
@@ -520,11 +508,11 @@ kauth_cred_compare(kauth_cred_t cred, const struct uucred *uuc)
 
 		/* Check if all groups from uuc appear in cred. */
 		for (i = 0; i < uuc->cr_ngroups; i++) {
-			int error, ismember;
+			int ismember;
 
-			error = kauth_cred_ismember_gid(cred,
-			    uuc->cr_groups[i], &ismember);
-			if (error || !ismember)
+			ismember = 0;
+			if (kauth_cred_ismember_gid(cred, uuc->cr_groups[i],
+			    &ismember) != 0 || !ismember)
 				return (0);
 		}
 
