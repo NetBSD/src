@@ -1,6 +1,6 @@
-#	$NetBSD: pckbd.fr_CH.iso8859-2,v 1.1 2006/03/12 12:38:34 rpaulo Exp $
+#	$NetBSD: pckbd.de_CH.iso8859-1,v 1.1 2006/03/12 15:06:13 rpaulo Exp $
 #
-# Mapping for Swiss French (fr_CH) keyboards
+# Mapping for Swiss German (de_CH) keyboards.
 
 keycode   2 = 1 plus bar
 keycode   3 = 2 quotedbl at
@@ -13,13 +13,13 @@ keycode   9 = 8 parenleft cent
 keycode  10 = 9 parenright
 keycode  11 = 0 equal
 keycode  12 = apostrophe question dead_acute
-keycode  13 = dead_circumflex dead_grave dead_tilde
+keycode  13 = dead_circumflex dead_grave dead_tilde 
 keycode  16 = q Q at
 keycode  21 = z Z
-keycode  26 = egrave udiaeresis bracketleft
+keycode  26 = udiaeresis egrave bracketleft
 keycode  27 = dead_diaeresis exclam bracketright
-keycode  39 = eacute odiaeresis
-keycode  40 = agrave adiaeresis braceleft
+keycode  39 = odiaeresis eacute
+keycode  40 = adiaeresis agrave braceleft
 keycode  41 = section dead_abovering
 keycode  43 = dollar sterling braceright
 keycode  44 = y Y
