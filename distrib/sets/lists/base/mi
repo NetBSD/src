@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.596 2006/03/12 12:42:31 rpaulo Exp $
+# $NetBSD: mi,v 1.597 2006/03/12 15:09:54 rpaulo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2909,10 +2909,13 @@
 ./usr/share/wscons/keymaps			base-util-share
 ./usr/share/wscons/keymaps/pckbd.br.abnt2	base-util-share		share
 ./usr/share/wscons/keymaps/amikbd.pl.qwertz.iso8859-2	base-util-share		share
-./usr/share/wscons/keymaps/mkbd.pt.iso8859-2	base-util-share		share
+./usr/share/wscons/keymaps/mkbd.pt.iso8859-2	base-obsolete		obsolete
+./usr/share/wscons/keymaps/mkbd.pt.iso8859-1	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.be.azerty	base-util-share		share
-./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-util-share		share
-./usr/share/wscons/keymaps/pckbd.pl.iso8859-2	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-obsolete		obsolete
+./usr/share/wscons/keymaps/pckbd.hu.iso8859-1	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.pl.iso8859-2	base-obsolete		obsolete
+./usr/share/wscons/keymaps/pckbd.pl.iso8859-1	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.ru.koi8-r	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.sv.svascii	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-2	base-util-share		share
