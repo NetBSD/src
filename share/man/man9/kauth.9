@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.15 2006/03/12 21:29:07 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.16 2006/03/12 22:15:45 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .In sys/kauth.h
 .Sh DESCRIPTION
 .Nm ,
-or kernel authorization, is subsystem managing all authorization requests
+or kernel authorization, is the subsystem managing all authorization requests
 inside the kernel. It manages user credentials and rights, and can be used
 to implement a system-wide security policy. It allows external modules to
 plug-in the authorization process.
@@ -554,4 +554,4 @@ Elad Efrat <elad@NetBSD.org> implemented the kernel authorization framework in
 .Nx .
 .Pp
 Jason R. Thorpe <thorpej@NetBSD.org> provided guidance and answered questions
-about the Darwin implementations.
+about the Darwin implementation.
