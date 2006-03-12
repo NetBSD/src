@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.7 2006/03/11 11:58:22 wiz Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.8 2006/03/12 18:47:28 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -141,14 +141,14 @@ main(int argc, char **argv)
 	}
 	/* Initialize target */
 	if (target_init(&g, &tv, TargetName) != 0) {
-		TRACE_ERROR("target_init() failed\n");
+		iscsi_trace_error("target_init() failed\n");
 		exit(EXIT_FAILURE);
 	}
 
 #ifdef HAVE_DAEMON
 	/* if we are supposed to be a daemon, detach from controlling tty */
 	if (detach_me_harder && daemon(0, 0) < 0) {
-		TRACE_ERROR("daemon() failed\n");
+		iscsi_trace_error("daemon() failed\n");
 		exit(EXIT_FAILURE);
 	}
 #endif
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 	
 	/* Wait for connections */
 	if (target_listen(&g) != 0) {
-		TRACE_ERROR("target_listen() failed\n");
+		iscsi_trace_error("target_listen() failed\n");
 	}
 
 	return EXIT_SUCCESS;
