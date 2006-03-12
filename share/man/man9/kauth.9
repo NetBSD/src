@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.12 2006/03/12 01:26:14 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.13 2006/03/12 17:41:27 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -390,7 +390,7 @@ Note that
 will try to copy as many groups as
 .Ar ucred
 can hold.
-.It Ft void Fn kauth_cred_convert "kauth_cred_t cred" "const struct uucred *uucred"
+.It Ft void Fn kauth_cred_uucvt "kauth_cred_t cred" "const struct uucred *uucred"
 Convert userland's view of credentials to a
 .Ft kauth_cred_t .
 .Pp
@@ -402,7 +402,7 @@ Note that
 will try to copy as many groups as can be held inside a
 .Ft kauth_cred_t .
 The addition of groups will also guarantee order and no duplicates.
-.It Ft int Fn kauth_cred_compare "kauth_cred_t cred" "struct uucred *uucred"
+.It Ft int Fn kauth_cred_uucmp "kauth_cred_t cred" "struct uucred *uucred"
 Compares
 .Ar cred
 with the userland credentials in
