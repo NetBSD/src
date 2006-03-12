@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.131 2006/03/07 07:21:51 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.132 2006/03/12 09:47:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.131 2006/03/07 07:21:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.132 2006/03/12 09:47:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -346,7 +346,7 @@ copyout_proc(struct proc *p, const void *kaddr, void *uaddr, size_t len)
 	if (error) {
 		return error;
 	}
-	error = copyin_vmspace(vm, kaddr, uaddr, len);
+	error = copyout_vmspace(vm, kaddr, uaddr, len);
 	uvmspace_free(vm);
 
 	return error;
