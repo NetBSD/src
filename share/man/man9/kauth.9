@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.11 2006/03/12 00:46:07 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.12 2006/03/12 01:26:14 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -87,36 +87,6 @@ For an operation to be allowed, all listeners must not retuen any deny
 or defer decisions.
 .Pp
 Scopes manage listeners that operate in the same aspect of the system.
-.Sh SCOPES
-.Pp
-In the
-.Nx
-implementation, the following scopes are available:
-.Bl -tag -width "123456"
-.It Generic scope ( Dq org.netbsd.kauth.generic )
-Manages generic authorization requests in the kernel.
-The following operations are available for this scope:
-.Bl -tag -width "123456"
-.It KAUTH_GENERIC_ISSUSER
-Checks whether the credentials belong to the super-user.
-.El
-.It Process scope ( Dq org.netbsd.kauth.process )
-Manages authorization requsts related to processes in the system.
-The following operations are available for this scope:
-.Bl -tag -width "123456"
-.It KAUTH_PROCESS_CANPTRACE
-Checks whether an object with one set of credentials can use
-.Xr ptrace 2
-on another process, possibly with a different set of credentials.
-.It KAUTH_PROCESS_CANSIGNAL
-Checks whether an object with one set of credentials can post signals
-to another process.
-.It KAUTH_PROCESS_CANSEE
-Checks whether an object with one set of credentials can access
-information about another object, possibly with a different set of
-credentials.
-.El
-.El
 .Sh KERNEL PROGRAMMING INTERFACE
 .Nm
 exports a KPI that allows developers both of
@@ -126,43 +96,92 @@ create and remove scopes and listeners, and perform other misc. operations on
 credentials.
 .Sh AUTHORIZATION REQUESTS
 .Nm
-provides a single authorization request routine, and a wrapper routine for
-each of the scopes.
-This wrapper makes it easier to call from various places by eliminating the
-need to specify the scope and/or cast values.
+provides a single authorization request routine, which all authorization
+requests go through.
+This routine dispatches the request to the listeners of the appropriate scope,
+together with four optional user-data variables, and returns the augmented
+result.
+.Pp
+It's declared as
+.Pp
+.Ft int Fn kauth_authorize_action "kauth_scope_t scope" "kauth_cred_t cred" \
+"kauth_action_t op" "void *arg0" "void *arg1" "void *arg2" "void *arg3"
 .Pp
 An authorization request can return one of two possible values.
-Zero indicates the success, the operation is allowed, and one
+Zero indicates success -- the operation is allowed;
 .Dq EPERM
 (see
 .Xr errno 2 )
-inidcates failure, the operation is denied.
+inidcates failure -- the operation is denied.
 .Pp
+Each scope has its own authorization wrapper, to make it easy to call from various
+places by eliminating the need to specify the scope and/or cast values.
+The authorization wrappers are detailed in each scope's section.
+.Sh GENERIC SCOPE
+The generic scope,
+.Dq org.netbsd.kauth.generic ,
+manages generic authorization requests in the kernel.
+.Pp
+The authorization wrapper for this scope is declared as
+.Pp
+.Ft int Fn kauth_authorize_generic "kauth_cred_t cred" "kauth_action_t op" \
+"void *arg0"
+.Pp
+The following operations are available for this scope:
 .Bl -tag -width "123456"
-.It Ft int Fn kauth_authorize_action "kauth_scope_t scope" \
-"kauth_cred_t cred" "kauth_action_t op" "void *arg0" "void *arg1" \
-"void *arg2" "void *arg3"
-Pass an authorization request
-.Ar op
-issued by an object with credentials
-.Ar cred
-to
-.Ar scope .
-.It Ft int Fn kauth_authorize_generic "kauth_cred_t cred" \
-"kauth_action_t op" "void *arg0"
-Passes an authorization request
-.Ar op
-issued by an object with credentials
-.Ar cred
-to the generic scope.
-.It Ft int Fn kauth_authorize_process "kauth_cred_t cred" \
-kauth_action_t op" "struct proc *p" "void *arg1" "void *arg2" "void *arg3"
-Passes an authorization request
-.Ar op
-issued by an object with credentials
-.Ar cred
-to the process scope.
+.It KAUTH_GENERIC_ISSUSER
+Checks whether the credentials belong to the super-user.
 .Pp
+If
+.Ar arg0
+is not
+.Dq NULL ,
+it's treated as a
+.Ft u_short *
+to accounting flags, and the
+.Dq ACU
+flag is set.
+.El
+.Sh PROCESS SCOPE
+The process scope, 
+.Dq org.netbsd.kauth.process ,
+manages authorization requsts related to processes in the system.
+.Pp
+The authorization wrapper for this scope is declared as
+.Pp
+.Ft int Fn kauth_authorize_process "kauth_cred_t cred" kauth_action_t op" \
+"struct proc *p" "void *arg1" "void *arg2" "void *arg3"
+.Pp
+The following operations are available for this scope:
+.Bl -tag -width "123456"
+.It KAUTH_PROCESS_CANPTRACE
+Checks whether an object with one set of credentials can use
+.Xr ptrace 2
+on another process, possibly with a different set of credentials.
+.Pp
+.Ar arg1
+contains the credentials of the process being attached to.
+.It KAUTH_PROCESS_CANSIGNAL
+Checks whether an object with one set of credentials can post signals
+to another process.
+.Pp
+.Ar arg1
+and
+.Ar arg2
+contain the credentials
+.Ft ( kauth_cred_t )
+and the process data
+.Ft ( struct proc * )
+of the process the signal is posted to, respectively.
+.Ar arg3
+is the signal to be posted.
+.It KAUTH_PROCESS_CANSEE
+Checks whether an object with one set of credentials can access
+information about another object, possibly with a different set of
+credentials.
+.Pp
+.Ar arg1
+contains the credentials of the process looked at.
 .El
 .Sh CREDENTIAL ACCESSORS AND MUTATORS
 .Nm
@@ -172,7 +191,7 @@ objects.
 .Pp
 The following routines can be used to access and modify the user- and
 group-ids in a
-.Ar kauth_cred_t :
+.Ft kauth_cred_t :
 .Bl -tag -width "123456"
 .It Ft uid_t Fn kauth_cred_getuid "kauth_cred_t cred"
 Returns the real user-id from
@@ -229,7 +248,7 @@ Return the reference count for
 .Pp
 The following routines can be used to access and modify the group
 list in a
-.Ar kauth_cred_t :
+.Ft kauth_cred_t :
 .Bl -tag -width "123456"
 .It Ft int Fn kauth_cred_ismember_gid "kauth_cred_t cred" "gid_t gid" \
 "int *resultp"
@@ -512,8 +531,6 @@ Elad Efrat <elad@NetBSD.org> implemented the kernel authorization framework in
 Jason R. Thorpe <thorpej@NetBSD.org> provided guidance and answered questions
 about the Darwin implementations.
 .Sh CAVEATS
-The KPI still requires cleanup.
-.Pp
 Need to document what happens to running listeners when a scope is being
 deregistered.
 .Pp
@@ -521,5 +538,3 @@ Need to document listener reference counting and garbage collection that
 should be done manually.
 .Pp
 Need to document locking convention.
-.Pp
-Need to document how each one of the arguments is used depending on the op.
