@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.14 2006/03/12 17:43:20 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.15 2006/03/12 21:29:07 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -512,7 +512,32 @@ setting the default listener to
 Remove
 .Ar listener
 from the scope which it belongs to.
+.Pp
+Effectively what this does is is remove the callback from the chain of
+functions to be called when an authorization request is made, preventing
+from the listener from being entered in the future.
 .El
+.Pp
+.Nm
+provides no means for synchronization within listeners.
+It is the the programmer's responsibility to make sure data used by the
+listener is properly locked during its use, as it can be accessed
+simultaneously from the same listener called multiple times.
+It is also the programmer's responsibility to do garbage collection after
+the listener, possibly freeing any allocated data it used.
+.Pp
+The common method to do the above is by having a reference count to
+each listener.
+On entry to the listener, this reference count should be raised, and
+on exit -- lowered.
+.Pp
+During the removal of a listener, first
+.Fn kauth_scope_unlisten
+should be called to make sure the listener code will not be entered in
+the future.
+Then, the code should wait (possibly sleeping) until the reference count
+drops to zero.
+When that happens, it is safe to do the final cleanup.
 .\".Sh EXAMPLES
 .\" .Sh SEE ALSO
 .Sh HISTORY
@@ -530,9 +555,3 @@ Elad Efrat <elad@NetBSD.org> implemented the kernel authorization framework in
 .Pp
 Jason R. Thorpe <thorpej@NetBSD.org> provided guidance and answered questions
 about the Darwin implementations.
-.Sh CAVEATS
-Need to document what happens to running listeners when a scope is being
-deregistered.
-.Pp
-Need to document listener reference counting and garbage collection that
-should be done manually.
