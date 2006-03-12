@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.22 2006/03/12 17:15:15 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.23 2006/03/12 23:41:07 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -306,7 +306,7 @@ kauth_cred_setsvgid(kauth_cred_t cred, gid_t gid)
 int
 kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 {
-	int i;
+	int high, low, mid;
 
 	KASSERT(cred != NULL);
 	KASSERT(gid >= 0 && gid <= GID_MAX);
@@ -314,9 +314,19 @@ kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 
 	*resultp = 0;
 
-	for (i = 0; i < cred->cr_ngroups; i++) {
-		if (cred->cr_groups[i] == gid)
+	high = cred->cr_ngroups;
+	low = -1;
+
+	while (high - low > 1) {
+		mid = (high + low) / 2;
+		if (cred->cr_groups[mid] == gid) {
 			*resultp = 1;
+			break;
+		}
+		if (cred->cr_groups[mid] > gid)
+			high = mid;
+		else
+			low = mid;
 	}
 
 	return (0);
