@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158.4.4 2006/03/11 21:22:42 elad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.158.4.5 2006/03/12 17:32:26 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.4 2006/03/11 21:22:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.5 2006/03/12 17:32:26 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2587,11 +2587,11 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 		/* First, clear any groups in cred. */
 		do_ngroups = kauth_cred_ngroups(cred);
 		for (i = 0; i < do_ngroups; i++)
-			kauth_cred_delgroup(cred, kauth_cred_group(cred, i));
+			kauth_cred_delgroup(cred, kauth_cred_group(cred, 0));
 
 		/* Then, add groups in credanon. */
 		do_ngroups = kauth_cred_ngroups(credanon);
-		for (i = 0; i < do_ngroups && i < NGROUPS; i++)
+		for (i = 0; i < do_ngroups && i < NGROUPS; i++) /* XXX elad */
 			kauth_cred_addgroup(cred, kauth_cred_group(credanon, i));
 	}
 	if (exflags & MNT_EXRDONLY)
