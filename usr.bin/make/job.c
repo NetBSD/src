@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.107 2006/03/12 19:14:51 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.108 2006/03/12 20:14:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.107 2006/03/12 19:14:51 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.108 2006/03/12 20:14:56 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.107 2006/03/12 19:14:51 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.108 2006/03/12 20:14:56 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -304,10 +304,10 @@ int	exit_pipe[2] = { -1, -1 }; /* child exit signal pipe. */
 	(void)fprintf(fp, targFmt, gn->name)
 
 /*
- * When JobStart attempts to run a job remotely but can't, and isn't allowed
- * to run the job locally, or when Job_CatchChildren detects a job that has
- * been migrated home, the job is placed on the stoppedJobs queue to be run
- * when the next job finishes.
+ * When make is stopped by SIGTSTP (ie ^Z types) the jobs are sent SIGTSTP.
+ * When they report themselves stopped they are moved to syoppedJobs.
+ * They all get moved back after SIGCONT.
+ * This is all a waste of cpu cycles...
  */
 STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 				 * jobs that were stopped due to concurrency
@@ -352,7 +352,7 @@ static void JobFinish(Job *, int *);
 static void JobExec(Job *, char **);
 static void JobMakeArgv(Job *, char **);
 static int JobRestart(Job *);
-static int JobStart(GNode *, int, Job *);
+static int JobStart(GNode *, int);
 static char *JobOutput(Job *, char *, char *, int);
 static void JobDoOutput(Job *, Boolean);
 static Shell *JobMatchShell(const char *);
@@ -1547,7 +1547,7 @@ JobRestart(Job *job)
  *-----------------------------------------------------------------------
  */
 static int
-JobStart(GNode *gn, int flags, Job *previous)
+JobStart(GNode *gn, int flags)
 {
     Job		  *job;       /* new job descriptor */
     char	  *argv[10];  /* Argument vector to shell */
@@ -1555,16 +1555,10 @@ JobStart(GNode *gn, int flags, Job *previous)
     Boolean 	  noExec;     /* Set true if we decide not to run the job */
     int		  tfd;	      /* File descriptor to the temp file */
 
-    if (previous != NULL) {
-	previous->flags &= ~(JOB_FIRST|JOB_IGNERR|JOB_SILENT);
-	job = previous;
-    } else {
-	job = emalloc(sizeof(Job));
-	if (job == NULL) {
-	    Punt("JobStart out of memory");
-	}
-	flags |= JOB_FIRST;
-    }
+    job = emalloc(sizeof(Job));
+    if (job == NULL)
+	Punt("JobStart out of memory");
+    flags |= JOB_FIRST;
     if (gn->type & OP_SPECIAL)
 	flags |= JOB_SPECIAL;
 
@@ -2023,7 +2017,7 @@ JobRun(GNode *targ)
     Lst_AtEnd(lst, targ);
     (void)Make_Run(lst);
     Lst_Destroy(lst, NOFREE);
-    JobStart(targ, JOB_SPECIAL, NULL);
+    JobStart(targ, JOB_SPECIAL);
     while (nJobs) {
 	Job_CatchOutput();
 	Job_CatchChildren(!usePipes);
@@ -2181,7 +2175,7 @@ Job_CatchOutput(void)
 void
 Job_Make(GNode *gn)
 {
-    (void)JobStart(gn, 0, NULL);
+    (void)JobStart(gn, 0);
 }
 
 void
