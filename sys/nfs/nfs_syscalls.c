@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.88.8.4 2006/03/10 22:38:09 elad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.88.8.5 2006/03/12 17:15:15 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.8.4 2006/03/10 22:38:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.8.5 2006/03/12 17:15:15 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -330,7 +330,7 @@ sys_nfssvc(l, v, retval)
 					m_freem(nuidp->nu_nam);
 			        }
 				nuidp->nu_flag = 0;
-				kauth_cred_convert(nuidp->nu_cr, &nsd->nsd_cr);
+				kauth_cred_uucvt(nuidp->nu_cr, &nsd->nsd_cr);
 #if 0 /* XXX elad - kernel auth makes sure this can't happen. */
 				if (nuidp->nu_cr.cr_ngroups > NGROUPS)
 				    nuidp->nu_cr.cr_ngroups = NGROUPS;

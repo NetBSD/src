@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.21 2006/03/12 00:26:56 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.22 2006/03/12 17:15:15 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -466,7 +466,7 @@ kauth_cred_getrefcnt(kauth_cred_t cred)
  * XXX: For NFS code.
  */
 void
-kauth_cred_convert(kauth_cred_t cred, const struct uucred *uuc)
+kauth_cred_uucvt(kauth_cred_t cred, const struct uucred *uuc)
 {
 	int i;
 
@@ -486,7 +486,7 @@ kauth_cred_convert(kauth_cred_t cred, const struct uucred *uuc)
  * XXX: Modelled after crcmp() for NFS.
  */
 int
-kauth_cred_compare(kauth_cred_t cred, const struct uucred *uuc)
+kauth_cred_uucmp(kauth_cred_t cred, const struct uucred *uuc)
 {
 	KASSERT(cred != NULL);
 	KASSERT(uuc != NULL);
