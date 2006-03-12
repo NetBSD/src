@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.9 2006/03/11 23:36:56 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.10 2006/03/12 00:11:16 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -327,13 +327,6 @@ Note that
 kernels will panic if you pass
 .Ar cred
 with a locked lock!
-.It Ft int Fn kauth_cred_memcmp "kauth_cred_t cred1" "kauth_cred_t cred2"
-Performs a
-.Xr memcmp 9
-on
-.Ar cred1
-and
-.Ar cred2 .
 .El
 .Sh CONVERSION ROUTINES
 Sometimes it might be necessary to convert a
