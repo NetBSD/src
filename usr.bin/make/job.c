@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.106 2006/03/11 17:18:00 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.107 2006/03/12 19:14:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.106 2006/03/11 17:18:00 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.107 2006/03/12 19:14:51 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.106 2006/03/11 17:18:00 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.107 2006/03/12 19:14:51 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -950,24 +950,8 @@ JobFinish(Job *job, int *status)
 	done = FALSE;
     }
 
-    if (done ||
-	WIFSTOPPED(*status) ||
-	(WIFSIGNALED(*status) && (WTERMSIG(*status) == SIGCONT)))
-    {
-	FILE	  *out;
-
-	if (compatMake && !usePipes && (job->flags & JOB_IGNERR)) {
-	    /*
-	     * If output is going to a file and this job is ignoring
-	     * errors, arrange to have the exit status sent to the
-	     * output file as well.
-	     */
-	    out = fdopen(job->outFd, "w");
-	    if (out == NULL)
-		Punt("Cannot fdopen");
-	} else {
-	    out = stdout;
-	}
+    if (done || WIFSTOPPED(*status) ||
+	    (WIFSIGNALED(*status) && (WTERMSIG(*status) == SIGCONT))) {
 
 	if (WIFEXITED(*status)) {
 	    if (DEBUG(JOB)) {
@@ -977,10 +961,10 @@ JobFinish(Job *job, int *status)
 	    }
 	    if (WEXITSTATUS(*status) != 0) {
 		if (usePipes && job->node != lastNode) {
-		    MESSAGE(out, job->node);
+		    MESSAGE(stdout, job->node);
 		    lastNode = job->node;
 		}
-		(void)fprintf(out, "*** [%s] Error code %d%s\n",
+		(void)printf("*** [%s] Error code %d%s\n",
 				job->node->name,
 			       WEXITSTATUS(*status),
 			       (job->flags & JOB_IGNERR) ? "(ignored)" : "");
@@ -990,10 +974,10 @@ JobFinish(Job *job, int *status)
 		}
 	    } else if (DEBUG(JOB)) {
 		if (usePipes && job->node != lastNode) {
-		    MESSAGE(out, job->node);
+		    MESSAGE(stdout, job->node);
 		    lastNode = job->node;
 		}
-		(void)fprintf(out, "*** [%s] Completed successfully\n",
+		(void)printf("*** [%s] Completed successfully\n",
 				job->node->name);
 	    }
 	} else if (WIFSTOPPED(*status) && WSTOPSIG(*status) != SIGCONT) {
@@ -1003,25 +987,25 @@ JobFinish(Job *job, int *status)
 		(void)fflush(stdout);
 	    }
 	    if (usePipes && job->node != lastNode) {
-		MESSAGE(out, job->node);
+		MESSAGE(stdout, job->node);
 		lastNode = job->node;
 	    }
 	    switch (WSTOPSIG(*status)) {
 	    case SIGTSTP:
-		(void)fprintf(out, "*** [%s] Suspended\n",
+		(void)printf("*** [%s] Suspended\n",
 			    job->node->name);
 		break;
 	    case SIGSTOP:
-		(void)fprintf(out, "*** [%s] Stopped\n",
+		(void)printf("*** [%s] Stopped\n",
 			    job->node->name);
 		break;
 	    default:
-		(void)fprintf(out, "*** [%s] Stopped -- signal %d\n",
+		(void)printf("*** [%s] Stopped -- signal %d\n",
 		    job->node->name, WSTOPSIG(*status));
 	    }
 	    job->flags |= JOB_RESUME;
 	    (void)Lst_AtEnd(stoppedJobs, (ClientData)job);
-	    (void)fflush(out);
+	    (void)fflush(stdout);
 	    return;
 	} else if (WIFSTOPPED(*status) && WSTOPSIG(*status) == SIGCONT) {
 	    /*
@@ -1030,10 +1014,10 @@ JobFinish(Job *job, int *status)
 	     */
 	    if (job->flags & JOB_RESUME) {
 		if (usePipes && job->node != lastNode) {
-		    MESSAGE(out, job->node);
+		    MESSAGE(stdout, job->node);
 		    lastNode = job->node;
 		}
-		(void)fprintf(out, "*** [%s] Continued\n", job->node->name);
+		(void)printf("*** [%s] Continued\n", job->node->name);
 	    }
 	    if (!(job->flags & JOB_CONTINUING)) {
 		if (DEBUG(JOB)) {
@@ -1051,67 +1035,31 @@ JobFinish(Job *job, int *status)
 			       job->pid);
 		(void)fflush(stdout);
 	    }
-	    (void)fflush(out);
+	    (void)fflush(stdout);
   	    return;
 	} else {
 	    if (usePipes && job->node != lastNode) {
-		MESSAGE(out, job->node);
+		MESSAGE(stdout, job->node);
 		lastNode = job->node;
 	    }
-	    (void)fprintf(out, "*** [%s] Signal %d\n",
+	    (void)printf("*** [%s] Signal %d\n",
 			job->node->name, WTERMSIG(*status));
 	}
 
-	(void)fflush(out);
-    }
-
-    /*
-     * Now handle the -B-mode stuff. If the beast still isn't finished,
-     * try and restart the job on the next command. If JobStart says it's
-     * ok, it's ok. If there's an error, this puppy is done.
-     */
-    if (compatMake && (WIFEXITED(*status) &&
-	    !Lst_IsAtEnd(job->node->commands))) {
-	switch (JobStart(job->node, job->flags & JOB_IGNDOTS, job)) {
-	case JOB_RUNNING:
-	    done = FALSE;
-	    break;
-	case JOB_ERROR:
-	    done = TRUE;
-	    *status = W_EXITCODE(1, 0);
-	    break;
-	case JOB_FINISHED:
-	    /*
-	     * If we got back a JOB_FINISHED code, JobStart has already
-	     * called Make_Update and freed the job descriptor. We set
-	     * done to false here to avoid fake cycles and double frees.
-	     * JobStart needs to do the update so we can proceed up the
-	     * graph when given the -n flag..
-	     */
-	    done = FALSE;
-	    break;
-	}
-    } else {
-	done = TRUE;
+	(void)fflush(stdout);
     }
 
     return_job_token = FALSE;
 
-    if (done) {
-	Trace_Log(JOBEND, job);
-	if (!compatMake && !(job->flags & JOB_SPECIAL)) {
-	    if ((*status != 0) ||
-		    (aborting == ABORT_ERROR) ||
-		    (aborting == ABORT_INTERRUPT))
-		return_job_token = TRUE;
-	}
+    Trace_Log(JOBEND, job);
+    if (!(job->flags & JOB_SPECIAL)) {
+	if ((*status != 0) ||
+		(aborting == ABORT_ERROR) ||
+		(aborting == ABORT_INTERRUPT))
+	    return_job_token = TRUE;
     }
 
-    if (done &&
-	(aborting != ABORT_ERROR) &&
-	(aborting != ABORT_INTERRUPT) &&
-	(*status == 0))
-    {
+    if ((aborting != ABORT_ERROR) && (aborting != ABORT_INTERRUPT) && (*status == 0)) {
 	/*
 	 * As long as we aren't aborting and the job didn't return a non-zero
 	 * status that we shouldn't ignore, we call Make_Update to update
@@ -1641,7 +1589,7 @@ JobStart(GNode *gn, int flags, Job *previous)
      * Check the commands now so any attributes from .DEFAULT have a chance
      * to migrate to the node
      */
-    if (!compatMake && job->flags & JOB_FIRST) {
+    if (job->flags & JOB_FIRST) {
 	cmdsOK = Job_CheckCommands(gn, Error);
     } else {
 	cmdsOK = TRUE;
@@ -1692,59 +1640,17 @@ JobStart(GNode *gn, int flags, Job *previous)
 	noExec = FALSE;
 
 	/*
-	 * used to be backwards; replace when start doing multiple commands
-	 * per shell.
+	 * We can do all the commands at once. hooray for sanity
 	 */
-	if (compatMake) {
-	    /*
-	     * Be compatible: If this is the first time for this node,
-	     * verify its commands are ok and open the commands list for
-	     * sequential access by later invocations of JobStart.
-	     * Once that is done, we take the next command off the list
-	     * and print it to the command file. If the command was an
-	     * ellipsis, note that there's nothing more to execute.
-	     */
-	    if ((job->flags&JOB_FIRST) && (Lst_Open(gn->commands) != SUCCESS)){
-		cmdsOK = FALSE;
-	    } else {
-		LstNode	ln = Lst_Next(gn->commands);
+	numCommands = 0;
+	Lst_ForEach(gn->commands, JobPrintCommand, (ClientData)job);
 
-		if ((ln == NILLNODE) ||
-		    JobPrintCommand((ClientData)Lst_Datum(ln),
-				    (ClientData) job))
-		{
-		    noExec = TRUE;
-		    Lst_Close(gn->commands);
-		}
-		if (noExec && !(job->flags & JOB_FIRST)) {
-		    /*
-		     * If we're not going to execute anything, the job
-		     * is done and we need to close down the various
-		     * file descriptors we've opened for output, then
-		     * call JobDoOutput to catch the final characters or
-		     * send the file to the screen... Note that the i/o streams
-		     * are only open if this isn't the first job.
-		     * Note also that this could not be done in
-		     * Job_CatchChildren b/c it wasn't clear if there were
-		     * more commands to execute or not...
-		     */
-		    JobClose(job);
-		}
-	    }
-	} else {
-	    /*
-	     * We can do all the commands at once. hooray for sanity
-	     */
-	    numCommands = 0;
-	    Lst_ForEach(gn->commands, JobPrintCommand, (ClientData)job);
-
-	    /*
-	     * If we didn't print out any commands to the shell script,
-	     * there's not much point in executing the shell, is there?
-	     */
-	    if (numCommands == 0) {
-		noExec = TRUE;
-	    }
+	/*
+	 * If we didn't print out any commands to the shell script,
+	 * there's not much point in executing the shell, is there?
+	 */
+	if (numCommands == 0) {
+	    noExec = TRUE;
 	}
     } else if (NoExecute(gn)) {
 	/*
@@ -1833,22 +1739,20 @@ JobStart(GNode *gn, int flags, Job *previous)
      * get the shell's output. If we're using files, print out that we're
      * starting a job and then set up its temporary-file name.
      */
-    if (!compatMake || (job->flags & JOB_FIRST)) {
-	if (usePipes) {
-	    int fd[2];
-	    if (pipe(fd) == -1)
-		Punt("Cannot create pipe: %s", strerror(errno));
-	    job->inPipe = fd[0];
-	    job->outPipe = fd[1];
-	    (void)fcntl(job->inPipe, F_SETFD, 1);
-	    (void)fcntl(job->outPipe, F_SETFD, 1);
-	} else {
-	    (void)fprintf(stdout, "Remaking `%s'\n", gn->name);
-  	    (void)fflush(stdout);
-	    (void)strcpy(job->outFile, TMPPAT);
-	    job->outFd = mkstemp(job->outFile);
-	    (void)fcntl(job->outFd, F_SETFD, 1);
-	}
+    if (usePipes) {
+	int fd[2];
+	if (pipe(fd) == -1)
+	    Punt("Cannot create pipe: %s", strerror(errno));
+	job->inPipe = fd[0];
+	job->outPipe = fd[1];
+	(void)fcntl(job->inPipe, F_SETFD, 1);
+	(void)fcntl(job->outPipe, F_SETFD, 1);
+    } else {
+	(void)fprintf(stdout, "Remaking `%s'\n", gn->name);
+	(void)fflush(stdout);
+	(void)strcpy(job->outFile, TMPPAT);
+	job->outFd = mkstemp(job->outFile);
+	(void)fcntl(job->outFd, F_SETFD, 1);
     }
 
     JobExec(job, argv);
