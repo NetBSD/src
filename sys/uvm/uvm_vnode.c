@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.69 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.69.8.1 2006/03/12 09:38:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,11 +50,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.69 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.69.8.1 2006/03/12 09:38:56 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
-#include "opt_readahead.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -296,9 +295,6 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 {
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
-#if defined(READAHEAD_STATS)
-	int orignpages = *npagesp;
-#endif /* defined(READAHEAD_STATS) */
 
 	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(ubchist);
 
@@ -314,31 +310,6 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
-
-#if defined(READAHEAD_STATS)
-	if (((flags & PGO_LOCKED) != 0 && *npagesp > 0) ||
-	    ((flags & (PGO_LOCKED|PGO_SYNCIO)) == PGO_SYNCIO && error == 0)) {
-		int i;
-
-		if ((flags & PGO_LOCKED) == 0) {
-			simple_lock(&uobj->vmobjlock);
-		}
-		for (i = 0; i < orignpages; i++) {
-			struct vm_page *pg = pps[i];
-
-			if (pg == NULL || pg == PGO_DONTCARE) {
-				continue;
-			}
-			if ((pg->flags & PG_SPECULATIVE) != 0) {
-				pg->flags &= ~PG_SPECULATIVE;
-				uvm_ra_hit.ev_count++;
-			}
-		}
-		if ((flags & PGO_LOCKED) == 0) {
-			simple_unlock(&uobj->vmobjlock);
-		}
-	}
-#endif /* defined(READAHEAD_STATS) */
 
 	return error;
 }

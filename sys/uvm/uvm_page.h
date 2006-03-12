@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.44.2.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.44.2.2 2006/03/12 09:38:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -169,7 +169,6 @@ struct vm_page {
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
-#define	PG_SPECULATIVE	0x0200		/* page has been read speculatively */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
@@ -183,6 +182,8 @@ struct vm_page {
 #define PQ_AOBJ		0x0004		/* page is part of an anonymous
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
+#define PQ_READAHEAD	0x0008	/* read-ahead but has not been "hit" yet */
+
 #define PQ_PRIVATE1	0x0100
 #define PQ_PRIVATE2	0x0200
 #define PQ_PRIVATE3	0x0400
@@ -193,9 +194,9 @@ struct vm_page {
 #define PQ_PRIVATE8	0x8000
 
 #define	UVM_PQFLAGBITS \
-	"\20\1FREE\2ANON\3AOBJ" \
+	"\20\1FREE\2ANON\3AOBJ\4READAHEAD" \
 	"\11PRIVATE1\12PRIVATE2\13PRIVATE3\14PRIVATE4" \
-	"\15PRIVATE5\16PRIVATE6\17PRIVATE7\18PRIVATE8"
+	"\15PRIVATE5\16PRIVATE6\17PRIVATE7\20PRIVATE8"
 
 /*
  * physical memory layout structure
