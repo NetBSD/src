@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.55.8.1 2006/03/08 01:06:28 elad Exp $	*/
+/*	$NetBSD: nfs.h,v 1.55.8.2 2006/03/12 00:07:42 elad Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -543,11 +543,6 @@ extern int nfs_numasync;
 #define NFSW_CONTIG(o, n) \
 		((o)->nd_eoff >= (n)->nd_off && \
 		 !memcmp((caddr_t)&(o)->nd_fh, (caddr_t)&(n)->nd_fh, NFSX_V3FH))
-
-/* XXX elad NFSW_SAMECRED */
-#define NFSW_SAMECRED(o, n) \
-	(((o)->nd_flag & ND_KERBAUTH) == ((n)->nd_flag & ND_KERBAUTH) && \
- 	 !kauth_cred_memcmp((o)->nd_cr, (n)->nd_cr))
 
 /*
  * Defines for WebNFS
