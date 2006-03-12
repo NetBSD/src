@@ -81,24 +81,24 @@ int             osd_command(void *dev, osd_args_t * args, OSD_OPS_MEM * mem);
  */
 
 #if 0
-TRACE(TRACE_SCSI_ARGS, "  Peripheral device type: %u\n", data[0] & 0x1f);
-TRACE(TRACE_SCSI_ARGS, "  Removable bit:          %u\n", data[1] >> 7);
-TRACE(TRACE_SCSI_ARGS, "  ANSI-approved version:  %u\n", data[2] & 0x7);
-TRACE(TRACE_SCSI_ARGS, "  AENC:                   %u\n", data[3] >> 7);
-TRACE(TRACE_SCSI_ARGS, "  TrmIOP:                 %u\n", (data[3] & 0x40) >> 6);
-TRACE(TRACE_SCSI_ARGS, "  NormACA:                %u\n", (data[3] & 0x20) >> 5);
-TRACE(TRACE_SCSI_ARGS, "  Additional length:      %u\n", data[4]);
-TRACE(TRACE_SCSI_ARGS, "  RelAdr:                 %u\n", data[7] & 0x7);
-TRACE(TRACE_SCSI_ARGS, "  Bus32:                  %u\n", (data[7] & 0x40) >> 6);
-TRACE(TRACE_SCSI_ARGS, "  WBus16:                 %u\n", (data[7] & 0x20) >> 5);
-TRACE(TRACE_SCSI_ARGS, "  Sync:                   %u\n", (data[7] & 0x10) >> 4);
-TRACE(TRACE_SCSI_ARGS, "  Linked:                 %u\n", (data[7] & 0x08) >> 3);
-TRACE(TRACE_SCSI_ARGS, "  TransDis:               %u\n", (data[7] & 0x04) >> 2);
-TRACE(TRACE_SCSI_ARGS, "  CmdQue:                 %u\n", (data[7] & 0x02) >> 1);
-TRACE(TRACE_SCSI_ARGS, "  SftRe:                  %u\n", (data[7] & 0x01));
-TRACE(TRACE_SCSI_ARGS, "  Vendor ID:              %s\n", (data + 8));
-TRACE(TRACE_SCSI_ARGS, "  Product ID:             %s\n", (data + 16));
-TRACE(TRACE_SCSI_ARGS, "  Revision Level:         %s\n", (data + 32));
+iscsi_trace(TRACE_SCSI_ARGS, "  Peripheral device type: %u\n", data[0] & 0x1f);
+iscsi_trace(TRACE_SCSI_ARGS, "  Removable bit:          %u\n", data[1] >> 7);
+iscsi_trace(TRACE_SCSI_ARGS, "  ANSI-approved version:  %u\n", data[2] & 0x7);
+iscsi_trace(TRACE_SCSI_ARGS, "  AENC:                   %u\n", data[3] >> 7);
+iscsi_trace(TRACE_SCSI_ARGS, "  TrmIOP:                 %u\n", (data[3] & 0x40) >> 6);
+iscsi_trace(TRACE_SCSI_ARGS, "  NormACA:                %u\n", (data[3] & 0x20) >> 5);
+iscsi_trace(TRACE_SCSI_ARGS, "  Additional length:      %u\n", data[4]);
+iscsi_trace(TRACE_SCSI_ARGS, "  RelAdr:                 %u\n", data[7] & 0x7);
+iscsi_trace(TRACE_SCSI_ARGS, "  Bus32:                  %u\n", (data[7] & 0x40) >> 6);
+iscsi_trace(TRACE_SCSI_ARGS, "  WBus16:                 %u\n", (data[7] & 0x20) >> 5);
+iscsi_trace(TRACE_SCSI_ARGS, "  Sync:                   %u\n", (data[7] & 0x10) >> 4);
+iscsi_trace(TRACE_SCSI_ARGS, "  Linked:                 %u\n", (data[7] & 0x08) >> 3);
+iscsi_trace(TRACE_SCSI_ARGS, "  TransDis:               %u\n", (data[7] & 0x04) >> 2);
+iscsi_trace(TRACE_SCSI_ARGS, "  CmdQue:                 %u\n", (data[7] & 0x02) >> 1);
+iscsi_trace(TRACE_SCSI_ARGS, "  SftRe:                  %u\n", (data[7] & 0x01));
+iscsi_trace(TRACE_SCSI_ARGS, "  Vendor ID:              %s\n", (data + 8));
+iscsi_trace(TRACE_SCSI_ARGS, "  Product ID:             %s\n", (data + 16));
+iscsi_trace(TRACE_SCSI_ARGS, "  Revision Level:         %s\n", (data + 32));
 #endif
 
 int 
@@ -120,7 +120,7 @@ nop_out(uint64_t target, int lun, int length, int ping, const char *data)
 		nop_cmd.tag = 0xffffffff;
 	}
 	if (initiator_command(&cmd) != 0) {
-		TRACE_ERROR("initiator_command() failed\n");
+		iscsi_trace_error("initiator_command() failed\n");
 		return -1;
 	}
 	return 0;
@@ -149,15 +149,15 @@ inquiry(uint64_t target, uint32_t lun, uint32_t *device_type)
 	cmd.ptr = &args;
 
 	if (initiator_command(&cmd) != 0) {
-		TRACE_ERROR("initiator_command() failed\n");
+		iscsi_trace_error("initiator_command() failed\n");
 		return -1;
 	}
 	if (args.status) {
-		TRACE_ERROR("INQUIRY failed (status 0x%x)\n", args.status);
+		iscsi_trace_error("INQUIRY failed (status 0x%x)\n", args.status);
 		return -1;
 	}
 	*device_type = data[0] & 0x1f;
-	TRACE(TRACE_SCSI_DEBUG, "Device Type 0x%x\n", *device_type);
+	iscsi_trace(TRACE_SCSI_DEBUG, "Device Type 0x%x\n", *device_type);
 
 	return 0;
 }
@@ -186,23 +186,23 @@ read_capacity(uint64_t target, uint32_t lun, uint32_t *max_lba, uint32_t *block_
 	cmd.ptr = &args;
 
 	if (initiator_command(&cmd) != 0) {
-		TRACE_ERROR("initiator_command() failed\n");
+		iscsi_trace_error("initiator_command() failed\n");
 		return -1;
 	}
 	if (args.status) {
-		TRACE_ERROR("READ_CAPACITY failed (status 0x%x)\n", args.status);
+		iscsi_trace_error("READ_CAPACITY failed (status 0x%x)\n", args.status);
 		return -1;
 	}
-	TRACE(TRACE_SCSI_DEBUG, "Max LBA (lun %u):   %u\n", lun, *max_lba);
-	TRACE(TRACE_SCSI_DEBUG, "Block Len (lun %u): %u\n", lun, *block_len);
+	iscsi_trace(TRACE_SCSI_DEBUG, "Max LBA (lun %u):   %u\n", lun, *max_lba);
+	iscsi_trace(TRACE_SCSI_DEBUG, "Block Len (lun %u): %u\n", lun, *block_len);
 	*max_lba = ISCSI_NTOHL(*((uint32_t *) (data)));
 	*block_len = ISCSI_NTOHL(*((uint32_t *) (data + 4)));
 	if (*max_lba == 0) {
-		TRACE_ERROR("Device returned Maximum LBA of zero\n");
+		iscsi_trace_error("Device returned Maximum LBA of zero\n");
 		return -1;
 	}
 	if (*block_len % 2) {
-		TRACE_ERROR("Device returned strange block len: %u\n", *block_len);
+		iscsi_trace_error("Device returned strange block len: %u\n", *block_len);
 		return -1;
 	}
 	return 0;
@@ -229,13 +229,13 @@ write_read_test(uint64_t target, uint32_t lun, int type)
 	int             i, j;
 
 	if ((type != 6) && (type != 10)) {
-		TRACE_ERROR("bad type, select 6 or 10\n");
+		iscsi_trace_error("bad type, select 6 or 10\n");
 		return -1;
 	}
 	/* determine last block on device */
 
 	if (read_capacity(target, lun, &max_lba, &block_len) != 0) {
-		TRACE_ERROR("read_capacity() failed\n");
+		iscsi_trace_error("read_capacity() failed\n");
 		return -1;
 	}
 	/* write pattern into first and last block on device */
@@ -285,11 +285,11 @@ write_read_test(uint64_t target, uint32_t lun, int type)
 		cmd.ptr = &args;
 		cmd.type = ISCSI_SCSI_CMD;
 		if (initiator_command(&cmd) != 0) {
-			TRACE_ERROR("initiator_command() failed\n");
+			iscsi_trace_error("initiator_command() failed\n");
 			return -1;
 		}
 		if (args.status) {
-			TRACE_ERROR("initiator_command() failed\n");
+			iscsi_trace_error("initiator_command() failed\n");
 			return -1;
 		}
 	}
@@ -337,16 +337,16 @@ write_read_test(uint64_t target, uint32_t lun, int type)
 		cmd.type = ISCSI_SCSI_CMD;
 		cmd.ptr = &args;
 		if (initiator_command(&cmd) != 0) {
-			TRACE_ERROR("initiator_command() failed\n");
+			iscsi_trace_error("initiator_command() failed\n");
 			return -1;
 		}
 		if (args.status) {
-			TRACE_ERROR("initiator_command() failed\n");
+			iscsi_trace_error("initiator_command() failed\n");
 			return -1;
 		}
 		for (j = 0; j < block_len; j++) {
 			if (data[j] != (uint8_t) (i + j)) {
-				TRACE_ERROR("Bad byte. data[%i] = %u, expected %u.\n",
+				iscsi_trace_error("Bad byte. data[%i] = %u, expected %u.\n",
 				       j, data[j], (uint8_t) (i + j));
 				return -1;
 			}
@@ -397,11 +397,11 @@ read_or_write(uint64_t target, uint32_t lun, uint32_t lba, uint32_t len,
 	/* Execute iSCSI command */
 
 	if (initiator_command(&cmd) != 0) {
-		TRACE_ERROR("initiator_command() failed\n");
+		iscsi_trace_error("initiator_command() failed\n");
 		return -1;
 	}
 	if (args.status) {
-		TRACE_ERROR("scsi_command() failed (status 0x%x)\n", args.status);
+		iscsi_trace_error("scsi_command() failed (status 0x%x)\n", args.status);
 		return -1;
 	}
 	return 0;
@@ -423,40 +423,40 @@ throughput_test(uint32_t target, uint32_t lun, uint32_t length, uint32_t request
 	/* Get device block len & capacity */
 
 	if (read_capacity(target, lun, &max_lba, &block_len) != 0) {
-		TRACE_ERROR("read_capacity() failed\n");
+		iscsi_trace_error("read_capacity() failed\n");
 		return -1;
 	}
 	if (request % block_len) {
-		TRACE_ERROR("request must be a multiple of %u\n", block_len);
+		iscsi_trace_error("request must be a multiple of %u\n", block_len);
 		return -1;
 	}
 	if (!sg_factor) {
-		TRACE_ERROR("sg_factor must be at least 1\n");
+		iscsi_trace_error("sg_factor must be at least 1\n");
 		return -1;
 	}
 	if (request % sg_factor) {
-		TRACE_ERROR("request must be a multiple of sg_factor\n");
+		iscsi_trace_error("request must be a multiple of sg_factor\n");
 		return -1;
 	}
 	if (length % request) {
-		TRACE_ERROR("length must be a multiple of request\n");
+		iscsi_trace_error("length must be a multiple of request\n");
 		return -1;
 	}
 	if (length > ((max_lba + 1) * block_len)) {
-		TRACE_ERROR("attempt to read past device (max length %u)\n", max_lba * block_len);
+		iscsi_trace_error("attempt to read past device (max length %u)\n", max_lba * block_len);
 		return -1;
 	}
 	if ((sg = iscsi_malloc(sg_factor * sizeof(struct iovec))) == NULL) {
-		TRACE_ERROR("out of memory\n");
+		iscsi_trace_error("out of memory\n");
 		return -1;
 	}
 	if ((data = iscsi_malloc(sg_factor * sizeof(uint8_t *))) == NULL) {
-		TRACE_ERROR("out of memory\n");
+		iscsi_trace_error("out of memory\n");
 		return -1;
 	}
 	for (i = 0; i < sg_factor; i++) {
 		if ((data[i] = iscsi_malloc(request / sg_factor)) == NULL) {
-			TRACE_ERROR("out of memory\n");
+			iscsi_trace_error("out of memory\n");
 			return -1;
 		}
 	}
@@ -475,11 +475,11 @@ throughput_test(uint32_t target, uint32_t lun, uint32_t length, uint32_t request
 			sg[j].iov_len = request / sg_factor;
 		}
 		if (read_or_write(target, lun, block_offset, num_blocks, block_len, (uint8_t *) sg, sg_factor, writing) != 0) {
-			TRACE_ERROR("read_10() failed\n");
+			iscsi_trace_error("read_10() failed\n");
 			goto done;
 		}
 		if (verbose && !((i + 1) % verbose)) {
-			PRINT("%u total bytes %s: this request (lba %u, len %u)\n",
+			printf("%u total bytes %s: this request (lba %u, len %u)\n",
 			      (i + 1) * request, writing ? "written" : "read", block_offset, num_blocks);
 		}
 	}
@@ -489,7 +489,7 @@ throughput_test(uint32_t target, uint32_t lun, uint32_t length, uint32_t request
 
 	/* Output results */
 
-	PRINT("%u MB %s in %.2f seconds --> %.2f MB/sec\n", length / 1048576, writing ? "written" : "read", (double) seconds,
+	printf("%u MB %s in %.2f seconds --> %.2f MB/sec\n", length / 1048576, writing ? "written" : "read", (double) seconds,
 	      (double) (length / seconds) / 1048576);
 
 done:	for (i = 0; i < sg_factor; i++) {
@@ -513,38 +513,38 @@ integrity_test(uint32_t target, uint32_t lun, uint32_t length, int sg_factor)
 	/* Get device block len & capacity; and check args */
 
 	if (read_capacity(target, lun, &max_lba, &block_len) != 0) {
-		TRACE_ERROR("read_capacity() failed\n");
+		iscsi_trace_error("read_capacity() failed\n");
 		return -1;
 	}
 	if (length % block_len) {
-		TRACE_ERROR("length must be a multiple of block len %u\n", block_len);
+		iscsi_trace_error("length must be a multiple of block len %u\n", block_len);
 		return -1;
 	}
 	if (!sg_factor) {
-		TRACE_ERROR("sg_factor must be at least 1\n");
+		iscsi_trace_error("sg_factor must be at least 1\n");
 		return -1;
 	}
 	if (length % sg_factor) {
-		TRACE_ERROR("length must be a multiple of sg_factor\n");
+		iscsi_trace_error("length must be a multiple of sg_factor\n");
 		return -1;
 	}
 	if (length > ((max_lba + 1) * block_len)) {
-		TRACE_ERROR("attempt to read past device (max length %u)\n", max_lba * block_len);
+		iscsi_trace_error("attempt to read past device (max length %u)\n", max_lba * block_len);
 		return -1;
 	}
 	/* Allocate sg and data buffers; fill data buffers with pattern */
 
 	if ((sg = iscsi_malloc(sg_factor * sizeof(struct iovec))) == NULL) {
-		TRACE_ERROR("out of memory\n");
+		iscsi_trace_error("out of memory\n");
 		return -1;
 	}
 	if ((data = iscsi_malloc(sg_factor * sizeof(uint8_t *))) == NULL) {
-		TRACE_ERROR("out of memory\n");
+		iscsi_trace_error("out of memory\n");
 		return -1;
 	}
 	for (i = 0; i < sg_factor; i++) {
 		if ((data[i] = iscsi_malloc(length / sg_factor)) == NULL) {
-			TRACE_ERROR("out of memory\n");
+			iscsi_trace_error("out of memory\n");
 			return -1;
 		}
 		for (j = 0; j < (length / sg_factor); j++) {
@@ -560,14 +560,14 @@ integrity_test(uint32_t target, uint32_t lun, uint32_t length, int sg_factor)
 		sg[j].iov_len = length / sg_factor;
 	}
 	if (read_or_write(target, lun, 0, length / block_len, block_len, (uint8_t *) sg, sg_factor, 1) != 0) {
-		TRACE_ERROR("read_or_write() failed\n");
+		iscsi_trace_error("read_or_write() failed\n");
 		goto done;
 	}
 	for (i = 0; i < sg_factor; i++) {
 		for (j = 0; j < (length / sg_factor); j++) {
 			/* if (data[i][j] != (uint8_t)(i+j)) { */
 			if (data[i][j] != (uint8_t) (i + 1)) {
-				TRACE_ERROR("Bad byte data[%i][%i]: got %u, expected %u\n", i, j, data[i][j], (uint8_t) (i + j));
+				iscsi_trace_error("Bad byte data[%i][%i]: got %u, expected %u\n", i, j, data[i][j], (uint8_t) (i + j));
 				goto done;
 			}
 		}
@@ -581,14 +581,14 @@ integrity_test(uint32_t target, uint32_t lun, uint32_t length, int sg_factor)
 		sg[j].iov_len = length / sg_factor;
 	}
 	if (read_or_write(target, lun, 0, length / block_len, block_len, (uint8_t *) sg, sg_factor, 0) != 0) {
-		TRACE_ERROR("read_or_write() failed\n");
+		iscsi_trace_error("read_or_write() failed\n");
 		goto done;
 	}
 	for (i = 0; i < sg_factor; i++) {
 		for (j = 0; j < (length / sg_factor); j++) {
 			/* if (data[i][j] != (uint8_t)(i+j)) { */
 			if (data[i][j] != (uint8_t) (i + 1)) {
-				TRACE_ERROR("Bad byte data[%i][%i]: got %u, expected %u\n", i, j, data[i][j], (uint8_t) (i + j));
+				iscsi_trace_error("Bad byte data[%i][%i]: got %u, expected %u\n", i, j, data[i][j], (uint8_t) (i + j));
 				goto done;
 			}
 		}
@@ -613,7 +613,7 @@ nop_test(uint32_t target, uint32_t lun, uint32_t iters)
 	int             i, j, k;
 
 	if ((data = iscsi_malloc(4096)) == NULL) {
-		TRACE_ERROR("iscsi_malloc() failed\n");
+		iscsi_trace_error("iscsi_malloc() failed\n");
 		return -1;
 	}
 	/* Fill with some pattern */
@@ -627,7 +627,7 @@ nop_test(uint32_t target, uint32_t lun, uint32_t iters)
 			gettimeofday(&t_start, 0);
 			for (i = 0; i < iters; i++) {
 				if (nop_out(target, lun, j, k, data) != 0) {
-					TRACE_ERROR("nop_out() failed\n");
+					iscsi_trace_error("nop_out() failed\n");
 					return -1;
 				}
 			}
@@ -635,7 +635,7 @@ nop_test(uint32_t target, uint32_t lun, uint32_t iters)
 
 			/* Output results */
 
-			PRINT("NOP_OUT (%4i bytes, ping = %i): %u iters in %.2f sec --> %.2f usec\n", j, k,
+			printf("NOP_OUT (%4i bytes, ping = %i): %u iters in %.2f sec --> %.2f usec\n", j, k,
 			      iters, toSeconds(t_stop) - toSeconds(t_start),
 			      ((toSeconds(t_stop) - toSeconds(t_start)) * 1e6) / iters);
 			if (!j)
@@ -669,16 +669,16 @@ latency_test(uint64_t target, uint32_t lun, uint8_t op, uint32_t iters)
 
 	if ((op == WRITE_10) || (op == READ_10)) {
 		if (read_capacity(target, lun, &max_lba, &block_len) != 0) {
-			TRACE_ERROR("read_capacity() failed\n");
+			iscsi_trace_error("read_capacity() failed\n");
 			return -1;
 		}
 		if ((data = iscsi_malloc(block_len)) == NULL) {
-			TRACE_ERROR("out of memory\n");
+			iscsi_trace_error("out of memory\n");
 			return -1;
 		}
 	} else {
 		if ((data = iscsi_malloc(1024)) == NULL) {
-			TRACE_ERROR("out of memory\n");
+			iscsi_trace_error("out of memory\n");
 			return -1;
 		}
 	}
@@ -755,7 +755,7 @@ latency_test(uint64_t target, uint32_t lun, uint8_t op, uint32_t iters)
 #endif
 		break;
 	default:
-		TRACE_ERROR("op 0x%x not implemented\n", op);
+		iscsi_trace_error("op 0x%x not implemented\n", op);
 		return -1;
 	}
 
@@ -779,11 +779,11 @@ latency_test(uint64_t target, uint32_t lun, uint8_t op, uint32_t iters)
 	gettimeofday(&t_start, 0);
 	for (i = 0; i < iters; i++) {
 		if (initiator_command(&cmd) != 0) {
-			TRACE_ERROR("initiator_command() failed\n");
+			iscsi_trace_error("initiator_command() failed\n");
 			goto done;
 		}
 		if (args.status) {
-			TRACE_ERROR("scsi_command() failed (status 0x%x)\n", args.status);
+			iscsi_trace_error("scsi_command() failed (status 0x%x)\n", args.status);
 			goto done;
 		}
 	}
@@ -791,7 +791,7 @@ latency_test(uint64_t target, uint32_t lun, uint8_t op, uint32_t iters)
 
 	/* Output results */
 
-	PRINT("SCSI op 0x%2x: %u iters in %.2f sec --> %.2f usec\n",
+	printf("SCSI op 0x%2x: %u iters in %.2f sec --> %.2f usec\n",
 	      op, iters, toSeconds(t_stop) - toSeconds(t_start),
 	      ((toSeconds(t_stop) - toSeconds(t_start)) * 1e6) / iters);
 
@@ -833,7 +833,7 @@ scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
 	/* Number of iterations (xfer_chunk bytes read/written per iteration) */
 
 	if (xfer_size % xfer_chunk) {
-		TRACE_ERROR("xfer_size (%i) is not a multiple of xfer_chunk (%i)\n", xfer_size, xfer_chunk);
+		iscsi_trace_error("xfer_size (%i) is not a multiple of xfer_chunk (%i)\n", xfer_size, xfer_chunk);
 		return -1;
 	}
 	n = xfer_size / xfer_chunk;
@@ -841,11 +841,11 @@ scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
 	/* Number of blocks per iteration */
 
 	if (read_capacity(target, lun, &max_lba, &block_len) != 0) {
-		TRACE_ERROR("read_capacity() failed\n");
+		iscsi_trace_error("read_capacity() failed\n");
 		return -1;
 	}
 	if (xfer_chunk % block_len) {
-		TRACE_ERROR("xfer_chunk (%i) is not a multiple of block_len (%i)\n", xfer_chunk, block_len);
+		iscsi_trace_error("xfer_chunk (%i) is not a multiple of block_len (%i)\n", xfer_chunk, block_len);
 		return -1;
 	}
 	len = xfer_chunk / block_len;
@@ -867,24 +867,24 @@ scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
 		input = 1;
 		break;
 	default:
-		TRACE_ERROR("scatter/gather test not implemented for SCSI op 0x%x\n", op);
+		iscsi_trace_error("scatter/gather test not implemented for SCSI op 0x%x\n", op);
 		return -1;
 	}
 
 	/* Allocate buffers for scatter/gather */
 
 	if ((buff = iscsi_malloc(len * sizeof(uint8_t *))) == NULL) {
-		TRACE_ERROR("out of memory\n");
+		iscsi_trace_error("out of memory\n");
 		return -1;
 	}
 	for (i = 0; i < len; i++) {
 		buff[i] = iscsi_malloc(block_len);
 		if (buff[i] == NULL) {
-			TRACE_ERROR("out of memory\n");
+			iscsi_trace_error("out of memory\n");
 		}
 	}
 	if ((sg = iscsi_malloc(len * sizeof(struct iovec))) == NULL) {
-		TRACE_ERROR("out of memory\n");
+		iscsi_trace_error("out of memory\n");
 		return -1;
 	}
 	for (i = 0; i < len; i++) {
@@ -941,11 +941,11 @@ scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
 		cmd.ptr = &args;
 
 		if (initiator_command(&cmd) != 0) {
-			TRACE_ERROR("initiator_command() failed\n");
+			iscsi_trace_error("initiator_command() failed\n");
 			goto done;
 		}
 		if (args.status) {
-			TRACE_ERROR("scsi_command() failed (status 0x%x)\n", args.status);
+			iscsi_trace_error("scsi_command() failed (status 0x%x)\n", args.status);
 			goto done;
 		}
 	}
@@ -980,57 +980,57 @@ osd_tests(int target, int lun)
 	uint16_t        len;
 
 	if (osd_create_group((void *) &dev, &osd_command, &GroupID) != 0) {
-		TRACE_ERROR("osd_create_group() failed\n");
+		iscsi_trace_error("osd_create_group() failed\n");
 		return -1;
 	}
-	PRINT("OSD_CREATE_GROUP: PASSED\n");
+	printf("OSD_CREATE_GROUP: PASSED\n");
 
 	if (osd_create((void *) &dev, GroupID, &osd_command, &UserID) != 0) {
-		TRACE_ERROR("osd_create() failed\n");
+		iscsi_trace_error("osd_create() failed\n");
 		return -1;
 	}
-	PRINT("OSD_CREATE: PASSED\n");
+	printf("OSD_CREATE: PASSED\n");
 
 	if (osd_write((void *) &dev, GroupID, UserID, 0, 13, "Hello, World!", 0, &osd_command) != 0) {
-		TRACE_ERROR("osd_write() failed\n");
+		iscsi_trace_error("osd_write() failed\n");
 		return -1;
 	}
-	PRINT("OSD_WRITE: PASSED\n");
+	printf("OSD_WRITE: PASSED\n");
 
 	if (osd_read((void *) &dev, GroupID, UserID, 0, 13, buffer, 0, &osd_command) != 0) {
-		TRACE_ERROR("osd_write() failed\n");
+		iscsi_trace_error("osd_write() failed\n");
 	}
 	if (strncmp(buffer, "Hello, World!", 13)) {
-		TRACE_ERROR("osd_read() failed\n");
+		iscsi_trace_error("osd_read() failed\n");
 		return -1;
 	}
-	PRINT("OSD_READ: PASSED\n");
+	printf("OSD_READ: PASSED\n");
 
 	if (osd_set_one_attr((void *) &dev, GroupID, UserID, 0x30000000, 0x1, 480, buffer, &osd_command) != 0) {
-		TRACE_ERROR("osd_write() failed\n");
+		iscsi_trace_error("osd_write() failed\n");
 	}
-	PRINT("OSD_SET_ATTR: PASSED\n");
+	printf("OSD_SET_ATTR: PASSED\n");
 
 	if (osd_get_one_attr((void *) &dev, GroupID, UserID, 0x30000000, 0, 480, &osd_command, &len, buffer) != 0) {
-		TRACE_ERROR("osd_get_one_attr() failed\n");
+		iscsi_trace_error("osd_get_one_attr() failed\n");
 	}
 	if (strncmp(buffer, "Hello, World!", 13)) {
-		TRACE_ERROR("osd_read() failed\n");
+		iscsi_trace_error("osd_read() failed\n");
 		return -1;
 	}
-	PRINT("OSD_GET_ATTR: PASSED\n");
+	printf("OSD_GET_ATTR: PASSED\n");
 
 	if (osd_remove((void *) &dev, GroupID, UserID, &osd_command) != 0) {
-		TRACE_ERROR("osd_remove() failed\n");
+		iscsi_trace_error("osd_remove() failed\n");
 		return -1;
 	}
-	PRINT("OSD_REMOVE: PASSED\n");
+	printf("OSD_REMOVE: PASSED\n");
 
 	if (osd_remove_group((void *) &dev, GroupID, &osd_command) != 0) {
-		TRACE_ERROR("osd_remove_group() failed\n");
+		iscsi_trace_error("osd_remove_group() failed\n");
 		return -1;
 	}
-	PRINT("OSD_REMOVE: PASSED\n");
+	printf("OSD_REMOVE: PASSED\n");
 
 	return 0;
 }
@@ -1047,48 +1047,48 @@ disk_tests(int target, int lun)
 	/* Initial Tests */
 
 	if (read_capacity(target, lun, &max_lba, &block_len) != 0) {
-		TRACE_ERROR("read_capacity() failed\n");
+		iscsi_trace_error("read_capacity() failed\n");
 		return -1;
 	}
-	PRINT("read_capacity PASSED\n");
+	printf("read_capacity PASSED\n");
 	if (write_read_test(target, lun, 10) != 0) {
-		TRACE_ERROR("write_read_test() failed\n");
+		iscsi_trace_error("write_read_test() failed\n");
 		return -1;
 	}
-	PRINT("write_read_test PASSED\n");
+	printf("write_read_test PASSED\n");
 	if (integrity_test(target, lun, max_request_size, 1024) != 0) {
-		TRACE_ERROR("integrity_test() failed\n");
+		iscsi_trace_error("integrity_test() failed\n");
 		return -1;
 	}
-	PRINT("integrity_test PASSED\n");
+	printf("integrity_test PASSED\n");
 
 	/* Latency Tests */
 
 	if (latency_test(target, lun, READ_10, 1000) != 0) {
-		TRACE_ERROR("latency_test(READ_10) failed\n");
+		iscsi_trace_error("latency_test(READ_10) failed\n");
 		return -1;
 	}
 	if (latency_test(target, lun, WRITE_10, 1000) != 0) {
-		TRACE_ERROR("latency_test(WRITE_10) failed\n");
+		iscsi_trace_error("latency_test(WRITE_10) failed\n");
 		return -1;
 	}
 	if (latency_test(target, lun, READ_CAPACITY, 1000) != 0) {
-		TRACE_ERROR("latency_test(READ_CAPACITY) failed\n");
+		iscsi_trace_error("latency_test(READ_CAPACITY) failed\n");
 		return -1;
 	}
 	/* Throughput Tests */
 
 	for (request_size = min_request_size; request_size <= max_request_size; request_size *= 2) {
-		PRINT("%u bytes/request: ", request_size);
+		printf("%u bytes/request: ", request_size);
 		if (throughput_test(target, lun, xfer_size, request_size, (xfer_size / request_size) + 1, 1, 1) != 0) {
-			TRACE_ERROR("througput_test() failed\n");
+			iscsi_trace_error("througput_test() failed\n");
 			return -1;
 		}
 	}
 	for (request_size = min_request_size; request_size <= max_request_size; request_size *= 2) {
-		PRINT("%u bytes/request: ", request_size);
+		printf("%u bytes/request: ", request_size);
 		if (throughput_test(target, lun, xfer_size, request_size, (xfer_size / request_size) + 1, 0, 1) != 0) {
-			TRACE_ERROR("througput_test() failed\n");
+			iscsi_trace_error("througput_test() failed\n");
 			return -1;
 		}
 	}
@@ -1104,66 +1104,66 @@ test_all(int target, int lun)
 
 	/* Initial Tests */
 
-	PRINT("##BEGIN INITIAL TESTS[%i:%i]##\n", target, lun);
+	printf("##BEGIN INITIAL TESTS[%i:%i]##\n", target, lun);
 	if (nop_out(target, lun, 13, 0, data) != 0) {
-		TRACE_ERROR("nop_out() failed\n");
+		iscsi_trace_error("nop_out() failed\n");
 		return -1;
 	}
-	PRINT("nop_out() PASSED\n");
+	printf("nop_out() PASSED\n");
 	if (nop_out(target, lun, 13, 1, data) != 0) {
-		TRACE_ERROR("nop_out() w/ ping failed\n");
+		iscsi_trace_error("nop_out() w/ ping failed\n");
 		return -1;
 	}
-	PRINT("nop_out() w/ ping PASSED\n");
+	printf("nop_out() w/ ping PASSED\n");
 	if (inquiry(target, lun, &device_type) != 0) {
-		TRACE_ERROR("inquiry() failed\n");
+		iscsi_trace_error("inquiry() failed\n");
 		return -1;
 	}
-	PRINT("inquiry() PASSED: device type 0x%x\n", device_type);
-	PRINT("##END INITIAL TESTS[%i:%i]##\n\n", target, lun);
+	printf("inquiry() PASSED: device type 0x%x\n", device_type);
+	printf("##END INITIAL TESTS[%i:%i]##\n\n", target, lun);
 
 	/* iSCSI Latency Tests */
 
-	PRINT("##BEGIN iSCSI LATENCY TESTS[%i:%i]##\n", target, lun);
+	printf("##BEGIN iSCSI LATENCY TESTS[%i:%i]##\n", target, lun);
 	if (nop_test(target, lun, 1000) != 0) {
-		TRACE_ERROR("nop_test() failed\n");
+		iscsi_trace_error("nop_test() failed\n");
 		return -1;
 	}
-	PRINT("##END iSCSI LATENCY TESTS[%i:%i]##\n\n", target, lun);
+	printf("##END iSCSI LATENCY TESTS[%i:%i]##\n\n", target, lun);
 
 	/* SCSI Latency Tests */
 
-	PRINT("##BEGIN SCSI LATENCY TESTS[%i:%i]##\n", target, lun);
+	printf("##BEGIN SCSI LATENCY TESTS[%i:%i]##\n", target, lun);
 	if (latency_test(target, lun, TEST_UNIT_READY, 1000) != 0) {
-		TRACE_ERROR("latency_test(TEST_UNIT_READY) failed\n");
+		iscsi_trace_error("latency_test(TEST_UNIT_READY) failed\n");
 		return -1;
 	}
 	if (latency_test(target, lun, INQUIRY, 1000) != 0) {
-		TRACE_ERROR("latency_test(INQUIRY) failed\n");
+		iscsi_trace_error("latency_test(INQUIRY) failed\n");
 		return -1;
 	}
-	PRINT("##END SCSI LATENCY TESTS[%i:%i]##\n\n", target, lun);
+	printf("##END SCSI LATENCY TESTS[%i:%i]##\n\n", target, lun);
 
 	/* Device-specific tests */
 
-	PRINT("##BEGIN DEVICE-SPECIFIC TESTS[%i:%i]##\n", target, lun);
+	printf("##BEGIN DEVICE-SPECIFIC TESTS[%i:%i]##\n", target, lun);
 	switch (device_type) {
 	case 0x00:
 		if (disk_tests(target, lun) != 0) {
-			TRACE_ERROR("disk_tests() failed\n");
+			iscsi_trace_error("disk_tests() failed\n");
 			return -1;
 		}
 		break;
 	case 0x0e:
 		if (osd_tests(target, lun) != 0) {
-			TRACE_ERROR("osd_tests() failed\n");
+			iscsi_trace_error("osd_tests() failed\n");
 			return -1;
 		}
 		break;
 	default:
 		break;
 	}
-	PRINT("##END DEVICE-SPECIFIC TESTS[%i:%i]##\n\n", target, lun);
+	printf("##END DEVICE-SPECIFIC TESTS[%i:%i]##\n\n", target, lun);
 
 	return 0;
 }
@@ -1240,11 +1240,11 @@ osd_command(void *dev, osd_args_t * args, OSD_OPS_MEM * m)
 	/* Execute initiator_cmd_t  */
 
 	if (initiator_command(&initiator_cmd) != 0) {
-		TRACE_ERROR("initiator_command() failed\n");
+		iscsi_trace_error("initiator_command() failed\n");
 		return -1;
 	}
 	if (scsi_cmd.status != 0) {
-		TRACE_ERROR("SCSI command failed\n");
+		iscsi_trace_error("SCSI command failed\n");
 		return -1;
 	}
 	return 0;

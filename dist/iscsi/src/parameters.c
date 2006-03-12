@@ -61,7 +61,7 @@ param_list_add(iscsi_parameter_t ** head, int type, const char *key, const char 
 
 	if (*head == NULL) {
 		if ((*head = iscsi_malloc_atomic(sizeof(iscsi_parameter_t))) == NULL) {
-			TRACE_ERROR("out of memory\n");
+			iscsi_trace_error("out of memory\n");
 			return -1;
 		}
 		param = *head;
@@ -69,7 +69,7 @@ param_list_add(iscsi_parameter_t ** head, int type, const char *key, const char 
 		for (param = *head; param->next != NULL; param = param->next) {
 		}
 		if ((param->next = iscsi_malloc_atomic(sizeof(iscsi_parameter_t))) == NULL) {
-			TRACE_ERROR("out of memory\n");
+			iscsi_trace_error("out of memory\n");
 			return -1;
 		}
 		param = param->next;
@@ -92,7 +92,7 @@ param_list_add(iscsi_parameter_t ** head, int type, const char *key, const char 
 	/* set offer and answer lists to NULL */
 
 	if ((param->value_l = iscsi_malloc_atomic(sizeof(iscsi_parameter_value_t))) == NULL) {
-		TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+		iscsi_trace_error("iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
 	param->value_l->next = NULL;
@@ -114,7 +114,7 @@ param_list_add(iscsi_parameter_t ** head, int type, const char *key, const char 
 		    strcmp(valid, "no,yes") != 0 &&
 		    strcmp(valid, "no") != 0 &&
 		    strcmp(valid, "yes") != 0) {
-			TRACE_ERROR("bad <valid> field \"%s\" for ISCSI_PARAM_TYPE_BINARY\n", valid);
+			iscsi_trace_error("bad <valid> field \"%s\" for ISCSI_PARAM_TYPE_BINARY\n", valid);
 			return -1;
 		}
 		break;
@@ -127,7 +127,7 @@ param_list_add(iscsi_parameter_t ** head, int type, const char *key, const char 
 		    strcmp(valid, "no,yes") != 0 &&
 		    strcmp(valid, "no") != 0 &&
 		    strcmp(valid, "yes") != 0) {
-			TRACE_ERROR("bad <valid> field \"%s\" for ISCSI_PARAM_TYPE_BINARY\n", valid);
+			iscsi_trace_error("bad <valid> field \"%s\" for ISCSI_PARAM_TYPE_BINARY\n", valid);
 			return -1;
 		}
 		break;
@@ -138,11 +138,11 @@ param_list_add(iscsi_parameter_t ** head, int type, const char *key, const char 
 	case ISCSI_PARAM_TYPE_LIST:
 		break;
 	default:
-		TRACE_ERROR("unknown parameter type %i\n", type);
+		iscsi_trace_error("unknown parameter type %i\n", type);
 		return -1;
 	}
 
-	TRACE(TRACE_ISCSI_PARAM, "\"%s\": valid \"%s\", default \"%s\", current \"%s\"\n",
+	iscsi_trace(TRACE_ISCSI_PARAM, "\"%s\": valid \"%s\", default \"%s\", current \"%s\"\n",
 	      param->key, param->valid, param->dflt, param->value_l->value);
 		return 0;
 }
@@ -160,13 +160,13 @@ param_list_destroy(iscsi_parameter_t * head)
 			for (item_ptr = tmp->value_l; item_ptr != NULL; item_ptr = next) {
 				next = item_ptr->next;
 				/*
-				 * TRACE(TRACE_ISCSI_PARAM, "freeing \"%s\"
+				 * iscsi_trace(TRACE_ISCSI_PARAM, "freeing \"%s\"
 				 * (%p)\n", item_ptr->value, item_ptr);
 				 */
 				iscsi_free_atomic(item_ptr);
 			}
 		}
-		/* TRACE(TRACE_ISCSI_PARAM, "freeing %p\n", tmp); */
+		/* iscsi_trace(TRACE_ISCSI_PARAM, "freeing %p\n", tmp); */
 		iscsi_free_atomic(tmp);
 	}
 	return 0;
@@ -183,7 +183,7 @@ param_get(iscsi_parameter_t * head, const char *key)
 			return ptr;
 		}
 	}
-	TRACE_ERROR("key \"%s\" not found in param list\n", key);
+	iscsi_trace_error("key \"%s\" not found in param list\n", key);
 	return NULL;
 }
 
@@ -205,19 +205,19 @@ param_val_which(iscsi_parameter_t * head, const char *key, int which)
 			item_ptr = ptr->value_l;
 			for (i = 0; i != which; i++) {
 				if (item_ptr == NULL) {
-					TRACE_ERROR("item %i in value list is NULL\n", i);
+					iscsi_trace_error("item %i in value list is NULL\n", i);
 					return NULL;
 				}
 				item_ptr = item_ptr->next;
 			}
 			if (item_ptr == NULL) {
-				TRACE_ERROR("item %i in value list is NULL\n", which);
+				iscsi_trace_error("item %i in value list is NULL\n", which);
 				return NULL;
 			}
 			return item_ptr->value;
 		}
 	}
-	TRACE_ERROR("key \"%s\" not found in param list\n", key);
+	iscsi_trace_error("key \"%s\" not found in param list\n", key);
 	return NULL;
 }
 
@@ -237,7 +237,7 @@ param_val_delete_all(iscsi_parameter_t * head, char *key)
 			return 0;
 		}
 	}
-	TRACE_ERROR("key \"%s\" not found in param list\n", key);
+	iscsi_trace_error("key \"%s\" not found in param list\n", key);
 	return -1;
 }
 
@@ -252,7 +252,7 @@ param_val_reset(iscsi_parameter_t * head, const char *key)
 			return 0;
 		}
 	}
-	TRACE_ERROR("key \"%s\" not found in param list\n", key);
+	iscsi_trace_error("key \"%s\" not found in param list\n", key);
 	return -1;
 }
 
@@ -268,16 +268,16 @@ param_atoi(iscsi_parameter_t * head, const char *key)
 				if ((value = param_val(head, key)) != NULL) {
 					return iscsi_atoi(value);
 				} else {
-					TRACE_ERROR("value is NULL\n");
+					iscsi_trace_error("value is NULL\n");
 					return 0;
 				}
 			} else {
-				TRACE_ERROR("param \"%s\" has NULL value list\n", key);
+				iscsi_trace_error("param \"%s\" has NULL value list\n", key);
 				return 0;
 			}
 		}
 	}
-	TRACE_ERROR("key \"%s\" not found in param list\n", key);
+	iscsi_trace_error("key \"%s\" not found in param list\n", key);
 	return 0;
 }
 
@@ -290,17 +290,17 @@ param_equiv(iscsi_parameter_t * head, const char *key, const char *val)
 	for (ptr = head; ptr != NULL; ptr = ptr->next) {
 		if (strcmp(ptr->key, key) == 0) {
 			if (ptr->value_l == NULL) {
-				TRACE_ERROR("param \"%s\" has NULL value list\n", key);
+				iscsi_trace_error("param \"%s\" has NULL value list\n", key);
 				return 0;
 			}
 			if ((value = param_val(head, key)) == NULL) {
-				TRACE_ERROR("key \"%s\" value is NULL\n", key);
+				iscsi_trace_error("key \"%s\" value is NULL\n", key);
 				return 0;
 			}
 			return (strcmp(value, val) == 0);
 		}
 	}
-	TRACE_ERROR("key \"%s\" not found in param list\n", key);
+	iscsi_trace_error("key \"%s\" not found in param list\n", key);
 	return -1;
 }
 
@@ -319,7 +319,7 @@ param_num_vals(iscsi_parameter_t * head, char *key)
 			return num;
 		}
 	}
-	TRACE_ERROR("key \"%s\" not found in param list\n", key);
+	iscsi_trace_error("key \"%s\" not found in param list\n", key);
 	return -1;
 }
 
@@ -331,7 +331,7 @@ param_list_print(iscsi_parameter_t * head)
 
 	for (ptr = head; ptr != NULL; ptr = ptr->next) {
 		for (item_ptr = ptr->value_l; item_ptr != NULL; item_ptr = item_ptr->next) {
-			PRINT("\"%s\"=\"%s\"\n", ptr->key, item_ptr->value);
+			printf("\"%s\"=\"%s\"\n", ptr->key, item_ptr->value);
 		}
 	}
 	return 0;
@@ -353,13 +353,13 @@ param_text_print(char *text, uint32_t text_len)
 			break;
 
 		if ((eq = strchr(ptr, '=')) == NULL) {
-			TRACE_ERROR("delimiter \'=\' not found in token \"%s\"\n", ptr);
+			iscsi_trace_error("delimiter \'=\' not found in token \"%s\"\n", ptr);
 			return -1;
 		}
 		strncpy(key, ptr, (unsigned)(eq - ptr));
 		key[(int)(eq - ptr)] = 0x0;
 		value = eq + 1;
-		PRINT("\"%s\"=\"%s\"\n", key, value);
+		printf("\"%s\"=\"%s\"\n", key, value);
 	}
 	return 0;
 }
@@ -400,7 +400,7 @@ find_credentials(cred_t *cred, char *user, const char *auth)
 	(void) memset(&e, 0x0, sizeof(e));
 
 	if (!conffile_open(&conf, _PATH_ISCSI_PASSWD, "r", ":", "#")) {
-		TRACE_ERROR("can't open `%s'\n", _PATH_ISCSI_PASSWD);
+		iscsi_trace_error("can't open `%s'\n", _PATH_ISCSI_PASSWD);
 		exit(EXIT_FAILURE);
 	}
 	while (conffile_getent(&conf, &e)) {
@@ -462,11 +462,11 @@ param_parse_security(iscsi_parameter_t * head,
 	int             ret = 1;
 
 	if ((chapstring = iscsi_malloc(ISCSI_CHAP_STRING_LENGTH)) == NULL) {
-		TRACE_ERROR("iscsi_malloc() failed\n");
+		iscsi_trace_error("iscsi_malloc() failed\n");
 		return -1;
 	}
 	if ((context = iscsi_malloc(sizeof(MD5Context_t))) == NULL) {
-		TRACE_ERROR("iscsi_malloc() failed\n");
+		iscsi_trace_error("iscsi_malloc() failed\n");
 		if (chapstring != NULL)
 			iscsi_free(chapstring);
 		return -1;
@@ -541,14 +541,14 @@ param_parse_security(iscsi_parameter_t * head,
 		param->rx_offer = 0;	/* reset */
 
 		if (cred->shared_secret == NULL && !find_credentials(cred, cred->user, "chap")) {
-			TRACE_ERROR("Unknown user `%s'\n", param_in->offer_rx);
+			iscsi_trace_error("Unknown user `%s'\n", param_in->offer_rx);
 			PPS_ERROR;
 		}
 
 		if (cred->user) {
 			(void) strlcpy(param->offer_tx, cred->user, sizeof(param->offer_tx));
 		} else {
-			TRACE_ERROR("no valid user credentials\n");
+			iscsi_trace_error("no valid user credentials\n");
 			PPS_ERROR;
 		}
 
@@ -564,7 +564,7 @@ param_parse_security(iscsi_parameter_t * head,
 		MD5Update(context, &idData, 1);
 
 		if (cred->shared_secret == NULL) {
-			TRACE_ERROR("null shared secret\n");
+			iscsi_trace_error("null shared secret\n");
 			PPS_ERROR;
 		} else {
 			MD5Update(context, cred->shared_secret, strlen(cred->shared_secret));
@@ -612,7 +612,7 @@ param_parse_security(iscsi_parameter_t * head,
 
 		user = (param_in->rx_offer) ? param_in->offer_rx : param_in->answer_rx;
 		if (!find_credentials(cred, user, "chap")) {
-			TRACE_ERROR("Unknown user `%s'\n", user);
+			iscsi_trace_error("Unknown user `%s'\n", user);
 			PPS_ERROR;
 		}
 		ret++;
@@ -628,7 +628,7 @@ param_parse_security(iscsi_parameter_t * head,
 			      chapstring, ISCSI_CHAP_STRING_LENGTH);
 
 		if (cred->shared_secret == NULL) {
-			TRACE_ERROR("Null shared secret in initiator\n");
+			iscsi_trace_error("Null shared secret in initiator\n");
 			PPS_ERROR;
 		} else {
 			MD5Update(context, cred->shared_secret, strlen(cred->shared_secret));
@@ -644,7 +644,7 @@ param_parse_security(iscsi_parameter_t * head,
 			      param_in->offer_rx, ISCSI_CHAP_STRING_LENGTH);
 
 		if (memcmp(respdata, chapdata, ISCSI_CHAP_DATA_LENGTH) != 0) {
-			TRACE_ERROR("Initiator authentication failed %x %x\n", *chapdata, *respdata);
+			iscsi_trace_error("Initiator authentication failed %x %x\n", *chapdata, *respdata);
 			PPS_ERROR;
 		} else {
 			PPS_CLEANUP;
@@ -688,21 +688,21 @@ param_text_parse(iscsi_parameter_t * head,
 	 */
 	/* text has offers that need an answer. */
 
-	TRACE(TRACE_ISCSI_PARAM, "parsing %i %s bytes of text parameters\n", text_len_in, outgoing ? "outgoing" : "incoming");
+	iscsi_trace(TRACE_ISCSI_PARAM, "parsing %i %s bytes of text parameters\n", text_len_in, outgoing ? "outgoing" : "incoming");
 
 	if ((key = iscsi_malloc(ISCSI_PARAM_KEY_LEN)) == NULL) {
-		TRACE_ERROR("iscsi_malloc() failed\n");
+		iscsi_trace_error("iscsi_malloc() failed\n");
 		return -1;
 	}
 	if ((offer = iscsi_malloc(ISCSI_PARAM_MAX_LEN)) == NULL) {
-		TRACE_ERROR("iscsi_malloc() failed\n");
+		iscsi_trace_error("iscsi_malloc() failed\n");
 		if (key != NULL) {
 			iscsi_free(key);
 		}
 		return -1;
 	}
 	if ((valid = iscsi_malloc(ISCSI_PARAM_MAX_LEN)) == NULL) {
-		TRACE_ERROR("iscsi_malloc() failed\n");
+		iscsi_trace_error("iscsi_malloc() failed\n");
 		if (key != NULL) {
 			iscsi_free(key);
 		}
@@ -712,7 +712,7 @@ param_text_parse(iscsi_parameter_t * head,
 		return -1;
 	}
 	if ((val1 = iscsi_malloc(ISCSI_PARAM_MAX_LEN)) == NULL) {
-		TRACE_ERROR("iscsi_malloc() failed\n");
+		iscsi_trace_error("iscsi_malloc() failed\n");
 		if (key != NULL) {
 			iscsi_free(key);
 		}
@@ -725,7 +725,7 @@ param_text_parse(iscsi_parameter_t * head,
 		return -1;
 	}
 	if ((val2 = iscsi_malloc(ISCSI_PARAM_MAX_LEN)) == NULL) {
-		TRACE_ERROR("iscsi_malloc() failed\n");
+		iscsi_trace_error("iscsi_malloc() failed\n");
 		if (key != NULL) {
 			iscsi_free(key);
 		}
@@ -753,9 +753,9 @@ param_text_parse(iscsi_parameter_t * head,
 	}
 
 #if ISCSI_DEBUG
-	PRINT("**************************************************\n");
-	PRINT("*              PARAMETERS NEGOTIATED             *\n");
-	PRINT("*                                                *\n");
+	printf("**************************************************\n");
+	printf("*              PARAMETERS NEGOTIATED             *\n");
+	printf("*                                                *\n");
 #endif
 
 	for (ptr = text_in; ptr - text_in < text_len_in; ptr += (strlen(ptr) + 1)) {
@@ -772,7 +772,7 @@ param_text_parse(iscsi_parameter_t * head,
 		/* Extract <key>=<value> token from text_in */
 
 		if ((eq = strchr(ptr, '=')) == NULL) {
-			TRACE_ERROR("delimiter \'=\' not found in token \"%s\"\n", ptr);
+			iscsi_trace_error("delimiter \'=\' not found in token \"%s\"\n", ptr);
 		} else {
 			if ((int)(eq - ptr) >= (ISCSI_PARAM_KEY_LEN - 1)) {
 				if (!outgoing) {
@@ -784,7 +784,7 @@ param_text_parse(iscsi_parameter_t * head,
 						PARAM_TEXT_ADD(head, tmp_key, "NotUnderstood", text_out, text_len_out, textsize, 0, PTP_ERROR);
 					}
 				} else {
-					PRINT("ignoring \"%s\"\n", key);
+					printf("ignoring \"%s\"\n", key);
 				}
 				goto next;
 			}
@@ -805,7 +805,7 @@ param_text_parse(iscsi_parameter_t * head,
 				/* Key not understood. */
 				PARAM_TEXT_ADD(head, key, "NotUnderstood", text_out, text_len_out, textsize, 0, PTP_ERROR);
 			} else {
-				PRINT("ignoring \"%s\"\n", key);
+				printf("ignoring \"%s\"\n", key);
 			}
 			goto next;
 		}
@@ -817,14 +817,14 @@ param_text_parse(iscsi_parameter_t * head,
 			if (param->rx_offer) {
 				param->tx_answer = 1;	/* sending an answer */
 				(void) strlcpy(param->answer_tx, value, sizeof(param->answer_tx));
-				TRACE(TRACE_ISCSI_PARAM, "sending answer \"%s\"=\"%s\" for offer \"%s\"\n",
+				iscsi_trace(TRACE_ISCSI_PARAM, "sending answer \"%s\"=\"%s\" for offer \"%s\"\n",
 				      param->key, param->answer_tx, param->offer_rx);
 				goto negotiate;
 			} else {
 				param->tx_offer = 1;	/* sending an offer */
 				param->rx_offer = 0;	/* reset */
 				(void) strlcpy(param->offer_tx, value, sizeof(param->offer_tx));
-				TRACE(TRACE_ISCSI_PARAM, "sending offer \"%s\"=\"%s\"\n", param->key, param->offer_tx);
+				iscsi_trace(TRACE_ISCSI_PARAM, "sending offer \"%s\"=\"%s\"\n", param->key, param->offer_tx);
 				if ((param->type == ISCSI_PARAM_TYPE_DECLARATIVE) ||
 				    (param->type == ISCSI_PARAM_TYPE_DECLARE_MULTI)) {
 					goto negotiate;
@@ -836,7 +836,7 @@ param_text_parse(iscsi_parameter_t * head,
 				param->rx_answer = 1;	/* received an answer */
 				param->tx_offer = 0;	/* reset */
 				(void) strlcpy(param->answer_rx, value, sizeof(param->answer_rx));
-				TRACE(TRACE_ISCSI_PARAM, "received answer \"%s\"=\"%s\" for offer \"%s\"\n",
+				iscsi_trace(TRACE_ISCSI_PARAM, "received answer \"%s\"=\"%s\" for offer \"%s\"\n",
 				      param->key, param->answer_rx, param->offer_tx);
 
 				if ((ret = param_parse_security(head, param, cred,
@@ -859,7 +859,7 @@ param_text_parse(iscsi_parameter_t * head,
 			} else {
 				param->rx_offer = 1;	/* received an offer */
 				(void) strlcpy(param->offer_rx, value, sizeof(param->offer_rx));
-				TRACE(TRACE_ISCSI_PARAM, "received offer \"%s\"=\"%s\"\n", param->key, param->offer_rx);
+				iscsi_trace(TRACE_ISCSI_PARAM, "received offer \"%s\"=\"%s\"\n", param->key, param->offer_rx);
 
 				if ((ret = param_parse_security(head, param, cred,
 					       text_out, text_len_out, textsize)) > 1) {
@@ -895,16 +895,16 @@ answer:
 		/* Answer with current value if this is an inquiry (<key>=?) */
 
 		if (strcmp(value, "?") == 0) {
-			TRACE(TRACE_ISCSI_PARAM, "got inquiry for param \"%s\"\n", param->key);
+			iscsi_trace(TRACE_ISCSI_PARAM, "got inquiry for param \"%s\"\n", param->key);
 			if (param->value_l) {
 				if (param->value_l->value) {
 					(void) strlcpy(param->answer_tx, param->value_l->value, sizeof(param->answer_tx));
 				} else {
-					TRACE_ERROR("param \"%s\" has NULL value_l->value\n", param->key);
+					iscsi_trace_error("param \"%s\" has NULL value_l->value\n", param->key);
 					param->answer_tx[0] = 0x0;
 				}
 			} else {
-				TRACE_ERROR("param \"%s\" has NULL value_l\n", param->key);
+				iscsi_trace_error("param \"%s\" has NULL value_l\n", param->key);
 				param->answer_tx[0] = 0x0;
 			}
 			goto add_answer;
@@ -922,7 +922,7 @@ binary_or:
 			    strcmp(value, "no") != 0 &&
 			    strcmp(value, "Yes") != 0 &&
 			    strcmp(value, "No") != 0) {
-				TRACE_ERROR("\"%s\" is not a valid binary value\n", value);
+				iscsi_trace_error("\"%s\" is not a valid binary value\n", value);
 				(void) strlcpy(param->answer_tx, "Reject", sizeof(param->answer_tx));
 				goto add_answer;
 			}
@@ -991,13 +991,13 @@ binary_or:
 						}
 					}
 				} else {
-					TRACE(TRACE_ISCSI_PARAM, "Valid list empty. Answering with first in offer list\n");
+					iscsi_trace(TRACE_ISCSI_PARAM, "Valid list empty. Answering with first in offer list\n");
 					(void) strlcpy(param->answer_tx, offer, sizeof(param->answer_tx));
 					goto add_answer;
 				}
-				TRACE(TRACE_ISCSI_PARAM, "\"%s\" is not a valid offer for key \"%s\" (must choose from \"%s\")\n", offer, param->key, param->valid);
+				iscsi_trace(TRACE_ISCSI_PARAM, "\"%s\" is not a valid offer for key \"%s\" (must choose from \"%s\")\n", offer, param->key, param->valid);
 			}
-			TRACE(TRACE_ISCSI_PARAM, "No Valid offers: \"%s\" is added as value for key \"%s\")\n", "Reject", param->key);
+			iscsi_trace(TRACE_ISCSI_PARAM, "No Valid offers: \"%s\" is added as value for key \"%s\")\n", "Reject", param->key);
 			(void) strlcpy(param->answer_tx, "Reject", sizeof(param->answer_tx));
 			break;
 
@@ -1039,7 +1039,7 @@ numerical:
 			goto next;
 		}
 add_answer:	PARAM_TEXT_ADD(head, key, param->answer_tx, text_out, text_len_out, textsize, 0, PTP_ERROR);
-		TRACE(TRACE_ISCSI_PARAM, "answering \"%s\"=\"%s\"\n", param->key, param->answer_tx);
+		iscsi_trace(TRACE_ISCSI_PARAM, "answering \"%s\"=\"%s\"\n", param->key, param->answer_tx);
 		goto next;
 
 
@@ -1070,7 +1070,7 @@ binary_or_negotiate:
 				    strcmp(val1, "no") != 0 &&
 				    strcmp(val1, "Irrelevant") != 0) {
 					/* Invalid value returned as answer. */
-					TRACE_ERROR("Invalid answer (%s) for key (%s)\n",
+					iscsi_trace_error("Invalid answer (%s) for key (%s)\n",
 						    val1, key);
 					PTP_ERROR;
 				}
@@ -1124,25 +1124,25 @@ numerical_negotiate:
 		case ISCSI_PARAM_TYPE_LIST:
 			if (outgoing) {
 				if (param->tx_offer) {
-					TRACE_ERROR("we should not be here\n");	/* error - we're sending
+					iscsi_trace_error("we should not be here\n");	/* error - we're sending
 										 * an offer */
 					PTP_ERROR;
 				} else if (param->tx_answer) {
 					(void) strlcpy(val1, param->answer_tx, ISCSI_PARAM_MAX_LEN);	/* we're sending an
 									 * answer */
 				} else {
-					TRACE_ERROR("unexpected error\n");
+					iscsi_trace_error("unexpected error\n");
 					PTP_ERROR;
 				}
 			} else {
 				if (param->rx_offer) {
-					TRACE_ERROR("we should not be here\n");	/* error - we received
+					iscsi_trace_error("we should not be here\n");	/* error - we received
 										 * an offer */
 					PTP_ERROR;
 				} else if (param->rx_answer) {
 					(void) strlcpy(val1, param->answer_rx, ISCSI_PARAM_MAX_LEN);	/* we received an answer */
 				} else {
-					TRACE_ERROR("unexpected error\n");
+					iscsi_trace_error("unexpected error\n");
 					PTP_ERROR;
 				}
 			}
@@ -1169,50 +1169,50 @@ numerical_negotiate:
 					}
 				}
 			} else {
-				TRACE(TRACE_ISCSI_PARAM, "Valid list empty??\n");
+				iscsi_trace(TRACE_ISCSI_PARAM, "Valid list empty??\n");
 				PTP_ERROR;
 			}
-			TRACE_ERROR("\"%s\" is not a valid value (must choose from \"%s\")\n", val1, param->valid);
+			iscsi_trace_error("\"%s\" is not a valid value (must choose from \"%s\")\n", val1, param->valid);
 			PTP_ERROR;
 value_ok:
 			(void) strlcpy(param->negotiated, val1, sizeof(param->negotiated));
 			break;
 		}
 
-		TRACE(TRACE_ISCSI_PARAM, "negotiated \"%s\"=\"%s\"\n", param->key, param->negotiated);
+		iscsi_trace(TRACE_ISCSI_PARAM, "negotiated \"%s\"=\"%s\"\n", param->key, param->negotiated);
 
 		/* For inquiries, we don't commit the value. */
 
 		if (param->tx_offer && strcmp(param->offer_tx, "?") == 0) {
 			/* we're offering an inquiry  */
-			TRACE(TRACE_ISCSI_PARAM, "sending an inquiry for \"%s\"\n", param->key);
+			iscsi_trace(TRACE_ISCSI_PARAM, "sending an inquiry for \"%s\"\n", param->key);
 			goto next;
 		} else if (param->rx_offer && strcmp(param->offer_rx, "?") == 0) {
 			/* we're receiving an inquiry  */
-			TRACE(TRACE_ISCSI_PARAM, "received an inquiry for \"%s\"\n", param->key);
+			iscsi_trace(TRACE_ISCSI_PARAM, "received an inquiry for \"%s\"\n", param->key);
 			goto next;
 		} else if (param->tx_answer && strcmp(param->offer_rx, "?") == 0) {
 			/* we're answering an inquiry  */
-			TRACE(TRACE_ISCSI_PARAM, "answering an inquiry for \"%s\"\n", param->key);
+			iscsi_trace(TRACE_ISCSI_PARAM, "answering an inquiry for \"%s\"\n", param->key);
 			goto next;
 		} else if (param->rx_answer && strcmp(param->offer_tx, "?") == 0) {
 			/* we're receiving an answer for our inquiry  */
-			TRACE(TRACE_ISCSI_PARAM, "received an answer for inquiry on \"%s\"\n", param->key);
+			iscsi_trace(TRACE_ISCSI_PARAM, "received an answer for inquiry on \"%s\"\n", param->key);
 			goto next;
 		}
-		TRACE(TRACE_ISCSI_PARAM, "automatically committing \"%s\"=\"%s\"\n", param->key, param->negotiated);
+		iscsi_trace(TRACE_ISCSI_PARAM, "automatically committing \"%s\"=\"%s\"\n", param->key, param->negotiated);
 
 		c = param->negotiated[19];
 		param->negotiated[19] = 0x0;
 #if ISCSI_DEBUG
-		PRINT("* %25s:%20s *\n", param->key, param->negotiated);
+		printf("* %25s:%20s *\n", param->key, param->negotiated);
 #endif
 		param->negotiated[19] = c;
 
 		if (param->reset) {
-			TRACE(TRACE_ISCSI_PARAM, "deleting value list for \"%s\"\n", param->key);
+			iscsi_trace(TRACE_ISCSI_PARAM, "deleting value list for \"%s\"\n", param->key);
 			if (param_val_delete_all(head, param->key) != 0) {
-				TRACE_ERROR("param_val_delete_all() failed\n");
+				iscsi_trace_error("param_val_delete_all() failed\n");
 				PTP_ERROR;
 			}
 			param->reset = 0;
@@ -1222,7 +1222,7 @@ value_ok:
 				for (item_ptr = param->value_l; item_ptr->next != NULL; item_ptr = item_ptr->next) {
 				}
 				if ((item_ptr->next = iscsi_malloc_atomic(sizeof(iscsi_parameter_value_t))) == NULL) {
-					TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+					iscsi_trace_error("iscsi_malloc_atomic() failed\n");
 					PTP_ERROR;
 				}
 				item_ptr = item_ptr->next;
@@ -1231,9 +1231,9 @@ value_ok:
 				item_ptr = param->value_l;
 			}
 		} else {
-			TRACE(TRACE_ISCSI_PARAM, "allocating value ptr\n");
+			iscsi_trace(TRACE_ISCSI_PARAM, "allocating value ptr\n");
 			if ((param->value_l = iscsi_malloc_atomic(sizeof(iscsi_parameter_value_t))) == NULL) {
-				TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+				iscsi_trace_error("iscsi_malloc_atomic() failed\n");
 				PTP_ERROR;
 			}
 			item_ptr = param->value_l;
@@ -1244,10 +1244,10 @@ next:
 		continue;
 	}
 	if (!outgoing) {
-		TRACE(TRACE_ISCSI_PARAM, "generated %d bytes response\n", *text_len_out);
+		iscsi_trace(TRACE_ISCSI_PARAM, "generated %d bytes response\n", *text_len_out);
 	}
 #if ISCSI_DEBUG
-	PRINT("**************************************************\n");
+	printf("**************************************************\n");
 #endif
 
 	PTP_CLEANUP;

@@ -133,7 +133,7 @@ static int so_ioctl(struct inode * inode, struct file * file, unsigned int cmd, 
 	Scsi_Device * SDev;
 	int osdinfo[4];
 
-	TRACE(TRACE_OSDSO, "so_ioctl()\n");
+	iscsi_trace(TRACE_OSDSO, "so_ioctl()\n");
     
 	SDev = rscsi_osds[DEVICE_NR(dev)].device;
 	/*
@@ -240,7 +240,7 @@ static int so_ioctl(struct inode * inode, struct file * file, unsigned int cmd, 
 }
 
 static void so_devname(unsigned int index, char *buffer) {
-  TRACE(TRACE_OSDSO, "so_devname(%i)\n", index);
+  iscsi_trace(TRACE_OSDSO, "so_devname(%i)\n", index);
   sprintf(buffer, "so%i", index);
 }
 
@@ -249,13 +249,13 @@ static request_queue_t *so_find_queue(kdev_t dev)
 	Scsi_Osd *dpnt;
  	int target;
 
-	TRACE(TRACE_OSDSO, "so_find_queue()\n");
+	iscsi_trace(TRACE_OSDSO, "so_find_queue()\n");
 
  	target = DEVICE_NR(dev);
 
 	dpnt = &rscsi_osds[target];
 	if (!dpnt) {
-		TRACE_ERROR("no such device\n");
+		iscsi_trace_error("no such device\n");
 		return NULL;
 	}
 	return &dpnt->device->request_queue;
@@ -269,7 +269,7 @@ static int so_init_command(Scsi_Cmnd * SCpnt)
 	osd_args_t args;
 	int index;
 
-	TRACE(TRACE_OSDSO, "so_init_command(MAJOR %i, MINOR %i)\n", 
+	iscsi_trace(TRACE_OSDSO, "so_init_command(MAJOR %i, MINOR %i)\n", 
           MAJOR(SCpnt->request.rq_dev), MINOR(SCpnt->request.rq_dev));
         index = MINOR(SCpnt->request.rq_dev);
         so_devname(index, nbuff);
@@ -279,26 +279,26 @@ static int so_init_command(Scsi_Cmnd * SCpnt)
 
         if (index >= so_template.dev_max || !dpnt || !dpnt->device->online ||
             block + SCpnt->request.nr_sectors > so[index].nr_sects) {
-          TRACE_ERROR("index %i: request out of range: %i offset + %li count > %li total sectors\n",
+          iscsi_trace_error("index %i: request out of range: %i offset + %li count > %li total sectors\n",
                       index, block, SCpnt->request.nr_sectors, so[index].nr_sects);
           return 0;
         }
 
         block += so[index].start_sect;
         if (dpnt->device->changed) {
-          TRACE_ERROR("SCSI osd has been changed. Prohibiting further I/O\n");
+          iscsi_trace_error("SCSI osd has been changed. Prohibiting further I/O\n");
           return 0;
         }
 
 	switch (SCpnt->request.cmd) {
 	case WRITE:
 
-                TRACE(TRACE_OSDSO, "Translating BLOCK WRITE to OBJECT WRITE\n");
+                iscsi_trace(TRACE_OSDSO, "Translating BLOCK WRITE to OBJECT WRITE\n");
                 if (!dpnt->device->writeable) {
-                        TRACE_ERROR("device is not writable\n");
+                        iscsi_trace_error("device is not writable\n");
                         return 0;
                 }
-                TRACE(TRACE_OSDSO, "Translating BLOCK WRITE (sector %i, len %i) to OBJECT WRITE\n", block, this_count);
+                iscsi_trace(TRACE_OSDSO, "Translating BLOCK WRITE (sector %i, len %i) to OBJECT WRITE\n", block, this_count);
                 memset(&args, 0, sizeof(osd_args_t));
                 args.opcode = 0x7f;
                 args.add_cdb_len = CONFIG_OSD_CDB_LEN-7;
@@ -314,7 +314,7 @@ static int so_init_command(Scsi_Cmnd * SCpnt)
 
 	case READ:
 
-                TRACE(TRACE_OSDSO, "Translating BLOCK READ (sector %i, len %i) to OBJECT READ\n", block, this_count);
+                iscsi_trace(TRACE_OSDSO, "Translating BLOCK READ (sector %i, len %i) to OBJECT READ\n", block, this_count);
                 memset(&args, 0, sizeof(osd_args_t));
                 args.opcode = 0x7f;
                 args.add_cdb_len = CONFIG_OSD_CDB_LEN-7;
@@ -365,7 +365,7 @@ static int so_open(struct inode *inode, struct file *filp)
 	Scsi_Device * SDev;
 	target = DEVICE_NR(inode->i_rdev);
 
-	TRACE(TRACE_OSDSO, "so_open()\n");
+	iscsi_trace(TRACE_OSDSO, "so_open()\n");
 
 	SCSI_LOG_HLQUEUE(1, printk("target=%d, max=%d\n", target, so_template.dev_max));
 
@@ -439,7 +439,7 @@ static int so_release(struct inode *inode, struct file *file)
 	int target;
 	Scsi_Device * SDev;
 
-	TRACE(TRACE_OSDSO, "so_release()\n");
+	iscsi_trace(TRACE_OSDSO, "so_release()\n");
 
 	target = DEVICE_NR(inode->i_rdev);
 	SDev = rscsi_osds[target].device;
@@ -501,7 +501,7 @@ static void rw_intr(Scsi_Cmnd * SCpnt)
 	int block_sectors = 1;
 
 	so_devname(DEVICE_NR(SCpnt->request.rq_dev), nbuff);
-        TRACE(TRACE_OSDSO, "rw_intr(/dev/%s, host %d, result 0x%x)\n", nbuff, SCpnt->host->host_no, result);
+        iscsi_trace(TRACE_OSDSO, "rw_intr(/dev/%s, host %d, result 0x%x)\n", nbuff, SCpnt->host->host_no, result);
 
 	/*
 	   Handle MEDIUM ERRORs that indicate partial success.  Since this is a
@@ -576,7 +576,7 @@ static int check_scsiosd_media_change(kdev_t full_dev)
 	int flag = 0;
 	Scsi_Device * SDev;
 
-	TRACE(TRACE_OSDSO, "check_scsiosd_media_change()\n");
+	iscsi_trace(TRACE_OSDSO, "check_scsiosd_media_change()\n");
 
 	target = DEVICE_NR(full_dev);
 	SDev = rscsi_osds[target].device;
@@ -641,11 +641,11 @@ static int so_init_oneosd(int i) {
 	char nbuff[6];
 	Scsi_Request *SRpnt;
 
-	TRACE(TRACE_OSDSO, "so_init_oneosd(%i)\n", i);
+	iscsi_trace(TRACE_OSDSO, "so_init_oneosd(%i)\n", i);
 
 	so_devname(i, nbuff);
 	if (rscsi_osds[i].device->online == FALSE) {
-		TRACE_ERROR("device is offline??\n");
+		iscsi_trace_error("device is offline??\n");
 		return i;
 	}
 
@@ -663,7 +663,7 @@ static int so_init_oneosd(int i) {
 	SRpnt->sr_data_direction = SCSI_DATA_READ;
 	scsi_wait_req (SRpnt, (void *) cmd, NULL, 0, SO_TIMEOUT, MAX_RETRIES);
         if (SRpnt->sr_result!=0) {
-		TRACE_ERROR("OSD not ready\n");
+		iscsi_trace_error("OSD not ready\n");
 		return i;
         }
 
@@ -700,18 +700,18 @@ static int so_registered;
 static int so_init() {
         int i;
 
-	TRACE(TRACE_OSDSO, "so_init()\n");
+	iscsi_trace(TRACE_OSDSO, "so_init()\n");
 
         if (so_template.dev_noticed == 0) {
-          TRACE_ERROR("no OSDs noticed\n");
+          iscsi_trace_error("no OSDs noticed\n");
           return 0;
         }
         if (!rscsi_osds) {
-          PRINT("%i osds detected \n", so_template.dev_noticed);
+          printf("%i osds detected \n", so_template.dev_noticed);
           so_template.dev_max = so_template.dev_noticed;
         }
         if (so_template.dev_max > SCSI_OSDS_PER_MAJOR) {
-          TRACE_ERROR("so_template.dev_max (%i) > SCSI_OSDS_PER_MAJOR\n", so_template.dev_max);
+          iscsi_trace_error("so_template.dev_max (%i) > SCSI_OSDS_PER_MAJOR\n", so_template.dev_max);
           so_template.dev_max = SCSI_OSDS_PER_MAJOR;
         }
         if (!so_registered) {
@@ -729,7 +729,7 @@ static int so_init() {
         /* Real devices */
 
         if ((rscsi_osds = kmalloc(so_template.dev_max * sizeof(Scsi_Osd), GFP_ATOMIC))==NULL) {
-          TRACE_ERROR("kmalloc() failed\n");
+          iscsi_trace_error("kmalloc() failed\n");
           goto cleanup_devfs;
         }
         memset(rscsi_osds, 0, so_template.dev_max * sizeof(Scsi_Osd));
@@ -738,7 +738,7 @@ static int so_init() {
         /* Partition sizes */
 
         if ((so_sizes=kmalloc(so_template.dev_max*sizeof(int), GFP_ATOMIC))==NULL) {
-          TRACE_ERROR("kmalloc() failed\n");
+          iscsi_trace_error("kmalloc() failed\n");
           goto cleanup_rscsi_osds;
         }
         memset(so_sizes, 0, so_template.dev_max*sizeof(int));
@@ -747,7 +747,7 @@ static int so_init() {
         /* Block sizes */
 
         if ((so_blocksizes=kmalloc(so_template.dev_max*sizeof(int), GFP_ATOMIC))==NULL) {
-          TRACE_ERROR("kmalloc() failed\n");
+          iscsi_trace_error("kmalloc() failed\n");
           goto cleanup_so_sizes;
         }
         blksize_size[SCSI_OSD_MAJOR] = so_blocksizes;
@@ -755,7 +755,7 @@ static int so_init() {
         /* Sector sizes */
 
         if ((so_hardsizes=kmalloc(so_template.dev_max*sizeof(int), GFP_ATOMIC))==NULL) {
-          TRACE_ERROR("kmalloc() failed\n");
+          iscsi_trace_error("kmalloc() failed\n");
           goto cleanup_so_blocksizes;
         }
         hardsect_size[SCSI_OSD_MAJOR] = so_hardsizes;
@@ -763,7 +763,7 @@ static int so_init() {
         /* Partitions */
 
         if ((so=kmalloc(so_template.dev_max*sizeof(struct hd_struct), GFP_ATOMIC))==NULL) {
-          TRACE_ERROR("kmalloc() failed\n");
+          iscsi_trace_error("kmalloc() failed\n");
           goto cleanup_so_hardsizes;
         }
         memset(so, 0, so_template.dev_max*sizeof(struct hd_struct));
@@ -781,7 +781,7 @@ static int so_init() {
         /* ??? */
 
         if ((so_gendisk.de_arr=kmalloc(SCSI_OSDS_PER_MAJOR*sizeof(*so_gendisk.de_arr), GFP_ATOMIC))==NULL) {
-          TRACE_ERROR("kmalloc() failed\n");
+          iscsi_trace_error("kmalloc() failed\n");
           goto cleanup_so;
         }
         memset(so_gendisk.de_arr, 0, SCSI_OSDS_PER_MAJOR * sizeof *so_gendisk.de_arr);
@@ -789,13 +789,13 @@ static int so_init() {
         /* Flags */
 
         if ((so_gendisk.flags=kmalloc(SCSI_OSDS_PER_MAJOR*sizeof(*so_gendisk.flags),GFP_ATOMIC))==NULL) {
-          TRACE_ERROR("kmalloc() failed\n");
+          iscsi_trace_error("kmalloc() failed\n");
           goto cleanup_so_gendisk_de_arr;
         }
         memset(so_gendisk.flags, 0, SCSI_OSDS_PER_MAJOR * sizeof *so_gendisk.flags);
 
         if (so_gendisk.next) {
-          TRACE_ERROR("Why is this not NULL?\n");
+          iscsi_trace_error("Why is this not NULL?\n");
 	  so_gendisk.next = NULL;
         }
 
@@ -825,7 +825,7 @@ static void so_finish()
 	struct gendisk *gendisk;
 	int i;
 
-	TRACE(TRACE_OSDSO, "so_finish()\n");
+	iscsi_trace(TRACE_OSDSO, "so_finish()\n");
 
 	blk_dev[SCSI_OSD_MAJOR].queue = so_find_queue;
 	for (gendisk = gendisk_head; gendisk != NULL; gendisk = gendisk->next)
@@ -856,7 +856,7 @@ static void so_finish()
 static int so_detect(Scsi_Device * SDp)
 {
 	char nbuff[6];
-	TRACE(TRACE_OSDSO, "so_detect()\n");
+	iscsi_trace(TRACE_OSDSO, "so_detect()\n");
 
 	if (SDp->type != TYPE_OSD && SDp->type != TYPE_MOD)
 		return 0;
@@ -876,7 +876,7 @@ static int so_attach(Scsi_Device * SDp)
 	Scsi_Osd *dpnt;
 	int i;
 
-	TRACE(TRACE_OSDSO, "so_attach(SDpnt 0x%p)\n", SDp);
+	iscsi_trace(TRACE_OSDSO, "so_attach(SDpnt 0x%p)\n", SDp);
 	if (SDp->type != TYPE_OSD && SDp->type != TYPE_MOD)
 		return 0;
 
@@ -922,7 +922,7 @@ int revalidate_scsiosd(kdev_t dev, int maxusage)
 	int start;
 	int i;
 
-	TRACE(TRACE_OSDSO, "revalidate_scsiosd()\n");
+	iscsi_trace(TRACE_OSDSO, "revalidate_scsiosd()\n");
 
 	target = DEVICE_NR(dev);
 
@@ -965,7 +965,7 @@ int revalidate_scsiosd(kdev_t dev, int maxusage)
 
 static int fop_revalidate_scsiosd(kdev_t dev)
 {
-	TRACE(TRACE_OSDSO, "fop_revalidate_scsiosd()\n");
+	iscsi_trace(TRACE_OSDSO, "fop_revalidate_scsiosd()\n");
 	return revalidate_scsiosd(dev, 0);
 }
 static void so_detach(Scsi_Device * SDp)
@@ -975,7 +975,7 @@ static void so_detach(Scsi_Device * SDp)
 	int max_p;
 	int start;
 
-	TRACE(TRACE_OSDSO, "so_detach()\n");
+	iscsi_trace(TRACE_OSDSO, "so_detach()\n");
 
 	for (dpnt = rscsi_osds, i = 0; i < so_template.dev_max; i++, dpnt++)
 		if (dpnt->device == SDp) {
@@ -1008,7 +1008,7 @@ static void so_detach(Scsi_Device * SDp)
 
 static int __init init_so(void)
 {
-	TRACE(TRACE_OSDSO, "init_so()\n");
+	iscsi_trace(TRACE_OSDSO, "init_so()\n");
 	so_template.module = THIS_MODULE;
 	return scsi_register_module(MODULE_SCSI_DEV, &so_template);
 }
@@ -1019,7 +1019,7 @@ static void __exit exit_so(void)
 	struct gendisk *sogd;
 	int removed = 0;
 
-	TRACE(TRACE_OSDSO, "exit_so()\n");
+	iscsi_trace(TRACE_OSDSO, "exit_so()\n");
 
 	scsi_unregister_module(MODULE_SCSI_DEV, &so_template);
 

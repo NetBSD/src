@@ -129,69 +129,15 @@
 
 EXTERN uint32_t iscsi_debug_level;
 
-void	set_debug(const char *);
-
 /*
  * Debugging Functions
  */
+void	set_debug(const char *);
+void	iscsi_trace(const int, const char *, ...);
+void	iscsi_trace_warning(const char *, ...);
+void	iscsi_trace_error(const char *, ...);
+void	iscsi_print_buffer(const char *, const size_t);
 
-#ifdef CONFIG_ISCSI_DEBUG
-
-#define TRACE(trace, args...) do {					\
-	if (iscsi_debug_level & trace) {				\
-		char     _iscsi_trace_buf[8192];			\
-		(void) snprintf(_iscsi_trace_buf, sizeof(_iscsi_trace_buf), args); \
-		PRINT("pid %i:%s:%d: %s",				\
-			ISCSI_GETPID, __FILE__, __LINE__,		\
-			_iscsi_trace_buf);				\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define PRINT_BUFF(buf, len) do {					\
-	if (iscsi_debug_level & TRACE_NET_BUFF) {			\
-		int	_i;						\
-		for (_i=0 ; _i < len; _i++) {				\
-			if (_i % 4 == 0) {				\
-				if (_i) {				\
-					PRINT("\n");			\
-				}					\
-				PRINT("%4i:", _i);			\
-			}						\
-			PRINT("%2x ", (uint8_t) (buf)[_i]);		\
-		}							\
-		if ((len + 1) % 32) {					\
-			PRINT("\n");					\
-		}							\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define TRACE_WARNING(args...) do {					\
-	if (iscsi_debug_level & TRACE_WARN) {				\
-		char     _iscsi_trace_buf[8192];			\
-		(void) snprintf(_iscsi_trace_buf, sizeof(_iscsi_trace_buf), args); \
-		PRINT("pid %i:%s:%i: ***WARNING*** %s",			\
-		       ISCSI_GETPID, __FILE__, __LINE__,		\
-		       _iscsi_trace_buf);				\
-	}								\
-} while (/* CONSTCOND */ 0)
-#define PRINT printf
-#else
-#define TRACE(trace, args...)
-#define TRACE_WARNING(args...)
-#define PRINT_BUFF(buf, len)
-#define PRINT(args...)
-#endif
-
-#define TRACE_ERROR(args...) do {					\
-	char     _iscsi_trace_buf[8192];				\
-	(void) snprintf(_iscsi_trace_buf, sizeof(_iscsi_trace_buf), args); \
-	PRINT("pid %i:%s:%i: ***ERROR*** %s",				\
-		       ISCSI_GETPID, __FILE__, __LINE__,		\
-		       _iscsi_trace_buf);				\
-	syslog(LOG_ERR, "pid %d:%s:%d: ***ERROR*** %s",			\
-		       ISCSI_GETPID, __FILE__, __LINE__,		\
-		       _iscsi_trace_buf);				\
-} while (/* CONSTCOND */ 0)
 
 /*
  * Byte Order
@@ -240,15 +186,7 @@ void	set_debug(const char *);
 /*
 #endif .* !linux */
 
-/*
- * Process ID
- */
-
-#ifdef __KERNEL__
-#define ISCSI_GETPID current->pid
-#else
 #define ISCSI_GETPID getpid()
-#endif
 
 #ifndef HAVE_SOCKLEN_T
 typedef int	socklen_t;
@@ -414,28 +352,28 @@ int             iscsi_mutex_destroy(iscsi_mutex_t * );
 
 #define ISCSI_LOCK(M, ELSE)	do {					\
 	if (iscsi_mutex_lock(M) != 0) {					\
-		TRACE_ERROR("iscsi_mutex_lock() failed\n");		\
+		iscsi_trace_error("iscsi_mutex_lock() failed\n");		\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_UNLOCK(M, ELSE)	do {					\
 	if (iscsi_mutex_unlock(M) != 0) {				\
-		TRACE_ERROR("iscsi_mutex_unlock() failed\n");		\
+		iscsi_trace_error("iscsi_mutex_unlock() failed\n");		\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_MUTEX_INIT(M, ELSE) do {					\
 	if (iscsi_mutex_init(M) != 0) {					\
-		TRACE_ERROR("iscsi_mutex_init() failed\n");		\
+		iscsi_trace_error("iscsi_mutex_init() failed\n");		\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_MUTEX_DESTROY(M, ELSE) do {				\
 	if (iscsi_mutex_destroy(M) != 0) {				\
-		TRACE_ERROR("iscsi_mutex_destroy() failed\n");		\
+		iscsi_trace_error("iscsi_mutex_destroy() failed\n");		\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -557,26 +495,26 @@ typedef struct {
 #define NO_CLEANUP {}
 #define RETURN_GREATER(NAME, V1, V2, CU, RC)                         \
 if ((V1)>(V2)) {                                                     \
-  TRACE_ERROR("Bad \"%s\": %u > %u.\n", NAME, (unsigned)V1, (unsigned)V2); \
+  iscsi_trace_error("Bad \"%s\": %u > %u.\n", NAME, (unsigned)V1, (unsigned)V2); \
   CU;                                                                \
   return RC;                                                         \
 }
 
 #define RETURN_NOT_EQUAL(NAME, V1, V2, CU, RC)                       \
 if ((V1)!=(V2)) {                                                    \
-  TRACE_ERROR("Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);    \
+  iscsi_trace_error("Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);    \
   CU;                                                                \
   return RC;                                                         \
 }
 
 #define WARN_NOT_EQUAL(NAME, V1, V2)                                 \
 if ((V1)!=(V2)) {                                                    \
-  TRACE_WARNING("Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);  \
+  iscsi_trace_warning("Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);  \
 }
 
 #define RETURN_EQUAL(NAME, V1, V2, CU, RC)                           \
 if ((V1)==(V2)) {                                                    \
-  TRACE_ERROR("Bad \"%s\": %u == %u.\n", NAME, V1, V2);              \
+  iscsi_trace_error("Bad \"%s\": %u == %u.\n", NAME, V1, V2);              \
   CU;                                                                \
   return RC;                                                         \
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.2 2006/02/16 19:19:38 agc Exp $ */
+/* $NetBSD: storage.c,v 1.3 2006/03/12 18:47:28 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -370,7 +370,7 @@ read_conf_file(const char *cf, targv_t *tvp, devv_t *dvp, extv_t *evp)
 		(void) fprintf(stderr, "Error: can't open `%s'\n", cf);
 		return 0;
 	}
-	PRINT("Reading configuration from `%s'\n", cf);
+	printf("Reading configuration from `%s'\n", cf);
 	(void) memset(&e, 0x0, sizeof(e));
 	while (conffile_getent(&conf, &e)) {
 		if (strncmp(e.sv.v[0], "extent", 6) == 0) {

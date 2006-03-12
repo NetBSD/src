@@ -106,7 +106,7 @@ reject_t(target_session_t * sess, uint8_t *header, uint8_t reason)
 	iscsi_reject_t  reject;
 	uint8_t   rsp_header[ISCSI_HEADER_LEN];
 
-	TRACE_ERROR("reject %x\n", reason);
+	iscsi_trace_error("reject %x\n", reason);
 	reject.reason = reason;
 	reject.length = ISCSI_HEADER_LEN;
 	reject.StatSN = ++(sess->StatSN);
@@ -115,12 +115,12 @@ reject_t(target_session_t * sess, uint8_t *header, uint8_t reason)
 	reject.DataSN = 0;	/* SNACK not yet implemented */
 
 	if (iscsi_reject_encap(rsp_header, &reject) != 0) {
-		TRACE_ERROR("iscsi_reject_encap() failed\n");
+		iscsi_trace_error("iscsi_reject_encap() failed\n");
 		return -1;
 	}
 	if (iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
 		     header, ISCSI_HEADER_LEN, 0) != 2 * ISCSI_HEADER_LEN) {
-		TRACE_ERROR("iscsi_sock_send_header_and_data() failed\n");
+		iscsi_trace_error("iscsi_sock_send_header_and_data() failed\n");
 		return -1;
 	}
 	return 0;
@@ -138,16 +138,16 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 
 	(void) memset(&scsi_cmd, 0x0, sizeof(scsi_cmd));
 	if (iscsi_scsi_cmd_decap(header, &scsi_cmd) != 0) {
-		TRACE_ERROR("iscsi_scsi_cmd_decap() failed\n");
+		iscsi_trace_error("iscsi_scsi_cmd_decap() failed\n");
 		return -1;
 	}
-	TRACE(TRACE_ISCSI_DEBUG, "session %i: SCSI Command (CmdSN %u, op 0x%x)\n", sess->id, scsi_cmd.CmdSN, scsi_cmd.cdb[0]);
+	iscsi_trace(TRACE_ISCSI_DEBUG, "session %i: SCSI Command (CmdSN %u, op 0x%x)\n", sess->id, scsi_cmd.CmdSN, scsi_cmd.cdb[0]);
 
 	/* For Non-immediate commands, the CmdSN should be between ExpCmdSN  */
 	/* and MaxCmdSN, inclusive of both.  Otherwise, ignore the command */
 	if ((!scsi_cmd.immediate) &&
 	    ((scsi_cmd.CmdSN < sess->ExpCmdSN) || (scsi_cmd.CmdSN > sess->MaxCmdSN))) {
-		TRACE_ERROR("CmdSN(%d) of SCSI Command not valid, ExpCmdSN(%d) MaxCmdSN(%d). Ignoring the command\n", scsi_cmd.CmdSN, sess->ExpCmdSN, sess->MaxCmdSN);
+		iscsi_trace_error("CmdSN(%d) of SCSI Command not valid, ExpCmdSN(%d) MaxCmdSN(%d). Ignoring the command\n", scsi_cmd.CmdSN, sess->ExpCmdSN, sess->MaxCmdSN);
 		return 0;
 	}
 	/* Arg check.   */
@@ -160,14 +160,14 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 	/* Check Numbering */
 
 	if (scsi_cmd.CmdSN != sess->ExpCmdSN) {
-		TRACE_WARNING("Expected CmdSN %i, got %i. (ignoring and resetting expectations)\n",
+		iscsi_trace_warning("Expected CmdSN %i, got %i. (ignoring and resetting expectations)\n",
 			      sess->ExpCmdSN, scsi_cmd.CmdSN);
 		sess->ExpCmdSN = scsi_cmd.CmdSN;
 	}
 	/* Check Transfer Lengths */
 	if (sess->sess_params.first_burst_length
 	    && (scsi_cmd.length > sess->sess_params.first_burst_length)) {
-		TRACE_ERROR("scsi_cmd.length (%u) > FirstBurstLength (%u)\n",
+		iscsi_trace_error("scsi_cmd.length (%u) > FirstBurstLength (%u)\n",
 		     scsi_cmd.length, sess->sess_params.first_burst_length);
 		scsi_cmd.status = 0x02;
 		scsi_cmd.length = 0;
@@ -175,7 +175,7 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 	}
 	if (sess->sess_params.max_data_seg_length
 	    && (scsi_cmd.length > sess->sess_params.max_data_seg_length)) {
-		TRACE_ERROR("scsi_cmd.length (%u) > MaxRecvDataSegmentLength (%u)\n",
+		iscsi_trace_error("scsi_cmd.length (%u) > MaxRecvDataSegmentLength (%u)\n",
 		    scsi_cmd.length, sess->sess_params.max_data_seg_length);
 		return -1;
 	}
@@ -196,40 +196,40 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 		uint8_t   ahs_type;
 
 		scsi_cmd.ahs = NULL;
-		TRACE(TRACE_ISCSI_DEBUG, "reading %i bytes AHS\n", scsi_cmd.ahs_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "reading %i bytes AHS\n", scsi_cmd.ahs_len);
 		if ((scsi_cmd.ahs = iscsi_malloc_atomic((unsigned)scsi_cmd.ahs_len)) == NULL) {
-			TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+			iscsi_trace_error("iscsi_malloc_atomic() failed\n");
 			return -1;
 		}
 #define AHS_CLEANUP { if(scsi_cmd.ahs != NULL) iscsi_free_atomic(scsi_cmd.ahs);}
 		if (iscsi_sock_msg(sess->sock, 0, (unsigned)scsi_cmd.ahs_len, scsi_cmd.ahs, 0) != scsi_cmd.ahs_len) {
-			TRACE_ERROR("iscsi_sock_msg() failed\n");
+			iscsi_trace_error("iscsi_sock_msg() failed\n");
 			AHS_CLEANUP;
 			return -1;
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "read %i bytes AHS\n", scsi_cmd.ahs_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "read %i bytes AHS\n", scsi_cmd.ahs_len);
 		for (ahs_ptr = scsi_cmd.ahs; ahs_ptr < (scsi_cmd.ahs + scsi_cmd.ahs_len - 1) ; ahs_ptr += ahs_len) {
 			ahs_len = ISCSI_NTOHS(*((uint16_t *) (void *)ahs_ptr));
 			RETURN_EQUAL("AHS Length", ahs_len, 0, AHS_CLEANUP, -1);
 			switch (ahs_type = *(ahs_ptr + 2)) {
 			case 0x01:
-				TRACE(TRACE_ISCSI_DEBUG, "Got ExtendedCDB AHS (%u bytes extra CDB)\n", ahs_len - 1);
+				iscsi_trace(TRACE_ISCSI_DEBUG, "Got ExtendedCDB AHS (%u bytes extra CDB)\n", ahs_len - 1);
 				scsi_cmd.ext_cdb = ahs_ptr + 4;
 				break;
 			case 0x02:
 				scsi_cmd.bidi_trans_len = ISCSI_NTOHL(*((uint32_t *) (void *) (ahs_ptr + 4)));
 				*((uint32_t *) (void *) (ahs_ptr + 4)) = scsi_cmd.bidi_trans_len;
-				TRACE(TRACE_ISCSI_DEBUG, "Got Bidirectional Read AHS (expected read length %u)\n", scsi_cmd.bidi_trans_len);
+				iscsi_trace(TRACE_ISCSI_DEBUG, "Got Bidirectional Read AHS (expected read length %u)\n", scsi_cmd.bidi_trans_len);
 				break;
 			default:
-				TRACE_ERROR("unknown AHS type %x\n", ahs_type);
+				iscsi_trace_error("unknown AHS type %x\n", ahs_type);
 				AHS_CLEANUP
 				return -1;
 			}
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "done parsing %i bytes AHS\n", scsi_cmd.ahs_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "done parsing %i bytes AHS\n", scsi_cmd.ahs_len);
 	} else {
-		TRACE(TRACE_ISCSI_DEBUG, "no AHS to read\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "no AHS to read\n");
 		scsi_cmd.ahs = NULL;
 	}
 
@@ -248,7 +248,7 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 	cmd.scsi_cmd = &scsi_cmd;
 	cmd.callback = NULL;
 	if (device_command(sess, &cmd) != 0) {
-		TRACE_ERROR("device_command() failed\n");
+		iscsi_trace_error("device_command() failed\n");
 		AHS_CLEANUP;
 		return -1;
 	}
@@ -264,12 +264,12 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 		int             offset_inc;
 #define SG_CLEANUP {if (fragment_flag) iscsi_free_atomic(sg_new);}
 		if (scsi_cmd.output) {
-			TRACE(TRACE_ISCSI_DEBUG, "sending %u bytes bi-directional input data\n", scsi_cmd.bidi_trans_len);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "sending %u bytes bi-directional input data\n", scsi_cmd.bidi_trans_len);
 			trans_len = scsi_cmd.bidi_trans_len;
 		} else {
 			trans_len = scsi_cmd.trans_len;
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "sending %i bytes input data as separate PDUs\n", trans_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "sending %i bytes input data as separate PDUs\n", trans_len);
 
 		if (scsi_cmd.send_sg_len) {
 			sg_orig = (struct iovec *) (void *) scsi_cmd.send_data;
@@ -292,7 +292,7 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 			if (data.length != trans_len) {
 				if (!fragment_flag) {
 					if ((sg_new = iscsi_malloc_atomic(sizeof(struct iovec) * sg_len_orig)) == NULL) {
-						TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+						iscsi_trace_error("iscsi_malloc_atomic() failed\n");
 						AHS_CLEANUP;
 						return -1;
 					}
@@ -302,13 +302,13 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 				sg_len = sg_len_orig;
 				(void) memcpy(sg, sg_orig, sizeof(struct iovec) * sg_len_orig);
 				if (modify_iov(&sg, &sg_len, offset, data.length) != 0) {
-					TRACE_ERROR("modify_iov() failed\n");
+					iscsi_trace_error("modify_iov() failed\n");
 					SG_CLEANUP;
 					AHS_CLEANUP;
 					return -1;
 				}
 			}
-			TRACE(TRACE_ISCSI_DEBUG, "sending read data PDU (offset %u, len %u)\n", offset, data.length);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "sending read data PDU (offset %u, len %u)\n", offset, data.length);
 			if (offset + data.length == trans_len) {
 				data.final = 1;
 
@@ -316,12 +316,12 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 					data.status = 1;
 					data.status = scsi_cmd.status;
 					data.StatSN = ++(sess->StatSN);
-					TRACE(TRACE_ISCSI_DEBUG, "status 0x%x collapsed into last data PDU\n", data.status);
+					iscsi_trace(TRACE_ISCSI_DEBUG, "status 0x%x collapsed into last data PDU\n", data.status);
 				} else {
-					TRACE(TRACE_ISCSI_DEBUG, "NOT collapsing status with last data PDU\n");
+					iscsi_trace(TRACE_ISCSI_DEBUG, "NOT collapsing status with last data PDU\n");
 				}
 			} else if (offset + data.length > trans_len) {
-				TRACE_ERROR("offset+data.length > trans_len??\n");
+				iscsi_trace_error("offset+data.length > trans_len??\n");
 				SG_CLEANUP;
 				AHS_CLEANUP;
 				return -1;
@@ -332,23 +332,23 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 			data.DataSN = DataSN++;
 			data.offset = offset;
 			if (iscsi_read_data_encap(rsp_header, &data) != 0) {
-				TRACE_ERROR("iscsi_read_data_encap() failed\n");
+				iscsi_trace_error("iscsi_read_data_encap() failed\n");
 				SG_CLEANUP;
 				AHS_CLEANUP;
 				return -1;
 			}
 			if (iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN, sg, data.length, sg_len)
 			    != ISCSI_HEADER_LEN + data.length) {
-				TRACE_ERROR("iscsi_sock_send_header_and_data() failed\n");
+				iscsi_trace_error("iscsi_sock_send_header_and_data() failed\n");
 				SG_CLEANUP;
 				AHS_CLEANUP;
 				return -1;
 			}
 			scsi_cmd.bytes_sent += data.length;
-			TRACE(TRACE_ISCSI_DEBUG, "sent read data PDU ok (offset %u, len %u)\n", data.offset, data.length);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "sent read data PDU ok (offset %u, len %u)\n", data.offset, data.length);
 		}
 		SG_CLEANUP;
-		TRACE(TRACE_ISCSI_DEBUG, "successfully sent %i bytes read data\n", trans_len);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "successfully sent %i bytes read data\n", trans_len);
 	}
 	/*
          * Send a response PDU if
@@ -359,7 +359,7 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
          */
 response:
 	if (!sess->UsePhaseCollapsedRead || !scsi_cmd.length || scsi_cmd.status) {
-		TRACE(TRACE_ISCSI_DEBUG, "sending SCSI response PDU\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "sending SCSI response PDU\n");
 		(void) memset(&scsi_rsp, 0x0, sizeof(scsi_rsp));
 		scsi_rsp.length = scsi_cmd.status ? scsi_cmd.length : 0;
 		scsi_rsp.tag = scsi_cmd.tag;
@@ -374,14 +374,14 @@ response:
 		scsi_rsp.response = 0x00;	/* iSCSI response */
 		scsi_rsp.status = scsi_cmd.status;	/* SCSI status */
 		if (iscsi_scsi_rsp_encap(rsp_header, &scsi_rsp) != 0) {
-			TRACE_ERROR("iscsi_scsi_rsp_encap() failed\n");
+			iscsi_trace_error("iscsi_scsi_rsp_encap() failed\n");
 			AHS_CLEANUP;
 			return -1;
 		}
 		if (iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
 		  scsi_cmd.send_data, scsi_rsp.length, scsi_cmd.send_sg_len)
 		    != ISCSI_HEADER_LEN + scsi_rsp.length) {
-			TRACE_ERROR("iscsi_sock_send_header_and_data() failed\n");
+			iscsi_trace_error("iscsi_sock_send_header_and_data() failed\n");
 			AHS_CLEANUP;
 			return -1;
 		}
@@ -401,9 +401,9 @@ response:
 	/* Device callback after command has completed */
 
 	if (cmd.callback) {
-		TRACE(TRACE_ISCSI_DEBUG, "issuing device callback\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "issuing device callback\n");
 		if ((*cmd.callback)(cmd.callback_arg) != 0) {
-			TRACE_ERROR("device callback failed\n");
+			iscsi_trace_error("device callback failed\n");
 			AHS_CLEANUP;
 			return -1;
 		}
@@ -422,11 +422,11 @@ task_command_t(target_session_t * sess, uint8_t *header)
 	/* Get & check args */
 
 	if (iscsi_task_cmd_decap(header, &cmd) != 0) {
-		TRACE_ERROR("iscsi_task_cmd_decap() failed\n");
+		iscsi_trace_error("iscsi_task_cmd_decap() failed\n");
 		return -1;
 	}
 	if (cmd.CmdSN != sess->ExpCmdSN) {
-		TRACE_WARNING("Expected CmdSN %i, got %i. (ignoring and resetting expectations)\n",
+		iscsi_trace_warning("Expected CmdSN %i, got %i. (ignoring and resetting expectations)\n",
 			      cmd.CmdSN, sess->ExpCmdSN);
 		sess->ExpCmdSN = cmd.CmdSN;
 	}
@@ -437,31 +437,31 @@ task_command_t(target_session_t * sess, uint8_t *header)
 
 	switch (cmd.function) {
 	case ISCSI_TASK_CMD_ABORT_TASK:
-		PRINT("ISCSI_TASK_CMD_ABORT_TASK\n");
+		printf("ISCSI_TASK_CMD_ABORT_TASK\n");
 		break;
 	case ISCSI_TASK_CMD_ABORT_TASK_SET:
-		PRINT("ISCSI_TASK_CMD_ABORT_TASK_SET\n");
+		printf("ISCSI_TASK_CMD_ABORT_TASK_SET\n");
 		break;
 	case ISCSI_TASK_CMD_CLEAR_ACA:
-		PRINT("ISCSI_TASK_CMD_CLEAR_ACA\n");
+		printf("ISCSI_TASK_CMD_CLEAR_ACA\n");
 		break;
 	case ISCSI_TASK_CMD_CLEAR_TASK_SET:
-		PRINT("ISCSI_TASK_CMD_CLEAR_TASK_SET\n");
+		printf("ISCSI_TASK_CMD_CLEAR_TASK_SET\n");
 		break;
 	case ISCSI_TASK_CMD_LOGICAL_UNIT_RESET:
-		PRINT("ISCSI_TASK_CMD_LOGICAL_UNIT_RESET\n");
+		printf("ISCSI_TASK_CMD_LOGICAL_UNIT_RESET\n");
 		break;
 	case ISCSI_TASK_CMD_TARGET_WARM_RESET:
-		PRINT("ISCSI_TASK_CMD_TARGET_WARM_RESET\n");
+		printf("ISCSI_TASK_CMD_TARGET_WARM_RESET\n");
 		break;
 	case ISCSI_TASK_CMD_TARGET_COLD_RESET:
-		PRINT("ISCSI_TASK_CMD_TARGET_COLD_RESET\n");
+		printf("ISCSI_TASK_CMD_TARGET_COLD_RESET\n");
 		break;
 	case ISCSI_TASK_CMD_TARGET_REASSIGN:
-		PRINT("ISCSI_TASK_CMD_TARGET_REASSIGN\n");
+		printf("ISCSI_TASK_CMD_TARGET_REASSIGN\n");
 		break;
 	default:
-		TRACE_ERROR("Unknown task function %i\n", cmd.function);
+		iscsi_trace_error("Unknown task function %i\n", cmd.function);
 		rsp.response = ISCSI_TASK_RSP_REJECTED;
 	}
 
@@ -471,11 +471,11 @@ task_command_t(target_session_t * sess, uint8_t *header)
 	rsp.MaxCmdSN = sess->MaxCmdSN;
 
 	if (iscsi_task_rsp_encap(rsp_header, &rsp) != 0) {
-		TRACE_ERROR("iscsi_task_cmd_decap() failed\n");
+		iscsi_trace_error("iscsi_task_cmd_decap() failed\n");
 		return -1;
 	}
 	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, rsp_header, 0) != ISCSI_HEADER_LEN) {
-		TRACE_ERROR("iscsi_sock_msg() failed\n");
+		iscsi_trace_error("iscsi_sock_msg() failed\n");
 		return -1;
 
 	}
@@ -489,11 +489,11 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 	char           *ping_data = NULL;
 
 	if (iscsi_nop_out_decap(header, &nop_out) != 0) {
-		TRACE_ERROR("iscsi_nop_out_decap() failed\n");
+		iscsi_trace_error("iscsi_nop_out_decap() failed\n");
 		return -1;
 	}
 	if (nop_out.CmdSN != sess->ExpCmdSN) {
-		TRACE_WARNING("Expected CmdSN %i, got %i. (ignoring and resetting expectations)\n",
+		iscsi_trace_warning("Expected CmdSN %i, got %i. (ignoring and resetting expectations)\n",
 			      nop_out.CmdSN, sess->ExpCmdSN);
 		sess->ExpCmdSN = nop_out.CmdSN;
 	}
@@ -502,26 +502,26 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 	/* sess->MaxCmdSN++;  */
 
 	if (nop_out.length) {
-		TRACE(TRACE_ISCSI_DEBUG, "reading %i bytes ping data\n", nop_out.length);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "reading %i bytes ping data\n", nop_out.length);
 		if ((ping_data = iscsi_malloc(nop_out.length)) == NULL) {
-			TRACE_ERROR("iscsi_malloc() failed\n");
+			iscsi_trace_error("iscsi_malloc() failed\n");
 			return -1;
 		}
 		if (iscsi_sock_msg(sess->sock, 0, nop_out.length, ping_data, 0) != nop_out.length) {
-			TRACE_ERROR("iscsi_sock_msg() failed\n");
+			iscsi_trace_error("iscsi_sock_msg() failed\n");
 			if (ping_data) {
 				iscsi_free(ping_data);
 			}
 			return -1;
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "successfully read %i bytes ping data:\n", nop_out.length);
-		PRINT_BUFF(ping_data, nop_out.length);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "successfully read %i bytes ping data:\n", nop_out.length);
+		iscsi_print_buffer(ping_data, nop_out.length);
 	}
 	if (nop_out.tag != 0xffffffff) {
 		iscsi_nop_in_args_t  nop_in;
 		uint8_t   rsp_header[ISCSI_HEADER_LEN];
 
-		TRACE(TRACE_ISCSI_DEBUG, "sending %i bytes ping response\n", nop_out.length);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "sending %i bytes ping response\n", nop_out.length);
 		(void) memset(&nop_in, 0x0, sizeof(&nop_in));
 		nop_in.length = nop_out.length;
 		nop_in.lun = nop_out.lun;
@@ -532,7 +532,7 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 		nop_in.MaxCmdSN = sess->MaxCmdSN;
 
 		if (iscsi_nop_in_encap(rsp_header, &nop_in) != 0) {
-			TRACE_ERROR("iscsi_nop_in_encap() failed\n");
+			iscsi_trace_error("iscsi_nop_in_encap() failed\n");
 			if (ping_data) {
 				iscsi_free(ping_data);
 			}
@@ -540,13 +540,13 @@ nop_out_t(target_session_t * sess, uint8_t *header)
 		}
 		if (iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
 						    ping_data, nop_in.length, 0) != ISCSI_HEADER_LEN + nop_in.length) {
-			TRACE_ERROR("iscsi_sock_send_header_and_data() failed\n");
+			iscsi_trace_error("iscsi_sock_send_header_and_data() failed\n");
 			if (ping_data) {
 				iscsi_free(ping_data);
 			}
 			return -1;
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "successfully sent %i bytes ping response\n", nop_out.length);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "successfully sent %i bytes ping response\n", nop_out.length);
 	}
 	if (ping_data) {
 		iscsi_free(ping_data);
@@ -576,7 +576,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 	/* Get text args */
 
 	if (iscsi_text_cmd_decap(header, &text_cmd) != 0) {
-		TRACE_ERROR("iscsi_text_cmd_decap() failed\n");
+		iscsi_trace_error("iscsi_text_cmd_decap() failed\n");
 		return -1;
 	}
 	/* Check args & update numbering */
@@ -587,7 +587,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 	sess->MaxCmdSN++;
 
 	if ((text_out = iscsi_malloc_atomic(2048)) == NULL) {
-		TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+		iscsi_trace_error("iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
 	/* Read text parameters */
@@ -596,13 +596,13 @@ text_command_t(target_session_t * sess, uint8_t *header)
 		iscsi_parameter_t *ptr;
 
 		if ((text_in = iscsi_malloc_atomic(len_in + 1)) == NULL) {
-			TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+			iscsi_trace_error("iscsi_malloc_atomic() failed\n");
 			TC_CLEANUP;
 			return -1;
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "reading %i bytes text parameters\n", len_in);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "reading %i bytes text parameters\n", len_in);
 		if (iscsi_sock_msg(sess->sock, 0, len_in, text_in, 0) != len_in) {
-			TRACE_ERROR("iscsi_sock_msg() failed\n");
+			iscsi_trace_error("iscsi_sock_msg() failed\n");
 			TC_CLEANUP;
 			return -1;
 		}
@@ -615,13 +615,13 @@ text_command_t(target_session_t * sess, uint8_t *header)
 		 */
 
 		if ((ptr = param_get(sess->params, "SendTargets")) == NULL) {
-			TRACE_ERROR("param_get() failed\n");
+			iscsi_trace_error("param_get() failed\n");
 			TC_CLEANUP;
 			return -1;
 		}
 		if (ptr->rx_offer) {
 			if (ptr->offer_rx && strcmp(ptr->offer_rx, "All") == 0 && !param_equiv(sess->params, "SessionType", "Discovery")) {
-				TRACE(TRACE_ISCSI_DEBUG, "Rejecting SendTargets=All in a non Discovery session\n");
+				iscsi_trace(TRACE_ISCSI_DEBUG, "Rejecting SendTargets=All in a non Discovery session\n");
 				PARAM_TEXT_ADD(sess->params, "SendTargets", "Reject", text_out, &len_out, 2048, 0, TC_ERROR);
 			} else {
 				for (i = 0 ; i < sess->globals->tv->c ; i++) {
@@ -660,18 +660,18 @@ text_command_t(target_session_t * sess, uint8_t *header)
 	text_rsp.ExpCmdSN = sess->ExpCmdSN;
 	text_rsp.MaxCmdSN = sess->MaxCmdSN;
 	if (iscsi_text_rsp_encap(rsp_header, &text_rsp) != 0) {
-		TRACE_ERROR("iscsi_text_rsp_encap() failed\n");
+		iscsi_trace_error("iscsi_text_rsp_encap() failed\n");
 		TC_CLEANUP;
 		return -1;
 	}
 	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, rsp_header, 0) != ISCSI_HEADER_LEN) {
-		TRACE_ERROR("iscsi_sock_msg() failed\n");
+		iscsi_trace_error("iscsi_sock_msg() failed\n");
 		TC_CLEANUP;
 		return -1;
 	}
 	if (len_out) {
 		if (iscsi_sock_msg(sess->sock, 1, (unsigned) len_out, text_out, 0) != len_out) {
-			TRACE_ERROR("iscsi_sock_msg() failed\n");
+			iscsi_trace_error("iscsi_sock_msg() failed\n");
 			TC_CLEANUP;
 			return -1;
 		}
@@ -710,47 +710,47 @@ login_command_t(target_session_t * sess, uint8_t *header)
 	/* Get login args & check preconditions */
 
 	if (iscsi_login_cmd_decap(header, &cmd) != 0) {
-		TRACE_ERROR("iscsi_login_cmd_decap() failed\n");
+		iscsi_trace_error("iscsi_login_cmd_decap() failed\n");
 		goto response;
 	}
 	if (sess->IsLoggedIn) {
-		TRACE_ERROR("duplicate login attempt on sess %i\n", sess->id);
+		iscsi_trace_error("duplicate login attempt on sess %i\n", sess->id);
 		goto response;
 	}
 	if ((cmd.cont != 0) && (cmd.transit != 0)) {
-		TRACE_ERROR("Bad cmd.continue.  Expected 0.\n");
+		iscsi_trace_error("Bad cmd.continue.  Expected 0.\n");
 		goto response;
 	} else if ((cmd.version_max < ISCSI_VERSION) || (cmd.version_min > ISCSI_VERSION)) {
-		TRACE_ERROR("Target iscsi version (%u) not supported by initiator [Max Ver (%u) and Min Ver (%u)]\n", ISCSI_VERSION, cmd.version_max, cmd.version_min);
+		iscsi_trace_error("Target iscsi version (%u) not supported by initiator [Max Ver (%u) and Min Ver (%u)]\n", ISCSI_VERSION, cmd.version_max, cmd.version_min);
 		rsp.status_class = ISCSI_LOGIN_STATUS_INITIATOR_ERROR;
 		rsp.status_detail = 0x05;	/* Version not supported */
 		rsp.version_max = ISCSI_VERSION;
 		rsp.version_active = ISCSI_VERSION;
 		goto response;
 	} else if (cmd.tsih != 0) {
-		TRACE_ERROR("Bad cmd.tsih (%u). Expected 0.\n", cmd.tsih);
+		iscsi_trace_error("Bad cmd.tsih (%u). Expected 0.\n", cmd.tsih);
 		goto response;
 	}
 	/* Parse text parameters and build response */
 
 	if ((text_out = iscsi_malloc_atomic(2048)) == NULL) {
-		TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+		iscsi_trace_error("iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
 	if ((len_in = cmd.length) != 0) {
-		TRACE(TRACE_ISCSI_DEBUG, "reading %i bytes text data\n", len_in);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "reading %i bytes text data\n", len_in);
 		if ((text_in = iscsi_malloc_atomic((unsigned)(len_in + 1))) == NULL) {
-			TRACE_ERROR("iscsi_malloc() failed\n");
+			iscsi_trace_error("iscsi_malloc() failed\n");
 			LC_CLEANUP;
 			return -1;
 		}
 		if (iscsi_sock_msg(sess->sock, 0, (unsigned) len_in, text_in, 0) != len_in) {
-			TRACE_ERROR("iscsi_sock_msg() failed\n");
+			iscsi_trace_error("iscsi_sock_msg() failed\n");
 			LC_CLEANUP;
 			return -1;
 		}
 		text_in[len_in] = 0x0;
-		TRACE(TRACE_ISCSI_DEBUG, "successfully read %i bytes text data\n", len_in);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "successfully read %i bytes text data\n", len_in);
 
 		/*
 		 * Parse incoming parameters (text_out will contain the
@@ -812,17 +812,17 @@ login_command_t(target_session_t * sess, uint8_t *header)
 	}
 	if (cmd.transit && cmd.nsg == ISCSI_LOGIN_STAGE_FULL_FEATURE) {
 
-		TRACE(TRACE_ISCSI_DEBUG, "transitioning to ISCSI_LOGIN_STAGE_FULL_FEATURE\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "transitioning to ISCSI_LOGIN_STAGE_FULL_FEATURE\n");
 
 		/* Check post conditions */
 
 		if (param_equiv(sess->params, "InitiatorName", "")) {
-			TRACE_ERROR("InitiatorName not specified\n");
+			iscsi_trace_error("InitiatorName not specified\n");
 			goto response;
 		}
 		if (param_equiv(sess->params, "SessionType", "Normal")) {
 			if (param_equiv(sess->params, "TargetName", "")) {
-				TRACE_ERROR("TargetName not specified\n");
+				iscsi_trace_error("TargetName not specified\n");
 				goto response;
 			}
 			for (found = 0, i = 0 ; !found && i < sess->globals->tv->c ; i++) {
@@ -833,12 +833,12 @@ login_command_t(target_session_t * sess, uint8_t *header)
 				}
 			}
 			if (!found) {
-				TRACE_ERROR("Bad TargetName \"%s\"\n", param_val(sess->params, "TargetName"));
+				iscsi_trace_error("Bad TargetName \"%s\"\n", param_val(sess->params, "TargetName"));
 				goto response;
 			}
 		}
 		if (param_equiv(sess->params, "SessionType", "")) {
-			TRACE_ERROR("SessionType not specified\n");
+			iscsi_trace_error("SessionType not specified\n");
 			goto response;
 		}
 		sess->ExpCmdSN = sess->MaxCmdSN = cmd.CmdSN;
@@ -881,43 +881,43 @@ response:
 		}
 	}
 	if (iscsi_login_rsp_encap(rsp_header, &rsp) != 0) {
-		TRACE_ERROR("iscsi_login_rsp_encap() failed\n");
+		iscsi_trace_error("iscsi_login_rsp_encap() failed\n");
 		LC_CLEANUP;
 		return -1;
 	}
-	TRACE(TRACE_ISCSI_DEBUG, "sending login response\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, "sending login response\n");
 	if (iscsi_sock_send_header_and_data(sess->sock, rsp_header, ISCSI_HEADER_LEN,
 		text_out, rsp.length, 0) != ISCSI_HEADER_LEN + rsp.length) {
-		TRACE_ERROR("iscsi_sock_send_header_and_data() failed\n");
+		iscsi_trace_error("iscsi_sock_send_header_and_data() failed\n");
 		LC_CLEANUP;
 		return -1;
 	}
-	TRACE(TRACE_ISCSI_DEBUG, "sent login response ok\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, "sent login response ok\n");
 	if (rsp.status_class != 0) {
 		LC_CLEANUP;
 		return -1;
 	}
 	if (cmd.transit && (cmd.nsg == ISCSI_LOGIN_STAGE_FULL_FEATURE)) {
 
-		PRINT("**************************************************\n");
-		PRINT("*                LOGIN SUCCESSFUL                *\n");
-		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "CID", sess->cid);
-		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20" PRIu64 " *\n", "ISID", sess->isid);
-		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "TSIH", sess->tsih);
-		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "StatSN", sess->StatSN);
-		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "ExpCmdSN", sess->ExpCmdSN);
-		TRACE(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "MaxCmdSN", sess->MaxCmdSN);
-		PRINT("**************************************************\n");
+		printf("**************************************************\n");
+		printf("*                LOGIN SUCCESSFUL                *\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "CID", sess->cid);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20" PRIu64 " *\n", "ISID", sess->isid);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "TSIH", sess->tsih);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "StatSN", sess->StatSN);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "ExpCmdSN", sess->ExpCmdSN);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "* %20s:%20u *\n", "MaxCmdSN", sess->MaxCmdSN);
+		printf("**************************************************\n");
 
 		/* Buffer for data xfers to/from the scsi device */
 		if (!param_equiv(sess->params, "MaxRecvDataSegmentLength", "0")) {
 			if ((sess->buff = iscsi_malloc((unsigned)(param_atoi(sess->params, "MaxRecvDataSegmentLength")))) == NULL) {
-				TRACE_ERROR("iscsi_malloc() failed\n");
+				iscsi_trace_error("iscsi_malloc() failed\n");
 				LC_CLEANUP;
 				return -1;
 			}
 		} else {
-			TRACE_ERROR("MaxRecvDataSegmentLength of 0 not supported\n");
+			iscsi_trace_error("MaxRecvDataSegmentLength of 0 not supported\n");
 			LC_CLEANUP;
 			return -1;
 		}
@@ -935,7 +935,7 @@ logout_command_t(target_session_t * sess, uint8_t *header)
 
 	(void) memset(&rsp, 0x0, sizeof(rsp));
 	if (iscsi_logout_cmd_decap(header, &cmd) != 0) {
-		TRACE_ERROR("iscsi_logout_cmd_decap() failed\n");
+		iscsi_trace_error("iscsi_logout_cmd_decap() failed\n");
 		return -1;
 	}
 	sess->StatSN = cmd.ExpStatSN;
@@ -950,22 +950,22 @@ logout_command_t(target_session_t * sess, uint8_t *header)
 	rsp.ExpCmdSN = ++sess->ExpCmdSN;
 	rsp.MaxCmdSN = sess->MaxCmdSN;
 	if (iscsi_logout_rsp_encap(rsp_header, &rsp) != 0) {
-		TRACE_ERROR("iscsi_logout_rsp_encap() failed\n");
+		iscsi_trace_error("iscsi_logout_rsp_encap() failed\n");
 		return -1;
 	}
 	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, rsp_header, 0) != ISCSI_HEADER_LEN) {
-		TRACE_ERROR("iscsi_sock_msg() failed\n");
+		iscsi_trace_error("iscsi_sock_msg() failed\n");
 		return -1;
 	}
-	TRACE(TRACE_ISCSI_DEBUG, "sent logout response OK\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, "sent logout response OK\n");
 
-	PRINT("**************************************************\n");
-	PRINT("*               LOGOUT SUCCESSFUL                *\n");
-	PRINT("*                                                *\n");
-	PRINT("* %20s:%20u      *\n", "CID", sess->cid);
-	PRINT("* %20s:%20" PRIu64 "    *\n", "ISID", sess->isid);
-	PRINT("* %20s:%20u      *\n", "TSIH", sess->tsih);
-	PRINT("**************************************************\n");
+	printf("**************************************************\n");
+	printf("*               LOGOUT SUCCESSFUL                *\n");
+	printf("*                                                *\n");
+	printf("* %20s:%20u      *\n", "CID", sess->cid);
+	printf("* %20s:%20" PRIu64 "    *\n", "ISID", sess->isid);
+	printf("* %20s:%20u      *\n", "TSIH", sess->tsih);
+	printf("**************************************************\n");
 
 #ifdef HAVE_SYSLOG_H
 	syslog(LOG_INFO, "< %s logout from %s on %s", param_val(sess->params, "SessionType"), param_val(sess->params, "InitiatorName"), sess->initiator);
@@ -986,14 +986,14 @@ verify_cmd_t(target_session_t * sess, uint8_t *header)
 
 	if ((!sess->LoginStarted) && (op != ISCSI_LOGIN_CMD)) {
 		/* Terminate the connection */
-		TRACE_ERROR("session %i: iSCSI op 0x%x attempted before LOGIN PHASE\n",
+		iscsi_trace_error("session %i: iSCSI op 0x%x attempted before LOGIN PHASE\n",
 			    sess->id, op);
 		return -1;
 	}
 	if (!sess->IsFullFeature && ((op != ISCSI_LOGIN_CMD) && (op != ISCSI_LOGOUT_CMD))) {
 		iscsi_login_rsp_args_t rsp;
 		uint8_t   rsp_header[ISCSI_HEADER_LEN];
-		TRACE_ERROR("session %i: iSCSI op 0x%x attempted before FULL FEATURE\n",
+		iscsi_trace_error("session %i: iSCSI op 0x%x attempted before FULL FEATURE\n",
 			    sess->id, op);
 		/* Create Login Reject response */
 		(void) memset(&rsp, 0x0, sizeof(rsp));
@@ -1003,17 +1003,17 @@ verify_cmd_t(target_session_t * sess, uint8_t *header)
 		rsp.version_active = ISCSI_VERSION;
 
 		if (iscsi_login_rsp_encap(rsp_header, &rsp) != 0) {
-			TRACE_ERROR("iscsi_login_rsp_encap() failed\n");
+			iscsi_trace_error("iscsi_login_rsp_encap() failed\n");
 			return -1;
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "sending login response\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "sending login response\n");
 		if (iscsi_sock_send_header_and_data(sess->sock, rsp_header,
 			 ISCSI_HEADER_LEN, NULL, 0, 0) != ISCSI_HEADER_LEN +
 		    rsp.length) {
-			TRACE_ERROR("iscsi_sock_send_header_and_data() failed\n");
+			iscsi_trace_error("iscsi_sock_send_header_and_data() failed\n");
 			return -1;
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "sent login response ok\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "sent login response ok\n");
 		return -1;
 	}
 	return 0;
@@ -1029,57 +1029,57 @@ execute_t(target_session_t * sess, uint8_t *header)
 	}
 	switch (op) {
 	case ISCSI_TASK_CMD:
-		TRACE(TRACE_ISCSI_CMD, "session %i: Task Command\n", sess->id);
+		iscsi_trace(TRACE_ISCSI_CMD, "session %i: Task Command\n", sess->id);
 		if (task_command_t(sess, header) != 0) {
-			TRACE_ERROR("task_command_t() failed\n");
+			iscsi_trace_error("task_command_t() failed\n");
 			return -1;
 		}
 		break;
 
 	case ISCSI_NOP_OUT:
-		TRACE(TRACE_ISCSI_CMD, "session %i: NOP-Out\n", sess->id);
+		iscsi_trace(TRACE_ISCSI_CMD, "session %i: NOP-Out\n", sess->id);
 		if (nop_out_t(sess, header) != 0) {
-			TRACE_ERROR("nop_out_t() failed\n");
+			iscsi_trace_error("nop_out_t() failed\n");
 			return -1;
 		}
 		break;
 
 	case ISCSI_LOGIN_CMD:
-		TRACE(TRACE_ISCSI_CMD, "session %i: Login Command\n", sess->id);
+		iscsi_trace(TRACE_ISCSI_CMD, "session %i: Login Command\n", sess->id);
 		if (login_command_t(sess, header) != 0) {
-			TRACE_ERROR("login_command_t() failed\n");
+			iscsi_trace_error("login_command_t() failed\n");
 			return -1;
 		}
 		break;
 
 	case ISCSI_TEXT_CMD:
-		TRACE(TRACE_ISCSI_CMD, "session %i: Text Command\n", sess->id);
+		iscsi_trace(TRACE_ISCSI_CMD, "session %i: Text Command\n", sess->id);
 		if (text_command_t(sess, header) != 0) {
-			TRACE_ERROR("text_command_t() failed\n");
+			iscsi_trace_error("text_command_t() failed\n");
 			return -1;
 		}
 		break;
 
 	case ISCSI_LOGOUT_CMD:
-		TRACE(TRACE_ISCSI_CMD, "session %i: Logout Command\n", sess->id);
+		iscsi_trace(TRACE_ISCSI_CMD, "session %i: Logout Command\n", sess->id);
 		if (logout_command_t(sess, header) != 0) {
-			TRACE_ERROR("logout_command_t() failed\n");
+			iscsi_trace_error("logout_command_t() failed\n");
 			return -1;
 		}
 		break;
 
 	case ISCSI_SCSI_CMD:
-		TRACE(TRACE_ISCSI_CMD, "session %i: SCSI Command\n", sess->id);
+		iscsi_trace(TRACE_ISCSI_CMD, "session %i: SCSI Command\n", sess->id);
 		if (scsi_command_t(sess, header) != 0) {
-			TRACE_ERROR("scsi_command_t() failed\n");
+			iscsi_trace_error("scsi_command_t() failed\n");
 			return -1;
 		}
 		break;
 
 	default:
-		TRACE_ERROR("Unknown Opcode 0x%x\n", ISCSI_OPCODE(header));
+		iscsi_trace_error("Unknown Opcode 0x%x\n", ISCSI_OPCODE(header));
 		if (reject_t(sess, header, 0x04) != 0) {
-			TRACE_ERROR("reject_t() failed\n");
+			iscsi_trace_error("reject_t() failed\n");
 			return -1;
 		}
 		break;
@@ -1101,7 +1101,7 @@ worker_proc_t(void *arg)
 	ISCSI_THREAD_START("worker_thread");
 	sess->worker.pid = ISCSI_GETPID;
 	sess->worker.state |= ISCSI_WORKER_STATE_STARTED;
-	TRACE(TRACE_ISCSI_DEBUG, "session %i: started\n", sess->id);
+	iscsi_trace(TRACE_ISCSI_DEBUG, "session %i: started\n", sess->id);
 
 	/*
          * ISCSI_PARAM_TYPE_LIST format:        <type> <key> <dflt> <valid list values>
@@ -1160,19 +1160,19 @@ worker_proc_t(void *arg)
 	/* Loop for commands */
 
 	while (sess->globals->state != TARGET_SHUT_DOWN) {
-		TRACE(TRACE_ISCSI_DEBUG, "session %i: reading header\n", sess->id);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "session %i: reading header\n", sess->id);
 		if (iscsi_sock_msg(sess->sock, 0, ISCSI_HEADER_LEN, header, 0) != ISCSI_HEADER_LEN) {
-			TRACE(TRACE_ISCSI_DEBUG, "session %i: iscsi_sock_msg() failed\n", sess->id);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "session %i: iscsi_sock_msg() failed\n", sess->id);
 			break;
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "session %i: iscsi op 0x%x\n", sess->id, ISCSI_OPCODE(header));
+		iscsi_trace(TRACE_ISCSI_DEBUG, "session %i: iscsi op 0x%x\n", sess->id, ISCSI_OPCODE(header));
 		if (execute_t(sess, header) != 0) {
-			TRACE_ERROR("execute_t() failed\n");
+			iscsi_trace_error("execute_t() failed\n");
 			break;
 		}
-		TRACE(TRACE_ISCSI_DEBUG, "session %i: iscsi op 0x%x complete\n", sess->id, ISCSI_OPCODE(header));
+		iscsi_trace(TRACE_ISCSI_DEBUG, "session %i: iscsi op 0x%x complete\n", sess->id, ISCSI_OPCODE(header));
 		if (ISCSI_OPCODE(header) == ISCSI_LOGOUT_CMD) {
-			TRACE(TRACE_ISCSI_DEBUG, "session %i: logout received, ending session\n", sess->id);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "session %i: logout received, ending session\n", sess->id);
 			break;
 		}
 	}
@@ -1181,24 +1181,24 @@ worker_proc_t(void *arg)
 
 	iscsi_free(sess->buff);
 	if (param_list_destroy(sess->params) != 0) {
-		TRACE_ERROR("param_list_destroy() failed\n");
+		iscsi_trace_error("param_list_destroy() failed\n");
 		return -1;
 	}
 	/* Terminate connection */
 
 	if (iscsi_sock_close(sess->sock) != 0) {
-		TRACE_ERROR("iscsi_sock_close() failed\n");
+		iscsi_trace_error("iscsi_sock_close() failed\n");
 	}
 	/* Make session available */
 
 	ISCSI_LOCK(&g_session_q_mutex, return -1);
 	(void) memset(sess, 0x0, sizeof(*sess));
 	if (iscsi_queue_insert(&g_session_q, sess) != 0) {
-		TRACE_ERROR("iscsi_queue_insert() failed\n");
+		iscsi_trace_error("iscsi_queue_insert() failed\n");
 		return -1;
 	}
 	ISCSI_UNLOCK(&g_session_q_mutex, return -1);
-	TRACE(TRACE_ISCSI_DEBUG, "session %i: ended\n", sess->id);
+	iscsi_trace(TRACE_ISCSI_DEBUG, "session %i: ended\n", sess->id);
 
 	return 0;
 }
@@ -1212,11 +1212,11 @@ read_data_pdu(target_session_t * sess,
 	int             ret_val = -1;
 
 	if (iscsi_sock_msg(sess->sock, 0, ISCSI_HEADER_LEN, header, 0) != ISCSI_HEADER_LEN) {
-		TRACE_ERROR("iscsi_sock_msg() failed\n");
+		iscsi_trace_error("iscsi_sock_msg() failed\n");
 		return -1;
 	}
 	if ((ret_val = iscsi_write_data_decap(header, data)) != 0) {
-		TRACE_ERROR("iscsi_write_data_decap() failed\n");
+		iscsi_trace_error("iscsi_write_data_decap() failed\n");
 		return ret_val;
 	}
 	/* Check args */
@@ -1231,15 +1231,15 @@ read_data_pdu(target_session_t * sess,
 		return -1;
 	}
 	if (data->tag != args->tag) {
-		TRACE(TRACE_ISCSI_DEBUG, "Data ITT (%d) does not match with command ITT (%d)\n", data->tag, args->tag);
+		iscsi_trace(TRACE_ISCSI_DEBUG, "Data ITT (%d) does not match with command ITT (%d)\n", data->tag, args->tag);
 		if (data->final) {
 			args->status = 0x02;
 			return -1;
 		} else {
 			/* Send a reject PDU */
-			TRACE(TRACE_ISCSI_DEBUG, "Sending Reject PDU\n");
+			iscsi_trace(TRACE_ISCSI_DEBUG, "Sending Reject PDU\n");
 			if (reject_t(sess, header, 0x09) != 0) {	/* Invalid PDU Field */
-				TRACE(TRACE_ISCSI_DEBUG, "Sending Reject PDU failed\n");
+				iscsi_trace(TRACE_ISCSI_DEBUG, "Sending Reject PDU failed\n");
 				return 1;
 			}
 		}
@@ -1257,14 +1257,14 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 
 	args->bytes_recv = 0;
 	if ((!sess->sess_params.immediate_data) && args->length) {
-		TRACE(TRACE_ISCSI_DEBUG, "Cannot accept any Immediate data\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "Cannot accept any Immediate data\n");
 		args->status = 0x02;
 		return -1;
 	}
 	/* Make a copy of the iovec */
 
 	if ((iov_ptr = iscsi_malloc_atomic(sizeof(struct iovec) * sg_len)) == NULL) {
-		TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+		iscsi_trace_error("iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
 	iov = iov_ptr;
@@ -1282,17 +1282,17 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 		/* Modify iov to include just immediate data */
 
 		if (modify_iov(&iov, &iov_len, 0, args->length) != 0) {
-			TRACE_ERROR("modify_iov() failed\n");
+			iscsi_trace_error("modify_iov() failed\n");
 			TTD_CLEANUP;
 			return -1;
 		}
-		TRACE(TRACE_SCSI_DATA, "reading %i bytes immediate write data\n", args->length);
+		iscsi_trace(TRACE_SCSI_DATA, "reading %i bytes immediate write data\n", args->length);
 		if (iscsi_sock_msg(sess->sock, 0, args->length, iov, iov_len) != args->length) {
-			TRACE_ERROR("iscsi_sock_msg() failed\n");
+			iscsi_trace_error("iscsi_sock_msg() failed\n");
 			TTD_CLEANUP;
 			return -1;
 		}
-		TRACE(TRACE_SCSI_DATA, "successfully read %i bytes immediate write data\n", args->length);
+		iscsi_trace(TRACE_SCSI_DATA, "successfully read %i bytes immediate write data\n", args->length);
 		args->bytes_recv += args->length;
 	}
 	/*
@@ -1321,7 +1321,7 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 
 				desired_xfer_len = MIN((args->trans_len - args->bytes_recv),
 					sess->sess_params.max_burst_length);
-				TRACE(TRACE_ISCSI_DEBUG, "sending R2T for %u bytes data\n", desired_xfer_len);
+				iscsi_trace(TRACE_ISCSI_DEBUG, "sending R2T for %u bytes data\n", desired_xfer_len);
 				r2t.tag = args->tag;
 
 				r2t.transfer_tag = 0x1234;
@@ -1332,14 +1332,14 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 				r2t.length = desired_xfer_len;
 				r2t.offset = args->bytes_recv;
 				if (iscsi_r2t_encap(header, &r2t) != 0) {
-					TRACE_ERROR("r2t_encap() failed\n");
+					iscsi_trace_error("r2t_encap() failed\n");
 					TTD_CLEANUP;
 					return -1;
 				}
-				TRACE(TRACE_ISCSI_DEBUG, "sending R2T tag %u transfer tag %u len %u offset %u\n",
+				iscsi_trace(TRACE_ISCSI_DEBUG, "sending R2T tag %u transfer tag %u len %u offset %u\n",
 				      r2t.tag, r2t.transfer_tag, r2t.length, r2t.offset);
 				if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, header, 0) != ISCSI_HEADER_LEN) {
-					TRACE_ERROR("iscsi_sock_msg() failed\n");
+					iscsi_trace_error("iscsi_sock_msg() failed\n");
 					TTD_CLEANUP;
 					return -1;
 				}
@@ -1348,20 +1348,20 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 			}
 			/* Read iSCSI data PDU */
 
-			TRACE(TRACE_ISCSI_DEBUG, "reading data pdu\n");
+			iscsi_trace(TRACE_ISCSI_DEBUG, "reading data pdu\n");
 			if ((read_status = read_data_pdu(sess, &data, args)) != 0) {
 				if (read_status == 1) {
-					TRACE(TRACE_ISCSI_DEBUG, "Unknown PDU received and ignored.  Expecting Data PDU\n");
+					iscsi_trace(TRACE_ISCSI_DEBUG, "Unknown PDU received and ignored.  Expecting Data PDU\n");
 					continue;
 				} else {
-					TRACE_ERROR("read_data_pdu() failed\n");
+					iscsi_trace_error("read_data_pdu() failed\n");
 					args->status = 0x02;
 					TTD_CLEANUP;
 					return -1;
 				}
 			}
 			WARN_NOT_EQUAL("ExpStatSN", data.ExpStatSN, sess->StatSN);
-			TRACE(TRACE_ISCSI_DEBUG, "read data pdu OK (offset %u, length %u)\n", data.offset, data.length);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "read data pdu OK (offset %u, length %u)\n", data.offset, data.length);
 
 			/* Modify iov with offset and length. */
 
@@ -1369,34 +1369,34 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 			(void) memcpy(iov, sg, sizeof(struct iovec) * sg_len);
 			iov_len = sg_len;
 			if (modify_iov(&iov, &iov_len, data.offset, data.length) != 0) {
-				TRACE_ERROR("modify_iov() failed\n");
+				iscsi_trace_error("modify_iov() failed\n");
 				TTD_CLEANUP;
 				return -1;
 			}
 			/* Scatter into destination buffers */
 
 			if (iscsi_sock_msg(sess->sock, 0, data.length, iov, iov_len) != data.length) {
-				TRACE_ERROR("iscsi_sock_msg() failed\n");
+				iscsi_trace_error("iscsi_sock_msg() failed\n");
 				TTD_CLEANUP;
 				return -1;
 			}
-			TRACE(TRACE_ISCSI_DEBUG, "successfully scattered %u bytes\n", data.length);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "successfully scattered %u bytes\n", data.length);
 			args->bytes_recv += data.length;
 			desired_xfer_len -= data.length;
 			if ((!r2t_flag) && (args->bytes_recv > sess->sess_params.first_burst_length)) {
-				TRACE_ERROR("Received unsolicited data (%d) more than first_burst_length (%d)\n", args->bytes_recv, sess->sess_params.first_burst_length);
+				iscsi_trace_error("Received unsolicited data (%d) more than first_burst_length (%d)\n", args->bytes_recv, sess->sess_params.first_burst_length);
 				args->status = 0x02;
 				TTD_CLEANUP;
 				return -1;
 			}
 			if ((desired_xfer_len != 0) && data.final) {
-				TRACE_ERROR("Expecting more data (%d) from initiator for this sequence\n", desired_xfer_len);
+				iscsi_trace_error("Expecting more data (%d) from initiator for this sequence\n", desired_xfer_len);
 				args->status = 0x02;
 				TTD_CLEANUP;
 				return -1;
 			}
 			if ((desired_xfer_len == 0) && !data.final) {
-				TRACE_ERROR("Final bit not set on the last data PDU of this sequence\n");
+				iscsi_trace_error("Final bit not set on the last data PDU of this sequence\n");
 				args->status = 0x02;
 				TTD_CLEANUP;
 				return -1;
@@ -1408,7 +1408,7 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 	} else {
 		RETURN_NOT_EQUAL("Final bit", args->final, 1, TTD_CLEANUP, -1);
 	}
-	TRACE(TRACE_ISCSI_DEBUG, "successfully transferred %u bytes write data\n", args->trans_len);
+	iscsi_trace(TRACE_ISCSI_DEBUG, "successfully transferred %u bytes write data\n", args->trans_len);
 	TTD_CLEANUP;
 	return 0;
 }
@@ -1427,25 +1427,25 @@ target_init(globals_t *gp, targv_t *tv, char *TargetName)
 
 	(void) strlcpy(gp->targetname, TargetName, sizeof(gp->targetname));
 	if (gp->state == TARGET_INITIALIZING || gp->state == TARGET_INITIALIZED) {
-		TRACE_ERROR("duplicate target initialization attempted\n");
+		iscsi_trace_error("duplicate target initialization attempted\n");
 		return -1;
 	}
 	gp->state = TARGET_INITIALIZING;
 	if (iscsi_queue_init(&g_session_q, DEFAULT_TARGET_MAX_SESSIONS) != 0) {
-		TRACE_ERROR("iscsi_queue_init() failed\n");
+		iscsi_trace_error("iscsi_queue_init() failed\n");
 		return -1;
 	}
 	gp->tv = tv;
 	for (i = 0; i < DEFAULT_TARGET_MAX_SESSIONS; i++) {
 		g_session[i].id = i;
 		if (iscsi_queue_insert(&g_session_q, &g_session[i]) != 0) {
-			TRACE_ERROR("iscsi_queue_insert() failed\n");
+			iscsi_trace_error("iscsi_queue_insert() failed\n");
 			return -1;
 		}
 	}
 	for (i = 0 ; i < tv->c ; i++) {
 		if ((g_session[i].d  = device_init(gp, tv, &tv->v[i])) < 0) {
-			TRACE_ERROR("device_init() failed\n");
+			iscsi_trace_error("device_init() failed\n");
 			return -1;
 		}
 	}
@@ -1454,7 +1454,7 @@ target_init(globals_t *gp, targv_t *tv, char *TargetName)
 	gp->listener_pid = -1;
 	gp->state = TARGET_INITIALIZED;
 
-	PRINT("TARGET: TargetName is %s, via Address Family %s on port %d\n",
+	printf("TARGET: TargetName is %s, via Address Family %s on port %d\n",
 		gp->targetname,
 		(gp->address_family == ISCSI_IPv4) ? "IPv4" :
 			(gp->address_family == ISCSI_IPv6) ? "IPv6" : "unknown",
@@ -1470,54 +1470,54 @@ target_shutdown(globals_t *gp)
 	int             i;
 
 	if ((gp->state == TARGET_SHUTTING_DOWN) || (gp->state == TARGET_SHUT_DOWN)) {
-		TRACE_ERROR("duplicate target shutdown attempted\n");
+		iscsi_trace_error("duplicate target shutdown attempted\n");
 		return -1;
 	}
 	gp->state = TARGET_SHUTTING_DOWN;
-	TRACE(TRACE_ISCSI_DEBUG, "shutting down target\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, "shutting down target\n");
 	for (i = 0; i < DEFAULT_TARGET_MAX_SESSIONS; i++) {
 		sess = &g_session[i];
 
 		/* Need to replace with a call to session_destroy() */
 
 		if (sess->IsLoggedIn) {
-			PRINT("shutting down socket on sess %i\n", i);
-			TRACE(TRACE_ISCSI_DEBUG, "shutting down socket on sess %i\n", i);
+			printf("shutting down socket on sess %i\n", i);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "shutting down socket on sess %i\n", i);
 			if (iscsi_sock_shutdown(sess->sock, 2) != 0) {
-				TRACE_ERROR("iscsi_sock_shutdown() failed\n");
+				iscsi_trace_error("iscsi_sock_shutdown() failed\n");
 				return -1;
 			}
-			PRINT("waiting for worker %i (pid %i, state %i)\n", i, sess->worker.pid, sess->worker.state);
-			TRACE(TRACE_ISCSI_DEBUG, "waiting for worker %i (pid %i, state %i)\n",
+			printf("waiting for worker %i (pid %i, state %i)\n", i, sess->worker.pid, sess->worker.state);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "waiting for worker %i (pid %i, state %i)\n",
 			      i, sess->worker.pid, sess->worker.state);
 			while (sess->worker.state & ISCSI_WORKER_STATE_STARTED) {
 				ISCSI_SPIN;
 			}
-			TRACE(TRACE_ISCSI_DEBUG, "worker %i has exited\n", i);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "worker %i has exited\n", i);
 		}
 		if (device_shutdown(sess) != 0) {
-			TRACE_ERROR("device_shutdown() failed\n");
+			iscsi_trace_error("device_shutdown() failed\n");
 			return -1;
 		}
 	}
-	TRACE(TRACE_ISCSI_DEBUG, "shutting down accept socket\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, "shutting down accept socket\n");
 	if (iscsi_sock_shutdown(gp->sock, 2) != 0) {
-		TRACE_ERROR("iscsi_sock_shutdown() failed\n");
+		iscsi_trace_error("iscsi_sock_shutdown() failed\n");
 		return -1;
 	}
 	if (gp->listener_pid != ISCSI_GETPID) {
-		TRACE(TRACE_ISCSI_DEBUG, "waiting for listener thread\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "waiting for listener thread\n");
 		while (gp->listener_listening)
 			ISCSI_SPIN;
-		TRACE(TRACE_ISCSI_DEBUG, "listener thread has exited\n");
+		iscsi_trace(TRACE_ISCSI_DEBUG, "listener thread has exited\n");
 	}
-	TRACE(TRACE_ISCSI_DEBUG, "closing accept socket\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, "closing accept socket\n");
 	if (iscsi_sock_close(gp->sock) != 0) {
-		TRACE_ERROR("iscsi_sock_close() failed\n");
+		iscsi_trace_error("iscsi_sock_close() failed\n");
 		return -1;
 	}
 	ISCSI_MUTEX_DESTROY(&g_session_q_mutex, return -1);
-	TRACE(TRACE_ISCSI_DEBUG, "target shutdown complete\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, "target shutdown complete\n");
 	gp->state = TARGET_SHUT_DOWN;
 
 	return 0;
@@ -1538,38 +1538,38 @@ target_listen(globals_t *gp)
 	ISCSI_THREAD_START("listen_thread");
 	gp->listener_pid = ISCSI_GETPID;
 	gp->listener_listening++;
-	TRACE(TRACE_ISCSI_DEBUG, "listener thread started\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, "listener thread started\n");
 
 	/* Create/Bind/Listen */
 
 	if (iscsi_sock_create(&gp->sock) < 0) {
-		TRACE_ERROR("iscsi_sock_create() failed\n");
+		iscsi_trace_error("iscsi_sock_create() failed\n");
 		goto done;
 	}
 	if (iscsi_sock_setsockopt(&gp->sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
-		TRACE_ERROR("iscsi_sock_setsockopt() failed\n");
+		iscsi_trace_error("iscsi_sock_setsockopt() failed\n");
 		goto done;
 	}
 	if (iscsi_sock_setsockopt(&gp->sock, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) != 0) {
-		TRACE_ERROR("iscsi_sock_setsockopt() failed\n");
+		iscsi_trace_error("iscsi_sock_setsockopt() failed\n");
 		return -1;
 	}
 	if (iscsi_sock_bind(gp->sock, gp->port) < 0) {
-		TRACE_ERROR("iscsi_sock_bind() failed\n");
+		iscsi_trace_error("iscsi_sock_bind() failed\n");
 		goto done;
 	}
 	if (iscsi_sock_listen(gp->sock) < 0) {
-		TRACE_ERROR("iscsi_sock_listen() failed\n");
+		iscsi_trace_error("iscsi_sock_listen() failed\n");
 		goto done;
 	}
-	TRACE(TRACE_NET_DEBUG, "create, bind, listen OK\n");
+	iscsi_trace(TRACE_NET_DEBUG, "create, bind, listen OK\n");
 
 	/* Loop for connections: FIX ME with queue */
 
 	while (gp->state != TARGET_SHUT_DOWN) {
 		ISCSI_LOCK(&g_session_q_mutex, return -1);
 		if ((sess = iscsi_queue_remove(&g_session_q)) == NULL) {
-			TRACE_ERROR("no free sessions: iscsi_queue_remove() failed\n");
+			iscsi_trace_error("no free sessions: iscsi_queue_remove() failed\n");
 			goto done;
 		}
 		ISCSI_UNLOCK(&g_session_q_mutex, return -1);
@@ -1582,23 +1582,23 @@ target_listen(globals_t *gp)
 		/* Accept connection, spawn session thread, and */
 		/* clean up old threads */
 
-		TRACE(TRACE_NET_DEBUG, "waiting for IPv4 connection on port %d\n", gp->port);
+		iscsi_trace(TRACE_NET_DEBUG, "waiting for IPv4 connection on port %d\n", gp->port);
 		if (iscsi_sock_accept(gp->sock, &sess->sock) < 0) {
-			TRACE(TRACE_ISCSI_DEBUG, "iscsi_sock_accept() failed\n");
+			iscsi_trace(TRACE_ISCSI_DEBUG, "iscsi_sock_accept() failed\n");
 			goto done;
 		}
 
 		localAddrLen = sizeof(localAddrStorage);
 		(void) memset(&localAddrStorage, 0x0, sizeof(localAddrStorage));
 		if (iscsi_sock_getsockname(sess->sock, (struct sockaddr *) (void *) &localAddrStorage, &localAddrLen) < 0) {
-			TRACE_ERROR("iscsi_sock_getsockname() failed\n");
+			iscsi_trace_error("iscsi_sock_getsockname() failed\n");
 			goto done;
 		}
 
 		remoteAddrLen = sizeof(remoteAddrStorage);
 		(void) memset(&remoteAddrStorage, 0x0, sizeof(remoteAddrStorage));
 		if (iscsi_sock_getpeername(sess->sock, (struct sockaddr *) (void *) &remoteAddrStorage, &remoteAddrLen) < 0) {
-			TRACE_ERROR("iscsi_sock_getsockname() failed\n");
+			iscsi_trace_error("iscsi_sock_getsockname() failed\n");
 			goto done;
 		}
 
@@ -1609,30 +1609,30 @@ target_listen(globals_t *gp)
 			(void) strlcpy(sess->initiator, inet_ntoa(remoteAddrStorage.sin_addr), sizeof(sess->initiator));
 
 			(void) snprintf(gp->targetaddress, sizeof(gp->targetaddress), "%s:%u,1", local, gp->port);
-			TRACE(TRACE_ISCSI_DEBUG, "IPv4 connection accepted on port %d (local IP %s, remote IP %s)\n",
+			iscsi_trace(TRACE_ISCSI_DEBUG, "IPv4 connection accepted on port %d (local IP %s, remote IP %s)\n",
 			      gp->port, local, sess->initiator);
-			TRACE(TRACE_ISCSI_DEBUG, "TargetAddress = \"%s\"\n", gp->targetaddress);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "TargetAddress = \"%s\"\n", gp->targetaddress);
 			if (iscsi_thread_create(&sess->worker.thread, (void *) worker_proc_t, sess) != 0) {
-				TRACE_ERROR("iscsi_thread_create() failed\n");
+				iscsi_trace_error("iscsi_thread_create() failed\n");
 				goto done;
 			}
 			break;
 		case ISCSI_IPv6:
 			if (inet_ntop(localAddrStorage.sin_family, (void *)&localAddrStorage.sin_addr, local, sizeof(local)) == NULL) {
-				TRACE_ERROR("inet_ntop local failed\n");
+				iscsi_trace_error("inet_ntop local failed\n");
 			}
 			if (inet_ntop(remoteAddrStorage.sin_family, (void *)&remoteAddrStorage.sin_addr, remote, sizeof(remote)) == NULL) {
-				TRACE_ERROR("inet_ntop remotefailed\n");
+				iscsi_trace_error("inet_ntop remotefailed\n");
 			}
 			(void) strlcpy(sess->initiator, remote, sizeof(sess->initiator));
 			(void) snprintf(gp->targetaddress, sizeof(gp->targetaddress), "%s:%u,1", local, gp->port);
-			TRACE(TRACE_ISCSI_DEBUG, "IPv6 connection accepted on port %d (local IP %s, remote IP %s)\n",
+			iscsi_trace(TRACE_ISCSI_DEBUG, "IPv6 connection accepted on port %d (local IP %s, remote IP %s)\n",
 			      gp->port, local, sess->initiator);
-			TRACE(TRACE_ISCSI_DEBUG, "TargetAddress = \"%s\"\n", gp->targetaddress);
+			iscsi_trace(TRACE_ISCSI_DEBUG, "TargetAddress = \"%s\"\n", gp->targetaddress);
 			break;
 		}
 		if (iscsi_thread_create(&sess->worker.thread, (void *) worker_proc_t, sess) != 0) {
-			TRACE_ERROR("iscsi_thread_create() failed\n");
+			iscsi_trace_error("iscsi_thread_create() failed\n");
 			goto done;
 		}
 	}
