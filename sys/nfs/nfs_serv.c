@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.101.4.2 2006/03/10 13:37:46 elad Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.101.4.3 2006/03/12 00:07:42 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101.4.2 2006/03/10 13:37:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101.4.3 2006/03/12 00:07:42 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -986,6 +986,29 @@ nfsrv_write(nfsd, slp, lwp, mrq)
 }
 
 /*
+ * XXX elad: the original NFSW_SAMECRED() macro also made sure the
+ *	     two nd_flag fields of the descriptors contained
+ *	     ND_KERBAUTH.
+ */
+static int
+nfsrv_samecred(kauth_cred_t cred1, kauth_cred_t cred2)
+{
+	int i, do_ngroups;
+
+	if (kauth_cred_geteuid(cred1) != kauth_cred_geteuid(cred2))
+		return (0);
+	if (kauth_cred_ngroups(cred1) != kauth_cred_ngroups(cred2))
+		return (0);
+	do_ngroups = kauth_cred_ngroups(cred1);
+	for (i = 0; i < do_ngroups; i++)
+		if (kauth_cred_group(cred1, i) !=
+		    kauth_cred_group(cred2, i))
+			return (0);
+
+	return (1);
+}
+
+/*
  * NFS write service with write gathering support. Called when
  * nfsrvw_procrastinate > 0.
  * See: Chet Juszczak, "Improving the Write Performance of an NFS Server",
@@ -1129,7 +1152,7 @@ nfsmout:
 		     */
 		    for(; nfsd && NFSW_CONTIG(owp, nfsd); nfsd = wp) {
 			wp = LIST_NEXT(nfsd, nd_hash);
-			if (NFSW_SAMECRED(owp, nfsd))
+			if (nfsrv_samecred(owp->nd_cr, nfsd->nd_cr))
 			    nfsrvw_coalesce(owp, nfsd);
 		    }
 		} else {
