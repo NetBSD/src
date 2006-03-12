@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.40 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: an.c,v 1.41 2006/03/12 03:07:50 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.40 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.41 2006/03/12 03:07:50 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -329,12 +329,12 @@ an_attach(struct an_softc *sc)
 #endif
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
-	sc->sc_rxtap.ar_ihdr.it_len = sizeof(sc->sc_rxtapu);
-	sc->sc_rxtap.ar_ihdr.it_present = AN_RX_RADIOTAP_PRESENT;
+	sc->sc_rxtap.ar_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.ar_ihdr.it_present = htole32(AN_RX_RADIOTAP_PRESENT);
 
 	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
-	sc->sc_txtap.at_ihdr.it_len = sizeof(sc->sc_txtapu);
-	sc->sc_txtap.at_ihdr.it_present = AN_TX_RADIOTAP_PRESENT;
+	sc->sc_txtap.at_ihdr.it_len = htole16(sizeof(sc->sc_txtapu));
+	sc->sc_txtap.at_ihdr.it_present = htole32(AN_TX_RADIOTAP_PRESENT);
 
 	sc->sc_attached = 1;
 	splx(s);
