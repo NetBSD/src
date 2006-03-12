@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.76.2.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.76.2.2 2006/03/12 09:38:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.76.2.1 2006/03/05 12:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.76.2.2 2006/03/12 09:38:56 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -706,8 +706,8 @@ uvmpd_scan_queue(void)
 		 */
 
 #if defined(READAHEAD_STATS)
-		if ((p->flags & PG_SPECULATIVE) != 0) {
-			p->flags &= ~PG_SPECULATIVE;
+		if ((p->pqflags & PQ_READAHEAD) != 0) {
+			p->pqflags &= ~PQ_READAHEAD;
 			uvm_ra_miss.ev_count++;
 		}
 #endif /* defined(READAHEAD_STATS) */

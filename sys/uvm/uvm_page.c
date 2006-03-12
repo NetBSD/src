@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.111.2.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.111.2.2 2006/03/12 09:38:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,9 +71,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.111.2.1 2006/03/05 12:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.111.2.2 2006/03/12 09:38:56 yamt Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_readahead.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1651,6 +1652,12 @@ void
 uvm_pagewire(struct vm_page *pg)
 {
 	UVM_LOCK_ASSERT_PAGEQ();
+#if defined(READAHEAD_STATS)
+	if ((pg->pqflags & PQ_READAHEAD) != 0) {
+		uvm_ra_hit.ev_count++;
+		pg->pqflags &= ~PQ_READAHEAD;
+	}
+#endif /* defined(READAHEAD_STATS) */
 	if (pg->wire_count == 0) {
 		uvm_pagedequeue(pg);
 		uvmexp.wired++;
@@ -1705,6 +1712,12 @@ uvm_pageactivate(struct vm_page *pg)
 {
 
 	UVM_LOCK_ASSERT_PAGEQ();
+#if defined(READAHEAD_STATS)
+	if ((pg->pqflags & PQ_READAHEAD) != 0) {
+		uvm_ra_hit.ev_count++;
+		pg->pqflags &= ~PQ_READAHEAD;
+	}
+#endif /* defined(READAHEAD_STATS) */
 	if (pg->wire_count != 0) {
 		return;
 	}
