@@ -128,12 +128,12 @@ int main(int argc, char *argv[]) {
     } else if (!strcmp(argv[i], "-v")) {
       i++; sscanf(argv[i], "%u", &VerboseFreq);
     } else {
-      PRINT("Unknown option \"%s\"\n", argv[i]);
-      PRINT("%s\n", usage);
+      printf("Unknown option \"%s\"\n", argv[i]);
+      printf("%s\n", usage);
       return -1;
     }
   }
-  if (argc == 1) PRINT("%s\n", usage);
+  if (argc == 1) printf("%s\n", usage);
   IsTarget = (strlen(TargetIP)>0)?0:1;
 
   /* 
@@ -157,16 +157,16 @@ int main(int argc, char *argv[]) {
    */
 
   if (iscsi_sock_create(&iscsi_sock)!=0) {
-    TRACE_ERROR("iscsi_sock_create() failed\n");
+    iscsi_trace_error("iscsi_sock_create() failed\n");
     return -1;
   }
   if (IsTarget) {
     if (iscsi_sock_bind(iscsi_sock, Port)!=0) {
-      TRACE_ERROR("iscsi_sock_bind() failed\n");
+      iscsi_trace_error("iscsi_sock_bind() failed\n");
       return -1;
     }
     if (iscsi_sock_listen(iscsi_sock)!=0) {
-      TRACE_ERROR("iscsi_sock_listen() failed\n");
+      iscsi_trace_error("iscsi_sock_listen() failed\n");
       return -1;
     }
   }
@@ -177,19 +177,19 @@ int main(int argc, char *argv[]) {
 
 accept:	
   if (IsTarget) {
-    PRINT("Waiting for TCP connection on port %u\n", Port);
+    printf("Waiting for TCP connection on port %u\n", Port);
     if(iscsi_sock_accept(iscsi_sock, &iscsi_sock_new)!=0) {
-      TRACE_ERROR("iscsi_sock_accept() failed\n");
+      iscsi_trace_error("iscsi_sock_accept() failed\n");
       return -1;
     }
-    PRINT("Connection accepted\n");
+    printf("Connection accepted\n");
   } else {
     printf("Connecting to %s\n", TargetIP);
     if(iscsi_sock_connect(iscsi_sock, TargetIP, Port)!=0) {
-      TRACE_ERROR("iscsi_sock_connect() failed\n");
+      iscsi_trace_error("iscsi_sock_connect() failed\n");
       return -1;
     }
-    PRINT("Connected\n");
+    printf("Connected\n");
     iscsi_sock_new = iscsi_sock;
   }
 
@@ -198,25 +198,25 @@ accept:
    */
 
   if (!IsTarget) {
-    TRACE(TRACE_DEBUG, "Sending test parameters\n");
+    iscsi_trace(TRACE_DEBUG, "Sending test parameters\n");
     sprintf(ctrlBufferSend, "%s:%s:%s:%s:%i:%i:%i",
             HostSendPattern, HostRecvPattern, TargSendPattern, TargRecvPattern,
             NumIters, VerboseFreq, Port);
     if ((n=iscsi_sock_msg(iscsi_sock_new, 1, ctrlBuffSize, ctrlBufferSend, 0))!=ctrlBuffSize) {
-      TRACE_ERROR("iscsi_sock_msg() failed\n");
+      iscsi_trace_error("iscsi_sock_msg() failed\n");
       return -1;
     }
     if ((n=iscsi_sock_msg(iscsi_sock_new, 0, ctrlBuffSize, ctrlBufferRecv, 0))!=ctrlBuffSize) {
-      TRACE_ERROR("iscsi_sock_msg() failed\n");
+      iscsi_trace_error("iscsi_sock_msg() failed\n");
       return -1;
     }
-    TRACE(TRACE_DEBUG, "Test parameters sent\n");
+    iscsi_trace(TRACE_DEBUG, "Test parameters sent\n");
   } else {
     char *ptr, *delim;
 
-    TRACE(TRACE_DEBUG, "Receiving test parameters\n");
+    iscsi_trace(TRACE_DEBUG, "Receiving test parameters\n");
     if ((n=iscsi_sock_msg(iscsi_sock_new, 0, ctrlBuffSize, ctrlBufferRecv, 0))!=ctrlBuffSize) {
-      TRACE_ERROR("iscsi_sock_msg() failed\n");
+      iscsi_trace_error("iscsi_sock_msg() failed\n");
       return -1;
     }
     ptr = ctrlBufferRecv; 
@@ -230,10 +230,10 @@ accept:
     strncpy(TargRecvPattern, ptr, delim-ptr+1); TargRecvPattern[delim-ptr] = 0x0; ptr = delim+1;
     sscanf(ptr, "%i:%i", &NumIters, &VerboseFreq);
     if ((n=iscsi_sock_msg(iscsi_sock_new, 1, ctrlBuffSize, ctrlBufferSend, 0))!=ctrlBuffSize) {
-      TRACE_ERROR("iscsi_sock_msg() failed\n");
+      iscsi_trace_error("iscsi_sock_msg() failed\n");
       return -1;
     }
-    TRACE(TRACE_DEBUG, "Test parameters received\n");
+    iscsi_trace(TRACE_DEBUG, "Test parameters received\n");
   }
 
   /* 
@@ -243,25 +243,25 @@ accept:
   HostSendTotal = 0; for (i=0; i<NumHostSendBuffs; i++) HostSendTotal += HostSendSize[i];
   TargRecvTotal = 0; for (i=0; i<NumTargRecvBuffs; i++) TargRecvTotal += TargRecvSize[i];
   if (HostSendTotal != TargRecvTotal) {
-    TRACE_ERROR("Host sending size (%i) > Target receiving size (%i)\n", 
+    iscsi_trace_error("Host sending size (%i) > Target receiving size (%i)\n", 
                 HostSendTotal, TargRecvTotal); 
     return -1;
   }
   HostRecvTotal = 0; for (i=0; i<NumHostRecvBuffs; i++) HostRecvTotal += HostRecvSize[i];
   TargSendTotal = 0; for (i=0; i<NumTargSendBuffs; i++) TargSendTotal += TargSendSize[i];
   if (HostRecvTotal != TargSendTotal) {
-    TRACE_ERROR("Host receiving size (%i) > Target sending size (%i)\n", 
+    iscsi_trace_error("Host receiving size (%i) > Target sending size (%i)\n", 
                 HostRecvTotal, TargSendTotal);
     return -1;
   }
-  TRACE(TRACE_DEBUG, "HostSendPattern: \"%s\"\n", HostSendPattern);
-  TRACE(TRACE_DEBUG, "HostRecvPattern: \"%s\"\n", HostRecvPattern);
-  TRACE(TRACE_DEBUG, "TargRecvPattern: \"%s\"\n", TargRecvPattern);
-  TRACE(TRACE_DEBUG, "TargSendPattern: \"%s\"\n", TargSendPattern);
-  TRACE(TRACE_DEBUG, "NumIters:        %i\n", NumIters);
-  TRACE(TRACE_DEBUG, "VerboseFreq:     %i\n", VerboseFreq);
-  TRACE(TRACE_DEBUG, "HostSendTotal:   %i bytes\n", HostSendTotal);
-  TRACE(TRACE_DEBUG, "HostRecvTotal:   %i bytes\n", HostRecvTotal);
+  iscsi_trace(TRACE_DEBUG, "HostSendPattern: \"%s\"\n", HostSendPattern);
+  iscsi_trace(TRACE_DEBUG, "HostRecvPattern: \"%s\"\n", HostRecvPattern);
+  iscsi_trace(TRACE_DEBUG, "TargRecvPattern: \"%s\"\n", TargRecvPattern);
+  iscsi_trace(TRACE_DEBUG, "TargSendPattern: \"%s\"\n", TargSendPattern);
+  iscsi_trace(TRACE_DEBUG, "NumIters:        %i\n", NumIters);
+  iscsi_trace(TRACE_DEBUG, "VerboseFreq:     %i\n", VerboseFreq);
+  iscsi_trace(TRACE_DEBUG, "HostSendTotal:   %i bytes\n", HostSendTotal);
+  iscsi_trace(TRACE_DEBUG, "HostRecvTotal:   %i bytes\n", HostRecvTotal);
 
   /*
    * Allocate buffers
@@ -269,22 +269,22 @@ accept:
 
   for (i=0; i<NumHostSendBuffs; i++)
     if ((HostSendBuff[i]=iscsi_malloc(HostSendSize[i]))==NULL) {
-      TRACE_ERROR("out of memory\n");
+      iscsi_trace_error("out of memory\n");
       return -1;
     }
   for (i=0; i<NumHostRecvBuffs; i++)
     if ((HostRecvBuff[i]=iscsi_malloc(HostRecvSize[i]))==NULL) {
-      TRACE_ERROR("out of memory\n");
+      iscsi_trace_error("out of memory\n");
       return -1;
     }
   for (i=0; i<NumTargSendBuffs; i++)
     if ((TargSendBuff[i]=iscsi_malloc(TargSendSize[i]))==NULL) {
-      TRACE_ERROR("out of memory\n");
+      iscsi_trace_error("out of memory\n");
       return -1;
     }
   for (i=0; i<NumTargRecvBuffs; i++)
     if ((TargRecvBuff[i]=iscsi_malloc(TargRecvSize[i]))==NULL) {
-      TRACE_ERROR("out of memory\n");
+      iscsi_trace_error("out of memory\n");
       return -1;
     }
 
@@ -296,27 +296,27 @@ accept:
 
   gettimeofday(&t_start, 0);
   for (i=0; i<NumIters; i++) {
-    TRACE(TRACE_DEBUG, "begin iteration %i\n", i);
+    iscsi_trace(TRACE_DEBUG, "begin iteration %i\n", i);
     if (!IsTarget) {
 
       /*  Send to target */
 
       for (j=0; j<NumHostSendBuffs; j++) {
         if (iscsi_sock_msg(iscsi_sock_new, 1, HostSendSize[j], HostSendBuff[j], 0)!= HostSendSize[j]) {
-          TRACE_ERROR("iscsi_sock_msg() failed\n");
+          iscsi_trace_error("iscsi_sock_msg() failed\n");
           return -1;
         }
-        TRACE(TRACE_DEBUG, "Tx HostSendBuff[%i] (size %i)\n", j, HostSendSize[j]);
+        iscsi_trace(TRACE_DEBUG, "Tx HostSendBuff[%i] (size %i)\n", j, HostSendSize[j]);
       }
 
       /*  Recv from target */
 
       for (j=0; j<NumHostRecvBuffs; j++) {
         if (iscsi_sock_msg(iscsi_sock_new, 0, HostRecvSize[j], HostRecvBuff[j], 0)!= HostRecvSize[j]) {
-          TRACE_ERROR("iscsi_sock_msg() failed\n");
+          iscsi_trace_error("iscsi_sock_msg() failed\n");
           return -1;
         }
-        TRACE(TRACE_DEBUG, "Rx HostRecvBuff[%i] (size %i)\n", j, HostRecvSize[j]);
+        iscsi_trace(TRACE_DEBUG, "Rx HostRecvBuff[%i] (size %i)\n", j, HostRecvSize[j]);
       }
     } else {
 
@@ -324,27 +324,27 @@ accept:
 
       for (j=0; j<NumTargRecvBuffs; j++) {
         if (iscsi_sock_msg(iscsi_sock_new, 0, TargRecvSize[j], TargRecvBuff[j], 0)!= TargRecvSize[j]) {
-          TRACE_ERROR("iscsi_sock_msg() failed\n");
+          iscsi_trace_error("iscsi_sock_msg() failed\n");
           return -1;
         }
-        TRACE(TRACE_DEBUG, "Rx TargRecvBuff[%i] (size %i)\n", j, TargRecvSize[j]);
+        iscsi_trace(TRACE_DEBUG, "Rx TargRecvBuff[%i] (size %i)\n", j, TargRecvSize[j]);
       }
 
       /*  Send to host */
 
       for (j=0; j<NumTargSendBuffs; j++) {
         if (iscsi_sock_msg(iscsi_sock_new, 1, TargSendSize[j], TargSendBuff[j], 0)!= TargSendSize[j]) {
-          TRACE_ERROR("iscsi_sock_msg() failed\n");
+          iscsi_trace_error("iscsi_sock_msg() failed\n");
           return -1;
         }
-        TRACE(TRACE_DEBUG, "Tx TargSendBuff[%i] (size %i)\n", j, TargSendSize[j]);
+        iscsi_trace(TRACE_DEBUG, "Tx TargSendBuff[%i] (size %i)\n", j, TargSendSize[j]);
       }
     }  
     if ((!IsTarget)&&((i+1)%VerboseFreq==0)) {
-      PRINT("Iter %i: %i total bytes sent, %i total bytes recv\n", 
+      printf("Iter %i: %i total bytes sent, %i total bytes recv\n", 
             i+1, HostSendTotal*(i+1), HostRecvTotal*(i+1));
     }
-    TRACE(TRACE_DEBUG, "end iteration %i\n", i);
+    iscsi_trace(TRACE_DEBUG, "end iteration %i\n", i);
   }
   gettimeofday(&t_stop, 0);
 

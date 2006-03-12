@@ -102,13 +102,13 @@ MODULE_LICENSE("Dual BSD/GPL"); /*  This source is under BSD License. This is th
 static int driver_init(void) {
   int i;
 
-  TRACE(TRACE_SCSI_DEBUG, "initializing iSCSI driver\n");
+  iscsi_trace(TRACE_SCSI_DEBUG, "initializing iSCSI driver\n");
   if ((g_cmd=iscsi_malloc_atomic(sizeof(initiator_cmd_t)*CONFIG_INITIATOR_QUEUE_DEPTH))==NULL) {
-    TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+    iscsi_trace_error("iscsi_malloc_atomic() failed\n");
     return -1;
   }
   if ((g_iov=iscsi_malloc_atomic(sizeof(struct iovec*)*CONFIG_INITIATOR_QUEUE_DEPTH))==NULL) {
-    TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+    iscsi_trace_error("iscsi_malloc_atomic() failed\n");
     iscsi_free_atomic(g_cmd);
     return -1;
   }
@@ -129,50 +129,50 @@ static int driver_init(void) {
 }
   for (i=0; i<CONFIG_INITIATOR_QUEUE_DEPTH; i++) {
     if ((g_iov[i]=iscsi_malloc_atomic(sizeof(struct iovec)*SG_ALL))==NULL) {
-      TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+      iscsi_trace_error("iscsi_malloc_atomic() failed\n");
       DI_ERROR;
     }
   }
   if (iscsi_queue_init(&g_cmd_q, CONFIG_INITIATOR_QUEUE_DEPTH)!=0) {
-    TRACE_ERROR("iscsi_queue_init() failed\n");
+    iscsi_trace_error("iscsi_queue_init() failed\n");
     DI_ERROR;
   }
   if (iscsi_queue_init(&g_iovec_q, CONFIG_INITIATOR_QUEUE_DEPTH)!=0) {
-    TRACE_ERROR("iscsi_queue_init() failed\n");
+    iscsi_trace_error("iscsi_queue_init() failed\n");
     DI_ERROR;
   }
 
   for (i=0; i<CONFIG_INITIATOR_QUEUE_DEPTH; i++) {
     if ((g_cmd[i].ptr = iscsi_malloc_atomic(sizeof(iscsi_scsi_cmd_args_t)))==NULL) {
-      TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+      iscsi_trace_error("iscsi_malloc_atomic() failed\n");
       DI_ERROR;
     }
     g_cmd[i].type = ISCSI_SCSI_CMD;
     if (iscsi_queue_insert(&g_cmd_q, &g_cmd[i])!=0) {
-      TRACE_ERROR("iscsi_queue_insert() failed\n");
+      iscsi_trace_error("iscsi_queue_insert() failed\n");
       DI_ERROR;
     }
     if (iscsi_queue_insert(&g_iovec_q, g_iov[i])!=0) {
-      TRACE_ERROR("iscsi_queue_insert() failed\n");
+      iscsi_trace_error("iscsi_queue_insert() failed\n");
       DI_ERROR;
     }
   }
   memset(&g_stats, 0, sizeof(g_stats));
   iscsi_spin_init(&g_stats.lock);
   if (initiator_init()!=0) {
-    TRACE_ERROR("initiator_init() failed\n");
+    iscsi_trace_error("initiator_init() failed\n");
     DI_ERROR;
   }
-  TRACE(TRACE_SCSI_DEBUG, "iSCSI initialization complete\n");
+  iscsi_trace(TRACE_SCSI_DEBUG, "iSCSI initialization complete\n");
   return 0;
 }
 
 static int driver_shutdown(void) {
   int i;
 
-  TRACE(TRACE_SCSI_DEBUG, "shutting down iSCSI driver\n");
+  iscsi_trace(TRACE_SCSI_DEBUG, "shutting down iSCSI driver\n");
   if (initiator_shutdown()!=0) {
-    TRACE_ERROR("initiator_shutdown() failed\n");
+    iscsi_trace_error("initiator_shutdown() failed\n");
     return -1;
   }
   iscsi_spin_destroy(&g_stats.lock);
@@ -184,7 +184,7 @@ static int driver_shutdown(void) {
   }
   iscsi_free_atomic(g_cmd);
   iscsi_free_atomic(g_iov);
-  TRACE(TRACE_SCSI_DEBUG, "iSCSI driver shutdown complete\n");
+  iscsi_trace(TRACE_SCSI_DEBUG, "iSCSI driver shutdown complete\n");
 
   return 0;
 }
@@ -196,10 +196,10 @@ static int driver_shutdown(void) {
 int iscsi_detect(Scsi_Host_Template *tptr) {
   struct Scsi_Host *ptr;
    
-  TRACE(TRACE_SCSI_DEBUG, "detecting iSCSI host\n");
+  iscsi_trace(TRACE_SCSI_DEBUG, "detecting iSCSI host\n");
   spin_unlock(&io_request_lock);
   if (driver_init()!=0) {
-    TRACE_ERROR("driver_init() failed\n");
+    iscsi_trace_error("driver_init() failed\n");
     spin_lock(&io_request_lock);
     return 0; /*No 'SCSI' host detected, return 0 */
    	
@@ -208,15 +208,15 @@ int iscsi_detect(Scsi_Host_Template *tptr) {
   ptr->max_id = CONFIG_INITIATOR_NUM_TARGETS;
   ptr->max_lun = CONFIG_DRIVER_MAX_LUNS;
   ptr->max_cmd_len = 255;
-  TRACE(TRACE_SCSI_DEBUG, "iSCSI host detected\n");
+  iscsi_trace(TRACE_SCSI_DEBUG, "iSCSI host detected\n");
    spin_lock(&io_request_lock);
   return 1; 
 }
 
 int iscsi_release(struct Scsi_Host *host) {
-  TRACE(TRACE_SCSI_DEBUG, "releasing iSCSI host\n");
+  iscsi_trace(TRACE_SCSI_DEBUG, "releasing iSCSI host\n");
   driver_shutdown();
-  TRACE(TRACE_SCSI_DEBUG, "iSCSI host released\n");
+  iscsi_trace(TRACE_SCSI_DEBUG, "iSCSI host released\n");
   return 0;
 }
 
@@ -228,15 +228,15 @@ int iscsi_bios_param(Disk *disk, kdev_t dev, int *ip) {
     ip[1] = 63;                                /*  sectors */
     ip[2] = disk->capacity / (255 * 63);       /*  cylinders */
   }
-  TRACE(TRACE_SCSI_DEBUG, "%u sectors, H/S/C: %u/%u/%u\n", disk->capacity, ip[0], ip[1], ip[2]);
+  iscsi_trace(TRACE_SCSI_DEBUG, "%u sectors, H/S/C: %u/%u/%u\n", disk->capacity, ip[0], ip[1], ip[2]);
   return 0;
 }
 
 int iscsi_command(Scsi_Cmnd *SCpnt) {
-  TRACE(TRACE_SCSI_DEBUG, "0x%p: op 0x%x, chan %i, target %i, lun %i, bufflen %i, sg %i\n", 
+  iscsi_trace(TRACE_SCSI_DEBUG, "0x%p: op 0x%x, chan %i, target %i, lun %i, bufflen %i, sg %i\n", 
         SCpnt, SCpnt->cmnd[0], SCpnt->channel, SCpnt->target, SCpnt->lun, 
         SCpnt->request_bufflen, SCpnt->use_sg);
-  TRACE_ERROR("NOT IMPLEMENTED\n");
+  iscsi_trace_error("NOT IMPLEMENTED\n");
   return -1;
 }
 
@@ -253,10 +253,10 @@ int iscsi_done(void *ptr) {
   } else {
     SCpnt->result = -1;
   } 
-  TRACE(TRACE_SCSI_DEBUG, "scsi_arg 0x%p SCpnt 0x%p op 0x%x done (result %i)\n",
+  iscsi_trace(TRACE_SCSI_DEBUG, "scsi_arg 0x%p SCpnt 0x%p op 0x%x done (result %i)\n",
         scsi_cmd, SCpnt, SCpnt->cmnd[0], SCpnt->result);
   if ((scsi_cmd->input)&&(scsi_cmd->output)) {
-    TRACE_ERROR("bidi xfers not implemented\n");
+    iscsi_trace_error("bidi xfers not implemented\n");
     return -1;
   } else if (scsi_cmd->input) {
     iscsi_spin_lock_irqsave(&g_stats.lock, &flags);
@@ -284,13 +284,13 @@ int iscsi_done(void *ptr) {
     hs = SCpnt->host_scribble;
     SCpnt->host_scribble = NULL; /*  for abort */
     if (iscsi_queue_insert(&g_iovec_q, hs)!=0) {
-      TRACE_ERROR("iscsi_queue_insert() failed\n");
+      iscsi_trace_error("iscsi_queue_insert() failed\n");
       return -1;
     }  
   }
   iscsi_free_atomic(scsi_cmd->ahs);
   if (iscsi_queue_insert(&g_cmd_q, cmd)!=0) {
-    TRACE_ERROR("iscsi_queue_insert() failed\n");
+    iscsi_trace_error("iscsi_queue_insert() failed\n");
   cmd->callback_arg = NULL;    /*  for abort */
     return -1;
   } 
@@ -298,7 +298,7 @@ int iscsi_done(void *ptr) {
   if (SCpnt->result==0) {
     SCpnt->scsi_done(SCpnt);
   } else {
-    TRACE_ERROR("SCSI cmd 0x%x failed at iSCSI level (ignoring)\n", SCpnt->cmnd[0]);
+    iscsi_trace_error("SCSI cmd 0x%x failed at iSCSI level (ignoring)\n", SCpnt->cmnd[0]);
   }
   return 0;
 }
@@ -317,7 +317,7 @@ int iscsi_queuecommand(Scsi_Cmnd *SCpnt, void (*done)(Scsi_Cmnd *)) {
 
   spin_unlock(&io_request_lock);
 
-  TRACE(TRACE_SCSI_DEBUG, "SCpnt %p: tid %i lun %i op 0x%x tag %u len %i sg %i buff 0x%p\n",
+  iscsi_trace(TRACE_SCSI_DEBUG, "SCpnt %p: tid %i lun %i op 0x%x tag %u len %i sg %i buff 0x%p\n",
         SCpnt, SCpnt->target, SCpnt->lun, SCpnt->cmnd[0], SCpnt->tag, SCpnt->request_bufflen, 
         SCpnt->use_sg, SCpnt->buffer);
 
@@ -352,7 +352,7 @@ int iscsi_queuecommand(Scsi_Cmnd *SCpnt, void (*done)(Scsi_Cmnd *)) {
 
     iov = iscsi_queue_remove(&g_iovec_q);
     if (iov == NULL) {
-      TRACE_ERROR("iscsi_queue_remove() failed\n");
+      iscsi_trace_error("iscsi_queue_remove() failed\n");
       spin_lock(&io_request_lock);
       return -1;
     }
@@ -369,7 +369,7 @@ int iscsi_queuecommand(Scsi_Cmnd *SCpnt, void (*done)(Scsi_Cmnd *)) {
   /*  Get free cmd structure */
 
   if ((cmd=iscsi_queue_remove(&g_cmd_q))==NULL) {
-    TRACE_ERROR("iscsi_queue_remove() failed\n");
+    iscsi_trace_error("iscsi_queue_remove() failed\n");
     spin_lock(&io_request_lock);	
     return -1;
   } 
@@ -390,9 +390,9 @@ int iscsi_queuecommand(Scsi_Cmnd *SCpnt, void (*done)(Scsi_Cmnd *)) {
   /*  AHS for CDBs larget than 16 bytes */
 
   if (SCpnt->cmd_len>16) {
-    TRACE(TRACE_ISCSI_DEBUG, "creating AHS for extended CDB (%i bytes)\n", SCpnt->cmd_len);
+    iscsi_trace(TRACE_ISCSI_DEBUG, "creating AHS for extended CDB (%i bytes)\n", SCpnt->cmd_len);
     if ((scsi_cmd->ahs=iscsi_malloc_atomic(SCpnt->cmd_len-16))==NULL) {
-      TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+      iscsi_trace_error("iscsi_malloc_atomic() failed\n");
       spin_lock(&io_request_lock);
       return -1;
     }
@@ -409,7 +409,7 @@ int iscsi_queuecommand(Scsi_Cmnd *SCpnt, void (*done)(Scsi_Cmnd *)) {
   cmd->callback_arg = SCpnt;
   cmd->isid = SCpnt->target;
   if (initiator_enqueue(cmd)!=0) {
-    TRACE_ERROR("initiator_enqueue() failed\n");
+    iscsi_trace_error("initiator_enqueue() failed\n");
     if (SCpnt->cmd_len>16) iscsi_free_atomic(scsi_cmd->ahs);
     spin_lock(&io_request_lock);
     return -1;
@@ -423,7 +423,7 @@ int iscsi_proc_info (char *buffer, char **start, off_t offset, int length, int h
   uint32_t	infolen = 8192;
   int len = 0;
 
-  TRACE(TRACE_SCSI_DEBUG, "buffer = 0x%p, offset %u, length = %i, hostno %i, writing %i\n",
+  iscsi_trace(TRACE_SCSI_DEBUG, "buffer = 0x%p, offset %u, length = %i, hostno %i, writing %i\n",
         buffer, (unsigned) offset, length, hostno, writing);
 
   /* writing resets counters */
@@ -440,7 +440,7 @@ int iscsi_proc_info (char *buffer, char **start, off_t offset, int length, int h
     return 0;
   } else {
     if ((info=iscsi_malloc_atomic(infolen))==NULL) {
-      TRACE_ERROR("iscsi_malloc_atomic() failed\n");
+      iscsi_trace_error("iscsi_malloc_atomic() failed\n");
       return -1;
     }
     len += snprintf(info, infolen, "%s\n\n", driver_template.name);
@@ -479,7 +479,7 @@ int iscsi_proc_info (char *buffer, char **start, off_t offset, int length, int h
     len += snprintf(&info[len], infolen - len, "--------------------\n\n");
 
     if ((len += initiator_info(&info[len], infolen, len))==-1) {
-      TRACE_ERROR("initiator_info() failed\n");
+      iscsi_trace_error("initiator_info() failed\n");
       if (info != NULL) iscsi_free_atomic(info);
       return -1;
     }
@@ -505,7 +505,7 @@ int iscsi_ioctl (Scsi_Device *dev, int cmd, void *argp) {
 
   for (i=0; i<CONFIG_INITIATOR_NUM_TARGETS; i++) {
     if (test_all(i, lun)!=0) {
-      TRACE_ERROR("test_all() failed\n");
+      iscsi_trace_error("test_all() failed\n");
       return -1;
     }
   }
@@ -517,17 +517,17 @@ void iscsi_select_queue_depths(struct Scsi_Host *host, Scsi_Device *scsi_devs) {
 
   for (device = scsi_devs; device; device = device->next) {
     if (device->host != host) {
-      TRACE_ERROR("got device for different host\n");
+      iscsi_trace_error("got device for different host\n");
       continue;
     }
     if (device->tagged_supported) {
-      TRACE(TRACE_SCSI_DEBUG, "target %i lun %i supports TCQ\n", device->id, device->lun);
+      iscsi_trace(TRACE_SCSI_DEBUG, "target %i lun %i supports TCQ\n", device->id, device->lun);
       device->tagged_queue = 1;
       device->current_tag = 0;
       device->queue_depth = CONFIG_INITIATOR_QUEUE_DEPTH;
-      TRACE(TRACE_SCSI_DEBUG, "device queue depth set to %i\n", device->queue_depth);
+      iscsi_trace(TRACE_SCSI_DEBUG, "device queue depth set to %i\n", device->queue_depth);
     } else {
-      TRACE(TRACE_SCSI_DEBUG, "target %i lun %i does NOT support TCQ\n", device->id, device->lun);
+      iscsi_trace(TRACE_SCSI_DEBUG, "target %i lun %i does NOT support TCQ\n", device->id, device->lun);
       device->queue_depth = 1;
     }
   }
@@ -545,7 +545,7 @@ int iscsi_abort_handler (Scsi_Cmnd *SCpnt) {
   unsigned long flags;
 
   spin_unlock_irq(&io_request_lock);
-  TRACE_ERROR("aborting SCSI cmd 0x%p (op 0x%x, tid %i, lun %i)\n", 
+  iscsi_trace_error("aborting SCSI cmd 0x%p (op 0x%x, tid %i, lun %i)\n", 
               SCpnt, SCpnt->cmnd[0], SCpnt->target, SCpnt->lun);
 
 
@@ -561,7 +561,7 @@ int iscsi_abort_handler (Scsi_Cmnd *SCpnt) {
       /*  Abort the command */
 
       if (initiator_abort(&g_cmd[i])!=0) {
-        TRACE_ERROR("initiator_abort() failed\n");
+        iscsi_trace_error("initiator_abort() failed\n");
         spin_lock_irq(&io_request_lock);
         return FAILED;
       }
@@ -570,7 +570,7 @@ int iscsi_abort_handler (Scsi_Cmnd *SCpnt) {
 
       scsi_cmd = (iscsi_scsi_cmd_args_t *) g_cmd[i].ptr;
       if ((scsi_cmd->input)&&(scsi_cmd->output)) {
-        TRACE_ERROR("bidi xfers not implemented\n");
+        iscsi_trace_error("bidi xfers not implemented\n");
         spin_lock_irq(&io_request_lock);
         return FAILED;
       } else if (scsi_cmd->input) {
@@ -595,58 +595,58 @@ int iscsi_abort_handler (Scsi_Cmnd *SCpnt) {
 
 #if LINUX_VERSION_CODE >= LinuxVersionCode(2,4,0)
     if (in_interrupt()) {
-      TRACE_ERROR("aborting within interrupt (killing Tx and Rx threads)\n");
+      iscsi_trace_error("aborting within interrupt (killing Tx and Rx threads)\n");
 #endif
-      TRACE_ERROR("killing Tx and Rx threads\n");
+      iscsi_trace_error("killing Tx and Rx threads\n");
       kill_proc(sess->rx_worker.pid, SIGKILL, 1);
       kill_proc(sess->tx_worker.pid, SIGKILL, 1);
       sess->tx_worker.state = 0;
       sess->rx_worker.state = 0;
 #if LINUX_VERSION_CODE >= LinuxVersionCode(2,4,0)
     } else {
-      TRACE_ERROR("aborting outside interrupt (gracefully ending Tx and Rx)\n");
+      iscsi_trace_error("aborting outside interrupt (gracefully ending Tx and Rx)\n");
     }
 #endif
 
-    TRACE(TRACE_ISCSI_DEBUG, "destroying session\n");
+    iscsi_trace(TRACE_ISCSI_DEBUG, "destroying session\n");
     if (session_destroy_i(sess)!=0) {
-      TRACE_ERROR("session_destroy() failed\n");
+      iscsi_trace_error("session_destroy() failed\n");
       g_stats.aborts_failed++;
       spin_lock_irq(&io_request_lock);
       return FAILED;
     }
   } else {
-    TRACE(TRACE_ISCSI_DEBUG, "no session\n");
+    iscsi_trace(TRACE_ISCSI_DEBUG, "no session\n");
   }
 
   g_stats.aborts_success++;
 
-  TRACE_ERROR("successfully aborted SCSI cmd 0x%p (op 0x%x, tid %i, lun %i)\n",
+  iscsi_trace_error("successfully aborted SCSI cmd 0x%p (op 0x%x, tid %i, lun %i)\n",
               SCpnt, SCpnt->cmnd[0], SCpnt->target, SCpnt->lun);
   spin_lock_irq(&io_request_lock);
   return SUCCESS;
 }
 
 int iscsi_device_reset_handler (Scsi_Cmnd *SCpnt) {
-  TRACE_ERROR("***********************\n");
-  TRACE_ERROR("*** DEVICE %i RESET ***\n", SCpnt->target);
-  TRACE_ERROR("***********************\n");
+  iscsi_trace_error("***********************\n");
+  iscsi_trace_error("*** DEVICE %i RESET ***\n", SCpnt->target);
+  iscsi_trace_error("***********************\n");
   g_stats.device_resets++;
   return SUCCESS;
 }
 
 int iscsi_bus_reset_handler (Scsi_Cmnd *SCpnt) {
-  TRACE_ERROR("********************\n");
-  TRACE_ERROR("*** BUS %i RESET ***\n", SCpnt->target);
-  TRACE_ERROR("********************\n");
+  iscsi_trace_error("********************\n");
+  iscsi_trace_error("*** BUS %i RESET ***\n", SCpnt->target);
+  iscsi_trace_error("********************\n");
   g_stats.bus_resets++;
   return SUCCESS;
 }
 
 int iscsi_host_reset_handler(Scsi_Cmnd *SCpnt) {
-  TRACE_ERROR("*********************\n");
-  TRACE_ERROR("*** HOST RESET %i ***\n", SCpnt->target);
-  TRACE_ERROR("*********************\n");
+  iscsi_trace_error("*********************\n");
+  iscsi_trace_error("*** HOST RESET %i ***\n", SCpnt->target);
+  iscsi_trace_error("*********************\n");
   g_stats.host_resets++;
   return SUCCESS;
 }

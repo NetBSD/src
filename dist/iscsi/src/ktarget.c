@@ -52,7 +52,7 @@ static int port = ISCSI_PORT; MODULE_PARM(port, "i");
 
 static int accept_connections(void *arg) {
   if (target_listen(port)!=0) {
-    TRACE_ERROR("target_listen() failed\n");
+    iscsi_trace_error("target_listen() failed\n");
   }
   return 0;
 }
@@ -62,7 +62,7 @@ int init_module(void) {
   printk("Usage: port=<int>\n");
   printk("\n");
   if (target_init(DEFAULT_TARGET_NAME)!=0) {
-    TRACE_ERROR("target_init() failed\n");
+    iscsi_trace_error("target_init() failed\n");
     return -1;
   }
   kernel_thread(accept_connections, NULL, 0);
@@ -71,6 +71,6 @@ int init_module(void) {
 
 void cleanup_module(void) {
   if (target_shutdown()!=0) {
-    TRACE_ERROR("target_shutdown() failed\n");
+    iscsi_trace_error("target_shutdown() failed\n");
   }
 }
