@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.100.4.2 2006/03/10 13:53:24 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.100.4.3 2006/03/12 23:33:56 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.100.4.2 2006/03/10 13:53:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.100.4.3 2006/03/12 23:33:56 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -564,7 +564,7 @@ static int
 sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
 {
 	struct proc *ptmp;
-	int i, error = 0;
+	int error = 0;
 
 	if (pid == PROC_CURPROC)
 		ptmp = p;
@@ -591,18 +591,14 @@ sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
 		 * sub-processes started by a sgid process)
 		 */
 		else {
-			int do_ngroups;
+			int ismember = 0;
 
-			do_ngroups = kauth_cred_ngroups(p->p_cred);
-			for (i = 0; i < do_ngroups; i++) {
-				if (kauth_cred_group(p->p_cred, i) ==
-				    kauth_cred_getgid(ptmp->p_cred))
-					break;
-			}
-			if (i == kauth_cred_ngroups(p->p_cred))
+			if (kauth_cred_ismember_gid(p->p_cred,
+			    kauth_cred_getgid(ptmp->p_cred), &ismember) != 0 ||
+			    !ismember) {
 				error = kauth_authorize_generic(p->p_cred,
-							  KAUTH_GENERIC_ISSUSER,
-							  &p->p_acflag);
+				    KAUTH_GENERIC_ISSUSER, &p->p_acflag);
+			}
 		}
 	}
 
