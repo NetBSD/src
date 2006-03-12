@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.113 2006/03/08 23:46:24 lukem Exp $  */
+/*	$NetBSD: atw.c,v 1.114 2006/03/12 03:22:02 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.113 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.114 2006/03/12 03:22:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -876,12 +876,12 @@ atw_attach(struct atw_softc *sc)
 		    sc->sc_dev.dv_xname);
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
-	sc->sc_rxtap.ar_ihdr.it_len = sizeof(sc->sc_rxtapu);
-	sc->sc_rxtap.ar_ihdr.it_present = ATW_RX_RADIOTAP_PRESENT;
+	sc->sc_rxtap.ar_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.ar_ihdr.it_present = htole32(ATW_RX_RADIOTAP_PRESENT);
 
 	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
-	sc->sc_txtap.at_ihdr.it_len = sizeof(sc->sc_txtapu);
-	sc->sc_txtap.at_ihdr.it_present = ATW_TX_RADIOTAP_PRESENT;
+	sc->sc_txtap.at_ihdr.it_len = htole16(sizeof(sc->sc_txtapu));
+	sc->sc_txtap.at_ihdr.it_present = htole32(ATW_TX_RADIOTAP_PRESENT);
 
 	ieee80211_announce(ic);
 	return;
@@ -3189,8 +3189,8 @@ atw_rxintr(struct atw_softc *sc)
 			struct atw_rx_radiotap_header *tap = &sc->sc_rxtap;
 
 			tap->ar_rate = rate;
-			tap->ar_chan_freq = ic->ic_curchan->ic_freq;
-			tap->ar_chan_flags = ic->ic_curchan->ic_flags;
+			tap->ar_chan_freq = htole16(ic->ic_curchan->ic_freq);
+			tap->ar_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
 			/* TBD verify units are dB */
 			tap->ar_antsignal = (int)rssi;
@@ -3507,8 +3507,8 @@ atw_start(struct ifnet *ifp)
 			struct atw_tx_radiotap_header *tap = &sc->sc_txtap;
 
 			tap->at_rate = rate;
-			tap->at_chan_freq = ic->ic_curchan->ic_freq;
-			tap->at_chan_flags = ic->ic_curchan->ic_flags;
+			tap->at_chan_freq = htole16(ic->ic_curchan->ic_freq);
+			tap->at_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
 			/* TBD tap->at_flags */
 

@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_radiotap.9,v 1.8 2005/12/13 16:15:10 explorer Exp $
+.\" $NetBSD: ieee80211_radiotap.9,v 1.9 2006/03/12 03:22:02 dyoung Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -96,6 +96,8 @@ a macro to set the bits of the
 .Va it_present
 bitmap to indicate which fields exist and are filled in by the driver.
 .\"
+.Pp
+Radiotap capture fields are in little-endian byte order.
 .Pp
 Radiotap capture fields
 .Em must be naturally aligned .
