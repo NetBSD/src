@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acconfig.h - Global configuration constants
- *       $Revision: 1.1.1.11 $
+ *       $Revision: 1.1.1.12 $
  *
  *****************************************************************************/
 
@@ -137,7 +137,7 @@
 
 /* Current ACPICA subsystem version in YYYYMMDD format */
 
-#define ACPI_CA_VERSION                 0x20060113
+#define ACPI_CA_VERSION                 0x20060217
 
 /*
  * OS name, used for the _OS object.  The _OS object is essentially obsolete,
@@ -157,7 +157,7 @@
 #define ACPI_MAX_OBJECT_CACHE_DEPTH     96          /* Interpreter operand objects */
 
 /*
- * Should the subystem abort the loading of an ACPI table if the
+ * Should the subsystem abort the loading of an ACPI table if the
  * table checksum is incorrect?
  */
 #define ACPI_CHECKSUM_ABORT             FALSE

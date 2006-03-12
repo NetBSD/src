@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsinit - Object initialization namespace walk
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -191,10 +191,9 @@ AcpiDsInitOneObject (
         Status = AcpiDsInitializeRegion (ObjHandle);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
-                "Region %p [%4.4s] - Init failure, %s\n",
-                ObjHandle, AcpiUtGetNodeName (ObjHandle),
-                AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "During Region initialization %p [%4.4s]",
+                ObjHandle, AcpiUtGetNodeName (ObjHandle)));
         }
 
         Info->OpRegionCount++;
@@ -238,8 +237,8 @@ AcpiDsInitOneObject (
         Status = AcpiDsParseMethod (ObjHandle);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
-                "\n+Method %p [%4.4s] - parse failure, %s\n",
+            ACPI_ERROR ((AE_INFO,
+                "Method %p [%4.4s] - parse failure, %s",
                 ObjHandle, AcpiUtGetNodeName (ObjHandle),
                 AcpiFormatException (Status)));
 
@@ -310,8 +309,7 @@ AcpiDsInitializeObjects (
                     AcpiDsInitOneObject, &Info, NULL);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("WalkNamespace failed, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During WalkNamespace"));
     }
 
     ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT,

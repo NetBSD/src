@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmutex - ASL Mutex Acquire/Release functions
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -249,7 +249,7 @@ AcpiExAcquireMutex (
 
     if (!WalkState->Thread)
     {
-        ACPI_REPORT_ERROR (("Cannot acquire Mutex [%4.4s], null thread info\n",
+        ACPI_ERROR ((AE_INFO, "Cannot acquire Mutex [%4.4s], null thread info",
             AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_INTERNAL);
     }
@@ -260,8 +260,8 @@ AcpiExAcquireMutex (
      */
     if (WalkState->Thread->CurrentSyncLevel > ObjDesc->Mutex.SyncLevel)
     {
-        ACPI_REPORT_ERROR ((
-            "Cannot acquire Mutex [%4.4s], incorrect SyncLevel\n",
+        ACPI_ERROR ((AE_INFO,
+            "Cannot acquire Mutex [%4.4s], incorrect SyncLevel",
             AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_MUTEX_ORDER);
     }
@@ -345,7 +345,7 @@ AcpiExReleaseMutex (
 
     if (!ObjDesc->Mutex.OwnerThread)
     {
-        ACPI_REPORT_ERROR (("Cannot release Mutex [%4.4s], not acquired\n",
+        ACPI_ERROR ((AE_INFO, "Cannot release Mutex [%4.4s], not acquired",
             AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_MUTEX_NOT_ACQUIRED);
     }
@@ -354,7 +354,7 @@ AcpiExReleaseMutex (
 
     if (!WalkState->Thread)
     {
-        ACPI_REPORT_ERROR (("Cannot release Mutex [%4.4s], null thread info\n",
+        ACPI_ERROR ((AE_INFO, "Cannot release Mutex [%4.4s], null thread info",
             AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_INTERNAL);
     }
@@ -366,8 +366,8 @@ AcpiExReleaseMutex (
     if ((ObjDesc->Mutex.OwnerThread->ThreadId != WalkState->Thread->ThreadId) &&
         (ObjDesc->Mutex.Semaphore != AcpiGbl_GlobalLockSemaphore))
     {
-        ACPI_REPORT_ERROR ((
-            "Thread %X cannot release Mutex [%4.4s] acquired by thread %X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Thread %X cannot release Mutex [%4.4s] acquired by thread %X",
             WalkState->Thread->ThreadId,
             AcpiUtGetNodeName (ObjDesc->Mutex.Node),
             ObjDesc->Mutex.OwnerThread->ThreadId));
@@ -380,8 +380,8 @@ AcpiExReleaseMutex (
      */
     if (ObjDesc->Mutex.SyncLevel > WalkState->Thread->CurrentSyncLevel)
     {
-        ACPI_REPORT_ERROR ((
-            "Cannot release Mutex [%4.4s], incorrect SyncLevel\n",
+        ACPI_ERROR ((AE_INFO,
+            "Cannot release Mutex [%4.4s], incorrect SyncLevel",
             AcpiUtGetNodeName (ObjDesc->Mutex.Node)));
         return_ACPI_STATUS (AE_AML_MUTEX_ORDER);
     }

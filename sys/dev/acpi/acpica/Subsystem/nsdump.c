@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -308,12 +308,12 @@ AcpiNsDumpOneObject (
 
         if (Type > ACPI_TYPE_LOCAL_MAX)
         {
-            ACPI_REPORT_WARNING (("Invalid ACPI Object Type %08X\n", Type));
+            ACPI_WARNING ((AE_INFO, "Invalid ACPI Object Type %08X", Type));
         }
 
         if (!AcpiUtValidAcpiName (ThisNode->Name.Integer))
         {
-            ACPI_REPORT_WARNING (("Invalid ACPI Name %08X\n",
+            ACPI_WARNING ((AE_INFO, "Invalid ACPI Name %08X",
                 ThisNode->Name.Integer));
         }
 

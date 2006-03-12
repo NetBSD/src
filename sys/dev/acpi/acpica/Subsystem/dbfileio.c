@@ -2,7 +2,7 @@
  *
  * Module Name: dbfileio - Debugger file I/O commands.  These can't usually
  *              be used when running the debugger in Ring 0 (Kernel mode)
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  ******************************************************************************/
 
@@ -249,8 +249,8 @@ AcpiDbCheckTextModeCorruption (
 
     if (TableLength != FileLength)
     {
-        ACPI_REPORT_WARNING ((
-            "File length (0x%X) is not the same as the table length (0x%X)\n",
+        ACPI_WARNING ((AE_INFO,
+            "File length (0x%X) is not the same as the table length (0x%X)",
             FileLength, TableLength));
     }
 

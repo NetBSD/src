@@ -2,7 +2,7 @@
  *
  * Module Name: nsxfname - Public interfaces to the ACPI subsystem
  *                         ACPI Namespace oriented interfaces
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -407,8 +407,7 @@ AcpiGetObjectInfo (
         Status = AcpiUtExecute_CID (Node, &CidList);
         if (ACPI_SUCCESS (Status))
         {
-            Size += ((ACPI_SIZE) CidList->Count - 1) *
-                                 sizeof (ACPI_COMPATIBLE_ID);
+            Size += CidList->Size;
             Info->Valid |= ACPI_VALID_CID;
         }
 

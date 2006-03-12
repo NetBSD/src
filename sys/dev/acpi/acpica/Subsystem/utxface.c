@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utxface - External interfaces for "global" ACPI functions
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -156,8 +156,7 @@ AcpiInitializeSubsystem (
     Status = AcpiOsInitialize ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("OSL failed to initialize, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During OSL initialization"));
         return_ACPI_STATUS (Status);
     }
 
@@ -170,8 +169,7 @@ AcpiInitializeSubsystem (
     Status = AcpiUtMutexInitialize ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Global mutex creation failure, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During Global Mutex creation"));
         return_ACPI_STATUS (Status);
     }
 
@@ -182,15 +180,13 @@ AcpiInitializeSubsystem (
     Status = AcpiNsRootInitialize ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Namespace initialization failure, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During Namespace initialization"));
         return_ACPI_STATUS (Status);
     }
 
     /* If configured, initialize the AML debugger */
 
     ACPI_DEBUGGER_EXEC (Status = AcpiDbInitialize ());
-
     return_ACPI_STATUS (Status);
 }
 
@@ -245,7 +241,7 @@ AcpiEnableSubsystem (
         Status = AcpiEnable ();
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_WARNING (("AcpiEnable failed\n"));
+            ACPI_WARNING ((AE_INFO, "AcpiEnable failed"));
             return_ACPI_STATUS (Status);
         }
     }

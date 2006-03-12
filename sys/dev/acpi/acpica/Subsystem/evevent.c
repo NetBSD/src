@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evevent - Fixed Event handling and dispatch
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -157,7 +157,7 @@ AcpiEvInitializeEvents (
 
     if (!AcpiGbl_DSDT)
     {
-        ACPI_REPORT_WARNING (("No ACPI tables present!\n"));
+        ACPI_WARNING ((AE_INFO, "No ACPI tables present!"));
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
     }
 
@@ -169,18 +169,16 @@ AcpiEvInitializeEvents (
     Status = AcpiEvFixedEventInitialize ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR ((
-            "Unable to initialize fixed events, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "Unable to initialize fixed events"));
         return_ACPI_STATUS (Status);
     }
 
     Status = AcpiEvGpeInitialize ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR ((
-            "Unable to initialize general purpose events, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "Unable to initialize general purpose events"));
         return_ACPI_STATUS (Status);
     }
 
@@ -263,9 +261,8 @@ AcpiEvInstallXruptHandlers (
     Status = AcpiEvInstallSciHandler ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR ((
-            "Unable to install System Control Interrupt Handler, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "Unable to install System Control Interrupt handler"));
         return_ACPI_STATUS (Status);
     }
 
@@ -274,9 +271,8 @@ AcpiEvInstallXruptHandlers (
     Status = AcpiEvInitGlobalLockHandler ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR ((
-            "Unable to initialize Global Lock handler, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "Unable to initialize Global Lock handler"));
         return_ACPI_STATUS (Status);
     }
 
@@ -426,8 +422,8 @@ AcpiEvFixedEventDispatch (
         (void) AcpiSetRegister (AcpiGbl_FixedEventInfo[Event].EnableRegisterId,
                 0, ACPI_MTX_DO_NOT_LOCK);
 
-        ACPI_REPORT_ERROR ((
-            "No installed handler for fixed event [%08X]\n",
+        ACPI_ERROR ((AE_INFO,
+            "No installed handler for fixed event [%08X]",
             Event));
 
         return (ACPI_INTERRUPT_NOT_HANDLED);

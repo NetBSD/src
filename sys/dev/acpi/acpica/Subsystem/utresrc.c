@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utresrc - Resource managment utilities
- *              $Revision: 1.8 $
+ *              $Revision: 1.9 $
  *
  ******************************************************************************/
 
@@ -631,6 +631,7 @@ AcpiUtGetDescriptorLength (
  * RETURN:      Status, pointer to the end tag
  *
  * DESCRIPTION: Find the EndTag resource descriptor in an AML resource template
+ *              Note: allows a buffer length of zero.
  *
  ******************************************************************************/
 
@@ -652,6 +653,14 @@ AcpiUtGetResourceEndTag (
     Aml    = ObjDesc->Buffer.Pointer;
     EndAml = Aml + ObjDesc->Buffer.Length;
 
+    /* Allow a buffer length of zero */
+
+    if (!ObjDesc->Buffer.Length)
+    {
+        *EndTag = Aml;
+        return_ACPI_STATUS (AE_OK);
+    }
+
     /* Walk the resource template, one descriptor per iteration */
 
     while (Aml < EndAml)
@@ -668,6 +677,15 @@ AcpiUtGetResourceEndTag (
 
         if (AcpiUtGetResourceType (Aml) == ACPI_RESOURCE_NAME_END_TAG)
         {
+            /*
+             * There must be at least one more byte in the buffer for
+             * the 2nd byte of the EndTag
+             */
+            if ((Aml + 1) >= EndAml)
+            {
+                return_ACPI_STATUS (AE_AML_NO_RESOURCE_END_TAG);
+            }
+
             /* Return the pointer to the EndTag */
 
             *EndTag = Aml;

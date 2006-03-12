@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -619,7 +619,7 @@ AcpiPsParseAml (
         {
             /* Either the method parse or actual execution failed */
 
-            ACPI_REPORT_MTERROR ("Method parse/execution failed",
+            ACPI_ERROR_METHOD ("Method parse/execution failed",
                 WalkState->MethodNode, NULL, Status);
 
             /* Check for possible multi-thread reentrancy problem */
@@ -667,8 +667,8 @@ AcpiPsParseAml (
                 }
                 else
                 {
-                    ACPI_REPORT_ERROR ((
-                        "Invalid zero thread count in method\n"));
+                    ACPI_ERROR ((AE_INFO,
+                        "Invalid zero thread count in method"));
                 }
             }
 

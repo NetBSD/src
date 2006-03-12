@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxface - External interfaces for ACPI events
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -230,7 +230,7 @@ AcpiInstallFixedEventHandler (
     Status = AcpiEnableEvent (Event, 0);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_WARNING (("Could not enable fixed event %X\n", Event));
+        ACPI_WARNING ((AE_INFO, "Could not enable fixed event %X", Event));
 
         /* Remove the handler */
 
@@ -298,8 +298,8 @@ AcpiRemoveFixedEventHandler (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_WARNING ((
-            "Could not write to fixed event enable register %X\n", Event));
+        ACPI_WARNING ((AE_INFO,
+            "Could not write to fixed event enable register %X", Event));
     }
     else
     {
@@ -677,7 +677,7 @@ AcpiInstallGpeHandler (
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
     ACPI_HANDLER_INFO       *Handler;
     ACPI_STATUS             Status;
-    ACPI_NATIVE_UINT        Flags;
+    ACPI_CPU_FLAGS          Flags;
 
 
     ACPI_FUNCTION_TRACE ("AcpiInstallGpeHandler");
@@ -777,7 +777,7 @@ AcpiRemoveGpeHandler (
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
     ACPI_HANDLER_INFO       *Handler;
     ACPI_STATUS             Status;
-    ACPI_NATIVE_UINT        Flags;
+    ACPI_CPU_FLAGS          Flags;
 
 
     ACPI_FUNCTION_TRACE ("AcpiRemoveGpeHandler");

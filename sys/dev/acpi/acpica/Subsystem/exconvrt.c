@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconvrt - Object conversion routines
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -774,7 +774,7 @@ AcpiExConvertToTargetType (
 
 
         default:
-            ACPI_REPORT_ERROR (("Bad destination type during conversion: %X\n",
+            ACPI_ERROR ((AE_INFO, "Bad destination type during conversion: %X",
                 DestinationType));
             Status = AE_AML_INTERNAL;
             break;
@@ -790,8 +790,8 @@ AcpiExConvertToTargetType (
 
 
     default:
-        ACPI_REPORT_ERROR ((
-            "Unknown Target type ID 0x%X AmlOpcode %X DestType %s\n",
+        ACPI_ERROR ((AE_INFO,
+            "Unknown Target type ID 0x%X AmlOpcode %X DestType %s",
             GET_CURRENT_ARG_TYPE (WalkState->OpInfo->RuntimeArgs),
             WalkState->Opcode, AcpiUtGetTypeName (DestinationType)));
         Status = AE_AML_INTERNAL;

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utmisc - common utility procedures
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  ******************************************************************************/
 
@@ -156,7 +156,7 @@ AcpiUtAllocateOwnerId (
 
     if (*OwnerId)
     {
-        ACPI_REPORT_ERROR (("Owner ID [%2.2X] already exists\n", *OwnerId));
+        ACPI_ERROR ((AE_INFO, "Owner ID [%2.2X] already exists", *OwnerId));
         return_ACPI_STATUS (AE_ALREADY_EXISTS);
     }
 
@@ -231,8 +231,8 @@ AcpiUtAllocateOwnerId (
      * methods, or there may be a bug where the IDs are not released.
      */
     Status = AE_OWNER_ID_LIMIT;
-    ACPI_REPORT_ERROR ((
-        "Could not allocate new OwnerId (255 max), AE_OWNER_ID_LIMIT\n"));
+    ACPI_ERROR ((AE_INFO,
+        "Could not allocate new OwnerId (255 max), AE_OWNER_ID_LIMIT"));
 
 Exit:
     (void) AcpiUtReleaseMutex (ACPI_MTX_CACHES);
@@ -275,7 +275,7 @@ AcpiUtReleaseOwnerId (
 
     if (OwnerId == 0)
     {
-        ACPI_REPORT_ERROR (("Invalid OwnerId: %2.2X\n", OwnerId));
+        ACPI_ERROR ((AE_INFO, "Invalid OwnerId: %2.2X", OwnerId));
         return_VOID;
     }
 
@@ -304,8 +304,8 @@ AcpiUtReleaseOwnerId (
     }
     else
     {
-        ACPI_REPORT_ERROR ((
-            "Release of non-allocated OwnerId: %2.2X\n", OwnerId + 1));
+        ACPI_ERROR ((AE_INFO,
+            "Release of non-allocated OwnerId: %2.2X", OwnerId + 1));
     }
 
     (void) AcpiUtReleaseMutex (ACPI_MTX_CACHES);
@@ -1005,38 +1005,92 @@ AcpiUtWalkPackageTree (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiUtGenerateChecksum
+ * FUNCTION:    AcpiUtError, AcpiUtWarning, AcpiUtInfo
  *
- * PARAMETERS:  Buffer          - Buffer to be scanned
- *              Length          - number of bytes to examine
+ * PARAMETERS:  ModuleName          - Caller's module name (for error output)
+ *              LineNumber          - Caller's line number (for error output)
+ *              Format              - Printf format string + additional args
  *
- * RETURN:      The generated checksum
+ * RETURN:      None
  *
- * DESCRIPTION: Generate a checksum on a raw buffer
+ * DESCRIPTION: Print message with module/line/version info
  *
  ******************************************************************************/
 
-UINT8
-AcpiUtGenerateChecksum (
-    UINT8                   *Buffer,
-    UINT32                  Length)
+void  ACPI_INTERNAL_VAR_XFACE
+AcpiUtError (
+    char                    *ModuleName,
+    UINT32                  LineNumber,
+    char                    *Format,
+    ...)
 {
-    UINT32                  i;
-    signed char             Sum = 0;
+    va_list                 args;
 
 
-    for (i = 0; i < Length; i++)
-    {
-        Sum = (signed char) (Sum + Buffer[i]);
-    }
+    AcpiOsPrintf ("ACPI Error (%s-%04d): ", ModuleName, LineNumber);
 
-    return ((UINT8) (0 - Sum));
+    va_start (args, Format);
+    AcpiOsVprintf (Format, args);
+    AcpiOsPrintf (" [%X]\n", ACPI_CA_VERSION);
+}
+
+void  ACPI_INTERNAL_VAR_XFACE
+AcpiUtException (
+    char                    *ModuleName,
+    UINT32                  LineNumber,
+    ACPI_STATUS             Status,
+    char                    *Format,
+    ...)
+{
+    va_list                 args;
+
+
+    AcpiOsPrintf ("ACPI Exception (%s-%04d): %s, ", ModuleName, LineNumber,
+        AcpiFormatException (Status));
+
+    va_start (args, Format);
+    AcpiOsVprintf (Format, args);
+    AcpiOsPrintf (" [%X]\n", ACPI_CA_VERSION);
+}
+
+void  ACPI_INTERNAL_VAR_XFACE
+AcpiUtWarning (
+    char                    *ModuleName,
+    UINT32                  LineNumber,
+    char                    *Format,
+    ...)
+{
+    va_list                 args;
+
+
+    AcpiOsPrintf ("ACPI Warning (%s-%04d): ", ModuleName, LineNumber);
+
+    va_start (args, Format);
+    AcpiOsVprintf (Format, args);
+    AcpiOsPrintf (" [%X]\n", ACPI_CA_VERSION);
+}
+
+void  ACPI_INTERNAL_VAR_XFACE
+AcpiUtInfo (
+    char                    *ModuleName,
+    UINT32                  LineNumber,
+    char                    *Format,
+    ...)
+{
+    va_list                 args;
+
+
+    AcpiOsPrintf ("ACPI (%s-%04d): ", ModuleName, LineNumber);
+
+    va_start (args, Format);
+    AcpiOsVprintf (Format, args);
+    AcpiOsPrintf (" [%X]\n", ACPI_CA_VERSION);
 }
 
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiUtReportError
+ * FUNCTION:    AcpiUtReportError, Warning, Info
  *
  * PARAMETERS:  ModuleName          - Caller's module name (for error output)
  *              LineNumber          - Caller's line number (for error output)
@@ -1044,6 +1098,8 @@ AcpiUtGenerateChecksum (
  * RETURN:      None
  *
  * DESCRIPTION: Print error message
+ *
+ * Note: Legacy only, should be removed when no longer used by drivers.
  *
  ******************************************************************************/
 
@@ -1056,20 +1112,6 @@ AcpiUtReportError (
     AcpiOsPrintf ("ACPI Error (%s-%04d): ", ModuleName, LineNumber);
 }
 
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiUtReportWarning
- *
- * PARAMETERS:  ModuleName          - Caller's module name (for error output)
- *              LineNumber          - Caller's line number (for error output)
- *
- * RETURN:      None
- *
- * DESCRIPTION: Print warning message
- *
- ******************************************************************************/
-
 void
 AcpiUtReportWarning (
     char                    *ModuleName,
@@ -1078,20 +1120,6 @@ AcpiUtReportWarning (
 
     AcpiOsPrintf ("ACPI Warning (%s-%04d): ", ModuleName, LineNumber);
 }
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiUtReportInfo
- *
- * PARAMETERS:  ModuleName          - Caller's module name (for error output)
- *              LineNumber          - Caller's line number (for error output)
- *
- * RETURN:      None
- *
- * DESCRIPTION: Print information message
- *
- ******************************************************************************/
 
 void
 AcpiUtReportInfo (

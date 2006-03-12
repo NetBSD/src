@@ -2,7 +2,7 @@
  *
  * Module Name: nsobject - Utilities for objects attached to namespace
  *                         table entries
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  ******************************************************************************/
 
@@ -168,7 +168,7 @@ AcpiNsAttachObject (
     {
         /* Invalid handle */
 
-        ACPI_REPORT_ERROR (("Null NamedObj handle\n"));
+        ACPI_ERROR ((AE_INFO, "Null NamedObj handle"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -176,8 +176,8 @@ AcpiNsAttachObject (
     {
         /* Null object */
 
-        ACPI_REPORT_ERROR ((
-            "Null object, but type not ACPI_TYPE_ANY\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Null object, but type not ACPI_TYPE_ANY"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -185,7 +185,7 @@ AcpiNsAttachObject (
     {
         /* Not a name handle */
 
-        ACPI_REPORT_ERROR (("Invalid handle %p [%s]\n",
+        ACPI_ERROR ((AE_INFO, "Invalid handle %p [%s]",
             Node, AcpiUtGetDescriptorName (Node)));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -358,7 +358,7 @@ AcpiNsGetAttachedObject (
 
     if (!Node)
     {
-        ACPI_REPORT_WARNING (("Null Node ptr\n"));
+        ACPI_WARNING ((AE_INFO, "Null Node ptr"));
         return_PTR (NULL);
     }
 

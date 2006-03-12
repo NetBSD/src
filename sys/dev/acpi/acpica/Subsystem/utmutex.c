@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utmutex - local mutex support
- *              $Revision: 1.5 $
+ *              $Revision: 1.6 $
  *
  ******************************************************************************/
 
@@ -330,15 +330,15 @@ AcpiUtAcquireMutex (
             {
                 if (i == MutexId)
                 {
-                    ACPI_REPORT_ERROR ((
-                        "Mutex [%s] already acquired by this thread [%X]\n",
+                    ACPI_ERROR ((AE_INFO,
+                        "Mutex [%s] already acquired by this thread [%X]",
                         AcpiUtGetMutexName (MutexId), ThisThreadId));
 
                     return (AE_ALREADY_ACQUIRED);
                 }
 
-                ACPI_REPORT_ERROR ((
-                    "Invalid acquire order: Thread %X owns [%s], wants [%s]\n",
+                ACPI_ERROR ((AE_INFO,
+                    "Invalid acquire order: Thread %X owns [%s], wants [%s]",
                     ThisThreadId, AcpiUtGetMutexName (i),
                     AcpiUtGetMutexName (MutexId)));
 
@@ -364,10 +364,8 @@ AcpiUtAcquireMutex (
     }
     else
     {
-        ACPI_REPORT_ERROR ((
-            "Thread %X could not acquire Mutex [%X] %s\n",
-            ThisThreadId, MutexId,
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "Thread %X could not acquire Mutex [%X]", ThisThreadId, MutexId));
     }
 
     return (Status);
@@ -412,8 +410,8 @@ AcpiUtReleaseMutex (
      */
     if (AcpiGbl_MutexInfo[MutexId].ThreadId == ACPI_MUTEX_NOT_ACQUIRED)
     {
-        ACPI_REPORT_ERROR ((
-            "Mutex [%X] is not acquired, cannot release\n", MutexId));
+        ACPI_ERROR ((AE_INFO,
+            "Mutex [%X] is not acquired, cannot release", MutexId));
 
         return (AE_NOT_ACQUIRED);
     }
@@ -438,8 +436,8 @@ AcpiUtReleaseMutex (
                     continue;
                 }
 
-                ACPI_REPORT_ERROR ((
-                    "Invalid release order: owns [%s], releasing [%s]\n",
+                ACPI_ERROR ((AE_INFO,
+                    "Invalid release order: owns [%s], releasing [%s]",
                     AcpiUtGetMutexName (i), AcpiUtGetMutexName (MutexId)));
 
                 return (AE_RELEASE_DEADLOCK);
@@ -456,10 +454,8 @@ AcpiUtReleaseMutex (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR ((
-            "Thread %X could not release Mutex [%X] %s\n",
-            ThisThreadId, MutexId,
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "Thread %X could not release Mutex [%X]", ThisThreadId, MutexId));
     }
     else
     {

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utalloc - local memory allocation routines
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -415,8 +415,8 @@ AcpiUtAllocate (
 
     if (!Size)
     {
-        _ACPI_REPORT_ERROR (Module, Line,
-            ("UtAllocate: Attempt to allocate zero bytes, allocating 1 byte\n"));
+        ACPI_ERROR ((Module, Line,
+            "UtAllocate: Attempt to allocate zero bytes, allocating 1 byte"));
         Size = 1;
     }
 
@@ -425,8 +425,8 @@ AcpiUtAllocate (
     {
         /* Report allocation error */
 
-        _ACPI_REPORT_ERROR (Module, Line,
-            ("UtAllocate: Could not allocate size %X\n", (UINT32) Size));
+        ACPI_ERROR ((Module, Line,
+            "UtAllocate: Could not allocate size %X", (UINT32) Size));
 
         return_PTR (NULL);
     }
@@ -467,8 +467,8 @@ AcpiUtCallocate (
 
     if (!Size)
     {
-        _ACPI_REPORT_ERROR (Module, Line,
-            ("UtCallocate: Attempt to allocate zero bytes, allocating 1 byte\n"));
+        ACPI_ERROR ((Module, Line,
+            "Attempt to allocate zero bytes, allocating 1 byte"));
         Size = 1;
     }
 
@@ -477,8 +477,8 @@ AcpiUtCallocate (
     {
         /* Report allocation error */
 
-        _ACPI_REPORT_ERROR (Module, Line,
-            ("UtCallocate: Could not allocate size %X\n", (UINT32) Size));
+        ACPI_ERROR ((Module, Line,
+            "Could not allocate size %X", (UINT32) Size));
         return_PTR (NULL);
     }
 
@@ -620,8 +620,8 @@ AcpiUtCallocateAndTrack (
     {
         /* Report allocation error */
 
-        _ACPI_REPORT_ERROR (Module, Line,
-            ("UtCallocate: Could not allocate size %X\n", (UINT32) Size));
+        ACPI_ERROR ((Module, Line,
+            "Could not allocate size %X", (UINT32) Size));
         return (NULL);
     }
 
@@ -671,8 +671,8 @@ AcpiUtFreeAndTrack (
 
     if (NULL == Allocation)
     {
-        _ACPI_REPORT_ERROR (Module, Line,
-            ("AcpiUtFree: Attempt to delete a NULL address\n"));
+        ACPI_ERROR ((Module, Line,
+            "Attempt to delete a NULL address"));
 
         return_VOID;
     }
@@ -687,14 +687,11 @@ AcpiUtFreeAndTrack (
                     Component, Module, Line);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not free memory, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "Could not free memory"));
     }
 
     AcpiOsFree (DebugBlock);
-
     ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS, "%p freed\n", Allocation));
-
     return_VOID;
 }
 
@@ -787,11 +784,11 @@ AcpiUtTrackAllocation (
     Element = AcpiUtFindAllocation (Allocation);
     if (Element)
     {
-        ACPI_REPORT_ERROR ((
-            "UtTrackAllocation: Allocation already present in list! (%p)\n",
+        ACPI_ERROR ((AE_INFO,
+            "UtTrackAllocation: Allocation already present in list! (%p)",
             Allocation));
 
-        ACPI_REPORT_ERROR (("Element %p Address %p\n",
+        ACPI_ERROR ((AE_INFO, "Element %p Address %p",
             Element, Allocation));
 
         goto UnlockAndExit;
@@ -860,8 +857,8 @@ AcpiUtRemoveAllocation (
     {
         /* No allocations! */
 
-        _ACPI_REPORT_ERROR (Module, Line,
-            ("UtRemoveAllocation: Empty allocation list, nothing to free!\n"));
+        ACPI_ERROR ((Module, Line,
+            "Empty allocation list, nothing to free!"));
 
         return_ACPI_STATUS (AE_OK);
     }
@@ -1046,13 +1043,13 @@ AcpiUtDumpAllocations (
 
     if (!NumOutstanding)
     {
-        ACPI_REPORT_INFO ((
-            "No outstanding allocations\n"));
+        ACPI_INFO ((AE_INFO,
+            "No outstanding allocations"));
     }
     else
     {
-        ACPI_REPORT_ERROR ((
-            "%d(%X) Outstanding allocations\n",
+        ACPI_ERROR ((AE_INFO,
+            "%d(%X) Outstanding allocations",
             NumOutstanding, NumOutstanding));
     }
 

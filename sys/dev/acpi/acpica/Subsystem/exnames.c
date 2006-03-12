@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exnames - interpreter/scanner name load/execute
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -188,8 +188,8 @@ AcpiExAllocateNameString (
     NameString = ACPI_MEM_ALLOCATE (SizeNeeded);
     if (!NameString)
     {
-        ACPI_REPORT_ERROR ((
-            "Could not allocate size %d\n", SizeNeeded));
+        ACPI_ERROR ((AE_INFO,
+            "Could not allocate size %d", SizeNeeded));
         return_PTR (NULL);
     }
 
@@ -271,7 +271,7 @@ AcpiExNameSegment (
 
     if ('0' <= CharBuf[0] && CharBuf[0] <= '9')
     {
-        ACPI_REPORT_ERROR (("Invalid leading digit: %c\n", CharBuf[0]));
+        ACPI_ERROR ((AE_INFO, "Invalid leading digit: %c", CharBuf[0]));
         return_ACPI_STATUS (AE_CTRL_PENDING);
     }
 
@@ -324,8 +324,8 @@ AcpiExNameSegment (
          * the required 4
          */
         Status = AE_AML_BAD_NAME;
-        ACPI_REPORT_ERROR ((
-            "Bad character %02x in name, at %p\n",
+        ACPI_ERROR ((AE_INFO,
+            "Bad character %02x in name, at %p",
             *AmlAddress, AmlAddress));
     }
 
@@ -537,8 +537,8 @@ AcpiExGetNameString (
     {
         /* Ran out of segments after processing a prefix */
 
-        ACPI_REPORT_ERROR ((
-            "Malformed Name at %p\n", NameString));
+        ACPI_ERROR ((AE_INFO,
+            "Malformed Name at %p", NameString));
         Status = AE_AML_BAD_NAME;
     }
 

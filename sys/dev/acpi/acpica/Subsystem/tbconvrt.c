@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbconvrt - ACPI Table conversion utilities
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -574,7 +574,7 @@ AcpiTbConvertTableFadt (
      */
     if (AcpiGbl_FADT->Length < sizeof (FADT_DESCRIPTOR_REV1))
     {
-        ACPI_REPORT_ERROR (("FADT is invalid, too short: 0x%X\n",
+        ACPI_ERROR ((AE_INFO, "FADT is invalid, too short: 0x%X",
             AcpiGbl_FADT->Length));
         return_ACPI_STATUS (AE_INVALID_TABLE_LENGTH);
     }
@@ -593,8 +593,8 @@ AcpiTbConvertTableFadt (
         {
             /* Length is too short to be a V2.0 table */
 
-            ACPI_REPORT_WARNING ((
-                "Inconsistent FADT length (0x%X) and revision (0x%X), using FADT V1.0 portion of table\n",
+            ACPI_WARNING ((AE_INFO,
+                "Inconsistent FADT length (0x%X) and revision (0x%X), using FADT V1.0 portion of table",
                 AcpiGbl_FADT->Length, AcpiGbl_FADT->Revision));
 
             AcpiTbConvertFadt1 (LocalFadt, (void *) AcpiGbl_FADT);
@@ -667,15 +667,15 @@ AcpiTbBuildCommonFacs (
 
     if (AcpiGbl_FACS->Length < 24)
     {
-        ACPI_REPORT_ERROR (("Invalid FACS table length: 0x%X\n",
+        ACPI_ERROR ((AE_INFO, "Invalid FACS table length: 0x%X",
             AcpiGbl_FACS->Length));
         return_ACPI_STATUS (AE_INVALID_TABLE_LENGTH);
     }
 
     if (AcpiGbl_FACS->Length < 64)
     {
-        ACPI_REPORT_WARNING ((
-            "FACS is shorter than the ACPI specification allows: 0x%X, using anyway\n",
+        ACPI_WARNING ((AE_INFO,
+            "FACS is shorter than the ACPI specification allows: 0x%X, using anyway",
             AcpiGbl_FACS->Length));
     }
 

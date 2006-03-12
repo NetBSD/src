@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: excreate - Named object creation
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -398,7 +398,7 @@ AcpiExCreateRegion (
     if ((RegionSpace >= ACPI_NUM_PREDEFINED_REGIONS) &&
         (RegionSpace < ACPI_USER_REGION_BEGIN))
     {
-        ACPI_REPORT_ERROR (("Invalid AddressSpace type %X\n", RegionSpace));
+        ACPI_ERROR ((AE_INFO, "Invalid AddressSpace type %X", RegionSpace));
         return_ACPI_STATUS (AE_AML_INVALID_SPACE_ID);
     }
 

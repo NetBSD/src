@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exutils - interpreter/scanner utilities
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -175,7 +175,7 @@ AcpiExEnterInterpreter (
     Status = AcpiUtAcquireMutex (ACPI_MTX_EXECUTE);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not acquire interpreter mutex\n"));
+        ACPI_ERROR ((AE_INFO, "Could not acquire interpreter mutex"));
     }
 
     return_ACPI_STATUS (Status);
@@ -217,7 +217,7 @@ AcpiExExitInterpreter (
     Status = AcpiUtReleaseMutex (ACPI_MTX_EXECUTE);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not release interpreter mutex\n"));
+        ACPI_ERROR ((AE_INFO, "Could not release interpreter mutex"));
     }
 
     return_VOID;
@@ -305,9 +305,8 @@ AcpiExAcquireGlobalLock (
         }
         else
         {
-            ACPI_REPORT_ERROR ((
-                "Could not acquire Global Lock, %s\n",
-                AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not acquire Global Lock"));
         }
     }
 
@@ -349,8 +348,8 @@ AcpiExReleaseGlobalLock (
         {
             /* Report the error, but there isn't much else we can do */
 
-            ACPI_REPORT_ERROR (("Could not release ACPI Global Lock, %s\n",
-                AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not release ACPI Global Lock"));
         }
     }
 

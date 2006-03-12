@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utcopy - Internal to external object translation utilities
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -726,8 +726,8 @@ AcpiUtCopyEobjectToIobject (
         /*
          * Packages as external input to control methods are not supported,
          */
-        ACPI_REPORT_ERROR ((
-            "Packages as parameters not implemented!\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Packages as parameters not implemented!"));
 
         return_ACPI_STATUS (AE_NOT_IMPLEMENTED);
     }
@@ -1009,7 +1009,7 @@ AcpiUtCopyIpackageToIpackage (
                                     sizeof (void *));
     if (!DestObj->Package.Elements)
     {
-        ACPI_REPORT_ERROR (("Package allocation failure\n"));
+        ACPI_ERROR ((AE_INFO, "Package allocation failure"));
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: pstree - Parser op tree manipulation/traversal/search
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  *****************************************************************************/
 
@@ -227,7 +227,7 @@ AcpiPsAppendArg (
     {
         /* Invalid opcode */
 
-        ACPI_REPORT_ERROR (("Invalid AML Opcode: 0x%2.2X\n",
+        ACPI_ERROR ((AE_INFO, "Invalid AML Opcode: 0x%2.2X",
             Op->Common.AmlOpcode));
         return;
     }

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbutils - Table manipulation utilities
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -236,8 +236,8 @@ AcpiTbValidateTableHeader (
 
     if (!AcpiOsReadable (TableHeader, sizeof (ACPI_TABLE_HEADER)))
     {
-        ACPI_REPORT_ERROR ((
-            "Cannot read table header at %p\n", TableHeader));
+        ACPI_ERROR ((AE_INFO,
+            "Cannot read table header at %p", TableHeader));
 
         return (AE_BAD_ADDRESS);
     }
@@ -247,11 +247,11 @@ AcpiTbValidateTableHeader (
     ACPI_MOVE_32_TO_32 (&Signature, TableHeader->Signature);
     if (!AcpiUtValidAcpiName (Signature))
     {
-        ACPI_REPORT_ERROR ((
-            "Table signature at %p [%p] has invalid characters\n",
+        ACPI_ERROR ((AE_INFO,
+            "Table signature at %p [%p] has invalid characters",
             TableHeader, &Signature));
 
-        ACPI_REPORT_WARNING (("Invalid table signature found: [%4.4s]\n",
+        ACPI_WARNING ((AE_INFO, "Invalid table signature found: [%4.4s]",
             ACPI_CAST_PTR (char, &Signature)));
 
         ACPI_DUMP_BUFFER (TableHeader, sizeof (ACPI_TABLE_HEADER));
@@ -262,11 +262,11 @@ AcpiTbValidateTableHeader (
 
     if (TableHeader->Length < sizeof (ACPI_TABLE_HEADER))
     {
-        ACPI_REPORT_ERROR ((
-            "Invalid length in table header %p name %4.4s\n",
+        ACPI_ERROR ((AE_INFO,
+            "Invalid length in table header %p name %4.4s",
             TableHeader, (char *) &Signature));
 
-        ACPI_REPORT_WARNING (("Invalid table header length (0x%X) found\n",
+        ACPI_WARNING ((AE_INFO, "Invalid table header length (0x%X) found",
             (UINT32) TableHeader->Length));
 
         ACPI_DUMP_BUFFER (TableHeader, sizeof (ACPI_TABLE_HEADER));
@@ -309,8 +309,8 @@ AcpiTbVerifyTableChecksum (
 
     if (Checksum)
     {
-        ACPI_REPORT_WARNING ((
-            "Invalid checksum in table [%4.4s] (%02X, sum %02X is not zero)\n",
+        ACPI_WARNING ((AE_INFO,
+            "Invalid checksum in table [%4.4s] (%02X, sum %02X is not zero)",
             TableHeader->Signature, (UINT32) TableHeader->Checksum,
             (UINT32) Checksum));
 
@@ -399,7 +399,7 @@ AcpiTbHandleToObject (
         }
     }
 
-    ACPI_REPORT_ERROR (("TableId=%X does not exist\n", TableId));
+    ACPI_ERROR ((AE_INFO, "TableId=%X does not exist", TableId));
     return (AE_BAD_PARAMETER);
 }
 #endif

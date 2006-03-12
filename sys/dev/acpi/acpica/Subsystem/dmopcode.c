@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmopcode - AML disassembler, specific AML opcodes
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  ******************************************************************************/
 
@@ -202,9 +202,9 @@ AcpiDmFieldFlags (
     UINT32                  Flags;
 
 
-    /* The next Op contains the flags */
+    /* The next peer Op (not child op) contains the flags */
 
-    Op = AcpiPsGetDepthNext (NULL, Op);
+    Op = Op->Common.Next;
     Flags = (UINT8) Op->Common.Value.Integer;
 
     /* Mark the Op as completed */

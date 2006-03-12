@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswscope - Scope stack manipulation
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -193,7 +193,7 @@ AcpiDsScopeStackPush (
     {
         /* Invalid scope   */
 
-        ACPI_REPORT_ERROR (("Null scope parameter\n"));
+        ACPI_ERROR ((AE_INFO, "Null scope parameter"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -201,8 +201,8 @@ AcpiDsScopeStackPush (
 
     if (!AcpiUtValidObjectType (Type))
     {
-        ACPI_REPORT_WARNING ((
-            "Invalid object type: 0x%X\n", Type));
+        ACPI_WARNING ((AE_INFO,
+            "Invalid object type: 0x%X", Type));
     }
 
     /* Allocate a new scope object */

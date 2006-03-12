@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbgetall - Get all required ACPI tables
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -245,8 +245,8 @@ AcpiTbGetSecondaryTable (
 
     if (ACPI_STRNCMP (Header.Signature, Signature, ACPI_NAME_SIZE))
     {
-        ACPI_REPORT_ERROR ((
-            "Incorrect table signature - wanted [%s] found [%4.4s]\n",
+        ACPI_ERROR ((AE_INFO,
+            "Incorrect table signature - wanted [%s] found [%4.4s]",
             Signature, Header.Signature));
         return_ACPI_STATUS (AE_BAD_SIGNATURE);
     }
@@ -336,7 +336,7 @@ AcpiTbGetRequiredTables (
         Status = AcpiTbGetPrimaryTable (&Address, &TableInfo);
         if ((Status != AE_OK) && (Status != AE_TABLE_NOT_SUPPORTED))
         {
-            ACPI_REPORT_WARNING (("%s, while getting table at %8.8X%8.8X\n",
+            ACPI_WARNING ((AE_INFO, "%s, while getting table at %8.8X%8.8X",
                 AcpiFormatException (Status),
                 ACPI_FORMAT_UINT64 (Address.Pointer.Value)));
         }
@@ -346,7 +346,7 @@ AcpiTbGetRequiredTables (
 
     if (!AcpiGbl_FADT)
     {
-        ACPI_REPORT_ERROR (("No FADT present in RSDT/XSDT\n"));
+        ACPI_ERROR ((AE_INFO, "No FADT present in RSDT/XSDT"));
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
     }
 
@@ -357,8 +357,8 @@ AcpiTbGetRequiredTables (
     Status = AcpiTbConvertTableFadt ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR ((
-            "Could not convert FADT to internal common format\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Could not convert FADT to internal common format"));
         return_ACPI_STATUS (Status);
     }
 
@@ -369,8 +369,8 @@ AcpiTbGetRequiredTables (
     Status = AcpiTbGetSecondaryTable (&Address, FACS_SIG, &TableInfo);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not get/install the FACS, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "Could not get/install the FACS"));
         return_ACPI_STATUS (Status);
     }
 
@@ -391,7 +391,7 @@ AcpiTbGetRequiredTables (
     Status = AcpiTbGetSecondaryTable (&Address, DSDT_SIG, &TableInfo);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not get/install the DSDT\n"));
+        ACPI_ERROR ((AE_INFO, "Could not get/install the DSDT"));
         return_ACPI_STATUS (Status);
     }
 

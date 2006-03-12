@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmisc - ACPI AML (p-code) execution - specific opcodes
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -183,7 +183,7 @@ AcpiExGetObjectReference (
 
         default:
 
-            ACPI_REPORT_ERROR (("Unknown Reference opcode %X\n",
+            ACPI_ERROR ((AE_INFO, "Unknown Reference opcode %X",
                 ObjDesc->Reference.Opcode));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
@@ -201,7 +201,7 @@ AcpiExGetObjectReference (
 
     default:
 
-        ACPI_REPORT_ERROR (("Invalid descriptor type %X\n",
+        ACPI_ERROR ((AE_INFO, "Invalid descriptor type %X",
             ACPI_GET_DESCRIPTOR_TYPE (ObjDesc)));
         return_ACPI_STATUS (AE_TYPE);
     }
@@ -255,6 +255,7 @@ AcpiExConcatTemplate (
     UINT8                   *EndTag;
     ACPI_SIZE               Length0;
     ACPI_SIZE               Length1;
+    ACPI_SIZE               NewLength;
 
 
     ACPI_FUNCTION_TRACE ("ExConcatTemplate");
@@ -262,10 +263,12 @@ AcpiExConcatTemplate (
 
     /*
      * Find the EndTag descriptor in each resource template.
-     * Note: returned pointers point TO the EndTag, not past it.
-     *
-     * Compute the length of each resource template
+     * Note1: returned pointers point TO the EndTag, not past it.
+     * Note2: zero-length buffers are allowed; treated like one EndTag
      */
+
+    /* Get the length of the first resource template */
+
     Status = AcpiUtGetResourceEndTag (Operand0, &EndTag);
     if (ACPI_FAILURE (Status))
     {
@@ -274,20 +277,23 @@ AcpiExConcatTemplate (
 
     Length0 = ACPI_PTR_DIFF (EndTag, Operand0->Buffer.Pointer);
 
+    /* Get the length of the second resource template */
+
     Status = AcpiUtGetResourceEndTag (Operand1, &EndTag);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    /* Include the EndTag in the second template length */
+    Length1 = ACPI_PTR_DIFF (EndTag, Operand1->Buffer.Pointer);
 
-    Length1 = ACPI_PTR_DIFF (EndTag, Operand1->Buffer.Pointer) +
-                sizeof (AML_RESOURCE_END_TAG);
+    /* Combine both lengths, minimum size will be 2 for EndTag */
 
-    /* Create a new buffer object for the result */
+    NewLength = Length0 + Length1 + sizeof (AML_RESOURCE_END_TAG);
 
-    ReturnDesc = AcpiUtCreateBufferObject (Length0 + Length1);
+    /* Create a new buffer object for the result (with one EndTag) */
+
+    ReturnDesc = AcpiUtCreateBufferObject (NewLength);
     if (!ReturnDesc)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);
@@ -301,9 +307,10 @@ AcpiExConcatTemplate (
     ACPI_MEMCPY (NewBuf, Operand0->Buffer.Pointer, Length0);
     ACPI_MEMCPY (NewBuf + Length0, Operand1->Buffer.Pointer, Length1);
 
-    /* Set the EndTag checksum to zero, means "ignore checksum" */
+    /* Insert EndTag and set the checksum to zero, means "ignore checksum" */
 
-    NewBuf[ReturnDesc->Buffer.Length - 1] = 0;
+    NewBuf[NewLength - 1] = 0;
+    NewBuf[NewLength - 2] = ACPI_RESOURCE_NAME_END_TAG | 1;
 
     /* Return the completed resource template */
 
@@ -366,7 +373,7 @@ AcpiExDoConcatenate (
         break;
 
     default:
-        ACPI_REPORT_ERROR (("Invalid object type: %X\n",
+        ACPI_ERROR ((AE_INFO, "Invalid object type: %X",
             ACPI_GET_OBJECT_TYPE (Operand0)));
         Status = AE_AML_INTERNAL;
     }
@@ -468,7 +475,7 @@ AcpiExDoConcatenate (
 
         /* Invalid object type, should not happen here */
 
-        ACPI_REPORT_ERROR (("Invalid object type: %X\n",
+        ACPI_ERROR ((AE_INFO, "Invalid object type: %X",
             ACPI_GET_OBJECT_TYPE (Operand0)));
         Status =AE_AML_INTERNAL;
         goto Cleanup;

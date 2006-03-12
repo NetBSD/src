@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxfevnt - External Interfaces, ACPI event disable/enable
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -151,7 +151,7 @@ AcpiEnable (
 
     if (!AcpiGbl_FADT)
     {
-        ACPI_REPORT_WARNING (("No FADT information present!\n"));
+        ACPI_WARNING ((AE_INFO, "No FADT information present!"));
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
     }
 
@@ -166,7 +166,7 @@ AcpiEnable (
         Status = AcpiHwSetMode (ACPI_SYS_MODE_ACPI);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR (("Could not transition to ACPI mode\n"));
+            ACPI_ERROR ((AE_INFO, "Could not transition to ACPI mode"));
             return_ACPI_STATUS (Status);
         }
 
@@ -202,7 +202,7 @@ AcpiDisable (
 
     if (!AcpiGbl_FADT)
     {
-        ACPI_REPORT_WARNING (("No FADT information present!\n"));
+        ACPI_WARNING ((AE_INFO, "No FADT information present!"));
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
     }
 
@@ -219,7 +219,7 @@ AcpiDisable (
 
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
+            ACPI_ERROR ((AE_INFO,
                 "Could not exit ACPI mode to legacy mode"));
             return_ACPI_STATUS (Status);
         }
@@ -285,8 +285,8 @@ AcpiEnableEvent (
 
     if (Value != 1)
     {
-        ACPI_REPORT_ERROR ((
-            "Could not enable %s event\n", AcpiUtGetEventName (Event)));
+        ACPI_ERROR ((AE_INFO,
+            "Could not enable %s event", AcpiUtGetEventName (Event)));
         return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
     }
 
@@ -516,8 +516,8 @@ AcpiDisableEvent (
 
     if (Value != 0)
     {
-        ACPI_REPORT_ERROR ((
-            "Could not disable %s events\n", AcpiUtGetEventName (Event)));
+        ACPI_ERROR ((AE_INFO,
+            "Could not disable %s events", AcpiUtGetEventName (Event)));
         return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
     }
 

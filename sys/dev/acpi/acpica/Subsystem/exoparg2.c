@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg2 - AML execution - opcodes with 2 arguments
- *              $Revision: 1.1.1.8 $
+ *              $Revision: 1.1.1.9 $
  *
  *****************************************************************************/
 
@@ -198,8 +198,8 @@ AcpiExOpcode_2A_0T_0R (
 
         if (!AcpiEvIsNotifyObject (Node))
         {
-            ACPI_REPORT_ERROR ((
-                "Unexpected notify object type [%s]\n",
+            ACPI_ERROR ((AE_INFO,
+                "Unexpected notify object type [%s]",
                 AcpiUtGetTypeName (Node->Type)));
 
             Status = AE_AML_OPERAND_TYPE;
@@ -246,7 +246,7 @@ AcpiExOpcode_2A_0T_0R (
 
     default:
 
-        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
+        ACPI_ERROR ((AE_INFO, "Unknown AML opcode %X",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
     }
@@ -319,7 +319,7 @@ AcpiExOpcode_2A_2T_1R (
 
     default:
 
-        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
+        ACPI_ERROR ((AE_INFO, "Unknown AML opcode %X",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;
@@ -499,54 +499,71 @@ AcpiExOpcode_2A_1T_1R (
             goto Cleanup;
         }
 
+        /* Initialize the Index reference object */
+
         Index = Operand[1]->Integer.Value;
+        ReturnDesc->Reference.Offset = (UINT32) Index;
+        ReturnDesc->Reference.Opcode = AML_INDEX_OP;
+        ReturnDesc->Reference.Object = Operand[0];
 
-        /* At this point, the Source operand is a Package, Buffer, or String */
-
-        if (ACPI_GET_OBJECT_TYPE (Operand[0]) == ACPI_TYPE_PACKAGE)
+        /*
+         * At this point, the Source operand is a String, Buffer, or Package.
+         * Verify that the index is within range.
+         */
+        switch (ACPI_GET_OBJECT_TYPE (Operand[0]))
         {
-            /* Object to be indexed is a Package */
+        case ACPI_TYPE_STRING:
 
-            if (Index >= Operand[0]->Package.Count)
+            if (Index >= Operand[0]->String.Length)
             {
-                ACPI_REPORT_ERROR ((
-                    "Index value (%X%8.8X) beyond package end (%X)\n",
-                    ACPI_FORMAT_UINT64 (Index), Operand[0]->Package.Count));
-                Status = AE_AML_PACKAGE_LIMIT;
-                goto Cleanup;
-            }
-
-            ReturnDesc->Reference.TargetType = ACPI_TYPE_PACKAGE;
-            ReturnDesc->Reference.Object = Operand[0];
-            ReturnDesc->Reference.Where = &Operand[0]->Package.Elements [Index];
-        }
-        else
-        {
-            /* Object to be indexed is a Buffer/String */
-
-            if (Index >= Operand[0]->Buffer.Length)
-            {
-                ACPI_REPORT_ERROR ((
-                    "Index value (%X%8.8X) beyond end of buffer (%X)\n",
-                    ACPI_FORMAT_UINT64 (Index), Operand[0]->Buffer.Length));
-                Status = AE_AML_BUFFER_LIMIT;
-                goto Cleanup;
+                Status = AE_AML_STRING_LIMIT;
             }
 
             ReturnDesc->Reference.TargetType = ACPI_TYPE_BUFFER_FIELD;
-            ReturnDesc->Reference.Object = Operand[0];
+            break;
+
+        case ACPI_TYPE_BUFFER:
+
+            if (Index >= Operand[0]->Buffer.Length)
+            {
+                Status = AE_AML_BUFFER_LIMIT;
+            }
+
+            ReturnDesc->Reference.TargetType = ACPI_TYPE_BUFFER_FIELD;
+            break;
+
+        case ACPI_TYPE_PACKAGE:
+
+            if (Index >= Operand[0]->Package.Count)
+            {
+                Status = AE_AML_PACKAGE_LIMIT;
+            }
+
+            ReturnDesc->Reference.TargetType = ACPI_TYPE_PACKAGE;
+            ReturnDesc->Reference.Where = &Operand[0]->Package.Elements [Index];
+            break;
+
+        default:
+
+            Status = AE_AML_INTERNAL;
+            goto Cleanup;
+        }
+
+        /* Failure means that the Index was beyond the end of the object */
+
+        if (ACPI_FAILURE (Status))
+        {
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Index (%X%8.8X) is beyond end of object",
+                ACPI_FORMAT_UINT64 (Index)));
+            goto Cleanup;
         }
 
         /*
          * Add a reference to the target package/buffer/string for the life
-         * of the index.
+         * of the index
          */
         AcpiUtAddReference (Operand[0]);
-
-        /* Complete the Index reference object */
-
-        ReturnDesc->Reference.Opcode = AML_INDEX_OP;
-        ReturnDesc->Reference.Offset = (UINT32) Index;
 
         /* Store the reference to the Target */
 
@@ -560,7 +577,7 @@ AcpiExOpcode_2A_1T_1R (
 
     default:
 
-        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
+        ACPI_ERROR ((AE_INFO, "Unknown AML opcode %X",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         break;
@@ -682,7 +699,7 @@ AcpiExOpcode_2A_0T_1R (
 
     default:
 
-        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
+        ACPI_ERROR ((AE_INFO, "Unknown AML opcode %X",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;

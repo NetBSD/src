@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsmisc - Miscellaneous resource descriptors
- *              $Revision: 1.1.1.9 $
+ *              $Revision: 1.1.1.10 $
  *
  ******************************************************************************/
 
@@ -163,13 +163,16 @@ AcpiRsConvertAmlToResource (
     UINT16                  Temp16 = 0;
 
 
-    ACPI_FUNCTION_TRACE ("RsGetResource");
+    ACPI_FUNCTION_TRACE ("RsConvertAmlToResource");
 
 
     if (((ACPI_NATIVE_UINT) Resource) & 0x3)
     {
-        AcpiOsPrintf ("**** GET: Misaligned resource pointer: %p Type %2.2X Len %X\n",
-            Resource, Resource->Type, Resource->Length);
+        /* Each internal resource struct is expected to be 32-bit aligned */
+
+        ACPI_WARNING ((AE_INFO,
+            "Misaligned resource pointer (get): %p Type %2.2X Len %X",
+            Resource, Resource->Type, Resource->Length));
     }
 
     /* Extract the resource Length field (does not include header length) */
@@ -374,7 +377,8 @@ AcpiRsConvertAmlToResource (
                 break;
 
             default:
-                AcpiOsPrintf ("*** Invalid conversion sub-opcode\n");
+
+                ACPI_ERROR ((AE_INFO, "Invalid conversion sub-opcode"));
                 return_ACPI_STATUS (AE_BAD_PARAMETER);
             }
             break;
@@ -382,7 +386,7 @@ AcpiRsConvertAmlToResource (
 
         default:
 
-            AcpiOsPrintf ("*** Invalid conversion opcode\n");
+            ACPI_ERROR ((AE_INFO, "Invalid conversion opcode"));
             return_ACPI_STATUS (AE_BAD_PARAMETER);
         }
 
@@ -393,9 +397,9 @@ AcpiRsConvertAmlToResource (
 Exit:
     if (!FlagsMode)
     {
-        /* Round the resource struct length up to the next 32-bit boundary */
+        /* Round the resource struct length up to the next boundary (32 or 64) */
 
-        Resource->Length = ACPI_ROUND_UP_TO_32BITS (Resource->Length);
+        Resource->Length = (UINT32) ACPI_ROUND_UP_TO_NATIVE_WORD (Resource->Length);
     }
     return_ACPI_STATUS (AE_OK);
 }
@@ -432,14 +436,6 @@ AcpiRsConvertResourceToAml (
 
     ACPI_FUNCTION_TRACE ("RsConvertResourceToAml");
 
-
-    /* Validate the Resource pointer, must be 32-bit aligned */
-
-    if (((ACPI_NATIVE_UINT) Resource) & 0x3)
-    {
-        AcpiOsPrintf ("**** SET: Misaligned resource pointer: %p Type %2.2X Len %X\n",
-            Resource, Resource->Type, Resource->Length);
-    }
 
     /*
      * First table entry must be ACPI_RSC_INITxxx and must contain the
@@ -607,7 +603,8 @@ AcpiRsConvertResourceToAml (
                 break;
 
             default:
-                AcpiOsPrintf ("*** Invalid conversion sub-opcode\n");
+
+                ACPI_ERROR ((AE_INFO, "Invalid conversion sub-opcode"));
                 return_ACPI_STATUS (AE_BAD_PARAMETER);
             }
             break;
@@ -615,7 +612,7 @@ AcpiRsConvertResourceToAml (
 
         default:
 
-            AcpiOsPrintf ("*** Invalid conversion opcode\n");
+            ACPI_ERROR ((AE_INFO, "Invalid conversion opcode"));
             return_ACPI_STATUS (AE_BAD_PARAMETER);
         }
 
@@ -649,8 +646,8 @@ Exit:
          * polarity/trigger interrupts are allowed (ACPI spec, section
          * "IRQ Format"), so 0x00 and 0x09 are illegal.
          */
-        ACPI_REPORT_ERROR ((
-            "Invalid interrupt polarity/trigger in resource list, %X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Invalid interrupt polarity/trigger in resource list, %X",
             Aml->Irq.Flags));
         return_ACPI_STATUS (AE_BAD_DATA);
     }
@@ -665,8 +662,8 @@ Exit:
 
     if (Resource->Data.Dma.Transfer == 0x03)
     {
-        ACPI_REPORT_ERROR ((
-            "Invalid DMA.Transfer preference (3)\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Invalid DMA.Transfer preference (3)"));
         return_ACPI_STATUS (AE_BAD_DATA);
     }
 #endif

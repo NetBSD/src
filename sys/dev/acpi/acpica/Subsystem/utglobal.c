@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utglobal - Global variables for the ACPI subsystem
- *              $Revision: 1.1.1.11 $
+ *              $Revision: 1.1.1.12 $
  *
  *****************************************************************************/
 
@@ -203,8 +203,8 @@ AcpiFormatException (
     {
         /* Exception code was not recognized */
 
-        ACPI_REPORT_ERROR ((
-            "Unknown exception code: 0x%8.8X\n", Status));
+        ACPI_ERROR ((AE_INFO,
+            "Unknown exception code: 0x%8.8X", Status));
 
         Exception = "UNKNOWN_STATUS_CODE";
     }

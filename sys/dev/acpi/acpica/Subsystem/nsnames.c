@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  ******************************************************************************/
 
@@ -197,8 +197,8 @@ AcpiNsBuildExternalPath (
 
     if (Index != 0)
     {
-        ACPI_REPORT_ERROR ((
-            "Could not construct pathname; index=%X, size=%X, Path=%s\n",
+        ACPI_ERROR ((AE_INFO,
+            "Could not construct pathname; index=%X, size=%X, Path=%s",
             (UINT32) Index, (UINT32) Size, &NameBuffer[Size]));
     }
 
@@ -241,7 +241,7 @@ AcpiNsGetExternalPathname (
     NameBuffer = ACPI_MEM_CALLOCATE (Size);
     if (!NameBuffer)
     {
-        ACPI_REPORT_ERROR (("Allocation failure\n"));
+        ACPI_ERROR ((AE_INFO, "Allocation failure"));
         return_PTR (NULL);
     }
 

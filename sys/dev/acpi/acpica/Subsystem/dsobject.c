@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              $Revision: 1.1.1.10 $
+ *              $Revision: 1.1.1.11 $
  *
  *****************************************************************************/
 
@@ -205,7 +205,7 @@ AcpiDsBuildInternalObject (
                 }
                 else
                 {
-                    ACPI_REPORT_NSERROR (Op->Common.Value.String, Status);
+                    ACPI_ERROR_NAMESPACE (Op->Common.Value.String, Status);
                 }
 
                 return_ACPI_STATUS (Status);
@@ -297,8 +297,8 @@ AcpiDsBuildInternalBufferObj (
     {
         if (ByteList->Common.AmlOpcode != AML_INT_BYTELIST_OP)
         {
-            ACPI_REPORT_ERROR ((
-                "Expecting bytelist, got AML opcode %X in op %p\n",
+            ACPI_ERROR ((AE_INFO,
+                "Expecting bytelist, got AML opcode %X in op %p",
                 ByteList->Common.AmlOpcode, ByteList));
 
             AcpiUtRemoveReference (ObjDesc);
@@ -658,8 +658,8 @@ AcpiDsInitObjectFromOp (
 
             default:
 
-                ACPI_REPORT_ERROR ((
-                    "Unknown constant opcode %X\n", Opcode));
+                ACPI_ERROR ((AE_INFO,
+                    "Unknown constant opcode %X", Opcode));
                 Status = AE_AML_OPERAND_TYPE;
                 break;
             }
@@ -676,7 +676,7 @@ AcpiDsInitObjectFromOp (
 
 
         default:
-            ACPI_REPORT_ERROR (("Unknown Integer type %X\n",
+            ACPI_ERROR ((AE_INFO, "Unknown Integer type %X",
                 OpInfo->Type));
             Status = AE_AML_OPERAND_TYPE;
             break;
@@ -753,7 +753,7 @@ AcpiDsInitObjectFromOp (
 
     default:
 
-        ACPI_REPORT_ERROR (("Unimplemented data type: %X\n",
+        ACPI_ERROR ((AE_INFO, "Unimplemented data type: %X",
             ACPI_GET_OBJECT_TYPE (ObjDesc)));
 
         Status = AE_AML_OPERAND_TYPE;
