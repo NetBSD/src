@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evrgnini- ACPI AddressSpace (OpRegion) init
- *              xRevision: 1.79 $
+ *              xRevision: 1.80 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.14 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evrgnini.c,v 1.15 2006/03/12 06:48:15 kochi Exp $");
 
 #define __EVRGNINI_C__
 
@@ -334,9 +334,9 @@ AcpiEvPciConfigRegionSetup (
                         }
                         else
                         {
-                            ACPI_REPORT_ERROR ((
-                                "Could not install PciConfig handler for Root Bridge %4.4s, %s\n",
-                                AcpiUtGetNodeName (PciRootNode), AcpiFormatException (Status)));
+                            ACPI_EXCEPTION ((AE_INFO, Status,
+                                "Could not install PciConfig handler for Root Bridge %4.4s",
+                                AcpiUtGetNodeName (PciRootNode)));
                         }
                     }
                     break;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psloop - Main AML parse loop
- *              xRevision: 1.8 $
+ *              xRevision: 1.10 $
  *
  *****************************************************************************/
 
@@ -204,14 +204,12 @@ AcpiPsParseLoop (
                 {
                     if (Status == AE_AML_NO_RETURN_VALUE)
                     {
-                        ACPI_REPORT_ERROR ((
-                            "Invoked method did not return a value, %s\n",
-                            AcpiFormatException (Status)));
+                        ACPI_EXCEPTION ((AE_INFO, Status,
+                            "Invoked method did not return a value"));
 
                     }
-                    ACPI_REPORT_ERROR ((
-                        "GetPredicate Failed, %s\n",
-                        AcpiFormatException (Status)));
+                    ACPI_EXCEPTION ((AE_INFO, Status,
+                        "GetPredicate Failed"));
                     return_ACPI_STATUS (Status);
                 }
 
@@ -268,8 +266,8 @@ AcpiPsParseLoop (
 
                 /* The opcode is unrecognized.  Just skip unknown opcodes */
 
-                ACPI_REPORT_ERROR ((
-                    "Found unknown opcode %X at AML address %p offset %X, ignoring\n",
+                ACPI_ERROR ((AE_INFO,
+                    "Found unknown opcode %X at AML address %p offset %X, ignoring",
                     WalkState->Opcode, ParserState->Aml, WalkState->AmlOffset));
 
                 ACPI_DUMP_BUFFER (ParserState->Aml, 128);
@@ -348,9 +346,8 @@ AcpiPsParseLoop (
                 Status = WalkState->DescendingCallback (WalkState, &Op);
                 if (ACPI_FAILURE (Status))
                 {
-                    ACPI_REPORT_ERROR ((
-                        "During name lookup/catalog, %s\n",
-                        AcpiFormatException (Status)));
+                    ACPI_EXCEPTION ((AE_INFO, Status,
+                        "During name lookup/catalog"));
                     goto CloseThisOp;
                 }
 
@@ -805,7 +802,17 @@ CloseThisOp:
                     {
                         return_ACPI_STATUS (Status2);
                     }
+
+                    Status2 = AcpiDsResultStackPop (WalkState);
+                    if (ACPI_FAILURE (Status2))
+                    {
+                        return_ACPI_STATUS (Status2);
+                    }
+
+                    AcpiUtDeleteGenericState (
+                        AcpiUtPopGenericState (&WalkState->ControlState));
                 }
+
                 AcpiPsPopScope (ParserState, &Op,
                     &WalkState->ArgTypes, &WalkState->ArgCount);
 
@@ -826,6 +833,7 @@ CloseThisOp:
                         return_ACPI_STATUS (Status2);
                     }
                 }
+
                 AcpiPsPopScope (ParserState, &Op,
                     &WalkState->ArgTypes, &WalkState->ArgCount);
 
