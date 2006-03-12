@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acstruct.h - Internal structs
- *       xRevision: 1.38 $
+ *       xRevision: 1.39 $
  *
  *****************************************************************************/
 
@@ -140,7 +140,7 @@
 
 typedef struct acpi_walk_state
 {
-    UINT8                       DataType;                           /* To differentiate various internal objs MUST BE FIRST!*/\
+    UINT8                       DataType;                           /* To differentiate various internal objs MUST BE FIRST!*/
     UINT8                       WalkType;
     ACPI_OWNER_ID               OwnerId;                            /* Owner of objects created during the walk */
     BOOLEAN                     LastPredicate;                      /* Result of last predicate */
