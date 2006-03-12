@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.41 2006/03/12 03:07:50 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.42 2006/03/12 03:34:37 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.41 2006/03/12 03:07:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.42 2006/03/12 03:34:37 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -817,15 +817,14 @@ an_start(struct ifnet *ifp)
 
 		/* XXX radiotap for tx must be completed */
 #if NBPFILTER > 0
-                if (sc->sc_drvbpf) {
-                        struct an_tx_radiotap_header *tap = &sc->sc_txtap;
-                        //tap->at_rate = frmhdr.an_tx_rate;
+		if (sc->sc_drvbpf) {
+			struct an_tx_radiotap_header *tap = &sc->sc_txtap;
 			tap->at_rate = ic->ic_bss->ni_rates.rs_rates[ic->ic_bss->ni_txrate];
 			tap->at_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->at_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
-                        /* TBD tap->wt_flags */
-                        bpf_mtap2(sc->sc_drvbpf, tap, tap->at_ihdr.it_len, m);
-                }
+			/* TBD tap->wt_flags */
+			bpf_mtap2(sc->sc_drvbpf, tap, tap->at_ihdr.it_len, m);
+		}
 #endif
 
 #ifdef AN_DEBUG
@@ -1514,7 +1513,7 @@ an_rx_intr(struct an_softc *sc)
 		    tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
 		
 		bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m);
-        }
+	}
 #endif
 	wh = mtod(m, struct ieee80211_frame_min *);
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
