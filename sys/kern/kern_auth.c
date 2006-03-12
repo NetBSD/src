@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.20 2006/03/12 00:10:18 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.21 2006/03/12 00:26:56 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -434,7 +434,7 @@ kauth_cred_delgroup(kauth_cred_t cred, gid_t gid)
  * cred2.
  * XXX: root bypasses this!
  */
-int
+static int
 kauth_cred_uidmatch(kauth_cred_t cred1, kauth_cred_t cred2)
 {
 	KASSERT(cred1 != NULL);
