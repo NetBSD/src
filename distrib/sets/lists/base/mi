@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.597 2006/03/12 15:09:54 rpaulo Exp $
+# $NetBSD: mi,v 1.598 2006/03/13 11:38:30 rpaulo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2912,14 +2912,14 @@
 ./usr/share/wscons/keymaps/mkbd.pt.iso8859-2	base-obsolete		obsolete
 ./usr/share/wscons/keymaps/mkbd.pt.iso8859-1	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.be.azerty	base-util-share		share
-./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-obsolete		obsolete
-./usr/share/wscons/keymaps/pckbd.hu.iso8859-1	base-util-share		share
-./usr/share/wscons/keymaps/pckbd.pl.iso8859-2	base-obsolete		obsolete
-./usr/share/wscons/keymaps/pckbd.pl.iso8859-1	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.pl.iso8859-2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.ru.koi8-r	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.sv.svascii	base-util-share		share
-./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-2	base-util-share		share
-./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-2	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-2	base-obsolete	obsolete
+./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-2	base-obsolete	obsolete
+./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-1	base-util-share		share
+./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-1	base-util-share		share
 ./usr/share/zoneinfo				base-sys-share
 ./usr/share/zoneinfo/Africa			base-sys-share
 ./usr/share/zoneinfo/Africa/Abidjan		base-sys-share		share
