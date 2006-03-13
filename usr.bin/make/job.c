@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.108 2006/03/12 20:14:56 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.109 2006/03/13 20:35:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.108 2006/03/12 20:14:56 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.109 2006/03/13 20:35:09 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.108 2006/03/12 20:14:56 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.109 2006/03/13 20:35:09 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -864,7 +864,7 @@ JobSaveCommand(ClientData cmd, ClientData gn)
 static void
 JobClose(Job *job)
 {
-    if (usePipes && (job->flags & JOB_FIRST)) {
+    if (usePipes) {
 	clearfd(job);
 	if (job->outPipe != job->inPipe) {
 	   (void)close(job->outPipe);
@@ -1293,8 +1293,7 @@ JobExec(Job *job, char **argv)
      * banner with their name in it never appears). This is an attempt to
      * provide that feedback, even if nothing follows it.
      */
-    if ((lastNode != job->node) && (job->flags & JOB_FIRST) &&
-	    !(job->flags & JOB_SILENT)) {
+    if ((lastNode != job->node) && !(job->flags & JOB_SILENT)) {
 	MESSAGE(stdout, job->node);
 	lastNode = job->node;
     }
@@ -1389,11 +1388,10 @@ JobExec(Job *job, char **argv)
 
 	Trace_Log(JOBSTART, job);
 
-	if (usePipes && (job->flags & JOB_FIRST)) {
+	if (usePipes) {
 	    /*
-	     * The first time a job is run for a node, we set the current
-	     * position in the buffer to the beginning and mark another
-	     * stream to watch in the outputs mask
+	     * Set the current position in the buffer to the beginning
+	     * and mark another stream to watch in the outputs mask
 	     */
 	    job->curPos = 0;
 
@@ -1558,7 +1556,6 @@ JobStart(GNode *gn, int flags)
     job = emalloc(sizeof(Job));
     if (job == NULL)
 	Punt("JobStart out of memory");
-    flags |= JOB_FIRST;
     if (gn->type & OP_SPECIAL)
 	flags |= JOB_SPECIAL;
 
@@ -1583,11 +1580,7 @@ JobStart(GNode *gn, int flags)
      * Check the commands now so any attributes from .DEFAULT have a chance
      * to migrate to the node
      */
-    if (job->flags & JOB_FIRST) {
-	cmdsOK = Job_CheckCommands(gn, Error);
-    } else {
-	cmdsOK = TRUE;
-    }
+    cmdsOK = Job_CheckCommands(gn, Error);
 
     job->inPollfd = NULL;
     /*
