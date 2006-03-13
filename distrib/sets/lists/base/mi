@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.598 2006/03/13 11:38:30 rpaulo Exp $
+# $NetBSD: mi,v 1.599 2006/03/13 19:45:35 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1400,6 +1400,33 @@
 ./usr/share/groff_font/devutf8			base-groff-font
 ./usr/share/i18n				base-sysutil-share
 ./usr/share/i18n/csmapper			base-sysutil-share
+./usr/share/i18n/csmapper/APPLE			base-sysutil-share
+./usr/share/i18n/csmapper/APPLE/CELTIC%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/CENTEURO%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/CROATIAN%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/CYRILLIC%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/DINGBATS%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/GAELIC%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/GREEK%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/ICELAND%UCS.mps base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/INUIT%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/ROMAN%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/ROMANIAN%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/THAI%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/TURKISH%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%CELTIC.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%CENTEURO.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%CROATIAN.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%CYRILLIC.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%DINGBATS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%GAELIC.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%GREEK.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%ICELAND.mps base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%INUIT.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%ROMAN.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%ROMANIAN.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%THAI.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/APPLE/UCS%TURKISH.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CNS			base-sysutil-share
 ./usr/share/i18n/csmapper/CNS/CNS11643-1%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CNS/CNS11643-2%UCS.mps	base-sysutil-share	nls
@@ -1408,7 +1435,13 @@
 ./usr/share/i18n/csmapper/CP			base-sysutil-share
 ./usr/share/i18n/csmapper/CP/CP037%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP038%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP10000%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP10006%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP10007%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP10029%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1006%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP10079%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP10081%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1026%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1250%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP1251%UCS.mps	base-sysutil-share	nls
@@ -1648,10 +1681,30 @@
 ./usr/share/i18n/csmapper/mapper.dir		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/mapper.dir.db		base-sysutil-share	nls
 ./usr/share/i18n/esdb				base-sysutil-share
+./usr/share/i18n/esdb/APPLE			base-sysutil-share
+./usr/share/i18n/esdb/APPLE/MACCELTIC.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACCENTEURO.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACCROATIAN.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACCYRILLIC.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACDINGBATS.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACGAELIC.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACGREEK.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACICELAND.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACINUIT.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACROMAN.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACROMANIAN.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACTHAI.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/APPLE/MACTURKISH.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP			base-sysutil-share
 ./usr/share/i18n/esdb/CP/CP037.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP038.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP10000.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP10006.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP10007.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP10029.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1006.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP10079.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP10081.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1026.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1250.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP1251.esdb		base-sysutil-share	nls
