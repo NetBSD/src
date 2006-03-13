@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.7.8.1 2006/03/13 09:07:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -45,7 +45,9 @@ struct mdlwp {
  * Machine-dependent part of the proc structure for vax.
  */
 struct mdproc {
-	int md_dummy;			/* Must be at least one field */
+	/* Syscall handling function */
+	void    (*md_syscall)(struct trapframe *);
+
 };
 
 /* md_flags */

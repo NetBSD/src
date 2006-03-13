@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswstate - Dispatcher parse tree walk management routines
- *              xRevision: 1.92 $
+ *              xRevision: 1.93 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswstate.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswstate.c,v 1.13.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #define __DSWSTATE_C__
 
@@ -183,15 +183,15 @@ AcpiDsResultRemove (
     State = WalkState->Results;
     if (!State)
     {
-        ACPI_REPORT_ERROR (("No result object pushed! State=%p\n",
+        ACPI_ERROR ((AE_INFO, "No result object pushed! State=%p",
             WalkState));
         return (AE_NOT_EXIST);
     }
 
     if (Index >= ACPI_OBJ_MAX_OPERAND)
     {
-        ACPI_REPORT_ERROR ((
-            "Index out of range: %X State=%p Num=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Index out of range: %X State=%p Num=%X",
             Index, WalkState, State->Results.NumResults));
     }
 
@@ -199,8 +199,8 @@ AcpiDsResultRemove (
 
     if (!State->Results.ObjDesc [Index])
     {
-        ACPI_REPORT_ERROR ((
-            "Null operand! State=%p #Ops=%X, Index=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Null operand! State=%p #Ops=%X, Index=%X",
             WalkState, State->Results.NumResults, Index));
         return (AE_AML_NO_RETURN_VALUE);
     }
@@ -255,7 +255,7 @@ AcpiDsResultPop (
 
     if (!State->Results.NumResults)
     {
-        ACPI_REPORT_ERROR (("Result stack is empty! State=%p\n",
+        ACPI_ERROR ((AE_INFO, "Result stack is empty! State=%p",
             WalkState));
         return (AE_AML_NO_RETURN_VALUE);
     }
@@ -283,8 +283,8 @@ AcpiDsResultPop (
         }
     }
 
-    ACPI_REPORT_ERROR ((
-        "No result objects! State=%p\n", WalkState));
+    ACPI_ERROR ((AE_INFO,
+        "No result objects! State=%p", WalkState));
     return (AE_AML_NO_RETURN_VALUE);
 }
 
@@ -318,14 +318,14 @@ AcpiDsResultPopFromBottom (
     State = WalkState->Results;
     if (!State)
     {
-        ACPI_REPORT_ERROR ((
-            "No result object pushed! State=%p\n", WalkState));
+        ACPI_ERROR ((AE_INFO,
+            "No result object pushed! State=%p", WalkState));
         return (AE_NOT_EXIST);
     }
 
     if (!State->Results.NumResults)
     {
-        ACPI_REPORT_ERROR (("No result objects! State=%p\n",
+        ACPI_ERROR ((AE_INFO, "No result objects! State=%p",
             WalkState));
         return (AE_AML_NO_RETURN_VALUE);
     }
@@ -347,8 +347,8 @@ AcpiDsResultPopFromBottom (
 
     if (!*Object)
     {
-        ACPI_REPORT_ERROR ((
-            "Null operand! State=%p #Ops=%X Index=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Null operand! State=%p #Ops=%X Index=%X",
             WalkState, State->Results.NumResults, (UINT32) Index));
         return (AE_AML_NO_RETURN_VALUE);
     }
@@ -388,22 +388,22 @@ AcpiDsResultPush (
     State = WalkState->Results;
     if (!State)
     {
-        ACPI_REPORT_ERROR (("No result stack frame during push\n"));
+        ACPI_ERROR ((AE_INFO, "No result stack frame during push"));
         return (AE_AML_INTERNAL);
     }
 
     if (State->Results.NumResults == ACPI_OBJ_NUM_OPERANDS)
     {
-        ACPI_REPORT_ERROR ((
-            "Result stack overflow: Obj=%p State=%p Num=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Result stack overflow: Obj=%p State=%p Num=%X",
             Object, WalkState, State->Results.NumResults));
         return (AE_STACK_OVERFLOW);
     }
 
     if (!Object)
     {
-        ACPI_REPORT_ERROR ((
-            "Null Object! Obj=%p State=%p Num=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Null Object! Obj=%p State=%p Num=%X",
             Object, WalkState, State->Results.NumResults));
         return (AE_BAD_PARAMETER);
     }
@@ -523,8 +523,8 @@ AcpiDsObjStackPush (
 
     if (WalkState->NumOperands >= ACPI_OBJ_NUM_OPERANDS)
     {
-        ACPI_REPORT_ERROR ((
-            "Object stack overflow! Obj=%p State=%p #Ops=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Object stack overflow! Obj=%p State=%p #Ops=%X",
             Object, WalkState, WalkState->NumOperands));
         return (AE_STACK_OVERFLOW);
     }
@@ -572,8 +572,8 @@ AcpiDsObjStackPop (
 
         if (WalkState->NumOperands == 0)
         {
-            ACPI_REPORT_ERROR ((
-                "Object stack underflow! Count=%X State=%p #Ops=%X\n",
+            ACPI_ERROR ((AE_INFO,
+                "Object stack underflow! Count=%X State=%p #Ops=%X",
                 PopCount, WalkState, WalkState->NumOperands));
             return (AE_STACK_UNDERFLOW);
         }
@@ -623,8 +623,8 @@ AcpiDsObjStackPopAndDelete (
 
         if (WalkState->NumOperands == 0)
         {
-            ACPI_REPORT_ERROR ((
-                "Object stack underflow! Count=%X State=%p #Ops=%X\n",
+            ACPI_ERROR ((AE_INFO,
+                "Object stack underflow! Count=%X State=%p #Ops=%X",
                 PopCount, WalkState, WalkState->NumOperands));
             return (AE_STACK_UNDERFLOW);
         }
@@ -981,14 +981,14 @@ AcpiDsDeleteWalkState (
 
     if (WalkState->DataType != ACPI_DESC_TYPE_WALK)
     {
-        ACPI_REPORT_ERROR (("%p is not a valid walk state\n",
+        ACPI_ERROR ((AE_INFO, "%p is not a valid walk state",
             WalkState));
         return;
     }
 
     if (WalkState->ParserState.Scope)
     {
-        ACPI_REPORT_ERROR (("%p walk still has a scope list\n",
+        ACPI_ERROR ((AE_INFO, "%p walk still has a scope list",
             WalkState));
     }
 
@@ -1057,23 +1057,23 @@ AcpiDsResultInsert (
     State = WalkState->Results;
     if (!State)
     {
-        ACPI_REPORT_ERROR (("No result object pushed! State=%p\n",
+        ACPI_ERROR ((AE_INFO, "No result object pushed! State=%p",
             WalkState));
         return (AE_NOT_EXIST);
     }
 
     if (Index >= ACPI_OBJ_NUM_OPERANDS)
     {
-        ACPI_REPORT_ERROR ((
-            "Index out of range: %X Obj=%p State=%p Num=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Index out of range: %X Obj=%p State=%p Num=%X",
             Index, Object, WalkState, State->Results.NumResults));
         return (AE_BAD_PARAMETER);
     }
 
     if (!Object)
     {
-        ACPI_REPORT_ERROR ((
-            "Null Object! Index=%X Obj=%p State=%p Num=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Null Object! Index=%X Obj=%p State=%p Num=%X",
             Index, Object, WalkState, State->Results.NumResults));
         return (AE_BAD_PARAMETER);
     }
@@ -1154,8 +1154,8 @@ AcpiDsObjStackPopObject (
 
     if (WalkState->NumOperands == 0)
     {
-        ACPI_REPORT_ERROR ((
-            "Missing operand/stack empty! State=%p #Ops=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Missing operand/stack empty! State=%p #Ops=%X",
             WalkState, WalkState->NumOperands));
         *Object = NULL;
         return (AE_AML_NO_OPERAND);
@@ -1169,8 +1169,8 @@ AcpiDsObjStackPopObject (
 
     if (!WalkState->Operands [WalkState->NumOperands])
     {
-        ACPI_REPORT_ERROR ((
-            "Null operand! State=%p #Ops=%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Null operand! State=%p #Ops=%X",
             WalkState, WalkState->NumOperands));
         *Object = NULL;
         return (AE_AML_NO_OPERAND);

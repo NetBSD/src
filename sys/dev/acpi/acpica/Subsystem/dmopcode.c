@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmopcode - AML disassembler, specific AML opcodes
- *              xRevision: 1.92 $
+ *              xRevision: 1.93 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.9 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmopcode.c,v 1.9.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -205,9 +205,9 @@ AcpiDmFieldFlags (
     UINT32                  Flags;
 
 
-    /* The next Op contains the flags */
+    /* The next peer Op (not child op) contains the flags */
 
-    Op = AcpiPsGetDepthNext (NULL, Op);
+    Op = Op->Common.Next;
     Flags = (UINT8) Op->Common.Value.Integer;
 
     /* Mark the Op as completed */

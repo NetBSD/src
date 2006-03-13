@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsdump - Functions to display the resource structures.
- *              xRevision: 1.59 $
+ *              xRevision: 1.60 $
  *
  ******************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.15 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.15.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __RSDUMP_C__
 
@@ -762,7 +762,12 @@ AcpiRsOutString (
     const char              *Title,
     const char              *Value)
 {
-    AcpiOsPrintf ("%27s : %s\n", Title, Value);
+    AcpiOsPrintf ("%27s : %s", Title, Value);
+    if (!*Value)
+    {
+        AcpiOsPrintf ("[NULL NAMESTRING]");
+    }
+    AcpiOsPrintf ("\n");
 }
 
 static void

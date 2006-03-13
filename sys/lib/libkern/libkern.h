@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.55 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: libkern.h,v 1.55.2.1 2006/03/13 09:07:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -171,6 +171,20 @@ tolower(int ch)
 }
 #endif
 
+/* __BIT(n): nth bit, where __BIT(0) == 0x1. */
+#define	__BIT(__n) (((__n) == 32) ? 0 : ((uint32_t)1 << (__n)))
+
+/* __BITS(m, n): bits m through n, m < n. */
+#define	__BITS(__m, __n)	\
+	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+
+/* find least significant bit that is set */
+#define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
+
+#define	SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
+#define	SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
+#define	SHIFTOUT_MASK(__mask) SHIFTOUT((__mask), (__mask))
+
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
 #else
@@ -245,6 +259,7 @@ void	*memset __P((void *, int, size_t));
 char	*strcpy __P((char *, const char *));
 int	 strcmp __P((const char *, const char *));
 size_t	 strlen __P((const char *));
+char	*strsep(char **, const char *);
 #if __GNUC_PREREQ__(2, 95)
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
@@ -275,6 +290,10 @@ int	 ffs __P((int));
 
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
+unsigned int
+	bcdtobin __P((unsigned int));
+unsigned int
+	bintobcd __P((unsigned int));
 u_int32_t
 	inet_addr __P((const char *));
 struct in_addr;

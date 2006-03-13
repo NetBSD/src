@@ -1,5 +1,6 @@
+/*	$NetBSD: if_lmc.c,v 1.25.2.1 2006/03/13 09:07:26 yamt Exp $	*/
+
 /*-
- * $NetSBD$
  *
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
  * All rights reserved.

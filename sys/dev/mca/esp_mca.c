@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.10 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.10.8.1 2006/03/13 09:07:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.10 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.10.8.1 2006/03/13 09:07:26 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -225,7 +225,7 @@ esp_mca_attach(parent, self, aux)
 
 	/* MI code glue */
 	sc->sc_id = scsi_id;
-	sc->sc_freq = 25;		/* Mhz */
+	sc->sc_freq = 25;		/* MHz */
 
 	sc->sc_glue = &esp_glue;
 

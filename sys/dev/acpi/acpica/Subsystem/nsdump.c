@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              xRevision: 1.175 $
+ *              xRevision: 1.176 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.16 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsdump.c,v 1.16.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSDUMP_C__
 
@@ -311,12 +311,12 @@ AcpiNsDumpOneObject (
 
         if (Type > ACPI_TYPE_LOCAL_MAX)
         {
-            ACPI_REPORT_WARNING (("Invalid ACPI Object Type %08X\n", Type));
+            ACPI_WARNING ((AE_INFO, "Invalid ACPI Object Type %08X", Type));
         }
 
         if (!AcpiUtValidAcpiName (ThisNode->Name.Integer))
         {
-            ACPI_REPORT_WARNING (("Invalid ACPI Name %08X\n",
+            ACPI_WARNING ((AE_INFO, "Invalid ACPI Name %08X",
                 ThisNode->Name.Integer));
         }
 

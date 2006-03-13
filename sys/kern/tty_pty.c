@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.86 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.86.8.1 2006/03/13 09:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.8.1 2006/03/13 09:07:32 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -63,11 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86 2005/12/11 12:24:30 christos Exp $"
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~((unsigned)(f))
-#define	ISSET(t, f)	((t) & (f))
 
 #define BUFSIZ 100		/* Chunk size iomoved to/from user */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.27 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: ser.c,v 1.27.8.1 2006/03/13 09:06:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.27 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.27.8.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -154,11 +154,6 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.27 2005/12/11 12:16:54 christos Exp $");
 #define	CONSBAUD	9600
 #define	CONSCFLAG	TTYDEF_CFLAG
 /* end XXX */
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 #define	splserial()	spl6()
 

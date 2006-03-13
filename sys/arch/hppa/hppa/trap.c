@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.8.1 2006/03/13 09:06:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,16 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.8.1 2006/03/13 09:06:53 yamt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 /* #define USERTRACE */
 
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $");
 #include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #include <sys/proc.h>
 #include <sys/signalvar.h>

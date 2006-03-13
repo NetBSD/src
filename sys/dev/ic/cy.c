@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.39 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: cy.c,v 1.39.8.1 2006/03/13 09:07:20 yamt Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.39 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.39.8.1 2006/03/13 09:07:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -38,11 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.39 2005/12/11 12:21:26 christos Exp $");
 #include <dev/ic/cd1400reg.h>
 #include <dev/ic/cyreg.h>
 #include <dev/ic/cyvar.h>
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 int	cyparam(struct tty *, struct termios *);
 void	cystart(struct tty *);

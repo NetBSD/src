@@ -2,7 +2,7 @@
  *
  * Module Name: nseval - Object evaluation interfaces -- includes control
  *                       method lookup and execution.
- *              xRevision: 1.136 $
+ *              xRevision: 1.137 $
  *
  ******************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.15 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.15.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSEVAL_C__
 
@@ -494,7 +494,7 @@ AcpiNsExecuteControlMethod (
     Info->ObjDesc = AcpiNsGetAttachedObject (Info->Node);
     if (!Info->ObjDesc)
     {
-        ACPI_REPORT_ERROR (("No attached method object\n"));
+        ACPI_ERROR ((AE_INFO, "No attached method object"));
 
         (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
         return_ACPI_STATUS (AE_NULL_OBJECT);

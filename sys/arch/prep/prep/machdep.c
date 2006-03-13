@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2006/02/23 19:44:02 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56.2.1 2006/03/13 09:06:59 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2006/02/23 19:44:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.2.1 2006/03/13 09:06:59 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -144,6 +144,7 @@ initppc(startkernel, endkernel, args, btinfo)
 		} else
 			panic("No residual data.");
 	}
+	printf("got residual data\n");
 
 	/*
 	 * Set memory region
@@ -173,9 +174,6 @@ initppc(startkernel, endkernel, args, btinfo)
 		ticks_per_sec = clockinfo->ticks_per_sec;
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
-
-	/* Initialize the CPU type */
-	ident_platform();
 
 	/*
 	 * boothowto
@@ -252,7 +250,7 @@ cpu_startup()
 	/*
 	 * external interrupt handler install
 	 */
-	(*platform->init_intr)();
+	init_intr();
 
 	/*
 	 * Do common startup.
@@ -274,6 +272,11 @@ cpu_startup()
 	 * Now safe for bus space allocation to use malloc.
 	 */
 	bus_space_mallocok();
+
+	/*
+	 * Gather the pci interrupt routings.
+         */
+	setup_pciroutinginfo();
 }
 
 /*
@@ -364,7 +367,7 @@ halt_sys:
 
 	printf("rebooting...\n\n");
 
-	(*platform->reset)();
+	reset_prep();
 
 	for (;;)
 		continue;

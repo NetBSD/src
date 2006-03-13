@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.40 2006/02/20 16:50:36 thorpej Exp $ */
+/* $NetBSD: sci.c,v 1.40.2.1 2006/03/13 09:07:02 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.40 2006/02/20 16:50:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.40.2.1 2006/03/13 09:07:02 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -214,11 +214,6 @@ void	scidiag(void *);
 
 #define	SCIUNIT(x)	(minor(x) & SCIUNIT_MASK)
 #define	SCIDIALOUT(x)	(minor(x) & SCIDIALOUT_MASK)
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 /* Hardware flag masks */
 #define	SCI_HW_NOIEN	0x01
@@ -949,7 +944,7 @@ scidiag(void *arg)
 integrate void
 sci_rxsoft(struct sci_softc *sc, struct tty *tp)
 {
-	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char ssr;

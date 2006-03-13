@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.59 2006/03/03 14:55:14 he Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.59.2.1 2006/03/13 09:07:02 yamt Exp $
 
 #=========================================================================
 #
@@ -158,10 +158,6 @@ ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
 		${UUDECODE} -p $> > ${.TARGET}
 athhal-sparc64-be-elf.hal.o: athhal-sparc64-be-elf.hal.o.uue
 	${ATH_UUDEC}
-all depend:	opt_ah.h
-opt_ah.h:	athhal-sparc64-be-elf.opt_ah.h
-	rm -f ${.TARGET}
-	ln -s ${.ALLSRC} ${.TARGET}
 .endif
 
 ##

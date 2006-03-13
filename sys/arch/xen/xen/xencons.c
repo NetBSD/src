@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.11.6.1 2006/03/13 09:07:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.11.6.1 2006/03/13 09:07:07 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -584,8 +584,11 @@ xenconscn_getc(dev_t dev)
 	int ret;
 #endif
 
+#ifndef XEN3
 	if (xencons_console_device == NULL) {
 		printf("xenconscn_getc(): not console\n");
+		while (1)
+			;  /* loop here instead of in ddb */
 		return 0;
 	}
 
@@ -593,6 +596,7 @@ xenconscn_getc(dev_t dev)
 		printf("xenconscn_getc() but not polling\n");
 		return 0;
 	}
+#endif
 	if (xen_start_info.flags & SIF_INITDOMAIN) {
 		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
 			;

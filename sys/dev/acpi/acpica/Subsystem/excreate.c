@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: excreate - Named object creation
- *              xRevision: 1.107 $
+ *              xRevision: 1.108 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: excreate.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EXCREATE_C__
 
@@ -401,7 +401,7 @@ AcpiExCreateRegion (
     if ((RegionSpace >= ACPI_NUM_PREDEFINED_REGIONS) &&
         (RegionSpace < ACPI_USER_REGION_BEGIN))
     {
-        ACPI_REPORT_ERROR (("Invalid AddressSpace type %X\n", RegionSpace));
+        ACPI_ERROR ((AE_INFO, "Invalid AddressSpace type %X", RegionSpace));
         return_ACPI_STATUS (AE_AML_INVALID_SPACE_ID);
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.42 2006/02/01 19:12:02 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.42.4.1 2006/03/13 09:07:07 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.42 2006/02/01 19:12:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.42.4.1 2006/03/13 09:07:07 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -197,7 +197,7 @@ void xennet_start(struct ifnet *);
 int  xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
 void xennet_watchdog(struct ifnet *ifp);
 
-CFATTACH_DECL(xennet, sizeof(struct xennet_softc),
+CFATTACH_DECL(xennet_hypervisor, sizeof(struct xennet_softc),
     xennet_match, xennet_attach, NULL, NULL);
 
 #define RX_MAX_ENTRIES (NETIF_RX_RING_SIZE - 2)

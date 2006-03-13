@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psargs - Parse AML opcode arguments
- *              xRevision: 1.89 $
+ *              xRevision: 1.90 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __PSARGS_C__
 
@@ -405,8 +405,8 @@ AcpiPsGetNextNamepath (
 
         if (!MethodDesc)
         {
-            ACPI_REPORT_ERROR ((
-                "Control Method %p has no attached object\n",
+            ACPI_ERROR ((AE_INFO,
+                "Control Method %p has no attached object",
                 Node));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
@@ -459,7 +459,7 @@ AcpiPsGetNextNamepath (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_NSERROR (Path, Status);
+        ACPI_ERROR_NAMESPACE (Path, Status);
 
         if ((WalkState->ParseFlags & ACPI_PARSE_MODE_MASK) ==
                 ACPI_PARSE_EXECUTE)
@@ -575,7 +575,7 @@ AcpiPsGetNextSimpleArg (
 
     default:
 
-        ACPI_REPORT_ERROR (("Invalid ArgType %X\n", ArgType));
+        ACPI_ERROR ((AE_INFO, "Invalid ArgType %X", ArgType));
         return_VOID;
     }
 
@@ -862,7 +862,7 @@ AcpiPsGetNextArg (
 
     default:
 
-        ACPI_REPORT_ERROR (("Invalid ArgType: %X\n", ArgType));
+        ACPI_ERROR ((AE_INFO, "Invalid ArgType: %X", ArgType));
         Status = AE_AML_OPERAND_TYPE;
         break;
     }

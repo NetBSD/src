@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.124 2006/02/27 05:46:39 dyoung Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.124.2.1 2006/03/13 09:07:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -768,8 +768,8 @@ do {									\
  * Allow drivers and/or protocols to use the rcvif member of
  * PKTHDR mbufs to store private context information.
  */
-#define	M_GETCTX(m, t)		((t) (m)->m_pkthdr.rcvif + 0)
-#define	M_SETCTX(m, c)		((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
+#define	M_GETCTX(m, t)		((t)(m)->m_pkthdr.rcvif)
+#define	M_SETCTX(m, c)		((void)((m)->m_pkthdr.rcvif = (void *)(c)))
 
 #endif /* defined(_KERNEL) */
 

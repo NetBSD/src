@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.14 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.14.8.1 2006/03/13 09:06:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14.8.1 2006/03/13 09:06:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,8 +61,10 @@ void	pcibattach(struct device *, struct device *, void *);
 
 struct pcib_softc {
 	struct device sc_dev;
-	struct prep_isa_chipset sc_chipset;
+	struct prep_isa_chipset *sc_chipset;
 };
+
+extern struct prep_isa_chipset prep_isa_chipset;
 
 CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
     pcibmatch, pcibattach, NULL, NULL);
@@ -160,7 +162,8 @@ pcib_callback(self)
 	 * Attach the ISA bus behind this bridge.
 	 */
 	memset(&iba, 0, sizeof(iba));
-	iba.iba_ic = &sc->sc_chipset;
+	sc->sc_chipset = &prep_isa_chipset;
+	iba.iba_ic = sc->sc_chipset;
 	iba.iba_iot = &prep_isa_io_space_tag;
 	iba.iba_memt = &prep_isa_mem_space_tag;
 #if NISADMA > 0

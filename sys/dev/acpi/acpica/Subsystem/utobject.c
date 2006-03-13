@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utobject - ACPI object create/delete/size/cache routines
- *              xRevision: 1.100 $
+ *              xRevision: 1.101 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.16 2006/01/29 03:05:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.16.6.1 2006/03/13 09:07:10 yamt Exp $");
 
 #define __UTOBJECT_C__
 
@@ -273,7 +273,7 @@ AcpiUtCreateBufferObject (
         Buffer = ACPI_MEM_CALLOCATE (BufferSize);
         if (!Buffer)
         {
-            ACPI_REPORT_ERROR (("Could not allocate size %X\n",
+            ACPI_ERROR ((AE_INFO, "Could not allocate size %X",
                 (UINT32) BufferSize));
             AcpiUtRemoveReference (BufferDesc);
             return_PTR (NULL);
@@ -332,7 +332,7 @@ AcpiUtCreateStringObject (
     String = ACPI_MEM_CALLOCATE (StringSize + 1);
     if (!String)
     {
-        ACPI_REPORT_ERROR (("Could not allocate size %X\n",
+        ACPI_ERROR ((AE_INFO, "Could not allocate size %X",
             (UINT32) StringSize));
         AcpiUtRemoveReference (StringDesc);
         return_PTR (NULL);
@@ -428,8 +428,8 @@ AcpiUtAllocateObjectDescDbg (
     Object = AcpiOsAcquireObject (AcpiGbl_OperandCache);
     if (!Object)
     {
-        _ACPI_REPORT_ERROR (ModuleName, LineNumber,
-            ("Could not allocate an object descriptor\n"));
+        ACPI_ERROR ((ModuleName, LineNumber,
+            "Could not allocate an object descriptor"));
 
         return_PTR (NULL);
     }
@@ -468,8 +468,8 @@ AcpiUtDeleteObjectDesc (
 
     if (ACPI_GET_DESCRIPTOR_TYPE (Object) != ACPI_DESC_TYPE_OPERAND)
     {
-        ACPI_REPORT_ERROR ((
-            "%p is not an ACPI Operand object [%s]\n", Object,
+        ACPI_ERROR ((AE_INFO,
+            "%p is not an ACPI Operand object [%s]", Object,
             AcpiUtGetDescriptorName (Object)));
         return_VOID;
     }
@@ -581,8 +581,8 @@ AcpiUtGetSimpleObjectSize (
              * Notably, Locals and Args are not supported, but this may be
              * required eventually.
              */
-            ACPI_REPORT_ERROR ((
-                "Unsupported Reference opcode=%X in object %p\n",
+            ACPI_ERROR ((AE_INFO,
+                "Unsupported Reference opcode=%X in object %p",
                 InternalObject->Reference.Opcode, InternalObject));
             Status = AE_TYPE;
             break;
@@ -592,7 +592,7 @@ AcpiUtGetSimpleObjectSize (
 
     default:
 
-        ACPI_REPORT_ERROR (("Unsupported type=%X in object %p\n",
+        ACPI_ERROR ((AE_INFO, "Unsupported type=%X in object %p",
             ACPI_GET_OBJECT_TYPE (InternalObject), InternalObject));
         Status = AE_TYPE;
         break;

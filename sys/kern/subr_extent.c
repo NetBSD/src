@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.54 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.54.8.1 2006/03/13 09:07:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.54 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.54.8.1 2006/03/13 09:07:32 yamt Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -1001,6 +1001,35 @@ skip:
 	simple_unlock(&ex->ex_slock);
 	*result = newstart;
 	return (0);
+}
+
+int
+extent_alloc_subregion(struct extent *ex, u_long start, u_long end, u_long size,
+    u_long alignment, u_long boundary, int flags, u_long *result)
+{
+
+	return (extent_alloc_subregion1(ex, start, end, size, alignment,
+					0, boundary, flags, result));
+}
+
+int
+extent_alloc(struct extent *ex, u_long size, u_long alignment, u_long boundary,
+    int flags, u_long *result)
+{
+
+	return (extent_alloc_subregion1(ex, ex->ex_start, ex->ex_end,
+					size, alignment, 0, boundary,
+					flags, result));
+}
+
+int
+extent_alloc1(struct extent *ex, u_long size, u_long alignment, u_long skew,
+    u_long boundary, int flags, u_long *result)
+{
+
+	return (extent_alloc_subregion1(ex, ex->ex_start, ex->ex_end,
+					size, alignment, skew, boundary,
+					flags, result));
 }
 
 int

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acenv.h - Generation environment specific items
- *       xRevision: 1.120 $
+ *       xRevision: 1.122 $
  *
  *****************************************************************************/
 
@@ -223,6 +223,9 @@
 #elif defined(NETWARE)
 #include "acnetware.h"
 
+#elif defined(__sun)
+#include "acsolaris.h"
+
 #else
 
 /* All other environments */
@@ -231,13 +234,6 @@
 
 #define COMPILER_DEPENDENT_INT64   long long
 #define COMPILER_DEPENDENT_UINT64  unsigned long long
-
-/*
- * This macro is used to tag functions as "printf-like" because
- * some compilers can catch printf format string problems. MSVC
- * doesn't, so this is proprocessed away.
- */
-#define ACPI_PRINTF_LIKE_FUNC
 
 #endif
 

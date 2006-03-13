@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.156 2006/02/04 12:02:35 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.156.2.1 2006/03/13 09:07:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.156 2006/02/04 12:02:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.156.2.1 2006/03/13 09:07:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,11 +136,6 @@ int count_lock_queue(void); /* XXX */
 #ifdef DEBUG
 static int checkfreelist(struct buf *, struct bqueue *);
 #endif
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 /*
  * Definitions for the buffer hash lists.

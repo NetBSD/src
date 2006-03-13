@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsload - namespace loading/expanding/contracting procedures
- *              xRevision: 1.75 $
+ *              xRevision: 1.76 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsload.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsload.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSLOAD_C__
 
@@ -182,7 +182,7 @@ AcpiNsLoadTable (
 
     if (!TableDesc->AmlStart)
     {
-        ACPI_REPORT_ERROR (("Null AML pointer\n"));
+        ACPI_ERROR ((AE_INFO, "Null AML pointer"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -193,7 +193,7 @@ AcpiNsLoadTable (
 
     if (!TableDesc->AmlLength)
     {
-        ACPI_REPORT_WARNING (("Zero-length AML block in table [%4.4s]\n",
+        ACPI_WARNING ((AE_INFO, "Zero-length AML block in table [%4.4s]",
             TableDesc->Pointer->Signature));
         return_ACPI_STATUS (AE_OK);
     }
@@ -374,7 +374,7 @@ AcpiNsLoadNamespace (
 
     if (AcpiGbl_DSDT == NULL)
     {
-        ACPI_REPORT_ERROR (("DSDT is not in memory\n"));
+        ACPI_ERROR ((AE_INFO, "DSDT is not in memory"));
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
     }
 

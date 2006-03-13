@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.137 2006/02/12 06:18:25 dogcow Exp $	*/
+/*	$NetBSD: mount.h,v 1.137.2.1 2006/03/13 09:07:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -232,7 +232,7 @@ struct vfsops {
 struct vfs_hooks {
 	void	(*vh_unmount)(struct mount *);
 };
-#define	VFS_HOOKS_ATTACH(hooks)	__link_set_add_rodata(vfs_hooks, hooks)
+#define	VFS_HOOKS_ATTACH(hooks)	__link_set_add_data(vfs_hooks, hooks)
 
 void	vfs_hooks_unmount(struct mount *);
 

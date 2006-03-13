@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exregion - ACPI default OpRegion (address space) handlers
- *              xRevision: 1.94 $
+ *              xRevision: 1.95 $
  *
  *****************************************************************************/
 
@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exregion.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EXREGION_C__
 
@@ -189,7 +189,7 @@ AcpiExSystemMemorySpaceHandler (
         break;
 
     default:
-        ACPI_REPORT_ERROR (("Invalid SystemMemory width %d\n",
+        ACPI_ERROR ((AE_INFO, "Invalid SystemMemory width %d",
             BitWidth));
         return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
     }
@@ -246,8 +246,8 @@ AcpiExSystemMemorySpaceHandler (
                                     (void **) &MemInfo->MappedLogicalAddress);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
-                "Could not map memory at %8.8X%8.8X, size %X\n",
+            ACPI_ERROR ((AE_INFO,
+                "Could not map memory at %8.8X%8.8X, size %X",
                 ACPI_FORMAT_UINT64 (Address), (UINT32) WindowSize));
             MemInfo->MappedLength = 0;
             return_ACPI_STATUS (Status);

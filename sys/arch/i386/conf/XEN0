@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.33 2006/02/25 01:33:15 christos Exp $
+# $NetBSD: XEN0,v 1.33.2.1 2006/03/13 09:06:54 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -279,6 +279,7 @@ le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
@@ -356,6 +357,7 @@ rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 

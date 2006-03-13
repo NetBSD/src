@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.89 2006/02/18 18:56:05 jmcneill Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.89.2.1 2006/03/13 09:07:32 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.89 2006/02/18 18:56:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.89.2.1 2006/03/13 09:07:32 yamt Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -185,11 +185,6 @@ const struct cdevsw wsdisplay_cdevsw = {
 static void wsdisplaystart(struct tty *);
 static int wsdisplayparam(struct tty *, struct termios *);
 
-
-/* Internal macros, functions, and variables. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 #define	WSDISPLAYUNIT(dev)	(minor(dev) >> 8)
 #define	WSDISPLAYSCREEN(dev)	(minor(dev) & 0xff)

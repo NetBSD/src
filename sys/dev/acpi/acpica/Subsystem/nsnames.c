@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              xRevision: 1.93 $
+ *              xRevision: 1.94 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSNAMES_C__
 
@@ -200,8 +200,8 @@ AcpiNsBuildExternalPath (
 
     if (Index != 0)
     {
-        ACPI_REPORT_ERROR ((
-            "Could not construct pathname; index=%X, size=%X, Path=%s\n",
+        ACPI_ERROR ((AE_INFO,
+            "Could not construct pathname; index=%X, size=%X, Path=%s",
             (UINT32) Index, (UINT32) Size, &NameBuffer[Size]));
     }
 
@@ -244,7 +244,7 @@ AcpiNsGetExternalPathname (
     NameBuffer = ACPI_MEM_CALLOCATE (Size);
     if (!NameBuffer)
     {
-        ACPI_REPORT_ERROR (("Allocation failure\n"));
+        ACPI_ERROR ((AE_INFO, "Allocation failure"));
         return_PTR (NULL);
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.200 2006/02/25 11:32:51 rpaulo Exp $	*/
+/*	$NetBSD: audio.c,v 1.200.2.1 2006/03/13 09:07:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.200 2006/02/25 11:32:51 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.200.2.1 2006/03/13 09:07:08 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -305,6 +305,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	sc->sc_dev = parent;
+	sc->sc_opencnt = 0;
 
 	error = audio_alloc_ring(sc, &sc->sc_pr, AUMODE_PLAY, AU_RING_SIZE);
 	if (error) {
@@ -900,6 +901,10 @@ audioopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	if (sc->sc_dying)
 		return EIO;
 
+	if (sc->hw_if->powerstate && sc->sc_opencnt <= 0)
+		sc->hw_if->powerstate(sc->hw_hdl, AUDIOPOWER_ON);
+	sc->sc_opencnt++;
+
 	sc->sc_refcnt++;
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
@@ -945,6 +950,11 @@ audioclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 		error = ENXIO;
 		break;
 	}
+
+	sc->sc_opencnt--;
+	if (sc->hw_if->powerstate && sc->sc_opencnt <= 0)
+		sc->hw_if->powerstate(sc->hw_hdl, AUDIOPOWER_OFF);
+
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.7 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.7.8.1 2006/03/13 09:07:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.7 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.7.8.1 2006/03/13 09:07:07 yamt Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.31 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.31.8.1 2006/03/13 09:07:25 yamt Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31.8.1 2006/03/13 09:07:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -68,11 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31 2005/12/11 12:22:02 christos Ex
 #include <dev/ir/sir.h>
 #include <dev/ir/irdaio.h>
 #include <dev/ir/irframevar.h>
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 #ifdef IRFRAMET_DEBUG
 #define DPRINTF(x)	if (irframetdebug) printf x

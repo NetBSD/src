@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsinit - namespace initialization
- *              xRevision: 1.72 $
+ *              xRevision: 1.74 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsinit.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsinit.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSXFINIT_C__
 
@@ -185,8 +185,7 @@ AcpiNsInitializeObjects (
                                 &Info, NULL);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("WalkNamespace failed! %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During WalkNamespace"));
     }
 
     ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT,
@@ -256,12 +255,11 @@ AcpiNsInitializeDevices (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("WalkNamespace failed! %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During WalkNamespace"));
     }
 
     ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT,
-        "\n%hd Devices found containing: %hd _STA, %hd _INI methods\n",
+        "\n%hd Devices found - executed %hd _STA, %hd _INI methods\n",
         Info.DeviceCount, Info.Num_STA, Info.Num_INI));
 
     return_ACPI_STATUS (Status);
@@ -396,10 +394,9 @@ AcpiNsInitOneObject (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR ((
-            "\nCould not execute arguments for [%4.4s] (%s), %s\n",
-            AcpiUtGetNodeName (Node), AcpiUtGetTypeName (Type),
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "Could not execute arguments for [%4.4s] (%s)",
+            AcpiUtGetNodeName (Node), AcpiUtGetTypeName (Type)));
     }
 
     /*
@@ -538,7 +535,7 @@ AcpiNsInitOneDevice (
 #ifdef ACPI_DEBUG_OUTPUT
         char        *ScopeName = AcpiNsGetExternalPathname (IniNode);
 
-        ACPI_REPORT_WARNING (("%s._INI failed: %s\n",
+        ACPI_WARNING ((AE_INFO, "%s._INI failed: %s",
             ScopeName, AcpiFormatException (Status)));
 
         ACPI_MEM_FREE (ScopeName);

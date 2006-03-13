@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.7 2006/02/20 16:50:36 thorpej Exp $ */
+/*	$NetBSD: epcom.c,v 1.7.2.1 2006/03/13 09:06:52 yamt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.7 2006/02/20 16:50:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.7.2.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -189,10 +189,6 @@ struct consdev epcomcons = {
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
 			device_is_active(&(sc)->sc_dev))
-
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 void
 epcom_attach_subr(struct epcom_softc *sc)

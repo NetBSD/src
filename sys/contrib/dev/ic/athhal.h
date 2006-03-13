@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: athhal.h,v 1.4 2006/03/02 03:38:45 dyoung Exp $
+ * $Id: athhal.h,v 1.4.2.1 2006/03/13 09:07:08 yamt Exp $
  */
 
 #ifndef _ATH_AH_H_
@@ -307,7 +307,7 @@ typedef enum {
  * Channels are specified by frequency.
  */
 typedef struct {
-	u_int16_t	channel;	/* setting in Mhz */
+	u_int16_t	channel;	/* setting in MHz */
 	u_int16_t	channelFlags;	/* see below */
 	u_int8_t	privFlags;
 	int8_t		maxRegTxPower;	/* max regulatory tx power in dBm */
@@ -515,7 +515,7 @@ struct ath_hal {
 	u_int32_t	ah_macVersion;	/* MAC version id */
 	u_int16_t	ah_macRev;	/* MAC revision */
 	u_int16_t	ah_phyRev;	/* PHY revision */
-	/* NB: when only one radio is present the rev is in 5Ghz */
+	/* NB: when only one radio is present the rev is in 5 GHz */
 	u_int16_t	ah_analog5GhzRev;/* 5GHz radio revision */
 	u_int16_t	ah_analog2GhzRev;/* 2GHz radio revision */
 	u_int8_t        ah_decompMask[HAL_DECOMP_MASK_SIZE]; /* decomp mask array */

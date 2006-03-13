@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.16 2005/12/11 12:16:45 christos Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.16.8.1 2006/03/13 09:06:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.16 2005/12/11 12:16:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.16.8.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -98,11 +98,6 @@ struct fcom_softc {
 };
 
 #define RX_BUFFER_SIZE	0x100
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 static int  fcom_probe   __P((struct device *, struct cfdata *, void *));
 static void fcom_attach  __P((struct device *, struct device *, void *));

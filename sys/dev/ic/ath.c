@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.68 2006/03/02 03:38:45 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.68.2.1 2006/03/13 09:07:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.68 2006/03/02 03:38:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.68.2.1 2006/03/13 09:07:20 yamt Exp $");
 #endif
 
 /*
@@ -4315,7 +4315,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		ath_stoprecv(sc);		/* turn off frame recv */
 		if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, AH_TRUE, &status)) {
 			if_printf(ic->ic_ifp, "%s: unable to reset "
-			    "channel %u (%u Mhz, flags 0x%x hal flags 0x%x)\n",
+			    "channel %u (%u MHz, flags 0x%x hal flags 0x%x)\n",
 			    __func__, ieee80211_chan2ieee(ic, chan),
 			    chan->ic_freq, chan->ic_flags, hchan.channelFlags);
 			return EIO;
@@ -5191,13 +5191,13 @@ ath_announce(struct ath_softc *sc)
 	/*
 	 * Print radio revision(s).  We check the wireless modes
 	 * to avoid falsely printing revs for inoperable parts.
-	 * Dual-band radio revs are returned in the 5Ghz rev number.
+	 * Dual-band radio revs are returned in the 5 GHz rev number.
 	 */
 	ath_hal_getcountrycode(ah, &cc);
 	modes = ath_hal_getwirelessmodes(ah, cc);
 	if ((modes & HAL_MODE_DUALBAND) == HAL_MODE_DUALBAND) {
 		if (ah->ah_analog5GhzRev && ah->ah_analog2GhzRev)
-			printf(" 5ghz radio %d.%d 2ghz radio %d.%d",
+			printf(" 5 GHz radio %d.%d 2 GHz radio %d.%d",
 				ah->ah_analog5GhzRev >> 4,
 				ah->ah_analog5GhzRev & 0xf,
 				ah->ah_analog2GhzRev >> 4,

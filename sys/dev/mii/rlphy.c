@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.5 2006/02/28 22:52:34 kleink Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.5.2.1 2006/03/13 09:07:26 yamt Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.5 2006/02/28 22:52:34 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.5.2.1 2006/03/13 09:07:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 	struct mii_attach_args *ma = aux;
 
 	/* Test for RealTek 8201L PHY */
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_REALTEK &&
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_yyREALTEK &&
 	    MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
 		return 10;
 	}

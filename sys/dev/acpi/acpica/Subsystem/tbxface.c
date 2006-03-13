@@ -2,7 +2,7 @@
  *
  * Module Name: tbxface - Public interfaces to the ACPI subsystem
  *                         ACPI table oriented interfaces
- *              xRevision: 1.72 $
+ *              xRevision: 1.73 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __TBXFACE_C__
 
@@ -159,8 +159,7 @@ AcpiLoadTables (
                     &RsdpAddress);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not get RSDP, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "Could not get the RSDP"));
         goto ErrorExit;
     }
 
@@ -171,8 +170,7 @@ AcpiLoadTables (
     Status = AcpiTbVerifyRsdp (&RsdpAddress);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("RSDP Failed validation: %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During RSDP validation"));
         goto ErrorExit;
     }
 
@@ -181,8 +179,7 @@ AcpiLoadTables (
     Status = AcpiTbGetTableRsdt ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not load RSDT: %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "Could not load RSDT"));
         goto ErrorExit;
     }
 
@@ -191,9 +188,8 @@ AcpiLoadTables (
     Status = AcpiTbGetRequiredTables ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR ((
-            "Could not get all required tables (DSDT/FADT/FACS): %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "Could not get all required tables (DSDT/FADT/FACS)"));
         goto ErrorExit;
     }
 
@@ -204,8 +200,7 @@ AcpiLoadTables (
     Status = AcpiNsLoadNamespace ();
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not load namespace: %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "Could not load namespace"));
         goto ErrorExit;
     }
 
@@ -213,9 +208,7 @@ AcpiLoadTables (
 
 
 ErrorExit:
-    ACPI_REPORT_ERROR (("Could not load tables: %s\n",
-        AcpiFormatException (Status)));
-
+    ACPI_EXCEPTION ((AE_INFO, Status, "Could not load tables"));
     return_ACPI_STATUS (Status);
 }
 

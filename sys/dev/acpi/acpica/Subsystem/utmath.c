@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utmath - Integer math support routines
- *              xRevision: 1.19 $
+ *              xRevision: 1.20 $
  *
  ******************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utmath.c,v 1.12 2006/01/29 03:05:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utmath.c,v 1.12.6.1 2006/03/13 09:07:10 yamt Exp $");
 
 #define __UTMATH_C__
 
@@ -169,7 +169,7 @@ AcpiUtShortDivide (
 
     if (Divisor == 0)
     {
-        ACPI_REPORT_ERROR (("Divide by zero\n"));
+        ACPI_ERROR ((AE_INFO, "Divide by zero"));
         return_ACPI_STATUS (AE_AML_DIVIDE_BY_ZERO);
     }
 
@@ -239,7 +239,7 @@ AcpiUtDivide (
 
     if (InDivisor == 0)
     {
-        ACPI_REPORT_ERROR (("Divide by zero\n"));
+        ACPI_ERROR ((AE_INFO, "Divide by zero"));
         return_ACPI_STATUS (AE_AML_DIVIDE_BY_ZERO);
     }
 
@@ -378,7 +378,7 @@ AcpiUtShortDivide (
 
     if (Divisor == 0)
     {
-        ACPI_REPORT_ERROR (("Divide by zero\n"));
+        ACPI_ERROR ((AE_INFO, "Divide by zero"));
         return_ACPI_STATUS (AE_AML_DIVIDE_BY_ZERO);
     }
 
@@ -410,7 +410,7 @@ AcpiUtDivide (
 
     if (InDivisor == 0)
     {
-        ACPI_REPORT_ERROR (("Divide by zero\n"));
+        ACPI_ERROR ((AE_INFO, "Divide by zero"));
         return_ACPI_STATUS (AE_AML_DIVIDE_BY_ZERO);
     }
 

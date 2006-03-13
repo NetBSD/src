@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsinit - Object initialization namespace walk
- *              xRevision: 1.21 $
+ *              xRevision: 1.22 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsinit.c,v 1.9 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsinit.c,v 1.9.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #define __DSINIT_C__
 
@@ -194,10 +194,9 @@ AcpiDsInitOneObject (
         Status = AcpiDsInitializeRegion (ObjHandle);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
-                "Region %p [%4.4s] - Init failure, %s\n",
-                ObjHandle, AcpiUtGetNodeName (ObjHandle),
-                AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "During Region initialization %p [%4.4s]",
+                ObjHandle, AcpiUtGetNodeName (ObjHandle)));
         }
 
         Info->OpRegionCount++;
@@ -241,8 +240,8 @@ AcpiDsInitOneObject (
         Status = AcpiDsParseMethod (ObjHandle);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
-                "\n+Method %p [%4.4s] - parse failure, %s\n",
+            ACPI_ERROR ((AE_INFO,
+                "Method %p [%4.4s] - parse failure, %s",
                 ObjHandle, AcpiUtGetNodeName (ObjHandle),
                 AcpiFormatException (Status)));
 
@@ -313,8 +312,7 @@ AcpiDsInitializeObjects (
                     AcpiDsInitOneObject, &Info, NULL);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("WalkNamespace failed, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During WalkNamespace"));
     }
 
     ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT,

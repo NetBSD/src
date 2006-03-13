@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rslist - Linked list utilities
- *              xRevision: 1.52 $
+ *              xRevision: 1.54 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __RSLIST_C__
 
@@ -163,6 +163,16 @@ AcpiRsConvertAmlToResources (
 
     while (Aml < EndAml)
     {
+        /*
+         * Check that the input buffer and all subsequent pointers into it
+         * are aligned on a native word boundary. Most important on IA64
+         */
+        if (ACPI_IS_MISALIGNED (Resource))
+        {
+            ACPI_WARNING ((AE_INFO,
+                "Misaligned resource pointer %p", Resource));
+        }
+
         /* Validate the Resource Type and Resource Length */
 
         Status = AcpiUtValidateResource (Aml, &ResourceIndex);
@@ -178,11 +188,15 @@ AcpiRsConvertAmlToResources (
                     AcpiGbl_GetResourceDispatch[ResourceIndex]);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
-                "Could not convert AML resource (Type %X) to resource, %s\n",
-                *Aml, AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not convert AML resource (Type %X)", *Aml));
             return_ACPI_STATUS (Status);
         }
+
+        ACPI_DEBUG_PRINT ((ACPI_DB_RESOURCES,
+            "Type %.2X, Aml %.2X internal %.2X\n", 
+            AcpiUtGetResourceType (Aml), AcpiUtGetDescriptorLength (Aml),
+            Resource->Length));
 
         /* Normal exit on completion of an EndTag resource descriptor */
 
@@ -247,8 +261,8 @@ AcpiRsConvertResourcesToAml (
 
         if (Resource->Type > ACPI_RESOURCE_TYPE_MAX)
         {
-            ACPI_REPORT_ERROR ((
-                "Invalid descriptor type (%X) in resource list\n",
+            ACPI_ERROR ((AE_INFO,
+                "Invalid descriptor type (%X) in resource list",
                 Resource->Type));
             return_ACPI_STATUS (AE_BAD_DATA);
         }
@@ -260,8 +274,9 @@ AcpiRsConvertResourcesToAml (
                     AcpiGbl_SetResourceDispatch[Resource->Type]);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR (("Could not convert resource (type %X) to AML, %s\n",
-                Resource->Type, AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not convert resource (type %X) to AML",
+                Resource->Type));
             return_ACPI_STATUS (Status);
         }
 

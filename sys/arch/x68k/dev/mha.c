@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.40 2006/02/23 05:37:48 thorpej Exp $	*/
+/*	$NetBSD: mha.c,v 1.40.2.1 2006/03/13 09:07:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.40 2006/02/23 05:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.40.2.1 2006/03/13 09:07:03 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -405,7 +405,7 @@ mha_reset(struct mha_softc *sc)
 	u_short	dummy;
 printf("reset...");
 	CMR = CMD_SOFT_RESET;
-	__asm volatile ("nop");	/* XXX wait (4clk in 20mhz) ??? */
+	__asm volatile ("nop");	/* XXX wait (4clk in 20 MHz) ??? */
 	dummy = sc->sc_ps[-1];
 	dummy = sc->sc_ps[-1];
 	dummy = sc->sc_ps[-1];

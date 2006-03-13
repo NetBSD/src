@@ -1,4 +1,4 @@
-/* $NetBSD: powernow_k7.c,v 1.8 2006/02/04 22:08:01 xtraeme Exp $ */
+/* $NetBSD: powernow_k7.c,v 1.8.2.1 2006/03/13 09:06:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -32,7 +32,7 @@
 /* Sysctl related code was adapted from NetBSD's i386/est.c for compatibility */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.8 2006/02/04 22:08:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.8.2.1 2006/03/13 09:06:54 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ struct psb_s {
 
 struct pst_s {
 	cpuid_t cpuid;
-	uint8_t fsb;		/* Front Side Bus frequency (Mhz) */
+	uint8_t fsb;		/* Front Side Bus frequency (MHz) */
 	uint8_t fid;		/* Max Frequency code */
 	uint8_t vid;		/* Max Voltage code */
 	uint8_t n_states;	/* Number of states */
@@ -404,9 +404,9 @@ pnowk7_init(struct cpu_info *ci)
 
 	aprint_normal("\n");
 	aprint_normal("%s: AMD PowerNow! Technology\n", cpuname);
-	aprint_normal("%s: available frequencies (Mhz): %s\n",
+	aprint_normal("%s: available frequencies (MHz): %s\n",
 	    cpuname, freq_names);
-        aprint_normal("%s: current frequency (Mhz): %d\n", cpuname, cur_freq);
+        aprint_normal("%s: current frequency (MHz): %d\n", cpuname, cur_freq);
 
 	return;
 

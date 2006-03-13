@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.29 2006/02/22 02:57:26 garbled Exp $	*/
+/*	$NetBSD: autri.c,v 1.29.2.1 2006/03/13 09:07:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.29 2006/02/22 02:57:26 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.29.2.1 2006/03/13 09:07:26 yamt Exp $");
 
 #include "midi.h"
 
@@ -1368,7 +1368,7 @@ autri_trigger_input(void *addr, void *start, void *end, int blksize,
 	}
 
 #if 0
-	/* 4DWAVE only allows capturing at a 48KHz rate */
+	/* 4DWAVE only allows capturing at a 48 kHz rate */
 	if (sc->sc_devid == AUTRI_DEVICE_ID_4DWAVE_DX ||
 	    sc->sc_devid == AUTRI_DEVICE_ID_4DWAVE_NX)
 		param->sample_rate = 48000;

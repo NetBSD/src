@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.7 2006/02/19 02:24:21 tls Exp $
+#	$NetBSD: files.i2c,v 1.7.2.1 2006/03/13 09:07:20 yamt Exp $
 
 define	i2cbus { }
 define	i2cexec
@@ -80,3 +80,8 @@ file dev/i2c/adm1030.c			adm1030c
 device	rs5c372rtc
 attach	rs5c372rtc at iic
 file	dev/i2c/rs5c372.c		rs5c372rtc
+
+# RICOH R2025S/D Real Time Clock
+device	r2025rtc
+attach	r2025rtc at iic
+file	dev/i2c/r2025.c			r2025rtc

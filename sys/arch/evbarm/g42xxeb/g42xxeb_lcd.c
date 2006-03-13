@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.3 2006/02/23 05:37:47 thorpej Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.3.2.1 2006/03/13 09:06:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -173,7 +173,7 @@ const struct lcd_panel_geometry toshiba_LTM035 =
 
     LCDPANEL_SINGLE|LCDPANEL_ACTIVE|   /* LCDPANEL_PCP| */
     LCDPANEL_VSP|LCDPANEL_HSP,
-    11,				/* clock divider, 4.5MHz at 100Mhz */
+    11,				/* clock divider, 4.5 MHz at 100 MHz */
 				/* required: 4.28..4.7 MHz  */
     0xff,			/* AC bias pin freq */
 

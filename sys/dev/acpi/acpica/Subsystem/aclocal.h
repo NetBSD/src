@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: aclocal.h - Internal data types used across the ACPI subsystem
- *       xRevision: 1.218 $
+ *       xRevision: 1.220 $
  *
  *****************************************************************************/
 
@@ -557,13 +557,13 @@ typedef struct acpi_field_info
 #define ACPI_CONTROL_PREDICATE_TRUE          0xC4
 
 
-#define ACPI_STATE_COMMON                  /* Two 32-bit fields and a pointer */\
-    UINT8                       DataType;           /* To differentiate various internal objs */\
+#define ACPI_STATE_COMMON   /* Two 32-bit fields and a pointer */\
+    UINT8                       DataType;   /* To differentiate various internal objs */\
     UINT8                       Flags;      \
     UINT16                      Value;      \
     UINT16                      State;      \
     UINT16                      Reserved;   \
-    void                        *Next;      \
+    void                        *Next;
 
 typedef struct acpi_common_state
 {
@@ -764,7 +764,7 @@ typedef union acpi_parse_value
     char                        AmlOpName[16])  /* Op name (debug only) */\
                                                 /* NON-DEBUG members below: */\
     ACPI_NAMESPACE_NODE         *Node;          /* For use by interpreter */\
-    ACPI_PARSE_VALUE            Value;          /* Value or args associated with the opcode */\
+    ACPI_PARSE_VALUE            Value;          /* Value or args associated with the opcode */
 
 
 #define ACPI_DASM_BUFFER        0x00

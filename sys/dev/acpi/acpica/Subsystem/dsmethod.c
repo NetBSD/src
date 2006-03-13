@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsmethod - Parser/Interpreter interface - control method parsing
- *              xRevision: 1.115 $
+ *              xRevision: 1.116 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.14 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.14.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #define __DSMETHOD_C__
 
@@ -233,8 +233,8 @@ AcpiDsBeginMethodExecution (
 
     if (ObjDesc->Method.ThreadCount == ACPI_UINT8_MAX)
     {
-        ACPI_REPORT_ERROR ((
-            "Method reached maximum reentrancy limit (255)\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Method reached maximum reentrancy limit (255)"));
         return_ACPI_STATUS (AE_AML_METHOD_LIMIT);
     }
 
@@ -594,7 +594,7 @@ AcpiDsTerminateControlMethod (
                         WalkState->MethodDesc->Method.Semaphore, 1);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR (("Could not signal method semaphore\n"));
+            ACPI_ERROR ((AE_INFO, "Could not signal method semaphore"));
 
             /* Ignore error and continue cleanup */
         }

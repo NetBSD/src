@@ -2,7 +2,7 @@
  *
  * Module Name: nsxfname - Public interfaces to the ACPI subsystem
  *                         ACPI Namespace oriented interfaces
- *              xRevision: 1.105 $
+ *              xRevision: 1.106 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.14 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.14.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSXFNAME_C__
 
@@ -410,8 +410,7 @@ AcpiGetObjectInfo (
         Status = AcpiUtExecute_CID (Node, &CidList);
         if (ACPI_SUCCESS (Status))
         {
-            Size += ((ACPI_SIZE) CidList->Count - 1) *
-                                 sizeof (ACPI_COMPATIBLE_ID);
+            Size += CidList->Size;
             Info->Valid |= ACPI_VALID_CID;
         }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.11 2005/12/11 12:18:47 christos Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.11.8.1 2006/03/13 09:06:59 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -119,6 +119,7 @@ int prep_pci_conf_hook(void *, int, int, int, pcireg_t);
 
 void prep_pci_get_chipset_tag_direct(pci_chipset_tag_t);
 void prep_pci_get_chipset_tag_indirect(pci_chipset_tag_t);
+void prep_pci_get_chipset_tag(pci_chipset_tag_t pc);
 
 /*
  * prep-specific PCI data.

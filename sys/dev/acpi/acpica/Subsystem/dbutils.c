@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
- *              xRevision: 1.79 $
+ *              xRevision: 1.80 $
  *
  ******************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.14 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.14.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #include "acpi.h"
 #include "acnamesp.h"
@@ -422,7 +422,7 @@ AcpiDbLocalNsLookup (
                     ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
     if (ACPI_FAILURE (Status))
     {
-        AcpiOsPrintf ("Could not locate name: %s %s\n",
+        AcpiOsPrintf ("Could not locate name: %s, %s\n",
                 Name, AcpiFormatException (Status));
     }
 

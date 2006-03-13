@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsalloc - Namespace allocation and deletion utilities
- *              xRevision: 1.99 $
+ *              xRevision: 1.100 $
  *
  ******************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.17 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.17.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSALLOC_C__
 
@@ -393,7 +393,7 @@ AcpiNsDeleteChildren (
 
         if (ChildNode->Child)
         {
-            ACPI_REPORT_ERROR (("Found a grandchild! P=%p C=%p\n",
+            ACPI_ERROR ((AE_INFO, "Found a grandchild! P=%p C=%p",
                 ParentNode, ChildNode));
         }
 
@@ -423,8 +423,8 @@ AcpiNsDeleteChildren (
 
         if (ChildNode->ReferenceCount != 1)
         {
-            ACPI_REPORT_WARNING ((
-                "Existing references (%d) on node being deleted (%p)\n",
+            ACPI_WARNING ((AE_INFO,
+                "Existing references (%d) on node being deleted (%p)",
                 ChildNode->ReferenceCount, ChildNode));
         }
 

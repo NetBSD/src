@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmwalk - AML disassembly tree walk
- *              xRevision: 1.25 $
+ *              xRevision: 1.27 $
  *
  ******************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmwalk.c,v 1.8 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmwalk.c,v 1.8.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -189,6 +189,7 @@ AcpiDmDisassemble (
         return;
     }
 
+    Info.Flags = 0;
     Info.Level = 0;
     Info.WalkState = WalkState;
     AcpiDmWalkParseTree (Op, AcpiDmDescendingOp, AcpiDmAscendingOp, &Info);
@@ -668,7 +669,7 @@ AcpiDmDescendingOp (
 
             default:
 
-                AcpiOsPrintf ("*** Unhandled named opcode\n");
+                AcpiOsPrintf ("*** Unhandled named opcode %X\n", Op->Common.AmlOpcode);
                 break;
             }
         }
@@ -692,23 +693,34 @@ AcpiDmDescendingOp (
             {
             case AML_BANK_FIELD_OP:
 
-                /* Namestring */
+                /* Namestring - Bank Name */
 
                 NextOp = AcpiPsGetDepthNext (NULL, NextOp);
                 AcpiDmNamestring (NextOp->Common.Value.Name);
                 NextOp->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE;
                 AcpiOsPrintf (", ");
 
-
+                /*
+                 * Bank Value. This is a TermArg in the middle of the parameter
+                 * list, must handle it here.
+                 *
+                 * Disassemble the TermArg parse tree. ACPI_PARSEOP_PARAMLIST 
+                 * eliminates newline in the output.
+                 */
                 NextOp = NextOp->Common.Next;
-                AcpiDmDisassembleOneOp (NULL, Info, NextOp);
+
+                Info->Flags = ACPI_PARSEOP_PARAMLIST;
+                AcpiDmWalkParseTree (NextOp, AcpiDmDescendingOp, AcpiDmAscendingOp, Info);
+                Info->Flags = 0;
+                Info->Level = Level;
+
                 NextOp->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE;
                 AcpiOsPrintf (", ");
                 break;
 
             case AML_INDEX_FIELD_OP:
 
-                /* Namestring */
+                /* Namestring - Data Name */
 
                 NextOp = AcpiPsGetDepthNext (NULL, NextOp);
                 AcpiDmNamestring (NextOp->Common.Value.Name);
@@ -863,7 +875,10 @@ AcpiDmAscendingOp (
                  * This is a first-level element of a term list
                  * start a new line
                  */
-                AcpiOsPrintf ("\n");
+                if (!(Info->Flags & ACPI_PARSEOP_PARAMLIST))
+                {
+                    AcpiOsPrintf ("\n");
+                }
             }
         }
         break;

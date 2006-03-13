@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.32 2005/12/24 20:27:42 perry Exp $      */
+/*      $NetBSD: esm.c,v 1.32.8.1 2006/03/13 09:07:26 yamt Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.32 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.32.8.1 2006/03/13 09:07:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -938,7 +938,7 @@ esm_trigger_input(void *sc, void *start, void *end, int blksize,
 	if (speed < 4000) speed = 4000;
 	dv = (((speed % 48000) << 16) + 24000) / 48000
 	    + ((speed / 48000) << 16);
-	mixdv = 65536;	/* 48KHz */
+	mixdv = 65536;	/* 48 kHz */
 
 	for (i = 0; i < nch; i++) {
 

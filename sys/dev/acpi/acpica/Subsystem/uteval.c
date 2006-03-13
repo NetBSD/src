@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: uteval - Object evaluation
- *              xRevision: 1.63 $
+ *              xRevision: 1.64 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uteval.c,v 1.14 2006/01/29 03:05:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uteval.c,v 1.14.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __UTEVAL_C__
 
@@ -251,7 +251,7 @@ AcpiUtEvaluateObject (
         }
         else
         {
-            ACPI_REPORT_MTERROR ("Method execution failed",
+            ACPI_ERROR_METHOD ("Method execution failed",
                 PrefixNode, Path, Status);
         }
 
@@ -264,7 +264,7 @@ AcpiUtEvaluateObject (
     {
         if (ExpectedReturnBtypes)
         {
-            ACPI_REPORT_MTERROR ("No object was returned from",
+            ACPI_ERROR_METHOD ("No object was returned from",
                 PrefixNode, Path, AE_NOT_EXIST);
 
             return_ACPI_STATUS (AE_NOT_EXIST);
@@ -314,11 +314,11 @@ AcpiUtEvaluateObject (
 
     if (!(ExpectedReturnBtypes & ReturnBtype))
     {
-        ACPI_REPORT_MTERROR ("Return object type is incorrect",
+        ACPI_ERROR_METHOD ("Return object type is incorrect",
             PrefixNode, Path, AE_TYPE);
 
-        ACPI_REPORT_ERROR ((
-            "Type returned from %s was incorrect: %s, expected Btypes: %X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Type returned from %s was incorrect: %s, expected Btypes: %X",
             Path, AcpiUtGetObjectTypeName (Info.ReturnObject),
             ExpectedReturnBtypes));
 

@@ -2,7 +2,7 @@
  *
  * Module Name: nsobject - Utilities for objects attached to namespace
  *                         table entries
- *              xRevision: 1.95 $
+ *              xRevision: 1.96 $
  *
  ******************************************************************************/
 
@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSOBJECT_C__
 
@@ -171,7 +171,7 @@ AcpiNsAttachObject (
     {
         /* Invalid handle */
 
-        ACPI_REPORT_ERROR (("Null NamedObj handle\n"));
+        ACPI_ERROR ((AE_INFO, "Null NamedObj handle"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -179,8 +179,8 @@ AcpiNsAttachObject (
     {
         /* Null object */
 
-        ACPI_REPORT_ERROR ((
-            "Null object, but type not ACPI_TYPE_ANY\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Null object, but type not ACPI_TYPE_ANY"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -188,7 +188,7 @@ AcpiNsAttachObject (
     {
         /* Not a name handle */
 
-        ACPI_REPORT_ERROR (("Invalid handle %p [%s]\n",
+        ACPI_ERROR ((AE_INFO, "Invalid handle %p [%s]",
             Node, AcpiUtGetDescriptorName (Node)));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -361,7 +361,7 @@ AcpiNsGetAttachedObject (
 
     if (!Node)
     {
-        ACPI_REPORT_WARNING (("Null Node ptr\n"));
+        ACPI_WARNING ((AE_INFO, "Null Node ptr"));
         return_PTR (NULL);
     }
 

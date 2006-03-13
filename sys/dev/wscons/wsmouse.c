@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.42 2006/02/10 20:38:54 christos Exp $ */
+/* $NetBSD: wsmouse.c,v 1.42.2.1 2006/03/13 09:07:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.42 2006/02/10 20:38:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.42.2.1 2006/03/13 09:07:32 yamt Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -466,7 +466,7 @@ wsmouse_input_xyzw(struct device *wsmousedev, u_int btns /* 0 is up */,
 
 		if (nevents >= sizeof(events) / sizeof(events[0])) {
 			printf("%s: Event queue full (button status mb=0x%x"
-			    " ub=0x%x\n", sc->sc_base.me_dv.dv_xname, mb, ub);
+			    " ub=0x%x)\n", sc->sc_base.me_dv.dv_xname, mb, ub);
 			break;
 		}
 

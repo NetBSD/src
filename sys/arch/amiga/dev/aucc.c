@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.39 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: aucc.c,v 1.39.8.1 2006/03/13 09:06:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -44,7 +44,7 @@
  *
  * - rely on auconv.c routines for mu-law/A-law conversions
  * - perhaps use a calibration table for better 14bit output
- * - set 31KHz AGA video mode to allow 44.1KHz even if grfcc is missing
+ * - set 31 kHz AGA video mode to allow 44.1 kHz even if grfcc is missing
  *	in the kernel
  * - 14bit output requires maximum volume
  */
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.39 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.39.8.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

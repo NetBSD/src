@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.18 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.18.8.1 2006/03/13 09:06:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.18 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.18.8.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,7 +174,7 @@ bzivscattach(struct device *parent, struct device *self, void *aux)
 	bsc->sc_reg = &((volatile u_char *)zap->va)[0x8000];
 	bsc->sc_dmabase = &bsc->sc_reg[0x8000];
 
-	sc->sc_freq = 40;		/* Clocked at 40Mhz */
+	sc->sc_freq = 40;		/* Clocked at 40 MHz */
 
 	printf(": address %p", bsc->sc_reg);
 

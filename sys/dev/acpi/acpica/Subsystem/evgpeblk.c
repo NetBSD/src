@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evgpeblk - GPE block creation and initialization.
- *              xRevision: 1.51 $
+ *              xRevision: 1.53 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.10 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.10.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -231,7 +231,7 @@ AcpiEvWalkGpeList (
     ACPI_GPE_BLOCK_INFO     *GpeBlock;
     ACPI_GPE_XRUPT_INFO     *GpeXruptInfo;
     ACPI_STATUS             Status = AE_OK;
-    ACPI_NATIVE_UINT        Flags;
+    ACPI_CPU_FLAGS          Flags;
 
 
     ACPI_FUNCTION_TRACE ("EvWalkGpeList");
@@ -389,8 +389,8 @@ AcpiEvSaveMethodInfo (
     default:
         /* Unknown method type, just ignore it! */
 
-        ACPI_REPORT_ERROR ((
-            "Unknown GPE method type: %s (name not of form _Lxx or _Exx)\n",
+        ACPI_ERROR ((AE_INFO,
+            "Unknown GPE method type: %s (name not of form _Lxx or _Exx)",
             Name));
         return_ACPI_STATUS (AE_OK);
     }
@@ -402,8 +402,8 @@ AcpiEvSaveMethodInfo (
     {
         /* Conversion failed; invalid method, just ignore it */
 
-        ACPI_REPORT_ERROR ((
-            "Could not extract GPE number from name: %s (name is not of form _Lxx or _Exx)\n",
+        ACPI_ERROR ((AE_INFO,
+            "Could not extract GPE number from name: %s (name is not of form _Lxx or _Exx)",
             Name));
         return_ACPI_STATUS (AE_OK);
     }
@@ -596,7 +596,7 @@ AcpiEvGetGpeXruptBlock (
     ACPI_GPE_XRUPT_INFO     *NextGpeXrupt;
     ACPI_GPE_XRUPT_INFO     *GpeXrupt;
     ACPI_STATUS             Status;
-    ACPI_NATIVE_UINT        Flags;
+    ACPI_CPU_FLAGS          Flags;
 
 
     ACPI_FUNCTION_TRACE ("EvGetGpeXruptBlock");
@@ -653,8 +653,8 @@ AcpiEvGetGpeXruptBlock (
                     AcpiEvGpeXruptHandler, GpeXrupt);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
-                "Could not install GPE interrupt handler at level 0x%X\n",
+            ACPI_ERROR ((AE_INFO,
+                "Could not install GPE interrupt handler at level 0x%X",
                 InterruptNumber));
             return_PTR (NULL);
         }
@@ -682,7 +682,7 @@ AcpiEvDeleteGpeXrupt (
     ACPI_GPE_XRUPT_INFO     *GpeXrupt)
 {
     ACPI_STATUS             Status;
-    ACPI_NATIVE_UINT        Flags;
+    ACPI_CPU_FLAGS          Flags;
 
 
     ACPI_FUNCTION_TRACE ("EvDeleteGpeXrupt");
@@ -747,7 +747,7 @@ AcpiEvInstallGpeBlock (
     ACPI_GPE_BLOCK_INFO     *NextGpeBlock;
     ACPI_GPE_XRUPT_INFO     *GpeXruptBlock;
     ACPI_STATUS             Status;
-    ACPI_NATIVE_UINT        Flags;
+    ACPI_CPU_FLAGS          Flags;
 
 
     ACPI_FUNCTION_TRACE ("EvInstallGpeBlock");
@@ -812,7 +812,7 @@ AcpiEvDeleteGpeBlock (
     ACPI_GPE_BLOCK_INFO     *GpeBlock)
 {
     ACPI_STATUS             Status;
-    ACPI_NATIVE_UINT        Flags;
+    ACPI_CPU_FLAGS          Flags;
 
 
     ACPI_FUNCTION_TRACE ("EvInstallGpeBlock");
@@ -906,8 +906,8 @@ AcpiEvCreateGpeInfoBlocks (
                             sizeof (ACPI_GPE_REGISTER_INFO));
     if (!GpeRegisterInfo)
     {
-        ACPI_REPORT_ERROR ((
-            "Could not allocate the GpeRegisterInfo table\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Could not allocate the GpeRegisterInfo table"));
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
@@ -921,8 +921,8 @@ AcpiEvCreateGpeInfoBlocks (
                         sizeof (ACPI_GPE_EVENT_INFO));
     if (!GpeEventInfo)
     {
-        ACPI_REPORT_ERROR ((
-            "Could not allocate the GpeEventInfo table\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Could not allocate the GpeEventInfo table"));
         Status = AE_NO_MEMORY;
         goto ErrorExit;
     }
@@ -1215,7 +1215,7 @@ AcpiEvInitializeGpeBlock (
     Status = AcpiHwEnableRuntimeGpeBlock (NULL, GpeBlock);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not enable GPEs in GpeBlock %p\n",
+        ACPI_ERROR ((AE_INFO, "Could not enable GPEs in GpeBlock %p",
             GpeBlock));
     }
 
@@ -1296,9 +1296,8 @@ AcpiEvGpeInitialize (
 
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
-                "Could not create GPE Block 0, %s\n",
-                AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not create GPE Block 0"));
         }
     }
 
@@ -1314,8 +1313,8 @@ AcpiEvGpeInitialize (
         if ((RegisterCount0) &&
             (GpeNumberMax >= AcpiGbl_FADT->Gpe1Base))
         {
-            ACPI_REPORT_ERROR ((
-                "GPE0 block (GPE 0 to %d) overlaps the GPE1 block (GPE %d to %d) - Ignoring GPE1\n",
+            ACPI_ERROR ((AE_INFO,
+                "GPE0 block (GPE 0 to %d) overlaps the GPE1 block (GPE %d to %d) - Ignoring GPE1",
                 GpeNumberMax, AcpiGbl_FADT->Gpe1Base,
                 AcpiGbl_FADT->Gpe1Base +
                 ((RegisterCount1 * ACPI_GPE_REGISTER_WIDTH) - 1)));
@@ -1335,9 +1334,8 @@ AcpiEvGpeInitialize (
 
             if (ACPI_FAILURE (Status))
             {
-                ACPI_REPORT_ERROR ((
-                    "Could not create GPE Block 1, %s\n",
-                    AcpiFormatException (Status)));
+                ACPI_EXCEPTION ((AE_INFO, Status,
+                    "Could not create GPE Block 1"));
             }
 
             /*
@@ -1365,8 +1363,8 @@ AcpiEvGpeInitialize (
 
     if (GpeNumberMax > ACPI_GPE_MAX)
     {
-        ACPI_REPORT_ERROR ((
-            "Maximum GPE number from FADT is too large: 0x%X\n",
+        ACPI_ERROR ((AE_INFO,
+            "Maximum GPE number from FADT is too large: 0x%X",
             GpeNumberMax));
         Status = AE_BAD_VALUE;
         goto Cleanup;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evmisc - Miscellaneous event manager support functions
- *              xRevision: 1.88 $
+ *              xRevision: 1.89 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -417,7 +417,7 @@ AcpiEvGlobalLockThread (
                                 AcpiGbl_GlobalLockThreadCount);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR (("Could not signal Global Lock semaphore\n"));
+            ACPI_ERROR ((AE_INFO, "Could not signal Global Lock semaphore"));
         }
     }
 }
@@ -463,8 +463,8 @@ AcpiEvGlobalLockHandler (
                         AcpiEvGlobalLockThread, Context);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR (("Could not queue Global Lock thread, %s\n",
-                AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not queue Global Lock thread"));
 
             return (ACPI_INTERRUPT_NOT_HANDLED);
         }
@@ -509,8 +509,8 @@ AcpiEvInitGlobalLockHandler (
      */
     if (Status == AE_NO_HARDWARE_RESPONSE)
     {
-        ACPI_REPORT_ERROR ((
-            "No response from Global Lock hardware, disabling lock\n"));
+        ACPI_ERROR ((AE_INFO,
+            "No response from Global Lock hardware, disabling lock"));
 
         AcpiGbl_GlobalLockPresent = FALSE;
         Status = AE_OK;
@@ -619,8 +619,8 @@ AcpiEvReleaseGlobalLock (
 
     if (!AcpiGbl_GlobalLockThreadCount)
     {
-        ACPI_REPORT_WARNING ((
-            "Cannot release HW Global Lock, it has not been acquired\n"));
+        ACPI_WARNING ((AE_INFO,
+            "Cannot release HW Global Lock, it has not been acquired"));
         return_ACPI_STATUS (AE_NOT_ACQUIRED);
     }
 
@@ -692,8 +692,8 @@ AcpiEvTerminate (
             Status = AcpiDisableEvent ((UINT32) i, 0);
             if (ACPI_FAILURE (Status))
             {
-                ACPI_REPORT_ERROR ((
-                    "Could not disable fixed event %d\n", (UINT32) i));
+                ACPI_ERROR ((AE_INFO,
+                    "Could not disable fixed event %d", (UINT32) i));
             }
         }
 
@@ -706,8 +706,8 @@ AcpiEvTerminate (
         Status = AcpiEvRemoveSciHandler ();
         if (ACPI_FAILURE(Status))
         {
-            ACPI_REPORT_ERROR ((
-                "Could not remove SCI handler\n"));
+            ACPI_ERROR ((AE_INFO,
+                "Could not remove SCI handler"));
         }
     }
 
@@ -722,7 +722,7 @@ AcpiEvTerminate (
         Status = AcpiDisable ();
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_WARNING (("AcpiDisable failed\n"));
+            ACPI_WARNING ((AE_INFO, "AcpiDisable failed"));
         }
     }
     return_VOID;

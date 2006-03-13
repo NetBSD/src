@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acutils.h -- prototypes for the common (subsystem-wide) procedures
- *       xRevision: 1.186 $
+ *       xRevision: 1.189 $
  *
  *****************************************************************************/
 
@@ -468,8 +468,15 @@ AcpiUtPtrExit (
     UINT8                   *Ptr);
 
 void
+AcpiUtDumpBuffer (
+    UINT8                   *Buffer,
+    UINT32                  Count,
+    UINT32                  Display,
+    UINT32                  componentId);
+
+void
 AcpiUtReportError (
-    const char             *ModuleName,
+    const char              *ModuleName,
     UINT32                  LineNumber);
 
 void
@@ -482,12 +489,7 @@ AcpiUtReportWarning (
     const char              *ModuleName,
     UINT32                  LineNumber);
 
-void
-AcpiUtDumpBuffer (
-    UINT8                   *Buffer,
-    UINT32                  Count,
-    UINT32                  Display,
-    UINT32                  componentId);
+/* Error and message reporting interfaces */
 
 void ACPI_INTERNAL_VAR_XFACE
 AcpiUtDebugPrint (
@@ -497,7 +499,7 @@ AcpiUtDebugPrint (
     const char              *ModuleName,
     UINT32                  ComponentId,
     const char              *Format,
-    ...) ACPI_PRINTF_LIKE_FUNC;
+    ...) ACPI_PRINTF_LIKE(6);
 
 void ACPI_INTERNAL_VAR_XFACE
 AcpiUtDebugPrintRaw (
@@ -507,7 +509,36 @@ AcpiUtDebugPrintRaw (
     const char              *ModuleName,
     UINT32                  ComponentId,
     const char              *Format,
-    ...) ACPI_PRINTF_LIKE_FUNC;
+    ...) ACPI_PRINTF_LIKE(6);
+
+void ACPI_INTERNAL_VAR_XFACE
+AcpiUtError (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    const char              *Format,
+    ...) ACPI_PRINTF_LIKE(3);
+
+void  ACPI_INTERNAL_VAR_XFACE
+AcpiUtException (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    ACPI_STATUS             Status,
+    const char              *Format,
+    ...) ACPI_PRINTF_LIKE(4);
+
+void ACPI_INTERNAL_VAR_XFACE
+AcpiUtWarning (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    const char              *Format,
+    ...) ACPI_PRINTF_LIKE(3);
+
+void ACPI_INTERNAL_VAR_XFACE
+AcpiUtInfo (
+    const char              *ModuleName,
+    UINT32                  LineNumber,
+    const char              *Format,
+    ...) ACPI_PRINTF_LIKE(3);
 
 
 /*
@@ -762,11 +793,6 @@ ACPI_STATUS
 AcpiUtGetResourceEndTag (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     UINT8                   **EndTag);
-
-UINT8
-AcpiUtGenerateChecksum (
-    UINT8                   *Buffer,
-    UINT32                  Length);
 
 UINT32
 AcpiUtDwordByteSwap (

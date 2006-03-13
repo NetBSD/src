@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.13 2006/02/26 17:12:44 kent Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.13.2.1 2006/03/13 09:07:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.13 2006/02/26 17:12:44 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.13.2.1 2006/03/13 09:07:08 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
