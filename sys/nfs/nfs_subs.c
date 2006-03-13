@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158.4.5 2006/03/12 17:32:26 elad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.158.4.6 2006/03/13 00:01:05 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.5 2006/03/12 17:32:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.6 2006/03/13 00:01:05 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2964,8 +2964,6 @@ void
 nfsrv_setcred(incred, outcred)
 	kauth_cred_t incred, *outcred;
 {
-	int i, in_ngroups;
-
 	/*
 	 * XXX elad: this is another case where the original code just
 	 *	     messed with the struct members, more specifically,
@@ -2980,10 +2978,6 @@ nfsrv_setcred(incred, outcred)
 
 	*outcred = kauth_cred_copy(*outcred);
 	kauth_cred_clone(incred, *outcred);
-
-	in_ngroups = kauth_cred_ngroups(incred);
-	for (i = 0; i < in_ngroups; i++)
-		kauth_cred_addgroup(*outcred, kauth_cred_group(incred, i));
 }
 
 u_int32_t
