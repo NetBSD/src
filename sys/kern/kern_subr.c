@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.133 2006/03/13 03:17:47 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.134 2006/03/13 08:52:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.133 2006/03/13 03:17:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.134 2006/03/13 08:52:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -275,7 +275,7 @@ copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
 	uio.uio_offset = (off_t)(intptr_t)uaddr;
 	uio.uio_resid = len;
 	uio.uio_rw = UIO_READ;
-	uio.uio_vmspace = vmspace_kernel();
+	UIO_SETUP_SYSSPACE(&uio);
 	error = uvm_io(&vm->vm_map, &uio);
 
 	return (error);
@@ -308,7 +308,7 @@ copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
 	uio.uio_offset = (off_t)(intptr_t)uaddr;
 	uio.uio_resid = len;
 	uio.uio_rw = UIO_WRITE;
-	uio.uio_vmspace = vmspace_kernel();
+	UIO_SETUP_SYSSPACE(&uio);
 	error = uvm_io(&vm->vm_map, &uio);
 
 	return (error);
