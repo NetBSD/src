@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbrsdt - ACPI RSDT table utilities
- *              xRevision: 1.22 $
+ *              xRevision: 1.23 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbrsdt.c,v 1.9 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbrsdt.c,v 1.9.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __TBRSDT_C__
 
@@ -296,23 +296,23 @@ AcpiTbValidateRsdt (
     {
         /* Invalid RSDT or XSDT signature */
 
-        ACPI_REPORT_ERROR ((
-            "Invalid signature where RSDP indicates RSDT/XSDT should be located. RSDP:\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Invalid signature where RSDP indicates RSDT/XSDT should be located. RSDP:"));
 
         ACPI_DUMP_BUFFER (AcpiGbl_RSDP, 20);
 
-        ACPI_REPORT_ERROR ((
-            "RSDT/XSDT signature at %X (%p) is invalid\n",
+        ACPI_ERROR ((AE_INFO,
+            "RSDT/XSDT signature at %X (%p) is invalid",
             AcpiGbl_RSDP->RsdtPhysicalAddress,
             (void *) (ACPI_NATIVE_UINT) AcpiGbl_RSDP->RsdtPhysicalAddress));
 
         if (AcpiGbl_RootTableType == ACPI_TABLE_TYPE_RSDT)
         {
-            ACPI_REPORT_ERROR (("Looking for RSDT\n"))
+            ACPI_ERROR ((AE_INFO, "Looking for RSDT"));
         }
         else
         {
-            ACPI_REPORT_ERROR (("Looking for XSDT\n"))
+            ACPI_ERROR ((AE_INFO, "Looking for XSDT"));
         }
 
         ACPI_DUMP_BUFFER ((char *) TablePtr, 48);
@@ -355,9 +355,7 @@ AcpiTbGetTableRsdt (
     Status = AcpiTbGetTable (&Address, &TableInfo);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not get the RSDT/XSDT, %s\n",
-            AcpiFormatException (Status)));
-
+        ACPI_EXCEPTION ((AE_INFO, Status, "Could not get the RSDT/XSDT"));
         return_ACPI_STATUS (Status);
     }
 

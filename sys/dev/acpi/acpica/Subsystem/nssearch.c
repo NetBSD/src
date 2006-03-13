@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nssearch - Namespace search
- *              xRevision: 1.109 $
+ *              xRevision: 1.110 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSSEARCH_C__
 
@@ -394,8 +394,8 @@ AcpiNsSearchAndEnter (
 
     if (!Node || !TargetName || !ReturnNode)
     {
-        ACPI_REPORT_ERROR ((
-            "Null param: Node %p Name %X ReturnNode %p\n",
+        ACPI_ERROR ((AE_INFO,
+            "Null param: Node %p Name %X ReturnNode %p",
             Node, TargetName, ReturnNode));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
@@ -404,7 +404,7 @@ AcpiNsSearchAndEnter (
 
     if (!AcpiUtValidAcpiName (TargetName))
     {
-        ACPI_REPORT_ERROR (("Bad character in ACPI Name: %X\n",
+        ACPI_ERROR ((AE_INFO, "Bad character in ACPI Name: %X",
             TargetName));
         return_ACPI_STATUS (AE_BAD_CHARACTER);
     }

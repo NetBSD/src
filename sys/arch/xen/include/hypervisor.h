@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.19 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.19.2.1 2006/03/13 09:07:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -525,7 +525,7 @@ HYPERVISOR_set_timer_op(uint64_t timeout)
     __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_set_timer_op), "b" (timeout_lo), "c" (timeout_hi)
+	: "0" (__HYPERVISOR_set_timer_op), "1" (timeout_lo), "2" (timeout_hi)
 	: "memory");
 
     return ret;

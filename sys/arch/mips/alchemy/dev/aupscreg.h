@@ -1,4 +1,4 @@
-/* $NetBSD: aupscreg.h,v 1.1 2006/02/24 14:34:31 shige Exp $ */
+/* $NetBSD: aupscreg.h,v 1.1.4.1 2006/03/13 09:06:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -68,10 +68,13 @@
  *    00 = Disable/Reset
  *    01 = Reserved
  *    10 = Suspend
- *    10 = Enable
+ *    11 = Enable
  */
 #define	AUPSC_CTRL			0x04	/* R/W */
 #  define	AUPSC_CTRL_ENA(x)	(x & 0x03)
+#  define	AUPSC_CTRL_DISABLE	0
+#  define	AUPSC_CTRL_SUSPEND	2
+#  define	AUPSC_CTRL_ENABLE	3
 
 /* 0x0008 - 0x002F: Protocol-specific registers */
 

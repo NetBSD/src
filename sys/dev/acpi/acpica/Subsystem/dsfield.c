@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsfield - Dispatcher field routines
- *              xRevision: 1.80 $
+ *              xRevision: 1.81 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsfield.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsfield.c,v 1.13.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #define __DSFIELD_C__
 
@@ -222,7 +222,7 @@ AcpiDsCreateBufferField (
                                 Flags, WalkState, &(Node));
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_NSERROR (Arg->Common.Value.String, Status);
+            ACPI_ERROR_NAMESPACE (Arg->Common.Value.String, Status);
             return_ACPI_STATUS (Status);
         }
     }
@@ -337,8 +337,8 @@ AcpiDsGetFieldNames (
 
             if (Position > ACPI_UINT32_MAX)
             {
-                ACPI_REPORT_ERROR ((
-                    "Bit offset within field too large (> 0xFFFFFFFF)\n"));
+                ACPI_ERROR ((AE_INFO,
+                    "Bit offset within field too large (> 0xFFFFFFFF)"));
                 return_ACPI_STATUS (AE_SUPPORT);
             }
 
@@ -375,7 +375,7 @@ AcpiDsGetFieldNames (
                             WalkState, &Info->FieldNode);
             if (ACPI_FAILURE (Status))
             {
-                ACPI_REPORT_NSERROR ((char *) &Arg->Named.Name, Status);
+                ACPI_ERROR_NAMESPACE ((char *) &Arg->Named.Name, Status);
                 if (Status != AE_ALREADY_EXISTS)
                 {
                     return_ACPI_STATUS (Status);
@@ -404,8 +404,8 @@ AcpiDsGetFieldNames (
 
             if (Position > ACPI_UINT32_MAX)
             {
-                ACPI_REPORT_ERROR ((
-                    "Field [%4.4s] bit offset too large (> 0xFFFFFFFF)\n",
+                ACPI_ERROR ((AE_INFO,
+                    "Field [%4.4s] bit offset too large (> 0xFFFFFFFF)",
                     ACPI_CAST_PTR (char, &Info->FieldNode->Name)));
                 return_ACPI_STATUS (AE_SUPPORT);
             }
@@ -416,8 +416,8 @@ AcpiDsGetFieldNames (
 
         default:
 
-            ACPI_REPORT_ERROR ((
-                "Invalid opcode in field list: %X\n",
+            ACPI_ERROR ((AE_INFO,
+                "Invalid opcode in field list: %X",
                 Arg->Common.AmlOpcode));
             return_ACPI_STATUS (AE_AML_BAD_OPCODE);
         }
@@ -467,7 +467,7 @@ AcpiDsCreateField (
                         ACPI_NS_SEARCH_PARENT, WalkState, &RegionNode);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_NSERROR (Arg->Common.Value.Name, Status);
+            ACPI_ERROR_NAMESPACE (Arg->Common.Value.Name, Status);
             return_ACPI_STATUS (Status);
         }
     }
@@ -556,7 +556,7 @@ AcpiDsInitFieldObjects (
                             WalkState, &Node);
             if (ACPI_FAILURE (Status))
             {
-                ACPI_REPORT_NSERROR ((char *) &Arg->Named.Name, Status);
+                ACPI_ERROR_NAMESPACE ((char *) &Arg->Named.Name, Status);
                 if (Status != AE_ALREADY_EXISTS)
                 {
                     return_ACPI_STATUS (Status);
@@ -617,7 +617,7 @@ AcpiDsCreateBankField (
                         ACPI_NS_SEARCH_PARENT, WalkState, &RegionNode);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_NSERROR (Arg->Common.Value.Name, Status);
+            ACPI_ERROR_NAMESPACE (Arg->Common.Value.Name, Status);
             return_ACPI_STATUS (Status);
         }
     }
@@ -630,7 +630,7 @@ AcpiDsCreateBankField (
                     ACPI_NS_SEARCH_PARENT, WalkState, &Info.RegisterNode);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_NSERROR (Arg->Common.Value.String, Status);
+        ACPI_ERROR_NAMESPACE (Arg->Common.Value.String, Status);
         return_ACPI_STATUS (Status);
     }
 
@@ -691,7 +691,7 @@ AcpiDsCreateIndexField (
                     ACPI_NS_SEARCH_PARENT, WalkState, &Info.RegisterNode);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_NSERROR (Arg->Common.Value.String, Status);
+        ACPI_ERROR_NAMESPACE (Arg->Common.Value.String, Status);
         return_ACPI_STATUS (Status);
     }
 
@@ -703,7 +703,7 @@ AcpiDsCreateIndexField (
                     ACPI_NS_SEARCH_PARENT, WalkState, &Info.DataRegisterNode);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_NSERROR (Arg->Common.Value.String, Status);
+        ACPI_ERROR_NAMESPACE (Arg->Common.Value.String, Status);
         return_ACPI_STATUS (Status);
     }
 

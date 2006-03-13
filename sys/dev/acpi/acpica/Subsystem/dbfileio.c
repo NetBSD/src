@@ -2,7 +2,7 @@
  *
  * Module Name: dbfileio - Debugger file I/O commands.  These can't usually
  *              be used when running the debugger in Ring 0 (Kernel mode)
- *              xRevision: 1.86 $
+ *              xRevision: 1.87 $
  *
  ******************************************************************************/
 
@@ -117,7 +117,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.14 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbfileio.c,v 1.14.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -252,8 +252,8 @@ AcpiDbCheckTextModeCorruption (
 
     if (TableLength != FileLength)
     {
-        ACPI_REPORT_WARNING ((
-            "File length (0x%X) is not the same as the table length (0x%X)\n",
+        ACPI_WARNING ((AE_INFO,
+            "File length (0x%X) is not the same as the table length (0x%X)",
             FileLength, TableLength));
     }
 

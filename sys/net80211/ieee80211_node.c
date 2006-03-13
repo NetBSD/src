@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.52 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.52.2.1 2006/03/13 09:07:39 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.52 2006/03/02 03:38:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.52.2.1 2006/03/13 09:07:39 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -588,7 +588,7 @@ ieee80211_node_compare(struct ieee80211com *ic,
 		if (maxa != maxb)
 			return maxa - maxb;
 		/* XXX use freq for channel preference */
-		/* for now just prefer 5Ghz band to all other bands */
+		/* for now just prefer 5 GHz band to all other bands */
 		if (IEEE80211_IS_CHAN_5GHZ(a->ni_chan) &&
 		   !IEEE80211_IS_CHAN_5GHZ(b->ni_chan))
 			return 1;

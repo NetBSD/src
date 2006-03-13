@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.7 2006/02/23 04:06:52 garbled Exp $     */
+/*      $NetBSD: residual.c,v 1.7.2.1 2006/03/13 09:06:59 yamt Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.7 2006/02/23 04:06:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.7.2.1 2006/03/13 09:06:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,11 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.7 2006/02/23 04:06:52 garbled Exp $")
 #include <machine/residual.h>
 #include <machine/pnp.h>
 
-int dump_residual_data = 1;
+#include "opt_residual.h"
 
+#ifdef RESIDUAL_DATA_DUMP
 static void make_pnp_device_tree(void *);
 static void bustype_subr(DEVICE_ID *);
-static void pnp_devid_to_string(char **string, unsigned long devid);
+
+int dump_residual_data = 1;
 
 #define	NELEMS(array)	((size_t)(sizeof(array)/sizeof(array[0])))
 
@@ -142,6 +144,103 @@ static const char *Flags[] = {
 	"Enabled",
 };
 
+#endif /* RESIDUAL_DATA_DUMP */
+
+
+/*
+ * Convert a pnp DevId to a string.
+ */
+
+void
+pnp_devid_to_string(uint32_t devid, char *s)
+{
+	uint8_t p[4];
+	uint32_t l;
+
+	if (res->Revision == 0)
+		l = le32toh(devid);
+	else
+		l = be32toh(devid);
+	p[0] = (l >> 24) & 0xff;
+	p[1] = (l >> 16) & 0xff;
+	p[2] = (l >> 8) & 0xff;
+	p[3] = l & 0xff;
+
+	*s++ = ((p[0] >> 2) & 0x1f) + 'A' - 1;
+	*s++ = (((p[0] & 0x03) << 3) | ((p[1] >> 5) & 0x07)) + 'A' - 1;
+	*s++ = (p[1] & 0x1f) + 'A' - 1;
+	*s++ = HEXDIGITS[(p[2] >> 4) & 0xf];
+	*s++ = HEXDIGITS[p[2] & 0xf];
+	*s++ = HEXDIGITS[(p[3] >> 4) & 0xf];
+	*s++ = HEXDIGITS[p[3] & 0xf];
+	*s = '\0';
+}
+
+/*
+ * Count the number of a specific deviceid on the pnp tree.
+ */
+
+int
+count_pnp_devices(const char *devid)
+{
+	PPC_DEVICE *ppc_dev;
+	int i, found=0;
+	uint32_t ndev;
+	char deviceid[8];
+
+	ndev = be32toh(res->ActualNumDevices);
+	ppc_dev = res->Devices;
+
+	for (i = 0; i < ((ndev > MAX_DEVICES) ? MAX_DEVICES : ndev); i++) {
+		DEVICE_ID *id = &ppc_dev[i].DeviceId;
+
+		pnp_devid_to_string(id->DevId, deviceid);
+		if (strcmp(deviceid, devid) == 0)
+			found++;
+	}
+	return found;
+}
+
+/*
+ * find and return a pointer to the N'th device of a given type.
+ */
+
+PPC_DEVICE *
+find_nth_pnp_device(const char *devid, int busid, int n)
+{
+	PPC_DEVICE *ppc_dev;
+	int i, found=0;
+	uint32_t ndev, l, bid = 0;
+	char deviceid[8];
+
+	ndev = be32toh(res->ActualNumDevices);
+	ppc_dev = res->Devices;
+	n++;
+
+	if (busid != 0)
+		bid = 1UL << busid;
+
+	for (i = 0; i < ((ndev > MAX_DEVICES) ? MAX_DEVICES : ndev); i++) {
+		DEVICE_ID *id = &ppc_dev[i].DeviceId;
+
+		if (bid) {
+			printf("???\n");
+			l = be32toh(id->BusId);
+			if ((l & bid) == 0)
+				continue;
+		}
+		pnp_devid_to_string(id->DevId, deviceid);
+		if (strcmp(deviceid, devid) == 0) {
+			found++;
+			if (found == n)
+				return &ppc_dev[i];
+		}
+	}
+	return NULL;
+}
+
+#ifdef RESIDUAL_DATA_DUMP
+
 void
 print_residual_device_info(void)
 {
@@ -160,7 +259,7 @@ print_residual_device_info(void)
 	int ncpu;
 	int first;
 	int i, j;
-	char deviceid[9], *d;
+	char deviceid[9];
 
 	if (!dump_residual_data)
 		return;
@@ -329,8 +428,7 @@ print_residual_device_info(void)
 			}
 		}
 		printf("\n");
-		d = deviceid;
-		pnp_devid_to_string(&d, id->DevId);
+		pnp_devid_to_string(id->DevId, deviceid);
 		printf("    DevId = 0x%08lx (%s)\n", id->DevId, deviceid);
 		printf("    SerialNum = 0x%08lx\n", be32toh(id->SerialNum));
 		l = be32toh(id->Flags);
@@ -369,29 +467,6 @@ enum {
 	TAG_SMALL = 0,
 	TAG_LARGE
 };
-
-/*
- * Convert a pnp DevId to a string.
- */
-
-static void
-pnp_devid_to_string(char **string, unsigned long devid)
-{
-	unsigned char p[4];
-	unsigned long l;
-
-	l = be32toh(devid);
-	p[0] = (l >> 24) & 0xff;
-	p[1] = (l >> 16) & 0xff;
-	p[2] = (l >> 8) & 0xff;
-	p[3] = l & 0xff;
-	sprintf(*string, "%c%c%c%c%c%c%c",
-	    ((p[0] >> 2) & 0x1f) + 'A' - 1,
-	    (((p[0] & 0x03) << 3) | ((p[1] >> 5) & 0x07)) + 'A' - 1,
-	    (p[1] & 0x1f) + 'A' - 1,
-	    HEXDIGITS[(p[2] >> 4) & 0xf], HEXDIGITS[p[2] & 0xf],
-	    HEXDIGITS[(p[3] >> 4) & 0xf], HEXDIGITS[p[3] & 0xf]);
-}
 
 /*--
  * pnp device
@@ -692,6 +767,12 @@ large_vendor_pcibridge_subr(struct _L4_PPCPack *p, int size)
 	char tmpstr[30], *t;
 	static const unsigned char *inttype[] =
 	    { "8259", "MPIC", "RS6k BUID %d" };
+
+	/* rev 0 residual has no valid pcibridge data */
+	if (res->Revision == 0) {
+		large_vendor_default_subr(p, size);
+		return;
+	}
 
 	printf("    PCI Bridge parameters\n"
 	    "      ConfigBaseAddress 0x%0" PRIx64" \n"
@@ -1395,3 +1476,5 @@ service_subr(DEVICE_ID *id)
 	printf("    SubType = %s (%d)\n", p, id->SubType);
 	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
+
+#endif /* RESIDUAL_DATA_DUMP */

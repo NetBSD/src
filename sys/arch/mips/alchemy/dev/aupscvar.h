@@ -1,4 +1,4 @@
-/* $NetBSD: aupscvar.h,v 1.1 2006/02/24 14:34:31 shige Exp $ */
+/* $NetBSD: aupscvar.h,v 1.1.4.1 2006/03/13 09:06:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -35,10 +35,23 @@
 #ifndef _MIPS_ALCHEMY_DEV_AUPSCVAR_H_
 #define	_MIPS_ALCHEMY_DEV_AUPSCVAR_H_
 
+struct aupsc_controller {
+	bus_space_tag_t		psc_bust;	/* Bus space tag */
+	bus_space_handle_t	psc_bush;	/* Bus space handle */
+	int *			psc_sel;	/* current protocol selection */
+	void			(*psc_enable)(void *, int);
+	void			(*psc_disable)(void *);
+	void			(*psc_suspend)(void *);
+};
+
 struct aupsc_attach_args {
 	const char *		aupsc_name;
-	bus_space_tag_t		aupsc_bust;	/* Bus space tag */
-	bus_space_handle_t	aupsc_bush;	/* Bus space handle */
+	struct aupsc_controller	aupsc_ctrl;
+};
+
+struct aupsc_protocol_device {
+	struct device		sc_dev;
+	struct aupsc_controller	sc_ctrl;
 };
 
 #endif	/* _MIPS_ALCHEMY_DEV_AUPSCVAR_H_ */

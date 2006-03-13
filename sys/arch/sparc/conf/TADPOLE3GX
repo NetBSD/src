@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.36 2006/02/05 05:02:02 cube Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.36.2.1 2006/03/13 09:07:02 yamt Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -21,13 +21,27 @@ options 	SUN4M		# sun4m - SS10, SS20, Classic, etc.
 # Blink the power LED on some machines to indicate the system load.
 #options 	BLINK
 
-## Use a faster console than the PROM's slow drawing routines.  Not needed
-## for headless (no framebuffer) machines.
-options 	RASTERCONSOLE		# fast rasterop console
+# wsdisplay options
+options 	WSEMUL_SUN
+#options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_CUSTOM_OUTPUT		# wsconsctl(8)
+
+# black on white, kernel output in green
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+
+options 	WSDISPLAY_DEFAULTSCREENS=1
+
+options		SPARCBOOK_CMD		# enable screen switching with lAlt-Fn
 #options 	FONT_GALLANT12x22	# the console font
 options 	FONT_BOLD8x16		# a somewhat smaller font
-options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
-options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
 #### System options that are the same for all ports
 
@@ -199,7 +213,7 @@ auxreg0	at obio0				# sun4m
 ## Additional auxiliary system registers on Sparcbook
 auxiotwo0	at obio0				# sun4m
 
-## Clock control on SPARCbook - used to put the COPU to sleep when idle
+## Clock control on SPARCbook - used to put the CPU to sleep when idle
 clkctrl0 at obio0
 
 ## Mostek clock found on 4/300, sun4c, and sun4m systems.
@@ -218,9 +232,13 @@ zstty0	at zs0 channel 0	# ttya
 zstty1	at zs0 channel 1	# ttyb
 
 zs1	at obio0					# sun4m
-kbd0	at zs1 channel 0	# keyboard
-ms0	at zs1 channel 1	# mouse
-zstty*	at zs? channel ?	# mouse
+zstty*	at zs1 channel ?	# mouse/keyboard
+
+kbd0	at zstty?
+ms0	at zstty?
+
+wskbd*		at kbd? console ?
+wsmouse*	at ms?
 
 ## Tadpole 3GX/3XL have a builtin modem that emulates a NS16450.
 com*	at obio0					# sun4m (tadpole)
@@ -325,11 +343,17 @@ pseudo-device	ipfilter
 
 ## /dev/audio support
 
+#options	DBRI_DEBUG	# noisy debug output from the dbri driver
+options		DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
 dbri0		at sbus0 slot ? offset ?		# SUNW,DBRI[s3|e]
 audio*		at audiobus?
 
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
 pnozz0 at sbus? slot ? offset ?
+#options	PNOZZ_EMUL_CG3		# emulate a CG3 for Xsun instead of 
+					# running natively
+
+wsdisplay* 	at wsemuldisplaydev? console ?
 
 #### Other device configuration
 
@@ -347,3 +371,6 @@ pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	fss		4	# file system snapshot device
+
+pseudo-device	wsmux			# mouse and keyboard multiplexor
+pseudo-device	wsfont

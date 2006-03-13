@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswload - Dispatcher namespace load callbacks
- *              xRevision: 1.105 $
+ *              xRevision: 1.106 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswload.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswload.c,v 1.13.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #define __DSWLOAD_C__
 
@@ -274,7 +274,7 @@ AcpiDsLoad1BeginOp (
 #endif
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_NSERROR (Path, Status);
+            ACPI_ERROR_NAMESPACE (Path, Status);
             return_ACPI_STATUS (Status);
         }
 
@@ -320,8 +320,8 @@ AcpiDsLoad1BeginOp (
 
             /* All other types are an error */
 
-            ACPI_REPORT_ERROR ((
-                "Invalid type (%s) for target of Scope operator [%4.4s] (Cannot override)\n",
+            ACPI_ERROR ((AE_INFO,
+                "Invalid type (%s) for target of Scope operator [%4.4s] (Cannot override)",
                 AcpiUtGetTypeName (Node->Type), Path));
 
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
@@ -393,7 +393,7 @@ AcpiDsLoad1BeginOp (
                         ACPI_IMODE_LOAD_PASS1, Flags, WalkState, &(Node));
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_NSERROR (Path, Status);
+            ACPI_ERROR_NAMESPACE (Path, Status);
             return_ACPI_STATUS (Status);
         }
         break;
@@ -732,10 +732,10 @@ AcpiDsLoad2BeginOp (
             }
             else
             {
-                ACPI_REPORT_NSERROR (BufferPtr, Status);
+                ACPI_ERROR_NAMESPACE (BufferPtr, Status);
             }
 #else
-            ACPI_REPORT_NSERROR (BufferPtr, Status);
+            ACPI_ERROR_NAMESPACE (BufferPtr, Status);
 #endif
             return_ACPI_STATUS (Status);
         }
@@ -766,8 +766,8 @@ AcpiDsLoad2BeginOp (
              *  Scope (DEB) { ... }
              */
 
-            ACPI_REPORT_WARNING ((
-                "Type override - [%4.4s] had invalid type (%s) for Scope operator, changed to (Scope)\n",
+            ACPI_WARNING ((AE_INFO,
+                "Type override - [%4.4s] had invalid type (%s) for Scope operator, changed to (Scope)",
                 BufferPtr, AcpiUtGetTypeName (Node->Type)));
 
             Node->Type = ACPI_TYPE_ANY;
@@ -778,8 +778,8 @@ AcpiDsLoad2BeginOp (
 
             /* All other types are an error */
 
-            ACPI_REPORT_ERROR ((
-                "Invalid type (%s) for target of Scope operator [%4.4s]\n",
+            ACPI_ERROR ((AE_INFO,
+                "Invalid type (%s) for target of Scope operator [%4.4s]",
                 AcpiUtGetTypeName (Node->Type), BufferPtr));
 
             return (AE_AML_OPERAND_TYPE);
@@ -835,7 +835,7 @@ AcpiDsLoad2BeginOp (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_NSERROR (BufferPtr, Status);
+        ACPI_ERROR_NAMESPACE (BufferPtr, Status);
         return_ACPI_STATUS (Status);
     }
 
@@ -1242,7 +1242,7 @@ AcpiDsLoad2EndOp (
         }
         else
         {
-            ACPI_REPORT_NSERROR (Arg->Common.Value.String, Status);
+            ACPI_ERROR_NAMESPACE (Arg->Common.Value.String, Status);
         }
         break;
 

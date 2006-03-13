@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.184 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.184.2.1 2006/03/13 09:07:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -74,6 +74,10 @@
 #endif
 
 #include <machine/endian.h>
+
+#ifdef _KERNEL
+#include <sys/types.h>
+#endif
 
 struct clockframe;
 struct device;
@@ -353,9 +357,12 @@ void	doforkhooks(struct proc *, struct proc *);
 /*
  * kernel syscall tracing/debugging hooks.
  */
+#ifdef _KERNEL
+boolean_t trace_is_enabled(struct proc *);
 int	trace_enter(struct lwp *, register_t, register_t,
 	    const struct sysent *, void *);
 void	trace_exit(struct lwp *, register_t, void *, register_t [], int);
+#endif
 
 int	uiomove(void *, size_t, struct uio *);
 int	uiomove_frombuf(void *, size_t, struct uio *);

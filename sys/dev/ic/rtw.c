@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.67 2006/02/20 16:50:37 thorpej Exp $ */
+/* $NetBSD: rtw.c,v 1.67.2.1 2006/03/13 09:07:20 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.67 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.67.2.1 2006/03/13 09:07:20 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -239,7 +239,7 @@ static int
 rtw_sysctl_verify_rfprog(SYSCTLFN_ARGS)
 {
 	return rtw_sysctl_verify(SYSCTLFN_CALL(__UNCONST(rnode)), 0,
-	    MASK_AND_RSHIFT(RTW_CONFIG4_RFTYPE_MASK, RTW_CONFIG4_RFTYPE_MASK));
+	    SHIFTOUT(RTW_CONFIG4_RFTYPE_MASK, RTW_CONFIG4_RFTYPE_MASK));
 }
 
 static int
@@ -550,7 +550,7 @@ rtw_chip_reset(struct rtw_regs *regs, const char *dvname)
 
 	/* from Linux driver */
 	tcr = RTW_TCR_CWMIN | RTW_TCR_MXDMA_2048 |
-	      LSHIFT(7, RTW_TCR_SRL_MASK) | LSHIFT(7, RTW_TCR_LRL_MASK);
+	      SHIFTIN(7, RTW_TCR_SRL_MASK) | SHIFTIN(7, RTW_TCR_LRL_MASK);
 
 	RTW_WRITE(regs, RTW_TCR, tcr);
 
@@ -877,7 +877,7 @@ rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
 	if ((RTW_SR_GET(sr, RTW_SR_RFPARM) & RTW_SR_RFPARM_DFLANTB) != 0)
 		*flags |= RTW_F_DFLANTB;
 
-	*rcr |= LSHIFT(MASK_AND_RSHIFT(RTW_SR_GET(sr, RTW_SR_RFPARM),
+	*rcr |= SHIFTIN(SHIFTOUT(RTW_SR_GET(sr, RTW_SR_RFPARM),
 	    RTW_SR_RFPARM_CS_MASK), RTW_RCR_ENCS1);
 
 	if ((RTW_SR_GET(sr, RTW_SR_CONFIG0) & RTW_CONFIG0_WEP104) != 0)
@@ -1039,7 +1039,7 @@ rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 
 	switch (rfchipid) {
 	default:
-		cfg4 |= LSHIFT(rtw_rfprog_fallback, RTW_CONFIG4_RFTYPE_MASK);
+		cfg4 |= SHIFTIN(rtw_rfprog_fallback, RTW_CONFIG4_RFTYPE_MASK);
 		method = "fallback";
 		break;
 	case RTW_RFCHIPID_INTERSIL:
@@ -1139,13 +1139,13 @@ rtw_identify_sta(struct rtw_regs *regs, uint8_t (*addr)[IEEE80211_ADDR_LEN],
 	uint32_t idr0 = RTW_READ(regs, RTW_IDR0),
 	          idr1 = RTW_READ(regs, RTW_IDR1);
 
-	(*addr)[0] = MASK_AND_RSHIFT(idr0, BITS(0,  7));
-	(*addr)[1] = MASK_AND_RSHIFT(idr0, BITS(8,  15));
-	(*addr)[2] = MASK_AND_RSHIFT(idr0, BITS(16, 23));
-	(*addr)[3] = MASK_AND_RSHIFT(idr0, BITS(24 ,31));
+	(*addr)[0] = SHIFTOUT(idr0, __BITS(0,  7));
+	(*addr)[1] = SHIFTOUT(idr0, __BITS(8,  15));
+	(*addr)[2] = SHIFTOUT(idr0, __BITS(16, 23));
+	(*addr)[3] = SHIFTOUT(idr0, __BITS(24 ,31));
 
-	(*addr)[4] = MASK_AND_RSHIFT(idr1, BITS(0,  7));
-	(*addr)[5] = MASK_AND_RSHIFT(idr1, BITS(8, 15));
+	(*addr)[4] = SHIFTOUT(idr1, __BITS(0,  7));
+	(*addr)[5] = SHIFTOUT(idr1, __BITS(8, 15));
 
 	if (IEEE80211_ADDR_EQ(addr, empty_macaddr)) {
 		printf("%s: could not get mac address, attach failed\n",
@@ -1371,7 +1371,7 @@ rtw_rxdesc_init(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *rs,
 	obuf = rd->rd_buf;
 	rd->rd_buf = htole32(rs->rs_dmamap->dm_segs[0].ds_addr);
 
-	ctl = LSHIFT(rs->rs_mbuf->m_len, RTW_RXCTL_LENGTH_MASK) |
+	ctl = SHIFTIN(rs->rs_mbuf->m_len, RTW_RXCTL_LENGTH_MASK) |
 	    RTW_RXCTL_OWN | RTW_RXCTL_FS | RTW_RXCTL_LS;
 
 	if (is_last)
@@ -1529,7 +1529,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			goto next;
 		}
 
-		len = MASK_AND_RSHIFT(hstat, RTW_RXSTAT_LENGTH_MASK);
+		len = SHIFTOUT(hstat, RTW_RXSTAT_LENGTH_MASK);
 		if (len < IEEE80211_MIN_LEN) {
 			sc->sc_ic.ic_stats.is_rx_tooshort++;
 			goto next;
@@ -1538,10 +1538,10 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		/* CRC is included with the packet; trim it off. */
 		len -= IEEE80211_CRC_LEN;
 
-		hwrate = MASK_AND_RSHIFT(hstat, RTW_RXSTAT_RATE_MASK);
+		hwrate = SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK);
 		if (hwrate >= sizeof(ratetbl) / sizeof(ratetbl[0])) {
 			printf("%s: unknown rate #%d\n", sc->sc_dev.dv_xname,
-			    MASK_AND_RSHIFT(hstat, RTW_RXSTAT_RATE_MASK));
+			    SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK));
 			ifp->if_ierrors++;
 			goto next;
 		}
@@ -1584,16 +1584,16 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		}
 
 		if (sc->sc_rfchipid == RTW_RFCHIPID_PHILIPS)
-			rssi = MASK_AND_RSHIFT(hrssi, RTW_RXRSSI_RSSI);
+			rssi = SHIFTOUT(hrssi, RTW_RXRSSI_RSSI);
 		else {
-			rssi = MASK_AND_RSHIFT(hrssi, RTW_RXRSSI_IMR_RSSI);
+			rssi = SHIFTOUT(hrssi, RTW_RXRSSI_IMR_RSSI);
 			/* TBD find out each front-end's LNA gain in the
 			 * front-end's units
 			 */
 			if ((hrssi & RTW_RXRSSI_IMR_LNA) == 0)
 				rssi |= 0x80;
 		}
-		sq = MASK_AND_RSHIFT(hrssi, RTW_RXRSSI_SQ);
+		sq = SHIFTOUT(hrssi, RTW_RXRSSI_SQ);
 
 		/* Note well: now we cannot recycle the rs_mbuf unless
 		 * we restore its original length.
@@ -1706,8 +1706,8 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *tdb,
 	tdn = &tdb->tdb_desc[ts->ts_last];
 
 	hstat = le32toh(tdn->td_stat);
-	rts_retry = MASK_AND_RSHIFT(hstat, RTW_TXSTAT_RTSRETRY_MASK);
-	data_retry = MASK_AND_RSHIFT(hstat, RTW_TXSTAT_DRC_MASK);
+	rts_retry = SHIFTOUT(hstat, RTW_TXSTAT_RTSRETRY_MASK);
+	data_retry = SHIFTOUT(hstat, RTW_TXSTAT_DRC_MASK);
 
 	ifp->if_collisions += rts_retry + data_retry;
 
@@ -2536,7 +2536,7 @@ rtw_transmit_config(struct rtw_regs *regs)
 
 	/* set short/long retry limits */
 	tcr &= ~(RTW_TCR_SRL_MASK|RTW_TCR_LRL_MASK);
-	tcr |= LSHIFT(4, RTW_TCR_SRL_MASK) | LSHIFT(4, RTW_TCR_LRL_MASK);
+	tcr |= SHIFTIN(4, RTW_TCR_SRL_MASK) | SHIFTIN(4, RTW_TCR_LRL_MASK);
 
 	tcr &= ~RTW_TCR_CRC;	/* NIC appends CRC32 */
 
@@ -3301,7 +3301,7 @@ rtw_start(struct ifnet *ifp)
 		}
 #endif /* RTW_DEBUG */
 		ctl0 = proto_ctl0 |
-		    LSHIFT(m0->m_pkthdr.len, RTW_TXCTL0_TPKTSIZE_MASK);
+		    SHIFTIN(m0->m_pkthdr.len, RTW_TXCTL0_TPKTSIZE_MASK);
 
 		switch (rate) {
 		default:
@@ -3327,7 +3327,7 @@ rtw_start(struct ifnet *ifp)
                  * encryption.
 		 */
 		if (k != NULL) {
-			ctl0 |= LSHIFT(k->wk_keyix, RTW_TXCTL0_KEYID_MASK) &
+			ctl0 |= SHIFTIN(k->wk_keyix, RTW_TXCTL0_KEYID_MASK) &
 			    RTW_TXCTL0_KEYID_MASK;
 		}
 
@@ -3353,8 +3353,8 @@ rtw_start(struct ifnet *ifp)
 
 		*(uint16_t*)wh->i_dur = htole16(d0->d_data_dur);
 
-		ctl1 = LSHIFT(d0->d_plcp_len, RTW_TXCTL1_LENGTH_MASK) |
-		    LSHIFT(d0->d_rts_dur, RTW_TXCTL1_RTSDUR_MASK);
+		ctl1 = SHIFTIN(d0->d_plcp_len, RTW_TXCTL1_LENGTH_MASK) |
+		    SHIFTIN(d0->d_rts_dur, RTW_TXCTL1_RTSDUR_MASK);
 
 		if (d0->d_residue)
 			ctl1 |= RTW_TXCTL1_LENGEXT;
@@ -3551,18 +3551,18 @@ rtw_join_bss(struct rtw_softc *sc, uint8_t *bssid, uint16_t intval0)
 
 	rtw_set_access(regs, RTW_ACCESS_CONFIG);
 
-	intval = MIN(intval0, PRESHIFT(RTW_BCNITV_BCNITV_MASK));
+	intval = MIN(intval0, SHIFTOUT_MASK(RTW_BCNITV_BCNITV_MASK));
 
 	bcnitv = RTW_READ16(regs, RTW_BCNITV) & ~RTW_BCNITV_BCNITV_MASK;
-	bcnitv |= LSHIFT(intval, RTW_BCNITV_BCNITV_MASK);
+	bcnitv |= SHIFTIN(intval, RTW_BCNITV_BCNITV_MASK);
 	RTW_WRITE16(regs, RTW_BCNITV, bcnitv);
 	/* interrupt host 1ms before the TBTT */
 	bintritv = RTW_READ16(regs, RTW_BINTRITV) & ~RTW_BINTRITV_BINTRITV;
-	bintritv |= LSHIFT(1000, RTW_BINTRITV_BINTRITV);
+	bintritv |= SHIFTIN(1000, RTW_BINTRITV_BINTRITV);
 	RTW_WRITE16(regs, RTW_BINTRITV, bintritv);
 	/* magic from Linux */
-	RTW_WRITE16(regs, RTW_ATIMWND, LSHIFT(1, RTW_ATIMWND_ATIMWND));
-	RTW_WRITE16(regs, RTW_ATIMTRITV, LSHIFT(2, RTW_ATIMTRITV_ATIMTRITV));
+	RTW_WRITE16(regs, RTW_ATIMWND, SHIFTIN(1, RTW_ATIMWND_ATIMWND));
+	RTW_WRITE16(regs, RTW_ATIMTRITV, SHIFTIN(2, RTW_ATIMTRITV_ATIMTRITV));
 	rtw_set_access(regs, RTW_ACCESS_NONE);
 
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 1);
@@ -4006,7 +4006,7 @@ rtw_check_phydelay(struct rtw_regs *regs, uint32_t old_rcr)
 #define REVAB (RTW_RCR_MXDMA_UNLIMITED | RTW_RCR_AICV)
 #define REVC (REVAB | RTW_RCR_RXFTH_WHOLE)
 
-	uint8_t phydelay = LSHIFT(0x6, RTW_PHYDELAY_PHYDELAY);
+	uint8_t phydelay = SHIFTIN(0x6, RTW_PHYDELAY_PHYDELAY);
 
 	RTW_WRITE(regs, RTW_RCR, REVAB);
 	RTW_WBW(regs, RTW_RCR, RTW_RCR);

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsaccess - Top-level functions for accessing ACPI namespace
- *              xRevision: 1.195 $
+ *              xRevision: 1.196 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsaccess.c,v 1.14 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsaccess.c,v 1.14.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __NSACCESS_C__
 
@@ -199,9 +199,9 @@ AcpiNsRootInitialize (
 
         if (ACPI_FAILURE (Status) || (!NewNode)) /* Must be on same line for code converter */
         {
-            ACPI_REPORT_ERROR ((
-                "Could not create predefined name %s, %s\n",
-                InitVal->Name, AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not create predefined name %s",
+                InitVal->Name));
         }
 
         /*
@@ -214,8 +214,8 @@ AcpiNsRootInitialize (
             Status = AcpiOsPredefinedOverride (InitVal, &Val);
             if (ACPI_FAILURE (Status))
             {
-                ACPI_REPORT_ERROR ((
-                    "Could not override predefined %s\n",
+                ACPI_ERROR ((AE_INFO,
+                    "Could not override predefined %s",
                     InitVal->Name));
             }
 
@@ -322,7 +322,7 @@ AcpiNsRootInitialize (
 
             default:
 
-                ACPI_REPORT_ERROR (("Unsupported initial type value %X\n",
+                ACPI_ERROR ((AE_INFO, "Unsupported initial type value %X",
                     InitVal->Type));
                 AcpiUtRemoveReference (ObjDesc);
                 ObjDesc = NULL;
@@ -438,7 +438,7 @@ AcpiNsLookup (
         PrefixNode = ScopeInfo->Scope.Node;
         if (ACPI_GET_DESCRIPTOR_TYPE (PrefixNode) != ACPI_DESC_TYPE_NAMED)
         {
-            ACPI_REPORT_ERROR (("%p is not a namespace node [%s]\n",
+            ACPI_ERROR ((AE_INFO, "%p is not a namespace node [%s]",
                 PrefixNode, AcpiUtGetDescriptorName (PrefixNode)));
             return_ACPI_STATUS (AE_AML_INTERNAL);
         }
@@ -535,8 +535,8 @@ AcpiNsLookup (
                 {
                     /* Current scope has no parent scope */
 
-                    ACPI_REPORT_ERROR (
-                        ("ACPI path has too many parent prefixes (^) - reached beyond root node\n"));
+                    ACPI_ERROR ((AE_INFO,
+                        "ACPI path has too many parent prefixes (^) - reached beyond root node"));
                     return_ACPI_STATUS (AE_NOT_FOUND);
                 }
             }
@@ -710,8 +710,8 @@ AcpiNsLookup (
         {
             /* Complain about a type mismatch */
 
-            ACPI_REPORT_WARNING ((
-                "NsLookup: Type mismatch on %4.4s (%s), searching for (%s)\n",
+            ACPI_WARNING ((AE_INFO,
+                "NsLookup: Type mismatch on %4.4s (%s), searching for (%s)",
                 ACPI_CAST_PTR (char, &SimpleName),
                 AcpiUtGetTypeName (ThisNode->Type),
                 AcpiUtGetTypeName (TypeToCheckFor)));

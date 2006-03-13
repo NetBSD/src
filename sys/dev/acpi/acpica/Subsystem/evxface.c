@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxface - External interfaces for ACPI events
- *              xRevision: 1.155 $
+ *              xRevision: 1.157 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxface.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxface.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EVXFACE_C__
 
@@ -233,7 +233,7 @@ AcpiInstallFixedEventHandler (
     Status = AcpiEnableEvent (Event, 0);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_WARNING (("Could not enable fixed event %X\n", Event));
+        ACPI_WARNING ((AE_INFO, "Could not enable fixed event %X", Event));
 
         /* Remove the handler */
 
@@ -301,8 +301,8 @@ AcpiRemoveFixedEventHandler (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_WARNING ((
-            "Could not write to fixed event enable register %X\n", Event));
+        ACPI_WARNING ((AE_INFO,
+            "Could not write to fixed event enable register %X", Event));
     }
     else
     {
@@ -680,7 +680,7 @@ AcpiInstallGpeHandler (
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
     ACPI_HANDLER_INFO       *Handler;
     ACPI_STATUS             Status;
-    ACPI_NATIVE_UINT        Flags;
+    ACPI_CPU_FLAGS          Flags;
 
 
     ACPI_FUNCTION_TRACE ("AcpiInstallGpeHandler");
@@ -780,7 +780,7 @@ AcpiRemoveGpeHandler (
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
     ACPI_HANDLER_INFO       *Handler;
     ACPI_STATUS             Status;
-    ACPI_NATIVE_UINT        Flags;
+    ACPI_CPU_FLAGS          Flags;
 
 
     ACPI_FUNCTION_TRACE ("AcpiRemoveGpeHandler");

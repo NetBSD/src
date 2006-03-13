@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.28 2006/03/04 17:22:06 peter Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.28.2.1 2006/03/13 09:06:52 yamt Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.28 2006/03/04 17:22:06 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.28.2.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -184,10 +184,6 @@ static void	sacom_j720_init(struct sa11x0_softc *, struct sacom_softc *);
 #define COM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, COM_NPORTS, (f))
 #define COM_LOCK(sc)
 #define COM_UNLOCK(sc)
-
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 int		sacomintr(void *);
 int		sacomcngetc(dev_t);

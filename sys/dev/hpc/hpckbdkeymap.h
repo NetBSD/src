@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.39 2006/03/04 13:52:38 peter Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.39.2.1 2006/03/13 09:07:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -782,9 +782,9 @@ const uint8_t jornada7xx_us_keytrans[] = {
 /* 48 */  51, 52 , UNK, 40 , 28 , UNK, UNK, UNK,
 /* 50 */ UNK, 15 , UNK, 42 , UNK, UNK, UNK, UNK,
 /* 58 */ UNK, UNK, 200, UNK, 54 , UNK, UNK, UNK,
-/* 60 */ UNK, UNK, UNK, UNK, UNK, 56 , 184, UNK,
+/* 60 */ UNK, UNK, UNK, UNK, UNK, 56 , 219, UNK,
 /* 68 */ UNK, 203, 208, 205, UNK, UNK, UNK, UNK,
-/* 70 */ UNK, 219, 29 , UNK, 57 , UNK, UNK, UNK,
+/* 70 */ UNK, 221, 29 , UNK, 57 , UNK, UNK, UNK,
 /* 78 */ 53 , 14 , UNK, UNK, UNK, UNK, UNK, SPL,
 };
 

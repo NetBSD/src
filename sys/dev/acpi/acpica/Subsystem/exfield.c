@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exfield - ACPI AML (p-code) execution - field manipulation
- *              xRevision: 1.125 $
+ *              xRevision: 1.126 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EXFIELD_C__
 
@@ -349,7 +349,7 @@ AcpiExWriteDataToField (
          */
         if (ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_BUFFER)
         {
-            ACPI_REPORT_ERROR (("SMBus write requires Buffer, found type %s\n",
+            ACPI_ERROR ((AE_INFO, "SMBus write requires Buffer, found type %s",
                 AcpiUtGetObjectTypeName (SourceDesc)));
 
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
@@ -357,8 +357,8 @@ AcpiExWriteDataToField (
 
         if (SourceDesc->Buffer.Length < ACPI_SMBUS_BUFFER_SIZE)
         {
-            ACPI_REPORT_ERROR ((
-                "SMBus write requires Buffer of length %X, found length %X\n",
+            ACPI_ERROR ((AE_INFO,
+                "SMBus write requires Buffer of length %X, found length %X",
                 ACPI_SMBUS_BUFFER_SIZE, SourceDesc->Buffer.Length));
 
             return_ACPI_STATUS (AE_AML_BUFFER_LIMIT);

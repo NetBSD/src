@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24.6.1 2006/03/13 09:07:03 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2006/01/15 22:09:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.6.1 2006/03/13 09:07:03 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1490,8 +1490,11 @@ init386(paddr_t first_avail)
 	    HYPERVISOR_shared_info->wc_sec));
 	if ((xen_start_info.flags & SIF_INITDOMAIN) == 0) {
 		extern volatile struct xencons_interface *xencons_interface;
+		extern struct xenstore_domain_interface *xenstore_interface;
 		XENPRINTK(("xencons %p (%x)\n",
 		    xencons_interface, xen_start_info.console_mfn));
+		XENPRINTK(("xenstore %p (%x)\n",
+		    xenstore_interface, xen_start_info.store_mfn));
 	}
 #endif
 #ifdef XENDEBUG_LOW

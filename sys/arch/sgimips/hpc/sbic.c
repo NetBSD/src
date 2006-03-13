@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.19 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: sbic.c,v 1.19.8.1 2006/03/13 09:07:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.19 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.19.8.1 2006/03/13 09:07:02 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -2176,7 +2176,7 @@ wd33c93_update_xfer_mode(struct wd33c93_softc *sc, int target)
  *
  * cycle = DIV / (2 * CLK)
  * DIV = FS + 2
- * best we can do is 200ns at 20Mhz, 2 cycles
+ * best we can do is 200ns at 20 MHz, 2 cycles
  */
 int
 wd33c93_div2stp(struct wd33c93_softc *dev, int div)

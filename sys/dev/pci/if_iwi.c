@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.45 2006/02/21 07:24:07 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.45.2.1 2006/03/13 09:07:26 yamt Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.45 2006/02/21 07:24:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.45.2.1 2006/03/13 09:07:26 yamt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -844,20 +844,25 @@ static void
 iwi_powerhook(int why, void *arg)
 {
         struct iwi_softc *sc = arg;
+	pci_chipset_tag_t pc = sc->sc_pct;
+	pcitag_t tag = sc->sc_pcitag;
 	int s;
 
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		iwi_suspend(sc);
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
 		break;
 	case PWR_RESUME:
-		iwi_resume(sc);
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
+		iwi_suspend(sc);
+		break;
 	case PWR_SOFTRESUME:
+		iwi_resume(sc);
 		break;
 	}
 	splx(s);

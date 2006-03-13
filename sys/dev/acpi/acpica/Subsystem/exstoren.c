@@ -3,7 +3,7 @@
  *
  * Module Name: exstoren - AML Interpreter object store support,
  *                        Store to Node (namespace object)
- *              xRevision: 1.66 $
+ *              xRevision: 1.68 $
  *
  *****************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EXSTOREN_C__
 
@@ -207,8 +207,8 @@ AcpiExResolveObject (
         {
             /* Conversion successful but still not a valid type */
 
-            ACPI_REPORT_ERROR ((
-                "Cannot assign type %s to %s (must be type Int/Str/Buf)\n",
+            ACPI_ERROR ((AE_INFO,
+                "Cannot assign type %s to %s (must be type Int/Str/Buf)",
                 AcpiUtGetObjectTypeName (SourceDesc),
                 AcpiUtGetTypeName (TargetType)));
             Status = AE_AML_OPERAND_TYPE;
@@ -219,9 +219,11 @@ AcpiExResolveObject (
     case ACPI_TYPE_LOCAL_ALIAS:
     case ACPI_TYPE_LOCAL_METHOD_ALIAS:
 
-        /* Aliases are resolved by AcpiExPrepOperands */
-
-        ACPI_REPORT_ERROR (("Store into Alias - should never happen\n"));
+        /*
+         * All aliases should have been resolved earlier, during the 
+         * operand resolution phase.
+         */
+        ACPI_ERROR ((AE_INFO, "Store into an unresolved Alias object"));
         Status = AE_AML_INTERNAL;
         break;
 
@@ -365,7 +367,7 @@ AcpiExStoreObjectToObject (
         /*
          * All other types come here.
          */
-        ACPI_REPORT_WARNING (("Store into type %s not implemented\n",
+        ACPI_WARNING ((AE_INFO, "Store into type %s not implemented",
             AcpiUtGetObjectTypeName (DestDesc)));
 
         Status = AE_NOT_IMPLEMENTED;

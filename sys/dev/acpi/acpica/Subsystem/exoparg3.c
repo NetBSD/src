@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              xRevision: 1.30 $
+ *              xRevision: 1.31 $
  *
  *****************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EXOPARG3_C__
 
@@ -209,7 +209,7 @@ AcpiExOpcode_3A_0T_0R (
 
     default:
 
-        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
+        ACPI_ERROR ((AE_INFO, "Unknown AML opcode %X",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;
@@ -348,7 +348,7 @@ AcpiExOpcode_3A_1T_1R (
 
     default:
 
-        ACPI_REPORT_ERROR (("Unknown AML opcode %X\n",
+        ACPI_ERROR ((AE_INFO, "Unknown AML opcode %X",
             WalkState->Opcode));
         Status = AE_AML_BAD_OPCODE;
         goto Cleanup;

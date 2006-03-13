@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.6 2006/03/04 02:59:29 uwe Exp $ */
+/*	$NetBSD: ts102.c,v 1.6.2.1 2006/03/13 09:07:02 yamt Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -764,7 +764,7 @@ tslot_event_thread(void *v)
 
 		if ((socket = ffs(sc->sc_events)) == 0) {
 			splx(s);
-			tsleep(&sc->sc_events, PWAIT, "tslot_event", 0);
+			tsleep(&sc->sc_events, PWAIT, "tslot_event", hz * 30);
 			continue;
 		}
 		socket--;
@@ -1030,7 +1030,7 @@ tslot_update_lcd(struct tslot_softc *sc, int socket, int status)
 	}
 	is = (sc->sc_active != 0);
 	if (was != is) {
-		tctrl_set_lcd(is, 0x40);
+		tadpole_set_lcd(is, 0x40);
 	}
 #endif
 }

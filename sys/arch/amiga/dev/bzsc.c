@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.36 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: bzsc.c,v 1.36.8.1 2006/03/13 09:06:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.36 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.36.8.1 2006/03/13 09:06:52 yamt Exp $");
 
 /*
  * Initial amiga Blizzard 1230-II driver by Daniel Widenfalk.  Conversion to
@@ -178,7 +178,7 @@ bzscattach(struct device *parent, struct device *self, void *aux)
 	bsc->sc_reg = &((volatile u_char *)zap->va)[0x10000];
 	bsc->sc_dmabase = &bsc->sc_reg[0x21];
 
-	sc->sc_freq = 40;		/* Clocked at 40Mhz */
+	sc->sc_freq = 40;		/* Clocked at 40 MHz */
 
 	printf(": address %p", bsc->sc_reg);
 

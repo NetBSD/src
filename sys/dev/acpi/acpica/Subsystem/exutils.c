@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exutils - interpreter/scanner utilities
- *              xRevision: 1.120 $
+ *              xRevision: 1.121 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EXUTILS_C__
 
@@ -178,7 +178,7 @@ AcpiExEnterInterpreter (
     Status = AcpiUtAcquireMutex (ACPI_MTX_EXECUTE);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not acquire interpreter mutex\n"));
+        ACPI_ERROR ((AE_INFO, "Could not acquire interpreter mutex"));
     }
 
     return_ACPI_STATUS (Status);
@@ -220,7 +220,7 @@ AcpiExExitInterpreter (
     Status = AcpiUtReleaseMutex (ACPI_MTX_EXECUTE);
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Could not release interpreter mutex\n"));
+        ACPI_ERROR ((AE_INFO, "Could not release interpreter mutex"));
     }
 
     return_VOID;
@@ -308,9 +308,8 @@ AcpiExAcquireGlobalLock (
         }
         else
         {
-            ACPI_REPORT_ERROR ((
-                "Could not acquire Global Lock, %s\n",
-                AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not acquire Global Lock"));
         }
     }
 
@@ -352,8 +351,8 @@ AcpiExReleaseGlobalLock (
         {
             /* Report the error, but there isn't much else we can do */
 
-            ACPI_REPORT_ERROR (("Could not release ACPI Global Lock, %s\n",
-                AcpiFormatException (Status)));
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "Could not release ACPI Global Lock"));
         }
     }
 

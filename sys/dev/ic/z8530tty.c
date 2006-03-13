@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.102 2005/12/27 17:20:54 chs Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.102.8.1 2006/03/13 09:07:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102 2005/12/27 17:20:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.8.1 2006/03/13 09:07:21 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -241,11 +241,6 @@ struct zstty_softc {
 	pps_info_t ppsinfo;
 	pps_params_t ppsparam;
 };
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 /* Definition of the driver for autoconfig. */
 static int	zstty_match(struct device *, struct cfdata *, void *);

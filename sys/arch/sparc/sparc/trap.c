@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: trap.c,v 1.163.10.1 2006/03/13 09:07:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,11 +49,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163.10.1 2006/03/13 09:07:02 yamt Exp $");
 
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_sparc_arch.h"
@@ -73,12 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2005/11/14 03:30:49 uwe Exp $");
 #include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 

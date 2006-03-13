@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evregion - ACPI AddressSpace (OpRegion) handler dispatch
- *              xRevision: 1.158 $
+ *              xRevision: 1.159 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evregion.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evregion.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EVREGION_C__
 
@@ -409,8 +409,8 @@ AcpiEvAddressSpaceDispatch (
     HandlerDesc = RegionObj->Region.Handler;
     if (!HandlerDesc)
     {
-        ACPI_REPORT_ERROR ((
-            "No handler for Region [%4.4s] (%p) [%s]\n",
+        ACPI_ERROR ((AE_INFO,
+            "No handler for Region [%4.4s] (%p) [%s]",
             AcpiUtGetNodeName (RegionObj->Region.Node),
             RegionObj, AcpiUtGetRegionName (RegionObj->Region.SpaceId)));
 
@@ -431,8 +431,8 @@ AcpiEvAddressSpaceDispatch (
         {
             /* No initialization routine, exit with error */
 
-            ACPI_REPORT_ERROR ((
-                "No init routine for region(%p) [%s]\n",
+            ACPI_ERROR ((AE_INFO,
+                "No init routine for region(%p) [%s]",
                 RegionObj, AcpiUtGetRegionName (RegionObj->Region.SpaceId)));
             return_ACPI_STATUS (AE_NOT_EXIST);
         }
@@ -459,8 +459,8 @@ AcpiEvAddressSpaceDispatch (
 
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR (("Region Initialization: %s [%s]\n",
-                AcpiFormatException (Status),
+            ACPI_EXCEPTION ((AE_INFO, Status,
+                "During region initialization: [%s]",
                 AcpiUtGetRegionName (RegionObj->Region.SpaceId)));
             return_ACPI_STATUS (Status);
         }
@@ -517,9 +517,8 @@ AcpiEvAddressSpaceDispatch (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR (("Handler for [%s] returned %s\n",
-            AcpiUtGetRegionName (RegionObj->Region.SpaceId),
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "Returned by Handler for [%s]",
+            AcpiUtGetRegionName (RegionObj->Region.SpaceId)));
     }
 
     if (!(HandlerDesc->AddressSpace.Hflags & ACPI_ADDR_HANDLER_DEFAULT_INSTALLED))
@@ -621,8 +620,7 @@ AcpiEvDetachRegion(
             Status = AcpiEvExecuteRegMethod (RegionObj, 0);
             if (ACPI_FAILURE (Status))
             {
-                ACPI_REPORT_ERROR (("%s from region _REG, [%s]\n",
-                    AcpiFormatException (Status),
+                ACPI_EXCEPTION ((AE_INFO, Status, "from region _REG, [%s]",
                     AcpiUtGetRegionName (RegionObj->Region.SpaceId)));
             }
 
@@ -645,8 +643,7 @@ AcpiEvDetachRegion(
 
             if (ACPI_FAILURE (Status))
             {
-                ACPI_REPORT_ERROR (("%s from region init, [%s]\n",
-                    AcpiFormatException (Status),
+                ACPI_EXCEPTION ((AE_INFO, Status, "from region init, [%s]",
                     AcpiUtGetRegionName (RegionObj->Region.SpaceId)));
             }
 

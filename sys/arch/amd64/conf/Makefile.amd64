@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.10 2006/03/03 14:55:14 he Exp $
+#	$NetBSD: Makefile.amd64,v 1.10.2.1 2006/03/13 09:06:51 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -123,11 +123,6 @@ athhal-x86_64-elf.hal.o: athhal-x86_64-elf.hal.o.uue
 	${OBJCOPY} -R .eh_frame $@
 	${OBJCOPY} -R .eh_frame $@
 .endif
-
-all depend:	opt_ah.h
-opt_ah.h:	athhal-x86_64-elf.opt_ah.h
-	rm -f ${.TARGET}
-	ln -s ${.ALLSRC} ${.TARGET}
 .endif
 
 ##

@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.7 2005/12/11 12:18:06 christos Exp $ */
+/* $NetBSD: aurtc.c,v 1.7.8.1 2006/03/13 09:06:58 yamt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.7 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.7.8.1 2006/03/13 09:06:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ aurtc_init(struct device *dev)
 /*
  * Note the fake "aurtc" on the Alchemy pb1000 uses a different year base.
  */
-#define	PB1000_YEAR_OFFSET	100
+#define	PB1000_YEAR_OFFSET	2000
 
 /*
  * Get the time of day, based on the clock's value and/or the base value.
@@ -99,10 +99,10 @@ aurtc_init(struct device *dev)
 void
 aurtc_get(struct device *dev, time_t base, struct clocktime *ct)
 {
-	struct clock_ymdhms ymdhms;
-	time_t secs;
+	struct clock_ymdhms	ymdhms;
+	time_t			secs;
 
-	secs = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(PC_BASE + PC_COUNTER_READ_0);
+	secs = *(uint32_t *)MIPS_PHYS_TO_KSEG1(PC_BASE + PC_COUNTER_READ_0);
 
 	clock_secs_to_ymdhms(secs, &ymdhms);
 
@@ -121,8 +121,11 @@ aurtc_get(struct device *dev, time_t base, struct clocktime *ct)
 void
 aurtc_set(struct device *dev, struct clocktime *ct)
 {
-	struct clock_ymdhms ymdhms;
-	time_t secs;
+	struct clock_ymdhms	ymdhms;
+	time_t			secs;
+	volatile uint32_t	*pcbase;
+
+	pcbase = (volatile uint32_t *)MIPS_PHYS_TO_KSEG1(PC_BASE);
 
 	ymdhms.dt_sec = ct->sec;
 	ymdhms.dt_min = ct->min;
@@ -134,5 +137,9 @@ aurtc_set(struct device *dev, struct clocktime *ct)
 
 	secs = clock_ymdhms_to_secs(&ymdhms);
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(PC_BASE + PC_COUNTER_READ_0) = secs;
+	while (pcbase[PC_COUNTER_CONTROL/sizeof (uint32_t)] & CC_C0S)
+		continue;
+	pcbase[PC_COUNTER_WRITE0/sizeof (uint32_t)] = secs;
+	while (pcbase[PC_COUNTER_CONTROL/sizeof (uint32_t)] & CC_C0S)
+		continue;
 }

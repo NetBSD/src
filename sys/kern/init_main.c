@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.262 2006/02/12 01:32:06 chs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.262.2.1 2006/03/13 09:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262 2006/02/12 01:32:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.1 2006/03/13 09:07:32 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262 2006/02/12 01:32:06 chs Exp $");
 #include "opt_multiprocessor.h"
 #include "opt_pipe.h"
 #include "opt_syscall_debug.h"
-#include "opt_systrace.h"
 #include "opt_posix.h"
 #include "opt_kcont.h"
 #include "opt_verified_exec.h"
@@ -128,9 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262 2006/02/12 01:32:06 chs Exp $");
 #endif
 #ifdef P1003_1B_SEMAPHORE
 #include <sys/ksem.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #include <sys/domain.h>
 #include <sys/namei.h>

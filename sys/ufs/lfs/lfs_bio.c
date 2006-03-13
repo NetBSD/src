@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.89.6.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.89.6.2 2006/03/13 09:07:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.89.6.1 2006/03/05 12:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.89.6.2 2006/03/13 09:07:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,11 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.89.6.1 2006/03/05 12:51:09 yamt Exp $"
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>
-
-/* Macros to clear/set/test flags. */
-# define	SET(t, f)	(t) |= (f)
-# define	CLR(t, f)	(t) &= ~(f)
-# define	ISSET(t, f)	((t) & (f))
 
 /*
  * LFS block write function.

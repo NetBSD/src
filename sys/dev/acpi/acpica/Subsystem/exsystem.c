@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exsystem - Interface to OS services
- *              xRevision: 1.86 $
+ *              xRevision: 1.87 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exsystem.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exsystem.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EXSYSTEM_C__
 
@@ -223,7 +223,7 @@ AcpiExSystemDoStall (
          * (ACPI specifies 100 usec as max, but this gives some slack in
          * order to support existing BIOSs)
          */
-        ACPI_REPORT_ERROR (("Time parameter is too large (%d)\n",
+        ACPI_ERROR ((AE_INFO, "Time parameter is too large (%d)",
             HowLong));
         Status = AE_AML_OPERAND_VALUE;
     }

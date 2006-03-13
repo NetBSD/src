@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.23 2006/02/20 16:50:36 thorpej Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.23.2.1 2006/03/13 09:06:52 yamt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.23 2006/02/20 16:50:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.23.2.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -182,10 +182,6 @@ struct consdev ixpcomcons = {
 
 #define	COM_LOCK(sc);
 #define	COM_UNLOCK(sc);
-
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 #define CFLAGS2CR_MASK	(CR_PE | CR_OES | CR_SBS | CR_DSS | CR_BRD)
 

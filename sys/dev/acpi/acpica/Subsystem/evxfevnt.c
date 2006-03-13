@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evxfevnt - External Interfaces, ACPI event disable/enable
- *              xRevision: 1.85 $
+ *              xRevision: 1.86 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EVXFEVNT_C__
 
@@ -154,7 +154,7 @@ AcpiEnable (
 
     if (!AcpiGbl_FADT)
     {
-        ACPI_REPORT_WARNING (("No FADT information present!\n"));
+        ACPI_WARNING ((AE_INFO, "No FADT information present!"));
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
     }
 
@@ -169,7 +169,7 @@ AcpiEnable (
         Status = AcpiHwSetMode (ACPI_SYS_MODE_ACPI);
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR (("Could not transition to ACPI mode\n"));
+            ACPI_ERROR ((AE_INFO, "Could not transition to ACPI mode"));
             return_ACPI_STATUS (Status);
         }
 
@@ -205,7 +205,7 @@ AcpiDisable (
 
     if (!AcpiGbl_FADT)
     {
-        ACPI_REPORT_WARNING (("No FADT information present!\n"));
+        ACPI_WARNING ((AE_INFO, "No FADT information present!"));
         return_ACPI_STATUS (AE_NO_ACPI_TABLES);
     }
 
@@ -222,7 +222,7 @@ AcpiDisable (
 
         if (ACPI_FAILURE (Status))
         {
-            ACPI_REPORT_ERROR ((
+            ACPI_ERROR ((AE_INFO,
                 "Could not exit ACPI mode to legacy mode"));
             return_ACPI_STATUS (Status);
         }
@@ -288,8 +288,8 @@ AcpiEnableEvent (
 
     if (Value != 1)
     {
-        ACPI_REPORT_ERROR ((
-            "Could not enable %s event\n", AcpiUtGetEventName (Event)));
+        ACPI_ERROR ((AE_INFO,
+            "Could not enable %s event", AcpiUtGetEventName (Event)));
         return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
     }
 
@@ -519,8 +519,8 @@ AcpiDisableEvent (
 
     if (Value != 0)
     {
-        ACPI_REPORT_ERROR ((
-            "Could not disable %s events\n", AcpiUtGetEventName (Event)));
+        ACPI_ERROR ((AE_INFO,
+            "Could not disable %s events", AcpiUtGetEventName (Event)));
         return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
     }
 
