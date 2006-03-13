@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.3 2006/03/13 16:20:58 shige Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.2 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.3 2006/03/13 16:20:58 shige Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -213,8 +213,6 @@ cpu_reboot(int howto, char *what)
 	static int syncing;
 	static char str[256];
 	char *ap = str, *ap1 = ap;
-
-	obs266_led_set(OBS266_LED_ON);
 
 	boothowto = howto;
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
