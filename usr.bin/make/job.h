@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.25 2006/03/11 17:18:00 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.26 2006/03/13 20:35:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -158,8 +158,6 @@ typedef struct Job {
 				 * if we can't export it and maxLocal is 0 */
 #define JOB_IGNDOTS	0x008  	/* Ignore "..." lines when processing
 				 * commands */
-#define JOB_FIRST	0x020	/* Job is first job for the node */
-#define JOB_RESTART	0x080	/* Job needs to be completely restarted */
 #define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
 				 * for some reason */
 #define JOB_CONTINUING	0x200	/* We are in the process of resuming this job.
