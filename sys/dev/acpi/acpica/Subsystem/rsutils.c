@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsutils - Utilities for the resource manager
- *              xRevision: 1.55 $
+ *              xRevision: 1.59 $
  *
  ******************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsutils.c,v 1.14 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsutils.c,v 1.14.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __RSUTILS_C__
 
@@ -420,7 +420,8 @@ AcpiRsStrcpy (
  *              StringPtr           - (optional) where to store the actual
  *                                    ResourceSource string
  *
- * RETURN:      Length of the string plus NULL terminator, rounded up to 32 bit
+ * RETURN:      Length of the string plus NULL terminator, rounded up to native
+ *              word boundary
  *
  * DESCRIPTION: Copy the optional ResourceSource data from a raw AML descriptor
  *              to an internal resource descriptor
@@ -452,7 +453,7 @@ AcpiRsGetResourceSource (
      * Note: Some resource descriptors will have an additional null, so
      * we add 1 to the minimum length.
      */
-    if (TotalLength > (ACPI_RSDESC_SIZE )(MinimumLength + 1))
+    if (TotalLength > (ACPI_RSDESC_SIZE) (MinimumLength + 1))
     {
         /* Get the ResourceSourceIndex */
 
@@ -470,20 +471,21 @@ AcpiRsGetResourceSource (
         }
 
         /*
-         * In order for the StructSize to fall on a 32-bit boundary, calculate
-         * the length of the string (+1 for the NULL terminator) and expand the
-         * StructSize to the next 32-bit boundary.
+         * In order for the Resource length to be a multiple of the native
+         * word, calculate the length of the string (+1 for NULL terminator)
+         * and expand to the next word multiple.
          *
          * Zero the entire area of the buffer.
          */
-        TotalLength = ACPI_ROUND_UP_TO_32BITS (
-                        ACPI_STRLEN ((char *) &AmlResourceSource[1]) + 1);
+        TotalLength = ACPI_STRLEN (ACPI_CAST_PTR (char, &AmlResourceSource[1])) + 1;
+        TotalLength = (UINT32) ACPI_ROUND_UP_TO_NATIVE_WORD (TotalLength);
+            
         ACPI_MEMSET (ResourceSource->StringPtr, 0, TotalLength);
 
         /* Copy the ResourceSource string to the destination */
 
         ResourceSource->StringLength = AcpiRsStrcpy (ResourceSource->StringPtr,
-                                        (char *) &AmlResourceSource[1]);
+            ACPI_CAST_PTR (char, &AmlResourceSource[1]));
 
         return ((ACPI_RS_LENGTH) TotalLength);
     }
@@ -543,8 +545,8 @@ AcpiRsSetResourceSource (
 
         /* Copy the ResourceSource string */
 
-        ACPI_STRCPY ((char *) &AmlResourceSource[1],
-                ResourceSource->StringPtr);
+        ACPI_STRCPY (ACPI_CAST_PTR (char, &AmlResourceSource[1]),
+            ResourceSource->StringPtr);
 
         /*
          * Add the length of the string (+ 1 for null terminator) to the
@@ -563,9 +565,9 @@ AcpiRsSetResourceSource (
  *
  * FUNCTION:    AcpiRsGetPrtMethodData
  *
- * PARAMETERS:  Handle          - a handle to the containing object
- *              RetBuffer       - a pointer to a buffer structure for the
- *                                  results
+ * PARAMETERS:  Handle          - Handle to the containing object
+ *              RetBuffer       - Pointer to a buffer structure for the
+ *                                results
  *
  * RETURN:      Status
  *
@@ -617,9 +619,9 @@ AcpiRsGetPrtMethodData (
  *
  * FUNCTION:    AcpiRsGetCrsMethodData
  *
- * PARAMETERS:  Handle          - a handle to the containing object
- *              RetBuffer       - a pointer to a buffer structure for the
- *                                  results
+ * PARAMETERS:  Handle          - Handle to the containing object
+ *              RetBuffer       - Pointer to a buffer structure for the
+ *                                results
  *
  * RETURN:      Status
  *
@@ -672,9 +674,9 @@ AcpiRsGetCrsMethodData (
  *
  * FUNCTION:    AcpiRsGetPrsMethodData
  *
- * PARAMETERS:  Handle          - a handle to the containing object
- *              RetBuffer       - a pointer to a buffer structure for the
- *                                  results
+ * PARAMETERS:  Handle          - Handle to the containing object
+ *              RetBuffer       - Pointer to a buffer structure for the
+ *                                results
  *
  * RETURN:      Status
  *
@@ -727,10 +729,10 @@ AcpiRsGetPrsMethodData (
  *
  * FUNCTION:    AcpiRsGetMethodData
  *
- * PARAMETERS:  Handle          - a handle to the containing object
+ * PARAMETERS:  Handle          - Handle to the containing object
  *              Path            - Path to method, relative to Handle
- *              RetBuffer       - a pointer to a buffer structure for the
- *                                  results
+ *              RetBuffer       - Pointer to a buffer structure for the
+ *                                results
  *
  * RETURN:      Status
  *
@@ -782,9 +784,9 @@ AcpiRsGetMethodData (
  *
  * FUNCTION:    AcpiRsSetSrsMethodData
  *
- * PARAMETERS:  Handle          - a handle to the containing object
- *              InBuffer        - a pointer to a buffer structure of the
- *                                  parameter
+ * PARAMETERS:  Handle          - Handle to the containing object
+ *              InBuffer        - Pointer to a buffer structure of the
+ *                                parameter
  *
  * RETURN:      Status
  *

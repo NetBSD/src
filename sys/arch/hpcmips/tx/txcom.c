@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.27 2005/12/24 23:24:00 perry Exp $ */
+/*	$NetBSD: txcom.c,v 1.27.8.1 2006/03/13 09:06:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27.8.1 2006/03/13 09:06:53 yamt Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -69,9 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27 2005/12/24 23:24:00 perry Exp $");
 
 #include <hpcmips/tx/tx39clockreg.h> /* XXX */
 
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 /* 
  * UARTA channel has DTR, DSR, RTS, CTS lines. and they  wired to MFIO/IO port.
  */

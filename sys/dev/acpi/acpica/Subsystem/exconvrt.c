@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconvrt - Object conversion routines
- *              xRevision: 1.70 $
+ *              xRevision: 1.71 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.15 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.15.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EXCONVRT_C__
 
@@ -777,7 +777,7 @@ AcpiExConvertToTargetType (
 
 
         default:
-            ACPI_REPORT_ERROR (("Bad destination type during conversion: %X\n",
+            ACPI_ERROR ((AE_INFO, "Bad destination type during conversion: %X",
                 DestinationType));
             Status = AE_AML_INTERNAL;
             break;
@@ -793,8 +793,8 @@ AcpiExConvertToTargetType (
 
 
     default:
-        ACPI_REPORT_ERROR ((
-            "Unknown Target type ID 0x%X AmlOpcode %X DestType %s\n",
+        ACPI_ERROR ((AE_INFO,
+            "Unknown Target type ID 0x%X AmlOpcode %X DestType %s",
             GET_CURRENT_ARG_TYPE (WalkState->OpInfo->RuntimeArgs),
             WalkState->Opcode, AcpiUtGetTypeName (DestinationType)));
         Status = AE_AML_INTERNAL;

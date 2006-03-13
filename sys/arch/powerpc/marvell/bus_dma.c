@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 2006/03/01 12:38:11 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12.2.1 2006/03/13 09:06:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2006/03/01 12:38:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12.2.1 2006/03/13 09:06:59 yamt Exp $");
 
 #define DEBUG 1
 
@@ -230,7 +230,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags, lastaddrp, segp, first)
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (!VMSPACE_IS_KERNEL(vm))
+		if (!VMSPACE_IS_KERNEL_P(vm))
 			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
 			    vaddr, (paddr_t *)&curaddr);
 		else

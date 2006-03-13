@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.7 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.7.2.1 2006/03/13 09:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.7 2006/02/20 16:50:37 thorpej Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.7.2.1 2006/03/13 09:07:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,11 +86,6 @@ int	ucycomdebug = 0;
 #define UCYCOMUNIT(x)		(minor(x) & UCYCOMUNIT_MASK)
 #define UCYCOMDIALOUT(x)	(minor(x) & UCYCOMDIALOUT_MASK)
 #define UCYCOMCALLUNIT(x)	(minor(x) & UCYCOMCALLUNIT_MASK)
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 /* Configuration Byte */
 #define UCYCOM_RESET		0x80

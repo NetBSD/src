@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utglobal - Global variables for the ACPI subsystem
- *              xRevision: 1.226 $
+ *              xRevision: 1.227 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.16 2006/01/29 03:05:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.16.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS
@@ -206,8 +206,8 @@ AcpiFormatException (
     {
         /* Exception code was not recognized */
 
-        ACPI_REPORT_ERROR ((
-            "Unknown exception code: 0x%8.8X\n", Status));
+        ACPI_ERROR ((AE_INFO,
+            "Unknown exception code: 0x%8.8X", Status));
 
         Exception = "UNKNOWN_STATUS_CODE";
     }

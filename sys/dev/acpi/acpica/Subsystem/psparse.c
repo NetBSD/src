@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
- *              xRevision: 1.162 $
+ *              xRevision: 1.163 $
  *
  *****************************************************************************/
 
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.14 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.14.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -622,7 +622,7 @@ AcpiPsParseAml (
         {
             /* Either the method parse or actual execution failed */
 
-            ACPI_REPORT_MTERROR ("Method parse/execution failed",
+            ACPI_ERROR_METHOD ("Method parse/execution failed",
                 WalkState->MethodNode, NULL, Status);
 
             /* Check for possible multi-thread reentrancy problem */
@@ -670,8 +670,8 @@ AcpiPsParseAml (
                 }
                 else
                 {
-                    ACPI_REPORT_ERROR ((
-                        "Invalid zero thread count in method\n"));
+                    ACPI_ERROR ((AE_INFO,
+                        "Invalid zero thread count in method"));
                 }
             }
 

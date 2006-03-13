@@ -3,7 +3,7 @@
  *
  * Module Name: hwregs - Read/write access functions for the various ACPI
  *                       control and status registers.
- *              xRevision: 1.175 $
+ *              xRevision: 1.176 $
  *
  ******************************************************************************/
 
@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.17 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.17.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __HWREGS_C__
 
@@ -255,7 +255,7 @@ AcpiGetSleepTypeData (
 
     if (!Info.ReturnObject)
     {
-        ACPI_REPORT_ERROR (("No Sleep State object returned from [%s]\n",
+        ACPI_ERROR ((AE_INFO, "No Sleep State object returned from [%s]",
             SleepStateName));
         Status = AE_NOT_EXIST;
     }
@@ -264,7 +264,7 @@ AcpiGetSleepTypeData (
 
     else if (ACPI_GET_OBJECT_TYPE (Info.ReturnObject) != ACPI_TYPE_PACKAGE)
     {
-        ACPI_REPORT_ERROR (("Sleep State return object is not a Package\n"));
+        ACPI_ERROR ((AE_INFO, "Sleep State return object is not a Package"));
         Status = AE_AML_OPERAND_TYPE;
     }
 
@@ -277,8 +277,8 @@ AcpiGetSleepTypeData (
      */
     else if (Info.ReturnObject->Package.Count < 2)
     {
-        ACPI_REPORT_ERROR ((
-            "Sleep State return package does not have at least two elements\n"));
+        ACPI_ERROR ((AE_INFO,
+            "Sleep State return package does not have at least two elements"));
         Status = AE_AML_NO_OPERAND;
     }
 
@@ -289,8 +289,8 @@ AcpiGetSleepTypeData (
              (ACPI_GET_OBJECT_TYPE (Info.ReturnObject->Package.Elements[1])
                 != ACPI_TYPE_INTEGER))
     {
-        ACPI_REPORT_ERROR ((
-            "Sleep State return package elements are not both Integers (%s, %s)\n",
+        ACPI_ERROR ((AE_INFO,
+            "Sleep State return package elements are not both Integers (%s, %s)",
             AcpiUtGetObjectTypeName (Info.ReturnObject->Package.Elements[0]),
             AcpiUtGetObjectTypeName (Info.ReturnObject->Package.Elements[1])));
         Status = AE_AML_OPERAND_TYPE;
@@ -307,9 +307,8 @@ AcpiGetSleepTypeData (
 
     if (ACPI_FAILURE (Status))
     {
-        ACPI_REPORT_ERROR ((
-            "%s While evaluating SleepState [%s], bad Sleep object %p type %s\n",
-            AcpiFormatException (Status),
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "While evaluating SleepState [%s], bad Sleep object %p type %s",
             SleepStateName, Info.ReturnObject,
             AcpiUtGetObjectTypeName (Info.ReturnObject)));
     }
@@ -340,7 +339,7 @@ AcpiHwGetBitRegisterInfo (
 
     if (RegisterId > ACPI_BITREG_MAX)
     {
-        ACPI_REPORT_ERROR (("Invalid BitRegister ID: %X\n", RegisterId));
+        ACPI_ERROR ((AE_INFO, "Invalid BitRegister ID: %X", RegisterId));
         return (NULL);
     }
 
@@ -455,7 +454,7 @@ AcpiSetRegister (
     BitRegInfo = AcpiHwGetBitRegisterInfo (RegisterId);
     if (!BitRegInfo)
     {
-        ACPI_REPORT_ERROR (("Bad ACPI HW RegisterId: %X\n", RegisterId));
+        ACPI_ERROR ((AE_INFO, "Bad ACPI HW RegisterId: %X", RegisterId));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -683,7 +682,7 @@ AcpiHwRegisterRead (
         break;
 
     default:
-        ACPI_REPORT_ERROR (("Unknown Register ID: %X\n",
+        ACPI_ERROR ((AE_INFO, "Unknown Register ID: %X",
             RegisterId));
         Status = AE_BAD_PARAMETER;
         break;
@@ -897,8 +896,8 @@ AcpiHwLowLevelRead (
 
 
     default:
-        ACPI_REPORT_ERROR ((
-            "Unsupported address space: %X\n", Reg->AddressSpaceId));
+        ACPI_ERROR ((AE_INFO,
+            "Unsupported address space: %X", Reg->AddressSpaceId));
         return (AE_BAD_PARAMETER);
     }
 
@@ -979,8 +978,8 @@ AcpiHwLowLevelWrite (
 
 
     default:
-        ACPI_REPORT_ERROR ((
-            "Unsupported address space: %X\n", Reg->AddressSpaceId));
+        ACPI_ERROR ((AE_INFO,
+            "Unsupported address space: %X", Reg->AddressSpaceId));
         return (AE_BAD_PARAMETER);
     }
 

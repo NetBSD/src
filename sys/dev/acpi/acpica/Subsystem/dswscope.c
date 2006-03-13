@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dswscope - Scope stack manipulation
- *              xRevision: 1.65 $
+ *              xRevision: 1.66 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.13.6.1 2006/03/13 09:07:08 yamt Exp $");
 
 #define __DSWSCOPE_C__
 
@@ -196,7 +196,7 @@ AcpiDsScopeStackPush (
     {
         /* Invalid scope   */
 
-        ACPI_REPORT_ERROR (("Null scope parameter\n"));
+        ACPI_ERROR ((AE_INFO, "Null scope parameter"));
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
@@ -204,8 +204,8 @@ AcpiDsScopeStackPush (
 
     if (!AcpiUtValidObjectType (Type))
     {
-        ACPI_REPORT_WARNING ((
-            "Invalid object type: 0x%X\n", Type));
+        ACPI_WARNING ((AE_INFO,
+            "Invalid object type: 0x%X", Type));
     }
 
     /* Allocate a new scope object */

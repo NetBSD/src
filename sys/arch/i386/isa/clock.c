@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.90 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.90.2.1 2006/03/13 09:06:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.90 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.90.2.1 2006/03/13 09:06:54 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -183,8 +183,6 @@ void	sysbeep(int, int);
 void	rtcinit(void);
 int	rtcget(mc_todregs *);
 void	rtcput(mc_todregs *);
-int 	bcdtobin(int);
-int	bintobcd(int);
 
 static int cmoscheck(void);
 
@@ -650,20 +648,6 @@ rtcput(mc_todregs *regs)
 
 	rtcinit();
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
-}
-
-int
-bcdtobin(int n)
-{
-
-	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
-}
-
-int
-bintobcd(int n)
-{
-
-	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
 
 static int timeset;

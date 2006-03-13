@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.26 2005/12/11 12:22:47 christos Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.26.8.1 2006/03/13 09:07:26 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.26 2005/12/11 12:22:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.26.8.1 2006/03/13 09:07:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -184,7 +184,7 @@ mt_putonline(mt)
 	struct	mscp_softc *mi = (struct mscp_softc *)mt->mt_dev.dv_parent;
 	volatile int i;
 
-	(volatile int)mt->mt_state = MT_OFFLINE;
+	((volatile struct mt_softc *) mt)->mt_state = MT_OFFLINE;
 	mp = mscp_getcp(mi, MSCP_WAIT);
 	mp->mscp_opcode = M_OP_ONLINE;
 	mp->mscp_unit = mt->mt_hwunit;
@@ -443,11 +443,8 @@ mtioctl(dev, cmd, data, flag, l)
 {
 	int unit = mtunit(dev);
 	struct mt_softc *mt = mt_cd.cd_devs[unit];
-	struct	mtop *mtop;
-	struct	mtget *mtget;
-	int error = 0, count;
-
-	count = mtop->mt_count;
+	struct mtop *mtop;
+	int error = 0;
 
 	switch (cmd) {
 
@@ -461,8 +458,7 @@ mtioctl(dev, cmd, data, flag, l)
 			error = mtcmd(mt, mtop->mt_op, mtop->mt_count, 0);
 
 	case MTIOCGET:
-		mtget = (void *)data;
-		mtget->mt_type = MT_ISTMSCP;
+		((struct mtget *)data)->mt_type = MT_ISTMSCP;
 		/* XXX we need to fill in more fields here */
 		break;
 

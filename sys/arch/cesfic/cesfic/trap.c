@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 2006/02/25 02:28:56 wiz Exp $	*/
+/*	$NetBSD: trap.c,v 1.23.2.1 2006/03/13 09:06:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,12 +77,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.23 2006/02/25 02:28:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.23.2.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_kgdb.h"
-#include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
@@ -101,9 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.23 2006/02/25 02:28:56 wiz Exp $");
 #include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/userret.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif

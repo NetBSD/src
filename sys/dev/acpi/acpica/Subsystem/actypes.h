@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: actypes.h - Common data types for the entire ACPI subsystem
- *       xRevision: 1.298 $
+ *       xRevision: 1.301 $
  *
  *****************************************************************************/
 
@@ -231,7 +231,6 @@ typedef UINT64                          ACPI_PHYSICAL_ADDRESS;
 #define ACPI_MAX_PTR                    ACPI_UINT64_MAX
 #define ACPI_SIZE_MAX                   ACPI_UINT64_MAX
 
-#define ALIGNED_ADDRESS_BOUNDARY        0x00000008
 #define ACPI_USE_NATIVE_DIVIDE          /* Has native 64-bit integer support */
 
 /*
@@ -274,8 +273,6 @@ typedef UINT64                          ACPI_PHYSICAL_ADDRESS;
 #define ACPI_MAX_PTR                    ACPI_UINT32_MAX
 #define ACPI_SIZE_MAX                   ACPI_UINT32_MAX
 
-#define ALIGNED_ADDRESS_BOUNDARY        0x00000004
-
 
 /*******************************************************************************
  *
@@ -304,7 +301,6 @@ typedef char                            *ACPI_PHYSICAL_ADDRESS;
 #define ACPI_MAX_PTR                    ACPI_UINT16_MAX
 #define ACPI_SIZE_MAX                   ACPI_UINT16_MAX
 
-#define ALIGNED_ADDRESS_BOUNDARY        0x00000002
 #define ACPI_USE_NATIVE_DIVIDE          /* No 64-bit integers, ok to use native divide */
 
 /* 64-bit integers cannot be supported */
@@ -320,17 +316,23 @@ typedef char                            *ACPI_PHYSICAL_ADDRESS;
 #endif
 
 
+/* Variable-width type, used instead of clib size_t */
+
+typedef ACPI_NATIVE_UINT                ACPI_SIZE;
+
+
 /*******************************************************************************
  *
  * OS- or compiler-dependent types
  *
+ * If the defaults below are not appropriate for the host system, they can 
+ * be defined in the compiler-specific or OS-specific header, and this will
+ * take precedence.
+ *
  ******************************************************************************/
 
-/*
- * If ACPI_UINTPTR_T was not defined in the OS- or compiler-dependent header,
- * define it now (use C99 uintptr_t for pointer casting if available,
- * "void *" otherwise)
- */
+/* Use C99 uintptr_t for pointer casting if available, "void *" otherwise */
+
 #ifndef ACPI_UINTPTR_T
 #define ACPI_UINTPTR_T                  void *
 #endif
@@ -344,9 +346,31 @@ typedef char                            *ACPI_PHYSICAL_ADDRESS;
 #define ACPI_CACHE_T                    ACPI_MEMORY_LIST
 #endif
 
-/* Variable-width type, used instead of clib size_t */
+/*
+ * Allow the CPU flags word to be defined per-OS to simplify the use of the
+ * lock and unlock OSL interfaces.
+ */
+#ifndef ACPI_CPU_FLAGS
+#define ACPI_CPU_FLAGS                  ACPI_NATIVE_UINT
+#endif
 
-typedef ACPI_NATIVE_UINT                ACPI_SIZE;
+/*
+ * ACPI_PRINTF_LIKE is used to tag functions as "printf-like" because
+ * some compilers can catch printf format string problems
+ */
+#ifndef ACPI_PRINTF_LIKE
+#define ACPI_PRINTF_LIKE(c)
+#endif
+
+/*
+ * Some compilers complain about unused variables. Sometimes we don't want to
+ * use all the variables (for example, _AcpiModuleName). This allows us
+ * to to tell the compiler in a per-variable manner that a variable
+ * is unused
+ */
+#ifndef ACPI_UNUSED_VAR
+#define ACPI_UNUSED_VAR
+#endif
 
 
 /*******************************************************************************
@@ -1509,12 +1533,6 @@ typedef struct acpi_resource
 #define ACPI_RS_SIZE(Type)                  (UINT32) (ACPI_RS_SIZE_NO_DATA + sizeof (Type))
 
 #define ACPI_NEXT_RESOURCE(Res)             (ACPI_RESOURCE *)((UINT8 *) Res + Res->Length)
-
-#ifndef ACPI_MISALIGNMENT_NOT_SUPPORTED
-#define ACPI_ALIGN_RESOURCE_SIZE(Length)    (Length)
-#else
-#define ACPI_ALIGN_RESOURCE_SIZE(Length)    ACPI_ROUND_UP_TO_NATIVE_WORD(Length)
-#endif
 
 /*
  * END: of definitions for Resource Attributes

@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.37 2005/12/11 12:16:29 christos Exp $ */
+/*	$NetBSD: zssc.c,v 1.37.8.1 2006/03/13 09:06:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.37 2005/12/11 12:16:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.37.8.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ zsscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * CTEST7 = 00
 	 */
-	sc->sc_clock_freq = 66;		/* Clock = 66Mhz */
+	sc->sc_clock_freq = 66;		/* Clock = 66 MHz */
 	sc->sc_ctest7 = 0x00;
 	sc->sc_dcntl = 0x00;
 

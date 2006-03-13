@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.140 2006/01/31 14:02:10 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.140.6.1 2006/03/13 09:07:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140 2006/01/31 14:02:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140.6.1 2006/03/13 09:07:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -943,28 +943,6 @@ restart:
 	simple_unlock(&fdp->fd_slock);
 
 	fdexpanded++;
-}
-
-/*
- * Check to see whether n user file descriptors
- * are available to the process p.
- */
-int
-fdavail(struct proc *p, int n)
-{
-	struct filedesc	*fdp;
-	struct file	**fpp;
-	int		i, lim;
-
-	fdp = p->p_fd;
-	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-	if ((i = lim - fdp->fd_nfiles) > 0 && (n -= i) <= 0)
-		return (1);
-	fpp = &fdp->fd_ofiles[fdp->fd_freefile];
-	for (i = min(lim,fdp->fd_nfiles) - fdp->fd_freefile; --i >= 0; fpp++)
-		if (*fpp == NULL && --n <= 0)
-			return (1);
-	return (0);
 }
 
 /*

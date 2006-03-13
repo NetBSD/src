@@ -1,4 +1,4 @@
-#	$NetBSD: files.alchemy,v 1.10 2006/02/24 14:34:31 shige Exp $
+#	$NetBSD: files.alchemy,v 1.10.2.1 2006/03/13 09:06:58 yamt Exp $
 
 defflag opt_alchemy.h		ALCHEMY_AU1000
 				ALCHEMY_AU1100
@@ -60,9 +60,14 @@ attach	augpio at aubus
 file	arch/mips/alchemy/dev/augpio.c		augpio
 
 # On-chip PSC
-device	aupsc
+device	aupsc { [ addr = -1 ] }
 attach	aupsc at aubus
 file	arch/mips/alchemy/dev/aupsc.c		aupsc
+
+# On-chip PSC SMBus Protocol
+device	ausmbus: i2cbus, i2c_bitbang
+attach	ausmbus at aupsc
+file	arch/mips/alchemy/dev/ausmbus_psc.c	ausmbus
 
 # On-chip PCMCIA
 #

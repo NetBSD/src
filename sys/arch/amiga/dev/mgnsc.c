@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.39 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: mgnsc.c,v 1.39.8.1 2006/03/13 09:06:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.39 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.39.8.1 2006/03/13 09:06:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ mgnscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * CTEST7 = TT1
 	 */
-	sc->sc_clock_freq = 33;		/* Clock = 33Mhz */
+	sc->sc_clock_freq = 33;		/* Clock = 33 MHz */
 	sc->sc_ctest7 = SIOP_CTEST7_TT1;
 	sc->sc_dcntl = 0x00;
 

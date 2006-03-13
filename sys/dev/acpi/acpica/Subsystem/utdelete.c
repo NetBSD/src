@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utdelete - object deletion and reference count utilities
- *              xRevision: 1.109 $
+ *              xRevision: 1.110 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.15 2006/01/29 03:05:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.15.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __UTDELETE_C__
 
@@ -485,7 +485,7 @@ AcpiUtUpdateRefCount (
 
     default:
 
-        ACPI_REPORT_ERROR (("Unknown action (%X)\n", Action));
+        ACPI_ERROR ((AE_INFO, "Unknown action (%X)", Action));
         break;
     }
 
@@ -496,8 +496,8 @@ AcpiUtUpdateRefCount (
     if (Count > ACPI_MAX_REFERENCE_COUNT)
     {
 
-        ACPI_REPORT_WARNING ((
-            "Large Reference Count (%X) in object %p\n\n",
+        ACPI_WARNING ((AE_INFO,
+            "Large Reference Count (%X) in object %p",
             Count, Object));
     }
 
@@ -661,8 +661,8 @@ AcpiUtUpdateObjectReference (
 
 ErrorExit:
 
-    ACPI_REPORT_ERROR (("Could not update object reference count, %s\n",
-        AcpiFormatException (Status)));
+    ACPI_EXCEPTION ((AE_INFO, Status,
+        "Could not update object reference count"));
 
     return_ACPI_STATUS (Status);
 }

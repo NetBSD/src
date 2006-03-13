@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utinit - Common ACPI subsystem initialization
- *              xRevision: 1.125 $
+ *              xRevision: 1.126 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utinit.c,v 1.14 2006/01/29 03:05:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utinit.c,v 1.14.6.1 2006/03/13 09:07:10 yamt Exp $");
 
 #define __UTINIT_C__
 
@@ -160,8 +160,8 @@ AcpiUtFadtRegisterError (
     ACPI_SIZE               Offset)
 {
 
-    ACPI_REPORT_WARNING ((
-        "Invalid FADT value %s=%X at offset %X FADT=%p\n",
+    ACPI_WARNING ((AE_INFO,
+        "Invalid FADT value %s=%X at offset %X FADT=%p",
         RegisterName, Value, (UINT32) Offset, AcpiGbl_FADT));
 }
 
@@ -329,8 +329,8 @@ AcpiUtSubsystemShutdown (
 
     if (AcpiGbl_Shutdown)
     {
-        ACPI_REPORT_ERROR ((
-            "ACPI Subsystem is already terminated\n"));
+        ACPI_ERROR ((AE_INFO,
+            "ACPI Subsystem is already terminated"));
         return_VOID;
     }
 

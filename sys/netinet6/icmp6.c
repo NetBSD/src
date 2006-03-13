@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.114 2006/03/03 14:07:06 rpaulo Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.114.2.1 2006/03/13 09:07:39 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.114 2006/03/03 14:07:06 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.114.2.1 2006/03/13 09:07:39 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -166,7 +166,7 @@ static void icmp6_redirect_timeout __P((struct rtentry *, struct rttimer *));
 void
 icmp6_init()
 {
-	mld6_init();
+	mld_init();
 	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
 	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout);
 }
@@ -683,11 +683,11 @@ icmp6_input(mp, offp, proto)
 			icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_mldreport);
 		if ((n = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 			/* give up local */
-			mld6_input(m, off);
+			mld_input(m, off);
 			m = NULL;
 			goto freeit;
 		}
-		mld6_input(n, off);
+		mld_input(n, off);
 		/* m stays. */
 		break;
 
@@ -1243,6 +1243,7 @@ ni6_input(m, off)
 		/* FALLTHROUGH */
 	case NI_QTYPE_FQDN:
 	case NI_QTYPE_NODEADDR:
+	case NI_QTYPE_IPV4ADDR:
 		switch (ni6->ni_code) {
 		case ICMP6_NI_SUBJ_IPV6:
 #if ICMP6_NI_SUBJ_IPV6 != 0
@@ -1340,6 +1341,7 @@ ni6_input(m, off)
 			goto bad;
 		break;
 	case NI_QTYPE_NODEADDR:
+	case NI_QTYPE_IPV4ADDR:
 		if ((icmp6_nodeinfo & 2) == 0)
 			goto bad;
 		break;
@@ -1362,6 +1364,9 @@ ni6_input(m, off)
 					  sizeof(u_int32_t))) > MCLBYTES)
 			replylen = MCLBYTES; /* XXX: will truncate pkt later */
 		break;
+	case NI_QTYPE_IPV4ADDR:
+		/* unsupported - should respond with unknown Qtype? */
+		goto bad;
 	default:
 		/*
 		 * XXX: We must return a reply with the ICMP6 code
@@ -1828,8 +1833,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 				 * We give up much more copy.
 				 * Set the truncate flag and return.
 				 */
-				nni6->ni_flags |=
-					NI_NODEADDR_FLAG_TRUNCATE;
+				nni6->ni_flags |= NI_NODEADDR_FLAG_TRUNCATE;
 				return (copied);
 			}
 
@@ -1873,8 +1877,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 			cp += sizeof(struct in6_addr);
 
 			resid -= (sizeof(struct in6_addr) + sizeof(u_int32_t));
-			copied += (sizeof(struct in6_addr) +
-				   sizeof(u_int32_t));
+			copied += (sizeof(struct in6_addr) + sizeof(u_int32_t));
 		}
 		if (ifp0)	/* we need search only on the specified IF */
 			break;
@@ -2148,9 +2151,8 @@ icmp6_reflect(m, off)
 	 * Note that only echo and node information replies are affected,
 	 * since the length of ICMP6 errors is limited to the minimum MTU.
 	 */
-	if (ip6_output(m, NULL, NULL, IPV6_MINMTU,
-		(struct ip6_moptions *)NULL, (struct socket *)NULL, &outif) != 0
-	    && outif)
+	if (ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL, &outif) != 0 &&
+	    outif)
 		icmp6_ifstat_inc(outif, ifs6_out_error);
 
 	if (outif)
@@ -2161,13 +2163,6 @@ icmp6_reflect(m, off)
  bad:
 	m_freem(m);
 	return;
-}
-
-void
-icmp6_fasttimo()
-{
-
-	mld6_fasttimeo();
 }
 
 static const char *
@@ -2592,7 +2587,7 @@ icmp6_redirect_output(m0, rt)
 			    m0->m_pkthdr.len);
 		} else {
 			/*
-                         * enough room, truncate if not aligned.
+			 * enough room, truncate if not aligned.
 			 * we don't pad here for simplicity.
 			 */
 			size_t extra;
@@ -2623,7 +2618,6 @@ noredhdropt:
 		m0 = NULL;
 	}
 
-	sip6 = mtod(m, struct ip6_hdr *);
 	/* XXX: clear embedded link IDs in the inner header */
 	in6_clearscope(&sip6->ip6_src);
 	in6_clearscope(&sip6->ip6_dst);
@@ -2850,6 +2844,7 @@ sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 	     "sysctl net.inet6.icmp6 subtree setup")
 {
+	extern int nd6_maxqueuelen; /* defined in nd6.c */
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -2996,4 +2991,11 @@ SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 		       sysctl_net_inet6_icmp6_nd6, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_PRLIST, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "maxqueuelen",
+		       SYSCTL_DESCR("max packet queue len for a unresolved ND"),
+		       NULL, 1, &nd6_maxqueuelen, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_MAXQLEN, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.4 2006/02/19 14:59:23 thorpej Exp $	*/
+/*	$NetBSD: geode.c,v 1.4.2.1 2006/03/13 09:06:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.4 2006/02/19 14:59:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.4.2.1 2006/03/13 09:06:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ geode_wdog_enable(struct geode_wdog_softc *sc)
 
 	wdcnfg &= ~(SC1100_WDCNFG_WD32KPD | SC1100_WDCNFG_WDPRES_MASK |
 	            SC1100_WDCNFG_WDTYPE1_MASK | SC1100_WDCNFG_WDTYPE2_MASK);
-	wdcnfg |= LSHIFT(sc->sc_prescale, SC1100_WDCNFG_WDPRES_MASK);
+	wdcnfg |= SHIFTIN(sc->sc_prescale, SC1100_WDCNFG_WDPRES_MASK);
         wdcnfg |= SC1100_WDCNFG_WDTYPE1_RESET | SC1100_WDCNFG_WDTYPE2_NOACTION;
 
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SC1100_GCB_WDCNFG, wdcnfg);

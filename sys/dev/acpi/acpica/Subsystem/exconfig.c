@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconfig - Namespace reconfiguration (Load/Unload opcodes)
- *              xRevision: 1.89 $
+ *              xRevision: 1.90 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.13 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.13.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #define __EXCONFIG_C__
 
@@ -522,8 +522,8 @@ AcpiExLoadOp (
                     AcpiGbl_TableData[ACPI_TABLE_SSDT].Signature,
                     AcpiGbl_TableData[ACPI_TABLE_SSDT].SigLength)))
     {
-        ACPI_REPORT_ERROR ((
-            "Table has invalid signature [%4.4s], must be SSDT or PSDT\n",
+        ACPI_ERROR ((AE_INFO,
+            "Table has invalid signature [%4.4s], must be SSDT or PSDT",
             TablePtr->Signature));
         Status = AE_BAD_SIGNATURE;
         goto Cleanup;

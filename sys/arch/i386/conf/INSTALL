@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.280 2006/02/05 05:01:55 cube Exp $
+#	$NetBSD: INSTALL,v 1.280.2.1 2006/03/13 09:06:54 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -435,6 +435,7 @@ rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 
@@ -524,6 +525,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S

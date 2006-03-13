@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.192 2005/12/24 23:41:34 perry Exp $	*/
+/*	$NetBSD: uhci.c,v 1.192.8.1 2006/03/13 09:07:32 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.192 2005/12/24 23:41:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.192.8.1 2006/03/13 09:07:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,9 +698,19 @@ void
 uhci_shutdown(void *v)
 {
 	uhci_softc_t *sc = v;
+	int s;
 
 	DPRINTF(("uhci_shutdown: stopping the HC\n"));
+
+	/*
+	 * Use polling mode to prevent the interrupts shutting
+	 * us down before we shut them down.
+	 */
+	s = splhardusb();
+	sc->sc_bus.use_polling++;
 	uhci_run(sc, 0); /* stop the controller */
+	sc->sc_bus.use_polling--;
+	splx(s);
 }
 
 /*

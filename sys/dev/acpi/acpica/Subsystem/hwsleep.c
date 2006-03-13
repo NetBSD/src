@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Name: hwsleep.c - ACPI Hardware Sleep/Wake Interface
- *              xRevision: 1.79 $
+ *              xRevision: 1.80 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.16 2006/01/29 03:05:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.16.6.1 2006/03/13 09:07:09 yamt Exp $");
 
 #include "acpi.h"
 
@@ -293,8 +293,7 @@ AcpiEnterSleepStatePrep (
     Status = AcpiEvaluateObject (NULL, METHOD_NAME__SST, &ArgList, NULL);
     if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
     {
-        ACPI_REPORT_ERROR (("Method _SST failed, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "While executing method _SST"));
     }
 
     return_ACPI_STATUS (AE_OK);
@@ -333,7 +332,7 @@ AcpiEnterSleepState (
     if ((AcpiGbl_SleepTypeA > ACPI_SLEEP_TYPE_MAX) ||
         (AcpiGbl_SleepTypeB > ACPI_SLEEP_TYPE_MAX))
     {
-        ACPI_REPORT_ERROR (("Sleep values out of range: A=%X B=%X\n",
+        ACPI_ERROR ((AE_INFO, "Sleep values out of range: A=%X B=%X",
             AcpiGbl_SleepTypeA, AcpiGbl_SleepTypeB));
         return_ACPI_STATUS (AE_AML_OPERAND_VALUE);
     }
@@ -657,23 +656,20 @@ AcpiLeaveSleepState (
     Status = AcpiEvaluateObject (NULL, METHOD_NAME__SST, &ArgList, NULL);
     if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
     {
-        ACPI_REPORT_ERROR (("Method _SST failed, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During Method _SST"));
     }
 
     Arg.Integer.Value = SleepState;
     Status = AcpiEvaluateObject (NULL, METHOD_NAME__BFS, &ArgList, NULL);
     if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
     {
-        ACPI_REPORT_ERROR (("Method _BFS failed, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During Method _BFS"));
     }
 
     Status = AcpiEvaluateObject (NULL, METHOD_NAME__WAK, &ArgList, NULL);
     if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
     {
-        ACPI_REPORT_ERROR (("Method _WAK failed, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During Method _WAK"));
     }
     /* TBD: _WAK "sometimes" returns stuff - do we want to look at it? */
 
@@ -717,8 +713,7 @@ AcpiLeaveSleepState (
     Status = AcpiEvaluateObject (NULL, METHOD_NAME__SST, &ArgList, NULL);
     if (ACPI_FAILURE (Status) && Status != AE_NOT_FOUND)
     {
-        ACPI_REPORT_ERROR (("Method _SST failed, %s\n",
-            AcpiFormatException (Status)));
+        ACPI_EXCEPTION ((AE_INFO, Status, "During Method _SST"));
     }
 
     return_ACPI_STATUS (Status);
