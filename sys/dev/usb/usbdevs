@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.422 2006/02/06 17:33:26 jmmv Exp $
+$NetBSD: usbdevs,v 1.423 2006/03/13 16:29:58 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -529,6 +529,7 @@ product ADDONICS2 205		0xa001	Cable 205
 product ADMTEK PEGASUS		0x0986	AN986 USB Ethernet
 product ADMTEK PEGASUSII	0x8511	AN8511 USB Ethernet
 product ADMTEK PEGASUSII_2	0x8513	AN8513 Ethernet
+product ADMTEK PEGASUSII_3      0x8515  ADM8515 USB 2.0 Ethernet
 
 /* ADS products */
 product ADS UBS10BT		0x0008	UBS-10BT Ethernet
