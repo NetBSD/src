@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158.4.6 2006/03/13 00:01:05 elad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.158.4.7 2006/03/14 02:50:43 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.6 2006/03/13 00:01:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.7 2006/03/14 02:50:43 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2529,7 +2529,6 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	int kerbflag;
 {
 	struct mount *mp;
-	int i;
 	kauth_cred_t credanon;
 	int error, exflags;
 	struct sockaddr_in *saddr;
@@ -2579,20 +2578,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
 	} else if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 		    NULL) == 0 || (exflags & MNT_EXPORTANON)) {
-		int do_ngroups;
-
-		kauth_cred_seteuid(cred, kauth_cred_geteuid(credanon));
-		kauth_cred_setegid(cred, kauth_cred_getegid(credanon));
-
-		/* First, clear any groups in cred. */
-		do_ngroups = kauth_cred_ngroups(cred);
-		for (i = 0; i < do_ngroups; i++)
-			kauth_cred_delgroup(cred, kauth_cred_group(cred, 0));
-
-		/* Then, add groups in credanon. */
-		do_ngroups = kauth_cred_ngroups(credanon);
-		for (i = 0; i < do_ngroups && i < NGROUPS; i++) /* XXX elad */
-			kauth_cred_addgroup(cred, kauth_cred_group(credanon, i));
+		kauth_cred_clone(credanon, cred);
 	}
 	if (exflags & MNT_EXRDONLY)
 		*rdonlyp = 1;
