@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.88.10.4 2006/03/10 13:53:24 elad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.88.10.5 2006/03/14 02:52:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.4 2006/03/10 13:53:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.5 2006/03/14 02:52:47 elad Exp $");
 
 #include "opt_compat_43.h"
 
@@ -232,7 +232,6 @@ sys_getgroups(struct lwp *l, void *v, register_t *retval)
 	u_int ngrp;
 	int error;
 	gid_t *grbuf;
-	int i;
 
 	if (SCARG(uap, gidsetsize) == 0) {
 		*retval = kauth_cred_ngroups(pc);
@@ -244,10 +243,8 @@ sys_getgroups(struct lwp *l, void *v, register_t *retval)
 		return (EINVAL);
 	ngrp = kauth_cred_ngroups(pc);
 
-	/* XXX elad - this is ugly */
 	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
-	for (i = 0; i < ngrp; i++)
-		grbuf[i] = kauth_cred_group(pc, i);
+	kauth_cred_getgroups(pc, grbuf, ngrp);
 	error = copyout(grbuf, (caddr_t)SCARG(uap, gidset),
 			ngrp * sizeof(gid_t));
 	free(grbuf, M_TEMP);
@@ -601,7 +598,6 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	int error;
 	gid_t grp[NGROUPS];
 	size_t grsize;
-	int do_ngroups, i, j;
 
 	if ((error = kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)) != 0)
@@ -621,31 +617,7 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	pc = kauth_cred_copy(pc);
 	p->p_cred = pc;
 
-	do_ngroups = kauth_cred_ngroups(pc);
-
-	/* (1) For every group in current group array... */
-	for (i = 0; i < do_ngroups; i++) {
-		int in_new_array;
-
-		/* ...check if it's also in the new array... */
-		in_new_array = 0;
-		for (j = 0; j < ngrp; j++) {
-			if (kauth_cred_group(pc, i) == grp[j])
-				in_new_array = 1;
-		}
-
-		/* ...if not, delete it. */
-		if (!in_new_array) {
-			kauth_cred_delgroup(pc, kauth_cred_group(pc, i));
-			do_ngroups--;
-		}
-	}
-
-	/* (2) For every group in the new group array... */
-	for (i = 0; i < ngrp; i++) {
-		/* ...add it to current group array. */
-		kauth_cred_addgroup(pc, grp[i]);
-	}
+	kauth_cred_setgroups(p->p_cred, grp, ngrp, -1);
 
 	p_sugid(p);
 	return (0);

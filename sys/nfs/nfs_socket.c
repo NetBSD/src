@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.4.4 2006/03/10 22:38:09 elad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.4.5 2006/03/14 02:52:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.4 2006/03/10 22:38:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.5 2006/03/14 02:52:47 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2003,7 +2003,7 @@ nfs_getreq(nd, nfsd, has_header)
 	 */
 	if (auth_type == rpc_auth_unix) {
 		uid_t uid;
-		gid_t gid;
+		gid_t gid, *grbuf;
 
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > NFS_MAXNAMLEN) {
@@ -2041,13 +2041,15 @@ nfs_getreq(nd, nfsd, has_header)
 		}
 		nfsm_dissect(tl, u_int32_t *, (len + 2) * NFSX_UNSIGNED);
 
+		grbuf = malloc(len * sizeof(gid_t), M_TEMP, M_WAITOK);
 		for (i = 0; i < len; i++) {
-			if (i < NGROUPS)
-				kauth_cred_addgroup(nd->nd_cr,
-						    fxdr_unsigned(gid_t, *tl++));
+			if (i < NGROUPS) /* XXX elad */
+				grbuf[i] = fxdr_unsigned(gid_t, *tl++);
 			else
 				tl++;
 		}
+		kauth_cred_setgroups(nd->nd_cr, grbuf, min(len, NGROUPS), -1);
+		free(grbuf, M_TEMP);
 
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
