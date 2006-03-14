@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.6 2006/03/12 22:30:24 chs Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.7 2006/03/14 04:48:44 chs Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.6 2006/03/12 22:30:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.7 2006/03/14 04:48:44 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,16 +69,23 @@ const struct mii_phy_funcs rlphy_funcs = {
 	rlphy_service, rlphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc rlphys[] = {
+	{ MII_OUI_yyREALTEK,		MII_MODEL_yyREALTEK_RTL8201L,
+          MII_STR_yyREALTEK_RTL8201L },
+	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP101,
+	  MII_STR_ICPLUS_IP101 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	/* Test for RealTek 8201L PHY */
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_yyREALTEK &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
-		return 10;
-	}
+	if (mii_phy_match(ma, rlphys) != NULL)
+		return (10);
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 ||
 	    MII_MODEL(ma->mii_id2) != 0)
