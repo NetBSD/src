@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.63.4.1 2006/03/08 01:34:34 elad Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.63.4.2 2006/03/14 02:52:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.63.4.1 2006/03/08 01:34:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.63.4.2 2006/03/14 02:52:47 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,6 @@ portal_open(v)
 	int fd;
 	int error;
 	int len;
-	int j;
 	struct portalmount *fmp;
 	struct file *fp;
 	struct portal_cred pcred;
@@ -397,8 +396,8 @@ portal_open(v)
 	pcred.pcr_uid = kauth_cred_geteuid(ap->a_cred);
 	pcred.pcr_gid = kauth_cred_getegid(ap->a_cred);
 	pcred.pcr_ngroups = kauth_cred_ngroups(ap->a_cred);
-	for (j = 0; j < pcred.pcr_ngroups; j++)
-		pcred.pcr_groups[j] = kauth_cred_group(ap->a_cred, j);
+	kauth_cred_getgroups(ap->a_cred, pcred.pcr_groups,
+	    sizeof(pcred.pcr_groups) / sizeof(pcred.pcr_groups[0]));
 	aiov[0].iov_base = &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;
