@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.133 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.133.4.1 2006/03/14 17:07:21 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -222,7 +222,6 @@ struct tcpcb {
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
-	struct	in6pcb *t_in6pcb;	/* back pointer to internet pcb */
 	struct	callout t_delack_ch;	/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
