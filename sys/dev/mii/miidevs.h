@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.66 2006/02/18 14:17:52 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.67 2006/03/14 04:49:00 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.63 2006/02/18 14:17:16 thorpej Exp
+ *	NetBSD: miidevs,v 1.64 2006/03/14 04:48:44 chs Exp
  */
 
 /*-
@@ -65,6 +65,7 @@
 #define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
+#define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
@@ -188,6 +189,10 @@
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
 #define	MII_MODEL_xxDAVICOM_DM9102	0x0004
 #define	MII_STR_xxDAVICOM_DM9102	"DM9102 10/100 media interface"
+
+/* IC Plus Corp. PHYs */
+#define	MII_MODEL_ICPLUS_IP101	0x0005
+#define	MII_STR_ICPLUS_IP101	"IP101 10/100 PHY"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1889	0x0001
