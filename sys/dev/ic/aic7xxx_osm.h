@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.13 2006/03/14 15:30:03 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.14 2006/03/14 15:33:11 tsutsui Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -218,7 +218,7 @@ ahc_timer_reset(ahc_timer_t *timer, u_int usec, ahc_callback_t *func, void *arg)
 static __inline void
 ahc_scb_timer_reset(struct scb *scb, u_int usec)
 {
-	if (scb->xs->xs_control & XS_CTL_POLL)) {
+	if (!(scb->xs->xs_control & XS_CTL_POLL)) {
 		callout_reset(&scb->xs->xs_callout,
 			      (usec * hz)/1000000, ahc_timeout, scb);
 	}
