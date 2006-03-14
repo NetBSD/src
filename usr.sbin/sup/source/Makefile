@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2006/03/14 17:42:06 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2006/03/14 22:59:43 christos Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -51,6 +51,7 @@
 SITE1			!= uname -s | tr '[a-z]' '[A-Z]'
 SITE2			=$(shell uname -s | tr '[a-z]' '[A-Z]')
 SITE			= ${SITE1}${SITE2}
+TARDIR			= sup-0.0
 
 LINUX_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR
 NETBSD_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR \
@@ -66,9 +67,10 @@ NON_MACH_DEFINES	= -UMACH
 
 
 #INSTALLATION PARAMETERS
-NETBSD_BINDIR		= /usr/local/sbin
-NETBSD_MAN1		= /usr/local/man/man1
-NETBSD_MAN8		= /usr/local/man/man8
+PREFIX		       ?= /usr/local/
+NETBSD_BINDIR		= ${PREFIX}/sbin
+NETBSD_MAN1		= ${PREFIX}/man/man1
+NETBSD_MAN8		= ${PREFIX}/man/man8
 
 CFLAGS			= ${DEFS} -O -I.
 
@@ -128,6 +130,13 @@ install: ${PROGRAMS}
 netcrypt.c:
 	@echo "[ Using netcryptvoid.c ]"
 	cp netcryptvoid.c netcrypt.c
+
+tar:
+	mkdir ${TARDIR} ${TARDIR}/sys
+	cp -p *.[ch18] Makefile ${TARDIR}
+	cp -p sys/*.h ${TARDIR}/sys
+	tar -czf ${TARDIR}.tar.gz ${TARDIR}
+	rm -fr ${TARDIR}
 
 read_line.o: supextern.h
 scan.o:	sup.h
