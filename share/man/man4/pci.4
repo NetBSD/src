@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.81 2006/01/20 21:57:25 wiz Exp $
+.\"	$NetBSD: pci.4,v 1.82 2006/03/14 04:21:48 chs Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 9, 2005
+.Dd March 13, 2006
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -263,6 +263,10 @@ LAN Media Corp WAN interfaces.
 NE2000-compatible
 .Tn Ethernet
 interfaces.
+.It nfe
+NVIDIA nForce
+.Tn Ethernet
+interfaces.
 .It ntwoc
 SDL Communications N2pci and WAN/ic 400 synchronous serial interfaces.
 .It pcn
@@ -454,6 +458,7 @@ VGA graphics boards.
 .Xr mly 4 ,
 .Xr mpt 4 ,
 .Xr ne 4 ,
+.Xr nfe 4 ,
 .Xr neo 4 ,
 .Xr ntwoc 4 ,
 .Xr oboe 4 ,
