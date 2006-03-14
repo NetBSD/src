@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.4 2005/12/18 23:57:07 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.5 2006/03/14 22:59:32 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.4 2005/12/18 23:57:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.5 2006/03/14 22:59:32 uwe Exp $");
+
+#include "opt_wsdisplay_compat.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,7 +63,9 @@ struct hpf1275a_softc {
 	struct tty *sc_tp;		/* back reference to the tty */
 	struct device *sc_wskbd;	/* wskbd child */
 	int sc_enabled;
-
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int sc_rawkbd;
+#endif
 };
 
 
@@ -262,6 +266,9 @@ hpf1275a_attach(struct device *parent, struct device *self, void *aux)
 	wska.accesscookie = sc;
 
 	sc->sc_enabled = 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	sc->sc_rawkbd = 0;
+#endif
 	sc->sc_wskbd = config_found(self, &wska, wskbddevprint);
 }
 
@@ -373,7 +380,17 @@ hpf1275a_input(int c, struct tty *tp)
 	}
 
 	KASSERT(sc->sc_wskbd != NULL);
-	wskbd_input(sc->sc_wskbd, type, xtscan);
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	if (sc->sc_rawkbd) {
+		u_char data[16];
+		int n;
+
+		n = pckbd_encode(type, xtscan, data);
+		wskbd_rawinput(sc->sc_wskbd, data, n);
+	} else
+#endif
+		wskbd_input(sc->sc_wskbd, type, xtscan);
 
 	return (0);
 }
@@ -403,7 +420,9 @@ static int
 hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
 		     struct lwp *l)
 {
-	/* struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self; */
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+#endif
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -413,6 +432,12 @@ hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
 	case WSKBDIO_GETLEDS:
 		*(int *)data = 0; /* this keyboard has no leds */
 		return (0);
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = (*(int *)data == WSKBD_RAW);
+		return (0);
+#endif
 
 	default:
 		return (EPASSTHROUGH);
