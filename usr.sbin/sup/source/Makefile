@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2003/04/03 20:32:41 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2006/03/14 17:42:06 christos Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -100,18 +100,18 @@ SOLARIS_LIBS		= -lsocket -lnsl
 SUNOS_LIBS		= 
 
 DEFS			= -UCMUCS -UCMU  ${${SITE}_DEFINES}
-LIBS			= ${EXTRALIBS} ${${SITE}_LIBS}
+LIBS			= ${EXTRALIBS}
 
 all: ${PROGRAMS}
 
 sup: ${sup_OFILES} ${LIBS}
-	${CC} ${CFLAGS} -o sup ${sup_OFILES} ${LIBS} ${LIBS}
+	${CC} ${CFLAGS} -o sup ${sup_OFILES} ${LIBS} ${${SITE}_LIBS}
 
 supfilesrv: ${supfilesrv_OFILES} ${supfilesrv_LIBS}
-	${CC} ${CFLAGS} -o supfilesrv ${supfilesrv_OFILES} ${supfilesrv_LIBS} ${LIBS}
+	${CC} ${CFLAGS} -o supfilesrv ${supfilesrv_OFILES} ${supfilesrv_LIBS} ${LIBS} ${${SITE}_LIBS}
 
 supscan:  ${supscan_OFILES} ${LIBS}
-	${CC} ${CFLAGS} -o supscan ${supscan_OFILES} ${LIBS}
+	${CC} ${CFLAGS} -o supscan ${supscan_OFILES} ${LIBS} ${${SITE}_LIBS}
 
 libextra.a: ${EXTRA}
 	ar r libextra.a $?
