@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.23.10.1 2006/03/08 01:34:34 elad Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.23.10.2 2006/03/14 02:52:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.23.10.1 2006/03/08 01:34:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.23.10.2 2006/03/14 02:52:47 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,7 @@ umap_mapids(v_mount, credp)
 
 	ngroups = kauth_cred_ngroups(credp);
 	for (i = 0; i < ngroups; i++) {
+		/* XXX elad: can't we just skip cases where gid == -1? */
 		groups[i] = kauth_cred_group(credp, i);
 		gid = (gid_t) umap_findid(groups[i],
 					  groupmap, gnentries);
@@ -191,5 +192,5 @@ umap_mapids(v_mount, credp)
 			groups[i] = NULLGROUP;
 	}
 
-	/* XXX elad kauth_cred_setgroups(credp, groups, ngroups); */
+	kauth_cred_setgroups(credp, groups, ngroups, -1);
 }

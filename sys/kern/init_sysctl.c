@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.63.4.1 2006/03/08 00:53:40 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.63.4.2 2006/03/14 02:52:47 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.4.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.4.2 2006/03/14 02:52:47 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2842,7 +2842,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	struct tty *tp;
 	struct lwp *l;
 	struct timeval ut, st;
-	int do_ngroups, i;
 
 	memset(ki, 0, sizeof(*ki));
 
@@ -2878,10 +2877,9 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_svuid = kauth_cred_getsvuid(p->p_cred);
 	ki->p_svgid = kauth_cred_getsvgid(p->p_cred);
 
-	do_ngroups = kauth_cred_ngroups(p->p_cred); /* XXX elad */
-	for (i = 0; i < do_ngroups; i++)
-		ki->p_groups[i] = kauth_cred_group(p->p_cred, i);
-	ki->p_ngroups = do_ngroups;
+	ki->p_ngroups = kauth_cred_ngroups(p->p_cred);
+	kauth_cred_getgroups(p->p_cred, ki->p_groups,
+	    sizeof(ki->p_groups) / sizeof(ki->p_groups[0]));
 
 	ki->p_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {

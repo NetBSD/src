@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.100.4.1 2006/03/08 01:48:38 elad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.100.4.2 2006/03/14 02:52:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.1 2006/03/08 01:48:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.2 2006/03/14 02:52:47 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -968,8 +968,7 @@ netbsd32_getgroups(l, v, retval)
 	ngrp = kauth_cred_ngroups(pc);
 	/* Should convert gid_t to netbsd32_gid_t, but they're the same */
 	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
-	for (i = 0; i < ngrp; i++)
-		grbuf[i] = kauth_cred_group(pc, i);
+	kauth_cred_getgroups(pc, grbuf, ngrp);
 	error = copyout(grbuf, (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)),
 			ngrp * sizeof(*grbuf));
 	free(grbuf, M_TEMP);
