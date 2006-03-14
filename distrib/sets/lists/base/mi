@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.600 2006/03/13 20:02:01 tnozaki Exp $
+# $NetBSD: mi,v 1.601 2006/03/14 16:16:44 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1898,6 +1898,8 @@
 ./usr/share/locale				base-locale-share
 ./usr/share/locale/be				base-locale-share
 ./usr/share/locale/be/LC_MESSAGES		base-locale-share
+./usr/share/locale/be_BY.CP1251			base-locale-be
+./usr/share/locale/be_BY.CP1251/LC_CTYPE	base-locale-be		nls
 ./usr/share/locale/bg_BG.CP1251			base-locale-bg
 ./usr/share/locale/bg_BG.CP1251/LC_CTYPE	base-locale-bg		nls
 ./usr/share/locale/ca				base-locale-ca
@@ -2132,6 +2134,10 @@
 ./usr/share/locale/ru/LC_MESSAGES/grep.mo	base-locale-ru		nls
 ./usr/share/locale/ru/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/ru/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ru	nls
+./usr/share/locale/ru_BY.CP1251			base-locale-ru
+./usr/share/locale/ru_BY.CP1251/LC_CTYPE	base-locale-ru		nls
+./usr/share/locale/ru_RU.CP1251			base-locale-ru
+./usr/share/locale/ru_RU.CP1251/LC_CTYPE	base-locale-ru		nls
 ./usr/share/locale/ru_RU.CP866			base-locale-ru
 ./usr/share/locale/ru_RU.CP866/LC_CTYPE		base-locale-ru		nls
 ./usr/share/locale/ru_RU.ISO8859-5		base-locale-ru
