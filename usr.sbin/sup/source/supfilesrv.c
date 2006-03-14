@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.31 2005/06/18 11:07:26 lukem Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.32 2006/03/14 17:45:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -259,6 +259,8 @@
 #include "supextern.h"
 #define MSGFILE
 #include "supmsg.h"
+
+extern char *crypt(const char *, const char *);
 
 int maxchildren;
 
@@ -1691,7 +1693,7 @@ changeuid(char *namep, char *passwordp, int fileuid, int filegid)
 #else				/* CMUCS */
 	status = ACCESS_CODE_OK;
 	if (namep && strcmp(pwd->pw_name, DEFUSER) != 0)
-		if (strcmp(pwd->pw_passwd, (char *) crypt(pswdp, pwd->pw_passwd)))
+		if (strcmp(pwd->pw_passwd, crypt(pswdp, pwd->pw_passwd)))
 			status = ACCESS_CODE_BADPASSWORD;
 #endif				/* CMUCS */
 	switch (status) {
