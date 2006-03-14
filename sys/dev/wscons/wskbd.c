@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.86 2006/02/07 09:13:02 jmmv Exp $ */
+/* $NetBSD: wskbd.c,v 1.87 2006/03/14 23:41:45 uwe Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.86 2006/02/07 09:13:02 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.87 2006/03/14 23:41:45 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -793,8 +793,8 @@ wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (ENXIO);
 
 #if NWSMUX > 0
-	DPRINTF(("wskbdopen: %s mux=%p p=%p\n", sc->sc_base.me_dv.dv_xname,
-		 sc->sc_base.me_parent, p));
+	DPRINTF(("wskbdopen: %s mux=%p l=%p\n", sc->sc_base.me_dv.dv_xname,
+		 sc->sc_base.me_parent, l));
 #endif
 
 	if (sc->sc_dying)
