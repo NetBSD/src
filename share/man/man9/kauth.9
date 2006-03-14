@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.16 2006/03/12 22:15:45 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.17 2006/03/14 02:57:16 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -270,21 +270,35 @@ Return the group-id of the group at index
 .Ar idx
 in the group list of
 .Ar cred .
-.It Ft int Fn kauth_cred_addgroup "kauth_cred_t cred" "gid_t gid"
-Add group-id
-.Ar gid
-to the group list of
-.Ar cred .
+.It Ft int Fn kauth_cred_setgroups "kauth_cred_t cred" "gid_t *groups" \
+"size_t ngroups" "uid_t gmuid"
+Copy
+.Ar ngroups
+groups from array pointed to by
+.Ar groups
+to the group list in
+.Ar cred ,
+adjusting the number of groups in
+.Ar cred
+appropriately.
 .Pp
-Duplicates will be avoided, and the group list will be sorted after
-the addition.
-.It Ft int Fn kauth_cred_delgroup "kauth_cred_t cred" "gid_t gid"
-Remove group-id
-.Ar gid
-from the group list of
-.Ar cred .
+Any groups remaining will be set to an invalid value.
 .Pp
-The group list will be sorted after the removal.
+.Ar gmuid
+is unused for now, and to maintain interface compatibility with the Darwin
+KPI.
+.It Ft int Fn kauth_cred_getgroups "kauth_cred_t cred" "gid_t *groups"
+"size_t ngroups"
+Copy
+.Ar ngroups
+groups from the group list in
+.Ar cred
+to the buffer pointed to by
+.Ar groups .
+.Pp
+The number of groups in
+.Ar cred
+will be returned.
 .El
 .Sh CREDENTIAL INHERITANCE REFERENCE COUNTING
 .Nm
