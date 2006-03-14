@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.23 2006/03/12 23:41:07 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.24 2006/03/14 02:49:15 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -306,7 +306,7 @@ kauth_cred_setsvgid(kauth_cred_t cred, gid_t gid)
 int
 kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 {
-	int high, low, mid;
+	int i;
 
 	KASSERT(cred != NULL);
 	KASSERT(gid >= 0 && gid <= GID_MAX);
@@ -314,20 +314,11 @@ kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 
 	*resultp = 0;
 
-	high = cred->cr_ngroups;
-	low = -1;
-
-	while (high - low > 1) {
-		mid = (high + low) / 2;
-		if (cred->cr_groups[mid] == gid) {
+	for (i = 0; i < cred->cr_ngroups; i++)
+		if (cred->cr_groups[i] == gid) {
 			*resultp = 1;
 			break;
 		}
-		if (cred->cr_groups[mid] > gid)
-			high = mid;
-		else
-			low = mid;
-	}
 
 	return (0);
 }
@@ -352,88 +343,36 @@ kauth_cred_group(kauth_cred_t cred, uint16_t idx)
 	return (cred->cr_groups[idx]);
 }
 
-/* Sort len groups in grbuf. */
-static void
-kauth_cred_sortgroups(gid_t *grbuf, size_t len)
-{
-	int i, j;
-	gid_t v;
-
-	KASSERT(grbuf != NULL);
-
-	/* Insertion sort. */
-	for (i = 1; i < len; i++) {
-		v = grbuf[i];
-		/* find correct slot for value v, moving others up */
-		for (j = i; --j >= 0 && v < grbuf[j];)
-			grbuf[j + 1] = grbuf[j];
-		grbuf[j + 1] = v;
-	}
-}
-
-/* Add group gid to groups in cred. Maintain order. */
+/* XXX elad: gmuid is unused for now. */
 int
-kauth_cred_addgroup(kauth_cred_t cred, gid_t gid)
+kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len, uid_t gmuid)
 {
-	int ismember = 0;
-
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
+	KASSERT(len < sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]));
 
 	simple_lock(&cred->cr_lock);
 
-	if (cred->cr_ngroups >=
-	    (sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]))) {
-		simple_unlock(&cred->cr_lock);
-		return (E2BIG);
-	}
+	if (len)
+		memcpy(cred->cr_groups, grbuf, len * sizeof(cred->cr_groups[0]));
+	memset(cred->cr_groups + len, 0xff,
+	    sizeof(cred->cr_groups) - (len * sizeof(cred->cr_groups[0])));
 
-	if (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember) {
-		simple_unlock(&cred->cr_lock);
-		return (0);
-	}
-
-	cred->cr_groups[cred->cr_ngroups++] = gid;
-
-	kauth_cred_sortgroups(cred->cr_groups, cred->cr_ngroups);
+	cred->cr_ngroups = len;
 
 	simple_unlock(&cred->cr_lock);
-		
+
 	return (0);
 }
 
-/* Delete group gid from groups in cred. Maintain order. */
 int
-kauth_cred_delgroup(kauth_cred_t cred, gid_t gid)
+kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len)
 {
-	int ismember = 0;
-
 	KASSERT(cred != NULL);
-	KASSERT(gid >= 0 && gid <= GID_MAX);
+	KASSERT(len <= cred->cr_ngroups);
 
+	memset(grbuf, 0xff, sizeof(*grbuf) * len);
 	simple_lock(&cred->cr_lock);
-
-	if (kauth_cred_ismember_gid(cred, gid, &ismember) != 0 || !ismember) {
-		simple_unlock(&cred->cr_lock);
-		return (0);
-	}
-
-	if (cred->cr_ngroups == 1)
-		cred->cr_groups[0] = (gid_t)-1; /* XXX */
-	else {
-		int i;
-
-		for (i = 0; i < cred->cr_ngroups; i++)
-			if (cred->cr_groups[i] == gid) {
-				cred->cr_groups[i] = cred->cr_groups[cred->cr_ngroups - 1];
-				cred->cr_groups[cred->cr_ngroups - 1] = (gid_t)-1; /* XXX */
-			}
-	}
-
-	cred->cr_ngroups--;
-
-	kauth_cred_sortgroups(cred->cr_groups, cred->cr_ngroups);
-
+	memcpy(grbuf, cred->cr_groups, sizeof(*grbuf) * len);
 	simple_unlock(&cred->cr_lock);
 
 	return (0);
@@ -478,17 +417,19 @@ kauth_cred_getrefcnt(kauth_cred_t cred)
 void
 kauth_cred_uucvt(kauth_cred_t cred, const struct uucred *uuc)
 {
-	int i;
-
 	KASSERT(cred != NULL);
 	KASSERT(uuc != NULL);
 
 	cred->cr_refcnt = 1;
+	cred->cr_uid = uuc->cr_uid;
 	cred->cr_euid = uuc->cr_uid;
+	cred->cr_svuid = uuc->cr_uid;
+	cred->cr_gid = uuc->cr_gid;
 	cred->cr_egid = uuc->cr_gid;
+	cred->cr_svgid = uuc->cr_gid;
 	cred->cr_ngroups = min(uuc->cr_ngroups, NGROUPS);
-	for (i = 0; i < cred->cr_ngroups; i++)
-		kauth_cred_addgroup(cred, uuc->cr_groups[i]);
+	kauth_cred_setgroups(cred, __UNCONST(uuc->cr_groups),
+	    cred->cr_ngroups, -1);
 }
 
 /*
