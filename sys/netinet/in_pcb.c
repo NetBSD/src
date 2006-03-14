@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.101.4.2 2006/02/14 02:17:12 rpaulo Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.101.4.3 2006/03/14 15:41:15 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.101.4.2 2006/02/14 02:17:12 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.101.4.3 2006/03/14 15:41:15 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -260,7 +260,6 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 	if (lport) {
 		struct inpcb *t;
 #ifdef INET6
-		struct in6pcb *t6;
 		struct in6_addr mapped;
 #endif
 #ifndef IPNOPRIVPORTS
@@ -274,8 +273,8 @@ in_pcbbind(void *v, struct mbuf *nam, struct proc *p)
 		mapped.s6_addr16[5] = 0xffff;
 		memcpy(&mapped.s6_addr32[3], &sin->sin_addr,
 		    sizeof(mapped.s6_addr32[3]));
-		t6 = in6_pcblookup_port(table, &mapped, lport, wild);
-		if (t6 && (reuseport & t6->inp_socket->so_options) == 0)
+		t = in6_pcblookup_port(table, &mapped, lport, wild);
+		if (t && (reuseport & t->inp_socket->so_options) == 0)
 			return (EADDRINUSE);
 #endif
 		if (so->so_uidinfo->ui_uid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
