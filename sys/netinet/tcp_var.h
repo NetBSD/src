@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.133.4.1 2006/03/14 17:07:21 rpaulo Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.133.4.2 2006/03/14 17:45:28 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -826,7 +826,7 @@ struct tcpcb *
 	 tcp_newtcpcb(int, void *);
 void	 tcp_notify(struct inpcb *, int);
 #ifdef INET6
-void	 tcp6_notify(struct in6pcb *, int);
+void	 tcp6_notify(struct inpcb *, int);
 #endif
 u_int	 tcp_optlen(struct tcpcb *);
 int	 tcp_output(struct tcpcb *);
@@ -834,7 +834,7 @@ void	 tcp_pulloutofband(struct socket *,
 	    struct tcphdr *, struct mbuf *, int);
 void	 tcp_quench(struct inpcb *, int);
 #ifdef INET6
-void	 tcp6_quench(struct in6pcb *, int);
+void	 tcp6_quench(struct inpcb *, int);
 #endif
 void	 tcp_mtudisc(struct inpcb *, int);
 
