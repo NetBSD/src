@@ -1,4 +1,4 @@
-/*	$NetBSD: vprintf.c,v 1.8 2002/07/10 20:19:48 wiz Exp $	*/
+/*	$NetBSD: vprintf.c,v 1.9 2006/03/14 17:42:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -54,7 +54,7 @@
  */
 
 #include <stdio.h>
-#include <varargs.h>
+#include <stdarg.h>
 
 #ifdef _IOSTRG
 #define STRFLAG	(_IOSTRG|_IOWRT)/* no _IOWRT: avoid stdio bug */
