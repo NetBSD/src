@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.5 2006/03/14 22:59:32 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.6 2006/03/14 23:03:45 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.5 2006/03/14 22:59:32 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.6 2006/03/14 23:03:45 uwe Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -120,7 +120,7 @@ static struct wskbd_mapdata hpf1275a_wskbd_keymapdata = {
 
 
 /* F1275A scancodes -> XT scancodes so that we can use pckbd_keydesctab. */
-static uint8_t hpf1275a_to_xtscan[128] = {
+static const uint8_t hpf1275a_to_xtscan[128] = {
 	[0x04] = 30,		/* a */
 	[0x05] = 48,		/* b */
 	[0x06] = 46,		/* c */
@@ -375,7 +375,7 @@ hpf1275a_input(int c, struct tty *tp)
 
 	xtscan = hpf1275a_to_xtscan[code];
 	if (xtscan == 0) {
-		printf("hpf1275a: unknown code 0x%x\n", code);
+		printf("%s: unknown code 0x%x\n", sc->sc_dev.dv_xname, code);
 		return (0);
 	}
 
