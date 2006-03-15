@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 2006/03/12 02:04:26 christos Exp $     */
+/*	$NetBSD: trap.c,v 1.101 2006/03/15 18:12:03 drochner Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 2006/03/12 02:04:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2006/03/15 18:12:03 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -222,7 +222,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		} else
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
-		rv = uvm_fault(map, addr, 0, ftype);
+		rv = uvm_fault(map, addr, ftype);
 		if (rv != 0) {
 			if (umode == 0) {
 				KERNEL_UNLOCK();
