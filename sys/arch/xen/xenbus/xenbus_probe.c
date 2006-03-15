@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -190,6 +190,8 @@ read_otherend_details(struct xenbus_device *xendev,
 				 path_node, xendev->xbusd_path);
 		return err;
 	}
+	DPRINTK("read_otherend_details: read %s/%s returned %s\n",
+	    xendev->xbusd_path, path_node, val);
 	xendev->xbusd_otherend = val;
 
 	if (strlen(xendev->xbusd_otherend) == 0 ||
@@ -220,14 +222,14 @@ read_frontend_details(struct xenbus_device *xendev)
 }
 #endif
 
-
-#if 0
+#if unused
 static void
 free_otherend_details(struct xenbus_device *dev)
 {
 	free(dev->xbusd_otherend, M_DEVBUF);
 	dev->xbusd_otherend = NULL;
 }
+#endif
 
 
 static void
@@ -235,11 +237,12 @@ free_otherend_watch(struct xenbus_device *dev)
 {
 	if (dev->xbusd_otherend_watch.node) {
 		unregister_xenbus_watch(&dev->xbusd_otherend_watch);
-		// XXX free(dev->xbusd_otherend_watch.node, M_DEVBUF);
+		free(dev->xbusd_otherend_watch.node, M_DEVBUF);
 		dev->xbusd_otherend_watch.node = NULL;
 	}
 }
 
+#if 0
 
 /* Bus type for frontend drivers. */
 static int xenbus_probe_frontend(const char *type, const char *name);
@@ -363,50 +366,41 @@ static struct xen_bus_type xenbus_backend = {
 	.levels = 3, 		/* backend/type/<frontend>/<id> */
 };
 
-#if 0
 static void
 otherend_changed(struct xenbus_watch *watch,
 			     const char **vec, unsigned int len)
 {
-	struct xenbus_device *dev =
-		container_of(watch, struct xenbus_device, otherend_watch);
-	struct xenbus_driver *drv = to_xenbus_driver(dev->dev.driver);
+	struct xenbus_device *xdev = watch->xbw_dev;
 	XenbusState state;
 
 	/* Protect us against watches firing on old details when the otherend
 	   details change, say immediately after a resume. */
-	if (!dev->xbusd_otherend ||
-	    strncmp(dev->xbusd_otherend, vec[XS_WATCH_PATH],
-		    strlen(dev->xbusd_otherend))) {
+	if (!xdev->xbusd_otherend ||
+	    strncmp(xdev->xbusd_otherend, vec[XS_WATCH_PATH],
+		    strlen(xdev->xbusd_otherend))) {
 		DPRINTK("Ignoring watch at %s", vec[XS_WATCH_PATH]);
 		return;
 	}
 
-	state = xenbus_read_driver_state(dev->xbusd_otherend);
+	state = xenbus_read_driver_state(xdev->xbusd_otherend);
 
 	DPRINTK("state is %d, %s, %s",
-		state, dev->xbusd_otherend_watch.node, vec[XS_WATCH_PATH]);
-	if (drv->otherend_changed)
-		drv->otherend_changed(dev, state);
+		state, xdev->xbusd_otherend_watch.node, vec[XS_WATCH_PATH]);
+	if (xdev->xbusd_otherend_changed)
+		xdev->xbusd_otherend_changed(xdev->xbusd_data, state);
 }
 
 static int
 talk_to_otherend(struct xenbus_device *dev)
 {
-	struct xenbus_driver *drv = to_xenbus_driver(dev->dev.driver);
-	int err;
-
 	free_otherend_watch(dev);
-	free_otherend_details(dev);
-
-	err = drv->read_otherend_details(dev);
-	if (err)
-		return err;
 
 	return xenbus_watch_path2(dev, dev->xbusd_otherend, "state",
-				  &dev->otherend_watch, otherend_changed);
+				  &dev->xbusd_otherend_watch,
+				  otherend_changed);
 }
 
+#if 0
 
 static int
 xenbus_dev_probe(struct device *_dev)
@@ -788,6 +782,7 @@ xenbus_probe_device_type(struct xen_bus_type *bus, const char *type)
 		snprintf(__UNCONST(xbusd->xbusd_path),
 		    sizeof(xbusd->xbusd_path), "%s/%s/%s",
 		    bus->root, type, dir[i]);
+		xbusd->xbusd_otherend_watch.xbw_dev = xbusd;
 		DPRINTK("xenbus_probe_device_type probe %s\n",
 		    xbusd->xbusd_path);
 		xa.xa_xbusd = xbusd;
@@ -809,6 +804,9 @@ xenbus_probe_device_type(struct xen_bus_type *bus, const char *type)
 		if (config_found_ia(xenbus_device, "xenbus", &xa,
 		    xenbus_print) == NULL)
 			free(xbusd, M_DEVBUF);
+		else {
+			talk_to_otherend(xbusd);
+		}
 	}
 	free(dir, M_DEVBUF);
 	return err;
@@ -941,15 +939,9 @@ backend_changed(struct xenbus_watch *watch,
 
 
 /* We watch for devices appearing and vanishing. */
-static struct xenbus_watch fe_watch = {
-	.node = "device",
-	.callback = frontend_changed,
-};
+static struct xenbus_watch fe_watch;
 
-static struct xenbus_watch be_watch = {
-	.node = "backend",
-	.callback = backend_changed,
-};
+static struct xenbus_watch be_watch;
 
 #if 0
 static int suspend_dev(struct device *dev, void *data)
@@ -1058,7 +1050,13 @@ xenbus_probe(void *unused)
 	xenbus_probe_devices(&xenbus_backend);
 
 	/* Watch for changes. */
+	fe_watch.node = malloc(strlen("device" + 1), M_DEVBUF, M_NOWAIT);
+	strcpy(fe_watch.node, "device");
+	fe_watch.xbw_callback = frontend_changed;
 	register_xenbus_watch(&fe_watch);
+	be_watch.node = malloc(strlen("backend" + 1), M_DEVBUF, M_NOWAIT);
+	strcpy(be_watch.node, "backend");
+	be_watch.xbw_callback = backend_changed;
 	register_xenbus_watch(&be_watch);
 
 	/* Notify others that xenstore is up */

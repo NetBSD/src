@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -79,6 +79,7 @@ struct xs_handle {
 	/* A list of replies. Currently only one will ever be outstanding. */
 	SIMPLEQ_HEAD(, xs_stored_msg) reply_list;
 	struct simplelock reply_lock;
+	struct lock xs_lock; /* serialize access to xenstore */
 	int suspend_spl;
 
 };
@@ -136,6 +137,8 @@ read_reply(enum xsd_sockmsg_type *type, unsigned int *len)
 	if (len)
 		*len = msg->hdr.len;
 	body = msg->u.reply.body;
+	DPRINTK("read_reply: type %d body %s\n",
+	    msg->hdr.type, body);
 
 	free(msg, M_DEVBUF);
 
@@ -165,6 +168,9 @@ xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void**reply)
 	int err = 0, s;
 
 	s = spltty();
+	err = lockmgr(&xs_state.xs_lock, LK_EXCLUSIVE, NULL);
+	if (err)
+		panic("can't get xs_state.xs_lock: %d", err);
 
 	err = xb_write(msg, sizeof(*msg) + msg->len);
 	if (err) {
@@ -174,6 +180,7 @@ xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void**reply)
 		*reply = read_reply(&msg->type, &msg->len);
 	}
 
+	lockmgr(&xs_state.xs_lock, LK_RELEASE, NULL);
 	splx(s);
 
 	return err;
@@ -201,11 +208,15 @@ xs_talkv(struct xenbus_transaction *t,
 		msg.len += iovec[i].iov_len;
 
 	s = spltty();
+	err = lockmgr(&xs_state.xs_lock, LK_EXCLUSIVE, NULL);
+	if (err)
+		panic("can't get xs_state.xs_lock: %d", err);
 
 	DPRINTK("write msg");
 	err = xb_write(&msg, sizeof(msg));
 	DPRINTK("write msg err %d", err);
 	if (err) {
+		lockmgr(&xs_state.xs_lock, LK_RELEASE, NULL);
 		splx(s);
 		return (err);
 	}
@@ -215,6 +226,7 @@ xs_talkv(struct xenbus_transaction *t,
 		err = xb_write(iovec[i].iov_base, iovec[i].iov_len);;
 		DPRINTK("write iovect err %d", err);
 		if (err) {
+			lockmgr(&xs_state.xs_lock, LK_RELEASE, NULL);
 			splx(s);
 			return (err);
 		}
@@ -224,6 +236,7 @@ xs_talkv(struct xenbus_transaction *t,
 	ret = read_reply(&msg.type, len);
 	DPRINTK("read done");
 
+	lockmgr(&xs_state.xs_lock, LK_RELEASE, NULL);
 	splx(s);
 
 	if (msg.type == XS_ERROR) {
@@ -695,8 +708,9 @@ xenwatch_thread(void *unused)
 			simple_lock(&watch_events_lock);
 			SIMPLEQ_REMOVE_HEAD(&watch_events, msg_next);
 			simple_unlock(&watch_events_lock);
+			DPRINTK("xenwatch_thread: got event\n");
 
-			msg->u.watch.handle->callback(
+			msg->u.watch.handle->xbw_callback(
 				msg->u.watch.handle,
 				(const char **)msg->u.watch.vec,
 				msg->u.watch.vec_size);
@@ -742,7 +756,7 @@ process_msg(void)
 	body[msg->hdr.len] = '\0';
 
 	if (msg->hdr.type == XS_WATCH_EVENT) {
-		DPRINTK("process_msg: XS_WATCH_EVENT");
+		DPRINTK("process_msg: XS_WATCH_EVENT\n");
 		msg->u.watch.vec = split(body, msg->hdr.len,
 					 &msg->u.watch.vec_size);
 		if (msg->u.watch.vec == NULL) {
@@ -766,7 +780,8 @@ process_msg(void)
 		splx(s);
 		simple_unlock(&watches_lock);
 	} else {
-		DPRINTK("process_msg: type %d", msg->hdr.type);
+		DPRINTK("process_msg: type %d body %s\n", msg->hdr.type, body);
+		    
 		msg->u.reply.body = body;
 		simple_lock(&xs_state.reply_lock);
 		s = spltty();
@@ -819,6 +834,7 @@ xs_init(void)
 {
 	SIMPLEQ_INIT(&xs_state.reply_list);
 	simple_lock_init(&xs_state.reply_lock);
+	lockinit(&xs_state.xs_lock, IPL_TTY, "xenst", 0, 0);
 
 	kthread_create(xenwatch_create_thread, NULL);
 
