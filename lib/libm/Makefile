@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.71 2006/01/17 13:16:08 is Exp $
+#  $NetBSD: Makefile,v 1.72 2006/03/15 22:07:09 kleink Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -218,5 +218,6 @@ MLINKS+=tan.3 tanf.3
 MLINKS+=tanh.3 tanhf.3
 MLINKS+=round.3 roundf.3
 
+.include "${.CURDIR}/gen/Makefile.inc"
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>

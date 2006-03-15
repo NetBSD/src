@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.860 2006/03/15 17:38:21 kleink Exp $
+#	$NetBSD: mi,v 1.861 2006/03/15 22:07:09 kleink Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3931,6 +3931,9 @@
 ./usr/share/man/cat3/mvwinstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwprintw.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwvline.0			comp-c-catman		.cat
+./usr/share/man/cat3/nan.0			comp-c-catman		.cat
+./usr/share/man/cat3/nanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/nanl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/napms.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nc_perror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nc_sperror.0		comp-c-catman		.cat
@@ -7892,6 +7895,9 @@
 ./usr/share/man/man3/mvwinstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvwprintw.3		comp-c-man		.man
 ./usr/share/man/man3/mvwvline.3			comp-c-man		.man
+./usr/share/man/man3/nan.3			comp-c-man		.man
+./usr/share/man/man3/nanf.3			comp-c-man		.man
+./usr/share/man/man3/nanl.3			comp-c-man		.man
 ./usr/share/man/man3/napms.3			comp-c-man		.man
 ./usr/share/man/man3/nc_perror.3		comp-c-man		.man
 ./usr/share/man/man3/nc_sperror.3		comp-c-man		.man
