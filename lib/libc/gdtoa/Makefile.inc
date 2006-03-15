@@ -1,10 +1,23 @@
-#	$NetBSD: Makefile.inc,v 1.3 2006/02/16 23:26:19 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2006/03/15 17:35:18 kleink Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
+CPPFLAGS+=-I${.CURDIR}/gdtoa
 
-CPPFLAGS+=-I${ARCHDIR}/gdtoa
 CPPFLAGS+=-DNO_FENV_H
+
+# machine-dependent directory must provide the following:
+# 	arith.h gd_qnan.h
+CPPFLAGS+=-I${ARCHDIR}/gdtoa
+
+# machine-dependent Makefile must define names of modules to use for
+# float conversions:
+# 	strtof(): strtof{,_vaxf}.c
+# and for long double conversions on platforms with extended-precision
+# format, if supported (strtod.c will define an alias otherwise):
+#	strtold(): strtold_p{x,xL,Q}.c
+#	helpers:   strtop{x,xL,Q}.c
+.include "${ARCHDIR}/gdtoa/Makefile.inc"
 
 # public interfaces
 SRCS+=	strtod.c
@@ -24,6 +37,7 @@ SRCS+=	dmisc.c \
 	ulp.c
 
 # wrappers
+SRCS+=	_strtof.c _strtold.c
 #SRCS+=	_hdtoa.c _ldtoa.c
 
 # XXX no hexadecimal floating-point string conversion for VAX FP yet

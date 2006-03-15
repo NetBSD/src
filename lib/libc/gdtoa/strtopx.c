@@ -1,4 +1,4 @@
-/* $NetBSD: strtopx.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: strtopx.c,v 1.3 2006/03/15 17:35:18 kleink Exp $ */
 
 /****************************************************************
 
@@ -60,13 +60,13 @@ strtopx(s, sp, V) CONST char *s; char **sp; void *V;
 strtopx(CONST char *s, char **sp, void *V)
 #endif
 {
-	static FPI fpi = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
+	static CONST FPI fpi = { 64, 1-16383-64+1, 32766 - 16383 - 64 + 1, 1, SI };
 	ULong bits[2];
-	Long exp;
+	Long expt;
 	int k;
 	UShort *L = (UShort*)V;
 
-	k = strtodg(s, sp, &fpi, &exp, bits);
+	k = strtodg(s, sp, &fpi, &expt, bits);
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
 	  case STRTOG_Zero:
@@ -79,7 +79,7 @@ strtopx(CONST char *s, char **sp, void *V)
 
 	  case STRTOG_Normal:
 	  case STRTOG_NaNbits:
-		L[_0] = exp + 0x3fff + 63;
+		L[_0] = expt + 0x3fff + 63;
  normal_bits:
 		L[_4] = (UShort)bits[0];
 		L[_3] = (UShort)(bits[0] >> 16);

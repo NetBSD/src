@@ -1,4 +1,4 @@
-/* $NetBSD: strtod.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: strtod.c,v 1.3 2006/03/15 17:35:18 kleink Exp $ */
 
 /****************************************************************
 
@@ -58,6 +58,11 @@ static CONST double tinytens[] = { 1e-16, 1e-32, 1e-64, 1e-128,
 #define Check_FLT_ROUNDS
 #else
 #define Rounding Flt_Rounds
+#endif
+
+#ifndef __HAVE_LONG_DOUBLE
+__strong_alias(_strtold, strtod)
+__weak_alias(strtold, _strtold)
 #endif
 
  double
