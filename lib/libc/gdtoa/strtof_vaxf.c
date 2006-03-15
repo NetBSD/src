@@ -1,4 +1,4 @@
-/* $NetBSD: strtof.c,v 1.2 2006/03/15 17:35:18 kleink Exp $ */
+/* $NetBSD: strtof_vaxf.c,v 1.1 2006/03/15 17:35:18 kleink Exp $ */
 
 /****************************************************************
 
@@ -31,11 +31,13 @@ THIS SOFTWARE.
 /* Please send bug reports to David M. Gay (dmg at acm dot org,
  * with " at " changed at "@" and " dot " changed to ".").	*/
 
+/* Adapted to VAX F_floating by Klaus Klein <kleink@netbsd.org>. */
+
 #include "namespace.h"
 #include "gdtoaimp.h"
 
 #ifdef __weak_alias
-__weak_alias(strtof, _strtof)
+__weak_alias(strtold, _strtold)
 #endif
 
  float
@@ -45,7 +47,7 @@ strtof(s, sp) CONST char *s; char **sp;
 strtof(CONST char *s, char **sp)
 #endif
 {
-	static CONST FPI fpi = { 24, 1-127-24+1,  254-127-24+1, 1, SI };
+	static CONST FPI fpi = { 24, 1-128-1-24+1,  255-128-1-24+1, 1, SI };
 	ULong bits[1];
 	Long expt;
 	int k;
@@ -59,22 +61,17 @@ strtof(CONST char *s, char **sp)
 		break;
 
 	  case STRTOG_Normal:
-	  case STRTOG_NaNbits:
-		u.L[0] = (bits[0] & 0x7fffff) | ((expt + 0x7f + 23) << 23);
-		break;
-
-	  case STRTOG_Denormal:
-		u.L[0] = bits[0];
+		u.L[0] = ((bits[0] & 0x0000ffff) << 16)	| /* FracLo */
+			 ((bits[0] & 0x007f0000) >> 16)	| /* FracHi */
+			 ((expt + 128 + 1 + 23)  <<  7);  /* Exp */
 		break;
 
 	  case STRTOG_Infinite:
-		u.L[0] = 0x7f800000;
+		u.L[0] = 0xffff7fff;
 		break;
 
-	  case STRTOG_NaN:
-		u.L[0] = f_QNAN;
 	  }
 	if (k & STRTOG_Neg)
-		u.L[0] |= 0x80000000L;
+		u.L[0] |= 0x00008000L;
 	return u.f;
 	}

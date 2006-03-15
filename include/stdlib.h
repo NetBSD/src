@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.75 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.76 2006/03/15 17:35:17 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -214,6 +214,8 @@ long long int	strtoll(const char * __restrict, char ** __restrict, int);
 /* LONGLONG */
 unsigned long long int
 		strtoull(const char * __restrict, char ** __restrict, int);
+float		strtof(const char * __restrict, char ** __restrict);
+long double	strtold(const char * __restrict, char ** __restrict);
 #endif
 
 /*
