@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.22 2006/03/08 23:46:23 lukem Exp $	*/
+/*	$NetBSD: est.c,v 1.23 2006/03/15 01:31:20 dogcow Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.22 2006/03/08 23:46:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.23 2006/03/15 01:31:20 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,25 +411,34 @@ static const struct fqlist pentium_m[] = { /* Banias */
 };
 
 static const struct fqlist pentium_m_dothan[] = {
+
+	/* low voltage CPUs */
 	ENTRY("1.00", 0x06d8, pentium_m_n723),
 	ENTRY("1.10", 0x06d6, pentium_m_n733),
 	ENTRY("1.20", 0x06d8, pentium_m_n753),
 	ENTRY("1.30", 0, pentium_m_n773), /*Intel is iffy over its existence*/
-	ENTRY("1.40", 0x06d6, pentium_m_n710),
-	ENTRY("1.40", 0x06d8, pentium_m_n738),
-	ENTRY("1.50", 0x06d6, pentium_m_n715),
+	
+	/* ultra low voltage CPUs */
+	ENTRY("1.40", 0x06d6, pentium_m_n738),
 	ENTRY("1.50", 0x06d8, pentium_m_n758),
-	ENTRY("1.60", 0x06d6, pentium_m_n725),
-	ENTRY("1.60", 0, pentium_m_n730),
 	ENTRY("1.60", 0x06d8, pentium_m_n778),
+
+	/* 'regular' 400MHz FSB CPUs */
+	ENTRY("1.40", 0x06d6, pentium_m_n710), /* does this exist? */
+	ENTRY("1.50", 0x06d6, pentium_m_n715),
+	ENTRY("1.60", 0x06d6, pentium_m_n725),
 	ENTRY("1.70", 0x06d6, pentium_m_n735),
-	ENTRY("1.73", 0x06d8, pentium_m_n740),
 	ENTRY("1.80", 0x06d6, pentium_m_n745),
-	ENTRY("1.86", 0x06d8, pentium_m_n750),
 	ENTRY("2.00", 0x06d6, pentium_m_n755),
-	ENTRY("2.00", 0x06d8, pentium_m_n760),
 	ENTRY("2.10", 0x06d6, pentium_m_n765),
+
+	/* 533MHz FSB CPUs */
+	ENTRY("1.60", 0x06d8, pentium_m_n730),
+	ENTRY("1.73", 0x06d8, pentium_m_n740),
+	ENTRY("1.86", 0x06d8, pentium_m_n750),
+	ENTRY("2.00", 0x06d8, pentium_m_n760),
 	ENTRY("2.13", 0x06d8, pentium_m_n770),
+
 };
 #undef ENTRY
 
@@ -566,21 +575,20 @@ est_init(struct cpu_info *ci)
 	}
 
 	fsbmult = cpuidtofsb[0].multiplier; /* default for un-CPUID'ed*/
+
+	j = -1;
 	for (i = 0; i < NUMFSBENTS; i++) {
 		if (est_fqlist->cpu_id == cpuidtofsb[i].cpu_id) {
 			fsbmult = cpuidtofsb[i].multiplier;
-			break;
+			/* Since there can be different CPUs with the same
+			   CPUID but different operating points, check here. */
+			for (j = est_fqlist->tablec - 1; j >= 0; j--)
+				if (est_fqlist->table[j].mv == mv) break;
+		if (j != -1) break;
 		}
 	}
 
-	/*
-	 * Check that the current operating point is in our list.
-	 * (now a sanity check, as the cpuid should be authoritative.)
-	 */
-	for (i = est_fqlist->tablec - 1; i >= 0; i--)
-		if (est_fqlist->table[i].mv == mv)
-			break;
-	if (i < 0) {
+	if (j < 0) {
 		aprint_normal("operating point not in table\n");
 		est_fqlist = NULL;	/* flag as not functional */
 		return;
@@ -589,7 +597,7 @@ est_init(struct cpu_info *ci)
 	/*
 	 * OK, tell the user the available frequencies.
 	 */
-	aprint_normal("%d MHz\n", est_fqlist->table[i].mhz);
+	aprint_normal("%d MHz\n", est_fqlist->table[j].mhz);
 	
 	freq_len = est_fqlist->tablec * (sizeof("9999 ")-1) + 1;
 	freq_names = malloc(freq_len, M_SYSCTLDATA, M_WAITOK);
