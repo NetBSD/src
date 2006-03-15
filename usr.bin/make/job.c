@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.109 2006/03/13 20:35:09 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.110 2006/03/15 20:33:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.109 2006/03/13 20:35:09 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.110 2006/03/15 20:33:19 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.109 2006/03/13 20:35:09 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.110 2006/03/15 20:33:19 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -268,7 +268,6 @@ static const char *shellArgv = NULL;		  /* Custom shell args */
 
 
 static int  	maxJobs;    	/* The most children we can run at once */
-STATIC int     	nJobs;	    	/* The number of children currently running */
 STATIC Lst     	jobs;		/* The structures that describe them */
 static Boolean	wantToken;	/* we want a token */
 
@@ -1029,7 +1028,6 @@ JobFinish(Job *job, int *status)
 	    }
 	    job->flags &= ~JOB_CONTINUING;
  	    Lst_AtEnd(jobs, (ClientData)job);
-	    nJobs += 1;
 	    if (DEBUG(JOB)) {
 		(void)fprintf(stdout, "Process %d is continuing.\n",
 			       job->pid);
@@ -1206,7 +1204,7 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	 * commands
 	 */
 	if ((DEFAULT != NILGNODE) && !Lst_IsEmpty(DEFAULT->commands) &&
-	    (gn->type & OP_SPECIAL) == 0) {
+		(gn->type & OP_SPECIAL) == 0) {
 	    char *p1;
 	    /*
 	     * Make only looks for a .DEFAULT if the node was never the
@@ -1411,7 +1409,6 @@ JobExec(Job *job, char **argv)
 	printf("JobExec(%s): pid %d added to jobs table\n",
 		job->node->name, job->pid);
     }
-    nJobs += 1;
     (void)Lst_AtEnd(jobs, (ClientData)job);
     JobSigUnlock(&mask);
 }
@@ -1542,6 +1539,9 @@ JobRestart(Job *job)
  * Side Effects:
  *	A new Job node is created and added to the list of running
  *	jobs. PMake is forked and a child shell created.
+ *
+ * NB: I'm fairly sure that this code is never called with JOB_SPECIAL set
+ *     JOB_IGNDOTS is never set (dsl)
  *-----------------------------------------------------------------------
  */
 static int
@@ -1677,6 +1677,8 @@ JobStart(GNode *gn, int flags)
      * If we're not supposed to execute a shell, don't.
      */
     if (noExec) {
+	if (!(job->flags & JOB_SPECIAL))
+	    Job_TokenReturn();
 	/*
 	 * Unlink and close the command file if we opened one
 	 */
@@ -1700,8 +1702,6 @@ JobStart(GNode *gn, int flags)
 				    JobSaveCommand,
 				   (ClientData)job->node);
 		}
-		if (!(job->flags & JOB_SPECIAL))
-		    Job_TokenReturn();
 		job->node->made = MADE;
 		Make_Update(job->node);
 	    }
@@ -2011,7 +2011,7 @@ JobRun(GNode *targ)
     (void)Make_Run(lst);
     Lst_Destroy(lst, NOFREE);
     JobStart(targ, JOB_SPECIAL);
-    while (nJobs) {
+    while (jobTokensRunning) {
 	Job_CatchOutput();
 	Job_CatchChildren(!usePipes);
     }
@@ -2057,7 +2057,7 @@ Job_CatchChildren(Boolean block)
     /*
      * Don't even bother if we know there's no one around.
      */
-    if (nJobs == 0) {
+    if (jobTokensRunning == 0) {
 	return;
     }
 
@@ -2087,7 +2087,6 @@ Job_CatchChildren(Boolean block)
 	} else {
 	    job = (Job *)Lst_Datum(jnode);
 	    (void)Lst_Remove(jobs, jnode);
-	    nJobs -= 1;
 	}
 
 	JobFinish(job, &status);
@@ -2219,7 +2218,6 @@ Job_Init(int maxproc)
     jobs =  	  Lst_Init(FALSE);
     stoppedJobs = Lst_Init(FALSE);
     maxJobs = 	  maxproc;
-    nJobs = 	  0;
     wantToken =	  FALSE;
 
     aborting = 	  0;
@@ -2336,7 +2334,7 @@ static void JobSigReset(void)
 Boolean
 Job_Empty(void)
 {
-    if (nJobs != 0)
+    if (jobTokensRunning != 0)
 	return FALSE;
 
     if (Lst_IsEmpty(stoppedJobs) || aborting)
@@ -2695,7 +2693,7 @@ void
 Job_Wait(void)
 {
     aborting = ABORT_WAIT;
-    while (nJobs != 0) {
+    while (jobTokensRunning != 0) {
 	Job_CatchOutput();
 	Job_CatchChildren(!usePipes);
     }
@@ -2726,7 +2724,7 @@ Job_AbortAll(void)
 
     aborting = ABORT_ERROR;
 
-    if (nJobs) {
+    if (jobTokensRunning) {
 
 	JobSigLock(&mask);
 	(void)Lst_Open(jobs);
