@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.29.6.2 2006/02/28 21:01:52 kardel Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.29.6.3 2006/03/15 22:52:05 kardel Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.2 2006/02/28 21:01:52 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.3 2006/03/15 22:52:05 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.2 2006/02/28 21:01:52 kardel
 
 #include <machine/cpu.h>
 
-#ifdef NTP
 /*
  * Single-precision macros for 64-bit machines
  */
@@ -78,6 +77,7 @@ typedef int64_t l_fp;
 #define L_LINT(v, a)	((v) = (int64_t)(a) << 32)
 #define L_GINT(v)	((v) < 0 ? -(-(v) >> 32) : (v) >> 32)
 
+#ifdef NTP
 /*
  * Generic NTP kernel interface
  *
@@ -1060,7 +1060,7 @@ sys_ntp_gettime(l, v, retval)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.2 2006/02/28 21:01:52 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.3 2006/03/15 22:52:05 kardel Exp $");
 
 #include "opt_ntp.h"
 
