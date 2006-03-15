@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtod.3,v 1.18 2006/03/15 17:35:18 kleink Exp $
+.\"	$NetBSD: strtod.3,v 1.19 2006/03/15 20:08:24 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -81,13 +81,20 @@ to
 .Em long double
 representation.
 .Pp
-The expected form of the string is an optional plus (``+'') or minus
-sign (``\-'') followed by one of the following:
+The expected form of the string is an optional plus
+.Pq Sq +
+or minus sign
+.Pq Sq \-
+followed by one of the following:
 .Bl -dash
 .It
 a sequence of digits optionally containing
 a decimal-point character, optionally followed by an exponent.
-An exponent consists of an ``E'' or ``e'', followed by an optional plus
+An exponent consists of an
+.Sq E
+or
+.Sq e ,
+followed by an optional plus
 or minus sign, followed by a sequence of digits.
 .It
 one of
@@ -146,7 +153,8 @@ is stored in the location referenced by
 .Pp
 If the correct value would cause overflow, plus or minus
 .Dv HUGE_VAL ,
-.Dv HUGE_VALF, or
+.Dv HUGE_VALF ,
+or
 .Dv HUGE_VALL
 is returned (according to the return type and sign of the value), and
 .Dv ERANGE
