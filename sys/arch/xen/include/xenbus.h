@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.1 2006/03/06 20:29:52 bouyer Exp $ */
+/* $NetBSD: xenbus.h,v 1.2 2006/03/15 22:20:06 bouyer Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -56,22 +56,26 @@ struct xenbus_watch
 	SLIST_ENTRY(xenbus_watch) watch_next;
 
 	/* Path being watched. */
-	const char *node;
+	char *node;
 
 	/* Callback (executed in a process context with no locks held). */
-	void (*callback)(struct xenbus_watch *,
+	void (*xbw_callback)(struct xenbus_watch *,
 			 const char **vec, unsigned int len);
+	struct xenbus_device *xbw_dev;
 };
 
 
 /* A xenbus device. */
 struct xenbus_device {
-	const char xbusd_path[80];
-	char *xbusd_otherend;
-	int xbusd_otherend_id;
-	struct xenbus_watch xbusd_otherend_watch;
-	int xbusd_has_error;
+	const char xbusd_path[80]; /* our path */
+	char *xbusd_otherend; /* the otherend path */
+	int xbusd_otherend_id; /* the otherend's id */
+	/* callback for otherend change */
+	void (*xbusd_otherend_changed)(void *, XenbusState);
 	void *xbusd_data;
+	int xbusd_has_error;
+	/* for xenbus internal use */
+	struct xenbus_watch xbusd_otherend_watch;
 };
 
 struct xenbus_device_id
