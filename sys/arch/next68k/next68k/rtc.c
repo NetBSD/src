@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.12 2006/03/14 02:52:48 christos Exp $        */
+/*      $NetBSD: rtc.c,v 1.13 2006/03/15 15:39:26 christos Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.12 2006/03/14 02:52:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.13 2006/03/15 15:39:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -301,9 +301,9 @@ setsecs(time_t secs)
 #endif
 
 	if (new_clock) {
-		rtc_write(RTC_CNTR0, (secs << 24) & 0xff);
-		rtc_write(RTC_CNTR1, (secs << 16) & 0xff);
-		rtc_write(RTC_CNTR2, (secs <<	 8) & 0xff);
+		rtc_write(RTC_CNTR0, (secs >> 24) & 0xff);
+		rtc_write(RTC_CNTR1, (secs >> 16) & 0xff);
+		rtc_write(RTC_CNTR2, (secs >> 8) & 0xff);
 		rtc_write(RTC_CNTR3, (secs) & 0xff);
 
 	} else {
