@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.105 2006/01/24 13:02:58 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.106 2006/03/15 10:40:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.105 2006/01/24 13:02:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.106 2006/03/15 10:40:30 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1152,6 +1152,13 @@ m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
 	KASSERT((flags & M_COPYBACK0_PRESERVE) == 0 || cp == NULL);
 	KASSERT((flags & M_COPYBACK0_COPYBACK) == 0 || cp != NULL);
 
+	/*
+	 * we don't bother to update "totlen" in the case of M_COPYBACK0_COW,
+	 * assuming that M_COPYBACK0_EXTEND and M_COPYBACK0_COW are exclusive.
+	 */
+
+	KASSERT((~flags & (M_COPYBACK0_EXTEND|M_COPYBACK0_COW)) != 0);
+
 	mp = mp0;
 	m = *mp;
 	while (off > (mlen = m->m_len)) {
@@ -1288,8 +1295,10 @@ m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
 		mp = &m->m_next;
 		m = m->m_next;
 	}
-out:	if (((m = *mp0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
+out:	if (((m = *mp0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen)) {
+		KASSERT((flags & M_COPYBACK0_EXTEND) != 0);
 		m->m_pkthdr.len = totlen;
+	}
 
 	return 0;
 
