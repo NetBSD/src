@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.63 2006/01/25 15:43:01 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.64 2006/03/15 17:35:18 kleink Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -50,6 +50,7 @@ MLINKS+=rand48.3 srand48.3 rand48.3 seed48.3 rand48.3 lcong48.3
 MLINKS+=random.3 initstate.3 random.3 setstate.3 random.3 srandom.3
 MLINKS+=radixsort.3 sradixsort.3
 MLINKS+=strsuftoll.3 strsuftollx.3
+MLINKS+=strtod.3 strtof.3 strtod.3 strtold.3
 MLINKS+=strtol.3 strtoimax.3
 MLINKS+=strtol.3 strtoll.3
 MLINKS+=strtol.3 strtoq.3

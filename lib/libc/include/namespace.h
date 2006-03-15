@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.110 2006/01/26 12:37:11 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.111 2006/03/15 17:35:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -61,7 +61,9 @@
 #define strerror_r	_strerror_r
 #define strlcat		_strlcat
 #define strlcpy		_strlcpy
+#define strtof		_strtof
 #define strtoimax	_strtoimax
+#define strtold		_strtold
 #define strtoll		_strtoll
 #define strtoull	_strtoull
 #define strtoumax	_strtoumax
