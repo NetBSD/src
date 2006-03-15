@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.859 2006/03/11 15:47:09 kleink Exp $
+#	$NetBSD: mi,v 1.860 2006/03/15 17:38:21 kleink Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4485,10 +4485,12 @@
 ./usr/share/man/cat3/strsvis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strsvisx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtod.0			comp-c-catman		.cat
+./usr/share/man/cat3/strtof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoimax.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strtok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtok_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtol.0			comp-c-catman		.cat
+./usr/share/man/cat3/strtold.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoq.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoul.0			comp-c-catman		.cat
@@ -8439,10 +8441,12 @@
 ./usr/share/man/man3/strsvis.3			comp-c-man		.man
 ./usr/share/man/man3/strsvisx.3			comp-c-man		.man
 ./usr/share/man/man3/strtod.3			comp-c-man		.man
+./usr/share/man/man3/strtof.3			comp-c-man		.man
 ./usr/share/man/man3/strtoimax.3		comp-c-man		.man
 ./usr/share/man/man3/strtok.3			comp-c-man		.man
 ./usr/share/man/man3/strtok_r.3			comp-c-man		.man
 ./usr/share/man/man3/strtol.3			comp-c-man		.man
+./usr/share/man/man3/strtold.3			comp-c-man		.man
 ./usr/share/man/man3/strtoll.3			comp-c-man		.man
 ./usr/share/man/man3/strtoq.3			comp-c-man		.man
 ./usr/share/man/man3/strtoul.3			comp-c-man		.man

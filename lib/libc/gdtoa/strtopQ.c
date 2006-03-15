@@ -1,4 +1,4 @@
-/* $NetBSD: strtopQ.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: strtopQ.c,v 1.3 2006/03/15 17:35:18 kleink Exp $ */
 
 /****************************************************************
 
@@ -58,13 +58,13 @@ strtopQ(s, sp, V) CONST char *s; char **sp; void *V;
 strtopQ(CONST char *s, char **sp, void *V)
 #endif
 {
-	static FPI fpi = { 113, 1-16383-113+1, 32766 - 16383 - 113 + 1, 1, SI };
+	static CONST FPI fpi = { 113, 1-16383-113+1, 32766 - 16383 - 113 + 1, 1, SI };
 	ULong bits[4];
-	Long exp;
+	Long expt;
 	int k;
 	ULong *L = (ULong*)V;
 
-	k = strtodg(s, sp, &fpi, &exp, bits);
+	k = strtodg(s, sp, &fpi, &expt, bits);
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
 	  case STRTOG_Zero:
@@ -76,7 +76,7 @@ strtopQ(CONST char *s, char **sp, void *V)
 		L[_3] = bits[0];
 		L[_2] = bits[1];
 		L[_1] = bits[2];
-		L[_0] = (bits[3] & ~0x10000) | ((exp + 0x3fff + 112) << 16);
+		L[_0] = (bits[3] & ~0x10000) | ((expt + 0x3fff + 112) << 16);
 		break;
 
 	  case STRTOG_Denormal:
