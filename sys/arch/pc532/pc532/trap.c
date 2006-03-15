@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 2006/03/11 13:52:59 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.74 2006/03/15 18:12:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2006/03/11 13:52:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2006/03/15 18:12:03 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -410,7 +410,7 @@ trap(frame)
 #endif
 
 		/* Fault the original page in. */
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 		if (rv == 0) {
 			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
@@ -427,7 +427,7 @@ trap(frame)
 				frame.tf_regs.r_pc = (int)curpcb->pcb_onfault;
 				return;
 			}
-			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
+			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
