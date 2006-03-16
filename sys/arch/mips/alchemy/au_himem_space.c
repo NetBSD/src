@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.2 2006/02/19 00:16:54 gdamore Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.3 2006/03/16 14:19:04 simonb Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.2 2006/02/19 00:16:54 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.3 2006/03/16 14:19:04 simonb Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -102,7 +102,7 @@ typedef struct au_himem_cookie {
 	struct extent	*c_extent;
 } au_himem_cookie_t;
 
-int au_himem_map(void *, bus_addr_t, bus_addr_t, int,
+int au_himem_map(void *, bus_addr_t, bus_size_t, int,
     bus_space_handle_t *, int);	
 void au_himem_unmap(void *, bus_space_handle_t, bus_size_t, int);
 void *au_himem_vaddr(void *, bus_space_handle_t);
