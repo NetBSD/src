@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.864 2006/03/16 17:38:46 jwise Exp $
+# $NetBSD: mi,v 1.865 2006/03/16 17:56:20 jwise Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1702,7 +1702,7 @@
 ./usr/share/man/cat8/atari/installboot.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/atari/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/atrun.0			man-cron-catman		.cat
-./usr/share/man/cat8/authpf.0			man-pf-cat		pf,.cat
+./usr/share/man/cat8/authpf.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat8/bad144.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/badsect.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
@@ -3878,7 +3878,7 @@
 ./usr/share/man/man5/pcre_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/pf.boot.conf.5		man-pf-man		pf,.man
 ./usr/share/man/man5/pf.conf.5			man-pf-man		pf,.man
-./usr/share/man/man5/pf.os.5			man-pf-sysman		pf,.man
+./usr/share/man/man5/pf.os.5			man-pf-man		pf,.man
 ./usr/share/man/man5/pfspamd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/phones.5			man-uucp-man		.man
 ./usr/share/man/man5/pim6dd.conf.5		man-obsolete		obsolete
