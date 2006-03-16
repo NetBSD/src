@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.1 2006/03/09 20:17:27 garbled Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.2 2006/03/16 17:43:34 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.1 2006/03/09 20:17:27 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.2 2006/03/16 17:43:34 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,11 +76,15 @@ static int
 wdc_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pnpbus_dev_attach_args *pna = aux;
+	int ret = 0;
 
 	if (strcmp(pna->pna_devid, "PNP0600") == 0)
-		return (1);
+		ret = 1;
 
-	return (0);
+	if (ret)
+		pnpbus_scan(pna, pna->pna_ppc_dev);
+
+	return ret;
 }
 
 static void
@@ -90,10 +94,6 @@ wdc_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	struct wdc_regs *wdr;
 	struct pnpbus_dev_attach_args *pna = aux;
 	int cmd_iobase, cmd_len, aux_iobase, aux_len, i;
-
-	pnpbus_scan(pna, pna->pna_ppc_dev);
-
-	pnpbus_print_devres(pna);
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
