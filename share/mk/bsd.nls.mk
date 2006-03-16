@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.45 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.nls.mk,v 1.46 2006/03/16 18:43:34 jwise Exp $
 
 .include <bsd.init.mk>
 
@@ -37,7 +37,7 @@ nlsinstall::	# ensure existence
 __nlsinstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${NLSOWN} -g ${NLSGRP} -m ${NLSMODE} \
-		${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+		${.ALLSRC} ${.TARGET}
 
 .for F in ${NLSALL:O:u}
 _F:=		${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat # installed path

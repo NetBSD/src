@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.208 2006/01/20 16:54:11 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.209 2006/03/16 18:43:34 jwise Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -239,7 +239,7 @@ proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 __proginstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${STRIPFLAG} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+		${STRIPFLAG} ${.ALLSRC} ${.TARGET}
 
 .if ${MKUPDATE} == "no"
 ${DESTDIR}${BINDIR}/${PROGNAME}! ${PROG} __proginstall
@@ -274,7 +274,7 @@ __scriptinstall: .USE
 	    -o ${SCRIPTSOWN_${.ALLSRC:T}:U${SCRIPTSOWN}} \
 	    -g ${SCRIPTSGRP_${.ALLSRC:T}:U${SCRIPTSGRP}} \
 	    -m ${SCRIPTSMODE_${.ALLSRC:T}:U${SCRIPTSMODE}} \
-	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+	    ${.ALLSRC} ${.TARGET}
 
 .for S in ${SCRIPTS:O:u}
 .if ${MKUPDATE} == "no"

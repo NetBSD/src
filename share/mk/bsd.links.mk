@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.30 2005/08/31 05:08:24 lukem Exp $
+#	$NetBSD: bsd.links.mk,v 1.31 2006/03/16 18:43:34 jwise Exp $
 
 .include <bsd.init.mk>
 
@@ -22,8 +22,8 @@ linksinstall::	realinstall
 			continue ; \
 		fi ; \
 		${_MKSHMSG_INSTALL} $$t; \
-		${_MKSHECHO} ${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
-		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
+		${_MKSHECHO} ${INSTALL_SYMLINK} $$l $$t; \
+		${INSTALL_SYMLINK} $$l $$t; \
 	 done; )
 .endif
 .if !empty(LINKS)
@@ -37,8 +37,8 @@ linksinstall::	realinstall
 			continue ; \
 		fi ; \
 		${_MKSHMSG_INSTALL} $$t; \
-		${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
-		${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
+		${_MKSHECHO} ${INSTALL_LINK} $$l $$t; \
+		${INSTALL_LINK} $$l $$t; \
 	done ; )
 .endif
 
@@ -56,8 +56,8 @@ configlinksinstall::	configfilesinstall
 			continue ; \
 		fi ; \
 		${_MKSHMSG_INSTALL} $$t; \
-		${_MKSHECHO} ${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
-		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
+		${_MKSHECHO} ${INSTALL_SYMLINK} $$l $$t; \
+		${INSTALL_SYMLINK} $$l $$t; \
 	 done; )
 .endif
 .if defined(CONFIGLINKS) && !empty(CONFIGLINKS)
@@ -71,8 +71,8 @@ configlinksinstall::	configfilesinstall
 			continue ; \
 		fi ; \
 		${_MKSHMSG_INSTALL} $$t; \
-		${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
-		${INSTALL_LINK} ${SYSPKGTAG} $$l $$t; \
+		${_MKSHECHO} ${INSTALL_LINK} $$l $$t; \
+		${INSTALL_LINK} $$l $$t; \
 	done ; )
 .endif
 
