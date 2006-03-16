@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.7 2003/08/07 11:16:17 agc Exp $	*/
+/*	$NetBSD: cu.c,v 1.8 2006/03/16 23:25:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.7 2003/08/07 11:16:17 agc Exp $");
+__RCSID("$NetBSD: cu.c,v 1.8 2006/03/16 23:25:17 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: cu.c,v 1.7 2003/08/07 11:16:17 agc Exp $");
  */
 int
 cumain(argc, argv)
+	int argc;
 	char *argv[];
 {
 	int i;
