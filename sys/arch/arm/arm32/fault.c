@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.56 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: fault.c,v 1.57 2006/03/16 15:10:06 he Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.56 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.57 2006/03/16 15:10:06 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,7 @@ data_abort_handler(trapframe_t *tf)
 
 	onfault = pcb->pcb_onfault;
 	pcb->pcb_onfault = NULL;
-	error = uvm_fault(map, va, 0, ftype);
+	error = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;
 
 	if (map != kernel_map)
@@ -848,7 +848,7 @@ prefetch_abort_handler(trapframe_t *tf)
 		l->l_flag |= L_SA_PAGEFAULT;
 	}
 
-	error = uvm_fault(map, va, 0, VM_PROT_READ);
+	error = uvm_fault(map, va, VM_PROT_READ);
 
 	if (map != kernel_map)
 		l->l_flag &= ~L_SA_PAGEFAULT;
