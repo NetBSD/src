@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.114 2006/03/09 20:17:27 garbled Exp $
+# $NetBSD: GENERIC,v 1.115 2006/03/16 17:43:34 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.114 $"
+#ident		"GENERIC-$Revision: 1.115 $"
 
 maxusers	32
 
@@ -154,6 +154,8 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	RESIDUAL_DATA_DUMP	# verbosely dump residual data
+#options		NVRAM_DUMP	# verbosely dump contents of nvram.
+				# Warning: output may not be ascii!
 
 #options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
@@ -244,6 +246,7 @@ isabeep0 at pcppi?			# "keyboard" beep
 mcclock0 at isa? port 0x70		# mc146818 and compatible
 mkclock0 at isa? port 0x74		# mk48t18 and compatible
 
+nvram*	at pnpbus?
 
 # Cryptographic Devices
 
