@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.94 2005/04/19 08:41:37 tron Exp $
+#	$NetBSD: bsd.man.mk,v 1.95 2006/03/16 18:43:34 jwise Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -46,9 +46,9 @@ __installpage: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (${_MKSHMSG_INSTALL} ${.TARGET}; \
 	     ${_MKSHECHO} "${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
-		${SYSPKGDOCTAG} ${.ALLSRC} ${.TARGET}" && \
+		${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
-		${SYSPKGDOCTAG} ${.ALLSRC} ${.TARGET})
+		${.ALLSRC} ${.TARGET})
 
 ##### Build and install rules (source form pages)
 
@@ -97,8 +97,8 @@ manlinks: .PHONY manpages				# symlink install
 		t=$${dir}${MANSUBDIR}/$${name}${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
 			${_MKSHMSG_INSTALL} $$t; \
-			${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
-			${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
+			${_MKSHECHO} ${INSTALL_LINK} $$l $$t; \
+			${INSTALL_LINK} $$l $$t; \
 		fi; \
 	done
 .endif
@@ -158,8 +158,8 @@ catlinks: .PHONY catpages				# symlink install
 		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
 			${_MKSHMSG_INSTALL} $$t; \
-			${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
-			${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
+			${_MKSHECHO} ${INSTALL_LINK} $$l $$t; \
+			${INSTALL_LINK} $$l $$t; \
 		fi; \
 	done
 .endif
