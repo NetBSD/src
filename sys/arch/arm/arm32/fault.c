@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.57 2006/03/16 15:10:06 he Exp $	*/
+/*	$NetBSD: fault.c,v 1.58 2006/03/16 18:22:16 drochner Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.57 2006/03/16 15:10:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.58 2006/03/16 18:22:16 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ data_abort_handler(trapframe_t *tf)
 			return;
 		}
 
-		printf("\nuvm_fault(%p, %lx, %x, 0) -> %x\n", map, va, ftype,
+		printf("\nuvm_fault(%p, %lx, %x) -> %x\n", map, va, ftype,
 		    error);
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
