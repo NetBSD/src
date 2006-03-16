@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.7 2006/03/14 22:03:39 cube Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.8 2006/03/16 16:05:53 cube Exp $	*/
 
 #ifndef _SPARC64_MCONTEXT_H_
 #define _SPARC64_MCONTEXT_H_
@@ -9,9 +9,9 @@
 typedef	int	__greg32_t;
 typedef	__greg32_t	__gregset32_t[_NGREG32];
 
-typedef uint32_t	netbsd32___greg32p_t;
-typedef uint32_t	netbsd32___fqp_t;
-typedef uint32_t	netbsd32___gwindows32p_t;
+typedef unsigned int	netbsd32___greg32p_t;
+typedef unsigned int	netbsd32___fqp_t;
+typedef unsigned int	netbsd32___gwindows32p_t;
 
 #define	_REG32_PSR	0
 #define	_REG32_PC	1
@@ -62,7 +62,7 @@ typedef struct {
 /* `Extra Register State'(?) */
 typedef struct {
 	unsigned int	__xrs_id;	/* See below */
-	uint32_t	__xrs_ptr;	/* points into filler area */
+	unsigned int	__xrs_ptr;	/* points into filler area */
 } __xrs32_t;
 
 typedef struct {
