@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.43 2006/03/06 22:04:18 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.44 2006/03/16 23:02:50 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.43 2006/03/06 22:04:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.44 2006/03/16 23:02:50 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -787,16 +787,21 @@ xen_network_handler(void *arg)
 			 * memory, copy data and push the receive
 			 * buffer back to the hypervisor.
 			 */
-			m->m_len = MHLEN;
-			m->m_pkthdr.len = 0;
-			m_copyback(m, 0, rx->status, pktp);
-			xennet_rx_push_buffer(sc, rx->id);
-			if (m->m_pkthdr.len < rx->status) {
-				/* out of memory, just drop packets */
-				ifp->if_ierrors++;
-				m_freem(m);
-				continue;
+			if (rx->status > MHLEN) {
+				MCLGET(m, M_DONTWAIT);
+				if (__predict_false(
+				    (m->m_flags & M_EXT) == 0)) {
+					/* out of memory, just drop packets */
+					ifp->if_ierrors++;
+					m_freem(m);
+					xennet_rx_push_buffer(sc, rx->id);
+					continue;
+				}
 			}
+					
+			m->m_len = m->m_pkthdr.len = rx->status;
+			memcpy(mtod(m, void *), pktp, rx->status);
+			xennet_rx_push_buffer(sc, rx->id);
 		}
 
 #ifdef XENNET_DEBUG_DUMP
