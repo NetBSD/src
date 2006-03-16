@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.92 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.93 2006/03/16 00:52:32 erh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.92 2005/12/27 04:06:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.93 2006/03/16 00:52:32 erh Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -166,7 +166,7 @@ int simple_lock_debugger = 1;	/* more serious on MP */
 #else
 int simple_lock_debugger = 0;
 #endif
-#define	SLOCK_DEBUGGER()	if (simple_lock_debugger) Debugger()
+#define	SLOCK_DEBUGGER()	if (simple_lock_debugger && db_onpanic) Debugger()
 #define	SLOCK_TRACE()							\
 	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
 	    TRUE, 65535, "", lock_printf);
@@ -177,7 +177,7 @@ int simple_lock_debugger = 0;
 
 #if defined(LOCKDEBUG)
 #if defined(DDB)
-#define	SPINLOCK_SPINCHECK_DEBUGGER	Debugger()
+#define	SPINLOCK_SPINCHECK_DEBUGGER	if (db_onpanic) Debugger()
 #else
 #define	SPINLOCK_SPINCHECK_DEBUGGER	/* nothing */
 #endif
@@ -1329,6 +1329,10 @@ simple_lock_switchcheck(void)
 	simple_lock_only_held(&sched_lock, "switching");
 }
 
+/*
+ * Drop into the debugger if lp isn't the only lock held.
+ * lp may be NULL.
+ */
 void
 simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 {
