@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.1 2006/03/12 22:40:42 chs Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.2 2006/03/16 17:26:13 chs Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.1 2006/03/12 22:40:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.2 2006/03/16 17:26:13 chs Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1433,6 +1433,9 @@ nfe_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 
 	/* ..and put it back in the free list */
 	SLIST_INSERT_HEAD(&sc->rxq.jfreelist, jbuf, jnext);
+
+        if (m != NULL)
+                pool_cache_put(&mbpool_cache, m);
 }
 
 int
