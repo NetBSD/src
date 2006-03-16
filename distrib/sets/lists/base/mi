@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.602 2006/03/16 17:38:46 jwise Exp $
+# $NetBSD: mi,v 1.603 2006/03/16 22:06:40 wiz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1165,7 +1165,7 @@
 ./usr/sbin/setkey				base-obsolete		obsolete
 ./usr/sbin/setobjstat				base-sysutil-bin
 ./usr/sbin/sliplogin				base-slip-bin
-./usr/sbin/slstats				base-obsolete		obsolete
+./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete
 ./usr/sbin/sntp					base-ntp-bin
 ./usr/sbin/pfspamdb				base-obsolete		obsolete
