@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.51 2005/11/12 22:57:46 spz Exp $
+#	$NetBSD: bsd.x11.mk,v 1.52 2006/03/16 18:43:34 jwise Exp $
 
 .include <bsd.init.mk>
 
@@ -144,7 +144,7 @@ appdefsinstall:: .PHONY ${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R
 
 __appdefinstall: .USE
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+	    ${.ALLSRC} ${.TARGET}
 
 .for S in ${APPDEFS:O:u}
 ${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}: ${S} __appdefinstall

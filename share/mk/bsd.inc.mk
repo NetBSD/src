@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.31 2004/07/06 12:07:34 mycroft Exp $
+#	$NetBSD: bsd.inc.mk,v 1.32 2006/03/16 18:43:34 jwise Exp $
 
 .include <bsd.init.mk>
 
@@ -17,9 +17,9 @@ __incinstall: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (${_MKSHMSG_INSTALL} ${.TARGET}; \
 	     ${_MKSHECHO} "${INSTALL_FILE} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}" && \
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET})
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
 
 .for F in ${INCS:O:u}
 _FDIR:=		${INCSDIR_${F:C,/,_,g}:U${INCSDIR}}	# dir override
@@ -51,7 +51,7 @@ inclinkinstall:	.PHONY
 			continue ; \
 		fi ; \
 		${_MKSHMSG_INSTALL} $$t; \
-		${_MKSHECHO} ${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
-		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
+		${_MKSHECHO} ${INSTALL_SYMLINK} $$l $$t; \
+		${INSTALL_SYMLINK} $$l $$t; \
 	 done; )
 .endif

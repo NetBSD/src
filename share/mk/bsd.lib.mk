@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.263 2006/01/28 11:10:18 dsl Exp $
+#	$NetBSD: bsd.lib.mk,v 1.264 2006/03/16 18:43:34 jwise Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -383,12 +383,12 @@ __archivebuild: .USE
 __archiveinstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-	    ${UPDATE:D:U-a "${RANLIB} -t"} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+	    ${UPDATE:D:U-a "${RANLIB} -t"} ${.ALLSRC} ${.TARGET}
 .endif
 
 __archivesymlinkpic: .USE
 	${_MKTARGET_INSTALL}
-	${INSTALL_SYMLINK} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+	${INSTALL_SYMLINK} ${.ALLSRC} ${.TARGET}
 
 DPSRCS+=	${_YLSRCS}
 CLEANFILES+=	${_YLSRCS}
@@ -539,9 +539,9 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_F
 .endif
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-		${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+		${.ALLSRC} ${.TARGET}
 .if ${_LIBSODIR} != ${LIBDIR}
-	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+	${INSTALL_SYMLINK} \
 		-l r ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
@@ -549,20 +549,20 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_F
 	/sbin/ldconfig -m ${_LIBSODIR} ${LIBDIR}
 .endif
 .if ${OBJECT_FMT} == "ELF"
-	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+	${INSTALL_SYMLINK} \
 		lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_MAJOR}
 .if ${_LIBSODIR} != ${LIBDIR}
-	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+	${INSTALL_SYMLINK} \
 		${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 .endif
 .if ${MKLINKLIB} != "no"
-	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+	${INSTALL_SYMLINK} \
 		lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${_LIBSODIR}/lib${LIB}.so
 .if ${_LIBSODIR} != ${LIBDIR}
-	${INSTALL_SYMLINK} ${SYSPKGTAG} \
+	${INSTALL_SYMLINK} \
 		-l r ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
 		${DESTDIR}${LIBDIR}/lib${LIB}.so
 .endif
@@ -587,7 +587,7 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .endif
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
-		${SYSPKGTAG} ${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
+		${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
 .endif
 .endif	# !target(libinstall)						# }
 
