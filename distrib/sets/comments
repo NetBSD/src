@@ -39,7 +39,9 @@ base-hesiod-bin utilities for the HESIOD network information system
 base-htmldoc-share HTML documentation
 base-i18n-root directories for internationalisation support
 base-i18n-shlib shared library modules for internationalisation support
+base-ipf-bin IPfilter utilities
 base-ipf-lkm loadable kernel module for IPfilter
+base-ipf-root directories for IPfilter
 base-isdn-bin utilities and daemons for ISDN network connectivity
 base-isdn-examples directories for the ISDN example files
 base-krb4-root root file system support for the Kerberos IV network user authentication system
@@ -109,6 +111,9 @@ base-ntfs-root root file system support for the Windows NT file system
 base-ntp-bin utilities for network time protocol support
 base-ntp-root	basic directories for network time protocol support
 base-objc-usr /usr file system support for the Objective C programming language
+base-pf-bin utilities for the PF packet filter
+base-pf-lkm loadable kernel module for the PF packet filter
+base-pf-root directories for the PF packet filter
 base-pkgutil-bin package system utilities
 base-postfix-bin the Postfix mailer
 base-postfix-examples example configuration files for the Postfix mailer
@@ -229,6 +234,7 @@ comp-fortran-piclib PIC libraries for the FORTRAN language shared library genera
 comp-fortran-proflib profiling libraries for the FOTRAN programming language
 comp-fortran-shlib shared libraries for the FORTRAN programming language
 comp-i18n-lib static libraries and shared library links for compiling applications with internationalisation support
+comp-ipf-include header files for the IPfilter C API
 comp-krb4-catman formatted manual pages for Kerberos 4 support
 comp-krb4-include header files for Kerberos 4 support
 comp-krb4-lib 	libraries to support Kerberos 4 compilation
@@ -270,7 +276,7 @@ etc-dhclient-rc startup script for DHCP dynamic host configuration protocol clie
 etc-dhcpd-rc startup script for DHCP dynamic host configuration protocol daemon
 etc-games-etc configuration file for games
 etc-games-scores empty score files for games
-etc-ipf-rc startup script for IP filter
+etc-ipf-rc startup scripts for IP filter
 etc-isdn-rc startup script for ISDN (Integrated Services Digital Network) network connectivity utilities
 etc-krb5-rc startup script for the Kerberos V authentication service
 etc-lpr-etc configuration file for printing services
@@ -288,6 +294,8 @@ etc-nis-rc startup script for the NIS network information system
 etc-nis-root root file system support for the NIS network file system
 etc-ntp-etc configuration files for the ntpd(8) Network Time Protocol server
 etc-ntp-rc startup script for the ntpd(8) Network Time Protocol server
+etc-pf-defaults default configuration files for the PF packet filter
+etc-pf-etc configuration files for the PF packet filter
 etc-postfix-etc configuration file for the postfix mailer program
 etc-postfix-rc startup script for the postfix mailer program
 etc-ppp-rc startup script for the PPP point-to-point connection protocol
@@ -398,6 +406,8 @@ man-ntfs-catman formatted manual pages for the Windows NT file system support
 man-ntfs-man manual pages source for the Windows NT file system support
 man-ntp-catman formatted manual pages for the network time protocol utilities
 man-ntp-man manual pages source for the network time protocol utilities
+man-pf-catman formatted manual pages for the PF packet filter
+man-pf-man manual page source for the PF packet filter
 man-pkgutil-catman formatted manual pages for the package system utilities
 man-pkgutil-man manual pages source for the package system utilities
 man-postfix-catman formatted manual pages for the postfix mailer
@@ -448,10 +458,12 @@ misc-bind-htmldoc HTML documentation for bind
 misc-crypto-examples example configuration files for cryptographic software
 misc-dhcpd-examples example configuration files for dhcpd(8)
 misc-fstab-examples example configuration files for file system tables
+misc-ipf-examples example configuration files for IPfilter
 misc-isdn-examples example configuration files for isdn
 misc-krb5-examples example configuration files for Kerberos5
 misc-netutil-examples example configuration files for network software
 misc-ntp-htmldoc HTML documentation for ntp(8) software
+misc-pf-examples
 misc-postfix-examples example configuration files for postfix
 misc-postfix-htmldoc	HTML documentation for postfix 
 misc-psd-doc the Programmer's Supplementary Documentation for BSD

@@ -39,7 +39,9 @@ base-hesiod-bin	utilities for the HESIOD network information system
 base-htmldoc-share	HTML documentation
 base-i18n-root	directories for internationalisation support
 base-i18n-shlib	shared library modules for internationalisation support
+base-ipf-bin utilities for IPfilter
 base-ipf-lkm	loadable kernel module for IPfilter
+base-ipf-root directories for IPfilter
 base-isdn-bin	utilities and daemons for ISDN network connectivity
 base-isdn-examples	directories for the ISDN example files
 base-krb4-root	root file system support for the Kerberos IV network user authentication system
@@ -109,6 +111,9 @@ base-ntfs-root	root file system support for the Windows NT file system
 base-ntp-bin	utilities for network time protocol support
 base-ntp-root	basic directories for network time protocol support
 base-objc-usr	/usr file system support for the Objective C programming language
+base-pf-bin	utilities for the PF packet filter
+base-pf-lkm	loadable kernel module for the PF packet filter
+base-pf-root	directories for the PF packet filter
 base-pkgutil-bin	package system utilities
 base-postfix-bin	the Postfix mailer
 base-postfix-examples	example configuration files for the Postfix mailer
@@ -185,54 +190,54 @@ base-util_locale-sv	Swedish language support for standard utilities
 base-uucp-bin	utilities for the UUCP UNIX-to-UNIX Communication Protocol
 base-uucp-root	root file system support for the UUCP UNIX-to-UNIX Communication Protocol
 base-vfs-lkm loadable kernel modules for filesystems
-comp-c-bin	This package includes compilers and tools for the C programming language:
 comp-c-bin	
+comp-c-bin	This package includes compilers and tools for the C programming language:
 comp-c-bin	c89, cc, gcc - C compilers
 comp-c-bin	flex, lex - lexical analyzer generator
 comp-c-bin	lint - C program validator
 comp-c-bin	rpcgen - RPC stub generator
 comp-c-bin	yacc - parser generator 
-comp-c-catman	This package includes formatted manual pages for compilers and tools for
-comp-c-catman	the C programming language:
+comp-c-catman	
+comp-c-catman	
+comp-c-catman	
+comp-c-catman	
 comp-c-catman	
 comp-c-catman		c89, cc, gcc - C compilers
-comp-c-catman	
 comp-c-catman		flex, lex - lexical analyzer generator
-comp-c-catman	
 comp-c-catman		lint - C program validator
-comp-c-catman	
 comp-c-catman		rpcgen - RPC stub generator
-comp-c-catman	
 comp-c-catman		yacc - parser generator
+comp-c-catman	This package includes formatted manual pages for compilers and tools for
+comp-c-catman	the C programming language:
 comp-c-include	This package contains header files for the C programming language,
 comp-c-include	including standard C and UNIX APIs, and APIs specific to the NetBSD
 comp-c-include	operating system.
 comp-c-lib	This contains library archives to build statically linked versions of C
-comp-c-lib	programs and simbolic links for use in linking software against shared
 comp-c-lib	libraries.
-comp-c-lintlib	This package contains library description files for use with the lint(1)
+comp-c-lib	programs and simbolic links for use in linking software against shared
 comp-c-lintlib	C language syntax checker.
-comp-c-man	This package includes the manual pages sources for compilers and tools
-comp-c-man	for the C programming language:
+comp-c-lintlib	This package contains library description files for use with the lint(1)
+comp-c-man	
+comp-c-man	
+comp-c-man	
+comp-c-man	
 comp-c-man	
 comp-c-man		c89, cc, gcc - C compilers
-comp-c-man	
 comp-c-man		flex, lex - lexical analyzer generator
-comp-c-man	
 comp-c-man		lint - C program validator
-comp-c-man	
 comp-c-man		rpcgen - RPC stub generator
-comp-c-man	
 comp-c-man		yacc - program parser generator
+comp-c-man	This package includes the manual pages sources for compilers and tools
+comp-c-man	for the C programming language:
 comp-c-piclib	This includes archives of position-independent object files which can be
-comp-c-piclib	used to recreate the shared libraries distributed with the base NetBSD
 comp-c-piclib	system.
+comp-c-piclib	used to recreate the shared libraries distributed with the base NetBSD
 comp-c-proflib	This includes versions of system libraries for use in profiling user code.
 comp-c-root	This contains data files installed in /var and used by C language
 comp-c-root	programming utilities.
 comp-c-share	This contains data files installed in /usr/share and used by C language
-comp-c-share	programming utilities, including user reference documents on the C
 comp-c-share	language.
+comp-c-share	programming utilities, including user reference documents on the C
 comp-c-shlib	shared libraries for binary file utilities and machine opcodes
 comp-c_locale-da	Danish language locale support for development utilities
 comp-c_locale-de	German language locale support for development utilities
@@ -246,204 +251,205 @@ comp-c_locale-pt	Portuguese language locale support for development utilities
 comp-c_locale-sl	Slovenian language locale support for development utilities
 comp-c_locale-sv	Swedish language locale support for development utilities
 comp-cvs-bin	CVS is a version control system, which allows you to keep old versions
-comp-cvs-bin	of files (usually source code), keep a log of who, when, and why changes
-comp-cvs-bin	occurred, etc., like RCS  or SCCS. Unlike the simpler systems, CVS
-comp-cvs-bin	does not just operate on one file at a time or one directory at a time,
-comp-cvs-bin	but operates on hierarchical collections of directories consisting of
-comp-cvs-bin	version controlled files. CVS helps to manage releases and to control
-comp-cvs-bin	the concurrent editing of source files among multiple authors. CVS
 comp-cvs-bin	allows triggers to enable/log/control various operations and works well
+comp-cvs-bin	but operates on hierarchical collections of directories consisting of
+comp-cvs-bin	does not just operate on one file at a time or one directory at a time,
+comp-cvs-bin	occurred, etc., like RCS  or SCCS. Unlike the simpler systems, CVS
+comp-cvs-bin	of files (usually source code), keep a log of who, when, and why changes
 comp-cvs-bin	over a wide area network (see manual pages).
-comp-cvs-catman	This contains groff-formatted manual pages for the CVS revision control
-comp-cvs-catman	system. CVS is a version control system which allows you to keep old
-comp-cvs-catman	versions of files (usually source code), keep a log of who, when, and why
-comp-cvs-catman	changes occurred, etc., like RCS  or SCCS. Unlike the simpler systems,
+comp-cvs-bin	the concurrent editing of source files among multiple authors. CVS
+comp-cvs-bin	version controlled files. CVS helps to manage releases and to control
 comp-cvs-catman	CVS does not just operate on one file at a time or one directory at a
-comp-cvs-catman	time, but operates on hierarchical collections of directories consisting
+comp-cvs-catman	This contains groff-formatted manual pages for the CVS revision control
+comp-cvs-catman	changes occurred, etc., like RCS  or SCCS. Unlike the simpler systems,
 comp-cvs-catman	of version controlled files. CVS helps to manage releases and to control
+comp-cvs-catman	system. CVS is a version control system which allows you to keep old
 comp-cvs-catman	the concurrent editing of source files among multiple authors. CVS allows
+comp-cvs-catman	time, but operates on hierarchical collections of directories consisting
 comp-cvs-catman	triggers to enable/log/control various operations and works well over a
+comp-cvs-catman	versions of files (usually source code), keep a log of who, when, and why
 comp-cvs-catman	wide area network (see manual pages).
-comp-cvs-man	This contains manual page groff source for the CVS revision control system.
 comp-cvs-man	CVS is a version control system which allows you to keep old versions of
-comp-cvs-man	files (usually source code), keep a log of who, when, and why changes
-comp-cvs-man	occurred, etc., like RCS  or SCCS. Unlike the simpler systems, CVS does
-comp-cvs-man	not just operate on one file at a time or one directory at a time, but
-comp-cvs-man	operates on hierarchical collections of directories consisting of version
-comp-cvs-man	controlled files. CVS helps to manage releases and to control the
+comp-cvs-man	This contains manual page groff source for the CVS revision control system.
 comp-cvs-man	concurrent editing of source files among multiple authors. CVS allows
+comp-cvs-man	controlled files. CVS helps to manage releases and to control the
+comp-cvs-man	files (usually source code), keep a log of who, when, and why changes
+comp-cvs-man	not just operate on one file at a time or one directory at a time, but
+comp-cvs-man	occurred, etc., like RCS  or SCCS. Unlike the simpler systems, CVS does
+comp-cvs-man	operates on hierarchical collections of directories consisting of version
 comp-cvs-man	triggers to enable/log/control various operations and works well over a
 comp-cvs-man	wide area network (see manual pages).
-comp-cxx-bin	This package includes compilers and tools for the C++ programming language:
 comp-cxx-bin	
 comp-cxx-bin		c++, g++ - C++ compiler
 comp-cxx-bin		c++filt - tool for demangling C++ single function names
 comp-cxx-bin		flex++ - C++ lexical analyzser generator (a C++ version of flex)
-comp-cxx-catman	This contains groff-formatted manual pages on compilers and tools for the
-comp-cxx-catman	C++ programming language:
+comp-cxx-bin	This package includes compilers and tools for the C++ programming language:
 comp-cxx-catman	
 comp-cxx-catman		c++, g++ - C++ compiler
 comp-cxx-catman		c++filt - tool for demangling C++ single function names
 comp-cxx-catman		flex++ - C++ lexical analyzser generator (a C++ version of flex)
+comp-cxx-catman	C++ programming language:
+comp-cxx-catman	This contains groff-formatted manual pages on compilers and tools for the
 comp-cxx-include	This contains header files for the C++ programming language.
 comp-cxx-lib	This contains library archives to build statically linked versions of C++
-comp-cxx-lib	programs and simbolic links for use in linking software against shared
 comp-cxx-lib	libraries.
-comp-cxx-man	This contains the manual page source on compilers and tools for the C++
-comp-cxx-man	programming language:
+comp-cxx-lib	programs and simbolic links for use in linking software against shared
 comp-cxx-man	
 comp-cxx-man		c++, g++ - C++ compiler
 comp-cxx-man		c++filt - tool for demangling C++ single function names
 comp-cxx-man		flex++ - C++ lexical analyzser generator (a C++ version of flex)
+comp-cxx-man	This contains the manual page source on compilers and tools for the C++
+comp-cxx-man	programming language:
 comp-cxx-piclib	This includes archives of position-independent object files which can be
-comp-cxx-piclib	used to recreate the shared C++ libraries distributed with the base NetBSD
 comp-cxx-piclib	system.
+comp-cxx-piclib	used to recreate the shared C++ libraries distributed with the base NetBSD
 comp-cxx-proflib	This includes versions of system libraries for use in profiling user C++
 comp-cxx-proflib	code.
-comp-debug-bin	This package contains various C programming debugging utilities, such as:
 comp-debug-bin	
-comp-debug-bin		addr2line - translates program addresses into file names and line
-comp-debug-bin		numbers. Given an address and an executable, it uses the debugging
-comp-debug-bin		information in the executable to figure out which file name and
-comp-debug-bin		line number are associated with a given address;
 comp-debug-bin	
-comp-debug-bin		gcov - displays basic block profile / coverage data, if requested
-comp-debug-bin		via the C compiler gcc(1) command line options -fprofile-arcs and
+comp-debug-bin	
+comp-debug-bin	
 comp-debug-bin		-ftest-coverage. These options cause the compiler to insert
-comp-debug-bin		instrumentation into the object files it generates, which measure
-comp-debug-bin		how often each basic block is executed; 
-comp-debug-bin	
-comp-debug-bin		gdb - is the GNU debugger. The purpose of a debugger such as GDB
-comp-debug-bin		is to allow you to see what is going on ``inside'' another program
-comp-debug-bin		while it executes, or what another program was doing at the moment
-comp-debug-bin		it crashed;
-comp-debug-bin	
-comp-debug-bin		gprof - displays call graph profile data. gprof produces an
+comp-debug-bin		addr2line - translates program addresses into file names and line
 comp-debug-bin		execution profile of C, Pascal, or Fortran77 programs.
+comp-debug-bin		gcov - displays basic block profile / coverage data, if requested
+comp-debug-bin		gdb - is the GNU debugger. The purpose of a debugger such as GDB
+comp-debug-bin		gprof - displays call graph profile data. gprof produces an
+comp-debug-bin		how often each basic block is executed; 
+comp-debug-bin		information in the executable to figure out which file name and
+comp-debug-bin		instrumentation into the object files it generates, which measure
+comp-debug-bin		is to allow you to see what is going on ``inside'' another program
+comp-debug-bin		it crashed;
+comp-debug-bin		line number are associated with a given address;
+comp-debug-bin		numbers. Given an address and an executable, it uses the debugging
+comp-debug-bin		via the C compiler gcc(1) command line options -fprofile-arcs and
+comp-debug-bin		while it executes, or what another program was doing at the moment
+comp-debug-bin	This package contains various C programming debugging utilities, such as:
+comp-debug-catman	
+comp-debug-catman	
+comp-debug-catman	
+comp-debug-catman	
+comp-debug-catman		-ftest-coverage. These options cause the compiler to insert
+comp-debug-catman		addr2line - translates program addresses into file names and line
+comp-debug-catman		execution profile of C, Pascal, or Fortran77 programs.
+comp-debug-catman		gcov - displays basic block profile / coverage data, if requested
+comp-debug-catman		gdb - is the GNU debugger. The purpose of a debugger such as GDB
+comp-debug-catman		gprof - displays call graph profile data. gprof produces an
+comp-debug-catman		how often each basic block is executed; 
+comp-debug-catman		information in the executable to figure out which file name and
+comp-debug-catman		instrumentation into the object files it generates, which measure
+comp-debug-catman		is to allow you to see what is going on ``inside'' another program
+comp-debug-catman		it crashed;
+comp-debug-catman		line number are associated with a given address;
+comp-debug-catman		numbers. Given an address and an executable, it uses the debugging
+comp-debug-catman		via the C compiler gcc(1) command line options -fprofile-arcs and
+comp-debug-catman		while it executes, or what another program was doing at the moment
 comp-debug-catman	This package contains formatted manual pages on various C programming
 comp-debug-catman	debugging utilities, such as:
-comp-debug-catman	
-comp-debug-catman		addr2line - translates program addresses into file names and line
-comp-debug-catman		numbers. Given an address and an executable, it uses the debugging
-comp-debug-catman		information in the executable to figure out which file name and
-comp-debug-catman		line number are associated with a given address;
-comp-debug-catman	
-comp-debug-catman		gcov - displays basic block profile / coverage data, if requested
-comp-debug-catman		via the C compiler gcc(1) command line options -fprofile-arcs and
-comp-debug-catman		-ftest-coverage. These options cause the compiler to insert
-comp-debug-catman		instrumentation into the object files it generates, which measure
-comp-debug-catman		how often each basic block is executed; 
-comp-debug-catman	
-comp-debug-catman		gdb - is the GNU debugger. The purpose of a debugger such as GDB
-comp-debug-catman		is to allow you to see what is going on ``inside'' another program
-comp-debug-catman		while it executes, or what another program was doing at the moment
-comp-debug-catman		it crashed;
-comp-debug-catman	
-comp-debug-catman		gprof - displays call graph profile data. gprof produces an
-comp-debug-catman		execution profile of C, Pascal, or Fortran77 programs.
+comp-debug-man	
+comp-debug-man	
+comp-debug-man	
+comp-debug-man	
+comp-debug-man		-ftest-coverage. These options cause the compiler to insert
+comp-debug-man		addr2line - translates program addresses into file names and line
+comp-debug-man		execution profile of C, Pascal, or Fortran77 programs.
+comp-debug-man		gcov - displays basic block profile / coverage data, if requested
+comp-debug-man		gdb - is the GNU debugger. The purpose of a debugger such as GDB
+comp-debug-man		gprof - displays call graph profile data. gprof produces an
+comp-debug-man		how often each basic block is executed; 
+comp-debug-man		information in the executable to figure out which file name and
+comp-debug-man		instrumentation into the object files it generates, which measure
+comp-debug-man		is to allow you to see what is going on ``inside'' another program
+comp-debug-man		it crashed;
+comp-debug-man		line number are associated with a given address;
+comp-debug-man		numbers. Given an address and an executable, it uses the debugging
+comp-debug-man		via the C compiler gcc(1) command line options -fprofile-arcs and
+comp-debug-man		while it executes, or what another program was doing at the moment
 comp-debug-man	This package contains the manual pages groff source on various C programming
 comp-debug-man	debugging utilities, such as:
-comp-debug-man	
-comp-debug-man		addr2line - translates program addresses into file names and line
-comp-debug-man		numbers. Given an address and an executable, it uses the debugging
-comp-debug-man		information in the executable to figure out which file name and
-comp-debug-man		line number are associated with a given address;
-comp-debug-man	
-comp-debug-man		gcov - displays basic block profile / coverage data, if requested
-comp-debug-man		via the C compiler gcc(1) command line options -fprofile-arcs and
-comp-debug-man		-ftest-coverage. These options cause the compiler to insert
-comp-debug-man		instrumentation into the object files it generates, which measure
-comp-debug-man		how often each basic block is executed; 
-comp-debug-man	
-comp-debug-man		gdb - is the GNU debugger. The purpose of a debugger such as GDB
-comp-debug-man		is to allow you to see what is going on ``inside'' another program
-comp-debug-man		while it executes, or what another program was doing at the moment
-comp-debug-man		it crashed;
-comp-debug-man	
-comp-debug-man		gprof - displays call graph profile data. gprof produces an
-comp-debug-man		execution profile of C, Pascal, or Fortran77 programs.
 comp-debug-sbin	This package contains kgmon, a kernel debugging utility. kgmon is a tool
-comp-debug-sbin	used when profiling the operating system. When no arguments are supplied,
-comp-debug-sbin	kgmon indicates the state of operating system profiling as running, off,
-comp-debug-sbin	or not configured. (see config(8)) If the -p flag is specified, kgmon
 comp-debug-sbin	extracts profile data from the operating system and produces a gmon.out
 comp-debug-sbin	file suitable for later analysis by gprof(1).
-comp-fortran-bin	This package contains compilers and tools for the FORTRAN programming
-comp-fortran-bin	language, including the following:
+comp-debug-sbin	kgmon indicates the state of operating system profiling as running, off,
+comp-debug-sbin	or not configured. (see config(8)) If the -p flag is specified, kgmon
+comp-debug-sbin	used when profiling the operating system. When no arguments are supplied,
 comp-fortran-bin	
-comp-fortran-bin		asa - interpret carriage-control characters. The asa utility reads
-comp-fortran-bin		files sequentially, mapping FORTRAN carriage-control characters
-comp-fortran-bin		to line-printer control sequences, and writes them to the standard
-comp-fortran-bin		output;
 comp-fortran-bin	
-comp-fortran-bin		f77, fort77, g77 - GNU project Fortran Compiler (v0.5.24). The C
-comp-fortran-bin		and F77 compilers are integrated; g77 is a program to call gcc
-comp-fortran-bin		with options to recognize programs written in Fortran (ANSI
+comp-fortran-bin	
 comp-fortran-bin		FORTRAN 77, also called F77). gcc processes input files through
-comp-fortran-bin		one or more of four stages: prepro- cessing, compilation,
+comp-fortran-bin		and F77 compilers are integrated; g77 is a program to call gcc
+comp-fortran-bin		asa - interpret carriage-control characters. The asa utility reads
 comp-fortran-bin		assembly, and linking. This manual page contains full descriptions
-comp-fortran-bin		for only F77-specific aspects of the compiler, though it also
 comp-fortran-bin		contains summaries of some general-purpose options. For a fuller
-comp-fortran-bin		explanation of the compiler, see gcc(1);
-comp-fortran-bin	
-comp-fortran-bin		fpr - print Fortran file utility. fpr is a filter that transforms
-comp-fortran-bin		files formatted according to Fortran's carriage control
 comp-fortran-bin		conventions into files formatted according to UNIX line printer
 comp-fortran-bin		conventions.
-comp-fortran-catman	This package contains formatted manual pages for compilers and tools for
-comp-fortran-catman	the FORTRAN programming language, which include:
+comp-fortran-bin		explanation of the compiler, see gcc(1);
+comp-fortran-bin		f77, fort77, g77 - GNU project Fortran Compiler (v0.5.24). The C
+comp-fortran-bin		files formatted according to Fortran's carriage control
+comp-fortran-bin		files sequentially, mapping FORTRAN carriage-control characters
+comp-fortran-bin		for only F77-specific aspects of the compiler, though it also
+comp-fortran-bin		fpr - print Fortran file utility. fpr is a filter that transforms
+comp-fortran-bin		one or more of four stages: prepro- cessing, compilation,
+comp-fortran-bin		output;
+comp-fortran-bin		to line-printer control sequences, and writes them to the standard
+comp-fortran-bin		with options to recognize programs written in Fortran (ANSI
+comp-fortran-bin	This package contains compilers and tools for the FORTRAN programming
+comp-fortran-bin	language, including the following:
 comp-fortran-catman	
-comp-fortran-catman		asa - interpret carriage-control characters. The asa utility reads
-comp-fortran-catman		files sequentially, mapping FORTRAN carriage-control characters
-comp-fortran-catman		to line-printer control sequences, and writes them to the standard
-comp-fortran-catman		output;
 comp-fortran-catman	
-comp-fortran-catman		f77, fort77, g77 - GNU project Fortran Compiler (v0.5.24). The C
-comp-fortran-catman		and F77 compilers are integrated; g77 is a program to call gcc
-comp-fortran-catman		with options to recognize programs written in Fortran (ANSI
+comp-fortran-catman	
 comp-fortran-catman		FORTRAN 77, also called F77). gcc processes input files through
-comp-fortran-catman		one or more of four stages: prepro- cessing, compilation,
+comp-fortran-catman		and F77 compilers are integrated; g77 is a program to call gcc
+comp-fortran-catman		asa - interpret carriage-control characters. The asa utility reads
 comp-fortran-catman		assembly, and linking. This manual page contains full descriptions
-comp-fortran-catman		for only F77-specific aspects of the compiler, though it also
 comp-fortran-catman		contains summaries of some general-purpose options. For a fuller
-comp-fortran-catman		explanation of the compiler, see gcc(1);
-comp-fortran-catman	
-comp-fortran-catman		fpr - print Fortran file utility. fpr is a filter that transforms
-comp-fortran-catman		files formatted according to Fortran's carriage control
 comp-fortran-catman		conventions into files formatted according to UNIX line printer
 comp-fortran-catman		conventions.
-comp-fortran-lib	This contains library archives to build statically linked versions of
+comp-fortran-catman		explanation of the compiler, see gcc(1);
+comp-fortran-catman		f77, fort77, g77 - GNU project Fortran Compiler (v0.5.24). The C
+comp-fortran-catman		files formatted according to Fortran's carriage control
+comp-fortran-catman		files sequentially, mapping FORTRAN carriage-control characters
+comp-fortran-catman		for only F77-specific aspects of the compiler, though it also
+comp-fortran-catman		fpr - print Fortran file utility. fpr is a filter that transforms
+comp-fortran-catman		one or more of four stages: prepro- cessing, compilation,
+comp-fortran-catman		output;
+comp-fortran-catman		to line-printer control sequences, and writes them to the standard
+comp-fortran-catman		with options to recognize programs written in Fortran (ANSI
+comp-fortran-catman	This package contains formatted manual pages for compilers and tools for
+comp-fortran-catman	the FORTRAN programming language, which include:
 comp-fortran-lib	FORTRAN programs and simbolic links for use in linking software against
+comp-fortran-lib	This contains library archives to build statically linked versions of
 comp-fortran-lib	shared libraries.
-comp-fortran-man	This package contains manual pages groff sources for compilers and tools for
-comp-fortran-man	the FORTRAN programming language, which include:
 comp-fortran-man	
-comp-fortran-man		asa - interpret carriage-control characters. The asa utility reads
-comp-fortran-man		files sequentially, mapping FORTRAN carriage-control characters
-comp-fortran-man		to line-printer control sequences, and writes them to the standard
-comp-fortran-man		output;
 comp-fortran-man	
-comp-fortran-man		f77, fort77, g77 - GNU project Fortran Compiler (v0.5.24). The C
-comp-fortran-man		and F77 compilers are integrated; g77 is a program to call gcc
-comp-fortran-man		with options to recognize programs written in Fortran (ANSI
+comp-fortran-man	
 comp-fortran-man		FORTRAN 77, also called F77). gcc processes input files through
-comp-fortran-man		one or more of four stages: prepro- cessing, compilation,
+comp-fortran-man		and F77 compilers are integrated; g77 is a program to call gcc
+comp-fortran-man		asa - interpret carriage-control characters. The asa utility reads
 comp-fortran-man		assembly, and linking. This manual page contains full descriptions
-comp-fortran-man		for only F77-specific aspects of the compiler, though it also
 comp-fortran-man		contains summaries of some general-purpose options. For a fuller
-comp-fortran-man		explanation of the compiler, see gcc(1);
-comp-fortran-man	
-comp-fortran-man		fpr - print Fortran file utility. fpr is a filter that transforms
-comp-fortran-man		files formatted according to Fortran's carriage control
 comp-fortran-man		conventions into files formatted according to UNIX line printer
 comp-fortran-man		conventions.
+comp-fortran-man		explanation of the compiler, see gcc(1);
+comp-fortran-man		f77, fort77, g77 - GNU project Fortran Compiler (v0.5.24). The C
+comp-fortran-man		files formatted according to Fortran's carriage control
+comp-fortran-man		files sequentially, mapping FORTRAN carriage-control characters
+comp-fortran-man		for only F77-specific aspects of the compiler, though it also
+comp-fortran-man		fpr - print Fortran file utility. fpr is a filter that transforms
+comp-fortran-man		one or more of four stages: prepro- cessing, compilation,
+comp-fortran-man		output;
+comp-fortran-man		to line-printer control sequences, and writes them to the standard
+comp-fortran-man		with options to recognize programs written in Fortran (ANSI
+comp-fortran-man	This package contains manual pages groff sources for compilers and tools for
+comp-fortran-man	the FORTRAN programming language, which include:
+comp-fortran-piclib	NetBSD system.
 comp-fortran-piclib	This includes archives of position-independent object files which can be
 comp-fortran-piclib	used to recreate the shared FORTRAN libraries distributed with the base
-comp-fortran-piclib	NetBSD system.
-comp-fortran-proflib	This includes versions of system libraries for use in profiling user
 comp-fortran-proflib	FORTRAN code.
+comp-fortran-proflib	This includes versions of system libraries for use in profiling user
 comp-fortran-shlib	Shared libraries for the FORTRAN programming language
 comp-i18n-lib	static libraries and shared library links for compiling applications with internationalisation support
+comp-ipf-include header files for the IPfilter C API
 comp-krb4-catman formatted manual pages for Kerberos 4 support
 comp-krb4-include header files for Kerberos 4 support
 comp-krb4-lib 	libraries to support Kerberos 4 compilation
@@ -458,17 +464,17 @@ comp-krb5c-catman 	pre-formatted manual pages for Kerberos V C support
 comp-objc-bin	This contains the gcc backend for Objective C programming. With this
 comp-objc-bin	package installed, it is possible to compile Objective C programs with
 comp-objc-bin	the cc(1) or gcc(1) commands.
-comp-objc-lib	This contains library archives to build statically linked versions of
 comp-objc-lib	Objective C programs and simbolic links for use in linking software
+comp-objc-lib	This contains library archives to build statically linked versions of
 comp-objc-lib	against shared Objective C libraries.
 comp-objc-piclib	This includes archives of position-independent object files which can be
-comp-objc-piclib	used to recreate the shared Objective C libraries distributed with the
 comp-objc-piclib	base NetBSD system.
-comp-objc-proflib	This includes versions of system libraries for use in profiling user
+comp-objc-piclib	used to recreate the shared Objective C libraries distributed with the
 comp-objc-proflib	Objective C code.
+comp-objc-proflib	This includes versions of system libraries for use in profiling user
 comp-sys-catman	This contains section 9 of the online manual pages for kernel programming,
-comp-sys-catman	which describe APIs available for writing device drivers and other parts
 comp-sys-catman	of the kernel.
+comp-sys-catman	which describe APIs available for writing device drivers and other parts
 comp-sys-man	manual pages source for kernel programming
 comp-sys-shlib	shared library support for basic i386 math and utility libs
 comp-sysutil-catman	formatted manual pages for system utilities
@@ -512,6 +518,8 @@ etc-nis-rc	startup script for the NIS network information system
 etc-nis-root	root file system support for the NIS network file system 
 etc-ntp-etc	configuration files for the ntpd(8) Network Time Protocol server
 etc-ntp-rc	startup script for the ntpd(8) Network Time Protocol server
+etc-pf-defaults default configuration for the PF packet filter
+etc-pf-etc	configuration files for the PF packet filter
 etc-postfix-etc	configuration file for the postfix mailer program
 etc-postfix-rc	startup script for the postfix mailer program
 etc-ppp-rc	startup script for the PPP point-to-point connection protocol
@@ -622,6 +630,8 @@ man-ntfs-catman	formatted manual pages for the Windows NT file system support
 man-ntfs-man	manual pages source for the Windows NT file system support
 man-ntp-catman	formatted manual pages for the network time protocol utilities
 man-ntp-man	manual pages source for the network time protocol utilities
+man-pf-catman	formatted manual pages for the PF packet filter
+man-pf-man	manual page source for the PF packet filter
 man-pkgutil-catman	formatted manual pages for the package system utilities
 man-pkgutil-man	manual pages source for the package system utilities
 man-postfix-catman	formatted manual pages for the postfix mailer 
@@ -672,10 +682,12 @@ misc-bind-htmldoc	HTML documentation for bind
 misc-crypto-examples	example configuration files for cryptographic software
 misc-dhcpd-examples	example configuration files for dhcpd(8)
 misc-fstab-examples	example configuration files for file system tables
+misc-ipf-examples	example configuration files for IPfilter
 misc-isdn-examples	example configuration files for isdn
 misc-krb5-examples	example configuration files for Kerberos5
 misc-netutil-examples	example configuration files for network software 
 misc-ntp-htmldoc	HTML documentation for ntp(8) software
+misc-pf-examples	example configuration files for the PF packet filter
 misc-postfix-examples	example configuration files for postfix 
 misc-postfix-htmldoc	HTML documentation for postfix 
 misc-psd-doc	the Programmer's Supplementary Documentation for BSD
@@ -689,133 +701,133 @@ misc-sysutil-examples	example configuration files for system utilities
 misc-usd-doc	the User's Supplementary Documents for BSD 
 misc-util-htmldoc	HTML documentation for miscellaneous utilities 
 text-groff-bin	Groff (GNU Troff) is a document processor which reads plain text mixed
-text-groff-bin	with formatting commands and produces formatted output. Included in this
-text-groff-bin	release are implementations of troff, pic, eqn, tbl, refer, the -man
-text-groff-bin	macros and the -ms macros, and drivers for PostScript, TeX dvi format, HP
 text-groff-bin	LaserJet 4 printers, HTML format (still alpha), and typewriter-like
-text-groff-bin	devices. Also included is a modified version of the Berkeley -me macros,
 text-groff-bin	an enhanced version of the X11 xditview previewer, and an implementation
+text-groff-bin	devices. Also included is a modified version of the Berkeley -me macros,
+text-groff-bin	macros and the -ms macros, and drivers for PostScript, TeX dvi format, HP
 text-groff-bin	of the -mm macros. 
+text-groff-bin	release are implementations of troff, pic, eqn, tbl, refer, the -man
+text-groff-bin	with formatting commands and produces formatted output. Included in this
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman	
+text-groff-catman		-e, -man, -me, -mm, -ms, -p, -s, and -t are  required  for
+text-groff-catman		TeX or  troff;
+text-groff-catman		eqn - compiles descriptions  of  equations  embedded  within  troff
+text-groff-catman		grodvi - convert groff output to TeX dvi format
+text-groff-catman		groff document formatting  system;
+text-groff-catman		groff_char - lists the standard groff input characters
+text-groff-catman		groff_font  -  format of groff device and font description files
+text-groff-catman		groff_ms, ms - groff ms macros
+text-groff-catman		groff_out - groff intermediate output format
+text-groff-catman		grog - grog reads files and guesses which of the groff(1) options
+text-groff-catman		grops - translates the output of GNU  troff  to  PostScript
+text-groff-catman		grotty - translates  the  output  of  GNU troff into a form
+text-groff-catman		input files  into  commands that are understood by troff
+text-groff-catman		input files into commands that are understood  by  troff;
+text-groff-catman		me - macros for formatting technical papers
+text-groff-catman		options on the standard output;
+text-groff-catman		pic - pic compiles  descriptions  of  pictures embedded within
+text-groff-catman		printing  files, and  prints  the groff command including those
+text-groff-catman		refer - preprocess bibliographic references for groff
+text-groff-catman		soelim - eliminate .so directives from nroff input
+text-groff-catman		suitable for  typewriter-like  devices
+text-groff-catman		tbl - tbl compiles  descriptions  of tables embedded within troff
+text-groff-catman		troff - describes the GNU version of troff, which is part of the
+text-groff-catman		troff or TeX input files into commands that are understood  by
 text-groff-catman	The manual pages include information about the following groff-related
 text-groff-catman	utilities:
-text-groff-catman	
-text-groff-catman		grog - grog reads files and guesses which of the groff(1) options
-text-groff-catman		-e, -man, -me, -mm, -ms, -p, -s, and -t are  required  for
-text-groff-catman		printing  files, and  prints  the groff command including those
-text-groff-catman		options on the standard output;
-text-groff-catman	
-text-groff-catman		troff - describes the GNU version of troff, which is part of the
-text-groff-catman		groff document formatting  system;
-text-groff-catman	
-text-groff-catman		tbl - tbl compiles  descriptions  of tables embedded within troff
-text-groff-catman		input files into commands that are understood  by  troff;
-text-groff-catman	
-text-groff-catman		pic - pic compiles  descriptions  of  pictures embedded within
-text-groff-catman		troff or TeX input files into commands that are understood  by
-text-groff-catman		TeX or  troff;
-text-groff-catman	
-text-groff-catman		eqn - compiles descriptions  of  equations  embedded  within  troff
-text-groff-catman		input files  into  commands that are understood by troff
-text-groff-catman	
-text-groff-catman		soelim - eliminate .so directives from nroff input
-text-groff-catman	
-text-groff-catman		refer - preprocess bibliographic references for groff
-text-groff-catman	
-text-groff-catman		grops - translates the output of GNU  troff  to  PostScript
-text-groff-catman	
-text-groff-catman		grodvi - convert groff output to TeX dvi format
-text-groff-catman	
-text-groff-catman		grotty - translates  the  output  of  GNU troff into a form
-text-groff-catman		suitable for  typewriter-like  devices
-text-groff-catman	
-text-groff-catman		groff_font  -  format of groff device and font description files
-text-groff-catman	
-text-groff-catman		groff_out - groff intermediate output format
-text-groff-catman	
-text-groff-catman		groff_ms, ms - groff ms macros
-text-groff-catman	
-text-groff-catman		me - macros for formatting technical papers
-text-groff-catman	
-text-groff-catman		groff_char - lists the standard groff input characters
-text-groff-font	This package contains groff font description files. The font files for
-text-groff-font	device <name> are stored in a directory 'dev<name>'. There are two types
-text-groff-font	of files per device: a device description file called DESC and for each
-text-groff-font	font F a font file called F. These are text files; there is no associated
-text-groff-font	binary format. Available devices are:
 text-groff-font	
-text-groff-font	       ps     For PostScript printers and previewers
 text-groff-font	
-text-groff-font	       dvi    For TeX dvi format
 text-groff-font	
-text-groff-font	       X75    For a 75 dpi X11 previewer
 text-groff-font	
-text-groff-font	       X100   For a 100dpi X11 previewer
 text-groff-font	
-text-groff-font	       ascii  For typewriter-like devices
 text-groff-font	
-text-groff-font	       latin1 For  typewriter-like  devices using the ISO Latin-1
 text-groff-font	              character set.
+text-groff-font	       X100   For a 100dpi X11 previewer
+text-groff-font	       X75    For a 75 dpi X11 previewer
+text-groff-font	       ascii  For typewriter-like devices
+text-groff-font	       dvi    For TeX dvi format
+text-groff-font	       latin1 For  typewriter-like  devices using the ISO Latin-1
+text-groff-font	       ps     For PostScript printers and previewers
+text-groff-font	This package contains groff font description files. The font files for
+text-groff-font	binary format. Available devices are:
+text-groff-font	device <name> are stored in a directory 'dev<name>'. There are two types
+text-groff-font	font F a font file called F. These are text files; there is no associated
+text-groff-font	of files per device: a device description file called DESC and for each
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man	
+text-groff-man		-e, -man, -me, -mm, -ms, -p, -s, and -t are  required  for
+text-groff-man		TeX or  troff;
+text-groff-man		eqn - compiles descriptions  of  equations  embedded  within  troff
+text-groff-man		grodvi - convert groff output to TeX dvi format
+text-groff-man		groff document formatting  system;
+text-groff-man		groff_char - lists the standard groff input characters
+text-groff-man		groff_font  -  format of groff device and font description files
+text-groff-man		groff_ms, ms - groff ms macros
+text-groff-man		groff_out - groff intermediate output format
+text-groff-man		grog - grog reads files and guesses which of the groff(1) options
+text-groff-man		grops - translates the output of GNU  troff  to  PostScript
+text-groff-man		grotty - translates  the  output  of  GNU troff into a form
+text-groff-man		input files  into  commands that are understood by troff
+text-groff-man		input files into commands that are understood  by  troff;
+text-groff-man		me - macros for formatting technical papers
+text-groff-man		options on the standard output;
+text-groff-man		pic - pic compiles  descriptions  of  pictures embedded within
+text-groff-man		printing  files, and  prints  the groff command including those
+text-groff-man		refer - preprocess bibliographic references for groff
+text-groff-man		soelim - eliminate .so directives from nroff input
+text-groff-man		suitable for  typewriter-like  devices
+text-groff-man		tbl - tbl compiles  descriptions  of tables embedded within troff
+text-groff-man		troff - describes the GNU version of troff, which is part of the
+text-groff-man		troff or TeX input files into commands that are understood  by
 text-groff-man	This package contains manual page sources for the groff family of text
 text-groff-man	formatters. As described in the DESCR file for text-groff-catman, the
-text-groff-man	online manual pages for groff contain information about the following
 text-groff-man	groff-related utilities:
-text-groff-man	
-text-groff-man		grog - grog reads files and guesses which of the groff(1) options
-text-groff-man		-e, -man, -me, -mm, -ms, -p, -s, and -t are  required  for
-text-groff-man		printing  files, and  prints  the groff command including those
-text-groff-man		options on the standard output;
-text-groff-man	
-text-groff-man		troff - describes the GNU version of troff, which is part of the
-text-groff-man		groff document formatting  system;
-text-groff-man	
-text-groff-man		tbl - tbl compiles  descriptions  of tables embedded within troff
-text-groff-man		input files into commands that are understood  by  troff;
-text-groff-man	
-text-groff-man		pic - pic compiles  descriptions  of  pictures embedded within
-text-groff-man		troff or TeX input files into commands that are understood  by
-text-groff-man		TeX or  troff;
-text-groff-man	
-text-groff-man		eqn - compiles descriptions  of  equations  embedded  within  troff
-text-groff-man		input files  into  commands that are understood by troff
-text-groff-man	
-text-groff-man		soelim - eliminate .so directives from nroff input
-text-groff-man	
-text-groff-man		refer - preprocess bibliographic references for groff
-text-groff-man	
-text-groff-man		grops - translates the output of GNU  troff  to  PostScript
-text-groff-man	
-text-groff-man		grodvi - convert groff output to TeX dvi format
-text-groff-man	
-text-groff-man		grotty - translates  the  output  of  GNU troff into a form
-text-groff-man		suitable for  typewriter-like  devices
-text-groff-man	
-text-groff-man		groff_font  -  format of groff device and font description files
-text-groff-man	
-text-groff-man		groff_out - groff intermediate output format
-text-groff-man	
-text-groff-man		groff_ms, ms - groff ms macros
-text-groff-man	
-text-groff-man		me - macros for formatting technical papers
-text-groff-man	
-text-groff-man		groff_char - lists the standard groff input characters
+text-groff-man	online manual pages for groff contain information about the following
+text-groff-share	
+text-groff-share	
+text-groff-share	
+text-groff-share	
+text-groff-share	
+text-groff-share	
+text-groff-share		Swedish language;
+text-groff-share		displaying/printing the online manual pages;
+text-groff-share		format the BSD manual pages;
+text-groff-share		formats; mm has supports macro output in various languages other
+text-groff-share		man - wrapper for the man.old and mandoc macro sets for
+text-groff-share		man.old - old style manual page macros;
+text-groff-share		mandoc - a set of content-based and domain-based macros used to
+text-groff-share		me, mm - formatting facility for technical papers in various
+text-groff-share		mmse - example macro set file which generates macro output in
+text-groff-share		ms - the Manuscript macros, set of macros for writing manuscripts;
+text-groff-share		than English;
 text-groff-share	This package contains groff macros and data files for the macro sets
 text-groff-share	distributed with groff. These include:
-text-groff-share	
-text-groff-share		man - wrapper for the man.old and mandoc macro sets for
-text-groff-share		displaying/printing the online manual pages;
-text-groff-share	
-text-groff-share		man.old - old style manual page macros;
-text-groff-share	
-text-groff-share		mandoc - a set of content-based and domain-based macros used to
-text-groff-share		format the BSD manual pages;
-text-groff-share	
-text-groff-share		me, mm - formatting facility for technical papers in various
-text-groff-share		formats; mm has supports macro output in various languages other
-text-groff-share		than English;
-text-groff-share	
-text-groff-share		mmse - example macro set file which generates macro output in
-text-groff-share		Swedish language;
-text-groff-share	
-text-groff-share		ms - the Manuscript macros, set of macros for writing manuscripts;
 text-texinfo-bin	the GNU texinfo software
 text-texinfo-share	shared files for the GNU texinfo software
