@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.863 2006/03/12 22:40:42 chs Exp $
+# $NetBSD: mi,v 1.864 2006/03/16 17:38:46 jwise Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -954,12 +954,12 @@
 ./usr/share/man/cat4/iopsp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ip6.0			man-sys-catman		.cat
-./usr/share/man/cat4/ipf.0			man-sys-catman		ipfilter,.cat
-./usr/share/man/cat4/ipfilter.0			man-sys-catman		ipfilter,.cat
+./usr/share/man/cat4/ipf.0			man-ipf-catman		ipfilter,.cat
+./usr/share/man/cat4/ipfilter.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat4/ipip.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ipkdb.0			man-sys-catman		.cat
-./usr/share/man/cat4/ipl.0			man-sys-catman		ipfilter,.cat
-./usr/share/man/cat4/ipnat.0			man-sys-catman		ipfilter,.cat
+./usr/share/man/cat4/ipl.0			man-ipf-catman		ipfilter,.cat
+./usr/share/man/cat4/ipnat.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat4/ippp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ipsec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ipw.0			man-sys-catman		.cat
@@ -1109,8 +1109,8 @@
 ./usr/share/man/cat4/pcweasel.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pdcide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pdcsata.0			man-sys-catman		.cat
-./usr/share/man/cat4/pf.0			man-sys-catman		pf,.cat
-./usr/share/man/cat4/pflog.0			man-sys-catman		pf,.cat
+./usr/share/man/cat4/pf.0			man-pf-catman		pf,.cat
+./usr/share/man/cat4/pflog.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat4/phy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/piixide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pim.0			man-sys-catman		.cat
@@ -1568,9 +1568,9 @@
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/pcfs.0			man-obsolete		obsolete
 ./usr/share/man/cat5/pcre_table.0		man-postfix-catman	postfix,.cat
-./usr/share/man/cat5/pf.boot.conf.0		man-sys-catman		pf,.cat
-./usr/share/man/cat5/pf.conf.0			man-sys-catman		pf,.cat
-./usr/share/man/cat5/pf.os.0			man-sys-catman		pf,.cat
+./usr/share/man/cat5/pf.boot.conf.0		man-pf-catman		pf,.cat
+./usr/share/man/cat5/pf.conf.0			man-pf-catman		pf,.cat
+./usr/share/man/cat5/pf.os.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat5/pfspamd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/phones.0			man-uucp-catman		.cat
 ./usr/share/man/cat5/pim6dd.conf.0		man-obsolete		obsolete
@@ -1702,7 +1702,7 @@
 ./usr/share/man/cat8/atari/installboot.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/atari/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/atrun.0			man-cron-catman		.cat
-./usr/share/man/cat8/authpf.0			man-sys-cat		pf,.cat
+./usr/share/man/cat8/authpf.0			man-pf-cat		pf,.cat
 ./usr/share/man/cat8/bad144.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/badsect.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bebox/MAKEDEV.0		man-obsolete		obsolete
@@ -1807,7 +1807,7 @@
 ./usr/share/man/cat8/fsinfo.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fsirand.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/fssconfig.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/ftp-proxy.0		man-netutil-catman	pf,.cat
+./usr/share/man/cat8/ftp-proxy.0		man-pf-catman		pf,.cat
 ./usr/share/man/cat8/ftpd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/fwctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/genassym.sh.0		man-obsolete		obsolete
@@ -2077,8 +2077,8 @@
 ./usr/share/man/cat8/pcnfsd.0			man-nfsserver-catman	.cat
 ./usr/share/man/cat8/pdisk.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/peace.0			man-sys-catman		.cat
-./usr/share/man/cat8/pfctl.0			man-sys-catman		pf,.cat
-./usr/share/man/cat8/pflogd.0			man-sys-catman		pf,.cat
+./usr/share/man/cat8/pfctl.0			man-pf-catman		pf,.cat
+./usr/share/man/cat8/pflogd.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat8/pfspamd-setup.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pfspamd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/pfspamdb.0			man-obsolete		obsolete
@@ -3417,8 +3417,8 @@
 ./usr/share/man/man4/pcweasel.4			man-sys-man		.man
 ./usr/share/man/man4/pdcide.4			man-sys-man		.man
 ./usr/share/man/man4/pdcsata.4			man-sys-man		.man
-./usr/share/man/man4/pf.4			man-sys-man		pf,.man
-./usr/share/man/man4/pflog.4			man-sys-man		pf,.man
+./usr/share/man/man4/pf.4			man-pf-man		pf,.man
+./usr/share/man/man4/pflog.4			man-pf-man		pf,.man
 ./usr/share/man/man4/phy.4			man-sys-man		.man
 ./usr/share/man/man4/piixide.4			man-sys-man		.man
 ./usr/share/man/man4/pim.4			man-sys-man		.man
@@ -3876,9 +3876,9 @@
 ./usr/share/man/man5/passwd.conf.5		man-sys-man		.man
 ./usr/share/man/man5/pcfs.5			man-obsolete		obsolete
 ./usr/share/man/man5/pcre_table.5		man-postfix-man		postfix,.man
-./usr/share/man/man5/pf.boot.conf.5		man-sys-man		pf,.man
-./usr/share/man/man5/pf.conf.5			man-sys-man		pf,.man
-./usr/share/man/man5/pf.os.5			man-sys-man		pf,.man
+./usr/share/man/man5/pf.boot.conf.5		man-pf-man		pf,.man
+./usr/share/man/man5/pf.conf.5			man-pf-man		pf,.man
+./usr/share/man/man5/pf.os.5			man-pf-sysman		pf,.man
 ./usr/share/man/man5/pfspamd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/phones.5			man-uucp-man		.man
 ./usr/share/man/man5/pim6dd.conf.5		man-obsolete		obsolete
@@ -4009,7 +4009,7 @@
 ./usr/share/man/man8/atari/installboot.8	man-sysutil-man		.man
 ./usr/share/man/man8/atari/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/atrun.8			man-cron-man		.man
-./usr/share/man/man8/authpf.8			man-sys-man		pf,.man
+./usr/share/man/man8/authpf.8			man-pf-man		pf,.man
 ./usr/share/man/man8/bad144.8			man-sysutil-man		.man
 ./usr/share/man/man8/badsect.8			man-sysutil-man		.man
 ./usr/share/man/man8/bebox/MAKEDEV.8		man-obsolete		obsolete
@@ -4114,7 +4114,7 @@
 ./usr/share/man/man8/fsinfo.8			man-sysutil-man		.man
 ./usr/share/man/man8/fsirand.8			man-sysutil-man		.man
 ./usr/share/man/man8/fssconfig.8		man-sysutil-man		.man
-./usr/share/man/man8/ftp-proxy.8		man-netutil-man		pf,.man
+./usr/share/man/man8/ftp-proxy.8		man-pf-man		pf,.man
 ./usr/share/man/man8/ftpd.8			man-netutil-man		.man
 ./usr/share/man/man8/fwctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/genassym.sh.8		man-obsolete		obsolete
@@ -4385,8 +4385,8 @@
 ./usr/share/man/man8/pcnfsd.8			man-nfsserver-man	.man
 ./usr/share/man/man8/pdisk.8			man-sysutil-man		.man
 ./usr/share/man/man8/peace.8			man-sys-man		.man
-./usr/share/man/man8/pfctl.8			man-sys-man		pf,.man
-./usr/share/man/man8/pflogd.8			man-sys-man		pf,.man
+./usr/share/man/man8/pfctl.8			man-pf-man		pf,.man
+./usr/share/man/man8/pflogd.8			man-pf-man		pf,.man
 ./usr/share/man/man8/pfspamd-setup.8		man-obsolete		obsolete
 ./usr/share/man/man8/pfspamd.8			man-obsolete		obsolete
 ./usr/share/man/man8/pfspamdb.8			man-obsolete		obsolete
