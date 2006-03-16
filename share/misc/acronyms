@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.154 2006/02/27 17:31:14 pooka Exp $
+$NetBSD: acronyms,v 1.155 2006/03/16 23:27:20 yamt Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -58,6 +58,7 @@ EMSG	email message
 EOB	end of business [day]
 EOD	end of discussion
 EOL	end of life
+ETA	estimated time of arrival
 ETLA	extended three letter acronym
 EWAG	experienced wild-ass guess
 FAQ	frequently asked question
