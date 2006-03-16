@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.part,v 1.3 2003/10/21 10:01:21 lukem Exp $
+# $NetBSD: Makefile.part,v 1.4 2006/03/16 14:28:19 tnozaki Exp $
 
 .for code in ${CODE}  # XXX: immediately expand ${CODE}
 
@@ -34,9 +34,9 @@ CLEANFILES+=	esdb.dir.${code}
 # esdb.alias
 #
 .for i in ${${code}_PART:S/:/@/}
-${code}_$i_aliases!= \
-	sed '/^\#/d;/^ *$$/d;/^${i:S/@/:/}[ 	]/!d;;s/^[^ 	]*[ 	]*//' \
-		${ALIASFILE_${code}}
+${code}_$i_aliases!= echo \
+	`sed '/^\#/d;/^ *$$/d;/^${i:S/@/:/}[ 	]/!d;;s/^[^ 	]*[ 	]*//' \
+		${ALIASFILE_${code}}`
 .endfor
 esdb.alias.${code}: ${PARTFILE_${code}} ${ALIASFILE_${code}}
 	${_MKTARGET_CREATE}
