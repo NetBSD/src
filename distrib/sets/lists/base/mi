@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.601 2006/03/14 16:16:44 tnozaki Exp $
+# $NetBSD: mi,v 1.602 2006/03/16 17:38:46 jwise Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -135,7 +135,7 @@
 ./sbin/halt					base-sysutil-root
 ./sbin/ifconfig					base-netutil-root
 ./sbin/init					base-sysutil-root
-./sbin/ipf					base-netutil-root	ipfilter
+./sbin/ipf					base-ipf-root		ipfilter
 ./sbin/ipppctl					base-netutil-root
 ./sbin/ispppcontrol				base-obsolete		obsolete
 ./sbin/lmcctl					base-obsolete		obsolete
@@ -178,8 +178,8 @@
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
-./sbin/pfctl					base-netutil-root	pf
-./sbin/pflogd					base-netutil-root	pf
+./sbin/pfctl					base-pf-root		pf
+./sbin/pflogd					base-pf-root		pf
 ./sbin/ping					base-netutil-root
 ./sbin/ping6					base-netutil-root	use_inet6
 ./sbin/poweroff					base-sysutil-root
@@ -856,7 +856,7 @@
 ./usr/libexec/cpp				base-obsolete		obsolete
 ./usr/libexec/dnskeygen				base-obsolete		obsolete
 ./usr/libexec/fingerd				base-netutil-bin
-./usr/libexec/ftp-proxy				base-netutil-bin	pf
+./usr/libexec/ftp-proxy				base-pf-bin		pf
 ./usr/libexec/ftpd				base-netutil-bin
 ./usr/libexec/getNAME				base-man-bin
 ./usr/libexec/getty				base-sysutil-bin
@@ -948,7 +948,7 @@
 ./usr/sbin/amd					base-amd-bin
 ./usr/sbin/amq					base-amd-bin
 ./usr/sbin/arp					base-netutil-bin
-./usr/sbin/authpf				base-netutil-bin	pf
+./usr/sbin/authpf				base-pf-bin		pf
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
 ./usr/sbin/bootpgw				base-bootserver-bin
@@ -1009,15 +1009,15 @@
 ./usr/sbin/installboot				base-sysutil-bin
 ./usr/sbin/iopctl				base-sysutil-bin
 ./usr/sbin/iostat				base-sysutil-bin
-./usr/sbin/ipfs					base-netutil-bin	ipfilter
-./usr/sbin/ipfstat				base-netutil-bin	ipfilter
-./usr/sbin/ipftest				base-netutil-bin	ipfilter
-./usr/sbin/ipmon				base-netutil-bin	ipfilter
-./usr/sbin/ipnat				base-router-bin		ipfilter
-./usr/sbin/ippool				base-netutil-root	ipfilter
-./usr/sbin/ipresend				base-netutil-bin	ipfilter
-./usr/sbin/ipsend				base-netutil-bin	ipfilter
-./usr/sbin/iptest				base-netutil-bin	ipfilter
+./usr/sbin/ipfs					base-ipf-bin		ipfilter
+./usr/sbin/ipfstat				base-ipf-bin		ipfilter
+./usr/sbin/ipftest				base-ipf-bin		ipfilter
+./usr/sbin/ipmon				base-ipf-bin		ipfilter
+./usr/sbin/ipnat				base-ipf-bin		ipfilter
+./usr/sbin/ippool				base-ipf-root		ipfilter
+./usr/sbin/ipresend				base-ipf-bin		ipfilter
+./usr/sbin/ipsend				base-ipf-bin		ipfilter
+./usr/sbin/iptest				base-ipf-bin		ipfilter
 ./usr/sbin/irdaattach				base-sysutil-bin
 ./usr/sbin/iscsi-target				base-iscsi-bin
 ./usr/sbin/isdnd				base-isdn-bin
