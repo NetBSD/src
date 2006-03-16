@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.189 2006/03/15 18:12:02 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.190 2006/03/16 10:13:55 drochner Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.189 2006/03/15 18:12:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2006/03/16 10:13:55 drochner Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -737,6 +737,9 @@ pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 	    pm != vm_map_pmap(&curproc->p_vmspace->vm_map))
 		return;
 
+	if ((opte ^ npte) & PG_X)
+		pmap_update_pg(va);
+
 	/*
 	 * Executability was removed on the last executable change.
 	 * Reset the code segment to something conservative and
@@ -746,8 +749,9 @@ pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 
 	if ((opte & PG_X) && (npte & PG_X) == 0 && va == pm->pm_hiexec) {
 		struct trapframe *tf = curlwp->l_md.md_regs;
+		struct pcb *pcb = &curlwp->l_addr->u_pcb;
 
-		tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
+		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 		pm->pm_hiexec = I386_MAX_EXE_ADDR;
 	}
 }
@@ -776,13 +780,16 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 			va = trunc_page(ent->end) - PAGE_SIZE;
 	}
 	vm_map_unlock_read(map);
-	pm->pm_hiexec = va;
-
-	if (tf->tf_cs == LSEL(LUCODEBIG_SEL, SEL_UPL) ||
-	    (pm->pm_hiexec <= I386_MAX_EXE_ADDR))
+	if (va == pm->pm_hiexec && tf->tf_cs == GSEL(GUCODEBIG_SEL, SEL_UPL))
 		return (0);
 
-	tf->tf_cs = LSEL(LUCODEBIG_SEL, SEL_UPL);
+	pm->pm_hiexec = va;
+	if (pm->pm_hiexec > I386_MAX_EXE_ADDR) {
+		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
+	} else {
+		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+		return (0);
+	}
 	return (1);
 }
 
@@ -2184,7 +2191,6 @@ pmap_map(va, spa, epa, prot)
 /*
  * pmap_zero_page: zero a page
  */
-void i686_pagezero(caddr_t);
 
 void
 pmap_zero_page(pa)
@@ -2204,11 +2210,7 @@ pmap_zero_page(pa)
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U; /* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
-#if 1
-	i686_pagezero(zerova);
-#else
 	memset(zerova, 0, PAGE_SIZE);			/* zero */
-#endif
 #ifdef DIAGNOSTIC
 	*zpte = 0;					/* zap! */
 #endif
