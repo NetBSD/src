@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.17 2006/03/14 02:57:16 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.18 2006/03/16 20:05:50 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -83,7 +83,7 @@ regarding the requested operation.
 It can either allow, deny, or defer the operation -- in which case, the
 decision is left to the other listeners.
 .Pp
-For an operation to be allowed, all listeners must not retuen any deny
+For an operation to be allowed, all listeners must not return any deny
 or defer decisions.
 .Pp
 Scopes manage listeners that operate in the same aspect of the system.
@@ -112,7 +112,7 @@ Zero indicates success -- the operation is allowed;
 .Dq EPERM
 (see
 .Xr errno 2 )
-inidcates failure -- the operation is denied.
+indicates failure -- the operation is denied.
 .Pp
 Each scope has its own authorization wrapper, to make it easy to call from various
 places by eliminating the need to specify the scope and/or cast values.
@@ -143,9 +143,9 @@ to accounting flags, and the
 flag is set.
 .El
 .Sh PROCESS SCOPE
-The process scope, 
+The process scope,
 .Dq org.netbsd.kauth.process ,
-manages authorization requsts related to processes in the system.
+manages authorization requests related to processes in the system.
 .Pp
 The authorization wrapper for this scope is declared as
 .Pp
@@ -564,8 +564,9 @@ first appeared in
 and is a clean-room implementation based on Apple TN2127, available at
 http://developer.apple.com/technotes/tn2005/tn2127.html.
 .Sh AUTHORS
-Elad Efrat <elad@NetBSD.org> implemented the kernel authorization framework in
+.An Elad Efrat Aq elad@NetBSD.org
+implemented the kernel authorization framework in
 .Nx .
 .Pp
-Jason R. Thorpe <thorpej@NetBSD.org> provided guidance and answered questions
-about the Darwin implementation.
+.An Jason R. Thorpe Aq thorpej@NetBSD.org
+provided guidance and answered questions about the Darwin implementation.
