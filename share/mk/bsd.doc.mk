@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.63 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.doc.mk,v 1.64 2006/03/16 18:43:34 jwise Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -26,7 +26,7 @@ docinstall::	# ensure existence
 
 __docinstall: .USE
 	${_MKTARGET_INSTALL}
-	${INSTALL_FILE} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} ${SYSPKGTAG} \
+	${INSTALL_FILE} -o ${DOCOWN} -g ${DOCGRP} -m ${DOCMODE} \
 		${.ALLSRC} ${.TARGET}
 
 FILES?=		${SRCS}

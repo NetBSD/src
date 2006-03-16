@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.35 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.36 2006/03/16 18:43:34 jwise Exp $
 
 # Variables:
 #
@@ -34,9 +34,9 @@ ${DESTDIR}${INCSDIR}: .EXEC
 		${_MKSHMSG_CREATE} ${.TARGET}; \
 		/bin/rm -rf ${.TARGET}; \
 		${_MKSHECHO} ${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 \
-			${SYSPKGTAG} ${.TARGET}; \
+			${.TARGET}; \
 		${INSTALL_DIR} -o ${BINOWN} -g ${BINGRP} -m 755 \
-			${SYSPKGTAG} ${.TARGET}; \
+			${.TARGET}; \
 	fi
 
 # -c is forced on here, in order to preserve modtimes for "make depend"
@@ -44,9 +44,9 @@ __incinstall: .USE
 	@cmp -s ${.ALLSRC} ${.TARGET} > /dev/null 2>&1 || \
 	    (${_MKSHMSG_INSTALL} ${.TARGET}; \
 	     ${_MKSHECHO} "${INSTALL_FILE} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}" && \
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET}" && \
 	     ${INSTALL_FILE} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET})
+		-m ${NONBINMODE} ${.ALLSRC} ${.TARGET})
 
 .for F in ${INCS:O:u} ${DEPINCS:O:u}
 _F:=		${DESTDIR}${INCSDIR}/${F}		# installed path
@@ -74,8 +74,8 @@ incinstall::
 			continue ; \
 		fi ; \
 		${_MKSHMSG_INSTALL} $$t; \
-		${_MKSHECHO} ${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
-		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
+		${_MKSHECHO} ${INSTALL_SYMLINK} $$l $$t; \
+		${INSTALL_SYMLINK} $$l $$t; \
 	 done; )
 .endif
 
