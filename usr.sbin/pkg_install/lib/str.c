@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.59 2006/03/17 02:10:55 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.60 2006/03/17 02:20:46 hubertf Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.59 2006/03/17 02:10:55 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.60 2006/03/17 02:20:46 hubertf Exp $");
 #endif
 #endif
 
@@ -307,9 +307,15 @@ findbestmatchingname_fn(const char *found, void *vp)
 		if (best_version) {
 			/* skip '-' if any version found */
 			best_version++;
+			strip_txz(best_no_sfx, NULL, best_version);
+			best_version = best_no_sfx;
+		} else {
+			/* how did this end up in 'best'?
+			 * Shouldn't happen... */
+			fprintf(stderr,
+				"'%s' has no usable package(version)\n",
+				best);
 		}
-		strip_txz(best_no_sfx, NULL, best_version);
-		best_version = best_no_sfx;
 	}
 
 	if (found_version == NULL) {
