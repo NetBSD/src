@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.174 2006/03/17 21:26:55 peter Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.175 2006/03/17 21:28:21 peter Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.174 2006/03/17 21:26:55 peter Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.175 2006/03/17 21:28:21 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -3224,8 +3224,6 @@ extended_port(const char *arg)
 	usedefault = 1;
 	if (tmp != NULL)
 		free(tmp);
-	if (res)
-		freeaddrinfo(res);
 	return -1;
 }
 
