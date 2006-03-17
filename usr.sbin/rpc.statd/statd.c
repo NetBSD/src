@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.25 2005/11/27 16:03:20 bouyer Exp $	*/
+/*	$NetBSD: statd.c,v 1.26 2006/03/17 02:41:31 elad Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.25 2005/11/27 16:03:20 bouyer Exp $");
+__RCSID("$NetBSD: statd.c,v 1.26 2006/03/17 02:41:31 elad Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -595,7 +595,6 @@ notify_one_host(hostname)
 
 	gethostname(our_hostname, sizeof(our_hostname));
 	our_hostname[sizeof(our_hostname) - 1] = '\0';
-	our_hostname[SM_MAXSTRLEN] = '\0';
 	arg.mon_name = our_hostname;
 	arg.state = status_info.ourState;
 
