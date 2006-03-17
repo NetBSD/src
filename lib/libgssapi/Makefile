@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.15 2006/03/17 21:43:16 christos Exp $
 
 NOLINT=		# defined
 
@@ -10,6 +10,11 @@ DIST=		${NETBSDSRCDIR}/crypto/dist
 WARNS?=		1
 
 LIB=		gssapi
+
+LIBDPLIBS=	crypto	${.CURDIR}/../libcrypto \
+		krb5	${.CURDIR}/../libkrb5 \
+		asn1	${.CURDIR}/../libasn1 \
+		roken	${.CURDIR}/../libroken
 
 SRCS	 =			\
 	8003.c			\
