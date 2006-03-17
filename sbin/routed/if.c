@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.24 2002/11/30 04:04:23 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.25 2006/03/17 16:58:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.24 2002/11/30 04:04:23 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.25 2006/03/17 16:58:09 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -985,6 +985,7 @@ ifinit(void)
 						  ifp->int_name,
 						  now.tv_sec-ifp->int_data.ts);
 					ifdel(ifp);
+					ifp = 0;
 				}
 				continue;
 			}
@@ -1182,7 +1183,7 @@ ifinit(void)
 	/* If we are multi-homed, optionally advertise a route to
 	 * our main address.
 	 */
-	if (advertise_mhome
+	if ((advertise_mhome && ifp)
 	    || (tot_interfaces > 1
 		&& mhome
 		&& (ifp = ifwithaddr(myaddr, 0, 0)) != 0
