@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.9 2003/08/07 09:37:40 agc Exp $	*/
+/*	$NetBSD: save.c,v 1.10 2006/03/17 23:04:01 abs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.9 2003/08/07 09:37:40 agc Exp $");
+__RCSID("$NetBSD: save.c,v 1.10 2006/03/17 23:04:01 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,6 +100,8 @@ save_into_file(sfile)
 	}
 	if (((fp = fopen(sfile, "w")) == NULL) ||
 	    ((file_id = md_get_file_id(sfile)) == -1)) {
+		if (fp)
+			fclose(fp);
 		message("problem accessing the save file", 0);
 		return;
 	}
