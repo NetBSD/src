@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.7 2003/08/07 09:46:50 agc Exp $	*/
+/*	$NetBSD: print.c,v 1.8 2006/03/17 02:12:15 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.7 2003/08/07 09:46:50 agc Exp $");
+__RCSID("$NetBSD: print.c,v 1.8 2006/03/17 02:12:15 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ print_request(cp, mp)
 {
 	char tbuf[80], *tp;
 	
-	if (mp->type > NTYPES) {
+	if (mp->type >= NTYPES) {
 		(void)snprintf(tbuf, sizeof tbuf, "type %d", mp->type);
 		tp = tbuf;
 	} else
@@ -92,12 +92,12 @@ print_response(cp, rp)
 {
 	char tbuf[80], *tp, abuf[80], *ap;
 	
-	if (rp->type > NTYPES) {
+	if (rp->type >= NTYPES) {
 		(void)snprintf(tbuf, sizeof tbuf, "type %d", rp->type);
 		tp = tbuf;
 	} else
 		tp = types[rp->type];
-	if (rp->answer > NANSWERS) {
+	if (rp->answer >= NANSWERS) {
 		(void)snprintf(abuf, sizeof abuf, "answer %d", rp->answer);
 		ap = abuf;
 	} else
