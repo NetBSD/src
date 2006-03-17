@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.77 2004/01/05 03:53:10 lukem Exp $       */
+/*     $NetBSD: login.c,v 1.77.6.1 2006/03/17 17:07:19 riz Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.77 2004/01/05 03:53:10 lukem Exp $");
+__RCSID("$NetBSD: login.c,v 1.77.6.1 2006/03/17 17:07:19 riz Exp $");
 #endif /* not lint */
 
 /*
@@ -482,9 +482,8 @@ main(argc, argv)
 		 * but with insecure terminal, refuse the login attempt.
 		 */
 		if (pwd && !rval && rootlogin && !rootterm(tty)) {
-			(void)fprintf(stderr,
-			    "%s login refused on this terminal.\n",
-			    pwd->pw_name);
+                       (void)printf("Login incorrect or refused on this "
+                           "terminal.\n");
 			if (hostname)
 				syslog(LOG_NOTICE,
 				    "LOGIN %s REFUSED FROM %s ON TTY %s",
@@ -499,7 +498,8 @@ main(argc, argv)
 		if (pwd && !rval)
 			break;
 
-		(void)printf("Login incorrect\n");
+               (void)printf("Login incorrect or refused on this "
+                   "terminal.\n");
 		failures++;
 		cnt++;
 		/* we allow 10 tries, but after 3 we start backing off */
