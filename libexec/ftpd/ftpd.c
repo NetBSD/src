@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.173 2006/03/17 21:24:33 peter Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.174 2006/03/17 21:26:55 peter Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.173 2006/03/17 21:24:33 peter Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.174 2006/03/17 21:26:55 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -1980,6 +1980,7 @@ dataconn(const char *name, off_t size, const char *fmode)
 			break;
 		conerrno = errno;
 		(void) fclose(file);
+		file = NULL;
 		data = -1;
 		if (conerrno == EADDRINUSE) {
 			sleep((unsigned) swaitint);
