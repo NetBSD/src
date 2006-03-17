@@ -1,4 +1,4 @@
-/*	$NetBSD: pen.c,v 1.35 2005/11/05 13:11:02 wiz Exp $	*/
+/*	$NetBSD: pen.c,v 1.36 2006/03/17 01:58:25 hubertf Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.35 2005/11/05 13:11:02 wiz Exp $");
+__RCSID("$NetBSD: pen.c,v 1.36 2006/03/17 01:58:25 hubertf Exp $");
 #endif
 #endif
 
@@ -103,7 +103,15 @@ find_play_pen(char *pen, size_t pensize, size_t sz)
 	char   *cp;
 	struct stat sb;
 
-	if (pen && pen[0] && stat(pen, &sb) != FAIL && (min_free(pen) >= sz))
+	if (pen == NULL) {
+		cleanup(0);
+		errx(2,
+		     "find_play_pen(): 'pen' variable is NULL\n"
+		     "(this should not happen, please report!");
+		return NULL;
+	}
+	
+	if (pen[0] && stat(pen, &sb) != FAIL && (min_free(pen) >= sz))
 		return pen;
 	else if ((cp = getenv("PKG_TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
 		(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
