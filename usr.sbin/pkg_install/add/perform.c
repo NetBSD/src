@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.117 2006/03/17 02:37:31 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.118 2006/03/17 05:32:11 erh Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.117 2006/03/17 02:37:31 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.118 2006/03/17 05:32:11 erh Exp $");
 #endif
 #endif
 
@@ -200,7 +200,7 @@ installprereq(const char *name, int *errc, int doupdate)
 
 	if (fexec_skipempty(BINDIR "/pkg_add", "-K", _pkgdb_getPKGDB_DIR(),
 			    "-s", get_verification(),
-	            doupdate ? "-u" : "",
+	            doupdate > 1 ? "-uu" : (doupdate ? "-u" : ""),
 	            Fake ? "-n" : "",
 			    NoView ? "-L" : "",
 			    View ? "-w" : "", View ? View : "",
@@ -761,7 +761,7 @@ ignore_replace_depends_check:
 						/* Yes, append .tgz after the version so the */
 						/* pattern can match a filename. */
 						snprintf(tmp, sizeof(tmp), "%s.tgz", p->name);
-						done = installprereq(tmp, &errc0, 1);
+						done = installprereq(tmp, &errc0, 2);
 					}
 					else if (Replace)
 					{
@@ -818,10 +818,10 @@ ignore_replace_depends_check:
 
 				if (exact != NULL) {
 					/* first try the exact name, from the @blddep */
-					done = installprereq(exact, &errc0, 0);
+					done = installprereq(exact, &errc0, (Replace > 1) ? 2 : 0);
 				}
 				if (!done) {
-					done = installprereq(p->name, &errc0, 0);
+					done = installprereq(p->name, &errc0, (Replace > 1) ? 2 : 0);
 				}
 				if (!done && !Force) {
 					errc += errc0;
