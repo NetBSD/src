@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.42 2006/02/16 23:25:18 lukem Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.43 2006/03/17 16:14:48 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.42 2006/02/16 23:25:18 lukem Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.43 2006/03/17 16:14:48 hubertf Exp $");
 #endif
 
 #include <sys/param.h>
@@ -259,6 +259,7 @@ do_single(int argc, char **argv, int action)
 	ileave = (int)strtol(cp, &cp2, 10);
 	if ((errno == ERANGE) || (ileave < 0) || (*cp2 != '\0')) {
 		warnx("invalid interleave factor: %s", cp);
+		free(ccd);
 		return (1);
 	}
 
@@ -267,6 +268,7 @@ do_single(int argc, char **argv, int action)
 		cp = *argv++; --argc;
 		if ((flags = flags_to_val(cp)) < 0) {
 			warnx("invalid flags argument: %s", cp);
+			free(ccd);
 			return (1);
 		}
 	}
@@ -275,6 +277,7 @@ do_single(int argc, char **argv, int action)
 	disks = malloc(argc * sizeof(char *));
 	if (disks == NULL) {
 		warnx("no memory to configure ccd");
+		free(ccd);
 		return (1);
 	}
 	for (i = 0; argc != 0; ) {
@@ -283,6 +286,8 @@ do_single(int argc, char **argv, int action)
 			disks[i++] = cp;
 		else {
 			warnx("%s: %s", cp, strerror(j));
+			free(ccd);
+			free(disks);
 			return (1);
 		}
 	}
@@ -294,6 +299,7 @@ do_single(int argc, char **argv, int action)
 	ccio.ccio_flags = flags;
 
 	if (do_io(ccd, CCDIOCSET, &ccio)) {
+		free(ccd);
 		free(disks);
 		return (1);
 	}
@@ -317,6 +323,7 @@ do_single(int argc, char **argv, int action)
 			printf("concatenated\n");
 	}
 
+	free(ccd);
 	free(disks);
 	return (0);
 }
