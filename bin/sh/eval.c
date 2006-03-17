@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.84 2005/06/23 23:05:29 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.85 2006/03/17 17:20:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.84 2005/06/23 23:05:29 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.85 2006/03/17 17:20:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -679,7 +679,7 @@ evalcommand(union node *cmd, int flags, struct backcmd *backcmd)
 	struct cmdentry cmdentry;
 	struct job *jp;
 	struct jmploc jmploc;
-	struct jmploc *volatile savehandler;
+	struct jmploc *volatile savehandler = NULL;
 	char *volatile savecmdname;
 	volatile struct shparam saveparam;
 	struct localvar *volatile savelocalvars;
