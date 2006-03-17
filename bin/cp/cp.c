@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.40 2005/11/16 22:42:12 christos Exp $ */
+/* $NetBSD: cp.c,v 1.41 2006/03/17 06:22:30 erh Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.40 2005/11/16 22:42:12 christos Exp $");
+__RCSID("$NetBSD: cp.c,v 1.41 2006/03/17 06:22:30 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -495,6 +495,7 @@ copy(char *argv[], enum op type, int fts_options)
 		err(EXIT_FAILURE, "fts_read");
 		/* NOTREACHED */
 	}
+	(void)fts_close(ftsp);
 	return (rval);
 }
 
