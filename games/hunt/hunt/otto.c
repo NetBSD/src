@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.8 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: otto.c,v 1.9 2006/03/17 23:36:38 abs Exp $	*/
 # ifdef OTTO
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.8 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: otto.c,v 1.9 2006/03/17 23:36:38 abs Exp $");
 #endif /* not lint */
 
 # include	<sys/time.h>
@@ -598,12 +598,15 @@ wander()
 		break;
 # endif
 	}
+# ifdef notdef
 	if (dir_count == 0) {
 		duck(random() % NUMDIRECTIONS);
 		num_turns = 0;
 		return;
 	} else if (dir_count == 1)
+# endif
 		rel_dir = ffs(dir_mask) - 1;
+# ifdef notdef
 	else {
 		rel_dir = ffs(dir_mask) - 1;
 		dir_mask &= ~(1 << rel_dir);
@@ -614,6 +617,7 @@ wander()
 			dir_mask &= ~(1 << i);
 		}
 	}
+# endif
 	if (rel_dir == FRONT)
 		num_turns++;
 	else
