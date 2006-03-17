@@ -1,4 +1,4 @@
-#	$NetBSD: buffer.inc,v 1.4 2003/07/24 14:16:31 itojun Exp $
+#	$NetBSD: buffer.inc,v 1.5 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/buffer
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/buffer
 
-SRCS+= buffer.c buf_err.c
+BUFFER_SRCS = buffer.c buf_err.c
+SRCS += ${BUFFER_SRCS}
+
+.for cryptosrc in ${BUFFER_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/buffer
+.endfor

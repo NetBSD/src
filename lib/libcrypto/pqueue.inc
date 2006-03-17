@@ -1,4 +1,4 @@
-#	$NetBSD: pqueue.inc,v 1.1 2005/11/26 00:35:58 christos Exp $
+#	$NetBSD: pqueue.inc,v 1.2 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/pqueue
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/pqueue
 
-SRCS+=	pqueue.c
+PQUEUE_SRCS = pqueue.c
+SRCS += ${PQUEUE_SRCS}
+
+.for cryptosrc in ${PQUEUE_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/pqueue
+.endfor

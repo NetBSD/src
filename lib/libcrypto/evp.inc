@@ -1,4 +1,4 @@
-#	$NetBSD: evp.inc,v 1.6 2005/11/25 19:15:08 christos Exp $
+#	$NetBSD: evp.inc,v 1.7 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,9 +7,8 @@
 
 .PATH:	${OPENSSLSRC}/crypto/evp
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/evp
 
-SRCS+=	encode.c digest.c evp_enc.c evp_key.c evp_acnf.c \
+EVP_SRCS = encode.c digest.c evp_enc.c evp_key.c evp_acnf.c \
 	e_des.c e_bf.c e_idea.c e_des3.c \
 	e_rc4.c e_aes.c names.c \
 	e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c \
@@ -19,3 +18,8 @@ SRCS+=	encode.c digest.c evp_enc.c evp_key.c evp_acnf.c \
 	bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
 	c_all.c c_allc.c c_alld.c evp_lib.c bio_ok.c \
 	evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c m_ecdsa.c
+SRCS += ${EVP_SRCS}
+
+.for cryptosrc in ${EVP_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/evp
+.endfor

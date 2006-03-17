@@ -1,4 +1,4 @@
-#	$NetBSD: rc5.inc,v 1.5 2003/07/24 14:16:33 itojun Exp $
+#	$NetBSD: rc5.inc,v 1.6 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,10 +7,14 @@
 
 .PATH:	${OPENSSLSRC}/crypto/rc5
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/rc5
 
-SRCS+=rc5_ecb.c rc5cfb64.c rc5ofb64.c
+RC5_SRCS = rc5_ecb.c rc5cfb64.c rc5ofb64.c
 # RC5 is a patented algorithm; abort().
 # see ../libcrypto_rc5
-SRCS+=rc5_skey_dummy.c rc5_enc_dummy.c
+RC5_SRCS = rc5_skey_dummy.c rc5_enc_dummy.c
 #SRCS+=rc5_skey.c rc5_enc.c
+SRCS += ${RC5_SRCS}
+
+.for cryptosrc in ${RC5_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/rc5
+.endfor

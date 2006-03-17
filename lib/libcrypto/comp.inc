@@ -1,4 +1,4 @@
-#	$NetBSD: comp.inc,v 1.4 2003/07/24 14:16:31 itojun Exp $
+#	$NetBSD: comp.inc,v 1.5 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,7 +7,11 @@
 
 .PATH:	${OPENSSLSRC}/crypto/comp
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/comp
 
-SRCS+=	comp_lib.c comp_err.c \
+COMP_SRCS = comp_lib.c comp_err.c \
 	c_rle.c c_zlib.c
+SRCS += ${COMP_SRCS}
+
+.for cryptosrc in ${COMP_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/comp
+.endfor

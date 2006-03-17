@@ -1,4 +1,4 @@
-#	$NetBSD: idea.inc,v 1.4 2000/09/30 00:23:37 itojun Exp $
+#	$NetBSD: idea.inc,v 1.5 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,10 +7,14 @@
 
 .PATH:	${OPENSSLSRC}/crypto/idea
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/idea
 
-SRCS+=i_cfb64.c i_ofb64.c i_ecb.c
+IDEA_SRCS = i_cfb64.c i_ofb64.c i_ecb.c
 # IDEA is a patented algorithm; abort().
 # see ../libcrypto_idea
-SRCS+=i_cbc_dummy.c i_skey_dummy.c
+IDEA_SRCS = i_cbc_dummy.c i_skey_dummy.c
 #SRCS+=i_cbc.c i_skey.c
+SRCS += ${IDEA_SRCS}
+
+.for cryptosrc in ${IDEA_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/idea
+.endfor
