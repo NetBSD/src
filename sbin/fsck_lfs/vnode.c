@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.3 2005/04/11 23:19:24 perseant Exp $ */
+/* $NetBSD: vnode.c,v 1.4 2006/03/17 15:53:46 rumble Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -110,6 +110,8 @@ register_vget(void *fs, struct uvnode *func(void *, ino_t))
 	struct vget_reg *vgr;
 
 	vgr = (struct vget_reg *)malloc(sizeof(*vgr));
+	if (vgr == NULL)
+		err(1, NULL);
 	vgr->vgr_fs = fs;
 	vgr->vgr_func = func;
 	LIST_INSERT_HEAD(&vgrlist, vgr, vgr_list);

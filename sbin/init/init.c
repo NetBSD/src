@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.71 2006/03/17 02:48:29 chris Exp $	*/
+/*	$NetBSD: init.c,v 1.72 2006/03/17 15:53:46 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.71 2006/03/17 02:48:29 chris Exp $");
+__RCSID("$NetBSD: init.c,v 1.72 2006/03/17 15:53:46 rumble Exp $");
 #endif
 #endif /* not lint */
 
@@ -1381,6 +1381,8 @@ mapfile(struct mappedfile *mf)
 
 	if ((st.st_mode & S_IFMT) == S_IFLNK) {
 		mf->buf = malloc(st.st_size + 1);
+		if (mf->buf == NULL)
+			return;
 		mf->buf[st.st_size] = 0;
 		if (readlink(mf->path, mf->buf, st.st_size) != st.st_size)
 			return;
@@ -1448,6 +1450,8 @@ mfs_dev(void)
 	switch ((pid = fork())) {
 	case 0:
 		asprintf(&fs_size, "%d", FSSIZE);
+		if (fs_size == NULL)
+			return(-1);
 		(void)execl(INIT_MOUNT_MFS, "mount_mfs",
 		    "-b", "4096", "-f", "512",
 		    "-s", fs_size, "-n", STR(NINODE),
