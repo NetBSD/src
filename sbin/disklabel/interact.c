@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.27 2005/10/19 21:22:21 dsl Exp $	*/
+/*	$NetBSD: interact.c,v 1.28 2006/03/17 14:50:44 rumble Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.27 2005/10/19 21:22:21 dsl Exp $");
+__RCSID("$NetBSD: interact.c,v 1.28 2006/03/17 14:50:44 rumble Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -645,7 +645,8 @@ dumpnames(const char *prompt, const char * const *olist, size_t numentries)
 	const char *p;
 	const char **list;
 
-	list = (const char **)malloc(sizeof(char *) * numentries);
+	if ((list = (const char **)malloc(sizeof(char *) * numentries)) == NULL)
+		err(1, "malloc");
 	width = 0;
 	printf("%s:\n", prompt);
 	for (i = 0; i < numentries; i++) {
