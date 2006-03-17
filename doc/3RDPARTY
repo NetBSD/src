@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.420 2006/03/17 17:47:57 macallan Exp $
+#	$NetBSD: 3RDPARTY,v 1.421 2006/03/17 18:44:07 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -507,20 +507,6 @@ Run ./configure, save config.h, make distclean, rm all autoconf/automake
 and ndbootd-raw.c.  Restore saved config.h, and force it to define
 HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
-Package:	nvi
-Version:	1.79
-Current Vers:	1.79
-Maintainer:	Keith Bostic <bostic@bsdi.com>
-Archive Site:	ftp://ftp.bostic.com/pub/
-Home Page:	http://www.bostic.com/vi/
-Mailing List:
-Responsible:	aymeric
-License:	BSD (3/4-clause)
-Notes:
-We have lots of local bug fixes, and the point of importing 1.81.x would
-be to get multibyte characters support. For now this means waiting for
-additions in our libcurses.
-
 Package:	ntp
 Version:	4.2.0
 Current Vers:	4.2.0
@@ -534,6 +520,20 @@ Notes:
 See /usr/src/dist/ntp/ntp2netbsd for update instructions.
 NOTE: As of 20010405 -current includes a fix for the "ntpdx" root
 exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
+
+Package:	nvi
+Version:	1.79
+Current Vers:	1.79
+Maintainer:	Keith Bostic <bostic@bsdi.com>
+Archive Site:	ftp://ftp.bostic.com/pub/
+Home Page:	http://www.bostic.com/vi/
+Mailing List:
+Responsible:	aymeric
+License:	BSD (3/4-clause)
+Notes:
+We have lots of local bug fixes, and the point of importing 1.81.x would
+be to get multibyte characters support. For now this means waiting for
+additions in our libcurses.
 
 Package:	OpenPAM
 Version:	20050616
@@ -609,20 +609,6 @@ Responsible:
 License:	Public domain
 pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
-Package:	ping
-Version:	980911
-Current Vers:	980911
-Maintainer:	Vernon Schryver <vjs@rhyolite.com>
-Archive Site:	ftp://ftp.rhyolite.com/src/
-Home Page:	http://www.rhyolite.com/src/
-Mailing List:
-Responsible:	christos
-License:	BSD (3-clause)
-Notes:
-We use err() and friends. We have changes for snprintf, extra
-formating in man pages, disallowing flood pinging, alignment fixes,
-and more.
-
 Package:	PF (openbsd packet filter)
 Version:	OpenBSD 3.7
 Current Vers:	OpenBSD 3.7-current
@@ -636,6 +622,20 @@ Notes:
 kernel code is imported into src/sys/dist/pf and src/sys/net has reachover
 definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
+
+Package:	ping
+Version:	980911
+Current Vers:	980911
+Maintainer:	Vernon Schryver <vjs@rhyolite.com>
+Archive Site:	ftp://ftp.rhyolite.com/src/
+Home Page:	http://www.rhyolite.com/src/
+Mailing List:
+Responsible:	christos
+License:	BSD (3-clause)
+Notes:
+We use err() and friends. We have changes for snprintf, extra
+formating in man pages, disallowing flood pinging, alignment fixes,
+and more.
 
 Package:	postfix
 Version:	2.2.9
@@ -877,18 +877,6 @@ Notes:
  ALL changes must be sent back to the XFree86 repository. Patches should
  be submitted back via http://bugzilla.xfree86.org.
 
-Package:	zlib
-Version:	1.2.3
-Current Vers:	1.2.3
-Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
-Archive Site:	http://www.gzip.org/zlib/
-Home Page:	http://www.gzip.org/zlib/
-Mailing List:
-Responsible:	gwr, tron, christos
-License:	BSD (3-clause)
-Notes:
-Imported to src/common/dist/zlib and shared by the kernel and userland.
-
 Package:	Xorg
 Version:	7.0
 Current Vers:	7.0
@@ -900,3 +888,15 @@ Responsible:	macallan
 License:	XFree
 Notes:		This is the modular branch tagged as XORG-7_0 pulled from
 		xorg's cvs repository.
+
+Package:	zlib
+Version:	1.2.3
+Current Vers:	1.2.3
+Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
+Archive Site:	http://www.gzip.org/zlib/
+Home Page:	http://www.gzip.org/zlib/
+Mailing List:
+Responsible:	gwr, tron, christos
+License:	BSD (3-clause)
+Notes:
+Imported to src/common/dist/zlib and shared by the kernel and userland.
