@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.60 2006/03/17 02:20:46 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.61 2006/03/17 17:46:44 hubertf Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.60 2006/03/17 02:20:46 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.61 2006/03/17 17:46:44 hubertf Exp $");
 #endif
 #endif
 
@@ -325,7 +325,8 @@ findbestmatchingname_fn(const char *found, void *vp)
 		/* if best_version==NULL only if best==NULL
 		 * (or best[0]='\0') */
 		if (best != NULL) {
-			if (dewey_cmp(found_version, DEWEY_GT, best_version)) {
+			if (best[0] == '\0'
+			    || dewey_cmp(found_version, DEWEY_GT, best_version)) {
 				/* found pkg(version) is bigger than current "best"
 				 * version - remember! */
 				strcpy(best, found);
