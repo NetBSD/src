@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.22 2006/02/26 21:55:23 riz Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.23 2006/03/17 17:29:30 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -178,4 +178,16 @@ sys/arch/i386/pci/pchb_rnd.c			patch
 	Improve code probing for the Intel hardware RNG to avoid false
 	detections.
 	[tron, ticket #10327]
+
+usr.bin/login/login.c				1.87 via patch
+
+	PR/31059: don't issue different message for root login on
+	insecure terminal.
+	[jnemeth, ticket #10356]
+
+usr.bin/mail/send.c				1.24
+
+	PR/32978: Johan Veenhuizen: mail(1) creates record file with
+	insecure umask
+	[adrianp, ticket #10365]
 
