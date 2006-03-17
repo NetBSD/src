@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.105 2006/03/17 14:14:45 dmcmahill Exp $ */
+/* $NetBSD: user.c,v 1.106 2006/03/17 14:20:10 dmcmahill Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.105 2006/03/17 14:14:45 dmcmahill Exp $");
+__RCSID("$NetBSD: user.c,v 1.106 2006/03/17 14:20:10 dmcmahill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1955,9 +1955,9 @@ usermod(int argc, char **argv)
 	    MOD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
 		case 'G':
-			while ((u.u_groupv[u.u_groupc] =
-			    strsep(&optarg, ",")) != NULL &&
-			    u.u_groupc < NGROUPS_MAX) {
+			while (u.u_groupc < NGROUPS_MAX &&
+			    (u.u_groupv[u.u_groupc] =
+			    strsep(&optarg, ",")) != NULL) {
 				if (u.u_groupv[u.u_groupc][0] != 0) {
 					u.u_groupc++;
 				}
