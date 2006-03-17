@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.25 2006/03/17 15:53:46 rumble Exp $	 */
+/* $NetBSD: pass0.c,v 1.26 2006/03/17 19:24:08 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 #include <ufs/lfs/lfs.h>
 #undef vnode
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
