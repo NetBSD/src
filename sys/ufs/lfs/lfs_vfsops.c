@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.193 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.194 2006/03/17 23:21:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.194 2006/03/17 23:21:01 tls Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1462,7 +1462,7 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	sbp->f_bsize = fs->lfs_bsize;
 	sbp->f_frsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
-	sbp->f_blocks = fsbtofrags(fs, LFS_EST_NONMETA(fs));
+	sbp->f_blocks = fsbtofrags(fs, LFS_EST_NONMETA(fs) - VTOI(fs->lfs_ivnode)->i_lfs_effnblks);
 
 	sbp->f_bfree = fsbtofrags(fs, LFS_EST_BFREE(fs));
 	KASSERT(sbp->f_bfree <= fs->lfs_dsize);
