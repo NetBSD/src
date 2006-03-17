@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.26 2006/03/17 21:43:16 christos Exp $
 
 NOLINT=		# defined
 
@@ -9,6 +9,8 @@ DIST=		${NETBSDSRCDIR}/crypto/dist
 
 WARNS?=		1
 LIB=		asn1
+
+LIBDPLIBS=	com_err	${.CURDIR}/../libcom_err
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=		cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
