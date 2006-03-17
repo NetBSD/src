@@ -27,7 +27,7 @@
  *	FSM for isdnd
  *	-------------
  *
- *	$Id: fsm.c,v 1.6 2003/10/06 09:43:27 itojun Exp $ 
+ *	$Id: fsm.c,v 1.7 2006/03/17 21:10:02 elad Exp $ 
  *
  * $FreeBSD$
  *
@@ -385,7 +385,7 @@ next_state(struct cfg_entry *cep, int event)
 {
 	int currstate, newstate;
 
-	if (event > N_EVENTS)
+	if (event >= N_EVENTS)
 	{
 		logit(LL_ERR, "next_state: event > N_EVENTS");
 		error_exit(1, "next_state: event > N_EVENTS");
@@ -393,7 +393,7 @@ next_state(struct cfg_entry *cep, int event)
 
 	currstate = cep->state;
 
-	if (currstate > N_STATES)
+	if (currstate >= N_STATES)
 	{
 		logit(LL_ERR, "next_state: currstate > N_STATES");
 		error_exit(1, "next_state: currstate > N_STATES");
@@ -401,7 +401,7 @@ next_state(struct cfg_entry *cep, int event)
 
 	newstate = state_tab[event][currstate].newstate;
 
-	if (newstate > N_STATES)
+	if (newstate >= N_STATES)
 	{
 		logit(LL_ERR, "next_state: newstate > N_STATES");
 		error_exit(1, "next_state: newstate > N_STATES");
