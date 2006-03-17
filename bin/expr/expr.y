@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.32 2005/06/01 15:21:52 lukem Exp $ */
+/* $NetBSD: expr.y,v 1.33 2006/03/17 14:43:11 rumble Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.32 2005/06/01 15:21:52 lukem Exp $");
+__RCSID("$NetBSD: expr.y,v 1.33 2006/03/17 14:43:11 rumble Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -136,6 +136,8 @@ expr:	item { $$ = $1; }
 				(void) asprintf(&val, "%d",
 					(int)(rm[0].rm_eo - rm[0].rm_so));
 			}
+			if (val == NULL)
+				err(1, NULL);
 			$$ = val;
 		} else {
 			if (rp.re_nsub == 0) {
@@ -153,6 +155,8 @@ expr:	item { $$ = $1; }
 		
 		res = perform_arith_op($1, $2, $3);
 		(void) asprintf(&val, "%lld", (long long int) res);
+		if (val == NULL)
+			err(1, NULL);
 		$$ = val;
                 }
 
@@ -166,6 +170,8 @@ expr:	item { $$ = $1; }
 
 		res = perform_arith_op($1, $2, $3);
 		(void) asprintf(&val, "%lld", (long long int) res);
+		if (val == NULL)
+			err(1, NULL);
 		$$ = val;
 
 		}
@@ -229,6 +235,8 @@ expr:	item { $$ = $1; }
 		char *ln;
 
 		asprintf(&ln, "%ld", (long) strlen($2));
+		if (ln == NULL)
+			err(1, NULL);
 		$$ = ln;
 		}
 	;
