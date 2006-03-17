@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.21 2006/03/17 22:20:31 christos Exp $ */
+/* $NetBSD: set.c,v 1.22 2006/03/17 22:38:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.21 2006/03/17 22:20:31 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.22 2006/03/17 22:38:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,8 +129,13 @@ doset(Char **v, struct command *t)
 	else
 	    set(vp, Strsave(p));
 	if (eq(vp, STRpath)) {
-	    exportpath(adrof(STRpath)->vec);
-	    dohash(NULL, NULL);
+	    struct varent *pt = adrof(STRpath); 
+	    if (pt == NULL)
+		stderror(ERR_NAME | ERR_UNDVAR);
+	    else {
+		exportpath(pt->vec);
+		dohash(NULL, NULL);
+	    }
 	}
 	else if (eq(vp, STRhistchars)) {
 	    Char *pn = value(STRhistchars);
@@ -282,8 +287,13 @@ dolet(Char **v, struct command *t)
 	else
 	    set(vp, operate(op, value(vp), p));
 	if (eq(vp, STRpath)) {
-	    exportpath(adrof(STRpath)->vec);
-	    dohash(NULL, NULL);
+	    struct varent *pt = adrof(STRpath); 
+	    if (pt == NULL)
+		stderror(ERR_NAME | ERR_UNDVAR);
+	    else {
+		exportpath(pt->vec);
+		dohash(NULL, NULL);
+	    }
 	}
 	xfree((ptr_t) vp);
 	if (c != '=')
