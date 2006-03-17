@@ -1,4 +1,4 @@
-#	$NetBSD: sha.inc,v 1.7 2005/11/26 00:35:58 christos Exp $
+#	$NetBSD: sha.inc,v 1.8 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/sha
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/sha
 
-SRCS+=sha_dgst.c sha1dgst.c sha_one.c sha1_one.c sha256.c sha512.c
+SHA_SRCS = sha_dgst.c sha1dgst.c sha_one.c sha1_one.c sha256.c sha512.c
+SRCS += ${SHA_SRCS}
+
+.for cryptosrc in ${SHA_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/sha
+.endfor

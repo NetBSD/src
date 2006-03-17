@@ -1,4 +1,4 @@
-#	$NetBSD: objects.inc,v 1.4 2003/07/24 14:16:32 itojun Exp $
+#	$NetBSD: objects.inc,v 1.5 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/objects
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/objects
 
-SRCS+=	o_names.c obj_dat.c obj_lib.c obj_err.c
+OBJECTS_SRCS = o_names.c obj_dat.c obj_lib.c obj_err.c
+SRCS += ${OBJECTS_SRCS}
+
+.for cryptosrc in ${OBJECTS_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/objects
+.endfor

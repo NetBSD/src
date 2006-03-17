@@ -1,4 +1,4 @@
-#	$NetBSD: md4.inc,v 1.1 2001/04/12 07:48:04 itojun Exp $
+#	$NetBSD: md4.inc,v 1.2 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/md4
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/md4
 
-SRCS+=	md4_dgst.c md4_one.c
+MD4_SRCS = md4_dgst.c md4_one.c
+SRCS += ${MD4_SRCS}
+
+.for cryptosrc in ${MD4_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/md4
+.endfor
