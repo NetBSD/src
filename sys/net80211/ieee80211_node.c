@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.53 2006/03/08 23:46:27 lukem Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.54 2006/03/17 23:29:10 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.53 2006/03/08 23:46:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.54 2006/03/17 23:29:10 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -130,9 +130,8 @@ ieee80211_node_lateattach(struct ieee80211com *ic)
 
 	if (ic->ic_max_aid > IEEE80211_AID_MAX)
 		ic->ic_max_aid = IEEE80211_AID_MAX;
-	MALLOC(ic->ic_aid_bitmap, u_int32_t *,
-		howmany(ic->ic_max_aid, 32) * sizeof(u_int32_t),
-		M_DEVBUF, M_NOWAIT | M_ZERO);
+	ic->ic_aid_bitmap = malloc(howmany(ic->ic_max_aid, 32) *
+	    sizeof(u_int32_t), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ic->ic_aid_bitmap == NULL) {
 		/* XXX no way to recover */
 		printf("%s: no memory for AID bitmap!\n", __func__);
@@ -141,8 +140,7 @@ ieee80211_node_lateattach(struct ieee80211com *ic)
 
 	/* XXX defer until using hostap/ibss mode */
 	ic->ic_tim_len = howmany(ic->ic_max_aid, 8) * sizeof(u_int8_t);
-	MALLOC(ic->ic_tim_bitmap, u_int8_t *, ic->ic_tim_len,
-		M_DEVBUF, M_NOWAIT | M_ZERO);
+	ic->ic_tim_bitmap = malloc(ic->ic_tim_len, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ic->ic_tim_bitmap == NULL) {
 		/* XXX no way to recover */
 		printf("%s: no memory for TIM bitmap!\n", __func__);
@@ -2389,9 +2387,9 @@ ieee80211_node_table_init(struct ieee80211com *ic,
 	nt->nt_timeout = timeout;
 	nt->nt_keyixmax = keyixmax;
 	if (nt->nt_keyixmax > 0) {
-		MALLOC(nt->nt_keyixmap, struct ieee80211_node **,
-			keyixmax * sizeof(struct ieee80211_node *),
-			M_80211_NODE, M_NOWAIT | M_ZERO);
+		nt->nt_keyixmap = malloc(keyixmax *
+		    sizeof(struct ieee80211_node *), M_80211_NODE,
+		    M_NOWAIT | M_ZERO);
 		if (nt->nt_keyixmap == NULL)
 			if_printf(ic->ic_ifp,
 			    "Cannot allocate key index map with %u entries\n",
