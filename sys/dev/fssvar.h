@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.8.2.1 2005/04/21 19:01:59 tron Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.8.2.2 2006/03/17 15:18:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -144,11 +144,11 @@ struct fss_cache {
 struct fss_softc {
 	int		sc_unit;	/* Logical unit number */
 	struct simplelock sc_slock;	/* Protect this softc */
+	struct lock	sc_lock;	/* Protect this softc */
 	volatile int	sc_flags;	/* Flags */
 #define FSS_ACTIVE	0x01		/* Snapshot is active */
 #define FSS_ERROR	0x02		/* I/O error occurred */
 #define FSS_BS_THREAD	0x04		/* Kernel thread is running */
-#define FSS_EXCL	0x08		/* Exclusive access granted */
 #define FSS_BS_ALLOC	0x10		/* Allocate backing store */
 #define FSS_PERSISTENT	0x20		/* File system internal snapshot */
 #define FSS_CDEV_OPEN	0x40		/* character device open */
