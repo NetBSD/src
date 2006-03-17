@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.20 2003/08/07 09:05:07 agc Exp $ */
+/* $NetBSD: set.c,v 1.21 2006/03/17 22:20:31 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.20 2003/08/07 09:05:07 agc Exp $");
+__RCSID("$NetBSD: set.c,v 1.21 2006/03/17 22:20:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,29 +336,21 @@ Char *
 putn(int n)
 {
     static Char numbers[15];
-    int num;
+    int num = -1;
 
     putp = numbers;
     if (n < 0) {
 	n = -n;
 	*putp++ = '-';
     }
-    num = 2;			/* confuse lint */
-    if (sizeof(int) == num && ((unsigned int) n) == 0x8000) {
+    if ((unsigned int)num == 0xffffU && (unsigned int)n == 0x8000U) {
 	*putp++ = '3';
 	n = 2768;
-#ifdef pdp11
+    } else if ((unsigned int)num == 0xffffffffU &&
+	(unsigned int)n == 0x80000000U) {
+	*putp++ = '2';
+	n = 147483648;
     }
-#else
-    }
-    else {
-	num = 4;		/* confuse lint */
-	if (sizeof(int) == num && ((unsigned int) n) == 0x80000000) {
-	    *putp++ = '2';
-	    n = 147483648;
-	}
-    }
-#endif
     putn1(n);
     *putp = 0;
     return (Strsave(numbers));
