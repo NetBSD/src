@@ -1,4 +1,4 @@
-/*	$NetBSD: shots.c,v 1.5 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: shots.c,v 1.6 2006/03/17 23:34:37 abs Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shots.c,v 1.5 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: shots.c,v 1.6 2006/03/17 23:34:37 abs Exp $");
 #endif /* not lint */
 
 # include	<err.h>
@@ -338,7 +338,7 @@ move_normal_shot(bp)
 				message(pp, "Zing!");
 				if (bp->b_owner == NULL)
 					break;
-				message(bp->b_owner,
+				message(bp->b_owner, bp->b_score &&
 					((bp->b_score->i_missed & 0x7) == 0x7) ?
 					"My!  What a bad shot you are!" :
 					"Missed him");
