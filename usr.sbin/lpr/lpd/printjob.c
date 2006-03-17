@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.48 2006/01/20 17:30:00 christos Exp $	*/
+/*	$NetBSD: printjob.c,v 1.49 2006/03/17 17:06:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.48 2006/01/20 17:30:00 christos Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.49 2006/03/17 17:06:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,7 +284,8 @@ again:
 			}
 		}
 	}
-	free((char *) queue);
+	free(queue);
+	queue = NULL;
 	/*
 	 * search the spool directory for more work.
 	 */
