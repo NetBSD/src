@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.27 2005/03/11 03:20:23 ginsbach Exp $	*/
+/*	$NetBSD: rsh.c,v 1.28 2006/03/17 21:52:41 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.27 2005/03/11 03:20:23 ginsbach Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.28 2006/03/17 21:52:41 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,8 +471,10 @@ talk(int nflag, sigset_t *oset, __pid_t pid, int rem)
 				if (nr == -1) {
 					if (errno == EIO)
 						goto done;
-					if (errno == EINTR)
+					if (errno == EINTR) {
+						nr = 0;
 						continue;
+					}
 					err(1, "read");
 				}
 				bp = buf;
