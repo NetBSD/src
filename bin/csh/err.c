@@ -1,4 +1,4 @@
-/* $NetBSD: err.c,v 1.18 2004/01/05 23:23:32 jmmv Exp $ */
+/* $NetBSD: err.c,v 1.19 2006/03/17 00:02:30 dmcmahill Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.18 2004/01/05 23:23:32 jmmv Exp $");
+__RCSID("$NetBSD: err.c,v 1.19 2006/03/17 00:02:30 dmcmahill Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,7 +293,7 @@ seterror(int id, ...)
 	va_list va;
 
 	va_start(va, id);
-	if (id < 0 || id > sizeof(errorlist) / sizeof(errorlist[0]))
+	if (id < 0 || id >= (sizeof(errorlist) / sizeof(errorlist[0])) - 1)
 	    id = ERR_INVALID;
 	(void)vsnprintf(berr, sizeof(berr), errorlist[id], va);
 	va_end(va);
