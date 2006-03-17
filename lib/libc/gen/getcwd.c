@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.42 2005/12/31 12:32:30 elad Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.43 2006/03/17 17:17:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.42 2005/12/31 12:32:30 elad Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.43 2006/03/17 17:17:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -96,7 +96,8 @@ realpath(const char *path, char *resolved)
 
 	/* If relative path, start from current working directory. */
 	if (*path != '/') {
-		if (getcwd(resolved, MAXPATHLEN) == NULL) {
+		/* check for resolved pointer to appease coverity */
+		if (resolved && getcwd(resolved, MAXPATHLEN) == NULL) {
 			p[0] = '.';
 			p[1] = 0;
 			return (NULL);
