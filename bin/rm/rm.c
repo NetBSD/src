@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.42 2004/01/11 09:41:55 wiz Exp $ */
+/* $NetBSD: rm.c,v 1.43 2006/03/17 23:55:42 peter Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.42 2004/01/11 09:41:55 wiz Exp $");
+__RCSID("$NetBSD: rm.c,v 1.43 2006/03/17 23:55:42 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -254,6 +254,7 @@ rm_tree(char **argv)
 	}
 	if (errno)
 		err(1, "fts_read");
+	fts_close(fts);
 }
 
 void
