@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.104 2006/02/23 22:45:25 christos Exp $ */
+/* $NetBSD: user.c,v 1.105 2006/03/17 14:14:45 dmcmahill Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.104 2006/02/23 22:45:25 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.105 2006/03/17 14:14:45 dmcmahill Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1815,8 +1815,8 @@ useradd(int argc, char **argv)
 			memsave(&u.u_inactive, "-1", strlen("-1"));
 			break;
 		case 'G':
-			while ((u.u_groupv[u.u_groupc] = strsep(&optarg, ",")) != NULL &&
-			       u.u_groupc < NGROUPS_MAX) {
+			while (u.u_groupc < NGROUPS_MAX  &&
+			       (u.u_groupv[u.u_groupc] = strsep(&optarg, ",")) != NULL) {
 				if (u.u_groupv[u.u_groupc][0] != 0) {
 					u.u_groupc++;
 				}
