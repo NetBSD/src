@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 2006/02/08 18:58:55 agc Exp $
+#	$NetBSD: Makefile,v 1.100 2006/03/17 21:43:16 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -35,8 +35,7 @@ SUBDIR+= libcrypto_rc5
 
 .if (${MKKERBEROS} != "no")
 # Heimdal Kerberos 5 libraries
-SUBDIR+= libroken libvers libcom_err libsl libss libasn1 libhdb \
-	 libkadm5srv libkadm5clnt libgssapi libkafs
+SUBDIR+= libroken libvers libcom_err libasn1
 
 .if (${MKKERBEROS4} != "no")
 # KTH Kerberos 4 libraries
@@ -83,6 +82,11 @@ SUBDIR+=	libkrb		# depends on libdes
 SUBDIR+=	.WAIT
 
 SUBDIR+=	libcdk 		# depends on libedit
+
+.if (${MKKERBEROS} != "no")
+# Heimdal Kerberos 5 libraries depending on libkrb5 and more
+SUBDIR+=	libgssapi libhdb libkadm5srv libkadm5clnt libkafs libsl libss
+.endif
 
 .if (${MKPAM} != "no")
 SUBDIR+=	libpam		# depends on libkrb5 and more

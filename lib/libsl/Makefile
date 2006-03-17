@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.7 2006/03/17 21:43:16 christos Exp $
 
 NOLINT=		# defined
 
@@ -8,6 +8,10 @@ DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/heimdal/lib/sl
 
 LIB=		sl
+
+LIBDPLIBS=	edit ${.CURDIR}/../libedit \
+		termcap ${.CURDIR}/../libterm
+
 SRCS=		sl.c
 INCS=		sl.h
 INCSDIR=	/usr/include/krb5
