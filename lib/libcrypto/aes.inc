@@ -1,4 +1,4 @@
-#	$NetBSD: aes.inc,v 1.1 2003/07/24 14:16:31 itojun Exp $
+#	$NetBSD: aes.inc,v 1.2 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/aes
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/aes
 
-SRCS+=aes_core.c aes_misc.c aes_ecb.c aes_cbc.c aes_cfb.c aes_ofb.c aes_ctr.c
+AES_SRCS = aes_core.c aes_misc.c aes_ecb.c aes_cbc.c aes_cfb.c aes_ofb.c aes_ctr.c
+SRCS += ${AES_SRCS}
+
+.for cryptosrc in ${AES_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/aes
+.endfor

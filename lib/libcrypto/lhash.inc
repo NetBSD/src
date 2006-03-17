@@ -1,4 +1,4 @@
-#	$NetBSD: lhash.inc,v 1.4 2003/07/24 14:16:32 itojun Exp $
+#	$NetBSD: lhash.inc,v 1.5 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/lhash
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/lhash
 
-SRCS+=lhash.c lh_stats.c
+LHASH_SRCS = lhash.c lh_stats.c
+SRCS += ${LHASH_SRCS}
+
+.for cryptosrc in ${LHASH_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/lhash
+.endfor

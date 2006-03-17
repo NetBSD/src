@@ -1,4 +1,4 @@
-#	$NetBSD: engine.inc,v 1.2 2005/11/25 19:15:08 christos Exp $
+#	$NetBSD: engine.inc,v 1.3 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,9 +7,8 @@
 
 .PATH:	${OPENSSLSRC}/crypto/engine ${OPENSSLSRC}/engines
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/engine -I${OPENSSLSRC}/engines
 
-SRCS+=	eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
+ENGINE_SRCS = eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	eng_table.c eng_pkey.c eng_fat.c eng_all.c \
 	tb_rsa.c tb_dsa.c tb_dh.c tb_rand.c tb_cipher.c tb_digest.c \
 	eng_openssl.c eng_dyn.c eng_cnf.c eng_padlock.c \
@@ -23,3 +22,8 @@ SRCS+=	eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	e_nuron.c e_nuron_err.c \
 	e_sureware.c e_sureware_err.c \
 	e_ubsec.c e_ubsec_err.c 
+SRCS += ${ENGINE_SRCS}
+
+.for cryptosrc in ${ENGINE_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/engine
+.endfor

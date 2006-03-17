@@ -1,4 +1,4 @@
-#	$NetBSD: ui.inc,v 1.1 2003/07/24 14:16:33 itojun Exp $
+#	$NetBSD: ui.inc,v 1.2 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/ui
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/ui
 
-SRCS+=	ui_err.c ui_lib.c ui_openssl.c ui_util.c $(COMPATSRC)
+UI_SRCS = ui_err.c ui_lib.c ui_openssl.c ui_util.c $(COMPATSRC)
+SRCS += ${UI_SRCS}
+
+.for cryptosrc in ${UI_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/ui
+.endfor
