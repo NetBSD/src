@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.20 2004/02/08 00:33:31 jsm Exp $	*/
+/*	$NetBSD: snake.c,v 1.21 2006/03/17 23:22:59 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.20 2004/02/08 00:33:31 jsm Exp $");
+__RCSID("$NetBSD: snake.c,v 1.21 2006/03/17 23:22:59 abs Exp $");
 #endif
 #endif				/* not lint */
 
@@ -556,17 +556,25 @@ post(iscore, flag)
 
 	/* See if we have a new champ */
 	p = getpwuid(allbwho);
-	if (p == NULL || score > allbscore) {
+	if (score > allbscore) {
 		lseek(rawscores, 0, SEEK_SET);
 		write(rawscores, &score, sizeof(short));
 		write(rawscores, &uid, sizeof(short));
-		if (allbwho)
-			printf("You beat %s's old record of $%d!\n",
-			       p->pw_name, allbscore);
+		if (allbwho) {
+			if (p)
+				printf("You beat %s's old record of $%d!\n",
+				       p->pw_name, allbscore);
+			else
+				printf("You beat (%d)'s old record of $%d!\n",
+				       (int)allbwho, allbscore);
+		}
 		else
 			printf("You set a new record!\n");
-	} else
+	} else if (p)
 		printf("The highest is %s with $%d\n", p->pw_name, allbscore);
+	else
+		printf("The highest is (%d) with $%d\n", (int)allbwho,
+		    allbscore);
 	lseek(rawscores, 0, SEEK_SET);
 	return (1);
 }
