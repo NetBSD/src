@@ -1,4 +1,4 @@
-/*	$NetBSD: bzlib.c,v 1.2 2005/04/17 17:37:11 christos Exp $	*/
+/*	$NetBSD: bzlib.c,v 1.3 2006/03/17 02:52:56 chris Exp $	*/
 
 
 /*-------------------------------------------------------------*/
@@ -1538,9 +1538,10 @@ int BZ_API(BZ2_bzflush) (BZFILE *b)
 void BZ_API(BZ2_bzclose) (BZFILE* b)
 {
    int bzerr;
-   FILE *fp = ((bzFile *)b)->handle;
+   FILE *fp;
    
    if (b==NULL) {return;}
+   fp = ((bzFile *)b)->handle;
    if(((bzFile*)b)->writing){
       BZ2_bzWriteClose(&bzerr,b,0,NULL,NULL);
       if(bzerr != BZ_OK){
