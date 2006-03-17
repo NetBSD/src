@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.69 2006/01/13 14:07:57 elad Exp $	*/
+/*	$NetBSD: df.c,v 1.70 2006/03/17 13:53:31 rumble Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.69 2006/01/13 14:07:57 elad Exp $");
+__RCSID("$NetBSD: df.c,v 1.70 2006/03/17 13:53:31 rumble Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,8 @@ main(int argc, char *argv[])
 	if (*argv == NULL) {
 		mntsize = regetmntinfo(&mntbuf, mntsize);
 	} else {
-		mntbuf = malloc(argc * sizeof(*mntbuf));
+		if ((mntbuf = malloc(argc * sizeof(*mntbuf))) == NULL)
+			err(1, "can't allocate statvfs array");
 		mntsize = 0;
 		for (; *argv != NULL; argv++) {
 			if (stat(*argv, &stbuf) < 0) {
