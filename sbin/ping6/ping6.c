@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.64 2005/06/07 09:10:33 he Exp $	*/
+/*	$NetBSD: ping6.c,v 1.65 2006/03/17 02:31:03 elad Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.64 2005/06/07 09:10:33 he Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.65 2006/03/17 02:31:03 elad Exp $");
 #endif
 #endif
 
@@ -2403,7 +2403,7 @@ pr_icmph(struct icmp6_hdr *icp, u_char *end)
 			break;
 		}
 		if (options & F_VERBOSE) {
-			if (ni->ni_code > sizeof(nircode) / sizeof(nircode[0]))
+			if (ni->ni_code >= sizeof(nircode) / sizeof(nircode[0]))
 				printf(", invalid");
 			else
 				printf(", %s", nircode[ni->ni_code]);
