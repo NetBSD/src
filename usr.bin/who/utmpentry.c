@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.5 2004/10/22 15:50:47 christos Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.6 2006/03/17 20:41:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.5 2004/10/22 15:50:47 christos Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.6 2006/03/17 20:41:02 elad Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -290,7 +290,7 @@ getentryx(struct utmpentry *e, struct utmpx *up)
 	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
 	e->line[sizeof(e->line) - 1] = '\0';
 	(void)strncpy(e->host, up->ut_host, sizeof(up->ut_host));
-	e->name[sizeof(e->host) - 1] = '\0';
+	e->name[sizeof(e->name) - 1] = '\0';
 	e->tv = up->ut_tv;
 	adjust_size(e);
 }
