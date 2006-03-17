@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.65 2004/10/16 03:48:15 dsainty Exp $	*/
+/*	$NetBSD: savecore.c,v 1.66 2006/03/17 01:45:51 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.65 2004/10/16 03:48:15 dsainty Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.66 2006/03/17 01:45:51 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,6 +400,7 @@ check_kmem(void)
 		    msgbuf.msg_bufs) != msgbuf.msg_bufs) {
 			if (verbose)
 				syslog(LOG_WARNING, "kvm_read: %s", kvm_geterr(kd_dump));
+			free(bufdata);
 			goto nomsguf;
 		}
 		cp = panic_mesg;
@@ -414,6 +415,7 @@ check_kmem(void)
 		if (*cp == '\n')
 			*cp = '\0';
 		panic_mesg[sizeof(panic_mesg) - 1] = '\0';
+		free(bufdata);
 
 		panicstr = 1;	/* anything not zero */
 		return;
