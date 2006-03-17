@@ -1,4 +1,4 @@
-/*	$NetBSD: snscore.c,v 1.15 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: snscore.c,v 1.16 2006/03/17 23:15:02 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: snscore.c,v 1.15 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: snscore.c,v 1.16 2006/03/17 23:15:02 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ main()
 		if(fread(&score, sizeof(short), 1, fd) == 0)
 			break;
 		if (score > 0) {
-			if (noplayers > MAXPLAYERS) {
+			if (noplayers >= MAXPLAYERS) {
 				printf("too many players\n");
 				exit(2);
 			}
