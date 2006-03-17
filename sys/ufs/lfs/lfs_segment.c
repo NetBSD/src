@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.169 2006/01/04 10:13:06 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.170 2006/03/17 23:21:01 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169 2006/01/04 10:13:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.170 2006/03/17 23:21:01 tls Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1790,8 +1790,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		sup->su_lastmod = time.tv_sec;
 	sup->su_ninos += ninos;
 	++sup->su_nsums;
-	fs->lfs_dmeta += (btofsb(fs, fs->lfs_sumsize) + btofsb(fs, ninos *
-							 fs->lfs_ibsize));
 	fs->lfs_avail -= btofsb(fs, fs->lfs_sumsize);
 
 	do_again = !(bp->b_flags & B_GATHERED);
@@ -1942,6 +1940,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 
 	simple_lock(&fs->lfs_interlock);
 	fs->lfs_bfree -= (btofsb(fs, ninos * fs->lfs_ibsize) +
+			  btofsb(fs, fs->lfs_sumsize));
+	fs->lfs_dmeta += (btofsb(fs, ninos * fs->lfs_ibsize) +
 			  btofsb(fs, fs->lfs_sumsize));
 	simple_unlock(&fs->lfs_interlock);
 
