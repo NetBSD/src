@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.45 2006/03/10 13:29:41 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.46 2006/03/17 15:30:08 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -926,4 +926,26 @@ usr.bin/login/login_pam.c			1.14
 
 	PR bin/23616: login might not back-off as expected.
 	[jnemeth, ticket #1201]
+
+sys/dev/fss.c					1.23
+sys/dev/fssvar.h				1.13
+
+	Prevent a hang when a process tries to open an fss device while
+	another process is in the middle of creating a snapshot with it.
+	This fixes PR kern/33060.                
+	[chs, ticket #1202]
+
+sys/dev/pci/pcidevs				1.774
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/if_rtk_pci.c			1.24
+
+	Add recognition of Nortel Baystack 21 as an RTK8139 variant.
+	This fixes PR kern/33044.
+	[he, ticket #1203]
+
+usr.bin/mail/send.c				1.24
+
+	PR security/32978: mail(1) creates record file with insecure umask.
+	[adrianp, ticket #1204]
 
