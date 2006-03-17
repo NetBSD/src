@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.25 2006/03/17 01:55:31 elad Exp $	*/
+/*	$NetBSD: util.c,v 1.26 2006/03/17 04:53:55 rumble Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.25 2006/03/17 01:55:31 elad Exp $");
+__RCSID("$NetBSD: util.c,v 1.26 2006/03/17 04:53:55 rumble Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,11 +197,13 @@ enter_lastlog(PERSON *pn)
 	if (doit) {
 		w = walloc(pn);
 		w->info = LASTLOG;
-		memcpy(w->tty = malloc(UT_LINESIZE + 1),
-		    ll.ll_line, UT_LINESIZE);
+		if ((w->tty = malloc(UT_LINESIZE + 1)) == NULL)
+			err(1, NULL);
+		memcpy(w->tty, ll.ll_line, UT_LINESIZE);
 		w->tty[UT_LINESIZE] = '\0';
-		memcpy(w->host = malloc(UT_HOSTSIZE + 1),
-		    ll.ll_host, UT_HOSTSIZE);
+		if ((w->host = malloc(UT_HOSTSIZE + 1)) == NULL)
+			err(1, NULL);
+		memcpy(w->host, ll.ll_host, UT_HOSTSIZE);
 		w->host[UT_HOSTSIZE] = '\0';
 		w->loginat = ll.ll_time;
 	}
