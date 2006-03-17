@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.17 2005/06/27 01:00:05 christos Exp $	*/
+/*	$NetBSD: elf.c,v 1.18 2006/03/17 15:53:46 rumble Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.17 2005/06/27 01:00:05 christos Exp $");
+__RCSID("$NetBSD: elf.c,v 1.18 2006/03/17 15:53:46 rumble Exp $");
 
 #include <sys/param.h>
 
@@ -359,6 +359,9 @@ elf_linkcmd(char **cmdp,
 				     (const char *)address + data_offset,
 				     object);
 	}
+
+	if (cmdp == NULL)
+		err(1, "malloc");
 }
 
 /* load a pre-linked module; returns entry point */

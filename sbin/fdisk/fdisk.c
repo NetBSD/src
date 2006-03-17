@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.97 2006/02/14 04:48:15 dyoung Exp $ */
+/*	$NetBSD: fdisk.c,v 1.98 2006/03/17 15:53:46 rumble Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.97 2006/02/14 04:48:15 dyoung Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.98 2006/03/17 15:53:46 rumble Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -946,6 +946,8 @@ get_geometry(void)
 		goto out;
 	}
 	dl = (struct disklist *) malloc(len);
+	if (dl == NULL)
+		err(1, "Malloc failed");
 	if (sysctl(mib, 2, dl, &len, NULL, 0) < 0) {
 		free(dl);
 		dl = 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.7 2005/05/20 18:59:36 perseant Exp $ */
+/* $NetBSD: bufcache.c,v 1.8 2006/03/17 15:53:46 rumble Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -100,6 +100,8 @@ bufinit(int max)
 		TAILQ_INIT(&bufqueues[i]);
 	}
 	bufhash = (struct bufhash_struct *)malloc(hashmax * sizeof(*bufhash));
+	if (bufhash == NULL)
+		err(1, NULL);
 	for (i = 0; i < hashmax; i++)
 		LIST_INIT(&bufhash[i]);
 }
@@ -248,6 +250,8 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 			assert(!(bp->b_flags & B_DELWRI));
 			bp->b_bcount = size;
 			bp->b_data = realloc(bp->b_data, size);
+			if (bp->b_data == NULL)
+				err(1, NULL);
 			return bp;
 		}
 
@@ -287,8 +291,12 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 	}
 	++nbufs;
 	bp = (struct ubuf *) malloc(sizeof(*bp));
+	if (bp == NULL)
+		err(1, NULL);
 	memset(bp, 0, sizeof(*bp));
 	bp->b_data = malloc(size);
+	if (bp->b_data == NULL)
+		err(1, NULL);
 	memset(bp->b_data, 0, size);
 
 	bp->b_vp = vp;

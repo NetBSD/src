@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.24 2005/09/13 04:14:17 christos Exp $	 */
+/* $NetBSD: pass0.c,v 1.25 2006/03/17 15:53:46 rumble Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -118,6 +118,8 @@ pass0(void)
 	 * Make sure that all free inodes are in fact on the list.
          */
 	visited = (ino_t *) malloc(maxino * sizeof(ino_t));
+	if (visited == NULL)
+		err(1, NULL);
 	memset(visited, 0, maxino * sizeof(ino_t));
 
 #ifdef BAD

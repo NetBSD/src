@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.23 2005/09/13 04:14:17 christos Exp $	 */
+/* $NetBSD: pass1.c,v 1.24 2006/03/17 15:53:46 rumble Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -109,8 +109,12 @@ pass1(void)
 		printf("creating sorted inode address table...\n");
 	/* Sort by daddr */
 	dins = (struct ino_daddr **) malloc(maxino * sizeof(*dins));
+	if (dins == NULL)
+		err(1, NULL);
 	for (i = 0; i < maxino; i++) {
 		dins[i] = malloc(sizeof(**dins));
+		if (dins[i] == NULL)
+			err(1, NULL);
 		dins[i]->ino = i;
 		if (i == fs->lfs_ifile)
 			dins[i]->daddr = fs->lfs_idaddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.5 2005/09/13 04:40:25 christos Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.6 2006/03/17 15:53:46 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.5 2005/09/13 04:40:25 christos Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.6 2006/03/17 15:53:46 rumble Exp $");
 #endif
 #endif /* not lint */
 
@@ -620,6 +620,8 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 	 */
 	dip = VTOI(fs->lfs_ivnode)->i_din.ffs1_din = (struct ufs1_dinode *)
 		malloc(sizeof(*dip));
+	if (dip == NULL)
+		err(1, NULL);
 	memset(dip, 0, sizeof(*dip));
 	dip->di_mode  = IFREG|IREAD|IWRITE;
 	dip->di_flags = SF_IMMUTABLE;
@@ -633,8 +635,14 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 	 * Set up in-superblock segment usage cache
 	 */
  	fs->lfs_suflags = (u_int32_t **) malloc(2 * sizeof(u_int32_t *));       
+	if (fs->lfs_suflags == NULL)
+		err(1, NULL);
 	fs->lfs_suflags[0] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
+	if (fs->lfs_suflags[0] == NULL)
+		err(1, NULL);
 	fs->lfs_suflags[1] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
+	if (fs->lfs_suflags[1] == NULL)
+		err(1, NULL);
 
 	/*
 	 * Initialize the cleanerinfo block

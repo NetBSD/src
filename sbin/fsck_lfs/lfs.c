@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.19 2005/10/13 21:14:45 jmc Exp $ */
+/* $NetBSD: lfs.c,v 1.20 2006/03/17 15:53:46 rumble Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -343,6 +343,8 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	int i, hash;
 
 	vp = (struct uvnode *) malloc(sizeof(*vp));
+	if (vp == NULL)
+		err(1, NULL);
 	memset(vp, 0, sizeof(*vp));
 	vp->v_fd = fd;
 	vp->v_fs = fs;
@@ -354,14 +356,20 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	LIST_INIT(&vp->v_dirtyblkhd);
 
 	ip = (struct inode *) malloc(sizeof(*ip));
+	if (ip == NULL)
+		err(1, NULL);
 	memset(ip, 0, sizeof(*ip));
 
 	ip->i_din.ffs1_din = (struct ufs1_dinode *)
 	    malloc(sizeof(struct ufs1_dinode));
+	if (ip->i_din.ffs1_din == NULL)
+		err(1, NULL);
 	memset(ip->i_din.ffs1_din, 0, sizeof (struct ufs1_dinode));
 
 	/* Initialize the inode -- from lfs_vcreate. */
 	ip->inode_ext.lfs = malloc(sizeof(struct lfs_inode_ext));
+	if (ip->inode_ext.lfs == NULL)
+		err(1, NULL);
 	memset(ip->inode_ext.lfs, 0, sizeof(struct lfs_inode_ext));
 	vp->v_data = ip;
 	/* ip->i_vnode = vp; */
@@ -463,6 +471,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	vfs_init();
 
 	devvp = (struct uvnode *) malloc(sizeof(*devvp));
+	if (devvp == NULL)
+		err(1, NULL);
 	memset(devvp, 0, sizeof(*devvp));
 	devvp->v_fs = NULL;
 	devvp->v_fd = devfd;
@@ -477,6 +487,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		if (sblkno == 0)
 			sblkno = btodb(LFS_LABELPAD);
 		fs = (struct lfs *) malloc(sizeof(*fs));
+		if (fs == NULL)
+			err(1, NULL);
 		memset(fs, 0, sizeof(*fs));
 		fs->lfs_devvp = devvp;
 	} else {
@@ -488,6 +500,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 		}
 		error = bread(devvp, sblkno, LFS_SBPAD, NOCRED, &bp);
 		fs = (struct lfs *) malloc(sizeof(*fs));
+		if (fs == NULL)
+			err(1, NULL);
 		memset(fs, 0, sizeof(*fs));
 		fs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 		fs->lfs_devvp = devvp;
@@ -498,6 +512,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 			error = bread(devvp, fsbtodb(fs, fs->lfs_sboffs[1]),
 		    	LFS_SBPAD, NOCRED, &bp);
 			altfs = (struct lfs *) malloc(sizeof(*altfs));
+			if (altfs == NULL)
+				err(1, NULL);
 			memset(altfs, 0, sizeof(*altfs));
 			altfs->lfs_dlfs = *((struct dlfs *) bp->b_data);
 			altfs->lfs_devvp = devvp;
@@ -542,8 +558,14 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 
 	if (!dummy_read) {
 		fs->lfs_suflags = (u_int32_t **) malloc(2 * sizeof(u_int32_t *));
+		if (fs->lfs_suflags == NULL)
+			err(1, NULL);
 		fs->lfs_suflags[0] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
+		if (fs->lfs_suflags[0] == NULL)
+			err(1, NULL);
 		fs->lfs_suflags[1] = (u_int32_t *) malloc(fs->lfs_nseg * sizeof(u_int32_t));
+		if (fs->lfs_suflags[1] == NULL)
+			err(1, NULL);
 	}
 
 	if (idaddr == 0)
@@ -729,6 +751,8 @@ check_summary(struct lfs *fs, SEGSUM *sp, ufs_daddr_t pseg_addr, int debug,
 		fp = (FINFO *) (fp->fi_blocks + fp->fi_nblocks);
 	}
 	datap = (u_int32_t *) malloc(nblocks * sizeof(*datap));
+	if (datap == NULL)
+		err(1, NULL);
 	datac = 0;
 
 	dp = (ufs_daddr_t *) sp;
