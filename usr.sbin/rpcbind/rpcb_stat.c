@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_stat.c,v 1.3 2003/10/21 02:50:41 fvdl Exp $	*/
+/*	$NetBSD: rpcb_stat.c,v 1.4 2006/03/17 02:56:05 elad Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -150,7 +150,7 @@ rpcbs_rmtcall(rpcvers_t rtype, rpcproc_t rpcbproc, rpcprog_t prog,
 	rpcbs_rmtcalllist *rl;
 	struct netconfig *nconf;
 
-	if (rtype > RPCBVERS_STAT)
+	if (rtype >= RPCBVERS_STAT)
 		return;
 	for (rl = inf[rtype].rmtinfo; rl; rl = rl->next) {
 
