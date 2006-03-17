@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.14 2005/06/27 03:07:45 christos Exp $ */
+/* $NetBSD: params.c,v 1.15 2006/03/17 13:58:27 elad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.14 2005/06/27 03:07:45 christos Exp $");
+__RCSID("$NetBSD: params.c,v 1.15 2006/03/17 13:58:27 elad Exp $");
 #endif
 
 #include <sys/types.h>
@@ -762,11 +762,11 @@ crypt_defaults_lookup(const char *alg)
 {
 	int	i;
 
-	for (i=0; i < sizeof(crypto_defaults); i++)
+	for (i=0; i < (sizeof(crypto_defaults) / sizeof(crypto_defaults[0])); i++)
 		if (!strcmp(alg, crypto_defaults[i].alg))
 			break;
 
-	if (i >= sizeof(crypto_defaults))
+	if (i >= (sizeof(crypto_defaults) / sizeof(crypto_defaults[0])))
 		return -1;
 	else
 		return i;
