@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.17 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: score.c,v 1.18 2006/03/17 23:11:47 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.17 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: score.c,v 1.18 2006/03/17 23:11:47 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,11 +193,11 @@ set_name(scp)
 	SCORE	*scp;
 {
 	PASSWD	*pp;
-	static char unknown[] = "???";
 
 	if ((pp = getpwuid(scp->s_uid)) == NULL)
-		pp->pw_name = unknown;
-	strncpy(scp->s_name, pp->pw_name, MAXNAME);
+		strncpy(scp->s_name, "???", MAXNAME);
+	else
+		strncpy(scp->s_name, pp->pw_name, MAXNAME);
 }
 
 /*
