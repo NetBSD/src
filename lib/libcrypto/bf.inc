@@ -1,4 +1,4 @@
-#	$NetBSD: bf.inc,v 1.6 2003/07/24 14:16:31 itojun Exp $
+#	$NetBSD: bf.inc,v 1.7 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/bf
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/bf
 
-SRCS+=bf_skey.c bf_ecb.c bf_enc.c bf_cfb64.c bf_ofb64.c 
+BF_SRCS = bf_skey.c bf_ecb.c bf_enc.c bf_cfb64.c bf_ofb64.c 
+SRCS += ${BF_SRCS}
+
+.for cryptosrc in ${BF_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/bf
+.endfor

@@ -1,4 +1,4 @@
-#	$NetBSD: ripemd.inc,v 1.4 2003/07/24 14:16:33 itojun Exp $
+#	$NetBSD: ripemd.inc,v 1.5 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/ripemd
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/ripemd
 
-SRCS+=rmd_dgst.c rmd_one.c
+RIPEMD_SRCS = rmd_dgst.c rmd_one.c
+SRCS += ${RIPEMD_SRCS}
+
+.for cryptosrc in ${RIPEMD_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/ripemd
+.endfor

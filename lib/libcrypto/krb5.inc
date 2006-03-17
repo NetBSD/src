@@ -1,4 +1,4 @@
-#	$NetBSD: krb5.inc,v 1.1 2003/07/24 14:16:32 itojun Exp $
+#	$NetBSD: krb5.inc,v 1.2 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/krb5
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/krb5
 
-SRCS+=	krb5_asn.c
+KRB5_SRCS = krb5_asn.c
+SRCS += ${KRB5_SRCS}
+
+.for cryptosrc in ${KRB5_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/krb5
+.endfor

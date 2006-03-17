@@ -1,4 +1,4 @@
-#	$NetBSD: dh.inc,v 1.5 2005/11/27 02:00:46 christos Exp $
+#	$NetBSD: dh.inc,v 1.6 2006/03/17 20:47:45 dsl Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,6 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/dh
 
-CPPFLAGS+=	-I${OPENSSLSRC}/crypto/dh
 
-SRCS+= dh_asn1.c dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c dh_depr.c
+DH_SRCS = dh_asn1.c dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c dh_depr.c
+SRCS += ${DH_SRCS}
+
+.for cryptosrc in ${DH_SRCS}
+CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/dh
+.endfor
