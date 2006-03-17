@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.121 2006/03/11 17:18:00 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.122 2006/03/17 15:39:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.121 2006/03/11 17:18:00 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.122 2006/03/17 15:39:44 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.121 2006/03/11 17:18:00 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.122 2006/03/17 15:39:44 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -204,17 +204,15 @@ static void
 MainParseArgs(int argc, char **argv)
 {
 	char *p;
-	int c;
+	int c = '?';
 	int arginc;
-	char *argvalue;
+	char *argvalue, *modules;
 	const char *getopt_def;
 	char *optscan;
 	Boolean inOption, dashDash = FALSE;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
 
 #define OPTFLAGS "BD:I:J:NPST:V:WXd:ef:ij:km:nqrst"
-#undef optarg
-#define optarg argvalue	
 /* Can't actually use getopt(3) because rescanning is not portable */
 
 	getopt_def = OPTFLAGS;
@@ -248,13 +246,8 @@ rearg:
 			arginc = 1;
 			argvalue = optscan;
 			if(*argvalue == '\0') {
-				if (argc < 3) {
-					(void)fprintf(stderr,
-					    "%s: option requires "
-					    "an argument -- %c\n",
-					    progname, c);
-					usage();
-				}
+				if (argc < 3)
+					goto noarg;
 				argvalue = argv[2];
 				arginc = 2;
 			}
@@ -271,21 +264,24 @@ rearg:
 			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
 			break;
 		case 'D':
-			Var_Set(optarg, "1", VAR_GLOBAL, 0);
+			if (argvalue == NULL) goto noarg;
+			Var_Set(argvalue, "1", VAR_GLOBAL, 0);
 			Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
 		case 'I':
-			Parse_AddIncludeDir(optarg);
+			if (argvalue == NULL) goto noarg;
+			Parse_AddIncludeDir(argvalue);
 			Var_Append(MAKEFLAGS, "-I", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
 		case 'J':
-			if (sscanf(optarg, "%d,%d", &job_pipe[0], &job_pipe[1]) != 2) {
+			if (argvalue == NULL) goto noarg;
+			if (sscanf(argvalue, "%d,%d", &job_pipe[0], &job_pipe[1]) != 2) {
 			    /* backslash to avoid trigraph ??) */
 			    (void)fprintf(stderr,
 				"%s: internal error -- J option malformed (%s?\?)\n",
-				progname, optarg);
+				progname, argvalue);
 				usage();
 			}
 			if ((fcntl(job_pipe[0], F_GETFD, 0) < 0) ||
@@ -301,7 +297,7 @@ rearg:
 			    compatMake = TRUE;
 			} else {
 			    Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
-			    Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			    Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			    jobServer = TRUE;
 			}
 			break;
@@ -319,15 +315,17 @@ rearg:
 			Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
 			break;
 		case 'T':
-			tracefile = estrdup(optarg);
+			if (argvalue == NULL) goto noarg;
+			tracefile = estrdup(argvalue);
 			Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
 		case 'V':
+			if (argvalue == NULL) goto noarg;
 			printVars = TRUE;
-			(void)Lst_AtEnd(variables, (ClientData)optarg);
+			(void)Lst_AtEnd(variables, (ClientData)argvalue);
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
 		case 'W':
 			parseWarnFatal = TRUE;
@@ -337,9 +335,8 @@ rearg:
 			Var_Append(MAKEFLAGS, "-X", VAR_GLOBAL);
 			break;
 		case 'd': {
-			char *modules = optarg;
-
-			for (; *modules; ++modules)
+			if (argvalue == NULL) goto noarg;
+			for (modules = argvalue; *modules; ++modules)
 				switch (*modules) {
 				case 'A':
 					debug = ~0;
@@ -404,7 +401,7 @@ rearg:
 					usage();
 				}
 			Var_Append(MAKEFLAGS, "-d", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
 		}
 		case 'e':
@@ -412,40 +409,43 @@ rearg:
 			Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
 			break;
 		case 'f':
-			(void)Lst_AtEnd(makefiles, (ClientData)optarg);
+			if (argvalue == NULL) goto noarg;
+			(void)Lst_AtEnd(makefiles, (ClientData)argvalue);
 			break;
 		case 'i':
 			ignoreErrors = TRUE;
 			Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
 			break;
 		case 'j':
+			if (argvalue == NULL) goto noarg;
 			forceJobs = TRUE;
-			maxJobs = strtol(optarg, &p, 0);
+			maxJobs = strtol(argvalue, &p, 0);
 			if (*p != '\0' || maxJobs < 1) {
 				(void)fprintf(stderr, "%s: illegal argument to -j -- must be positive integer!\n",
 				    progname);
 				exit(1);
 			}
 			Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
 		case 'k':
 			keepgoing = TRUE;
 			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
 			break;
 		case 'm':
+			if (argvalue == NULL) goto noarg;
 			/* look for magic parent directory search string */
-			if (strncmp(".../", optarg, 4) == 0) {
-				if (!Dir_FindHereOrAbove(curdir, optarg+4,
+			if (strncmp(".../", argvalue, 4) == 0) {
+				if (!Dir_FindHereOrAbove(curdir, argvalue+4,
 				    found_path, sizeof(found_path)))
 					break;		/* nothing doing */
 				(void)Dir_AddDir(sysIncPath, found_path);
 				
 			} else {
-				(void)Dir_AddDir(sysIncPath, optarg);
+				(void)Dir_AddDir(sysIncPath, argvalue);
 			}
 			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
-			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
 		case 'n':
 			noExecute = TRUE;
@@ -496,6 +496,12 @@ rearg:
 				goto rearg;
 			(void)Lst_AtEnd(create, (ClientData)estrdup(argv[1]));
 		}
+
+	return;
+noarg:
+	(void)fprintf(stderr, "%s: option requires an argument -- %c\n",
+	    progname, c);
+	usage();
 }
 
 /*-
