@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.92 2005/09/11 16:09:51 rpaulo Exp $	*/
+/*	$NetBSD: pstat.c,v 1.93 2006/03/17 20:48:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.92 2005/09/11 16:09:51 rpaulo Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.93 2006/03/17 20:48:09 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -675,7 +675,7 @@ mount_print(struct mount *mp)
 		int i;
 		const char *sep = " (";
 
-		for (i = 0; i <= sizeof mnt_flags / sizeof mnt_flags[0]; i++) {
+		for (i = 0; i < sizeof mnt_flags / sizeof mnt_flags[0]; i++) {
 			if (flags & mnt_flags[i].m_flag) {
 				(void)printf("%s%s", sep, mnt_flags[i].m_name);
 				flags &= ~mnt_flags[i].m_flag;
