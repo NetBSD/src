@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.615.2.17.2.14 2005/12/01 22:18:12 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.615.2.17.2.15 2006/03/17 17:22:30 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.14 2005/12/01 22:16:38 tron Exp 
+ *	NetBSD
  */
 
 /*
@@ -518,6 +518,7 @@
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS Technology, Inc. */
 #define	PCI_VENDOR_INTERSIL	0x1260		/* Intersil */
+#define	PCI_VENDOR_NORTEL	0x126c		/* Nortel Networks (Northern Telecom) */
 #define	PCI_VENDOR_SILMOTION	0x126f		/* Silicon Motion, Inc. */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
@@ -2065,6 +2066,9 @@
 
 /* NKK products */
 #define	PCI_PRODUCT_NKK_NDR4600	0xa001		/* NDR4600 Host-PCI Bridge */
+
+/* Nortel products */
+#define	PCI_PRODUCT_NORTEL_BAYSTACK_21	0x1211		/* Baystack 21 (Accton MPX EN5038) */
 
 /* Number Nine products */
 #define	PCI_PRODUCT_NUMBER9_I128	0x2309		/* Imagine-128 */

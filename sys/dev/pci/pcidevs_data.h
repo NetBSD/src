@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.14 2005/12/01 22:18:12 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.15 2006/03/17 17:22:30 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.615.2.17.2.14 2005/12/01 22:16:38 tron Exp 
+ *	NetBSD
  */
 
 /*
@@ -6952,6 +6952,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "NDR4600 Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_BAYSTACK_21,
+	    0,
+	    "Nortel Networks (Northern Telecom)",
+	    "Baystack 21 (Accton MPX EN5038)",
+	},
+	{
 	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128,
 	    0,
 	    "Number 9 Computer Company",
@@ -13789,6 +13795,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTERSIL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Intersil",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NORTEL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Nortel Networks (Northern Telecom)",
 	    NULL,
 	},
 	{
