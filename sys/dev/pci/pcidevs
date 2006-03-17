@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.26 2006/02/15 19:26:50 riz Exp $
+$NetBSD: pcidevs,v 1.701.2.27 2006/03/17 15:22:57 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -512,6 +512,7 @@ vendor ASIX		0x125b	ASIX Electronics
 vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS Technology
 vendor INTERSIL		0x1260	Intersil
+vendor NORTEL		0x126c	Nortel Networks (Northern Telecom)
 vendor SILMOTION	0x126f	Silicon Motion
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
@@ -2218,6 +2219,9 @@ product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
 
 /* NKK products */
 product NKK NDR4600	0xa001	NDR4600 Host-PCI Bridge
+
+/* Nortel products */
+product NORTEL BAYSTACK_21	0x1211	Baystack 21 (Accton MPX EN5038)
 
 /* Number Nine products */
 product NUMBER9 I128	0x2309	Imagine-128
