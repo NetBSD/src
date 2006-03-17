@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.33 2006/01/20 17:30:00 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.34 2006/03/17 17:04:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.33 2006/01/20 17:30:00 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.34 2006/03/17 17:04:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -279,8 +279,10 @@ getq(struct queue **namelist[])
 		if (++nitems > arraysz) {
 			nqueue = (struct queue **)realloc(queue,
 				arraysz * 2 * sizeof(struct queue *));
-			if (nqueue == NULL)
+			if (nqueue == NULL) {
+				free(queue);
 				goto errdone;
+			}
 			queue = nqueue;
 			arraysz *= 2;
 		}
