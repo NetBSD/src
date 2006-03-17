@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.93 2006/03/17 20:48:09 elad Exp $	*/
+/*	$NetBSD: pstat.c,v 1.94 2006/03/17 21:01:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.93 2006/03/17 20:48:09 elad Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.94 2006/03/17 21:01:02 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -887,7 +887,7 @@ filemode(void)
 	    (PTRSTRWIDTH - 4) / 2, "", " LOC", (PTRSTRWIDTH - 4) / 2, "",
 	    (PTRSTRWIDTH - 4) / 2, "", "DATA", (PTRSTRWIDTH - 4) / 2, "");
 	for (; (char *)fp < offset + len; addr = fp->f_list.le_next, fp++) {
-		if ((unsigned)fp->f_type > sizeof(dtypes) / sizeof(dtypes[0]))
+		if ((unsigned)fp->f_type >= sizeof(dtypes) / sizeof(dtypes[0]))
 			continue;
 		ovflw = 0;
 		(void)getflags(filemode_flags, flags, fp->f_flag);
