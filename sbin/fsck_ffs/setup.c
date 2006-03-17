@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.78 2005/06/27 01:25:35 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.79 2006/03/17 15:53:46 rumble Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.78 2005/06/27 01:25:35 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.79 2006/03/17 15:53:46 rumble Exp $");
 #endif
 #endif /* not lint */
 
@@ -390,6 +390,11 @@ setup(const char *dev)
 	 */
 	asked = 0;
 	sblock->fs_csp = (struct csum *)calloc(1, sblock->fs_cssize);
+	if (sblock->fs_csp == NULL) {
+		pwarn("cannot alloc %u bytes for summary info\n",
+		    sblock->fs_cssize);	
+		goto badsblabel;
+	}
 	for (i = 0, j = 0; i < sblock->fs_cssize; i += sblock->fs_bsize, j++) {
 		size = sblock->fs_cssize - i < sblock->fs_bsize ?
 		    sblock->fs_cssize - i : sblock->fs_bsize;

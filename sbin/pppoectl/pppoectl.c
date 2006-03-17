@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.20 2005/06/27 01:00:06 christos Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.21 2006/03/17 15:53:46 rumble Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.20 2005/06/27 01:00:06 christos Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.21 2006/03/17 15:53:46 rumble Exp $");
 #endif
 
 
@@ -265,9 +265,11 @@ main(int argc, char **argv)
 			err(EX_OSERR, "SPPPGETAUTHCFG");
 		/* now allocate buffers for strings */
 		if (spr.myname_length)
-			spr.myname = malloc(spr.myname_length);
+			if ((spr.myname = malloc(spr.myname_length)) == NULL)
+				err(1, NULL);
 		if (spr.hisname_length)
-			spr.hisname = malloc(spr.hisname_length);
+			if ((spr.hisname = malloc(spr.hisname_length)) == NULL)
+				err(1, NULL);
 		/* second pass: get names too */
 		if (ioctl(s, SPPPGETAUTHCFG, &spr) == -1)
 			err(EX_OSERR, "SPPPGETAUTHCFG");
