@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.17 2006/03/17 20:47:45 dsl Exp $
+#	$NetBSD: man.inc,v 1.18 2006/03/17 23:10:48 dsl Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -95,8 +95,3 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 MAN+=	openssl.cnf.5
 
 #MAN+=	des_modes.7
-SRCS += ${MAN_SRCS}
-
-.for cryptosrc in ${MAN_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/man
-.endfor
