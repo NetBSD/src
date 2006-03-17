@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.11 2004/01/05 23:23:37 jmmv Exp $	*/
+/*	$NetBSD: get_names.c,v 1.12 2006/03/17 21:19:24 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_names.c,v 1.11 2004/01/05 23:23:37 jmmv Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.12 2006/03/17 21:19:24 ginsbach Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -118,4 +118,5 @@ get_names(argc, argv)
 	msg.r_name[NAME_SIZE - 1] = '\0';
 	strncpy(msg.r_tty, his_tty, TTY_SIZE);
 	msg.r_tty[TTY_SIZE - 1] = '\0';
+	free(names);
 }
