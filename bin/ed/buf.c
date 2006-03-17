@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.25 2005/06/26 19:10:49 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.26 2006/03/17 14:37:14 rumble Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
    ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
 #else
-__RCSID("$NetBSD: buf.c,v 1.25 2005/06/26 19:10:49 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.26 2006/03/17 14:37:14 rumble Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,6 +220,13 @@ open_sbuf(void)
 		(void)asprintf(&sfn, "%sed.XXXXXX", tmp);
 	else
 		(void)asprintf(&sfn, "%s/ed.XXXXXX", tmp);
+	if (sfn == NULL) {
+		warn(NULL);
+		sprintf(errmsg, "could not allocate memory");
+		umask(u);
+		return ERR;
+	}
+		
 
 	if ((fd = mkstemp(sfn)) == -1 || (sfp = fdopen(fd, "w+")) == NULL) {
 		if (fd != -1)
