@@ -1,4 +1,4 @@
-/*	$NetBSD: security.c,v 1.7 2003/07/13 12:16:05 itojun Exp $	*/
+/*	$NetBSD: security.c,v 1.8 2006/03/17 14:40:11 elad Exp $	*/
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -202,7 +202,7 @@ logit(int severity, struct sockaddr *addr, rpcproc_t procnum, rpcprog_t prognum,
 
 		/* Try to map procedure number to name. */
 
-		if (procnum > (sizeof procmap / sizeof (char *))) {
+		if (procnum >= (sizeof procmap / sizeof (char *))) {
 			snprintf(procbuf, sizeof procbuf, "%u",
 			    (unsigned)procnum);
 			procname = procbuf;
