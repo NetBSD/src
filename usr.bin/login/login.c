@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.77.4.1 2006/03/17 17:07:13 riz Exp $       */
+/*     $NetBSD: login.c,v 1.77.4.2 2006/03/17 17:18:27 riz Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.77.4.1 2006/03/17 17:07:13 riz Exp $");
+__RCSID("$NetBSD: login.c,v 1.77.4.2 2006/03/17 17:18:27 riz Exp $");
 #endif /* not lint */
 
 /*
@@ -502,13 +502,17 @@ main(argc, argv)
                    "terminal.\n");
 		failures++;
 		cnt++;
-		/* we allow 10 tries, but after 3 we start backing off */
+		/*
+		 * We allow login_retries tries, but after login_backoff
+		 * we start backing off.  These default to 10 and 3
+		 * respectively.
+		 */
 		if (cnt > login_backoff) {
 			if (cnt >= login_retries) {
 				badlogin(username);
 				sleepexit(1);
 			}
-			sleep((u_int)((cnt - 3) * 5));
+			sleep((u_int)((cnt - login_backoff) * 5));
 		}
 	}
 
