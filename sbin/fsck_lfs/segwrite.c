@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.10 2005/09/13 04:14:17 christos Exp $ */
+/* $NetBSD: segwrite.c,v 1.11 2006/03/17 15:53:46 rumble Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -788,6 +788,8 @@ lfs_writeseg(struct lfs * fs, struct segment * sp)
 	else
 		el_size = sizeof(u_int32_t);
 	datap = dp = malloc(nblocks * el_size);
+	if (dp == NULL)
+		err(1, NULL);
 	for (bpp = sp->bpp, i = nblocks - 1; i--;) {
 		++bpp;
 		/* Loop through gop_write cluster blocks */
@@ -897,6 +899,8 @@ lfs_seglock(struct lfs * fs, unsigned long flags)
 	fs->lfs_seglock = 1;
 
 	sp = fs->lfs_sp = (struct segment *) malloc(sizeof(*sp));
+	if (sp == NULL)
+		err(1, NULL);
 	sp->bpp = (struct ubuf **) malloc(fs->lfs_ssize * sizeof(struct ubuf *));
 	if (!sp->bpp)
 		errx(!preen, "Could not allocate %zu bytes: %s",

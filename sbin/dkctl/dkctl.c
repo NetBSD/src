@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.12 2005/12/26 10:38:52 yamt Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.13 2006/03/17 15:53:46 rumble Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.12 2005/12/26 10:38:52 yamt Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.13 2006/03/17 15:53:46 rumble Exp $");
 #endif
 
 
@@ -422,7 +422,8 @@ disk_badsectors(int argc, char *argv[])
 
 			dbs = (struct disk_badsectors *)dbsi.dbsi_buffer;
 			for (count = dbsi.dbsi_copied; count > 0; count--) {
-				dbs2 = malloc(sizeof(*dbs2));
+				if ((dbs2 = malloc(sizeof(*dbs2)) == NULL)
+					err(1, NULL);
 				*dbs2 = *dbs;
 				SLIST_INSERT_HEAD(&dbstop, dbs2, dbs_next);
 				dbs++;
@@ -437,7 +438,8 @@ disk_badsectors(int argc, char *argv[])
 		 */
 		bad = 0;
 		totbad = 0;
-		block = calloc(1, DEV_BSIZE);
+		if ((block = calloc(1, DEV_BSIZE)) == NULL)
+			err(1, NULL);
 		SLIST_FOREACH(dbs, &dbstop, dbs_next) {
 			bad++;
 			totbad += dbs->dbs_max - dbs->dbs_min + 1;
