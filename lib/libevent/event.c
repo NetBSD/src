@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.5 2005/04/17 07:20:00 provos Exp $	*/
+/*	$NetBSD: event.c,v 1.6 2006/03/17 02:34:22 chris Exp $	*/
 /*	$OpenBSD: event.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -409,6 +409,7 @@ event_once(int fd, short events,
 		event_set(&eonce->ev, fd, events, event_once_cb, eonce);
 	} else {
 		/* Bad event combination */
+		free(eonce);
 		return (-1);
 	}
 
