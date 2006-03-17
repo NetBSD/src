@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.40 2006/03/01 12:38:33 yamt Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.41 2006/03/17 23:29:11 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.40 2006/03/01 12:38:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.41 2006/03/17 23:29:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ ext2fs_readdir(void *v)
 	aiov.iov_len = e2fs_count;
 	auio.uio_resid = e2fs_count;
 	UIO_SETUP_SYSSPACE(&auio);
-	MALLOC(dirbuf, caddr_t, e2fs_count, M_TEMP, M_WAITOK);
+	dirbuf = malloc(e2fs_count, M_TEMP, M_WAITOK);
 	if (ap->a_ncookies) {
 		nc = ncookies = e2fs_count / 16;
 		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
