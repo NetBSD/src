@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.22 2003/08/07 09:05:06 agc Exp $ */
+/* $NetBSD: lex.c,v 1.23 2006/03/17 22:24:28 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.22 2003/08/07 09:05:06 agc Exp $");
+__RCSID("$NetBSD: lex.c,v 1.23 2006/03/17 22:24:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1090,6 +1090,7 @@ gethent(int sc)
 {
     struct Hist *hp;
     Char *np;
+    char *str;
     int c, event;
     bool back;
 
@@ -1193,7 +1194,9 @@ gethent(int sc)
 	    return (&hp->Hlex);
 	}
     np = putn(event);
-    seterror(ERR_NOEVENT, vis_str(np));
+    str = vis_str(np);
+    xfree((ptr_t) np);
+    seterror(ERR_NOEVENT, str);
     return (0);
 }
 
