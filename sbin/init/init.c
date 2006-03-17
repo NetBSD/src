@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.70 2005/06/27 01:00:05 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.71 2006/03/17 02:48:29 chris Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.70 2005/06/27 01:00:05 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.71 2006/03/17 02:48:29 chris Exp $");
 #endif
 #endif /* not lint */
 
@@ -902,8 +902,13 @@ construct_argv(char *command)
 	char **argv = malloc(((strlen(command) + 1) / 2 + 1) * sizeof (char *));
 	static const char separators[] = " \t";
 
-	if ((argv[argc++] = strtok(command, separators)) == 0)
+	if (argv == NULL)
 		return (NULL);
+
+	if ((argv[argc++] = strtok(command, separators)) == 0) {
+		free(argv);
+		return (NULL);
+	}
 	while ((argv[argc++] = strtok(NULL, separators)) != NULL)
 		continue;
 	return (argv);
