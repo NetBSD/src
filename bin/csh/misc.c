@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.17 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: misc.c,v 1.18 2006/03/17 22:48:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.17 2005/06/26 19:10:48 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.18 2006/03/17 22:48:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,6 @@ dcopy(int i, int j)
 	(void)dup2(i, j);
 	return (j);
     }
-    (void)close(j);
     return (renum(i, j));
 }
 
