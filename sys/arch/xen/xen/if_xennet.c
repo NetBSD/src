@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.44 2006/03/16 23:02:50 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.45 2006/03/17 06:04:24 jld Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.44 2006/03/16 23:02:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.45 2006/03/17 06:04:24 jld Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -550,7 +550,7 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		 * we've probably just requeued some packets.
 		 */
 		sc->sc_backend_state = BEST_CONNECTED;
-		__insn_barrier();
+		x86_sfence();
 		hypervisor_notify_via_evtchn(status->evtchn);  
 		network_tx_buf_gc(sc);
 
