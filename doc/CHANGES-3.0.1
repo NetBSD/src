@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.24 2006/03/10 13:29:59 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.25 2006/03/17 15:29:39 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -247,4 +247,9 @@ usr.bin/login/login_pam.c			1.14
 
 	PR bin/23616: login might not back-off as expected.
 	[jnemeth, ticket #1201]
+
+usr.bin/mail/send.c				1.24
+
+	PR security/32978: mail(1) creates record file with insecure umask.
+	[adrianp, ticket #1204]
 
