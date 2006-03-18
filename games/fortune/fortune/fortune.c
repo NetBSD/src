@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.45 2006/03/18 23:44:05 christos Exp $	*/
+/*	$NetBSD: fortune.c,v 1.46 2006/03/18 23:51:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.45 2006/03/18 23:44:05 christos Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.46 2006/03/18 23:51:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -507,11 +507,11 @@ add_file(percent, file, dir, head, tail, parent)
 	FILEDESC	*fp;
 	int		fd;
 	const char	*path;
-	char		*tpath, *offensive;
+	char		*tpath, *offensive, *tfile = strdup(file), *tf;
 	bool		isdir;
 
 	if (dir == NULL) {
-		path = file;
+		path = tfile;
 		tpath = NULL;
 	}
 	else {
@@ -520,10 +520,9 @@ add_file(percent, file, dir, head, tail, parent)
 		path = tpath;
 	}
 	if ((isdir = is_dir(path)) && parent != NULL) {
-		if (tpath) {
+		if (tpath)
 			free(tpath);
-			tpath = NULL;
-		}
+		free(tfile);
 		return FALSE;	/* don't recurse */
 	}
 	offensive = NULL;
@@ -536,7 +535,9 @@ add_file(percent, file, dir, head, tail, parent)
 				tpath = NULL;
 			}
 			path = offensive;
-			file = off_name(file);
+			tf = off_name(tfile);
+			free(tfile);
+			tfile = tf;
 		}
 	}
 
@@ -559,18 +560,26 @@ over:
 			}
 			offensive = NULL;
 			DPRINTF(1, (stderr, "\ttrying \"%s\"\n", path));
-			file = off_name(file);
+			tf = off_name(tfile);
+			free(tfile);
+			tfile = tf;
 			goto over;
 		}
-		if (dir == NULL && file[0] != '/')
-			return add_file(percent, file, FORTDIR, head, tail,
+		if (dir == NULL && tfile[0] != '/') {
+			int n = add_file(percent, tfile, FORTDIR, head, tail,
 					parent);
+			if (tpath)
+				free(tpath);
+			free(tfile);
+			return n;
+		}
 		if (parent == NULL)
 			warn("Cannot open `%s'", path);
 		if (tpath) {
 			free(tpath);
 			tpath = NULL;
 		}
+		free(tfile);
 		return FALSE;
 	}
 
@@ -579,7 +588,7 @@ over:
 	fp = new_fp();
 	fp->fd = fd;
 	fp->percent = percent;
-	fp->name = file;
+	fp->name = tfile;
 	fp->path = path;
 	fp->parent = parent;
 
