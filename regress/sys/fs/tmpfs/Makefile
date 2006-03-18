@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/09/10 19:20:51 jmmv Exp $
+#	$NetBSD: Makefile,v 1.2 2006/03/18 17:09:35 jmmv Exp $
 
 tests=	t_mount
 tests+=	t_statvfs
@@ -32,6 +32,7 @@ regress: ${tests}
 
 PROG=	h_tools
 NOMAN=	# defined
+WARNS=	4
 
 t_sizes t_sockets t_statvfs: h_tools
 
