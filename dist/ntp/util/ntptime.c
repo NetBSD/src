@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptime.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: ntptime.c,v 1.3 2006/03/18 02:35:47 elad Exp $	*/
 
 /*
  * NTP test program
@@ -435,7 +435,7 @@ timex_state(
 {
 	static char buf[32];
 
-	if (s >= 0 && s <= sizeof(timex_states) / sizeof(timex_states[0]))
+	if (s >= 0 && s < sizeof(timex_states) / sizeof(timex_states[0]))
 	    return (timex_states[s]);
 	sprintf(buf, "TIME-#%d", s);
 	return (buf);
