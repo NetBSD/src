@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.16 2005/07/01 00:03:36 jmc Exp $	*/
+/*	$NetBSD: io.c,v 1.17 2006/03/18 23:31:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.16 2005/07/01 00:03:36 jmc Exp $");
+__RCSID("$NetBSD: io.c,v 1.17 2006/03/18 23:31:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,7 +353,7 @@ rtrav(void)
 
 	for (oldloc = -1;;) {	/* get another line             */
 		/* end of entry */		
-		if ((locc = rnum()) != oldloc && oldloc >= 0) {
+		if ((locc = rnum()) != oldloc && oldloc >= 0 && t) {
 			t->next = 0;	/* terminate the old entry      */
 			/* printf("%d:%d entries\n",oldloc,entries);       */
 			/* twrite(oldloc);                                 */
@@ -384,11 +384,11 @@ rtrav(void)
 			m = atoi(buf);
 		}
 		while (breakch != LF) {	/* only do one line at a time   */
-			if (entries++) {
-				t = t->next = (struct travlist *) 
-					malloc(sizeof(struct travlist));
-				if (t == NULL)
+			if (t && entries++) {
+				t->next = malloc(sizeof(struct travlist));
+				if (t->next == NULL)
 					err(1, NULL);
+				t = t->next;
 			}
 			t->tverb = rnum();	/* get verb from the file */
 			t->tloc = n;	/* table entry mod 1000         */
