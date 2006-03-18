@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.63 2006/03/18 09:19:02 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.64 2006/03/18 09:28:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.63 2006/03/18 09:19:02 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.64 2006/03/18 09:28:23 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -872,6 +872,7 @@ history_expand(char *str, char **output)
 
 	result = NULL;
 	size = idx = 0;
+	tmp = NULL;
 	for (i = 0; str[i];) {
 		int qchar, loop_again;
 		size_t len, start, j;
@@ -909,24 +910,27 @@ loop:
 			goto loop;
 		}
 		len = i - start;
-		tmp = &str[start];
-		ADD_STRING(tmp, len, 0);
+		ADD_STRING(&str[start], len, 0);
 
 		if (str[i] == '\0' || str[i] != history_expansion_char) {
 			len = j - i;
-			tmp = &str[i];
-			ADD_STRING(tmp, len, 0);
+			ADD_STRING(&str[i], len, 0);
 			if (start == 0)
 				ret = 0;
 			else
 				ret = 1;
 			break;
 		}
+		if (tmp) {
+			free(tmp);
+			tmp = NULL;
+		}
 		ret = _history_expand_command (str, i, (j - i), &tmp);
 		if (ret > 0 && tmp) {
 			len = strlen(tmp);
 			ADD_STRING(tmp, len, 1);
 			free(tmp);
+			tmp = NULL;
 		}
 		i = j;
 	}
