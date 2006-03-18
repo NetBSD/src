@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.23 2005/06/01 11:37:52 lukem Exp $	*/
+/*	$NetBSD: tty.c,v 1.24 2006/03/18 09:07:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.23 2005/06/01 11:37:52 lukem Exp $");
+__RCSID("$NetBSD: tty.c,v 1.24 2006/03/18 09:07:05 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1200,10 +1200,14 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const char **argv)
 				st = len =
 				    strlen(el->el_tty.t_t[z][m->m_type].t_name);
 			}
-			x = (el->el_tty.t_t[z][i].t_setmask & m->m_value)
-			    ?  '+' : '\0';
-			x = (el->el_tty.t_t[z][i].t_clrmask & m->m_value)
-			    ? '-' : x;
+			if (i != -1) {
+			    x = (el->el_tty.t_t[z][i].t_setmask & m->m_value)
+				?  '+' : '\0';
+			    x = (el->el_tty.t_t[z][i].t_clrmask & m->m_value)
+				? '-' : x;
+			} else {
+			    x = '\0';
+			}
 
 			if (x != '\0' || aflag) {
 
