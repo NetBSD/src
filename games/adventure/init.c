@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.15 2005/07/01 00:03:36 jmc Exp $	*/
+/*	$NetBSD: init.c,v 1.16 2006/03/18 05:16:46 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.15 2005/07/01 00:03:36 jmc Exp $");
+__RCSID("$NetBSD: init.c,v 1.16 2006/03/18 05:16:46 rtr Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ linkdata(void)
 	int     i, j;
 
 	/* array linkages */
-	for (i = 1; i <= LOCSIZ; i++)
+	for (i = 1; i < LOCSIZ; i++)
 		if (ltext[i].seekadr != 0 && travel[i] != 0)
 			if ((travel[i]->tverb) == 1)
 				cond[i] = 2;
