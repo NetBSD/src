@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.21 2006/02/19 12:15:33 peter Exp $	*/
+/*	$NetBSD: pf.c,v 1.21.6.1 2006/03/18 14:07:27 peter Exp $	*/
 /*	$OpenBSD: pf.c,v 1.483 2005/03/15 17:38:43 dhartmei Exp $ */
 
 /*
@@ -6176,7 +6176,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0, log = 0;
 	struct mbuf		*m = *m0;
-	struct ip6_hdr		*h;
+	struct ip6_hdr		*h = NULL;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule, *tr, *nr;
 	struct pf_state		*s = NULL;
 	struct pf_ruleset	*ruleset = NULL;
