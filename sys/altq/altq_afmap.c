@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_afmap.c,v 1.9 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.9.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$KAME: altq_afmap.c,v 1.12 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,12 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9.12.1 2006/03/18 12:08:18 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
 #include "opt_inet.h"
 #endif
+
+#ifdef ALTQ_AFMAP
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -62,11 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9 2005/12/11 12:16:03 christos Exp 
 #include <altq/altq_conf.h>
 #include <altq/altq_afmap.h>
 
+#ifdef ALTQ3_COMPAT
+
 LIST_HEAD(, afm_head) afhead_chain;
 
-static struct afm *afm_match4 __P((struct afm_head *, struct flowinfo_in *));
+static struct afm *afm_match4(struct afm_head *, struct flowinfo_in *);
 #ifdef INET6
-static struct afm *afm_match6 __P((struct afm_head *, struct flowinfo_in6 *));
+static struct afm *afm_match6(struct afm_head *, struct flowinfo_in6 *);
 #endif
 
 /*
@@ -352,12 +356,7 @@ afmclose(dev, flag, fmt, l)
 	     head = head->afh_chain.le_next) {
 
 		/* call interface to clean up maps */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 		sprintf(fmap.af_ifname, "%s", head->afh_ifp->if_xname);
-#else
-		sprintf(fmap.af_ifname, "%s%d",
-			head->afh_ifp->if_name, head->afh_ifp->if_unit);
-#endif
 		err = afmioctl(dev, AFM_CLEANFMAP, (caddr_t)&fmap, flag, l);
 		if (err && error == 0)
 			error = err;
@@ -406,3 +405,6 @@ afmioctl(dev, cmd, addr, flag, l)
 
 	return error;
 }
+
+#endif /* ALTQ3_COMPAT */
+#endif /* ALTQ_AFMAP */

@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_subr.c,v 1.13 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.13.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
- * Copyright (C) 1997-2002
+ * Copyright (C) 1997-2003
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,17 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.13 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.13.12.1 2006/03/18 12:08:18 peter Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#if (__FreeBSD__ != 2)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -66,8 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.13 2005/12/11 12:16:03 christos Exp 
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
+#include <net/pfvar.h>
 #include <altq/altq.h>
+#ifdef ALTQ3_COMPAT
 #include <altq/altq_conf.h>
+#endif
 
 /* machine dependent clock related includes */
 #ifdef __FreeBSD__
@@ -75,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.13 2005/12/11 12:16:03 christos Exp 
 #include <machine/clock.h>
 #endif
 #if defined(__i386__)
+#include <machine/cpufunc.h>		/* for pentium tsc */
 #include <machine/specialreg.h>		/* for CPUID_TSC */
 #ifdef __FreeBSD__
 #include <machine/md_var.h>		/* for cpu_feature */
@@ -86,43 +85,45 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.13 2005/12/11 12:16:03 christos Exp 
 /*
  * internal function prototypes
  */
-static void	tbr_timeout __P((void *));
-static int 	extract_ports4 __P((struct mbuf *, struct ip *,
-				    struct flowinfo_in *));
-#ifdef INET6
-static int 	extract_ports6 __P((struct mbuf *, struct ip6_hdr *,
-				    struct flowinfo_in6 *));
-#endif
-static int	apply_filter4 __P((u_int32_t, struct flow_filter *,
-				   struct flowinfo_in *));
-static int	apply_ppfilter4 __P((u_int32_t, struct flow_filter *,
-				     struct flowinfo_in *));
-#ifdef INET6
-static int	apply_filter6 __P((u_int32_t, struct flow_filter6 *,
-					   struct flowinfo_in6 *));
-#endif
-static int	apply_tosfilter4 __P((u_int32_t, struct flow_filter *,
-					     struct flowinfo_in *));
-static u_long	get_filt_handle __P((struct acc_classifier *, int));
-static struct acc_filter *filth_to_filtp __P((struct acc_classifier *,
-					      u_long));
-static u_int32_t filt2fibmask __P((struct flow_filter *));
-
-static void 	ip4f_cache __P((struct ip *, struct flowinfo_in *));
-static int 	ip4f_lookup __P((struct ip *, struct flowinfo_in *));
-static int 	ip4f_init __P((void));
-static struct ip4_frag	*ip4f_alloc __P((void));
-static void 	ip4f_free __P((struct ip4_frag *));
-
-int (*altq_input) __P((struct mbuf *, int)) = NULL;
+static void	tbr_timeout(void *);
+int (*altq_input)(struct mbuf *, int) = NULL;
 static int tbr_timer = 0;	/* token bucket regulator timer */
 static struct callout tbr_callout = CALLOUT_INITIALIZER;
+
+int pfaltq_running;	/* keep track of running state */
+
+#ifdef ALTQ3_CLFIER_COMPAT
+static int 	extract_ports4(struct mbuf *, struct ip *, struct flowinfo_in *);
+#ifdef INET6
+static int 	extract_ports6(struct mbuf *, struct ip6_hdr *,
+			       struct flowinfo_in6 *);
+#endif
+static int	apply_filter4(u_int32_t, struct flow_filter *,
+			      struct flowinfo_in *);
+static int	apply_ppfilter4(u_int32_t, struct flow_filter *,
+				struct flowinfo_in *);
+#ifdef INET6
+static int	apply_filter6(u_int32_t, struct flow_filter6 *,
+			      struct flowinfo_in6 *);
+#endif
+static int	apply_tosfilter4(u_int32_t, struct flow_filter *,
+				 struct flowinfo_in *);
+static u_long	get_filt_handle(struct acc_classifier *, int);
+static struct acc_filter *filth_to_filtp(struct acc_classifier *, u_long);
+static u_int32_t filt2fibmask(struct flow_filter *);
+
+static void 	ip4f_cache(struct ip *, struct flowinfo_in *);
+static int 	ip4f_lookup(struct ip *, struct flowinfo_in *);
+static int 	ip4f_init(void);
+static struct ip4_frag	*ip4f_alloc(void);
+static void 	ip4f_free(struct ip4_frag *);
+#endif /* ALTQ3_CLFIER_COMPAT */
 
 /*
  * alternate queueing support routines
  */
 
-/* look up the queue state by the interface name and the queuing type. */
+/* look up the queue state by the interface name and the queueing type. */
 void *
 altq_lookup(name, type)
 	char *name;
@@ -151,10 +152,19 @@ altq_attach(ifq, type, discipline, enqueue, dequeue, request, clfier, classify)
 {
 	if (!ALTQ_IS_READY(ifq))
 		return ENXIO;
-	if (ALTQ_IS_ENABLED(ifq))
-		return EBUSY;
-	if (ALTQ_IS_ATTACHED(ifq))
-		return EEXIST;
+
+#ifdef ALTQ3_COMPAT
+	/*
+	 * pfaltq can override the existing discipline, but altq3 cannot.
+	 * check these if clfier is not NULL (which implies altq3).
+	 */
+	if (clfier != NULL) {
+		if (ALTQ_IS_ENABLED(ifq))
+			return EBUSY;
+		if (ALTQ_IS_ATTACHED(ifq))
+			return EEXIST;
+	}
+#endif
 	ifq->altq_type     = type;
 	ifq->altq_disc     = discipline;
 	ifq->altq_enqueue  = enqueue;
@@ -162,9 +172,11 @@ altq_attach(ifq, type, discipline, enqueue, dequeue, request, clfier, classify)
 	ifq->altq_request  = request;
 	ifq->altq_clfier   = clfier;
 	ifq->altq_classify = classify;
-	ifq->altq_flags &= ALTQF_CANTCHANGE;
+	ifq->altq_flags &= (ALTQF_CANTCHANGE|ALTQF_ENABLED);
+#ifdef ALTQ3_COMPAT
 #ifdef ALTQ_KLD
 	altq_module_incref(type);
+#endif
 #endif
 	return 0;
 }
@@ -179,10 +191,12 @@ altq_detach(ifq)
 		return EBUSY;
 	if (!ALTQ_IS_ATTACHED(ifq))
 		return (0);
-
+#ifdef ALTQ3_COMPAT
 #ifdef ALTQ_KLD
 	altq_module_declref(ifq->altq_type);
 #endif
+#endif
+
 	ifq->altq_type     = ALTQT_NONE;
 	ifq->altq_disc     = NULL;
 	ifq->altq_enqueue  = NULL;
@@ -233,6 +247,7 @@ altq_disable(ifq)
 	return 0;
 }
 
+#ifdef ALTQ_DEBUG
 void
 altq_assert(file, line, failedexpr)
 	const char *file, *failedexpr;
@@ -243,10 +258,11 @@ altq_assert(file, line, failedexpr)
 	panic("altq assertion");
 	/* NOTREACHED */
 }
+#endif
 
 /*
  * internal representation of token bucket parameters
- *	rate: 	byte_per_unittime << 32
+ *	rate:	byte_per_unittime << 32
  *		(((bits_per_sec) / 8) << 32) / machclk_freq
  *	depth:	byte << 32
  *
@@ -372,16 +388,7 @@ tbr_timeout(arg)
 
 	active = 0;
 	s = splnet();
-#ifdef __FreeBSD__
-#if (__FreeBSD_version < 300000)
-	for (ifp = ifnet; ifp; ifp = ifp->if_next)
-#else
-	for (ifp = ifnet.tqh_first; ifp != NULL; ifp = ifp->if_link.tqe_next)
-#endif
-#else /* !FreeBSD */
-	for (ifp = ifnet.tqh_first; ifp != NULL; ifp = ifp->if_list.tqe_next)
-#endif
-	{
+	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list)) {
 		if (!TBR_IS_ENABLED(&ifp->if_snd))
 			continue;
 		active++;
@@ -430,6 +437,521 @@ tbr_get(ifq, profile)
 	return (0);
 }
 
+/*
+ * attach a discipline to the interface.  if one already exists, it is
+ * overridden.
+ */
+int
+altq_pfattach(struct pf_altq *a)
+{
+	struct ifnet *ifp;
+	struct tb_profile tb;
+	int s, error = 0;
+
+	switch (a->scheduler) {
+	case ALTQT_NONE:
+		break;
+#ifdef ALTQ_CBQ
+	case ALTQT_CBQ:
+		error = cbq_pfattach(a);
+		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_pfattach(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_pfattach(a);
+		break;
+#endif
+	default:
+		error = ENXIO;
+	}
+
+	ifp = ifunit(a->ifname);
+
+	/* if the state is running, enable altq */
+	if (error == 0 && pfaltq_running &&
+	    ifp != NULL && ifp->if_snd.altq_type != ALTQT_NONE &&
+	    !ALTQ_IS_ENABLED(&ifp->if_snd))
+			error = altq_enable(&ifp->if_snd);
+
+	/* if altq is already enabled, reset set tokenbucket regulator */
+	if (error == 0 && ifp != NULL && ALTQ_IS_ENABLED(&ifp->if_snd)) {
+		tb.rate = a->ifbandwidth;
+		tb.depth = a->tbrsize;
+		s = splnet();
+		error = tbr_set(&ifp->if_snd, &tb);
+		splx(s);
+	}
+
+	return (error);
+}
+
+/*
+ * detach a discipline from the interface.
+ * it is possible that the discipline was already overridden by another
+ * discipline.
+ */
+int
+altq_pfdetach(struct pf_altq *a)
+{
+	struct ifnet *ifp;
+	int s, error = 0;
+
+	if ((ifp = ifunit(a->ifname)) == NULL)
+		return (EINVAL);
+
+	/* if this discipline is no longer referenced, just return */
+	if (a->altq_disc == NULL || a->altq_disc != ifp->if_snd.altq_disc)
+		return (0);
+
+	s = splnet();
+	if (ALTQ_IS_ENABLED(&ifp->if_snd))
+		error = altq_disable(&ifp->if_snd);
+	if (error == 0)
+		error = altq_detach(&ifp->if_snd);
+	splx(s);
+
+	return (error);
+}
+
+/*
+ * add a discipline or a queue
+ */
+int
+altq_add(struct pf_altq *a)
+{
+	int error = 0;
+
+	if (a->qname[0] != 0)
+		return (altq_add_queue(a));
+
+	if (machclk_freq == 0)
+		init_machclk();
+	if (machclk_freq == 0)
+		panic("altq_add: no CPU clock");
+
+	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
+	case ALTQT_CBQ:
+		error = cbq_add_altq(a);
+		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_add_altq(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_add_altq(a);
+		break;
+#endif
+	default:
+		error = ENXIO;
+	}
+
+	return (error);
+}
+
+/*
+ * remove a discipline or a queue
+ */
+int
+altq_remove(struct pf_altq *a)
+{
+	int error = 0;
+
+	if (a->qname[0] != 0)
+		return (altq_remove_queue(a));
+
+	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
+	case ALTQT_CBQ:
+		error = cbq_remove_altq(a);
+		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_remove_altq(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_remove_altq(a);
+		break;
+#endif
+	default:
+		error = ENXIO;
+	}
+
+	return (error);
+}
+
+/*
+ * add a queue to the discipline
+ */
+int
+altq_add_queue(struct pf_altq *a)
+{
+	int error = 0;
+
+	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
+	case ALTQT_CBQ:
+		error = cbq_add_queue(a);
+		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_add_queue(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_add_queue(a);
+		break;
+#endif
+	default:
+		error = ENXIO;
+	}
+
+	return (error);
+}
+
+/*
+ * remove a queue from the discipline
+ */
+int
+altq_remove_queue(struct pf_altq *a)
+{
+	int error = 0;
+
+	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
+	case ALTQT_CBQ:
+		error = cbq_remove_queue(a);
+		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_remove_queue(a);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_remove_queue(a);
+		break;
+#endif
+	default:
+		error = ENXIO;
+	}
+
+	return (error);
+}
+
+/*
+ * get queue statistics
+ */
+int
+altq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
+{
+	int error = 0;
+
+	switch (a->scheduler) {
+#ifdef ALTQ_CBQ
+	case ALTQT_CBQ:
+		error = cbq_getqstats(a, ubuf, nbytes);
+		break;
+#endif
+#ifdef ALTQ_PRIQ
+	case ALTQT_PRIQ:
+		error = priq_getqstats(a, ubuf, nbytes);
+		break;
+#endif
+#ifdef ALTQ_HFSC
+	case ALTQT_HFSC:
+		error = hfsc_getqstats(a, ubuf, nbytes);
+		break;
+#endif
+	default:
+		error = ENXIO;
+	}
+
+	return (error);
+}
+
+/*
+ * read and write diffserv field in IPv4 or IPv6 header
+ */
+u_int8_t
+read_dsfield(m, pktattr)
+	struct mbuf *m;
+	struct altq_pktattr *pktattr;
+{
+	struct mbuf *m0;
+	u_int8_t ds_field = 0;
+
+	if (pktattr == NULL ||
+	    (pktattr->pattr_af != AF_INET && pktattr->pattr_af != AF_INET6))
+		return ((u_int8_t)0);
+
+	/* verify that pattr_hdr is within the mbuf data */
+	for (m0 = m; m0 != NULL; m0 = m0->m_next)
+		if ((pktattr->pattr_hdr >= m0->m_data) &&
+		    (pktattr->pattr_hdr < m0->m_data + m0->m_len))
+			break;
+	if (m0 == NULL) {
+		/* ick, pattr_hdr is stale */
+		pktattr->pattr_af = AF_UNSPEC;
+#ifdef ALTQ_DEBUG
+		printf("read_dsfield: can't locate header!\n");
+#endif
+		return ((u_int8_t)0);
+	}
+
+	if (pktattr->pattr_af == AF_INET) {
+		struct ip *ip = (struct ip *)pktattr->pattr_hdr;
+
+		if (ip->ip_v != 4)
+			return ((u_int8_t)0);	/* version mismatch! */
+		ds_field = ip->ip_tos;
+	}
+#ifdef INET6
+	else if (pktattr->pattr_af == AF_INET6) {
+		struct ip6_hdr *ip6 = (struct ip6_hdr *)pktattr->pattr_hdr;
+		u_int32_t flowlabel;
+
+		flowlabel = ntohl(ip6->ip6_flow);
+		if ((flowlabel >> 28) != 6)
+			return ((u_int8_t)0);	/* version mismatch! */
+		ds_field = (flowlabel >> 20) & 0xff;
+	}
+#endif
+	return (ds_field);
+}
+
+void
+write_dsfield(m, pktattr, dsfield)
+	struct mbuf *m;
+	struct altq_pktattr *pktattr;
+	u_int8_t dsfield;
+{
+	struct mbuf *m0;
+
+	if (pktattr == NULL ||
+	    (pktattr->pattr_af != AF_INET && pktattr->pattr_af != AF_INET6))
+		return;
+
+	/* verify that pattr_hdr is within the mbuf data */
+	for (m0 = m; m0 != NULL; m0 = m0->m_next)
+		if ((pktattr->pattr_hdr >= m0->m_data) &&
+		    (pktattr->pattr_hdr < m0->m_data + m0->m_len))
+			break;
+	if (m0 == NULL) {
+		/* ick, pattr_hdr is stale */
+		pktattr->pattr_af = AF_UNSPEC;
+#ifdef ALTQ_DEBUG
+		printf("write_dsfield: can't locate header!\n");
+#endif
+		return;
+	}
+
+	if (pktattr->pattr_af == AF_INET) {
+		struct ip *ip = (struct ip *)pktattr->pattr_hdr;
+		u_int8_t old;
+		int32_t sum;
+
+		if (ip->ip_v != 4)
+			return;		/* version mismatch! */
+		old = ip->ip_tos;
+		dsfield |= old & 3;	/* leave CU bits */
+		if (old == dsfield)
+			return;
+		ip->ip_tos = dsfield;
+		/*
+		 * update checksum (from RFC1624)
+		 *	   HC' = ~(~HC + ~m + m')
+		 */
+		sum = ~ntohs(ip->ip_sum) & 0xffff;
+		sum += 0xff00 + (~old & 0xff) + dsfield;
+		sum = (sum >> 16) + (sum & 0xffff);
+		sum += (sum >> 16);  /* add carry */
+
+		ip->ip_sum = htons(~sum & 0xffff);
+	}
+#ifdef INET6
+	else if (pktattr->pattr_af == AF_INET6) {
+		struct ip6_hdr *ip6 = (struct ip6_hdr *)pktattr->pattr_hdr;
+		u_int32_t flowlabel;
+
+		flowlabel = ntohl(ip6->ip6_flow);
+		if ((flowlabel >> 28) != 6)
+			return;		/* version mismatch! */
+		flowlabel = (flowlabel & 0xf03fffff) | (dsfield << 20);
+		ip6->ip6_flow = htonl(flowlabel);
+	}
+#endif
+	return;
+}
+
+
+/*
+ * high resolution clock support taking advantage of a machine dependent
+ * high resolution time counter (e.g., timestamp counter of intel pentium).
+ * we assume
+ *  - 64-bit-long monotonically-increasing counter
+ *  - frequency range is 100M-4GHz (CPU speed)
+ */
+/* if pcc is not available or disabled, emulate 256MHz using microtime() */
+#define	MACHCLK_SHIFT	8
+
+int machclk_usepcc;
+u_int32_t machclk_freq = 0;
+u_int32_t machclk_per_tick = 0;
+
+#ifdef __alpha__
+#ifdef __FreeBSD__
+extern u_int32_t cycles_per_sec;	/* alpha cpu clock frequency */
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
+extern u_int64_t cycles_per_usec;	/* alpha cpu clock frequency */
+#endif
+#endif /* __alpha__ */
+
+void
+init_machclk(void)
+{
+	machclk_usepcc = 1;
+
+#if (!defined(__i386__) && !defined(__alpha__)) || defined(ALTQ_NOPCC)
+	machclk_usepcc = 0;
+#endif
+#if defined(__FreeBSD__) && defined(SMP)
+	machclk_usepcc = 0;
+#endif
+#if defined(__NetBSD__) && defined(MULTIPROCESSOR)
+	machclk_usepcc = 0;
+#endif
+#ifdef __i386__
+	/* check if TSC is available */
+	if (machclk_usepcc == 1 && (cpu_feature & CPUID_TSC) == 0)
+		machclk_usepcc = 0;
+#endif
+
+	if (machclk_usepcc == 0) {
+		/* emulate 256MHz using microtime() */
+		machclk_freq = 1000000 << MACHCLK_SHIFT;
+		machclk_per_tick = machclk_freq / hz;
+#ifdef ALTQ_DEBUG
+		printf("altq: emulate %uHz CPU clock\n", machclk_freq);
+#endif
+		return;
+	}
+
+	/*
+	 * if the clock frequency (of Pentium TSC or Alpha PCC) is
+	 * accessible, just use it.
+	 */
+#ifdef __i386__
+#ifdef __FreeBSD__
+#if (__FreeBSD_version > 300000)
+	machclk_freq = tsc_freq;
+#else
+	machclk_freq = i586_ctr_freq;
+#endif
+#elif defined(__NetBSD__)
+	machclk_freq = (u_int32_t)curcpu()->ci_tsc_freq;
+#elif defined(__OpenBSD__) && (defined(I586_CPU) || defined(I686_CPU))
+	machclk_freq = pentium_mhz * 1000000;
+#endif
+#elif defined(__alpha__)
+#ifdef __FreeBSD__
+	machclk_freq = cycles_per_sec;
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
+	machclk_freq = (u_int32_t)(cycles_per_usec * 1000000);
+#endif
+#endif /* __alpha__ */
+
+	/*
+	 * if we don't know the clock frequency, measure it.
+	 */
+	if (machclk_freq == 0) {
+		static int	wait;
+		struct timeval	tv_start, tv_end;
+		u_int64_t	start, end, diff;
+		int		timo;
+
+		microtime(&tv_start);
+		start = read_machclk();
+		timo = hz;	/* 1 sec */
+		(void)tsleep(&wait, PWAIT | PCATCH, "init_machclk", timo);
+		microtime(&tv_end);
+		end = read_machclk();
+		diff = (u_int64_t)(tv_end.tv_sec - tv_start.tv_sec) * 1000000
+		    + tv_end.tv_usec - tv_start.tv_usec;
+		if (diff != 0)
+			machclk_freq = (u_int)((end - start) * 1000000 / diff);
+	}
+
+	machclk_per_tick = machclk_freq / hz;
+
+#ifdef ALTQ_DEBUG
+	printf("altq: CPU clock: %uHz\n", machclk_freq);
+#endif
+}
+
+#if defined(__OpenBSD__) && defined(__i386__)
+static inline u_int64_t
+rdtsc(void)
+{
+	u_int64_t rv;
+	__asm __volatile(".byte 0x0f, 0x31" : "=A" (rv));
+	return (rv);
+}
+#endif /* __OpenBSD__ && __i386__ */
+
+u_int64_t
+read_machclk(void)
+{
+	u_int64_t val;
+
+	if (machclk_usepcc) {
+#if defined(__i386__)
+		val = rdtsc();
+#elif defined(__alpha__)
+		static u_int32_t last_pcc, upper;
+		u_int32_t pcc;
+
+		/*
+		 * for alpha, make a 64bit counter value out of the 32bit
+		 * alpha processor cycle counter.
+		 * read_machclk must be called within a half of its
+		 * wrap-around cycle (about 5 sec for 400MHz cpu) to properly
+		 * detect a counter wrap-around.
+		 * tbr_timeout calls read_machclk once a second.
+		 */
+		pcc = (u_int32_t)alpha_rpcc();
+		if (pcc <= last_pcc)
+			upper++;
+		last_pcc = pcc;
+		val = ((u_int64_t)upper << 32) + pcc;
+#else
+		panic("read_machclk");
+#endif
+	} else {
+		struct timeval tv;
+
+		microtime(&tv);
+		val = (((u_int64_t)(tv.tv_sec - boottime.tv_sec) * 1000000
+		    + tv.tv_usec) << MACHCLK_SHIFT);
+	}
+	return (val);
+}
+
+#ifdef ALTQ3_CLFIER_COMPAT
 
 #ifndef IPPROTO_ESP
 #define	IPPROTO_ESP	50		/* encapsulating security payload */
@@ -1365,236 +1887,4 @@ ip4f_free(fp)
 	TAILQ_INSERT_TAIL(&ip4f_list, fp, ip4f_chain);
 }
 
-/*
- * read and write diffserv field in IPv4 or IPv6 header
- */
-u_int8_t
-read_dsfield(m, pktattr)
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
-{
-	struct mbuf *m0;
-	u_int8_t ds_field = 0;
-
-	if (pktattr == NULL ||
-	    (pktattr->pattr_af != AF_INET && pktattr->pattr_af != AF_INET6))
-		return ((u_int8_t)0);
-
-	/* verify that pattr_hdr is within the mbuf data */
-	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if ((pktattr->pattr_hdr >= m0->m_data) &&
-		    (pktattr->pattr_hdr < m0->m_data + m0->m_len))
-			break;
-	if (m0 == NULL) {
-		/* ick, pattr_hdr is stale */
-		pktattr->pattr_af = AF_UNSPEC;
-#ifdef ALTQ_DEBUG
-		printf("read_dsfield: can't locate header!\n");
-#endif
-		return ((u_int8_t)0);
-	}
-
-	if (pktattr->pattr_af == AF_INET) {
-		struct ip *ip = (struct ip *)pktattr->pattr_hdr;
-
-		if (ip->ip_v != 4)
-			return ((u_int8_t)0);	/* version mismatch! */
-		ds_field = ip->ip_tos;
-	}
-#ifdef INET6
-	else if (pktattr->pattr_af == AF_INET6) {
-		struct ip6_hdr *ip6 = (struct ip6_hdr *)pktattr->pattr_hdr;
-		u_int32_t flowlabel;
-
-		flowlabel = ntohl(ip6->ip6_flow);
-		if ((flowlabel >> 28) != 6)
-			return ((u_int8_t)0);	/* version mismatch! */
-		ds_field = (flowlabel >> 20) & 0xff;
-	}
-#endif
-	return (ds_field);
-}
-
-void
-write_dsfield(m, pktattr, dsfield)
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
-	u_int8_t dsfield;
-{
-	struct mbuf *m0;
-
-	if (pktattr == NULL ||
-	    (pktattr->pattr_af != AF_INET && pktattr->pattr_af != AF_INET6))
-		return;
-
-	/* verify that pattr_hdr is within the mbuf data */
-	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if ((pktattr->pattr_hdr >= m0->m_data) &&
-		    (pktattr->pattr_hdr < m0->m_data + m0->m_len))
-			break;
-	if (m0 == NULL) {
-		/* ick, pattr_hdr is stale */
-		pktattr->pattr_af = AF_UNSPEC;
-#ifdef ALTQ_DEBUG
-		printf("write_dsfield: can't locate header!\n");
-#endif
-		return;
-	}
-
-	if (pktattr->pattr_af == AF_INET) {
-		struct ip *ip = (struct ip *)pktattr->pattr_hdr;
-		u_int8_t old;
-		int32_t sum;
-
-		if (ip->ip_v != 4)
-			return;		/* version mismatch! */
-		old = ip->ip_tos;
-		dsfield |= old & 3;	/* leave CU bits */
-		if (old == dsfield)
-			return;
-		ip->ip_tos = dsfield;
-		/*
-		 * update checksum (from RFC1624)
-		 *	   HC' = ~(~HC + ~m + m')
-		 */
-		sum = ~ntohs(ip->ip_sum) & 0xffff;
-		sum += 0xff00 + (~old & 0xff) + dsfield;
-		sum = (sum >> 16) + (sum & 0xffff);
-		sum += (sum >> 16);  /* add carry */
-
-		ip->ip_sum = htons(~sum & 0xffff);
-	}
-#ifdef INET6
-	else if (pktattr->pattr_af == AF_INET6) {
-		struct ip6_hdr *ip6 = (struct ip6_hdr *)pktattr->pattr_hdr;
-		u_int32_t flowlabel;
-
-		flowlabel = ntohl(ip6->ip6_flow);
-		if ((flowlabel >> 28) != 6)
-			return;		/* version mismatch! */
-		flowlabel = (flowlabel & 0xf03fffff) | (dsfield << 20);
-		ip6->ip6_flow = htonl(flowlabel);
-	}
-#endif
-	return;
-}
-
-
-/*
- * high resolution clock support taking advantage of a machine dependent
- * high resolution time counter (e.g., timestamp counter of intel pentium).
- * we assume
- *  - 64-bit-long monotonically-increasing counter
- *  - frequency range is 100M-4GHz (CPU speed)
- */
-u_int32_t machclk_freq = 0;
-u_int32_t machclk_per_tick = 0;
-
-#if (defined(__i386__) || defined(__alpha__)) && !defined(ALTQ_NOPCC)
-
-#if defined(__FreeBSD__) && defined(SMP)
-#error SMP system!  use ALTQ_NOPCC option.
-#endif
-
-#ifdef __alpha__
-#ifdef __FreeBSD__
-extern u_int32_t cycles_per_sec;	/* alpha CPU clock frequency */
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-extern u_int64_t cycles_per_usec;	/* alpha CPU clock frequency */
-#endif
-#endif /* __alpha__ */
-
-void
-init_machclk(void)
-{
-	/* sanity check */
-#ifdef __i386__
-	/* check if TSC is available */
-	if ((cpu_feature & CPUID_TSC) == 0) {
-		printf("altq: TSC isn't available! use ALTQ_NOPCC option.\n");
-		return;
-	}
-#endif
-
-	/*
-	 * if the clock frequency (of Pentium TSC or Alpha PCC) is
-	 * accessible, just use it.
-	 */
-#ifdef __i386__
-#ifdef __FreeBSD__
-#if (__FreeBSD_version > 300000)
-	machclk_freq = tsc_freq;
-#else
-	machclk_freq = i586_ctr_freq;
-#endif
-#elif defined(__NetBSD__)
-	machclk_freq = (u_int32_t)curcpu()->ci_tsc_freq;
-#elif defined(__OpenBSD__)
-	machclk_freq = pentium_mhz * 1000000;
-#endif
-#elif defined(__alpha__)
-#ifdef __FreeBSD__
-	machclk_freq = cycles_per_sec;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	machclk_freq = (u_int32_t)(cycles_per_usec * 1000000);
-#endif
-#endif /* __alpha__ */
-
-	/*
-	 * if we don't know the clock frequency, measure it.
-	 */
-	if (machclk_freq == 0) {
-		static int	wait;
-		struct timeval	tv_start, tv_end;
-		u_int64_t	start, end, diff;
-		int		timo;
-
-		microtime(&tv_start);
-		start = read_machclk();
-		timo = hz;	/* 1 sec */
-		(void)tsleep(&wait, PWAIT | PCATCH, "init_machclk", timo);
-		microtime(&tv_end);
-		end = read_machclk();
-		diff = (u_int64_t)(tv_end.tv_sec - tv_start.tv_sec) * 1000000
-		    + tv_end.tv_usec - tv_start.tv_usec;
-		if (diff != 0)
-			machclk_freq = (u_int)((end - start) * 1000000 / diff);
-	}
-
-	machclk_per_tick = machclk_freq / hz;
-
-#ifdef ALTQ_DEBUG
-	printf("altq: CPU clock: %uHz\n", machclk_freq);
-#endif
-}
-
-#ifdef __alpha__
-/*
- * make a 64bit counter value out of the 32bit alpha processor cycle counter.
- * read_machclk must be called within a half of its wrap-around cycle
- * (about 5 sec for 400MHz CPU) to properly detect a counter wrap-around.
- * tbr_timeout calls read_machclk once a second.
- */
-u_int64_t
-read_machclk(void)
-{
-	static u_int32_t last_pcc, upper;
-	u_int32_t pcc;
-
-	pcc = (u_int32_t)alpha_rpcc();
-	if (pcc <= last_pcc)
-		upper++;
-	last_pcc = pcc;
-	return (((u_int64_t)upper << 32) + pcc);
-}
-#endif /* __alpha__ */
-#else /* !i386  && !alpha */
-/* use microtime() for now */
-void
-init_machclk(void)
-{
-	machclk_freq = 1000000 << MACHCLK_SHIFT;
-	machclk_per_tick = machclk_freq / hz;
-	printf("altq: emulate %uHz CPU clock\n", machclk_freq);
-}
-#endif /* !i386 && !alpha */
+#endif /* ALTQ3_CLFIER_COMPAT */

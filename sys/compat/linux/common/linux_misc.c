@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.152 2006/03/17 06:01:14 erh Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.151 2006/03/01 12:38:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.152 2006/03/17 06:01:14 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151 2006/03/01 12:38:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1251,10 +1251,7 @@ linux_sys_getgroups16(l, v, retval)
 		kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
 		lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 		if (bset == NULL || kbset == NULL || lset == NULL)
-		{
-			error = ENOMEM;
-			goto out;
-		}
+			return ENOMEM;
 		SCARG(&bsa, gidsetsize) = n;
 		SCARG(&bsa, gidset) = bset;
 		error = sys_getgroups(l, &bsa, retval);
@@ -1302,11 +1299,8 @@ linux_sys_setgroups16(l, v, retval)
 	bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
 	lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 	kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
-	if (bset == NULL || kbset == NULL || lset == NULL)
-	{
-		error = ENOMEM;
-		goto out;
-	}
+	if (lset == NULL || bset == NULL)
+		return ENOMEM;
 	error = copyin(SCARG(uap, gidset), lset, n * sizeof (linux_gid_t));
 	if (error != 0)
 		goto out;

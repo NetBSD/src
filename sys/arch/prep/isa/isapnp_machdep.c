@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.5 2006/03/17 05:33:33 garbled Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.4 2005/12/11 12:18:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.5 2006/03/17 05:33:33 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.4 2005/12/11 12:18:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.5 2006/03/17 05:33:33 garbled E
  *	Map I/O regions used by PnP
  */
 int
-isapnp_map(struct isapnp_softc *sc)
+isapnp_map(sc)
+	struct isapnp_softc *sc;
 {
 #ifdef _KERNEL
 	int error;
@@ -124,7 +125,8 @@ isapnp_map(struct isapnp_softc *sc)
  *	Unmap I/O regions used by PnP
  */
 void
-isapnp_unmap(struct isapnp_softc *sc)
+isapnp_unmap(sc)
+	struct isapnp_softc *sc;
 {
 
 	bus_space_unmap(sc->sc_iot, sc->sc_addr_ioh, 1);
@@ -138,7 +140,7 @@ isapnp_unmap(struct isapnp_softc *sc)
  *	NOTE: assumes the caller has filled in sc->sc_read_port!
  */
 int
-isapnp_map_readport(struct isapnp_softc *sc)
+isapnp_map_readport(sc)
 	struct isapnp_softc *sc;
 {
 #ifdef _KERNEL
@@ -158,7 +160,8 @@ isapnp_map_readport(struct isapnp_softc *sc)
  *	Pretend to unmap a previously mapped `read port'.
  */
 void
-isapnp_unmap_readport(struct isapnp_softc *sc)
+isapnp_unmap_readport(sc)
+	struct isapnp_softc *sc;
 {
 
 	bus_space_unmap(sc->sc_iot, sc->sc_read_ioh, 1);

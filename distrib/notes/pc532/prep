@@ -1,5 +1,0 @@
-.\"	$NetBSD: prep,v 1.6 2002/06/30 12:15:13 lukem Exp $
-.
-The major preparation needed is to make sure you can recover any
-current bits stored on your \*M.
-If you don't care about your data on the disk, you don't need to do anything.
