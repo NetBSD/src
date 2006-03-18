@@ -1,4 +1,4 @@
-/* $NetBSD: misc.c,v 1.18 2006/03/17 22:48:10 christos Exp $ */
+/* $NetBSD: misc.c,v 1.19 2006/03/18 06:24:26 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.18 2006/03/17 22:48:10 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.19 2006/03/18 06:24:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,6 +143,9 @@ Char **
 saveblk(Char **v)
 {
     Char **newv, **onewv;
+
+    if (v == NULL)
+	return NULL;
 
     newv = (Char **)xcalloc((size_t)(blklen(v) + 1), sizeof(Char **));
     onewv = newv;
