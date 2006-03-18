@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.24 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: dir.c,v 1.25 2006/03/18 06:54:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.24 2005/06/26 19:10:48 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.25 2006/03/18 06:54:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ dinit(Char *hp)
 	    if (chdir(ecp) == -1)
 		cp = NULL;
 	    else
-		cp = hp;
+		cp = Strsave(hp);
 	    (void)fprintf(csherr, emsg, vis_str(hp));
 	}
 	else
@@ -127,7 +127,7 @@ dinit(Char *hp)
     }
 
     dp = (struct directory *)xcalloc(1, sizeof(struct directory));
-    dp->di_name = Strsave(cp);
+    dp->di_name = cp;
     dp->di_count = 0;
     dhead.di_next = dhead.di_prev = dp;
     dp->di_next = dp->di_prev = &dhead;
