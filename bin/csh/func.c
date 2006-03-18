@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.30 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: func.c,v 1.31 2006/03/18 06:29:21 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.30 2005/06/26 19:10:48 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.31 2006/03/18 06:29:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1418,9 +1418,12 @@ doeval(Char **v, struct command *t)
     evalp = oevalp;
     doneinp = 0;
     didfds = odidfds;
-    (void)close(SHIN);
-    (void)close(SHOUT);
-    (void)close(SHERR);
+    if (SHIN != -1)
+	(void)close(SHIN);
+    if (SHOUT != -1)
+	(void)close(SHOUT);
+    if (SHERR != -1)
+	(void)close(SHERR);
     SHIN = dmove(saveIN, oSHIN);
     SHOUT = dmove(saveOUT, oSHOUT);
     SHERR = dmove(saveERR, oSHERR);
