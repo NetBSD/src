@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwv.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_wwv.c,v 1.4 2006/03/18 14:02:13 kardel Exp $	*/
 
 /*
  * refclock_wwv - clock driver for NIST WWV/H time/frequency station
@@ -1297,7 +1297,7 @@ wwv_rf(
 			k += SECOND;
 		j = epopos + 6 * MS;
 		if (j >= SECOND)
-			i -= SECOND;
+			j -= SECOND;
 		up->eposnr = wwv_snr(epomax, max(abs(epobuf[k]),
 		    abs(epobuf[j])));
 		epopos -= pdelay + 5 * MS; 
