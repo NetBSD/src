@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_analyze.c,v 1.10 2006/03/18 20:46:23 christos Exp $	*/
+/*	$NetBSD: fsi_analyze.c,v 1.11 2006/03/18 21:11:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -545,7 +545,8 @@ analyze_mounts(host *hp)
       lerror(fp->f_ioloc, "volname %s unknown", fp->f_volname);
     } else if (matched) {
 
-      fixup_required_mount_info(fp, de);
+      if (de)
+	fixup_required_mount_info(fp, de);
       req = ~fp->f_mask & FM_REQUIRED;
       if (req) {
 	show_required(fp->f_ioloc, req, fp->f_volname, hp->h_hostname,
