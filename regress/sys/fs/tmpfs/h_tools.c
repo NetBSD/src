@@ -1,4 +1,4 @@
-/*	$NetBSD: h_tools.c,v 1.2 2005/09/23 15:36:15 jmmv Exp $	*/
+/*	$NetBSD: h_tools.c,v 1.3 2006/03/18 17:09:35 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,13 +45,22 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/mount.h>
 #include <sys/statvfs.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
+/* --------------------------------------------------------------------- */
+
+static int getfh_main(int, char **);
+static int rename_main(int, char **);
+static int sockets_main(int, char **);
+static int statvfs_main(int, char **);
 
 /* --------------------------------------------------------------------- */
 
@@ -84,7 +93,6 @@ getfh_main(int argc, char **argv)
 int
 rename_main(int argc, char **argv)
 {
-	int error;
 
 	if (argc < 3)
 		return EXIT_FAILURE;
@@ -169,6 +177,8 @@ main(int argc, char **argv)
 		error = sockets_main(argc, argv);
 	else if (strcmp(argv[0], "statvfs") == 0)
 		error = statvfs_main(argc, argv);
+	else
+		error = EXIT_FAILURE;
 
 	return error;
 }
