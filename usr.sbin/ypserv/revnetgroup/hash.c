@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.3 2002/07/06 01:00:15 wiz Exp $ */
+/*	$NetBSD: hash.c,v 1.4 2006/03/18 14:33:07 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hash.c,v 1.3 2002/07/06 01:00:15 wiz Exp $");
+__RCSID("$NetBSD: hash.c,v 1.4 2006/03/18 14:33:07 bouyer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -202,8 +202,11 @@ mstore(struct member_entry *table[], const char *key, const char *data,
 		if (!strcmp(cur->key, key) && !strcmp(cur->domain,domain)) {
 		  	p = cur->groups;
 			while(p) {
-				if (!strcmp(p->groupname,data))
+				if (!strcmp(p->groupname,data)) {
+					/* group already there */
+					free(tmp);
 					return;
+				}
 				p = p->next;
 			}
 			tmp->next = cur->groups;
