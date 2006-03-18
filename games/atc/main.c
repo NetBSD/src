@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2005/08/10 17:53:28 rpaulo Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2006/03/18 23:38:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2005/08/10 17:53:28 rpaulo Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2006/03/18 23:38:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -241,6 +241,7 @@ default_game(void)
 	}
 	if (fgets(line, sizeof(line), fp) == NULL) {
 		(void)fprintf(stderr, "%s: no default game available\n", games);
+		fclose(fp);
 		return (NULL);
 	}
 	(void)fclose(fp);
