@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.22 2006/03/18 20:23:51 christos Exp $	*/
+/*	$NetBSD: parms.c,v 1.23 2006/03/18 20:25:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: parms.c,v 1.22 2006/03/18 20:23:51 christos Exp $");
+__RCSID("$NetBSD: parms.c,v 1.23 2006/03/18 20:25:28 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -834,8 +834,10 @@ parse_parms(char *line,
 				    || !getnet(buf2, &tg->tgate_nets[i].net,
 					       &tg->tgate_nets[i].mask)
 				    || tg->tgate_nets[i].net == RIP_DEFAULT
-				    || tg->tgate_nets[i].mask == 0)
+				    || tg->tgate_nets[i].mask == 0) {
+					free(tg);
 					return bad_str(tgt);
+				}
 				i++;
 			}
 			tg->tgate_next = tgates;
