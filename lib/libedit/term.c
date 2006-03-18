@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.42 2006/03/06 21:11:56 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.43 2006/03/18 09:02:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.42 2006/03/06 21:11:56 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.43 2006/03/18 09:02:08 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -398,7 +398,8 @@ term_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
          * New string is shorter; no need to allocate space
          */
 	if (clen <= tlen) {
-		(void) strcpy(*str, cap);	/* XXX strcpy is safe */
+		if (*str)
+			(void) strcpy(*str, cap);	/* XXX strcpy is safe */
 		return;
 	}
 	/*
