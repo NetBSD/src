@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.61 2006/03/06 21:11:03 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.62 2006/03/18 09:15:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.61 2006/03/06 21:11:03 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.62 2006/03/18 09:15:57 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -728,6 +728,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 				what = realloc(from, size);
 				if (what == NULL) {
 					free(from);
+					free(tmp);
 					return 0;
 				}
 				len = 0;
@@ -740,6 +741,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 								(size <<= 1));
 						if (nwhat == NULL) {
 							free(what);
+							free(tmp);
 							return 0;
 						}
 						what = nwhat;
@@ -752,10 +754,13 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 					free(what);
 					if (search) {
 						from = strdup(search);
-						if (from == NULL)
+						if (from == NULL) {
+							free(tmp);
 							return 0;
+						}
 					} else {
 						from = NULL;
+						free(tmp);
 						return (-1);
 					}
 				}
@@ -767,6 +772,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 				with = realloc(to, size);
 				if (with == NULL) {
 					free(to);
+					free(tmp);
 					return -1;
 				}
 				len = 0;
@@ -778,6 +784,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 						nwith = realloc(with, size);
 						if (nwith == NULL) {
 							free(with);
+							free(tmp);
 							return -1;
 						}
 						with = nwith;
