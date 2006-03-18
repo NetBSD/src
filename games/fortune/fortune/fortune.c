@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.44 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: fortune.c,v 1.45 2006/03/18 23:44:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.44 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.45 2006/03/18 23:44:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -508,33 +508,33 @@ add_file(percent, file, dir, head, tail, parent)
 	int		fd;
 	const char	*path;
 	char		*tpath, *offensive;
-	bool		was_malloc;
 	bool		isdir;
 
 	if (dir == NULL) {
 		path = file;
 		tpath = NULL;
-		was_malloc = FALSE;
 	}
 	else {
 		tpath = do_malloc((unsigned int) (strlen(dir) + strlen(file) + 2));
 		(void) strcat(strcat(strcpy(tpath, dir), "/"), file);
 		path = tpath;
-		was_malloc = TRUE;
 	}
 	if ((isdir = is_dir(path)) && parent != NULL) {
-		if (was_malloc)
+		if (tpath) {
 			free(tpath);
+			tpath = NULL;
+		}
 		return FALSE;	/* don't recurse */
 	}
 	offensive = NULL;
 	if (!isdir && parent == NULL && (All_forts || Offend) &&
 	    !is_off_name(path)) {
 		offensive = off_name(path);
-		was_malloc = TRUE;
 		if (Offend) {
-			if (was_malloc)
+			if (tpath) {
 				free(tpath);
+				tpath = NULL;
+			}
 			path = offensive;
 			file = off_name(file);
 		}
@@ -553,10 +553,11 @@ over:
 		 */
 		if (All_forts && offensive != NULL) {
 			path = offensive;
-			if (was_malloc)
+			if (tpath) {
 				free(tpath);
+				tpath = NULL;
+			}
 			offensive = NULL;
-			was_malloc = TRUE;
 			DPRINTF(1, (stderr, "\ttrying \"%s\"\n", path));
 			file = off_name(file);
 			goto over;
@@ -566,8 +567,10 @@ over:
 					parent);
 		if (parent == NULL)
 			warn("Cannot open `%s'", path);
-		if (was_malloc)
+		if (tpath) {
 			free(tpath);
+			tpath = NULL;
+		}
 		return FALSE;
 	}
 
@@ -586,8 +589,10 @@ over:
 	{
 		if (parent == NULL)
 			warnx("`%s' not a fortune file or directory", path);
-		if (was_malloc)
+		if (tpath) {
 			free(tpath);
+			tpath = NULL;
+		}
 		do_free(fp->datfile);
 		do_free(fp->posfile);
 		free(fp);
