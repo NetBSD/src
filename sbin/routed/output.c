@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.22 2002/11/30 04:04:23 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.23 2006/03/18 20:21:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: output.c,v 1.22 2002/11/30 04:04:23 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.23 2006/03/18 20:21:50 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -729,7 +729,7 @@ supply(struct sockaddr_in *dst,
 
 	switch (type) {
 	case OUT_MULTICAST:
-		if (ifp->int_if_flags & IFF_MULTICAST)
+		if (ifp != NULL && ifp->int_if_flags & IFF_MULTICAST)
 			v2buf.type = OUT_MULTICAST;
 		else
 			v2buf.type = NO_OUT_MULTICAST;
