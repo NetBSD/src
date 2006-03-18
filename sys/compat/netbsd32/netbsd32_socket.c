@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.17 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.18 2006/03/18 18:56:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.17 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.18 2006/03/18 18:56:19 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -83,7 +83,7 @@ netbsd32_recvmsg(l, v, retval)
 	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
 		if ((u_int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
-		MALLOC(iov, struct iovec *,
+		iov = (struct iovec *)malloc(
 		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
 		       M_WAITOK);
 	} else if ((u_int)msg.msg_iovlen > 0)
