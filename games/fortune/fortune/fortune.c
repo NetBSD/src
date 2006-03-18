@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.46 2006/03/18 23:51:51 christos Exp $	*/
+/*	$NetBSD: fortune.c,v 1.47 2006/03/18 23:54:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.46 2006/03/18 23:51:51 christos Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.47 2006/03/18 23:54:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -614,7 +614,7 @@ over:
 	 * we are scanning a directory, since the scan will pick up the
 	 * -o file anyway.
 	 */
-	if (All_forts && parent == NULL && !is_off_name(path))
+	if (All_forts && parent == NULL && !is_off_name(path) && offensive)
 		all_forts(fp, offensive);
 	if (*head == NULL)
 		*head = *tail = fp;
