@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.38 2006/03/18 05:17:36 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.39 2006/03/18 05:23:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.38 2006/03/18 05:17:36 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.39 2006/03/18 05:23:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -603,9 +603,12 @@ builtin_success:
 	cmdp->param.bltin = bltin;
 	INTON;
 success:
-	cmdp->rehash = 0;
-	entry->cmdtype = cmdp->cmdtype;
-	entry->u = cmdp->param;
+	if (cmdp) {
+		cmdp->rehash = 0;
+		entry->cmdtype = cmdp->cmdtype;
+		entry->u = cmdp->param;
+	} else
+		entry->cmdtype = CMDUNKNOWN;
 }
 
 
