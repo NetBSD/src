@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.9 2005/10/17 18:00:00 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.10 2006/03/18 04:39:50 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -50,7 +50,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.85 2005/10/17 15:31:10 christos Exp")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.9 2005/10/17 18:00:00 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.10 2006/03/18 04:39:50 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -180,8 +180,6 @@ apprentice_1(struct magic_set *ms, const char *fn, int action,
 		mapped = 0;
 	}
 
-	if (rv == -1)
-		return rv;
 	mapped = rv;
 	     
 	if (magic == NULL || nmagic == 0) {
