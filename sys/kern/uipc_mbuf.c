@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.106 2006/03/15 10:40:30 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.107 2006/03/18 17:37:17 chris Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.106 2006/03/15 10:40:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.107 2006/03/18 17:37:17 chris Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1430,11 +1430,11 @@ nextchain:
 		    m->m_ext.ext_free, m->m_ext.ext_arg);
 	}
 	if ((~m->m_flags & (M_EXT|M_EXT_PAGES)) == 0) {
-		int i;
+		int i, j;
 
 		(*pr)("  pages:");
-		for (i = 0; i < m->m_ext.ext_size; i += PAGE_SIZE) {
-			(*pr)(" %p", m->m_ext.ext_pgs[i]);
+		for (i = 0, j = 0; i < m->m_ext.ext_size; i += PAGE_SIZE, j++) {
+			(*pr)(" %p", m->m_ext.ext_pgs[j]);
 		}
 		(*pr)("\n");
 	}
