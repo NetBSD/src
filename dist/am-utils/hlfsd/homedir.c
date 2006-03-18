@@ -1,4 +1,4 @@
-/*	$NetBSD: homedir.c,v 1.6 2006/02/05 16:28:56 christos Exp $	*/
+/*	$NetBSD: homedir.c,v 1.7 2006/03/18 18:05:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -267,8 +267,7 @@ delay(uid2home_t *found, int secs)
 {
   struct timeval tv;
 
-  if (found)
-    dlog("delaying on child %ld for %d seconds", (long) found->child, secs);
+  dlog("delaying on child %ld for %d seconds", (long) found->child, secs);
 
   tv.tv_usec = 0;
 
