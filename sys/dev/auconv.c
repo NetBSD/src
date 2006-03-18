@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.15 2006/02/26 23:52:08 pooka Exp $	*/
+/*	$NetBSD: auconv.c,v 1.16 2006/03/18 13:12:15 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.15 2006/02/26 23:52:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.16 2006/03/18 13:12:15 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -462,6 +462,52 @@ DEFINE_FILTER(linear16_to_linear8)
 			d[0] = s[0] ^ 0x80;
 		} FILTER_LOOP_EPILOGUE(this->src, dst);
 	}
+	return 0;
+}
+
+DEFINE_FILTER(linear16_to_linear32)
+{
+	stream_filter_t *this;
+	int m, err, enc_dst, enc_src;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used + 1) & ~1;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 2)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used);
+	enc_dst = dst->param.encoding;
+	enc_src = this->src->param.encoding;
+	if (enc_src == AUDIO_ENCODING_SLINEAR_LE &&
+	    enc_dst == AUDIO_ENCODING_SLINEAR_LE) {
+		FILTER_LOOP_PROLOGUE(this->src, 2, dst, 4, m) {
+			d[0] = s[0];
+			d[1] = 0;
+			d[2] = s[1];
+			d[3] = 0;
+		} FILTER_LOOP_EPILOGUE(this->src, dst);
+	}
+
+	return 0;
+}
+
+DEFINE_FILTER(interleave32_2ch_to_8ch)
+{
+	stream_filter_t *this;
+	int m, err;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used + 1) & ~1;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used / 2)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used);
+
+	FILTER_LOOP_PROLOGUE(this->src, 4, dst, 16, m) {
+		memcpy(d, s, 4);
+		memset(d, 0, 12);
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
+
 	return 0;
 }
 
@@ -929,6 +975,10 @@ auconv_create_encodings(const struct audio_format *formats, int nformats,
 
 	capacity = 10;
 	buf = AUCONV_MALLOC(ENCODING_SET_SIZE(capacity));
+	if (buf == NULL) {
+		err = ENOMEM;
+		goto err_exit;
+	}
 	buf->size = 0;
 	for (i = 0; i < nformats; i++) {
 		if (!AUFMT_IS_VALID(&formats[i]))
@@ -1064,6 +1114,7 @@ static int
 auconv_add_encoding(int enc, int prec, int flags,
 		    struct audio_encoding_set **buf, int *capacity)
 {
+#ifndef AUCONV_DEBUG 
 	static const char *encoding_names[] = {
 		NULL, AudioEmulaw, AudioEalaw, NULL,
 		NULL, AudioEadpcm, AudioEslinear_le, AudioEslinear_be,
@@ -1073,6 +1124,7 @@ auconv_add_encoding(int enc, int prec, int flags,
 		AudioEmpeg_l1_system, AudioEmpeg_l2_stream,
 		AudioEmpeg_l2_packets, AudioEmpeg_l2_system
 	};
+#endif
 	struct audio_encoding_set *set;
 	struct audio_encoding_set *new_buf;
 	audio_encoding_t *e;
