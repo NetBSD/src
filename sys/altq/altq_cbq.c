@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.12.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.12.12.2 2006/03/18 18:18:10 peter Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.12.12.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.12.12.2 2006/03/18 18:18:10 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -269,7 +269,7 @@ cbq_add_altq(struct pf_altq *a)
 	MALLOC(cbqp, cbq_state_t *, sizeof(cbq_state_t), M_DEVBUF, M_WAITOK);
 	if (cbqp == NULL)
 		return (ENOMEM);
-	(void)memset(cbqp, 9, sizeof(cbq_state_t));
+	(void)memset(cbqp, 0, sizeof(cbq_state_t));
 	CALLOUT_INIT(&cbqp->cbq_callout);
 	cbqp->cbq_qlen = 0;
 	cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */
