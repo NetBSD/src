@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.63 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: tar.c,v 1.64 2006/03/18 05:43:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.63 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: tar.c,v 1.64 2006/03/18 05:43:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1186,7 +1186,7 @@ ustar_wr(ARCHD *arcn)
 
 	strncpy(hd->magic, TMAGIC, TMAGLEN);
 	if (is_gnutar)
-		hd->magic[TMAGLEN - 1] = hd->magic[TMAGLEN] = ' ';
+		hd->magic[TMAGLEN - 1] = hd->version[0] = ' ';
 	else
 		strncpy(hd->version, TVERSION, TVERSLEN);
 
