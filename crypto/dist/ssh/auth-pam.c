@@ -50,7 +50,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.5 2006/02/04 22:32:13 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.6 2006/03/18 10:22:46 jnemeth Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_PAM_GETENVLIST
 #define HAVE_PAM_PUTENV
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: auth-pam.c,v 1.5 2006/02/04 22:32:13 christos Exp $");
 #define PAM_MSG_MEMBER(msg, n, member) ((*(msg))[(n)].member)
 void sshpam_password_change_required(int);
 /* end NetBSD local changes */
-RCSID("$Id: auth-pam.c,v 1.5 2006/02/04 22:32:13 christos Exp $");
+RCSID("$Id: auth-pam.c,v 1.6 2006/03/18 10:22:46 jnemeth Exp $");
 
 #ifdef USE_PAM
 #if defined(HAVE_SECURITY_PAM_APPL_H)
@@ -735,6 +735,7 @@ sshpam_query(void *ctx, char **name, char **info,
 				*num = 0;
 				**echo_on = 0;
 				ctxt->pam_done = -1;
+				xfree(msg);
 				return 0;
 			}
 			/* FALLTHROUGH */
