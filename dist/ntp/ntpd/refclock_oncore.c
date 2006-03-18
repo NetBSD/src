@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.5 2004/10/30 15:01:32 dsl Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.6 2006/03/18 13:44:15 kardel Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -903,6 +903,8 @@ oncore_init_shmem(
 
 	if ((instance->shmemfd = open(instance->shmem_fname, O_RDWR|O_CREAT|O_TRUNC, 0644)) < 0) {
 		perror(instance->shmem_fname);
+		if (shmem_old)
+			free(shmem_old);
 		return;
 	}
 
@@ -937,6 +939,8 @@ oncore_init_shmem(
 	if (buf == NULL) {
 		perror("malloc");
 		close(instance->shmemfd);
+		if (shmem_old)
+			free(shmem_old);
 		return;
 	}
 
