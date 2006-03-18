@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.4 2006/03/18 03:35:41 christos Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -75,7 +75,7 @@
 #if 0
 #define RCSID	"Id: auth.c,v 1.101 2004/11/12 10:30:51 paulus Exp"
 #else
-__RCSID("$NetBSD: auth.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.4 2006/03/18 03:35:41 christos Exp $");
 #endif
 #endif
 
@@ -427,29 +427,30 @@ setupapfile(argv)
     FILE *ufile;
     int l;
     char u[MAXNAMELEN], p[MAXSECRETLEN];
-    char *fname;
 
     lcp_allowoptions[0].neg_upap = 1;
 
-    /* open user info file */
-    fname = strdup(*argv);
-    if (fname == NULL)
+    if (*argv == NULL)
 	novm("+ua file name");
+
+    if (uafname != NULL)
+	free(uafname);
+    /* open user info file */
+    uafname = strdup(*argv);
     seteuid(getuid());
-    ufile = fopen(fname, "r");
+    ufile = fopen(uafname, "r");
     seteuid(0);
     if (ufile == NULL) {
-	option_error("unable to open user login data file %s", fname);
+	option_error("unable to open user login data file %s", uafname);
 	return 0;
     }
-    check_access(ufile, fname);
-    uafname = fname;
+    check_access(ufile, uafname);
 
     /* get username */
     if (fgets(u, MAXNAMELEN - 1, ufile) == NULL
 	|| fgets(p, MAXSECRETLEN - 1, ufile) == NULL) {
 	fclose(ufile);
-	option_error("unable to read user login data file %s", fname);
+	option_error("unable to read user login data file %s", uafname);
 	return 0;
     }
     fclose(ufile);
@@ -462,9 +463,9 @@ setupapfile(argv)
     if (l > 0 && p[l-1] == '\n')
 	p[l-1] = 0;
 
-    if (override_value("user", option_priority, fname))
+    if (override_value("user", option_priority, uafname))
 	strlcpy(user, u, sizeof(user));
-    if (override_value("passwd", option_priority, fname))
+    if (override_value("passwd", option_priority, uafname))
 	strlcpy(passwd, p, sizeof(passwd));
 
     return (1);
