@@ -1,4 +1,4 @@
-/* $NetBSD: dol.c,v 1.22 2006/03/18 07:02:16 christos Exp $ */
+/* $NetBSD: dol.c,v 1.23 2006/03/18 07:09:08 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.22 2006/03/18 07:02:16 christos Exp $");
+__RCSID("$NetBSD: dol.c,v 1.23 2006/03/18 07:09:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -763,8 +763,10 @@ setDolp(Char *cp)
 	addla(dp);
 	xfree((ptr_t) dp);
     }
-    else
+    else {
 	addla(cp);
+	xfree((ptr_t) cp);
+    }
 
     dolp = STRNULL;
     if (seterr)
