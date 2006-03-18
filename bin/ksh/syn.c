@@ -1,4 +1,4 @@
-/*	$NetBSD: syn.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: syn.c,v 1.7 2006/03/18 07:23:07 christos Exp $	*/
 
 /*
  * shell parser (C version)
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: syn.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: syn.c,v 1.7 2006/03/18 07:23:07 christos Exp $");
 #endif
 
 
@@ -896,7 +896,8 @@ dbtestp_isa(te, meta)
 		ret = uqword && strcmp(yylval.cp, db_close) == 0;
 	if (ret) {
 		ACCEPT;
-		if (meta != TM_END) {
+		if (meta != TM_END &&
+		    meta < sizeof(dbtest_tokens) / sizeof(dbtest_tokens[0])) {
 			if (!save)
 				save = wdcopy(dbtest_tokens[(int) meta], ATEMP);
 			XPput(*te->pos.av, save);
