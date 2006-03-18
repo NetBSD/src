@@ -1,5 +1,5 @@
-/*	$NetBSD: qdisc_rio.c,v 1.3 2001/08/16 07:48:12 itojun Exp $	*/
-/*	$KAME: qdisc_rio.c,v 1.4 2001/08/15 12:51:59 kjc Exp $	*/
+/*	$NetBSD: qdisc_rio.c,v 1.3.14.1 2006/03/18 12:16:52 peter Exp $	*/
+/*	$KAME: qdisc_rio.c,v 1.7 2004/01/22 09:31:24 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -40,7 +40,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <math.h>
+#include <signal.h>
 #include <errno.h>
 #include <err.h>
 
@@ -56,6 +56,7 @@ rio_stat_loop(int fd, const char *ifname, int count, int interval)
 	u_int64_t last_bytes[3];
 	double sec;
 	int cnt = count;
+	sigset_t		omask;
 	
 	bzero(&rio_stats, sizeof(rio_stats));
 	strlcpy(rio_stats.iface.rio_ifname, ifname,
@@ -77,7 +78,7 @@ rio_stat_loop(int fd, const char *ifname, int count, int interval)
 
 		printf("\t\t\tLOW DP\t\tMEDIUM DP\t\tHIGH DP\n");
 
-		printf("thresh (prob):\t\t[%d,%d](1/%d)\t[%d,%d](1/%d)\t\t[%d,%d](%d)\n",
+		printf("thresh (prob):\t\t[%d,%d](1/%d)\t[%d,%d](1/%d)\t\t[%d,%d](1/%d)\n",
 		       rio_stats.q_params[0].th_min,
 		       rio_stats.q_params[0].th_max,
 		       rio_stats.q_params[0].inv_pmax,
@@ -127,7 +128,10 @@ rio_stat_loop(int fd, const char *ifname, int count, int interval)
 		last_bytes[1] = rio_stats.q_stats[1].xmit_cnt.bytes;
 		last_bytes[2] = rio_stats.q_stats[2].xmit_cnt.bytes;
 		last_time = cur_time;
-		sleep(interval);
+
+		/* wait for alarm signal */
+		if (sigprocmask(SIG_BLOCK, NULL, &omask) == 0)
+			sigsuspend(&omask);
 	}
 }
 
