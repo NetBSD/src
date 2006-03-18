@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.48 2005/02/04 15:52:08 perry Exp $	*/
+/*	$NetBSD: termcap.c,v 1.49 2006/03/18 12:18:15 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.48 2005/02/04 15:52:08 perry Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.49 2006/03/18 12:18:15 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ t_setinfo(struct tinfo **bp, const char *entry)
 {
 	char capability[256], *cap_ptr;
 	size_t limit;
-	
+
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(entry != NULL);
 
@@ -104,7 +104,7 @@ t_setinfo(struct tinfo **bp, const char *entry)
 	if ((*bp)->bc)
 		(*bp)->bc = strdup((*bp)->bc);
 	(*bp)->tbuf = NULL;
-	
+
 	return 0;
 }
 
@@ -128,14 +128,14 @@ t_getent(struct tinfo **bp, const char *name)
 	char  *termpath;
 	char  capability[256], *cap_ptr;
 	int error;
-	
+
 
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(name != NULL);
 
 	if ((*bp = malloc(sizeof(struct tinfo))) == NULL)
 		return 0;
-	
+
 	fname = pathvec;
 	p = pathbuf;
 	cp = getenv("TERMCAP");
@@ -209,14 +209,14 @@ t_getent(struct tinfo **bp, const char *name)
 			goto out;
 		}
 	}
-	
+
 	/*
 	 * XXX potential security hole here in a set-id program if the
 	 * user had setup name to be built from a path they can not
 	 * normally read.
 	 */
  	(*bp)->info = NULL;
- 	i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);      
+ 	i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);
 
 	/*
 	 * if we get an error and we skipped doing the cgetset before
@@ -229,7 +229,7 @@ t_getent(struct tinfo **bp, const char *name)
 				error = -2;
 				goto out;
 			}
-		i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);      
+		i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);
 	}
 
 	/* no tc reference loop return code in libterm XXX */
@@ -259,7 +259,7 @@ t_getent(struct tinfo **bp, const char *name)
 		error = i + 1;
 		goto out;
 	}
-		
+
 	return (i + 1);
 out:
 	free(*bp);
@@ -275,9 +275,9 @@ tgetent(char *bp, const char *name)
 {
 	int i, plen, elen, c;
         char *ptrbuf = NULL;
-	
+
 	i = t_getent(&fbuf, name);
-	
+
 	if (i == 1) {
 		/*
 		 * stash the full buffer pointer as the ZZ capability
@@ -301,7 +301,7 @@ tgetent(char *bp, const char *name)
 				}
 			}
 		}
-		
+
 		strcat(bp, ptrbuf);
                 tbuf = bp;
 	}
@@ -383,7 +383,7 @@ t_getstr(struct tinfo *info, const char *id, char **area, size_t *limit)
 			*limit = 0;
 		return NULL;
 	}
-	
+
 	if (area != NULL) {
 		/*
 		 * check if there is room for the new entry to be put into
@@ -394,13 +394,13 @@ t_getstr(struct tinfo *info, const char *id, char **area, size_t *limit)
 			free(s);
 			return NULL;
 		}
-  	
+
 		(void)strcpy(*area, s);
 		free(s);
 		s = *area;
 		*area += i + 1;
 		if (limit != NULL) *limit -= i;
-  	
+
 		return (s);
 	} else {
 		_DIAGASSERT(limit != NULL);
@@ -409,7 +409,7 @@ t_getstr(struct tinfo *info, const char *id, char **area, size_t *limit)
 		return NULL;
 	}
 }
- 
+
 /*
  * Get a string valued option.
  * These are given as
@@ -428,7 +428,7 @@ tgetstr(const char *id, char **area)
 
 	if (fbuf == NULL)
 		return NULL;
-		
+
 	/*
 	 * XXX
 	 * This is for all the boneheaded programs that relied on tgetstr
@@ -460,7 +460,7 @@ t_agetstr(struct tinfo *info, const char *id)
 {
 	size_t new_size;
 	struct tbuf *tb;
-	
+
 	_DIAGASSERT(info != NULL);
 	_DIAGASSERT(id != NULL);
 
@@ -480,8 +480,11 @@ t_agetstr(struct tinfo *info, const char *id)
 		if ((tb = malloc(sizeof(*info->tbuf))) == NULL)
 			return NULL;
 
-		if ((tb->data = tb->ptr = tb->eptr = malloc(new_size)) == NULL)
+		if ((tb->data = tb->ptr = tb->eptr = malloc(new_size))
+		    == NULL) {
+			free(tb);
 			return NULL;
+		}
 
 		tb->eptr += new_size;
 
@@ -494,7 +497,7 @@ t_agetstr(struct tinfo *info, const char *id)
 	}
 	return t_getstr(info, id, &tb->ptr, NULL);
 }
- 
+
 /*
  * Free the buffer allocated by t_getent
  *
@@ -533,7 +536,7 @@ t_getterm(struct tinfo *info, char **area, size_t *limit)
 		errno = EINVAL;
 		return -1;
 	}
-	
+
 
 	count = endp - info->info + 1;
 	if (area == NULL) {
