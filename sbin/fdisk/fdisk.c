@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.98 2006/03/17 15:53:46 rumble Exp $ */
+/*	$NetBSD: fdisk.c,v 1.99 2006/03/18 08:36:50 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.98 2006/03/17 15:53:46 rumble Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.99 2006/03/18 08:36:50 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -794,7 +794,8 @@ read_boot(const char *name, void *buf, size_t len, int err_exit)
 	return ret;
 
     fail:
-	close(bfd);
+	if (bfd >= 0)
+		close(bfd);
 	if (err_exit)
 		exit(1);
 	return 0;
