@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.5 2005/11/26 01:10:42 christos Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.6 2006/03/18 08:57:25 kardel Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -3434,16 +3434,19 @@ crypto_key(
 	if ((ptr = fgets(linkname, MAXFILENAME, str)) == NULL) {
 		msyslog(LOG_ERR, "crypto_key: no data %s\n",
 		    filename);
+		(void)fclose(str);
 		return (NULL);
 	}
 	if ((ptr = strrchr(ptr, '.')) == NULL) {
 		msyslog(LOG_ERR, "crypto_key: no filestamp %s\n",
 		    filename);
+		(void)fclose(str);
 		return (NULL);
 	}
 	if (sscanf(++ptr, "%u", fstamp) != 1) {
 		msyslog(LOG_ERR, "crypto_key: invalid timestamp %s\n",
 		    filename);
+		(void)fclose(str);
 		return (NULL);
 	}
 
