@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arc.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_arc.c,v 1.3 2006/03/18 14:18:59 kardel Exp $	*/
 
 /*
  * refclock_arc - clock driver for ARCRON MSF/DCF/WWVB receivers
@@ -806,7 +806,7 @@ send_slow(
 	}
 
 	/* Copy in the command to be sent. */
-	while(*s) { up->cmdqueue[CMDQUEUELEN - spaceleft--] = *s++; }
+	while(*s && spaceleft > 0) { up->cmdqueue[CMDQUEUELEN - spaceleft--] = *s++; }
 
 	return(1);
 }
