@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.18 2005/02/26 22:12:34 dsl Exp $	*/
+/*	$NetBSD: swap.c,v 1.19 2006/03/18 11:02:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.18 2005/02/26 22:12:34 dsl Exp $");
+__RCSID("$NetBSD: swap.c,v 1.19 2006/03/18 11:02:48 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -143,9 +143,6 @@ showswap(void)
 	blk_div = blocksize / 512;
 	swp_free = avail = 0;
 	for (sep = swap_devices, i = 0; i < nswap; i++, sep++) {
-		if (sep == NULL)
-			continue;
-
 		p = strrchr(sep->se_path, '/');
 		p = p ? p+1 : sep->se_path;
 
