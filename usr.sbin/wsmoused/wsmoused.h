@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.h,v 1.8 2004/01/20 22:11:02 matt Exp $ */
+/* $NetBSD: wsmoused.h,v 1.9 2006/03/18 02:06:38 elad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct block {
 	int b_type;
 	int b_prop_count;
 	int b_child_count;
-	struct prop *b_prop[MAX_BLOCKS];
+	struct prop *b_prop[MAX_PROPS];
 	struct block *b_child[MAX_BLOCKS];
 	struct block *b_parent;
 };
