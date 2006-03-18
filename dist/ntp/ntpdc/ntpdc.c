@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.5 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.6 2006/03/18 15:22:34 kardel Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -543,8 +543,7 @@ openhost(
 		    ai->ai_addrlen) == -1)
 #endif /* SYS_VXWORKS */
 	    error("connect", "", "");
-	if (a_info)
-		freeaddrinfo(ai);
+	freeaddrinfo(ai);
 	havehost = 1;
 	req_pkt_size = REQ_LEN_NOMAC;
 	impl_ver = IMPL_XNTPD;
