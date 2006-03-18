@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.16 2006/02/18 10:08:07 dsl Exp $	*/
+/*	$NetBSD: alpha.c,v 1.17 2006/03/18 11:08:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.16 2006/02/18 10:08:07 dsl Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.17 2006/03/18 11:08:19 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -246,10 +246,10 @@ alpha_setboot(ib_params *params)
 	rv = pread(params->s1fd, bootstrapbuf, params->s1stat.st_size, 0);
 	if (rv == -1) {
 		warn("Reading `%s'", params->stage1);
-		return (0);
+		goto done;
 	} else if (rv != params->s1stat.st_size) {
 		warnx("Reading `%s': short read", params->stage1);
-		return (0);
+		goto done;
 	}
 
 	rv = pread(params->fsfd, &bb, sizeof(bb), ALPHA_BOOT_BLOCK_OFFSET);
