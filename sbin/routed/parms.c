@@ -1,4 +1,4 @@
-/*	$NetBSD: parms.c,v 1.21 2006/03/18 20:20:31 christos Exp $	*/
+/*	$NetBSD: parms.c,v 1.22 2006/03/18 20:23:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: parms.c,v 1.21 2006/03/18 20:20:31 christos Exp $");
+__RCSID("$NetBSD: parms.c,v 1.22 2006/03/18 20:23:51 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -609,8 +609,10 @@ parse_parms(char *line,
 			intnetp->intnet_metric = (int)strtol(val+1,&p,0);
 			if (*p != '\0'
 			    || intnetp->intnet_metric <= 0
-			    || intnetp->intnet_metric >= HOPCNT_INFINITY)
+			    || intnetp->intnet_metric >= HOPCNT_INFINITY) {
+				free(intnetp);
 				return bad_str(line);
+			}
 		}
 		if (!getnet(buf, &intnetp->intnet_addr, &intnetp->intnet_mask)
 		    || intnetp->intnet_mask == HOST_MASK
