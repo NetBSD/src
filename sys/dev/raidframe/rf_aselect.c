@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.22 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.23 2006/03/18 17:34:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.22 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.23 2006/03/18 17:34:31 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -427,11 +427,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				/* Create a dag for this parity stripe */
 				InitHdrNode(&tempdag_h, raidPtr, desc);
 				dagList->numDags++;
-				if (dag_h == NULL) {
-					dag_h = tempdag_h;
-				} else {
-					lastdag_h->next = tempdag_h;
-				}
+				dag_h = tempdag_h;
 				lastdag_h = tempdag_h;
 
 				(stripeFuncs->fp) (raidPtr, asm_p, tempdag_h, bp, flags, tempdag_h->allocList);
