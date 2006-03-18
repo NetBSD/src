@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.17 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.18 2006/03/18 01:43:52 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.17 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.18 2006/03/18 01:43:52 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ parties(struct ship *to, int *crew, int isdefense, int buf)
 		ptr = isdefense ? to->file->DBP : to->file->OBP; 
 		for (j = 0; j < NBP && ptr[j].turnsent; j++)
 			;
-		if (!ptr[j].turnsent && buf > '0') {
+		if (j < NBP && !ptr[j].turnsent && buf > '0') {
 			men = 0;
 			for (k = 0; k < 3 && buf > '0'; k++) {
 				men += crew[k]
