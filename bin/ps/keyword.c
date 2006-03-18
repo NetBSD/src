@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.45 2005/11/05 19:27:24 chs Exp $	*/
+/*	$NetBSD: keyword.c,v 1.46 2006/03/18 05:33:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.45 2005/11/05 19:27:24 chs Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.46 2006/03/18 05:33:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,11 +227,11 @@ showkey(void)
 static void
 parsevarlist(const char *pp, struct varent **head, struct varent **tail)
 {
-	char *p;
+	char *p, *sp;
 
 	/* dup to avoid zapping arguments, can't free because it
 	   might contain a header. */
-	p = strdup(pp);
+	sp = p = strdup(pp);
 
 #define	FMTSEP	" \t,\n"
 	while (p && *p) {
@@ -253,6 +253,7 @@ parsevarlist(const char *pp, struct varent **head, struct varent **tail)
 			(*tail)->next = vent;
 		*tail = vent;
 	}
+	free(sp);
 	if (!*head)
 		errx(1, "no valid keywords");
 }
