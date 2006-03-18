@@ -1,4 +1,4 @@
-/*	$NetBSD: facpri.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: facpri.c,v 1.2 2006/03/18 04:12:52 elad Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -81,7 +81,7 @@ fac_toname(facpri)
 
 	fac = facpri & LOG_FACMASK;
 	j = fac >> 3;
-	if (j < 24) {
+	if (j < (sizeof(facs)/sizeof(facs[0]))) {
 		if (facs[j].value == fac)
 			return facs[j].name;
 		for (i = 0; facs[i].name; i++)
