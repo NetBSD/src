@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_analyze.c,v 1.8 2006/02/05 16:28:56 christos Exp $	*/
+/*	$NetBSD: fsi_analyze.c,v 1.9 2006/03/18 20:43:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -518,7 +518,8 @@ analyze_mounts(host *hp)
 	    ITER(dd, dict_data, &de->de_q) {
 	      fsi_mount *mp = (fsi_mount *) dd->dd_data;
 
-	      if (STREQ(mp->m_dk->d_host->h_hostname, fp->f_from)) {
+	      if (fp->f_from &&
+		  STREQ(mp->m_dk->d_host->h_hostname, fp->f_from)) {
 		mp2 = mp;
 		break;
 	      }
