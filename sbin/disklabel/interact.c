@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.28 2006/03/17 14:50:44 rumble Exp $	*/
+/*	$NetBSD: interact.c,v 1.29 2006/03/18 12:48:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.28 2006/03/17 14:50:44 rumble Exp $");
+__RCSID("$NetBSD: interact.c,v 1.29 2006/03/18 12:48:35 dsl Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -640,7 +640,8 @@ alphacmp(const void *a, const void *b)
 static void
 dumpnames(const char *prompt, const char * const *olist, size_t numentries)
 {
-	int	i, j, w;
+	int	i, w;
+	int	entry;
 	int	columns, width, lines;
 	const char *p;
 	const char **list;
@@ -670,24 +671,23 @@ dumpnames(const char *prompt, const char * const *olist, size_t numentries)
 	if (columns == 0)
 		columns = 1;
 	lines = (numentries + columns - 1) / columns;
+	/* Output sorted by columns */
 	for (i = 0; i < lines; i++) {
-		for (j = 0; j < columns; j++) {
-			p = list[j * lines + i];
-			if (j == 0)
-				putc('\t', stdout);
-			if (p) {
-				fputs(p, stdout);
-			}
-			if (j * lines + i + lines >= numentries) {
-				putc('\n', stdout);
+		putc('\t', stdout);
+		entry = i;
+		for (;;) {
+			p = list[entry];
+			fputs(p, stdout);
+			entry += lines;
+			if (entry >= numentries)
 				break;
-			}
 			w = strlen(p);
 			while (w < width) {
-				w = (w + 8) &~ 7;
+				w = (w + 8) & ~7;
 				putc('\t', stdout);
 			}
 		}
+		putc('\n', stdout);
 	}
 	free(list);
 }
