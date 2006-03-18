@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.6 2006/03/10 13:01:19 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.7 2006/03/18 11:19:22 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.6 2006/03/10 13:01:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.7 2006/03/18 11:19:22 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -335,7 +335,7 @@ calccookie(objid_t obj, off_t idx)
 	return cookie;
 }
 
-#define	BUCKETSIZE	16
+#define	BUCKETSIZE	14
 struct bucket {
 	int cycle;
 	int cur;
