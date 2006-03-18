@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.62 2006/02/05 09:54:50 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.63 2006/03/18 14:58:49 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.62 2006/02/05 09:54:50 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.63 2006/03/18 14:58:49 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.62 2006/02/05 09:54:50 dsl Exp $");
 #include "dkstats.h"
 #include "tpstats.h"
 #include "utmpentry.h"
+#include "vmstat.h"
 
 static struct Info {
 	struct	uvmexp_sysctl uvmexp;
@@ -68,27 +69,19 @@ static struct Info {
 	u_int64_t	*evcnt;
 } s, s1, s2, z;
 
-#define	cnt s.Cnt
-#define oldcnt s1.Cnt
-#define	total s.Total
-#define	nchtotal s.nchstats
-#define	oldnchtotal s1.nchstats
-
-static	enum state { BOOT, TIME, RUN } state = TIME;
+enum display_mode display_mode = TIME;
 
 static void allocinfo(struct Info *);
 static void copyinfo(struct Info *, struct Info *);
 static float cputime(int);
 static void dinfo(int, int, int);
 static void tinfo(int, int, int);
-static void getinfo(struct Info *, enum state);
-static void putint(int, int, int, int);
-static void putfloat(double, int, int, int, int, int);
+static void getinfo(struct Info *);
 static int ucount(void);
 
 static	char buf[26];
 static	u_int64_t temp;
-static	double etime;
+double etime;
 static	float hertz;
 static	int nintr;
 static	long *intrloc;
@@ -262,7 +255,7 @@ initvmstat(void)
 	allocinfo(&s2);
 	allocinfo(&z);
 
-	getinfo(&s2, RUN);
+	getinfo(&s2);
 	copyinfo(&s2, &s1);
 	return(1);
 }
@@ -275,7 +268,7 @@ fetchvmstat(void)
 	time(&now);
 	strlcpy(buf, ctime(&now), sizeof(buf));
 	buf[19] = '\0';
-	getinfo(&s, state);
+	getinfo(&s);
 }
 
 static void
@@ -326,23 +319,76 @@ print_ie_title(int i)
 }
 
 void
+labelvmstat_top(void)
+{
+
+	clear();
+
+	mvprintw(STATROW, STATCOL + 4, "users    Load");
+
+	mvprintw(GENSTATROW, GENSTATCOL, "   Csw    Trp    Sys   Int   Sof    Flt");
+
+	mvprintw(GRAPHROW, GRAPHCOL,
+		"    . %% Sy    . %% Us    . %% Ni    . %% In    . %% Id");
+	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
+	mvprintw(GRAPHROW + 1, GRAPHCOL,
+		"|    |    |    |    |    |    |    |    |    |    |");
+
+	mvprintw(PAGEROW, PAGECOL + 8, "PAGING   SWAPPING ");
+	mvprintw(PAGEROW + 1, PAGECOL, "        in  out   in  out ");
+	mvprintw(PAGEROW + 2, PAGECOL + 2, "ops");
+	mvprintw(PAGEROW + 3, PAGECOL, "pages");
+}
+
+void
 labelvmstat(void)
 {
 	int i;
 
-	clear();
-	mvprintw(STATROW, STATCOL + 4, "users    Load");
+	/* Top few lines first */
+
+	labelvmstat_top();
+
+	/* Left hand column */
+
 	mvprintw(MEMROW, MEMCOL,     "           memory totals (in kB)");
 	mvprintw(MEMROW + 1, MEMCOL, "          real  virtual     free");
 	mvprintw(MEMROW + 2, MEMCOL, "Active");
 	mvprintw(MEMROW + 3, MEMCOL, "All");
 
-	mvprintw(PAGEROW, PAGECOL, "        PAGING   SWAPPING ");
-	mvprintw(PAGEROW + 1, PAGECOL, "        in  out   in  out ");
-	mvprintw(PAGEROW + 2, PAGECOL, "ops");
-	mvprintw(PAGEROW + 3, PAGECOL, "pages");
+	mvprintw(NAMEIROW, NAMEICOL, "Namei         Sys-cache     Proc-cache");
+	mvprintw(NAMEIROW + 1, NAMEICOL,
+		"    Calls     hits    %%     hits     %%");
+
+	mvprintw(DISKROW, DISKCOL, "Disks:");
+	if (disk_horiz) {
+		mvprintw(DISKROW + 1, DISKCOL + 1, "seeks");
+		mvprintw(DISKROW + 2, DISKCOL + 1, "xfers");
+		mvprintw(DISKROW + 3, DISKCOL + 1, "bytes");
+		mvprintw(DISKROW + 4, DISKCOL + 1, "%%busy");
+	} else {
+		mvprintw(DISKROW, DISKCOL + 1 + 1 * DISKCOLWIDTH, "seeks");
+		mvprintw(DISKROW, DISKCOL + 1 + 2 * DISKCOLWIDTH, "xfers");
+		mvprintw(DISKROW, DISKCOL + 1 + 3 * DISKCOLWIDTH, "bytes");
+		mvprintw(DISKROW, DISKCOL + 1 + 4 * DISKCOLWIDTH, "%%busy");
+	}
+
+	/* Middle column */
 
 	mvprintw(INTSROW, INTSCOL + 9, "Interrupts");
+	for (i = 0; i < nintr; i++) {
+		if (intrloc[i] == 0)
+			continue;
+		mvprintw(intrloc[i], INTSCOL + 9, "%-.*s",
+			INTSCOLEND - (INTSCOL + 9), intrname[i]);
+	}
+	for (i = 0; i < nevcnt; i++) {
+		if (ie_head[i].ie_loc == 0)
+			continue;
+		print_ie_title(i);
+	}
+
+	/* Right hand column */
 
 	mvprintw(VMSTATROW + 0, VMSTATCOL + 10, "forks");
 	mvprintw(VMSTATROW + 1, VMSTATCOL + 10, "fkppw");
@@ -360,60 +406,82 @@ labelvmstat(void)
 	mvprintw(VMSTATROW + 13, VMSTATCOL + 10, "itarg");
 	mvprintw(VMSTATROW + 14, VMSTATCOL + 10, "wired");
 	mvprintw(VMSTATROW + 15, VMSTATCOL + 10, "pdfre");
+
 	if (LINES - 1 > VMSTATROW + 16)
 		mvprintw(VMSTATROW + 16, VMSTATCOL + 10, "pdscn");
-
-	mvprintw(GENSTATROW, GENSTATCOL, "  Csw   Trp   Sys  Int  Sof   Flt");
-
-	mvprintw(GRAPHROW, GRAPHCOL,
-		"    . %% Sy    . %% Us    . %% Ni    . %% In    . %% Id");
-	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
-	mvprintw(GRAPHROW + 1, GRAPHCOL,
-		"|    |    |    |    |    |    |    |    |    |    |");
-
-	mvprintw(NAMEIROW, NAMEICOL, "Namei         Sys-cache     Proc-cache");
-	mvprintw(NAMEIROW + 1, NAMEICOL,
-		"    Calls     hits    %%     hits     %%");
-	mvprintw(DISKROW, DISKCOL, "Disks:");
-	if (disk_horiz) {
-		mvprintw(DISKROW + 1, DISKCOL + 1, "seeks");
-		mvprintw(DISKROW + 2, DISKCOL + 1, "xfers");
-		mvprintw(DISKROW + 3, DISKCOL + 1, "bytes");
-		mvprintw(DISKROW + 4, DISKCOL + 1, "%%busy");
-	} else {
-		mvprintw(DISKROW, DISKCOL + 1 + 1 * DISKCOLWIDTH, "seeks");
-		mvprintw(DISKROW, DISKCOL + 1 + 2 * DISKCOLWIDTH, "xfers");
-		mvprintw(DISKROW, DISKCOL + 1 + 3 * DISKCOLWIDTH, "bytes");
-		mvprintw(DISKROW, DISKCOL + 1 + 4 * DISKCOLWIDTH, "%%busy");
-	}
-	for (i = 0; i < nintr; i++) {
-		if (intrloc[i] == 0)
-			continue;
-		mvprintw(intrloc[i], INTSCOL + 9, "%-.*s",
-			INTSCOLEND - (INTSCOL + 9), intrname[i]);
-	}
-	for (i = 0; i < nevcnt; i++) {
-		if (ie_head[i].ie_loc == 0)
-			continue;
-		print_ie_title(i);
-	}
 }
 
-#define X(fld)	{temp=s.fld[i]; s.fld[i]-=s1.fld[i]; if(state==TIME) s1.fld[i]=temp;}
-#define Y(fld)	{temp = s.fld; s.fld -= s1.fld; if(state == TIME) s1.fld = temp;}
-#define Z(fld)	{temp = s.nchstats.fld; s.nchstats.fld -= s1.nchstats.fld; \
-	if(state == TIME) s1.nchstats.fld = temp;}
-#define PUTRATE(fld, l, c, w) {Y(fld); putint((int)((float)s.fld/etime + 0.5), l, c, w);}
+#define X(s, s1, fld)	{temp = (s).fld[i]; (s).fld[i] -= (s1).fld[i]; \
+			if (display_mode == TIME) (s1).fld[i] = temp;}
+#define Z(s, s1, fld)	{temp = (s).nchstats.fld; \
+			(s).nchstats.fld -= (s1).nchstats.fld; \
+			if (display_mode == TIME) (s1).nchstats.fld = temp;}
+#define PUTRATE(s, s1, fld, l, c, w) \
+			{temp = (s).fld; (s).fld -= (s1).fld; \
+			if (display_mode == TIME) (s1).fld = temp; \
+			putint((int)((float)(s).fld/etime + 0.5), l, c, w);}
 #define MAXFAIL 5
 
 static	char cpuchar[CPUSTATES] = { '=' , '>', '-', '%', ' ' };
 static	char cpuorder[CPUSTATES] = { CP_SYS, CP_USER, CP_NICE, CP_INTR, CP_IDLE };
 
 void
-showvmstat(void)
+show_vmstat_top(vmtotal_t *Total, uvmexp_sysctl_t *uvm, uvmexp_sysctl_t *uvm1)
 {
 	float f1, f2;
-	int psiz, inttotal;
+	int psiz;
+	int i, l, c;
+	struct {
+		struct uvmexp_sysctl *uvmexp;
+	} us, us1;
+
+	us.uvmexp = uvm;
+	us1.uvmexp = uvm1;
+
+	putint(ucount(), STATROW, STATCOL, 3);
+	putfloat(avenrun[0], STATROW, STATCOL + 17, 6, 2, 0);
+	putfloat(avenrun[1], STATROW, STATCOL + 23, 6, 2, 0);
+	putfloat(avenrun[2], STATROW, STATCOL + 29, 6, 2, 0);
+	mvaddstr(STATROW, STATCOL + 53, buf);
+
+	putint(Total->t_rq - 1, PROCSROW + 1, PROCSCOL + 3, 3);
+	putint(Total->t_dw, PROCSROW + 1, PROCSCOL + 6, 3);
+	putint(Total->t_sl, PROCSROW + 1, PROCSCOL + 9, 3);
+	putint(Total->t_sw, PROCSROW + 1, PROCSCOL + 12, 3);
+
+	PUTRATE(us, us1, uvmexp->swtch, GENSTATROW + 1, GENSTATCOL - 1, 7);
+	PUTRATE(us, us1, uvmexp->traps, GENSTATROW + 1, GENSTATCOL + 6, 7);
+	PUTRATE(us, us1, uvmexp->syscalls, GENSTATROW + 1, GENSTATCOL + 13, 7);
+	PUTRATE(us, us1, uvmexp->intrs, GENSTATROW + 1, GENSTATCOL + 20, 6);
+	PUTRATE(us, us1, uvmexp->softs, GENSTATROW + 1, GENSTATCOL + 26, 6);
+	PUTRATE(us, us1, uvmexp->faults, GENSTATROW + 1, GENSTATCOL + 32, 7);
+
+	/* Last CPU state not calculated yet. */
+	for (f2 = 0.0, psiz = 0, c = 0; c < CPUSTATES; c++) {
+		i = cpuorder[c];
+		f1 = cputime(i);
+		f2 += f1;
+		l = (int) ((f2 + 1.0) / 2.0) - psiz;
+		if (c == 0)
+			putfloat(f1, GRAPHROW, GRAPHCOL + 1, 5, 1, 0);
+		else
+			putfloat(f1, GRAPHROW, GRAPHCOL + 10 * c + 1, 5, 1, 0);
+		mvhline(GRAPHROW + 2, psiz, cpuchar[c], l);
+		psiz += l;
+	}
+
+	PUTRATE(us, us1, uvmexp->pageins, PAGEROW + 2, PAGECOL + 5, 5);
+	PUTRATE(us, us1, uvmexp->pdpageouts, PAGEROW + 2, PAGECOL + 10, 5);
+	PUTRATE(us, us1, uvmexp->swapins, PAGEROW + 2, PAGECOL + 15, 5);
+	PUTRATE(us, us1, uvmexp->swapouts, PAGEROW + 2, PAGECOL + 20, 5);
+	PUTRATE(us, us1, uvmexp->pgswapin, PAGEROW + 3, PAGECOL + 5, 5);
+	PUTRATE(us, us1, uvmexp->pgswapout, PAGEROW + 3, PAGECOL + 10, 5);
+}
+
+void
+showvmstat(void)
+{
+	int inttotal;
 	int i, l, r, c;
 	static int failcnt = 0;
 	static int relabel = 0;
@@ -426,7 +494,7 @@ showvmstat(void)
 	}
 
 	cpuswap();
-	if (state == TIME) {
+	if (display_mode == TIME) {
 		dkswap();
 		tpswap();
 		etime = cur.cp_etime;
@@ -447,71 +515,10 @@ showvmstat(void)
 	} else
 		etime = 1.0;
 
-	failcnt = 0;
-	inttotal = 0;
-	for (i = 0; i < nintr; i++) {
-		if (s.intrcnt[i] == 0)
-			continue;
-		if (intrloc[i] == 0) {
-			if (nextintsrow == LINES)
-				continue;
-			intrloc[i] = nextintsrow++;
-			mvprintw(intrloc[i], INTSCOL + 9, "%-.*s",
-				INTSCOLEND - (INTSCOL + 9), intrname[i]);
-		}
-		X(intrcnt);
-		l = (int)((float)s.intrcnt[i]/etime + 0.5);
-		inttotal += l;
-		putint(l, intrloc[i], INTSCOL, 8);
-	}
-	for (i = 0; i < nevcnt; i++) {
-		if (s.evcnt[i] == 0)
-			continue;
-		if (ie_head[i].ie_loc == 0) {
-			if (nextintsrow == LINES)
-				continue;
-			ie_head[i].ie_loc = nextintsrow++;
-			print_ie_title(i);
-		}
-		X(evcnt);
-		l = (int)((float)s.evcnt[i]/etime + 0.5);
-		inttotal += l;
-		putint(l, ie_head[i].ie_loc, INTSCOL, 8);
-	}
-	putint(inttotal, INTSROW, INTSCOL, 8);
-	Z(ncs_goodhits); Z(ncs_badhits); Z(ncs_miss);
-	Z(ncs_long); Z(ncs_pass2); Z(ncs_2passes);
-	s.nchcount = nchtotal.ncs_goodhits + nchtotal.ncs_badhits +
-	    nchtotal.ncs_miss + nchtotal.ncs_long;
-	if (state == TIME)
-		s1.nchcount = s.nchcount;
+	show_vmstat_top(&s.Total, &s.uvmexp, &s1.uvmexp);
 
-	psiz = 0;
-	f2 = 0.0;
-
-	/*
-	 * Last CPU state not calculated yet.
-	 */
-	for (c = 0; c < CPUSTATES; c++) {
-		i = cpuorder[c];
-		f1 = cputime(i);
-		f2 += f1;
-		l = (int) ((f2 + 1.0) / 2.0) - psiz;
-		if (c == 0)
-			putfloat(f1, GRAPHROW, GRAPHCOL + 1, 5, 1, 0);
-		else
-			putfloat(f1, GRAPHROW, GRAPHCOL + 10 * c + 1, 5, 1, 0);
-		mvhline(GRAPHROW + 2, psiz, cpuchar[c], l);
-		psiz += l;
-	}
-
-	putint(ucount(), STATROW, STATCOL, 3);
-	putfloat(avenrun[0], STATROW, STATCOL + 17, 6, 2, 0);
-	putfloat(avenrun[1], STATROW, STATCOL + 23, 6, 2, 0);
-	putfloat(avenrun[2], STATROW, STATCOL + 29, 6, 2, 0);
-	mvaddstr(STATROW, STATCOL + 53, buf);
+	/* Memory totals */
 #define pgtokb(pg)	((pg) * (s.uvmexp.pagesize / 1024))
-
 	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 6, 8);
 	putint(pgtokb(s.uvmexp.active + s.uvmexp.swpginuse),	/* XXX */
 	    MEMROW + 2, MEMCOL + 15, 8);
@@ -521,42 +528,27 @@ showvmstat(void)
 	putint(pgtokb(s.uvmexp.free), MEMROW + 2, MEMCOL + 24, 8);
 	putint(pgtokb(s.uvmexp.free + s.uvmexp.swpages - s.uvmexp.swpginuse),
 	    MEMROW + 3, MEMCOL + 24, 8);
-	putint(total.t_rq - 1, PROCSROW + 1, PROCSCOL + 3, 3);
-	putint(total.t_dw, PROCSROW + 1, PROCSCOL + 6, 3);
-	putint(total.t_sl, PROCSROW + 1, PROCSCOL + 9, 3);
-	putint(total.t_sw, PROCSROW + 1, PROCSCOL + 12, 3);
-	PUTRATE(uvmexp.forks, VMSTATROW + 0, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.forks_ppwait, VMSTATROW + 1, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.forks_sharevm, VMSTATROW + 2, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.fltpgwait, VMSTATROW + 3, VMSTATCOL + 4, 5);
-	PUTRATE(uvmexp.fltrelck, VMSTATROW + 4, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.fltrelckok, VMSTATROW + 5, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.fltnoram, VMSTATROW + 6, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.fltamcopy, VMSTATROW + 7, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.flt_prcopy, VMSTATROW + 8, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.flt_przero, VMSTATROW + 9, VMSTATCOL + 3, 6);
-	PUTRATE(uvmexp.flt_acow, VMSTATROW + 10, VMSTATCOL, 9);
-	putint(s.uvmexp.freemin, VMSTATROW + 11, VMSTATCOL, 9);
-	putint(s.uvmexp.freetarg, VMSTATROW + 12, VMSTATCOL, 9);
-	putint(s.uvmexp.inactarg, VMSTATROW + 13, VMSTATCOL, 9);
-	putint(s.uvmexp.wired, VMSTATROW + 14, VMSTATCOL, 9);
-	PUTRATE(uvmexp.pdfreed, VMSTATROW + 15, VMSTATCOL, 9);
-	if (LINES - 1 > VMSTATROW + 16)
-		PUTRATE(uvmexp.pdscans, VMSTATROW + 16, VMSTATCOL, 9);
+#undef pgtokb
 
-	PUTRATE(uvmexp.pageins, PAGEROW + 2, PAGECOL + 5, 5);
-	PUTRATE(uvmexp.pdpageouts, PAGEROW + 2, PAGECOL + 10, 5);
-	PUTRATE(uvmexp.swapins, PAGEROW + 2, PAGECOL + 15, 5);
-	PUTRATE(uvmexp.swapouts, PAGEROW + 2, PAGECOL + 20, 5);
-	PUTRATE(uvmexp.pgswapin, PAGEROW + 3, PAGECOL + 5, 5);
-	PUTRATE(uvmexp.pgswapout, PAGEROW + 3, PAGECOL + 10, 5);
+	/* Namei cache */
+	Z(s, s1, ncs_goodhits); Z(s, s1, ncs_badhits); Z(s, s1, ncs_miss);
+	Z(s, s1, ncs_long); Z(s, s1, ncs_pass2); Z(s, s1, ncs_2passes);
+	s.nchcount = s.nchstats.ncs_goodhits + s.nchstats.ncs_badhits +
+	    s.nchstats.ncs_miss + s.nchstats.ncs_long;
+	if (display_mode == TIME)
+		s1.nchcount = s.nchcount;
 
-	PUTRATE(uvmexp.swtch, GENSTATROW + 1, GENSTATCOL, 5);
-	PUTRATE(uvmexp.traps, GENSTATROW + 1, GENSTATCOL + 5, 6);
-	PUTRATE(uvmexp.syscalls, GENSTATROW + 1, GENSTATCOL + 11, 6);
-	PUTRATE(uvmexp.intrs, GENSTATROW + 1, GENSTATCOL + 17, 5);
-	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 22, 5);
-	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 27, 6);
+	putint(s.nchcount, NAMEIROW + 2, NAMEICOL, 9);
+	putint(s.nchstats.ncs_goodhits, NAMEIROW + 2, NAMEICOL + 9, 9);
+#define nz(x)	((x) ? (x) : 1)
+	putfloat(s.nchstats.ncs_goodhits * 100.0 / nz(s.nchcount),
+	   NAMEIROW + 2, NAMEICOL + 19, 4, 0, 1);
+	putint(s.nchstats.ncs_pass2, NAMEIROW + 2, NAMEICOL + 23, 9);
+	putfloat(s.nchstats.ncs_pass2 * 100.0 / nz(s.nchcount),
+	   NAMEIROW + 2, NAMEICOL + 34, 4, 0, 1);
+#undef nz
+
+	/* Disks */
 	for (l = 0, i = 0, r = DISKROW, c = DISKCOL;
 	     i < (dk_ndrive + tp_ndrive); i++) {
 		if (i < dk_ndrive) {
@@ -609,42 +601,88 @@ showvmstat(void)
 		}
 	}
 	last_disks = l;
-	putint(s.nchcount, NAMEIROW + 2, NAMEICOL, 9);
-	putint(nchtotal.ncs_goodhits, NAMEIROW + 2, NAMEICOL + 9, 9);
-#define nz(x)	((x) ? (x) : 1)
-	putfloat(nchtotal.ncs_goodhits * 100.0 / nz(s.nchcount),
-	   NAMEIROW + 2, NAMEICOL + 19, 4, 0, 1);
-	putint(nchtotal.ncs_pass2, NAMEIROW + 2, NAMEICOL + 23, 9);
-	putfloat(nchtotal.ncs_pass2 * 100.0 / nz(s.nchcount),
-	   NAMEIROW + 2, NAMEICOL + 34, 4, 0, 1);
-#undef nz
+
+	/* Interrupts */
+	failcnt = 0;
+	inttotal = 0;
+	for (i = 0; i < nintr; i++) {
+		if (s.intrcnt[i] == 0)
+			continue;
+		if (intrloc[i] == 0) {
+			if (nextintsrow == LINES)
+				continue;
+			intrloc[i] = nextintsrow++;
+			mvprintw(intrloc[i], INTSCOL + 9, "%-.*s",
+				INTSCOLEND - (INTSCOL + 9), intrname[i]);
+		}
+		X(s, s1, intrcnt);
+		l = (int)((float)s.intrcnt[i]/etime + 0.5);
+		inttotal += l;
+		putint(l, intrloc[i], INTSCOL, 8);
+	}
+
+	for (i = 0; i < nevcnt; i++) {
+		if (s.evcnt[i] == 0)
+			continue;
+		if (ie_head[i].ie_loc == 0) {
+			if (nextintsrow == LINES)
+				continue;
+			ie_head[i].ie_loc = nextintsrow++;
+			print_ie_title(i);
+		}
+		X(s, s1, evcnt);
+		l = (int)((float)s.evcnt[i]/etime + 0.5);
+		inttotal += l;
+		putint(l, ie_head[i].ie_loc, INTSCOL, 8);
+	}
+	putint(inttotal, INTSROW, INTSCOL, 8);
+
+	PUTRATE(s, s1, uvmexp.forks, VMSTATROW + 0, VMSTATCOL + 3, 6);
+	PUTRATE(s, s1, uvmexp.forks_ppwait, VMSTATROW + 1, VMSTATCOL + 3, 6);
+	PUTRATE(s, s1, uvmexp.forks_sharevm, VMSTATROW + 2, VMSTATCOL + 3, 6);
+	PUTRATE(s, s1, uvmexp.fltpgwait, VMSTATROW + 3, VMSTATCOL + 4, 5);
+	PUTRATE(s, s1, uvmexp.fltrelck, VMSTATROW + 4, VMSTATCOL + 3, 6);
+	PUTRATE(s, s1, uvmexp.fltrelckok, VMSTATROW + 5, VMSTATCOL + 3, 6);
+	PUTRATE(s, s1, uvmexp.fltnoram, VMSTATROW + 6, VMSTATCOL + 3, 6);
+	PUTRATE(s, s1, uvmexp.fltamcopy, VMSTATROW + 7, VMSTATCOL + 3, 6);
+	PUTRATE(s, s1, uvmexp.flt_prcopy, VMSTATROW + 8, VMSTATCOL + 3, 6);
+	PUTRATE(s, s1, uvmexp.flt_przero, VMSTATROW + 9, VMSTATCOL + 3, 6);
+	PUTRATE(s, s1, uvmexp.flt_acow, VMSTATROW + 10, VMSTATCOL, 9);
+	putint(s.uvmexp.freemin, VMSTATROW + 11, VMSTATCOL, 9);
+	putint(s.uvmexp.freetarg, VMSTATROW + 12, VMSTATCOL, 9);
+	putint(s.uvmexp.inactarg, VMSTATROW + 13, VMSTATCOL, 9);
+	putint(s.uvmexp.wired, VMSTATROW + 14, VMSTATCOL, 9);
+	PUTRATE(s, s1, uvmexp.pdfreed, VMSTATROW + 15, VMSTATCOL, 9);
+	if (LINES - 1 > VMSTATROW + 16)
+		PUTRATE(s, s1, uvmexp.pdscans, VMSTATROW + 16, VMSTATCOL, 9);
+
 }
 
 void
 vmstat_boot(char *args)
 {
 	copyinfo(&z, &s1);
-	state = BOOT;
+	display_mode = BOOT;
 }
 
 void
 vmstat_run(char *args)
 {
 	copyinfo(&s1, &s2);
-	state = RUN;
+	display_mode = RUN;
 }
 
 void
 vmstat_time(char *args)
 {
-	state = TIME;
+	display_mode = TIME;
 }
 
 void
 vmstat_zero(char *args)
 {
-	if (state == RUN)
-		getinfo(&s1, RUN);
+	if (display_mode == RUN)
+		getinfo(&s1);
 }
 
 /* calculate number of users on the system */
@@ -686,7 +724,7 @@ cputime(int indx)
 	return (cur.cp_time[indx] * 100.0 / t);
 }
 
-static void
+void
 puthumanint(u_int64_t n, int l, int c, int w)
 {
 	char b[128];
@@ -701,11 +739,10 @@ puthumanint(u_int64_t n, int l, int c, int w)
 		hline('*', w);
 		return;
 	}
-	hline(' ', w - strlen(b));
-	mvaddstr(l, c + w - strlen(b), b);
+	printw("%*s", w, b);
 }
 
-static void
+void
 putint(int n, int l, int c, int w)
 {
 	char b[128];
@@ -718,13 +755,16 @@ putint(int n, int l, int c, int w)
 	}
 	(void)snprintf(b, sizeof b, "%*d", w, n);
 	if (strlen(b) > w) {
-		hline('*', w);
+		if (display_mode == TIME)
+			hline('*', w);
+		else
+			puthumanint(n, l, c, w);
 		return;
 	}
 	addstr(b);
 }
 
-static void
+void
 putfloat(double f, int l, int c, int w, int d, int nz)
 {
 	char b[128];
@@ -744,7 +784,7 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 }
 
 static void
-getinfo(struct Info *stats, enum state st)
+getinfo(struct Info *stats)
 {
 	int mib[2];
 	size_t size;
