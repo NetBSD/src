@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.13.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.13.12.2 2006/03/18 18:18:53 peter Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13.12.1 2006/03/18 12:08:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13.12.2 2006/03/18 18:18:53 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -305,11 +305,13 @@ red_alloc(int weight, int inv_pmax, int th_min, int th_max, int flags,
 	rp->red_wtab = wtab_alloc(rp->red_weight);
 
 	microtime(&rp->red_last);
+#ifdef ALTQ3_COMPAT
 #ifdef ALTQ_FLOWVALVE
 	if (flags & REDF_FLOWVALVE)
 		rp->red_flowvalve = fv_alloc(rp);
 	/* if fv_alloc failes, flowvalve is just disabled */
 #endif
+#endif /* ALTQ3_COMPAT */
 	return (rp);
 }
 
