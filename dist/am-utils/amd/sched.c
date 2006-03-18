@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.8 2005/09/20 17:57:45 rpaulo Exp $	*/
+/*	$NetBSD: sched.c,v 1.9 2006/03/18 20:38:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -285,7 +285,7 @@ sigchld(int sig)
       }
     } /* end of for loop */
 
-    if (!p)
+    if (p == HEAD(pjob, &proc_wait_list))
       dlog("can't locate task block for pid %d", pid);
 
     /*
