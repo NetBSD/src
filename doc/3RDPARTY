@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.421 2006/03/17 18:44:07 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.422 2006/03/18 00:26:32 peter Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -611,12 +611,12 @@ pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
 Package:	PF (openbsd packet filter)
 Version:	OpenBSD 3.7
-Current Vers:	OpenBSD 3.7-current
-Maintainer:	itojun
+Current Vers:	OpenBSD 3.9-current
+Maintainer:	The OpenBSD Project
 Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
 Mailing List:	pf@benzedrine.cx or appropriate OpenBSD mailing list
-Responsible:	itojun
+Responsible:	itojun, peter, yamt
 License:	BSD (2-clause)
 Notes:
 kernel code is imported into src/sys/dist/pf and src/sys/net has reachover
