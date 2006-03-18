@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.7 2006/03/18 09:26:08 kardel Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.8 2006/03/18 09:28:50 kardel Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -3534,14 +3534,14 @@ crypto_cert(
 	if ((ptr = strrchr(ptr, '.')) == NULL) {
 		msyslog(LOG_ERR, "crypto_cert: no filestamp %s\n",
 		    filename);
-		return (NULL);
 		(void)fclose(str);
+		return (NULL);
 	}
 	if (sscanf(++ptr, "%u", &fstamp) != 1) {
 		msyslog(LOG_ERR, "crypto_cert: invalid filestamp %s\n",
 		    filename);
-		return (NULL);
 		(void)fclose(str);
+		return (NULL);
 	}
 
 	/*
