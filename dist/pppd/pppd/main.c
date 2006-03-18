@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2006/03/18 03:49:37 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -73,7 +73,7 @@
 #if 0
 #define RCSID	"Id: main.c,v 1.148 2004/11/13 12:05:48 paulus Exp"
 #else
-__RCSID("$NetBSD: main.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2006/03/18 03:49:37 christos Exp $");
 #endif
 #endif
 
@@ -1581,7 +1581,7 @@ safe_fork(int infd, int outfd, int errfd)
 		dup2(infd, 0);
 	if (outfd != 1)
 		dup2(outfd, 1);
-	if (errfd != 2)
+	if (errfd != 2 && errfd != -1)
 		dup2(errfd, 2);
 
 	closelog();
@@ -1597,7 +1597,7 @@ safe_fork(int infd, int outfd, int errfd)
 		close(infd);
 	if (outfd != 1)
 		close(outfd);
-	if (errfd != 2)
+	if (errfd != 2 && errfd != -1)
 		close(errfd);
 
 	notify(fork_notifier, 0);
@@ -1631,7 +1631,7 @@ device_script(program, in, out, dont_wait)
     ++conn_running;
     pid = safe_fork(in, out, errfd);
 
-    if (pid != 0 && log_to_fd < 0)
+    if (pid != 0 && log_to_fd < 0 && errfd >= 0)
 	close(errfd);
 
     if (pid < 0) {
