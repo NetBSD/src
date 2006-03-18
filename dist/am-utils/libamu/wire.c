@@ -1,4 +1,4 @@
-/*	$NetBSD: wire.c,v 1.11 2006/02/05 16:28:57 christos Exp $	*/
+/*	$NetBSD: wire.c,v 1.12 2006/03/18 21:14:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -400,7 +400,7 @@ getwire(char **name1, char **number1)
       al = getwire_lookup(S2IN(ifap->ifa_dstaddr), 0xffffffff, 1);
 
     /* append to the end of the list */
-    if (!localnets) {
+    if (!localnets || tail == NULL) {
       localnets = tail = al;
       tail->ip_next = NULL;
     } else {
