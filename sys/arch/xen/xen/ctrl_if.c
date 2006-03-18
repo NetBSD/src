@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.13 2006/03/17 06:04:24 jld Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.12 2006/01/15 22:09:52 bouyer Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.13 2006/03/17 06:04:24 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.12 2006/01/15 22:09:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ __ctrl_if_rxmsg_deferred(void *unused)
 	while (1) {
 		s = splsoftnet();
 		dp = ctrl_if_rxmsg_deferred_prod;
-		x86_lfence(); /* Ensure we see all requests up to 'dp'. */
+		__insn_barrier(); /* Ensure we see all requests up to 'dp'. */
 		if (ctrl_if_rxmsg_deferred_cons == dp) {
 			tsleep(&ctrl_if_rxmsg_deferred_cons, PRIBIO,
 			    "rxdef", 0);

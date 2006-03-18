@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.3 2006/03/16 23:08:08 bouyer Exp $ */
+/* $NetBSD: xenbus.h,v 1.2 2006/03/15 22:20:06 bouyer Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -51,7 +51,8 @@ struct xenbusdev_attach_args {
 };
 
 /* Register callback to watch this node. */
-struct xenbus_watch {
+struct xenbus_watch
+{
 	SLIST_ENTRY(xenbus_watch) watch_next;
 
 	/* Path being watched. */
@@ -111,8 +112,6 @@ int xenbus_directory(struct xenbus_transaction *t,
 int xenbus_read(struct xenbus_transaction *t,
 		  const char *dir, const char *node, unsigned int *len,
 		  char **);
-int xenbus_read_ul(struct xenbus_transaction *,
-		  const char *, const char *, unsigned long *);
 int xenbus_write(struct xenbus_transaction *t,
 		 const char *dir, const char *node, const char *string);
 int xenbus_mkdir(struct xenbus_transaction *t,
