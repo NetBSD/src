@@ -1,4 +1,4 @@
-/*	$NetBSD: l2_packet.c,v 1.1 2005/10/01 18:50:12 scw Exp $	*/
+/*	$NetBSD: l2_packet.c,v 1.2 2006/03/18 12:35:19 dan Exp $	*/
 
 /*
  * WPA Supplicant - Layer2 packet handling
@@ -181,12 +181,13 @@ eth_get(const char *device, u8 ea[ETH_ALEN])
 		memcpy(ea, LLADDR(sdl), sdl->sdl_alen);
 		break;
 	}
-	free(buf);
 
 	if (p >= buf + len) {
 		errno = ESRCH;
+		free(buf);
 		return -1;
 	}
+	free(buf);
 	return 0;
 }
 
