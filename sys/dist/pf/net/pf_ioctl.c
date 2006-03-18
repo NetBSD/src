@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.21 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.21.12.1 2006/03/18 14:07:52 peter Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -1019,7 +1019,11 @@ pf_enable_altq(struct pf_altq *altq)
 	if (error == 0 && ifp != NULL && ALTQ_IS_ENABLED(&ifp->if_snd)) {
 		tb.rate = altq->ifbandwidth;
 		tb.depth = altq->tbrsize;
+#ifdef __NetBSD__
+		s = splnet();
+#else
 		s = splimp();
+#endif
 		error = tbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}
@@ -1049,7 +1053,11 @@ pf_disable_altq(struct pf_altq *altq)
 	if (error == 0) {
 		/* clear tokenbucket regulator */
 		tb.rate = 0;
+#ifdef __NetBSD__
+		s = splnet();
+#else
 		s = splimp();
+#endif
 		error = tbr_set(&ifp->if_snd, &tb);
 		splx(s);
 	}
