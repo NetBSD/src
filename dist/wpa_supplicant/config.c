@@ -508,6 +508,7 @@ static int wpa_config_parse_eap(struct parse_data *data, int line,
 		methods = realloc(methods, num_methods + 1);
 		if (methods == NULL) {
 			free(tmp);
+			free(buf);
 			return -1;
 		}
 		methods[num_methods] = eap_get_type(start);
