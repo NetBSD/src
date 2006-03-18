@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptime.c,v 1.3 2006/03/18 02:35:47 elad Exp $	*/
+/*	$NetBSD: ntptime.c,v 1.4 2006/03/18 08:09:03 kardel Exp $	*/
 
 /*
  * NTP test program
@@ -403,8 +403,8 @@ sprintb(
 	else
 	    (void)sprintf(buf, "0x%x", v);
 	cp = buf + strlen(buf);
-	bits++;
 	if (bits) {
+		bits++;
 		*cp++ = ' ';
 		*cp++ = '(';
 		while ((i = *bits++) != 0) {
