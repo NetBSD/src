@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.10 2005/08/24 19:09:03 elad Exp $	*/
+/*	$NetBSD: parse.y,v 1.11 2006/03/18 00:14:50 peter Exp $	*/
 /*	$OpenBSD: parse.y,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.y,v 1.10 2005/08/24 19:09:03 elad Exp $");
+__RCSID("$NetBSD: parse.y,v 1.11 2006/03/18 00:14:50 peter Exp $");
 
 #include <sys/types.h>
 
@@ -512,6 +512,7 @@ parse_newsymbol(char *type, int typeoff, char *data)
 		}
 		if (node->filterdata == NULL) {
 			yyerror("strdup");
+			free(node);
 			return (NULL);
 		}
 		node->filterlen = strlen(node->filterdata) + 1;
