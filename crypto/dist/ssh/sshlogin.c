@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.c,v 1.15 2005/02/13 05:57:27 christos Exp $	*/
+/*	$NetBSD: sshlogin.c,v 1.16 2006/03/18 21:09:57 elad Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshlogin.c,v 1.13 2004/08/12 09:18:24 djm Exp $");
-__RCSID("$NetBSD: sshlogin.c,v 1.15 2005/02/13 05:57:27 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.16 2006/03/18 21:09:57 elad Exp $");
 
 #include <util.h>
 #ifdef SUPPORT_UTMP
@@ -239,12 +239,14 @@ record_login(pid_t pid, const char *tty, const char *user, uid_t uid,
 	} else {
 		if ((uxp = getutxline(&ux)) == NULL)
 			logit("could not find utmpx line for %.100s", tty);
-		uxp->ut_type = DEAD_PROCESS;
-		uxp->ut_tv = tv;
-		/* XXX: we don't record exit info yet */
-		if (pututxline(&ux) == NULL)
-			logit("could not replace utmpx line: %.100s",
-			    strerror(errno));
+		else {
+			uxp->ut_type = DEAD_PROCESS;
+			uxp->ut_tv = tv;
+			/* XXX: we don't record exit info yet */
+			if (pututxline(&ux) == NULL)
+				logit("could not replace utmpx line: %.100s",
+				    strerror(errno));
+		}
 	}
 	endutxent();
 	updwtmpx(_PATH_WTMPX, uxp);
