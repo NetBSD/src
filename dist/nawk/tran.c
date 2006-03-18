@@ -218,7 +218,7 @@ Cell *setsymtab(const char *n, const char *s, Awkfloat f, unsigned t, Array *tp)
 	p = (Cell *) malloc(sizeof(Cell));
 	if (p == NULL)
 		FATAL("out of space for symbol table at %s", n);
-	p->nval = tostring(n);
+	p->nval = n ? tostring(n) : tostring("");
 	p->sval = s ? tostring(s) : tostring("");
 	p->fval = f;
 	p->tval = t;
