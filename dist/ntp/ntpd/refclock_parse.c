@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.4 2006/03/18 00:30:30 kardel Exp $	*/
 
 /*
  * /src/NTP/ntp-4/ntpd/refclock_parse.c,v 4.36 1999/11/28 17:18:20 kardel RELEASE_19991128_A
@@ -2410,9 +2410,17 @@ parse_shutdown(
 	struct peer *peer
 	)
 {
-	struct parseunit *parse = (struct parseunit *)peer->procptr->unitptr;
+	struct parseunit *parse = NULL;
 
-	if (parse && !parse->peer)
+	if (peer && peer->procptr)
+		parse = (struct parseunit *)peer->procptr->unitptr;
+
+	if (!parse) {
+		/* not active - return */
+		return;
+	}
+
+	if (!parse->peer)
 	{
 		msyslog(LOG_ERR,
 			"PARSE receiver #%d: parse_shutdown: INTERNAL ERROR, unit not in use", unit);
@@ -2666,8 +2674,6 @@ parse_start(
 	}
 
 	parse->binding = init_iobinding(parse);
-	parse->generic->io.clock_recv = parse->binding->bd_receive; /* pick correct receive routine */
-	parse->generic->io.io_input   = parse->binding->bd_io_input; /* pick correct input routine */
 
 	if (parse->binding == (bind_t *)0)
 		{
@@ -2675,6 +2681,10 @@ parse_start(
 			parse_shutdown(CLK_UNIT(parse->peer), peer); /* let our cleaning staff do the work */
 			return 0;			/* well, ok - special initialisation broke */
 		}      
+
+	parse->generic->io.clock_recv = parse->binding->bd_receive; /* pick correct receive routine */
+	parse->generic->io.io_input   = parse->binding->bd_io_input; /* pick correct input routine */
+
 
 	/*
 	 * as we always(?) get 8 bit chars we want to be
@@ -3820,7 +3830,7 @@ gps16x_message(
 						*p   = '\0';
 						set_var(&parse->kv, buffer, sizeof(buffer), RO);
 						
-						for (i = MIN_SVNO; i <= MAX_SVNO; i++)
+						for (i = MIN_SVNO; i < MAX_SVNO; i++)
 						{
 							p = buffer;
 							sprintf(p, "gps_cfg[%d]=\"[0x%x] ", i, cfgh.cfg[i]);
@@ -4516,7 +4526,7 @@ trimble_check(
 	}
 	poll_poll(parse->peer);	/* emit query string and re-arm timer */
 	
-	if (t->qtracking)
+	if (t && t->qtracking)
 	{
 		u_long oldsats = t->ltrack & ~t->ctrack;
 		
@@ -4527,14 +4537,15 @@ trimble_check(
 		{
 			int i;
 				
-			for (i = 0; oldsats; i++)
+			for (i = 0; oldsats; i++) {
 				if (oldsats & (1 << i))
 					{
 						sendcmd(&buf, CMD_CSTATTRACK);
 						sendbyte(&buf, i+1);	/* old sat */
 						sendetx(&buf, parse);
 					}
-			oldsats &= ~(1 << i);
+				oldsats &= ~(1 << i);
+			}
 		}
 						
 		sendcmd(&buf, CMD_CSTATTRACK);
