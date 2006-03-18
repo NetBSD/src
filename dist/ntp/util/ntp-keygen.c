@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.4 2003/12/04 17:15:26 drochner Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.5 2006/03/18 14:25:17 kardel Exp $	*/
 
 /*
  * Program to generate cryptographic keys for NTP clients and servers
@@ -718,7 +718,7 @@ gen_md5(
 			}
 			md5key[j] = (u_char)temp;
 		}
-		md5key[16] = '\0';
+		md5key[15] = '\0';
 		fprintf(str, "%2d MD5 %16s	# MD5 key\n", i,
 		    md5key);
 	}
