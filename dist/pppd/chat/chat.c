@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.3 2006/03/18 03:39:57 christos Exp $	*/
+/*	$NetBSD: chat.c,v 1.4 2006/03/18 03:43:13 christos Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.30 2004/01/17 05:47:55 carlsonj Exp";
 #else
-__RCSID("$NetBSD: chat.c,v 1.3 2006/03/18 03:39:57 christos Exp $");
+__RCSID("$NetBSD: chat.c,v 1.4 2006/03/18 03:43:13 christos Exp $");
 #endif
 #endif
 
@@ -1400,12 +1400,14 @@ register char *string;
     if (len > STR_LEN) {
 	msgf("expect string is too long");
 	exit_code = 1;
+	free(string);
 	return 0;
     }
 
     if (len == 0) {
 	if (verbose)
 	    msgf("got it");
+	free(string);
 	return (1);
     }
 
@@ -1481,6 +1483,7 @@ register char *string;
 
 	    alarm(0);
 	    alarmed = 0;
+	    free(string);
 	    return (1);
 	}
 
@@ -1498,6 +1501,7 @@ register char *string;
 		exit_code = n + 4;
 		strlcpy(fail_buffer, abort_string[n], sizeof(fail_buffer));
 		fail_reason = fail_buffer;
+		free(string);
 		return (0);
 	    }
 	}
@@ -1529,6 +1533,7 @@ register char *string;
 
     exit_code = 3;
     alarmed   = 0;
+    free(string);
     return (0);
 }
 
