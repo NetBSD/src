@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_analyze.c,v 1.9 2006/03/18 20:43:48 christos Exp $	*/
+/*	$NetBSD: fsi_analyze.c,v 1.10 2006/03/18 20:46:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -283,7 +283,7 @@ analyze_dkmounts(disk_fs *dk, qelem *q)
   /*
    * Now see if a default mount point is required
    */
-  if (STREQ(mp2->m_name, "default")) {
+  if (mp2 && STREQ(mp2->m_name, "default")) {
     if (ISSET(mp2->m_mask, DM_VOLNAME)) {
       char nbuf[1024];
       compute_automount_point(nbuf, sizeof(nbuf), dk->d_host, mp2->m_volname);
