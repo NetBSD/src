@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-agent.c,v 1.26 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: ssh-agent.c,v 1.27 2006/03/18 10:41:24 dan Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
 #include "includes.h"
 #include <sys/queue.h>
 RCSID("$OpenBSD: ssh-agent.c,v 1.124 2005/10/30 08:52:18 djm Exp $");
-__RCSID("$NetBSD: ssh-agent.c,v 1.26 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.27 2006/03/18 10:41:24 dan Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -383,8 +383,7 @@ process_remove_all_identities(SocketEntry *e, int version)
 	Identity *id;
 
 	/* Loop over all identities and clear the keys. */
-	for (id = TAILQ_FIRST(&tab->idlist); id;
-	    id = TAILQ_FIRST(&tab->idlist)) {
+	while ((id = TAILQ_FIRST(&tab->idlist)) != NULL) {
 		TAILQ_REMOVE(&tab->idlist, id, next);
 		free_identity(id);
 	}
