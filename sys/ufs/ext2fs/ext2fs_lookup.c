@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.41 2006/03/17 23:29:11 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.42 2006/03/18 13:49:19 bouyer Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.41 2006/03/17 23:29:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.42 2006/03/18 13:49:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,12 +498,6 @@ searchloop:
 			dp->i_offset = roundup(ext2fs_size(dp), dirblksiz);
 			dp->i_count = 0;
 			enduseful = dp->i_offset;
-		} else if (nameiop == DELETE) {
-			dp->i_offset = slotoffset;
-			if ((dp->i_offset & (dirblksiz - 1)) == 0)
-				dp->i_count = 0;
-			else
-				dp->i_count = dp->i_offset - prevoff;
 		} else {
 			dp->i_offset = slotoffset;
 			dp->i_count = slotsize;
