@@ -1,4 +1,4 @@
-/*	$NetBSD: vocab.c,v 1.12 2005/07/01 00:03:36 jmc Exp $	*/
+/*	$NetBSD: vocab.c,v 1.13 2006/03/18 23:35:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: vocab.c,v 1.12 2005/07/01 00:03:36 jmc Exp $");
+__RCSID("$NetBSD: vocab.c,v 1.13 2006/03/18 23:35:51 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -184,7 +184,7 @@ vocab(const char *word, int type, int value)
 		}
 
 exitloop2:			/* hashed entry does not match  */
-		if (adr + 1 == hash || (adr == HTSIZE && hash == 0))
+		if (adr + 1 == hash || hash == 0)
 			errx(1,"Hash table overflow");
 	}
 }
