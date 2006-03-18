@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.10 2006/03/18 04:39:50 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.11 2006/03/18 04:41:57 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -50,7 +50,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.85 2005/10/17 15:31:10 christos Exp")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.10 2006/03/18 04:39:50 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.11 2006/03/18 04:41:57 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -413,8 +413,6 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 		if ((m = (struct magic *) realloc(*magicp,
 		    sizeof(struct magic) * maxmagic)) == NULL) {
 			file_oomem(ms);
-			if (*magicp)
-				free(*magicp);
 			return -1;
 		}
 		*magicp = m;
