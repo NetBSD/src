@@ -1,4 +1,4 @@
-/*	$NetBSD: am_ops.c,v 1.7 2006/02/05 16:28:55 christos Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.8 2006/03/18 20:40:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -339,7 +339,7 @@ merge_opts(const char *opts1, const char *opts2)
     if (amu_hasmntopt(&mnt2, oneopt) || amu_hasmntopt(&mnt2, revoneopt))
       continue;
     /* add option to returned string */
-    if (newstr && newstr[0]) {
+    if (newstr[0]) {
       xstrlcat(newstr, ",", len);
       xstrlcat(newstr, tmpstr, len);
     } else {
