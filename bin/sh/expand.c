@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.72 2005/12/13 17:44:18 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.73 2006/03/18 05:25:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.72 2005/12/13 17:44:18 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.73 2006/03/18 05:25:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -510,8 +510,6 @@ subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varfla
 		amount = startp - expdest;
 		STADJUST(amount, expdest);
 		varflags &= ~VSNUL;
-		if (c != 0)
-			*loc = c;
 		return 1;
 
 	case VSQUESTION:
