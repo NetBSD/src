@@ -1,4 +1,4 @@
-/*	$NetBSD: mapc.c,v 1.7 2006/02/05 16:28:56 christos Exp $	*/
+/*	$NetBSD: mapc.c,v 1.8 2006/03/18 20:33:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -588,7 +588,7 @@ mapc_create(char *map, char *opt, const char *type)
 {
   mnt_map *m = ALLOC(struct mnt_map);
   map_type *mt;
-  time_t modify;
+  time_t modify = 0;
   int alloc = 0;
 
   cmdoption(opt, mapc_opt, &alloc);
