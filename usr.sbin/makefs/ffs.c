@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.37 2005/10/23 16:12:02 thorpej Exp $	*/
+/*	$NetBSD: ffs.c,v 1.38 2006/03/18 12:35:41 rtr Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.37 2005/10/23 16:12:02 thorpej Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.38 2006/03/18 12:35:41 rtr Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -509,10 +509,12 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 		if (i == -1) {
 			warn("zeroing image, %lld bytes to go",
 			    (long long)bufrem);
+			free(buf);
 			return (-1);
 		}
 		bufrem -= i;
 	}
+	free(buf);
 
 		/* make the file system */
 	if (debug & DEBUG_FS_CREATE_IMAGE)
