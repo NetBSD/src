@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2004/02/08 00:32:48 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.28 2006/03/18 01:43:52 abs Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -148,8 +148,8 @@ struct logs {
 };
 
 struct BP {
-	short turnsent;
 	struct ship *toship;
+	short turnsent;
 	short mensent;
 };
 
