@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2005/12/07 04:38:32 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2006/03/18 11:38:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.8 2005/12/07 04:38:32 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2006/03/18 11:38:59 dsl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1127,6 +1127,7 @@ edit(int f)
 	const char *tmpdir;
 	char	tmpfil[MAXPATHLEN];
 	int	 first, ch, fd;
+	int	get_ok;
 	FILE	*fp;
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
@@ -1149,11 +1150,11 @@ edit(int f)
 			break;
 		}
 		(void) memset(&lab, 0, sizeof(lab));
-		if (getasciilabel(fp, &lab)) {
-			if (write_label(f) == 0) {
-				(void) unlink(tmpfil);
-				return (0);
-			}
+		get_ok = getasciilabel(fp, &lab);
+		fclose(fp);
+		if (get_ok && write_label(f) == 0) {
+			(void) unlink(tmpfil);
+			return (0);
 		}
 		(void) printf("re-edit the label? [y]: ");
 		(void) fflush(stdout);
