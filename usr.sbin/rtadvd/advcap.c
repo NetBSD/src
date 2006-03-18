@@ -1,4 +1,4 @@
-/*	$NetBSD: advcap.c,v 1.11 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: advcap.c,v 1.12 2006/03/18 22:07:15 dan Exp $	*/
 /*	$KAME: advcap.c,v 1.11 2003/05/19 09:46:50 keiichi Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ tskip(bp)
 			} else
 				bp++;
 		case '"':
-			dquote = (dquote ? 1 : 0);
+			dquote = (dquote ? 0 : 1);
 			bp++;
 			break;
 		default:
