@@ -1560,7 +1560,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 
 		if (isrec(x)) {
 			/* format argument not provided, use default */
-			fmt = "%a %b %d %H:%M:%S %Z %Y";
+			fmt = tostring("%a %b %d %H:%M:%S %Z %Y");
 		} else
 			fmt = tostring(getsval(x));
 
@@ -1572,6 +1572,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 
 		y = gettemp();
 		setsval(y, buf);
+		free(fmt);
 		free(buf);
 
 		return y;
