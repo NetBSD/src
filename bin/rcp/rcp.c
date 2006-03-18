@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.40 2005/06/26 19:10:49 christos Exp $	*/
+/*	$NetBSD: rcp.c,v 1.41 2006/03/18 04:44:49 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.40 2005/06/26 19:10:49 christos Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.41 2006/03/18 04:44:49 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,8 +289,10 @@ toremote(char *targ, int argc, char *argv[])
 				suser = argv[i];
 				if (*suser == '\0')
 					suser = pwname;
-				else if (!okname(suser))
+				else if (!okname(suser)) {
+					(void)free(bp);
 					continue;
+				}
 				(void)snprintf(bp, len,
 				    "%s %s -l %s -n %s %s '%s%s%s:%s'",
 				    _PATH_RSH, host, suser, cmd, src,
