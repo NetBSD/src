@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.12 2005/06/03 16:13:33 lukem Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.13 2006/03/18 13:13:25 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1273,6 +1273,9 @@ close_socket(
 {
 	SOCKET i, newmax;
 
+	if (fd == INVALID_SOCKET)
+		return;
+
 	(void) closesocket(fd);
 
 	/*
@@ -1305,6 +1308,9 @@ close_file(
 	)
 {
 	int i, newmax;
+
+	if (fd == INVALID_SOCKET)
+		return;
 
 	(void) close(fd);
 	/*
