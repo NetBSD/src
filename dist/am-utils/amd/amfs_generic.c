@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_generic.c,v 1.3 2006/03/18 20:48:42 christos Exp $	*/
+/*	$NetBSD: amfs_generic.c,v 1.4 2006/03/18 21:05:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -771,7 +771,7 @@ amfs_bgmount(struct continuation *cp)
       goto already_mounted;
     }
 
-    if (mf->mf_fo->fs_mtab) {
+    if (mf->mf_fo && mf->mf_fo->fs_mtab) {
       plog(XLOG_MAP, "Trying mount of %s on %s fstype %s mount_type %s",
 	   mf->mf_fo->fs_mtab, mf->mf_mount, p->fs_type,
 	   mp->am_flags & AMF_AUTOFS ? "autofs" : "non-autofs");
@@ -785,7 +785,7 @@ amfs_bgmount(struct continuation *cp)
     if (this_error < 0)
       goto retry;
 
-    if (mf->mf_fo->opt_delay) {
+    if (mf->mf_fo && mf->mf_fo->opt_delay) {
       /*
        * If there is a delay timer on the mount
        * then don't try to mount if the timer
