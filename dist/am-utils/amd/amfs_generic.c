@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_generic.c,v 1.2 2006/02/05 16:28:55 christos Exp $	*/
+/*	$NetBSD: amfs_generic.c,v 1.3 2006/03/18 20:48:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -416,6 +416,7 @@ amfs_lookup_mntfs(am_node *new_mp, int *error_return)
       /*
        * Pick up new defaults
        */
+      XFREE(def_opts);
       def_opts = str3cat((char *) 0, def_opts, ";", *cur_ivec + 1);
       dlog("Setting def_opts to \"%s\"", def_opts);
       continue;
