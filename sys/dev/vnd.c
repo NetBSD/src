@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.141 2006/03/01 12:38:13 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.142 2006/03/18 01:13:24 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141 2006/03/01 12:38:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.142 2006/03/18 01:13:24 dogcow Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1170,6 +1170,7 @@ unlock_and_exit:
 		struct vnd_user *vnu;
 		struct vattr va;
 		vnu = (struct vnd_user *)data;
+		if (l == NULL) panic("VNDIOCGET: lwp == NULL!");
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
 			vnu->vnu_dev = va.va_fsid;
