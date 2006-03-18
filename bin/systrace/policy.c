@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.19 2005/08/10 21:33:36 elad Exp $	*/
+/*	$NetBSD: policy.c,v 1.20 2006/03/18 00:12:02 peter Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.19 2005/08/10 21:33:36 elad Exp $");
+__RCSID("$NetBSD: policy.c,v 1.20 2006/03/18 00:12:02 peter Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -489,7 +489,7 @@ systrace_readtemplate(char *filename, struct policy *policy,
 		}
 
 		if (policy == NULL)
-			return (template);
+			goto out;
 
 		if (systrace_policyprocess(policy, p) == -1)
 			goto error;
