@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.4 2006/03/16 23:08:08 bouyer Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.4 2006/03/16 23:08:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -385,26 +385,6 @@ xenbus_read(struct xenbus_transaction *t,
 	err = xs_single(t, XS_READ, path, len, ret);
 	free(path, M_DEVBUF);
 	return err;
-}
-
-/* Read a node and convert it to unsigned long. */
-int
-xenbus_read_ul(struct xenbus_transaction *t,
-		  const char *dir, const char *node, unsigned long *val)
-{
-	char *string, *ep;
-	int err;
-
-	err = xenbus_read(t, dir, node, NULL, &string);
-	if (err)
-		return err;
-	*val = strtoul(string, &ep, 10);
-	if (*ep != '\0') {
-		free(string, M_DEVBUF);
-		return EFTYPE;
-	}
-	free(string, M_DEVBUF);
-	return 0;
 }
 
 /* Write the value of a single file.

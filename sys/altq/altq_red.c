@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $	*/
-/*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.13.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2003
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,35 +61,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13.12.1 2006/03/18 12:08:18 peter Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#if (__FreeBSD__ != 2)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
+
 #ifdef ALTQ_RED	/* red is enabled by ALTQ_RED option in opt_altq.h */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/errno.h>
+#if 1 /* ALTQ3_COMPAT */
+#include <sys/sockio.h>
+#include <sys/proc.h>
 #include <sys/kernel.h>
 #ifdef ALTQ_FLOWVALVE
 #include <sys/queue.h>
 #include <sys/time.h>
 #endif
+#endif /* ALTQ3_COMPAT */
 
 #include <net/if.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -98,11 +95,14 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $");
 #include <netinet/ip6.h>
 #endif
 
+#include <net/pfvar.h>
 #include <altq/altq.h>
-#include <altq/altq_conf.h>
 #include <altq/altq_red.h>
+#ifdef ALTQ3_COMPAT
+#include <altq/altq_conf.h>
 #ifdef ALTQ_FLOWVALVE
 #include <altq/altq_flowvalve.h>
+#endif
 #endif
 
 /*
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $");
  * for a slow link like dial-up, 500 packets takes more than 1 minute!
  * when q_weight is 0.008, N is about 127 packets.
  * when q_weight is 0.016, N is about 63 packets.
- * bursts of 50 packets are allowd for 0.002, bursts of 25 packets
+ * bursts of 50 packets are allowed for 0.002, bursts of 25 packets
  * are allowed for 0.016.
  * see Sally's paper for more details.
  */
@@ -160,7 +160,8 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $");
 #define	TH_MIN		5	/* min threshold */
 #define	TH_MAX		15	/* max threshold */
 
-#define	RED_LIMIT	60	/* default max queue length */
+#define	RED_LIMIT	60	/* default max queue lenght */
+#define	RED_STATS		/* collect statistics */
 
 /*
  * our default policy for forced-drop is drop-tail.
@@ -169,9 +170,10 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $");
  * to switch to the random-drop policy, define "RED_RANDOM_DROP".
  */
 
+#ifdef ALTQ3_COMPAT
 #ifdef ALTQ_FLOWVALVE
 /*
- * flow-valve is an extension to protect red from unresponsive flows
+ * flow-valve is an extention to protect red from unresponsive flows
  * and to promote end-to-end congestion control.
  * flow-valve observes the average drop rates of the flows that have
  * experienced packet drops in the recent past.
@@ -187,34 +189,536 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $");
 /* red_list keeps all red_queue_t's allocated. */
 static red_queue_t *red_list = NULL;
 
+#endif /* ALTQ3_COMPAT */
+
 /* default red parameter values */
 static int default_th_min = TH_MIN;
 static int default_th_max = TH_MAX;
 static int default_inv_pmax = INV_P_MAX;
 
+#ifdef ALTQ3_COMPAT
 /* internal function prototypes */
-static int red_enqueue __P((struct ifaltq *, struct mbuf *,
-			    struct altq_pktattr *));
-static struct mbuf *red_dequeue __P((struct ifaltq *, int));
-static int red_request __P((struct ifaltq *, int, void *));
-static void red_purgeq __P((red_queue_t *));
-static int red_detach __P((red_queue_t *));
+static int red_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static struct mbuf *red_dequeue(struct ifaltq *, int);
+static int red_request(struct ifaltq *, int, void *);
+static void red_purgeq(red_queue_t *);
+static int red_detach(red_queue_t *);
 #ifdef ALTQ_FLOWVALVE
-static inline struct fve *flowlist_lookup __P((struct flowvalve *,
-			 struct altq_pktattr *, struct timeval *));
-static inline struct fve *flowlist_reclaim __P((struct flowvalve *,
-						  struct altq_pktattr *));
-static inline void flowlist_move_to_head __P((struct flowvalve *,
-						struct fve *));
-static inline int fv_p2f __P((struct flowvalve *, int));
-static struct flowvalve *fv_alloc __P((struct red *));
-static void fv_destroy __P((struct flowvalve *));
-static int fv_checkflow __P((struct flowvalve *, struct altq_pktattr *,
-			     struct fve **));
-static void fv_dropbyred __P((struct flowvalve *fv, struct altq_pktattr *,
-			      struct fve *));
+static inline struct fve *flowlist_lookup(struct flowvalve *,
+			 struct altq_pktattr *, struct timeval *);
+static inline struct fve *flowlist_reclaim(struct flowvalve *,
+					     struct altq_pktattr *);
+static inline void flowlist_move_to_head(struct flowvalve *, struct fve *);
+static inline int fv_p2f(struct flowvalve *, int);
+static struct flowvalve *fv_alloc(struct red *);
+static void fv_destroy(struct flowvalve *);
+static int fv_checkflow(struct flowvalve *, struct altq_pktattr *,
+			struct fve **);
+static void fv_dropbyred(struct flowvalve *fv, struct altq_pktattr *,
+			 struct fve *);
 #endif
+#endif /* ALTQ3_COMPAT */
 
+/*
+ * red support routines
+ */
+red_t *
+red_alloc(int weight, int inv_pmax, int th_min, int th_max, int flags,
+   int pkttime)
+{
+	red_t	*rp;
+	int	 w, i;
+	int	 npkts_per_sec;
+
+	MALLOC(rp, red_t *, sizeof(red_t), M_DEVBUF, M_WAITOK);
+	if (rp == NULL)
+		return (NULL);
+	(void)memset(rp, 0, sizeof(red_t));
+
+	rp->red_avg = 0;
+	rp->red_idle = 1;
+
+	if (weight == 0)
+		rp->red_weight = W_WEIGHT;
+	else
+		rp->red_weight = weight;
+	if (inv_pmax == 0)
+		rp->red_inv_pmax = default_inv_pmax;
+	else
+		rp->red_inv_pmax = inv_pmax;
+	if (th_min == 0)
+		rp->red_thmin = default_th_min;
+	else
+		rp->red_thmin = th_min;
+	if (th_max == 0)
+		rp->red_thmax = default_th_max;
+	else
+		rp->red_thmax = th_max;
+
+	rp->red_flags = flags;
+
+	if (pkttime == 0)
+		/* default packet time: 1000 bytes / 10Mbps * 8 * 1000000 */
+		rp->red_pkttime = 800;
+	else
+		rp->red_pkttime = pkttime;
+
+	if (weight == 0) {
+		/* when the link is very slow, adjust red parameters */
+		npkts_per_sec = 1000000 / rp->red_pkttime;
+		if (npkts_per_sec < 50) {
+			/* up to about 400Kbps */
+			rp->red_weight = W_WEIGHT_2;
+		} else if (npkts_per_sec < 300) {
+			/* up to about 2.4Mbps */
+			rp->red_weight = W_WEIGHT_1;
+		}
+	}
+
+	/* calculate wshift.  weight must be power of 2 */
+	w = rp->red_weight;
+	for (i = 0; w > 1; i++)
+		w = w >> 1;
+	rp->red_wshift = i;
+	w = 1 << rp->red_wshift;
+	if (w != rp->red_weight) {
+		printf("invalid weight value %d for red! use %d\n",
+		       rp->red_weight, w);
+		rp->red_weight = w;
+	}
+
+	/*
+	 * thmin_s and thmax_s are scaled versions of th_min and th_max
+	 * to be compared with avg.
+	 */
+	rp->red_thmin_s = rp->red_thmin << (rp->red_wshift + FP_SHIFT);
+	rp->red_thmax_s = rp->red_thmax << (rp->red_wshift + FP_SHIFT);
+
+	/*
+	 * precompute probability denominator
+	 *  probd = (2 * (TH_MAX-TH_MIN) / pmax) in fixed-point
+	 */
+	rp->red_probd = (2 * (rp->red_thmax - rp->red_thmin)
+			 * rp->red_inv_pmax) << FP_SHIFT;
+
+	/* allocate weight table */
+	rp->red_wtab = wtab_alloc(rp->red_weight);
+
+	microtime(&rp->red_last);
+#ifdef ALTQ_FLOWVALVE
+	if (flags & REDF_FLOWVALVE)
+		rp->red_flowvalve = fv_alloc(rp);
+	/* if fv_alloc failes, flowvalve is just disabled */
+#endif
+	return (rp);
+}
+
+void
+red_destroy(red_t *rp)
+{
+#ifdef ALTQ3_COMPAT
+#ifdef ALTQ_FLOWVALVE
+	if (rp->red_flowvalve != NULL)
+		fv_destroy(rp->red_flowvalve);
+#endif
+#endif /* ALTQ3_COMPAT */
+	wtab_destroy(rp->red_wtab);
+	FREE(rp, M_DEVBUF);
+}
+
+void
+red_getstats(red_t *rp, struct redstats *sp)
+{
+	sp->q_avg		= rp->red_avg >> rp->red_wshift;
+	sp->xmit_cnt		= rp->red_stats.xmit_cnt;
+	sp->drop_cnt		= rp->red_stats.drop_cnt;
+	sp->drop_forced		= rp->red_stats.drop_forced;
+	sp->drop_unforced	= rp->red_stats.drop_unforced;
+	sp->marked_packets	= rp->red_stats.marked_packets;
+}
+
+int
+red_addq(red_t *rp, class_queue_t *q, struct mbuf *m,
+    struct altq_pktattr *pktattr)
+{
+	int avg, droptype;
+	int n;
+#ifdef ALTQ3_COMPAT
+#ifdef ALTQ_FLOWVALVE
+	struct fve *fve = NULL;
+
+	if (rp->red_flowvalve != NULL && rp->red_flowvalve->fv_flows > 0)
+		if (fv_checkflow(rp->red_flowvalve, pktattr, &fve)) {
+			m_freem(m);
+			return (-1);
+		}
+#endif
+#endif /* ALTQ3_COMPAT */
+
+	avg = rp->red_avg;
+
+	/*
+	 * if we were idle, we pretend that n packets arrived during
+	 * the idle period.
+	 */
+	if (rp->red_idle) {
+		struct timeval now;
+		int t;
+
+		rp->red_idle = 0;
+		microtime(&now);
+		t = (now.tv_sec - rp->red_last.tv_sec);
+		if (t > 60) {
+			/*
+			 * being idle for more than 1 minute, set avg to zero.
+			 * this prevents t from overflow.
+			 */
+			avg = 0;
+		} else {
+			t = t * 1000000 + (now.tv_usec - rp->red_last.tv_usec);
+			n = t / rp->red_pkttime - 1;
+
+			/* the following line does (avg = (1 - Wq)^n * avg) */
+			if (n > 0)
+				avg = (avg >> FP_SHIFT) *
+				    pow_w(rp->red_wtab, n);
+		}
+	}
+
+	/* run estimator. (note: avg is scaled by WEIGHT in fixed-point) */
+	avg += (qlen(q) << FP_SHIFT) - (avg >> rp->red_wshift);
+	rp->red_avg = avg;		/* save the new value */
+
+	/*
+	 * red_count keeps a tally of arriving traffic that has not
+	 * been dropped.
+	 */
+	rp->red_count++;
+
+	/* see if we drop early */
+	droptype = DTYPE_NODROP;
+	if (avg >= rp->red_thmin_s && qlen(q) > 1) {
+		if (avg >= rp->red_thmax_s) {
+			/* avg >= th_max: forced drop */
+			droptype = DTYPE_FORCED;
+		} else if (rp->red_old == 0) {
+			/* first exceeds th_min */
+			rp->red_count = 1;
+			rp->red_old = 1;
+		} else if (drop_early((avg - rp->red_thmin_s) >> rp->red_wshift,
+				      rp->red_probd, rp->red_count)) {
+			/* mark or drop by red */
+			if ((rp->red_flags & REDF_ECN) &&
+			    mark_ecn(m, pktattr, rp->red_flags)) {
+				/* successfully marked.  do not drop. */
+				rp->red_count = 0;
+#ifdef RED_STATS
+				rp->red_stats.marked_packets++;
+#endif
+			} else {
+				/* unforced drop by red */
+				droptype = DTYPE_EARLY;
+			}
+		}
+	} else {
+		/* avg < th_min */
+		rp->red_old = 0;
+	}
+
+	/*
+	 * if the queue length hits the hard limit, it's a forced drop.
+	 */
+	if (droptype == DTYPE_NODROP && qlen(q) >= qlimit(q))
+		droptype = DTYPE_FORCED;
+
+#ifdef RED_RANDOM_DROP
+	/* if successful or forced drop, enqueue this packet. */
+	if (droptype != DTYPE_EARLY)
+		_addq(q, m);
+#else
+	/* if successful, enqueue this packet. */
+	if (droptype == DTYPE_NODROP)
+		_addq(q, m);
+#endif
+	if (droptype != DTYPE_NODROP) {
+		if (droptype == DTYPE_EARLY) {
+			/* drop the incoming packet */
+#ifdef RED_STATS
+			rp->red_stats.drop_unforced++;
+#endif
+		} else {
+			/* forced drop, select a victim packet in the queue. */
+#ifdef RED_RANDOM_DROP
+			m = _getq_random(q);
+#endif
+#ifdef RED_STATS
+			rp->red_stats.drop_forced++;
+#endif
+		}
+#ifdef RED_STATS
+		PKTCNTR_ADD(&rp->red_stats.drop_cnt, m_pktlen(m));
+#endif
+		rp->red_count = 0;
+#ifdef ALTQ3_COMPAT
+#ifdef ALTQ_FLOWVALVE
+		if (rp->red_flowvalve != NULL)
+			fv_dropbyred(rp->red_flowvalve, pktattr, fve);
+#endif
+#endif /* ALTQ3_COMPAT */
+		m_freem(m);
+		return (-1);
+	}
+	/* successfully queued */
+#ifdef RED_STATS
+	PKTCNTR_ADD(&rp->red_stats.xmit_cnt, m_pktlen(m));
+#endif
+	return (0);
+}
+
+/*
+ * early-drop probability is calculated as follows:
+ *   prob = p_max * (avg - th_min) / (th_max - th_min)
+ *   prob_a = prob / (2 - count*prob)
+ *	    = (avg-th_min) / (2*(th_max-th_min)*inv_p_max - count*(avg-th_min))
+ * here prob_a increases as successive undrop count increases.
+ * (prob_a starts from prob/2, becomes prob when (count == (1 / prob)),
+ * becomes 1 when (count >= (2 / prob))).
+ */
+int
+drop_early(int fp_len, int fp_probd, int count)
+{
+	int	d;		/* denominator of drop-probability */
+
+	d = fp_probd - count * fp_len;
+	if (d <= 0)
+		/* count exceeds the hard limit: drop or mark */
+		return (1);
+
+	/*
+	 * now the range of d is [1..600] in fixed-point. (when
+	 * th_max-th_min=10 and p_max=1/30)
+	 * drop probability = (avg - TH_MIN) / d
+	 */
+
+	if ((arc4random() % d) < fp_len) {
+		/* drop or mark */
+		return (1);
+	}
+	/* no drop/mark */
+	return (0);
+}
+
+/*
+ * try to mark CE bit to the packet.
+ *    returns 1 if successfully marked, 0 otherwise.
+ */
+int
+mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
+{
+	struct mbuf	*m0;
+	struct m_tag	*t;
+	struct altq_tag	*at;
+	void		*hdr;
+	int		 af;
+
+	t = m_tag_find(m, PACKET_TAG_PF_QID, NULL);
+	if (t != NULL) {
+		at = (struct altq_tag *)(t + 1);
+		if (at == NULL)
+			return (0);
+		af = at->af;
+		hdr = at->hdr;
+#ifdef ALTQ3_COMPAT
+	} else if (pktattr != NULL) {
+		af = pktattr->pattr_af;
+		hdr = pktattr->pattr_hdr;
+#endif /* ALTQ3_COMPAT */
+	} else
+		return (0);
+
+	if (af != AF_INET && af != AF_INET6)
+		return (0);
+
+	/* verify that pattr_hdr is within the mbuf data */
+	for (m0 = m; m0 != NULL; m0 = m0->m_next)
+		if (((caddr_t)hdr >= m0->m_data) &&
+		    ((caddr_t)hdr < m0->m_data + m0->m_len))
+			break;
+	if (m0 == NULL) {
+		/* ick, tag info is stale */
+		return (0);
+	}
+
+	switch (af) {
+	case AF_INET:
+		if (flags & REDF_ECN4) {
+			struct ip *ip = hdr;
+			u_int8_t otos;
+			int sum;
+
+			if (ip->ip_v != 4)
+				return (0);	/* version mismatch! */
+
+			if ((ip->ip_tos & IPTOS_ECN_MASK) == IPTOS_ECN_NOTECT)
+				return (0);	/* not-ECT */
+			if ((ip->ip_tos & IPTOS_ECN_MASK) == IPTOS_ECN_CE)
+				return (1);	/* already marked */
+
+			/*
+			 * ecn-capable but not marked,
+			 * mark CE and update checksum
+			 */
+			otos = ip->ip_tos;
+			ip->ip_tos |= IPTOS_ECN_CE;
+			/*
+			 * update checksum (from RFC1624)
+			 *	   HC' = ~(~HC + ~m + m')
+			 */
+			sum = ~ntohs(ip->ip_sum) & 0xffff;
+			sum += (~otos & 0xffff) + ip->ip_tos;
+			sum = (sum >> 16) + (sum & 0xffff);
+			sum += (sum >> 16);  /* add carry */
+			ip->ip_sum = htons(~sum & 0xffff);
+			return (1);
+		}
+		break;
+#ifdef INET6
+	case AF_INET6:
+		if (flags & REDF_ECN6) {
+			struct ip6_hdr *ip6 = hdr;
+			u_int32_t flowlabel;
+
+			flowlabel = ntohl(ip6->ip6_flow);
+			if ((flowlabel >> 28) != 6)
+				return (0);	/* version mismatch! */
+			if ((flowlabel & (IPTOS_ECN_MASK << 20)) ==
+			    (IPTOS_ECN_NOTECT << 20))
+				return (0);	/* not-ECT */
+			if ((flowlabel & (IPTOS_ECN_MASK << 20)) ==
+			    (IPTOS_ECN_CE << 20))
+				return (1);	/* already marked */
+			/*
+			 * ecn-capable but not marked,  mark CE
+			 */
+			flowlabel |= (IPTOS_ECN_CE << 20);
+			ip6->ip6_flow = htonl(flowlabel);
+			return (1);
+		}
+		break;
+#endif  /* INET6 */
+	}
+
+	/* not marked */
+	return (0);
+}
+
+struct mbuf *
+red_getq(rp, q)
+	red_t *rp;
+	class_queue_t *q;
+{
+	struct mbuf *m;
+
+	if ((m = _getq(q)) == NULL) {
+		if (rp->red_idle == 0) {
+			rp->red_idle = 1;
+			microtime(&rp->red_last);
+		}
+		return NULL;
+	}
+
+	rp->red_idle = 0;
+	return (m);
+}
+
+/*
+ * helper routine to calibrate avg during idle.
+ * pow_w(wtab, n) returns (1 - Wq)^n in fixed-point
+ * here Wq = 1/weight and the code assumes Wq is close to zero.
+ *
+ * w_tab[n] holds ((1 - Wq)^(2^n)) in fixed-point.
+ */
+static struct wtab *wtab_list = NULL;	/* pointer to wtab list */
+
+struct wtab *
+wtab_alloc(int weight)
+{
+	struct wtab	*w;
+	int		 i;
+
+	for (w = wtab_list; w != NULL; w = w->w_next)
+		if (w->w_weight == weight) {
+			w->w_refcount++;
+			return (w);
+		}
+
+	MALLOC(w, struct wtab *, sizeof(struct wtab), M_DEVBUF, M_WAITOK);
+	if (w == NULL)
+		panic("wtab_alloc: malloc failed!");
+	(void)memset(w, 0, sizeof(struct wtab));
+	w->w_weight = weight;
+	w->w_refcount = 1;
+	w->w_next = wtab_list;
+	wtab_list = w;
+
+	/* initialize the weight table */
+	w->w_tab[0] = ((weight - 1) << FP_SHIFT) / weight;
+	for (i = 1; i < 32; i++) {
+		w->w_tab[i] = (w->w_tab[i-1] * w->w_tab[i-1]) >> FP_SHIFT;
+		if (w->w_tab[i] == 0 && w->w_param_max == 0)
+			w->w_param_max = 1 << i;
+	}
+
+	return (w);
+}
+
+int
+wtab_destroy(struct wtab *w)
+{
+	struct wtab	*prev;
+
+	if (--w->w_refcount > 0)
+		return (0);
+
+	if (wtab_list == w)
+		wtab_list = w->w_next;
+	else for (prev = wtab_list; prev->w_next != NULL; prev = prev->w_next)
+		if (prev->w_next == w) {
+			prev->w_next = w->w_next;
+			break;
+		}
+
+	FREE(w, M_DEVBUF);
+	return (0);
+}
+
+int32_t
+pow_w(struct wtab *w, int n)
+{
+	int	i, bit;
+	int32_t	val;
+
+	if (n >= w->w_param_max)
+		return (0);
+
+	val = 1 << FP_SHIFT;
+	if (n <= 0)
+		return (val);
+
+	bit = 1;
+	i = 0;
+	while (n) {
+		if (n & bit) {
+			val = (val * w->w_tab[i]) >> FP_SHIFT;
+			n &= ~bit;
+		}
+		i++;
+		bit <<=  1;
+	}
+	return (val);
+}
+
+#ifdef ALTQ3_COMPAT
 /*
  * red device interface
  */
@@ -408,7 +912,7 @@ redioctl(dev, cmd, addr, flag, l)
 #ifdef ALTQ_FLOWVALVE
 			}
 #endif /* ALTQ_FLOWVALVE */
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	case RED_CONFIG:
@@ -453,7 +957,7 @@ redioctl(dev, cmd, addr, flag, l)
 			fc->red_thmin = rqp->rq_red->red_thmin;
 			fc->red_thmax = rqp->rq_red->red_thmax;
 
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	case RED_SETDEFAULTS:
@@ -465,7 +969,7 @@ redioctl(dev, cmd, addr, flag, l)
 			default_th_min = rp->th_min;
 			default_th_max = rp->th_max;
 			default_inv_pmax = rp->inv_pmax;
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	default:
@@ -507,127 +1011,6 @@ red_detach(rqp)
 }
 
 /*
- * red support routines
- */
-
-red_t *
-red_alloc(weight, inv_pmax, th_min, th_max, flags, pkttime)
-	int	weight, inv_pmax, th_min, th_max;
-	int	flags, pkttime;
-{
-	red_t 	*rp;
-	int	w, i;
-	int	npkts_per_sec;
-
-	MALLOC(rp, red_t *, sizeof(red_t), M_DEVBUF, M_WAITOK);
-	if (rp == NULL)
-		return (NULL);
-	(void)memset(rp, 0, sizeof(red_t));
-
-	rp->red_avg = 0;
-	rp->red_idle = 1;
-
-	if (weight == 0)
-		rp->red_weight = W_WEIGHT;
-	else
-		rp->red_weight = weight;
-	if (inv_pmax == 0)
-		rp->red_inv_pmax = default_inv_pmax;
-	else
-		rp->red_inv_pmax = inv_pmax;
-	if (th_min == 0)
-		rp->red_thmin = default_th_min;
-	else
-		rp->red_thmin = th_min;
-	if (th_max == 0)
-		rp->red_thmax = default_th_max;
-	else
-		rp->red_thmax = th_max;
-
-	rp->red_flags = flags;
-
-	if (pkttime == 0)
-		/* default packet time: 1000 bytes / 10Mbps * 8 * 1000000 */
-		rp->red_pkttime = 800;
-	else
-		rp->red_pkttime = pkttime;
-
-	if (weight == 0) {
-		/* when the link is very slow, adjust red parameters */
-		npkts_per_sec = 1000000 / rp->red_pkttime;
-		if (npkts_per_sec < 50) {
-			/* up to about 400Kbps */
-			rp->red_weight = W_WEIGHT_2;
-		} else if (npkts_per_sec < 300) {
-			/* up to about 2.4Mbps */
-			rp->red_weight = W_WEIGHT_1;
-		}
-	}
-
-	/* calculate wshift.  weight must be power of 2 */
-	w = rp->red_weight;
-	for (i = 0; w > 1; i++)
-		w = w >> 1;
-	rp->red_wshift = i;
-	w = 1 << rp->red_wshift;
-	if (w != rp->red_weight) {
-		printf("invalid weight value %d for red! use %d\n",
-		       rp->red_weight, w);
-		rp->red_weight = w;
-	}
-
-	/*
-	 * thmin_s and thmax_s are scaled versions of th_min and th_max
-	 * to be compared with avg.
-	 */
-	rp->red_thmin_s = rp->red_thmin << (rp->red_wshift + FP_SHIFT);
-	rp->red_thmax_s = rp->red_thmax << (rp->red_wshift + FP_SHIFT);
-
-	/*
-	 * precompute probability denominator
-	 *  probd = (2 * (TH_MAX-TH_MIN) / pmax) in fixed-point
-	 */
-	rp->red_probd = (2 * (rp->red_thmax - rp->red_thmin)
-			 * rp->red_inv_pmax) << FP_SHIFT;
-
-	/* allocate weight table */
-	rp->red_wtab = wtab_alloc(rp->red_weight);
-
-	microtime(&rp->red_last);
-#ifdef ALTQ_FLOWVALVE
-	if (flags & REDF_FLOWVALVE)
-		rp->red_flowvalve = fv_alloc(rp);
-	/* if fv_alloc failes, flowvalve is just disabled */
-#endif
-	return (rp);
-}
-
-void
-red_destroy(rp)
-	red_t *rp;
-{
-#ifdef ALTQ_FLOWVALVE
-	if (rp->red_flowvalve != NULL)
-		fv_destroy(rp->red_flowvalve);
-#endif
-	wtab_destroy(rp->red_wtab);
-	FREE(rp, M_DEVBUF);
-}
-
-void
-red_getstats(rp, sp)
-	red_t *rp;
-	struct redstats *sp;
-{
-	sp->q_avg 		= rp->red_avg >> rp->red_wshift;
-	sp->xmit_cnt		= rp->red_stats.xmit_cnt;
-	sp->drop_cnt		= rp->red_stats.drop_cnt;
-	sp->drop_forced		= rp->red_stats.drop_forced;
-	sp->drop_unforced	= rp->red_stats.drop_unforced;
-	sp->marked_packets	= rp->red_stats.marked_packets;
-}
-
-/*
  * enqueue routine:
  *
  *	returns: 0 when successfully queued.
@@ -645,269 +1028,6 @@ red_enqueue(ifq, m, pktattr)
 		return ENOBUFS;
 	ifq->ifq_len++;
 	return 0;
-}
-
-int
-red_addq(rp, q, m, pktattr)
-	red_t *rp;
-	class_queue_t *q;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
-{
-	int avg, droptype;
-	int n;
-#ifdef ALTQ_FLOWVALVE
-	struct fve *fve = NULL;
-
-	if (rp->red_flowvalve != NULL && rp->red_flowvalve->fv_flows > 0)
-		if (fv_checkflow(rp->red_flowvalve, pktattr, &fve)) {
-			m_freem(m);
-			return (-1);
-		}
-#endif
-
-	avg = rp->red_avg;
-
-	/*
-	 * if we were idle, we pretend that n packets arrived during
-	 * the idle period.
-	 */
-	if (rp->red_idle) {
-		struct timeval now;
-		int t;
-
-		rp->red_idle = 0;
-		microtime(&now);
-		t = (now.tv_sec - rp->red_last.tv_sec);
-		if (t > 60) {
-			/*
-			 * being idle for more than 1 minute, set avg to zero.
-			 * this prevents t from overflow.
-			 */
-			avg = 0;
-		} else {
-			t = t * 1000000 + (now.tv_usec - rp->red_last.tv_usec);
-			n = t / rp->red_pkttime - 1;
-
-			/* the following line does (avg = (1 - Wq)^n * avg) */
-			if (n > 0)
-				avg = (avg >> FP_SHIFT) *
-				    pow_w(rp->red_wtab, n);
-		}
-	}
-
-	/* run estimator. (note: avg is scaled by WEIGHT in fixed-point) */
-	avg += (qlen(q) << FP_SHIFT) - (avg >> rp->red_wshift);
-	rp->red_avg = avg;		/* save the new value */
-
-	/*
-	 * red_count keeps a tally of arriving traffic that has not
-	 * been dropped.
-	 */
-	rp->red_count++;
-
-	/* see if we drop early */
-	droptype = DTYPE_NODROP;
-	if (avg >= rp->red_thmin_s && qlen(q) > 1) {
-		if (avg >= rp->red_thmax_s) {
-			/* avg >= th_max: forced drop */
-			droptype = DTYPE_FORCED;
-		} else if (rp->red_old == 0) {
-			/* first exceeds th_min */
-			rp->red_count = 1;
-			rp->red_old = 1;
-		} else if (drop_early((avg - rp->red_thmin_s) >> rp->red_wshift,
-				      rp->red_probd, rp->red_count)) {
-			/* mark or drop by red */
-			if ((rp->red_flags & REDF_ECN) &&
-			    mark_ecn(m, pktattr, rp->red_flags)) {
-				/* successfully marked.  do not drop. */
-				rp->red_count = 0;
-#ifdef RED_STATS
-				rp->red_stats.marked_packets++;
-#endif
-			} else {
-				/* unforced drop by red */
-				droptype = DTYPE_EARLY;
-			}
-		}
-	} else {
-		/* avg < th_min */
-		rp->red_old = 0;
-	}
-
-	/*
-	 * if the queue length hits the hard limit, it's a forced drop.
-	 */
-	if (droptype == DTYPE_NODROP && qlen(q) >= qlimit(q))
-		droptype = DTYPE_FORCED;
-
-#ifdef RED_RANDOM_DROP
-	/* if successful or forced drop, enqueue this packet. */
-	if (droptype != DTYPE_EARLY)
-		_addq(q, m);
-#else
-	/* if successful, enqueue this packet. */
-	if (droptype == DTYPE_NODROP)
-		_addq(q, m);
-#endif
-	if (droptype != DTYPE_NODROP) {
-		if (droptype == DTYPE_EARLY) {
-			/* drop the incoming packet */
-#ifdef RED_STATS
-			rp->red_stats.drop_unforced++;
-#endif
-		} else {
-			/* forced drop, select a victim packet in the queue. */
-#ifdef RED_RANDOM_DROP
-			m = _getq_random(q);
-#endif
-#ifdef RED_STATS
-			rp->red_stats.drop_forced++;
-#endif
-		}
-#ifdef RED_STATS
-		PKTCNTR_ADD(&rp->red_stats.drop_cnt, m_pktlen(m));
-#endif
-		rp->red_count = 0;
-#ifdef ALTQ_FLOWVALVE
-		if (rp->red_flowvalve != NULL)
-			fv_dropbyred(rp->red_flowvalve, pktattr, fve);
-#endif
-		m_freem(m);
-		return (-1);
-	}
-	/* successfully queued */
-#ifdef RED_STATS
-	PKTCNTR_ADD(&rp->red_stats.xmit_cnt, m_pktlen(m));
-#endif
-	return (0);
-}
-
-/*
- * early-drop probability is calculated as follows:
- *   prob = p_max * (avg - th_min) / (th_max - th_min)
- *   prob_a = prob / (2 - count*prob)
- *	    = (avg-th_min) / (2*(th_max-th_min)*inv_p_max - count*(avg-th_min))
- * here prob_a increases as successive undrop count increases.
- * (prob_a starts from prob/2, becomes prob when (count == (1 / prob)),
- * becomes 1 when (count >= (2 / prob))).
- */
-int
-drop_early(fp_len, fp_probd, count)
-	int fp_len;	/* (avg - TH_MIN) in fixed-point */
-	int fp_probd;	/* (2 * (TH_MAX-TH_MIN) / pmax) in fixed-point */
-	int count;	/* how many successive undropped packets */
-{
-	int d;		/* denominator of drop-probability */
-
-	d = fp_probd - count * fp_len;
-	if (d <= 0)
-		/* count exceeds the hard limit: drop or mark */
-		return (1);
-
-	/*
-	 * now the range of d is [1..600] in fixed-point. (when
-	 * th_max-th_min=10 and p_max=1/30)
-	 * drop probability = (avg - TH_MIN) / d
-	 */
-
-	if ((random() % d) < fp_len) {
-		/* drop or mark */
-		return (1);
-	}
-	/* no drop/mark */
-	return (0);
-}
-
-/*
- * try to mark CE bit to the packet.
- *    returns 1 if successfully marked, 0 otherwise.
- */
-int
-mark_ecn(m, pktattr, flags)
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
-	int flags;
-{
-	struct mbuf *m0;
-
-	if (pktattr == NULL ||
-	    (pktattr->pattr_af != AF_INET && pktattr->pattr_af != AF_INET6))
-		return (0);
-
-	/* verify that pattr_hdr is within the mbuf data */
-	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if ((pktattr->pattr_hdr >= m0->m_data) &&
-		    (pktattr->pattr_hdr < m0->m_data + m0->m_len))
-			break;
-	if (m0 == NULL) {
-		/* ick, pattr_hdr is stale */
-		pktattr->pattr_af = AF_UNSPEC;
-		return (0);
-	}
-
-	switch (pktattr->pattr_af) {
-	case AF_INET:
-		if (flags & REDF_ECN4) {
-			struct ip *ip = (struct ip *)pktattr->pattr_hdr;
-			u_int8_t otos;
-			int sum;
-
-			if (ip->ip_v != 4)
-				return (0);	/* version mismatch! */
-
-			if ((ip->ip_tos & IPTOS_ECN_MASK) == IPTOS_ECN_NOTECT)
-				return (0);	/* not-ECT */
-			if ((ip->ip_tos & IPTOS_ECN_MASK) == IPTOS_ECN_CE)
-				return (1);	/* already marked */
-
-			/*
-			 * ecn-capable but not marked,
-			 * mark CE and update checksum
-			 */
-			otos = ip->ip_tos;
-			ip->ip_tos |= IPTOS_ECN_CE;
-			/*
-			 * update checksum (from RFC1624)
-			 *	   HC' = ~(~HC + ~m + m')
-			 */
-			sum = ~ntohs(ip->ip_sum) & 0xffff;
-			sum += (~otos & 0xffff) + ip->ip_tos;
-			sum = (sum >> 16) + (sum & 0xffff);
-			sum += (sum >> 16);  /* add carry */
-			ip->ip_sum = htons(~sum & 0xffff);
-			return (1);
-		}
-		break;
-#ifdef INET6
-	case AF_INET6:
-		if (flags & REDF_ECN6) {
-			struct ip6_hdr *ip6 = (struct ip6_hdr *)pktattr->pattr_hdr;
-			u_int32_t flowlabel;
-
-			flowlabel = ntohl(ip6->ip6_flow);
-			if ((flowlabel >> 28) != 6)
-				return (0);	/* version mismatch! */
-			if ((flowlabel & (IPTOS_ECN_MASK << 20)) ==
-			    (IPTOS_ECN_NOTECT << 20))
-				return (0);	/* not-ECT */
-			if ((flowlabel & (IPTOS_ECN_MASK << 20)) ==
-			    (IPTOS_ECN_CE << 20))
-				return (1);	/* already marked */
-			/*
-			 * ecn-capable but not marked,  mark CE
-			 */
-			flowlabel |= (IPTOS_ECN_CE << 20);
-			ip6->ip6_flow = htonl(flowlabel);
-			return (1);
-		}
-		break;
-#endif  /* INET6 */
-	}
-
-	/* not marked */
-	return (0);
 }
 
 /*
@@ -936,25 +1056,6 @@ red_dequeue(ifq, op)
 	return (m);
 }
 
-struct mbuf *
-red_getq(rp, q)
-	red_t *rp;
-	class_queue_t *q;
-{
-	struct mbuf *m;
-
-	if ((m = _getq(q)) == NULL) {
-		if (rp->red_idle == 0) {
-			rp->red_idle = 1;
-			microtime(&rp->red_last);
-		}
-		return NULL;
-	}
-
-	rp->red_idle = 0;
-	return (m);
-}
-
 static int
 red_request(ifq, req, arg)
 	struct ifaltq *ifq;
@@ -980,98 +1081,6 @@ red_purgeq(rqp)
 		rqp->rq_ifq->ifq_len = 0;
 }
 
-
-/*
- * helper routine to calibrate avg during idle.
- * pow_w(wtab, n) returns (1 - Wq)^n in fixed-point
- * here Wq = 1/weight and the code assumes Wq is close to zero.
- *
- * w_tab[n] holds ((1 - Wq)^(2^n)) in fixed-point.
- */
-static struct wtab *wtab_list = NULL;	/* pointer to wtab list */
-
-struct wtab *
-wtab_alloc(weight)
-	int weight;
-{
-	struct wtab *w;
-	int i;
-
-	for (w = wtab_list; w != NULL; w = w->w_next)
-		if (w->w_weight == weight) {
-			w->w_refcount++;
-			return (w);
-		}
-
-	MALLOC(w, struct wtab *, sizeof(struct wtab), M_DEVBUF, M_WAITOK);
-	if (w == NULL)
-		panic("wtab_alloc: malloc failed!");
-	(void)memset(w, 0, sizeof(struct wtab));
-	w->w_weight = weight;
-	w->w_refcount = 1;
-	w->w_next = wtab_list;
-	wtab_list = w;
-
-	/* initialize the weight table */
-	w->w_tab[0] = ((weight - 1) << FP_SHIFT) / weight;
-	for (i = 1; i < 32; i++) {
-		w->w_tab[i] = (w->w_tab[i-1] * w->w_tab[i-1]) >> FP_SHIFT;
-		if (w->w_tab[i] == 0 && w->w_param_max == 0)
-			w->w_param_max = 1 << i;
-	}
-
-	return (w);
-}
-
-int
-wtab_destroy(w)
-	struct wtab *w;
-{
-	struct wtab *prev;
-
-	if (--w->w_refcount > 0)
-		return (0);
-
-	if (wtab_list == w)
-		wtab_list = w->w_next;
-	else for (prev = wtab_list; prev->w_next != NULL; prev = prev->w_next)
-		if (prev->w_next == w) {
-			prev->w_next = w->w_next;
-			break;
-		}
-
-	FREE(w, M_DEVBUF);
-	return (0);
-}
-
-int32_t
-pow_w(w, n)
-	struct wtab *w;
-	int n;
-{
-	int	i, bit;
-	int32_t	val;
-
-	if (n >= w->w_param_max)
-		return (0);
-
-	val = 1 << FP_SHIFT;
-	if (n <= 0)
-		return (val);
-
-	bit = 1;
-	i = 0;
-	while (n) {
-		if (n & bit) {
-			val = (val * w->w_tab[i]) >> FP_SHIFT;
-			n &= ~bit;
-		}
-		i++;
-		bit <<=  1;
-	}
-	return (val);
-}
-
 #ifdef ALTQ_FLOWVALVE
 
 #define	FV_PSHIFT	7	/* weight of average drop rate -- 1/128 */
@@ -1089,6 +1098,8 @@ pow_w(w, n)
 #define	FV_BACKOFFTHRESH	1  /* backoff threshold interval in second */
 #define	FV_TTHRESH		3  /* time threshold to delete fve */
 #define	FV_ALPHA		5  /* extra packet count */
+
+#define	FV_STATS
 
 #if (__FreeBSD_version > 300000)
 #define	FV_TIMESTAMP(tp)	getmicrotime(tp)
@@ -1463,7 +1474,9 @@ static struct altqsw red_sw =
 	{"red", redopen, redclose, redioctl};
 
 ALTQ_MODULE(altq_red, ALTQT_RED, &red_sw);
+MODULE_VERSION(altq_red, 1);
 
 #endif /* KLD_MODULE */
+#endif /* ALTQ3_COMPAT */
 
 #endif /* ALTQ_RED */

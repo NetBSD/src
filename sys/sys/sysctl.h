@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.153 2006/03/17 08:50:36 kleink Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.152 2006/02/25 00:58:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -201,7 +201,7 @@ struct ctlname {
 #define	KERN_SECURELVL	 	 9	/* int: system security level */
 #define	KERN_HOSTNAME		10	/* string: hostname */
 #define	KERN_HOSTID		11	/* int: host identifier */
-#define	KERN_CLOCKRATE		12	/* struct: struct clockinfo */
+#define	KERN_CLOCKRATE		12	/* struct: struct clockrate */
 #define	KERN_VNODE		13	/* struct: vnode structures */
 #define	KERN_PROC		14	/* struct: process entries */
 #define	KERN_FILE		15	/* struct: file entries */
@@ -359,17 +359,6 @@ struct ctlname {
 	{ "cp_id", CTLTYPE_STRUCT }, \
 	{ "hardclock_ticks", CTLTYPE_INT }, \
 }
-
-/*
- *  KERN_CLOCKRATE structure
- */
-struct clockinfo {
-	int	hz;		/* clock frequency */
-	int	tick;		/* micro-seconds per hz tick */
-	int	tickadj;	/* clock skew rate for adjtime() */
-	int	stathz;		/* statistics clock frequency */
-	int	profhz;		/* profiling clock frequency */
-};
 
 /*
  * KERN_PROC subtypes

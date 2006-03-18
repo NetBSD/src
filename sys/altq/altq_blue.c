@@ -1,8 +1,8 @@
-/*	$NetBSD: altq_blue.c,v 1.12 2005/12/11 12:16:03 christos Exp $	*/
-/*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.12.12.1 2006/03/18 12:08:18 peter Exp $	*/
+/*	$KAME: altq_blue.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,17 +61,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12.12.1 2006/03/18 12:08:18 peter Exp $");
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#ifdef _KERNEL_OPT
 #include "opt_altq.h"
-#if (__FreeBSD__ != 2)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
+
 #ifdef ALTQ_BLUE	/* blue is enabled by ALTQ_BLUE option in opt_altq.h */
 
 #include <sys/param.h>
@@ -97,28 +93,29 @@ __KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12 2005/12/11 12:16:03 christos Exp 
 #include <altq/altq_conf.h>
 #include <altq/altq_blue.h>
 
+#ifdef ALTQ3_COMPAT
 /*
  * Blue is proposed and implemented by Wu-chang Feng <wuchang@eecs.umich.edu>.
  * more information on Blue is available from
- * http://www.thefengs.com/wuchang/work/blue/
+ * http://www.eecs.umich.edu/~wuchang/blue/
  */
 
 /* fixed-point uses 12-bit decimal places */
 #define	FP_SHIFT	12	/* fixed-point shift */
 
-#define	BLUE_LIMIT	200	/* default max queue length */
+#define	BLUE_LIMIT	200	/* default max queue lenght */
+#define	BLUE_STATS		/* collect statistics */
 
 /* blue_list keeps all blue_state_t's allocated. */
 static blue_queue_t *blue_list = NULL;
 
 /* internal function prototypes */
-static int blue_enqueue __P((struct ifaltq *, struct mbuf *,
-			     struct altq_pktattr *));
-static struct mbuf *blue_dequeue __P((struct ifaltq *, int));
-static int drop_early __P((blue_t *));
-static int mark_ecn __P((struct mbuf *, struct altq_pktattr *, int));
-static int blue_detach __P((blue_queue_t *));
-static int blue_request __P((struct ifaltq *, int, void *));
+static int blue_enqueue(struct ifaltq *, struct mbuf *, struct altq_pktattr *);
+static struct mbuf *blue_dequeue(struct ifaltq *, int);
+static int drop_early(blue_t *);
+static int mark_ecn(struct mbuf *, struct altq_pktattr *, int);
+static int blue_detach(blue_queue_t *);
+static int blue_request(struct ifaltq *, int, void *);
 
 /*
  * blue device interface
@@ -281,7 +278,7 @@ blueioctl(dev, cmd, addr, flag, l)
 			q_stats->drop_unforced = rp->blue_stats.drop_unforced;
 			q_stats->marked_packets = rp->blue_stats.marked_packets;
 
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	case BLUE_CONFIG:
@@ -310,7 +307,7 @@ blueioctl(dev, cmd, addr, flag, l)
 				  rqp->rq_blue->blue_pkttime,
 				  rqp->rq_blue->blue_max_pmark,
 				  rqp->rq_blue->blue_hold_time);
-		} while (0);
+		} while (/*CONSTCOND*/ 0);
 		break;
 
 	default:
@@ -511,7 +508,7 @@ static int
 drop_early(rp)
 	blue_t *rp;
 {
-	if ((random() % rp->blue_max_pmark) < rp->blue_pmark) {
+	if ((arc4random() % rp->blue_max_pmark) < rp->blue_pmark) {
 		/* drop or mark */
 		return (1);
 	}
@@ -683,4 +680,5 @@ ALTQ_MODULE(altq_blue, ALTQT_BLUE, &blue_sw);
 
 #endif /* KLD_MODULE */
 
+#endif /* ALTQ3_COMPAT */
 #endif /* ALTQ_BLUE */

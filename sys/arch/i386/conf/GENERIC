@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.735 2006/03/17 12:25:01 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.733 2006/03/12 22:57:01 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.735 $"
+#ident 		"GENERIC-$Revision: 1.733 $"
 
 maxusers	32		# estimated number of users
 
@@ -421,8 +421,6 @@ gpio* 	at elansc?
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
-#viapcib* at pci? dev ? function ?	# VT8235 PCI-ISA w/ SMBus support
-#iic*	at viapcib?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
@@ -441,7 +439,6 @@ eisa0	at pceb?
 # ISA bus support
 #isa0	at ichlpcib?
 #isa0	at gscpcib?
-#isa0	at viapcib?
 isa0	at mainbus?
 isa0	at pceb?
 isa0	at pcib?

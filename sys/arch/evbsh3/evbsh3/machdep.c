@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2006/03/17 16:06:51 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56 2005/12/24 20:07:03 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2006/03/17 16:06:51 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2005/12/24 20:07:03 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -223,11 +223,11 @@ haltsys:
 void
 initSH3(void *pc)	/* XXX return address */
 {
-	extern char edata[], end[];
+	extern char _edata[], _end[];
 	vaddr_t kernend;
 
 	/* Clear bss */
-	memset(edata, 0, end - edata);
+	memset(_edata, 0, _end - _edata);
 
 	/* Initilize CPU ops. */
 #if defined(SH3) && defined(SH4)
@@ -261,7 +261,7 @@ initSH3(void *pc)	/* XXX return address */
 	consinit();
 
 	/* Load memory to UVM */
-	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
+	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(_end)));
 	physmem = atop(IOM_RAM_SIZE);
 	uvm_page_physload(
 		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),

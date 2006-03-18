@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.53 2006/03/17 08:50:36 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.52 2005/12/05 00:16:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -149,6 +149,17 @@ struct	itimerval {
 struct	itimerspec {
 	struct	timespec it_interval;
 	struct	timespec it_value;
+};
+
+/*
+ * Getkerninfo clock information structure
+ */
+struct clockinfo {
+	int	hz;		/* clock frequency */
+	int	tick;		/* micro-seconds per hz tick */
+	int	tickadj;	/* clock skew rate for adjtime() */
+	int	stathz;		/* statistics clock frequency */
+	int	profhz;		/* profiling clock frequency */
 };
 
 #define	CLOCK_REALTIME	0
