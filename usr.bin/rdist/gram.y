@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.11 2003/10/21 02:23:13 fvdl Exp $	*/
+/*	$NetBSD: gram.y,v 1.12 2006/03/18 09:46:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: gram.y,v 1.11 2003/10/21 02:23:13 fvdl Exp $");
+__RCSID("$NetBSD: gram.y,v 1.12 2006/03/18 09:46:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -478,6 +478,24 @@ makenl(char *name)
 	nl->n_name = name;
 	nl->n_next = NULL;
 	return(nl);
+}
+
+void
+freenl(struct namelist *nl)
+{
+	if (nl == NULL)
+		return;
+	freenl(nl->n_next);
+	free(nl);
+}
+
+void
+freesubcmd(struct subcmd *cmd)
+{
+	if (cmd == NULL)
+		return;
+	freesubcmd(cmd->sc_next);
+	free(cmd);
 }
 
 /*

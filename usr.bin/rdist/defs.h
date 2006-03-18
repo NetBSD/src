@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.16 2003/08/07 11:15:35 agc Exp $	*/
+/*	$NetBSD: defs.h,v 1.17 2006/03/18 09:46:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -173,8 +173,10 @@ struct namelist *
 void	 lostconn(int);
 struct namelist *
 	 makenl(char *);
+void	 freenl(struct namelist *);
 struct subcmd *
 	 makesubcmd(int);
+void	 freesubcmd(struct subcmd *);
 void	 prnames(struct namelist *);
 void	 server(void);
 void	 yyerror(char *);

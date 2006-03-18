@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2004/07/13 12:06:35 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2006/03/18 09:46:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2004/07/13 12:06:35 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2006/03/18 09:46:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -299,6 +299,9 @@ docmdargs(int nargs, char **args)
 	}
 	insert(NULL, files, hosts, cmds);
 	docmds(NULL, 0, NULL);
+	freenl(files);
+	freenl(hosts);
+	freesubcmd(cmds);
 }
 
 /*
