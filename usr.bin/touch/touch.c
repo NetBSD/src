@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.25 2005/11/26 13:57:27 tsutsui Exp $	*/
+/*	$NetBSD: touch.c,v 1.26 2006/03/18 11:15:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.25 2005/11/26 13:57:27 tsutsui Exp $");
+__RCSID("$NetBSD: touch.c,v 1.26 2006/03/18 11:15:00 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -355,7 +355,7 @@ err:			rval = 1;
 		}
 	}
 
-	if (close(fd) && rval != 1) {
+	if (fd >= 0 && close(fd) && rval != 1) {
 		rval = 1;
 		warn("%s", fname);
 	}
