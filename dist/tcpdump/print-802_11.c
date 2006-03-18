@@ -1,4 +1,4 @@
-/*	$NetBSD: print-802_11.c,v 1.9 2006/02/26 03:04:28 dyoung Exp $	*/
+/*	$NetBSD: print-802_11.c,v 1.10 2006/03/18 02:15:03 elad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -28,7 +28,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-802_11.c,v 1.22.2.6 2003/12/10 09:52:33 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-802_11.c,v 1.9 2006/02/26 03:04:28 dyoung Exp $");
+__RCSID("$NetBSD: print-802_11.c,v 1.10 2006/03/18 02:15:03 elad Exp $");
 #endif
 #endif
 
@@ -456,8 +456,8 @@ handle_auth(const u_char *p)
 	    ((pbody.auth_trans_seq_num == 2) ||
 	     (pbody.auth_trans_seq_num == 3))) {
 		printf(" (%s)-%x [Challenge Text] %s",
-		    (pbody.auth_alg < 4) ? auth_alg_text[pbody.auth_alg]
-		                         : "Reserved",
+		    (pbody.auth_alg < (sizeof(auth_alg_text)/sizeof(auth_alg_text[0]))) ?
+		    auth_alg_text[pbody.auth_alg] : "Reserved",
 		    pbody.auth_trans_seq_num,
 		    ((pbody.auth_trans_seq_num % 2)
 		        ? ((pbody.status_code < 19)
