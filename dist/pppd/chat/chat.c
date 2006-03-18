@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.5 2006/03/18 03:45:34 christos Exp $	*/
+/*	$NetBSD: chat.c,v 1.6 2006/03/18 04:34:41 christos Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.30 2004/01/17 05:47:55 carlsonj Exp";
 #else
-__RCSID("$NetBSD: chat.c,v 1.5 2006/03/18 03:45:34 christos Exp $");
+__RCSID("$NetBSD: chat.c,v 1.6 2006/03/18 04:34:41 christos Exp $");
 #endif
 #endif
 
@@ -1385,7 +1385,7 @@ int get_string(string)
 register char *string;
 {
     char temp[STR_LEN];
-    int c, printed = 0, len, minlen;
+    int c, len, minlen;
     register char *s = temp, *end = s + STR_LEN;
     char *logged = temp;
 
@@ -1523,13 +1523,6 @@ register char *string;
     }
 
     alarm(0);
-    
-    if (verbose && printed) {
-	if (alarmed)
-	    msgf(" -- read timed out");
-	else
-	    msgf(" -- read failed: %m");
-    }
 
     exit_code = 3;
     alarmed   = 0;
