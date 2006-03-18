@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.6 2006/03/18 13:44:15 kardel Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.7 2006/03/18 14:33:20 kardel Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -2184,7 +2184,7 @@ oncore_msg_BaEaHa(
 		default:	i = 0; break;
 		}
 
-		if (i) {
+		if (i && smp) {
 			i *= (len+6);
 			smp[i + 2]++;
 			memcpy(&smp[i+3], buf, (size_t) (len+3));
