@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.8 2005/11/21 14:20:29 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.9 2006/03/18 10:19:09 jnemeth Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.17.2.5 2005/05/20 07:31:09 manubsd Exp */
 
@@ -676,11 +676,15 @@ xauth_login_pam(port, raddr, usr, pwd)
 		goto out;
 	}
 
+	if (remote != NULL)
+		free(remote);
 	return 0;
 
 out:
 	pam_end(pam, error);
 	isakmp_cfg_config.port_pool[port].pam = NULL;
+	if (remote != NULL)
+		free(remote);
 	return -1;
 }
 #endif
