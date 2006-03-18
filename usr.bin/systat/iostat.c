@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.34 2006/02/05 09:58:39 dsl Exp $	*/
+/*	$NetBSD: iostat.c,v 1.35 2006/03/18 16:48:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.34 2006/02/05 09:58:39 dsl Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.35 2006/03/18 16:48:44 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -311,7 +311,7 @@ stats(int row, int col, int dn)
 	wwords = cur.dk_wbytes[dn] / 1024.0;
 	rxfer = cur.dk_rxfer[dn];
 	if (!read_write) {
-		rwords = wwords;
+		rwords += wwords;
 		rxfer += cur.dk_wxfer[dn];
 	}
 	if (numbers) {
