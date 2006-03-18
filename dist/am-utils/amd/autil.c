@@ -1,4 +1,4 @@
-/*	$NetBSD: autil.c,v 1.7 2006/02/05 16:28:56 christos Exp $	*/
+/*	$NetBSD: autil.c,v 1.8 2006/03/18 21:07:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -710,7 +710,7 @@ am_unmounted(am_node *mp)
   if (mp->am_parent && mp->am_parent->am_mnt)
     clocktime(&mp->am_parent->am_fattr.na_mtime);
 
-  if (mp->am_flags & AMF_REMOUNT) {
+  if (mp->am_parent && (mp->am_flags & AMF_REMOUNT)) {
     char *fname = strdup(mp->am_name);
     am_node *mp_parent = mp->am_parent;
     mntfs *mf_parent = mp_parent->am_mnt;
