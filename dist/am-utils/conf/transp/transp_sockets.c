@@ -1,4 +1,4 @@
-/*	$NetBSD: transp_sockets.c,v 1.10 2006/02/05 16:28:56 christos Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.11 2006/03/18 21:15:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -341,7 +341,7 @@ create_amq_service(int *udp_soAMQp,
 # ifndef RPC_MAXDATASIZE
 #  define RPC_MAXDATASIZE 9000
 # endif /* not RPC_MAXDATASIZE */
-    {
+    if (tcp_amqpp) {
       int maxrec = RPC_MAXDATASIZE;
       SVC_CONTROL(*tcp_amqpp, SVCSET_CONNMAXREC, &maxrec);
     }
