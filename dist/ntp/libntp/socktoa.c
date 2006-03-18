@@ -1,4 +1,4 @@
-/*	$NetBSD: socktoa.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: socktoa.c,v 1.3 2006/03/18 12:40:48 kardel Exp $	*/
 
 /*
  * socktoa - return a numeric host name from a sockaddr_storage structure
@@ -33,18 +33,20 @@ socktoa(
 
 	LIB_GETBUF(buffer);
 
-	if (sock == NULL) printf("null");
+	if (sock == NULL) {
+		strcpy(buffer, "null");
+	} else {
+		switch(sock->ss_family) {
 
-	switch(sock->ss_family) {
+			case AF_INET :
+				inet_ntop(AF_INET, &GET_INADDR(*sock), buffer,
+				    LIB_BUFLENGTH);
+				break;
 
-		case AF_INET :
-			inet_ntop(AF_INET, &GET_INADDR(*sock), buffer,
-			    LIB_BUFLENGTH);
-			break;
-
-		case AF_INET6 :
-			inet_ntop(AF_INET6, &GET_INADDR6(*sock), buffer,
-			    LIB_BUFLENGTH);
+			case AF_INET6 :
+				inet_ntop(AF_INET6, &GET_INADDR6(*sock), buffer,
+				    LIB_BUFLENGTH);
+		}
 	}
   	return buffer;
 }
