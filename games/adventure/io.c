@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.17 2006/03/18 23:31:19 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.18 2006/03/18 23:33:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.17 2006/03/18 23:31:19 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.18 2006/03/18 23:33:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -481,7 +481,10 @@ rliq(void)
 		if ((bitnum = rnum()) < 0)
 			break;
 		for (;;) {	/* read locs for bits           */
-			cond[rnum()] |= setbit[bitnum];
+			int n = rnum();
+			if (n < 0)
+				break;
+			cond[n] |= setbit[bitnum];
 			if (breakch == LF)
 				break;
 		}
