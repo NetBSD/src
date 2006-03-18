@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.15 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.16 2006/03/18 07:27:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.15 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.16 2006/03/18 07:27:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,7 @@ prop_copy(propdb_t db, opaque_t source, opaque_t dest, int wait)
 		{
 			int rv;
 
-oprop = prop; /* XXXX -- use vars to make gcc happy. */
+oprop = prop = NULL; /* XXXX -- use vars to make gcc happy. */
 			rv = prop_insert(nobj, srcp->kp_name,
 				/*XXXUNCONST*/
 				__UNCONST(srcp->kp_val), srcp->kp_len,
