@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.11 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: save.c,v 1.12 2006/03/18 23:25:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.11 2005/07/01 01:12:39 jmc Exp $");
+__RCSID("$NetBSD: save.c,v 1.12 2006/03/18 23:25:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,6 @@ save(int n)
 		writel(cantuse);
 		writel(fname);
 		writel(".\n");
-		close(fdesc);
 		cflag = 1;
 	}
 	write(fdesc, board, sizeof board);
