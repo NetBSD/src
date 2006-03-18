@@ -1,4 +1,4 @@
-/*	$NetBSD: autil.c,v 1.8 2006/03/18 21:07:47 christos Exp $	*/
+/*	$NetBSD: autil.c,v 1.9 2006/03/18 21:10:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -398,7 +398,7 @@ amfs_mkcacheref(mntfs *mf)
   else
     cache = "none";
   mf->mf_private = (opaque_t) mapc_find(mf->mf_info, cache,
-				     mf->mf_fo->opt_maptype);
+				     mf->mf_fo ? mf->mf_fo->opt_maptype : NULL);
   mf->mf_prfree = mapc_free;
 }
 
