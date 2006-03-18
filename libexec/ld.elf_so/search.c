@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.19 2004/10/22 05:39:57 skrll Exp $	 */
+/*	$NetBSD: search.c,v 1.20 2006/03/18 02:34:30 matt Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: search.c,v 1.19 2004/10/22 05:39:57 skrll Exp $");
+__RCSID("$NetBSD: search.c,v 1.20 2006/03/18 02:34:30 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -93,6 +93,15 @@ _rtld_search_library_path(const char *name, size_t namelen,
 	obj = _rtld_load_object(pathname, mode);
 	if (obj == NULL) {
 		Search_Path *path;
+
+		/*
+		 * Since pathname is freed by _rtld_load_object on error,
+		 * recreate it.
+		 */
+		pathname = xmalloc(pathnamelen + 1);
+		(void)strncpy(pathname, dir, dirlen);
+		pathname[dirlen] = '/';
+		strcpy(pathname + dirlen + 1, name);
 
 		path = NEW(Search_Path);
 		path->sp_pathlen = pathnamelen;
@@ -174,8 +183,8 @@ pathfound:
 	return obj;
 
 found:
-	obj = _rtld_load_object(pathname, mode);
-	if (obj == NULL)
-		free(pathname);
-	return obj;
+	/*
+	 * _rtld_load_object will free the pathname.
+	 */
+	return _rtld_load_object(pathname, mode);
 }
