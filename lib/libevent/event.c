@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.6 2006/03/17 02:34:22 chris Exp $	*/
+/*	$NetBSD: event.c,v 1.7 2006/03/19 19:57:22 christos Exp $	*/
 /*	$OpenBSD: event.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -220,7 +220,9 @@ event_process_active(struct event_base *base)
 		}
 	}
 
-	for (ev = TAILQ_FIRST(activeq); ev; ev = TAILQ_FIRST(activeq)) {
+	assert(activeq != NULL);
+
+	while ((ev = TAILQ_FIRST(activeq)) != NULL) {
 		event_queue_remove(base, ev, EVLIST_ACTIVE);
 		
 		/* Allows deletes to work */
