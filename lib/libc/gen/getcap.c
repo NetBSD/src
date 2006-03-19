@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.43 2006/03/19 02:12:09 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.44 2006/03/19 02:25:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.43 2006/03/19 02:12:09 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.44 2006/03/19 02:25:12 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -785,7 +785,9 @@ cgetnext(char **bp, const char * const *db_array)
 			line = toprec;
 		} else {
 			line = fgetln(pfp, &len);
-			if (line == NULL && pfp) {
+			if (line == NULL) {
+				if (pfp == NULL)
+					return -1;
 				if (ferror(pfp)) {
 					(void)cgetclose();
 					return (-1);
