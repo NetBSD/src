@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.8 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.9 2006/03/19 02:56:48 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_generic.c 1.21 89/02/28 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_generic.c,v 1.8 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: svc_generic.c,v 1.9 2006/03/19 02:56:48 christos Exp $");
 #endif
 #endif
 
@@ -312,10 +312,5 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 freedata:
 	if (madefd)
 		(void) close(fd);
-	if (xprt) {
-		if (!madefd) /* so that svc_destroy doesnt close fd */
-			xprt->xp_fd = RPC_ANYFD;
-		SVC_DESTROY(xprt);
-	}
 	return (NULL);
 }
