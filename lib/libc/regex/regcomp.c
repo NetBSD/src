@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.24 2006/03/19 04:17:42 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.25 2006/03/19 04:43:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.24 2006/03/19 04:17:42 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.25 2006/03/19 04:43:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -320,7 +320,6 @@ int cflags;
 		SETERROR(REG_ASSERT);
 #endif
 
-out:
 	/* win or lose, we're done */
 	if (p->error != 0)	/* lose */
 		regfree(preg);
