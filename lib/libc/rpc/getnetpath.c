@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.9 2005/02/09 21:35:47 kleink Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.10 2006/03/19 01:44:48 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetpath.c,v 1.9 2005/02/09 21:35:47 kleink Exp $");
+__RCSID("$NetBSD: getnetpath.c,v 1.10 2006/03/19 01:44:48 christos Exp $");
 #endif
 #endif
 
@@ -107,6 +107,7 @@ setnetpath()
 	    malloc(sizeof (struct netpath_vars))) == NULL)
 		return (NULL);
 	if ((np_sessionp->nc_handlep = setnetconfig()) == NULL) {
+		free(np_sessionp);
 		syslog (LOG_ERR, "rpc: failed to open " NETCONFIG);
 		return (NULL);
 	}
