@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.9 2006/03/17 23:36:38 abs Exp $	*/
+/*	$NetBSD: otto.c,v 1.10 2006/03/19 00:00:19 christos Exp $	*/
 # ifdef OTTO
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.9 2006/03/17 23:36:38 abs Exp $");
+__RCSID("$NetBSD: otto.c,v 1.10 2006/03/19 00:00:19 christos Exp $");
 #endif /* not lint */
 
 # include	<sys/time.h>
@@ -335,7 +335,8 @@ ottolook(rel_dir, itemp)
 	cont_north:
 		if (itemp->flags & DEADEND) {
 			itemp->flags |= BEEN;
-			been_there[r][col] |= NORTH;
+			if (r >= 0)
+				been_there[r][col] |= NORTH;
 			for (r = row - 1; r > row - itemp->distance; r--)
 				been_there[r][col] = ALLDIRS;
 		}
@@ -355,7 +356,8 @@ ottolook(rel_dir, itemp)
 	cont_south:
 		if (itemp->flags & DEADEND) {
 			itemp->flags |= BEEN;
-			been_there[r][col] |= SOUTH;
+			if (r < HEIGHT)
+				been_there[r][col] |= SOUTH;
 			for (r = row + 1; r < row + itemp->distance; r++)
 				been_there[r][col] = ALLDIRS;
 		}
