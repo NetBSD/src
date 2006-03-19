@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.27 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: rune.c,v 1.28 2006/03/19 02:44:27 christos Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.27 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: rune.c,v 1.28 2006/03/19 02:44:27 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -307,7 +307,8 @@ _Read_RuneMagi(fp)
 	}
 	if (rl->rl_variable_len == 0)
 		rl->rl_variable = NULL;
-	else if (fread(rl->rl_variable, rl->rl_variable_len, 1, fp) != 1) {
+	if (rl->rl_variable == NULL ||
+	    fread(rl->rl_variable, rl->rl_variable_len, 1, fp) != 1) {
 		_freeentry(&rl->rl_runetype_ext);
 		free(hostdata);
 		return NULL;
