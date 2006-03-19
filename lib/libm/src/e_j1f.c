@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_j1f.c,v 1.8 2006/03/19 20:15:07 christos Exp $");
+__RCSID("$NetBSD: e_j1f.c,v 1.9 2006/03/19 20:39:48 christos Exp $");
 #endif
 
 #include "math.h"
@@ -289,7 +289,7 @@ static const float qs5[6] = {
  -4.7191835938e+03, /* 0xc5937978 */
 };
 
-static const float qr3[6] = {
+static const float qr3[6] = { /* for x in [4.5454,2.8570]=1/[0.22001,0.3499] */
  -5.0783124372e-09, /* 0xb1ae7d4f */
  -1.0253783315e-01, /* 0xbdd1ff5b */
  -4.6101160049e+00, /* 0xc0938612 */
@@ -333,9 +333,13 @@ qonef(float x)
 	p = q = 0;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;
+	/* [inf, 1/0.125]		(8       40200000 00000000) */
 	if(ix>=0x40200000)     {p = qr8; q= qs8;}
-	else if(ix>=0x40f71c58){p = qr5; q= qs5;}
-	else if(ix>=0x4036db68){p = qr3; q= qs3;}
+	/* [1/0.125, 1/0.22001]		(4.54525 40122e55 7a125097) */
+	else if(ix>=0x40122e55){p = qr5; q= qs5;}
+	/* [1/0.22001, 1/0.3499]	(2.85796 4006dd19 d3a9aab1) */
+	else if(ix>=0x4006dd19){p = qr3; q= qs3;}
+	/* [1/0.3499, 1/0.5]		(2 	 40000000 00000000) */
 	else if(ix>=0x40000000){p = qr2; q= qs2;}
 	z = one/(x*x);
 	r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
