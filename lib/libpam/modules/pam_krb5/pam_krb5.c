@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.11 2006/03/19 21:07:55 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.12 2006/03/19 21:11:28 christos Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.11 2006/03/19 21:07:55 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.12 2006/03/19 21:11:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -119,6 +119,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	char password_prompt[80];
 	char pwbuf[1024];
 
+	princ_name = NULL;
 	retval = pam_get_user(pamh, &user, USER_PROMPT);
 	if (retval != PAM_SUCCESS)
 		return (retval);
@@ -183,7 +184,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	PAM_LOG("Done krb5_parse_name()");
 
 	/* Now convert the principal name into something human readable */
-	princ_name = NULL;
 	krbret = krb5_unparse_name(pam_context, princ, &princ_name);
 	if (krbret != 0) {
 		PAM_LOG("Error krb5_unparse_name(): %s",
