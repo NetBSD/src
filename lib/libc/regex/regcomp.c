@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.22 2006/03/19 02:48:30 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.23 2006/03/19 02:51:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.22 2006/03/19 02:48:30 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.23 2006/03/19 02:51:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1843,7 +1843,10 @@ struct re_guts *g;
 		}
 	} while (OP(s) != OEND);
 
-	if (g->mlen == 0)		/* there isn't one */
+	if (start == NULL)
+		g->mlen = 0;
+
+	if (g->mlen == 0)	/* there isn't one */
 		return;
 
 	/* turn it into a character string */
