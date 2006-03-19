@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.9 2003/08/07 09:37:47 agc Exp $	*/
+/*	$NetBSD: input.c,v 1.10 2006/03/19 00:50:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,8 +100,10 @@ again:
 		/* NOTREACHED */
 
 	case 0:	/* timed out */
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
+		if (tvp) {
+			tvp->tv_sec = 0;
+			tvp->tv_usec = 0;
+		}
 		return (0);
 	}
 	if (tvp) {
