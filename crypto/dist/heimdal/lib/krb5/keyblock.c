@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 __RCSID("$Heimdal: keyblock.c,v 1.12 2001/05/14 06:14:48 assar Exp $"
-        "$NetBSD: keyblock.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+        "$NetBSD: keyblock.c,v 1.2 2006/03/19 22:49:59 christos Exp $");
 
 void
 krb5_free_keyblock_contents(krb5_context context,
@@ -71,6 +71,7 @@ krb5_copy_keyblock (krb5_context context,
 		    krb5_keyblock **to)
 {
     krb5_keyblock *k;
+    int error;
 
     k = malloc (sizeof(*k));
     if (k == NULL) {
@@ -78,5 +79,8 @@ krb5_copy_keyblock (krb5_context context,
 	return ENOMEM;
     }
     *to = k;
-    return krb5_copy_keyblock_contents (context, inblock, k);
+    error = krb5_copy_keyblock_contents (context, inblock, k);
+    if (error)
+	free(k);
+    return error;
 }
