@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.27 2005/12/26 10:36:47 yamt Exp $ */
+/* $NetBSD: xbd.c,v 1.28 2006/03/19 00:36:09 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.27 2005/12/26 10:36:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.28 2006/03/19 00:36:09 bouyer Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -82,7 +82,7 @@ static int xbd_detach(struct device *, int);
 
 #if NXBD > 0
 int xbd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(xbd, sizeof(struct xbd_softc),
+CFATTACH_DECL(xbd_hypervisor, sizeof(struct xbd_softc),
     xbd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver xbd_cd;
