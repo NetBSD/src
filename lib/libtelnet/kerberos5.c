@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.15 2006/03/19 22:34:59 christos Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.16 2006/03/19 22:56:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -384,7 +384,7 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 
 		if (UserNameRequested && krb5_kuserok(telnet_context,
 		    ticket->client, UserNameRequested)) {
-			Data(ap, KRB_ACCEPT, name, name ? -1 : 0);
+			Data(ap, KRB_ACCEPT, name ? name : "", name ? -1 : 0);
 			if (auth_debug_mode) {
 				printf("Kerberos5 identifies him as ``%s''\r\n",
 				    name ? name : "");
@@ -524,7 +524,6 @@ kerberos5_reply(Authenticator * ap, unsigned char *data, int cnt)
 			if (ret) {
 				printf("[ krb5_auth_con_getkey: %s ]\r\n",
 				    krb5_get_err_text(telnet_context, ret));
-				krb5_free_keyblock(telnet_context, keyblock);
 				auth_send_retry();
 				return;
 			}
