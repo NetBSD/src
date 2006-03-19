@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.14 2006/03/08 03:09:04 jnemeth Exp $       */
+/*     $NetBSD: login_pam.c,v 1.15 2006/03/19 22:52:01 jnemeth Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.14 2006/03/08 03:09:04 jnemeth Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.15 2006/03/19 22:52:01 jnemeth Exp $");
 #endif /* not lint */
 
 /*
@@ -837,6 +837,7 @@ decode_ss(const char *arg)
 
 	(void)memcpy(&ss, ssp, sizeof(ss));
 	have_ss = 1;
+	free(ssp);
 }
 
 void
