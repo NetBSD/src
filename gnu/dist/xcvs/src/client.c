@@ -4155,7 +4155,7 @@ start_tcp_server (root, to_server, from_server)
 	status = krb_sendauth (KOPT_DO_MUTUAL, s, &ticket, "rcmd",
 			       hname, (char *)realm, (unsigned long) 0,
 			       &msg_data,
-			       &cred, sched, &laddr, &sin, "KCVSV1.0");
+			       &cred, (void *)sched, &laddr, &sin, "KCVSV1.0");
 	if (status != KSUCCESS)
 	    error (1, 0, "kerberos authentication failed: %s",
 		   krb_get_err_text (status));
