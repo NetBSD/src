@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.13 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.14 2006/03/19 01:21:28 christos Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.13 2005/10/29 18:02:04 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.14 2006/03/19 01:21:28 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -258,6 +258,9 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 		_DIAGASSERT(findlen(wchar) == c);
 
 		break;
+	default:
+		/* illegal state */
+		goto ilseq;
 	}
 
 	*s = s0;
