@@ -34,7 +34,7 @@
 #include <krb5_locl.h>
 
 __RCSID("$Heimdal: rd_rep.c,v 1.22 2001/06/18 02:46:53 assar Exp $"
-        "$NetBSD: rd_rep.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
+        "$NetBSD: rd_rep.c,v 1.2 2006/03/19 22:45:03 christos Exp $");
 
 krb5_error_code
 krb5_rd_rep(krb5_context context,
@@ -88,13 +88,16 @@ krb5_rd_rep(krb5_context context,
 				 data.length,
 				 *repl, 
 				 &len);
-  if (ret)
+  if (ret) {
+      free(*repl);
       return ret;
+  }
   
   if ((*repl)->ctime != auth_context->authenticator->ctime ||
       (*repl)->cusec != auth_context->authenticator->cusec) {
     ret = KRB5KRB_AP_ERR_MUT_FAIL;
     krb5_clear_error_string (context);
+    free(*repl);
     goto out;
   }
   if ((*repl)->seq_number)
