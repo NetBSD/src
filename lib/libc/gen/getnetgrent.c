@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.30 2005/07/25 14:38:48 christos Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.31 2006/03/19 01:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.30 2005/07/25 14:38:48 christos Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.31 2006/03/19 01:41:43 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -752,8 +752,10 @@ innetgr(const char *grp, const char *host, const char *user, const char *domain)
 	sl = sl_init();
 	if (sl == NULL)
 		return 0;
-	if ((grcpy = strdup(grp)) == NULL)
+	if ((grcpy = strdup(grp)) == NULL) {
+		sl_free(sl, 1);
 		return 0;
+	}
 	found = in_find(sl, grcpy, host, user, domain);
 	sl_free(sl, 1);
 
