@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.10 2005/09/27 14:38:19 tsarna Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.11 2006/03/19 21:07:55 christos Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.10 2005/09/27 14:38:19 tsarna Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.11 2006/03/19 21:07:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -565,7 +565,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	retval = pam_setenv(pamh, "KRB5CCNAME", cache_name, 1);
 	if (retval != PAM_SUCCESS) {
 		PAM_LOG("Error pam_setenv(): %s", pam_strerror(pamh, retval));
-		krb5_cc_destroy(pam_context, ccache_perm);
 		retval = PAM_SERVICE_ERR;
 		goto cleanup2;
 	}
