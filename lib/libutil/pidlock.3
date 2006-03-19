@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidlock.3,v 1.9 2003/07/26 19:25:10 salo Exp $
+.\"	$NetBSD: pidlock.3,v 1.10 2006/03/19 21:56:04 christos Exp $
 .\"
 .\" Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>
 .\"
@@ -20,7 +20,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 10, 1996
+.Dd March 19, 2006
 .Os
 .Dt PIDLOCK 3
 .Sh NAME
@@ -91,8 +91,9 @@ and put the current process's pid in it.
 The
 .Fn ttylock
 function will do the same, but should be passed only the base name
-(with no leading directory prefix) of the tty to be locked; it will
-test that the tty exists in
+(with no leading directory prefix) of the 
+.Fa tty
+to be locked; it will test that the tty exists in
 .Pa /dev
 and is a character device, and then create
 the file in the
@@ -134,31 +135,32 @@ is non-null and the lock succeeds, the string it points to will be
 written as the third line of the lock file.
 .Sh RETURN VALUES
 Zero is returned if the operation was successful; on an error a -1
-is returned and a standard error code is left in the global location errno.
+is returned and a standard error code is left in the global location
+.Va errno .
 .Sh ERRORS
-These are among the values left in
-.Va errno
-if
+In addition to the errors that are returned from
+.Xr stat 2 ,
+.Xr open 2 ,
+.Xr read 2 ,
+.Xr write 2 ,
+.Xr link 2 ,
 .Fn pidlock
 or
 .Fn ttylock
-returns a failure:
+can set
+.Va errno
+to the following values on failure:
 .Bl -tag -width Er
-.It Bq Er EPERM
-The current process does not have some of the privileges necessary
-to perform the lock.
-These include read and write access to the lock
-directory, and read access to the current lockfile, if it exists.
-.It Bq Er ENOENT
-A component of a specified pathname did not exist, or the pathname
-was an empty string.
-.It Bq Er EWOULBLOCK
+.It Bq Er EWOULDBLOCK
 Another running process has a lock and the
 .Dv PIDLOCK_NONBLOCK
 flag was specified.
-.It Bq Er ENAMETOOLONG
-A component of the path name exceeded 255 (MAXNAMELEN) characters,
-or an entire path name exceeded 1023 (MAXPATHLEN-1) characters.
+.It Bq Er EFTYPE
+The 
+.Fa tty
+specified in 
+.Fn ttylock
+is not a character special device.
 .El
 .\" .Sh SEE ALSO
 .Sh HISTORY
