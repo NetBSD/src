@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_j0f.c,v 1.7 2002/05/26 22:01:50 wiz Exp $");
+__RCSID("$NetBSD: e_j0f.c,v 1.8 2006/03/19 20:41:24 christos Exp $");
 #endif
 
 #include "math.h"
@@ -64,8 +64,11 @@ __ieee754_j0f(float x)
 	 * j0(x) = 1/sqrt(pi) * (P(0,x)*cc - Q(0,x)*ss) / sqrt(x)
 	 * y0(x) = 1/sqrt(pi) * (P(0,x)*ss + Q(0,x)*cc) / sqrt(x)
 	 */
+#ifdef DEAD_CODE
 		if(ix>0x80000000) z = (invsqrtpi*cc)/sqrtf(x);
-		else {
+		else
+#endif
+		{
 		    u = pzerof(x); v = qzerof(x);
 		    z = invsqrtpi*(u*cc-v*ss)/sqrtf(x);
 		}
