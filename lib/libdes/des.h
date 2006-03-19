@@ -1,4 +1,4 @@
-/*	$NetBSD: des.h,v 1.5 2006/03/19 19:35:00 christos Exp $	*/
+/*	$NetBSD: des.h,v 1.6 2006/03/19 19:39:26 christos Exp $	*/
 
 /* crypto/des/des.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
@@ -80,8 +80,8 @@ typedef /* const */ unsigned char const_des_cblock[8];
 #define DES_KEY_SZ 	8	/*(sizeof(des_cblock))*/
 #define DES_SCHEDULE_SZ 128	/*(sizeof(des_key_schedule))*/
 
-#ifdef notdef
-typedef struct des_ks_struct
+/* XXX: remove this; used by KRB4 */
+struct des_ks_struct
 	{
 	union	{
 		des_cblock cblock;
@@ -92,10 +92,8 @@ typedef struct des_ks_struct
 #if 0
 	int weak_key;
 #endif
-	} des_key_schedule[16];
-#else
+	};
 typedef DES_LONG des_key_schedule[DES_SCHEDULE_SZ / sizeof(DES_LONG)];
-#endif
 
 #define DES_ENCRYPT	1
 #define DES_DECRYPT	0
