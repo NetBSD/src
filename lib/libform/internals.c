@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.30 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.31 2006/03/19 20:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.30 2004/11/24 11:57:09 blymn Exp $");
+__RCSID("$NetBSD: internals.c,v 1.31 2006/03/19 20:08:09 christos Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -953,10 +953,10 @@ split_line(FIELD *field, bool hard_split, unsigned pos,
 	"split_line: enter: length = %d, expanded = %d\n",
 			row->length, row->expanded);
 	}
+#endif
 
 	assert((row->length < INT_MAX) && (row->expanded < INT_MAX));
 
-#endif
 
 	  /* add new line to the row list */
 	new_line->next = row->next;
@@ -1014,10 +1014,8 @@ split_line(FIELD *field, bool hard_split, unsigned pos,
 				field->start_line = field->start_line->next;
 				field->cursor_ypos = field->rows - 1;
 			}
-#ifdef DEBUG
 			else
 				assert(field->start_line->next == NULL);
-#endif
 		}
 	}
 
@@ -1039,12 +1037,12 @@ split_line(FIELD *field, bool hard_split, unsigned pos,
 		row->hard_ret = TRUE;
 	}
 	
-#ifdef DEBUG
 	assert(((row->expanded < INT_MAX) &&
 		(new_line->expanded < INT_MAX) &&
 		(row->length < INT_MAX) &&
 		(new_line->length < INT_MAX)));
 
+#ifdef DEBUG
 	if (dbg_ok == TRUE) {
 		fprintf(dbg, "split_line: exit: ");
 		fprintf(dbg, "row.length = %d, row.expanded = %d, ",
@@ -1447,10 +1445,8 @@ _formi_hscroll_fwd(FIELD *field, _FORMI_FIELD_LINES *row, int unsigned amt)
 			while ((expanded <= field->cols)
 			       && (end < row->length)) {
 				if (row->string[end] == '\t') {
-#ifdef DEBUG
 					assert((ts != NULL)
 					       && (ts->in_use == TRUE));
-#endif
 					if (ts->pos == end) {
 						if ((expanded + ts->size)
 						    > field->cols)
@@ -1458,10 +1454,8 @@ _formi_hscroll_fwd(FIELD *field, _FORMI_FIELD_LINES *row, int unsigned amt)
 						expanded += ts->size;
 						ts = ts->fwd;
 					}
-#ifdef DEBUG
 					else
 						assert(ts->pos == end);
-#endif
 				} else
 					expanded++;
 				end++;
@@ -1761,9 +1755,7 @@ add_tab(FORM *form, _FORMI_FIELD_LINES *row, unsigned int i, char c)
 	while ((ts != NULL) && (ts->pos != i))
 		ts = ts->fwd;
 
-#ifdef DEBUG
 	assert(ts != NULL);
-#endif
 
 	for (j = 0; j < ts->size; j++)
 		waddch(form->scrwin, c);
@@ -1982,10 +1974,10 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 		}
 	}
 
-#ifdef DEBUG
 	assert((field->cursor_xpos <= field->cols)
 	       && (field->cursor_ypos < 400000));
 
+#ifdef DEBUG
 	fprintf(dbg, "add_char exit: xpos=%d, row_pos=%d, start=%d\n",
 		field->cursor_xpos, field->row_xpos, field->start_char);
 	fprintf(dbg, "add_char_exit: length=%d(%d), allocated=%d\n",
@@ -3536,9 +3528,7 @@ tab_fit_window(FIELD *field, unsigned int pos, unsigned int window)
 	scroll_amt = 0;
 	for (i = pos; i >= 0; i--) {
 		if (field->lines->string[i] == '\t') {
-#ifdef DEBUG
 			assert((ts != NULL) && (ts->in_use == TRUE));
-#endif
 			if (ts->pos == i) {
 				if ((scroll_amt + ts->size) > window) {
 					break;
@@ -3546,10 +3536,8 @@ tab_fit_window(FIELD *field, unsigned int pos, unsigned int window)
 				scroll_amt += ts->size;
 				ts = ts->back;
 			}
-#ifdef DEBUG
 			else
 				assert(ts->pos == i);
-#endif
 		} else {
 			scroll_amt++;
 			if (scroll_amt > window)
@@ -3581,19 +3569,15 @@ tab_fit_len(_FORMI_FIELD_LINES *row, unsigned int width)
 
 	while ((len < width) && (pos < row->length)) {
 		if (row->string[pos] == '\t') {
-#ifdef DEBUG
 			assert((ts != NULL) && (ts->in_use == TRUE));
-#endif
 			if (ts->pos == row_pos) {
 				if ((len + ts->size) > width)
 					break;
 				len += ts->size;
 				ts = ts->fwd;
 			}
-#ifdef DEBUG
 			else
 				assert(ts->pos == row_pos);
-#endif
 		} else
 			len++;
 		pos++;
