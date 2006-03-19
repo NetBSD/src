@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_seq.c,v 1.13 2003/08/07 16:42:41 agc Exp $	*/
+/*	$NetBSD: bt_seq.c,v 1.14 2006/03/19 02:30:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_seq.c	8.7 (Berkeley) 7/20/94";
 #else
-__RCSID("$NetBSD: bt_seq.c,v 1.13 2003/08/07 16:42:41 agc Exp $");
+__RCSID("$NetBSD: bt_seq.c,v 1.14 2006/03/19 02:30:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -394,12 +394,8 @@ __bt_first(t, key, erval, exactp)
 				if (h->pgno != save.page->pgno)
 					mpool_put(t->bt_mp, h, 0);
 				if ((h = mpool_get(t->bt_mp,
-				    h->prevpg, 0)) == NULL) {
-					if (h->pgno == save.page->pgno)
-						mpool_put(t->bt_mp,
-						    save.page, 0);
+				    h->prevpg, 0)) == NULL)
 					return (RET_ERROR);
-				}
 				ep->page = h;
 				ep->index = NEXTINDEX(h);
 			}
