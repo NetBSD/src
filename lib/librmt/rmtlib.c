@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.20 2005/12/05 02:04:16 christos Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.21 2006/03/19 23:05:50 christos Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.20 2005/12/05 02:04:16 christos Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.21 2006/03/19 23:05:50 christos Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -552,7 +552,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 	if (((struct mtget *)(void *)p)->mt_type < 256)
 		return (0);
 
-	for (cnt = 0; cnt < rc; cnt += 2) {
+	for (cnt = 0; cnt < rv; cnt += 2) {
 		c = p[cnt];
 		p[cnt] = p[cnt+1];
 		p[cnt+1] = c;
