@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.44 2004/03/22 18:57:10 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.45 2006/03/19 01:58:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.44 2004/03/22 18:57:10 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.45 2006/03/19 01:58:48 christos Exp $");
 #endif
 #endif					/* not lint */
 
@@ -655,7 +655,7 @@ reread:
 				clearerr(infd);
 				return KEY_RESIZE;
 			}
-			if (ferror(infd)) {
+			if (c == -1 || ferror(infd)) {
 				clearerr(infd);
 				return ERR;
 			}
