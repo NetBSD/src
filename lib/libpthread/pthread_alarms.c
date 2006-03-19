@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.12 2005/01/06 17:33:36 mycroft Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.13 2006/03/19 23:01:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_alarms.c,v 1.12 2005/01/06 17:33:36 mycroft Exp $");
+__RCSID("$NetBSD: pthread_alarms.c,v 1.13 2006/03/19 23:01:03 christos Exp $");
 
 #include <err.h>
 #include <sys/time.h>
@@ -116,7 +116,7 @@ pthread__alarm_add(pthread_t self, struct pt_alarm_t *alarm,
 		    &it, NULL);
 		pthread__assert(retval == 0);
 			
-	} else {
+	} else if (prev != NULL) {
 		PTQ_INSERT_AFTER(&pthread_alarmqueue, prev, alarm, pta_next);
 	}
 	pthread_spinunlock(self, &pthread_alarmqlock);
