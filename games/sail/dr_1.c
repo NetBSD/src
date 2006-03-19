@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.21 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.22 2006/03/19 00:41:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.21 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.22 2006/03/19 00:41:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -419,7 +419,7 @@ next(void)
 				bestship = s;
 			}
 		}
-		if (best > 0.0) {
+		if (best > 0.0 && bestship) {
 			char *tp = getenv("WOTD");
 			const char *p;
 			if (tp == 0)
