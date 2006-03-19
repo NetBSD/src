@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.58 2005/04/19 05:27:58 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.59 2006/03/19 03:08:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.58 2005/04/19 05:27:58 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.59 2006/03/19 03:08:11 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1054,8 +1054,6 @@ __grscan_nis(int *retval, struct group *grp, char *buffer, size_t buflen,
 			}
 		} else {				/* dodgy entry */
 			if (!search) {		/* try again if ! searching */
-				if (key)
-					free(key);
 				free(data);
 				goto next_nis_entry;
 			}
