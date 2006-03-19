@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.20 2006/03/19 01:37:59 christos Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.21 2006/03/19 03:00:49 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.20 2006/03/19 01:37:59 christos Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.21 2006/03/19 03:00:49 christos Exp $");
 #endif
 #endif
 
@@ -966,11 +966,6 @@ regular_rpcbind:
 			clnt_geterr(client, &rpc_createerr.cf_error);
 			goto error;
 		}
-	}
-
-	if ((address == NULL) || (address->len == 0)) {
-		rpc_createerr.cf_stat = RPC_PROGNOTREGISTERED;
-		clnt_geterr(client, &rpc_createerr.cf_error);
 	}
 
 error:
