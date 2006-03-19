@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.11 2006/03/18 22:17:48 christos Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.12 2006/03/19 08:00:19 christos Exp $	*/
 
 /* Id: cfparse.y,v 1.37.2.6 2005/10/17 16:23:50 monas Exp */
 
@@ -1063,7 +1063,7 @@ remote_statement
 				return -1;
 			prspec = newprspec();
 			if (prspec == NULL)
-				return -1 
+				return -1;
 			prspec->lifetime = cur_rmconf->inherited_from->proposal->lifetime;
 			prspec->lifebyte = cur_rmconf->inherited_from->proposal->lifebyte;
 			insprspec(prspec, &cur_rmconf->prhead);
