@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.23 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.24 2006/03/19 02:09:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-__RCSID("$NetBSD: hash.c,v 1.23 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.24 2006/03/19 02:09:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -931,16 +931,18 @@ alloc_segs(hashp, nsegs)
 		errno = save_errno;
 		return (-1);
 	}
+	hashp->nsegs = nsegs;
+	if (nsegs == 0)
+		return 0;
 	/* Allocate segments */
-	if ((store =
-	    (SEGMENT)calloc((size_t)(nsegs << hashp->SSHIFT),
+	if ((store = (SEGMENT)calloc((size_t)(nsegs << hashp->SSHIFT),
 	    sizeof(SEGMENT))) == NULL) {
 		save_errno = errno;
 		(void)hdestroy(hashp);
 		errno = save_errno;
 		return (-1);
 	}
-	for (i = 0; i < nsegs; i++, hashp->nsegs++)
+	for (i = 0; i < nsegs; i++)
 		hashp->dir[i] = &store[i << hashp->SSHIFT];
 	return (0);
 }
