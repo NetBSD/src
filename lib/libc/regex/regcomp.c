@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.21 2005/12/02 12:12:29 yamt Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.22 2006/03/19 02:48:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.21 2005/12/02 12:12:29 yamt Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.22 2006/03/19 02:48:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -305,6 +305,10 @@ int cflags;
 	EMIT(OEND, 0);
 	g->laststate = THERE();
 
+	if (g->setbits == NULL) {
+		SETERROR(REG_INVARG);
+		goto out;
+	}
 	/* tidy up loose ends and fill things in */
 	categorize(p, g);
 	stripsnug(p, g);
@@ -320,6 +324,7 @@ int cflags;
 		SETERROR(REG_ASSERT);
 #endif
 
+out:
 	/* win or lose, we're done */
 	if (p->error != 0)	/* lose */
 		regfree(preg);
