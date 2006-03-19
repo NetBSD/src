@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.25 2006/03/19 02:21:15 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.26 2006/03/19 03:36:28 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-__RCSID("$NetBSD: hash.c,v 1.25 2006/03/19 02:21:15 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.26 2006/03/19 03:36:28 rtr Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -801,7 +801,7 @@ hash_seq(dbp, key, data, flag)
 			return (ERROR);
 	} else {
 		if (hashp->cpage == NULL)
-			retrun (ERROR);
+			return (ERROR);
 		key->data = (u_char *)hashp->cpage->page + bp[ndx];
 		key->size = (ndx > 1 ? bp[ndx - 1] : hashp->BSIZE) - bp[ndx];
 		data->data = (u_char *)hashp->cpage->page + bp[ndx + 1];
