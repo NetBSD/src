@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.14 2005/04/19 03:19:46 christos Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.15 2006/03/19 22:34:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -524,6 +524,7 @@ kerberos5_reply(Authenticator * ap, unsigned char *data, int cnt)
 			if (ret) {
 				printf("[ krb5_auth_con_getkey: %s ]\r\n",
 				    krb5_get_err_text(telnet_context, ret));
+				krb5_free_keyblock(telnet_context, keyblock);
 				auth_send_retry();
 				return;
 			}
@@ -531,7 +532,7 @@ kerberos5_reply(Authenticator * ap, unsigned char *data, int cnt)
 			skey.length = 8;
 			skey.data = keyblock->keyvalue.data;
 			encrypt_session_key(&skey, 0);
-			krb5_free_keyblock_contents(telnet_context, keyblock);
+			krb5_free_keyblock(telnet_context, keyblock);
 			auth_finished(ap, AUTH_USER);
 			if (forward_flags & OPTS_FORWARD_CREDS)
 				kerberos5_forward(ap);
