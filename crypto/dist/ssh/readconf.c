@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.27 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.28 2006/03/19 16:29:43 elad Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: readconf.c,v 1.145 2005/12/08 18:34:11 reyk Exp $");
-__RCSID("$NetBSD: readconf.c,v 1.27 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.28 2006/03/19 16:29:43 elad Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -336,7 +336,8 @@ process_config_line(Options *options, const char *host,
 
 	s = line;
 	/* Get the keyword. (Each line is supposed to begin with a keyword). */
-	keyword = strdelim(&s);
+	if ((keyword = strdelim(&s)) == NULL)
+		return 0;
 	/* Ignore leading whitespace. */
 	if (*keyword == '\0')
 		keyword = strdelim(&s);
