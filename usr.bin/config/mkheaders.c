@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.3 2005/08/25 15:02:18 drochner Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.4 2006/03/19 22:27:14 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -249,20 +249,25 @@ locators_print(const char *name, void *value, void *arg)
 					*cp = '_';
 			if (fprintf(fp, "#define %sCF_%s %d\n",
 			    locdup, namedup, i) < 0)
-				return 1;
+				goto bad;
 			if (nv->nv_str &&
 			    fprintf(fp, "#define %sCF_%s_DEFAULT %s\n",
 			    locdup, namedup, nv->nv_str) < 0)
-				return 1;
+				goto bad;
 			free(namedup);
 		}
 		/* assert(i == a->a_loclen) */
 		if (fprintf(fp, "#define %sCF_NLOCS %d\n",
 					locdup, a->a_loclen) < 0)
-			return 1;
+			goto bad1;
 		free(locdup);
 	}
 	return 0;
+bad:
+	free(namedup);
+bad1:
+	free(locdup);
+	return 1;
 }
 
 /*
@@ -308,8 +313,10 @@ emitioconfh(void)
 		if (!devbase_has_instances(d, WILD))
 			continue;
 		if (fprintf(tfp, "extern struct cfdriver %s_cd;\n",
-		    d->d_name) < 0)
+		    d->d_name) < 0) {
+			(void)fclose(tfp);
 			return (1);
+		}
 	}
 
 	if (fclose(tfp) == EOF)
@@ -336,7 +343,7 @@ emittime(void)
 		return (herr("open", "config_time.src", NULL));
 
 	if (strftime(buf, sizeof(buf), "%c %Z", tm) == 0)
-		return (herr("strftime", "config_time.src", NULL));
+		return (herr("strftime", "config_time.src", fp));
 
 	if (fprintf(fp, "/* %s */\n"
 	    "#define CONFIG_TIME\t%2lld\n"
@@ -349,7 +356,7 @@ emittime(void)
 	    buf, (long long)t, 
 	    tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 	    tm->tm_hour, tm->tm_min, tm->tm_sec) < 0)
-		return (herr("fprintf", "config_time.src", NULL));
+		return (herr("fprintf", "config_time.src", fp));
 
 	if (fclose(fp) != 0)
 		return (herr("close", "config_time.src", NULL));
