@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.25 2006/02/08 23:08:13 he Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.26 2006/03/19 16:48:36 elad Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: serverloop.c,v 1.124 2005/12/13 15:03:02 reyk Exp $");
-__RCSID("$NetBSD: serverloop.c,v 1.25 2006/02/08 23:08:13 he Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.26 2006/03/19 16:48:36 elad Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -1077,6 +1077,7 @@ server_input_global_request(int type, u_int32_t seq, void *ctxt)
 
 		success = channel_cancel_rport_listener(cancel_address,
 		    cancel_port);
+		xfree(cancel_address);
 	}
 	if (want_reply) {
 		packet_start(success ?
