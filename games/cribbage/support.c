@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.9 2006/03/18 23:14:45 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.10 2006/03/19 06:02:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.9 2006/03/18 23:14:45 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.10 2006/03/19 06:02:50 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <curses.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "deck.h"
 #include "cribbage.h"
