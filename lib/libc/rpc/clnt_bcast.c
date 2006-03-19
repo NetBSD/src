@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.15 2005/12/03 15:16:19 yamt Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.16 2006/03/19 01:40:09 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.15 2005/12/03 15:16:19 yamt Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.16 2006/03/19 01:40:09 christos Exp $");
 #endif
 #endif
 
@@ -313,6 +313,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	if (nettype == NULL)
 		nettype = "datagram_n";
 	if ((handle = __rpc_setconf(nettype)) == NULL) {
+		AUTH_DESTROY(sys_auth);
 		return (RPC_UNKNOWNPROTO);
 	}
 	while ((nconf = __rpc_getconf(handle)) != NULL) {
