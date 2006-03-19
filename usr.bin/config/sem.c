@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.20 2006/03/19 23:12:59 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.21 2006/03/19 23:36:10 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1109,6 +1109,9 @@ remove_devi(struct devi *i)
 	struct deva *iba;
 
 	f = ht_lookup(devitab, i->i_name);
+	if (f == NULL)
+		panic("remove_devi(): instance %s disappeared from devitab",
+		    i->i_name);
 
 	/*
 	 * We have the device instance, i.
