@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.7 2006/01/24 17:39:44 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.8 2006/03/19 03:10:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.9.2.5.4.2 2004/03/16 12:34:18 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.7 2006/01/24 17:39:44 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.8 2006/03/19 03:10:08 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -675,8 +675,10 @@ res_setservers(res_state statp, const union res_sockaddr_union *set, int cnt) {
 			if (size <= sizeof(statp->nsaddr_list[nserv]))
 				memcpy(&statp->nsaddr_list[nserv],
 					&set->sin, size);
+#ifdef notdef
 			else
 				statp->nsaddr_list[nserv].sin_family = 0;
+#endif
 			nserv++;
 			break;
 
