@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.8 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: monster.c,v 1.9 2006/03/19 00:32:18 christos Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.8 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: monster.c,v 1.9 2006/03/19 00:32:18 christos Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -1846,7 +1846,8 @@ rmsphere(x, y)
 					spheres = sp->p;
 					free((char *) sp2);
 				} else {
-					sp2->p = sp->p;
+					if (sp2)
+						sp2->p = sp->p;
 					free((char *) sp);
 				}
 				break;
