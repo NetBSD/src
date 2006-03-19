@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.13 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: dh.c,v 1.14 2006/03/19 16:23:19 elad Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: dh.c,v 1.31 2004/08/04 10:37:52 djm Exp $");
-__RCSID("$NetBSD: dh.c,v 1.13 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: dh.c,v 1.14 2006/03/19 16:23:19 elad Exp $");
 
 #include "xmalloc.h"
 
@@ -48,7 +48,8 @@ parse_prime(int linenum, char *line, struct dhgroup *dhg)
 	char *strsize, *gen, *prime;
 
 	cp = line;
-	arg = strdelim(&cp);
+	if ((arg = strdelim(&cp)) == NULL)
+		return 0;
 	/* Ignore leading whitespace */
 	if (*arg == '\0')
 		arg = strdelim(&cp);
