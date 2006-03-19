@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.102 2006/02/26 21:43:00 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.103 2006/03/19 01:54:21 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.102 2006/02/26 21:43:00 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.103 2006/03/19 01:54:21 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.102 2006/02/26 21:43:00 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.103 2006/03/19 01:54:21 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -133,6 +133,7 @@ __RCSID("$NetBSD: var.c,v 1.102 2006/02/26 21:43:00 sjg Exp $");
 
 #include    "make.h"
 #include    "buf.h"
+#include    "dir.h"
 
 /*
  * This is a harmless return value for Var_Parse that can be used by Var_Subst
@@ -2467,10 +2468,16 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    if ((v->flags & VAR_JUNK) != 0)
 			v->flags |= VAR_KEEP;
 		    gn = Targ_FindNode(v->name, TARG_NOCREATE);
-		    if (gn == NILGNODE || gn->path == NULL)
-			newStr = strdup(v->name);
-		    else
+		    if (gn == NILGNODE || gn->type & OP_NOPATH) {
+			newStr = NULL;
+		    } else if (gn->path) {
 			newStr = strdup(gn->path);
+		    } else {
+			newStr = Dir_FindFile(v->name, Suff_FindPath(gn));
+		    }
+		    if (!newStr) {
+			newStr = strdup(v->name);
+		    }
 		    cp = ++tstr;
 		    termc = *tstr;
 		    break;
