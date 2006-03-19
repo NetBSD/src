@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.9 2006/03/19 00:32:18 christos Exp $	*/
+/*	$NetBSD: monster.c,v 1.10 2006/03/19 00:37:15 christos Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.9 2006/03/19 00:32:18 christos Exp $");
+__RCSID("$NetBSD: monster.c,v 1.10 2006/03/19 00:37:15 christos Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -1768,6 +1768,7 @@ newsphere(x, y, dir, life)
 		lprintf("\nThe %s dispels the sphere!", monster[m].name);
 		beep();
 		rmsphere(x, y);	/* remove any spheres that are here */
+		free(sp);
 		return (c[SPHCAST]);
 	}
 	if (m == DISENCHANTRESS) {	/* disenchantress cancels spheres */
@@ -1776,6 +1777,7 @@ newsphere(x, y, dir, life)
 		beep();
 boom:		sphboom(x, y);	/* blow up stuff around sphere */
 		rmsphere(x, y);	/* remove any spheres that are here */
+		free(sp);
 		return (c[SPHCAST]);
 	}
 	if (c[CANCELLATION]) {	/* cancellation cancels spheres */
