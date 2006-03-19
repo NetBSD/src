@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.202 2006/03/01 21:41:49 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.203 2006/03/19 05:31:38 david Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202 2006/03/01 21:41:49 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.203 2006/03/19 05:31:38 david Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2103,7 +2103,10 @@ raidlookup(char *path, struct lwp *l, struct vnode **vpp)
 	struct vattr va;
 	int     error;
 
-	p = l ? l->l_proc : NULL;
+        if (l == NULL)
+            return(ESRCH); /* Is ESRCH the best choice? */
+        p = l->l_proc;
+        
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
 		return (error);
@@ -2681,7 +2684,13 @@ rf_find_raid_components()
 				malloc(sizeof(RF_ComponentLabel_t),
 				       M_RAIDFRAME, M_NOWAIT);
 			if (clabel == NULL) {
-				/* XXX CLEANUP HERE */
+                                while(ac_list) {
+                                  ac = ac_list;
+                                  if (ac->clabel)
+                                    free(ac->clabel, M_RAIDFRAME);
+                                  ac_list = ac_list->next;
+                                  free(ac, M_RAIDFRAME);
+                                };
 				printf("RAID auto config: out of memory!\n");
 				return(NULL); /* XXX probably should panic? */
 			}
@@ -2705,7 +2714,14 @@ rf_find_raid_components()
 						       M_NOWAIT);
 					if (ac == NULL) {
 						/* XXX should panic?? */
-						return(NULL);
+                                                while(ac_list) {
+                                                       ac = ac_list;
+                                                       if (ac->clabel)
+                                                           free(ac->clabel, M_RAIDFRAME);
+                                                       ac_list = ac_list->next;
+                                                       free(ac, M_RAIDFRAME);
+                                                }
+                                                return(NULL);
 					}
 
 					snprintf(ac->devname,
@@ -3235,6 +3251,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 		/* punt... */
 		printf("Unable to auto configure this set!\n");
 		printf("(Out of RAID devs!)\n");
+	        free(config, M_RAIDFRAME);
 		return(1);
 	}
 
