@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euc.c,v 1.10 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_euc.c,v 1.11 2006/03/19 01:25:44 christos Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euc.c,v 1.10 2005/10/29 18:02:04 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_euc.c,v 1.11 2006/03/19 01:25:44 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -265,6 +265,8 @@ _citrus_EUC_mbrtowc_priv(_EUCEncodingInfo *ei, wchar_t *pwc, const char **s,
 		len = c;
 		s1 = &psenc->ch[0];
 		break;
+	default:
+		goto encoding_error;
 	}
 	wchar = 0;
 	while (len-- > 0)
