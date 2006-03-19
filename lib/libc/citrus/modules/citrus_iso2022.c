@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.14 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.15 2006/03/19 01:19:32 christos Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.14 2005/10/29 18:02:04 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.15 2006/03/19 01:19:32 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -627,6 +627,8 @@ _ISO2022_sgetwchar(_ISO2022EncodingInfo * __restrict ei,
 				case CS96MULTI:
 					i = string[sp->csoff] - ',';
 					break;
+				default:
+					return (_ISO2022INVALID);
 				}
 			}
 			psenc->g[i].type = sp->type;
