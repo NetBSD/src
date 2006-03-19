@@ -22,7 +22,7 @@ or implied warranty.
 #include "krb_locl.h"
 
 __RCSID("$KTH-KRB: sendauth.c,v 1.18 1999/09/16 20:41:55 assar Exp $"
-      "$NetBSD: sendauth.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
+      "$NetBSD: sendauth.c,v 1.2 2006/03/19 21:01:17 christos Exp $");
 
 /*
  * krb_sendauth() transmits a ticket over a file descriptor for a
@@ -155,7 +155,7 @@ krb_sendauth(int32_t options,	/* bit-pattern of options */
 	if (ret != KSUCCESS)
 	    return ret;
 
-	des_key_sched(&cred->session, schedule);
+	des_key_sched(&cred->session, (void *)schedule);
 
 	ret = krb_check_auth (&buf, checksum, msg_data, &cred->session, 
 			      schedule, laddr, faddr);

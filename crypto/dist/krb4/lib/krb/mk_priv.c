@@ -34,7 +34,7 @@
 #include "krb_locl.h"
 
 __RCSID("$KTH-KRB: mk_priv.c,v 1.25 2001/09/16 22:41:58 assar Exp $"
-      "$NetBSD: mk_priv.c,v 1.3 2002/09/12 12:33:15 joda Exp $");
+      "$NetBSD: mk_priv.c,v 1.4 2006/03/19 21:01:17 christos Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"
@@ -115,7 +115,7 @@ krb_mk_priv(void *in, void *out, u_int32_t length,
     memset(p, 0, 7);
 
     des_pcbc_encrypt(cipher, cipher,
-		     len, schedule, key, DES_ENCRYPT);
+		     len, (void *)schedule, key, DES_ENCRYPT);
 
     return  (cipher - (unsigned char*)out) + len;
 }
