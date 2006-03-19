@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.18 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: sftp.c,v 1.19 2006/03/19 16:47:09 elad Exp $	*/
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -18,7 +18,7 @@
 #include "includes.h"
 
 RCSID("$OpenBSD: sftp.c,v 1.70 2006/01/31 10:19:02 djm Exp $");
-__RCSID("$NetBSD: sftp.c,v 1.18 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.19 2006/03/19 16:47:09 elad Exp $");
 
 #include <glob.h>
 #include <histedit.h>
@@ -1275,6 +1275,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 			if (parse_dispatch_command(conn, cmd, &pwd, 1) != 0) {
 				xfree(dir);
 				xfree(pwd);
+				xfree(conn);
 				return (-1);
 			}
 		} else {
@@ -1287,6 +1288,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 			err = parse_dispatch_command(conn, cmd, &pwd, 1);
 			xfree(dir);
 			xfree(pwd);
+			xfree(conn);
 			return (err);
 		}
 		xfree(dir);
@@ -1343,6 +1345,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 			break;
 	}
 	xfree(pwd);
+	xfree(conn);
 
 	if (el != NULL)
 		el_end(el);
