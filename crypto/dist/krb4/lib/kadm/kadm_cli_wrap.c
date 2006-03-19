@@ -30,7 +30,7 @@ or implied warranty.
 #include "kadm_locl.h"
 
 __RCSID("$KTH-KRB: kadm_cli_wrap.c,v 1.31 2002/08/15 11:31:37 joda Exp $"
-      "$NetBSD: kadm_cli_wrap.c,v 1.4 2002/09/12 12:33:13 joda Exp $");
+      "$NetBSD: kadm_cli_wrap.c,v 1.5 2006/03/19 21:45:33 christos Exp $");
 
 static Kadm_Client client_parm;
 
@@ -153,7 +153,7 @@ kadm_cli_keyd(des_cblock (*s_k), /* session key */
 #ifdef NOENCRYPTION
 	memset(s_s, 0, sizeof(des_key_schedule));
 #else
-	if ((stat = des_key_sched(s_k,s_s)))
+	if ((stat = des_key_sched(s_k,(void *)s_s)))
 		return stat+ERROR_TABLE_BASE_krb;
 #endif
 	return KADM_SUCCESS;
@@ -254,7 +254,7 @@ kadm_cli_send(u_char *st_dat,	/* the actual data */
 	memcpy(act_st, KADM_VERSTR, KADM_VERSIZE);
 	act_len = KADM_VERSIZE;
 
-	if ((retdat = kadm_cli_keyd(&sess_key, sess_sched)) != KADM_SUCCESS) {
+	if ((retdat = kadm_cli_keyd(&sess_key, (void *)sess_sched)) != KADM_SUCCESS) {
 		free(act_st);
 		clear_secrets();
 		return retdat;	       /* couldnt get key working */
@@ -267,7 +267,7 @@ kadm_cli_send(u_char *st_dat,	/* the actual data */
 	    return KADM_NOMEM;
 	}
 	priv_len = krb_mk_priv(st_dat, priv_pak, st_siz,
-			       sess_sched, &sess_key, &client_parm.my_addr,
+			       (void *)sess_sched, &sess_key, &client_parm.my_addr,
 			       &client_parm.admin_addr);
 
 	if (priv_len < 0)
@@ -329,7 +329,7 @@ kadm_cli_send(u_char *st_dat,	/* the actual data */
 	    RET_N_FREE2(retdat);
 	}
 	/* need to decode the ret_dat */
-	retdat = krb_rd_priv(*ret_dat, (u_int32_t)*ret_siz, sess_sched,
+	retdat = krb_rd_priv(*ret_dat, (u_int32_t)*ret_siz, (void *)sess_sched,
 			     &sess_key, &client_parm.admin_addr,
 			     &client_parm.my_addr, &mdat);
 	if (retdat)
