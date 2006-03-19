@@ -22,7 +22,7 @@ or implied warranty.
 #include "krb_locl.h"
 
 __RCSID("$KTH-KRB: recvauth.c,v 1.21 2001/08/26 02:52:18 assar Exp $"
-      "$NetBSD: recvauth.c,v 1.1.1.4 2002/09/12 12:22:10 joda Exp $");
+      "$NetBSD: recvauth.c,v 1.2 2006/03/19 21:01:17 christos Exp $");
 
 /*
  * krb_recvauth() reads (and optionally responds to) a message sent
@@ -172,7 +172,7 @@ krb_recvauth(int32_t options,	/* bit-pattern of options */
 	    unsigned char cs[4];
 	    krb_put_int(kdata->checksum + 1, cs, sizeof(cs), 4);
 #ifndef NOENCRYPTION
-	    des_key_sched(&kdata->session,schedule);
+	    des_key_sched(&kdata->session,(void *)schedule);
 #endif
 	    priv_len = krb_mk_priv(cs, 
 				   tmp_buf+4, 

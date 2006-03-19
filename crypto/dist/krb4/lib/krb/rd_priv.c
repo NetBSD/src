@@ -34,7 +34,7 @@
 #include "krb_locl.h"
 
 __RCSID("$KTH-KRB: rd_priv.c,v 1.30 2001/09/16 22:41:58 assar Exp $"
-      "$NetBSD: rd_priv.c,v 1.4 2002/09/12 12:33:15 joda Exp $");
+      "$NetBSD: rd_priv.c,v 1.5 2006/03/19 21:01:17 christos Exp $");
 
 /* application include files */
 #include "krb-archaeology.h"
@@ -85,7 +85,7 @@ krb_rd_priv(void *in, u_int32_t in_length,
 	return RD_AP_MODIFIED;
 
     des_pcbc_encrypt(p, p, clen, 
-		     schedule, key, DES_DECRYPT);
+		     (void *)schedule, key, DES_DECRYPT);
     
     p += krb_get_int(p, &m_data->app_length, 4, little_endian);
     if(m_data->app_length + 17 > in_length)
