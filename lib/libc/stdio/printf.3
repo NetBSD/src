@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.41 2006/03/18 05:46:04 rumble Exp $
+.\"	$NetBSD: printf.3,v 1.42 2006/03/19 10:46:21 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -129,14 +129,18 @@ This pointer should be passed to
 .Xr free 3
 to release the allocated storage when it is no longer needed.
 If sufficient space cannot be allocated, these functions
-will return -1 and set
+will return \-1 and set
 .Fa ret
-to be a NULL pointer.
+to be a
+.Dv NULL
+pointer.
 Please note that these functions are not standardized, and not all
 implementations can be assumed to set the
 .Fa ret
-argument to NULL on error.
-It is more portable to check for a return value of -1 instead.
+argument to
+.Dv NULL
+on error.
+It is more portable to check for a return value of \-1 instead.
 .Pp
 .Fn snprintf
 and
@@ -156,7 +160,9 @@ If
 .Fa size
 is zero, nothing is written and
 .Fa str
-may be a NULL pointer.
+may be a
+.Dv NULL
+pointer.
 .Pp
 .Fn sprintf
 and
