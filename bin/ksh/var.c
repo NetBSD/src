@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.12 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.13 2006/03/19 19:12:23 christos Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.12 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.13 2006/03/19 19:12:23 christos Exp $");
 #endif
 
 
@@ -367,6 +367,7 @@ setstr(vq, s, error_ok)
 	const char *s;
 	int error_ok;
 {
+	char *fs = NULL;
 	int no_ro_check = error_ok & 0x4;
 	error_ok &= ~0x4;
 	if ((vq->flag & RDONLY) && !no_ro_check) {
@@ -388,7 +389,7 @@ setstr(vq, s, error_ok)
 		vq->flag &= ~(ISSET|ALLOC);
 		vq->type = 0;
 		if (s && (vq->flag & (UCASEV_AL|LCASEV|LJUST|RJUST)))
-			s = formatstr(vq, s);
+			s = fs = formatstr(vq, s);
 		if ((vq->flag&EXPORT))
 			export(vq, s);
 		else {
@@ -401,6 +402,8 @@ setstr(vq, s, error_ok)
 	vq->flag |= ISSET;
 	if ((vq->flag&SPECIAL))
 		setspec(vq);
+	if (fs)
+		afree(fs, ATEMP);
 	return 1;
 }
 
