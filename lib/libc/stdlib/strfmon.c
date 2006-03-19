@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.3 2005/12/02 14:19:43 yamt Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.3 2005/12/02 14:19:43 yamt Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -230,6 +230,8 @@ strfmon(char * __restrict s, size_t maxsize, const char * __restrict format,
 				goto format_error;
 		}
 
+		if (currency_symbol)
+			free(currency_symbol);
 		if (flags & USE_INTL_CURRENCY) {
 			currency_symbol = strdup(lc->int_curr_symbol);
 			if (currency_symbol != NULL)
