@@ -1,4 +1,4 @@
-/*	$NetBSD: schedule.c,v 1.5 2003/08/07 09:37:53 agc Exp $	*/
+/*	$NetBSD: schedule.c,v 1.6 2006/03/19 00:56:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)schedule.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: schedule.c,v 1.5 2003/08/07 09:37:53 agc Exp $");
+__RCSID("$NetBSD: schedule.c,v 1.6 2006/03/19 00:56:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ char	z;
 		e->x = x;
 		e->y = y;
 		e->systemname = z;
-		Now.eventptr[type] = e;
+		Now.eventptr[type & ~E_GHOST] = e;
 		return (e);
 	}
 	errx(1, "Cannot schedule event %d parm %d %d %d", type, x, y, z);
