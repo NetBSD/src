@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.8 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.9 2006/03/19 07:04:06 phil Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -160,6 +160,7 @@ setfilename(cs, token, arg, line, lnum)
 	default:
 		warn("%s: Bad filename argument %d at line %lu", token, arg,
 		    (u_long)lnum);
+		free(p);
 		return 1;
 	}
 }
