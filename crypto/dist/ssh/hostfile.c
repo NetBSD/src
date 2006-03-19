@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.16 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.17 2006/03/19 16:33:26 elad Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: hostfile.c,v 1.36 2005/11/22 03:36:03 dtucker Exp $");
-__RCSID("$NetBSD: hostfile.c,v 1.16 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.17 2006/03/19 16:33:26 elad Exp $");
 
 #include <resolv.h>
 #include <openssl/hmac.h>
@@ -256,8 +256,10 @@ check_host_in_hostfile_by_key_or_type(const char *filename,
 
 		if (key == NULL) {
 			/* we found a key of the requested type */
-			if (found->type == keytype)
+			if (found->type == keytype) {
+				fclose(f);
 				return HOST_FOUND;
+			}
 			continue;
 		}
 
