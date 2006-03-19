@@ -1,4 +1,4 @@
-/* $NetBSD: shquote.c,v 1.7 2005/06/12 05:21:27 lukem Exp $ */
+/* $NetBSD: shquote.c,v 1.8 2006/03/19 02:33:02 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: shquote.c,v 1.7 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: shquote.c,v 1.8 2006/03/19 02:33:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -151,8 +151,6 @@ shquote(const char *arg, char *buf, size_t bufsize)
 		PUT('\'');
 	for (;;) {
 		XLATE_INCH();
-		if (n == (size_t)-1)
-			goto bad;
 		if (n <= 0)
 			break;
 		arg += n;
