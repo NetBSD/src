@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_prot.c,v 1.7 2006/03/19 02:37:59 christos Exp $	*/
+/*	$NetBSD: rpcb_prot.c,v 1.8 2006/03/19 02:41:16 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_prot.c 1.9 89/04/21 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_prot.c,v 1.7 2006/03/19 02:37:59 christos Exp $");
+__RCSID("$NetBSD: rpcb_prot.c,v 1.8 2006/03/19 02:41:16 christos Exp $");
 #endif
 #endif
 
@@ -251,7 +251,7 @@ xdr_rpcb_entry_list_ptr(xdrs, rp)
 		 * the case of freeing we must remember the next object
 		 * before we free the current object ...
 		 */
-		if (freeing)
+		if (freeing && *rp)
 			next = (*rp)->rpcb_entry_next;
 		if (! xdr_reference(xdrs, (caddr_t *)rp,
 		    (u_int)sizeof (rpcb_entry_list),
@@ -266,7 +266,7 @@ xdr_rpcb_entry_list_ptr(xdrs, rp)
 			 * gets nulled out by the xdr_reference
 			 * but next itself survives.
 			 */
-		} else {
+		} else if (*rp) {
 			rp = &((*rp)->rpcb_entry_next);
 		}
 	}
