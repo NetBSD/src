@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.23 2006/03/19 02:51:30 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.24 2006/03/19 04:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.23 2006/03/19 02:51:30 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.24 2006/03/19 04:17:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -305,10 +305,6 @@ int cflags;
 	EMIT(OEND, 0);
 	g->laststate = THERE();
 
-	if (g->setbits == NULL) {
-		SETERROR(REG_INVARG);
-		goto out;
-	}
 	/* tidy up loose ends and fill things in */
 	categorize(p, g);
 	stripsnug(p, g);
