@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.19 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: sem.c,v 1.20 2006/03/19 23:12:59 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1338,6 +1338,7 @@ deldeva(const char *at)
 
 	for (nv = stack; nv != NULL; nv = nv->nv_next)
 		remove_devi(nv->nv_ptr);
+	nvfreel(stack);
 }
 
 void
@@ -1373,6 +1374,7 @@ deldev(const char *name)
 
 	for (nv = stack; nv != NULL; nv = nv->nv_next)
 		remove_devi(nv->nv_ptr);
+	nvfreel(stack);
 }
 
 void
