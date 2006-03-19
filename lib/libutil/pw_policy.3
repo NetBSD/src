@@ -1,4 +1,4 @@
-.\" $NetBSD: pw_policy.3,v 1.6 2006/02/24 21:07:29 wiz Exp $
+.\" $NetBSD: pw_policy.3,v 1.7 2006/03/19 22:58:21 elad Exp $
 .\"
 .\" Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 16, 2006
+.Dd March 19, 2006
 .Dt PW_POLICY 3
 .Os
 .Sh NAME
@@ -247,19 +247,20 @@ to a value returned by the called handlers and/or
 .Xr malloc 3 .
 .Pp
 .Fn pw_policy_test
-returns 0 if the password follows the policy, or any of the following
-values:
+returns 0 if the password follows the policy, or -1 if it doesn't,
+.Ar errno
+can be set to any of the following values:
 .Bl -tag -width Er
 .It Bq Er EPERM
 The password does not follow the password policy.
-.It Bq Er EFAULT
+.It Bq Er EINVAL
 .Dv NULL
 pointer was passed as the password.
 .El
 .Pp
 In addition,
-.Fn pw_policy_test
-can also return any of the values returned by the called handlers.
+.Ar errno
+can be set to any error code returned by the handlers.
 .Sh FILES
 .Bl -tag -width /etc/passwd.conf -compact
 .It Pa /etc/passwd.conf
@@ -314,8 +315,7 @@ Check if
 follows the policy in
 .Ar policy :
 .Bd -literal -offset indent
-error = pw_policy_test(policy, the_password);
-if (error == EPERM)
+if (pw_policy_test(policy, the_password) != 0)
 	warnx("Please refer to the password policy");
 .Ed
 .Pp

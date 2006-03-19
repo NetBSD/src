@@ -1,4 +1,4 @@
-/* $NetBSD: pw_policy.c,v 1.8 2006/03/19 22:18:25 christos Exp $ */
+/* $NetBSD: pw_policy.c,v 1.9 2006/03/19 22:58:21 elad Exp $ */
 
 /*-
  * Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -460,8 +460,10 @@ pw_policy_test(pw_policy_t policy, char *pw)
 {
 	struct pw_policy_handler *hp;
 
-	if (policy == NULL)
+	if (policy == NULL) {
+		errno = EINVAL;
 		return 0;
+	}
 
 	hp = &handlers[0];
 	while (hp->name != NULL) {
