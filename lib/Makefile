@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 2006/03/17 21:43:16 christos Exp $
+#	$NetBSD: Makefile,v 1.101 2006/03/19 15:10:19 bouyer Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -85,7 +85,7 @@ SUBDIR+=	libcdk 		# depends on libedit
 
 .if (${MKKERBEROS} != "no")
 # Heimdal Kerberos 5 libraries depending on libkrb5 and more
-SUBDIR+=	libgssapi libhdb libkadm5srv libkadm5clnt libkafs libsl libss
+SUBDIR+=	libgssapi libhdb .WAIT libkadm5srv libkadm5clnt libkafs libsl libss
 .endif
 
 .if (${MKPAM} != "no")
