@@ -1,4 +1,4 @@
-/*	$NetBSD: keyname.c,v 1.1 2003/06/20 06:56:29 jdc Exp $	*/
+/*	$NetBSD: keyname.c,v 1.2 2006/03/19 01:53:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keyname.c,v 1.1 2003/06/20 06:56:29 jdc Exp $");
+__RCSID("$NetBSD: keyname.c,v 1.2 2006/03/19 01:53:11 christos Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -61,10 +61,14 @@ keyname(int key)
 #else
 	char *name;
 
-	if ((name = malloc(KEYNAMEMAX + 1)) == NULL)
+	if (key < 0)
 		return NULL;
 
-	if (key < 0)
+	/* No name. */
+	if (key == 0x100)
+		return NULL;
+
+	if ((name = malloc(KEYNAMEMAX + 1)) == NULL)
 		return NULL;
 
 	/* Control codes */
@@ -109,10 +113,6 @@ keyname(int key)
 		strcpy(name, "M-^?\0");
 		return name;
 	}
-
-	/* No name. */
-	if (key == 0x100)
-		return NULL;
 
 	/* Key names.  Synchronise this with curses.h. */
 	if (key == 0x101) {
@@ -481,6 +481,7 @@ keyname(int key)
 		strncpy(name, "KEY_MOUSE\0", KEYNAMEMAX);
 		return name;
 	}
+	free(name);
 	/* No more names. */
 	return NULL;
 #endif
