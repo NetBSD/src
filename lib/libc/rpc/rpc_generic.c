@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.20 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.21 2006/03/19 01:43:11 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.20 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.21 2006/03/19 01:43:11 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -365,6 +365,7 @@ __rpc_setconf(nettype)
 		handle->nflag = FALSE;
 		break;
 	default:
+		free(handle);
 		return (NULL);
 	}
 
