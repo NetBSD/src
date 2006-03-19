@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.12 2006/02/09 22:03:15 dogcow Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.13 2006/03/19 01:15:06 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.12 2006/02/09 22:03:15 dogcow Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.13 2006/03/19 01:15:06 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -155,7 +155,7 @@ static int
 init_encoding(struct _citrus_iconv_std_encoding *se, struct _stdenc *cs,
 	      void *ps1, void *ps2)
 {
-	int ret;
+	int ret = -1;
 
 	se->se_handle = cs;
 	se->se_ps = ps1;
