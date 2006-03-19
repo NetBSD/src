@@ -887,8 +887,8 @@ int cgoto(fa *f, int s, int c)
 			if (tmpset[j] != p[j])
 				goto different;
 		/* setvec is state i */
-		assert(c < NCHARS);
-		f->gototab[s][c] = i;
+		if (c != HAT)
+			f->gototab[s][c] = i;
 		return i;
 	  different:;
 	}
