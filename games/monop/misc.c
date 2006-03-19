@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.13 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: misc.c,v 1.14 2006/03/19 00:03:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.13 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14 2006/03/19 00:03:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,16 +201,21 @@ set_ownlist(pl)
 				printf("player # %d\n", pl+1);
 				printhold(pl);
 				printf("orig_op = %p\n", orig_op);
-				printf("orig_op->sqr->type = %d (PRPTY)\n",
-				    op->sqr->type);
-				printf("orig_op->next = %p\n", op->next);
-				printf("orig_op->sqr->desc = %p\n",
-				    op->sqr->desc);
+				if (orig_op) {
+					printf("orig_op->sqr->type = %d (PRPTY)\n",
+					    orig_op->sqr->type);
+					printf("orig_op->next = %p\n", op->next);
+					printf("orig_op->sqr->desc = %p\n",
+					    orig_op->sqr->desc);
+				}
 				printf("op = %p\n", op);
-				printf("op->sqr->type = %d (PRPTY)\n",
-				    op->sqr->type);
-				printf("op->next = %p\n", op->next);
-				printf("op->sqr->desc = %p\n", op->sqr->desc);
+				if (op) {
+					printf("op->sqr->type = %d (PRPTY)\n",
+					    op->sqr->type);
+					printf("op->next = %p\n", op->next);
+					printf("op->sqr->desc = %p\n",
+					    op->sqr->desc);
+				}
 				printf("num = %d\n", num);
 			}
 #ifdef DEBUG
