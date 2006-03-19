@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.33 2005/06/22 21:35:28 he Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.34 2006/03/19 02:17:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.33 2005/06/22 21:35:28 he Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.34 2006/03/19 02:17:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -124,10 +124,13 @@ getdiskbyname(name)
 	cgetstr(buf, "b0", &dp->d_boot0);
 	cgetstr(buf, "b1", &dp->d_boot1);
 
-	if (cgetstr(buf, "ty", &cq) > 0 && strcmp(cq, "removable") == 0)
-		dp->d_flags |= D_REMOVABLE;
-	else  if (cq && strcmp(cq, "simulated") == 0)
-		dp->d_flags |= D_RAMDISK;
+	if (cgetstr(buf, "ty", &cq) >= 0) {
+		if (strcmp(cq, "removable") == 0)
+			dp->d_flags |= D_REMOVABLE;
+		else if (strcmp(cq, "simulated") == 0)
+			dp->d_flags |= D_RAMDISK;
+		free(cq);
+	}
 	if (cgetcap(buf, "sf", ':') != NULL)
 		dp->d_flags |= D_BADSECT;
 
@@ -141,9 +144,10 @@ getdiskbyname(name)
 	getnum(dp->d_nsectors, "ns");
 	getnum(dp->d_ncylinders, "nc");
 
-	if (cgetstr(buf, "dt", &cq) > 0)
+	if (cgetstr(buf, "dt", &cq) >= 0) {
 		dp->d_type = gettype(cq, dktypenames);
-	else
+		free(cq);
+	} else
 		getnumdflt(dp->d_type, "dt", 0);
 	getnumdflt(dp->d_secpercyl, "sc", dp->d_nsectors * dp->d_ntracks);
 	getnumdflt(dp->d_secperunit, "su", dp->d_secpercyl * dp->d_ncylinders);
@@ -182,8 +186,11 @@ getdiskbyname(name)
 					    (u_int8_t)(bsize / pp->p_fsize);
 			}
 			getnumdflt(pp->p_fstype, ptype, 0);
-			if (pp->p_fstype == 0 && cgetstr(buf, ptype, &cq) > 0)
-				pp->p_fstype = gettype(cq, fstypenames);
+			if (pp->p_fstype == 0)
+				if (cgetstr(buf, ptype, &cq) >= 0) {
+					pp->p_fstype = gettype(cq, fstypenames);
+					free(cq);
+				}
 			max = p;
 		}
 	}
