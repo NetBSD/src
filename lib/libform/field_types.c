@@ -1,4 +1,4 @@
-/*	$NetBSD: field_types.c,v 1.6 2003/03/09 00:57:17 lukem Exp $	*/
+/*	$NetBSD: field_types.c,v 1.7 2006/03/19 20:02:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field_types.c,v 1.6 2003/03/09 00:57:17 lukem Exp $");
+__RCSID("$NetBSD: field_types.c,v 1.7 2006/03/19 20:02:27 christos Exp $");
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -59,8 +59,7 @@ _formi_create_field_args(FIELDTYPE *type, char **type_args,
 	if ((type != NULL)
 	    && ((type->flags & _TYPE_HAS_ARGS) == _TYPE_HAS_ARGS)) {
 		if ((type->flags & _TYPE_IS_LINKED) == _TYPE_IS_LINKED) {
-			l = (formi_type_link *)
-				malloc(sizeof(formi_type_link));
+			l = malloc(sizeof(*l));
 			if (l != NULL) {
 				_formi_create_field_args(type->link->next,
 							 type_args,
@@ -93,7 +92,7 @@ _formi_create_fieldtype(void)
 {
 	FIELDTYPE *new;
 	
-	if ((new = (FIELDTYPE *) malloc(sizeof(FIELDTYPE))) == NULL)
+	if ((new = malloc(sizeof(*new))) == NULL)
 		return NULL;
 
 	new->flags = _TYPE_NO_FLAGS;
@@ -261,8 +260,10 @@ link_fieldtype(FIELDTYPE *type1, FIELDTYPE *type2)
 	new->flags = _TYPE_IS_LINKED;
 	new->flags |= ((type1->flags & _TYPE_HAS_ARGS)
 		       | (type2->flags & _TYPE_HAS_ARGS));
-	if ((new->link = (_FORMI_TYPE_LINK*) malloc(sizeof(_FORMI_TYPE_LINK))) == NULL)
+	if ((new->link = malloc(sizeof(*new->link))) == NULL) {
+		free(new);
 		return NULL;
+	}
 	
 	new->link->prev = type1;
 	new->link->next = type2;
