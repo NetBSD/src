@@ -1,4 +1,4 @@
-/* $NetBSD: strtodg.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
+/* $NetBSD: strtodg.c,v 1.4 2006/03/19 03:04:04 christos Exp $ */
 
 /****************************************************************
 
@@ -214,8 +214,6 @@ rvOK
 		break;
 	  default: /* round near */
 		k = bdif - 1;
-		if (k < 0)
-			goto trunc;
 		if (!k) {
 			if (!exact)
 				goto ret;
