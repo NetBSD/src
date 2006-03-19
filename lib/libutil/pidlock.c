@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.13 2005/08/27 16:55:59 elad Exp $ */
+/*	$NetBSD: pidlock.c,v 1.14 2006/03/19 21:55:37 christos Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.13 2005/08/27 16:55:59 elad Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.14 2006/03/19 21:55:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: pidlock.c,v 1.13 2005/08/27 16:55:59 elad Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <paths.h>
 
 /*
  * Create a lockfile. Return 0 when locked, -1 on error.
@@ -52,9 +53,10 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 	pid_t	pid2 = -1;
 	struct	stat st;
 	int	err;
-	int	f;
+	int	f = -1;
 	char	s[256];
 	char	*p;
+	size_t	len;
 
 	_DIAGASSERT(lockfile != NULL);
 	/* locker may be NULL */
@@ -77,77 +79,63 @@ pidlock(const char *lockfile, int flags, pid_t *locker, const char *info)
 	}
 
 	/* Open it, write pid, hostname, info. */
-	if ( (f = open(tempfile, O_WRONLY|O_CREAT|O_TRUNC, 0600)) == -1 )  {
-		err = errno;
-		unlink(tempfile);
-		errno = err;
-		return -1;
-	}
-	snprintf(s, sizeof(s), "%10d\n", getpid());	/* pid */
-	if (write(f, s, (size_t)11) != 11)  {
-		err = errno;
-		close(f);
-		unlink(tempfile);
-		errno = err;
-		return -1;
-	}
+	if ((f = open(tempfile, O_WRONLY|O_CREAT|O_TRUNC, 0600)) == -1)
+		goto out;
+
+	(void)snprintf(s, sizeof(s), "%10d\n", getpid());	/* pid */
+	if (write(f, s, (size_t)11) != 11)
+		goto out;
+
 	if ((flags & PIDLOCK_USEHOSTNAME))  {		/* hostname */
-		if ((write(f, hostname, strlen(hostname)) != strlen(hostname))
-		    || (write(f, "\n", (size_t)1) != 1))  {
-			err = errno;
-			close(f);
-			unlink(tempfile);
-			errno = err;
-			return -1;
-		}
+		len = strlen(hostname);
+		if (write(f, hostname, len) != len
+		    || write(f, "\n", (size_t)1) != 1)
+			goto out;
 	}
 	if (info)  {					/* info */
 		if (!(flags & PIDLOCK_USEHOSTNAME))  {
 			/* write blank line because there's no hostname */
-			if (write(f, "\n", (size_t)1) != 1)  {
-				err = errno;
-				close(f);
-				unlink(tempfile);
-				errno = err;
-				return -1;
-			}
+			if (write(f, "\n", (size_t)1) != 1)
+				goto out;
 		}
-		if (write(f, info, strlen(info)) != strlen(info) ||
-		    (write(f, "\n", (size_t)1) != 1))  {
-			err = errno;
-			close(f);
-			unlink(tempfile);
-			errno = err;
-			return -1;
-		}
+		len = strlen(info);
+		if (write(f, info, len) != len ||
+		    write(f, "\n", (size_t)1) != 1)
+			goto out;
 	}
-	close(f);
+	(void)close(f);
+	f = -1;
 
 	/* Hard link the temporary file to the real lock file. */
 	/* This is an atomic operation. */
 lockfailed:
-	while (link(tempfile, lockfile) != 0)  {
-		if (errno != EEXIST)  {
-			err = errno;
-			unlink(tempfile);
-			errno = err;
-			return -1;
-		}
+	while (link(tempfile, lockfile) == -1)  {
+		if (errno != EEXIST)
+			goto out;
 		/* Find out who has this lockfile. */
-		if ((f = open(lockfile, O_RDONLY, 0)) != 0)  {
-			read(f, s, (size_t)11);
+		if ((f = open(lockfile, O_RDONLY, 0)) != -1)  {
+			if ((err = read(f, s, (size_t)11)) == -1)
+				goto out;
+			if (err == 0) {
+				errno = EINVAL;
+				goto out;
+			}
 			pid2 = atoi(s);
-			read(f, s, sizeof(s)-2);
-			s[sizeof(s)-1] = '\0';
-			if ((p=strchr(s, '\n')) != NULL)
+			if ((err = read(f, s, sizeof(s) - 2)) == -1)
+				goto out;
+			if (err == 0)
+				*s = '\0';
+			s[sizeof(s) - 1] = '\0';
+			if ((p = strchr(s, '\n')) != NULL)
 				*p = '\0';
-			close(f);
+			(void)close(f);
+			f = -1;
 
-			if (!((flags & PIDLOCK_USEHOSTNAME) &&
-			    strcmp(s, hostname)))  {
-				if ((kill(pid2, 0) != 0) && (errno == ESRCH))  {
+			if ((flags & PIDLOCK_USEHOSTNAME) == 0 ||
+			    strcmp(s, hostname) == 0)  {
+				if (kill(pid2, 0) == -1 && errno == ESRCH)  {
 					/* process doesn't exist */
-					unlink(lockfile);
+					(void)unlink(lockfile);
 					continue;
 				}
 			}
@@ -155,9 +143,8 @@ lockfailed:
 		if (flags & PIDLOCK_NONBLOCK)  {
 			if (locker)
 				*locker = pid2;
-			unlink(tempfile);
 			errno = EWOULDBLOCK;
-			return -1;
+			goto out;
 		} else
 			sleep(5);
 	}
@@ -166,77 +153,80 @@ lockfailed:
 	 * using NFS) by making sure that something really is linked
 	 * to our tempfile (reference count is two).
 	 */
-	if (stat(tempfile, &st) != 0)  {
-		err = errno;
-		/*
-		 * We don't know if lockfile was really created by us,
-		 * so we can't remove it.
-		 */
-		unlink(tempfile);
-		errno = err;
-		return -1;
-	}
+	if (stat(tempfile, &st) == -1)
+		goto out;
 	if (st.st_nlink != 2)
 		goto lockfailed;
 
-	unlink(tempfile);
+	(void)unlink(tempfile);
  	if (locker)
  		*locker = getpid();	/* return this process's PID on lock */
 	errno = 0;
 	return 0;
+out:
+	err = errno;
+	if (f != -1)
+		(void)close(f);
+	(void)unlink(tempfile);
+	errno = err;
+	return -1;
+}
+
+static int
+checktty(const char *tty)
+{
+	char	ttyfile[MAXPATHLEN];
+	struct stat sb;
+
+	(void)strlcpy(ttyfile, _PATH_DEV, sizeof(ttyfile));
+	(void)strlcat(ttyfile, tty, sizeof(ttyfile));
+
+	/* make sure the tty exists */
+	if (stat(ttyfile, &sb) == -1)
+		return -1;
+	if (!S_ISCHR(sb.st_mode))  {
+		errno = EFTYPE;
+		return -1;
+	}
+	return 0;
 }
 
 #define LOCKPATH	"/var/spool/lock/LCK.."
-#define	DEVPATH		"/dev/"
+
+static char *
+makelock(char *buf, size_t bufsiz, const char *tty)
+{
+	(void)strlcpy(buf, LOCKPATH, bufsiz);
+	(void)strlcat(buf, tty, bufsiz);
+	return buf;
+}
 
 /*ARGSUSED*/
 int
 ttylock(const char *tty, int flags, pid_t *locker)
 {
 	char	lockfile[MAXPATHLEN];
-	char	ttyfile[MAXPATHLEN];
-	struct stat sb;
 
 	_DIAGASSERT(tty != NULL);
-	/* locker is not used */
 
-	/* make sure the tty exists */
-	strlcpy(ttyfile, DEVPATH, sizeof(ttyfile));
-	strlcat(ttyfile, tty, sizeof(ttyfile));
-	if (stat(ttyfile, &sb))  {
-		errno = ENOENT; return -1;
-	}
-	if (!S_ISCHR(sb.st_mode))  {
-		errno = ENOENT; return -1;
-	}
+	if (checktty(tty) != 0)
+		return -1;
 
 	/* do the lock */
-	strlcpy(lockfile, LOCKPATH, sizeof(lockfile));
-	strlcat(lockfile, tty, sizeof(lockfile));
-	return pidlock(lockfile, flags, locker, 0);
+	return pidlock(makelock(lockfile, sizeof(lockfile), tty),
+	    flags, locker, 0);
 }
 
 int
 ttyunlock(const char *tty)
 {
 	char	lockfile[MAXPATHLEN];
-	char	ttyfile[MAXPATHLEN];
-	struct stat sb;
 
 	_DIAGASSERT(tty != NULL);
 
-	/* make sure the tty exists */
-	strlcpy(ttyfile, DEVPATH, sizeof(ttyfile));
-	strlcat(ttyfile, tty, sizeof(ttyfile));
-	if (stat(ttyfile, &sb))  {
-		errno = ENOENT; return -1;
-	}
-	if (!S_ISCHR(sb.st_mode))  {
-		errno = ENOENT; return -1;
-	}
+	if (checktty(tty) != 0)
+		return -1;
 
-	/* undo the lock */
-	strlcpy(lockfile, LOCKPATH, sizeof(lockfile));
-	strlcat(lockfile, tty, sizeof(lockfile));
-	return unlink(lockfile);
+	/* remove the lock */
+	return unlink(makelock(lockfile, sizeof(lockfile), tty));
 }
