@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.3 2005/11/07 18:45:34 erh Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.4 2006/03/19 16:27:13 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,19 +93,19 @@ mkmakefile(void)
 		 */
 		(void)snprintf(buf, sizeof(buf), "arch/%s/conf/Makefile.%s",
 		    machinearch, machinearch);
+		free(ifname);
 		ifname = sourcepath(buf);
+		ifp = fopen(ifname, "r");
 	}
-	if ((ifp = fopen(ifname, "r")) == NULL) {
+	if (ifp == NULL) {
 		(void)fprintf(stderr, "config: cannot read %s: %s\n",
 		    ifname, strerror(errno));
-		free(ifname);
-		return (1);
+		goto bad2;
 	}
 	if ((ofp = fopen("Makefile.tmp", "w")) == NULL) {
 		(void)fprintf(stderr, "config: cannot write Makefile: %s\n",
 		    strerror(errno));
-		free(ifname);
-		return (1);
+		goto bad1;
 	}
 	if (emitdefs(ofp) != 0)
 		goto wrerror;
@@ -144,9 +144,6 @@ mkmakefile(void)
 		    "config: error reading %s (at line %d): %s\n",
 		    ifname, lineno, strerror(errno));
 		goto bad;
-		/* (void)unlink("Makefile.tmp"); */
-		free(ifname);
-		return (1);
 	}
 	if (fclose(ofp)) {
 		ofp = NULL;
@@ -157,17 +154,21 @@ mkmakefile(void)
 		(void)fprintf(stderr,
 		    "config: error renaming Makefile: %s\n",
 		    strerror(errno));
-		goto bad;
+		goto bad2;
 	}
 	free(ifname);
 	return (0);
+
  wrerror:
 	(void)fprintf(stderr, "config: error writing Makefile: %s\n",
 	    strerror(errno));
  bad:
 	if (ofp != NULL)
 		(void)fclose(ofp);
+ bad1:
+	(void)fclose(ifp);
 	/* (void)unlink("Makefile.tmp"); */
+ bad2:
 	free(ifname);
 	return (1);
 }
