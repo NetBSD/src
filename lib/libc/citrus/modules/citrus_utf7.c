@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf7.c,v 1.3 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_utf7.c,v 1.4 2006/03/19 01:55:48 christos Exp $	*/
 
 /*-
  * Copyright (c)2004, 2005 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf7.c,v 1.3 2005/10/29 18:02:04 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_utf7.c,v 1.4 2006/03/19 01:55:48 christos Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <assert.h>
@@ -164,7 +164,7 @@ static const char spaces[] = " \t\r\n";
 	ei->cell[(c)] & (EI_DIRECT | EI_OPTION | EI_SPACE)))
 
 #define	ISSAFE(ei, c)	(!SHIFT7BIT((c)) && (ISSPECIAL((c)) || \
-	ei->cell[(c)] & (EI_DIRECT | EI_SPACE)))
+	(c < 0x80 && ei->cell[(c)] & (EI_DIRECT | EI_SPACE))))
 
 /* surrogate pair */
 #define	SRG_BASE	UINT32_C(0x10000)
