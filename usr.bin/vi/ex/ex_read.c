@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_read.c,v 1.13 2005/06/02 04:25:16 lukem Exp $	*/
+/*	$NetBSD: ex_read.c,v 1.14 2006/03/19 04:34:19 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_read.c	10.38 (Berkeley) 8/12/96";
 #else
-__RCSID("$NetBSD: ex_read.c,v 1.13 2005/06/02 04:25:16 lukem Exp $");
+__RCSID("$NetBSD: ex_read.c,v 1.14 2006/03/19 04:34:19 rtr Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,8 +342,13 @@ ex_readfp(sp, name, fp, fm, nlinesp, silent)
 		ccnt += len;
 	}
 
-	if (ferror(fp) || fclose(fp))
+	if (ferror(fp))
 		goto err;
+
+	if (fclose(fp)) {
+		fp = NULL;
+		goto err;
+	}
 
 	/* Return the number of lines read in. */
 	if (nlinesp != NULL)
@@ -361,7 +366,8 @@ ex_readfp(sp, name, fp, fm, nlinesp, silent)
 	rval = 0;
 	if (0) {
 err:		msgq_str(sp, M_SYSERR, name, "%s");
-		(void)fclose(fp);
+		if (NULL != fp)
+			(void)fclose(fp);
 		rval = 1;
 	}
 
