@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.33 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.34 2006/03/19 16:20:47 elad Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: servconf.c,v 1.146 2005/12/08 18:34:11 reyk Exp $");
-__RCSID("$NetBSD: servconf.c,v 1.33 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.34 2006/03/19 16:20:47 elad Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -474,7 +474,8 @@ process_server_config_line(ServerOptions *options, char *line,
 	u_int i;
 
 	cp = line;
-	arg = strdelim(&cp);
+	if ((arg = strdelim(&cp)) == NULL)
+		return 0;
 	/* Ignore leading whitespace */
 	if (*arg == '\0')
 		arg = strdelim(&cp);
