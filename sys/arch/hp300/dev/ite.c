@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.70 2006/03/19 06:13:43 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.71 2006/03/19 06:47:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.70 2006/03/19 06:13:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.71 2006/03/19 06:47:35 tsutsui Exp $");
 
 #include "hil.h"
 
@@ -612,7 +612,7 @@ itefilter(char stat, char c)
 	case KBD_CTRLSHIFT:
 		code = ite_km->kbd_ctrlshiftmap[(int)c];
 		break;
-        }
+	}
 
 	if (code == '\0' && (str = ite_km->kbd_stringmap[(int)c]) != NULL) {
 		while (*str)
