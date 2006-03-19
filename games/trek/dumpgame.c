@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpgame.c,v 1.9 2004/01/27 20:30:31 jsm Exp $	*/
+/*	$NetBSD: dumpgame.c,v 1.10 2006/03/19 01:00:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumpgame.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dumpgame.c,v 1.9 2004/01/27 20:30:31 jsm Exp $");
+__RCSID("$NetBSD: dumpgame.c,v 1.10 2006/03/19 01:00:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,8 @@ restartgame()
 	    readdump(fd))
 	{
 		printf("cannot restart\n");
-		close(fd);
+		if (fd >= 0)
+			close(fd);
 		return (1);
 	}
 
