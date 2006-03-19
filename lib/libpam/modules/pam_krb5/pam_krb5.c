@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.13 2006/03/19 21:15:21 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.14 2006/03/19 21:21:18 christos Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.13 2006/03/19 21:15:21 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.14 2006/03/19 21:21:18 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -355,7 +355,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	const char *cache_name, *q;
 	const void *user;
 	void *cache_data;
-	char *cache_name_buf = NULL, *p;
+	char *cache_name_buf = NULL, *p, *cache_name_buf2 = NULL;
 	char pwbuf[1024];
 
 	uid_t euid;
@@ -441,7 +441,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 		}
 
 		/* XXX potential overflow */
-		p = calloc(PATH_MAX + 16, sizeof(char));
+		cache_name_buf2 = p = calloc(PATH_MAX + 16, sizeof(char));
 		q = cache_name;
 	
 		if (p == NULL) {
@@ -585,6 +585,8 @@ cleanup3:
 
 	if (cache_name_buf != NULL)
 		free(cache_name_buf);
+	if (cache_name_buf2 != NULL)
+		free(cache_name_buf2);
 
 	return (retval);
 }
