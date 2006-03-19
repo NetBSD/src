@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.109 2006/03/17 23:21:01 tls Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.110 2006/03/19 04:10:02 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.109 2006/03/17 23:21:01 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.110 2006/03/19 04:10:02 rtr Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -231,7 +231,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	struct inode *ip = NULL;
 	struct lfs *fs;
 	struct mount *mntp;
-	struct vnode *vp;
+	struct vnode *vp = NULL;
 	ino_t lastino;
 	daddr_t b_daddr, v_daddr;
 	int cnt, error;
