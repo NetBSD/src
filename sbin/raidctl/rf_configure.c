@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.22 2005/02/09 14:21:37 xtraeme Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.23 2006/03/19 01:57:11 dan Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.22 2005/02/09 14:21:37 xtraeme Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.23 2006/03/19 01:57:11 dan Exp $");
 #endif
 
 
@@ -329,6 +329,7 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 	}
 	if (fgets(buf, 256, fp) == NULL) {
 		RF_ERRORMSG1("RAID: config error: Can't read layout from layout table file %s\n", bdfile);
+		fclose(fp);
 		return (EINVAL);
 	}
 	i = sscanf(buf, "%u %u %u %u %u %u", &b, &v, &k, &r, &lambda, &norotate);
@@ -336,14 +337,17 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 		norotate = 0;	/* no-rotate flag is optional */
 	else if (i != 6) {
 		RF_ERRORMSG("Unable to parse header line in block design file\n");
+		fclose(fp);
 		return (EINVAL);
 	}
 	/* set the sparemap directory.  In the in-kernel version, there's a
 	 * daemon that's responsible for finding the sparemaps */
 	if (distSpare) {
 		if (rf_get_next_nonblank_line(smbuf, 256, configfp,
-		    "Can't find sparemap file name in config file\n"))
+		    "Can't find sparemap file name in config file\n")) {
+			fclose(fp);
 			return (EINVAL);
+		}
 		smname = rf_find_non_white(smbuf);
 		if (smname[strlen(smname) - 1] == '\n') {
 			/* strip newline char */
@@ -359,8 +363,10 @@ rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 	    6 * sizeof(int) + b * k;
 
 	cfgBuf = (char *) malloc(cfgPtr->layoutSpecificSize);
-	if (cfgBuf == NULL)
+	if (cfgBuf == NULL) {
+		fclose(fp);
 		return (ENOMEM);
+	}
 	cfgPtr->layoutSpecific = (void *) cfgBuf;
 	p = cfgBuf;
 
@@ -518,8 +524,10 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 		return (NULL);
 	}
 	if (rf_get_next_nonblank_line(buf, 1024, fp,
-	    "Invalid sparemap file:  can't find header line\n"))
+	    "Invalid sparemap file:  can't find header line\n")) {
+		fclose(fp);
 		return (NULL);
+	}
 	if (buf[strlen(buf) - 1] == '\n')
 		buf[strlen(buf) - 1] = '\0';
 
@@ -540,6 +548,7 @@ rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 		    &spareDisk, &spareBlkOffset);
 		if (numFound != 4) {
 			fprintf(stderr, "Sparemap file prematurely exhausted after %d of %d lines\n", i, linecount);
+			fclose(fp);
 			return (NULL);
 		}
 
