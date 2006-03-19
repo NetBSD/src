@@ -1,4 +1,4 @@
-/*	$NetBSD: comp.c,v 1.9 2003/08/07 09:37:24 agc Exp $	*/
+/*	$NetBSD: comp.c,v 1.10 2006/03/19 00:29:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)comp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: comp.c,v 1.9 2003/08/07 09:37:24 agc Exp $");
+__RCSID("$NetBSD: comp.c,v 1.10 2006/03/19 00:29:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,9 +342,7 @@ normbad:
 						*value /= ++badcount;
 					if (op->mileage == 0)
 						*value += 5;
-					if ((card == C_LIMIT &&
-					     op->speed == C_LIMIT) ||
-					    !op->can_go)
+					if (op->speed == C_LIMIT || !op->can_go)
 						*value -= 5;
 					if (cango && pp->safety[S_RIGHT_WAY] !=
 						     S_UNKNOWN)
