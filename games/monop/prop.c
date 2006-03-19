@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.9 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: prop.c,v 1.10 2006/03/19 00:05:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.9 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: prop.c,v 1.10 2006/03/19 00:05:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,8 @@ del_list(plr, head, op_sqr)
 			break;
 		else
 			last_op = op;
+	if (op) == NULL)
+		return;
 	if (last_op == NULL)
 		*head = op->next;
 	else {
