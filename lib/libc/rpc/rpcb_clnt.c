@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.19 2005/12/03 15:16:19 yamt Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.20 2006/03/19 01:37:59 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.19 2005/12/03 15:16:19 yamt Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.20 2006/03/19 01:37:59 christos Exp $");
 #endif
 #endif
 
@@ -249,11 +249,21 @@ add_cache(host, netid, taddr, uaddr)
 	ad_cache->ac_taddr = (struct netbuf *)malloc(sizeof (struct netbuf));
 	if (!ad_cache->ac_host || !ad_cache->ac_netid || !ad_cache->ac_taddr ||
 		(uaddr && !ad_cache->ac_uaddr)) {
-		return;
+		goto out;
 	}
 	ad_cache->ac_taddr->len = ad_cache->ac_taddr->maxlen = taddr->len;
 	ad_cache->ac_taddr->buf = (char *) malloc(taddr->len);
 	if (ad_cache->ac_taddr->buf == NULL) {
+out:
+		if (ad_cache->ac_host)
+			free(ad_cache->ac_host);
+		if (ad_cache->ac_netid)
+			free(ad_cache->ac_netid);
+		if (ad_cache->ac_uaddr)
+			free(ad_cache->ac_uaddr);
+		if (ad_cache->ac_taddr)
+			free(ad_cache->ac_taddr);
+		free(ad_cache);
 		return;
 	}
 	memcpy(ad_cache->ac_taddr->buf, taddr->buf, taddr->len);
