@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.29 2005/12/11 04:12:58 christos Exp $	*/
+/*	$NetBSD: fts.c,v 1.30 2006/03/19 02:01:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.29 2005/12/11 04:12:58 christos Exp $");
+__RCSID("$NetBSD: fts.c,v 1.30 2006/03/19 02:01:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -195,6 +195,9 @@ fts_open(char * const *argv, int options,
 			SET(FTS_NOCHDIR);
 		}
 	}
+
+	if (nitems == 0)
+		free(parent);
 
 	return (sp);
 
