@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.94 2006/03/18 05:40:28 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.95 2006/03/19 19:06:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.94 2006/03/18 05:40:28 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.95 2006/03/19 19:06:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1142,7 +1142,7 @@ tar_options(int argc, char **argv)
 		{
 			int sawpat = 0;
 			int dirisnext = 0;
-			char *file, *dir;
+			char *file, *dir = NULL;
 
 			while (nincfiles || *argv != NULL) {
 				/*
@@ -1178,6 +1178,8 @@ tar_options(int argc, char **argv)
 					}
 					while ((str = getline(fp)) != NULL) {
 						if (dirisnext) {
+							if (dir)
+								free(dir);
 							dir = str;
 							dirisnext = 0;
 							continue;
@@ -1188,19 +1190,22 @@ tar_options(int argc, char **argv)
 							continue;
 						}
 						if (strncmp(str, "-C ", 3) == 0) {
+							if (dir)
+								free(dir);
 							dir = strdup(str + 3);
 							free(str);
 							continue;
 						}
 						if (pat_add(str, dir) < 0)
 							tar_usage();
-						free(dir);
 						free(str);
 						sawpat = 1;
 					}
 					/* Bomb if given -C w/out a dir. */
 					if (dirisnext)
 						tar_usage();
+					if (dir)
+						free(dir);
 					if (strcmp(file, "-") != 0)
 						fclose(fp);
 					if (getline_error) {
