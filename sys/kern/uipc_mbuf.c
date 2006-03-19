@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.108 2006/03/18 18:17:19 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.109 2006/03/19 10:07:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.108 2006/03/18 18:17:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.109 2006/03/19 10:07:19 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1164,13 +1164,48 @@ m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
 	while (off > (mlen = m->m_len)) {
 		off -= mlen;
 		totlen += mlen;
-		if (m->m_next == 0) {
+		if (m->m_next == NULL) {
+			int tspace;
+extend:
 			if ((flags & M_COPYBACK0_EXTEND) == 0)
 				goto out;
-			n = m_getclr(how, m->m_type);
-			if (n == 0)
+
+			/*
+			 * try to make some space at the end of "m".
+			 */
+
+			mlen = m->m_len;
+			if (off + len >= MINCLSIZE &&
+			    (m->m_flags & M_EXT) == 0 && m->m_len == 0) {
+				MCLGET(m, how);
+			}
+			tspace = M_TRAILINGSPACE(m);
+			if (tspace > 0) {
+				tspace = min(tspace, off + len);
+				KASSERT(tspace > 0);
+				memset(mtod(m, char *) + m->m_len, 0,
+				    min(off, tspace));
+				m->m_len += tspace;
+				off += mlen;
+				totlen -= mlen;
+				continue;
+			}
+
+			/*
+			 * need to allocate an mbuf.
+			 */
+
+			if (off + len >= MINCLSIZE) {
+				n = m_getcl(how, m->m_type, 0);
+			} else {
+				n = m_get(how, m->m_type);
+			}
+			if (n == NULL) {
 				goto out;
-			n->m_len = min(MLEN, len + off);
+			}
+			n->m_len = 0;
+			n->m_len = min(M_TRAILINGSPACE(n), off + len);
+			memset(mtod(n, char *), 0, min(n->m_len, off));
 			m->m_next = n;
 		}
 		mp = &m->m_next;
@@ -1283,14 +1318,8 @@ m_copyback0(struct mbuf **mp0, int off, int len, const void *vp, int flags,
 		totlen += mlen;
 		if (len == 0)
 			break;
-		if (m->m_next == 0) {
-			if ((flags & M_COPYBACK0_EXTEND) == 0)
-				goto out;
-			n = m_get(how, m->m_type);
-			if (n == 0)
-				break;
-			n->m_len = min(MLEN, len);
-			m->m_next = n;
+		if (m->m_next == NULL) {
+			goto extend;
 		}
 		mp = &m->m_next;
 		m = m->m_next;
