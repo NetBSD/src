@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.42 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.43 2006/03/19 02:12:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.42 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.43 2006/03/19 02:12:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -764,7 +764,7 @@ cgetclose(void)
 int
 cgetnext(char **bp, const char * const *db_array)
 {
-	size_t len;
+	size_t len = 0;
 	int status, done;
 	char *cp, *line, *rp, *np, buf[BSIZE], nbuf[BSIZE];
 	size_t dummy;
