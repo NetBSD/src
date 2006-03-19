@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf1632.c,v 1.5 2006/02/09 22:03:15 dogcow Exp $	*/
+/*	$NetBSD: citrus_utf1632.c,v 1.6 2006/03/19 01:24:09 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf1632.c,v 1.5 2006/02/09 22:03:15 dogcow Exp $");
+__RCSID("$NetBSD: citrus_utf1632.c,v 1.6 2006/03/19 01:24:09 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -173,6 +173,8 @@ refetch:
 				wc = (psenc->ch[1] |
 				      ((wchar_t)psenc->ch[0] << 8));
 				break;
+			default:
+				goto ilseq;
 			}
 			if (wc >= 0xD800 && wc <= 0xDBFF) {
 				/* surrogate high */
@@ -196,6 +198,8 @@ refetch:
 				wc |= psenc->ch[3];
 				wc |= (wchar_t)(psenc->ch[2] & 3) << 8;
 				break;
+			default:
+				goto ilseq;
 			}
 			wc += 0x10000;
 		}
@@ -214,6 +218,8 @@ refetch:
 			      ((wchar_t)psenc->ch[1] << 16) |
 			      ((wchar_t)psenc->ch[0] << 24));
 			break;
+		default:
+			goto ilseq;
 		}
 	}
 
