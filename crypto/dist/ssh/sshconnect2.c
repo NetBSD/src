@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.27 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.28 2006/03/19 16:40:32 elad Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshconnect2.c,v 1.143 2005/10/14 02:17:59 stevesk Exp $");
-__RCSID("$NetBSD: sshconnect2.c,v 1.27 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.28 2006/03/19 16:40:32 elad Exp $");
 
 #include <sys/queue.h>
 
@@ -521,8 +521,10 @@ userauth_gssapi(Authctxt *authctxt)
 		}
 	}
 
-	if (!ok)
+	if (!ok) {
+		ssh_gssapi_delete_ctx(&gssctxt);
 		return 0;
+	}
 
 	authctxt->methoddata=(void *)gssctxt;
 
@@ -1338,6 +1340,7 @@ userauth_hostbased(Authctxt *authctxt)
 	if (p == NULL) {
 		error("userauth_hostbased: cannot get local ipaddr/name");
 		key_free(private);
+		xfree(blob);
 		return 0;
 	}
 	len = strlen(p) + 2;
@@ -1376,6 +1379,7 @@ userauth_hostbased(Authctxt *authctxt)
 		error("key_sign failed");
 		xfree(chost);
 		xfree(pkalg);
+		xfree(blob);
 		return 0;
 	}
 	packet_start(SSH2_MSG_USERAUTH_REQUEST);
@@ -1391,6 +1395,7 @@ userauth_hostbased(Authctxt *authctxt)
 	xfree(signature);
 	xfree(chost);
 	xfree(pkalg);
+	xfree(blob);
 
 	packet_send();
 	return 1;
