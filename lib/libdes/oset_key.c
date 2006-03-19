@@ -342,7 +342,7 @@ void des_set_key_unchecked(const_des_cblock *key, des_key_schedule schedule)
 	register DES_LONG *k;
 	register int i;
 
-	k = &schedule->ks.deslong[0];
+	k = schedule;
 	in = &(*key)[0];
 
 	c2l(in,c);

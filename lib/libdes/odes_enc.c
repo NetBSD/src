@@ -84,7 +84,7 @@ void des_encrypt1(DES_LONG *data, des_key_schedule ks, int enc)
 	r=ROTATE(r,29)&0xffffffffL;
 	l=ROTATE(l,29)&0xffffffffL;
 
-	s=ks->ks.deslong;
+	s=ks;
 	/* I don't know if it is worth the effort of loop unrolling the
 	 * inner loop */
 	if (enc)
@@ -180,7 +180,7 @@ void des_encrypt2(DES_LONG *data, des_key_schedule ks, int enc)
 	r=ROTATE(r,29)&0xffffffffL;
 	l=ROTATE(l,29)&0xffffffffL;
 
-	s=ks->ks.deslong;
+	s=ks;
 	/* I don't know if it is worth the effort of loop unrolling the
 	 * inner loop */
 	if (enc)
