@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_term.c,v 1.5 2002/04/09 01:47:30 thorpej Exp $	*/
+/*	$NetBSD: cl_term.c,v 1.6 2006/03/19 06:10:22 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)cl_term.c	10.22 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: cl_term.c,v 1.5 2002/04/09 01:47:30 thorpej Exp $");
+__RCSID("$NetBSD: cl_term.c,v 1.6 2006/03/19 06:10:22 rtr Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,8 +113,6 @@ cl_term_init(sp)
 		for (kp = keylist;; ++kp)
 			if (kp->value == tkp->value)
 				break;
-		if (kp == NULL)
-			continue;
 		if (seq_set(sp, tkp->name, strlen(tkp->name), t, strlen(t),
 		    &kp->ch, 1, SEQ_INPUT, SEQ_NOOVERWRITE | SEQ_SCREEN))
 			return (1);
