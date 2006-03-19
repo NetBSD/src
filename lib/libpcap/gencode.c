@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.37 2004/10/01 20:46:15 he Exp $	*/
+/*	$NetBSD: gencode.c,v 1.38 2006/03/19 23:10:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/gencode.c,v 1.193.2.8 2004/03/29 20:53:47 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.37 2004/10/01 20:46:15 he Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.38 2006/03/19 23:10:04 christos Exp $");
 #endif
 #endif
 
@@ -4329,7 +4329,7 @@ gen_mcode6(s1, s2, masklen, q)
 	memset(&mask, 0, sizeof(mask));
 	memset(&mask, 0xff, masklen / 8);
 	if (masklen % 8) {
-		mask.s6_addr[masklen / 8] =
+		mask.s6_addr[masklen / 8 - 1] =
 			(0xff << (8 - masklen % 8)) & 0xff;
 	}
 
