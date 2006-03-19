@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_std.c,v 1.5 2006/02/09 22:03:15 dogcow Exp $	*/
+/*	$NetBSD: citrus_mapper_std.c,v 1.6 2006/03/19 01:17:30 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_mapper_std.c,v 1.5 2006/02/09 22:03:15 dogcow Exp $");
+__RCSID("$NetBSD: citrus_mapper_std.c,v 1.6 2006/03/19 01:17:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -122,6 +122,8 @@ rowcol_convert(struct _citrus_mapper_std * __restrict ms,
 	case 32:
 		conv = be32toh(_region_peek32(&rc->rc_table, idx*4));
 		break;
+	default:
+		return _MAPPER_CONVERT_FATAL;
 	}
 
 	if (conv == rc->rc_dst_invalid) {
