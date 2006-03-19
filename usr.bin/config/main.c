@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2005/12/10 13:39:47 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2006/03/19 22:34:44 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1201,6 +1201,7 @@ int
 mkident(void)
 {
 	FILE *fp;
+	int error = 0;
 
 	(void)unlink("ident");
 
@@ -1215,10 +1216,10 @@ mkident(void)
 	if (vflag)
 		(void)printf("using ident '%s'\n", ident);
 	if (fprintf(fp, "%s\n", ident) < 0)
-		return (1);
+		error = 1;
 	(void)fclose(fp);
 
-	return (0);
+	return error;
 }
 
 void
