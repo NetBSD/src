@@ -1,4 +1,4 @@
-/*	$NetBSD: houses.c,v 1.8 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: houses.c,v 1.9 2006/03/19 00:19:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)houses.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: houses.c,v 1.8 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: houses.c,v 1.9 2006/03/19 00:19:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ sell_houses()
 over:
 	num_mon = 0;
 	good = TRUE;
-	for (op = cur_p->own_list; op; op = op->next)
+	for (op = cur_p->own_list; op;)
 		if (op->sqr->type == PRPTY && op->sqr->desc->monop) {
 			mp = op->sqr->desc->mon_desc;
 			names[num_mon] = (monops[num_mon]=mp)->name;
@@ -187,10 +187,11 @@ over:
 				if (!good && op->sqr->desc->houses != 0)
 					good++;
 			while (op->next && op->sqr->desc->mon_desc == mp
-			    && (op=op->next));
+			    && (op = op->next));
 			if (!good)
 				--num_mon;
-		}
+		} else
+			op = op->next;
 	if (num_mon == 0) {
 		printf("You don't have any houses to sell!!\n");
 		return;
