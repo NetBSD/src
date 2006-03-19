@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.28 2006/03/19 00:36:09 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.29 2006/03/19 15:11:50 bouyer Exp $ */
 
 /*
  *
@@ -33,9 +33,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.28 2006/03/19 00:36:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.29 2006/03/19 15:11:50 bouyer Exp $");
 
-#include "xbd.h"
+#include "xbd_hypervisor.h"
 #include "rnd.h"
 
 #include <sys/types.h>
@@ -80,7 +80,7 @@ static void	send_interface_connect(void);
 static void xbd_attach(struct device *, struct device *, void *);
 static int xbd_detach(struct device *, int);
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 int xbd_match(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(xbd_hypervisor, sizeof(struct xbd_softc),
     xbd_match, xbd_attach, xbd_detach, NULL);
@@ -123,7 +123,7 @@ dev_type_strategy(xbdstrategy);
 dev_type_dump(xbddump);
 dev_type_size(xbdsize);
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 const struct bdevsw xbd_bdevsw = {
 	xbdopen, xbdclose, xbdstrategy, xbdioctl,
 	xbddump, xbdsize, D_DISK
@@ -212,7 +212,7 @@ static struct dk_intf dkintf_scsi = {
 };
 #endif
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 static struct xbd_attach_args xbd_ata = {
 	.xa_device = "xbd",
 	.xa_dkintf = &dkintf_esdi,
@@ -397,7 +397,7 @@ getxbd_softc(dev_t dev)
 
 	DPRINTF_FOLLOW(("getxbd_softc(0x%x): major = %d unit = %d\n", dev,
 	    major(dev), unit));
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 	if (major(dev) == xbd_major)
 		return device_lookup(&xbd_cd, unit);
 #endif
@@ -927,7 +927,7 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 	blkctrl.xc_parent = self;
 	blkctrl.xc_cfprint = print;
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 	xbd_major = devsw_name2blk("xbd", NULL, 0);
 #endif
 #if NWD > 0
@@ -966,7 +966,7 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 	return 0;
 }
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 int
 xbd_match(struct device *parent, struct cfdata *match, void *aux)
 {
