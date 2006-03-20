@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.1 2006/03/19 00:36:09 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.2 2006/03/20 22:31:21 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.1 2006/03/19 00:36:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.2 2006/03/20 22:31:21 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -568,8 +568,6 @@ xbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	dksc = &sc->sc_dksc;
 	dk = &dksc->sc_dkdev;
 
-	KASSERT(bufq == dksc->sc_bufq);
-
 	switch (cmd) {
 	case DIOCSSTRATEGY:
 		error = EOPNOTSUPP;
@@ -665,7 +663,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 		nsects = nbytes >> XEN_BSHIFT;
 		req->seg[seg].first_sect = off >> XEN_BSHIFT;
 		req->seg[seg].last_sect = (off >> XEN_BSHIFT) + nsects - 1;
-		KASSERT(req->seg[seg].first_sect <= last_sect);
+		KASSERT(req->seg[seg].first_sect <= req->seg[seg].last_sect);
 		KASSERT(req->seg[seg].last_sect < 8);
 		if (__predict_false(xengnt_grant_access(
 		    sc->sc_xbusd->xbusd_otherend_id, ma,
