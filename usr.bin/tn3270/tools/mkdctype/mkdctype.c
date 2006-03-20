@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdctype.c,v 1.7 2003/08/07 11:16:41 agc Exp $	*/
+/*	$NetBSD: mkdctype.c,v 1.8 2006/03/20 01:34:49 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -29,7 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <stdio.h>
+
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT(
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
@@ -40,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)mkdctype.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkdctype.c,v 1.7 2003/08/07 11:16:41 agc Exp $");
+__RCSID("$NetBSD: mkdctype.c,v 1.8 2006/03/20 01:34:49 gdamore Exp $");
 #endif
 #endif /* not lint */
 
