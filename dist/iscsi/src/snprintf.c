@@ -40,7 +40,7 @@
 #endif
 
 #if 0
-RCSID("$Id: snprintf.c,v 1.1.1.1 2006/02/08 18:56:20 agc Exp $");
+RCSID("$Id: snprintf.c,v 1.2 2006/03/20 20:45:07 agc Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -564,36 +564,6 @@ asprintf (char **ret, const char *format, ...)
 }
 #endif
 
-#if !defined(HAVE_ASNPRINTF) || defined(TEST_SNPRINTF)
-int
-asnprintf (char **ret, size_t max_sz, const char *format, ...)
-{
-  va_list args;
-  int val;
-
-  va_start(args, format);
-  val = vasnprintf (ret, max_sz, format, args);
-
-#ifdef PARANOIA
-  {
-    int ret2;
-    char *tmp;
-    tmp = malloc (val + 1);
-    if (tmp == NULL)
-      abort ();
-
-    ret2 = vsprintf (tmp, format, args);
-    if (val != ret2 || strcmp(*ret, tmp))
-      abort ();
-    free (tmp);
-  }
-#endif
-
-  va_end(args);
-  return val;
-}
-#endif
-
 #if !defined(HAVE_VASPRINTF) || defined(TEST_SNPRINTF)
 int
 vasprintf (char **ret, const char *format, va_list args)
@@ -661,5 +631,35 @@ vsnprintf (char *str, size_t sz, const char *format, va_list args)
   if (state.s != NULL)
     *state.s = '\0';
   return ret;
+}
+#endif
+
+#if !defined(HAVE_ASNPRINTF) || defined(TEST_SNPRINTF)
+int
+asnprintf (char **ret, size_t max_sz, const char *format, ...)
+{
+  va_list args;
+  int val;
+
+  va_start(args, format);
+  val = vasnprintf (ret, max_sz, format, args);
+
+#ifdef PARANOIA
+  {
+    int ret2;
+    char *tmp;
+    tmp = malloc (val + 1);
+    if (tmp == NULL)
+      abort ();
+
+    ret2 = vsprintf (tmp, format, args);
+    if (val != ret2 || strcmp(*ret, tmp))
+      abort ();
+    free (tmp);
+  }
+#endif
+
+  va_end(args);
+  return val;
 }
 #endif
