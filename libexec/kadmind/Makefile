@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2005/01/10 03:11:18 lukem Exp $
+# $NetBSD: Makefile,v 1.17 2006/03/20 04:03:23 christos Exp $
 
 NOLINT=		# defined
 
@@ -11,15 +11,6 @@ WARNS?=		1
 
 PROG=		kadmind
 MAN=		kadmind.8
-
-.if ${MKKERBEROS4} != "no"
-CPPFLAGS+= -DKRB4
-CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
-SRCS+= 	version4.c
-
-KRB4LDADD= -lkadm -lkrb -ldes
-KRB4DPADD= ${LIBKADM} ${LIBKRB} ${LIBDES}
-.endif
 
 SRCS+= 	kadmind.c				\
 	server.c				\

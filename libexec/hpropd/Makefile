@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.14 2006/03/20 04:03:22 christos Exp $
 
 NOLINT=		# defined
 
@@ -11,13 +11,6 @@ WARNS?=		1
 
 PROG=		hpropd
 MAN=		hpropd.8
-
-.if ${MKKERBEROS4} != "no"
-CPPFLAGS+= -DKRB4
-CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
-KRB4LDADD= -lkdb -lkrb -ldes
-KRB4DPADD= ${LIBKDB} ${LIBKRB} ${LIBDES}
-.endif
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kdc			\

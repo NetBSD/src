@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.41 2006/03/18 04:44:49 ginsbach Exp $	*/
+/*	$NetBSD: rcp.c,v 1.42 2006/03/20 04:03:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.41 2006/03/18 04:44:49 ginsbach Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.42 2006/03/20 04:03:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,25 +67,7 @@ __RCSID("$NetBSD: rcp.c,v 1.41 2006/03/18 04:44:49 ginsbach Exp $");
 #include "pathnames.h"
 #include "extern.h"
 
-#ifdef KERBEROS
-#include <des.h>
-#include <kerberosIV/krb.h>
-#include "krb.h"
-
-char	dst_realm_buf[REALM_SZ];
-char	*dest_realm = NULL;
-int	use_kerberos = 1;
-CREDENTIALS 	cred;
-Key_schedule	schedule;
-#ifdef CRYPT
-int	doencrypt = 0;
-#define	OPTIONS	"46dfKk:prtx"
-#else
-#define	OPTIONS	"46dfKk:prt"
-#endif
-#else
 #define	OPTIONS "46dfprt"
-#endif
 
 struct passwd *pwd;
 char *pwname;
@@ -99,10 +81,6 @@ static char dot[] = ".";
 #define	CMDNEEDS	64
 char cmd[CMDNEEDS];		/* must hold "rcp -r -p -d\0" */
 
-#ifdef KERBEROS
-int	 kerberos(char **, char *, char *, char *);
-void	 oldw(const char *, ...);
-#endif
 int	 response(void);
 void	 rsource(char *, struct stat *);
 void	 sink(int, char *[]);
@@ -129,24 +107,7 @@ main(int argc, char *argv[])
 			family = AF_INET6;
 			break;
 		case 'K':
-#ifdef KERBEROS
-			use_kerberos = 0;
-#endif
 			break;
-#ifdef	KERBEROS
-		case 'k':
-			dest_realm = dst_realm_buf;
-			if (strlcpy(dst_realm_buf, optarg,
-			    sizeof(dst_realm_buf)) >= sizeof(dst_realm_buf))
-				errx(1, "Argument `realm' is too long");
-			break;
-#ifdef CRYPT
-		case 'x':
-			doencrypt = 1;
-			/* des_set_key(cred.session, schedule); */
-			break;
-#endif
-#endif
 		case 'p':
 			pflag = 1;
 			break;
@@ -172,23 +133,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-#ifdef KERBEROS
-	if (use_kerberos) {
-#ifdef CRYPT
-		shell = doencrypt ? "ekshell" : "kshell";
-#else
-		shell = "kshell";
-#endif
-		if ((sp = getservbyname(shell, "tcp")) == NULL) {
-			use_kerberos = 0;
-			oldw("can't get entry for %s/tcp service", shell);
-			sp = getservbyname(shell = "shell", "tcp");
-		}
-	} else
-		sp = getservbyname(shell = "shell", "tcp");
-#else
 	sp = getservbyname(shell = "shell", "tcp");
-#endif
 	if (sp == NULL)
 		errx(1, "%s/tcp: unknown service", shell);
 	port = sp->s_port;
@@ -219,20 +164,9 @@ main(int argc, char *argv[])
 
 	rem = -1;
 	/* Command to be executed on remote system using "rsh". */
-#ifdef	KERBEROS
-	(void)snprintf(cmd, sizeof(cmd),
-	    "rcp%s%s%s%s", iamrecursive ? " -r" : "",
-#ifdef CRYPT
-	    (doencrypt && use_kerberos ? " -x" : ""),
-#else
-	    "",
-#endif
-	    pflag ? " -p" : "", targetshouldbedirectory ? " -d" : "");
-#else
 	(void)snprintf(cmd, sizeof(cmd), "rcp%s%s%s",
 	    iamrecursive ? " -r" : "", pflag ? " -p" : "",
 	    targetshouldbedirectory ? " -d" : "");
-#endif
 
 	(void)signal(SIGPIPE, lostconn);
 
@@ -315,12 +249,6 @@ toremote(char *targ, int argc, char *argv[])
 					err(1, NULL);
 				(void)snprintf(bp, len, "%s -t %s", cmd, targ);
 				host = thost;
-#ifdef KERBEROS
-				if (use_kerberos)
-					rem = kerberos(&host, bp, pwname,
-					    tuser ? tuser : pwname);
-				else
-#endif
 					rem = rcmd_af(&host, port, pwname,
 					    tuser ? tuser : pwname,
 					    bp, NULL, family);
@@ -375,10 +303,6 @@ tolocal(int argc, char *argv[])
 			err(1, NULL);
 		(void)snprintf(bp, len, "%s -f %s", cmd, src);
 		rem = 
-#ifdef KERBEROS
-		    use_kerberos ? 
-			kerberos(&host, bp, pwname, suser) : 
-#endif
 			rcmd_af(&host, port, pwname, suser, bp, NULL, family);
 		(void)free(bp);
 		if (rem < 0) {
@@ -796,48 +720,6 @@ screwup:
 	/* NOTREACHED */
 }
 
-#ifdef KERBEROS
-int
-kerberos(char **host, char *bp, char *locuser, char *user)
-{
-	struct servent *sp;
-
-again:
-	if (use_kerberos) {
-		rem = KSUCCESS;
-		errno = 0;
-		if (dest_realm == NULL)
-			dest_realm = krb_realmofhost(*host);
-		rem = 
-#ifdef CRYPT
-		    doencrypt ? 
-			krcmd_mutual(host,
-			    port, user, bp, 0, dest_realm, &cred, schedule) :
-#endif
-			krcmd(host, port, user, bp, 0, dest_realm);
-
-		if (rem < 0) {
-			use_kerberos = 0;
-			if ((sp = getservbyname("shell", "tcp")) == NULL)
-				errx(1, "unknown service shell/tcp");
-			if (errno == ECONNREFUSED)
-			    oldw("remote host doesn't support Kerberos");
-			else if (errno == ENOENT)
-			    oldw("can't provide Kerberos authentication data");
-			port = sp->s_port;
-			goto again;
-		}
-	} else {
-#ifdef CRYPT
-		if (doencrypt)
-			errx(1,
-			   "the -x option requires Kerberos authentication");
-#endif
-		rem = rcmd_af(host, port, locuser, user, bp, NULL, family);
-	}
-	return (rem);
-}
-#endif /* KERBEROS */
 
 int
 response(void)
@@ -875,39 +757,14 @@ response(void)
 void
 usage(void)
 {
-#ifdef KERBEROS
-#ifdef CRYPT
-	(void)fprintf(stderr, "%s\n\t%s\n",
-	    "usage: rcp [-46Kpx] [-k realm] f1 f2",
-	    "or: rcp [-46Kprx] [-k realm] f1 ... fn directory");
-#else
-	(void)fprintf(stderr, "%s\n\t%s\n",
-	    "usage: rcp [-46Kp] [-k realm] f1 f2",
-	    "or: rcp [-46Kpr] [-k realm] f1 ... fn directory");
-#endif
-#else
 	(void)fprintf(stderr,
 	    "usage: rcp [-46p] f1 f2; or: rcp [-46pr] f1 ... fn directory\n");
-#endif
 	exit(1);
 	/* NOTREACHED */
 }
 
 #include <stdarg.h>
 
-#ifdef KERBEROS
-void
-oldw(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	(void)fprintf(stderr, "rcp: ");
-	(void)vfprintf(stderr, fmt, ap);
-	(void)fprintf(stderr, ", using standard rcp\n");
-	va_end(ap);
-}
-#endif
 
 void
 run_err(const char *fmt, ...)
