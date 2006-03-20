@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.866 2006/03/16 22:06:40 wiz Exp $
+# $NetBSD: mi,v 1.867 2006/03/20 04:17:40 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -28,7 +28,7 @@
 ./usr/share/info/info-stnd.info			man-texinfo-info	info
 ./usr/share/info/info.info			man-texinfo-info	info
 ./usr/share/info/iostream.info			man-obsolete		obsolete
-./usr/share/info/kth-krb.info			man-krb4-info		kerberos4,info
+./usr/share/info/kth-krb.info			man-obsolete		obsolete
 ./usr/share/info/ld.info			man-computil-info	bfd,info
 ./usr/share/info/send-pr.info			man-gnats-info		info
 ./usr/share/info/stabs.info			man-debug-info		gdb,info
@@ -1529,10 +1529,10 @@
 ./usr/share/man/cat5/isdnd.acct.0		man-isdn-catman		.cat
 ./usr/share/man/cat5/isdnd.rates.0		man-isdn-catman		.cat
 ./usr/share/man/cat5/isdnd.rc.0			man-isdn-catman		.cat
-./usr/share/man/cat5/krb.conf.0			man-krb4-catman		kerberos4,.cat
-./usr/share/man/cat5/krb.equiv.0		man-krb4-catman		kerberos4,.cat
-./usr/share/man/cat5/krb.extra.0		man-krb4-catman		kerberos4,.cat
-./usr/share/man/cat5/krb.realms.0		man-krb4-catman		kerberos4,.cat
+./usr/share/man/cat5/krb.conf.0			man-obsolete		obsolete
+./usr/share/man/cat5/krb.equiv.0		man-obsolete		obsolete
+./usr/share/man/cat5/krb.extra.0		man-obsolete		obsolete
+./usr/share/man/cat5/krb.realms.0		man-obsolete		obsolete
 ./usr/share/man/cat5/krb5.conf.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat5/lastlog.0			man-sys-catman		.cat
 ./usr/share/man/cat5/lastlogx.0			man-sys-catman		.cat
@@ -3837,10 +3837,10 @@
 ./usr/share/man/man5/isdnd.acct.5		man-isdn-man		.man
 ./usr/share/man/man5/isdnd.rates.5		man-isdn-man		.man
 ./usr/share/man/man5/isdnd.rc.5			man-isdn-man		.man
-./usr/share/man/man5/krb.conf.5			man-krb4-man		kerberos4,.man
-./usr/share/man/man5/krb.equiv.5		man-krb4-man		kerberos4,.man
-./usr/share/man/man5/krb.extra.5		man-krb4-man		kerberos4,.man
-./usr/share/man/man5/krb.realms.5		man-krb4-man		kerberos4,.man
+./usr/share/man/man5/krb.conf.5			man-obsolete		obsolete
+./usr/share/man/man5/krb.equiv.5		man-obsolete		obsolete
+./usr/share/man/man5/krb.extra.5		man-obsolete		obsolete
+./usr/share/man/man5/krb.realms.5		man-obsolete		obsolete
 ./usr/share/man/man5/krb5.conf.5		man-krb5-man		kerberos,.man
 ./usr/share/man/man5/lastlog.5			man-sys-man		.man
 ./usr/share/man/man5/lastlogx.5			man-sys-man		.man
