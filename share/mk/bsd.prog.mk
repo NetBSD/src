@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.209 2006/03/16 18:43:34 jwise Exp $
+#	$NetBSD: bsd.prog.mk,v 1.210 2006/03/20 21:27:31 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -63,7 +63,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	crypto crypto_idea crypto_mdc2 crypto_rc5 \
 	curses dbm des edit event \
 	form fl g2c gcc gnumalloc gssapi hdb intl ipsec \
-	kadm kadm5clnt kadm5srv kafs kdb krb krb5 kstream kvm l \
+	kadm5clnt kadm5srv kafs krb5 kvm l \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
 	radius resolv rmt roken rpcsvc rt skey sl ss ssh ssl termcap \
 	usbhid util wrap y z
@@ -80,7 +80,7 @@ PAM_STATIC_LDADD+= -lssh
 PAM_STATIC_DPADD+= ${LIBSSH}
 .endif
 .if (${MKKERBEROS} != "no")
-PAM_STATIC_LDADD+= -lkafs -lkrb -lkrb5 -lasn1 -lroken -lcom_err -lcrypto
+PAM_STATIC_LDADD+= -lkafs -lkrb5 -lasn1 -lroken -lcom_err -lcrypto
 PAM_STATIC_DPADD+= ${LIBKAFS} ${LIBKRB} ${LIBKRB5} ${LIBASN1} ${LIBROKEN} \
 	${LIBCOM_ERR} ${LIBCRYPTO}
 .endif
