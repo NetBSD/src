@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.63 2006/03/18 14:58:49 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.64 2006/03/20 20:36:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.63 2006/03/18 14:58:49 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.64 2006/03/20 20:36:38 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -198,8 +198,16 @@ get_interrupt_events(void)
 int
 initvmstat(void)
 {
-	char *intrnamebuf, *cp;
+	static char *intrnamebuf;
+	char *cp;
 	int i;
+
+	if (intrnamebuf)
+		free(intrnamebuf);
+	if (intrname)
+		free(intrname);
+	if (intrloc)
+		free(intrloc);
 
 	if (namelist[0].n_type == 0) {
 		if (kvm_nlist(kd, namelist) &&
@@ -229,12 +237,6 @@ initvmstat(void)
 				     namelist[X_INTRNAMES].n_value);
 		if (intrnamebuf == NULL || intrname == 0 || intrloc == 0) {
 			error("Out of memory\n");
-			if (intrnamebuf)
-				free(intrnamebuf);
-			if (intrname)
-				free(intrname);
-			if (intrloc)
-				free(intrloc);
 			nintr = 0;
 			return(0);
 		}
