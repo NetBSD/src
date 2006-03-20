@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/02/04 16:22:54 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2006/03/20 04:03:22 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -22,12 +22,6 @@ DPADD+= ${LIBDIFF} ${LIBCVS} ${LIBCRYPT} ${LIBZ}
 LDADD+= ${LIBDIFF} ${LIBCVS} -lcrypt -lz
 
 .if defined(USE_KERBEROS) && (${USE_KERBEROS} != "no")
-.if defined(USE_KERBEROS4) && (${USE_KERBEROS4} != "no")
-CPPFLAGS+= -DHAVE_KERBEROS -I${DESTDIR}/usr/include/kerberosIV
-DPADD+= ${LIBKRB} ${LIBDES}
-LDADD+= -lkrb -ldes
-.endif
-
 CPPFLAGS+= -DHAVE_GSSAPI -I${DESTDIR}/usr/include/krb5
 DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} ${LIBCRYPT}
 LDADD+= -lgssapi -lkrb5 -lasn1 -lcrypto -lcrypt

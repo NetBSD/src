@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2005/03/04 20:44:55 he Exp $
+#	$NetBSD: Makefile,v 1.39 2006/03/20 04:03:23 christos Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -63,12 +63,6 @@ CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 CPPFLAGS+=-DKRB5 -DFORWARD -DAUTHENTICATION -DENCRYPTION
 LDADD+= -lkrb5 -lasn1 -lcrypto -lcrypt
 DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} ${LIBCRYPT}
-
-.if (${USE_KERBEROS4} != "no")
-CPPFLAGS+= -DKRB4
-LDADD+= -lkrb
-DPADD+=	${LIBKRB}
-.endif
 
 .if (${USE_PAM} != "no")
 LDADD+= -lpam ${PAM_STATIC_LDADD}
