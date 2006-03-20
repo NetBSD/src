@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.20 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.21 2006/03/20 16:40:25 elad Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: monitor.c,v 1.64 2005/10/13 22:24:31 stevesk Exp $");
-__RCSID("$NetBSD: monitor.c,v 1.20 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.21 2006/03/20 16:40:25 elad Exp $");
 
 #include <openssl/dh.h>
 
@@ -999,6 +999,10 @@ mm_answer_keyallowed(int sock, Buffer *m)
 		key_blobtype = type;
 		hostbased_cuser = cuser;
 		hostbased_chost = chost;
+	} else {
+		xfree(blob);
+		xfree(cuser);
+		xfree(chost);
 	}
 
 	debug3("%s: key %p is %s",
