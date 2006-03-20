@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.17 2006/03/20 01:34:16 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.18 2006/03/20 01:37:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.17 2006/03/20 01:34:16 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.18 2006/03/20 01:37:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ __RCSID("$NetBSD: dir.c,v 1.17 2006/03/20 01:34:16 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 
 #include "fsck.h"
 #include "fsutil.h"
@@ -149,10 +150,8 @@ dirscan(struct inodesc *idesc)
 	long blksiz;
 	char *dbuf = NULL;
 
-	if ((dbuf = malloc(sblock.e2fs_bsize)) == NULL) {
-		fprintf(stderr, "out of memory");
-		exit(8);
-	}
+	if ((dbuf = malloc(sblock.e2fs_bsize)) == NULL)
+		err(8, "Can't allocate directory block");
 
 	if (idesc->id_type != DATA)
 		errexit("wrong type to dirscan %d\n", idesc->id_type);
@@ -162,6 +161,7 @@ dirscan(struct inodesc *idesc)
 	blksiz = idesc->id_numfrags * sblock.e2fs_bsize;
 	if (chkrange(idesc->id_blkno, idesc->id_numfrags)) {
 		idesc->id_filesize -= blksiz;
+		free(dbuf);
 		return (SKIP);
 	}
 	idesc->id_loc = 0;
