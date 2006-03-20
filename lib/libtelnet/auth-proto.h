@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-proto.h,v 1.14 2005/02/19 21:55:52 christos Exp $	*/
+/*	$NetBSD: auth-proto.h,v 1.15 2006/03/20 21:23:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -80,15 +80,6 @@ void auth_finished(Authenticator *, int);
 int auth_wait(char *, size_t);
 void auth_debug(int);
 void auth_printsub(unsigned char *, int, unsigned char *, int);
-
-#ifdef	KRB4
-int kerberos4_init(Authenticator *, int);
-int kerberos4_send(Authenticator *);
-void kerberos4_is(Authenticator *, unsigned char *, int);
-void kerberos4_reply(Authenticator *, unsigned char *, int);
-int kerberos4_status(Authenticator *, char *, size_t, int);
-void kerberos4_printsub(unsigned char *, int, unsigned char *, int);
-#endif
 
 #ifdef	KRB5
 int kerberos5_init(Authenticator *, int);
