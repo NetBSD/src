@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.27 2004/11/01 21:39:32 dsl Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.28 2006/03/20 16:58:13 elad Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.27 2004/11/01 21:39:32 dsl Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.28 2006/03/20 16:58:13 elad Exp $");
 #endif
 #endif
 
@@ -495,7 +495,7 @@ static char *
 generate_guard(pathname)
 	char   *pathname;
 {
-	char   *filename, *guard, *tmp;
+	char   *filename, *guard, *tmp, *tmp2;
 
 	filename = strrchr(pathname, '/');	/* find last component */
 	filename = ((filename == 0) ? pathname : filename + 1);
@@ -507,7 +507,9 @@ generate_guard(pathname)
 		tmp++;
 	}
 
-	guard = extendfile(guard, "_H_RPCGEN");
+	tmp2 = extendfile(guard, "_H_RPCGEN");
+	free(guard);
+	guard = tmp2;
 	return (guard);
 }
 /*
@@ -557,6 +559,8 @@ h_output(infile, define, extend, outfile)
 			f_print(fout, rpcgen_table_dcl);
 		}
 	f_print(fout, "\n#endif /* !_%s */\n", guard);
+
+	free(guard);
 }
 /*
  * Compile into an RPC service
