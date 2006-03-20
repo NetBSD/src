@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.43 2006/03/17 16:14:48 hubertf Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.44 2006/03/20 01:00:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.43 2006/03/17 16:14:48 hubertf Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.44 2006/03/20 01:00:34 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -227,6 +227,7 @@ do_single(int argc, char **argv, int action)
 			else
 				if (verbose)
 					printf("%s unconfigured\n", cp);
+			free(ccd);
 		}
 		return (i);
 	}
@@ -557,6 +558,7 @@ dump_ccd(int argc, char **argv, int action)
 
 	if ((cs = calloc(numccd, sizeof(struct ccd_softc))) == NULL) {
 		warnx("no memory for configuration data");
+		free(vcs);
 		goto bad;
 	}
 	for (i = 0; i < numccd; i++) {
@@ -597,6 +599,7 @@ dump_ccd(int argc, char **argv, int action)
 				print_ccd_info(&cs[i], kd);
 			else
 				printf("# ccd%d not configured\n", i);
+			free(ccd);
 		}
 	}
 
