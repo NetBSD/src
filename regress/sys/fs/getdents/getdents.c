@@ -1,4 +1,4 @@
-/*	$Id: getdents.c,v 1.7 2005/08/20 05:25:16 yamt Exp $	*/
+/*	$Id: getdents.c,v 1.8 2006/03/20 08:57:37 martin Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -71,7 +71,10 @@ print_dents(FILE *fp, const void *vp, int sz)
 struct ent {
 	off_t off;
 	int sz;
-	char buf[DIRBLKSIZ];
+	union {
+		struct dirent u_d;
+		char u_buf[DIRBLKSIZ];
+	} u;
 };
 
 int
@@ -116,12 +119,12 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "lseek");
 		printf("off=%" PRIx64 "(%" PRIu64 ")\n",
 		    (uint64_t)off, (uint64_t)off);
-		p->sz = ret = getdents(fd, p->buf, DIRBLKSIZ);
+		p->sz = ret = getdents(fd, p->u.u_buf, DIRBLKSIZ);
 		printf("getdents: %d\n", ret);
 		if (ret == -1)
 			err(EXIT_FAILURE, "getdents");
 		nblks++;
-		print_dents(stdout, p->buf, ret);
+		print_dents(stdout, p->u.u_buf, ret);
 	} while (ret > 0);
 	printf("%d blks read\n", nblks);
 
@@ -157,18 +160,18 @@ main(int argc, char *argv[])
 			    ": different sz %d != %d\n",
 			    (uint64_t)off, p->sz, ret);
 			differ = 1;
-		} else if (memcmp(p->buf, buf, (size_t)ret)) {
+		} else if (memcmp(p->u.u_buf, buf, (size_t)ret)) {
 			fflush(NULL);
 			fprintf(stderr, "off=%" PRIx64 ": different data\n",
 			    (uint64_t)off);
 			fprintf(stderr, "previous:\n");
-			print_dents(stderr, p->buf, p->sz);
+			print_dents(stderr, p->u.u_buf, p->sz);
 			fprintf(stderr, "now:\n");
 			print_dents(stderr, buf, ret);
 			differ = 1;
 		}
 		if (differ) {
-			const struct dirent *d1 = (void *)p->buf;
+			const struct dirent *d1 = (void *)p->u.u_buf;
 			const struct dirent *d2 = (void *)buf;
 
 			if (p->sz == 0 || ret == 0 ||
