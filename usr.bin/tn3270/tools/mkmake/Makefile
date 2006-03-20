@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 1999/07/14 21:36:38 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.4 2006/03/20 01:34:49 gdamore Exp $
 
 HOSTPROG=	mkmake
+HOST_CPPFLAGS+= -DHOST_TOOL
 SRCS=	mkmake.y
 
 .include <bsd.hostprog.mk>
