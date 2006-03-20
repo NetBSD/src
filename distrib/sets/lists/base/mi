@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.603 2006/03/16 22:06:40 wiz Exp $
+# $NetBSD: mi,v 1.604 2006/03/20 04:17:39 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -71,7 +71,7 @@
 ./etc/disklabels				base-obsolete		obsolete
 ./etc/fonts					base-x11-root
 ./etc/iscsi					base-sysutil-root
-./etc/kerberosIV				base-krb4-root
+./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
 ./etc/mail					base-sendmail-root
 ./etc/mtree					base-sys-root
