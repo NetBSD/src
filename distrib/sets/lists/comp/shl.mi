@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.46 2006/02/08 19:00:34 agc Exp $
+# $NetBSD: shl.mi,v 1.47 2006/03/20 16:37:22 he Exp $
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
 ./usr/lib/libbz2_pic.a				comp-c-piclib
@@ -21,12 +21,12 @@
 ./usr/lib/libiscsi_pic.a			comp-c-piclib
 ./usr/lib/libkadm5clnt_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libkadm5srv_pic.a			comp-c-piclib		kerberos
-./usr/lib/libkadm_pic.a				comp-c-piclib		kerberos4
+./usr/lib/libkadm_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libkafs_pic.a				comp-c-piclib		kerberos
-./usr/lib/libkdb_pic.a				comp-c-piclib		kerberos4
+./usr/lib/libkdb_pic.a				comp-c-piclib		obsolete
 ./usr/lib/libkrb5_pic.a				comp-c-piclib		kerberos
-./usr/lib/libkrb_pic.a				comp-c-piclib		kerberos4
-./usr/lib/libkstream_pic.a			comp-c-piclib		kerberos4
+./usr/lib/libkrb_pic.a				comp-c-piclib		obsolete
+./usr/lib/libkstream_pic.a			comp-c-piclib		obsolete
 ./usr/lib/libkvm_pic.a				comp-c-piclib
 ./usr/lib/libm_pic.a				comp-c-piclib
 ./usr/lib/libmagic_pic.a			comp-c-piclib

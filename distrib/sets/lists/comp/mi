@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.863 2006/03/20 04:17:40 christos Exp $
+#	$NetBSD: mi,v 1.864 2006/03/20 16:37:22 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1756,7 +1756,7 @@
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-liscsi.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lkstream.ln		comp-c-lintlib		lint,kerberos4
+./usr/libdata/lint/llib-lkstream.ln		comp-c-lintlib		obsolete
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
