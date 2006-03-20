@@ -31,6 +31,9 @@
  */
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/param.h>
+
 #include <stdlib.h>
 
 #ifdef HAVE_NETINET_TCP_H
