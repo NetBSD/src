@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.13 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.14 2006/03/20 20:20:07 christos Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.13 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.14 2006/03/20 20:20:07 christos Exp $");
 #endif
 
 #include "sh.h"
@@ -32,6 +32,7 @@ c_cd(wp)
 	char *dir, *try, *pwd;
 	int phys_path;
 	char *cdpath;
+	char *fdir = NULL;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "LP")) != EOF)
 		switch (optc) {
@@ -93,7 +94,7 @@ c_cd(wp)
 		olen = strlen(wp[0]);
 		nlen = strlen(wp[1]);
 		elen = strlen(current_wd + ilen + olen) + 1;
-		dir = alloc(ilen + nlen + elen, ATEMP);
+		fdir = dir = alloc(ilen + nlen + elen, ATEMP);
 		memcpy(dir, current_wd, ilen);
 		memcpy(dir + ilen, wp[1], nlen);
 		memcpy(dir + ilen + nlen, current_wd + ilen + olen, elen);
@@ -128,6 +129,8 @@ c_cd(wp)
 			bi_errorf("%s: bad directory", dir);
 		else
 			bi_errorf("%s - %s", try, strerror(errno));
+		if (fdir)
+			afree(fdir, ATEMP);
 		return 1;
 	}
 
@@ -175,6 +178,9 @@ c_cd(wp)
 	}
 	if (printpath || cdnode)
 		shprintf("%s\n", pwd);
+
+	if (fdir)
+		afree(fdir, ATEMP);
 
 	return 0;
 }
