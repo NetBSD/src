@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2005/06/27 01:55:52 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2006/03/20 01:51:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 2005/06/27 01:55:52 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2006/03/20 01:51:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -383,6 +383,8 @@ obsolete(int *argcp, char **argvp[])
 	if (flags) {
 		*p = '\0';
 		*nargv++ = flagsp;
+	} else {
+		free(flagsp);
 	}
 
 	/* Copy remaining arguments. */
