@@ -87,6 +87,9 @@
 /* Define to 1 if you have the `strtoll' function. */
 #undef HAVE_STRTOLL
 
+/* Define to 1 if you have the `syslog' function. */
+#undef HAVE_SYSLOG
+
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
 
