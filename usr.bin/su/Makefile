@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2005/12/15 14:03:34 christos Exp $
+#	$NetBSD: Makefile,v 1.44 2006/03/20 04:03:23 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -42,12 +42,6 @@ LDADD+= -lkafs
 CPPFLAGS+=-DKERBEROS5 -I${DESTDIR}/usr/include/krb5
 DPADD+=	${LIBKRB5} ${LIBASN1}
 LDADD+= -lkrb5 -lasn1
-
-.if (${USE_KERBEROS4} != "no")
-CPPFLAGS+=-DKERBEROS -I${DESTDIR}/usr/include/kerberosIV
-DPADD+=	${LIBKRB} ${LIBDES}
-LDADD+= -lkrb -ldes
-.endif
 
 DPADD+=	${LIBCRYPTO} ${LIBROKEN} ${LIBCOM_ERR}
 LDADD+=	-lcrypto -lroken -lcom_err

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.18 2005/02/19 21:55:52 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.19 2006/03/20 04:03:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.18 2005/02/19 21:55:52 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.19 2006/03/20 04:03:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,15 +79,6 @@ __RCSID("$NetBSD: auth.c,v 1.18 2005/02/19 21:55:52 christos Exp $");
 #include "auth-proto.h"
 
 #define	typemask(x)		(1<<((x)-1))
-
-#ifdef	KRB4_ENCPWD
-extern krb4encpwd_init();
-extern krb4encpwd_send();
-extern krb4encpwd_is();
-extern krb4encpwd_reply();
-extern krb4encpwd_status();
-extern krb4encpwd_printsub();
-#endif
 
 #ifdef	RSA_ENCPWD
 extern rsaencpwd_init();
@@ -148,33 +139,6 @@ Authenticator authenticators[] = {
 				kerberos5_reply,
 				kerberos5_status,
 				kerberos5_printsub },
-#endif
-#ifdef	KRB4
-# ifdef	ENCRYPTION
-	{ AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				kerberos4_init,
-				kerberos4_send,
-				kerberos4_is,
-				kerberos4_reply,
-				kerberos4_status,
-				kerberos4_printsub },
-# endif	/* ENCRYPTION */
-	{ AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
-				kerberos4_init,
-				kerberos4_send,
-				kerberos4_is,
-				kerberos4_reply,
-				kerberos4_status,
-				kerberos4_printsub },
-#endif
-#ifdef	KRB4_ENCPWD
-	{ AUTHTYPE_KRB4_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				krb4encpwd_init,
-				krb4encpwd_send,
-				krb4encpwd_is,
-				krb4encpwd_reply,
-				krb4encpwd_status,
-				krb4encpwd_printsub },
 #endif
 #ifdef	RSA_ENCPWD
 	{ AUTHTYPE_RSA_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,

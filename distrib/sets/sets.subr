@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.46 2006/01/08 10:25:33 apb Exp $
+#	$NetBSD: sets.subr,v 1.47 2006/03/20 04:03:21 christos Exp $
 #
 
 #
@@ -40,7 +40,6 @@ MKVARS="\
 	MKIPFILTER	\
 	MKINET6		\
 	MKKERBEROS	\
-	MKKERBEROS4	\
 	MKLINT		\
 	MKMAN		\
 	MKMANPAGES	\
@@ -215,7 +214,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.46 2006/01/08 10:25:33 apb Exp $
+# 	# $NetBSD: sets.subr,v 1.47 2006/03/20 04:03:21 christos Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -250,7 +249,6 @@ fi
 #	ipfilter		${MKIPFILTER} != no
 #	inet6			${MKINET6} != no
 #	kerberos		${MKKERBEROS} != no
-#	kerberos4		${MKKERBEROS4} != no
 #	lint			${MKLINT} != no
 #	man			${MKMAN} != no
 #	manz			${MKMANZ} != no

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2005/01/10 03:11:18 lukem Exp $
+# $NetBSD: Makefile,v 1.19 2006/03/20 04:03:23 christos Exp $
 
 NOLINT= # defined
 
@@ -12,13 +12,6 @@ WARNS?=  1
 PROG= kinit
 
 SRCS= kinit.c
-
-.if ${MKKERBEROS4} != "no"
-CPPFLAGS+= -DKRB4
-CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
-KRB4LDADD= -lkrb -ldes
-KRB4DPADD= ${LIBKRB} ${LIBDES}
-.endif
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DHAVE_IPV6

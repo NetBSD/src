@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.101 2006/03/19 15:10:19 bouyer Exp $
+#	$NetBSD: Makefile,v 1.102 2006/03/20 04:03:22 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -37,10 +37,6 @@ SUBDIR+= libcrypto_rc5
 # Heimdal Kerberos 5 libraries
 SUBDIR+= libroken libvers libcom_err libasn1
 
-.if (${MKKERBEROS4} != "no")
-# KTH Kerberos 4 libraries
-SUBDIR+= libkdb libkadm libkstream
-.endif	# MKKERBEROS4 != no
 .endif	# MKKERBEROS != no
 
 SUBDIR+=	libtelnet
@@ -72,10 +68,6 @@ SUBDIR+=	libssh		# depends on libcrypto
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+=	libkrb5		# depends on libcrypto and more
-.endif
-
-.if (${MKKERBEROS4} != "no")
-SUBDIR+=	libkrb		# depends on libdes
 .endif
 
 #==================== 2nd library dependency barrier ====================

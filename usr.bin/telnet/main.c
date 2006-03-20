@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2006/02/02 19:33:12 he Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2006/03/20 04:03:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2006/02/02 19:33:12 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2006/03/20 04:03:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,17 +242,9 @@ main(int argc, char *argv[])
 #endif
 			break;
 		case 'k':
-#if defined(AUTHENTICATION) && defined(KRB4)
-		    {
-			extern char *dest_realm, dst_realm_buf[], dst_realm_sz;
-			dest_realm = dst_realm_buf;
-			(void)strlcpy(dest_realm, optarg, dst_realm_sz);
-		    }
-#else
 			fprintf(stderr,
 			   "%s: Warning: -k ignored, no Kerberos V4 support.\n",
 								prompt);
-#endif
 			break;
 		case 'l':
 			if(autologin == 0) {

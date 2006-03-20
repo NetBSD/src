@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2005/01/10 03:11:18 lukem Exp $
+# $NetBSD: Makefile,v 1.12 2006/03/20 04:03:24 christos Exp $
 
 NOLINT= # defined
 
@@ -10,16 +10,6 @@ DIST=		${NETBSDSRCDIR}/crypto/dist
 WARNS?=  1
 
 PROG= kdc
-
-.if ${MKKERBEROS4} != "no"
-CPPFLAGS+= -DKRB4
-CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
-KRB4LDADD= -lkrb -ldes
-KRB4DPADD= ${LIBKRB} ${LIBDES}
-
-SRCS+= 	kaserver.c
-
-.endif
 
 SRCS+= 	524.c		\
 	config.c	\
