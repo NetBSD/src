@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.42 2006/03/17 17:30:36 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.43 2006/03/20 17:55:47 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -560,4 +560,11 @@ usr.bin/mail/send.c				1.24
 	PR/32978: Johan Veenhuizen: mail(1) creates record file with
 	insecure umask
 	[adrianp, ticket #10365]
+
+sys/kern/exec_elf32.c				1.110-1.111
+
+	Found by coverity issue 887.  Check for NULL before using base_ph so
+	an interpreter that does not have PT_LOAD in the program header doesn't
+	crash the system.
+	[erh, ticket #10380]
 
