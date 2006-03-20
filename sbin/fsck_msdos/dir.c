@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.17 2005/01/19 20:00:45 xtraeme Exp $	*/
+/*	$NetBSD: dir.c,v 1.18 2006/03/20 01:25:14 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.17 2005/01/19 20:00:45 xtraeme Exp $");
+__RCSID("$NetBSD: dir.c,v 1.18 2006/03/20 01:25:14 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: dir.c,v 1.17 2005/01/19 20:00:45 xtraeme Exp $");
 #include <ctype.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <assert.h>
 #include <time.h>
 
 #include <sys/param.h>
@@ -502,6 +503,7 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 							   cl, p - buffer, 1) == FSFATAL)
 							return FSFATAL;
 						q = empcl == cl ? empty : buffer;
+						assert(q != NULL);
 						for (; q < p; q += 32)
 							*q = SLOT_DELETED;
 						mod |= THISMOD|FSDIRMOD;
