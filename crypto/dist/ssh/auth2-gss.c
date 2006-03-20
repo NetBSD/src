@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-gss.c,v 1.2 2006/02/04 22:32:13 christos Exp $	*/
+/*	$NetBSD: auth2-gss.c,v 1.3 2006/03/20 16:41:46 elad Exp $	*/
 /*	$OpenBSD: auth2-gss.c,v 1.12 2005/10/13 22:24:31 stevesk Exp $	*/
 
 /*
@@ -101,6 +101,8 @@ userauth_gssapi(Authctxt *authctxt)
 	}
 
 	if (GSS_ERROR(PRIVSEP(ssh_gssapi_server_ctx(&ctxt, &goid)))) {
+		if (ctxt != NULL)
+			ssh_gssapi_delete_ctx(&ctxt);
 		xfree(doid);
 		return (0);
 	}
