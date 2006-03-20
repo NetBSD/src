@@ -13,6 +13,7 @@ BINDIR=$(exec_prefix)/bin
 LIBDIR=$(exec_prefix)/lib
 INCDIR=$(prefix)/include
 MANDIR=$(prefix)/man
+SYSCONFDIR=@sysconfdir@
 
 CC= @CC@
 PTHREAD_FLAGS= -pthread
