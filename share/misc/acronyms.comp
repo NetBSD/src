@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.65 2006/01/21 15:19:20 elad Exp $
+$NetBSD: acronyms.comp,v 1.66 2006/03/20 12:22:08 rpaulo Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -95,6 +95,8 @@ EGA	enhanced graphics array
 EGP	exterior gateway protocol
 EISA	extended industry standard architecture
 ELF	executable and linking format
+EOF	end of file
+EOT	end of transmission
 EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
