@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-genr.c,v 1.2 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: gss-genr.c,v 1.3 2006/03/20 16:36:31 elad Exp $	*/
 /*	$OpenBSD: gss-genr.c,v 1.6 2005/10/13 22:24:31 stevesk Exp $	*/
 
 /*
@@ -73,7 +73,11 @@ ssh_gssapi_set_oid(Gssctxt *ctx, gss_OID oid)
 void
 ssh_gssapi_error(Gssctxt *ctxt)
 {
-	debug("%s", ssh_gssapi_last_error(ctxt, NULL, NULL));
+	char *s;
+
+	s = ssh_gssapi_last_error(ctxt, NULL, NULL);
+	debug("%s", s);
+	xfree(s);
 }
 
 char *
@@ -232,11 +236,15 @@ ssh_gssapi_acquire_cred(Gssctxt *ctx)
 	gss_create_empty_oid_set(&status, &oidset);
 	gss_add_oid_set_member(&status, ctx->oid, &oidset);
 
-	if (gethostname(lname, MAXHOSTNAMELEN))
+	if (gethostname(lname, MAXHOSTNAMELEN)) {
+		gss_release_oid_set(&status, &oidset);
 		return (-1);
+	}
 
-	if (GSS_ERROR(ssh_gssapi_import_name(ctx, lname)))
+	if (GSS_ERROR(ssh_gssapi_import_name(ctx, lname))) {
+		gss_release_oid_set(&status, &oidset);
 		return (ctx->major);
+	}
 
 	if ((ctx->major = gss_acquire_cred(&ctx->minor,
 	    ctx->name, 0, oidset, GSS_C_ACCEPT, &ctx->creds, NULL, NULL)))
