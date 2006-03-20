@@ -1,4 +1,4 @@
-/*	$NetBSD: astosc.c,v 1.7 2003/08/07 11:16:25 agc Exp $	*/
+/*	$NetBSD: astosc.c,v 1.8 2006/03/20 01:34:49 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -29,14 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#ifndef HOST_TOOL
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)astosc.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: astosc.c,v 1.7 2003/08/07 11:16:25 agc Exp $");
+__RCSID("$NetBSD: astosc.c,v 1.8 2006/03/20 01:34:49 gdamore Exp $");
 #endif
 #endif /* not lint */
+#endif
 
 #include <ctype.h>
 
