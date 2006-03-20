@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.443 2006/03/20 04:03:23 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.444 2006/03/20 18:18:41 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -633,7 +633,7 @@ PRESERVE?=	-p
 .endif
 RENAME?=	-r
 HRDLINK?=	-l h
-SYMLINK?=	-l sr
+SYMLINK?=	-l s
 
 METALOG?=	${DESTDIR}/METALOG
 METALOG.add?=	${TOOL_CAT} -l >> ${METALOG}
