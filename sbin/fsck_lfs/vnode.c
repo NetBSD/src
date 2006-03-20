@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.4 2006/03/17 15:53:46 rumble Exp $ */
+/* $NetBSD: vnode.c,v 1.5 2006/03/20 01:20:55 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -137,11 +137,13 @@ vnode_destroy(struct uvnode *tossvp)
 	--nvnodes;
 	LIST_REMOVE(tossvp, v_getvnodes);
 	LIST_REMOVE(tossvp, v_mntvnodes);
-	LIST_FOREACH(bp, &tossvp->v_dirtyblkhd, b_vnbufs) {
+	while ((bp = LIST_FIRST(&tossvp->v_dirtyblkhd)) != NULL) {
+		LIST_REMOVE(bp, b_vnbufs);
 		bremfree(bp);
 		buf_destroy(bp);
 	}
-	LIST_FOREACH(bp, &tossvp->v_cleanblkhd, b_vnbufs) {
+	while ((bp = LIST_FIRST(&tossvp->v_cleanblkhd)) != NULL) {
+		LIST_REMOVE(bp, b_vnbufs);
 		bremfree(bp);
 		buf_destroy(bp);
 	}
