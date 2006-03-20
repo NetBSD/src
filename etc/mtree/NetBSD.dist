@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.302 2006/03/14 16:16:44 tnozaki Exp $
+#	$NetBSD: NetBSD.dist,v 1.303 2006/03/20 04:14:42 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -27,7 +27,6 @@
 ./etc/defaults
 ./etc/fonts
 ./etc/iscsi
-./etc/kerberosIV
 ./etc/kerberosV
 ./etc/mail
 ./etc/mtree
@@ -256,7 +255,6 @@
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
 ./usr/include/kadm5
-./usr/include/kerberosIV
 ./usr/include/krb5
 ./usr/include/libmilter
 ./usr/include/miscfs
