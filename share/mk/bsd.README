@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.174 2006/03/20 04:03:23 christos Exp $
+#	$NetBSD: bsd.README,v 1.175 2006/03/20 21:25:31 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -288,7 +288,7 @@ USE_INET6	If "no", disables building INET6 (IPv6) support into
 		If ${MKINET6} is "no", USE_INET6 will also be
 		forced to "no".
 
-USE_KERBEROS	If "no", disables building Kerberos v4 or v5)
+USE_KERBEROS	If "no", disables building Kerberos v5
 		support into various system utilities/libraries that
 		support it.  If ${MKKERBEROS} is "no", USE_KERBEROS
 		will also be forced to "no".
@@ -1010,14 +1010,10 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBHDB?=	${DESTDIR}/usr/lib/libhdb.a
 		LIBINTL?=	${DESTDIR}/usr/lib/libintl.a
 		LIBIPSEC?=	${DESTDIR}/usr/lib/libipsec.a
-		LIBKADM?=	${DESTDIR}/usr/lib/libkadm.a
 		LIBKADM5CLNT?=	${DESTDIR}/usr/lib/libkadm5clnt.a
 		LIBKADM5SRV?=	${DESTDIR}/usr/lib/libkadm5srv.a
 		LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
-		LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
-		LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
 		LIBKRB5?=	${DESTDIR}/usr/lib/libkrb5.a
-		LIBKSTREAM?=	${DESTDIR}/usr/lib/libkstream.a
 		LIBKVM?=	${DESTDIR}/usr/lib/libkvm.a
 		LIBL?=		${DESTDIR}/usr/lib/libl.a
 		LIBM?=		${DESTDIR}/usr/lib/libm.a
