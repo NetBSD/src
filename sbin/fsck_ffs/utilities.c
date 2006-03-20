@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.52 2005/08/23 11:10:23 tron Exp $	*/
+/*	$NetBSD: utilities.c,v 1.53 2006/03/20 01:30:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.52 2005/08/23 11:10:23 tron Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.53 2006/03/20 01:30:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,11 +149,16 @@ bufinit(void)
 	if (bufcnt < MINBUFS)
 		bufcnt = MINBUFS;
 	for (i = 0; i < bufcnt; i++) {
-		bp = (struct bufarea *)malloc(sizeof(struct bufarea));
+		bp = malloc(sizeof(struct bufarea));
 		bufp = malloc((unsigned int)sblock->fs_bsize);
 		if (bp == NULL || bufp == NULL) {
-			if (i >= MINBUFS)
+			if (i >= MINBUFS) {
+				if (bp)
+					free(bp);
+				if (bufp)
+					free(bufp);
 				break;
+			}
 			errx(EEXIT, "cannot allocate buffer pool");
 		}
 		bp->b_un.b_buf = bufp;
