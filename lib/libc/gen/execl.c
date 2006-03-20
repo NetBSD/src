@@ -1,4 +1,4 @@
-/*	$NetBSD: execl.c,v 1.14 2006/03/20 05:12:24 rtr Exp $	*/
+/*	$NetBSD: execl.c,v 1.15 2006/03/20 09:27:30 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execl.c,v 1.14 2006/03/20 05:12:24 rtr Exp $");
+__RCSID("$NetBSD: execl.c,v 1.15 2006/03/20 09:27:30 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
