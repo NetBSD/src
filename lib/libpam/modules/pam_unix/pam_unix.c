@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_unix.c,v 1.5.2.4 2005/07/11 11:30:07 tron Exp $	*/
+/*	$NetBSD: pam_unix.c,v 1.5.2.4.2.1 2006/03/20 17:37:33 riz Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -40,7 +40,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_unix/pam_unix.c,v 1.49 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_unix.c,v 1.5.2.4 2005/07/11 11:30:07 tron Exp $");
+__RCSID("$NetBSD: pam_unix.c,v 1.5.2.4.2.1 2006/03/20 17:37:33 riz Exp $");
 #endif
 
 
@@ -416,10 +416,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 #endif
 
 	pwd = NULL;
-	if (openpam_get_option(pamh, PAM_OPT_AUTH_AS_SELF))
-		(void) getpwnam_r(getlogin(), &old_pwd, old_pwbuf,
+	if (openpam_get_option(pamh, PAM_OPT_AUTH_AS_SELF)) {
+		if ((user = getlogin()) == NULL) {
+			pam_error(pamh, "Unable to determine user.");
+			return (PAM_SERVICE_ERR);
+		}
+		(void) getpwnam_r(user, &old_pwd, old_pwbuf,
 				  sizeof(old_pwbuf), &pwd);
-	else {
+	} else {
 		retval = pam_get_user(pamh, &user, NULL);
 		if (retval != PAM_SUCCESS)
 			return (retval);
@@ -461,11 +465,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			passwd_db = "files";
 		}
 
-		if (passwd_db == NULL) {
-			pam_error(pamh, "Unable to determine Unix password DB");
-			return (PAM_SERVICE_ERR);
-		} else if ((retval = openpam_set_option(pamh, "passwd_db",
-						passwd_db)) != PAM_SUCCESS) {
+		if ((retval = openpam_set_option(pamh, "passwd_db",
+		    passwd_db)) != PAM_SUCCESS) {
 			return (retval);
 		}
 	} else {
