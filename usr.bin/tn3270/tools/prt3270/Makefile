@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2005/09/17 16:52:02 chs Exp $
+#	$NetBSD: Makefile,v 1.11 2006/03/20 01:34:49 gdamore Exp $
 
 NOMAN=		# defined
 
@@ -7,7 +7,7 @@ NOMAN=		# defined
 HOSTPROG=	prt3270
 SRCS=	prt3270.c asc_ebc.c ebc_disp.c astosc.c
 DPSRCS=	kbd.out astosc.out
-HOST_CPPFLAGS+=-I.
+HOST_CPPFLAGS+=-I. -DHOST_TOOL
 
 MKHITSDIR!=cd $(.CURDIR)/../mkhits && ${PRINTOBJDIR}
 MKHITS=${MKHITSDIR}/mkhits

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: mkmake.y,v 1.12 2004/11/19 14:19:45 peter Exp $	*/
+/*	$NetBSD: mkmake.y,v 1.13 2006/03/20 01:34:49 gdamore Exp $	*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -29,14 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#ifndef HOST_TOOL
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mkmake.y	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkmake.y,v 1.12 2004/11/19 14:19:45 peter Exp $");
+__RCSID("$NetBSD: mkmake.y,v 1.13 2006/03/20 01:34:49 gdamore Exp $");
 #endif
 #endif /* not lint */
+#endif
 
 typedef struct string {
     int

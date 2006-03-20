@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.5 2003/08/07 11:16:30 agc Exp $	*/
+/*	$NetBSD: function.c,v 1.6 2006/03/20 01:34:49 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -29,14 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#ifndef HOST_TOOL
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)function.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: function.c,v 1.5 2003/08/07 11:16:30 agc Exp $");
+__RCSID("$NetBSD: function.c,v 1.6 2006/03/20 01:34:49 gdamore Exp $");
 #endif
 #endif /* not lint */
+#endif
 
 /*
  * This file, which never produces a function.o, is used solely to
