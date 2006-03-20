@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.11 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: pass5.c,v 1.12 2006/03/20 01:45:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.11 2005/01/19 19:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.12 2006/03/20 01:45:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,6 +263,8 @@ pass5(void)
 		fs->e2fs.e2fs_ficount = cs_nifree;
 		sbdirty();
 	}
+	free(ibmap);
+	free(bbmap);
 }
 
 void 
