@@ -44,8 +44,6 @@ base-ipf-lkm loadable kernel module for IPfilter
 base-ipf-root directories for IPfilter
 base-isdn-bin utilities and daemons for ISDN network connectivity
 base-isdn-examples directories for the ISDN example files
-base-krb4-root root file system support for the Kerberos IV network user authentication system
-base-krb4-shlib shared libraries for the Kerberos IV network authentication system
 base-krb5-bin commands and utilities for the Kerberos V network authentication system
 base-krb5-examples example configuration files for the Kerberos V network authentication system
 base-krb5-root root file system support for the Kerberos V network authentication system
@@ -235,11 +233,6 @@ comp-fortran-proflib profiling libraries for the FOTRAN programming language
 comp-fortran-shlib shared libraries for the FORTRAN programming language
 comp-i18n-lib static libraries and shared library links for compiling applications with internationalisation support
 comp-ipf-include header files for the IPfilter C API
-comp-krb4-catman formatted manual pages for Kerberos 4 support
-comp-krb4-include header files for Kerberos 4 support
-comp-krb4-lib 	libraries to support Kerberos 4 compilation
-comp-krb4-man 	source manual pages for Kerberos 4 support 
-comp-krb4-proflib 	profiling libraries for Kerberos 4 support 
 comp-krb5-catman formatted manual pages for Kerberos V support
 comp-krb5-include header files for Kerberos V support
 comp-krb5-lib 	libraries to support Kerberos V compilation
@@ -376,7 +369,6 @@ man-ipf-catman formatted manual pages for the IPfilter packet filtering software
 man-ipf-man manual pages source for the IPfilter packet filtering software
 man-isdn-catman formatted manual pages for ISDN (Integrated Services Data Networking) support
 man-isdn-man manual pages source for ISDN (Integrated Services Data Networking) support
-man-krb4-info texinfo documentation for the Kerberos V network authentication system
 man-krb5-catman formatted manual pages for the Kerberos V network authentication system
 man-krb5-info the GNU texinfo software
 man-krb5-man manual pages source for the Kerberos V network authentication system
