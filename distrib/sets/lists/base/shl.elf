@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.109 2006/03/20 04:03:21 christos Exp $
+# $NetBSD: shl.elf,v 1.110 2006/03/20 04:22:41 christos Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -101,22 +101,22 @@
 ./usr/lib/libipsec.so.2				base-net-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib
 ./usr/lib/libiscsi.so.0				base-iscsi-shlib
-./usr/lib/libkadm.so				base-krb4-shlib		kerberos4
-./usr/lib/libkadm.so.5				base-krb4-shlib		kerberos4
+./usr/lib/libkadm.so				base-obsolete		obsolete
+./usr/lib/libkadm.so.5				base-obsolete		obsolete
 ./usr/lib/libkadm5clnt.so			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5clnt.so.8			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5srv.so			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5srv.so.9			base-krb5-shlib		kerberos
 ./usr/lib/libkafs.so				base-krb5-shlib		kerberos
 ./usr/lib/libkafs.so.7				base-krb5-shlib		kerberos
-./usr/lib/libkdb.so				base-krb4-shlib		kerberos4
-./usr/lib/libkdb.so.5				base-krb4-shlib		kerberos4
-./usr/lib/libkrb.so				base-krb4-shlib		kerberos4
-./usr/lib/libkrb.so.6				base-krb4-shlib		kerberos4
+./usr/lib/libkdb.so				base-obsolete		obsolete
+./usr/lib/libkdb.so.5				base-obsolete		obsolete
+./usr/lib/libkrb.so				base-obsolete		obsolete
+./usr/lib/libkrb.so.6				base-obsolete		obsolete
 ./usr/lib/libkrb5.so				base-krb5-shlib		kerberos
 ./usr/lib/libkrb5.so.20				base-krb5-shlib		kerberos
-./usr/lib/libkstream.so				base-krb4-shlib		kerberos4
-./usr/lib/libkstream.so.2			base-krb4-shlib		kerberos4
+./usr/lib/libkstream.so				base-obsolete		obsolete
+./usr/lib/libkstream.so.2			base-obsolete		obsolete
 ./usr/lib/libkvm.so				base-sys-shlib
 ./usr/lib/libkvm.so.5				base-sys-shlib
 ./usr/lib/libm.so				base-sys-shlib
