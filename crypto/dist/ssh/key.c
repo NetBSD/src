@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.22 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.23 2006/03/20 16:31:45 elad Exp $	*/
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,7 +34,7 @@
  */
 #include "includes.h"
 RCSID("$OpenBSD: key.c,v 1.58 2005/06/17 02:44:32 djm Exp $");
-__RCSID("$NetBSD: key.c,v 1.22 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.23 2006/03/20 16:31:45 elad Exp $");
 
 #include <openssl/evp.h>
 
@@ -125,6 +125,8 @@ key_new_private(int type)
 void
 key_free(Key *k)
 {
+	if (k == NULL)
+		fatal("key_free: key is NULL");
 	switch (k->type) {
 	case KEY_RSA1:
 	case KEY_RSA:
