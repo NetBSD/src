@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.16 2005/08/19 02:07:18 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.17 2006/03/20 01:34:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.16 2005/08/19 02:07:18 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.17 2006/03/20 01:34:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -551,17 +551,14 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 	struct bufarea *bp;
 	char *firstblk;
 
-	if ((firstblk = malloc(sblock.e2fs_bsize)) == NULL) {
-		fprintf(stderr, "out of memory");
-		exit(8);
-	}
-
 	lastbn = lblkno(&sblock, inosize(dp));
 	if (lastbn >= NDADDR - 1 || fs2h32(dp->e2di_blocks[lastbn]) == 0 ||
-		inosize(dp) == 0)
+		inosize(dp) == 0) {
 		return (0);
-	if ((newblk = allocblk()) == 0)
+	}
+	if ((newblk = allocblk()) == 0) {
 		return (0);
+	}
 	dp->e2di_blocks[lastbn + 1] = dp->e2di_blocks[lastbn];
 	dp->e2di_blocks[lastbn] = h2fs32(newblk);
 	inossize(dp, inosize(dp) + sblock.e2fs_bsize);
@@ -570,11 +567,16 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 		sblock.e2fs_bsize);
 	if (bp->b_errs)
 		goto bad;
+	if ((firstblk = malloc(sblock.e2fs_bsize)) == NULL)
+		err(8, "cannot allocate first block");
 	memcpy(firstblk, bp->b_un.b_buf, sblock.e2fs_bsize);
 	bp = getdirblk(newblk, sblock.e2fs_bsize);
-	if (bp->b_errs)
+	if (bp->b_errs) {
+		free(firstblk);
 		goto bad;
+	}
 	memcpy(bp->b_un.b_buf, firstblk, sblock.e2fs_bsize);
+	free(firstblk);
 	dirty(bp);
 	bp = getdirblk(fs2h32(dp->e2di_blocks[lastbn + 1]),
 		sblock.e2fs_bsize);
