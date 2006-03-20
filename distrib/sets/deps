@@ -40,8 +40,6 @@ base-i18n-shlib base-i18n-root
 base-ipf-lkm base-sys-usr
 base-isdn-bin base-sys-usr
 base-isdn-examples base-sys-share
-base-krb4-root base-sys-root
-base-krb4-shlib base-sys-usr
 base-krb5-bin base-sys-usr
 base-krb5-examples base-sys-share
 base-krb5-root base-sys-root
@@ -255,11 +253,6 @@ comp-fortran-lib base-sys-usr
 comp-fortran-man base-man-share
 comp-fortran-proflib base-sys-usr
 comp-i18n-lib base-i18n-root
-comp-krb4-catman base-man-share
-comp-krb4-include base-c-usr
-comp-krb4-lib base-sys-usr
-comp-krb4-man base-man-share
-comp-krb4-proflib base-sys-usr
 comp-krb5-catman base-man-share
 comp-krb5-include base-c-usr
 comp-krb5-lib base-sys-usr
@@ -396,9 +389,6 @@ man-ipf-catman base-man-share
 man-ipf-man base-man-share
 man-isdn-catman base-man-share
 man-isdn-man base-man-share
-man-krb4-catman base-man-share
-man-krb4-info base-texinfo-share
-man-krb4-man base-man-share
 man-krb5-catman base-man-share
 man-krb5-info base-texinfo-share
 man-krb5-man base-man-share
