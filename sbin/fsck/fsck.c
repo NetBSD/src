@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.41 2005/06/27 01:00:05 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.42 2006/03/20 01:27:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.41 2005/06/27 01:00:05 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.42 2006/03/20 01:27:44 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -292,6 +292,7 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 		warn("vfork");
 		if (optbuf)
 			free(optbuf);
+		free(argv);
 		return (1);
 
 	case 0:					/* Child. */
@@ -345,6 +346,7 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 	default:				/* Parent. */
 		if (optbuf)
 			free(optbuf);
+		free(argv);
 
 		if (pidp) {
 			*pidp = pid;
