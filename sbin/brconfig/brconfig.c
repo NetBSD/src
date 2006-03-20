@@ -1,4 +1,4 @@
-/*	$NetBSD: brconfig.c,v 1.10 2005/03/20 15:34:47 yamt Exp $	*/
+/*	$NetBSD: brconfig.c,v 1.11 2006/03/20 01:06:07 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: brconfig.c,v 1.10 2005/03/20 15:34:47 yamt Exp $");
+__RCSID("$NetBSD: brconfig.c,v 1.11 2006/03/20 01:06:07 christos Exp $");
 #endif
 
 
@@ -299,8 +299,8 @@ printb(const char *s, u_int v, const char *bits)
 		printf("%s=%o", s, v);
 	else
 		printf("%s=%x", s, v);
-	bits++;
 	if (bits) { 
+		bits++;
 		putchar('<');
 		while ((i = *bits++) != 0) {
 			if (v & (1 << (i-1))) {
