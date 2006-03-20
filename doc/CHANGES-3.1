@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.46 2006/03/17 15:30:08 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.47 2006/03/20 17:47:01 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -948,4 +948,22 @@ usr.bin/mail/send.c				1.24
 
 	PR security/32978: mail(1) creates record file with insecure umask.
 	[adrianp, ticket #1204]
+
+lib/libpam/modules/pam_unix/pam_unix.c		1.10
+
+	Fix an uninitialized variable, and remove some unreachable code.
+	[jnemeth, ticket #1206]
+
+usr.bin/systat/iostat.c				1.35
+
+	Count both read bytes and write bytes when we are not showing
+	separate read and write statistics.
+	[dsl, ticket #1208]
+
+sys/kern/exec_elf32.c				1.110-1.111
+
+	Found by coverity issue 887.  Check for NULL before using base_ph so
+	an interpreter that does not have PT_LOAD in the program header doesn't
+	crash the system.
+	[erh, ticket #1211]
 
