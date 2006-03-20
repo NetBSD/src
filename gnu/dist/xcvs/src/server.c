@@ -6007,8 +6007,8 @@ error %s getpeername or getsockname failed\n", strerror (errno));
 
     status = krb_recvauth (KOPT_DO_MUTUAL, STDIN_FILENO, &ticket, "rcmd",
 			   instance, (struct sockaddr_in *)&peer,
-			   (struct sockaddr_in *)&laddr, &auth, "", sched,
-			   version);
+			   (struct sockaddr_in *)&laddr, &auth, "",
+			   (void *)sched, version);
     if (status != KSUCCESS)
     {
 	printf ("E Fatal error, aborting.\n\
