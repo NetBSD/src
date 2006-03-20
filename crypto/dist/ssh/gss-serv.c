@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv.c,v 1.2 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: gss-serv.c,v 1.3 2006/03/20 16:39:05 elad Exp $	*/
 /*	$OpenBSD: gss-serv.c,v 1.13 2005/10/13 22:24:31 stevesk Exp $	*/
 
 /*
@@ -79,6 +79,8 @@ ssh_gssapi_supported_oids(gss_OID_set *oidset)
 			    &supported_mechs[i]->oid, oidset);
 		i++;
 	}
+
+	gss_release_oid_set(&min_status, &supported);
 }
 
 
