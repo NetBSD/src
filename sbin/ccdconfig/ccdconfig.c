@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.44 2006/03/20 01:00:34 christos Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.45 2006/03/20 22:44:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.44 2006/03/20 01:00:34 christos Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.45 2006/03/20 22:44:25 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -582,7 +582,6 @@ dump_ccd(int argc, char **argv, int action)
 			cp = *argv++; --argc;
 			if ((ccd = resolve_ccdname(cp)) == NULL) {
 				warnx("invalid ccd name: %s", cp);
-				free(ccd);
 				continue;
 			}
 			if ((error = pathtounit(ccd, &i)) != 0) {
