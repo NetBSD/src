@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.16 2005/01/19 20:00:45 xtraeme Exp $	*/
+/*	$NetBSD: fat.c,v 1.17 2006/03/20 01:42:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.16 2005/01/19 20:00:45 xtraeme Exp $");
+__RCSID("$NetBSD: fat.c,v 1.17 2006/03/20 01:42:47 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -232,7 +232,11 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 	}
 
 	free(buffer);
-	*fp = fat;
+	if (ret & FSFATAL) {
+		free(fat);
+		*fp = NULL;
+	} else
+		*fp = fat;
 	return ret;
 }
 
