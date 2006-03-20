@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2005/08/18 00:19:29 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2006/03/20 04:03:23 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -40,12 +40,6 @@ DPADD+= ${LIBKAFS}
 SRCS+=	auth-krb5.c auth2-krb5.c
 LDADD+=	-lkrb5 -lasn1
 DPADD+=	${LIBKRB5} ${LIBASN1}
-
-.if ${MKKERBEROS4} != "no"
-SRCS+=	auth-krb4.c radix.c
-LDADD+=	-lkrb -ldes
-DPADD+=	${LIBKRB} ${LIBDES}
-.endif
 
 LDADD+=	-lcom_err -lroken
 DPADD+=	${LIBCOM_ERR} ${LIBROKEN}

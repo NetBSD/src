@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.442 2006/03/16 18:43:34 jwise Exp $
+#	$NetBSD: bsd.own.mk,v 1.443 2006/03/20 04:03:23 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -566,7 +566,7 @@ MK${var}:=	yes
 	GCC GCCCMDS GDB \
 	HESIOD HTML \
 	IEEEFP INET6 INFO IPFILTER \
-	KERBEROS KERBEROS4 \
+	KERBEROS \
 	LINKLIB LINT \
 	MAN \
 	NLS \
@@ -591,12 +591,7 @@ MK${var}?=	no
 # Force some options off if their dependencies are off.
 #
 
-.if ${MKKERBEROS} == "no"
-MKKERBEROS4:=   no 
-.endif
-
 .if ${MKCRYPTO} == "no"
-MKKERBEROS4:=	no
 MKKERBEROS:=	no
 .endif
 
@@ -638,7 +633,7 @@ PRESERVE?=	-p
 .endif
 RENAME?=	-r
 HRDLINK?=	-l h
-SYMLINK?=	-l s
+SYMLINK?=	-l sr
 
 METALOG?=	${DESTDIR}/METALOG
 METALOG.add?=	${TOOL_CAT} -l >> ${METALOG}
@@ -676,7 +671,7 @@ HOST_INSTALL_SYMLINK?=	${INSTALL} ${SYMLINK} ${RENAME}
 # USE_* options which default to "yes" unless their corresponding MK*
 # variable is set to "no".
 #
-.for var in HESIOD INET6 KERBEROS KERBEROS4 PAM SKEY YP
+.for var in HESIOD INET6 KERBEROS PAM SKEY YP
 .if (${MK${var}} == "no")
 USE_${var}:= no
 .else
