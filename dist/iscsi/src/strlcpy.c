@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.1.1.1 2006/02/08 18:56:20 agc Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.2 2006/03/20 20:45:07 agc Exp $	*/
 /*	$OpenBSD: strlcpy.c,v 1.7 2003/04/12 21:56:39 millert Exp $	*/
 
 /*
@@ -17,6 +17,8 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "compat.h"
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -24,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcpy.c,v 1.1.1.1 2006/02/08 18:56:20 agc Exp $");
+__RCSID("$NetBSD: strlcpy.c,v 1.2 2006/03/20 20:45:07 agc Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC

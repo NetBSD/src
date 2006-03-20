@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.6 2006/03/12 18:47:28 agc Exp $ */
+/* $NetBSD: disk.c,v 1.7 2006/03/20 20:45:07 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -63,6 +63,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "config.h"
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 #include <sys/types.h>
 

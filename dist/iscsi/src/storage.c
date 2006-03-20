@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.3 2006/03/12 18:47:28 agc Exp $ */
+/* $NetBSD: storage.c,v 1.4 2006/03/20 20:45:07 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -32,6 +32,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "config.h"
+
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>

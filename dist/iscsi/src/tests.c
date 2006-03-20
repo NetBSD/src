@@ -30,6 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "config.h"
+#include "compat.h"
 
 #include <sys/types.h>
 

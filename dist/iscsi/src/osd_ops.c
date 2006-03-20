@@ -33,11 +33,17 @@
 /*
  * Transport-independent Methods
  */
+#include "config.h"
 
 
 #include "osd.h"
 #include "util.h"
+#include "compat.h"
 #include "osd_ops.h"
+
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 
 static int 
 extract_attribute(uint32_t page, uint32_t n, uint16_t len,
