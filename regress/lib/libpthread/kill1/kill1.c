@@ -1,4 +1,4 @@
-/*	$NetBSD: kill1.c,v 1.1 2004/07/27 22:01:51 yamt Exp $	*/
+/*	$NetBSD: kill1.c,v 1.2 2006/03/20 00:22:38 christos Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -35,7 +35,7 @@
 #define	NTHREAD	16
 struct threadinfo {
 	pthread_t id;
-	int gotsignal;
+	sig_atomic_t gotsignal;
 } th[NTHREAD];
 
 pthread_t mainthread;
