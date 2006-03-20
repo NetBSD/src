@@ -88,6 +88,9 @@
 /* Define to 1 if you have the `strtoll' function. */
 #define HAVE_STRTOLL 1
 
+/* Define to 1 if you have the `syslog' function. */
+#define HAVE_SYSLOG 1
+
 /* Define to 1 if you have the <syslog.h> header file. */
 #define HAVE_SYSLOG_H 1
 
@@ -140,13 +143,13 @@
 #define PACKAGE_NAME "netbsd-iscsi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netbsd-iscsi 20060304"
+#define PACKAGE_STRING "netbsd-iscsi 20060314"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netbsd-iscsi"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20060304"
+#define PACKAGE_VERSION "20060314"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1

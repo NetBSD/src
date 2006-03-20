@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.h,v 1.1.1.1 2006/02/08 18:56:15 agc Exp $ */
+/* $NetBSD: conffile.h,v 1.2 2006/03/20 20:25:42 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -67,7 +67,11 @@ void conffile_close(conffile_t *);
 #define PREFIX	""
 #endif
 
-#define _PATH_ISCSI_ETC		"/etc/iscsi/"
+#ifndef SYSCONFDIR
+#define SYSCONFDIR	"/etc"
+#endif
+
+#define _PATH_ISCSI_ETC		SYSCONFDIR "/iscsi/"
 
 #define _PATH_ISCSI_PASSWD	PREFIX _PATH_ISCSI_ETC "auths"
 #define	_PATH_ISCSI_TARGETS	PREFIX _PATH_ISCSI_ETC "targets"

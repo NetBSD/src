@@ -282,12 +282,14 @@ iscsi_trace_error(const char *fmt, ...)
 	va_start(vp, fmt);
 	(void) snprintf(buf, sizeof(buf), fmt, vp);
 	va_end(vp);
-	printf("pid %i:%s:%d: ***WARNING*** %s",
+	printf("pid %i:%s:%d: ***ERROR*** %s",
 			ISCSI_GETPID, __FILE__, __LINE__,
 			buf);
+#  ifdef HAVE_SYSLOG
 	syslog(LOG_ERR, "pid %d:%s:%d: ***ERROR*** %s",
 		       ISCSI_GETPID, __FILE__, __LINE__,
 		       buf);
+#  endif /* HAVE_SYSLOG */
 #endif
 }
 
