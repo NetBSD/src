@@ -42,7 +42,7 @@
 #include <kadm_err.h>
 
 __RCSID("$Heimdal: version4.c,v 1.29.2.1 2004/04/29 12:29:23 lha Exp $"
-	"$NetBSD: version4.c,v 1.5 2004/05/08 13:27:58 lha Exp $");
+	"$NetBSD: version4.c,v 1.6 2006/03/20 02:18:59 christos Exp $");
 
 #define KADM_NO_OPCODE -1
 #define KADM_NO_ENCRYPT -2
@@ -911,7 +911,7 @@ decode_packet(krb5_context context,
 	goto out;
     }
     des_set_key(&ad.session, schedule);
-    ret = krb_rd_priv(msg + off, rlen, schedule, &ad.session, 
+    ret = krb_rd_priv(msg + off, rlen, (void *)schedule, &ad.session, 
 		      client_addr, admin_addr, &msg_dat);
     if (ret) {
 	make_you_lose_packet (ERROR_TABLE_BASE_krb + ret, reply);
@@ -930,7 +930,7 @@ decode_packet(krb5_context context,
 			  client, client_str, d, &r);
 	krb5_data_alloc(reply, r.length + 26);
 	reply->length = krb_mk_priv(r.data, reply->data, r.length, 
-				    schedule, &ad.session, 
+				    (void *)schedule, &ad.session, 
 				    admin_addr, client_addr);
 	if((ssize_t)reply->length < 0) {
 	    make_you_lose_packet(KADM_NO_ENCRYPT, reply);
