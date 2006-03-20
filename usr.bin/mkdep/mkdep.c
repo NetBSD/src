@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.26 2005/12/12 22:49:37 wiz Exp $ */
+/* $NetBSD: mkdep.c,v 1.27 2006/03/20 17:18:06 elad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.26 2005/12/12 22:49:37 wiz Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.27 2006/03/20 17:18:06 elad Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -150,6 +150,9 @@ run_cc(int argc, char **argv, const char **fname)
 	case -1:
 		err(EXIT_FAILURE, "unable to fork");
 	}
+
+	free(pathname);
+	free(args);
 
 	while (((pid = wait(&status)) != cpid) && (pid >= 0))
 		continue;
