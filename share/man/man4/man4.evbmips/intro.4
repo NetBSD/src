@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.4,v 1.2 2006/02/11 10:38:07 wiz Exp $
+.\"     $NetBSD: intro.4,v 1.3 2006/03/21 19:48:24 gdamore Exp $
 .\"
 .\" Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,7 +92,7 @@ A list of the supported devices is given below.
 The following systems are supported:
 .Pp
 .Bl -tag -width XXXXXX -offset indent -compact
-.It MIPS Malta
+.It 4G Systems MTX-1
 .It AMD Alchemy DBAU1000
 .It AMD Alchemy DBAU1100
 .It AMD Alchemy DBAU1500
@@ -101,6 +101,10 @@ The following systems are supported:
 .It AMD Alchemy Pb1100
 .It AMD Alchemy Pb1500
 .It AMD Alchemy Pb1550
+.It Atheros AR5001AP
+.It MIPS Malta
+.It Plat'Home OpenMicroServer OMSAL-400
+.It Senao/Engenius 5354AP1 Aries2
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the
@@ -109,18 +113,24 @@ Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width com -offset indent -compact
+.It ae, aumac
+10/100 ethernet
+.It arbus, aubus
+Local system bus
 .It aupci
 PCI bridge
-.It aucom
+.It aucom, com
 serial communications interface
-.It aumac
-10/100 ethernet
 .It ohci
 USB 1.1 host controller
 .El
 .Pp
 PCI devices are supported through the
 .Xr pci 4
+bus and associated device drivers.
+.Pp
+USB devices are supported through the
+.Xr usb 4
 bus and associated device drivers.
 .\" .Sh UNSUPPORTED DEVICES
 .\" The following devices are not supported, due to unavailability of
