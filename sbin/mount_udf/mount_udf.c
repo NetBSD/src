@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.4 2006/02/02 23:41:43 christos Exp $ */
+/* $NetBSD: mount_udf.c,v 1.5 2006/03/21 21:11:42 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.4 2006/02/02 23:41:43 christos Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.5 2006/03/21 21:11:42 christos Exp $");
 #endif /* not lint */
 
 
@@ -115,6 +115,7 @@ mount_udf(int argc, char **argv)
 	char	*dev, *dir;
 	int	 ch, mntflags, set_gmtoff;
 	uint32_t sector_size;
+	mntoptparse_t mp;
 
 	/* set program name for error messages */
 	setprogname(argv[0]);
@@ -150,8 +151,10 @@ mount_udf(int argc, char **argv)
 			break;
 		case 'o' :
 			/* process generic mount options */
-			if (getmntopts(optarg, mopts, &mntflags, 0) == NULL)
-				err(EXIT_FAILURE, NULL);
+			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			if (mp == NULL)
+				err(EXIT_FAILURE, "getmntopts");
+			freemntopts(mp);
 			break;
 		case 's' :
 			args.sessionnr = a_num(optarg, "session number");

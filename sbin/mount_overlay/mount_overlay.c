@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_overlay.c,v 1.7 2005/02/05 15:14:25 xtraeme Exp $	*/
+/*	$NetBSD: mount_overlay.c,v 1.8 2006/03/21 21:11:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_overlay.c,v 1.7 2005/02/05 15:14:25 xtraeme Exp $");
+__RCSID("$NetBSD: mount_overlay.c,v 1.8 2006/03/21 21:11:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,12 +81,16 @@ mount_overlay(int argc, char *argv[])
 	struct overlay_args args;
 	int ch, mntflags;
 	char target[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	mntoptparse_t mp;
 
 	mntflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch(ch) {
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			if (mp == NULL)
+				err(1, "getmntopts");
+			freemntopts(mp);
 			break;
 		case '?':
 		default:

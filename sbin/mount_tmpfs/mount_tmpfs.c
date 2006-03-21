@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.11 2006/02/11 05:49:48 christos Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.12 2006/03/21 21:11:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.11 2006/02/11 05:49:48 christos Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.12 2006/03/21 21:11:42 christos Exp $");
 #endif /* not lint */
 
 #define __POOL_EXPOSE
@@ -89,7 +89,7 @@ mount_tmpfs(int argc, char *argv[])
 	uid_t uid;
 	mode_t mode;
 	off_t offtmp;
-	mntoptparse_t mo;
+	mntoptparse_t mp;
 	struct tmpfs_args args;
 	struct stat sb;
 
@@ -136,8 +136,10 @@ mount_tmpfs(int argc, char *argv[])
 			break;
 
 		case 'o':
-			mo = getmntopts(optarg, mopts, &mntflags, 0);
-			freemntopts(mo);
+			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			if (mp == NULL)
+				err(1, "getmntopts");
+			freemntopts(mp);
 			break;
 
 		case 's':
