@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb4.c,v 1.17 2005/04/23 16:55:03 christos Exp $	*/
+/*	$NetBSD: auth-krb4.c,v 1.18 2006/03/21 00:01:29 christos Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: auth-krb4.c,v 1.29 2003/02/21 10:34:48 mpech Exp $");
-__RCSID("$NetBSD: auth-krb4.c,v 1.17 2005/04/23 16:55:03 christos Exp $");
+__RCSID("$NetBSD: auth-krb4.c,v 1.18 2006/03/21 00:01:29 christos Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -256,7 +256,7 @@ auth_krb4(Authctxt *authctxt, KTEXT auth, char **client, KTEXT reply)
 	/* If we can't successfully encrypt the checksum, we send back an
 	   empty message, admitting our failure. */
 	if ((r = krb_mk_priv((u_char *) & cksum, reply->dat, sizeof(cksum) + 1,
-	    schedule, &adat.session, &local, &foreign)) < 0) {
+	    (void *)schedule, &adat.session, &local, &foreign)) < 0) {
 		debug("Kerberos v4 mk_priv: (%d) %s", r, krb_err_txt[r]);
 		reply->dat[0] = 0;
 		reply->length = 0;
