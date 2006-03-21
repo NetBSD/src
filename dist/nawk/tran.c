@@ -210,7 +210,10 @@ Cell *setsymtab(const char *n, const char *s, Awkfloat f, unsigned t, Array *tp)
 	int h;
 	Cell *p;
 
-	if (n != NULL && (p = lookup(n, tp)) != NULL) {
+	if (n == NULL)
+		n = "";
+
+	if ((p = lookup(n, tp)) != NULL) {
 		   dprintf( ("setsymtab found %p: n=%s s=\"%s\" f=%g t=%o\n",
 			p, NN(p->nval), NN(p->sval), p->fval, p->tval) );
 		return(p);
@@ -218,7 +221,7 @@ Cell *setsymtab(const char *n, const char *s, Awkfloat f, unsigned t, Array *tp)
 	p = (Cell *) malloc(sizeof(Cell));
 	if (p == NULL)
 		FATAL("out of space for symbol table at %s", n);
-	p->nval = n ? tostring(n) : tostring("");
+	p->nval = tostring(n);
 	p->sval = s ? tostring(s) : tostring("");
 	p->fval = f;
 	p->tval = t;
