@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.h,v 1.21 2006/01/20 17:30:00 christos Exp $	*/
+/*	$NetBSD: lp.h,v 1.22 2006/03/21 22:47:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -111,6 +111,7 @@ int	 getline(FILE *);
 const char *gethost(const char *);
 int	 getport(const char *);
 int	 getq(struct queue *(*[]));
+void	 freeq(struct queue **, u_int);
 void     header(void);
 void     inform(const char *);
 int      inlist(const char *, const char *);
