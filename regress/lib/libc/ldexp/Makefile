@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2002/09/18 05:41:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2006/03/21 18:34:22 drochner Exp $
 
 NOMAN=		# defined
 
 PROG=		ldexp
+LDADD+=		-lm
 CLEANFILES+=	output
 
 regress: ${PROG}
