@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.78 2006/03/21 12:08:19 mjl Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.79 2006/03/21 23:55:02 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.78 2006/03/21 12:08:19 mjl Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.79 2006/03/21 23:55:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -484,7 +484,7 @@ getaddrinfo(const char *hostname, const char *servname,
 		if (error)
 			goto free;
 
-		while (cur && cur->ai_next)
+		while (cur->ai_next)
 			cur = cur->ai_next;
 	}
 
