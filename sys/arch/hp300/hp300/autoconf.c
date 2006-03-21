@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.78 2006/03/19 06:13:43 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.79 2006/03/21 01:15:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.78 2006/03/19 06:13:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.79 2006/03/21 01:15:03 tsutsui Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -693,11 +693,11 @@ setbootdev(void)
 	/*
 	 * Determine device type.
 	 */
-	if (device_is_a(root_device, "rd") == 0)
+	if (device_is_a(root_device, "rd"))
 		type = 2;
-	else if (device_is_a(root_device, "sd") == 0)
+	else if (device_is_a(root_device, "sd"))
 		type = 4;
-	else if (device_is_a(root_device, "md") == 0)
+	else if (device_is_a(root_device, "md"))
 		goto out;
 	else {
 		printf("WARNING: strange root device!\n");
