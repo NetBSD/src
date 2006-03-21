@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.85 2006/02/16 20:48:42 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.86 2006/03/21 23:47:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.85 2006/02/16 20:48:42 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.86 2006/03/21 23:47:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -696,8 +696,9 @@ kvm_open(uf, mf, sf, flag, program)
 {
 	kvm_t *kd;
 
-	if ((kd = malloc(sizeof(*kd))) == NULL && program != NULL) {
-		(void)fprintf(stderr, "%s: %s\n", program, strerror(errno));
+	if ((kd = malloc(sizeof(*kd))) == NULL) {
+		(void)fprintf(stderr, "%s: %s\n",
+		    program ? program : getprogname(), strerror(errno));
 		return (0);
 	}
 	kd->program = program;
