@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.185 2006/03/20 18:31:30 gdamore Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.186 2006/03/21 09:06:21 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.185 2006/03/20 18:31:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.186 2006/03/21 09:06:21 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -381,14 +381,14 @@ static const struct pridtab cputab[] = {
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4Kc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_4KEc, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc"			},
+	{ MIPS_PRID_CID_MTI, MIPS_4KEc_R2, -1, -1, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc (Rev 2)"		},
 	{ MIPS_PRID_CID_MTI, MIPS_4KSc, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KSc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_5Kc, -1, -1,	-1, 0,
 	  MIPS64_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"5Kc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_20Kc, -1, -1,	-1, 0,
 	  MIPS64_FLAGS,				"20Kc"			},
-	{ MIPS_PRID_CID_MTI, MIPS_4KEc_R2, -1, -1, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc (Rev 2)"		},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1000, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
@@ -397,19 +397,19 @@ static const struct pridtab cputab[] = {
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1000 (Rev 2 core)" 	},
 
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1500, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
-						"Au1500 (Rev 1 core)"	},
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1500, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
-						"Au1500 (Rev 2 core)" 	},
-
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1100, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1100 (Rev 1 core)"	},
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1100, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1100 (Rev 2 core)" 	},
+
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1500, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1500 (Rev 1 core)"	},
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1500, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1500 (Rev 2 core)" 	},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1550, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
