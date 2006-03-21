@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.7 2006/03/20 20:45:07 agc Exp $ */
+/* $NetBSD: disk.c,v 1.8 2006/03/21 21:03:14 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -934,25 +934,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case WRITE_10:
 
-		/* Some platforms (like strongarm) aligns on */
-		/* word boundaries.  So HTONL and NTOHL won't */
-		/* work here. */
-
-#if (BYTE_ORDER == BIG_ENDIAN)
-		((uint8_t *) (void *) &lba)[0] = cdb[2];
-		((uint8_t *) (void *) &lba)[1] = cdb[3];
-		((uint8_t *) (void *) &lba)[2] = cdb[4];
-		((uint8_t *) (void *) &lba)[3] = cdb[5];
-		((uint8_t *) (void *) &len)[0] = cdb[7];
-		((uint8_t *) (void *) &len)[1] = cdb[8];
-#else
-		((uint8_t *) (void *) &lba)[0] = cdb[5];
-		((uint8_t *) (void *) &lba)[1] = cdb[4];
-		((uint8_t *) (void *) &lba)[2] = cdb[3];
-		((uint8_t *) (void *) &lba)[3] = cdb[2];
-		((uint8_t *) (void *) &len)[0] = cdb[8];
-		((uint8_t *) (void *) &len)[1] = cdb[7];
-#endif
+		cdb2lba(&lba, &len, cdb);
 
 		iscsi_trace(TRACE_SCSI_CMD, "WRITE_10(lba %u, len %u blocks)\n", lba, len);
 		if (disk_write(sess, args, lun, lba, (unsigned) len) != 0) {
@@ -964,26 +946,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case READ_10:
 
-		/* Some platforms (like strongarm) aligns on */
-		/* word boundaries.  So HTONL and NTOHL won't */
-		/* work here. */
-
-#if (BYTE_ORDER == BIG_ENDIAN)
-		((uint8_t *) (void *) &lba)[0] = cdb[2];
-		((uint8_t *) (void *) &lba)[1] = cdb[3];
-		((uint8_t *) (void *) &lba)[2] = cdb[4];
-		((uint8_t *) (void *) &lba)[3] = cdb[5];
-		((uint8_t *) (void *) &len)[0] = cdb[7];
-		((uint8_t *) (void *) &len)[1] = cdb[8];
-#else
-		((uint8_t *) (void *) &lba)[0] = cdb[5];
-		((uint8_t *) (void *) &lba)[1] = cdb[4];
-
-		((uint8_t *) (void *) &lba)[2] = cdb[3];
-		((uint8_t *) (void *) &lba)[3] = cdb[2];
-		((uint8_t *) (void *) &len)[0] = cdb[8];
-		((uint8_t *) (void *) &len)[1] = cdb[7];
-#endif
+		cdb2lba(&lba, &len, cdb);
 
 		iscsi_trace(TRACE_SCSI_CMD, "READ_10(lba %u, len %u blocks)\n", lba, len);
 		if (disk_read(sess, args, lba, len, lun) != 0) {

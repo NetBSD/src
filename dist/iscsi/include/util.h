@@ -196,11 +196,7 @@ typedef int	socklen_t;
  * Sleeping
  */
 
-#ifdef __KERNEL__
-#define ISCSI_SLEEP(N) {uint32_t future = jiffies+N*HZ; while (jiffies<future) ISCSI_SPIN;}
-#else
 #define ISCSI_SLEEP(N) sleep(N)
-#endif
 
 /*
  * Memory
@@ -223,13 +219,7 @@ void            iscsi_free_atomic(void *);
 
 /* Spin locks */
 
-#ifdef __KERNEL__
-typedef         spinlock_t
-                iscsi_spin_t;
-#else
-typedef         pthread_mutex_t
-                iscsi_spin_t;
-#endif
+typedef         pthread_mutex_t iscsi_spin_t;
 
 int             iscsi_spin_init(iscsi_spin_t * );
 int             iscsi_spin_lock(iscsi_spin_t * );
@@ -303,11 +293,7 @@ int             iscsi_queue_full(iscsi_queue_t * );
  * Socket Abstraction
  */
 
-#ifdef __KERNEL__
-typedef struct socket *iscsi_socket_t;
-#else
 typedef int     iscsi_socket_t;
-#endif
 
 /* Turning off Nagle's Algorithm doesn't always seem to work, */
 /* so we combine two messages into one when the second's size */
@@ -335,15 +321,15 @@ int             iscsi_sock_getsockname(iscsi_socket_t , struct sockaddr * , unsi
 int             iscsi_sock_getpeername(iscsi_socket_t , struct sockaddr * , unsigned *);
 int             modify_iov(struct iovec ** , int *, uint32_t , uint32_t );
 
+
+void	cdb2lba(uint32_t *, uint16_t *, uint8_t *);
+void	lba2cdb(uint8_t *, uint32_t *, uint16_t *);
+
 /*
  * Mutexes
  */
 
-#ifdef __KERNEL__
-typedef struct semaphore iscsi_mutex_t;
-#else
 typedef pthread_mutex_t iscsi_mutex_t;
-#endif
 
 int             iscsi_mutex_init(iscsi_mutex_t * );
 int             iscsi_mutex_lock(iscsi_mutex_t * );
@@ -352,28 +338,28 @@ int             iscsi_mutex_destroy(iscsi_mutex_t * );
 
 #define ISCSI_LOCK(M, ELSE)	do {					\
 	if (iscsi_mutex_lock(M) != 0) {					\
-		iscsi_trace_error("iscsi_mutex_lock() failed\n");		\
+		iscsi_trace_error("iscsi_mutex_lock() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_UNLOCK(M, ELSE)	do {					\
 	if (iscsi_mutex_unlock(M) != 0) {				\
-		iscsi_trace_error("iscsi_mutex_unlock() failed\n");		\
+		iscsi_trace_error("iscsi_mutex_unlock() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_MUTEX_INIT(M, ELSE) do {					\
 	if (iscsi_mutex_init(M) != 0) {					\
-		iscsi_trace_error("iscsi_mutex_init() failed\n");		\
+		iscsi_trace_error("iscsi_mutex_init() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_MUTEX_DESTROY(M, ELSE) do {				\
 	if (iscsi_mutex_destroy(M) != 0) {				\
-		iscsi_trace_error("iscsi_mutex_destroy() failed\n");		\
+		iscsi_trace_error("iscsi_mutex_destroy() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -382,11 +368,7 @@ int             iscsi_mutex_destroy(iscsi_mutex_t * );
  * Condition Variable
  */
 
-#ifdef __KERNEL__
-typedef struct semaphore iscsi_cond_t;
-#else
 typedef pthread_cond_t iscsi_cond_t;
-#endif
 
 int             iscsi_cond_init(iscsi_cond_t * );
 int             iscsi_cond_wait(iscsi_cond_t * , iscsi_mutex_t * );
@@ -422,36 +404,14 @@ int             iscsi_cond_destroy(iscsi_cond_t * );
  */
 
 typedef struct iscsi_thread_t {
-#ifdef __KERNEL__
-	struct task_struct *pthread;
-#else
 	pthread_t       pthread;
-#endif
 }               iscsi_thread_t;
 
 int             iscsi_thread_create(iscsi_thread_t * , void *(*proc) (void *), void *);
 
-#ifdef __KERNEL__
-#define ISCSI_SET_THREAD(ME) me->thread.pthread = current;
-
-#if LINUX_VERSION_CODE >= LinuxVersionCode(2,4,0)
-#define REPARENT_TO_INIT() reparent_to_init()
-#define ISCSI_THREAD_START(NAME)      \
-      lock_kernel();                      \
-      daemonize();                        \
-      REPARENT_TO_INIT(); 				  \
-      unlock_kernel();                    \
-      sprintf(current->comm, "%s", NAME);
-#else
-#define REPARENT_TO_INIT
-#define ISCSI_THREAD_START(NAME)      \
-      sprintf(current->comm, "%s", NAME);
-#endif
-#else
 #define ISCSI_SET_THREAD(ME)	/* for user pthread id set by pthread_create
 				 * in iscsi_thread_create */
 #define ISCSI_THREAD_START(NAME)
-#endif
 
 /*
  * Worker Thread
@@ -481,12 +441,7 @@ typedef struct {
 /*
  * Spin Lock
  */
-
-#ifdef __KERNEL__
-#define ISCSI_SPIN schedule()
-#else
 #define ISCSI_SPIN
-#endif
 
 /*
  * Pre/Post condition checking
