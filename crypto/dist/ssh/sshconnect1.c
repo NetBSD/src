@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.29 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.30 2006/03/21 00:01:29 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshconnect1.c,v 1.62 2005/10/30 08:52:18 djm Exp $");
-__RCSID("$NetBSD: sshconnect1.c,v 1.29 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.30 2006/03/21 00:01:29 christos Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -473,8 +473,8 @@ try_krb4_authentication(void)
 		 * key, and the decrypted checksum fails to match, he's
 		 * bogus. Bail out.
 		 */
-		r = krb_rd_priv(auth.dat, auth.length, schedule, &cred.session,
-		    &foreign, &local, &msg_data);
+		r = krb_rd_priv(auth.dat, auth.length, (void *)schedule,
+		    &cred.session, &foreign, &local, &msg_data);
 		if (r != KSUCCESS) {
 			debug("Kerberos v4 krb_rd_priv failed: %s",
 			    krb_err_txt[r]);
