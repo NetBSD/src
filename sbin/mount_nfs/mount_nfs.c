@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.48 2005/05/15 21:18:34 dsl Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.49 2006/03/21 21:11:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.48 2005/05/15 21:18:34 dsl Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.49 2006/03/21 21:11:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -318,7 +318,7 @@ mount_nfs(int argc, char *argv[])
 		case 'o':
 			mp = getmntopts(optarg, mopts, &mntflags, &altflags);
 			if (mp == NULL)
-				err(1, NULL);
+				err(1, "getmntopts");
 			if (altflags & ALTF_BG)
 				opflags |= BGRND;
 			if (altflags & ALTF_CONN)
