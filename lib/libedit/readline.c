@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.65 2006/03/18 19:22:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.66 2006/03/21 17:52:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.65 2006/03/18 19:22:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.66 2006/03/21 17:52:50 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -929,6 +929,8 @@ loop:
 		if (ret > 0 && tmp) {
 			len = strlen(tmp);
 			ADD_STRING(tmp, len, 1);
+		}
+		if (tmp) {
 			free(tmp);
 			tmp = NULL;
 		}
