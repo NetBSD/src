@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.12 2005/09/23 12:10:35 jmmv Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.13 2006/03/21 21:11:41 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -121,6 +121,7 @@ mount_filecore(int argc, char **argv)
 	struct filecore_args args;
 	int ch, mntflags, opts, useuid;
 	char *dev, *dir, canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	mntoptparse_t mp;
 
 	mntflags = opts = 0;
 	useuid = 1;
@@ -150,7 +151,10 @@ mount_filecore(int argc, char **argv)
 			useuid = 0;
                         break;
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			if (mp == NULL)
+				err(1, "getmntopts");
+			freemntopts(mp);
 			break;
 		case '?':
 		default:

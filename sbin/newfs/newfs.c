@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.89 2006/01/16 21:34:41 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.90 2006/03/21 21:11:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.89 2006/01/16 21:34:41 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.90 2006/03/21 21:11:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,6 +238,7 @@ main(int argc, char *argv[])
 	mode_t mfsmode = 01777;	/* default mode for a /tmp-type directory */
 	uid_t mfsuid = 0;	/* user root */
 	gid_t mfsgid = 0;	/* group wheel */
+	mntoptparse_t mo;
 
 	cp = NULL;
 	fsi = fso = -1;
@@ -350,9 +351,12 @@ main(int argc, char *argv[])
 			    optarg, 1, INT_MAX, NULL);
 			break;
 		case 'o':
-			if (mfs)
-				getmntopts(optarg, mopts, &mntflags, 0);
-			else {
+			if (mfs) {
+				mo = getmntopts(optarg, mopts, &mntflags, 0);
+				if (mo == NULL)
+					err(1, "getmntopts");
+				freemntopts(mo);
+			} else {
 				if (strcmp(optarg, "space") == 0)
 					opt = FS_OPTSPACE;
 				else if (strcmp(optarg, "time") == 0)

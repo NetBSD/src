@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.21 2005/09/23 12:10:34 jmmv Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.22 2006/03/21 21:11:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.21 2005/09/23 12:10:34 jmmv Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.22 2006/03/21 21:11:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ mount_cd9660(int argc, char **argv)
 {
 	struct iso_args args;
 	int ch, mntflags, opts;
+	mntoptparse_t mp;
 	char *dev, *dir, canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 
 	mntflags = opts = 0;
@@ -115,7 +116,10 @@ mount_cd9660(int argc, char **argv)
 			opts |= ISOFSMNT_NOJOLIET;
 			break;
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, &opts);
+			mp = getmntopts(optarg, mopts, &mntflags, &opts);
+			if (mp == NULL)
+				err(1, "getmntopts");
+			freemntopts(mp);
 			break;
 		case 'r':
 			/* obsolete, retained for compatibility only, use

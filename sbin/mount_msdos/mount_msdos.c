@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.37 2005/09/23 12:10:35 jmmv Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.38 2006/03/21 21:11:41 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.37 2005/09/23 12:10:35 jmmv Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.38 2006/03/21 21:11:41 christos Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -87,6 +87,7 @@ mount_msdos(int argc, char **argv)
 	char *dev, *dir, canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 	time_t now;
 	struct tm *tm;
+	mntoptparse_t mp;
 
 	mntflags = set_gid = set_uid = set_mask = set_dirmask = set_gmtoff = 0;
 	(void)memset(&args, '\0', sizeof(args));
@@ -122,7 +123,10 @@ mount_msdos(int argc, char **argv)
 			set_dirmask = 1;
 			break;
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			if (mp == NULL)
+				err(1, "getmntopts");
+			freemntopts(mp);
 			break;
 		case 't':
 			args.gmtoff = atoi(optarg);

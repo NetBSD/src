@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ptyfs.c,v 1.4 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_ptyfs.c,v 1.5 2006/03/21 21:11:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ptyfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_ptyfs.c,v 1.4 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_ptyfs.c,v 1.5 2006/03/21 21:11:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,8 @@ mount_ptyfs(int argc, char *argv[])
 		case 'o':
 			altflags = 0;
 			mp = getmntopts(optarg, mopts, &mntflags, &altflags);
+			if (mp == NULL)
+				err(1, "getmntopts");
 			if (altflags & ALTF_GROUP)
 				args.gid = getgrp(getmntoptstr(mp, "group"));
 			if (altflags & ALTF_MODE)
