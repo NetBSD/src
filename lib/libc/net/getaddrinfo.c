@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.77 2006/02/17 15:55:01 ginsbach Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.78 2006/03/21 12:08:19 mjl Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.77 2006/02/17 15:55:01 ginsbach Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.78 2006/03/21 12:08:19 mjl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1287,7 +1287,7 @@ _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
 	name = va_arg(ap, char *);
 	pai = va_arg(ap, const struct addrinfo *);
 
-	memset(&q, 0, sizeof(q2));
+	memset(&q, 0, sizeof(q));
 	memset(&q2, 0, sizeof(q2));
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
