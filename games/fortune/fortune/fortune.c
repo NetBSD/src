@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.47 2006/03/18 23:54:17 christos Exp $	*/
+/*	$NetBSD: fortune.c,v 1.48 2006/03/21 20:25:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.47 2006/03/18 23:54:17 christos Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.48 2006/03/21 20:25:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -568,8 +568,6 @@ over:
 		if (dir == NULL && tfile[0] != '/') {
 			int n = add_file(percent, tfile, FORTDIR, head, tail,
 					parent);
-			if (tpath)
-				free(tpath);
 			free(tfile);
 			return n;
 		}
