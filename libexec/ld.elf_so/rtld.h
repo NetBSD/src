@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.71 2004/07/05 11:50:07 cube Exp $	 */
+/*	$NetBSD: rtld.h,v 1.72 2006/03/21 17:48:10 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -234,7 +234,7 @@ void _rtld_digest_dynamic(Obj_Entry *);
 Obj_Entry *_rtld_digest_phdr(const Elf_Phdr *, int, caddr_t);
 
 /* load.c */
-Obj_Entry *_rtld_load_object(char *, int);
+Obj_Entry *_rtld_load_object(const char *, int);
 int _rtld_load_needed_objects(Obj_Entry *, int);
 int _rtld_preload(const char *);
 
@@ -266,7 +266,7 @@ const Elf_Sym *_rtld_symlook_default(const char *, unsigned long,
     const Obj_Entry *, const Obj_Entry **, bool);
 
 /* map_object.c */
-Obj_Entry *_rtld_map_object(char *, int, const struct stat *);
+Obj_Entry *_rtld_map_object(const char *, int, const struct stat *);
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
 
