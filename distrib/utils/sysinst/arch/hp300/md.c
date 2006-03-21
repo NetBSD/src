@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 2006/03/21 02:05:33 tsutsui Exp $ */
+/*	$NetBSD: md.c,v 1.23 2006/03/21 06:18:29 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,8 +99,8 @@ md_get_info(void)
 		exit(1);
 	}
 
-	/* preserve first cylinder for system. */
-	ptstart = disklabel.d_secpercyl;
+	/* We will preserve the first cylinder as PART_BOOT for bootloader. */
+	ptstart = 0;
 
 	close(fd);
 
@@ -184,7 +184,7 @@ md_check_partitions(void)
 	start = 0;
 	last = PART_A - 1;
 	for (part = PART_A; part < MAXPARTITIONS; part++) {
-		if (part == PART_C)
+		if (part == PART_RAW || part == PART_BOOT)
 			continue;
 		if (last >= PART_A && bsdlabel[part].pi_size > 0) {
 			msg_display(MSG_emptypart, part+'a');
@@ -247,4 +247,16 @@ md_pre_update(void)
 void
 md_init(void)
 {
+}
+
+int
+hp300_boot_size(void)
+{
+	int i;
+
+	i = dlcylsize;
+	if (i >= 1024) /* XXX: bsddisklabel.c has a hack. */
+		i = dlcylsize * sectorsize * 2;
+
+	return i;
 }
