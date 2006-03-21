@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.18 2005/11/28 03:26:06 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.19 2006/03/21 22:49:43 christos Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.18 2005/11/28 03:26:06 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.19 2006/03/21 22:49:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,6 +194,8 @@ upstat(const char *msg)
 	fd = open(statfile, O_WRONLY|O_CREAT, 0664);
 	if (fd < 0 || flock(fd, LOCK_EX) < 0) {
 		printf("\tcannot create status file\n");
+		if (fd >= 0)
+			(void)close(fd);
 		return;
 	}
 	(void)ftruncate(fd, 0);
@@ -760,7 +762,8 @@ prstat(void)
 		printf("\t%d entries in spool area\n", i);
 	fd = open(line, O_RDONLY);
 	if (fd < 0 || flock(fd, LOCK_SH|LOCK_NB) == 0) {
-		(void)close(fd);	/* unlocks as well */
+		if (fd >= 0)
+			(void)close(fd);	/* unlocks as well */
 		printf("\tprinter idle\n");
 		return;
 	}
