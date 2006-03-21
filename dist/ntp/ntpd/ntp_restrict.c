@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_restrict.c,v 1.3 2006/03/19 07:02:47 kardel Exp $	*/
+/*	$NetBSD: ntp_restrict.c,v 1.4 2006/03/21 10:28:25 kardel Exp $	*/
 
 /*
  * ntp_restrict.c - determine host restrictions
@@ -442,8 +442,13 @@ hack_restrict(
 				rl->mask = mask;
 				rl->mflags = (u_short)mflags;
 
-				rl->next = rlprev->next;
-				rlprev->next = rl;
+				if (rlprev == NULL) {
+					rl->next = restrictlist;
+					restrictlist = rl;
+				} else {
+					rl->next = rlprev->next;
+					rlprev->next = rl;
+				}
 				restrictcount++;
 			}
 			if ((rl->flags ^ (u_short)flags) &
@@ -479,7 +484,11 @@ hack_restrict(
 			if (rl != 0
 			    && rl->addr != htonl(INADDR_ANY)
 			    && !(rl->mflags & RESM_INTERFACE)) {
-				rlprev->next = rl->next;
+				if (rlprev != NULL) {
+					rlprev->next = rl->next;
+				} else {
+					restrictlist = rl->next;
+				}
 				restrictcount--;
 				if (rl->flags & RES_LIMITED) {
 					res_limited_refcnt--;
