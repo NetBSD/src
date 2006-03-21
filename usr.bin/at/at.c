@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.21 2004/10/30 16:55:06 dsl Exp $	*/
+/*	$NetBSD: at.c,v 1.22 2006/03/21 21:59:56 phil Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -70,7 +70,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.21 2004/10/30 16:55:06 dsl Exp $");
+__RCSID("$NetBSD: at.c,v 1.22 2006/03/21 21:59:56 phil Exp $");
 #endif
 #endif
 
@@ -537,11 +537,13 @@ process_jobs(int argc, char **argv, int what)
 
 						PRIV_END
 
-						if (!fp)
+						if (!fp) {
 							perr("Cannot open file");
-
-						while((ch = getc(fp)) != EOF)
-							putchar(ch);
+						} else {
+							while((ch = getc(fp)) != EOF)
+								putchar(ch);
+							fclose(fp);
+						}
 					}
 					break;
 
