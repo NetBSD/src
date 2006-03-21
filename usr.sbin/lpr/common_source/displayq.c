@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.30 2006/01/20 17:30:00 christos Exp $	*/
+/*	$NetBSD: displayq.c,v 1.31 2006/03/21 22:37:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.30 2006/01/20 17:30:00 christos Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.31 2006/03/21 22:37:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,8 +204,8 @@ displayq(int format)
 			inform(q->q_name);
 			free(q);
 		}
-		free(queue);
 	}
+	free(queue);
 	if (!remote) {
 		if (nitems == 0)
 			puts("no entries");
