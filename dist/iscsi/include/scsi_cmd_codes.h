@@ -9,7 +9,7 @@ enum {
 	READ_6 = 0x08,
 	INQUIRY = 0x12,
 	MODE_SENSE_6 = 0x1a,
-	LOAD_UNLOAD = 0x1b,
+	STOP_START_UNIT = 0x1b,
 	READ_CAPACITY = 0x25,
 	READ_10 = 0x28,
 	WRITE_10 = 0x2a,
@@ -17,7 +17,7 @@ enum {
 	SYNC_CACHE = 0x35,
 	LOG_SENSE = 0x4d,
 	MODE_SENSE_10 = 0x5a,
-	UNKNOWN_5E = 0x5e,
+	PERSISTENT_RESERVE_IN = 0x5e,
 	REPORT_LUNS = 0xa0
 };
 

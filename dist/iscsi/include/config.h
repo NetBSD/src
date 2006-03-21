@@ -31,6 +31,9 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
+/* Define to 1 if you have the `fsync_range' function. */
+#define HAVE_FSYNC_RANGE 1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
@@ -143,13 +146,13 @@
 #define PACKAGE_NAME "netbsd-iscsi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netbsd-iscsi 20060314"
+#define PACKAGE_STRING "netbsd-iscsi 20060321"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netbsd-iscsi"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20060314"
+#define PACKAGE_VERSION "20060321"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
