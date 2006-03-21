@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.72 2006/03/15 22:07:09 kleink Exp $
+#  $NetBSD: Makefile,v 1.73 2006/03/21 18:46:05 drochner Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -137,7 +137,7 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	w_pow.c w_powf.c w_remainder.c w_remainderf.c w_scalb.c w_scalbf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
-	llroundf.c
+	llroundf.c s_frexp.c s_ldexp.c s_modf.c
 
 # math routines for non-IEEE architectures.
 NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
