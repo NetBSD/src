@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.41 2006/03/21 21:41:00 christos Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.42 2006/03/21 21:43:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.41 2006/03/21 21:41:00 christos Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.42 2006/03/21 21:43:03 christos Exp $");
 #endif
 
 
@@ -178,6 +178,7 @@ do_conf(void)
 	if ((conf = fopen(aout_conf, "r")) == NULL) {
 		if (verbose)
 			warnx("can't open `%s'", aout_conf);
+		free(aout_conf);
 		return (0);
 	}
 	free(aout_conf);
