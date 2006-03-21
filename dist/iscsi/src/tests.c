@@ -248,26 +248,7 @@ write_read_test(uint64_t target, uint32_t lun, int type)
 		if (type == 10) {
 			cdb[0] = WRITE_10;
 			cdb[1] = lun << 5;
-
-			/* Strongarm aligns on word boundaries.  */
-			/* So HTONL and NTOHL won't work here. */
-
-#if (BYTE_ORDER == BIG_ENDIAN)
-			cdb[2] = ((uint8_t *) &i)[2];
-			cdb[3] = ((uint8_t *) &i)[3];
-			cdb[4] = ((uint8_t *) &i)[0];
-			cdb[5] = ((uint8_t *) &i)[1];
-			cdb[7] = ((uint8_t *) &len)[0];
-			cdb[8] = ((uint8_t *) &len)[1];
-#else
-			cdb[2] = ((uint8_t *) &i)[3];
-			cdb[3] = ((uint8_t *) &i)[2];
-			cdb[4] = ((uint8_t *) &i)[1];
-			cdb[5] = ((uint8_t *) &i)[0];
-			cdb[7] = ((uint8_t *) &len)[1];
-			cdb[8] = ((uint8_t *) &len)[0];
-#endif
-
+			lba2cdb(cdb, &i, &len);
 		} else {
 			*((uint32_t *) (cdb + 0)) = ISCSI_HTONL(i);
 			cdb[0] = WRITE_6;
@@ -302,26 +283,7 @@ write_read_test(uint64_t target, uint32_t lun, int type)
 		if (type == 10) {
 			cdb[0] = READ_10;
 			cdb[1] = lun << 5;
-
-			/* Strongarm aligns on word boundaries. */
-			/* So HTONL and NTOHL won't work here. */
-
-#if (BYTE_ORDER == BIG_ENDIAN)
-			cdb[2] = ((uint8_t *) &i)[2];
-			cdb[3] = ((uint8_t *) &i)[3];
-			cdb[4] = ((uint8_t *) &i)[0];
-			cdb[5] = ((uint8_t *) &i)[1];
-			cdb[7] = ((uint8_t *) &len)[0];
-			cdb[8] = ((uint8_t *) &len)[1];
-#else
-			cdb[2] = ((uint8_t *) &i)[3];
-			cdb[3] = ((uint8_t *) &i)[2];
-			cdb[4] = ((uint8_t *) &i)[1];
-			cdb[5] = ((uint8_t *) &i)[0];
-			cdb[7] = ((uint8_t *) &len)[1];
-			cdb[8] = ((uint8_t *) &len)[0];
-#endif
-
+			lba2cdb(cdb, &i, &len);
 		} else {
 			*((uint32_t *) (cdb + 0)) = ISCSI_HTONL(i);
 			cdb[0] = READ_6;
@@ -710,50 +672,14 @@ latency_test(uint64_t target, uint32_t lun, uint8_t op, uint32_t iters)
 		trans_len = block_len;
 		cdb[0] = READ_10;
 		cdb[1] = lun << 5;
-
-		/* Strongarm aligns on word boundaries. */
-		/* So HTONL and NTOHL won't work here. */
-
-#if (BYTE_ORDER == BIG_ENDIAN)
-		cdb[2] = ((uint8_t *) &lba)[2];
-		cdb[3] = ((uint8_t *) &lba)[3];
-		cdb[4] = ((uint8_t *) &lba)[0];
-		cdb[5] = ((uint8_t *) &lba)[1];
-		cdb[7] = ((uint8_t *) &len)[0];
-		cdb[8] = ((uint8_t *) &len)[1];
-#else
-		cdb[2] = ((uint8_t *) &lba)[3];
-		cdb[3] = ((uint8_t *) &lba)[2];
-		cdb[4] = ((uint8_t *) &lba)[1];
-		cdb[5] = ((uint8_t *) &lba)[0];
-		cdb[7] = ((uint8_t *) &len)[1];
-		cdb[8] = ((uint8_t *) &len)[0];
-#endif
+		lba2cdb(cdb, &lba, &len);
 		break;
 	case WRITE_10:
 		output = 1;
 		trans_len = block_len;
 		cdb[0] = WRITE_10;
 		cdb[1] = lun << 5;
-
-		/* Strongarm aligns on word boundaries. */
-		/* So HTONL and NTOHL won't work here. */
-
-#if (BYTE_ORDER == BIG_ENDIAN)
-		cdb[2] = ((uint8_t *) &lba)[2];
-		cdb[3] = ((uint8_t *) &lba)[3];
-		cdb[4] = ((uint8_t *) &lba)[0];
-		cdb[5] = ((uint8_t *) &lba)[1];
-		cdb[7] = ((uint8_t *) &len)[0];
-		cdb[8] = ((uint8_t *) &len)[1];
-#else
-		cdb[2] = ((uint8_t *) &lba)[3];
-		cdb[3] = ((uint8_t *) &lba)[2];
-		cdb[4] = ((uint8_t *) &lba)[1];
-		cdb[5] = ((uint8_t *) &lba)[0];
-		cdb[7] = ((uint8_t *) &len)[1];
-		cdb[8] = ((uint8_t *) &len)[0];
-#endif
+		lba2cdb(cdb, &lba, &len);
 		break;
 	default:
 		iscsi_trace_error("op 0x%x not implemented\n", op);
@@ -892,25 +818,7 @@ scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
 		sg[i].iov_base = buff[i];
 		sg[i].iov_len = block_len;
 	}
-
-	/* Strongarm aligns on word boundaries.  */
-	/* So HTONL and NTOHL won't work here. */
-
-#if (BYTE_ORDER == BIG_ENDIAN)
-	cdb[2] = ((uint8_t *) &lba)[2];
-	cdb[3] = ((uint8_t *) &lba)[3];
-	cdb[4] = ((uint8_t *) &lba)[0];
-	cdb[5] = ((uint8_t *) &lba)[1];
-	cdb[7] = ((uint8_t *) &len)[0];
-	cdb[8] = ((uint8_t *) &len)[1];
-#else
-	cdb[2] = ((uint8_t *) &lba)[3];
-	cdb[3] = ((uint8_t *) &lba)[2];
-	cdb[4] = ((uint8_t *) &lba)[1];
-	cdb[5] = ((uint8_t *) &lba)[0];
-	cdb[7] = ((uint8_t *) &len)[1];
-	cdb[8] = ((uint8_t *) &len)[0];
-#endif
+	lba2cdb(cdb, &lba, &len);
 
 	gettimeofday(&t_start, 0);
 
