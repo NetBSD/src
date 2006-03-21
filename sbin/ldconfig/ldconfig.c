@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.40 2005/06/02 00:03:38 lukem Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.41 2006/03/21 21:41:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.40 2005/06/02 00:03:38 lukem Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.41 2006/03/21 21:41:00 christos Exp $");
 #endif
 
 
@@ -432,7 +432,7 @@ buildhints(void)
 			}
 			if (i == hdr.hh_nbucket) {
 				warnx("Bummer!");
-				return (-1);
+				goto out;
 			}
 			while (bp->hi_next != -1)
 				bp = &blist[bp->hi_next];
@@ -466,44 +466,48 @@ buildhints(void)
 	tempfile = concat(_PATH_LD_HINTS, ".XXXXXX", "");
 	if ((fd = mkstemp(tempfile)) == -1) {
 		warn("%s", tempfile);
-		return (-1);
+		goto out;
 	}
 
 	if (write(fd, &hdr, sizeof(struct hints_header)) !=
 	    sizeof(struct hints_header)) {
 		warn("%s", _PATH_LD_HINTS);
-		return (-1);
+		goto out;
 	}
 	if (write(fd, blist, hdr.hh_nbucket * sizeof(struct hints_bucket)) !=
 		  hdr.hh_nbucket * sizeof(struct hints_bucket)) {
 		warn("%s", _PATH_LD_HINTS);
-		return (-1);
+		goto out;
 	}
 	if (write(fd, strtab, strtab_sz) != strtab_sz) {
 		warn("%s", _PATH_LD_HINTS);
-		return (-1);
+		goto out;
 	}
 	if (fchmod(fd, 0444) == -1) {
 		warn("%s", _PATH_LD_HINTS);
-		return (-1);
+		goto out;
 	}
 	if (close(fd) != 0) {
 		warn("%s", _PATH_LD_HINTS);
-		return (-1);
+		goto out;
 	}
 
 	/* Install it */
 	if (unlink(_PATH_LD_HINTS) != 0 && errno != ENOENT) {
 		warn("%s", _PATH_LD_HINTS);
-		return (-1);
+		goto out;
 	}
 
 	if (rename(tempfile, _PATH_LD_HINTS) != 0) {
 		warn("%s", _PATH_LD_HINTS);
-		return (-1);
+		goto out;
 	}
 
-	return (0);
+	return 0;
+out:
+	free(blist);
+	free(strtab);
+	return -1;
 }
 
 static int
