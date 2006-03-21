@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fdesc.c,v 1.16 2005/02/05 14:53:03 xtraeme Exp $	*/
+/*	$NetBSD: mount_fdesc.c,v 1.17 2006/03/21 21:11:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.3 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_fdesc.c,v 1.16 2005/02/05 14:53:03 xtraeme Exp $");
+__RCSID("$NetBSD: mount_fdesc.c,v 1.17 2006/03/21 21:11:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,12 +114,16 @@ mount_fdesc(int argc, char *argv[])
 {
 	int ch, mntflags;
 	char canon_dir[MAXPATHLEN];
+	mntoptparse_t mp;
 
 	mntflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			if (mp == NULL)
+				err(1, "getmntopts");
+			freemntopts(mp);
 			break;
 		case '?':
 		default:
