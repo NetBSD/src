@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.79 2006/03/17 15:53:46 rumble Exp $	*/
+/*	$NetBSD: mount.c,v 1.80 2006/03/21 21:37:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.79 2006/03/17 15:53:46 rumble Exp $");
+__RCSID("$NetBSD: mount.c,v 1.80 2006/03/21 21:37:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -451,6 +451,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		warn("vfork");
 		if (optbuf)
 			free(optbuf);
+		free(argv);
 		return (1);
 
 	case 0:					/* Child. */
@@ -482,6 +483,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	default:				/* Parent. */
 		if (optbuf)
 			free(optbuf);
+		free(argv);
 
 		if (buf || (options != NULL &&
 		    strstr(options, "getargs") != NULL)) {
