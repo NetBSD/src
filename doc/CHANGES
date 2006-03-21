@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.597 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.598 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -224,3 +224,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		OpenBSD via Joerg Sonnenberger [bouyer 20060306]
 	acpi(4): Import ACPI-CA 20060217 [kochi 20060312]
 	krb4: Removed [christos 20060319]
+	evbmips: Add support for Atheros AR5312 SoC. [gdamore 20060321]
