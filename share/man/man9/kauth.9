@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.18 2006/03/16 20:05:50 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.19 2006/03/21 09:46:14 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 2006
+.Dd March 21, 2006
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ Describes a scope.
 .It kauth_listener_t
 Describes a listener.
 .El
-.Sh TERMINOLOGY
+.Ss Terminology
 .Nm
 operates in various
 .Dq scopes ,
@@ -87,14 +87,14 @@ For an operation to be allowed, all listeners must not return any deny
 or defer decisions.
 .Pp
 Scopes manage listeners that operate in the same aspect of the system.
-.Sh KERNEL PROGRAMMING INTERFACE
+.Ss Kernel Programming Interface
 .Nm
 exports a KPI that allows developers both of
 .Nx
 and third-party products to authorize requests, access and modify credentials,
 create and remove scopes and listeners, and perform other misc. operations on
 credentials.
-.Sh AUTHORIZATION REQUESTS
+.Ss Authorization Requests
 .Nm
 provides a single authorization request routine, which all authorization
 requests go through.
@@ -117,7 +117,7 @@ indicates failure -- the operation is denied.
 Each scope has its own authorization wrapper, to make it easy to call from various
 places by eliminating the need to specify the scope and/or cast values.
 The authorization wrappers are detailed in each scope's section.
-.Sh GENERIC SCOPE
+.Ss Generic Scope
 The generic scope,
 .Dq org.netbsd.kauth.generic ,
 manages generic authorization requests in the kernel.
@@ -142,7 +142,7 @@ to accounting flags, and the
 .Dq ACU
 flag is set.
 .El
-.Sh PROCESS SCOPE
+.Ss Process Scope
 The process scope,
 .Dq org.netbsd.kauth.process ,
 manages authorization requests related to processes in the system.
@@ -183,7 +183,7 @@ credentials.
 .Ar arg1
 contains the credentials of the process looked at.
 .El
-.Sh CREDENTIAL ACCESSORS AND MUTATORS
+.Ss Credentials Accessors and Mutators
 .Nm
 has a variety of accessor and mutator routines to handle
 .Ft kauth_cred_t
@@ -300,7 +300,7 @@ The number of groups in
 .Ar cred
 will be returned.
 .El
-.Sh CREDENTIAL INHERITANCE REFERENCE COUNTING
+.Ss Credentials Inheritance and Reference Counting
 .Nm
 provides a KPI for handling a
 .Ft kauth_cred_t
@@ -333,7 +333,7 @@ If the reference count dropped to zero, the memory used by
 .Ar cred
 will be returned back to the memory pool.
 .El
-.Sh CREDENTIALS MEMORY MANAGEMENT
+.Ss Credentials Memory Management
 Data-structures for credentials, listeners, and scopes are allocated from
 memory pools managed by the
 .Xr pool 9
@@ -362,7 +362,7 @@ kernels will panic if you pass
 .Ar cred
 with a locked lock!
 .El
-.Sh CONVERSION ROUTINES
+.Ss Conversion Routines
 Sometimes it might be necessary to convert a
 .Ft kauth_cred_t
 to a predecessing type, such as
@@ -425,7 +425,7 @@ with the userland credentials in
 Common values that will be compared are effective user- and group-ids, and
 the group list.
 .El
-.Sh MISC. ROUTINES
+.Ss Misc. Routines
 Other routines provided by
 .Nm
 are:
@@ -466,7 +466,7 @@ will be done.
 .It Ft kauth_cred_t Fn kauth_cred_get "void"
 Return the credentials associated with the current process.
 .El
-.Sh SCOPE MANAGEMENT
+.Ss Scope Management
 .Nm
 provides routines to manage the creation and deletion of scopes on the
 system.
@@ -495,7 +495,7 @@ Deregister
 .Ar scope
 from the scopes available on the system.
 .El
-.Sh LISTENER MANAGEMENT
+.Ss Listener Management
 Listeners in
 .Nm
 are authorization callbacks that are called during an authorization
