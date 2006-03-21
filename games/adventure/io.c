@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.18 2006/03/18 23:33:38 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.19 2006/03/21 17:14:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.18 2006/03/18 23:33:38 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.19 2006/03/21 17:14:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -361,9 +361,8 @@ rtrav(void)
 		if (locc == -1)
 			return;
 		if (locc != oldloc) {	/* getting a new entry         */
-			t = travel[locc] = (struct travlist *) 
-				malloc(sizeof(struct travlist));
-			if ( t == NULL)
+			t = travel[locc] = calloc(1, sizeof(*t));
+			if (t == NULL)
 				err(1, NULL);
 			/* printf("New travel list for %d\n",locc);        */
 			entries = 0;
@@ -384,8 +383,10 @@ rtrav(void)
 			m = atoi(buf);
 		}
 		while (breakch != LF) {	/* only do one line at a time   */
-			if (t && entries++) {
-				t->next = malloc(sizeof(struct travlist));
+			if (t == NULL)
+				abort();
+			if (entries++) {
+				t->next = calloc(1, sizeof(*t));
 				if (t->next == NULL)
 					err(1, NULL);
 				t = t->next;
