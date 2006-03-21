@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.34 2006/03/17 17:04:22 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.35 2006/03/21 22:47:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.34 2006/03/17 17:04:22 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.35 2006/03/21 22:47:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,10 +235,10 @@ int
 getq(struct queue **namelist[])
 {
 	struct dirent *d;
-	struct queue *q, **queue, **nqueue;
+	struct queue *q, **queue = NULL, **nqueue;
 	struct stat stbuf;
 	DIR *dirp;
-	u_int nitems, arraysz;
+	u_int nitems = 0, arraysz;
 
 	seteuid(euid);
 	dirp = opendir(SD);
@@ -253,11 +253,10 @@ getq(struct queue **namelist[])
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
 	arraysz = (int)(stbuf.st_size / 24);
-	queue = (struct queue **)malloc(arraysz * sizeof(struct queue *));
+	queue = calloc(arraysz, sizeof(struct queue *));
 	if (queue == NULL)
 		goto errdone;
 
-	nitems = 0;
 	while ((d = readdir(dirp)) != NULL) {
 		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
 			continue;	/* daemon control files only */
@@ -279,10 +278,10 @@ getq(struct queue **namelist[])
 		if (++nitems > arraysz) {
 			nqueue = (struct queue **)realloc(queue,
 				arraysz * 2 * sizeof(struct queue *));
-			if (nqueue == NULL) {
-				free(queue);
+			if (nqueue == NULL)
 				goto errdone;
-			}
+			(void)memset(&nqueue[arraysz], 0,
+			    arraysz * sizeof(struct queueue *));
 			queue = nqueue;
 			arraysz *= 2;
 		}
@@ -295,8 +294,21 @@ getq(struct queue **namelist[])
 	return(nitems);
 
 errdone:
+	freeq(queue, nitems);
 	closedir(dirp);
 	return(-1);
+}
+
+void
+freeq(struct queue **namelist, u_int nitems)
+{
+	u_int i;
+	if (namelist == NULL)
+		return;
+	for (i = 0; i < nitems; i++)
+		if (namelist[i])
+			free(namelist[i]);
+	free(namelist);
 }
 
 /*
