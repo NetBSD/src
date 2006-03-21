@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 2006/02/26 10:25:53 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.25 2006/03/21 02:06:31 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,7 @@
 void get_labelname(void);
 
 void
-get_labelname()
+get_labelname(void)
 {
 
 	/* Disk name */
@@ -68,7 +68,7 @@ get_labelname()
 }
 
 int
-md_get_info()
+md_get_info(void)
 {
 	struct disklabel disklabel;
 	int fd;
@@ -113,8 +113,9 @@ md_get_info()
  * hook called before writing new disklabel.
  */
 int
-md_pre_disklabel()
+md_pre_disklabel(void)
 {
+
 	return 0;
 }
 
@@ -124,6 +125,7 @@ md_pre_disklabel()
 int
 md_post_disklabel(void)
 {
+
 	return 0;
 }
 
@@ -137,7 +139,7 @@ md_post_disklabel(void)
  * On the news68k, we use this opportunity to install the boot blocks.
  */
 int
-md_post_newfs()
+md_post_newfs(void)
 {
 	const char *bootfile = "/boot";
 
@@ -153,16 +155,17 @@ md_post_newfs()
  * some ports use this to copy the MD filesystem, we do not.
  */
 int
-md_copy_filesystem()
+md_copy_filesystem(void)
 {
+
 	return 0;
 }
 
 int
-md_make_bsd_partitions()
+md_make_bsd_partitions(void)
 {
 
-	return(make_bsd_partitions());
+	return make_bsd_partitions();
 }
 
 /*
@@ -177,7 +180,7 @@ md_check_partitions(void)
 
 /* Upgrade support */
 int
-md_update()
+md_update(void)
 {
 
 	move_aout_libs();
@@ -192,7 +195,7 @@ md_update()
 }
 
 void
-md_cleanup_install()
+md_cleanup_install(void)
 {
 
 	enable_rc_conf();
@@ -202,12 +205,13 @@ md_cleanup_install()
 }
 
 int
-md_pre_update()
+md_pre_update(void)
 {
+
 	return 1;
 }
 
 void
-md_init()
+md_init(void)
 {
 }
