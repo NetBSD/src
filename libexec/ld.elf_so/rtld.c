@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.109 2006/01/12 22:40:17 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.110 2006/03/21 17:48:10 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.109 2006/01/12 22:40:17 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.110 2006/03/21 17:48:10 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -355,9 +355,9 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
          */
 	if (pAUX_execfd != NULL) {	/* Load the main program. */
 		int             fd = pAUX_execfd->a_v;
+		const char *obj_name = argv[0] ? argv[0] : "main program";
 		dbg(("loading main program"));
-		_rtld_objmain = _rtld_map_object(xstrdup(argv[0] ? argv[0] :
-		    "main program"), fd, NULL);
+		_rtld_objmain = _rtld_map_object(obj_name, fd, NULL);
 		close(fd);
 		if (_rtld_objmain == NULL)
 			_rtld_die();

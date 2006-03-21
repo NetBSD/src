@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.20 2006/03/18 02:34:30 matt Exp $	 */
+/*	$NetBSD: search.c,v 1.21 2006/03/21 17:48:10 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: search.c,v 1.20 2006/03/18 02:34:30 matt Exp $");
+__RCSID("$NetBSD: search.c,v 1.21 2006/03/21 17:48:10 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -69,12 +69,14 @@ static Obj_Entry *
 _rtld_search_library_path(const char *name, size_t namelen,
     const char *dir, size_t dirlen, int mode)
 {
-	char *pathname;
+	char pathname[MAXPATHLEN];
 	size_t pathnamelen;
 	Obj_Entry *obj;
 	Search_Path *sp;
 
 	pathnamelen = dirlen + 1 + namelen;
+	if (pathnamelen >= sizeof(pathname))
+		return NULL;
 
 	for (sp = _rtld_invalid_paths; sp != NULL; sp = sp->sp_next) {
 		if (sp->sp_pathlen == pathnamelen &&
@@ -84,7 +86,6 @@ _rtld_search_library_path(const char *name, size_t namelen,
 		}
 	}
 
-	pathname = xmalloc(pathnamelen + 1);
 	(void)strncpy(pathname, dir, dirlen);
 	pathname[dirlen] = '/';
 	strcpy(pathname + dirlen + 1, name);
@@ -94,18 +95,9 @@ _rtld_search_library_path(const char *name, size_t namelen,
 	if (obj == NULL) {
 		Search_Path *path;
 
-		/*
-		 * Since pathname is freed by _rtld_load_object on error,
-		 * recreate it.
-		 */
-		pathname = xmalloc(pathnamelen + 1);
-		(void)strncpy(pathname, dir, dirlen);
-		pathname[dirlen] = '/';
-		strcpy(pathname + dirlen + 1, name);
-
 		path = NEW(Search_Path);
 		path->sp_pathlen = pathnamelen;
-		path->sp_path = pathname;
+		path->sp_path = xstrdup(pathname);
 		path->sp_next = _rtld_invalid_paths;
 		_rtld_invalid_paths = path;
 	}
@@ -125,7 +117,7 @@ _rtld_load_library(const char *name, const Obj_Entry *refobj, int mode)
 {
 	char tmperror[512], *tmperrorp;
 	Search_Path *sp;
-	char *pathname;
+	const char *pathname;
 	int namelen;
 	Obj_Entry *obj;
 
@@ -136,7 +128,7 @@ _rtld_load_library(const char *name, const Obj_Entry *refobj, int mode)
 			    name);
 			return NULL;
 		}
-		pathname = xstrdup(name);
+		pathname = name;
 		goto found;
 	}
 	dbg((" Searching for \"%s\" (%p)", name, refobj));
@@ -183,8 +175,5 @@ pathfound:
 	return obj;
 
 found:
-	/*
-	 * _rtld_load_object will free the pathname.
-	 */
 	return _rtld_load_object(pathname, mode);
 }
