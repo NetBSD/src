@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.8 2006/03/21 21:03:14 agc Exp $ */
+/* $NetBSD: disk.c,v 1.9 2006/03/21 22:56:55 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -302,6 +302,83 @@ de_lseek(disc_de_t *dp, off_t off, int whence)
 		return device_lseek(dp->u.dp, off, whence);
 	case DE_EXTENT:
 		return extent_lseek(dp->u.xp, off, whence);
+	default:
+		return -1;
+	}
+}
+
+/* fsync_range on the extent */
+static int
+extent_fsync_range(disc_extent_t *xp, int how, off_t from, off_t len)
+{
+#ifdef HAVE_FSYNC_RANGE
+	return fsync_range(xp->fd, how, xp->sacred + from, len);
+#else
+	return fsync(xp->fd);
+#endif
+}
+
+/* (recursively) lseek on the device's devices */
+static int
+device_fsync_range(disc_device_t *dp, int how, off_t from, off_t len)
+{
+	uint64_t	suboff;
+	int		ret;
+	int		d;
+
+	ret = -1;
+	switch(dp->raid) {
+	case 0:
+		if (raid0_getoff(dp, from, &d, &suboff)) {
+			switch (dp->xv[d].type) {
+			case DE_DEVICE:
+				if ((ret = device_fsync_range(dp->xv[d].u.dp, how, suboff, len)) < 0) {
+					return -1;
+				}
+				break;
+			case DE_EXTENT:
+				if ((ret = extent_fsync_range(dp->xv[d].u.xp, how, suboff, len)) < 0) {
+					return -1;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		break;
+	case 1:
+		for (d = 0 ; d < dp->c ; d++) {
+			switch (dp->xv[d].type) {
+			case DE_DEVICE:
+				if ((ret = device_fsync_range(dp->xv[d].u.dp, how, from, len)) < 0) {
+					return -1;
+				}
+				break;
+			case DE_EXTENT:
+				if ((ret = extent_fsync_range(dp->xv[d].u.xp, how, from, len)) < 0) {
+					return -1;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return dp->off = ret;
+}
+
+/* and for the undecided... */
+static int
+de_fsync_range(disc_de_t *dp, int how, off_t from, off_t len)
+{
+	switch(dp->type) {
+	case DE_DEVICE:
+		return device_fsync_range(dp->u.dp, how, from, len);
+	case DE_EXTENT:
+		return extent_fsync_range(dp->u.xp, how, from, len);
 	default:
 		return -1;
 	}
@@ -864,9 +941,9 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		args->status = 0;
 		break;
 
-	case LOAD_UNLOAD:
+	case STOP_START_UNIT:
 
-		iscsi_trace(TRACE_SCSI_CMD, "LOAD_UNLOAD\n");
+		iscsi_trace(TRACE_SCSI_CMD, "STOP_START_UNIT\n");
 		args->status = 0;
 		args->length = 0;
 		break;
@@ -963,9 +1040,16 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case SYNC_CACHE:
 
-		iscsi_trace(TRACE_SCSI_CMD, "SYNC_CACHE\n");
-		args->status = 0;
-		args->length = 0;
+		cdb2lba(&lba, &len, cdb);
+
+		iscsi_trace(TRACE_SCSI_CMD, "SYNC_CACHE (lba %u, len %u blocks)\n", lba, len);
+		if (de_fsync_range(&disks.v[sess->d].tv->v[lun].de, FDATASYNC, lba, len * disks.v[sess->d].blocklen) < 0) {
+			iscsi_trace_error("disk_read() failed\n");
+			args->status = 0x01;
+		} else {
+			args->status = 0;
+			args->length = 0;
+		}
 		break;
 
 	case LOG_SENSE:
@@ -975,9 +1059,9 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		args->length = 0;
 		break;
 
-	case UNKNOWN_5E:
+	case PERSISTENT_RESERVE_IN:
 
-		iscsi_trace(TRACE_SCSI_CMD, "UNKNOWN_5E\n");
+		iscsi_trace(TRACE_SCSI_CMD, "PERSISTENT_RESERVE_IN\n");
 		args->status = 0;
 		args->length = 0;
 		break;
@@ -1043,7 +1127,7 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 		break;
 	case ISCSI_FS_MMAP:
 		extra = byte_offset % 4096;
-		if ((ptr = de_mmap(0, (size_t) (num_bytes + extra), PROT_WRITE, MAP_SHARED, &disks.v[sess->d].tv->v[sess->d].de, (off_t)(byte_offset - extra))) == NULL) {
+		if ((ptr = de_mmap(0, (size_t) (num_bytes + extra), PROT_WRITE, MAP_SHARED, &disks.v[sess->d].tv->v[lun].de, (off_t)(byte_offset - extra))) == NULL) {
 			iscsi_trace_error("mmap() failed\n");
 			return -1;
 		} else {
@@ -1061,22 +1145,22 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 	/* Finish up write */
 	switch(disks.v[sess->d].type) {
 	case ISCSI_FS:
-		if (de_lseek(&disks.v[sess->d].tv->v[sess->d].de, (off_t) byte_offset, SEEK_SET) == -1) {
+		if (de_lseek(&disks.v[sess->d].tv->v[lun].de, (off_t) byte_offset, SEEK_SET) == -1) {
 			iscsi_trace_error("lseek() to offset %" PRIu64 " failed\n", byte_offset);
 			return -1;
 		}
-		if (!target_writable(&disks.v[sess->d].tv->v[sess->d])) {
-			iscsi_trace_error("write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "[READONLY TARGET]\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[0].de));
+		if (!target_writable(&disks.v[sess->d].tv->v[lun])) {
+			iscsi_trace_error("write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "[READONLY TARGET]\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[lun].de));
 			return -1;
 		}
-		if (de_write(&disks.v[sess->d].tv->v[sess->d].de, ptr, (unsigned) num_bytes) != num_bytes) {
-			iscsi_trace_error("write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[0].de));
+		if (de_write(&disks.v[sess->d].tv->v[lun].de, ptr, (unsigned) num_bytes) != num_bytes) {
+			iscsi_trace_error("write() of %" PRIu64 " bytes failed at offset %" PRIu64 ", size %" PRIu64 "\n", num_bytes, byte_offset, de_getsize(&disks.v[sess->d].tv->v[lun].de));
 			return -1;
 		}
 		break;
 	case ISCSI_FS_MMAP:
 		ptr -= (uint32_t) extra;
-		if (de_munmap(&disks.v[sess->d].tv->v[sess->d].de, ptr, (size_t)(num_bytes + extra)) != 0) {
+		if (de_munmap(&disks.v[sess->d].tv->v[lun].de, ptr, (size_t)(num_bytes + extra)) != 0) {
 			iscsi_trace_error("munmap() failed\n");
 			return -1;
 		}
@@ -1127,11 +1211,11 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 		ptr = disks.v[sess->d].buffer[lun];
 		n = 0;
 		do {
-			if (de_lseek(&disks.v[sess->d].tv->v[sess->d].de, (off_t)(n + byte_offset), SEEK_SET) == -1) {
+			if (de_lseek(&disks.v[sess->d].tv->v[lun].de, (off_t)(n + byte_offset), SEEK_SET) == -1) {
 				iscsi_trace_error("lseek() failed\n");
 				return -1;
 			}
-			rc = de_read(&disks.v[sess->d].tv->v[sess->d].de, ptr + n, (size_t)(num_bytes - n));
+			rc = de_read(&disks.v[sess->d].tv->v[lun].de, ptr + n, (size_t)(num_bytes - n));
 			if (rc <= 0) {
 				iscsi_trace_error("read() failed: rc %i errno %i\n", rc, errno);
 				return -1;
@@ -1144,7 +1228,7 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 		break;
 	case ISCSI_FS_MMAP:
 		if (last_ptr[lun]) {
-			if (de_munmap(&disks.v[sess->d].tv->v[sess->d].de, last_ptr[lun], (unsigned)(last_extra[lun] + last_num_bytes[lun])) != 0) {
+			if (de_munmap(&disks.v[sess->d].tv->v[lun].de, last_ptr[lun], (unsigned)(last_extra[lun] + last_num_bytes[lun])) != 0) {
 				iscsi_trace_error("munmap() failed\n");
 				return -1;
 			}
@@ -1153,7 +1237,7 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 			last_extra[lun] = 0;
 		}
 		extra = byte_offset % 4096;
-		if ((ptr = de_mmap(0, (size_t)(num_bytes + extra), PROT_READ, MAP_SHARED, &disks.v[sess->d].tv->v[0].de, (off_t)(byte_offset - extra))) == NULL) {
+		if ((ptr = de_mmap(0, (size_t)(num_bytes + extra), PROT_READ, MAP_SHARED, &disks.v[sess->d].tv->v[lun].de, (off_t)(byte_offset - extra))) == NULL) {
 			iscsi_trace_error("mmap() failed\n");
 			return -1;
 		}
