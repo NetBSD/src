@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.80 2006/03/21 23:55:56 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.81 2006/03/21 23:56:47 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.80 2006/03/21 23:55:56 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.81 2006/03/21 23:56:47 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -753,7 +753,7 @@ explore_numeric(const struct addrinfo *pai, const char *hostname,
 					 */
 					GET_CANONNAME(cur->ai_next, canonname);
 				}
-				while (cur && cur->ai_next)
+				while (cur->ai_next)
 					cur = cur->ai_next;
 			} else
 				ERR(EAI_FAMILY);	/*xxx*/
