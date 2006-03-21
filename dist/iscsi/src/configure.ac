@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.57)
-AC_INIT([netbsd-iscsi],[20060314],[Alistair Crooks <agc@NetBSD.org>])
+AC_INIT([netbsd-iscsi],[20060321],[Alistair Crooks <agc@NetBSD.org>])
 AC_CONFIG_SRCDIR([iscsi.c])
 AC_CONFIG_HEADER(../include/config.h)
 
@@ -29,7 +29,7 @@ AC_DEFINE_UNQUOTED(HAVE_LONG_LONG, $ac_cv_type_long_long)
 AC_DEFINE_UNQUOTED(HAVE_UNSIGNED_LONG_LONG, $ac_cv_type_unsigned_long_long)
 
 dnl Check for functionality
-AC_CHECK_FUNCS(asprintf asnprintf bswap64 snprintf strlcpy strtoll syslog daemon vasprintf vasnprintf vsnprintf)
+AC_CHECK_FUNCS(asprintf asnprintf bswap64 daemon fsync_range snprintf strlcpy strtoll syslog vasprintf vasnprintf vsnprintf)
 
 dnl that's it for now...
 AC_OUTPUT(Makefile)
