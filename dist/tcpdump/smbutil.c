@@ -1,4 +1,4 @@
-/*	$NetBSD: smbutil.c,v 1.6 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: smbutil.c,v 1.7 2006/03/21 20:27:59 christos Exp $	*/
 
 /*
  * Copyright (C) Andrew Tridgell 1995-1999
@@ -18,7 +18,7 @@
 static const char rcsid[] _U_ =
      "@(#) Header: /tcpdump/master/tcpdump/smbutil.c,v 1.26.2.2 2003/11/16 08:51:56 guy Exp";
 #else
-__RCSID("$NetBSD: smbutil.c,v 1.6 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: smbutil.c,v 1.7 2006/03/21 20:27:59 christos Exp $");
 #endif
 #endif
 
@@ -606,6 +606,9 @@ smb_fdata1(const u_char *buf, const char *fmt, const u_char *maxbuf)
 	    case 3:
 		t = interpret_long_date(buf);
 		buf += 8;
+		break;
+	    default:
+		t = 0;
 		break;
 	    }
 	    if (t != 0) {
