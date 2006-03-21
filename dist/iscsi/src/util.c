@@ -1088,3 +1088,50 @@ GenRandomData(uint8_t *data, uint32_t length)
 		*data++ = n;
 	}
 }
+
+
+void
+cdb2lba(uint32_t *lba, uint16_t *len, uint8_t *cdb)
+{
+	/* Some platforms (like strongarm) aligns on */
+	/* word boundaries.  So HTONL and NTOHL won't */
+	/* work here. */
+#if (BYTE_ORDER == BIG_ENDIAN)
+	((uint8_t *) (void *) lba)[0] = cdb[2];
+	((uint8_t *) (void *) lba)[1] = cdb[3];
+	((uint8_t *) (void *) lba)[2] = cdb[4];
+	((uint8_t *) (void *) lba)[3] = cdb[5];
+	((uint8_t *) (void *) len)[0] = cdb[7];
+	((uint8_t *) (void *) len)[1] = cdb[8];
+#else
+	((uint8_t *) (void *) lba)[0] = cdb[5];
+	((uint8_t *) (void *) lba)[1] = cdb[4];
+	((uint8_t *) (void *) lba)[2] = cdb[3];
+	((uint8_t *) (void *) lba)[3] = cdb[2];
+	((uint8_t *) (void *) len)[0] = cdb[8];
+	((uint8_t *) (void *) len)[1] = cdb[7];
+#endif
+}
+
+void
+lba2cdb(uint8_t *cdb, uint32_t *lba, uint16_t *len)
+{
+	/* Some platforms (like strongarm) aligns on */
+	/* word boundaries.  So HTONL and NTOHL won't */
+	/* work here. */
+#if (BYTE_ORDER == BIG_ENDIAN)
+	cdb[2] = ((uint8_t *) lba)[2];
+	cdb[3] = ((uint8_t *) lba)[3];
+	cdb[4] = ((uint8_t *) lba)[0];
+	cdb[5] = ((uint8_t *) lba)[1];
+	cdb[7] = ((uint8_t *) len)[0];
+	cdb[8] = ((uint8_t *) len)[1];
+#else
+	cdb[2] = ((uint8_t *) lba)[3];
+	cdb[3] = ((uint8_t *) lba)[2];
+	cdb[4] = ((uint8_t *) lba)[1];
+	cdb[5] = ((uint8_t *) lba)[0];
+	cdb[7] = ((uint8_t *) len)[1];
+	cdb[8] = ((uint8_t *) len)[0];
+#endif
+}
