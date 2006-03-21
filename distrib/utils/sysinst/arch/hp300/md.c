@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2006/03/21 01:32:19 tsutsui Exp $ */
+/*	$NetBSD: md.c,v 1.21 2006/03/21 01:33:49 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -182,7 +182,7 @@ md_check_partitions(void)
 	/* hp300 partitions must be in order of the range. */
 	int part, start = 0, last = PART_A-1;
 
-	for (part = PART_A; part < 8; part++) {
+	for (part = PART_A; part < MAXPARTITIONS; part++) {
 		if (part == PART_C)
 			continue;
 		if (last >= PART_A && bsdlabel[part].pi_size > 0) {
