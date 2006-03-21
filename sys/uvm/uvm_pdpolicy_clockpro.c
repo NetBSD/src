@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.7 2006/03/18 11:19:22 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.8 2006/03/21 11:05:22 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.7 2006/03/18 11:19:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.8 2006/03/21 11:05:22 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -170,6 +170,8 @@ struct clockpro_state {
 
 	int s_newqlenmax;
 	pageq_t s_q[CLOCKPRO_NQUEUE];
+
+	struct uvm_pctparam s_coldtargetpct;
 };
 
 static pageq_t *
@@ -571,6 +573,7 @@ clockpro_init(void)
 	}
 	s->s_newqlenmax = 1;
 	s->s_coldtarget = 1;
+	uvm_pctparam_init(&s->s_coldtargetpct, CLOCKPRO_COLDPCT, NULL);
 }
 
 static void
@@ -591,7 +594,7 @@ clockpro_tune(void)
 	}
 	coldtarget += coldadj;
 #else /* defined(ADAPTIVE) */
-	coldtarget = s->s_npages * CLOCKPRO_COLDPCT / 100;
+	coldtarget = UVM_PCTPARAM_APPLY(&s->s_coldtargetpct, s->s_npages);
 	if (coldtarget < 1) {
 		coldtarget = 1;
 	}
@@ -1221,12 +1224,22 @@ uvmpdpol_tune(void)
 	clockpro_tune();
 }
 
+#if !defined(PDSIM)
+
+#include <sys/sysctl.h>	/* XXX SYSCTL_DESCR */
+
 void
 uvmpdpol_sysctlsetup(void)
 {
+#if !defined(ADAPTIVE)
+	struct clockpro_state * const s = &clockpro;
 
-	/* nothing */
+	uvm_pctparam_createsysctlnode(&s->s_coldtargetpct, "coldtargetpct",
+	    SYSCTL_DESCR("Percentage cold target queue of the entire queue"));
+#endif /* !defined(ADAPTIVE) */
 }
+
+#endif /* !defined(PDSIM) */
 
 #if defined(DDB)
 
