@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.107 2006/03/22 18:01:11 joerg Exp $ */
+/* $NetBSD: user.c,v 1.108 2006/03/22 18:02:46 joerg Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.107 2006/03/22 18:01:11 joerg Exp $");
+__RCSID("$NetBSD: user.c,v 1.108 2006/03/22 18:02:46 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1377,7 +1377,6 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 	size_t		colonc;
 	size_t		loginc;
 	size_t		len;
-	size_t		cc;
 	FILE	       *master;
 	char		newdir[MaxFileNameLen];
 	char	        buf[MaxEntryLen];
@@ -1637,7 +1636,7 @@ moduser(char *login_name, char *newlogin, user_t *up, int allow_samba)
 			}
 		} else {
 			len = strlen(buf);
-			if ((cc = write(ptmpfd, buf, len)) != len) {
+			if (write(ptmpfd, buf, len) != len) {
 				int serrno = errno;
 				(void)close(masterfd);
 				(void)close(ptmpfd);
