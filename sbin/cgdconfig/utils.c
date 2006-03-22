@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.11 2006/03/22 02:21:20 christos Exp $ */
+/* $NetBSD: utils.c,v 1.12 2006/03/22 15:45:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.11 2006/03/22 02:21:20 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.12 2006/03/22 15:45:16 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -386,7 +386,7 @@ bits_decode(const string_t *in)
 	if (len == -1) {
 		fprintf(stderr, "bits_decode: mangled base64 stream\n");
 		fprintf(stderr, "  %s\n", in->text);
-		free(bits);
+		free(tmp);
 		return NULL;
 	}
 
@@ -395,7 +395,7 @@ bits_decode(const string_t *in)
 		fprintf(stderr, "bits_decode: encoded bits claim to be "
 		    "longer than they are (nbits=%u, stream len=%u bytes)\n",
 		    (unsigned)nbits, (unsigned)len);
-		free(bits);
+		free(tmp);
 		return NULL;
 	}
 
