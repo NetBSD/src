@@ -1,4 +1,4 @@
-/*	$NetBSD: odds.c,v 1.6 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: odds.c,v 1.7 2006/03/22 04:22:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)odds.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: odds.c,v 1.6 2005/07/01 01:12:39 jmc Exp $");
+__RCSID("$NetBSD: odds.c,v 1.7 2006/03/22 04:22:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ canhit(int i, int c)
 		if (board[j] * a > 0) {
 			diff = abs(j - i);
 			addon = place + ((board[j] * a > 2 || j == b) ? 5 : 0);
-			if ((j == b && menstuck == 1) &&
+			if ((j == b && menstuck == 1) ||
 			    (j != b && menstuck == 0))
 				for (k = 1; k < diff; k++)
 					if (k < 7 && diff - k < 7 &&
