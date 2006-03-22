@@ -1,4 +1,4 @@
-/*	$NetBSD: erand48.c,v 1.8 2005/06/12 05:21:28 lukem Exp $	*/
+/*	$NetBSD: erand48.c,v 1.9 2006/03/22 20:52:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -15,12 +15,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: erand48.c,v 1.8 2005/06/12 05:21:28 lukem Exp $");
+__RCSID("$NetBSD: erand48.c,v 1.9 2006/03/22 20:52:16 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <assert.h>
+#include <math.h>
 
 #include "rand48.h"
 
