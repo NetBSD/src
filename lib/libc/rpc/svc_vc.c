@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.17 2006/03/22 00:02:00 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.18 2006/03/22 12:51:32 drochner Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.17 2006/03/22 00:02:00 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.18 2006/03/22 12:51:32 drochner Exp $");
 #endif
 #endif
 
@@ -94,9 +94,9 @@ static bool_t svc_vc_freeargs __P((SVCXPRT *, xdrproc_t, caddr_t));
 static bool_t svc_vc_reply __P((SVCXPRT *, struct rpc_msg *));
 static void svc_vc_rendezvous_ops __P((SVCXPRT *));
 static void svc_vc_ops __P((SVCXPRT *));
-static bool_t svc_vc_control __P((SVCXPRT *xprt, const u_int rq, void *in));
-static bool_t svc_vc_rendezvous_control __P((SVCXPRT *xprt, const u_int rq,
-					     void *in));
+static bool_t svc_vc_control __P((SVCXPRT *, const u_int, void *));
+static bool_t svc_vc_rendezvous_control __P((SVCXPRT *, const u_int,
+					     void *));
 
 struct cf_rendezvous { /* kept in xprt->xp_p1 for rendezvouser */
 	u_int sendsize;
@@ -151,7 +151,7 @@ svc_vc_create(fd, sendsize, recvsize)
 	r = mem_alloc(sizeof(*r));
 	if (r == NULL) {
 		warnx("svc_vc_create: out of memory");
-		goto cleanup_svc_vc_create;
+		return NULL;
 	}
 	r->sendsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)sendsize);
 	r->recvsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)recvsize);
