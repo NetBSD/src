@@ -1,4 +1,4 @@
-/*	$NetBSD: print-smb.c,v 1.5 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-smb.c,v 1.6 2006/03/22 04:34:49 christos Exp $	*/
 
 /*
  * Copyright (C) Andrew Tridgell 1995-1999
@@ -18,7 +18,7 @@
 static const char rcsid[] _U_ =
      "@(#) Header: /tcpdump/master/tcpdump/print-smb.c,v 1.27.2.2 2003/11/16 08:51:45 guy Exp";
 #else
-__RCSID("$NetBSD: print-smb.c,v 1.5 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-smb.c,v 1.6 2006/03/22 04:34:49 christos Exp $");
 #endif
 #endif
 
@@ -1292,8 +1292,7 @@ ipx_netbios_print(const u_char *data, u_int length)
 	    break;
 	if (memcmp(&data[i], "\377SMB", 4) == 0) {
 	    smb_fdata(data, "\n>>> IPX transport ", &data[i]);
-	    if (data != NULL)
-		print_smb(&data[i], maxbuf);
+	    print_smb(&data[i], maxbuf);
 	    printf("\n");
 	    fflush(stdout);
 	    break;
