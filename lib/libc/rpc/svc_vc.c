@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.16 2006/03/22 00:00:16 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.17 2006/03/22 00:02:00 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.16 2006/03/22 00:00:16 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.17 2006/03/22 00:02:00 christos Exp $");
 #endif
 #endif
 
@@ -145,13 +145,14 @@ svc_vc_create(fd, sendsize, recvsize)
 	socklen_t slen;
 	int one = 1;
 
+	if (!__rpc_fd2sockinfo(fd, &si))
+		return NULL;
+
 	r = mem_alloc(sizeof(*r));
 	if (r == NULL) {
 		warnx("svc_vc_create: out of memory");
 		goto cleanup_svc_vc_create;
 	}
-	if (!__rpc_fd2sockinfo(fd, &si))
-		return NULL;
 	r->sendsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)sendsize);
 	r->recvsize = __rpc_get_t_size(si.si_af, si.si_proto, (int)recvsize);
 	r->maxrec = __svc_maxrec;
