@@ -1,4 +1,4 @@
-/*	$NetBSD: supcparse.c,v 1.12 2002/07/10 23:55:06 wiz Exp $	*/
+/*	$NetBSD: supcparse.c,v 1.13 2006/03/22 16:54:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -257,8 +257,10 @@ putwhen(char *fname, time_t tstamp)
 	FILE *fp;
 	if ((fp = fopen(fname, "w")) == NULL)
 		return 0;
-	if (fprintf(fp, "%lu\n", (u_long) tstamp) < 0)
+	if (fprintf(fp, "%lu\n", (u_long) tstamp) < 0) {
+		(void) fclose(fp);
 		return 0;
+	}
 	if (fclose(fp) != 0)
 		return 0;
 	return 1;
