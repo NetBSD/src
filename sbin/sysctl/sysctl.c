@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.111 2006/02/08 18:13:56 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.112 2006/03/22 02:25:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.111 2006/02/08 18:13:56 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.112 2006/03/22 02:25:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -990,7 +990,7 @@ parse_create(char *l)
 			data = value;
 			break;
 		}
-		else {
+		else if (value) {
 			if ((c = strchr(value, ',')) != NULL)
 				*c++ = '\0';
 		}
