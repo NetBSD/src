@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.41 2005/04/07 16:28:40 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.42 2006/03/22 02:08:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.41 2005/04/07 16:28:40 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.42 2006/03/22 02:08:55 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1184,9 +1184,9 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	if (mp->m_badeop &&
 	    (ltp->t_isenum || (mp->m_binary && rtp->t_isenum))) {
 		chkbeop(op, ln, rn);
-	} else if (mp->m_enumop && (ltp->t_isenum && rtp->t_isenum)) {
+	} else if (mp->m_enumop && (ltp->t_isenum && rtp && rtp->t_isenum)) {
 		chkeop2(op, arg, ln, rn);
-	} else if (mp->m_enumop && (ltp->t_isenum || rtp->t_isenum)) {
+	} else if (mp->m_enumop && (ltp->t_isenum || (rtp && rtp->t_isenum))) {
 		chkeop1(op, arg, ln, rn);
 	}
 
