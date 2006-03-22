@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.33 2006/03/22 17:05:44 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.34 2006/03/22 17:16:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1748,8 +1748,6 @@ changeuid(char *namep, char *passwordp, int fileuid, int filegid)
 		(void) sprintf(p = errbuf, "Reason:  Status %d", status);
 		break;
 	}
-	if (pwd == NULL)
-		return (p);
 	if (status != ACCESS_CODE_OK) {
 		logerr("Login failure for %s", pwd->pw_name);
 		logerr("%s", p);
