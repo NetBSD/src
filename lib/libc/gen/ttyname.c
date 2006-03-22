@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.22 2005/09/25 20:43:54 christos Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.23 2006/03/22 00:05:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.22 2005/09/25 20:43:54 christos Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.23 2006/03/22 00:05:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -142,6 +142,7 @@ oldttyname(const struct stat *sb, char *buf, size_t len)
 			 * fit
 			 */
 			errno = ERANGE;
+			(void)closedir(dp);
 			return -1;
 		}
 		(void)memcpy(buf + DEVSZ, dirp->d_name, dlen);
