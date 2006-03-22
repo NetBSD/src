@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.16 2006/03/18 07:27:50 simonb Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.17 2006/03/22 00:13:26 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.16 2006/03/18 07:27:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.17 2006/03/22 00:13:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,7 +567,7 @@ int
 prop_copy(propdb_t db, opaque_t source, opaque_t dest, int wait)
 {
 	struct kdbobj *nobj, *oobj;
-	struct kdbprop *prop, *oprop, *srcp;
+	struct kdbprop *srcp;
 	int s;
 
 	DPRINTF(x, ("prop_copy: %p, %p, %p, %d\n", db, source, dest, wait));
@@ -597,7 +597,6 @@ prop_copy(propdb_t db, opaque_t source, opaque_t dest, int wait)
 		{
 			int rv;
 
-oprop = prop = NULL; /* XXXX -- use vars to make gcc happy. */
 			rv = prop_insert(nobj, srcp->kp_name,
 				/*XXXUNCONST*/
 				__UNCONST(srcp->kp_val), srcp->kp_len,
@@ -609,6 +608,8 @@ oprop = prop = NULL; /* XXXX -- use vars to make gcc happy. */
 			}
 		}
 #else
+		{
+		struct kdbprop *prop, *oprop;
 		/* Does the prop exist already? */
 		prop = NULL;
 		LIST_FOREACH(oprop, &nobj->ko_props, kp_link) {
@@ -662,6 +663,7 @@ oprop = prop = NULL; /* XXXX -- use vars to make gcc happy. */
 				LIST_REMOVE(oprop, kp_link);
 				free(oprop, M_PROP);
 			}
+		}
 		}
 #endif
 	}
