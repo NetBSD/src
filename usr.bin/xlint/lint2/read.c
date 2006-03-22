@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.17 2006/03/22 02:17:52 christos Exp $ */
+/* $NetBSD: read.c,v 1.18 2006/03/22 16:16:59 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.17 2006/03/22 02:17:52 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.18 2006/03/22 16:16:59 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -904,6 +904,10 @@ gettlen(const char *cp, const char **epp)
 	case UQUAD:
 	case LONG:
 		break;
+#ifndef __COVERITY__
+	case NTSPEC:
+		abort();
+#endif
 	}
 
 	*epp = cp;
