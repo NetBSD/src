@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.c,v 1.11 2002/12/06 15:21:08 thorpej Exp $	*/
+/*	$NetBSD: supmsg.c,v 1.12 2006/03/22 16:42:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -342,6 +342,7 @@ msgrefuse(void)
 				break;
 			(void) Tinsert(&refuseT, name, FALSE);
 			free(name);
+			name = NULL;
 			x = readstring(&name);
 		}
 		if (x == SCMOK)
