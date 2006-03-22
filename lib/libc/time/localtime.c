@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.37 2005/07/16 19:48:09 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.38 2006/03/22 00:14:18 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.37 2005/07/16 19:48:09 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.38 2006/03/22 00:14:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -851,7 +851,6 @@ const int			lastditch;
 			register long	theirstdoffset;
 			register long	theirdstoffset;
 			register long	theiroffset;
-			register int	isdst;
 			register int	i;
 			register int	j;
 
@@ -881,7 +880,6 @@ const int			lastditch;
 			/*
 			** Initially we're assumed to be in standard time.
 			*/
-			isdst = FALSE;
 			theiroffset = theirstdoffset;
 			/*
 			** Now juggle transition times and types
@@ -907,13 +905,8 @@ const int			lastditch;
 					** POSIX provides for only one DST
 					** offset.
 					*/
-					if (isdst && !sp->ttis[j].tt_ttisstd) {
-						sp->ats[i] += dstoffset -
-							theirdstoffset;
-					} else {
-						sp->ats[i] += stdoffset -
-							theirstdoffset;
-					}
+					sp->ats[i] += stdoffset -
+					    theirstdoffset;
 				}
 				theiroffset = -sp->ttis[j].tt_gmtoff;
 				if (sp->ttis[j].tt_isdst)
