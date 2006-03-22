@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.12 2006/03/22 15:45:16 christos Exp $ */
+/* $NetBSD: utils.c,v 1.13 2006/03/22 16:35:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.12 2006/03/22 15:45:16 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.13 2006/03/22 16:35:44 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -435,8 +435,8 @@ bits_encode(const bits_t *in)
 	memcpy(tmp + 4, in->text, len - 4);
 
 	if ((len = __b64_ntop(tmp, len, out, len * 2)) == -1) {
+		free(out);
 		free(tmp);
-		free(malloc);
 		return NULL;
 	}
 	ret = string_new(out, len);
