@@ -1,4 +1,4 @@
-/*	$NetBSD: parsenfsfh.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: parsenfsfh.c,v 1.6 2006/03/22 04:30:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -48,7 +48,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.25.2.2 2003/11/16 08:51:07 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: parsenfsfh.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: parsenfsfh.c,v 1.6 2006/03/22 04:30:28 christos Exp $");
 #endif
 #endif
 
@@ -308,10 +308,12 @@ int ourself;		/* true if file handle was generated on this host */
 		*osnamep = "IRIX5";
 	    break;
 
+#ifdef notdef
 	case FHT_SUNOS3:
 	    if (osnamep)
 		*osnamep = "SUNOS3";
 	    break;
+#endif
 
 	case FHT_SUNOS4:
 	    fsidp->Fsid_dev.Minor = fhp[3];
