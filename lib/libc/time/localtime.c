@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.38 2006/03/22 00:14:18 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.39 2006/03/22 14:01:30 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.38 2006/03/22 00:14:18 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.39 2006/03/22 14:01:30 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -849,7 +849,6 @@ const int			lastditch;
 			}
 		} else {
 			register long	theirstdoffset;
-			register long	theirdstoffset;
 			register long	theiroffset;
 			register int	i;
 			register int	j;
@@ -857,22 +856,13 @@ const int			lastditch;
 			if (*name != '\0')
 				return -1;
 			/*
-			** Initial values of theirstdoffset and theirdstoffset.
+			** Initial values of theirstdoffset
 			*/
 			theirstdoffset = 0;
 			for (i = 0; i < sp->timecnt; ++i) {
 				j = sp->types[i];
 				if (!sp->ttis[j].tt_isdst) {
 					theirstdoffset =
-						-sp->ttis[j].tt_gmtoff;
-					break;
-				}
-			}
-			theirdstoffset = 0;
-			for (i = 0; i < sp->timecnt; ++i) {
-				j = sp->types[i];
-				if (sp->ttis[j].tt_isdst) {
-					theirdstoffset =
 						-sp->ttis[j].tt_gmtoff;
 					break;
 				}
@@ -909,9 +899,8 @@ const int			lastditch;
 					    theirstdoffset;
 				}
 				theiroffset = -sp->ttis[j].tt_gmtoff;
-				if (sp->ttis[j].tt_isdst)
-					theirdstoffset = theiroffset;
-				else	theirstdoffset = theiroffset;
+				if (!sp->ttis[j].tt_isdst)
+					theirstdoffset = theiroffset;
 			}
 			/*
 			** Finally, fill in ttis.
