@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.24 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.25 2006/03/22 23:04:39 elad Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +39,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: packet.c,v 1.120 2005/10/30 08:52:17 djm Exp $");
-__RCSID("$NetBSD: packet.c,v 1.24 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.25 2006/03/22 23:04:39 elad Exp $");
 
 #include <sys/queue.h>
 
@@ -976,7 +976,7 @@ packet_read_poll1(void)
 	 * Ariel Futoransky(futo@core-sdi.com)
 	 */
 	if (!receive_context.plaintext &&
-	    detect_attack(buffer_ptr(&input), padded_len, NULL) == DEATTACK_DETECTED)
+	    detect_attack(buffer_ptr(&input), padded_len) == DEATTACK_DETECTED)
 		packet_disconnect("crc32 compensation attack: network attack detected");
 
 	/* Decrypt data to incoming_packet. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.h,v 1.1.1.5 2001/09/27 02:00:42 itojun Exp $	*/
+/*	$NetBSD: deattack.h,v 1.2 2006/03/22 23:04:39 elad Exp $	*/
 /*	$OpenBSD: deattack.h,v 1.7 2001/06/26 17:27:23 markus Exp $	*/
 
 /*
@@ -27,5 +27,5 @@
 #define DEATTACK_OK		0
 #define DEATTACK_DETECTED	1
 
-int	 detect_attack(u_char *, u_int32_t, u_char[8]);
+int	 detect_attack(u_char *, u_int32_t);
 #endif
