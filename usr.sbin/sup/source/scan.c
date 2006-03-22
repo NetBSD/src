@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.20 2006/03/22 17:01:47 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.21 2006/03/22 17:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -240,6 +240,8 @@ parserelease(TREELIST ** tlp, char *relname, char *args)
 		case ONEXT:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
+			if (nextrel)
+				free(nextrel);
 			nextrel = salloc(arg);
 			break;
 		case OPREFIX:
