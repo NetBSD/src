@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.c,v 1.12 2006/03/22 16:42:41 christos Exp $	*/
+/*	$NetBSD: supmsg.c,v 1.13 2006/03/22 16:44:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -626,6 +626,7 @@ msgrecv(int (*xferfile)(TREE *, va_list), ...)
 				break;
 			(void) Tinsert(&t->Tlink, linkname, FALSE);
 			free(linkname);
+			linkname = NULL;
 			x = readstring(&linkname);
 		}
 		t->Texec = NULL;
@@ -636,6 +637,7 @@ msgrecv(int (*xferfile)(TREE *, va_list), ...)
 				break;
 			(void) Tinsert(&t->Texec, execcmd, FALSE);
 			free(execcmd);
+			execcmd = NULL;
 			x = readstring(&execcmd);
 		}
 		if (x == SCMOK)
