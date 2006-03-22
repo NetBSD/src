@@ -1,4 +1,4 @@
-/* $NetBSD: mt.c,v 1.41 2006/03/21 23:50:09 christos Exp $ */
+/* $NetBSD: mt.c,v 1.42 2006/03/22 01:45:08 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.41 2006/03/21 23:50:09 christos Exp $");
+__RCSID("$NetBSD: mt.c,v 1.42 2006/03/22 01:45:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -298,8 +298,7 @@ printreg(const char *s, u_int v, const char *bits)
 		printf("%s=%o", s, v);
 	else
 		printf("%s=%x", s, v);
-	if (v && *bits) {
-		bits++;
+	if (v && bits && *++bits) {
 		putchar('<');
 		while ((i = *bits++)) {
 			if (v & (1 << (i-1))) {
