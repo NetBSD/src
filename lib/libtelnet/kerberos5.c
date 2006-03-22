@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.16 2006/03/19 22:56:36 christos Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.17 2006/03/22 16:32:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -375,6 +375,7 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 					    "krb5_mk_rep failed (%s)\r\n",
 					    krb5_get_err_text(telnet_context,
 					    ret));
+				krb5_free_keyblock(telnet_context, key_block);
 				return;
 			}
 			Data(ap, KRB_RESPONSE, outbuf.data, outbuf.length);
@@ -413,12 +414,11 @@ kerberos5_is(Authenticator * ap, unsigned char *data, int cnt)
 				free(msg);
 			}
 			auth_finished(ap, AUTH_REJECT);
-			krb5_free_keyblock_contents(telnet_context, key_block);
+			krb5_free_keyblock(telnet_context, key_block);
 			break;
 		}
 		auth_finished(ap, AUTH_USER);
-		krb5_free_keyblock_contents(telnet_context, key_block);
-
+		krb5_free_keyblock(telnet_context, key_block);
 		break;
 	case KRB_FORWARD:{
 			struct passwd pws, *pwd;
