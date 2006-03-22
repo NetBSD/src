@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.19 2006/03/22 16:58:30 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.20 2006/03/22 17:01:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -274,10 +274,11 @@ getrelease(char *release)
 	char buf[STRINGLENGTH];
 	char *p, *q;
 	int rewound;
+	char *frelease = NULL;
 	FILE *f;
 
 	if (release == NULL)
-		release = salloc(DEFRELEASE);
+		frelease = release = salloc(DEFRELEASE);
 	listTL = NULL;
 
 	(void) sprintf(buf, FILERELEASES, collname);
@@ -307,6 +308,8 @@ getrelease(char *release)
 			else if (chdir(tl->TLprefix) < 0) {
 				free(tl);
 				fclose(f);
+				if (frelease)
+					free(frelease);
 				return (FALSE);
 			} else
 				(void) chdir(basedir);
@@ -318,14 +321,22 @@ getrelease(char *release)
 		}
 		(void) fclose(f);
 	}
-	if (release == NULL)
+	if (release == NULL) {
+		if (frelease)
+			free(frelease);
 		return (TRUE);
-	if (strcmp(release, DEFRELEASE) != 0)
+	}
+	if (strcmp(release, DEFRELEASE) != 0) {
+		if (frelease)
+			free(frelease);
 		return (FALSE);
+	}
 	(void) parserelease(&tl, release, "");
 	tl->TLprefix = prefix;
 	tl->TLnext = listTL;
 	listTL = tl;
+	if (frelease)
+		free(frelease);
 	return (TRUE);
 }
 
