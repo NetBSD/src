@@ -1,4 +1,4 @@
-/*	$NetBSD: am_ops.c,v 1.8 2006/03/18 20:40:53 christos Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.9 2006/03/22 04:11:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -348,7 +348,7 @@ merge_opts(const char *opts1, const char *opts2)
   }
 
   /* finally, append opts2 itself */
-  if (newstr && newstr[0]) {
+  if (newstr[0]) {
     xstrlcat(newstr, ",", len);
     xstrlcat(newstr, opts2, len);
   } else {
