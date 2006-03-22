@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.13 2005/06/19 23:43:51 lukem Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.14 2006/03/22 19:54:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.13 2005/06/19 23:43:51 lukem Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.14 2006/03/22 19:54:13 bouyer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -536,7 +536,7 @@ add_secure(CLIENT *client, char *domain, char *map, DBM *db)
 	status = yp_match_host(client, domain, map,
 	    k.dptr, k.dsize, &value, &vallen);
 	
-	if (status > 0) {
+	if (status == 0 && value > 0) {
 		v.dptr = value;
 		v.dsize = vallen;
 		
