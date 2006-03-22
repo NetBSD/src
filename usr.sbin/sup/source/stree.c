@@ -1,4 +1,4 @@
-/*	$NetBSD: stree.c,v 1.7 2004/12/21 16:20:09 christos Exp $	*/
+/*	$NetBSD: stree.c,v 1.8 2006/03/22 17:14:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -55,6 +55,7 @@
 #include "libc.h"
 #include "c.h"
 #include <sys/param.h>
+#include <assert.h>
 #include "supcdefs.h"
 #include "supextern.h"
 
@@ -228,7 +229,8 @@ Tinsert(TREE ** t, char *p, int find)
 {
 	int deltah;
 
-	if (p != NULL && p[0] == '.' && p[1] == '/') {
+	assert((t == NULL && p == NULL) || (t != NULL && p != NULL));
+	if (p[0] == '.' && p[1] == '/') {
 		p += 2;
 		while (*p == '/')
 			p++;
