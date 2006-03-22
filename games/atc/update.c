@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.16 2006/03/22 05:03:10 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.17 2006/03/22 15:24:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.16 2006/03/22 05:03:10 christos Exp $");
+__RCSID("$NetBSD: update.c,v 1.17 2006/03/22 15:24:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,9 +260,9 @@ name(const PLANE *p)
 int
 number(int l)
 {
-	if (islower((unsigned char)l)
+	if (islower((unsigned char)l))
 		return (l - 'a');
-	else if (isupper((unsigned char)l)
+	else if (isupper((unsigned char)l))
 		return (l - 'A');
 	else
 		return (-1);
