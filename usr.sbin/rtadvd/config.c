@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.22 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: config.c,v 1.23 2006/03/22 09:22:28 itojun Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -656,7 +656,7 @@ get_prefix(struct rainfo *rai)
 		{
 			p = (u_char *)&pp->prefix;
 			ep = (u_char *)(&pp->prefix + 1);
-			while (m < lim)
+			while (m < lim && p < ep)
 				*p++ &= *m++;
 			while (p < ep)
 				*p++ = 0x00;
