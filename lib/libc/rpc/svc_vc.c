@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.15 2005/12/13 05:54:50 jmc Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.16 2006/03/22 00:00:16 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.15 2005/12/13 05:54:50 jmc Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.16 2006/03/22 00:00:16 christos Exp $");
 #endif
 #endif
 
@@ -194,6 +194,8 @@ svc_vc_create(fd, sendsize, recvsize)
 	xprt_register(xprt);
 	return (xprt);
 cleanup_svc_vc_create:
+	if (xprt)
+		mem_free(xprt, sizeof(*xprt));
 	if (r != NULL)
 		mem_free(r, sizeof(*r));
 	return (NULL);
