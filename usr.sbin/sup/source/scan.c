@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.17 2003/04/03 17:14:24 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.18 2006/03/22 16:57:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -304,9 +304,10 @@ getrelease(char *release)
 			release = parserelease(&tl, release, p);
 			if (tl->TLprefix == NULL)
 				tl->TLprefix = prefix;
-			else if (chdir(tl->TLprefix) < 0)
+			else if (chdir(tl->TLprefix) < 0) {
+				fclose(f);
 				return (FALSE);
-			else
+			} else
 				(void) chdir(basedir);
 			tl->TLnext = listTL;
 			listTL = tl;
