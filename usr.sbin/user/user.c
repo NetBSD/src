@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.106 2006/03/17 14:20:10 dmcmahill Exp $ */
+/* $NetBSD: user.c,v 1.107 2006/03/22 18:01:11 joerg Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.106 2006/03/17 14:20:10 dmcmahill Exp $");
+__RCSID("$NetBSD: user.c,v 1.107 2006/03/22 18:01:11 joerg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -368,6 +368,7 @@ creategid(char *group, int gid, const char *name)
 	}
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
 		warn("Can't lock `%s'", _PATH_GROUP);
+		(void)fclose(from);
 		return 0;
 	}
 	(void)fstat(fileno(from), &st);
@@ -432,6 +433,7 @@ modify_gid(char *group, char *newent)
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
 		warn("Can't modify group `%s': can't lock `%s'",
 		    group, _PATH_GROUP);
+		(void)fclose(from);
 		return 0;
 	}
 	(void)fstat(fileno(from), &st);
@@ -554,6 +556,7 @@ append_group(char *user, int ngroups, const char **groups)
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
 		warn("Can't append group(s) for `%s': can't lock `%s'",
 		    user, _PATH_GROUP);
+		(void)fclose(from);
 		return 0;
 	}
 	(void)fstat(fileno(from), &st);
@@ -1278,6 +1281,7 @@ rm_user_from_groups(char *login_name)
 	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
 		warn("Can't remove user `%s' from `%s': can't lock `%s'",
 		    login_name, _PATH_GROUP, _PATH_GROUP);
+		(void)fclose(from);
 		return 0;
 	}
 	(void)fstat(fileno(from), &st);
