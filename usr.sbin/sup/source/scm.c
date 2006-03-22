@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.20 2004/11/16 06:00:37 itojun Exp $	*/
+/*	$NetBSD: scm.c,v 1.21 2006/03/22 17:10:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -429,6 +429,10 @@ request(char *server, char *hostname, int *retry)
 			break;
 	}
 
+	if (res == NULL) {
+		freeaddrinfo(res0);
+		return (SCMERR);
+	}
 	memcpy(&remoteaddr, res->ai_addr, res->ai_addrlen);
 	remotename = salloc(hostname);
 	x = 0x01020304;
