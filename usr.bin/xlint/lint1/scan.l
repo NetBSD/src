@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.33 2004/09/12 08:58:52 yamt Exp $ */
+/* $NetBSD: scan.l,v 1.34 2006/03/22 02:14:03 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.33 2004/09/12 08:58:52 yamt Exp $");
+__RCSID("$NetBSD: scan.l,v 1.34 2006/03/22 02:14:03 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -524,8 +524,10 @@ icon(int base)
 			/* ok */
 		} else if (ul <= (unsigned)UINT_MAX && base != 10) {
 			typ = UINT;
+#if INT_MAX != LONG_MAX
 		} else if (ul <= LONG_MAX) {
 			typ = LONG;
+#endif
 		} else {
 			typ = ULONG;
 		}
