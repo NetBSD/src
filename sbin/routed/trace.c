@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.30 2004/04/21 19:01:17 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.31 2006/03/22 02:23:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -41,7 +41,7 @@
 #include <fcntl.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: trace.c,v 1.30 2004/04/21 19:01:17 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.31 2006/03/22 02:23:11 christos Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -215,6 +215,8 @@ trace_close(int zap_stdio)
 			fclose(ftrace);
 		ftrace = 0;
 		fd = open(_PATH_DEVNULL, O_RDWR);
+		if (fd == -1)
+			return;
 		if (isatty(STDIN_FILENO))
 			(void)dup2(fd, STDIN_FILENO);
 		if (isatty(STDOUT_FILENO))
