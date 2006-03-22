@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.604 2006/03/20 04:17:39 christos Exp $
+# $NetBSD: mi,v 1.605 2006/03/22 15:49:31 elad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -755,7 +755,7 @@
 ./usr/include/isofs				base-c-usr
 ./usr/include/isofs/cd9660			base-c-usr
 ./usr/include/kadm5				base-c-usr
-./usr/include/kerberosIV			base-c-usr
+./usr/include/kerberosIV			base-obsolete		obsolete
 ./usr/include/krb5				base-c-usr
 ./usr/include/libmilter				base-sendmail-usr
 ./usr/include/machine				base-c-usr
