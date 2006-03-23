@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.9 2006/03/21 22:56:55 agc Exp $ */
+/* $NetBSD: disk.c,v 1.10 2006/03/23 00:01:48 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -864,6 +864,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	uint8_t  *cdb = args->cdb;
 	uint8_t   lun = (uint8_t) (args->lun >> 32);
 	int	mode_data_len;
+	int	done;
 
 #if (CONFIG_DISK_INITIAL_CHECK_CONDITION==1)
 	static int      initialized = 0;
@@ -891,7 +892,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	 */
 	if (lun >= disks.v[sess->d].luns) {
 		data = args->send_data;
-		memset(data, 0x0, (size_t) cdb[4]);
+		(void) memset(data, 0x0, (size_t) cdb[4]);
 		/*
 		 * data[0] = 0x7F;
 		 * / no device
@@ -914,28 +915,44 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case INQUIRY:
-		iscsi_trace(TRACE_SCSI_CMD, "INQUIRY\n");
+		iscsi_trace(TRACE_SCSI_CMD, "INQUIRY%s\n", (cdb[1] & INQUIRY_EVPD_BIT) ? " for Vital Product Data" : "");
 		data = args->send_data;
 		(void) memset(data, 0x0, (unsigned) cdb[4]);	/* Clear allocated buffer */
-		data[0] = 0;	/* Peripheral Device Type */
-		/* data[1] |= 0x80;                        // Removable Bit */
-		data[2] |= 0x02;/* ANSI-approved version */
-		/* data[3] |= 0x80;                        // AENC  */
-		/* data[3] |= 0x40;                        // TrmIOP  */
-		/* data[3] |= 0x20;                        // NormACA  */
-		data[4] = cdb[4] - 4;	/* Additional length  */
-		/* data[7] |= 0x80;                        // Relative addressing */
-		data[7] |= 0x40;/* WBus32  */
-		data[7] |= 0x20;/* WBus16 */
-		/* data[7] |= 0x10;                        // Sync  */
-		/* data[7] |= 0x08;                        // Linked Commands */
-		/* data[7] |= 0x04;                        // TransDis  */
-		/* data[7] |= 0x02;                        // Tagged Command Queueing */
-		/* data[7] |= 0x01;                        // SftRe */
-		(void) memset(data + 8, 0x0, 32);
-		(void) strlcpy((char *)&data[8], ISCSI_VENDOR, 8);	/* Vendor */
-		(void) strlcpy((char *)&data[16], ISCSI_PRODUCT, 16);	/* Product ID */
-		(void) snprintf((char *)&data[32], 8, "%d", ISCSI_VERSION);	/* Product Revision */
+		done = 0;
+		if (cdb[1] & INQUIRY_EVPD_BIT) {
+			switch(cdb[2]) {
+			case INQUIRY_DEVICE_IDENTIFICATION_VPD:
+				data[0] = DISK_PERIPHERAL_DEVICE;
+				data[1] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
+				data[3] = cdb[4] - 7;
+				data[4] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
+				data[5] = (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
+				data[7] = snprintf((char *)&data[8], (unsigned) cdb[4] - 8, "%s", sess->globals->targetname);
+				done = 1;
+				break;
+			case INQUIRY_SUPPORTED_VPD_PAGES:
+				data[0] = DISK_PERIPHERAL_DEVICE;
+				data[1] = INQUIRY_SUPPORTED_VPD_PAGES;
+				data[3] = 2;
+				data[4] = INQUIRY_SUPPORTED_VPD_PAGES;
+				data[5] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
+				done = 1;
+				break;
+			default:
+				iscsi_trace_error("Unsupported INQUIRY VPD page %x\n", cdb[2]);
+				break;
+			}
+		}
+		if (!done) {
+			data[0] = DISK_PERIPHERAL_DEVICE;
+			data[2] = SCSI_VERSION_SPC;
+			data[4] = cdb[4] - 4;	/* Additional length  */
+			data[7] |= (WIDE_BUS_32 | WIDE_BUS_16);
+			(void) memset(data + 8, 0x0, 32);
+			(void) strlcpy((char *)&data[8], ISCSI_VENDOR, 8);	/* Vendor */
+			(void) strlcpy((char *)&data[16], ISCSI_PRODUCT, 16);	/* Product ID */
+			(void) snprintf((char *)&data[32], 8, "%d", ISCSI_VERSION);	/* Product Revision */
+		}
 		args->input = 1;
 		args->length = cdb[4] + 1;
 		args->status = 0;
@@ -962,8 +979,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	case WRITE_6:
 
 		lba = ISCSI_NTOHL(*((uint32_t *) (void *)cdb)) & 0x001fffff;
-		len = cdb[4];
-		if (!len) {
+		if ((len = cdb[4]) == 0) {
 			len = 256;
 		}
 		iscsi_trace(TRACE_SCSI_CMD, "WRITE_6(lba %u, len %u blocks)\n", lba, len);
@@ -978,9 +994,9 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	case READ_6:
 
 		lba = ISCSI_NTOHL(*((uint32_t *) (void *)cdb)) & 0x001fffff;
-		len = cdb[4];
-		if (!len)
+		if ((len = cdb[4]) == 0) {
 			len = 256;
+		}
 		iscsi_trace(TRACE_SCSI_CMD, "READ_6(lba %u, len %u blocks)\n", lba, len);
 		if (disk_read(sess, args, lba, len, lun) != 0) {
 			iscsi_trace_error("disk_read() failed\n");
