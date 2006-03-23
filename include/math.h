@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.42 2005/12/24 19:16:02 perry Exp $	*/
+/*	$NetBSD: math.h,v 1.43 2006/03/23 16:55:42 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -332,6 +332,9 @@ float	remainderf(float, float);
 /* 7.2.11 manipulation */
 
 float	copysignf(float, float);
+double	nan(const char *);
+float	nanf(const char *);
+long double	nanl(const char *);
 float	nextafterf(float, float);
 
 
