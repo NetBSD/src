@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2005/03/09 03:11:21 christos Exp $
+#	$NetBSD: Makefile,v 1.56 2006/03/23 20:14:16 wiz Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 .include <bsd.own.mk>
@@ -43,11 +43,6 @@ ftpd.o ftpcmd.o: version.h
 #CPPFLAGS+=-DKERBEROS5 -I${DESTDIR}/usr/include/krb5
 #DPADD+=	${LIBKRB5} ${LIBASN1}
 #LDADD+= -lkrb5 -lasn1
-#
-#SRCS+= klogin.c
-#CPPFLAGS+=-DKERBEROS -I${DESTDIR}/usr/include/kerberosIV
-#DPADD+=	${LIBKRB}
-#LDADD+= -lkrb
 #
 #DPADD+=	${LIBCRYPTO} ${{LIBCRYPT} ${LIBROKEN} ${LIBCOM_ERR}
 #LDADD+=	-lcrypto -lcrypt -lroken -lcom_err
