@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.22 2006/03/23 22:14:59 bjh21 Exp $	*/
+/*	$NetBSD: boot32.c,v 1.23 2006/03/23 22:27:22 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -151,7 +151,6 @@ int	 vdu_var(int);
 void	 process_args(int argc, char **argv, int *howto, char *file,
     int *start_args);
 
-char		 *sprint0(int width, char prefix, char base, int value);
 struct page_info *get_relocated_page(u_long destination, int size);
 
 extern void start_kernel(
@@ -405,10 +404,8 @@ get_memory_configuration(void)
 			default:
 				printf("WARNING : found unknown "
 				    "memory object %d ", current_page_type);
-				printf(" at 0x%s",
-				    sprint0(8,'0','x', phys_page * nbpp));
-				printf(" for %s k\n",
-				    sprint0(5,' ','d', (page_count*nbpp)>>10));
+				printf(" at 0x%08x", phys_page * nbpp);
+				printf(" for %5d k\n", (page_count*nbpp)>>10);
 				break;
 			}
 			current_page_type = page;
@@ -485,8 +482,7 @@ get_memory_configuration(void)
 
 	if (mapped_screen_memory) {
 		printf("Used %d kb DRAM ", mapped_screen_memory / 1024);
-		printf("at 0x%s for video memory\n",
-		    sprint0(8,'0','x', videomem_start));
+		printf("at 0x%08lx for video memory\n", videomem_start);
 	}
 
 	/* find top of (PO)DRAM pages */
@@ -510,16 +506,14 @@ get_memory_configuration(void)
 	/* pretty print the individual page types */
 	for (count = 0; count < rom_blocks; count++) {
 		printf("Found ROM  (%d)", count);
-		printf(" at 0x%s", sprint0(8,'0','x', ROM_addr[count]));
-		printf(" for %s k\n",
-		    sprint0(5,' ','d', (ROM_pages[count]*nbpp)>>10));
+		printf(" at 0x%08lx", ROM_addr[count]);
+		printf(" for %5lu k\n", (ROM_pages[count]*nbpp)>>10);
 	}
 
 	for (count = 0; count < io_blocks; count++) {
 		printf("Found I/O  (%d)", count);
-		printf(" at 0x%s", sprint0(8,'0','x', IO_addr[count]));
-		printf(" for %s k\n",
-		    sprint0(5,' ','d', (IO_pages[count]*nbpp)>>10));
+		printf(" at 0x%08lx", IO_addr[count]);
+		printf(" for %5lu k\n", (IO_pages[count]*nbpp)>>10);
 	}
 
 	/* for DRAM/VRAM also count the number of pages */
@@ -527,27 +521,24 @@ get_memory_configuration(void)
 	for (count = 0; count < dram_blocks; count++) {
 		total_dram_pages += DRAM_pages[count];
 		printf("Found DRAM (%d)", count);
-		printf(" at 0x%s", sprint0(8,'0','x', DRAM_addr[count]));
-		printf(" for %s k\n",
-		    sprint0(5,' ','d', (DRAM_pages[count]*nbpp)>>10));
+		printf(" at 0x%08lx", DRAM_addr[count]);
+		printf(" for %5lu k\n", (DRAM_pages[count]*nbpp)>>10);
 	}
 
 	total_vram_pages = 0;
 	for (count = 0; count < vram_blocks; count++) {
 		total_vram_pages += VRAM_pages[count];
 		printf("Found VRAM (%d)", count);
-		printf(" at 0x%s", sprint0(8,'0','x', VRAM_addr[count]));
-		printf(" for %s k\n",
-		    sprint0(5,' ','d', (VRAM_pages[count]*nbpp)>>10));
+		printf(" at 0x%08lx", VRAM_addr[count]);
+		printf(" for %5lu k\n", (VRAM_pages[count]*nbpp)>>10);
 	}
 
 	total_podram_pages = 0;
 	for (count = 0; count < podram_blocks; count++) {
 		total_podram_pages += PODRAM_pages[count];
 		printf("Found Processor only (S)DRAM (%d)", count);
-		printf(" at 0x%s", sprint0(8,'0','x', PODRAM_addr[count]));
-		printf(" for %s k\n",
-		    sprint0(5,' ','d', (PODRAM_pages[count]*nbpp)>>10));
+		printf(" at 0x%08lx", PODRAM_addr[count]);
+		printf(" for %5lu k\n", (PODRAM_pages[count]*nbpp)>>10);
 	}
 }
 
@@ -1051,23 +1042,3 @@ process_args(int argc, char **argv, int *howto, char *file, int *start_args)
 			strcpy(file, "netbsd");
 	}
 }
-
-
-char *
-sprint0(int width, char prefix, char base, int value)
-{
-	static char format[50], scrap[50];
-	char *pos;
-	int length;
-
-	for (pos = format, length = 0; length<width; length++) *pos++ = prefix;
-	*pos++ = '%';
-	*pos++ = base;
-	*pos++ = (char) 0;
-	
-	sprintf(scrap, format, value);
-	length = strlen(scrap);
-
-	return scrap+length-width;
-}
-
