@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.25 2005/02/26 07:19:25 thorpej Exp $	*/
+/*	$NetBSD: passwd.c,v 1.26 2006/03/23 23:37:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.25 2005/02/26 07:19:25 thorpej Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.26 2006/03/23 23:37:07 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,12 +216,6 @@ static struct pw_module_s {
 	    krb5_init, krb5_arg, krb5_arg_end, krb5_end, krb5_chpw, 0, 0 },
 	{ "kpasswd", "5ku:", "[-5] [-k] [-u principal]",
 	    krb5_init, krb5_arg, krb5_arg_end, krb5_end, krb5_chpw, 0, 0 },
-#endif
-#ifdef KERBEROS
-	{ NULL, "4ku:i:r:", "[-4] [-k] [-u user] [-i instance] [-r realm]",
-	    krb4_init, krb4_arg, krb4_arg_end, krb4_end, krb4_chpw, 0, 0 },
-	{ "kpasswd", "4ku:i:r:", "[-4] [-k] [-u user] [-i instance] [-r realm]",
-	    krb4_init, krb4_arg, krb4_arg_end, krb4_end, krb4_chpw, 0, 0 },
 #endif
 #ifdef YP
 	{ NULL, "y", "[-y]",
