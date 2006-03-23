@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.28 2006/03/17 21:52:41 ginsbach Exp $	*/
+/*	$NetBSD: rsh.c,v 1.29 2006/03/23 23:49:07 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.28 2006/03/17 21:52:41 ginsbach Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.29 2006/03/23 23:49:07 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,17 +67,6 @@ __RCSID("$NetBSD: rsh.c,v 1.28 2006/03/17 21:52:41 ginsbach Exp $");
 #include "pathnames.h"
 #include "getport.h"
 
-#ifdef KERBEROS
-#include <des.h>
-#include <kerberosIV/krb.h>
-
-CREDENTIALS cred;
-Key_schedule schedule;
-int use_kerberos = 1, doencrypt;
-char dst_realm_buf[REALM_SZ], *dest_realm;
-
-void	warning(const char *, ...);
-#endif
 
 /*
  * rsh - remote shell
@@ -147,27 +136,11 @@ main(int argc, char **argv)
 
 	putenv("RCMD_LOOP=YES");
 
-# ifdef KERBEROS
-#  ifdef CRYPT
-#   define	OPTIONS	"468KLdek:l:np:u:wx"
-#  else
-#   define	OPTIONS	"468KLdek:l:np:u:w"
-#  endif
-# else
 #  define	OPTIONS	"468KLdel:np:u:w"
-# endif
 
 #else /* IN_RCMD */
 
-# ifdef KERBEROS
-#  ifdef CRYPT
-#   define	OPTIONS	"468KLdek:l:np:wx"
-#  else
-#   define	OPTIONS	"468KLdek:l:np:w"
-#  endif
-# else
 #  define	OPTIONS	"468KLdel:np:w"
-# endif
 
 #endif /* IN_RCMD */
 
@@ -185,9 +158,6 @@ main(int argc, char **argv)
 			family = AF_INET6;
 			break;
 		case 'K':
-#ifdef KERBEROS
-			use_kerberos = 0;
-#endif
 			break;
 		case 'L':	/* -8Lew are ignored to allow rlogin aliases */
 		case 'e':
@@ -200,12 +170,6 @@ main(int argc, char **argv)
 		case 'l':
 			user = optarg;
 			break;
-#ifdef KERBEROS
-		case 'k':
-			strlcpy(dest_realm_buf, optarg, sizeof(dest_realm_buf));
-			dest_realm = dst_realm_buf;
-			break;
-#endif
 		case 'n':
 			nflag = 1;
 			break;
@@ -220,14 +184,6 @@ main(int argc, char **argv)
 			locuser = optarg;
 			break;
 #endif /* IN_RCMD */
-#ifdef KERBEROS
-#ifdef CRYPT
-		case 'x':
-			doencrypt = 1;
-			des_set_key((des_cblock *) cred.session, schedule);
-			break;
-#endif
-#endif
 		case '?':
 		default:
 			usage();
@@ -266,81 +222,14 @@ main(int argc, char **argv)
 	if (!user)
 		user = name;
 
-#ifdef KERBEROS
-#ifdef CRYPT
-	/* -x turns off -n */
-	if (doencrypt)
-		nflag = 0;
-#endif
-#endif
 
 	args = copyargs(argv);
 
-#ifdef KERBEROS
-	if (use_kerberos) {
-		if (sp == NULL) {
-			sp = getservbyname((doencrypt ? "ekshell" : "kshell"), "tcp");
-		}
-		if (sp == NULL) {
-			use_kerberos = 0;
-			warning("can't get entry for %s/tcp service",
-			    doencrypt ? "ekshell" : "kshell");
-		}
-	}
-#endif
 	if (sp == NULL)
 		sp = getservbyname("shell", "tcp");
 	if (sp == NULL)
 		errx(1, "shell/tcp: unknown service");
 
-#ifdef KERBEROS
-try_connect:
-	if (use_kerberos) {
-#if 1
-		struct hostent *hp;
-
-		/* fully qualify hostname (needed for krb_realmofhost) */
-		hp = gethostbyname(host);
-		if (hp != NULL && !(host = strdup(hp->h_name)))
-			err(1, "strdup");
-#endif
-
-		rem = KSUCCESS;
-		errno = 0;
-		if (dest_realm == NULL)
-			dest_realm = krb_realmofhost(host);
-
-#ifdef CRYPT
-		if (doencrypt)
-			rem = krcmd_mutual(&host, sp->s_port, user, args,
-			    &remerr, dest_realm, &cred, schedule);
-		else
-#endif
-			rem = krcmd(&host, sp->s_port, user, args, &remerr,
-			    dest_realm);
-		if (rem < 0) {
-			use_kerberos = 0;
-			sp = getservbyname("shell", "tcp");
-			if (sp == NULL)
-				errx(1, "shell/tcp: unknown service");
-			if (errno == ECONNREFUSED)
-				warning("remote host doesn't support Kerberos");
-			if (errno == ENOENT)
-				warning("can't provide Kerberos auth data");
-			goto try_connect;
-		}
-	} else {
-		if (doencrypt)
-			errx(1, "the -x flag requires Kerberos authentication.");
-#ifdef IN_RCMD
-		rem = orcmd_af(&host, sp->s_port, locuser ? locuser :
-#else
-		rem = rcmd_af(&host, sp->s_port,
-#endif
-		    name,
-		    user, args, &remerr, family);
-	}
-#else /* KERBEROS */
 
 #ifdef IN_RCMD
 	rem = orcmd_af(&host, sp->s_port, locuser ? locuser :
@@ -348,7 +237,6 @@ try_connect:
 	rem = rcmd_af(&host, sp->s_port,
 #endif
 	    name, user, args, &remerr, family);
-#endif /* KERBEROS */
 	(void)free(name);
 
 	if (rem < 0)
@@ -543,31 +431,9 @@ sendsig(int sig)
 	char signo;
 
 	signo = sig;
-#ifdef KERBEROS
-#ifdef CRYPT
-	if (doencrypt)
-		(void)des_write(remerr, &signo, 1);
-	else
-#endif
-#endif
 		(void)write(remerr, &signo, 1);
 }
 
-#ifdef KERBEROS
-/* VARARGS */
-void
-warning(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	(void)fprintf(stderr, "%s: warning, using standard rsh: ",
-	    getprogname());
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, ".\n");
-}
-#endif
 
 char *
 copyargs(char **argv)
@@ -596,20 +462,12 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-46nd%s]%s[-l login] [-p port]%s [login@]host %s\n", getprogname(),
-#ifdef KERBEROS
-#ifdef CRYPT
-	    "x", " [-k realm] ",
-#else
-	    "", " [-k realm] ",
-#endif
-#else
-	    "", " ",
-#endif
+	    "usage: %s [-46dn] [-l login] [-p port]%s [login@]host command\n",
+	    getprogname(),
 #ifdef IN_RCMD
-	    " [-u locuser]", "command"
+	    " [-u locuser]"
 #else
-	    "", "[command]"
+	    ""
 #endif
 	    );
 	exit(1);
