@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.6 2006/03/18 04:34:41 christos Exp $	*/
+/*	$NetBSD: chat.c,v 1.7 2006/03/23 19:25:09 he Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.30 2004/01/17 05:47:55 carlsonj Exp";
 #else
-__RCSID("$NetBSD: chat.c,v 1.6 2006/03/18 04:34:41 christos Exp $");
+__RCSID("$NetBSD: chat.c,v 1.7 2006/03/23 19:25:09 he Exp $");
 #endif
 #endif
 
@@ -1295,7 +1295,7 @@ int c;
 int put_string (s)
 register char *s;
 {
-    quiet = 0;
+    int quiet = 0;
     char *ss;
     s = ss = clean(s, 1);
 
