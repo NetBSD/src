@@ -1,8 +1,4 @@
-$NetBSD: TODO,v 1.7 2001/07/10 21:52:46 wiz Exp $
-
-- Make KTH Kerberos IV API like the Berkeley'ized MIT API that
-  appeared in 4.4BSD.  This also means include paths and library
-  requirements.
+$NetBSD: TODO,v 1.8 2006/03/23 19:58:03 wiz Exp $
 
 - Make the Heimdal Kerberos V API much more like the MIT API.  The
   current situation means that basically no krb5-aware programs can
@@ -13,10 +9,3 @@ $NetBSD: TODO,v 1.7 2001/07/10 21:52:46 wiz Exp $
   - ssh and ssh6
 
 - Make rcp, rlogin, ftpd, and ftp work with Kerberos again.
-
-- Decide if we're going to really try and support both krb4 and
-  krb5.  It's hard to make programs work with both, and having
-  to decide at compile-time really sucks.
-
-- Add Heimdal's ticket forwarding support to the Berkeley Kerberos 4
-  module (in libtelnet).
