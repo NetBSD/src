@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.101 2006/01/05 10:38:29 yamt Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.102 2006/03/23 23:51:25 wiz Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.101 2006/01/05 10:38:29 yamt Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.102 2006/03/23 23:51:25 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -89,10 +89,6 @@ __RCSID("$NetBSD: mountd.c,v 1.101 2006/01/05 10:38:29 yamt Exp $");
 #include <err.h>
 #include <util.h>
 #include "pathnames.h"
-#ifdef KERBEROS
-#include <kerberosIV/krb.h>
-#include "kuid.h"
-#endif
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -483,9 +479,6 @@ main(argc, argv)
 		exit(1);
 	}
 
-#ifdef KERBEROS
-	kuidinit();
-#endif
 	svc_run();
 	syslog(LOG_ERR, "Mountd died");
 	exit(1);
@@ -538,9 +531,6 @@ mntsrv(rqstp, transp)
 	    sizeof numerichost, NULL, 0, ninumeric) != 0)
 		strlcpy(numerichost, "?", sizeof(numerichost));
 	ai = NULL;
-#ifdef KERBEROS
-	kuidreset();
-#endif
 	ret = 0;
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
@@ -662,14 +652,6 @@ out:
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 
-#ifdef KERBEROS
-	case MOUNTPROC_KUIDMAP:
-	case MOUNTPROC_KUIDUMAP:
-	case MOUNTPROC_KUIDPURGE:
-	case MOUNTPROC_KUIDUPURGE:
-		kuidops(rqstp, transp);
-		return;
-#endif
 
 	default:
 		svcerr_noproc(transp);
