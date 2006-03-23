@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidlock.3,v 1.10 2006/03/19 21:56:04 christos Exp $
+.\"	$NetBSD: pidlock.3,v 1.11 2006/03/23 19:30:27 wiz Exp $
 .\"
 .\" Copyright 1996, 1997 by Curt Sampson <cjs@NetBSD.org>
 .\"
@@ -91,7 +91,7 @@ and put the current process's pid in it.
 The
 .Fn ttylock
 function will do the same, but should be passed only the base name
-(with no leading directory prefix) of the 
+(with no leading directory prefix) of the
 .Fa tty
 to be locked; it will test that the tty exists in
 .Pa /dev
@@ -143,6 +143,7 @@ In addition to the errors that are returned from
 .Xr open 2 ,
 .Xr read 2 ,
 .Xr write 2 ,
+and
 .Xr link 2 ,
 .Fn pidlock
 or
@@ -156,9 +157,9 @@ Another running process has a lock and the
 .Dv PIDLOCK_NONBLOCK
 flag was specified.
 .It Bq Er EFTYPE
-The 
+The
 .Fa tty
-specified in 
+specified in
 .Fn ttylock
 is not a character special device.
 .El
