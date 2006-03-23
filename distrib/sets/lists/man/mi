@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.867 2006/03/20 04:17:40 christos Exp $
+# $NetBSD: mi,v 1.868 2006/03/23 18:19:30 garbled Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -4418,6 +4418,8 @@
 ./usr/share/man/man8/praliases.8		man-sendmail-man	sendmail,.man
 ./usr/share/man/man8/prep/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/prep/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/prep/mkbootimage.8	man-sys-man		.man
+./usr/share/man/man8/prep/boot.8		man-sys-man		.man
 ./usr/share/man/man8/proxymap.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/pstat.8			man-sysutil-man		.man
 ./usr/share/man/man8/pvcsif.8			man-netutil-man		.man
