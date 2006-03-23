@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.23 2006/03/18 17:34:31 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.24 2006/03/23 03:43:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.23 2006/03/18 17:34:31 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.24 2006/03/23 03:43:54 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -441,12 +441,6 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 		if ((numStripesBailed > 0) || (numStripeUnitsBailed > 0)) {
 			stripeNum = 0;
 			stripeUnitNum = 0;
-			if (dag_h->asmList) {
-				endASMList = dag_h->asmList;
-				while (endASMList->next)
-					endASMList = endASMList->next;
-			} else
-				endASMList = NULL;
 			/* walk through io, stripe by stripe */
 			/* here we build up dag_h->asmList for this dag...
 			   we need all of these asm's to do the IO, and
@@ -454,8 +448,19 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			   later time */
 			stripeFuncs = stripeFuncsList;
 			failed_stripe = failed_stripes_list;
+			dagList = desc->dagList;
+
 			for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
-				if (stripeFuncs->fp == NULL) {
+
+				dag_h = dagList->dags;
+				if (dag_h->asmList) {
+					endASMList = dag_h->asmList;
+					while (endASMList->next)
+						endASMList = endASMList->next;
+				} else
+					endASMList = NULL;
+
+				if (stripeFuncs->fp == NULL) {					
 					numStripeUnits = asm_p->numStripeUnitsAccessed;
 					/* walk through stripe, stripe unit by
 					 * stripe unit */
@@ -495,6 +500,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 					stripeNum++;
 					failed_stripe = failed_stripe->next;
 				}
+				dagList = dagList->next; /* need to move in stride with stripeFuncs */
 				stripeFuncs = stripeFuncs->next;
 			}
 			RF_ASSERT(stripeNum == numStripesBailed);
