@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.868 2006/03/23 18:19:30 garbled Exp $
+# $NetBSD: mi,v 1.869 2006/03/23 18:56:48 garbled Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2110,6 +2110,8 @@
 ./usr/share/man/cat8/praliases.0		man-sendmail-catman	sendmail,.cat
 ./usr/share/man/cat8/prep/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/prep/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/prep/boot.0		man-sys-catman		.cat
+./usr/share/man/cat8/prep/mkbootimage.0	man-sys-catman		.cat
 ./usr/share/man/cat8/proxymap.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/pstat.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pvcsif.0			man-netutil-catman	.cat
