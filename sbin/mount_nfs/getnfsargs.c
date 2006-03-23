@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.3 2005/11/12 20:30:21 dsl Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.4 2006/03/23 23:23:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.3 2005/11/12 20:30:21 dsl Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.4 2006/03/23 23:23:27 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,6 @@ __RCSID("$NetBSD: getnfsargs.c,v 1.3 2005/11/12 20:30:21 dsl Exp $");
 #include <netiso/iso.h>
 #endif
 
-#ifdef NFSKERB
-#include <des.h>
-#include <kerberosIV/krb.h>
-#endif
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -118,9 +114,6 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 	enum clnt_stat clnt_stat;
 	int i, nfsvers, mntvers, orgcnt;
 	char *hostp, *delimp;
-#ifdef NFSKERB
-	char *cp;
-#endif
 	static struct nfhret nfhret;
 	static char nam[MNAMELEN + 1];
 
@@ -194,14 +187,6 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 			return (0);
 		}
 	}
-#ifdef NFSKERB
-	if (nfsargsp->flags & NFSMNT_KERB) {
-		strncpy(inst, hp->h_name, INST_SZ);
-		inst[INST_SZ - 1] = '\0';
-		if (cp = strchr(inst, '.'))
-			*cp = '\0';
-	}
-#endif /* NFSKERB */
 
 	if (force2) {
 		nfsvers = NFS_VER2;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.29 2006/03/23 20:15:49 wiz Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.30 2006/03/23 23:23:27 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mount_nfs.8	8.3 (Berkeley) 3/29/95
 .\"
-.Dd January 22, 2005
+.Dd March 24, 2006
 .Dt MOUNT_NFS 8
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Bk -words
-.Op Fl 23bcCdiKlpPqsTUX
+.Op Fl 23bcCdilpPqsTUX
 .Ek
 .Bk -words
 .Op Fl D Ar deadthresh
@@ -57,9 +57,6 @@
 .Ek
 .Bk -words
 .Op Fl g Ar maxgroups
-.Ek
-.Bk -words
-.Op Fl m Ar realm
 .Ek
 .Bk -words
 .Op Fl o Ar options
@@ -129,18 +126,6 @@ The value should normally
 be a multiple of
 .Dv DIRBLKSIZ
 that is \*[Le] the read size for the mount.
-.It Fl K
-Pass
-.Tn Kerberos
-authenticators to the server for client-to-server user-credential mapping.
-This requires that the
-.Nx
-kernel be built with the
-.Dv NFSKERB
-.Xr options 4 .
-Refer to RFC 2695,
-.%T "Authentication Mechanisms for ONC RPC" ,
-for more information.
 .It Fl L
 Used with
 .Tn NQNFS
@@ -254,13 +239,6 @@ but tends to flood the attribute and name caches with prefetched entries.
 Try this option and see whether performance improves or degrades.
 Probably most useful for client to server network
 interconnects with a large bandwidth times delay product.
-.It Fl m
-Set the
-.Tn Kerberos
-realm to the string argument.
-Used with the
-.Fl K
-option for mounts to other realms.
 .It Fl o
 Options are specified with a
 .Fl o
