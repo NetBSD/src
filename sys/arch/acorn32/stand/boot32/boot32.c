@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.20 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: boot32.c,v 1.21 2006/03/23 21:27:42 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -49,7 +49,7 @@ int debug = 1;
 
 
 /* constants */
-#define PODRAM_START   (512*1024*1024)				/* XXX Kinetic cards XXX	*/
+#define PODRAM_START   (512*1024*1024)		/* XXX Kinetic cards XXX */
 
 #define MAX_RELOCPAGES	4096
 
@@ -62,63 +62,71 @@ int debug = 1;
 
 
 /* booter variables */
-char	 scrap[80], twirl_cnt;					/* misc				*/
+char	 scrap[80], twirl_cnt;		/* misc				*/
 char	 booted_file[80];
 
-struct bootconfig *bconfig;					/* bootconfig passing		*/
-u_long	 bconfig_new_phys;					/* physical address its bound	*/
+struct bootconfig *bconfig;		/* bootconfig passing		*/
+u_long	 bconfig_new_phys;		/* physical address its bound	*/
 
-u_int	 monitor_type, monitor_sync, ioeb_flags, lcd_flags;	/* computer knowledge		*/
+/* computer knowledge		*/
+u_int	 monitor_type, monitor_sync, ioeb_flags, lcd_flags;
 u_int	 superio_flags, superio_flags_basic, superio_flags_extra;
 
-int	 nbpp, memory_table_size, memory_image_size;		/* sizes			*/
-u_long	 reloc_tablesize, *reloc_instruction_table;		/* relocate info		*/
-u_long	*reloc_pos;						/* current empty entry		*/
-int	 reloc_entries;						/* number of relocations	*/
-int	 first_mapped_DRAM_page_index;				/* offset in RISC OS blob	*/
-int	 first_mapped_PODRAM_page_index;			/* offset in RISC OS blob	*/
+/* sizes			*/
+int	 nbpp, memory_table_size, memory_image_size;
+/* relocate info		*/
+u_long	 reloc_tablesize, *reloc_instruction_table;
+u_long	*reloc_pos;			/* current empty entry		*/
+int	 reloc_entries;			/* number of relocations	*/
+int	 first_mapped_DRAM_page_index;	/* offset in RISC OS blob	*/
+int	 first_mapped_PODRAM_page_index;/* offset in RISC OS blob	*/
 
-struct page_info *mem_pages_info;				/* {nr, virt, phys}*		*/
-struct page_info *free_relocation_page;				/* points to the page_info chain*/
-struct page_info *relocate_table_pages;				/* points to seq. relocate info */
-struct page_info *relocate_code_page;				/* points to the copied code	*/
-struct page_info *bconfig_page;					/* page for passing on settings	*/
+struct page_info *mem_pages_info;	/* {nr, virt, phys}*		*/
+struct page_info *free_relocation_page;	/* points to the page_info chain*/
+struct page_info *relocate_table_pages;	/* points to seq. relocate info */
+struct page_info *relocate_code_page;	/* points to the copied code	*/
+struct page_info *bconfig_page;		/* page for passing on settings	*/
 
-unsigned char *memory_page_types;				/* packed array of 4 bit typeId	*/
+unsigned char *memory_page_types;	/* packed array of 4 bit typeId	*/
 
-u_long	*initial_page_tables;					/* pagetables to be booted from	*/
+u_long	*initial_page_tables;		/* pagetables to be booted from	*/
 
 
 /* XXX rename *_BLOCKS to MEM_BLOCKS */
 /* DRAM/VRAM/ROM/IO info */
-u_long	 videomem_start, videomem_pages, display_size;		/* where the display is		*/
+/* where the display is		*/
+u_long	 videomem_start, videomem_pages, display_size;
 
-u_long	 pv_offset, top_physdram;				/* kernel_base - phys. diff	*/
-u_long	 top_1Mb_dram;						/* the lower mapped top 1Mb	*/
-u_long	 new_L1_pages_phys;					/* physical address of L1 pages	*/
+u_long	 pv_offset, top_physdram;	/* kernel_base - phys. diff	*/
+u_long	 top_1Mb_dram;			/* the lower mapped top 1Mb	*/
+u_long	 new_L1_pages_phys;		/* physical address of L1 pages	*/
 
-u_long	 total_podram_pages, total_dram_pages, total_vram_pages;/* for bootconfig passing	*/
-int	 dram_blocks, podram_blocks;				/* number of mem. objects/type  */
+/* for bootconfig passing	*/
+u_long	 total_podram_pages, total_dram_pages, total_vram_pages;
+int	 dram_blocks, podram_blocks;	/* number of mem. objects/type  */
 int	 vram_blocks, rom_blocks, io_blocks;
 
 u_long	 DRAM_addr[DRAM_BLOCKS],     DRAM_pages[DRAM_BLOCKS];
-u_long	 PODRAM_addr[PODRAM_BLOCKS], PODRAM_pages[PODRAM_BLOCKS];	/* processor only RAM	*/
+/* processor only RAM	*/
+u_long	 PODRAM_addr[PODRAM_BLOCKS], PODRAM_pages[PODRAM_BLOCKS];
 u_long	 VRAM_addr[VRAM_BLOCKS],     VRAM_pages[VRAM_BLOCKS];
 u_long	 ROM_addr[ROM_BLOCKS],       ROM_pages[ROM_BLOCKS];
 u_long	 IO_addr[IO_BLOCKS],         IO_pages[IO_BLOCKS];
 
 
 /* RISC OS memory pages we claimed */
-u_long	 firstpage, lastpage, totalpages;			/* RISC OS pagecounters		*/
-char	*memory_image, *bottom_memory, *top_memory;		/* RISC OS memory		*/
+u_long	 firstpage, lastpage, totalpages; /* RISC OS pagecounters	*/
+/* RISC OS memory		*/
+char	*memory_image, *bottom_memory, *top_memory;
 
-u_long	 videomem_start_ro;					/* for debugging mainly		*/
+u_long	 videomem_start_ro;		/* for debugging mainly		*/
 
 /* kernel info */
-u_long	 marks[MARK_MAX];					/* loader mark pointers 	*/ 
-u_long	 kernel_physical_start;					/* where does it get relocated	*/
-u_long	 kernel_free_vm_start;					/* where does the free VM start	*/
-u_long	 scratch_virtualbase, scratch_physicalbase;		/* some free space to mess with	*/
+u_long	 marks[MARK_MAX];		/* loader mark pointers 	*/ 
+u_long	 kernel_physical_start;		/* where does it get relocated	*/
+u_long	 kernel_free_vm_start;		/* where does the free VM start	*/
+/* some free space to mess with	*/
+u_long	 scratch_virtualbase, scratch_physicalbase;
 
 
 /* bootprogram identifiers */
@@ -140,7 +148,8 @@ void	 create_configuration(int argc, char **argv, int start_args);
 void	 prepare_and_check_relocation_system(void);
 void	 twirl(void);
 int	 vdu_var(int);
-void	 process_args(int argc, char **argv, int *howto, char *file, int *start_args);
+void	 process_args(int argc, char **argv, int *howto, char *file,
+    int *start_args);
 
 char		 *sprint0(int width, char prefix, char base, int value);
 struct page_info *get_relocated_page(u_long destination, int size);
@@ -248,8 +257,12 @@ void prepare_and_check_relocation_system(void) {
 
 		if (pages < relocate_pages-1) {
 			/* check if next page is sequential physically */
-			if ((relocate_table_pages+pages+1)->physical - (relocate_table_pages+pages)->physical != nbpp) {
-				/* Non contigunous relocate area -> try again */
+			if ((relocate_table_pages+pages+1)->physical -
+			    (relocate_table_pages+pages)->physical != nbpp) {
+				/*
+				 * Non contigunous relocate area ->
+				 * try again
+				 */
 				printf("*");
 				relocate_table_pages += pages;
 				continue;	/* while */
@@ -279,7 +292,9 @@ void prepare_and_check_relocation_system(void) {
 		length      = reloc_entry[2];
 
 		/* paranoia check */
-		if ((long) (src - last_src) <= 0) printf("relocation sequence challenged -- booting might fail ");
+		if ((long) (src - last_src) <= 0)
+			printf("relocation sequence challenged -- "
+			    "booting might fail ");
 		last_src = src;
 
 		/* check if its gonna be relocated into (PO)DRAM ! */
@@ -287,21 +302,25 @@ void prepare_and_check_relocation_system(void) {
 		found = 0;
 		for (bank = 0; (bank < dram_blocks) && !found; bank++) {
 			base   = DRAM_addr[bank];
-			found = (destination >= base) && (extend <= base + DRAM_pages[bank]*nbpp);
+			found = (destination >= base) &&
+			    (extend <= base + DRAM_pages[bank]*nbpp);
 		};
 		for (bank = 0; (bank < podram_blocks) && !found; bank++) {
 			base = PODRAM_addr[bank];
-			found = (destination >= base) && (extend <= base + PODRAM_pages[bank]*nbpp);
+			found = (destination >= base) &&
+			    (extend <= base + PODRAM_pages[bank]*nbpp);
 		};
 		if (!found || (extend > top_physdram)) {
-			panic( "Internal error: relocating range [%lx +%lx => %lx] outside (PO)DRAM banks!",
-				src, length, destination
+			panic( "Internal error: relocating range "
+			    "[%lx +%lx => %lx] outside (PO)DRAM banks!",
+			    src, length, destination
 			);
 		};
 
 		reloc_entry+=3;
 	};
-	if (reloc_entry != reloc_pos) panic("Relocation instruction table is corrupted");
+	if (reloc_entry != reloc_pos)
+		panic("Relocation instruction table is corrupted");
 	
 	printf("OK!\n");
 }
@@ -319,7 +338,8 @@ void get_memory_configuration(void) {
 	osmemory_read_arrangement_table(memory_page_types);
 
 	/* init counters */
-	bank = vram_blocks = dram_blocks = rom_blocks = io_blocks = podram_blocks = 0;
+	bank = vram_blocks = dram_blocks = rom_blocks = io_blocks =
+	    podram_blocks = 0;
 
 	current_page_type = -1;
 	phys_page = 0;			/* physical address in pages	*/
@@ -328,36 +348,48 @@ void get_memory_configuration(void) {
 
 	/* iterating over a packed array of 2 page types/byte i.e. 8 kb/byte */
 	while (loop < 2*memory_table_size) {
-		page = (memory_page_types[loop / 2]);	/* read	twice       	   */
-		if (loop & 1) page >>= 4;		/* take other nibble	   */
+		page = (memory_page_types[loop / 2]);	/* read	twice */
+		if (loop & 1) page >>= 4;		/* take other nibble */
 
-		/* bits 0-2 give type, bit3 means the bit page is allocatable 	   */
-		page &= 0x7;				/* only take bottom 3 bits */
+		/*
+		 * bits 0-2 give type, bit3 means the bit page is
+		 * allocatable
+		 */
+		page &= 0x7;			/* only take bottom 3 bits */
 		if (page != current_page_type) {
-			/* passed a boundary ... note this block		   */
-			/* splitting in different vars is for compatability reasons*/
+			/* passed a boundary ... note this block	   */
+			/*
+			 * splitting in different vars is for
+			 * compatability reasons
+			 */
 			switch (current_page_type) {
 				case -1 :
 				case  0 :
 					break;
 				case osmemory_TYPE_DRAM :
 					if (phys_page < PODRAM_START) {
-						DRAM_addr[dram_blocks]  = phys_page * nbpp;
-						DRAM_pages[dram_blocks] = page_count;
+						DRAM_addr[dram_blocks]  =
+						    phys_page * nbpp;
+						DRAM_pages[dram_blocks] =
+						    page_count;
 						dram_blocks++;
 					} else {
-						PODRAM_addr[podram_blocks]  = phys_page * nbpp;
-						PODRAM_pages[podram_blocks] = page_count;
+						PODRAM_addr[podram_blocks]  =
+						    phys_page * nbpp;
+						PODRAM_pages[podram_blocks] =
+						    page_count;
 						podram_blocks++;
 					};
 					break;
 				case osmemory_TYPE_VRAM :
-					VRAM_addr[vram_blocks]  = phys_page * nbpp;
+					VRAM_addr[vram_blocks]  =
+					    phys_page * nbpp;
 					VRAM_pages[vram_blocks] = page_count;
 					vram_blocks++;
 					break;
 				case osmemory_TYPE_ROM :
-					ROM_addr[rom_blocks]  = phys_page * nbpp;
+					ROM_addr[rom_blocks]  =
+					    phys_page * nbpp;
 					ROM_pages[rom_blocks] = page_count;
 					rom_blocks++;
 					break;
@@ -367,16 +399,25 @@ void get_memory_configuration(void) {
 					io_blocks++;
 					break;
 				default :
-					printf("WARNING : found unknown memory object %d ", current_page_type);
-					printf(" at 0x%s", sprint0(8,'0','x', phys_page * nbpp));
-					printf(" for %s k\n", sprint0(5,' ','d', (page_count*nbpp)>>10));
+					printf("WARNING : found unknown "
+					    "memory object %d ",
+					    current_page_type);
+					printf(" at 0x%s",
+					    sprint0(8,'0','x',
+						phys_page * nbpp));
+					printf(" for %s k\n",
+					    sprint0(5,' ','d',
+						(page_count*nbpp)>>10));
 					break;
 			};
 			current_page_type = page;
 			phys_page = loop;
 			page_count = 0;
 		};
-		/* smallest unit we recognise is one page ... silly could be upto 64 pages i.e. 256 kb */
+		/*
+		 * smallest unit we recognise is one page ... silly
+		 * could be upto 64 pages i.e. 256 kb
+		 */
 		page_count += 1;
 		loop       += 1;
 		if ((loop & 31) == 0) twirl();
@@ -386,9 +427,10 @@ void get_memory_configuration(void) {
 
 	if (VRAM_pages[0] == 0) {
 		/* map DRAM as video memory */
-		display_size	 = (vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & ~(nbpp-1));
+		display_size	 = (vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) &
+		    ~(nbpp-1));
 #if 0
-		mapped_screen_memory = 1024 * 1024;		/* max allowed on RiscPC	*/
+		mapped_screen_memory = 1024 * 1024; /* max allowed on RiscPC */
 		videomem_pages   = (mapped_screen_memory / nbpp);
 		videomem_start   = DRAM_addr[0];
 		DRAM_addr[0]	+= videomem_pages * nbpp;
@@ -410,16 +452,19 @@ void get_memory_configuration(void) {
 		if (DRAM_pages[top_bank] == one_mb_pages) video_bank--;
 
 		if (DRAM_pages[video_bank] < videomem_pages)
-			panic("Weird memory configuration found; please contact acorn32 portmaster.");
+			panic("Weird memory configuration found; please "
+			    "contact acorn32 portmaster.");
 
 		/* split off the top 1Mb */
-		DRAM_addr [top_bank+1]  = DRAM_addr[top_bank] + (DRAM_pages[top_bank] - one_mb_pages)*nbpp;
+		DRAM_addr [top_bank+1]  = DRAM_addr[top_bank] +
+		    (DRAM_pages[top_bank] - one_mb_pages)*nbpp;
 		DRAM_pages[top_bank+1]  = one_mb_pages;
 		DRAM_pages[top_bank  ] -= one_mb_pages;
 		dram_blocks++;
 
 		/* Map video memory at the end of the choosen DIMM */
-		videomem_start          = DRAM_addr[video_bank] + (DRAM_pages[video_bank] - videomem_pages)*nbpp;
+		videomem_start          = DRAM_addr[video_bank] +
+		    (DRAM_pages[video_bank] - videomem_pages)*nbpp;
 		DRAM_pages[video_bank] -= videomem_pages;
 
 		/* sanity */
@@ -439,7 +484,8 @@ void get_memory_configuration(void) {
 
 	if (mapped_screen_memory) {
 		printf("Used %d kb DRAM ", (mapped_screen_memory)/1024);
-		printf("at 0x%s for video memory\n", sprint0(8,'0','x', videomem_start));
+		printf("at 0x%s for video memory\n",
+		    sprint0(8,'0','x', videomem_start));
 	};
 
 	/* find top of (PO)DRAM pages */
@@ -452,9 +498,11 @@ void get_memory_configuration(void) {
 		top = DRAM_addr[loop] + DRAM_pages[loop]*nbpp;
 		if (top > top_physdram) top_physdram = top;
 	};
-	if (top_physdram == 0) panic("reality check: No DRAM in this machine?");
+	if (top_physdram == 0)
+		panic("reality check: No DRAM in this machine?");
 	if (((top_physdram >> 20) << 20) != top_physdram)
-		panic("Top is not not aligned on a Mb; remove very small DIMMS?");
+		panic("Top is not not aligned on a Mb; "
+		    "remove very small DIMMS?");
 
 	videomem_start_ro = vdu_var(os_VDUVAR_DISPLAY_START);
 
@@ -462,13 +510,15 @@ void get_memory_configuration(void) {
 	for (count = 0; count < rom_blocks; count++) {
 		printf("Found ROM  (%d)", count);
 		printf(" at 0x%s", sprint0(8,'0','x', ROM_addr[count]));
-		printf(" for %s k\n", sprint0(5,' ','d', (ROM_pages[count]*nbpp)>>10));
+		printf(" for %s k\n",
+		    sprint0(5,' ','d', (ROM_pages[count]*nbpp)>>10));
 	};
 
 	for (count = 0; count < io_blocks; count++) {
 		printf("Found I/O  (%d)", count);
 		printf(" at 0x%s", sprint0(8,'0','x', IO_addr[count]));
-		printf(" for %s k\n", sprint0(5,' ','d', (IO_pages[count]*nbpp)>>10));
+		printf(" for %s k\n",
+		    sprint0(5,' ','d', (IO_pages[count]*nbpp)>>10));
 	};
 
 	/* for DRAM/VRAM also count the number of pages */
@@ -477,7 +527,8 @@ void get_memory_configuration(void) {
 		total_dram_pages += DRAM_pages[count];
 		printf("Found DRAM (%d)", count);
 		printf(" at 0x%s", sprint0(8,'0','x', DRAM_addr[count]));
-		printf(" for %s k\n", sprint0(5,' ','d', (DRAM_pages[count]*nbpp)>>10));
+		printf(" for %s k\n",
+		    sprint0(5,' ','d', (DRAM_pages[count]*nbpp)>>10));
 	};
 
 	total_vram_pages = 0;
@@ -485,7 +536,8 @@ void get_memory_configuration(void) {
 		total_vram_pages += VRAM_pages[count];
 		printf("Found VRAM (%d)", count);
 		printf(" at 0x%s", sprint0(8,'0','x', VRAM_addr[count]));
-		printf(" for %s k\n", sprint0(5,' ','d', (VRAM_pages[count]*nbpp)>>10));
+		printf(" for %s k\n",
+		    sprint0(5,' ','d', (VRAM_pages[count]*nbpp)>>10));
 	};
 
 	total_podram_pages = 0;
@@ -493,7 +545,8 @@ void get_memory_configuration(void) {
 		total_podram_pages += PODRAM_pages[count];
 		printf("Found Processor only (S)DRAM (%d)", count);
 		printf(" at 0x%s", sprint0(8,'0','x', PODRAM_addr[count]));
-		printf(" for %s k\n", sprint0(5,' ','d', (PODRAM_pages[count]*nbpp)>>10));
+		printf(" for %s k\n",
+		    sprint0(5,' ','d', (PODRAM_pages[count]*nbpp)>>10));
 	};
 }
 
@@ -504,7 +557,9 @@ void get_memory_map(void) {
 	int	phys_addr;
 
 	printf("\nGetting actual memorymapping");
-	for (page = 0, page_info = mem_pages_info; page < totalpages; page++, page_info++) {
+	for (page = 0, page_info = mem_pages_info;
+	     page < totalpages;
+	     page++, page_info++) {
 		page_info->pagenumber = 0;	/* not used */
 		page_info->logical    = (firstpage + page) * nbpp;
 		page_info->physical   = 0;	/* result comes here */
@@ -514,7 +569,8 @@ void get_memory_map(void) {
 	/* close list */
 	page_info->pagenumber = -1;
 
-	inout = osmemory_GIVEN_LOG_ADDR | osmemory_RETURN_PAGE_NO | osmemory_RETURN_PHYS_ADDR;
+	inout = osmemory_GIVEN_LOG_ADDR | osmemory_RETURN_PAGE_NO |
+	    osmemory_RETURN_PHYS_ADDR;
 	osmemory_page_op(inout, mem_pages_info, totalpages);
 
 	printf(" ; sorting ");
@@ -522,7 +578,10 @@ void get_memory_map(void) {
 	    &page_info_cmp);
 	printf(".\n");
 
-	/* get the first DRAM index and show the physical memory fragments we got */
+	/*
+	 * get the first DRAM index and show the physical memory
+	 * fragments we got
+	 */
 	printf("\nFound physical memory blocks :\n");
 	first_mapped_DRAM_page_index = -1;
 	first_mapped_PODRAM_page_index = -1;
@@ -530,10 +589,12 @@ void get_memory_map(void) {
 		phys_addr = mem_pages_info[page].physical;
 		printf("[0x%x", phys_addr);
 		while (mem_pages_info[page+1].physical - phys_addr == nbpp) {
-			if ((first_mapped_DRAM_page_index<0) && (phys_addr >= DRAM_addr[0])) {
+			if ((first_mapped_DRAM_page_index<0) &&
+			    (phys_addr >= DRAM_addr[0])) {
 				first_mapped_DRAM_page_index = page;
 			};
-			if ((first_mapped_PODRAM_page_index<0) && (phys_addr >= PODRAM_addr[0])) {
+			if ((first_mapped_PODRAM_page_index<0) &&
+			    (phys_addr >= PODRAM_addr[0])) {
 				first_mapped_PODRAM_page_index = page;
 			};
 			page++;
@@ -543,9 +604,11 @@ void get_memory_map(void) {
 	};
 	printf("\n\n");
 	if (first_mapped_PODRAM_page_index < 0) {
-		if (PODRAM_addr[0]) panic("Found no (S)DRAM mapped in the bootloader");
+		if (PODRAM_addr[0])
+			panic("Found no (S)DRAM mapped in the bootloader");
 	};
-	if (first_mapped_DRAM_page_index < 0) panic("No DRAM mapped in the bootloader");
+	if (first_mapped_DRAM_page_index < 0)
+		panic("No DRAM mapped in the bootloader");
 }
 
 
@@ -553,22 +616,30 @@ void create_initial_page_tables(void) {
 	u_long page, section, addr, kpage;
 
 	/* mark a section by the following bits and domain 0, AP=01, CB=0 */
-	/*         A         P         C        B        section                 domain		*/
-	section = (0<<11) | (1<<10) | (0<<3) | (0<<2) | (1<<4) | (1<<1) | (0) | (0 << 5);
+	/*         A         P         C        B        section          
+	           domain		*/
+	section = (0<<11) | (1<<10) | (0<<3) | (0<<2) | (1<<4) | (1<<1) |
+	    (0) | (0 << 5);
 
 	/* first of all a full 1:1 mapping */
 	for (page = 0; page < 4*1024; page++) {
 		initial_page_tables[page] = (page<<20) | section;
 	};
 
-	/* video memory is mapped 1:1 in the DRAM section or in VRAM section	*/
-
-	/* map 1Mb from top of DRAM memory to bottom 1Mb of virtual memmap	*/
+	/*
+	 * video memory is mapped 1:1 in the DRAM section or in VRAM
+	 * section
+	 * 
+	 * map 1Mb from top of DRAM memory to bottom 1Mb of virtual memmap
+	 */
 	top_1Mb_dram = (((top_physdram - 1024*1024) >> 20) << 20);
 
 	initial_page_tables[0] = top_1Mb_dram | section;
 
-	/* map 16 Mb of kernel space to KERNEL_BASE i.e. marks[KERNEL_START]	*/
+	/*
+	 * map 16 Mb of kernel space to KERNEL_BASE
+	 * i.e. marks[KERNEL_START]
+	 */
 	for (page = 0; page < 16; page++) {
 		addr  = (kernel_physical_start >> 20) + page;
 		kpage = (marks[MARK_START]     >> 20) + page;
@@ -581,15 +652,19 @@ void add_pagetables_at_top(void) {
 	int page;
 	u_long src, dst, fragaddr;
 
-	/* Special : destination must be on a 16 Kb boundary			*/
-	/* get 4 pages on the top of the physical memory and copy PT's in it	*/
+	/* Special : destination must be on a 16 Kb boundary */
+	/* get 4 pages on the top of the physical memory and copy PT's in it */
 	new_L1_pages_phys = top_physdram - 4*nbpp;
 
-	/* If the L1 page tables are not 16 kb aligned, adjust base until it is	*/
+	/*
+	 * If the L1 page tables are not 16 kb aligned, adjust base
+	 * until it is
+	 */
 	while (new_L1_pages_phys & (16*1024-1)) {
 		new_L1_pages_phys -= nbpp;
 	};
-	if (new_L1_pages_phys & (16*1024-1)) panic("Paranoia : L1 pages not on 16Kb boundary");
+	if (new_L1_pages_phys & (16*1024-1))
+		panic("Paranoia : L1 pages not on 16Kb boundary");
 
 	dst = new_L1_pages_phys;
 	src = (u_long) initial_page_tables;
@@ -630,7 +705,8 @@ void create_configuration(int argc, char **argv, int start_args) {
 	/* get some miscelanious info for the bootblock */
 	os_readsysinfo_monitor_info(NULL, &monitor_type, &monitor_sync);
 	os_readsysinfo_chip_presence(&ioeb_flags, &superio_flags, &lcd_flags);
-	os_readsysinfo_superio_features(&superio_flags_basic, &superio_flags_extra);
+	os_readsysinfo_superio_features(&superio_flags_basic,
+	    &superio_flags_extra);
 	os_readsysinfo_unique_id(&id_low, &id_high);
 
 	/* fill in the bootconfig *bconfig structure : generic version II */
@@ -639,7 +715,10 @@ void create_configuration(int argc, char **argv, int start_args) {
 	bconfig->version	= BOOTCONFIG_VERSION;
 	strcpy(bconfig->kernelname, booted_file);
 
-	/* get the kernel base name and update the RiscOS name to a Unix name */
+	/*
+	 * get the kernel base name and update the RiscOS name to a
+	 * Unix name
+	 */
 	i = strlen(booted_file);
 	while ((i >= 0) && (booted_file[i] != '.')) i--;
 	if (i) {
@@ -671,7 +750,8 @@ void create_configuration(int argc, char **argv, int start_args) {
 	/* mark kernel pointers */
 	bconfig->kernvirtualbase	= marks[MARK_START];
 	bconfig->kernphysicalbase	= kernel_physical_start;
-	bconfig->kernsize		= kernel_free_vm_start - marks[MARK_START];
+	bconfig->kernsize		= kernel_free_vm_start -
+					    marks[MARK_START];
 	bconfig->ksym_start		= marks[MARK_SYM];
 	bconfig->ksym_end		= marks[MARK_SYM] + marks[MARK_NSYM];
 
@@ -682,13 +762,15 @@ void create_configuration(int argc, char **argv, int start_args) {
 	bconfig->width			= vdu_var(os_MODEVAR_XWIND_LIMIT);
 	bconfig->height			= vdu_var(os_MODEVAR_YWIND_LIMIT);
 	bconfig->log2_bpp		= vdu_var(os_MODEVAR_LOG2_BPP);
-	bconfig->framerate		= 56;		/* XXX why? better guessing possible? XXX */
+	/* XXX why? better guessing possible? XXX */
+	bconfig->framerate		= 56;
 
 	/* fill in memory info */
 	bconfig->pagesize		= nbpp;
-	bconfig->drampages		= total_dram_pages + total_podram_pages;	/* XXX */
+	bconfig->drampages		= total_dram_pages +
+					    total_podram_pages;	/* XXX */
 	bconfig->vrampages		= total_vram_pages;
-	bconfig->dramblocks		= dram_blocks + podram_blocks;			/* XXX */
+	bconfig->dramblocks		= dram_blocks + podram_blocks; /*XXX*/
 	bconfig->vramblocks		= vram_blocks;
 
 	for (i = 0; i < dram_blocks; i++) {
@@ -726,12 +808,17 @@ int main(int argc, char **argv) {
 	get_memory_configuration();
 	get_memory_map();
 
-	/* point to the first free DRAM page guaranteed to be in strict order up */
+	/*
+	 * point to the first free DRAM page guaranteed to be in
+	 * strict order up
+	 */
 	if (first_mapped_PODRAM_page_index) {
-		free_relocation_page = mem_pages_info + first_mapped_PODRAM_page_index;
+		free_relocation_page =
+		    mem_pages_info + first_mapped_PODRAM_page_index;
 		kernel_physical_start = PODRAM_addr[0];
 	} else {
-		free_relocation_page = mem_pages_info + first_mapped_DRAM_page_index;
+		free_relocation_page =
+		    mem_pages_info + first_mapped_DRAM_page_index;
 		kernel_physical_start = DRAM_addr[0];
 	};
 
@@ -739,12 +826,16 @@ int main(int argc, char **argv) {
 
 	/* first count the kernel to get the markers */
 	ret = loadfile(booted_file, marks, COUNT_KERNEL);
-	if (ret == -1) panic("Kernel load failed");				/* lie to the user ...	*/
+	if (ret == -1) panic("Kernel load failed"); /* lie to the user ... */
 	close(ret);
 
-	/* calculate how much the difference is between physical and virtual space for the kernel	*/
+	/*
+	 * calculate how much the difference is between physical and
+	 * virtual space for the kernel
+	 */
 	pv_offset = ((u_long) marks[MARK_START] - kernel_physical_start);
-	kernel_free_vm_start = (marks[MARK_END] + nbpp-1) & ~(nbpp-1);		/* round on a page	*/
+	/* round on a page	*/
+	kernel_free_vm_start = (marks[MARK_END] + nbpp-1) & ~(nbpp-1);
 
 	/* we seem to be forced to clear the marks[] ? */
 	bzero(marks, sizeof(marks[MARK_MAX]));
@@ -760,11 +851,15 @@ int main(int argc, char **argv) {
 	add_pagetables_at_top();
 	create_configuration(argc, argv, start_args);
 
-	/* done relocating and creating information, now update and check the relocation mechanism */
+	/*
+	 * done relocating and creating information, now update and
+	 * check the relocation mechanism
+	 */
 	prepare_and_check_relocation_system();
 	
 	printf("\nStarting at 0x%lx\n", marks[MARK_ENTRY]);
-	printf("Will boot in a few secs due to relocation....\nbye bye from RISC OS!");
+	printf("Will boot in a few secs due to relocation....\n"
+	    "bye bye from RISC OS!");
 
 	/* dismount all filesystems */
 	xosfscontrol_shutdown();
@@ -774,9 +869,11 @@ int main(int argc, char **argv) {
 
 	start_kernel(
 		/* r0 relocation code page (V)	*/ relocate_code_page->logical,
-		/* r1 relocation pv offset	*/ relocate_code_page->physical-relocate_code_page->logical,
+		/* r1 relocation pv offset	*/
+		relocate_code_page->physical-relocate_code_page->logical,
 		/* r2 configuration structure	*/ bconfig_new_phys, 
-		/* r3 relocation table (P)	*/ relocate_table_pages->physical,	/* one piece! */
+		/* r3 relocation table (P)	*/
+		relocate_table_pages->physical,	/* one piece! */
 		/* r4 L1 page descriptor (P)	*/ new_L1_pages_phys,
 		/* r5 kernel entry point	*/ marks[MARK_ENTRY]
 	);
@@ -792,19 +889,21 @@ ssize_t boot32_read(int f, void *addr, size_t size) {
 	/* printf("read at %p for %ld bytes\n", addr, size); */
 	total = 0;
 	while (size > 0) {
-		fragsize = nbpp;				/* select one page	*/
-		if (size < nbpp) fragsize = size;		/* clip to size left	*/
+		fragsize = nbpp;		/* select one page	*/
+		if (size < nbpp) fragsize = size;/* clip to size left	*/
 
 		/* get a page for a fragment */
-		fragaddr = (caddr_t) get_relocated_page((u_long) addr - pv_offset, fragsize)->logical;
+		fragaddr = (caddr_t) get_relocated_page((u_long) addr -
+		    pv_offset, fragsize)->logical;
 
 		bytes_read = read(f, fragaddr, fragsize);
-		if (bytes_read < 0) return bytes_read;		/* error!		*/
-		total += bytes_read;				/* account read bytes	*/
+		if (bytes_read < 0) return bytes_read;	/* error!	*/
+		total += bytes_read;		/* account read bytes	*/
 
-		if (bytes_read < fragsize) return total;	/* does this happen?	*/
+		if (bytes_read < fragsize)
+			return total;		/* does this happen?	*/
 
-		size -= fragsize;				/* advance		*/
+		size -= fragsize;		/* advance		*/
 		addr += fragsize;
 	};
 	return total;
@@ -817,14 +916,15 @@ void *boot32_memcpy(void *dst, const void *src, size_t size) {
 
 	/* printf("memcpy to %p from %p for %ld bytes\n", dst, src, size); */
 	while (size > 0) {
-		fragsize = nbpp;				/* select one page	*/
-		if (size < nbpp) fragsize = size;		/* clip to size left	*/
+		fragsize = nbpp;		/* select one page	*/
+		if (size < nbpp) fragsize = size;/* clip to size left	*/
 
 		/* get a page for a fragment */
-		fragaddr = (caddr_t) get_relocated_page((u_long) dst - pv_offset, fragsize)->logical;
+		fragaddr = (caddr_t) get_relocated_page((u_long) dst -
+		    pv_offset, fragsize)->logical;
 		memcpy(fragaddr, src, size);
 
-		src += fragsize;				/* account copy		*/
+		src += fragsize;		/* account copy		*/
 		dst += fragsize;
 		size-= fragsize;
 	};
@@ -838,14 +938,14 @@ void *boot32_memset(void *dst, int c, size_t size) {
 
 	/* printf("memset %p for %ld bytes with %d\n", dst, size, c); */
 	while (size > 0) {
-		fragsize = nbpp;				/* select one page	*/
-		if (size < nbpp) fragsize = size;		/* clip to size left	*/
+		fragsize = nbpp;		/* select one page	*/
+		if (size < nbpp) fragsize = size;/* clip to size left	*/
 
 		/* get a page for a fragment */
 		fragaddr = (caddr_t) get_relocated_page((u_long) dst - pv_offset, fragsize)->logical;
 		memset(fragaddr, c, fragsize);
 
-		dst += fragsize;				/* account memsetting	*/
+		dst += fragsize;		/* account memsetting	*/
 		size-= fragsize;
 
 	};
@@ -866,13 +966,14 @@ struct page_info *get_relocated_page(u_long destination, int size) {
 	page = free_relocation_page;
 	if (free_relocation_page->pagenumber < 0) panic("\n\nOut of pages");
 	reloc_entries++;
-	if (reloc_entries >= MAX_RELOCPAGES) panic("\n\nToo many relocations! What are you loading ??");
+	if (reloc_entries >= MAX_RELOCPAGES)
+		panic("\n\nToo many relocations! What are you loading ??");
 
 	/* record the relocation */
 	*reloc_pos++ = free_relocation_page->physical;
 	*reloc_pos++ = destination;
 	*reloc_pos++ = size;
-	free_relocation_page++;				/* advance 		*/
+	free_relocation_page++;			/* advance 		*/
 
 	return page;
 }
@@ -895,7 +996,8 @@ void twirl(void) {
 }
 
 
-void process_args(int argc, char **argv, int *howto, char *file, int *start_args) {
+void process_args(int argc, char **argv, int *howto, char *file,
+    int *start_args) {
 	int i, j;
 	static char filename[80];
 
