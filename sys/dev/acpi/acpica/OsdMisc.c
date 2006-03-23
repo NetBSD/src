@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.1 2006/03/23 13:41:13 kochi Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.2 2006/03/23 13:45:11 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.1 2006/03/23 13:41:13 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.2 2006/03/23 13:45:11 kochi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.1 2006/03/23 13:41:13 kochi Exp $");
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpi_osd.h>
 
-#include <dev/acpi/acpica/Subsystem/acdebug.h>
+#include <dist/acpica/acdebug.h>
 /*
  * for debugging DSDT (try this at your own risk!):
  *
