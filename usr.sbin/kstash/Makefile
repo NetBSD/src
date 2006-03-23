@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2005/01/10 03:11:18 lukem Exp $
+# $NetBSD: Makefile,v 1.14 2006/03/23 21:51:14 wiz Exp $
 
 NOLINT= # defined
 
@@ -18,7 +18,6 @@ CPPFLAGS+= -I.					\
 	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${DIST}/heimdal/lib/asn1		\
 	-I${DIST}/heimdal/lib/krb5		\
-	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
