@@ -1,4 +1,4 @@
-.\" $NetBSD: mkbootimage.8,v 1.1 2006/03/23 18:13:34 garbled Exp $
+.\" $NetBSD: mkbootimage.8,v 1.2 2006/03/23 19:53:07 wiz Exp $
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -53,10 +53,12 @@ is the utility used to create a bootable prep kernel image on
 .Pp
 The
 .Nm
-utility takes the boot-progam, and the optional kernel, and creates a boot
-image from them.  This image contains the boot code, kernel, and optionally
-an i386 partition table.  The image can be written directly to a floppy or
-hard drive with the
+utility takes the boot-program, and the optional kernel, and creates a boot
+image from them.
+This image contains the boot code, kernel, and optionally
+an i386 partition table.
+The image can be written directly to a floppy or hard drive with
+the
 .Xr dd 1
 command, or it can be directly netbooted via
 .Xr bootpd 8 .
@@ -64,17 +66,19 @@ command, or it can be directly netbooted via
 The following options are available:
 .Bl -tag -width indent
 .It Fl b
-Specifies which bootloader to embed in the bootable image.  Defaults to
+Specifies which bootloader to embed in the bootable image.
+Defaults to
 .Pa /usr/mdec/boot .
 .It Fl k
-Specifies which kernel binary to embed in the bootable image.  Defaults to
+Specifies which kernel binary to embed in the bootable image.
+Defaults to
 .Pa /netbsd .
 .It Fl l
-Creates a partition table for a 2.88MB floppy instead of a 1.44MB floppy. This
-is primarily used for El-Torrito style CD images.
+Creates a partition table for a 2.88MB floppy instead of a 1.44MB floppy.
+This is primarily used for El-Torrito style CD images.
 .It Fl r
-Specifies the raw device to read to gather the current partition table. This
-is generally
+Specifies the raw device to read to gather the current partition table.
+This is generally
 .Pa /dev/rsd0c .
 .It Fl s
 Generates a standalone image with no partition table embedded.
@@ -84,39 +88,43 @@ There are three primary ways to use
 .Nm
 to build a bootable image:
 .Pp
-The first method is to build an image suitable for a floppy or netboot.  This
-will create an image with an embedded partition table with a single PReP boot
-partition of type 0x41(65).  The image can be directly netbooted, or if it
+The first method is to build an image suitable for a floppy or netboot.
+This will create an image with an embedded partition table with a
+single PReP boot partition of type 0x41(65).
+The image can be directly netbooted, or if it
 is small enough, written directly to a floppy with
 .Xr dd 1 .
 .Nm
 will warn you if the generated image is too large to be written to a floppy.
 .Pp
-The second method is to build a standalone image with no partition table.  This
-should be written to the PReP boot partition on your hard drive with
+The second method is to build a standalone image with no partition table.
+This should be written to the PReP boot partition on your hard drive with
 .Xr dd 1 .
 .Pp
-The third method is for use in upgrading older systems that have been built by
-writing the floppy image directly to the head of the hard drive.  This method
-reads the existing partition table and embeds that in the image.  This should
-prevent loss of your current partition layout.  This image should be written
-directly to the head of the disk with
+The third method is for use in upgrading older systems that have
+been built by writing the floppy image directly to the head of the
+hard drive.
+This method reads the existing partition table and embeds that in
+the image.
+This should prevent loss of your current partition layout.
+This image should be written directly to the head of the disk with
 .Xr dd 1 .
 .Pp
-The reccomended setup for a PReP machine is to build a partition table with
+The recommended setup for a PReP machine is to build a partition table with
 .Xr fdisk 8
 that contains a PReP boot partition (type 65) as partition 0, marked active,
 and a second partition for
 .Nx
-encompasing the remainder of the disk.  You should then create a disklabel on
+encompassing the remainder of the disk.
+You should then create a disklabel on
 that disk with a partition (such as e) pointing to the PReP boot partition.
 Partition c should be the whole disk, and partition d can optionally be the
 .Nx
-portion of the disk.  You may then use the other partitions for your normal
-disk layout.
+portion of the disk.
+You may then use the other partitions for your normal disk layout.
 The PReP boot partition can be placed anywhere on the disk, but it is
-reccomended that it be placed at the beginning of the disk.
-.Sh Examples
+recommended that it be placed at the beginning of the disk.
+.Sh EXAMPLES
 Create a floppy or netboot image named
 .Sq boot.fs :
 .Dl Ic mkbootimage -b /usr/mdec/boot -k /netbsd boot.fs
@@ -127,15 +135,16 @@ Use the partition information on
 to create a new bootable image with com0 as the console:
 .Dl Ic mkbootimage -b /usr/mdec/boot_com0 -k /netbsd -r /dev/rsd0c boot.fs
 .Sh SEE ALSO
-.Xr fdisk 8 ,
+.Xr dd 1 ,
 .Xr boot 8 ,
-.Xr disklabel 8 ,
 .Xr bootpd 8 ,
-.Xr dd 1
+.Xr disklabel 8 ,
+.Xr fdisk 8
 .Sh HISTORY
 .Nm
 first appeared in
 .Nx 1.5 .
 .Sh AUTHORS
 .Nm
-was written by NONAKA Kimihiro.
+was written by
+.An NONAKA Kimihiro .
