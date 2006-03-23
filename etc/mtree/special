@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.91 2006/02/11 09:33:16 agc Exp $
+#	$NetBSD: special,v 1.92 2006/03/23 20:02:57 wiz Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -77,7 +77,6 @@
 ./etc/iscsi			type=dir  mode=0755
 ./etc/iscsi/auths		type=file mode=0600
 ./etc/iscsi/targets		type=file mode=0644
-./etc/kerberosIV		type=dir  mode=0755 ignore optional
 ./etc/ld.so.conf		type=file mode=0644 optional
 ./etc/lkm.conf			type=file mode=0644 optional
 ./etc/localtime			type=link mode=0755
