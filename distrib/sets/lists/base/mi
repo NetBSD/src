@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.605 2006/03/22 15:49:31 elad Exp $
+# $NetBSD: mi,v 1.606 2006/03/23 23:23:38 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1896,10 +1896,16 @@
 ./usr/share/lkm/vfs/module/Makefile		base-obsolete		obsolete
 ./usr/share/lkm/vfs/module/kernfsmod.c		base-obsolete		obsolete
 ./usr/share/locale				base-locale-share
-./usr/share/locale/be				base-locale-share
-./usr/share/locale/be/LC_MESSAGES		base-locale-share
+./usr/share/locale/af_ZA.ISO8859-1		base-locale-af
+./usr/share/locale/af_ZA.ISO8859-1/LC_CTYPE	base-locale-af		nls
+./usr/share/locale/af_ZA.ISO8859-15		base-locale-af
+./usr/share/locale/af_ZA.ISO8859-15/LC_CTYPE	base-locale-af		nls
+./usr/share/locale/be				base-locale-be
+./usr/share/locale/be/LC_MESSAGES		base-locale-be
 ./usr/share/locale/be_BY.CP1251			base-locale-be
 ./usr/share/locale/be_BY.CP1251/LC_CTYPE	base-locale-be		nls
+./usr/share/locale/be_BY.ISO8859-5		base-locale-be
+./usr/share/locale/be_BY.ISO8859-5/LC_CTYPE	base-locale-be		nls
 ./usr/share/locale/bg_BG.CP1251			base-locale-bg
 ./usr/share/locale/bg_BG.CP1251/LC_CTYPE	base-locale-bg		nls
 ./usr/share/locale/ca				base-locale-ca
@@ -1964,6 +1970,10 @@
 ./usr/share/locale/en_GB.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_GB.ISO8859-15		base-locale-en
 ./usr/share/locale/en_GB.ISO8859-15/LC_CTYPE	base-locale-en		nls
+./usr/share/locale/en_NZ.ISO8859-1		base-locale-en
+./usr/share/locale/en_NZ.ISO8859-1/LC_CTYPE	base-locale-en		nls
+./usr/share/locale/en_NZ.ISO8859-15		base-locale-en
+./usr/share/locale/en_NZ.ISO8859-15/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_US.ISO8859-1		base-locale-en
 ./usr/share/locale/en_US.ISO8859-1/LC_CTYPE	base-locale-en		nls
 ./usr/share/locale/en_US.ISO8859-15		base-locale-en
@@ -1988,6 +1998,12 @@
 ./usr/share/locale/et/LC_MESSAGES		base-locale-et
 ./usr/share/locale/et/LC_MESSAGES/grep.mo	base-util_locale-et	nls
 ./usr/share/locale/et/LC_MESSAGES/tar.mo	base-obsolete		obsolete
+./usr/share/locale/et_EE.ISO8859-15		base-locale-et
+./usr/share/locale/et_EE.ISO8859-15/LC_CTYPE	base-locale-et		nls
+./usr/share/locale/eu_ES.ISO8859-1		base-locale-eu
+./usr/share/locale/eu_ES.ISO8859-1/LC_CTYPE	base-locale-eu		nls
+./usr/share/locale/eu_ES.ISO8859-15		base-locale-eu
+./usr/share/locale/eu_ES.ISO8859-15/LC_CTYPE	base-locale-eu		nls
 ./usr/share/locale/fi				base-locale-share
 ./usr/share/locale/fi/LC_MESSAGES		base-locale-share
 ./usr/share/locale/fi_FI.ISO8859-1		base-locale-fi
@@ -2122,6 +2138,8 @@
 ./usr/share/locale/pt_BR/LC_MESSAGES		base-locale-pt
 ./usr/share/locale/pt_BR/LC_MESSAGES/grep.mo	base-locale-pt		nls
 ./usr/share/locale/pt_BR/LC_MESSAGES/tar.mo	base-obsolete		obsolete
+./usr/share/locale/pt_BR.ISO8859-1		base-locale-pt
+./usr/share/locale/pt_BR.ISO8859-1/LC_CTYPE	base-locale-pt		nls
 ./usr/share/locale/pt_PT.ISO8859-1		base-locale-pt
 ./usr/share/locale/pt_PT.ISO8859-1/LC_CTYPE	base-locale-pt		nls
 ./usr/share/locale/pt_PT.ISO8859-15		base-locale-pt
@@ -2129,6 +2147,8 @@
 ./usr/share/locale/ro				base-locale-ro
 ./usr/share/locale/ro/LC_MESSAGES		base-locale-ro
 ./usr/share/locale/ro/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ro	nls
+./usr/share/locale/ro_RO.ISO8859-2		base-locale-ro
+./usr/share/locale/ro_RO.ISO8859-2/LC_CTYPE	base-locale-ro		nls
 ./usr/share/locale/ru				base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES		base-locale-ru
 ./usr/share/locale/ru/LC_MESSAGES/grep.mo	base-locale-ru		nls
@@ -2162,6 +2182,10 @@
 ./usr/share/locale/sl_SI.ISO8859-2/LC_CTYPE	base-locale-sl		nls
 ./usr/share/locale/sr				base-locale-share
 ./usr/share/locale/sr/LC_MESSAGES		base-locale-share
+./usr/share/locale/sr_YU.ISO8859-2		base-locale-sr
+./usr/share/locale/sr_YU.ISO8859-2/LC_CTYPE	base-locale-sr		nls
+./usr/share/locale/sr_YU.ISO8859-5		base-locale-sr
+./usr/share/locale/sr_YU.ISO8859-5/LC_CTYPE	base-locale-sr		nls
 ./usr/share/locale/sv				base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES		base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES/grep.mo	base-util_locale-sv	nls
@@ -2177,6 +2201,10 @@
 ./usr/share/locale/tr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-tr	nls
 ./usr/share/locale/uk				base-locale-share
 ./usr/share/locale/uk/LC_MESSAGES		base-locale-share
+./usr/share/locale/uk_UA.CP1251			base-locale-uk
+./usr/share/locale/uk_UA.CP1251/LC_CTYPE	base-locale-uk		nls
+./usr/share/locale/uk_UA.ISO8859-5		base-locale-uk
+./usr/share/locale/uk_UA.ISO8859-5/LC_CTYPE	base-locale-uk		nls
 ./usr/share/locale/uk_UA.KOI8-U			base-locale-uk
 ./usr/share/locale/uk_UA.KOI8-U/LC_CTYPE	base-locale-uk		nls
 ./usr/share/locale/zh_CN			base-locale-zh
