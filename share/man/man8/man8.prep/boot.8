@@ -1,4 +1,4 @@
-.\" $NetBSD: boot.8,v 1.1 2006/03/23 18:15:34 garbled Exp $
+.\" $NetBSD: boot.8,v 1.2 2006/03/23 19:54:43 wiz Exp $
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -38,8 +38,7 @@
 .Os
 .Sh NAME
 .Nm boot
-.Nd
-system bootstrapping procedures
+.Nd system bootstrapping procedures
 .Sh SYNOPSIS
 .Nm boot
 .Sh DESCRIPTION
@@ -50,22 +49,26 @@ as described in
 .Xr fsck 8 ,
 and unless this fails, the system will resume multi-user operations.
 .Ss Cold starts
-The prep architecture does not allow the direct booting of a kernel from the
-hard drive.  Instead it requires a complete boot image to be loaded.  This
-boot image contains a
+The prep architecture does not allow the direct booting of a kernel
+from the hard drive.
+Instead it requires a complete boot image to be loaded.
+This boot image contains a
 .Nx
-kernel, which will then provide access to the devices on the machine.  The
-image can be placed on any device that the firmware considers a bootable
-device.  Usually this is either a SCSI disk, tape, CD-ROM, or floppy drive.
+kernel, which will then provide access to the devices on the machine.
+The image can be placed on any device that the firmware considers
+a bootable device.
+Usually this is either a SCSI disk, tape, CD-ROM, or floppy drive.
 .Ss Boot program options
-The prep architecture and bootloader does not support any option parsing at
-the boot prompt.
+The prep architecture and bootloader does not support any option
+parsing at the boot prompt.
 .Ss Boot partition
-The prep port requires a special boot partition on the primary boot device
-in order to load the kernel.  This partition consists of a PC-style i386
-partition label, a small bootloader, and a kernel image.  The prep firmware
-looks for a partition of type 0x41 (65) and expects the bootloader, immediately
-followed by the kernel, to be there.
+The prep port requires a special boot partition on the primary boot
+device in order to load the kernel.
+This partition consists of a PC-style i386 partition label, a small
+bootloader, and a kernel image.
+The prep firmware looks for a partition of type 0x41 (65) and
+expects the bootloader, immediately followed by the kernel, to be
+there.
 The
 .Xr mkbootimage 8
 command needs to be used to generate this image.
