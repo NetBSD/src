@@ -1,4 +1,4 @@
-.\" $NetBSD: pw_policy.3,v 1.7 2006/03/19 22:58:21 elad Exp $
+.\" $NetBSD: pw_policy.3,v 1.8 2006/03/23 19:31:37 wiz Exp $
 .\"
 .\" Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\"
@@ -226,7 +226,7 @@ returns a
 on success, or
 .Dv NULL
 on failure, in which case the
-.Ar errno
+.Va errno
 variable will be set to any of the following values indicating the
 reason for the failure:
 .Bl -tag -width Er
@@ -242,13 +242,13 @@ parameter or an invalid value in the password policy specification.
 .Pp
 .Fn pw_policy_load
 can also set
-.Ar errno
+.Va errno
 to a value returned by the called handlers and/or
 .Xr malloc 3 .
 .Pp
 .Fn pw_policy_test
-returns 0 if the password follows the policy, or -1 if it doesn't,
-.Ar errno
+returns 0 if the password follows the policy, or \-1 if it doesn't,
+.Va errno
 can be set to any of the following values:
 .Bl -tag -width Er
 .It Bq Er EPERM
@@ -259,7 +259,7 @@ pointer was passed as the password.
 .El
 .Pp
 In addition,
-.Ar errno
+.Va errno
 can be set to any error code returned by the handlers.
 .Sh FILES
 .Bl -tag -width /etc/passwd.conf -compact
