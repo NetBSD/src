@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.423 2006/03/22 17:21:33 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.424 2006/03/23 21:55:58 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -389,17 +389,6 @@ in sys/netinet6/in6.h.  No script is available for upgrades.
 "KAME" branch is used for kernel merge work purposes.
 http://www.kame.net/dev/cvsweb.cgi/kame/COVERAGE has functionality comparison
 among KAME/*BSD, *BSD-current and recent *BSD releases.
-
-Package:	krb4
-Version:	1.2
-Current Vers:	1.2.2
-Maintainer:	kth-krb@pdc.kth.se
-Archive Site:	ftp://ftp.pdc.kth.se/pub/krb/src/
-Home Page:	http://www.pdc.kth.se/kth-krb/
-Mailing List:	krb4@sics.se
-Responsible:	joda
-License:	BSD, MIT
-Notes:
 
 Package:	less
 Version:	less381
