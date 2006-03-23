@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2006/03/20 04:03:23 christos Exp $
+# $NetBSD: Makefile,v 1.16 2006/03/23 21:48:19 wiz Exp $
 
 NOLINT= # defined
 
@@ -16,7 +16,6 @@ SRCS= klist.c
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kuser			\
 	-I${NETBSDSRCDIR}/include/heimdal	\
-	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
@@ -26,9 +25,9 @@ CPPFLAGS+=-DHAVE_IPV6
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD+=	-lkafs -lkrb5 ${KRB4LDADD} -lcrypto -lasn1 -lcom_err \
+LDADD+=	-lkafs -lkrb5 -lcrypto -lasn1 -lcom_err \
 	-L${VERS} -lvers -lroken -lcrypt
-DPADD+=	${LIBKAFS} ${LIBKRB5} ${KRB4DPADD} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} \
+DPADD+=	${LIBKAFS} ${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} \
 	${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT}
 
 .include <bsd.prog.mk>
