@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2005/02/26 07:19:25 thorpej Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2006/03/23 23:37:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -67,13 +67,6 @@ int	krb5_arg __P((char, const char *));
 int	krb5_arg_end __P((void));
 void	krb5_end __P((void));
 int	krb5_chpw __P((const char *));
-#endif
-#ifdef KERBEROS
-int	krb4_init __P((const char *));
-int	krb4_arg __P((char, const char *));
-int	krb4_arg_end __P((void));
-void	krb4_end __P((void));
-int	krb4_chpw __P((const char *));
 #endif
 #ifdef YP
 int	yp_init __P((const char *));
