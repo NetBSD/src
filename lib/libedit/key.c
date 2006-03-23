@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.18 2006/03/06 21:11:56 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.19 2006/03/23 20:22:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.18 2006/03/06 21:11:56 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.19 2006/03/23 20:22:51 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -91,7 +91,6 @@ private int		 node__delete(EditLine *, key_node_t **, const char *);
 private int		 node_lookup(EditLine *, const char *, key_node_t *,
     int);
 private int		 node_enum(EditLine *, key_node_t *, int);
-private int		 key__decode_char(char *, int, int, int);
 
 #define	KEY_BUFSIZ	EL_BUFSIZ
 
