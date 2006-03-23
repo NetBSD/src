@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.24 2006/03/23 22:38:08 bjh21 Exp $	*/
+/*	$NetBSD: boot32.c,v 1.25 2006/03/23 22:47:15 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -257,13 +257,13 @@ prepare_and_check_relocation_system(void)
 	pages = 0;
 	while (pages < relocate_pages) {
 		src = (u_long)reloc_instruction_table + pages*nbpp;
-		dst = (relocate_table_pages + pages)->logical;
+		dst = relocate_table_pages[pages].logical;
 		memcpy((void *)dst, (void *)src, nbpp);
 
 		if (pages < relocate_pages - 1) {
 			/* check if next page is sequential physically */
-			if ((relocate_table_pages+pages+1)->physical -
-			    (relocate_table_pages+pages)->physical != nbpp) {
+			if (relocate_table_pages[pages+1].physical -
+			    relocate_table_pages[pages].physical != nbpp) {
 				/*
 				 * Non contigunous relocate area ->
 				 * try again
