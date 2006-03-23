@@ -1,4 +1,4 @@
-/* $NetBSD: strtof_vaxf.c,v 1.1 2006/03/15 17:35:18 kleink Exp $ */
+/* $NetBSD: strtof_vaxf.c,v 1.2 2006/03/23 18:08:20 he Exp $ */
 
 /****************************************************************
 
@@ -37,7 +37,7 @@ THIS SOFTWARE.
 #include "gdtoaimp.h"
 
 #ifdef __weak_alias
-__weak_alias(strtold, _strtold)
+__weak_alias(strtof, _strtof)
 #endif
 
  float
@@ -74,4 +74,4 @@ strtof(CONST char *s, char **sp)
 	if (k & STRTOG_Neg)
 		u.L[0] |= 0x00008000L;
 	return u.f;
-	}
+}
