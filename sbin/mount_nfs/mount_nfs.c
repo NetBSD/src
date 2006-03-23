@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.49 2006/03/21 21:11:41 christos Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.50 2006/03/23 23:23:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.49 2006/03/21 21:11:41 christos Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.50 2006/03/23 23:23:28 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,11 +54,6 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.49 2006/03/21 21:11:41 christos Exp $");
 
 #ifdef ISO
 #include <netiso/iso.h>
-#endif
-
-#ifdef NFSKERB
-#include <des.h>
-#include <kerberosIV/krb.h>
 #endif
 
 #include <nfs/rpcv2.h>
@@ -119,9 +114,6 @@ static const struct mntopt mopts[] = {
 	{ "conn", 0, ALTF_CONN, 1 },
 	{ "dumbtimer", 0, ALTF_DUMBTIMR, 1 },
 	{ "intr", 0, ALTF_INTR, 1 },
-#ifdef NFSKERB
-	{ "kerb", 0, ALTF_KERB, 1 },
-#endif
 	{ "nfsv3", 0, ALTF_NFSV3, 1 },
 	{ "rdirplus", 0, ALTF_RDIRPLUS, 1 },
 	{ "mntudp", 0, ALTF_MNTUDP, 1 },
@@ -175,21 +167,6 @@ int force3 = 0;
 int mnttcp_ok = 1;
 int port = 0;
 
-#ifdef NFSKERB
-static char inst[INST_SZ];
-static char realm[REALM_SZ];
-static struct {
-	u_long		kind;
-	KTEXT_ST	kt;
-} ktick;
-static struct nfsrpc_nickverf kverf;
-static struct nfsrpc_fullblock kin, kout;
-static NFSKERBKEY_T kivec;
-static CREDENTIALS kcr;
-static struct timeval ktv;
-static NFSKERBKEYSCHED_T kerb_keysched;
-#endif
-
 static void	shownfsargs(const struct nfs_args *);
 #ifdef ISO
 static struct	iso_addr *iso_addr(const char *);
@@ -217,18 +194,6 @@ mount_nfs(int argc, char *argv[])
 	int mntflags, altflags, i, nfssvc_flag, num;
 	char name[MAXPATHLEN], *p, *spec, *ospec;
 	mntoptparse_t mp;
-#ifdef NFSKERB
-	uid_t last_ruid;
-
-	last_ruid = -1;
-	if (krb_get_lrealm(realm, 0) != KSUCCESS)
-	    (void)strlcpy(realm, KRB_REALM, sizeof(realm));
-	if (sizeof (struct nfsrpc_nickverf) != RPCX_NICKVERF ||
-	    sizeof (struct nfsrpc_fullblock) != RPCX_FULLBLOCK ||
-	    ((char *)&ktick.kt) - ((char *)&ktick) != NFSX_UNSIGNED ||
-	    ((char *)ktick.kt.dat) - ((char *)&ktick) != 2 * NFSX_UNSIGNED)
-		warnx("Yikes! NFSKERB structs not packed!!\n");
-#endif
 	retrycnt = DEF_RETRY;
 
 	mntflags = 0;
@@ -295,11 +260,6 @@ mount_nfs(int argc, char *argv[])
 		case 'i':
 			nfsargsp->flags |= NFSMNT_INT;
 			break;
-#ifdef NFSKERB
-		case 'K':
-			nfsargsp->flags |= NFSMNT_KERB;
-			break;
-#endif
 		case 'L':
 			num = strtol(optarg, &p, 10);
 			if (*p || num < 2)
@@ -310,11 +270,6 @@ mount_nfs(int argc, char *argv[])
 		case 'l':
 			nfsargsp->flags |= NFSMNT_RDIRPLUS;
 			break;
-#ifdef NFSKERB
-		case 'm':
-			(void)strlcpy(realm, optarg, sizeof(realm));
-			break;
-#endif
 		case 'o':
 			mp = getmntopts(optarg, mopts, &mntflags, &altflags);
 			if (mp == NULL)
@@ -327,10 +282,6 @@ mount_nfs(int argc, char *argv[])
 				nfsargsp->flags |= NFSMNT_DUMBTIMR;
 			if (altflags & ALTF_INTR)
 				nfsargsp->flags |= NFSMNT_INT;
-#ifdef NFSKERB
-			if (altflags & ALTF_KERB)
-				nfsargsp->flags |= NFSMNT_KERB;
-#endif
 			if (altflags & ALTF_NFSV3) {
 				if (force2)
 					errx(1, "conflicting version options");
@@ -550,79 +501,6 @@ mount_nfs(int argc, char *argv[])
 			}
 			nfssvc_flag =
 			    NFSSVC_MNTD | NFSSVC_GOTAUTH | NFSSVC_AUTHINFAIL;
-#ifdef NFSKERB
-			/*
-			 * Set up as ncd_authuid for the kerberos call.
-			 * Must set ruid to ncd_authuid and reset the
-			 * ticket name iff ncd_authuid is not the same
-			 * as last time, so that the right ticket file
-			 * is found.
-			 * Get the Kerberos credential structure so that
-			 * we have the seesion key and get a ticket for
-			 * this uid.
-			 * For more info see the IETF Draft "Authentication
-			 * in ONC RPC".
-			 */
-			if (ncd.ncd_authuid != last_ruid) {
-				krb_set_tkt_string("");
-				last_ruid = ncd.ncd_authuid;
-			}
-			setreuid(ncd.ncd_authuid, 0);
-			kret = krb_get_cred(NFS_KERBSRV, inst, realm, &kcr);
-			if (kret == RET_NOTKT) {
-		            kret = get_ad_tkt(NFS_KERBSRV, inst, realm,
-				DEFAULT_TKT_LIFE);
-			    if (kret == KSUCCESS)
-				kret = krb_get_cred(NFS_KERBSRV, inst, realm,
-				    &kcr);
-			}
-			if (kret == KSUCCESS)
-			    kret = krb_mk_req(&ktick.kt, NFS_KERBSRV, inst,
-				realm, 0);
-
-			/*
-			 * Fill in the AKN_FULLNAME authenticator and verfier.
-			 * Along with the Kerberos ticket, we need to build
-			 * the timestamp verifier and encrypt it in CBC mode.
-			 */
-			if (kret == KSUCCESS &&
-			    ktick.kt.length <= (RPCAUTH_MAXSIZ-3*NFSX_UNSIGNED)
-			    && gettimeofday(&ktv, (struct timezone *)0) == 0) {
-			    ncd.ncd_authtype = RPCAUTH_KERB4;
-			    ncd.ncd_authstr = (u_char *)&ktick;
-			    ncd.ncd_authlen = nfsm_rndup(ktick.kt.length) +
-				3 * NFSX_UNSIGNED;
-			    ncd.ncd_verfstr = (u_char *)&kverf;
-			    ncd.ncd_verflen = sizeof (kverf);
-			    memmove(ncd.ncd_key, kcr.session,
-				sizeof (kcr.session));
-			    kin.t1 = htonl(ktv.tv_sec);
-			    kin.t2 = htonl(ktv.tv_usec);
-			    kin.w1 = htonl(NFS_KERBTTL);
-			    kin.w2 = htonl(NFS_KERBTTL - 1);
-			    memset((caddr_t)kivec, 0, sizeof (kivec));
-
-			    /*
-			     * Encrypt kin in CBC mode using the session
-			     * key in kcr.
-			     */
-			    XXX
-
-			    /*
-			     * Finally, fill the timestamp verifier into the
-			     * authenticator and verifier.
-			     */
-			    ktick.kind = htonl(RPCAKN_FULLNAME);
-			    kverf.kind = htonl(RPCAKN_FULLNAME);
-			    NFS_KERBW1(ktick.kt) = kout.w1;
-			    ktick.kt.length = htonl(ktick.kt.length);
-			    kverf.verf.t1 = kout.t1;
-			    kverf.verf.t2 = kout.t2;
-			    kverf.verf.w2 = kout.w2;
-			    nfssvc_flag = NFSSVC_MNTD | NFSSVC_GOTAUTH;
-			}
-			setreuid(0, 0);
-#endif /* NFSKERB */
 		}
 	}
 	exit(0);
@@ -671,8 +549,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n%s\n",
-"[-23bcCdiKlpPqsTUX] [-a maxreadahead] [-D deadthresh]",
-"\t[-g maxgroups] [-I readdirsize] [-L leaseterm] [-m realm]",
+"[-23bcCdilpPqsTUX] [-a maxreadahead] [-D deadthresh]",
+"\t[-g maxgroups] [-I readdirsize] [-L leaseterm]",
 "\t[-o options] [-R retrycnt] [-r readsize] [-t timeout]",
 "\t[-w writesize] [-x retrans]",
 "\trhost:path node");
