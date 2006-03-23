@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.35 2005/03/11 03:19:31 ginsbach Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.36 2006/03/23 23:44:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.35 2005/03/11 03:19:31 ginsbach Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.36 2006/03/23 23:44:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,20 +74,6 @@ __RCSID("$NetBSD: rlogin.c,v 1.35 2005/03/11 03:19:31 ginsbach Exp $");
 
 #include "getport.h"
 
-#ifdef KERBEROS
-#include <kerberosIV/des.h>
-#include <kerberosIV/krb.h>
-#include <kerberosIV/kstream.h>
-
-#include "krb.h"
-
-CREDENTIALS cred;
-Key_schedule schedule;
-MSG_DAT msg_data;
-struct sockaddr_in local, foreign;
-int use_kerberos = 1, doencrypt;
-kstream krem;
-#endif
 
 #ifndef TIOCPKT_WINDOW
 #define	TIOCPKT_WINDOW	0x80
@@ -138,9 +124,6 @@ void		usage(void);
 void		writer(void);
 void		writeroob(int);
 
-#ifdef	KERBEROS
-void		warning(const char *, ...);
-#endif
 #ifdef OLDSUN
 int		get_window_size(int, struct winsize *);
 #endif
@@ -161,14 +144,6 @@ main(int argc, char *argv[])
 	struct sigaction sa;
 	char *service = NULL;
 	struct rlimit rlim;
-#ifdef KERBEROS
-	KTEXT_ST ticket;
-	int sock;
-	long authopts;
-	int through_once = 0;
-	extern int _kstream_des_debug_OOB;
-	char *dest_realm = NULL;
-#endif
 
 	argoff = dflag = 0;
 	one = 1;
@@ -187,11 +162,7 @@ main(int argc, char *argv[])
 		argoff = 1;
 	}
 
-#ifdef KERBEROS
-#define	OPTIONS	"468EKde:p:k:l:x"
-#else
-#define	OPTIONS	"468EKde:p:l:"
-#endif
+#define	OPTIONS	"468dEe:l:p:"
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
 		switch(ch) {
 		case '4':
@@ -203,42 +174,22 @@ main(int argc, char *argv[])
 		case '8':
 			eight = 1;
 			break;
+		case 'd':
+			dflag = 1;
+			break;
 		case 'E':
 			noescape = 1;
-			break;
-#ifdef KERBEROS
-		case 'K':
-			use_kerberos = 0;
-			break;
-#endif
-		case 'd':
-#ifdef KERBEROS
-			_kstream_des_debug_OOB = 1;
-#endif
-			dflag = 1;
 			break;
 		case 'e':
 			noescape = 0;
 			escapechar = getescape(optarg);
 			break;
-#ifdef KERBEROS
-		case 'k':
-			dest_realm = optarg;
-			break;
-#endif
 		case 'l':
 			user = optarg;
 			break;
 		case 'p':
 			sp = getport(service = optarg, "tcp");
 			break;
-#ifdef CRYPT
-#ifdef KERBEROS
-		case 'x':
-			doencrypt = 1;
-			break;
-#endif
-#endif
 		case '?':
 		default:
 			usage();
@@ -271,18 +222,6 @@ main(int argc, char *argv[])
 	if (!user)
 		user = name;
 
-#ifdef KERBEROS
-	if (use_kerberos) {
-		if (sp == NULL) {
-			sp = getservbyname((doencrypt ? "eklogin" : "klogin"), "tcp");
-		}
-		if (sp == NULL) {
-			use_kerberos = 0;
-			warning("can't get entry for %s/tcp service",
-			    doencrypt ? "eklogin" : "klogin");
-		}
-	}
-#endif
 	if (sp == NULL)
 		sp = getservbyname("login", "tcp");
 	if (sp == NULL)
@@ -327,94 +266,8 @@ main(int argc, char *argv[])
 	if (setrlimit(RLIMIT_CORE, &rlim) < 0)
 		warn("setrlimit");
 
-#ifdef KERBEROS
-try_connect:
-	if (use_kerberos) {
-		struct hostent *hp;
-
-		/* Fully qualify hostname (needed for krb_realmofhost). */
-		hp = gethostbyname(host);
-		if (hp != NULL && !(host = strdup(hp->h_name)))
-			errx(1, "%s", strerror(ENOMEM));
-
-		rem = KSUCCESS;
-		errno = 0;
-#ifdef CRYPT
-		if (doencrypt)
-			authopts = KOPT_DO_MUTUAL;
-		else
-#endif /* CRYPT */
-			authopts = 0L;
-
-		if (dest_realm == NULL) {
-			/* default this now, once. */
-			if (!(dest_realm = krb_realmofhost (host))) {
-				warnx("Unknown realm for host %s.", host);
-				use_kerberos = 0;
-				if (service != NULL)
-					sp = getservbyname("login", "tcp");
-				goto try_connect;
-			}
-		}
-
-		rem = kcmd(&sock, &host, sp->s_port, name, user, 
-			   term, 0, &ticket, "rcmd", dest_realm,
-			   &cred, schedule, &msg_data, &local, &foreign,
-			   authopts);
-
-		if (rem != KSUCCESS) {
-			switch(rem) {
-
-				case KDC_PR_UNKNOWN:
-					warnx("Host %s not registered for %s",
-				       	      host, "Kerberos rlogin service");
-					use_kerberos = 0;
-					if (service != NULL) 
-						sp = getservbyname("login", "tcp");
-					goto try_connect;
-				case NO_TKT_FIL:
-					if (through_once++) {
-						use_kerberos = 0;
-						if (service != NULL) 
-							sp = getservbyname("login", "tcp");
-						goto try_connect;
-					}
-#ifdef notyet
-				krb_get_pw_in_tkt(user, krb_realm, "krbtgt",
-						  krb_realm,
-					          DEFAULT_TKT_LIFE/5, 0);
-				goto try_connect;
-#endif
-			default:
-				warnx("Kerberos rcmd failed: %s",
-				      (rem == -1) ? "rcmd protocol failure" :
-				      krb_err_txt[rem]);
-				use_kerberos = 0;
-				if (service != NULL) 
-					sp = getservbyname("login", "tcp");
-				goto try_connect;
-			}
-		}
-		rem = sock;
-		if (doencrypt)
-			krem = kstream_create_rlogin_from_fd(rem, &schedule,
-							     &cred.session);
-		else
-			krem = kstream_create_from_fd(rem, 0, 0);
-			kstream_set_buffer_mode(krem, 0);
-	} else {
-#ifdef CRYPT
-		if (doencrypt)
-			errx(1, "the -x flag requires Kerberos authentication.");
-#endif /* CRYPT */
-		rem = rcmd_af(&host, sp->s_port, name, user, term, 0, family);
-		if (rem < 0)
-			exit(1);
-	}
-#else
 	rem = rcmd_af(&host, sp->s_port, name, user, term, 0, family);
 
-#endif /* KERBEROS */
 
 	if (rem < 0)
 		exit(1);
@@ -620,25 +473,10 @@ writer(void)
 				continue;
 			}
 			if (c != escapechar) {
-#ifdef KERBEROS
-				if (use_kerberos)
-					(void)kstream_write(krem,
-					    (char *)&escapechar, 1);
-				else
-#endif
 					(void)write(rem, &escapechar, 1);
 			}
 		}
 
-#ifdef KERBEROS
-		if (use_kerberos) {
-			if (kstream_write(krem, &c, 1) == 0) {
-					msg("line gone");
-					break;
-			}
-		}
-		else
-#endif
 			if (write(rem, &c, 1) == 0) {
 				msg("line gone");
 				break;
@@ -723,11 +561,6 @@ sendwindow(void)
 	wp->ws_xpixel = htons(winsize.ws_xpixel);
 	wp->ws_ypixel = htons(winsize.ws_ypixel);
 
-#ifdef KERBEROS
-		if (use_kerberos)
-			(void)kstream_write(krem, obuf, sizeof(obuf));
-		else
-#endif
 		(void)write(rem, obuf, sizeof(obuf));
 }
 
@@ -858,11 +691,6 @@ reader(sigset_t *smask)
 		rcvcnt = 0;
 		rcvstate = READING;
 
-#ifdef KERBEROS
-			if (use_kerberos)
-				rcvcnt = kstream_read(krem, rcvbuf, sizeof(rcvbuf));
-			else
-#endif
 			rcvcnt = read(rem, rcvbuf, sizeof (rcvbuf));
 
 		if (rcvcnt == 0)
@@ -933,35 +761,13 @@ msg(const char *str)
 	(void)fprintf(stderr, "rlogin: %s\r\n", str);
 }
 
-#ifdef KERBEROS
-/* VARARGS */
-void
-warning(const char *fmt, ...)
-{
-	va_list ap;
-
-	(void)fprintf(stderr, "rlogin: warning, using standard rlogin: ");
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, ".\n");
-}
-#endif
 
 void
 usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: rlogin [-%s]%s[-e char] [-l username] [-p port] [username@]host\n",
-#ifdef KERBEROS
-#ifdef CRYPT
-	    "468EKdx", " [-k realm] ");
-#else
-	    "468EKd", " [-k realm] ");
-#endif
-#else
 	    "468Ed", " ");
-#endif
 	exit(1);
 }
 
