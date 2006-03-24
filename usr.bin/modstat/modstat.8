@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.13 2006/03/23 23:59:38 reed Exp $
+.\" $NetBSD: modstat.8,v 1.14 2006/03/24 00:14:23 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -66,7 +66,7 @@ includes:
 Type of module, such as
 "SYSCALL", "VFS", "DEV",
 .\" "STRMOD",
-"EXEC", "COMPAT", "MISC" or "(UNKNOWN)".
+"EXEC", "COMPAT", "MISC", or "(UNKNOWN)".
 See
 .Xr lkm 4
 for details.
@@ -84,7 +84,6 @@ Kernel address of private area.
 Version of the module interface.
 (Not the version of the module itself.)
 .El
-.Pp
 .Sh EXIT STATUS
 The
 .Nm
