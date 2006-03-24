@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.61 2005/02/27 00:26:59 perry Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.61.2.1 2006/03/24 22:31:52 riz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61.2.1 2006/03/24 22:31:52 riz Exp $");
 
 #include "opt_cardbus.h"
 
@@ -293,7 +293,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 
 	switch (tuple[0]) {
 	case PCMCIA_CISTPL_MANFID:
-		if (tuple[1] != 5) {
+		if (tuple[1] != 4) {
 			DPRINTF(("%s: wrong length manufacturer id (%d)\n",
 			    __func__, tuple[1]));
 			break;
@@ -308,12 +308,13 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
 		p = cis->cis1_info_buf + 2;
 		while (i <
 		    sizeof(cis->cis1_info) / sizeof(cis->cis1_info[0])) {
+			if (p >= cis->cis1_info_buf + tuple[1] || *p == '\xff')
+				break;
 			cis->cis1_info[i++] = p;
 			while (*p != '\0' && *p != '\xff')
 				p++;
-			if (*p == '\xff')
-				break;
-			p++;
+			if (*p == '\0')
+				p++;
 		}
 		break;
 
