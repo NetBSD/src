@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.96 2006/03/17 23:21:01 tls Exp $	*/
+/*	$NetBSD: lfs.h,v 1.97 2006/03/24 20:05:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -119,6 +119,9 @@
 #define LFS_WAIT_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
 #define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
+
+/* How starved can we be before we start holding back page writes */
+#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_minfreeseg / 2 + 1)
 
 /*
  * Reserved blocks for lfs_malloc
