@@ -1,7 +1,7 @@
-/* $NetBSD: util.c,v 1.11 2004/03/25 19:14:31 atatat Exp $ */
+/* $NetBSD: util.c,v 1.11.2.1 2006/03/24 19:13:43 riz Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.11 2004/03/25 19:14:31 atatat Exp $");
+__RCSID("$NetBSD: util.c,v 1.11.2.1 2006/03/24 19:13:43 riz Exp $");
 #endif
 
 /*
@@ -916,18 +916,18 @@ fixcrlf(line, stripnl)
 **		mci -- the mailer connection information.
 **
 **	Returns:
-**		none
+**		true iff line was written successfully
 **
 **	Side Effects:
 **		output of l to mci->mci_out.
 */
 
-void
+bool
 putline(l, mci)
 	register char *l;
 	register MCI *mci;
 {
-	putxline(l, strlen(l), mci, PXLF_MAPFROM);
+	return putxline(l, strlen(l), mci, PXLF_MAPFROM);
 }
 /*
 **  PUTXLINE -- putline with flags bits.
@@ -946,13 +946,13 @@ putline(l, mci)
 **		    PXLF_NOADDEOL -- don't add an EOL if one wasn't present.
 **
 **	Returns:
-**		none
+**		true iff line was written successfully
 **
 **	Side Effects:
 **		output of l to mci->mci_out.
 */
 
-void
+bool
 putxline(l, len, mci, pxflags)
 	register char *l;
 	size_t len;
@@ -1004,11 +1004,6 @@ putxline(l, len, mci, pxflags)
 				if (sm_io_putc(mci->mci_out, SM_TIME_DEFAULT,
 					       '.') == SM_IO_EOF)
 					dead = true;
-				else
-				{
-					/* record progress for DATA timeout */
-					DataProgress = true;
-				}
 				if (TrafficLogFile != NULL)
 					(void) sm_io_putc(TrafficLogFile,
 							  SM_TIME_DEFAULT, '.');
@@ -1021,11 +1016,6 @@ putxline(l, len, mci, pxflags)
 				if (sm_io_putc(mci->mci_out, SM_TIME_DEFAULT,
 					       '>') == SM_IO_EOF)
 					dead = true;
-				else
-				{
-					/* record progress for DATA timeout */
-					DataProgress = true;
-				}
 				if (TrafficLogFile != NULL)
 					(void) sm_io_putc(TrafficLogFile,
 							  SM_TIME_DEFAULT,
@@ -1037,15 +1027,10 @@ putxline(l, len, mci, pxflags)
 			while (l < q)
 			{
 				if (sm_io_putc(mci->mci_out, SM_TIME_DEFAULT,
-					       (unsigned char) *l++) == SM_IO_EOF)
+				       (unsigned char) *l++) == SM_IO_EOF)
 				{
 					dead = true;
 					break;
-				}
-				else
-				{
-					/* record progress for DATA timeout */
-					DataProgress = true;
 				}
 			}
 			if (dead)
@@ -1061,11 +1046,6 @@ putxline(l, len, mci, pxflags)
 			{
 				dead = true;
 				break;
-			}
-			else
-			{
-				/* record progress for DATA timeout */
-				DataProgress = true;
 			}
 			if (TrafficLogFile != NULL)
 			{
@@ -1090,11 +1070,9 @@ putxline(l, len, mci, pxflags)
 		{
 			if (sm_io_putc(mci->mci_out, SM_TIME_DEFAULT, '.') ==
 			    SM_IO_EOF)
-				break;
-			else
 			{
-				/* record progress for DATA timeout */
-				DataProgress = true;
+				dead = true;
+				break;
 			}
 			if (TrafficLogFile != NULL)
 				(void) sm_io_putc(TrafficLogFile,
@@ -1107,11 +1085,9 @@ putxline(l, len, mci, pxflags)
 		{
 			if (sm_io_putc(mci->mci_out, SM_TIME_DEFAULT, '>') ==
 			    SM_IO_EOF)
-				break;
-			else
 			{
-				/* record progress for DATA timeout */
-				DataProgress = true;
+				dead = true;
+				break;
 			}
 			if (TrafficLogFile != NULL)
 				(void) sm_io_putc(TrafficLogFile,
@@ -1129,11 +1105,6 @@ putxline(l, len, mci, pxflags)
 				dead = true;
 				break;
 			}
-			else
-			{
-				/* record progress for DATA timeout */
-				DataProgress = true;
-			}
 		}
 		if (dead)
 			break;
@@ -1144,11 +1115,9 @@ putxline(l, len, mci, pxflags)
 		if ((!bitset(PXLF_NOADDEOL, pxflags) || !noeol) &&
 		    sm_io_fputs(mci->mci_out, SM_TIME_DEFAULT,
 				mci->mci_mailer->m_eol) == SM_IO_EOF)
-			break;
-		else
 		{
-			/* record progress for DATA timeout */
-			DataProgress = true;
+			dead = true;
+			break;
 		}
 		if (l < end && *l == '\n')
 		{
@@ -1157,11 +1126,9 @@ putxline(l, len, mci, pxflags)
 			{
 				if (sm_io_putc(mci->mci_out, SM_TIME_DEFAULT,
 					       ' ') == SM_IO_EOF)
-					break;
-				else
 				{
-					/* record progress for DATA timeout */
-					DataProgress = true;
+					dead = true;
+					break;
 				}
 
 				if (TrafficLogFile != NULL)
@@ -1170,10 +1137,10 @@ putxline(l, len, mci, pxflags)
 			}
 		}
 
-		/* record progress for DATA timeout */
-		DataProgress = true;
 	} while (l < end);
+	return !dead;
 }
+
 /*
 **  XUNLINK -- unlink a file, doing logging as appropriate.
 **

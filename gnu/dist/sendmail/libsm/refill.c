@@ -1,7 +1,7 @@
-/* $NetBSD: refill.c,v 1.1.1.2 2003/06/01 14:01:37 atatat Exp $ */
+/* $NetBSD: refill.c,v 1.1.1.2.2.1 2006/03/24 19:13:43 riz Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: refill.c,v 1.1.1.2 2003/06/01 14:01:37 atatat Exp $");
+__RCSID("$NetBSD: refill.c,v 1.1.1.2.2.1 2006/03/24 19:13:43 riz Exp $");
 #endif
 
 /*
@@ -82,8 +82,11 @@ static int sm_lflush __P((SM_FILE_T *, int *));
 	FD_SET((fd), &sm_io_x_mask);					\
 	if (gettimeofday(&sm_io_to_before, NULL) < 0)			\
 		return SM_IO_EOF;					\
-	(sel_ret) = select((fd) + 1, &sm_io_to_mask, NULL,		\
-			   &sm_io_x_mask, (to));			\
+	do								\
+	{								\
+		(sel_ret) = select((fd) + 1, &sm_io_to_mask, NULL,	\
+			   	&sm_io_x_mask, (to));			\
+	} while ((sel_ret) < 0 && errno == EINTR);			\
 	if ((sel_ret) < 0)						\
 	{								\
 		/* something went wrong, errno set */			\
@@ -100,7 +103,7 @@ static int sm_lflush __P((SM_FILE_T *, int *));
 	/* calulate wall-clock time used */				\
 	if (gettimeofday(&sm_io_to_after, NULL) < 0)			\
 		return SM_IO_EOF;					\
-	timersub(&sm_io_to_before, &sm_io_to_after, &sm_io_to_diff);	\
+	timersub(&sm_io_to_after, &sm_io_to_before, &sm_io_to_diff);	\
 	timersub((to), &sm_io_to_diff, (to));				\
 }
 
