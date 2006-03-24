@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.48 2006/03/24 17:34:52 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.49 2006/03/24 23:04:08 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -989,4 +989,63 @@ gnu/dist/sendmail/sendmail/version.c		1.17
 	Apply patch 8.13.5.p0 from sendmail.org; Although we are running 8.13.4,
 	this applied with mimimal fixes.
 	[christos, ticket #1221]
+
+lib/libcrypt/crypt.3				1.19
+
+	salt is in the second argument
+	[drochner, ticket #1212]
+
+distrib/sets/lists/comp/mi			1.815
+lib/libm/Makefile				1.69
+lib/libm/man/lrint.3				1.1
+
+	Add man page for l{,l}rint{,f}(3), very loosely based on the
+	FreeBSD one.
+	[drochner, ticket #1213]
+
+sys/dev/cardbus/cardbus.c			1.65
+
+	fix parsing of some informational CIS tuples: correct length and handle
+	the case correctly where a string is terminated with 0x00 0xff
+	[drochner, ticket #1214]
+
+sys/dev/usb/usb.c				1.83
+
+	Allow a NULL pointer as argument to usb_get_next_event(), and don't
+	allocate a "struct usb_event" on stack in usb_add_event().
+	[drochner, ticket #1215]
+
+lib/libc/gen/frexp_ieee754.c			1.5
+
+	scale denormal numbers, to get a meaningful exponent (and a mantissa
+	which just consists of the implicit bit),
+	fixes PR lib/32861 by FX Coudert
+	[drochner, ticket #1216]
+
+sys/kern/kern_sysctl.c				1.191
+
+	Check the "oldlen" argument to sysctl(2) before passing it
+	to vslock(9). This prevents a local DOS.
+	[drochner, ticket #1217]
+
+sys/arch/xen/xen/if_xennet.c			1.44
+
+	m_copyback() doesn't work the way I expexted it: it doesn't update the
+	mbuf fields, and it seems it doesn't allocate mbuf clusters for large
+	packets. So revert to using MCLGET() if needed and memcpy to get the
+	data in the mbuf.
+	[bouyer, ticket #1218]
+
+sbin/ifconfig/ifconfig.c			1.169
+sbin/ifconfig/ifconfig.8			1.79 vi patch
+
+	Added a new ifconfig flag, -h, allowing, in conjunction with -v,
+	the display of interface I/O bytes in human-format.
+	[rpaulo, ticket #1219]
+
+sys/dev/sun/cgsix.c				1.24
+
+	fixed a typo in cg6_ras_do_cursor and made using the blitter to draw the
+	cursor optional when using RASTERCONSOLE
+	[macallan, ticket #1220]
 
