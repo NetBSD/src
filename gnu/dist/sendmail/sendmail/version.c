@@ -1,7 +1,7 @@
-/* $NetBSD: version.c,v 1.16 2005/03/15 02:14:17 atatat Exp $ */
+/* $NetBSD: version.c,v 1.16.2.1 2006/03/24 17:12:30 riz Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: version.c,v 1.16 2005/03/15 02:14:17 atatat Exp $");
+__RCSID("$NetBSD: version.c,v 1.16.2.1 2006/03/24 17:12:30 riz Exp $");
 #endif
 
 /*
@@ -16,9 +16,8 @@ __RCSID("$NetBSD: version.c,v 1.16 2005/03/15 02:14:17 atatat Exp $");
  * the sendmail distribution.
  *
  */
+char	Version[] = "8.13.5.20060308";
 
 #include <sm/gen.h>
 
 SM_RCSID("@(#)Id: version.c,v 8.140 2005/01/12 04:32:32 ca Exp")
-
-char	Version[] = "8.13.3";
