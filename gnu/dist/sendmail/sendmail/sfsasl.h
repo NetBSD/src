@@ -1,4 +1,4 @@
-/* $NetBSD: sfsasl.h,v 1.5 2003/06/01 14:07:08 atatat Exp $ */
+/* $NetBSD: sfsasl.h,v 1.5.8.1 2006/03/24 19:13:13 riz Exp $ */
 /*
  * Copyright (c) 1999, 2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -18,6 +18,8 @@ extern int	sfdcsasl __P((SM_FILE_T **, SM_FILE_T **, sasl_conn_t *));
 #endif /* SASL */
 
 # if STARTTLS
+extern int	tls_retry __P((SSL *, int, int, time_t, int, int,
+				const char *));
 extern int	sfdctls __P((SM_FILE_T **, SM_FILE_T **, SSL *));
 # endif /* STARTTLS */
 
