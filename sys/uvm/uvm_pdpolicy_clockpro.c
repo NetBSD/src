@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.9 2006/03/24 13:48:10 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.10 2006/03/24 14:02:24 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.9 2006/03/24 13:48:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.10 2006/03/24 14:02:24 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -347,8 +347,9 @@ struct bucket {
 static int cycle_target;
 static int cycle_target_frac;
 
-static struct bucket *buckets;
-static size_t hashsize;
+static struct bucket static_bucket;
+static struct bucket *buckets = &static_bucket;
+static size_t hashsize = 1;
 
 static int coldadj;
 #define	COLDTARGET_ADJ(d)	coldadj += (d)
@@ -421,7 +422,7 @@ clockpro_hashinit(uint64_t n)
 	buckets = newbuckets;
 	hashsize = sz;
 	/* XXX unlock */
-	if (oldbuckets) {
+	if (oldbuckets != &static_bucket) {
 		clockpro_hashfree(oldbuckets, oldsz);
 	}
 }
@@ -430,11 +431,6 @@ static struct bucket *
 nonresident_getbucket(objid_t obj, off_t idx)
 {
 	uint32_t hash;
-	static struct bucket static_bucket;
-
-	if (hashsize == 0) {
-		return &static_bucket;
-	}
 
 	hash = pageidentityhash1(obj, idx);
 	return &buckets[hash % hashsize];
