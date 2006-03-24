@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2005/12/25 22:07:01 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.3 2006/03/24 13:54:58 pavel Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR= interface
+SUBDIR= interface out-of-bounds
 
 .include <bsd.subdir.mk>
