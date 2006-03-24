@@ -1,7 +1,7 @@
-/* $NetBSD: fflush.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $ */
+/* $NetBSD: fflush.c,v 1.1.1.2.8.1 2006/03/24 19:13:13 riz Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fflush.c,v 1.1.1.2 2003/06/01 14:01:34 atatat Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.1.1.2.8.1 2006/03/24 19:13:13 riz Exp $");
 #endif
 
 /*
@@ -151,6 +151,7 @@ sm_flush(fp, timeout)
 				return SM_IO_EOF;
 			}
 			SM_IO_WR_TIMEOUT(fp, fd, *timeout);
+			t = 0;
 		}
 	}
 	return 0;
