@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.27 2006/03/24 17:35:08 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.28 2006/03/24 23:04:34 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -287,4 +287,16 @@ gnu/dist/sendmail/sendmail/version.c		1.17
 	Apply patch 8.13.5.p0 from sendmail.org; Although we are running 8.13.4,
 	this applied with mimimal fixes.
 	[christos, ticket #1221]
+
+sys/dev/usb/usb.c				1.83
+
+	Allow a NULL pointer as argument to usb_get_next_event(), and don't
+	allocate a "struct usb_event" on stack in usb_add_event().
+	[drochner, ticket #1215]
+
+sys/kern/kern_sysctl.c				1.191
+
+	Check the "oldlen" argument to sysctl(2) before passing it
+	to vslock(9). This prevents a local DOS.
+	[drochner, ticket #1217]
 
