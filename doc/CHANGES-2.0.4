@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.25 2006/03/24 19:15:48 riz Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.26 2006/03/24 21:57:27 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -219,4 +219,10 @@ gnu/dist/sendmail/sendmail/version.c		patch
 
 	Apply patch 8.12.11.p0 from sendmail.org, with local compile fixes.
 	[christos, ticket #10383]
+
+sys/kern/kern_sysctl.c				1.191
+
+	Check the "oldlen" argument to sysctl(2) before passing it
+	to vslock(9). This prevents a local DOS.
+	[drochner, ticket #10381]
 
