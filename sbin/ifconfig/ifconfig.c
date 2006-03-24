@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.152 2005/03/06 00:13:36 matt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.152.2.1 2006/03/24 22:50:59 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.152 2005/03/06 00:13:36 matt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.152.2.1 2006/03/24 22:50:59 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,6 +144,7 @@ int	conflicting = 0;
 int	nsellength = 1;
 int	af;
 int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag, vflag, zflag;
+int	hflag;
 #ifdef INET6
 int	Lflag;
 #endif
@@ -413,7 +414,7 @@ main(int argc, char *argv[])
 
 	/* Parse command-line options */
 	aflag = mflag = vflag = zflag = 0;
-	while ((ch = getopt(argc, argv, "AabCdlmsuvz"
+	while ((ch = getopt(argc, argv, "AabCdhlmsuvz"
 #ifdef INET6
 					"L"
 #endif
@@ -438,7 +439,9 @@ main(int argc, char *argv[])
 		case 'd':
 			dflag = 1;
 			break;
-
+		case 'h':
+			hflag = 1;
+			break;
 #ifdef INET6
 		case 'L':
 			Lflag = 1;
@@ -2044,12 +2047,23 @@ status(const struct sockaddr_dl *sdl)
 		err(EXIT_FAILURE, zflag ? "SIOCZIFDATA" : "SIOCGIFDATA");
 	} else {
 		struct if_data * const ifi = &ifdr.ifdr_data;
+		char buf[5];
+
 #define	PLURAL(n)	((n) == 1 ? "" : "s")
-		printf("\tinput: %llu packet%s, %llu byte%s",
+#define PLURALSTR(s)	((atof(s)) == 1.0 ? "" : "s")
+		printf("\tinput: %llu packet%s, ", 
 		    (unsigned long long) ifi->ifi_ipackets,
-		    PLURAL(ifi->ifi_ipackets),
-		    (unsigned long long) ifi->ifi_ibytes,
-		    PLURAL(ifi->ifi_ibytes));
+		    PLURAL(ifi->ifi_ipackets));
+		if (hflag) {
+			(void) humanize_number(buf, sizeof(buf),
+			    (int64_t) ifi->ifi_ibytes, "", HN_AUTOSCALE, 
+			    HN_NOSPACE | HN_DECIMAL);
+			printf("%s byte%s", buf,
+			    PLURALSTR(buf));
+		} else
+			printf("%llu byte%s",
+			    (unsigned long long) ifi->ifi_ibytes,
+		            PLURAL(ifi->ifi_ibytes));
 		if (ifi->ifi_imcasts)
 			printf(", %llu multicast%s",
 			    (unsigned long long) ifi->ifi_imcasts,
@@ -2065,11 +2079,19 @@ status(const struct sockaddr_dl *sdl)
 		if (ifi->ifi_noproto)
 			printf(", %llu unknown protocol",
 			    (unsigned long long) ifi->ifi_noproto);
-		printf("\n\toutput: %llu packet%s, %llu byte%s",
+		printf("\n\toutput: %llu packet%s, ",
 		    (unsigned long long) ifi->ifi_opackets,
-		    PLURAL(ifi->ifi_opackets),
-		    (unsigned long long) ifi->ifi_obytes,
-		    PLURAL(ifi->ifi_obytes));
+		    PLURAL(ifi->ifi_opackets));
+		if (hflag) {
+			(void) humanize_number(buf, sizeof(buf),
+			    (int64_t) ifi->ifi_obytes, "", HN_AUTOSCALE,
+			    HN_NOSPACE | HN_DECIMAL);
+			printf("%s byte%s", buf,
+			    PLURALSTR(buf));
+		} else
+			printf("%llu byte%s",
+			    (unsigned long long) ifi->ifi_obytes,
+			    PLURAL(ifi->ifi_obytes));
 		if (ifi->ifi_omcasts)
 			printf(", %llu multicast%s",
 			    (unsigned long long) ifi->ifi_omcasts,
@@ -2084,6 +2106,7 @@ status(const struct sockaddr_dl *sdl)
 			    PLURAL(ifi->ifi_collisions));
 		printf("\n");
 #undef PLURAL
+#undef PLURALSTR
 	}
 
 	ieee80211_statistics();
@@ -2860,7 +2883,7 @@ usage(void)
 	const char *progname = getprogname();
 
 	fprintf(stderr,
-	    "usage: %s [-m] [-v] [-z] "
+	    "usage: %s [-h] [-m] [-v] [-z] "
 #ifdef INET6
 		"[-L] "
 #endif
@@ -2878,7 +2901,7 @@ usage(void)
 		"\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
 		"\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] [ eui64 ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
-		"       %s -a [-b] [-m] [-d] [-u] [-v] [-z] [ af ]\n"
+		"       %s -a [-b] [-h] [-m] [-d] [-u] [-v] [-z] [ af ]\n"
 		"       %s -l [-b] [-d] [-u] [-s]\n"
 		"       %s -C\n"
 		"       %s interface create\n"
