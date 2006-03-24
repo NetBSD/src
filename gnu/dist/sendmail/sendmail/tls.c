@@ -1,7 +1,7 @@
-/* $NetBSD: tls.c,v 1.1.1.3 2004/03/25 19:01:31 atatat Exp $ */
+/* $NetBSD: tls.c,v 1.1.1.3.2.1 2006/03/24 19:13:43 riz Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tls.c,v 1.1.1.3 2004/03/25 19:01:31 atatat Exp $");
+__RCSID("$NetBSD: tls.c,v 1.1.1.3.2.1 2006/03/24 19:13:43 riz Exp $");
 #endif
 
 /*
@@ -1472,7 +1472,7 @@ tls_verify_cb(ctx, unused)
 
 void
 tlslogerr(who)
-	char *who;
+	const char *who;
 {
 	unsigned long l;
 	int line, flags;
