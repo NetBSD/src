@@ -1,4 +1,4 @@
-/*	$NetBSD: frexp_ieee754.c,v 1.4 2003/10/27 00:05:46 kleink Exp $	*/
+/*	$NetBSD: frexp_ieee754.c,v 1.4.6.1 2006/03/24 22:41:07 riz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: frexp_ieee754.c,v 1.4 2003/10/27 00:05:46 kleink Exp $");
+__RCSID("$NetBSD: frexp_ieee754.c,v 1.4.6.1 2006/03/24 22:41:07 riz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,13 @@ frexp(double value, int *eptr)
 		 */
 		u.dblu_d = value;
 		if (u.dblu_dbl.dbl_exp != DBL_EXP_INFNAN) {
-			*eptr = u.dblu_dbl.dbl_exp - (DBL_EXP_BIAS - 1);
+			*eptr = 0;
+			if (u.dblu_dbl.dbl_exp == 0) {
+				/* denormal, scale out of mantissa */
+				*eptr = -DBL_FRACBITS;
+				u.dblu_d *= 4.50359962737049600000e+15;
+			}
+			*eptr += u.dblu_dbl.dbl_exp - (DBL_EXP_BIAS - 1);
 			u.dblu_dbl.dbl_exp = DBL_EXP_BIAS - 1;
 		}
 		return (u.dblu_d);
