@@ -1,7 +1,7 @@
-/* $NetBSD: headers.c,v 1.13 2005/03/15 02:14:17 atatat Exp $ */
+/* $NetBSD: headers.c,v 1.13.4.1 2006/03/24 17:12:36 riz Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.13 2005/03/15 02:14:17 atatat Exp $");
+__RCSID("$NetBSD: headers.c,v 1.13.4.1 2006/03/24 17:12:36 riz Exp $");
 #endif
 
 /*
@@ -24,7 +24,7 @@ SM_RCSID("@(#)Id: headers.c,v 8.287 2004/12/03 18:29:51 ca Exp")
 static HDR	*allocheader __P((char *, char *, int, SM_RPOOL_T *));
 static size_t	fix_mime_header __P((HDR *, ENVELOPE *));
 static int	priencode __P((char *));
-static void	put_vanilla_header __P((HDR *, char *, MCI *));
+static bool	put_vanilla_header __P((HDR *, char *, MCI *));
 
 /*
 **  SETUPHEADERS -- initialize headers in symbol table
@@ -999,7 +999,6 @@ logsender(e, msgid)
 	char *name;
 	register char *sbp;
 	register char *p;
-	int l;
 	char hbuf[MAXNAME + 1];
 	char sbuf[MAXLINE + 1];
 	char mbuf[MAXNAME + 1];
@@ -1008,6 +1007,8 @@ logsender(e, msgid)
 	/* XXX do we still need this? sm_syslog() replaces control chars */
 	if (msgid != NULL)
 	{
+		size_t l;
+
 		l = strlen(msgid);
 		if (l > sizeof mbuf - 1)
 			l = sizeof mbuf - 1;
@@ -1547,13 +1548,13 @@ crackaddr(addr, e)
 **		flags -- MIME conversion flags.
 **
 **	Returns:
-**		none.
+**		success
 **
 **	Side Effects:
 **		none.
 */
 
-void
+bool
 putheader(mci, hdr, e, flags)
 	register MCI *mci;
 	HDR *hdr;
@@ -1688,7 +1689,8 @@ putheader(mci, hdr, e, flags)
 		{
 			if (tTd(34, 11))
 				sm_dprintf("\n");
-			put_vanilla_header(h, p, mci);
+			if (!put_vanilla_header(h, p, mci))
+				goto writeerr;
 			continue;
 		}
 
@@ -1747,7 +1749,8 @@ putheader(mci, hdr, e, flags)
 				/* no other recipient headers: truncate value */
 				(void) sm_strlcpyn(obuf, sizeof obuf, 2,
 						   h->h_field, ":");
-				putline(obuf, mci);
+				if (!putline(obuf, mci))
+					goto writeerr;
 			}
 			continue;
 		}
@@ -1766,7 +1769,8 @@ putheader(mci, hdr, e, flags)
 		}
 		else
 		{
-			put_vanilla_header(h, p, mci);
+			if (!put_vanilla_header(h, p, mci))
+				goto writeerr;
 		}
 	}
 
@@ -1783,18 +1787,25 @@ putheader(mci, hdr, e, flags)
 	    !bitset(MCIF_CVT8TO7|MCIF_CVT7TO8|MCIF_INMIME, mci->mci_flags) &&
 	    hvalue("MIME-Version", e->e_header) == NULL)
 	{
-		putline("MIME-Version: 1.0", mci);
+		if (!putline("MIME-Version: 1.0", mci))
+			goto writeerr;
 		if (hvalue("Content-Type", e->e_header) == NULL)
 		{
 			(void) sm_snprintf(obuf, sizeof obuf,
 					"Content-Type: text/plain; charset=%s",
 					defcharset(e));
-			putline(obuf, mci);
+			if (!putline(obuf, mci))
+				goto writeerr;
 		}
-		if (hvalue("Content-Transfer-Encoding", e->e_header) == NULL)
-			putline("Content-Transfer-Encoding: 8bit", mci);
+		if (hvalue("Content-Transfer-Encoding", e->e_header) == NULL
+		    && !putline("Content-Transfer-Encoding: 8bit", mci))
+			goto writeerr;
 	}
 #endif /* MIME8TO7 */
+	return true;
+
+  writeerr:
+	return false;
 }
 /*
 **  PUT_VANILLA_HEADER -- output a fairly ordinary header
@@ -1805,10 +1816,10 @@ putheader(mci, hdr, e, flags)
 **		mci -- the connection info for output
 **
 **	Returns:
-**		none.
+**		success
 */
 
-static void
+static bool
 put_vanilla_header(h, v, mci)
 	HDR *h;
 	char *v;
@@ -1839,7 +1850,8 @@ put_vanilla_header(h, v, mci)
 			l = SPACELEFT(obuf, obp) - 1;
 
 		(void) sm_snprintf(obp, SPACELEFT(obuf, obp), "%.*s", l, v);
-		putxline(obuf, strlen(obuf), mci, putflags);
+		if (!putxline(obuf, strlen(obuf), mci, putflags))
+			goto writeerr;
 		v += l + 1;
 		obp = obuf;
 		if (*v != ' ' && *v != '\t')
@@ -1849,7 +1861,10 @@ put_vanilla_header(h, v, mci)
 	/* XXX This is broken for SPACELEFT()==0 */
 	(void) sm_snprintf(obp, SPACELEFT(obuf, obp), "%.*s",
 			   (int) (SPACELEFT(obuf, obp) - 1), v);
-	putxline(obuf, strlen(obuf), mci, putflags);
+	return putxline(obuf, strlen(obuf), mci, putflags);
+
+  writeerr:
+	return false;
 }
 /*
 **  COMMAIZE -- output a header field, making a comma-translated list.
@@ -1862,13 +1877,13 @@ put_vanilla_header(h, v, mci)
 **		e -- the envelope containing the message.
 **
 **	Returns:
-**		none.
+**		success
 **
 **	Side Effects:
 **		outputs "p" to file "fp".
 */
 
-void
+bool
 commaize(h, p, oldstyle, mci, e)
 	register HDR *h;
 	register char *p;
@@ -2007,13 +2022,6 @@ commaize(h, p, oldstyle, mci, e)
 		}
 		name = denlstring(name, false, true);
 
-		/*
-		**  record data progress so DNS timeouts
-		**  don't cause DATA timeouts
-		*/
-
-		DataProgress = true;
-
 		/* output the name with nice formatting */
 		opos += strlen(name);
 		if (!firstone)
@@ -2021,7 +2029,8 @@ commaize(h, p, oldstyle, mci, e)
 		if (opos > omax && !firstone)
 		{
 			(void) sm_strlcpy(obp, ",\n", SPACELEFT(obuf, obp));
-			putxline(obuf, strlen(obuf), mci, putflags);
+			if (!putxline(obuf, strlen(obuf), mci, putflags))
+				goto writeerr;
 			obp = obuf;
 			(void) sm_strlcpy(obp, "        ", sizeof obuf);
 			opos = strlen(obp);
@@ -2043,8 +2052,12 @@ commaize(h, p, oldstyle, mci, e)
 		*obp = '\0';
 	else
 		obuf[sizeof obuf - 1] = '\0';
-	putxline(obuf, strlen(obuf), mci, putflags);
+	return putxline(obuf, strlen(obuf), mci, putflags);
+
+  writeerr:
+	return false;
 }
+
 /*
 **  COPYHEADER -- copy header list
 **
