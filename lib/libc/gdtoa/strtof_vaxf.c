@@ -1,4 +1,4 @@
-/* $NetBSD: strtof_vaxf.c,v 1.2 2006/03/23 18:08:20 he Exp $ */
+/* $NetBSD: strtof_vaxf.c,v 1.3 2006/03/24 16:04:32 kleink Exp $ */
 
 /****************************************************************
 
@@ -74,4 +74,4 @@ strtof(CONST char *s, char **sp)
 	if (k & STRTOG_Neg)
 		u.L[0] |= 0x00008000L;
 	return u.f;
-}
+	}
