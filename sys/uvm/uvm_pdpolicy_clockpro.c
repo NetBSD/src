@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.8 2006/03/21 11:05:22 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.9 2006/03/24 13:48:10 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.8 2006/03/21 11:05:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.9 2006/03/24 13:48:10 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -87,7 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.1.2.8 2006/03/21 11:05:2
 
 int clockpro_hashfactor = CLOCKPRO_HASHFACTOR;
 
-PDPOL_EVCNT_DEFINE(nresrecord)
+PDPOL_EVCNT_DEFINE(nresrecordobj)
+PDPOL_EVCNT_DEFINE(nresrecordanon)
 PDPOL_EVCNT_DEFINE(nreslookup)
 PDPOL_EVCNT_DEFINE(nresfoundobj)
 PDPOL_EVCNT_DEFINE(nresfoundanon)
@@ -534,7 +535,11 @@ nonresident_pagerecord(struct vm_page *pg)
 	}
 #endif /* defined(DEBUG) */
 
-	PDPOL_EVCNT_INCR(nresrecord);
+	if (pg->uobject) {
+		PDPOL_EVCNT_INCR(nresrecordobj);
+	} else {
+		PDPOL_EVCNT_INCR(nresrecordanon);
+	}
 	nonresident_rotate(b);
 	if (b->pages[b->cur] != NONRES_COOKIE_INVAL) {
 		PDPOL_EVCNT_INCR(nresoverwritten);
