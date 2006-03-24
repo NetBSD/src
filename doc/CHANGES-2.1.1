@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.27 2006/03/20 17:55:59 riz Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.28 2006/03/24 19:15:21 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -265,4 +265,26 @@ sys/kern/exec_elf32.c				1.110-1.111
 	an interpreter that does not have PT_LOAD in the program header doesn't
 	crash the system.
 	[erh, ticket #10380]
+
+gnu/dist/sendmail/libsm/fflush.c		patch
+gnu/dist/sendmail/libsm/local.h			patch
+gnu/dist/sendmail/libsm/refill.c		patch
+gnu/dist/sendmail/sendmail/collect.c		patch
+gnu/dist/sendmail/sendmail/conf.c		patch
+gnu/dist/sendmail/sendmail/deliver.c		patch
+gnu/dist/sendmail/sendmail/headers.c		patch
+gnu/dist/sendmail/sendmail/mime.c		patch
+gnu/dist/sendmail/sendmail/parseaddr.c		patch
+gnu/dist/sendmail/sendmail/savemail.c		patch
+gnu/dist/sendmail/sendmail/sendmail.h		patch
+gnu/dist/sendmail/sendmail/sfsasl.c		patch
+gnu/dist/sendmail/sendmail/sfsasl.h		patch
+gnu/dist/sendmail/sendmail/srvrsmtp.c		patch
+gnu/dist/sendmail/sendmail/tls.c		patch
+gnu/dist/sendmail/sendmail/usersmtp.c		patch
+gnu/dist/sendmail/sendmail/util.c		patch
+gnu/dist/sendmail/sendmail/version.c		patch
+
+	Apply patch 8.12.11.p0 from sendmail.org, with local compile fixes.
+	[christos, ticket #10383]
 
