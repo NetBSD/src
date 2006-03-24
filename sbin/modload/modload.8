@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.25 2003/09/06 20:09:26 wiz Exp $
+.\" $NetBSD: modload.8,v 1.26 2006/03/24 00:38:23 reed Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 6, 2003
+.Dd March 23, 2006
 .Dt MODLOAD 8
 .Os
 .Sh NAME
@@ -128,6 +128,9 @@ The
 .Nm
 utility exits with a status of 0 on success
 and with a nonzero status if an error occurs.
+.Pp
+Mismatched LKM and kernel versions will be reported to the console
+and to the system message buffer.
 .Sh SEE ALSO
 .Xr ld 1 ,
 .Xr lkm 4 ,
