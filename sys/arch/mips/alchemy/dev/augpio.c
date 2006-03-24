@@ -1,4 +1,4 @@
-/* $NetBSD: augpio.c,v 1.4 2006/03/24 02:58:36 gdamore Exp $ */
+/* $NetBSD: augpio.c,v 1.5 2006/03/24 18:22:42 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.4 2006/03/24 02:58:36 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: augpio.c,v 1.5 2006/03/24 18:22:42 gdamore Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,17 +79,12 @@ CFATTACH_DECL(augpio, sizeof(struct augpio_softc),
 #define	GETGPIO2(x)	GETREG(GPIO2_BASE + (x))
 #define	PUTGPIO2(x,v)	PUTREG(GPIO2_BASE + (x), (v))
 
-static int augpio_found = 0;
-
 int
 augpio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct aubus_attach_args *aa = (struct aubus_attach_args *)aux;
 
 	if (strcmp(aa->aa_name, "augpio") != 0)
-		return 0;
-
-	if (augpio_found)
 		return 0;
 
 	return 1;
