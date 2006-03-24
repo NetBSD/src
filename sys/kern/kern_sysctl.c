@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.169.2.6 2004/05/14 06:18:39 jdc Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.169.2.7 2006/03/24 21:39:04 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169.2.6 2004/05/14 06:18:39 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169.2.7 2006/03/24 21:39:04 riz Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -349,6 +349,14 @@ sysctl_lock(struct lwp *l, void *oldp, size_t savelen)
 		return (error);
 
 	if (l != NULL && oldp != NULL && savelen) {
+		/*
+		 * be lazy - memory is locked for short time only, so
+		 * just do a basic check against system limit
+		 */
+		if (uvmexp.wired + atop(savelen) > uvmexp.wiredmax) {
+			lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
+			return (ENOMEM);
+		}
 		error = uvm_vslock(l->l_proc, oldp, savelen, VM_PROT_WRITE);
 		if (error) {
 			(void) lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
