@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.65 2004/11/13 20:29:47 jmmv Exp $
+#  $NetBSD: Makefile,v 1.65.2.1 2006/03/24 22:28:38 riz Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -172,7 +172,8 @@ SRCS:=${SRCS} n_sqrt.S n_argred.S n_infnan.S n_atan2.S n_cabs.S n_cbrt.S \
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
-	ieee_test.3 isinff.3 j0.3 lgamma.3 math.3 rint.3 round.3 sin.3 sinh.3 \
+	ieee_test.3 isinff.3 j0.3 lgamma.3 lrint.3 \
+	math.3 rint.3 round.3 sin.3 sinh.3 \
 	sqrt.3 tan.3 tanh.3
 
 MLINKS+=acos.3 acosf.3
@@ -205,6 +206,7 @@ MLINKS+=j0.3 j0f.3 j0.3 j1.3 j0.3 j1f.3 j0.3 jn.3 j0.3 jnf.3 \
 MLINKS+=lgamma.3 lgammaf.3 lgamma.3 lgamma_r.3 lgamma.3 lgammaf_r.3 \
 	lgamma.3 gamma.3 lgamma.3 gammaf.3 lgamma.3 gamma_r.3 \
 	lgamma.3 gammaf_r.3
+MLINKS+=lrint.3 lrintf.3 lrint.3 llrint.3 lrint.3 llrintf.3
 MLINKS+=rint.3 rintf.3
 MLINKS+=sin.3 sinf.3
 MLINKS+=sinf.3 sinhf.3

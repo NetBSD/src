@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.770.2.8 2005/09/08 19:15:43 tron Exp $
+#	$NetBSD: mi,v 1.770.2.9 2006/03/24 22:28:38 riz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3695,6 +3695,8 @@
 ./usr/share/man/cat3/list_remove.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/llabs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/lldiv.0			comp-c-catman		.cat
+./usr/share/man/cat3/llrint.0			comp-c-catman		.cat
+./usr/share/man/cat3/llrintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/localeconv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/localtime.0		comp-c-catman		.cat
 ./usr/share/man/cat3/localtime_r.0		comp-c-catman		.cat
@@ -3726,6 +3728,8 @@
 ./usr/share/man/cat3/longjmperror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/longname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/lrand48.0			comp-c-catman		.cat
+./usr/share/man/cat3/lrint.0			comp-c-catman		.cat
+./usr/share/man/cat3/lrintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/lsearch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/magic_buffer.0		comp-c-catman		.cat
 ./usr/share/man/cat3/magic_check.0		comp-c-catman		.cat
@@ -7566,6 +7570,8 @@
 ./usr/share/man/man3/list_remove.3		comp-obsolete		obsolete
 ./usr/share/man/man3/llabs.3			comp-c-man		.man
 ./usr/share/man/man3/lldiv.3			comp-c-man		.man
+./usr/share/man/man3/llrint.3			comp-c-man		.man
+./usr/share/man/man3/llrintf.3			comp-c-man		.man
 ./usr/share/man/man3/localeconv.3		comp-c-man		.man
 ./usr/share/man/man3/localtime.3		comp-c-man		.man
 ./usr/share/man/man3/localtime_r.3		comp-c-man		.man
@@ -7597,6 +7603,8 @@
 ./usr/share/man/man3/longjmperror.3		comp-c-man		.man
 ./usr/share/man/man3/longname.3			comp-c-man		.man
 ./usr/share/man/man3/lrand48.3			comp-c-man		.man
+./usr/share/man/man3/lrint.3			comp-c-man		.man
+./usr/share/man/man3/lrintf.3			comp-c-man		.man
 ./usr/share/man/man3/lsearch.3			comp-c-man		.man
 ./usr/share/man/man3/magic_buffer.3		comp-c-man		.man
 ./usr/share/man/man3/magic_check.3		comp-c-man		.man
