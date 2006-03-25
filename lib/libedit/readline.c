@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.66 2006/03/21 17:52:50 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.67 2006/03/25 13:00:11 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.66 2006/03/21 17:52:50 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.67 2006/03/25 13:00:11 rtr Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -920,10 +920,6 @@ loop:
 			else
 				ret = 1;
 			break;
-		}
-		if (tmp) {
-			free(tmp);
-			tmp = NULL;
 		}
 		ret = _history_expand_command (str, i, (j - i), &tmp);
 		if (ret > 0 && tmp) {
