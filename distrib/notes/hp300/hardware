@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.17 2003/11/15 23:45:08 mbw Exp $
+.\"	$NetBSD: hardware,v 1.18 2006/03/25 13:24:49 tsutsui Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -100,13 +100,9 @@ SCSI devices
 .(bullet -compact
 .Em sd ;
 SCSI hard drives
-.br
-.Em "Some SCSI II drives may have problems (not very common)"
 .It
-.Em sd ;
+.Em cd ;
 SCSI CD-ROM drives
-.br
-.Em "Support for data only (no audio CDs)"
 .It
 .Em sd ;
 SCSI Magneto-optical drives
@@ -116,7 +112,7 @@ SCSI tape drives: HP 35450A (DDS-1 DAT), Exabyte EXB-8200 (8mm), Archive
 (QIC-24), Archive Viper (QIC-60), Archive Viper (QIC-150), Archive Python
 25501 (DAT), and Archive Python 28849 (DAT)
 .It
-.Em ac ;
+.Em ch ;
 SCSI autochangers
 .bullet)
 .It
@@ -196,7 +192,7 @@ ID modules
 .It
 Miscellaneous boards/interfaces
 .(bullet -compact
-98265A SCSI interface (DIO-I board, daughtercard for 98562, or built-in)
+98265A/98652 SCSI interface (DIO-I board, daughtercard for 98562, or built-in)
 .It
 98561 Human Interface board (DIO-I board with serial port, HP-HIL, and HP-IB)
 .It
