@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.47 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.48 2006/03/25 23:17:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.47 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.48 2006/03/25 23:17:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -385,7 +385,7 @@ mii_phy_update(struct mii_softc *sc, int cmd)
 	    sc->mii_media_status != mii->mii_media_status ||
 	    cmd == MII_MEDIACHG) {
 		mii_phy_statusmsg(sc);
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
+		(*mii->mii_statchg)(device_parent(&sc->mii_dev));
 		sc->mii_media_active = mii->mii_media_active;
 		sc->mii_media_status = mii->mii_media_status;
 	}
