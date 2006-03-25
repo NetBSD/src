@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.865 2006/03/25 16:44:23 xtraeme Exp $
+#	$NetBSD: mi,v 1.866 2006/03/25 22:16:09 kleink Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4639,6 +4639,7 @@
 ./usr/share/man/cat3/tputs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/trunc.0			comp-c-catman		.cat
+./usr/share/man/cat3/truncf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tsearch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ttyaction.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ttylock.0			comp-c-catman		.cat
@@ -8599,6 +8600,7 @@
 ./usr/share/man/man3/tputs.3			comp-c-man		.man
 ./usr/share/man/man3/tree.3			comp-c-man		.man
 ./usr/share/man/man3/trunc.3			comp-c-man		.man
+./usr/share/man/man3/truncf.3			comp-c-man		.man
 ./usr/share/man/man3/tsearch.3			comp-c-man		.man
 ./usr/share/man/man3/ttyaction.3		comp-c-man		.man
 ./usr/share/man/man3/ttylock.3			comp-c-man		.man
