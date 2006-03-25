@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.776 2006/03/21 20:19:21 he Exp $
+$NetBSD: pcidevs,v 1.777 2006/03/25 22:31:13 rpaulo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1381,6 +1381,7 @@ product COMTROL ROCKETPORTP422	0x000f	RocketPort 2 port RS422
 /* Conexant Systems products */
 product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
 product CONEXANT 56KFAXMODEM	0x1085	HW 56K Fax Modem
+product	CONEXANT LANFINITY	0x1803	LANfinity MiniPCI 10/100 Ethernet
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
