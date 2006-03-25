@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.25 2006/03/25 10:47:53 rpaulo Exp $
+.\"	$NetBSD: cardbus.4,v 1.26 2006/03/25 11:17:49 xtraeme Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,6 +80,8 @@ ADMtek ADM8211 (802.11)
 3Com 3c575TX and 3c575BTX
 .It fxp
 Intel i8255x
+.It ral
+Ralink Technology RT25x0 (802.11)
 .It rtk
 Realtek 8129/8139
 .It rtw
@@ -144,6 +146,7 @@ in the kernel configuration might be of use.
 .Xr options 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
+.Xr ral 4 ,
 .Xr rtk 4 ,
 .Xr tlp 4 ,
 .Xr uhci 4
