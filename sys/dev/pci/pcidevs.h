@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.777 2006/03/21 20:20:59 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.778 2006/03/25 22:32:55 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.776 2006/03/21 20:19:21 he Exp
+ *	NetBSD: pcidevs,v 1.777 2006/03/25 22:31:13 rpaulo Exp
  */
 
 /*
@@ -1388,6 +1388,7 @@
 /* Conexant Systems products */
 #define	PCI_PRODUCT_CONEXANT_SOFTK56	0x2443		/* SoftK56 PCI Software Modem */
 #define	PCI_PRODUCT_CONEXANT_56KFAXMODEM	0x1085		/* HW 56K Fax Modem */
+#define	PCI_PRODUCT_CONEXANT_LANFINITY	0x1803		/* LANfinity MiniPCI 10/100 Ethernet */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
