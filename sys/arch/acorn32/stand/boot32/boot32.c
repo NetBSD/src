@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.26 2006/03/25 11:45:50 bjh21 Exp $	*/
+/*	$NetBSD: boot32.c,v 1.27 2006/03/25 15:09:00 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -820,7 +820,7 @@ main(int argc, char **argv)
 	 * point to the first free DRAM page guaranteed to be in
 	 * strict order up
 	 */
-	if (first_mapped_PODRAM_page_index) {
+	if (podram_blocks != 0) {
 		free_relocation_page =
 		    mem_pages_info + first_mapped_PODRAM_page_index;
 		kernel_physical_start = PODRAM_addr[0];
