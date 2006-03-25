@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.13 2006/03/23 17:32:56 garbled Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.14 2006/03/25 06:29:42 garbled Exp $	*/
 
 /*-
  * Copyright (C) 2006 Tim Rightnour
@@ -131,7 +131,7 @@ check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
 	/* If we are building a standalone image, do not write an MBR, just
 	 * set entry point and boot image size skipping over elf header
 	 */
-	if (!saloneflag) {
+	if (saloneflag) {
 		entry  = sa_htole32(0x400);
 		length = sa_htole32(elf_stat.st_size - sizeof(hdr) + 0x400);
 		lseek(prep_fd, sizeof(mbr), SEEK_SET);
