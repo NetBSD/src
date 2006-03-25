@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.81 2006/03/21 23:56:47 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.82 2006/03/25 12:09:40 rpaulo Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.81 2006/03/21 23:56:47 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.82 2006/03/25 12:09:40 rpaulo Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -272,43 +272,44 @@ static const char * const ai_errlist[] = {
 
 /* XXX macros that make external reference is BAD. */
 
-#define GET_AI(ai, afd, addr) \
-do { \
-	/* external reference: pai, error, and label free */ \
-	(ai) = get_ai(pai, (afd), (addr)); \
-	if ((ai) == NULL) { \
-		error = EAI_MEMORY; \
-		goto free; \
-	} \
+#define GET_AI(ai, afd, addr) 					\
+do { 								\
+	/* external reference: pai, error, and label free */ 	\
+	(ai) = get_ai(pai, (afd), (addr)); 			\
+	if ((ai) == NULL) { 					\
+		error = EAI_MEMORY; 				\
+		goto free; 					\
+	} 							\
 } while (/*CONSTCOND*/0)
 
-#define GET_PORT(ai, serv) \
-do { \
-	/* external reference: error and label free */ \
-	error = get_port((ai), (serv), 0); \
-	if (error != 0) \
-		goto free; \
+#define GET_PORT(ai, serv) 					\
+do { 								\
+	/* external reference: error and label free */ 		\
+	error = get_port((ai), (serv), 0); 			\
+	if (error != 0) 					\
+		goto free; 					\
 } while (/*CONSTCOND*/0)
 
-#define GET_CANONNAME(ai, str) \
-do { \
-	/* external reference: pai, error and label free */ \
-	error = get_canonname(pai, (ai), (str)); \
-	if (error != 0) \
-		goto free; \
+#define GET_CANONNAME(ai, str) 					\
+do { 								\
+	/* external reference: pai, error and label free */ 	\
+	error = get_canonname(pai, (ai), (str)); 		\
+	if (error != 0) 					\
+		goto free; 					\
 } while (/*CONSTCOND*/0)
 
-#define ERR(err) \
-do { \
-	/* external reference: error, and label bad */ \
-	error = (err); \
-	goto bad; \
-	/*NOTREACHED*/ \
+#define ERR(err) 						\
+do { 								\
+	/* external reference: error, and label bad */ 		\
+	error = (err); 						\
+	goto bad; 						\
+	/*NOTREACHED*/ 						\
 } while (/*CONSTCOND*/0)
 
-#define MATCH_FAMILY(x, y, w) \
-	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == PF_UNSPEC || (y) == PF_UNSPEC)))
-#define MATCH(x, y, w) \
+#define MATCH_FAMILY(x, y, w) 						\
+	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == PF_UNSPEC || 	\
+	    (y) == PF_UNSPEC)))	
+#define MATCH(x, y, w) 							\
 	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == ANY || (y) == ANY)))
 
 const char *
