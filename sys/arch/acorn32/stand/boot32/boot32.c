@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.25 2006/03/23 22:47:15 bjh21 Exp $	*/
+/*	$NetBSD: boot32.c,v 1.26 2006/03/25 11:45:50 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -270,6 +270,7 @@ prepare_and_check_relocation_system(void)
 				 */
 				printf("*");
 				relocate_table_pages += pages;
+				pages = 0;
 				continue;	/* while */
 			}
 		}
