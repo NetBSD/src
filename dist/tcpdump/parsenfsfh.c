@@ -1,4 +1,4 @@
-/*	$NetBSD: parsenfsfh.c,v 1.6 2006/03/22 04:30:28 christos Exp $	*/
+/*	$NetBSD: parsenfsfh.c,v 1.7 2006/03/25 11:43:53 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -48,7 +48,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.25.2.2 2003/11/16 08:51:07 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: parsenfsfh.c,v 1.6 2006/03/22 04:30:28 christos Exp $");
+__RCSID("$NetBSD: parsenfsfh.c,v 1.7 2006/03/25 11:43:53 rpaulo Exp $");
 #endif
 #endif
 
@@ -86,6 +86,7 @@ __RCSID("$NetBSD: parsenfsfh.c,v 1.6 2006/03/22 04:30:28 christos Exp $");
 #define	FHT_SUNOS5	9
 #define	FHT_AIX32	10
 #define	FHT_HPUX9	11
+#define	FHT_BSD44	12
 
 #ifdef	ultrix
 /* Nasty hack to keep the Ultrix C compiler from emitting bogus warnings */
@@ -153,6 +154,10 @@ int ourself;		/* true if file handle was generated on this host */
 #if	defined(__osf__)
 	    fhtype = FHT_DECOSF;
 #endif
+#if	defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) \
+     || defined(__OpenBSD__)
+	    fhtype = FHT_BSD44;
+#endif
 	}
 	/*
 	 * This is basically a big decision tree
@@ -203,8 +208,11 @@ int ourself;		/* true if file handle was generated on this host */
 		 * could be Ultrix, IRIX5, AIX, or SUNOS5
 		 * might be HP-UX (depends on their values for minor devs)
 		 */
+		if ((fhp[6] == 0) && (fhp[7] == 0)) {
+		    fhtype = FHT_BSD44;
+		}
 		/*XXX we probably only need to test of these two bytes */
-		if ((fhp[21] == 0) && (fhp[23] == 0)) {
+		else if ((fhp[21] == 0) && (fhp[23] == 0)) {
 		    fhtype = FHT_ULTRIX;
 		}
 		else {
@@ -268,6 +276,18 @@ int ourself;		/* true if file handle was generated on this host */
 
 	    if (osnamep)
 		*osnamep = "Auspex";
+	    break;
+
+	case FHT_BSD44:
+	    fsidp->Fsid_dev.Minor = fhp[0];
+	    fsidp->Fsid_dev.Major = fhp[1];
+	    fsidp->fsid_code = 0;
+
+	    temp = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
+	    *inop = temp;
+
+	    if (osnamep)
+		*osnamep = "BSD 4.4";
 	    break;
 
 	case FHT_DECOSF:
