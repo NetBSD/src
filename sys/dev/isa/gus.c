@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.91 2006/03/17 23:29:07 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.92 2006/03/25 23:14:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.91 2006/03/17 23:29:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.92 2006/03/25 23:14:58 thorpej Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1472,7 +1472,7 @@ gus_dmaout_timeout(void *arg)
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 #if 0
 	/* XXX we will dmadone below? */
-	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_playdrq);
+	isa_dmaabort(device_parent(&sc->sc_dev), sc->sc_playdrq);
 #endif
 
 	gus_dmaout_dointr(sc);
