@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.4 2006/03/25 17:23:36 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.4 2006/03/25 17:23:36 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -775,7 +775,7 @@ xenbus_probe_device_type(struct xen_bus_type *bus, const char *type)
 		return err;
 
 	for (i = 0; i < dir_n; i++) {
-		xbusd = malloc(sizeof(*xbusd), M_DEVBUF, M_WAITOK);
+		xbusd = malloc(sizeof(*xbusd), M_DEVBUF, M_WAITOK | M_ZERO);
 		if (xbusd == NULL)
 			panic("can't malloc xbusd");
 			
