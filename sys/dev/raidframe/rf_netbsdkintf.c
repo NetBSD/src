@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.204 2006/03/19 05:46:50 simonb Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.205 2006/03/25 13:15:41 rtr Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.204 2006/03/19 05:46:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.205 2006/03/25 13:15:41 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2722,6 +2722,7 @@ rf_find_raid_components()
 							ac_list = ac_list->next;
 							free(ac, M_RAIDFRAME);
 						}
+						free(clabel, M_RAIDFRAME);
 						return(NULL);
 					}
 
