@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: nb.c,v 1.4 2006/03/22 02:29:42 christos Exp $");
+__RCSID("$NetBSD: nb.c,v 1.5 2006/03/25 16:06:04 peter Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -121,8 +121,9 @@ nb_ctx_resolve(struct nb_ctx *ctx)
 			return error;
 		}
 		if (sap->sa_family != AF_INET) {
+			smb_error("unsupported address family %d", 0,
+			    sap->sa_family);
 			free(sap);
-			smb_error("unsupported address family %d", 0, sap->sa_family);
 			return EINVAL;
 		}
 		bcopy(sap, &ctx->nb_ns, sizeof(ctx->nb_ns));
