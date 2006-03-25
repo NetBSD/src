@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.2 2006/03/20 22:31:21 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.3 2006/03/25 17:20:32 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.2 2006/03/20 22:31:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.3 2006/03/25 17:20:32 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -263,8 +263,8 @@ xbd_xenbus_resume(void *p)
 
 
 	/* setup device: alloc event channel and shared ring */
-	ring =
-	    (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_ZERO);
+	ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		UVM_KMF_ZERO | UVM_KMF_WIRED);
 	if (ring == NULL)
 		panic("xbd_xenbus_resume: can't alloc rings");
 
@@ -474,6 +474,8 @@ xbdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (DISKUNIT(dev) > xbd_cd.cd_ndevs)
 		return (ENXIO);
 	sc = xbd_cd.cd_devs[DISKUNIT(dev)];
+	if (sc == NULL)
+		return (ENXIO);
 	if ((flags & FWRITE) && (sc->sc_info & VDISK_READONLY))
 		return EROFS;
 
