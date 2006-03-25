@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.43 2006/03/23 16:55:42 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.44 2006/03/25 16:41:11 xtraeme Exp $	*/
 
 /*
  * ====================================================
@@ -311,6 +311,8 @@ float	floorf(float);
 float	rintf(float);
 double	round(double);
 float	roundf(float);
+double	trunc(double);
+float	truncf(float);
 long int	lrint(double);
 long int	lrintf(float);
 /* LONGLONG */
