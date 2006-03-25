@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.3 2006/03/25 17:20:32 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.4 2006/03/25 17:57:25 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.3 2006/03/25 17:20:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.4 2006/03/25 17:57:25 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -358,7 +358,9 @@ static void xbd_backend_changed(void *p, XenbusState new_state)
 		dk_getdisklabel(sc->sc_di, &sc->sc_dksc, 0 /* XXX ? */);
 		format_bytes(buf, sizeof(buf), (uint64_t)sc->sc_dksc.sc_size *
 		    pdg->pdg_secsize);
-		printf("%s: %s\n", sc->sc_dev.dv_xname, buf);
+		printf("%s: %s, %d bytes/sect x %llu sectors\n",
+		    sc->sc_dev.dv_xname, buf, (int)pdg->pdg_secsize,
+		    (unsigned long long)sc->sc_dksc.sc_size);
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
 
@@ -447,7 +449,7 @@ again:
 				bp->b_resid = bp->b_bcount;
 				goto next;
 		}
-		bp->b_resid = 0;
+		/* b_resid was set in xbdstart */
 next:
 		if (bp->b_data != xbdreq->req_data)
 			xbd_unmap_align(xbdreq);
@@ -615,11 +617,23 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 
 
 	if (sc == NULL || sc->sc_shutdown) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
+		goto err;
+	}
+
+	if (bp->b_rawblkno < 0 || bp->b_rawblkno > sc->sc_dksc.sc_size) {
+		/* invalid block number */
+		bp->b_error = EINVAL;
+		goto err;
+	}
+
+	if (bp->b_rawblkno == sc->sc_dksc.sc_size) {
+		/* at end of disk; return short read */
+		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return 0;
 	}
+		
 
 	if (RING_FULL(&sc->sc_ring)) {
 		DPRINTF(("xbdstart: ring_full\n"));
@@ -655,6 +669,13 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 
 	va = (vaddr_t)xbdreq->req_data & ~PAGE_MASK;
 	off = (vaddr_t)xbdreq->req_data & PAGE_MASK;
+	if (bp->b_rawblkno + bp->b_bcount / DEV_BSIZE >= sc->sc_dksc.sc_size) {
+		bcount = (sc->sc_dksc.sc_size - bp->b_rawblkno) * DEV_BSIZE;
+		bp->b_resid = bp->b_bcount - bcount;
+	} else {
+		bcount = bp->b_bcount;
+		bp->b_resid = 0;
+	}
 	for (seg = 0, bcount = bp->b_bcount; bcount > 0;) {
 		pmap_extract_ma(pmap_kernel(), va, &ma);
 		KASSERT((ma & (XEN_BSIZE - 1)) == 0);
@@ -692,6 +713,12 @@ out:
 			hypervisor_notify_via_evtchn(sc->sc_evtchn);
 	}
 	return ret;
+
+err:
+	bp->b_flags |= B_ERROR;
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
+	return 0;
 }
 
 static int
