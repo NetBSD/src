@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.776 2006/03/21 20:20:59 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.777 2006/03/25 22:32:55 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.776 2006/03/21 20:19:21 he Exp
+ *	NetBSD: pcidevs,v 1.777 2006/03/25 22:31:13 rpaulo Exp
  */
 
 /*
@@ -4850,6 +4850,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56KFAXMODEM,
 	    "HW 56K Fax Modem",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_LANFINITY,
+	    "LANfinity MiniPCI 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -11180,4 +11184,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2206;
+const int pci_nproducts = 2207;
