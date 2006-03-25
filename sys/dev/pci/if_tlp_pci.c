@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.86 2006/02/18 05:04:12 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.87 2006/03/25 04:12:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.86 2006/02/18 05:04:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.87 2006/03/25 04:12:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,8 @@ tlp_pci_check_slaved(struct tulip_pci_softc *psc, int shared, int slaved)
 	for (i = 0; i < tlp_cd.cd_ndevs; i++) {
 		if ((cur = tlp_cd.cd_devs[i]) == NULL)
 			continue;
-		if (cur->sc_tulip.sc_dev.dv_parent != sc->sc_dev.dv_parent)
+		if (device_parent(&cur->sc_tulip.sc_dev) !=
+		    device_parent(&sc->sc_dev))
 			continue;
 		if ((cur->sc_flags & shared) == 0)
 			continue;
