@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.17 2003/07/26 17:07:04 salo Exp $
+.\"	$NetBSD: prep,v 1.18 2006/03/25 13:42:41 tsutsui Exp $
 .
 There are two installation tools available.
 The traditional miniroot
@@ -21,26 +21,27 @@ The configurations described in this document are as follows:
 .(bullet -compact
 \*M netboots
 .Li SYS_UBOOT
-and then runs the miniroot installation tools or a purely diskless
-installation from a
+from a
 .Nx
-server on the same subnet (you must have root access).
-Other server platforms will work, but are described in the NetBSD Diskless
+server running
+.Xr rbootd 8 ,
+or other server platforms (Linux, FreeBSD, SunOS, Solaris, HP-UX etc.) with
+YAMAMORI Takenori's
+.Li sun-rbootd
+package and then runs the miniroot installation tools or a purely diskless
+installation from a server on the same subnet (you must have root access).
+The more infomation is described in the NetBSD Diskless
 HOW-TO.
 .Lk http://www.NetBSD.org/Documentation/network/netboot/
+and
+.Lk http://www.NetBSD.org/Documentation/network/netboot/rbootd/
 .Pp
 .It
 \*M loads
 .Li SYS_UBOOT
 from a local disk, tape, or floppy
 and then runs the miniroot installation tools or a purely diskless
-installation from a
-.Nx
-server on the same subnet (you must have root access).
-Other server platforms will work, but are described in the NetBSD Diskless
-HOW-TO.
-.Lk http://www.NetBSD.org/Documentation/network/netboot/
-You will need
+installation from a server as described above. You will need
 .Tn HP-UX
 on your \*M if it does not have a SCSI interface or a floppy drive.
 .Pp

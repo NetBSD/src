@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.25 2006/03/25 13:19:57 tsutsui Exp $
+.\"	$NetBSD: netboot,v 1.26 2006/03/25 13:42:41 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -234,6 +234,18 @@ you can achieve this with:
 .(disp
 .No # Ic "/etc/rc.d/rbootd restart"
 .disp)
+.Pp
+If your netboot server is not running
+.Nx 
+but other OSs (like Linux, Solaris etc.), you have to use
+YAMAMORI Takenori's
+.Li sun-rbootd
+package instead of native
+.Xr rbootd 8 .
+Please refer the "Setting up the rbootd server" section
+in the NetBSD Diskless HOW-TO
+.Lk http://www.NetBSD.org/Documentation/network/netboot/rbootd/
+for details.
 .Pp
 .It
 .\} \" ! \n[hp300]:\n[hp700]
