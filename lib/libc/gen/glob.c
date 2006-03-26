@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.15 2006/01/24 17:24:09 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.16 2006/03/26 18:11:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.15 2006/01/24 17:24:09 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.16 2006/03/26 18:11:22 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -460,7 +460,8 @@ glob0(pattern, pglob)
 	glob_t *pglob;
 {
 	const Char *qpatnext;
-	int c, error, oldpathc;
+	int c, error;
+	__gl_size_t oldpathc;
 	Char *bufnext, patbuf[MAXPATHLEN+1];
 	size_t limit = 0;
 
@@ -791,8 +792,7 @@ globextend(path, pglob, limit)
 	size_t *limit;
 {
 	char **pathv;
-	int i;
-	size_t newsize, len;
+	size_t i, newsize, len;
 	char *copy;
 	const Char *p;
 
@@ -808,7 +808,7 @@ globextend(path, pglob, limit)
 	if (pglob->gl_pathv == NULL && pglob->gl_offs > 0) {
 		/* first time around -- clear initial gl_offs items */
 		pathv += pglob->gl_offs;
-		for (i = pglob->gl_offs; --i >= 0; )
+		for (i = pglob->gl_offs + 1; --i > 0; )
 			*--pathv = NULL;
 	}
 	pglob->gl_pathv = pathv;
@@ -895,7 +895,7 @@ void
 globfree(pglob)
 	glob_t *pglob;
 {
-	int i;
+	size_t i;
 	char **pp;
 
 	_DIAGASSERT(pglob != NULL);

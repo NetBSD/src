@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.24 2004/10/29 20:35:16 dsl Exp $       */
+/*      $NetBSD: catman.c,v 1.25 2006/03/26 18:11:22 christos Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -264,7 +264,8 @@ uniquepath(void)
 	struct stat st1;
 	struct stat st2;
 	struct stat st3;
-	int i, j, len, lnk, gflags;
+	int len, lnk, gflags;
+	size_t i, j;
 	char path[PATH_MAX], *p;
 
 	gflags = 0;
