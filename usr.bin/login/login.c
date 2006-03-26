@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.89 2006/03/23 23:33:28 wiz Exp $       */
+/*     $NetBSD: login.c,v 1.90 2006/03/26 16:45:33 hubertf Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.89 2006/03/23 23:33:28 wiz Exp $");
+__RCSID("$NetBSD: login.c,v 1.90 2006/03/26 16:45:33 hubertf Exp $");
 #endif /* not lint */
 
 /*
@@ -173,7 +173,6 @@ main(int argc, char *argv[])
 	gid_t saved_gid, saved_gids[NGROUPS_MAX];
 	int nsaved_gids;
 	char *domain, *p, *ttyn, *pwprompt;
-	const char *salt;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN + 1];
 	int need_chpass, require_chpass;
@@ -368,10 +367,7 @@ main(int argc, char *argv[])
 		}
 		(void)strlcpy(tbuf, username, sizeof(tbuf));
 
-		if ((pwd = getpwnam(username)) != NULL)
-			salt = pwd->pw_passwd;
-		else
-			salt = "xx";
+		pwd = getpwnam(username);
 
 #ifdef LOGIN_CAP
 		/*
