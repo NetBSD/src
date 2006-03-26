@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.67 2006/03/19 06:47:35 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.68 2006/03/26 01:58:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.67 2006/03/19 06:47:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.68 2006/03/26 01:58:28 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -273,6 +273,9 @@ hilopen(dev_t dev, int flags, int mode, struct lwp *l)
 	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
 	int s;
+#ifdef DEBUG
+	struct proc *p = l->l_proc;
+#endif
 
 	hilp = device_lookup(&hil_cd, HILLOOP(dev));
 
@@ -354,6 +357,9 @@ hilclose(dev_t dev, int flags, int mode, struct lwp *l)
 	char mask, lpctrl;
 	int s;
 	extern struct emul emul_netbsd;
+#ifdef DEBUG
+	struct proc *p = l->l_proc;
+#endif
 
 	hilp = device_lookup(&hil_cd, HILLOOP(dev));
 
