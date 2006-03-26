@@ -1,6 +1,6 @@
-.\"	$NetBSD: tlp.4,v 1.21 2006/02/04 20:23:17 wiz Exp $
+.\"	$NetBSD: tlp.4,v 1.22 2006/03/26 12:38:21 rpaulo Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -356,6 +356,13 @@ This chip also supports ACPI power management.
 .Pp
 A list of boards which include the AX88140A or the AX88141 is not
 yet available.
+.It
+.Em Conexant RS7112 (LANfinity)
+-- These chips are 21143 clones with coupled modem function.
+Media is provided
+by an IEEE 802.3u-compliant PHY connected to an MII interface.
+.Pp
+A list of boards which include the RS7112 is not yet available.
 .El
 .Sh MEDIA SELECTION
 Media selection done using
@@ -531,6 +538,12 @@ Refer to those manual pages for more information.
 .%A ASIX Electronics Co.
 .%O Document Number AX140D2.DOC
 .Re
+.Rs
+.%T "LANfinity - Home Networking Physical Layer Device with Integrated Analog Front End Circuitry"
+.%A Conexant Systems, Inc.
+.%N Revision A
+.%D March 12, 1999
+.Re
 .Sh HISTORY
 The
 .Nm
@@ -550,6 +563,10 @@ The author may be contacted at
 ASIX AX88140A and AX881401 support was added by
 .An Rui Paulo
 .Aq rpaulo@NetBSD.org .
+.Pp
+Conexant RS7112 support was contributed by
+.An Frank Wille
+.Aq frank@phoenix.owl.de .
 .Sh BUGS
 Media autosense is not yet supported for any serial or PCS function media.
 It is, however, supported for IEEE 802.3u-compliant PHY media.
