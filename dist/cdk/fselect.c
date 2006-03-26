@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: garbled $
- * $Date: 2001/01/04 19:58:11 $
- * $Revision: 1.1.1.1 $
+ * $Author: christos $
+ * $Date: 2006/03/26 21:44:05 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -349,7 +349,6 @@ void setCDKFselect (CDKFSELECT *fselect, char *directory, chtype fieldAttrib, ch
    fselect->fieldAttribute	= fieldAttrib;
    fselect->fillerCharacter	= filler;
    fselect->highlight		= highlight;
-   strcpy (newDirectory, directory);
 
    /* Set the attributes of the entry field/scrolling list. */
    setCDKEntryFillerChar (fentry, filler);
@@ -368,6 +367,8 @@ void setCDKFselect (CDKFSELECT *fselect, char *directory, chtype fieldAttrib, ch
 	    freeChar (tempDir);
 	 }
       }
+      else
+         strcpy (newDirectory, directory);
 
       /* Change directories. */
       ret = chdir (newDirectory);
