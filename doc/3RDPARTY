@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.424 2006/03/23 21:55:58 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.425 2006/03/26 15:11:57 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -834,7 +834,7 @@ Maintainer:	Ian Lance Taylor <ian@airs.com>
 Archive Site:	ftp://ftp.gnu.org/gnu/uucp/
 Home Page:	http://www.airs.com/ian/uucp.html
 Mailing List:	taylor-uucp@cirr.com
-Responsible:	jtk
+Responsible:	tron
 License:	GPLv2
 Notes:
 
