@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.4 2006/03/25 17:57:25 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.5 2006/03/26 22:05:06 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.4 2006/03/25 17:57:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.5 2006/03/26 22:05:06 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.4 2006/03/25 17:57:25 bouyer Exp $"
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/stat.h>
+#include <sys/vnode.h>
 
 #include <dev/dkvar.h>
 
@@ -123,7 +124,7 @@ static int  xbd_xenbus_detach(struct device *, int);
 static int  xbd_xenbus_resume(void *);
 static int  xbd_handler(void *);
 static int  xbdstart(struct dk_softc *, struct buf *);
-static void xbd_backend_changed(void *, XenbusState);
+static void xbd_backend_changed(struct device *, XenbusState);
 static void xbd_connect(struct xbd_xenbus_softc *);
 
 static int  xbd_map_align(struct xbd_req *);
@@ -223,7 +224,6 @@ xbd_xenbus_attach(struct device *parent, struct device *self, void *aux)
 #endif /* XBD_DEBUG */
 	sc->sc_xbusd = xa->xa_xbusd;
 	sc->sc_xbusd->xbusd_otherend_changed = xbd_backend_changed;
-	sc->sc_xbusd->xbusd_data = sc;
 
 	dk_sc_init(&sc->sc_dksc, sc, sc->sc_dev.dv_xname);
 	sc->sc_dksc.sc_dkdev.dk_driver = &xbddkdriver;
@@ -245,8 +245,45 @@ xbd_xenbus_attach(struct device *parent, struct device *self, void *aux)
 static int
 xbd_xenbus_detach(struct device *dev, int flags)
 {
-	printf("%s: xbd_detach\n", dev->dv_xname);
-	return 0; /* XXX */
+	struct xbd_xenbus_softc *sc = (void *)dev;
+	int s, bmaj, cmaj, i, mn;
+	s = splbio();
+	DPRINTF(("%s: xbd_detach\n", dev->dv_xname));
+	if (sc->sc_shutdown == 0) {
+		sc->sc_shutdown = 1;
+		/* wait for requests to complete */
+		while (sc->sc_dksc.sc_dkdev.dk_busy > 0)
+			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
+	}
+	splx(s);
+
+	/* locate the major number */
+	bmaj = bdevsw_lookup_major(&xbd_bdevsw);
+	cmaj = cdevsw_lookup_major(&xbd_cdevsw);
+
+	/* Nuke the vnodes for any open instances. */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = DISKMINOR(dev->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
+	/* Delete all of our wedges. */
+	dkwedge_delall(&sc->sc_dksc.sc_dkdev);
+
+	s = splbio();
+	/* Kill off any queued buffers. */
+	bufq_drain(sc->sc_dksc.sc_bufq);
+	bufq_free(sc->sc_dksc.sc_bufq);
+	splx(s);
+
+	/* detach disk */
+	disk_detach(&sc->sc_dksc.sc_dkdev);
+
+	event_remove_handler(sc->sc_evtchn, &xbd_handler, sc);
+	xengnt_revoke_access(sc->sc_ring_gntref);
+	uvm_km_free(kernel_map, (vaddr_t)sc->sc_ring.sring,
+	    PAGE_SIZE, UVM_KMF_WIRED);
+	return 0;
 }
 
 static int
@@ -319,11 +356,12 @@ abort_transaction:
 	return error;
 }
 
-static void xbd_backend_changed(void *p, XenbusState new_state)
+static void xbd_backend_changed(struct device *dev, XenbusState new_state)
 {
-	struct xbd_xenbus_softc *sc = p;
+	struct xbd_xenbus_softc *sc = (void *)dev;
 	struct dk_geom *pdg;
 	char buf[9];
+	int s;
 	DPRINTF(("%s: new backend state %d\n", sc->sc_dev.dv_xname, new_state));
 
 	switch (new_state) {
@@ -331,10 +369,16 @@ static void xbd_backend_changed(void *p, XenbusState new_state)
 	case XenbusStateInitialising:
 	case XenbusStateInitWait:
 	case XenbusStateInitialised:
-	case XenbusStateClosed:
 		break;
 	case XenbusStateClosing:
-		break; /* XXX implement */
+		s = splbio();
+		sc->sc_shutdown = 1;
+		/* wait for requests to complete */
+		while (sc->sc_dksc.sc_dkdev.dk_busy > 0)
+			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
+		splx(s);
+		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
+		break;
 	case XenbusStateConnected:
 		xbd_connect(sc);
 		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
