@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.12 2006/03/21 21:11:42 christos Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.13 2006/03/26 16:15:15 jmmv Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.12 2006/03/21 21:11:42 christos Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.13 2006/03/26 16:15:15 jmmv Exp $");
 #endif /* not lint */
 
 #define __POOL_EXPOSE
@@ -264,8 +264,7 @@ dehumanize_group(const char *str, gid_t *gid)
 		tmp = strtoul(str, &ep, 0);
 		if (str[0] == '\0' || *ep != '\0')
 			error = 0; /* Not a number. */
-		else if (errno == ERANGE &&
-		    (tmp == LONG_MAX || tmp == LONG_MIN))
+		else if (errno == ERANGE)
 			error = 0; /* Out of range. */
 		else {
 			*gid = (gid_t)tmp;
@@ -294,8 +293,7 @@ dehumanize_mode(const char *str, mode_t *mode)
 	tmp = strtol(str, &ep, 8);
 	if (str[0] == '\0' || *ep != '\0')
 		error = 0; /* Not a number. */
-	else if (errno == ERANGE &&
-	    (tmp == LONG_MAX || tmp == LONG_MIN))
+	else if (errno == ERANGE)
 		error = 0; /* Out of range. */
 	else {
 		*mode = (mode_t)tmp;
@@ -360,7 +358,7 @@ dehumanize_off(const char *str, off_t *size)
 	tmp = strtoll(str, &ep, 10);
 	if (str[0] == '\0' || (ep != delimit && *ep != '\0'))
 		return 0; /* Not a number. */
-	else if (errno == ERANGE && (tmp == LONG_MAX || tmp == LONG_MIN))
+	else if (errno == ERANGE)
 		return 0; /* Out of range. */
 
 	tmp2 = tmp * multiplier;
@@ -399,8 +397,7 @@ dehumanize_user(const char *str, uid_t *uid)
 		tmp = strtoul(str, &ep, 0);
 		if (str[0] == '\0' || *ep != '\0')
 			error = 0; /* Not a number. */
-		else if (errno == ERANGE &&
-		    (tmp == LONG_MAX || tmp == LONG_MIN))
+		else if (errno == ERANGE)
 			error = 0; /* Out of range. */
 		else {
 			*uid = (uid_t)tmp;
