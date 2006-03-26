@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119 2006/03/26 02:02:01 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.120 2006/03/26 02:28:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2006/03/26 02:02:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2006/03/26 02:28:37 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -91,26 +91,23 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2006/03/26 02:02:01 tsutsui Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
-#include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/ras.h>
 #include <sys/resourcevar.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscall.h>
-#include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/userret.h>
 
 #include <m68k/frame.h>
 #include <m68k/cacheops.h>
 
-#include <machine/db_machdep.h>
-#include <machine/psl.h>
-#include <machine/trap.h>
 #include <machine/cpu.h>
-#include <machine/reg.h>
+#include <machine/db_machdep.h>
 #include <machine/intr.h>
+#include <machine/reg.h>
+#include <machine/trap.h>
 
 #include <uvm/uvm_extern.h>
 
