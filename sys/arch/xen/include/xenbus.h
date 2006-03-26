@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.3 2006/03/16 23:08:08 bouyer Exp $ */
+/* $NetBSD: xenbus.h,v 1.4 2006/03/26 22:02:57 bouyer Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -64,17 +64,22 @@ struct xenbus_watch {
 };
 
 
-/* A xenbus device. */
+/*
+ * A xenbus device. Note that the malloced memory will be larger than
+ * sizeof(xenbus_device) to have the storage for xbusd_path, so xbusd_path
+ * has to be the last entry.
+ */
 struct xenbus_device {
-	const char xbusd_path[80]; /* our path */
+	SLIST_ENTRY(xenbus_device) xbusd_entries;
 	char *xbusd_otherend; /* the otherend path */
 	int xbusd_otherend_id; /* the otherend's id */
 	/* callback for otherend change */
-	void (*xbusd_otherend_changed)(void *, XenbusState);
-	void *xbusd_data;
+	void (*xbusd_otherend_changed)(struct device *, XenbusState);
+	struct device *xbusd_dev;
 	int xbusd_has_error;
 	/* for xenbus internal use */
 	struct xenbus_watch xbusd_otherend_watch;
+	const char xbusd_path[1]; /* our path */
 };
 
 struct xenbus_device_id
@@ -82,26 +87,6 @@ struct xenbus_device_id
 	/* .../device/<device_type>/<identifier> */
 	char devicetype[32]; 	/* General class of device. */
 };
-
-/* A xenbus driver. */
-struct xenbus_driver {
-	char *name;
-	struct module *owner;
-	const struct xenbus_device_id *ids;
-	int (*probe)(struct xenbus_device *dev,
-		     const struct xenbus_device_id *id);
-	void (*otherend_changed)(struct xenbus_device *dev,
-				 XenbusState backend_state);
-	int (*remove)(struct xenbus_device *dev);
-	int (*suspend)(struct xenbus_device *dev);
-	int (*resume)(struct xenbus_device *dev);
-	int (*hotplug)(struct xenbus_device *, char **, int, char *, int);
-	int (*read_otherend_details)(struct xenbus_device *dev);
-};
-
-int xenbus_register_frontend(struct xenbus_driver *drv);
-int xenbus_register_backend(struct xenbus_driver *drv);
-void xenbus_unregister_driver(struct xenbus_driver *drv);
 
 struct xenbus_transaction;
 
@@ -154,6 +139,8 @@ void xenbus_suspend(void);
 void xenbus_resume(void);
 
 void xenbus_probe(void *);
+
+int xenbus_free_device(struct xenbus_device *);
 
 #define XENBUS_IS_ERR_READ(str) ({			\
 	if (!IS_ERR(str) && strlen(str) == 0) {		\
