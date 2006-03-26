@@ -1,4 +1,4 @@
-/*	$NetBSD: ident.c,v 1.4 1996/10/15 07:00:02 veego Exp $	*/
+/*	$NetBSD: ident.c,v 1.5 2006/03/26 22:50:48 christos Exp $	*/
 /* Identify RCS keyword strings in files.  */
 
 /* Copyright 1982, 1988, 1989 Walter Tichy
@@ -30,6 +30,10 @@ Report problems and direct all questions to:
 
 /*
  * $Log: ident.c,v $
+ * Revision 1.5  2006/03/26 22:50:48  christos
+ * Coverity CID 1202: Always return on EOF, otherwise we would try to use
+ * ctab[-1].
+ *
  * Revision 1.4  1996/10/15 07:00:02  veego
  * Merge rcs 5.7.
  *
@@ -254,8 +258,8 @@ match(fp)   /* group substring between two KDELIM's; then do pattern match */
       return c ? c : '\n';
    *tp++ = c;
    while( (c = getc(fp)) != KDELIM ) {
-      if (c == EOF  &&  feof(fp) | ferror(fp))
-	    return c;
+      if (c == EOF)
+	 return c;
       switch (ctab[c]) {
 	 default:
 	    *tp++ = c;
