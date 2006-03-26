@@ -1,4 +1,4 @@
-/*	$NetBSD: rcs.c,v 1.4 1996/10/15 07:00:33 veego Exp $	*/
+/*	$NetBSD: rcs.c,v 1.5 2006/03/26 22:35:07 christos Exp $	*/
 
 /* Change RCS file attributes.  */
 
@@ -31,6 +31,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcs.c,v $
+ * Revision 1.5  2006/03/26 22:35:07  christos
+ * Coverity CID 927: Check for NULL before de-referencing.
+ *
  * Revision 1.4  1996/10/15 07:00:33  veego
  * Merge rcs 5.7.
  *
@@ -1585,7 +1588,7 @@ buildtree()
                     pre = pt;
                     pt = pt->nextbranch;
                 }
-                if ( cuttail )
+                if ( cuttail && pt )
                     pt->hsh = cuttail;
                 else if ( pt == pre )
                     cuthead->branches = pt->nextbranch;
