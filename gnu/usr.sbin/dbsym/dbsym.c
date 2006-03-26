@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.9 2005/11/24 12:54:29 dbj Exp $ */
+/* $NetBSD: dbsym.c,v 1.10 2006/03/26 22:58:44 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT(
     "@(#) Copyright (c) 1996 Christopher G. Demetriou, 2001 Simon Burge.\
   All rights reserved.\n");
-__RCSID("$NetBSD: dbsym.c,v 1.9 2005/11/24 12:54:29 dbj Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.10 2006/03/26 22:58:44 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -400,22 +400,22 @@ load_symtab(bfd *abfd, int fd, char **symtab, u_int32_t *symtabsize)
 	   ? bfd_get_64(abfd, e64_hdr.e_shoff)
 	   : bfd_get_32(abfd, e32_hdr.e_shoff));
 	if (lseek(fd, e_shoff, SEEK_SET) < 0)
-		return (1);
+		goto out;
 	if (read(fd, shdr, sh_size) != sh_size)
-		return (1);
+		goto out;
 
 	for (i = 0; i < e_shnum; i++) {
 		if (SH_TYPE(i) == SHT_SYMTAB || SH_TYPE(i) == SHT_STRTAB) {
 			osymtabsize = *symtabsize;
 			*symtabsize += roundup(SH_SIZE(i), ISELF64 ? 8 : 4);
 			if ((*symtab = realloc(*symtab, *symtabsize)) == NULL)
-				return (1);
+				goto out;
 
 			if (lseek(fd, SH_OFFSET(i), SEEK_SET) < 0)
-				return (1);
+				goto out;
 			if (read(fd, *symtab + osymtabsize, SH_SIZE(i)) !=
 			    SH_SIZE(i))
-				return (1);
+				goto out;
 			if (ISELF64) {
 				bfd_put_64(abfd, osymtabsize,
 				    s64hdr[i].sh_offset);
@@ -448,4 +448,7 @@ load_symtab(bfd *abfd, int fd, char **symtab, u_int32_t *symtabsize)
 	memcpy(*symtab, &ehdr, sizeof(ehdr));
 
 	return (0);
+out:
+	free(shdr);
+	return (1);
 }
