@@ -1,4 +1,4 @@
-/* $NetBSD: dbsym.c,v 1.10 2006/03/26 22:58:44 christos Exp $ */
+/* $NetBSD: dbsym.c,v 1.11 2006/03/26 23:00:35 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Simon Burge (for Wasabi Systems)
@@ -39,7 +39,7 @@
 __COPYRIGHT(
     "@(#) Copyright (c) 1996 Christopher G. Demetriou, 2001 Simon Burge.\
   All rights reserved.\n");
-__RCSID("$NetBSD: dbsym.c,v 1.10 2006/03/26 22:58:44 christos Exp $");
+__RCSID("$NetBSD: dbsym.c,v 1.11 2006/03/26 23:00:35 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -425,6 +425,9 @@ load_symtab(bfd *abfd, int fd, char **symtab, u_int32_t *symtabsize)
 			}
 		}
 	}
+
+	if (*symtab == NULL)
+		goto out;
 
 	/*
 	 * Copy updated section headers.
