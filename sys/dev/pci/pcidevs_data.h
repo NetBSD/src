@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.777 2006/03/25 22:32:55 rpaulo Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.778 2006/03/26 20:23:27 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.777 2006/03/25 22:31:13 rpaulo Exp
+ *	NetBSD: pcidevs,v 1.778 2006/03/26 20:21:55 jonathan Exp
  */
 
 /*
@@ -4309,7 +4309,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5780S,
-	    "BCM5782S 1000baseX Ethernet",
+	    "BCM5780S 1000baseX Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782,
