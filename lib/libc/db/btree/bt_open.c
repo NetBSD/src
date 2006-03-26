@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.18 2005/01/19 00:23:44 mycroft Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.19 2006/03/26 02:03:40 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.18 2005/01/19 00:23:44 mycroft Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.19 2006/03/26 02:03:40 rtr Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -411,8 +411,10 @@ tmp()
 	
 	(void)sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
-	if ((fd = mkstemp(path)) != -1)
+	if ((fd = mkstemp(path)) != -1) {
 		(void)unlink(path);
+		(void)fcntl(fd, F_SETFD, 1);
+	}
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return(fd);
 }
