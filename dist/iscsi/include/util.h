@@ -159,32 +159,12 @@ void	iscsi_print_buffer(const char *, const size_t);
 #define __BIG_ENDIAN    _BIG_ENDIAN
 #define __LITTLE_ENDIAN _LITTLE_ENDIAN
 
-/*
-#if __BYTE_ORDER == __BIG_ENDIAN
-#    define ISCSI_NTOHLL(x) (x)
-#    define ISCSI_HTONLL(x) (x)
-#    define ISCSI_NTOHL(x)  (x)
-#    define ISCSI_HTONL(x)  (x)
-#    define ISCSI_NTOHS(x)  (x)
-#    define ISCSI_HTONS(x)  (x)
-#else
-#    define ISCSI_NTOHLL(x) bswap_64(x)
-#    define ISCSI_HTONLL(x) bswap_64(x)
-#    define ISCSI_NTOHL(x)  bswap_32(x)
-#    define ISCSI_HTONL(x)  bswap_32(x)
-#    define ISCSI_NTOHS(x)  bswap_16(x)
-#    define ISCSI_HTONS(x)  bswap_16(x)
-#endif
-#else
-*/
-#  define ISCSI_NTOHLL(x) 	BE64TOH(x)
-#  define ISCSI_HTONLL(x) 	HTOBE64(x)
-#  define ISCSI_NTOHL(a)	ntohl(a)
-#  define ISCSI_HTONL(a)	htonl(a)
-#  define ISCSI_NTOHS(a)	ntohs(a)
-#  define ISCSI_HTONS(a)	htons(a)
-/*
-#endif .* !linux */
+#define ISCSI_NTOHLL(x) 	BE64TOH(x)
+#define ISCSI_HTONLL(x) 	HTOBE64(x)
+#define ISCSI_NTOHL(a)	ntohl(a)
+#define ISCSI_HTONL(a)	htonl(a)
+#define ISCSI_NTOHS(a)	ntohs(a)
+#define ISCSI_HTONS(a)	htons(a)
 
 #define ISCSI_GETPID getpid()
 
