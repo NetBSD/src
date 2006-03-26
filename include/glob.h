@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.20 2005/09/13 01:44:32 christos Exp $	*/
+/*	$NetBSD: glob.h,v 1.21 2006/03/26 18:11:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,14 +42,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifndef __gl_size_t
+#define __gl_size_t	size_t
+#endif
 #ifndef __gl_stat_t
 #define __gl_stat_t	struct stat
 #endif
 
 typedef struct {
-	int gl_pathc;		/* Count of total paths so far. */
-	int gl_matchc;		/* Count of paths matching pattern. */
-	int gl_offs;		/* Reserved at beginning of gl_pathv. */
+	__gl_size_t gl_pathc;	/* Count of total paths so far. */
+	__gl_size_t gl_matchc;	/* Count of paths matching pattern. */
+	__gl_size_t gl_offs;	/* Reserved at beginning of gl_pathv. */
 	int gl_flags;		/* Copy of flags parameter to glob. */
 	char **gl_pathv;	/* List of paths matching pattern. */
 				/* Copy of errfunc parameter to glob. */
@@ -95,8 +98,8 @@ typedef struct {
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
 int	glob(const char * __restrict, int,
-    int (*)(const char *, int), glob_t * __restrict)	 __RENAME(__glob13);
-void	globfree(glob_t *)				 __RENAME(__globfree13);
+    int (*)(const char *, int), glob_t * __restrict)	 __RENAME(__glob30);
+void	globfree(glob_t *)				 __RENAME(__globfree30);
 #endif
 __END_DECLS
 
