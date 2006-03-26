@@ -390,7 +390,7 @@ driver_atoi(const char *s)
 
 /* find the credentials for `user' and put them in `cred' */
 static int
-find_credentials(cred_t *cred, char *user, const char *auth)
+find_credentials(iscsi_cred_t *cred, char *user, const char *auth)
 {
 	conffile_t	 conf;
 	const char	*authtype;
@@ -426,7 +426,7 @@ find_credentials(cred_t *cred, char *user, const char *auth)
 #if 0
 /* free any storage allocated in `cred' */
 static void
-free_cred(cred_t *cred)
+free_cred(iscsi_cred_t *cred)
 {
 	if (cred) {
 		if (cred->user) {
@@ -450,7 +450,7 @@ free_cred(cred_t *cred)
 static int
 param_parse_security(iscsi_parameter_t * head,
 		     iscsi_parameter_t * param_in,
-		     cred_t *cred,
+		     iscsi_cred_t *cred,
 		     char *text_out, int *text_len_out, int textsize)
 {
 
@@ -658,7 +658,7 @@ param_parse_security(iscsi_parameter_t * head,
 
 int 
 param_text_parse(iscsi_parameter_t * head,
-		 cred_t *cred,
+		 iscsi_cred_t *cred,
 		 char *text_in, int text_len_in,
 		 char *text_out, int *text_len_out,
 		 int textsize, 

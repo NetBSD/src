@@ -530,7 +530,7 @@ iscsi_sock_bind(iscsi_socket_t sock, int port)
 	(void) memset(&laddr, 0x0, sizeof(laddr));
 	laddr.sin_family = AF_INET;
 	laddr.sin_addr.s_addr = INADDR_ANY;
-	laddr.sin_port = ISCSI_HTON16(port);
+	laddr.sin_port = ISCSI_HTONS(port);
 	if ((rc = bind(sock, (struct sockaddr *) (void *) &laddr, sizeof(laddr))) < 0) {
 		iscsi_trace_error("bind() failed: rc %i errno %i\n", rc, errno);
 		return -1;
@@ -1096,21 +1096,24 @@ cdb2lba(uint32_t *lba, uint16_t *len, uint8_t *cdb)
 	/* Some platforms (like strongarm) aligns on */
 	/* word boundaries.  So HTONL and NTOHL won't */
 	/* work here. */
-#if (BYTE_ORDER == BIG_ENDIAN)
-	((uint8_t *) (void *) lba)[0] = cdb[2];
-	((uint8_t *) (void *) lba)[1] = cdb[3];
-	((uint8_t *) (void *) lba)[2] = cdb[4];
-	((uint8_t *) (void *) lba)[3] = cdb[5];
-	((uint8_t *) (void *) len)[0] = cdb[7];
-	((uint8_t *) (void *) len)[1] = cdb[8];
-#else
-	((uint8_t *) (void *) lba)[0] = cdb[5];
-	((uint8_t *) (void *) lba)[1] = cdb[4];
-	((uint8_t *) (void *) lba)[2] = cdb[3];
-	((uint8_t *) (void *) lba)[3] = cdb[2];
-	((uint8_t *) (void *) len)[0] = cdb[8];
-	((uint8_t *) (void *) len)[1] = cdb[7];
-#endif
+	int	indian = 1;
+
+	if (*(char *) &indian) {
+		/* little endian */
+		((uint8_t *) (void *) lba)[0] = cdb[5];
+		((uint8_t *) (void *) lba)[1] = cdb[4];
+		((uint8_t *) (void *) lba)[2] = cdb[3];
+		((uint8_t *) (void *) lba)[3] = cdb[2];
+		((uint8_t *) (void *) len)[0] = cdb[8];
+		((uint8_t *) (void *) len)[1] = cdb[7];
+	} else {
+		((uint8_t *) (void *) lba)[0] = cdb[2];
+		((uint8_t *) (void *) lba)[1] = cdb[3];
+		((uint8_t *) (void *) lba)[2] = cdb[4];
+		((uint8_t *) (void *) lba)[3] = cdb[5];
+		((uint8_t *) (void *) len)[0] = cdb[7];
+		((uint8_t *) (void *) len)[1] = cdb[8];
+	}
 }
 
 void
@@ -1119,19 +1122,23 @@ lba2cdb(uint8_t *cdb, uint32_t *lba, uint16_t *len)
 	/* Some platforms (like strongarm) aligns on */
 	/* word boundaries.  So HTONL and NTOHL won't */
 	/* work here. */
-#if (BYTE_ORDER == BIG_ENDIAN)
-	cdb[2] = ((uint8_t *) lba)[2];
-	cdb[3] = ((uint8_t *) lba)[3];
-	cdb[4] = ((uint8_t *) lba)[0];
-	cdb[5] = ((uint8_t *) lba)[1];
-	cdb[7] = ((uint8_t *) len)[0];
-	cdb[8] = ((uint8_t *) len)[1];
-#else
-	cdb[2] = ((uint8_t *) lba)[3];
-	cdb[3] = ((uint8_t *) lba)[2];
-	cdb[4] = ((uint8_t *) lba)[1];
-	cdb[5] = ((uint8_t *) lba)[0];
-	cdb[7] = ((uint8_t *) len)[1];
-	cdb[8] = ((uint8_t *) len)[0];
-#endif
+	int	indian = 1;
+
+	if (*(char *) &indian) {
+		/* little endian */
+		cdb[2] = ((uint8_t *) lba)[3];
+		cdb[3] = ((uint8_t *) lba)[2];
+		cdb[4] = ((uint8_t *) lba)[1];
+		cdb[5] = ((uint8_t *) lba)[0];
+		cdb[7] = ((uint8_t *) len)[1];
+		cdb[8] = ((uint8_t *) len)[0];
+	} else {
+		/* big endian */
+		cdb[2] = ((uint8_t *) lba)[2];
+		cdb[3] = ((uint8_t *) lba)[3];
+		cdb[4] = ((uint8_t *) lba)[0];
+		cdb[5] = ((uint8_t *) lba)[1];
+		cdb[7] = ((uint8_t *) len)[0];
+		cdb[8] = ((uint8_t *) len)[1];
+	}
 }
