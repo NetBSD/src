@@ -2,8 +2,8 @@
 
 /*
  * $Author: christos $
- * $Date: 2006/03/26 21:53:55 $
- * $Revision: 1.5 $
+ * $Date: 2006/03/26 21:57:14 $
+ * $Revision: 1.6 $
  */
 
 /*
@@ -65,6 +65,7 @@ CDKFSELECT *newCDKFselect (CDKSCREEN *cdkscreen, int xplace, int yplace, int hei
    /* Is the window null? */
    if (fselect->win == 0)
    {
+      free (fselect);
       return (0);
    }
    keypad (fselect->win, TRUE);
