@@ -2,8 +2,8 @@
 
 /*
  * $Author: christos $
- * $Date: 2006/03/26 21:44:05 $
- * $Revision: 1.2 $
+ * $Date: 2006/03/26 21:46:25 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -1209,6 +1209,7 @@ void deleteFileCB (EObjectType objectType GCC_UNUSED, void *object, void *client
 
    /* Redraw the file selector. */
    drawCDKFselect (fselect, ObjOf(fselect)->box);
+   freeChar (filename);
 }
 
 /*
