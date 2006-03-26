@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.599 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.600 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -223,6 +223,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	svwsata(4): Driver for Serverworks K2 SATA controllers. From
 		OpenBSD via Joerg Sonnenberger [bouyer 20060306]
 	acpi(4): Import ACPI-CA 20060217 [kochi 20060312]
+	nfe(4): Driver for NVIDIA nForce Ethernet from OpenBSD [chs 20060312]
 	krb4: Removed [christos 20060319]
 	evbmips: Add support for Atheros AR5312 SoC. [gdamore 20060321]
 	ciss(4): Driver for HP/Compaq 5th+ generation Smart ARRAY controllers
