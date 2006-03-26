@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.113 2006/03/26 23:10:26 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.114 2006/03/26 23:12:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.113 2006/03/26 23:10:26 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.114 2006/03/26 23:12:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1015,11 +1015,11 @@ parse_create(char *l)
 				    method == CTL_CREATE ? "addr" : "symbol");
 				EXIT(1);
 			}
-			errno = 0;
 			if (value == NULL) {
 				sysctlperror("%s: missing value\n", nname);
 				EXIT(1);
 			}
+			errno = 0;
 			addr = (void*)strtoul(value, &t, 0);
 			if (t == value || *t != '\0' || errno != 0) {
 				sysctlperror(
@@ -1041,6 +1041,10 @@ parse_create(char *l)
 			method = CTL_CREATESYM;
 		}
 		else if (strcmp(key, "type") == 0) {
+			if (value == NULL) {
+				sysctlperror("%s: missing value\n", nname);
+				EXIT(1);
+			}
 			if (strcmp(value, "node") == 0)
 				type = CTLTYPE_NODE;
 			else if (strcmp(value, "int") == 0) {
@@ -1078,6 +1082,10 @@ parse_create(char *l)
 			}
 		}
 		else if (strcmp(key, "n") == 0) {
+			if (value == NULL) {
+				sysctlperror("%s: missing value\n", nname);
+				EXIT(1);
+			}
 			errno = 0;
 			q = strtoll(value, &t, 0);
 			if (t == value || *t != '\0' || errno != 0 ||
@@ -1090,6 +1098,10 @@ parse_create(char *l)
 			node.sysctl_num = (int)q;
 		}
 		else if (strcmp(key, "flags") == 0) {
+			if (value == NULL) {
+				sysctlperror("%s: missing value\n", nname);
+				EXIT(1);
+			}
 			t = value;
 			while (*t != '\0') {
 				switch (*t) {
