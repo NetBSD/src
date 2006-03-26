@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.10 2006/03/23 00:01:48 agc Exp $ */
+/* $NetBSD: disk.c,v 1.11 2006/03/26 23:34:06 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -924,10 +924,17 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 			case INQUIRY_DEVICE_IDENTIFICATION_VPD:
 				data[0] = DISK_PERIPHERAL_DEVICE;
 				data[1] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
-				data[3] = cdb[4] - 7;
-				data[4] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
-				data[5] = (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
-				data[7] = snprintf((char *)&data[8], (unsigned) cdb[4] - 8, "%s", sess->globals->targetname);
+				len = data[3] = cdb[4] - 7;
+				cp = &data[4];
+				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
+				cp[1] = (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
+				len = (uint8_t) snprintf((char *)&cp[4], (int)len, "%s", sess->globals->targetname) + 4;
+				cp[3] = len;
+				cp += len;
+				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
+				cp[1] = (INQUIRY_DEVICE_ASSOCIATION_TARGET_PORT << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
+				len = (uint8_t) snprintf((char *)&cp[4], (int)len, "%s,t,0x%x", sess->globals->targetname, lun) + 4;
+				cp[3] = len;
 				done = 1;
 				break;
 			case INQUIRY_SUPPORTED_VPD_PAGES:
