@@ -2,8 +2,8 @@
 
 /*
  * $Author: christos $
- * $Date: 2006/03/26 22:02:59 $
- * $Revision: 1.4 $
+ * $Date: 2006/03/26 22:04:14 $
+ * $Revision: 1.5 $
  */
 
 char *GPasteBuffer = 0;
@@ -1217,6 +1217,7 @@ char *dirName (char *pathname)
    /* Now dir either has nothing or the basename. */
    if (dir[0] == '\0')
    {
+      freeChar (dir);
       /* If it has nothing, return nothing. */
       return copyChar ("");
    }
