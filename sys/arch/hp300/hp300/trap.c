@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.120 2006/03/26 02:28:37 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.121 2006/03/26 02:33:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2006/03/26 02:28:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2006/03/26 02:33:31 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -628,7 +628,7 @@ trap(int type, u_int code, u_int v, struct frame frame)
 		}
 
 		if (WRFAULT(code))
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 
