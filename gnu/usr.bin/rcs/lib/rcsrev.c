@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsrev.c,v 1.5 1996/10/15 07:00:24 veego Exp $	*/
+/*	$NetBSD: rcsrev.c,v 1.6 2006/03/26 22:20:04 christos Exp $	*/
 
 /* Handle RCS revision numbers.  */
 
@@ -31,6 +31,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsrev.c,v $
+ * Revision 1.6  2006/03/26 22:20:04  christos
+ * Coverity CID 2361: Avoid possible NULL deref.
+ *
  * Revision 1.5  1996/10/15 07:00:24  veego
  * Merge rcs 5.7.
  *
@@ -635,11 +638,19 @@ genbranch(bpoint, revno, length, date, author, state, store)
 				);
 				return 0;
                         }
-			if (state && strcmp(state,trail->state)!=0) {
-				rcserror("Revision %s has state %s.",
-					trail->num,
-					trail->state ? trail->state : "<empty>"
-				);
+			if (state) {
+				const char *st;
+
+				if (trail->state == NULL)
+					st = "<empty>";
+				else if (strcmp(trail->state, state) != 0)
+					st = trail->state;
+				else
+					st = NULL;
+
+				if (st)
+					rcserror("Revision %s has state %s.",
+					    trail->num, st);
 				return 0;
                         }
                 }
