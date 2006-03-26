@@ -2,8 +2,8 @@
 
 /*
  * $Author: christos $
- * $Date: 2006/03/26 21:49:01 $
- * $Revision: 1.4 $
+ * $Date: 2006/03/26 21:53:55 $
+ * $Revision: 1.5 $
  */
 
 /*
@@ -942,17 +942,14 @@ static void completeFilenameCB (EObjectType objectType GCC_UNUSED, void *object 
    int difference, absoluteDifference;
 
    /* Make sure the filename is not null. */
-   if (filename == 0)
-   {
-      Beep();
-      return;
-   }
-   filenameLen = (int)strlen (filename);
-
    /* If the filename length is equal to zero, just leave. */
-   if (filenameLen == 0)
+   if (filename == 0 || filenameLen = (int)strlen (filename))
    {
       freeChar (filename);
+      freeChar (basename);
+      freeChar (dirname);
+      freeChar (dirPWD);
+      freeChar (basePWD);
       Beep();
       return;
    }
