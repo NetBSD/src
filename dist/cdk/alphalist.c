@@ -1,9 +1,9 @@
 #include <cdk.h>
  
 /*
- * $Author: garbled $
- * $Date: 2001/01/04 19:58:30 $
- * $Revision: 1.1.1.1 $
+ * $Author: christos $
+ * $Date: 2006/03/26 22:00:23 $
+ * $Revision: 1.2 $
  */
  
 /*
@@ -62,6 +62,7 @@ CDKALPHALIST *newCDKAlphalist (CDKSCREEN *cdkscreen, int xplace, int yplace, int
 
    if (alphalist->win == 0)
    {
+      free (alphalist);
       return (0);
    }
    keypad (alphalist->win, TRUE);
