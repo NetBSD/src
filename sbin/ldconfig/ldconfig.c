@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.42 2006/03/21 21:43:03 christos Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.43 2006/03/26 23:06:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.42 2006/03/21 21:43:03 christos Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.43 2006/03/26 23:06:45 christos Exp $");
 #endif
 
 
@@ -504,6 +504,8 @@ buildhints(void)
 		goto out;
 	}
 
+	free(blist);
+	free(strtab);
 	return 0;
 out:
 	free(blist);
