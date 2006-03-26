@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: garbled $
- * $Date: 2001/01/04 20:15:31 $
- * $Revision: 1.2 $
+ * $Author: christos $
+ * $Date: 2006/03/26 21:38:43 $
+ * $Revision: 1.3 $
  */
 
 /*
@@ -763,7 +763,7 @@ static void getAndStorePattern (CDKSCREEN *screen)
    info = activateCDKEntry (getPattern, 0);
 
    /* Save the info. */
-   if ((info != 0) || (strlen (info) != 0))
+   if ((info != 0) && (strlen (info) != 0))
    {
       SearchPattern = copyChar (info);
    }
