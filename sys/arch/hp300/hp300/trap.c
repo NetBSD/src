@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116 2006/03/15 18:12:02 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.117 2006/03/26 01:50:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2006/03/15 18:12:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 2006/03/26 01:50:07 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -121,8 +121,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2006/03/15 18:12:02 drochner Exp $");
 #endif
 
 #ifdef COMPAT_SUNOS
+#include <compat/sunos/sunos_exec.h>
 #include <compat/sunos/sunos_syscall.h>
-extern struct emul emul_sunos;
 #endif
 
 int	writeback(struct frame *fp, int docachepush);
