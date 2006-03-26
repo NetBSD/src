@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: t_mount,v 1.4 2005/09/26 09:50:53 jmmv Exp $
+# $NetBSD: t_mount,v 1.5 2006/03/26 16:19:04 jmmv Exp $
 #
-# Copyright (c) 2005 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -71,9 +71,11 @@ test_run() {
 	test_unmount
 
 	test_name "Extremely large values are correctly handled"
-	test_mount -o -s9223372036854775808
+	test_mount -o -s9223372036854775807
 	test_unmount
 	mkdir -p ${Work_Dir}
+	mount -t tmpfs -o -s9223372036854775808 tmpfs ${Work_Dir} \
+	    2>/dev/null && die
 	mount -t tmpfs -o -s9223372036854775808g tmpfs ${Work_Dir} \
 	    2>/dev/null && die
 	rmdir ${Work_Dir}
