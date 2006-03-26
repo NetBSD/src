@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: wiz $
- * $Date: 2004/04/05 10:21:23 $
- * $Revision: 1.3 $
+ * $Author: christos $
+ * $Date: 2006/03/26 22:02:59 $
+ * $Revision: 1.4 $
  */
 
 char *GPasteBuffer = 0;
@@ -371,6 +371,8 @@ chtype *char2Chtype (char *string, int *to, int *align)
       {
 	 if (pass != 0)
 	 {
+	    if (result)
+		free(result);
 	    if ((result = (chtype *)malloc((used+2) * sizeof(chtype))) == 0)
 	    {
 	       used = 0;
