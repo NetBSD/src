@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.424 2006/03/25 14:12:19 gdt Exp $
+$NetBSD: usbdevs,v 1.425 2006/03/26 17:58:19 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1628,6 +1628,8 @@ product ROLAND UA3FX		0x0051	EDIROL UA-3FX USB audio I/F
 product ROLAND FANTOMX		0x006d	Fantom-X MIDI Synth.
 product ROLAND UA101		0x007d	EDIROL UA-101
 product ROLAND UA101F		0x008d	EDIROL UA-101 USB1
+product ROLAND UA1EX		0x0096	EDIROL UA-1EX
+product ROLAND UM3		0x009A	EDIROL UM-3
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
