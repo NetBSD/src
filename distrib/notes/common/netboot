@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.26 2006/03/25 13:42:41 tsutsui Exp $
+.\"	$NetBSD: netboot,v 1.27 2006/03/26 14:29:12 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,8 +37,7 @@ Introduction
 .Pp
 To netboot a \*M, you must configure one or more servers to provide
 information and files to your \*M (the
-.Sq client
-).
+.Sq client ) .
 If you are using
 .Nx
 (any architecture) on your netboot server(s), the information
