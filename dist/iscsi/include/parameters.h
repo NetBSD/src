@@ -78,11 +78,11 @@ typedef struct iscsi_parameter_item_t {
 }               iscsi_parameter_value_t;
 
 /* this struct defines the credentials a user has */
-typedef struct cred_t {
+typedef struct iscsi_cred_t {
 	char		*user;			/* user's name */
 	char		*auth_type;		/* preferred authentication type */
 	char		*shared_secret;		/* the shared secret which will be used */
-} cred_t;
+} iscsi_cred_t;
 
 /*
  * Structure for storing negotiated parameters that are frequently accessed
@@ -92,7 +92,7 @@ typedef struct iscsi_sess_param_t {
 	uint32_t        max_burst_length;
 	uint32_t        first_burst_length;
 	uint32_t        max_data_seg_length;
-	cred_t		cred;
+	iscsi_cred_t	cred;
 	uint8_t         initial_r2t;
 	uint8_t         immediate_data;
 	uint8_t		header_digest;
@@ -125,7 +125,7 @@ int             param_list_add(iscsi_parameter_t ** , int , const char *, const 
 int             param_list_print(iscsi_parameter_t * );
 int             param_list_destroy(iscsi_parameter_t * );
 int             param_text_add(iscsi_parameter_t *, const char *, const char *, char *, int *, int, int );
-int             param_text_parse(iscsi_parameter_t *, cred_t *, char *, int , char *, int *, int, int);
+int             param_text_parse(iscsi_parameter_t *, iscsi_cred_t *, char *, int , char *, int *, int, int);
 int             param_text_print(char *, uint32_t );
 int             param_num_vals(iscsi_parameter_t * , char *);
 int             param_val_reset(iscsi_parameter_t * , const char *);
