@@ -2,8 +2,8 @@
 
 /*
  * $Author: christos $
- * $Date: 2006/03/26 22:04:14 $
- * $Revision: 1.5 $
+ * $Date: 2006/03/26 22:08:59 $
+ * $Revision: 1.6 $
  */
 
 char *GPasteBuffer = 0;
@@ -373,7 +373,7 @@ chtype *char2Chtype (char *string, int *to, int *align)
 	 {
 	    if (result)
 		free(result);
-	    if ((result = (chtype *)malloc((used+2) * sizeof(chtype))) == 0)
+	    if ((result = (chtype *)malloc((used+3) * sizeof(chtype))) == 0)
 	    {
 	       used = 0;
 	       break;
