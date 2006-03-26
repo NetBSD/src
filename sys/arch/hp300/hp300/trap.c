@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.118 2006/03/26 01:59:31 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.119 2006/03/26 02:02:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.118 2006/03/26 01:59:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119 2006/03/26 02:02:01 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -788,7 +788,7 @@ writeback(struct frame *fp, int docachepush)
 			    trunc_page(f->f_fa), VM_PROT_WRITE,
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
-			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) ^ ~0xF];
+			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) & ~0xF];
 			memcpy((caddr_t)fa, (caddr_t)&f->f_pd0, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
