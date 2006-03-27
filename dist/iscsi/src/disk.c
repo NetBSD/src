@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.11 2006/03/26 23:34:06 agc Exp $ */
+/* $NetBSD: disk.c,v 1.12 2006/03/27 22:26:28 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -164,6 +164,15 @@ DEFINE_ARRAY(disks_t, iscsi_disk_t);
 
 static disks_t		disks;
 static iscsi_disk_t	defaults;
+
+#ifndef FDATASYNC
+/*
+this means that we probably don't have the fsync_range(2) system call,
+but no matter - define this here to preserve the abstraction for the
+disk/extent code
+*/
+#define FDATASYNC	0x0010
+#endif
 
 /*
  * Private Interface
