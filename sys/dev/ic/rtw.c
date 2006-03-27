@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.69 2006/03/08 08:26:50 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.70 2006/03/27 22:02:02 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.69 2006/03/08 08:26:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.70 2006/03/27 22:02:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3143,7 +3143,7 @@ rtw_seg_too_short(bus_dmamap_t dmamap)
 /* TBD factor with atw_start */
 static struct mbuf *
 rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
-    u_int ndescfree, short *ifflagsp, const char *dvname)
+    u_int ndescfree, const char *dvname)
 {
 	int first, rc;
 	struct mbuf *m, *m0;
@@ -3270,7 +3270,7 @@ rtw_start(struct ifnet *ifp)
 		dmamap = ts->ts_dmamap;
 
 		m0 = rtw_dmamap_load_txbuf(sc->sc_dmat, dmamap, m0,
-		    tdb->tdb_nfree, &ifp->if_flags, sc->sc_dev.dv_xname);
+		    tdb->tdb_nfree, sc->sc_dev.dv_xname);
 
 		if (m0 == NULL || dmamap->dm_nsegs == 0) {
 			DPRINTF(sc, RTW_DEBUG_XMIT,
