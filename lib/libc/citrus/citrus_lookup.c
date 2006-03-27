@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_lookup.c,v 1.4 2005/11/29 03:11:58 christos Exp $	*/
+/*	$NetBSD: citrus_lookup.c,v 1.5 2006/03/27 01:09:11 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lookup.c,v 1.4 2005/11/29 03:11:58 christos Exp $");
+__RCSID("$NetBSD: citrus_lookup.c,v 1.5 2006/03/27 01:09:11 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -326,6 +326,7 @@ _citrus_lookup_seq_close(struct _citrus_lookup *cl)
 {
 	free(cl->cl_key);
 	(*cl->cl_close)(cl);
+	free(cl);
 }
 
 char *
