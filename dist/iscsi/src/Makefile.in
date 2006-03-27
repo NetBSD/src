@@ -22,6 +22,7 @@ PTHREAD_LIBS= -lpthread
 GCC_CFLAGS= -Wall -Wstrict-prototypes -fno-strict-aliasing -fno-common -Wno-trigraphs
 COMMON_CFLAGS += -DCONFIG_ISCSI_DEBUG -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 CFLAGS= @CFLAGS@ ${GCC_CFLAGS} ${COMMON_CFLAGS} -I${INCLUDE} ${PTHREAD_FLAGS}
+LIBS= @LIBS@
 
 INSTALL= @INSTALL@
 PREFIX= @prefix@
@@ -48,13 +49,13 @@ COMPATOBJS= strlcpy.o snprintf.o strtoll.o
 
 USER_TARGET_OBJS = target.o iscsi.o util.o parameters.o netmask.o conffile.o storage.o ${COMPATOBJS}
 $(BIN)/osd: osd-target.c osd.c $(USER_TARGET_OBJS)
-	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS)  ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o $(BIN)/osd
+	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS)  ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -o $(BIN)/osd
 $(BIN)/iscsi-target: iscsi-target.c disk.c $(USER_TARGET_OBJS)
-	$(CC) $(CFLAGS) iscsi-target.c disk.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o $(BIN)/iscsi-target
+	$(CC) $(CFLAGS) iscsi-target.c disk.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -o $(BIN)/iscsi-target
 iscsi-target: iscsi-target.c disk.c $(USER_TARGET_OBJS)
-	$(CC) $(CFLAGS) iscsi-target.c disk.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o iscsi-target
+	$(CC) $(CFLAGS) iscsi-target.c disk.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -o iscsi-target
 osd: osd-target.c osd.c $(USER_TARGET_OBJS)
-	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -o osd
+	$(CC) $(CFLAGS) osd-target.c osd.c $(USER_TARGET_OBJS) ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -o osd
 
 #
 # Test harness (initiators)
