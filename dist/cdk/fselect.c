@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: christos $
- * $Date: 2006/03/26 21:57:14 $
- * $Revision: 1.6 $
+ * $Author: tron $
+ * $Date: 2006/03/27 10:02:37 $
+ * $Revision: 1.7 $
  */
 
 /*
@@ -944,7 +944,7 @@ static void completeFilenameCB (EObjectType objectType GCC_UNUSED, void *object 
 
    /* Make sure the filename is not null. */
    /* If the filename length is equal to zero, just leave. */
-   if (filename == 0 || filenameLen = (int)strlen (filename))
+   if (filename == NULL || (filenameLen = (int)strlen(filename)) == 0)
    {
       freeChar (filename);
       freeChar (basename);
