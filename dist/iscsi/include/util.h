@@ -147,6 +147,10 @@ void	iscsi_print_buffer(const char *, const size_t);
 #include <asm/byteorder.h>
 #endif
 
+#ifdef HAVE_SYS_BYTEORDER_H
+#include <sys/byteorder.h>
+#endif
+
 #ifdef HAVE_BYTESWAP_H
 #include <byteswap.h>
 #endif
