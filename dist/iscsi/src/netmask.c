@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.3 2006/02/16 19:19:38 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.4 2006/03/27 22:26:28 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -31,14 +31,6 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-
-#ifndef lint
-__COPYRIGHT("@(#) Copyright © 2006 \
-	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: netmask.c,v 1.3 2006/02/16 19:19:38 agc Exp $");
-#endif
-
 #include <sys/types.h>
 #include <sys/param.h>
 

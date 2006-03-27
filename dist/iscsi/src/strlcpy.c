@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.2 2006/03/20 20:45:07 agc Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.3 2006/03/27 22:26:28 agc Exp $	*/
 /*	$OpenBSD: strlcpy.c,v 1.7 2003/04/12 21:56:39 millert Exp $	*/
 
 /*
@@ -19,31 +19,9 @@
 
 #include "compat.h"
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcpy.c,v 1.2 2006/03/20 20:45:07 agc Exp $");
-#endif /* LIBC_SCCS and not lint */
-
-#ifdef _LIBC
-#include "namespace.h"
-#endif
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
-
-#ifdef _LIBC
-# ifdef __weak_alias
-__weak_alias(strlcpy, _strlcpy)
-# endif
-#endif
-#else
-#include <lib/libkern/libkern.h>
-#endif /* !_KERNEL && !_STANDALONE */
 
 
 #if !HAVE_STRLCPY

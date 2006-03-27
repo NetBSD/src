@@ -1,4 +1,4 @@
-/* $NetBSD: strtoll.c,v 1.1.1.1 2006/02/08 18:56:20 agc Exp $ */
+/* $NetBSD: strtoll.c,v 1.2 2006/03/27 22:26:28 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -31,15 +31,9 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-
-#ifndef lint
-__COPYRIGHT("@(#) Copyright © 2006 \
-	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: strtoll.c,v 1.1.1.1 2006/02/08 18:56:20 agc Exp $");
-#endif
-
 #include "config.h"
+
+#include <sys/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
