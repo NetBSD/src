@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.98 2006/02/09 23:19:39 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.99 2006/03/27 10:07:07 ghen Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 24, 2005
+.Dd March 27, 2006
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -166,9 +166,15 @@ run by
 .Bl -tag -width net_interfaces
 .It Sy defaultroute
 A string.
-Default network route.
+Default IPv4 network route.
 If empty or not set, then the contents of
 .Pa /etc/mygate
+(if it exists) are used.
+.It Sy defaultroute6
+A string.
+Default IPv6 network route.
+If empty or not set, then the contents of
+.Pa /etc/mygate6
 (if it exists) are used.
 .It Sy domainname
 A string.
