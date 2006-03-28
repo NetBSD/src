@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.49 2006/03/24 23:04:08 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.50 2006/03/28 23:03:06 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1048,4 +1048,38 @@ sys/dev/sun/cgsix.c				1.24
 	fixed a typo in cg6_ras_do_cursor and made using the blitter to draw the
 	cursor optional when using RASTERCONSOLE
 	[macallan, ticket #1220]
+
+sys/netipsec/xform_esp.c			1.8
+
+	FreeBSD SA-06:11 and CVE-2006-0905: update the replay sequence number
+	or else the anti-reply technique won't work as expected.
+	[rpaulo, ticket #1222]
+
+sys/arch/powerpc/powerpc/sig_machdep.c		1.25
+
+	Make cpu_setmcontext() fix up the passed-in MSR value.  PR#31386
+	[shige, ticket #1223]
+
+etc/defaults/rc.conf				1.74
+etc/mtree/special				1.93
+share/man/man5/rc.conf.5			1.99 via patch
+
+	Document the defaultroute6 rc.conf variable and the /etc/mygate6 file in
+	/etc/defaults/rc.conf, /etc/mtree/special, and rc.conf(5).
+	[ghen, ticket #1226]
+
+sys/dev/ata/wd.c				1.310 via patch
+
+	Use a pmatch(9) expression which should catch all present and future
+	seagate drives larger than 200GB for the WD_QUIRK_FORCE_LBA48 quirks.
+	Based on infos from
+	http://www.seagate.com/support/kb/disc/howto/interpret_model.html
+	[bouyer, ticket #1227]
+
+usr.sbin/rpc.statd/statd.c			1.27
+
+	Use sigaction(2) to setup automatic disposal of child processes after
+	daemonizing. This is more portable and avoids zombie "rpc.statd"
+	processes after an NFS client running e.g. Mac OS X shuts down.
+	[tron, ticket #1228]
 
