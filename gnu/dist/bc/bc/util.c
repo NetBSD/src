@@ -574,11 +574,11 @@ lookup (name, namekind)
 	  return (-id->a_name);
 	}
       id->a_name = next_array++;
-      a_names[id->a_name] = name;
       if (id->a_name < MAX_STORE)
 	{
 	  if (id->a_name >= a_count)
 	    more_arrays ();
+	  a_names[id->a_name] = name;
 	  return (-id->a_name);
 	}
       yyerror ("Too many array variables");
@@ -595,11 +595,11 @@ lookup (name, namekind)
 	  return (id->f_name);
 	}
       id->f_name = next_func++;
-      f_names[id->f_name] = name;
       if (id->f_name < MAX_STORE)
 	{
 	  if (id->f_name >= f_count)
 	    more_functions ();
+	  f_names[id->f_name] = name;
 	  return (id->f_name);
 	}
       yyerror ("Too many functions");
@@ -612,11 +612,11 @@ lookup (name, namekind)
 	  return (id->v_name);
 	}
       id->v_name = next_var++;
-      v_names[id->v_name - 1] = name;
       if (id->v_name <= MAX_STORE)
 	{
 	  if (id->v_name >= v_count)
 	    more_variables ();
+	  v_names[id->v_name - 1] = name;
 	  return (id->v_name);
 	}
       yyerror ("Too many variables");
