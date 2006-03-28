@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.185 2006/03/28 14:26:56 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.186 2006/03/28 20:58:40 pavel Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.185 $"
+#ident 		"GENERIC-$Revision: 1.186 $"
 
 maxusers	16
 
@@ -677,7 +677,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 # for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan
