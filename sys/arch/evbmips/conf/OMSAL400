@@ -1,4 +1,4 @@
-#	$NetBSD: OMSAL400,v 1.3 2006/03/28 15:12:01 shige Exp $
+#	$NetBSD: OMSAL400,v 1.4 2006/03/28 16:56:50 shige Exp $
 #
 # Kernel config for the Open Micro Server AL400.
 
@@ -15,6 +15,9 @@ makeoptions	TEXTADDR="0x80100000"
 options		ALCHEMY_AU1550
 options		ALCHEMY_OMSAL400
 options		PCI_NETBSD_CONFIGURE
+
+# OMS-AL400 doesn't use aurtc.
+no aurtc*	at aubus?
 
 # Alchemy On-chip Programmable Serial Controllers
 aupsc*		at aubus? addr ?
