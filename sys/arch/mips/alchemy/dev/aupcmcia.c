@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.1 2006/02/23 03:49:28 gdamore Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.1.8.1 2006/03/28 09:47:16 tron Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.1 2006/02/23 03:49:28 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.1.8.1 2006/03/28 09:47:16 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -328,13 +328,10 @@ aupcm_intr_establish(pcmcia_chipset_handle_t pch,
 	 */
 	sp->as_softint = softintr_establish(IPL_SOFT, aupcm_softintr, sp);
 
-	printf("slot %d interrupting on irq %d\n",
-	    sp->as_slot, (int)sp->as_card_irq);
-
 	/* set up hard interrupt handler for the card IRQs */
 	s = splhigh();
 	sp->as_hardint = au_intr_establish(sp->as_card_irq, 0,
-	    IPL_NONE, IST_LEVEL_LOW, aupcm_card_intr, sp);
+	    IPL_TTY, IST_LEVEL_LOW, aupcm_card_intr, sp);
 	/* if card is not powered up, then leave the IRQ masked */
 	if (!sp->as_enabled) {
 		au_intr_disable(sp->as_card_irq);

@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.2 2006/03/17 19:52:35 xtraeme Exp $ */
+/* $NetBSD: viapcib.c,v 1.2.2.1 2006/03/28 09:47:16 tron Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.2 2006/03/17 19:52:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.2.2.1 2006/03/28 09:47:16 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

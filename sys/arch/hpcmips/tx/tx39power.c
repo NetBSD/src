@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.16 2006/03/07 23:18:31 he Exp $ */
+/*	$NetBSD: tx39power.c,v 1.16.2.1 2006/03/28 09:47:16 tron Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.16 2006/03/07 23:18:31 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.16.2.1 2006/03/28 09:47:16 tron Exp $");
 
 #include "opt_tx39power_debug.h"
-#define TX39POWERDEBUG 
 
 #include <sys/param.h>
 #include <sys/systm.h>

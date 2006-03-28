@@ -1,4 +1,4 @@
-/* $NetBSD: viapcibreg.h,v 1.1 2006/03/17 12:19:49 jmcneill Exp $ */
+/* $NetBSD: viapcibreg.h,v 1.1.2.1 2006/03/28 09:47:16 tron Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Jared D. McNeill <jmcneill@invisible.ca>

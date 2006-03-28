@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.69 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.69.12.1 2006/03/28 09:47:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.12.1 2006/03/28 09:47:15 tron Exp $");
 
 #include "hil.h"
 
@@ -262,8 +262,8 @@ iteattach(struct device *parent, struct device *self, void *aux)
 		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&ite_cdevsw),
 					 self->dv_unit);
 	} else {
-		MALLOC(ite->sc_data, struct ite_data *,
-		    sizeof(struct ite_data), M_DEVBUF, M_NOWAIT | M_ZERO);
+		ite->sc_data = malloc(sizeof(struct ite_data), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
 		if (ite->sc_data == NULL) {
 			printf("\n%s: malloc for ite_data failed\n",
 			    ite->sc_dev.dv_xname);
@@ -612,7 +612,7 @@ itefilter(char stat, char c)
 	case KBD_CTRLSHIFT:
 		code = ite_km->kbd_ctrlshiftmap[(int)c];
 		break;
-        }
+	}
 
 	if (code == '\0' && (str = ite_km->kbd_stringmap[(int)c]) != NULL) {
 		while (*str)

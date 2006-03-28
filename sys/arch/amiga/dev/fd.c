@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.66 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: fd.c,v 1.66.12.1 2006/03/28 09:53:02 tron Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.66 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.66.12.1 2006/03/28 09:53:02 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1586,7 +1586,7 @@ fddone(struct fd_softc *sc)
 
 	biodone(bp);
 nobuf:
-	fdfindwork(sc->sc_dv.dv_unit);
+	fdfindwork(device_unit(&sc->sc_dv));
 }
 
 void

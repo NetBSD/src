@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.30 2006/02/05 05:01:50 cube Exp $
+# $NetBSD: INSTALL,v 1.30.6.1 2006/03/28 09:47:15 tron Exp $
 #
 # INSTALL machine description file
 #
@@ -72,7 +72,7 @@ file-system	FFS		# fast filesystem
 file-system	CD9660		# CD-ROM ISO-9660 filesystem
 file-system	NFS		# Network filesystem client
 #file-system	UNION		# Union filesystem (req. for FDESC)
-file-system	KERNFS		# kernel data-structure filesystem
+#file-system	KERNFS		# kernel data-structure filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	PROCFS		# /proc filesystem
 file-system	MFS		# Memory-based filesystem

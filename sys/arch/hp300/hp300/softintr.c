@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.7 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: softintr.c,v 1.7.12.1 2006/03/28 09:47:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.7 2005/12/11 12:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.7.12.1 2006/03/28 09:47:15 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,7 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 
 	hsi = &hp300_soft_intrs[ipl];
 
-	MALLOC(sih, struct hp300_soft_intrhand *,
-	   sizeof(struct hp300_soft_intrhand), M_DEVBUF, M_NOWAIT);
+	sih = malloc(sizeof(struct hp300_soft_intrhand), M_DEVBUF, M_NOWAIT);
 	if (__predict_true(sih != NULL)) {
 		sih->sih_intrhead = hsi;
 		sih->sih_fn = func;

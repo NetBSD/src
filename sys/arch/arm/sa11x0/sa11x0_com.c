@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.29 2006/03/06 19:57:03 christos Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.29.4.1 2006/03/28 09:48:29 tron Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.29 2006/03/06 19:57:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.29.4.1 2006/03/28 09:48:29 tron Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -330,7 +330,7 @@ sacom_attach_subr(struct sacom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&sacom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		delay(10000); /* XXX */
 		printf("%s: console\n", sc->sc_dev.dv_xname);
@@ -368,7 +368,7 @@ sacom_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&sacom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	mn |= COMDIALOUT_MASK;

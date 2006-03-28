@@ -1,4 +1,4 @@
-/*	$NetBSD: epled.c,v 1.1 2005/11/12 05:33:23 hamajima Exp $	*/
+/*	$NetBSD: epled.c,v 1.1.16.1 2006/03/28 09:48:29 tron Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epled.c,v 1.1 2005/11/12 05:33:23 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epled.c,v 1.1.16.1 2006/03/28 09:48:29 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,7 @@ epled_attach(struct device *parent, struct device *self, void *aux)
 		the_epled_sc = sc;
 #ifdef DIAGNOSTIC
 	else
-		printf("%s%d is already configured\n",
-			sc->sc_dev.dv_xname, sc->sc_dev.dv_unit);
+		printf("%s is already configured\n", sc->sc_dev.dv_xname);
 #endif
 
 	epgpio_out(sc->sc_gpio, sc->sc_port, sc->sc_green);

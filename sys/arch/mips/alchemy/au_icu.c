@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.18 2006/02/23 01:50:55 gdamore Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.18.6.1 2006/03/28 09:47:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.18 2006/02/23 01:50:55 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.18.6.1 2006/03/28 09:47:16 tron Exp $");
 
 #include "opt_ddb.h"
 
@@ -160,6 +160,7 @@ struct au_intrhand {
 	int (*ih_func)(void *);
 	void *ih_arg;
 	int ih_irq;
+	int ih_mask;
 };
 
 struct au_cpuintr {
@@ -200,6 +201,21 @@ au_intr_init(void)
 		evcnt_attach_dynamic(&au_icu_intrtab[i].intr_count,
 		    EVCNT_TYPE_INTR, NULL, chip->name, chip->irqnames[i]);
 	}
+
+	/* start with all interrupts masked */
+	REGVAL(ic0_base + IC_MASK_CLEAR) = 0xffffffff;
+	REGVAL(ic0_base + IC_WAKEUP_CLEAR) = 0xffffffff;
+	REGVAL(ic0_base + IC_SOURCE_SET) = 0xffffffff;
+	REGVAL(ic0_base + IC_RISING_EDGE) = 0xffffffff;
+	REGVAL(ic0_base + IC_FALLING_EDGE) = 0xffffffff;
+	REGVAL(ic0_base + IC_TEST_BIT) = 0;
+
+	REGVAL(ic1_base + IC_MASK_CLEAR) = 0xffffffff;
+	REGVAL(ic1_base + IC_WAKEUP_CLEAR) = 0xffffffff;
+	REGVAL(ic1_base + IC_SOURCE_SET) = 0xffffffff;
+	REGVAL(ic1_base + IC_RISING_EDGE) = 0xffffffff;
+	REGVAL(ic1_base + IC_FALLING_EDGE) = 0xffffffff;
+	REGVAL(ic1_base + IC_TEST_BIT) = 0;
 }
 
 void *
@@ -226,6 +242,7 @@ au_intr_establish(int irq, int req, int level, int type,
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;
+	ih->ih_mask = (1 << (irq & 31));
 
 	s = splhigh();
 
@@ -337,7 +354,7 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	int level;
 	uint32_t icu_base, irqstat, irqmask;
 
-	icu_base = irqstat = 0;	/* XXX gcc */
+	icu_base = irqstat = 0;
 
 	for (level = 3; level >= 0; level--) {
 		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)
@@ -377,15 +394,15 @@ au_iointr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		irqmask = REGVAL(icu_base + IC_MASK_READ);
 		au_cpuintrs[level].cintr_count.ev_count++;
 		LIST_FOREACH(ih, &au_cpuintrs[level].cintr_list, ih_q) {
-			int irq = (1 << ih->ih_irq);
+			int mask = ih->ih_mask;
 
-			if ((irq & irqmask) && (irq & irqstat)) {
+			if (mask & irqmask & irqstat) {
 				au_icu_intrtab[ih->ih_irq].intr_count.ev_count++;
 				(*ih->ih_func)(ih->ih_arg);
 
-				if (REGVAL(icu_base + IC_MASK_READ) & irq) {
-					REGVAL(icu_base + IC_MASK_CLEAR) = irq;
-					REGVAL(icu_base + IC_MASK_SET) = irq;
+				if (REGVAL(icu_base + IC_MASK_READ) & mask) {
+					REGVAL(icu_base + IC_MASK_CLEAR) = mask;
+					REGVAL(icu_base + IC_MASK_SET) = mask;
 					wbflush();
 				}
 			}

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.3.2.1 2006/03/28 09:46:22 tron Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.3 2006/03/15 22:20:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.3.2.1 2006/03/28 09:46:22 tron Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -65,10 +65,14 @@ static int  xenbus_print(void *, const char *);
 static void xenbus_kthread_create(void *);
 static void xenbus_probe_init(void *);
 
+static struct xenbus_device *xenbus_lookup_device_path(const char *);
+
 CFATTACH_DECL(xenbus, sizeof(struct device), xenbus_match, xenbus_attach,
     NULL, NULL);
 
-struct device *xenbus_device;
+struct device *xenbus_sc;
+
+SLIST_HEAD(, xenbus_device) xenbus_device_list;
 
 int
 xenbus_match(struct device *parent, struct cfdata *match, void *aux)
@@ -84,7 +88,7 @@ static void
 xenbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	aprint_normal(": Xen Virtual Bus Interface\n");
-	xenbus_device = self;
+	xenbus_sc = self;
 	xb_init_comms(self);
 	config_pending_incr();
 	kthread_create(xenbus_kthread_create, NULL);
@@ -386,8 +390,19 @@ otherend_changed(struct xenbus_watch *watch,
 
 	DPRINTK("state is %d, %s, %s",
 		state, xdev->xbusd_otherend_watch.node, vec[XS_WATCH_PATH]);
+	if (state == XenbusStateClosed) {
+		int error;
+		error = config_detach(xdev->xbusd_dev, DETACH_FORCE);
+		if (error) {
+			printf("could not detach %s: %d\n",
+			    xdev->xbusd_dev->dv_xname, error);
+			return;
+		}
+		xenbus_free_device(xdev);
+		return;
+	}
 	if (xdev->xbusd_otherend_changed)
-		xdev->xbusd_otherend_changed(xdev->xbusd_data, state);
+		xdev->xbusd_otherend_changed(xdev->xbusd_dev, state);
 }
 
 static int
@@ -757,6 +772,18 @@ xenbus_probe_backend(const char *type, const char *domid)
 }
 #endif
 
+static struct xenbus_device *
+xenbus_lookup_device_path(const char *path)
+{
+	struct xenbus_device *xbusd;
+
+	SLIST_FOREACH(xbusd, &xenbus_device_list, xbusd_entries) {
+		if (strcmp(xbusd->xbusd_path, path) == 0)
+			return xbusd;
+	}
+	return NULL;
+}
+
 static int
 xenbus_probe_device_type(struct xen_bus_type *bus, const char *type)
 {
@@ -775,13 +802,26 @@ xenbus_probe_device_type(struct xen_bus_type *bus, const char *type)
 		return err;
 
 	for (i = 0; i < dir_n; i++) {
-		xbusd = malloc(sizeof(*xbusd), M_DEVBUF, M_WAITOK);
+		int msize;
+		/*
+		 * add size of path to size of xenbus_device. xenbus_device
+		 * already has room for one char in xbusd_path.
+		 */
+		msize = sizeof(*xbusd) + strlen(bus->root) + strlen(type)
+		    + strlen(dir[i]) + 2;
+		xbusd = malloc(msize, M_DEVBUF, M_WAITOK | M_ZERO);
 		if (xbusd == NULL)
 			panic("can't malloc xbusd");
 			
 		snprintf(__UNCONST(xbusd->xbusd_path),
-		    sizeof(xbusd->xbusd_path), "%s/%s/%s",
+		    msize - sizeof(*xbusd) + 1, "%s/%s/%s",
 		    bus->root, type, dir[i]);
+		if (xenbus_lookup_device_path(xbusd->xbusd_path) != NULL) {
+			/* device already registered */
+			free(xbusd, M_DEVBUF);
+			continue;
+		}
+
 		xbusd->xbusd_otherend_watch.xbw_dev = xbusd;
 		DPRINTK("xenbus_probe_device_type probe %s\n",
 		    xbusd->xbusd_path);
@@ -801,10 +841,13 @@ xenbus_probe_device_type(struct xen_bus_type *bus, const char *type)
 			    "for %s (%d)\n", xbusd->xbusd_path, err);
 			break;
 		}
-		if (config_found_ia(xenbus_device, "xenbus", &xa,
-		    xenbus_print) == NULL)
+		xbusd->xbusd_dev = config_found_ia(xenbus_sc, "xenbus", &xa,
+		    xenbus_print);
+		if (xbusd->xbusd_dev == NULL)
 			free(xbusd, M_DEVBUF);
 		else {
+			SLIST_INSERT_HEAD(&xenbus_device_list,
+			    xbusd, xbusd_entries);
 			talk_to_otherend(xbusd);
 		}
 	}
@@ -850,6 +893,18 @@ xenbus_probe_devices(struct xen_bus_type *bus)
 	}
 	free(dir, M_DEVBUF);
 	return err;
+}
+
+int
+xenbus_free_device(struct xenbus_device *xbusd)
+{
+	KASSERT(xenbus_lookup_device_path(xbusd->xbusd_path) == xbusd);
+	SLIST_REMOVE(&xenbus_device_list, xbusd, xenbus_device, xbusd_entries);
+	free_otherend_watch(xbusd);
+	free(xbusd->xbusd_otherend, M_DEVBUF);
+	xenbus_switch_state(xbusd, NULL, XenbusStateClosed);
+	free(xbusd, M_DEVBUF);
+	return 0;
 }
 
 #if 0
@@ -922,9 +977,8 @@ frontend_changed(struct xenbus_watch *watch,
 			     const char **vec, unsigned int len)
 {
 	DPRINTK("");
-	printf("frontend_changed %s\n", vec[XS_WATCH_PATH]);
-
-	//dev_changed(vec[XS_WATCH_PATH], &xenbus_frontend);
+	//printf("frontend_changed %s\n", vec[XS_WATCH_PATH]);
+	xenbus_probe_devices(&xenbus_frontend);
 }
 
 static void
@@ -1097,6 +1151,8 @@ xenbus_probe_init(void *unused)
 	int err = 0, dom0;
 
 	DPRINTK("");
+
+	SLIST_INIT(&xenbus_device_list);
 
 #if 0
 	if (xen_init() < 0) {

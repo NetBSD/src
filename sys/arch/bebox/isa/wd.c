@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.7 2003/07/15 01:26:32 lukem Exp $	*/
+/*	$NetBSD: wd.c,v 1.7.22.1 2006/03/28 09:47:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.7 2003/07/15 01:26:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.7.22.1 2006/03/28 09:47:14 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

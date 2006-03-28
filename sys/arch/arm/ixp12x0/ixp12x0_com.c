@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.24 2006/03/08 12:10:58 he Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.24.2.1 2006/03/28 09:48:29 tron Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.24 2006/03/08 12:10:58 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.24.2.1 2006/03/28 09:48:29 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -235,7 +235,7 @@ ixpcom_attach_subr(sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&ixpcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}

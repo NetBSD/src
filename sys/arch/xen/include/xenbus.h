@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.2 2006/03/15 22:20:06 bouyer Exp $ */
+/* $NetBSD: xenbus.h,v 1.2.2.1 2006/03/28 09:46:22 tron Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -51,8 +51,7 @@ struct xenbusdev_attach_args {
 };
 
 /* Register callback to watch this node. */
-struct xenbus_watch
-{
+struct xenbus_watch {
 	SLIST_ENTRY(xenbus_watch) watch_next;
 
 	/* Path being watched. */
@@ -65,17 +64,22 @@ struct xenbus_watch
 };
 
 
-/* A xenbus device. */
+/*
+ * A xenbus device. Note that the malloced memory will be larger than
+ * sizeof(xenbus_device) to have the storage for xbusd_path, so xbusd_path
+ * has to be the last entry.
+ */
 struct xenbus_device {
-	const char xbusd_path[80]; /* our path */
+	SLIST_ENTRY(xenbus_device) xbusd_entries;
 	char *xbusd_otherend; /* the otherend path */
 	int xbusd_otherend_id; /* the otherend's id */
 	/* callback for otherend change */
-	void (*xbusd_otherend_changed)(void *, XenbusState);
-	void *xbusd_data;
+	void (*xbusd_otherend_changed)(struct device *, XenbusState);
+	struct device *xbusd_dev;
 	int xbusd_has_error;
 	/* for xenbus internal use */
 	struct xenbus_watch xbusd_otherend_watch;
+	const char xbusd_path[1]; /* our path */
 };
 
 struct xenbus_device_id
@@ -83,26 +87,6 @@ struct xenbus_device_id
 	/* .../device/<device_type>/<identifier> */
 	char devicetype[32]; 	/* General class of device. */
 };
-
-/* A xenbus driver. */
-struct xenbus_driver {
-	char *name;
-	struct module *owner;
-	const struct xenbus_device_id *ids;
-	int (*probe)(struct xenbus_device *dev,
-		     const struct xenbus_device_id *id);
-	void (*otherend_changed)(struct xenbus_device *dev,
-				 XenbusState backend_state);
-	int (*remove)(struct xenbus_device *dev);
-	int (*suspend)(struct xenbus_device *dev);
-	int (*resume)(struct xenbus_device *dev);
-	int (*hotplug)(struct xenbus_device *, char **, int, char *, int);
-	int (*read_otherend_details)(struct xenbus_device *dev);
-};
-
-int xenbus_register_frontend(struct xenbus_driver *drv);
-int xenbus_register_backend(struct xenbus_driver *drv);
-void xenbus_unregister_driver(struct xenbus_driver *drv);
 
 struct xenbus_transaction;
 
@@ -112,6 +96,8 @@ int xenbus_directory(struct xenbus_transaction *t,
 int xenbus_read(struct xenbus_transaction *t,
 		  const char *dir, const char *node, unsigned int *len,
 		  char **);
+int xenbus_read_ul(struct xenbus_transaction *,
+		  const char *, const char *, unsigned long *);
 int xenbus_write(struct xenbus_transaction *t,
 		 const char *dir, const char *node, const char *string);
 int xenbus_mkdir(struct xenbus_transaction *t,
@@ -153,6 +139,8 @@ void xenbus_suspend(void);
 void xenbus_resume(void);
 
 void xenbus_probe(void *);
+
+int xenbus_free_device(struct xenbus_device *);
 
 #define XENBUS_IS_ERR_READ(str) ({			\
 	if (!IS_ERR(str) && strlen(str) == 0) {		\
