@@ -1,10 +1,10 @@
-#	$NetBSD: AR531X,v 1.1 2006/03/21 08:15:19 gdamore Exp $
+#	$NetBSD: AR531X,v 1.2 2006/03/28 03:43:57 gdamore Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AR531X-$Revision: 1.1 $"
+#ident 		"AR531X-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -135,7 +135,6 @@ config		netbsd	root on ? type ?
 
 mainbus0 	at root
 cpu0 		at mainbus?
-rtc0		at mainbus?
 arbus0		at mainbus?
 
 com*		at arbus? addr ?

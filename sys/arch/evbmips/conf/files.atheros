@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.1 2006/03/21 08:15:19 gdamore Exp $
+#	$NetBSD: files.atheros,v 1.2 2006/03/28 03:43:57 gdamore Exp $
 
 file	arch/evbmips/atheros/mach_intr.c
 
@@ -21,11 +21,6 @@ file	arch/evbmips/alchemy/mainbus.c		mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/evbmips/atheros/cpu.c		cpu
-
-# "fake" RTC (do we need it?)
-device	rtc
-attach	rtc at mainbus
-file	arch/evbmips/atheros/rtc.c		rtc
 
 # Machine-independent WS console drivers
 #include "dev/wsfont/files.wsfont"

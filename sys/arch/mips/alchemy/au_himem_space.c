@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.4 2006/03/19 11:55:02 martin Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.5 2006/03/28 03:43:58 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.4 2006/03/19 11:55:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.5 2006/03/28 03:43:58 gdamore Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -640,7 +640,6 @@ __CONCAT(au_himem_sm_,BYTES)(void *v,					\
 									\
 	while (cnt-- > 0) {						\
 		__CONCAT(au_himem_w_,BYTES)(v, h, o, val);		\
-		wbflush();						\
 	}								\
 }
 AU_HIMEM_SM(uint8_t,1)
