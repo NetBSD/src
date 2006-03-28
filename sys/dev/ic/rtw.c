@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.71 2006/03/27 22:03:36 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.72 2006/03/28 00:48:10 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.71 2006/03/27 22:03:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.72 2006/03/28 00:48:10 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3294,7 +3294,7 @@ rtw_start(struct ifnet *ifp)
 		    IEEE80211_FC0_TYPE_MGT)
 			rate = 2;
 		else
-			rate = MAX(2, ieee80211_get_rate(ic));
+			rate = MAX(2, ieee80211_get_rate(ni));
 
 #ifdef RTW_DEBUG
 		if ((ifp->if_flags & (IFF_DEBUG|IFF_LINK2)) ==

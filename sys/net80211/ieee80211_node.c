@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.54 2006/03/17 23:29:10 christos Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.55 2006/03/28 00:48:10 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.54 2006/03/17 23:29:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.55 2006/03/28 00:48:10 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -844,28 +844,42 @@ ieee80211_sta_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 int
-ieee80211_get_rate(struct ieee80211com *ic)
+ieee80211_get_rate(const struct ieee80211_node * const ni)
 {
 #define	RATE(_ix)	(ni->ni_rates.rs_rates[(_ix)] & IEEE80211_RATE_VAL)
 	int ix, rate;
-	const struct ieee80211_node *ni;
+	struct ieee80211com *ic = ni->ni_ic;
 	const struct ieee80211_rateset *rs;
 
-	ni = ic->ic_bss;
-
+	IASSERT(ni != NULL, ("ni != NULL"));
+	IASSERT(ieee80211_node_refcnt(ni) > 0,
+	    ("refcnt(ni) == %d", ieee80211_node_refcnt(ni)));
+	IASSERT(ic != NULL, ("ic != NULL"));
 	if (ic->ic_fixed_rate != IEEE80211_FIXED_RATE_NONE) {
 		rs = &ic->ic_sup_rates[ic->ic_curmode];
 		rate = rs->rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
 		for (ix = ni->ni_rates.rs_nrates - 1;
 		     ix >= 0 && RATE(ix) != rate; ix--)
 			;
-		IASSERT(ix >= 0,
-			("fixed rate %d not in rate set", ic->ic_fixed_rate));
+		if (ix < 0) {
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG,
+			    "%s: fixed rate %d (%d.%d Mb/s) not in rate set",
+			    __func__, ic->ic_fixed_rate, (rate * 5) / 10,
+			    (rate * 5) % 10);
+			goto no_rate;
+		}
 	} else if (ic->ic_state == IEEE80211_S_RUN)
 		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-	else
-		rate = 0;
-
+	else {
+no_rate:
+		rs = &ni->ni_rates;
+		/* Choose node's lowest basic rate, or else its lowest rate. */
+		for (ix = 0; ix < rs->rs_nrates; ix++) {
+			if (rs->rs_rates[ix] & IEEE80211_RATE_BASIC)
+				return rs->rs_rates[ix] & IEEE80211_RATE_VAL;
+		}
+		return ni->ni_rates.rs_rates[0] & IEEE80211_RATE_VAL;
+	}
 	return rate & IEEE80211_RATE_VAL;
 }
 
