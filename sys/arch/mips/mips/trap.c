@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.199 2006/03/15 18:12:02 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.199.2.1 2006/03/28 09:47:17 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199 2006/03/15 18:12:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.199.2.1 2006/03/28 09:47:17 tron Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -379,7 +379,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		}
 
 		if (p->p_emul->e_fault)
-			rv = (*p->p_emul->e_fault)(p, va, 0, ftype);
+			rv = (*p->p_emul->e_fault)(p, va, ftype);
 		else
 			rv = uvm_fault(map, va, ftype);
 #ifdef VMFAULT_TRACE

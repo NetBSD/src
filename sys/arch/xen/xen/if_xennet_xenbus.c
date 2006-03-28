@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.3 2006/03/06 22:10:28 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.3.6.1 2006/03/28 09:46:22 tron Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.3 2006/03/06 22:10:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.3.6.1 2006/03/28 09:46:22 tron Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -222,8 +222,36 @@ xennet_xenbus_attach(struct device *parent, struct device *self, void *aux)
 	char *val, *e, *p;
 	int s;
 	extern int ifqmaxlen; /* XXX */
+#ifdef XENNET_DEBUG
+	char **dir;
+	int dir_n = 0;
+	char id_str[20];
+#endif
 
 	aprint_normal(": Xen Virtual Network Interface\n");
+#ifdef XENNET_DEBUG
+	printf("path: %s\n", xa->xa_xbusd->xbusd_path);
+	snprintf(id_str, sizeof(id_str), "%d", xa->xa_id);
+	err = xenbus_directory(NULL, "device/vif", id_str, &dir_n, &dir);
+	if (err) {
+		printf("%s: xenbus_directory err %d\n",
+		    sc->sc_dev.dv_xname, err);
+	} else {
+		printf("%s/\n", xa->xa_xbusd->xbusd_path);
+		for (i = 0; i < dir_n; i++) {
+			printf("\t/%s", dir[i]);
+			err = xenbus_read(NULL, xa->xa_xbusd->xbusd_path, dir[i],
+			    NULL, &val);
+			if (err) {
+				printf("%s: xenbus_read err %d\n",
+		    		sc->sc_dev.dv_xname, err);
+			} else {
+				printf(" = %s\n", val);
+				free(val, M_DEVBUF);
+			}
+		}
+	}
+#endif /* XENNET_DEBUG */
 	sc->sc_xbusd = xa->xa_xbusd;
 	/* initialize free RX and RX request lists */
 	SLIST_INIT(&sc->sc_txreq_head);
