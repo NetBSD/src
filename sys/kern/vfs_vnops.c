@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.107 2006/03/10 11:07:01 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.107.2.1 2006/03/28 09:42:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.107 2006/03/10 11:07:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.107.2.1 2006/03/28 09:42:27 tron Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -351,7 +351,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 {
 	struct uio auio;
 	struct iovec aiov;
-	struct mount *mp;
+	struct mount *mp = NULL;
 	int error;
 
 	if ((ioflg & IO_NODELOCKED) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.191 2006/03/15 16:12:07 drochner Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.191.2.1 2006/03/28 09:42:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.191 2006/03/15 16:12:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.191.2.1 2006/03/28 09:42:26 tron Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -2333,13 +2333,14 @@ sysctl_free(struct sysctlnode *rnode)
 {
 	struct sysctlnode *node, *pnode;
 
+	if (rnode == NULL)
+		rnode = &sysctl_root;
+
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_free: rnode %p wrong version\n", rnode);
 		return;
 	}
 
-	if (rnode == NULL)
-		rnode = &sysctl_root;
 	pnode = rnode;
 
 	node = pnode->sysctl_child;

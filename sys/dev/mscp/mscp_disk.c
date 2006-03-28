@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.49 2005/12/11 12:22:47 christos Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.49.12.1 2006/03/28 09:42:13 tron Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.49 2005/12/11 12:22:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.49.12.1 2006/03/28 09:42:13 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -382,7 +382,7 @@ rastrategy(bp)
 	        b = splbio();
 	        disk_busy(&ra->ra_disk);
 		splx(b);
-		mscp_strategy(bp, ra->ra_dev.dv_parent);
+		mscp_strategy(bp, device_parent(&ra->ra_dev));
 		return;
 	}
 
@@ -405,7 +405,7 @@ rastrategy(bp)
 	b = splbio();
 	disk_busy(&ra->ra_disk);
 	splx(b);
-	mscp_strategy(bp, ra->ra_dev.dv_parent);
+	mscp_strategy(bp, device_parent(&ra->ra_dev));
 	return;
 
 done:
@@ -738,7 +738,8 @@ rx_putonline(rx)
 	struct rx_softc *rx;
 {
 	struct	mscp *mp;
-	struct	mscp_softc *mi = (struct mscp_softc *)rx->ra_dev.dv_parent;
+	struct	mscp_softc *mi =
+	    (struct mscp_softc *)device_parent(&rx->ra_dev);
 	volatile int i;
 
 	rx->ra_state = DK_CLOSED;
@@ -841,7 +842,7 @@ rxstrategy(bp)
 	b = splbio();
 	disk_busy(&rx->ra_disk);
 	splx(b);
-	mscp_strategy(bp, rx->ra_dev.dv_parent);
+	mscp_strategy(bp, device_parent(&rx->ra_dev));
 	return;
 
 done:

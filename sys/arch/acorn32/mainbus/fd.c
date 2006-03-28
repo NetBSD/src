@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.24.6.2 2006/03/28 09:32:41 tron Exp $	*/
+/*	$NetBSD: fd.c,v 1.24.6.3 2006/03/28 09:35:33 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,11 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-<<<<<<< fd.c
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.24.6.2 2006/03/28 09:32:41 tron Exp $");
-=======
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.24.6.2 2006/03/28 09:32:41 tron Exp $");
->>>>>>> 1.25
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.24.6.3 2006/03/28 09:35:33 tron Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.15 2006/02/26 23:52:08 pooka Exp $	*/
+/*	$NetBSD: auconv.c,v 1.15.6.1 2006/03/28 09:42:03 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.15 2006/02/26 23:52:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.15.6.1 2006/03/28 09:42:03 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -929,6 +929,10 @@ auconv_create_encodings(const struct audio_format *formats, int nformats,
 
 	capacity = 10;
 	buf = AUCONV_MALLOC(ENCODING_SET_SIZE(capacity));
+	if (buf == NULL) {
+		err = ENOMEM;
+		goto err_exit;
+	}
 	buf->size = 0;
 	for (i = 0; i < nformats; i++) {
 		if (!AUFMT_IS_VALID(&formats[i]))

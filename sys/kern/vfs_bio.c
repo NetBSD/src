@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.157 2006/03/05 16:57:16 christos Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.157.4.1 2006/03/28 09:42:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.157 2006/03/05 16:57:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.157.4.1 2006/03/28 09:42:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,16 +184,16 @@ static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 
 /* XXX - somewhat gross.. */
 #if MAXBSIZE == 0x2000
-#define NMEMPOOLS 4
-#elif MAXBSIZE == 0x4000
 #define NMEMPOOLS 5
-#elif MAXBSIZE == 0x8000
+#elif MAXBSIZE == 0x4000
 #define NMEMPOOLS 6
-#else
+#elif MAXBSIZE == 0x8000
 #define NMEMPOOLS 7
+#else
+#define NMEMPOOLS 8
 #endif
 
-#define MEMPOOL_INDEX_OFFSET 10		/* smallest pool is 1k */
+#define MEMPOOL_INDEX_OFFSET 9	/* smallest pool is 512 bytes */
 #if (1 << (NMEMPOOLS + MEMPOOL_INDEX_OFFSET - 1)) != MAXBSIZE
 #error update vfs_bio buffer memory parameters
 #endif

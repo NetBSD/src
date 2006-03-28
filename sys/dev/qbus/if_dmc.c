@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.10 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.10.12.1 2006/03/28 09:42:14 tron Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.10 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.10.12.1 2006/03/28 09:42:14 tron Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -328,13 +328,14 @@ dmcinit(struct ifnet *ifp)
 	if ((sc->sc_flag & DMC_BMAPPED) == 0) {
 		sc->sc_ui.ui_size = sizeof(struct dmc_base);
 		sc->sc_ui.ui_vaddr = (caddr_t)&sc->dmc_base;
-		uballoc((void *)sc->sc_dev.dv_parent, &sc->sc_ui, 0);
+		uballoc((void *)device_parent(&sc->sc_dev), &sc->sc_ui, 0);
 		sc->sc_flag |= DMC_BMAPPED;
 	}
 	/* initialize UNIBUS resources */
 	sc->sc_iused = sc->sc_oused = 0;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		if (if_ubaminit(&sc->sc_ifuba, (void *)sc->sc_dev.dv_parent,
+		if (if_ubaminit(&sc->sc_ifuba,
+		    (void *)device_parent(&sc->sc_dev),
 		    sizeof(struct dmc_header) + DMCMTU,
 		    sc->sc_ifr, NRCV, sc->sc_ifw, NXMT) == 0) {
 			printf("%s: can't allocate uba resources\n",

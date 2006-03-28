@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.64 2006/01/06 09:21:44 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.64.10.1 2006/03/28 09:42:12 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64 2006/01/06 09:21:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64.10.1 2006/03/28 09:42:12 tron Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -626,7 +626,7 @@ fdstrategy(bp)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
-		struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+		struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
@@ -648,7 +648,7 @@ void
 fdstart(fd)
 	struct fd_softc *fd;
 {
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 	int active = !TAILQ_EMPTY(&fdc->sc_drives);
 
 	/* Link into controller queue. */
@@ -665,7 +665,7 @@ fdfinish(fd, bp)
 	struct fd_softc *fd;
 	struct buf *bp;
 {
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
@@ -745,7 +745,7 @@ fd_motor_off(arg)
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	fd_set_motor((struct fdc_softc *)fd->sc_dev.dv_parent, 0);
+	fd_set_motor((struct fdc_softc *)device_parent(&fd->sc_dev), 0);
 	splx(s);
 }
 
@@ -754,7 +754,7 @@ fd_motor_on(arg)
 	void *arg;
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 	int s;
 
 	s = splbio();
@@ -880,7 +880,7 @@ fdcstatus(dv, n, s)
 	int n;
 	const char *s;
 {
-	struct fdc_softc *fdc = (void *)dv->dv_parent;
+	struct fdc_softc *fdc = (void *)device_parent(dv);
 	char bits[64];
 
 	if (n == 0) {

@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.69 2006/03/08 08:26:50 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.69.2.1 2006/03/28 09:42:11 tron Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.69 2006/03/08 08:26:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.69.2.1 2006/03/28 09:42:11 tron Exp $");
 
 #include "bpfilter.h"
 
@@ -1620,7 +1620,6 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 
 #if NBPFILTER > 0
 		if (sc->sc_radiobpf != NULL) {
-			struct ieee80211com *ic = &sc->sc_ic;
 			struct rtw_rx_radiotap_header *rr = &sc->sc_rxtap;
 
 			rr->rr_tsft =
@@ -1631,8 +1630,6 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 
 			rr->rr_flags = 0;
 			rr->rr_rate = rate;
-			rr->rr_chan_freq = htole16(ic->ic_curchan->ic_freq);
-			rr->rr_chan_flags = htole16(ic->ic_curchan->ic_flags);
 			rr->rr_antsignal = rssi;
 			rr->rr_barker_lock = htole16(sq);
 
@@ -2442,6 +2439,8 @@ static int
 rtw_tune(struct rtw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct rtw_tx_radiotap_header *rt = &sc->sc_txtap;
+	struct rtw_rx_radiotap_header *rr = &sc->sc_rxtap;
 	u_int chan;
 	int rc;
 	int antdiv = sc->sc_flags & RTW_F_ANTDIV,
@@ -2450,6 +2449,12 @@ rtw_tune(struct rtw_softc *sc)
 	chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
 	if (chan == IEEE80211_CHAN_ANY)
 		panic("%s: chan == IEEE80211_CHAN_ANY\n", __func__);
+
+	rt->rt_chan_freq = htole16(ic->ic_curchan->ic_freq);
+	rt->rt_chan_flags = htole16(ic->ic_curchan->ic_flags);
+
+	rr->rr_chan_freq = htole16(ic->ic_curchan->ic_freq);
+	rr->rr_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
 	if (chan == sc->sc_cur_chan) {
 		RTW_DPRINTF(RTW_DEBUG_TUNE,
@@ -3143,7 +3148,7 @@ rtw_seg_too_short(bus_dmamap_t dmamap)
 /* TBD factor with atw_start */
 static struct mbuf *
 rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
-    u_int ndescfree, short *ifflagsp, const char *dvname)
+    u_int ndescfree, const char *dvname)
 {
 	int first, rc;
 	struct mbuf *m, *m0;
@@ -3270,7 +3275,7 @@ rtw_start(struct ifnet *ifp)
 		dmamap = ts->ts_dmamap;
 
 		m0 = rtw_dmamap_load_txbuf(sc->sc_dmat, dmamap, m0,
-		    tdb->tdb_nfree, &ifp->if_flags, sc->sc_dev.dv_xname);
+		    tdb->tdb_nfree, sc->sc_dev.dv_xname);
 
 		if (m0 == NULL || dmamap->dm_nsegs == 0) {
 			DPRINTF(sc, RTW_DEBUG_XMIT,
@@ -3289,7 +3294,7 @@ rtw_start(struct ifnet *ifp)
 		    IEEE80211_FC0_TYPE_MGT)
 			rate = 2;
 		else
-			rate = MAX(2, ieee80211_get_rate(ic));
+			rate = MAX(2, ieee80211_get_rate(ni));
 
 #ifdef RTW_DEBUG
 		if ((ifp->if_flags & (IFF_DEBUG|IFF_LINK2)) ==
@@ -3377,8 +3382,6 @@ rtw_start(struct ifnet *ifp)
 
 			rt->rt_flags = 0;
 			rt->rt_rate = rate;
-			rt->rt_chan_freq = htole16(ic->ic_curchan->ic_freq);
-			rt->rt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 
 			bpf_mtap2(sc->sc_radiobpf, (caddr_t)rt,
 			    sizeof(sc->sc_txtapu), m0);

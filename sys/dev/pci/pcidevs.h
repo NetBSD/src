@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.776 2006/03/12 22:35:32 chs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.776.2.1 2006/03/28 09:42:13 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.775 2006/03/12 22:34:41 chs Exp
+ *	NetBSD: pcidevs,v 1.778 2006/03/26 20:21:55 jonathan Exp
  */
 
 /*
@@ -1213,7 +1213,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5750M	0x167c		/* BCM5750M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5751M	0x167d		/* BCM5751M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5780	0x166a		/* BCM5780 1000baseT Ethernet */
-#define	PCI_PRODUCT_BROADCOM_BCM5780S	0x166b		/* BCM5782S 1000baseX Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM5780S	0x166b		/* BCM5780S 1000baseX Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5782	0x1696		/* BCM5782 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5788	0x169c		/* BCM5788 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5789	0x169d		/* BCM5789 10/100/1000 Ethernet */
@@ -1335,6 +1335,14 @@
 #define	PCI_PRODUCT_COMPAQ_CSA5300	0x4070		/* Smart Array 5300 */
 #define	PCI_PRODUCT_COMPAQ_CSA5i	0x4080		/* Smart Array 5i */
 #define	PCI_PRODUCT_COMPAQ_CSA532	0x4082		/* Smart Array 532 */
+#define	PCI_PRODUCT_COMPAQ_CSA5312	0x4083		/* Smart Array 5312 */
+#define	PCI_PRODUCT_COMPAQ_CSA6i	0x4091		/* Smart Array 6i */
+#define	PCI_PRODUCT_COMPAQ_CSA641	0x409a		/* Smart Array 641 */
+#define	PCI_PRODUCT_COMPAQ_CSA642	0x409b		/* Smart Array 642 */
+#define	PCI_PRODUCT_COMPAQ_CSA6400	0x409c		/* Smart Array 6400 */
+#define	PCI_PRODUCT_COMPAQ_CSA6400EM	0x409d		/* Smart Array 6400 EM */
+#define	PCI_PRODUCT_COMPAQ_CSA6422	0x409e		/* Smart Array 6422 */
+#define	PCI_PRODUCT_COMPAQ_CSA64XX	0x0046		/* Smart Array 64xx */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB Controller */
 #define	PCI_PRODUCT_COMPAQ_ASMC	0xa0f0		/* Advanced Systems Management Controller */
 /* MediaGX Cx55x0 built-in OHCI seems to have this ID */
@@ -1348,8 +1356,10 @@
 #define	PCI_PRODUCT_COMPAQ_DPNet100TX	0xae40		/* Dual Port Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_IntPL100TX	0xae43		/* ProLiant Integrated Netelligent 10/100 TX */
 #define	PCI_PRODUCT_COMPAQ_DP4000	0xb011		/* Deskpro 4000 5233MMX */
+#define	PCI_PRODUCT_COMPAQ_CSA5300_2	0xb060		/* Smart Array 5300 rev.2 */
 #define	PCI_PRODUCT_COMPAQ_PRESARIO56XX	0xb0b8		/* Presario 56xx */
 #define	PCI_PRODUCT_COMPAQ_M700	0xb112		/* Armada M700 */
+#define	PCI_PRODUCT_COMPAQ_CSA5i_2	0xb178		/* Smart Array 5i/532 rev.2 */
 #define	PCI_PRODUCT_COMPAQ_NF3P_BNC	0xf150		/* NetFlex 3/P w/ BNC */
 #define	PCI_PRODUCT_COMPAQ_NF3P	0xf130		/* NetFlex 3/P */
 
@@ -1378,6 +1388,7 @@
 /* Conexant Systems products */
 #define	PCI_PRODUCT_CONEXANT_SOFTK56	0x2443		/* SoftK56 PCI Software Modem */
 #define	PCI_PRODUCT_CONEXANT_56KFAXMODEM	0x1085		/* HW 56K Fax Modem */
+#define	PCI_PRODUCT_CONEXANT_LANFINITY	0x1803		/* LANfinity MiniPCI 10/100 Ethernet */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
@@ -1629,6 +1640,30 @@
 #define	PCI_PRODUCT_HP_J2585B	0x1031		/* J2585B */
 #define	PCI_PRODUCT_HP_82557B	0x1200		/* 82557B 10/100 NIC */
 #define	PCI_PRODUCT_HP_NETRAID_4M	0x10c2		/* NetRaid-4M */
+
+#define	PCI_PRODUCT_HP_HPSAV100	0x3210		/* Smart Array V100 */
+#define	PCI_PRODUCT_HP_HPSAE200I_1	0x3211		/* Smart Array E200i */
+#define	PCI_PRODUCT_HP_HPSAE200	0x3212		/* Smart Array E200 */
+#define	PCI_PRODUCT_HP_HPSAE200I_2	0x3213		/* Smart Array E200i */
+#define	PCI_PRODUCT_HP_HPSAE200I_3	0x3214		/* Smart Array E200i */
+#define	PCI_PRODUCT_HP_HPSAE200I_4	0x3215		/* Smart Array E200i */
+#define	PCI_PRODUCT_HP_HPSA_1	0x3220		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_2	0x3222		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSAP800	0x3223		/* Smart Array P600 */
+#define	PCI_PRODUCT_HP_HPSAP600	0x3225		/* Smart Array P600 */
+#define	PCI_PRODUCT_HP_HPSA_3	0x3230		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_4	0x3231		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_5	0x3232		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_6	0x3233		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSAP400	0x3234		/* Smart Array P400 */
+#define	PCI_PRODUCT_HP_HPSAP400I	0x3235		/* Smart Array P400i */
+#define	PCI_PRODUCT_HP_HPSA_7	0x3236		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_8	0x3237		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_9	0x3238		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_10	0x3239		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_11	0x323a		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_12	0x323b		/* Smart Array */
+#define	PCI_PRODUCT_HP_HPSA_13	0x323c		/* Smart Array */
 
 /* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */

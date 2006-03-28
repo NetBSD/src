@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.54 2006/02/27 03:00:33 thorpej Exp $	*/
+/*	$NetBSD: uda.c,v 1.54.6.1 2006/03/28 09:42:14 tron Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.54 2006/02/27 03:00:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.54.6.1 2006/03/28 09:42:14 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -417,7 +417,7 @@ udaintr(void *arg)
 	 * Handle buffer purge requests.
 	 * XXX - should be done in bus_dma_sync().
 	 */
-	uh = (void *)sc->sc_dev.dv_parent;
+	uh = (void *)device_parent(&sc->sc_dev);
 #ifdef notyet
 	if (ud->mp_ca.ca_bdp) {
 		if (uh->uh_ubapurge)
@@ -468,6 +468,6 @@ udactlrdone(struct device *usc)
 	int s;
 
 	s = spluba();
-	uba_done((struct uba_softc *)sc->sc_dev.dv_parent);
+	uba_done((struct uba_softc *)device_parent(&sc->sc_dev));
 	splx(s);
 }

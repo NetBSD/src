@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.63 2006/03/01 12:38:21 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.63.6.1 2006/03/28 09:42:26 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.6.1 2006/03/28 09:42:26 tron Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -125,6 +125,9 @@ sysctl_ncpus(void)
 }
 #endif /* MULTIPROCESSOR */
 
+#ifdef DIAGNOSTIC
+static int sysctl_kern_trigger_panic(SYSCTLFN_PROTO);
+#endif
 static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
@@ -740,6 +743,14 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Perform a crash dump on system panic"),
 		       NULL, 0, &dumponpanic, 0,
 		       CTL_KERN, KERN_DUMP_ON_PANIC, CTL_EOL);
+#ifdef DIAGNOSTIC
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "panic_now",
+		       SYSCTL_DESCR("Trigger a panic"),
+		       sysctl_kern_trigger_panic, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "root_partition",
@@ -1094,6 +1105,27 @@ SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
  * section 2: private node-specific helper routines.
  * ********************************************************************
  */
+
+#ifdef DIAGNOSTIC
+static int
+sysctl_kern_trigger_panic(SYSCTLFN_ARGS)
+{
+	int newtrig, error;
+	struct sysctlnode node;
+
+	newtrig = 0;
+	node = *rnode;
+	node.sysctl_data = &newtrig;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (newtrig != 0)
+		panic("Panic triggered");
+
+	return (error);
+}
+#endif
 
 /*
  * sysctl helper routine for kern.maxvnodes.  drain vnodes if
