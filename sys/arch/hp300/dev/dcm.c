@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.68 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: dcm.c,v 1.69 2006/03/28 17:38:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.68 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.69 2006/03/28 17:38:24 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -397,7 +397,7 @@ dcmattach(struct device *parent, struct device *self, void *aux)
 	struct dcm_softc *sc = (struct dcm_softc *)self;
 	struct dio_attach_args *da = aux;
 	struct dcmdevice *dcm;
-	int brd = self->dv_unit;
+	int brd = device_unit(self);
 	int scode = da->da_scode;
 	int i, mbits, code;
 
@@ -720,7 +720,7 @@ dcmintr(void *arg)
 	struct dcm_softc *sc = arg;
 	struct dcmdevice *dcm = sc->sc_dcm;
 	struct dcmischeme *dis = &sc->sc_scheme;
-	int brd = sc->sc_dev.dv_unit;
+	int brd = device_unit(&sc->sc_dev);
 	int code, i;
 	int pcnd[4], mcode, mcnd[4];
 

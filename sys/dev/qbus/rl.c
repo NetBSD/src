@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.28 2006/03/25 04:08:45 thorpej Exp $	*/
+/*	$NetBSD: rl.c,v 1.29 2006/03/28 17:38:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.28 2006/03/25 04:08:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.29 2006/03/28 17:38:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -344,7 +344,7 @@ rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		printf("%s: ", rc->rc_dev.dv_xname);
 		maj = cdevsw_lookup_major(&rl_cdevsw);
 		if ((msg = readdisklabel(MAKEDISKDEV(maj,
-		    rc->rc_dev.dv_unit, RAW_PART), rlstrategy, dl, NULL)))
+		    device_unit(&rc->rc_dev), RAW_PART), rlstrategy, dl, NULL)))
 			printf("%s: ", msg);
 		printf("size %d sectors\n", dl->d_secperunit);
 	}
