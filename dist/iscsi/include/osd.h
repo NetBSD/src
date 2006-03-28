@@ -33,7 +33,11 @@
 #ifndef OSD_H
 #define OSD_H
 
-#ifndef __KERNEL__
+#include "config.h"
+
+#include <sys/types.h>
+
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
 #endif
 

@@ -1585,7 +1585,7 @@ target_listen(globals_t *gp)
 		/* Accept connection, spawn session thread, and */
 		/* clean up old threads */
 
-		iscsi_trace(TRACE_NET_DEBUG, "waiting for IPv4 connection on port %d\n", gp->port);
+		iscsi_trace(TRACE_NET_DEBUG, "waiting for IPv4 connection on port %d\n", ISCSI_HTONS(gp->port));
 		if (iscsi_sock_accept(gp->sock, &sess->sock) < 0) {
 			iscsi_trace(TRACE_ISCSI_DEBUG, "iscsi_sock_accept() failed\n");
 			goto done;
