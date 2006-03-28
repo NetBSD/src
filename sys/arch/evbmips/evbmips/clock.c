@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2006/03/28 12:02:36 shige Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2006/03/28 16:35:51 gdamore Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2006/03/28 12:02:36 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2006/03/28 16:35:51 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -127,8 +127,10 @@ void
 todr_attach(todr_chip_handle_t todr)
 {
 
-        if (todr_handle)
-                panic("todr_attach: realtime-clock already configured");
+        if (todr_handle) {
+                printf("todr_attach: TOD already configured\n");
+		return;
+	}
         todr_handle = todr;
 }
 
