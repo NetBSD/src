@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.77 2006/02/26 05:31:54 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.77.6.1 2006/03/28 09:47:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77.6.1 2006/03/28 09:47:15 tron Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -452,8 +452,7 @@ device_register(struct device *dev, void *aux)
 	 * we can mount as root.
 	 */
 
-	MALLOC(dd, struct dev_data *, sizeof(struct dev_data),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	dd = malloc(sizeof(struct dev_data), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (dd == NULL)
 		panic("device_register: can't allocate dev_data");
 
@@ -694,11 +693,11 @@ setbootdev(void)
 	/*
 	 * Determine device type.
 	 */
-	if (device_is_a(root_device, "rd") == 0)
+	if (device_is_a(root_device, "rd"))
 		type = 2;
-	else if (device_is_a(root_device, "sd") == 0)
+	else if (device_is_a(root_device, "sd"))
 		type = 4;
-	else if (device_is_a(root_device, "md") == 0)
+	else if (device_is_a(root_device, "md"))
 		goto out;
 	else {
 		printf("WARNING: strange root device!\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2006/03/06 20:32:28 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25.4.1 2006/03/28 09:46:22 tron Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2006/03/06 20:32:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25.4.1 2006/03/28 09:46:22 tron Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1559,7 +1559,8 @@ init386(paddr_t first_avail)
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;
 	mem_cluster_cnt++;
-	physmem += atop(mem_clusters[0].size);
+	physmem += xen_start_info.nr_pages;
+	uvmexp.wired += atop(avail_start);
 #endif
 
 	/*

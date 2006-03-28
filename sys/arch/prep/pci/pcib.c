@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.15 2006/03/09 20:17:27 garbled Exp $	*/
+/*	$NetBSD: pcib.c,v 1.15.2.1 2006/03/28 09:47:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15 2006/03/09 20:17:27 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15.2.1 2006/03/28 09:47:17 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,10 +72,7 @@ CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
 void	pcib_callback(struct device *);
 
 int
-pcibmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+pcibmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -107,9 +104,7 @@ pcibmatch(parent, cf, aux)
 }
 
 void
-pcibattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
@@ -151,8 +146,7 @@ pcibattach(parent, self, aux)
 }
 
 void
-pcib_callback(self)
-	struct device *self;
+pcib_callback(struct device *self)
 {
 	struct pcib_softc *sc = (struct pcib_softc *)self;
 #if NISA > 0

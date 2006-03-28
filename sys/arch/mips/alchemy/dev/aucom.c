@@ -1,4 +1,4 @@
-/*	$NetBSD: aucom.c,v 1.18 2006/02/20 16:50:36 thorpej Exp $	*/
+/*	$NetBSD: aucom.c,v 1.18.6.1 2006/03/28 09:47:16 tron Exp $	*/
 /*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.18 2006/02/20 16:50:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.18.6.1 2006/03/28 09:47:16 tron Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -618,7 +618,8 @@ com_attach_subr(struct com_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&com_cdevsw);
 
-		tp->t_dev = cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		tp->t_dev = cn_tab->cn_dev = makedev(maj,
+						     device_unit(&sc->sc_dev));
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.3 2006/03/06 23:06:17 shige Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.3.6.1 2006/03/28 09:47:16 tron Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.3 2006/03/06 23:06:17 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.3.6.1 2006/03/28 09:47:16 tron Exp $");
 
 #include "locators.h"
 
@@ -67,7 +67,9 @@ struct ausmbus_softc {
 #define	ausmbus_reg_read(sc, reg) \
 	bus_space_read_4(sc->sc_ctrl.psc_bust, sc->sc_ctrl.psc_bush, reg)
 #define	ausmbus_reg_write(sc, reg, val) \
-	bus_space_write_4(sc->sc_ctrl.psc_bust, sc->sc_ctrl.psc_bush, reg, val)
+	bus_space_write_4(sc->sc_ctrl.psc_bust, sc->sc_ctrl.psc_bush, reg, \
+		val); \
+	delay(100);
 
 static int	ausmbus_match(struct device *, struct cfdata *, void *);
 static void	ausmbus_attach(struct device *, struct device *, void *);

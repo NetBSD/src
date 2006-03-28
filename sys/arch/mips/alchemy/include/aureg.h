@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.15 2006/03/01 18:35:28 shige Exp $ */
+/* $NetBSD: aureg.h,v 1.15.6.1 2006/03/28 09:47:17 tron Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -109,13 +109,11 @@
 #define	IC_MASK_SET			0x70
 #define	IC_MASK_CLEAR			0x74
 
-#define	IC_RISING_EDGE_DETECT		0x78	/* Check/clear rising edge interrupts */
-#define	IC_RISING_EDGE_DETECT_CLEAR	0x78
+#define	IC_RISING_EDGE			0x78	/* Check/clear rising edge */
 
-#define	IC_FAILLING_EDGE_DETECT		0x7c	/* Check/clear falling edge interrupts */
-#define	IC_FAILLING_EDGE_DETECT_CLEAR	0x7c
+#define	IC_FALLING_EDGE			0x7c	/* Check/clear falling edge */
 
-#define	IC_TEST_BIT			0x80	/* single bit source select testing register */
+#define	IC_TEST_BIT			0x80	/* single bit source select */
 
 /*
  *	Interrupt Configuration Register Functions
