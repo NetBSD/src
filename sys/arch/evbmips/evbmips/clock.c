@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2006/03/28 03:43:57 gdamore Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2006/03/28 12:02:36 shige Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2006/03/28 03:43:57 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2006/03/28 12:02:36 shige Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -118,6 +118,18 @@ cpu_initclocks(void)
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
         }
+}
+
+/*
+ * Attach the clock device to todr_handle.
+ */
+void
+todr_attach(todr_chip_handle_t todr)
+{
+
+        if (todr_handle)
+                panic("todr_attach: realtime-clock already configured");
+        todr_handle = todr;
 }
 
 /*
