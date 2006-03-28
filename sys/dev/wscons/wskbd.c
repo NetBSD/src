@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.87 2006/03/14 23:41:45 uwe Exp $ */
+/* $NetBSD: wskbd.c,v 1.88 2006/03/28 17:38:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.87 2006/03/14 23:41:45 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.88 2006/03/28 17:38:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -596,7 +596,7 @@ wskbd_detach(struct device  *self, int flags)
 	maj = cdevsw_lookup_major(&wskbd_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.52 2006/03/27 21:50:45 bouyer Exp $	*/
+/*	$NetBSD: iop.c,v 1.53 2006/03/28 17:38:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.52 2006/03/27 21:50:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.53 2006/03/28 17:38:30 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -531,7 +531,7 @@ iop_config_interrupts(struct device *self)
 				continue;
 
 			ste->orgid = iop->sc_status.orgid;
-			ste->iopid = iop->sc_dv.dv_unit + 2;
+			ste->iopid = device_unit(&iop->sc_dv) + 2;
 			ste->segnumber =
 			    htole32(le32toh(iop->sc_status.segnumber) & ~4095);
 			ste->iopcaps = iop->sc_status.iopcaps;
@@ -1512,7 +1512,7 @@ iop_systab_set(struct iop_softc *sc)
 	mf->msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_EXEC_SYS_TAB_SET);
 	mf->msgictx = IOP_ICTX;
 	mf->msgtctx = im->im_tctx;
-	mf->iopid = (sc->sc_dv.dv_unit + 2) << 12;
+	mf->iopid = (device_unit(&sc->sc_dv) + 2) << 12;
 	mf->segnumber = 0;
 
 	mema[1] = sc->sc_status.desiredprivmemsize;

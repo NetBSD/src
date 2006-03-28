@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.71 2006/03/19 06:47:35 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.72 2006/03/28 17:38:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.71 2006/03/19 06:47:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.72 2006/03/28 17:38:25 thorpej Exp $");
 
 #include "hil.h"
 
@@ -260,7 +260,7 @@ iteattach(struct device *parent, struct device *self, void *aux)
 		 * the console probe, so we have to fixup cn_dev here.
 		 */
 		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&ite_cdevsw),
-					 self->dv_unit);
+					 device_unit(self));
 	} else {
 		ite->sc_data = malloc(sizeof(struct ite_data), M_DEVBUF,
 		    M_NOWAIT | M_ZERO);

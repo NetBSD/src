@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.31 2006/02/21 04:31:33 thorpej Exp $	*/
+/*	$NetBSD: irframe.c,v 1.32 2006/03/28 17:38:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.31 2006/02/21 04:31:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.32 2006/03/28 17:38:33 thorpej Exp $");
 
 #include "irframe.h"
 
@@ -177,7 +177,7 @@ irframe_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&irframe_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);

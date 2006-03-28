@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.33 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: cg4.c,v 1.34 2006/03/28 17:38:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.33 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.34 2006/03/28 17:38:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,8 @@ cg4attach(struct device *parent, struct device *self, void *args)
 	 */
 	if (fb->fb_pfour)
 		fb_pfour_setsize(fb);
-	else if (sc->sc_dev.dv_unit == 0)
+	/* XXX device_unit() abuse */
+	else if (device_unit(&sc->sc_dev) == 0)
 		fb_eeprom_setsize(fb);
 	else {
 		/* Guess based on machine ID. */

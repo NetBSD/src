@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.50 2006/03/25 23:20:18 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.51 2006/03/28 17:38:34 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.50 2006/03/25 23:20:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.51 2006/03/28 17:38:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -208,7 +208,7 @@ ra_putonline(ra)
 	ra->ra_state = DK_RDLABEL;
 	printf("%s", ra->ra_dev.dv_xname);
 	maj = cdevsw_lookup_major(&ra_cdevsw);
-	if ((msg = readdisklabel(MAKEDISKDEV(maj, ra->ra_dev.dv_unit,
+	if ((msg = readdisklabel(MAKEDISKDEV(maj, device_unit(&ra->ra_dev),
 	    RAW_PART), rastrategy, dl, NULL)) != NULL)
 		printf(": %s", msg);
 	else {

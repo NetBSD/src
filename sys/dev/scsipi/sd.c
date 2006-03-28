@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.245 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.246 2006/03/28 17:38:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.245 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.246 2006/03/28 17:38:34 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -354,7 +354,7 @@ sddetach(struct device *self, int flags)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = SDMINOR(self->dv_unit, i);
+		mn = SDMINOR(device_unit(self), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
@@ -1310,8 +1310,8 @@ sdgetdisklabel(struct sd_softc *sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit, RAW_PART),
-	    sdstrategy, lp, sd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(MAKESDDEV(0, device_unit(&sd->sc_dev),
+	    RAW_PART), sdstrategy, lp, sd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;

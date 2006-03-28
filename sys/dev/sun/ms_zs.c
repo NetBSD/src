@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.13 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.14 2006/03/28 17:38:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.13 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.14 2006/03/28 17:38:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ ms_zs_attach(parent, self, aux)
 	int bps;
 
 	cf = ms->ms_dev.dv_cfdata;
-	ms_unit = ms->ms_dev.dv_unit;
+	ms_unit = device_unit(&ms->ms_dev);
 	channel = args->channel;
 	cs = zsc->zsc_cs[channel];
 	cs->cs_private = ms;

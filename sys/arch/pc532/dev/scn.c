@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.68 2005/12/24 20:07:24 perry Exp $ */
+/*	$NetBSD: scn.c,v 1.69 2006/03/28 17:38:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.69 2006/03/28 17:38:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -822,7 +822,7 @@ scnattach(parent, self, aux)
 	boolean_t console, first;
 
 	sc = (void *) self;
-	unit = self->dv_unit;
+	unit = device_unit(self);
 
 	duartno = SCN_ADDR2DUART(ca->ca_addr);	/* get chip number */
 	channel = SCN_ADDR2CHAN(ca->ca_addr);	/* get channel on chip */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.22 2006/03/25 23:04:31 thorpej Exp $	*/
+/*	$NetBSD: dpti.c,v 1.23 2006/03/28 17:38:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.22 2006/03/25 23:04:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.23 2006/03/28 17:38:30 thorpej Exp $");
 
 #include "opt_i2o.h"
 
@@ -340,7 +340,7 @@ dpti_ctlrinfo(struct dpti_softc *sc, int size, caddr_t data)
 	memset(&info, 0, sizeof(info));
 
 	info.length = sizeof(info) - sizeof(u_int16_t);
-	info.drvrHBAnum = sc->sc_dv.dv_unit;
+	info.drvrHBAnum = device_unit(&sc->sc_dv);
 	info.baseAddr = iop->sc_memaddr;
 	if ((i = dpti_blinkled(sc)) == -1)
 		i = 0;

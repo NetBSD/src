@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.5 2006/02/20 03:18:36 riz Exp $ */
+/* $NetBSD: gpio.c,v 1.6 2006/03/28 17:38:30 thorpej Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.5 2006/02/20 03:18:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.6 2006/03/28 17:38:30 thorpej Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -106,7 +106,7 @@ gpio_detach(struct device *self, int flags)
 			break;
 
 	/* Nuke the vnodes for any open instances (calls close) */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 #endif
 

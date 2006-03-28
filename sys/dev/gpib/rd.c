@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.9 2006/03/25 22:59:59 thorpej Exp $ */
+/*	$NetBSD: rd.c,v 1.10 2006/03/28 17:38:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.9 2006/03/25 22:59:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.10 2006/03/28 17:38:30 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -492,7 +492,7 @@ rdgetinfo(sc)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	msg = readdisklabel(RDMAKEDEV(0, sc->sc_dev.dv_unit, RAW_PART),
+	msg = readdisklabel(RDMAKEDEV(0, device_unit(&sc->sc_dev), RAW_PART),
 	    rdstrategy, lp, NULL);
 	if (msg == NULL)
 		return (0);

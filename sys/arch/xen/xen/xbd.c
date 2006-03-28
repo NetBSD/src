@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.29 2006/03/19 15:11:50 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.30 2006/03/28 17:38:29 thorpej Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.29 2006/03/19 15:11:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.30 2006/03/28 17:38:29 thorpej Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -1054,7 +1054,7 @@ xbd_detach(struct device *dv, int flags)
 	cmaj = cdevsw_lookup_major(&xbd_cdevsw);
 
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(dv->dv_unit, i);
+		mn = DISKMINOR(device_unit(dv), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}

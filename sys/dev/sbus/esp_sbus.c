@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.34 2006/03/25 23:25:24 thorpej Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.35 2006/03/28 17:38:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.34 2006/03/25 23:25:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.35 2006/03/28 17:38:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ espattach_sbus(parent, self, aux)
 	 * find the matching esp driver.
 	 */
 	esc->sc_dma = (struct lsi64854_softc *)
-				getdevunit("dma", sc->sc_dev.dv_unit);
+				getdevunit("dma", device_unit(&sc->sc_dev));
 
 	/*
 	 * and a back pointer to us, for DMA

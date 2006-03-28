@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.19 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.20 2006/03/28 17:38:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.19 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.20 2006/03/28 17:38:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ zs_hb_attach(struct device *parent, struct device *self, void *aux)
 	int s, zs_unit, channel, intlevel;
 	static int didintr;
 
-	zs_unit = zsc->zsc_dev.dv_unit;
+	zs_unit = device_unit(&zsc->zsc_dev);
 	intlevel = ha->ha_level;
 	zsaddr[zs_unit] = (void *)ha->ha_addr;
 

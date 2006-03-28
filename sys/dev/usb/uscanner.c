@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.50 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.51 2006/03/28 17:38:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.50 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.51 2006/03/28 17:38:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -681,7 +681,7 @@ USB_DETACH(uscanner)
 #endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit * USB_MAX_ENDPOINTS;
+	mn = device_unit(self) * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
 #elif defined(__FreeBSD__)
 	/* destroy the device for the control endpoint */
