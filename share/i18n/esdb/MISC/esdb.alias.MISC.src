@@ -1,4 +1,4 @@
-# $NetBSD: esdb.alias.MISC.src,v 1.4 2003/07/20 19:26:57 tshiozak Exp $
+# $NetBSD: esdb.alias.MISC.src,v 1.5 2006/03/28 14:44:01 tnozaki Exp $
 
 shift_jis			Shift_JIS
 sjis				Shift_JIS
@@ -9,3 +9,9 @@ koi8-r				KOI8-R
 koi8-u				KOI8-U
 iso-ir-111			KOI8-R
 ctext				CTEXT
+csPTCP154			PTCP154
+PT154				PTCP154
+CP154				PTCP154
+Cyrillic-Asian			PTCP154
+PT-154				PTCP154
+paratype-154			PTCP154

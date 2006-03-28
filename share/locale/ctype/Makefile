@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2006/03/23 23:23:38 tnozaki Exp $
+# $NetBSD: Makefile,v 1.23 2006/03/28 14:44:01 tnozaki Exp $
 
 NOMAN=	# defined
 
@@ -179,6 +179,9 @@ LOCALES += ja_JP.ISO2022-JP2
 
 LOCALES += ja_JP.SJIS
  LOCALESRC_ja_JP.SJIS = ja_JP.SJIS
+
+LOCALES += kk_KZ.PT154
+ LOCALESRC_kk_KZ.PT154 = kk_KZ.PT154
 
 LOCALES += ko_KR.eucKR
  LOCALESRC_ko_KR.eucKR = ko_KR.eucKR

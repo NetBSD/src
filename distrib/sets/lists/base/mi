@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.606 2006/03/23 23:23:38 tnozaki Exp $
+# $NetBSD: mi,v 1.607 2006/03/28 14:44:01 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1679,9 +1679,11 @@
 ./usr/share/i18n/csmapper/MISC/Big5%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/KOI8-R%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/KOI8-U%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/PTCP154%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%Big5.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%KOI8-R.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/MISC/UCS%KOI8-U.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/MISC/UCS%PTCP154.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/charset.pivot		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/charset.pivot.pvdb	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/mapper.dir		base-sysutil-share	nls
@@ -2082,6 +2084,8 @@
 ./usr/share/locale/ja_JP.ct/LC_CTYPE		base-locale-ja		nls
 ./usr/share/locale/ja_JP.eucJP			base-locale-ja
 ./usr/share/locale/ja_JP.eucJP/LC_CTYPE		base-locale-ja		nls
+./usr/share/locale/kk_KZ.PT154			base-locale-kk
+./usr/share/locale/kk_KZ.PT154/LC_CTYPE		base-locale-kk		nls
 ./usr/share/locale/ko				base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES		base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko		nls

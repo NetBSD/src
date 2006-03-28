@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2003/10/21 10:01:21 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.6 2006/03/28 14:44:01 tnozaki Exp $
 
 .PATH: ${.CURDIR}/MISC
 
@@ -10,7 +10,9 @@ MAPS_MISC=		Big5%UCS.mps \
 			KOI8-R%UCS.mps \
 			UCS%KOI8-R.mps \
 			KOI8-U%UCS.mps \
-			UCS%KOI8-U.mps
+			UCS%KOI8-U.mps \
+			PTCP154%UCS.mps \
+			UCS%PTCP154.mps
 
 mapper.dir.MISC: ${.CURDIR}/MISC/mapper.dir.MISC.src
 	${_MKTARGET_CREATE}
