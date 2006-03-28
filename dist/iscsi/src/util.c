@@ -246,8 +246,8 @@ iscsi_trace(const int trace, const char *fmt, ...)
 	if (iscsi_debug_level & trace) {
 		va_start(vp, fmt);
 		(void) snprintf(buf, sizeof(buf), fmt, vp);
-		printf("pid %i:%s:%d: %s",
-			ISCSI_GETPID, __FILE__, __LINE__,
+		printf("pid %d:%s:%d: %s",
+			(int) ISCSI_GETPID, __FILE__, __LINE__,
 			buf);
 		va_end(vp);
 	}
@@ -264,8 +264,8 @@ iscsi_trace_warning(const char *fmt, ...)
 	if (iscsi_debug_level & TRACE_WARN) {
 		va_start(vp, fmt);
 		(void) snprintf(buf, sizeof(buf), fmt, vp);
-		printf("pid %i:%s:%d: ***WARNING*** %s",
-			ISCSI_GETPID, __FILE__, __LINE__,
+		printf("pid %d:%s:%d: ***WARNING*** %s",
+			(int) ISCSI_GETPID, __FILE__, __LINE__,
 			buf);
 		va_end(vp);
 	}
@@ -282,8 +282,8 @@ iscsi_trace_error(const char *fmt, ...)
 	va_start(vp, fmt);
 	(void) snprintf(buf, sizeof(buf), fmt, vp);
 	va_end(vp);
-	printf("pid %i:%s:%d: ***ERROR*** %s",
-			ISCSI_GETPID, __FILE__, __LINE__,
+	printf("pid %d:%s:%d: ***ERROR*** %s",
+			(int) ISCSI_GETPID, __FILE__, __LINE__,
 			buf);
 #  ifdef HAVE_SYSLOG
 	syslog(LOG_ERR, "pid %d:%s:%d: ***ERROR*** %s",

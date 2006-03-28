@@ -40,7 +40,7 @@ size_t strlcpy(char *, const char *, size_t);
 
 #ifndef HTOBE64
 #  if _BYTE_ORDER == _BIG_ENDIAN
-#    define HTOBE64(x)      (void) (x)
+#    define HTOBE64(x)      (x)
 #  else   /* LITTLE_ENDIAN */
 #    define HTOBE64(x)      (x) = __bswap64((u_int64_t)(x))
 #    define bswap64(x)      __bswap64(x)

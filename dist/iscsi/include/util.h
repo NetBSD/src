@@ -417,7 +417,7 @@ typedef struct {
 }               iscsi_worker_t;
 
 #define ISCSI_WORKER_EXIT(ME) do {					\
-	TRACE(TRACE_ISCSI_DEBUG ,"exiting\n");				\
+	iscsi_trace(TRACE_ISCSI_DEBUG ,"exiting\n");			\
 	(ME)->state |= ISCSI_WORKER_STATE_EXITING;			\
 	return 0;							\
 } while (/* CONSTCOND */ 0)
