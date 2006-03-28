@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.14 2003/08/07 11:17:49 agc Exp $	*/
+/*	$NetBSD: xargs.c,v 1.15 2006/03/28 14:27:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: xargs.c,v 1.14 2003/08/07 11:17:49 agc Exp $");
+__RCSID("$NetBSD: xargs.c,v 1.15 2006/03/28 14:27:41 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,6 +77,7 @@ main(argc, argv)
 	int ch;
 	char *p, *bbp, *ebp, **bxp, **exp, **xp;
 	int cnt, indouble, insingle, nargs, nflag, nline, xflag;
+	long arg_max;
 	char **av, *argp;
 
 	setlocale(LC_ALL, "");
@@ -95,7 +96,9 @@ main(argc, argv)
 	 * probably not worthwhile.
 	 */
 	nargs = 5000;
-	nline = ARG_MAX - 4 * 1024;
+	if ((arg_max = sysconf(_SC_ARG_MAX)) == -1)
+		errx(1, "sysconf(_SC_ARG_MAX) failed");
+	nline = arg_max - 4 * 1024;
 	nflag = xflag = 0;
 	while ((ch = getopt(argc, argv, "0n:ps:tx")) != -1)
 		switch(ch) {
