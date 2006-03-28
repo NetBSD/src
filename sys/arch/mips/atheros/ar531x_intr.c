@@ -1,4 +1,4 @@
-/* $Id: ar531x_intr.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $Id: ar531x_intr.c,v 1.2 2006/03/28 03:43:58 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar531x_intr.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar531x_intr.c,v 1.2 2006/03/28 03:43:58 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -298,7 +298,6 @@ ar531x_miscintr(void *arg)
 	for (index = 0; index < NIRQS; index++) {
 
 		if (isr & mask & (1 << index)) {
-			/* disable the interrupt for now */
 			ar531x_miscintrs[index].intr_count.ev_count++;
 			LIST_FOREACH(ih, &ar531x_miscintrs[index].intr_l, ih_q)
 			    rv |= (*ih->ih_func)(ih->ih_arg);
@@ -308,17 +307,12 @@ ar531x_miscintr(void *arg)
 	return rv;
 }
 
-int		intrmaxdepth = 0;
-int		intrdepth = 0;
-
 void
 ar531x_cpuintr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	uint32_t		mask;
 	int			index;
 	struct ar531x_intrhand	*ih;
-
-	intrdepth++;
 
 	/* all others get normal handling */
 	for (index = NINTRS - 1; index >= 0; index--) {
@@ -332,10 +326,6 @@ ar531x_cpuintr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		}
 	}
 
-	if (intrmaxdepth < intrdepth) {
-		intrmaxdepth = intrdepth;
-	}
-	intrdepth--;
 	/* re-enable the stuff we processed */
 	_splset(MIPS_SR_INT_IE | ((status & ~cause) & MIPS_HARD_INT_MASK));
 }
