@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.59 2006/03/28 17:38:27 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.60 2006/03/28 23:22:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.59 2006/03/28 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.60 2006/03/28 23:22:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -355,7 +355,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		 * sunkbd and sunms line disciplines.
 		 */
 		if (child 
-		    && (!strcmp(child->dv_cfdata->cf_name, "zstty"))
+		    && (device_is_a(child, "zstty"))
 		    && (prom_getproplen(zsc->zsc_node, "keyboard") == 0)) {
 			struct kbd_ms_tty_attach_args kma;
 			struct tty *tp;
