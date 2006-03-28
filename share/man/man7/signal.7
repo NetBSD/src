@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.7,v 1.8 2005/01/14 22:33:15 jmmv Exp $
+.\"	$NetBSD: signal.7,v 1.9 2006/03/28 09:45:26 yamt Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 13, 2004
+.Dd March 28, 2006
 .Dt SIGNAL 7
 .Os
 .Sh NAME
@@ -42,47 +42,47 @@ The
 .Aq Pa signal.h
 header file defines the following signals:
 .Pp
-.Bl -column "SIGVTALARM" "terminate process" -compact
-.It Em "Name" Ta Em "Default Action" Ta Em "Description"
-.It Li SIGHUP Ta "terminate process" Ta "terminal line hangup"
-.It Li SIGINT Ta "terminate process" Ta "interrupt program"
-.It Li SIGQUIT Ta "create core image" Ta "quit program"
-.It Li SIGILL Ta "create core image" Ta "illegal instruction"
-.It Li SIGTRAP Ta "create core image" Ta "trace trap"
-.It Li SIGABRT Ta "create core image" Ta Xr abort 3
+.Bl -column "99" "SIGVTALARM" "terminate process" -compact
+.It Em "Value" Ta Em "Name" Ta Em "Default Action" Ta Em "Description"
+.It 1 Ta Li SIGHUP Ta "terminate process" Ta "terminal line hangup"
+.It 2 Ta Li SIGINT Ta "terminate process" Ta "interrupt program"
+.It 3 Ta Li SIGQUIT Ta "create core image" Ta "quit program"
+.It 4 Ta Li SIGILL Ta "create core image" Ta "illegal instruction"
+.It 5 Ta Li SIGTRAP Ta "create core image" Ta "trace trap"
+.It 6 Ta Li SIGABRT Ta "create core image" Ta Xr abort 3
 call (formerly
 .Dv SIGIOT )
-.It Li SIGEMT Ta "create core image" Ta "emulate instruction executed"
-.It Li SIGFPE Ta "create core image" Ta "floating-point exception"
-.It Li SIGKILL Ta "terminate process" Ta "kill program (cannot be caught or ignored)"
-.It Li SIGBUS Ta "create core image" Ta "bus error"
-.It Li SIGSEGV Ta "create core image" Ta "segmentation violation"
-.It Li SIGSYS Ta "create core image" Ta "invalid system call argument"
-.It Li SIGPIPE Ta "terminate process" Ta "write to a pipe with no reader"
-.It Li SIGALRM Ta "terminate process" Ta "real-time timer expired"
-.It Li SIGTERM Ta "terminate process" Ta "software termination signal"
-.It Li SIGURG Ta "discard signal" Ta "urgent condition present on socket"
-.It Li SIGSTOP Ta "stop process" Ta "stop (cannot be caught or ignored)"
-.It Li SIGTSTP Ta "stop process" Ta "stop signal generated from keyboard"
-.It Li SIGCONT Ta "discard signal" Ta "continue after stop"
-.It Li SIGCHLD Ta "discard signal" Ta "child status has changed"
-.It Li SIGTTIN Ta "stop process" Ta "background read attempted from control terminal"
-.It Li SIGTTOU Ta "stop process" Ta "background write attempted to control terminal"
-.It Li SIGIO Ta "discard signal" Ta "I/O is possible on a descriptor (see"
+.It 7 Ta Li SIGEMT Ta "create core image" Ta "emulate instruction executed"
+.It 8 Ta Li SIGFPE Ta "create core image" Ta "floating-point exception"
+.It 9 Ta Li SIGKILL Ta "terminate process" Ta "kill program (cannot be caught or ignored)"
+.It 10 Ta Li SIGBUS Ta "create core image" Ta "bus error"
+.It 11 Ta Li SIGSEGV Ta "create core image" Ta "segmentation violation"
+.It 12 Ta Li SIGSYS Ta "create core image" Ta "invalid system call argument"
+.It 13 Ta Li SIGPIPE Ta "terminate process" Ta "write to a pipe with no reader"
+.It 14 Ta Li SIGALRM Ta "terminate process" Ta "real-time timer expired"
+.It 15 Ta Li SIGTERM Ta "terminate process" Ta "software termination signal"
+.It 16 Ta Li SIGURG Ta "discard signal" Ta "urgent condition present on socket"
+.It 17 Ta Li SIGSTOP Ta "stop process" Ta "stop (cannot be caught or ignored)"
+.It 18 Ta Li SIGTSTP Ta "stop process" Ta "stop signal generated from keyboard"
+.It 19 Ta Li SIGCONT Ta "discard signal" Ta "continue after stop"
+.It 20 Ta Li SIGCHLD Ta "discard signal" Ta "child status has changed"
+.It 21 Ta Li SIGTTIN Ta "stop process" Ta "background read attempted from control terminal"
+.It 22 Ta Li SIGTTOU Ta "stop process" Ta "background write attempted to control terminal"
+.It 23 Ta Li SIGIO Ta "discard signal" Ta "I/O is possible on a descriptor (see"
 .Xr fcntl 2 )
-.It Li SIGXCPU Ta "terminate process" Ta "CPU time limit exceeded (see"
+.It 24 Ta Li SIGXCPU Ta "terminate process" Ta "CPU time limit exceeded (see"
 .Xr setrlimit 2 )
-.It Li SIGXFSZ Ta "terminate process" Ta "file size limit exceeded (see"
+.It 25 Ta Li SIGXFSZ Ta "terminate process" Ta "file size limit exceeded (see"
 .Xr setrlimit 2 )
-.It Li SIGVTALRM Ta "terminate process" Ta "virtual time alarm (see"
+.It 26 Ta Li SIGVTALRM Ta "terminate process" Ta "virtual time alarm (see"
 .Xr setitimer 2 )
-.It Li SIGPROF Ta "terminate process" Ta "profiling timer alarm (see"
+.It 27 Ta Li SIGPROF Ta "terminate process" Ta "profiling timer alarm (see"
 .Xr setitimer 2 )
-.It Li SIGWINCH Ta "discard signal" Ta "window size change"
-.It Li SIGINFO Ta "discard signal" Ta "status request from keyboard"
-.It Li SIGUSR1 Ta "terminate process" Ta "user-defined signal 1"
-.It Li SIGUSR2 Ta "terminate process" Ta "user-defined signal 2"
-.It Li SIGPWR Ta "discard signal" Ta "power failure/restart"
+.It 28 Ta Li SIGWINCH Ta "discard signal" Ta "window size change"
+.It 29 Ta Li SIGINFO Ta "discard signal" Ta "status request from keyboard"
+.It 30 Ta Li SIGUSR1 Ta "terminate process" Ta "user-defined signal 1"
+.It 31 Ta Li SIGUSR2 Ta "terminate process" Ta "user-defined signal 2"
+.It 32 Ta Li SIGPWR Ta "discard signal" Ta "power failure/restart"
 .El
 .Pp
 A function that is async-signal-safe is either reentrant or
