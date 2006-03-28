@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_osfp.c,v 1.5 2005/07/01 12:43:50 peter Exp $	*/
+/*	$NetBSD: pfctl_osfp.c,v 1.5.2.1 2006/03/28 08:27:01 tron Exp $	*/
 /*	$OpenBSD: pfctl_osfp.c,v 1.12 2005/02/17 13:18:00 aaron Exp $ */
 
 /*
@@ -255,6 +255,8 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 		free(subtype);
 	if (desc)
 		free(desc);
+	if (tcpopts)
+		free(tcpopts);
 
 	fclose(in);
 

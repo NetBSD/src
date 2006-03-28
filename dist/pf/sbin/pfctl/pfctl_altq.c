@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_altq.c,v 1.5.2.1 2006/03/18 18:44:20 peter Exp $	*/
+/*	$NetBSD: pfctl_altq.c,v 1.5.2.2 2006/03/28 08:27:01 tron Exp $	*/
 /*	$OpenBSD: pfctl_altq.c,v 1.86 2005/02/28 14:04:51 henning Exp $	*/
 
 /*
@@ -495,10 +495,7 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 		maxidle = ptime * maxidle;
 	else
 		maxidle = ptime * maxidle_s;
-	if (minburst)
-		offtime = cptime * (1.0 + 1.0/(1.0 - g) * (1.0 - gtom) / gtom);
-	else
-		offtime = cptime;
+	offtime = cptime * (1.0 + 1.0/(1.0 - g) * (1.0 - gtom) / gtom);
 	minidle = -((double)opts->maxpktsize * (double)nsPerByte);
 
 	/* scale parameters */
