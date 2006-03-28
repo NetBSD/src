@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.8 2005/04/14 18:52:23 nathanw Exp $
+.\"	$NetBSD: crypto.4,v 1.9 2006/03/28 20:50:57 riz Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Jonathan Stone <jonathan@dsg.stanford.edu>. All rights reserved.
@@ -24,17 +24,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 27, 2004
+.Dd March 28, 2006
 .Dt CRYPTO 4
 .Os
 .Sh NAME
-.Nm crypto
+.Nm crypto ,
+.Nm swcrypto
 .Nd user-mode access to hardware-accelerated cryptography
 .Sh SYNOPSIS
 .Cd "hifn*   at pci? dev ? function ?"
 .Cd "ubsec*  at pci? dev ? function ?"
 .Pp
 .Cd pseudo-device crypto
+.Cd pseudo-device swcrypto
 .Pp
 .In sys/ioctl.h
 .In sys/time.h
@@ -46,6 +48,12 @@ driver gives user-mode applications access to hardware-accelerated
 cryptographic transforms, as implemented by the
 .Xr opencrypto 9
 in-kernel interface.
+The
+.Cm swcrypto
+driver is a software-only implementation of the
+.Xr opencrypto 9
+interface, and must be included to use the interface without hardware
+acceleration.
 The
 .Pa /dev/crypto
 special device provides an
