@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.379 2006/03/25 17:38:34 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.380 2006/03/28 20:50:57 riz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
@@ -106,6 +106,7 @@ MLINKS+=audio.4 sound.4
 MLINKS+=bha.4 bt.4
 MLINKS+=cardbus.4 cardslot.4
 MLINKS+=cardbus.4 cbb.4
+MLINKS+=crypto.4 swcrypto.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
 MLINKS+=fss.4 fssbs.4
