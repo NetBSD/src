@@ -1,4 +1,4 @@
-/*	$NetBSD: authpf.c,v 1.4 2005/07/01 12:43:50 peter Exp $	*/
+/*	$NetBSD: authpf.c,v 1.4.2.1 2006/03/28 08:27:01 tron Exp $	*/
 /*	$OpenBSD: authpf.c,v 1.89 2005/02/10 04:24:15 joel Exp $	*/
 
 /*
@@ -549,10 +549,12 @@ check_luser(char *luserdir, char *luser)
 		    sizeof(tmp));
 		while (fputs(tmp, stdout) != EOF && !feof(f)) {
 			if (fgets(tmp, sizeof(tmp), f) == NULL) {
+				fclose(f);
 				fflush(stdout);
 				return (0);
 			}
 		}
+		fclose(f);
 	}
 	fflush(stdout);
 	return (0);
