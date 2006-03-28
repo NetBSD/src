@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.26 2006/03/24 21:57:27 riz Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.27 2006/03/28 23:24:05 riz Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -225,4 +225,22 @@ sys/kern/kern_sysctl.c				1.191
 	Check the "oldlen" argument to sysctl(2) before passing it
 	to vslock(9). This prevents a local DOS.
 	[drochner, ticket #10381]
+
+sys/netipsec/xform_esp.c			1.8
+
+	FreeBSD SA-06:11 and CVE-2006-0905: update the replay sequence number
+	or else the anti-reply technique won't work as expected.
+	[rpaulo, ticket #10384]
+
+sys/dev/ata/wd.c				patch
+
+	sync the list of quirky seagate drives with -current.
+	[bouyer, ticket #10397]
+
+usr.sbin/rpc.statd/statd.c			1.27
+
+	Use sigaction(2) to setup automatic disposal of child processes after
+	daemonizing. This is more portable and avoids zombie "rpc.statd"
+	processes after an NFS client running e.g. Mac OS X shuts down.
+	[tron, ticket #10400]
 
