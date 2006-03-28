@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.7,v 1.9 2006/03/28 09:45:26 yamt Exp $
+.\"	$NetBSD: signal.7,v 1.10 2006/03/28 19:13:04 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,7 +101,7 @@ below is unsafe to use in signal handlers.
 .Xr abort 3 ,
 .Xr accept 2 ,
 .Xr access 2 ,
-.\" .Xr aio_error 
+.\" .Xr aio_error
 .\" .Xr aio_return
 .\" .Xr aio_suspend
 .Xr alarm 3 ,
@@ -120,7 +120,7 @@ below is unsafe to use in signal handlers.
 .Xr dup 2 ,
 .Xr dup2 2 ,
 .Xr execle 3 ,
-.Xr execve 3 ,
+.Xr execve 2 ,
 .Xr fchmod 2 ,
 .Xr fchown 2 ,
 .Xr fcntl 2 ,
@@ -162,7 +162,7 @@ below is unsafe to use in signal handlers.
 .Xr recvfrom 2 ,
 .Xr recvmsg 2 ,
 .Xr rename 2 ,
-.Xr rmdir 2,
+.Xr rmdir 2 ,
 .Xr select 2 ,
 .Xr sem_post 3 ,
 .Xr send 2 ,
@@ -184,11 +184,11 @@ below is unsafe to use in signal handlers.
 .Xr signal 3 ,
 .Xr sigpause 3 ,
 .Xr sigpending 2 ,
-.Xr sigprocmask 2 , 
-.\" .Xr sigqueue 
+.Xr sigprocmask 2 ,
+.\" .Xr sigqueue
 .Xr sigset 3 ,
 .Xr sigsuspend 2 ,
-.Xr sockatmark 3 , 
+.Xr sockatmark 3 ,
 .Xr socket 2 ,
 .Xr socketpair 2 ,
 .Xr stat 2 ,
