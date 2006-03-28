@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.72 2006/03/24 03:12:30 elad Exp $
+#	$NetBSD: BRANCHES,v 1.73 2006/03/28 13:11:43 tron Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -919,7 +919,7 @@ Base Tag:	peter-altq-base
 Maintainer:	Peter Postma <peter@NetBSD.org>,
 		Martin Husemann <martin@NetBSD.org>,
 		Matthias Scheler <tron@NetBSD.org>
-Scope:		dist/pf dist/ipf sys usr.sbin/altq
+Scope:		dist/pf dist/ipf distrib/sets/lists sys usr.sbin/altq
 Notes:
 
 
