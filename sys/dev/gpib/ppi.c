@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.4 2005/12/11 12:21:21 christos Exp $	*/
+/*	$NetBSD: ppi.c,v 1.5 2006/03/28 17:38:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.4 2005/12/11 12:21:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.5 2006/03/28 17:38:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ ppistart(v)
 {
 	struct ppi_softc *sc = v;
 
-	DPRINTF(PDB_FOLLOW, ("ppistart(%x)\n", sc->sc_dev.dv_unit));
+	DPRINTF(PDB_FOLLOW, ("ppistart(%x)\n", device_unit(&sc->sc_dev)));
 
 	sc->sc_flags &= ~PPIF_DELAY;
 	wakeup(sc);
@@ -269,7 +269,7 @@ ppitimo(arg)
 {
 	struct ppi_softc *sc = arg;
 
-	DPRINTF(PDB_FOLLOW, ("ppitimo(%x)\n", sc->sc_dev.dv_unit));
+	DPRINTF(PDB_FOLLOW, ("ppitimo(%x)\n", device_unit(&sc->sc_dev)));
 
 	sc->sc_flags &= ~(PPIF_UIO|PPIF_TIMO);
 	wakeup(sc);

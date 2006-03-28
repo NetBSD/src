@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.64 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.65 2006/03/28 17:38:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.64 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.65 2006/03/28 17:38:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ ssdetach(struct device *self, int flags)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances */
-	mn = SSUNIT(self->dv_unit);
+	mn = SSUNIT(device_unit(self));
 	vdevgone(cmaj, mn, mn+SSNMINOR-1, VCHR);
 
 	return (0);

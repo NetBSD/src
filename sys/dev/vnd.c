@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.143 2006/03/21 10:22:59 dogcow Exp $	*/
+/*	$NetBSD: vnd.c,v 1.144 2006/03/28 17:38:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.143 2006/03/21 10:22:59 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.144 2006/03/28 17:38:29 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1382,7 +1382,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(vnd->sc_dev.dv_unit, i);
+		mn = DISKMINOR(device_unit(&vnd->sc_dev), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		if (mn != myminor) /* XXX avoid to kill own vnode */
 			vdevgone(cmaj, mn, mn, VCHR);

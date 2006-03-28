@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.32 2006/03/01 12:38:12 yamt Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.33 2006/03/28 17:38:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.32 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.33 2006/03/28 17:38:29 thorpej Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -580,7 +580,7 @@ darwin_findwsmux(dev, mux)
 		return ENODEV;
 
 	major = cdevsw_lookup_major(&wsmux_cdevsw);
-	minor = wsm_sc->sc_base.me_dv.dv_unit;
+	minor = device_unit(&wsm_sc->sc_base.me_dv);
 	*dev = makedev(major, minor);
 
 	return 0;

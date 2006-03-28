@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.90 2006/03/05 17:33:33 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.91 2006/03/28 17:38:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.90 2006/03/05 17:33:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.91 2006/03/28 17:38:38 thorpej Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -414,7 +414,7 @@ wsdisplay_closescreen(struct wsdisplay_softc *sc, struct wsscreen *scr)
 #endif
 
 	/* nuke the vnodes */
-	mn = WSDISPLAYMINOR(sc->sc_dv.dv_unit, idx);
+	mn = WSDISPLAYMINOR(device_unit(&sc->sc_dv), idx);
 	vdevgone(maj, mn, mn, VCHR);
 }
 
@@ -540,7 +540,8 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(self->dv_unit, 0));
+		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(device_unit(self),
+					 0));
 	}
 }
 
@@ -613,7 +614,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	if (kbdmux >= 0)
 		mux = wsmux_getmux(kbdmux);
 	else
-		mux = wsmux_create("dmux", sc->sc_dv.dv_unit);
+		mux = wsmux_create("dmux", device_unit(&sc->sc_dv));
 	/* XXX panic()ing isn't nice, but attach cannot fail */
 	if (mux == NULL)
 		panic("wsdisplay_common_attach: no memory");

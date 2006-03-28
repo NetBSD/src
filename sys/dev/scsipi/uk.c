@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.46 2005/12/11 12:23:51 christos Exp $	*/
+/*	$NetBSD: uk.c,v 1.47 2006/03/28 17:38:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.46 2005/12/11 12:23:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.47 2006/03/28 17:38:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ ukdetach(struct device *self, int flags)
 	cmaj = cdevsw_lookup_major(&uk_cdevsw);
 
 	/* Nuke the vnodes for any open instances */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(cmaj, mn, mn, VCHR);
 
 	return (0);
