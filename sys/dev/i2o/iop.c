@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.51 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.51.12.1 2006/03/28 09:42:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.51 2005/12/11 12:21:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.51.12.1 2006/03/28 09:42:10 tron Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -766,8 +766,10 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 			if (ii->ii_tid == sc->sc_tidmap[i].it_tid)
 				break;
 		if (i == sc->sc_nlctent ||
-		    (sc->sc_tidmap[i].it_flags & IT_CONFIGURED) == 0)
+		    (sc->sc_tidmap[i].it_flags & IT_CONFIGURED) == 0) {
 			config_detach(ii->ii_dv, DETACH_FORCE);
+			continue;
+		}
 
 		/*
 		 * Tell initiators that existed before the re-configuration

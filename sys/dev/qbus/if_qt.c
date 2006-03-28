@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.7 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.7.12.1 2006/03/28 09:42:14 tron Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.7 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.7.12.1 2006/03/28 09:42:14 tron Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -360,14 +360,15 @@ qtinit(struct ifnet *ifp)
 	}
 
 	if (sc->sc_ib == NULL) {
-		if (if_ubaminit(&sc->sc_ifuba, (void *)sc->sc_dev.dv_parent,
+		if (if_ubaminit(&sc->sc_ifuba,
+		    (void *)device_parent(&sc->sc_dev),
 		    MCLBYTES, sc->sc_ifr, NRCV, sc->sc_ifw, NXMT)) {
 			printf("%s: can't initialize\n", XNAME);
 			ifp->if_flags &= ~IFF_UP;
 			return 0;
 		}
 		sc->sc_ui.ui_size = sizeof(struct qt_cdata);
-		if ((error = ubmemalloc((void *)sc->sc_dev.dv_parent,
+		if ((error = ubmemalloc((void *)device_parent(&sc->sc_dev),
 		    &sc->sc_ui, 0))) {
 			printf(": failed ubmemalloc(), error = %d\n", error);
 			return error;

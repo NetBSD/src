@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.58 2006/03/11 15:40:07 kleink Exp $	*/
+/*	$NetBSD: libkern.h,v 1.58.2.1 2006/03/28 09:42:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -170,6 +170,12 @@ tolower(int ch)
 	return (ch);
 }
 #endif
+
+/*
+ * Return the number of elements in a statically-allocated array,
+ * __x.
+ */
+#define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n) (((__n) == 32) ? 0 : ((uint32_t)1 << (__n)))

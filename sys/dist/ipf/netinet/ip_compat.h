@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.8 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.8.12.1 2006/03/28 09:42:26 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -444,7 +444,7 @@ extern	void	*get_unit __P((char *, int));
 				  spinunlock(_l); \
 				}
 #  define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), M_IOSYS, M_NOWAIT)
-#  define	KMALLOCS(a, b, c)	MALLOC((a), b, (c), M_IOSYS, M_NOWAIT)
+#  define	KMALLOCS(a, b, c) (a) = (b)malloc((c), M_IOSYS, M_NOWAIT)
 #  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
 #  define	KFREES(x,s)	kmem_free((char *)(x), (s))
 #  define	MSGDSIZE(x)	msgdsize(x)
@@ -666,7 +666,7 @@ typedef struct mbuf mb_t;
 #  define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
 #  define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
 #  define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), M_PFILT, M_NOWAIT)
-#  define	KMALLOCS(a, b, c)	MALLOC((a), b, (c), M_PFILT, \
+#  define	KMALLOCS(a, b, c) (a) = (b)malloc((c), M_PFILT, \
 					    ((c) > 4096) ? M_WAITOK : M_NOWAIT)
 #  define	KFREE(x)	FREE((x), M_PFILT)
 #  define	KFREES(x,s)	FREE((x), M_PFILT)
@@ -1460,7 +1460,7 @@ MALLOC_DECLARE(M_IPFILTER);
 #   endif /* M_PFIL */
 #  endif /* IPFILTER_M_IPFILTER */
 #  define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), _M_IPF, M_NOWAIT)
-#  define	KMALLOCS(a, b, c)	MALLOC((a), b, (c), _M_IPF, M_NOWAIT)
+#  define	KMALLOCS(a, b, c)	(a) = (b)malloc((c), _M_IPF, M_NOWAIT)
 #  define	KFREE(x)	FREE((x), _M_IPF)
 #  define	KFREES(x,s)	FREE((x), _M_IPF)
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.141 2006/03/01 12:38:13 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.141.6.1 2006/03/28 09:42:03 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141 2006/03/01 12:38:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.6.1 2006/03/28 09:42:03 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -868,6 +868,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, l);
 		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
+		KASSERT(l);
 		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_proc->p_ucred, l);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
@@ -1150,6 +1151,7 @@ unlock_and_exit:
 		struct vnd_ouser *vnu;
 		struct vattr va;
 		vnu = (struct vnd_ouser *)data;
+		KASSERT(l);
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
 			vnu->vnu_dev = va.va_fsid;
@@ -1170,6 +1172,7 @@ unlock_and_exit:
 		struct vnd_user *vnu;
 		struct vattr va;
 		vnu = (struct vnd_user *)data;
+		KASSERT(l);
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
 			vnu->vnu_dev = va.va_fsid;

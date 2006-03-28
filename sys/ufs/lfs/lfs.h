@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.95 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.95.12.1 2006/03/28 09:42:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -119,6 +119,9 @@
 #define LFS_WAIT_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemax) >> 8)
 #define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
+
+/* How starved can we be before we start holding back page writes */
+#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_minfreeseg / 2 + 1)
 
 /*
  * Reserved blocks for lfs_malloc
@@ -986,7 +989,8 @@ struct lfs_inode_ext {
 #define LFS_EST_NONMETA(F) ((F)->lfs_dsize - (F)->lfs_dmeta - LFS_EST_CMETA(F))
 
 /* Estimate number of blocks actually available for writing */
-#define LFS_EST_BFREE(F) ((F)->lfs_bfree > LFS_EST_CMETA(F) + (F)->lfs_dmeta ? (F)->lfs_bfree - LFS_EST_CMETA(F) - (F)->lfs_dmeta : 0)
+#define LFS_EST_BFREE(F) ((F)->lfs_bfree > LFS_EST_CMETA(F) ?		     \
+			  (F)->lfs_bfree - LFS_EST_CMETA(F) : 0)
 
 /* Amount of non-meta space not available to mortal man */
 #define LFS_EST_RSVD(F) (int32_t)((LFS_EST_NONMETA(F) *			     \

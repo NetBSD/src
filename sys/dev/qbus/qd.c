@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.34 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: qd.c,v 1.34.12.1 2006/03/28 09:42:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.34 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.34.12.1 2006/03/28 09:42:14 tron Exp $");
 
 #include "opt_ddb.h"
 
@@ -899,7 +899,7 @@ qdclose(dev, flag, mode, p)
 	qd = &qdmap[unit];
 
 	uh = (struct uba_softc *)
-	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
+	     device_parent((struct device *)(qd_cd.cd_devs[unit]));
 
 
 	if ((minor_dev & 0x03) == 2) {
@@ -1102,7 +1102,7 @@ qdioctl(dev, cmd, datap, flags, p)
 	struct uba_softc *uh;
 
 	uh = (struct uba_softc *)
-	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
+	     device_parent((struct device *)(qd_cd.cd_devs[unit]));
 
 	/*
 	* service graphic device ioctl commands
@@ -1718,7 +1718,7 @@ qd_strategy(bp)
 	unit = (minor(bp->b_dev) >> 2) & 0x07;
 
 	uh = (struct uba_softc *)
-	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
+	     device_parent((struct device *)(qd_cd.cd_devs[unit]));
 
 	/*
 	* init pointers

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.238 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.238.6.1 2006/03/28 09:42:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238.6.1 2006/03/28 09:42:27 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1220,6 +1220,7 @@ sys_getfh(struct lwp *l, void *v, register_t *retval)
 	vput(vp);
 	if (error)
 		return (error);
+	KASSERT(fh.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	error = copyout(&fh, (caddr_t)SCARG(uap, fhp), sizeof (fh));
 	return (error);
 }

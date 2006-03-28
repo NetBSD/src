@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.31 2005/12/24 20:27:30 perry Exp $ */
+/*	$NetBSD: iha.c,v 1.31.12.1 2006/03/28 09:42:11 tron Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.31 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.31.12.1 2006/03/28 09:42:11 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1335,20 +1335,21 @@ iha_timeout(void *arg)
 {
 	struct iha_scb *scb = (struct iha_scb *)arg;
 	struct scsipi_xfer *xs = scb->xs;
-	struct scsipi_periph *periph = xs->xs_periph;
+	struct scsipi_periph *periph;
 	struct iha_softc *sc;
+
+	if (xs == NULL) {
+		printf("[debug] iha_timeout called with xs == NULL\n");
+		return;
+	}
+
+	periph = xs->xs_periph;
 
 	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 
-	if (xs == NULL)
-		printf("[debug] iha_timeout called with xs == NULL\n");
-
-	else {
-		scsipi_printaddr(periph);
-		printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
-
-		iha_abort_xs(sc, xs, HOST_TIMED_OUT);
-	}
+	scsipi_printaddr(periph);
+	printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
+	iha_abort_xs(sc, xs, HOST_TIMED_OUT);
 }
 
 /*

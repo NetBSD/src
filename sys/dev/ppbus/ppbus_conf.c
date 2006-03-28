@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.9 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.9.12.1 2006/03/28 09:42:14 tron Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.9 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.9.12.1 2006/03/28 09:42:14 tron Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -136,7 +136,7 @@ ppbus_attach(struct device *parent, struct device *self, void *aux)
 		LK_NOWAIT);
 
 	/* Set up bus mode and ieee state */
-	ppbus->sc_mode = ppbus->ppbus_getmode(self->dv_parent);
+	ppbus->sc_mode = ppbus->ppbus_getmode(device_parent(self));
 	ppbus->sc_use_ieee = 1;
 	ppbus->sc_1284_state = PPBUS_FORWARD_IDLE;
 	ppbus->sc_1284_error = PPBUS_NO_ERROR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_adaptec.c,v 1.2 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: ata_raid_adaptec.c,v 1.2.12.1 2006/03/28 09:42:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.2 2005/12/11 12:21:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.2.12.1 2006/03/28 09:42:10 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -163,7 +163,7 @@ ata_raid_read_config_adaptec(struct wd_softc *sc)
 			aai->aai_interleave = aai->aai_capacity;
 	}
 
-	atabus = (struct atabus_softc *) sc->sc_dev.dv_parent;
+	atabus = (struct atabus_softc *) device_parent(&sc->sc_dev);
 	drive = atabus->sc_chan->ch_channel;
 	if (drive >= aai->aai_ndisks) {
 		aprint_error("%s: drive number %d doesn't make sense within "
