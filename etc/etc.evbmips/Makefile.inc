@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.5 2006/02/06 20:14:36 he Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2006/03/28 18:00:30 shige Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
 
-KERNEL_SETS=		ALCHEMY MALTA
+KERNEL_SETS=		ALCHEMY MALTA OMSAL400
 KERNEL_SUFFIXES=	srec
