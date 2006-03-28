@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.99 2006/03/06 20:33:52 rpaulo Exp $	*/
+/*	$NetBSD: in6.c,v 1.99.4.1 2006/03/28 09:42:28 tron Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.99 2006/03/06 20:33:52 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.99.4.1 2006/03/28 09:42:28 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1921,7 +1921,7 @@ in6_are_prefix_equal(p1, p2, len)
 	int bytelen, bitlen;
 
 	/* sanity check */
-	if (0 > len || len > 128) {
+	if (len < 0 || len > 128) {
 		log(LOG_ERR, "in6_are_prefix_equal: invalid prefix length(%d)\n",
 		    len);
 		return (0);
@@ -1949,7 +1949,7 @@ in6_prefixlen2mask(maskp, len)
 	int bytelen, bitlen, i;
 
 	/* sanity check */
-	if (0 > len || len > 128) {
+	if (len < 0 || len > 128) {
 		log(LOG_ERR, "in6_prefixlen2mask: invalid prefix length(%d)\n",
 		    len);
 		return;

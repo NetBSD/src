@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.32 2006/01/05 20:31:33 wrstuden Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.32.10.1 2006/03/28 09:42:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32 2006/01/05 20:31:33 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.32.10.1 2006/03/28 09:42:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,6 +337,7 @@ union_unmount(mp, mntflags, l)
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int freeing;
+	int error;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_unmount(mp = %p)\n", mp);
@@ -351,7 +352,7 @@ union_unmount(mp, mntflags, l)
 	 * (d) times, where (d) is the maximum tree depth
 	 * in the filesystem.
 	 */
-	for (freeing = 0; vflush(mp, NULL, 0) != 0;) {
+	for (freeing = 0; (error = vflush(mp, NULL, 0)) != 0;) {
 		struct vnode *vp;
 		int n;
 
@@ -374,8 +375,10 @@ union_unmount(mp, mntflags, l)
 	 */
 
 	if (mntflags & MNT_FORCE)
-		vflush(mp, NULL, FORCECLOSE);
+		error = vflush(mp, NULL, FORCECLOSE);
 
+	if (error)
+		return error;
 
 	/*
 	 * Discard references to upper and lower target vnodes.

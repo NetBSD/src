@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.21 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.21.12.1 2006/03/28 09:42:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.21 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.21.12.1 2006/03/28 09:42:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1823,9 +1823,9 @@ ntfs_readattr(
 		ddprintf(("ntfs_ntreadattr: compression: %d\n",
 			 vap->va_compressalg));
 
-		MALLOC(cup, u_int8_t *, ntfs_cntob(NTFS_COMPUNIT_CL),
+		cup = malloc(ntfs_cntob(NTFS_COMPUNIT_CL),
 		       M_NTFSDECOMP, M_WAITOK);
-		MALLOC(uup, u_int8_t *, ntfs_cntob(NTFS_COMPUNIT_CL),
+		uup = malloc(ntfs_cntob(NTFS_COMPUNIT_CL),
 		       M_NTFSDECOMP, M_WAITOK);
 
 		cn = (ntfs_btocn(roff)) & (~(NTFS_COMPUNIT_CL - 1));

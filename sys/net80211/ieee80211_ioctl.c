@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.30 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.30.6.1 2006/03/28 09:42:27 tron Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.30 2006/03/02 03:38:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.30.6.1 2006/03/28 09:42:27 tron Exp $");
 #endif
 
 /*
@@ -1201,7 +1201,7 @@ ieee80211_ioctl_getstainfo(struct ieee80211com *ic, struct ieee80211req *ireq)
 
 		space = req.space;
 		/* XXX M_WAITOK after driver lock released */
-		MALLOC(p, void *, space, M_TEMP, M_NOWAIT);
+		p = malloc(space, M_TEMP, M_NOWAIT);
 		if (p == NULL)
 			return ENOMEM;
 		req.si = p;
@@ -1558,7 +1558,7 @@ ieee80211_ioctl_setoptie(struct ieee80211com *ic, struct ieee80211req *ireq)
 	if (ireq->i_len > IEEE80211_MAX_OPT_IE)
 		return EINVAL;
 	/* NB: data.length is validated by the wireless extensions code */
-	MALLOC(ie, void *, (u_long)ireq->i_len, M_DEVBUF, M_WAITOK);
+	ie = malloc(ireq->i_len, M_DEVBUF, M_WAITOK);
 	if (ie == NULL)
 		return ENOMEM;
 	error = copyin(ireq->i_data, ie, ireq->i_len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.8 2006/02/25 02:28:58 wiz Exp $ */
+/*	$NetBSD: rd.c,v 1.8.6.1 2006/03/28 09:42:10 tron Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.8 2006/02/25 02:28:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.8.6.1 2006/03/28 09:42:10 tron Exp $");
 
 #include "rnd.h"
 
@@ -802,7 +802,7 @@ again:
 	     sc->sc_errcnt));
 
 	sc->sc_flags &= ~RDF_SEEK;
-	cs80reset(sc->sc_dev.dv_parent, slave, punit);
+	cs80reset(device_parent(&sc->sc_dev), slave, punit);
 	if (sc->sc_errcnt++ < RDRETRY)
 		goto again;
 	printf("%s: rdstart err: cmd 0x%x sect %uld blk %" PRId64 " len %d\n",
@@ -891,9 +891,10 @@ rderror(sc)
 
 	DPRINTF(RDB_FOLLOW, ("rderror: sc=%p\n", sc));
 
-	if (cs80status(sc->sc_dev.dv_parent, sc->sc_slave,
+	if (cs80status(device_parent(&sc->sc_dev), sc->sc_slave,
 	    sc->sc_punit, &css)) {
-		cs80reset(sc->sc_dev.dv_parent, sc->sc_slave, sc->sc_punit);
+		cs80reset(device_parent(&sc->sc_dev), sc->sc_slave,
+		    sc->sc_punit);
 		return (1);
 	}
 #ifdef DEBUG
@@ -913,7 +914,8 @@ rderror(sc)
 	if (css.c_fef & FEF_REXMT)
 		return (1);
 	if (css.c_fef & FEF_PF) {
-		cs80reset(sc->sc_dev.dv_parent, sc->sc_slave, sc->sc_punit);
+		cs80reset(device_parent(&sc->sc_dev), sc->sc_slave,
+		    sc->sc_punit);
 		return (1);
 	}
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.17 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.17.12.1 2006/03/28 09:42:12 tron Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.17 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.17.12.1 2006/03/28 09:42:12 tron Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1372,7 +1372,8 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 	}
 #if 0
 	GE_DPRINTF(sc, ("(ectdp=%#x", txq->txq_ectdp));
-	gt_write(sc->sc_dev.dv_parent, txq->txq_ectdp, txq->txq_desc_busaddr);
+	gt_write(device_parent(&sc->sc_dev), txq->txq_ectdp,
+	    txq->txq_desc_busaddr);
 	GE_DPRINTF(sc, (")"));
 #endif
 
@@ -1508,13 +1509,13 @@ gfe_mii_mediastatus (struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 gfe_mii_read (struct device *self, int phy, int reg)
 {
-	return gt_mii_read(self, self->dv_parent, phy, reg);
+	return gt_mii_read(self, device_parent(self), phy, reg);
 }
 
 void
 gfe_mii_write (struct device *self, int phy, int reg, int value)
 {
-	gt_mii_write(self, self->dv_parent, phy, reg, value);
+	gt_mii_write(self, device_parent(self), phy, reg, value);
 }
 
 void

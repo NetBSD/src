@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.33 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.33.12.1 2006/03/28 09:42:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.33 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.33.12.1 2006/03/28 09:42:16 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ espattach_sbus(parent, self, aux)
 	sc->sc_freq = prom_getpropint(sa->sa_node, "clock-frequency", -1);
 	if (sc->sc_freq < 0)
 		sc->sc_freq = ((struct sbus_softc *)
-		    sc->sc_dev.dv_parent)->sc_clockfreq;
+		    device_parent(&sc->sc_dev))->sc_clockfreq;
 
 #ifdef ESP_SBUS_DEBUG
 	printf("%s: espattach_sbus: sc_id %d, freq %d\n",

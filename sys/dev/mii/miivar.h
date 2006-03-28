@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.45 2006/02/18 19:51:07 joerg Exp $	*/
+/*	$NetBSD: miivar.h,v 1.45.6.1 2006/03/28 09:42:12 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -209,11 +209,11 @@ struct mii_media {
 #ifdef _KERNEL
 
 #define	PHY_READ(p, r) \
-	(*(p)->mii_pdata->mii_readreg)((p)->mii_dev.dv_parent, \
+	(*(p)->mii_pdata->mii_readreg)(device_parent(&(p)->mii_dev), \
 	    (p)->mii_phy, (r))
 
 #define	PHY_WRITE(p, r, v) \
-	(*(p)->mii_pdata->mii_writereg)((p)->mii_dev.dv_parent, \
+	(*(p)->mii_pdata->mii_writereg)(device_parent(&(p)->mii_dev), \
 	    (p)->mii_phy, (r), (v))
 
 #define	PHY_SERVICE(p, d, o) \

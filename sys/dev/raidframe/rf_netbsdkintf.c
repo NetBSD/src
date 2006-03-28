@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.202 2006/03/01 21:41:49 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.202.6.1 2006/03/28 09:42:15 tron Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202 2006/03/01 21:41:49 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.6.1 2006/03/28 09:42:15 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -240,7 +240,7 @@ const struct cdevsw raid_cdevsw = {
 struct raid_softc {
 	int     sc_flags;	/* flags */
 	int     sc_cflags;	/* configuration flags */
-	size_t  sc_size;        /* size of the raid device */
+	size_t  sc_size;	/* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
 	struct bufq_state *buf_queue;	/* used for the device queue */
@@ -317,9 +317,9 @@ int rf_auto_config_set(RF_ConfigSet_t *, int *);
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 				  allow autoconfig to take place.
-			          Note that this is overridden by having
-			          RAID_AUTOCONFIG as an option in the
-			          kernel config file.  */
+				  Note that this is overridden by having
+				  RAID_AUTOCONFIG as an option in the
+				  kernel config file.  */
 
 struct RF_Pools_s rf_pools;
 
@@ -1061,7 +1061,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		   of the fields!?!?!?! */
 #if 0
 		raidwrite_component_label(
-                            raidPtr->Disks[column].dev,
+		     raidPtr->Disks[column].dev,
 			    raidPtr->raid_cinfo[column].ci_vp,
 			    clabel );
 #endif
@@ -1914,7 +1914,7 @@ KernelWakeupFunc(struct buf *bp)
 		     (queue->raidPtr->Disks[queue->col].status ==
 		      rf_ds_used_spare)) && 
 		     (queue->raidPtr->numFailures <
-		         queue->raidPtr->Layout.map->faultsTolerated)) {
+		      queue->raidPtr->Layout.map->faultsTolerated)) {
 			printf("raid%d: IO Error.  Marking %s as failed.\n",
 			       queue->raidPtr->raidid,
 			       queue->raidPtr->Disks[queue->col].devname);
@@ -2103,7 +2103,10 @@ raidlookup(char *path, struct lwp *l, struct vnode **vpp)
 	struct vattr va;
 	int     error;
 
-	p = l ? l->l_proc : NULL;
+	if (l == NULL)
+		return(ESRCH);	/* Is ESRCH the best choice? */
+	p = l->l_proc;
+
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
 		return (error);
@@ -2229,7 +2232,7 @@ raidread_component_label(dev_t dev, struct vnode *b_vp,
 	if (!error) {
 		memcpy(clabel, bp->b_data,
 		       sizeof(RF_ComponentLabel_t));
-        }
+	}
 
 	brelse(bp);
 	return(error);
@@ -2505,7 +2508,7 @@ rf_ReconThread(struct rf_recon_req *req)
 	splx(s);
 
 	/* That's all... */
-	kthread_exit(0);        /* does not return */
+	kthread_exit(0);	/* does not return */
 }
 
 void
@@ -2535,7 +2538,7 @@ rf_RewriteParityThread(RF_Raid_t *raidPtr)
 	}
 
 	/* That's all... */
-	kthread_exit(0);        /* does not return */
+	kthread_exit(0);	/* does not return */
 }
 
 
@@ -2551,7 +2554,7 @@ rf_CopybackThread(RF_Raid_t *raidPtr)
 	raidPtr->copyback_in_progress = 0;
 
 	/* That's all... */
-	kthread_exit(0);        /* does not return */
+	kthread_exit(0);	/* does not return */
 }
 
 
@@ -2570,7 +2573,7 @@ rf_ReconstructInPlaceThread(struct rf_recon_req *req)
 	splx(s);
 
 	/* That's all... */
-	kthread_exit(0);        /* does not return */
+	kthread_exit(0);	/* does not return */
 }
 
 RF_AutoConfig_t *
@@ -2681,7 +2684,13 @@ rf_find_raid_components()
 				malloc(sizeof(RF_ComponentLabel_t),
 				       M_RAIDFRAME, M_NOWAIT);
 			if (clabel == NULL) {
-				/* XXX CLEANUP HERE */
+				while(ac_list) {
+					ac = ac_list;
+					if (ac->clabel)
+						free(ac->clabel, M_RAIDFRAME);
+					ac_list = ac_list->next;
+					free(ac, M_RAIDFRAME);
+				};
 				printf("RAID auto config: out of memory!\n");
 				return(NULL); /* XXX probably should panic? */
 			}
@@ -2705,6 +2714,15 @@ rf_find_raid_components()
 						       M_NOWAIT);
 					if (ac == NULL) {
 						/* XXX should panic?? */
+						while(ac_list) {
+							ac = ac_list;
+							if (ac->clabel)
+								free(ac->clabel,
+								    M_RAIDFRAME);
+							ac_list = ac_list->next;
+							free(ac, M_RAIDFRAME);
+						}
+						free(clabel, M_RAIDFRAME);
 						return(NULL);
 					}
 
@@ -3235,6 +3253,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 		/* punt... */
 		printf("Unable to auto configure this set!\n");
 		printf("(Out of RAID devs!)\n");
+		free(config, M_RAIDFRAME);
 		return(1);
 	}
 

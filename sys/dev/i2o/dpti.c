@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.21 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: dpti.c,v 1.21.12.1 2006/03/28 09:42:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.21 2005/12/11 12:21:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.21.12.1 2006/03/28 09:42:10 tron Exp $");
 
 #include "opt_i2o.h"
 
@@ -226,7 +226,7 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int i, size, rv, linux;
 
 	sc = device_lookup(&dpti_cd, minor(dev));
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 	rv = 0;
 
 	if (cmd == PTIOCLINUX) {
@@ -316,7 +316,7 @@ dpti_blinkled(struct dpti_softc *sc)
 	struct iop_softc *iop;
 	u_int v;
 
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
 	v = bus_space_read_1(iop->sc_iot, iop->sc_ioh, sc->sc_blinkled + 0);
 	if (v == 0xbc) {
@@ -335,7 +335,7 @@ dpti_ctlrinfo(struct dpti_softc *sc, int size, caddr_t data)
 	struct iop_softc *iop;
 	int rv, i;
 
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
 	memset(&info, 0, sizeof(info));
 
@@ -457,7 +457,7 @@ dpti_passthrough(struct dpti_softc *sc, caddr_t data, struct proc *proc)
 	int rv, msgsize, repsize, sgoff, i, mapped, nbuf, nfrag, j, sz;
 	u_int32_t *p, *pmax;
 
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 	im = NULL;
 
 	if ((rv = dpti_blinkled(sc)) != -1) {

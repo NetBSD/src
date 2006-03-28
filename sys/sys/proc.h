@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.216 2006/03/07 03:32:06 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.216.4.1 2006/03/28 09:42:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -125,7 +125,7 @@ struct emul {
 #endif
 					/* Emulation specific sysctl data */
 	struct sysctlnode *e_sysctlovly;
-	int		(*e_fault)(struct proc *, vaddr_t, int, int);
+	int		(*e_fault)(struct proc *, vaddr_t, int);
 
 	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t);
 

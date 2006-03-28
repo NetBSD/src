@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.214 2006/03/05 07:21:38 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.214.6.1 2006/03/28 09:42:26 tron Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214 2006/03/05 07:21:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.6.1 2006/03/28 09:42:26 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1195,7 +1195,7 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 {
 	struct execsw_entry *et, *e1;
 
-	MALLOC(et, struct execsw_entry *, sizeof(struct execsw_entry),
+	et = (struct execsw_entry *) malloc(sizeof(struct execsw_entry),
 			M_TEMP, M_WAITOK);
 	et->next = NULL;
 	et->es = esp;
@@ -1284,7 +1284,7 @@ exec_init(int init_boot)
 	for(i=0; list; i++) {
 		new_es[i] = list->es;
 		e1 = list->next;
-		FREE(list, M_TEMP);
+		free(list, M_TEMP);
 		list = e1;
 	}
 

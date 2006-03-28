@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.93 2006/03/16 00:52:32 erh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.93.2.1 2006/03/28 09:42:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.93 2006/03/16 00:52:32 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.93.2.1 2006/03/28 09:42:26 tron Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1367,6 +1367,45 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 		SLOCK_DEBUGGER();
 	}
 }
+
+/*
+ * Set to 1 by simple_lock_assert_*().
+ * Can be cleared from ddb to avoid a panic.
+ */
+int slock_assert_will_panic;
+
+/*
+ * If the lock isn't held, print a traceback, optionally drop into the
+ *  debugger, then panic.
+ * The panic can be avoided by clearing slock_assert_with_panic from the
+ *  debugger.
+ */
+void
+_simple_lock_assert_locked(volatile struct simplelock *alp,
+    const char *lockname, const char *id, int l)
+{
+	if (simple_lock_held(alp) == 0) {
+		slock_assert_will_panic = 1;
+		lock_printf("%s lock not held\n", lockname);
+		SLOCK_WHERE("lock not held", alp, id, l);
+		if (slock_assert_will_panic)
+			panic("%s: not locked", lockname);
+	}
+}
+
+void
+_simple_lock_assert_unlocked(volatile struct simplelock *alp,
+    const char *lockname, const char *id, int l)
+{
+	if (simple_lock_held(alp)) {
+		slock_assert_will_panic = 1;
+		lock_printf("%s lock held\n", lockname);
+		SLOCK_WHERE("lock held", alp, id, l);
+		if (slock_assert_will_panic)
+			panic("%s: locked", lockname);
+	}
+}
+
 #endif /* LOCKDEBUG */ /* } */
 
 #if defined(MULTIPROCESSOR)
@@ -1495,8 +1534,8 @@ _kernel_lock_acquire_count(int hold_count)
 void
 _kernel_lock_assert_locked()
 {
-
-	LOCK_ASSERT(simple_lock_held(&kernel_lock));
+	_simple_lock_assert_locked(&kernel_lock, "kernel_lock");
 }
 #endif
+
 #endif /* MULTIPROCESSOR */

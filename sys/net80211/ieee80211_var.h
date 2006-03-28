@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.23 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.23.6.1 2006/03/28 09:42:28 tron Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -309,7 +309,7 @@ u_int	ieee80211_ieee2mhz(u_int, u_int);
 int	ieee80211_setmode(struct ieee80211com *, enum ieee80211_phymode);
 enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 		struct ieee80211_channel *);
-int	ieee80211_get_rate(struct ieee80211com *);
+int	ieee80211_get_rate(const struct ieee80211_node *);
 
 /* 
  * Key update synchronization methods.  XXX should not be visible.
