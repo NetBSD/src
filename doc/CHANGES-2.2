@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.45 2006/03/24 21:56:59 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.46 2006/03/28 23:23:26 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -595,4 +595,25 @@ sys/kern/kern_sysctl.c				1.191
 	Check the "oldlen" argument to sysctl(2) before passing it
 	to vslock(9). This prevents a local DOS.
 	[drochner, ticket #10381]
+
+sys/netipsec/xform_esp.c			1.8
+
+	FreeBSD SA-06:11 and CVE-2006-0905: update the replay sequence number
+	or else the anti-reply technique won't work as expected.
+	[rpaulo, ticket #10384]
+
+sys/dev/ata/wd.c				1.310 via patch
+
+	Use a pmatch(9) expression which should catch all present and future
+	seagate drives larger than 200GB for the WD_QUIRK_FORCE_LBA48 quirks.
+	Based on infos from
+	http://www.seagate.com/support/kb/disc/howto/interpret_model.html
+	[bouyer, ticket #10396]
+
+usr.sbin/rpc.statd/statd.c			1.27
+
+	Use sigaction(2) to setup automatic disposal of child processes after
+	daemonizing. This is more portable and avoids zombie "rpc.statd"
+	processes after an NFS client running e.g. Mac OS X shuts down.
+	[tron, ticket #10400]
 
