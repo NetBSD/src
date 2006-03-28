@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.176 2006/02/26 22:06:03 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.177 2006/03/28 23:29:38 riz Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2151,4 +2151,11 @@ sys/arch/i386/pci/pchb_rnd.c			patch
 	Improve code probing for the Intel hardware RNG to avoid false
 	detections.
 	[tron, ticket #6015]
+
+usr.sbin/rpc.statd/statd.c			1.27
+
+	Use sigaction(2) to setup automatic disposal of child processes after
+	daemonizing. This is more portable and avoids zombie "rpc.statd"
+	processes after an NFS client running e.g. Mac OS X shuts down.
+	[tron, ticket #6037]
 
