@@ -62,9 +62,9 @@ osd: osd-target.c osd.c $(USER_TARGET_OBJS)
 #
 
 $(BIN)/iscsi-harness: iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o
-	$(CC) iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o -o $(BIN)/iscsi-harness ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS}
+	$(CC) iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o -o $(BIN)/iscsi-harness ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS}
 iscsi-harness: iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o
-	$(CC) iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o -o iscsi-harness ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS}
+	$(CC) iscsi-harness.o tests.o iscsi.o util.o initiator.o parameters.o osd_ops.o conffile.o -o iscsi-harness ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS}
 
 #
 # Dependencies
