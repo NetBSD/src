@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_adaptec.c,v 1.3 2006/03/25 22:55:55 thorpej Exp $	*/
+/*	$NetBSD: ata_raid_adaptec.c,v 1.4 2006/03/28 17:38:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.3 2006/03/25 22:55:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.4 2006/03/28 17:38:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -80,7 +80,7 @@ ata_raid_read_config_adaptec(struct wd_softc *sc)
 	bmajor = devsw_name2blk(sc->sc_dev.dv_xname, NULL, 0);
 
 	/* Get a vnode for the raw partition of this disk. */
-	dev = MAKEDISKDEV(bmajor, sc->sc_dev.dv_unit, RAW_PART);
+	dev = MAKEDISKDEV(bmajor, device_unit(&sc->sc_dev), RAW_PART);
 	error = bdevvp(dev, &vp);
 	if (error)
 		goto out;

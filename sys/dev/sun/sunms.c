@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.21 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: sunms.c,v 1.22 2006/03/28 17:38:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.21 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.22 2006/03/28 17:38:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ sunms_attach(parent, self, aux)
 #endif
 
 	cf = ms->ms_dev.dv_cfdata;
-	ms_unit = ms->ms_dev.dv_unit;
+	ms_unit = device_unit(&ms->ms_dev);
 	tp->t_sc  = ms;
 	tp->t_dev = args->kmta_dev;
 	ms->ms_cs = (struct zs_chanstate *)tp;

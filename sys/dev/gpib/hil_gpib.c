@@ -1,7 +1,7 @@
-/*	$NetBSD: hil_gpib.c,v 1.4 2005/12/11 12:21:21 christos Exp $	*/
+/*	$NetBSD: hil_gpib.c,v 1.5 2006/03/28 17:38:30 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.4 2005/12/11 12:21:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.5 2006/03/28 17:38:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ hilstart(v)
 {
 	struct hil_softc *sc = v;
 
-	DPRINTF(HDB_FOLLOW, ("hilstart(%x)\n", sc->sc_dev.dv_unit));
+	DPRINTF(HDB_FOLLOW, ("hilstart(%x)\n", device_unit(&sc->sc_dev)));
 
 	sc->sc_flags &= ~HILF_DELAY;
 }

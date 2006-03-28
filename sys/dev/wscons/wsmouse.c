@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.43 2006/03/05 16:04:37 jmmv Exp $ */
+/* $NetBSD: wsmouse.c,v 1.44 2006/03/28 17:38:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.43 2006/03/05 16:04:37 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.44 2006/03/28 17:38:38 thorpej Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -333,7 +333,7 @@ wsmouse_detach(struct device  *self, int flags)
 	maj = cdevsw_lookup_major(&wsmouse_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);

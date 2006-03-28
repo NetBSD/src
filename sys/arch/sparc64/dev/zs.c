@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.58 2006/02/13 21:47:12 cdi Exp $	*/
+/*	$NetBSD: zs.c,v 1.59 2006/03/28 17:38:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.58 2006/02/13 21:47:12 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.59 2006/03/28 17:38:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -206,7 +206,7 @@ zs_attach_sbus(struct device *parent, struct device *self, void *aux)
 	struct zsc_softc *zsc = (void *) self;
 	struct sbus_attach_args *sa = aux;
 	bus_space_handle_t bh;
-	int zs_unit = zsc->zsc_dev.dv_unit;
+	int zs_unit = device_unit(&zsc->zsc_dev);
 
 	if (sa->sa_nintr == 0) {
 		printf(" no interrupt lines\n");

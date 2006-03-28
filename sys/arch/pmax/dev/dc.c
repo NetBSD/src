@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.82 2005/12/13 22:08:58 christos Exp $	*/
+/*	$NetBSD: dc.c,v 1.83 2006/03/28 17:38:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.82 2005/12/13 22:08:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.83 2006/03/28 17:38:26 thorpej Exp $");
 
 /*
  * devDC7085.c --
@@ -293,7 +293,8 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
-	if (sc->sc_dv.dv_unit == 0 && major(cn_tab->cn_dev) == maj &&
+	/* XXX device_unit() abuse */
+	if (device_unit(&sc->sc_dv) == 0 && major(cn_tab->cn_dev) == maj &&
 	    cn_tab->cn_pri == CN_REMOTE) {
 		DELAY(10000);
 	}
@@ -311,7 +312,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 		tp = sc->dc_tty[line] = ttymalloc();
 		if (line != DCKBD_PORT && line != DCMOUSE_PORT)
 			tty_attach(tp);
-		tp->t_dev = makedev(maj, 4 * sc->sc_dv.dv_unit + line);
+		tp->t_dev = makedev(maj, 4 * device_unit(&sc->sc_dv) + line);
 		pdp->p_arg = (int) tp;
 		pdp->p_fcn = dcxint;
 		pdp++;
@@ -345,7 +346,8 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	/*
 	 * Special handling for consoles.
 	 */
-	if (sc->sc_dv.dv_unit == 0) {
+	/* XXX device_unit() abuse */
+	if (device_unit(&sc->sc_dv) == 0) {
 		if (major(cn_tab->cn_dev) == maj) {
 			/* set params for serial console */
 			dc_tty_init(sc, cn_tab->cn_dev);

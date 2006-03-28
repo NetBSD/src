@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.240 2006/02/08 23:09:15 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.241 2006/03/28 17:38:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.240 2006/02/08 23:09:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.241 2006/03/28 17:38:34 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -311,7 +311,7 @@ cddetach(struct device *self, int flags)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = CDMINOR(self->dv_unit, i);
+		mn = CDMINOR(device_unit(self), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
@@ -1620,8 +1620,8 @@ cdgetdisklabel(struct cd_softc *cd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKECDDEV(0, cd->sc_dev.dv_unit, RAW_PART),
-	    cdstrategy, lp, cd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(MAKECDDEV(0, device_unit(&cd->sc_dev),
+	    RAW_PART), cdstrategy, lp, cd->sc_dk.dk_cpulabel);
 
 	/* if all went OK, we are passed a NULL error string */
 	if (errstring == NULL)
