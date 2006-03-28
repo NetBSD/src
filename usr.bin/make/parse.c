@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.110 2006/02/26 22:45:46 apb Exp $	*/
+/*	$NetBSD: parse.c,v 1.111 2006/03/28 17:41:35 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.110 2006/02/26 22:45:46 apb Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.111 2006/03/28 17:41:35 ginsbach Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.110 2006/02/26 22:45:46 apb Exp $");
+__RCSID("$NetBSD: parse.c,v 1.111 2006/03/28 17:41:35 ginsbach Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2150,11 +2150,21 @@ ParseTraditionalInclude(char *line)
     cfname  = curFile.fname;
     clineno = curFile.lineno;
 
+    if (DEBUG(PARSE)) {
+	    printf("ParseTraditionalInclude: %s\n", file);
+    }
+
     /*
      * Skip over whitespace
      */
     while (isspace((unsigned char)*file))
 	file++;
+
+    /*
+     * Substitute for any variables in the file name before trying to
+     * find the thing.
+     */
+    file = Var_Subst(NULL, file, VAR_CMD, FALSE);
 
     if (*file == '\0') {
 	Parse_Error(PARSE_FATAL,
@@ -2173,12 +2183,6 @@ ParseTraditionalInclude(char *line)
 	    *cp = '\0';
 	else
 	    done = 1;
-
-	/*
-	 * Substitute for any variables in the file name before trying to
-	 * find the thing.
-	 */
-	file = Var_Subst(NULL, file, VAR_CMD, FALSE);
 
 	/*
 	 * Now we know the file's name, we attempt to find the durn thing.
