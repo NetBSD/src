@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.7 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.8 2006/03/29 04:32:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.7 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.8 2006/03/29 04:32:09 thorpej Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -298,8 +298,12 @@ mpt_pci_link_peer(mpt_softc_t *mpt)
 		dev = device_lookup(&mpt_cd, unit);
 		if (dev == NULL)
 			continue;
-		if (dev->dv_cfattach != &mpt_pci_ca)
+		if (device_parent(&mpt->sc_dev) != device_parent(dev))
 			continue;
+		/*
+		 * If we have the same parent, we know the other one
+		 * is attached with mpt_pci.
+		 */
 		peer_psc = (void *) dev;
 		if (peer_psc->sc_pc != psc->sc_pc)
 			continue;
