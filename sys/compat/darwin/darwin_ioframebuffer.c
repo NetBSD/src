@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.35 2006/03/28 17:38:29 thorpej Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.36 2006/03/29 04:19:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.35 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.36 2006/03/29 04:19:48 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -822,8 +822,8 @@ darwin_findscreen(dev, unit, screen)
 
 	/* Find a wsdisplay */
 	TAILQ_FOREACH(dv, &alldevs, dv_list)
-		if ((dv->dv_cfdriver == &wsdisplay_cd) &&
-		    (device_unit(dv) == unit))
+		if (device_is_a(dv, "wsdisplay") &&
+		    device_unit(dv) == unit)
 			break;
 	if (dv == NULL)
 		return ENODEV;
