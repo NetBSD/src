@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.72 2006/03/28 17:38:25 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.73 2006/03/29 16:03:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.72 2006/03/28 17:38:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.73 2006/03/29 16:03:37 tsutsui Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -907,7 +907,7 @@ rdintr(void *arg)
 	u_char stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
-	ctlr = device_unit(device_parent(&rs->sc_dev);
+	ctlr = device_unit(device_parent(&rs->sc_dev));
 	slave = rs->sc_slave;
 
 #ifdef DEBUG
