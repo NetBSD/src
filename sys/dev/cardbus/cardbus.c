@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.69 2006/03/28 17:38:29 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.70 2006/03/29 06:00:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.69 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.70 2006/03/29 06:00:46 thorpej Exp $");
 
 #include "opt_cardbus.h"
 
@@ -672,7 +672,7 @@ cardbus_childdetached(struct device *self, struct device *child)
 	struct cardbus_softc *sc = (struct cardbus_softc *)self;
 	struct cardbus_devfunc *ct;
 
-	ct = sc->sc_funcs[child->dv_locators[CARDBUSCF_FUNCTION]];
+	ct = sc->sc_funcs[device_locator(child, CARDBUSCF_FUNCTION)];
 	KASSERT(ct->ct_device == child);
 
 	sc->sc_poweron_func &= ~(1 << ct->ct_func);
