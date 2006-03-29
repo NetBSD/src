@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char conn_rcsid[] = "$Id: conn.c,v 1.4 1998/02/04 14:32:53 christos Exp $";
+const char conn_rcsid[] = "$Id: conn.c,v 1.5 2006/03/29 16:02:45 christos Exp $";
 #endif
 
 #include <ctype.h>
@@ -569,10 +569,7 @@ fmodem_dial (qconn, puuconf, qsys, zphone, qdialer, ptdialerfound)
       *qdialer = *q;
       *ptdialerfound = DIALERFOUND_TRUE;
 
-      if (qconn->qport == NULL)
-	zname = NULL;
-      else
-	zname = qconn->qport->uuconf_zname;
+      zname = qconn->qport->uuconf_zname;
 
       return (fsysdep_modem_begin_dial (qconn, q)
 	      && fchat (qconn, puuconf, &q->uuconf_schat, qsys, q,
