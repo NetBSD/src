@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.73 2005/12/12 22:44:04 dsl Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.74 2006/03/29 21:35:32 uwe Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -77,7 +77,7 @@ CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-sign-compare
 .endif
 
-CFLAGS+=	${CPUFLAGS} -ffreestanding
+CFLAGS+=	-ffreestanding
 CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	${CPUFLAGS} -D_LOCORE
 
