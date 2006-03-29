@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.11 2004/04/23 22:24:34 christos Exp $	*/
+/*	$NetBSD: remote.c,v 1.12 2006/03/29 12:37:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.11 2004/04/23 22:24:34 christos Exp $");
+__RCSID("$NetBSD: remote.c,v 1.12 2006/03/29 12:37:59 yamt Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -177,6 +177,8 @@ getremcap(host)
 		setboolean(value(HALFDUPLEX), 1);
 	if (cgetflag("dc"))
 		DC = 1;
+	if (cgetflag("hf"))
+		setboolean(value(HARDWAREFLOW), 1);
 	if (RE == NULL)
 		RE = tiprecord;
 	if (EX == NULL)

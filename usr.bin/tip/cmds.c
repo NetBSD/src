@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.16 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.17 2006/03/29 12:37:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.16 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.17 2006/03/29 12:37:59 yamt Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -804,6 +804,13 @@ variable(dummy)
 		vtable[PARITY].v_access &= ~CHANGED;
 		setparity(NULL);	/* XXX what is the correct arg? */
 	}
+	if (vtable[HARDWAREFLOW].v_access&CHANGED) {
+		vtable[HARDWAREFLOW].v_access &= ~CHANGED;
+		if (boolean(value(HARDWAREFLOW)))
+			hardwareflow("on");
+		else
+			hardwareflow("off");
+	}
 }
 
 /*
@@ -825,6 +832,23 @@ tandem(option)
 	}
 	tcsetattr(FD, TCSADRAIN, &rmtty);
 	tcsetattr(0, TCSADRAIN, &term);
+}
+
+/*
+ * Turn hardware flow control on or off for remote tty.
+ */
+void
+hardwareflow(option)
+	const char *option;
+{
+	struct termios	rmtty;
+
+	tcgetattr(FD, &rmtty);
+	if (strcmp(option, "on") == 0)
+		rmtty.c_iflag |= CRTSCTS;
+	else
+		rmtty.c_iflag &= ~CRTSCTS;
+	tcsetattr(FD, TCSADRAIN, &rmtty);
 }
 
 /*
