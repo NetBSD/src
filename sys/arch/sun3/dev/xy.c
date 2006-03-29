@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.54 2006/03/28 17:38:28 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.55 2006/03/29 14:34:29 tsutsui Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.54 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.55 2006/03/29 14:34:29 tsutsui Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -472,7 +472,7 @@ xymatch(struct device *parent, struct cfdata *cf, void *aux)
 	int xy_unit;
 
 	/* Match only on the "wired-down" controller+disk. */
-	xy_unit = device_parent(parent) * 2 + xa->driveno;
+	xy_unit = device_unit(parent) * 2 + xa->driveno;
 	if (cf->cf_unit != xy_unit)
 		return (0);
 
