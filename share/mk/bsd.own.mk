@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.444 2006/03/20 18:18:41 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.445 2006/03/29 21:03:39 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -684,6 +684,13 @@ USE_${var}?= yes
 #
 .for var in LIBSTDCXX
 USE_${var}?= yes
+.endfor
+
+#
+# USE_* options which default to "no".
+#
+.for var in GCC4
+USE_${var}?= no
 .endfor
 
 #
