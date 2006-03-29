@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.14.2.3 2005/11/24 22:19:11 tron Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.14.2.4 2006/03/29 21:09:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -122,6 +122,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +151,9 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 #include <dev/mii/mii.h>
@@ -1305,7 +1309,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
 #if NRND > 0
-        rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+        rnd_attach_source(&sc->rnd_source, sc->sk_dev.dv_xname,
             RND_TYPE_NET, 0);
 #endif
 
@@ -2169,6 +2173,11 @@ sk_intr(void *xsc)
 		sk_start(ifp0);
 	if (ifp1 != NULL && !IFQ_IS_EMPTY(&ifp1->if_snd))
 		sk_start(ifp1);
+
+#if NRND > 0
+	if (RND_ENABLED(&sc->rnd_source))
+		rnd_add_uint32(&sc->rnd_source, status);
+#endif
 
 	return (claimed);
 }
