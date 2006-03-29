@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.16 2006/03/25 03:44:35 thorpej Exp $ */
+/* $NetBSD: lpt.c,v 1.17 2006/03/29 17:23:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.16 2006/03/25 03:44:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.17 2006/03/29 17:23:56 thorpej Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -134,7 +134,7 @@ lpt_probe(struct device * parent, struct cfdata * match, void * aux)
 static void
 lpt_attach(struct device * parent, struct device * self, void * aux)
 {
-	struct lpt_softc * sc = (struct lpt_softc *) self;
+	struct lpt_softc * sc = device_private(self);
 	struct ppbus_device_softc * ppbdev = &(sc->ppbus_dev);
 	struct ppbus_attach_args * args = aux;
 	char buf[64];
@@ -189,7 +189,7 @@ lpt_attach(struct device * parent, struct device * self, void * aux)
 static int
 lpt_detach(struct device * self, int flags)
 {
-	struct lpt_softc * lpt = (struct lpt_softc *) self;
+	struct lpt_softc * lpt = device_private(self);
 	struct ppbus_device_softc * ppbdev = (struct ppbus_device_softc *) lpt;
 	int err;
 
