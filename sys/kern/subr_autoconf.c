@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.110 2006/03/29 06:08:16 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.111 2006/03/29 06:25:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.110 2006/03/29 06:08:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.111 2006/03/29 06:25:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1614,7 +1614,7 @@ device_is_active(device_t dev)
 }
 
 int
-device_locator(device_t dev, int locnum)
+device_locator(device_t dev, u_int locnum)
 {
 
 	KASSERT(dev->dv_locators != NULL);
