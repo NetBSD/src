@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.13 2006/03/19 19:12:23 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.14 2006/03/29 15:51:00 christos Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.13 2006/03/19 19:12:23 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.14 2006/03/29 15:51:00 christos Exp $");
 #endif
 
 
@@ -339,8 +339,12 @@ str_val(vp)
 		}
 		if (!(vp->flag & INT_U) && vp->val.i < 0)
 			*--s = '-';
-		if (vp->flag & (RJUST|LJUST)) /* case already dealt with */
+		if (vp->flag & (RJUST|LJUST)) { /* case already dealt with */
 			s = formatstr(vp, s);
+			(void)strlcpy(strbuf, s, sizeof(strbuf));
+			afree(s, ATEMP);
+			s = strbuf;
+		}
 	}
 	return s;
 }
