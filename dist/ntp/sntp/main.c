@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2003/12/04 17:17:36 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2006/03/29 07:30:30 kardel Exp $	*/
 
 /*  Copyright (C) 1996, 1997, 2000 N.M. Maclaren
     Copyright (C) 1996, 1997, 2000 The University of Cambridge
@@ -855,9 +855,7 @@ the error for broadcasts. */
                 fprintf(stderr,
                     "%s: excessively high error %.3f > %.3f > %.3f\n",
                     argv0,sqrt(z),sqrt(e),sqrt(error));
-            if (total <= 1)
-                return 0.0;
-            else if (z < maxerr*maxerr) {
+            if (z < maxerr*maxerr) {
                 sprintf(text,"resetting on error %.3g > %.3g",
                     sqrt(z),sqrt(e));
                 log_message(text);
