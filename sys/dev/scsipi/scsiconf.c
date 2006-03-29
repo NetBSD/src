@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.234 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.235 2006/03/29 06:00:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.234 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.235 2006/03/29 06:00:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,8 +399,8 @@ scsidevdetached(struct device *sc, struct device *dev)
 	struct scsipi_periph *periph;
 	int target, lun;
 
-	target = dev->dv_locators[SCSIBUSCF_TARGET];
-	lun = dev->dv_locators[SCSIBUSCF_LUN];
+	target = device_locator(dev, SCSIBUSCF_TARGET);
+	lun = device_locator(dev, SCSIBUSCF_LUN);
 
 	periph = scsipi_lookup_periph(chan, target, lun);
 	KASSERT(periph->periph_dev == dev);
