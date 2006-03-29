@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.23.6.2 2005/11/27 22:55:29 riz Exp $	*/
+/*	$NetBSD: statd.c,v 1.23.6.2.2.1 2006/03/29 14:47:36 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.23.6.2 2005/11/27 22:55:29 riz Exp $");
+__RCSID("$NetBSD: statd.c,v 1.23.6.2.2.1 2006/03/29 14:47:36 riz Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -101,11 +101,6 @@ main(argc, argv)
 	struct sigaction nsa;
 	int maxrec = RPC_MAXDATASIZE;
 
-	sigemptyset(&nsa.sa_mask);
-	nsa.sa_flags = SA_NOCLDSTOP|SA_NOCLDWAIT;
-	nsa.sa_handler = SIG_IGN;
-	(void)sigaction(SIGCHLD, &nsa, NULL);
-
 	while ((ch = getopt(argc, argv, "d")) != (-1)) {
 		switch (ch) {
 		case 'd':
@@ -140,6 +135,12 @@ main(argc, argv)
 	 */
 	if (!debug)
 		daemon(0, 0);
+
+	sigemptyset(&nsa.sa_mask);
+	nsa.sa_flags = SA_NOCLDSTOP|SA_NOCLDWAIT;
+	nsa.sa_handler = SIG_IGN;
+	(void)sigaction(SIGCHLD, &nsa, NULL);
+
 	pidfile(NULL);
 	openlog("rpc.statd", 0, LOG_DAEMON);
 	if (debug)
