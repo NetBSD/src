@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.15 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.16 2006/03/29 06:55:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.15 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.16 2006/03/29 06:55:32 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -421,7 +421,7 @@ gtmpsc_loadchannelregs(struct gtmpsc_softc *sc)
 STATIC int
 gtmpscmatch(struct device *parent, struct cfdata *self, void *aux)
 {
-	struct gt_softc *gt = (struct gt_softc *) parent;
+	struct gt_softc *gt = device_private(parent);
 	struct gt_attach_args *ga = aux;
 
 	return GT_MPSCOK(gt, ga, &gtmpsc_cd);
@@ -431,8 +431,8 @@ STATIC void
 gtmpscattach(struct device *parent, struct device *self, void *aux)
 {
 	struct gt_attach_args *ga = aux;
-	struct gt_softc *gt = (struct gt_softc *) parent;
-	struct gtmpsc_softc *sc = (struct gtmpsc_softc *) self;
+	struct gt_softc *gt = device_private(parent);
+	struct gtmpsc_softc *sc = device_private(self);
 	gtmpsc_poll_sdma_t *vmps;
 	gtmpsc_poll_sdma_t *pmps;
 	struct tty *tp;

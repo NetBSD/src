@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.19 2006/03/29 04:16:50 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.20 2006/03/29 06:55:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.19 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.20 2006/03/29 06:55:32 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -224,8 +224,8 @@ void
 gfe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gt_attach_args * const ga = aux;
-	struct gt_softc * const gt = (struct gt_softc *) parent;
-	struct gfe_softc * const sc = (struct gfe_softc *) self;
+	struct gt_softc * const gt = device_private(parent);
+	struct gfe_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	uint32_t data;
 	uint8_t enaddr[6];
@@ -1521,7 +1521,7 @@ gfe_mii_write (struct device *self, int phy, int reg, int value)
 void
 gfe_mii_statchg (struct device *self)
 {
-	/* struct gfe_softc *sc = (struct gfe_softc *) self; */
+	/* struct gfe_softc *sc = device_private(self); */
 	/* do nothing? */
 }
 

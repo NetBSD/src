@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.48 2006/03/25 23:17:36 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.49 2006/03/29 07:05:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.48 2006/03/25 23:17:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.49 2006/03/29 07:05:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -566,7 +566,7 @@ mii_phy_activate(struct device *self, enum devact act)
 int
 mii_phy_detach(struct device *self, int flags)
 {
-	struct mii_softc *sc = (void *) self;
+	struct mii_softc *sc = device_private(self);
 
 	if (sc->mii_flags & MIIF_DOINGAUTO)
 		callout_stop(&sc->mii_nway_ch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.52 2006/03/29 04:47:13 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.53 2006/03/29 07:06:24 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.52 2006/03/29 04:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.53 2006/03/29 07:06:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -684,7 +684,7 @@ rxattach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	struct	rx_softc *rx = (void *)self;
+	struct	rx_softc *rx = device_private(self);
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
 	struct	mscp_softc *mi = (void *)parent;

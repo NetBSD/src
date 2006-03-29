@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.31 2006/03/25 23:20:18 thorpej Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.32 2006/03/29 07:06:24 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.31 2006/03/25 23:20:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.32 2006/03/29 07:06:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,7 +166,7 @@ mscp_attach(parent, self, aux)
 	void *aux;
 {
 	struct	mscp_attach_args *ma = aux;
-	struct	mscp_softc *mi = (void *)self;
+	struct	mscp_softc *mi = device_private(self);
 	struct mscp *mp2;
 	volatile struct mscp *mp;
 	volatile int i;
