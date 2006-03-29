@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.3.6.1 2005/01/07 12:16:10 jdc Exp $ */
+/* $NetBSD: if_skvar.h,v 1.3.6.2 2006/03/29 21:32:57 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,6 +86,12 @@
 
 #ifndef _DEV_PCI_IF_SKVAR_H_
 #define _DEV_PCI_IF_SKVAR_H_
+
+#include "rnd.h"
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 struct sk_jslot {
 	caddr_t			sk_buf;
@@ -208,6 +214,9 @@ struct sk_softc {
 	u_int32_t		sk_intrmask;
 	bus_dma_tag_t		sc_dmatag;
 	struct sk_if_softc	*sk_if[2];
+#if NRND > 0
+	rndsource_element_t     rnd_source;
+#endif
 };
 
 /* Softc for each logical interface */
