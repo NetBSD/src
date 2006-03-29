@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.23 2006/03/28 17:38:30 thorpej Exp $	*/
+/*	$NetBSD: dpti.c,v 1.24 2006/03/29 06:45:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.23 2006/03/28 17:38:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.24 2006/03/29 06:45:05 thorpej Exp $");
 
 #include "opt_i2o.h"
 
@@ -185,8 +185,8 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 	} __attribute__ ((__packed__)) param;
 	int rv;
 
-	sc = (struct dpti_softc *)self;
-	iop = (struct iop_softc *)parent;
+	sc = device_private(self);
+	iop = device_private(parent);
 
 	/*
 	 * Tell the world what we are.  The description in the signature

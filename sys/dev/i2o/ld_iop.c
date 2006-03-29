@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.19 2006/03/25 23:04:31 thorpej Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.20 2006/03/29 06:45:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.19 2006/03/25 23:04:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.20 2006/03/29 06:45:05 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -146,9 +146,9 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 		} p;
 	} __attribute__ ((__packed__)) param;
 
-	sc = (struct ld_iop_softc *)self;
+	sc = device_private(self);
 	ld = &sc->sc_ld;
-	iop = (struct iop_softc *)parent;
+	iop = device_private(parent);
 	ia = (struct iop_attach_args *)aux;
 	evreg = 0;
 
@@ -334,8 +334,8 @@ ld_iop_detach(struct device *self, int flags)
 	struct iop_softc *iop;
 	int rv;
 
-	sc = (struct ld_iop_softc *)self;
-	iop = (struct iop_softc *)device_parent(self);
+	sc = device_private(self);
+	iop = device_private(device_parent(self));
 
 	if ((rv = ldbegindetach(&sc->sc_ld, flags)) != 0)
 		return (rv);
