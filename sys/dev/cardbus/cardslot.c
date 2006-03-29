@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.30 2006/03/29 04:42:30 thorpej Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.31 2006/03/29 06:22:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.30 2006/03/29 04:42:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.31 2006/03/29 06:22:38 thorpej Exp $");
 
 #include "opt_cardslot.h"
 
@@ -103,7 +103,7 @@ cardslotattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct cardslot_softc *sc = (struct cardslot_softc *)self;
+	struct cardslot_softc *sc = device_private(self);
 	struct cardslot_attach_args *caa = aux;
 
 	struct cbslot_attach_args *cba = caa->caa_cb_attach;
