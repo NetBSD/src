@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.5 2006/03/29 04:16:49 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.6 2006/03/29 06:41:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -91,7 +91,7 @@ lmtemp_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 lmtemp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct lmtemp_softc *sc = (struct lmtemp_softc *)self;
+	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	int ptype;
 
