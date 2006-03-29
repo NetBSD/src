@@ -1,0 +1,43 @@
+#                                                                    -*-perl-*-
+
+$description = "Test make -B (always remake) option.\n";
+
+$details = "\
+Construct a simple makefile that builds a target.
+Invoke make once, so it builds everything.  Invoke it again and verify
+that nothing is built.  Then invoke it with -B and verify that everything
+is built again.";
+
+open(MAKEFILE,"> $makefile");
+
+print MAKEFILE <<'EOF';
+.SUFFIXES:
+
+.PHONY: all
+all: foo
+
+foo: bar.x
+	@echo cp $< $@
+	@echo "" > $@
+EOF
+
+close(MAKEFILE);
+
+
+&touch('bar.x');
+
+&run_make_with_options($makefile, '', &get_logfile);
+$answer = "cp bar.x foo\n";
+&compare_output($answer, &get_logfile(1));
+
+&run_make_with_options($makefile, '', &get_logfile);
+$answer = "$make_name: Nothing to be done for `all'.\n";
+&compare_output($answer, &get_logfile(1));
+
+&run_make_with_options($makefile, '-B', &get_logfile);
+$answer = "cp bar.x foo\n";
+&compare_output($answer, &get_logfile(1));
+
+unlink('bar.x', 'foo') unless $keep;
+
+1;
