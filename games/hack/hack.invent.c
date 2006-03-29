@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.invent.c,v 1.9 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hack.invent.c,v 1.10 2006/03/29 01:19:51 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.invent.c,v 1.9 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: hack.invent.c,v 1.10 2006/03/29 01:19:51 jnemeth Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -214,9 +214,12 @@ freeobj(obj)
 	if (obj == fobj)
 		fobj = fobj->nobj;
 	else {
-		for (otmp = fobj; otmp->nobj != obj; otmp = otmp->nobj)
-			if (!otmp)
+		otmp = fobj;
+		while (otmp->nobj != obj) {
+			if (otmp->nobj == NULL)
 				panic("error in freeobj");
+			otmp = otmp->nobj;
+		}
 		otmp->nobj = obj->nobj;
 	}
 }
@@ -231,9 +234,12 @@ freegold(gold)
 	if (gold == fgold)
 		fgold = gold->ngold;
 	else {
-		for (gtmp = fgold; gtmp->ngold != gold; gtmp = gtmp->ngold)
-			if (!gtmp)
+		gtmp = fgold;
+		while (gtmp->ngold != gold) {
+			if (gtmp->ngold == NULL)
 				panic("error in freegold");
+			gtmp = gtmp->ngold;
+		}
 		gtmp->ngold = gold->ngold;
 	}
 	free((char *) gold);
