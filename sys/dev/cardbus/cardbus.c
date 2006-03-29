@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.70 2006/03/29 06:00:46 thorpej Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.71 2006/03/29 06:22:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.70 2006/03/29 06:00:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.71 2006/03/29 06:22:38 thorpej Exp $");
 
 #include "opt_cardbus.h"
 
@@ -116,7 +116,7 @@ cardbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 STATIC void
 cardbusattach(struct device *parent, struct device *self, void *aux)
 {
-	struct cardbus_softc *sc = (void *)self;
+	struct cardbus_softc *sc = device_private(self);
 	struct cbslot_attach_args *cba = aux;
 
 	sc->sc_bus = cba->cba_bus;
@@ -409,7 +409,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 int
 cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 {
-	struct cardbus_softc *sc = (struct cardbus_softc *)self;
+	struct cardbus_softc *sc = device_private(self);
 	cardbus_chipset_tag_t cc;
 	cardbus_function_tag_t cf;
 	cardbustag_t tag;
@@ -669,7 +669,7 @@ cardbus_detach_card(struct cardbus_softc *sc)
 void
 cardbus_childdetached(struct device *self, struct device *child)
 {
-	struct cardbus_softc *sc = (struct cardbus_softc *)self;
+	struct cardbus_softc *sc = device_private(self);
 	struct cardbus_devfunc *ct;
 
 	ct = sc->sc_funcs[device_locator(child, CARDBUSCF_FUNCTION)];
