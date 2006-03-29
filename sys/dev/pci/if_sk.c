@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.14.2.4 2006/03/29 21:09:16 tron Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.14.2.5 2006/03/29 21:13:47 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -201,6 +202,8 @@ void sk_vpd_read_res(struct sk_softc *,
 					struct vpd_res *, int);
 void sk_vpd_read(struct sk_softc *);
 
+void sk_update_int_mod(struct sk_softc *);
+
 int sk_xmac_miibus_readreg(struct device *, int, int);
 void sk_xmac_miibus_writereg(struct device *, int, int, int);
 void sk_xmac_miibus_statchg(struct device *);
@@ -246,6 +249,9 @@ void sk_dump_bytes(const char *, int);
 
 #define SK_WIN_CLRBIT_2(sc, reg, x)	\
 	sk_win_write_2(sc, reg, sk_win_read_2(sc, reg) & ~x)
+
+static int sk_sysctl_handler(SYSCTLFN_PROTO);
+static int sk_root_num;
 
 /* supported device vendors */
 static const struct sk_product {
@@ -952,6 +958,39 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	return(error);
 }
 
+void
+sk_update_int_mod(struct sk_softc *sc)
+{
+	u_int32_t sk_imtimer_ticks;
+
+	/*
+         * Configure interrupt moderation. The moderation timer
+	 * defers interrupts specified in the interrupt moderation
+	 * timer mask based on the timeout specified in the interrupt
+	 * moderation timer init register. Each bit in the timer
+	 * register represents one tick, so to specify a timeout in
+	 * microseconds, we have to multiply by the correct number of
+	 * ticks-per-microsecond.
+	 */
+	switch (sc->sk_type) {
+	case SK_GENESIS:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_GENESIS;
+		break;
+	case SK_YUKON_EC:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		break;
+	default:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+	}
+	aprint_verbose("%s: interrupt moderation is %d us\n",
+	    sc->sk_dev.dv_xname, sc->sk_int_mod);
+        sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(sc->sk_int_mod));
+        sk_win_write_4(sc, SK_IMMR, SK_ISR_TX1_S_EOF|SK_ISR_TX2_S_EOF|
+	    SK_ISR_RX1_EOF|SK_ISR_RX2_EOF);
+        sk_win_write_1(sc, SK_IMTIMERCTL, SK_IMCTL_START);
+	sc->sk_int_mod_pending = 0;
+}
+
 /*
  * Lookup: Check the PCI vendor and device, and return a pointer to
  * The structure if the IDs match against our list.
@@ -1030,18 +1069,7 @@ void sk_reset(struct sk_softc *sc)
 	/* Enable RAM interface */
 	sk_win_write_4(sc, SK_RAMCTL, SK_RAMCTL_UNRESET);
 
-	/*
-         * Configure interrupt moderation. The moderation timer
-	 * defers interrupts specified in the interrupt moderation
-	 * timer mask based on the timeout specified in the interrupt
-	 * moderation timer init register. Each bit in the timer
-	 * register represents 18.825ns, so to specify a timeout in
-	 * microseconds, we have to multiply by 54.
-	 */
-        sk_win_write_4(sc, SK_IMTIMERINIT, SK_IM_USECS(100));
-        sk_win_write_4(sc, SK_IMMR, SK_ISR_TX1_S_EOF|SK_ISR_TX2_S_EOF|
-	    SK_ISR_RX1_EOF|SK_ISR_RX2_EOF);
-        sk_win_write_1(sc, SK_IMTIMERCTL, SK_IMCTL_START);
+	sk_update_int_mod(sc);
 }
 
 int
@@ -1351,9 +1379,10 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	bus_addr_t iobase;
 	bus_size_t iosize;
-	int s;
+	int s, rc, sk_nodenum;
 	u_int32_t command;
 	char *revstr;
+	struct sysctlnode *node;
 
 	DPRINTFN(2, ("begin skc_attach\n"));
 
@@ -1626,6 +1655,36 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Turn on the 'driver is loaded' LED. */
 	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_ON);
+
+	/* skc sysctl setup */
+
+	sc->sk_int_mod = SK_IM_DEFAULT;
+	sc->sk_int_mod_pending = 0;
+
+	if ((rc = sysctl_createv(&sc->sk_clog, 0, NULL, &node,
+	    0, CTLTYPE_NODE, sc->sk_dev.dv_xname,
+	    SYSCTL_DESCR("skc per-controller controls"),
+	    NULL, 0, NULL, 0, CTL_HW, sk_root_num, CTL_CREATE,
+	    CTL_EOL)) != 0) {
+		aprint_normal("%s: couldn't create sysctl node\n",
+		    sc->sk_dev.dv_xname);
+		goto fail;
+	}
+
+	sk_nodenum = node->sysctl_num;
+
+	/* interrupt moderation time in usecs */
+	if ((rc = sysctl_createv(&sc->sk_clog, 0, NULL, &node,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "int_mod",
+	    SYSCTL_DESCR("sk interrupt moderation timer"),
+	    sk_sysctl_handler, 0, sc,
+	    0, CTL_HW, sk_root_num, sk_nodenum, CTL_CREATE,
+	    CTL_EOL)) != 0) {
+		aprint_normal("%s: couldn't create int_mod sysctl node\n",
+		    sc->sk_dev.dv_xname);
+		goto fail;
+	}
 
 fail:
 	splx(s);
@@ -2179,6 +2238,9 @@ sk_intr(void *xsc)
 		rnd_add_uint32(&sc->rnd_source, status);
 #endif
 
+	if (sc->sk_int_mod_pending)
+		sk_update_int_mod(sc);
+
 	return (claimed);
 }
 
@@ -2490,6 +2552,7 @@ sk_init(struct ifnet *ifp)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct mii_data		*mii = &sc_if->sk_mii;
 	int			s;
+	u_int32_t		imr, sk_imtimer_ticks;
 
 	DPRINTFN(1, ("sk_init\n"));
 
@@ -2592,6 +2655,25 @@ sk_init(struct ifnet *ifp)
 		return(ENOBUFS);
 	}
 
+	/* Set interrupt moderation if changed via sysctl. */
+	switch (sc->sk_type) {
+	case SK_GENESIS:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_GENESIS;
+		break;
+	case SK_YUKON_EC:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		break;
+	default:
+		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+	}
+	imr = sk_win_read_4(sc, SK_IMTIMERINIT);
+	if (imr != SK_IM_USECS(sc->sk_int_mod)) {
+		sk_win_write_4(sc, SK_IMTIMERINIT,
+		    SK_IM_USECS(sc->sk_int_mod));
+		aprint_verbose("%s: interrupt moderation is %d us\n",
+		    sc->sk_dev.dv_xname, sc->sk_int_mod);
+	}
+
 	/* Configure interrupt handling */
 	CSR_READ_4(sc, SK_ISSR);
 	if (sc_if->sk_port == SK_PORT_A)
@@ -2633,6 +2715,7 @@ sk_stop(struct ifnet *ifp, int disable)
 {
         struct sk_if_softc	*sc_if = ifp->if_softc;
 	struct sk_softc		*sc = sc_if->sk_softc;
+	//struct sk_txmap_entry	*dma;
 	int			i;
 
 	DPRINTFN(1, ("sk_stop\n"));
@@ -2794,3 +2877,57 @@ sk_dump_mbuf(struct mbuf *m)
 	}
 }
 #endif
+
+static int
+sk_sysctl_handler(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+	struct sk_softc *sc;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+	t = sc->sk_int_mod;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < SK_IM_MIN || t > SK_IM_MAX)
+		return (EINVAL);
+
+	/* update the softc with sysctl-changed value, and mark
+	   for hardware update */
+	sc->sk_int_mod = t;
+	sc->sk_int_mod_pending = 1;
+	return (0);
+}
+
+/*
+ * Set up sysctl(3) MIB, hw.sk.* - Individual controllers will be
+ * set up in skc_attach()
+ */
+SYSCTL_SETUP(sysctl_sk, "sysctl sk subtree setup")
+{
+	int rc;
+	struct sysctlnode *node;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	    0, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
+		goto err;
+	}
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    0, CTLTYPE_NODE, "sk",
+	    SYSCTL_DESCR("sk interface controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
+		goto err;
+	}
+
+	sk_root_num = node->sysctl_num;
+	return;
+
+err:
+	printf("%s: syctl_createv failed (rc = %d)\n", __func__, rc);
+}
