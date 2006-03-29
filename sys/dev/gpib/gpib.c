@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.7 2006/03/29 04:16:48 thorpej Exp $	*/
+/*	$NetBSD: gpib.c,v 1.8 2006/03/29 06:33:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.7 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.8 2006/03/29 06:33:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ gpibattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct gpib_softc *sc = (struct gpib_softc *)self;
+	struct gpib_softc *sc = device_private(self);
 	struct cfdata *cf = device_cfdata(&sc->sc_dev);
 	struct gpibdev_attach_args *gda = aux;
 	struct gpib_attach_args ga;

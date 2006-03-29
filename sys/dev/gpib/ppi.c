@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.5 2006/03/28 17:38:30 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.6 2006/03/29 06:33:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.5 2006/03/28 17:38:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.6 2006/03/29 06:33:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ ppiattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ppi_softc *sc = (struct ppi_softc *)self;
+	struct ppi_softc *sc = device_private(self);
 	struct gpib_attach_args *ga = aux;
 
 	printf("\n");

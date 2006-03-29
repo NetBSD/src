@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.21 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.22 2006/03/29 06:37:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.21 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.22 2006/03/29 06:37:35 thorpej Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -150,7 +150,7 @@ bivideomatch(struct device *parent, struct cfdata *match, void *aux)
 void
 bivideoattach(struct device *parent, struct device *self, void *aux)
 {
-	struct bivideo_softc *sc = (struct bivideo_softc *)self;
+	struct bivideo_softc *sc = device_private(self);
 	struct hpcfb_attach_args ha;
 
 	if (attach_flag) {
