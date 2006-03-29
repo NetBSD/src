@@ -1,4 +1,4 @@
-/* $NetBSD: ncdcs.c,v 1.3 2003/10/19 19:30:08 jdolecek Exp $ */
+/* $NetBSD: ncdcs.c,v 1.4 2006/03/29 15:55:57 christos Exp $ */
 /*
 ** Program to prepare an ELF file for download to an IBM Network
 ** Station 300 or 1000 running the NCD firmware.
@@ -146,15 +146,26 @@ int main(int argc, char *argv[])
 
 	/* determine file size, allocate buffer, open and read elf file */
 
-	if(stat(infile, &st)) {
+	if ((fd = open(infile, O_RDONLY)) == -1) {
 		perror(infile);
 		return(-1);
-		}
-	buf = malloc(st.st_size + 4);
-	fd = open(infile, O_RDONLY);
-	filesize = read(fd, buf, st.st_size);
-	if(filesize != st.st_size) {
+	}
+
+	if (fstat(fd, &st) == -1) {
 		perror(infile);
+		close(fd);
+		return(-1);
+	}
+	buf = malloc(st.st_size + 4);
+	if (buf == NULL) {
+		perror(infile);
+		close(fd);
+		return(-1);
+	}
+	filesize = read(fd, buf, st.st_size);
+	if (filesize != st.st_size) {
+		perror(infile);
+		close(fd);
 		return(-1);
 	}
 	close(fd);
