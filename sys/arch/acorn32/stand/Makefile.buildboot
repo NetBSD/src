@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.9 2006/03/28 20:45:46 bjh21 Exp $
+#	$NetBSD: Makefile.buildboot,v 1.10 2006/03/29 13:51:54 bjh21 Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -16,6 +16,7 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
+MKMODULE?=no
 .if ${MKMODULE} == "yes"
 RISCOSTYPE ?= ffa
 LINKFLAGS+=-shared -Bsymbolic --no-undefined -T ${.CURDIR}/../module.ldscript
