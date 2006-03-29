@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.51 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.52 2006/03/29 04:47:13 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.51 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.52 2006/03/29 04:47:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -751,7 +751,7 @@ rx_putonline(rx)
 
 	/* Poll away */
 	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
-	if (tsleep(&rx->ra_dev.dv_unit, PRIBIO, "rxonline", 100*100))
+	if (tsleep(&rx->ra_state, PRIBIO, "rxonline", 100*100))
 		rx->ra_state = DK_CLOSED;
 
 	if (rx->ra_state == DK_CLOSED)
@@ -1019,7 +1019,7 @@ rronline(usc, mp)
 	struct rx_softc *rx = (struct rx_softc *)usc;
 	struct disklabel *dl;
 
-	wakeup((caddr_t)&usc->dv_unit);
+	wakeup((caddr_t)&rx->ra_state);
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		printf("%s: attempt to bring on line failed: ", usc->dv_xname);
 		mscp_printevent(mp);
