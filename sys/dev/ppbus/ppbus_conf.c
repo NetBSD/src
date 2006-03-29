@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.10 2006/03/25 03:44:35 thorpej Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.11 2006/03/29 17:23:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.10 2006/03/25 03:44:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.11 2006/03/29 17:23:56 thorpej Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -104,7 +104,7 @@ ppbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 static void
 ppbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ppbus_softc *ppbus = (struct ppbus_softc *)self;
+	struct ppbus_softc *ppbus = device_private(self);
 	struct parport_adapter *sc_link = aux;
 	struct ppbus_attach_args args;
 
@@ -176,7 +176,7 @@ ppbus_attach(struct device *parent, struct device *self, void *aux)
 static int
 ppbus_detach(struct device *self, int flag)
 {
-	struct ppbus_softc * ppbus = (struct ppbus_softc *) self;
+	struct ppbus_softc * ppbus = device_private(self);
 	struct ppbus_device_softc * child;
 
 	if (ppbus->sc_dev_ok != PPBUS_OK) {
