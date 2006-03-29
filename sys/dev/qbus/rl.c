@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.29 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: rl.c,v 1.30 2006/03/29 18:17:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.29 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.30 2006/03/29 18:17:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -194,7 +194,7 @@ rlcmatch(struct device *parent, struct cfdata *cf, void *aux)
 void
 rlcattach(struct device *parent, struct device *self, void *aux)
 {
-	struct rlc_softc *sc = (struct rlc_softc *)self;
+	struct rlc_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 	struct rlc_attach_args ra;
 	int i, error;
@@ -248,7 +248,7 @@ rlmatch(struct device *parent, struct cfdata *cf, void *aux)
 void
 rlattach(struct device *parent, struct device *self, void *aux)
 {
-	struct rl_softc *rc = (struct rl_softc *)self;
+	struct rl_softc *rc = device_private(self);
 	struct rlc_attach_args *ra = aux;
 	struct disklabel *dl;
 
