@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.607 2006/03/28 14:44:01 tnozaki Exp $
+# $NetBSD: mi,v 1.608 2006/03/29 01:01:02 dogcow Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1845,6 +1845,7 @@
 ./usr/share/i18n/esdb/MISC/GB18030.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/KOI8-R.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/KOI8-U.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/PTCP154.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/UTF			base-sysutil-share
 ./usr/share/i18n/esdb/UTF/UTF-16.esdb		base-sysutil-share	nls
