@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char chat_rcsid[] = "$Id: chat.c,v 1.3 1995/08/24 05:18:45 jtc Exp $";
+const char chat_rcsid[] = "$Id: chat.c,v 1.4 2006/03/29 16:01:03 christos Exp $";
 #endif
 
 #include <ctype.h>
@@ -558,7 +558,7 @@ fcsend (qconn, puuconf, z, qsys, qdial, zphone, ftranslate, fstrip)
   boolean (*pfwrite) P((struct sconnection *, const char *, size_t));
   char *zcallout_login;
   char *zcallout_pass;
-  boolean fquote;
+  boolean fquote = 0;
 
   if (strcmp (z, "\"\"") == 0)
     return TRUE;
