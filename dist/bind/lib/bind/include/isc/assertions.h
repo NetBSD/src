@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.1.1.3 2005/12/21 23:15:22 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.2 2006/03/29 16:40:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,9 @@ typedef enum {
 typedef void (*assertion_failure_callback)(const char *, int, assertion_type,
 					   const char *, int);
 
+/* coverity[+kill] */
 extern assertion_failure_callback __assertion_failed;
+
 void set_assertion_failure_callback(assertion_failure_callback f);
 const char *assertion_type_to_text(assertion_type type);
 
