@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.3.6.2 2006/03/29 21:32:57 tron Exp $ */
+/* $NetBSD: if_skvar.h,v 1.3.6.3 2006/03/29 21:36:22 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -212,6 +212,9 @@ struct sk_softc {
 	u_int32_t		sk_ramsize;	/* amount of RAM on NIC */
 	u_int32_t		sk_pmd;		/* physical media type */
 	u_int32_t		sk_intrmask;
+	struct sysctllog	*sk_clog;
+	int			sk_int_mod;
+	int			sk_int_mod_pending;
 	bus_dma_tag_t		sc_dmatag;
 	struct sk_if_softc	*sk_if[2];
 #if NRND > 0
