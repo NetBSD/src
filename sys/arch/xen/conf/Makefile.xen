@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.5 2004/06/21 18:20:09 jmc Exp $
+#	$NetBSD: Makefile.xen,v 1.5.14.1 2006/03/29 21:18:29 tron Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -110,6 +110,22 @@ clock.o: config_time.h
 %LOAD
 
 %RULES
+
+# XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
+# XXX - Also, config has no simple was to just add foo.o to the Makefile. 
+#       It needs a pathname of some sort for "object"        
+.if !empty(OBJS:M\/athhal-elf.o)
+OBJS:=${OBJS:C/\/athhal-elf.o/athhal-elf.o/}
+ 
+.PATH: $S/../contrib/sys/arch/i386/dev
+ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
+		${_MKSHECHO}\
+		${UUDECODE} -p $> \> ${.TARGET}; \
+		rm -f ${.TARGET}; \
+		${UUDECODE} -p $> > ${.TARGET}
+athhal-elf.o: athhal-elf-o.uue
+	${ATH_UUDEC}
+.endif
 
 ##
 ## (9) port independent kernel machinery
