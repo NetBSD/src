@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.11 2006/03/25 04:08:45 thorpej Exp $	*/
+/*	$NetBSD: rf.c,v 1.12 2006/03/29 18:17:36 thorpej Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.11 2006/03/25 04:08:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.12 2006/03/29 18:17:36 thorpej Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -330,7 +330,7 @@ rfcprobedens(struct rfc_softc *rfc_sc, int dnum)
 void
 rfc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct rfc_softc *rfc_sc = (struct rfc_softc *)self;
+	struct rfc_softc *rfc_sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 	struct rfc_attach_args rfc_aa;
 	int i;
@@ -444,7 +444,7 @@ rf_match(struct device *parent, struct cfdata *match, void *aux)
 void
 rf_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct rf_softc *rf_sc = (struct rf_softc *)self;
+	struct rf_softc *rf_sc = device_private(self);
 	struct rfc_attach_args *rfc_aa = (struct rfc_attach_args *)aux;
 	struct rfc_softc *rfc_sc;
 	struct disklabel *dl;

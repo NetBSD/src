@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.8 2006/03/25 04:08:45 thorpej Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.9 2006/03/29 18:17:36 thorpej Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.8 2006/03/25 04:08:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.9 2006/03/29 18:17:36 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -258,7 +258,7 @@ void
 qtattach(struct device *parent, struct device *self, void *aux)
 	{
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
-	register struct qt_softc *sc = (struct qt_softc *)self;
+	register struct qt_softc *sc = device_private(self);
 	register struct ifnet *ifp = &sc->is_if;
 	struct uba_attach_args *ua = aux;
 
