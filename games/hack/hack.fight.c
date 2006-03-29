@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.fight.c,v 1.6 2003/04/02 18:36:36 jsm Exp $	*/
+/*	$NetBSD: hack.fight.c,v 1.7 2006/03/29 01:18:39 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.fight.c,v 1.6 2003/04/02 18:36:36 jsm Exp $");
+__RCSID("$NetBSD: hack.fight.c,v 1.7 2006/03/29 01:18:39 jnemeth Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -252,10 +252,12 @@ hmon(mon, obj, thrown)		/* return TRUE if mon still alive */
 				freeinv(obj);
 				setworn((struct obj *) 0, obj->owornmask);
 				obfree(obj, (struct obj *) 0);
+				obj = NULL;
 				tmp++;
 			}
 		}
-		if (mon->data->mlet == 'O' && obj->otyp == TWO_HANDED_SWORD &&
+		if (mon->data->mlet == 'O' && obj != NULL &&
+		    obj->otyp == TWO_HANDED_SWORD &&
 		    !strcmp(ONAME(obj), "Orcrist"))
 			tmp += rnd(10);
 	} else
@@ -319,11 +321,13 @@ hmon(mon, obj, thrown)		/* return TRUE if mon still alive */
 		mon->mfleetim += 10 * rnd(tmp);
 	}
 	if (!hittxt) {
-		if (thrown)
+		if (thrown) {
 			/* this assumes that we cannot throw plural things */
+			if (obj == NULL)
+				panic("thrown non-object");
 			hit(xname(obj) /* or: objects[obj->otyp].oc_name */ ,
 			    mon, exclam(tmp));
-		else if (Blind)
+		} else if (Blind)
 			pline("You hit it.");
 		else
 			pline("You hit %s%s", monnam(mon), exclam(tmp));
