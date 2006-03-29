@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.9 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: if_eb.c,v 1.10 2006/03/29 07:12:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.9 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.10 2006/03/29 07:12:56 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -103,7 +103,7 @@ ebprobe(struct device *parent, struct cfdata *cf, void *aux)
 void
 ebattach(struct device *parent, struct device *self, void *aux)
 {
-	struct eb_softc *sc = (void *)self;
+	struct eb_softc *sc = device_private(self);
 	struct podulebus_attach_args *pa = aux;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 

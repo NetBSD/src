@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.35 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.36 2006/03/29 07:10:25 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.35 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.36 2006/03/29 07:10:25 thorpej Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -126,7 +126,7 @@ ofnet_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 ofnet_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ofnet_softc *of = (void *)self;
+	struct ofnet_softc *of = device_private(self);
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;
 	struct ofbus_attach_args *oba = aux;
 	char path[256];
