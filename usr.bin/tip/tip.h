@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.16 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: tip.h,v 1.17 2006/03/29 12:37:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -231,6 +231,7 @@ extern value_t	vtable[];	/* variable table */
 #define HALFDUPLEX	30
 #define	LECHO		31
 #define	PARITY		32
+#define	HARDWAREFLOW	33
 
 struct termios	term;		/* current mode of terminal */
 struct termios	defterm;	/* initial mode of terminal */
@@ -286,6 +287,7 @@ void	finish __P((char));
 void	genbrk __P((char));
 void	getfl __P((char));
 char   *getremote __P((char *));
+void	hardwareflow __P((const char *));
 void	help __P((char));
 int	hunt __P((char *));
 char   *interp __P((const char *));
