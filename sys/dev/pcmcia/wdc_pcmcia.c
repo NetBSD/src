@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.99.2.1 2005/07/02 23:19:27 tron Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.99.2.2 2006/03/29 21:29:16 tron Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.99.2.1 2005/07/02 23:19:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.99.2.2 2006/03/29 21:29:16 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -307,9 +307,11 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	 * and probe properly, so give them half a second.
 	 * See PR 25659 for details.
 	 */
+	config_pending_incr();
 	tsleep(wdc_pcmcia_attach, PWAIT, "wdcattach", hz / 2);
 
 	wdcattach(&sc->ata_channel);
+	config_pending_decr();
 	ata_delref(&sc->ata_channel);
 	sc->sc_state = WDC_PCMCIA_ATTACHED;
 	return;
