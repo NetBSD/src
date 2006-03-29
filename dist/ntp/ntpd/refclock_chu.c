@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.4 2006/03/21 11:12:13 kardel Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.5 2006/03/29 07:19:34 kardel Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
@@ -1233,7 +1233,7 @@ chu_a(
 	}
 	i = -(2 * k);
 	for (j = 0; j < nchar; j++) {
-		if (i < 0 || i > 19) {
+		if (i < 0 || i > 18) {
 			i += 2;
 			continue;
 		}
