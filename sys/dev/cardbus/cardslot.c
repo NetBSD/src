@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.28 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.29 2006/03/29 04:16:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.28 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.29 2006/03/29 04:16:48 thorpej Exp $");
 
 #include "opt_cardslot.h"
 
@@ -119,7 +119,7 @@ cardslotattach(parent, self, aux)
 	sc->sc_th_enable = 0;
 
 	printf(" slot %d flags %x\n", sc->sc_slot,
-	       sc->sc_dev.dv_cfdata->cf_flags);
+	       device_cfdata(&sc->sc_dev)->cf_flags);
 
 	DPRINTF(("%s attaching CardBus bus...\n", sc->sc_dev.dv_xname));
 	if (cba != NULL) {

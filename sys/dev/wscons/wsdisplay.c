@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.91 2006/03/28 17:38:38 thorpej Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.92 2006/03/29 04:16:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.91 2006/03/28 17:38:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.92 2006/03/29 04:16:51 thorpej Exp $");
 
 #include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
@@ -531,7 +531,7 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 		ap->console = 0;
 
 	wsdisplay_common_attach(sc, ap->console,
-	     sc->sc_dv.dv_cfdata->wsemuldisplaydevcf_kbdmux, ap->scrdata,
+	     device_cfdata(&sc->sc_dv)->wsemuldisplaydevcf_kbdmux, ap->scrdata,
 	     ap->accessops, ap->accesscookie);
 
 	if (ap->console) {
@@ -580,7 +580,7 @@ wsdisplay_noemul_attach(struct device *parent, struct device *self, void *aux)
 	struct wsdisplaydev_attach_args *ap = aux;
 
 	wsdisplay_common_attach(sc, 0,
-	    sc->sc_dv.dv_cfdata->wsemuldisplaydevcf_kbdmux, NULL,
+	    device_cfdata(&sc->sc_dv)->wsemuldisplaydevcf_kbdmux, NULL,
 	    ap->accessops, ap->accesscookie);
 }
 
