@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.69 2006/03/28 17:38:24 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.70 2006/03/29 04:16:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.69 2006/03/28 17:38:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.70 2006/03/29 04:16:45 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -438,8 +438,8 @@ dcmattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Extract configuration info from flags. */
-	sc->sc_softCAR = self->dv_cfdata->cf_flags & DCM_SOFTCAR;
-	sc->sc_flags |= self->dv_cfdata->cf_flags & DCM_FLAGMASK;
+	sc->sc_softCAR = device_cfdata(self)->cf_flags & DCM_SOFTCAR;
+	sc->sc_flags |= device_cfdata(self)->cf_flags & DCM_FLAGMASK;
 
 	/* Mark our unit as configured. */
 	sc->sc_flags |= DCM_ACTIVE;

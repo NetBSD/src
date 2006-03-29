@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.11 2006/03/25 04:08:45 thorpej Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.12 2006/03/29 04:16:50 thorpej Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.11 2006/03/25 04:08:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.12 2006/03/29 04:16:50 thorpej Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -305,7 +305,7 @@ dmcinit(struct ifnet *ifp)
 	struct dmcbufs *rp;
 	struct dmc_command *qp;
 	struct ifaddr *ifa;
-	struct cfdata *ui = sc->sc_dev.dv_cfdata;
+	struct cfdata *ui = device_cfdata(&sc->sc_dev);
 	int base;
 	int s;
 

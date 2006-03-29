@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.14 2006/03/28 17:38:28 thorpej Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.15 2006/03/29 04:16:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@ matchbiosdisks(void)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_name);
+		    dv->dv_xname, device_cfdata(dv)->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
@@ -396,7 +396,7 @@ findroot(void)
 			if (device_class(dv) != DV_DISK)
 				continue;
 
-			cd = dv->dv_cfdata;
+			cd = device_cfdata(dv);
 			len = strlen(cd->cf_name);
 
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.114 2006/03/28 17:38:27 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.115 2006/03/29 04:16:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.114 2006/03/28 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.115 2006/03/29 04:16:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1158,7 +1158,7 @@ device_register(struct device *dev, void *aux)
 	bpname = bp->name;
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s\n",
-	    dev->dv_xname, dev->dv_cfdata->cf_name, dev->dv_xname, bpname));
+	    dev->dv_xname, device_cfdata(dev)->cf_name, dev->dv_xname, bpname));
 
 	/* First, match by name */
 	if (!device_is_a(dev, bpname)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.4 2006/02/18 05:04:12 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.5 2006/03/29 04:16:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -97,7 +97,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
-	sc->sc_is_ds75 = sc->sc_dev.dv_cfdata->cf_flags & 1;
+	sc->sc_is_ds75 = device_cfdata(&sc->sc_dev)->cf_flags & 1;
 
 	aprint_naive(": Temperature Sensor\n");
 	aprint_normal(": %s Temperature Sensor\n",

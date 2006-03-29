@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.22 2006/03/28 17:38:35 thorpej Exp $	*/
+/*	$NetBSD: sunms.c,v 1.23 2006/03/29 04:16:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.22 2006/03/28 17:38:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.23 2006/03/29 04:16:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ sunms_attach(parent, self, aux)
 	struct wsmousedev_attach_args a;
 #endif
 
-	cf = ms->ms_dev.dv_cfdata;
+	cf = device_cfdata(&ms->ms_dev);
 	ms_unit = device_unit(&ms->ms_dev);
 	tp->t_sc  = ms;
 	tp->t_dev = args->kmta_dev;

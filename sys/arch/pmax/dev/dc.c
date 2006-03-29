@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.83 2006/03/28 17:38:26 thorpej Exp $	*/
+/*	$NetBSD: dc.c,v 1.84 2006/03/29 04:16:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.83 2006/03/28 17:38:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.84 2006/03/29 04:16:46 thorpej Exp $");
 
 /*
  * devDC7085.c --
@@ -317,7 +317,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 		pdp->p_fcn = dcxint;
 		pdp++;
 	}
-	sc->dcsoftCAR = sc->sc_dv.dv_cfdata->cf_flags | 0xB;
+	sc->dcsoftCAR = device_cfdata(&sc->sc_dv)->cf_flags | 0xB;
 
 	if (dc_timer == 0) {
 		dc_timer = 1;

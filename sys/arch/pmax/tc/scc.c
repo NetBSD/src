@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.91 2006/03/28 17:38:27 thorpej Exp $	*/
+/*	$NetBSD: scc.c,v 1.92 2006/03/29 04:16:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.91 2006/03/28 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.92 2006/03/29 04:16:47 thorpej Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -399,7 +399,7 @@ sccattach(parent, self, aux)
 		pdp++;
 	}
 	/* What's the warning here? Defaulting to softCAR on line 2? */
-	sc->scc_softCAR = sc->sc_dv.dv_cfdata->cf_flags;
+	sc->scc_softCAR = device_cfdata(&sc->sc_dv)->cf_flags;
 
 	/*
 	 * Reset chip, initialize  register-copies in softc.
