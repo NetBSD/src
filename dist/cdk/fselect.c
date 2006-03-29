@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: tron $
- * $Date: 2006/03/27 10:02:37 $
- * $Revision: 1.7 $
+ * $Author: christos $
+ * $Date: 2006/03/29 15:44:19 $
+ * $Revision: 1.8 $
  */
 
 /*
@@ -123,6 +123,7 @@ CDKFSELECT *newCDKFselect (CDKSCREEN *cdkscreen, int xplace, int yplace, int hei
       freeChar (fselect->linkAttribute);
       freeChar (fselect->sockAttribute);
       deleteCursesWindow (fselect->win);
+      free (fselect);
       return (0);
    }
 
