@@ -1,0 +1,79 @@
+This is release 3.78 (September 6, 1999) of the GNU make test
+suite.  See the file NEWS for some of the changes since the last
+release.
+
+This release is made by psmith@gnu.org to correspond to GNU make 3.78.
+It won't work correctly for versions before that.  In addition to some
+infrastructure changes I've added a number of new tests.
+
+Rob Tulloh has contributed changes to get the suite running on NT.
+
+Eli Zaretskii and Esa A E Peuha <peuha@cc.helsinki.fi> have contributed
+changes to get the suite running on DJGPP/DOS.
+
+This package has a number of problems which preclude me from
+distributing it with make as a default "make check" test suite.  The
+most serious of these is that it's not parallelizable: it scribbles all
+over its installation directory and so can only test one make at a
+time.  I simply don't have time to do more with this than I am so far;
+I'm very actively interested in finding someone willing to overhaul the
+test suite infrastructure.  If you're interested, contact me (see below)!
+
+The test suite thus far has been written by Steve McGee, Chris Arthur,
+and Paul D. Smith.  It is covered by the GNU General Public License
+(Version 2), described in the file COPYING.
+
+The test suite requires Perl and is known to work with Perl 4.036 and
+Perl 5.004 (available from ftp.gnu.org, and portable to many machines).
+Earlier or later versions may work; I don't know.  It assumes that the
+first "diff" it finds is GNU diff, but that only matters if a test
+fails.
+
+To run the test suite on a UNIX system, use "perl ./run_make_tests"
+(or just "./run_make_tests" if you have a perl on your PATH).
+
+To run the test suite on Windows NT or DOS systems, use
+"perl.exe ./run_make-tests.pl".
+
+By default, the test engine picks up the first executable called "make"
+that it finds in your path.  You may use the -make_path option (ie,
+"perl run_make_tests -make_path /usr/local/src/make-3.78/make") if
+you want to run a particular copy.  This now works correctly with
+relative paths and when make is called something other than "make" (like
+"gmake").
+
+Tests cannot end with a "~" character, as the test suite will ignore any
+that do (I was tired of having it run my Emacs backup files as test :)
+
+If you want to run the tests in parallel, you should use the mkshadow
+script included here to create temporary "copies" (via symbolic links)
+of the test suite, one for each parallel job.  This is a pain and one
+day maybe the test suite will be rewritten so it's no longer
+necessary--volunteers welcome!
+
+Also, sometimes the tests may behave strangely on networked
+filesystems.  You can use mkshadow to create a copy of the test suite in
+/tmp or similar, and try again.  If the error disappears, it's an issue
+with your network or file server, not GNU make (I believe).
+
+The options/dash-l test will not really test anything if the copy of
+make you are using can't obtain the system load.  Some systems require
+make to be setgid sys or kmem for this; if you don't want to install
+make just to test it, make it setgid to kmem or whatever group /dev/kmem
+is (ie, "chgrp kmem make;chmod g+s make" as root).  In any case, the
+options/dash-l test should no longer *fail* because make can't read
+/dev/kmem.
+
+A directory named "work" will be created when the tests are run which
+will contain any makefiles and "diff" files of tests that fail so that
+you may look at them afterward to see the output of make and the
+expected result.
+
+There is a -help option which will give you more information about the
+other possible options for the test suite.
+
+Any complaints/suggestions/bugs/etc. for the test suite itself (as
+opposed to problems in make that the suite finds) should be sent to
+psmith@gnu.org.  Enjoy!
+                                                Paul D. Smith
+						Chris Arthur
