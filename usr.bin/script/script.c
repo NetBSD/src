@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.10 2004/07/13 12:07:51 wiz Exp $	*/
+/*	$NetBSD: script.c,v 1.11 2006/03/29 15:40:49 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.10 2004/07/13 12:07:51 wiz Exp $");
+__RCSID("$NetBSD: script.c,v 1.11 2006/03/29 15:40:49 rpaulo Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,20 +79,18 @@ char	*fname;
 
 struct	termios tt;
 
-void	done __P((void));
-void	dooutput __P((void));
-void	doshell __P((void));
-void	fail __P((void));
-void	finish __P((int));
-int	main __P((int, char **));
-void	scriptflush __P((int));
-void	record __P((FILE *, char *, size_t, int));
-void	playback __P((FILE *));
+void	done(void);
+void	dooutput(void);
+void	doshell(void);
+void	fail(void);
+void	finish(int);
+int	main(int, char **);
+void	scriptflush(int);
+void	record(FILE *, char *, size_t, int);
+void	playback(FILE *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int cc;
 	struct termios rtt;
@@ -180,8 +178,7 @@ main(argc, argv)
 }
 
 void
-finish(signo)
-	int signo;
+finish(int signo)
 {
 	int die, pid, status;
 
@@ -229,8 +226,7 @@ dooutput()
 }
 
 void
-scriptflush(signo)
-	int signo;
+scriptflush(int signo)
 {
 	if (outcc) {
 		(void)fflush(fscript);
@@ -285,11 +281,7 @@ done()
 }
 
 void
-record(fscript, buf, cc, direction)
-	FILE *fscript;
-	char *buf;
-	size_t cc;
-	int direction;
+record(FILE *fscript, char *buf, size_t cc, int direction)
 {
 	struct iovec iov[2];
 	struct stamp stamp;
@@ -318,8 +310,7 @@ record(fscript, buf, cc, direction)
 } while (0/*CONSTCOND*/)
 
 void
-playback(fscript)
-	FILE *fscript;
+playback(FILE *fscript)
 {
 	struct timespec tsi, tso;
 	struct stamp stamp;
