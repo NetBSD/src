@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2006/03/28 17:38:29 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2006/03/29 04:16:48 thorpej Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2006/03/29 04:16:48 thorpej Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -252,7 +252,7 @@ matchbiosdisks(void)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_name);
+		    dv->dv_xname, device_cfdata(dv)->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;

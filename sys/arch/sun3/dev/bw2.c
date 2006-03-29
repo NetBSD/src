@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.29 2006/03/28 17:38:28 thorpej Exp $	*/
+/*	$NetBSD: bw2.c,v 1.30 2006/03/29 04:16:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.29 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.30 2006/03/29 04:16:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ bw2attach(struct device *parent, struct device *self, void *args)
 	fb->fb_driver = &bw2fbdriver;
 	fb->fb_private = sc;
 	fb->fb_name  = sc->sc_dev.dv_xname;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
 
 	/* Set up default pixel offset.  May be changed below. */
 	pixeloffset = 0;

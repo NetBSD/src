@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.15 2006/03/28 17:38:39 thorpej Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.16 2006/03/29 04:16:51 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.15 2006/03/28 17:38:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.16 2006/03/29 04:16:51 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -617,7 +617,7 @@ tap_clone_destroy(struct ifnet *ifp)
 int
 tap_clone_destroyer(struct device *dev)
 {
-	struct cfdata *cf = dev->dv_cfdata;
+	struct cfdata *cf = device_cfdata(dev);
 	int error;
 
 	if ((error = config_detach(dev, 0)) != 0)

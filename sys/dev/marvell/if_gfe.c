@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.18 2006/03/25 23:15:54 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.19 2006/03/29 04:16:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.18 2006/03/25 23:15:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.19 2006/03/29 04:16:50 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -263,14 +263,14 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_pcxr &= ~ETH_EPCXR_PRIOrx_Override;
-	if (sc->sc_dev.dv_cfdata->cf_flags & 1) {
+	if (device_cfdata(&sc->sc_dev)->cf_flags & 1) {
 		aprint_normal(", phy %d (rmii)", phyaddr);
 		sc->sc_pcxr |= ETH_EPCXR_RMIIEn;
 	} else {
 		aprint_normal(", phy %d (mii)", phyaddr);
 		sc->sc_pcxr &= ~ETH_EPCXR_RMIIEn;
 	}
-	if (sc->sc_dev.dv_cfdata->cf_flags & 2)
+	if (device_cfdata(&sc->sc_dev)->cf_flags & 2)
 		sc->sc_flags |= GE_NOFREE;
 	sc->sc_pcxr &= ~(3 << 14);
 	sc->sc_pcxr |= (ETH_EPCXR_MFL_1536 << 14);
