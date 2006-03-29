@@ -49,6 +49,7 @@ static struct sbuf *qBlist;
 /* Get a buffer of a given size.  The buffer is returned with the
    ubuffree function.  */
 
+/* coverity[+alloc] */
 char *
 zbufalc (c)
      size_t c;
@@ -76,6 +77,7 @@ zbufalc (c)
 
 /* Get a buffer holding a given string.  */
 
+/* coverity[+alloc] */
 char *
 zbufcpy (z)
      const char *z;
@@ -93,6 +95,7 @@ zbufcpy (z)
 
 /* Free up a buffer back onto the linked list.  */
 
+/* coverity[+free : arg-1] */
 void
 ubuffree (z)
      char *z;
