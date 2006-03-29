@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.21 2006/03/19 23:36:10 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.22 2006/03/29 09:16:36 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1199,13 +1199,14 @@ remove_devi(struct devi *i)
 		struct nvlist *nv, *onv;
 
 		/* Double-linked nvlist anyone? */
-		for (nv = p->p_devs; nv->nv_ptr != NULL; nv = nv->nv_next) {
+		for (nv = p->p_devs; nv->nv_next != NULL; nv = nv->nv_next) {
 			if (nv->nv_next && nv->nv_next->nv_ptr == i) {
 				onv = nv->nv_next;
 				nv->nv_next = onv->nv_next;
 				nvfree(onv);
 				break;
-			} if (nv->nv_ptr == i) {
+			}
+			if (nv->nv_ptr == i) {
 				/* nv is p->p_devs in that case */
 				p->p_devs = nv->nv_next;
 				nvfree(nv);
