@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.53 2006/03/28 17:38:30 thorpej Exp $	*/
+/*	$NetBSD: iop.c,v 1.54 2006/03/29 06:45:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.53 2006/03/28 17:38:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.54 2006/03/29 06:45:05 thorpej Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -486,7 +486,7 @@ iop_config_interrupts(struct device *self)
 	int rv, i, niop;
 	int locs[IOPCF_NLOCS];
 
-	sc = (struct iop_softc *)self;
+	sc = device_private(self);
 	LIST_INIT(&sc->sc_iilist);
 
 	printf("%s: configuring...\n", sc->sc_dv.dv_xname);

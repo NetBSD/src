@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.22 2006/03/25 23:04:31 thorpej Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.23 2006/03/29 06:45:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.22 2006/03/25 23:04:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.23 2006/03/29 06:45:05 thorpej Exp $");
 
 #include "opt_i2o.h"
 
@@ -136,8 +136,8 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	ia = (struct iop_attach_args *)aux;
-	sc = (struct iopsp_softc *)self;
-	iop = (struct iop_softc *)parent;
+	sc = device_private(self);
+	iop = device_private(parent);
 
 	/* Register us as an initiator. */
 	sc->sc_ii.ii_dv = self;
