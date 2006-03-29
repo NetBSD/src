@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.46 2006/03/28 23:23:26 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.47 2006/03/29 21:44:55 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -616,4 +616,20 @@ usr.sbin/rpc.statd/statd.c			1.27
 	daemonizing. This is more portable and avoids zombie "rpc.statd"
 	processes after an NFS client running e.g. Mac OS X shuts down.
 	[tron, ticket #10400]
+
+sys/dev/pci/if_sk.c				1.19
+sys/dev/pci/if_skvar.h				1.8
+
+	PR kern/31304: Contribute to the random pool.
+	[riz, ticket #10402]
+
+sys/dev/pci/if_sk.c				1.20 via patch
+sys/dev/pci/if_skreg.h				1.6
+sys/dev/pci/if_skvar.h				1.9
+
+	Not all chips supported by this driver use the same interrupt
+	moderation timer frequency. Also add sysctl support for changing
+	the interrupt moderation timer at runtime; each board is controlled
+	independently.
+	[riz, ticket #10403]
 
