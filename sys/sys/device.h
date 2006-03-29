@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.88 2006/03/29 06:00:47 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.89 2006/03/29 06:08:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -370,6 +370,7 @@ const char	*device_xname(device_t);
 device_t	device_parent(device_t);
 boolean_t	device_is_active(device_t);
 int		device_locator(device_t, u_int);
+void		*device_private(device_t);
 
 boolean_t	device_is_a(device_t, const char *);
 
