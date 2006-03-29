@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.28 2004/11/04 07:29:09 dsl Exp $	*/
+/*	$NetBSD: tip.c,v 1.29 2006/03/29 12:37:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.28 2004/11/04 07:29:09 dsl Exp $");
+__RCSID("$NetBSD: tip.c,v 1.29 2006/03/29 12:37:59 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -553,6 +553,8 @@ ttysetup(spd)
 	cntrl.c_cflag |= CS8;
 	if (DC)
 		cntrl.c_cflag |= CLOCAL;
+	if (boolean(value(HARDWAREFLOW)))
+		cntrl.c_cflag |= CRTSCTS;	
 	cntrl.c_iflag &= ~(ISTRIP|ICRNL);
 	cntrl.c_oflag &= ~OPOST;
 	cntrl.c_lflag &= ~(ICANON|ISIG|IEXTEN|ECHO);
