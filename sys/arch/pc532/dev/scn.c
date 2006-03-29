@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.69 2006/03/28 17:38:26 thorpej Exp $ */
+/*	$NetBSD: scn.c,v 1.70 2006/03/29 03:58:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.69 2006/03/28 17:38:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.70 2006/03/29 03:58:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -832,10 +832,7 @@ scnattach(parent, self, aux)
 	first =	(duart->base == NULL);
 
 	/* pick up "flags" (SCN_xxx) from config file */
-	if (self->dv_cfdata)	/* paranoia */
-		sc->sc_swflags = ca->ca_flags;
-	else
-		sc->sc_swflags = 0;
+	sc->sc_swflags = ca->ca_flags;
 
 	console = SCN_ISCONSOLE(ca->ca_addr);
 	if (console) {
