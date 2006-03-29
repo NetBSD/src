@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.29 2006/03/29 04:16:48 thorpej Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.30 2006/03/29 04:42:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.29 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.30 2006/03/29 04:42:30 thorpej Exp $");
 
 #include "opt_cardslot.h"
 
@@ -112,7 +112,7 @@ cardslotattach(parent, self, aux)
 	struct cardbus_softc *csc = NULL;
 	struct pcmcia_softc *psc = NULL;
 
-	sc->sc_slot = sc->sc_dev.dv_unit;
+	sc->sc_slot = device_unit(&sc->sc_dev);
 	sc->sc_cb_softc = NULL;
 	sc->sc_16_softc = NULL;
 	SIMPLEQ_INIT(&sc->sc_events);
