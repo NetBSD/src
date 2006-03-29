@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.1.1.3 2005/12/21 23:17:24 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.2 2006/03/29 16:40:50 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -39,6 +39,7 @@ typedef enum {
 typedef void (*isc_assertioncallback_t)(const char *, int, isc_assertiontype_t,
 					const char *);
 
+/* coverity[+kill] */
 LIBISC_EXTERNAL_DATA extern isc_assertioncallback_t isc_assertion_failed;
 
 void
