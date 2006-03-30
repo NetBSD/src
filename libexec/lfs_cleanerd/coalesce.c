@@ -1,7 +1,7 @@
-/*      $NetBSD: coalesce.c,v 1.10 2005/08/19 02:06:29 christos Exp $  */
+/*      $NetBSD: coalesce.c,v 1.11 2006/03/30 19:10:13 perseant Exp $  */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -60,25 +60,20 @@
 
 #include <syslog.h>
 
-#include "clean.h"
+#include "bufcache.h"
+#include "vnode.h"
+#include "cleaner.h"
 
 extern int debug, do_mmap;
 
-static int
-tossdead(const void *client, const void *a, const void *b)
-{
-	return (((BLOCK_INFO *)a)->bi_daddr <= 0 ||
-		((BLOCK_INFO *)a)->bi_size == 0);
-}
-
-static int log2int(int n)
+int log2int(int n)
 {
 	int log;
 
 	log = 0;
 	while (n > 0) {
 		++log;
-		n /= 2;
+		n >>= 1;
 	}
 	return log - 1;
 }
@@ -91,9 +86,9 @@ enum coalesce_returncodes {
 	COALESCE_BADBLOCKSIZE,
 	COALESCE_NOMEM,
 	COALESCE_BADBMAPV,
+	COALESCE_BADMARKV,
 	COALESCE_NOTWORTHIT,
 	COALESCE_NOTHINGLEFT,
-	COALESCE_NOTHINGLEFT2,
 	COALESCE_EIO,
 
 	COALESCE_MAXERROR
@@ -115,30 +110,62 @@ char *coalesce_return[] = {
 	"No such error"
 };
 
+static struct ufs1_dinode *
+get_dinode(struct clfs *fs, ino_t ino)
+{
+	IFILE *ifp;
+	daddr_t daddr;
+	struct ubuf *bp;
+	struct ufs1_dinode *dip, *r;
+
+	lfs_ientry(&ifp, fs, ino, &bp);
+	daddr = ifp->if_daddr;
+	brelse(bp);
+
+	if (daddr == 0x0)
+		return NULL;
+
+	bread(fs->clfs_devvp, daddr, fs->lfs_ibsize, NOCRED, &bp);
+	for (dip = (struct ufs1_dinode *)bp->b_data;
+	     dip < (struct ufs1_dinode *)(bp->b_data + fs->lfs_ibsize); dip++)
+		if (dip->di_inumber == ino) {
+			r = (struct ufs1_dinode *)malloc(sizeof(*r));
+			memcpy(r, dip, sizeof(*r));
+			brelse(bp);
+			return r;
+		}
+	brelse(bp);
+	return NULL;
+}
+
 /*
  * Find out if this inode's data blocks are discontinuous; if they are,
  * rewrite them using markv.  Return the number of inodes rewritten.
  */
-int clean_inode(struct fs_info *fsp, ino_t ino)
+static int
+clean_inode(struct clfs *fs, ino_t ino)
 {
-	int i, error;
 	BLOCK_INFO *bip = NULL, *tbip;
+	CLEANERINFO cip;
+	struct ubuf *bp;
 	struct ufs1_dinode *dip;
-	int nb, onb, noff;
+	struct clfs_seguse *sup;
+	struct lfs_fcntl_markv /* {
+		BLOCK_INFO *blkiov;
+		int blkcnt;
+	} */ lim;
 	daddr_t toff;
-	struct lfs *lfsp;
-	int bps;
-	SEGUSE *sup;
+	int i;
+	int nb, onb, noff;
 	int retval;
+	int bps;
 
-	lfsp = &fsp->fi_lfs;
-
-        dip = get_dinode(fsp, ino);
+	dip = get_dinode(fs, ino);
 	if (dip == NULL)
 		return COALESCE_NOINODE;
 
 	/* Compute file block size, set up for bmapv */
-	onb = nb = lblkno(lfsp, dip->di_size);
+	onb = nb = lblkno(fs, dip->di_size);
 
 	/* XXX for now, don't do any file small enough to have fragments */
 	if (nb < NDADDR)
@@ -146,16 +173,12 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 
 	/* Sanity checks */
 	if (dip->di_size < 0) {
-		if (debug)
-			syslog(LOG_DEBUG, "ino %llu, negative size (%lld)",
-			    (unsigned long long)ino, (long long)dip->di_size);
+		dlog("ino %d, negative size (%" PRId64 ")", ino, dip->di_size);
 		return COALESCE_BADSIZE;
 	}
 	if (nb > dip->di_blocks) {
-		if (debug)
-			syslog(LOG_DEBUG, "ino %llu, computed blocks %d "
-			    "> held blocks %d",
-			    (unsigned long long)ino, nb, dip->di_blocks);
+		dlog("ino %d, computed blocks %d > held blocks %d", ino, nb,
+		     dip->di_blocks);
 		return COALESCE_BADBLOCKSIZE;
 	}
 
@@ -172,8 +195,11 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 		bip[i].bi_version = dip->di_gen;
 		/* Don't set the size, but let lfs_bmap fill it in */
 	}
-	if ((error = lfs_bmapv_emul(ifile_fd, bip, nb)) < 0) { 
-                syslog(LOG_WARNING, "LFCNBMAPV: %m");
+	lim.blkiov = bip;
+	lim.blkcnt = nb;
+	if (fcntl(fs->clfs_ifilefd, LFCNBMAPV, &lim) < 0) { 
+		syslog(LOG_WARNING, "%s: coalesce: LFCNBMAPV: %m",
+		       fs->lfs_fsmnt);
 		retval = COALESCE_BADBMAPV;
 		goto out;
 	}
@@ -187,21 +213,21 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 #endif
 	noff = toff = 0;
 	for (i = 1; i < nb; i++) {
-		if (bip[i].bi_daddr != bip[i - 1].bi_daddr + lfsp->lfs_frag)
+		if (bip[i].bi_daddr != bip[i - 1].bi_daddr + fs->lfs_frag)
 			++noff;
 		toff += abs(bip[i].bi_daddr - bip[i - 1].bi_daddr
-		    - lfsp->lfs_frag) >> lfsp->lfs_fbshift;
+		    - fs->lfs_frag) >> fs->lfs_fbshift;
 	}
 
 	/*
 	 * If this file is not discontinuous, there's no point in rewriting it.
-         *
-         * Explicitly allow a certain amount of discontinuity, since large
-         * files will be broken among segments and medium-sized files
-         * can have a break or two and it's okay.
+	 *
+	 * Explicitly allow a certain amount of discontinuity, since large
+	 * files will be broken among segments and medium-sized files
+	 * can have a break or two and it's okay.
 	 */
 	if (nb <= 1 || noff == 0 || noff < log2int(nb) ||
-	    segtod(lfsp, noff) * 2 < nb) {
+	    segtod(fs, noff) * 2 < nb) {
 		retval = COALESCE_NOTWORTHIT;
 		goto out;
 	} else if (debug)
@@ -213,35 +239,32 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	for (i = 0; i < nb; i++) {
 		if (bip[i].bi_daddr <= 0)
 			continue;
-		sup = SEGUSE_ENTRY(lfsp, fsp->fi_segusep,
-				dtosn(lfsp, bip[i].bi_daddr));
-		if (sup->su_flags & SEGUSE_ACTIVE)
+		sup = &fs->clfs_segtab[dtosn(fs, bip[i].bi_daddr)];
+		if (sup->flags & SEGUSE_ACTIVE)
 			bip[i].bi_daddr = LFS_UNUSED_DADDR; /* 0 */
 	}
-        /*
-	 * Get rid of any we've marked dead.  If this is an older
-	 * kernel that doesn't have bmapv fill in the block
-	 * sizes, we'll toss everything here.
+
+	/*
+	 * Get rid of any blocks we've marked dead.  If this is an older
+	 * kernel that doesn't have bmapv fill in the block sizes, we'll
+	 * toss everything here. 
 	 */
-	toss(bip, &nb, sizeof(BLOCK_INFO), tossdead, NULL);
-        if (nb && tossdead(NULL, bip + nb - 1, NULL))
-                --nb;
-        if (nb == 0) {
-		retval = COALESCE_NOTHINGLEFT;
-		goto out;
-	}
+	onb = nb;
+	toss_old_blocks(fs, &bip, &nb);
+	nb = i;
 
 	/*
 	 * We may have tossed enough blocks that it is no longer worthwhile
 	 * to rewrite this inode.
 	 */
-	if (onb - nb > log2int(onb)) {
+	if (nb == 0 || onb - nb > log2int(onb)) {
 		if (debug)
 			syslog(LOG_DEBUG, "too many blocks tossed, not rewriting");
-		return COALESCE_NOTHINGLEFT2;
+		retval = COALESCE_NOTHINGLEFT;
+		goto out;
 	}
 
-        /*
+	/*
 	 * We are going to rewrite this inode.
 	 * For any remaining blocks, read in their contents.
 	 */
@@ -253,8 +276,9 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 			retval = COALESCE_NOMEM;
 			goto out;
 		}
-                if (get_rawblock(fsp, bip[i].bi_bp, bip[i].bi_size,
-		    bip[i].bi_daddr) != bip[i].bi_size) {
+
+		if (pread(fs->clfs_devfd, bip[i].bi_bp, bip[i].bi_size,
+			  fsbtob(fs, bip[i].bi_daddr)) < 0) {
 			retval = COALESCE_EIO;
 			goto out;
 		}
@@ -268,19 +292,29 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 	 * than half of the available segments, sleep until that's not
 	 * true any more.
 	 */
-	bps = segtod(lfsp, 1);
+	bps = segtod(fs, 1);
 	for (tbip = bip; tbip < bip + nb; tbip += bps) {
-		while (fsp->fi_cip->clean < 4) {
-			lfs_segwait_emul(ifile_fd, NULL);
-			reread_fs_info(fsp, do_mmap);
-			/* XXX start over? */
+		do {
+			bread(fs->lfs_ivnode, 0, fs->lfs_bsize, NOCRED, &bp);
+			cip = *(CLEANERINFO *)bp->b_data;
+			bp->b_flags |= B_INVAL;
+			brelse(bp);
+
+			if (cip.clean < 4) /* XXX magic number 4 */
+				fcntl(fs->clfs_ifilefd, LFCNSEGWAIT, NULL);
+		} while(cip.clean < 4);
+
+		lim.blkiov = tbip;
+		lim.blkcnt = (tbip + bps < bip + nb ? bps : nb % bps);
+		if (fcntl(fs->clfs_ifilefd, LFCNMARKV, &lim) < 0) {
+			retval = COALESCE_BADMARKV;
+			goto out;
 		}
-		lfs_markv_emul(ifile_fd, tbip,
-                          (tbip + bps < bip + nb ? bps : nb % bps));
 	}
 
 	retval = COALESCE_OK;
 out:
+	free(dip);
 	if (bip) {
 		for (i = 0; i < onb; i++)
 			if (bip[i].bi_bp)
@@ -294,34 +328,45 @@ out:
  * Try coalescing every inode in the filesystem.
  * Return the number of inodes actually altered.
  */
-int clean_all_inodes(struct fs_info *fsp)
+int clean_all_inodes(struct clfs *fs)
 {
-	int i, r;
+	int i, r, maxino;
 	int totals[COALESCE_MAXERROR];
+	struct stat st;
 
 	memset(totals, 0, sizeof(totals));
-	for (i = 0; i < fsp->fi_ifile_count; i++) {
-		r = clean_inode(fsp, i);
+
+	fstat(fs->clfs_ifilefd, &st);
+	maxino = fs->lfs_ifpb * (st.st_size >> fs->lfs_bshift) -
+		fs->lfs_segtabsz - fs->lfs_cleansz;
+
+	for (i = 0; i < maxino; i++) {
+		r = clean_inode(fs, i);
 		++totals[r];
 	}
 
 	for (i = 0; i < COALESCE_MAXERROR; i++)
 		if (totals[i])
 			syslog(LOG_DEBUG, "%s: %d", coalesce_return[i],
-				totals[i]);
-
+			       totals[i]);
+	
 	return totals[COALESCE_OK];
 }
 
-int fork_coalesce(struct fs_info *fsp)
+/*
+ * Fork a child process to coalesce this fs.
+ */
+int
+fork_coalesce(struct clfs *fs)
 {
 	static pid_t childpid;
 	int num;
 
-	reread_fs_info(fsp, do_mmap);
-
+	/*
+	 * If already running a coalescing child, don't start a new one.
+	 */
 	if (childpid) {
-     		if (waitpid(childpid, NULL, WNOHANG) == childpid)
+		if (waitpid(childpid, NULL, WNOHANG) == childpid)
 			childpid = 0;
 	}
 	if (childpid && kill(childpid, 0) >= 0) {
@@ -330,15 +375,22 @@ int fork_coalesce(struct fs_info *fsp)
 			syslog(LOG_DEBUG, "coalescing already in progress");
 		return 0;
 	}
+
+	/*
+	 * Fork a child and let the child coalease
+	 */
 	childpid = fork();
 	if (childpid < 0) {
-		syslog(LOG_ERR, "fork: %m");
+		syslog(LOG_ERR, "%s: fork to coaleasce: %m", fs->lfs_fsmnt);
 		return 0;
 	} else if (childpid == 0) {
-		syslog(LOG_NOTICE, "new coalescing process, pid %d", getpid());
-		num = clean_all_inodes(fsp);
-		syslog(LOG_NOTICE, "coalesced %d discontiguous inodes", num);
+		syslog(LOG_NOTICE, "%s: new coalescing process, pid %d",
+		       fs->lfs_fsmnt, getpid());
+		num = clean_all_inodes(fs);
+		syslog(LOG_NOTICE, "%s: coalesced %d discontiguous inodes",
+		       fs->lfs_fsmnt, num);
 		exit(0);
 	}
+
 	return 0;
 }
