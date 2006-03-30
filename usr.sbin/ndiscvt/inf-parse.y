@@ -32,7 +32,13 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-parse.y,v 1.2 2004/01/02 04:31:06 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__RCSID("$NetBSD: inf-parse.y,v 1.2 2006/03/30 23:21:06 rittera Exp $");
+#endif 
+
 
 #include <stdio.h>
 #include <sys/types.h>
