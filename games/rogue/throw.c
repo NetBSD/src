@@ -1,4 +1,4 @@
-/*	$NetBSD: throw.c,v 1.6 2003/08/07 09:37:40 agc Exp $	*/
+/*	$NetBSD: throw.c,v 1.7 2006/03/30 05:04:22 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: throw.c,v 1.6 2003/08/07 09:37:40 agc Exp $");
+__RCSID("$NetBSD: throw.c,v 1.7 2006/03/30 05:04:22 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,6 +211,9 @@ flop_weapon(weapon, row, col)
 	boolean found = 0;
 	short mch, dch;
 	unsigned short mon;
+
+	if ((row < 0) || (row >= DROWS) || (col < 0) || (col >= DCOLS))
+		clean_up("flop_weapon:  weapon landed outside of dungeon");
 
 	while ((i < 9) && dungeon[row][col] & ~(FLOOR | TUNNEL | DOOR | MONSTER)) {
 		rand_around(i++, &row, &col);
