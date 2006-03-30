@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.shk.c,v 1.7 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hack.shk.c,v 1.8 2006/03/30 01:32:27 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.shk.c,v 1.7 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: hack.shk.c,v 1.8 2006/03/30 01:32:27 jnemeth Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -1100,6 +1100,8 @@ notonl_ok:
 	if (nix != omx || niy != omy) {
 		if (info[chi] & ALLOW_M) {
 			mtmp = m_at(nix, niy);
+			if (mtmp == NULL)
+				panic("error in shk_move");
 			if (hitmm(shkp, mtmp) == 1 && rn2(3) &&
 			    hitmm(mtmp, shkp) == 2)
 				return (2);
