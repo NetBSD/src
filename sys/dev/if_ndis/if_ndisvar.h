@@ -67,9 +67,14 @@ TAILQ_HEAD(nch, ndis_cfglist);
 #define NDIS_INC(x)		\
 	(x)->ndis_txidx = ((x)->ndis_txidx + 1) % (x)->ndis_maxpkts 
 
+#ifdef __FreeBSD__
 #define arpcom ic.ic_ac
+#endif
 
 struct ndis_softc {
+#ifndef __FreeBSD__
+	struct ethercom		arpcom;
+#endif
 	struct ieee80211com	ic;		/* interface info */
 #ifdef notdef
 	struct ieee80211com	arpcom;		/* interface info */
@@ -92,7 +97,9 @@ struct ndis_softc {
 	struct resource		*ndis_res_am;	/* attribute mem (pccard) */
 	int			ndis_am_rid;
 	struct resource		*ndis_res_cm;	/* common mem (pccard) */
+#ifdef __FreeBSD__
 	struct resource_list	ndis_rl;
+#endif
 	int			ndis_rescnt;
 	struct mtx		ndis_mtx;
 	device_t		ndis_dev;
@@ -100,7 +107,11 @@ struct ndis_softc {
 	ndis_miniport_block	*ndis_block;
 	ndis_miniport_characteristics	*ndis_chars;
 	interface_type		ndis_type;
+#ifdef __FreeBSD__
 	struct callout_handle	ndis_stat_ch;
+#else
+	struct callout		ndis_stat_ch;
+#endif
 	int			ndis_maxpkts;
 	ndis_oid		*ndis_oids;
 	int			ndis_oidcnt;
@@ -117,8 +128,8 @@ struct ndis_softc {
 	int			ndis_if_flags;
 	int			ndis_skip;
 
-#if __FreeBSD_version < 502113
 	struct sysctl_ctx_list	ndis_ctx;
+#if __FreeBSD__ && __FreeBSD_version < 502113
 	struct sysctl_oid	*ndis_tree;
 #endif
 	int			ndis_devidx;
