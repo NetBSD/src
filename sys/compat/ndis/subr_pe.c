@@ -31,7 +31,13 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_pe.c,v 1.7.2.3 2005/03/31 04:24:36 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+#endif
+
 
 /*
  * This file contains routines for relocating and dynamically linking

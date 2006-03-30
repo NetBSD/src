@@ -31,7 +31,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_hal.c,v 1.13.2.3 2005/03/31 04:24:35 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,19 +45,30 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_hal.c,v 1.13.2.3 2005/03/31 04:24:3
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
+#ifdef __FreeBSD__
 #include <sys/mutex.h>
+#endif
 #include <sys/proc.h>
 #include <sys/sched.h>
+#ifdef __FreeBSD__
 #include <sys/module.h>
+#endif
 
 #include <sys/systm.h>
+#ifdef __NetBSD__
+#include <sys/lkm.h>
+#endif
+#ifdef __FreeBSD__
 #include <machine/clock.h>
 #include <machine/bus_memio.h>
 #include <machine/bus_pio.h>
+#endif
 #include <machine/bus.h>
 
+#ifdef __FreeBSD__
 #include <sys/bus.h>
 #include <sys/rman.h>
+#endif
 
 #include <compat/ndis/pe_var.h>
 #include <compat/ndis/ntoskrnl_var.h>
@@ -332,13 +348,20 @@ __fastcall uint8_t
 KfRaiseIrql(REGARGS1(uint8_t irql))
 {
 	uint8_t			oldirql;
+#ifdef __NetBSD__
+	uint8_t			s;
+#endif
 
 	if (irql < KeGetCurrentIrql())
 		panic("IRQL_NOT_LESS_THAN");
 
 	if (KeGetCurrentIrql() == DISPATCH_LEVEL)
 		return(DISPATCH_LEVEL);
-
+#ifdef __NetBSD__
+	SCHED_LOCK(s);
+	oldirql = curlwp->l_priority;
+	SCHED_UNLOCK(s);
+#else
 	mtx_lock_spin(&sched_lock);
 	oldirql = curthread->td_base_pri;
 	sched_prio(curthread, PI_REALTIME);
@@ -346,6 +369,7 @@ KfRaiseIrql(REGARGS1(uint8_t irql))
 	curthread->td_base_pri = PI_REALTIME;
 #endif
 	mtx_unlock_spin(&sched_lock);
+#endif /* __NetBSD__ */
 
 	return(oldirql);
 }
@@ -353,18 +377,28 @@ KfRaiseIrql(REGARGS1(uint8_t irql))
 __fastcall void 
 KfLowerIrql(REGARGS1(uint8_t oldirql))
 {
+#ifdef __NetBSD__
+	uint8_t		s;
+#endif
+
 	if (oldirql == DISPATCH_LEVEL)
 		return;
 
 	if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 		panic("IRQL_NOT_GREATER_THAN");
 
+#ifdef __NetBSD__
+	SCHED_LOCK(s);
+	curlwp->l_priority = oldirql;
+	SCHED_UNLOCK(s);
+#else
 	mtx_lock_spin(&sched_lock);
 #if __FreeBSD_version < 600000
 	curthread->td_base_pri = oldirql;
 #endif
 	sched_prio(curthread, oldirql);
 	mtx_unlock_spin(&sched_lock);
+#endif /* __NetBSD__ */
 
 	return;
 }

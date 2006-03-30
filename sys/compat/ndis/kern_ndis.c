@@ -31,7 +31,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,20 +50,32 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#ifdef __FreeBSD__
 #include <sys/mutex.h>
+#endif
 #include <sys/conf.h>
 
 #include <sys/kernel.h>
+#ifdef __FreeBSD__
 #include <sys/module.h>
+#else
+#include <sys/lkm.h>
+#endif
 #include <sys/kthread.h>
 #include <machine/bus.h>
+#ifdef __FreeBSD__
 #include <machine/resource.h>
 #include <sys/bus.h>
 #include <sys/rman.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#else
+#include <net/if_ether.h>
+#endif
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
@@ -138,6 +155,7 @@ static struct ndisproc ndis_iproc;
  * 'ndis.'
  */
 
+#ifdef __FreeBSD__
 static int
 ndis_modevent(module_t mod, int cmd, void *arg)
 {
@@ -210,6 +228,72 @@ ndis_modevent(module_t mod, int cmd, void *arg)
 }
 DEV_MODULE(ndisapi, ndis_modevent, NULL);
 MODULE_VERSION(ndisapi, 1);
+#endif
+#ifdef __NetBSD__
+MOD_MISC( "ndis");
+
+static int
+ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
+{
+	int			error = 0;
+	image_patch_table	*patch;
+
+	switch (cmd) {
+	case LKM_E_LOAD:
+		/* Initialize subsystems */
+		windrv_libinit();
+		hal_libinit();
+		ndis_libinit();
+		ntoskrnl_libinit();
+		usbd_libinit();
+
+		patch = kernndis_functbl;
+		while (patch->ipt_func != NULL) {
+			windrv_wrap((funcptr)patch->ipt_func,
+			    (funcptr *)&patch->ipt_wrap);
+			patch++;
+		}
+
+		ndis_create_kthreads();
+
+		TAILQ_INIT(&ndis_devhead);
+
+		break;
+	case LKM_E_UNLOAD:
+		/* stop kthreads */
+		ndis_destroy_kthreads();
+
+		/* Shut down subsystems */
+		hal_libfini();
+		ndis_libfini();
+		ntoskrnl_libfini();
+		usbd_libfini();
+		windrv_libfini();
+
+		patch = kernndis_functbl;
+		while (patch->ipt_func != NULL) {
+			windrv_unwrap(patch->ipt_wrap);
+			patch++;
+		}
+
+		break;
+	case LKM_E_STAT:
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return(error);
+}
+
+int
+ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
+{
+	DISPATCH(lkmtp, cmd, ver, 
+		 ndis_lkm_handle, ndis_lkm_handle, ndis_lkm_handle);
+}
+#endif /* __NetBSD__ */
 
 /*
  * We create two kthreads for the NDIS subsystem. One of them is a task
@@ -272,8 +356,10 @@ ndis_runq(arg)
 	}
 
 	wakeup(die);
+#ifdef __FreeBSD__
 #if __FreeBSD_version < 502113
 	mtx_lock(&Giant);
+#endif
 #endif
 	kthread_exit(0);
 	return; /* notreached */
@@ -304,17 +390,27 @@ ndis_create_kthreads()
 	if (error == 0) {
 		ndis_tproc.np_q = &ndis_ttodo;
 		ndis_tproc.np_state = NDIS_PSTATE_SLEEPING;
+#ifdef __FreeBSD__
 		error = kthread_create(ndis_runq, &ndis_tproc,
 		    &ndis_tproc.np_p, RFHIGHPID,
 		    NDIS_KSTACK_PAGES, "ndis taskqueue");
+#else
+		error = kthread_create1(ndis_runq, &ndis_tproc,
+		    &ndis_tproc.np_p, "ndis taskqueue");
+#endif
 	}
 
 	if (error == 0) {
 		ndis_iproc.np_q = &ndis_itodo;
 		ndis_iproc.np_state = NDIS_PSTATE_SLEEPING;
+#ifdef __FreeBSD__
 		error = kthread_create(ndis_runq, &ndis_iproc,
 		    &ndis_iproc.np_p, RFHIGHPID,
 		    NDIS_KSTACK_PAGES, "ndis swi");
+#else
+		error = kthread_create1(ndis_runq, &ndis_iproc,
+		    &ndis_iproc.np_p, "ndis swi");
+#endif
 	}
 
 	if (error) {
@@ -382,7 +478,11 @@ ndis_stop_thread(t)
 
 	/* wait for thread exit */
 
+#ifdef __FreeBSD__
 	tsleep(r, curthread->td_priority|PCATCH, "ndisthexit", hz * 60);
+#else
+	tsleep(r, curlwp->l_priority|PCATCH, "ndisthexit", hz * 60);
+#endif
 
 	/* Now empty the job list. */
 
@@ -539,6 +639,7 @@ ndis_thsuspend(p, m, timo)
 {
 	int			error;
 
+#ifdef __FreeBSD__
 	if (m != NULL) {
 		error = msleep(&p->p_siglist, m,
 		    curthread->td_priority, "ndissp", timo);
@@ -547,6 +648,14 @@ ndis_thsuspend(p, m, timo)
 		error = msleep(&p->p_siglist, &p->p_mtx,
 		    curthread->td_priority|PDROP, "ndissp", timo);
 	}
+#else
+	if (m != NULL)
+		error = ltsleep(&p->p_siglist, curlwp->l_priority, 
+				"ndissp", timo, 0);
+	else
+		error = ltsleep(&p->p_siglist, curlwp->l_priority|PNORELOCK, 
+				"ndissp", timo, 0);
+#endif
 
 	return(error);
 }
@@ -579,7 +688,11 @@ ndis_status_func(adapter, status, sbuf, slen)
 
 	block = adapter;
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#ifdef __FreeBSD__
 	ifp = &sc->arpcom.ac_if;
+#else
+	ifp = &sc->arpcom.ec_if;
+#endif
 	if (ifp->if_flags & IFF_DEBUG)
 		device_printf (sc->ndis_dev, "status: %x\n", status);
 	return;
@@ -595,7 +708,11 @@ ndis_statusdone_func(adapter)
 
 	block = adapter;
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#ifdef __FreeBSD__
 	ifp = &sc->arpcom.ac_if;
+#else
+	ifp = &sc->arpcom.ec_if;
+#endif
 	if (ifp->if_flags & IFF_DEBUG)
 		device_printf (sc->ndis_dev, "status complete\n");
 	return;
@@ -639,7 +756,11 @@ ndis_resetdone_func(adapter, status, addressingreset)
 
 	block = adapter;
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#ifdef __FreeBSD__
 	ifp = &sc->arpcom.ac_if;
+#else
+	ifp = &sc->arpcom.ec_if;
+#endif
 
 	if (ifp->if_flags & IFF_DEBUG)
 		device_printf (sc->ndis_dev, "reset done...\n");
@@ -651,6 +772,7 @@ int
 ndis_create_sysctls(arg)
 	void			*arg;
 {
+#ifdef __FreeBSD__
 	struct ndis_softc	*sc;
 	ndis_cfg		*vals;
 	char			buf[256];
@@ -748,6 +870,7 @@ ndis_create_sysctls(arg)
 		    "Interrupt Number", buf, CTLFLAG_RD);
 	}
 
+#endif /* __FreeBSD__ */
 	return(0);
 }
 
@@ -759,6 +882,7 @@ ndis_add_sysctl(arg, key, desc, val, flag)
 	char			*val;
 	int			flag;
 {
+#ifdef __FreeBSD__
 	struct ndis_softc	*sc;
 	struct ndis_cfglist	*cfg;
 	char			descstr[256];
@@ -789,7 +913,7 @@ ndis_add_sysctl(arg, key, desc, val, flag)
 	    OID_AUTO, cfg->ndis_cfg.nc_cfgkey, flag,
 	    cfg->ndis_cfg.nc_val, sizeof(cfg->ndis_cfg.nc_val),
 	    cfg->ndis_cfg.nc_cfgdesc);
-
+#endif /* __FreeBSD__ */
 	return(0);
 }
 
@@ -904,9 +1028,11 @@ ndis_convert_res(arg)
 	device_t		dev;
 	struct resource_list	*brl;
 	struct resource_list_entry	*brle;
+#ifdef __FreeBSD__
 #if __FreeBSD_version < 600022
 	struct resource_list	brl_rev;
 	struct resource_list_entry	*n;
+#endif
 #endif
 	int 			error = 0;
 
@@ -914,10 +1040,11 @@ ndis_convert_res(arg)
 	block = sc->ndis_block;
 	dev = sc->ndis_dev;
 
+#ifdef __FreeBSD__
 #if __FreeBSD_version < 600022
 	SLIST_INIT(&brl_rev);
 #endif
-
+#endif
 	rl = malloc(sizeof(ndis_resource_list) +
 	    (sizeof(cm_partial_resource_desc) * (sc->ndis_rescnt - 1)),
 	    M_DEVBUF, M_NOWAIT|M_ZERO);

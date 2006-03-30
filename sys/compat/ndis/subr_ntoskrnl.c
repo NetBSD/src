@@ -31,9 +31,16 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+#endif
 
+#ifdef __FreeBSD__
 #include <sys/ctype.h>
+#endif
 #include <sys/unistd.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,7 +48,9 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#ifdef __FreeBSD__
 #include <sys/mutex.h>
+#endif
 
 #include <sys/callout.h>
 #if __FreeBSD_version > 502113
@@ -50,22 +59,38 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
+#ifdef __FreeBSD__
 #include <sys/module.h>
+#else
+#include <sys/lkm.h>
+#endif
 
 #include <machine/atomic.h>
+#ifdef __FreeBSD__
 #include <machine/clock.h>
 #include <machine/bus_memio.h>
 #include <machine/bus_pio.h>
+#endif
 #include <machine/bus.h>
 #include <machine/stdarg.h>
 
+#ifdef __FreeBSD__
 #include <sys/bus.h>
 #include <sys/rman.h>
+#endif
 
+#ifdef __NetBSD__
+#include <uvm/uvm.h>
+#include <uvm/uvm_param.h>
+#include <uvm/uvm_pmap.h>
+#include <sys/pool.h>
+#include <sys/reboot.h> /* for AB_VERBOSE */
+#else
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
 #include <vm/uma.h>
+#endif
 
 #include <compat/ndis/pe_var.h>
 #include <compat/ndis/ntoskrnl_var.h>
@@ -190,7 +215,11 @@ static kspin_lock ntoskrnl_global;
 static kspin_lock ntoskrnl_cancellock;
 static int ntoskrnl_kth = 0;
 static struct nt_objref_head ntoskrnl_reflist;
+#ifdef __FreeBSD__
 static uma_zone_t mdl_zone;
+#else
+static struct pool mdl_pool;
+#endif
 
 int
 ntoskrnl_libinit()
@@ -223,8 +252,12 @@ ntoskrnl_libinit()
 	 * the heap.
 	 */
 
+#ifdef __FreeBSD__
 	mdl_zone = uma_zcreate("Windows MDL", MDL_ZONE_SIZE,
 	    NULL, NULL, NULL, NULL, UMA_ALIGN_PTR, 0);
+#else
+	pool_init(&mdl_pool, MDL_ZONE_SIZE, 0, 0, 0, "Windows MDL", NULL);
+#endif
 
 	return(0);
 }
@@ -240,7 +273,11 @@ ntoskrnl_libfini()
 		patch++;
 	}
 
+#ifdef __FreeBSD__
 	uma_zdestroy(mdl_zone);
+#else
+	pool_destroy(&mdl_pool);
+#endif
 
 	mtx_destroy(&ntoskrnl_dispatchlock);
 
@@ -1000,7 +1037,9 @@ ntoskrnl_wakeup(arg)
 	nt_dispatch_header	*obj;
 	wait_block		*w;
 	list_entry		*e;
+#ifdef __FreeBSD__
 	struct thread		*td;
+#endif
 
 	obj = arg;
 
@@ -1008,8 +1047,12 @@ ntoskrnl_wakeup(arg)
 	e = obj->dh_waitlisthead.nle_flink;
 	while (e != &obj->dh_waitlisthead) {
 		w = (wait_block *)e;
+#ifdef __FreeBSD__
 		td = w->wb_kthread;
 		ndis_thresume(td->td_proc);
+#else
+		ndis_thresume(curproc);
+#endif
 		/*
 		 * For synchronization objects, only wake up
 		 * the first waiter.
@@ -1030,7 +1073,7 @@ ntoskrnl_time(tval)
 
 	nanotime(&ts);
 	*tval = (uint64_t)ts.tv_nsec / 100 + (uint64_t)ts.tv_sec * 10000000 +
-	    11644473600;
+	    (uint64_t)11644473600ULL;
 
 	return;
 }
@@ -1095,7 +1138,9 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 	uint8_t			alertable;
 	int64_t			*duetime;
 {
+#ifdef __FreeBSD__
 	struct thread		*td = curthread;
+#endif
 	kmutant			*km;
 	wait_block		w;
 	struct timeval		tv;
@@ -1120,10 +1165,18 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 	if (obj->dh_size == OTYPE_MUTEX) {
 		km = (kmutant *)obj;
 		if (km->km_ownerthread == NULL ||
+#ifdef __FreeBSD__
 		    km->km_ownerthread == curthread->td_proc) {
+#else
+		km->km_ownerthread == curproc) {
+#endif
 			obj->dh_sigstate = FALSE;
 			km->km_acquirecnt++;
+#ifdef __FreeBSD__
 			km->km_ownerthread = curthread->td_proc;
+#else
+			km->km_ownerthread = curproc;
+#endif
 			mtx_unlock(&ntoskrnl_dispatchlock);
 			return (STATUS_SUCCESS);
 		}
@@ -1135,7 +1188,9 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 	}
 
 	w.wb_object = obj;
+#ifdef __FreeBSD__
 	w.wb_kthread = td;
+#endif
 
 	INSERT_LIST_TAIL((&obj->dh_waitlisthead), (&w.wb_waitlist));
 
@@ -1165,8 +1220,13 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 		}
 	}
 
+#ifdef __FreeBSD__
 	error = ndis_thsuspend(td->td_proc, &ntoskrnl_dispatchlock,
 	    duetime == NULL ? 0 : tvtohz(&tv));
+#else
+	error = ndis_thsuspend(curproc, &ntoskrnl_dispatchlock,
+	    duetime == NULL ? 0 : tvtohz(&tv));
+#endif
 
 	/* We timed out. Leave the object alone and return status. */
 
@@ -1186,7 +1246,11 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 	if (obj->dh_size == OTYPE_MUTEX) {
 		km = (kmutant *)obj;
 		if (km->km_ownerthread == NULL) {
+#ifdef __FreeBSD__
 			km->km_ownerthread = curthread->td_proc;
+#else
+			km->km_ownerthread = curproc;
+#endif
 			km->km_acquirecnt++;
 		}
 	}
@@ -1212,7 +1276,9 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 	int64_t			*duetime;
 	wait_block		*wb_array;
 {
+#ifdef __FreeBSD__
 	struct thread		*td = curthread;
+#endif
 	kmutant			*km;
 	wait_block		_wb_array[THREAD_WAIT_OBJECTS];
 	wait_block		*w;
@@ -1239,10 +1305,18 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 		if (obj[i]->dh_size == OTYPE_MUTEX) {
 			km = (kmutant *)obj[i];
 			if (km->km_ownerthread == NULL ||
+#ifdef __FreeBSD__
 			    km->km_ownerthread == curthread->td_proc) {
+#else
+			    km->km_ownerthread == curproc) {
+#endif
 				obj[i]->dh_sigstate = FALSE;
 				km->km_acquirecnt++;
+#ifdef __FreeBSD__
 				km->km_ownerthread = curthread->td_proc;
+#else
+				km->km_ownerthread = curproc;
+#endif
 				if (wtype == WAITTYPE_ANY) {
 					mtx_unlock(&ntoskrnl_dispatchlock);
 					return (STATUS_WAIT_0 + i);
@@ -1268,7 +1342,9 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 			continue;
 		INSERT_LIST_TAIL((&obj[i]->dh_waitlisthead),
 		    (&w[i].wb_waitlist));
+#ifdef __FreeBSD__
 		w[i].wb_kthread = td;
+#endif
 		w[i].wb_object = obj[i];
 		wcnt++;
 	}
@@ -1293,9 +1369,13 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 	while (wcnt) {
 		nanotime(&t1);
 
+#ifdef __FreeBSD__
 		error = ndis_thsuspend(td->td_proc, &ntoskrnl_dispatchlock,
 		    duetime == NULL ? 0 : tvtohz(&tv));
-
+#else
+		error = ndis_thsuspend(curproc, &ntoskrnl_dispatchlock,
+		    duetime == NULL ? 0 : tvtohz(&tv));
+#endif
 		nanotime(&t2);
 
 		for (i = 0; i < cnt; i++) {
@@ -1303,7 +1383,11 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 				km = (kmutant *)obj;
 				if (km->km_ownerthread == NULL) {
 					km->km_ownerthread =
+#ifdef __FreeBSD__
 					    curthread->td_proc;
+#else
+					    curproc;
+#endif
 					km->km_acquirecnt++;
 				}
 			}
@@ -1834,7 +1918,11 @@ IoAllocateMdl(vaddr, len, secondarybuf, chargequota, iopkt)
 		m = ExAllocatePoolWithTag(NonPagedPool,
 		    MmSizeOfMdl(vaddr, len), 0);
 	else {
+#ifdef __FreeBSD__
 		m = uma_zalloc(mdl_zone, M_NOWAIT | M_ZERO);
+#else
+		m = pool_get(&mdl_pool, PR_WAITOK);
+#endif
 		zone++;
 	}
 
@@ -1877,7 +1965,11 @@ IoFreeMdl(m)
 		return;
 
 	if (m->mdl_flags & MDL_ZONE_ALLOCED)
+#ifdef __FreeBSD__
 		uma_zfree(mdl_zone, m);
+#else
+		pool_put(&mdl_pool, m);
+#endif
 	else
 		ExFreePool(m);
 
@@ -2190,7 +2282,11 @@ KeReleaseMutex(kmutex, kwait)
 	uint8_t			kwait;
 {
 	mtx_lock(&ntoskrnl_dispatchlock);
+#ifdef __FreeBSD__
 	if (kmutex->km_ownerthread != curthread->td_proc) {
+#else
+	if (kmutex->km_ownerthread != curproc) {
+#endif
 		mtx_unlock(&ntoskrnl_dispatchlock);
 		return(STATUS_MUTANT_NOT_OWNED);
 	}
@@ -2361,8 +2457,12 @@ PsCreateSystemThread(handle, reqaccess, objattrs, phandle,
 	tc->tc_thrfunc = thrfunc;
 
 	sprintf(tname, "windows kthread %d", ntoskrnl_kth);
+#ifdef __FreeBSD__
 	error = kthread_create(ntoskrnl_thrfunc, tc, &p,
 	    RFHIGHPID, NDIS_KSTACK_PAGES, tname);
+#else
+	error = kthread_create1(ntoskrnl_thrfunc, tc, &p, tname);
+#endif
 	*handle = p;
 
 	ntoskrnl_kth++;
@@ -2386,7 +2486,11 @@ PsTerminateSystemThread(status)
 
 	mtx_lock(&ntoskrnl_dispatchlock);
 	TAILQ_FOREACH(nr, &ntoskrnl_reflist, link) {
+#ifdef __FreeBSD__
 		if (nr->no_obj != curthread->td_proc)
+#else
+		if (nr->no_obj != curproc)
+#endif
 			continue;
 		ntoskrnl_wakeup(&nr->no_dh);
 		break;
@@ -2395,9 +2499,11 @@ PsTerminateSystemThread(status)
 
 	ntoskrnl_kth--;
 
+#ifdef __FreeBSD__
 #if __FreeBSD_version < 502113
 	mtx_lock(&Giant);
 #endif
+#endif /* __FreeBSD__ */
 	kthread_exit(0);
 	return(0);	/* notreached */
 }
@@ -2433,7 +2539,9 @@ ntoskrnl_timercall(arg)
 	ktimer			*timer;
 	struct timeval		tv;
 
+#ifdef __FreeBSD__
 	mtx_unlock(&Giant);
+#endif
 
 	mtx_lock(&ntoskrnl_dispatchlock);
 
@@ -2454,8 +2562,12 @@ ntoskrnl_timercall(arg)
 		tv.tv_sec = 0;
 		tv.tv_usec = timer->k_period * 1000;
 		timer->k_header.dh_inserted = TRUE;
+#ifdef __FreeBSD__
 		timer->k_handle = timeout(ntoskrnl_timercall,
 		    timer, tvtohz(&tv));
+#else
+		timeout(ntoskrnl_timercall, timer, tvtohz(&tv));
+#endif
 	}
 
 	if (timer->k_dpc != NULL)
@@ -2464,7 +2576,9 @@ ntoskrnl_timercall(arg)
 	ntoskrnl_wakeup(&timer->k_header);
 	mtx_unlock(&ntoskrnl_dispatchlock);
 
+#ifdef __FreeBSD__
 	mtx_lock(&Giant);
+#endif
 
 	return;
 }
@@ -2494,7 +2608,11 @@ KeInitializeTimerEx(timer, type)
 	timer->k_header.dh_inserted = FALSE;
 	timer->k_header.dh_type = type;
 	timer->k_header.dh_size = OTYPE_TIMER;
+#ifdef __FreeBSD__
 	callout_handle_init(&timer->k_handle);
+#else
+	callout_init(&timer->k_handle);
+#endif
 
 	return;
 }
@@ -2608,7 +2726,11 @@ KeSetTimerEx(timer, duetime, period, dpc)
 	}
 
 	timer->k_header.dh_inserted = TRUE;
+#ifdef __FreeBSD__
 	timer->k_handle = timeout(ntoskrnl_timercall, timer, tvtohz(&tv));
+#else
+	timeout(ntoskrnl_timercall, timer, tvtohz(&tv));
+#endif
 
 	mtx_unlock(&ntoskrnl_dispatchlock);
 

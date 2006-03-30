@@ -31,7 +31,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+#endif
 
 /*
  * This file implements a translation layer between the BSD networking
@@ -48,8 +53,9 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:
  * expects.
  */
 
-
+#ifdef __FreeBSD__
 #include <sys/ctype.h>
+#endif
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -57,13 +63,20 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#ifdef __NetBSD__
+#include <sys/lkm.h>
+#endif
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#ifdef __FreeBSD__
 #include <sys/mutex.h>
+#endif
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#ifdef __FreeBSD__
 #include <sys/timespec.h>
 #include <sys/smp.h>
+#endif
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
@@ -71,24 +84,31 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/kthread.h>
+#ifdef __FreeBSD__
 #include <sys/linker.h>
-#include <sys/mount.h>
 #include <sys/sysproto.h>
+#endif
+#include <sys/mount.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#else
+#include <net/if_ether.h>
+#endif
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <machine/atomic.h>
+#ifdef __FreeBSD__
 #include <machine/bus_memio.h>
 #include <machine/bus_pio.h>
-#include <machine/bus.h>
 #include <machine/resource.h>
-
 #include <sys/bus.h>
 #include <sys/rman.h>
+#endif
+#include <machine/bus.h>
 
 #include <machine/stdarg.h>
 
@@ -109,8 +129,10 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:
 static char ndis_filepath[MAXPATHLEN];
 extern struct nd_head ndis_devhead;
 
+#ifdef __FreeBSD__
 SYSCTL_STRING(_hw, OID_AUTO, ndis_filepath, CTLFLAG_RW, ndis_filepath,
         MAXPATHLEN, "Path used by NdisOpenFile() to search for files");
+#endif
 
 __stdcall static void NdisInitializeWrapper(ndis_handle *,
 	driver_object *, void *, void *);
@@ -129,8 +151,10 @@ __stdcall static void NdisOpenConfigurationKeyByIndex(ndis_status *,
 	ndis_handle, uint32_t, ndis_unicode_string *, ndis_handle *);
 __stdcall static void NdisOpenConfigurationKeyByName(ndis_status *,
 	ndis_handle, ndis_unicode_string *, ndis_handle *);
+#ifdef __FreeBSD__
 static ndis_status ndis_encode_parm(ndis_miniport_block *,
 	struct sysctl_oid *, ndis_parm_type, ndis_config_parm **);
+#endif
 static ndis_status ndis_decode_parm(ndis_miniport_block *,
 	ndis_config_parm *, char *);
 __stdcall static void NdisReadConfiguration(ndis_status *, ndis_config_parm **,
@@ -260,12 +284,14 @@ __stdcall static void NdisGetFirstBufferFromPacket(ndis_packet *,
 	ndis_buffer **, void **, uint32_t *, uint32_t *);
 __stdcall static void NdisGetFirstBufferFromPacketSafe(ndis_packet *,
 	ndis_buffer **, void **, uint32_t *, uint32_t *, uint32_t);
+#ifdef __FreeBSD__
 static int ndis_find_sym(linker_file_t, char *, char *, caddr_t *);
 __stdcall static void NdisOpenFile(ndis_status *, ndis_handle *, uint32_t *,
 	ndis_unicode_string *, ndis_physaddr);
 __stdcall static void NdisMapFile(ndis_status *, void **, ndis_handle);
 __stdcall static void NdisUnmapFile(ndis_handle);
 __stdcall static void NdisCloseFile(ndis_handle);
+#endif
 __stdcall static uint8_t NdisSystemProcessorCount(void);
 __stdcall static void NdisMIndicateStatusComplete(ndis_handle);
 __stdcall static void NdisMIndicateStatus(ndis_handle, ndis_status,
@@ -588,6 +614,7 @@ NdisOpenConfigurationKeyByIndex(status, cfg, idx, subkey, subhandle)
 	return;
 }
 
+#ifdef __FreeBSD__
 static ndis_status
 ndis_encode_parm(block, oid, type, parm)
 	ndis_miniport_block	*block;
@@ -634,6 +661,7 @@ ndis_encode_parm(block, oid, type, parm)
 
 	return(NDIS_STATUS_SUCCESS);
 }
+#endif /* __FreeBSD__ */
 
 int
 ndis_strcasecmp(s1, s2)
@@ -690,6 +718,7 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 	ndis_unicode_string	*key;
 	ndis_parm_type		type;
 {
+#ifdef __FreeBSD__
 	char			*keystr = NULL;
 	uint16_t		*unicode;
 	ndis_miniport_block	*block;
@@ -714,6 +743,7 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 	 * See if registry key is already in a list of known keys
 	 * included with the driver.
 	 */
+
 #if __FreeBSD_version < 502113
 	TAILQ_FOREACH(e, &sc->ndis_ctx, link) {
 #else
@@ -754,6 +784,10 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 	free(keystr, M_DEVBUF);
 	*status = NDIS_STATUS_FAILURE;
 	return;
+#else /* __FreeBSD__ */
+	*status = NDIS_STATUS_FAILURE;
+	return;
+#endif
 }
 
 static ndis_status
@@ -792,6 +826,7 @@ NdisWriteConfiguration(status, cfg, key, parm)
 	ndis_unicode_string	*key;
 	ndis_config_parm	*parm;
 {
+#ifdef __FreeBSD__
 	char			*keystr = NULL;
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
@@ -800,6 +835,7 @@ NdisWriteConfiguration(status, cfg, key, parm)
 	char			val[256];
 
 	block = (ndis_miniport_block *)cfg;
+
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
 
 	ndis_unicode_to_ascii(key->us_buf, key->us_len, &keystr);
@@ -814,7 +850,7 @@ NdisWriteConfiguration(status, cfg, key, parm)
 
 	/* See if the key already exists. */
 
-#if __FreeBSD_version < 502113
+#if __FreeBSD_version < 502113 || !defined(__FreeBSD__)
 	TAILQ_FOREACH(e, &sc->ndis_ctx, link) {
 #else
 	TAILQ_FOREACH(e, device_get_sysctl_ctx(sc->ndis_dev), link) {
@@ -835,6 +871,10 @@ NdisWriteConfiguration(status, cfg, key, parm)
 	free(keystr, M_DEVBUF);
 	*status = NDIS_STATUS_SUCCESS;
 	return;
+#else /* __FreeBSD__ */
+	*status = NDIS_STATUS_SUCCESS;
+	return;
+#endif
 }
 
 __stdcall static void
@@ -940,7 +980,7 @@ NdisReadPciSlotInformation(adapter, slot, offset, buf, len)
 	if (block == NULL)
 		return(0);
 
-	dev = block->nmb_physdeviceobj->do_devext;
+	dev = (device_t)block->nmb_physdeviceobj->do_devext;
 
 	/*
 	 * I have a test system consisting of a Sun w2100z
@@ -1088,16 +1128,27 @@ NdisMStartBufferPhysicalMapping(adapter, buf, mapreg, writedev, addrarray, array
 	map = sc->ndis_mmaps[mapreg];
 	nma.nma_fraglist = addrarray;
 
+#ifdef __FreeBSD__
 	error = bus_dmamap_load(sc->ndis_mtag, map,
 	    MmGetMdlVirtualAddress(buf), MmGetMdlByteCount(buf), ndis_map_cb,
 	    (void *)&nma, BUS_DMA_NOWAIT);
-
+#else
+	error = bus_dmamap_load(sc->ndis_mtag, map,
+	    MmGetMdlVirtualAddress(buf), MmGetMdlByteCount(buf), 
+				NULL /* kernel space */, BUS_DMA_NOWAIT);
+	/* callback function called "by hand" */
+	ndis_map_cb((void *)&nma, map->dm_segs, map->dm_nsegs, error);
+#endif
 	if (error)
 		return;
 
+#ifdef __FreeBSD__
 	bus_dmamap_sync(sc->ndis_mtag, map,
 	    writedev ? BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
-
+#else
+	bus_dmamap_sync(sc->ndis_mtag, map, 0, map->dm_mapsize,
+		writedev ? BUS_DMASYNC_PREWRITE : BUS_DMASYNC_PREREAD);
+#endif
 	*arraysize = nma.nma_cnt;
 
 	return;
@@ -1124,9 +1175,13 @@ NdisMCompleteBufferPhysicalMapping(adapter, buf, mapreg)
 
 	map = sc->ndis_mmaps[mapreg];
 
+#ifdef __FreeBSD__
 	bus_dmamap_sync(sc->ndis_mtag, map,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-
+#else
+	bus_dmamap_sync(sc->ndis_mtag, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+#endif
 	bus_dmamap_unload(sc->ndis_mtag, map);
 
 	return;
@@ -1345,10 +1400,20 @@ NdisReadNetworkAddress(status, addr, addrlen, adapter)
 	block = (ndis_miniport_block *)adapter;
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
 
+#ifdef __FreeBSD__
 	if (bcmp(sc->arpcom.ac_enaddr, empty, ETHER_ADDR_LEN) == 0)
+#else
+	if (bcmp(LLADDR(sc->arpcom.ec_if.if_sadl), 
+		 empty, ETHER_ADDR_LEN) == 0)
+#endif
+
 		*status = NDIS_STATUS_FAILURE;
 	else {
+#ifdef __FreeBSD__
 		*addr = sc->arpcom.ac_enaddr;
+#else
+                *addr = LLADDR(sc->arpcom.ec_if.if_sadl);
+#endif
 		*addrlen = ETHER_ADDR_LEN;
 		*status = NDIS_STATUS_SUCCESS;
 	}
@@ -1386,6 +1451,7 @@ NdisMAllocateMapRegisters(adapter, dmachannel, dmasize, physmapneeded, maxmap)
 	if (sc->ndis_mmaps == NULL)
 		return(NDIS_STATUS_RESOURCES);
 
+#ifdef __FreeBSD__
 	error = bus_dma_tag_create(sc->ndis_parent_tag, ETHER_ALIGN, 0,
 	    BUS_SPACE_MAXADDR_32BIT, BUS_SPACE_MAXADDR, NULL,
 	    NULL, maxmap * nseg, nseg, maxmap, BUS_DMA_ALLOCNOW,
@@ -1395,9 +1461,17 @@ NdisMAllocateMapRegisters(adapter, dmachannel, dmasize, physmapneeded, maxmap)
 		free(sc->ndis_mmaps, M_DEVBUF);
 		return(NDIS_STATUS_RESOURCES);
 	}
-
+#else
+	sc->ndis_mtag = sc->ndis_parent_tag;
+#endif
 	for (i = 0; i < physmapneeded; i++)
+#ifdef __FreeBSD__
 		bus_dmamap_create(sc->ndis_mtag, 0, &sc->ndis_mmaps[i]);
+#else
+		bus_dmamap_create(sc->ndis_mtag, maxmap * nseg, 
+				  nseg, maxmap, BUS_DMA_NOWAIT, 
+				  0, &sc->ndis_mmaps[i]);
+#endif
 
 	sc->ndis_mmapcnt = physmapneeded;
 
@@ -1459,6 +1533,10 @@ NdisMAllocateSharedMemory(adapter, len, cached, vaddr, paddr)
 	struct ndis_softc	*sc;
 	struct ndis_shmem	*sh;
 	int			error;
+#ifndef __FreeBSD__
+	bus_dma_segment_t	segs;
+	int			nsegs;
+#endif
 
 	if (adapter == NULL)
 		return;
@@ -1484,6 +1562,7 @@ NdisMAllocateSharedMemory(adapter, len, cached, vaddr, paddr)
 	 * than 1GB of physical memory.
 	 */
 
+#ifdef __FreeBSD__
 	error = bus_dma_tag_create(sc->ndis_parent_tag, 64,
 	    0, NDIS_BUS_SPACE_SHARED_MAXADDR, BUS_SPACE_MAXADDR, NULL,
 	    NULL, len, 1, len, BUS_DMA_ALLOCNOW, NULL, NULL,
@@ -1512,6 +1591,47 @@ NdisMAllocateSharedMemory(adapter, len, cached, vaddr, paddr)
 		free(sh, M_DEVBUF);
 		return;
 	}
+#else
+	sh->ndis_stag = sc->ndis_parent_tag;
+
+	error = bus_dmamem_alloc(sh->ndis_stag, len, 64, 0, 
+				 &segs, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error) {
+		printf("bus_dmamem_alloc failed(1)\n");
+		return;
+	}
+
+	error = bus_dmamem_map(sh->ndis_stag, &segs, nsegs, 
+			       len, (caddr_t *)&vaddr, BUS_DMA_NOWAIT);
+
+	if (error) {
+		printf("bus_dmamem_alloc failed(2)\n");
+		/* XXX free */
+		return;
+	}
+
+	error = bus_dmamap_create(sh->ndis_stag, len, nsegs,
+				  BUS_SPACE_MAXSIZE_32BIT, 0,
+				  BUS_DMA_ALLOCNOW, &sh->ndis_smap);
+
+	if (error) {
+		printf("bus_dmamem_alloc failed(3)\n");
+		/* XXX free, unmap */
+		return;
+	}
+
+	error = bus_dmamap_load(sh->ndis_stag, sh->ndis_smap, vaddr, 
+				len, NULL, BUS_DMA_NOWAIT);
+	ndis_mapshared_cb((void *)paddr, 
+			  sh->ndis_smap->dm_segs,
+			  sh->ndis_smap->dm_nsegs, error);
+
+	if (error) {
+		printf("bus_dmamem_alloc failed(3)\n");
+		/* XXX free, unmap, destroy */
+		return;
+	}
+#endif
 
 	sh->ndis_saddr = *vaddr;
 	sh->ndis_next = sc->ndis_shlist;
@@ -1621,7 +1741,13 @@ NdisMFreeSharedMemory(adapter, len, cached, vaddr, paddr)
 	}
 
 	bus_dmamap_unload(sh->ndis_stag, sh->ndis_smap);
+#ifdef __FreeBSD__
 	bus_dmamem_free(sh->ndis_stag, vaddr, sh->ndis_smap);
+#else
+	bus_dmamem_unmap(sh->ndis_stag, vaddr, sh->ndis_smap->dm_mapsize);
+	bus_dmamem_free(sh->ndis_stag,
+			sh->ndis_smap->dm_segs, sh->ndis_smap->dm_nsegs );
+#endif
 	bus_dma_tag_destroy(sh->ndis_stag);
 
 	if (sh == sc->ndis_shlist)
@@ -2349,7 +2475,11 @@ NdisMSleep(usecs)
 	tv.tv_sec = 0;
 	tv.tv_usec = usecs;
 
+#ifdef __FreeBSD__
 	ndis_thsuspend(curthread->td_proc, NULL, tvtohz(&tv));
+#else
+	ndis_thsuspend(curproc, NULL, tvtohz(&tv));
+#endif
 
 	return;
 }
@@ -2503,7 +2633,7 @@ NdisGetCurrentSystemTime(tval)
 
 	nanotime(&ts);
 	*tval = (uint64_t)ts.tv_nsec / 100 + (uint64_t)ts.tv_sec * 10000000 +
-	    11644473600;
+	    (uint64_t)11644473600ULL;
 
 	return;
 }
@@ -2660,6 +2790,7 @@ NdisGetFirstBufferFromPacketSafe(packet, buf, firstva, firstlen, totlen, prio)
 	NdisGetFirstBufferFromPacket(packet, buf, firstva, firstlen, totlen);
 }
 
+#ifdef __FreeBSD__
 static int
 ndis_find_sym(lf, filename, suffix, sym)
 	linker_file_t		lf;
@@ -2946,11 +3077,15 @@ NdisCloseFile(filehandle)
 
 	return;
 }
-
+#endif /* __FreeBSD__ */
 __stdcall static uint8_t
 NdisSystemProcessorCount()
 {
+#ifdef __FreeBSD__
 	return(mp_ncpus);
+#else
+	return(nprocs);
+#endif
 }
 
 typedef void (*ndis_statusdone_handler)(ndis_handle);
@@ -3280,10 +3415,12 @@ image_patch_table ndis_functbl[] = {
 	IMPORT_FUNC(NdisUnchainBufferAtFront),
 	IMPORT_FUNC(NdisReadPcmciaAttributeMemory),
 	IMPORT_FUNC(NdisWritePcmciaAttributeMemory),
+#ifdef __FreeBSD__
 	IMPORT_FUNC(NdisOpenFile),
 	IMPORT_FUNC(NdisMapFile),
 	IMPORT_FUNC(NdisUnmapFile),
 	IMPORT_FUNC(NdisCloseFile),
+#endif
 	IMPORT_FUNC(NdisMRegisterDevice),
 	IMPORT_FUNC(NdisMDeregisterDevice),
 	IMPORT_FUNC(NdisMQueryAdapterInstanceName),

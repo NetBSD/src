@@ -35,6 +35,10 @@
 #ifndef _NTOSKRNL_VAR_H_
 #define _NTOSKRNL_VAR_H_
 
+#ifdef __NetBSD__
+#include "nbcompat.h"
+#endif
+
 /*
  * us_buf is really a wchar_t *, but it's inconvenient to include
  * all the necessary header goop needed to define it, and it's a
@@ -291,8 +295,13 @@ typedef struct nt_dispatch_header nt_dispatch_header;
 #define AT_PASSIVE_LEVEL(td)		\
 	((td)->td_proc->p_flag & P_KTHREAD == FALSE)
 
+#ifdef __FreeBSD__
 #define AT_DISPATCH_LEVEL(td)		\
 	((td)->td_base_pri == PI_REALTIME)
+#else
+#define AT_DISPATCH_LEVEL(useless)	\
+	curlwp->l_priority == 0
+#endif
 
 #define AT_DIRQL_LEVEL(td)		\
 	((td)->td_priority <= PI_NET)
@@ -331,7 +340,11 @@ struct ktimer {
 	uint64_t		k_duetime;
 	union {
 		list_entry		k_timerlistentry;
+#ifdef __FreeBSD__
 		struct callout_handle	k_handle;
+#else
+		struct callout		k_handle;
+#endif
 	} u;
 	void			*k_dpc;
 	uint32_t		k_period;
