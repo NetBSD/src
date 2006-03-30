@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.145 2006/03/29 04:16:48 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.146 2006/03/30 15:19:45 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.145 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.146 2006/03/30 15:19:45 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -272,8 +272,6 @@ vnd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
 	pseudo_disk_init(&sc->sc_dkdev);
-
-	aprint_normal("%s: vnode disk driver\n", self->dv_xname);
 }
 
 static int
@@ -309,7 +307,7 @@ vnd_destroy(struct device *dev)
 	struct cfdata *cf;
 
 	cf = device_cfdata(dev);
-	error = config_detach(dev, 0);
+	error = config_detach(dev, DETACH_QUIET);
 	if (error)
 		return error;
 	free(cf, M_DEVBUF);
