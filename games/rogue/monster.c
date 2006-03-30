@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.10 2005/06/09 12:20:12 tron Exp $	*/
+/*	$NetBSD: monster.c,v 1.11 2006/03/30 04:10:04 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.10 2005/06/09 12:20:12 tron Exp $");
+__RCSID("$NetBSD: monster.c,v 1.11 2006/03/30 04:10:04 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -733,6 +733,8 @@ aim_monster(monster)
 	short i, rn, d, r;
 
 	rn = get_room_number(monster->row, monster->col);
+	if (rn == NO_ROOM)
+		clean_up("aim_monster: monster not in room");
 	r = get_rand(0, 12);
 
 	for (i = 0; i < 4; i++) {
