@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.235 2006/03/29 06:00:46 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.236 2006/03/30 16:09:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.235 2006/03/29 06:00:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.236 2006/03/30 16:09:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ scsibusmatch(struct device *parent, struct cfdata *cf, void *aux)
 static void
 scsibusattach(struct device *parent, struct device *self, void *aux)
 {
-	struct scsibus_softc *sc = (void *) self;
+	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = aux;
 	struct scsi_initq *scsi_initq;
 
@@ -242,7 +242,7 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 static int
 scsibusactivate(struct device *self, enum devact act)
 {
-	struct scsibus_softc *sc = (void *) self;
+	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
 	int target, lun, error = 0, s;
@@ -278,7 +278,7 @@ scsibusactivate(struct device *self, enum devact act)
 static int
 scsibusdetach(struct device *self, int flags)
 {
-	struct scsibus_softc *sc = (void *) self;
+	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
 	int ctarget, clun;

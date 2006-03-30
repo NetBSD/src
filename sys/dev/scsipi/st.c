@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.187 2006/03/28 17:38:34 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.188 2006/03/30 16:09:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.187 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.188 2006/03/30 16:09:28 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -453,7 +453,7 @@ stactivate(struct device *self, enum devact act)
 int
 stdetach(struct device *self, int flags)
 {
-	struct st_softc *st = (struct st_softc *)self;
+	struct st_softc *st = device_private(self);
 	int s, bmaj, cmaj, mn;
 
 	/* locate the major number */
