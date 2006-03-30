@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.102 2006/03/20 04:03:22 christos Exp $
+#	$NetBSD: Makefile,v 1.103 2006/03/30 00:00:23 rtr Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -72,8 +72,6 @@ SUBDIR+=	libkrb5		# depends on libcrypto and more
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
-
-SUBDIR+=	libcdk 		# depends on libedit
 
 .if (${MKKERBEROS} != "no")
 # Heimdal Kerberos 5 libraries depending on libkrb5 and more
