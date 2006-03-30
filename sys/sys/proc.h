@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.216.2.2 2006/03/08 01:01:13 elad Exp $	*/
+/*	$NetBSD: proc.h,v 1.216.2.3 2006/03/30 22:30:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -461,7 +461,6 @@ void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
-int	groupmember(gid_t, const struct ucred *);
 int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);
