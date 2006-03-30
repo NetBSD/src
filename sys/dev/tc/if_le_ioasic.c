@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.24 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.25 2006/03/30 16:18:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.24 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.25 2006/03/30 16:18:49 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -107,7 +107,7 @@ le_ioasic_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct le_ioasic_softc *sc = (void *)self;
+	struct le_ioasic_softc *sc = device_private(self);
 	struct ioasicdev_attach_args *d = aux;
 	struct lance_softc *le = &sc->sc_am7990.lsc;
 	bus_space_tag_t ioasic_bst;

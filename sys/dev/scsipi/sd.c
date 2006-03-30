@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.246 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.247 2006/03/30 16:09:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.246 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.247 2006/03/30 16:09:28 thorpej Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -212,7 +212,7 @@ sdmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 sdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct sd_softc *sd = (void *)self;
+	struct sd_softc *sd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 	int error, result;
@@ -345,7 +345,7 @@ sdactivate(struct device *self, enum devact act)
 static int
 sddetach(struct device *self, int flags)
 {
-	struct sd_softc *sd = (struct sd_softc *) self;
+	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */

@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.26 2005/12/02 19:26:14 kleink Exp $ */
+/* $NetBSD: bba.c,v 1.27 2006/03/30 16:18:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.26 2005/12/02 19:26:14 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.27 2006/03/30 16:18:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ bba_attach(struct device *parent, struct device *self, void *aux)
 	struct am7930_softc *asc;
 
 	ia = aux;
-	sc = (struct bba_softc *)self;
+	sc = device_private(self);
 	asc = &sc->sc_am7930;
 	sc->sc_bst = ((struct ioasic_softc *)parent)->sc_bst;
 	sc->sc_bsh = ((struct ioasic_softc *)parent)->sc_bsh;

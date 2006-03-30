@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.23 2006/03/29 04:16:50 thorpej Exp $	*/
+/*	$NetBSD: sunms.c,v 1.24 2006/03/30 16:12:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.23 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.24 2006/03/30 16:12:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ sunms_attach(parent, self, aux)
 	void   *aux;
 
 {
-	struct ms_softc *ms = (void *) self;
+	struct ms_softc *ms = device_private(self);
 	struct kbd_ms_tty_attach_args *args = aux;
 	struct cfdata *cf;
 	struct tty *tp = args->kmta_tp;
