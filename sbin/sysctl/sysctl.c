@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.114 2006/03/26 23:12:48 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.115 2006/03/30 08:02:40 jnemeth Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.114 2006/03/26 23:12:48 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.115 2006/03/30 08:02:40 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -1067,6 +1067,10 @@ parse_create(char *l)
 			}
 		}
 		else if (strcmp(key, "size") == 0) {
+			if (value == NULL) {
+				sysctlperror("%s: missing value\n", nname);
+				EXIT(1);
+			}
 			errno = 0;
 			/*
 			 * yes, i know size_t is not an unsigned long,
