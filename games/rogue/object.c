@@ -1,4 +1,4 @@
-/*	$NetBSD: object.c,v 1.9 2003/08/07 09:37:39 agc Exp $	*/
+/*	$NetBSD: object.c,v 1.10 2006/03/30 04:27:24 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: object.c,v 1.9 2003/08/07 09:37:39 agc Exp $");
+__RCSID("$NetBSD: object.c,v 1.10 2006/03/30 04:27:24 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -639,6 +639,7 @@ alloc_object()
 	} else if (!(obj = (object *) md_malloc(sizeof(object)))) {
 			message("cannot allocate object, saving game", 0);
 			save_into_file(error_file);
+			clean_up("alloc_object:  save failed");
 	}
 	obj->quantity = 1;
 	obj->ichar = 'L';
