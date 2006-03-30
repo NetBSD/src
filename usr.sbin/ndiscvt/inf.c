@@ -31,16 +31,30 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf.c,v 1.13.2.1 2005/02/18 16:30:10 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__RCSID("$NetBSD: inf.c,v 1.2 2006/03/30 23:21:06 rittera Exp $");
+#endif
+
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#ifdef __NetBSD__
+#include <sys/stdint.h>
+#endif
 
 #include <sys/queue.h>
 
 #include "inf.h"
+
+#ifndef __DECONST
+#define __DECONST(type, var)    ((type)(uintptr_t)(const void *)(var))
+#endif
+
 
 extern FILE *yyin;
 int yyparse (void);

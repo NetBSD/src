@@ -31,9 +31,18 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__RCSID("$NetBSD: ndiscvt.c,v 1.2 2006/03/30 23:21:06 rittera Exp $");
+#endif
+
 
 #include <sys/types.h>
+#ifdef __NetBSD__
+#include <sys/stdint.h>
+#endif
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <net/if.h>
@@ -189,7 +198,11 @@ bincvt(char *sysfile, char *outfile, void *img, int fsize)
 
 	snprintf(sysbuf, sizeof(sysbuf),
 #ifdef __i386__
+#ifdef __FreeBSD__
 	    "objcopy -I binary -O elf32-i386-freebsd -B i386 %s %s.o\n",
+#else
+	    "objcopy -I binary -O elf32-i386 -B i386 %s %s.o\n",
+#endif /* __FreeBSD__ */
 #endif
 #ifdef __amd64__
 	    "objcopy -I binary -O elf64-x86-64 -B i386 %s %s.o\n",
@@ -228,7 +241,11 @@ firmcvt(char *firmfile)
 
 	snprintf(sysbuf, sizeof(sysbuf),
 #ifdef __i386__
+#ifdef __FreeBSD__
 	    "objcopy -I binary -O elf32-i386-freebsd -B i386 %s %s.o\n",
+#else
+	    "objcopy -I binary -O elf32-i386 -B i386 %s %s.o\n",
+#endif /* __FreeBSD__ */
 #endif
 #ifdef __amd64__
 	    "objcopy -I binary -O elf64-x86-64 -B i386 %s %s.o\n",
@@ -248,7 +265,7 @@ firmcvt(char *firmfile)
 		if (*ptr == '/' || *ptr == '.')
 			*ptr = '_';
 		else
-			*ptr = tolower(*ptr);
+			*ptr = tolower((int)*ptr);
 		ptr++;
 	}
 
