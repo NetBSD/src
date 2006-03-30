@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.159 2006/03/28 01:29:55 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.160 2006/03/30 12:40:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.159 2006/03/28 01:29:55 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.160 2006/03/30 12:40:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2006,10 +2006,6 @@ lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 	daddr_t olbn, nlbn;
-
-	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
-	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
-		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
 
 	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);
