@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.19 2006/03/21 09:46:14 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.20 2006/03/30 18:13:43 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -149,8 +149,9 @@ manages authorization requests related to processes in the system.
 .Pp
 The authorization wrapper for this scope is declared as
 .Pp
-.Ft int Fn kauth_authorize_process "kauth_cred_t cred" kauth_action_t op" \
-"struct proc *p" "void *arg1" "void *arg2" "void *arg3"
+.Ft int Fn kauth_authorize_process "kauth_cred_t cred" \
+"kauth_action_t op" "struct proc *p" "void *arg1" "void *arg2" \
+"void *arg3"
 .Pp
 The following operations are available for this scope:
 .Bl -tag -width "123456"
@@ -562,7 +563,7 @@ The kernel authorization framework in
 first appeared in
 .Nx 5.0 ,
 and is a clean-room implementation based on Apple TN2127, available at
-http://developer.apple.com/technotes/tn2005/tn2127.html.
+http://developer.apple.com/technotes/tn2005/tn2127.html
 .Sh AUTHORS
 .An Elad Efrat Aq elad@NetBSD.org
 implemented the kernel authorization framework in
