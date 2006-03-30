@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.241 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.242 2006/03/30 16:09:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.241 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.242 2006/03/30 16:09:28 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -232,7 +232,7 @@ cdmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 cdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct cd_softc *cd = (void *)self;
+	struct cd_softc *cd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
@@ -302,7 +302,7 @@ cdactivate(struct device *self, enum devact act)
 static int
 cddetach(struct device *self, int flags)
 {
-	struct cd_softc *cd = (struct cd_softc *) self;
+	struct cd_softc *cd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
