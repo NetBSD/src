@@ -1,9 +1,9 @@
-# $NetBSD: shl.mi,v 1.47 2006/03/20 16:37:22 he Exp $
+# $NetBSD: shl.mi,v 1.48 2006/03/30 00:00:24 rtr Exp $
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib
 ./usr/lib/libbz2_pic.a				comp-c-piclib
 ./usr/lib/libc_pic.a				comp-c-piclib
-./usr/lib/libcdk_pic.a				comp-c-piclib
+./usr/lib/libcdk_pic.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libcompat_pic.a			comp-c-piclib
 ./usr/lib/libcrypt_pic.a			comp-c-piclib

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.608 2006/03/29 01:01:02 dogcow Exp $
+# $NetBSD: mi,v 1.609 2006/03/30 00:00:23 rtr Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -703,7 +703,7 @@
 ./usr/include/adosfs				base-c-usr
 ./usr/include/altq				base-c-usr
 ./usr/include/arpa				base-c-usr
-./usr/include/cdk				base-c-usr
+./usr/include/cdk				base-obsolete		obsolete
 ./usr/include/compat				base-obsolete		obsolete
 ./usr/include/crypto				base-c-usr
 ./usr/include/dev				base-c-usr
