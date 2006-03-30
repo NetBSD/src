@@ -1,6 +1,6 @@
-.\"     $NetBSD: vnodeops.9,v 1.44 2006/03/11 09:15:58 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.45 2006/03/30 11:16:00 rpaulo Exp $
 .\"
-.\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 4, 2006
+.Dd March 30, 2006
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -527,7 +527,7 @@ is the vnode of the file to open and
 .Fa mode
 specifies the access mode required by the calling process.
 The calling process and its credentials are specified by
-.Fa p
+.Fa l
 and
 .Fa cred
 respectively.
@@ -551,7 +551,7 @@ is the vnode of the file to close and
 .Fa fflags
 specifies the access mode by the calling process.
 The calling process and its credentials are specified by
-.Fa p
+.Fa l
 and
 .Fa cred
 respectively.
@@ -572,7 +572,7 @@ is the vnode of the file to check,
 is the type of access required,
 .Fa cred
 contains the user credentials to check and
-.Fa p
+.Fa l
 is the process which is checking the credentials.
 The argument
 .Fa mode
@@ -589,7 +589,7 @@ The argument
 .Fa vp
 is the vnode of the file to get the attributes for.
 The arguments
-.Fa p
+.Fa l
 and
 .Fa cred
 specifies the calling process and its credentials respectively.
@@ -612,7 +612,7 @@ The argument
 .Fa vp
 is the locked vnode of the file to set the attributes for.
 The arguments
-.Fa p
+.Fa l
 and
 .Fa cred
 specifies the calling process and its credentials respectively.
@@ -712,7 +712,7 @@ is a set of flags.
 The argument
 .Fa cred
 is the caller's credentials and
-.Fa p
+.Fa l
 the calling process.
 If the operation is successful, zero is
 returned, otherwise an appropriate error code is returned.
@@ -738,7 +738,7 @@ is a set of flags.
 The argument
 .Fa cred
 is the caller's credentials and
-.Fa p
+.Fa l
 the calling process.
 If the operation is successful, zero is returned, otherwise an
 appropriate error code is returned.
@@ -747,7 +747,7 @@ Test if a poll event has occurred.
 The argument
 .Fa vp
 is the locked vnode of the file to poll and
-.Fa p
+.Fa l
 is the calling process.
 It returns any events of interest as specified by
 .Fa events
@@ -789,7 +789,7 @@ is a set of flags.
 The argument
 .Fa cred
 is the caller's credentials and
-.Fa p
+.Fa l
 the calling process requesting the map.
 If the operation is successful, zero is returned, otherwise an
 appropriate error code is returned.
@@ -807,7 +807,7 @@ is the locked vnode of the file for flush.
 The argument
 .Fa cred
 is the caller's credentials and
-.Fa p
+.Fa l
 the calling process.
 The argument
 .Fa flags
@@ -1071,7 +1071,7 @@ The argument
 .Fa vp
 is the locked vnode to be released.
 The argument
-.Fa p
+.Fa l
 is the calling process.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
@@ -1088,7 +1088,7 @@ The argument
 .Fa vp
 is the locked vnode to be reclaimed.
 The argument
-.Fa p
+.Fa l
 is the calling process.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
@@ -1255,7 +1255,7 @@ The argument
 is the locked vnode of the file to validate credentials
 .Fa cred .
 The argument
-.Fa p
+.Fa l
 specifies the calling process and
 .Fa flags
 specifies the operation flags.
@@ -1370,7 +1370,7 @@ The argument
 .Fa cred
 specifies the user credentials to use when authorizing the request.
 The argument
-.Fa p
+.Fa l
 specifies the process requesting the extended attribute.
 .It Fn VOP_SETEXTATTR "vp" "attrnamespace" "name" "uio" "cred" "l"
 Set an extended attribute.
@@ -1391,7 +1391,7 @@ The argument
 .Fa cred
 specifies the user credentials to use when authorizing the request.
 The argument
-.Fa p
+.Fa l
 specifies the process setting the extended attribute.
 .It Fn VOP_LISTEXTATTR "vp" "attrnamespace" "uio" "size" "cred" "l"
 Retrieve the list of extended attributes.
@@ -1423,7 +1423,7 @@ The argument
 .Fa cred
 specifies the user credentials to use when authorizing the request.
 The argument
-.Fa p
+.Fa l
 specifies the process requesting the extended attribute list.
 .El
 .Sh ERRORS
