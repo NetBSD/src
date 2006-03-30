@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.18 2005/03/22 21:56:28 yamt Exp $	*/
+/*	$NetBSD: cut.c,v 1.19 2006/03/30 19:17:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.18 2005/03/22 21:56:28 yamt Exp $");
+__RCSID("$NetBSD: cut.c,v 1.19 2006/03/30 19:17:44 dsl Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -232,7 +232,7 @@ f_cut(FILE *fp, const char *fname)
 			if ((tbuf = (char *)malloc(len + 1)) == NULL)
 				err(1, NULL);
 			memcpy(tbuf, lbuf, len);
-			tbuf[len] = '\n';
+			tbuf[len++] = '\n';
 			lbuf = tbuf;
 		}
 		for (isdelim = 0, p = lbuf;; ++p) {
@@ -273,9 +273,11 @@ f_cut(FILE *fp, const char *fname)
 				for (; (ch = *p) != '\n'; ++p);
 		}
 		(void)putchar('\n');
+		if (tbuf) {
+			free(tbuf);
+			tbuf = NULL;
+		}
 	}
-	if (tbuf)
-		free(tbuf);
 }
 
 void
