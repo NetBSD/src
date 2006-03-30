@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.88.10.5 2006/03/14 02:52:47 elad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.88.10.6 2006/03/30 22:30:27 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.5 2006/03/14 02:52:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.6 2006/03/30 22:30:27 elad Exp $");
 
 #include "opt_compat_43.h"
 
@@ -61,9 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.88.10.5 2006/03/14 02:52:47 elad Exp
 #include <sys/syscallargs.h>
 
 #include <sys/malloc.h>
-
-POOL_INIT(cred_pool, sizeof(struct ucred), 0, 0, 0, "credpl",
-    &pool_allocator_nointr);
 
 int	sys_getpid(struct lwp *, void *, register_t *);
 int	sys_getpid_with_ppid(struct lwp *, void *, register_t *);
@@ -621,134 +618,6 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 
 	p_sugid(p);
 	return (0);
-}
-
-/*
- * Check if gid is a member of the group set.
- */
-int
-groupmember(gid_t gid, const struct ucred *cred)
-{
-	const gid_t *gp;
-	const gid_t *egp;
-
-	egp = &(cred->cr_groups[cred->cr_ngroups]);
-	for (gp = cred->cr_groups; gp < egp; gp++)
-		if (*gp == gid)
-			return (1);
-	return (0);
-}
-
-/*
- * Test whether the specified credentials imply "super-user"
- * privilege; if so, and we have accounting info, set the flag
- * indicating use of super-powers.
- * Returns 0 or error.
- */
-int
-suser(const struct ucred *cred, u_short *acflag)
-{
-
-	if (cred->cr_uid == 0) {
-		if (acflag)
-			*acflag |= ASU;
-		return (0);
-	}
-	return (EPERM);
-}
-
-/*
- * Allocate a zeroed cred structure.
- */
-struct ucred *
-crget(void)
-{
-	struct ucred *cr;
-
-	cr = pool_get(&cred_pool, PR_WAITOK);
-	memset(cr, 0, sizeof(*cr));
-	simple_lock_init(&cr->cr_lock);
-	cr->cr_ref = 1;
-	return (cr);
-}
-
-/*
- * Free a cred structure.
- * Throws away space when ref count gets to 0.
- */
-void
-crfree(struct ucred *cr)
-{
-	int n;
-
-	simple_lock(&cr->cr_lock);
-	n = --cr->cr_ref;
-	simple_unlock(&cr->cr_lock);
-	if (n == 0)
-		pool_put(&cred_pool, cr);
-}
-
-/*
- * Compare cred structures and return 0 if they match
- */
-int
-crcmp(const struct ucred *cr1, const struct uucred *cr2)
-{
-	/* FIXME: The group lists should be compared element by element,
-	 * as the order of groups may be different in the two lists.
-	 * Currently this function can return a non-zero value for
-	 * equivalent group lists. */
-	return cr1->cr_uid != cr2->cr_uid ||
-	    cr1->cr_gid != cr2->cr_gid ||
-	    cr1->cr_ngroups != (uint32_t)cr2->cr_ngroups ||
-	    memcmp(cr1->cr_groups, cr2->cr_groups,
-	        sizeof(cr1->cr_groups[0]) * cr1->cr_ngroups);
-}
-
-/*
- * Copy cred structure to a new one and free the old one.
- */
-struct ucred *
-crcopy(struct ucred *cr)
-{
-	struct ucred *newcr;
-
-	if (cr->cr_ref == 1)
-		return (cr);
-
-	newcr = crget();
-	memcpy(&newcr->cr_startcopy, &cr->cr_startcopy,
-		sizeof(struct ucred) - offsetof(struct ucred, cr_startcopy));
-	crfree(cr);
-	return (newcr);
-}
-
-/*
- * Dup cred struct to a new held one.
- */
-struct ucred *
-crdup(const struct ucred *cr)
-{
-	struct ucred *newcr;
-
-	newcr = crget();
-	memcpy(&newcr->cr_startcopy, &cr->cr_startcopy,
-		sizeof(struct ucred) - offsetof(struct ucred, cr_startcopy));
-	return (newcr);
-}
-
-/*
- * convert from userland credentials to kernel one
- */
-void
-crcvt(struct ucred *uc, const struct uucred *uuc)
-{
-
-	uc->cr_ref = 0;
-	uc->cr_uid = uuc->cr_uid;
-	uc->cr_gid = uuc->cr_gid;
-	uc->cr_ngroups = uuc->cr_ngroups;
-	(void)memcpy(uc->cr_groups, uuc->cr_groups, sizeof(uuc->cr_groups));
 }
 
 /*
