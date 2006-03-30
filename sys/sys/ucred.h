@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.27.4.1 2006/03/08 01:01:13 elad Exp $	*/
+/*	$NetBSD: ucred.h,v 1.27.4.2 2006/03/30 22:30:27 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,14 +85,6 @@ static __inline void crhold(struct ucred *cr)
 
 int		do_setresuid(struct lwp *, uid_t, uid_t, uid_t, u_int);
 int		do_setresgid(struct lwp *, gid_t, gid_t, gid_t, u_int);
-
-struct ucred	*crcopy(struct ucred *);
-struct ucred	*crdup(const struct ucred *);
-void		crfree(struct ucred *);
-struct ucred	*crget(void);
-int		suser(const struct ucred *, u_short *);
-void		crcvt(struct ucred *, const struct uucred *);
-int		crcmp(const struct ucred *, const struct uucred *);
 
 /*
  * Check if we need to curtain information when a user requests information

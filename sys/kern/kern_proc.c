@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.86.4.3 2006/03/10 21:04:13 elad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.86.4.4 2006/03/30 22:30:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86.4.3 2006/03/10 21:04:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86.4.4 2006/03/30 22:30:27 elad Exp $");
 
 #include "opt_kstack.h"
 
@@ -187,8 +187,6 @@ POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
 POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
     &pool_allocator_nointr);
 POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-    &pool_allocator_nointr);
-POOL_INIT(pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
     &pool_allocator_nointr);
 POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
     &pool_allocator_nointr);
