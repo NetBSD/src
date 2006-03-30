@@ -1,4 +1,4 @@
-/*	$NetBSD: trsp.c,v 1.11 2005/09/06 02:58:48 rpaulo Exp $	*/
+/*	$NetBSD: trsp.c,v 1.12 2006/03/30 21:05:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trsp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trsp.c,v 1.11 2005/09/06 02:58:48 rpaulo Exp $");
+__RCSID("$NetBSD: trsp.c,v 1.12 2006/03/30 21:05:07 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -413,12 +413,9 @@ spp_trace(short act, short ostate, struct sppcb *asp, struct sppcb *sp,
 		if ((req & 0xff) == PRU_SLOWTIMO)
 			printf("<%s>", tcptimers[req>>8]);
 	}
-	printf(" -> %s", tcpstates[sp->s_state]);
+	printf(" -> %s\n", tcpstates[sp->s_state]);
 
 	/* print out internal state of sp !?! */
-	printf("\n");
-	if (sp == 0)
-		return;
 #define p3(name, f)  { \
 	printf("%s = %x, ", name, f); \
 }
