@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.66 2006/03/20 12:22:08 rpaulo Exp $
+$NetBSD: acronyms.comp,v 1.67 2006/03/30 17:38:01 rpaulo Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -241,7 +241,6 @@ QOS	quality of service
 RAID	redundant array of inexpensive disks
 RAM	random access memory
 RCS	revision control system
-RFC	request for comments
 RGB	red green blue
 RIFF	Resource Interchange File Format
 RIP	routing information protocol
