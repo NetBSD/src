@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mon.c,v 1.6 2003/04/02 18:36:38 jsm Exp $	*/
+/*	$NetBSD: hack.mon.c,v 1.7 2006/03/30 01:28:46 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mon.c,v 1.6 2003/04/02 18:36:38 jsm Exp $");
+__RCSID("$NetBSD: hack.mon.c,v 1.7 2006/03/30 01:28:46 jnemeth Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -500,6 +500,8 @@ nxti:		;
 	if (mmoved) {
 		if (info[chi] & ALLOW_M) {
 			mtmp2 = m_at(nix, niy);
+			if (mtmp2 == NULL)
+				panic("error in m_move");
 			if (hitmm(mtmp, mtmp2) == 1 && rn2(4) &&
 			    hitmm(mtmp2, mtmp) == 2)
 				return (2);
