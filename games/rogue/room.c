@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.7 2003/08/07 09:37:40 agc Exp $	*/
+/*	$NetBSD: room.c,v 1.8 2006/03/30 04:41:15 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: room.c,v 1.7 2003/08/07 09:37:40 agc Exp $");
+__RCSID("$NetBSD: room.c,v 1.8 2006/03/30 04:41:15 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -461,6 +461,8 @@ dr_course(monster, entering, row, col)
 			}
 		}
 		/* look for door to dead end */
+		if (rn == NO_ROOM)
+			clean_up("dr_course:  monster not in room");
 		for (i = rooms[rn].top_row; i <= rooms[rn].bottom_row; i++) {
 			for (j = rooms[rn].left_col; j <= rooms[rn].right_col; j++) {
 				if ((i != monster->row) && (j != monster->col) &&
