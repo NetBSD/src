@@ -35,6 +35,10 @@
 #ifndef _PE_VAR_H_
 #define _PE_VAR_H_
 
+#ifdef __NetBSD__
+#include "nbcompat.h"
+#endif
+
 /*
  *  Image Format
  */
