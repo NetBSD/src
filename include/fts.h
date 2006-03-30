@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.h,v 1.14 2005/09/13 01:44:32 christos Exp $	*/
+/*	$NetBSD: fts.h,v 1.15 2006/03/30 01:23:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,6 +43,9 @@
 #ifndef	__fts_ino_t
 #define	__fts_ino_t	ino_t
 #endif
+#ifndef __fts_length_t
+#define __fts_length_t	u_int
+#endif
 
 typedef struct {
 	struct _ftsent *fts_cur;	/* current node */
@@ -81,8 +84,8 @@ typedef struct _ftsent {
 	char *fts_path;			/* root path */
 	int fts_errno;			/* errno for this node */
 	int fts_symfd;			/* fd for symlink */
-	u_short fts_pathlen;		/* strlen(fts_path) */
-	u_short fts_namelen;		/* strlen(fts_name) */
+	__fts_length_t fts_pathlen;	/* strlen(fts_path) */
+	__fts_length_t fts_namelen;	/* strlen(fts_name) */
 
 	__fts_ino_t fts_ino;		/* inode */
 	dev_t fts_dev;			/* device */
@@ -127,12 +130,12 @@ typedef struct _ftsent {
 
 __BEGIN_DECLS
 #ifndef __LIBC12_SOURCE__
-FTSENT	*fts_children(FTS *, int)		__RENAME(__fts_children30);
-int	 fts_close(FTS *)			__RENAME(__fts_close30);
+FTSENT	*fts_children(FTS *, int)		__RENAME(__fts_children31);
+int	 fts_close(FTS *)			__RENAME(__fts_close31);
 FTS	*fts_open(char * const *, int,
-    int (*)(const FTSENT **, const FTSENT **))	__RENAME(__fts_open30);
-FTSENT	*fts_read(FTS *)			__RENAME(__fts_read30);
-int	 fts_set(FTS *, FTSENT *, int)		__RENAME(__fts_set30);
+    int (*)(const FTSENT **, const FTSENT **))	__RENAME(__fts_open31);
+FTSENT	*fts_read(FTS *)			__RENAME(__fts_read31);
+int	 fts_set(FTS *, FTSENT *, int)		__RENAME(__fts_set31);
 #endif
 __END_DECLS
 

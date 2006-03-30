@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.30 2006/03/19 02:01:50 christos Exp $	*/
+/*	$NetBSD: fts.c,v 1.31 2006/03/30 01:23:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.30 2006/03/19 02:01:50 christos Exp $");
+__RCSID("$NetBSD: fts.c,v 1.31 2006/03/30 01:23:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -762,6 +762,7 @@ mem1:				saved_errno = errno;
 			maxlen = sp->fts_pathlen - len;
 		}
 
+#if defined(__FTS_COMPAT_LENGTH)
 		if (len + dnamlen >= USHRT_MAX) {
 			/*
 			 * In an FTSENT, fts_pathlen is a u_short so it is
@@ -777,6 +778,7 @@ mem1:				saved_errno = errno;
 			errno = ENAMETOOLONG;
 			return (NULL);
 		}
+#endif
 		p->fts_level = level;
 		p->fts_pathlen = len + dnamlen;
 		p->fts_parent = sp->fts_cur;
@@ -1097,7 +1099,7 @@ fts_palloc(FTS *sp, size_t size)
 
 	_DIAGASSERT(sp != NULL);
 
-#if 1
+#ifdef __FTS_COMPAT_LENGTH
 	/* Protect against fts_pathlen overflow. */
 	if (size > USHRT_MAX + 1) {
 		errno = ENAMETOOLONG;
