@@ -5,19 +5,26 @@
 PROG=	ndiscvt
 SRCS=	ndiscvt.c
 SRCS+=	subr_pe.c
-SRCS+=	inf.c inf-token.l inf-parse.y y.tab.h
+SRCS+=	inf.c inf-token.l inf-parse.y
 
-MAN8=	ndiscvt.8
+DPSRCS+= y.tab.h
+
+MAN=	ndiscvt.8
 
 WARNS?=	4
 
 DPADD=  ${LIBL}
 LDADD=  -ll
 
-YFLAGS+=-v
 
 CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../../sys
 
 CLEANFILES= y.output
+CLEANFILES+= ndiscvt.cat8
+CLEANFILES+= y.tab.c y.tab.h
+
+
+y.tab.h: inf-parse.y
+	${YACC} -v -d inf-parse.y
 
 .include <bsd.prog.mk>
