@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.18 2006/01/04 01:30:21 perry Exp $	*/
+/*	$NetBSD: parse.c,v 1.19 2006/03/30 19:53:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.18 2006/01/04 01:30:21 perry Exp $");
+__RCSID("$NetBSD: parse.c,v 1.19 2006/03/30 19:53:58 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,19 +219,16 @@ rewrite(FS *fs)
 	char savech, *fmtp, cs[3];
 	int nconv, prec;
 
-	nextpr = NULL;
 	prec = 0;
 	for (fu = fs->nextfu; fu; fu = fu->nextfu) {
 		/*
 		 * Break each format unit into print units; each conversion
 		 * character gets its own.
 		 */
+		nextpr = &fu->nextpr;
 		for (nconv = 0, fmtp = fu->fmt; *fmtp; nextpr = &pr->nextpr) {
 			pr = emalloc(sizeof(PR));
-			if (!fu->nextpr)
-				fu->nextpr = pr;
-			else
-				*nextpr = pr;
+			*nextpr = pr;
 
 			/* Skip preceding text and up to the next % sign. */
 			for (p1 = fmtp; *p1 && *p1 != '%'; ++p1);
