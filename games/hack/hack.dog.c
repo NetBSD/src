@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.dog.c,v 1.6 2003/04/02 18:36:36 jsm Exp $	*/
+/*	$NetBSD: hack.dog.c,v 1.7 2006/03/30 01:25:52 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.dog.c,v 1.6 2003/04/02 18:36:36 jsm Exp $");
+__RCSID("$NetBSD: hack.dog.c,v 1.7 2006/03/30 01:25:52 jnemeth Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -366,6 +366,8 @@ dog_move(struct monst *mtmp, int after)
 		ny = poss[i].y;
 		if (info[i] & ALLOW_M) {
 			mtmp2 = m_at(nx, ny);
+			if (mtmp2 = NULL)
+				panic("error in dog_move");
 			if (mtmp2->data->mlevel >= mdat->mlevel + 2 ||
 			    mtmp2->data->mlet == 'c')
 				continue;
