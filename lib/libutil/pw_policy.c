@@ -1,4 +1,4 @@
-/* $NetBSD: pw_policy.c,v 1.9 2006/03/19 22:58:21 elad Exp $ */
+/* $NetBSD: pw_policy.c,v 1.10 2006/03/30 18:11:17 elad Exp $ */
 
 /*-
  * Copyright 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -224,8 +224,7 @@ pw_policy_handle_charclass(HANDLER_ARGS)
 		ischarclass = arg2;
 
 		do {
-			if (!isspace((unsigned char)*pw) &&
-			    ischarclass((unsigned char)*pw++))
+			if (ischarclass((unsigned char)*pw++))
 				count++;
 		} while (*pw != '\0');
 
@@ -248,18 +247,6 @@ pw_policy_handle_nclasses(HANDLER_ARGS)
 		    &policy->maxclasses) != 0)
 			return EINVAL;
 
-		/*
-		 * Set these to -1 just in case. This indicates we allow any
-		 * number of characters from all classes.
-		 */
-		policy->minlower = -1;
-		policy->maxlower = -1;
-		policy->minupper = -1;
-		policy->maxupper = -1;
-		policy->mindigits = -1;
-		policy->maxdigits = -1;
-		policy->minpunct = -1;
-		policy->maxpunct = -1;
 		return 0;
 
 	case TEST_POLICY: {
@@ -431,9 +418,11 @@ pw_policy_load(void *key, int how)
 	}
 
  load_policies:
-	policy = calloc(sizeof(struct pw_policy), 1);
+	policy = malloc(sizeof(struct pw_policy));
 	if (policy == NULL)
 		return NULL;
+
+	memset(policy, 0xff, sizeof(struct pw_policy));
 
 	hp = &handlers[0];
 	while (hp->name != NULL) {
