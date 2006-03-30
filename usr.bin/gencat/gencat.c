@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.19 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: gencat.c,v 1.20 2006/03/30 20:32:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.19 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.20 2006/03/30 20:32:10 dsl Exp $");
 #endif
 
 /***********************************************************
@@ -799,14 +799,13 @@ MCDelSet(setId)
 	for (; set != NULL && set->setId < setId; set = set->entries.le_next);
 
 	if (set && set->setId == setId) {
-
-		msg = set->msghead.lh_first;
-		while (msg) {
-			free(msg->str);
-			LIST_REMOVE(msg, entries);
-		}
-
 		LIST_REMOVE(set, entries);
+		while ((msg = set->msghead.lh_first) != NULL) {
+			LIST_REMOVE(msg, entries);
+			free(msg->str);
+			free(msg);
+		}
+		free(set);
 		return;
 	}
 	warning(NULL, "specified set doesn't exist");
@@ -825,8 +824,9 @@ MCDelMsg(msgId)
 	for (; msg != NULL && msg->msgId < msgId; msg = msg->entries.le_next);
 
 	if (msg && msg->msgId == msgId) {
-		free(msg->str);
 		LIST_REMOVE(msg, entries);
+		free(msg->str);
+		free(msg);
 		return;
 	}
 	warning(NULL, "specified msg doesn't exist");
