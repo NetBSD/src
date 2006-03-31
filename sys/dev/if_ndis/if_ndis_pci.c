@@ -31,7 +31,9 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,11 +75,7 @@ __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24
 #include <compat/ndis/cfg_var.h>
 #include <dev/if_ndis/if_ndisvar.h>
 
-#ifdef NDIS_LKM
-#include "ndis_driver_data.h"
-#else
-#include <modules/if_ndis/ndis_driver_data.h>
-#endif /* NDIS_LKM */
+#include NDIS_DRV_DATA
 
 #ifdef __NetBSD__
 #ifndef NDIS_LKM
