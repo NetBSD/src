@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_pe.c,v 1.7.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.3 2006/03/31 00:03:57 rittera Exp $");
 #endif
 
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/errno.h>
+#include <sys/lock.h>
 #ifdef _KERNEL
 #include <sys/systm.h>
 extern int ndis_strncasecmp(const char *, const char *, size_t);
@@ -447,7 +448,7 @@ int
 pe_get_import_descriptor(imgbase, desc, module)
 	vm_offset_t		imgbase;
 	image_import_descriptor	*desc;
-	char			*module;
+	const char		*module;
 {	
 	vm_offset_t		offset;
 	image_import_descriptor	*imp_desc;
@@ -608,7 +609,7 @@ pe_functbl_match(functbl, name)
 int
 pe_patch_imports(imgbase, module, functbl)
 	vm_offset_t		imgbase;
-	char			*module;
+	const char		*module;
 	image_patch_table	*functbl;
 {
 	image_import_descriptor	imp_desc;

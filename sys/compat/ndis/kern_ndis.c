@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.3 2006/03/31 00:03:57 rittera Exp $");
 #endif
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.2 2006/03/30 23:06:56 rittera Exp $"
 #include <sys/module.h>
 #else
 #include <sys/lkm.h>
+#include <sys/mbuf.h>
 #endif
 #include <sys/kthread.h>
 #include <machine/bus.h>
@@ -67,6 +68,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.2 2006/03/30 23:06:56 rittera Exp $"
 #include <machine/resource.h>
 #include <sys/bus.h>
 #include <sys/rman.h>
+#endif
+
+#ifdef __NetBSD__
+#include <machine/bus.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
 #endif
 
 #include <net/if.h>
@@ -103,6 +110,11 @@ __stdcall static void ndis_sendrsrcavail_func(ndis_handle);
 __stdcall static void ndis_intrhand(kdpc *, device_object *,
 	irp *, struct ndis_softc *);
 
+#ifdef __NetBSD__
+extern int ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
+extern void device_printf(device_t, const char *fmt, ...);
+#endif
+	
 static image_patch_table kernndis_functbl[] = {
 	IMPORT_FUNC(ndis_status_func),
 	IMPORT_FUNC(ndis_statusdone_func),
@@ -122,23 +134,40 @@ struct ndis_req {
 	void			*nr_arg;
 	int			nr_exit;
 	STAILQ_ENTRY(ndis_req)	link;
+	/* just for debugging */
+	int 			area;
 };
 
 struct ndisproc {
 	struct ndisqhead	*np_q;
 	struct proc		*np_p;
 	int			np_state;
+	uint8_t			np_stack[PAGE_SIZE*NDIS_KSTACK_PAGES];
+#ifdef __NetBSD__
+	int			np_needs_wakeup;
+#endif
 };
 
 static void ndis_return(void *);
-static int ndis_create_kthreads(void);
+//#ifdef NDIS_LKM
+/*static*/ int ndis_create_kthreads(void);
+//#endif
 static void ndis_destroy_kthreads(void);
 static void ndis_stop_thread(int);
 static int ndis_enlarge_thrqueue(int);
 static int ndis_shrink_thrqueue(int);
+//#ifdef NDIS_LKM
 static void ndis_runq(void *);
+//#endif
 
+#ifdef __FreeBSD__
 static struct mtx ndis_thr_mtx;
+#else /* __NetBSD__ */
+static struct simplelock ndis_thr_mtx;
+#define THR_LOCK() 	 do {old_ipl = splnet(); simple_lock(&ndis_thr_mtx);} while(0)
+#define THR_UNLOCK()	 do {simple_unlock(&ndis_thr_mtx); splx(old_ipl);} while(0)
+#endif
+
 static struct mtx ndis_req_mtx;
 static STAILQ_HEAD(ndisqhead, ndis_req) ndis_ttodo;
 static struct ndisqhead ndis_itodo;
@@ -169,7 +198,9 @@ ndis_modevent(module_t mod, int cmd, void *arg)
 		hal_libinit();
 		ndis_libinit();
 		ntoskrnl_libinit();
+#ifdef usbimplemented
 		usbd_libinit();
+#endif
 
 		patch = kernndis_functbl;
 		while (patch->ipt_func != NULL) {
@@ -191,7 +222,9 @@ ndis_modevent(module_t mod, int cmd, void *arg)
 			hal_libfini();
 			ndis_libfini();
 			ntoskrnl_libfini();
+#ifdef usbimplemented
 			usbd_libfini();
+#endif
 			windrv_libfini();
 
 			patch = kernndis_functbl;
@@ -230,9 +263,22 @@ DEV_MODULE(ndisapi, ndis_modevent, NULL);
 MODULE_VERSION(ndisapi, 1);
 #endif
 #ifdef __NetBSD__
-MOD_MISC( "ndis");
+MOD_MISC( "ndisapi");
 
-static int
+#ifndef NDIS_LKM
+int ndis_lkm_handle(struct lkm_table *lkmtp, int cmd);
+void call_ndis_create_kthreads(void *arg);
+
+/* Just to schedule ndis_create_kthreads() to be called after init
+ * has been created.
+ */
+void call_ndis_create_kthreads(void *arg)
+{
+	ndis_create_kthreads();
+}
+#endif
+
+/*static*/ int
 ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
 {
 	int			error = 0;
@@ -245,7 +291,9 @@ ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
 		hal_libinit();
 		ndis_libinit();
 		ntoskrnl_libinit();
+#ifdef usbimplemented
 		usbd_libinit();
+#endif
 
 		patch = kernndis_functbl;
 		while (patch->ipt_func != NULL) {
@@ -254,7 +302,12 @@ ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
 			patch++;
 		}
 
+#ifdef NDIS_LKM
 		ndis_create_kthreads();
+#else
+		/* Shedule threads to be created after autoconfiguration */
+		kthread_create(call_ndis_create_kthreads, NULL);
+#endif
 
 		TAILQ_INIT(&ndis_devhead);
 
@@ -267,7 +320,9 @@ ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
 		hal_libfini();
 		ndis_libfini();
 		ntoskrnl_libfini();
+#ifdef usbimplemented		
 		usbd_libfini();
+#endif		
 		windrv_libfini();
 
 		patch = kernndis_functbl;
@@ -309,6 +364,14 @@ ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
  * By default there are 32 jobs available to start, and another 8
  * are added to the free list each time a new device is created.
  */
+ 
+/* Just for testing this can be removed later */
+struct ndis_req *_ndis_taskqueue_req;
+struct ndis_req *_ndis_swi_req;
+int calling_in_swi = FALSE;
+int calling_in_tq  = FALSE;
+int num_swi		 = 0;
+int num_tq		 = 0;
 
 static void
 ndis_runq(arg)
@@ -316,38 +379,101 @@ ndis_runq(arg)
 {
 	struct ndis_req		*r = NULL, *die = NULL;
 	struct ndisproc		*p;
+#ifdef __NetBSD__
+	int old_ipl;
+#endif
 
 	p = arg;
 
 	while (1) {
 
+		/* Protect against interrupts between checking if the queue is empty, and going to sleep
+		 * to avoid a wakeup before sleep.
+		 */
+		old_ipl = splnet();
 		/* Sleep, but preserve our original priority. */
-		ndis_thsuspend(p->np_p, NULL, 0);
-
+		if(STAILQ_EMPTY(p->np_q)) {
+			/* TODO: If we get an interrupt between checking if the queue is empty, 
+			 * TODO: and sleeping, then in the interrupt, an item could be placed
+			 * TODO: on the queue, and we could be woken up before we sleep.
+			 * 
+			 */
+			ndis_thsuspend(p->np_p, NULL, 0);
+		}
+		splx(old_ipl);
+		
+#ifdef __NetBSD__
+		p->np_needs_wakeup = FALSE;
+#endif
+		
 		/* Look for any jobs on the work queue. */
-
+#ifdef __FreeBSD__		
 		mtx_lock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+		THR_LOCK();
+#endif
+		
 		p->np_state = NDIS_PSTATE_RUNNING;
-		while(STAILQ_FIRST(p->np_q) != NULL) {
+		while(!STAILQ_EMPTY(p->np_q)/*STAILQ_FIRST(p->np_q) != NULL*/) {	
 			r = STAILQ_FIRST(p->np_q);
-			STAILQ_REMOVE_HEAD(p->np_q, link);
+			STAILQ_REMOVE_HEAD(p->np_q, link);			
+
+			/* for debugging */
+			
+			if(p == &ndis_tproc) {
+				num_tq++;
+				_ndis_taskqueue_req = r;
+				r->area = 1;
+			} else if(p == &ndis_iproc) {
+				num_swi++;
+				_ndis_swi_req = r;
+				r->area = 2;
+			}
+#ifdef __FreeBSD__		
 			mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+			THR_UNLOCK();
+#endif			
+			/* Just for debugging */
 
+			if(p == &ndis_tproc) {
+				calling_in_tq = TRUE;
+			} else if(p == &ndis_iproc) {
+				calling_in_swi	   = TRUE;
+			}
+			
 			/* Do the work. */
-
 			if (r->nr_func != NULL)
 				(*r->nr_func)(r->nr_arg);
+			
+			/* Just for debugging */
+			if(p == &ndis_tproc) {
+				calling_in_tq = FALSE;
+			} else if(p == &ndis_iproc) {
+				calling_in_swi	   = FALSE;
+			}
 
+#ifdef __FreeBSD__				
 			mtx_lock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+			THR_LOCK();
+#endif
+
+			/* Zeroing out the ndis_req is just for debugging */
+			//memset(r, 0, sizeof(struct ndis_req));
 			STAILQ_INSERT_HEAD(&ndis_free, r, link);
-
+			
 			/* Check for a shutdown request */
-
 			if (r->nr_exit == TRUE)
 				die = r;
 		}
 		p->np_state = NDIS_PSTATE_SLEEPING;
+
+#ifdef __FreeBSD__		
 		mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+		THR_UNLOCK();
+#endif
 
 		/* Bail if we were told to shut down. */
 
@@ -361,17 +487,29 @@ ndis_runq(arg)
 	mtx_lock(&Giant);
 #endif
 #endif
+	if(p == &ndis_tproc) {
+		printf("taskqueue thread exiting!\n");
+	} else if(p == &ndis_iproc) {
+		printf("swi thread exiting!\n");
+	}
 	kthread_exit(0);
 	return; /* notreached */
 }
 
-static int
+/*static*/ int
 ndis_create_kthreads()
 {
 	struct ndis_req		*r;
 	int			i, error = 0;
 
+	printf("in ndis_create_kthreads\n");
+	
+#ifdef __FreeBSD__
 	mtx_init(&ndis_thr_mtx, "NDIS thread lock", NULL, MTX_SPIN);
+#else /* __NetBSD__ */
+	simple_lock_init(&ndis_thr_mtx);
+	//lockinit(&ndis_thr_mtx, PWAIT, "NDIS thread lock", 0, 0/*LK_CANRECURSE*//*LK_SPIN*/);
+#endif	
 	mtx_init(&ndis_req_mtx, "NDIS request lock", MTX_NDIS_LOCK, MTX_DEF);
 
 	STAILQ_INIT(&ndis_ttodo);
@@ -379,7 +517,7 @@ ndis_create_kthreads()
 	STAILQ_INIT(&ndis_free);
 
 	for (i = 0; i < ndis_jobs; i++) {
-		r = malloc(sizeof(struct ndis_req), M_DEVBUF, M_WAITOK);
+		r = malloc(sizeof(struct ndis_req), M_DEVBUF, M_WAITOK|M_ZERO);	
 		if (r == NULL) {
 			error = ENOMEM;
 			break;
@@ -394,9 +532,9 @@ ndis_create_kthreads()
 		error = kthread_create(ndis_runq, &ndis_tproc,
 		    &ndis_tproc.np_p, RFHIGHPID,
 		    NDIS_KSTACK_PAGES, "ndis taskqueue");
-#else
-		error = kthread_create1(ndis_runq, &ndis_tproc,
-		    &ndis_tproc.np_p, "ndis taskqueue");
+#else /* __NetBSD__ */
+		error = ndis_kthread_create(ndis_runq, &ndis_tproc,
+		    &ndis_tproc.np_p, ndis_tproc.np_stack, PAGE_SIZE*NDIS_KSTACK_PAGES, "ndis taskqueue");
 #endif
 	}
 
@@ -408,8 +546,8 @@ ndis_create_kthreads()
 		    &ndis_iproc.np_p, RFHIGHPID,
 		    NDIS_KSTACK_PAGES, "ndis swi");
 #else
-		error = kthread_create1(ndis_runq, &ndis_iproc,
-		    &ndis_iproc.np_p, "ndis swi");
+		error = ndis_kthread_create(ndis_runq, &ndis_iproc,
+		    &ndis_iproc.np_p, ndis_iproc.np_stack, PAGE_SIZE*NDIS_KSTACK_PAGES, "ndis swi");
 #endif
 	}
 
@@ -454,6 +592,9 @@ ndis_stop_thread(t)
 	struct ndis_req		*r;
 	struct ndisqhead	*q;
 	struct proc		*p;
+#ifdef __NetBSD__
+	int old_ipl;
+#endif
 
 	if (t == NDIS_TASKQUEUE) {
 		q = &ndis_ttodo;
@@ -465,14 +606,23 @@ ndis_stop_thread(t)
 
 	/* Create and post a special 'exit' job. */
 
+#ifdef __FreeBSD__
 	mtx_lock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+	THR_LOCK();
+#endif	
 	r = STAILQ_FIRST(&ndis_free);
 	STAILQ_REMOVE_HEAD(&ndis_free, link);
 	r->nr_func = NULL;
 	r->nr_arg = NULL;
 	r->nr_exit = TRUE;
+	r->area	   = 3;
 	STAILQ_INSERT_TAIL(q, r, link);
+#ifdef __FreeBSD__	
 	mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+	THR_UNLOCK();
+#endif	
 
 	ndis_thresume(p);
 
@@ -485,13 +635,21 @@ ndis_stop_thread(t)
 #endif
 
 	/* Now empty the job list. */
-
+#ifdef __FreeBSD__
 	mtx_lock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+	THR_LOCK();
+#endif	
 	while ((r = STAILQ_FIRST(q)) != NULL) {
 		STAILQ_REMOVE_HEAD(q, link);
 		STAILQ_INSERT_HEAD(&ndis_free, r, link);
 	}
+
+#ifdef __FreeBSD__		
 	mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+	THR_UNLOCK();
+#endif
 
 	return;
 }
@@ -502,15 +660,26 @@ ndis_enlarge_thrqueue(cnt)
 {
 	struct ndis_req		*r;
 	int			i;
+#ifdef __NetBSD__
+	int			old_ipl;
+#endif	
 
 	for (i = 0; i < cnt; i++) {
 		r = malloc(sizeof(struct ndis_req), M_DEVBUF, M_WAITOK);
 		if (r == NULL)
 			return(ENOMEM);
+#ifdef __FreeBSD__
 		mtx_lock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+		THR_LOCK();
+#endif
 		STAILQ_INSERT_HEAD(&ndis_free, r, link);
 		ndis_jobs++;
+#ifdef __FreeBSD__		
 		mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+		THR_UNLOCK();
+#endif		
 	}
 
 	return(0);
@@ -522,17 +691,33 @@ ndis_shrink_thrqueue(cnt)
 {
 	struct ndis_req		*r;
 	int			i;
+#ifdef __NetBSD__
+	int			old_ipl;
+#endif	
 
 	for (i = 0; i < cnt; i++) {
+#ifdef __FreeBSD__	
 		mtx_lock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+		THR_LOCK();
+#endif		
 		r = STAILQ_FIRST(&ndis_free);
 		if (r == NULL) {
+#ifdef __FreeBSD__		
 			mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+			THR_UNLOCK();
+#endif
 			return(ENOMEM);
 		}
 		STAILQ_REMOVE_HEAD(&ndis_free, link);
 		ndis_jobs--;
+#ifdef __FreeBSD__		
 		mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+		THR_UNLOCK();
+#endif		
+
 		free(r, M_DEVBUF);
 	}
 
@@ -548,6 +733,9 @@ ndis_unsched(func, arg, t)
 	struct ndis_req		*r;
 	struct ndisqhead	*q;
 	struct proc		*p;
+#ifdef __NetBSD__
+	int			old_ipl;
+#endif	
 
 	if (t == NDIS_TASKQUEUE) {
 		q = &ndis_ttodo;
@@ -557,20 +745,35 @@ ndis_unsched(func, arg, t)
 		p = ndis_iproc.np_p;
 	}
 
+#ifdef __FreeBSD__	
 	mtx_lock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+	THR_LOCK();
+#endif	
 	STAILQ_FOREACH(r, q, link) {
 		if (r->nr_func == func && r->nr_arg == arg) {
+			r->area = 4;
 			STAILQ_REMOVE(q, r, ndis_req, link);
 			STAILQ_INSERT_HEAD(&ndis_free, r, link);
+#ifdef __FreeBSD__			
 			mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+			THR_UNLOCK();
+#endif			
 			return(0);
 		}
 	}
-
+#ifdef __FreeBSD__
 	mtx_unlock_spin(&ndis_thr_mtx);
-
+#else /* __NetBSD__ */
+	THR_UNLOCK();
+#endif
 	return(ENOENT);
 }
+
+/* just for testing */
+struct ndis_req *ls_tq_req = NULL;
+struct ndis_req *ls_swi_req = NULL;
 
 int
 ndis_sched(func, arg, t)
@@ -582,41 +785,92 @@ ndis_sched(func, arg, t)
 	struct ndisqhead	*q;
 	struct proc		*p;
 	int			s;
+#ifdef __NetBSD__
+	int			old_ipl;
+	/* just for debugging */
+	struct ndis_req		**ls;
+	//struct lwp		*l = curlwp;
+#endif
 
 	if (t == NDIS_TASKQUEUE) {
+		ls = &ls_tq_req;
 		q = &ndis_ttodo;
 		p = ndis_tproc.np_p;
 	} else {
+		ls = &ls_swi_req;
 		q = &ndis_itodo;
 		p = ndis_iproc.np_p;
 	}
 
+#ifdef __FreeBSD__
 	mtx_lock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+	THR_LOCK();
+#endif
+	
 	/*
 	 * Check to see if an instance of this job is already
 	 * pending. If so, don't bother queuing it again.
 	 */
 	STAILQ_FOREACH(r, q, link) {
 		if (r->nr_func == func && r->nr_arg == arg) {
+#ifdef __NetBSD__
+			if (t == NDIS_TASKQUEUE)
+				s = ndis_tproc.np_state;
+			else
+				s = ndis_iproc.np_state;
+#endif
+#ifdef __FreeBSD__		
 			mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+			THR_UNLOCK();
+#endif
+#ifdef __NetBSD__
+			/* The swi thread seemed to be going to sleep, and not waking up
+			 * again, so I thought I'd try this out...
+			 */
+			if (s == NDIS_PSTATE_SLEEPING)
+				ndis_thresume(p);
+#endif
 			return(0);
 		}
 	}
 	r = STAILQ_FIRST(&ndis_free);
 	if (r == NULL) {
+#ifdef __FreeBSD__		
 		mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+		THR_UNLOCK();
+#endif
 		return(EAGAIN);
 	}
 	STAILQ_REMOVE_HEAD(&ndis_free, link);
+#ifdef __NetBSD__
+	//memset(r, 0, sizeof(struct ndis_req));
+#endif
+	*ls = r;
 	r->nr_func = func;
 	r->nr_arg = arg;
 	r->nr_exit = FALSE;
+	r->area	   = 5;
 	STAILQ_INSERT_TAIL(q, r, link);
-	if (t == NDIS_TASKQUEUE)
+	if (t == NDIS_TASKQUEUE) {
 		s = ndis_tproc.np_state;
-	else
+#ifdef __NetBSD__
+		ndis_tproc.np_needs_wakeup = TRUE;
+#endif
+	} else {
 		s = ndis_iproc.np_state;
+#ifdef __NetBSD__
+		ndis_iproc.np_needs_wakeup = TRUE;
+#endif
+	}
+	
+#ifdef __FreeBSD__		
 	mtx_unlock_spin(&ndis_thr_mtx);
+#else /* __NetBSD__ */
+	THR_UNLOCK();
+#endif
 
 	/*
 	 * Post the job, but only if the thread is actually blocked
@@ -625,16 +879,47 @@ ndis_sched(func, arg, t)
 	 * it may suspend there, and in that case we don't want to wake
 	 * it up until KeWaitForObject() gets woken up on its own.
 	 */
-	if (s == NDIS_PSTATE_SLEEPING)
+	if (s == NDIS_PSTATE_SLEEPING) {
 		ndis_thresume(p);
+	}
 
 	return(0);
 }
 
+/* Try out writing my own version of ndis_sched() for NetBSD in which I just
+ * call the function instead of scheduling it.  I know this isn't
+ * what's supposed to be done, but I've been having a lot of problems
+ * with the SWI and taskqueue threads, and just thought I'd give this
+ * a try.
+ */
+ 
+ /* I don't think this will work, because it means that DPC's will be
+  * called from the bottom half of the kernel, so they won't be able
+  * to sleep using KeWaitForSingleObject.
+  */
+ /*
+ int
+ndis_sched(func, arg, t)
+	void			(*func)(void *);
+	void			*arg;
+	int			t;
+{
+	if(func != NULL) {
+		(*func)(arg);
+	}
+	
+	return 0;
+}
+*/
+
 int
 ndis_thsuspend(p, m, timo)
 	struct proc		*p;
+#ifdef __FreeBSD__	
 	struct mtx		*m;
+#else /* __NetBSD__*/
+	struct simplelock	*m;
+#endif		
 	int			timo;
 {
 	int			error;
@@ -649,12 +934,20 @@ ndis_thsuspend(p, m, timo)
 		    curthread->td_priority|PDROP, "ndissp", timo);
 	}
 #else
-	if (m != NULL)
+/* TODO: Why do they wait on &p->p_siglist?  I noticed that in FreeBSD's 
+ * src/sys/sys/proc.h there is some mention of p_siglist having to do with
+ * M:N threading.
+ */
+	if (m != NULL) {
+		//mtx_unlock(m);
 		error = ltsleep(&p->p_siglist, curlwp->l_priority, 
-				"ndissp", timo, 0);
-	else
-		error = ltsleep(&p->p_siglist, curlwp->l_priority|PNORELOCK, 
-				"ndissp", timo, 0);
+				"ndissp", timo, m);
+		//mtx_lock(m);
+	} else {
+		error = ltsleep(&p->p_siglist, curlwp->l_priority/*|PNORELOCK*/, 
+				"ndissp", timo, 0 /*&p->p_lock*/);
+	}
+
 #endif
 
 	return(error);
@@ -665,6 +958,7 @@ ndis_thresume(p)
 	struct proc		*p;
 {
 	wakeup(&p->p_siglist);
+	
 	return;
 }
 
@@ -687,7 +981,12 @@ ndis_status_func(adapter, status, sbuf, slen)
 	struct ifnet		*ifp;
 
 	block = adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif	
+	
 #ifdef __FreeBSD__
 	ifp = &sc->arpcom.ac_if;
 #else
@@ -707,7 +1006,12 @@ ndis_statusdone_func(adapter)
 	struct ifnet		*ifp;
 
 	block = adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif	
+	
 #ifdef __FreeBSD__
 	ifp = &sc->arpcom.ac_if;
 #else
@@ -755,7 +1059,12 @@ ndis_resetdone_func(adapter, status, addressingreset)
 	struct ifnet		*ifp;
 
 	block = adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif	
+	
 #ifdef __FreeBSD__
 	ifp = &sc->arpcom.ac_if;
 #else
@@ -768,11 +1077,12 @@ ndis_resetdone_func(adapter, status, addressingreset)
 	return;
 }
 
+#ifdef __FreeBSD__
+/* FreeBSD version of ndis_create_sysctls() */
 int
 ndis_create_sysctls(arg)
 	void			*arg;
 {
-#ifdef __FreeBSD__
 	struct ndis_softc	*sc;
 	ndis_cfg		*vals;
 	char			buf[256];
@@ -870,22 +1180,136 @@ ndis_create_sysctls(arg)
 		    "Interrupt Number", buf, CTLFLAG_RD);
 	}
 
-#endif /* __FreeBSD__ */
 	return(0);
+}
+#endif /* __FreeBSD__ */
+
+#ifdef __NetBSD__
+/* NetBSD version of ndis_create_sysctls() */
+int
+ndis_create_sysctls(arg)
+	void			*arg;
+{
+	struct ndis_softc	*sc;
+	ndis_cfg		*vals;
+	const struct sysctlnode *ndis_node;
+	char buf[256];
+	
+	printf("in ndis_create_sysctls()\n");
+
+	if (arg == NULL)
+		return(EINVAL);
+
+	sc = arg;
+	vals = sc->ndis_regvals;
+
+	TAILQ_INIT(&sc->ndis_cfglist_head);
+
+	/* Create the sysctl tree. */
+	sysctl_createv(&sc->sysctllog, 0, NULL, &ndis_node, CTLFLAG_READWRITE, CTLTYPE_NODE,
+					sc->ndis_dev->dv_xname, NULL, NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	/* Store the number of the ndis mib */	
+	sc->ndis_sysctl_mib = ndis_node->sysctl_num;
+	
+	/* Add the driver-specific registry keys. */
+	vals = sc->ndis_regvals;
+	while(1) {
+		if (vals->nc_cfgkey == NULL)
+			break;
+		if (vals->nc_idx != sc->ndis_devidx) {
+			vals++;
+			continue;
+		}
+
+		/* See if we already have a sysctl with this name */
+/* TODO: Is something like this nesicary in NetBSD?  I'm guessing this
+   TODO: is just checking if any of the information in the .inf file was
+   TODO: already determined by FreeBSD's autoconfiguration which seems to
+   TODO: add dev.XXX sysctl's beginning with %.  (NetBSD dosen't seem to do this).
+*/		   
+
+/* TODO: use CTLFLAG_OWNDATA or not? */
+		   /*		   
+		sysctl_createv(&sc->sysctllog, 0, NULL, NULL, 
+						CTLFLAG_READWRITE|CTLFLAG_OWNDESC|CTLFLAG_OWNDATA, CTLTYPE_STRING, 
+						vals->nc_cfgkey, vals->nc_cfgdesc, NULL, 0, vals->nc_val, strlen(vals->nc_val),
+					    ndis_node->sysctl_num, CTL_CREATE, CTL_EOL);
+		   */
+		   ndis_add_sysctl(sc, vals->nc_cfgkey,
+						   vals->nc_cfgdesc, vals->nc_val, CTLFLAG_READWRITE);		   
+			
+   		vals++;
+	} /* end while */	
+
+		/* Now add a couple of builtin keys. */
+
+	/*
+	 * Environment can be either Windows (0) or WindowsNT (1).
+	 * We qualify as the latter.
+	 */	
+#ifdef __NetBSD__
+#define CTLFLAG_RD CTLFLAG_READONLY
+/* TODO: do we need something like rman_get_start? */
+#define rman_get_start(x) x
+#endif						
+		ndis_add_sysctl(sc, "Environment",
+						"Windows environment", "1", CTLFLAG_RD);
+						
+		/* NDIS version should be 5.1. */
+		ndis_add_sysctl(sc, "NdisVersion",
+						/*"NDIS API Version"*/ "Version", "0x00050001", CTLFLAG_RD);
+		
+		/* Bus type (PCI, PCMCIA, etc...) */
+		sprintf(buf, "%d", (int)sc->ndis_iftype);
+		ndis_add_sysctl(sc, "BusType", "Bus Type", buf, CTLFLAG_RD);
+
+		if (sc->ndis_res_io != NULL) {
+			sprintf(buf, "0x%lx", (long unsigned int)rman_get_start(sc->ndis_res_io));
+			ndis_add_sysctl(sc, "IOBaseAddress",
+							/*"Base I/O Address"*/ "Base I/O", buf, CTLFLAG_RD);
+		}
+
+		if (sc->ndis_irq != NULL) {
+			sprintf(buf, "%lu", (long unsigned int)rman_get_start(sc->ndis_irq));
+			ndis_add_sysctl(sc, "InterruptNumber",
+							"Interrupt Number", buf, CTLFLAG_RD);
+		}
+
+		return(0);	
+}
+#endif /* __NetBSD__ */
+
+char *ndis_strdup(const char *src);
+
+char *ndis_strdup(const char *src)
+{
+	char *ret;
+	
+	ret = malloc(strlen(src), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (ret == NULL) {
+		printf("ndis_strdup failed\n");
+		return(NULL);
+	}
+	strcpy(ret, src);
+	
+	return ret;
 }
 
 int
 ndis_add_sysctl(arg, key, desc, val, flag)
 	void			*arg;
-	char			*key;
-	char			*desc;
-	char			*val;
+	const char		*key;
+	const char		*desc;
+	const char		*val;
 	int			flag;
 {
-#ifdef __FreeBSD__
 	struct ndis_softc	*sc;
 	struct ndis_cfglist	*cfg;
 	char			descstr[256];
+#ifdef __NetBSD__
+	char newkey[MAX_SYSCTL_LEN+1];
+#endif	
 
 	sc = arg;
 
@@ -894,16 +1318,30 @@ ndis_add_sysctl(arg, key, desc, val, flag)
 	if (cfg == NULL)
 		return(ENOMEM);
 
-	cfg->ndis_cfg.nc_cfgkey = strdup(key, M_DEVBUF);
+	/* I added this because NetBSD sysctl node names can't begin with
+	 * a digit.
+	 */
+#ifdef __NetBSD__	
+	if(strlen(key) + strlen("ndis_") > MAX_SYSCTL_LEN) {
+		panic("sysctl name too long: %s\n", key);
+	}
+	strcpy(newkey, "ndis_");
+	strcpy(newkey + strlen("ndis_"), key);	
+	key = newkey;
+#endif	
+	
+	cfg->ndis_cfg.nc_cfgkey = ndis_strdup(key);
+	
 	if (desc == NULL) {
 		snprintf(descstr, sizeof(descstr), "%s (dynamic)", key);
-		cfg->ndis_cfg.nc_cfgdesc = strdup(descstr, M_DEVBUF);
+		cfg->ndis_cfg.nc_cfgdesc = ndis_strdup(descstr);
 	} else
-		cfg->ndis_cfg.nc_cfgdesc = strdup(desc, M_DEVBUF);
+		cfg->ndis_cfg.nc_cfgdesc = ndis_strdup(desc);
 	strcpy(cfg->ndis_cfg.nc_val, val);
 
 	TAILQ_INSERT_TAIL(&sc->ndis_cfglist_head, cfg, link);
 
+#ifdef __FreeBSD__
 #if __FreeBSD_version < 502113
 	SYSCTL_ADD_STRING(&sc->ndis_ctx, SYSCTL_CHILDREN(sc->ndis_tree),
 #else
@@ -913,7 +1351,12 @@ ndis_add_sysctl(arg, key, desc, val, flag)
 	    OID_AUTO, cfg->ndis_cfg.nc_cfgkey, flag,
 	    cfg->ndis_cfg.nc_val, sizeof(cfg->ndis_cfg.nc_val),
 	    cfg->ndis_cfg.nc_cfgdesc);
-#endif /* __FreeBSD__ */
+#else /* __NetBSD__ */
+/* TODO: use CTLFLAG_OWNDATA or not? */
+	sysctl_createv(&sc->sysctllog, 0, NULL, NULL, flag/*|CTLFLAG_OWNDESC|CTLFLAG_OWNDATA*/, CTLTYPE_STRING, 
+					cfg->ndis_cfg.nc_cfgkey, cfg->ndis_cfg.nc_cfgdesc, NULL, 0, cfg->ndis_cfg.nc_val,
+					strlen(cfg->ndis_cfg.nc_val), sc->ndis_sysctl_mib, CTL_CREATE, CTL_EOL);	
+#endif	
 	return(0);
 }
 
@@ -929,8 +1372,10 @@ ndis_flush_sysctls(arg)
 	while (!TAILQ_EMPTY(&sc->ndis_cfglist_head)) {
 		cfg = TAILQ_FIRST(&sc->ndis_cfglist_head);
 		TAILQ_REMOVE(&sc->ndis_cfglist_head, cfg, link);
+#ifdef __FreeBSD__		
 		free(cfg->ndis_cfg.nc_cfgkey, M_DEVBUF);
 		free(cfg->ndis_cfg.nc_cfgdesc, M_DEVBUF);
+#endif		
 		free(cfg, M_DEVBUF);
 	}
 
@@ -964,9 +1409,14 @@ ndis_return(arg)
 }
 
 void
+#ifdef __FreeBSD__
 ndis_return_packet(buf, arg)
 	void			*buf;	/* not used */
 	void			*arg;
+#else
+ndis_return_packet(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+#endif
+
 {
 	ndis_packet		*p;
 
@@ -1017,6 +1467,7 @@ ndis_free_packet(p)
 	return;
 }
 
+#ifdef __FreeBSD__
 int
 ndis_convert_res(arg)
 	void			*arg;
@@ -1028,11 +1479,9 @@ ndis_convert_res(arg)
 	device_t		dev;
 	struct resource_list	*brl;
 	struct resource_list_entry	*brle;
-#ifdef __FreeBSD__
 #if __FreeBSD_version < 600022
 	struct resource_list	brl_rev;
 	struct resource_list_entry	*n;
-#endif
 #endif
 	int 			error = 0;
 
@@ -1040,10 +1489,8 @@ ndis_convert_res(arg)
 	block = sc->ndis_block;
 	dev = sc->ndis_dev;
 
-#ifdef __FreeBSD__
 #if __FreeBSD_version < 600022
 	SLIST_INIT(&brl_rev);
-#endif
 #endif
 	rl = malloc(sizeof(ndis_resource_list) +
 	    (sizeof(cm_partial_resource_desc) * (sc->ndis_rescnt - 1)),
@@ -1141,7 +1588,7 @@ bad:
 
 	return(error);
 }
-
+#endif /* __FreeBSD__ */
 /*
  * Map an NDIS packet to an mbuf list. When an NDIS driver receives a
  * packet, it will hand it to us in the form of an ndis_packet,
@@ -1184,8 +1631,13 @@ ndis_ptom(m0, p)
 		}
 		m->m_len = MmGetMdlByteCount(buf);
 		m->m_data = MmGetMdlVirtualAddress(buf);
+#ifdef __FreeBSD__
 		MEXTADD(m, m->m_data, m->m_len, ndis_return_packet,
-		    p, 0, EXT_NDIS);
+			p, 0, EXT_NDIS);
+#else
+		MEXTADD(m, m->m_data, m->m_len, M_DEVBUF,
+			ndis_return_packet, p);
+#endif
 		p->np_refcnt++;
 		totlen += m->m_len;
 		if (m->m_flags & MT_HEADER)
@@ -1297,6 +1749,9 @@ ndis_set_info(arg, oid, buf, buflen)
 	uint32_t		byteswritten = 0, bytesneeded = 0;
 	int			error;
 	uint8_t			irql;
+#ifdef __NetBSD__
+	int			s;
+#endif
 
 	/*
 	 * According to the NDIS spec, MiniportQueryInformation()
@@ -1314,15 +1769,21 @@ ndis_set_info(arg, oid, buf, buflen)
 	else
 		sc->ndis_block->nmb_pendingreq = (ndis_request *)sc;
 
+	/* I added this lock because it was present in the FreeBSD-current sources */
+	NDIS_LOCK(sc);
+	
 	setfunc = sc->ndis_chars->nmc_setinfo_func;
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
 
 	if (adapter == NULL || setfunc == NULL) {
 		sc->ndis_block->nmb_pendingreq = NULL;
 		KeReleaseSpinLock(&sc->ndis_block->nmb_lock, irql);
+		NDIS_UNLOCK(sc);
 		return(ENXIO);
 	}
-
+	
+	NDIS_UNLOCK(sc);
+	
 	rval = MSCALL6(setfunc, adapter, oid, buf, *buflen,
 	    &byteswritten, &bytesneeded);
 
@@ -1332,11 +1793,20 @@ ndis_set_info(arg, oid, buf, buflen)
 
 	if (rval == NDIS_STATUS_PENDING) {
 		mtx_lock(&ndis_req_mtx);
+#ifdef __FreeBSD__
 		error = msleep(&sc->ndis_block->nmb_setstat,
 		    &ndis_req_mtx,
 		    curthread->td_priority|PDROP,
 		    "ndisset", 5 * hz);
+#else
+		error = ltsleep(&sc->ndis_block->nmb_setstat,
+				curlwp->l_priority|PNORELOCK, 
+				"ndisset", 5 * hz, 0);
+#endif
 		rval = sc->ndis_block->nmb_setstat;
+#ifdef __NetBSD__
+		mtx_unlock(&ndis_req_mtx);
+#endif
 	}
 
 
@@ -1451,7 +1921,7 @@ ndis_init_dma(arg)
 	void			*arg;
 {
 	struct ndis_softc	*sc;
-	int			i, error;
+	int			i, error = 0;
 
 	sc = arg;
 
@@ -1462,8 +1932,19 @@ ndis_init_dma(arg)
 		return(ENOMEM);
 
 	for (i = 0; i < sc->ndis_maxpkts; i++) {
+#ifdef __FreeBSD__
 		error = bus_dmamap_create(sc->ndis_ttag, 0,
 		    &sc->ndis_tmaps[i]);
+#else
+		/*
+		bus_dmamap_create(sc->ndis_mtag, sizeof(bus_dmamap_t), 
+				  1, sizeof(bus_dmamap_t), BUS_DMA_NOWAIT, 
+				  0, &sc->ndis_mmaps[i]);
+		*/	
+		bus_dmamap_create(sc->ndis_ttag, NDIS_MAXSEG * MCLBYTES, 
+				  NDIS_MAXSEG, MCLBYTES, 0, 
+				  BUS_DMA_NOWAIT, &sc->ndis_tmaps[i]);
+#endif
 		if (error) {
 			free(sc->ndis_tmaps, M_DEVBUF);
 			return(ENODEV);
@@ -1497,7 +1978,9 @@ ndis_destroy_dma(arg)
 
 	free(sc->ndis_tmaps, M_DEVBUF);
 
+#ifdef __FreeBSD__
 	bus_dma_tag_destroy(sc->ndis_ttag);
+#endif
 
 	return(0);
 }
@@ -1515,7 +1998,11 @@ ndis_reset_nic(arg)
 	uint8_t			irql;
 
 	sc = arg;
+#ifdef __FreeBSD__
 	ifp = &sc->arpcom.ac_if;
+#else
+	ifp = &sc->arpcom.ec_if;
+#endif
 
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
 	resetfunc = sc->ndis_chars->nmc_reset_func;
@@ -1533,8 +2020,12 @@ ndis_reset_nic(arg)
 
 	if (rval == NDIS_STATUS_PENDING) {
 		mtx_lock(&ndis_req_mtx);
+#ifdef __FreeBSD__
 		msleep(sc, &ndis_req_mtx,
-		    curthread->td_priority|PDROP, "ndisrst", 0);
+		       curthread->td_priority|PDROP, "ndisrst", 0);
+#else
+		ltsleep(sc, curlwp->l_priority|PNORELOCK, "ndisrst", 0, 0);
+#endif
 	}
 
 	return(0);
@@ -1548,14 +2039,22 @@ ndis_halt_nic(arg)
 	ndis_handle		adapter;
 	__stdcall ndis_halt_handler	haltfunc;
 	struct ifnet		*ifp;
+#ifdef __NetBSD__
+	int			s;
+#endif	
 
 	sc = arg;
+#ifdef __FreeBSD__
 	ifp = &sc->arpcom.ac_if;
+#else
+	ifp = &sc->arpcom.ec_if;
+#endif
 
 	NDIS_LOCK(sc);
+	
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
 	if (adapter == NULL) {
-		NDIS_UNLOCK(sc);
+		NDIS_UNLOCK(sc);	
 		return(EIO);
 	}
 
@@ -1566,13 +2065,16 @@ ndis_halt_nic(arg)
 	 */
 
 	haltfunc = sc->ndis_chars->nmc_halt_func;
+		
 	NDIS_UNLOCK(sc);
 
 	MSCALL1(haltfunc, adapter);
 
 	NDIS_LOCK(sc);
+			
 	sc->ndis_block->nmb_miniportadapterctx = NULL;
-	NDIS_UNLOCK(sc);
+
+	NDIS_UNLOCK(sc);	
 
 	return(0);
 }
@@ -1584,12 +2086,19 @@ ndis_shutdown_nic(arg)
 	struct ndis_softc	*sc;
 	ndis_handle		adapter;
 	__stdcall ndis_shutdown_handler	shutdownfunc;
+#ifdef __NetBSD__
+	int			s;
+#endif	
 
 	sc = arg;
+	
 	NDIS_LOCK(sc);
+	
 	adapter = sc->ndis_block->nmb_miniportadapterctx;
 	shutdownfunc = sc->ndis_chars->nmc_shutdown_handler;
+	
 	NDIS_UNLOCK(sc);
+
 	if (adapter == NULL || shutdownfunc == NULL)
 		return(EIO);
 
@@ -1614,21 +2123,34 @@ ndis_init_nic(arg)
 	ndis_status		status, openstatus = 0;
 	ndis_medium		mediumarray[NdisMediumMax];
 	uint32_t		chosenmedium, i;
+#ifdef __NetBSD__
+	int			s;
+#endif	
 
 	if (arg == NULL)
 		return(EINVAL);
 
 	sc = arg;
+
 	NDIS_LOCK(sc);
+	
 	block = sc->ndis_block;
 	initfunc = sc->ndis_chars->nmc_init_func;
-	NDIS_UNLOCK(sc);
+
+	NDIS_UNLOCK(sc);	
+	
+	printf("sc->ndis_chars->nmc_version_major = %d\n\
+			sc->ndis_chars->nmc_version_minor = %d\n", 
+			sc->ndis_chars->nmc_version_major,
+			sc->ndis_chars->nmc_version_minor);
 
 	for (i = 0; i < NdisMediumMax; i++)
 		mediumarray[i] = i;
 
         status = MSCALL6(initfunc, &openstatus, &chosenmedium,
             mediumarray, NdisMediumMax, block, block);
+		
+	printf("status = %x", status);		
 
 	/*
 	 * If the init fails, blow away the other exported routines
@@ -1637,8 +2159,10 @@ ndis_init_nic(arg)
 	 */
 	if (status != NDIS_STATUS_SUCCESS) {
 		NDIS_LOCK(sc);
+					
 		sc->ndis_block->nmb_miniportadapterctx = NULL;
-		NDIS_UNLOCK(sc);
+		
+		NDIS_UNLOCK(sc);			
 		return(ENXIO);
 	}
 
@@ -1755,8 +2279,12 @@ ndis_get_info(arg, oid, buf, buflen)
 	ndis_handle		adapter;
 	__stdcall ndis_queryinfo_handler	queryfunc;
 	uint32_t		byteswritten = 0, bytesneeded = 0;
+#ifdef __FreeBSD__	
 	int			error;
+#endif
 	uint8_t			irql;
+	
+	//printf("in ndis_get_info\n");
 	
 	sc = arg;
 	KeAcquireSpinLock(&sc->ndis_block->nmb_lock, &irql);
@@ -1786,10 +2314,15 @@ ndis_get_info(arg, oid, buf, buflen)
 
 	if (rval == NDIS_STATUS_PENDING) {
 		mtx_lock(&ndis_req_mtx);
+#ifdef __FreeBSD__
 		error = msleep(&sc->ndis_block->nmb_getstat,
 		    &ndis_req_mtx,
 		    curthread->td_priority|PDROP,
 		    "ndisget", 5 * hz);
+#else
+		ltsleep(&sc->ndis_block->nmb_getstat,
+			curlwp->l_priority|PNORELOCK, "ndisget", 5 * hz, 0);
+#endif
 		rval = sc->ndis_block->nmb_getstat;
 	}
 
@@ -1836,13 +2369,24 @@ NdisAddDevice(drv, pdo)
 	block->nmb_physdeviceobj = pdo;
 	block->nmb_nextdeviceobj = IoAttachDeviceToDeviceStack(fdo, pdo);
 	KeInitializeSpinLock(&block->nmb_lock);
+	
+#ifdef __NetBSD__
+	/* NetBSD has a pointer to the callout object */
+	block->nmb_wkupdpctimer.nt_ktimer.k_handle = 
+		malloc(sizeof(struct callout), M_DEVBUF, M_NOWAIT|M_ZERO);
+#endif	
 
 	/*
 	 * Stash pointers to the miniport block and miniport
 	 * characteristics info in the if_ndis softc so the
 	 * UNIX wrapper driver can get to them later.
-         */
+     */
+#ifdef __FreeBSD__		   	
 	sc = device_get_softc(pdo->do_devext);
+#else /* __NetBSD__ */
+	sc = pdo->pdo_sc;
+	fdo->fdo_sc = sc;
+#endif   
 	sc->ndis_block = block;
 	sc->ndis_chars = IoGetDriverObjectExtension(drv, (void *)1);
 
