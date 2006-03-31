@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.19 2005/12/11 12:24:00 christos Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.19.12.1 2006/03/31 09:45:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.19 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.19.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ pxg_attach(struct device *parent, struct device *self, void *aux)
 	struct pxg_softc *pxg;
 	int console;
 
-	pxg = (struct pxg_softc *)self;
+	pxg = device_private(self);
 	ta = (struct tc_attach_args *)aux;
 
 	if (ta->ta_addr == stic_consinfo.si_slotbase) {

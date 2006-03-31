@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.6.12.1 2006/03/28 09:47:15 tron Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.6.12.2 2006/03/31 09:44:59 tron Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.6.12.1 2006/03/28 09:47:15 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.6.12.2 2006/03/31 09:44:59 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,8 +58,6 @@ CFATTACH_DECL(mcclock_isa, sizeof (struct mc146818_softc),
 
 static void	mcclock_isa_write(struct mc146818_softc *, u_int, u_int);
 static u_int	mcclock_isa_read(struct mc146818_softc *, u_int);
-
-extern todr_chip_handle_t	todr_handle;
 
 static int
 mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
@@ -127,7 +125,7 @@ mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	mc146818_attach(sc);
 
-	todr_handle = &sc->sc_handle;
+	todr_attach(&sc->sc_handle);
 }
 
 void

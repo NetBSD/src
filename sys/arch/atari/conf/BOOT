@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOT,v 1.70 2006/02/05 05:01:49 cube Exp $
+# $NetBSD: BOOT,v 1.70.6.1 2006/03/31 09:44:57 tron Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.59 2006/02/04 02:25:57 rpaulo Exp $
+#		NetBSD: GENERIC.in,v 1.61 2006/03/28 20:58:39 pavel Exp $
 include "arch/atari/conf/std.atari"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -62,7 +62,7 @@ pseudo-device ppp # ppp
 
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device vnd  # 3 pseudo disks (see vnconfig)
+pseudo-device vnd # 3 pseudo disks (see vnconfig)
 
 pseudo-device md 3 # Boot memory disk
 pseudo-device view 4 # View (graphics mapping)

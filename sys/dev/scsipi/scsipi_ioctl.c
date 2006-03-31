@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.58.6.1 2006/03/28 09:42:16 tron Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.58.6.2 2006/03/31 09:45:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.58.6.1 2006/03/28 09:42:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.58.6.2 2006/03/31 09:45:25 tron Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -387,14 +387,14 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 		case SCSIPI_BUSTYPE_SCSI:
 			sca->type = TYPE_SCSI;
 			sca->addr.scsi.scbus =
-			    device_parent(periph->periph_dev)->dv_unit;
+			    device_unit(device_parent(periph->periph_dev));
 			sca->addr.scsi.target = periph->periph_target;
 			sca->addr.scsi.lun = periph->periph_lun;
 			return (0);
 		case SCSIPI_BUSTYPE_ATAPI:
 			sca->type = TYPE_ATAPI;
 			sca->addr.atapi.atbus =
-			    device_parent(periph->periph_dev)->dv_unit;
+			    device_unit(device_parent(periph->periph_dev));
 			sca->addr.atapi.drive = periph->periph_target;
 			return (0);
 		}
@@ -407,7 +407,8 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 
 		switch (scsipi_periph_bustype(periph)) {
 		case SCSIPI_BUSTYPE_SCSI:
-			sca->scbus = device_parent(periph->periph_dev)->dv_unit;
+			sca->scbus =
+			    device_unit(device_parent(periph->periph_dev));
 			sca->target = periph->periph_target;
 			sca->lun = periph->periph_lun;
 			return (0);

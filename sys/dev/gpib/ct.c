@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.6.12.1 2006/03/28 09:42:10 tron Exp $ */
+/*	$NetBSD: ct.c,v 1.6.12.2 2006/03/31 09:45:19 tron Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.6.12.1 2006/03/28 09:42:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.6.12.2 2006/03/31 09:45:19 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ ctattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ct_softc *sc = (struct ct_softc *)self;
+	struct ct_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;
 	struct cs80_description csd;
 	char name[7];

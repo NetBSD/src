@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.14 2006/03/16 15:57:59 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.14.2.1 2006/03/31 09:45:29 tron Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.14 2006/03/16 15:57:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.14.2.1 2006/03/31 09:45:29 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -324,7 +324,8 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	    &node, CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, sc->sc_dev.dv_xname, NULL,
 	    tap_sysctl_handler, 0, sc, 18,
-	    CTL_NET, AF_LINK, tap_node, sc->sc_dev.dv_unit, CTL_EOL)) != 0)
+	    CTL_NET, AF_LINK, tap_node, device_unit(&sc->sc_dev),
+	    CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_createv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
 
@@ -378,7 +379,7 @@ tap_detach(struct device* self, int flags)
 	 * CTL_EOL.
 	 */
 	if ((error = sysctl_destroyv(NULL, CTL_NET, AF_LINK, tap_node,
-	    sc->sc_dev.dv_unit, CTL_EOL)) != 0)
+	    device_unit(&sc->sc_dev), CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_destroyv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
 	ether_ifdetach(ifp);
@@ -616,7 +617,7 @@ tap_clone_destroy(struct ifnet *ifp)
 int
 tap_clone_destroyer(struct device *dev)
 {
-	struct cfdata *cf = dev->dv_cfdata;
+	struct cfdata *cf = device_cfdata(dev);
 	int error;
 
 	if ((error = config_detach(dev, 0)) != 0)
@@ -709,7 +710,7 @@ tap_dev_cloner(struct lwp *l)
 	sc->sc_flags |= TAP_INUSE;
 
 	return fdclone(l, fp, fd, FREAD|FWRITE, &tap_fileops,
-	    (void *)(intptr_t)sc->sc_dev.dv_unit);
+	    (void *)(intptr_t)device_unit(&sc->sc_dev));
 }
 
 /*

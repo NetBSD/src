@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.216.4.1 2006/03/28 09:42:29 tron Exp $	*/
+/*	$NetBSD: proc.h,v 1.216.4.2 2006/03/31 09:45:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -86,6 +86,7 @@ struct pgrp {
 struct exec_package;
 struct ps_strings;
 struct ras;
+struct sa_emul;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -131,6 +132,9 @@ struct emul {
 
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
+
+	/* SA-related information */
+	const struct sa_emul *e_sa;
 };
 
 /*

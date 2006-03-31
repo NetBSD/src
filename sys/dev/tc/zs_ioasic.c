@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.29 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.29.12.1 2006/03/31 09:45:26 tron Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.29 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.29.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,7 +242,7 @@ zs_ioasic_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct zsc_softc *zs = (void *) self;
+	struct zsc_softc *zs = device_private(self);
 	struct zsc_attach_args zs_args;
 	struct zs_chanstate *cs;
 	struct ioasicdev_attach_args *d = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.5 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: sbp.c,v 1.5.6.1 2006/03/31 09:45:20 tron Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1200,7 +1200,8 @@ fw_kthread_create0(void *arg)
 
 	/* create thread */
 	if (kthread_create1(sbp_scsipi_scan_target,
-	    &sbp->target, &sbp->proc, "sbp%d_attach", sbp->fd.dev->dv_unit)) {
+	    &sbp->target, &sbp->proc, "sbp%d_attach",
+	    device_unit(sbp->fd.dev))) {
 
 		device_printf(sbp->fd.dev, "unable to create thread");
 		panic("fw_kthread_create");

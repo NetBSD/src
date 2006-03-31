@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.10.12.1 2006/03/28 09:42:14 tron Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.10.12.2 2006/03/31 09:45:24 tron Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.10.12.1 2006/03/28 09:42:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.10.12.2 2006/03/31 09:45:24 tron Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -250,7 +250,7 @@ void
 dmcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct uba_attach_args *ua = aux;
-	struct dmc_softc *sc = (struct dmc_softc *)self;
+	struct dmc_softc *sc = device_private(self);
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
@@ -305,7 +305,7 @@ dmcinit(struct ifnet *ifp)
 	struct dmcbufs *rp;
 	struct dmc_command *qp;
 	struct ifaddr *ifa;
-	struct cfdata *ui = sc->sc_dev.dv_cfdata;
+	struct cfdata *ui = device_cfdata(&sc->sc_dev);
 	int base;
 	int s;
 

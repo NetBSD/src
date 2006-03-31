@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.113 2006/03/03 10:32:01 cube Exp $ */
+/*	$NetBSD: autoconf.c,v 1.113.6.1 2006/03/31 09:45:10 tron Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.113 2006/03/03 10:32:01 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.113.6.1 2006/03/31 09:45:10 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1110,7 +1110,7 @@ instance_match(struct device *dev, void *aux, struct bootpath *bp)
 		break;
 	}
 
-	if (bp->val[0] == -1 && bp->val[1] == dev->dv_unit)
+	if (bp->val[0] == -1 && bp->val[1] == device_unit(dev))
 		return (1);
 
 	return (0);
@@ -1158,7 +1158,7 @@ device_register(struct device *dev, void *aux)
 	bpname = bp->name;
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s\n",
-	    dev->dv_xname, dev->dv_cfdata->cf_name, dev->dv_xname, bpname));
+	    dev->dv_xname, device_cfdata(dev)->cf_name, dev->dv_xname, bpname));
 
 	/* First, match by name */
 	if (!device_is_a(dev, bpname)) {

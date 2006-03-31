@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.33 2006/02/16 20:17:20 perry Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.33.6.1 2006/03/31 09:45:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,16 +104,16 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #endif
 
 /* These flags are kept in l_flag. */
-#define	L_INMEM		0x00004	/* Loaded into memory. */
-#define	L_SELECT	0x00040	/* Selecting; wakeup/waiting danger. */
-#define	L_SINTR		0x00080	/* Sleep is interruptible. */
-#define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
-#define	L_SA		0x100000 /* Scheduler activations LWP */
-#define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
-#define	L_SA_BLOCKING	0x400000 /* Blocking in tsleep() */
-#define	L_DETACHED	0x800000 /* Won't be waited for. */
-#define	L_CANCELLED	0x2000000 /* tsleep should not sleep */
-#define	L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
+#define	L_INMEM		0x00000004 /* Loaded into memory. */
+#define	L_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
+#define	L_SINTR		0x00000080 /* Sleep is interruptible. */
+#define	L_TIMEOUT	0x00000400 /* Timing out during sleep. */
+#define	L_SA		0x00100000 /* Scheduler activations LWP */
+#define	L_SA_UPCALL	0x00200000 /* SA upcall is pending */
+#define	L_SA_BLOCKING	0x00400000 /* Blocking in tsleep() */
+#define	L_DETACHED	0x00800000 /* Won't be waited for. */
+#define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
+#define	L_SA_PAGEFAULT	0x04000000 /* SA LWP in pagefault handler */
 #define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
 #define	L_SA_IDLE	0x20000000 /* VP is idle */
 #define	L_COWINPROGRESS	0x40000000 /* UFS: doing copy on write */
@@ -180,6 +180,7 @@ void	lwp_exit (struct lwp *);
 void	lwp_exit2 (struct lwp *);
 struct lwp *proc_representative_lwp(struct proc *);
 __inline int lwp_suspend(struct lwp *, struct lwp *);
+int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);
 #endif	/* _KERNEL */
 
 /* Flags for _lwp_create(), as per Solaris. */

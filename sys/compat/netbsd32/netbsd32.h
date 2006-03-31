@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.50 2006/03/06 14:40:55 cube Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.50.4.1 2006/03/31 09:45:13 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -47,6 +47,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/ucontext.h>
+#include <compat/sys/ucontext.h>
 
 /*
  * first, define the basic types we need.
@@ -289,6 +290,13 @@ struct netbsd32_msqid_ds14 {
 	netbsd32_long	msg_pad4[4];
 };
 
+/* from  <sys/sa.h> */
+typedef netbsd32_pointer_t netbsd32_sa_upcall_t;
+typedef netbsd32_pointer_t netbsd32_sa_upcallp_t;
+
+void	netbsd32_cpu_upcall(struct lwp *, int, int, int, void *, void *,
+    void *, sa_upcall_t);
+
 /* from <sys/sem.h> */
 typedef netbsd32_pointer_t netbsd32_semp_t;
 
@@ -411,6 +419,9 @@ struct netbsd32_sigevent {
 	netbsd32_voidp	sigev_notify_function;
 	netbsd32_voidp	sigev_notify_attributes;
 };
+
+/* from <sys/sigtypes.h> */
+typedef netbsd32_pointer_t netbsd32_stackp_t;
 
 /* from <sys/socket.h> */
 typedef netbsd32_pointer_t netbsd32_sockaddrp_t;

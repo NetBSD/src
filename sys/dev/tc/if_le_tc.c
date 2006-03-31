@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.18 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.18.12.1 2006/03/31 09:45:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.18 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.18.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -89,7 +89,7 @@ le_tc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct le_softc *lesc = (void *)self;
+	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct tc_attach_args *d = aux;
 

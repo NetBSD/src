@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.202.6.1 2006/03/28 09:42:15 tron Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.202.6.2 2006/03/31 09:45:24 tron Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.6.1 2006/03/28 09:42:15 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.6.2 2006/03/31 09:45:24 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2605,21 +2605,22 @@ rf_find_raid_components()
 			continue;
 
 		/* we don't care about floppies... */
-		if (!strcmp(dv->dv_cfdata->cf_name,"fd")) {
+		if (device_is_a(dv, "fd")) {
 			continue;
 		}
 
 		/* we don't care about CD's... */
-		if (!strcmp(dv->dv_cfdata->cf_name,"cd")) {
+		if (device_is_a(dv, "cd")) {
 			continue;
 		}
 
 		/* hdfd is the Atari/Hades floppy driver */
-		if (!strcmp(dv->dv_cfdata->cf_name,"hdfd")) {
+		if (device_is_a(dv, "hdfd")) {
 			continue;
 		}
+
 		/* fdisa is the Atari/Milan floppy driver */
-		if (!strcmp(dv->dv_cfdata->cf_name,"fdisa")) {
+		if (device_is_a(dv, "fdisa")) {
 			continue;
 		}
 
@@ -2628,7 +2629,7 @@ rf_find_raid_components()
 
 		/* get a vnode for the raw partition of this disk */
 
-		dev = MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART);
+		dev = MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART);
 		if (bdevvp(dev, &vp))
 			panic("RAID can't alloc vnode");
 
@@ -2667,7 +2668,7 @@ rf_find_raid_components()
 			if (label.d_partitions[i].p_fstype != FS_RAID)
 				continue;
 
-			dev = MAKEDISKDEV(bmajor, dv->dv_unit, i);
+			dev = MAKEDISKDEV(bmajor, device_unit(dv), i);
 			if (bdevvp(dev, &vp))
 				panic("RAID can't alloc vnode");
 

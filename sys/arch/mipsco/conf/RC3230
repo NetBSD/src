@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.30 2006/02/05 05:01:56 cube Exp $
+# 	$NetBSD: RC3230,v 1.30.6.1 2006/03/31 09:45:05 tron Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -154,3 +154,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

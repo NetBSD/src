@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101 2006/02/05 05:02:01 cube Exp $
+# $NetBSD: GENERIC,v 1.101.6.1 2006/03/31 09:45:06 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.101.6.1 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -246,7 +246,7 @@ pseudo-device	tap			# virtual Ethernet
 pseudo-device	ipfilter		# ip filter
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

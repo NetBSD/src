@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.193.6.1 2006/03/28 09:42:30 tron Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.193.6.2 2006/03/31 09:45:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.6.1 2006/03/28 09:42:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.6.2 2006/03/31 09:45:29 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -483,9 +483,15 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		fs = ump->um_lfs;
 		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
-			 * Changing from read-only to read/write
+			 * Changing from read-only to read/write.
+			 * Note in the superblocks that we're writing.
 			 */
 			fs->lfs_ronly = 0;
+			if (fs->lfs_pflags & LFS_PF_CLEAN) {
+				fs->lfs_pflags &= ~LFS_PF_CLEAN;
+				lfs_writesuper(fs, fs->lfs_sboffs[0]);
+				lfs_writesuper(fs, fs->lfs_sboffs[1]);
+			}
 		}
 		if (args.fspec == NULL)
 			return EINVAL;
@@ -1363,8 +1369,9 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;
 
-	/* Write everything we've got */
-	lfs_segwrite(mp, SEGM_CKP);
+	/* Two checkpoints */
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
 
 	/* wake up the cleaner so it can die */
 	wakeup(&fs->lfs_nextseg);
@@ -1994,7 +2001,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	UVMHIST_LOG(ubchist, "vp %p pgs %p npages %d flags 0x%x",
 	    vp, pgs, npages, flags);
 
-	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_WRITE);
+	GOP_SIZE(vp, vp->v_size, &eof, 0);
 
 	if (vp->v_type == VREG)
 		fs_bshift = vp->v_mount->mnt_fs_bshift;

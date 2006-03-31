@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.5.12.1 2006/03/28 09:42:10 tron Exp $	*/
+/*	$NetBSD: i2c.c,v 1.5.12.2 2006/03/31 09:45:19 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@ iic_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 iic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct iic_softc *sc = (void *) self;
+	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
 
 	aprint_naive(": I2C bus\n");

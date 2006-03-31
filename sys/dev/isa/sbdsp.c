@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.119 2006/03/08 23:46:25 lukem Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.119.2.1 2006/03/31 09:45:21 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.119 2006/03/08 23:46:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.119.2.1 2006/03/31 09:45:21 tron Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -275,7 +275,7 @@ sbdsp_probe(struct sbdsp_softc *sc)
 		return 0;
 	}
 	/* if flags set, go and probe the jazz16 stuff */
-	if (sc->sc_dev.dv_cfdata->cf_flags & 1)
+	if (device_cfdata(&sc->sc_dev)->cf_flags & 1)
 		sbdsp_jazz16_probe(sc);
 	else
 		sbversion(sc);

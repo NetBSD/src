@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.8 2006/03/05 17:33:33 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.8.4.1 2006/03/31 09:45:26 tron Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.8 2006/03/05 17:33:33 christos Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.8.4.1 2006/03/31 09:45:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ ucycom_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&ucycom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 
 	DPRINTFN(2, ("ucycom_detach: maj=%d mn=%d\n", maj, mn));
 	vdevgone(maj, mn, mn, VCHR);

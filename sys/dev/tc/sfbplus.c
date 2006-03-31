@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.23 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: sfbplus.c,v 1.23.12.1 2006/03/31 09:45:26 tron Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.23 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.23.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ sfbpattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct sfbp_softc *sc = (struct sfbp_softc *)self;
+	struct sfbp_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.23 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: opl.c,v 1.23.12.1 2006/03/31 09:45:20 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.23 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.23.12.1 2006/03/31 09:45:20 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ opl_attach(sc)
 	sc->panl = OPL_VOICE_TO_LEFT;
 	sc->panr = OPL_VOICE_TO_RIGHT;
 	if (sc->model == OPL_3 &&
-	    sc->mididev.dev.dv_cfdata->cf_flags & OPL_FLAGS_SWAP_LR) {
+	    device_cfdata(&sc->mididev.dev)->cf_flags & OPL_FLAGS_SWAP_LR) {
 		sc->panl = OPL_VOICE_TO_RIGHT;
 		sc->panr = OPL_VOICE_TO_LEFT;
 		printf(": LR swapped");
