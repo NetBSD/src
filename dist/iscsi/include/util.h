@@ -133,9 +133,9 @@ EXTERN uint32_t iscsi_debug_level;
  * Debugging Functions
  */
 void	set_debug(const char *);
-void	iscsi_trace(const int, const char *, ...);
-void	iscsi_trace_warning(const char *, ...);
-void	iscsi_trace_error(const char *, ...);
+void	iscsi_trace(const int, const char *, const int, const char *, ...);
+void	iscsi_trace_warning(const char *, const int, const char *, ...);
+void	iscsi_trace_error(const char *, const int, const char *, ...);
 void	iscsi_print_buffer(const char *, const size_t);
 
 
@@ -322,28 +322,28 @@ int             iscsi_mutex_destroy(iscsi_mutex_t * );
 
 #define ISCSI_LOCK(M, ELSE)	do {					\
 	if (iscsi_mutex_lock(M) != 0) {					\
-		iscsi_trace_error("iscsi_mutex_lock() failed\n");	\
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_mutex_lock() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_UNLOCK(M, ELSE)	do {					\
 	if (iscsi_mutex_unlock(M) != 0) {				\
-		iscsi_trace_error("iscsi_mutex_unlock() failed\n");	\
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_mutex_unlock() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_MUTEX_INIT(M, ELSE) do {					\
 	if (iscsi_mutex_init(M) != 0) {					\
-		iscsi_trace_error("iscsi_mutex_init() failed\n");	\
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_mutex_init() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
 #define ISCSI_MUTEX_DESTROY(M, ELSE) do {				\
 	if (iscsi_mutex_destroy(M) != 0) {				\
-		iscsi_trace_error("iscsi_mutex_destroy() failed\n");	\
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_mutex_destroy() failed\n");	\
 		ELSE;							\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -417,7 +417,7 @@ typedef struct {
 }               iscsi_worker_t;
 
 #define ISCSI_WORKER_EXIT(ME) do {					\
-	iscsi_trace(TRACE_ISCSI_DEBUG ,"exiting\n");			\
+	iscsi_trace(TRACE_ISCSI_DEBUG ,__FILE__, __LINE__, "exiting\n");			\
 	(ME)->state |= ISCSI_WORKER_STATE_EXITING;			\
 	return 0;							\
 } while (/* CONSTCOND */ 0)
@@ -434,26 +434,26 @@ typedef struct {
 #define NO_CLEANUP {}
 #define RETURN_GREATER(NAME, V1, V2, CU, RC)                         \
 if ((V1)>(V2)) {                                                     \
-  iscsi_trace_error("Bad \"%s\": %u > %u.\n", NAME, (unsigned)V1, (unsigned)V2); \
+  iscsi_trace_error(__FILE__, __LINE__, "Bad \"%s\": %u > %u.\n", NAME, (unsigned)V1, (unsigned)V2); \
   CU;                                                                \
   return RC;                                                         \
 }
 
 #define RETURN_NOT_EQUAL(NAME, V1, V2, CU, RC)                       \
 if ((V1)!=(V2)) {                                                    \
-  iscsi_trace_error("Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);    \
+  iscsi_trace_error(__FILE__, __LINE__, "Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);    \
   CU;                                                                \
   return RC;                                                         \
 }
 
 #define WARN_NOT_EQUAL(NAME, V1, V2)                                 \
 if ((V1)!=(V2)) {                                                    \
-  iscsi_trace_warning("Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);  \
+  iscsi_trace_warning(__FILE__, __LINE__, "Bad \"%s\": Got %u expected %u.\n", NAME, V1, V2);  \
 }
 
 #define RETURN_EQUAL(NAME, V1, V2, CU, RC)                           \
 if ((V1)==(V2)) {                                                    \
-  iscsi_trace_error("Bad \"%s\": %u == %u.\n", NAME, V1, V2);              \
+  iscsi_trace_error(__FILE__, __LINE__, "Bad \"%s\": %u == %u.\n", NAME, V1, V2);              \
   CU;                                                                \
   return RC;                                                         \
 }
