@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.52 2006/01/08 12:59:52 dsl Exp $	*/
+/*	$NetBSD: suff.c,v 1.53 2006/03/31 21:58:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.52 2006/01/08 12:59:52 dsl Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.53 2006/03/31 21:58:08 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.52 2006/01/08 12:59:52 dsl Exp $");
+__RCSID("$NetBSD: suff.c,v 1.53 2006/03/31 21:58:08 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1582,16 +1582,15 @@ SuffExpandChildren(LstNode prevLN, GNode *pgn)
 			 */
 			char	*junk;
 			int 	len;
-			Boolean	doFree;
+			void	*freeIt;
 
-			junk = Var_Parse(cp, pgn, TRUE, &len, &doFree);
+			junk = Var_Parse(cp, pgn, TRUE, &len, &freeIt);
 			if (junk != var_Error) {
 			    cp += len - 1;
 			}
 
-			if (doFree) {
-			    free(junk);
-			}
+			if (freeIt)
+			    free(freeIt);
 		    } else if (*cp == '\\' && *cp != '\0') {
 			/*
 			 * Escaped something -- skip over it
