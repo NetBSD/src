@@ -1,4 +1,4 @@
-/*	$NetBSD: paste.c,v 1.7 2003/08/07 11:15:28 agc Exp $	*/
+/*	$NetBSD: paste.c,v 1.8 2006/03/31 17:20:07 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,13 +34,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n"
+	"The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: paste.c,v 1.7 2003/08/07 11:15:28 agc Exp $");
+__RCSID("$NetBSD: paste.c,v 1.8 2006/03/31 17:20:07 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,25 +53,22 @@ __RCSID("$NetBSD: paste.c,v 1.7 2003/08/07 11:15:28 agc Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	main __P((int, char **));
-void	parallel __P((char **));
-void	sequential __P((char **));
-int	tr __P((char *));
-void	usage __P((void));
+void	parallel(char **);
+void	sequential(char **);
+int	tr(char *);
+void	usage(void);
 
 char *delim;
 int delimcnt;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch, seq;
 
 	seq = 0;
 	while ((ch = getopt(argc, argv, "d:s")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'd':
 			delimcnt = tr(delim = optarg);
 			break;
@@ -105,8 +102,7 @@ typedef struct _list {
 } LIST;
 
 void
-parallel(argv)
-	char **argv;
+parallel(char **argv)
 {
 	LIST *lp;
 	int cnt;
@@ -173,8 +169,7 @@ parallel(argv)
 }
 
 void
-sequential(argv)
-	char **argv;
+sequential(char **argv)
 {
 	FILE *fp;
 	int cnt;
@@ -212,8 +207,7 @@ sequential(argv)
 }
 
 int
-tr(arg)
-	char *arg;
+tr(char *arg)
 {
 	int cnt;
 	char ch, *p;
