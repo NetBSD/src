@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.111 2006/03/28 17:41:35 ginsbach Exp $	*/
+/*	$NetBSD: parse.c,v 1.112 2006/03/31 20:30:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.111 2006/03/28 17:41:35 ginsbach Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.112 2006/03/31 20:30:46 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.111 2006/03/28 17:41:35 ginsbach Exp $");
+__RCSID("$NetBSD: parse.c,v 1.112 2006/03/31 20:30:46 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1030,7 +1030,7 @@ ParseDoDependency(char *line)
 	    if (Arch_ParseArchive(&line, targets, VAR_CMD) != SUCCESS) {
 		Parse_Error(PARSE_FATAL,
 			     "Error in archive specification: \"%s\"", line);
-		return;
+		goto out;
 	    } else {
 		continue;
 	    }
@@ -1050,7 +1050,7 @@ ParseDoDependency(char *line)
 		    "Makefile appears to contain unresolved cvs/rcs/??? merge conflicts");
 	    else
 		Parse_Error(PARSE_FATAL, "Need an operator");
-	    return;
+	    goto out;
 	}
 	*cp = '\0';
 	/*
@@ -1066,7 +1066,7 @@ ParseDoDependency(char *line)
 	    if (keywd != -1) {
 		if (specType == ExPath && parseKeywords[keywd].spec != ExPath) {
 		    Parse_Error(PARSE_FATAL, "Mismatched special targets");
-		    return;
+		    goto out;
 		}
 
 		specType = parseKeywords[keywd].spec;
@@ -1152,7 +1152,7 @@ ParseDoDependency(char *line)
 		    Parse_Error(PARSE_FATAL,
 				 "Suffix '%s' not defined (yet)",
 				 &line[5]);
-		    return;
+		    goto out;
 		} else {
 		    if (paths == (Lst)NULL) {
 			paths = Lst_Init(FALSE);
@@ -1234,6 +1234,7 @@ ParseDoDependency(char *line)
      * Don't need the list of target names anymore...
      */
     Lst_Destroy(curTargs, NOFREE);
+    curTargs = NULL;
 
     if (!Lst_IsEmpty(targets)) {
 	switch(specType) {
@@ -1271,7 +1272,7 @@ ParseDoDependency(char *line)
 	}
     } else {
 	Parse_Error(PARSE_FATAL, "Missing dependency operator");
-	return;
+	goto out;
     }
 
     cp++;			/* Advance beyond operator */
@@ -1332,7 +1333,7 @@ ParseDoDependency(char *line)
     } else if (specType == ExShell) {
 	if (Job_ParseShell(line) != SUCCESS) {
 	    Parse_Error(PARSE_FATAL, "improper shell specification");
-	    return;
+	    goto out;
 	}
 	*line = '\0';
     } else if ((specType == NotParallel) || (specType == SingleShell)) {
@@ -1446,7 +1447,7 @@ ParseDoDependency(char *line)
 		if (Arch_ParseArchive(&line, sources, VAR_CMD) != SUCCESS) {
 		    Parse_Error(PARSE_FATAL,
 				 "Error in source archive spec \"%s\"", line);
-		    return;
+		    goto out;
 		}
 
 		while (!Lst_IsEmpty (sources)) {
@@ -1480,6 +1481,9 @@ ParseDoDependency(char *line)
 	Lst_ForEach(targets, ParseFindMain, (ClientData)0);
     }
 
+out:
+    if (curTargs)
+	    Lst_Destroy(curTargs, NOFREE);
     /*
      * Finally, destroy the list of sources
      */
