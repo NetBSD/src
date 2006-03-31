@@ -31,7 +31,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_windrv.c,v 1.3.2.2 2005/03/31 04:24:35 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: kern_windrv.c,v 1.2 2006/03/31 00:03:57 rittera Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,11 +46,15 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_windrv.c,v 1.3.2.2 2005/03/31 04:24
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#ifdef __FreeBSD__
 #include <sys/mutex.h>
 #include <sys/module.h>
+#endif /* __FreeBSD__ */
 #include <sys/conf.h>
 #include <sys/mbuf.h>
+#ifdef __FreeBSD__
 #include <sys/bus.h>
+#endif
 
 #include <sys/queue.h>
 
@@ -133,11 +142,14 @@ windrv_libfini(void)
 driver_object *
 windrv_lookup(img, name)
 	vm_offset_t		img;
-	char			*name;
+	const char		*name;
 {
 	struct drvdb_ent	*d;
 	unicode_string		us;
 
+	printf("In windrv_lookup():\n");
+	printf("name = %s\n", name);
+	
 	/* Damn unicode. */
 
 	if (name != NULL) {
@@ -145,14 +157,25 @@ windrv_lookup(img, name)
 		us.us_maxlen = strlen(name) * 2;
 		us.us_buf = NULL;
 		ndis_ascii_to_unicode(name, &us.us_buf);
+	} else {
+		us.us_len = 0;
+		us.us_maxlen = 0;
+		us.us_buf = NULL;
 	}
 
 	mtx_lock(&drvdb_mtx); 
 	STAILQ_FOREACH(d, &drvdb_head, link) {
-		if (d->windrv_object->dro_driverstart == (void *)img ||
-		    bcmp((char *)d->windrv_object->dro_drivername.us_buf,
-		    (char *)us.us_buf, us.us_len) == 0) {
-			mtx_unlock(&drvdb_mtx);
+#ifdef NDIS_LKM		
+		printf("d->windrv_object->dro_driverstart = %x\n", d->windrv_object->dro_driverstart);
+#endif		
+		if (d->windrv_object->dro_driverstart == (void *)img ||	
+		    (bcmp((char *)d->windrv_object->dro_drivername.us_buf,
+			 (char *)us.us_buf, us.us_len) == 0 && us.us_len > 0)) {		
+			mtx_unlock(&drvdb_mtx);		
+			printf("found driver object!\n");
+#ifdef NDIS_LKM
+			printf("returning %x\n", d->windrv_object);
+#endif				
 			return(d->windrv_object);
 		}
 	}
@@ -161,6 +184,7 @@ windrv_lookup(img, name)
 	if (name != NULL)
 		ExFreePool(us.us_buf);
 
+	printf("no driver object\n");
 	return(NULL);
 }
 
@@ -237,34 +261,48 @@ windrv_load(mod, img, len)
 	struct driver_object	*drv;
 	int			status;
 
+#ifdef NDIS_LKM
+	printf("in windrv_load\n");
+	printf("img = %x\n", img);
+#endif	
+
 	/*
 	 * First step: try to relocate and dynalink the executable
 	 * driver image.
 	 */
 
 	/* Perform text relocation */
-	if (pe_relocate(img))
+	if (pe_relocate(img)) {
 		return(ENOEXEC);
+	}
 
 	/* Dynamically link the NDIS.SYS routines -- required. */
-	if (pe_patch_imports(img, "NDIS", ndis_functbl))
+	if (pe_patch_imports(img, "NDIS", ndis_functbl)) {
 		return(ENOEXEC);
+	}
 
 	/* Dynamically link the HAL.dll routines -- also required. */
-	if (pe_patch_imports(img, "HAL", hal_functbl))
+	if (pe_patch_imports(img, "HAL", hal_functbl)) {		
 		return(ENOEXEC);
+	}
 
 	/* Dynamically link ntoskrnl.exe -- optional. */
 	if (pe_get_import_descriptor(img, &imp_desc, "ntoskrnl") == 0) {
-		if (pe_patch_imports(img, "ntoskrnl", ntoskrnl_functbl))
+		if (pe_patch_imports(img, "ntoskrnl", ntoskrnl_functbl))	
 			return(ENOEXEC);
 	}
 
 	/* Dynamically link USBD.SYS -- optional */
 	if (pe_get_import_descriptor(img, &imp_desc, "USBD") == 0) {
-		if (pe_patch_imports(img, "USBD", usbd_functbl))
+#if ubsimplemented
+		if (pe_patch_imports(img, "USBD", usbd_functbl)) {	
 			return(ENOEXEC);
-	}
+		}
+#else
+	    //printf("windrv_load: pe_get_import_descriptor USBD failed");	
+            return(ENOEXEC);
+#endif
+	}	
 
 	/* Next step: find the driver entry point. */
 
@@ -386,7 +424,12 @@ windrv_find_pdo(drv, bsddev)
 	device_t		bsddev;
 {
 	device_object		*pdo;
-
+#ifdef NDIS_LKM
+	printf("In windrv_find_pdo: \ndrv = %x", drv);
+	printf("\nbsddev = %x", bsddev);
+	printf("\npdo = %x", drv->dro_devobj);
+	printf("\npdo->do_devext = %x\n", drv->dro_devobj->do_devext);
+#endif
 	mtx_lock(&drvdb_mtx);
 	pdo = drv->dro_devobj;
 	if (pdo->do_devext != bsddev) {
@@ -406,7 +449,7 @@ windrv_find_pdo(drv, bsddev)
 int
 windrv_bus_attach(drv, name)
 	driver_object		*drv;
-	char			*name;
+	const char			*name;
 {
 	struct drvdb_ent	*new;
 
@@ -418,6 +461,14 @@ windrv_bus_attach(drv, name)
         drv->dro_drivername.us_maxlen = strlen(name) * 2;
         drv->dro_drivername.us_buf = NULL;
         ndis_ascii_to_unicode(name, &drv->dro_drivername.us_buf);
+		
+#ifdef __NetBSD__
+/* I added this because windrv_lookup was getting 
+ * fake_pccard_driver and fake_pci_driver mixed up.
+ * I'm not sure if it will mess anything else up.
+ */
+	drv->dro_driverstart = drv;
+#endif		
 
 	new->windrv_object = drv;
 	new->windrv_devlist = NULL;
