@@ -78,7 +78,6 @@ int tvtohz(struct timeval *tv);
 
 typedef vaddr_t			vm_offset_t;
 typedef vsize_t			vm_size_t;
-typedef struct device		*device_t;
 typedef uint16_t		linker_file_t;
 typedef struct lkm_table *	module_t;
 
