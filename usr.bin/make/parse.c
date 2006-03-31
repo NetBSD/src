@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.112 2006/03/31 20:30:46 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.113 2006/03/31 21:05:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.112 2006/03/31 20:30:46 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.113 2006/03/31 21:05:34 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.112 2006/03/31 20:30:46 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.113 2006/03/31 21:05:34 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1127,7 +1127,7 @@ ParseDoDependency(char *line)
 			DEFAULT = gn;
 			break;
 		    case NotParallel:
-			not_parallel = 1;
+			maxJobs = 1;
 			break;
 		    case SingleShell:
 			compatMake = TRUE;
