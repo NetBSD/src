@@ -146,25 +146,25 @@ void            set_session_parameters(iscsi_parameter_t * , iscsi_sess_param_t 
 
 #define PARAM_LIST_DESTROY(LIST, ELSE)                    \
 if (param_list_destroy(LIST)!=0) {                             \
-  iscsi_trace_error("param_list_destroy() failed\n");                \
+  iscsi_trace_error(__FILE__, __LINE__, "param_list_destroy() failed\n");                \
   ELSE;                                                        \
 }
 
 #define PARAM_LIST_ADD(LIST, TYPE, KEY, DFLT, VALID, ELSE)   \
 if (param_list_add(LIST, TYPE, KEY, DFLT, VALID)!=0) {            \
-  iscsi_trace_error("param_list_add() failed\n");                       \
+  iscsi_trace_error(__FILE__, __LINE__, "param_list_add() failed\n");                       \
   ELSE;                                                           \
 }
 
 #define PARAM_TEXT_ADD(LIST, KEY, VAL, TEXT, LEN, SIZE, OFFER, ELSE )  \
 if (param_text_add(LIST, KEY, VAL, TEXT, LEN, SIZE, OFFER)!=0) {            \
-  iscsi_trace_error("param_text_add() failed\n");                           \
+  iscsi_trace_error(__FILE__, __LINE__, "param_text_add() failed\n");                           \
   ELSE;                                                               \
 }
 
 #define PARAM_TEXT_PARSE(LIST, CRED, TEXT, LEN, TEXT_OUT, LEN_OUT, SIZE, OFFER, ELSE )   \
 if (param_text_parse(LIST, CRED, TEXT, LEN, TEXT_OUT, LEN_OUT, SIZE, OFFER)!=0) {             \
-  iscsi_trace_error("param_text_parse_offer() failed\n");                               \
+  iscsi_trace_error(__FILE__, __LINE__, "param_text_parse_offer() failed\n");                               \
   ELSE;                                                                           \
 }
 #endif
