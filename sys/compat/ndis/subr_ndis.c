@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.3 2006/03/31 00:03:57 rittera Exp $");
 #endif
 
 /*
@@ -126,8 +126,20 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.2 2006/03/30 23:06:56 rittera Exp $"
 #include <compat/ndis/cfg_var.h>
 #include <dev/if_ndis/if_ndisvar.h>
 
+#ifdef __NetBSD__
+#include "nbcompat.h"
+#endif
+
+#ifdef __NetBSD__
+#define PN(name) /* printf(#name "\n"); */
+#endif
+
 static char ndis_filepath[MAXPATHLEN];
 extern struct nd_head ndis_devhead;
+
+#ifdef __NetBSD__
+extern void device_printf(device_t, const char *fmt, ...);
+#endif  
 
 #ifdef __FreeBSD__
 SYSCTL_STRING(_hw, OID_AUTO, ndis_filepath, CTLFLAG_RW, ndis_filepath,
@@ -154,9 +166,12 @@ __stdcall static void NdisOpenConfigurationKeyByName(ndis_status *,
 #ifdef __FreeBSD__
 static ndis_status ndis_encode_parm(ndis_miniport_block *,
 	struct sysctl_oid *, ndis_parm_type, ndis_config_parm **);
-#endif
 static ndis_status ndis_decode_parm(ndis_miniport_block *,
 	ndis_config_parm *, char *);
+#else /* __NetBSD__ */
+static ndis_status ndis_encode_parm(ndis_miniport_block *,
+	void *, ndis_parm_type, ndis_config_parm **);
+#endif	
 __stdcall static void NdisReadConfiguration(ndis_status *, ndis_config_parm **,
 	ndis_handle, ndis_unicode_string *, ndis_parm_type);
 __stdcall static void NdisWriteConfiguration(ndis_status *, ndis_handle,
@@ -379,7 +394,7 @@ ndis_findwrap(func)
 
 int
 ndis_ascii_to_unicode(ascii, unicode)
-	char			*ascii;
+	const char		*ascii;
 	uint16_t		**unicode;
 {
 	uint16_t		*ustr;
@@ -433,6 +448,7 @@ NdisInitializeWrapper(wrapper, drv, path, unused)
 	void			*path;
 	void			*unused;
 {
+	PN(NdisInitializeWrapper)
 	/*
 	 * As of yet, I haven't come up with a compelling
 	 * reason to define a private NDIS wrapper structure,
@@ -473,9 +489,12 @@ NdisMRegisterMiniport(handle, characteristics, len)
 	ndis_miniport_characteristics *characteristics;
 	int			len;
 {
-	ndis_miniport_characteristics	*ch = NULL;
+	ndis_miniport_characteristics	*pch = NULL;
+	void *ch = NULL;
 	driver_object		*drv;
 
+	PN(NdisMRegisterMiniport);
+	
 	drv = (driver_object *)handle;
 
 	/*
@@ -487,20 +506,24 @@ NdisMRegisterMiniport(handle, characteristics, len)
 	 * The extra extension info is automagically deleted when
 	 * the driver is unloaded (see windrv_unload()).
 	 */
-
 	if (IoAllocateDriverObjectExtension(drv, (void *)1,
-	    sizeof(ndis_miniport_characteristics), (void **)&ch) !=
+		sizeof(ndis_miniport_characteristics), /*(void **)*/&ch) !=
 	    STATUS_SUCCESS)
 		return(NDIS_STATUS_RESOURCES);
+   pch = (ndis_miniport_characteristics *)ch;
 
-	bzero((char *)ch, sizeof(ndis_miniport_characteristics));
+	bzero((char *)pch, sizeof(ndis_miniport_characteristics));
 
-	bcopy((char *)characteristics, (char *)ch, len);
+#ifdef __FreeBSD__
+	bcopy((char *)characteristics, (char *)pch, len);
+#else /* __NetBSD__ */
+	memcpy(pch, characteristics, len);
+#endif	
 
-	if (ch->nmc_version_major < 5 || ch->nmc_version_minor < 1) {
-		ch->nmc_shutdown_handler = NULL;
-		ch->nmc_canceltxpkts_handler = NULL;
-		ch->nmc_pnpevent_handler = NULL;
+	if (pch->nmc_version_major < 5 || pch->nmc_version_minor < 1) {
+		pch->nmc_shutdown_handler = NULL;
+		pch->nmc_canceltxpkts_handler = NULL;
+		pch->nmc_pnpevent_handler = NULL;
 	}
 
 	return(NDIS_STATUS_SUCCESS);
@@ -565,6 +588,7 @@ NdisMSetAttributesEx(adapter_handle, adapter_ctx, hangsecs,
 {
 	ndis_miniport_block		*block;
 
+	PN(NdisMSetAttributesEx)
 	/*
 	 * Save the adapter context, we need it for calling
 	 * the driver's internal functions.
@@ -583,7 +607,7 @@ NdisOpenConfiguration(status, cfg, wrapctx)
 	ndis_handle		*cfg;
 	ndis_handle		wrapctx;
 {
-
+	PN(NdisOpenConfiguration)
 	*cfg = wrapctx;
 	*status = NDIS_STATUS_SUCCESS;
 
@@ -597,6 +621,7 @@ NdisOpenConfigurationKeyByName(status, cfg, subkey, subhandle)
 	ndis_unicode_string	*subkey;
 	ndis_handle		*subhandle;
 {
+	PN(NdisOpenConfiguration)
 	*subhandle = cfg;
 	*status = NDIS_STATUS_SUCCESS;
 	return;
@@ -614,45 +639,81 @@ NdisOpenConfigurationKeyByIndex(status, cfg, idx, subkey, subhandle)
 	return;
 }
 
-#ifdef __FreeBSD__
 static ndis_status
+#ifdef __FreeBSD__
 ndis_encode_parm(block, oid, type, parm)
-	ndis_miniport_block	*block;
-        struct sysctl_oid	*oid;
+	ndis_miniport_block	*block;	
+    struct sysctl_oid	*oid;
 	ndis_parm_type		type;
 	ndis_config_parm	**parm;
+#else /* __NetBSD__ */
+ndis_encode_parm(block, data, type, parm)
+	ndis_miniport_block	*block;	
+    void				*data;
+	ndis_parm_type		type;
+	ndis_config_parm	**parm;
+#endif	
 {
 	uint16_t		*unicode;
 	ndis_unicode_string	*ustr;
 	int			base = 0;
 
+	PN(ndis_encode_parm)
+	
 	unicode = (uint16_t *)&block->nmb_dummybuf;
 
 	switch(type) {
 	case ndis_parm_string:
+#ifdef __FreeBSD__		
 		ndis_ascii_to_unicode((char *)oid->oid_arg1, &unicode);
+#else /* __NetBSD__ */
+		ndis_ascii_to_unicode((char *)data, &unicode);
+#endif		
 		(*parm)->ncp_type = ndis_parm_string;
 		ustr = &(*parm)->ncp_parmdata.ncp_stringdata;
+#ifdef __FreeBSD__		
 		ustr->us_len = strlen((char *)oid->oid_arg1) * 2;
+#else /* __NetBSD__ */
+		ustr->us_len = strlen((char *)data) * 2;
+#endif		
 		ustr->us_buf = unicode;
 		break;
 	case ndis_parm_int:
-		if (strncmp((char *)oid->oid_arg1, "0x", 2) == 0)
+#ifdef __FreeBSD__		
+		if (strncmp((char *)oid->oid_arg1, "0x", 2) == 0) {
+#else /* __NetBSD__ */
+		if (strncmp((char *)data, "0x", 2) == 0) {
+#endif		
 			base = 16;
+		}
 		else
 			base = 10;
 		(*parm)->ncp_type = ndis_parm_int;
 		(*parm)->ncp_parmdata.ncp_intdata =
+#ifdef __FreeBSD__				
 		    strtol((char *)oid->oid_arg1, NULL, base);
+#else /* __NetBSD__ */
+/* TODO: NetBSD dosen't seem to have a strtol in sys/lib/libkern I hope strtoul is OK */
+		    strtoul((char *)data, NULL, base);
+#endif		
 		break;
 	case ndis_parm_hexint:
-		if (strncmp((char *)oid->oid_arg1, "0x", 2) == 0)
+#ifdef __FreeBSD__		
+		if (strncmp((char *)oid->oid_arg1, "0x", 2) == 0) {
+#else /* __NetBSD__ */
+		if (strncmp((char *)data, "0x", 2) == 0) {
+#endif
 			base = 16;
+		}
 		else
 			base = 10;
 		(*parm)->ncp_type = ndis_parm_hexint;
 		(*parm)->ncp_parmdata.ncp_intdata =
+#ifdef __FreeBSD__				
 		    strtoul((char *)oid->oid_arg1, NULL, base);
+#else /* __NetBSD__ */
+		    strtoul((char *)data, NULL, base);
+#endif		
 		break;
 	default:
 		return(NDIS_STATUS_FAILURE);
@@ -661,7 +722,6 @@ ndis_encode_parm(block, oid, type, parm)
 
 	return(NDIS_STATUS_SUCCESS);
 }
-#endif /* __FreeBSD__ */
 
 int
 ndis_strcasecmp(s1, s2)
@@ -718,16 +778,33 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 	ndis_unicode_string	*key;
 	ndis_parm_type		type;
 {
-#ifdef __FreeBSD__
 	char			*keystr = NULL;
 	uint16_t		*unicode;
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
-        struct sysctl_oid	*oidp;
+#ifdef __FreeBSD__	
+    struct sysctl_oid	*oidp;
 	struct sysctl_ctx_entry	*e;
+#endif
+
+#ifdef __NetBSD__
+	const struct sysctlnode *pnode = NULL;
+	struct sysctlnode *ndiscld = NULL;
+	int error;
+	int numcld;
+	int mib[1];
+	int i;
+	char new_keystr[MAX_SYSCTL_LEN+1];
+	char *old_keystr;
+#endif
 
 	block = (ndis_miniport_block *)cfg;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = block->nmb_physdeviceobj->pdo_sc;
+#endif
+	PN(NdisReadConfiguration)
 
 	if (key->us_len == 0 || key->us_buf == NULL) {
 		*status = NDIS_STATUS_FAILURE;
@@ -738,29 +815,82 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 	*parm = &block->nmb_replyparm;
 	bzero((char *)&block->nmb_replyparm, sizeof(ndis_config_parm));
 	unicode = (uint16_t *)&block->nmb_dummybuf;
+	
+#ifdef __NetBSD__	
+	if(strlen(keystr) + strlen("ndis_") > MAX_SYSCTL_LEN) {
+		panic("sysctl name too long: %s\n", keystr);
+	}
+	strcpy(new_keystr, "ndis_");
+	strcpy(new_keystr + strlen("ndis_"), keystr);
+	old_keystr = keystr;
+	keystr = new_keystr;
+#endif		
 
 	/*
 	 * See if registry key is already in a list of known keys
 	 * included with the driver.
 	 */
-
+#ifdef __FreeBSD__
 #if __FreeBSD_version < 502113
 	TAILQ_FOREACH(e, &sc->ndis_ctx, link) {
 #else
 	TAILQ_FOREACH(e, device_get_sysctl_ctx(sc->ndis_dev), link) {
 #endif
 		oidp = e->entry;
+#ifdef __FreeBSD__		
 		if (ndis_strcasecmp(oidp->oid_name, keystr) == 0) {
+#else /* __NetBSD__ */
+		if (ndis_strcasecmp(oidp->ctl_name, keystr) == 0) {
+#endif
 			if (strcmp((char *)oidp->oid_arg1, "UNSET") == 0) {
 				free(keystr, M_DEVBUF);
 				*status = NDIS_STATUS_FAILURE;
 				return;
-			}
+			}	
 			*status = ndis_encode_parm(block, oidp, type, parm);
+		
 			free(keystr, M_DEVBUF);
 			return;
 		}
 	}
+#else /* __NetBSD__ */
+	mib[0] = sc->ndis_sysctl_mib;
+	
+	sysctl_lock(curlwp, NULL, 0);
+		error = sysctl_locate(curlwp, &mib[0], 1, &pnode, NULL);
+	
+		numcld  = pnode->sysctl_csize;
+		ndiscld = pnode->sysctl_child;
+	
+		/* find the node whose name is keystr */
+		for(i=0; i < numcld; i++) {
+			if(strcmp(keystr, ndiscld->sysctl_name) == 0) {
+				/* Found it */
+				break;
+			}
+			ndiscld++;
+		}
+	sysctl_unlock(curlwp);
+	
+	if(i < numcld) {
+		/* Found it */
+		if(strcmp(ndiscld->sysctl_data, "UNSET") == 0) {
+			free(keystr, M_DEVBUF);
+			*status = NDIS_STATUS_FAILURE;
+			return;
+		}
+		
+		*status = ndis_encode_parm(block, ndiscld->sysctl_data, type,  parm);
+		free(keystr, M_DEVBUF);
+		return;
+	}
+	
+#endif
+
+#ifdef __NetBSD__
+	free(keystr, M_DEVBUF);
+	keystr = old_keystr;
+#endif	
 
 	/*
 	 * If the key didn't match, add it to the list of dynamically
@@ -773,23 +903,19 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 	 * make its default value an empty string, otherwise default
 	 * it to "0".
 	 */
-
 	if (type == ndis_parm_int || type == ndis_parm_hexint)
 		ndis_add_sysctl(sc, keystr, "(dynamic integer key)",
 		    "UNSET", CTLFLAG_RW);
 	else
 		ndis_add_sysctl(sc, keystr, "(dynamic string key)",
-		    "UNSET", CTLFLAG_RW);
+		    "UNSET", CTLFLAG_RW);	
 
 	free(keystr, M_DEVBUF);
 	*status = NDIS_STATUS_FAILURE;
 	return;
-#else /* __FreeBSD__ */
-	*status = NDIS_STATUS_FAILURE;
-	return;
-#endif
 }
 
+#ifdef __FreeBSD__
 static ndis_status
 ndis_decode_parm(block, parm, val)
 	ndis_miniport_block	*block;
@@ -799,6 +925,8 @@ ndis_decode_parm(block, parm, val)
 	ndis_unicode_string	*ustr;
 	char			*astr = NULL;
 
+	PN(ndis_decode_parm)
+	
 	switch(parm->ncp_type) {
 	case ndis_parm_string:
 		ustr = &parm->ncp_parmdata.ncp_stringdata;
@@ -818,6 +946,7 @@ ndis_decode_parm(block, parm, val)
 	}
 	return(NDIS_STATUS_SUCCESS);
 }
+#endif
 
 __stdcall static void
 NdisWriteConfiguration(status, cfg, key, parm)
@@ -836,7 +965,13 @@ NdisWriteConfiguration(status, cfg, key, parm)
 
 	block = (ndis_miniport_block *)cfg;
 
+	PN(NdisWriteConfiguration)
+	
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif
 
 	ndis_unicode_to_ascii(key->us_buf, key->us_len, &keystr);
 
@@ -972,8 +1107,15 @@ NdisReadPciSlotInformation(adapter, slot, offset, buf, len)
 {
 	ndis_miniport_block	*block;
 	int			i;
-	char			*dest;
+#ifdef __FreeBSD__
+     char                    *dest;
+#else
+   pcireg_t    *dest;
+#endif
+
+	/* PN(NdisReadPciSlotInformation) */
 	device_t		dev;
+    struct ndis_softc  *sc;
 
 	block = (ndis_miniport_block *)adapter;
 	dest = buf;
@@ -981,6 +1123,11 @@ NdisReadPciSlotInformation(adapter, slot, offset, buf, len)
 		return(0);
 
 	dev = (device_t)block->nmb_physdeviceobj->do_devext;
+#ifdef __FreeBSD__	
+    sc = device_get_softc(dev);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif	
 
 	/*
 	 * I have a test system consisting of a Sun w2100z
@@ -997,9 +1144,18 @@ NdisReadPciSlotInformation(adapter, slot, offset, buf, len)
 	 * seems to prevent this problem.
 	 */
 
+#ifdef __FreeBSD__	 
 	for (i = 0; i < len; i++) {
+#else /* __NetBSD__ */
+	for (i = 0; i < len/4; i += 4) {
+#endif	
 		DELAY(1);
-		dest[i] = pci_read_config(dev, i + offset, 1);
+#ifdef __FreeBSD__
+      dest[i] = pci_read_config(dev, i + offset, 1);
+#else
+      dest[i/4] = pci_conf_read(sc->ndis_res_pc,sc->ndis_res_pctag, (i + offset));
+#endif
+
 	}
 
 	return(len);
@@ -1015,19 +1171,44 @@ NdisWritePciSlotInformation(adapter, slot, offset, buf, len)
 {
 	ndis_miniport_block	*block;
 	int			i;
-	char			*dest;
+#ifdef __FreeBSD__
+    char                    *dest;
+#else
+    pcireg_t    *dest;
+#endif
+
 	device_t		dev;
 
+	/* PN(NdisWritePciSlotInformation) */
+	
 	block = (ndis_miniport_block *)adapter;
 	dest = buf;
+    struct ndis_softc      *sc;
+
 
 	if (block == NULL)
 		return(0);
 
 	dev = block->nmb_physdeviceobj->do_devext;
+#ifdef __FreeBSD__	
+    sc = device_get_softc(dev);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
+
+#ifdef __FreeBSD__    
 	for (i = 0; i < len; i++) {
+#else /* __NetBSD__ */	
+	for (i = 0; i < len/4; i++) {
+#endif
 		DELAY(1);
-		pci_write_config(dev, i + offset, dest[i], 1);
+#ifdef __FreeBSD__
+        pci_write_config(dev, i + offset, dest[i], 1);
+#else
+        pci_conf_write(sc->ndis_res_pc,sc->ndis_res_pctag,
+					   (i + offset), dest[i/4]);
+#endif
+
 	}
 
 	return(len);
@@ -1051,6 +1232,8 @@ NdisWriteErrorLogEntry(ndis_handle adapter, ndis_error_code code,
 	device_t		dev;
 	driver_object		*drv;
 
+	PN(NdisWriteErrorLogEntry)
+	
 	block = (ndis_miniport_block *)adapter;
 	dev = block->nmb_physdeviceobj->do_devext;
 	drv = block->nmb_physdeviceobj->do_drvobj;
@@ -1063,14 +1246,26 @@ NdisWriteErrorLogEntry(ndis_handle adapter, ndis_error_code code,
 		    ((i / 2)) > (ERRMSGLEN - 1) ? ERRMSGLEN : i, &ustr);
 		str = ustr;
 	}
+
+#ifdef __FreeBSD__	
 	device_printf (dev, "NDIS ERROR: %x (%s)\n", code,
 	    str == NULL ? "unknown error" : str);
 	device_printf (dev, "NDIS NUMERRORS: %x\n", numerrors);
+#else /* __NetBSD__ */
+	printf ("NDIS ERROR: %x (%s)\n", code,
+				   str == NULL ? "unknown error" : str);
+	printf ("NDIS NUMERRORS: %x\n", numerrors);
+#endif	
 
 	va_start(ap, numerrors);
 	for (i = 0; i < numerrors; i++)
+#ifdef __FreeBSD__		
 		device_printf (dev, "argptr: %p\n",
 		    va_arg(ap, void *));
+#else /* __NetBSD__ */
+		printf ("argptr: %p\n",
+					   va_arg(ap, void *));
+#endif
 	va_end(ap);
 
 	return;
@@ -1086,6 +1281,8 @@ ndis_map_cb(arg, segs, nseg, error)
 	struct ndis_map_arg	*ctx;
 	int			i;
 
+	PN(ndis_map_cb)
+	
 	if (error)
 		return;
 
@@ -1116,11 +1313,17 @@ NdisMStartBufferPhysicalMapping(adapter, buf, mapreg, writedev, addrarray, array
 	bus_dmamap_t		map;
 	int			error;
 
+	PN(NdisMStartBufferPhysicalMapping)
+	
 	if (adapter == NULL)
 		return;
 
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 
 	if (mapreg > sc->ndis_mmapcnt)
 		return;
@@ -1164,11 +1367,17 @@ NdisMCompleteBufferPhysicalMapping(adapter, buf, mapreg)
 	struct ndis_softc	*sc;
 	bus_dmamap_t		map;
 
+	PN(NdisMCompleteBufferPhysicalMapping)
+	
 	if (adapter == NULL)
 		return;
 
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 
 	if (mapreg > sc->ndis_mmapcnt)
 		return;
@@ -1212,6 +1421,8 @@ ndis_timercall(dpc, timer, sysarg1, sysarg2)
 	void			*sysarg1;
 	void			*sysarg2;
 {
+	//PN(ndis_timercall)
+
 	/*
 	 * Since we're called as a DPC, we should be running
 	 * at DISPATCH_LEVEL here. This means to acquire the
@@ -1247,6 +1458,10 @@ ndis_timercall(dpc, timer, sysarg1, sysarg2)
  * SMP, you must acquire a lock as well, otherwise the other CPU is
  * free to clobber you.
  */
+ 
+ /* Just to test out how much memory is wasted*/
+ int ndis_num_timers_allocated = 0;
+ 
 __stdcall static void
 NdisMInitializeTimer(timer, handle, func, ctx)
 	ndis_miniport_timer	*timer;
@@ -1256,9 +1471,21 @@ NdisMInitializeTimer(timer, handle, func, ctx)
 {
 	/* Save the driver's funcptr and context */
 
+	PN(NdisMInitializeTimer)
+	
 	timer->nmt_timerfunc = func;
 	timer->nmt_timerctx = ctx;
 	timer->nmt_block = handle;
+	
+#ifdef __NetBSD__
+/* TODO: free this memory somewhere! */
+	printf("Allocating callout struct\n");
+	if(timer->nmt_ktimer.k_handle == NULL) {
+		timer->nmt_ktimer.k_handle = 
+				malloc(sizeof(struct callout), M_DEVBUF, M_NOWAIT|M_ZERO);
+		ndis_num_timers_allocated++;
+	}
+#endif	
 
 	/*
 	 * Set up the timer so it will call our intermediate DPC.
@@ -1282,12 +1509,13 @@ NdisSetTimer(timer, msecs)
 	ndis_timer		*timer;
 	uint32_t		msecs;
 {
+	PN(NdisSetTimer)
 	/*
 	 * KeSetTimer() wants the period in
 	 * hundred nanosecond intervals.
-	 */
+	 */ 
 	KeSetTimer(&timer->nt_ktimer,
-	    ((int64_t)msecs * -10000), &timer->nt_kdpc);
+	    ((int64_t)msecs * -10000), &timer->nt_kdpc);    
 
 	return;
 }
@@ -1297,6 +1525,8 @@ NdisMSetPeriodicTimer(timer, msecs)
 	ndis_miniport_timer	*timer;
 	uint32_t		msecs;
 {
+	PN(NdisMSetPeriodicTimer)
+
 	KeSetTimerEx(&timer->nmt_ktimer,
 	    ((int64_t)msecs * -10000), msecs, &timer->nmt_kdpc);
 
@@ -1315,6 +1545,7 @@ NdisMCancelTimer(timer, cancelled)
 	ndis_timer		*timer;
 	uint8_t			*cancelled;
 {
+	PN(NdisMCancelTimer)
 	*cancelled = KeCancelTimer(&timer->nt_ktimer);
 
 	return;
@@ -1331,8 +1562,15 @@ NdisMQueryAdapterResources(status, adapter, list, buflen)
 	struct ndis_softc	*sc;
 	int			rsclen;
 
+	PN(NdisMQueryAdapterResources)
+	
 	block = (ndis_miniport_block *)adapter;
+	
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif	
 
 	rsclen = sizeof(ndis_resource_list) +
 	    (sizeof(cm_partial_resource_desc) * (sc->ndis_rescnt - 1));
@@ -1342,7 +1580,12 @@ NdisMQueryAdapterResources(status, adapter, list, buflen)
 		return;
 	}
 
+#ifdef __FreeBSD__	
 	bcopy((char *)block->nmb_rlist, (char *)list, rsclen);
+#else /* __NetBSD__ */
+	memcpy(list, block->nmb_rlist, rsclen);
+#endif
+
 	*status = NDIS_STATUS_SUCCESS;
 
 	return;
@@ -1358,20 +1601,49 @@ NdisMRegisterIoPortRange(offset, adapter, port, numports)
 	struct ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
 
+	PN(NdisMRegisterIoPortRange)
+	
 	if (adapter == NULL)
 		return(NDIS_STATUS_FAILURE);
 
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 
+#ifdef __FreeBSD__
 	if (sc->ndis_res_io == NULL)
+#else
+    if (sc->ndis_res_io == NULL && sc->ndis_iftype != PCMCIABus)
+#endif
 		return(NDIS_STATUS_FAILURE);
 
 	/* Don't let the device map more ports than we have. */
+#ifdef __FreeBSD__
 	if (rman_get_size(sc->ndis_res_io) < numports)
+#else /* __NetBSD__ */
+    if ( (sc->ndis_iftype != PCMCIABus && sc->ndis_res_io->res_size < numports)
+            || (sc->ndis_iftype == PCMCIABus && sc->ndis_res_pcioh.size < numports) )
+#endif
 		return(NDIS_STATUS_INVALID_LENGTH);
-
-	*offset = (void *)rman_get_start(sc->ndis_res_io);
+			
+#ifdef __FreeBSD__
+        *offset = (void *)rman_get_start(sc->ndis_res_io);
+#else /* __NetBSD__ */
+    switch (sc->ndis_iftype){
+        case PCIBus:
+        case CBus:	/* CardBus */
+            *offset = (void*)sc->ndis_res_io->res_base;
+            break;
+        case PCMCIABus:
+            *offset = (void*)sc->ndis_res_pcioh.addr;
+            break;
+        default:
+            return(NDIS_STATUS_FAILURE);
+   }
+#endif /* __NetBSD__ */
 
 	return(NDIS_STATUS_SUCCESS);
 }
@@ -1396,9 +1668,15 @@ NdisReadNetworkAddress(status, addr, addrlen, adapter)
 	struct ndis_softc	*sc;
 	ndis_miniport_block	*block;
 	uint8_t			empty[] = { 0, 0, 0, 0, 0, 0 };
+	
+	PN(NdisReadNetworkAddress)
 
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 
 #ifdef __FreeBSD__
 	if (bcmp(sc->arpcom.ac_enaddr, empty, ETHER_ADDR_LEN) == 0)
@@ -1426,6 +1704,8 @@ NdisQueryMapRegisterCount(bustype, cnt)
 	uint32_t		bustype;
 	uint32_t		*cnt;
 {
+	PN(NdisQueryMapRegisterCount)
+
 	*cnt = 8192;
 	return(NDIS_STATUS_SUCCESS);
 }
@@ -1440,10 +1720,19 @@ NdisMAllocateMapRegisters(adapter, dmachannel, dmasize, physmapneeded, maxmap)
 {
 	struct ndis_softc	*sc;
 	ndis_miniport_block	*block;
-	int			error, i, nseg = NDIS_MAXSEG;
+#ifdef __FreeBSD__
+	int error;
+#endif	
+	int			i, nseg = NDIS_MAXSEG;
 
+	PN(NdisMAllocateMapRegisters)
+	
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 
 	sc->ndis_mmaps = malloc(sizeof(bus_dmamap_t) * physmapneeded,
 	    M_DEVBUF, M_NOWAIT|M_ZERO);
@@ -1464,7 +1753,8 @@ NdisMAllocateMapRegisters(adapter, dmachannel, dmasize, physmapneeded, maxmap)
 #else
 	sc->ndis_mtag = sc->ndis_parent_tag;
 #endif
-	for (i = 0; i < physmapneeded; i++)
+
+	for (i = 0; i < physmapneeded; i++) {
 #ifdef __FreeBSD__
 		bus_dmamap_create(sc->ndis_mtag, 0, &sc->ndis_mmaps[i]);
 #else
@@ -1472,6 +1762,7 @@ NdisMAllocateMapRegisters(adapter, dmachannel, dmasize, physmapneeded, maxmap)
 				  nseg, maxmap, BUS_DMA_NOWAIT, 
 				  0, &sc->ndis_mmaps[i]);
 #endif
+	}
 
 	sc->ndis_mmapcnt = physmapneeded;
 
@@ -1486,15 +1777,23 @@ NdisMFreeMapRegisters(adapter)
 	ndis_miniport_block	*block;
 	int			i;
 
+	PN(NdisMFreeMapRegisters)
+	
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 
 	for (i = 0; i < sc->ndis_mmapcnt; i++)
 		bus_dmamap_destroy(sc->ndis_mtag, sc->ndis_mmaps[i]);
 
 	free(sc->ndis_mmaps, M_DEVBUF);
 
+#ifdef __FreeBSD__
 	bus_dma_tag_destroy(sc->ndis_mtag);
+#endif
 
 	return;
 }
@@ -1508,6 +1807,8 @@ ndis_mapshared_cb(arg, segs, nseg, error)
 {
 	ndis_physaddr		*p;
 
+	/* PN(ndis_mapshared_cb) */
+	
 	if (error || nseg > 1)
 		return;
 
@@ -1533,16 +1834,22 @@ NdisMAllocateSharedMemory(adapter, len, cached, vaddr, paddr)
 	struct ndis_softc	*sc;
 	struct ndis_shmem	*sh;
 	int			error;
-#ifndef __FreeBSD__
+#ifdef __NetBSD__
 	bus_dma_segment_t	segs;
-	int			nsegs;
+	int					nsegs;
 #endif
+
+	/* PN(NdisMAllocateSharedMemory) */
 
 	if (adapter == NULL)
 		return;
 
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 
 	sh = malloc(sizeof(struct ndis_shmem), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sh == NULL)
@@ -1592,18 +1899,21 @@ NdisMAllocateSharedMemory(adapter, len, cached, vaddr, paddr)
 		return;
 	}
 #else
-	sh->ndis_stag = sc->ndis_parent_tag;
-
+	sh->ndis_stag = sc->ndis_parent_tag;	
+	
 	error = bus_dmamem_alloc(sh->ndis_stag, len, 64, 0, 
 				 &segs, 1, &nsegs, BUS_DMA_NOWAIT);
+	
 	if (error) {
 		printf("bus_dmamem_alloc failed(1)\n");
 		return;
 	}
 
 	error = bus_dmamem_map(sh->ndis_stag, &segs, nsegs, 
-			       len, (caddr_t *)&vaddr, BUS_DMA_NOWAIT);
+				len, /*(caddr_t *)&vaddr*/ (caddr_t *)vaddr, BUS_DMA_NOWAIT);
 
+	/* printf("*vaddr = %x\n", (unsigned int)*vaddr); */
+	
 	if (error) {
 		printf("bus_dmamem_alloc failed(2)\n");
 		/* XXX free */
@@ -1612,15 +1922,15 @@ NdisMAllocateSharedMemory(adapter, len, cached, vaddr, paddr)
 
 	error = bus_dmamap_create(sh->ndis_stag, len, nsegs,
 				  BUS_SPACE_MAXSIZE_32BIT, 0,
-				  BUS_DMA_ALLOCNOW, &sh->ndis_smap);
+				  BUS_DMA_ALLOCNOW, &sh->ndis_smap);	
 
 	if (error) {
 		printf("bus_dmamem_alloc failed(3)\n");
 		/* XXX free, unmap */
 		return;
 	}
-
-	error = bus_dmamap_load(sh->ndis_stag, sh->ndis_smap, vaddr, 
+	
+	error = bus_dmamap_load(sh->ndis_stag, sh->ndis_smap, /*vaddr*/ *vaddr, 
 				len, NULL, BUS_DMA_NOWAIT);
 	ndis_mapshared_cb((void *)paddr, 
 			  sh->ndis_smap->dm_segs,
@@ -1660,7 +1970,13 @@ ndis_asyncmem_complete(arg)
 
 	w = arg;
 	block = (ndis_miniport_block *)w->na_adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
+
+	PN(ndis_asyncmem_complete)
 
 	vaddr = NULL;
 	paddr.np_quad = 0;
@@ -1684,6 +2000,8 @@ NdisMAllocateSharedMemoryAsync(adapter, len, cached, ctx)
 {
 	struct ndis_allocwork	*w;
 
+	PN(NdisMAllocateSharedMemoryAsync)
+	
 	if (adapter == NULL)
 		return(NDIS_STATUS_FAILURE);
 
@@ -1721,11 +2039,17 @@ NdisMFreeSharedMemory(adapter, len, cached, vaddr, paddr)
 	struct ndis_softc	*sc;
 	struct ndis_shmem	*sh, *prev;
 
+	PN(NdisMFreeSharedMemory)
+	
 	if (vaddr == NULL || adapter == NULL)
 		return;
 
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 	sh = prev = sc->ndis_shlist;
 
 	/* Sanity check: is list empty? */
@@ -1743,13 +2067,12 @@ NdisMFreeSharedMemory(adapter, len, cached, vaddr, paddr)
 	bus_dmamap_unload(sh->ndis_stag, sh->ndis_smap);
 #ifdef __FreeBSD__
 	bus_dmamem_free(sh->ndis_stag, vaddr, sh->ndis_smap);
+	bus_dma_tag_destroy(sh->ndis_stag);
 #else
 	bus_dmamem_unmap(sh->ndis_stag, vaddr, sh->ndis_smap->dm_mapsize);
 	bus_dmamem_free(sh->ndis_stag,
 			sh->ndis_smap->dm_segs, sh->ndis_smap->dm_nsegs );
 #endif
-	bus_dma_tag_destroy(sh->ndis_stag);
-
 	if (sh == sc->ndis_shlist)
 		sc->ndis_shlist = sh->ndis_next;
 	else
@@ -1764,18 +2087,26 @@ __stdcall static ndis_status
 NdisMMapIoSpace(vaddr, adapter, paddr, len)
 	void			**vaddr;
 	ndis_handle		adapter;
-	ndis_physaddr		paddr;
+	ndis_physaddr	paddr;
 	uint32_t		len;
 {
 	ndis_miniport_block	*block;
 	struct ndis_softc	*sc;
 
+	PN(NdisMMapIoSpace)
+	
 	if (adapter == NULL)
 		return(NDIS_STATUS_FAILURE);
 
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif
+	
 
+#ifdef __FreeBSD__
 	if (sc->ndis_res_mem != NULL &&
 	    paddr.np_quad == rman_get_start(sc->ndis_res_mem))
 		*vaddr = (void *)rman_get_virtual(sc->ndis_res_mem);
@@ -1787,6 +2118,23 @@ NdisMMapIoSpace(vaddr, adapter, paddr, len)
 		*vaddr = (void *)rman_get_virtual(sc->ndis_res_am);
 	else
 		return(NDIS_STATUS_FAILURE);
+#else
+/* TODO: add one for sc->ndis_res_am once PCMCIA is going */
+	if (sc->ndis_res_mem != NULL &&
+	    paddr.np_quad == sc->ndis_res_mem->res_base)
+		*vaddr = bus_space_vaddr(sc->ndis_res_mem->res_tag,
+					sc->ndis_res_mem->res_handle);
+	else if (sc->ndis_res_altmem != NULL &&
+	     paddr.np_quad == sc->ndis_res_altmem->res_base)
+		*vaddr = bus_space_vaddr(sc->ndis_res_altmem->res_tag,
+					sc->ndis_res_altmem->res_handle);
+	else
+		return(NDIS_STATUS_FAILURE);
+/*		
+	*vaddr = bus_space_vaddr(sc->ndis_res_mem->res_tag,
+				sc->ndis_res_mem->res_handle);
+*/
+#endif
 
 	return(NDIS_STATUS_SUCCESS);
 }
@@ -1832,21 +2180,34 @@ NdisMInitializeScatterGatherDma(adapter, is64, maxphysmap)
 {
 	struct ndis_softc	*sc;
 	ndis_miniport_block	*block;
+#ifdef __FreeBSD__	
 	int			error;
+#endif	
+
+	PN(NdisMInitializeScatterGatherDma)
 
 	if (adapter == NULL)
 		return(NDIS_STATUS_FAILURE);
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 
 	/* Don't do this twice. */
 	if (sc->ndis_sc == 1)
 		return(NDIS_STATUS_SUCCESS);
 
+#ifdef __FreeBSD__
 	error = bus_dma_tag_create(sc->ndis_parent_tag, ETHER_ALIGN, 0,
 	    BUS_SPACE_MAXADDR_32BIT, BUS_SPACE_MAXADDR, NULL, NULL,
 	    MCLBYTES * NDIS_MAXSEG, NDIS_MAXSEG, MCLBYTES, BUS_DMA_ALLOCNOW,
 	    NULL, NULL, &sc->ndis_ttag);
+#else /* __NetBSD__ */
+/* TODO: Is this correct to just use the parent tag? */
+	sc->ndis_ttag = sc->ndis_parent_tag;
+#endif
 
 	sc->ndis_sc = 1;
 
@@ -1862,6 +2223,8 @@ NdisAllocatePacketPool(status, pool, descnum, protrsvdlen)
 {
 	ndis_packet		*cur;
 	int			i;
+	
+	PN(NdisAllocatePacketPool)	
 
 	*pool = malloc((sizeof(ndis_packet) + protrsvdlen) *
 	    ((descnum + NDIS_POOL_EXTRA) + 1),
@@ -1949,6 +2312,17 @@ NdisAllocatePacket(status, packet, pool)
 	ndis_packet		*head, *pkt;
 	uint8_t			irql;
 
+#ifdef __NetBSD__
+/*TODO: For some reason NdisAllocatePacket was getting called once with pool being NULL
+ *TODO: and this was causing a seg-fault.  This seems to solve the problem, but I'm not
+ *TODO: should happen at all in the first place.
+ */
+	if(pool == NULL) {
+		*status = NDIS_STATUS_FAILURE;
+		return;
+	}
+#endif		
+	
 	head = (ndis_packet *)pool;
 	KeAcquireSpinLock(&head->np_lock, &irql);
 
@@ -2397,7 +2771,11 @@ NdisMRegisterAdapterShutdownHandler(adapter, shutdownctx, shutdownfunc)
 		return;
 
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 	chars = sc->ndis_chars;
 
 	chars->nmc_shutdown_handler = shutdownfunc;
@@ -2418,7 +2796,11 @@ NdisMDeregisterAdapterShutdownHandler(adapter)
 		return;
 
 	block = (ndis_miniport_block *)adapter;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 	chars = sc->ndis_chars;
 
 	chars->nmc_shutdown_handler = NULL;
@@ -2502,11 +2884,27 @@ NdisReadPcmciaAttributeMemory(handle, offset, buf, len)
 		return(0);
 
 	block = (ndis_miniport_block *)handle;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 	dest = buf;
 
-	bh = rman_get_bushandle(sc->ndis_res_am);
-	bt = rman_get_bustag(sc->ndis_res_am);
+#ifdef __FreeBSD__
+    bh = rman_get_bushandle(sc->ndis_res_am);
+    bt = rman_get_bustag(sc->ndis_res_am);
+
+#else
+    if ( sc->ndis_iftype == PCMCIABus  ){
+        bt = sc->ndis_res_pcmem.memt;
+        bh = sc->ndis_res_pcmem.memh;
+   } else { /* cardbus case */
+            /* TODO  what does it really wait for ? */
+        bt = sc->ndis_res_mem->res_tag;
+        bh = sc->ndis_res_mem->res_handle;
+   }
+#endif
 
 	for (i = 0; i < len; i++)
 		dest[i] = bus_space_read_1(bt, bh, (offset + i) * 2);
@@ -2532,11 +2930,25 @@ NdisWritePcmciaAttributeMemory(handle, offset, buf, len)
 		return(0);
 
 	block = (ndis_miniport_block *)handle;
+#ifdef __FreeBSD__	
 	sc = device_get_softc(block->nmb_physdeviceobj->do_devext);
+#else /* __NetBSD__ */
+	sc = (struct ndis_softc *)block->nmb_physdeviceobj->pdo_sc;
+#endif		
 	src = buf;
-
-	bh = rman_get_bushandle(sc->ndis_res_am);
-	bt = rman_get_bustag(sc->ndis_res_am);
+#ifdef __FreeBSD__
+    bh = rman_get_bushandle(sc->ndis_res_am);
+    bt = rman_get_bustag(sc->ndis_res_am);
+#else
+    if ( sc->ndis_iftype == PCMCIABus  ){
+        bt = sc->ndis_res_pcmem.memt;
+        bh = sc->ndis_res_pcmem.memh;
+   } else { /* cardbus case */
+            /* TODO  what does it really wait for ? */
+        bt = sc->ndis_res_mem->res_tag;
+        bh = sc->ndis_res_mem->res_handle;
+   }
+#endif
 
 	for (i = 0; i < len; i++)
 		bus_space_write_1(bt, bh, (offset + i) * 2, src[i]);
@@ -2630,8 +3042,15 @@ NdisGetCurrentSystemTime(tval)
 	uint64_t		*tval;
 {
 	struct timespec		ts;
+#ifdef __NetBSD__
+    struct timeval      tv;
 
-	nanotime(&ts);
+    microtime(&tv);
+    TIMEVAL_TO_TIMESPEC(&tv,&ts);
+#else
+    nanotime(&ts);
+#endif
+
 	*tval = (uint64_t)ts.tv_nsec / 100 + (uint64_t)ts.tv_sec * 10000000 +
 	    (uint64_t)11644473600ULL;
 

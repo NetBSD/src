@@ -31,7 +31,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_usbd.c,v 1.1.2.1 2005/03/31 04:24:36 wpaul Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD");
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,11 +46,15 @@ __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_usbd.c,v 1.1.2.1 2005/03/31 04:24:3
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#ifdef __FreeBSD__
 #include <sys/mutex.h>
 #include <sys/module.h>
+#endif
 #include <sys/conf.h>
 #include <sys/mbuf.h>
+#ifdef __FreeBSD__
 #include <sys/bus.h>
+#endif
 
 #include <sys/queue.h>
 
