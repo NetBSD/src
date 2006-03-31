@@ -137,7 +137,7 @@ main(int argc, char **argv)
 
 	if (user == NULL) {
 		if ((pwp = getpwuid(geteuid())) == NULL) {
-			iscsi_trace_error("can't find user information\n");
+			iscsi_trace_error(__FILE__, __LINE__, "can't find user information\n");
 			exit(EXIT_FAILURE);
 		}
 		user = pwp->pw_name;
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 
 	if (target != -1) {
 		if (target >= CONFIG_INITIATOR_NUM_TARGETS) {
-			iscsi_trace_error("initiator only configured with %i targets\n", CONFIG_INITIATOR_NUM_TARGETS);
+			iscsi_trace_error(__FILE__, __LINE__, "initiator only configured with %i targets\n", CONFIG_INITIATOR_NUM_TARGETS);
 			exit(EXIT_FAILURE);
 		}
 		tgtlo = target;
@@ -166,14 +166,14 @@ main(int argc, char **argv)
 
 		/* Initialize Initiator */
 		if (initiator_init(host, user, auth_type, mutual_auth, digest_type) == -1) {
-			iscsi_trace_error("initiator_init() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "initiator_init() failed\n");
 			return -1;
 		}
 		/* Run tests for each target */
 
 		for (i = tgtlo; i < tgthi; i++) {
 			if (test_all(i, lun) != 0) {
-				iscsi_trace_error("test_all() failed\n");
+				iscsi_trace_error(__FILE__, __LINE__, "test_all() failed\n");
 				return -1;
 			}
 		}
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 		/* Shutdown Initiator */
 
 		if (initiator_shutdown() == -1) {
-			iscsi_trace_error("initiator_shutdown() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "initiator_shutdown() failed\n");
 			return -1;
 		}
 	}

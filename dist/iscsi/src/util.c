@@ -98,7 +98,7 @@ iscsi_malloc_atomic(unsigned n)
 	void           *ptr;
 
 	ptr = malloc(n);
-	iscsi_trace(TRACE_MEM, "iscsi_malloc_atomic(%i) = 0x%p\n", n, ptr);
+	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_malloc_atomic(%i) = 0x%p\n", n, ptr);
 	return ptr;
 }
 
@@ -108,7 +108,7 @@ iscsi_malloc(unsigned n)
 	void           *ptr;
 
 	ptr = malloc(n);
-	iscsi_trace(TRACE_MEM, "iscsi_malloc_atomic(%i) = 0x%p\n", n, ptr);
+	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_malloc_atomic(%i) = 0x%p\n", n, ptr);
 	return ptr;
 }
 
@@ -116,14 +116,14 @@ void
 iscsi_free_atomic(void *ptr)
 {
 	(void) free(ptr);
-	iscsi_trace(TRACE_MEM, "iscsi_free_atomic(0x%p)\n", ptr);
+	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_free_atomic(0x%p)\n", ptr);
 }
 
 void 
 iscsi_free(void *ptr)
 {
 	(void) free(ptr);
-	iscsi_trace(TRACE_MEM, "iscsi_free(0x%p)\n", ptr);
+	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_free(0x%p)\n", ptr);
 }
 
 /* debugging levels */
@@ -150,11 +150,11 @@ int
 iscsi_thread_create(iscsi_thread_t * thread, void *(*proc) (void *), void *arg)
 {
 	if (pthread_create(&thread->pthread, NULL, proc, arg) != 0) {
-		iscsi_trace_error("pthread_create() failed\n");
+		iscsi_trace_error(__FILE__, __LINE__, "pthread_create() failed\n");
 		return -1;
 	}
 	if (pthread_detach(thread->pthread) != 0) {
-		iscsi_trace_error("pthread_detach() failed\n");
+		iscsi_trace_error(__FILE__, __LINE__, "pthread_detach() failed\n");
 		return -1;
 	}
 	return 0;
@@ -169,7 +169,7 @@ iscsi_queue_init(iscsi_queue_t * q, int depth)
 	q->head = q->tail = q->count = 0;
 	q->depth = depth;
 	if ((q->elem = iscsi_malloc_atomic(depth * sizeof(void *))) == NULL) {
-		iscsi_trace_error("iscsi_malloc_atomic() failed\n");
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
 	iscsi_spin_init(&q->lock);
@@ -201,7 +201,7 @@ iscsi_queue_insert(iscsi_queue_t * q, void *ptr)
 
 	iscsi_spin_lock_irqsave(&q->lock, &flags);
 	if (iscsi_queue_full(q)) {
-		iscsi_trace_error("QUEUE FULL\n");
+		iscsi_trace_error(__FILE__, __LINE__, "QUEUE FULL\n");
 		iscsi_spin_unlock_irqrestore(&q->lock, &flags);
 		return -1;
 	}
@@ -222,7 +222,7 @@ iscsi_queue_remove(iscsi_queue_t * q)
 	uint32_t   flags = 0;
 	iscsi_spin_lock_irqsave(&q->lock, &flags);
 	if (!iscsi_queue_depth(q)) {
-		iscsi_trace(TRACE_QUEUE, "QUEUE EMPTY\n");
+		iscsi_trace(TRACE_QUEUE, __FILE__, __LINE__, "QUEUE EMPTY\n");
 		iscsi_spin_unlock_irqrestore(&q->lock, &flags);
 		return NULL;
 	}
@@ -237,7 +237,7 @@ iscsi_queue_remove(iscsi_queue_t * q)
 }
 
 void
-iscsi_trace(const int trace, const char *fmt, ...)
+iscsi_trace(const int trace, const char *f, const int line, const char *fmt, ...)
 {
 #ifdef CONFIG_ISCSI_DEBUG
 	va_list	vp;
@@ -247,7 +247,7 @@ iscsi_trace(const int trace, const char *fmt, ...)
 		va_start(vp, fmt);
 		(void) snprintf(buf, sizeof(buf), fmt, vp);
 		printf("pid %d:%s:%d: %s",
-			(int) ISCSI_GETPID, __FILE__, __LINE__,
+			(int) ISCSI_GETPID, f, line,
 			buf);
 		va_end(vp);
 	}
@@ -255,7 +255,7 @@ iscsi_trace(const int trace, const char *fmt, ...)
 }
 
 void
-iscsi_trace_warning(const char *fmt, ...)
+iscsi_trace_warning(const char *f, const int line, const char *fmt, ...)
 {
 #ifdef CONFIG_ISCSI_DEBUG
 	va_list	vp;
@@ -265,7 +265,7 @@ iscsi_trace_warning(const char *fmt, ...)
 		va_start(vp, fmt);
 		(void) snprintf(buf, sizeof(buf), fmt, vp);
 		printf("pid %d:%s:%d: ***WARNING*** %s",
-			(int) ISCSI_GETPID, __FILE__, __LINE__,
+			(int) ISCSI_GETPID, f, line,
 			buf);
 		va_end(vp);
 	}
@@ -273,7 +273,7 @@ iscsi_trace_warning(const char *fmt, ...)
 }
 
 void
-iscsi_trace_error(const char *fmt, ...)
+iscsi_trace_error(const char *f, const int line, const char *fmt, ...)
 {
 #ifdef CONFIG_ISCSI_DEBUG
 	va_list	vp;
@@ -282,13 +282,9 @@ iscsi_trace_error(const char *fmt, ...)
 	va_start(vp, fmt);
 	(void) snprintf(buf, sizeof(buf), fmt, vp);
 	va_end(vp);
-	printf("pid %d:%s:%d: ***ERROR*** %s",
-			(int) ISCSI_GETPID, __FILE__, __LINE__,
-			buf);
+	printf("pid %d:%s:%d: ***ERROR*** %s", (int) ISCSI_GETPID, f, line, buf);
 #  ifdef HAVE_SYSLOG
-	syslog(LOG_ERR, "pid %d:%s:%d: ***ERROR*** %s",
-		       ISCSI_GETPID, __FILE__, __LINE__,
-		       buf);
+	syslog(LOG_ERR, "pid %d:%s:%d: ***ERROR*** %s", ISCSI_GETPID, f, line, buf);
 #  endif /* HAVE_SYSLOG */
 #endif
 }
@@ -331,7 +327,7 @@ hash_init(hash_t * h, int n)
 	h->insertions = 0;
 	h->collisions = 0;
 	if ((h->bucket = iscsi_malloc_atomic(n * sizeof(initiator_cmd_t *))) == NULL) {
-		iscsi_trace_error("iscsi_malloc_atomic() failed\n");
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
 	for (i = 0; i < n; i++)
@@ -350,13 +346,13 @@ hash_insert(hash_t * h, initiator_cmd_t * cmd, unsigned key)
 
 	i = key % (h->n);
 	if (h->bucket[i] == NULL) {
-		iscsi_trace(TRACE_HASH, "inserting key %u (val 0x%p) into bucket[%i]\n", key, cmd, i);
+		iscsi_trace(TRACE_HASH, __FILE__, __LINE__, "inserting key %u (val 0x%p) into bucket[%i]\n", key, cmd, i);
 		h->bucket[i] = cmd;
 	} else {
 		cmd->hash_next = h->bucket[i];
 		h->bucket[i] = cmd;
 		h->collisions++;
-		iscsi_trace(TRACE_HASH, "inserting key %u (val 0x%p) into bucket[%i] (collision)\n", key, cmd, i);
+		iscsi_trace(TRACE_HASH, __FILE__, __LINE__, "inserting key %u (val 0x%p) into bucket[%i] (collision)\n", key, cmd, i);
 	}
 	h->insertions++;
 	iscsi_spin_unlock(&h->lock);
@@ -373,7 +369,7 @@ hash_remove(hash_t * h, unsigned key)
 	iscsi_spin_lock(&h->lock);
 	i = key % (h->n);
 	if (h->bucket[i] == NULL) {
-		iscsi_trace_error("bucket emtpy\n");
+		iscsi_trace_error(__FILE__, __LINE__, "bucket emtpy\n");
 		curr = NULL;
 	} else {
 		prev = NULL;
@@ -383,18 +379,18 @@ hash_remove(hash_t * h, unsigned key)
 			curr = curr->hash_next;
 		}
 		if (curr->key != key) {
-			iscsi_trace_error("key %u (0x%x) not found in bucket[%i]\n", key, key, i);
+			iscsi_trace_error(__FILE__, __LINE__, "key %u (0x%x) not found in bucket[%i]\n", key, key, i);
 			curr = NULL;
 		} else {
 			if (prev == NULL) {
 				h->bucket[i] = h->bucket[i]->hash_next;
-				iscsi_trace(TRACE_HASH, "removed key %u (val 0x%p) from head of bucket\n", key, curr);
+				iscsi_trace(TRACE_HASH, __FILE__, __LINE__, "removed key %u (val 0x%p) from head of bucket\n", key, curr);
 			} else {
 				prev->hash_next = curr->hash_next;
 				if (prev->hash_next == NULL) {
-					iscsi_trace(TRACE_HASH, "removed key %u (val 0x%p) from end of bucket\n", key, curr);
+					iscsi_trace(TRACE_HASH, __FILE__, __LINE__, "removed key %u (val 0x%p) from end of bucket\n", key, curr);
 				} else {
-					iscsi_trace(TRACE_HASH, "removed key %u (val 0x%p) from middle of bucket\n", key, curr);
+					iscsi_trace(TRACE_HASH, __FILE__, __LINE__, "removed key %u (val 0x%p) from middle of bucket\n", key, curr);
 				}
 			}
 		}
@@ -428,13 +424,13 @@ modify_iov(struct iovec ** iov_ptr, int *iovc, uint32_t offset, uint32_t length)
 	for (i = 0; i < *iovc; i++) {
 		len += iov[i].iov_len;
 		if (len > offset) {
-			iscsi_trace(TRACE_NET_IOV, "found offset %u in iov[%i]\n", offset, i);
+			iscsi_trace(TRACE_NET_IOV, __FILE__, __LINE__, "found offset %u in iov[%i]\n", offset, i);
 			break;
 		}
 		disp -= iov[i].iov_len;
 	}
 	if (i == *iovc) {
-		iscsi_trace_error("sum of iov lens (%u) < offset (%u)\n", len, offset);
+		iscsi_trace_error(__FILE__, __LINE__, "sum of iov lens (%u) < offset (%u)\n", len, offset);
 		return -1;
 	}
 	iov[i].iov_len -= disp;
@@ -454,14 +450,14 @@ modify_iov(struct iovec ** iov_ptr, int *iovc, uint32_t offset, uint32_t length)
 	for (i = 0; i < *iovc; i++) {
 		len += iov[i].iov_len;
 		if (len >= length) {
-			iscsi_trace(TRACE_NET_IOV, "length %u ends in iovec[%i]\n", length, i);
+			iscsi_trace(TRACE_NET_IOV, __FILE__, __LINE__, "length %u ends in iovec[%i]\n", length, i);
 			break;
 		}
 	}
 	if (i == *iovc) {
-		iscsi_trace_error("sum of iovec lens (%u) < length (%u)\n", len, length);
+		iscsi_trace_error(__FILE__, __LINE__, "sum of iovec lens (%u) < length (%u)\n", len, length);
 		for (i = 0; i < *iovc; i++) {
-			iscsi_trace_error("iov[%i].iov_base = %p (len %u)\n", i, iov[i].iov_base, (unsigned)iov[i].iov_len);
+			iscsi_trace_error(__FILE__, __LINE__, "iov[%i].iov_base = %p (len %u)\n", i, iov[i].iov_base, (unsigned)iov[i].iov_len);
 		}
 		return -1;
 	}
@@ -469,13 +465,13 @@ modify_iov(struct iovec ** iov_ptr, int *iovc, uint32_t offset, uint32_t length)
 	*iovc = i + 1;
 
 #ifdef CONFIG_ISCSI_DEBUG
-	iscsi_trace(TRACE_NET_IOV, "new iov:\n");
+	iscsi_trace(TRACE_NET_IOV, __FILE__, __LINE__, "new iov:\n");
 	len = 0;
 	for (i = 0; i < *iovc; i++) {
-		iscsi_trace(TRACE_NET_IOV, "iov[%i].iov_base = %p (len %u)\n", i, iov[i].iov_base, (unsigned)iov[i].iov_len);
+		iscsi_trace(TRACE_NET_IOV, __FILE__, __LINE__, "iov[%i].iov_base = %p (len %u)\n", i, iov[i].iov_base, (unsigned)iov[i].iov_len);
 		len += iov[i].iov_len;
 	}
-	iscsi_trace(TRACE_NET_IOV, "new iov length: %u bytes\n", len);
+	iscsi_trace(TRACE_NET_IOV, __FILE__, __LINE__, "new iov length: %u bytes\n", len);
 #endif
 
 	return 0;
@@ -487,7 +483,7 @@ iscsi_sock_setsockopt(iscsi_socket_t * sock, int level, int optname, void *optva
 	int             rc;
 
 	if ((rc = setsockopt(*sock, level, optname, optval, optlen)) != 0) {
-		iscsi_trace_error("sock->ops->setsockopt() failed: rc %i errno %i\n", rc, errno);
+		iscsi_trace_error(__FILE__, __LINE__, "sock->ops->setsockopt() failed: rc %i errno %i\n", rc, errno);
 		return -1;
 	}
 	return 0;
@@ -499,7 +495,7 @@ iscsi_sock_getsockopt(iscsi_socket_t * sock, int level, int optname, void *optva
 	int             rc;
 
 	if ((rc = getsockopt(*sock, level, optname, optval, optlen)) != 0) {
-		iscsi_trace_error("sock->ops->getsockopt() failed: rc %i errno %i\n", rc, errno);
+		iscsi_trace_error(__FILE__, __LINE__, "sock->ops->getsockopt() failed: rc %i errno %i\n", rc, errno);
 		return -1;
 	}
 	return 0;
@@ -511,11 +507,11 @@ iscsi_sock_create(iscsi_socket_t * sock)
 	int             rc;
 
 	if ((rc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		iscsi_trace_error("socket() failed: rc %i errno %i\n", rc, errno);
+		iscsi_trace_error(__FILE__, __LINE__, "socket() failed: rc %i errno %i\n", rc, errno);
 	}
 	*sock = rc;
 	if (rc < 0) {
-		iscsi_trace_error("error creating socket (rc %i)\n", rc);
+		iscsi_trace_error(__FILE__, __LINE__, "error creating socket (rc %i)\n", rc);
 		return -1;
 	}
 	return 0;
@@ -532,7 +528,7 @@ iscsi_sock_bind(iscsi_socket_t sock, int port)
 	laddr.sin_addr.s_addr = INADDR_ANY;
 	laddr.sin_port = ISCSI_HTONS(port);
 	if ((rc = bind(sock, (struct sockaddr *) (void *) &laddr, sizeof(laddr))) < 0) {
-		iscsi_trace_error("bind() failed: rc %i errno %i\n", rc, errno);
+		iscsi_trace_error(__FILE__, __LINE__, "bind() failed: rc %i errno %i\n", rc, errno);
 		return -1;
 	}
 	return 0;
@@ -544,7 +540,7 @@ iscsi_sock_listen(iscsi_socket_t sock)
 	int             rc;
 
 	if ((rc = listen(sock, 32)) < 0) {
-		iscsi_trace_error("listen() failed: rc %i errno %i\n", rc, errno);
+		iscsi_trace_error(__FILE__, __LINE__, "listen() failed: rc %i errno %i\n", rc, errno);
 		return -1;
 	}
 	return 0;
@@ -559,7 +555,7 @@ iscsi_sock_accept(iscsi_socket_t sock, iscsi_socket_t * newsock)
 	remoteAddrLen = sizeof(remoteAddr);
 	(void) memset(&remoteAddr, 0, sizeof(remoteAddr));
 	if ((*newsock = accept(sock, (struct sockaddr *) (void *)& remoteAddr, &remoteAddrLen)) < 0) {
-		iscsi_trace(TRACE_NET_DEBUG, "accept() failed: rc %i errno %i\n", *newsock, errno);
+		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "accept() failed: rc %i errno %i\n", *newsock, errno);
 		return -1;
 	}
 
@@ -570,7 +566,7 @@ int
 iscsi_sock_getsockname(iscsi_socket_t sock, struct sockaddr * name, unsigned *namelen)
 {
 	if (getsockname(sock, name, namelen) != 0) {
-		iscsi_trace_error("getsockame() failed (errno %i)\n", errno);
+		iscsi_trace_error(__FILE__, __LINE__, "getsockame() failed (errno %i)\n", errno);
 		return -1;
 	}
 	return 0;
@@ -580,7 +576,7 @@ int
 iscsi_sock_getpeername(iscsi_socket_t sock, struct sockaddr * name, unsigned *namelen)
 {
 	if (getpeername(sock, name, namelen) != 0) {
-		iscsi_trace_error("getpeername() failed (errno %i)\n", errno);
+		iscsi_trace_error(__FILE__, __LINE__, "getpeername() failed (errno %i)\n", errno);
 		return -1;
 	}
 	return 0;
@@ -592,7 +588,7 @@ iscsi_sock_shutdown(iscsi_socket_t sock, int how)
 	int             rc;
 
 	if ((rc = shutdown(sock, how)) != 0) {
-		iscsi_trace(TRACE_NET_DEBUG, "shutdown() failed: rc %i, errno %i\n", rc, errno);
+		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "shutdown() failed: rc %i, errno %i\n", rc, errno);
 	}
 	return 0;
 }
@@ -603,7 +599,7 @@ iscsi_sock_close(iscsi_socket_t sock)
 	int             rc;
 
 	if ((rc = close(sock)) != 0) {
-		iscsi_trace_error("close() failed: rc %i errno %i\n", rc, errno);
+		iscsi_trace_error(__FILE__, __LINE__, "close() failed: rc %i errno %i\n", rc, errno);
 		return -1;
 	}
 	return 0;
@@ -628,14 +624,14 @@ iscsi_sock_connect(iscsi_socket_t sock, char *hostname, int port)
 		addr.sin_addr.s_addr = inet_addr(hostname);
 #if ISCSI_SOCK_CONNECT_NONBLOCK == 1
 		if (fcntl(sock, F_SETFL, O_NONBLOCK) != 0) {
-			iscsi_trace_error("fcntl() failed");
+			iscsi_trace_error(__FILE__, __LINE__, "fcntl() failed");
 			return -1;
 		}
 #endif
 		rc = connect(sock, (struct sockaddr *) (void *) &addr, sizeof(addr));
 #if ISCSI_SOCK_CONNECT_NONBLOCK == 1
 		if (fcntl(sock, F_SETFL, O_SYNC) != 0) {
-			iscsi_trace_error("fcntl() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "fcntl() failed\n");
 			return -1;
 		}
 #endif
@@ -656,7 +652,7 @@ iscsi_sock_connect(iscsi_socket_t sock, char *hostname, int port)
 		}
 	}
 	if (rc < 0) {
-		iscsi_trace_error("connect() to %s:%i failed (errno %i)\n", hostname, port, errno);
+		iscsi_trace_error(__FILE__, __LINE__, "connect() to %s:%i failed (errno %i)\n", hostname, port, errno);
 	}
 	return rc;
 }
@@ -680,9 +676,9 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 	uint32_t        padding_len = 0;
 	int             total_len = 0;
 
-	iscsi_trace(TRACE_NET_DEBUG, "%s %i bytes on sock\n", xmit ? "sending" : "receiving", len);
+	iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "%s %i bytes on sock\n", xmit ? "sending" : "receiving", len);
 	if (iovc == 0) {
-		iscsi_trace(TRACE_NET_DEBUG, "building singleton iovec (data %p, len %u)\n", data, len);
+		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "building singleton iovec (data %p, len %u)\n", data, len);
 		singleton.iov_base = data;
 		singleton.iov_len = len;
 		iov = &singleton;
@@ -695,7 +691,7 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 
 	if ((remainder = len % ISCSI_SOCK_MSG_BYTE_ALIGN) != 0) {
 		if ((iov_padding = iscsi_malloc_atomic((iovc + 1) * sizeof(struct iovec))) == NULL) {
-			iscsi_trace_error("iscsi_malloc_atomic() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 			return -1;
 		}
 		memcpy(iov_padding, iov, iovc * sizeof(struct iovec));
@@ -706,7 +702,7 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 		iovc++;
 		memset(padding, 0, padding_len);
 		len += padding_len;
-		iscsi_trace(TRACE_NET_DEBUG, "Added iovec for padding (len %u)\n", padding_len);
+		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "Added iovec for padding (len %u)\n", padding_len);
 	}
 	/*
 	 * We make copy of iovec if we're in debugging mode,  as we'll print
@@ -721,47 +717,47 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 		/* Check iovec */
 
 		total_len = 0;
-		iscsi_trace(TRACE_NET_DEBUG, "%s %i buffers\n", xmit ? "gathering from" : "scattering into", iovc);
+		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "%s %i buffers\n", xmit ? "gathering from" : "scattering into", iovc);
 		for (i = 0; i < iovc; i++) {
-			iscsi_trace(TRACE_NET_IOV, "iov[%i].iov_base = %p, len %u\n", i, iov[i].iov_base, (unsigned)iov[i].iov_len);
+			iscsi_trace(TRACE_NET_IOV, __FILE__, __LINE__, "iov[%i].iov_base = %p, len %u\n", i, iov[i].iov_base, (unsigned)iov[i].iov_len);
 			total_len += iov[i].iov_len;
 		}
 		if (total_len != len - n) {
-			iscsi_trace_error("iovcs sum to %i != total len of %i\n", total_len, len - n);
-			iscsi_trace_error("iov = %p\n", iov);
+			iscsi_trace_error(__FILE__, __LINE__, "iovcs sum to %i != total len of %i\n", total_len, len - n);
+			iscsi_trace_error(__FILE__, __LINE__, "iov = %p\n", iov);
 			for (i = 0; i < iovc; i++) {
-				iscsi_trace_error("iov[%i].iov_base = %p, len %u\n",
+				iscsi_trace_error(__FILE__, __LINE__, "iov[%i].iov_base = %p, len %u\n",
 					i, iov[i].iov_base, (unsigned)iov[i].iov_len);
 			}
 			return -1;
 		}
 		if ((rc = (xmit) ? writev(sock, iov, iovc) : readv(sock, iov, iovc)) == 0) {
-			iscsi_trace(TRACE_NET_DEBUG, "%s() failed: rc %i errno %i\n", (xmit) ? "writev" : "readv", rc, errno);
+			iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "%s() failed: rc %i errno %i\n", (xmit) ? "writev" : "readv", rc, errno);
 			break;
 		} else if (rc < 0) {
 			/* Temp FIXME */
-			iscsi_trace_error("%s() failed: rc %i errno %i\n", (xmit)?"writev":"readv", rc, errno);
+			iscsi_trace_error(__FILE__, __LINE__, "%s() failed: rc %i errno %i\n", (xmit)?"writev":"readv", rc, errno);
 			break;
 		}
 		n += rc;
 		if (n < len) {
-			iscsi_trace(TRACE_NET_DEBUG, "Got partial %s: %i bytes of %i\n", (xmit) ? "send" : "recv", rc, len - n + rc);
+			iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "Got partial %s: %i bytes of %i\n", (xmit) ? "send" : "recv", rc, len - n + rc);
 
 			total_len = 0;
 			for (i = 0; i < iovc; i++) {
 				total_len += iov[i].iov_len;
 			}
-			iscsi_trace(TRACE_NET_IOV, "before modify_iov: %s %i buffers, total_len = %u, n = %u, rc = %u\n",
+			iscsi_trace(TRACE_NET_IOV, __FILE__, __LINE__, "before modify_iov: %s %i buffers, total_len = %u, n = %u, rc = %u\n",
 			      xmit ? "gathering from" : "scattering into", iovc, total_len, n, rc);
 			if (modify_iov(&iov, &iovc, (unsigned) rc, len - n) != 0) {
-				iscsi_trace_error("modify_iov() failed\n");
+				iscsi_trace_error(__FILE__, __LINE__, "modify_iov() failed\n");
 				break;
 			}
 			total_len = 0;
 			for (i = 0; i < iovc; i++) {
 				total_len += iov[i].iov_len;
 			}
-			iscsi_trace(TRACE_NET_IOV, "after modify_iov: %s %i buffers, total_len = %u, n = %u, rc = %u\n\n",
+			iscsi_trace(TRACE_NET_IOV, __FILE__, __LINE__, "after modify_iov: %s %i buffers, total_len = %u, n = %u, rc = %u\n\n",
 			      xmit ? "gathering from" : "scattering into", iovc, total_len, n, rc);
 		}
 	} while (n < len);
@@ -769,7 +765,7 @@ iscsi_sock_msg(iscsi_socket_t sock, int xmit, unsigned len, void *data, int iovc
 	if (remainder) {
 		iscsi_free_atomic(iov_padding);
 	}
-	iscsi_trace(TRACE_NET_DEBUG, "successfully %s %i bytes on sock (%i bytes padding)\n", xmit ? "sent" : "received", n, padding_len);
+	iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "successfully %s %i bytes on sock (%i bytes padding)\n", xmit ? "sent" : "received", n, padding_len);
 	return n - padding_len;
 }
 
@@ -793,7 +789,7 @@ iscsi_sock_send_header_and_data(iscsi_socket_t sock,
 	if (data_len && data_len <= ISCSI_SOCK_HACK_CROSSOVER) {
 		/* combine header and data into one iovec */
 		if (iovc >= ISCSI_MAX_IOVECS) {
-			iscsi_trace_error("iscsi_sock_msg() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			return -1;
 		}
 		if (iovc == 0) {
@@ -809,16 +805,16 @@ iscsi_sock_send_header_and_data(iscsi_socket_t sock,
 			iovc += 1;
 		}
 		if (iscsi_sock_msg(sock, Transmit, header_len + data_len, iov, iovc) != header_len + data_len) {
-			iscsi_trace_error("iscsi_sock_msg() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			return -1;
 		}
 	} else {
 		if (iscsi_sock_msg(sock, Transmit, header_len, header, 0) != header_len) {
-			iscsi_trace_error("iscsi_sock_msg() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			return -1;
 		}
 		if (data_len != 0 && iscsi_sock_msg(sock, Transmit, data_len, __UNCONST((const char *) data), iovc) != data_len) {
-			iscsi_trace_error("iscsi_sock_msg() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			return -1;
 		}
 	}
@@ -940,7 +936,7 @@ uint32_t
 iscsi_atoi(char *value)
 {
 	if (value == NULL) {
-		iscsi_trace_error("iscsi_atoi() called with NULL value\n");
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_atoi() called with NULL value\n");
 		return 0;
 	}
 	return atoi(value);

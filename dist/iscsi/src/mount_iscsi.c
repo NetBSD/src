@@ -1,4 +1,4 @@
-/* $NetBSD: mount_iscsi.c,v 1.2 2006/03/12 18:47:28 agc Exp $ */
+/* $NetBSD: mount_iscsi.c,v 1.3 2006/03/31 23:22:24 agc Exp $ */
 
 /*
  * Copyright © 2005 Alistair Crooks.  All rights reserved.
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright © 2005 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: mount_iscsi.c,v 1.2 2006/03/12 18:47:28 agc Exp $");
+__RCSID("$NetBSD: mount_iscsi.c,v 1.3 2006/03/31 23:22:24 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -265,14 +265,14 @@ main(int argc, char **argv)
 		/* Initialize Initiator */
 
 		if (initiator_init(iqn.domain) == -1) {
-			iscsi_trace_error("initiator_init() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "initiator_init() failed\n");
 			return -1;
 		}
 		/* Run tests for each target */
 
 		for (i = begin_tid; i < end_tid; i++) {
 			if (test_all(i, lun) != 0) {
-				iscsi_trace_error("test_all() failed\n");
+				iscsi_trace_error(__FILE__, __LINE__, "test_all() failed\n");
 				return -1;
 			}
 		}
@@ -280,7 +280,7 @@ main(int argc, char **argv)
 		/* Shutdown Initiator */
 
 		if (initiator_shutdown() == -1) {
-			iscsi_trace_error("initiator_shutdown() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "initiator_shutdown() failed\n");
 			return -1;
 		}
 	}
