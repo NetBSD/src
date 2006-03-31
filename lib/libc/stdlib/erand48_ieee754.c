@@ -1,4 +1,4 @@
-/*	$NetBSD: erand48_ieee754.c,v 1.1 2006/03/22 21:06:03 drochner Exp $	*/
+/*	$NetBSD: erand48_ieee754.c,v 1.2 2006/03/31 11:42:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: erand48_ieee754.c,v 1.1 2006/03/22 21:06:03 drochner Exp $");
+__RCSID("$NetBSD: erand48_ieee754.c,v 1.2 2006/03/31 11:42:31 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -39,9 +39,9 @@ erand48(unsigned short xseed[3])
 	__dorand48(xseed);
 	u.dblu_dbl.dbl_sign = 0;
 	u.dblu_dbl.dbl_exp = DBL_EXP_BIAS; /* so we get [1,2) */
-	u.dblu_dbl.dbl_frach = ((unsigned int)xseed[0] << 4)
+	u.dblu_dbl.dbl_frach = ((unsigned int)xseed[2] << 4)
 				| ((unsigned int)xseed[1] >> 12);
 	u.dblu_dbl.dbl_fracl = (((unsigned int)xseed[1] & 0x0fff) << 20)
-				| ((unsigned int)xseed[2] << 4);
+				| ((unsigned int)xseed[0] << 4);
 	return (u.dblu_d - 1);
 }
