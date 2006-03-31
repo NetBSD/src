@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.110 2006/03/15 20:33:19 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.111 2006/03/31 21:05:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.110 2006/03/15 20:33:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.111 2006/03/31 21:05:34 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.110 2006/03/15 20:33:19 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.111 2006/03/31 21:05:34 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -111,9 +111,6 @@ __RCSID("$NetBSD: job.c,v 1.110 2006/03/15 20:33:19 dsl Exp $");
  *	    	  	    	before this function is called.
  *
  *	Job_End  	    	Cleanup any memory used.
- *
- *	Job_Empty 	    	Return TRUE if the job table is completely
- *	    	  	    	empty.
  *
  *	Job_ParseShell	    	Given the line following a .SHELL target, parse
  *	    	  	    	the line as a shell specification. Returns
@@ -267,7 +264,6 @@ const char *shellPath = NULL,		  	  /* full pathname of
 static const char *shellArgv = NULL;		  /* Custom shell args */
 
 
-static int  	maxJobs;    	/* The most children we can run at once */
 STATIC Lst     	jobs;		/* The structures that describe them */
 static Boolean	wantToken;	/* we want a token */
 
@@ -386,8 +382,7 @@ static void JobSigUnlock(sigset_t *omaskp)
 /*-
  *-----------------------------------------------------------------------
  * JobCondPassSig --
- *	Pass a signal to a job if the job is remote or if USE_PGRP
- *	is defined.
+ *	Pass a signal to a job if USE_PGRP is defined.
  *
  * Input:
  *	jobp		Job to biff
@@ -468,8 +463,8 @@ JobContinueSig(int signo __unused)
 /*-
  *-----------------------------------------------------------------------
  * JobPassSig --
- *	Pass a signal on to all remote jobs and to all local jobs if
- *	USE_PGRP is defined, then die ourselves.
+ *	Pass a signal on to all local jobs if
+ *	USE_PGRP is defined, then resend to ourselves.
  *
  * Input:
  *	signo		The signal number we've received
@@ -1078,7 +1073,6 @@ JobFinish(Job *job, int *status)
 	errors += 1;
 	free(job);
     }
-    JobRestartJobs();
 
     /*
      * Set aborting if any error.
@@ -1095,7 +1089,7 @@ JobFinish(Job *job, int *status)
     if (return_job_token)
 	Job_TokenReturn();
 
-    if ((aborting == ABORT_ERROR) && Job_Empty()) {
+    if (aborting == ABORT_ERROR && jobTokensRunning == 0) {
 	/*
 	 * If we are aborting and the job table is now empty, we finish.
 	 */
@@ -2198,10 +2192,6 @@ Shell_Init()
  *	Initialize the process module
  *
  * Input:
- *	maxproc		the greatest number of jobs which may be running
- *			at one time
- *	maxlocal	the greatest number of jobs which may be running
- *			at once
  *
  * Results:
  *	none
@@ -2211,13 +2201,12 @@ Shell_Init()
  *-----------------------------------------------------------------------
  */
 void
-Job_Init(int maxproc)
+Job_Init(void)
 {
     GNode         *begin;     /* node for commands to do at the very start */
 
     jobs =  	  Lst_Init(FALSE);
     stoppedJobs = Lst_Init(FALSE);
-    maxJobs = 	  maxproc;
     wantToken =	  FALSE;
 
     aborting = 	  0;
@@ -2313,39 +2302,6 @@ static void JobSigReset(void)
 #endif
 #undef DELSIG
     (void)signal(SIGCHLD, SIG_DFL);
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Job_Empty --
- *	See if the job table is empty.  Because the local concurrency may
- *	be set to 0, it is possible for the job table to become empty,
- *	while the list of stoppedJobs remains non-empty. In such a case,
- *	we want to restart as many jobs as we can.
- *
- * Results:
- *	TRUE if it is. FALSE if it ain't.
- *
- * Side Effects:
- *	None.
- *
- * -----------------------------------------------------------------------
- */
-Boolean
-Job_Empty(void)
-{
-    if (jobTokensRunning != 0)
-	return FALSE;
-
-    if (Lst_IsEmpty(stoppedJobs) || aborting)
-	return TRUE;
-
-    /*
-     * The job table is obviously not full if it has no jobs in
-     * it...Try and restart the stopped jobs.
-     */
-    JobRestartJobs();
-    return FALSE;
 }
 
 /*-
@@ -2882,7 +2838,7 @@ JobTokenAdd(void)
  */
 
 void
-Job_ServerStart(int maxproc)
+Job_ServerStart(void)
 {
     int i, fd, flags;
     char jobarg[64];
@@ -2925,11 +2881,11 @@ Job_ServerStart(int maxproc)
      * Preload job_pipe with one token per job, save the one
      * "extra" token for the primary job.
      * 
-     * XXX should clip maxJobs against PIPE_BUF -- if maxJobs is
+     * XXX should clip maxJobs against PIPE_BUF -- if maxJobTokens is
      * larger than the write buffer size of the pipe, we will
      * deadlock here.
      */
-    for (i=1; i < maxproc; i++)
+    for (i=1; i < maxJobTokens; i++)
 	JobTokenAdd();
 }
 
@@ -2979,7 +2935,7 @@ Job_TokenWithdraw(void)
 	printf("Job_TokenWithdraw(%d): aborting %d, running %d\n",
 		getpid(), aborting, jobTokensRunning);
 
-    if (aborting || (jobTokensRunning && not_parallel))
+    if (aborting || (jobTokensRunning >= maxJobs))
 	return FALSE;
 
     count = read(job_pipe[0], &tok, 1);

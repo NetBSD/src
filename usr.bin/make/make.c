@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.61 2006/02/11 20:59:49 dsl Exp $	*/
+/*	$NetBSD: make.c,v 1.62 2006/03/31 21:05:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.61 2006/02/11 20:59:49 dsl Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.62 2006/03/31 21:05:34 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.61 2006/02/11 20:59:49 dsl Exp $");
+__RCSID("$NetBSD: make.c,v 1.62 2006/03/31 21:05:34 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1228,7 +1228,7 @@ Make_Run(Lst targs)
      * Note that the Job module will exit if there were any errors unless the
      * keepgoing flag was given.
      */
-    while (!Lst_IsEmpty(toBeMade) || !Job_Empty ()) {
+    while (!Lst_IsEmpty(toBeMade) || jobTokensRunning > 0) {
 	Job_CatchOutput();
 	Job_CatchChildren(!usePipes);
 	(void)MakeStartJobs();

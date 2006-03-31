@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.122 2006/03/17 15:39:44 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.123 2006/03/31 21:05:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.122 2006/03/17 15:39:44 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.123 2006/03/31 21:05:34 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.122 2006/03/17 15:39:44 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.123 2006/03/31 21:05:34 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -156,6 +156,7 @@ static Lst		makefiles;	/* ordered list of makefiles to read */
 static Boolean		printVars;	/* print value of one or more vars */
 static Lst		variables;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
+int			maxJobTokens;	/* -j argument */
 Boolean			compatMake;	/* -B argument */
 int			debug;		/* -d argument */
 Boolean			noExecute;	/* -n flag */
@@ -427,6 +428,7 @@ rearg:
 			}
 			Var_Append(MAKEFLAGS, "-j", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
+			maxJobTokens = maxJobs;
 			break;
 		case 'k':
 			keepgoing = TRUE;
@@ -782,6 +784,7 @@ main(int argc, char **argv)
 	jobsRunning = FALSE;
 
 	maxJobs = DEFMAXLOCAL;		/* Set default local max concurrency */
+	maxJobTokens = maxJobs;
 	compatMake = FALSE;		/* No compat mode */
 
 
@@ -925,10 +928,10 @@ main(int argc, char **argv)
 	    free(p1);
 
 	if (!jobServer && !compatMake)
-	    Job_ServerStart(maxJobs);
+	    Job_ServerStart();
 	if (DEBUG(JOB))
-	    printf("job_pipe %d %d, maxjobs %d compat %d\n",
-		    job_pipe[0], job_pipe[1], maxJobs, compatMake);
+	    printf("job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
+		job_pipe[0], job_pipe[1], maxJobs, maxJobTokens, compatMake);
 
 	Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 
@@ -1022,7 +1025,7 @@ main(int argc, char **argv)
 		 * being executed should it exist).
 		 */
 		if (!queryFlag) {
-			Job_Init(maxJobs);
+			Job_Init();
 			jobsRunning = TRUE;
 		}
 

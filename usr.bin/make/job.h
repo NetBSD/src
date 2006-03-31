@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.26 2006/03/13 20:35:09 dsl Exp $	*/
+/*	$NetBSD: job.h,v 1.27 2006/03/31 21:05:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -264,7 +264,8 @@ extern const char *shellName;
 
 extern int	job_pipe[2];	/* token pipe for jobs. */
 extern int	jobTokensRunning; /* tokens currently "out" */
-extern int	not_parallel;	/* => only run one job */
+extern int	maxJobs;	/* Max jobs we can run */
+extern int	maxJobTokens;	/* Number of token for the job pipe */
 
 void Shell_Init(void);
 void Job_Touch(GNode *, Boolean);
@@ -272,7 +273,7 @@ Boolean Job_CheckCommands(GNode *, void (*abortProc )(const char *, ...));
 void Job_CatchChildren(Boolean);
 void Job_CatchOutput(void);
 void Job_Make(GNode *);
-void Job_Init(int);
+void Job_Init(void);
 Boolean Job_Full(void);
 Boolean Job_Empty(void);
 ReturnStatus Job_ParseShell(char *);
@@ -283,6 +284,6 @@ void Job_AbortAll(void);
 void JobFlagForMigration(int);
 void Job_TokenReturn(void);
 Boolean Job_TokenWithdraw(void);
-void Job_ServerStart(int);
+void Job_ServerStart(void);
 
 #endif /* _JOB_H_ */
