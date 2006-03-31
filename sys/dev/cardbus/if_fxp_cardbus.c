@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.21.12.1 2006/03/28 09:42:10 tron Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.21.12.2 2006/03/31 09:45:18 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.21.12.1 2006/03/28 09:42:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.21.12.2 2006/03/31 09:45:18 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -144,8 +144,8 @@ fxp_cardbus_attach(parent, self, aux)
 {
 	static const char thisfunc[] = "fxp_cardbus_attach";
 
-	struct fxp_softc *sc = (struct fxp_softc *) self;
-	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) self;
+	struct fxp_softc *sc = device_private(self);
+	struct fxp_cardbus_softc *csc = device_private(self);
 	struct cardbus_attach_args *ca = aux;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
@@ -273,8 +273,8 @@ fxp_cardbus_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct fxp_softc *sc = (struct fxp_softc *) self;
-	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *) self;
+	struct fxp_softc *sc = device_private(self);
+	struct fxp_cardbus_softc *csc = device_private(self);
 	struct cardbus_devfunc *ct = csc->ct;
 	int rv, reg;
 

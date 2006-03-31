@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.17 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: tcds.c,v 1.17.12.1 2006/03/31 09:45:26 tron Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.17 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.17.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -161,7 +161,7 @@ tcdsattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct tcds_softc *sc = (struct tcds_softc *)self;
+	struct tcds_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct tcdsdev_attach_args tcdsdev;
 	struct tcds_slotconfig *slotc;

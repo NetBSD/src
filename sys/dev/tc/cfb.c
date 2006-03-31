@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.47 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: cfb.c,v 1.47.12.1 2006/03/31 09:45:26 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.47 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.47.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ cfbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cfb_softc *sc = (struct cfb_softc *)self;
+	struct cfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;

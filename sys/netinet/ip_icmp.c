@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.97.14.1 2006/03/28 09:42:28 tron Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.97.14.2 2006/03/31 09:45:29 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.97.14.1 2006/03/28 09:42:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.97.14.2 2006/03/31 09:45:29 tron Exp $");
 
 #include "opt_ipsec.h"
 
@@ -405,7 +405,7 @@ icmp_input(struct mbuf *m, ...)
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
-	if (m->m_len < i && (m = m_pullup(m, i)) == 0) {
+	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == 0) {
 		icmpstat.icps_tooshort++;
 		return;
 	}

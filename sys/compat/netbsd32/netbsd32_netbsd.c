@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.100 2006/02/09 19:18:57 manu Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.100.6.1 2006/03/31 09:45:13 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.6.1 2006/03/31 09:45:13 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100 2006/02/09 19:18:57 manu E
 #include <uvm/uvm_extern.h>
 
 #include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
@@ -91,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100 2006/02/09 19:18:57 manu E
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/netbsd32/netbsd32_sa.h>
 
 #include <machine/frame.h>
 
@@ -114,6 +116,17 @@ struct uvm_object *emul_netbsd32_object;
 #endif
 
 extern struct sysctlnode netbsd32_sysctl_root;
+
+const struct sa_emul saemul_netbsd32 = {
+	sizeof(ucontext32_t),
+	sizeof(struct netbsd32_sa_t),
+	sizeof(netbsd32_sa_tp),
+	netbsd32_sacopyout,
+	netbsd32_upcallconv,
+	netbsd32_cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext32,
+	netbsd32_sa_ucsp
+};
 
 const struct emul emul_netbsd32 = {
 	"netbsd32",
@@ -157,6 +170,8 @@ const struct emul emul_netbsd32 = {
 	NULL,
 
 	netbsd32_vm_default_addr,
+	NULL,
+	&saemul_netbsd32,
 };
 
 /*

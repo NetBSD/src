@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.8 2006/02/28 01:16:59 simonb Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.8.6.1 2006/03/31 09:45:08 tron Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.8 2006/02/28 01:16:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.8.6.1 2006/03/31 09:45:08 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -56,7 +56,7 @@ ibm4xx_device_register(struct device *dev, void *aux)
 		/* Set the mac-addr of the on-chip Ethernet. */
 		struct opb_attach_args *oaa = aux;
 
-		if (dev->dv_unit < 10) {
+		if (oaa->opb_instance < 10) {
 			uint8_t enaddr[ETHER_ADDR_LEN];
 			unsigned char prop_name[15];
 

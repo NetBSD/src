@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129 2006/02/05 05:01:50 cube Exp $
+# $NetBSD: GENERIC,v 1.129.6.1 2006/03/31 09:44:59 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129 $"
+#ident 		"GENERIC-$Revision: 1.129.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -289,7 +289,7 @@ pseudo-device	loop			# loopback network interface
 pseudo-device	ppp			# PPP network interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# SLIP network interfaces
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	vlan			# IEEE 802.1q encapsulation

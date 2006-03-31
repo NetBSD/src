@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6.12.1 2006/03/28 09:47:15 tron Exp $	*/
+/*	$NetBSD: clock.c,v 1.6.12.2 2006/03/31 09:44:59 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6.12.1 2006/03/28 09:47:15 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6.12.2 2006/03/31 09:44:59 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,6 +121,20 @@ cpu_initclocks(void)
 }
 
 /*
+ * Attach the clock device to todr_handle.
+ */
+void
+todr_attach(todr_chip_handle_t todr)
+{
+
+        if (todr_handle) {
+                printf("todr_attach: TOD already configured\n");
+		return;
+	}
+        todr_handle = todr;
+}
+
+/*
  * Set up the system's time, given a `reasonable' time value.
  */
 void
@@ -146,6 +160,9 @@ inittodr(time_t base)
 
 		if (todr_handle != NULL)
 			printf("WARNING: preposterous TOD clock time");
+		else
+			printf("WARNING: no TOD clock present");
+
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
@@ -179,8 +196,9 @@ resettodr(void)
 	if (time.tv_sec == 0)
 		return;
 
-	if (todr_settime(todr_handle, &time) != 0)
-		printf("Cannot set TOD clock time\n");
+	if (todr_handle)
+		if (todr_settime(todr_handle, &time) != 0)
+			printf("Cannot set TOD clock time\n");
 }
 
 /*

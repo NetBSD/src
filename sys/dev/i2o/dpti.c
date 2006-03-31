@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.21.12.1 2006/03/28 09:42:10 tron Exp $	*/
+/*	$NetBSD: dpti.c,v 1.21.12.2 2006/03/31 09:45:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.21.12.1 2006/03/28 09:42:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.21.12.2 2006/03/31 09:45:19 tron Exp $");
 
 #include "opt_i2o.h"
 
@@ -185,8 +185,8 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 	} __attribute__ ((__packed__)) param;
 	int rv;
 
-	sc = (struct dpti_softc *)self;
-	iop = (struct iop_softc *)parent;
+	sc = device_private(self);
+	iop = device_private(parent);
 
 	/*
 	 * Tell the world what we are.  The description in the signature
@@ -340,7 +340,7 @@ dpti_ctlrinfo(struct dpti_softc *sc, int size, caddr_t data)
 	memset(&info, 0, sizeof(info));
 
 	info.length = sizeof(info) - sizeof(u_int16_t);
-	info.drvrHBAnum = sc->sc_dv.dv_unit;
+	info.drvrHBAnum = device_unit(&sc->sc_dv);
 	info.baseAddr = iop->sc_memaddr;
 	if ((i = dpti_blinkled(sc)) == -1)
 		i = 0;

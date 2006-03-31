@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.186 2006/03/09 20:58:40 macallan Exp $
+# $NetBSD: GENERIC,v 1.186.2.1 2006/03/31 09:45:09 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.186 $"
+#ident 		"GENERIC-$Revision: 1.186.2.1 $"
 
 maxusers	32
 
@@ -595,7 +595,7 @@ pseudo-device	ipfilter
 ## for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan

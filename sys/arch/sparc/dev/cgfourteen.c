@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.45 2006/03/04 02:59:29 uwe Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.45.6.1 2006/03/31 09:45:09 tron Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -200,7 +200,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 	fb->fb_driver = &cgfourteenfbdriver;
 	fb->fb_device = &sc->sc_dev;
 	/* Mask out invalid flags from the user. */
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 
 	/*
 	 * We're emulating a cg3/8, so represent ourselves as one

@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.8.2.1 2006/03/28 09:47:16 tron Exp $ */
+/* $NetBSD: aurtc.c,v 1.8.2.2 2006/03/31 09:45:04 tron Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.8.2.1 2006/03/28 09:47:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.8.2.2 2006/03/31 09:45:04 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,9 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.8.2.1 2006/03/28 09:47:16 tron Exp $");
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
-
-/* provided in machdep code */
-extern todr_chip_handle_t	todr_handle;
 
 #define	REGVAL(x) (*(volatile uint32_t *)(MIPS_PHYS_TO_KSEG1(PC_BASE + (x))))
 #define	GETREG(x)	(REGVAL(x))
@@ -124,15 +121,8 @@ aurtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aurtc_softc *sc = (struct aurtc_softc *)self;
 
-	if (todr_handle != NULL) {
-		printf(": another TOD clock is already registered\n");
-		return;
-	}
-
 	printf(": Au1X00 programmable clock\n");
 	
-	todr_handle = &sc->sc_tch;
-
 	sc->sc_tch.cookie = sc;
 	sc->sc_tch.bus_cookie = NULL;
 	sc->sc_tch.todr_gettime = aurtc_gettime;
@@ -142,6 +132,8 @@ aurtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tch.todr_setwen = NULL;
 
 	sc->sc_shutdownhook = shutdownhook_establish(aurtc_shutdown, NULL);
+
+	todr_attach(&sc->sc_tch);
 }
 
 /*

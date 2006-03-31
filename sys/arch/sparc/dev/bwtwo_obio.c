@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.14 2005/11/16 00:49:02 uwe Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.14.12.1 2006/03/31 09:45:09 tron Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.14 2005/11/16 00:49:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_obio.c,v 1.14.12.1 2006/03/31 09:45:09 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ bwtwoattach_obio(struct device *parent, struct device *self, void *aux)
 	sc->sc_bustag = oba->oba_bustag;
 	sc->sc_paddr = (bus_addr_t)oba->oba_paddr;
 
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
 	fb->fb_type.fb_depth = 1;
 	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.19.12.1 2006/03/28 09:42:10 tron Exp $	*/
+/*	$NetBSD: iopl.c,v 1.19.12.2 2006/03/31 09:45:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.19.12.1 2006/03/28 09:42:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.19.12.2 2006/03/31 09:45:19 tron Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -218,7 +218,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	u_int tmp;
 	u_int32_t tmp1, tmp2, tmp3;
 
-	sc = (struct iopl_softc *)self;
+	sc = device_private(self);
 	iop = (struct iop_softc *)parent;
 	ia = (struct iop_attach_args *)aux;
 	ifp = &sc->sc_if.sci_if;

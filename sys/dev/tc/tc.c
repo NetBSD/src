@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.43 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: tc.c,v 1.43.12.1 2006/03/31 09:45:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.43 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.43.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -73,7 +73,7 @@ tcattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct tc_softc *sc = (struct tc_softc *)self;
+	struct tc_softc *sc = device_private(self);
 	struct tcbus_attach_args *tba = aux;
 	struct tc_attach_args ta;
 	const struct tc_builtin *builtin;

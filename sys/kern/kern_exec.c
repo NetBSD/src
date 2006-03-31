@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.214.6.1 2006/03/28 09:42:26 tron Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.214.6.2 2006/03/31 09:45:27 tron Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.6.1 2006/03/28 09:42:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.6.2 2006/03/31 09:45:27 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -142,6 +142,17 @@ struct uvm_object *emul_netbsd_object;
 void	syscall(void);
 #endif
 
+static const struct sa_emul saemul_netbsd = {
+	sizeof(ucontext_t),
+	sizeof(struct sa_t),
+	sizeof(struct sa_t *),
+	NULL,
+	NULL,
+	cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext,
+	sa_ucsp
+};
+
 /* NetBSD emul struct */
 const struct emul emul_netbsd = {
 	"netbsd",
@@ -185,6 +196,8 @@ const struct emul emul_netbsd = {
 	NULL,
 
 	uvm_default_mapaddr,
+	NULL,
+	&saemul_netbsd,
 };
 
 #ifdef LKM

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.39 2005/12/11 12:19:35 christos Exp $ */
+/*	$NetBSD: hp.c,v 1.39.12.1 2006/03/31 09:45:11 tron Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.39 2005/12/11 12:19:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.39.12.1 2006/03/31 09:45:11 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ hpattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Read in label.
 	 */
-	if ((msg = readdisklabel(makedev(0, self->dv_unit * 8), hpstrategy,
+	if ((msg = readdisklabel(makedev(0, device_unit(self) * 8), hpstrategy,
 	    dl, NULL)) != NULL)
 		printf(": %s", msg);
 	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);

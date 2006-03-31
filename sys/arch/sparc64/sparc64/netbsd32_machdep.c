@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.58 2006/03/14 22:05:05 cube Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.58.2.1 2006/03/31 09:45:10 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.58 2006/03/14 22:05:05 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.58.2.1 2006/03/31 09:45:10 tron Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -91,8 +91,6 @@ const char	machine_arch32[] = "sparc";
 #if NFIRM_EVENTS > 0
 static int ev_out32(struct firm_event *, int, struct uio *);
 #endif
-
-void netbsd32_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 
 /*
  * Set up registers on exec.
@@ -414,33 +412,34 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * trampolines.
  */
 void 
-netbsd32_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+netbsd32_cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
        	struct trapframe *tf;
 	vaddr_t addr;
 
 	tf = l->l_md.md_tf;
+	addr = (vaddr_t) upcall;
 
-	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
-
-	/* Jump to the upcall handler */
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
-
-#if 0
-/* XXX */
-	/* The upcall itself is in %g1 */
-	tf->tf_global[1] = upcall;
-
+	/* Arguments to the upcall... */
 	tf->tf_out[0] = type;
-	tf->tf_out[1] = sas;
+	tf->tf_out[1] = (vaddr_t) sas;
 	tf->tf_out[2] = nevents;
 	tf->tf_out[3] = ninterrupted;
-	tf->tf_out[4] = ap;
-	tf->tf_out[6] = (vaddr_t)sp;
-#endif
+	tf->tf_out[4] = (vaddr_t) ap;
+
+	/*
+	 * Ensure the stack is double-word aligned, and provide a
+	 * C call frame.
+	 */
+	sp = (void *)(((vaddr_t)sp & ~0x7) - CCFSZ);
+
+	/* Arrange to begin execution at the upcall handler. */
+
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+	tf->tf_out[6] = (vaddr_t) sp;
+	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
 #undef DEBUG

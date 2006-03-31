@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.2 2006/03/16 17:43:34 garbled Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.2.2.1 2006/03/31 09:45:08 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.2 2006/03/16 17:43:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.2.2.1 2006/03/31 09:45:08 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,7 +122,8 @@ wdc_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_PREATA;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags & WDC_OPTIONS_32)
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
+	    WDC_OPTIONS_32)
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
 
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;

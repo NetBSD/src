@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.5 2006/02/26 05:24:52 thorpej Exp $	*/
+/*	$NetBSD: obsled.c,v 1.5.6.1 2006/03/31 09:44:59 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.5 2006/02/26 05:24:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.5.6.1 2006/03/31 09:44:59 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,10 +83,10 @@ obsled_attach(struct device *parent, struct device *self, void *aux)
 	struct sysctlnode *node;
 	int err, node_mib;
 	char led_name[5];
-	/* int led = (1 << sc->sc_dev.dv_unit); */
+	/* int led = (1 << device_unit(&sc->sc_dev)); */
 
 	snprintf(led_name, sizeof(led_name),
-		"led%d", (1 << sc->sc_dev.dv_unit) & 0x7);
+		"led%d", (1 << device_unit(&sc->sc_dev)) & 0x7);
         aprint_naive(": OpenBlockS %s\n", led_name);
         aprint_normal(": OpenBlockS %s\n", led_name);
 
@@ -189,7 +189,7 @@ obs266_led_set(int led)
 		if (device_is_a(dp, "obsles")) {
 			struct obsled_softc *sc = (struct obsled_softc *)dp;
 			sc->sc_led_state =
-				(led & (1 << dp->dv_unit)) >> dp->dv_unit;
+			    (led & (1 << device_unit(dp))) >> device_unit(dp);
 			obsled_set_state(sc);
 		}
 	}

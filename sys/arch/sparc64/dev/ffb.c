@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.22 2006/02/13 21:47:11 cdi Exp $	*/
+/*	$NetBSD: ffb.c,v 1.22.6.1 2006/03/31 09:45:10 tron Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.22 2006/02/13 21:47:11 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.22.6.1 2006/03/31 09:45:10 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -196,8 +196,8 @@ ffb_attach(struct ffb_softc *sc)
 
 	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &blank);
 
-	sc->sc_accel = ((sc->sc_dv.dv_cfdata->cf_flags & FFB_CFFLAG_NOACCEL) == 
-	    0);
+	sc->sc_accel = ((device_cfdata(&sc->sc_dv)->cf_flags &
+	    FFB_CFFLAG_NOACCEL) == 0);
 		
 	wsfont_init();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.6 2006/03/14 23:03:45 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.6.2.1 2006/03/31 09:45:19 tron Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.6 2006/03/14 23:03:45 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.6.2.1 2006/03/31 09:45:19 tron Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -257,7 +257,7 @@ hpf1275a_match(struct device *self, struct cfdata *cfdata, void *arg)
 static void
 hpf1275a_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = device_private(self);
 	struct wskbddev_attach_args wska;
 
 	wska.console = 0;
@@ -279,7 +279,7 @@ hpf1275a_attach(struct device *parent, struct device *self, void *aux)
 static int
 hpf1275a_detach(struct device *self, int flags)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = device_private(self);
 	int error;
 
 	if (sc->sc_wskbd == NULL)
@@ -399,7 +399,7 @@ hpf1275a_input(int c, struct tty *tp)
 static int
 hpf1275a_wskbd_enable(void *self, int on)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = self;
 
 	sc->sc_enabled = on;
 	return (0);
@@ -421,7 +421,7 @@ hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
 		     struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = self;
 #endif
 
 	switch (cmd) {

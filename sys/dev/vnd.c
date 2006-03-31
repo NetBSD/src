@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.141.6.1 2006/03/28 09:42:03 tron Exp $	*/
+/*	$NetBSD: vnd.c,v 1.141.6.2 2006/03/31 09:45:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.6.1 2006/03/28 09:42:03 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.6.2 2006/03/31 09:45:17 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -272,8 +272,6 @@ vnd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
 	pseudo_disk_init(&sc->sc_dkdev);
-
-	aprint_normal("%s: vnode disk driver\n", self->dv_xname);
 }
 
 static int
@@ -308,8 +306,8 @@ vnd_destroy(struct device *dev)
 	int error;
 	struct cfdata *cf;
 
-	cf = dev->dv_cfdata;
-	error = config_detach(dev, 0);
+	cf = device_cfdata(dev);
+	error = config_detach(dev, DETACH_QUIET);
 	if (error)
 		return error;
 	free(cf, M_DEVBUF);
@@ -1382,7 +1380,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(vnd->sc_dev.dv_unit, i);
+		mn = DISKMINOR(device_unit(&vnd->sc_dev), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		if (mn != myminor) /* XXX avoid to kill own vnode */
 			vdevgone(cmaj, mn, mn, VCHR);

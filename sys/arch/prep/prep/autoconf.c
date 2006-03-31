@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2006/03/16 17:43:34 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.2.1 2006/03/31 09:45:08 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2006/03/16 17:43:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.1 2006/03/31 09:45:08 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,8 +215,8 @@ device_register(struct device *dev, void *aux)
 
 		sprintf(devpath, "%s%d", devpath, adev->adev_drv_data->drive);
 	} else if (device_is_a(dev, "fd")) {
-		/* XXX dv_unit abuse */
-		sprintf(devpath, "%s%d", devpath, dev->dv_unit);
+		/* XXX device_unit() abuse */
+		sprintf(devpath, "%s%d", devpath, device_unit(dev));
 	}
 
 	len = strlen(devpath) + 1;

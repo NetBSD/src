@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.27.12.1 2006/03/28 09:46:22 tron Exp $ */
+/* $NetBSD: xbd.c,v 1.27.12.2 2006/03/31 09:45:12 tron Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.27.12.1 2006/03/28 09:46:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.27.12.2 2006/03/31 09:45:12 tron Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -613,8 +613,7 @@ find_device(vdisk_t *xd)
 	struct xbd_softc *xs = NULL;
 
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_cfattach == NULL ||
-		    dv->dv_cfattach->ca_attach != xbd_attach)
+		if (!device_is_a(dv, "xbd"))
 			continue;
 		xs = (struct xbd_softc *)dv;
 		if (xd == NULL || xs->sc_xd_device == xd->device)
@@ -1054,7 +1053,7 @@ xbd_detach(struct device *dv, int flags)
 	cmaj = cdevsw_lookup_major(&xbd_cdevsw);
 
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(dv->dv_unit, i);
+		mn = DISKMINOR(device_unit(dv), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}

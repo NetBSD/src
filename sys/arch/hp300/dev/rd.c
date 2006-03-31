@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.71 2006/02/25 02:28:56 wiz Exp $	*/
+/*	$NetBSD: rd.c,v 1.71.6.1 2006/03/31 09:45:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.71 2006/02/25 02:28:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.71.6.1 2006/03/31 09:45:00 tron Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -358,7 +358,7 @@ rdmatch(struct device *parent, struct cfdata *match, void *aux)
 		 * XXX up and probe them again.
 		 */
 		delay(10000);
-		ha->ha_id = hpibid(parent->dv_unit, ha->ha_slave);
+		ha->ha_id = hpibid(device_unit(parent), ha->ha_slave);
 		return (rdident(parent, NULL, ha));
 	}
 	return (1);
@@ -421,7 +421,7 @@ rdident(struct device *parent, struct rd_softc *sc,
 	char name[7];
 	int i, id, n, ctlr, slave;
 
-	ctlr = parent->dv_unit;
+	ctlr = device_unit(parent);
 	slave = ha->ha_slave;
 
 	/* Verify that we have a CS80 device. */
@@ -528,7 +528,7 @@ rdident(struct device *parent, struct rd_softc *sc,
 static void
 rdreset(struct rd_softc *rs)
 {
-	int ctlr = device_parent(&rs->sc_dev)->dv_unit;
+	int ctlr = device_unit(device_parent(&rs->sc_dev));
 	int slave = rs->sc_slave;
 	u_char stat;
 
@@ -805,7 +805,7 @@ rdstart(void *arg)
 	struct buf *bp = BUFQ_PEEK(rs->sc_tab);
 	int part, ctlr, slave;
 
-	ctlr = device_parent(&rs->sc_dev)->dv_unit;
+	ctlr = device_unit(device_parent(&rs->sc_dev));
 	slave = rs->sc_slave;
 
 again:
@@ -883,7 +883,7 @@ rdgo(void *arg)
 	struct buf *bp = BUFQ_PEEK(rs->sc_tab);
 	int rw, ctlr, slave;
 
-	ctlr = device_parent(&rs->sc_dev)->dv_unit;
+	ctlr = device_unit(device_parent(&rs->sc_dev));
 	slave = rs->sc_slave;
 
 	rw = bp->b_flags & B_READ;
@@ -902,12 +902,12 @@ static void
 rdintr(void *arg)
 {
 	struct rd_softc *rs = arg;
-	int unit = rs->sc_dev.dv_unit;
+	int unit = device_unit(&rs->sc_dev);
 	struct buf *bp = BUFQ_PEEK(rs->sc_tab);
 	u_char stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
-	ctlr = device_parent(&rs->sc_dev)->dv_unit;
+	ctlr = device_unit(device_parent(&rs->sc_dev));
 	slave = rs->sc_slave;
 
 #ifdef DEBUG
@@ -977,7 +977,7 @@ rdstatus(struct rd_softc *rs)
 	u_char stat;
 	int rv;
 
-	c = device_parent(&rs->sc_dev)->dv_unit;
+	c = device_unit(device_parent(&rs->sc_dev));
 	s = rs->sc_slave;
 	rs->sc_rsc.c_unit = C_SUNIT(rs->sc_punit);
 	rs->sc_rsc.c_sram = C_SRAM;
@@ -1318,7 +1318,7 @@ rddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	    (rs->sc_flags & RDF_ALIVE) == 0)
 		return (ENXIO);
 
-	ctlr = device_parent(&rs->sc_dev)->dv_unit;
+	ctlr = device_unit(device_parent(&rs->sc_dev));
 	slave = rs->sc_slave;
 
 	/*

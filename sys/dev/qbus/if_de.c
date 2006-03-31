@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.18.12.1 2006/03/28 09:42:14 tron Exp $	*/
+/*	$NetBSD: if_de.c,v 1.18.12.2 2006/03/31 09:45:24 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.18.12.1 2006/03/28 09:42:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.18.12.2 2006/03/31 09:45:24 tron Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -209,7 +209,7 @@ void
 deattach(struct device *parent, struct device *self, void *aux)
 {
 	struct uba_attach_args *ua = aux;
-	struct de_softc *sc = (struct de_softc *)self;
+	struct de_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	int csr1, error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.12 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: zsms.c,v 1.12.12.1 2006/03/31 09:45:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.12 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.12.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,8 @@ zsms_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct zsc_softc *zsc = (void *)parent;
-	struct zsms_softc *zsms = (void *)self;
+	struct zsc_softc *zsc = device_private(parent);
+	struct zsms_softc *zsms = device_private(self);
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	struct wsmousedev_attach_args a;

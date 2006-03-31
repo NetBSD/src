@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.32.6.1 2006/03/28 09:47:15 tron Exp $	*/
+/*	$NetBSD: mt.c,v 1.32.6.2 2006/03/31 09:45:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.32.6.1 2006/03/28 09:47:15 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.32.6.2 2006/03/31 09:45:00 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,8 +189,8 @@ mtattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	unit = self->dv_unit;
-	hpibno = parent->dv_unit;
+	unit = device_unit(self);
+	hpibno = device_unit(parent);
 	slave = ha->ha_slave;
 
 	bufq_alloc(&sc->sc_tab, "fcfs", 0);

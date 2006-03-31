@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.25 2006/02/13 21:47:12 cdi Exp $	*/
+/*	$NetBSD: sab.c,v 1.25.6.1 2006/03/31 09:45:10 tron Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25 2006/02/13 21:47:12 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.6.1 2006/03/31 09:45:10 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -435,7 +435,7 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 			cn_tab->cn_pollc = sab_cnpollc;
 			cn_tab->cn_getc = sab_cngetc;
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
-			cn_tab->cn_dev = makedev(maj, self->dv_unit);
+			cn_tab->cn_dev = makedev(maj, device_unit(self));
 			shutdownhook_establish(sabtty_shutdown, sc);
 			cn_init_magic(&sabtty_cnm_state);
 			cn_set_magic("\047\001"); /* default magic is BREAK */
@@ -446,7 +446,7 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 			sabtty_cons_output = sc;
 			cn_tab->cn_putc = sab_cnputc;
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
-			cn_tab->cn_dev = makedev(maj, self->dv_unit);
+			cn_tab->cn_dev = makedev(maj, device_unit(self));
 		}
 		aprint_normal(": console %s", acc);
 	} else {

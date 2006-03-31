@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.27.4.1 2006/03/28 09:42:13 tron Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.27.4.2 2006/03/31 09:45:22 tron Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.27.4.1 2006/03/28 09:42:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.27.4.2 2006/03/31 09:45:22 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -161,7 +161,7 @@ mtattach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	struct	mt_softc *mt = (void *)self;
+	struct	mt_softc *mt = device_private(self);
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
 	struct	mscp_softc *mi = (void *)parent;

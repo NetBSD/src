@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.79 2006/03/01 12:38:13 yamt Exp $	*/
+/*	$NetBSD: ugen.c,v 1.79.6.1 2006/03/31 09:45:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.79 2006/03/01 12:38:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.79.6.1 2006/03/31 09:45:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -834,7 +834,7 @@ USB_DETACH(ugen)
 #endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit * USB_MAX_ENDPOINTS;
+	mn = device_unit(self) * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
 #elif defined(__FreeBSD__)
 	/* XXX not implemented yet */

@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.28 2006/03/08 20:09:01 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.28.2.1 2006/03/31 09:45:25 tron Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.28 2006/03/08 20:09:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.28.2.1 2006/03/31 09:45:25 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +313,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 
 	fb->fb_driver = &p9100fbdriver;
 	fb->fb_device = &sc->sc_dev;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 #ifdef PNOZZ_EMUL_CG3
 	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
 #else

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.12 2006/03/14 21:59:12 shige Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.12.2.1 2006/03/31 09:44:59 tron Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -174,9 +174,10 @@ slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 atabus* at ata?
 
-tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+rlphy*  at mii? phy ?			# Realtek 8139/8201L PHYs
+tqphy*  at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 #cardslot* at cbb?
@@ -225,7 +226,7 @@ pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator

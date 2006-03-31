@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.10.12.1 2006/03/28 09:42:14 tron Exp $ */
+/* $NetBSD: if_ei.c,v 1.10.12.2 2006/03/31 09:45:24 tron Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.10.12.1 2006/03/28 09:42:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.10.12.2 2006/03/31 09:45:24 tron Exp $");
 
 #include <sys/param.h>
 
@@ -114,7 +114,7 @@ static void
 ei_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
-	struct ei_softc *sc = (struct ei_softc *)self;
+	struct ei_softc *sc = device_private(self);
 	int i;
 	char descr[16];
 

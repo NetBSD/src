@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.157.12.1 2006/03/28 09:42:30 tron Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.157.12.2 2006/03/31 09:45:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.12.1 2006/03/28 09:42:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.12.2 2006/03/31 09:45:29 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,6 +273,10 @@ lfs_fsync(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error, wait;
+
+	/* If we're mounted read-only, don't try to sync. */
+	if (VTOI(vp)->i_lfs->lfs_ronly)
+		return 0;
 
 	/*
 	 * Trickle sync checks for need to do a checkpoint after possible
@@ -2006,10 +2010,6 @@ lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 	daddr_t olbn, nlbn;
-
-	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
-	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
-		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
 
 	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);

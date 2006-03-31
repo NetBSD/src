@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.5.2.2 2006/03/28 09:46:22 tron Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.5.2.3 2006/03/31 09:45:13 tron Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.5.2.2 2006/03/28 09:46:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.5.2.3 2006/03/31 09:45:13 tron Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -263,7 +263,7 @@ xbd_xenbus_detach(struct device *dev, int flags)
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(dev->dv_unit, i);
+		mn = DISKMINOR(device_unit(dev), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}

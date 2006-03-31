@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.12.12.1 2006/03/28 09:42:14 tron Exp $	*/
+/*	$NetBSD: if_il.c,v 1.12.12.2 2006/03/31 09:45:24 tron Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.12.12.1 2006/03/28 09:42:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.12.12.2 2006/03/31 09:45:24 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -161,7 +161,7 @@ void
 ilattach(struct device *parent, struct device *self, void *aux)
 {
 	struct uba_attach_args *ua = aux;
-	struct il_softc *sc = (struct il_softc *)self;
+	struct il_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 	int error;
 

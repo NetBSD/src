@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.52.12.1 2006/03/28 09:42:29 tron Exp $	*/
+/*	$NetBSD: time.h,v 1.52.12.2 2006/03/31 09:45:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -59,6 +59,7 @@ struct timespec {
 	long	tv_nsec;	/* and nanoseconds */
 };
 
+#if defined(_NETBSD_SOURCE)
 #define	TIMEVAL_TO_TIMESPEC(tv, ts) do {				\
 	(ts)->tv_sec = (tv)->tv_sec;					\
 	(ts)->tv_nsec = (tv)->tv_usec * 1000;				\
@@ -128,6 +129,7 @@ struct timezone {
 			(vsp)->tv_nsec += 1000000000L;			\
 		}							\
 	} while (/* CONSTCOND */ 0)
+#endif /* _NETBSD_SOURCE */
 
 /*
  * Names of the interval timers, and structure
@@ -225,24 +227,27 @@ void	realtimerexpire(void *);
 #include <sys/select.h>
 #endif
 
+#include <sys/cdefs.h>
 #include <time.h>
 
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-#include <sys/cdefs.h>
-
 __BEGIN_DECLS
-int	adjtime(const struct timeval *, struct timeval *);
-int	futimes(int, const struct timeval [2]);
+#if (_POSIX_C_SOURCE - 0) >= 200112L || \
+    defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	getitimer(int, struct itimerval *);
 int	gettimeofday(struct timeval * __restrict, void * __restrict);
-int	lutimes(const char *, const struct timeval [2]);
 int	setitimer(int, const struct itimerval * __restrict,
 	    struct itimerval * __restrict);
+int	utimes(const char *, const struct timeval [2]);
+#endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
+
+#if defined(_NETBSD_SOURCE)
+int	adjtime(const struct timeval *, struct timeval *);
+int	futimes(int, const struct timeval [2]);
+int	lutimes(const char *, const struct timeval [2]);
 int	settimeofday(const struct timeval * __restrict,
 	    const void * __restrict);
-int	utimes(const char *, const struct timeval [2]);
+#endif /* _NETBSD_SOURCE */
 __END_DECLS
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #endif	/* !_STANDALONE */
 

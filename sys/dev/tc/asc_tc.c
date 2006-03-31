@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.26 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: asc_tc.c,v 1.26.12.1 2006/03/31 09:45:26 tron Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.26 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.26.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ asc_tc_attach(parent, self, aux)
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;
-	struct asc_softc *asc = (struct asc_softc *)self;
+	struct asc_softc *asc = device_private(self);
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
 
 	/*
