@@ -1,4 +1,4 @@
-.\"	$NetBSD: trunc.3,v 1.3 2006/03/25 22:18:40 kleink Exp $
+.\"	$NetBSD: trunc.3,v 1.4 2006/03/31 12:17:41 drochner Exp $
 .\"
 .\" Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.org>
 .\" All rights reserved.
@@ -59,11 +59,11 @@ and
 .Fn rintf
 .\" .Fn rintl
 respectively, in the
-.Dv FE_TOWARDZERO
+.Dv FP_RZ
 rounding mode.
 .Sh SEE ALSO
 .Xr ceil 3 ,
-.\" .Xr fesetround 3
+.Xr fpsetround 3 ,
 .Xr floor 3 ,
 .Xr math 3 ,
 .Xr nextafter 3 ,
