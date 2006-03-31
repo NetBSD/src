@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcp.c,v 1.9 2005/08/11 17:13:30 drochner Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: dhcp.c,v 1.10 2006/03/31 17:28:50 christos Exp $ Copyright (c) 2004-2005 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2555,7 +2555,7 @@ void ack_lease (packet, lease, offer, when, msg, ms_nulltp, hp)
 	/* If we don't have a hostname yet, and we've been asked to do
 	   a reverse lookup to find the hostname, do it. */
 	j = SV_GET_LEASE_HOSTNAMES;
-	if (!lookup_option (&server_universe, state -> options, i) &&
+	if (!lookup_option (&dhcp_universe, state -> options, i) &&
 	    (evaluate_boolean_option_cache
 	     (&ignorep, packet, lease, (struct client_state *)0,
 	      packet -> options, state -> options, &lease -> scope,
