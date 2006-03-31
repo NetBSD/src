@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.24 2006/02/11 17:57:31 cdi Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.24.6.1 2006/03/31 09:45:10 tron Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.24 2006/02/11 17:57:31 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.24.6.1 2006/03/31 09:45:10 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,7 +179,7 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
 
-	kma.kmta_dev = makedev(maj, sc->sc_dev.dv_unit);
+	kma.kmta_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 /* Attach 'em if we got 'em. */
 #if (NKBD > 0)

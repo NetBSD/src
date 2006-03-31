@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.25 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: osiop.c,v 1.25.12.1 2006/03/31 09:45:20 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.25 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.25.12.1 2006/03/31 09:45:20 tron Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -263,7 +263,7 @@ osiop_attach(struct osiop_softc *sc)
 		return;
 	}
 	sc->sc_acb = acb;
-	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
+	sc->sc_cfflags = device_cfdata(&sc->sc_dev)->cf_flags;
 	sc->sc_nexus = NULL;
 	sc->sc_active = 0;
 	memset(sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));

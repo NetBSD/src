@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.14 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.14.12.1 2006/03/31 09:45:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.14 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.14.12.1 2006/03/31 09:45:19 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
 	int irq, i, icfg;
 
 	ea = aux;
-	mlx = (struct mlx_softc *)self;
+	mlx = device_private(self);
 	iot = ea->ea_iot;
 	ec = ea->ea_ec;
 

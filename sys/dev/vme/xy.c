@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.61 2005/12/11 12:24:07 christos Exp $	*/
+/*	$NetBSD: xy.c,v 1.61.12.1 2006/03/31 09:45:26 tron Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61 2005/12/11 12:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.12.1 2006/03/31 09:45:26 tron Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -265,7 +265,7 @@ xygetdisklabel(xy, b)
 	/* Required parameter for readdisklabel() */
 	xy->sc_dk.dk_label->d_secsize = XYFM_BPS;
 
-	err = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
+	err = readdisklabel(MAKEDISKDEV(0, device_unit(&xy->sc_dev), RAW_PART),
 					xydummystrat,
 				xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel);
 	if (err) {

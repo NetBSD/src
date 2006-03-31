@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.4.12.1 2006/03/28 09:42:10 tron Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.4.12.2 2006/03/31 09:45:19 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.4.12.1 2006/03/28 09:42:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.4.12.2 2006/03/31 09:45:19 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ cs80busattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cs80bus_softc *sc = (struct cs80bus_softc *)self;
+	struct cs80bus_softc *sc = device_private(self);
 	struct gpib_attach_args *ga = aux;
 	struct cs80bus_attach_args ca;
 	int slave;

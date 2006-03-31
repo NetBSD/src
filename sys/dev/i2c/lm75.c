@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.4 2006/02/18 05:04:12 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.4.6.1 2006/03/31 09:45:19 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -91,13 +91,13 @@ lmtemp_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 lmtemp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct lmtemp_softc *sc = (struct lmtemp_softc *)self;
+	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	int ptype;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
-	sc->sc_is_ds75 = sc->sc_dev.dv_cfdata->cf_flags & 1;
+	sc->sc_is_ds75 = device_cfdata(&sc->sc_dev)->cf_flags & 1;
 
 	aprint_naive(": Temperature Sensor\n");
 	aprint_normal(": %s Temperature Sensor\n",

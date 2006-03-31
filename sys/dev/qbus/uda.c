@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.54.6.1 2006/03/28 09:42:14 tron Exp $	*/
+/*	$NetBSD: uda.c,v 1.54.6.2 2006/03/31 09:45:24 tron Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.54.6.1 2006/03/28 09:42:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.54.6.2 2006/03/31 09:45:24 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -201,7 +201,7 @@ bad:
 void
 udaattach(struct device *parent, struct device *self, void *aux)
 {
-	struct	uda_softc *sc = (void *)self;
+	struct	uda_softc *sc = device_private(self);
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *uh = (void *)parent;
 	struct	mscp_attach_args ma;

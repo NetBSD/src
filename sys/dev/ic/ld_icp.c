@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.12.12.1 2006/03/28 09:42:11 tron Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.12.12.2 2006/03/31 09:45:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.12.12.1 2006/03/28 09:42:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.12.12.2 2006/03/31 09:45:20 tron Exp $");
 
 #include "rnd.h"
 
@@ -320,7 +320,7 @@ ld_icp_intr(struct icp_ccb *ic)
 		bp->b_resid = bp->b_bcount;
 
 		icp->icp_evt.size = sizeof(icp->icp_evt.eu.sync);
-		icp->icp_evt.eu.sync.ionode = icp->icp_dv.dv_unit;
+		icp->icp_evt.eu.sync.ionode = device_unit(&icp->icp_dv);
 		icp->icp_evt.eu.sync.service = icp->icp_service;
 		icp->icp_evt.eu.sync.status = icp->icp_status;
 		icp->icp_evt.eu.sync.info = icp->icp_info;

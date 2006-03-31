@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2006/03/06 22:04:18 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14.4.1 2006/03/31 09:45:12 tron Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2006/03/06 22:04:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.4.1 2006/03/31 09:45:12 tron Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -252,7 +252,7 @@ matchbiosdisks(void)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_name);
+		    dv->dv_xname, device_cfdata(dv)->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
@@ -263,8 +263,8 @@ matchbiosdisks(void)
 			if (bmajor == -1)
 				return;
 
-			if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART),
-			    &tv))
+			if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv),
+				   RAW_PART), &tv))
 				panic("matchbiosdisks: can't alloc vnode");
 
 			error = VOP_OPEN(tv, FREAD, NOCRED, 0);
@@ -348,7 +348,8 @@ match_harddisk(struct device *dv, struct btinfo_bootdisk *bid)
 	 * Fake a temporary vnode for the disk, open
 	 * it, and read the disklabel for comparison.
 	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, bid->partition), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), bid->partition),
+			       &tmpvn))
 		panic("findroot can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
@@ -438,8 +439,9 @@ findroot(void)
 				 * behaviour.)  Needs some ideas how to handle
 				 * BIOS's "swap floppy drive" options.
 				 */
+				/* XXX device_unit() abuse */
 				if ((bid->biosdev & 0x80) ||
-				    dv->dv_unit != bid->biosdev)
+				    device_unit(dv) != bid->biosdev)
 					continue;
 
 				goto found;

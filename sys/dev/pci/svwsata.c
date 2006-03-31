@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.2 2006/03/07 22:11:25 bouyer Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.2.4.1 2006/03/31 09:45:23 tron Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.2 2006/03/07 22:11:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.2.4.1 2006/03/31 09:45:23 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ svwsata_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.dma_start = pciide_dma_start;
 	sc->sc_wdcdev.dma_finish = pciide_dma_finish;
 
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags &
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
 		aprint_normal(
 		    ", but unused (forced off by config file)");

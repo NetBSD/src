@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.36 2006/03/08 23:46:22 lukem Exp $ */
+/*	$NetBSD: flsc.c,v 1.36.2.1 2006/03/31 09:44:57 tron Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.36 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.36.2.1 2006/03/31 09:44:57 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -197,7 +197,7 @@ flscattach(struct device *parent, struct device *self, void *aux)
 
 	fsc->sc_alignbuf = (char *)((u_long)fsc->sc_unalignbuf & -4);
 
-	sc->sc_dev.dv_cfdata->cf_flags |= (scsi_nosync >> shift_nosync) & 0xffff;
+	device_cfdata(&sc->sc_dev)->cf_flags |= (scsi_nosync >> shift_nosync) & 0xffff;
 	shift_nosync += 16;
 	ncr53c9x_debug |= (scsi_nosync >> shift_nosync) & 0xffff;
 	shift_nosync += 16;

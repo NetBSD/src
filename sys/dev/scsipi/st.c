@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.186 2005/12/11 12:23:51 christos Exp $ */
+/*	$NetBSD: st.c,v 1.186.12.1 2006/03/31 09:45:25 tron Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.186 2005/12/11 12:23:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.186.12.1 2006/03/31 09:45:25 tron Exp $");
 
 #include "opt_scsi.h"
 
@@ -453,7 +453,7 @@ stactivate(struct device *self, enum devact act)
 int
 stdetach(struct device *self, int flags)
 {
-	struct st_softc *st = (struct st_softc *)self;
+	struct st_softc *st = device_private(self);
 	int s, bmaj, cmaj, mn;
 
 	/* locate the major number */
@@ -476,7 +476,7 @@ stdetach(struct device *self, int flags)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances */
-	mn = STUNIT(self->dv_unit);
+	mn = STUNIT(device_unit(self));
 	vdevgone(bmaj, mn, mn+STNMINOR-1, VBLK);
 	vdevgone(cmaj, mn, mn+STNMINOR-1, VCHR);
 

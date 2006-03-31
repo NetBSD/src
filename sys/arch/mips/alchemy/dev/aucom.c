@@ -1,4 +1,4 @@
-/*	$NetBSD: aucom.c,v 1.18.6.1 2006/03/28 09:47:16 tron Exp $	*/
+/*	$NetBSD: aucom.c,v 1.18.6.2 2006/03/31 09:45:04 tron Exp $	*/
 /*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.18.6.1 2006/03/28 09:47:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.18.6.2 2006/03/31 09:45:04 tron Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -723,7 +723,7 @@ com_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&com_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	mn |= COMDIALOUT_MASK;

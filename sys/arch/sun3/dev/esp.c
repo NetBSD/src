@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.22 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: esp.c,v 1.22.2.1 2006/03/31 09:45:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.22 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.22.2.1 2006/03/31 09:45:10 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Hook up the DMA driver.
 	 */
-	esc->sc_dma = espdmafind(sc->sc_dev.dv_unit);
+	esc->sc_dma = espdmafind(device_unit(&sc->sc_dev));
 	esc->sc_dma->sc_esp = sc; /* Point back to us */
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.49.12.1 2006/03/28 09:42:13 tron Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.49.12.2 2006/03/31 09:45:22 tron Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.49.12.1 2006/03/28 09:42:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.49.12.2 2006/03/31 09:45:22 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -208,7 +208,7 @@ ra_putonline(ra)
 	ra->ra_state = DK_RDLABEL;
 	printf("%s", ra->ra_dev.dv_xname);
 	maj = cdevsw_lookup_major(&ra_cdevsw);
-	if ((msg = readdisklabel(MAKEDISKDEV(maj, ra->ra_dev.dv_unit,
+	if ((msg = readdisklabel(MAKEDISKDEV(maj, device_unit(&ra->ra_dev),
 	    RAW_PART), rastrategy, dl, NULL)) != NULL)
 		printf(": %s", msg);
 	else {
@@ -684,7 +684,7 @@ rxattach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	struct	rx_softc *rx = (void *)self;
+	struct	rx_softc *rx = device_private(self);
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
 	struct	mscp_softc *mi = (void *)parent;
@@ -751,7 +751,7 @@ rx_putonline(rx)
 
 	/* Poll away */
 	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
-	if (tsleep(&rx->ra_dev.dv_unit, PRIBIO, "rxonline", 100*100))
+	if (tsleep(&rx->ra_state, PRIBIO, "rxonline", 100*100))
 		rx->ra_state = DK_CLOSED;
 
 	if (rx->ra_state == DK_CLOSED)
@@ -1019,7 +1019,7 @@ rronline(usc, mp)
 	struct rx_softc *rx = (struct rx_softc *)usc;
 	struct disklabel *dl;
 
-	wakeup((caddr_t)&usc->dv_unit);
+	wakeup((caddr_t)&rx->ra_state);
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		printf("%s: attempt to bring on line failed: ", usc->dv_xname);
 		mscp_printevent(mp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.64.10.1 2006/03/28 09:42:12 tron Exp $	*/
+/*	$NetBSD: fd.c,v 1.64.10.2 2006/03/31 09:45:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64.10.1 2006/03/28 09:42:12 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64.10.2 2006/03/31 09:45:20 tron Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -347,7 +347,8 @@ fdcfinishattach(self)
 	 * The NVRAM info only tells us about the first two disks on the
 	 * `primary' floppy controller.
 	 */
-	if (fdc->sc_dev.dv_unit == 0)
+	/* XXX device_unit() abuse */
+	if (device_unit(&fdc->sc_dev) == 0)
 		type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
 	else
 		type = -1;

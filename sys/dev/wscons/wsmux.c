@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.42 2006/02/07 09:13:02 jmmv Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.42.6.1 2006/03/31 09:45:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.42 2006/02/07 09:13:02 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.42.6.1 2006/03/31 09:45:27 tron Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -457,7 +457,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		/* Locate the device */
 		CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
 			if (me->me_ops->type == d->type &&
-			    me->me_dv.dv_unit == d->idx) {
+			    device_unit(&me->me_dv) == d->idx) {
 				DPRINTF(("wsmux_do_ioctl: detach\n"));
 				wsmux_detach_sc(me);
 				return (0);
@@ -474,7 +474,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 			if (n >= WSMUX_MAXDEV)
 				break;
 			l->devices[n].type = me->me_ops->type;
-			l->devices[n].idx = me->me_dv.dv_unit;
+			l->devices[n].idx = device_unit(&me->me_dv);
 			n++;
 		}
 		l->ndevices = n;
@@ -634,6 +634,8 @@ struct wsmux_softc *
 wsmux_create(const char *name, int unit)
 {
 	struct wsmux_softc *sc;
+
+	/* XXX This is wrong -- should use autoconfiguraiton framework */
 
 	DPRINTF(("wsmux_create: allocating\n"));
 	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT|M_ZERO);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.8 2006/02/16 20:17:19 perry Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.8.6.1 2006/03/31 09:45:20 tron Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1079,7 +1079,7 @@ typedef struct scsipi_inquiry_data sbp_scsi_inquiry_data;
 #define timevalsub(tv1, tv2)		timersub((tv1), (tv2), (tv1))
 
 #define device_get_nameunit(dev) (dev)->dv_xname
-#define device_get_unit(dev) (dev)->dv_unit
+#define device_get_unit(dev)		device_unit((dev))
 
 /*
  * queue macros for NetBSD

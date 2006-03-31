@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.15.12.1 2006/03/28 09:42:14 tron Exp $ */
+/*	$NetBSD: ts.c,v 1.15.12.2 2006/03/31 09:45:24 tron Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.15.12.1 2006/03/28 09:42:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.15.12.2 2006/03/31 09:45:24 tron Exp $");
 
 #undef	TSDEBUG
 
@@ -231,8 +231,8 @@ tsmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 tsattach(struct device *parent, struct device *self, void *aux)
 {
-	struct uba_softc *uh = (void *)parent;
-	struct ts_softc *sc = (void *)self;
+	struct uba_softc *uh = device_private(parent);
+	struct ts_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 	int error;
 	char *t;

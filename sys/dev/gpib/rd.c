@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.8.6.1 2006/03/28 09:42:10 tron Exp $ */
+/*	$NetBSD: rd.c,v 1.8.6.2 2006/03/31 09:45:19 tron Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.8.6.1 2006/03/28 09:42:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.8.6.2 2006/03/31 09:45:19 tron Exp $");
 
 #include "rnd.h"
 
@@ -352,7 +352,7 @@ rdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct rd_softc *sc = (struct rd_softc *)self;
+	struct rd_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;
 	struct cs80_description csd;
 	char name[7];
@@ -492,7 +492,7 @@ rdgetinfo(sc)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	msg = readdisklabel(RDMAKEDEV(0, sc->sc_dev.dv_unit, RAW_PART),
+	msg = readdisklabel(RDMAKEDEV(0, device_unit(&sc->sc_dev), RAW_PART),
 	    rdstrategy, lp, NULL);
 	if (msg == NULL)
 		return (0);
