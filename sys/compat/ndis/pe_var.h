@@ -408,9 +408,9 @@ typedef struct message_resource_entry message_resource_entry;
 #define MESSAGE_RESOURCE_UNICODE	0x0001
 
 struct image_patch_table {
-	char		*ipt_name;
-	void		(*ipt_func)(void);
-	void		(*ipt_wrap)(void);
+	const char		*ipt_name;
+	void			(*ipt_func)(void);
+	void			(*ipt_wrap)(void);
 };
 
 typedef struct image_patch_table image_patch_table;
@@ -568,8 +568,8 @@ extern vm_offset_t pe_directory_offset(vm_offset_t, uint32_t);
 extern vm_offset_t pe_translate_addr (vm_offset_t, vm_offset_t);
 extern int pe_get_section(vm_offset_t, image_section_header *, const char *);
 extern int pe_relocate(vm_offset_t);
-extern int pe_get_import_descriptor(vm_offset_t, image_import_descriptor *, char *);
-extern int pe_patch_imports(vm_offset_t, char *, image_patch_table *);
+extern int pe_get_import_descriptor(vm_offset_t, image_import_descriptor *, const char *);
+extern int pe_patch_imports(vm_offset_t, const char *, image_patch_table *);
 extern int pe_get_messagetable(vm_offset_t, message_resource_data **);
 extern int pe_get_message(vm_offset_t, uint32_t, char **, int *, uint16_t *);
 __END_DECLS

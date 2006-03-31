@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_hal.c,v 1.13.2.3 2005/03/31 04:24:35 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hal.c,v 1.3 2006/03/31 00:03:57 rittera Exp $");
 #endif
 
 #include <sys/param.h>
@@ -344,13 +344,17 @@ KeQueryPerformanceCounter(freq)
 	return((uint64_t)ticks);
 }
 
+
+static int old_ipl;
+static int ipl_raised = FALSE;
+
 __fastcall uint8_t
 KfRaiseIrql(REGARGS1(uint8_t irql))
 {
-	uint8_t			oldirql;
-#ifdef __NetBSD__
-	uint8_t			s;
-#endif
+	uint8_t			oldirql = 0;
+//#ifdef __NetBSD__
+//	uint8_t			s;
+//#endif
 
 	if (irql < KeGetCurrentIrql())
 		panic("IRQL_NOT_LESS_THAN");
@@ -358,10 +362,13 @@ KfRaiseIrql(REGARGS1(uint8_t irql))
 	if (KeGetCurrentIrql() == DISPATCH_LEVEL)
 		return(DISPATCH_LEVEL);
 #ifdef __NetBSD__
-	SCHED_LOCK(s);
-	oldirql = curlwp->l_priority;
-	SCHED_UNLOCK(s);
-#else
+	if(irql >= DISPATCH_LEVEL && !ipl_raised) {
+		old_ipl = splsoftclock();
+		ipl_raised = TRUE;
+		oldirql = win_irql;
+		win_irql = irql;
+	}
+#else /* __FreeBSD__ */
 	mtx_lock_spin(&sched_lock);
 	oldirql = curthread->td_base_pri;
 	sched_prio(curthread, PI_REALTIME);
@@ -369,7 +376,7 @@ KfRaiseIrql(REGARGS1(uint8_t irql))
 	curthread->td_base_pri = PI_REALTIME;
 #endif
 	mtx_unlock_spin(&sched_lock);
-#endif /* __NetBSD__ */
+#endif /* __FreeBSD__ */
 
 	return(oldirql);
 }
@@ -377,20 +384,27 @@ KfRaiseIrql(REGARGS1(uint8_t irql))
 __fastcall void 
 KfLowerIrql(REGARGS1(uint8_t oldirql))
 {
-#ifdef __NetBSD__
-	uint8_t		s;
-#endif
+//#ifdef __NetBSD__
+//	uint8_t		s;
+//#endif
 
 	if (oldirql == DISPATCH_LEVEL)
 		return;
 
+#ifdef __FreeBSD__
 	if (KeGetCurrentIrql() != DISPATCH_LEVEL)
 		panic("IRQL_NOT_GREATER_THAN");
+#else /* __NetBSD__ */
+	if (KeGetCurrentIrql() < oldirql)
+		panic("IRQL_NOT_GREATER_THAN");	
+#endif
 
 #ifdef __NetBSD__
-	SCHED_LOCK(s);
-	curlwp->l_priority = oldirql;
-	SCHED_UNLOCK(s);
+	if(oldirql < DISPATCH_LEVEL && ipl_raised) {
+		splx(old_ipl);
+		ipl_raised = FALSE;
+		win_irql = oldirql;
+	}
 #else
 	mtx_lock_spin(&sched_lock);
 #if __FreeBSD_version < 600000

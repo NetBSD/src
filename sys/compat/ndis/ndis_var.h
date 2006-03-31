@@ -1557,7 +1557,7 @@ extern image_patch_table ndis_functbl[];
 __BEGIN_DECLS
 extern int ndis_libinit(void);
 extern int ndis_libfini(void);
-extern int ndis_ascii_to_unicode(char *, uint16_t **);
+extern int ndis_ascii_to_unicode(const char *, uint16_t **);
 extern int ndis_unicode_to_ascii(uint16_t *, int, char **);
 extern int ndis_load_driver(vm_offset_t, void *);
 extern int ndis_unload_driver(void *);
@@ -1578,17 +1578,25 @@ extern int ndis_halt_nic(void *);
 extern int ndis_shutdown_nic(void *);
 extern int ndis_init_nic(void *);
 extern int ndis_isr(void *, int *, int *);
+#ifdef __FreeBSD__
 extern void ndis_return_packet(void *, void *);
+#else
+extern void ndis_return_packet(struct mbuf *, caddr_t, size_t, void *);
+#endif
 extern void ndis_enable_intr(void *);
 extern void ndis_disable_intr(void *);
 extern int ndis_init_dma(void *);
 extern int ndis_destroy_dma(void *);
 extern int ndis_create_sysctls(void *);
-extern int ndis_add_sysctl(void *, char *, char *, char *, int);
+extern int ndis_add_sysctl(void *, const char *, const char *, const char *, int);
 extern int ndis_flush_sysctls(void *);
 extern int ndis_sched(void (*)(void *), void *, int);
 extern int ndis_unsched(void (*)(void *), void *, int);
+#ifdef __FreeBSD__
 extern int ndis_thsuspend(struct proc *, struct mtx *, int);
+#else /* __NetBSD__ */
+extern int ndis_thsuspend(struct proc *, struct simplelock *, int);
+#endif
 extern void ndis_thresume(struct proc *);
 extern int ndis_strcasecmp(const char *, const char *);
 extern int ndis_strncasecmp(const char *, const char *, size_t);

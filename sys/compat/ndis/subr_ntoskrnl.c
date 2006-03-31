@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.2 2006/03/30 23:06:56 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.3 2006/03/31 00:03:57 rittera Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.2 2006/03/30 23:06:56 rittera Ex
 #include <sys/module.h>
 #else
 #include <sys/lkm.h>
+#include <sys/callout.h>
 #endif
 
 #include <machine/atomic.h>
@@ -97,8 +98,16 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.2 2006/03/30 23:06:56 rittera Ex
 #include <compat/ndis/hal_var.h>
 #include <compat/ndis/resource_var.h>
 #include <compat/ndis/ndis_var.h>
+#ifdef __NetBSD__
+#include <compat/ndis/nbcompat.h>
+#endif
 
 #define __regparm __attribute__((regparm(3)))
+
+#ifdef __NetBSD__
+/* Turn on DbgPrint() from Windows Driver*/
+#define boothowto AB_VERBOSE
+#endif
 
 __stdcall static uint8_t RtlEqualUnicodeString(ndis_unicode_string *,
 	ndis_unicode_string *, uint8_t);
@@ -210,7 +219,14 @@ static uint32_t DbgPrint(char *, ...);
 __stdcall static void DbgBreakPoint(void);
 __stdcall static void dummy(void);
 
+#ifdef __FreeBSD__
 static struct mtx ntoskrnl_dispatchlock;
+#else /* __NetBSD__ */
+static struct simplelock ntoskrnl_dispatchlock;
+#define DISPATCH_LOCK()   do {s = splnet(); simple_lock(&ntoskrnl_dispatchlock);} while(0)
+#define DISPATCH_UNLOCK() do {simple_unlock(&ntoskrnl_dispatchlock); splx(s);} while(0)
+#endif
+
 static kspin_lock ntoskrnl_global;
 static kspin_lock ntoskrnl_cancellock;
 static int ntoskrnl_kth = 0;
@@ -225,9 +241,12 @@ int
 ntoskrnl_libinit()
 {
 	image_patch_table	*patch;
-
+#ifdef __FreeBSD__
 	mtx_init(&ntoskrnl_dispatchlock,
 	    "ntoskrnl dispatch lock", MTX_NDIS_LOCK, MTX_DEF);
+#else /* __NetBSD__ */
+	simple_lock_init(&ntoskrnl_dispatchlock);
+#endif
 	KeInitializeSpinLock(&ntoskrnl_global);
 	KeInitializeSpinLock(&ntoskrnl_cancellock);
 	TAILQ_INIT(&ntoskrnl_reflist);
@@ -440,14 +459,17 @@ IoGetDriverObjectExtension(drv, clid)
 	list_entry		*e;
 	custom_extension	*ce;
 
+	printf("in IoGetDriverObjectExtension\n");
+	
 	e = drv->dro_driverext->dre_usrext.nle_flink;
 	while (e != &drv->dro_driverext->dre_usrext) {
 		ce = (custom_extension *)e;
 		if (ce->ce_clid == clid)
+			printf("found\n");
 			return((void *)(ce + 1));
 		e = e->nle_flink;
 	}
-
+	printf("not found\n");
 	return(NULL);
 }
 
@@ -463,8 +485,15 @@ IoCreateDevice(drv, devextlen, devname, devtype, devchars, exclusive, newdev)
 	device_object		**newdev;
 {
 	device_object		*dev;
-
+	
+#ifdef NDIS_LKM	
+	printf("In IoCreateDevice: drv = %x, devextlen = %x\n", drv, devextlen);
+#endif	
+	
 	dev = ExAllocatePoolWithTag(NonPagedPool, sizeof(device_object), 0);
+#ifdef NDIS_LKM	
+	printf("dev = %x\n", dev);
+#endif
 	if (dev == NULL)
 		return(STATUS_INSUFFICIENT_RESOURCES);
 
@@ -795,17 +824,30 @@ IoMakeAssociatedIrp(ip, stsize)
 	uint8_t			stsize;
 {
 	irp			*associrp;
+#ifdef __NetBSD__
+	int			s;
+#endif	
 
 	associrp = IoAllocateIrp(stsize, FALSE);
 	if (associrp == NULL)
 		return(NULL);
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
+	
 	associrp->irp_flags |= IRP_ASSOCIATED_IRP;
 	associrp->irp_tail.irp_overlay.irp_thread =
 	    ip->irp_tail.irp_overlay.irp_thread;
 	associrp->irp_assoc.irp_master = ip;
+
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return(associrp);
 }
@@ -988,13 +1030,26 @@ IoAttachDeviceToDeviceStack(src, dst)
 	device_object		*dst;
 {
 	device_object		*attached;
+#ifdef __NetBSD__
+	int			s;
+#endif	
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
+	
 	attached = IoGetAttachedDevice(dst);
 	attached->do_attacheddev = src;
 	src->do_attacheddev = NULL;
 	src->do_stacksize = attached->do_stacksize + 1;
+
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return(attached);
 }
@@ -1004,13 +1059,24 @@ IoDetachDevice(topdev)
 	device_object		*topdev;
 {
 	device_object		*tail;
+#ifdef __NetBSD__
+	int			s;
+#endif	
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
 
 	/* First, break the chain. */
 	tail = topdev->do_attacheddev;
 	if (tail == NULL) {
+#ifdef __FreeBSD__
 		mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+		DISPATCH_UNLOCK();
+#endif	
 		return;
 	}
 	topdev->do_attacheddev = tail->do_attacheddev;
@@ -1024,7 +1090,11 @@ IoDetachDevice(topdev)
 		tail = tail->do_attacheddev;
 	}
 
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return;
 }
@@ -1047,6 +1117,7 @@ ntoskrnl_wakeup(arg)
 	e = obj->dh_waitlisthead.nle_flink;
 	while (e != &obj->dh_waitlisthead) {
 		w = (wait_block *)e;
+/* TODO: is this correct? */		
 #ifdef __FreeBSD__
 		td = w->wb_kthread;
 		ndis_thresume(td->td_proc);
@@ -1070,8 +1141,14 @@ ntoskrnl_time(tval)
 	uint64_t                *tval;
 {
 	struct timespec		ts;
+#ifdef __NetBSD__
+    struct timeval      tv;
+    microtime(&tv);
+    TIMEVAL_TO_TIMESPEC(&tv,&ts);
+#else
+    nanotime(&ts);
+#endif
 
-	nanotime(&ts);
 	*tval = (uint64_t)ts.tv_nsec / 100 + (uint64_t)ts.tv_sec * 10000000 +
 	    (uint64_t)11644473600ULL;
 
@@ -1146,11 +1223,18 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 	struct timeval		tv;
 	int			error = 0;
 	uint64_t		curtime;
+#ifdef __NetBSD__
+	int			s;
+#endif
 
 	if (obj == NULL)
 		return(STATUS_INVALID_PARAMETER);
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
 
 	/*
 	 * See if the object is a mutex. If so, and we already own
@@ -1177,13 +1261,23 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 #else
 			km->km_ownerthread = curproc;
 #endif
+
+#ifdef __FreeBSD__
 			mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+			DISPATCH_UNLOCK();
+#endif	
 			return (STATUS_SUCCESS);
 		}
 	} else if (obj->dh_sigstate == TRUE) {
 		if (obj->dh_type == EVENT_TYPE_SYNC)
 			obj->dh_sigstate = FALSE;
+		
+#ifdef __FreeBSD__
 		mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+		DISPATCH_UNLOCK();
+#endif	
 		return (STATUS_SUCCESS);
 	}
 
@@ -1232,7 +1326,11 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 
 	if (error == EWOULDBLOCK) {
 		REMOVE_LIST_ENTRY((&w.wb_waitlist));
+#ifdef __FreeBSD__
 		mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+		DISPATCH_UNLOCK();
+#endif	
 		return(STATUS_TIMEOUT);
 	}
 
@@ -1258,8 +1356,12 @@ KeWaitForSingleObject(obj, reason, mode, alertable, duetime)
 	if (obj->dh_type == EVENT_TYPE_SYNC)
 		obj->dh_sigstate = FALSE;
 	REMOVE_LIST_ENTRY((&w.wb_waitlist));
-
+	
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return(STATUS_SUCCESS);
 }
@@ -1286,13 +1388,22 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 	int			i, wcnt = 0, widx = 0, error = 0;
 	uint64_t		curtime;
 	struct timespec		t1, t2;
+#ifdef __NetBSD__
+    	struct timeval      	tv1,tv2;
+    	int			s;
+#endif
+
 
 	if (cnt > MAX_WAIT_OBJECTS)
 		return(STATUS_INVALID_PARAMETER);
 	if (cnt > THREAD_WAIT_OBJECTS && wb_array == NULL)
 		return(STATUS_INVALID_PARAMETER);
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
 
 	if (wb_array == NULL)
 		w = &_wb_array[0];
@@ -1318,7 +1429,11 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 				km->km_ownerthread = curproc;
 #endif
 				if (wtype == WAITTYPE_ANY) {
+#ifdef __FreeBSD__
 					mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+					DISPATCH_UNLOCK();
+#endif	
 					return (STATUS_WAIT_0 + i);
 				}
 			}
@@ -1326,7 +1441,11 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 			if (obj[i]->dh_type == EVENT_TYPE_SYNC)
 				obj[i]->dh_sigstate = FALSE;
 			if (wtype == WAITTYPE_ANY) {
+#ifdef __FreeBSD__
 				mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+				DISPATCH_UNLOCK();
+#endif	
 				return (STATUS_WAIT_0 + i);
 			}
 		}
@@ -1367,7 +1486,12 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 	}
 
 	while (wcnt) {
-		nanotime(&t1);
+#ifdef __FreeBSD__
+        nanotime(&t1);
+#else
+        microtime(&tv1);
+        TIMEVAL_TO_TIMESPEC(&tv1,&t1);
+#endif
 
 #ifdef __FreeBSD__
 		error = ndis_thsuspend(td->td_proc, &ntoskrnl_dispatchlock,
@@ -1376,7 +1500,12 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 		error = ndis_thsuspend(curproc, &ntoskrnl_dispatchlock,
 		    duetime == NULL ? 0 : tvtohz(&tv));
 #endif
-		nanotime(&t2);
+#ifdef __FreeBSD__
+        nanotime(&t2);
+#else
+        microtime(&tv2);
+        TIMEVAL_TO_TIMESPEC(&tv2,&t2);
+#endif
 
 		for (i = 0; i < cnt; i++) {
 			if (obj[i]->dh_size == OTYPE_MUTEX) {
@@ -1415,16 +1544,28 @@ KeWaitForMultipleObjects(cnt, obj, wtype, reason, mode,
 	}
 
 	if (error == EWOULDBLOCK) {
+#ifdef __FreeBSD__
 		mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+		DISPATCH_UNLOCK();
+#endif	
 		return(STATUS_TIMEOUT);
 	}
 
 	if (wtype == WAITTYPE_ANY && wcnt) {
+#ifdef __FreeBSD__
 		mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+		DISPATCH_UNLOCK();
+#endif	
 		return(STATUS_WAIT_0 + widx);
 	}
 
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return(STATUS_SUCCESS);
 }
@@ -1797,6 +1938,11 @@ ExQueryDepthSList(head)
 	return(depth);
 }
 
+/* TODO: Make sure that LOCKDEBUG isn't defined otherwise a "struct simplelock" will
+ * TODO: be more than 4 bytes.  I'm using a kspin_lock as a simplelock, and the
+ * TODO: kspin lock is 4 bytes, so this is OK as long as LOCKDEBUG isn't defined.
+ */
+
 /*
  * The KeInitializeSpinLock(), KefAcquireSpinLockAtDpcLevel()
  * and KefReleaseSpinLockFromDpcLevel() appear to be analagous
@@ -1808,7 +1954,11 @@ __stdcall void
 KeInitializeSpinLock(lock)
 	kspin_lock		*lock;
 {
+#ifdef __FreeBSD__
 	*lock = 0;
+#else /* __NetBSD__ */
+	simple_lock_init((struct simplelock *)lock);
+#endif
 
 	return;
 }
@@ -1817,8 +1967,12 @@ KeInitializeSpinLock(lock)
 __fastcall void
 KefAcquireSpinLockAtDpcLevel(REGARGS1(kspin_lock *lock))
 {
+#ifdef __FreeBSD__
 	while (atomic_cmpset_acq_int((volatile u_int *)lock, 0, 1) == 0)
 		/* sit and spin */;
+#else /* __NetBSD__ */
+	simple_lock((struct simplelock *)lock);
+#endif
 
 	return;
 }
@@ -1826,8 +1980,11 @@ KefAcquireSpinLockAtDpcLevel(REGARGS1(kspin_lock *lock))
 __fastcall void
 KefReleaseSpinLockFromDpcLevel(REGARGS1(kspin_lock *lock))
 {
+#ifdef __FreeBSD__
 	atomic_store_rel_int((volatile u_int *)lock, 0);
-
+#else /* __NetBSD__ */
+	simple_unlock((struct simplelock *)lock);
+#endif
 	return;
 }
 
@@ -2195,15 +2352,44 @@ static int
 atoi(str)
 	const char		*str;
 {
+#ifdef __FreeBSD__
 	return (int)strtol(str, (char **)NULL, 10);
+#else
+    int n;
+
+    for (n = 0; *str && *str >= '0' && *str <= '9'; str++)
+        n = n * 10 + *str - '0';
+    return n;
+#endif
+
 }
 
 static long
 atol(str)
 	const char		*str;
 {
+#ifdef __FreeBSD__
 	return strtol(str, (char **)NULL, 10);
+#else
+     long n;
+
+     for (n = 0; *str && *str >= '0' && *str <= '9'; str++)
+        n = n * 10 + *str - '0';
+    return n;
+#endif
+
 }
+
+
+/*
+ * stolen from ./netipsec/key.c 
+ */
+
+#ifdef __NetBSD__
+void srandom(int arg);
+void srandom(int arg) {return;}
+#endif
+
 
 static int
 rand(void)
@@ -2281,13 +2467,26 @@ KeReleaseMutex(kmutex, kwait)
 	kmutant			*kmutex;
 	uint8_t			kwait;
 {
+#ifdef __NetBSD__
+	int			s;
+#endif
+
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
+	
 #ifdef __FreeBSD__
 	if (kmutex->km_ownerthread != curthread->td_proc) {
 #else
 	if (kmutex->km_ownerthread != curproc) {
 #endif
+#ifdef __FreeBSD__
 		mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+		DISPATCH_UNLOCK();
+#endif	
 		return(STATUS_MUTANT_NOT_OWNED);
 	}
 	kmutex->km_acquirecnt--;
@@ -2295,7 +2494,12 @@ KeReleaseMutex(kmutex, kwait)
 		kmutex->km_ownerthread = NULL;
 		ntoskrnl_wakeup(&kmutex->km_header);
 	}
+	
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return(kmutex->km_acquirecnt);
 }
@@ -2325,11 +2529,24 @@ KeResetEvent(kevent)
 	nt_kevent		*kevent;
 {
 	uint32_t		prevstate;
+#ifdef __NetBSD__
+	int			s;
+#endif
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
+	
 	prevstate = kevent->k_header.dh_sigstate;
 	kevent->k_header.dh_sigstate = FALSE;
+	
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return(prevstate);
 }
@@ -2341,11 +2558,24 @@ KeSetEvent(kevent, increment, kwait)
 	uint8_t			kwait;
 {
 	uint32_t		prevstate;
+#ifdef __NetBSD__
+	int			s;
+#endif
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
+	
 	prevstate = kevent->k_header.dh_sigstate;
 	ntoskrnl_wakeup(&kevent->k_header);
+	
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return(prevstate);
 }
@@ -2461,7 +2691,8 @@ PsCreateSystemThread(handle, reqaccess, objattrs, phandle,
 	error = kthread_create(ntoskrnl_thrfunc, tc, &p,
 	    RFHIGHPID, NDIS_KSTACK_PAGES, tname);
 #else
-	error = kthread_create1(ntoskrnl_thrfunc, tc, &p, tname);
+/* TODO: Provide a larger stack for these threads (NDIS_KSTACK_PAGES) */
+	error = ndis_kthread_create(ntoskrnl_thrfunc, tc, &p, NULL, 0, tname);
 #endif
 	*handle = p;
 
@@ -2483,8 +2714,16 @@ PsTerminateSystemThread(status)
 	ndis_status		status;
 {
 	struct nt_objref	*nr;
+#ifdef __NetBSD__
+	int			s;
+#endif
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
+	
 	TAILQ_FOREACH(nr, &ntoskrnl_reflist, link) {
 #ifdef __FreeBSD__
 		if (nr->no_obj != curthread->td_proc)
@@ -2495,7 +2734,12 @@ PsTerminateSystemThread(status)
 		ntoskrnl_wakeup(&nr->no_dh);
 		break;
 	}
+	
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	ntoskrnl_kth--;
 
@@ -2511,11 +2755,11 @@ PsTerminateSystemThread(status)
 static uint32_t
 DbgPrint(char *fmt, ...)
 {
-	va_list			ap;
+	//va_list			ap;
 
 	if (bootverbose) {
-		va_start(ap, fmt);
-		vprintf(fmt, ap);
+		//va_start(ap, fmt);
+		//vprintf(fmt, ap);
 	}
 
 	return(STATUS_SUCCESS);
@@ -2524,11 +2768,12 @@ DbgPrint(char *fmt, ...)
 __stdcall static void
 DbgBreakPoint(void)
 {
-
-#if __FreeBSD_version < 502113
+#if defined(__FreeBSD__) && __FreeBSD_version < 502113
 	Debugger("DbgBreakPoint(): breakpoint");
-#else
+#elif defined(__FreeBSD__) && __FreeBSD_version >= 502113
 	kdb_enter("DbgBreakPoint(): breakpoint");
+#else /* Netbsd case */
+    ; /* TODO Search how to go into debugger without panic */
 #endif
 }
 
@@ -2538,12 +2783,19 @@ ntoskrnl_timercall(arg)
 {
 	ktimer			*timer;
 	struct timeval		tv;
+#ifdef __NetBSD__
+	int			s;
+#endif	
 
 #ifdef __FreeBSD__
 	mtx_unlock(&Giant);
 #endif
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
 
 	timer = arg;
 
@@ -2565,16 +2817,21 @@ ntoskrnl_timercall(arg)
 #ifdef __FreeBSD__
 		timer->k_handle = timeout(ntoskrnl_timercall,
 		    timer, tvtohz(&tv));
-#else
-		timeout(ntoskrnl_timercall, timer, tvtohz(&tv));
-#endif
+#else /* __NetBSD__ */
+		callout_reset(timer->k_handle, tvtohz(&tv), ntoskrnl_timercall, timer);
+#endif /* __NetBSD__ */
 	}
 
 	if (timer->k_dpc != NULL)
 		KeInsertQueueDpc(timer->k_dpc, NULL, NULL);
 
 	ntoskrnl_wakeup(&timer->k_header);
+
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 #ifdef __FreeBSD__
 	mtx_lock(&Giant);
@@ -2611,7 +2868,7 @@ KeInitializeTimerEx(timer, type)
 #ifdef __FreeBSD__
 	callout_handle_init(&timer->k_handle);
 #else
-	callout_init(&timer->k_handle);
+	callout_init(timer->k_handle);
 #endif
 
 	return;
@@ -2692,14 +2949,25 @@ KeSetTimerEx(timer, duetime, period, dpc)
 	struct timeval		tv;
 	uint64_t		curtime;
 	uint8_t			pending;
+#ifdef __NetBSD__
+	int			s;
+#endif
 
 	if (timer == NULL)
 		return(FALSE);
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
 
 	if (timer->k_header.dh_inserted == TRUE) {
+#ifdef __FreeBSD__
 		untimeout(ntoskrnl_timercall, timer, timer->k_handle);
+#else /* __NetBSD__ */
+		callout_stop(timer->k_handle);
+#endif
 		timer->k_header.dh_inserted = FALSE;
 		pending = TRUE;
 	} else
@@ -2729,10 +2997,14 @@ KeSetTimerEx(timer, duetime, period, dpc)
 #ifdef __FreeBSD__
 	timer->k_handle = timeout(ntoskrnl_timercall, timer, tvtohz(&tv));
 #else
-	timeout(ntoskrnl_timercall, timer, tvtohz(&tv));
+	callout_reset(timer->k_handle, tvtohz(&tv), ntoskrnl_timercall, timer);
 #endif
 
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return(pending);
 }
@@ -2751,19 +3023,34 @@ KeCancelTimer(timer)
 	ktimer			*timer;
 {
 	uint8_t			pending;
+#ifdef __NetBSD__
+	int			s;
+#endif
 
 	if (timer == NULL)
 		return(FALSE);
 
+#ifdef __NetBSD__
+	DISPATCH_LOCK();
+#else
 	mtx_lock(&ntoskrnl_dispatchlock);
+#endif
 
 	if (timer->k_header.dh_inserted == TRUE) {
+#ifdef __FreeBSD__
 		untimeout(ntoskrnl_timercall, timer, timer->k_handle);
+#else /* __NetBSD__ */
+		callout_stop(timer->k_handle);
+#endif
 		pending = TRUE;
 	} else
 		pending = KeRemoveQueueDpc(timer->k_dpc);
 
+#ifdef __FreeBSD__
 	mtx_unlock(&ntoskrnl_dispatchlock);
+#else  /* __NetBSD__ */
+	DISPATCH_UNLOCK();
+#endif	
 
 	return(pending);
 }

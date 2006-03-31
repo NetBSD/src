@@ -36,8 +36,8 @@
 #define _CFG_VAR_H_
 
 struct ndis_cfg {
-	char			*nc_cfgkey;
-	char			*nc_cfgdesc;
+    const char		*nc_cfgkey;
+    const char		*nc_cfgdesc;
 	char			nc_val[256];
 	int			nc_idx;
 };

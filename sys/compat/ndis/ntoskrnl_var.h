@@ -299,8 +299,20 @@ typedef struct nt_dispatch_header nt_dispatch_header;
 #define AT_DISPATCH_LEVEL(td)		\
 	((td)->td_base_pri == PI_REALTIME)
 #else
+
+/* TODO: What is the best way to do this? */
+
+int win_irql;
+#define AT_DISPATCH_LEVEL(useless) \
+	(win_irql == DISPATCH_LEVEL)
+
+/*
 #define AT_DISPATCH_LEVEL(useless)	\
-	curlwp->l_priority == 0
+	curlwp->l_priority > IPL_NONE
+
+#define AT_DISPATCH_LEVEL(useless)	\
+	TRUE
+*/
 #endif
 
 #define AT_DIRQL_LEVEL(td)		\
@@ -342,8 +354,8 @@ struct ktimer {
 		list_entry		k_timerlistentry;
 #ifdef __FreeBSD__
 		struct callout_handle	k_handle;
-#else
-		struct callout		k_handle;
+#else /* __NetBSD__ */
+		struct callout			*k_handle;
 #endif
 	} u;
 	void			*k_dpc;
@@ -581,6 +593,10 @@ struct device_object {
 	uint16_t		do_spare1;
 	struct devobj_extension	*do_devobj_ext;
 	void			*do_rsvd;
+#ifdef __NetBSD__
+	struct ndis_softc		*fdo_sc;
+	struct ndis_softc		*pdo_sc;
+#endif		
 };
 
 typedef struct device_object device_object;
@@ -1164,6 +1180,7 @@ typedef struct driver_object driver_object;
  * Windows stack is larger, so we need to give our threads more
  * stack pages. 4 should be enough, we use 8 just to extra safe.
  */
+ /* This is also defined in nbcompat.c */
 #define NDIS_KSTACK_PAGES	8
 
 extern image_patch_table ntoskrnl_functbl[];
@@ -1172,13 +1189,13 @@ typedef void (*funcptr)(void);
 __BEGIN_DECLS
 extern int windrv_libinit(void);
 extern int windrv_libfini(void);
-extern driver_object *windrv_lookup(vm_offset_t, char *);
+extern driver_object *windrv_lookup(vm_offset_t, const char *);
 extern int windrv_load(module_t, vm_offset_t, int);
 extern int windrv_unload(module_t, vm_offset_t, int);
 extern int windrv_create_pdo(driver_object *, device_t);
 extern void windrv_destroy_pdo(driver_object *, device_t);
 extern device_object *windrv_find_pdo(driver_object *, device_t);
-extern int windrv_bus_attach(driver_object *, char *);
+extern int windrv_bus_attach(driver_object *, const char *);
 extern int windrv_wrap(funcptr, funcptr *);
 extern int windrv_unwrap(funcptr);
 
