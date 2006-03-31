@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.103 2006/03/19 01:54:21 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.104 2006/03/31 21:58:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.103 2006/03/19 01:54:21 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.104 2006/03/31 21:58:08 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.103 2006/03/19 01:54:21 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.104 2006/03/31 21:58:08 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1729,7 +1729,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
 		if (flags == NULL || (*flags & VAR_NOSUBST) == 0) {
 		    char   *cp2;
 		    int     len;
-		    Boolean freeIt;
+		    void   *freeIt;
 
 		    /*
 		     * If unescaped dollar sign not before the
@@ -1739,7 +1739,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate __unused,
 		    cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
 		    Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
 		    if (freeIt)
-			free(cp2);
+			free(freeIt);
 		    cp += len - 1;
 		} else {
 		    const char *cp2 = &cp[1];
@@ -1886,9 +1886,10 @@ VarChangeCase(char *str, int upper)
  *
  *-----------------------------------------------------------------------
  */
+/* coverity[+alloc : arg-*4] */
 char *
 Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
-	  Boolean *freePtr)
+	  void **freePtr)
 {
     const char	   *tstr;    	/* Pointer into str */
     char	   *tstr2;	/* Secondary tstr if we need
@@ -1913,7 +1914,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 				 * result is just the invocation, unaltered */
     Var_Parse_State parsestate; /* Flags passed to helper functions */
 
-    *freePtr = FALSE;
+    *freePtr = NULL;
     dynamic = FALSE;
     start = str;
     parsestate.oneBigWord = FALSE;
@@ -1987,13 +1988,13 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	     */
 	    if (*tstr == '$') {
 		int rlen;
-		Boolean rfree;
-		char *rval = Var_Parse(tstr, ctxt, err, &rlen, &rfree);
+		void *freeIt;
+		char *rval = Var_Parse(tstr, ctxt, err, &rlen, &freeIt);
 		if (rval != NULL) {
 		    Buf_AddBytes(buf, strlen(rval), (Byte *)rval);
-		    if (rfree)
-			free(rval);
 		}
+		if (freeIt)
+		    free(freeIt);
 		tstr += rlen - 1;
 	    }
 	    else
@@ -2062,7 +2063,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			 * Resulting string is dynamically allocated, so
 			 * tell caller to free it.
 			 */
-			*freePtr = TRUE;
+			*freePtr = val;
 			*lengthPtr = tstr-start+1;
 			*WR(tstr) = endc;
 			Buf_Destroy(buf, TRUE);
@@ -2123,7 +2124,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    char *pstr = emalloc(*lengthPtr + 1);
 		    strncpy(pstr, start, *lengthPtr);
 		    pstr[*lengthPtr] = '\0';
-		    *freePtr = TRUE;
+		    *freePtr = pstr;
 		    Buf_Destroy(buf, TRUE);
 		    return(pstr);
 		} else {
@@ -2164,7 +2165,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
     nstr = (char *)Buf_GetAll(v->val, NULL);
     if (strchr(nstr, '$') != NULL) {
 	nstr = Var_Subst(NULL, nstr, ctxt, err);
-	*freePtr = TRUE;
+	*freePtr = nstr;
     }
 
     v->flags &= ~VAR_IN_USE;
@@ -2422,12 +2423,12 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			     */
 			    char    *cp2;
 			    int	    len;
-			    Boolean freeIt;
+			    void    *freeIt;
 
 			    cp2 = Var_Parse(cp, ctxt, err, &len, &freeIt);
 			    Buf_AddBytes(buf, strlen(cp2), (Byte *)cp2);
 			    if (freeIt)
-				free(cp2);
+				free(freeIt);
 			    cp += len - 1;
 			} else {
 			    Buf_AddByte(buf, (Byte)*cp);
@@ -3178,9 +3179,9 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		}
 		nstr = newStr;
 		if (nstr != var_Error && nstr != varNoError) {
-		    *freePtr = TRUE;
+		    *freePtr = nstr;
 		} else {
-		    *freePtr = FALSE;
+		    *freePtr = NULL;
 		}
 	    }
 	    if (termc == '\0') {
@@ -3209,7 +3210,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	     * Returning the value unmodified, so tell the caller to free
 	     * the thing.
 	     */
-	    *freePtr = TRUE;
+	    *freePtr = nstr;
 	}
 	if (nstr != (char *)Buf_GetAll(v->val, NULL))
 	    Buf_Destroy(v->val, destroy);
@@ -3225,12 +3226,12 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	    if (*freePtr) {
 		free(nstr);
 	    }
-	    *freePtr = FALSE;
+	    *freePtr = NULL;
 	    if (dynamic) {
 		nstr = emalloc(*lengthPtr + 1);
 		strncpy(nstr, start, *lengthPtr);
 		nstr[*lengthPtr] = '\0';
-		*freePtr = TRUE;
+		*freePtr = nstr;
 	    } else {
 		nstr = var_Error;
 	    }
@@ -3254,8 +3255,10 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 
 cleanup:
     *lengthPtr = cp - start + 1;
-    if (*freePtr)
+    if (*freePtr) {
 	free(nstr);
+	*freePtr = NULL;
+    }
     if (tstr2)
 	free(tstr2);
     if (delim != '\0')
@@ -3291,7 +3294,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
     char    	  *val;		    /* Value to substitute for a variable */
     int	    	  length;   	    /* Length of the variable invocation */
     Boolean	  trailingBslash;   /* variable ends in \ */
-    Boolean 	  doFree;   	    /* Set true if val should be freed */
+    void 	  *freeIt = NULL;    /* Set if it should be freed */
     static Boolean errorReported;   /* Set true if an error has already
 				     * been reported to prevent a plethora
 				     * of messages when recursing */
@@ -3383,7 +3386,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 		    continue;
 	    }
 
-	    val = Var_Parse(str, ctxt, undefErr, &length, &doFree);
+	    val = Var_Parse(str, ctxt, undefErr, &length, &freeIt);
 
 	    /*
 	     * When we come down here, val should either point to the
@@ -3430,9 +3433,10 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 		length = strlen(val);
 		Buf_AddBytes(buf, length, (Byte *)val);
 		trailingBslash = length > 0 && val[length - 1] == '\\';
-		if (doFree) {
-		    free(val);
-		}
+	    }
+	    if (freeIt) {
+		free(freeIt);
+		freeIt = NULL;
 	    }
 	}
     }
