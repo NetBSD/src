@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.48 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.49 2006/03/31 21:58:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.48 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.49 2006/03/31 21:58:08 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.48 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.49 2006/03/31 21:58:08 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -258,19 +258,18 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	     * so we can safely advance beyond it...
 	     */
 	    int 	length;
-	    Boolean	freeIt;
+	    void	*freeIt;
 	    char	*result;
 
-	    result=Var_Parse(cp, ctxt, TRUE, &length, &freeIt);
+	    result = Var_Parse(cp, ctxt, TRUE, &length, &freeIt);
+	    if (freeIt)
+		free(freeIt);
 	    if (result == var_Error) {
 		return(FAILURE);
 	    } else {
 		subLibName = TRUE;
 	    }
 
-	    if (freeIt) {
-		free(result);
-	    }
 	    cp += length-1;
 	}
     }
@@ -300,19 +299,18 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		 * so we can safely advance beyond it...
 		 */
 		int 	length;
-		Boolean	freeIt;
+		void	*freeIt;
 		char	*result;
 
-		result=Var_Parse(cp, ctxt, TRUE, &length, &freeIt);
+		result = Var_Parse(cp, ctxt, TRUE, &length, &freeIt);
+		if (freeIt)
+		    free(freeIt);
 		if (result == var_Error) {
 		    return(FAILURE);
 		} else {
 		    doSubst = TRUE;
 		}
 
-		if (freeIt) {
-		    free(result);
-		}
 		cp += length;
 	    } else {
 		cp++;
