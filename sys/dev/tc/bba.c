@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.29 2006/03/30 18:16:20 thorpej Exp $ */
+/* $NetBSD: bba.c,v 1.30 2006/03/31 07:34:31 he Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.29 2006/03/30 18:16:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.30 2006/03/31 07:34:31 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ CFATTACH_DECL(bba, sizeof(struct bba_softc),
  * Define our interface into the am7930 MI driver.
  */
 
-stsatic uint8_t	bba_codec_iread(struct am7930_softc *, int);
+static uint8_t	bba_codec_iread(struct am7930_softc *, int);
 static uint16_t	bba_codec_iread16(struct am7930_softc *, int);
 static void	bba_codec_iwrite(struct am7930_softc *, int, uint8_t);
 static void	bba_codec_iwrite16(struct am7930_softc *, int, uint16_t);
