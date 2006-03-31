@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.4.6 2006/03/31 00:27:48 elad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.4.7 2006/03/31 01:18:16 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.6 2006/03/31 00:27:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.7 2006/03/31 01:18:16 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1067,12 +1067,12 @@ kerbauth:
 			}
 			if (use_opencred)
 				break;
+			kauth_cred_setuid(acred, uid);
 			kauth_cred_seteuid(acred, uid);
-			kauth_cred_seteeuid(acred, uid);
-			kauth_cred_setesvuid(acred, uid);
+			kauth_cred_setsvuid(acred, uid);
+			kauth_cred_setgid(acred, gid);
 			kauth_cred_setegid(acred, gid);
-			kauth_cred_seteegid(acred, gid);
-			kauth_cred_setesvgid(acred, gid);
+			kauth_cred_setsvgid(acred, gid);
 			cred = acred;
 			break;
 		default:
