@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.113 2006/03/31 21:05:34 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.114 2006/03/31 21:58:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.113 2006/03/31 21:05:34 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.114 2006/03/31 21:58:08 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.113 2006/03/31 21:05:34 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.114 2006/03/31 21:58:08 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1004,14 +1004,12 @@ ParseDoDependency(char *line)
 		 * in the initial Var_Subst and we wouldn't be here.
 		 */
 		int 	length;
-		Boolean	freeIt;
+		void    *freeIt;
 		char	*result;
 
-		result=Var_Parse(cp, VAR_CMD, TRUE, &length, &freeIt);
-
-		if (freeIt) {
-		    free(result);
-		}
+		result = Var_Parse(cp, VAR_CMD, TRUE, &length, &freeIt);
+		if (freeIt)
+		    free(freeIt);
 		cp += length-1;
 	    }
 	    continue;
