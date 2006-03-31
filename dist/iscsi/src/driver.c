@@ -102,7 +102,7 @@ MODULE_LICENSE("Dual BSD/GPL"); /*  This source is under BSD License. This is th
 static int driver_init(void) {
   int i;
 
-  iscsi_trace(TRACE_SCSI_DEBUG, "initializing iSCSI driver\n");
+  iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "initializing iSCSI driver\n");
   if ((g_cmd=iscsi_malloc_atomic(sizeof(initiator_cmd_t)*CONFIG_INITIATOR_QUEUE_DEPTH))==NULL) {
     iscsi_trace_error("iscsi_malloc_atomic() failed\n");
     return -1;
