@@ -1,4 +1,4 @@
-/*	$NetBSD: paste.c,v 1.8 2006/03/31 17:20:07 dsl Exp $	*/
+/*	$NetBSD: paste.c,v 1.9 2006/03/31 18:59:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n"
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: paste.c,v 1.8 2006/03/31 17:20:07 dsl Exp $");
+__RCSID("$NetBSD: paste.c,v 1.9 2006/03/31 18:59:52 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,13 +53,14 @@ __RCSID("$NetBSD: paste.c,v 1.8 2006/03/31 17:20:07 dsl Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void	parallel(char **);
+void	parallel(int, char **);
 void	sequential(char **);
 int	tr(char *);
 void	usage(void);
 
-char *delim;
-int delimcnt;
+char dflt_delim[] = "\t";
+char *delim = dflt_delim;
+int delimcnt = 1;
 
 int
 main(int argc, char **argv)
@@ -67,10 +68,11 @@ main(int argc, char **argv)
 	int ch, seq;
 
 	seq = 0;
-	while ((ch = getopt(argc, argv, "d:s")) != -1)
+	while ((ch = getopt(argc, argv, "d:s")) != -1) {
 		switch (ch) {
 		case 'd':
-			delimcnt = tr(delim = optarg);
+			delim = strdup(optarg);
+			delimcnt = tr(delim);
 			break;
 		case 's':
 			seq = 1;
@@ -79,93 +81,81 @@ main(int argc, char **argv)
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
-
-	if (!delim) {
-		delimcnt = 1;
-		delim = "\t";
-	}
 
 	if (seq)
 		sequential(argv);
 	else
-		parallel(argv);
+		parallel(argc, argv);
 	exit(0);
 }
 
-typedef struct _list {
-	struct _list *next;
-	FILE *fp;
-	int cnt;
-	char *name;
-} LIST;
-
 void
-parallel(char **argv)
+parallel(int argc, char **argv)
 {
-	LIST *lp;
-	int cnt;
-	char ch, *p;
-	LIST *head, *tmp;
-	int opencnt, output;
-	char buf[_POSIX2_LINE_MAX + 1];
+	char ch, *dp, *line;
+	FILE **fpp, *fp;
+	size_t line_len;
+	int cnt, output;
 
-	tmp = NULL;
-	for (cnt = 0, head = NULL; (p = *argv) != NULL; ++argv, ++cnt) {
-		if (!(lp = (LIST *)malloc((u_int)sizeof(LIST))))
-			err(1, "malloc");
-		if (p[0] == '-' && !p[1])
-			lp->fp = stdin;
-		else if (!(lp->fp = fopen(p, "r")))
-			err(1, "%s", p);
-		lp->next = NULL;
-		lp->cnt = cnt;
-		lp->name = p;
-		if (!head)
-			head = tmp = lp;
-		else {
-			tmp->next = lp;
-			tmp = lp;
-		}
+	fpp = calloc(argc, sizeof *fpp);
+	if (fpp == NULL)
+		err(1, "calloc");
+
+	for (cnt = 0; cnt < argc; cnt++) {
+		if (strcmp(argv[cnt], "-") == 0)
+			fpp[cnt] = stdin;
+		else if (!(fpp[cnt] = fopen(argv[cnt], "r")))
+			err(1, "%s", argv[cnt]);
 	}
 
-	for (opencnt = cnt; opencnt;) {
-		for (output = 0, lp = head; lp; lp = lp->next) {
-			if (!lp->fp) {
-				if (output && lp->cnt &&
-				    (ch = delim[(lp->cnt - 1) % delimcnt]))
-					putchar(ch);
+	for (;;) {
+		/* Start with the NUL at the end of 'delim' ... */
+		dp = delim + delimcnt;
+		output = 0;
+		for (cnt = 0; cnt < argc; cnt++) {
+			fp = fpp[cnt];
+			if (fp == NULL)
+				continue;
+			line = fgetln(fp, &line_len);
+			if (line == NULL) {
+				/* Assume EOF */
+				if (fp != stdin)
+					fclose(fp);
+				fpp[cnt] = NULL;
 				continue;
 			}
-			if (!fgets(buf, sizeof(buf), lp->fp)) {
-				if (!--opencnt)
-					break;
-				lp->fp = NULL;
-				if (output && lp->cnt &&
-				    (ch = delim[(lp->cnt - 1) % delimcnt]))
+			/* Output enough separators to catch up */
+			do {
+				ch = *dp++;
+				if (ch)
 					putchar(ch);
-				continue;
-			}
-			if (!(p = strchr(buf, '\n')))
-				err(1, "%s: input line too long.", lp->name);
-			*p = '\0';
-			/*
-			 * make sure that we don't print any delimiters
-			 * unless there's a non-empty file.
-			 */
-			if (!output) {
-				output = 1;
-				for (cnt = 0; cnt < lp->cnt; ++cnt)
-					if ((ch = delim[cnt % delimcnt]) != 0)
-						putchar(ch);
-			} else if ((ch = delim[(lp->cnt - 1) % delimcnt]) != 0)
+				if (dp >= delim + delimcnt)
+					dp = delim;
+			} while (++output <= cnt);
+			/* Remove any trailing newline - check for last line */
+			if (line[line_len - 1] == '\n')
+				line_len--;
+			printf("%.*s", line_len, line);
+		}
+
+		if (!output)
+			break;
+
+		/* Add separators to end of line */
+		while (++output <= cnt) {
+			ch = *dp++;
+			if (ch)
 				putchar(ch);
-			(void)printf("%s", buf);
+			if (dp >= delim + delimcnt)
+				dp = delim;
 		}
-		if (output)
-			putchar('\n');
+		putchar('\n');
 	}
+
+	free(fpp);
 }
 
 void
