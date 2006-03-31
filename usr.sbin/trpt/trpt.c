@@ -1,7 +1,7 @@
-/*	$NetBSD: trpt.c,v 1.21 2005/09/06 03:04:15 rpaulo Exp $	*/
+/*	$NetBSD: trpt.c,v 1.22 2006/03/31 10:20:21 rpaulo Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.21 2005/09/06 03:04:15 rpaulo Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.22 2006/03/31 10:20:21 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -495,6 +495,8 @@ tcp_trace(short act, short ostate, struct tcpcb *atp, struct tcpcb *tp,
 			pf(TH_RST, "RST");
 			pf(TH_PUSH, "PUSH");
 			pf(TH_URG, "URG");
+			pf(TH_CWR, "CWR");
+			pf(TH_ECE, "ECE");
 			printf(">");
 		}
 		break;
