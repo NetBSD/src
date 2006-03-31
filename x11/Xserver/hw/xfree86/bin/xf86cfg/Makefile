@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/11/29 16:49:18 skrll Exp $
+#	$NetBSD: Makefile,v 1.6 2006/03/31 21:43:42 uwe Exp $
 
 .include <bsd.own.mk>
 
@@ -40,11 +40,11 @@ CPPFLAGS+=	-DXF86CONFIG=\"XF86Config\" -DUSE_MODULES \
 .if ${MACHINE} == "cats"
 CPPFLAGS+=	-DPCVT_SUPPORT
 .endif
-		
+
 .if ${MACHINE} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .endif
-		
+
 
 LDADD=	-lxkbui -lxkbfile -L${XF86OBJDIR} -lxf86config -lXxf86misc \
 	-lXxf86vm -lXaw -lXmu -lXt -lSM -lICE -lXext -lX11 -lXt -lSM \
