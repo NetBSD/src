@@ -1,7 +1,6 @@
-/*	$NetBSD: devopen.c,v 1.2 2006/04/01 19:08:08 bjh21 Exp $	*/
-
+/*	$NetBSD: riscospart.h,v 1.1 2006/04/01 19:08:08 bjh21 Exp $	*/
 /*-
- * Copyright (c) 2001 Ben Harris
+ * Copyright (c) 2006 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,45 +26,4 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/disklabel.h>
-#include <lib/libkern/libkern.h>
-#include <lib/libsa/stand.h>
-#include <riscosdisk.h>
-
-int
-devopen(struct open_file *f, const char *fname, char **file)
-{
-#ifdef LIBSA_SINGLE_FILESYSTEM
-
-	/* We don't support any devices yet. */
-	f->f_flags |= F_NODEV;
-	*file = (char *)fname;
-	return 0;
-#else
-	char *p, *fsname;
-	int part, drive, err, fslen;
-
-	p = strchr(fname, ':');
-	if (p == NULL || p == fname) return ENOENT;
-	*file = p + 1;
-	p--;
-	if (p == fname) return ENOENT;
-	if (*p >= 'a' && *p <= 'z')
-		part = *p-- - 'a';
-	else
-		part = RAW_PART;
-	if (p == fname) return ENOENT;
-	drive = 0;
-	while (*p >= '0' && *p <= '9' && p >= fname)
-		drive = drive * 10 + *p-- - '0';
-	if (p <= fname) return ENOENT;
-
-	fslen = p + 1 - fname;
-	fsname = alloc(fslen + 1);
-	memcpy(fsname, fname, fslen);
-	fsname[fslen] = 0;
-	err =  rodisk_open(f, fsname, drive, part);
-	dealloc(fsname, fslen + 1);
-	return err;
-#endif
-}
+extern int getdisklabel_acorn(struct open_file *, struct disklabel *);
