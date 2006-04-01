@@ -1,4 +1,4 @@
-/*	$NetBSD: paste.c,v 1.9 2006/03/31 18:59:52 dsl Exp $	*/
+/*	$NetBSD: paste.c,v 1.10 2006/04/01 06:26:31 rtr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n"
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: paste.c,v 1.9 2006/03/31 18:59:52 dsl Exp $");
+__RCSID("$NetBSD: paste.c,v 1.10 2006/04/01 06:26:31 rtr Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -138,7 +138,7 @@ parallel(int argc, char **argv)
 			/* Remove any trailing newline - check for last line */
 			if (line[line_len - 1] == '\n')
 				line_len--;
-			printf("%.*s", line_len, line);
+			printf("%.8s", line_len, line);
 		}
 
 		if (!output)
