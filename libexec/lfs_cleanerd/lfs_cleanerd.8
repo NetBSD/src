@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_cleanerd.8,v 1.14 2006/03/30 19:10:13 perseant Exp $
+.\"	$NetBSD: lfs_cleanerd.8,v 1.15 2006/04/01 08:44:57 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)lfs_cleanerd.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 11, 1993
+.Dd April 1, 2006
 .Dt LFS_CLEANERD 8
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl bcdfmqs
+.Op Fl i Ar segment-number
 .Op Fl l Ar load-threshhold
 .Op Fl n Ar number-of-segments
 .Op Fl r Ar report-frequency
@@ -82,6 +83,12 @@ s give more detailed debugging information.
 .It Fl f
 Use filesystem idle time as the criterion for aggressive cleaning,
 instead of system load.
+.It Fl i Ar segment-number
+Invalidate the segment with segment number
+.Ar segment-number .
+This option is used by
+.Xr resize_lfs 8 ,
+and should not be specified on the command line.
 .It Fl l Ar load-threshhold
 Clean more aggressively when the system load is below the given threshhold.
 The default threshhold is 0.2.
