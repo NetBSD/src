@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.446 2006/03/29 21:12:20 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.447 2006/04/01 20:20:28 christos Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -50,6 +50,11 @@ HAVE_GCC3?=	no
 .else
 HAVE_GCC3?=	yes
 .endif
+
+#
+# Transitional for toolchain upgrade to GCC4.1
+#
+HAVE_GCC4?=	no
 
 # Do we want to use tools/toolchain or not?
 .if ${HAVE_GCC3} != "no"
