@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.8 2006/03/26 21:36:13 christos Exp $	*/
+/*	$NetBSD: alloc.c,v 1.9 2006/04/01 23:36:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Marc Espie.
@@ -76,6 +76,8 @@ alloc(size_t size, Area *ap)
 	return L2P(l);
 }
 
+/* coverity[+alloc] */
+/* coverity[+free : arg-0] */
 void *
 aresize(void *ptr, size_t size, Area *ap)
 {
