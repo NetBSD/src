@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.11 2006/03/30 19:10:13 perseant Exp $  */
+/*      $NetBSD: coalesce.c,v 1.12 2006/04/01 23:53:11 christos Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -168,17 +168,21 @@ clean_inode(struct clfs *fs, ino_t ino)
 	onb = nb = lblkno(fs, dip->di_size);
 
 	/* XXX for now, don't do any file small enough to have fragments */
-	if (nb < NDADDR)
+	if (nb < NDADDR) {
+		free(dip);
 		return COALESCE_TOOSMALL;
+	}
 
 	/* Sanity checks */
 	if (dip->di_size < 0) {
 		dlog("ino %d, negative size (%" PRId64 ")", ino, dip->di_size);
+		free(dip);
 		return COALESCE_BADSIZE;
 	}
 	if (nb > dip->di_blocks) {
 		dlog("ino %d, computed blocks %d > held blocks %d", ino, nb,
 		     dip->di_blocks);
+		free(dip);
 		return COALESCE_BADBLOCKSIZE;
 	}
 
@@ -186,6 +190,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	if (bip == NULL) {
 		syslog(LOG_WARNING, "ino %llu, %d blocks: %m",
 		    (unsigned long long)ino, nb);
+		free(dip);
 		return COALESCE_NOMEM;
 	}
 	for (i = 0; i < nb; i++) {
