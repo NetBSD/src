@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.1 2006/03/30 19:10:13 perseant Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.2 2006/04/01 23:48:56 christos Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -279,11 +279,11 @@ reload_ifile(struct clfs *fs)
 	int ohashmax;
 	extern int hashmax;
 
-	LIST_FOREACH(bp, &fs->lfs_ivnode->v_dirtyblkhd, b_vnbufs) {
+	while ((bp = LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd)) != NULL) {
 		bremfree(bp);
 		buf_destroy(bp);
 	}
-	LIST_FOREACH(bp, &fs->lfs_ivnode->v_cleanblkhd, b_vnbufs) {
+	while ((bp = LIST_FIRST(&fs->lfs_ivnode->v_cleanblkhd)) != NULL) {
 		bremfree(bp);
 		buf_destroy(bp);
 	}
