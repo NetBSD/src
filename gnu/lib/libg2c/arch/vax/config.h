@@ -38,7 +38,7 @@
 #define CHMOD_PATH "/bin/chmod"
 
 /* Define if your sys/time.h defines struct timezone. */
-#define HAVE_STRUCT_TIMEZONE 1
+/* #define HAVE_STRUCT_TIMEZONE 1 */
 
 /* Define if you have the alarm function.  */
 #define HAVE_ALARM 1
