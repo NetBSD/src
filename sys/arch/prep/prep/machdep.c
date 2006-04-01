@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56.2.1 2006/03/13 09:06:59 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56.2.2 2006/04/01 12:06:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.2.1 2006/03/13 09:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.2.2 2006/04/01 12:06:27 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -99,6 +99,7 @@ int lcsplx(int);
 void prep_bus_space_init(void);
 
 char bootinfo[BOOTINFO_MAXSIZE];
+char bootpath[256];
 
 vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
 

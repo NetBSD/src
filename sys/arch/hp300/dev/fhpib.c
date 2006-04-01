@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.31 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.31.2.1 2006/04/01 12:06:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.31 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.31.2.1 2006/04/01 12:06:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,8 @@ fhpibdone(struct hpibbus_softc *hs)
 	hs->sc_addr += cnt;
 	hs->sc_count -= cnt;
 #ifdef DEBUG
-	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == sc->sc_dev.dv_unit)
+	if ((fhpibdebug & FDB_DMA) &&
+	    fhpibdebugunit == device_unit(&sc->sc_dev))
 		printf("fhpibdone: addr %p cnt %d\n",
 		       hs->sc_addr, hs->sc_count);
 #endif
@@ -552,7 +553,8 @@ fhpibintr(void *arg)
 		return(0);
 	}
 #ifdef DEBUG
-	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == sc->sc_dev.dv_unit)
+	if ((fhpibdebug & FDB_DMA) &&
+	    fhpibdebugunit == device_unit(&sc->sc_dev))
 		printf("fhpibintr: flags %x\n", hs->sc_flags);
 #endif
 	hq = hs->sc_queue.tqh_first;
@@ -581,7 +583,7 @@ fhpibintr(void *arg)
 #ifdef DEBUG
 		stat0 = fhpibppoll(hs);
 		if ((fhpibdebug & FDB_PPOLL) &&
-		    fhpibdebugunit == sc->sc_dev.dv_unit)
+		    fhpibdebugunit == device_unit(&sc->sc_dev))
 			printf("fhpibintr: got PPOLL status %x\n", stat0);
 		if ((stat0 & (0x80 >> hq->hq_slave)) == 0) {
 			/*
@@ -592,9 +594,10 @@ fhpibintr(void *arg)
 			stat0 = fhpibppoll(hs);
 			if ((stat0 & (0x80 >> hq->hq_slave)) == 0 &&
 			    (fhpibdebug & FDB_PPOLL) &&
-			    fhpibdebugunit == sc->sc_dev.dv_unit)
+			    fhpibdebugunit == device_unit(&sc->sc_dev))
 				printf("fhpibintr: PPOLL: unit %d slave %d stat %x\n",
-				       sc->sc_dev.dv_unit, hq->hq_slave, stat0);
+				       device_unit(&sc->sc_dev), hq->hq_slave,
+				       stat0);
 		}
 #endif
 		hs->sc_flags &= ~HPIBF_PPOLL;
@@ -668,7 +671,8 @@ fhpibppwatch(void *arg)
 			callout_reset(&sc->sc_ppwatch_ch, 1, fhpibppwatch, sc);
 		return;
 	}
-	if ((fhpibdebug & FDB_PPOLL) && sc->sc_dev.dv_unit == fhpibdebugunit)
+	if ((fhpibdebug & FDB_PPOLL) &&
+	    device_unit(&sc->sc_dev) == fhpibdebugunit)
 		printf("fhpibppwatch: sense request on %s\n",
 		    sc->sc_dev.dv_xname);
 #endif

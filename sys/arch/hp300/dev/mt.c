@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.32 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.32.2.1 2006/04/01 12:06:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.32 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.32.2.1 2006/04/01 12:06:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,8 +189,8 @@ mtattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	unit = self->dv_unit;
-	hpibno = parent->dv_unit;
+	unit = device_unit(self);
+	hpibno = device_unit(parent);
 	slave = ha->ha_slave;
 
 	bufq_alloc(&sc->sc_tab, "fcfs", 0);
@@ -275,7 +275,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 		    sc->sc_lastdsj);
 		return (-1);
 	}
-    getstats:
+ getstats:
 	retval = hpibrecv(sc->sc_hpibno,
 	    (sc->sc_flags & MTF_STATCONT) ? -1 : sc->sc_slave,
 	    MTT_STAT, ((char *)&(sc->sc_stat)) + sc->sc_statindex,
@@ -905,7 +905,7 @@ mtintr(void *arg)
 			tprintf(sc->sc_ttyp,
 				"%s: record (%d) larger than wanted (%d)\n",
 				sc->sc_dev.dv_xname, i, bp->b_bcount);
-    error:
+ error:
 			sc->sc_flags &= ~MTF_IO;
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;

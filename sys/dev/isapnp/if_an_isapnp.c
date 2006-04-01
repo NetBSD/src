@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.11 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.11.8.1 2006/04/01 12:07:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.11 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.11.8.1 2006/04/01 12:07:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ an_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 void
 an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct an_isapnp_softc *isc = (void *) self;
+	struct an_isapnp_softc *isc = device_private(self);
 	struct an_softc *sc = &isc->sc_an;
 	struct isapnp_attach_args *ipa = aux;
 

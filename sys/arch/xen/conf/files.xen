@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.34.2.1 2006/03/13 09:07:03 yamt Exp $
+#	$NetBSD: files.xen,v 1.34.2.2 2006/04/01 12:06:35 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -153,12 +153,12 @@ file   arch/xen/xen/if_xennet.c        xennet_hypervisor needs-flag
 
 # Xen Block device driver and wd/sd/cd identities
 device	xbd: disk
-attach	xbd at xendevbus
-file	arch/xen/xen/xbd.c		xbd | wd_xen | sd_xen | cd_xen needs-flag
-
-#attach	wd at hypervisor with wd_xen
-#attach	sd at hypervisor with sd_xen
-#attach	cd at hypervisor with cd_xen
+attach	xbd at xendevbus with xbd_hypervisor
+attach	xbd at xenbus with xbd_xenbus
+#file	arch/xen/xen/xbd_hypervisor.c	xbd_hypervisor
+file	arch/xen/xen/xbd_xenbus.c	xbd_xenbus
+#file	arch/xen/xen/xbd.c		xbd | xbd_hypervisor | xbd_xenbus needs-flag
+file	arch/xen/xen/xbd.c		xbd_hypervisor needs-flag
 
 # Non-Xen specific devices and options
 

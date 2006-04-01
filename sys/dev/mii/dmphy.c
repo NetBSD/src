@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.23 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.23.2.1 2006/04/01 12:07:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.23 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.23.2.1 2006/04/01 12:07:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ dmphymatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 dmphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;

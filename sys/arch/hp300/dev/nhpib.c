@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.33 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.33.2.1 2006/04/01 12:06:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.33 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.33.2.1 2006/04/01 12:06:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,7 +603,7 @@ nhpibppwatch(void *arg)
 		return;
 again:
 	if (nhpibppoll(hs) & (0x80 >> hs->sc_queue.tqh_first->hq_slave))
-       		sc->sc_regs->hpib_mim = MIS_BO;
+		sc->sc_regs->hpib_mim = MIS_BO;
 	else if (cold)
 		/* timeouts not working yet */
 		goto again;

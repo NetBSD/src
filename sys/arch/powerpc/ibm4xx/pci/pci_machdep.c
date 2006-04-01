@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2006/02/10 20:52:57 gdamore Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3.2.1 2006/04/01 12:06:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2006/02/10 20:52:57 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3.2.1 2006/04/01 12:06:26 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,7 +108,7 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
 	 * use, can have devices 0-32 (i.e. the `normal' range).
 	 */
-	return 5;
+	return 31;
 }
 
 pcitag_t
@@ -160,46 +160,6 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 	bus_space_write_4(&pci_iot, pci_ioh, PCIC_CFGADDR, 0);
 }
 
-
-int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	int pin = pa->pa_intrpin;
-	int dev = pa->pa_device;
-
-	if (pin == 0) {
-		/* No IRQ used. */
-		goto bad;
-	}
-
-	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
-		goto bad;
-	}
-
-	/*
-	 * We need to map the interrupt pin to the interrupt bit in the UIC
-	 * associated with it.  This is highly machine-dependent.
-	 */
-	switch(dev) {
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-		*ihp = 27 + dev;
-		break;
-	default:
-		printf("Hmm.. PCI device %d should not exist on this board\n",
-			dev);
-		goto bad;
-	}
-	return 0;
-
-bad:
-	*ihp = -1;
-	return 1;
-}
-
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
@@ -237,24 +197,6 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
 	intr_disestablish(cookie);
-}
-
-void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
-		   int swiz, int *iline)
-{
-
-	if (bus == 0) {
-		switch(dev) {
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-			*iline = 31 - dev;
-		}
-	} else {
-		*iline = 20 + ((swiz + dev + 1) & 3);
-	}
 }
 
 /* Avoid overconfiguration */

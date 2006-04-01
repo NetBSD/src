@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.101 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.101.2.1 2006/04/01 12:07:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101.2.1 2006/04/01 12:07:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,6 +449,7 @@ nfsrv_lookup(nfsd, slp, lwp, mrq)
 	if (!error)
 		error = VOP_GETATTR(vp, &va, cred, lwp);
 	vput(vp);
+	KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	nfsm_reply(NFSX_SRVFH(v3) + NFSX_POSTOPORFATTR(v3) + NFSX_POSTOPATTR(v3));
 	if (error) {
 		nfsm_srvpostop_attr(dirattr_ret, &dirattr);
@@ -1542,6 +1543,7 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred, lwp);
 		vput(vp);
+		KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	}
 	if (v3) {
 		if (exclusive_flag && !error) {
@@ -1708,6 +1710,7 @@ out:
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred, lwp);
 		vput(vp);
+		KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	}
 	diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
 	vrele(dirp);
@@ -2254,6 +2257,7 @@ abortop:
 		if (!error)
 		    error = VOP_GETATTR(nd.ni_vp, &va, cred, lwp);
 		vput(nd.ni_vp);
+		KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	    } else {
 		vput(nd.ni_vp);
 	    }
@@ -2379,6 +2383,7 @@ nfsrv_mkdir(nfsd, slp, lwp, mrq)
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred, lwp);
 		vput(vp);
+		KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	}
 out:
 	if (dirp) {
@@ -3024,6 +3029,7 @@ again:
 				goto invalid;
 			}
 			vput(nvp);
+			KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 
 			/*
 			 * If either the dircount or maxcount will be

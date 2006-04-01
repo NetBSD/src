@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.109.2.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.109.2.2 2006/04/01 12:07:57 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.109.2.1 2006/03/05 12:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.109.2.2 2006/04/01 12:07:57 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -690,9 +690,13 @@ done:
 #define MASK(entry)     (UVM_ET_ISCOPYONWRITE(entry) ? \
 			 ~VM_PROT_WRITE : VM_PROT_ALL)
 
+/* fault_flag values passed from uvm_fault_wire to uvm_fault_internal */
+#define UVM_FAULT_WIRE 1
+#define UVM_FAULT_WIREMAX 2
+
 int
-uvm_fault(struct vm_map *orig_map, vaddr_t vaddr, vm_fault_t fault_type,
-    vm_prot_t access_type)
+uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
+    vm_prot_t access_type, int fault_flag)
 {
 	struct uvm_faultinfo ufi;
 	vm_prot_t enter_prot, check_prot;
@@ -707,8 +711,8 @@ uvm_fault(struct vm_map *orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	struct vm_page *pages[UVM_MAXRANGE], *pg, *uobjpage;
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, ft=%d, at=%d)",
-	      orig_map, vaddr, fault_type, access_type);
+	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, at=%d, ff=%d)",
+	      orig_map, vaddr, access_type, fault_flag);
 
 	anon = anon_spare = NULL;
 	pg = NULL;
@@ -722,8 +726,7 @@ uvm_fault(struct vm_map *orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	ufi.orig_map = orig_map;
 	ufi.orig_rvaddr = trunc_page(vaddr);
 	ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
-	wire_fault = fault_type == VM_FAULT_WIRE ||
-	    fault_type == VM_FAULT_WIREMAX;
+	wire_fault = (fault_flag > 0);
 	if (wire_fault)
 		narrow = TRUE;		/* don't look for neighborhood
 					 * pages on wire */
@@ -760,7 +763,7 @@ ReFault:
 	 * check protection
 	 */
 
-	check_prot = fault_type == VM_FAULT_WIREMAX ?
+	check_prot = fault_flag == UVM_FAULT_WIREMAX ?
 	    ufi.entry->max_protection : ufi.entry->protection;
 	if ((check_prot & access_type) != access_type) {
 		UVMHIST_LOG(maphist,
@@ -795,7 +798,7 @@ ReFault:
 	 */
 
 	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
-		KASSERT(fault_type != VM_FAULT_WIREMAX);
+		KASSERT(fault_flag != UVM_FAULT_WIREMAX);
 		if (cow_now || (ufi.entry->object.uvm_obj == NULL)) {
 			/* need to clear */
 			UVMHIST_LOG(maphist,
@@ -1809,6 +1812,7 @@ done:
 	return error;
 }
 
+
 /*
  * uvm_fault_wire: wire down a range of virtual addresses in a map.
  *
@@ -1820,7 +1824,7 @@ done:
 
 int
 uvm_fault_wire(struct vm_map *map, vaddr_t start, vaddr_t end,
-    vm_fault_t fault_type, vm_prot_t access_type)
+    vm_prot_t access_type, int wiremax)
 {
 	vaddr_t va;
 	int error;
@@ -1840,7 +1844,8 @@ uvm_fault_wire(struct vm_map *map, vaddr_t start, vaddr_t end,
 	}
 
 	for (va = start ; va < end ; va += PAGE_SIZE) {
-		error = uvm_fault(map, va, fault_type, access_type);
+		error = uvm_fault_internal(map, va, access_type,
+				wiremax ? UVM_FAULT_WIREMAX : UVM_FAULT_WIRE);
 		if (error) {
 			if (va != start) {
 				uvm_fault_unwire(map, start, va);

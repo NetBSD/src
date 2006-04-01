@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.34 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.34.8.1 2006/04/01 12:06:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.34 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.34.8.1 2006/04/01 12:06:55 yamt Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.34 2005/12/11 12:21:22 christos Exp $";
+    "$NetBSD: hpcfb.c,v 1.34.8.1 2006/04/01 12:06:55 yamt Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ hpcfbmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 hpcfbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct hpcfb_softc *sc = (struct hpcfb_softc *)self;
+	struct hpcfb_softc *sc = device_private(self);
 	struct hpcfb_attach_args *ha = aux;
 	struct wsemuldisplaydev_attach_args wa;
 

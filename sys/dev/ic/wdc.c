@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.235 2006/02/20 16:50:37 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.235.2.1 2006/04/01 12:06:59 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.235 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.235.2.1 2006/04/01 12:06:59 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1010,7 +1010,7 @@ __wdcwait_reset(struct ata_channel *chp, int drv_mask, int poll)
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < nloop; timeout++) {
 		if ((drv_mask & 0x01) != 0) {
-			if (wdc && wdc->select)
+			if (wdc->select)
 				wdc->select(chp,0);
 			bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh],
 			    0, WDSD_IBM); /* master */
@@ -1029,7 +1029,7 @@ __wdcwait_reset(struct ata_channel *chp, int drv_mask, int poll)
 #endif
 		}
 		if ((drv_mask & 0x02) != 0) {
-			if (wdc && wdc->select)
+			if (wdc->select)
 				wdc->select(chp,1);
 			bus_space_write_1(wdr->cmd_iot, wdr->cmd_iohs[wd_sdh],
 			    0, WDSD_IBM | 0x10); /* slave */

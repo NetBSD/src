@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.64 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.64.2.1 2006/04/01 12:07:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.64 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.64.2.1 2006/04/01 12:07:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ ssmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 ssattach(struct device *parent, struct device *self, void *aux)
 {
-	struct ss_softc *ss = (void *)self;
+	struct ss_softc *ss = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
@@ -187,7 +187,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 static int
 ssdetach(struct device *self, int flags)
 {
-	struct ss_softc *ss = (struct ss_softc *) self;
+	struct ss_softc *ss = device_private(self);
 	int s, cmaj, mn;
 
 	/* locate the major number */
@@ -209,7 +209,7 @@ ssdetach(struct device *self, int flags)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances */
-	mn = SSUNIT(self->dv_unit);
+	mn = SSUNIT(device_unit(self));
 	vdevgone(cmaj, mn, mn+SSNMINOR-1, VCHR);
 
 	return (0);

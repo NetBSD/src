@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.117 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.117.2.1 2006/04/01 12:07:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.117 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.117.2.1 2006/04/01 12:07:42 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -151,20 +151,25 @@ int nkern_dirs = 2;
 #endif
 
 int kernfs_try_fileop(kfstype, kfsfileop, void *, int);
+int kernfs_try_xread(kfstype, const struct kernfs_node *, char *,
+    size_t, int);
 int kernfs_try_xwrite(kfstype, const struct kernfs_node *, char *,
     size_t, int);
 
+static int kernfs_default_xread(void *v);
 static int kernfs_default_xwrite(void *v);
 static int kernfs_default_fileop_getattr(void *);
 
 /* must include all fileop's */
 const struct kernfs_fileop kernfs_default_fileops[] = {
+  { .kf_fileop = KERNFS_XREAD },
   { .kf_fileop = KERNFS_XWRITE },
   { .kf_fileop = KERNFS_FILEOP_OPEN },
   { .kf_fileop = KERNFS_FILEOP_GETATTR,
     .kf_genop = {kernfs_default_fileop_getattr} },
   { .kf_fileop = KERNFS_FILEOP_IOCTL },
   { .kf_fileop = KERNFS_FILEOP_CLOSE },
+  { .kf_fileop = KERNFS_FILEOP_READ, .kf_genop = {kernfs_default_xread} },
   { .kf_fileop = KERNFS_FILEOP_WRITE, .kf_genop = {kernfs_default_xwrite} },
 };
 
@@ -910,7 +915,7 @@ kernfs_setattr(v)
 }
 
 int
-kernfs_read(v)
+kernfs_default_xread(v)
 	void *v;
 {
 	struct vop_read_args /* {
@@ -938,6 +943,21 @@ kernfs_read(v)
 	if ((error = kernfs_xread(kfs, off, &bf, sizeof(strbuf), &len)) == 0)
 		error = uiomove(bf, len, uio);
 	return (error);
+}
+
+int
+kernfs_read(v)
+	void *v;
+{
+	struct vop_read_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int  a_ioflag;
+		struct ucred *a_cred;
+	} */ *ap = v;
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
+
+	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_READ, v, 0);
 }
 
 static int

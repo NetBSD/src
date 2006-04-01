@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.20 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.20.8.1 2006/04/01 12:07:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.20 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.20.8.1 2006/04/01 12:07:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,8 @@ kbd_zs_attach(parent, self, aux)
 	void   *aux;
 
 {
-	struct zsc_softc *zsc = (void *) parent;
-	struct kbd_sun_softc *k = (void *) self;
+	struct zsc_softc *zsc = device_private(parent);
+	struct kbd_sun_softc *k = device_private(self);
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	int channel;

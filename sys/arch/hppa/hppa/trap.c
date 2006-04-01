@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30.8.1 2006/03/13 09:06:53 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.8.2 2006/04/01 12:06:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.8.1 2006/03/13 09:06:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.8.2 2006/04/01 12:06:18 yamt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -820,12 +820,12 @@ do_onfault:
 
 		onfault = l->l_addr->u_pcb.pcb_onfault;
 		l->l_addr->u_pcb.pcb_onfault = 0;
-		ret = uvm_fault(map, va, 0, vftype);
+		ret = uvm_fault(map, va, vftype);
 		l->l_addr->u_pcb.pcb_onfault = onfault;
 
 #ifdef TRAPDEBUG
-		printf("uvm_fault(%p, %x, %d, %d)=%d\n",
-		    map, (u_int)va, 0, vftype, ret);
+		printf("uvm_fault(%p, %x, %d)=%d\n",
+		    map, (u_int)va, vftype, ret);
 #endif
 
 		if (map != kernel_map)
@@ -863,8 +863,8 @@ do_onfault:
 				if (l->l_addr->u_pcb.pcb_onfault) {
 					goto do_onfault;
 				}
-				panic("trap: uvm_fault(%p, %lx, %d, %d): %d",
-				    map, va, 0, vftype, ret);
+				panic("trap: uvm_fault(%p, %lx, %d): %d",
+				    map, va, vftype, ret);
 			}
 		}
 		break;

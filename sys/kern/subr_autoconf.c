@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.108 2006/02/23 05:48:12 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.108.2.1 2006/04/01 12:07:40 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.108 2006/02/23 05:48:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.108.2.1 2006/04/01 12:07:40 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1613,11 +1613,23 @@ device_is_active(device_t dev)
 	return ((dev->dv_flags & DVF_ACTIVE) != 0);
 }
 
-int *
-device_locators(device_t dev)
+int
+device_locator(device_t dev, u_int locnum)
 {
 
-	return (dev->dv_locators);
+	KASSERT(dev->dv_locators != NULL);
+	return (dev->dv_locators[locnum]);
+}
+
+void *
+device_private(device_t dev)
+{
+
+	/*
+	 * For now, at least, "struct device" is the first thing in
+	 * the driver's private data.  So, we just return ourselves.
+	 */
+	return (dev);
 }
 
 /*

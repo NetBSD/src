@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.9.8.1 2006/03/13 09:06:51 yamt Exp $ */
+/* $NetBSD: except.c,v 1.9.8.2 2006/04/01 12:06:05 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.9.8.1 2006/03/13 09:06:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.9.8.2 2006/04/01 12:06:05 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -202,7 +202,7 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	KASSERT(current_intr_depth == 0);
 
 	for (;;) {
-		error = uvm_fault(map, va, 0, atype);
+		error = uvm_fault(map, va, atype);
 		if (error != ENOMEM)
 			break;
 		log(LOG_WARNING, "pid %d.%d: VM shortage, sleeping\n",

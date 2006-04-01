@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.55.2.1 2006/03/13 09:07:39 yamt Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.55.2.2 2006/04/01 12:07:50 yamt Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.55.2.1 2006/03/13 09:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.55.2.2 2006/04/01 12:07:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,16 +269,7 @@ nd6_ra_input(m, off, icmp6len)
 	memset(&drtr, 0, sizeof(drtr));
 	drtr.rtaddr = saddr6;
 	drtr.flags  = nd_ra->nd_ra_flags_reserved;
-	if (rtpref(&drtr) == RTPREF_RESERVED) {
-		/*
-		 * "reserved" router preference should be treated as
-		 * 0-lifetime.  Note that rtpref() covers the case that the
-		 * kernel is not cnofigured to support the preference
-		 * extension.
-		 */
-		drtr.rtlifetime = 0;
-	} else 
-		drtr.rtlifetime = ntohs(nd_ra->nd_ra_router_lifetime);
+	drtr.rtlifetime = ntohs(nd_ra->nd_ra_router_lifetime);
 	drtr.expire = time.tv_sec + drtr.rtlifetime;
 	drtr.ifp = ifp;
 	/* unspecified or not? (RFC 2461 6.3.4) */
@@ -736,9 +727,8 @@ rtpref(struct nd_defrouter *dr)
 	case ND_RA_FLAG_RTPREF_HIGH:
 		return (RTPREF_HIGH);
 	case ND_RA_FLAG_RTPREF_MEDIUM:
-		return (RTPREF_MEDIUM);
 	case ND_RA_FLAG_RTPREF_RSV:
-		return (RTPREF_RESERVED);
+		return (RTPREF_MEDIUM);
 	case ND_RA_FLAG_RTPREF_LOW:
 		return (RTPREF_LOW);
 	default:

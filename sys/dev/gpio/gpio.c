@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.5 2006/02/20 03:18:36 riz Exp $ */
+/* $NetBSD: gpio.c,v 1.5.2.1 2006/04/01 12:06:55 yamt Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.5 2006/02/20 03:18:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.5.2.1 2006/04/01 12:06:55 yamt Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -78,7 +78,7 @@ gpio_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 gpio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct gpio_softc *sc = (struct gpio_softc *)self;
+	struct gpio_softc *sc = device_private(self);
 	struct gpiobus_attach_args *gba = aux;
 
 	sc->sc_gc = gba->gba_gc;
@@ -106,7 +106,7 @@ gpio_detach(struct device *self, int flags)
 			break;
 
 	/* Nuke the vnodes for any open instances (calls close) */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 #endif
 
@@ -116,7 +116,7 @@ gpio_detach(struct device *self, int flags)
 int
 gpio_activate(struct device *self, enum devact act)
 {
-	struct gpio_softc *sc = (struct gpio_softc *)self;
+	struct gpio_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

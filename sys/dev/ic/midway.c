@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.68 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: midway.c,v 1.68.8.1 2006/04/01 12:06:58 yamt Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68.8.1 2006/04/01 12:06:58 yamt Exp $");
 
 #include "opt_natm.h"
 
@@ -162,6 +162,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.68 2005/12/11 12:21:27 christos Exp $")
 #include <sys/proc.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <net/if_atm.h>
 
 #ifdef __NetBSD__

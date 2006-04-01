@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.19 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: bthci.c,v 1.19.2.1 2006/04/01 12:06:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.19 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.19.2.1 2006/04/01 12:06:54 yamt Exp $");
 
 #include "bthcidrv.h"
 
@@ -210,7 +210,7 @@ bthci_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&bthci_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	DPRINTFN(1, ("%s: driver detached\n", __func__));

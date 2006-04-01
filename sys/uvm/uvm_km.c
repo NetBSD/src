@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.84 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.84.8.1 2006/04/01 12:07:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.84 2005/12/11 12:25:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.84.8.1 2006/04/01 12:07:58 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -476,7 +476,7 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, boolean_t intrsafe)
 
 	KDASSERT(VM_MIN_KERNEL_ADDRESS <= start);
 	KDASSERT(start < end);
-	KDASSERT(end < VM_MAX_KERNEL_ADDRESS);
+	KDASSERT(end <= VM_MAX_KERNEL_ADDRESS);
 
 	for (va = start; va < end; va += PAGE_SIZE) {
 		if (pmap_extract(pmap_kernel(), va, &pa)) {

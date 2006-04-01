@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.109.2.1 2006/03/13 09:07:20 yamt Exp $  */
+/*	$NetBSD: atw.c,v 1.109.2.2 2006/04/01 12:06:57 yamt Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.109.2.1 2006/03/13 09:07:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.109.2.2 2006/04/01 12:06:57 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -3470,7 +3470,7 @@ atw_start(struct ifnet *ifp)
 			}
 		}
 
-		rate = MAX(ieee80211_get_rate(ic), 2);
+		rate = MAX(ieee80211_get_rate(ni), 2);
 
 		whm = mtod(m0, struct ieee80211_frame_min *);
 

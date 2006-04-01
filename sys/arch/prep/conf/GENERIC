@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113.2.1 2006/03/13 09:06:59 yamt Exp $
+# $NetBSD: GENERIC,v 1.113.2.2 2006/04/01 12:06:26 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.113.2.1 $"
+#ident		"GENERIC-$Revision: 1.113.2.2 $"
 
 maxusers	32
 
@@ -154,6 +154,8 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	RESIDUAL_DATA_DUMP	# verbosely dump residual data
+#options		NVRAM_DUMP	# verbosely dump contents of nvram.
+				# Warning: output may not be ascii!
 
 #options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
@@ -244,6 +246,7 @@ isabeep0 at pcppi?			# "keyboard" beep
 mcclock0 at isa? port 0x70		# mc146818 and compatible
 mkclock0 at isa? port 0x74		# mk48t18 and compatible
 
+nvram*	at pnpbus?
 
 # Cryptographic Devices
 
@@ -543,7 +546,7 @@ pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
