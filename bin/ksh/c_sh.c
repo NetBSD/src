@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.11 2006/03/18 07:24:40 christos Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.12 2006/04/01 23:39:58 christos Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.11 2006/03/18 07:24:40 christos Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.12 2006/04/01 23:39:58 christos Exp $");
 #endif
 
 
@@ -432,6 +432,7 @@ c_eval(wp)
 	char **wp;
 {
 	register struct source *s;
+	int rv;
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
@@ -465,7 +466,9 @@ c_eval(wp)
 		exstat = subst_exstat;
 	}
 
-	return shell(s, FALSE);
+	rv = shell(s, FALSE);
+	afree(s, ATEMP);
+	return rv;
 }
 
 int
