@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.29 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.30 2006/04/01 23:34:43 christos Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.29 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.30 2006/04/01 23:34:43 christos Exp $");
 #endif
 
 
@@ -142,7 +142,7 @@ static int      x_search    ARGS((char *pat, int sameline, int offset));
 static int      x_match     ARGS((char *str, char *pat));
 static void	x_redraw    ARGS((int limit));
 static void     x_push      ARGS((int nchars));
-static char *   x_mapin     ARGS((const char *cp));
+static char *   x_mapin     ARGS((const char *cp, Area *area));
 static char *   x_mapout    ARGS((int c));
 static void     x_print     ARGS((int prefix, int key));
 static void	x_adjust    ARGS((void));
@@ -1347,12 +1347,13 @@ x_stuff(c)
 }
 
 static char *
-x_mapin(cp)
+x_mapin(cp, area)
 	const char *cp;
+	Area *area;
 {
 	char *new, *op;
 
-	op = new = str_save(cp, ATEMP);
+	op = new = str_save(cp, area);
 	while (*cp)  {
 		/* XXX -- should handle \^ escape? */
 		if (*cp == '^')  {
@@ -1455,7 +1456,7 @@ x_bind(a1, a2, macro, list)
 		return 0;
 	}
 
-	m1 = x_mapin(a1);
+	m2 = m1 = x_mapin(a1, ATEMP);
 	prefix = key = 0;
 	for (;; m1++) {
 		key = *m1 & CHARMASK;
@@ -1470,6 +1471,7 @@ x_bind(a1, a2, macro, list)
 		else
 			break;
 	}
+	afree(m2, ATEMP);
 
 	if (a2 == NULL) {
 		x_print(prefix, key);
@@ -1495,8 +1497,7 @@ x_bind(a1, a2, macro, list)
 #endif /* 0 */
 	} else {
 		f = XFUNC_ins_string;
-		m2 = x_mapin(a2);
-		sp = str_save(m2, AEDIT);
+		sp = x_mapin(a2, AEDIT);
 	}
 
 	if (x_tab[prefix][key] == XFUNC_ins_string && x_atab[prefix][key])
