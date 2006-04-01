@@ -1,4 +1,4 @@
-/*	$NetBSD: gcore.c,v 1.8 2005/01/09 17:47:45 christos Exp $	*/
+/*	$NetBSD: gcore.c,v 1.9 2006/04/01 22:34:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gcore.c,v 1.8 2005/01/09 17:47:45 christos Exp $");
+__RCSID("$NetBSD: gcore.c,v 1.9 2006/04/01 22:34:01 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/ptrace.h>
 #include <sys/proc.h>
+#include <sys/wait.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -88,16 +89,42 @@ main(int argc, char **argv)
 
 	for (c = optind; c < argc; c++) {
 		char *ep;
-		long lval;
+		u_long lval;
+		int status, serrno;
+		pid_t pid, cpid;
 
 		errno = 0;
-		lval = strtol(argv[c], &ep, 0);
+		lval = strtoul(argv[c], &ep, 0);
 		if (argv[c] == '\0' || *ep)
 			errx(1, "`%s' is not a number.", argv[c]);
-		if (errno == ERANGE && (lval == LONG_MAX || lval == LONG_MIN))
+
+		if (errno == ERANGE && lval == ULONG_MAX)
 			err(1, "Pid `%s'", argv[c]);
-		if (ptrace(PT_DUMPCORE, (pid_t)lval, corename, corelen) == -1)
-			err(1, "ptrace(PT_DUMPCORE) failed");
+
+		pid = (pid_t)lval;
+
+		if (ptrace(PT_ATTACH, pid, 0, 0) == -1)
+			err(1, "ptrace(PT_ATTACH) to %lu failed", lval);
+
+		if ((cpid = waitpid(pid, &status, 0)) != pid) {
+			serrno = errno;
+			(void)ptrace(PT_DETACH, pid, (void *)1, 0);
+			errno = serrno;
+			if (cpid == -1)
+				err(1, "Cannot wait for %lu", lval);
+			else
+				errx(1, "Unexpected process %lu waited",
+				    (unsigned long)cpid);
+		}
+
+		if (ptrace(PT_DUMPCORE, pid, corename, corelen) == -1) {
+			serrno = errno;
+			(void)ptrace(PT_DETACH, pid, (void *)1, 0);
+			errno = serrno;
+			err(1, "ptrace(PT_DUMPCORE) to %lu failed", lval);
+		}
+		if (ptrace(PT_DETACH, pid, (void *)1, 0) == -1)
+			err(1, "ptrace(PT_DETACH) to %lu failed", lval);
 	}
 	return 0;
 }
