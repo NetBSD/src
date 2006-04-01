@@ -1,4 +1,4 @@
-/* $NetBSD: fdfs.c,v 1.1 2006/03/30 19:10:13 perseant Exp $	 */
+/* $NetBSD: fdfs.c,v 1.2 2006/04/01 23:50:50 christos Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -126,11 +126,11 @@ fd_reclaim(struct uvnode *vp)
 	struct ubuf *bp;
 	struct fdfs *fs;
 
-	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
+	while ((bp = LIST_FIRST(&vp->v_dirtyblkhd)) != NULL) {
 		bremfree(bp);
 		buf_destroy(bp);
 	}
-	LIST_FOREACH(bp, &vp->v_cleanblkhd, b_vnbufs) {
+	while ((bp = LIST_FIRST(&vp->v_cleanblkhd)) != NULL) {
 		bremfree(bp);
 		buf_destroy(bp);
 	}
