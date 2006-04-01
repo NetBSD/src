@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.161 2006/03/31 02:31:37 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.162 2006/04/01 00:13:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.161 2006/03/31 02:31:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.162 2006/04/01 00:13:01 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1892,6 +1892,8 @@ again:
 	    ap->a_flags, 0) < 0) {
 		simple_unlock(&vp->v_interlock);
 		sp->vp = NULL;
+		if (!seglocked)
+			lfs_segunlock(fs);
 		return EDEADLK;
 	}
 
