@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.1.2.2 2006/03/13 09:06:59 yamt Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.1.2.3 2006/04/01 12:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.1.2.2 2006/03/13 09:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.1.2.3 2006/04/01 12:06:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,10 +100,12 @@ pnp_newirq(void *v, struct pnpresources *r, int size)
 	irq = malloc(sizeof(struct pnpbus_irq), M_DEVBUF, M_NOWAIT);
 
 	irq->mask = le16dec(&p->IRQMask[0]);
+
+	/* XXX default to level, not edge, based on the powerstack E0 */
 	if (size > 2)
 		irq->flags = p->IRQInfo;
 	else
-		irq->flags = 0x01;
+		irq->flags = 0x0c;
 
 	SIMPLEQ_INSERT_TAIL(&r->irq, irq, next);
 	r->numirq++;
@@ -145,6 +147,25 @@ pnp_newioport(void *v, struct pnpresources *r, int size)
 	io->align = p->IOAlign;
 	io->len = p->IONum;
 	io->flags = p->IOInfo;
+
+	SIMPLEQ_INSERT_TAIL(&r->io, io, next);
+	r->numio++;
+
+	return 0;
+}
+
+static int
+pnp_newfixedioport(void *v, struct pnpresources *r, int size)
+{
+	struct _S9_Pack *p = v;
+	struct pnpbus_io *io;
+
+	io = malloc(sizeof(struct pnpbus_io), M_DEVBUF, M_NOWAIT);
+	io->minbase = (p->Range[0] | (p->Range[1] << 8)) & 0x3ff;
+	io->len = p->IONum;
+	io->maxbase = -1;
+	io->flags = 0;
+	io->align = 1;
 
 	SIMPLEQ_INSERT_TAIL(&r->io, io, next);
 	r->numio++;
@@ -238,6 +259,9 @@ pnpbus_scan(struct pnpbus_dev_attach_args *pna, PPC_DEVICE *dev)
 			case IOPort:
 				pnp_newioport(v, r, size);
 				break;
+			case FixedIOPort:
+				pnp_newfixedioport(v, r, size);
+				break;
 			}
 		} else {
 			struct _L4_Pack *pack = v;
@@ -246,7 +270,6 @@ pnpbus_scan(struct pnpbus_dev_attach_args *pna, PPC_DEVICE *dev)
 			q = p;
 			size = (q[1] | (q[2] << 8)) + 3 /* tag + length */;
 			item = tag_large_item_name(tag);
-			printf("large vi item %d, %d\n", item, pa->Type);
 			if (item == LargeVendorItem &&
 			    pa->Type == LV_GenericAddress)
 				pnp_newaddr(v, r, size);
@@ -376,22 +399,21 @@ pnpbus_printres(struct pnpresources *r)
 	}
 }
 
+void
+pnpbus_print_devres(struct pnpbus_dev_attach_args *pna)
+{
+	aprint_normal(": ");
+	pnpbus_printres(&pna->pna_res);
+	aprint_normal("\n");
+}
+
 static int
 pnpbus_print(void *args, const char *name)
 {
 	struct pnpbus_dev_attach_args *pna = args;
 
-	pnpbus_printres(&pna->pna_res);
-	
+	pnpbus_print_devres(pna);	
 	return (UNCONF);
-}
-
-void
-pnpbus_print_devres(struct pnpbus_dev_attach_args *pna)
-{
-	aprint_normal(" ");
-	pnpbus_printres(&pna->pna_res);
-	aprint_normal("\n");
 }
 
 /*

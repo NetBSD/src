@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.19.8.1 2006/03/13 09:07:02 yamt Exp $	*/
+/*	$NetBSD: sbic.c,v 1.19.8.2 2006/04/01 12:06:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.19.8.1 2006/03/13 09:07:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.19.8.2 2006/04/01 12:06:28 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -221,7 +221,7 @@ wd33c93_attach(struct wd33c93_softc *dev)
 		return;
 	}
 
-	dev->sc_cfflags = dev->sc_dev.dv_cfdata->cf_flags;
+	dev->sc_cfflags = device_cfdata(&dev->sc_dev)->cf_flags;
 	wd33c93_init(dev);
 
 	dev->sc_child = config_found(&dev->sc_dev, &dev->sc_channel,

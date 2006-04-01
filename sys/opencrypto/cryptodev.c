@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.17.2.1 2006/03/13 09:07:43 yamt Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.17.2.2 2006/04/01 12:07:51 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.17.2.1 2006/03/13 09:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.17.2.2 2006/04/01 12:07:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,8 +255,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 				goto bail;
 			}
 
-			MALLOC(crie.cri_key, u_int8_t *,
-			    crie.cri_klen / 8, M_XDATA, M_WAITOK);
+			crie.cri_key = malloc(crie.cri_klen / 8, M_XDATA,
+			    M_WAITOK);
 			if ((error = copyin(sop->key, crie.cri_key,
 			    crie.cri_klen / 8)))
 				goto bail;
@@ -275,8 +275,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 			}
 
 			if (cria.cri_klen) {
-				MALLOC(cria.cri_key, u_int8_t *,
-				    cria.cri_klen / 8, M_XDATA, M_WAITOK);
+				cria.cri_key = malloc(cria.cri_klen / 8,
+				    M_XDATA, M_WAITOK);
 				if ((error = copyin(sop->mackey, cria.cri_key,
 				    cria.cri_klen / 8)))
 					goto bail;
@@ -564,7 +564,7 @@ cryptodev_key(struct crypt_kop *kop)
 		size = (krp->krp_param[i].crp_nbits + 7) / 8;
 		if (size == 0)
 			continue;
-		MALLOC(krp->krp_param[i].crp_p, caddr_t, size, M_XDATA, M_WAITOK);
+		krp->krp_param[i].crp_p = malloc(size, M_XDATA, M_WAITOK);
 		if (i >= krp->krp_iparams)
 			continue;
 		error = copyin(kop->crk_param[i].crp_p, krp->krp_param[i].crp_p, size);

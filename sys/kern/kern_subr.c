@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.128.2.2 2006/03/13 09:07:32 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.128.2.3 2006/04/01 12:07:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.128.2.2 2006/03/13 09:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.128.2.3 2006/04/01 12:07:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -990,10 +990,11 @@ setroot(struct device *bootdv, int bootpartition)
 			 * unless the device does not use partitions.
 			 */
 			if (DEV_USES_PARTITIONS(bootdv))
-				rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit,
-				    bootpartition);
+				rootdev = MAKEDISKDEV(majdev,
+						      device_unit(bootdv),
+						      bootpartition);
 			else
-				rootdev = makedev(majdev, bootdv->dv_unit);
+				rootdev = makedev(majdev, device_unit(bootdv));
 		}
 	} else {
 
@@ -1100,7 +1101,7 @@ setroot(struct device *bootdv, int bootpartition)
 		else {
 			dumpdv = rootdv;
 			dumpdev = MAKEDISKDEV(major(rootdev),
-			    dumpdv->dv_unit, 1);
+			    device_unit(dumpdv), 1);
 		}
 	}
 
@@ -1237,9 +1238,10 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 			if (majdev < 0)
 				panic("parsedisk");
 			if (DEV_USES_PARTITIONS(dv))
-				*devp = MAKEDISKDEV(majdev, dv->dv_unit, part);
+				*devp = MAKEDISKDEV(majdev, device_unit(dv),
+						    part);
 			else
-				*devp = makedev(majdev, dv->dv_unit);
+				*devp = makedev(majdev, device_unit(dv));
 		}
 
 		if (device_class(dv) == DV_IFNET)

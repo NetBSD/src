@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.16 2006/02/20 16:50:36 thorpej Exp $ */
+/*	$NetBSD: sscom.c,v 1.16.2.1 2006/04/01 12:06:10 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.16 2006/02/20 16:50:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.16.2.1 2006/04/01 12:06:10 yamt Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -492,7 +492,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&sscom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		printf("%s: console (major=%d)\n", sc->sc_dev.dv_xname, maj);
 	}

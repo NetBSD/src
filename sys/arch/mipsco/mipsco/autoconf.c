@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2006/02/21 04:32:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.2.1 2006/04/01 12:06:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2006/02/21 04:32:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.2.1 2006/04/01 12:06:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,9 @@ findroot(devpp, partp)
 	struct device *dv;
 
 	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
-		if (device_class(dv) == boot_class && dv->dv_unit == boot_id) {
+		if (device_class(dv) == boot_class &&
+		    /* XXX device_unit() abuse */
+		    device_unit(dv) == boot_id) {
 			*devpp = dv;
 			*partp = boot_part;
 			return;

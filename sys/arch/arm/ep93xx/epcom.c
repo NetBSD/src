@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.7.2.1 2006/03/13 09:06:52 yamt Exp $ */
+/*	$NetBSD: epcom.c,v 1.7.2.2 2006/04/01 12:06:09 yamt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.7.2.1 2006/03/13 09:06:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.7.2.2 2006/04/01 12:06:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -236,7 +236,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&epcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}

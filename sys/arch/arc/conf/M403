@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.40 2006/02/05 05:01:49 cube Exp $
+#	$NetBSD: M403,v 1.40.2.1 2006/04/01 12:06:09 yamt Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -209,7 +209,7 @@ pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices

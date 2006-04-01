@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.112 2006/02/24 11:46:20 bjh21 Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.112.2.1 2006/04/01 12:07:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.112 2006/02/24 11:46:20 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.112.2.1 2006/04/01 12:07:40 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -183,6 +183,7 @@ static void	pool_prime_page(struct pool *, caddr_t,
 		    struct pool_item_header *);
 static void	pool_update_curpage(struct pool *);
 
+static int	pool_grow(struct pool *, int);
 void		*pool_allocator_alloc(struct pool *, int);
 void		pool_allocator_free(struct pool *, void *);
 
@@ -867,6 +868,8 @@ pool_get(struct pool *pp, int flags)
 	 * has no items in its bucket.
 	 */
 	if ((ph = pp->pr_curpage) == NULL) {
+		int error;
+
 #ifdef DIAGNOSTIC
 		if (pp->pr_nitems != 0) {
 			simple_unlock(&pp->pr_slock);
@@ -882,18 +885,9 @@ pool_get(struct pool *pp, int flags)
 		 * may block.
 		 */
 		pr_leave(pp);
-		simple_unlock(&pp->pr_slock);
-		v = pool_allocator_alloc(pp, flags);
-		if (__predict_true(v != NULL))
-			ph = pool_alloc_item_header(pp, v, flags);
-
-		if (__predict_false(v == NULL || ph == NULL)) {
-			if (v != NULL)
-				pool_allocator_free(pp, v);
-
-			simple_lock(&pp->pr_slock);
-			pr_enter(pp, file, line);
-
+		error = pool_grow(pp, flags);
+		pr_enter(pp, file, line);
+		if (error != 0) {
 			/*
 			 * We were unable to allocate a page or item
 			 * header, but we released the lock during
@@ -921,14 +915,7 @@ pool_get(struct pool *pp, int flags)
 			pr_leave(pp);
 			ltsleep(pp, PSWP, pp->pr_wchan, hz, &pp->pr_slock);
 			pr_enter(pp, file, line);
-			goto startover;
 		}
-
-		/* We have more memory; add it to the pool */
-		simple_lock(&pp->pr_slock);
-		pr_enter(pp, file, line);
-		pool_prime_page(pp, v, ph);
-		pp->pr_npagealloc++;
 
 		/* Start the allocation process over. */
 		goto startover;
@@ -1204,35 +1191,57 @@ pool_put(struct pool *pp, void *v)
 #endif
 
 /*
+ * pool_grow: grow a pool by a page.
+ *
+ * => called with pool locked.
+ * => unlock and relock the pool.
+ * => return with pool locked.
+ */
+
+static int
+pool_grow(struct pool *pp, int flags)
+{
+	struct pool_item_header *ph = NULL;
+	char *cp;
+
+	simple_unlock(&pp->pr_slock);
+	cp = pool_allocator_alloc(pp, flags);
+	if (__predict_true(cp != NULL)) {
+		ph = pool_alloc_item_header(pp, cp, flags);
+	}
+	if (__predict_false(cp == NULL || ph == NULL)) {
+		if (cp != NULL) {
+			pool_allocator_free(pp, cp);
+		}
+		simple_lock(&pp->pr_slock);
+		return ENOMEM;
+	}
+
+	simple_lock(&pp->pr_slock);
+	pool_prime_page(pp, cp, ph);
+	pp->pr_npagealloc++;
+	pp->pr_minpages++;
+	return 0;
+}
+
+/*
  * Add N items to the pool.
  */
 int
 pool_prime(struct pool *pp, int n)
 {
-	struct pool_item_header *ph = NULL;
-	caddr_t cp;
 	int newpages;
+	int error = 0;
 
 	simple_lock(&pp->pr_slock);
 
 	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	while (newpages-- > 0) {
-		simple_unlock(&pp->pr_slock);
-		cp = pool_allocator_alloc(pp, PR_NOWAIT);
-		if (__predict_true(cp != NULL))
-			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-
-		if (__predict_false(cp == NULL || ph == NULL)) {
-			if (cp != NULL)
-				pool_allocator_free(pp, cp);
-			simple_lock(&pp->pr_slock);
+		error = pool_grow(pp, PR_NOWAIT);
+		if (error) {
 			break;
 		}
-
-		simple_lock(&pp->pr_slock);
-		pool_prime_page(pp, cp, ph);
-		pp->pr_npagealloc++;
 		pp->pr_minpages++;
 	}
 
@@ -1240,7 +1249,7 @@ pool_prime(struct pool *pp, int n)
 		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
 
 	simple_unlock(&pp->pr_slock);
-	return (0);
+	return error;
 }
 
 /*
@@ -1345,34 +1354,15 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 static int
 pool_catchup(struct pool *pp)
 {
-	struct pool_item_header *ph = NULL;
-	caddr_t cp;
 	int error = 0;
 
 	while (POOL_NEEDS_CATCHUP(pp)) {
-		/*
-		 * Call the page back-end allocator for more memory.
-		 *
-		 * XXX: We never wait, so should we bother unlocking
-		 * the pool descriptor?
-		 */
-		simple_unlock(&pp->pr_slock);
-		cp = pool_allocator_alloc(pp, PR_NOWAIT);
-		if (__predict_true(cp != NULL))
-			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		if (__predict_false(cp == NULL || ph == NULL)) {
-			if (cp != NULL)
-				pool_allocator_free(pp, cp);
-			error = ENOMEM;
-			simple_lock(&pp->pr_slock);
+		error = pool_grow(pp, PR_NOWAIT);
+		if (error) {
 			break;
 		}
-		simple_lock(&pp->pr_slock);
-		pool_prime_page(pp, cp, ph);
-		pp->pr_npagealloc++;
 	}
-
-	return (error);
+	return error;
 }
 
 static void

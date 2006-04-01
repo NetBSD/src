@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.90 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.90.8.1 2006/04/01 12:07:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.90 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.90.8.1 2006/04/01 12:07:05 yamt Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1472,7 +1472,7 @@ gus_dmaout_timeout(void *arg)
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 #if 0
 	/* XXX we will dmadone below? */
-	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_playdrq);
+	isa_dmaabort(device_parent(&sc->sc_dev), sc->sc_playdrq);
 #endif
 
 	gus_dmaout_dointr(sc);
@@ -2390,7 +2390,7 @@ gus_round_blocksize(void * addr, int blocksize,
 		FREE(sc->sc_deintr_buf, M_DEVBUF);
 		sc->sc_deintr_buf = NULL;
 	}
-	MALLOC(sc->sc_deintr_buf, void *, blocksize>>1, M_DEVBUF, M_WAITOK);
+	sc->sc_deintr_buf = malloc(blocksize>>1, M_DEVBUF, M_WAITOK);
 
 	sc->sc_blocksize = blocksize;
 	/* multi-buffering not quite working yet. */

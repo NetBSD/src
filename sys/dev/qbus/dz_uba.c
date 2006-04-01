@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.23 2005/12/11 12:23:29 christos Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.23.8.1 2006/04/01 12:07:22 yamt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.23 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.23.8.1 2006/04/01 12:07:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ dz_uba_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct dz_softc *sc = (void *)self;
+	struct dz_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 
 	sc->sc_iot = ua->ua_iot;

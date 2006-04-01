@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.35 2006/02/23 05:37:48 thorpej Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.35.2.1 2006/04/01 12:06:34 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.35 2006/02/23 05:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.35.2.1 2006/04/01 12:06:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	rdmakelabel(dl, &rd->sc_xbn);
 	printf("%s", rd->sc_dev.dv_xname);
 	msg = readdisklabel(MAKEDISKDEV(cdevsw_lookup_major(&rd_cdevsw),
-					rd->sc_dev.dv_unit, RAW_PART),
+					device_unit(&rd->sc_dev), RAW_PART),
 			    rdstrategy, dl, NULL);
 	if (msg)
 		printf(": %s", msg);

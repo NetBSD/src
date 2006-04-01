@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 2006/02/26 05:31:54 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.2.1 2006/04/01 12:06:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.2.1 2006/04/01 12:06:28 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -190,7 +190,8 @@ device_register(struct device *dev, void *aux)
 	 */
 	if ( (scsiboot && device_is_a(dev, "wdsc")) ||
 	     (scsiboot && device_is_a(dev, "ahc")) ) {
-		if (dev->dv_unit == booted_slot)
+		/* XXX device_unit() abuse */
+		if (device_unit(dev) == booted_slot)
 			booted_controller = dev;
 		return;
 	}

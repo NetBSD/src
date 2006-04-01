@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.43 2006/02/23 05:37:48 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.43.2.1 2006/04/01 12:06:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.43 2006/02/23 05:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.43.2.1 2006/04/01 12:06:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -697,8 +697,8 @@ dewait(ds, fn)
 	addr->pchigh = csr0 >> 8;
 	if (csr0 & PCSR0_PCEI) {
 		char bits[64];
-		printf("de%d: %s failed, csr0=%s ", ds->ds_dev.dv_unit, fn,
-		    bitmask_snprintf(csr0, PCSR0_BITS, bits, sizeof(bits)));
+		printf("de%d: %s failed, csr0=%s ", device_unit(&ds->ds_dev),
+		    fn, bitmask_snprintf(csr0, PCSR0_BITS, bits, sizeof(bits)));
 		printf("csr1=%s\n", bitmask_snprintf(addr->pcsr1, PCSR1_BITS,
 		    bits, sizeof(bits)));
 	}

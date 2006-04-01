@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.163.10.1 2006/03/13 09:07:02 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.163.10.2 2006/04/01 12:06:29 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163.10.1 2006/03/13 09:07:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163.10.2 2006/04/01 12:06:29 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -870,7 +870,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 			}
 			if (rv > 0)
 				return;
-			rv = uvm_fault(kernel_map, va, 0, atype);
+			rv = uvm_fault(kernel_map, va, atype);
 			if (rv == 0)
 				return;
 			goto kfault;
@@ -898,7 +898,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		goto out;
 
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, atype);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1133,7 +1133,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 			/* On HS, we have va for both */
 			vm = p->p_vmspace;
 			if (uvm_fault(&vm->vm_map, trunc_page(pc),
-				      0, VM_PROT_READ) != 0)
+				      VM_PROT_READ) != 0)
 #ifdef DEBUG
 				printf("mem_access_fault: "
 					"can't pagein 1st text fault.\n")
@@ -1180,7 +1180,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			rv = uvm_fault(kernel_map, va, 0, atype);
+			rv = uvm_fault(kernel_map, va, atype);
 			if (rv == 0) {
 				KERNEL_UNLOCK();
 				return;
@@ -1198,7 +1198,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	vm = p->p_vmspace;
 
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, atype);
 
 	/*
 	 * If this was a stack access we keep track of the maximum

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.207 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.207.8.1 2006/04/01 12:06:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207 2005/12/24 20:07:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.207.8.1 2006/04/01 12:06:19 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -624,7 +624,7 @@ copyfault:
 		/* Fault the original page in. */
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
-		error = uvm_fault(map, va, 0, ftype);
+		error = uvm_fault(map, va, ftype);
 		pcb->pcb_onfault = onfault;
 		if (error == 0) {
 			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
@@ -665,7 +665,7 @@ copyfault:
 				KERNEL_UNLOCK();
 				goto copyfault;
 			}
-			printf("uvm_fault(%p, %#lx, 0, %d) -> %#x\n",
+			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
 		}
@@ -790,7 +790,7 @@ trapwrite(addr)
 	p = curproc;
 	vm = p->p_vmspace;
 
-	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE) != 0)
+	if (uvm_fault(&vm->vm_map, va, VM_PROT_WRITE) != 0)
 		return 1;
 
 	if ((caddr_t)va >= vm->vm_maxsaddr)

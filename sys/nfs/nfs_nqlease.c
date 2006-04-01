@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.57 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.57.8.1 2006/04/01 12:07:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.57 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.57.8.1 2006/04/01 12:07:50 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -210,6 +210,7 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 			splx(s);
 			return (error);
 		}
+		KASSERT(fh.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 		lpp = NQFHHASH(fh.fh_fid.fid_data);
 		LIST_FOREACH (lp, lpp, lc_hash) {
 			if (fh.fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
@@ -517,6 +518,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred, l)
 			memset((caddr_t)fhp, 0, sizeof(nfh));
 			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 			VFS_VPTOFH(vp, &fhp->fh_fid);
+			KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 			nfsm_srvfhtom(fhp, 1);
 			m = mreq;
 			siz = 0;

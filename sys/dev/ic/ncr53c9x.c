@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.118 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.118.8.1 2006/04/01 12:06:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.118 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.118.8.1 2006/04/01 12:06:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ ncr53c9x_attach(sc)
 	}
 
 	/* Reset state & bus */
-	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
+	sc->sc_cfflags = device_cfdata(&sc->sc_dev)->cf_flags;
 	sc->sc_state = 0;
 	ncr53c9x_init(sc, 1);
 

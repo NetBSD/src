@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.769.2.1 2006/03/13 09:07:26 yamt Exp $
+$NetBSD: pcidevs,v 1.769.2.2 2006/04/01 12:07:16 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1206,7 +1206,7 @@ product BROADCOM BCM5752	0x1600	BCM5752 10/100/1000 Ethernet
 product BROADCOM BCM5750M	0x167c	BCM5750M 10/100/1000 Ethernet
 product BROADCOM BCM5751M	0x167d	BCM5751M 10/100/1000 Ethernet
 product BROADCOM BCM5780	0x166a	BCM5780 1000baseT Ethernet
-product BROADCOM BCM5780S	0x166b	BCM5782S 1000baseX Ethernet
+product BROADCOM BCM5780S	0x166b	BCM5780S 1000baseX Ethernet
 product BROADCOM BCM5782	0x1696	BCM5782 10/100/1000 Ethernet
 product BROADCOM BCM5788	0x169c	BCM5788 10/100/1000 Ethernet
 product BROADCOM BCM5789	0x169d	BCM5789 10/100/1000 Ethernet
@@ -1328,6 +1328,14 @@ product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI Bridge
 product COMPAQ CSA5300		0x4070	Smart Array 5300
 product COMPAQ CSA5i		0x4080	Smart Array 5i
 product COMPAQ CSA532		0x4082	Smart Array 532
+product COMPAQ CSA5312		0x4083	Smart Array 5312
+product COMPAQ CSA6i		0x4091	Smart Array 6i
+product COMPAQ CSA641		0x409a	Smart Array 641
+product COMPAQ CSA642		0x409b	Smart Array 642
+product COMPAQ CSA6400		0x409c	Smart Array 6400
+product COMPAQ CSA6400EM	0x409d	Smart Array 6400 EM
+product COMPAQ CSA6422		0x409e	Smart Array 6422
+product COMPAQ CSA64XX		0x0046	Smart Array 64xx
 product COMPAQ USB		0x7020	USB Controller
 product COMPAQ ASMC		0xa0f0	Advanced Systems Management Controller
 /* MediaGX Cx55x0 built-in OHCI seems to have this ID */
@@ -1341,8 +1349,10 @@ product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
 product COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
 product COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
 product COMPAQ DP4000		0xb011	Deskpro 4000 5233MMX
+product COMPAQ CSA5300_2	0xb060	Smart Array 5300 rev.2
 product COMPAQ PRESARIO56XX	0xb0b8	Presario 56xx
 product COMPAQ M700		0xb112	Armada M700
+product COMPAQ CSA5i_2		0xb178	Smart Array 5i/532 rev.2
 product COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
 product COMPAQ NF3P		0xf130	NetFlex 3/P
 
@@ -1371,6 +1381,7 @@ product COMTROL ROCKETPORTP422	0x000f	RocketPort 2 port RS422
 /* Conexant Systems products */
 product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
 product CONEXANT 56KFAXMODEM	0x1085	HW 56K Fax Modem
+product	CONEXANT LANFINITY	0x1803	LANfinity MiniPCI 10/100 Ethernet
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
@@ -1622,6 +1633,30 @@ product HP J2585A		0x1030	J2585A
 product HP J2585B		0x1031	J2585B
 product HP 82557B		0x1200	82557B 10/100 NIC
 product HP NETRAID_4M		0x10c2	NetRaid-4M
+
+product HP HPSAV100		0x3210	Smart Array V100
+product HP HPSAE200I_1		0x3211	Smart Array E200i
+product HP HPSAE200		0x3212	Smart Array E200
+product HP HPSAE200I_2		0x3213	Smart Array E200i
+product HP HPSAE200I_3		0x3214	Smart Array E200i
+product HP HPSAE200I_4		0x3215	Smart Array E200i
+product HP HPSA_1		0x3220	Smart Array
+product HP HPSA_2		0x3222	Smart Array
+product HP HPSAP800		0x3223	Smart Array P600
+product HP HPSAP600		0x3225	Smart Array P600
+product HP HPSA_3		0x3230	Smart Array
+product HP HPSA_4		0x3231	Smart Array
+product HP HPSA_5		0x3232	Smart Array
+product HP HPSA_6		0x3233	Smart Array
+product HP HPSAP400		0x3234	Smart Array P400
+product HP HPSAP400I		0x3235	Smart Array P400i
+product HP HPSA_7		0x3236	Smart Array
+product HP HPSA_8		0x3237	Smart Array
+product HP HPSA_9		0x3238	Smart Array
+product HP HPSA_10		0x3239	Smart Array
+product HP HPSA_11		0x323a	Smart Array
+product HP HPSA_12		0x323b	Smart Array
+product HP HPSA_13		0x323c	Smart Array
 
 /* Hifn products */
 product HIFN 7751	0x0005	7751

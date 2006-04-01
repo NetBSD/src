@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2006/02/25 02:28:57 wiz Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.2.1 2006/04/01 12:06:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22 2006/02/25 02:28:57 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22.2.1 2006/04/01 12:06:30 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -543,7 +543,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
-			printf("vm_fault(%p, 0x%lx, 0x%x, 0) -> 0x%x\n",
+			printf("vm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			       map, va, ftype, rv);
 			if (mmudebug & MDB_WBFAILED)
 				Debugger();
@@ -581,7 +581,7 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 #endif
 				goto copyfault;
 			}
-			printf("vm_fault(%p, 0x%lx, 0x%x, 0) -> 0x%x\n",
+			printf("vm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			       map, va, ftype, rv);
 			goto dopanic;
 		}

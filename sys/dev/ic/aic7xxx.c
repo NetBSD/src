@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.118 2006/02/25 00:58:35 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.118.2.1 2006/04/01 12:06:56 yamt Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.118 2006/02/25 00:58:35 wiz Exp $
+ * $Id: aic7xxx.c,v 1.118.2.1 2006/04/01 12:06:56 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.118 2006/02/25 00:58:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.118.2.1 2006/04/01 12:06:56 yamt Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -82,7 +82,7 @@ const char *ahc_chip_names[] =
  * Hardware error codes.
  */
 struct ahc_hard_error_entry {
-        uint8_t errno;
+	uint8_t errno;
 	const char *errmesg;
 };
 
@@ -829,7 +829,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		printf("data overrun detected %s."
 		       "  Tag == 0x%x.\n",
 		       ahc_phase_table[i].phasemsg,
-  		       scb->hscb->tag);
+		       scb->hscb->tag);
 		ahc_print_path(ahc, scb);
 		printf("%s seen Data Phase.  Length = %ld.  NumSGs = %d.\n",
 		       ahc_inb(ahc, SEQ_FLAGS) & DPHASE ? "Have" : "Haven't",
@@ -7395,19 +7395,19 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 
 	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
 				       BUS_DMA_WAITOK | flags, mapp)) != 0) {
-                printf("%s: failed to create DMA map for %s, error = %d\n",
+		printf("%s: failed to create DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
-        }
+	}
 	level++;
 
 
 	if ((error = bus_dmamap_load(tag, *mapp, *vaddr, size, NULL,
 				     BUS_DMA_WAITOK)) != 0) {
-                printf("%s: failed to load DMA map for %s, error = %d\n",
+		printf("%s: failed to load DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
-        }
+	}
 
 	*baddr = (*mapp)->dm_segs[0].ds_addr;
 

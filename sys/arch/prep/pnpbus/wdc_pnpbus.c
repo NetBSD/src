@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.1.2.2 2006/03/13 09:06:59 yamt Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.1.2.3 2006/04/01 12:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.1.2.2 2006/03/13 09:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.1.2.3 2006/04/01 12:06:27 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,11 +76,15 @@ static int
 wdc_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pnpbus_dev_attach_args *pna = aux;
+	int ret = 0;
 
 	if (strcmp(pna->pna_devid, "PNP0600") == 0)
-		return (1);
+		ret = 1;
 
-	return (0);
+	if (ret)
+		pnpbus_scan(pna, pna->pna_ppc_dev);
+
+	return ret;
 }
 
 static void
@@ -90,10 +94,6 @@ wdc_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	struct wdc_regs *wdr;
 	struct pnpbus_dev_attach_args *pna = aux;
 	int cmd_iobase, cmd_len, aux_iobase, aux_len, i;
-
-	pnpbus_scan(pna, pna->pna_ppc_dev);
-
-	pnpbus_print_devres(pna);
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
@@ -122,7 +122,8 @@ wdc_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_PREATA;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags & WDC_OPTIONS_32)
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
+	    WDC_OPTIONS_32)
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
 
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;

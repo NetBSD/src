@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.68 2006/02/23 05:37:48 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.68.2.1 2006/04/01 12:06:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68 2006/02/23 05:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68.2.1 2006/04/01 12:06:34 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1655,7 +1655,8 @@ fd_mountroot_hook(struct device *dev)
 	struct fdc_softc *fdc = (void*) device_parent(&fd->sc_dev);
 	int c;
 
-	fd_do_eject(fdc, dev->dv_unit);
+	/* XXX device_unit() abuse */
+	fd_do_eject(fdc, device_unit(dev));
 	printf("Insert filesystem floppy and press return.");
 	for (;;) {
 		c = cngetc();

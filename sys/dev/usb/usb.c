@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.85 2006/03/01 12:38:13 yamt Exp $	*/
+/*	$NetBSD: usb.c,v 1.85.2.1 2006/04/01 12:07:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.85 2006/03/01 12:38:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.85.2.1 2006/04/01 12:07:31 yamt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -222,7 +222,7 @@ USB_ATTACH(usb)
 		 * until the USB event thread is running, which means that
 		 * the keyboard will not work until after cold boot.
 		 */
-		if (cold && (sc->sc_dev.dv_cfdata->cf_flags & 1))
+		if (cold && (device_cfdata(&sc->sc_dev)->cf_flags & 1))
 			dev->hub->explore(sc->sc_bus->root_hub);
 #endif
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.82 2006/03/03 19:57:37 rpaulo Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.82.2.1 2006/04/01 12:07:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82 2006/03/03 19:57:37 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.2.1 2006/04/01 12:07:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -847,6 +847,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	case AF_INET6:
 		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
+		break;
 #endif
 	default:
 		error = EAFNOSUPPORT;

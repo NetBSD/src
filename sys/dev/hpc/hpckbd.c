@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.16 2006/02/13 16:35:57 uwe Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.16.2.1 2006/04/01 12:06:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.16 2006/02/13 16:35:57 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.16.2.1 2006/04/01 12:06:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ void
 hpckbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpckbd_attach_args *haa = aux;
-	struct hpckbd_softc *sc = (void*)self;
+	struct hpckbd_softc *sc = device_private(self);
 	struct hpckbd_ic_if *ic = haa->haa_ic;
 	struct wskbddev_attach_args wa;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.89.8.1 2006/03/13 09:06:59 yamt Exp $	*/
+/*	$NetBSD: scc.c,v 1.89.8.2 2006/04/01 12:06:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.89.8.1 2006/03/13 09:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.89.8.2 2006/04/01 12:06:26 yamt Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -370,7 +370,7 @@ sccattach(parent, self, aux)
 #endif
 	int unit;
 
-	unit = sc->sc_dv.dv_unit;
+	unit = device_unit(&sc->sc_dv);
 
 	sccaddr = (void*)MIPS_PHYS_TO_KSEG1(d->iada_addr);
 
@@ -399,7 +399,7 @@ sccattach(parent, self, aux)
 		pdp++;
 	}
 	/* What's the warning here? Defaulting to softCAR on line 2? */
-	sc->scc_softCAR = sc->sc_dv.dv_cfdata->cf_flags;
+	sc->scc_softCAR = device_cfdata(&sc->sc_dv)->cf_flags;
 
 	/*
 	 * Reset chip, initialize  register-copies in softc.
@@ -1137,7 +1137,7 @@ sccintr(xxxsc)
 	void *xxxsc;
 {
 	struct scc_softc *sc = (struct scc_softc *)xxxsc;
-	int unit = (long)sc->sc_dv.dv_unit;
+	int unit = device_unit(&sc->sc_dv);
 	scc_regmap_t *regs;
 	int rr3;
 
@@ -1372,7 +1372,7 @@ scc_modem_intr(dev)
 	}
 
 	/* Break on serial console drops into the debugger */
-	if ((value & ZSRR0_BREAK) && CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
+	if ((value & ZSRR0_BREAK) && CONSOLE_ON_UNIT(device_unit(&sc->sc_dv))) {
 #ifdef DDB
 		splx(s);		/* spl0()? */
 		console_debugger();
@@ -1387,7 +1387,7 @@ scc_modem_intr(dev)
 	 * On pmax, ignore hups on a console tty.
 	 * On alpha, a no-op, for historical reasons.
 	 */
-	if (!CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
+	if (!CONSOLE_ON_UNIT(device_unit(&sc->sc_dv))) {
 		if (car) {
 			/* carrier present */
 			if (!(tp->t_state & TS_CARR_ON))

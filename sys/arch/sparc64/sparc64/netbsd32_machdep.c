@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.57 2006/02/11 17:57:32 cdi Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.57.2.1 2006/04/01 12:06:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.57 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.57.2.1 2006/04/01 12:06:30 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -91,8 +91,6 @@ const char	machine_arch32[] = "sparc";
 #if NFIRM_EVENTS > 0
 static int ev_out32(struct firm_event *, int, struct uio *);
 #endif
-
-void netbsd32_upcall(struct lwp *, int, int, int, void *, void *, void *, sa_upcall_t);
 
 /*
  * Set up registers on exec.
@@ -414,33 +412,34 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * trampolines.
  */
 void 
-netbsd32_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+netbsd32_cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
-	struct proc *p = l->l_proc;
        	struct trapframe *tf;
 	vaddr_t addr;
 
 	tf = l->l_md.md_tf;
+	addr = (vaddr_t) upcall;
 
-	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
-
-	/* Jump to the upcall handler */
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
-
-#if 0
-/* XXX */
-	/* The upcall itself is in %g1 */
-	tf->tf_global[1] = upcall;
-
+	/* Arguments to the upcall... */
 	tf->tf_out[0] = type;
-	tf->tf_out[1] = sas;
+	tf->tf_out[1] = (vaddr_t) sas;
 	tf->tf_out[2] = nevents;
 	tf->tf_out[3] = ninterrupted;
-	tf->tf_out[4] = ap;
-	tf->tf_out[6] = (vaddr_t)sp;
-#endif
+	tf->tf_out[4] = (vaddr_t) ap;
+
+	/*
+	 * Ensure the stack is double-word aligned, and provide a
+	 * C call frame.
+	 */
+	sp = (void *)(((vaddr_t)sp & ~0x7) - CCFSZ);
+
+	/* Arrange to begin execution at the upcall handler. */
+
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+	tf->tf_out[6] = (vaddr_t) sp;
+	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
 #undef DEBUG
@@ -624,15 +623,13 @@ compat_16_netbsd32___sigreturn14(l, v, retval)
 	return (EJUSTRETURN);
 }
 
-#if 0
 /* Unfortunately we need to convert v9 trapframe to v8 regs */
 int
-netbsd32_process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+netbsd32_process_read_regs(l, regs)
+	struct lwp *l;
+	struct reg32 *regs;
 {
-	struct reg32* regp = (struct reg32*)regs;
-	struct trapframe64* tf = p->p_md.md_tf;
+	struct trapframe64* tf = l->l_md.md_tf;
 	int i;
 
 	/* 
@@ -641,18 +638,19 @@ netbsd32_process_read_regs(p, regs)
 	 * 32-bit emulation flag!
 	 */
 
-	regp->r_psr = TSTATECCR_TO_PSR(tf->tf_tstate);
-	regp->r_pc = tf->tf_pc;
-	regp->r_npc = tf->tf_npc;
-	regp->r_y = tf->tf_y;
+	regs->r_psr = TSTATECCR_TO_PSR(tf->tf_tstate);
+	regs->r_pc = tf->tf_pc;
+	regs->r_npc = tf->tf_npc;
+	regs->r_y = tf->tf_y;
 	for (i = 0; i < 8; i++) {
-		regp->r_global[i] = tf->tf_global[i];
-		regp->r_out[i] = tf->tf_out[i];
+		regs->r_global[i] = tf->tf_global[i];
+		regs->r_out[i] = tf->tf_out[i];
 	}
 	/* We should also write out the ins and locals.  See signal stuff */
 	return (0);
 }
 
+#if 0
 int
 netbsd32_process_write_regs(p, regs)
 	struct proc *p;
@@ -673,30 +671,26 @@ netbsd32_process_write_regs(p, regs)
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(regp->r_psr);
 	return (0);
 }
+#endif
 
 int
-netbsd32_process_read_fpregs(p, regs)
-struct proc	*p;
-struct fpreg	*regs;
+netbsd32_process_read_fpregs(l, regs)
+struct lwp	*l;
+struct fpreg32	*regs;
 {
 	extern struct fpstate64	initfpstate;
 	struct fpstate64	*statep = &initfpstate;
-	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
-	/* NOTE: struct fpreg == struct fpstate */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
+	if (l->l_md.md_fpstate)
+		statep = l->l_md.md_fpstate;
 	for (i=0; i<32; i++)
-		regp->fr_regs[i] = statep->fs_regs[i];
-	regp->fr_fsr = statep->fs_fsr;
-	regp->fr_qsize = statep->fs_qsize;
-	for (i=0; i<statep->fs_qsize; i++)
-		regp->fr_queue[i] = statep->fs_queue[i];
+		regs->fr_regs[i] = statep->fs_regs[i];
 
 	return 0;
 }
 
+#if 0
 int
 netbsd32_process_write_fpregs(p, regs)
 struct proc	*p;
@@ -1336,7 +1330,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	gr[_REG32_O7]  = tf->tf_out[7];
 	*flags |= _UC_CPU;
 
-	mcp->__gwins = NULL;
+	mcp->__gwins = 0;
 	mcp->__xrs.__xrs_id = 0;	/* Solaris extension? */
 	*flags |= _UC_CPU;
 

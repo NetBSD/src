@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.86 2006/02/07 09:13:02 jmmv Exp $ */
+/* $NetBSD: wskbd.c,v 1.86.2.1 2006/04/01 12:07:38 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.86 2006/02/07 09:13:02 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.86.2.1 2006/04/01 12:07:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -391,7 +391,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_base.me_ops = &wskbd_srcops;
 #endif
 #if NWSMUX > 0
-	mux = sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux;
+	mux = device_cfdata(&sc->sc_base.me_dv)->wskbddevcf_mux;
 	if (ap->console) {
 		/* Ignore mux for console; it always goes to the console mux. */
 		/* printf(" (mux %d ignored for console)", mux); */
@@ -400,7 +400,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	if (mux >= 0)
 		printf(" mux %d", mux);
 #else
-	if (sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux >= 0)
+	if (device_cfdata(&sc->sc_base.me_dv)->wskbddevcf_mux >= 0)
 		printf(" (mux ignored)");
 #endif
 
@@ -596,7 +596,7 @@ wskbd_detach(struct device  *self, int flags)
 	maj = cdevsw_lookup_major(&wskbd_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);
@@ -793,8 +793,8 @@ wskbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (ENXIO);
 
 #if NWSMUX > 0
-	DPRINTF(("wskbdopen: %s mux=%p p=%p\n", sc->sc_base.me_dv.dv_xname,
-		 sc->sc_base.me_parent, p));
+	DPRINTF(("wskbdopen: %s mux=%p l=%p\n", sc->sc_base.me_dv.dv_xname,
+		 sc->sc_base.me_parent, l));
 #endif
 
 	if (sc->sc_dying)

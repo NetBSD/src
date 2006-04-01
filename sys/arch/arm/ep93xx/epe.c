@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.6 2006/02/18 05:04:11 thorpej Exp $	*/
+/*	$NetBSD: epe.c,v 1.6.2.1 2006/04/01 12:06:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.6 2006/02/18 05:04:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.6.2.1 2006/04/01 12:06:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -417,8 +417,8 @@ epe_init(struct epe_softc *sc)
 	}
 
 	/* Divide HCLK by 32 for MDC clock */
-	if (sc->sc_dev.dv_cfdata->cf_flags)
-		mdcdiv = sc->sc_dev.dv_cfdata->cf_flags;
+	if (device_cfdata(&sc->sc_dev)->cf_flags)
+		mdcdiv = device_cfdata(&sc->sc_dev)->cf_flags;
 	EPE_WRITE(SelfCtl, (SelfCtl_MDCDIV(mdcdiv)|SelfCtl_PSPRS));
 
 	sc->sc_mii.mii_ifp = ifp;

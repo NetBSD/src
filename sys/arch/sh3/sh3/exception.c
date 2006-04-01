@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.23.8.1 2006/03/13 09:07:02 yamt Exp $	*/
+/*	$NetBSD: exception.c,v 1.23.8.2 2006/04/01 12:06:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23.8.1 2006/03/13 09:07:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23.8.2 2006/04/01 12:06:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -367,7 +367,7 @@ do {									\
 		l->l_flag |= L_SA_PAGEFAULT;
 	}
 
-	err = uvm_fault(map, va, 0, ftype);
+	err = uvm_fault(map, va, ftype);
 
 	/* User stack extension */
 	if (map != kernel_map &&

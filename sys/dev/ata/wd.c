@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.320 2006/03/01 12:38:13 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.320.2.1 2006/04/01 12:06:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.320 2006/03/01 12:38:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.320.2.1 2006/04/01 12:06:54 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -441,7 +441,7 @@ wddetach(struct device *self, int flags)
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = WDMINOR(self->dv_unit, i);
+		mn = WDMINOR(device_unit(self), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
@@ -1060,8 +1060,9 @@ wdgetdisklabel(struct wd_softc *wd)
 		wd->drvp->drive_flags |= DRIVE_RESET;
 		splx(s);
 	}
-	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-	    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(MAKEWDDEV(0, device_unit(&wd->sc_dev),
+				  RAW_PART), wdstrategy, lp,
+				  wd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -1074,7 +1075,7 @@ wdgetdisklabel(struct wd_softc *wd)
 			wd->drvp->drive_flags |= DRIVE_RESET;
 			splx(s);
 		}
-		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit,
+		errstring = readdisklabel(MAKEWDDEV(0, device_unit(&wd->sc_dev),
 		    RAW_PART), wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {

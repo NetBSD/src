@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.242.2.1 2006/03/13 09:07:26 yamt Exp $
+#	$NetBSD: files.pci,v 1.242.2.2 2006/04/01 12:07:15 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -112,6 +112,10 @@ file	dev/ic/adwmcode.c		adw_pci
 device	pcscp: scsi, ncr53c9x
 attach	pcscp at pci
 file	dev/pci/pcscp.c			pcscp
+
+# HP/Compaq Command Interface to Scsi-3
+attach ciss at pci with ciss_pci
+file	dev/pci/ciss_pci.c		ciss_pci
 
 # BusLogic BT-9xx PCI family
 # device declaration in sys/conf/files
@@ -756,6 +760,12 @@ file	dev/pci/if_dge.c		dge
 # Realtek 8169 Ethernet controllers
 attach	re at pci with re_pci
 file	dev/pci/if_re_pci.c		re_pci
+
+# Windows NDIS drivers (Experimental)
+#device 	ndis
+#attach 	ndis at pci
+#file	dev/if_ndis/if_ndis.c
+#file	dev/if_ndis/if_ndis_pci.c
 
 # Intel PRO/Wireless 2100
 device	ipw: ifnet, arp, wlan

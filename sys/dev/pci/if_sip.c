@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.104 2006/02/07 06:20:04 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.104.2.1 2006/04/01 12:07:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.104 2006/02/07 06:20:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.104.2.1 2006/04/01 12:07:15 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1247,6 +1247,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 				    sc->sc_dev.dv_xname);
 				break;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
@@ -1944,6 +1945,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 				m_freem(m);
 				continue;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 			nm->m_data += 2;
 			nm->m_pkthdr.len = nm->m_len = len;
 			m_copydata(m, 0, len, mtod(nm, caddr_t));
@@ -2112,6 +2114,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL)
 				goto dropit;
+			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 			memcpy(mtod(m, caddr_t),
 			    mtod(rxs->rxs_mbuf, caddr_t), len);
 			SIP_INIT_RXDESC(sc, i);
@@ -2147,6 +2150,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			continue;
 		}
+		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 		if (len > (MHLEN - 2)) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
@@ -2738,6 +2742,7 @@ SIP_DECL(add_rxbuf)(struct sip_softc *sc, int idx)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
