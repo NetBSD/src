@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.15.8.1 2006/03/13 09:06:53 yamt Exp $ */
+/*	$NetBSD: tx39power.c,v 1.15.8.2 2006/04/01 12:06:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.15.8.1 2006/03/13 09:06:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.15.8.2 2006/04/01 12:06:16 yamt Exp $");
 
 #include "opt_tx39power_debug.h"
-#define TX39POWERDEBUG 
 
 #include <sys/param.h>
 #include <sys/systm.h>

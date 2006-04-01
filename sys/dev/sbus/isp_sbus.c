@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.64 2005/12/11 12:23:44 christos Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.64.8.1 2006/04/01 12:07:27 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.64 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.64.8.1 2006/04/01 12:07:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #endif
 
-	isp->isp_confopts = self->dv_cfdata->cf_flags;
+	isp->isp_confopts = device_cfdata(self)->cf_flags;
 	isp->isp_role = ISP_DEFAULT_ROLES;
 
 	/*

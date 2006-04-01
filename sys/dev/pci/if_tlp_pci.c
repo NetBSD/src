@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.86 2006/02/18 05:04:12 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.86.2.1 2006/04/01 12:07:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.86 2006/02/18 05:04:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.86.2.1 2006/04/01 12:07:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,9 @@ static const struct tulip_pci_product {
 	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
 	  TULIP_CHIP_AX88140 },
 
+	{ PCI_VENDOR_CONEXANT,		PCI_PRODUCT_CONEXANT_LANFINITY,
+	  TULIP_CHIP_RS7112 },
+
 	{ 0,				0,
 	  TULIP_CHIP_INVALID },
 };
@@ -296,7 +299,8 @@ tlp_pci_check_slaved(struct tulip_pci_softc *psc, int shared, int slaved)
 	for (i = 0; i < tlp_cd.cd_ndevs; i++) {
 		if ((cur = tlp_cd.cd_devs[i]) == NULL)
 			continue;
-		if (cur->sc_tulip.sc_dev.dv_parent != sc->sc_dev.dv_parent)
+		if (device_parent(&cur->sc_tulip.sc_dev) !=
+		    device_parent(&sc->sc_dev))
 			continue;
 		if ((cur->sc_flags & shared) == 0)
 			continue;
@@ -486,6 +490,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	case TULIP_CHIP_DM9102A:
 	case TULIP_CHIP_AX88140:
 	case TULIP_CHIP_AX88141:
+	case TULIP_CHIP_RS7112:
 		/*
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
@@ -946,6 +951,17 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 		 * an external MII interface.
 		 */
 		sc->sc_mediasw = &tlp_asix_mediasw;
+		break;
+
+	case TULIP_CHIP_RS7112:
+		/*
+		 * RS7112 Ethernet Address is located of offset 0x19a
+		 * of the SROM
+		 */
+		memcpy(enaddr, &sc->sc_srom[0x19a], ETHER_ADDR_LEN);
+
+		/* RS7112 chip has a PHY at MII address 1 */
+		sc->sc_mediasw = &tlp_rs7112_mediasw;
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.29 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.29.2.1 2006/04/01 12:06:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.29 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.29.2.1 2006/04/01 12:06:18 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1163,8 +1163,8 @@ identifycpu(struct cpu_info *ci)
 				vendorname = (char *)&ci->ci_vendor[0];
 			else
 				vendorname = "Unknown";
-			if (family > CPU_MAXFAMILY)
-				family = CPU_MAXFAMILY;
+			if (family >= CPU_MAXFAMILY)
+				family = CPU_MINFAMILY;
 			class = family - 3;
 			modifier = "";
 			name = "";
@@ -1313,9 +1313,18 @@ identifycpu(struct cpu_info *ci)
 			else
 				aprint_normal("%s: using thermal monitor 1\n",
 				    cpuname);
-		} else
-			aprint_normal("%s: running without thermal monitor!\n",
+		} else {
+			aprint_normal("%s: enabling thermal monitor 1 ... ",
 			    cpuname);
+			wrmsr(MSR_MISC_ENABLE, rdmsr(MSR_MISC_ENABLE) | (1<<3));
+			if (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) {
+				aprint_normal("enabled.\n");
+			} else {
+				aprint_normal("failed!\n");
+				aprint_error("%s: failed to enable thermal "
+				    "monitoring!\n", cpuname);
+			}
+		}
 	}
 
 	if (ci->ci_cpuid_level >= 3 && (ci->ci_feature_flags & CPUID_PN)) {

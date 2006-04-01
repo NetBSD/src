@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.149 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.149.8.1 2006/04/01 12:06:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149.8.1 2006/04/01 12:06:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2582,7 +2582,7 @@ _pmap_fault(struct vm_map *map, vaddr_t va, vm_prot_t ftype)
 		if (pmap_fault_reload(pmap, va, ftype))
 			return 0;
 	}
-	rv = uvm_fault(map, va, 0, ftype);
+	rv = uvm_fault(map, va, ftype);
 
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_FAULT) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.16.8.1 2006/03/13 09:07:32 yamt Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.16.8.2 2006/04/01 12:07:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.16.8.1 2006/03/13 09:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.16.8.2 2006/04/01 12:07:31 yamt Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -425,7 +425,7 @@ Static const keysym_t ukbd_keydesc_es[] = {
     KC(37),  KS_8,		KS_parenleft,
     KC(38),  KS_9,		KS_parenright,
     KC(39),  KS_0,		KS_equal,
-    KC(45),  KS_grave,		KS_question,
+    KC(45),  KS_apostrophe,	KS_question,
     KC(46),  KS_exclamdown,	KS_questiondown,
     KC(47),  KS_dead_grave,	KS_dead_circumflex, KS_bracketleft,
     KC(48),  KS_plus,		KS_asterisk,	KS_bracketright,

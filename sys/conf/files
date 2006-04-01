@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.763 2006/03/01 22:12:09 cube Exp $
+#	$NetBSD: files,v 1.763.2.1 2006/04/01 12:06:42 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -373,6 +373,11 @@ file	dev/ic/cac.c			cac
 
 attach	ld at cac with ld_cac
 file	dev/ic/ld_cac.c			ld_cac
+
+# HP/Compaq Command Interface for SCSI-3 Support
+#
+device ciss: scsi
+file	dev/ic/ciss.c			ciss
 
 # Mylex DAC960 RAID controllers
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17.4.1 2006/03/13 09:07:07 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.17.4.2 2006/04/01 12:06:36 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.4.1 2006/03/13 09:07:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.4.2 2006/04/01 12:06:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,29 +82,29 @@ get_time_values_from_xen(void)
 	uint32_t tversion;
 	do {
 		tversion = t->version;
-		__insn_barrier();
+		x86_lfence();
 		shadow_tsc_stamp = t->tsc_timestamp;
 		shadow_system_time = t->system_time;
-		__insn_barrier();
+		x86_lfence();
 	} while ((t->version & 1) || (tversion != t->version));
 	do {
 		tversion = HYPERVISOR_shared_info->wc_version;
-		__insn_barrier();
+		x86_lfence();
 		shadow_tv.tv_sec = HYPERVISOR_shared_info->wc_sec;
 		shadow_tv.tv_usec = HYPERVISOR_shared_info->wc_nsec;
-		__insn_barrier();
+		x86_lfence();
 	} while ((HYPERVISOR_shared_info->wc_version & 1) ||
 	    (tversion != HYPERVISOR_shared_info->wc_version));
 	shadow_tv.tv_usec = shadow_tv.tv_usec / 1000;
 #else /* XEN3 */
 	do {
 		shadow_time_version = HYPERVISOR_shared_info->time_version2;
-		__insn_barrier();
+		x86_lfence();
 		shadow_tv.tv_sec = HYPERVISOR_shared_info->wc_sec;
 		shadow_tv.tv_usec = HYPERVISOR_shared_info->wc_usec;
 		shadow_tsc_stamp = HYPERVISOR_shared_info->tsc_timestamp;
 		shadow_system_time = HYPERVISOR_shared_info->system_time;
-		__insn_barrier();
+		x86_lfence();
 	} while (shadow_time_version != HYPERVISOR_shared_info->time_version1);
 #endif
 }

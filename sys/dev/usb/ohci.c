@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.169 2005/12/19 21:57:27 tron Exp $	*/
+/*	$NetBSD: ohci.c,v 1.169.8.1 2006/04/01 12:07:29 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.169 2005/12/19 21:57:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.169.8.1 2006/04/01 12:07:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2167,6 +2167,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
 		usb_transfer_complete(xfer);
 		splx(s);
+		return;
 	}
 
 	if (xfer->device->bus->intr_context || !curproc)

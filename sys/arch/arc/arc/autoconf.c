@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 2006/02/25 17:37:14 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28.2.1 2006/04/01 12:06:09 yamt Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 2006/02/25 17:37:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28.2.1 2006/04/01 12:06:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,8 +267,8 @@ device_register(struct device *dev, void *aux)
 	}
 
 	if (scsiboot && device_is_a(dev, "scsibus")) {
-		/* XXX dv_unit abuse */
-		if (dev->dv_unit == b->bus) {
+		/* XXX device_unit() abuse */
+		if (device_unit(dev) == b->bus) {
 			scsibusdev = dev;
 #if 0
 			printf("\nscsibus = %s\n", dev->dv_xname);
@@ -293,8 +293,8 @@ device_register(struct device *dev, void *aux)
 		}
 		return;
 	}
-	/* XXX dv_unit abuse */
-	if (dev->dv_unit == b->unit) {
+	/* XXX device_unit() abuse */
+	if (device_unit(dev) == b->unit) {
 		booted_device = dev;
 #if 0
 		printf("\nbooted_device = %s\n", dev->dv_xname);

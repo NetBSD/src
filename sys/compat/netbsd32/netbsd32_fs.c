@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.24 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.24.2.1 2006/04/01 12:06:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.24 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.24.2.1 2006/04/01 12:06:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -475,12 +475,12 @@ netbsd32_getvfsstat(l, v, retval)
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statvfs);
 	sfsp = (struct netbsd32_statvfs *)NETBSD32PTR64(SCARG(uap, buf));
-	simple_lock(&mountlist_slock);
-	count = 0;
 	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
 	    M_WAITOK);
 	s32 = (struct netbsd32_statvfs *)
 	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
+	simple_lock(&mountlist_slock);
+	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
 		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {

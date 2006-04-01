@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.33.2.1 2006/03/13 09:06:54 yamt Exp $
+# $NetBSD: XEN0,v 1.33.2.2 2006/04/01 12:06:18 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -676,7 +676,7 @@ pseudo-device	tun			# network tunneling over tty
 pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

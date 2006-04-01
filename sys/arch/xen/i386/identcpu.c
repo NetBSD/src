@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.9.6.1 2006/03/13 09:07:03 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.9.6.2 2006/04/01 12:06:35 yamt Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9.6.1 2006/03/13 09:07:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9.6.2 2006/04/01 12:06:35 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -1097,8 +1097,8 @@ identifycpu(struct cpu_info *ci)
 				vendorname = (char *)&ci->ci_vendor[0];
 			else
 				vendorname = "Unknown";
-			if (family > CPU_MAXFAMILY)
-				family = CPU_MAXFAMILY;
+			if (family >= CPU_MAXFAMILY)
+				family = CPU_MINFAMILY;
 			class = family - 3;
 			modifier = "";
 			name = "";

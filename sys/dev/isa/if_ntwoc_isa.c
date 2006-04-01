@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.11 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.11.8.1 2006/04/01 12:07:05 yamt Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.11 2005/12/11 12:22:02 christos Exp $
+ * $Id: if_ntwoc_isa.c,v 1.11.8.1 2006/04/01 12:07:05 yamt Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.11 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.11.8.1 2006/04/01 12:07:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,7 @@ ntwoc_isa_attach(struct device *parent, struct device *self, void *aux)
 	dbg = 0;
 
 	printf(": N2 Serial Interface\n");
-	flags = sc->sc_dev.dv_cfdata->cf_flags;
+	flags = device_cfdata(&sc->sc_dev)->cf_flags;
 
 	sc->sc_ic = ia->ia_ic;
 	sca->sc_parent = &sc->sc_dev;

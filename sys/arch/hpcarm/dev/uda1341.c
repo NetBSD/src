@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.9 2006/03/04 14:36:19 peter Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.9.2.1 2006/04/01 12:06:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.9 2006/03/04 14:36:19 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.9.2.1 2006/04/01 12:06:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.9 2006/03/04 14:36:19 peter Exp $");
 #include <hpcarm/dev/ipaq_saipvar.h>
 #include <hpcarm/dev/ipaq_gpioreg.h>
 #include <hpcarm/dev/uda1341.h>
-#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
-#include <hpcarm/sa11x0/sa11x0_sspreg.h>
+
+#include <arm/sa11x0/sa11x0_gpioreg.h>
+#include <arm/sa11x0/sa11x0_sspreg.h>
 
 struct uda1341_softc {
 	struct device		sc_dev;

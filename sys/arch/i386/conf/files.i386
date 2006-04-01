@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.282 2006/02/19 21:41:18 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.282.2.1 2006/04/01 12:06:18 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -208,7 +208,7 @@ file	arch/i386/pci/pceb.c		pceb
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib
+file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib | viapcib
 
 # PCI-LPC bridges
 device	ichlpcib: isabus, sysmon_wdog
@@ -218,6 +218,10 @@ file	arch/i386/pci/ichlpcib.c	ichlpcib
 device	gscpcib: isabus, gpiobus
 attach	gscpcib at pci
 file	arch/i386/pci/gscpcib.c		gscpcib
+
+device	viapcib: isabus, i2cbus
+attach	viapcib at pci
+file	arch/i386/pci/viapcib.c		viapcib
 
 # PCI-MCA bridges
 device	pcmb: mcabus
@@ -378,6 +382,9 @@ include	"compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
 file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
+
+# NDIS compatibilty (COMPAT_NDIS)
+# include "compat/ndis/files.ndis"
 
 # Win32 binary compatibility (COMPAT_PECOFF)
 include	"compat/pecoff/files.pecoff"

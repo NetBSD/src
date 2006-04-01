@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.6 2006/02/27 02:30:39 peter Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.6.2.1 2006/04/01 12:06:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.6 2006/02/27 02:30:39 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.6.2.1 2006/04/01 12:06:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,7 +113,7 @@ hpcapm_attach(struct device *parent, struct device *self, void *aux)
 	struct apmhpc_softc *sc;
 	struct apmdev_attach_args aaa;
 
-	sc = (struct apmhpc_softc *)self;
+	sc = device_private(self);
 	printf(": pseudo power management module\n");
 
 	sc->events = 0;

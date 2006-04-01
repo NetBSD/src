@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.12 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: cir.c,v 1.12.2.1 2006/04/01 12:07:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.12 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.12.2.1 2006/04/01 12:07:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ cir_match(struct device *parent, struct cfdata *match, void *aux)
 void
 cir_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct cir_softc *sc = (struct cir_softc *)self;
+	struct cir_softc *sc = device_private(self);
 	struct ir_attach_args *ia = aux;
 
 	sc->sc_methods = ia->ia_methods;
@@ -107,7 +107,7 @@ cir_attach(struct device *parent, struct device *self, void *aux)
 int
 cir_activate(struct device *self, enum devact act)
 {
-	/*struct cir_softc *sc = (struct cir_softc *)self;*/
+	/*struct cir_softc *sc = device_private(self);*/
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -123,14 +123,14 @@ cir_activate(struct device *self, enum devact act)
 int
 cir_detach(struct device *self, int flags)
 {
-	/*struct cir_softc *sc = (struct cir_softc *)self;*/
+	/*struct cir_softc *sc = device_private(self);*/
 	int maj, mn;
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&cir_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);

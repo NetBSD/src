@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.22 2006/02/21 04:25:29 thorpej Exp $ */
+/* $NetBSD: opb.c,v 1.22.2.1 2006/04/01 12:06:26 yamt Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.22 2006/02/21 04:25:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.22.2.1 2006/04/01 12:06:26 yamt Exp $");
 
 #include "locators.h"
 
@@ -94,7 +94,7 @@ const struct opb_dev {
 	{ IBM405GP,	"com",	IBM405GP_UART0_BASE,	 0, 0 },
 	{ IBM405GP,	"com",	IBM405GP_UART1_BASE,	 1, 1 },
 	{ IBM405GP,	"emac",	IBM405GP_EMAC0_BASE,	 0, 9 }, /* XXX: really irq 9..15 */
-	{ IBM405GP,	"gpio",	IBM405GP_GPIO0_BASE,	0, -1 },
+	{ IBM405GP,	"opbgpio",	IBM405GP_GPIO0_BASE,	0, -1 },
 	{ IBM405GP,	"gpiic",IBM405GP_IIC0_BASE,	0,  2 },
 	{ IBM405GP,	"wdog",	-1,	        	0, -1 },
 
@@ -102,7 +102,7 @@ const struct opb_dev {
 	{ IBM405GPR,	"com",	IBM405GP_UART0_BASE,	 0, 0 },
 	{ IBM405GPR,	"com",	IBM405GP_UART1_BASE,	 1, 1 },
 	{ IBM405GPR,	"emac",	IBM405GP_EMAC0_BASE,	 0, 9 }, /* XXX: really irq 9..15 */
-	{ IBM405GPR,	"gpio",	IBM405GP_GPIO0_BASE,	0, -1 },
+	{ IBM405GPR,	"opbgpio",	IBM405GP_GPIO0_BASE,	0, -1 },
 	{ IBM405GPR,	"gpiic",IBM405GP_IIC0_BASE,	0, 2 },
 	{ IBM405GPR,	"wdog",	-1,	        	0, -1 },
 	{ 0,		 NULL }
@@ -128,7 +128,7 @@ CFATTACH_DECL(opb, sizeof(struct device),
     opb_match, opb_attach, NULL, NULL);
 
 static struct powerpc_bus_space opb_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x0, IBM405GP_UART0_BASE, 0x1000
 };
 static char ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)]

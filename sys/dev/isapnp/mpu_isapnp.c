@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.11 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.11.8.1 2006/04/01 12:07:06 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.11 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.11.8.1 2006/04/01 12:07:06 yamt Exp $");
 
 #include "midi.h"
 
@@ -61,7 +61,7 @@ mpu_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct mpu_isapnp_softc *sc = (struct mpu_isapnp_softc *)self;
+	struct mpu_isapnp_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;
 
 	printf("\n");

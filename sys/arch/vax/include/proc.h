@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7.8.1 2006/03/13 09:07:03 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.7.8.2 2006/04/01 12:06:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -41,6 +41,7 @@ struct mdlwp {
 	int md_dummy;			/* Must be at least one field */
 };
 
+struct trapframe;
 /*
  * Machine-dependent part of the proc structure for vax.
  */

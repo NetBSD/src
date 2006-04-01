@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.1.4.2 2006/03/13 09:07:20 yamt Exp $ */
+/* $NetBSD: r2025.c,v 1.1.4.3 2006/04/01 12:06:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.1.4.2 2006/03/13 09:07:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.1.4.3 2006/04/01 12:06:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ r2025rtc_match(struct device *parent, struct cfdata *cf, void *arg)
 static void
 r2025rtc_attach(struct device *parent, struct device *self, void *arg)
 {
-	struct r2025rtc_softc *sc = (struct r2025rtc_softc *)self;
+	struct r2025rtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
 	aprint_normal(": RICOH R2025S/D Real-time Clock\n");

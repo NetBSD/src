@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.39.2.1 2006/03/13 09:07:20 yamt Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.39.2.2 2006/04/01 12:06:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -255,13 +255,39 @@ static uint8_t tripad_keytrans[] = {
 /*10*/	 56,	 57,	 46,	 47,	 32,	 33,	 19,	  4,
 /*18*/	 48,	 49,	 34,	 35,	 20,	 21,	  5,	  6,
 /*20*/	 50,	 51,	 36,	 37,	 22,	 23,	  7,	  8,
-/*28*/	105,	 58,	 38,	 24,	 25,	  9,	 10,	 11,
+/*28*/	184,	 58,	 38,	 24,	 25,	  9,	 10,	 11,
 /*30*/	 26,	 27,	203,	 52,	 53,	 39,	 12,	 13,
 /*38*/	 54,	205,	200,	208,	 40,	 28,	 43,	 14,
 /*40*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
 /*48*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
 /*50*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
 /*58*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
+};
+
+static const keysym_t tripad_cmdmap[] = {
+/*  pos      command		normal		shifted		fn    */
+KC(2),	 KS_Cmd_Screen0,	KS_1,		KS_exclam,	KS_f1,
+KC(3),	 KS_Cmd_Screen1,	KS_2,		KS_at,		KS_f2,
+KC(4),	 KS_Cmd_Screen2,	KS_3,		KS_numbersign,	KS_f3,
+KC(5),	 KS_Cmd_Screen3,	KS_4,		KS_dollar,	KS_f4,
+KC(6),	 KS_Cmd_Screen4,	KS_5,		KS_percent,	KS_f5,
+KC(7),	 KS_Cmd_Screen5,	KS_6,		KS_asciicircum,	KS_f6,
+KC(8),	 KS_Cmd_Screen6,	KS_7,		KS_ampersand,	KS_f7,
+KC(9),	 KS_Cmd_Screen7,	KS_8,		KS_asterisk,	KS_f8,
+KC(10),  KS_Cmd_Screen8,	KS_9,		KS_parenleft,	KS_f9,
+KC(11),  KS_Cmd_Screen9,	KS_0,		KS_parenright,	KS_f10,
+KC(12),  KS_Cmd_BrightnessDown,	KS_minus,	KS_underscore,	KS_f11,
+KC(13),  KS_Cmd_BrightnessUp,	KS_equal,	KS_plus,	KS_f12,
+KC(20),  KS_Cmd_BacklightToggle, KS_t,
+KC(33),  KS_Cmd_BacklightOff,	KS_f,
+KC(49),  KS_Cmd_BacklightOn,	KS_n,
+KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
+KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
+KC(184), KS_Mode_switch,	KS_Multi_key,
+KC(200), KS_Cmd_ScrollSlowUp,	KS_Up,		KS_Up,		KS_Prior,
+KC(203), KS_Cmd_ScrollFastUp,	KS_Left,	KS_Left,	KS_Home,
+KC(205), KS_Cmd_ScrollFastDown,	KS_Right,	KS_Right,	KS_End,
+KC(208), KS_Cmd_ScrollSlowDown,	KS_Down,	KS_Down,	KS_Next,
 };
 
 /* NEC Mobile Gear MCCS series */
@@ -1066,12 +1092,12 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_SHARP_TRIPAD,
 		tripad_keytrans,
 		NULL,
-		NULLCMDMAP,
+		CMDMAP(tripad_cmdmap),
 		KB_US },
 	{	&platid_mask_MACH_VADEM_CLIO_C,
 		tripad_keytrans,
 		NULL,
-		NULLCMDMAP,
+		CMDMAP(tripad_cmdmap),
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCCS,
 		mccs_keytrans,

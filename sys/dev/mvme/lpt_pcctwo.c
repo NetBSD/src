@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcctwo.c,v 1.7 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: lpt_pcctwo.c,v 1.7.8.1 2006/04/01 12:07:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pcctwo.c,v 1.7 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pcctwo.c,v 1.7.8.1 2006/04/01 12:07:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,7 +125,7 @@ lpt_pcctwo_attach(parent, self, args)
 	struct lpt_softc *sc;
 
 	pa = (struct pcctwo_attach_args *) args;
-	sc = (struct lpt_softc *) self;
+	sc = device_private(self);
 
 	/* The printer registers are part of the PCCChip2's own registers. */
 	sc->sc_bust = pa->pa_bust;

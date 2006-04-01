@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.193 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.193.2.1 2006/04/01 12:07:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.2.1 2006/04/01 12:07:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -483,9 +483,15 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		fs = ump->um_lfs;
 		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
-			 * Changing from read-only to read/write
+			 * Changing from read-only to read/write.
+			 * Note in the superblocks that we're writing.
 			 */
 			fs->lfs_ronly = 0;
+			if (fs->lfs_pflags & LFS_PF_CLEAN) {
+				fs->lfs_pflags &= ~LFS_PF_CLEAN;
+				lfs_writesuper(fs, fs->lfs_sboffs[0]);
+				lfs_writesuper(fs, fs->lfs_sboffs[1]);
+			}
 		}
 		if (args.fspec == NULL)
 			return EINVAL;
@@ -1363,6 +1369,10 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;
 
+	/* Two checkpoints */
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
+
 	/* wake up the cleaner so it can die */
 	wakeup(&fs->lfs_nextseg);
 	wakeup(&lfs_allclean_wakeup);
@@ -1462,7 +1472,7 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	sbp->f_bsize = fs->lfs_bsize;
 	sbp->f_frsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
-	sbp->f_blocks = fsbtofrags(fs, LFS_EST_NONMETA(fs));
+	sbp->f_blocks = fsbtofrags(fs, LFS_EST_NONMETA(fs) - VTOI(fs->lfs_ivnode)->i_lfs_effnblks);
 
 	sbp->f_bfree = fsbtofrags(fs, LFS_EST_BFREE(fs));
 	KASSERT(sbp->f_bfree <= fs->lfs_dsize);
@@ -1957,6 +1967,15 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	/* The Ifile lives in the buffer cache */
 	KASSERT(vp != fs->lfs_ivnode);
 
+        /*
+         * We don't want to fill the disk before the cleaner has a chance
+         * to make room for us.  If we're in danger of doing that, fail
+         * with EAGAIN.  The caller will have to notice this, unlock
+         * so the cleaner can run, relock and try again.
+         */
+        if (LFS_STARVED_FOR_SEGS(fs))
+                goto tryagain;
+
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,
 	 * and the pagedaemon tries to write pages---problem is
@@ -1982,7 +2001,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	UVMHIST_LOG(ubchist, "vp %p pgs %p npages %d flags 0x%x",
 	    vp, pgs, npages, flags);
 
-	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_WRITE);
+	GOP_SIZE(vp, vp->v_size, &eof, 0);
 
 	if (vp->v_type == VREG)
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
@@ -1991,6 +2010,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	error = 0;
 	pg = pgs[0];
 	startoffset = pg->offset;
+	KASSERT(eof >= 0);
 	if (startoffset >= eof) {
 		goto tryagain;
 	} else
@@ -2199,6 +2219,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		DLOG((DLOG_PAGE, "lfs_gop_write: ino %d start 0x%" PRIx64
 		      " eof 0x%" PRIx64 " npages=%d\n", VTOI(vp)->i_number,
 		      pgs[0]->offset, eof, npages));
+	else if (LFS_STARVED_FOR_SEGS(fs))
+		DLOG((DLOG_PAGE, "lfs_gop_write: avail too low\n"));
 	else
 		DLOG((DLOG_PAGE, "lfs_gop_write: seglock not held\n"));
 
@@ -2213,7 +2235,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		}
 		uvm_pageactivate(pg);
 		pg->flags &= ~(PG_CLEAN|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
-		DLOG((DLOG_PAGE, "pg[%d] = %p\n", i, pg));
+		DLOG((DLOG_PAGE, "pg[%d] = %p (vp %p off %" PRIx64 ")\n", i, pg,
+			vp, pg->offset));
 		DLOG((DLOG_PAGE, "pg[%d]->flags = %x\n", i, pg->flags));
 		DLOG((DLOG_PAGE, "pg[%d]->pqflags = %x\n", i, pg->pqflags));
 		DLOG((DLOG_PAGE, "pg[%d]->uanon = %p\n", i, pg->uanon));

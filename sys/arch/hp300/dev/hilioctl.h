@@ -1,4 +1,4 @@
-/*	$NetBSD: hilioctl.h,v 1.8 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: hilioctl.h,v 1.8.8.1 2006/04/01 12:06:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -90,11 +90,11 @@ struct _hilbuf11 {
 };
 
 struct _hilbuf5 {
-  	u_char  string[5];
+	u_char  string[5];
 };
 
 struct _hilbuf4 {
-  	u_char  string[4];
+	u_char  string[4];
 };
 
 struct _hilbuf2 {

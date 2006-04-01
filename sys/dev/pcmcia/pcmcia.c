@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.78 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.78.8.1 2006/04/01 12:07:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.78 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.78.8.1 2006/04/01 12:07:21 yamt Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -294,7 +294,7 @@ pcmcia_childdetached(struct device *self, struct device *child)
 		if (SIMPLEQ_EMPTY(&pf->cfe_head))
 			continue;
 		if (pf->child == child) {
-			KASSERT(child->dv_locators[PCMCIACF_FUNCTION]
+			KASSERT(device_locator(child, PCMCIACF_FUNCTION)
 				== pf->number);
 			pf->child = NULL;
 			return;

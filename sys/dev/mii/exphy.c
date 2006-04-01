@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.40 2006/02/28 22:52:34 kleink Exp $	*/
+/*	$NetBSD: exphy.c,v 1.40.2.1 2006/04/01 12:07:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.40 2006/02/28 22:52:34 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.40.2.1 2006/04/01 12:07:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ exphymatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 exphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 

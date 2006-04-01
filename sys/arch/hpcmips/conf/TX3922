@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.74 2006/02/22 10:41:35 hira Exp $
+#	$NetBSD: TX3922,v 1.74.2.1 2006/04/01 12:06:15 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -363,3 +363,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 # for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

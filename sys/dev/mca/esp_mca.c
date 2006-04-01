@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.10.8.1 2006/03/13 09:07:26 yamt Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.10.8.2 2006/04/01 12:07:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.10.8.1 2006/03/13 09:07:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.10.8.2 2006/04/01 12:07:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,7 +148,7 @@ esp_mca_attach(parent, self, aux)
 	void *aux;
 {
 	struct mca_attach_args *ma = aux;
-	struct esp_softc *esc = (void *)self;
+	struct esp_softc *esc = device_private(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	u_int16_t iobase;
 	int scsi_id, irq, drq, error;

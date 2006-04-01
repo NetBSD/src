@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.36 2006/02/22 10:41:35 hira Exp $
+# $NetBSD: VR41XX,v 1.36.2.1 2006/04/01 12:06:15 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.36 $"
+#ident 		"GENERIC-$Revision: 1.36.2.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -306,8 +306,8 @@ pcic0	at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 #
 # Vadem Clio and Sharp Tripad
 #
-vrisab3	at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
-vrisab3	at vrgiu? platform VADEM_CLIO_C isaportoffset 0x1000000
+vrisab3	at vrgiu? platform SHARP_TRIPAD isaportoffset 0x0
+vrisab3	at vrgiu? platform VADEM_CLIO_C isaportoffset 0x0
 isa3	at vrisab3
 pcic0	at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
 
@@ -528,7 +528,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 # for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan

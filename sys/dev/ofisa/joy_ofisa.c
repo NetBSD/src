@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_ofisa.c,v 1.9 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: joy_ofisa.c,v 1.9.8.1 2006/04/01 12:07:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.9 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.9.8.1 2006/04/01 12:07:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ joy_ofisa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct joy_softc *sc = (struct joy_softc *)self;
+	struct joy_softc *sc = device_private(self);
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg;
 	char *model = NULL;

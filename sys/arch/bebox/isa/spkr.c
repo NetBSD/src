@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.15 2006/02/25 17:37:14 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.15.2.1 2006/04/01 12:06:11 yamt Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15 2006/02/25 17:37:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.15.2.1 2006/04/01 12:06:11 yamt Exp $");
 
 #include "spkr.h"
 #if NSPKR > 0
@@ -444,7 +444,7 @@ spkrattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf(" port 0x%x\n", self->dv_cfdata->cf_loc[PCKBDCF_PORT]);
+	printf(" port 0x%x\n", device_cfdata(self)->cf_loc[PCKBDCF_PORT]);
 	spkr_attached = 1;
 }
 

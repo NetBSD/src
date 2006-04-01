@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.18.2.1 2006/03/13 09:06:54 yamt Exp $	*/
+/*	$NetBSD: est.c,v 1.18.2.2 2006/04/01 12:06:18 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.18.2.1 2006/03/13 09:06:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.18.2.2 2006/04/01 12:06:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,6 @@ static const struct fq_info pentium_m_1700[] = {
 	{  800, 1004 },
 	{  600,  956 }
 };
-
 
 /* Intel Pentium M processor 723 Ultra Low Voltage 1.0 GHz */
 static const struct fq_info pentium_m_n723[] = {
@@ -298,11 +297,11 @@ static const struct fq_info pentium_m_n725[] = {
 
 /* Intel Pentium M processor 730 1.6 GHz */
 static const struct fq_info pentium_m_n730[] = {
-       { 1596, 1308 },
-       { 1330, 1260 }, 
-       { 1197, 1212 },
-       { 1064, 1180 },
-       {  798,  988 }
+       { 1600, 1308 },
+       { 1333, 1260 }, 
+       { 1200, 1212 },
+       { 1067, 1180 },
+       {  800,  988 }
 };     
 
 /* Intel Pentium M processor 735 1.7 GHz */
@@ -319,7 +318,7 @@ static const struct fq_info pentium_m_n735[] = {
 static const struct fq_info pentium_m_n740[] = {
        { 1733, 1356 },
        { 1333, 1212 },
-       { 1066, 1100 },
+       { 1067, 1100 },
        {  800,  988 },
 };
 
@@ -335,8 +334,12 @@ static const struct fq_info pentium_m_n745[] = {
 };
 
 /* Intel Pentium M processor 750 1.86 GHz */
+/* values extracted from \_PR\NPSS (via _PSS) SDST ACPI table */
 static const struct fq_info pentium_m_n750[] = {
-	{ 1866, 1308 }, /* emperically determined, not from datasheet */
+	{ 1867, 1308 },
+	{ 1600, 1228 },
+	{ 1333, 1148 },
+	{ 1067, 1068 },
 	{  800,  988 }
 };
 
@@ -357,7 +360,7 @@ static const struct fq_info pentium_m_n760[] = {
 	{ 2000, 1356 },
 	{ 1600, 1244 },
 	{ 1333, 1164 },
-	{ 1066, 1084 },
+	{ 1067, 1084 },
 	{  800,  988 }
 };
 
@@ -375,7 +378,7 @@ static const struct fq_info pentium_m_n765[] = {
 
 /* Intel Pentium M processor 770 2.13 GHz */
 static const struct fq_info pentium_m_n770[] = {
-	{ 2130, 1551 },
+	{ 2133, 1551 },
 	{ 1800, 1429 },
 	{ 1600, 1356 },
 	{ 1400, 1180 },
@@ -390,57 +393,53 @@ struct fqlist {
 	const int cpu_id;
 	size_t tablec;
 	const struct fq_info *table;
+	const int fsbmult; /* in multiples of 133 MHz */
 };
 
-struct cpufsbmult {
-	const int cpu_id;
-	const int multiplier; /* FSB multiplier, in 133 MHz increments */
-};
-
-#define ENTRY(s, i, v)	{ s, i, sizeof(v) / sizeof((v)[0]), v }
+#define ENTRY(s, i, v, f)	{ s, i, sizeof(v) / sizeof((v)[0]), v, f }
 static const struct fqlist pentium_m[] = { /* Banias */
-	ENTRY(" 900", 0x0695, pentium_m_900),
-	ENTRY("1000", 0x0695, pentium_m_1000),
-	ENTRY("1100", 0x0695, pentium_m_1100),
-	ENTRY("1200", 0x0695, pentium_m_1200),
-	ENTRY("1300", 0x0695, pentium_m_1300),
-	ENTRY("1400", 0x0695, pentium_m_1400),
-	ENTRY("1500", 0x0695, pentium_m_1500),
-	ENTRY("1600", 0x0695, pentium_m_1600),
-	ENTRY("1700", 0x0695, pentium_m_1700),
+	ENTRY(" 900", 0x0695, pentium_m_900,  3),
+	ENTRY("1000", 0x0695, pentium_m_1000, 3),
+	ENTRY("1100", 0x0695, pentium_m_1100, 3),
+	ENTRY("1200", 0x0695, pentium_m_1200, 3),
+	ENTRY("1300", 0x0695, pentium_m_1300, 3),
+	ENTRY("1400", 0x0695, pentium_m_1400, 3),
+	ENTRY("1500", 0x0695, pentium_m_1500, 3),
+	ENTRY("1600", 0x0695, pentium_m_1600, 3),
+	ENTRY("1700", 0x0695, pentium_m_1700, 3),
 };
 
 static const struct fqlist pentium_m_dothan[] = {
-	ENTRY("1.00", 0x06d8, pentium_m_n723),
-	ENTRY("1.10", 0x06d6, pentium_m_n733),
-	ENTRY("1.20", 0x06d8, pentium_m_n753),
-	ENTRY("1.30", 0, pentium_m_n773), /*Intel is iffy over its existence*/
-	ENTRY("1.40", 0x06d6, pentium_m_n710),
-	ENTRY("1.40", 0x06d8, pentium_m_n738),
-	ENTRY("1.50", 0x06d6, pentium_m_n715),
-	ENTRY("1.50", 0x06d8, pentium_m_n758),
-	ENTRY("1.60", 0x06d6, pentium_m_n725),
-	ENTRY("1.60", 0, pentium_m_n730),
-	ENTRY("1.60", 0x06d8, pentium_m_n778),
-	ENTRY("1.70", 0x06d6, pentium_m_n735),
-	ENTRY("1.73", 0x06d8, pentium_m_n740),
-	ENTRY("1.80", 0x06d6, pentium_m_n745),
-	ENTRY("1.86", 0x06d8, pentium_m_n750),
-	ENTRY("2.00", 0x06d6, pentium_m_n755),
-	ENTRY("2.00", 0x06d8, pentium_m_n760),
-	ENTRY("2.10", 0x06d6, pentium_m_n765),
-	ENTRY("2.13", 0x06d8, pentium_m_n770),
+
+	/* low voltage CPUs */
+	ENTRY("1.00", 0x06d8, pentium_m_n723, 3),
+	ENTRY("1.10", 0x06d6, pentium_m_n733, 3),
+	ENTRY("1.20", 0x06d8, pentium_m_n753, 3),
+	ENTRY("1.30", 0, pentium_m_n773, 3), /* does this exist? */
+	
+	/* ultra low voltage CPUs */
+	ENTRY("1.40", 0x06d6, pentium_m_n738, 3),
+	ENTRY("1.50", 0x06d8, pentium_m_n758, 3),
+	ENTRY("1.60", 0x06d8, pentium_m_n778, 3),
+
+	/* 'regular' 400 MHz FSB CPUs */
+	ENTRY("1.40", 0x06d6, pentium_m_n710, 3),
+	ENTRY("1.50", 0x06d6, pentium_m_n715, 3),
+	ENTRY("1.60", 0x06d6, pentium_m_n725, 3),
+	ENTRY("1.70", 0x06d6, pentium_m_n735, 3),
+	ENTRY("1.80", 0x06d6, pentium_m_n745, 3),
+	ENTRY("2.00", 0x06d6, pentium_m_n755, 3),
+	ENTRY("2.10", 0x06d6, pentium_m_n765, 3),
+
+	/* 533 MHz FSB CPUs */
+	ENTRY("1.60", 0x06d8, pentium_m_n730, 4),
+	ENTRY("1.73", 0x06d8, pentium_m_n740, 4),
+	ENTRY("1.86", 0x06d8, pentium_m_n750, 4),
+	ENTRY("2.00", 0x06d8, pentium_m_n760, 4),
+	ENTRY("2.13", 0x06d8, pentium_m_n770, 4),
+
 };
 #undef ENTRY
-
-static const struct cpufsbmult cpuidtofsb[] = {
-	{      0, 3 }, /* default to 400 MHz FSB */
-	{ 0x0695, 3 },
-	{ 0x06d6, 3 },
-	{ 0x06d8, 4 }
-};
-
-#define NUMFSBENTS (sizeof(cpuidtofsb) / sizeof(cpuidtofsb[0]))
 
 struct est_cpu {
 	const char *brand_prefix;
@@ -465,7 +464,7 @@ static const struct est_cpu est_cpus[] = {
 #define NESTCPUS  (sizeof(est_cpus) / sizeof(est_cpus[0]))
 
 #define MSR2MV(msr)	(((int) (msr) & 0xff) * 16 + 700)
-#define MSR2MHZ(msr)	((((int) (msr) >> 8) & 0xff) * 100 * fsbmult / 3)
+#define MSR2MHZ(msr)	(((((int) (msr) >> 8) & 0xff) * 100 * fsbmult + 1)/ 3)
 #define MV2MSR(mv)	((((int) (mv) - 700) >> 4) & 0xff)
 #define MHZ2MSR(mhz)	(((3 * (mhz + 30) / (100 * fsbmult)) & 0xff) << 8)
 /* XXX 30 is slop to deal with the 33.333 MHz roundoff values */
@@ -526,7 +525,7 @@ est_init(struct cpu_info *ci)
 	const struct fqlist	*fql;
 	const struct sysctlnode	*node, *estnode, *freqnode;
 	uint64_t		msr;
-	int			i, j, rc;
+	int			i, j, k, rc;
 	int			mv;
 	size_t			len, freq_len;
 	char			*tag, *freq_names;
@@ -555,41 +554,28 @@ est_init(struct cpu_info *ci)
 			    !strcmp(ccpu->brand_suffix, tag + len) &&
 			    (fql->cpu_id == 0 ||
 			     fql->cpu_id == ci->ci_signature)) {
+				/* verify operating point is in table, because
+				   CPUID + brand_tag still isn't unique. */
+				for (k = fql->tablec - 1; k >= 0; k--) {
+					if (fql->table[k].mv == mv) {
 				est_fqlist = fql;
 				break;
 			}
 		}
 	}
-	if (est_fqlist == NULL) {
-		aprint_normal(" - unknown CPU.\n");
-		return;
-	}
-
-	fsbmult = cpuidtofsb[0].multiplier; /* default for un-CPUID'ed*/
-	for (i = 0; i < NUMFSBENTS; i++) {
-		if (est_fqlist->cpu_id == cpuidtofsb[i].cpu_id) {
-			fsbmult = cpuidtofsb[i].multiplier;
-			break;
+			if (NULL != est_fqlist) break;
 		}
 	}
-
-	/*
-	 * Check that the current operating point is in our list.
-	 * (now a sanity check, as the cpuid should be authoritative.)
-	 */
-	for (i = est_fqlist->tablec - 1; i >= 0; i--)
-		if (est_fqlist->table[i].mv == mv)
-			break;
-	if (i < 0) {
-		aprint_normal("operating point not in table\n");
-		est_fqlist = NULL;	/* flag as not functional */
+	if (est_fqlist == NULL) {
+		aprint_normal(" - unknown CPU or operating point.\n");
 		return;
 	}
 
 	/*
 	 * OK, tell the user the available frequencies.
 	 */
-	aprint_normal("%d MHz\n", est_fqlist->table[i].mhz);
+	fsbmult = est_fqlist->fsbmult;
+	aprint_normal("%d MHz\n", MSR2MHZ(msr));
 	
 	freq_len = est_fqlist->tablec * (sizeof("9999 ")-1) + 1;
 	freq_names = malloc(freq_len, M_SYSCTLDATA, M_WAITOK);

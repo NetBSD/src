@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.215.2.1 2006/03/05 12:51:09 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.215.2.2 2006/04/01 12:07:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.215.2.1 2006/03/05 12:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.215.2.2 2006/04/01 12:07:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2902,7 +2902,7 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
  *
  * => wires map entries.  should not be used for transient page locking.
  *	for that, use uvm_fault_wire()/uvm_fault_unwire() (see uvm_vslock()).
- * => regions sepcified as not pageable require lock-down (wired) memory
+ * => regions specified as not pageable require lock-down (wired) memory
  *	and page tables.
  * => map must never be read-locked
  * => if islocked is TRUE, map is already write-locked
@@ -3076,7 +3076,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 	while (entry != &map->header && entry->start < end) {
 		if (entry->wired_count == 1) {
 			rv = uvm_fault_wire(map, entry->start, entry->end,
-			    VM_FAULT_WIREMAX, entry->max_protection);
+			    entry->max_protection, 1);
 			if (rv) {
 
 				/*
@@ -3307,7 +3307,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 	     entry = entry->next) {
 		if (entry->wired_count == 1) {
 			rv = uvm_fault_wire(map, entry->start, entry->end,
-			    VM_FAULT_WIREMAX, entry->max_protection);
+			    entry->max_protection, 1);
 			if (rv) {
 
 				/*

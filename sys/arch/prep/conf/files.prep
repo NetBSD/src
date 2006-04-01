@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.50.2.1 2006/03/13 09:06:59 yamt Exp $
+#	$NetBSD: files.prep,v 1.50.2.2 2006/04/01 12:06:27 yamt Exp $
 #
 # prep-specific configuration info
 #
@@ -7,6 +7,7 @@ maxpartitions 8
 maxusers 2 8 64
 
 defflag	opt_residual.h	RESIDUAL_DATA_DUMP
+defflag opt_nvram.h	NVRAM_DUMP
 
 # IBM quirk functions
 file	arch/prep/prep/ibm_machdep.c
@@ -173,5 +174,8 @@ attach wdc at pnpbus with wdc_pnpbus
 file arch/prep/pnpbus/wdc_pnpbus.c	wdc_pnpbus needs-flag
 attach fdc at pnpbus with fdc_pnpbus: isadma
 file arch/prep/pnpbus/fdc_pnpbus.c	fdc_pnpbus
+device nvram
+attach nvram at pnpbus with nvram_pnpbus
+file arch/prep/pnpbus/nvram_pnpbus.c	nvram_pnpbus
 
 include "arch/prep/conf/majors.prep"

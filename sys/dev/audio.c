@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.200.2.1 2006/03/13 09:07:08 yamt Exp $	*/
+/*	$NetBSD: audio.c,v 1.200.2.2 2006/04/01 12:06:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.200.2.1 2006/03/13 09:07:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.200.2.2 2006/04/01 12:06:43 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -500,7 +500,7 @@ audiodetach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&audio_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn | SOUND_DEVICE,    mn | SOUND_DEVICE, VCHR);
 	vdevgone(maj, mn | AUDIO_DEVICE,    mn | AUDIO_DEVICE, VCHR);
 	vdevgone(maj, mn | AUDIOCTL_DEVICE, mn | AUDIOCTL_DEVICE, VCHR);

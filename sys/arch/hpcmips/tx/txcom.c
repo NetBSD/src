@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.27.8.1 2006/03/13 09:06:53 yamt Exp $ */
+/*	$NetBSD: txcom.c,v 1.27.8.2 2006/04/01 12:06:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27.8.1 2006/03/13 09:06:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27.8.2 2006/04/01 12:06:17 yamt Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -251,7 +251,7 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&txcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		printf(": console");
 	}

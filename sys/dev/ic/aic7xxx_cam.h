@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_cam.h,v 1.3.36.1 2006/04/01 12:06:57 yamt Exp $	*/
 
 /*
  * Data structures and definitions for the CAM system.
@@ -105,7 +105,7 @@ typedef enum {
 } cam_status;
 
 typedef enum {
-  	CAM_DIR_IN		= XS_CTL_DATA_IN,
+	CAM_DIR_IN		= XS_CTL_DATA_IN,
 	CAM_DIR_OUT		= XS_CTL_DATA_OUT,
 } ccb_flags;
 

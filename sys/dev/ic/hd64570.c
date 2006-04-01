@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.30 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.30.8.1 2006/04/01 12:06:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.30 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.30.8.1 2006/04/01 12:06:57 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -425,14 +425,14 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 		scp->msci_off = SCA_MSCI_OFF_0;
 		scp->dmac_off = SCA_DMAC_OFF_0;
 		if(sc->sc_parent != NULL)
-			ntwo_unit=sc->sc_parent->dv_unit * 2 + 0;
+			ntwo_unit = device_unit(sc->sc_parent) * 2 + 0;
 		else
 			ntwo_unit = 0;	/* XXX */
 	} else {
 		scp->msci_off = SCA_MSCI_OFF_1;
 		scp->dmac_off = SCA_DMAC_OFF_1;
 		if(sc->sc_parent != NULL)
-			ntwo_unit=sc->sc_parent->dv_unit * 2 + 1;
+			ntwo_unit = device_unit(sc->sc_parent) * 2 + 1;
 		else
 			ntwo_unit = 1;	/* XXX */
 	}

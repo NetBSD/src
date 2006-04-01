@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.32 2005/12/11 12:23:51 christos Exp $ */
+/*	$NetBSD: ses.c,v 1.32.8.1 2006/04/01 12:07:28 yamt Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.32 2005/12/11 12:23:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.32.8.1 2006/04/01 12:07:28 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -215,7 +215,7 @@ static void
 ses_attach(struct device *parent, struct device *self, void *aux)
 {
 	const char *tname;
-	struct ses_softc *softc = (void *)self;
+	struct ses_softc *softc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 

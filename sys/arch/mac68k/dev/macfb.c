@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.12 2005/12/11 12:18:02 christos Exp $ */
+/* $NetBSD: macfb.c,v 1.12.8.1 2006/04/01 12:06:19 yamt Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.12 2005/12/11 12:18:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.12.8.1 2006/04/01 12:06:19 yamt Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -240,7 +240,7 @@ macfb_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &waa, wsemuldisplaydevprint);
 
 #if NGRF > 0
-	grf_attach(sc, self->dv_unit);
+	grf_attach(sc, device_unit(self));
 #endif
 }
 

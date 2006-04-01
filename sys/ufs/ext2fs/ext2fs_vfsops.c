@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.95 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.95.2.1 2006/04/01 12:07:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.95 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.95.2.1 2006/04/01 12:07:51 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -702,8 +702,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	return (0);
 
 out:
-	if (bp)
-		brelse(bp);
+	KASSERT(bp != NULL);
+	brelse(bp);
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT);
 		free(ump, M_UFSMNT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.16.2.1 2006/03/13 09:07:02 yamt Exp $	*/
+/*	$NetBSD: scr.c,v 1.16.2.2 2006/04/01 12:06:28 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.16.2.1 2006/03/13 09:07:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.16.2.2 2006/04/01 12:06:28 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -701,7 +701,7 @@ int scrprobe(parent, match, aux)
     int                     rv = 0;           
 
     KERN_DEBUG (scrdebug, SCRPROBE_DEBUG_INFO,("scrprobe: called, name = %s\n",
-                                               parent->dv_cfdata->cf_name));
+                                               device_cfdata(parent)->cf_name));
 
     if (device_is_a(parent, "ofisascr") && devices == 0)
     {

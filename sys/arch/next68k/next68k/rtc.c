@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.10.8.1 2006/03/13 09:06:58 yamt Exp $        */
+/*      $NetBSD: rtc.c,v 1.10.8.2 2006/04/01 12:06:23 yamt Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.10.8.1 2006/03/13 09:06:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.10.8.2 2006/04/01 12:06:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -301,10 +301,10 @@ setsecs(time_t secs)
 #endif
 
 	if (new_clock) {
-		rtc_write(RTC_CNTR3, (secs << 24) & 0xff);
-		rtc_write(RTC_CNTR2, (secs << 16) & 0xff);
-		rtc_write(RTC_CNTR1, (secs <<	 8) & 0xff);
-		rtc_write(RTC_CNTR0, (secs) & 0xff);
+		rtc_write(RTC_CNTR0, (secs >> 24) & 0xff);
+		rtc_write(RTC_CNTR1, (secs >> 16) & 0xff);
+		rtc_write(RTC_CNTR2, (secs >> 8) & 0xff);
+		rtc_write(RTC_CNTR3, (secs) & 0xff);
 
 	} else {
 		struct clock_ymdhms val;

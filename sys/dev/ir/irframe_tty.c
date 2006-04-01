@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.31.8.1 2006/03/13 09:07:25 yamt Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.31.8.2 2006/04/01 12:07:05 yamt Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31.8.1 2006/03/13 09:07:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31.8.2 2006/04/01 12:07:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -310,7 +310,7 @@ irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 	error = 0;
 	switch (cmd) {
 	case IRFRAMETTY_GET_DEVICE:
-		*(int *)data = sc->sc_irp.sc_dev.dv_unit;
+		*(int *)data = device_unit(&sc->sc_irp.sc_dev);
 		break;
 	case IRFRAMETTY_GET_DONGLE:
 		*(int *)data = sc->sc_dongle;

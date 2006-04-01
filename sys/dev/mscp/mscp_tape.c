@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.26.8.1 2006/03/13 09:07:26 yamt Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.26.8.2 2006/04/01 12:07:15 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.26.8.1 2006/03/13 09:07:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.26.8.2 2006/04/01 12:07:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -161,7 +161,7 @@ mtattach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	struct	mt_softc *mt = (void *)self;
+	struct	mt_softc *mt = device_private(self);
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
 	struct	mscp_softc *mi = (void *)parent;
@@ -181,7 +181,8 @@ mt_putonline(mt)
 	struct mt_softc *mt;
 {
 	struct	mscp *mp;
-	struct	mscp_softc *mi = (struct mscp_softc *)mt->mt_dev.dv_parent;
+	struct	mscp_softc *mi =
+	    (struct mscp_softc *)device_parent(&mt->mt_dev);
 	volatile int i;
 
 	((volatile struct mt_softc *) mt)->mt_state = MT_OFFLINE;
@@ -280,7 +281,7 @@ mtstrategy(bp)
 	}
 
 	mt->mt_waswrite = bp->b_flags & B_READ ? 0 : 1;
-	mscp_strategy(bp, mt->mt_dev.dv_parent);
+	mscp_strategy(bp, device_parent(&mt->mt_dev));
 	return;
 
 bad:
@@ -496,7 +497,7 @@ mtcmd(mt, cmd, count, complete)
 	int cmd, count, complete;
 {
 	struct mscp *mp;
-	struct mscp_softc *mi = (void *)mt->mt_dev.dv_parent;
+	struct mscp_softc *mi = (void *)device_parent(&mt->mt_dev);
 	volatile int i;
 
 	mp = mscp_getcp(mi, MSCP_WAIT);

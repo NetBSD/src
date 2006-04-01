@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.51 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.51.2.1 2006/04/01 12:07:39 yamt Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.2.1 2006/04/01 12:07:39 yamt Exp $");
 
 #include "opt_systrace.h"
 
@@ -1461,6 +1461,11 @@ systrace_scriptname(struct proc *p, char *dst)
 
 	systrace_lock();
 	strp = p->p_systrace;
+	if (strp == NULL) {
+		systrace_unlock();
+		return (EINVAL);
+	}
+
 	fst = strp->parent;
 
 	SYSTRACE_LOCK(fst, curlwp);
@@ -1473,15 +1478,13 @@ systrace_scriptname(struct proc *p, char *dst)
 		goto out;
 	}
 
-	if (strp != NULL) {
-		if (strp->scriptname[0] == '\0') {
-			error = ENOENT;
-			goto out;
-		}
-
-		strlcpy(dst, strp->scriptname, MAXPATHLEN);
-		strp->isscript = 1;
+	if (strp->scriptname[0] == '\0') {
+		error = ENOENT;
+		goto out;
 	}
+
+	strlcpy(dst, strp->scriptname, MAXPATHLEN);
+	strp->isscript = 1;
 
  out:
 	strp->scriptname[0] = '\0';

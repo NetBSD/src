@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.37 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.37.8.1 2006/04/01 12:07:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.37 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.37.8.1 2006/04/01 12:07:05 yamt Exp $");
 
 #define	PCICISADEBUG
 
@@ -327,7 +327,7 @@ pcic_isa_config_interrupts(self)
 	 * use two different interrupts, but interrupts are relatively
 	 * scarce, shareable, and for PCIC controllers, very infrequent.
 	 */
-	if ((self->dv_cfdata->cf_flags & 1) == 0) {
+	if ((device_cfdata(self)->cf_flags & 1) == 0) {
 		if (sc->irq != ISA_UNKNOWN_IRQ) {
 			if ((chipmask & (1 << sc->irq)) == 0)
 				printf("%s: warning: configured irq %d not "

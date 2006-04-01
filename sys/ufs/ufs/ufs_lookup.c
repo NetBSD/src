@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.73 2006/01/14 17:41:18 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.73.6.1 2006/04/01 12:07:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.73 2006/01/14 17:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.73.6.1 2006/04/01 12:07:57 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1339,7 +1339,7 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 
 	ip = VTOI(vp);
 	KASSERT(vp->v_size == ip->i_size);
-	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_READ);
+	GOP_SIZE(vp, vp->v_size, &eof, 0);
 	lbn = offset >> bshift;
 	for (run = 0; run <= dirrablks;) {
 		const off_t curoff = lbn << bshift;

@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.2 2006/02/19 00:16:54 gdamore Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.2.2.1 2006/04/01 12:06:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.2 2006/02/19 00:16:54 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.2.2.1 2006/04/01 12:06:21 yamt Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -102,7 +102,7 @@ typedef struct au_himem_cookie {
 	struct extent	*c_extent;
 } au_himem_cookie_t;
 
-int au_himem_map(void *, bus_addr_t, bus_addr_t, int,
+int au_himem_map(void *, bus_addr_t, bus_size_t, int,
     bus_space_handle_t *, int);	
 void au_himem_unmap(void *, bus_space_handle_t, bus_size_t, int);
 void *au_himem_vaddr(void *, bus_space_handle_t);
@@ -451,7 +451,7 @@ au_himem_w_8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t val)
 inline uint16_t
 au_himem_rs_2(void *v, bus_space_handle_t h, bus_size_t o)
 {
-	uint16_t		val = (*(volatile uint16_t *)(h + o));
+	uint16_t		val;
 	au_himem_cookie_t	*c = (au_himem_cookie_t *)v;
 
 	wbflush();
@@ -640,7 +640,6 @@ __CONCAT(au_himem_sm_,BYTES)(void *v,					\
 									\
 	while (cnt-- > 0) {						\
 		__CONCAT(au_himem_w_,BYTES)(v, h, o, val);		\
-		wbflush();						\
 	}								\
 }
 AU_HIMEM_SM(uint8_t,1)

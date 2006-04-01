@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.4 2005/12/11 12:18:34 christos Exp $ */
+/*	$NetBSD: hp.c,v 1.4.8.1 2006/04/01 12:06:24 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -208,7 +208,7 @@ hpattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Read in label.
 	 */
-	if ((msg = readdisklabel(makedev(0, self->dv_unit * 8), hpstrategy,
+	if ((msg = readdisklabel(makedev(0, device_unit(self) * 8), hpstrategy,
 	    dl, NULL)) != NULL)
 		printf(": %s", msg);
 	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);

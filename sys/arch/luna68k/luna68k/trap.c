@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.34 2006/02/25 02:28:56 wiz Exp $ */
+/* $NetBSD: trap.c,v 1.34.2.1 2006/04/01 12:06:19 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2006/02/25 02:28:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.2.1 2006/04/01 12:06:19 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -594,10 +594,10 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 #endif
 		/*
@@ -629,7 +629,7 @@ trap(type, code, v, frame)
 		if (type == T_MMUFLT) {
 			if (l->l_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
