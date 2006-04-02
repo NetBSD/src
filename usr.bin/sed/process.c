@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.35 2003/11/07 04:44:57 itojun Exp $	*/
+/*	$NetBSD: process.c,v 1.36 2006/04/02 03:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.35 2003/11/07 04:44:57 itojun Exp $");
+__RCSID("$NetBSD: process.c,v 1.36 2006/04/02 03:40:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -327,7 +327,7 @@ applies(struct s_command *cp)
 				lastaddr = 1;
 			}
 			r = 1;
-		} else if (MATCH(cp->a1)) {
+		} else if (cp->a1 && MATCH(cp->a1)) {
 			/*
 			 * If the second address is a number less than or
 			 * equal to the line number first selected, only
