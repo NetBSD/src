@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.17 2005/03/30 18:01:32 xtraeme Exp $	*/
+/*	$NetBSD: checknr.c,v 1.18 2006/04/02 03:29:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.17 2005/03/30 18:01:32 xtraeme Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.18 2006/04/02 03:29:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -365,7 +365,8 @@ process(FILE *f)
 						n = 10 * n + line[i] - '0';
 					i--;
 					if (n == 0) {
-						if (stk[stktop].opno == SZ) {
+						if (stktop >= 0 && 
+						    stk[stktop].opno == SZ) {
 							stktop--;
 						} else {
 							pe(lineno);
