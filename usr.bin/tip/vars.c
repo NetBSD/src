@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.8 2006/03/29 12:37:59 yamt Exp $	*/
+/*	$NetBSD: vars.c,v 1.9 2006/04/02 04:25:36 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vars.c,v 1.8 2006/03/29 12:37:59 yamt Exp $");
+__RCSID("$NetBSD: vars.c,v 1.9 2006/04/02 04:25:36 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -77,7 +77,7 @@ value_t vtable[] = {
 	{ "raise",	BOOL,			(READ|WRITE)<<PUBLIC,
 	  "ra",		(char *)FALSE },
 	{ "raisechar",	CHAR,			(READ|WRITE)<<PUBLIC,
-	  "rc",		(char *)CTRL('a') },
+	  "rc",		NULL },
 	{ "record",	STRING|INIT|IREMOTE,	(READ|WRITE)<<PUBLIC,
 	  "rec",	(char *)&RE },
 	{ "remote",	STRING|INIT|IREMOTE,	READ<<PUBLIC,
