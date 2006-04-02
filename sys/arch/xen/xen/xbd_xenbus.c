@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.6 2006/03/29 04:41:56 thorpej Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.7 2006/04/02 15:36:10 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.6 2006/03/29 04:41:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.7 2006/04/02 15:36:10 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -280,6 +280,9 @@ xbd_xenbus_detach(struct device *dev, int flags)
 	disk_detach(&sc->sc_dksc.sc_dkdev);
 
 	event_remove_handler(sc->sc_evtchn, &xbd_handler, sc);
+	while (xengnt_status(sc->sc_ring_gntref)) {
+		tsleep(xbd_xenbus_detach, PRIBIO, "xbd_ref", hz/2);
+	}
 	xengnt_revoke_access(sc->sc_ring_gntref);
 	uvm_km_free(kernel_map, (vaddr_t)sc->sc_ring.sring,
 	    PAGE_SIZE, UVM_KMF_WIRED);
