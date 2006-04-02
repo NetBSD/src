@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.69 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: ath.c,v 1.70 2006/04/02 05:52:50 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.69 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.70 2006/04/02 05:52:50 gdamore Exp $");
 #endif
 
 /*
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.69 2006/03/08 23:46:24 lukem Exp $");
 
 #define	AR_DEBUG
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ic/athhal_desc.h>
-#include <contrib/dev/ic/athhal_devid.h>	/* XXX for softled */
+#include <contrib/dev/ath/ah_desc.h>
+#include <contrib/dev/ath/ah_devid.h>	/* XXX for softled */
 
 #ifdef ATH_TX99_DIAG
 #include <dev/ath/ath_tx99/ath_tx99.h>
@@ -1947,7 +1947,7 @@ ath_beaconq_setup(struct ath_hal *ah)
 	qi.tqi_cwmin = HAL_TXQ_USEDEFAULT;
 	qi.tqi_cwmax = HAL_TXQ_USEDEFAULT;
 	/* NB: for dynamic turbo, don't enable any other interrupts */
-	qi.tqi_qflags = TXQ_FLAG_TXDESCINT_ENABLE;
+	qi.tqi_qflags = HAL_TXQ_TXDESCINT_ENABLE;
 	return ath_hal_setuptxqueue(ah, HAL_TX_QUEUE_BEACON, &qi);
 }
 
@@ -3157,7 +3157,7 @@ ath_txq_setup(struct ath_softc *sc, int qtype, int subtype)
 	 * up in which case the top half of the kernel may backup
 	 * due to a lack of tx descriptors.
 	 */
-	qi.tqi_qflags = TXQ_FLAG_TXEOLINT_ENABLE | TXQ_FLAG_TXDESCINT_ENABLE;
+	qi.tqi_qflags = HAL_TXQ_TXEOLINT_ENABLE | HAL_TXQ_TXDESCINT_ENABLE;
 	qnum = ath_hal_setuptxqueue(ah, qtype, &qi);
 	if (qnum == -1) {
 		/*
