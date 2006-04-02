@@ -1544,24 +1544,23 @@ target_listen(globals_t *gp)
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "listener thread started\n");
 
 	/* Create/Bind/Listen */
-
-	if (iscsi_sock_create(&gp->sock) < 0) {
+	if (!iscsi_sock_create(&gp->sock)) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_create() failed\n");
 		goto done;
 	}
-	if (iscsi_sock_setsockopt(&gp->sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
+	if (!iscsi_sock_setsockopt(&gp->sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one))) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_setsockopt() failed\n");
 		goto done;
 	}
-	if (iscsi_sock_setsockopt(&gp->sock, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) != 0) {
+	if (!iscsi_sock_setsockopt(&gp->sock, SOL_TCP, TCP_NODELAY, &one, sizeof(one))) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_setsockopt() failed\n");
 		return -1;
 	}
-	if (iscsi_sock_bind(gp->sock, gp->port) < 0) {
+	if (!iscsi_sock_bind(gp->sock, gp->port)) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_bind() failed\n");
 		goto done;
 	}
-	if (iscsi_sock_listen(gp->sock) < 0) {
+	if (!iscsi_sock_listen(gp->sock)) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_listen() failed\n");
 		goto done;
 	}
@@ -1585,23 +1584,23 @@ target_listen(globals_t *gp)
 		/* Accept connection, spawn session thread, and */
 		/* clean up old threads */
 
-		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "waiting for IPv4 connection on port %d\n", ISCSI_HTONS(gp->port));
-		if (iscsi_sock_accept(gp->sock, &sess->sock) < 0) {
+		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "waiting for IPv4 connection on port %hd\n", gp->port);
+		if (!iscsi_sock_accept(gp->sock, &sess->sock)) {
 			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "iscsi_sock_accept() failed\n");
 			goto done;
 		}
 
 		localAddrLen = sizeof(localAddrStorage);
 		(void) memset(&localAddrStorage, 0x0, sizeof(localAddrStorage));
-		if (iscsi_sock_getsockname(sess->sock, (struct sockaddr *) (void *) &localAddrStorage, &localAddrLen) < 0) {
+		if (!iscsi_sock_getsockname(sess->sock, (struct sockaddr *) (void *) &localAddrStorage, &localAddrLen)) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_getsockname() failed\n");
 			goto done;
 		}
 
 		remoteAddrLen = sizeof(remoteAddrStorage);
 		(void) memset(&remoteAddrStorage, 0x0, sizeof(remoteAddrStorage));
-		if (iscsi_sock_getpeername(sess->sock, (struct sockaddr *) (void *) &remoteAddrStorage, &remoteAddrLen) < 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_getsockname() failed\n");
+		if (!iscsi_sock_getpeername(sess->sock, (struct sockaddr *) (void *) &remoteAddrStorage, &remoteAddrLen)) {
+			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_getpeername() failed\n");
 			goto done;
 		}
 

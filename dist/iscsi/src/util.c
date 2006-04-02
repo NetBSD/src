@@ -98,7 +98,7 @@ iscsi_malloc_atomic(unsigned n)
 	void           *ptr;
 
 	ptr = malloc(n);
-	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_malloc_atomic(%i) = 0x%p\n", n, ptr);
+	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_malloc_atomic(%u) = %p\n", n, ptr);
 	return ptr;
 }
 
@@ -108,7 +108,7 @@ iscsi_malloc(unsigned n)
 	void           *ptr;
 
 	ptr = malloc(n);
-	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_malloc_atomic(%i) = 0x%p\n", n, ptr);
+	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_malloc(%u) = %p\n", n, ptr);
 	return ptr;
 }
 
@@ -116,14 +116,14 @@ void
 iscsi_free_atomic(void *ptr)
 {
 	(void) free(ptr);
-	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_free_atomic(0x%p)\n", ptr);
+	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_free_atomic(%p)\n", ptr);
 }
 
 void 
 iscsi_free(void *ptr)
 {
 	(void) free(ptr);
-	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_free(0x%p)\n", ptr);
+	iscsi_trace(TRACE_MEM, __FILE__, __LINE__, "iscsi_free(%p)\n", ptr);
 }
 
 /* debugging levels */
@@ -168,7 +168,7 @@ iscsi_queue_init(iscsi_queue_t * q, int depth)
 {
 	q->head = q->tail = q->count = 0;
 	q->depth = depth;
-	if ((q->elem = iscsi_malloc_atomic(depth * sizeof(void *))) == NULL) {
+	if ((q->elem = iscsi_malloc_atomic((unsigned)(depth * sizeof(void *)))) == NULL) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
@@ -245,7 +245,7 @@ iscsi_trace(const int trace, const char *f, const int line, const char *fmt, ...
 
 	if (iscsi_debug_level & trace) {
 		va_start(vp, fmt);
-		(void) snprintf(buf, sizeof(buf), fmt, vp);
+		(void) vsnprintf(buf, sizeof(buf), fmt, vp);
 		printf("pid %d:%s:%d: %s",
 			(int) ISCSI_GETPID, f, line,
 			buf);
@@ -263,7 +263,7 @@ iscsi_trace_warning(const char *f, const int line, const char *fmt, ...)
 
 	if (iscsi_debug_level & TRACE_WARN) {
 		va_start(vp, fmt);
-		(void) snprintf(buf, sizeof(buf), fmt, vp);
+		(void) vsnprintf(buf, sizeof(buf), fmt, vp);
 		printf("pid %d:%s:%d: ***WARNING*** %s",
 			(int) ISCSI_GETPID, f, line,
 			buf);
@@ -280,7 +280,7 @@ iscsi_trace_error(const char *f, const int line, const char *fmt, ...)
 	char	buf[8192];
 
 	va_start(vp, fmt);
-	(void) snprintf(buf, sizeof(buf), fmt, vp);
+	(void) vsnprintf(buf, sizeof(buf), fmt, vp);
 	va_end(vp);
 	printf("pid %d:%s:%d: ***ERROR*** %s", (int) ISCSI_GETPID, f, line, buf);
 #  ifdef HAVE_SYSLOG
@@ -484,9 +484,9 @@ iscsi_sock_setsockopt(iscsi_socket_t * sock, int level, int optname, void *optva
 
 	if ((rc = setsockopt(*sock, level, optname, optval, optlen)) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "sock->ops->setsockopt() failed: rc %i errno %i\n", rc, errno);
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 int 
@@ -496,9 +496,9 @@ iscsi_sock_getsockopt(iscsi_socket_t * sock, int level, int optname, void *optva
 
 	if ((rc = getsockopt(*sock, level, optname, optval, optlen)) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "sock->ops->getsockopt() failed: rc %i errno %i\n", rc, errno);
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 int 
@@ -506,15 +506,11 @@ iscsi_sock_create(iscsi_socket_t * sock)
 {
 	int             rc;
 
-	if ((rc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	if ((*sock = rc = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "socket() failed: rc %i errno %i\n", rc, errno);
+		return 0;
 	}
-	*sock = rc;
-	if (rc < 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "error creating socket (rc %i)\n", rc);
-		return -1;
-	}
-	return 0;
+	return 1;
 }
 
 int 
@@ -529,9 +525,9 @@ iscsi_sock_bind(iscsi_socket_t sock, int port)
 	laddr.sin_port = ISCSI_HTONS(port);
 	if ((rc = bind(sock, (struct sockaddr *) (void *) &laddr, sizeof(laddr))) < 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "bind() failed: rc %i errno %i\n", rc, errno);
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 int 
@@ -541,9 +537,9 @@ iscsi_sock_listen(iscsi_socket_t sock)
 
 	if ((rc = listen(sock, 32)) < 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "listen() failed: rc %i errno %i\n", rc, errno);
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 int 
@@ -556,10 +552,10 @@ iscsi_sock_accept(iscsi_socket_t sock, iscsi_socket_t * newsock)
 	(void) memset(&remoteAddr, 0, sizeof(remoteAddr));
 	if ((*newsock = accept(sock, (struct sockaddr *) (void *)& remoteAddr, &remoteAddrLen)) < 0) {
 		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "accept() failed: rc %i errno %i\n", *newsock, errno);
-		return -1;
+		return 0;
 	}
 
-	return 0;
+	return 1;
 }
 
 int 
@@ -567,9 +563,9 @@ iscsi_sock_getsockname(iscsi_socket_t sock, struct sockaddr * name, unsigned *na
 {
 	if (getsockname(sock, name, namelen) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "getsockame() failed (errno %i)\n", errno);
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 int 
@@ -577,9 +573,9 @@ iscsi_sock_getpeername(iscsi_socket_t sock, struct sockaddr * name, unsigned *na
 {
 	if (getpeername(sock, name, namelen) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "getpeername() failed (errno %i)\n", errno);
-		return -1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 int 
