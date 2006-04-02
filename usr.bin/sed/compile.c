@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.31 2004/11/17 22:17:54 matt Exp $	*/
+/*	$NetBSD: compile.c,v 1.32 2006/04/02 03:47:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.31 2004/11/17 22:17:54 matt Exp $");
+__RCSID("$NetBSD: compile.c,v 1.32 2006/04/02 03:47:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,12 +176,10 @@ compile(void)
 	match = xmalloc((maxnsub + 1) * sizeof(regmatch_t));
 }
 
-#define EATSPACE() do {							\
-	if (p)								\
-		while (*p && isascii((unsigned char)*p) &&		\
-		    isspace((unsigned char)*p))				\
-			p++;						\
-	} while (0)
+#define EATSPACE() 						\
+	while (*p && isascii((unsigned char)*p) &&		\
+	    isspace((unsigned char)*p))				\
+		p++						\
 
 static struct s_command **
 compile_stream(struct s_command **link)
@@ -201,13 +199,11 @@ compile_stream(struct s_command **link)
 		}
 
 semicolon:	EATSPACE();
-		if (p) {
-			if (*p == '#' || *p == '\0')
-				continue;
-			else if (*p == ';') {
-				p++;
-				goto semicolon;
-			}
+		if (*p == '#' || *p == '\0')
+			continue;
+		else if (*p == ';') {
+			p++;
+			goto semicolon;
 		}
 		*link = cmd = xmalloc(sizeof(struct s_command));
 		link = &cmd->next;
