@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.4 2006/03/19 00:30:00 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.5 2006/04/02 13:56:12 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,11 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.4 2006/03/19 00:30:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.5 2006/04/02 13:56:12 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
 #include "rnd.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,6 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.4 2006/03/19 00:30:00 bouyer 
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
+#endif
 
 #if defined(NFS_BOOT_BOOTSTATIC)
 #include <sys/fstypes.h>
