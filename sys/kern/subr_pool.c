@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.113 2006/03/17 10:09:25 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.114 2006/04/02 13:25:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.113 2006/03/17 10:09:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.114 2006/04/02 13:25:34 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1220,7 +1220,6 @@ pool_grow(struct pool *pp, int flags)
 	simple_lock(&pp->pr_slock);
 	pool_prime_page(pp, cp, ph);
 	pp->pr_npagealloc++;
-	pp->pr_minpages++;
 	return 0;
 }
 
