@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.22 2006/04/02 07:17:16 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.23 2006/04/02 17:09:01 macallan Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.22 2006/04/02 07:17:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.23 2006/04/02 17:09:01 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -129,7 +129,7 @@ svr4_sock_ioctl(fp, l, retval, fd, cmd, data)
 					    ifa = ifa->ifa_list.tqe_next)
 						lifnum.lifn_count++;
 
-			DPRINTF(("SIOCGLIFNUM %d\n", ifnum));
+			DPRINTF(("SIOCGLIFNUM %d\n", lifnum));
 			return copyout(&lifnum, data, sizeof(lifnum));
 		}
 
