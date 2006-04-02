@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.24 2005/08/04 19:41:28 rpaulo Exp $	*/
+/*	$NetBSD: iso.c,v 1.25 2006/04/02 03:19:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.24 2005/08/04 19:41:28 rpaulo Exp $");
+__RCSID("$NetBSD: iso.c,v 1.25 2006/04/02 03:19:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,6 +367,7 @@ tp_protopr(off, name)
 			printf(" %-12.12s", tp_sstring[tpcb.tp_state]);
 		putchar('\n');
 	}
+	free(tpr_base);
 }
 
 void
