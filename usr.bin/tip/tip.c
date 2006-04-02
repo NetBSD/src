@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.31 2006/04/02 04:28:38 tls Exp $	*/
+/*	$NetBSD: tip.c,v 1.32 2006/04/02 06:11:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.31 2006/04/02 04:28:38 tls Exp $");
+__RCSID("$NetBSD: tip.c,v 1.32 2006/04/02 06:11:45 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -92,11 +92,12 @@ main(argc, argv)
 	}
 
 	if (argc > 4) {
-		fprintf(stderr, "usage: tip [-v] [-speed] [system-name]\n");
+		fprintf(stderr, "usage: %s [-v] [-speed] [system-name]\n",
+		    getprogname());
 		exit(1);
 	}
 	if (!isatty(0)) {
-		fprintf(stderr, "tip: must be interactive\n");
+		fprintf(stderr, "%s: must be interactive\n", getprogname());
 		exit(1);
 	}
 
@@ -115,7 +116,7 @@ main(argc, argv)
 			break;
 
 		default:
-			fprintf(stderr, "tip: %s, unknown option\n", argv[1]);
+			warnx("%s, unknown option", argv[1]);
 			break;
 		}
 	}
@@ -130,9 +131,8 @@ main(argc, argv)
 	 *	is private, we don't want 'ps' or 'w' to find it).
 	 */
 	if (strlen(System) > sizeof PNbuf - 1) {
-		fprintf(stderr, "tip: phone number too long (max = %d bytes)\n",
+		errx(1, "phone number too long (max = %d bytes)",
 			(int)sizeof(PNbuf) - 1);
-		exit(1);
 	}
 	(void)strlcpy(PNbuf, System, sizeof(PNbuf));
 	for (p = System; *p; p++)
@@ -177,7 +177,7 @@ notnumber:
 	vinit();				/* init variables */
 	setparity("none");			/* set the parity table */
 	if ((i = speed(number(value(BAUDRATE)))) == 0) {
-		printf("tip: bad baud rate %d\n", (int)number(value(BAUDRATE)));
+		warnx("bad baud rate %d", (int)number(value(BAUDRATE)));
 		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(3);
@@ -207,7 +207,7 @@ notnumber:
 	if (DC &&
 	    ((fcarg = fcntl(FD, F_GETFL, 0)) < 0 ||
 	     fcntl(FD, F_SETFL, fcarg & ~O_NONBLOCK) < 0)) {
-		printf("tip: can't clear O_NONBLOCK: %s", strerror (errno));
+		warn("can't clear O_NONBLOCK");
 		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(1);
@@ -592,7 +592,7 @@ xpwrite(fd, buf, n)
 		if (errno == EIO)
 			tipabort("Lost carrier.");
 		/* this is questionable */
-		perror("write");
+		warn("write");
 	}
 }
 

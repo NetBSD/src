@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.17 2006/03/29 12:37:59 yamt Exp $	*/
+/*	$NetBSD: cmds.c,v 1.18 2006/04/02 06:11:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.17 2006/03/29 12:37:59 yamt Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.18 2006/04/02 06:11:45 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -895,7 +895,7 @@ expand(name)
 	if (!anyof(name, "~{[*?$`'\"\\"))
 		return(name);
 	if (pipe(pivec) < 0) {
-		perror("pipe");
+		warn("pipe");
 		return(name);
 	}
 	(void)snprintf(cmdbuf, sizeof cmdbuf, "echo %s", name);
@@ -913,7 +913,7 @@ expand(name)
 		_exit(1);
 	}
 	if (mypid == -1) {
-		perror("fork");
+		warn("fork");
 		close(pivec[0]);
 		close(pivec[1]);
 		return(NULL);
@@ -929,7 +929,7 @@ expand(name)
 		return(NULL);
 	}
 	if (l < 0) {
-		perror("read");
+		warn("read");
 		return(NULL);
 	}
 	if (l == 0) {

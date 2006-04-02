@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.8 2006/03/16 23:25:17 christos Exp $	*/
+/*	$NetBSD: cu.c,v 1.9 2006/04/02 06:11:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.8 2006/03/16 23:25:17 christos Exp $");
+__RCSID("$NetBSD: cu.c,v 1.9 2006/04/02 06:11:45 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -73,9 +73,7 @@ cumain(argc, argv)
 
 		case 's':
 			if (argc < 3 || speed(atoi(argv[2])) == 0) {
-				fprintf(stderr, "cu: unsupported speed %s\n",
-					argv[2]);
-				exit(3);
+				errx(3, "unsupported speed %s", argv[2]);
 			}
 			BR = atoi(argv[2]); ++argv; --argc;
 			break;
