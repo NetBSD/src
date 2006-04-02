@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.21 2006/03/22 17:03:29 christos Exp $	*/
+/*	$NetBSD: scan.c,v 1.22 2006/04/02 01:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -221,7 +221,7 @@ parserelease(TREELIST ** tlp, char *relname, char *args)
 	if ((*tlp = tl) == NULL)
 		goaway("Couldn't allocate TREELIST");
 	tl->TLnext = NULL;
-	tl->TLname = salloc(relname);
+	tl->TLname = estrdup(relname);
 	tl->TLprefix = NULL;
 	tl->TLlist = NULL;
 	tl->TLscan = NULL;
@@ -242,27 +242,27 @@ parserelease(TREELIST ** tlp, char *relname, char *args)
 			arg = nxtarg(&args, " \t");
 			if (nextrel)
 				free(nextrel);
-			nextrel = salloc(arg);
+			nextrel = estrdup(arg);
 			break;
 		case OPREFIX:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			tl->TLprefix = salloc(arg);
+			tl->TLprefix = estrdup(arg);
 			break;
 		case OLIST:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			tl->TLlist = salloc(arg);
+			tl->TLlist = estrdup(arg);
 			break;
 		case OSCAN:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			tl->TLscan = salloc(arg);
+			tl->TLscan = estrdup(arg);
 			break;
 		case OHOST:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			tl->TLhost = salloc(arg);
+			tl->TLhost = estrdup(arg);
 			break;
 		}
 	}
@@ -280,7 +280,7 @@ getrelease(char *release)
 	FILE *f;
 
 	if (release == NULL)
-		frelease = release = salloc(DEFRELEASE);
+		frelease = release = estrdup(DEFRELEASE);
 	listTL = NULL;
 
 	(void) sprintf(buf, FILERELEASES, collname);

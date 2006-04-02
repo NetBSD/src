@@ -1,4 +1,4 @@
-/*	$NetBSD: salloc.c,v 1.6 2004/12/21 16:19:09 christos Exp $	*/
+/*	$NetBSD: estrdup.c,v 1.1 2006/04/02 01:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -40,7 +40,7 @@
 
 
 char *
-salloc(const char *p)
+estrdup(const char *p)
 {
 	char *q;
 	if ((q = strdup(p)) == NULL)
