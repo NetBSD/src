@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/03/16 23:25:17 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2006/04/02 04:10:54 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -34,7 +34,7 @@
 WARNS=4
 PROG=	tip
 CPPFLAGS+=-I${.CURDIR} \
-	-DDEFBR=1200 -DDEFFS=BUFSIZ -DACULOG -DPRISTINE -DCONNECT \
+	-DDEFBR=9600 -DDEFFS=BUFSIZ -DACULOG -DPRISTINE -DCONNECT \
 	-DV831 -DVENTEL -DHAYES -DCOURIER -DT3000
 .PATH:	${.CURDIR}/aculib
 BINOWN=	uucp
