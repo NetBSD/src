@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_schedctl.c,v 1.1 2006/04/02 06:34:18 macallan Exp $ */
+/* $NetBSD: svr4_schedctl.c,v 1.2 2006/04/02 06:44:23 christos Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_schedctl.c,v 1.1 2006/04/02 06:34:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_schedctl.c,v 1.2 2006/04/02 06:44:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,4 +71,3 @@ svr4_sys_schedctl(struct lwp *l, void *v, register_t *retval)
 
 	return 0; /* XXX */
 }
-
