@@ -1,4 +1,4 @@
-/*	$NetBSD: libc.h,v 1.6 2002/07/10 18:53:57 wiz Exp $	*/
+/*	$NetBSD: libc.h,v 1.7 2006/04/02 01:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -66,7 +66,7 @@
  *	Added lseek() extern.
  *
  * 02-Nov-85  Glenn Marcy (gm0w) at Carnegie-Mellon University
- *	Added salloc() extern.
+ *	Added estrdup() extern.
  *
  * 14-Aug-81  Mike Accetta (mja) at Carnegie-Mellon University
  *	Created.
