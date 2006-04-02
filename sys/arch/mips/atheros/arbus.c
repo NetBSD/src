@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $Id: arbus.c,v 1.2 2006/04/02 05:41:32 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.2 2006/04/02 05:41:32 gdamore Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -251,11 +251,12 @@ arbus_print(void *aux, const char *pnp)
 	if (aa->aa_addr)
 		aprint_normal(" addr 0x%lx", aa->aa_addr);
 
-	if (ARBUS_IRQ_CPU(aa->aa_irq))
+	if (aa->aa_irq >= 0) {
 		aprint_normal(" interrupt %d", ARBUS_IRQ_CPU(aa->aa_irq));
 
-	if (ARBUS_IRQ_MISC(aa->aa_irq))
-		aprint_normal(" irq %d", ARBUS_IRQ_MISC(aa->aa_irq));
+		if (ARBUS_IRQ_MISC(aa->aa_irq))
+			aprint_normal(" irq %d", ARBUS_IRQ_MISC(aa->aa_irq));
+	}
 
 	return (UNCONF);
 }
