@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.18 2006/04/02 06:11:45 tls Exp $	*/
+/*	$NetBSD: cmds.c,v 1.19 2006/04/02 20:44:20 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.18 2006/04/02 06:11:45 tls Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.19 2006/04/02 20:44:20 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -845,9 +845,9 @@ hardwareflow(option)
 
 	tcgetattr(FD, &rmtty);
 	if (strcmp(option, "on") == 0)
-		rmtty.c_iflag |= CRTSCTS;
+		rmtty.c_cflag |= CRTSCTS;
 	else
-		rmtty.c_iflag &= ~CRTSCTS;
+		rmtty.c_cflag &= ~CRTSCTS;
 	tcsetattr(FD, TCSADRAIN, &rmtty);
 }
 
