@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.32 2006/04/02 06:11:45 tls Exp $	*/
+/*	$NetBSD: tip.c,v 1.33 2006/04/02 19:04:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.32 2006/04/02 06:11:45 tls Exp $");
+__RCSID("$NetBSD: tip.c,v 1.33 2006/04/02 19:04:24 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -50,15 +50,6 @@ __RCSID("$NetBSD: tip.c,v 1.32 2006/04/02 06:11:45 tls Exp $");
  */
 #include "tip.h"
 #include "pathnames.h"
-
-/*
- * Baud rate mapping table
- */
-int rates[] = {
-	0, 50, 75, 110, 134, 150, 200, 300, 600,
-	1200, 1800, 2400, 4800, 9600, 14400, 19200,
-	28800, 38400, 57600, 76800, 115200, 230400, -1
-};
 
 int	escape __P((void));
 int	main __P((int, char **));
@@ -176,28 +167,37 @@ notnumber:
 		PH = path_phones;
 	vinit();				/* init variables */
 	setparity("none");			/* set the parity table */
-	if ((i = speed(number(value(BAUDRATE)))) == 0) {
-		warnx("bad baud rate %d", (int)number(value(BAUDRATE)));
-		daemon_uid();
-		(void)uu_unlock(uucplock);
-		exit(3);
-	}
 
 	/*
 	 * Hardwired connections require the
 	 *  line speed set before they make any transmissions
 	 *  (this is particularly true of things like a DF03-AC)
 	 */
-	if (HW)
-		ttysetup(i);
+	if (HW) {
+		if (ttysetup(i) != 0) {
+			warnx("bad baud rate %d",
+			    (int)number(value(BAUDRATE)));
+			daemon_uid();
+			(void)uu_unlock(uucplock);
+			exit(3);
+		}
+	}
 	if ((q = connect()) != NULL) {
 		printf("\07%s\n[EOT]\n", q);
 		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(1);
 	}
-	if (!HW)
-		ttysetup(i);
+	if (!HW) {
+		if (ttysetup(i) != 0) {
+			warnx("bad baud rate %d",
+			    (int)number(value(BAUDRATE)));
+			daemon_uid();
+			(void)uu_unlock(uucplock);
+			exit(3);
+		}
+	}
+			
 
 	/*
 	 * Direct connections with no carrier require using O_NONBLOCK on
@@ -452,18 +452,6 @@ escape()
 }
 
 int
-speed(n)
-	int n;
-{
-	int *p;
-
-	for (p = rates; *p != -1;  p++)
-		if (*p == n)
-			return n;
-	return 0;
-}
-
-int
 any(c, p)
 	char c;
 	const char *p;
@@ -541,7 +529,7 @@ help(c)
 /*
  * Set up the "remote" tty's state
  */
-void
+int
 ttysetup(spd)
 	int spd;
 {
@@ -563,7 +551,7 @@ ttysetup(spd)
 	cntrl.c_cc[VTIME] = 0;
 	if (boolean(value(TAND)))
 		cntrl.c_iflag |= IXOFF;
-	tcsetattr(FD, TCSAFLUSH, &cntrl);
+	return(tcsetattr(FD, TCSAFLUSH, &cntrl));
 }
 
 static char partab[0200];
