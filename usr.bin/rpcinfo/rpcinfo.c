@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.22 2005/06/02 02:46:16 lukem Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.23 2006/04/02 03:33:55 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -906,9 +906,19 @@ failed:
 			printf(" %s\n", rs->owner);
 		}
 	}
+	while (rs_head) {
+		rs = rs_head;
+		rs_head = rs_head->next;
+		free(rs);
+	}
 	clnt_destroy(client);
 	return;
 error:	fprintf(stderr, "rpcinfo: no memory\n");
+	while (rs_head) {
+		rs = rs_head;
+		rs_head = rs_head->next;
+		free(rs);
+	}
 	return;
 }
 
