@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_schedctl.h,v 1.1 2006/04/02 06:34:18 macallan Exp $ */
+/* $NetBSD: svr4_schedctl.h,v 1.2 2006/04/02 06:44:23 christos Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,12 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SVR4_32_SCHEDCTL_H_
-#define _SVR4_32_SCHEDCTL_H_
+#ifndef _SVR4_SCHEDCTL_H_
+#define _SVR4_SCHEDCTL_H_
 
 #include <compat/svr4/svr4_types.h>
 
-int svr4_sys_schedctl(struct lwp *, void *, register_t *);
-
-#endif  /* !_SVR4_32_SCHEDCTL_H_ */
+#endif  /* !_SVR4_SCHEDCTL_H_ */
 
