@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.44 2006/03/19 02:25:12 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.45 2006/04/02 03:26:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.44 2006/03/19 02:25:12 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.45 2006/04/02 03:26:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -213,6 +213,7 @@ cgetcap(buf, cap, type)
  * encountered (couldn't open/read a file, etc.), and -3 if a potential
  * reference loop is detected.
  */
+/* coverity[+alloc : arg-*0] */
 int
 cgetent(char **buf, const char * const *db_array, const char *name)
 {
@@ -243,6 +244,7 @@ cgetent(char **buf, const char * const *db_array, const char *name)
  *	  names interpolated, a name can't be found, or depth exceeds
  *	  MAX_RECURSION.
  */
+/* coverity[+alloc : arg-*0] */
 static int
 getent(char **cap, size_t *len, const char * const *db_array, int fd,
     const char *name, int depth, char *nfield)
@@ -761,6 +763,7 @@ cgetclose(void)
  * specified by db_array.  It returns 0 upon completion of the database, 1
  * upon returning an entry with more remaining, and -1 if an error occurs.
  */
+/* coverity[+alloc : arg-*0] */
 int
 cgetnext(char **bp, const char * const *db_array)
 {
