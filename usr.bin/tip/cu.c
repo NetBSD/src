@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.11 2006/04/02 19:16:22 tls Exp $	*/
+/*	$NetBSD: cu.c,v 1.12 2006/04/02 22:19:26 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.11 2006/04/02 19:16:22 tls Exp $");
+__RCSID("$NetBSD: cu.c,v 1.12 2006/04/02 22:19:26 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -52,8 +52,10 @@ cumain(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int i, phonearg = 0, parity = 0;	/* 0 is no parity */
-	static int helpme = 0;
+	int i, phonearg = 0;
+	int parity = 0;		/* 0 is no parity */
+	int flow = -1;		/* -1 is "tandem" ^S/^Q */
+	static int helpme = 0, nostop = 0;
 	char useresc = '~';
 	static char sbuf[12], brbuf[16];
 	extern char *optarg;
@@ -62,12 +64,14 @@ cumain(argc, argv)
 	static struct option longopts[] = {
 		{ "help",	no_argument,		&helpme,	1 },
 		{ "escape",	required_argument,	NULL,		'E' },
+		{ "flow",	required_argument,	NULL,		'F' },
 		{ "parity",	required_argument,	NULL,		'P' },
 		{ "phone", 	required_argument,	NULL,		'c' },
 		{ "port",	required_argument,	NULL,		'a' },
 		{ "line",	required_argument,	NULL,		'l' },
 		{ "speed",	required_argument,	NULL,		's' },
-		{ "halfduplex",	required_argument,	NULL,		'h' },
+		{ "halfduplex",	no_argument,		NULL,		'h' },
+		{ "nostop",	no_argument,		&nostop,	1  },
 		{ NULL,		0,			NULL,		0 }
 	};
 		
@@ -80,7 +84,7 @@ cumain(argc, argv)
 	BR = DEFBR;
 
 	while((ch = getopt_long(argc, argv,
-	    "E:P:a:p:c:l:s:heot0123456789", longopts, NULL)) != -1) {
+	    "E:F:P:a:p:c:l:s:heot0123456789", longopts, NULL)) != -1) {
 
 		if (helpme == 1) cuhelp();
 
@@ -91,6 +95,19 @@ cumain(argc, argv)
 				errx(3, "only one escape character allowed");
 			useresc = optarg[0];
 			break;
+		case 'F':
+			if (strncmp(optarg, "hard", sizeof("hard") - 1 ) == 0)
+				flow = 1;
+			else
+				if (strncmp(optarg, "soft",
+				    sizeof("soft") - 1 ) == 0)
+					flow = -1;
+				else
+					if(strcmp(optarg, "none") != 0)
+						errx(3, "bad flow setting");
+					else
+						flow = 0;
+			break;
 		case 'P':
 			if(strcmp(optarg, "even") == 0)
 				parity = -1;
@@ -100,6 +117,8 @@ cumain(argc, argv)
 				else
 					if(strcmp(optarg, "none") != 0)
 						errx(3, "bad parity setting");
+					else
+						parity = 0;
 			break;
 		case 'a':
 		case 'p':
@@ -121,7 +140,6 @@ cumain(argc, argv)
 			BR = atoi(optarg);
 			break;
 		case 'h':
-			setboolean(value(LECHO), TRUE);
 			HD = TRUE;
 			break;
 		case 'e':
@@ -144,7 +162,8 @@ cumain(argc, argv)
 			BR = atoi(brbuf);
 			break;
 		default:
-			cuusage();
+			if (nostop == 0)
+				cuusage();
 			break;
 		}
 	}
@@ -205,8 +224,32 @@ cumain(argc, argv)
 		setparity("none");
 		break;
 	}
+
+	switch (flow) {
+	case -1:
+		if(nostop) {
+			setboolean(value(TAND), FALSE);
+			setboolean(value(HARDWAREFLOW), FALSE);
+		}
+		else {
+			setboolean(value(TAND), TRUE);
+			setboolean(value(HARDWAREFLOW), FALSE);
+		}
+		break;
+	case 1:
+		setboolean(value(TAND), FALSE);
+		setboolean(value(HARDWAREFLOW), TRUE);
+		break;
+	case 0:
+	default:
+		setboolean(value(TAND), FALSE);
+		setboolean(value(HARDWAREFLOW), FALSE);
+		break;
+	}
 	setcharacter(value(ESCAPE), useresc);
 	setboolean(value(VERBOSE), FALSE);
+	if (HD)
+		setboolean(value(LECHO), TRUE);
 	if (HW) {
 		if (ttysetup(BR) != 0) {
 			warnx("unsupported speed %ld", BR);
@@ -246,9 +289,11 @@ cuhelp(void)
 	    "BSD tip/cu\n"
 	    "Usage: cu [options] [phone-number]\n"
 	    " -E,--escape char: Use this escape character\n"
+	    " -F,--flow {hard,soft,none}: Use RTS/CTS, ^S/^Q, no flow control\n"
+	    " --nostop: Do not use software flow control\n"
 	    " -a, -p,--port port: Use this port as ACU/Dialer\n"
 	    " -c,--phone number: Call this number\n"
-	    " -h: Echo characters locally (use \"half duplex\")\n"
+	    " -h,--halfduplex: Echo characters locally (use \"half duplex\")\n"
 	    " -e: Use even parity\n"
 	    " -o: Use odd parity\n"
 	    " -P,--parity {even,odd,none}: use even, odd, no parity\n"
