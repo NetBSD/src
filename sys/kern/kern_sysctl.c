@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.193 2006/04/02 08:04:05 dsl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.194 2006/04/02 09:07:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.193 2006/04/02 08:04:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.194 2006/04/02 09:07:57 dsl Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -994,6 +994,8 @@ sysctl_create(SYSCTLFN_ARGS)
 			if (flags & CTLFLAG_OWNDATA) {
 				own = malloc(sz, M_SYSCTLDATA,
 					     M_WAITOK|M_CANFAIL);
+				if (own == NULL)
+					return ENOMEM;
 				if (nnode.sysctl_data == NULL)
 					memset(own, 0, sz);
 				else {
@@ -1079,8 +1081,11 @@ sysctl_create(SYSCTLFN_ARGS)
 			error = sysctl_alloc(pnode, 1);
 		else
 			error = sysctl_alloc(pnode, 0);
-		if (error)
+		if (error) {
+			if (own != NULL)
+				free(own, M_SYSCTLDATA);
 			return (error);
+		}
 	}
 	node = pnode->sysctl_child;
 
@@ -1103,8 +1108,11 @@ sysctl_create(SYSCTLFN_ARGS)
 	 */
 	if (pnode->sysctl_clen == pnode->sysctl_csize) {
 		error = sysctl_realloc(pnode);
-		if (error)
+		if (error) {
+			if (own != NULL)
+				free(own, M_SYSCTLDATA);
 			return (error);
+		}
 		node = pnode->sysctl_child;
 	}
 
@@ -1172,6 +1180,7 @@ sysctl_create(SYSCTLFN_ARGS)
 	     pnode = pnode->sysctl_parent)
 		pnode->sysctl_ver = nm;
 
+	/* If this fails, the node is already added - the user won't know! */
 	error = sysctl_cvt_out(l, v, node, oldp, *oldlenp, oldlenp);
 
 	return (error);
