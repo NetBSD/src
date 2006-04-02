@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.12 2006/03/29 12:37:59 yamt Exp $	*/
+/*	$NetBSD: remote.c,v 1.13 2006/04/02 06:11:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.12 2006/03/29 12:37:59 yamt Exp $");
+__RCSID("$NetBSD: remote.c,v 1.13 2006/04/02 06:11:45 tls Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -103,15 +103,15 @@ getremcap(host)
 		}
 		switch(status) {
 		case -1:
-			fprintf(stderr, "tip: unknown host %s\n", host);
+			warnx("unknown host %s", host);
 			break;
 		case -2:
-			fprintf(stderr, 
-			    "tip: can't open host description file\n");
+			warnx("can't open host description file");
 			break;
 		case -3:
-			fprintf(stderr, 
-			    "tip: possible reference loop in host description file\n");
+			warnx("possible reference loop in host "
+			    "description file");
+
 			break;
 		}
 		exit(3);
@@ -129,14 +129,12 @@ getremcap(host)
 	else
 		DU = cgetflag("du");
 	if (DV == NULL) {
-		fprintf(stderr, "%s: missing device spec\n", host);
-		exit(3);
+		errx(3, "%s: missing device spec\n", host);
 	}
 	if (DU && CU == NULL)
 		CU = DV;
 	if (DU && PN == NULL) {
-		fprintf(stderr, "%s: missing phone number\n", host);
-		exit(3);
+		errx(3, "%s: missing phone number\n", host);
 	}
 
 	HD = cgetflag("hd");
@@ -209,8 +207,7 @@ getremote(host)
 
 	if (!lookedup) {
 		if (host == NULL && (host = getenv("HOST")) == NULL) {
-			fprintf(stderr, "tip: no host specified\n");
-			exit(3);
+			errx(3, "no host specified\n");
 		}
 		getremcap(host);
 		next = DV;
