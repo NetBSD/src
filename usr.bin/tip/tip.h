@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.18 2006/04/02 19:04:24 tls Exp $	*/
+/*	$NetBSD: tip.h,v 1.19 2006/04/02 19:16:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
