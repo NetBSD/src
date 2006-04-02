@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.14 2005/11/12 22:57:46 spz Exp $
+# $NetBSD: md.cats,v 1.15 2006/04/02 01:17:16 uwe Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/gtf
@@ -169,7 +169,7 @@
 ./usr/X11R6/lib/modules/libfb.a
 ./usr/X11R6/lib/modules/libi2c.a
 ./usr/X11R6/lib/modules/libint10.a
-./usr/X11R6/lib/modules/liblayer.a 
+./usr/X11R6/lib/modules/liblayer.a
 ./usr/X11R6/lib/modules/libmfb.a
 ./usr/X11R6/lib/modules/libpcidata.a
 ./usr/X11R6/lib/modules/librac.a
