@@ -1,4 +1,4 @@
-/*	$NetBSD: uucplock.c,v 1.12 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: uucplock.c,v 1.13 2006/04/02 06:11:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: uucplock.c,v 1.12 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: uucplock.c,v 1.13 2006/04/02 06:11:45 tls Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -64,15 +64,15 @@ uu_lock(ttname)
 		 */
 		fd = open(tbuf, O_RDWR, 0);
 		if (fd < 0) {
-			perror(tbuf);
-			fprintf(stderr, "Can't open lock file.\n");
+			warn(tbuf);
+			warnx("Can't open lock file.");
 			return(-1);
 		}
 		len = read(fd, text_pid, sizeof(text_pid)-1);
 		if(len <= 0) {
-			perror(tbuf);
+			warn(tbuf);
 			(void)close(fd);
-			fprintf(stderr, "Can't read lock file.\n");
+			warnx("Can't read lock file.");
 			return(-1);
 		}
 		text_pid[len] = 0;
@@ -86,12 +86,12 @@ uu_lock(ttname)
 		 * The process that locked the file isn't running, so
 		 * we'll lock it ourselves
 		 */
-		fprintf(stderr, "Stale lock on %s PID=%d... overriding.\n",
+		warnx("Stale lock on %s PID=%d... overriding.",
 			ttname, mypid);
 		if (lseek(fd, (off_t)0, SEEK_SET) < 0) {
-			perror(tbuf);
+			warn(tbuf);
 			(void)close(fd);
-			fprintf(stderr, "Can't seek lock file.\n");
+			warnx("Can't seek lock file.");
 			return(-1);
 		}
 		/* fall out and finish the locking process */
@@ -102,7 +102,7 @@ uu_lock(ttname)
 	if (write(fd, text_pid, len) != len) {
 		(void)close(fd);
 		(void)unlink(tbuf);
-		perror("lock write");
+		warn("lock write");
 		return(-1);
 	}
 	(void)close(fd);

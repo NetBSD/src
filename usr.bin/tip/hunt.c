@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.10 2003/08/07 11:16:17 agc Exp $	*/
+/*	$NetBSD: hunt.c,v 1.11 2006/04/02 06:11:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hunt.c,v 1.10 2003/08/07 11:16:17 agc Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.11 2006/04/02 06:11:45 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -81,7 +81,7 @@ hunt(name)
 		}
 		alarm(0);
 		if (FD < 0) {
-			perror(cp);
+			warn(cp);
 			deadfl = 1;
 		}
 		if (!deadfl) {
