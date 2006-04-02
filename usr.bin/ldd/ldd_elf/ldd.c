@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.26 2005/12/27 11:29:30 yamt Exp $	*/
+/*	$NetBSD: ldd.c,v 1.27 2006/04/02 03:50:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.26 2005/12/27 11:29:30 yamt Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.27 2006/04/02 03:50:38 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -325,7 +325,7 @@ fmtprint(const char *libname, Obj_Entry *obj, const char *fmt1,
 				printf("%s", libpath);
 				break;
 			case 'x':
-				printf("%p", obj->mapbase);
+				printf("%p", obj ? obj->mapbase : 0);
 				break;
 			}
 			break;
