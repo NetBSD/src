@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.31 2006/03/28 20:58:39 pavel Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.32 2006/04/02 17:04:24 kiyohara Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.31 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.32 $"
 
 maxusers	32
 
@@ -185,8 +185,8 @@ atabus* at ata?
 wd*	at atabus? drive ?
 
 # MII/PHY support
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101/9102 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 options 	MIIVERBOSE		# verbose PHY autoconfig messages
 
 
