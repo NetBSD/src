@@ -204,7 +204,7 @@ write_read_test(uint64_t target, uint32_t lun, int type)
 	uint8_t   data[4096], cdb[16];
 	initiator_cmd_t cmd;
 	iscsi_scsi_cmd_args_t args;
-	int             len = 1;
+	int16_t             len = 1;
 	int             i, j;
 
 	if ((type != 6) && (type != 10)) {
