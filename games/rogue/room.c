@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.8 2006/03/30 04:41:15 jnemeth Exp $	*/
+/*	$NetBSD: room.c,v 1.9 2006/04/02 00:13:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: room.c,v 1.8 2006/03/30 04:41:15 jnemeth Exp $");
+__RCSID("$NetBSD: room.c,v 1.9 2006/04/02 00:13:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -490,7 +490,7 @@ dr_course(monster, entering, row, col)
 		/* no place to send monster */
 		monster->trow = NO_ROOM;
 	} else {		/* exiting room */
-		if (!get_oth_room(rn, &row, &col)) {
+		if (rn == NO_ROOM || !get_oth_room(rn, &row, &col)) {
 			monster->trow = NO_ROOM;
 		} else {
 			monster->trow = row;
