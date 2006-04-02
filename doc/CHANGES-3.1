@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.51 2006/03/29 21:31:32 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.52 2006/04/02 18:08:32 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1111,4 +1111,17 @@ sys/dev/pcmcia/wdc_pcmcia.c			1.105
 	Make sure that disks are probed before trying to mount root, if the
 	card is plugged in at boot time. Fixes PR kern/33137.
 	[bouyer, ticket #1232]
+
+sys/arch/i386/i386/est.c			1.8,1.10-1.12,1.14,1.16-1.24 via patch
+
+	Improve Enhanced SpeedStep support:
+	- Recognize many more CPU modules.
+	- Properly handle LV and ULV CPUs.
+	[tron, ticket #1234]
+
+sys/netinet/in.c				1.105
+
+	Close NULL dereference when a GIFALIAS is performed on
+  	a non existant address.
+	[seanb, ticket #1235]
 
