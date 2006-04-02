@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.33 2006/04/02 19:04:24 tls Exp $	*/
+/*	$NetBSD: tip.c,v 1.34 2006/04/02 19:16:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.33 2006/04/02 19:04:24 tls Exp $");
+__RCSID("$NetBSD: tip.c,v 1.34 2006/04/02 19:16:22 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -148,7 +148,9 @@ notnumber:
 		exit(3);
 	}
 	setbuf(stdout, NULL);
+#ifdef ACULOG
 	loginit();
+#endif
 
 	/*
 	 * Now that we have the logfile and the ACU open
