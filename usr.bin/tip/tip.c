@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.30 2006/04/02 04:02:00 tls Exp $	*/
+/*	$NetBSD: tip.c,v 1.31 2006/04/02 04:28:38 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.30 2006/04/02 04:02:00 tls Exp $");
+__RCSID("$NetBSD: tip.c,v 1.31 2006/04/02 04:28:38 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -175,7 +175,7 @@ notnumber:
 	if ((PH = getenv("PHONES")) == NULL)
 		PH = path_phones;
 	vinit();				/* init variables */
-	setparity("even");			/* set the parity table */
+	setparity("none");			/* set the parity table */
 	if ((i = speed(number(value(BAUDRATE)))) == 0) {
 		printf("tip: bad baud rate %d\n", (int)number(value(BAUDRATE)));
 		daemon_uid();
