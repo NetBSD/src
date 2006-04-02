@@ -202,11 +202,11 @@ session_init_i(initiator_session_t ** sess, uint64_t isid)
 
 	/* Create socket */
 
-	if (iscsi_sock_create(&s->sock) != 0) {
+	if (!iscsi_sock_create(&s->sock)) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_create() failed\n");
 		return -1;
 	}
-	if (iscsi_sock_setsockopt(&s->sock, SOL_TCP, TCP_NODELAY, &one, sizeof(one)) != 0) {
+	if (!iscsi_sock_setsockopt(&s->sock, SOL_TCP, TCP_NODELAY, &one, sizeof(one))) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_setsockopt() failed\n");
 		return -1;
 	}
