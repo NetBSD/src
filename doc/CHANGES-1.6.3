@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.177 2006/03/28 23:29:38 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.178 2006/04/02 17:45:58 riz Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2158,4 +2158,10 @@ usr.sbin/rpc.statd/statd.c			1.27
 	daemonizing. This is more portable and avoids zombie "rpc.statd"
 	processes after an NFS client running e.g. Mac OS X shuts down.
 	[tron, ticket #6037]
+
+sys/netinet/in.c				1.105
+
+	Close NULL dereference when a GIFALIAS is performed on a
+	non existant address.
+	[seanb, ticket #6040]
 
