@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.192 2006/03/17 01:52:08 chris Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.193 2006/04/02 08:04:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.192 2006/03/17 01:52:08 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.193 2006/04/02 08:04:05 dsl Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -815,22 +815,25 @@ sysctl_create(SYSCTLFN_ARGS)
 	 * know what they collided with
 	 */
 	node = pnode->sysctl_child;
-	if (((flags & CTLFLAG_ANYNUMBER) && node) ||
-	    (node && node->sysctl_flags & CTLFLAG_ANYNUMBER))
-		return (EINVAL);
-	for (ni = at = 0; ni < pnode->sysctl_clen; ni++) {
-		if (nm == node[ni].sysctl_num ||
-		    strcmp(nnode.sysctl_name, node[ni].sysctl_name) == 0) {
-			/*
-			 * ignore error here, since we
-			 * are already fixed on EEXIST
-			 */
-			(void)sysctl_cvt_out(l, v, &node[ni], oldp,
-					     *oldlenp, oldlenp);
-			return (EEXIST);
+	at = 0;
+	if (node) {
+		if ((flags | node->sysctl_flags) & CTLFLAG_ANYNUMBER)
+			/* No siblings for a CTLFLAG_ANYNUMBER node */
+			return EINVAL;
+		for (ni = 0; ni < pnode->sysctl_clen; ni++) {
+			if (nm == node[ni].sysctl_num ||
+			    strcmp(nnode.sysctl_name, node[ni].sysctl_name) == 0) {
+				/*
+				 * ignore error here, since we
+				 * are already fixed on EEXIST
+				 */
+				(void)sysctl_cvt_out(l, v, &node[ni], oldp,
+						     *oldlenp, oldlenp);
+				return (EEXIST);
+			}
+			if (nm > node[ni].sysctl_num)
+				at++;
 		}
-		if (nm > node[ni].sysctl_num)
-			at++;
 	}
 
 	/*
