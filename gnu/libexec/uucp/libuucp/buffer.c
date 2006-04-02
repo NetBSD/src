@@ -95,7 +95,7 @@ zbufcpy (z)
 
 /* Free up a buffer back onto the linked list.  */
 
-/* coverity[+free : arg-1] */
+/* coverity[+free : arg-0] */
 void
 ubuffree (z)
      char *z;
