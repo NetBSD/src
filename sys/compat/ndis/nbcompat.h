@@ -5,6 +5,7 @@
 #include <sys/lkm.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
+#include <sys/device.h>
 
 #define CTLFLAG_RW			CTLFLAG_READWRITE
 
