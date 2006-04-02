@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.13 2006/03/22 16:56:10 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.14 2006/04/02 01:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -299,7 +299,7 @@ init(int argc, char **argv)
 			p = skipover(p, " \t=");
 			if (!localhost(p))
 				continue;
-			*c = getscancoll(filename, salloc(collname),
+			*c = getscancoll(filename, estrdup(collname),
 			    (char *) NULL);
 			if (*c)
 				c = &((*c)->Cnext);
@@ -320,7 +320,7 @@ init(int argc, char **argv)
 				continue;
 			q = nxtarg(&p, " \t=");
 			p = skipover(p, " \t=");
-			*c = getscancoll(filename, salloc(q), salloc(p));
+			*c = getscancoll(filename, estrdup(q), estrdup(p));
 			if (*c)
 				c = &((*c)->Cnext);
 		}
@@ -329,8 +329,8 @@ init(int argc, char **argv)
 	}
 	if (argc < 2 || argc > 3)
 		usage();
-	firstC = getscancoll(filename, salloc(argv[1]),
-	    argc > 2 ? salloc(argv[2]) : (char *) NULL);
+	firstC = getscancoll(filename, estrdup(argv[1]),
+	    argc > 2 ? estrdup(argv[2]) : (char *) NULL);
 }
 
 static SCAN_COLLECTION *
@@ -351,7 +351,7 @@ getscancoll(char *filename, char *collname, char *basedir)
 				q = nxtarg(&p, " \t=");
 				if (strcmp(q, collname) == 0) {
 					p = skipover(p, " \t=");
-					basedir = salloc(p);
+					basedir = estrdup(p);
 					break;
 				}
 			}
@@ -359,7 +359,7 @@ getscancoll(char *filename, char *collname, char *basedir)
 		}
 		if (basedir == NULL) {
 			(void) sprintf(buf, FILEBASEDEFAULT, collname);
-			basedir = salloc(buf);
+			basedir = estrdup(buf);
 		}
 	}
 	if (chdir(basedir) < 0) {
@@ -376,7 +376,7 @@ getscancoll(char *filename, char *collname, char *basedir)
 				*q = 0;
 			if (index("#;:", *p))
 				continue;
-			prefix = salloc(p);
+			prefix = estrdup(p);
 			if (chdir(prefix) < 0) {
 				fprintf(stderr, "supscan: can't chdir to %s from base directory %s for %s\n",
 				    prefix, basedir, collname);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2006/03/14 22:59:43 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2006/04/02 01:39:48 christos Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -78,7 +78,7 @@ SUPCL			= supcmain.o supcvers.o supcparse.o supcname.o \
 			  supcmisc.o supcmeat.o
 SUPS			= scm.o scmio.o stree.o log.o supmsg.o netcrypt.o
 EXTRA			= atoo.o errmsg.o expand.o ffilecopy.o filecopy.o \
-			  nxtarg.o path.o quit.o read_line.o run.o salloc.o \
+			  nxtarg.o path.o quit.o read_line.o run.o estrdup.o \
 			  skipto.o vprintf.o
 
 

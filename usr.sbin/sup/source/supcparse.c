@@ -1,4 +1,4 @@
-/*	$NetBSD: supcparse.c,v 1.13 2006/03/22 16:54:26 christos Exp $	*/
+/*	$NetBSD: supcparse.c,v 1.14 2006/04/02 01:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -115,7 +115,7 @@ parsecoll(COLLECTION * c, char *collname, char *args)
 	int opno;
 
 	c->Cnext = NULL;
-	c->Cname = salloc(collname);
+	c->Cname = estrdup(collname);
 	c->Chost = NULL;
 	c->Chtree = NULL;
 	c->Cbase = NULL;
@@ -157,42 +157,42 @@ parsecoll(COLLECTION * c, char *collname, char *args)
 		case OBASE:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			c->Cbase = salloc(arg);
+			c->Cbase = estrdup(arg);
 			break;
 		case OHOSTBASE:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			c->Chbase = salloc(arg);
+			c->Chbase = estrdup(arg);
 			break;
 		case OPREFIX:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			c->Cprefix = salloc(arg);
+			c->Cprefix = estrdup(arg);
 			break;
 		case ORELEASE:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			c->Crelease = salloc(arg);
+			c->Crelease = estrdup(arg);
 			break;
 		case ONOTIFY:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			c->Cnotify = salloc(arg);
+			c->Cnotify = estrdup(arg);
 			break;
 		case OLOGIN:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			c->Clogin = salloc(arg);
+			c->Clogin = estrdup(arg);
 			break;
 		case OPASSWORD:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			c->Cpswd = salloc(arg);
+			c->Cpswd = estrdup(arg);
 			break;
 		case OCRYPT:
 			passdelim(&args, '=');
 			arg = nxtarg(&args, " \t");
-			c->Ccrypt = salloc(arg);
+			c->Ccrypt = estrdup(arg);
 			break;
 		case OBACKUP:
 			c->Cflags |= CFBACKUP;
