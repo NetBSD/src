@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.104 2005/02/26 22:45:12 perry Exp $	*/
+/*	$NetBSD: in.c,v 1.104.6.1 2006/04/02 18:06:10 riz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.104 2005/02/26 22:45:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.104.6.1 2006/04/02 18:06:10 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -349,14 +349,15 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 				    ifra->ifra_addr.sin_addr))
 					break;
 			}
-		if (cmd == SIOCDIFADDR) {
-			if (ia == 0)
-				return (EADDRNOTAVAIL);
+		if ((cmd == SIOCDIFADDR || cmd == SIOCGIFALIAS) && ia == NULL)
+			return (EADDRNOTAVAIL);
+
 #if 1 /*def COMPAT_43*/
-			if (ifra->ifra_addr.sin_family == AF_UNSPEC)
-				ifra->ifra_addr.sin_family = AF_INET;
-#endif
+		if (cmd == SIOCDIFADDR &&
+		    ifra->ifra_addr.sin_family == AF_UNSPEC) {
+			ifra->ifra_addr.sin_family = AF_INET;
 		}
+#endif
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
