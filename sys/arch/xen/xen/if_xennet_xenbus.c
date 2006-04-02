@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.6 2006/04/02 15:32:41 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.7 2006/04/02 17:11:12 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.6 2006/04/02 15:32:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.7 2006/04/02 17:11:12 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -684,6 +684,12 @@ again:
 			sc->sc_tx_ring.rsp_cons = i;
 			goto end;
 		}
+		if (__predict_false(
+		    RING_GET_RESPONSE(&sc->sc_tx_ring, i)->status !=
+		    NETIF_RSP_OKAY))
+			ifp->if_oerrors++;
+		else
+			ifp->if_opackets++;
 		xengnt_revoke_access(req->txreq_gntref);
 		m_freem(req->txreq_m);
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
