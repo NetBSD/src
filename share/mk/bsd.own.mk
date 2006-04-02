@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.427.2.2 2004/12/07 11:07:32 rtr Exp $
+#	$NetBSD: bsd.own.mk,v 1.427.2.3 2006/04/02 01:57:07 rtr Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -50,6 +50,11 @@ HAVE_GCC3?=	no
 .else
 HAVE_GCC3?=	yes
 .endif
+
+#
+# Transitional for toolchain upgrade to GCC4.1
+#
+HAVE_GCC4?=	no
 
 # Do we want to use tools/toolchain or not?
 .if ${HAVE_GCC3} != "no"
@@ -220,7 +225,9 @@ TOOL_CTAGS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ctags
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
 TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
+TOOL_GENASSYM=		${TOOLDIR}/bin/${_TOOL_PREFIX}genassym
 TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
+TOOL_GMAKE=		${TOOLDIR}/bin/${_TOOL_PREFIX}gmake
 TOOL_GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
 TOOL_HEXDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
 TOOL_HP300MKBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}hp300-mkboot
@@ -233,6 +240,8 @@ TOOL_MAKEFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makefs
 TOOL_MAKEINFO=		${TOOLDIR}/bin/${_TOOL_PREFIX}makeinfo
 TOOL_MAKEWHATIS=	${TOOLDIR}/bin/${_TOOL_PREFIX}makewhatis
 TOOL_MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
+TOOL_DISKLABEL=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-disklabel
+TOOL_FDISK=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-fdisk
 TOOL_MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}menuc
 TOOL_MIPSELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
 TOOL_MKCSMAPPER=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkcsmapper
@@ -425,6 +434,13 @@ MKGDB=		no
 .endif
 
 #
+# The ia64 port is incomplete.
+#
+.if ${MACHINE_ARCH} == "ia64"
+MKLINT=		no
+.endif
+
+#
 # On the MIPS, all libs are compiled with ABIcalls (and are thus PIC),
 # not just shared libraries, so don't build the _pic version.
 #
@@ -555,13 +571,13 @@ MK${var}:=	yes
 	DOC \
 	GCC GCCCMDS GDB \
 	HESIOD HTML \
-	IEEEFP INET6 INFO \
-	KERBEROS KERBEROS4 \
+	IEEEFP INET6 INFO IPFILTER \
+	KERBEROS \
 	LINKLIB LINT \
 	MAN \
 	NLS \
 	OBJ \
-	PIC PICINSTALL PICLIB POSTFIX PROFILE \
+	PAM PF PIC PICINSTALL PICLIB POSTFIX PROFILE \
 	SENDMAIL SHARE SKEY STATICLIB \
 	UUCP \
 	YP
@@ -581,12 +597,7 @@ MK${var}?=	no
 # Force some options off if their dependencies are off.
 #
 
-.if ${MKKERBEROS} == "no"
-MKKERBEROS4:=   no 
-.endif
-
 .if ${MKCRYPTO} == "no"
-MKKERBEROS4:=	no
 MKKERBEROS:=	no
 .endif
 
@@ -640,8 +651,6 @@ INSTPRIV.unpriv=
 .endif
 INSTPRIV?=	${INSTPRIV.unpriv} -N ${NETBSDSRCDIR}/etc
 .endif
-SYSPKGTAG?=	${SYSPKG:D-T ${SYSPKG}_pkg}
-SYSPKGDOCTAG?=	${SYSPKG:D-T ${SYSPKG}-doc_pkg}
 STRIPFLAG?=	
 
 .if ${NEED_OWN_INSTALL_TARGET} != "no"
@@ -650,6 +659,8 @@ INSTALL_FILE?=		${INSTALL} ${INSTPRIV} ${COPY} ${PRESERVE} ${RENAME}
 INSTALL_LINK?=		${INSTALL} ${INSTPRIV} ${HRDLINK} ${RENAME}
 INSTALL_SYMLINK?=	${INSTALL} ${INSTPRIV} ${SYMLINK} ${RENAME}
 HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
+HOST_INSTALL_DIR?=	${INSTALL} -d
+HOST_INSTALL_SYMLINK?=	${INSTALL} ${SYMLINK} ${RENAME}
 .endif
 
 #
@@ -657,10 +668,16 @@ HOST_INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME}
 #
 
 #
+# USE_* options which default to "no" and will be forced to "no" if their
+# corresponding MK* variable is set to "no".
+# (The latter is implemented using the .for loop in the next block.)
+#
+
+#
 # USE_* options which default to "yes" unless their corresponding MK*
 # variable is set to "no".
 #
-.for var in HESIOD INET6 KERBEROS KERBEROS4 SKEY YP
+.for var in HESIOD INET6 KERBEROS PAM SKEY YP
 .if (${MK${var}} == "no")
 USE_${var}:= no
 .else
@@ -676,15 +693,17 @@ USE_${var}?= yes
 .endfor
 
 #
-# Use XFree86 4.x as default version on:
-#	i386, amd64, macppc, cats, sgimips, sparc, sparc64.
+# USE_* options which default to "no".
 #
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE} == "amd64" || \
-    ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
-    ${MACHINE} == "sgimips" || \
-    ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
-USE_XF86_4?=	yes
-.endif
+.for var in GCC4
+USE_${var}?= no
+.endfor
+
+#
+# Because XFree86 3.3.6 was EOLed all ports use XFree86 4.x now.
+# We keep this definition for backwards compatiblity.
+#
+USE_XF86_4=	yes
 
 #
 # Where X11R6 sources are and where it is installed to.

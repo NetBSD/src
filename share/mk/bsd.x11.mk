@@ -1,11 +1,12 @@
-#	$NetBSD: bsd.x11.mk,v 1.41.2.1 2004/11/15 10:10:46 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.41.2.2 2006/04/02 02:04:55 rtr Exp $
 
 .include <bsd.init.mk>
-
 
 BINDIR=			${X11BINDIR}
 LIBDIR=			${X11USRLIBDIR}
 MANDIR=			${X11MANDIR}
+
+COPTS+=			-fno-strict-aliasing
 
 X11FLAGS.VERSION=	-DOSMAJORVERSION=1 -DOSMINORVERSION=6		# XXX
 
@@ -13,12 +14,13 @@ X11FLAGS.VERSION=	-DOSMAJORVERSION=1 -DOSMINORVERSION=6		# XXX
 X11FLAGS.THREADS=	-DXTHREADS -D_REENTRANT -DXUSE_MTSAFE_API \
 			-DXNO_MTSAFE_PWDAPI
 
-#	 THREADS_DEFINES for libraries
-X11FLAGS.THREADLIB=	${X11FLAGS.THREADS} -DUSE_NBSD_THREADLIB
-
 #	 CONNECTION_FLAGS
 X11FLAGS.CONNECTION=	-DTCPCONN -DUNIXCONN -DHAS_STICKY_DIR_BIT \
-			-DHAS_FCHOWN -DIPv6
+			-DHAS_FCHOWN
+
+.if (${USE_INET6} != "no")
+X11FLAGS.CONNECTION+=	-DIPv6
+.endif
 
 #	 EXT_DEFINES
 #X11FLAGS.EXTENSION=	-DMITMISC -DXTEST -DXTRAP -DXSYNC -DXCMISC -DXRECORD \
@@ -57,13 +59,12 @@ X11FLAGS.SERVER=	-DSHAPE -DXKB -DLBX -DXAPPGROUP -DXCSECURITY \
 
 #	 OS_DEFINES
 X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
-			-DDDXOSVERRORF -DDDXTIME
+			-DDDXOSVERRORF -DDDXTIME -DUSB_HID
 
 .if !(${MACHINE} == "acorn32"	|| \
     ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "pmax"	|| \
-    ${MACHINE} == "sparc"	|| \
     ${MACHINE} == "sun3"	|| \
     ${MACHINE} == "vax")
 #	EXT_DEFINES
@@ -85,9 +86,12 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
     ${MACHINE} == "cats"	|| \
     ${MACHINE} == "i386"	|| \
     ${MACHINE} == "macppc"	|| \
-    ${MACHINE} == "sgimips"
+    ${MACHINE} == "sgimips"	|| \
+    ${MACHINE} == "sparc64"	|| \
+    ${MACHINE} == "sparc"
 #	LOADABLE
-X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module
+X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
+			-fno-merge-constants
 .endif
 
 XVENDORNAMESHORT=	'"X.Org"'
@@ -162,7 +166,7 @@ appdefsinstall:: .PHONY ${APPDEFS:@S@${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R
 
 __appdefinstall: .USE
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
-	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+	    ${.ALLSRC} ${.TARGET}
 
 .for S in ${APPDEFS:O:u}
 ${DESTDIR}${X11LIBDIR}/app-defaults/${S:T:R}: ${S} __appdefinstall
@@ -186,7 +190,8 @@ cleanx11man: .PHONY
 .man.1 .man.3 .man.4 .man.5 .man.7:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${CPP} -undef -traditional \
+	sed -e 's/\\$$/\\ /' ${.IMPSRC} \
+	| ${CPP} -undef -traditional \
 	    -D__apploaddir__=${X11ROOTDIR}/lib/X11/app-defaults \
 	    -D__libmansuffix__=3 \
 	    -D__filemansuffix__=5 \
@@ -195,6 +200,6 @@ cleanx11man: .PHONY
 	    -D__adminmansuffix__=8 \
 	    -D__projectroot__=${X11ROOTDIR} \
 	    -D__xorgversion__='"Release 6.6" "X Version 11"' \
-	    -D__vendorversion__="XFree86 4.4.0" \
+	    -D__vendorversion__="XFree86 4.5.0" \
 	    ${X11EXTRAMANDEFS} \
-	< ${.IMPSRC} | ${X11TOOL_UNXCOMM} > ${.TARGET}
+	| ${X11TOOL_UNXCOMM} > ${.TARGET}
