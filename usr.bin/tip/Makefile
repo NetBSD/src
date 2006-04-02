@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2006/04/02 19:00:40 tls Exp $
+#	$NetBSD: Makefile,v 1.16 2006/04/02 19:16:22 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -34,8 +34,8 @@
 WARNS=4
 PROG=	tip
 CPPFLAGS+=-I${.CURDIR} \
-	-DDEFBR=9600 -DDEFFS=BUFSIZ -DACULOG -DPRISTINE -DCONNECT \
-	-DHAYES #-DV831 -DVENTEL -DHAYES -DCOURIER -DT3000
+	-DDEFBR=9600 -DDEFFS=BUFSIZ -DCONNECT \
+	-DHAYES #-DV831 -DVENTEL -DHAYES -DCOURIER -DT3000 -DACULOG -DPRISTINE
 .PATH:	${.CURDIR}/aculib
 BINOWN=	uucp
 BINGRP=	dialer
@@ -46,7 +46,7 @@ SRCS=	acu.c acutab.c cmds.c cmdtab.c cu.c hunt.c log.c partab.c \
 
 # -- acutab is configuration dependent, and so depends on the Makefile
 # -- remote.o depends on the Makefile because of DEFBR and DEFFS
-# -- log.o depends on the Makefile because of ACULOG
-acutab.o log.o remote.o: Makefile
+# -- log.o, cu.o, acu.o, tip.o depend on the Makefile because of ACULOG
+acutab.o log.o cu.o acu.o tip.o remote.o: Makefile
 
 .include <bsd.prog.mk>
