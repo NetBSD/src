@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.14 2004/12/21 16:20:09 christos Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.15 2006/04/02 01:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -210,7 +210,7 @@ ugconvert(char *uname, char *gname, int *uid, int *gid, int *mode)
 	if ((u = Llookup(uidL, uname)) != NULL)
 		*uid = u->Lnumber;
 	else if ((pw = getpwnam(uname)) != NULL) {
-		Linsert(uidL, salloc(uname), pw->pw_uid);
+		Linsert(uidL, estrdup(uname), pw->pw_uid);
 		*uid = pw->pw_uid;
 	}
 	if (u || pw) {
@@ -219,7 +219,7 @@ ugconvert(char *uname, char *gname, int *uid, int *gid, int *mode)
 			return;
 		}
 		if ((gr = getgrnam(gname)) != NULL) {
-			Linsert(gidL, salloc(gname), gr->gr_gid);
+			Linsert(gidL, estrdup(gname), gr->gr_gid);
 			*gid = gr->gr_gid;
 			return;
 		}

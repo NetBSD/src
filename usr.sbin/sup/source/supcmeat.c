@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.29 2006/01/13 10:06:10 elad Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.30 2006/04/02 01:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1460,7 +1460,7 @@ done(int value, char *fmt, ...)
 	if (protver < 6) {
 		if (goawayreason)
 			free(goawayreason);
-		goawayreason = (fmt) ? salloc(buf) : (char *) NULL;
+		goawayreason = (fmt) ? estrdup(buf) : (char *) NULL;
 		(void) msggoaway();
 	} else {
 		doneack = value;

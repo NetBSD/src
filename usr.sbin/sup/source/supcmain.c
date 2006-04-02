@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.20 2004/12/21 16:20:09 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.21 2006/04/02 01:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -369,7 +369,7 @@ main(int argc, char **argv)
 	server = FALSE;		/* export that we're not a server */
 	collname = NULL;	/* no current collection yet */
 	dontjump = TRUE;	/* clear setjmp buffer */
-	progname = salloc(argv[0]);
+	progname = estrdup(argv[0]);
 
 	supfname = init(argc, argv);
 	restart = -1;		/* don't make restart checks */
@@ -695,11 +695,11 @@ init(int argc, char **argv)
 			if (*username == '\0')
 				logerr("User unknown, notification disabled");
 			else
-				c->Cnotify = salloc(username);
+				c->Cnotify = estrdup(username);
 		}
 		if (c->Cbase == NULL) {
 			(void) sprintf(buf, FILEBASEDEFAULT, c->Cname);
-			c->Cbase = salloc(buf);
+			c->Cbase = estrdup(buf);
 		}
 	}
 	if (bogus)
@@ -721,7 +721,7 @@ init(int argc, char **argv)
 	if (!silent)
 		loginfo("SUP %d.%d (%s) for %s at %s", PROTOVERSION, PGMVERSION,
 		    scmversion, p, fmttime(timenow));
-	return (salloc(supfname));
+	return (estrdup(supfname));
 }
 
 static int

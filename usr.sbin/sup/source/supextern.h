@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.18 2002/07/10 21:28:13 wiz Exp $	*/
+/*	$NetBSD: supextern.h,v 1.19 2006/04/02 01:39:48 christos Exp $	*/
 
 struct stat;
 
@@ -59,8 +59,8 @@ int runvp(char *, char **);
 int runio(char *const[], const char *, const char *, const char *);
 int runiofd(char *const[], const int, const int, const int);
 
-/* salloc.c */
-char *salloc(const char *);
+/* estrdup.c */
+char *estrdup(const char *);
 
 /* scan.c */
 int getrelease(char *);

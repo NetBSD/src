@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.21 2006/03/22 17:10:33 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.22 2006/04/02 01:39:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -434,7 +434,7 @@ request(char *server, char *hostname, int *retry)
 		return (SCMERR);
 	}
 	memcpy(&remoteaddr, res->ai_addr, res->ai_addrlen);
-	remotename = salloc(hostname);
+	remotename = estrdup(hostname);
 	x = 0x01020304;
 	(void) write(netfile, (char *) &x, sizeof(int));
 	swapmode = 0;		/* swap only on server, not client */
@@ -491,7 +491,7 @@ remotehost(void)
 #endif
 			h1, sizeof(h1), NULL, 0, 0))
 			return ("UNKNOWN");
-		remotename = salloc(h1);
+		remotename = estrdup(h1);
 		if (remotename == NULL)
 			return ("UNKNOWN");
 	}
