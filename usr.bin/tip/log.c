@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.10 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.11 2006/04/02 06:11:45 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: log.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.11 2006/04/02 06:11:45 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -58,7 +58,7 @@ logent(group, num, acu, message)
 	if (flog == NULL)
 		return;
 	if (flock(fileno(flog), LOCK_EX) < 0) {
-		perror("tip: flock");
+		warn("flock");
 		return;
 	}
 	if ((user = getlogin()) == NULL) {
@@ -92,6 +92,6 @@ loginit()
 		return;
 	flog = fopen(logfile, "a");
 	if (flog == NULL)
-		fprintf(stderr, "can't open log file %s.\r\n", logfile);
+		warnx("can't open log file %s.\r", logfile);
 }
 #endif
