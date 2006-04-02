@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.13 2006/04/02 06:11:45 tls Exp $	*/
+/*	$NetBSD: remote.c,v 1.14 2006/04/02 19:03:55 tls Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.13 2006/04/02 06:11:45 tls Exp $");
+__RCSID("$NetBSD: remote.c,v 1.14 2006/04/02 19:03:55 tls Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -207,7 +207,7 @@ getremote(host)
 
 	if (!lookedup) {
 		if (host == NULL && (host = getenv("HOST")) == NULL) {
-			errx(3, "no host specified\n");
+			errx(3, "no host specified");
 		}
 		getremcap(host);
 		next = DV;
