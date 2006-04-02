@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.47 2006/03/29 21:44:55 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.48 2006/04/02 17:51:20 riz Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -632,4 +632,10 @@ sys/dev/pci/if_skvar.h				1.9
 	the interrupt moderation timer at runtime; each board is controlled
 	independently.
 	[riz, ticket #10403]
+
+sys/netinet/in.c				1.105
+
+	Close NULL dereference when a GIFALIAS is performed on a
+	non existant address.
+	[seanb, ticket #10411]
 
