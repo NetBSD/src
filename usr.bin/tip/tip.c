@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.29 2006/03/29 12:37:59 yamt Exp $	*/
+/*	$NetBSD: tip.c,v 1.30 2006/04/02 04:02:00 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.29 2006/03/29 12:37:59 yamt Exp $");
+__RCSID("$NetBSD: tip.c,v 1.30 2006/04/02 04:02:00 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -56,7 +56,8 @@ __RCSID("$NetBSD: tip.c,v 1.29 2006/03/29 12:37:59 yamt Exp $");
  */
 int rates[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600,
-	1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200, -1
+	1200, 1800, 2400, 4800, 9600, 14400, 19200,
+	28800, 38400, 57600, 76800, 115200, 230400, -1
 };
 
 int	escape __P((void));
