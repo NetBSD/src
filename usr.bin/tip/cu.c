@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.9 2006/04/02 06:11:45 tls Exp $	*/
+/*	$NetBSD: cu.c,v 1.10 2006/04/02 19:04:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -30,75 +30,147 @@
  */
 
 #include <sys/cdefs.h>
+#include <getopt.h>
+
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.9 2006/04/02 06:11:45 tls Exp $");
+__RCSID("$NetBSD: cu.c,v 1.10 2006/04/02 19:04:24 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
 
+static void cuhelp(void);
+static void cuusage(void);
+
 /*
  * Botch the interface to look like cu's
  */
-int
+void
 cumain(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int i;
-	static char sbuf[12];
+	int i, phonearg = 0, parity = 0;	/* 0 is no parity */
+	static int helpme = 0;
+	char useresc = '~';
+	static char sbuf[12], brbuf[16];
+	extern char *optarg;
+	extern int optind;
 
-	if (argc < 2) {
-		fprintf(stderr,
-	    "usage: cu telno [-t] [-s speed] [-a acu] [-l line] [-#]\n");
-		exit(8);
-	}
-	CU = DV = NULL;
+	static struct option longopts[] = {
+		{ "help",	no_argument,		&helpme,	1 },
+		{ "escape",	required_argument,	NULL,		'E' },
+		{ "parity",	required_argument,	NULL,		'P' },
+		{ "phone", 	required_argument,	NULL,		'c' },
+		{ "port",	required_argument,	NULL,		'a' },
+		{ "line",	required_argument,	NULL,		'l' },
+		{ "speed",	required_argument,	NULL,		's' },
+		{ "halfduplex",	required_argument,	NULL,		'h' },
+		{ NULL,		0,			NULL,		0 }
+	};
+		
+
+	if (argc < 2)
+		cuusage();
+
+	CU = NULL;
+	DV = NULL;
 	BR = DEFBR;
-	for (; argc > 1; argv++, argc--) {
-		if (argv[1][0] != '-')
-			PN = argv[1];
-		else switch (argv[1][1]) {
 
+	while((ch = getopt_long(argc, argv,
+	    "E:P:a:p:c:l:s:heot0123456789", longopts, NULL)) != -1) {
+
+		if (helpme == 1) cuhelp();
+
+		switch(ch) {
+
+		case 'E':
+			if(strlen(optarg) > 1)
+				errx(3, "only one escape character allowed");
+			useresc = optarg[0];
+			break;
+		case 'P':
+			if(strcmp(optarg, "even") == 0)
+				parity = -1;
+			else
+				if(strcmp(optarg, "odd") == 0)
+					parity = 1;
+				else
+					if(strcmp(optarg, "none") != 0)
+						errx(3, "bad parity setting");
+			break;
+		case 'a':
+		case 'p':
+			CU = optarg;
+			break;
+		case 'c':
+			phonearg = 1;
+			PN = optarg;
+			break;
+		case 'l':
+			if (DV != NULL)
+				errx(3,"more than one line specified");
+			if(strchr(optarg, '/'))
+				DV=optarg;
+			else
+				asprintf(&DV, "/dev/%s", optarg);
+			break;
+		case 's':
+			BR = atoi(optarg);
+			break;
+		case 'h':
+			setboolean(value(LECHO), TRUE);
+			HD = TRUE;
+			break;
+		case 'e':
+			if (parity != 0)
+				errx(3, "more than one parity specified");
+			parity = -1; /* even */
+			break;
+		case 'o':
+			if (parity != 0)
+				errx(3, "more than one parity specified");
+			parity = 1; /* odd */
+			break;
 		case 't':
 			HW = 1, DU = -1;
-			--argc;
-			continue;
-
-		case 'a':
-			CU = argv[2]; ++argv; --argc;
 			break;
-
-		case 's':
-			if (argc < 3 || speed(atoi(argv[2])) == 0) {
-				errx(3, "unsupported speed %s", argv[2]);
-			}
-			BR = atoi(argv[2]); ++argv; --argc;
-			break;
-
-		case 'l':
-			DV = argv[2]; ++argv; --argc;
-			break;
-
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			if (CU)
-				CU[strlen(CU)-1] = argv[1][1];
-			if (DV)
-				DV[strlen(DV)-1] = argv[1][1];
+			snprintf(brbuf, sizeof(brbuf) -1, "%s%c",
+				 brbuf, ch);
+			BR = atoi(brbuf);
 			break;
-
 		default:
-			printf("Bad flag %s", argv[1]);
+			cuusage();
 			break;
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
+
+	switch (argc) {
+	case 1:
+		if (phonearg)
+			errx(3, "more than one phone number specified");
+		else
+			PN = argv[0];
+		break;
+	case 0:
+		break;
+	default:
+		cuusage();
+		break;
+	}
+		
 	signal(SIGINT, cleanup);
 	signal(SIGQUIT, cleanup);
 	signal(SIGHUP, cleanup);
 	signal(SIGTERM, cleanup);
+	/* signal(SIGCHLD, SIG_DFL) */	/* XXX seems wrong */
 
 	/*
 	 * The "cu" host name is used to define the
@@ -106,11 +178,10 @@ cumain(argc, argv)
 	 */
 	(void)snprintf(sbuf, sizeof sbuf, "cu%d", (int)BR);
 	if ((i = hunt(sbuf)) == 0) {
-		printf("all ports busy\n");
-		exit(3);
+		errx(3,"all ports busy");
 	}
 	if (i == -1) {
-		printf("link down\n");
+		warnx("link down");
 		(void)uu_unlock(uucplock);
 		exit(3);
 	}
@@ -118,17 +189,69 @@ cumain(argc, argv)
 	loginit();
 	user_uid();
 	vinit();
-	setparity("none");
-	setboolean(value(VERBOSE), 0);
-	if (HW)
-		ttysetup(speed(BR));
+	switch (parity) {
+	case -1:
+		setparity("even");
+		break;
+	case 1:
+		setparity("odd");
+		break;
+	case 0:
+		setparity("none");
+		break;
+	default:
+		setparity("none");
+		break;
+	}
+	setcharacter(value(ESCAPE), useresc);
+	setboolean(value(VERBOSE), FALSE);
+	if (HW) {
+		if (ttysetup(BR) != 0) {
+			warnx("unsupported speed %ld", BR);
+			daemon_uid();
+			(void)uu_unlock(uucplock);
+			exit(3);
+		}
+	}
 	if (connect()) {
-		printf("Connect failed\n");
+		warnx("Connect failed");
 		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(1);
 	}
-	if (!HW)
-		ttysetup(speed(BR));
+	if (!HW) {
+		if (ttysetup(BR) != 0) {
+			warnx("unsupported speed %ld", BR);
+			daemon_uid();
+			(void)uu_unlock(uucplock);
+			exit(3);
+		}
+	}
+}
+
+static void
+cuusage(void)
+{
+	fprintf(stderr, "Usage: cu [options] [phone-number]\n"
+	    "Use cu --help for help\n");
+	exit(8);
+}
+
+static void
+cuhelp(void)
+{
+	fprintf(stderr,
+	    "BSD tip/cu\n"
+	    "Usage: cu [options] [phone-number]\n"
+	    " -E,--escape char: Use this escape character\n"
+	    " -a, -p,--port port: Use this port as ACU/Dialer\n"
+	    " -c,--phone number: Call this number\n"
+	    " -h: Echo characters locally (use \"half duplex\")\n"
+	    " -e: Use even parity\n"
+	    " -o: Use odd parity\n"
+	    " -P,--parity {even,odd,none}: use even, odd, no parity\n"
+	    " -l,-line line: Use this device (ttyXX)\n"
+	    " -s,--speed,--baud speed,-#: Use this speed\n"
+	    " -t: Connect via hard-wired connection\n");
 	exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.17 2006/03/29 12:37:59 yamt Exp $	*/
+/*	$NetBSD: tip.h,v 1.18 2006/04/02 19:04:24 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -277,7 +277,7 @@ void	cleanup __P((int));
 const char   *connect __P((void));
 void	consh __P((char));
 char   *ctrl __P((char));
-int	cumain __P((int, char **));
+void	cumain __P((int, char **));
 void	cu_put __P((char));
 void	cu_take __P((char));
 void	daemon_uid __P((void));
@@ -304,12 +304,11 @@ void	setparity __P((const char *));
 void	setscript __P((void));
 void	shell __P((char));
 void	shell_uid __P((void));
-int	speed __P((int));
 void	suspend __P((char));
 void	tandem __P((const char *));
 void	tipabort __P((const char *));
 void	tipout __P((void));
-void	ttysetup __P((int));
+int	ttysetup __P((int));
 void	unraw __P((void));
 void	user_uid __P((void));
 int	uu_lock __P((char *));	
