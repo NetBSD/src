@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.30 2006/03/31 21:58:08 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.31 2006/04/02 00:15:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.30 2006/03/31 21:58:08 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.31 2006/04/02 00:15:53 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.30 2006/03/31 21:58:08 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.31 2006/04/02 00:15:53 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -989,12 +989,11 @@ error:
 		 * Evaluate the argument using the set function. If invert
 		 * is TRUE, we invert the sense of the function.
 		 */
-		void *ap = strdup(arg);
-		if (arg)
-		    free(arg);
-		t = (!doEval || (* evalProc) (arglen, ap) ?
+		t = (!doEval || (* evalProc) (arglen, arg) ?
 		     (invert ? False : True) :
 		     (invert ? True : False));
+		if (arg)
+		    free(arg);
 		break;
 	    }
 	}
