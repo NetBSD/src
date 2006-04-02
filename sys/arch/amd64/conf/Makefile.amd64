@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.11 2006/03/08 17:03:13 dyoung Exp $
+#	$NetBSD: Makefile.amd64,v 1.12 2006/04/02 05:52:14 gdamore Exp $
 
 # Makefile for NetBSD
 #
@@ -103,20 +103,20 @@ clock.o: config_time.h
 
 %RULES
 
-# XXX -	Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
+# XXX -	Ugly, but make doesn't easily handle .o.uu (assumes it's a suffix)
 # XXX -	Also, config has no simple was to just add foo.o to the Makefile.
 #	It needs a pathname of some sort for "object"
 .if !empty(OBJS:M\/athhal-x86_64-elf.hal.o)
 OBJS:=${OBJS:C/\/athhal-x86_64-elf.hal.o/athhal-x86_64-elf.hal.o/}
 
-.PATH: $S/contrib/arch/amd64/dev
+.PATH: $S/contrib/dev/ath/public
 ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${UUDECODE} -p $> \> ${.TARGET}; \
 		rm -f ${.TARGET}; \
 		${UUDECODE} -p $> > ${.TARGET}
 
-athhal-x86_64-elf.hal.o: athhal-x86_64-elf.hal.o.uue
+athhal-x86_64-elf.hal.o: x86_64-elf.hal.o.uu
 	${ATH_UUDEC}
 .if defined(COPTS) && !empty(COPTS:M-fno-asynchronous-unwind-tables)
 	${_MKSHECHO}\
