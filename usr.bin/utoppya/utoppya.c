@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppya.c,v 1.1 2006/04/03 08:15:48 scw Exp $	*/
+/*	$NetBSD: utoppya.c,v 1.2 2006/04/03 13:30:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <strings.h>
 #include <unistd.h>
 #include <time.h>
+#include <inttypes.h>
 
 #include <dev/usb/utoppy.h>
 
@@ -187,8 +188,8 @@ cmd_df(int argc, char **argv)
 	if (ioctl(toppy_fd, UTOPPYIOSTATS, &us) < 0)
 		err(EX_OSERR, "ioctl(UTOPPYIOSTATS)");
 
-	printf("Hard Disk Size: %lld MB\n", us.us_hdd_size / (1024 * 1024));
-	printf("Hard Disk Free: %lld MB\n", us.us_hdd_free / (1024 * 1024));
+	printf("Hard Disk Size: %" PRId64 " MB\n", us.us_hdd_size / (1024 * 1024));
+	printf("Hard Disk Free: %" PRId64 " MB\n", us.us_hdd_free / (1024 * 1024));
 }
 
 static void
@@ -236,8 +237,8 @@ cmd_ls(int argc, char **argv)
 		tm = localtime(&ud.ud_mtime);
 		strftime(tmbuf, sizeof(tmbuf), "%b %e %G %R", tm);
 
-		printf("%crw%c %11lld %s %s\n", ft, ex, ud.ud_size, tmbuf,
-		    ud.ud_path);
+		printf("%crw%c %11lld %s %s\n", ft, ex, (long long)ud.ud_size,
+		    tmbuf, ud.ud_path);
 	}
 
 	if (l < 0)
