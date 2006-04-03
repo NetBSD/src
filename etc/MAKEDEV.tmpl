@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.51 2006/03/25 17:19:02 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.52 2006/04/03 08:15:50 scw Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -505,6 +505,7 @@ usbs)
 	makedev ttyY0 ttyY1
 	makedev urio0
 	makedev uscanner0 uscanner1
+	makedev utoppy0 utoppy1
 	makedev ugen0
 	;;
 
@@ -559,6 +560,11 @@ urio*)
 uscanner*)
 	unit=${i#uscanner}
 	mkdev uscanner$unit c %uscanner_chr% $unit
+	;;
+
+utoppy*)
+	unit=${i#utoppy}
+	mkdev utoppy$unit c %utoppy_chr% $unit
 	;;
 
 ttyY*)

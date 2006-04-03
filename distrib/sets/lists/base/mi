@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.610 2006/04/01 04:13:21 tnozaki Exp $
+# $NetBSD: mi,v 1.611 2006/04/03 08:15:49 scw Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -652,6 +652,7 @@
 ./usr/bin/usbhidaction				base-util-bin
 ./usr/bin/usbhidctl				base-util-bin
 ./usr/bin/users					base-util-bin
+./usr/bin/utoppya				base-util-bin
 ./usr/bin/uucp					base-uucp-bin		uucp
 ./usr/bin/uudecode				base-util-bin
 ./usr/bin/uuencode				base-util-bin
