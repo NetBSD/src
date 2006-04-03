@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.20 2006/04/03 00:51:13 perry Exp $	*/
+/*	$NetBSD: tip.h,v 1.21 2006/04/03 02:01:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -256,7 +256,6 @@ char	fname[80];		/* file name buffer for ~< */
 char	copyname[80];		/* file name buffer for ~> */
 char	ccc;			/* synchronization character */
 char	ch;			/* for tipout */
-char	*uucplock;		/* name of lock file for uucp's */
 
 int	odisc;				/* initial tty line discipline */
 extern	int disc;			/* current tty discpline */
@@ -275,7 +274,6 @@ char   *ctrl(char);
 void	cumain(int, char **);
 void	cu_put(char);
 void	cu_take(char);
-void	daemon_uid(void);
 void	disconnect(const char *);
 char   *expand(char *);
 void	finish(char);
@@ -298,16 +296,12 @@ void	sendfile(char);
 void	setparity(const char *);
 void	setscript(void);
 void	shell(char);
-void	shell_uid(void);
 void	suspend(char);
 void	tandem(const char *);
 void	tipabort(const char *);
 void	tipout(void);
 int	ttysetup(int);
 void	unraw(void);
-void	user_uid(void);
-int	uu_lock(char *);
-int	uu_unlock(char *);
 void	variable(char);
 void	vinit(void);
 char   *vinterp(char *, char);
