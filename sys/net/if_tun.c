@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.83 2006/03/29 19:29:00 rpaulo Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.84 2006/04/03 23:29:39 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.83 2006/03/29 19:29:00 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.84 2006/04/03 23:29:39 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -542,7 +542,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 				goto out;
 			}
 			bcopy(dst, mtod(m0, char *), dst->sa_len);
-		} else {
+		} else if (tp->tun_flags & TUN_IFHEAD) {
 			/* Prepend the address family */
 			M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
 			if (m0 == NULL) {
@@ -637,6 +637,17 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			tp->tun_flags |= TUN_PREPADDR;
 		else
 			tp->tun_flags &= ~TUN_PREPADDR;
+		break;
+
+	case TUNSIFHEAD:
+		if (*(int *)data)
+			tp->tun_flags |= TUN_IFHEAD;
+		else
+			tp->tun_flags &= ~TUN_IFHEAD;
+		break;
+
+	case TUNGIFHEAD:
+		*(int *)data = (tp->tun_flags & TUN_IFHEAD);
 		break;
 
 	case FIONBIO:
