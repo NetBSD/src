@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.13 2006/04/03 00:51:13 perry Exp $	*/
+/*	$NetBSD: cu.c,v 1.14 2006/04/03 01:48:22 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.13 2006/04/03 00:51:13 perry Exp $");
+__RCSID("$NetBSD: cu.c,v 1.14 2006/04/03 01:48:22 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -151,7 +151,7 @@ cumain(int argc, char *argv[])
 			parity = 1; /* odd */
 			break;
 		case 't':
-			HW = 1, DU = -1;
+			HW = 1, DU = -1, DC = 1;
 			break;
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -177,6 +177,11 @@ cumain(int argc, char *argv[])
 			PN = argv[0];
 		break;
 	case 0:
+		/*
+		 * No system or number to call.  We're "direct", so use
+		 * the tty as local.
+		 */
+		HW = 1; DU = -1; DC = 1;
 		break;
 	default:
 		cuusage();
