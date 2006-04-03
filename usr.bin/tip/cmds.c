@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.22 2006/04/03 02:06:44 tls Exp $	*/
+/*	$NetBSD: cmds.c,v 1.23 2006/04/03 04:25:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.22 2006/04/03 02:06:44 tls Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.23 2006/04/03 04:25:30 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -96,8 +96,9 @@ getfl(char c)
 /*
  * Cu-like take command
  */
+/* ARGSUSED */
 void
-cu_take(char cc)
+cu_take(char dummy)
 {
 	int fd, argc;
 	char line[BUFSIZ], *cp;
@@ -196,6 +197,7 @@ transfer(char *buf, int fd, const char *eofchars)
  * FTP - remote ==> local process
  *   send remote input to local process via pipe
  */
+/* ARGSUSED */
 void
 pipefile(char dummy)
 {
@@ -243,6 +245,7 @@ pipefile(char dummy)
 /*
  * Interrupt service routine for FTP
  */
+/* ARGSUSED */
 void
 stopsnd(int dummy)
 {
@@ -313,6 +316,7 @@ transmit(FILE *fd, const char *eofchars, char *command)
 	lcount = 0;
 	lastc = '\0';
 	start_t = time(0);
+	/* CONSTCOND */
 	while (1) {
 		ccount = 0;
 		do {
@@ -348,7 +352,7 @@ transmit(FILE *fd, const char *eofchars, char *command)
 			printf("\r%d", ++lcount);
 		if (boolean(value(ECHOCHECK))) {
 			timedout = 0;
-			alarm((long)value(ETIMEOUT));
+			alarm((unsigned int)value(ETIMEOUT));
 			do {	/* wait for prompt */
 				read(FD, (char *)&c, 1);
 				if (timedout || stop) {
@@ -385,8 +389,9 @@ out:
 /*
  * Cu-like put command
  */
+/* ARGSUSED */
 void
-cu_put(char cc)
+cu_put(char dummy)
 {
 	FILE *fd;
 	char line[BUFSIZ];
@@ -438,7 +443,7 @@ send(char c)
 	}
 tryagain:
 	timedout = 0;
-	alarm((long)value(ETIMEOUT));
+	alarm((unsigned int)value(ETIMEOUT));
 	read(FD, &cc, 1);
 	alarm(0);
 	if (timedout) {
@@ -450,6 +455,7 @@ tryagain:
 	}
 }
 
+/* ARGSUSED */
 void
 alrmtimeout(int dummy)
 {
@@ -562,6 +568,7 @@ consh(char c)
 /*
  * Escape to local shell
  */
+/* ARGSUSED */
 void
 shell(char dummy)
 {
@@ -625,6 +632,7 @@ setscript(void)
  * Change current working directory of
  *   local portion of tip
  */
+/* ARGSUSED */
 void
 chdirectory(char dummy)
 {
@@ -654,6 +662,7 @@ tipabort(const char *msg)
 	exit(0);
 }
 
+/* ARGSUSED */
 void
 finish(char dummy)
 {
@@ -667,6 +676,7 @@ finish(char dummy)
 	tipabort(NULL);
 }
 
+/* ARGSUSED */
 void
 intcopy(int dummy)
 {
@@ -730,6 +740,7 @@ prtime(const char *s, time_t a)
 	printf("\r\n!\r\n");
 }
 
+/* ARGSUSED */
 void
 variable(char dummy)
 {
@@ -820,6 +831,7 @@ hardwareflow(const char *option)
 /*
  * Send a break.
  */
+/* ARGSUSED */
 void
 genbrk(char dummy)
 {
