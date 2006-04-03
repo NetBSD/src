@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2006/04/03 02:25:27 perry Exp $
+#	$NetBSD: Makefile,v 1.22 2006/04/03 02:33:19 perry Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -33,9 +33,13 @@ CPPFLAGS+=-I${.CURDIR} \
 	-DDEFBR=9600 -DDEFFS=BUFSIZ -DHAYES \
 	#-DV831 -DVENTEL -DHAYES -DCOURIER -DT3000
 .PATH:	${.CURDIR}/aculib
+
+# Dialers we can choose from:
+# biz22.c courier.c df.c dn11.c hayes.c t3000.c v3451.c v831.c ventel.c
+DIALSRCS = hayes.c
+
 SRCS=	acu.c acutab.c cmds.c cmdtab.c cu.c hunt.c partab.c \
-	remote.c tip.c tipout.c value.c vars.c \
-	df.c hayes.c # biz22.c courier.c dn11.c hayes.c t3000.c v3451.c v831.c ventel.c
+	remote.c tip.c tipout.c value.c vars.c ${DIALSRCS}
 
 # -- acutab is configuration dependent, and so depends on the Makefile
 # -- remote.o depends on the Makefile because of DEFBR and DEFFS
