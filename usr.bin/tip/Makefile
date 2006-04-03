@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2006/04/03 02:06:44 tls Exp $
+#	$NetBSD: Makefile,v 1.20 2006/04/03 02:21:13 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -31,6 +31,8 @@
 
 WARNS=4
 PROG=	tip
+LINKS=	${BINDIR/tip ${BINDIR}/cu
+MLINKS=	tip.1 cu.1
 CPPFLAGS+=-I${.CURDIR} \
 	-DDEFBR=9600 -DDEFFS=BUFSIZ -DHAYES \
 	#-DV831 -DVENTEL -DHAYES -DCOURIER -DT3000 -DACULOG -DPRISTINE
