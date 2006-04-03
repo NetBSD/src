@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.30 2006/04/03 21:03:15 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.31 2006/04/03 21:18:20 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.30 2006/04/03 21:03:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.31 2006/04/03 21:18:20 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ static struct wsdisplay_accessops igsfb_accessops = {
  * acceleration
  */
 static int	igsfb_make_text_cursor(struct igsfb_devconfig *,
-    struct vcons_screen *);
+				       struct vcons_screen *);
 static void	igsfb_accel_cursor(void *, int, int, int);
 
 static int	igsfb_accel_wait(struct igsfb_devconfig *);
@@ -129,7 +129,7 @@ static void	igsfb_init_cmap(struct igsfb_devconfig *);
 static uint16_t	igsfb_spread_bits_8(uint8_t);
 static void	igsfb_init_bit_table(struct igsfb_devconfig *);
 static void	igsfb_init_wsdisplay(void *, struct vcons_screen *, int,
-    long *);
+				     long *);
 
 
 static void	igsfb_blank_screen(struct igsfb_devconfig *, int);
@@ -430,7 +430,7 @@ igsfb_init_wsdisplay(void *cookie, struct vcons_screen *scr, int existing,
 
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 	if (IGSFB_HW_SOFT_BSWAP(dc))
-	    ri->ri_flg |= RI_BSWAP;
+		ri->ri_flg |= RI_BSWAP;
 
 	ri->ri_depth = dc->dc_depth;
 	ri->ri_width = dc->dc_width;
@@ -488,15 +488,15 @@ igsfb_init_wsdisplay(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_ops.cursor = igsfb_accel_cursor;
 
 	if (dc->dc_id >= 0x2000) { /* XXX */
-	    /* accelerated erase/copy */
-	    ri->ri_ops.copycols = igsfb_accel_copycols;
-	    ri->ri_ops.erasecols = igsfb_accel_erasecols;
-	    ri->ri_ops.copyrows = igsfb_accel_copyrows;
-	    ri->ri_ops.eraserows = igsfb_accel_eraserows;
+		/* accelerated erase/copy */
+		ri->ri_ops.copycols = igsfb_accel_copycols;
+		ri->ri_ops.erasecols = igsfb_accel_erasecols;
+		ri->ri_ops.copyrows = igsfb_accel_copyrows;
+		ri->ri_ops.eraserows = igsfb_accel_eraserows;
 
-	    /* putchar hook to sync with the cop */
-	    dc->dc_ri_putchar = ri->ri_ops.putchar;
-	    ri->ri_ops.putchar = igsfb_accel_putchar;
+		/* putchar hook to sync with the cop */
+		dc->dc_ri_putchar = ri->ri_ops.putchar;
+		ri->ri_ops.putchar = igsfb_accel_putchar;
 	}
 
 	igsfb_stdscreen.nrows = ri->ri_rows;
