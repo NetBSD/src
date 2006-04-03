@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.28 2006/02/24 18:35:09 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.29 2006/04/03 20:44:35 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.28 2006/02/24 18:35:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.29 2006/04/03 20:44:35 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -531,15 +531,7 @@ igsfb_make_text_cursor(dc, scr)
 		} else {
 			/* first w pixels inverted, the rest is transparent */
 			s = ~(0x5555 << (w * 2));
-			/* 
-			 * XXX!!!
-			 * apparently the cursor data need to be in LE format
-			 * at least on Krups without hardware byteswapping.
-			 * This needs to be properly fixed for /netwinder by 
-			 * someone who actually has the hardware.
-			 */
-			if (!IGSFB_HW_SOFT_BSWAP(dc))
-				s = bswap16(s);
+			s = htole16(s);
 			w = 0;
 		}
 		cc_scan[i] = s;
@@ -588,13 +580,12 @@ igsfb_init_bit_table(dc)
 	struct igsfb_devconfig *dc;
 {
 	uint16_t *expand = dc->dc_bexpand;
-	int need_bswap = IGSFB_HW_SOFT_BSWAP(dc);
 	uint16_t s;
 	u_int i;
 
 	for (i = 0; i < 256; ++i) {
 		s = igsfb_spread_bits_8(i);
-		expand[i] = need_bswap ? bswap16(s) : s;
+		expand[i] = htole16(s);
 	}
 }
 
