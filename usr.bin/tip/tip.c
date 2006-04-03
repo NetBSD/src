@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.35 2006/04/03 00:51:13 perry Exp $	*/
+/*	$NetBSD: tip.c,v 1.36 2006/04/03 02:01:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.35 2006/04/03 00:51:13 perry Exp $");
+__RCSID("$NetBSD: tip.c,v 1.36 2006/04/03 02:01:28 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -141,23 +141,12 @@ notnumber:
 		exit(3);
 	}
 	if (i == -1) {
-		printf("link down\n");
-		(void)uu_unlock(uucplock);
-		exit(3);
+		errx(3, "link down\n");
 	}
 	setbuf(stdout, NULL);
 #ifdef ACULOG
 	loginit();
 #endif
-
-	/*
-	 * Now that we have the logfile and the ACU open
-	 *  return to the real uid and gid.  These things will
-	 *  be closed on exit.  Swap real and effective uid's
-	 *  so we can get the original permissions back
-	 *  for removing the uucp lock.
-	 */
-	user_uid();
 
 	/*
 	 * Kludge, their's no easy way to get the initialization
@@ -175,26 +164,17 @@ notnumber:
 	 */
 	if (HW) {
 		if (ttysetup(i) != 0) {
-			warnx("bad baud rate %d",
+			errx(3, "bad baud rate %d",
 			    (int)number(value(BAUDRATE)));
-			daemon_uid();
-			(void)uu_unlock(uucplock);
-			exit(3);
 		}
 	}
 	if ((q = connect()) != NULL) {
-		printf("\07%s\n[EOT]\n", q);
-		daemon_uid();
-		(void)uu_unlock(uucplock);
-		exit(1);
+		errx(1, "\07%s\n[EOT]\n", q);
 	}
 	if (!HW) {
 		if (ttysetup(i) != 0) {
-			warnx("bad baud rate %d",
+			errx(3, "bad baud rate %d",
 			    (int)number(value(BAUDRATE)));
-			daemon_uid();
-			(void)uu_unlock(uucplock);
-			exit(3);
 		}
 	}
 
@@ -207,10 +187,7 @@ notnumber:
 	if (DC &&
 	    ((fcarg = fcntl(FD, F_GETFL, 0)) < 0 ||
 	     fcntl(FD, F_SETFL, fcarg & ~O_NONBLOCK) < 0)) {
-		warn("can't clear O_NONBLOCK");
-		daemon_uid();
-		(void)uu_unlock(uucplock);
-		exit(1);
+		err(1, "can't clear O_NONBLOCK");
 	}
 
 cucommon:
@@ -261,48 +238,9 @@ void
 cleanup(int dummy)
 {
 
-	daemon_uid();
-	(void)uu_unlock(uucplock);
 	if (odisc)
 		ioctl(0, TIOCSETD, (char *)&odisc);
 	exit(0);
-}
-
-/*
- * Muck with user ID's.  We are setuid to the owner of the lock
- * directory when we start.  user_uid() reverses real and effective
- * ID's after startup, to run with the user's permissions.
- * daemon_uid() switches back to the privileged uid for unlocking.
- * Finally, to avoid running a shell with the wrong real uid,
- * shell_uid() sets real and effective uid's to the user's real ID.
- */
-static int uidswapped;
-
-void
-user_uid(void)
-{
-
-	if (uidswapped == 0) {
-		seteuid(uid);
-		uidswapped = 1;
-	}
-}
-
-void
-daemon_uid(void)
-{
-
-	if (uidswapped) {
-		seteuid(euid);
-		uidswapped = 0;
-	}
-}
-
-void
-shell_uid(void)
-{
-
-	seteuid(uid);
 }
 
 /*
