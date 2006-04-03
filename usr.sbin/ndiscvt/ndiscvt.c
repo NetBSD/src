@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ndiscvt.c,v 1.2 2006/03/30 23:21:06 rittera Exp $");
+__RCSID("$NetBSD: ndiscvt.c,v 1.3 2006/04/03 16:29:57 rittera Exp $");
 #endif
 
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: ndiscvt.c,v 1.2 2006/03/30 23:21:06 rittera Exp $");
 #endif
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/lock.h>
 #include <net/if.h>
 #include <stdlib.h>
 #include <unistd.h>
