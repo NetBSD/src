@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.26 2006/04/03 14:12:29 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.27 2006/04/03 16:03:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.26 2006/04/03 14:12:29 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.27 2006/04/03 16:03:50 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -142,7 +142,7 @@ transfer(char *buf, int fd, const char *eofchars)
 
 	xpwrite(FD, buf, strlen(buf));
 	quit = 0;
-	kill(pid, SIGIOT);
+	write(attndes[1], "W", 1);	/* Put TIPOUT into a wait state */
 	read(repdes[0], (char *)&ccc, 1);  /* Wait until read process stops */
 
 	/*
@@ -299,7 +299,7 @@ transmit(FILE *fd, const char *eofchars, char *command)
 	time_t start_t, stop_t;
 	sig_t f;
 
-	kill(pid, SIGIOT);	/* put TIPOUT into a wait state */
+	write(attndes[1], "W", 1);	/* put TIPOUT into a wait state */
 	stop = 0;
 	f = signal(SIGINT, stopsnd);
 	tcsetattr(0, TCSAFLUSH, &defchars);
@@ -479,7 +479,7 @@ pipeout(char c)
 	putchar(c);
 	if (prompt("Local command? ", buf, sizeof buf))
 		return;
-	kill(pid, SIGIOT);	/* put TIPOUT into a wait state */
+	write(attndes[1], "W", 1);	/* put TIPOUT into a wait state */
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	tcsetattr(0, TCSAFLUSH, &defchars);
@@ -530,7 +530,7 @@ consh(char c)
 	putchar(c);
 	if (prompt("Local command? ", buf, sizeof buf))
 		return;
-	kill(pid, SIGIOT);	/* put TIPOUT into a wait state */
+	write(attndes[1], "W", 1);	/* put TIPOUT into a wait state */
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	tcsetattr(0, TCSAFLUSH, &defchars);
@@ -549,7 +549,7 @@ consh(char c)
 		int i;
 
 		dup2(FD, 0);
-		dup2(3, 1);
+		dup2(FD, 1);
 		for (i = 3; i < 20; i++)
 			close(i);
 		signal(SIGINT, SIG_DFL);
@@ -617,7 +617,7 @@ setscript(void)
 	/*
 	 * enable TIPOUT side for dialogue
 	 */
-	kill(pid, SIGEMT);
+	write(attndes[1], "S", 1);
 	if (boolean(value(SCRIPT)) && strlen(value(RECORD)))
 		write(fildes[1], value(RECORD), strlen(value(RECORD)));
 	write(fildes[1], "\n", 1);
@@ -752,7 +752,7 @@ variable(char dummy)
 	vlex(buf);
 	if (vtable[BEAUTIFY].v_access&CHANGED) {
 		vtable[BEAUTIFY].v_access &= ~CHANGED;
-		kill(pid, SIGSYS);
+		write(attndes[1], "B", 1);	/* Tell TIPOUT to toggle */
 	}
 	if (vtable[SCRIPT].v_access&CHANGED) {
 		vtable[SCRIPT].v_access &= ~CHANGED;
