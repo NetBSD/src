@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.40 2006/04/03 05:08:40 yamt Exp $	*/
+/*	$NetBSD: tip.c,v 1.41 2006/04/03 14:54:16 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.40 2006/04/03 05:08:40 yamt Exp $");
+__RCSID("$NetBSD: tip.c,v 1.41 2006/04/03 14:54:16 tls Exp $");
 #endif /* not lint */
 
 /*
@@ -176,6 +176,12 @@ notnumber:
 	}
 
 
+cucommon:
+	/*
+	 * From here down the code is shared with
+	 * the "cu" version of tip.
+	 */
+
 	/*
 	 * Direct connections with no carrier require using O_NONBLOCK on
 	 * open, but we don't want to keep O_NONBLOCK after open because it
@@ -186,12 +192,6 @@ notnumber:
 	     fcntl(FD, F_SETFL, fcarg & ~O_NONBLOCK) < 0)) {
 		err(1, "can't clear O_NONBLOCK");
 	}
-
-cucommon:
-	/*
-	 * From here down the code is shared with
-	 * the "cu" version of tip.
-	 */
 
 	tcgetattr(0, &defterm);
 	term = defterm;
