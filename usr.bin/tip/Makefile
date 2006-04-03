@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2006/04/03 02:33:19 perry Exp $
+#	$NetBSD: Makefile,v 1.23 2006/04/03 05:05:55 yamt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -27,7 +27,7 @@
 
 WARNS=4
 PROG=	tip
-LINKS=	${BINDIR/tip ${BINDIR}/cu
+LINKS=	${BINDIR}/tip ${BINDIR}/cu
 MLINKS=	tip.1 cu.1
 CPPFLAGS+=-I${.CURDIR} \
 	-DDEFBR=9600 -DDEFFS=BUFSIZ -DHAYES \
