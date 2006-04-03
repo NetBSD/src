@@ -1,4 +1,4 @@
-/*	$NetBSD: tipout.c,v 1.12 2006/04/03 16:03:50 tls Exp $	*/
+/*	$NetBSD: tipout.c,v 1.13 2006/04/03 16:13:34 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tipout.c,v 1.12 2006/04/03 16:03:50 tls Exp $");
+__RCSID("$NetBSD: tipout.c,v 1.13 2006/04/03 16:13:34 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
