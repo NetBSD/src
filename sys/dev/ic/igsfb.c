@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.29 2006/04/03 20:44:35 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.30 2006/04/03 21:03:15 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.29 2006/04/03 20:44:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.30 2006/04/03 21:03:15 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1358,12 +1358,18 @@ igsfb_accel_eraserows(cookie, row, num, attr)
 	uint32_t dsp;
 	uint16_t width, height;
 
-	width = ri->ri_emuwidth;
-	height = num * ri->ri_font->fontheight;
+	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0) {
+		width = ri->ri_width;
+		height = ri->ri_height;
+		dsp = 0;
+	} else {
+		width = ri->ri_emuwidth;
+		height = num * ri->ri_font->fontheight;
 
-	dsp = ri->ri_xorigin
-		+ ri->ri_width * (ri->ri_yorigin
-				  + row * ri->ri_font->fontheight);
+		dsp = ri->ri_xorigin
+			+ ri->ri_width * (ri->ri_yorigin
+					  + row * ri->ri_font->fontheight);
+	}
 
 	/* XXX: we "know" the encoding that rasops' allocattr uses */
 	color = (attr >> 16) & 0xff;
