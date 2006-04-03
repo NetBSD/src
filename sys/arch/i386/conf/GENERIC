@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.738 2006/03/31 00:03:57 rittera Exp $
+# $NetBSD: GENERIC,v 1.739 2006/04/03 16:08:49 scw Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.738 $"
+#ident 		"GENERIC-$Revision: 1.739 $"
 
 maxusers	32		# estimated number of users
 
@@ -1080,6 +1080,9 @@ uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
+
+# Topfield TF5000PVR range of DVB recorders
+utoppy*	at uhub? port ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?
