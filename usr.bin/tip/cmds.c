@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.25 2006/04/03 13:00:48 he Exp $	*/
+/*	$NetBSD: cmds.c,v 1.26 2006/04/03 14:12:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.25 2006/04/03 13:00:48 he Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.26 2006/04/03 14:12:29 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -353,7 +353,7 @@ transmit(FILE *fd, const char *eofchars, char *command)
 			printf("\r%d", ++lcount);
 		if (boolean(value(ECHOCHECK))) {
 			timedout = 0;
-			alarm((unsigned int)((intptr_t)value(ETIMEOUT)));
+			alarm((unsigned int)number(value(ETIMEOUT)));
 			do {	/* wait for prompt */
 				read(FD, &c, (size_t)1);
 				if (timedout || stop) {
@@ -444,7 +444,7 @@ sendchar(char c)
 	}
 tryagain:
 	timedout = 0;
-	alarm((unsigned int)((intptr_t)value(ETIMEOUT)));
+	alarm((unsigned int)number(value(ETIMEOUT)));
 	read(FD, &cc, 1);
 	alarm(0);
 	if (timedout) {
