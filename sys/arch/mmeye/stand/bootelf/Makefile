@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/04/03 06:22:45 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.14 2006/04/03 09:08:03 uebayasi Exp $
 #
 # NOTE: This program is *not* standalone, but a userlevel program -- this
 #       program was run from within boot-only, NetBSD-as-bootloader as a
@@ -14,6 +14,7 @@ LIBSA=	${.CURDIR}/../../../../lib/libsa
 
 .PATH: ${LIBSA}
 
+CFLAGS+=	-ffreestanding
 CPPFLAGS+=	-I${.CURDIR}/../../../.. -I${.OBJDIR}
 LDSTATIC=	-static
 
