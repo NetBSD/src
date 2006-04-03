@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.38 2006/04/03 04:25:30 perry Exp $	*/
+/*	$NetBSD: tip.c,v 1.39 2006/04/03 04:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.38 2006/04/03 04:25:30 perry Exp $");
+__RCSID("$NetBSD: tip.c,v 1.39 2006/04/03 04:53:58 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -160,7 +160,7 @@ notnumber:
 	 *  (this is particularly true of things like a DF03-AC)
 	 */
 	if (HW) {
-		if (ttysetup(i) != 0) {
+		if (ttysetup((speed_t)i) != 0) {
 			errx(3, "bad baud rate %d",
 			    (int)number(value(BAUDRATE)));
 		}
@@ -169,7 +169,7 @@ notnumber:
 		errx(1, "\07%s\n[EOT]\n", q);
 	}
 	if (!HW) {
-		if (ttysetup(i) != 0) {
+		if (ttysetup((speed_t)i) != 0) {
 			errx(3, "bad baud rate %d",
 			    (int)number(value(BAUDRATE)));
 		}
@@ -232,11 +232,12 @@ cucommon:
 }
 
 void
+/*ARGSUSED*/
 cleanup(int dummy)
 {
 
 	if (odisc)
-		ioctl(0, TIOCSETD, (char *)&odisc);
+		ioctl(0, TIOCSETD, &odisc);
 	exit(0);
 }
 
@@ -300,6 +301,7 @@ prompt(const char *s, char *p, size_t l)
  * Interrupt service routine during prompting
  */
 void
+/*ARGSUSED*/
 intprompt(int dummy)
 {
 
@@ -329,7 +331,7 @@ tipin(void)
 		setscript();
 	}
 
-	while (1) {
+	for (;;) {
 		gch = getchar()&STRIP_PAR;
 		if ((gch == character(value(ESCAPE))) && bol) {
 			if (!(gch = escape()))
@@ -455,7 +457,7 @@ help(char c)
  * Set up the "remote" tty's state
  */
 int
-ttysetup(int spd)
+ttysetup(speed_t spd)
 {
 	struct termios	cntrl;
 
@@ -515,7 +517,7 @@ setparity(const char *defparity)
 	const char *parity;
 	static char *curpar;
 
-	if (value(PARITY) == NULL || (value(PARITY))[0] == '\0') {
+	if (value(PARITY) == NULL || ((char *)value(PARITY))[0] == '\0') {
 		if (curpar != NULL)
 			free(curpar);
 		value(PARITY) = curpar = strdup(defparity);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hayes.c,v 1.12 2006/04/03 02:25:27 perry Exp $	*/
+/*	$NetBSD: hayes.c,v 1.13 2006/04/03 04:53:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hayes.c,v 1.12 2006/04/03 02:25:27 perry Exp $");
+__RCSID("$NetBSD: hayes.c,v 1.13 2006/04/03 04:53:59 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -69,12 +69,6 @@ static	jmp_buf timeoutbuf;
 #define DUMBUFLEN	40
 static char dumbuf[DUMBUFLEN];
 
-#define	DIALING		1
-#define IDLE		2
-#define CONNECTED	3
-#define	FAILED		4
-static	int state = IDLE;
-
 static	void	error_rep(char);
 static	char	gobble(const char *);
 static	void	goodbye(void);
@@ -82,6 +76,7 @@ static	int	hay_sync(void);
 static	void	sigALRM(int);
 
 int
+/*ARGSUSED*/
 hay_dialer(char *num, char *acu)
 {
 	char *cp;
@@ -106,7 +101,6 @@ hay_dialer(char *num, char *acu)
 		if (*cp == '=')
 			*cp = ',';
 	write(FD, num, strlen(num));
-	state = DIALING;
 	write(FD, "\r", 1);
 	connected = 0;
 	if (gobble("\r")) {
@@ -115,12 +109,8 @@ hay_dialer(char *num, char *acu)
 		else
 			connected = 1;
 	}
-	if (connected)
-		state = CONNECTED;
-	else {
-		state = FAILED;
+	if (!connected)
 		return (connected);	/* lets get out of here.. */
-	}
 	tcflush(FD, TCIOFLUSH);
 	if (timeout)
 		hay_disconnect();	/* insurance */
@@ -151,6 +141,7 @@ hay_abort(void)
 }
 
 static void
+/*ARGSUSED*/
 sigALRM(int dummy)
 {
 
@@ -180,7 +171,7 @@ gobble(const char *match)
 			signal(SIGALRM, f);
 			return (0);
 		}
-		alarm(number(value(DIALTIMEOUT)));
+		alarm((unsigned int)number(value(DIALTIMEOUT)));
 		read(FD, &c, 1);
 		alarm(0);
 		c &= 0177;
@@ -294,7 +285,7 @@ hay_sync(void)
 		sleep(1);
 		ioctl(FD, FIONREAD, &len);
 		if (len) {
-			len = read(FD, dumbuf, min(len, DUMBUFLEN));
+			len = read(FD, dumbuf, (size_t)min(len, DUMBUFLEN));
 			if (strchr(dumbuf, '0') ||
 		   	(strchr(dumbuf, 'O') && strchr(dumbuf, 'K')))
 				return(1);
