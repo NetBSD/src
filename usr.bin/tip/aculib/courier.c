@@ -1,4 +1,4 @@
-/*	$NetBSD: courier.c,v 1.14 2006/04/03 00:51:14 perry Exp $	*/
+/*	$NetBSD: courier.c,v 1.15 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: courier.c,v 1.14 2006/04/03 00:51:14 perry Exp $");
+__RCSID("$NetBSD: courier.c,v 1.15 2006/04/03 02:25:27 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -64,9 +64,6 @@ int
 cour_dialer(char *num, char *acu)
 {
 	char *cp;
-#ifdef ACULOG
-	char line[80];
-#endif
 	struct termios cntrl;
 
 	if (boolean(value(VERBOSE)))
@@ -81,9 +78,6 @@ cour_dialer(char *num, char *acu)
 	if (!coursync()) {
 badsynch:
 		printf("can't synchronize with courier\n");
-#ifdef ACULOG
-		logent(value(HOST), num, "courier", "can't synch up");
-#endif
 		return (0);
 	}
 	cour_write(FD, "AT E0\r", 6);	/* turn off echoing */
@@ -104,13 +98,6 @@ badsynch:
 	cour_write(FD, num, strlen(num));
 	cour_write(FD, "\r", 1);
 	connected = cour_connect();
-#ifdef ACULOG
-	if (timeout) {
-		(void)snprintf(line, sizeof line, "%d second dial timeout",
-			(int)number(value(DIALTIMEOUT)));
-		logent(value(HOST), num, "cour", line);
-	}
-#endif
 	if (timeout)
 		cour_disconnect();
 	return (connected);
