@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.24 2006/04/03 04:25:30 perry Exp $	*/
+/*	$NetBSD: tip.h,v 1.25 2006/04/03 04:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -79,8 +79,8 @@ char	*HO;			/* host name */
 long	BR;			/* line speed for conversation */
 long	FS;			/* frame size for transfers */
 
-int	DU;			/* this host is dialed up */
-int	HW;			/* this device is hardwired, see hunt.c */
+long	DU;			/* this host is dialed up */
+long	HW;			/* this device is hardwired, see hunt.c */
 char	*ES;			/* escape character */
 char	*EX;			/* exceptions */
 char	*FO;			/* force (literal next) char*/
@@ -90,7 +90,7 @@ char	*PR;			/* remote prompt */
 long	DL;			/* line delay for file transfers to remote */
 long	CL;			/* char delay for file transfers to remote */
 long	ET;			/* echocheck timeout */
-int	HD;			/* this host is half duplex - do local echo */
+long	HD;			/* this host is half duplex - do local echo */
 char	DC;			/* this host is directly connected. */
 
 /*
@@ -99,10 +99,10 @@ char	DC;			/* this host is directly connected. */
 typedef
 	struct {
 		const char *v_name;	/* whose name is it */
-		char	v_type;		/* for interpreting set's */
-		char	v_access;	/* protection of touchy ones */
+		uint8_t v_type;		/* for interpreting set's */
+		uint8_t v_access;	/* protection of touchy ones */
 		const char *v_abrev;	/* possible abreviation */
-		char *v_value;		/* casted to a union later */
+		void *v_value;		/* casted to a union later */
 				/*
 				 * XXX:	this assumes that the storage space
 				 *	of a pointer >= that of a long
@@ -154,15 +154,15 @@ typedef
 
 #define value(v)	vtable[v].v_value
 
-#define	number(v)	((long)(v))
-#define	boolean(v)	((short)(long)(v))
-#define	character(v)	((char)(long)(v))
-#define	address(v)	((long *)(v))
+#define	number(v)	((int)(intptr_t)(v))
+#define	boolean(v)	((short)(intptr_t)(v))
+#define	character(v)	((char)(intptr_t)(v))
+#define	address(v)	((long *)(intptr_t)(v))
 
-#define	setnumber(v,n)		do { (v) = (char *)(long)(n); } while (0)
-#define	setboolean(v,n)		do { (v) = (char *)(long)(n); } while (0)
-#define	setcharacter(v,n)	do { (v) = (char *)(long)(n); } while (0)
-#define	setaddress(v,n)		do { (v) = (char *)(n); } while (0)
+#define	setnumber(v,n)		do { (v) = (char *)(intptr_t)(n); } while (/*CONSTCOND*/0)
+#define	setboolean(v,n)		do { (v) = (char *)(intptr_t)(n); } while (/*CONSTCOND*/0)
+#define	setcharacter(v,n)	do { (v) = (char *)(intptr_t)(n); } while (/*CONSTCOND*/0)
+#define	setaddress(v,n)		do { (v) = (char *)(intptr_t)(n); } while (/*CONSTCOND*/0)
 
 /*
  * Escape command table definitions --
@@ -288,7 +288,7 @@ void	pipeout(char);
 int	prompt(const char *, char *, size_t);
 void	xpwrite(int, char *, size_t);
 void	raw(void);
-void	send(char);
+void	sendchar(char);
 void	sendfile(char);
 void	setparity(const char *);
 void	setscript(void);
@@ -297,7 +297,7 @@ void	suspend(char);
 void	tandem(const char *);
 void	tipabort(const char *);
 void	tipout(void);
-int	ttysetup(int);
+int	ttysetup(speed_t);
 void	unraw(void);
 void	variable(char);
 void	vinit(void);

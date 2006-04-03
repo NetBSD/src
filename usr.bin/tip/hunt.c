@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.13 2006/04/03 02:01:28 perry Exp $	*/
+/*	$NetBSD: hunt.c,v 1.14 2006/04/03 04:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hunt.c,v 1.13 2006/04/03 02:01:28 perry Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.14 2006/04/03 04:53:58 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -45,6 +45,7 @@ static	int deadfl;
 void	dead(int);
 
 void
+/*ARGSUSED*/
 dead(int dummy)
 {
 

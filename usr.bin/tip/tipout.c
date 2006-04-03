@@ -1,4 +1,4 @@
-/*	$NetBSD: tipout.c,v 1.10 2006/04/03 00:51:13 perry Exp $	*/
+/*	$NetBSD: tipout.c,v 1.11 2006/04/03 04:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tipout.c,v 1.10 2006/04/03 00:51:13 perry Exp $");
+__RCSID("$NetBSD: tipout.c,v 1.11 2006/04/03 04:53:58 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -57,6 +57,7 @@ void	intTERM(int);
  *   sent by TIPIN when it wants to posses the remote host
  */
 void
+/*ARGSUSED*/
 intIOT(int dummy)
 {
 
@@ -70,6 +71,7 @@ intIOT(int dummy)
  *  accepts script file name over the pipe and acts accordingly
  */
 void
+/*ARGSUSED*/
 intEMT(int dummy)
 {
 	char c, line[256];
@@ -100,6 +102,7 @@ intEMT(int dummy)
 }
 
 void
+/*ARGSUSED*/
 intTERM(int dummy)
 {
 
@@ -109,6 +112,7 @@ intTERM(int dummy)
 }
 
 void
+/*ARGSUSED*/
 intSYS(int dummy)
 {
 
@@ -150,10 +154,10 @@ tipout(void)
 		omask = sigblock(ALLSIGS);
 		for (cp = buf; cp < buf + cnt; cp++)
 			*cp &= STRIP_PAR;
-		write(1, buf, cnt);
+		write(1, buf, (size_t)cnt);
 		if (boolean(value(SCRIPT)) && fscript != NULL) {
 			if (!boolean(value(BEAUTIFY))) {
-				fwrite(buf, 1, cnt, fscript);
+				fwrite(buf, 1, (size_t)cnt, fscript);
 				continue;
 			}
 			for (cp = buf; cp < buf + cnt; cp++)
