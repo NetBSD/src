@@ -1,4 +1,4 @@
-/*	$NetBSD: tipout.c,v 1.11 2006/04/03 04:53:58 christos Exp $	*/
+/*	$NetBSD: tipout.c,v 1.12 2006/04/03 16:03:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
+#include <poll.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tipout.c,v 1.11 2006/04/03 04:53:58 christos Exp $");
+__RCSID("$NetBSD: tipout.c,v 1.12 2006/04/03 16:03:50 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -45,11 +46,9 @@ __RCSID("$NetBSD: tipout.c,v 1.11 2006/04/03 04:53:58 christos Exp $");
  *  reading from the remote host
  */
 
-static	jmp_buf sigbuf;
-
-void	intEMT(int);
-void	intIOT(int);
-void	intSYS(int);
+void	intEMT(void);
+void	intIOT(void);
+void	intSYS(void);
 void	intTERM(int);
 
 /*
@@ -57,13 +56,11 @@ void	intTERM(int);
  *   sent by TIPIN when it wants to posses the remote host
  */
 void
-/*ARGSUSED*/
-intIOT(int dummy)
+intIOT(void)
 {
 
-	write(repdes[1],&ccc,1);
-	read(fildes[0], &ccc,1);
-	longjmp(sigbuf, 1);
+	write(repdes[1],&ccc,1);	/* We got the message */
+	read(fildes[0], &ccc,1);	/* Now wait for coprocess */
 }
 
 /*
@@ -71,14 +68,13 @@ intIOT(int dummy)
  *  accepts script file name over the pipe and acts accordingly
  */
 void
-/*ARGSUSED*/
-intEMT(int dummy)
+intEMT(void)
 {
 	char c, line[256];
 	char *pline = line;
 	char reply;
 
-	read(fildes[0], &c, 1);
+	read(fildes[0], &c, 1);		/* We got the message */
 	while (c != '\n' && line + sizeof line - pline > 0) {
 		*pline++ = c;
 		read(fildes[0], &c, 1);
@@ -97,8 +93,7 @@ intEMT(int dummy)
 			setboolean(value(SCRIPT), TRUE);
 		}
 	}
-	write(repdes[1], &reply, 1);
-	longjmp(sigbuf, 1);
+	write(repdes[1], &reply, 1);	/* Now coprocess waits for us */
 }
 
 void
@@ -112,12 +107,10 @@ intTERM(int dummy)
 }
 
 void
-/*ARGSUSED*/
-intSYS(int dummy)
+intSYS(void)
 {
 
 	setboolean(value(BEAUTIFY), !boolean(value(BEAUTIFY)));
-	longjmp(sigbuf, 1);
 }
 
 /*
@@ -130,40 +123,65 @@ tipout(void)
 	char *cp;
 	int cnt;
 	int omask;
+	struct pollfd pfd[2];
 
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
-	signal(SIGEMT, intEMT);		/* attention from TIPIN */
-	signal(SIGTERM, intTERM);	/* time to go signal */
-	signal(SIGIOT, intIOT);		/* scripting going on signal */
 	signal(SIGHUP, intTERM);	/* for dial-ups */
-	signal(SIGSYS, intSYS);		/* beautify toggle */
-	(void) setjmp(sigbuf);
+	signal(SIGTERM, intTERM);	/* time to go signal*/
+
+	pfd[0].fd = attndes[0];
+	pfd[0].events = POLLIN;
+	pfd[1].fd = FD;
+	pfd[1].events = POLLIN|POLLHUP;
+
 	for (omask = 0;; sigsetmask(omask)) {
-		cnt = read(FD, buf, BUFSIZ);
-		if (cnt <= 0) {
-			/* lost carrier || EOF */
-			if ((cnt < 0 && errno == EIO) || (cnt == 0)) {
-				sigblock(sigmask(SIGTERM));
-				intTERM(0);
-				/*NOTREACHED*/
+
+	if (poll(pfd, 2, -1) > 0) {
+
+	if (pfd[0].revents & POLLIN)
+		if (read(attndes[0], &ccc, 1) > 0) {
+			switch(ccc) {
+			case 'W':
+				intIOT();	/* TIPIN wants us to wait */
+				break;
+			case 'S':
+				intEMT();	/* TIPIN wants us to script */
+				break;
+			case 'B':
+				intSYS();	/* "Beautify" value toggle */
+				break;
+			default:
+				break;
 			}
-			continue;
 		}
-#define	ALLSIGS	sigmask(SIGEMT)|sigmask(SIGTERM)|sigmask(SIGIOT)|sigmask(SIGSYS)
-		omask = sigblock(ALLSIGS);
-		for (cp = buf; cp < buf + cnt; cp++)
-			*cp &= STRIP_PAR;
-		write(1, buf, (size_t)cnt);
-		if (boolean(value(SCRIPT)) && fscript != NULL) {
-			if (!boolean(value(BEAUTIFY))) {
-				fwrite(buf, 1, (size_t)cnt, fscript);
+	}
+
+	if (pfd[1].revents & (POLLIN|POLLHUP)) {
+			cnt = read(FD, buf, BUFSIZ);
+			if (cnt <= 0) {
+				/* lost carrier || EOF */
+				if ((cnt < 0 && errno == EIO) || (cnt == 0)) {
+					sigblock(sigmask(SIGTERM));
+					intTERM(0);
+					/*NOTREACHED*/
+				}
 				continue;
 			}
+			omask = sigblock(SIGTERM);
 			for (cp = buf; cp < buf + cnt; cp++)
-				if ((*cp >= ' ' && *cp <= '~') ||
-				    any(*cp, value(EXCEPTIONS)))
-					putc(*cp, fscript);
+				*cp &= STRIP_PAR;
+			write(1, buf, (size_t)cnt);
+			if (boolean(value(SCRIPT)) && fscript != NULL) {
+				if (!boolean(value(BEAUTIFY))) {
+					fwrite(buf, 1, (size_t)cnt, fscript);
+					continue;
+				}
+				for (cp = buf; cp < buf + cnt; cp++)
+					if ((*cp >= ' ' && *cp <= '~') ||
+					    any(*cp, value(EXCEPTIONS)))
+						putc(*cp, fscript);
+			}
 		}
 	}
 }
