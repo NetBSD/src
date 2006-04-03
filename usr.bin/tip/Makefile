@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2006/04/02 19:16:22 tls Exp $
+#	$NetBSD: Makefile,v 1.17 2006/04/03 01:47:20 tls Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -40,9 +40,9 @@ CPPFLAGS+=-I${.CURDIR} \
 BINOWN=	uucp
 BINGRP=	dialer
 BINMODE=4554
-SRCS=	acu.c acutab.c cmds.c cmdtab.c cu.c hunt.c log.c partab.c \
+SRCS=	acu.c acutab.c cmds.c cmdtab.c cu.c hunt.c partab.c \
 	remote.c tip.c tipout.c uucplock.c value.c vars.c \
-	df.c hayes.c # biz22.c courier.c dn11.c hayes.c t3000.c v3451.c v831.c ventel.c
+	df.c hayes.c # log.c biz22.c courier.c dn11.c hayes.c t3000.c v3451.c v831.c ventel.c
 
 # -- acutab is configuration dependent, and so depends on the Makefile
 # -- remote.o depends on the Makefile because of DEFBR and DEFFS
