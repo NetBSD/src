@@ -1,4 +1,4 @@
-.\"	$NetBSD: tip.1,v 1.25 2006/04/03 02:14:26 perry Exp $
+.\"	$NetBSD: tip.1,v 1.26 2006/04/03 03:46:34 perry Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,16 +29,16 @@
 .\"
 .\"	@(#)tip.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd March 29, 2006
+.Dd April 2, 2006
 .Dt TIP 1
 .Os
 .Sh NAME
-.Nm tip
-.\" .Nm cu
+.Nm tip ,
+.Nm cu
 .Nd connect to a remote system
 .Sh SYNOPSIS
 .Nm
-.Op Fl v
+.Op Fl nv
 .Fl Ns Ns Ar speed
 .Ar system\-name
 .Nm
@@ -54,30 +54,93 @@
 .\" .Op Fl #
 .Sh DESCRIPTION
 .Nm
-.\" and
-.\" .Nm cu
-establishes a full-duplex connection to another machine,
-giving the appearance of being logged in directly on the
-remote CPU.
-It goes without saying that you must have a login
-on the machine (or equivalent) to which you wish to connect.
-.\" The preferred interface is
-.\" .Nm tip  .
-.\" The
-.\" .Nm cu
-.\" interface is included for those people attached to the
-.\" ``call
-.\" .Ux Ns ''
-.\" command of version 7.
-.\" This manual page
-.\" describes only
-.\" .Nm tip  .
+and
+.Nm cu
+are used to connect to another system over a serial link.
+In the era before modern networks, they were typically used to
+connect to a modem in order to dial in to a remote host.
+They are now frequently used for tasks such as attaching to the
+serial console of another machine for administrative or
+debugging purposes.
 .Pp
-Available Option:
-.Bl -tag -width indent
+The options are as follows:
+.Bl -tag -width 4n
+.It Fl a Ar acu
+Set the acu.
+.It Fl e
+For
+.Nm cu ,
+use even parity.
+.It Fl h
+For
+.Nm cu ,
+echo characters locally (half-duplex mode).
+.It Fl l Ar line
+For
+.Nm cu ,
+specify the line to use.
+Either of the forms like
+.Pa tty00
+or
+.Pa /dev/tty00
+are permitted.
+.It Fl n
+No escape (disable tilde).
+.It Fl o
+For
+.Nm cu ,
+use odd parity.
+.It Fl s Ar speed
+For
+.Nm cu ,
+set the speed of the connection.
+Defaults to 9600.
+.It Fl t
+For
+.Nm cu ,
+connect via a hard-wired connection to a host on a dial-up line.
 .It Fl v
 Set verbose mode.
 .El
+.Pp
+For
+.Nm cu ,
+if both
+.Fl e
+and
+.Fl o
+are given, then no parity is used.
+This is the default behaviour.
+.Pp
+If
+.Ar speed
+is specified it will override any baudrate specified in the system
+description being used.
+.Pp
+If neither
+.Ar speed
+nor
+.Ar system-name
+are specified,
+.Ar system-name
+will be set to the value of the
+.Ev HOST
+environment variable.
+.Pp
+If
+.Ar speed
+is specified but
+.Ar system-name
+is not,
+.Ar system-name
+will be set to a value of 'tip' with
+.Ar speed
+appended.
+e.g.\&
+.Ic tip -1200
+will set
+.Ar system-name
+to 'tip1200'.
 .Pp
 Typed characters are normally transmitted directly to the remote
 machine (which does the echoing as well).
