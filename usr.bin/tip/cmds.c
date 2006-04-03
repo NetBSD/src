@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.27 2006/04/03 16:03:50 tls Exp $	*/
+/*	$NetBSD: cmds.c,v 1.28 2006/04/03 16:13:34 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.27 2006/04/03 16:03:50 tls Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.28 2006/04/03 16:13:34 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -230,12 +230,9 @@ pipefile(char dummy)
 				;
 		}
 	} else {
-		int f;
-
 		dup2(pdes[0], 0);
 		close(pdes[0]);
-		for (f = 3; f < 20; f++)
-			close(f);
+		closefrom(3);
 		execute(buf);
 		printf("can't execl!\r\n");
 		exit(0);
@@ -495,11 +492,8 @@ pipeout(char c)
 		while ((p = wait(&status)) > 0 && p != cpid)
 			;
 	} else {
-		int i;
-
 		dup2(FD, 1);
-		for (i = 3; i < 20; i++)
-			close(i);
+		closefrom(3);
 		signal(SIGINT, SIG_DFL);
 		signal(SIGQUIT, SIG_DFL);
 		execute(buf);
@@ -546,12 +540,9 @@ consh(char c)
 		while ((p = wait(&status)) > 0 && p != cpid)
 			;
 	} else {
-		int i;
-
 		dup2(FD, 0);
 		dup2(FD, 1);
-		for (i = 3; i < 20; i++)
-			close(i);
+		closefrom(3);
 		signal(SIGINT, SIG_DFL);
 		signal(SIGQUIT, SIG_DFL);
 		execute(buf);
