@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.426 2006/03/30 17:41:14 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.427 2006/04/03 17:01:22 gdamore Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -50,6 +50,20 @@ Notes:
 Amd2netbsd script to convert to BSD make system and remove unneeded files.
 Fix symbolic links before import.
 Check src/usr.sbin/amd/include/config.h is correct after import.
+
+Package:	ath-hal
+Version:	0.9.16.16
+Current Vers:	0.9.16.16
+Maintainer:	Sam Leffler <sam@errno.com>
+Archive Site:	none
+Home Page:	none
+Mailing List:	none
+Responsible:	sam, dyoung, gdamore
+License:	Redistribution without changes (binary only)
+Notes:
+The current version was imported from FreeBSD.  New versions should come from
+Sam Leffler directly.  The HAL is binary only, and located in
+src/sys/contrib/dev/ath
 
 Package:	bc
 Version:	1.06
