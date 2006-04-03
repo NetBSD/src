@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.872 2006/03/28 20:54:13 riz Exp $
+# $NetBSD: mi,v 1.873 2006/04/03 08:15:50 scw Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -463,6 +463,7 @@
 ./usr/share/man/cat1/usbhidaction.0		man-util-catman		.cat
 ./usr/share/man/cat1/usbhidctl.0		man-util-catman		.cat
 ./usr/share/man/cat1/users.0			man-util-catman		.cat
+./usr/share/man/cat1/utoppya.0			man-util-catman		.cat
 ./usr/share/man/cat1/uucp.0			man-uucp-catman		uucp,.cat
 ./usr/share/man/cat1/uudecode.0			man-uucp-catman		.cat
 ./usr/share/man/cat1/uuencode.0			man-uucp-catman		.cat
@@ -1364,6 +1365,7 @@
 ./usr/share/man/cat4/userconf.0			man-sys-catman		.cat
 ./usr/share/man/cat4/usscanner.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ustir.0			man-sys-catman		.cat
+./usr/share/man/cat4/utoppy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uvisor.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uvscom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uyap.0			man-sys-catman		.cat
@@ -2776,6 +2778,7 @@
 ./usr/share/man/man1/usbhidaction.1		man-util-man		.man
 ./usr/share/man/man1/usbhidctl.1		man-util-man		.man
 ./usr/share/man/man1/users.1			man-util-man		.man
+./usr/share/man/man1/utoppya.1			man-util-man		.man
 ./usr/share/man/man1/uucp.1			man-uucp-man		uucp,.man
 ./usr/share/man/man1/uudecode.1			man-uucp-man		.man
 ./usr/share/man/man1/uuencode.1			man-uucp-man		.man
@@ -3677,6 +3680,7 @@
 ./usr/share/man/man4/userconf.4			man-sys-man		.man
 ./usr/share/man/man4/usscanner.4		man-sys-man		.man
 ./usr/share/man/man4/ustir.4			man-sys-man		.man
+./usr/share/man/man4/utoppy.4			man-sys-man		.man
 ./usr/share/man/man4/uvisor.4			man-sys-man		.man
 ./usr/share/man/man4/uvscom.4			man-sys-man		.man
 ./usr/share/man/man4/uyap.4			man-sys-man		.man

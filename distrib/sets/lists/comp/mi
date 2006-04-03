@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.867 2006/03/30 00:00:24 rtr Exp $
+#	$NetBSD: mi,v 1.868 2006/04/03 08:15:49 scw Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -469,6 +469,7 @@
 ./usr/include/dev/usb/usbcdc.h			comp-obsolete		obsolete
 ./usr/include/dev/usb/usbdevs.h			comp-obsolete		obsolete
 ./usr/include/dev/usb/usbhid.h			comp-c-include
+./usr/include/dev/usb/utoppy.h			comp-c-include
 ./usr/include/dev/vinum/request.h		comp-obsolete		obsolete
 ./usr/include/dev/vinum/statetexts.h		comp-obsolete		obsolete
 ./usr/include/dev/vinum/vinumext.h		comp-obsolete		obsolete
