@@ -1,4 +1,4 @@
-/*	$NetBSD: v831.c,v 1.10 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: v831.c,v 1.11 2006/04/03 00:51:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)v831.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: v831.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: v831.c,v 1.11 2006/04/03 00:51:14 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -45,13 +45,12 @@ __RCSID("$NetBSD: v831.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
 static jmp_buf jmpbuf;
 static int child = -1;
 
-static	void	alarmtr __P((int));
-static	int	dialit __P((char *, char *));
-static	char   *sanitize __P((char *));
+static	void	alarmtr(int);
+static	int	dialit(char *, char *);
+static	char   *sanitize(char *);
 
 int
-v831_dialer(num, acu)
-        char *num, *acu;
+v831_dialer(char *num, char *acu)
 {
         int status, mypid;
         int timelim;
@@ -114,8 +113,7 @@ v831_dialer(num, acu)
 }
 
 static void
-alarmtr(dummy)
-	int dummy;
+alarmtr(int dummy)
 {
 
         alarm(0);
@@ -127,7 +125,7 @@ alarmtr(dummy)
  *  hanging up...
  */
 void
-v831_disconnect()
+v831_disconnect(void)
 {
 	struct termios	cntrl;
 
@@ -147,7 +145,7 @@ v831_disconnect()
 }
 
 void
-v831_abort()
+v831_abort(void)
 {
 
 #ifdef DEBUG
@@ -184,9 +182,7 @@ struct vaconfig {
 #define ETX	03
 
 static int
-dialit(phonenum, acu)
-	char *phonenum;
-	char *acu;
+dialit(char *phonenum, char *acu)
 {
         struct vaconfig *vp;
 	struct termios cntrl;
@@ -246,8 +242,7 @@ dialit(phonenum, acu)
 }
 
 static char *
-sanitize(s)
-	char *s;
+sanitize(char *s)
 {
         static char buf[128];
         char *cp;

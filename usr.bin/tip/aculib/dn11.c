@@ -1,4 +1,4 @@
-/*	$NetBSD: dn11.c,v 1.8 2004/03/11 03:33:19 uebayasi Exp $	*/
+/*	$NetBSD: dn11.c,v 1.9 2006/04/03 00:51:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dn11.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: dn11.c,v 1.8 2004/03/11 03:33:19 uebayasi Exp $");
+__RCSID("$NetBSD: dn11.c,v 1.9 2006/04/03 00:51:14 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -45,11 +45,10 @@ __RCSID("$NetBSD: dn11.c,v 1.8 2004/03/11 03:33:19 uebayasi Exp $");
 static jmp_buf jmpbuf;
 static int child = -1, dn;
 
-static	void	alarmtr __P((int));
+static	void	alarmtr(int);
 
 int
-dn_dialer(num, acu)
-	char *num, *acu;
+dn_dialer(char *num, char *acu)
 {
 	int lt, nw;
 	int timelim;
@@ -113,8 +112,7 @@ dn_dialer(num, acu)
 }
 
 static void
-alarmtr(dummy)
-	int dummy;
+alarmtr(int dummy)
 {
 
 	alarm(0);
@@ -126,7 +124,7 @@ alarmtr(dummy)
  *  hanging up...
  */
 void
-dn_disconnect()
+dn_disconnect(void)
 {
 
 	sleep(2);
@@ -136,7 +134,7 @@ dn_disconnect()
 }
 
 void
-dn_abort()
+dn_abort(void)
 {
 
 	sleep(2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.19 2006/04/02 20:44:20 tls Exp $	*/
+/*	$NetBSD: cmds.c,v 1.20 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.19 2006/04/02 20:44:20 tls Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.20 2006/04/03 00:51:13 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -52,25 +52,24 @@ char	null = '\0';
 const char	*sep[] = { "second", "minute", "hour" };
 static	char *argv[10];		/* argument vector for take and put */
 
-int	args __P((char *, char **));
-int	anyof __P((char *, const char *));
-void	execute __P((char *));
-void	intcopy __P((int));
-void	prtime __P((const char *, time_t));
-void	stopsnd __P((int));
-void	transfer __P((char *, int, const char *));
-void	transmit __P((FILE *, const char *, char *));
+int	args(char *, char **);
+int	anyof(char *, const char *);
+void	execute(char *);
+void	intcopy(int);
+void	prtime(const char *, time_t);
+void	stopsnd(int);
+void	transfer(char *, int, const char *);
+void	transmit(FILE *, const char *, char *);
 
 /*
  * FTP - remote ==> local
  *  get a file from the remote host
  */
 void
-getfl(c)
-	char c;
+getfl(char c)
 {
 	char buf[256], *cp;
-	
+
 	putchar(c);
 	/*
 	 * get the UNIX receiving file's name
@@ -82,7 +81,7 @@ getfl(c)
 		printf("\r\n%s: cannot create\r\n", copyname);
 		return;
 	}
-	
+
 	/*
 	 * collect parameters
 	 */
@@ -98,8 +97,7 @@ getfl(c)
  * Cu-like take command
  */
 void
-cu_take(cc)
-	char cc;
+cu_take(char cc)
 {
 	int fd, argc;
 	char line[BUFSIZ], *cp;
@@ -127,10 +125,7 @@ static	jmp_buf intbuf;
  *  used by getfl(), cu_take(), and pipefile()
  */
 void
-transfer(buf, fd, eofchars)
-	char *buf;
-	int fd;
-	const char *eofchars;
+transfer(char *buf, int fd, const char *eofchars)
 {
 	int ct;
 	char c, buffer[BUFSIZ];
@@ -148,17 +143,17 @@ transfer(buf, fd, eofchars)
 	quit = 0;
 	kill(pid, SIGIOT);
 	read(repdes[0], (char *)&ccc, 1);  /* Wait until read process stops */
-	
+
 	/*
 	 * finish command
 	 */
 	r = '\r';
 	xpwrite(FD, &r, 1);
 	do
-		read(FD, &c, 1); 
+		read(FD, &c, 1);
 	while ((c&STRIP_PAR) != '\n');
 	tcsetattr(0, TCSAFLUSH, &defchars);
-	
+
 	(void) setjmp(intbuf);
 	f = signal(SIGINT, intcopy);
 	start = time(0);
@@ -202,8 +197,7 @@ transfer(buf, fd, eofchars)
  *   send remote input to local process via pipe
  */
 void
-pipefile(dummy)
-	char dummy;
+pipefile(char dummy)
 {
 	int cpid, pdes[2];
 	char buf[256];
@@ -250,8 +244,7 @@ pipefile(dummy)
  * Interrupt service routine for FTP
  */
 void
-stopsnd(dummy)
-	int dummy;
+stopsnd(int dummy)
 {
 
 	stop = 1;
@@ -264,8 +257,7 @@ stopsnd(dummy)
  *  terminate transmission with pseudo EOF sequence
  */
 void
-sendfile(cc)
-	char cc;
+sendfile(char cc)
 {
 	FILE *fd;
 	char *fnamex;
@@ -295,10 +287,7 @@ sendfile(cc)
  *   used by sendfile() and cu_put()
  */
 void
-transmit(fd, eofchars, command)
-	FILE *fd;
-	const char *eofchars;
-	char *command;
+transmit(FILE *fd, const char *eofchars, char *command)
 {
 	const char *pc;
 	char lastc;
@@ -397,8 +386,7 @@ out:
  * Cu-like put command
  */
 void
-cu_put(cc)
-	char cc;
+cu_put(char cc)
 {
 	FILE *fd;
 	char line[BUFSIZ];
@@ -430,8 +418,7 @@ cu_put(cc)
  *  wait for echo & handle timeout
  */
 void
-send(c)
-	char c;
+send(char c)
 {
 	char cc;
 	int retry = 0;
@@ -464,8 +451,7 @@ tryagain:
 }
 
 void
-alrmtimeout(dummy)
-	int dummy;
+alrmtimeout(int dummy)
 {
 
 	signal(SIGALRM, alrmtimeout);
@@ -477,8 +463,7 @@ alrmtimeout(dummy)
  *	Identical to consh() except for where stdout goes.
  */
 void
-pipeout(c)
-	char c;
+pipeout(char c)
 {
 	char buf[256];
 	int cpid, status, p;
@@ -530,8 +515,7 @@ pipeout(c)
  *  2 <-> local tty out
  */
 void
-consh(c)
-	char c;
+consh(char c)
 {
 	char buf[256];
 	int cpid, status, p;
@@ -581,8 +565,7 @@ consh(c)
  * Escape to local shell
  */
 void
-shell(dummy)
-	char dummy;
+shell(char dummy)
 {
 	int shpid, status;
 	const char *cp;
@@ -623,7 +606,7 @@ shell(dummy)
  *   initiate the conversation with TIPOUT
  */
 void
-setscript()
+setscript(void)
 {
 	char c;
 	/*
@@ -646,8 +629,7 @@ setscript()
  *   local portion of tip
  */
 void
-chdirectory(dummy)
-	char dummy;
+chdirectory(char dummy)
 {
 	char dirnam[80];
 	const char *cp = dirnam;
@@ -663,8 +645,7 @@ chdirectory(dummy)
 }
 
 void
-tipabort(msg)
-	const char *msg;
+tipabort(const char *msg)
 {
 
 	kill(pid, SIGTERM);
@@ -679,8 +660,7 @@ tipabort(msg)
 }
 
 void
-finish(dummy)
-	char dummy;
+finish(char dummy)
 {
 	const char *dismsg;
 
@@ -693,8 +673,7 @@ finish(dummy)
 }
 
 void
-intcopy(dummy)
-	int dummy;
+intcopy(int dummy)
 {
 
 	raw();
@@ -703,8 +682,7 @@ intcopy(dummy)
 }
 
 void
-execute(s)
-	char *s;
+execute(char *s)
 {
 	const char *cp;
 
@@ -717,8 +695,7 @@ execute(s)
 }
 
 int
-args(buf, a)
-	char *buf, *a[];
+args(char *buf, char *a[])
 {
 	char *p = buf, *start;
 	char **parg = a;
@@ -742,9 +719,7 @@ args(buf, a)
 }
 
 void
-prtime(s, a)
-	const char *s;
-	time_t a;
+prtime(const char *s, time_t a)
 {
 	int i;
 	int nums[3];
@@ -762,8 +737,7 @@ prtime(s, a)
 }
 
 void
-variable(dummy)
-	char dummy;
+variable(char dummy)
 {
 	char	buf[256];
 
@@ -817,8 +791,7 @@ variable(dummy)
  * Turn tandem mode on or off for remote tty.
  */
 void
-tandem(option)
-	const char *option;
+tandem(const char *option)
 {
 	struct termios	rmtty;
 
@@ -838,8 +811,7 @@ tandem(option)
  * Turn hardware flow control on or off for remote tty.
  */
 void
-hardwareflow(option)
-	const char *option;
+hardwareflow(const char *option)
 {
 	struct termios	rmtty;
 
@@ -855,8 +827,7 @@ hardwareflow(option)
  * Send a break.
  */
 void
-genbrk(dummy)
-	char dummy;
+genbrk(char dummy)
 {
 
 	ioctl(FD, TIOCSBRK, NULL);
@@ -868,8 +839,7 @@ genbrk(dummy)
  * Suspend tip
  */
 void
-suspend(c)
-	char c;
+suspend(char c)
 {
 
 	unraw();
@@ -882,8 +852,7 @@ suspend(c)
  */
 
 char *
-expand(name)
-	char name[];
+expand(char name[])
 {
 	static char xname[BUFSIZ];
 	char cmdbuf[BUFSIZ];
@@ -952,9 +921,7 @@ expand(name)
  */
 
 int
-anyof(s1, s2)
-	char *s1;
-	const char *s2;
+anyof(char *s1, const char *s2)
 {
 	int c;
 

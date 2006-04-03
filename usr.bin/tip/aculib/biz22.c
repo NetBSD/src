@@ -1,4 +1,4 @@
-/*	$NetBSD: biz22.c,v 1.9 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: biz22.c,v 1.10 2006/04/03 00:51:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: biz22.c,v 1.9 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: biz22.c,v 1.10 2006/04/03 00:51:14 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -44,10 +44,10 @@ __RCSID("$NetBSD: biz22.c,v 1.9 2004/04/23 22:11:44 christos Exp $");
 static	int btimeout = 0;
 static	jmp_buf timeoutbuf;
 
-static	int	biz_dialer __P((char *, const char *));
-static	int	cmd __P((const char *));
-static	int	detect __P((const char *));
-static	void	sigALRM __P((int));
+static	int	biz_dialer(char *, const char *);
+static	int	cmd(const char *);
+static	int	detect(const char *);
+static	void	sigALRM(int);
 
 /*
  * Dial up on a BIZCOMP Model 1022 with either
@@ -55,9 +55,7 @@ static	void	sigALRM __P((int));
  *	pulse dialing (mod = "W")
  */
 static int
-biz_dialer(num, mod)
-	char *num;
-	const char *mod;
+biz_dialer(char *num, const char *mod)
 {
 	int connected = 0;
 	char cbuf[40];
@@ -107,23 +105,21 @@ biz_dialer(num, mod)
 }
 
 int
-biz22w_dialer(num, acu)
-	char *num, *acu;
+biz22w_dialer(char *num, char *acu)
 {
 
 	return (biz_dialer(num, "W"));
 }
 
 int
-biz22f_dialer(num, acu)
-	char *num, *acu;
+biz22f_dialer(char *num, char *acu)
 {
 
 	return (biz_dialer(num, "V"));
 }
 
 void
-biz22_disconnect()
+biz22_disconnect(void)
 {
 
 	write(FD, DISCONNECT_CMD, 4);
@@ -132,15 +128,14 @@ biz22_disconnect()
 }
 
 void
-biz22_abort()
+biz22_abort(void)
 {
 
 	write(FD, "\02", 1);
 }
 
 static void
-sigALRM(dummy)
-	int dummy;
+sigALRM(int dummy)
 {
 
 	btimeout = 1;
@@ -148,8 +143,7 @@ sigALRM(dummy)
 }
 
 static int
-cmd(s)
-	const char *s;
+cmd(const char *s)
 {
 	sig_t f;
 	char c;
@@ -170,8 +164,7 @@ cmd(s)
 }
 
 static int
-detect(s)
-	const char *s;
+detect(const char *s)
 {
 	sig_t f;
 	char c;

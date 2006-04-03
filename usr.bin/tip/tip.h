@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.19 2006/04/02 19:16:22 tls Exp $	*/
+/*	$NetBSD: tip.h,v 1.20 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -104,7 +104,7 @@ typedef
 		const char *v_abrev;	/* possible abreviation */
 		char *v_value;		/* casted to a union later */
 				/*
-				 * XXX:	this assumes that the storage space 
+				 * XXX:	this assumes that the storage space
 				 *	of a pointer >= that of a long
 				 */
 	}
@@ -137,9 +137,9 @@ typedef
 typedef
 	struct {
 		const char *acu_name;
-		int	(*acu_dialer) __P((char *, char *));
-		void	(*acu_disconnect) __P((void));
-		void	(*acu_abort) __P((void));
+		int	(*acu_dialer)(char *, char *);
+		void	(*acu_disconnect)(void);
+		void	(*acu_abort)(void);
 	}
 	acu_t;
 
@@ -175,7 +175,7 @@ typedef
 		char	e_char;			/* char to match on */
 		char	e_flags;		/* experimental, privileged */
 		const char *e_help;		/* help string */
-		void 	(*e_func) __P((char));	/* command */
+		void 	(*e_func)(char);	/* command */
 	}
 	esctable_t;
 
@@ -185,11 +185,6 @@ typedef
 
 extern int	vflag;		/* verbose during reading of .tiprc file */
 extern value_t	vtable[];	/* variable table */
-
-#ifndef ACULOG
-#define logent(a, b, c, d)
-#define loginit()
-#endif
 
 /*
  * Definition of indices into variable table so
@@ -270,85 +265,90 @@ extern acu_t		acutable[];
 extern esctable_t	etable[];
 extern unsigned char	evenpartab[];
 
-void	alrmtimeout __P((int));
-int	any __P((char, const char *));
-void	chdirectory __P((char));
-void	cleanup __P((int));
-const char   *connect __P((void));
-void	consh __P((char));
-char   *ctrl __P((char));
-void	cumain __P((int, char **));
-void	cu_put __P((char));
-void	cu_take __P((char));
-void	daemon_uid __P((void));
-void	disconnect __P((const char *));
-char   *expand __P((char *));
-void	finish __P((char));
-void	genbrk __P((char));
-void	getfl __P((char));
-char   *getremote __P((char *));
-void	hardwareflow __P((const char *));
-void	help __P((char));
-int	hunt __P((char *));
-char   *interp __P((const char *));
-void	logent __P((const char *, const char *, const char *, const char *));
-void	loginit __P((void));
-void	pipefile __P((char));
-void	pipeout __P((char));
-int	prompt __P((const char *, char *, size_t));
-void	xpwrite __P((int, char *, int));
-void	raw __P((void));
-void	send __P((char));
-void	sendfile __P((char));
-void	setparity __P((const char *));
-void	setscript __P((void));
-void	shell __P((char));
-void	shell_uid __P((void));
-void	suspend __P((char));
-void	tandem __P((const char *));
-void	tipabort __P((const char *));
-void	tipout __P((void));
-int	ttysetup __P((int));
-void	unraw __P((void));
-void	user_uid __P((void));
-int	uu_lock __P((char *));	
-int	uu_unlock __P((char *));	
-void	variable __P((char));
-void	vinit __P((void));
-char   *vinterp __P((char *, char));
-void	vlex __P((char *));
-int	vstring __P((const char *, char *));
+void	alrmtimeout(int);
+int	any(char, const char *);
+void	chdirectory(char);
+void	cleanup(int);
+const char   *connect(void);
+void	consh(char);
+char   *ctrl(char);
+void	cumain(int, char **);
+void	cu_put(char);
+void	cu_take(char);
+void	daemon_uid(void);
+void	disconnect(const char *);
+char   *expand(char *);
+void	finish(char);
+void	genbrk(char);
+void	getfl(char);
+char   *getremote(char *);
+void	hardwareflow(const char *);
+void	help(char);
+int	hunt(char *);
+char   *interp(const char *);
+void	logent(const char *, const char *, const char *, const char *);
+void	loginit(void);
+void	pipefile(char);
+void	pipeout(char);
+int	prompt(const char *, char *, size_t);
+void	xpwrite(int, char *, int);
+void	raw(void);
+void	send(char);
+void	sendfile(char);
+void	setparity(const char *);
+void	setscript(void);
+void	shell(char);
+void	shell_uid(void);
+void	suspend(char);
+void	tandem(const char *);
+void	tipabort(const char *);
+void	tipout(void);
+int	ttysetup(int);
+void	unraw(void);
+void	user_uid(void);
+int	uu_lock(char *);
+int	uu_unlock(char *);
+void	variable(char);
+void	vinit(void);
+char   *vinterp(char *, char);
+void	vlex(char *);
+int	vstring(const char *, char *);
 
-void	biz22_abort __P((void));
-void	biz22_disconnect __P((void));
-int	biz22f_dialer __P((char *, char *));
-int	biz22w_dialer __P((char *, char *));
-void	biz31_abort __P((void));
-void	biz31_disconnect __P((void));
-int	biz31f_dialer __P((char *, char *));
-int	biz31w_dialer __P((char *, char *));
-void	cour_abort __P((void));
-int	cour_dialer __P((char *, char *));
-void	cour_disconnect __P((void));
-int	df02_dialer __P((char *, char *));
-int	df03_dialer __P((char *, char *));
-void	df_abort __P((void));
-void	df_disconnect __P((void));
-void	dn_abort __P((void));
-int	dn_dialer __P((char *, char *));
-void	dn_disconnect __P((void));
-void	hay_abort __P((void));
-int	hay_dialer __P((char *, char *));
-void	hay_disconnect __P((void));
-void	t3000_abort __P((void));
-int	t3000_dialer __P((char *, char *));
-void	t3000_disconnect __P((void));
-void	v3451_abort __P((void));
-int	v3451_dialer __P((char *, char *));
-void	v3451_disconnect __P((void));
-void	v831_abort __P((void));
-int	v831_dialer __P((char *, char *));
-void	v831_disconnect __P((void));
-void	ven_abort __P((void));
-int	ven_dialer __P((char *, char *));
-void	ven_disconnect __P((void));
+void	biz22_abort(void);
+void	biz22_disconnect(void);
+int	biz22f_dialer(char *, char *);
+int	biz22w_dialer(char *, char *);
+void	biz31_abort(void);
+void	biz31_disconnect(void);
+int	biz31f_dialer(char *, char *);
+int	biz31w_dialer(char *, char *);
+void	cour_abort(void);
+int	cour_dialer(char *, char *);
+void	cour_disconnect(void);
+int	df02_dialer(char *, char *);
+int	df03_dialer(char *, char *);
+void	df_abort(void);
+void	df_disconnect(void);
+void	dn_abort(void);
+int	dn_dialer(char *, char *);
+void	dn_disconnect(void);
+void	hay_abort(void);
+int	hay_dialer(char *, char *);
+void	hay_disconnect(void);
+void	t3000_abort(void);
+int	t3000_dialer(char *, char *);
+void	t3000_disconnect(void);
+void	v3451_abort(void);
+int	v3451_dialer(char *, char *);
+void	v3451_disconnect(void);
+void	v831_abort(void);
+int	v831_dialer(char *, char *);
+void	v831_disconnect(void);
+void	ven_abort(void);
+int	ven_dialer(char *, char *);
+void	ven_disconnect(void);
+
+#ifndef ACULOG
+#define logent(a, b, c, d)
+#define loginit(a)
+#endif

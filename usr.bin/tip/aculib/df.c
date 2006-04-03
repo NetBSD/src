@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.7 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: df.c,v 1.8 2006/04/03 00:51:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: df.c,v 1.7 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.8 2006/04/03 00:51:14 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -45,29 +45,25 @@ __RCSID("$NetBSD: df.c,v 1.7 2004/04/23 22:11:44 christos Exp $");
 
 static jmp_buf Sjbuf;
 
-static	int	df_dialer __P((char *, char *, int));
-static	void	timeout __P((int));
+static	int	df_dialer(char *, char *, int);
+static	void	timeout(int);
 
 int
-df02_dialer(num, acu)
-	char *num, *acu;
+df02_dialer(char *num, char *acu)
 {
 
 	return (df_dialer(num, acu, 0));
 }
 
 int
-df03_dialer(num, acu)
-	char *num, *acu;
+df03_dialer(char *num, char *acu)
 {
 
 	return (df_dialer(num, acu, 1));
 }
 
 static int
-df_dialer(num, acu, df03)
-	char *num, *acu;
-	int df03;
+df_dialer(char *num, char *acu, int df03)
 {
 	int f = FD;
 	struct termios cntrl;
@@ -123,7 +119,7 @@ df_dialer(num, acu, df03)
 }
 
 void
-df_disconnect()
+df_disconnect(void)
 {
 
 	write(FD, "\001", 1);
@@ -133,7 +129,7 @@ df_disconnect()
 
 
 void
-df_abort()
+df_abort(void)
 {
 
 	df_disconnect();
@@ -141,8 +137,7 @@ df_abort()
 
 
 static void
-timeout(dummy)
-	int dummy;
+timeout(int dummy)
 {
 
 	longjmp(Sjbuf, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uucplock.c,v 1.13 2006/04/02 06:11:45 tls Exp $	*/
+/*	$NetBSD: uucplock.c,v 1.14 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,21 +34,20 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: uucplock.c,v 1.13 2006/04/02 06:11:45 tls Exp $");
+__RCSID("$NetBSD: uucplock.c,v 1.14 2006/04/03 00:51:13 perry Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
 #include "tip.h"
 
-/* 
+/*
  * uucp style locking routines
  * return: 0 - success
  * 	  -1 - failure
  */
 
 int
-uu_lock(ttname)
-	char *ttname;
+uu_lock(char *ttname)
 {
 	int fd, mypid;
 	char tbuf[sizeof(_PATH_LOCKDIRNAME) + MAXNAMLEN];
@@ -110,8 +109,7 @@ uu_lock(ttname)
 }
 
 int
-uu_unlock(ttname)
-	char *ttname;
+uu_unlock(char *ttname)
 {
 	char tbuf[sizeof(_PATH_LOCKDIRNAME) + MAXNAMLEN];
 

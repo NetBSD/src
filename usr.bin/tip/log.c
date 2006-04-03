@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.11 2006/04/02 06:11:45 tls Exp $	*/
+/*	$NetBSD: log.c,v 1.12 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: log.c,v 1.11 2006/04/02 06:11:45 tls Exp $");
+__RCSID("$NetBSD: log.c,v 1.12 2006/04/03 00:51:13 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -47,8 +47,8 @@ static	FILE *flog = NULL;
  */
 
 void
-logent(group, num, acu, message)
-	const char *group, *num, *acu, *message;
+logent(const char *group, const char *num,
+    const char *acu, const char *message)
 {
 	const char *user;
 	char *timestamp;
@@ -83,7 +83,7 @@ logent(group, num, acu, message)
 }
 
 void
-loginit()
+loginit(void)
 {
 	const char *logfile;
 
