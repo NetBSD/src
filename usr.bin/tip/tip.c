@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.37 2006/04/03 02:25:27 perry Exp $	*/
+/*	$NetBSD: tip.c,v 1.38 2006/04/03 04:25:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.37 2006/04/03 02:25:27 perry Exp $");
+__RCSID("$NetBSD: tip.c,v 1.38 2006/04/03 04:25:30 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -486,7 +486,7 @@ static char partab[0200];
  * with the right parity and output it.
  */
 void
-xpwrite(int fd, char *buf, int n)
+xpwrite(int fd, char *buf, size_t n)
 {
 	int i;
 	char *bp;

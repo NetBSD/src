@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.23 2006/04/03 03:13:10 tls Exp $	*/
+/*	$NetBSD: tip.h,v 1.24 2006/04/03 04:25:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -286,7 +286,7 @@ char   *interp(const char *);
 void	pipefile(char);
 void	pipeout(char);
 int	prompt(const char *, char *, size_t);
-void	xpwrite(int, char *, int);
+void	xpwrite(int, char *, size_t);
 void	raw(void);
 void	send(char);
 void	sendfile(char);
