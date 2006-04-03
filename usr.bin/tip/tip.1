@@ -1,4 +1,4 @@
-.\"	$NetBSD: tip.1,v 1.26 2006/04/03 03:46:34 perry Exp $
+.\"	$NetBSD: tip.1,v 1.27 2006/04/03 05:56:20 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,14 +133,17 @@ is specified but
 .Ar system-name
 is not,
 .Ar system-name
-will be set to a value of 'tip' with
+will be set to a value of
+.Dq tip
+with
 .Ar speed
 appended.
 e.g.\&
 .Ic tip -1200
 will set
 .Ar system-name
-to 'tip1200'.
+to
+.Dq tip1200 .
 .Pp
 Typed characters are normally transmitted directly to the remote
 machine (which does the echoing as well).
@@ -467,7 +470,7 @@ beautification rules.
 (bool) Expand tabs to spaces during file transfers; abbreviated
 .Ar tab  ;
 default value is
-.Ar false  .
+.Ar false .
 Each tab is expanded to 8 spaces.
 .It Ar tandem
 (bool) Use XON/XOFF flow control to throttle data from the remote host;
@@ -480,7 +483,7 @@ unless the
 capability has been specified in
 .Pa /etc/remote ,
 in which case the default value is
-.Ar false.
+.Ar false .
 .It Ar verbose
 (bool) Verbose mode; abbreviated
 .Ar verb  ;
