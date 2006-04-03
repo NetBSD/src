@@ -1,4 +1,4 @@
-/*	$NetBSD: hayes.c,v 1.11 2006/04/03 00:51:14 perry Exp $	*/
+/*	$NetBSD: hayes.c,v 1.12 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hayes.c,v 1.11 2006/04/03 00:51:14 perry Exp $");
+__RCSID("$NetBSD: hayes.c,v 1.12 2006/04/03 02:25:27 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -88,9 +88,7 @@ hay_dialer(char *num, char *acu)
 	int connected = 0;
 	char dummy;
 	struct termios cntrl;
-#ifdef ACULOG
-	char line[80];
-#endif
+
 	if (hay_sync() == 0)		/* make sure we can talk to the modem */
 		return(0);
 	if (boolean(value(VERBOSE)))
@@ -124,13 +122,6 @@ hay_dialer(char *num, char *acu)
 		return (connected);	/* lets get out of here.. */
 	}
 	tcflush(FD, TCIOFLUSH);
-#ifdef ACULOG
-	if (timeout) {
-		(void)snprintf(line, sizeof line, "%d second dial timeout",
-			(int)number(value(DIALTIMEOUT)));
-		logent(value(HOST), num, "hayes", line);
-	}
-#endif
 	if (timeout)
 		hay_disconnect();	/* insurance */
 	return (connected);

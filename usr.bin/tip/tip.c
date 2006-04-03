@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.36 2006/04/03 02:01:28 perry Exp $	*/
+/*	$NetBSD: tip.c,v 1.37 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.36 2006/04/03 02:01:28 perry Exp $");
+__RCSID("$NetBSD: tip.c,v 1.37 2006/04/03 02:25:27 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -144,9 +144,6 @@ notnumber:
 		errx(3, "link down\n");
 	}
 	setbuf(stdout, NULL);
-#ifdef ACULOG
-	loginit();
-#endif
 
 	/*
 	 * Kludge, their's no easy way to get the initialization

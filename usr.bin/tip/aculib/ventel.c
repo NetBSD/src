@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.13 2006/04/03 00:51:14 perry Exp $	*/
+/*	$NetBSD: ventel.c,v 1.14 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ventel.c,v 1.13 2006/04/03 00:51:14 perry Exp $");
+__RCSID("$NetBSD: ventel.c,v 1.14 2006/04/03 02:25:27 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -73,9 +73,6 @@ ven_dialer(char *num, char *acu)
 	 */
 	if (!vensync(FD)) {
 		printf("can't synchronize with ventel\n");
-#ifdef ACULOG
-		logent(value(HOST), num, "ventel", "can't synch up");
-#endif
 		return (0);
 	}
 	if (boolean(value(VERBOSE)))
@@ -95,13 +92,6 @@ ven_dialer(char *num, char *acu)
 	if (gobble('\n', line))
 		connected = gobble('!', line);
 	tcflush(FD, TCIOFLUSH);
-#ifdef ACULOG
-	if (timeout) {
-		(void)snprintf(line, sizeof line, "%d second dial timeout",
-			(int)number(value(DIALTIMEOUT)));
-		logent(value(HOST), num, "ventel", line);
-	}
-#endif
 	if (timeout)
 		ven_disconnect();	/* insurance */
 	if (connected || timeout || !boolean(value(VERBOSE)))

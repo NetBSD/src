@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.10 2006/04/02 23:25:35 tls Exp $	*/
+/*	$NetBSD: vars.c,v 1.11 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,13 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vars.c,v 1.10 2006/04/02 23:25:35 tls Exp $");
+__RCSID("$NetBSD: vars.c,v 1.11 2006/04/03 02:25:27 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
 #include "pathnames.h"
 
-static char path_aculog[] = _PATH_ACULOG;
 static char path_bshell[] = _PATH_BSHELL;
 /*
  * Definition of variables
@@ -68,8 +67,6 @@ value_t vtable[] = {
 	  "fr",		(char *)&FS },
 	{ "host",	STRING|IREMOTE|INIT,	READ<<PUBLIC,
 	  "ho",		(char *)&HO },
-	{ "log",	STRING|INIT,		(READ|WRITE)<<ROOT,
-	  NULL,		path_aculog },
 	{ "phones",	STRING|INIT|IREMOTE,	READ<<PUBLIC,
 	  NULL,		(char *)&PH },
 	{ "prompt",	CHAR,			(READ|WRITE)<<PUBLIC,

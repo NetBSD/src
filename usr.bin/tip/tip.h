@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.21 2006/04/03 02:01:28 perry Exp $	*/
+/*	$NetBSD: tip.h,v 1.22 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -284,8 +284,6 @@ void	hardwareflow(const char *);
 void	help(char);
 int	hunt(char *);
 char   *interp(const char *);
-void	logent(const char *, const char *, const char *, const char *);
-void	loginit(void);
 void	pipefile(char);
 void	pipeout(char);
 int	prompt(const char *, char *, size_t);
@@ -341,8 +339,3 @@ void	v831_disconnect(void);
 void	ven_abort(void);
 int	ven_dialer(char *, char *);
 void	ven_disconnect(void);
-
-#ifndef ACULOG
-#define logent(a, b, c, d)
-#define loginit(a)
-#endif

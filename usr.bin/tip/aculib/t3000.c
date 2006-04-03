@@ -1,4 +1,4 @@
-/*	$NetBSD: t3000.c,v 1.12 2006/04/03 00:51:14 perry Exp $	*/
+/*	$NetBSD: t3000.c,v 1.13 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: t3000.c,v 1.12 2006/04/03 00:51:14 perry Exp $");
+__RCSID("$NetBSD: t3000.c,v 1.13 2006/04/03 02:25:27 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -62,9 +62,6 @@ t3000_dialer(char *num, char *acu)
 {
 	char *cp;
 	struct termios cntrl;
-#ifdef ACULOG
-	char line[80];
-#endif
 
 	if (boolean(value(VERBOSE)))
 		printf("Using \"%s\"\n", acu);
@@ -78,9 +75,6 @@ t3000_dialer(char *num, char *acu)
 	if (!t3000_sync()) {
 badsynch:
 		printf("can't synchronize with t3000\n");
-#ifdef ACULOG
-		logent(value(HOST), num, "t3000", "can't synch up");
-#endif
 		return (0);
 	}
 	t3000_write(FD, "AT E0\r", 6);	/* turn off echoing */
@@ -101,13 +95,6 @@ badsynch:
 	t3000_write(FD, num, strlen(num));
 	t3000_write(FD, "\r", 1);
 	connected = t3000_connect();
-#ifdef ACULOG
-	if (timeout) {
-		(void)snprintf(line, sizeof line, "%d second dial timeout",
-			(int)number(value(DIALTIMEOUT)));
-		logent(value(HOST), num, "t3000", line);
-	}
-#endif
 	if (timeout)
 		t3000_disconnect();
 	return (connected);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.11 2006/04/03 00:51:13 perry Exp $	*/
+/*	$NetBSD: acu.c,v 1.12 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: acu.c,v 1.11 2006/04/03 00:51:13 perry Exp $");
+__RCSID("$NetBSD: acu.c,v 1.12 2006/04/03 02:25:27 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -78,9 +78,6 @@ connect(void)
 	if (!DU) {		/* regular connect message */
 		if (CM != NULL)
 			xpwrite(FD, CM, strlen(CM));
-#ifdef ACULOG
-		logent(value(HOST), "", DV, "call completed");
-#endif
 		return (NULL);
 	}
 	/*
@@ -93,9 +90,6 @@ connect(void)
 		signal(SIGINT, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
 		printf("\ncall aborted\n");
-#ifdef ACULOG
-		logent(value(HOST), "", "", "call aborted");
-#endif
 		if (acu != NULL) {
 			setboolean(value(VERBOSE), FALSE);
 			if (conflag)
@@ -117,16 +111,8 @@ connect(void)
 			if ((conflag = (*acu->acu_dialer)(phnum, CU)) != 0) {
 				if (CM != NULL)
 					xpwrite(FD, CM, strlen(CM));
-#ifdef ACULOG
-				logent(value(HOST), phnum, acu->acu_name,
-					"call completed");
-#endif
 				return (NULL);
 			} else
-#ifdef ACULOG
-				logent(value(HOST), phnum, acu->acu_name,
-					"call failed");
-#endif
 			tried++;
 		}
 	} else {
@@ -159,24 +145,13 @@ connect(void)
 				fclose(fd);
 				if (CM != NULL)
 					xpwrite(FD, CM, strlen(CM));
-#ifdef ACULOG
-				logent(value(HOST), phnum, acu->acu_name,
-					"call completed");
-#endif
 				return (NULL);
 			} else
-#ifdef ACULOG
-				logent(value(HOST), phnum, acu->acu_name,
-					"call failed");
-#endif
 			tried++;
 		}
 		fclose(fd);
 	}
 	if (!tried) {
-#ifdef ACULOG
-		logent(value(HOST), "", acu->acu_name, "missing phone number");
-#endif
 	}
 	else
 		(*acu->acu_abort)();
@@ -188,21 +163,12 @@ disconnect(const char *reason)
 {
 
 	if (!conflag) {
-#ifdef ACULOG
-		logent(value(HOST), "", DV, "call terminated");
-#endif
 		return;
 	}
 	if (reason == NULL) {
-#ifdef ACULOG
-		logent(value(HOST), "", acu->acu_name, "call terminated");
-#endif
 		if (boolean(value(VERBOSE)))
 			printf("\r\ndisconnecting...");
 	} else
-#ifdef ACULOG
-		logent(value(HOST), "", acu->acu_name, reason);
-#endif
 	(*acu->acu_disconnect)();
 }
 
