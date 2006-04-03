@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.21 2006/04/03 02:01:28 perry Exp $	*/
+/*	$NetBSD: cmds.c,v 1.22 2006/04/03 02:06:44 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.21 2006/04/03 02:01:28 perry Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.22 2006/04/03 02:06:44 tls Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -507,7 +507,6 @@ pipeout(char c)
 	signal(SIGQUIT, SIG_DFL);
 }
 
-#ifdef CONNECT
 /*
  * Fork a program with:
  *  0 <-> remote tty in
@@ -559,7 +558,6 @@ consh(char c)
 	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_DFL);
 }
-#endif
 
 /*
  * Escape to local shell
