@@ -1,4 +1,4 @@
-/*	$NetBSD: biz22.c,v 1.10 2006/04/03 00:51:14 perry Exp $	*/
+/*	$NetBSD: biz22.c,v 1.11 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: biz22.c,v 1.10 2006/04/03 00:51:14 perry Exp $");
+__RCSID("$NetBSD: biz22.c,v 1.11 2006/04/03 02:25:27 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -90,15 +90,6 @@ biz_dialer(char *num, const char *mod)
 	 *	1 \r		success
 	 */
 	connected = detect("1\r");
-#ifdef ACULOG
-	if (btimeout) {
-		char line[80];
-
-		(void)snprintf(line, sizeof line, "%d second dial timeout",
-			(int)number(value(DIALTIMEOUT)));
-		logent(value(HOST), num, "biz1022", line);
-	}
-#endif
 	if (btimeout)
 		biz22_disconnect();	/* insurance */
 	return (connected);
