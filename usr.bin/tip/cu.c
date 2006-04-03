@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.16 2006/04/03 02:25:27 perry Exp $	*/
+/*	$NetBSD: cu.c,v 1.17 2006/04/03 04:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.16 2006/04/03 02:25:27 perry Exp $");
+__RCSID("$NetBSD: cu.c,v 1.17 2006/04/03 04:53:58 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -50,7 +50,7 @@ static void cuusage(void);
 void
 cumain(int argc, char *argv[])
 {
-	int i, phonearg = 0;
+	int c, i, phonearg = 0;
 	int parity = 0;		/* 0 is no parity */
 	int flow = -1;		/* -1 is "tandem" ^S/^Q */
 	static int helpme = 0, nostop = 0;
@@ -81,12 +81,12 @@ cumain(int argc, char *argv[])
 	DV = NULL;
 	BR = DEFBR;
 
-	while((ch = getopt_long(argc, argv,
+	while((c = getopt_long(argc, argv,
 	    "E:F:P:a:p:c:l:s:heot0123456789", longopts, NULL)) != -1) {
 
 		if (helpme == 1) cuhelp();
 
-		switch(ch) {
+		switch(c) {
 
 		case 'E':
 			if(strlen(optarg) > 1)
@@ -156,7 +156,7 @@ cumain(int argc, char *argv[])
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			snprintf(brbuf, sizeof(brbuf) -1, "%s%c",
-				 brbuf, ch);
+				 brbuf, c);
 			BR = atoi(brbuf);
 			break;
 		default:
@@ -248,7 +248,7 @@ cumain(int argc, char *argv[])
 	if (HD)
 		setboolean(value(LECHO), TRUE);
 	if (HW) {
-		if (ttysetup(BR) != 0) {
+		if (ttysetup((speed_t)BR) != 0) {
 			errx(3, "unsupported speed %ld", BR);
 		}
 	}
@@ -256,7 +256,7 @@ cumain(int argc, char *argv[])
 		errx(1, "Connect failed");
 	}
 	if (!HW) {
-		if (ttysetup(BR) != 0) {
+		if (ttysetup((speed_t)BR) != 0) {
 			errx(3, "unsupported speed %ld", BR);
 		}
 	}

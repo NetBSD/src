@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.12 2006/04/03 00:51:13 perry Exp $	*/
+/*	$NetBSD: value.c,v 1.13 2006/04/03 04:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: value.c,v 1.12 2006/04/03 00:51:13 perry Exp $");
+__RCSID("$NetBSD: value.c,v 1.13 2006/04/03 04:53:58 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: value.c,v 1.12 2006/04/03 00:51:13 perry Exp $");
 
 static int col = 0;
 
-static	int	vaccess(unsigned, unsigned);
+static	int	vaccess(int, int);
 static	void	vassign(value_t *, char *);
 static	value_t *vlookup(const char *);
 static	void	vprint(value_t *);
@@ -71,7 +71,7 @@ vinit(void)
 	 * Read the .tiprc file in the HOME directory
 	 *  for sets
 	 */
-	snprintf(file, sizeof(file), "%s/.tiprc", value(HOME));
+	snprintf(file, sizeof(file), "%s/.tiprc", (char *)value(HOME));
 	if ((f = fopen(file, "r")) != NULL) {
 		char *tp;
 
@@ -94,7 +94,7 @@ void
 vassign(value_t *p, char *v)
 {
 
-	if (!vaccess(p->v_access, WRITE)) {
+	if (!vaccess(p->v_access, (unsigned int)WRITE)) {
 		printf("access denied\r\n");
 		return;
 	}
@@ -218,7 +218,6 @@ vprint(value_t *p)
 		printf("%s=", p->v_name);
 		col++;
 		if (p->v_value) {
-/*###226 [cc] warning: passing arg 1 of `interp' discards qualifiers from pointer target type%%%*/
 			cp = interp(p->v_value);
 			col += strlen(cp);
 			printf("%s", cp);
@@ -249,7 +248,7 @@ vprint(value_t *p)
 
 
 static int
-vaccess(unsigned mode, unsigned rw)
+vaccess(int mode, int rw)
 {
 
 	if (mode & (rw<<PUBLIC))

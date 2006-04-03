@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.23 2006/04/03 04:25:30 perry Exp $	*/
+/*	$NetBSD: cmds.c,v 1.24 2006/04/03 04:53:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.23 2006/04/03 04:25:30 perry Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.24 2006/04/03 04:53:58 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -174,7 +174,7 @@ transfer(char *buf, int fd, const char *eofchars)
 		if (c == '\n' && boolean(value(VERBOSE)))
 			printf("\r%d", ++ct);
 		if ((cnt = (p-buffer)) == number(value(FRAMESIZE))) {
-			if (write(fd, buffer, cnt) != cnt) {
+			if (write(fd, buffer, (size_t)cnt) != cnt) {
 				printf("\r\nwrite error\r\n");
 				quit = 1;
 			}
@@ -182,15 +182,15 @@ transfer(char *buf, int fd, const char *eofchars)
 		}
 	}
 	if ((cnt = (p-buffer)) != 0)
-		if (write(fd, buffer, cnt) != cnt)
+		if (write(fd, buffer, (size_t)cnt) != cnt)
 			printf("\r\nwrite error\r\n");
 
 	if (boolean(value(VERBOSE)))
 		prtime(" lines transferred in ", time(0)-start);
-	tcsetattr(0, TCSAFLUSH, &term);
-	write(fildes[1], (char *)&ccc, 1);
-	signal(SIGINT, f);
-	close(fd);
+	(void)tcsetattr(0, TCSAFLUSH, &term);
+	(void)write(fildes[1], (char *)&ccc, 1);
+	(void)signal(SIGINT, f);
+	(void)close(fd);
 }
 
 /*
@@ -294,7 +294,8 @@ transmit(FILE *fd, const char *eofchars, char *command)
 {
 	const char *pc;
 	char lastc;
-	int c, ccount, lcount;
+	int c;
+	int ccount, lcount;
 	time_t start_t, stop_t;
 	sig_t f;
 
@@ -305,9 +306,9 @@ transmit(FILE *fd, const char *eofchars, char *command)
 	read(repdes[0], (char *)&ccc, 1);
 	if (command != NULL) {
 		for (pc = command; *pc; pc++)
-			send(*pc);
+			sendchar(*pc);
 		if (boolean(value(ECHOCHECK)))
-			read(FD, (char *)&c, 1);	/* trailing \n */
+			(void)read(FD, &c, (size_t)1);	/* trailing \n */
 		else {
 			tcdrain(FD);
 			sleep(5); /* wait for remote stty to take effect */
@@ -336,9 +337,9 @@ transmit(FILE *fd, const char *eofchars, char *command)
 				else if (c == '\t') {
 					if (!boolean(value(RAWFTP))) {
 						if (boolean(value(TABEXPAND))) {
-							send(' ');
+							sendchar(' ');
 							while ((++ccount % 8) != 0)
-								send(' ');
+								sendchar(' ');
 							continue;
 						}
 					}
@@ -346,7 +347,7 @@ transmit(FILE *fd, const char *eofchars, char *command)
 					if (!boolean(value(RAWFTP)))
 						continue;
 			}
-			send(c);
+			sendchar(c);
 		} while (c != '\r' && !boolean(value(RAWFTP)));
 		if (boolean(value(VERBOSE)))
 			printf("\r%d", ++lcount);
@@ -354,7 +355,7 @@ transmit(FILE *fd, const char *eofchars, char *command)
 			timedout = 0;
 			alarm((unsigned int)value(ETIMEOUT));
 			do {	/* wait for prompt */
-				read(FD, (char *)&c, 1);
+				read(FD, &c, (size_t)1);
 				if (timedout || stop) {
 					if (timedout)
 						printf(
@@ -368,10 +369,10 @@ transmit(FILE *fd, const char *eofchars, char *command)
 	}
 out:
 	if (lastc != '\n' && !boolean(value(RAWFTP)))
-		send('\r');
+		sendchar('\r');
 	if (eofchars) {
 		for (pc = eofchars; *pc; pc++)
-			send(*pc);
+			sendchar(*pc);
 	}
 	stop_t = time(0);
 	fclose(fd);
@@ -423,7 +424,7 @@ cu_put(char dummy)
  *  wait for echo & handle timeout
  */
 void
-send(char c)
+sendchar(char c)
 {
 	char cc;
 	int retry = 0;
@@ -625,7 +626,7 @@ setscript(void)
 	 */
 	read(repdes[0], &c, 1);
 	if (c == 'n')
-		printf("can't create %s\r\n", value(RECORD));
+		printf("can't create %s\r\n", (char *)value(RECORD));
 }
 
 /*
@@ -930,7 +931,7 @@ anyof(char *s1, const char *s2)
 {
 	int c;
 
-	while ((c = *s1++))
+	while ((c = *s1++) != '\0')
 		if (any(c, s2))
 			return(1);
 	return(0);
