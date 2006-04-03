@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.23 2006/04/02 03:33:55 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.24 2006/04/03 15:21:26 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -202,12 +202,8 @@ main(argc, argv)
 
 		case 'n':
 			portnum = (u_short) strtol(optarg, &strptr, 10);
-			if (strptr == optarg || *strptr != '\0') {
-				fprintf(stderr,
-			"rpcinfo: %s is illegal port number\n",
-					optarg);
-				exit(1);
-			}
+			if (strptr == optarg || *strptr != '\0')
+				errx(1, "Illegal port number `%s'", optarg);
 			break;
 #endif
 		case 'a':
@@ -359,8 +355,8 @@ clnt_com_create(addr, prog, vers, fdp, trans)
 		to.tv_usec = 0;
 		clnt = clntudp_create(addr, prog, vers, to, fdp);
 	}
-	if (clnt == (CLIENT *)NULL) {
-		clnt_pcreateerror("rpcinfo");
+	if (clnt == NULL) {
+		clnt_pcreateerror(getprogname());
 		if (vers == MIN_VERS)
 			printf("program %lu is not available\n", prog);
 		else
@@ -414,8 +410,7 @@ ip_ping(portnum, trans, argc, argv)
 	addr.sin_port = htons(portnum);
 	client = clnt_com_create(&addr, prognum, vers, &fd, trans);
 	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-			(char *)NULL, (xdrproc_t) xdr_void, (char *)NULL,
-			to);
+	    NULL, (xdrproc_t) xdr_void, NULL, to);
 	if (argc != 2) {
 		/* Version number was known */
 		if (pstatus(client, prognum, vers) < 0)
@@ -424,7 +419,7 @@ ip_ping(portnum, trans, argc, argv)
 		return;
 	}
 	/* Version number not known */
-	(void) CLNT_CONTROL(client, CLSET_FD_NCLOSE, (char *)NULL);
+	(void) CLNT_CONTROL(client, CLSET_FD_NCLOSE, NULL);
 	if (rpc_stat == RPC_PROGVERSMISMATCH) {
 		clnt_geterr(client, &rpcerr);
 		minvers = rpcerr.re_vers.low;
@@ -438,8 +433,7 @@ ip_ping(portnum, trans, argc, argv)
 		addr.sin_port = htons(portnum);
 		client = clnt_com_create(&addr, prognum, MAX_VERS, &fd, trans);
 		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-				(char *)NULL, (xdrproc_t) xdr_void,
-				(char *)NULL, to);
+		    NULL, (xdrproc_t) xdr_void, NULL, to);
 		if (rpc_stat == RPC_PROGVERSMISMATCH) {
 			clnt_geterr(client, &rpcerr);
 			minvers = rpcerr.re_vers.low;
@@ -466,8 +460,7 @@ ip_ping(portnum, trans, argc, argv)
 		addr.sin_port = htons(portnum);
 		client = clnt_com_create(&addr, prognum, vers, &fd, trans);
 		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-				(char *)NULL, (xdrproc_t) xdr_void,
-				(char *)NULL, to);
+		    NULL, (xdrproc_t) xdr_void, NULL, to);
 		if (pstatus(client, prognum, vers) < 0)
 				failure = 1;
 		(void) CLNT_DESTROY(client);
@@ -493,7 +486,7 @@ pmapdump(argc, argv)
 	register CLIENT *client;
 	struct rpcent *rpc;
 	enum clnt_stat clnt_st;
-	struct rpc_err err;
+	struct rpc_err error;
 	char *host = NULL;
 
 	if (argc > 1) {
@@ -532,8 +525,8 @@ pmapdump(argc, argv)
 	if (clnt_st != RPC_SUCCESS) {
 		if ((clnt_st == RPC_PROGVERSMISMATCH) ||
 		    (clnt_st == RPC_PROGUNAVAIL)) {
-			CLNT_GETERR(client, &err);
-			if (err.re_vers.low > PMAPVERS) {
+			CLNT_GETERR(client, &error);
+			if (error.re_vers.low > PMAPVERS) {
 				if (host)
 					fprintf(stderr,
 	"%s does not support portmapper.  Try 'rpcinfo %s' instead\n",
@@ -585,17 +578,13 @@ get_inet_address(addr, host)
 	if (addr->sin_addr.s_addr == -1 || addr->sin_addr.s_addr == 0) {
 		if ((nconf = __rpc_getconfip("udp")) == NULL &&
 		    (nconf = __rpc_getconfip("tcp")) == NULL) {
-			fprintf(stderr,
-			"rpcinfo: couldn't find a suitable transport\n");
-			exit(1);
+			errx(1, "Couldn't find a suitable transport");
 		} else {
 			memset(&hints, 0, sizeof hints);
 			hints.ai_family = AF_INET;
 			if ((error = getaddrinfo(host, "rpcbind", &hints, &res))
 			    != 0) {
-				fprintf(stderr, "rpcinfo: %s: %s\n",
-				    host, gai_strerror(error));
-				exit(1);
+				errx(1, "%s: %s", host, gai_strerror(error));
 			} else {
 				memcpy(addr, res->ai_addr, res->ai_addrlen);
 				freeaddrinfo(res);
@@ -655,13 +644,10 @@ brdcst(argc, argv)
 	prognum = getprognum(argv[0]);
 	vers = getvers(argv[1]);
 	rpc_stat = rpc_broadcast(prognum, vers, NULLPROC,
-		(xdrproc_t) xdr_void, (char *)NULL, (xdrproc_t) xdr_void,
-		(char *)NULL, (resultproc_t) reply_proc, NULL);
-	if ((rpc_stat != RPC_SUCCESS) && (rpc_stat != RPC_TIMEDOUT)) {
-		fprintf(stderr, "rpcinfo: broadcast failed: %s\n",
-			clnt_sperrno(rpc_stat));
-		exit(1);
-	}
+	    (xdrproc_t) xdr_void, NULL, (xdrproc_t) xdr_void,
+	    NULL, (resultproc_t) reply_proc, NULL);
+	if ((rpc_stat != RPC_SUCCESS) && (rpc_stat != RPC_TIMEDOUT))
+		errx(1, "broadcast failed: %s", clnt_sperrno(rpc_stat));
 	exit(0);
 }
 
@@ -677,7 +663,7 @@ add_version(rs, vers)
 			break;
 	if (vl)
 		return (TRUE);
-	vl = (struct verslist *)malloc(sizeof (struct verslist));
+	vl = malloc(sizeof (struct verslist));
 	if (vl == NULL)
 		return (FALSE);
 	vl->vers = vers;
@@ -698,7 +684,7 @@ add_netid(rs, netid)
 			break;
 	if (nl)
 		return (TRUE);
-	nl = (struct netidlist *)malloc(sizeof (struct netidlist));
+	nl = malloc(sizeof (struct netidlist));
 	if (nl == NULL)
 		return (FALSE);
 	nl->netid = netid;
@@ -716,7 +702,7 @@ rpcbdump(dumptype, netid, argc, argv)
 {
 	rpcblist_ptr head = NULL;
 	struct timeval minutetimeout;
-	register CLIENT *client;
+	register CLIENT *client = NULL;
 	struct rpcent *rpc;
 	char *host;
 	struct netidlist *nl;
@@ -724,7 +710,7 @@ rpcbdump(dumptype, netid, argc, argv)
 	struct rpcbdump_short *rs, *rs_tail = NULL;
 	char buf[256];
 	enum clnt_stat clnt_st;
-	struct rpc_err err;
+	struct rpc_err error;
 	struct rpcbdump_short *rs_head = NULL;
 
 	if (argc > 1) {
@@ -750,7 +736,7 @@ rpcbdump(dumptype, netid, argc, argv)
 	} else
 		client = local_rpcb(PMAPPROG, RPCBVERS);
 
-	if (client == (CLIENT *)NULL) {
+	if (client == NULL) {
 		clnt_pcreateerror("rpcinfo: can't contact rpcbind");
 		exit(1);
 	}
@@ -764,8 +750,8 @@ rpcbdump(dumptype, netid, argc, argv)
 		(clnt_st == RPC_PROGUNAVAIL)) {
 		int vers;
 
-		CLNT_GETERR(client, &err);
-		if (err.re_vers.low == RPCBVERS4) {
+		CLNT_GETERR(client, &error);
+		if (error.re_vers.low == RPCBVERS4) {
 		    vers = RPCBVERS4;
 		    clnt_control(client, CLSET_VERS, (char *)&vers);
 		    clnt_st = CLNT_CALL(client, RPCBPROC_DUMP,
@@ -775,7 +761,7 @@ rpcbdump(dumptype, netid, argc, argv)
 		    if (clnt_st != RPC_SUCCESS)
 			goto failed;
 		} else {
-		    if (err.re_vers.high == PMAPVERS) {
+		    if (error.re_vers.high == PMAPVERS) {
 			int high, low;
 			struct pmaplist *pmaphead = NULL;
 			rpcblist_ptr list, prev = NULL;
@@ -793,7 +779,7 @@ rpcbdump(dumptype, netid, argc, argv)
 			 */
 			for (head = NULL; pmaphead != NULL;
 				pmaphead = pmaphead->pml_next) {
-			    list = (rpcblist *)malloc(sizeof (rpcblist));
+			    list = malloc(sizeof (rpcblist));
 			    if (list == NULL)
 				goto error;
 			    if (head == NULL)
@@ -856,8 +842,7 @@ failed:
 				if (head->rpcb_map.r_prog == rs->prog)
 					break;
 			if (rs == NULL) {
-				rs = (struct rpcbdump_short *)
-					malloc(sizeof (struct rpcbdump_short));
+				rs = malloc(sizeof (struct rpcbdump_short));
 				if (rs == NULL)
 					goto error;
 				rs->next = NULL;
@@ -906,20 +891,24 @@ failed:
 			printf(" %s\n", rs->owner);
 		}
 	}
+	if (client)
+		clnt_destroy(client);
+	while (head != NULL) {
+		rpcblist_ptr list = head->rpcb_next;
+		if (head->rpcb_map.r_addr)
+			free(head->rpcb_map.r_addr);
+		if (head->rpcb_map.r_netid)
+			free(head->rpcb_map.r_netid);
+		free(head);
+		head = list;
+	}
 	while (rs_head) {
 		rs = rs_head;
 		rs_head = rs_head->next;
 		free(rs);
 	}
-	clnt_destroy(client);
 	return;
-error:	fprintf(stderr, "rpcinfo: no memory\n");
-	while (rs_head) {
-		rs = rs_head;
-		rs_head = rs_head->next;
-		free(rs);
-	}
-	return;
+error:	err(1, "Cannot allocate memory");
 }
 
 static char nullstring[] = "\000";
@@ -957,7 +946,7 @@ rpcbaddrlist(netid, argc, argv)
 		if (nconf)
 			(void) freenetconfigent(nconf);
 	}
-	if (client == (CLIENT *)NULL) {
+	if (client == NULL) {
 		clnt_pcreateerror("rpcinfo: can't contact rpcbind");
 		exit(1);
 	}
@@ -1069,7 +1058,7 @@ rpcbgetstat(argc, argv)
 		client = clnt_rpcbind_create(host, RPCBVERS4, NULL);
 	} else
 		client = local_rpcb(PMAPPROG, RPCBVERS4);
-	if (client == (CLIENT *)NULL) {
+	if (client == NULL) {
 		clnt_pcreateerror("rpcinfo: can't contact rpcbind");
 		exit(1);
 	}
@@ -1312,13 +1301,13 @@ clnt_addr_create(address, nconf, prog, vers)
 		/* Convert the uaddr to taddr */
 		nbuf = uaddr2taddr(nconf, address);
 		if (nbuf == NULL) {
-			errx(1, "rpcinfo: no address for client handle");
+			errx(1, "No address for client handle");
 			exit(1);
 		}
 	}
 	client = clnt_tli_create(fd, nconf, nbuf, prog, vers, 0, 0);
-	if (client == (CLIENT *)NULL) {
-		clnt_pcreateerror("rpcinfo");
+	if (client == NULL) {
+		clnt_pcreateerror(getprogname());
 		exit(1);
 	}
 	return (client);
@@ -1351,10 +1340,8 @@ addrping(address, netid, argc, argv)
 		exit(1);
 	}
 	nconf = getnetconfigent(netid);
-	if (nconf == (struct netconfig *)NULL) {
-		fprintf(stderr, "rpcinfo: Could not find %s\n", netid);
-		exit(1);
-	}
+	if (nconf == NULL)
+		errx(1, "Could not find %s", netid);
 	to.tv_sec = 10;
 	to.tv_usec = 0;
 	prognum = getprognum(argv[0]);
@@ -1369,8 +1356,7 @@ addrping(address, netid, argc, argv)
 	}
 	client = clnt_addr_create(address, nconf, prognum, versnum);
 	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-			(char *)NULL, (xdrproc_t) xdr_void,
-			(char *)NULL, to);
+	    NULL, (xdrproc_t) xdr_void, NULL, to);
 	if (argc == 2) {
 		/* Version number was known */
 		if (pstatus(client, prognum, versnum) < 0)
@@ -1381,7 +1367,7 @@ addrping(address, netid, argc, argv)
 		return;
 	}
 	/* Version number not known */
-	(void) CLNT_CONTROL(client, CLSET_FD_NCLOSE, (char *)NULL);
+	(void) CLNT_CONTROL(client, CLSET_FD_NCLOSE, NULL);
 	(void) CLNT_CONTROL(client, CLGET_FD, (char *)&fd);
 	if (rpc_stat == RPC_PROGVERSMISMATCH) {
 		clnt_geterr(client, &rpcerr);
@@ -1395,8 +1381,7 @@ addrping(address, netid, argc, argv)
 		(void) CLNT_DESTROY(client);
 		client = clnt_addr_create(address, nconf, prognum, MAX_VERS);
 		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-				(char *)NULL, (xdrproc_t) xdr_void,
-				(char *)NULL, to);
+		    NULL, (xdrproc_t) xdr_void, NULL, to);
 		if (rpc_stat == RPC_PROGVERSMISMATCH) {
 			clnt_geterr(client, &rpcerr);
 			minvers = rpcerr.re_vers.low;
@@ -1422,8 +1407,7 @@ addrping(address, netid, argc, argv)
 	for (versnum = minvers; versnum <= maxvers; versnum++) {
 		client = clnt_addr_create(address, nconf, prognum, versnum);
 		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-				(char *)NULL, (xdrproc_t) xdr_void,
-				(char *)NULL, to);
+		    NULL, (xdrproc_t) xdr_void, NULL, to);
 		if (pstatus(client, prognum, versnum) < 0)
 				failure = 1;
 		(void) CLNT_DESTROY(client);
@@ -1470,23 +1454,20 @@ progping(netid, argc, argv)
 	}
 	if (netid) {
 		nconf = getnetconfigent(netid);
-		if (nconf == (struct netconfig *)NULL) {
-			fprintf(stderr, "rpcinfo: Could not find %s\n", netid);
-			exit(1);
-		}
+		if (nconf == NULL)
+			errx(1, "Could not find `%s'", netid);
 		client = clnt_tp_create(argv[0], prognum, versnum, nconf);
 	} else {
 		client = clnt_create(argv[0], prognum, versnum, "NETPATH");
 	}
-	if (client == (CLIENT *)NULL) {
-		clnt_pcreateerror("rpcinfo");
+	if (client == NULL) {
+		clnt_pcreateerror(getprogname());
 		exit(1);
 	}
 	to.tv_sec = 10;
 	to.tv_usec = 0;
 	rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-			(char *)NULL, (xdrproc_t) xdr_void,
-			(char *)NULL, to);
+	    NULL, (xdrproc_t) xdr_void, NULL, to);
 	if (argc == 3) {
 		/* Version number was known */
 		if (pstatus(client, prognum, versnum) < 0)
@@ -1509,8 +1490,7 @@ progping(netid, argc, argv)
 		versnum = MAX_VERS;
 		(void) CLNT_CONTROL(client, CLSET_VERS, (char *)&versnum);
 		rpc_stat = CLNT_CALL(client, NULLPROC,
-				(xdrproc_t) xdr_void, (char *)NULL,
-				(xdrproc_t)  xdr_void, (char *)NULL, to);
+		    (xdrproc_t) xdr_void, NULL, (xdrproc_t) xdr_void, NULL, to);
 		if (rpc_stat == RPC_PROGVERSMISMATCH) {
 			clnt_geterr(client, &rpcerr);
 			minvers = rpcerr.re_vers.low;
@@ -1535,8 +1515,7 @@ progping(netid, argc, argv)
 	for (versnum = minvers; versnum <= maxvers; versnum++) {
 		(void) CLNT_CONTROL(client, CLSET_VERS, (char *)&versnum);
 		rpc_stat = CLNT_CALL(client, NULLPROC, (xdrproc_t) xdr_void,
-					(char *)NULL, (xdrproc_t) xdr_void,
-					(char *)NULL, to);
+		    NULL, (xdrproc_t) xdr_void, NULL, to);
 		if (pstatus(client, prognum, versnum) < 0)
 				failure = 1;
 	}
@@ -1577,19 +1556,13 @@ getprognum  (arg)
 	while (*tptr && isdigit((unsigned char)*tptr++));
 	if (*tptr || isalpha((unsigned char)*(tptr - 1))) {
 		rpc = getrpcbyname(arg);
-		if (rpc == NULL) {
-			fprintf(stderr, "rpcinfo: %s is unknown service\n",
-				arg);
-			exit(1);
-		}
+		if (rpc == NULL)
+			errx(1, "Unknown service `%s'", arg);
 		prognum = rpc->r_number;
 	} else {
 		prognum = strtol(arg, &strptr, 10);
-		if (strptr == arg || *strptr != '\0') {
-			fprintf(stderr,
-		"rpcinfo: %s is illegal program number\n", arg);
-			exit(1);
-		}
+		if (strptr == arg || *strptr != '\0')
+			errx(1, "Illegal program number `%s'", arg);
 	}
 	return (prognum);
 }
@@ -1602,11 +1575,8 @@ getvers(arg)
 	register u_long vers;
 
 	vers = (int) strtol(arg, &strptr, 10);
-	if (strptr == arg || *strptr != '\0') {
-		fprintf(stderr, "rpcinfo: %s is illegal version number\n",
-			arg);
-		exit(1);
-	}
+	if (strptr == arg || *strptr != '\0')
+		errx(1, "Illegal version number `%s'", arg);
 	return (vers);
 }
 
@@ -1627,7 +1597,7 @@ pstatus(client, prog, vers)
 
 	clnt_geterr(client, &rpcerr);
 	if (rpcerr.re_status != RPC_SUCCESS) {
-		clnt_perror(client, "rpcinfo");
+		clnt_perror(client, getprogname());
 		printf("program %lu version %lu is not available\n",
 			prog, vers);
 		return (-1);
@@ -1656,7 +1626,7 @@ clnt_rpcbind_create(host, rpcbversnum, targaddr)
 	for (i = 0; i < 3; i++) {
 		if ((handle = __rpc_setconf(tlist[i])) == NULL)
 			continue;
-		while (clnt == (CLIENT *)NULL) {
+		while (clnt == NULL) {
 			if ((nconf = __rpc_getconf(handle)) == NULL) {
 				if (rpc_createerr.cf_stat == RPC_SUCCESS)
 				    rpc_createerr.cf_stat = RPC_UNKNOWNPROTO;
@@ -1695,12 +1665,11 @@ getclnthandle(host, nconf, rpcbversnum, targaddr)
 			rpcbversnum, 0, 0);
 	if (client) {
 		if (targaddr != NULL) {
-			*targaddr =
-			    (struct netbuf *)malloc(sizeof (struct netbuf));
+			*targaddr = malloc(sizeof (struct netbuf));
 			if (*targaddr != NULL) {
 				(*targaddr)->maxlen = addr.maxlen;
 				(*targaddr)->len = addr.len;
-				(*targaddr)->buf = (char *)malloc(addr.len);
+				(*targaddr)->buf = malloc(addr.len);
 				if ((*targaddr)->buf != NULL) {
 					memcpy((*targaddr)->buf, addr.buf,
 						addr.len);
