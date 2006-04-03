@@ -1,4 +1,4 @@
-/*	$NetBSD: tipout.c,v 1.9 2005/12/09 03:15:42 gavan Exp $	*/
+/*	$NetBSD: tipout.c,v 1.10 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tipout.c,v 1.9 2005/12/09 03:15:42 gavan Exp $");
+__RCSID("$NetBSD: tipout.c,v 1.10 2006/04/03 00:51:13 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -47,18 +47,17 @@ __RCSID("$NetBSD: tipout.c,v 1.9 2005/12/09 03:15:42 gavan Exp $");
 
 static	jmp_buf sigbuf;
 
-void	intEMT __P((int));
-void	intIOT __P((int));
-void	intSYS __P((int));
-void	intTERM __P((int));
+void	intEMT(int);
+void	intIOT(int);
+void	intSYS(int);
+void	intTERM(int);
 
 /*
  * TIPOUT wait state routine --
  *   sent by TIPIN when it wants to posses the remote host
  */
 void
-intIOT(dummy)
-	int dummy;
+intIOT(int dummy)
 {
 
 	write(repdes[1],&ccc,1);
@@ -71,8 +70,7 @@ intIOT(dummy)
  *  accepts script file name over the pipe and acts accordingly
  */
 void
-intEMT(dummy)
-	int dummy;
+intEMT(int dummy)
 {
 	char c, line[256];
 	char *pline = line;
@@ -102,8 +100,7 @@ intEMT(dummy)
 }
 
 void
-intTERM(dummy)
-	int dummy;
+intTERM(int dummy)
 {
 
 	if (boolean(value(SCRIPT)) && fscript != NULL)
@@ -112,8 +109,7 @@ intTERM(dummy)
 }
 
 void
-intSYS(dummy)
-	int dummy;
+intSYS(int dummy)
 {
 
 	setboolean(value(BEAUTIFY), !boolean(value(BEAUTIFY)));
@@ -124,7 +120,7 @@ intSYS(dummy)
  * ****TIPOUT   TIPOUT****
  */
 void
-tipout()
+tipout(void)
 {
 	char buf[BUFSIZ];
 	char *cp;

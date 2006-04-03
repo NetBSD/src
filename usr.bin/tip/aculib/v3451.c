@@ -1,4 +1,4 @@
-/*	$NetBSD: v3451.c,v 1.10 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: v3451.c,v 1.11 2006/04/03 00:51:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)v3451.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: v3451.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: v3451.c,v 1.11 2006/04/03 00:51:14 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -44,16 +44,14 @@ __RCSID("$NetBSD: v3451.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
 
 static	jmp_buf Sjbuf;
 
-static	void	alarmtr __P((int));
-static	int	expect __P((const char *));
-static	int	notin __P((const char *, char *));
-static	int	prefix __P((const char *, char *));
-static	void	vawrite __P((const char *, int));
+static	void	alarmtr(int);
+static	int	expect(const char *);
+static	int	notin(const char *, char *);
+static	int	prefix(const char *, char *);
+static	void	vawrite(const char *, int);
 
 int
-v3451_dialer(num, acu)
-	char *num;
-	char *acu;
+v3451_dialer(char *num, char *acu)
 {
 	sig_t func;
 	int ok;
@@ -127,23 +125,21 @@ v3451_dialer(num, acu)
 }
 
 void
-v3451_disconnect()
+v3451_disconnect(void)
 {
 
 	close(FD);
 }
 
 void
-v3451_abort()
+v3451_abort(void)
 {
 
 	close(FD);
 }
 
 static void
-vawrite(cp, delay)
-	const char *cp;
-	int delay;
+vawrite(const char *cp, int delay)
 {
 
 	for (; *cp; sleep(delay), cp++)
@@ -151,8 +147,7 @@ vawrite(cp, delay)
 }
 
 static int
-expect(cp)
-	const char *cp;
+expect(const char *cp)
 {
 	char buf[300];
 	char *rp = buf;
@@ -196,17 +191,14 @@ expect(cp)
 }
 
 static void
-alarmtr(dummy)
-	int dummy;
+alarmtr(int dummy)
 {
 
 	longjmp(Sjbuf, 1);
 }
 
 static int
-notin(sh, lg)
-	const char *sh;
-	char *lg;
+notin(const char *sh, char *lg)
 {
 
 	for (; *lg; lg++)
@@ -216,9 +208,7 @@ notin(sh, lg)
 }
 
 static int
-prefix(s1, s2)
-	const char *s1;
-	char *s2;
+prefix(const char *s1, char *s2)
 {
 	char c;
 

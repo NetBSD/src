@@ -1,4 +1,4 @@
-/*	$NetBSD: hayes.c,v 1.10 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: hayes.c,v 1.11 2006/04/03 00:51:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hayes.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: hayes.c,v 1.11 2006/04/03 00:51:14 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -50,13 +50,13 @@ __RCSID("$NetBSD: hayes.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
  * before modem is hung up, removal of the DTR signal
  * has no effect (except that it prevents the modem from
  * recognizing commands).
- * (by Helge Skrivervik, Calma Company, Sunnyvale, CA. 1984) 
+ * (by Helge Skrivervik, Calma Company, Sunnyvale, CA. 1984)
  */
 /*
  * TODO:
  * It is probably not a good idea to switch the modem
  * state between 'verbose' and terse (status messages).
- * This should be kicked out and we should use verbose 
+ * This should be kicked out and we should use verbose
  * mode only. This would make it consistent with normal
  * interactive use thru the command 'tip dialer'.
  */
@@ -75,16 +75,14 @@ static char dumbuf[DUMBUFLEN];
 #define	FAILED		4
 static	int state = IDLE;
 
-static	void	error_rep __P((char));
-static	char	gobble __P((const char *));
-static	void	goodbye __P((void));
-static	int	hay_sync __P((void));
-static	void	sigALRM __P((int));
+static	void	error_rep(char);
+static	char	gobble(const char *);
+static	void	goodbye(void);
+static	int	hay_sync(void);
+static	void	sigALRM(int);
 
 int
-hay_dialer(num, acu)
-	char *num;
-	char *acu;
+hay_dialer(char *num, char *acu)
 {
 	char *cp;
 	int connected = 0;
@@ -140,7 +138,7 @@ hay_dialer(num, acu)
 
 
 void
-hay_disconnect()
+hay_disconnect(void)
 {
 
 	/* first hang up the modem*/
@@ -154,7 +152,7 @@ hay_disconnect()
 }
 
 void
-hay_abort()
+hay_abort(void)
 {
 
 	write(FD, "\r", 1);	/* send anything to abort the call */
@@ -162,8 +160,7 @@ hay_abort()
 }
 
 static void
-sigALRM(dummy)
-	int dummy;
+sigALRM(int dummy)
 {
 
 	printf("\07timeout waiting for reply\n\r");
@@ -172,8 +169,7 @@ sigALRM(dummy)
 }
 
 static char
-gobble(match)
-	const char *match;
+gobble(const char *match)
 {
 	char c;
 	sig_t f;
@@ -212,8 +208,7 @@ gobble(match)
 }
 
 static void
-error_rep(c)
-	char c;
+error_rep(char c)
 {
 
 	printf("\n\r");
@@ -226,23 +221,23 @@ error_rep(c)
 	case '1':
 		printf("CONNECT");
 		break;
-	
+
 	case '2':
 		printf("RING");
 		break;
-	
+
 	case '3':
 		printf("NO CARRIER");
 		break;
-	
+
 	case '4':
 		printf("ERROR in input");
 		break;
-	
+
 	case '5':
 		printf("CONNECT 1200");
 		break;
-	
+
 	default:
 		printf("Unknown Modem error: %c (0x%x)", c, c);
 	}
@@ -254,7 +249,7 @@ error_rep(c)
  * set modem back to normal verbose status codes.
  */
 void
-goodbye()
+goodbye(void)
 {
 	int len;
 	char c;
@@ -299,7 +294,7 @@ goodbye()
 #define MAXRETRY	5
 
 int
-hay_sync()
+hay_sync(void)
 {
 	int len, retry = 0;
 
@@ -309,7 +304,7 @@ hay_sync()
 		ioctl(FD, FIONREAD, &len);
 		if (len) {
 			len = read(FD, dumbuf, min(len, DUMBUFLEN));
-			if (strchr(dumbuf, '0') || 
+			if (strchr(dumbuf, '0') ||
 		   	(strchr(dumbuf, 'O') && strchr(dumbuf, 'K')))
 				return(1);
 #ifdef DEBUG
