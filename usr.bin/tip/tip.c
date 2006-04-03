@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.42 2006/04/03 16:03:50 tls Exp $	*/
+/*	$NetBSD: tip.c,v 1.43 2006/04/03 16:13:34 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.42 2006/04/03 16:03:50 tls Exp $");
+__RCSID("$NetBSD: tip.c,v 1.43 2006/04/03 16:13:34 tls Exp $");
 #endif /* not lint */
 
 /*
