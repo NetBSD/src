@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.14 2006/04/03 14:08:41 cherry Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.15 2006/04/03 15:45:36 cherry Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -300,8 +300,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 #ifndef MD_LOADSEG /* Allow processor ABI specific segment loads */
 #define MD_LOADSEG(a) /*CONSTCOND*/0
 #endif
-		if ( (phdr[i].p_type & PT_LOPROC) &&
-		     MD_LOADSEG(phdr[i]))
+		if (MD_LOADSEG(phdr[i]))
 			goto loadseg;
 
 
