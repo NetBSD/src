@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.25 2006/04/03 04:53:58 christos Exp $	*/
+/*	$NetBSD: tip.h,v 1.26 2006/04/03 16:03:50 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -233,6 +233,7 @@ struct termios	defchars;	/* current mode with initial chars */
 
 FILE	*fscript;		/* FILE for scripting */
 
+int	attndes[2];		/* coprocess wakeup channel */
 int	fildes[2];		/* file transfer synchronization channel */
 int	repdes[2];		/* read process synchronization channel */
 int	FD;			/* open file descriptor to remote host */
