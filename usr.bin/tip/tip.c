@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.39 2006/04/03 04:53:58 christos Exp $	*/
+/*	$NetBSD: tip.c,v 1.40 2006/04/03 05:08:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.39 2006/04/03 04:53:58 christos Exp $");
+__RCSID("$NetBSD: tip.c,v 1.40 2006/04/03 05:08:40 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -160,7 +160,7 @@ notnumber:
 	 *  (this is particularly true of things like a DF03-AC)
 	 */
 	if (HW) {
-		if (ttysetup((speed_t)i) != 0) {
+		if (ttysetup((speed_t)number(value(BAUDRATE))) != 0) {
 			errx(3, "bad baud rate %d",
 			    (int)number(value(BAUDRATE)));
 		}
@@ -169,7 +169,7 @@ notnumber:
 		errx(1, "\07%s\n[EOT]\n", q);
 	}
 	if (!HW) {
-		if (ttysetup((speed_t)i) != 0) {
+		if (ttysetup((speed_t)number(value(BAUDRATE))) != 0) {
 			errx(3, "bad baud rate %d",
 			    (int)number(value(BAUDRATE)));
 		}
