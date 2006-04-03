@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.601 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.602 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -229,3 +229,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ciss(4): Driver for HP/Compaq 5th+ generation Smart ARRAY controllers
 		[he 20060321]
 	tun(4): IPv6 support added [rpaulo 20060329]
+	utoppy(4): Driver for Topfield TF5000PVR range of digital video
+		recorders.  [scw 20060403]
+	utoppya(1): Userland program to interface to utoppy(4).
+		[scw 20060403]
