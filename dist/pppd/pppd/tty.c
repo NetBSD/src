@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.3 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.4 2006/04/03 16:16:00 tls Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
@@ -75,7 +75,7 @@
 #if 0
 #define RCSID	"Id: tty.c,v 1.22 2004/11/13 12:07:29 paulus Exp"
 #else
-__RCSID("$NetBSD: tty.c,v 1.3 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.4 2006/04/03 16:16:00 tls Exp $");
 #endif
 #endif
 
@@ -588,6 +588,13 @@ int connect_tty()
 				goto errret;
 		}
 		ttyfd = real_ttyfd;
+		if (lockflag) 
+			if(flock(ttyfd, (LOCK_EX|LOCK_NB)) != 0) {
+				status = EXIT_LOCK_FAILED;
+				close(ttyfd);
+				goto errret;
+			}
+
 		if ((fdflags = fcntl(ttyfd, F_GETFL)) == -1
 		    || fcntl(ttyfd, F_SETFL, fdflags & ~O_NONBLOCK) < 0)
 			warn("Couldn't reset non-blocking mode on device: %m");
