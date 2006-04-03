@@ -1,4 +1,4 @@
-/*	$NetBSD: biz31.c,v 1.8 2003/08/07 11:16:21 agc Exp $	*/
+/*	$NetBSD: biz31.c,v 1.9 2006/04/03 00:51:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)biz31.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: biz31.c,v 1.8 2003/08/07 11:16:21 agc Exp $");
+__RCSID("$NetBSD: biz31.c,v 1.9 2006/04/03 00:51:14 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -52,8 +52,7 @@ static	jmp_buf timeoutbuf;
  *	pulse dialing (mod = "w")
  */
 static int
-biz_dialer(num, mod)
-	char *num, *mod;
+biz_dialer(char *num, char *mod)
 {
 	int connected = 0;
 
@@ -101,21 +100,19 @@ biz_dialer(num, mod)
 	return (connected);
 }
 
-biz31w_dialer(num, acu)
-	char *num, *acu;
+biz31w_dialer(char *num, char *acu)
 {
 
 	return (biz_dialer(num, "w"));
 }
 
-biz31f_dialer(num, acu)
-	char *num, *acu;
+biz31f_dialer(char *num, char *acu)
 {
 
 	return (biz_dialer(num, "f"));
 }
 
-biz31_disconnect()
+biz31_disconnect(void)
 {
 
 	write(FD, DISCONNECT_CMD, 4);
@@ -123,15 +120,14 @@ biz31_disconnect()
 	tcflush(FD, TCIOFLUSH);
 }
 
-biz31_abort()
+biz31_abort(void)
 {
 
 	write(FD, "\33", 1);
 }
 
 static int
-echo(s)
-	char *s;
+echo(char *s)
 {
 	char c;
 
@@ -153,7 +149,7 @@ echo(s)
 }
 
 static void
-sigALRM()
+sigALRM(void)
 {
 
 	timeout = 1;
@@ -161,8 +157,7 @@ sigALRM()
 }
 
 static int
-detect(s)
-	char *s;
+detect(char *s)
 {
 	sig_t f;
 	char c;
@@ -186,8 +181,7 @@ detect(s)
 }
 
 static int
-flush(s)
-	char *s;
+flush(char *s)
 {
 	sig_t f;
 	char c;
@@ -210,7 +204,7 @@ flush(s)
  *  call there are gory ways to simulate this.
  */
 static int
-bizsync(fd)
+bizsync(int fd)
 {
 #ifdef FIOCAPACITY
 	struct capacity b;

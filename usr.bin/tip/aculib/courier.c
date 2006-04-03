@@ -1,4 +1,4 @@
-/*	$NetBSD: courier.c,v 1.13 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: courier.c,v 1.14 2006/04/03 00:51:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: courier.c,v 1.13 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: courier.c,v 1.14 2006/04/03 00:51:14 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -49,21 +49,19 @@ static	int timeout = 0;
 static	int connected = 0;
 static	jmp_buf timeoutbuf;
 
-static	int	cour_connect __P((void));
-static	void	cour_nap __P((void));
-static	void	cour_napx __P((int));
-static	int	cour_swallow __P((const char *));
-static	int	coursync __P((void));
+static	int	cour_connect(void);
+static	void	cour_nap(void);
+static	void	cour_napx(int);
+static	int	cour_swallow(const char *);
+static	int	coursync(void);
 #ifdef DEBUG
-static	void	cour_verbose_read __P((void));
+static	void	cour_verbose_read(void);
 #endif
-static	void	cour_write __P((int, const char *, int));
-static	void	sigALRM __P((int));
+static	void	cour_write(int, const char *, int);
+static	void	sigALRM(int);
 
 int
-cour_dialer(num, acu)
-	char *num;
-	char *acu;
+cour_dialer(char *num, char *acu)
 {
 	char *cp;
 #ifdef ACULOG
@@ -119,7 +117,7 @@ badsynch:
 }
 
 void
-cour_disconnect()
+cour_disconnect(void)
 {
 
 	/* first hang up the modem*/
@@ -131,7 +129,7 @@ cour_disconnect()
 }
 
 void
-cour_abort()
+cour_abort(void)
 {
 
 	cour_write(FD, "\r", 1);	/* send anything to abort the call */
@@ -139,8 +137,7 @@ cour_abort()
 }
 
 static void
-sigALRM(dummy)
-	int dummy;
+sigALRM(int dummy)
 {
 
 	printf("\07timeout waiting for reply\n");
@@ -149,8 +146,7 @@ sigALRM(dummy)
 }
 
 static int
-cour_swallow(match)
-	const char *match;
+cour_swallow(const char *match)
 {
 	sig_t f;
 	char c;
@@ -200,7 +196,7 @@ struct baud_msg {
 };
 
 static int
-cour_connect()
+cour_connect(void)
 {
 	char c;
 	int nc, nl, n;
@@ -277,7 +273,7 @@ again:
  * the courier in sync.
  */
 static int
-coursync()
+coursync(void)
 {
 	int already = 0;
 	int len;
@@ -295,7 +291,7 @@ coursync()
 			buf[len] = '\0';
 			printf("coursync: (\"%s\")\n\r", buf);
 #endif
-			if (strchr(buf, '0') || 
+			if (strchr(buf, '0') ||
 			   (strchr(buf, 'O') && strchr(buf, 'K')))
 				return(1);
 		}
@@ -319,10 +315,7 @@ coursync()
 }
 
 static void
-cour_write(fd, cp, n)
-	int fd;
-	const char *cp;
-	int n;
+cour_write(int fd, const char *cp, int n)
 {
 
 #ifdef notdef
@@ -340,7 +333,7 @@ cour_write(fd, cp, n)
 
 #ifdef DEBUG
 static void
-cour_verbose_read()
+cour_verbose_read(void)
 {
 	int n = 0;
 	char buf[BUFSIZ];
@@ -363,9 +356,9 @@ static int napms = 50; /* Give the courier 50 milliseconds between characters */
 static int ringring;
 
 void
-cour_nap()
+cour_nap(void)
 {
-	
+
 	struct itimerval itv, oitv;
 	struct itimerval *itp = &itv;
 	struct sigaction sa, osa;
@@ -400,8 +393,7 @@ cour_nap()
 }
 
 static void
-cour_napx(dummy)
-	int dummy;
+cour_napx(int dummy)
 {
 
 	ringring = 1;

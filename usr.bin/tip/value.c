@@ -1,4 +1,4 @@
-/*	$NetBSD: value.c,v 1.11 2004/04/23 22:11:44 christos Exp $	*/
+/*	$NetBSD: value.c,v 1.12 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: value.c,v 1.11 2004/04/23 22:11:44 christos Exp $");
+__RCSID("$NetBSD: value.c,v 1.12 2006/04/03 00:51:13 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -43,17 +43,17 @@ __RCSID("$NetBSD: value.c,v 1.11 2004/04/23 22:11:44 christos Exp $");
 
 static int col = 0;
 
-static	int	vaccess __P((unsigned, unsigned));
-static	void	vassign __P((value_t *, char *));
-static	value_t *vlookup __P((const char *));
-static	void	vprint __P((value_t *));
-static	void	vtoken __P((char *));
+static	int	vaccess(unsigned, unsigned);
+static	void	vassign(value_t *, char *);
+static	value_t *vlookup(const char *);
+static	void	vprint(value_t *);
+static	void	vtoken(char *);
 
 /*
  * Variable manipulation
  */
 void
-vinit()
+vinit(void)
 {
 	value_t *p;
 	char *cp;
@@ -91,9 +91,7 @@ vinit()
 }
 
 void
-vassign(p, v)
-	value_t *p;
-	char *v;
+vassign(value_t *p, char *v)
 {
 
 	if (!vaccess(p->v_access, WRITE)) {
@@ -135,8 +133,7 @@ vassign(p, v)
 }
 
 void
-vlex(s)
-	char *s;
+vlex(char *s)
 {
 	value_t *p;
 
@@ -161,8 +158,7 @@ vlex(s)
 }
 
 static void
-vtoken(s)
-	char *s;
+vtoken(char *s)
 {
 	value_t *p;
 	char *cp;
@@ -200,8 +196,7 @@ vtoken(s)
 }
 
 static void
-vprint(p)
-	value_t *p;
+vprint(value_t *p)
 {
 	char *cp;
 
@@ -254,8 +249,7 @@ vprint(p)
 
 
 static int
-vaccess(mode, rw)
-	unsigned mode, rw;
+vaccess(unsigned mode, unsigned rw)
 {
 
 	if (mode & (rw<<PUBLIC))
@@ -266,8 +260,7 @@ vaccess(mode, rw)
 }
 
 static value_t *
-vlookup(s)
-	const char *s;
+vlookup(const char *s)
 {
 	value_t *p;
 
@@ -278,9 +271,7 @@ vlookup(s)
 }
 
 char *
-vinterp(s, stp)
-	char *s;
-	char stp;
+vinterp(char *s, char stp)
 {
 	char *p = s, c;
 	int num;
@@ -335,13 +326,11 @@ vinterp(s, stp)
  */
 
 int
-vstring(s,v)
-	const char *s;
-	char *v;
+vstring(const char *s, char *v)
 {
 	value_t *p;
 
-	p = vlookup(s); 
+	p = vlookup(s);
 	if (p == 0)
 		return (1);
 	if (p->v_type&NUMBER)

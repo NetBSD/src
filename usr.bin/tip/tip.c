@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.34 2006/04/02 19:16:22 tls Exp $	*/
+/*	$NetBSD: tip.c,v 1.35 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.34 2006/04/02 19:16:22 tls Exp $");
+__RCSID("$NetBSD: tip.c,v 1.35 2006/04/03 00:51:13 perry Exp $");
 #endif /* not lint */
 
 /*
@@ -51,19 +51,17 @@ __RCSID("$NetBSD: tip.c,v 1.34 2006/04/02 19:16:22 tls Exp $");
 #include "tip.h"
 #include "pathnames.h"
 
-int	escape __P((void));
-int	main __P((int, char **));
-void	intprompt __P((int));
-void	tipin __P((void));
+int	escape(void);
+int	main(int, char **);
+void	intprompt(int);
+void	tipin(void);
 
 char	PNbuf[256];			/* This limits the size of a number */
 
 static char path_phones[] = _PATH_PHONES;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *System = NULL;
 	int i;
@@ -199,7 +197,7 @@ notnumber:
 			exit(3);
 		}
 	}
-			
+
 
 	/*
 	 * Direct connections with no carrier require using O_NONBLOCK on
@@ -214,7 +212,7 @@ notnumber:
 		(void)uu_unlock(uucplock);
 		exit(1);
 	}
-		
+
 cucommon:
 	/*
 	 * From here down the code is shared with
@@ -230,7 +228,7 @@ cucommon:
 	term.c_cc[VTIME] = 0;
 	defchars = term;
 	term.c_cc[VINTR] = term.c_cc[VQUIT] = term.c_cc[VSUSP] =
-		term.c_cc[VDSUSP] = term.c_cc[VDISCARD] = 
+		term.c_cc[VDSUSP] = term.c_cc[VDISCARD] =
 	 	term.c_cc[VLNEXT] = _POSIX_VDISABLE;
 	raw();
 
@@ -260,8 +258,7 @@ cucommon:
 }
 
 void
-cleanup(dummy)
-	int dummy;
+cleanup(int dummy)
 {
 
 	daemon_uid();
@@ -282,7 +279,7 @@ cleanup(dummy)
 static int uidswapped;
 
 void
-user_uid()
+user_uid(void)
 {
 
 	if (uidswapped == 0) {
@@ -292,7 +289,7 @@ user_uid()
 }
 
 void
-daemon_uid()
+daemon_uid(void)
 {
 
 	if (uidswapped) {
@@ -302,7 +299,7 @@ daemon_uid()
 }
 
 void
-shell_uid()
+shell_uid(void)
 {
 
 	seteuid(uid);
@@ -312,7 +309,7 @@ shell_uid()
  * put the controlling keyboard into raw mode
  */
 void
-raw()
+raw(void)
 {
 
 	tcsetattr(0, TCSADRAIN, &term);
@@ -323,7 +320,7 @@ raw()
  * return keyboard to normal mode
  */
 void
-unraw()
+unraw(void)
 {
 
 	tcsetattr(0, TCSADRAIN, &defterm);
@@ -337,10 +334,7 @@ static	jmp_buf promptbuf;
  *  normal erase and kill characters.
  */
 int
-prompt(s, p, l)
-	const char *s;
-	char *p;
-	size_t l;
+prompt(const char *s, char *p, size_t l)
 {
 	int c;
 	char *b = p;
@@ -371,8 +365,7 @@ prompt(s, p, l)
  * Interrupt service routine during prompting
  */
 void
-intprompt(dummy)
-	int dummy;
+intprompt(int dummy)
 {
 
 	(void)signal(SIGINT, SIG_IGN);
@@ -385,7 +378,7 @@ intprompt(dummy)
  * ****TIPIN   TIPIN****
  */
 void
-tipin()
+tipin(void)
 {
 	char gch, bol = 1;
 
@@ -406,7 +399,7 @@ tipin()
 		if ((gch == character(value(ESCAPE))) && bol) {
 			if (!(gch = escape()))
 				continue;
-		} else if (!cumode && 
+		} else if (!cumode &&
 		    gch && gch == character(value(RAISECHAR))) {
 			setboolean(value(RAISE), !boolean(value(RAISE)));
 			continue;
@@ -432,7 +425,7 @@ tipin()
  *  called on recognition of ``escapec'' at the beginning of a line
  */
 int
-escape()
+escape(void)
 {
 	char gch;
 	esctable_t *p;
@@ -454,9 +447,7 @@ escape()
 }
 
 int
-any(c, p)
-	char c;
-	const char *p;
+any(char c, const char *p)
 {
 
 	while (p && *p)
@@ -466,8 +457,7 @@ any(c, p)
 }
 
 char *
-interp(s)
-	const char *s;
+interp(const char *s)
 {
 	static char buf[256];
 	char *p = buf, c;
@@ -493,8 +483,7 @@ interp(s)
 }
 
 char *
-ctrl(c)
-	char c;
+ctrl(char c)
 {
 	static char s[3];
 
@@ -513,8 +502,7 @@ ctrl(c)
  * Help command
  */
 void
-help(c)
-	char c;
+help(char c)
 {
 	esctable_t *p;
 
@@ -532,8 +520,7 @@ help(c)
  * Set up the "remote" tty's state
  */
 int
-ttysetup(spd)
-	int spd;
+ttysetup(int spd)
 {
 	struct termios	cntrl;
 
@@ -545,7 +532,7 @@ ttysetup(spd)
 	if (DC)
 		cntrl.c_cflag |= CLOCAL;
 	if (boolean(value(HARDWAREFLOW)))
-		cntrl.c_cflag |= CRTSCTS;	
+		cntrl.c_cflag |= CRTSCTS;
 	cntrl.c_iflag &= ~(ISTRIP|ICRNL);
 	cntrl.c_oflag &= ~OPOST;
 	cntrl.c_lflag &= ~(ICANON|ISIG|IEXTEN|ECHO);
@@ -564,10 +551,7 @@ static char partab[0200];
  * with the right parity and output it.
  */
 void
-xpwrite(fd, buf, n)
-	int fd;
-	char *buf;
-	int n;
+xpwrite(int fd, char *buf, int n)
 {
 	int i;
 	char *bp;
@@ -590,8 +574,7 @@ xpwrite(fd, buf, n)
  * Build a parity table with appropriate high-order bit.
  */
 void
-setparity(defparity)
-	const char *defparity;
+setparity(const char *defparity)
 {
 	int i, flip, clr, set;
 	const char *parity;
