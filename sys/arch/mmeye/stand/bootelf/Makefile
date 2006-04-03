@@ -1,4 +1,10 @@
-#	$NetBSD: Makefile,v 1.12 2006/04/03 06:15:00 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.13 2006/04/03 06:22:45 uebayasi Exp $
+#
+# NOTE: This program is *not* standalone, but a userlevel program -- this
+#       program was run from within boot-only, NetBSD-as-bootloader as a
+#       userlevel program, then in-kernel boot code loads another NetBSD
+#	image and jumps to it.
+#
 
 PROG=	bootelf
 SRCS=	alloc.c boot.c byteorder.c loadfile.c loadfile_elf32.c
