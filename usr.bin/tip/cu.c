@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.14 2006/04/03 01:48:22 tls Exp $	*/
+/*	$NetBSD: cu.c,v 1.15 2006/04/03 02:01:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.14 2006/04/03 01:48:22 tls Exp $");
+__RCSID("$NetBSD: cu.c,v 1.15 2006/04/03 02:01:28 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -203,15 +203,12 @@ cumain(int argc, char *argv[])
 		errx(3,"all ports busy");
 	}
 	if (i == -1) {
-		warnx("link down");
-		(void)uu_unlock(uucplock);
-		exit(3);
+		errx(3, "link down");
 	}
 	setbuf(stdout, NULL);
 #ifdef ACULOG
 	loginit();
 #endif
-	user_uid();
 	vinit();
 	switch (parity) {
 	case -1:
@@ -255,24 +252,15 @@ cumain(int argc, char *argv[])
 		setboolean(value(LECHO), TRUE);
 	if (HW) {
 		if (ttysetup(BR) != 0) {
-			warnx("unsupported speed %ld", BR);
-			daemon_uid();
-			(void)uu_unlock(uucplock);
-			exit(3);
+			errx(3, "unsupported speed %ld", BR);
 		}
 	}
 	if (connect()) {
-		warnx("Connect failed");
-		daemon_uid();
-		(void)uu_unlock(uucplock);
-		exit(1);
+		errx(1, "Connect failed");
 	}
 	if (!HW) {
 		if (ttysetup(BR) != 0) {
-			warnx("unsupported speed %ld", BR);
-			daemon_uid();
-			(void)uu_unlock(uucplock);
-			exit(3);
+			errx(3, "unsupported speed %ld", BR);
 		}
 	}
 }

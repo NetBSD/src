@@ -1,4 +1,4 @@
-/*	$NetBSD: biz31.c,v 1.9 2006/04/03 00:51:14 perry Exp $	*/
+/*	$NetBSD: biz31.c,v 1.10 2006/04/03 02:01:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)biz31.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: biz31.c,v 1.9 2006/04/03 00:51:14 perry Exp $");
+__RCSID("$NetBSD: biz31.c,v 1.10 2006/04/03 02:01:28 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -59,7 +59,6 @@ biz_dialer(char *num, char *mod)
 	if (!bizsync(FD)) {
 		logent(value(HOST), "", "biz", "out of sync");
 		printf("bizcomp out of sync\n");
-		delock(uucplock);
 		exit(0);
 	}
 	if (boolean(value(VERBOSE)))

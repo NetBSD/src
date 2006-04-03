@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.20 2006/04/03 00:51:13 perry Exp $	*/
+/*	$NetBSD: cmds.c,v 1.21 2006/04/03 02:01:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.20 2006/04/03 00:51:13 perry Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.21 2006/04/03 02:01:28 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -589,7 +589,6 @@ shell(char dummy)
 			cp = value(SHELL);
 		else
 			cp++;
-		shell_uid();
 		execl(value(SHELL), cp, 0);
 		fprintf(stderr, "\r\n");
 		err(1, "can't execl");
@@ -653,8 +652,6 @@ tipabort(const char *msg)
 	if (msg != NULL)
 		printf("\r\n%s", msg);
 	printf("\r\n[EOT]\r\n");
-	daemon_uid();
-	(void)uu_unlock(uucplock);
 	unraw();
 	exit(0);
 }
@@ -690,7 +687,6 @@ execute(char *s)
 		cp = value(SHELL);
 	else
 		cp++;
-	shell_uid();
 	execl(value(SHELL), cp, "-c", s, 0);
 }
 
@@ -877,7 +873,6 @@ expand(char name[])
 		dup(pivec[1]);
 		close(pivec[1]);
 		close(2);
-		shell_uid();
 		execl(Shell, Shell, "-c", cmdbuf, 0);
 		_exit(1);
 	}
