@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.12 2006/04/02 22:19:26 tls Exp $	*/
+/*	$NetBSD: cu.c,v 1.13 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.12 2006/04/02 22:19:26 tls Exp $");
+__RCSID("$NetBSD: cu.c,v 1.13 2006/04/03 00:51:13 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -48,9 +48,7 @@ static void cuusage(void);
  * Botch the interface to look like cu's
  */
 void
-cumain(argc, argv)
-	int argc;
-	char *argv[];
+cumain(int argc, char *argv[])
 {
 	int i, phonearg = 0;
 	int parity = 0;		/* 0 is no parity */
@@ -74,7 +72,7 @@ cumain(argc, argv)
 		{ "nostop",	no_argument,		&nostop,	1  },
 		{ NULL,		0,			NULL,		0 }
 	};
-		
+
 
 	if (argc < 2)
 		cuusage();
@@ -184,7 +182,7 @@ cumain(argc, argv)
 		cuusage();
 		break;
 	}
-		
+
 	signal(SIGINT, cleanup);
 	signal(SIGQUIT, cleanup);
 	signal(SIGHUP, cleanup);

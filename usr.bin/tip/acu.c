@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.10 2006/04/02 19:16:22 tls Exp $	*/
+/*	$NetBSD: acu.c,v 1.11 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: acu.c,v 1.10 2006/04/02 19:16:22 tls Exp $");
+__RCSID("$NetBSD: acu.c,v 1.11 2006/04/03 00:51:13 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -43,8 +43,8 @@ static acu_t *acu = NULL;
 static int conflag;
 static jmp_buf jmpbuf;
 
-static void	acuabort __P((int));
-static acu_t   *acutype __P((char *));
+static void	acuabort(int);
+static acu_t   *acutype(char *);
 
 /*
  * Establish connection for tip
@@ -63,7 +63,7 @@ static acu_t   *acutype __P((char *));
  *   found in the file).
  */
 const char *
-connect()
+connect(void)
 {
 	char *cp = PN;
 	char *phnum, string[256];
@@ -113,7 +113,7 @@ connect()
 				;
 			if (*cp)
 				*cp++ = '\0';
-			
+
 			if ((conflag = (*acu->acu_dialer)(phnum, CU)) != 0) {
 				if (CM != NULL)
 					xpwrite(FD, CM, strlen(CM));
@@ -154,7 +154,7 @@ connect()
 				;
 			if (*cp)
 				*cp++ = '\0';
-			
+
 			if ((conflag = (*acu->acu_dialer)(phnum, CU)) != 0) {
 				fclose(fd);
 				if (CM != NULL)
@@ -184,8 +184,7 @@ connect()
 }
 
 void
-disconnect(reason)
-	const char *reason;
+disconnect(const char *reason)
 {
 
 	if (!conflag) {
@@ -200,7 +199,7 @@ disconnect(reason)
 #endif
 		if (boolean(value(VERBOSE)))
 			printf("\r\ndisconnecting...");
-	} else 
+	} else
 #ifdef ACULOG
 		logent(value(HOST), "", acu->acu_name, reason);
 #endif
@@ -208,8 +207,7 @@ disconnect(reason)
 }
 
 static void
-acuabort(s)
-	int s;
+acuabort(int s)
 {
 
 	signal(s, SIG_IGN);
@@ -217,8 +215,7 @@ acuabort(s)
 }
 
 static acu_t *
-acutype(s)
-	char *s;
+acutype(char *s)
 {
 	acu_t *p;
 

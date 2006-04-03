@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.11 2006/04/02 06:11:45 tls Exp $	*/
+/*	$NetBSD: hunt.c,v 1.12 2006/04/03 00:51:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hunt.c,v 1.11 2006/04/02 06:11:45 tls Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.12 2006/04/03 00:51:13 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -42,11 +42,10 @@ __RCSID("$NetBSD: hunt.c,v 1.11 2006/04/02 06:11:45 tls Exp $");
 static	jmp_buf deadline;
 static	int deadfl;
 
-void	dead __P((int));
+void	dead(int);
 
 void
-dead(dummy)
-	int dummy;
+dead(int dummy)
 {
 
 	deadfl = 1;
@@ -54,8 +53,7 @@ dead(dummy)
 }
 
 int
-hunt(name)
-	char *name;
+hunt(char *name)
 {
 	char *cp;
 	sig_t f;
