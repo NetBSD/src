@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 2003/08/07 11:16:18 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 2006/04/03 02:25:27 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,7 +33,5 @@
 
 #include <paths.h>
 
-#define	_PATH_ACULOG		"/var/log/aculog"
-#define	_PATH_LOCKDIRNAME	"/var/spool/lock/LCK..%s"
 #define	_PATH_PHONES		"/etc/phones"
 #define	_PATH_REMOTE		"/etc/remote"
