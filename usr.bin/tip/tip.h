@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.22 2006/04/03 02:25:27 perry Exp $	*/
+/*	$NetBSD: tip.h,v 1.23 2006/04/03 03:13:10 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -204,29 +204,28 @@ extern value_t	vtable[];	/* variable table */
 #define FORCE		8
 #define FRAMESIZE	9
 #define HOST		10
-#define LOG		11
-#define PHONES		12
-#define PROMPT		13
-#define RAISE		14
-#define RAISECHAR	15
-#define RECORD		16
-#define REMOTE		17
-#define SCRIPT		18
-#define TABEXPAND	19
-#define VERBOSE		20
-#define SHELL		21
-#define HOME		22
-#define ECHOCHECK	23
-#define DISCONNECT	24
-#define TAND		25
-#define LDELAY		26
-#define CDELAY		27
-#define ETIMEOUT	28
-#define RAWFTP		29
-#define HALFDUPLEX	30
-#define	LECHO		31
-#define	PARITY		32
-#define	HARDWAREFLOW	33
+#define PHONES		11
+#define PROMPT		12
+#define RAISE		13
+#define RAISECHAR	14
+#define RECORD		15
+#define REMOTE		16
+#define SCRIPT		17
+#define TABEXPAND	18
+#define VERBOSE		19
+#define SHELL		20
+#define HOME		21
+#define ECHOCHECK	22
+#define DISCONNECT	23
+#define TAND		24
+#define LDELAY		25
+#define CDELAY		26
+#define ETIMEOUT	27
+#define RAWFTP		28
+#define HALFDUPLEX	29
+#define	LECHO		30
+#define	PARITY		31
+#define	HARDWAREFLOW	32
 
 struct termios	term;		/* current mode of terminal */
 struct termios	defterm;	/* initial mode of terminal */
