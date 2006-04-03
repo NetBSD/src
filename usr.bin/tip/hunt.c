@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.12 2006/04/03 00:51:13 perry Exp $	*/
+/*	$NetBSD: hunt.c,v 1.13 2006/04/03 02:01:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: hunt.c,v 1.12 2006/04/03 00:51:13 perry Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.13 2006/04/03 02:01:28 perry Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -61,9 +61,6 @@ hunt(char *name)
 	f = signal(SIGALRM, dead);
 	while ((cp = getremote(name)) != NULL) {
 		deadfl = 0;
-		uucplock = strrchr(cp, '/')+1;
-		if (uu_lock(uucplock) < 0)
-			continue;
 		/*
 		 * Straight through call units, such as the BIZCOMP,
 		 * VADIC and the DF, must indicate they're hardwired in
@@ -85,6 +82,11 @@ hunt(char *name)
 		if (!deadfl) {
 			struct termios cntrl;
 
+			if (flock(FD, (LOCK_EX|LOCK_NB)) != 0) {
+				close(FD);
+				continue;
+			}
+
 			tcgetattr(FD, &cntrl);
 			if (!DC)
 				cntrl.c_cflag |= HUPCL;
@@ -93,7 +95,6 @@ hunt(char *name)
 			signal(SIGALRM, SIG_DFL);
 			return (cp != NULL);
 		}
-		(void)uu_unlock(uucplock);
 	}
 	signal(SIGALRM, f);
 	return (deadfl ? -1 : cp != NULL);
