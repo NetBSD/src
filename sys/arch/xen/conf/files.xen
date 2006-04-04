@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.38 2006/03/19 00:36:09 bouyer Exp $
+#	$NetBSD: files.xen,v 1.39 2006/04/04 03:13:12 gdamore Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -175,9 +175,6 @@ include "dev/pci/files.pci"
 include "dev/pci/files.agp"
 file 	arch/i386/pci/agp_machdep.c	agp
 file	arch/xen/xen/pciide_machdep.c	pciide_common
-
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-i386-elf.hal.o	ath
 
 #
 # Machine-independent ISA devices
