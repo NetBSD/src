@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.85 2006/04/04 11:33:15 rpaulo Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.86 2006/04/04 15:43:23 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.85 2006/04/04 11:33:15 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.86 2006/04/04 15:43:23 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -554,6 +554,15 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 			}
 			af = mtod(m0,uint32_t *);
 			*af = htonl(dst->sa_family);
+		} else {
+#ifdef INET     
+			if (dst->sa_family != AF_INET)
+#endif
+			{
+				m_freem(m0);
+				error = EAFNOSUPPORT;
+				goto out;
+			}
 		}
 		/* FALLTHROUGH */
 	case AF_UNSPEC:
