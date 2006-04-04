@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.40.2.4 2005/07/02 15:49:36 tron Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.40.2.5 2006/04/04 21:37:40 tron Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -829,7 +829,7 @@ pty*)
 		warn "$i: pty unit conflicts with console ttyv0 device"
 		continue
 	fi
-	s2=$(($start % $nt - $s1 * $mult))
+	s2=$(($start % ($nt - $s1 * $mult)))
 	set -- $d2
 	shift $s2
 	t2=$1
