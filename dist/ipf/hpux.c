@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.c,v 1.1.1.2 2005/02/08 06:52:56 martti Exp $	*/
+/*	$NetBSD: hpux.c,v 1.1.1.3 2006/04/04 16:08:23 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -48,8 +48,6 @@ struct uio;
 #undef	IPFDEBUG
 
 extern	struct	filterstats	frstats[];
-extern	ipfrwlock_t	ipf_mutex, ipf_nat, ipf_global;
-extern	ipfmutex_t	ipf_rw, ipf_stinsert;
 extern	int	fr_running;
 extern	int	fr_flags;
 extern	int	fr_check __P(());

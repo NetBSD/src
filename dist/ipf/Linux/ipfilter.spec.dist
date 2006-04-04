@@ -1,8 +1,8 @@
 Summary: IP Filter Software
 Name: ipfilter
-Version: 4.1.8
+Version: 4.1.13
 Release: 1
-Copyright: Copyright 2004 Darren Reed
+Copyright: Copyright 2006 Darren Reed
 Group: System Environment/Base
 BuildRoot: /usr/src/redhat/BUILD/ipfilter
 

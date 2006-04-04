@@ -1,4 +1,4 @@
-/*	$NetBSD: lexer.c,v 1.1.1.4 2005/02/19 21:27:06 martti Exp $	*/
+/*	$NetBSD: lexer.c,v 1.1.1.5 2006/04/04 16:10:23 martti Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.
@@ -172,6 +172,8 @@ nextchar:
 	switch (c)
 	{
 	case '\n' :
+		lnext = 0;
+		nokey = 0;
 	case '\t' :
 	case '\r' :
 	case ' ' :

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_bsdos.c,v 1.1.1.3 2005/02/08 06:52:54 martti Exp $	*/
+/*	$NetBSD: ip_fil_bsdos.c,v 1.1.1.4 2006/04/04 16:08:28 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_bsdos.c,v 2.45.2.17 2005/01/08 16:55:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_bsdos.c,v 2.45.2.19 2006/03/25 13:03:00 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -68,10 +68,6 @@ extern	struct	protosw	inetsw[];
 
 static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
 static	int	fr_send_ip __P((ip_t *, fr_info_t *, mb_t *, mb_t **));
-#ifdef KMUTEX_T
-extern  ipfmutex_t	ipf_rw;
-extern	ipfrwlock_t	ipf_mutex;
-#endif
 
 #if (_BSDI_VERSION >= 199510)
 # include <sys/device.h>
@@ -910,31 +906,16 @@ frdest_t *fdp;
 	bzero((caddr_t)ro, sizeof (*ro));
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
+	dst->sin_addr = ip->ip_dst;
 
 	fr = fin->fin_fr;
 	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
-	else {
+	else
 		ifp = fin->fin_ifp;
-		dst->sin_addr = ip->ip_dst;
-	}
 
-	/*
-	 * In case we're here due to "to <if>" being used with "keep state",
-	 * check that we're going in the correct direction.
-	 */
-	if ((fr != NULL) && (fin->fin_rev != 0)) {
-		if ((ifp != NULL) && (fdp == &fr->fr_tif))
-			return -1;
-		dst->sin_addr = ip->ip_dst;
-	}
-	if (fdp != NULL) {
-		if (fdp->fd_ip.s_addr) {
-			dst->sin_addr = fdp->fd_ip;
-			ip->ip_dst = fdp->fd_ip;
-		} else
-			dst->sin_addr = ip->ip_dst;
-	}
+	if ((fdp != NULL) && (fdp->fd_ip.s_addr != 0))
+		dst->sin_addr = fdp->fd_ip;
 
 	dst->sin_len = sizeof(*dst);
 	rtalloc(ro);

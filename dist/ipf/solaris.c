@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.13 2005/02/08 06:53:04 martti Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.14 2006/04/04 16:08:49 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.73.2.5 2004/12/15 17:13:20 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.73.2.10 2006/03/19 15:02:30 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -55,6 +55,7 @@
 #include "netinet/ip_auth.h"
 #include "netinet/ip_state.h"
 
+struct pollhead iplpollhead[IPL_LOGSIZE];
 
 extern	struct	filterstats	frstats[];
 extern	int	fr_running;
@@ -72,6 +73,7 @@ static	int	ipf_attach __P((dev_info_t *, ddi_attach_cmd_t));
 static	int	ipf_detach __P((dev_info_t *, ddi_detach_cmd_t));
 static	int	fr_qifsync __P((ip_t *, int, void *, int, void *, mblk_t **));
 static	int	ipf_property_update __P((dev_info_t *));
+static 	int	iplpoll __P((dev_t, short, int, short *, struct pollhead **));
 static	char	*ipf_devfiles[] = { IPL_NAME, IPNAT_NAME, IPSTATE_NAME,
 				    IPAUTH_NAME, IPSYNC_NAME, IPSCAN_NAME,
 				    IPLOOKUP_NAME, NULL };
@@ -96,7 +98,7 @@ static struct cb_ops ipf_cb_ops = {
 	nodev,		/* devmap */
 	nodev,		/* mmap */
 	nodev,		/* segmap */
-	nochpoll,	/* poll */
+	iplpoll,	/* poll */
 	ddi_prop_op,
 	NULL,
 	D_MTSAFE,
@@ -293,6 +295,7 @@ ddi_attach_cmd_t cmd;
 		 */
 		RWLOCK_INIT(&ipf_global, "ipf filter load/unload mutex");
 		RWLOCK_INIT(&ipf_mutex, "ipf filter rwlock");
+		RWLOCK_INIT(&ipf_frcache, "ipf cache rwlock");
 
 		/*
 		 * Lock people out while we set things up.
@@ -407,6 +410,7 @@ ddi_detach_cmd_t cmd;
 		if (!ipldetach()) {
 			RWLOCK_EXIT(&ipf_global);
 			RW_DESTROY(&ipf_mutex);
+			RW_DESTROY(&ipf_frcache);
 			RW_DESTROY(&ipf_global);
 			cmn_err(CE_CONT, "!%s detached.\n", ipfilter_version);
 			return (DDI_SUCCESS);
@@ -568,4 +572,56 @@ dev_info_t *dip;
 	}
 
 	return err;
+}
+
+
+static int iplpoll(dev, events, anyyet, reventsp, phpp)
+dev_t dev;
+short events;
+int anyyet;
+short *reventsp;
+struct pollhead **phpp;
+{
+	u_int xmin = getminor(dev);
+	int revents = 0;
+
+	if (xmin < 0 || xmin > IPL_LOGMAX)
+		return ENXIO;
+
+	switch (xmin) 
+	{
+	case IPL_LOGIPF :
+	case IPL_LOGNAT :
+	case IPL_LOGSTATE :
+#ifdef IPFILTER_LOG
+		if ((events & (POLLIN | POLLRDNORM)) && ipflog_canread(xmin))
+			revents |= events & (POLLIN | POLLRDNORM);
+#endif  
+		break;
+	case IPL_LOGAUTH :
+		if ((events & (POLLIN | POLLRDNORM)) && fr_auth_waiting())
+			revents |= events & (POLLIN | POLLRDNORM);
+		break; 
+	case IPL_LOGSYNC :
+#ifdef IPFILTER_SYNC
+		if ((events & (POLLIN | POLLRDNORM)) && ipfsync_canread())
+			revents |= events & (POLLIN | POLLRDNORM);
+		if ((events & (POLLOUT | POLLWRNORM)) && ipfsync_canwrite())
+			revents |= events & (POLLOUT | POLLOUTNORM);
+#endif
+		break;
+	case IPL_LOGSCAN :
+	case IPL_LOGLOOKUP :
+	default :
+		break;
+	}
+
+	if (revents) {
+		*reventsp = revents;
+	} else {
+		*reventsp = 0;
+		if (!anyyet)
+			*phpp = &iplpollhead[xmin];
+	}
+	return 0;
 }

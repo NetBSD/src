@@ -15,6 +15,17 @@ else
 fi
 
 
+getpid()
+{
+	if [ -f /usr/bin/pgrep ] ; then
+		rval=`pgrep $1`
+	else
+		rval=`ps -ef | awk "/$1/ { print \\$2; } " -`
+	fi
+
+	return $rval
+}
+
 logmsg()
 {
 	logger -p local0.emerg -t ipfilter "$1"
@@ -56,7 +67,8 @@ getids()
 	if [ -f $PIDFILE ] ; then
 		pid=`cat $PIDFILE 2>/dev/null`
 	else
-		pid=`pgrep ipmon`
+		getpid ipmon
+		pid=$?
 	fi
 }
 

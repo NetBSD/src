@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_openbsd.c,v 1.1.1.3 2005/02/08 06:52:58 martti Exp $	*/
+/*	$NetBSD: ip_fil_openbsd.c,v 1.1.1.4 2006/04/04 16:08:32 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_openbsd.c,v 2.50.2.21 2005/01/08 16:55:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_openbsd.c,v 2.50.2.23 2006/03/25 13:03:02 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -76,10 +76,6 @@ extern int ip6_getpmtu(struct route_in6 *, struct route_in6 *,
 
 static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
 static	int	fr_send_ip __P((fr_info_t *, mb_t *, mb_t **));
-#ifdef KMUTEX_T
-extern  ipfmutex_t	ipf_rw;
-extern	ipfrwlock_t	ipf_mutex;
-#endif
 #ifdef	USE_INET6
 static int ipfr_fastroute6 __P((struct mbuf *, struct mbuf **,
 				fr_info_t *, frdest_t *));
@@ -863,18 +859,8 @@ frdest_t *fdp;
 		goto bad;
 	}
 
-	/*
-	 * In case we're here due to "to <if>" being used with "keep state",
-	 * check that we're going in the correct direction.
-	 */
-	if ((fr != NULL) && (fin->fin_rev != 0)) {
-		if ((ifp != NULL) && (fdp == &fr->fr_tif))
-			return -1;
-	}
-	if (fdp != NULL) {
-		if (fdp->fd_ip.s_addr != 0)
-			dst->sin_addr = fdp->fd_ip;
-	}
+	if ((fdp != NULL) && (fdp->fd_ip.s_addr != 0))
+		dst->sin_addr = fdp->fd_ip;
 
 	dst->sin_len = sizeof(*dst);
 	rtalloc(ro);

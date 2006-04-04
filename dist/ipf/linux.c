@@ -1,4 +1,4 @@
-/*	$NetBSD: linux.c,v 1.1.1.2 2005/02/08 06:53:02 martti Exp $	*/
+/*	$NetBSD: linux.c,v 1.1.1.3 2006/04/04 16:08:46 martti Exp $	*/
 
 
 #include "ipf-linux.h"
@@ -7,6 +7,8 @@
 #ifdef CONFIG_PROC_FS
 #include <linux/proc_fs.h>
 #endif
+
+extern wait_queue_head_t	iplh_linux[IPL_LOGSIZE];
 
 #ifdef MODULE
 MODULE_SUPPORTED_DEVICE("ipf");
@@ -28,7 +30,35 @@ MODULE_PARM(ipl_logall, "i");
 static int ipf_open(struct inode *, struct file *);
 static ssize_t ipf_write(struct file *, const char *, size_t, loff_t *);
 static ssize_t ipf_read(struct file *, char *, size_t, loff_t *);
+static u_int ipf_poll(struct file *fp, struct poll_table_struct *wait);
 extern int ipf_ioctl(struct inode *, struct file *, u_int, u_long);
+
+
+#ifdef	CONFIG_DEVFS_FS
+static	char	*ipf_devfiles[] = { IPL_NAME, IPNAT_NAME, IPSTATE_NAME,
+				    IPAUTH_NAME, IPSYNC_NAME, IPSCAN_NAME,
+				    IPLOOKUP_NAME, NULL };
+#endif
+
+static struct file_operations ipf_fops = {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+	.owner = THIS_MODULE,
+#endif
+	open:	ipf_open,
+	read:	ipf_read,
+	write:	ipf_write,
+	ioctl:	ipf_ioctl,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
+	poll:	ipf_poll,
+#endif
+};
+
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+static	devfs_handle_t	dh[IPL_LOGSIZE];
+#endif
+static	int		ipfmajor = 0;
+
 
 
 int uiomove(address, nbytes, rwflag, uiop)
@@ -139,29 +169,51 @@ static ssize_t ipf_read(struct file *fp, char *buf, size_t count, loff_t *posp)
 	return err;
 }
 
-#ifdef	CONFIG_DEVFS_FS
-static	char	*ipf_devfiles[] = { IPL_NAME, IPNAT_NAME, IPSTATE_NAME,
-				    IPAUTH_NAME, IPSYNC_NAME, IPSCAN_NAME,
-				    IPLOOKUP_NAME, NULL };
-#endif
 
-static struct file_operations ipf_fops = {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
-	.owner = THIS_MODULE,
-#endif
-	open:	ipf_open,
-	read:	ipf_read,
-	write:	ipf_write,
-	ioctl:	ipf_ioctl,
-};
+static u_int ipf_poll(struct file *fp, poll_table *wait)
+{
+	struct inode *i;
+	u_int revents;
+	int unit;
 
+	revents = 0;
+	i = fp->f_dentry->d_inode;
+	unit = MINOR(i->i_rdev);
+	if (unit < 0 || unit > IPL_LOGMAX)
+		return 0;
 
-#ifdef	CONFIG_DEVFS_FS
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
-static	devfs_handle_t	dh[IPL_LOGSIZE];
+	poll_wait(fp, &iplh_linux[unit], wait);
+
+	switch (unit)
+	{
+	case IPL_LOGIPF :
+	case IPL_LOGNAT :
+	case IPL_LOGSTATE :
+# ifdef IPFILTER_LOG
+		if (ipflog_canread(unit))
+			revents = (POLLIN | POLLRDNORM);
+# endif
+		break;
+	case IPL_LOGAUTH :
+		if (fr_auth_waiting())
+			revents = (POLLIN | POLLRDNORM);
+		break;
+	case IPL_LOGSYNC :
+# ifdef IPFILTER_SYNC
+		if (ipfsync_canread())
+			revents = (POLLIN | POLLRDNORM);
+# endif
+		break;
+	case IPL_LOGSCAN :
+	case IPL_LOGLOOKUP :
+	default :
+		break;
+	}
+
+	return revents;
+}
 #endif
-#endif
-static	int		ipfmajor = 0;
 
 
 #ifdef	CONFIG_PROC_FS
@@ -190,13 +242,13 @@ static int ipfilter_init(void)
 	for (i = 0; ipf_devfiles[i] != NULL; i++) {
 		s = strrchr(ipf_devfiles[i], '/');
 		if (s != NULL) {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+# if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 			dh[i] = devfs_register(NULL, s + 1, DEVFS_FL_DEFAULT,
 					       ipfmajor, i, 0600|S_IFCHR,
 					       &ipf_fops, NULL);
-#else
+# else
 			devfs_mk_cdev(MKDEV(ipfmajor, i),0600|S_IFCHR,s+1);
-#endif
+# endif
 		}
 	}
 #endif
@@ -275,11 +327,11 @@ static int ipfilter_fini(void)
 	for (i = 0; ipf_devfiles[i] != NULL; i++) {
 		s = strrchr(ipf_devfiles[i], '/');
 		if (s != NULL)
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
+# if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 			devfs_unregister_chrdev(ipfmajor, s + 1);
-#else
+# else
 			devfs_remove(s+1);
-#endif
+# endif
 	}
 #endif
 

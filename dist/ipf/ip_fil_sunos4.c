@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_sunos4.c,v 1.1.1.3 2005/02/08 06:52:59 martti Exp $	*/
+/*	$NetBSD: ip_fil_sunos4.c,v 1.1.1.4 2006/04/04 16:08:34 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -56,7 +56,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_sunos4.c,v 2.46.2.17 2005/01/08 16:55:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_sunos4.c,v 2.46.2.19 2006/03/25 13:03:03 darrenr Exp";
 #endif
 
 extern	struct	protosw	inetsw[];
@@ -326,7 +326,6 @@ void *ifp;
 {
 	register frentry_t *f;
 
-	WRITE_ENTER(&ipf_mutex);
 	for (f = ipacct[0][fr_active]; (f != NULL); f = f->fr_next)
 		if (f->fr_ifa == ifp)
 			f->fr_ifa = (void *)-1;
@@ -339,7 +338,6 @@ void *ifp;
 	for (f = ipfilter[1][fr_active]; (f != NULL); f = f->fr_next)
 		if (f->fr_ifa == ifp)
 			f->fr_ifa = (void *)-1;
-	RWLOCK_EXIT(&ipf_mutex);
 	fr_natsync(ifp);
 }
 #endif
@@ -670,31 +668,16 @@ frdest_t *fdp;
 	bzero((caddr_t)ro, sizeof (*ro));
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
+	dst->sin_addr = ip->ip_dst;
 
 	fr = fin->fin_fr;
 	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
-	else {
+	else
 		ifp = fin->fin_ifp;
-		dst->sin_addr = ip->ip_dst;
-	}
 
-	/*
-	 * In case we're here due to "to <if>" being used with "keep state",
-	 * check that we're going in the correct direction.
-	 */
-	if ((fr != NULL) && (fin->fin_rev != 0)) {
-		if ((ifp != NULL) && (fdp == &fr->fr_tif))
-			return -1;
-		dst->sin_addr = ip->ip_dst;
-	}
-	if (fdp != NULL) {
-		if (fdp->fd_ip.s_addr) {
-			dst->sin_addr = fdp->fd_ip;
-			ip->ip_dst = fdp->fd_ip;
-		} else
-			dst->sin_addr = ip->ip_dst;
-	}
+	if ((fdp != NULL) && (fdp->fd_ip.s_addr != 0))
+		dst->sin_addr = fdp->fd_ip;
 
 	rtalloc(ro);
 	if (ifp == NULL) {

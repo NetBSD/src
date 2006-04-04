@@ -18,7 +18,7 @@ CFLAGS=-g -I$(TOP)
 # For Linux
 #
 CPUTYPE:=`uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/`
-ARCH:=$(shell uname -m)
+ARCH:=$(shell uname -i)
 OBJ=.
 TOP=..
 TOOL=$(TOP)/tools
@@ -479,7 +479,7 @@ install: $(CPUDIR)/$(SPECFILE) $(CPUDIR)/ipfilter
 	done
 	$(CP) $(TOP)/ipl.h $(ROOTDIR)/usr/include/netinet/ipl.h
 	-if [ -d $(IPV4DIR) ] ; then \
-		-if [ -f $(CPUDIR)/ipfilter.$(MODEXT) ] ; then \
+		if [ -f $(CPUDIR)/ipfilter.$(MODEXT) ] ; then \
 			cp $(CPUDIR)/ipfilter.$(MODEXT) $(ROOTDIR)$(IPV4DIR)/ipfilter.$(MODEXT); \
 		else \
 			cp $(CPUDIR)/ipfilter.o $(ROOTDIR)$(IPV4DIR)/ipfilter.$(MODEXT); \

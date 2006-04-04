@@ -3,6 +3,7 @@
 #
 # See the IPFILTER.LICENCE file for details on licencing.
 #
+TOP=$(shell echo `pwd`/..)
 TOP:sh=echo `pwd`/..
 BINDEST=/usr/local/bin
 SBINDEST=/sbin/$(OBJ)
@@ -12,6 +13,7 @@ CFLAGS=-I$(TOP)
 #
 # For SunOS 5.x
 #
+CPUDIR=$(shell echo `uname -p`-`uname -r`)
 CPUDIR:sh=echo `uname -p`-`uname -r`
 ROOT=$(CPUDIR)/root
 PKGDIR=$(ROOT)/opt/ipf
@@ -20,10 +22,30 @@ PKGBIN=$(PKGDIR)/bin/$(OBJ)
 #
 DEST=$(OBJ)
 TOOL=$(TOP)/tools
+#CPU=$(shell uname -p)
+#REV=$(shell uname -v)
 #CPU:sh=uname -p
 #REV:sh=uname -r
 HERE=SunOS5/$(CPUDIR)
-BITS:sh=if optisa sparcv9 >/dev/null 2>&1; then echo "64"; else echo "32"; fi
+BITS=$(shell if optisa amd64 sparcv9 >/dev/null 2>&1; then echo "64"; else echo "32"; fi)
+BITS:sh=if optisa amd64 sparcv9 >/dev/null 2>&1; then echo "64"; else echo "32"; fi
+ARCH=$(shell uname -p)
+ARCH:sh=uname -p
+
+OBJ32_i386=i86
+OBJ64_i386=amd64
+OBJ32_sparc=sparcv7
+OBJ64_sparc=sparcv9
+OBJ32=$(OBJ32_$(ARCH))
+OBJ64=$(OBJ64_$(ARCH))
+
+PROTO32_i386=prototype_ia32
+PROTO64_i386=prototype_amd64
+PROTO32_sparc=prototype32
+PROTO64_sparc=prototype64
+PROTO32=$(PROTO32_$(ARCH))
+PROTO64=$(PROTO64_$(ARCH))
+
 CC=gcc -Wall
 DEBUG=-g
 LIBS=-lsocket -lnsl -lelf -L$(OBJ) -lipf $(LIBBPF)
@@ -112,7 +134,7 @@ $(OBJ)/ipfstat: $(FILS) $(OBJ)/libipf.a
 $(OBJ)/ipf.exe: $(IPF) $(OBJ)/libipf.a
 	$(CC) $(CCARGS) $(IPF) -o $@ $(LIBS) -ll $(LIBBPF)
 
-# Magic dependency on ipf.exe creates the $(TOP)/sparcv{7,9} directories.
+# Magic dependency on ipf.exe creates the $(TOP)/$(OBJ{32,64}) directories.
 $(OBJ)/ipftest: $(IPT) $(OBJ)/ipf.exe $(OBJ)/libipf.a
 	$(CC) $(CCARGS) $(IPT) -o $@ $(LIBS) -ll $(LIBBPF)
 
@@ -424,7 +446,7 @@ clean:
 		${RM} -f ipmon_y.c ipmon_y.h ipmon_l.c ipmon_l.h; \
 		${RM} -f ipsyncm ipsyncs ipfs; \
 	fi
-	/bin/rm -rf */root ipf.pkg* sparcv7 sparcv9
+	/bin/rm -rf */root ipf.pkg* $(OBJ32) $(OBJ64)
 	make -f Makefile.ipsend clean "TOP=${TOP}"
 	-(for i in *; do \
 		if [ -d $${i} -a -h $${i}/Makefile ] ; then \
@@ -435,10 +457,10 @@ clean:
 	 done)
 
 $(CPUDIR)/ipf.pkg: $(CPUDIR)/ipf.pkg.common
-	if [ -d $(CPUDIR)/sparcv7 ]; then \
-		$(MAKE) PROTO=prototype32 PKG=ipf OBJ=sparcv7 \
+	if [ -d $(CPUDIR)/$(OBJ32) ]; then \
+		$(MAKE) PROTO=$(PROTO32) PKG=ipf OBJ=$(OBJ32) \
 		 BITS=32 TOP=$(TOP) ipf.pkg.bin; \
-		$(MAKE) PROTO=prototype64 PKG=ipfx OBJ=sparcv9 \
+		$(MAKE) PROTO=$(PROTO64) PKG=ipfx OBJ=$(OBJ64) \
 		 BITS=64 TOP=$(TOP) ipf.pkg.bin; \
 	else \
 		($(MAKE) PROTO=prototype OBJ=. BITS=${BITS} \
@@ -513,7 +535,7 @@ ipf.pkg.bin:
 	-sed -e 's/ipf/$(PKG)/' -e "s/NAME=.*/&$(BITTYPE)/" \
 	     -e "s/ARCH=.*/ARCH=`uname -p` (${BITS}-bit)/" \
 		< pkginfo > $(CPUDIR)/pkginfo
-	-if [ "$(BITS)" = 64 ]; then echo 'SUNW_ISA=sparcv9' >> $(CPUDIR)/pkginfo; fi
+	-if [ "$(BITS)" = 64 ]; then echo 'SUNW_ISA=$(OBJ64)' >> $(CPUDIR)/pkginfo; fi
 	(cd $(CPUDIR); pkgmk -a `uname -p` -o -d $(TMP))
 
 
@@ -525,5 +547,5 @@ package install: $(CPUDIR)/ipf.pkg
 		exit 1; \
 	fi
 	# Must add ipfx before ipf or driver attach fails.
-	-[ -d $(CPUDIR)/sparcv9 ] && pkgadd -d ipf.pkg ipfx
+	-[ -d $(CPUDIR)/$(OBJ64) ] && pkgadd -d ipf.pkg ipfx
 	-pkgadd -d ipf.pkg ipf

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_linux.c,v 1.1.1.3 2005/02/08 06:52:58 martti Exp $	*/
+/*	$NetBSD: ip_fil_linux.c,v 1.1.1.4 2006/04/04 16:08:30 martti Exp $	*/
 
 #include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
@@ -14,6 +14,7 @@
 #include <net/route.h>
 
 #include <linux/random.h>
+#include <linux/timer.h>
 #include <asm/ioctls.h>
 
 extern int sysctl_ip_default_ttl;
@@ -23,8 +24,9 @@ static	int	fr_send_ip __P((fr_info_t *, struct sk_buff *, struct sk_buff **));
 
 ipfmutex_t	ipl_mutex, ipf_authmx, ipf_rw, ipf_stinsert;
 ipfmutex_t	ipf_nat_new, ipf_natio, ipf_timeoutlock;
-ipfrwlock_t	ipf_mutex, ipf_global, ipf_ipidfrag;
+ipfrwlock_t	ipf_mutex, ipf_global, ipf_ipidfrag, ipf_frcache;
 ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
+struct timer_list	ipf_timer;
 
 static u_int ipf_linux_inout __P((u_int, struct sk_buff **, const struct net_device *, const struct net_device *, int (*okfn)(struct sk_buff *)));
 
@@ -95,6 +97,93 @@ static struct	nf_hook_ops	ipf_hooks[] = {
 # endif
 };
 #endif
+
+
+int iplattach()
+{
+	int err, i;
+
+	SPL_NET(s);
+	if (fr_running > 0) {
+		SPL_X(s);
+		return -EBUSY;
+	}
+
+	bzero((char *)frcache, sizeof(frcache));
+	MUTEX_INIT(&ipf_rw, "ipf rw mutex");
+	MUTEX_INIT(&ipl_mutex, "ipf log mutex");
+	MUTEX_INIT(&ipf_timeoutlock, "ipf timeout lock mutex");
+	RWLOCK_INIT(&ipf_global, "ipf global rwlock");
+	RWLOCK_INIT(&ipf_mutex, "ipf global mutex rwlock");
+	RWLOCK_INIT(&ipf_frcache, "ipf cache mutex rwlock");
+	RWLOCK_INIT(&ipf_ipidfrag, "ipf IP NAT-Frag rwlock");
+
+	for (i = 0; i < sizeof(ipf_hooks)/sizeof(ipf_hooks[0]); i++) {
+		err = nf_register_hook(&ipf_hooks[i]);
+		if (err != 0)
+			return err;
+	}
+
+	if (fr_initialise() < 0) {
+		for (i = 0; i < sizeof(ipf_hooks)/sizeof(ipf_hooks[0]); i++)
+			nf_unregister_hook(&ipf_hooks[i]);
+		SPL_X(s);
+		return EIO;
+	}
+
+	bzero((char *)frcache, sizeof(frcache));
+#ifdef notyet
+	if (fr_control_forwarding & 1)
+		ipv4_devconf.forwarding = 1;
+#endif
+
+	SPL_X(s);
+	/* timeout(fr_slowtimer, NULL, (hz / IPF_HZ_DIVIDE) * IPF_HZ_MULT); */
+	init_timer(&ipf_timer);
+	ipf_timer.function = fr_slowtimer;
+	ipf_timer.data = NULL;
+	ipf_timer.expires = (HZ / IPF_HZ_DIVIDE) * IPF_HZ_MULT;
+	add_timer(&ipf_timer);
+	mod_timer(&ipf_timer, HZ/2 + jiffies);
+	return 0;
+}
+
+
+int ipldetach()
+{
+	int i;
+
+	del_timer(&ipf_timer);
+
+	SPL_NET(s);
+
+	for (i = 0; i < sizeof(ipf_hooks)/sizeof(ipf_hooks[0]); i++)
+		nf_unregister_hook(&ipf_hooks[i]);
+	/* untimeout(fr_slowtimer, NULL); */
+
+#ifdef notyet
+	if (fr_control_forwarding & 2)
+		ipv4_devconf.forwarding = 0;
+#endif
+
+	fr_deinitialise();
+
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE);
+
+	MUTEX_DESTROY(&ipf_timeoutlock);
+	MUTEX_DESTROY(&ipl_mutex);
+	MUTEX_DESTROY(&ipf_rw);
+	RW_DESTROY(&ipf_mutex);
+	RW_DESTROY(&ipf_frcache);
+	RW_DESTROY(&ipf_global);
+	RW_DESTROY(&ipf_ipidfrag);
+
+	SPL_X(s);
+
+	return 0;
+}
+
 
 
 /*
@@ -355,7 +444,7 @@ fr_info_t *fin;
 		ip->ip_dst.s_addr = fin->fin_saddr;
 		ip->ip_p = IPPROTO_TCP;
 		ip->ip_len = sizeof(*ip) + sizeof(*tcp);
-		tcp2->th_sum = fr_cksum(m, ip, IPPROTO_TCP, tcp2);
+		tcp2->th_sum = fr_cksum(m, ip, IPPROTO_TCP, tcp2, ip->ip_len);
 	}
 	return fr_send_ip(fin, m, &m);
 }
@@ -408,6 +497,7 @@ fr_info_t *fin;
 int isdst;
 {
 	int hlen, code, leader, dlen;
+	struct net_device *ifp;
 	struct in_addr dst4;
 	struct icmp *icmp;
 	u_short sz;
@@ -485,9 +575,10 @@ int isdst;
 	icmp->icmp_type = type & 0xff;
 	icmp->icmp_code = code & 0xff;
 #ifdef	icmp_nextmtu
-	if (type == ICMP_UNREACH && (qif->qf_max_frag != 0) &&
+	ifp = fin->fin_ifp;
+	if (type == ICMP_UNREACH && (ifp->mtu != 0) &&
 	    fin->fin_icode == ICMP_UNREACH_NEEDFRAG)
-		icmp->icmp_nextmtu = htons(qif->qf_max_frag);
+		icmp->icmp_nextmtu = htons(ifp->mtu);
 #endif
 
 #ifdef	USE_INET6
@@ -616,18 +707,8 @@ frdest_t *fdp;
 		goto bad;
 	}
 
-	/*
-	 * In case we're here due to "to <if>" being used with "keep state",
-	 * check that we're going in the correct direction.
-	 */
-	if ((fr != NULL) && (fin->fin_rev != 0)) {
-		if ((ifp != NULL) && (fdp == &fr->fr_tif))
-			return -1;
-	}
-	if (fdp != NULL) {
-		if (fdp->fd_ip.s_addr)
-			dip = fdp->fd_ip;
-	}
+	if ((fdp != NULL) && (fdp->fd_ip.s_addr))
+		dip = fdp->fd_ip;
 
 	switch (fin->fin_v)
 	{
@@ -791,82 +872,6 @@ caddr_t	data;
 		return EFAULT;
 
 	bzero((char *)frstats, sizeof(*frstats) * 2);
-
-	return 0;
-}
-
-
-int iplattach()
-{
-	int err, i;
-
-	SPL_NET(s);
-	if (fr_running > 0) {
-		SPL_X(s);
-		return -EBUSY;
-	}
-
-	bzero((char *)frcache, sizeof(frcache));
-	MUTEX_INIT(&ipf_rw, "ipf rw mutex");
-	MUTEX_INIT(&ipl_mutex, "ipf log mutex");
-	MUTEX_INIT(&ipf_timeoutlock, "ipf timeout lock mutex");
-	RWLOCK_INIT(&ipf_global, "ipf global rwlock");
-	RWLOCK_INIT(&ipf_mutex, "ipf global mutex rwlock");
-	RWLOCK_INIT(&ipf_ipidfrag, "ipf IP NAT-Frag rwlock");
-
-	for (i = 0; i < sizeof(ipf_hooks)/sizeof(ipf_hooks[0]); i++) {
-		err = nf_register_hook(&ipf_hooks[i]);
-		if (err != 0)
-			return err;
-	}
-
-	if (fr_initialise() < 0) {
-		for (i = 0; i < sizeof(ipf_hooks)/sizeof(ipf_hooks[0]); i++)
-			nf_unregister_hook(&ipf_hooks[i]);
-		SPL_X(s);
-		return EIO;
-	}
-
-	bzero((char *)frcache, sizeof(frcache));
-#ifdef notyet
-	if (fr_control_forwarding & 1)
-		ipv4_devconf.forwarding = 1;
-#endif
-
-	SPL_X(s);
-	/* timeout(fr_slowtimer, NULL, (hz / IPF_HZ_DIVIDE) * IPF_HZ_MULT); */
-	return 0;
-}
-
-
-int ipldetach()
-{
-	int i;
-
-	SPL_NET(s);
-
-	for (i = 0; i < sizeof(ipf_hooks)/sizeof(ipf_hooks[0]); i++)
-		nf_unregister_hook(&ipf_hooks[i]);
-	/* untimeout(fr_slowtimer, NULL); */
-
-#ifdef notyet
-	if (fr_control_forwarding & 2)
-		ipv4_devconf.forwarding = 0;
-#endif
-
-	fr_deinitialise();
-
-	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
-	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE);
-
-	MUTEX_DESTROY(&ipf_timeoutlock);
-	MUTEX_DESTROY(&ipl_mutex);
-	MUTEX_DESTROY(&ipf_rw);
-	RW_DESTROY(&ipf_mutex);
-	RW_DESTROY(&ipf_global);
-	RW_DESTROY(&ipf_ipidfrag);
-
-	SPL_X(s);
 
 	return 0;
 }
@@ -1103,4 +1108,30 @@ int len;
 	if (len == fin->fin_plen)
 		fin->fin_flx |= FI_COALESCE;
 	return ip;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_slowtimer                                                */
+/* Returns:     Nil                                                         */
+/* Parameters:  Nil                                                         */
+/*                                                                          */
+/* Slowly expire held state for fragments.  Timeouts are set * in           */
+/* expectation of this being called twice per second.                       */
+/* ------------------------------------------------------------------------ */
+void fr_slowtimer(long value)
+{
+	READ_ENTER(&ipf_global);
+
+	fr_fragexpire();
+	fr_timeoutstate();
+	fr_natexpire();
+	fr_authexpire();
+	fr_ticks++;
+	if (fr_running <= 0)
+		goto done;
+	mod_timer(&ipf_timer, HZ/2 + jiffies);
+
+done:
+	RWLOCK_EXIT(&ipf_global);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpf.c,v 1.1.1.2 2002/01/24 08:18:32 martti Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.1.1.3 2006/04/04 16:09:19 martti Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed. (from tcplog)
@@ -11,6 +11,9 @@
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
+#ifdef __NetBSD__
+# include <paths.h>
+#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -123,8 +126,18 @@ int	tout;
 	struct	bpf_version bv;
 	struct	timeval to;
 	struct	ifreq ifr;
+#ifdef _PATH_BPF
+	char 	*bpfname = _PATH_BPF;
+	int	fd;
+
+	if ((fd = open(bpfname, O_RDWR)) < 0)
+	    {
+		fprintf(stderr, "no bpf devices available as /dev/bpfxx\n");
+		return -1;
+	    }
+#else
 	char	bpfname[16];
-	int	fd, i;
+	int	fd = -1, i;
 
 	for (i = 0; i < 16; i++)
 	    {
@@ -137,6 +150,7 @@ int	tout;
 		fprintf(stderr, "no bpf devices available as /dev/bpfxx\n");
 		return -1;
 	    }
+#endif
 
 	if (ioctl(fd, BIOCVERSION, (caddr_t)&bv) < 0)
 	    {

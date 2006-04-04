@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_log.c,v 1.1.1.2 2005/02/08 06:53:27 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.1.1.3 2006/04/04 16:10:41 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_log.c,v 2.75.2.6 2004/10/16 07:59:27 darrenr Exp
+ * Id: ip_log.c,v 2.75.2.11 2006/03/26 13:50:47 darrenr Exp
  */
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -67,6 +67,10 @@ struct file;
 #  include <sys/dir.h>
 # endif
 # include <sys/mbuf.h>
+# include <sys/select.h>
+# if __FreeBSD_version >= 500000
+#  include <sys/selinfo.h>
+# endif
 #else
 # if !defined(__hpux) && defined(_KERNEL)
 #  include <sys/filio.h>
@@ -147,6 +151,7 @@ wait_queue_head_t	iplh_linux[IPL_LOGSIZE];
 # endif
 # if SOLARIS
 extern	kcondvar_t	iplwait;
+extern	struct pollhead	iplpollhead[IPL_LOGSIZE];
 # endif
 
 iplog_t	**iplh[IPL_LOGSIZE], *iplt[IPL_LOGSIZE], *ipll[IPL_LOGSIZE];
@@ -416,9 +421,7 @@ int *types, cnt;
 	iplog_t *ipl;
 	size_t len;
 	int i;
-# if defined(_KERNEL) && !defined(MENTAT) && defined(USE_SPL)
-	int s;
-# endif
+	SPL_INT(s);
 
 	/*
 	 * Check to see if this log record has a CRC which matches the last
@@ -507,9 +510,11 @@ int *types, cnt;
 # if SOLARIS && defined(_KERNEL)
 	cv_signal(&iplwait);
 	MUTEX_EXIT(&ipl_mutex);
+	pollwakeup(&iplpollhead[dev], POLLRDNORM);
 # else
 	MUTEX_EXIT(&ipl_mutex);
-	WAKEUP(iplh,dev);
+	WAKEUP(iplh, dev);
+	POLLWAKEUP(dev);
 # endif
 	SPL_X(s);
 # ifdef	IPL_SELECT
@@ -538,9 +543,7 @@ struct uio *uio;
 	size_t dlen, copied;
 	int error = 0;
 	iplog_t *ipl;
-# if defined(_KERNEL) && !defined(MENTAT) && defined(USE_SPL)
-	int s;
-# endif
+	SPL_INT(s);
 
 	/*
 	 * Sanity checks.  Make sure the minor # is valid and we're copying
@@ -652,9 +655,7 @@ minor_t unit;
 {
 	iplog_t *ipl;
 	int used;
-# if defined(_KERNEL) && !defined(MENTAT) && defined(USE_SPL)
-	int s;
-# endif
+	SPL_INT(s);
 
 	SPL_NET(s);
 	MUTEX_ENTER(&ipl_mutex);
@@ -670,5 +671,20 @@ minor_t unit;
 	MUTEX_EXIT(&ipl_mutex);
 	SPL_X(s);
 	return used;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipflog_canread                                              */
+/* Returns:     int    - 0 == no data to read, 1 = data present             */
+/* Parameters:  unit(I) - device we are reading from                        */
+/*                                                                          */
+/* Returns an indication of whether or not there is data present in the     */
+/* current buffer for the selected ipf device.                              */
+/* ------------------------------------------------------------------------ */
+int ipflog_canread(unit)
+int unit;
+{
+	return iplt[unit] != NULL;
 }
 #endif /* IPFILTER_LOG */

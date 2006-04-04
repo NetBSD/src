@@ -12,6 +12,7 @@ TOP=..
 #
 # For SunOS 4.1.x
 #
+DCPU=$(shell uname -m)
 DCPU:sh=uname -m
 DEF=-D$(DCPU) -D__$(DCPU)__ -DINET -DKERNEL -D_KERNEL -Dsun $(CPU)
 IPDEF=$(DEF) -DGATEWAY -DDIRECTED_BROADCAST

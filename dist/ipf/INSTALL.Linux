@@ -1,1 +1,25 @@
-Linux is no longer supported.
+
+The Linux 2.4 and 2.6 series of kernels are supported by this software.
+
+Building has been tested on RedHat 9 and SUSE 9.x, although your results may vary.
+
+You will need to have your kernel source in /usr/src/linux to build IPFilter.
+
+The steps required are as follows:
+
+1. Create the binaries
+
+make linux
+
+2. Create the RPM file
+
+make install-linux
+
+3. In an ideal world, this step wouldn't be required.  At this point you need to locate
+the actual RPM file as the rpmbuild failed in the previous step.  Now run:
+
+rpm -i /path/to/ipfilter.rpm
+
+At this point IPFilter should be installed and ready to use.
+
+Darren

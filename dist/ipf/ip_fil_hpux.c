@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.3 2005/02/08 06:52:57 martti Exp $	*/
+/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.4 2006/04/04 16:08:29 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.11 2005/01/08 16:55:52 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.13 2006/03/29 11:19:56 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ extern	struct	callout	*fr_timer_id;
 static	int	fr_send_ip(fr_info_t *, mblk_t *);
 ipfmutex_t	ipl_mutex, ipf_authmx, ipf_rw, ipf_stinsert;
 ipfmutex_t	ipf_nat_new, ipf_natio, ipf_timeoutlock;
-ipfrwlock_t	ipf_mutex, ipf_global, ipf_ipidfrag;
+ipfrwlock_t	ipf_mutex, ipf_global, ipf_ipidfrag, ipf_frcache;
 ipfrwlock_t	ipf_frag, ipf_state, ipf_nat, ipf_natfrag, ipf_auth;
 int		*ip_ttl_ptr;
 int		*ip_mtudisc;
@@ -82,6 +82,7 @@ int ipldetach()
 
 	RW_DESTROY(&ipf_ipidfrag);
 	RW_DESTROY(&ipf_mutex);
+	RW_DESTROY(&ipf_frcache);
 	/* NOTE: This lock is acquired in ipf_detach */
 	RWLOCK_EXIT(&ipf_global);
 	RW_DESTROY(&ipf_global);
@@ -105,6 +106,7 @@ int iplattach __P((void))
 	MUTEX_INIT(&ipf_timeoutlock, "ipf_timeoutlock");
 	RWLOCK_INIT(&ipf_global, "ipf filter load/unload mutex");
 	RWLOCK_INIT(&ipf_mutex, "ipf filter rwlock");
+	RWLOCK_INIT(&ipf_frcache, "ipf cache rwlock");
 	RWLOCK_INIT(&ipf_ipidfrag, "ipf IP NAT-Frag rwlock");
 
 	if (fr_initialise() < 0)
@@ -514,7 +516,7 @@ fr_info_t *fin;
 		ip->ip_p = IPPROTO_TCP;
 		ip->ip_len = sizeof(*ip) + sizeof(*tcp);
 		ip->ip_tos = fin->fin_ip->ip_tos;
-		tcp2->th_sum = fr_cksum(m, ip, IPPROTO_TCP, tcp2);
+		tcp2->th_sum = fr_cksum(m, ip, IPPROTO_TCP, tcp2, ip->ip_len);
 	}
 	return fr_send_ip(fin, m);
 }

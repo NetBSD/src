@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_irix.c,v 1.1.1.3 2005/02/08 06:52:58 martti Exp $	*/
+/*	$NetBSD: ip_fil_irix.c,v 1.1.1.4 2006/04/04 16:08:30 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_irix.c,v 2.42.2.15 2005/01/08 16:55:53 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_irix.c,v 2.42.2.17 2006/03/25 13:03:01 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -77,8 +77,6 @@ extern	toid_t	fr_timer_id;
 
 static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
 static	int	fr_send_ip __P((fr_info_t *, struct mbuf *, struct mbuf **));
-extern  ipfmutex_t	ipf_rw;
-extern	ipfrwlock_t	ipf_mutex;
 
 
 int ipl_attach()
@@ -837,26 +835,16 @@ frdest_t *fdp;
 	bzero((caddr_t)ro, sizeof (*ro));
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
+	dst->sin_addr = ip->ip_dst;
 
 	fr = fin->fin_fr;
 	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
-	else {
+	else
 		ifp = fin->fin_ifp;
-		dst->sin_addr = ip->ip_dst;
-	}
 
-	/*
-	 * In case we're here due to "to <if>" being used with "keep state",
-	 * check that we're going in the correct direction.
-	 */
-	if ((fr != NULL) && (fin->fin_rev != 0)) {
-		if ((ifp != NULL) && (fdp == &fr->fr_tif))
-			return -1;
-		dst->sin_addr = ip->ip_dst;
-	}
-	if (fdp != NULL)
-		dst->sin_addr = fdp->fd_ip.s_addr ? fdp->fd_ip : ip->ip_dst;
+	if ((fdp != NULL) && (fdp->fd_ip.s_addr != 0))
+		dst->sin_addr = fdp->fd_ip.s_addr;
 
 	rtalloc(ro);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf-linux.h,v 1.1.1.3 2005/02/08 06:53:09 martti Exp $	*/
+/*	$NetBSD: ipf-linux.h,v 1.1.1.4 2006/04/04 16:09:00 martti Exp $	*/
 
 #ifndef __IPF_LINUX_H__
 #define __IPF_LINUX_H__
@@ -101,13 +101,18 @@ struct icmp {
 			__u16	icd_id;
 			__u16	icd_seq;
 		} ih_idseq;
-		int ih_void;
+		__u32	 ih_void;
+		struct	ih_pmtu	{
+			__u16	ipm_void;
+			__u16	ipm_nextmtu;
+		} ih_pmtu;
 	} icmp_hun;
 # define	icmp_pptr	icmp_hun.ih_pptr
 # define	icmp_gwaddr	icmp_hun.ih_gwaddr
 # define	icmp_id		icmp_hun.ih_idseq.icd_id
 # define	icmp_seq	icmp_hun.ih_idseq.icd_seq
 # define	icmp_void	icmp_hun.ih_void
+# define	icmp_nextmtu	icmp_hun.ih_pmtu.ipm_nextmtu
 	union {
 		struct id_ts {
 			__u32	its_otime;
