@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.63 2006/02/02 19:33:12 he Exp $	*/
+/*	$NetBSD: commands.c,v 1.64 2006/04/04 21:35:20 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.63 2006/02/02 19:33:12 he Exp $");
+__RCSID("$NetBSD: commands.c,v 1.64 2006/04/04 21:35:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2876,7 +2876,8 @@ sourceroute(struct addrinfo *ai, char *arg, char **cpp, int *protop, int *optp)
 		else
 			break;
 	}
-	if (ai->ai_family == AF_INET) {
+	switch (ai->ai_family) {
+	case AF_INET:
 		/* record the last hop */
 		if (lsrp + 4 > lsrep)
 			return -1;
@@ -2889,15 +2890,16 @@ sourceroute(struct addrinfo *ai, char *arg, char **cpp, int *protop, int *optp)
 		*lsrp++ = IPOPT_NOP;	/*32bit word align*/
 		len = lsrp - lsr;
 		*cpp = lsr;
-	}
+		break;
 #ifdef INET6
-	else if (ai->ai_family == AF_INET6) {
+	case AF_INET6:
 		inet6_rthdr_lasthop(cmsg, IPV6_RTHDR_LOOSE);
 		len = cmsg->cmsg_len;
 		*cpp = rhbuf;
-	}
+		break;
 #endif
-	else
+	default:
 		return -1;
+	}
 	return len;
 }
