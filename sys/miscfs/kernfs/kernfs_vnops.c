@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.118 2006/03/14 20:47:52 bouyer Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.119 2006/04/04 14:21:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.118 2006/03/14 20:47:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.119 2006/04/04 14:21:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1142,9 +1142,9 @@ kernfs_readdir(v)
 						break;
 				} else {
 					dkt = SIMPLEQ_NEXT(dkt, dkt_queue);
-					if (dkt == NULL)
-						break;
 				}
+				if (dkt == NULL)
+					break;
 				kt = &dkt->dkt_kt;
 			}
 			if (kt->kt_tag == KFSdevice) {
