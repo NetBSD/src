@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.31 2006/04/03 21:18:20 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.32 2006/04/04 22:25:23 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.31 2006/04/03 21:18:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.32 2006/04/04 22:25:23 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,6 @@ igsfb_init_video(dc)
 	 * For now - hardcode to 1024x768/8bpp.  This is what Krups OFW uses.
 	 */
 	igsfb_hw_setup(dc);
-	delay(10000);		/* XXX: uwe */
 
 	dc->dc_width = 1024;
 	dc->dc_height = 768;
