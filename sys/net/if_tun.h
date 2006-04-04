@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.14 2006/04/03 23:29:39 rpaulo Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.15 2006/04/04 11:23:59 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -54,7 +54,7 @@ struct tun_softc {
 #define	TUNGDEBUG	_IOR('t', 89, int)
 #define	TUNSIFMODE	_IOW('t', 88, int)
 #define	TUNSLMODE	_IOW('t', 87, int)
-#define	TUNSIFHEAD	_IOW('t', 86, int)
-#define	TUNGIFHEAD	_IOR('t', 85, int)
+#define	TUNSIFHEAD	_IOW('t', 66, int)
+#define	TUNGIFHEAD	_IOR('t', 65, int)
 
 #endif /* !_NET_IF_TUN_H_ */
