@@ -1,3 +1,5 @@
+.\" $NetBSD: ndiscvt.8,v 1.2 2006/04/04 20:25:14 wiz Exp $
+.\"
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com> All rights reserved.
 .\"
@@ -38,14 +40,14 @@
 .Nd convert
 .Tn Windows\[rg]
 NDIS drivers for use with
-.Fx
+.Nx
 .Sh SYNOPSIS
 .Nm
 .Op Fl O
 .Op Fl i Ar inffile
-.Fl s Ar sysfile
 .Op Fl n Ar devname
 .Op Fl o Ar outfile
+.Fl s Ar sysfile
 .Nm
 .Op Fl f Ar firmfile
 .Sh DESCRIPTION
@@ -74,7 +76,7 @@ into
 .Pa if_ndis.c
 to create an object code module that can be linked into
 the
-.Fx
+.Nx
 kernel.
 .Pp
 The
@@ -93,79 +95,7 @@ file.
 This is useful for debugging purposes only.
 .Sh OPTIONS
 The options are as follows:
-.Bl -tag -width indent
-.It Fl i Ar inffile
-Open and parse the specified
-.Pa .INF
-file when performing conversion.
-The
-.Nm
-utility will parse this file and emit a device identification
-structure and registry key configuration structures which will be
-used by the
-.Xr ndis 4
-driver and
-.Xr ndisapi 9
-kernel subsystem.
-If this is omitted,
-.Nm
-will emit a dummy configuration structure only.
-.It Fl s Ar sysfile
-Open and parse the specified
-.Pa .SYS
-file.
-This file must contain a
-.Tn Windows\[rg]
-driver image.
-The
-.Nm
-utility will perform some manipulation of the sections within the
-executable file to make runtime linking within the kernel a little
-easier and then convert the image into a data array.
-.It Fl n Ar devname
-Specify an alternate name for the network device/interface which will
-be created when the driver is instantiated.
-If you need to load more
-than one NDIS driver into your system (i.e., if you have two different
-network cards in your system which require NDIS driver support), each
-module you create must have a unique name.
-Device can not be larger than
-.Dv IFNAMSIZ .
-If no name is specified, the driver will use the
-default a default name
-.Pq Dq Li ndis .
-.It Fl o Ar outfile
-Specify the output file in which to place the resulting data.
-This can be any file pathname.
-If
-.Ar outfile
-is a single dash
-.Pq Sq Fl ,
-the data will be written to the standard output.
-The
-.Pa if_ndis.c
-module expects to find the driver data in a file called
-.Pa ndis_driver_data.h ,
-so it is recommended that this name be used.
-.It Fl O
-Generate both an
-.Pa ndis_driver_data.h
-file and
-an
-.Pa ndis_driver.data.o
-file.
-The latter file will contain a copy of the
-.Tn Windows\[rg]
-.Pa .SYS
-driver image encoded as a
-.Fx
-ELF object file
-(created with
-.Xr objcopy 1 ) .
-Turning the
-.Tn Windows\[rg]
-driver image directly into an object code file saves disk space
-and compilation time.
+.Bl -tag -offset indent -width XfXfirmfileXX
 .It Fl f Ar firmfile
 A few NDIS drivers come with additional files that the core
 driver module will load during initialization time.
@@ -178,7 +108,7 @@ these files are usually just copied into one of the system
 directories along with the driver itself.
 .Pp
 In
-.Fx
+.Nx
 there are two mechanism for loading these files.
 If the driver
 is built as a loadable kernel module which is loaded after the
@@ -199,7 +129,7 @@ loader in order to be accessible, since the driver will need them
 before the root file system has been mounted.
 However, the bootstrap
 loader is only able to load files that are shared
-.Fx
+.Nx
 binary objects.
 .Pp
 The
@@ -258,6 +188,78 @@ linked into the kernel directly along with the driver itself.
 Some
 editing of the kernel configuration files will be necessary in order
 to have the extra object included in the build.
+.It Fl i Ar inffile
+Open and parse the specified
+.Pa .INF
+file when performing conversion.
+The
+.Nm
+utility will parse this file and emit a device identification
+structure and registry key configuration structures which will be
+used by the
+.Xr ndis 4
+driver and
+.Xr ndisapi 9
+kernel subsystem.
+If this is omitted,
+.Nm
+will emit a dummy configuration structure only.
+.It Fl n Ar devname
+Specify an alternate name for the network device/interface which will
+be created when the driver is instantiated.
+If you need to load more
+than one NDIS driver into your system (i.e., if you have two different
+network cards in your system which require NDIS driver support), each
+module you create must have a unique name.
+Device can not be larger than
+.Dv IFNAMSIZ .
+If no name is specified, the driver will use the
+default a default name
+.Pq Dq Li ndis .
+.It Fl O
+Generate both an
+.Pa ndis_driver_data.h
+file and
+an
+.Pa ndis_driver.data.o
+file.
+The latter file will contain a copy of the
+.Tn Windows\[rg]
+.Pa .SYS
+driver image encoded as a
+.Nx
+ELF object file
+(created with
+.Xr objcopy 1 ) .
+Turning the
+.Tn Windows\[rg]
+driver image directly into an object code file saves disk space
+and compilation time.
+.It Fl o Ar outfile
+Specify the output file in which to place the resulting data.
+This can be any file pathname.
+If
+.Ar outfile
+is a single dash
+.Pq Sq Fl ,
+the data will be written to the standard output.
+The
+.Pa if_ndis.c
+module expects to find the driver data in a file called
+.Pa ndis_driver_data.h ,
+so it is recommended that this name be used.
+.It Fl s Ar sysfile
+Open and parse the specified
+.Pa .SYS
+file.
+This file must contain a
+.Tn Windows\[rg]
+driver image.
+The
+.Nm
+utility will perform some manipulation of the sections within the
+executable file to make runtime linking within the kernel a little
+easier and then convert the image into a data array.
 .El
 .Sh SEE ALSO
 .Xr ld 1 ,
@@ -280,6 +282,6 @@ The
 .Xr lex 1
 and
 .Xr yacc 1
-.Pa INF
+.Pa .INF
 file parser was written by
 .An Matthew Dodd Aq mdodd@FreeBSD.org .
