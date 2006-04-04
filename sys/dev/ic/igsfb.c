@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.33 2006/04/04 22:36:15 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.34 2006/04/04 23:00:15 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.33 2006/04/04 22:36:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.34 2006/04/04 23:00:15 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,7 @@ igsfb_init_wsdisplay(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_height = dc->dc_height;
 
 	ri->ri_stride = dc->dc_width; /* XXX: 8bpp specific */
-	ri->ri_bits = (u_char *)dc->dc_fbh;
+	ri->ri_bits = bus_space_vaddr(dc->dc_memt, dc->dc_fbh);
 
 	/*
 	 * Initialize wsfont related stuff.
