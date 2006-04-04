@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.53 2006/04/03 21:28:11 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.54 2006/04/04 21:49:22 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1130,4 +1130,22 @@ share/man/man9/mbuf.9				1.41
 	Fix up the description of m_copyback_cow(), which was at best
 	ambiguous, and at worst, wrong.
 	[riz, ticket #1233]
+
+lib/libm/arch/i387/s_scalbn.S			1.8
+lib/libm/arch/i387/s_scalbnf.S			1.7
+
+	Fix the ldexp() bug reported on the port-amd64 mailing list.
+	[drochner, ticket #1236]
+
+etc/MAKEDEV.tmpl				1.51
+
+	Fix tty name resolution for high numbered ptys.
+	[christos, ticket #1237]
+
+etc/rc.subr					1.66
+
+	In order to handle some perl scripts running as daemons, add a
+	pattern which also matches "`basename $interpreter`: $command" in the
+	ps listing. This fixes PR bin/31932.
+	[he, ticket #1238]
 
