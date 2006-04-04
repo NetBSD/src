@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.84 2006/04/03 23:29:39 rpaulo Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.85 2006/04/04 11:33:15 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.84 2006/04/03 23:29:39 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.85 2006/04/04 11:33:15 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -542,7 +542,9 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 				goto out;
 			}
 			bcopy(dst, mtod(m0, char *), dst->sa_len);
-		} else if (tp->tun_flags & TUN_IFHEAD) {
+		}
+
+		if (tp->tun_flags & TUN_IFHEAD) {
 			/* Prepend the address family */
 			M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
 			if (m0 == NULL) {
@@ -831,13 +833,17 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 					goto out0;
 				}
 		}
-	} else {
+	} else if (tp->tun_flags & TUN_IFHEAD) {
 		if (uio->uio_resid < sizeof(family)){
 			error = EIO;
 			goto out0;
 		}
 		error = uiomove((caddr_t)&family, sizeof(family), uio);
 		dst.sa_family = ntohl(family);
+	} else {
+#ifdef INET
+		dst.sa_family = AF_INET;
+#endif
 	}
 
 	if (uio->uio_resid > TUNMTU) {
