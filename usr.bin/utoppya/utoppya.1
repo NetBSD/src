@@ -1,4 +1,4 @@
-.\" $NetBSD: utoppya.1,v 1.1 2006/04/03 08:15:49 scw Exp $
+.\" $NetBSD: utoppya.1,v 1.2 2006/04/04 20:45:41 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -101,7 +101,9 @@ named using the last component of the
 operand.
 If
 .Ar localfile
-is -, then
+is
+.Sq - ,
+then
 .Ar toppyfile
 will be copied to the standard output.
 .Pp
@@ -150,8 +152,8 @@ command.
 .Pa /dev/utoppy0
 The default Topfield TF5000PVR instance.
 .Sh SEE ALSO
-.Xr utoppy 4 ,
-.Xr usb 4
+.Xr usb 4 ,
+.Xr utoppy 4
 .Sh HISTORY
 The
 .Nm
@@ -164,6 +166,6 @@ written by Steve Bennett
 and
 .Ql puppy
 written by Peter Urbanec
-.Aq toppy at urbanec.net
+.Aq toppy at urbanec.net .
 .Sh AUTHORS
 .An Steve C. Woodford Aq scw@netbsd.org
