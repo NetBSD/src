@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.32 2006/04/04 22:25:23 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.33 2006/04/04 22:36:15 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.32 2006/04/04 22:25:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.33 2006/04/04 22:36:15 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,13 +62,9 @@ struct igsfb_devconfig igsfb_console_dc;
  * wsscreen
  */
 
-/* filled from rasops_info in igsfb_common_init */
+/* filled from rasops_info in igsfb_init_wsdisplay */
 static struct wsscreen_descr igsfb_stdscreen = {
-	"std",			/* name */
-	0, 0,			/* ncols, nrows */
-	NULL,			/* textops */
-	0, 0,			/* fontwidth, fontheight */
-	0			/* capabilities */
+	.name = "std",
 };
 
 static const struct wsscreen_descr *_igsfb_scrlist[] = {
@@ -76,8 +72,8 @@ static const struct wsscreen_descr *_igsfb_scrlist[] = {
 };
 
 static const struct wsscreen_list igsfb_screenlist = {
-	sizeof(_igsfb_scrlist) / sizeof(struct wsscreen_descr *),
-	_igsfb_scrlist
+	.nscreens = sizeof(_igsfb_scrlist) / sizeof(_igsfb_scrlist[0]),
+	.screens = _igsfb_scrlist,
 };
 
 
@@ -89,15 +85,8 @@ static int	igsfb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static paddr_t	igsfb_mmap(void *, off_t, int);
 
 static struct wsdisplay_accessops igsfb_accessops = {
-	igsfb_ioctl,
-	igsfb_mmap,
-	NULL,
-	NULL,
-	NULL,
-	NULL,			/* load_font */
-	NULL,			/* pollc */
-	NULL,			/* getwschar */
-	NULL			/* putwschar */
+	.ioctl = igsfb_ioctl,
+	.mmap = igsfb_mmap,
 };
 
 
