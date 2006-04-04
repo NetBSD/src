@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.34 2006/04/04 23:00:15 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.35 2006/04/04 23:43:40 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.34 2006/04/04 23:00:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.35 2006/04/04 23:43:40 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,6 +287,7 @@ igsfb_init_video(dc)
 	dc->dc_width = 1024;
 	dc->dc_height = 768;
 	dc->dc_depth = 8;
+	dc->dc_stride = dc->dc_width;
 
 	/*
 	 * Don't map in all N megs, just the amount we need for the wsscreen.
@@ -423,8 +424,7 @@ igsfb_init_wsdisplay(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_depth = dc->dc_depth;
 	ri->ri_width = dc->dc_width;
 	ri->ri_height = dc->dc_height;
-
-	ri->ri_stride = dc->dc_width; /* XXX: 8bpp specific */
+	ri->ri_stride = dc->dc_stride;
 	ri->ri_bits = bus_space_vaddr(dc->dc_memt, dc->dc_fbh);
 
 	/*
@@ -612,7 +612,6 @@ igsfb_ioctl(v, cmd, data, flag, l)
 {
 	struct vcons_data *vd = v;
 	struct igsfb_devconfig *dc = vd->cookie;
-	struct rasops_info *ri;
 	int cursor_busy;
 	int turnoff;
 
@@ -627,18 +626,16 @@ igsfb_ioctl(v, cmd, data, flag, l)
 		return (0);
 
 	case WSDISPLAYIO_GINFO:
-		ri = &dc->dc_vd.active->scr_ri;
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
-		wsd_fbip->height = ri->ri_height;
-		wsd_fbip->width = ri->ri_width;
-		wsd_fbip->depth = ri->ri_depth;
+		wsd_fbip->height = dc->dc_height;
+		wsd_fbip->width = dc->dc_width;
+		wsd_fbip->depth = dc->dc_depth;
 		wsd_fbip->cmsize = IGS_CMAP_SIZE;
 #undef wsd_fbip
 		return (0);
 		
 	case WSDISPLAYIO_LINEBYTES:
-		ri = &dc->dc_vd.active->scr_ri;
-		*(int *)data = ri->ri_stride;
+		*(int *)data = dc->dc_stride;
 		return (0);
 
 	case WSDISPLAYIO_SMODE:

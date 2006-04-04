@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.13 2006/02/23 08:01:59 macallan Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.14 2006/04/04 23:43:40 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -75,7 +75,7 @@ struct igsfb_devconfig {
 	bus_size_t dc_vmemsz;
 
 	/* resolution */
-	int dc_width, dc_height, dc_depth;
+	int dc_width, dc_height, dc_depth, dc_stride;
 
 	/* part of video memory mapped for wsscreen */
 	bus_space_handle_t dc_fbh;
