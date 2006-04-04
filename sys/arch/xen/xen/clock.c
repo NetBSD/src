@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 2006/03/17 06:04:24 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 2006/04/04 21:08:47 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2006/03/17 06:04:24 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2006/04/04 21:08:47 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.19 2006/03/17 06:04:24 jld Exp $");
 
 #include "config_time.h"		/* for CONFIG_TIME */
 
-/* #define XEN_CLOCK_DEBUG */
+#if defined(DEBUG) && !defined(XEN_CLOCK_DEBUG)
+#define XEN_CLOCK_DEBUG
+#endif
 
 static int xen_timer_handler(void *, struct intrframe *);
 
@@ -146,7 +148,7 @@ inittodr(time_t base)
 
 	time.tv_usec = shadow_tv.tv_usec;
 	time.tv_sec = shadow_tv.tv_sec + rtc_offset * 60;
-#ifdef DEBUG_CLOCK
+#ifdef XEN_CLOCK_DEBUG
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
 	/* reset microset, so that the next call to microset() will init */
@@ -283,10 +285,18 @@ xen_microtime(struct timeval *tv)
 	*tv = time;
 	/* Extrapolate from hardclock()'s last step. */
 	cycles = cpu_counter() - ci->ci_cc.cc_cc;
-	KDASSERT(cycles > 0);
+#ifdef XEN_CLOCK_DEBUG
+	if (cycles <= 0) {
+		printf("xen_microtime: CPU counter has decreased by %" PRId64
+		    " since last hardclock(9)\n", -cycles);
+ 	}
+#endif
 	cycles += ci->ci_cc.cc_denom * cpu_frequency(ci) / 1000000000LL;
 	tv->tv_usec += cycles * ci->ci_cc.cc_ms_delta * hz / cpu_frequency(ci);
-	KDASSERT(tv->tv_usec < 2000000);
+#ifdef XEN_CLOCK_DEBUG
+	if (tv->tv_usec >= 2000000)
+		printf("xen_microtime: unexpectedly large tv_usec %ld\n", tv->tv_usec);
+#endif
 	if (tv->tv_usec >= 1000000) {
 		tv->tv_sec++;
 		tv->tv_usec -= 1000000;
@@ -349,7 +359,12 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 		
 		/* Use that tick length for the coming tick's microtimes. */
 		timersub(&time, &oldtime, &elapsed);
-		KDASSERT(elapsed.tv_sec == 0);
+#ifdef XEN_CLOCK_DEBUG
+		if (elapsed.tv_sec != 0) {
+			printf("xen_timer_handler: hardclock(9) stepped by %ld.%06lds\n",
+			    elapsed.tv_sec, elapsed.tv_usec);
+		}
+#endif
 		ci->ci_cc.cc_ms_delta = elapsed.tv_usec;
 
 		delta -= NS_PER_TICK;
