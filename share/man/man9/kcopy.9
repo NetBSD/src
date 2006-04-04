@@ -1,4 +1,4 @@
-.\"     $NetBSD: kcopy.9,v 1.2 2003/04/16 13:35:29 wiz Exp $
+.\"     $NetBSD: kcopy.9,v 1.3 2006/04/04 17:33:40 mrg Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,6 +58,8 @@ aborting if a fatal page fault is encountered.
 must save and restore the old fault handler since it is called by
 .Xr uiomove 9 ,
 which may be in the path of servicing a non-fatal page fault.
+.Fn kcopy
+returns 0 on success.  All other values indicate failure.
 .Sh SEE ALSO
 .Xr memcpy 9 ,
 .Xr uiomove 9
