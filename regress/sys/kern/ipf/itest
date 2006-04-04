@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: itest,v 1.3 2004/07/23 05:39:04 martti Exp $
+# $NetBSD: itest,v 1.4 2006/04/04 16:17:19 martti Exp $
 #
 TESTDIR=$1
 shift
@@ -19,7 +19,14 @@ else
 fi
 echo "$1...";
 /bin/cp /dev/null results/$1
-ipf -Rnvf ${TESTDIR}/regress/$1 2>/dev/null > results/$1
+case $3 in
+ipf)
+	ipf -Rnvf ${TESTDIR}/regress/$1 2>/dev/null > results/$1
+	;;
+ipftest)
+	ipftest -D -r ${TESTDIR}/regress/$1 -i /dev/null > results/$1
+	;;
+esac
 cmp ${TESTDIR}/expected/$1 results/$1
 status=$?
 if [ $status = 0 ] ; then

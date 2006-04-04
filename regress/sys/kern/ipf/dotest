@@ -1,11 +1,14 @@
 #!/bin/sh
 #
-# $NetBSD: dotest,v 1.3 2004/07/23 05:39:04 martti Exp $
+# $NetBSD: dotest,v 1.4 2006/04/04 16:17:19 martti Exp $
 #
 TESTDIR=$1
 shift
 
+thistest=$1
 format=$2
+output=$3
+tuning=$4
 if [ -f /usr/ucb/touch ] ; then
 	TOUCH=/usr/ucb/touch
 else
@@ -17,18 +20,21 @@ else
 		fi
 	fi
 fi
-echo "$1...";
-/bin/cp /dev/null results/$1
+if [ "$tuning" != "" ] ; then
+	tuning="-T $tuning"
+fi
+echo "${thistest}...";
+/bin/cp /dev/null results/${thistest}
 ( while read rule; do
-	echo "$rule" | ipftest -F $format -Rbr - -i ${TESTDIR}/input/$1 >> results/$1;
+	echo "$rule" | ipftest -F $format -Rbr - -i ${TESTDIR}/input/${thistest} $tuning>> results/${thistest};
 	if [ $? -ne 0 ] ; then
 		exit 1;
 	fi
-	echo "--------" >> results/$1
-done ) < ${TESTDIR}/regress/$1
-cmp ${TESTDIR}/expected/$1 results/$1
+	echo "--------" >> results/${thistest}
+done ) < ${TESTDIR}/regress/${thistest}
+cmp ${TESTDIR}/expected/${thistest} results/${thistest}
 status=$?
 if [ $status = 0 ] ; then
-	$TOUCH $1
+	$TOUCH ${thistest}
 fi
 exit $status
