@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.765 2006/04/02 05:52:14 gdamore Exp $
+#	$NetBSD: files,v 1.766 2006/04/04 03:13:12 gdamore Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -518,6 +518,7 @@ file	dev/ic/ath.c					ath
 file	dev/ic/ath_netbsd.c				ath
 file	dev/ic/athrate-sample.c				ath
 file	contrib/dev/ath/netbsd/ah_osdep.c		ath
+object	/athhal.o					ath
 
 # ADMtek ADM8211 802.11
 #

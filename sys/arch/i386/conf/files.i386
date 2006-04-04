@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.284 2006/03/31 00:03:57 rittera Exp $
+#	$NetBSD: files.i386,v 1.285 2006/04/04 03:13:12 gdamore Exp $
 #
 # new style config file for i386 architecture
 #
@@ -506,8 +506,5 @@ defflag	opt_est.h	EST_FREQ_USERWRITE
 
 # AMD PowerNow K7
 file   arch/i386/i386/powernow_k7.c	powernow_k7
-
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-i386-elf.hal.o	ath
 
 include "arch/i386/conf/majors.i386"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ath.inc,v 1.1 2006/04/04 01:26:53 gdamore Exp $
+#	$NetBSD: Makefile.ath.inc,v 1.2 2006/04/04 03:13:12 gdamore Exp $
 
 # Rules for building a HAL on various platforms.  We put them here
 # to centralize them all in one place.
@@ -12,7 +12,16 @@
 ## hardware (R3000).
 ##
 
-.if ${MACHINE_ARCH} == "alpha"
+#
+# First we look for some specific MACHINEs that we know about
+#
+.if ${MACHINE} == "macppc"
+ATH_HAL=powerpc-be-eabi
+
+#
+# Then use use MACHINE_ARCH if we still don't know
+#
+.elif ${MACHINE_ARCH} == "alpha"
 ATH_HAL=alpha-elf
 
 .elif ${MACHINE_ARCH} == "arm"
