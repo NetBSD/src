@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.20 2006/03/15 14:30:56 gdt Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.21 2006/04/04 13:11:08 gdt Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.20 2006/03/15 14:30:56 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.21 2006/04/04 13:11:08 gdt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,12 +412,42 @@ venus_readlink(void *mdp, CodaFid *fid,
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     KASSERT(outp != NULL);
+    if (error != 0)
+	    goto out;
+
+    /* Check count for reasonableness */
+    if (outp->count <= 0 || outp->count > CODA_MAXPATHLEN) {
+	    printf("venus_readlink: bad count %d\n", outp->count);
+	    error = EINVAL;
+	    goto out;
+    }
+
+    /*
+     * Check data pointer for reasonableness.  It must point after
+     * itself, and within the allocated region.
+     */
+    if ((int) outp->data < sizeof(struct coda_readlink_out) ) {
+	    printf("venus_readlink: data pointer %d too low\n",
+		   (int) outp->data);
+	    error = EINVAL;
+	    goto out;
+    }
+    
+    if ((int) outp->data + outp->count >
+	sizeof(struct coda_readlink_out) + CODA_MAXPATHLEN) {
+	    printf("venus_readlink: data pointer %d too high\n",
+		   (int) outp->data);
+	    error = EINVAL;
+	    goto out;
+    }
+
     if (!error) {
 	    CODA_ALLOC(*str, char *, outp->count);
 	    *len = outp->count;
 	    bcopy((char *)outp + (int)(long)outp->data, *str, *len);
     }
 
+out:
     CODA_FREE(inp, coda_readlink_size);
     return error;
 }
