@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.64 2006/03/18 18:41:09 macallan Exp $
+#	$NetBSD: RESPONSIBLE,v 1.65 2006/04/04 13:30:59 gdt Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -151,6 +151,7 @@ trm		tsutsui
 
 file systems:
 
+coda		gdt
 lfs		perseant
 msdosfs		jdolecek
 nfs		fvdl
