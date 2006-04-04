@@ -1,3 +1,4 @@
+/* $NetBSD: xs_wire.h,v 1.3 2006/04/04 20:30:31 bouyer Exp $ */
 /*
  * Details of the "wire" protocol between Xen Store Daemon and client
  * library or guest kernel.
