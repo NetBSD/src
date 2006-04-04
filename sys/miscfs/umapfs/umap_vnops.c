@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.35 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.36 2006/04/04 14:16:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.35 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.36 2006/04/04 14:16:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ umap_bypass(v)
 			printf("umap_bypass: returning-user was %d\n",
 			    credp->cr_uid);
 
-		if (savecredp != NOCRED) {
+		if (savecredp != NOCRED && credpp) {
 			crfree(credp);
 			*credpp = savecredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && credpp &&
