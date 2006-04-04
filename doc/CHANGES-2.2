@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.48 2006/04/02 17:51:20 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.49 2006/04/04 21:21:28 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -638,4 +638,10 @@ sys/netinet/in.c				1.105
 	Close NULL dereference when a GIFALIAS is performed on a
 	non existant address.
 	[seanb, ticket #10411]
+
+share/man/man9/mbuf.9				1.41
+
+	Fix up the description of m_copyback_cow(), which was at best
+	ambiguous, and at worst, wrong.
+	[riz, ticket #10405]
 
