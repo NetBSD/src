@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.602 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.603 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -233,3 +233,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		recorders.  [scw 20060403]
 	utoppya(1): Userland program to interface to utoppy(4).
 		[scw 20060403]
+	ipf(8): Updated to version 4.1.13. [martti 20060404]
