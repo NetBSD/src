@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah.h,v 1.1 2006/04/02 05:52:17 gdamore Exp $
+ * $Id: ah.h,v 1.2 2006/04/05 23:41:03 gdamore Exp $
  */
 
 #ifndef _ATH_AH_H_
@@ -46,11 +46,7 @@
  * follow must call back into the HAL through interface, supplying the
  * reference as the first parameter.
  */
-#ifdef __NetBSD__
-#include "netbsd/ah_osdep.h"
-#else
 #include "ah_osdep.h"
-#endif
 
 /*
  * __ahdecl is analogous to _cdecl; it defines the calling
@@ -384,8 +380,8 @@ typedef struct {
 	u_int16_t	channelFlags;	/* see below */
 	u_int8_t	privFlags;
 	int8_t		maxRegTxPower;	/* max regulatory tx power in dBm */
-	int8_t		maxTxPower;	/* max true tx power in 0.25 dBm */
-	int8_t		minTxPower;	/* min true tx power in 0.25 dBm */
+	int8_t		maxTxPower;	/* max true tx power in 0.5 dBm */
+	int8_t		minTxPower;	/* min true tx power in 0.5 dBm */
 } HAL_CHANNEL;
 
 /* channelFlags */
@@ -577,7 +573,7 @@ struct ath_desc;
 struct ath_hal {
 	u_int32_t	ah_magic;	/* consistency check magic number */
 	u_int32_t	ah_abi;		/* HAL ABI version */
-#define	HAL_ABI_VERSION	0x05122200	/* YYMMDDnn */
+#define	HAL_ABI_VERSION	0x06033100	/* YYMMDDnn */
 	u_int16_t	ah_devid;	/* PCI device ID */
 	u_int16_t	ah_subvendorid;	/* PCI subvendor ID */
 	HAL_SOFTC	ah_sc;		/* back pointer to driver/os state */
@@ -601,6 +597,7 @@ struct ath_hal {
 				HAL_CHANNEL *, HAL_BOOL bChannelChange,
 				HAL_STATUS *status);
 	HAL_BOOL  __ahdecl(*ah_phyDisable)(struct ath_hal *);
+	HAL_BOOL  __ahdecl(*ah_disable)(struct ath_hal *);
 	void	  __ahdecl(*ah_setPCUConfig)(struct ath_hal *);
 	HAL_BOOL  __ahdecl(*ah_perCalibration)(struct ath_hal*, HAL_CHANNEL *, HAL_BOOL *);
 	HAL_BOOL  __ahdecl(*ah_setTxPowerLimit)(struct ath_hal *, u_int32_t);
