@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $	*/
+/*	$NetBSD: yacc.c,v 1.11 2006/04/05 20:03:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)yacc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yacc.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $");
+__RCSID("$NetBSD: yacc.c,v 1.11 2006/04/05 20:03:14 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,8 @@ y_entries(void)
 				*sp++ = c;
 			*sp = EOS;
 			getline();		/* may change before ':' */
+			if (c == EOF)
+				return;
 			while (iswhite(c)) {
 				if (c == '\n')
 					SETLINE;
