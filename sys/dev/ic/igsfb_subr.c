@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.7 2006/04/05 01:05:50 uwe Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.8 2006/04/05 01:13:50 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.7 2006/04/05 01:05:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.8 2006/04/05 01:13:50 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ igsfb_enable(bus_space_tag_t iot, bus_addr_t iobase, int ioflags)
 	bus_space_unmap(iot, regh, IGS_REG_SIZE);
   out2:	bus_space_unmap(iot, vseh, 1);
   out1:	bus_space_unmap(iot, vdoh, 1);
-  out0: return (ret);
+  out0: return ret;
 }
 
 
