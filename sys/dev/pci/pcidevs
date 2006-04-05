@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.778 2006/03/26 20:21:55 jonathan Exp $
+$NetBSD: pcidevs,v 1.779 2006/04/05 20:09:22 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -572,6 +572,7 @@ vendor DELTA		0x1500	Delta Electronics
 vendor ENE		0x1524	ENE Technology
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems
+vendor FARADAY		0x159b	Faraday Technology
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
