@@ -1,7 +1,7 @@
-/*	$NetBSD: devopen.c,v 1.2 2006/04/01 19:08:08 bjh21 Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2006/04/05 21:30:29 bjh21 Exp $	*/
 
 /*-
- * Copyright (c) 2001 Ben Harris
+ * Copyright (c) 2001, 2006 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,13 +50,13 @@ devopen(struct open_file *f, const char *fname, char **file)
 	*file = p + 1;
 	p--;
 	if (p == fname) return ENOENT;
-	if (*p >= 'a' && *p <= 'z')
+	if (islower((unsigned char)*p))
 		part = *p-- - 'a';
 	else
 		part = RAW_PART;
 	if (p == fname) return ENOENT;
 	drive = 0;
-	while (*p >= '0' && *p <= '9' && p >= fname)
+	while (isdigit((unsigned char)*p) && p >= fname)
 		drive = drive * 10 + *p-- - '0';
 	if (p <= fname) return ENOENT;
 
