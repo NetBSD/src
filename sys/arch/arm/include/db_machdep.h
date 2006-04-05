@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.10 2006/04/01 15:44:59 cherry Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.11 2006/04/05 00:38:51 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -47,7 +47,7 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 typedef trapframe_t db_regs_t;
 
-db_regs_t		ddb_regs;	/* register state */
+extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 #ifdef __PROG26
