@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2006/02/26 10:25:53 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.3 2006/04/05 16:55:05 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -231,4 +231,10 @@ ews4800mips_sysvbfs_size(void)
 {
 
 	return (8 * 1024 * 1024) / 512;	/* 8MB */
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
 }

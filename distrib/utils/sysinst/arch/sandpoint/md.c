@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.25 2006/02/26 10:25:54 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.26 2006/04/05 16:55:06 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,4 +175,22 @@ md_bios_info(char *dev)
 		msg_display_add(MSG_biosguess, cyl, head, sec);
 	set_bios_geom(cyl, head, sec);
 	return 0;
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
+}
+
+int
+md_check_mbr(mbr_info_t *mbri)
+{
+	return 2;
+}
+
+int
+md_mbr_use_wholedisk(mbr_info_t *mbri)
+{
+	return mbr_use_wholedisk(mbri);
 }

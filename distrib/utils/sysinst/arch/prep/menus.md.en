@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.10 2003/06/12 10:51:42 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.11 2006/04/05 16:55:06 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,3 +38,6 @@
 
 /* Menu definitions for sysinst. prep version, machine dependent. */
 
+menu prepconsole, title "Select console device", y=-10;
+	option "com0 (S1)", exit, action { yesno = 1; };
+	option "VGA", exit, action { yesno = 0; };

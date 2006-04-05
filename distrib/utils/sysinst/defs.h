@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.128 2006/02/26 10:25:52 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.129 2006/04/05 16:55:01 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -221,7 +221,9 @@ int rootpart;				/* partition we install into */
 const char *disktype;		/* ST506, SCSI, ... */
 
 /* Area of disk we can allocate, start and size in disk sectors. */
-int ptstart, ptsize;	
+int ptstart, ptsize;
+/* If we have an MBR boot partition, start and size in sectors */
+int bootstart, bootsize;
 
 /* Actual values for current disk - set by find_disks() or md_get_info() */
 int sectorsize;
@@ -300,6 +302,7 @@ int	md_post_newfs(void);
 int	md_pre_disklabel(void);
 int	md_pre_update(void);
 int	md_update(void);
+int	md_post_extract(void);
 void	md_init(void);
 void	md_set_no_x(void);
 

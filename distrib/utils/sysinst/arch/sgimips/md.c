@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2006/02/26 10:25:54 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.21 2006/04/05 16:55:07 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -207,4 +207,10 @@ md_init()
                 set_kernel_set(SET_KERNEL_1);
 	else if (strstr(instsys.version, "(GENERIC32_IP12)"))
 		set_kernel_set(SET_KERNEL_3);
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
 }
