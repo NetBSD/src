@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.21 2006/04/04 13:11:08 gdt Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.22 2006/04/05 06:55:26 he Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.21 2006/04/04 13:11:08 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.22 2006/04/05 06:55:26 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,17 +426,17 @@ venus_readlink(void *mdp, CodaFid *fid,
      * Check data pointer for reasonableness.  It must point after
      * itself, and within the allocated region.
      */
-    if ((int) outp->data < sizeof(struct coda_readlink_out) ) {
-	    printf("venus_readlink: data pointer %d too low\n",
-		   (int) outp->data);
+    if ((intptr_t) outp->data < sizeof(struct coda_readlink_out) ) {
+	    printf("venus_readlink: data pointer %lld too low\n",
+		   (long long)((intptr_t) outp->data));
 	    error = EINVAL;
 	    goto out;
     }
     
-    if ((int) outp->data + outp->count >
+    if ((intptr_t) outp->data + outp->count >
 	sizeof(struct coda_readlink_out) + CODA_MAXPATHLEN) {
-	    printf("venus_readlink: data pointer %d too high\n",
-		   (int) outp->data);
+	    printf("venus_readlink: data pointer %lld too high\n",
+		   (long long)((intptr_t) outp->data));
 	    error = EINVAL;
 	    goto out;
     }
