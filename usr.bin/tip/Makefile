@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2006/04/04 15:09:50 dyoung Exp $
+#	$NetBSD: Makefile,v 1.25 2006/04/05 13:04:33 tron Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -27,7 +27,7 @@
 
 WARNS=4
 PROG=	tip
-.if defined(MKUUCP) && ${MKUUCP} != no
+.if !defined(MKUUCP) || ${MKUUCP} != no
 LINKS=	${BINDIR}/tip ${BINDIR}/cu
 MLINKS=	tip.1 cu.1
 .endif
