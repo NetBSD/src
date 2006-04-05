@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.17 2006/04/03 04:53:58 christos Exp $	*/
+/*	$NetBSD: cu.c,v 1.18 2006/04/05 23:30:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.17 2006/04/03 04:53:58 christos Exp $");
+__RCSID("$NetBSD: cu.c,v 1.18 2006/04/05 23:30:57 yamt Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -285,7 +285,7 @@ cuhelp(void)
 	    " -e: Use even parity\n"
 	    " -o: Use odd parity\n"
 	    " -P,--parity {even,odd,none}: use even, odd, no parity\n"
-	    " -l,-line line: Use this device (ttyXX)\n"
+	    " -l,--line line: Use this device (ttyXX)\n"
 	    " -s,--speed,--baud speed,-#: Use this speed\n"
 	    " -t: Connect via hard-wired connection\n");
 	exit(0);
