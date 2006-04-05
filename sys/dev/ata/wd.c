@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.322 2006/04/04 07:11:45 cherry Exp $ */
+/*	$NetBSD: wd.c,v 1.323 2006/04/05 02:40:57 cherry Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.322 2006/04/04 07:11:45 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.323 2006/04/05 02:40:57 cherry Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1833,7 +1833,6 @@ wd_shutdown(void *arg)
 {
 	struct wd_softc *wd = arg;
 	wd_flushcache(wd, AT_POLL);
-	wd_standby(wd, AT_POLL);
 }
 
 /*
