@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.779 2006/03/26 20:23:27 jonathan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.780 2006/04/05 20:09:47 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.778 2006/03/26 20:21:55 jonathan Exp
+ *	NetBSD: pcidevs,v 1.779 2006/04/05 20:09:22 nonaka Exp
  */
 
 /*
@@ -579,6 +579,7 @@
 #define	PCI_VENDOR_ENE	0x1524		/* ENE Technology */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems */
+#define	PCI_VENDOR_FARADAY	0x159b		/* Faraday Technology */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
