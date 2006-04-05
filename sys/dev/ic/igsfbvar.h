@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.15 2006/04/05 01:05:50 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.16 2006/04/05 01:13:50 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -110,7 +110,7 @@ struct igsfb_devconfig {
 
 	/* precomputed bit table for cursor sprite 1bpp -> 2bpp conversion */
 	uint16_t dc_bexpand[256];
-	
+
 	/* virtual console support */
 	struct vcons_data dc_vd;
 	struct vcons_screen dc_console;

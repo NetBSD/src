@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.12 2006/04/05 01:05:50 uwe Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.13 2006/04/05 01:13:50 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.12 2006/04/05 01:05:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.13 2006/04/05 01:13:50 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,15 +84,15 @@ igsfb_pci_match_by_id(pcireg_t id)
 {
 
 	if (PCI_VENDOR(id) != PCI_VENDOR_INTEGRAPHICS)
-		return (0);
+		return 0;
 
 	switch (PCI_PRODUCT(id)) {
 	case PCI_PRODUCT_INTEGRAPHICS_IGA1682:		/* FALLTHROUGH */
 	case PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000:	/* FALLTHROUGH */
 	case PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010:
-		return (1);
+		return 1;
 	default:
-		return (0);
+		return 0;
 	}
 }
 
@@ -111,24 +111,24 @@ igsfb_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 	if (igsfb_pci_match_by_id(id) == 0)
-		return (1);
+		return 1;
 
 	dc = &igsfb_console_dc;
 	if (igsfb_pci_map_regs(dc, iot, memt, pc, tag, PCI_PRODUCT(id)) != 0)
-		return (1);
+		return 1;
 
 	ret = igsfb_enable(dc->dc_iot, dc->dc_iobase, dc->dc_ioflags);
 	if (ret)
-		return (ret);
+		return ret;
 
 	ret = igsfb_cnattach_subr(dc);
 	if (ret)
-		return (ret);
+		return ret;
 
 	igsfb_pci_console = 1;
 	igsfb_pci_constag = tag;
 
-	return (0);
+	return 0;
 }
 
 
@@ -136,7 +136,7 @@ static int
 igsfb_pci_is_console(pci_chipset_tag_t pc, pcitag_t tag)
 {
 
-	return (igsfb_pci_is_console && (tag == igsfb_pci_constag));
+	return igsfb_pci_is_console && (tag == igsfb_pci_constag);
 }
 
 
@@ -145,7 +145,7 @@ igsfb_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	return (igsfb_pci_match_by_id(pa->pa_id));
+	return igsfb_pci_match_by_id(pa->pa_id);
 }
 
 
@@ -226,7 +226,7 @@ igsfb_pci_map_regs(struct igsfb_devconfig *dc,
 		&dc->dc_memaddr, &dc->dc_memsz, &dc->dc_memflags) != 0)
 	{
 		printf("unable to configure memory space\n");
-		return (1);
+		return 1;
 	}
 
 	/*
@@ -254,8 +254,8 @@ igsfb_pci_map_regs(struct igsfb_devconfig *dc,
 			  &dc->dc_ioh) != 0)
 	{
 		printf("unable to map I/O registers\n");
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }

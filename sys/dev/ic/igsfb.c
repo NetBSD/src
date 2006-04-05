@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.36 2006/04/05 01:05:50 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.37 2006/04/05 01:13:50 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.36 2006/04/05 01:05:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.37 2006/04/05 01:13:50 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ igsfb_cnattach_subr(struct igsfb_devconfig *dc)
 	ri = &dc->dc_console.scr_ri;
 	ri->ri_hw = &dc->dc_console;
 	dc->dc_console.scr_cookie = dc;
-	
+
 	(*ri->ri_ops.allocattr)(ri,
 				WS_DEFAULT_FG, /* fg */
 				WS_DEFAULT_BG, /* bg */
@@ -165,7 +165,7 @@ igsfb_cnattach_subr(struct igsfb_devconfig *dc)
 			   ri,   /* emulcookie */
 			   0, 0, /* cursor position */
 			   defattr);
-	return (0);
+	return 0;
 }
 
 
@@ -189,10 +189,10 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 
 	vcons_init(&dc->dc_vd, dc, &igsfb_stdscreen, &igsfb_accessops);
 	dc->dc_vd.init_screen = igsfb_init_wsdisplay;
-	
+
 	vcons_init_screen(&dc->dc_vd, &dc->dc_console, 1, &defattr);
 	dc->dc_console.scr_flags |= VCONS_SCREEN_IS_STATIC;
-	
+
 	printf("%s: %dMB, %s%dx%d, %dbpp\n",
 	       sc->sc_dev.dv_xname,
 	       (uint32_t)(dc->dc_vmemsz >> 20),
@@ -246,7 +246,7 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 			  &tmph) != 0)
 	{
 		printf("unable to map video memory for endianness test\n");
-		return (1);
+		return 1;
 	}
 
 	p = bus_space_vaddr(dc->dc_memt, tmph);
@@ -295,7 +295,7 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 	{
 		bus_space_unmap(dc->dc_iot, dc->dc_ioh, IGS_REG_SIZE);
 		printf("unable to map framebuffer\n");
-		return (1);
+		return 1;
 	}
 
 	igsfb_init_cmap(dc);
@@ -312,7 +312,7 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 		bus_space_unmap(dc->dc_iot, dc->dc_ioh, IGS_REG_SIZE);
 		bus_space_unmap(dc->dc_memt, dc->dc_fbh, dc->dc_fbsz);
 		printf("unable to map cursor sprite region\n");
-		return (1);
+		return 1;
 	}
 
 	/*
@@ -349,7 +349,7 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 				  &dc->dc_coph) != 0)
 		{
 			printf("unable to map COP registers\n");
-			return (1);
+			return 1;
 		}
 
 		/* XXX: hardcoded 8bpp */
@@ -369,7 +369,7 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 	dc->dc_blanked = 0;
 	igsfb_blank_screen(dc, dc->dc_blanked);
 
-	return (0);
+	return 0;
 }
 
 
@@ -531,7 +531,7 @@ igsfb_make_text_cursor(struct igsfb_devconfig *dc, struct vcons_screen *scr)
 		memcpy(&dc->dc_cursor.cc_sprite[i * 8],
 		       cc_scan, f->stride * sizeof(uint16_t));
 
-	return (0);
+	return 0;
 }
 
 
@@ -547,7 +547,7 @@ igsfb_spread_bits_8(uint8_t b)
 	s = ((s & 0x00f0) << 4) | (s & 0x000f);
 	s = ((s & 0x0c0c) << 2) | (s & 0x0303);
 	s = ((s & 0x2222) << 1) | (s & 0x1111);
-	return (s);
+	return s;
 }
 
 
@@ -580,10 +580,10 @@ igsfb_mmap(void *v, off_t offset, int prot)
 	struct igsfb_devconfig *dc = vd->cookie;
 
 	if (offset >= dc->dc_memsz || offset < 0)
-		return (-1);
+		return -1;
 
-	return (bus_space_mmap(dc->dc_memt, dc->dc_memaddr, offset, prot,
-			       dc->dc_memflags | BUS_SPACE_MAP_LINEAR));
+	return bus_space_mmap(dc->dc_memt, dc->dc_memaddr, offset, prot,
+			      dc->dc_memflags | BUS_SPACE_MAP_LINEAR);
 }
 
 
@@ -606,7 +606,7 @@ igsfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_GINFO:
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
@@ -615,11 +615,11 @@ igsfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		wsd_fbip->depth = dc->dc_depth;
 		wsd_fbip->cmsize = IGS_CMAP_SIZE;
 #undef wsd_fbip
-		return (0);
-		
+		return 0;
+
 	case WSDISPLAYIO_LINEBYTES:
 		*(int *)data = dc->dc_stride;
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_SMODE:
 #define d (*(int *)data)
@@ -643,12 +643,12 @@ igsfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			}
 			vcons_redraw_screen(vd->active);
 		}
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_GVIDEO:
 		*(u_int *)data = dc->dc_blanked ?
 		    WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = (*(u_int *)data == WSDISPLAYIO_VIDEO_OFF);
@@ -656,43 +656,43 @@ igsfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			dc->dc_blanked = turnoff;
 			igsfb_blank_screen(dc, dc->dc_blanked);
 		}
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_GETCMAP:
-		return (igsfb_get_cmap(dc, (struct wsdisplay_cmap *)data));
+		return igsfb_get_cmap(dc, (struct wsdisplay_cmap *)data);
 
 	case WSDISPLAYIO_PUTCMAP:
-		return (igsfb_set_cmap(dc, (struct wsdisplay_cmap *)data));
+		return igsfb_set_cmap(dc, (struct wsdisplay_cmap *)data);
 
 	case WSDISPLAYIO_GCURMAX:
 		((struct wsdisplay_curpos *)data)->x = IGS_CURSOR_MAX_SIZE;
 		((struct wsdisplay_curpos *)data)->y = IGS_CURSOR_MAX_SIZE;
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_GCURPOS:
 		if (cursor_busy)
-			return (EBUSY);
+			return EBUSY;
 		*(struct wsdisplay_curpos *)data = dc->dc_cursor.cc_pos;
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_SCURPOS:
 		if (cursor_busy)
-			return (EBUSY);
+			return EBUSY;
 		igsfb_set_curpos(dc, (struct wsdisplay_curpos *)data);
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_GCURSOR:
 		if (cursor_busy)
-			return (EBUSY);
-		return (igsfb_get_cursor(dc, (struct wsdisplay_cursor *)data));
+			return EBUSY;
+		return igsfb_get_cursor(dc, (struct wsdisplay_cursor *)data);
 
 	case WSDISPLAYIO_SCURSOR:
 		if (cursor_busy)
-			return (EBUSY);
-		return (igsfb_set_cursor(dc, (struct wsdisplay_cursor *)data));
+			return EBUSY;
+		return igsfb_set_cursor(dc, (struct wsdisplay_cursor *)data);
 	}
 
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 
 
@@ -724,19 +724,19 @@ igsfb_get_cmap(struct igsfb_devconfig *dc, struct wsdisplay_cmap *p)
 	count = p->count;
 
 	if (index >= IGS_CMAP_SIZE || count > IGS_CMAP_SIZE - index)
-		return (EINVAL);
+		return EINVAL;
 
 	err = copyout(&dc->dc_cmap.r[index], p->red, count);
 	if (err)
-		return (err);
+		return err;
 	err = copyout(&dc->dc_cmap.g[index], p->green, count);
 	if (err)
-		return (err);
+		return err;
 	err = copyout(&dc->dc_cmap.b[index], p->blue, count);
 	if (err)
-		return (err);
+		return err;
 
-	return (0);
+	return 0;
 }
 
 
@@ -756,7 +756,7 @@ igsfb_set_cmap(struct igsfb_devconfig *dc, const struct wsdisplay_cmap *p)
 	index = p->index;
 	count = p->count;
 	if (index >= IGS_CMAP_SIZE || count > IGS_CMAP_SIZE - index)
-		return (EINVAL);
+		return EINVAL;
 	error = copyin(p->red, &r[index], count);
 	if (error)
 		return error;
@@ -773,7 +773,7 @@ igsfb_set_cmap(struct igsfb_devconfig *dc, const struct wsdisplay_cmap *p)
 
 	/* propagate changes to the device */
 	igsfb_update_cmap(dc, index, count);
-	return (0);
+	return 0;
 }
 
 
@@ -873,7 +873,7 @@ igsfb_get_cursor(struct igsfb_devconfig *dc, struct wsdisplay_cursor *p)
 {
 
 	/* XXX: TODO */
-	return (0);
+	return 0;
 }
 
 
@@ -898,7 +898,7 @@ igsfb_set_cursor(struct igsfb_devconfig *dc, const struct wsdisplay_cursor *p)
 		index = p->cmap.index;
 		count = p->cmap.count;
 		if (index >= 2 || (index + count) > 2)
-			return (EINVAL);
+			return EINVAL;
 		error = copyin(p->cmap.red, &r[index], count);
 		if (error)
 			return error;
@@ -914,7 +914,7 @@ igsfb_set_cursor(struct igsfb_devconfig *dc, const struct wsdisplay_cursor *p)
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > IGS_CURSOR_MAX_SIZE
 		    || p->size.y > IGS_CURSOR_MAX_SIZE)
-			return (EINVAL);
+			return EINVAL;
 
 		iwidth = (p->size.x + 7) >> 3; /* bytes per scan line */
 		icount = iwidth * p->size.y;
@@ -993,7 +993,7 @@ igsfb_set_cursor(struct igsfb_devconfig *dc, const struct wsdisplay_cursor *p)
 	/* propagate changes to the device */
 	igsfb_update_cursor(dc, v);
 
-	return (0);
+	return 0;
 }
 
 
@@ -1171,10 +1171,10 @@ igsfb_accel_wait(struct igsfb_devconfig *dc)
 	while (timo--) {
 		reg = bus_space_read_1(t, h, IGS_COP_CTL_REG);
 		if ((reg & IGS_COP_CTL_BUSY) == 0)
-			return (0);
+			return 0;
 	}
 
-	return (1);
+	return 1;
 }
 
 
