@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2005/12/11 12:17:05 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.8 2006/04/05 15:03:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2005/12/11 12:17:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2006/04/05 15:03:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,7 +47,7 @@ int
 cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 void
