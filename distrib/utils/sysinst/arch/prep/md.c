@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2006/04/05 16:55:06 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.24 2006/04/05 17:01:21 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,7 +54,8 @@
 
 int prep_nobootfix = 0, prep_rawdevfix = 0, prep_bootpart = PART_BOOT;
 
-int md_check_mbr(mbr_info_t *mbri)
+int
+md_check_mbr(mbr_info_t *mbri)
 {
 	mbr_info_t *ext;
 	struct mbr_partition *part;
