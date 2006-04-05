@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.84 2006/03/05 17:03:19 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.85 2006/04/05 00:50:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.84 2006/03/05 17:03:19 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.85 2006/04/05 00:50:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,7 +422,7 @@ ioctldecode(u_long cmd)
 	output_long(cmd & 0xff, decimal == 0);
 	if ((cmd & IOC_VOID) == 0) {
 		putchar(',');
-		output_long((cmd >> 16) & 0xff, decimal == 0);
+		output_long(IOCPARM_LEN(cmd), decimal == 0);
 	}
 	putchar(')');
 }
