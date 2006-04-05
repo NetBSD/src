@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.24 2006/03/01 12:38:11 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.25 2006/04/05 14:03:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.24 2006/03/01 12:38:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.25 2006/04/05 14:03:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,14 +512,14 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
-		panic("_bus_dmamap_sync_r4k: mix PRE and POST");
+		panic("_bus_dmamap_sync: mix PRE and POST");
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync_r4k: bad offset %lu (map size is %lu)",
+		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
 		      offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync_r4k: bad length");
+		panic("_bus_dmamap_sync: bad length");
 #endif
 
 	/*
