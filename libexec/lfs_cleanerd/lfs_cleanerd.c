@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.2 2006/04/01 23:48:56 christos Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.3 2006/04/05 20:29:40 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -354,7 +354,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 {
 	SEGSUM *ssp;
 	IFILE *ifp;
-	BLOCK_INFO *bip;
+	BLOCK_INFO *bip, *nbip;
 	int32_t *iaddrp, idaddr, odaddr;
 	FINFO *fip;
 	struct ubuf *ifbp;
@@ -408,6 +408,17 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	fic = inoc = 0;
 	while (fic < ssp->ss_nfinfo || inoc < ssp->ss_ninos) {
 		/*
+		 * We must have either a file block or an inode block.
+		 * If we don't have either one, it's an error.
+		 */
+		if (fic >= ssp->ss_nfinfo && *iaddrp != daddr) {
+			syslog(LOG_WARNING, "%s: bad pseg at %x (seg %d)",
+			       fs->lfs_fsmnt, odaddr, dtosn(fs, odaddr));
+			*bipp = bip;
+			return 0x0;
+		}
+
+		/*
 		 * Note each inode from the inode blocks
 		 */
 		if (inoc < ssp->ss_ninos && *iaddrp == daddr) {
@@ -433,8 +444,15 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 				 * A current inode.  Add it.
 				 */
 				++*bic;
-				bip = (BLOCK_INFO *)realloc(bip, *bic *
-							    sizeof(*bip));
+				nbip = (BLOCK_INFO *)realloc(bip, *bic *
+							     sizeof(*bip));
+				if (nbip)
+					bip = nbip;
+				else {
+					--*bic;
+					*bipp = bip;
+					return 0x0;
+				}
 				bip[*bic - 1].bi_inode = dip[i].di_inumber;
 				bip[*bic - 1].bi_lbn = LFS_UNUSED_LBN;
 				bip[*bic - 1].bi_daddr = daddr;
@@ -506,8 +524,15 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		}
 
 		/* Add all the blocks from the finfos (current or not) */
-		bip = (BLOCK_INFO *)realloc(bip, (*bic + fip->fi_nblocks) *
-					    sizeof(*bip));
+		nbip = (BLOCK_INFO *)realloc(bip, (*bic + fip->fi_nblocks) *
+					     sizeof(*bip));
+		if (nbip)
+			bip = nbip;
+		else {
+			*bipp = bip;
+			return 0x0;
+		}
+
 		for (i = 0; i < fip->fi_nblocks; i++) {
 			bip[*bic + i].bi_inode = fip->fi_ino;
 			bip[*bic + i].bi_lbn = fip->fi_blocks[i];
@@ -744,6 +769,9 @@ toss_old_blocks(struct clfs *fs, BLOCK_INFO **bipp, int *bic)
 		BLOCK_INFO *blkiov;
 		int blkcnt;
 	} */ lim;
+
+	if (bic == 0 || bip == NULL)
+		return;
 
 	/*
 	 * Kludge: Store the disk address in segcreate so we know which
@@ -1029,6 +1057,8 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 
 	/* If there is nothing to do, try again later. */
 	if (bic == 0) {
+		dlog("%s: no blocks to clean in %d cleanable segments",
+		       fs->lfs_fsmnt, (int)ngood);
 		fd_release_all(fs->clfs_devvp);
 		return 0;
 	}
@@ -1086,9 +1116,10 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 	       PRId64 " supporting Ifile = %"
 	       PRId64 " bytes to clean %d segs (%" PRId64 "%% recovery)",
 	       fs->lfs_fsmnt, (int64_t)nb, (int64_t)(extra - if_extra),
-	       (int64_t)if_extra, (int64_t)(nb + extra),
-	       ngood, (int64_t)(100 - (100 * (nb + extra)) /
-			              (ngood * fs->lfs_ssize)));
+	       (int64_t)if_extra, (int64_t)(nb + extra), ngood,
+	       (ngood ? (int64_t)(100 - (100 * (nb + extra)) /
+					 (ngood * fs->lfs_ssize)) :
+		(int64_t)0));
 	if (nb + extra >= ngood * fs->lfs_ssize)
 		syslog(LOG_WARNING, "%s: cleaner not making forward progress",
 		       fs->lfs_fsmnt);
