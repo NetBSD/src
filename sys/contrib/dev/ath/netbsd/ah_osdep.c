@@ -33,9 +33,10 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.1 2006/04/02 05:52:17 gdamore Exp $
+ * $Id: ah_osdep.c,v 1.2 2006/04/05 06:54:26 gdamore Exp $
  */
 #include "opt_athhal.h"
+#include "athhal_options.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,18 +64,18 @@ extern	void ath_hal_vprintf(struct ath_hal *, const char*, va_list)
 extern	const char* ath_hal_ether_sprintf(const u_int8_t *mac);
 extern	void *ath_hal_malloc(size_t);
 extern	void ath_hal_free(void *);
-#ifdef AH_ASSERT
+#ifdef ATHHAL_ASSERT
 extern	void ath_hal_assert_failed(const char* filename,
 		int lineno, const char* msg);
 #endif
-#ifdef AH_DEBUG
+#ifdef ATHHAL_DEBUG
 extern	void HALDEBUG(struct ath_hal *ah, const char* fmt, ...);
 extern	void HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...);
-#endif /* AH_DEBUG */
+#endif /* ATHHAL_DEBUG */
 
-#ifdef AH_DEBUG
+#ifdef ATHHAL_DEBUG
 static	int ath_hal_debug = 0;
-#endif /* AH_DEBUG */
+#endif /* ATHHAL_DEBUG */
 
 int	ath_hal_dma_beacon_response_time = 2;	/* in TU's */
 int	ath_hal_sw_beacon_response_time = 10;	/* in TU's */
@@ -123,13 +124,13 @@ SYSCTL_SETUP(sysctl_ath_hal, "sysctl ath.hal subtree setup")
 	    &ath_hal_additional_swba_backoff, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-#ifdef AH_DEBUG
+#ifdef ATHHAL_DEBUG
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
 	    SYSCTL_DESCR("Atheros HAL debugging printfs"), NULL, 0,
 	    &ath_hal_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
-#endif /* AH_DEBUG */
+#endif /* ATHHAL_DEBUG */
 	return;
 err:
 	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
@@ -170,7 +171,7 @@ ath_hal_ether_sprintf(const u_int8_t *mac)
 	return ether_sprintf(mac);
 }
 
-#ifdef AH_DEBUG
+#ifdef ATHHAL_DEBUG
 void
 HALDEBUG(struct ath_hal *ah, const char* fmt, ...)
 {
@@ -192,9 +193,9 @@ HALDEBUGn(struct ath_hal *ah, u_int level, const char* fmt, ...)
 		va_end(ap);
 	}
 }
-#endif /* AH_DEBUG */
+#endif /* ATHHAL_DEBUG */
 
-#ifdef AH_DEBUG_ALQ
+#ifdef ATHHAL_DEBUG_ALQ
 /*
  * ALQ register tracing support.
  *
@@ -350,7 +351,7 @@ OS_MARK(struct ath_hal *ah, u_int id, u_int32_t v)
 		}
 	}
 }
-#elif defined(AH_DEBUG) || defined(AH_REGOPS_FUNC)
+#elif defined(ATHHAL_DEBUG) || defined(AH_REGOPS_FUNC)
 /*
  * Memory-mapped device register read/write.  These are here
  * as routines when debugging support is enabled and/or when
@@ -385,9 +386,9 @@ ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 #endif
 	return bus_space_read_stream_4(ah->ah_st, h, reg);
 }
-#endif /* AH_DEBUG || AH_REGOPS_FUNC */
+#endif /* ATHHAL_DEBUG || AH_REGOPS_FUNC */
 
-#ifdef AH_ASSERT
+#ifdef ATHHAL_ASSERT
 void
 ath_hal_assert_failed(const char* filename, int lineno, const char *msg)
 {
@@ -395,7 +396,7 @@ ath_hal_assert_failed(const char* filename, int lineno, const char *msg)
 		filename, lineno, msg);
 	panic("ath_hal_assert");
 }
-#endif /* AH_ASSERT */
+#endif /* ATHHAL_ASSERT */
 
 /*
  * Delay n microseconds.
