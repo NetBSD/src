@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.48 2004/06/05 21:19:00 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.49 2006/04/05 16:55:05 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,6 +91,9 @@ do_upgrade(void)
 	/* Done with disks. Ready to get and unpack tarballs. */
 	if (get_and_unpack_sets(1, MSG_disksetupdoneupdate,
 	    MSG_upgrcomplete, MSG_abortupgr) != 0)
+		return;
+
+	if (!md_post_extract() == 0)
 		return;
 
 	merge_X();

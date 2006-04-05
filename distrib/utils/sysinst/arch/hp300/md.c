@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2006/03/21 06:18:29 tsutsui Exp $ */
+/*	$NetBSD: md.c,v 1.24 2006/04/05 16:55:05 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -259,4 +259,10 @@ hp300_boot_size(void)
 		i = dlcylsize * sectorsize * 2;
 
 	return i;
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
 }

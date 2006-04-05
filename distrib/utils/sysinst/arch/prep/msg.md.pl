@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.8 2003/06/12 10:51:42 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.9 2006/04/05 16:55:06 garbled Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/01/16 16:54:01 nonaka Exp */
 
@@ -65,3 +65,13 @@ chcesz to zrobic?
 message set_kernel_1
 {Kernel (GENERIC)}
 
+message nopreppart
+{There is no PReP boot partition in the MBR partition table.}
+
+message preptoosmall
+{The PReP boot partition is too small.  It needs to be at least 2MB in size,
+however a size of at least 5MB is reccomended.}
+
+message prepnobootpart
+{There is no boot partition in the disklabel.  The boot partition should 
+match the PReP boot partition you set up in the MBR partition table.}

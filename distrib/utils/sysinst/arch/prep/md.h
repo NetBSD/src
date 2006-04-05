@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.14 2006/02/26 10:25:54 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.15 2006/04/05 16:55:06 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,14 +49,18 @@
 #include "mbr.h"
 
 /* constants and defines */
+#define PREP_BOOT_SIZE	5017600	/* 5MB boot partition */
+#define MIN_PREP_BOOT	2097152 /* 2MB absoule minimum */
 #define PART_ROOT	PART_A
 #define PART_SWAP	PART_B
 #define PART_RAW	PART_C
-#define PART_USR	PART_D	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	PART_E
+#define PART_BSD	PART_D
+#define PART_BOOT	PART_E
+#define PART_USR	PART_F	/* Can be after PART_FIRST_FREE */
+#define PART_FIRST_FREE	PART_G
 
 #define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
-#define DEFROOTSIZE	24	/* Default root size */
+#define DEFROOTSIZE	32	/* Default root size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
 #define DEFUSRSIZE	128	/* Default /usr size, if /home */
 #define XNEEDMB		39	/* Extra megs for full X installation */

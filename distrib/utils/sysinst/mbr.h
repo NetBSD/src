@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.21 2004/07/17 19:36:59 dsl Exp $	*/
+/*	$NetBSD: mbr.h,v 1.22 2006/04/05 16:55:05 garbled Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -105,6 +105,7 @@ int	check_geom(void);		/* primitive geometry sanity-check */
 
 void	disp_cur_part(struct mbr_partition *, int, int);
 int	edit_mbr(mbr_info_t *);
+int	mbr_use_wholedisk(mbr_info_t *);
 int 	partsoverlap(struct mbr_partition *, int, int);
 
 /* from mbr.c */
@@ -127,5 +128,9 @@ void	edit_bootsel_default_ptn(int);
 void	edit_bootsel_default_disk(int);
 void	configure_bootsel(void);
 #endif
+
+/* Machine dependant mbr functions */
+int	md_mbr_use_wholedisk(mbr_info_t *mbri);
+int	md_check_mbr(mbr_info_t *mbri);
 
 #endif

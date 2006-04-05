@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.46 2006/02/26 10:25:53 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.47 2006/04/05 16:55:06 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1154,4 +1154,10 @@ md_init()
 		 * Running the GENERIC Installation Kernel, so enable GENERIC
 		 */
 		set_kernel_set(SET_KERNEL_1);
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
 }

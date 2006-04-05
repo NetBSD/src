@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.39 2006/01/12 22:02:44 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.40 2006/04/05 16:55:01 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -600,7 +600,13 @@ make_bsd_partitions(void)
 	bsdlabel[PART_BOOT].pi_offset = ptstart;
 	partstart += i;
 #endif
-#endif
+#elif defined(PART_BOOT)
+	if (bootsize != 0) {
+		bsdlabel[PART_BOOT].pi_fstype = FS_BOOT;
+		bsdlabel[PART_BOOT].pi_size = bootsize;
+		bsdlabel[PART_BOOT].pi_offset = bootstart;
+	}
+#endif /* PART_BOOT w/o BOOT_SIZE */
 
 #if defined(PART_SYSVBFS) && defined(SYSVBFS_SIZE)
 	bsdlabel[PART_SYSVBFS].pi_offset = partstart;
