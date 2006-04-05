@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.778 2006/03/26 20:23:27 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.779 2006/04/05 20:09:48 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.778 2006/03/26 20:21:55 jonathan Exp
+ *	NetBSD: pcidevs,v 1.779 2006/04/05 20:09:22 nonaka Exp
  */
 
 /*
@@ -2128,6 +2128,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Solidum Systems",
 	},
 	{
+	    PCI_VENDOR_FARADAY,
+	    "Faraday Technology",
+	},
+	{
 	    PCI_VENDOR_GEOCAST,
 	    "Geocast Network Systems",
 	},
@@ -2352,7 +2356,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 578;
+const int pci_nvendors = 579;
 
 static const struct pci_product pci_products[] = {
 	{
