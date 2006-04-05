@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.24 2006/04/03 15:21:26 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.25 2006/04/05 12:57:29 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -791,9 +791,9 @@ rpcbdump(dumptype, netid, argc, argv)
 			    list->rpcb_map.r_prog = pmaphead->pml_map.pm_prog;
 			    list->rpcb_map.r_vers = pmaphead->pml_map.pm_vers;
 			    if (pmaphead->pml_map.pm_prot == IPPROTO_UDP)
-				list->rpcb_map.r_netid = "udp";
+				list->rpcb_map.r_netid = strdup("udp");
 			    else if (pmaphead->pml_map.pm_prot == IPPROTO_TCP)
-				list->rpcb_map.r_netid = "tcp";
+				list->rpcb_map.r_netid = strdup("tcp");
 			    else {
 #define	MAXLONG_AS_STRING	"2147483648"
 				list->rpcb_map.r_netid =
