@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.25 2006/03/18 06:54:46 christos Exp $ */
+/* $NetBSD: dir.c,v 1.26 2006/04/05 23:10:16 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.25 2006/03/18 06:54:46 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.26 2006/04/05 23:10:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ dinit(Char *hp)
 	if (hp && *hp &&
 	    stat(ecp, &swd) != -1 && stat(short2str(hp), &shp) != -1 &&
 	    swd.st_dev == shp.st_dev && swd.st_ino == shp.st_ino)
-	    cp = hp;
+	    cp = Strsave(hp);
 	else {
 	    const char *cwd;
 
