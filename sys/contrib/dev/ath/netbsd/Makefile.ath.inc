@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ath.inc,v 1.3 2006/04/04 13:00:23 nakayama Exp $
+#	$NetBSD: Makefile.ath.inc,v 1.4 2006/04/05 05:07:38 gdamore Exp $
 
 # Rules for building a HAL on various platforms.  We put them here
 # to centralize them all in one place.
@@ -63,12 +63,19 @@ ATH_HAL=${ATH_MACHINE_HAL}
 .if !empty(OBJS:M\/athhal.o)
 OBJS:=${OBJS:C/\/athhal.o/athhal.o/}
 
-.PATH: $S/contrib/dev/ath/public
 ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${UUDECODE} -p $> \> ${.TARGET}; \
 		rm -f ${.TARGET}; \
 		${UUDECODE} -p $> > ${.TARGET}
-athhal.o: ${ATH_HAL}.hal.o.uu
+
+athhal.o: $S/contrib/dev/ath/public/${ATH_HAL}.hal.o.uu
 	${ATH_UUDEC}
+
+athhal_options.h: $S/contrib/dev/ath/public/${ATH_HAL}.opt_ah.h
+	${_MKSHECHO} cp $> ${.TARGET}
+	rm -f ${.TARGET}
+	cp $> ${.TARGET}
 .endif
+
+depend ath.o ah_osdep.o: athhal_options.h
