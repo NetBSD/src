@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.61 2006/03/17 17:46:44 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.62 2006/04/05 17:50:48 hubertf Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.61 2006/03/17 17:46:44 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.62 2006/04/05 17:50:48 hubertf Exp $");
 #endif
 #endif
 
@@ -315,6 +315,7 @@ findbestmatchingname_fn(const char *found, void *vp)
 			fprintf(stderr,
 				"'%s' has no usable package(version)\n",
 				best);
+			found_version = NULL;	/* error out cheaply */
 		}
 	}
 
