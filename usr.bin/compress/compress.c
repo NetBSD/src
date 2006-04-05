@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.21 2004/07/09 12:14:37 wiz Exp $	*/
+/*	$NetBSD: compress.c,v 1.22 2006/04/05 20:24:38 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.21 2004/07/09 12:14:37 wiz Exp $");
+__RCSID("$NetBSD: compress.c,v 1.22 2006/04/05 20:24:38 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,6 +237,7 @@ compress(char *in, char *out, int bits)
 		cwarn("%s", out);
 		goto err;
 	}
+	oreg <<= 1;
 	while ((nr = fread(buf, 1, sizeof(buf), ifp)) != 0)
 		if (fwrite(buf, 1, nr, ofp) != nr) {
 			cwarn("%s", out);
@@ -251,6 +252,7 @@ compress(char *in, char *out, int bits)
 
 	if (fclose(ofp)) {
 		cwarn("%s", out);
+		ofp = NULL;
 		goto err;
 	}
 	ofp = NULL;
@@ -264,8 +266,6 @@ compress(char *in, char *out, int bits)
 		if (!force && sb.st_size >= isb.st_size) {
 			if (verbose)
 		(void)printf("%s: file would grow; left unmodified\n", in);
-			if (unlink(out))
-				cwarn("%s", out);
 			goto err;
 		}
 
@@ -286,11 +286,10 @@ compress(char *in, char *out, int bits)
 	}
 	return;
 
-err:	if (ofp) {
-		if (oreg)
-			(void)unlink(out);
+err:	if (ofp)
 		(void)fclose(ofp);
-	}
+	if (oreg == 2)
+		(void)unlink(out);
 	if (ifp)
 		(void)fclose(ifp);
 }
@@ -334,19 +333,26 @@ decompress(char *in, char *out, int bits)
 	} else
 		isreg = 0;
 
+	oreg <<= 1;
 	while ((nr = fread(buf, 1, sizeof(buf), ifp)) != 0)
 		if (fwrite(buf, 1, nr, ofp) != nr) {
 			cwarn("%s", out);
 			goto err;
 		}
 
-	if (ferror(ifp) || fclose(ifp)) {
+	if (ferror(ifp)) {
+		cwarn("%s", in);
+		goto err;
+	}
+	if (fclose(ifp)) {
+		ifp = NULL;
 		cwarn("%s", in);
 		goto err;
 	}
 	ifp = NULL;
 
 	if (fclose(ofp)) {
+		ofp = NULL;
 		cwarn("%s", out);
 		goto err;
 	}
@@ -359,11 +365,10 @@ decompress(char *in, char *out, int bits)
 	}
 	return;
 
-err:	if (ofp) {
-		if (oreg)
-			(void)unlink(out);
+err:	if (ofp)
 		(void)fclose(ofp);
-	}
+	if (oreg == 2)
+		(void)unlink(out);
 	if (ifp)
 		(void)fclose(ifp);
 }
