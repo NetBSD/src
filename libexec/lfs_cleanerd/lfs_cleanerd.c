@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.3 2006/04/05 20:29:40 perseant Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.4 2006/04/05 21:42:49 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -374,7 +374,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	 */
 	cp = fd_ptrget(fs->clfs_devvp, daddr);
 	ssp = (SEGSUM *)cp;
-	iaddrp = ((int32_t *)(cp + fs->lfs_bsize)) - 1;
+	iaddrp = ((int32_t *)(cp + fs->lfs_ibsize)) - 1;
 	fip = (FINFO *)(cp + sizeof(SEGSUM));
 
 	/*
