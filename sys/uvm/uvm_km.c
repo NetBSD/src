@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.85 2006/03/17 09:37:55 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.86 2006/04/05 21:56:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.85 2006/03/17 09:37:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.86 2006/04/05 21:56:24 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -393,7 +393,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 
 	KASSERT(VM_MIN_KERNEL_ADDRESS <= startva);
 	KASSERT(startva < endva);
-	KASSERT(endva < VM_MAX_KERNEL_ADDRESS);
+	KASSERT(endva <= VM_MAX_KERNEL_ADDRESS);
 
 	simple_lock(&uobj->vmobjlock);
 
@@ -454,7 +454,7 @@ uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 
 	KASSERT(VM_MIN_KERNEL_ADDRESS <= start);
 	KASSERT(start < end);
-	KASSERT(end < VM_MAX_KERNEL_ADDRESS);
+	KASSERT(end <= VM_MAX_KERNEL_ADDRESS);
 
 	for (; start < end; start += PAGE_SIZE) {
 		if (!pmap_extract(pmap_kernel(), start, &pa)) {
