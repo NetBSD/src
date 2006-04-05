@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ath.inc,v 1.5 2006/04/05 09:01:28 tron Exp $
+#	$NetBSD: Makefile.ath.inc,v 1.6 2006/04/05 23:41:03 gdamore Exp $
 
 # Rules for building a HAL on various platforms.  We put them here
 # to centralize them all in one place.
@@ -79,4 +79,5 @@ athhal_options.h: $S/contrib/dev/ath/public/${ATH_HAL}.opt_ah.h
 
 depend ath.o ah_osdep.o: athhal_options.h
 
+EXTRA_INCLUDES+= -I$S/contrib/dev/ath/netbsd
 .endif
