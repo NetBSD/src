@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.11 2005/02/17 17:29:58 xtraeme Exp $	*/
+/*	$NetBSD: tree.c,v 1.12 2006/04/05 19:38:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tree.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: tree.c,v 1.11 2005/02/17 17:29:58 xtraeme Exp $");
+__RCSID("$NetBSD: tree.c,v 1.12 2006/04/05 19:38:47 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,10 +130,16 @@ add_node(NODE *node, NODE *cur_node)
 static void
 free_tree(NODE *node)
 {
-	while (node) {
-		if (node->right)
-			free_tree(node->right);
+	NODE *nnode;
+
+	for (; node != NULL; node = nnode) {
+		nnode = node->left;
+		if (node->right) {
+			if (nnode == NULL)
+				nnode = node->right;
+			else
+				free_tree(node->right);
+		}
 		free(node);
-		node = node->left;
 	}
 }
