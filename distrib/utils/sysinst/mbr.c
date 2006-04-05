@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.71 2005/11/05 09:58:32 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.72 2006/04/05 16:55:01 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,6 +106,7 @@ struct part_id {
 	{MBR_PTYPE_FAT32L,	"Windows FAT32, LBA"},
 	{MBR_PTYPE_NTFSVOL,	"NTFS volume set"},
 	{MBR_PTYPE_NTFS,	"NTFS"},
+	{MBR_PTYPE_PREP,	"PReP Boot"},
 #ifdef MBR_PTYPE_SOLARIS
 	{MBR_PTYPE_SOLARIS,	"Solaris"},
 #endif
@@ -1205,6 +1206,33 @@ set_mbr_header(menudesc *m, void *arg)
 	m->numopts = op - opts;
 }
 
+int
+mbr_use_wholedisk(mbr_info_t *mbri)
+{
+	struct mbr_sector *mbrs = &mbri->mbr;
+	mbr_info_t *ext;
+	struct mbr_partition *part;
+
+	part = &mbrs->mbr_parts[0];
+	/* Set the partition information for full disk usage. */
+	while ((ext = mbri->extended)) {
+		mbri->extended = ext->extended;
+		free(ext);
+	}
+	memset(part, 0, MBR_PART_COUNT * sizeof *part);
+#ifdef BOOTSEL
+	memset(&mbri->mbrb, 0, sizeof mbri->mbrb);
+#endif
+	part[0].mbrp_type = MBR_PTYPE_NETBSD;
+	part[0].mbrp_size = dlsize - bsec;
+	part[0].mbrp_start = bsec;
+	part[0].mbrp_flag = MBR_PFLAG_ACTIVE;
+
+	ptstart = bsec;
+	ptsize = dlsize - bsec;
+	return 1;
+}
+
 /*
  * Let user change incore Master Boot Record partitions via menu.
  */
@@ -1251,24 +1279,7 @@ edit_mbr(mbr_info_t *mbri)
 				return 0;
 			}
 		}
-
-		/* Set the partition information for full disk usage. */
-		while ((ext = mbri->extended)) {
-			mbri->extended = ext->extended;
-			free(ext);
-		}
-		memset(part, 0, MBR_PART_COUNT * sizeof *part);
-#ifdef BOOTSEL
-		memset(&mbri->mbrb, 0, sizeof mbri->mbrb);
-#endif
-		part[0].mbrp_type = MBR_PTYPE_NETBSD;
-		part[0].mbrp_size = dlsize - bsec;
-		part[0].mbrp_start = bsec;
-		part[0].mbrp_flag = MBR_PFLAG_ACTIVE;
-
-		ptstart = bsec;
-		ptsize = dlsize - bsec;
-		return 1;
+		return(md_mbr_use_wholedisk(mbri));
 	}
 
 	mbr_menu = new_menu(NULL, NULL, 16, 0, -1, 15, 70,
@@ -1335,6 +1346,15 @@ edit_mbr(mbr_info_t *mbri)
 			if (yesno)
 				continue;
 		}
+		/* the md_check_mbr function has 3 ret codes to deal with
+		 * the different possible states. 0, 1, >1
+		 */
+		j = md_check_mbr(mbri);
+		if (j == 0)
+			return 0;
+		if (j == 1)
+			continue;
+
 		break;
 	}
 

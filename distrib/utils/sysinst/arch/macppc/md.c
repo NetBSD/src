@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.35 2006/02/26 10:25:53 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.36 2006/04/05 16:55:06 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -187,4 +187,10 @@ md_pre_update(void)
 void
 md_init(void)
 {
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
 }

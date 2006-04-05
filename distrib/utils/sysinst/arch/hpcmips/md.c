@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.40 2006/02/26 10:25:53 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.41 2006/04/05 16:55:05 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -160,4 +160,22 @@ md_pre_update(void)
 void
 md_init(void)
 {
+}
+
+int
+md_post_extract(void)
+{
+	return 0;
+}
+
+int
+md_check_mbr(mbr_info_t *mbri)
+{
+	return 2;
+}
+
+int
+md_mbr_use_wholedisk(mbr_info_t *mbri)
+{
+	return mbr_use_wholedisk(mbri);
 }
