@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:32 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2006/04/05 16:55:06 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,3 +63,14 @@ Puede que no sea posible iniciar desde ahi.
 
 message set_kernel_1
 {Núcleo (GENERIC)}
+
+message nopreppart
+{There is no PReP boot partition in the MBR partition table.}
+
+message preptoosmall
+{The PReP boot partition is too small.  It needs to be at least 2MB in size,
+however a size of at least 5MB is reccomended.}
+
+message prepnobootpart
+{There is no boot partition in the disklabel.  The boot partition should 
+match the PReP boot partition you set up in the MBR partition table.}

@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.41 2005/07/09 14:56:23 xtraeme Exp $	*/
+/*	$NetBSD: install.c,v 1.42 2006/04/05 16:55:01 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -119,6 +119,9 @@ do_install(void)
 	/* Unpack the distribution. */
 	if (get_and_unpack_sets(0, MSG_disksetupdone,
 	    MSG_extractcomplete, MSG_abortinst) != 0)
+		return;
+
+	if (md_post_extract() != 0)
 		return;
 
 	set_timezone();
