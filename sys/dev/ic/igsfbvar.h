@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.14 2006/04/04 23:43:40 uwe Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.15 2006/04/05 01:05:50 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -134,22 +134,16 @@ static __inline void
 igs_idx_write(bus_space_tag_t, bus_space_handle_t, u_int, uint8_t, uint8_t);
 
 static __inline uint8_t
-igs_idx_read(t, h, idxport, idx)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	u_int idxport;
-	uint8_t idx;
+igs_idx_read(bus_space_tag_t t, bus_space_handle_t h,
+	     u_int idxport, uint8_t idx)
 {
 	bus_space_write_1(t, h, idxport, idx);
 	return (bus_space_read_1(t, h, idxport + 1));
 }
 
 static __inline void
-igs_idx_write(t, h, idxport, idx, val)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	u_int idxport;
-	uint8_t idx, val;
+igs_idx_write(bus_space_tag_t t, bus_space_handle_t h,
+	      u_int idxport, uint8_t idx, uint8_t val)
 {
 	bus_space_write_1(t, h, idxport, idx);
 	bus_space_write_1(t, h, idxport + 1, val);
@@ -180,10 +174,8 @@ static __inline void
 igs_attr_write(bus_space_tag_t, bus_space_handle_t, uint8_t, uint8_t);
 
 static __inline void
-igs_attr_write(t, h, idx, val)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	uint8_t idx, val;
+igs_attr_write(bus_space_tag_t t, bus_space_handle_t h,
+	       uint8_t idx, uint8_t val)
 {
 	bus_space_write_1(t, h, IGS_ATTR_IDX, idx);
 	bus_space_write_1(t, h, IGS_ATTR_IDX, val); /* sic, same register */
