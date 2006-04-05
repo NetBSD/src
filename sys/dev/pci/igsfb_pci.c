@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.11 2006/02/24 22:39:15 uwe Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.12 2006/04/05 01:05:50 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.11 2006/02/24 22:39:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.12 2006/04/05 01:05:50 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,7 @@ CFATTACH_DECL(igsfb_pci, sizeof(struct igsfb_softc),
 
 
 static int
-igsfb_pci_match_by_id(id)
-	pcireg_t id;
+igsfb_pci_match_by_id(pcireg_t id)
 {
 
 	if (PCI_VENDOR(id) != PCI_VENDOR_INTEGRAPHICS)
@@ -99,10 +98,9 @@ igsfb_pci_match_by_id(id)
 
 
 int
-igsfb_pci_cnattach(iot, memt, pc, bus, device, function)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+igsfb_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
+		   pci_chipset_tag_t pc,
+		   int bus, int device, int function)
 {
 	struct igsfb_devconfig *dc;
 	pcitag_t tag;
@@ -135,9 +133,7 @@ igsfb_pci_cnattach(iot, memt, pc, bus, device, function)
 
 
 static int
-igsfb_pci_is_console(pc, tag)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+igsfb_pci_is_console(pci_chipset_tag_t pc, pcitag_t tag)
 {
 
 	return (igsfb_pci_is_console && (tag == igsfb_pci_constag));
@@ -145,10 +141,7 @@ igsfb_pci_is_console(pc, tag)
 
 
 static int
-igsfb_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+igsfb_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -157,9 +150,7 @@ igsfb_pci_match(parent, match, aux)
 
 
 static void
-igsfb_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+igsfb_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct igsfb_softc *sc = (struct igsfb_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -214,12 +205,10 @@ igsfb_pci_attach(parent, self, aux)
  * for CyberPro cards.
  */
 static int
-igsfb_pci_map_regs(dc, iot, memt, pc, tag, id)
-	struct igsfb_devconfig *dc;
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	pci_product_id_t id;
+igsfb_pci_map_regs(struct igsfb_devconfig *dc,
+		   bus_space_tag_t iot, bus_space_tag_t memt,
+		   pci_chipset_tag_t pc, pcitag_t tag,
+		   pci_product_id_t id)
 {
 
 	dc->dc_id = id;
