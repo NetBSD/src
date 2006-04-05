@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.428 2006/04/04 16:20:21 martti Exp $
+#	$NetBSD: 3RDPARTY,v 1.429 2006/04/05 19:47:09 hubertf Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -755,10 +755,10 @@ original.
 Package:	tcpdump
 Version:	3.8.3
 Current Vers:	3.9.3
-Maintainer:	tcpdump-workers@tcpdump.org
+Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Mailing List:	tcpdump-workers@tcpdump.org
+Mailing List:	tcpdump-workers@lists.tcpdump.org
 Responsible:	itojun
 License:	BSD (3-clause)
 Notes:
