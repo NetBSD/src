@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.42 2006/04/06 18:06:43 rpaulo Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.43 2006/04/06 22:35:47 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.42 2006/04/06 18:06:43 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.43 2006/04/06 22:35:47 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1320,6 +1320,7 @@ pcmcia_parse_cis_tuple(tuple, arg)
 						cfe->memspace[i].hostaddr = 0;
 					}
 				}
+			}
 			}
 
 			if (misc) {
