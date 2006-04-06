@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.116 2006/04/06 05:47:23 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.117 2006/04/06 06:08:26 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.116 2006/04/06 05:47:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.117 2006/04/06 06:08:26 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3414,7 +3414,7 @@ atw_start(struct ifnet *ifp)
 	struct atw_txdesc *txd;
 	int npkt, rate;
 	bus_dmamap_t dmamap;
-	int ctl, error, firsttx, nexttx, lasttx = -1, first, ofree, seg;
+	int ctl, error, firsttx, nexttx, lasttx, first, ofree, seg;
 
 	DPRINTF2(sc, ("%s: atw_start: sc_flags 0x%08x, if_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags, ifp->if_flags));
@@ -3427,7 +3427,7 @@ atw_start(struct ifnet *ifp)
 	 * the first descriptor we'll use.
 	 */
 	ofree = sc->sc_txfree;
-	firsttx = sc->sc_txnext;
+	firsttx = lasttx = sc->sc_txnext;
 
 	DPRINTF2(sc, ("%s: atw_start: txfree %d, txnext %d\n",
 	    sc->sc_dev.dv_xname, ofree, firsttx));
@@ -3718,7 +3718,6 @@ atw_start(struct ifnet *ifp)
 			lasttx = nexttx;
 		}
 
-		IASSERT(lasttx != -1, ("bad lastx"));
 		/* Set `first segment' and `last segment' appropriately. */
 		sc->sc_txdescs[sc->sc_txnext].at_flags |=
 		    htole32(ATW_TXFLAG_FS);
