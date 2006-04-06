@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.55 2006/04/04 22:16:04 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.56 2006/04/06 13:07:36 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -542,9 +542,9 @@ sys/arch/i386/i386/est.c			1.15
 
 sys/dev/pci/auixp.c				1.11
 
-Duh! If askes to halt the input dont halt the output instead. This also
-fixes the timeout on draining when closing.
-[reinoud, ticket #1138]
+	Duh! If askes to halt the input dont halt the output instead. This
+	also fixes the timeout on draining when closing.
+	[reinoud, ticket #1138]
 
 sys/dist/pf/net/pf_norm.c			1.11
 
@@ -1149,4 +1149,29 @@ etc/rc.subr					1.66
 	pattern which also matches "`basename $interpreter`: $command" in the
 	ps listing. This fixes PR bin/31932.
 	[he, ticket #1238]
+
+sys/arch/xen/include/if_xennetvar.h		1.9
+sys/arch/xen/xen/if_xennet.c			1.37
+
+	Significantly reduce the number of interrupts generated on the
+	xennet backend and thereby the time spent doing hypercalls.
+	[bouyer, ticket #1239]
+
+sys/arch/xen/xen/xbd.c				patch
+
+	Avoid panics under high system load. This fixes PR port-xen/33110.  
+	[jld, ticket #1240]
+
+sys/uvm/uvm_swap.c				1.90
+
+	Switch swap space allocation code to use blist instead of extent(9).
+	This fixes "warning: resource shortage: %d pages of swap lost".
+	[jld, ticket #1241]
+
+sys/arch/m68k/include/signal.h			1.23
+sys/arch/hp300/stand/common/samachdep.h		1.11
+
+	Fix a huge number of "pkgsrc" build problems in by avoiding
+	namespace pollution.
+	[oster, ticket #1242, #1243]
 
