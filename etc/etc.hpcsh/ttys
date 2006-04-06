@@ -1,9 +1,9 @@
 #
-#	$NetBSD: ttys,v 1.8 2004/07/11 16:08:55 uch Exp $
+#	$NetBSD: ttys,v 1.9 2006/04/06 22:31:11 uwe Exp $
 #
 # name	getty				type	status		comments
 
-# serial port (19200bps is default WindowsCE boad rate)
+# serial port (19200bps is default WindowsCE baud rate)
 console	"/usr/libexec/getty std.19200"	vt100	off secure
 
 # Workstation console (framebuffer) ttys
