@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.10 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.11 2006/04/06 11:50:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.10 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.11 2006/04/06 11:50:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,16 +77,12 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = maa->ma_iot;
 	sc->sc_iobase = maa->ma_addr;
 
-#if 0	/* XXX */
 	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
 	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
 	    &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-#else
-	sc->sc_ioh = maa->ma_ioh;
-#endif
 
 	sc->sc_frequency = COM_MAINBUS_FREQ;
 
