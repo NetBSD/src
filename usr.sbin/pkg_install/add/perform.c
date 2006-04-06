@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.118 2006/03/17 05:32:11 erh Exp $	*/
+/*	$NetBSD: perform.c,v 1.119 2006/04/06 06:45:08 reed Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.118 2006/03/17 05:32:11 erh Exp $");
+__RCSID("$NetBSD: perform.c,v 1.119 2006/04/06 06:45:08 reed Exp $");
 #endif
 #endif
 
@@ -157,6 +157,8 @@ read_buildinfo(char **buildinfo)
 			    buildinfo[BI_MACHINE_ARCH] = strdup(line);
 			else if (strcmp(key, "IGNORE_RECOMMENDED") == 0)
 			    buildinfo[BI_IGNORE_RECOMMENDED] = strdup(line);
+			else if (strcmp(key, "USE_ABI_DEPENDS") == 0)
+			    buildinfo[BI_USE_ABI_DEPENDS] = strdup(line);
 		}
 	}
 	(void) fclose(fp);
@@ -471,12 +473,15 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 		}
 	}
 
-	/* Check if IGNORE_RECOMMENDED was set when this package was built. */
+	/* Check if USE_ABI_DEPENDS or IGNORE_RECOMMENDED was set
+	 * when this package was built. IGNORE_RECOMMENDED is historical. */
 
-	if (buildinfo[BI_IGNORE_RECOMMENDED] != NULL &&
-	    strcasecmp(buildinfo[BI_IGNORE_RECOMMENDED], "NO") != 0) {
+	if ((buildinfo[BI_USE_ABI_DEPENDS] != NULL &&
+	    strcasecmp(buildinfo[BI_USE_ABI_DEPENDS], "YES") != 0) ||
+	    (buildinfo[BI_IGNORE_RECOMMENDED] != NULL &&
+	    strcasecmp(buildinfo[BI_IGNORE_RECOMMENDED], "NO") != 0)) {
 		warnx("%s was built", pkg);
-		warnx("\t to ignore recommended dependencies, this may cause problems!\n");
+		warnx("\tto ignore recommended ABI dependencies, this may cause problems!\n");
 	}
 
 	/*

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.61 2005/11/03 21:16:41 dillo Exp $
+.\" $NetBSD: pkg_add.1,v 1.62 2006/04/06 06:45:08 reed Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd November 1, 2005
+.Dd April 3, 2006
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -401,8 +401,10 @@ flag.
 The package build information from
 .Pa +BUILD_INFO
 is then checked for
-.Ev IGNORE_RECOMMENDED .
-If the package was built with dependency recommendations ignored,
+.Ev USE_ABI_DEPENDS=NO
+(or
+.Ev IGNORE_RECOMMENDED).
+If the package was built with ABI dependency recommendations ignored,
 a warning will be issued.
 .It
 If the package contains a
