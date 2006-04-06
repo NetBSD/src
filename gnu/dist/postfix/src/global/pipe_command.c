@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.c,v 1.1.1.9 2005/08/18 21:06:55 rpaulo Exp $	*/
+/*	$NetBSD: pipe_command.c,v 1.1.1.10 2006/04/06 22:59:07 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -133,6 +133,7 @@
 
 #include <msg.h>
 #include <vstream.h>
+#include <msg_vstream.h>
 #include <vstring.h>
 #include <stringops.h>
 #include <iostuff.h>
@@ -347,7 +348,7 @@ static int pipe_command_wait_or_kill(pid_t pid, WAIT_STATUS_T *statusp, int sig,
 
 int     pipe_command(VSTREAM *src, VSTRING *why,...)
 {
-    char   *myname = "pipe_comand";
+    char   *myname = "pipe_command";
     va_list ap;
     VSTREAM *cmd_in_stream;
     VSTREAM *cmd_out_stream;
@@ -423,6 +424,7 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 	 * parent can kill not just the child but also its offspring.
 	 */
     case 0:
+	(void) msg_cleanup((MSG_CLEANUP_FN) 0);
 	set_ugid(args.uid, args.gid);
 	if (setsid() < 0)
 	    msg_warn("setsid failed: %m");
@@ -464,8 +466,16 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 
 	/*
 	 * Process plumbing. If possible, avoid running a shell.
+	 * 
+	 * As a safety for buggy libraries, we close the syslog socket.
+	 * Otherwise we could leak a file descriptor that was created by a
+	 * privileged process.
+	 * 
+	 * XXX To avoid losing fatal error messages we open a VSTREAM and
+	 * capture the output in the parent process.
 	 */
 	closelog();
+	msg_vstream_init(var_procname, VSTREAM_ERR);
 	if (args.argv) {
 	    execvp(args.argv[0], args.argv);
 	    msg_fatal("%s: execvp %s: %m", myname, args.argv[0]);

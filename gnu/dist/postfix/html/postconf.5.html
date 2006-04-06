@@ -8226,17 +8226,17 @@ of forged mail from worms or viruses.  </p>
 <ul>
 
 <li> The sender domain matches $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or
-$<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>, but the recipient is not listed in
+$<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>, but the sender is not listed in
 $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, and $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> is not null.
 
-<li> The sender domain matches $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> but the recipient
+<li> The sender domain matches $<a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> but the sender
 is not listed in $<a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a>.
 
 <li> The sender domain matches $<a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> but the
-recipient is not listed in $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>, and $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
+sender is not listed in $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>, and $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
 is not null.
 
-<li> The sender domain matches $<a href="postconf.5.html#relay_domains">relay_domains</a> but the recipient is
+<li> The sender domain matches $<a href="postconf.5.html#relay_domains">relay_domains</a> but the sender is
 not listed in $<a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a>, and $<a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> is
 not null.
 

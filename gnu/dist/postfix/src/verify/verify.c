@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.1.1.3 2005/08/18 21:10:59 rpaulo Exp $	*/
+/*	$NetBSD: verify.c,v 1.1.1.4 2006/04/06 23:01:08 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -268,11 +268,18 @@ static int verify_parse_entry(char *buf, int *status, long *probed,
 	*probed = atol(probed_text);
 	*updated = atol(updated_text);
 	*status = atoi(buf);
+
+	/*
+	 * Coverity 200604: the code incorrectly tested (probed || updated),
+	 * so that the sanity check never detected all-zero time stamps. Such
+	 * records are never written. If we read a record with all-zero time
+	 * stamps, then something is badly broken.
+	 */
 	if ((*status == DEL_RCPT_STAT_OK
 	     || *status == DEL_RCPT_STAT_DEFER
 	     || *status == DEL_RCPT_STAT_BOUNCE
 	     || *status == DEL_RCPT_STAT_TODO)
-	    && (probed || updated))
+	    && (*probed || *updated))
 	    return (0);
     }
     msg_warn("bad address verify table entry: %.100s", buf);
