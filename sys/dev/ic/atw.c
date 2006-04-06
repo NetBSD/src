@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.115 2006/03/28 00:48:10 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.116 2006/04/06 05:47:23 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.115 2006/03/28 00:48:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.116 2006/04/06 05:47:23 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.115 2006/03/28 00:48:10 dyoung Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/time.h>
+#include <lib/libkern/libkern.h>
 
 #include <machine/endian.h>
 
@@ -662,11 +663,11 @@ atw_attach(struct atw_softc *sc)
 	sc->sc_bbptype = SHIFTOUT(sc->sc_srom[ATW_SR_CSR20],
 	    ATW_SR_BBPTYPE_MASK);
 
-	if (sc->sc_rftype > sizeof(type_strings)/sizeof(type_strings[0])) {
+	if (sc->sc_rftype >= __arraycount(type_strings)) {
 		printf("%s: unknown RF\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	if (sc->sc_bbptype > sizeof(type_strings)/sizeof(type_strings[0])) {
+	if (sc->sc_bbptype >= __arraycount(type_strings)) {
 		printf("%s: unknown BBP\n", sc->sc_dev.dv_xname);
 		return;
 	}
