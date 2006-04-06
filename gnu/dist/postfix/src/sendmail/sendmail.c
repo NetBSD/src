@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.1.1.10 2005/08/18 21:08:46 rpaulo Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.1.1.11 2006/04/06 22:59:56 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -744,8 +744,10 @@ static void enqueue(const int flags, const char *encoding, const char *sender,
 		skip_from_ = 0;
 	    }
 	    if (strip_cr == STRIP_CR_DO && type == REC_TYPE_NORM)
-		if (VSTRING_LEN(buf) > 0 && vstring_end(buf)[-1] == '\r')
+		if (VSTRING_LEN(buf) > 0 && vstring_end(buf)[-1] == '\r') {
 		    vstring_truncate(buf, VSTRING_LEN(buf) - 1);
+		    VSTRING_TERMINATE(buf);
+		}
 	    if ((flags & SM_FLAG_AEOF) && prev_type != REC_TYPE_CONT
 		&& VSTRING_LEN(buf) == 1 && *STR(buf) == '.')
 		break;

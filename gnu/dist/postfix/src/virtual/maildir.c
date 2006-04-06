@@ -1,4 +1,4 @@
-/*	$NetBSD: maildir.c,v 1.1.1.6 2005/08/18 21:11:00 rpaulo Exp $	*/
+/*	$NetBSD: maildir.c,v 1.1.1.7 2006/04/06 23:01:09 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -189,7 +189,13 @@ int     deliver_maildir(LOCAL_STATE state, USER_ATTR usr_attr)
 	    || (dst = vstream_fopen(tmpfile, O_WRONLY | O_CREAT | O_EXCL, 0600)) == 0)) {
 	vstring_sprintf(why, "create %s: %m", tmpfile);
     } else if (fstat(vstream_fileno(dst), &st) < 0) {
-	vstring_sprintf(why, "create %s: %m", tmpfile);
+
+	/*
+	 * Coverity 200604: file descriptor leak in code that never executes.
+	 * Code replaced by msg_fatal(), as it is not worthwhile to continue
+	 * after an impossible error condition.
+	 */
+	msg_fatal("fstat %s: %m", tmpfile);
     } else {
 	vstring_sprintf(buf, "%lu.V%lxI%lxM%lu.%s",
 			(unsigned long) starttime.tv_sec,
