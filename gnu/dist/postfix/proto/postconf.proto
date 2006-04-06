@@ -7172,17 +7172,17 @@ of forged mail from worms or viruses.  </p>
 <ul>
 
 <li> The sender domain matches $mydestination, $inet_interfaces or
-$proxy_interfaces, but the recipient is not listed in
+$proxy_interfaces, but the sender is not listed in
 $local_recipient_maps, and $local_recipient_maps is not null.
 
-<li> The sender domain matches $virtual_alias_domains but the recipient
+<li> The sender domain matches $virtual_alias_domains but the sender
 is not listed in $virtual_alias_maps.
 
 <li> The sender domain matches $virtual_mailbox_domains but the
-recipient is not listed in $virtual_mailbox_maps, and $virtual_mailbox_maps
+sender is not listed in $virtual_mailbox_maps, and $virtual_mailbox_maps
 is not null.
 
-<li> The sender domain matches $relay_domains but the recipient is
+<li> The sender domain matches $relay_domains but the sender is
 not listed in $relay_recipient_maps, and $relay_recipient_maps is
 not null.
 
