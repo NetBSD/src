@@ -1,4 +1,4 @@
-/* $NetBSD: nbfs.c,v 1.2 2006/04/06 20:41:38 bjh21 Exp $ */
+/* $NetBSD: nbfs.c,v 1.3 2006/04/06 21:39:16 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -243,7 +243,8 @@ nbfs_file(struct nbfs_reg *r)
 			    fileswitch_IS_DIR : fileswitch_IS_FILE;
 			r->r2 = r->r3 = 0;
 			r->r4 = st.st_size;
-			r->r5 = fileswitch_OWNER_READ | fileswitch_WORLD_READ;
+			r->r5 = fileswitch_ATTR_OWNER_READ |
+			    fileswitch_ATTR_WORLD_READ;
 		}
 		break;
 	default:
