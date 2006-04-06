@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.5 2006/04/01 19:08:08 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.6 2006/04/06 20:41:38 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -298,6 +298,18 @@ extern os_error *xosmodule_lookup(char const *, int *, int *, void **, void **,
 #define fileswitch_SUPPORTS_DIR_CHANGE		(1 << 0)
 #define fileswitch_NEEDS_CAT			(1 << 1)
 #define fileswitch_NEEDS_EX			(1 << 2)
+
+#define fileswitch_NOT_FOUND	0
+#define fileswitch_IS_FILE	1
+#define fileswitch_IS_DIR	2
+#define fileswitch_IS_IMAGE	3
+
+#define fileswitch_ATTR_OWNER_READ	(1 << 0)
+#define fileswitch_ATTR_OWNER_WRITE	(1 << 1)
+#define fileswitch_ATTR_OWNER_LOCKED	(1 << 3)
+#define fileswitch_ATTR_WORLD_READ	(1 << 4)
+#define fileswitch_ATTR_WORLD_WRITE	(1 << 5)
+#define fileswitch_ATTR_WORLD_LOCKED	(1 << 7)
 
 #ifndef __ASSEMBLER__
 extern os_error *xosfscontrol_shutdown(void);
