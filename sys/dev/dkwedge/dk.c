@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.13 2006/04/06 17:17:45 thorpej Exp $	*/
+/*	$NetBSD: dk.c,v 1.14 2006/04/06 17:55:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.13 2006/04/06 17:17:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.14 2006/04/06 17:55:43 thorpej Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -459,7 +459,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 {
 	struct dkwedge_softc *sc = NULL;
 	u_int unit;
-	int bmaj, cmaj, i, mn, s;
+	int bmaj, cmaj, s;
 
 	/* Find our softc. */
 	dkw->dkw_devname[sizeof(dkw->dkw_devname) - 1] = '\0';
@@ -497,11 +497,8 @@ dkwedge_del(struct dkwedge_info *dkw)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances. */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(unit, i);
-		vdevgone(bmaj, mn, mn, VBLK);
-		vdevgone(cmaj, mn, mn, VCHR);
-	}
+	vdevgone(bmaj, unit, unit, VBLK);
+	vdevgone(cmaj, unit, unit, VCHR);
 
 	/* Clean up the parent. */
 	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
@@ -886,7 +883,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	struct vnode *vp;
-	int error;
+	int error = 0;
 
 	if (sc == NULL)
 		return (ENODEV);
@@ -930,13 +927,10 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		sc->sc_dk.dk_openmask =
 		    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 	}
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
-
-	return (0);
 
  popen_fail:
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return (error);
 }
 
