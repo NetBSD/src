@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.9 2006/04/05 15:14:49 tsutsui Exp $ */
+/* $NetBSD: panel.c,v 1.10 2006/04/06 11:50:19 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.9 2006/04/05 15:14:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.10 2006/04/06 11:50:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.9 2006/04/05 15:14:49 tsutsui Exp $");
 #include "ioconf.h"
 
 #define PANEL_POLLRATE	(hz / 10)
+#define PANEL_REGION	0x20
 #define DATA_OFFSET	0x10
 
 struct panel_softc {
@@ -113,7 +114,11 @@ panel_attach(struct device *parent, struct device *self, void *aux)
 	};
 
 	sc->sc_lcd.sc_iot = maa->ma_iot;
-	sc->sc_lcd.sc_ioir = maa->ma_ioh;
+	if (bus_space_map(sc->sc_lcd.sc_iot, maa->ma_addr, PANEL_REGION,
+	    0, &sc->sc_lcd.sc_ioir)) {
+		printf(": unable to map registers\n");
+		return;
+	}
 	bus_space_subregion(sc->sc_lcd.sc_iot, sc->sc_lcd.sc_ioir, DATA_OFFSET,
 	    1, &sc->sc_lcd.sc_iodr);
 
