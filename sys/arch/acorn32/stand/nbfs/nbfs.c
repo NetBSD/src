@@ -1,4 +1,4 @@
-/* $NetBSD: nbfs.c,v 1.1 2006/04/05 21:33:26 bjh21 Exp $ */
+/* $NetBSD: nbfs.c,v 1.2 2006/04/06 20:41:38 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -239,17 +239,11 @@ nbfs_file(struct nbfs_reg *r)
 		else {
 			err = FS_STAT(f.f_ops)(&f, &st);
 			if (err != 0) goto fail;
-			if (S_ISDIR(st.st_mode)) {
-				r->r0 = 2;
-				r->r2 = r->r3 = 0;
-				r->r4 = st.st_size;
-				r->r5 = 0x11;
-			} else {
-				r->r0 = 1;
-				r->r2 = r->r3 = 0;
-				r->r4 = st.st_size;
-				r->r5 = 0x11;
-			}
+			r->r0 = S_ISDIR(st.st_mode) ?
+			    fileswitch_IS_DIR : fileswitch_IS_FILE;
+			r->r2 = r->r3 = 0;
+			r->r4 = st.st_size;
+			r->r5 = fileswitch_OWNER_READ | fileswitch_WORLD_READ;
 		}
 		break;
 	default:
