@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.30 2006/04/02 18:08:44 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.31 2006/04/06 12:46:27 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -331,4 +331,10 @@ sys/netinet/in.c				1.105
 	Close NULL dereference when a GIFALIAS is performed on
   	a non existant address.
 	[seanb, ticket #1235]
+
+sys/arch/xen/xen/xbd.c				patch
+
+	Avoid panics under high system load. This fixes PR port-xen/33110.  
+	[jld, ticket #1240]
+
 
