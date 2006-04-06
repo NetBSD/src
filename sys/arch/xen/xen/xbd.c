@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.14.2.5 2005/04/28 10:28:42 tron Exp $ */
+/* $NetBSD: xbd.c,v 1.14.2.5.2.1 2006/04/06 12:43:34 tron Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14.2.5 2005/04/28 10:28:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14.2.5.2.1 2006/04/06 12:43:34 tron Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -1140,7 +1140,7 @@ xbdsize(dev_t dev)
 	return dk_size(xs->sc_di, &xs->sc_dksc, dev);
 }
 
-static void
+static int
 map_align(struct xbdreq *xr)
 {
 	int s;
@@ -1148,8 +1148,10 @@ map_align(struct xbdreq *xr)
 	s = splvm();
 	xr->xr_aligned = uvm_km_kmemalloc1(kmem_map, NULL,
 	    xr->xr_bqueue, XEN_BSIZE, UVM_UNKNOWN_OFFSET,
-	    0/*  UVM_KMF_NOWAIT */);
+	    UVM_KMF_NOWAIT);
 	splx(s);
+	if (xr->xr_aligned == 0)
+		return 0;
 	DPRINTF(XBDB_IO, ("map_align(%p): bp %p addr %p align 0x%08lx "
 	    "size 0x%04lx\n", xr, xr->xr_bp, xr->xr_bp->b_data,
 	    xr->xr_aligned, xr->xr_bqueue));
@@ -1157,6 +1159,7 @@ map_align(struct xbdreq *xr)
 	if ((xr->xr_bp->b_flags & B_READ) == 0)
 		memcpy((void *)xr->xr_aligned, xr->xr_bp->b_data,
 		    xr->xr_bqueue);
+	return 1;
 }
 
 static void
@@ -1361,7 +1364,13 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	pxr->xr_sc = xs;
 
 	if (pxr->xr_data & (XEN_BSIZE - 1))
-		map_align(pxr);
+		if (!map_align(pxr)) { /* No memory; try later. */
+			DPRINTF(XBDB_IO, ("xbdstart: map_align failed\n"));
+			ret = -1;
+			disk_unbusy(&dksc->sc_dkdev, 0, bp->b_flags & B_READ);
+			PUT_XBDREQ(pxr);
+			goto out;
+		}
 
 	fill_ring(pxr);
 
