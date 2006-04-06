@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.5 2006/02/25 22:17:12 rpaulo Exp $
+.\"	$NetBSD: postconf.5,v 1.6 2006/04/06 23:07:16 rpaulo Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -4707,17 +4707,17 @@ access restriction is specified. This can slow down an explosion
 of forged mail from worms or viruses.
 .IP \(bu
 The sender domain matches $mydestination, $inet_interfaces or
-$proxy_interfaces, but the recipient is not listed in
+$proxy_interfaces, but the sender is not listed in
 $local_recipient_maps, and $local_recipient_maps is not null.
 .IP \(bu
-The sender domain matches $virtual_alias_domains but the recipient
+The sender domain matches $virtual_alias_domains but the sender
 is not listed in $virtual_alias_maps.
 .IP \(bu
 The sender domain matches $virtual_mailbox_domains but the
-recipient is not listed in $virtual_mailbox_maps, and $virtual_mailbox_maps
+sender is not listed in $virtual_mailbox_maps, and $virtual_mailbox_maps
 is not null.
 .IP \(bu
-The sender domain matches $relay_domains but the recipient is
+The sender domain matches $relay_domains but the sender is
 not listed in $relay_recipient_maps, and $relay_recipient_maps is
 not null.
 .PP
