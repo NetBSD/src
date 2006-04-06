@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.9 2005/08/04 19:41:28 rpaulo Exp $	*/
+/*	$NetBSD: atalk.c,v 1.10 2006/04/06 18:30:31 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.9 2005/08/04 19:41:28 rpaulo Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.10 2006/04/06 18:30:31 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ atalk_print2(sa, mask, what)
 	const struct sockaddr *mask;
 	int what;
 {
-	size_t          n, l;
+	int		n, l;
 	static char     buf[100];
 	struct sockaddr_at *sat1, *sat2;
 	struct sockaddr_at thesockaddr;
