@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.29 2006/03/29 04:16:50 thorpej Exp $ */
+/*	$NetBSD: p9100.c,v 1.30 2006/04/06 12:22:05 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.29 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.30 2006/04/06 12:22:05 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,8 +253,6 @@ struct wsdisplay_accessops p9100_accessops = {
 	NULL,	/* getwschar */
 	NULL,	/* putwschar */
 	NULL,	/* scroll */
-	NULL,	/* getborder */
-	NULL	/* setborder */
 };
 #endif
 
