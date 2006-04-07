@@ -1,6 +1,6 @@
 .file "__udivsi3.s"
 
-// $FreeBSD$
+// $NetBSD: udivsi3.S,v 1.2 2006/04/07 14:27:33 cherry Exp $
 
 //-
 // Copyright (c) 2000, Intel Corporation
