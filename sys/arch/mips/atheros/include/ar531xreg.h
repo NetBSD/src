@@ -1,4 +1,4 @@
-/* $Id: ar531xreg.h,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $Id: ar531xreg.h,v 1.2 2006/04/07 04:58:31 gdamore Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -152,6 +152,7 @@
 /* Revision ids */
 #define	AR531X_REVISION_WMAC_MAJOR(x)		(((x) >> 12) & 0xf)
 #define	AR531X_REVISION_WMAC_MINOR(x)		(((x) >> 8) & 0xf)
+#define	AR531X_REVISION_WMAC(x)			(((x) >> 8) & 0xff)
 #define	AR531X_REVISION_MAJOR(x)		(((x) >> 4) & 0xf)
 #define	AR531X_REVISION_MINOR(x)		(((x) >> 0) & 0xf)
 
