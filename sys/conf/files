@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.767 2006/04/05 06:54:26 gdamore Exp $
+#	$NetBSD: files,v 1.768 2006/04/07 01:39:13 gdamore Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -278,6 +278,9 @@ define	rasops32
 
 # splash screen support
 include "dev/splash/files.splash"
+
+# videomode support
+include "dev/videomode/files.videomode"
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, token ring, atm and eco(net).
