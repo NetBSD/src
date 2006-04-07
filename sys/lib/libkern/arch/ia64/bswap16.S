@@ -1,3 +1,5 @@
+/*	$NetBSD: bswap16.S,v 1.2 2006/04/07 14:27:33 cherry Exp $	*/
+	
 /*-
  * Copyright (c) 1996 Carnegie-Mellon University.
  * All rights reserved.
