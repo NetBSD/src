@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.768 2006/04/07 01:39:13 gdamore Exp $
+#	$NetBSD: files,v 1.769 2006/04/07 18:55:22 riz Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -232,6 +232,7 @@ define	atapi		{ }
 define	radiodev	{ }
 define	gpibdev		{[address = -1]}
 define	gpiobus		{ }
+define	onewirebus	{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
@@ -1398,4 +1399,7 @@ include	"net/agr/files.agr"
 #
 # General Purpose Input/Output framework
 #
+define	onewire_bitbang
 include	"dev/gpio/files.gpio"
+
+include "dev/onewire/files.onewire"
