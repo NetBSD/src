@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.2.2.8 2005/06/18 10:47:44 tron Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.2.2.9 2006/04/07 12:51:26 tron Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.8 2005/06/18 10:47:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.2.2.9 2006/04/07 12:51:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ __ctrl_if_rx_tasklet(unsigned long data)
 	 * though the console polling code.
 	 */
 	ctrl_if_rx_req_cons++;
-        if ( x86_atomic_test_bit(
+        if ( xen_atomic_test_bit(
                       (unsigned long *)&ctrl_if_rxmsg_blocking_context,
 		      msg.type) )
             memcpy(&ctrl_if_rxmsg_deferred[MASK_CONTROL_IDX(dp++)],
@@ -426,10 +426,10 @@ ctrl_if_register_receiver(
     else
     {
         ctrl_if_rxmsg_handler[type] = hnd;
-        x86_atomic_clear_bit((unsigned long *)&ctrl_if_rxmsg_blocking_context, type);
+        xen_atomic_clear_bit((unsigned long *)&ctrl_if_rxmsg_blocking_context, type);
         if ( flags == CALLBACK_IN_BLOCKING_CONTEXT )
         {
-            x86_atomic_set_bit((unsigned long *)&ctrl_if_rxmsg_blocking_context, type);
+            xen_atomic_set_bit((unsigned long *)&ctrl_if_rxmsg_blocking_context, type);
 #if 0
             if ( !safe_to_schedule_task )
                 BUG();

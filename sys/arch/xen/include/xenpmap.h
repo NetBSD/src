@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.4.2.4 2005/08/25 20:48:28 tron Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.4.2.5 2006/04/07 12:51:26 tron Exp $	*/
 
 /*
  *
@@ -211,8 +211,19 @@ paddr_t *xpmap_phys_to_machine_mapping;
 
 #endif
 
-#define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE_LOCORE)
-static __inline paddr_t
+/*   
+ * On Xen-2, the start of the day virual memory starts at KERNTEXTOFF
+ * (0xc0100000). On Xen-3 for domain0 it starts at KERNBASE (0xc0000000).
+ * So the offset between physical and virtual address is different on
+ * Xen-2 and Xen-3 for domain0.
+ */  
+#if defined(XEN3) && defined(DOM0OPS)
+#define XPMAP_OFFSET	0
+#else
+#define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE)
+#endif
+
+static inline paddr_t
 xpmap_mtop(paddr_t mpa)
 {
 	return ((machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) +
@@ -233,5 +244,51 @@ xpmap_ptom_masked(paddr_t ppa)
 	return (xpmap_phys_to_machine_mapping[(ppa -
 	    XPMAP_OFFSET) >> PAGE_SHIFT] << PAGE_SHIFT);
 }
+
+#ifdef XEN3
+static inline void
+MULTI_update_va_mapping(
+	multicall_entry_t *mcl, vaddr_t va,
+	paddr_t new_val, unsigned long flags)
+{
+	mcl->op = __HYPERVISOR_update_va_mapping;
+	mcl->args[0] = va;
+#if defined(__x86_64__)
+	mcl->args[1] = new_val;
+	mcl->args[2] = flags;
+#else
+	mcl->args[1] = new_val;
+	mcl->args[2] = 0;
+	mcl->args[3] = flags;
+#endif
+}
+
+static inline void
+MULTI_update_va_mapping_otherdomain(
+	multicall_entry_t *mcl, vaddr_t va,
+	paddr_t new_val, unsigned long flags, domid_t domid)
+{
+	mcl->op = __HYPERVISOR_update_va_mapping_otherdomain;
+	mcl->args[0] = va;
+#if defined(__x86_64__)
+	mcl->args[1] = new_val;
+	mcl->args[2] = flags;
+	mcl->args[3] = domid;
+#else
+	mcl->args[1] = new_val;   
+	mcl->args[2] = 0;
+	mcl->args[3] = flags;
+	mcl->args[4] = domid;
+#endif
+}
+#if defined(__x86_64__)
+#define MULTI_UVMFLAGS_INDEX 2
+#define MULTI_UVMDOMID_INDEX 3
+#else
+#define MULTI_UVMFLAGS_INDEX 3
+#define MULTI_UVMDOMID_INDEX 4
+#endif
+
+#endif /* XEN3 */
 
 #endif /* _XEN_XENPMAP_H_ */

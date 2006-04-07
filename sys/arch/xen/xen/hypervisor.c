@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.12.2.5 2006/01/05 05:59:03 riz Exp $ */
+/* $NetBSD: hypervisor.c,v 1.12.2.6 2006/04/07 12:51:26 tron Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.12.2.5 2006/01/05 05:59:03 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.12.2.6 2006/04/07 12:51:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,9 +71,10 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.12.2.5 2006/01/05 05:59:03 riz Exp 
 #include <sys/malloc.h>
 #include <dev/sysmon/sysmonvar.h>
 
+#include "xenbus.h"
 #include "xencons.h"
-#include "xennet.h"
-#include "xbd.h"
+#include "xennet_hypervisor.h"
+#include "xbd_hypervisor.h"
 #include "npx.h"
 #include "isa.h"
 #include "pci.h"
@@ -83,7 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.12.2.5 2006/01/05 05:59:03 riz Exp 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+#ifndef XEN3
 #include <machine/ctrl_if.h>
+#endif
 
 #ifdef DOM0OPS
 #include <sys/dirent.h>
@@ -98,15 +101,21 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.12.2.5 2006/01/05 05:59:03 riz Exp 
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
 #endif
+#ifdef XEN3
+#include <machine/granttables.h>
+#endif
+#if NXENBUS > 0
+#include <machine/xenbus.h>
+#endif
 
-#if NXENNET > 0
+#if NXENNET_HYPERVISOR > 0
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <machine/if_xennetvar.h>
 #endif
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 #include <sys/buf.h>
 #include <sys/disk.h>
 #include <sys/bufq.h>
@@ -127,10 +136,13 @@ union hypervisor_attach_cookie {
 #if NXENCONS > 0
 	struct xencons_attach_args hac_xencons;
 #endif
-#if NXENNET > 0
+#if NXENBUS > 0
+	struct xenbus_attach_args hac_xenbus;
+#endif
+#if NXENNET_HYPERVISOR > 0
 	struct xennet_attach_args hac_xennet;
 #endif
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 	struct xbd_attach_args hac_xbd;
 #endif
 #if NNPX > 0
@@ -150,7 +162,9 @@ struct  x86_isa_chipset x86_isa_chipset;
 #endif
 
 /* shutdown/reboot message stuff */
+#ifndef XEN3
 static void hypervisor_shutdown_handler(ctrl_msg_t *, unsigned long);
+#endif
 static struct sysmon_pswitch hysw_shutdown = {
 	.smpsw_type = PSWITCH_TYPE_POWER,
 	.smpsw_name = "hypervisor",
@@ -197,16 +211,24 @@ hypervisor_attach(parent, self, aux)
 	printf("\n");
 
 	init_events();
+#ifdef XEN3
+	xengnt_init();
+#endif
+
+#if NXENBUS > 0
+	hac.hac_xenbus.xa_device = "xenbus";
+	config_found_ia(self, "xendevbus", &hac.hac_xenbus, hypervisor_print);
+#endif
 
 #if NXENCONS > 0
 	hac.hac_xencons.xa_device = "xencons";
 	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
 #endif
-#if NXENNET > 0
+#if NXENNET_HYPERVISOR > 0
 	hac.hac_xennet.xa_device = "xennet";
 	xennet_scan(self, &hac.hac_xennet, hypervisor_print);
 #endif
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 	hac.hac_xbd.xa_device = "xbd";
 	xbd_scan(self, &hac.hac_xbd, hypervisor_print);
 #endif
@@ -215,7 +237,6 @@ hypervisor_attach(parent, self, aux)
 	config_found_ia(self, "xendevbus", &hac.hac_xennpx, hypervisor_print);
 #endif
 #if NPCI > 0
-
 	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
 	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
 		printf("hypervisor: PHYSDEVOP_PCI_PROBE_ROOT_BUSES failed with status %d\n", i);
@@ -261,7 +282,7 @@ hypervisor_attach(parent, self, aux)
 		config_found_ia(self, "isabus", &iba, isabusprint);
 	}
 #endif
-#endif
+#endif /* NPCI */
 
 #ifdef DOM0OPS
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
@@ -276,9 +297,11 @@ hypervisor_attach(parent, self, aux)
 	    sysmon_pswitch_register(&hysw_shutdown) != 0)
 		printf("%s: unable to register with sysmon\n",
 		    self->dv_xname);
+#ifndef XEN3
 	else 
 		ctrl_if_register_receiver(CMSG_SHUTDOWN,
 		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);
+#endif
 }
 
 static int
@@ -311,6 +334,7 @@ xenkernfs_init()
 }
 #endif
 
+#ifndef XEN3
 /* handler for the shutdown messages */
 static void
 hypervisor_shutdown_handler(ctrl_msg_t *msg, unsigned long id)
@@ -327,3 +351,4 @@ hypervisor_shutdown_handler(ctrl_msg_t *msg, unsigned long id)
 		    msg->type);
 	}
 }
+#endif

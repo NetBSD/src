@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.2 2005/03/09 22:39:20 bouyer Exp $ */
+/* $NetBSD: xen.h,v 1.2.2.1 2006/04/07 12:51:26 tron Exp $ */
 
 /*
  * Copyright (c) 2004, K A Fraser
@@ -439,9 +439,6 @@ typedef struct {
 #define SIF_INITDOMAIN    (1<<1)  /* Is this the initial control domain? */
 #define SIF_BLK_BE_DOMAIN (1<<4)  /* Is this a block backend domain? */
 #define SIF_NET_BE_DOMAIN (1<<5)  /* Is this a net backend domain? */
-
-/* For use in guest OSes. */
-volatile extern shared_info_t *HYPERVISOR_shared_info;
 
 #endif /* !__ASSEMBLY__ */
 
