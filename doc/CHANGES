@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.603 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.604 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -234,3 +234,9 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	utoppya(1): Userland program to interface to utoppy(4).
 		[scw 20060403]
 	ipf(8): Updated to version 4.1.13. [martti 20060404]
+	onewire(4): Driver for Dallas Semiconductor 1-wire bus. From
+		OpenBSD. [riz 20060407]
+	gpioow(4): bit-banging driver for onewire via gpio pin.  From
+		OpenBSD. [riz 20060407]
+	owtemp(4): Driver for some 1-wire temperature sensors.  From
+		OpenBSD. [riz 20060407]
