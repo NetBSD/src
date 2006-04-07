@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.36.2.6 2005/09/08 21:06:30 tron Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.36.2.7 2006/04/07 12:31:52 tron Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.36.2.6 2005/09/08 21:06:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.36.2.7 2006/04/07 12:31:52 tron Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2667,7 +2667,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_back = PTRTOUINT64(l->l_back);
 		ki->p_addr = PTRTOUINT64(l->l_addr);
 		ki->p_stat = l->l_stat;
-		ki->p_flag |= l->l_flag;
+		ki->p_flag |= l->l_flag & P_SHARED;
 		ki->p_swtime = l->l_swtime;
 		ki->p_slptime = l->l_slptime;
 		if (l->l_stat == LSONPROC) {
