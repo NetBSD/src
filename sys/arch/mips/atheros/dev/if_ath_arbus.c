@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.2 2006/04/02 05:44:28 gdamore Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.3 2006/04/07 04:57:05 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.2 2006/04/02 05:44:28 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.3 2006/04/07 04:57:05 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.2 2006/04/02 05:44:28 gdamore Exp
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
 #include <contrib/dev/ath/ah.h>
@@ -114,7 +115,7 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 
 	rev = GETSYSREG(AR531X_SYSREG_REVISION);
 	devid = AR531X_REVISION_WMAC(rev);
-	name = ath_hal_probe(AR531X_ATHEROS_VENDOR_ID, devid);
+	name = ath_hal_probe(PCI_VENDOR_ATHEROS, devid);
 
 	printf(": %s\n", name ? name : "Unknown AR531X WLAN");
 
