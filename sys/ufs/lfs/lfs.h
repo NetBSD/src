@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.97 2006/03/24 20:05:32 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.98 2006/04/07 23:44:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -768,6 +768,7 @@ struct lfs {
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
 	u_int32_t  lfs_seglock;		/* single-thread the segment writer */
 	pid_t	  lfs_lockpid;		/* pid of lock holder */
+	lwpid_t	  lfs_locklwp;		/* lwp of lock holder */
 	u_int32_t lfs_iocount;		/* number of ios pending */
 	u_int32_t lfs_writer;		/* don't allow any dirops to start */
 	u_int32_t lfs_dirops;		/* count of active directory ops */
@@ -1059,7 +1060,9 @@ struct lfs_fcntl_markv {
 #ifdef _KERNEL
 /* XXX MP */
 #define	LFS_SEGLOCK_HELD(fs) \
-	((fs)->lfs_seglock != 0 && (fs)->lfs_lockpid == curproc->p_pid)
+	((fs)->lfs_seglock != 0 &&					\
+	 (fs)->lfs_lockpid == curproc->p_pid &&				\
+	 (fs)->lfs_locklwp == curlwp->l_lid)
 #endif /* _KERNEL */
 
 /* Debug segment lock */
