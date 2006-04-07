@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.110 2006/03/19 04:10:02 rtr Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.111 2006/04/07 23:59:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.110 2006/03/19 04:10:02 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.111 2006/04/07 23:59:28 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -933,9 +933,9 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	cip->bfree = fs->lfs_bfree;
 	simple_lock(&fs->lfs_interlock);
 	cip->avail = fs->lfs_avail - fs->lfs_ravail - fs->lfs_favail;
+	wakeup(&fs->lfs_avail);
 	simple_unlock(&fs->lfs_interlock);
 	(void) LFS_BWRITE_LOG(bp);
-	wakeup(&fs->lfs_avail);
 
 	if (lfs_dostats)
 		++lfs_stats.segs_reclaimed;
@@ -968,7 +968,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	timeradd(tv, &time, tv);
 	timeout = hzto(tv);
 	splx(s);
-	error = tsleep(addr, PCATCH | PUSER, "segment", timeout);
+	error = tsleep(addr, PCATCH | PVFS, "segment", timeout);
 	return (error == ERESTART ? EINTR : 0);
 }
 
