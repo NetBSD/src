@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.57 2006/04/06 19:30:54 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.58 2006/04/07 13:05:08 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1168,4 +1168,84 @@ sys/arch/hp300/stand/common/samachdep.h		1.11
 	Fix a huge number of "pkgsrc" build problems in by avoiding
 	namespace pollution.
 	[oster, ticket #1242, #1243]
+
+sys/kern/init_sysctl.c				1.65 via patch
+sys/sys/lwp.h					1.35-1.36 via patch
+sys/sys/proc.h					1.219 via patch
+
+	PR kern/32809: Conflicting flags in l_flag and p_flag caused
+	ps(1) to print incorrect information.
+	[pavel, ticket #1244]
+
+sys/arch/i386/conf/INSTALL_XEN3_U		patch
+sys/arch/i386/conf/XEN3_U			patch
+sys/arch/xen/conf/files.compat			patch
+sys/arch/xen/conf/files.xen			patch
+sys/arch/xen/i386/autoconf.c			patch
+sys/arch/xen/i386/genassym.cf			patch
+sys/arch/xen/i386/hypervisor_machdep.c		patch
+sys/arch/xen/i386/identcpu.c			patch
+sys/arch/xen/i386/locore.S			patch
+sys/arch/xen/i386/machdep.c			patch
+sys/arch/xen/i386/sys_machdep.c			patch
+sys/arch/xen/i386/trap.c			patch
+sys/arch/xen/i386/vector.S			patch
+sys/arch/xen/i386/xen_machdep.c			patch
+sys/arch/xen/include/cpufunc.h			patch
+sys/arch/xen/include/frameasm.h			patch
+sys/arch/xen/include/granttables.h		patch
+sys/arch/xen/include/hypervisor.h		patch
+sys/arch/xen/include/xen.h			patch
+sys/arch/xen/include/if_xennetvar.h		patch
+sys/arch/xen/include/segments.h			patch
+sys/arch/xen/include/xenbus.h			patch
+sys/arch/xen/include/xenpmap.h			patch
+sys/arch/xen/include/xen-public/xen.h		patch
+sys/arch/xen/include/xen3-public/COPYING	patch
+sys/arch/xen/include/xen3-public/arch-ia64.h	patch
+sys/arch/xen/include/xen3-public/arch-x86_64.h	patch
+sys/arch/xen/include/xen3-public/dom0_ops.h	patch
+sys/arch/xen/include/xen3-public/event_channel.h patch
+sys/arch/xen/include/xen3-public/grant_table.h	patch
+sys/arch/xen/include/xen3-public/memory.h	patch
+sys/arch/xen/include/xen3-public/physdev.h	patch
+sys/arch/xen/include/xen3-public/sched.h	patch
+sys/arch/xen/include/xen3-public/sched_ctl.h	patch
+sys/arch/xen/include/xen3-public/trace.h	patch
+sys/arch/xen/include/xen3-public/vcpu.h		patch
+sys/arch/xen/include/xen3-public/version.h	patch
+sys/arch/xen/include/xen3-public/arch-x86_32.h	patch
+sys/arch/xen/include/xen3-public/xen.h		patch
+sys/arch/xen/include/xen3-public/io/blkif.h	patch
+sys/arch/xen/include/xen3-public/io/console.h	patch
+sys/arch/xen/include/xen3-public/io/netif.h	patch
+sys/arch/xen/include/xen3-public/io/tpmif.h	patch
+sys/arch/xen/include/xen3-public/io/xenbus.h	patch
+sys/arch/xen/include/xen3-public/io/ring.h	patch
+sys/arch/xen/include/xen3-public/io/xs_wire.h	patch
+sys/arch/xen/xen/clock.c			patch
+sys/arch/xen/xen/ctrl_if.c			patch
+sys/arch/xen/xen/evtchn.c			patch
+sys/arch/xen/xen/hypervisor.c			patch
+sys/arch/xen/xen/if_xennet.c			patch
+sys/arch/xen/xen/if_xennet_xenbus.c		patch
+sys/arch/xen/xen/xbd_xenbus.c			patch
+sys/arch/xen/xen/xbd.c				patch
+sys/arch/xen/xen/xencons.c			patch
+sys/arch/xen/xen/xengnt.c			patch
+sys/arch/xen/xenbus/xenbus_client.c		patch
+sys/arch/xen/xenbus/xenbus_comms.c		patch
+sys/arch/xen/xenbus/xenbus_comms.h		patch
+sys/arch/xen/xenbus/xenbus_dev.c		patch
+sys/arch/xen/xenbus/xenbus_probe.c		patch
+sys/arch/xen/xenbus/xenbus_xs.c			patch
+
+	Add Xen-3 domU support.
+	[bouyer, ticket #1245]
+
+usr.bin/calendar/calendar.c			1.39
+
+	Correct logic error in wildcard handling, which was causing the
+	day-of-month on normal entries to always be treated as a wildcard.
+	[jld, ticket #1246]
 
