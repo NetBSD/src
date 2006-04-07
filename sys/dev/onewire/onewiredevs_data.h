@@ -1,10 +1,10 @@
-/*	$NetBSD: onewiredevs_data.h,v 1.1 2006/04/07 18:55:22 riz Exp $	*/
+/*	$NetBSD: onewiredevs_data.h,v 1.2 2006/04/07 18:56:37 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * Generated from:
- *	NetBSD
+ *	NetBSD: onewiredevs,v 1.1 2006/04/07 18:55:22 riz Exp 
  */
 
 static const struct onewire_family onewire_famtab[] = {
