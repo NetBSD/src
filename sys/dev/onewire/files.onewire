@@ -1,0 +1,15 @@
+# $OpenBSD: files.onewire,v 1.1 2006/03/04 16:27:03 grange Exp $
+
+define	onewire {}
+
+device	onewire: onewire
+attach	onewire at onewirebus
+file	dev/onewire/onewire.c		onewire
+file	dev/onewire/onewire_subr.c	onewire
+
+file	dev/onewire/onewire_bitbang.c	onewire_bitbang
+
+# Temperature family type device
+device	owtemp: sysmon_envsys
+attach	owtemp at onewire
+file	dev/onewire/owtemp.c		owtemp
