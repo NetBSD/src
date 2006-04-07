@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.26.2.1 2005/05/11 18:04:58 tron Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.26.2.2 2006/04/07 12:27:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -101,18 +101,18 @@ extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
 
 extern struct lwp lwp0;			/* LWP for proc0 */
 
-/* These flags are kept in l_flag. */
-#define	L_INMEM		0x00004	/* Loaded into memory. */
-#define	L_SELECT	0x00040	/* Selecting; wakeup/waiting danger. */
-#define	L_SINTR		0x00080	/* Sleep is interruptible. */
-#define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
-#define	L_PROCEXIT	0x00800 /* In process exit, l_proc no longer valid */
-#define	L_SA		0x100000 /* Scheduler activations LWP */
-#define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
-#define	L_SA_BLOCKING	0x400000 /* Blocking in tsleep() */
-#define	L_DETACHED	0x800000 /* Won't be waited for. */
-#define	L_CANCELLED	0x2000000 /* tsleep should not sleep */
-#define	L_SA_PAGEFAULT	0x4000000 /* SA LWP in pagefault handler */
+/* These flags are kept in l_flag. [*] is shared with p_flag */
+#define	L_INMEM		0x00000004 /* [*] Loaded into memory. */
+#define	L_SELECT	0x00000040 /* [*] Selecting; wakeup/waiting danger. */
+#define	L_SINTR		0x00000080 /* [*] Sleep is interruptible. */
+#define	L_TIMEOUT	0x00000400 /* Timing out during sleep. */
+#define	L_PROCEXIT	0x00000800 /* In process exit, l_proc no longer valid */
+#define	L_SA		0x00100000 /* Scheduler activations LWP */
+#define	L_SA_UPCALL	0x00200000 /* SA upcall is pending */
+#define	L_SA_BLOCKING	0x00400000 /* Blocking in tsleep() */
+#define	L_DETACHED	0x00800000 /* Won't be waited for. */
+#define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
+#define	L_SA_PAGEFAULT	0x04000000 /* SA LWP in pagefault handler */
 #define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
 #define	L_SA_IDLE	0x20000000 /* VP is idle */
 #define	L_COWINPROGRESS	0x40000000 /* UFS: doing copy on write */
