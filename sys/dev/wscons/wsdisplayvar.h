@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.36 2006/04/05 15:18:25 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.37 2006/04/07 14:30:20 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -231,7 +231,6 @@ const struct wsscreen_descr *
 #if defined(_KERNEL)
 #  if defined(_KERNEL_OPT)
 #    include "opt_wsmsgattrs.h"
-#    include "opt_wsdisplay_border.h"
 #  endif
 #  if !defined(WS_DEFAULT_FG)
 #    define WS_DEFAULT_FG WSCOL_WHITE
