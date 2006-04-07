@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.18.2.8 2006/03/29 21:18:29 tron Exp $
+#	$NetBSD: files.xen,v 1.18.2.9 2006/04/07 12:51:25 tron Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -52,14 +52,16 @@ file	arch/xen/xen/xen_debug.c
 
 file	arch/xen/xen/clock.c
 file	arch/xen/xen/evtchn.c
-file	arch/xen/xen/ctrl_if.c
+file	arch/xen/xen/ctrl_if.c			!xen3
+
+file	arch/xen/xen/xengnt.c			xen3
 
 file	dev/cons.c
 
 file	arch/i386/i386/mptramp.S		multiprocessor
-file    arch/i386/i386/ipifuncs.c	multiprocessor
+file    arch/i386/i386/ipifuncs.c		multiprocessor
 
-file	arch/i386/i386/pmc.c		perfctrs
+file	arch/i386/i386/pmc.c			perfctrs
 
 file	crypto/des/arch/i386/des_enc.S		des
 file	crypto/des/arch/i386/des_cbc.S		des
@@ -115,6 +117,15 @@ device	hypervisor { }: isabus, pcibus, sysmon_power, xendevbus
 attach hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
+# Xenbus (xen3 only)
+device xenbus {[id = -1]}
+attach xenbus at xendevbus
+file arch/xen/xenbus/xenbus_client.c xenbus & xen3 needs-flag
+file arch/xen/xenbus/xenbus_comms.c xenbus & xen3 needs-flag
+file arch/xen/xenbus/xenbus_dev.c xenbus & xen3 & dom0ops needs-flag
+file arch/xen/xenbus/xenbus_probe.c xenbus & xen3 needs-flag
+file arch/xen/xenbus/xenbus_xs.c xenbus & xen3 needs-flag
+
 # Numeric Processing Extension; Math Co-processor
 device	npx
 file	arch/xen/i386/npx.c		npx needs-flag
@@ -132,17 +143,19 @@ defpseudo xenevt
 
 # Xen Network driver
 device	xennet: arp, ether, ifnet
-attach	xennet at xendevbus
-file	arch/xen/xen/if_xennet.c	xennet needs-flag
+attach xennet at xendevbus with xennet_hypervisor
+attach xennet at xenbus with xennet_xenbus
+file   arch/xen/xen/if_xennet_xenbus.c xennet_xenbus needs-flag
+file   arch/xen/xen/if_xennet.c        xennet_hypervisor needs-flag
 
 # Xen Block device driver and wd/sd/cd identities
 device	xbd: disk
-attach	xbd at xendevbus
-file	arch/xen/xen/xbd.c		xbd | wd_xen | sd_xen | cd_xen needs-flag
-
-#attach	wd at hypervisor with wd_xen
-#attach	sd at hypervisor with sd_xen
-#attach	cd at hypervisor with cd_xen
+attach	xbd at xendevbus with xbd_hypervisor
+attach	xbd at xenbus with xbd_xenbus
+#file	arch/xen/xen/xbd_hypervisor.c	xbd_hypervisor
+file	arch/xen/xen/xbd_xenbus.c	xbd_xenbus
+#file	arch/xen/xen/xbd.c		xbd | xbd_hypervisor | xbd_xenbus needs-flag
+file	arch/xen/xen/xbd.c		xbd_hypervisor needs-flag
 
 # Non-Xen specific devices and options
 
@@ -266,8 +279,8 @@ include	"dev/pcmcia/files.pcmcia"
 defflag	opt_xen.h			DOM0OPS
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/i386/xen_shm_machdep.c	dom0ops
-file	arch/xen/xen/xbdback.c		dom0ops
-file	arch/xen/xen/xennetback.c	dom0ops
+file	arch/xen/xen/xbdback.c		dom0ops & !xen3
+file	arch/xen/xen/xennetback.c	dom0ops & !xen3
 file	arch/xen/xen/pci_machdep.c	hypervisor & pci
 file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
