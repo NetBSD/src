@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.447 2006/04/01 20:20:28 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.448 2006/04/07 19:38:58 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -38,26 +38,22 @@ NEED_OWN_INSTALL_TARGET?=	yes
 # If some future port is not supported by the in-tree toolchain, this
 # should be set to "yes" for that port only.
 #
-TOOLCHAIN_MISSING=	no
-
-#
-# Transitional for toolchain upgrade to GCC3.3
-#
-# not working:
-#
-.if ${MACHINE_ARCH} == "vax"
-HAVE_GCC3?=	no
-.else
-HAVE_GCC3?=	yes
-.endif
+TOOLCHAIN_MISSING?=	no
 
 #
 # Transitional for toolchain upgrade to GCC4.1
 #
-HAVE_GCC4?=	no
+# not working:
+#	all
+#
+.if ${MACHINE_ARCH} == "vax"
+HAVE_GCC?=	2
+.else
+HAVE_GCC?=	3
+.endif
 
 # Do we want to use tools/toolchain or not?
-.if ${HAVE_GCC3} != "no"
+.if ${HAVE_GCC} != "2"
 USE_TOOLS_TOOLCHAIN=no
 .endif
 USE_TOOLS_TOOLCHAIN?=yes
@@ -406,7 +402,7 @@ MKGCC:= no
 #
 # GCC can produce PIC code for sh3 only starting with gcc3.
 #
-.if ${MACHINE_CPU} == "sh3" && ${HAVE_GCC3} == "no"
+.if ${MACHINE_CPU} == "sh3" && ${HAVE_GCC} == "2"
 NOPIC=		# defined
 .endif
 
@@ -462,7 +458,7 @@ MKGDB=		no
 # so don't build the _pic version.  Unless we are using GCC3 which
 # doesn't support PIC yet.
 #
-.if ${MACHINE_ARCH} == "vax" && ${HAVE_GCC3} != "no"
+.if ${MACHINE_ARCH} == "vax" && ${HAVE_GCC} == "3"
 NOPIC=		# defined
 .endif
 .if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"

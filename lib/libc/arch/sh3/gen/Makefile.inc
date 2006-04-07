@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2005/10/15 16:00:42 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2006/04/07 19:38:58 mrg Exp $
 
 SRCS+=	setjmp.S _setjmp.S sigsetjmp.S
 
@@ -22,7 +22,7 @@ SRCS+=	nanf.c
 
 # In gcc3 dynamic world these functions must be ".hidden" in libgcc*.a,
 # as they are gcc "millicode" with different calling conventions.
-.if ${HAVE_GCC3} == "no"
+.if ${HAVE_GCC} == "2"
 SRCS+=	ashiftrt.S ashlsi3.S ashrsi3.S lshrsi3.S movstr.S movstr_i4.S \
 	movstrSI.S mulsi3.S sdivsi3.S udivsi3.S
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2006/01/06 18:08:59 apb Exp $
+#	$NetBSD: Makefile,v 1.52 2006/04/07 19:38:58 mrg Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -34,8 +34,8 @@ MAKESRCTARS_FLAGS= 	-N ${NETBSDSRCDIR}/etc
 MAKETARSETS!= ${SETSCMD} ./makeflist -l ${MAKEFLIST_FLAGS}
 .endif
 
-print_have_gcc3: .PHONY
-	@echo ${HAVE_GCC3}
+print_have_gcc: .PHONY
+	@echo ${HAVE_GCC}
 
 print_machine: .PHONY
 	@echo ${MACHINE}

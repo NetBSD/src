@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.121 2006/02/04 16:30:04 christos Exp $
+#	$NetBSD: Makefile,v 1.122 2006/04/07 19:38:58 mrg Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -22,10 +22,12 @@ SUBDIR+=	gdb53
 .endif
 
 .if ${MKGCCCMDS} != "no"
-.if ${HAVE_GCC3} == "no"
+.if ${HAVE_GCC} == "2"
 SUBDIR+=	gcc
-.else
+.elif ${HAVE_GCC} == "3"
 SUBDIR+=	gcc3
+.else
+SUBDIR+=	gcc4
 .endif
 .endif
 
