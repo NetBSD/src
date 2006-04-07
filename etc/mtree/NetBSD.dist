@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.306 2006/04/01 04:13:21 tnozaki Exp $
+#	$NetBSD: NetBSD.dist,v 1.307 2006/04/07 12:40:10 drochner Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -217,7 +217,6 @@
 ./usr/include/adosfs
 ./usr/include/altq
 ./usr/include/arpa
-./usr/include/cdk
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm
