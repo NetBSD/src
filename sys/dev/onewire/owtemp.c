@@ -1,4 +1,4 @@
-/* $NetBSD */
+/*	$NetBSD: owtemp.c,v 1.2 2006/04/07 20:03:52 uwe Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.2 2006/04/07 20:03:52 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
