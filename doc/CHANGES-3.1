@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.58 2006/04/07 13:05:08 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.59 2006/04/07 21:35:03 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1248,4 +1248,10 @@ usr.bin/calendar/calendar.c			1.39
 	Correct logic error in wildcard handling, which was causing the
 	day-of-month on normal entries to always be treated as a wildcard.
 	[jld, ticket #1246]
+
+distrib/i386/floppies/instkernel/Makefile	1.5
+etc/etc.i386/Makefile.inc			1.42
+
+	Build XEN3_U and INSTALL_XEN3_U kernels as part of release process.
+	[bouyer, ticket #1248]
 
