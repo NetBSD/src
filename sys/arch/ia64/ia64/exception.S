@@ -1,4 +1,5 @@
-/*	$NetBSD: exception.S,v 1.1 2006/04/07 14:21:18 cherry Exp $	
+/*	$NetBSD: exception.S,v 1.2 2006/04/08 14:52:09 cherry Exp $ */
+
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
  * Copyright (c) 2000 Doug Rabson

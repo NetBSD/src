@@ -1,4 +1,6 @@
-/*-
+/*	$NetBSD: syscall_stubs.S,v 1.2 2006/04/08 14:52:09 cherry Exp $	*/
+	
+	/*-
  * Copyright (c) 2002, 2003 Marcel Moolenaar
  * All rights reserved.
  *

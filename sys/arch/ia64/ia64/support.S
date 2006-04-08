@@ -1,3 +1,5 @@
+/*	$NetBSD: support.S,v 1.2 2006/04/08 14:52:09 cherry Exp $	*/
+	
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -25,6 +27,7 @@
  *
  * $FreeBSD$
  */
+
 /*-
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
