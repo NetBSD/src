@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.31 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: man.c,v 1.32 2006/04/08 23:27:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.31 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: man.c,v 1.32 2006/04/08 23:27:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -381,7 +381,8 @@ manual(page, tag, pg, pathsearch)
 {
 	ENTRY *ep, *e_sufp, *e_tag;
 	TAG *missp, *sufp;
-	int anyfound, cnt, error, found;
+	int anyfound, error, found;
+	size_t cnt;
 	char *p, buf[MAXPATHLEN], *escpage, *eptr;
 	static const char escglob[] = "\\~?*{}[]";
 
