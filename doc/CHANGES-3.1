@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.59 2006/04/07 21:35:03 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.60 2006/04/08 23:37:56 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1254,4 +1254,21 @@ etc/etc.i386/Makefile.inc			1.42
 
 	Build XEN3_U and INSTALL_XEN3_U kernels as part of release process.
 	[bouyer, ticket #1248]
+
+distrib/sets/lists/man/mi			1.870 via patch
+share/man/man4/Makefile				1.378
+share/man/man4/ciss.4				1.1-1.2
+sys/conf/files					1.764
+sys/dev/ic/ciss.c				1.1
+sys/dev/ic/cissreg.h				1.1
+sys/dev/ic/cissvar.h				1.1
+sys/dev/pci/ciss_pci.c				1.1
+sys/dev/pci/files.pci				1.245
+sys/dev/pci/pcidevs				1.776
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add a driver, ciss(4), for the HP/Compaq drivers using the newer
+	"Command Interface to SCSI-3 Support" command interface.
+	[he, ticket #1247]
 
