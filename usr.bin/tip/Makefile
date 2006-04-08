@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2006/04/05 13:04:33 tron Exp $
+#	$NetBSD: Makefile,v 1.26 2006/04/08 20:07:29 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # Files are:
@@ -24,6 +24,8 @@
 #				writes on local side
 #	BUFSIZ			buffer sizing from stdio, must be fed
 #				explicitly to remcap.c if not 1024
+
+.include <bsd.own.mk>
 
 WARNS=4
 PROG=	tip
