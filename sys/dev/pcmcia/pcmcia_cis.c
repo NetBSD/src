@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.43 2006/04/06 22:35:47 rpaulo Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.44 2006/04/08 15:59:59 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.43 2006/04/06 22:35:47 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.44 2006/04/08 15:59:59 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1220,109 +1220,98 @@ pcmcia_parse_cis_tuple(tuple, arg)
 					    (1 << (reg & PCMCIA_TPCE_IR_IRQ));
 				}
 			}
-			if (memspace && tuple->length <= idx) {
-				DPRINTF(("ran out of space before TCPE_MS\n"));
-				goto abort_cfe;
-			}
-
-			switch (memspace) {
-			case PCMCIA_TPCE_FS_MEMSPACE_NONE:
-				cfe->num_memspace = 0;
-				break;
-
-			case PCMCIA_TPCE_FS_MEMSPACE_LENGTH:
-				cfe->num_memspace = 1;
-				cfe->memspace[0].length = 256 *
-				    pcmcia_tuple_read_2(tuple, idx);
-				idx += 2;
-				cfe->memspace[0].cardaddr = 0;
-				cfe->memspace[0].hostaddr = 0;
-				break;
-
-			case PCMCIA_TPCE_FS_MEMSPACE_LENGTHADDR:
-				cfe->num_memspace = 1;
-				cfe->memspace[0].length = 256 *
-				    pcmcia_tuple_read_2(tuple, idx);
-				idx += 2;
-				cfe->memspace[0].cardaddr = 256 *
-				    pcmcia_tuple_read_2(tuple, idx);
-				idx += 2;
-				cfe->memspace[0].hostaddr =
-				    cfe->memspace[0].cardaddr;
-				break;
-
-			default:
-			{
-				int lengthsize;
-				int cardaddrsize;
-				int hostaddrsize;
-
-				reg = pcmcia_tuple_read_1(tuple, idx);
-				idx++;
-
-				cfe->num_memspace = (reg & PCMCIA_TPCE_MS_COUNT)
-				    + 1;
-
-				if (cfe->num_memspace >
-				    (sizeof(cfe->memspace) /
-					sizeof(cfe->memspace[0]))) {
-					DPRINTF(("too many mem spaces %d",
-					    cfe->num_memspace));
-					state->card->error++;
-					break;
+			if (memspace) {
+				if (tuple->length <= idx) {
+					DPRINTF(("ran out of space before TCPE_MS\n"));
+					goto abort_cfe;
 				}
-				lengthsize = 
-				    ((reg & PCMCIA_TPCE_MS_LENGTH_SIZE_MASK) >>
-					PCMCIA_TPCE_MS_LENGTH_SIZE_SHIFT);
-				cardaddrsize =
-				    ((reg &
-					PCMCIA_TPCE_MS_CARDADDR_SIZE_MASK) >>
-					  PCMCIA_TPCE_MS_CARDADDR_SIZE_SHIFT);
-				hostaddrsize =
-				    (reg & PCMCIA_TPCE_MS_HOSTADDR) ?
-				    cardaddrsize : 0;
 
-				if (lengthsize == 0) {
-					DPRINTF(("cfe memspace "
-					    "lengthsize == 0"));
-					state->card->error++;
-				}
-				for (i = 0; i < cfe->num_memspace; i++) {
-					if (lengthsize) {
-						cfe->memspace[i].length = 256 *
-						    pcmcia_tuple_read_n(tuple,
-							lengthsize, idx);
-						idx += lengthsize;
-					} else {
-						cfe->memspace[i].length = 0;
+				if (memspace == PCMCIA_TPCE_FS_MEMSPACE_NONE) {
+					cfe->num_memspace = 0;
+				} else if (memspace == PCMCIA_TPCE_FS_MEMSPACE_LENGTH) {
+					cfe->num_memspace = 1;
+					cfe->memspace[0].length = 256 *
+					    pcmcia_tuple_read_2(tuple, idx);
+					idx += 2;
+					cfe->memspace[0].cardaddr = 0;
+					cfe->memspace[0].hostaddr = 0;
+				} else if (memspace ==
+				    PCMCIA_TPCE_FS_MEMSPACE_LENGTHADDR) {
+					cfe->num_memspace = 1;
+					cfe->memspace[0].length = 256 *
+					    pcmcia_tuple_read_2(tuple, idx);
+					idx += 2;
+					cfe->memspace[0].cardaddr = 256 *
+					    pcmcia_tuple_read_2(tuple, idx);
+					idx += 2;
+					cfe->memspace[0].hostaddr = cfe->memspace[0].cardaddr;
+				} else {
+					int lengthsize;
+					int cardaddrsize;
+					int hostaddrsize;
+
+					reg = pcmcia_tuple_read_1(tuple, idx);
+					idx++;
+
+					cfe->num_memspace = (reg &
+					    PCMCIA_TPCE_MS_COUNT) + 1;
+
+					if (cfe->num_memspace >
+					    (sizeof(cfe->memspace) /
+					     sizeof(cfe->memspace[0]))) {
+						DPRINTF(("too many mem "
+						    "spaces %d",
+						    cfe->num_memspace));
+						state->card->error++;
+						break;
 					}
-					if (cfe->memspace[i].length == 0) {
-						DPRINTF(("cfe->memspace" 
-						    "[%d].length == 0", i));
+					lengthsize =
+						((reg & PCMCIA_TPCE_MS_LENGTH_SIZE_MASK) >>
+						 PCMCIA_TPCE_MS_LENGTH_SIZE_SHIFT);
+					cardaddrsize =
+						((reg & PCMCIA_TPCE_MS_CARDADDR_SIZE_MASK) >>
+						 PCMCIA_TPCE_MS_CARDADDR_SIZE_SHIFT);
+					hostaddrsize =
+						(reg & PCMCIA_TPCE_MS_HOSTADDR) ? cardaddrsize : 0;
+
+					if (lengthsize == 0) {
+						DPRINTF(("cfe memspace "
+						    "lengthsize == 0"));
 						state->card->error++;
 					}
-					if (cardaddrsize) {
-						cfe->memspace[i].cardaddr =
-						    256 * 
-						    pcmcia_tuple_read_n(tuple,
-							cardaddrsize, idx);
-						idx += cardaddrsize;
-					} else {
-						cfe->memspace[i].cardaddr = 0;
-					}
-					if (hostaddrsize) {
-						cfe->memspace[i].hostaddr =
-						    256 *
-						    pcmcia_tuple_read_n(tuple,
-							hostaddrsize, idx);
-						idx += hostaddrsize;
-					} else {
-						cfe->memspace[i].hostaddr = 0;
+					for (i = 0; i < cfe->num_memspace; i++) {
+						if (lengthsize) {
+							cfe->memspace[i].length =
+								256 * pcmcia_tuple_read_n(tuple, lengthsize,
+								       idx);
+							idx += lengthsize;
+						} else {
+							cfe->memspace[i].length = 0;
+						}
+						if (cfe->memspace[i].length == 0) {
+							DPRINTF(("cfe->memspace[%d].length == 0",
+								 i));
+							state->card->error++;
+						}
+						if (cardaddrsize) {
+							cfe->memspace[i].cardaddr =
+								256 * pcmcia_tuple_read_n(tuple, cardaddrsize,
+								       idx);
+							idx += cardaddrsize;
+						} else {
+							cfe->memspace[i].cardaddr = 0;
+						}
+						if (hostaddrsize) {
+							cfe->memspace[i].hostaddr =
+								256 * pcmcia_tuple_read_n(tuple, hostaddrsize,
+								       idx);
+							idx += hostaddrsize;
+						} else {
+							cfe->memspace[i].hostaddr = 0;
+						}
 					}
 				}
 			}
-			}
-
 			if (misc) {
 				if (tuple->length <= idx) {
 					DPRINTF(("ran out of space before TCPE_MI\n"));
