@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.6 2005/08/14 18:14:52 joff Exp $
+.\"	$NetBSD: prep,v 1.7 2006/04/08 19:54:08 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,8 +55,7 @@ system bootup and drop to the RedBoot prompt by hitting Ctrl-C immediately
 after applying power.  To load both the installation kernel and the generic
 post-installation TS7200 kernel you will need network connectivity from RedBoot which
 you will have to configure using the RedBoot
-.Ic
-fconfig 
+.Ic fconfig 
 command; see the RedBoot documentation for more information.
 .Pp
 A compressed kernel image and loader suitable for placing into
