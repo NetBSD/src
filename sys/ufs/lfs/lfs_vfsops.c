@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.198 2006/03/31 02:31:37 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.199 2006/04/08 00:16:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.198 2006/03/31 02:31:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.199 2006/04/08 00:16:56 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1155,6 +1155,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 	fs->lfs_ivnode = vp;
 	VREF(vp);
+
+	/* Set up inode bitmap and order free list */
+	lfs_order_freelist(fs);
 
 	/* Set up segment usage flags for the autocleaner. */
 	fs->lfs_nactive = 0;
