@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: regexp.c,v 1.16 2006/04/08 21:33:09 christos Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.17 2006/04/08 22:05:36 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -1285,6 +1285,7 @@ char *op;
 		p = "WORDZ";
 		break;
 	default:
+		p = NULL;
 		regerror("corrupted opcode");
 		break;
 	}
