@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.76 2006/03/24 20:05:32 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.77 2006/04/08 00:16:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 int lfs_valloc(struct vnode *, int, struct ucred *, struct vnode **);
 int lfs_vfree(struct vnode *, ino_t, int);
+void lfs_order_freelist(struct lfs *);
 
 /* lfs_balloc.c */
 int lfs_balloc(struct vnode *, off_t, int, struct ucred *, int, struct buf **);
