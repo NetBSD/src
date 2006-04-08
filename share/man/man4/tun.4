@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.18 2006/03/29 19:39:51 rpaulo Exp $
+.\" $NetBSD: tun.4,v 1.19 2006/04/08 12:16:55 rpaulo Exp $
 .\"
 .\" Copyright (c) 1996-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 29, 2006
+.Dd April 08, 2006
 .Dt TUN 4
 .Os
 .Sh NAME
@@ -212,10 +212,22 @@ error occurs.
 .It Dv TUNSLMODE
 The argument should be a pointer to an
 .Va int ;
-a non-zero value turns on
+a non-zero value turns off
+.Dq multi-af
+mode and turns on
 .Dq link-layer
 mode, causing packets read from the tunnel device to be prepended with
 network destination address.
+.It Dv TUNGIFHEAD
+The argument should be a pointer to an
+.Va int ;
+the ioctl sets the value to one if the device is in ``multi-af'' mode, and
+zero otherwise.
+.It Dv TUNSIFHEAD
+The argument should be a pointer to an
+.Va int ;
+a non-zero value turns off ``link-layer'' mode, and enables ``multi-af'' mode,
+where every packet is preceded with a four byte address family.
 .It Dv FIONBIO
 Turn non-blocking I/O for reads off or on, according as the argument
 .Va int Ns 's
