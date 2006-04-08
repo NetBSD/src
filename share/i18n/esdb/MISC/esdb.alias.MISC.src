@@ -1,13 +1,10 @@
-# $NetBSD: esdb.alias.MISC.src,v 1.5 2006/03/28 14:44:01 tnozaki Exp $
+# $NetBSD: esdb.alias.MISC.src,v 1.6 2006/04/08 14:15:48 tnozaki Exp $
 
 shift_jis			Shift_JIS
 sjis				Shift_JIS
 big5				Big5
 big5eten			Big5
 gb18030				GB18030
-koi8-r				KOI8-R
-koi8-u				KOI8-U
-iso-ir-111			KOI8-R
 ctext				CTEXT
 csPTCP154			PTCP154
 PT154				PTCP154

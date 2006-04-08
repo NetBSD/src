@@ -1,10 +1,6 @@
-# $NetBSD: charset.pivot.MISC.src,v 1.4 2006/03/28 14:44:01 tnozaki Exp $
+# $NetBSD: charset.pivot.MISC.src,v 1.5 2006/04/08 14:15:48 tnozaki Exp $
 
 Big5			UCS			1
 UCS			Big5			1
-KOI8-R			UCS			1
-UCS			KOI8-R			1
-KOI8-U			UCS			1
-UCS			KOI8-U			1
 PTCP154			UCS			1
 UCS			PTCP154			1
