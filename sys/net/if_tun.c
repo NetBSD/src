@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.86 2006/04/04 15:43:23 rpaulo Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.87 2006/04/08 12:14:42 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.86 2006/04/04 15:43:23 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.87 2006/04/08 12:14:42 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -644,16 +644,18 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TUNSLMODE:
-		if (*(int *)data)
+		if (*(int *)data) {
 			tp->tun_flags |= TUN_PREPADDR;
-		else
+			tp->tun_flags &= ~TUN_IFHEAD;
+		} else
 			tp->tun_flags &= ~TUN_PREPADDR;
 		break;
 
 	case TUNSIFHEAD:
-		if (*(int *)data)
+		if (*(int *)data) {
 			tp->tun_flags |= TUN_IFHEAD;
-		else
+			tp->tun_flags &= TUN_PREPADDR;
+		} else
 			tp->tun_flags &= ~TUN_IFHEAD;
 		break;
 
