@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: regexp.c,v 1.15 2002/11/11 23:43:03 thorpej Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.16 2006/04/08 21:33:09 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -1170,7 +1170,6 @@ regexp *r;
 	char *s;
 	char op = EXACTLY;	/* Arbitrary non-END op. */
 	char *next;
-	extern char *strchr();
 
 
 	s = r->program + 1;
