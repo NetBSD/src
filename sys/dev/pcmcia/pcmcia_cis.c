@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.45 2006/04/08 20:01:21 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.46 2006/04/08 20:55:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.45 2006/04/08 20:01:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.46 2006/04/08 20:55:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1319,16 +1319,22 @@ decode_cftable_entry(struct pcmcia_tuple *tuple, struct cis_state *state)
 			    (1 << (reg & PCMCIA_TPCE_IR_IRQ));
 		}
 	}
-	if (memspace)
+	if (memspace) {
+		int lengthsize;
+		int cardaddrsize;
+		int hostaddrsize;
+
 		if (tuple->length <= idx) {
 			DPRINTF(("ran out of space before TCPE_MS\n"));
 			goto abort_cfe;
 		}
 
 		switch (memspace) {
+#ifdef notdef	/* This is 0 */
 		case PCMCIA_TPCE_FS_MEMSPACE_NONE:
 			cfe->num_memspace = 0;
 			break;
+#endif
 
 		case PCMCIA_TPCE_FS_MEMSPACE_LENGTH:
 			cfe->num_memspace = 1;
@@ -1352,11 +1358,6 @@ decode_cftable_entry(struct pcmcia_tuple *tuple, struct cis_state *state)
 			break;
 
 		default:
-		{
-			int lengthsize;
-			int cardaddrsize;
-			int hostaddrsize;
-
 			reg = pcmcia_tuple_read_1(tuple, idx);
 			idx++;
 
