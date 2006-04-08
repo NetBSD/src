@@ -1,7 +1,0 @@
-# $NetBSD: KOI8-U.src,v 1.1 2003/07/20 19:26:57 tshiozak Exp $
-
-NAME		"KOI8-U"
-ENCODING	"NONE"
-VARIABLE	"none"
-DEFCSID		"KOI8-U"		0
-INVALID		0x3F	# '?'

@@ -1,10 +1,6 @@
-# $NetBSD: mapper.dir.MISC.src,v 1.4 2006/03/28 14:44:01 tnozaki Exp $
+# $NetBSD: mapper.dir.MISC.src,v 1.5 2006/04/08 14:15:48 tnozaki Exp $
 
 Big5/UCS			mapper_std	MISC/Big5%UCS.mps
 UCS/Big5			mapper_std	MISC/UCS%Big5.mps
-KOI8-R/UCS			mapper_std	MISC/KOI8-R%UCS.mps
-UCS/KOI8-R			mapper_std	MISC/UCS%KOI8-R.mps
-KOI8-U/UCS			mapper_std	MISC/KOI8-U%UCS.mps
-UCS/KOI8-U			mapper_std	MISC/UCS%KOI8-U.mps
 PTCP154/UCS			mapper_std	MISC/PTCP154%UCS.mps
 UCS/PTCP154			mapper_std	MISC/UCS%PTCP154.mps
