@@ -1,3 +1,5 @@
+/*	$NetBSD: ssc.c,v 1.2 2006/04/08 14:52:09 cherry Exp $	*/
+
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -25,6 +27,7 @@
  *
  *	$FreeBSD$
  */
+
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
