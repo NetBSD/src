@@ -1,10 +1,10 @@
-.\"	$NetBSD: hardware,v 1.1 2006/04/05 18:37:00 garbled Exp $
+.\"	$NetBSD: hardware,v 1.2 2006/04/08 23:14:10 wiz Exp $
 .
 .Pp
 The minimum configuration requires 16 MB of RAM and 60 MB of disk space.
 To install the entire system requires about 250 MB (not including swap).
 .Nx
-works best with about 32 MB or RAM, but at least 64 MB is advised, especially
+works with about 32 MB or RAM, but at least 64 MB is advised, especially
 on the slower processors.
 .
 .Ss2 Supported machines
