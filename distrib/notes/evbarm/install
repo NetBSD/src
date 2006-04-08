@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.6 2005/08/14 18:14:52 joff Exp $
+.\"	$NetBSD: install,v 1.7 2006/04/08 19:54:08 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,8 +35,7 @@
 The following steps describe how to set up a CompactFlash card for
 the TS-7200.  The TS-7200 can use the interactive
 installation program
-.Ic
-sysinst 
+.Ic sysinst 
 to perform an internet installation from ftp.netbsd.org on the CompactFlash.  
 .Pp
 .(enum
@@ -65,11 +64,9 @@ system will reboot back into RedBoot.  If the preparation instructions above hav
 been followed, the post-installation NetBSD kernel will be in the FIS ready to be 
 jumped into.  You can have RedBoot automatically start NetBSD by putting the
 command
-.Ic
-go 0x60660000
+.Ic go 0x60660000
 into the RedBoot bootscript using the
-.Ic
-fconfig
+.Ic fconfig
 command.
 .enum)
 .
