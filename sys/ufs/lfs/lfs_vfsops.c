@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.199 2006/04/08 00:16:56 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.200 2006/04/08 00:26:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.199 2006/04/08 00:16:56 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.200 2006/04/08 00:26:34 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -222,13 +222,18 @@ lfs_writerd(void *arg)
 				    MFSNAMELEN) == 0) {
 				fs = VFSTOUFS(mp)->um_lfs;
 				simple_lock(&fs->lfs_interlock);
-				if (fs->lfs_pdflush ||
-				    !TAILQ_EMPTY(&fs->lfs_pchainhd)) {
+				if (fs->lfs_pdflush) {
 					DLOG((DLOG_FLUSH, "lfs_writerd: pdflush set\n"));
 					fs->lfs_pdflush = 0;
 					lfs_flush_fs(fs, 0);
+					simple_unlock(&fs->lfs_interlock);
+				} else if (!TAILQ_EMPTY(&fs->lfs_pchainhd)) {
+					DLOG((DLOG_FLUSH, "lfs_writerd: pchain non-empty\n"));
+					simple_unlock(&fs->lfs_interlock);
+					lfs_writer_enter(fs, "wrdirop");
+					lfs_flush_pchain(fs);
+					lfs_writer_leave(fs);
 				}
-				simple_unlock(&fs->lfs_interlock);
 			}
 
 			simple_lock(&mountlist_slock);
