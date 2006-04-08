@@ -1,3 +1,5 @@
+/*	$NetBSD: sal.c,v 1.2 2006/04/08 14:52:09 cherry Exp $	*/
+
 /*-
  * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
