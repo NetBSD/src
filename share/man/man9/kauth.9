@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.1.2.21 2006/04/05 00:00:52 elad Exp $
+.\" $NetBSD: kauth.9,v 1.1.2.22 2006/04/08 22:53:47 wiz Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -39,9 +39,10 @@
 .Sh DESCRIPTION
 .Nm ,
 or kernel authorization, is the subsystem managing all authorization requests
-inside the kernel. It manages user credentials and rights, and can be used
-to implement a system-wide security policy. It allows external modules to
-plug-in the authorization process.
+inside the kernel.
+It manages user credentials and rights, and can be used
+to implement a system-wide security policy.
+It allows external modules to plug-in the authorization process.
 .Pp
 .Nm
 introduces some new concepts, namely
@@ -50,7 +51,6 @@ and
 .Dq listeners ,
 which will be detailed together with other useful information for kernel
 developers in this document.
-.Pp
 .Sh TYPES
 Some
 .Nm
@@ -92,7 +92,7 @@ Scopes manage listeners that operate in the same aspect of the system.
 exports a KPI that allows developers both of
 .Nx
 and third-party products to authorize requests, access and modify credentials,
-create and remove scopes and listeners, and perform other misc. operations on
+create and remove scopes and listeners, and perform other miscellaneous operations on
 credentials.
 .Ss Authorization Requests
 .Nm
@@ -102,14 +102,14 @@ This routine dispatches the request to the listeners of the appropriate scope,
 together with four optional user-data variables, and returns the augmented
 result.
 .Pp
-It's declared as
+It is declared as
 .Pp
 .Ft int Fn kauth_authorize_action "kauth_scope_t scope" "kauth_cred_t cred" \
 "kauth_action_t op" "void *arg0" "void *arg1" "void *arg2" "void *arg3"
 .Pp
 An authorization request can return one of two possible values.
 Zero indicates success -- the operation is allowed;
-.Dq EPERM
+.Er EPERM
 (see
 .Xr errno 2 )
 indicates failure -- the operation is denied.
@@ -129,17 +129,17 @@ The authorization wrapper for this scope is declared as
 .Pp
 The following operations are available for this scope:
 .Bl -tag -width "123456"
-.It KAUTH_GENERIC_ISSUSER
+.It Dv KAUTH_GENERIC_ISSUSER
 Checks whether the credentials belong to the super-user.
 .Pp
 If
 .Ar arg0
 is not
-.Dq NULL ,
+.Dv NULL ,
 it's treated as a
 .Ft u_short *
 to accounting flags, and the
-.Dq ACU
+.Dv ACU
 flag is set.
 .El
 .Ss Process Scope
@@ -155,14 +155,14 @@ The authorization wrapper for this scope is declared as
 .Pp
 The following operations are available for this scope:
 .Bl -tag -width "123456"
-.It KAUTH_PROCESS_CANPTRACE
+.It Dv KAUTH_PROCESS_CANPTRACE
 Checks whether an object with one set of credentials can use
 .Xr ptrace 2
 on another process, possibly with a different set of credentials.
 .Pp
 .Ar arg1
 contains the credentials of the process being attached to.
-.It KAUTH_PROCESS_CANSIGNAL
+.It Dv KAUTH_PROCESS_CANSIGNAL
 Checks whether an object with one set of credentials can post signals
 to another process.
 .Pp
@@ -176,7 +176,7 @@ and the process data
 of the process the signal is posted to, respectively.
 .Ar arg3
 is the signal to be posted.
-.It KAUTH_PROCESS_CANSEE
+.It Dv KAUTH_PROCESS_CANSEE
 Checks whether an object with one set of credentials can access
 information about another object, possibly with a different set of
 credentials.
@@ -318,7 +318,7 @@ where the child process inherits the credentials of the parent.
 .Pp
 To prevent freeing a
 .Ft kauth_cred_t
-while it's still referenced, the following routines are available to maintain
+while it is still referenced, the following routines are available to maintain
 its reference count:
 .Bl -tag -width "123456"
 .It Ft void Fn kauth_cred_hold "kauth_cred_t cred"
@@ -410,7 +410,8 @@ Convert userland's view of credentials to a
 .Ft kauth_cred_t .
 .Pp
 This includes effective user- and group-ids, a number of groups, and a group
-list. The reference count is set to one.
+list.
+The reference count is set to one.
 .Pp
 Note that
 .Nm
@@ -426,7 +427,7 @@ with the userland credentials in
 Common values that will be compared are effective user- and group-ids, and
 the group list.
 .El
-.Ss Misc. Routines
+.Ss Miscellaneous Routines
 Other routines provided by
 .Nm
 are:
@@ -575,4 +576,5 @@ provided guidance and answered questions about the Darwin implementation.
 The
 .Nm
 framework is dedicated to Brian Mitchell, one of the most talented people
-I know. Thanks for everything.
+I know.
+Thanks for everything.
