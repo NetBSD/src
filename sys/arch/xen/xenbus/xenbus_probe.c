@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.7 2006/04/09 21:39:42 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.8 2006/04/09 22:14:13 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.7 2006/04/09 21:39:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.8 2006/04/09 22:14:13 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -1249,7 +1249,6 @@ xenbus_probe_init(void *unused)
 		xen_start_info.store_evtchn = op.u.alloc_unbound.port;
 
 		/* And finally publish the above info in /kern/xen */
-		xenkernfs_init();
 		kfst = KERNFS_ALLOCTYPE(xsd_mfn_fileops);
 		KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
 		KERNFS_INITENTRY(dkt, DT_REG, "xsd_mfn", NULL, kfst, VREG,
