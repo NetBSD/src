@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.23 2006/04/09 19:28:01 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.24 2006/04/09 22:14:13 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.23 2006/04/09 19:28:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.24 2006/04/09 22:14:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,13 +350,9 @@ hypervisor_attach(parent, self, aux)
 #endif
 #endif /* NPCI */
 
-#if defined(DOM0OPS) && !defined(XEN3)
-	if (xen_start_info.flags & SIF_PRIVILEGED)
-		xenkernfs_init();
-#endif
-
 #ifdef DOM0OPS
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		xenkernfs_init();
 		xenprivcmd_init();
 		xen_shm_init();
 #ifndef XEN3
