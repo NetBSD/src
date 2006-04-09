@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.10 2003/08/07 11:13:37 agc Exp $	*/
+/*	$NetBSD: input.c,v 1.11 2006/04/09 19:27:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.10 2003/08/07 11:13:37 agc Exp $");
+__RCSID("$NetBSD: input.c,v 1.11 2006/04/09 19:27:22 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -337,8 +337,8 @@ lint0(void)
 Errorclass
 lint1(void)
 {
-	char	*line1, *line2;
-	char	*file1, *file2;
+	char	*line1 = NULL, *line2 = NULL;
+	char	*file1 = NULL, *file2 = NULL;
 	char	**nwordv1, **nwordv2;
 
 	/*
@@ -369,6 +369,14 @@ lint1(void)
 			return(C_TRUE);
 		}
 	}
+	if (file2)
+		free(file2);
+	if (file1)
+		free(file1);
+	if (line2)
+		free(line2);
+	if (line1)
+		free(line1);
 	return(C_UNKNOWN);
 } /* end of lint 1*/
 
