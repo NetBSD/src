@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.10 2003/10/16 06:39:56 itojun Exp $	*/
+/*	$NetBSD: read.c,v 1.11 2006/04/09 19:42:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: read.c,v 1.10 2003/10/16 06:39:56 itojun Exp $");
+__RCSID("$NetBSD: read.c,v 1.11 2006/04/09 19:42:03 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -179,6 +179,7 @@ lines(FILE *fp, __off_t off)
 		}
 	}
 	if (ferror(fp)) {
+		free(lines);
 		ierr();
 		return (1);
 	}
