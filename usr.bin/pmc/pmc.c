@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.12 2005/06/02 02:14:58 lukem Exp $	*/
+/*	$NetBSD: pmc.c,v 1.13 2006/04/09 18:54:28 christos Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.12 2005/06/02 02:14:58 lukem Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.13 2006/04/09 18:54:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ struct pmc_name2val {
 	int unit;
 };
 
-const struct pmc_name2val i586_names[] = {
+static const struct pmc_name2val i586_names[] = {
 	{ "tlb-data-miss",		PMC5_DATA_TLB_MISS,		0 },
 	{ "tlb-ins-miss",		PMC5_INST_TLB_MISS,		0 },
 	{ "l1cache-ins-miss", 		PMC5_INST_CACHE_MISS,		0 },
@@ -99,7 +99,7 @@ const struct pmc_name2val i586_names[] = {
 	{ "break-match3",		PMC5_BP3_MATCH,			0 },
 };
 
-const struct pmc_name2val i686_names[] = {
+static const struct pmc_name2val i686_names[] = {
 	{ "mem-refs",			PMC6_DATA_MEM_REFS,		0 },
 	{ "l1cache-lines",		PMC6_DCU_LINES_IN,		0 },
 	{ "l1cache-mlines",		PMC6_DCU_M_LINES_IN,		0 },
@@ -226,7 +226,7 @@ const struct pmc_name2val i686_names[] = {
 	{ "seg-rename-retire",		PMC6_RET_SEG_RENAMES,		0 },
 };
 
-const struct pmc_name2val k7_names[] = {
+static const struct pmc_name2val k7_names[] = {
 	{ "seg-load-all",		K7_SEGMENT_REG_LOADS,		0x7f },
 	{ "seg-load-es",		K7_SEGMENT_REG_LOADS,		0x01 },
 	{ "seg-load-cs",		K7_SEGMENT_REG_LOADS,		0x02 },
@@ -308,7 +308,7 @@ const struct pmc_name2val k7_names[] = {
 	{ "break-match3",		K7_BP3_MATCH,			0 },
 };
 
-struct pmc_name2val_cpus {
+static struct pmc_name2val_cpus {
 	int type;
 	const struct pmc_name2val *pmc_names;
 	int size;
@@ -357,23 +357,23 @@ list_pmc_names(const struct pmc_name2val_cpus *pncp)
 {
 	int i, n, left, pairs;
 
-	printf("Supported performance counter events:\n");
+	(void)printf("Supported performance counter events:\n");
 	n = pncp->size;
 	pairs = n / 2;
 	left = n % 2;
 
 	for (i = 0; i < pairs; i++)
-		printf("    %37s %37s\n", pncp->pmc_names[i * 2].name,
+		(void)printf("    %37s %37s\n", pncp->pmc_names[i * 2].name,
 		    pncp->pmc_names[i * 2 + 1].name);
 	if (left != 0)
-		printf("\t%37s\n", pncp->pmc_names[n - 1].name);
+		(void)printf("\t%37s\n", pncp->pmc_names[n - 1].name);
 }
 
-static void
-usage(void)
+static void usage(void) __attribute__((__noreturn__));
+static void usage(void)
 {
 
-	fprintf(stderr, "usage: %s -h\n"
+	(void)fprintf(stderr, "usage: %s -h\n"
 			"       %s -C\n"
 			"       %s -c <event> command [options] ...\n",
 	    getprogname(), getprogname(), getprogname());
@@ -392,6 +392,7 @@ main(int argc, char **argv)
 	struct i386_pmc_read_args pr0, pr1;
 	pid_t pid;
 
+	setprogname(argv[0]);
 	errn0 = errn1 = 0;
 
 	if (i386_pmc_info(&pi) < 0)
@@ -413,11 +414,11 @@ main(int argc, char **argv)
 			 * a previous run got killed and did not
 			 * clean up.
 			 */
-			memset(&pss0, 0, sizeof pss0);
-			i386_pmc_startstop(&pss0);
+			(void)memset(&pss0, 0, sizeof pss0);
+			(void)i386_pmc_startstop(&pss0);
 			pss0.counter = 1;
-			i386_pmc_startstop(&pss0);
-			exit(0);
+			(void)i386_pmc_startstop(&pss0);
+			return 0;
 		case 'c':
 			event = optarg;
 			pnp = find_pmc_name(pncp, event);
@@ -426,7 +427,7 @@ main(int argc, char **argv)
 			if (argc != 2)
 				usage();
 			list_pmc_names(pncp);
-			exit(0);
+			return 0;
 		default:
 			usage();
 		}
@@ -435,8 +436,8 @@ main(int argc, char **argv)
 	if (pnp == NULL || argc <= optind || event == NULL)
 		usage();
 
-	memset(&pss0, 0, sizeof pss0);
-	memset(&pss1, 0, sizeof pss1);
+	(void)memset(&pss0, 0, sizeof pss0);
+	(void)memset(&pss1, 0, sizeof pss1);
 	pss0.event = pss1.event = pnp->val;
 	pss0.unit = pss1.unit = pnp->unit;
 	pss0.flags = PMC_SETUP_USER;
@@ -458,16 +459,17 @@ main(int argc, char **argv)
 
 	switch(pid) {
 	case -1:
-		errx(5, "vfork");
+		err(5, "vfork");
 	case 0:
-		execvp(argv[optind], &argv[optind]);
-		errx(6, "execvp");
+		(void)execvp(argv[optind], &argv[optind]);
+		err(6, "execvp");
 	}
 
 	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
 
-	waitpid(pid, &status, 0);
+	if (waitpid(pid, &status, 0) == -1)
+		err(6, "waitpid");
 	if (!WIFEXITED(status))
 		return 0;
 
@@ -492,14 +494,14 @@ main(int argc, char **argv)
 
 	if (ret0 < 0) {
 		errno = errn0;
-		errx(6, "pmc_read");
+		err(6, "pmc_read");
 	}
 	if (ret1 < 0) {
 		errno = errn1;
-		errx(7, "pmc_read");
+		err(7, "pmc_read");
 	}
 
-	printf("%s: user %llu kernel %llu\n", event, pr0.val, pr1.val);
+	(void)printf("%s: user %llu kernel %llu\n", event, pr0.val, pr1.val);
 
 	return 0;
 }
