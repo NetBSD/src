@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.11 2003/08/07 11:13:38 agc Exp $	*/
+/*	$NetBSD: pi.c,v 1.12 2006/04/09 19:21:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.11 2003/08/07 11:13:38 agc Exp $");
+__RCSID("$NetBSD: pi.c,v 1.12 2006/04/09 19:21:26 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 #include "error.h"
 
 static	char	*c_linenumber;
@@ -317,6 +318,10 @@ pi(void)
 		){
 			for (wordindex = undefined ? 5 : 6; wordindex <= wordc;
 			    wordindex++){
+				if (nwordv) {
+					free(nwordv[0]);
+					free(nwordv);
+				}
 				nwordv = wordvsplice(2, undefined ? 2 : 3, wordv+1);
 				nwordv[0] = strdup(currentfilename);
 				nwordv[1] = wordv[wordindex];
