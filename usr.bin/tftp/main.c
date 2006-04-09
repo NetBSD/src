@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2006/04/09 18:45:19 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2006/04/09 18:47:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 2006/04/09 18:45:19 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2006/04/09 18:47:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,7 +272,7 @@ setpeer0(host, port)
 		}
 	}
 
-	if (f < 0)
+	if (f < 0 || res == NULL)
 		warn("%s", cause);
 	else {
 		/* res->ai_addr <= sizeof(peeraddr) is guaranteed */
