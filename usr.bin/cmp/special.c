@@ -1,4 +1,4 @@
-/*	$NetBSD: special.c,v 1.9 2005/02/06 20:50:34 dsl Exp $	*/
+/*	$NetBSD: special.c,v 1.10 2006/04/09 19:47:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)special.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: special.c,v 1.9 2005/02/06 20:50:34 dsl Exp $");
+__RCSID("$NetBSD: special.c,v 1.10 2006/04/09 19:47:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,8 @@ eof:	if (ferror(fp1))
 	} else
 		if (feof(fp2))
 			eofmsg(file2);
+	(void)fclose(fp1);
+	(void)fclose(fp2);
 	if (dfound)
 		exit(DIFF_EXIT);
 }
