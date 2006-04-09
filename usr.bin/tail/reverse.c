@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.17 2005/06/05 19:08:28 chs Exp $	*/
+/*	$NetBSD: reverse.c,v 1.18 2006/04/09 19:37:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.17 2005/06/05 19:08:28 chs Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.18 2006/04/09 19:37:50 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -177,11 +177,18 @@ r_buf(FILE *fp)
 		 * linked list.  If out of memory, toss the LRU block and
 		 * keep going.
 		 */
-		if (enomem || (tl = malloc(sizeof(BF))) == NULL ||
-		    (tl->l = malloc(BSZ)) == NULL) {
+		if (enomem) {
 			if (!mark)
 				err(1, "%s", strerror(errno));
-			tl = enomem ? tl->next : mark;
+			tl = tl->next;
+			enomem += tl->len;
+		} else if ((tl = malloc(sizeof(BF))) == NULL ||
+		    (tl->l = malloc(BSZ)) == NULL) {
+			if (tl)
+				free(tl);
+			if (!mark)
+				err(1, "%s", strerror(errno));
+			tl = mark;
 			enomem += tl->len;
 		} else if (mark) {
 			tl->next = mark;
