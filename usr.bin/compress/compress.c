@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.22 2006/04/05 20:24:38 dsl Exp $	*/
+/*	$NetBSD: compress.c,v 1.23 2006/04/09 20:01:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.22 2006/04/05 20:24:38 dsl Exp $");
+__RCSID("$NetBSD: compress.c,v 1.23 2006/04/09 20:01:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,6 +203,7 @@ compress(char *in, char *out, int bits)
 {
 	int nr;
 	struct stat isb, sb;
+	const char *error = NULL;
 	FILE *ifp, *ofp;
 	int exists, isreg, oreg;
 	u_char buf[BUFSIZ];
@@ -244,18 +245,20 @@ compress(char *in, char *out, int bits)
 			goto err;
 		}
 
-	if (ferror(ifp) || fclose(ifp)) {
-		cwarn("%s", in);
-		goto err;
-	}
+	if (ferror(ifp))
+		error = in;
+	if (fclose(ifp))
+		if (error == NULL)
+			error = in;
+	if (fclose(ofp))
+		if (error == NULL)
+			error = out;
 	ifp = NULL;
-
-	if (fclose(ofp)) {
-		cwarn("%s", out);
-		ofp = NULL;
+	ofp = NULL;
+	if (error) {
+		cwarn("%s", error);
 		goto err;
 	}
-	ofp = NULL;
 
 	if (isreg && oreg) {
 		if (stat(out, &sb)) {
