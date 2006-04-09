@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2006/04/09 01:20:06 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2006/04/09 01:29:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2006/04/09 01:20:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2006/04/09 01:29:38 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -68,6 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2006/04/09 01:20:06 tsutsui Exp $")
 #include <machine/leds.h>
 
 #include <dev/cons.h>
+
+#include <arch/cobalt/dev/gtreg.h>
+#define GT_BASE		0x14000000	/* XXX */
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -408,9 +411,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 	if (ipending & MIPS_INT_MASK_0) {
 		volatile uint32_t *irq_src =
-		    (uint32_t *)MIPS_PHYS_TO_KSEG1(0x14000c18);
+		    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
 
-		if (*irq_src & 0x00000100) {
+		if ((*irq_src & T0EXP) != 0) {
 			*irq_src = 0;
 
 			cf.pc = pc;
