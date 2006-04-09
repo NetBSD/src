@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.5 2006/03/26 22:02:57 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.6 2006/04/09 19:25:50 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.5 2006/03/26 22:02:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.6 2006/04/09 19:25:50 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -218,7 +218,7 @@ read_backend_details(struct xenbus_device *xendev)
 }
 
 
-#ifdef DOM0OPS
+#if 0 //#ifdef DOM0OPS
 static int
 read_frontend_details(struct xenbus_device *xendev)
 {
