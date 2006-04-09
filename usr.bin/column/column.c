@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.13 2005/12/17 18:10:55 christos Exp $	*/
+/*	$NetBSD: column.c,v 1.14 2006/04/09 19:51:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.13 2005/12/17 18:10:55 christos Exp $");
+__RCSID("$NetBSD: column.c,v 1.14 2006/04/09 19:51:23 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -251,6 +251,9 @@ maketbl(void)
 			    lens[coloff] - t->len[coloff] + 2, " ");
 		(void)printf("%s\n", t->list[coloff]);
 	}
+	free(tbl);
+	free(cols);
+	free(lens);
 }
 
 #define	DEFNUM		1000
