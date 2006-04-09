@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2006/04/09 19:28:01 bouyer Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -45,6 +45,13 @@
 #ifndef _LOCORE
 #include <machine/cpu.h>
 #include <machine/pic.h>
+
+#include "opt_xen.h"
+
+#ifdef XEN3
+/* for x86 compatibility */
+extern struct intrstub i8259_stubs[];
+#endif
 
 /*
  * Struct describing an event channel. 
@@ -209,6 +216,7 @@ struct pcibus_attach_args;
 void intr_default_setup(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct evtsource *);
+
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(int);
@@ -216,6 +224,7 @@ void cpu_intr_init(struct cpu_info *);
 #ifdef INTRDEBUG
 void intr_printconfig(void);
 #endif
+
 
 #endif /* !_LOCORE */
 
