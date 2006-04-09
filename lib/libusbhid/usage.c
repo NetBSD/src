@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.6 2004/10/28 21:14:52 dsl Exp $	*/
+/*	$NetBSD: usage.c,v 1.7 2006/04/09 00:49:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: usage.c,v 1.6 2004/10/28 21:14:52 dsl Exp $");
+__RCSID("$NetBSD: usage.c,v 1.7 2006/04/09 00:49:55 christos Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -54,7 +54,8 @@ static struct usage_page {
 static int npages, npagesmax;
 
 #ifdef DEBUG
-void
+static void dump_hid_table(void);
+static void
 dump_hid_table(void)
 {
 	int i, j;
