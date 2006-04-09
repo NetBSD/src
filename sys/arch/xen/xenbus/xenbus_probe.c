@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.6 2006/04/09 19:25:50 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.7 2006/04/09 21:39:42 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.6 2006/04/09 19:25:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.7 2006/04/09 21:39:42 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -45,6 +45,17 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.6 2006/04/09 19:25:50 bouyer Exp 
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/kthread.h>
+#include <uvm/uvm.h>
+
+#if defined(DOM0OPS)
+#include <sys/dirent.h>
+#include <sys/stat.h>
+#include <sys/tree.h> 
+#include <sys/vnode.h>
+#include <miscfs/specfs/specdev.h>
+#include <miscfs/kernfs/kernfs.h>
+#include <machine/kernfs_machdep.h>
+#endif
 
 #include <machine/stdarg.h>
 
@@ -74,6 +85,19 @@ struct device *xenbus_sc;
 
 SLIST_HEAD(, xenbus_device) xenbus_device_list;
 
+#if defined(DOM0OPS)
+static int xsd_mfn_read(void *);
+static int xsd_port_read(void *);
+
+static const struct kernfs_fileop xsd_mfn_fileops[] = {
+    { .kf_fileop = KERNFS_FILEOP_READ, .kf_vop = xsd_mfn_read },
+};
+static const struct kernfs_fileop xsd_port_fileops[] = {
+    { .kf_fileop = KERNFS_FILEOP_READ, .kf_vop = xsd_port_read },
+};
+
+#define XSD_MODE    (S_IRUSR)
+#endif /*DOM0OPS*/
 int
 xenbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -1117,34 +1141,71 @@ xenbus_probe(void *unused)
 	//notifier_call_chain(&xenstore_chain, 0, NULL);
 }
 
-#if 0
-static struct proc_dir_entry *xsd_mfn_intf;
-static struct proc_dir_entry *xsd_port_intf;
-
-
+#if defined(DOM0OPS)
+#define LD_STRLEN 21 /* a 64bit integer needs 20 digits in base10 */
 static int
-xsd_mfn_read(char *page, char **start, off_t off,
-                        int count, int *eof, void *data)
+xsd_mfn_read(void *v)
 {
-	int len; 
-	len  = sprintf(page, "%ld", xen_start_info.store_mfn); 
-	*eof = 1; 
-	return len; 
+	struct vop_read_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int  a_ioflag;
+		struct ucred *a_cred;
+	} */ *ap = v;
+	struct uio *uio = ap->a_uio;
+	int off, error;
+	size_t len; 
+	char strbuf[LD_STRLEN], *bf;
+
+	off = (int)uio->uio_offset;
+	if (off < 0)
+		return EINVAL;
+
+	len  = snprintf(strbuf, sizeof(strbuf), "%ld\n",
+	    xen_start_info.store_mfn);
+	if (off >= len) {
+		bf = strbuf;
+		len = 0;
+	} else {
+		bf = &strbuf[off];
+		len -= off;
+	}
+	error = uiomove(bf, len, uio);
+	return error;
 }
 
 static int
-xsd_port_read(char *page, char **start, off_t off,
-			 int count, int *eof, void *data)
+xsd_port_read(void *v)
 {
-	int len; 
+	struct vop_read_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int  a_ioflag;
+		struct ucred *a_cred;
+	} */ *ap = v;
+	struct uio *uio = ap->a_uio;
+	int off, error;
+	size_t len; 
+	char strbuf[LD_STRLEN], *bf;
 
-	len  = sprintf(page, "%d", xen_start_info.store_evtchn); 
-	*eof = 1; 
-	return len; 
+	off = (int)uio->uio_offset;
+	if (off < 0)
+		return EINVAL;
+
+	len  = snprintf(strbuf, sizeof(strbuf), "%ld\n",
+	    (long)xen_start_info.store_evtchn);
+	if (off >= len) {
+		bf = strbuf;
+		len = 0;
+	} else {
+		bf = &strbuf[off];
+		len -= off;
+	}
+	error = uiomove(bf, len, uio);
+	return error;
 }
-#endif
-
-
+#endif /*DOM0OPS*/
+			 
 static void
 xenbus_probe_init(void *unused)
 {
@@ -1154,45 +1215,28 @@ xenbus_probe_init(void *unused)
 
 	SLIST_INIT(&xenbus_device_list);
 
-#if 0
-	if (xen_init() < 0) {
-		DPRINTK("failed");
-		return -ENODEV;
-	}
-
-
-
-	/* Register ourselves with the kernel bus & device subsystems */
-	bus_register(&xenbus_frontend.bus);
-	bus_register(&xenbus_backend.bus);
-	device_register(&xenbus_frontend.dev);
-	device_register(&xenbus_backend.dev);
-#endif
-
 	/*
 	** Domain0 doesn't have a store_evtchn or store_mfn yet.
 	*/
 	dom0 = (xen_start_info.store_evtchn == 0);
-#if 0
 	if (dom0) {
-		unsigned long page;
+#if defined(DOM0OPS)
+		vaddr_t page;
+		paddr_t ma;
 		evtchn_op_t op = { 0 };
 		int ret;
+		kernfs_entry_t *dkt;
+		kfstype kfst;
 
-
-		// XXX implement
 		/* Allocate page. */
-		page = get_zeroed_page(GFP_KERNEL);
+		page = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_ZERO | UVM_KMF_WIRED);
 		if (!page) 
-			return -ENOMEM; 
+			panic("can't get xenstore page");
 
-		/* We don't refcnt properly, so set reserved on page.
-		 * (this allocation is permanent) */
-		SetPageReserved(virt_to_page(page));
-
-		xen_start_info->store_mfn =
-			pfn_to_mfn(virt_to_phys((void *)page) >>
-				   PAGE_SHIFT);
+		(void)pmap_extract_ma(pmap_kernel(), page, &ma);
+		xen_start_info.store_mfn = ma >> PAGE_SHIFT;
+		xenstore_interface = (void *)page;
 		
 		/* Next allocate a local port which xenstored can bind to */
 		op.cmd = EVTCHNOP_alloc_unbound;
@@ -1200,18 +1244,27 @@ xenbus_probe_init(void *unused)
 		op.u.alloc_unbound.remote_dom = 0; 
 
 		ret = HYPERVISOR_event_channel_op(&op);
-		if (ret == 0)
+		if (ret)
 			panic("can't register xenstore event");
-		xen_start_info->store_evtchn = op.u.alloc_unbound.port;
+		xen_start_info.store_evtchn = op.u.alloc_unbound.port;
 
-		// XXX implement
-		/* And finally publish the above info in /proc/xen */
-		if((xsd_mfn_intf = create_xen_proc_entry("xsd_mfn", 0400)))
-			xsd_mfn_intf->read_proc = xsd_mfn_read; 
-		if((xsd_port_intf = create_xen_proc_entry("xsd_port", 0400)))
-			xsd_port_intf->read_proc = xsd_port_read;
+		/* And finally publish the above info in /kern/xen */
+		xenkernfs_init();
+		kfst = KERNFS_ALLOCTYPE(xsd_mfn_fileops);
+		KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+		KERNFS_INITENTRY(dkt, DT_REG, "xsd_mfn", NULL, kfst, VREG,
+		    XSD_MODE);
+		kernfs_addentry(kernxen_pkt, dkt);
+		kfst = KERNFS_ALLOCTYPE(xsd_port_fileops);
+		KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
+		KERNFS_INITENTRY(dkt, DT_REG, "xsd_port", NULL, kfst, VREG,
+		    XSD_MODE);
+		kernfs_addentry(kernxen_pkt, dkt);
+
+#else /* DOM0OPS */
+		return ; /* can't get a working xenstore in this case */
+#endif /* DOM0OPS */
 	}
-#endif
 
 	/* Initialize the interface to xenstore. */
 	err = xs_init(); 

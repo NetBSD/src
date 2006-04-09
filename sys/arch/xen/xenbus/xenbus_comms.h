@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.h,v 1.2 2006/03/06 20:21:35 bouyer Exp $ */
+/* $NetBSD: xenbus_comms.h,v 1.3 2006/04/09 21:39:42 bouyer Exp $ */
 /*
  * Private include for xenbus communications.
  * 
@@ -37,6 +37,8 @@ int xb_init_comms(struct device *dev);
 int xb_write(const void *data, unsigned len);
 int xb_read(void *data, unsigned len);
 int xs_input_avail(void);
+
+extern struct xenstore_domain_interface *xenstore_interface;
 
 #endif /* _XENBUS_COMMS_H */
 
