@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.18 2006/04/09 19:37:50 christos Exp $	*/
+/*	$NetBSD: reverse.c,v 1.19 2006/04/09 19:39:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.18 2006/04/09 19:37:50 christos Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.19 2006/04/09 19:39:17 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -178,16 +178,20 @@ r_buf(FILE *fp)
 		 * keep going.
 		 */
 		if (enomem) {
-			if (!mark)
-				err(1, "%s", strerror(errno));
+			if (!mark) {
+				errno = ENOMEM;
+				err(1, NULL);
+			}
 			tl = tl->next;
 			enomem += tl->len;
 		} else if ((tl = malloc(sizeof(BF))) == NULL ||
 		    (tl->l = malloc(BSZ)) == NULL) {
 			if (tl)
 				free(tl);
-			if (!mark)
-				err(1, "%s", strerror(errno));
+			if (!mark) {
+				errno = ENOMEM;
+				err(1, NULL);
+			}
 			tl = mark;
 			enomem += tl->len;
 		} else if (mark) {
