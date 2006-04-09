@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.24 2006/02/01 20:26:28 martin Exp $	*/
+/*	$NetBSD: tftp.c,v 1.25 2006/04/09 18:45:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.24 2006/02/01 20:26:28 martin Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.25 2006/04/09 18:45:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,10 +168,10 @@ sendfile(fd, name, mode)
 	convert = !strcmp(mode, "netascii");
 	block = 0;
 	amount = 0;
-	memcpy(&peer, &peeraddr, (size_t)peeraddr.ss_len);
-	memset(&serv, 0, sizeof(serv));
+	(void)memcpy(&peer, &peeraddr, (size_t)peeraddr.ss_len);
+	(void)memset(&serv, 0, sizeof(serv));
 
-	signal(SIGALRM, timer);
+	(void)signal(SIGALRM, timer);
 	do {
 		if (block == 0)
 			size = makerequest(WRQ, name, dp, mode, filesize) - 4;
@@ -199,13 +199,13 @@ send_data:
 		if (block)
 			read_ahead(file, blksize, convert);
 		for ( ; ; ) {
-			alarm(rexmtval);
+			(void)alarm(rexmtval);
 			do {
 				fromlen = sizeof(from);
 				n = recvfrom(f, ackbuf, sizeof(ackbuf), 0,
 				    (struct sockaddr *)(void *)&from, &fromlen);
 			} while (n <= 0);
-			alarm(0);
+			(void)alarm(0);
 			if (n < 0) {
 				warn("recvfrom");
 				goto abort;
@@ -223,7 +223,7 @@ send_data:
 			/* should verify packet came from server */
 			ap->th_opcode = ntohs(ap->th_opcode);
 			if (ap->th_opcode == ERROR) {
-				printf("Error code %d: %s\n", ap->th_code,
+				(void)printf("Error code %d: %s\n", ap->th_code,
 					ap->th_msg);
 				goto abort;
 			}
@@ -249,7 +249,7 @@ send_data:
 				 */
 				j = synchnet(f, blksize+4);
 				if (j && trace) {
-					printf("discarded %d packets\n",
+					(void)printf("discarded %d packets\n",
 							j);
 				}
 				if (ap->th_block == (block-1)) {
@@ -270,7 +270,7 @@ send_data:
 		block++;
 	} while (size == blksize || block == 1);
 abort:
-	fclose(file);
+	(void)fclose(file);
 	stopclock();
 	if (amount > 0)
 		printstats("Sent", amount);
@@ -307,10 +307,10 @@ recvfile(fd, name, mode)
 	block = 1;
 	firsttrip = 1;
 	amount = 0;
-	memcpy(&peer, &peeraddr, (size_t)peeraddr.ss_len);
-	memset(&serv, 0, sizeof(serv));
+	(void)memcpy(&peer, &peeraddr, (size_t)peeraddr.ss_len);
+	(void)memset(&serv, 0, sizeof(serv));
 
-	signal(SIGALRM, timer);
+	(void)signal(SIGALRM, timer);
 	do {
 		if (firsttrip) {
 			size = makerequest(RRQ, name, ap, mode, (off_t)0);
@@ -331,20 +331,20 @@ send_ack:
 		if (sendto(f, ackbuf, (socklen_t)size, 0,
 		    (struct sockaddr *)(void *)&peer,
 		    (socklen_t)peer.ss_len) != size) {
-			alarm(0);
+			(void)alarm(0);
 			warn("sendto");
 			goto abort;
 		}
 		if (write_behind(file, convert) == -1)
 			goto abort;
 		for ( ; ; ) {
-			alarm(rexmtval);
+			(void)alarm(rexmtval);
 			do  {
 				fromlen = sizeof(from);
 				n = recvfrom(f, dp, readlen, 0,
 				    (struct sockaddr *)(void *)&from, &fromlen);
 			} while (n <= 0);
-			alarm(0);
+			(void)alarm(0);
 			if (n < 0) {
 				warn("recvfrom");
 				goto abort;
@@ -362,7 +362,7 @@ send_ack:
 			/* should verify client address */
 			dp->th_opcode = ntohs(dp->th_opcode);
 			if (dp->th_opcode == ERROR) {
-				printf("Error code %d: %s\n", dp->th_code,
+				(void)printf("Error code %d: %s\n", dp->th_code,
 					dp->th_msg);
 				goto abort;
 			}
@@ -382,7 +382,7 @@ send_ack:
 				 */
 				j = synchnet(f, blksize);
 				if (j && trace) {
-					printf("discarded %d packets\n", j);
+					(void)printf("discarded %d packets\n", j);
 				}
 				if (dp->th_block == (block-1)) {
 					goto send_ack;	/* resend ack */
@@ -422,7 +422,7 @@ abort:						/* ok to ack, since user */
 	 * XXX maybe we should fix 'write_behind' instead.
 	 */
 	(void)write_behind(file, convert);
-	fclose(file);
+	(void)fclose(file);
 	stopclock();
 	if (amount > 0)
 		printstats("Received", amount);
@@ -444,33 +444,33 @@ makerequest(request, name, tp, mode, filesize)
 #else
 	cp = (void *)&tp->th_stuff;
 #endif
-	strcpy(cp, name);
+	(void)strcpy(cp, name);
 	cp += strlen(name);
 	*cp++ = '\0';
-	strcpy(cp, mode);
+	(void)strcpy(cp, mode);
 	cp += strlen(mode);
 	*cp++ = '\0';
 	if (tsize) {
-		strcpy(cp, "tsize");
+		(void)strcpy(cp, "tsize");
 		cp += strlen(cp);
 		*cp++ = '\0';
-		sprintf(cp, "%lu", (unsigned long) filesize);
+		(void)sprintf(cp, "%lu", (unsigned long) filesize);
 		cp += strlen(cp);
 		*cp++ = '\0';
 	}
 	if (tout) {
-		strcpy(cp, "timeout");
+		(void)strcpy(cp, "timeout");
 		cp += strlen(cp);
 		*cp++ = '\0';
-		sprintf(cp, "%d", rexmtval);
+		(void)sprintf(cp, "%d", rexmtval);
 		cp += strlen(cp);
 		*cp++ = '\0';
 	}
 	if (blksize != SEGSIZE) {
-		strcpy(cp, "blksize");
+		(void)strcpy(cp, "blksize");
 		cp += strlen(cp);
 		*cp++ = '\0';
-		sprintf(cp, "%zd", blksize);
+		(void)sprintf(cp, "%zd", blksize);
 		cp += strlen(cp);
 		*cp++ = '\0';
 	}
@@ -517,10 +517,10 @@ nak(error, peer)
 			break;
 	if (pe->e_code < 0) {
 		tp->th_code = EUNDEF;
-		strlcpy(tp->th_msg, strerror(error - 100), msglen);
+		(void)strlcpy(tp->th_msg, strerror(error - 100), msglen);
 	} else {
 		tp->th_code = htons((u_short)error);
-		strlcpy(tp->th_msg, pe->e_msg, msglen);
+		(void)strlcpy(tp->th_msg, pe->e_msg, msglen);
 	}
 	length = strlen(tp->th_msg);
 	msglen = &tp->th_msg[length + 1] - ackbuf;
@@ -544,9 +544,9 @@ tpacket(s, tp, n)
 	int i, o;
 
 	if (op < RRQ || op > OACK)
-		printf("%s opcode=%x ", s, op);
+		(void)printf("%s opcode=%x ", s, op);
 	else
-		printf("%s %s ", s, opcodes[op]);
+		(void)printf("%s %s ", s, opcodes[op]);
 	switch (op) {
 
 	case RRQ:
@@ -563,32 +563,32 @@ tpacket(s, tp, n)
 		}
 		file = cp;
 		cp = strchr(cp, '\0') + 1;
-		printf("<file=%s, mode=%s", file, cp);
+		(void)printf("<file=%s, mode=%s", file, cp);
 		cp = strchr(cp, '\0') + 1;
 		o = 0;
 		while (cp < endp) {
 			i = strlen(cp) + 1;
 			if (o) {
-				printf(", %s=%s", opt, cp);
+				(void)printf(", %s=%s", opt, cp);
 			} else {
 				opt = cp;
 			}
 			o = (o+1) % 2;
 			cp += i;
 		}
-		printf(">\n");
+		(void)printf(">\n");
 		break;
 
 	case DATA:
-		printf("<block=%d, %d bytes>\n", ntohs(tp->th_block), n - 4);
+		(void)printf("<block=%d, %d bytes>\n", ntohs(tp->th_block), n - 4);
 		break;
 
 	case ACK:
-		printf("<block=%d>\n", ntohs(tp->th_block));
+		(void)printf("<block=%d>\n", ntohs(tp->th_block));
 		break;
 
 	case ERROR:
-		printf("<code=%d, msg=%s>\n", ntohs(tp->th_code), tp->th_msg);
+		(void)printf("<code=%d, msg=%s>\n", ntohs(tp->th_code), tp->th_msg);
 		break;
 
 	case OACK:
@@ -599,12 +599,12 @@ tpacket(s, tp, n)
 		if (*endp != '\0') {	/* Shouldn't happen, but... */
 			*endp = '\0';
 		}
-		printf("<");
+		(void)printf("<");
 		spc = "";
 		while (cp < endp) {
 			i = strlen(cp) + 1;
 			if (o) {
-				printf("%s%s=%s", spc, opt, cp);
+				(void)printf("%s%s=%s", spc, opt, cp);
 				spc = ", ";
 			} else {
 				opt = cp;
@@ -612,7 +612,7 @@ tpacket(s, tp, n)
 			o = (o+1) % 2;
 			cp += i;
 		}
-		printf(">\n");
+		(void)printf(">\n");
 		break;
 	}
 }
@@ -645,10 +645,10 @@ printstats(direction, amount)
 	delta = ((tstop.tv_sec*10.)+(tstop.tv_usec/100000)) -
 		((tstart.tv_sec*10.)+(tstart.tv_usec/100000));
 	delta = delta/10.;      /* back to seconds */
-	printf("%s %ld bytes in %.1f seconds", direction, amount, delta);
+	(void)printf("%s %ld bytes in %.1f seconds", direction, amount, delta);
 	if (verbose)
-		printf(" [%.0f bits/sec]", (amount*8.)/delta);
-	putchar('\n');
+		(void)printf(" [%.0f bits/sec]", (amount*8.)/delta);
+	(void)putchar('\n');
 }
 
 static void
@@ -659,7 +659,7 @@ timer(sig)
 
 	timeout += rexmtval;
 	if (timeout >= maxtimeout) {
-		printf("Transfer timed out.\n");
+		(void)printf("Transfer timed out.\n");
 		longjmp(toplevel, -1);
 	}
 	longjmp(timeoutbuf, 1);

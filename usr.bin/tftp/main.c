@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2006/01/31 17:36:56 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2006/04/09 18:45:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2006/01/31 17:36:56 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2006/04/09 18:45:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,20 +168,20 @@ main(argc, argv)
 	int	c;
 
 	f = -1;
-	strcpy(mode, "netascii");
-	signal(SIGINT, intr);
+	(void)strlcpy(mode, "netascii", sizeof(mode));
+	(void)signal(SIGINT, intr);
 
 	setprogname(argv[0]);
 	while ((c = getopt(argc, argv, "e")) != -1) {
 		switch (c) {
 		case 'e':
 			blksize = MAXSEGSIZE;
-			strcpy(mode, "octet");
+			(void)strlcpy(mode, "octet", sizeof(mode));
 			tsize = 1;
 			tout = 1;
 			break;
 		default:
-			printf("usage: %s [-e] host-name [port]\n",
+			(void)printf("usage: %s [-e] host-name [port]\n",
 				getprogname());
 			exit(1);
 		}
@@ -220,7 +220,7 @@ setpeer0(host, port)
 	}
 	connected = 0;
 
-	memset(&hints, 0, sizeof(hints));
+	(void)memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_protocol = IPPROTO_UDP;
@@ -242,13 +242,13 @@ setpeer0(host, port)
 			continue;
 		}
 
-		memset(&ss, 0, sizeof(ss));
+		(void)memset(&ss, 0, sizeof(ss));
 		ss.ss_family = res->ai_family;
 		ss.ss_len = res->ai_addrlen;
 		if (bind(f, (struct sockaddr *)(void *)&ss,
 		    (socklen_t)ss.ss_len) < 0) {
 			cause = "bind";
-			close(f);
+			(void)close(f);
 			f = -1;
 			continue;
 		}
@@ -260,13 +260,13 @@ setpeer0(host, port)
 		soopt = 65536;
 		if (setsockopt(f, SOL_SOCKET, SO_SNDBUF, &soopt, sizeof(soopt))
 		    < 0) {
-			close(f);
+			(void)close(f);
 			f = -1;
 			cause = "setsockopt SNDBUF";
 		}
-		if (setsockopt(f, SOL_SOCKET, SO_RCVBUF, &soopt, sizeof(soopt))
+		else if (setsockopt(f, SOL_SOCKET, SO_RCVBUF, &soopt, sizeof(soopt))
 		    < 0) {
-			close(f);
+			(void)close(f);
 			f = -1;
 			cause = "setsockopt RCVBUF";
 		}
@@ -276,12 +276,12 @@ setpeer0(host, port)
 		warn("%s", cause);
 	else {
 		/* res->ai_addr <= sizeof(peeraddr) is guaranteed */
-		memcpy(&peeraddr, res->ai_addr, res->ai_addrlen);
+		(void)memcpy(&peeraddr, res->ai_addr, res->ai_addrlen);
 		if (res->ai_canonname) {
-			(void) strlcpy(hostname, res->ai_canonname,
+			(void)strlcpy(hostname, res->ai_canonname,
 			    sizeof(hostname));
 		} else
-			(void) strlcpy(hostname, host, sizeof(hostname));
+			(void)strlcpy(hostname, host, sizeof(hostname));
 		connected = 1;
 	}
 
@@ -295,15 +295,15 @@ setpeer(argc, argv)
 {
 
 	if (argc < 2) {
-		strcpy(line, "Connect ");
-		printf("(to) ");
-		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
+		(void)strlcpy(line, "Connect ", sizeof(line));
+		(void)printf("(to) ");
+		(void)fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
 	}
 	if ((argc < 2) || (argc > 3)) {
-		printf("usage: %s [-e] host-name [port]\n", getprogname());
+		(void)printf("usage: %s [-e] host-name [port]\n", getprogname());
 		return;
 	}
 	if (argc == 2)
@@ -334,7 +334,7 @@ modecmd(argc, argv)
 	const char *sep;
 
 	if (argc < 2) {
-		printf("Using %s mode to transfer files.\n", mode);
+		(void)printf("Using %s mode to transfer files.\n", mode);
 		return;
 	}
 	if (argc == 2) {
@@ -345,18 +345,18 @@ modecmd(argc, argv)
 			settftpmode(p->m_mode);
 			return;
 		}
-		printf("%s: unknown mode\n", argv[1]);
+		(void)printf("%s: unknown mode\n", argv[1]);
 		/* drop through and print usage message */
 	}
 
-	printf("usage: %s [", argv[0]);
+	(void)printf("usage: %s [", argv[0]);
 	sep = " ";
 	for (p = modes; p->m_name; p++) {
-		printf("%s%s", sep, p->m_name);
+		(void)printf("%s%s", sep, p->m_name);
 		if (*sep == ' ')
 			sep = " | ";
 	}
-	printf(" ]\n");
+	(void)printf(" ]\n");
 	return;
 }
 
@@ -384,9 +384,9 @@ static void
 settftpmode(newmode)
 	const char *newmode;
 {
-	strcpy(mode, newmode);
+	(void)strlcpy(mode, newmode, sizeof(mode));
 	if (verbose)
-		printf("mode set to %s\n", mode);
+		(void)printf("mode set to %s\n", mode);
 }
 
 
@@ -403,9 +403,9 @@ put(argc, argv)
 	char *targ, *p;
 
 	if (argc < 2) {
-		strcpy(line, "send ");
-		printf("(file) ");
-		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
+		(void)strlcpy(line, "send ", sizeof(line));
+		(void)printf("(file) ");
+		(void)fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -433,7 +433,7 @@ put(argc, argv)
 		setpeer0(cp, NULL);
 	}
 	if (!connected) {
-		printf("No target machine specified.\n");
+		(void)printf("No target machine specified.\n");
 		return;
 	}
 	if (argc < 4) {
@@ -444,7 +444,7 @@ put(argc, argv)
 			return;
 		}
 		if (verbose)
-			printf("putting %s to %s:%s [%s]\n",
+			(void)printf("putting %s to %s:%s [%s]\n",
 				cp, hostname, targ, mode);
 		sendfile(fd, targ, mode);
 		return;
@@ -454,14 +454,14 @@ put(argc, argv)
 	p = strchr(targ, '\0'); 
 	*p++ = '/';
 	for (n = 1; n < argc - 1; n++) {
-		strcpy(p, tail(argv[n]));
+		(void)strcpy(p, tail(argv[n]));
 		fd = open(argv[n], O_RDONLY);
 		if (fd < 0) {
 			warn("%s", argv[n]);
 			continue;
 		}
 		if (verbose)
-			printf("putting %s to %s:%s [%s]\n",
+			(void)printf("putting %s to %s:%s [%s]\n",
 				argv[n], hostname, targ, mode);
 		sendfile(fd, targ, mode);
 	}
@@ -471,8 +471,8 @@ static void
 putusage(s)
 	char *s;
 {
-	printf("usage: %s file ... host:target, or\n", s);
-	printf("       %s file ... target (when already connected)\n", s);
+	(void)printf("usage: %s file ... host:target, or\n", s);
+	(void)printf("       %s file ... target (when already connected)\n", s);
 }
 
 /*
@@ -489,9 +489,9 @@ get(argc, argv)
 	char *src;
 
 	if (argc < 2) {
-		strcpy(line, "get ");
-		printf("(files) ");
-		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
+		(void)strlcpy(line, "get ", sizeof(line));
+		(void)printf("(files) ");
+		(void)fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -531,7 +531,7 @@ get(argc, argv)
 				return;
 			}
 			if (verbose)
-				printf("getting from %s:%s to %s [%s]\n",
+				(void)printf("getting from %s:%s to %s [%s]\n",
 					hostname, src, cp, mode);
 			recvfile(fd, src, mode);
 			break;
@@ -543,7 +543,7 @@ get(argc, argv)
 			continue;
 		}
 		if (verbose)
-			printf("getting from %s:%s to %s [%s]\n",
+			(void)printf("getting from %s:%s to %s [%s]\n",
 				hostname, src, p, mode);
 		recvfile(fd, src, mode);
 	}
@@ -553,8 +553,8 @@ static void
 getusage(s)
 	char *s;
 {
-	printf("usage: %s host:file host:file ... file, or\n", s);
-	printf("       %s file file ... file if connected\n", s);
+	(void)printf("usage: %s host:file host:file ... file, or\n", s);
+	(void)printf("       %s file file ... file if connected\n", s);
 }
 
 void
@@ -565,20 +565,20 @@ setblksize(argc, argv)
 	int t;
 
 	if (argc < 2) {
-		strcpy(line, "blksize ");
-		printf("(blksize) ");
-		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
+		(void)strlcpy(line, "blksize ", sizeof(line));
+		(void)printf("(blksize) ");
+		(void)fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
 	}
 	if (argc != 2) {
-		printf("usage: %s value\n", argv[0]);
+		(void)printf("usage: %s value\n", argv[0]);
 		return;
 	}
 	t = atoi(argv[1]);
 	if (t < 8 || t > 65464)
-		printf("%s: bad value\n", argv[1]);
+		(void)printf("%s: bad value\n", argv[1]);
 	else
 		blksize = t;
 }
@@ -594,20 +594,20 @@ setrexmt(argc, argv)
 	int t;
 
 	if (argc < 2) {
-		strcpy(line, "Rexmt-timeout ");
-		printf("(value) ");
-		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
+		(void)strlcpy(line, "Rexmt-timeout ", sizeof(line));
+		(void)printf("(value) ");
+		(void)fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
 	}
 	if (argc != 2) {
-		printf("usage: %s value\n", argv[0]);
+		(void)printf("usage: %s value\n", argv[0]);
 		return;
 	}
 	t = atoi(argv[1]);
 	if (t < 0)
-		printf("%s: bad value\n", argv[1]);
+		(void)printf("%s: bad value\n", argv[1]);
 	else
 		rexmtval = t;
 }
@@ -622,20 +622,20 @@ settimeout(argc, argv)
 	int t;
 
 	if (argc < 2) {
-		strcpy(line, "Maximum-timeout ");
-		printf("(value) ");
-		fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
+		(void)strlcpy(line, "Maximum-timeout ", sizeof(line));
+		(void)printf("(value) ");
+		(void)fgets(&line[strlen(line)], (int)(LBUFLEN-strlen(line)), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
 	}
 	if (argc != 2) {
-		printf("usage: %s value\n", argv[0]);
+		(void)printf("usage: %s value\n", argv[0]);
 		return;
 	}
 	t = atoi(argv[1]);
 	if (t < 0)
-		printf("%s: bad value\n", argv[1]);
+		(void)printf("%s: bad value\n", argv[1]);
 	else
 		maxtimeout = t;
 }
@@ -647,12 +647,12 @@ status(argc, argv)
 	char *argv[];
 {
 	if (connected)
-		printf("Connected to %s.\n", hostname);
+		(void)printf("Connected to %s.\n", hostname);
 	else
-		printf("Not connected.\n");
-	printf("Mode: %s Verbose: %s Tracing: %s\n", mode,
+		(void)printf("Not connected.\n");
+	(void)printf("Mode: %s Verbose: %s Tracing: %s\n", mode,
 		verbose ? "on" : "off", trace ? "on" : "off");
-	printf("Rexmt-interval: %d seconds, Max-timeout: %d seconds\n",
+	(void)printf("Rexmt-interval: %d seconds, Max-timeout: %d seconds\n",
 		rexmtval, maxtimeout);
 }
 
@@ -662,8 +662,8 @@ intr(dummy)
 	int dummy;
 {
 
-	signal(SIGALRM, SIG_IGN);
-	alarm(0);
+	(void)signal(SIGALRM, SIG_IGN);
+	(void)alarm(0);
 	longjmp(toplevel, -1);
 }
 
@@ -693,7 +693,7 @@ command()
 	const struct cmd *c;
 
 	for (;;) {
-		printf("%s> ", prompt);
+		(void)printf("%s> ", prompt);
 		if (fgets(line, LBUFLEN, stdin) == 0) {
 			if (feof(stdin)) {
 				exit(0);
@@ -708,11 +708,11 @@ command()
 			continue;
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
-			printf("?Ambiguous command\n");
+			(void)printf("?Ambiguous command\n");
 			continue;
 		}
 		if (c == 0) {
-			printf("?Invalid command\n");
+			(void)printf("?Invalid command\n");
 			continue;
 		}
 		(*c->handler)(margc, margv);
@@ -795,9 +795,9 @@ help(argc, argv)
 	const struct cmd *c;
 
 	if (argc == 1) {
-		printf("Commands may be abbreviated.  Commands are:\n\n");
+		(void)printf("Commands may be abbreviated.  Commands are:\n\n");
 		for (c = cmdtab; c->name; c++)
-			printf("%-*s\t%s\n", (int)HELPINDENT, c->name, c->help);
+			(void)printf("%-*s\t%s\n", (int)HELPINDENT, c->name, c->help);
 		return;
 	}
 	while (--argc > 0) {
@@ -805,11 +805,11 @@ help(argc, argv)
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
-			printf("?Ambiguous help command %s\n", arg);
+			(void)printf("?Ambiguous help command %s\n", arg);
 		else if (c == (struct cmd *)0)
-			printf("?Invalid help command %s\n", arg);
+			(void)printf("?Invalid help command %s\n", arg);
 		else
-			printf("%s\n", c->help);
+			(void)printf("%s\n", c->help);
 	}
 }
 
@@ -820,7 +820,7 @@ settrace(argc, argv)
 	char **argv;
 {
 	trace = !trace;
-	printf("Packet tracing %s.\n", trace ? "on" : "off");
+	(void)printf("Packet tracing %s.\n", trace ? "on" : "off");
 }
 
 void
@@ -830,7 +830,7 @@ setverbose(argc, argv)
 	char **argv;
 {
 	verbose = !verbose;
-	printf("Verbose mode %s.\n", verbose ? "on" : "off");
+	(void)printf("Verbose mode %s.\n", verbose ? "on" : "off");
 }
 
 void
@@ -840,7 +840,7 @@ settsize(argc, argv)
 	char **argv;
 {
 	tsize = !tsize;
-	printf("Tsize mode %s.\n", tsize ? "on" : "off");
+	(void)printf("Tsize mode %s.\n", tsize ? "on" : "off");
 }
 
 void
@@ -850,5 +850,5 @@ settimeoutopt(argc, argv)
 	char **argv;
 {
 	tout = !tout;
-	printf("Timeout option %s.\n", tout ? "on" : "off");
+	(void)printf("Timeout option %s.\n", tout ? "on" : "off");
 }

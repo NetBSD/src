@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpsubs.c,v 1.9 2006/01/31 17:36:56 christos Exp $	*/
+/*	$NetBSD: tftpsubs.c,v 1.10 2006/04/09 18:45:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftpsubs.c,v 1.9 2006/01/31 17:36:56 christos Exp $");
+__RCSID("$NetBSD: tftpsubs.c,v 1.10 2006/04/09 18:45:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,7 @@ write_behind(file, convert)
 	    c = *p++;                   /* pick up a character */
 	    if (prevchar == '\r') {     /* if prev char was cr */
 		if (c == '\n')          /* if have cr,lf then just */
-		   fseeko(file, (off_t)-1, 1);  /* smash lf on top of the cr */
+		   (void)fseeko(file, (off_t)-1, 1);  /* smash lf on top of the cr */
 		else
 		   if (c == '\0')       /* if have cr,nul then */
 			goto skipit;    /* just skip over the putc */
