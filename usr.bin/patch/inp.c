@@ -1,4 +1,4 @@
-/*	$NetBSD: inp.c,v 1.17 2003/07/30 08:51:04 itojun Exp $	*/
+/*	$NetBSD: inp.c,v 1.18 2006/04/09 19:06:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.17 2003/07/30 08:51:04 itojun Exp $");
+__RCSID("$NetBSD: inp.c,v 1.18 2006/04/09 19:06:34 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -88,11 +88,14 @@ plan_a(char *filename)
 
 	statfailed = stat(filename, &filestat);
 	if (statfailed && ok_to_create_file) {
+		int fd;
 		if (verbose)
 			say("(Creating file %s...)\n",filename);
 		makedirs(filename, TRUE);
-		close(creat(filename, 0666));
-		statfailed = stat(filename, &filestat);
+		if ((fd = open(filename, O_CREAT|O_TRUNC, 0666)) == -1)
+			pfatal("can't open file %s", filename);
+		statfailed = fstat(fd, &filestat);
+		(void)close(fd);
 	}
 	/*
 	 * For nonexistent or read-only files, look for RCS or SCCS
