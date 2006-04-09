@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.31 2006/03/19 20:08:09 christos Exp $	*/
+/*	$NetBSD: internals.c,v 1.32 2006/04/09 00:44:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.31 2006/03/19 20:08:09 christos Exp $");
+__RCSID("$NetBSD: internals.c,v 1.32 2006/04/09 00:44:40 christos Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -2128,7 +2128,7 @@ _formi_manipulate_field(FORM *form, int c)
 	"entry: xpos=%d, row_pos=%d, start_char=%d, length=%d, allocated=%d\n",
 		cur->cursor_xpos, cur->row_xpos, cur->start_char,
 		cur->cur_line->length,	cur->cur_line->allocated);
-	fprintf(dbg, "entry: start_line=%d, ypos=%d\n", cur->start_line,
+	fprintf(dbg, "entry: start_line=%p, ypos=%d\n", cur->start_line,
 		cur->cursor_ypos);
 	fprintf(dbg, "entry: string=");
 	if (cur->cur_line->string == NULL)
