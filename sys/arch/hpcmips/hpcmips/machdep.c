@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 2006/04/09 01:18:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2006/04/09 01:18:14 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -191,7 +191,6 @@ static int __bicons_enable;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-extern	char cpu_model[];	
 char	cpu_name[40];			/* set CPU depend xx_init() */
 
 struct cpu_info cpu_info_store;		/* only one CPU */

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $NetBSD: machdep.c,v 1.2 2006/04/09 01:18:14 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2006/04/09 01:18:14 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -189,9 +189,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $");
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 #include "com.h"
-
-/* The following are used externally (sysctl_hw). */
-extern char	cpu_model[];
 
 struct	user *proc0paddr;
 

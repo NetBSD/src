@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2006/01/24 22:32:19 uwe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 2006/04/09 01:18:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2006/01/24 22:32:19 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2006/04/09 01:18:14 tsutsui Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -147,7 +147,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2006/01/24 22:32:19 uwe Exp $");
 /* Machine */
 char machine[]		= MACHINE;
 char machine_arch[]	= MACHINE_ARCH;
-extern char cpu_model[];
 struct bootinfo *bootinfo;
 
 /* Physical memory */

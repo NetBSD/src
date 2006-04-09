@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.27 2006/02/23 03:51:40 gdamore Exp $ */
+/* $NetBSD: machdep.c,v 1.28 2006/04/09 01:18:14 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2006/02/23 03:51:40 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2006/04/09 01:18:14 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -160,9 +160,6 @@ int	aucomcnrate = 0;
 #endif /* NAUCOM > 0 */
 
 #include "ohci.h"
-
-/* The following are used externally (sysctl_hw). */
-extern char	cpu_model[];
 
 struct	user *proc0paddr;
 
