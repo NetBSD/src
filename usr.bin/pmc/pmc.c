@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.13 2006/04/09 18:54:28 christos Exp $	*/
+/*	$NetBSD: pmc.c,v 1.14 2006/04/09 18:57:10 christos Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.13 2006/04/09 18:54:28 christos Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.14 2006/04/09 18:57:10 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -384,7 +384,7 @@ int
 main(int argc, char **argv)
 {
 	int c, status, ret0, ret1, errn0, errn1;
-	char *event = NULL;
+	const char *event = "unknown";
 	const struct pmc_name2val_cpus *pncp;
 	const struct pmc_name2val *pnp;
 	struct i386_pmc_info_args pi;
@@ -433,7 +433,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (pnp == NULL || argc <= optind || event == NULL)
+	if (pnp == NULL || argc <= optind)
 		usage();
 
 	(void)memset(&pss0, 0, sizeof pss0);
