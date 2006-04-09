@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/10/21 10:01:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2006/04/09 02:52:20 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -43,6 +43,12 @@ L${f}.o: f2cext.c
 
 .if ${MKPIC} != "no"
 L${f}.so: f2cext.c
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${CPICFLAGS} -DL${f} -o $@ ${>:M*.c}
+.endif
+
+.if ${MKDEBUG} != "no"
+L${f}.go: f2cext.c
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${CPICFLAGS} -DL${f} -o $@ ${>:M*.c}
 .endif
