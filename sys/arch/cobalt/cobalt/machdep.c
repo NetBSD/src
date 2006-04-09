@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2006/04/05 15:03:27 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 2006/04/09 01:20:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2006/04/05 15:03:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2006/04/09 01:20:06 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -81,9 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2006/04/05 15:03:27 tsutsui Exp $")
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
-
-/* For sysctl. */
-extern char cpu_model[];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
