@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.10 2006/02/27 13:41:40 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.11 2006/04/10 18:44:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.10 2006/02/27 13:41:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.11 2006/04/10 18:44:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.10 2006/02/27 13:41:40 jmcneill Exp $")
 #include <machine/frame.h>
 #include <machine/kvm86.h>
 #include <machine/bus.h>
+
+#if notyet
+#include <machine/bioscall.h>
+#endif
 
 #include "opt_vesafb.h"
 
@@ -435,6 +439,12 @@ vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	ri->ri_bits = sc->sc_bits;
 #endif /* !VESAFB_SHADOW_FB */
 	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_rnum = mi->RedMaskSize;
+	ri->ri_gnum = mi->GreenMaskSize;
+	ri->ri_bnum = mi->BlueMaskSize;
+	ri->ri_rpos = mi->RedFieldPosition;
+	ri->ri_gpos = mi->GreenFieldPosition;
+	ri->ri_bpos = mi->BlueFieldPosition;
 
 	rasops_init(ri, mi->YResolution / 16, mi->XResolution / 8);
 
@@ -448,6 +458,9 @@ static void
 vesafb_init(struct vesafb_softc *sc)
 {
 	struct trapframe tf;
+#if notyet
+	struct bioscallregs regs;
+#endif
 	struct modeinfoblock *mi;
 	struct paletteentry pe;
 	int res;
@@ -456,6 +469,7 @@ vesafb_init(struct vesafb_softc *sc)
 	mi = &sc->sc_mi;
 
 	/* set mode */
+#if 1
 	memset(&tf, 0, sizeof(struct trapframe));
 	tf.tf_eax = 0x4f02; /* function code */
 	tf.tf_ebx = sc->sc_mode | 0x4000; /* flat */
@@ -466,6 +480,16 @@ vesafb_init(struct vesafb_softc *sc)
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 		return;
 	}
+#else
+	regs.EAX = 0x4f02;
+	regs.EBX = sc->sc_mode | 0x4000;
+	bioscall(0x10, &regs);
+	if ((regs.EAX & 0xffff) != 0x004f) {
+		aprint_error("%s: bioscall failed\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+#endif
 
 	/* setup palette, not required in direct colour mode */
 	if (mi->BitsPerPixel == 8) {
