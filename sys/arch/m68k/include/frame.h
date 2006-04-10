@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.24 2004/08/28 21:31:07 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.24.10.1 2006/04/10 20:15:54 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -211,9 +211,11 @@
 #define	FPF6_V_SNAN	6
 #define	FPF6_V_UNSUP	7
 
+#if defined(_KERNEL)
+
 #include <m68k/signal.h>
 
-#if defined(COMPAT_16) || !defined(_KERNEL)
+#if defined(COMPAT_16)
 /*
  * Stack frame layout when delivering a signal.
  */
@@ -236,7 +238,6 @@ struct sigframe_siginfo {
 	ucontext_t	sf_uc;		/* actual saved ucontext */
 };
 
-#if defined(_KERNEL)
 /*
  * Utility function to relocate the initial frame, make room to restore an
  * exception frame and reenter the syscall.
