@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2006/04/10 17:58:59 garbled Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2006/04/10 18:40:06 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -33,9 +33,9 @@
 
 #include <lib/libsa/stand.h>
 
-int instrategy __P((void *, int , daddr_t, size_t, void *, size_t *));
-int inopen __P((struct open_file *, ...));
-int inclose __P((struct open_file *));
+int instrategy(void *, int , daddr_t, size_t, void *, size_t *);
+int inopen(struct open_file *, ...);
+int inclose(struct open_file *);
 
 struct devsw devsw[] = {
 	{ "in",	instrategy, inopen, inclose, noioctl },

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.1 2000/02/29 15:21:49 nonaka Exp $	*/
+/*	$NetBSD: io.c,v 1.2 2006/04/10 18:40:06 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -39,25 +39,21 @@ volatile u_char *ISA_io  = (u_char *)0x80000000;
 volatile u_char *ISA_mem = (u_char *)0xC0000000;
 
 void
-outb(port, val)
-	int port;
-	char val;
+outb(int port, char val)
 {
 
 	ISA_io[port] = val;
 }
 
 u_char
-inb(port)
-	int port;
+inb(int port)
 {
 
 	return (ISA_io[port]);
 }
 
 u_long
-local_to_PCI(addr)
-	u_long addr;
+local_to_PCI(u_long addr)
 {
 
 	return ((addr & 0x7FFFFFFF) | 0x80000000);
