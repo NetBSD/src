@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.38 2005/11/18 17:12:09 christos Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.39 2006/04/10 14:39:06 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.38 2005/11/18 17:12:09 christos Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.39 2006/04/10 14:39:06 chuck Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -180,14 +180,14 @@ main(int argc, char *const *argv)
 	 * if man.conf not available.
 	 */
 	config(conffile);
-	if ((tp = getlist("_whatdb", 0)) == NULL) {
+	if ((tp = gettag("_whatdb", 0)) == NULL) {
 		manpath = default_manpath;
 		goto mkwhatis;
 	}
 
 	/* Build individual databases */
 	paths[1] = NULL;
-	TAILQ_FOREACH(ep, &tp->list, q) {
+	TAILQ_FOREACH(ep, &tp->entrylist, q) {
 		if ((rv = glob(ep->s,
 		    GLOB_BRACE | GLOB_NOSORT | GLOB_ERR | GLOB_NOCHECK,
 		    NULL, &pg)) != 0)

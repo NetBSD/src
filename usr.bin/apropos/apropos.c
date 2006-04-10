@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.26 2005/09/17 19:18:31 elad Exp $	*/
+/*	$NetBSD: apropos.c,v 1.27 2006/04/10 14:39:06 chuck Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.26 2005/09/17 19:18:31 elad Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.27 2006/04/10 14:39:06 chuck Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,8 +114,10 @@ main(int argc, char *argv[])
 		apropos(argv, p_path, 1);
 	else {
 		config(conffile);
-		tp = getlist("_whatdb", 1);
-		TAILQ_FOREACH(ep, &tp->list, q) {
+		tp = gettag("_whatdb", 1);
+		if (!tp)
+			errx(EXIT_FAILURE, "malloc");
+		TAILQ_FOREACH(ep, &tp->entrylist, q) {
 			if ((rv = glob(ep->s, GLOB_BRACE | GLOB_NOSORT, NULL,
 			    &pg)) != 0) {
 				if (rv == GLOB_NOMATCH)
@@ -154,7 +156,8 @@ apropos(char **argv, char *path, int buildpath)
 			*end++ = '\0';
 
 		if (buildpath) {
-			(void)snprintf(hold, sizeof(hold), "%s/%s", name, _PATH_WHATIS);
+			(void)snprintf(hold, sizeof(hold), "%s/%s", name, 
+					_PATH_WHATIS);
 			name = hold;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: manconf.c,v 1.4 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: manconf.c,v 1.5 2006/04/10 14:39:06 chuck Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -29,6 +29,13 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * manconf.c: provides interface for reading man.conf files
+ *
+ * note that this code is shared across all programs that read man.conf.
+ * (currently: apropos, catman, makewhatis, man, and whatis...)
+ */
+
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
@@ -38,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: manconf.c,v 1.4 2003/10/27 00:12:43 lukem Exp $");
+__RCSID("$NetBSD: manconf.c,v 1.5 2006/04/10 14:39:06 chuck Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,21 +62,42 @@ __RCSID("$NetBSD: manconf.c,v 1.4 2003/10/27 00:12:43 lukem Exp $");
 #include "manconf.h"
 #include "pathnames.h"
 
-struct _head head;
+TAILQ_HEAD(_head, _tag);
+static struct _head head;	/* 'head' -- top level data structure */
+
+/*
+ * xstrdup: like strdup, but also returns length of string in lenp
+ */
+static char *
+xstrdup(const char *str, size_t *lenp)
+{
+	size_t len;
+	char *copy;
+
+	len = strlen(str) + 1;
+	copy = malloc(len);
+	if (!copy)
+		return(NULL);
+	memcpy(copy, str, len);
+	if (lenp)
+		*lenp = len - 1;	/* subtract out the null */
+	return(copy);
+}
 
 /*
  * config --
  *
  * Read the configuration file and build a doubly linked
- * list that looks like:
+ * list off of "head" that looks like:
  *
- *	tag1 <-> record <-> record <-> record
+ *	tag1 <-> entry <-> entry <-> entry
  *	|
- *	tag2 <-> record <-> record <-> record
+ *	tag2 <-> entry <-> entry <-> entry
+ *
+ * note: will err/errx out on error (fopen or malloc failure)
  */
 void
-config(fname)
-	const char *fname;
+config(const char *fname)
 {
 	TAG *tp;
 	FILE *cfp;
@@ -102,7 +130,9 @@ config(fname)
 			continue;
 		*t = '\0';
 
-		tp = getlist(p, 1);
+		tp = gettag(p, 1);
+		if (!tp)
+			errx(1, "gettag: malloc failed");
 
 		/*
 		 * Attach new records. Check to see if it is a
@@ -122,11 +152,15 @@ config(fname)
 				 * has only a single token on it.
 				 */
 				while (*++t && isspace((unsigned char)*t));
-				addentry(tp, t, 0);
+				if (addentry(tp, t, 0) < 0)
+					errx(1, "addentry: malloc failed");
 			} else {
 				for(++t; (p = strtok(t, " \t\n")) != NULL;
-					t = NULL)
-					addentry(tp, p, 0);
+					t = NULL) {
+					if (addentry(tp, p, 0) < 0)
+						errx(1, 
+						   "addentry: malloc failed");
+				}
 			}
 				
 		} else {			/* section record */
@@ -135,8 +169,8 @@ config(fname)
 			 * section entries can either be all absolute
 			 * paths or all relative paths, but not both.
 			 */
-			type = (TAILQ_FIRST(&tp->list) != NULL) ?
-			  *(TAILQ_FIRST(&tp->list)->s) : 0;
+			type = (TAILQ_FIRST(&tp->entrylist) != NULL) ?
+			  *(TAILQ_FIRST(&tp->entrylist)->s) : 0;
 
 			for (++t; (p = strtok(t, " \t\n")) != NULL; t = NULL) {
 
@@ -151,7 +185,8 @@ config(fname)
 	warnx("man.conf cannot mix absolute and relative paths in an entry");
 					continue;
 				}
-				addentry(tp, p, 0);
+				if (addentry(tp, p, 0) < 0)
+					errx(1, "addentry: malloc failed");
 			}
 		}
 	}
@@ -160,66 +195,61 @@ config(fname)
 }
 
 /*
- * getlist --
- *	Return the linked list of entries for a tag if it exists.
- *	If it doesn't exist and create is non zero, create new tag
- *	and return that, otherwise return NULL.
+ * gettag --
+ *	if (!create) return tag for given name if it exists, or NULL otherwise
+ * 
+ *	if (create) return tag for given name if it exists, try and create
+ *	a new tag if it does not exist.  return NULL if unable to create new
+ *	tag.
  */
 TAG *
-getlist(name, create)
-	const char *name;
-	int create;
+gettag(const char *name, int create)
 {
 	TAG *tp;
 
 	TAILQ_FOREACH(tp, &head, q)
 		if (!strcmp(name, tp->s))
 			return (tp);
-	if (create) {
-		if ((tp = malloc(sizeof(TAG))) == NULL ||
-		    (tp->s = strdup(name)) == NULL)
-			err(1, "malloc");
-		TAILQ_INIT(&tp->list);
-		TAILQ_INSERT_TAIL(&head, tp, q);
-		return (tp);
-	} else
-		return (NULL);
+	if (!create)
+		return(NULL);
+
+	/* try and add it in */
+	tp = malloc(sizeof(*tp));
+	if (tp)
+		tp->s = xstrdup(name, &tp->len);
+	if (!tp || !tp->s) {
+		if (tp)
+			free(tp);
+		return(NULL);
+	}
+	TAILQ_INIT(&tp->entrylist);
+	TAILQ_INSERT_TAIL(&head, tp, q);
+	return (tp);
 }
 
 /*
  * addentry --
- *	add an entry to a list.
+ *	add an entry to a list.   
+ *	returns -1 if malloc failed, otherwise 0.
  */
-void
-addentry(tp, newent, head)
-	TAG *tp;
-	const char *newent;
-	int head;
+int
+addentry(TAG *tp, const char *newent, int head)
 {
 	ENTRY *ep;
 
-	if ((ep = malloc(sizeof(*ep))) == NULL ||
-	    (ep->s = strdup(newent)) == NULL)
-		err(1, "malloc");
-	if (head)
-		TAILQ_INSERT_HEAD(&tp->list, ep, q);
-	else
-		TAILQ_INSERT_TAIL(&tp->list, ep, q);
-}
-
-#ifdef MANDEBUG
-void
-debug(l)
-	const char *l;
-{
-	TAG *tp;
-	ENTRY *ep;
-
-	(void)printf("%s ===============\n", l);
-	TAILQ_FOREACH(tp, &head, q) {
-		printf("%s\n", tp->s);
-		TAILQ_FOREACH(ep, &tp->list, q)
-			printf("\t%s\n", ep->s);
+	ep = malloc(sizeof(*ep));
+	if (ep)
+		ep->s = xstrdup(newent, &ep->len);
+	if (!ep || !ep->s) {
+		if (ep)
+			free(ep);
+		return(-1);
 	}
+
+	if (head)
+		TAILQ_INSERT_HEAD(&tp->entrylist, ep, q);
+	else
+		TAILQ_INSERT_TAIL(&tp->entrylist, ep, q);
+
+	return(0);
 }
-#endif

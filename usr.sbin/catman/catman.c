@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.25 2006/03/26 18:11:22 christos Exp $       */
+/*      $NetBSD: catman.c,v 1.26 2006/04/10 14:39:06 chuck Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,24 +67,21 @@ int dowhatis = 0;
 
 TAG *defp;	/* pointer to _default list */
 
-int		main __P((int, char * const *));
-static void	setdefentries __P((char *, char *, const char *));
-static void	uniquepath __P((void));
-static void	catman __P((void));
-static void	scanmandir __P((const char *, const char *));
-static int	splitentry __P((char *, char *, size_t, char *, size_t));
-static void	setcatsuffix __P((char *, const char *, const char *));
-static void	makecat __P((const char *, const char *, const char *,
-							const char *));
-static void	makewhatis __P((void));
-static void	dosystem __P((const char *));
-static void	usage __P((void));
+int		main(int, char * const *);
+static void	setdefentries(char *, char *, const char *);
+static void	uniquepath(void);
+static void	catman(void);
+static void	scanmandir(const char *, const char *);
+static int	splitentry(char *, char *, size_t, char *, size_t);
+static void	setcatsuffix(char *, const char *, const char *);
+static void	makecat(const char *, const char *, const char *, const char *);
+static void	makewhatis(void);
+static void	dosystem(const char *);
+static void	usage(void);
 
 
 int
-main(argc, argv)
-	int argc;
-	char * const *argv;
+main(int argc, char * const *argv)
 {
 	char *m_path = NULL;
 	char *m_add = NULL;
@@ -140,10 +137,7 @@ main(argc, argv)
 }
 
 static void
-setdefentries(m_path, m_add, sections)
-	char *m_path;
-	char *m_add;
-	const char *sections;
+setdefentries(char *m_path, char *m_add, const char *sections)
 {
 	TAG *defnewp, *sectnewp, *subp;
 	ENTRY *e_defp, *e_subp;
@@ -164,21 +158,24 @@ setdefentries(m_path, m_add, sections)
 	}
 
 	/* If there's no _default list, create an empty one. */
-	defp = getlist("_default", 1);
-
-	subp = getlist("_subdir", 1);
+	defp = gettag("_default", 1);
+	subp = gettag("_subdir", 1);
+	if (defp == NULL || subp == NULL)
+		err(1, "malloc");
 
 	/*
 	 * 0: If one or more sections was specified, rewrite _subdir list.
 	 */
 	if (sections != NULL) {
-		sectnewp = getlist("_section_new", 1);
+		if ((sectnewp = gettag("_section_new", 1)) == NULL)
+			err(1, "malloc");
 		for (p = sections; *p;) {
 			i = snprintf(buf, sizeof(buf), "man%c", *p++);
 			for (; *p && !isdigit((unsigned char)*p) && i < sizeof(buf) - 1; i++)
 				buf[i] = *p++;
 			buf[i] = '\0';
-			addentry(sectnewp, buf, 0);
+			if (addentry(sectnewp, buf, 0) < 0)
+				err(1, "malloc");
 		}
 		subp = sectnewp;
 	}
@@ -191,19 +188,20 @@ setdefentries(m_path, m_add, sections)
 	if (m_path == NULL)
 		m_path = getenv("MANPATH");
 	if (m_path != NULL) {
-		while ((e_defp = TAILQ_FIRST(&defp->list)) != NULL) {
+		while ((e_defp = TAILQ_FIRST(&defp->entrylist)) != NULL) {
 			free(e_defp->s);
-			TAILQ_REMOVE(&defp->list, e_defp, q);
+			TAILQ_REMOVE(&defp->entrylist, e_defp, q);
 		}
 		for (p = strtok(m_path, ":");
 		    p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			TAILQ_FOREACH(e_subp, &subp->list, q) {
+			TAILQ_FOREACH(e_subp, &subp->entrylist, q) {
 				if (!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 				    p, slashp, e_subp->s, machine);
-				addentry(defp, buf, 0);
+				if (addentry(defp, buf, 0) < 0)
+					err(1, "malloc");
 			}
 		}
 	}
@@ -213,18 +211,21 @@ setdefentries(m_path, m_add, sections)
 	 *    the _default list to include the _subdir list and the machine.
 	 */
 	if (m_path == NULL) {
-		defp = getlist("_default", 1);
-		defnewp = getlist("_default_new1", 1);
+		defp = gettag("_default", 1);
+		defnewp = gettag("_default_new1", 1);
+		if (defp == NULL || defnewp == NULL)
+			err(1, "malloc");
 
-		TAILQ_FOREACH(e_defp, &defp->list, q) {
+		TAILQ_FOREACH(e_defp, &defp->entrylist, q) {
 			slashp =
 			    e_defp->s[strlen(e_defp->s) - 1] == '/' ? "" : "/";
-			TAILQ_FOREACH(e_subp, &subp->list, q) {
+			TAILQ_FOREACH(e_subp, &subp->entrylist, q) {
 				if (!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 					e_defp->s, slashp, e_subp->s, machine);
-				addentry(defnewp, buf, 0);
+				if (addentry(defnewp, buf, 0) < 0)
+					err(1, "malloc");
 			}
 		}
 		defp = defnewp;
@@ -238,12 +239,13 @@ setdefentries(m_path, m_add, sections)
 	if (m_add != NULL)
 		for (p = strtok(m_add, ":"); p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			TAILQ_FOREACH(e_subp, &subp->list, q) {
+			TAILQ_FOREACH(e_subp, &subp->entrylist, q) {
 				if (!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 				    p, slashp, e_subp->s, machine);
-				addentry(defp, buf, 1);
+				if (addentry(defp, buf, 1) < 0)
+					err(1, "malloc");
 			}
 		}
 }
@@ -269,13 +271,14 @@ uniquepath(void)
 	char path[PATH_MAX], *p;
 
 	gflags = 0;
-	TAILQ_FOREACH(e_defp, &defp->list, q) {
+	TAILQ_FOREACH(e_defp, &defp->entrylist, q) {
 		glob(e_defp->s, GLOB_BRACE | GLOB_NOSORT | gflags, NULL,
 		    &manpaths);
 		gflags = GLOB_APPEND;
 	}
 
-	defnewp = getlist("_default_new2", 1);
+	if ((defnewp = gettag("_default_new2", 1)) == NULL)
+		err(1, "malloc");
 
 	for (i = 0; i < manpaths.gl_pathc; i++) {
 		lnk = 0;
@@ -308,8 +311,10 @@ uniquepath(void)
 			}
 		}
 
-		if (!lnk)
-			addentry(defnewp, manpaths.gl_pathv[i], 0);
+		if (!lnk) {
+			if (addentry(defnewp, manpaths.gl_pathv[i], 0) < 0)
+				err(1, "malloc");
+		}
 	}
 
 	globfree(&manpaths);
@@ -324,7 +329,7 @@ catman(void)
 	const char *mandir;
 	char catdir[PATH_MAX], *cp;
 
-	TAILQ_FOREACH(e_path, &defp->list, q) {
+	TAILQ_FOREACH(e_path, &defp->entrylist, q) {
 		mandir = e_path->s;
 		strlcpy(catdir, mandir, sizeof(catdir));
 		if (!(cp = strstr(catdir, "man/man")))
@@ -335,9 +340,7 @@ catman(void)
 }
 
 static void
-scanmandir(catdir, mandir)
-	const char *catdir;
-	const char *mandir;
+scanmandir(const char *catdir, const char *mandir)
 {
 	TAG *buildp, *crunchp;
 	ENTRY *e_build, *e_crunch;
@@ -385,8 +388,9 @@ scanmandir(catdir, mandir)
 		snprintf(catpage, sizeof(catpage), "%s/%s", catdir, dp->d_name);
 
 		e_build = NULL;
-		buildp = getlist("_build", 1);
-		TAILQ_FOREACH(e_build, &buildp->list, q) {
+		if ((buildp = gettag("_build", 1)) == NULL)
+			err(1, "malloc");
+		TAILQ_FOREACH(e_build, &buildp->entrylist, q) {
 			splitentry(e_build->s, buildsuff, sizeof(buildsuff),
 			    buildcmd, sizeof(buildcmd));
 			snprintf(match, sizeof(match), "*%s",
@@ -399,8 +403,9 @@ scanmandir(catdir, mandir)
 			continue;
 
 		e_crunch = NULL;
-		crunchp = getlist("_crunch", 1);
-		TAILQ_FOREACH(e_crunch, &crunchp->list, q) {
+		if ((crunchp = gettag("_crunch", 1)) == NULL)
+			err(1, "malloc");
+		TAILQ_FOREACH(e_crunch, &crunchp->entrylist, q) {
 			splitentry(e_crunch->s, crunchsuff, sizeof(crunchsuff),
 			    crunchcmd, sizeof(crunchcmd));
 			snprintf(match, sizeof(match), "*%s", crunchsuff);
@@ -518,12 +523,8 @@ scanmandir(catdir, mandir)
 }
 
 static int
-splitentry(s, first, firstlen, second, secondlen)
-	char *s;
-	char *first;
-	size_t firstlen;
-	char *second;
-	size_t secondlen;
+splitentry(char *s, char *first, size_t firstlen, char *second, 
+	   size_t secondlen)
 {
 	char *c;
 
@@ -543,20 +544,18 @@ splitentry(s, first, firstlen, second, secondlen)
 }
 
 static void
-setcatsuffix(catpage, suffix, crunchsuff)
-	char		*catpage;
-	const char	*suffix;
-	const char	*crunchsuff;
+setcatsuffix(char *catpage, const char *suffix, const char *crunchsuff)
 {
 	TAG *tp;
 	char *p;
 
 	for (p = catpage + strlen(catpage); p != catpage; p--)
 		if (!fnmatch(suffix, p, 0)) {
-			tp = getlist("_suffix", 1);
-			if (! TAILQ_EMPTY(&tp->list)) {
+			if ((tp = gettag("_suffix", 1)) == NULL)
+				err(1, "malloc");
+			if (! TAILQ_EMPTY(&tp->entrylist)) {
 				sprintf(p, "%s%s",
-				    TAILQ_FIRST(&tp->list)->s, crunchsuff);
+				    TAILQ_FIRST(&tp->entrylist)->s, crunchsuff);
 			} else {
 				sprintf(p, ".0%s", crunchsuff);
 			}
@@ -565,11 +564,8 @@ setcatsuffix(catpage, suffix, crunchsuff)
 }
 
 static void
-makecat(manpage, catpage, buildcmd, crunchcmd)
-	const char	*manpage;
-	const char	*catpage;
-	const char	*buildcmd;
-	const char	*crunchcmd;
+makecat(const char *manpage, const char *catpage, const char *buildcmd, 
+	const char *crunchcmd)
 {
 	char crunchbuf[1024];
 	char sysbuf[2048];
@@ -596,8 +592,9 @@ makewhatis(void)
 	ENTRY *e_whatdb;
 	char sysbuf[1024];
 
-	whatdbp = getlist("_whatdb", 1);
-	TAILQ_FOREACH(e_whatdb, &whatdbp->list, q) {
+	if ((whatdbp = gettag("_whatdb", 1)) == NULL)
+		err(1, "malloc");
+	TAILQ_FOREACH(e_whatdb, &whatdbp->entrylist, q) {
 		snprintf(sysbuf, sizeof(sysbuf), "%s %s",
 		    _PATH_WHATIS, dirname(e_whatdb->s));
 		if (f_noprint == 0)
@@ -608,8 +605,7 @@ makewhatis(void)
 }
 
 static void
-dosystem(cmd)
-	const char *cmd;
+dosystem(const char *cmd)
 {
 	int status;
 
