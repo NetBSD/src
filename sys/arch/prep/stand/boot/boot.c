@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2006/04/10 17:58:59 garbled Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2006/04/10 18:40:06 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,13 +62,11 @@ RESIDUAL residual;
 extern u_long ns_per_tick;
 extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
 
-void boot __P((void *, u_long));
-static void exec_kernel __P((char *));
+void boot(void *, u_long);
+static void exec_kernel(char *);
 
 void
-boot(resp, loadaddr)
-	void *resp;
-	u_long loadaddr;
+boot(void *resp, u_long loadaddr)
 {
 	extern char _end[], _edata[];
 	int n = 0;
@@ -151,8 +149,7 @@ boot(resp, loadaddr)
  * Exec kernel
  */
 static void
-exec_kernel(name)
-	char *name;
+exec_kernel(char *name)
 {
 	int howto = 0;
 	char c, *ptr;

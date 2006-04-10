@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.4 2006/04/10 17:58:59 garbled Exp $	*/
+/*	$NetBSD: cons.c,v 1.5 2006/04/10 18:40:06 garbled Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,19 +82,19 @@
 #include "cons.h"
 
 #ifdef CONS_VGA
-void vgacnprobe __P((struct consdev *));
-void vgacninit __P((struct consdev *));
-void vgacnputchar __P((void *, int));
-int vgacngetchar __P((void *));
-int vgacnscan __P((void *));
+void vgacnprobe(struct consdev *);
+void vgacninit(struct consdev *);
+void vgacnputchar(void *, int);
+int vgacngetchar(void *);
+int vgacnscan(void *);
 #endif
 
 #ifdef CONS_SERIAL
-void siocnprobe __P((struct consdev *));
-void siocninit __P((struct consdev *));
-void siocnputchar __P((void *, int));
-int siocngetchar __P((void *));
-int siocnscan __P((void *));
+void siocnprobe(struct consdev *);
+void siocninit(struct consdev *);
+void siocnputchar(void *, int);
+int siocngetchar(void *);
+int siocnscan(void *);
 # include "ns16550.h"
 # ifndef COMPORT
 #  define COMPORT COM1
@@ -119,9 +119,7 @@ struct consdev constab[] = {
 struct consdev *cn_tab;
 
 char *
-cninit(addr, speed)
-	int *addr;
-	int *speed;
+cninit(int *addr, int *speed)
 {
 	register struct consdev *cp;
 
@@ -143,7 +141,7 @@ cninit(addr, speed)
 }
 
 int
-cngetc()
+cngetc(void)
 {
 
 	if (cn_tab)
@@ -152,8 +150,7 @@ cngetc()
 }
 
 void
-cnputc(c)
-	int c;
+cnputc(int c)
 {
 
 	if (cn_tab)
@@ -161,7 +158,7 @@ cnputc(c)
 }
 
 int
-cnscan()
+cnscan(void)
 {
 
 	if (cn_tab)
@@ -174,15 +171,13 @@ cnscan()
  * VGA console
  */
 void
-vgacnprobe(cp)
-	struct consdev *cp;
+vgacnprobe(struct consdev *cp)
 {
 	cp->cn_pri = CN_NORMAL;
 }
 
 void
-vgacninit(cp)
-	struct consdev *cp;
+vgacninit(struct consdev *cp)
 {
 
 	vga_reset((u_char *)cp->address);
@@ -191,25 +186,21 @@ vgacninit(cp)
 }
 
 int
-vgacngetchar(dev)
-	void *dev;
+vgacngetchar(void *dev)
 {
 
 	return (kbd_getc());
 }
 
 void
-vgacnputchar(dev, c)
-	void *dev;
-	register int c;
+vgacnputchar(void *dev, register int c)
 {
 
 	vga_putc(c);
 }
 
 int
-vgacnscan(dev)
-	void *dev;
+vgacnscan(void *dev)
 {
 
 	return (kbd(1));
@@ -221,33 +212,28 @@ vgacnscan(dev)
  * serial console
  */
 void
-siocnprobe(cp)
-	struct consdev *cp;
+siocnprobe(struct consdev *cp)
 {
 
 	cp->cn_pri = CN_REMOTE;
 }
 
 void
-siocninit(cp)
-	struct consdev *cp;
+siocninit(struct consdev *cp)
 {
 
 	cp->cn_dev = (void *)NS16550_init(cp->address, cp->speed);
 }
 
 int
-siocngetchar(dev)
-	void *dev;
+siocngetchar(void *dev)
 {
 
 	return (NS16550_getc((struct NS16550 *)dev));
 }
 
 void
-siocnputchar(dev, c)
-	void *dev;
-	register int c;
+siocnputchar(void *dev, register int c)
 {
 
 	if (c == '\n')
@@ -256,8 +242,7 @@ siocnputchar(dev, c)
 }
 
 int
-siocnscan(dev)
-	void *dev;
+siocnscan(void *dev)
 {
 
 	return (NS16550_scankbd((struct NS16550 *)dev));
