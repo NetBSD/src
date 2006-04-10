@@ -1,4 +1,4 @@
-/*	$NetBSD: manconf.h,v 1.2 2003/08/07 11:15:11 agc Exp $	*/
+/*	$NetBSD: manconf.h,v 1.3 2006/04/10 14:39:06 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,28 +32,29 @@
  *	@(#)config.h	8.4 (Berkeley) 12/18/93
  */
 
+/*
+ * manconf.h: common data structures and APIs shared across all programs 
+ * that access man.conf (currently: apropos, catman, makewhatis, man, and
+ * whatis).
+ */
+
+/* TAG: top-level structure (one per section/reserved word) */
 typedef struct _tag {
-	TAILQ_ENTRY(_tag) q;		/* Queue of tags. */
+	TAILQ_ENTRY(_tag) q;			/* Queue of tags */
 
-	TAILQ_HEAD(tqh, _entry) list;	/* Queue of entries. */
-	char *s;			/* Associated string. */
-	size_t len;			/* Length of 's'. */
+	TAILQ_HEAD(tqh, _entry) entrylist;	/* Queue of entries */
+	char *s;				/* Associated string */
+	size_t len;				/* Length of 's' */
 } TAG;
-typedef struct _entry {
-	TAILQ_ENTRY(_entry) q;		/* Queue of entries. */
 
-	char *s;			/* Associated string. */
-	size_t len;			/* Length of 's'. */
+/* ENTRY: each TAG has one or more ENTRY strings linked off of it */
+typedef struct _entry {
+	TAILQ_ENTRY(_entry) q;			/* Queue of entries */
+
+	char *s;				/* Associated string */
+	size_t len;				/* Length of 's' */
 } ENTRY;
 
-TAILQ_HEAD(_head, _tag);
-extern struct _head head;
-
-void	 addentry __P((TAG *, const char *, int));
-void	 config __P((const char *));
-#ifdef MANDEBUG
-void	 debug __P((const char *));
-#endif
-TAG	*getlist __P((const char *, int));
-void	removelist __P((const char *));
-TAG	*renamelist __P((const char *, const char *));
+int	 addentry(TAG *, const char *, int);
+void	 config(const char *);
+TAG	*gettag(const char *, int);
