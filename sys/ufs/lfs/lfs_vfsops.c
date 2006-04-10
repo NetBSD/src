@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.200 2006/04/08 00:26:34 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.201 2006/04/10 18:42:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.200 2006/04/08 00:26:34 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.201 2006/04/10 18:42:48 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -233,7 +233,8 @@ lfs_writerd(void *arg)
 					lfs_writer_enter(fs, "wrdirop");
 					lfs_flush_pchain(fs);
 					lfs_writer_leave(fs);
-				}
+				} else
+					simple_unlock(&fs->lfs_interlock);
 			}
 
 			simple_lock(&mountlist_slock);
