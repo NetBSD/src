@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2005/12/24 20:07:31 perry Exp $	*/
+/*	$NetBSD: boot.c,v 1.12 2006/04/10 17:58:59 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,11 +45,6 @@
 
 char *names[] = {
 	"in()",
-#if 0
-	"fd(0,0,0)netbsd", "fd(0,0,0)netbsd.gz",
-	"fd(0,0,0)netbsd.old", "fd(0,0,0)netbsd.old.gz",
-	"fd(0,0,0)onetbsd", "fd(0,0,0)onetbsd.gz"
-#endif
 };
 #define	NUMNAMES (sizeof (names) / sizeof (names[0]))
 
@@ -165,9 +160,9 @@ exec_kernel(name)
 #ifdef DBMONITOR
 	int go_monitor;
 	extern int db_monitor __P((void));
-#endif /* DBMONITOR */
 
 ret:
+#endif /* DBMONITOR */
 	printf("\nBoot: ");
 	memset(namebuf, 0, sizeof (namebuf));
 	(void)tgets(namebuf);
