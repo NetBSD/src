@@ -1,4 +1,4 @@
-$NetBSD: NetBSD-Xlist,v 1.1 2005/10/01 10:22:44 scw Exp $
+$NetBSD: NetBSD-Xlist,v 1.2 2006/04/10 20:43:00 rpaulo Exp $
 .cvsignore
 README-Windows.txt
 driver_atmel.c
@@ -15,8 +15,12 @@ driver_prism54.c
 driver_test.c
 driver_wext.c
 driver_wext.h
-l2_packet.c
+l2_packet_freebsd.c
+l2_packet_linux.c
+l2_packet_pcap.c
 ndis_events.cpp
 priv_netlink.h
 win_if_list.c
 wireless_copy.h
+wpa_gui
+wpa_gui-qt4
