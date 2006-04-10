@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.264 2006/03/30 17:40:58 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.265 2006/04/10 11:16:22 onoe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,11 +71,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.264 2006/03/30 17:40:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.265 2006/04/10 11:16:22 onoe Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
-#include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
 #include "opt_pipe.h"
 #include "opt_syscall_debug.h"
