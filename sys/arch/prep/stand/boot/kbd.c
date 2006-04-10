@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.2 2006/04/10 17:58:59 garbled Exp $	*/
+/*	$NetBSD: kbd.c,v 1.3 2006/04/10 18:40:06 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -80,8 +80,7 @@ const u_char keycode[] = {
 };
 
 int
-kbd(noblock)
-	int noblock;
+kbd(int noblock)
 {
 	u_char dt, brk, act;
 	int first = 1;
@@ -169,7 +168,7 @@ loop:
 }
 
 void
-kbdreset()
+kbdreset(void)
 {
 	u_char c;
 	int i;
@@ -198,7 +197,7 @@ kbdreset()
 }
 
 int
-kbd_getc()
+kbd_getc(void)
 {
 	int c;
 	while ((c = kbd(0)) == 0)
