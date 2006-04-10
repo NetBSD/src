@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.1 2000/02/29 15:21:50 nonaka Exp $	*/
+/*	$NetBSD: kbd.c,v 1.2 2006/04/10 17:58:59 garbled Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(CONS_FB) || defined(CONS_VGA)
+#ifdef CONS_VGA
 #include <lib/libsa/stand.h>
 #include "boot.h"
 
@@ -205,4 +205,4 @@ kbd_getc()
 		;
 	return (c);
 }
-#endif /* CONS_FB || CONS_VGA*/
+#endif /* CONS_VGA */

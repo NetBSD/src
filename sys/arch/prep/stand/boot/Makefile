@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2005/12/28 09:10:26 skrll Exp $
+#	$NetBSD: Makefile,v 1.18 2006/04/10 17:58:59 garbled Exp $
 
 NOMAN= # defined
 
@@ -17,17 +17,18 @@ PROG=		${BASE}
 NEWVERSWHAT=	"BOOT"
 
 SRCS= srt0.s
-SRCS+= boot.c clock.c com.c conf.c cons.c devopen.c fd.c
+SRCS+= boot.c clock.c com.c conf.c cons.c devopen.c
 SRCS+= filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
-SRCS+= kbd.c ns16550.c vers.c vreset.c vga.c video.c
+SRCS+= kbd.c ns16550.c vers.c vreset.c vga.c 
 
 CFLAGS= -Os -mmultiple -ffreestanding
 AFLAGS= -x assembler-with-cpp -traditional-cpp
 
 CPPFLAGS= -nostdinc -I${.OBJDIR} -I${.CURDIR}/../mkbootimage -I${S}
 CPPFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CPPFLAGS+= -D_STANDALONE -DDBMONITOR -DRELOC=${RELOC} -DUSE_SCAN
+CPPFLAGS+= -D_STANDALONE -DRELOC=${RELOC} -DUSE_SCAN
 CPPFLAGS+= -D__daddr_t=int32_t
+#CPPFLAGS+= -DDBMONITOR
 
 .if (${BASE} == "boot")
 CPPFLAGS+= -DCONS_VGA

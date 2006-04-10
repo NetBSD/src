@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.3 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: cons.c,v 1.4 2006/04/10 17:58:59 garbled Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,14 +81,6 @@
 #include "boot.h"
 #include "cons.h"
 
-#ifdef CONS_FB
-void fbcnprobe __P((struct consdev *));
-void fbcninit __P((struct consdev *));
-void fbcnputchar __P((void *, int));
-int fbcngetchar __P((void *));
-int fbcnscan __P((void *));
-#endif
-
 #ifdef CONS_VGA
 void vgacnprobe __P((struct consdev *));
 void vgacninit __P((struct consdev *));
@@ -113,10 +105,6 @@ int siocnscan __P((void *));
 #endif
 
 struct consdev constab[] = {
-#ifdef CONS_FB
-	{ "fb", 0xc0800000, 0,
-	    fbcnprobe, fbcninit, fbcngetchar, fbcnputchar, fbcnscan },
-#endif
 #ifdef CONS_VGA
 	{ "vga", 0xc0000000, 0,
 	    vgacnprobe, vgacninit, vgacngetchar, vgacnputchar, vgacnscan },
@@ -180,53 +168,6 @@ cnscan()
 		return ((*cn_tab->cn_scan)(cn_tab->cn_dev));
 	return (0);
 }
-
-#ifdef CONS_FB
-/*
- * frame buffer console
- */
-void
-fbcnprobe(cp)
-	struct consdev *cp;
-{
-
-	cp->cn_pri = CN_INTERNAL;
-}
-
-void
-fbcninit(cp)
-	struct consdev *cp;
-{
-
-	video_init((u_char *)cp->address);
-	kbdreset();
-}
-
-int
-fbcngetchar(dev)
-	void *dev;
-{
-
-	return (kbd_getc());
-}
-
-void
-fbcnputchar(dev, c)
-	void *dev;
-	register int c;
-{
-
-	video_putc(c);
-}
-
-int
-fbcnscan(dev)
-	void *dev;
-{
-
-	return (kbd(1));
-}
-#endif /* CONS_FB */
 
 #ifdef CONS_VGA
 /*

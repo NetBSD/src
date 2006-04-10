@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.4 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: monitor.c,v 1.5 2006/04/10 17:58:59 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef DBMONITOR
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -417,3 +419,5 @@ db_cmd_help(argc, argv)
 		printf("%s, ", db_cmd[i++].name);
 	printf("continue\n");
 }
+
+#endif /* DBMONITOR */
