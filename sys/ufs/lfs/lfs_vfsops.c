@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.201 2006/04/10 18:42:48 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.202 2006/04/10 21:20:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.201 2006/04/10 18:42:48 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.202 2006/04/10 21:20:19 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1449,6 +1449,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 			fs->lfs_pages, lfs_subsys_pages);
 
 	/* Free per-mount data structures */
+	free(fs->lfs_ino_bitmap, M_SEGMENT);
 	free(fs->lfs_suflags[0], M_SEGMENT);
 	free(fs->lfs_suflags[1], M_SEGMENT);
 	free(fs->lfs_suflags, M_SEGMENT);
