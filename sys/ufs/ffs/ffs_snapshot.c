@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.25 2006/03/17 23:29:12 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.26 2006/04/10 21:50:18 bouyer Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.25 2006/03/17 23:29:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.26 2006/04/10 21:50:18 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1539,8 +1539,10 @@ retry:
 			 * (default), or does not care about the block,
 			 * it is not needed.
 			 */
-			if (lbn >= NDADDR)
+			if (lbn >= NDADDR) {
 				brelse(ibp);
+				ibp = NULL;
+			}
 			continue;
 		}
 		/*
