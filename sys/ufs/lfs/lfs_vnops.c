@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.164 2006/04/08 00:26:34 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.165 2006/04/10 21:17:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.164 2006/04/08 00:26:34 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.165 2006/04/10 21:17:21 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1264,8 +1264,8 @@ lfs_flush_pchain(struct lfs *fs)
 	 * We're very conservative about what we write; we want to be
 	 * fast and async.
 	 */
-	simple_lock(&fs->lfs_interlock);
     top:
+	simple_lock(&fs->lfs_interlock);
 	for (ip = TAILQ_FIRST(&fs->lfs_pchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_pchain);
 		simple_unlock(&fs->lfs_interlock);
@@ -1280,9 +1280,10 @@ lfs_flush_pchain(struct lfs *fs)
 			continue;
 		if (lfs_vref(vp))
 			continue;
-
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0)
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0) {
+			lfs_vunref(vp);
 			continue;
+		}
 
 		error = lfs_writefile(fs, sp, vp);
 		if (!VPISEMPTY(vp) && !WRITEINPROG(vp) &&
