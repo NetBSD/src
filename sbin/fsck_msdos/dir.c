@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.18 2006/03/20 01:25:14 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.19 2006/04/10 03:25:11 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.18 2006/03/20 01:25:14 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.19 2006/04/10 03:25:11 dbj Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -369,7 +369,8 @@ removede(int f, struct bootblock *boot, struct fatEntry *fat, u_char *start,
 				return FSFATAL;
 			start = buffer;
 		}
-		if (endcl == curcl)
+		/* startcl is < CLUST_FIRST for !fat32 root */
+		if ((endcl == curcl) || (startcl < CLUST_FIRST))
 			for (; start < end; start += 32)
 				*start = SLOT_DELETED;
 		return FSDIRMOD;
@@ -836,6 +837,10 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 			}
 			boot->NumFiles++;
 		}
+
+		if (!(boot->flags & FAT32) && !dir->parent)
+			break;
+
 		if (mod & THISMOD) {
 			last *= 32;
 			if (lseek(f, off, SEEK_SET) != off
@@ -851,6 +856,19 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 				invlfn ? invlfn : vallfn, p,
 				invlfn ? invcl : valcl, -1, 0,
 				fullpath(dir), 1);
+
+	/* The root directory of non fat32 filesystems is in a special
+	 * area and may have been modified above without being written out.
+	 */
+	if ((mod & FSDIRMOD) && !(boot->flags & FAT32) && !dir->parent) {
+		last *= 32;
+		if (lseek(f, off, SEEK_SET) != off
+		    || write(f, buffer, last) != last) {
+			perror("Unable to write directory");
+			return FSFATAL;
+		}
+		mod &= ~THISMOD;
+	}
 	return mod & ~THISMOD;
 }
 
