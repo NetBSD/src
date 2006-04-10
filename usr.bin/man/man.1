@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.1,v 1.18 2003/08/07 11:15:10 agc Exp $
+.\"	$NetBSD: man.1,v 1.19 2006/04/10 14:02:57 chuck Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,12 +58,8 @@
 The
 .Nm
 utility
-displays the
-.Bx
-man pages entitled
-.Ar name .
-.Pp
-The options are as follows:
+displays the manual pages named on the command line.  
+Its options are as follows:
 .Bl -tag -width indent
 .It Fl a
 Display all of the man pages for a specified
@@ -88,9 +84,10 @@ This is done by default if the standard output is not a terminal device.
 .It Fl h
 Display only the
 .Dq Tn SYNOPSIS
-lines of the requested man pages,
-in the same manner as
-.Xr whatis 1 .
+lines of the requested man pages.
+For commands, this is typically the command line usage information.
+For library functions, this is usually the required include files
+and function prototypes.
 .It Fl k
 Display the header lines for any man pages matching
 .Ar keyword Ns Pq s ,
@@ -137,7 +134,7 @@ configuration file.
 .It Fl s
 Restrict the directories that
 .Nm
-will search.
+will search to the specified section.
 The
 .Nm
 configuration file (see
@@ -146,8 +143,8 @@ specifies the possible
 .Ar section
 values that are currently available.
 .It Fl S
-Display only man pages that have the specified string in their
-filenames.
+Display only man pages that have the specified string in the directory
+part of their filenames.
 This allows the man page search process criteria to be
 narrowed without having to change the MANPATH or
 .Dq _default
@@ -168,7 +165,7 @@ option is not specified,
 there is more than one argument,
 the
 .Ql Fl k
-option is not used and the first argument is a valid section, that
+option is not used, and the first argument is a valid section, then that
 argument will be used as if specified by the
 .Ql Fl s
 option.
