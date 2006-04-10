@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.60 2006/04/08 23:37:56 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.61 2006/04/10 20:17:59 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1271,4 +1271,9 @@ sys/dev/pci/pcidevs_data.h			regen
 	Add a driver, ciss(4), for the HP/Compaq drivers using the newer
 	"Command Interface to SCSI-3 Support" command interface.
 	[he, ticket #1247]
+
+sys/arch/m68k/include/frame.h			1.25
+
+	Fix build problems caused by recent "signal.h" changes.
+	[oster, ticket #1249]
 
