@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.246 2006/03/31 00:03:57 rittera Exp $
+#	$NetBSD: files.pci,v 1.247 2006/04/11 16:11:07 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -734,6 +734,11 @@ file	dev/pci/joy_pci.c		joy_pci
 device	machfb: wsemuldisplaydev, rasops8
 attach	machfb at pci
 file	dev/pci/machfb.c		machfb
+
+# 3Dfx Voodoo3 framebuffer console driver
+device	voodoofb: wsemuldisplaydev, rasops8, vcons, videomode
+attach	voodoofb at pci
+file	dev/pci/voodoofb.c		voodoofb
 
 # 3Com 3c990
 device	txp: ether, ifnet, arp
