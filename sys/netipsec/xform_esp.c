@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.8 2006/03/23 15:25:46 rpaulo Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.9 2006/04/11 20:21:28 rpaulo Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.8 2006/03/23 15:25:46 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.9 2006/04/11 20:21:28 rpaulo Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -770,7 +770,15 @@ esp_output(
 	/* Initialize ESP header. */
 	bcopy((caddr_t) &sav->spi, mtod(mo, caddr_t) + roff, sizeof(u_int32_t));
 	if (sav->replay) {
-		u_int32_t replay = htonl(++(sav->replay->count));
+		u_int32_t replay;
+
+#ifdef IPSEC_DEBUG
+		/* Emulate replay attack when ipsec_replay is TRUE. */
+		if (!ipsec_replay)
+#endif
+			sav->replay->count++;
+
+		replay = htonl(sav->replay->count);
 		bcopy((caddr_t) &replay,
 		    mtod(mo, caddr_t) + roff + sizeof(u_int32_t),
 		    sizeof(u_int32_t));
@@ -948,6 +956,24 @@ esp_output_cb(struct cryptop *crp)
 	/* Release crypto descriptors. */
 	free(tc, M_XDATA);
 	crypto_freereq(crp);
+
+#ifdef IPSEC_DEBUG
+	/* Emulate man-in-the-middle attack when ipsec_integrity is TRUE. */
+	if (ipsec_integrity) {
+		static unsigned char ipseczeroes[AH_HMAC_HASHLEN];
+		struct auth_hash *esph;
+
+		/*
+		 * Corrupt HMAC if we want to test integrity verification of
+		 * the other side.
+		 */
+		esph = sav->tdb_authalgxform;
+		if (esph !=  NULL) {
+			m_copyback(m, m->m_pkthdr.len - AH_HMAC_HASHLEN,
+			    AH_HMAC_HASHLEN, ipseczeroes);
+		}
+	}
+#endif
 
 	/* NB: m is reclaimed by ipsec_process_done. */
 	err = ipsec_process_done(m, isr);
