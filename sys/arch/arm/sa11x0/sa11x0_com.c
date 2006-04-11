@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.30 2006/03/26 04:42:50 thorpej Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.31 2006/04/11 15:08:10 peter Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.30 2006/03/26 04:42:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.31 2006/04/11 15:08:10 peter Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1518,7 +1518,7 @@ sacomcninit(struct consdev *cp)
 {
 	if (cp == NULL) {
 		/* XXX cp == NULL means that MMU is disabled. */
-		sacomconsioh = SACOM3_HW_BASE;
+		sacomconsioh = SACOM3_BASE;
 		sacomconstag = &sa11x0_bs_tag;
 		cn_tab = &sacomcons;
 		return;
