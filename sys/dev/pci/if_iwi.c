@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.46 2006/03/09 16:02:55 jmcneill Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.47 2006/04/11 15:42:56 rpaulo Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.46 2006/03/09 16:02:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.47 2006/04/11 15:42:56 rpaulo Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -473,7 +473,9 @@ iwi_detach(struct device* self, int flags)
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 
-	iwi_stop(ifp, 1);
+	if (ifp != NULL)
+		iwi_stop(ifp, 1);
+
 	iwi_free_firmware(sc);
 
 #if NBPFILTER > 0
