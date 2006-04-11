@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.8 2006/04/11 18:42:09 uwe Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.9 2006/04/11 19:07:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -91,7 +91,7 @@
  * LINTSTUB: Func: int in_cksum(struct mbuf *m, int len);
  */
 ENTRY(in_cksum)
-	sts.l	pr,@-r15
+	sts.l	pr,@-sp
 
 
 	mov	#0,reg_sum
@@ -191,30 +191,29 @@ mbuf_loop_done:
 
 in_cksum_return:
 	not	reg_sum,r0
-	lds.l	@r15+,pr
+	lds.l	@sp+,pr
 	rts
-	extu.w	r0,r0
+	 extu.w	r0,r0
 
 
 out_of_mbufs:
-	mova	message_out_of_data,reg_tmp0
-	mov.l	XLprintf,reg_tmp3
+	mova	.L_message_out_of_data,reg_tmp0
+	mov.l	.L_printf,reg_tmp3
 
-	mov.l	reg_sum,@-r15
+	mov.l	reg_sum,@-sp	/* save: call clobbered regsiter */
 
 	jsr	@reg_tmp3
-	mov	reg_tmp0,r4
+	 mov	reg_tmp0,r4
 
 	bra	in_cksum_return
-	mov.l	@r15+,reg_sum
-
+	 mov.l	@sp+,reg_sum	/* restore */
 
 	.align 2
-XLprintf:
+.L_printf:
 	.long	_C_LABEL(printf)
 
-	.align 2
-message_out_of_data:
+	.align 2	/* mova target */
+.L_message_out_of_data:
 	.asciz "cksum: out of data (%d byte short)\n"
 
 	SET_ENTRY_SIZE(in_cksum)
@@ -226,14 +225,15 @@ cksum128mod:
 	and	#124,reg_tmp0
 	sub	reg_tmp0,reg_mlen
 
-	mov.l	L_cksum128_tail_p,reg_tmp3
+	mov.l	.L_cksum128_tail_p,reg_tmp3
 	sub	reg_tmp0,reg_tmp3
 	jmp	@reg_tmp3
-	clrt
+	 clrt
 
 	.align	2
-L_cksum128_tail_p:
+.L_cksum128_tail_p:
 	.long	cksum128_tail
+
 
 	.align	2
 cksum128:
@@ -276,4 +276,4 @@ cksum128_unroll:
 cksum128_tail:
 	mov	#0,reg_tmp0
 	rts
-	addc	reg_tmp0,reg_sum
+	 addc	reg_tmp0,reg_sum
