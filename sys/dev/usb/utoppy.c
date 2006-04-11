@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.3 2006/04/11 14:08:51 christos Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.4 2006/04/11 23:07:22 scw Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.3 2006/04/11 14:08:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.4 2006/04/11 23:07:22 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,7 +648,7 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 	struct utoppy_header *h;
 	usbd_status err;
 	uint32_t len, thislen, requested, bytesleft;
-	uint16_t crc = 0;
+	uint16_t crc;
 	uint8_t *data, *e, t1, t2;
 
 	data = sc->sc_in_data;
@@ -720,8 +720,8 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 	}
 
 	/* The command word is part of the CRC */
-	crc = UTOPPY_CRC16(crc, h->h_cmd2 >> 8);
-	crc = UTOPPY_CRC16(0,   h->h_cmd2);
+	crc = UTOPPY_CRC16(0,   h->h_cmd2 >> 8);
+	crc = UTOPPY_CRC16(crc, h->h_cmd2);
 	crc = UTOPPY_CRC16(crc, h->h_cmd >> 8);
 	crc = UTOPPY_CRC16(crc, h->h_cmd);
 
