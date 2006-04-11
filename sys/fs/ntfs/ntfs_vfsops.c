@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.38 2006/04/11 14:12:53 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.39 2006/04/11 16:57:47 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.38 2006/04/11 14:12:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.39 2006/04/11 16:57:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,6 +408,8 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	dev_t dev = devvp->v_rdev;
 	int error, ronly, i;
 	struct vnode *vp;
+
+	ntmp = NULL;
 
 	/*
 	 * Flush out any old buffers remaining from a previous use.
