@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.8 2006/04/09 22:14:13 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.9 2006/04/11 22:09:09 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.8 2006/04/09 22:14:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.9 2006/04/11 22:09:09 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -46,16 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.8 2006/04/09 22:14:13 bouyer Exp 
 #include <sys/param.h>
 #include <sys/kthread.h>
 #include <uvm/uvm.h>
-
-#if defined(DOM0OPS)
-#include <sys/dirent.h>
-#include <sys/stat.h>
-#include <sys/tree.h> 
-#include <sys/vnode.h>
-#include <miscfs/specfs/specdev.h>
-#include <miscfs/kernfs/kernfs.h>
-#include <machine/kernfs_machdep.h>
-#endif
 
 #include <machine/stdarg.h>
 
@@ -85,19 +75,6 @@ struct device *xenbus_sc;
 
 SLIST_HEAD(, xenbus_device) xenbus_device_list;
 
-#if defined(DOM0OPS)
-static int xsd_mfn_read(void *);
-static int xsd_port_read(void *);
-
-static const struct kernfs_fileop xsd_mfn_fileops[] = {
-    { .kf_fileop = KERNFS_FILEOP_READ, .kf_vop = xsd_mfn_read },
-};
-static const struct kernfs_fileop xsd_port_fileops[] = {
-    { .kf_fileop = KERNFS_FILEOP_READ, .kf_vop = xsd_port_read },
-};
-
-#define XSD_MODE    (S_IRUSR)
-#endif /*DOM0OPS*/
 int
 xenbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -1141,71 +1118,6 @@ xenbus_probe(void *unused)
 	//notifier_call_chain(&xenstore_chain, 0, NULL);
 }
 
-#if defined(DOM0OPS)
-#define LD_STRLEN 21 /* a 64bit integer needs 20 digits in base10 */
-static int
-xsd_mfn_read(void *v)
-{
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
-	struct uio *uio = ap->a_uio;
-	int off, error;
-	size_t len; 
-	char strbuf[LD_STRLEN], *bf;
-
-	off = (int)uio->uio_offset;
-	if (off < 0)
-		return EINVAL;
-
-	len  = snprintf(strbuf, sizeof(strbuf), "%ld\n",
-	    xen_start_info.store_mfn);
-	if (off >= len) {
-		bf = strbuf;
-		len = 0;
-	} else {
-		bf = &strbuf[off];
-		len -= off;
-	}
-	error = uiomove(bf, len, uio);
-	return error;
-}
-
-static int
-xsd_port_read(void *v)
-{
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
-	struct uio *uio = ap->a_uio;
-	int off, error;
-	size_t len; 
-	char strbuf[LD_STRLEN], *bf;
-
-	off = (int)uio->uio_offset;
-	if (off < 0)
-		return EINVAL;
-
-	len  = snprintf(strbuf, sizeof(strbuf), "%ld\n",
-	    (long)xen_start_info.store_evtchn);
-	if (off >= len) {
-		bf = strbuf;
-		len = 0;
-	} else {
-		bf = &strbuf[off];
-		len -= off;
-	}
-	error = uiomove(bf, len, uio);
-	return error;
-}
-#endif /*DOM0OPS*/
-			 
 static void
 xenbus_probe_init(void *unused)
 {
@@ -1225,8 +1137,6 @@ xenbus_probe_init(void *unused)
 		paddr_t ma;
 		evtchn_op_t op = { 0 };
 		int ret;
-		kernfs_entry_t *dkt;
-		kfstype kfst;
 
 		/* Allocate page. */
 		page = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -1249,17 +1159,7 @@ xenbus_probe_init(void *unused)
 		xen_start_info.store_evtchn = op.u.alloc_unbound.port;
 
 		/* And finally publish the above info in /kern/xen */
-		kfst = KERNFS_ALLOCTYPE(xsd_mfn_fileops);
-		KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
-		KERNFS_INITENTRY(dkt, DT_REG, "xsd_mfn", NULL, kfst, VREG,
-		    XSD_MODE);
-		kernfs_addentry(kernxen_pkt, dkt);
-		kfst = KERNFS_ALLOCTYPE(xsd_port_fileops);
-		KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
-		KERNFS_INITENTRY(dkt, DT_REG, "xsd_port", NULL, kfst, VREG,
-		    XSD_MODE);
-		kernfs_addentry(kernxen_pkt, dkt);
-
+		xenbus_kernfs_init();
 #else /* DOM0OPS */
 		return ; /* can't get a working xenstore in this case */
 #endif /* DOM0OPS */
