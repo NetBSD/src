@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.7 2006/04/11 18:34:39 uwe Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.8 2006/04/11 18:42:09 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -43,9 +43,8 @@
 
 
 #define	REDUCE	\
-	mov	reg_sum,reg_tmp0	; \
+	swap.w	reg_sum,reg_tmp0	; \
 	extu.w	reg_sum,reg_sum		; \
-	swap.w	reg_tmp0,reg_tmp0	; \
 	extu.w	reg_tmp0,reg_tmp0	; \
 	add	reg_tmp0,reg_sum
 
