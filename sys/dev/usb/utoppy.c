@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.1 2006/04/03 08:15:48 scw Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.2 2006/04/11 14:05:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.1 2006/04/03 08:15:48 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.2 2006/04/11 14:05:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,7 +648,7 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 	struct utoppy_header *h;
 	usbd_status err;
 	uint32_t len, thislen, requested, bytesleft;
-	uint16_t crc;
+	uint16_t crc = 0;
 	uint8_t *data, *e, t1, t2;
 
 	data = sc->sc_in_data;
