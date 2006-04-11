@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/12/28 09:10:26 skrll Exp $
+#	$NetBSD: Makefile,v 1.8.8.1 2006/04/11 11:53:47 yamt Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -38,7 +38,7 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
+SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes SA_INCLUDE_NET=no
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 

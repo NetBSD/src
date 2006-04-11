@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.11.8.1 2006/04/01 12:07:51 yamt Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.11.8.2 2006/04/11 11:55:48 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.11.8.1 2006/04/01 12:07:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.11.8.2 2006/04/11 11:55:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,7 +756,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 	*sid = i;
 
 	while (cri) {
-		*swd = malloc(sizeof(*swd), M_CRYPTO_DATA, M_NOWAIT);
+		*swd = malloc(sizeof **swd, M_CRYPTO_DATA, M_NOWAIT);
 		if (*swd == NULL) {
 			swcr_freesession(NULL, i);
 			return ENOBUFS;

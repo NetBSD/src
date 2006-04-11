@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.193.2.1 2006/04/01 12:07:56 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.193.2.2 2006/04/11 11:55:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.2.1 2006/04/01 12:07:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.2.2 2006/04/11 11:55:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -119,7 +119,6 @@ static boolean_t lfs_issequential_hole(const struct ufsmount *,
     daddr_t, daddr_t);
 
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
-static void warn_ifile_size(struct lfs *);
 static daddr_t check_segsum(struct lfs *, daddr_t, u_int64_t,
     struct ucred *, int, int *, struct lwp *);
 
@@ -222,13 +221,19 @@ lfs_writerd(void *arg)
 				    MFSNAMELEN) == 0) {
 				fs = VFSTOUFS(mp)->um_lfs;
 				simple_lock(&fs->lfs_interlock);
-				if (fs->lfs_pdflush ||
-				    !TAILQ_EMPTY(&fs->lfs_pchainhd)) {
+				if (fs->lfs_pdflush) {
 					DLOG((DLOG_FLUSH, "lfs_writerd: pdflush set\n"));
 					fs->lfs_pdflush = 0;
 					lfs_flush_fs(fs, 0);
-				}
-				simple_unlock(&fs->lfs_interlock);
+					simple_unlock(&fs->lfs_interlock);
+				} else if (!TAILQ_EMPTY(&fs->lfs_pchainhd)) {
+					DLOG((DLOG_FLUSH, "lfs_writerd: pchain non-empty\n"));
+					simple_unlock(&fs->lfs_interlock);
+					lfs_writer_enter(fs, "wrdirop");
+					lfs_flush_pchain(fs);
+					lfs_writer_leave(fs);
+				} else
+					simple_unlock(&fs->lfs_interlock);
 			}
 
 			simple_lock(&mountlist_slock);
@@ -1156,6 +1161,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_ivnode = vp;
 	VREF(vp);
 
+	/* Set up inode bitmap and order free list */
+	lfs_order_freelist(fs);
+
 	/* Set up segment usage flags for the autocleaner. */
 	fs->lfs_nactive = 0;
 	fs->lfs_suflags = (u_int32_t **)malloc(2 * sizeof(u_int32_t *),
@@ -1327,9 +1335,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* Now that roll-forward is done, unlock the Ifile */
 	vput(vp);
 
-	/* Comment on ifile size if it is too large */
-	warn_ifile_size(fs);
-
 	/* Start the pagedaemon-anticipating daemon */
 	if (lfs_writer_daemon == 0 &&
 	    kthread_create1(lfs_writerd, NULL, NULL, "lfs_writer") != 0)
@@ -1408,10 +1413,6 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		panic("lfs_unmount: still dirty blocks on ifile vnode");
 	splx(s);
 
-	/* Comment on ifile size if it has become too large */
-	if (!(fs->lfs_flags & LFS_WARNED))
-		warn_ifile_size(fs);
-
 	/* Explicitly write the superblock, to update serial and pflags */
 	fs->lfs_pflags |= LFS_PF_CLEAN;
 	lfs_writesuper(fs, fs->lfs_sboffs[0]);
@@ -1440,6 +1441,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 			fs->lfs_pages, lfs_subsys_pages);
 
 	/* Free per-mount data structures */
+	free(fs->lfs_ino_bitmap, M_SEGMENT);
 	free(fs->lfs_suflags[0], M_SEGMENT);
 	free(fs->lfs_suflags[1], M_SEGMENT);
 	free(fs->lfs_suflags, M_SEGMENT);
@@ -2332,77 +2334,6 @@ inconsistent:
 	ip->i_lfs_hiblk = lblkno(ip->i_lfs, ip->i_size + ip->i_lfs->lfs_bsize - 1) - 1;
 
 	*vpp = vp;
-}
-
-/*
- * Warn if the inode portion of the Ifile is too large to be contained
- * in the buffer cache, according to LFS_MAX_BUFS / LFS_MAX_BYTES.
- * XXX the estimates don't take multiple LFSs into account.
- */
-static void
-warn_ifile_size(struct lfs *fs)
-{
-	KASSERT(LFS_MAX_BUFS > 0);
-	KASSERT(LFS_MAX_BYTES > 0);
-	if (((fs->lfs_ivnode->v_size >> fs->lfs_bshift) - fs->lfs_segtabsz) >
-	    LFS_MAX_BUFS) {
-		simple_lock(&fs->lfs_interlock);
-		fs->lfs_flags |= LFS_WARNED;
-		simple_unlock(&fs->lfs_interlock);
-		log(LOG_WARNING, "lfs_mountfs: inode part of ifile of length %"
-				 PRId64 " cannot fit in %d buffers\n",
-				 fs->lfs_ivnode->v_size -
-				 (fs->lfs_segtabsz << fs->lfs_bshift),
-				 LFS_MAX_BUFS);
-		log(LOG_WARNING, "lfs_mountfs: please consider increasing NBUF"
-				 " to at least %" PRId64 "\n",
-				 LFS_INVERSE_MAX_BUFS((fs->lfs_ivnode->v_size >>
-						       fs->lfs_bshift) -
-						      fs->lfs_segtabsz));
-	} else if ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) > LFS_MAX_BUFS) {
-		/* Same thing but LOG_NOTICE */
-		simple_lock(&fs->lfs_interlock);
-		fs->lfs_flags |= LFS_WARNED;
-		simple_unlock(&fs->lfs_interlock);
-		log(LOG_NOTICE, "lfs_mountfs: entire ifile of length %"
-				PRId64 " cannot fit in %d buffers\n",
-				fs->lfs_ivnode->v_size, LFS_MAX_BUFS);
-		log(LOG_NOTICE, "lfs_mountfs: please consider increasing NBUF"
-				" to at least %" PRId64 "\n",
-				LFS_INVERSE_MAX_BUFS(fs->lfs_ivnode->v_size >>
-						     fs->lfs_bshift));
-	}
-
-	if (fs->lfs_ivnode->v_size - (fs->lfs_segtabsz << fs->lfs_bshift) >
-	    LFS_MAX_BYTES) {
-		simple_lock(&fs->lfs_interlock);
-		fs->lfs_flags |= LFS_WARNED;
-		simple_unlock(&fs->lfs_interlock);
-		log(LOG_WARNING, "lfs_mountfs: inode part of ifile of length %"
-				 PRId64 " cannot fit in %lu bytes\n",
-				 fs->lfs_ivnode->v_size - (fs->lfs_segtabsz <<
-							   fs->lfs_bshift),
-				 LFS_MAX_BYTES);
-		log(LOG_WARNING, "lfs_mountfs: please consider increasing"
-				 " BUFPAGES to at least %" PRId64 "\n",
-				 LFS_INVERSE_MAX_BYTES(fs->lfs_ivnode->v_size -
-						       (fs->lfs_segtabsz <<
-							fs->lfs_bshift)) >>
-				 PAGE_SHIFT);
-	} else if(fs->lfs_ivnode->v_size > LFS_MAX_BYTES) {
-		simple_lock(&fs->lfs_interlock);
-		fs->lfs_flags |= LFS_WARNED;
-		simple_unlock(&fs->lfs_interlock);
-		log(LOG_NOTICE, "lfs_mountfs: entire ifile of length %" PRId64
-				" cannot fit in %lu buffer bytes\n",
-				fs->lfs_ivnode->v_size, LFS_MAX_BYTES);
-		log(LOG_NOTICE, "lfs_mountfs: please consider increasing"
-				" BUFPAGES to at least %" PRId64 "\n",
-				LFS_INVERSE_MAX_BYTES(fs->lfs_ivnode->v_size -
-						      (fs->lfs_segtabsz <<
-						       fs->lfs_bshift)) >>
-				PAGE_SHIFT);
-	}
 }
 
 /*

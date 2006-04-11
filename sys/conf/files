@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.763.2.1 2006/04/01 12:06:42 yamt Exp $
+#	$NetBSD: files,v 1.763.2.2 2006/04/11 11:53:50 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -232,6 +232,7 @@ define	atapi		{ }
 define	radiodev	{ }
 define	gpibdev		{[address = -1]}
 define	gpiobus		{ }
+define	onewirebus	{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
@@ -278,6 +279,9 @@ define	rasops32
 
 # splash screen support
 include "dev/splash/files.splash"
+
+# videomode support
+include "dev/videomode/files.videomode"
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, token ring, atm and eco(net).
@@ -510,14 +514,13 @@ file	dev/ic/wi.c			wi
 
 # Atheros 5210/5211/5212 multi-mode 802.11
 #
-# XXX: All the AH_ stuff should be renamed to ATHHAL_!!! 
-defflag	opt_athhal.h	AH_ASSERT AH_DEBUG AH_DEBUG_ALQ AH_REGOPS_FUNC
-
+defflag	opt_athhal.h	ATHHAL_ASSERT ATHHAL_DEBUG ATHHAL_DEBUG_ALQ
 device	ath: arp, wlan, ifnet
 file	dev/ic/ath.c					ath
 file	dev/ic/ath_netbsd.c				ath
 file	dev/ic/athrate-sample.c				ath
-file	contrib/dev/ic/athhal_osdep.c			ath
+file	contrib/dev/ath/netbsd/ah_osdep.c		ath
+object	/athhal.o					ath
 
 # ADMtek ADM8211 802.11
 #
@@ -1396,4 +1399,7 @@ include	"net/agr/files.agr"
 #
 # General Purpose Input/Output framework
 #
+define	onewire_bitbang
 include	"dev/gpio/files.gpio"
+
+include "dev/onewire/files.onewire"

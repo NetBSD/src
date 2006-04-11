@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.99.2.2 2006/03/13 09:07:32 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.99.2.3 2006/04/11 11:55:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99.2.2 2006/03/13 09:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99.2.3 2006/04/11 11:55:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	case  PT_ATTACH:
-	case  PT_DUMPCORE:
 		/*
 		 * You can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
@@ -209,6 +208,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	case  PT_DETACH:
 	case  PT_LWPINFO:
 	case  PT_SYSCALL:
+	case  PT_DUMPCORE:
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
@@ -240,20 +240,27 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 *	(2) it's being traced by procfs (which has
 		 *	    different signal delivery semantics),
 		 */
-		if (ISSET(t->p_flag, P_FSTRACE))
+		if (ISSET(t->p_flag, P_FSTRACE)) {
+			uprintf("file system traced\n");
 			return (EBUSY);
+		}
 
 		/*
 		 *	(3) it's not being traced by _you_, or
 		 */
-		if (t->p_pptr != p)
+		if (t->p_pptr != p) {
+			uprintf("parent %d != %d\n", t->p_pptr->p_pid, p->p_pid);
 			return (EBUSY);
+		}
 
 		/*
 		 *	(4) it's not currently stopped.
 		 */
-		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
+		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED)) {
+			uprintf("stat %d flag %d\n", t->p_stat,
+			    !ISSET(t->p_flag, P_WAITED));
 			return (EBUSY);
+		}
 		break;
 
 	default:			/* It was not a legal request. */

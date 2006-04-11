@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.8.1 2006/04/11 11:53:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.8.1 2006/04/11 11:53:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -102,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2005/12/11 12:18:58 christos Exp $"
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
-
-/* For sysctl_hw. */
-extern char cpu_model[];
 
 struct sgimips_intrhand intrtab[NINTR];
 

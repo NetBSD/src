@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.769.2.2 2006/04/01 12:07:16 yamt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.769.2.3 2006/04/11 11:55:18 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.778 2006/03/26 20:21:55 jonathan Exp
+ *	NetBSD: pcidevs,v 1.780 2006/04/06 04:06:52 simonb Exp
  */
 
 /*
@@ -2128,6 +2128,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Solidum Systems",
 	},
 	{
+	    PCI_VENDOR_FARADAY,
+	    "Faraday Technology",
+	},
+	{
 	    PCI_VENDOR_GEOCAST,
 	    "Geocast Network Systems",
 	},
@@ -2352,7 +2356,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 578;
+const int pci_nvendors = 579;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -6084,6 +6088,18 @@ static const struct pci_product pci_products[] = {
 	    "PRO/100 M Network Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_COPPER,
+	    "i82571EB 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_FIBER,
+	    "i82571EB 1000baseX Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_SERDES,
+	    "i82571EB Gigabit Ethernet (SERDES)",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN,
 	    "82801FB 10/100 Ethernet",
 	},
@@ -6122,18 +6138,6 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541PI,
 	    "i82541PI Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_COPPER,
-	    "i82571EB 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_FIBER,
-	    "i82571EB 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_SERDES,
-	    "i82571EB Gigabit Ethernet (SERDES)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_COPPER,

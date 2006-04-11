@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.11 2005/12/11 12:24:54 christos Exp $	 */
+/*	$NetBSD: at_control.c,v 1.11.8.1 2006/04/11 11:55:48 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.11 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.11.8.1 2006/04/11 11:55:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ at_control(cmd, data, ifp, p)
 		 * If we are not superuser, then we don't get to do these
 		 * ops.
 		 */
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (p && suser(p->p_ucred, &p->p_acflag))
 			return (EPERM);
 
 		sat = satosat(&ifr->ifr_addr);
