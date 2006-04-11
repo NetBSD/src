@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.9 2006/04/11 19:07:54 uwe Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.10 2006/04/11 23:45:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -200,7 +200,7 @@ out_of_mbufs:
 	mova	.L_message_out_of_data,reg_tmp0
 	mov.l	.L_printf,reg_tmp3
 
-	mov.l	reg_sum,@-sp	/* save: call clobbered regsiter */
+	mov.l	reg_sum,@-sp	/* save: call clobbered register */
 
 	jsr	@reg_tmp3
 	 mov	reg_tmp0,r4
