@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.313.2.5.2.3 2005/07/21 19:26:54 riz Exp $
+#	$NetBSD: Makefile,v 1.313.2.5.2.4 2006/04/11 02:12:59 riz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
@@ -7,7 +7,7 @@ MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
 	audio.4 audiocs.4 auich.4 autri.4 auvia.4 awi.4 \
 	bba.4 bce.4 bge.4 bha.4 bktr.4 bpf.4 bmtphy.4 \
 	brgphy.4 bridge.4 cac.4 cardbus.4 ccd.4 cd.4 \
-	cec.4 cgd.4 cfb.4 ch.4 clcs.4 clct.4 clnp.4 \
+	cec.4 cgd.4 cfb.4 ch.4 ciss.4 clcs.4 clct.4 clnp.4 \
 	clockctl.4 cltp.4 cmdide.4 cmpci.4 cms.4 cnw.4 \
 	com.4 crypto.4 cs80bus.4 cypide.4  geodeide.4 \
 	ddb.4 dge.4 de.4 dmoverio.4 \
