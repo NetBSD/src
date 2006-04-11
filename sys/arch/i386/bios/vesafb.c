@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.11 2006/04/10 18:44:11 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.12 2006/04/11 14:18:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.11 2006/04/10 18:44:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.12 2006/04/11 14:18:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ vesafb_attach(parent, dev, aux)
 		tf.tf_edi = 0x2000; /* buf ptr */
 
 		res = kvm86_bioscall(0x10, &tf);
-		if (res || tf.tf_eax != 0x004f) {
+		if (res || (tf.tf_eax & 0xff) != 0x4f) {
 			aprint_error("%s: vbecall: res=%d, ax=%x\n",
 			    sc->sc_dev.dv_xname, res, tf.tf_eax);
 			goto out;
@@ -203,7 +203,7 @@ vesafb_attach(parent, dev, aux)
 	tf.tf_edi = 0x2000; /* buf ptr */
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || tf.tf_eax != 0x004f)
+	if (res || (tf.tf_eax & 0xff) != 0x4f)
 		sc->sc_pm = 0; /* power management not supported */
 	else {
 		sc->sc_pm = 1; /* power management is supported */
@@ -475,7 +475,7 @@ vesafb_init(struct vesafb_softc *sc)
 	tf.tf_ebx = sc->sc_mode | 0x4000; /* flat */
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xffff) != 0x004f) {
+	if (res || (tf.tf_eax & 0xff) != 0x4f) {
 		aprint_error("%s: vbecall: res=%d, ax=%x\n",
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 		return;
@@ -484,7 +484,7 @@ vesafb_init(struct vesafb_softc *sc)
 	regs.EAX = 0x4f02;
 	regs.EBX = sc->sc_mode | 0x4000;
 	bioscall(0x10, &regs);
-	if ((regs.EAX & 0xffff) != 0x004f) {
+	if ((regs.EAX & 0xff) != 0x4f) {
 		aprint_error("%s: bioscall failed\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -495,10 +495,10 @@ vesafb_init(struct vesafb_softc *sc)
 	if (mi->BitsPerPixel == 8) {
 		memset(&tf, 0, sizeof(struct trapframe));
 		tf.tf_eax = 0x4f08; /* function code */
-		tf.tf_ebx = 0x0800; /* we want an 8-bit palette */
+		tf.tf_ebx = 0x0600; /* we want a 6-bit palette */
 
 		res = kvm86_bioscall(0x10, &tf);
-		if (res || (tf.tf_eax & 0xffff) != 0x004f) {
+		if (res || (tf.tf_eax & 0xff) != 0x4f) {
 			aprint_error("%s: vbecall: res=%d, ax=%x\n",
 			    sc->sc_dev.dv_xname, res, tf.tf_eax);
 			return;
@@ -573,19 +573,28 @@ vesafb_set_palette(struct vesafb_softc *sc, int reg,
 	char *buf;
 
 	buf = sc->sc_buf;
+
+	/*
+	 * this function takes 8 bit per palette as input, but we're
+	 * working in 6 bit mode here
+	 */
+	pe.Red >>= 2;
+	pe.Green >>= 2;
+	pe.Blue >>= 2;
+
 	memcpy(buf, &pe, sizeof(struct paletteentry));
 
 	/* set palette */
 	memset(&tf, 0, sizeof(struct trapframe));
 	tf.tf_eax = 0x4f09; /* function code */
-	tf.tf_ebx = 0x00;
+	tf.tf_ebx = 0x0600; /* 6 bit per primary, set format */
 	tf.tf_ecx = 1;
 	tf.tf_edx = reg;
 	tf.tf_vm86_es = 0;
 	tf.tf_edi = 0x2000;
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xffff) != 0x004f)
+	if (res || (tf.tf_eax & 0xff) != 0x4f)
 		aprint_error("%s: vbecall: res=%d, ax=%x\n",
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 
@@ -610,7 +619,7 @@ vesafb_svideo(struct vesafb_softc *sc, u_int *on)
 	tf.tf_ebx = (bh << 8) | 1;
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xffff) != 0x004f) {
+	if (res || (tf.tf_eax & 0xff) != 0x4f) {
 		aprint_error("%s: unable to set power state (0x%04x)\n",
 		    sc->sc_dev.dv_xname, (tf.tf_eax & 0xffff));
 		return ENODEV;
@@ -635,7 +644,7 @@ vesafb_gvideo(struct vesafb_softc *sc, u_int *on)
 	tf.tf_ebx = 2;
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xffff) != 0x004f) {
+	if (res || (tf.tf_eax & 0xff) != 0x4f) {
 		aprint_error("%s: unable to get power state (0x%04x)\n",
 		    sc->sc_dev.dv_xname, (tf.tf_eax & 0xffff));
 		return ENODEV;
