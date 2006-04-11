@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.38 2005/12/18 19:21:12 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.38.8.1 2006/04/11 11:55:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.38 2005/12/18 19:21:12 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.38.8.1 2006/04/11 11:55:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,8 +405,6 @@ static struct wsdisplay_accessops mach64_accessops = {
 	mach64_getwschar,	/* getwschar */
 	mach64_putwschar,	/* putwschar */
 	NULL,			/* scroll */
-	NULL,			/* getborder */
-	NULL			/* setborder */
 };
 
 /*

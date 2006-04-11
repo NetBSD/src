@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.82.2.1 2006/04/01 12:07:43 yamt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.82.2.2 2006/04/11 11:55:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.2.1 2006/04/01 12:07:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.2.2 2006/04/11 11:55:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -542,7 +542,9 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 				goto out;
 			}
 			bcopy(dst, mtod(m0, char *), dst->sa_len);
-		} else {
+		}
+
+		if (tp->tun_flags & TUN_IFHEAD) {
 			/* Prepend the address family */
 			M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
 			if (m0 == NULL) {
@@ -552,6 +554,15 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 			}
 			af = mtod(m0,uint32_t *);
 			*af = htonl(dst->sa_family);
+		} else {
+#ifdef INET     
+			if (dst->sa_family != AF_INET)
+#endif
+			{
+				m_freem(m0);
+				error = EAFNOSUPPORT;
+				goto out;
+			}
 		}
 		/* FALLTHROUGH */
 	case AF_UNSPEC:
@@ -633,10 +644,23 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TUNSLMODE:
-		if (*(int *)data)
+		if (*(int *)data) {
 			tp->tun_flags |= TUN_PREPADDR;
-		else
+			tp->tun_flags &= ~TUN_IFHEAD;
+		} else
 			tp->tun_flags &= ~TUN_PREPADDR;
+		break;
+
+	case TUNSIFHEAD:
+		if (*(int *)data) {
+			tp->tun_flags |= TUN_IFHEAD;
+			tp->tun_flags &= TUN_PREPADDR;
+		} else
+			tp->tun_flags &= ~TUN_IFHEAD;
+		break;
+
+	case TUNGIFHEAD:
+		*(int *)data = (tp->tun_flags & TUN_IFHEAD);
 		break;
 
 	case FIONBIO:
@@ -820,13 +844,17 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 					goto out0;
 				}
 		}
-	} else {
+	} else if (tp->tun_flags & TUN_IFHEAD) {
 		if (uio->uio_resid < sizeof(family)){
 			error = EIO;
 			goto out0;
 		}
 		error = uiomove((caddr_t)&family, sizeof(family), uio);
 		dst.sa_family = ntohl(family);
+	} else {
+#ifdef INET
+		dst.sa_family = AF_INET;
+#endif
 	}
 
 	if (uio->uio_resid > TUNMTU) {

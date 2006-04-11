@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.54.8.1 2006/03/13 09:07:32 yamt Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.54.8.2 2006/04/11 11:55:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.54.8.1 2006/03/13 09:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.54.8.2 2006/04/11 11:55:47 yamt Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -593,13 +593,14 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 				error = ltsleep(ex,
 				    PNORELOCK | PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
 				    "extnt", 0, &ex->ex_slock);
-				if (error)
-					return (error);
-				goto alloc_start;
+				if (error == 0)
+					goto alloc_start;
+			} else {
+				simple_unlock(&ex->ex_slock);
+				error = EAGAIN;
 			}
 			extent_free_region_descriptor(ex, myrp);
-			simple_unlock(&ex->ex_slock);
-			return (EAGAIN);
+			return error;
 		}
 		/*
 		 * We don't conflict, but this region lies before
@@ -984,14 +985,15 @@ skip:
 		error = ltsleep(ex,
 		    PNORELOCK | PRIBIO | ((flags & EX_CATCH) ? PCATCH : 0),
 		    "extnt", 0, &ex->ex_slock);
-		if (error)
-			return (error);
-		goto alloc_start;
+		if (error == 0)
+			goto alloc_start;
+	} else {
+		simple_unlock(&ex->ex_slock);
+		error = EAGAIN;
 	}
 
 	extent_free_region_descriptor(ex, myrp);
-	simple_unlock(&ex->ex_slock);
-	return (EAGAIN);
+	return error;
 
  found:
 	/*

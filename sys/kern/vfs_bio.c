@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.156.2.2 2006/04/01 12:07:41 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.156.2.3 2006/04/11 11:55:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -77,11 +77,12 @@
  *		UNIX Operating System (Addison Welley, 1989)
  */
 
+#include "fs_ffs.h"
 #include "opt_bufcache.h"
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.156.2.2 2006/04/01 12:07:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.156.2.3 2006/04/11 11:55:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

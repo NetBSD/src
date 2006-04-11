@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.100 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.100.8.1 2006/04/11 11:55:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100.8.1 2006/04/11 11:55:58 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -573,6 +573,17 @@ done:
 		panic("lfs_truncate: persistent blocks");
 	}
 #endif
+
+	/*
+	 * If we truncated to zero, take us off the paging queue.
+	 */
+	simple_lock(&fs->lfs_interlock);
+	if (oip->i_size == 0 && oip->i_flags & IN_PAGING) {
+		oip->i_flags &= ~IN_PAGING;
+		TAILQ_REMOVE(&fs->lfs_pchainhd, oip, i_lfs_pchain);
+	}
+	simple_unlock(&fs->lfs_interlock);
+
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);

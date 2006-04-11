@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.122.2.2 2006/04/01 12:07:42 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.122.2.3 2006/04/11 11:55:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.122.2.2 2006/04/01 12:07:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.122.2.3 2006/04/11 11:55:48 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -439,7 +439,7 @@ genfs_getpages(void *v)
 	} */ *ap = v;
 
 	off_t newsize, diskeof, memeof;
-	off_t offset, origoffset, startoffset, endoffset, raoffset;
+	off_t offset, origoffset, startoffset, endoffset;
 	daddr_t lbn, blkno;
 	int i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
 	int fs_bshift, fs_bsize, dev_bshift;
@@ -600,7 +600,6 @@ genfs_getpages(void *v)
 	}
 	if (i == npages) {
 		UVMHIST_LOG(ubchist, "returning cached pages", 0,0,0,0);
-		raoffset = origoffset + (orignpages << PAGE_SHIFT);
 		npages += ridx;
 		goto out;
 	}
@@ -609,7 +608,7 @@ genfs_getpages(void *v)
 	 * if PGO_OVERWRITE is set, don't bother reading the pages.
 	 */
 
-	if (flags & PGO_OVERWRITE) {
+	if (overwrite) {
 		UVMHIST_LOG(ubchist, "PGO_OVERWRITE",0,0,0,0);
 
 		for (i = 0; i < npages; i++) {
@@ -834,7 +833,6 @@ loopdone:
 	}
 	putiobuf(mbp);
 	uvm_pagermapout(kva, npages);
-	raoffset = startoffset + totalbytes;
 
 	/*
 	 * if this we encountered a hole then we have to do a little more work.

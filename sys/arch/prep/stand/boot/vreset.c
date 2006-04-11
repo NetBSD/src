@@ -1,4 +1,4 @@
-/*	$NetBSD: vreset.c,v 1.3 2006/01/29 21:42:41 dsl Exp $	*/
+/*	$NetBSD: vreset.c,v 1.3.6.1 2006/04/11 11:53:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -46,8 +46,8 @@
 #include "boot.h"
 #include "iso_font.h"
 
-static inline void outw __P((int, u_short));
-void writeAttr __P((u_char, u_char, u_char));
+static inline void outw(int, u_short);
+void writeAttr(u_char, u_char, u_char);
 
 
 #if 0
@@ -442,30 +442,27 @@ u_char AC[21] = {
 	0x0C, 0x00, 0x0F, 0x08, 0x00
 };
 
-void enablePCIvideo __P((int));
-static int scanPCI __P((void));
-static int PCIVendor __P((int));
-int delayLoop __P((int));
-void setTextRegs __P((struct VgaRegs *));
-void setTextCLUT __P((void));
-void loadFont __P((u_char *));
-void unlockS3 __P((void));
+void enablePCIvideo(int);
+static int scanPCI(void);
+static int PCIVendor(int);
+int delayLoop(int);
+void setTextRegs(struct VgaRegs *);
+void setTextCLUT(void);
+void loadFont(u_char *);
+void unlockS3(void);
 #ifdef DEBUG
-static void printslots __P((void));
+static void printslots(void);
 #endif
 
 static inline void
-outw(port, val)
-	int port;
-	u_short val;
+outw(int port, u_short val)
 {
 	outb(port, val >> 8);
 	outb(port+1, val);
 }
  
 void
-vga_reset(ISA_mem)
-	u_char *ISA_mem;
+vga_reset(u_char *ISA_mem)
 {
 	int slot;
         struct VgaRegs *VgaTextRegs;
@@ -552,10 +549,7 @@ vga_reset(ISA_mem)
  * Write to VGA Attribute registers.  
  */
 void
-writeAttr(index, data, videoOn)
-     u_char index;
-     u_char data;
-     u_char videoOn;   /* video on flag */
+writeAttr(u_char index, u_char data, u_char videoOn)
 {
 	u_char v;
 	v = inb(0x3da);   /* reset attr. address toggle */
@@ -567,8 +561,7 @@ writeAttr(index, data, videoOn)
 }
 
 void
-setTextRegs(svp)
-	struct VgaRegs *svp;
+setTextRegs(struct VgaRegs *svp)
 {
 	int i;
 
@@ -594,7 +587,7 @@ setTextRegs(svp)
 }
 
 void
-setTextCLUT()
+setTextCLUT(void)
 {
 	int i;
 
@@ -611,8 +604,7 @@ setTextCLUT()
 }
 
 void
-loadFont(ISA_mem)
-	u_char *ISA_mem;
+loadFont(u_char *ISA_mem)
 {
 	int i, j;
 	u_char *font_page = (u_char *)&ISA_mem[0xA0000];
@@ -643,7 +635,7 @@ loadFont(ISA_mem)
 }
 
 void
-unlockS3()
+unlockS3(void)
 {
 	/* From the S3 manual */
 	outb(0x46E8, 0x10);  /* Put into setup mode */
@@ -721,12 +713,11 @@ struct PCI_ConfigInfo {
  * to enable memory and I/O accesses.    
  */ 
 void
-enablePCIvideo(slot)        
-	int slot;
+enablePCIvideo(int slot)        
 {
-       volatile u_char * ppci;
+	volatile u_char * ppci;
 
-        ppci =  (u_char *)PCI_slots[slot].config_addr;
+	ppci =  (u_char *)PCI_slots[slot].config_addr;
 	ppci[4] = 0x0003;         /* enable memory and I/O accesses */
 	__asm volatile("eieio");
 
@@ -740,7 +731,7 @@ enablePCIvideo(slot)
 #define MEMBASE 4
 
 int
-scanPCI()
+scanPCI(void)
 {
 	int slt, r;
 	struct PCI_ConfigInfo *pslot;
@@ -770,8 +761,7 @@ scanPCI()
 }
 
 int
-delayLoop(k)
-	int k;
+delayLoop(int k)
 {
 	volatile int a, b;
 	volatile int i, j;
@@ -789,8 +779,7 @@ delayLoop(k)
 
 /* return Vendor ID of card in the slot */
 static
-int PCIVendor(slotnum)
-	int slotnum;
+int PCIVendor(int slotnum)
 {
 	struct PCI_ConfigInfo *pslot;
 
@@ -802,7 +791,7 @@ int PCIVendor(slotnum)
 #ifdef DEBUG
 static
 void
-printslots()
+printslots(void)
 {
 	int i;
 	for (i = 0; i < NSLOTS; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.212 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.212.8.1 2006/04/11 11:53:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212.8.1 2006/04/11 11:53:44 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -121,9 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2005/12/11 12:18:39 christos Exp $
 #include "opt_dec_maxine.h"
 #include "opt_dec_3maxplus.h"
 #include "ksyms.h"
-
-/* the following is used externally (sysctl_hw) */
-extern char	cpu_model[];
 
 unsigned ssir;				/* simulated interrupt register */
 

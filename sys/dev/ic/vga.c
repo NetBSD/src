@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.84 2006/02/19 15:16:53 jmcneill Exp $ */
+/* $NetBSD: vga.c,v 1.84.2.1 2006/04/11 11:55:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.84 2006/02/19 15:16:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.84.2.1 2006/04/11 11:55:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,8 +279,8 @@ static int	vga_getwschar(void *, struct wsdisplay_char *);
 static int	vga_putwschar(void *, struct wsdisplay_char *);
 #endif /* WSDISPLAY_CHARFUNCS */
 #ifdef WSDISPLAY_CUSTOM_BORDER
-static u_int	vga_getborder(void *);
-static int	vga_setborder(void *, u_int);
+static int	vga_getborder(struct vga_config *, u_int *);
+static int	vga_setborder(struct vga_config *, u_int);
 #endif /* WSDISPLAY_CUSTOM_BORDER */
 
 void vga_doswitch(struct vga_config *);
@@ -305,13 +305,6 @@ const struct wsdisplay_accessops vga_accessops = {
 #else
 	NULL,
 #endif
-#ifdef WSDISPLAY_CUSTOM_BORDER
-	vga_getborder,
-	vga_setborder,
-#else /* WSDISPLAY_CUSTOM_BORDER */
-	NULL,
-	NULL,
-#endif /* WSDISPLAY_CUSTOM_BORDER */
 };
 
 /*
@@ -797,6 +790,14 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case WSDISPLAYIO_SVIDEO:
 		vga_set_video(vc, *(int *)data == WSDISPLAYIO_VIDEO_ON);
 		return 0;
+
+#ifdef WSDISPLAY_CUSTOM_BORDER
+	case WSDISPLAYIO_GBORDER:
+		return (vga_getborder(vc, (u_int *)data));
+
+	case WSDISPLAYIO_SBORDER:
+		return (vga_setborder(vc, *(u_int *)data));
+#endif
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
@@ -1438,35 +1439,35 @@ vga_putwschar(void *cookie, struct wsdisplay_char *wschar)
 #endif /* WSDISPLAY_CHARFUNCS */
 
 #ifdef WSDISPLAY_CUSTOM_BORDER
-static u_int
-vga_getborder(void *cookie)
+static int
+vga_getborder(struct vga_config *vc, u_int *valuep)
 {
-	struct vgascreen *scr = cookie;
-	struct vga_handle *vh;
+	struct vga_handle *vh = &vc->hdl;
 	u_int idx;
 	u_int8_t value;
 
-	if (scr == NULL) return EINVAL;
-	vh = &scr->cfg->hdl;
-	if (vh->vh_mono) return ENODEV;
+	if (vh->vh_mono)
+		return ENODEV;
 
 	value = _vga_attr_read(vh, VGA_ATC_OVERSCAN);
-	for (idx = 0; idx < sizeof(fgansitopc); idx++)
-		if (fgansitopc[idx] == value)
-			break;
-	return idx == sizeof(fgansitopc) ? 0 : idx;
+	for (idx = 0; idx < sizeof(fgansitopc); idx++) {
+		if (fgansitopc[idx] == value) {
+			*valuep = idx;
+			return (0);
+		}
+	}
+	return (EIO);
 }
 
 static int
-vga_setborder(void *cookie, u_int value)
+vga_setborder(struct vga_config *vc, u_int value)
 {
-	struct vgascreen *scr = cookie;
-	struct vga_handle *vh;
+	struct vga_handle *vh = &vc->hdl;
 
-	if (scr == NULL) return EINVAL;
-	vh = &scr->cfg->hdl;
-	if (vh->vh_mono) return ENODEV;
-	if (value >= sizeof(fgansitopc)) return EINVAL;
+	if (vh->vh_mono)
+		return ENODEV;
+	if (value >= sizeof(fgansitopc))
+		return EINVAL;
 
 	_vga_attr_write(vh, VGA_ATC_OVERSCAN, fgansitopc[value]);
 	return (0);

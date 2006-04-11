@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.4.2.1 2006/04/01 12:06:56 yamt Exp $	*/
+/*	$NetBSD: lm75.c,v 1.4.2.2 2006/04/11 11:55:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -126,7 +126,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	    ptype != PROP_STRING)
 		strcpy(sc->sc_info[0].desc, sc->sc_dev.dv_xname);
 
-	/* Hook info system monitor. */
+	/* Hook into system monitor. */
 	sc->sc_sysmon.sme_ranges = lmtemp_ranges;
 	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
 	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
@@ -265,7 +265,7 @@ lmtemp_decode_ds75(const uint8_t *buf)
 
 	/*
 	 * Sign-extend the MSB byte, and add in the fractions of a
-	 * degree contained in the LSB (prescision 1/16th DegC).
+	 * degree contained in the LSB (precision 1/16th DegC).
 	 */
 	temp = (int8_t)buf[0];
 	temp = (temp << 4) | ((buf[1] >> 4) & 0xf);

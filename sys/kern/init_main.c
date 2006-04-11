@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.262.2.2 2006/04/01 12:07:39 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.262.2.3 2006/04/11 11:55:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,11 +71,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.2 2006/04/01 12:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.262.2.3 2006/04/11 11:55:47 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
-#include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
 #include "opt_pipe.h"
 #include "opt_syscall_debug.h"

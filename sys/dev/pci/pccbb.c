@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.127 2005/12/18 11:04:00 sekiya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.127.8.1 2006/04/11 11:55:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.127 2005/12/18 11:04:00 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.127.8.1 2006/04/11 11:55:17 yamt Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1380,7 +1380,7 @@ pccbb_power(ct, command)
 		while (pwrcycle == sc->sc_pwrcycle) {
 			/*
 			 * XXX: Set timeout to 200ms because power cycle event
-			 * will be never happen when attaching a 16-bit card.
+			 * will never happen when attaching a 16-bit card.
 			 */
 			if ((error = tsleep(&sc->sc_pwrcycle, PWAIT, "pccpwr",
 			    hz / 5)) == EWOULDBLOCK)

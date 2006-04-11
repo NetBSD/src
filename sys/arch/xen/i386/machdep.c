@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24.6.2 2006/04/01 12:06:35 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24.6.3 2006/04/11 11:53:47 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.6.2 2006/04/01 12:06:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.6.3 2006/04/11 11:53:47 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -162,18 +162,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.6.2 2006/04/01 12:06:35 yamt Exp $"
 #include <machine/vm86.h>
 #endif
 
-#include "acpi.h"
-#include "apm.h"
 #include "bioscall.h"
 
 #if NBIOSCALL > 0
 #include <machine/bioscall.h>
-#endif
-
-#if NACPI > 0
-#include <dev/acpi/acpivar.h>
-#define ACPI_MACHDEP_PRIVATE
-#include <machine/acpi_machdep.h>
 #endif
 
 #if NAPM > 0
@@ -838,13 +830,6 @@ haltsys:
 #endif
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-#if NACPI > 0
-		if (acpi_softc != NULL) {
-			delay(500000);
-			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
-			printf("WARNING: ACPI powerdown failed!\n");
-		}
-#endif
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and
 		 * wait a bit first--some disk drives are slow to clean up
@@ -1582,11 +1567,6 @@ init386(paddr_t first_avail)
 		realmode_reserved_size = MP_TRAMPOLINE;		 /* XXX */
 	needs_earlier_install_pte0 = 1;				 /* XXX */
 #endif								 /* XXX */
-#if NACPI > 0
-	/* trampoline code for wake handler */
-	realmode_reserved_size += ptoa(acpi_md_get_npages_of_wakecode()+1);
-	needs_earlier_install_pte0 = 1;
-#endif
 	if (needs_earlier_install_pte0) {
 		/* page table for directory entry 0 */
 		realmode_reserved_size += PAGE_SIZE;
@@ -1951,40 +1931,6 @@ init386(paddr_t first_avail)
 #endif
 	realmode_reserved_size  -= PAGE_SIZE;
 	realmode_reserved_start += PAGE_SIZE;
-#endif
-
-#if NACPI > 0
-	/*
-	 * Steal memory for the acpi wake code
-	 */
-	{
-		paddr_t paddr, p;
-		psize_t sz;
-		int npg;
-
-		paddr = realmode_reserved_start;
-		npg = acpi_md_get_npages_of_wakecode();
-		sz = ptoa(npg);
-#ifdef DIAGNOSTIC
-		if (realmode_reserved_size < sz) {
-			panic("cannot steal memory for ACPI wake code.");
-		}
-#endif
-
-		/* identical mapping */
-		p = paddr;
-		for (x=0; x<npg; x++) {
-			printf("kenter: 0x%08X\n", (unsigned)p);
-			pmap_kenter_pa((vaddr_t)p, p, VM_PROT_ALL);
-			p += PAGE_SIZE;
-		}
-		pmap_update(pmap_kernel());
-
-		acpi_md_install_wakecode(paddr);
-
-		realmode_reserved_size  -= sz;
-		realmode_reserved_start += sz;
-	}
 #endif
 
  	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
