@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.46 2006/03/28 20:58:40 pavel Exp $
+#	$NetBSD: IPAQ,v 1.47 2006/04/11 15:08:10 peter Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -138,7 +138,7 @@ saip0	at mainbus?
 
 # Serial
 options 	CONSPEED=19200
-sacom*	at saip? addr 0xd000d000 size 0x24	intr 17
+sacom*	at saip? addr 0x80050000 size 0x24	intr 17
 
 # OS Timer
 saost*	at saip? addr 0x90000000 size 0x20
