@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.6 2006/03/28 17:38:33 thorpej Exp $	*/
+/*	$NetBSD: sbp.c,v 1.7 2006/04/11 15:52:07 rpaulo Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -2332,10 +2332,18 @@ END_DEBUG
 static void
 sbp_scsipi_detach_sdev(struct sbp_dev *sdev)
 {
-	struct sbp_target *target = sdev->target;
-	struct sbp_softc *sbp = target->sbp;
+	struct sbp_target *target;
+	struct sbp_softc *sbp;
+
 	if (sdev == NULL)
 		return;
+
+	target = sdev->target;
+	if (target == NULL)
+		return;
+
+	sbp = target->sbp;
+
 	if (sdev->status == SBP_DEV_DEAD)
 		return;
 	if (sdev->status == SBP_DEV_RESET)
