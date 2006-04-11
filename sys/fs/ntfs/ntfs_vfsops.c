@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.37 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.38 2006/04/11 14:12:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.38 2006/04/11 14:12:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -572,6 +572,12 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
+
+	if (error) {
+		if (ntmp->ntm_ad)
+			free(ntmp->ntm_ad, M_NTFSMNT);
+		free(ntmp, M_NTFSMNT);
+	}
 
 	return (error);
 }
