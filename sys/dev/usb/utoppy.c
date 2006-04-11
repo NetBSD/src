@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.2 2006/04/11 14:05:46 christos Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.3 2006/04/11 14:08:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.2 2006/04/11 14:05:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.3 2006/04/11 14:08:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1432,7 +1432,8 @@ utoppyclose(dev_t dev, int flag, int mode, struct lwp *l)
 		return (0);
 	}
 
-	(void) utoppy_cancel(sc);
+	if (sc->sc_out_data)
+		(void) utoppy_cancel(sc);
 
 	if (sc->sc_out_pipe != NULL) {
 		if ((err = usbd_abort_pipe(sc->sc_out_pipe)) != 0)
