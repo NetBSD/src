@@ -1,4 +1,4 @@
-/*	$NetBSD: JISX0208-1983,v 1.1 2000/12/30 02:33:20 itojun Exp $	*/
+/*	$NetBSD: JISX0208-1983,v 1.2 2006/04/11 18:45:03 tnozaki Exp $	*/
 
 /*
  * JIS X0208-1983 - (ESC $ ( B or ESC $ B)
@@ -6,6 +6,8 @@
 CHARSET		"$(B"
 
 SPACE		0x2121
+BLANK		0x2121
+PRINT		0x2121
 PHONOGRAM	0x213c
 SPECIAL     	0x2122 - 0x217e
 PUNCT		0x2122 - 0x2178		/* A few too many in here... */
