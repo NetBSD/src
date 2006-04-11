@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.4 2006/04/11 23:07:22 scw Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.5 2006/04/11 23:08:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.4 2006/04/11 23:07:22 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.5 2006/04/11 23:08:08 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1369,6 +1369,7 @@ utoppyopen(dev_t dev, int flag, int mode, struct lwp *l)
 		error = EIO;
 		usbd_close_pipe(sc->sc_out_pipe);
 		sc->sc_out_pipe = NULL;
+		goto done;
 	}
 
 	sc->sc_out_data = malloc(UTOPPY_BSIZE + 1, M_DEVBUF, M_WAITOK);
