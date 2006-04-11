@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.210.2.3.2.1 2005/04/02 21:26:46 he Exp $
+#	$NetBSD: files.pci,v 1.210.2.3.2.2 2006/04/11 01:15:22 riz Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -110,6 +110,10 @@ file	dev/ic/adwmcode.c		adw_pci
 device	pcscp: scsi, ncr53c9x
 attach	pcscp at pci
 file	dev/pci/pcscp.c			pcscp
+
+# HP/Compaq Command Interface to Scsi-3
+attach ciss at pci with ciss_pci
+file	dev/pci/ciss_pci.c		ciss_pci
 
 # BusLogic BT-9xx PCI family
 # device declaration in sys/conf/files
