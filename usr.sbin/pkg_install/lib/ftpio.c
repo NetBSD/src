@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.70 2006/04/05 18:01:20 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.71 2006/04/11 10:36:19 hubertf Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.70 2006/04/05 18:01:20 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.71 2006/04/11 10:36:19 hubertf Exp $");
 #endif
 
 /*-
@@ -217,7 +217,7 @@ expect(int fd, const char *str, int *ftprc)
 	set[0].fd = fd;
 	set[0].events = POLLIN;
 	while(!done) {
-		rc = poll(set, 1, 10*60*1000);    /* seconds until next message from tar */
+		rc = poll(set, 1, 60*60*1000);    /* seconds until next message from tar */
 		switch (rc) {
 		case -1:
 			if (errno == EINTR)
