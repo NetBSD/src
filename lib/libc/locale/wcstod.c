@@ -1,4 +1,4 @@
-/* $NetBSD: wcstod.c,v 1.6 2005/11/29 03:11:59 christos Exp $ */
+/* $NetBSD: wcstod.c,v 1.7 2006/04/11 14:24:37 tnozaki Exp $ */
 
 /*-
  * Copyright (c)1999, 2000, 2001 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcstod.c,v 1.6 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: wcstod.c,v 1.7 2006/04/11 14:24:37 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -59,9 +59,10 @@ wcstod(const wchar_t *nptr, wchar_t **endptr)
 	src = nptr;
 
 	/* skip space first */
-	while (iswspace(*src)) {
+	while (iswspace(*src))
 		src++;
-	}
+	if (!*src)
+		goto done;
 
 	/* get length of string */
 	start = src;	
@@ -74,9 +75,9 @@ wcstod(const wchar_t *nptr, wchar_t **endptr)
 		size = wcsspn(src, _L("0123456789"));
 		src += size;
 	}
-	if (wcschr(_L("Ee"), *src)) {
+	if (*src && wcschr(_L("Ee"), *src)) {
 		src++;
-		if (wcschr(_L("+-"), *src))
+		if (*src && wcschr(_L("+-"), *src))
 			src++;
 		size = wcsspn(src, _L("0123456789"));
 		src += size;
@@ -128,8 +129,9 @@ wcstod(const wchar_t *nptr, wchar_t **endptr)
 		return result;
 	}
 
+done:
 	if (endptr)
-		*endptr = __UNCONST(start);
+		*endptr = __UNCONST(nptr);
 
 	return 0;
 }
