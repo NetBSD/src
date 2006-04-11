@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.15 2006/03/17 17:22:30 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.613.2.17.2.16 2006/04/11 01:12:50 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.615.2.17.2.16 2006/04/11 01:12:30 riz Exp 
  */
 
 /*
@@ -2914,6 +2914,54 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Smart Array 532",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5312,
+	    0,
+	    "Compaq",
+	    "Smart Array 5312",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6i,
+	    0,
+	    "Compaq",
+	    "Smart Array 6i",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA641,
+	    0,
+	    "Compaq",
+	    "Smart Array 641",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA642,
+	    0,
+	    "Compaq",
+	    "Smart Array 642",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6400,
+	    0,
+	    "Compaq",
+	    "Smart Array 6400",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6400EM,
+	    0,
+	    "Compaq",
+	    "Smart Array 6400 EM",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6422,
+	    0,
+	    "Compaq",
+	    "Smart Array 6422",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA64XX,
+	    0,
+	    "Compaq",
+	    "Smart Array 64xx",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB,
 	    0,
 	    "Compaq",
@@ -2980,10 +3028,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Deskpro 4000 5233MMX",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5300_2,
+	    0,
+	    "Compaq",
+	    "Smart Array 5300 rev.2",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_M700,
 	    0,
 	    "Compaq",
 	    "Armada M700",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5i_2,
+	    0,
+	    "Compaq",
+	    "Smart Array 5i/532 rev.2",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P_BNC,
@@ -3962,6 +4022,144 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hewlett-Packard",
 	    "NetRaid-4M",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAV100,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array V100",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_1,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array E200i",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array E200",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_2,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array E200i",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_3,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array E200i",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_4,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array E200i",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_1,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_2,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP800,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array P600",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP600,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array P600",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_3,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_4,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_5,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_6,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP400,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array P400",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP400I,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array P400i",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_7,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_8,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_9,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_10,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_11,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_12,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_13,
+	    0,
+	    "Hewlett-Packard",
+	    "Smart Array",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,
