@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.6 2006/01/22 06:25:25 uwe Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.7 2006/04/11 18:34:39 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -79,12 +79,10 @@
 	addc	reg_tmp0,reg_sum
 
 #define	FORWARD1	\
-	mov	#1,reg_tmp0		; \
-	sub	reg_tmp0,reg_mlen
+	add	#-1,reg_mlen
 
 #define	FORWARD2	\
-	mov	#2,reg_tmp0		; \
-	sub	reg_tmp0,reg_mlen
+	add	#-2,reg_mlen
 
 
 /*
@@ -240,9 +238,7 @@ L_cksum128_tail_p:
 
 	.align	2
 cksum128:
-	mov	#64,reg_tmp0
-	add	reg_tmp0,reg_tmp0	/* reg_tmp0 = 128 */
-	sub	reg_tmp0,reg_mlen
+	add	#-128,reg_mlen
 	clrt
 
 cksum128_unroll:
