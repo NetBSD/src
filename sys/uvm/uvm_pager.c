@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.74.2.2 2006/03/12 09:38:56 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.74.2.3 2006/04/11 11:55:59 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.74.2.2 2006/03/12 09:38:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.74.2.3 2006/04/11 11:55:59 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -134,6 +134,7 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	vaddr_t cva;
 	struct vm_page *pp;
 	vm_prot_t prot;
+	const boolean_t pdaemon = curproc == uvm.pagedaemon_proc;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d)", pps, npages,0,0);
@@ -151,9 +152,9 @@ ReStart:
 	size = npages << PAGE_SHIFT;
 	kva = 0;			/* let system choose VA */
 
-	if (uvm_map(pager_map, &kva, size, NULL,
-	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != 0) {
-		if (curproc == uvm.pagedaemon_proc) {
+	if (uvm_map(pager_map, &kva, size, NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_FLAG_NOMERGE | (pdaemon ? UVM_FLAG_NOWAIT : 0)) != 0) {
+		if (pdaemon) {
 			simple_lock(&pager_map_wanted_lock);
 			if (emerginuse) {
 				UVM_UNLOCK_AND_WAIT(&emergva,

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2005/12/11 12:17:05 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.8.1 2006/04/11 11:53:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/12/11 12:17:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.8.1 2006/04/11 11:53:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,7 +45,7 @@ long (*timer_read)(void *);
 void *timer_cookie;
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	/* start timer */
@@ -57,27 +57,23 @@ cpu_initclocks()
 }
 
 u_int
-mc146818_read(sc, reg)
-	void *sc;
-	u_int reg;
+mc146818_read(void *sc, u_int reg)
 {
+
 	(*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000070))) = reg;
 	return (*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000071)));
 }
 
 void
-mc146818_write(sc, reg, datum)
-	void *sc;
-	u_int reg;
-	u_int datum;
+mc146818_write(void *sc, u_int reg, u_int datum)
 {
+
 	(*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000070))) = reg;
 	(*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000071))) = datum;
 }
 
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	struct clock_ymdhms dt;
 	mc_todregs regs;
@@ -101,7 +97,7 @@ inittodr(base)
 }
 
 void
-resettodr()
+resettodr(void)
 {
 	mc_todregs regs;
 	struct clock_ymdhms dt;
@@ -131,8 +127,7 @@ resettodr()
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 	/* XXX */
 

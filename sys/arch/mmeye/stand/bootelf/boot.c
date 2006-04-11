@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1999/09/27 08:47:56 tsubai Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.70.1 2006/04/11 11:53:43 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "loadfile.h"
+#include <lib/libsa/loadfile.h>
 
 #if 1
 # define DPRINTF printf

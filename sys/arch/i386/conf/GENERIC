@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.731.2.2 2006/04/01 12:06:18 yamt Exp $
+# $NetBSD: GENERIC,v 1.731.2.3 2006/04/11 11:53:27 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.731.2.2 $"
+#ident 		"GENERIC-$Revision: 1.731.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -611,6 +611,12 @@ dpti*	at iop? tid 0			# DPT/Adaptec control interface
 # GPIO devices
 #gpio*	at gscpcib?
 
+# 1-Wire support
+#gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bus bitbanging via gpio
+#onewire*	at gpioow?
+
+# 1-Wire devices
+#owtemp* 	at onewire?			# Temperature sensors
 
 # SCSI Controllers and Devices
 
@@ -1080,6 +1086,9 @@ uscanner* at uhub? port ?
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?
+
+# Topfield TF5000PVR range of DVB recorders
+utoppy*	at uhub? port ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?
