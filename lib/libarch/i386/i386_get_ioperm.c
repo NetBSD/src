@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_get_ioperm.c,v 1.4 1998/02/25 21:24:56 perry Exp $	*/
+/*	$NetBSD: i386_get_ioperm.c,v 1.5 2006/04/12 21:48:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #include <machine/sysarch.h>
 
+int i386_get_ioperm(u_long *);
+
 int
 i386_get_ioperm(iomap)
 	u_long *iomap;
@@ -49,5 +51,5 @@ i386_get_ioperm(iomap)
 
 	p.iomap = iomap;
 
-	return sysarch(I386_GET_IOPERM, (void *)&p);
+	return sysarch(I386_GET_IOPERM, &p);
 }
