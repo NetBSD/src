@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.24 2006/04/12 19:38:23 jmmv Exp $	*/
+/*	$NetBSD: ffb.c,v 1.25 2006/04/12 20:22:00 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.24 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.25 2006/04/12 20:22:00 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -671,7 +671,7 @@ ffbfb_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
 
-	return ffb_ioctl(sc, cmd, data, flags, l);
+	return ffb_ioctl(sc, NULL, cmd, data, flags, l);
 }
 
 paddr_t
