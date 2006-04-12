@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.93 2006/04/05 15:18:25 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.94 2006/04/12 19:38:24 jmmv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.93 2006/04/05 15:18:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.94 2006/04/12 19:38:24 jmmv Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -1013,8 +1013,8 @@ int
 wsdisplay_param(struct device *dev, u_long cmd, struct wsdisplay_param *dp)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
-					   (caddr_t)dp, 0, NULL));
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, sc->sc_focus,
+					   cmd, (caddr_t)dp, 0, NULL));
 }
 
 int
@@ -1077,8 +1077,8 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
 
-	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
-		    flag, l);
+	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, scr, cmd,
+	        data, flag, l);
 
 	    return (0);
 #undef d
@@ -1183,7 +1183,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	}
 
 	/* check ioctls for display */
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, scr, cmd, data,
 	    flag, l));
 }
 
@@ -1363,7 +1363,8 @@ wsdisplaymmap(dev_t dev, off_t offset, int prot)
 		return (-1);
 
 	/* pass mmap to display */
-	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie, offset, prot));
+	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie, scr,
+	    offset, prot));
 }
 
 void
@@ -1554,7 +1555,7 @@ wsdisplay_update_rawkbd(struct wsdisplay_softc *sc, struct wsscreen *scr)
 	inp = sc->sc_input;
 	if (inp == NULL)
 		return (ENXIO);
-	error = wsevsrc_display_ioctl(inp, WSKBDIO_SETMODE, &data, 0, 0);
+	error = wsevsrc_display_ioctl(inp, scr, WSKBDIO_SETMODE, &data, 0, 0);
 	if (!error)
 		sc->sc_rawkbd = raw;
 	splx(s);
