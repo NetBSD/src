@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.604 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.605 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -240,3 +240,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		OpenBSD. [riz 20060407]
 	owtemp(4): Driver for some 1-wire temperature sensors.  From
 		OpenBSD. [riz 20060407]
+	wpa_supplicant: Updated to version 0.4.8 [rpaulo 20060412]
+	hostapd: Imported version 0.4.8 [rpaulo 20060412]
