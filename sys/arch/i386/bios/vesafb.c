@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.12 2006/04/11 14:18:01 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.13 2006/04/12 19:38:23 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.12 2006/04/11 14:18:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.13 2006/04/12 19:38:23 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,9 @@ struct wsscreen_descr vesafb_stdscreen = {
 	8, 16,
 };
 
-static int	vesafb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	vesafb_mmap(void *, off_t, int);
+static int	vesafb_ioctl(void *, void *, u_long, caddr_t, int,
+		    struct lwp *);
+static paddr_t	vesafb_mmap(void *, void *, off_t, int);
 
 static void	vesafb_init_screen(void *, struct vcons_screen *,
 					int, long *);
@@ -312,7 +313,8 @@ out:
 }
 
 static int
-vesafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vesafb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct vcons_data *vd;
 	struct vesafb_softc *sc;
@@ -396,7 +398,7 @@ vesafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-vesafb_mmap(void *v, off_t offset, int prot)
+vesafb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd;
 	struct vesafb_softc *sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.23 2006/03/29 04:16:47 thorpej Exp $	*/
+/*	$NetBSD: ffb.c,v 1.24 2006/04/12 19:38:23 jmmv Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.23 2006/03/29 04:16:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.24 2006/04/12 19:38:23 jmmv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,9 +86,9 @@ struct wsscreen_list ffb_screenlist = {
 
 static struct ffb_screen ffb_console_screen;
 
-int	ffb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	ffb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
 static int ffb_blank(struct ffb_softc *, u_long, u_int *);
-paddr_t ffb_mmap(void *, off_t, int);
+paddr_t ffb_mmap(void *, void *, off_t, int);
 void	ffb_ras_fifo_wait(struct ffb_softc *, int);
 void	ffb_ras_wait(struct ffb_softc *);
 void	ffb_ras_init(struct ffb_softc *);
@@ -238,7 +238,7 @@ ffb_attach(struct ffb_softc *sc)
 }
 
 int
-ffb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct lwp *l)
+ffb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct ffb_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -378,7 +378,7 @@ ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 }
 
 paddr_t
-ffb_mmap(void *vsc, off_t off, int prot)
+ffb_mmap(void *vsc, void *vs, off_t off, int prot)
 {
 	struct ffb_softc *sc = vsc;
 	int i;

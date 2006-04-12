@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.1 2006/04/11 16:11:07 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.2 2006/04/12 19:38:24 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.1 2006/04/11 16:11:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.2 2006/04/12 19:38:24 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,8 +186,9 @@ struct wsscreen_list voodoofb_screenlist = {
 	sizeof(_voodoofb_scrlist) / sizeof(struct wsscreen_descr *), _voodoofb_scrlist
 };
 
-static int	voodoofb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	voodoofb_mmap(void *, off_t, int);
+static int	voodoofb_ioctl(void *, void *, u_long, caddr_t, int,
+		    struct lwp *);
+static paddr_t	voodoofb_mmap(void *, void *, off_t, int);
 
 static void	voodoofb_clearscreen(struct voodoofb_softc *);
 static void	voodoofb_init_screen(void *, struct vcons_screen *, int,
@@ -853,7 +854,8 @@ voodoofb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
  */
 
 static int
-voodoofb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+voodoofb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct voodoofb_softc *sc = vd->cookie;
@@ -914,7 +916,7 @@ voodoofb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-voodoofb_mmap(void *v, off_t offset, int prot)
+voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct voodoofb_softc *sc = vd->cookie;

@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.30 2006/04/06 12:22:05 drochner Exp $ */
+/*	$NetBSD: p9100.c,v 1.31 2006/04/12 19:38:24 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.30 2006/04/06 12:22:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.31 2006/04/12 19:38:24 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,8 +219,8 @@ static int	p9100_allocattr(void *, int, int, int, long *);
 
 static int	p9100_putcmap(struct p9100_softc *, struct wsdisplay_cmap *);
 static int 	p9100_getcmap(struct p9100_softc *, struct wsdisplay_cmap *);
-static int	p9100_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	p9100_mmap(void *, off_t, int);
+static int	p9100_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	p9100_mmap(void *, void *, off_t, int);
 		
 /*static int	p9100_load_font(void *, void *, struct wsdisplay_font *);*/
 
@@ -1122,7 +1122,8 @@ p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
  */
 
 int
-p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+p9100_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct p9100_softc *sc = vd->cookie;
@@ -1178,7 +1179,7 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-p9100_mmap(void *v, off_t offset, int prot)
+p9100_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct p9100_softc *sc = vd->cookie;	
