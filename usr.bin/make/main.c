@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.123 2006/03/31 21:05:34 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.124 2006/04/12 20:32:27 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.123 2006/03/31 21:05:34 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.124 2006/04/12 20:32:27 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.123 2006/03/31 21:05:34 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.124 2006/04/12 20:32:27 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -592,6 +592,18 @@ Main_SetObjdir(const char *path)
 	return rc;
 }
 
+/*-
+ * ReadAllMakefiles --
+ *	wrapper around ReadMakefile() to read all.
+ *
+ * Results:
+ *	TRUE if ok, FALSE on error
+ */
+static int
+ReadAllMakefiles(ClientData p, ClientData q)
+{
+	return (ReadMakefile(p, q) == 0);
+}
 
 /*-
  * main --
@@ -906,7 +918,7 @@ main(int argc, char **argv)
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
 		ln = Lst_Find(sysMkPath, (ClientData)NULL, ReadMakefile);
-		if (ln != NILLNODE)
+		if (ln == NILLNODE)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
 	}
@@ -914,11 +926,11 @@ main(int argc, char **argv)
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
 
-		ln = Lst_Find(makefiles, (ClientData)NULL, ReadMakefile);
+		ln = Lst_Find(makefiles, (ClientData)NULL, ReadAllMakefiles);
 		if (ln != NILLNODE)
 			Fatal("%s: cannot open %s.", progname, 
 			    (char *)Lst_Datum(ln));
-	} else if (!ReadMakefile(UNCONST("makefile"), NULL))
+	} else if (ReadMakefile(UNCONST("makefile"), NULL) != 0)
 		(void)ReadMakefile(UNCONST("Makefile"), NULL);
 
 	(void)ReadMakefile(UNCONST(".depend"), NULL);
@@ -1072,12 +1084,12 @@ main(int argc, char **argv)
  *	Open and parse the given makefile.
  *
  * Results:
- *	TRUE if ok. FALSE if couldn't open file.
+ *	0 if ok. -1 if couldn't open file.
  *
  * Side Effects:
  *	lots
  */
-static Boolean
+static int
 ReadMakefile(ClientData p, ClientData q __unused)
 {
 	char *fname = p;		/* makefile to read */
@@ -1122,7 +1134,7 @@ ReadMakefile(ClientData p, ClientData q __unused)
 				Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
 		if (!name || !(stream = fopen(name, "r"))) {
 			free(path);
-			return(FALSE);
+			return(-1);
 		}
 		fname = name;
 		/*
@@ -1137,7 +1149,7 @@ found:
 		(void)fclose(stream);
 	}
 	free(path);
-	return(TRUE);
+	return(0);
 }
 
 
