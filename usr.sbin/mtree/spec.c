@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.61 2005/10/01 20:28:22 christos Exp $	*/
+/*	$NetBSD: spec.c,v 1.62 2006/04/12 19:49:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.61 2005/10/01 20:28:22 christos Exp $");
+__RCSID("$NetBSD: spec.c,v 1.62 2006/04/12 19:49:59 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -506,21 +506,20 @@ set(char *t, NODE *ip)
 	char	*kw, *val, *md, *ep;
 	void	*m;
 
-	val = NULL;
 	while ((kw = strsep(&t, "= \t")) != NULL) {
 		if (*kw == '\0')
 			continue;
 		if (strcmp(kw, "all") == 0)
 			mtree_err("invalid keyword `all'");
 		ip->flags |= type = parsekey(kw, &value);
-		if (value) {
-			while ((val = strsep(&t, " \t")) != NULL &&
-			    *val == '\0')
-				continue;
-			if (val == NULL)
-				mtree_err("missing value");
-		}
-		switch(type) {
+		if (!value)
+			/* Just set flag bit (F_IGN and F_OPT) */
+			continue;
+		while ((val = strsep(&t, " \t")) != NULL && *val == '\0')
+			continue;
+		if (val == NULL)
+			mtree_err("missing value");
+		switch (type) {
 		case F_CKSUM:
 			ip->cksum = strtoul(val, &ep, 10);
 			if (*ep)
@@ -548,9 +547,6 @@ set(char *t, NODE *ip)
 				mtree_err("unknown group `%s'", val);
 			ip->st_gid = gid;
 			break;
-		case F_IGN:
-			/* just set flag bit */
-			break;
 		case F_MD5:
 			if (val[0]=='0' && val[1]=='x')
 				md=&val[2];
@@ -570,9 +566,6 @@ set(char *t, NODE *ip)
 			ip->st_nlink = (nlink_t)strtoul(val, &ep, 10);
 			if (*ep)
 				mtree_err("invalid link count `%s'", val);
-			break;
-		case F_OPT:
-			/* just set flag bit */
 			break;
 		case F_RMD160:
 			if (val[0]=='0' && val[1]=='x')
