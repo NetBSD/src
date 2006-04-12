@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.2 2006/04/12 19:38:24 jmmv Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.3 2006/04/12 23:11:56 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.2 2006/04/12 19:38:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.3 2006/04/12 23:11:56 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,6 @@ struct voodoofb_softc {
 	bus_space_handle_t sc_ioregh;	
 	bus_addr_t sc_regs, sc_fb, sc_ioreg;
 	bus_size_t sc_regsize, sc_fbsize, sc_ioregsize;
-
-/*	void (*putchar)(void *c, int row, int col, u_int uc, long attr);*/
 
 	void *sc_ih;
 	
@@ -312,7 +310,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	uint32_t bg, fg, ul;
 		
-	sc->sc_mode=WSDISPLAYIO_MODE_EMUL;
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -324,26 +322,26 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 
 	/* the framebuffer */
-	if(pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM,
+	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE | 
 	    BUS_SPACE_MAP_LINEAR, 
 	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		printf("%s: Couldn't map the frame buffer!\n", 
+		printf("%s: failed to map the frame buffer.\n", 
 		    sc->sc_dev.dv_xname);
 	}
 
 	/* memory-mapped registers */
-	if(pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
+	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_regt, &sc->sc_regh, &sc->sc_regs, &sc->sc_regsize)) {
-		printf("%s: Couldn't map memory-mapped registers!\n", 
+		printf("%s: failed to map memory-mapped registers.\n", 
 		    sc->sc_dev.dv_xname);
 	}
 
 	/* IO-mapped registers */
-	if(pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
+	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_ioregt, &sc->sc_ioregh, &sc->sc_ioreg,
 	    &sc->sc_ioregsize)) {
-		printf("%s: Couldn't map IO-mapped registers!\n", 
+		printf("%s: failed to map IO-mapped registers.\n", 
 		    sc->sc_dev.dv_xname);
 	}
 	voodoofb_init(sc);
@@ -416,7 +414,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Interrupt. We don't use it for anything yet */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: failed to map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -424,7 +422,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, voodoofb_intr, 
 	    sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		printf("%s: failed to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
@@ -455,7 +453,7 @@ voodoofb_putpalreg(struct voodoofb_softc *sc, uint8_t index, uint8_t r,
 	sc->sc_cmap_green[index] = g;
 	sc->sc_cmap_blue[index] = b;
 
-	color=(r << 16) | (g << 8) | b;
+	color = (r << 16) | (g << 8) | b;
 	voodoo3_make_room(sc, 2);
 	voodoo3_write32(sc, DACADDR, index);
 	voodoo3_write32(sc, DACDATA, color);
@@ -497,7 +495,7 @@ voodoofb_putcmap(struct voodoofb_softc *sc, struct wsdisplay_cmap *cm)
 	b = &sc->sc_cmap_blue[index];
 	
 	for (i = 0; i < count; i++) {
-		voodoofb_putpalreg(sc,index, *r, *g, *b);
+		voodoofb_putpalreg(sc, index, *r, *g, *b);
 		index++;
 		r++, g++, b++;
 	}
@@ -562,7 +560,7 @@ voodoofb_cursor(void *cookie, int on, int row, int col)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voodoofb_softc *sc = scr->scr_cookie;
-	int x, y, wi,he;
+	int x, y, wi, he;
 	
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
@@ -749,7 +747,7 @@ static void
 voodoofb_rectfill(struct voodoofb_softc *sc, int x, int y, int width, 
     int height, int colour) 
 {
-	uint32_t fmt,col;
+	uint32_t fmt, col;
 	
 	col = (colour << 24) | (colour << 16) | (colour << 8) | colour;
 	fmt = sc->linebytes | ((sc->bits_per_pixel + 
@@ -1223,8 +1221,9 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	voodoofb_setup_monitor(sc, vm);
 	vp = voodoo3_read32(sc, VIDPROCCFG);
 	
-	vidproc &= ~(0x1c0000); // clear bits 18 to 20, bpp in vidproccfg
-	vidproc |= ((bpp - 1) << VIDCFG_PIXFMT_SHIFT); // enable bits 18 to 20 to the required bpp
+	vidproc &= ~(0x1c0000); /* clear bits 18 to 20, bpp in vidproccfg */
+	/* enable bits 18 to 20 to the required bpp */
+	vidproc |= ((bpp - 1) << VIDCFG_PIXFMT_SHIFT);
 	
 	vidpll = voodoofb_calc_pll(vm->dot_clock, &fout, 0);
 
@@ -1232,23 +1231,28 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
 	printf("old vidproc: %08x\n", vp);
 	printf("pll: %08x %d\n", vidpll, fout);
 #endif
-	
-	switch (bpp) { // bit 10 of vidproccfg, is enabled or disabled as needed for the Desktop
+	/* bit 10 of vidproccfg, is enabled or disabled as needed */
+	switch (bpp) { 
 		case 1:
-			vidproc &= ~(1 << 10); // bit 10 off for palettized modes only, off means palette is used
+			/*
+			 * bit 10 off for palettized modes only, off means
+			 * palette is used
+			 */
+			vidproc &= ~(1 << 10);
 			break;
 #if 0
 		case 2:
 			#if __POWERPC__
 				miscinit0 = 0xc0000000;
 			#endif
-			vidproc |= (1 << 10); // bypass palette for 16bit modes
+			/* bypass palette for 16bit modes */
+			vidproc |= (1 << 10);
 			break;
 		case 4:
 			#if __POWERPC__
 				miscinit0 = 0x40000000;
 			#endif			
-			vidproc |= (1 << 10); // Same for 32bit modes
+			vidproc |= (1 << 10); /* Same for 32bit modes */
 			break;
 #endif
 		default:
@@ -1298,7 +1302,6 @@ voodoofb_init(struct voodoofb_softc *sc)
 	/* XXX */
 	uint32_t vgainit0 = 0;
 	uint32_t vidcfg = 0;
-/*	uint32_t cpp = 16;*/
 
 #ifdef VOODOOFB_DEBUG
 	printf("initializing engine...");	
