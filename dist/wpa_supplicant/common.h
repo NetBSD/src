@@ -21,6 +21,8 @@
 #endif /* __linux__ */
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/endian.h>
 #define __BYTE_ORDER	_BYTE_ORDER
