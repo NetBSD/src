@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.39 2006/04/05 15:23:06 drochner Exp $	*/
+/*	$NetBSD: machfb.c,v 1.40 2006/04/12 19:38:23 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.39 2006/04/05 15:23:06 drochner Exp $");
+	"$NetBSD: machfb.c,v 1.40 2006/04/12 19:38:23 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,8 +383,9 @@ static struct wsscreen_list mach64_screenlist = {
 	_mach64_scrlist
 };
 
-static int	mach64_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	mach64_mmap(void *, off_t, int);
+static int	mach64_ioctl(void *, void *, u_long, caddr_t, int,
+		             struct lwp *);
+static paddr_t	mach64_mmap(void *, void *, off_t, int);
 static int	mach64_alloc_screen(void *, const struct wsscreen_descr *,
 				    void **, int *, int *, long *);
 static void	mach64_free_screen(void *, void *);
@@ -1591,7 +1592,8 @@ mach64_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
  */
 
 static int
-mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mach64_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct mach64_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -1660,7 +1662,7 @@ mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-mach64_mmap(void *v, off_t offset, int prot)
+mach64_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct mach64_softc *sc = v;
 	paddr_t pa;

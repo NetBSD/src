@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.41 2006/03/31 17:39:33 thorpej Exp $ */
+/* $NetBSD: xcfb.c,v 1.42 2006/04/12 19:38:24 jmmv Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.41 2006/03/31 17:39:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.42 2006/04/12 19:38:24 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,8 @@ static const struct wsscreen_list xcfb_screenlist = {
 	sizeof(_xcfb_scrlist) / sizeof(struct wsscreen_descr *), _xcfb_scrlist
 };
 
-static int	xcfbioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	xcfbmmap(void *, off_t, int);
+static int	xcfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	xcfbmmap(void *, void *, off_t, int);
 
 static int	xcfb_alloc_screen(void *, const struct wsscreen_descr *,
 				       void **, int *, int *, long *);
@@ -393,7 +393,7 @@ xcfbhwinit(caddr_t base)
 }
 
 static int
-xcfbioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+xcfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct xcfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -470,7 +470,7 @@ xcfbioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-xcfbmmap(void *v, off_t offset, int prot)
+xcfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 
 	if (offset >= XCFB_FB_SIZE || offset < 0)
