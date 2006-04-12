@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.206 2006/03/28 17:32:20 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.207 2006/04/12 23:33:39 simonb Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.206 2006/03/28 17:32:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.207 2006/04/12 23:33:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1826,7 +1826,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 		queue->numOutstanding++;
 
 		bp->b_flags = 0;
-		bp->b_fspriv.bf_private = req;
+		bp->b_private = req;
 
 		KernelWakeupFunc(bp);
 		break;
@@ -1885,7 +1885,7 @@ KernelWakeupFunc(struct buf *bp)
 
 	s = splbio();
 	db1_printf(("recovering the request queue:\n"));
-	req = bp->b_fspriv.bf_private;
+	req = bp->b_private;
 
 	queue = (RF_DiskQueue_t *) req->queue;
 
@@ -1971,7 +1971,7 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	}
 	bp->b_proc = b_proc;
 	bp->b_iodone = cbFunc;
-	bp->b_fspriv.bf_private = cbArg;
+	bp->b_private = cbArg;
 	bp->b_vp = b_vp;
 	if ((bp->b_flags & B_READ) == 0) {
 		bp->b_vp->v_numoutput++;
