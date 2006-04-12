@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.31 2006/03/31 17:39:33 thorpej Exp $	*/
+/*	$NetBSD: stic.c,v 1.32 2006/04/12 19:38:24 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.31 2006/03/31 17:39:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.32 2006/04/12 19:38:24 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.31 2006/03/31 17:39:33 thorpej Exp $");
 	tc_wmb();				\
    } while (0)
 
-static int	sticioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	sticioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
 static int	stic_alloc_screen(void *, const struct wsscreen_descr *,
 				  void **, int *, int *, long *);
 static void	stic_free_screen(void *, void *);
@@ -558,7 +558,7 @@ stic_clear_screen(struct stic_info *si)
 }
 
 static int
-sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sticioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct stic_info *si;
 	int s;
