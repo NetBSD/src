@@ -1,4 +1,4 @@
-/*	$NetBSD: preempt1.c,v 1.2 2003/06/27 13:27:58 skrll Exp $	*/
+/*	$NetBSD: preempt1.c,v 1.3 2006/04/12 14:01:52 cube Exp $	*/
 
 #include <assert.h>
 #include <err.h>
@@ -32,7 +32,7 @@ main(int argc, char *argv[])
 		err(1, "malloc");
 
 	fd = open("/dev/urandom", O_RDONLY, 0);
-	if (fd == 0)
+	if (fd == -1)
 		err(1, "open");
 
 	printf("1: preempt test\n");
