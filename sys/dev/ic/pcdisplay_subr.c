@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.30 2006/04/12 20:06:16 jmmv Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.31 2006/04/12 20:08:20 jmmv Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.30 2006/04/12 20:06:16 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.31 2006/04/12 20:08:20 jmmv Exp $");
 
 #include "opt_wsdisplay_compat.h" /* for WSDISPLAY_CHARFUNCS */
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
@@ -296,8 +296,6 @@ int
 pcdisplay_getwschar(void *id, struct wsdisplay_char *wschar)
 {
 	struct pcdisplayscreen *scr = id;
-	bus_space_tag_t memt = scr->hdl->ph_memt;
-	bus_space_handle_t memh = scr->hdl->ph_memh;
 	int off;
 	uint16_t chardata;
 	uint8_t attrbyte;
@@ -307,8 +305,8 @@ pcdisplay_getwschar(void *id, struct wsdisplay_char *wschar)
 		return -1;
 
 	if (scr->active)
-		chardata = bus_space_read_2(memt, memh,
-					    scr->dispoffset + off * 2);
+		chardata = bus_space_read_2(scr->hdl->ph_memt,
+		    scr->hdl->ph_memh, scr->dispoffset + off * 2);
 	else
 		chardata = scr->mem[off];
 
@@ -327,8 +325,6 @@ int
 pcdisplay_putwschar(void *id, struct wsdisplay_char *wschar)
 {
 	struct pcdisplayscreen *scr = id;
-	bus_space_tag_t memt = scr->hdl->ph_memt;
-	bus_space_handle_t memh = scr->hdl->ph_memh;
 	int off;
 	uint16_t chardata;
 	uint8_t attrbyte;
@@ -345,8 +341,8 @@ pcdisplay_putwschar(void *id, struct wsdisplay_char *wschar)
 	chardata = (attrbyte << 8) | wschar->letter;
 
 	if (scr->active)
-		bus_space_write_2(memt, memh, scr->dispoffset + off * 2,
-		                  chardata);
+		bus_space_write_2(scr->hdl->ph_memt, scr->hdl->ph_memh,
+		    scr->dispoffset + off * 2, chardata);
 	else
 		scr->mem[off] = chardata;
 
