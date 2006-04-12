@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.430 2006/04/07 11:27:04 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.431 2006/04/12 17:30:16 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -348,6 +348,18 @@ Mailing List:	heimdal-discuss@pdc.kth.se
 Responsible:	joda, lha
 License:	BSD
 Notes:
+
+Package:	hostapd
+Version:	0.4.8
+Current Vers:	0.4.8
+Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
+Archive Site:	http://hostap.epitest.fi/releases/
+Home Page:	http://hostap.epitest.fi/hostapd/
+Mailing List:
+Responsible:	rpaulo
+License:	BSD or GPLv2
+Notes:
+See /usr/src/dist/hostapd/NetBSD-upgrade for update instructions.
 
 Package:	hunt
 Version:	2003-04-16
@@ -853,8 +865,8 @@ License:	GPLv2
 Notes:
 
 Package:	wpa_supplicant
-Version:	0.3.9
-Current Vers:	0.3.9
+Version:	0.4.8
+Current Vers:	0.4.8
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/
