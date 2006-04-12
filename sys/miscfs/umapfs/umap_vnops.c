@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.37 2006/04/04 14:24:15 christos Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.38 2006/04/12 01:09:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.37 2006/04/04 14:24:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.38 2006/04/12 01:09:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,8 @@ umap_lookup(v)
 			    compcredp->cr_uid);
 
 	if (savecompcredp != NOCRED) {
-		crfree(compcredp);
+		if (compcredp)
+			crfree(compcredp);
 		cnp->cn_cred = savecompcredp;
 		if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
 				savecompcredp->cr_uid != 0)
