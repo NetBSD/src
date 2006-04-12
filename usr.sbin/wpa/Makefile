@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1 2005/10/01 18:50:12 scw Exp $
+# $NetBSD: Makefile,v 1.2 2006/04/12 15:37:48 rpaulo Exp $
 
-SUBDIR= wpa_supplicant wpa_cli
+SUBDIR= hostapd hostapd_cli wpa_supplicant wpa_cli
 
 .include <bsd.subdir.mk>
