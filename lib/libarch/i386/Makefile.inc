@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2001/11/10 06:40:58 gmcgarry Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2006/04/12 18:35:42 drochner Exp $
 
 .if (${MACHINE_ARCH} == "i386")
 SRCS+=	i386_get_ldt.c i386_set_ldt.c \
@@ -8,12 +8,11 @@ SRCS+=	i386_get_ldt.c i386_set_ldt.c \
 
 MAN+=	i386_get_ldt.2 \
 	i386_get_mtrr.2 \
-	i386_iopl.2 i386_get_ioperm.2 \
+	i386_iopl.2 \
 	i386_pmc_info.2 \
 	i386_vm86.2
 
 MLINKS+=i386_get_ldt.2 i386_set_ldt.2 \
 	i386_get_mtrr.2 i386_set_mtrr.2 \
-	i386_get_ioperm.2 i386_set_ioperm.2 \
 	i386_pmc_info.2 i386_pmc_startstop.2 \
 	i386_pmc_info.2 i386_pmc_read.2
