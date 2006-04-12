@@ -1,6 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.3 2005/10/01 21:34:01 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4 2006/04/12 15:31:51 rpaulo Exp $
 
 BINDIR?=	/usr/sbin
 
-WPA_SUPPLICANT_DISTDIR?= ${.CURDIR}/../../../dist/wpa_supplicant
-.PATH: ${WPA_SUPPLICANT_DISTDIR}
+# Don't define .PATH here.
+
+WPA_SUPPLICANT_DISTDIR?=	${.CURDIR}/../../../dist/wpa_supplicant
+HOSTAPD_DISTDIR?=		${.CURDIR}/../../../dist/hostapd
