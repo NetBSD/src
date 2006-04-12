@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_var.h,v 1.6 2006/04/11 15:24:24 peter Exp $        */
+/*	$NetBSD: sa11x0_var.h,v 1.7 2006/04/12 12:42:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
