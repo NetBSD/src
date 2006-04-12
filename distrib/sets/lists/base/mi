@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.612 2006/04/08 14:15:48 tnozaki Exp $
+# $NetBSD: mi,v 1.613 2006/04/12 15:46:39 rpaulo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1002,6 +1002,8 @@
 ./usr/sbin/groupmod				base-sysutil-bin
 ./usr/sbin/hlfsd				base-amd-bin
 ./usr/sbin/host					base-obsolete		obsolete
+./usr/sbin/hostapd				base-sysutil-bin
+./usr/sbin/hostapd_cli				base-sysutil-bin
 ./usr/sbin/hprop				base-krb5-bin		kerberos
 ./usr/sbin/htable				base-obsolete		obsolete
 ./usr/sbin/ifmcstat				base-netutil-bin	inet6
