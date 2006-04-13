@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.45 2006/03/29 06:51:47 thorpej Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.46 2006/04/13 00:30:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.45 2006/03/29 06:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.46 2006/04/13 00:30:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,13 @@ sb_isapnp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_drq16 = -1;
 
 #if NMPU > 0
-	if (ipa->ipa_nio > 1) {
+	/*
+	 * Aztech 1020 don't store information about it's mpu in io[1]
+	 * It has a seperate pnpdev for the mpu
+	 */
+	if (strcmp(ipa->ipa_devlogic, "AZT1016") == 0)
+		sc->sc_hasmpu = -1;
+	else if (ipa->ipa_nio > 1) {
 		sc->sc_hasmpu = 1;
 		sc->sc_mpu_iot = ipa->ipa_iot;
 		sc->sc_mpu_ioh = ipa->ipa_io[1].h;
