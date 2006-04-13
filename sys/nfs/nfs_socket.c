@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.4.7 2006/03/31 01:18:16 elad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.4.8 2006/04/13 22:25:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.7 2006/03/31 01:18:16 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.8 2006/04/13 22:25:29 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2017,17 +2017,7 @@ nfs_getreq(nd, nfsd, has_header)
 		nfsm_adv(nfsm_rndup(len));
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 
-		/*
-		 * XXX elad: could the previous nd_cr be referenced from
-		 *	     somewhere else? we might be leaking memory
-		 *	     here or causing other code to access freed
-		 *	     memory (or worse: re-allocated memory).
-		 */
-#ifdef DIAGNOSTIC
-		if (kauth_cred_getrefcnt(nd->nd_cr) > 1)
-			panic("nfs_req: possible memory leak");
-#endif /* DIAGNOSTIC */
-		nd->nd_cr = kauth_cred_copy(nd->nd_cr);
+		nd->nd_cr = kauth_cred_alloc();
 
 		uid = fxdr_unsigned(uid_t, *tl++);
 		gid = fxdr_unsigned(gid_t, *tl++);
