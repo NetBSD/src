@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.6 2006/03/23 23:53:54 christos Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.7 2006/04/13 17:44:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.6 2006/03/23 23:53:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.7 2006/04/13 17:44:24 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -76,7 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.6 2006/03/23 23:53:54 christos Exp 
 #define TTY_OLD_SUFFIX  "0123456789abcdef"
 #define TTY_NEW_SUFFIX  "ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-static int pty_makename(struct ptm_pty *, char *, size_t, dev_t, char);
+static int pty_makename(struct ptm_pty *, struct lwp *, char *, size_t, dev_t,
+    char);
 static int pty_allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
     dev_t, char);
 static void pty_getvattr(struct ptm_pty *, struct proc *, struct vattr *);
@@ -90,7 +91,8 @@ struct ptm_pty ptm_bsdpty = {
 
 static int
 /*ARGSUSED*/
-pty_makename(struct ptm_pty *ptm, char *bf, size_t bufsiz, dev_t dev, char c)
+pty_makename(struct ptm_pty *ptm, struct lwp *l, char *bf, size_t bufsiz,
+    dev_t dev, char c)
 {
 	size_t nt;
 	dev_t minor = minor(dev);
@@ -126,7 +128,7 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
 	struct nameidata nd;
 	char name[TTY_NAMESIZE];
 
-	error = (*ptm->makename)(ptm, name, sizeof(name), dev, ms);
+	error = (*ptm->makename)(ptm, l, name, sizeof(name), dev, ms);
 	if (error)
 		return error;
 
