@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2006/04/10 18:40:06 garbled Exp $	*/
+/*	$NetBSD: boot.c,v 1.14 2006/04/13 18:46:46 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,6 +81,9 @@ boot(void *resp, u_long loadaddr)
 	 * console init
 	 */
 	cnname = cninit(&addr, &speed);
+#ifdef VGA_RESET
+	vga_reset((u_char *)0xc0000000);
+#endif
 
 	/* make bootinfo */
 	/*

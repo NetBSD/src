@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.5 2006/04/10 18:40:06 garbled Exp $	*/
+/*	$NetBSD: cons.c,v 1.6 2006/04/13 18:46:46 garbled Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -180,7 +180,6 @@ void
 vgacninit(struct consdev *cp)
 {
 
-	vga_reset((u_char *)cp->address);
 	vga_init((u_char *)cp->address);
 	kbdreset();
 }
