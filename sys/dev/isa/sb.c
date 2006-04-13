@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.82 2006/04/13 00:30:19 christos Exp $	*/
+/*	$NetBSD: sb.c,v 1.83 2006/04/13 09:47:19 cube Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.82 2006/04/13 00:30:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.83 2006/04/13 09:47:19 cube Exp $");
 
 #include "midi.h"
 
@@ -236,12 +236,12 @@ sbattach(struct sbdsp_softc *sc)
 #if NMPU > 0
 	switch(sc->sc_hasmpu) {
 	default:
-	case -1:		/* no mpu */
+	case SBMPU_NONE:	/* no mpu */
 		break;
-	case 0:			/* try to attach midi directly */
+	case SBMPU_INTERNAL:	/* try to attach midi directly */
 		midi_attach_mi(&sb_midi_hw_if, sc, &sc->sc_dev);
 		break;
-	case 1:			/* search for mpu */
+	case SBMPU_EXTERNAL:	/* search for mpu */
 		arg.type = AUDIODEV_TYPE_MPU;
 		arg.hwif = 0;
 		arg.hdl = 0;
