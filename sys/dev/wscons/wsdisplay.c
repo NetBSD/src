@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.95 2006/04/12 20:13:21 macallan Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.96 2006/04/13 01:15:27 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.95 2006/04/12 20:13:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.96 2006/04/13 01:15:27 macallan Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -1013,7 +1013,8 @@ int
 wsdisplay_param(struct device *dev, u_long cmd, struct wsdisplay_param *dp)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, sc->sc_focus,
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+					   sc->sc_focus->scr_dconf->emulcookie,
 					   cmd, (caddr_t)dp, 0, NULL));
 }
 
@@ -1077,8 +1078,8 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
 
-	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, scr, cmd,
-	        data, flag, l);
+	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+	        scr->scr_dconf->emulcookie, cmd, data, flag, l);
 
 	    return (0);
 #undef d
@@ -1183,8 +1184,8 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	}
 
 	/* check ioctls for display */
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, scr, cmd, data,
-	    flag, l));
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+	    scr->scr_dconf->emulcookie, cmd, data, flag, l));
 }
 
 int
@@ -1363,8 +1364,8 @@ wsdisplaymmap(dev_t dev, off_t offset, int prot)
 		return (-1);
 
 	/* pass mmap to display */
-	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie, scr,
-	    offset, prot));
+	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie,
+	    scr->scr_dconf->emulcookie, offset, prot));
 }
 
 void
