@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.1.2.24 2006/03/14 02:49:15 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.1.2.25 2006/04/13 20:04:40 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -44,6 +44,7 @@
 #include <sys/pool.h>
 #include <sys/kauth.h>
 #include <sys/acct.h>
+#include <sys/sysctl.h>
 
 /* 
  * Credentials.
@@ -798,11 +799,15 @@ kauth_authorize_cb_process(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_PROCESS_CANSEE:
-		if (kauth_cred_uidmatch(cred, cred2))
+		if (!security_curtain) {
 			error = KAUTH_RESULT_ALLOW;
-		else
-			error = KAUTH_RESULT_DENY;
-			/* arg2 - type of information [XXX NOTIMPL] */
+		} else {
+			if (kauth_cred_uidmatch(cred, cred2))
+				error = KAUTH_RESULT_ALLOW;
+			else
+				error = KAUTH_RESULT_DENY;
+				/* arg2 - type of information [XXX NOTIMPL] */
+		}
 		break;
 	}
 

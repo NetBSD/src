@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.63.4.2 2006/03/14 02:52:47 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.63.4.3 2006/04/13 20:04:40 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.4.2 2006/03/14 02:52:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.4.3 2006/04/13 20:04:40 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1321,8 +1321,9 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 * followed by an array of file structures
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
-		if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
-			    kauth_cred_geteuid(fp->f_cred)))
+		if (kauth_authorize_process(l->l_proc->p_cred,
+		    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
+		    NULL) != 0)
 			continue;
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
@@ -2040,8 +2041,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		LIST_FOREACH(fp, &filehead, f_list) {
-			if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
-				    kauth_cred_geteuid(fp->f_cred)))
+			if (kauth_authorize_process(l->l_proc->p_cred,
+			    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
+			    NULL) != 0)
 				continue;
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
@@ -2067,8 +2069,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			if (p->p_stat == SIDL)
 				/* skip embryonic processes */
 				continue;
-			if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
-				    kauth_cred_geteuid(p->p_cred)))
+			if (kauth_authorize_process(l->l_proc->p_cred,
+			    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred,
+			    NULL, NULL) != 0)
 				continue;
 			if (arg > 0 && p->p_pid != arg)
 				/* pick only the one we want */
@@ -2200,8 +2203,9 @@ again:
 		if (p->p_stat == SIDL)
 			continue;
 
-		if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
-			    kauth_cred_geteuid(p->p_cred)))
+		if (kauth_authorize_process(l->l_proc->p_cred,
+		    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred,
+		    NULL, NULL) != 0)
 			continue;
 
 		/*
@@ -2372,8 +2376,8 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 
-	if (CURTAIN(kauth_cred_geteuid(l->l_proc->p_cred),
-		    kauth_cred_geteuid(p->p_cred))) {
+	if (kauth_authorize_process(l->l_proc->p_cred,
+	    KAUTH_PROCESS_CANSEE, l->l_proc, p->p_cred, NULL, NULL) != 0) {
 		error = EPERM;
 		goto out_locked;
 	}
