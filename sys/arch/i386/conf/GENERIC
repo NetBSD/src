@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.741 2006/04/12 03:41:51 martti Exp $
+# $NetBSD: GENERIC,v 1.742 2006/04/13 00:30:19 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.741 $"
+#ident 		"GENERIC-$Revision: 1.742 $"
 
 maxusers	32		# estimated number of users
 
@@ -1181,6 +1181,7 @@ audio*	at audiobus?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
+mpu*	at isapnp?
 mpu*	at cmpci?
 mpu*	at eso?
 mpu*	at fms?
