@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.87 2006/03/01 02:06:11 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.88 2006/04/13 04:58:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87 2006/03/01 02:06:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.88 2006/04/13 04:58:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,6 +383,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_ABORT:
 		unp_drop(unp, ECONNABORTED);
 
+		KASSERT(so->so_head == NULL);
 #ifdef DIAGNOSTIC
 		if (so->so_pcb == 0)
 			panic("uipc 5: drop killed pcb");
