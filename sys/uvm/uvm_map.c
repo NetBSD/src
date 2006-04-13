@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.216 2006/03/15 18:09:25 drochner Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.217 2006/04/13 01:11:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.216 2006/03/15 18:09:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.217 2006/04/13 01:11:08 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -681,7 +681,7 @@ uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
 		/* ... unlikely to happen, but play it safe */
 		 uvm_map_reference(new_entry->object.sub_map);
 	} else {
-		if (UVM_ET_ISOBJ(entry) &&
+		if (UVM_ET_ISOBJ(entry) && entry->object.uvm_obj &&
 		    entry->object.uvm_obj->pgops &&
 		    entry->object.uvm_obj->pgops->pgo_reference)
 			entry->object.uvm_obj->pgops->pgo_reference(
