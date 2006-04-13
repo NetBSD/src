@@ -1,4 +1,4 @@
-/*	$NetBSD: stree.c,v 1.9 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: stree.c,v 1.10 2006/04/13 21:48:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -229,8 +229,7 @@ Tinsert(TREE ** t, char *p, int find)
 {
 	int deltah;
 
-	assert((t == NULL && p == NULL) || (t != NULL && p != NULL));
-	if (p[0] == '.' && p[1] == '/') {
+	if (p != NULL && p[0] == '.' && p[1] == '/') {
 		p += 2;
 		while (*p == '/')
 			p++;
