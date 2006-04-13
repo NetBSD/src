@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.2 2006/04/13 07:21:20 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.3 2006/04/13 07:31:29 kochi Exp $");
 
 #define __DSMETHOD_C__
 
@@ -373,8 +373,7 @@ AcpiDsCallControlMethod (
                         NULL, 1);
         if (ACPI_FAILURE (Status))
         {
-            AcpiDsDeleteWalkState (NextWalkState);
-            return_ACPI_STATUS (Status);
+            goto Cleanup;
         }
 
         /* Begin AML parse */
