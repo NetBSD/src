@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.40 2006/04/14 20:53:38 christos Exp $	*/
+/*	$NetBSD: mlx.c,v 1.41 2006/04/14 20:56:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.40 2006/04/14 20:53:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.41 2006/04/14 20:56:26 christos Exp $");
 
 #include "ld.h"
 
@@ -1807,19 +1807,19 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 			goto out;
 		}
 		mapped = 1;
+		/*
+		 * If this is a passthrough SCSI command, the DCDB is packed at
+		 * the beginning of the data area.  Fix up the DCDB to point to
+		 * the correct physical address and override any bufptr
+		 * supplied by the caller since we know what it's meant to be.
+		 */
+		if (mc->mc_mbox[0] == MLX_CMD_DIRECT_CDB) {
+			dcdb = (struct mlx_dcdb *)kbuf;
+			dcdb->dcdb_physaddr = mc->mc_xfer_phys + sizeof(*dcdb);
+			mu->mu_bufptr = 8;
+		}
 	}
 
-	/*
-	 * If this is a passthrough SCSI command, the DCDB is packed at the
-	 * beginning of the data area.  Fix up the DCDB to point to the correct physical
-	 * address and override any bufptr supplied by the caller since we know
-	 * what it's meant to be.
-	 */
-	if (mc->mc_mbox[0] == MLX_CMD_DIRECT_CDB) {
-		dcdb = (struct mlx_dcdb *)kbuf;
-		dcdb->dcdb_physaddr = mc->mc_xfer_phys + sizeof(*dcdb);
-		mu->mu_bufptr = 8;
-	}
 
 	/*
 	 * If there's a data buffer, fix up the command's buffer pointer.
