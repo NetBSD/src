@@ -1,4 +1,4 @@
-# $NetBSD:
+# $NetBSD: files.onewire,v 1.3 2006/04/14 18:38:50 riz Exp $
 
 define	onewire {}
 
