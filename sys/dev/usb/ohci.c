@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.170 2006/03/30 19:08:31 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.171 2006/04/14 17:04:06 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.170 2006/03/30 19:08:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.171 2006/04/14 17:04:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2421,6 +2421,8 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		DPRINTFN(8,("ohci_root_ctrl_control wValue=0x%04x\n", value));
+		if (len == 0)
+			break;
 		switch(value >> 8) {
 		case UDESC_DEVICE:
 			if ((value & 0xff) != 0) {
@@ -2450,8 +2452,6 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &ohci_endpd, l);
 			break;
 		case UDESC_STRING:
-			if (len == 0)
-				break;
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
@@ -2572,6 +2572,8 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
+		if (len == 0)
+			break;
 		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;
