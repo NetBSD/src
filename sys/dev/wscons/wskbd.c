@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.89 2006/03/29 04:16:51 thorpej Exp $ */
+/* $NetBSD: wskbd.c,v 1.90 2006/04/14 16:19:44 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.89 2006/03/29 04:16:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.90 2006/04/14 16:19:44 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1021,7 +1021,7 @@ getbell:
 		return (0);
 
 	case WSKBDIO_SETDEFAULTBELL:
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if (p && (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		kbdp = &wskbd_default_bell_data;
 		goto setbell;
