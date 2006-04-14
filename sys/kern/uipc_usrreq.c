@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.89 2006/04/14 23:12:14 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.90 2006/04/14 23:15:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.89 2006/04/14 23:12:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.90 2006/04/14 23:15:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +229,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
+		KASSERT(l != NULL);
 		error = unp_bind(unp, nam, l);
 		break;
 
@@ -238,6 +239,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
+		KASSERT(l != NULL);
 		error = unp_connect(so, nam, l);
 		break;
 
@@ -306,8 +308,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * has the side-effect of preventing a caller from
 		 * forging SCM_CREDS.
 		 */
-		if (control && (error = unp_internalize(control, l))) {
-			goto die;
+		if (control) {
+			KASSERT(l != NULL);
+			if ((error = unp_internalize(control, l)) != 0)
+				goto die;
 		}
 		switch (so->so_type) {
 
@@ -317,6 +321,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					error = EISCONN;
 					goto die;
 				}
+				KASSERT(l != NULL);
 				error = unp_connect(so, nam, l);
 				if (error) {
 				die:
