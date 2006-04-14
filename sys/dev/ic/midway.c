@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.69 2006/03/16 15:59:55 christos Exp $	*/
+/*	$NetBSD: midway.c,v 1.70 2006/04/14 22:30:13 christos Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.69 2006/03/16 15:59:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.70 2006/04/14 22:30:13 christos Exp $");
 
 #include "opt_natm.h"
 
@@ -1761,7 +1761,7 @@ struct ifnet *ifp;
        * check that vpi/vci is one we can use
        */
 
-      if (atm_vpi || atm_vci > MID_N_VC) {
+      if (atm_vpi || atm_vci >= MID_N_VC) {
 	printf("%s: output vpi=%d, vci=%d out of card range, dropping...\n",
 		sc->sc_dev.dv_xname, atm_vpi, atm_vci);
 	m_freem(m);
