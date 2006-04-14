@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.5 2006/02/04 22:24:26 uwe Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.6 2006/04/14 09:23:01 nonaka Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,6 +27,9 @@
  */
 
 #include <machine/asm.h>
+
+#undef _LOCORE
+#define	_LOCORE		/* XXX not really, just assembly-code source */
 #include <machine/endian.h>
 
 ENTRY(bswap16)
