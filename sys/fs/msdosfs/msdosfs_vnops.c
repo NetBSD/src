@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.26 2006/03/01 12:38:13 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.27 2006/04/14 22:05:07 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.26 2006/03/01 12:38:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.27 2006/04/14 22:05:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1870,7 +1870,7 @@ msdosfs_detimes(struct denode *dep, const struct timespec *acc,
 	dep->de_flag |= DE_MODIFIED;
 	if (dep->de_flag & DE_UPDATE) {
 		if (mod == NULL)
-			mod = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			mod = ts = nanotime(&tsb);
 		unix2dostime(mod, gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 	}
