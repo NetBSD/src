@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.216 2006/03/29 23:02:31 cube Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.217 2006/04/14 23:54:21 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.216 2006/03/29 23:02:31 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.217 2006/04/14 23:54:21 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1240,6 +1240,8 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 #ifdef DIAGNOSTIC
 		panic("execw[] entry with unknown priority %d found",
 			et->es->es_prio);
+#else
+		free(et, M_TEMP);
 #endif
 		break;
 	}
