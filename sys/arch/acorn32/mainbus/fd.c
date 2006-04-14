@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25 2006/03/26 04:32:33 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.26 2006/04/14 13:09:05 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.25 2006/03/26 04:32:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.26 2006/04/14 13:09:05 blymn Exp $");
 
 #include "opt_ddb.h"
 
@@ -1030,7 +1030,7 @@ loop:
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 
-		fd->sc_dk.dk_seek++;
+		iostat_seek(fd->sc_dk.dk_stats);
 		disk_busy(&fd->sc_dk);
 
 		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);
