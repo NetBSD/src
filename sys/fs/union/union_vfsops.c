@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.33 2006/03/20 19:54:15 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.34 2006/04/14 22:00:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.33 2006/03/20 19:54:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.34 2006/04/14 22:00:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,6 @@ union_mount(mp, path, data, ndp, l)
 	struct vnode *lowerrootvp = NULLVP;
 	struct vnode *upperrootvp = NULLVP;
 	struct union_mount *um = 0;
-	struct ucred *cred = 0;
 	const char *cp;
 	char *xp;
 	int len;
@@ -301,8 +300,6 @@ union_mount(mp, path, data, ndp, l)
 bad:
 	if (um)
 		free(um, M_UFSMNT);
-	if (cred)
-		crfree(cred);
 	if (upperrootvp)
 		vrele(upperrootvp);
 	if (lowerrootvp)
