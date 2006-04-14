@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.44 2006/04/14 19:25:37 christos Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.45 2006/04/14 19:33:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.44 2006/04/14 19:25:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.45 2006/04/14 19:33:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1380,7 +1380,7 @@ emuxki_voice_channel_create(struct emuxki_voice *voice)
 
 	channel = voice->sc->channel;
 	stereo = voice->stereo;
-	for (i = 0; i < EMU_NUMCHAN; i += stereo + 1) {
+	for (i = 0; i < EMU_NUMCHAN - stereo; i += stereo + 1) {
 		if ((stereo && (channel[i + 1] != NULL)) ||
 		    (channel[i] != NULL))	/* Looking for free channels */
 			continue;
