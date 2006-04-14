@@ -1,4 +1,4 @@
-/*	$NetBSD: dklist.c,v 1.5 2004/10/30 08:47:58 dsl Exp $	*/
+/*	$NetBSD: dklist.c,v 1.6 2006/04/14 13:20:48 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dklist.c,v 1.5 2004/10/30 08:47:58 dsl Exp $");
+__RCSID("$NetBSD: dklist.c,v 1.6 2006/04/14 13:20:48 blymn Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -97,9 +97,9 @@ static SIMPLEQ_HEAD(, mlx_disk) mlx_disks;
 
 static struct nlist namelist[] = {
 #define X_DISK_COUNT	0
-	{ "_disk_count" },	/* number of disks */
+	{ "_iostat_count" },	/* number of disks */
 #define X_DISKLIST	1
-	{ "_disklist" },	/* TAILQ of disks */
+	{ "_iostatlist" },	/* TAILQ of disks */
 	{ NULL },
 };
 
@@ -177,8 +177,8 @@ mlx_disk_add(const char *name)
 void
 mlx_disk_add_all(void)
 {
-	struct disklist_head disk_head;
-	struct disk cur_disk, *dk;
+	struct iostatlist_head iostat_head;
+	struct io_stats cur_drive, *drv;
         char errbuf[_POSIX2_LINE_MAX];
 	char buf[12];
 	int i, ndrives;
@@ -201,15 +201,16 @@ mlx_disk_add_all(void)
 		errx(EXIT_FAILURE, "no drives attached.");
 
 	/* Get a pointer to the first disk. */
-	deref_nl(kd, X_DISKLIST, &disk_head, sizeof(disk_head));
-	dk = TAILQ_FIRST(&disk_head);
+	deref_nl(kd, X_DISKLIST, &iostat_head, sizeof(iostat_head));
+	drv = TAILQ_FIRST(&iostat_head);
 
 	/* Try to add each disk to the list. */
 	for (i = 0; i < ndrives; i++) {
-		deref_kptr(kd, dk, &cur_disk, sizeof(cur_disk));
-		deref_kptr(kd, cur_disk.dk_name, buf, sizeof(buf));
-		mlx_disk_add0(buf);
-		dk = TAILQ_NEXT(&cur_disk, dk_link);
+		deref_kptr(kd, drv, &cur_drive, sizeof(cur_drive));
+		deref_kptr(kd, cur_drive.name, buf, sizeof(buf));
+		if (cur_drive.type == IOSTAT_DISK)
+			mlx_disk_add0(buf);
+		drv = TAILQ_NEXT(&cur_drive, link);
 	}
 
 	kvm_close(kd);
