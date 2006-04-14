@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.88 2006/04/13 04:58:31 matt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.89 2006/04/14 23:12:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.88 2006/04/13 04:58:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.89 2006/04/14 23:12:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,6 +330,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					goto die;
 				}
 			}
+			KASSERT(p != NULL);
 			error = unp_output(m, control, unp, p);
 			if (nam)
 				unp_disconnect(unp);
