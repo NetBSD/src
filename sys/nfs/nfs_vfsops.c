@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.152.4.1 2006/03/08 01:06:28 elad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.152.4.2 2006/04/14 10:01:35 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.152.4.1 2006/03/08 01:06:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.152.4.2 2006/04/14 10:01:35 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -779,8 +779,12 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	VOP_GETATTR(*vpp, attrs, l->l_proc->p_cred, l);
 	if ((nmp->nm_flag & NFSMNT_NFSV3) && ((*vpp)->v_type == VDIR)) {
 		cr = kauth_cred_alloc();
+		kauth_cred_setuid(cr, attrs->va_uid);
 		kauth_cred_seteuid(cr, attrs->va_uid);
+		kauth_cred_setsvuid(cr, attrs->va_uid);
+		kauth_cred_setgid(cr, attrs->va_gid);
 		kauth_cred_setegid(cr, attrs->va_gid);
+		kauth_cred_setsvgid(cr, attrs->va_gid);
 		nfs_cookieheuristic(*vpp, &nmp->nm_iflag, l, cr);
 		kauth_cred_free(cr);
 	}
