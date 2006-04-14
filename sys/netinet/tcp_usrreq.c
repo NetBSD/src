@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.113 2005/12/11 12:24:58 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.114 2006/04/14 23:09:16 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113 2005/12/11 12:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.114 2006/04/14 23:09:16 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1216,18 +1216,25 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	if (namelen != 4)
 		return (EINVAL);
 
+	if (oldp != NULL) {
+		    len = *oldlenp;
+		    elem_size = name[2];
+		    elem_count = name[3];
+		    if (elem_size != sizeof(pcb))
+			    return EINVAL;
+		    pf2 = pf;
+	} else {
+		    len = 0;
+		    elem_count = INT_MAX;
+		    elem_size = sizeof(pcb);
+		    pf2 = 0;
+	}
 	error = 0;
 	dp = oldp;
-	len = (oldp != NULL) ? *oldlenp : 0;
 	op = name[0];
 	arg = name[1];
-	elem_size = name[2];
-	elem_count = name[3];
-	out_size = MIN(sizeof(pcb), elem_size);
+	out_size = elem_size;
 	needed = 0;
-
-	elem_count = INT_MAX;
-	elem_size = out_size = sizeof(pcb);
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -1237,7 +1244,6 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 	pf = oname[1];
 	proto = oname[2];
-	pf2 = (oldp == NULL) ? 0 : pf;
 
 	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
 #ifdef INET
