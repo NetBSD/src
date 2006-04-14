@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.83 2006/04/13 09:47:19 cube Exp $	*/
+/*	$NetBSD: sb.c,v 1.84 2006/04/14 19:56:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.83 2006/04/13 09:47:19 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.84 2006/04/14 19:56:40 christos Exp $");
 
 #include "midi.h"
 
@@ -181,6 +181,21 @@ sbmatch(struct sbdsp_softc *sc)
 
 	if (ISSB16CLASS(sc) && !(sc->sc_quirks & SB_QUIRK_NO_INIT_DRQ)) {
 		int w, r;
+		if (sc->sc_irq >= __arraycount(irq_conf)) {
+			printf("%s: Cannot handle irq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_irq);
+			return 0;
+		}
+		if (sc->sc_drq16 >= __arraycount(drq_conf)) {
+			printf("%s: Cannot handle drq16 %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq16);
+			return 0;
+		}
+		if (sc->sc_drq8 >= __arraycount(drq_conf)) {
+			printf("%s: Cannot handle drq8 %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq8);
+			return 0;
+		}
 #if 0
 		printf("%s: old drq conf %02x\n", sc->sc_dev.dv_xname,
 		    sbdsp_mix_read(sc, SBP_SET_DRQ));
