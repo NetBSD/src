@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.769 2006/04/07 18:55:22 riz Exp $
+#	$NetBSD: files,v 1.770 2006/04/14 13:09:06 blymn Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1250,6 +1250,7 @@ file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
+file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_extent.c
 file	kern/subr_log.c

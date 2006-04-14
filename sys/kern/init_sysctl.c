@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.65 2006/04/01 00:57:34 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.66 2006/04/14 13:09:06 blymn Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.65 2006/04/01 00:57:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.66 2006/04/14 13:09:06 blymn Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -913,18 +913,6 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       SYSCTL_DESCR("Software page size"),
 		       NULL, PAGE_SIZE, NULL, 0,
 		       CTL_HW, HW_PAGESIZE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "disknames",
-		       SYSCTL_DESCR("List of disk devices present"),
-		       sysctl_hw_disknames, 0, NULL, 0,
-		       CTL_HW, HW_DISKNAMES, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "diskstats",
-		       SYSCTL_DESCR("Statistics on disk operation"),
-		       sysctl_hw_diskstats, 0, NULL, 0,
-		       CTL_HW, HW_DISKSTATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine_arch",

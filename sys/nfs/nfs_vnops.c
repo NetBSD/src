@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.231 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.232 2006/04/14 13:09:06 blymn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.231 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.232 2006/04/14 13:09:06 blymn Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.231 2006/03/01 12:38:32 yamt Exp $")
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/disk.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
@@ -1240,7 +1241,7 @@ nfs_readrpc(vp, uiop)
 	caddr_t bpos, dpos, cp2;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsmount *nmp;
-	int error = 0, len, retlen, tsiz, eof;
+	int error = 0, len, retlen, tsiz, eof, byte_count;
 	const int v3 = NFS_ISV3(vp);
 	struct nfsnode *np = VTONFS(vp);
 #ifndef NFS_V2_ONLY
@@ -1254,6 +1255,8 @@ nfs_readrpc(vp, uiop)
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
+	iostat_busy(nmp->nm_stats);
+	byte_count = 0; /* count bytes actually transferred */
 	while (tsiz > 0) {
 		nfsstats.rpccnt[NFSPROC_READ]++;
 		len = (tsiz > nmp->nm_rsize) ? nmp->nm_rsize : tsiz;
@@ -1288,6 +1291,7 @@ nfs_readrpc(vp, uiop)
 		nfsm_mtouio(uiop, retlen);
 		m_freem(mrep);
 		tsiz -= retlen;
+		byte_count += retlen;
 #ifndef NFS_V2_ONLY
 		if (v3) {
 			if (eof || retlen == 0)
@@ -1298,6 +1302,7 @@ nfs_readrpc(vp, uiop)
 			tsiz = 0;
 	}
 nfsmout:
+	iostat_unbusy(nmp->nm_stats, byte_count, 1);
 	return (error);
 }
 
@@ -1347,7 +1352,7 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	int committed = NFSV3WRITE_FILESYNC;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfs_writerpc_context ctx;
-	int s;
+	int s, byte_count;
 	struct lwp *l = NULL;
 	size_t origresid;
 #ifndef NFS_V2_ONLY
@@ -1376,6 +1381,8 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 retry:
 	origresid = uiop->uio_resid;
 	KASSERT(origresid == uiop->uio_iov->iov_len);
+	iostat_busy(nmp->nm_stats);
+	byte_count = 0; /* count of bytes actually written */
 	while (tsiz > 0) {
 		uint32_t datalen; /* data bytes need to be allocated in mbuf */
 		uint32_t backup;
@@ -1508,6 +1515,7 @@ retry:
 		if (error)
 			break;
 		tsiz -= len;
+		byte_count += len;
 		if (stalewriteverf) {
 			*stalewriteverfp = TRUE;
 			stalewriteverf = FALSE;
@@ -1528,6 +1536,7 @@ retry:
 		}
 	}
 nfsmout:
+	iostat_unbusy(nmp->nm_stats, byte_count, 0);
 	if (pageprotected) {
 		/*
 		 * wait until mbufs go away.

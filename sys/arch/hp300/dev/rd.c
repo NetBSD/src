@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.73 2006/03/29 16:03:37 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.74 2006/04/14 13:09:05 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.73 2006/03/29 16:03:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.74 2006/04/14 13:09:05 blymn Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -836,7 +836,7 @@ again:
 
 		/* Instrumentation. */
 		disk_busy(&rs->sc_dkdev);
-		rs->sc_dkdev.dk_seek++;
+		iostat_seek(rs->sc_dkdev.dk_stats);
 
 #ifdef DEBUG
 		if (rddebug & RDB_IO)
