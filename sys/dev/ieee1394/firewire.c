@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.6 2006/03/21 23:29:04 yamt Exp $	*/
+/*	$NetBSD: firewire.c,v 1.7 2006/04/14 21:22:26 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1801,8 +1801,10 @@ fw_rcv_copy(struct fw_rcv_buf *rb)
 			    rb->xfer->recv.pay_len, len - res);
 			len = res;
 		}
-		bcopy(rb->vec->iov_base, p, len);
-		p += len;
+		if (p) {
+			bcopy(rb->vec->iov_base, p, len);
+			p += len;
+		}
 		res -= len;
 		plen -= len;
 		if (res == 0 || plen == 0)
