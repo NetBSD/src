@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.95 2006/03/19 19:06:39 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.96 2006/04/14 16:57:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.95 2006/03/19 19:06:39 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.96 2006/04/14 16:57:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1198,7 +1198,6 @@ tar_options(int argc, char **argv)
 						}
 						if (pat_add(str, dir) < 0)
 							tar_usage();
-						free(str);
 						sawpat = 1;
 					}
 					/* Bomb if given -C w/out a dir. */
