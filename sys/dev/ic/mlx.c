@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.39 2006/03/25 23:10:12 thorpej Exp $	*/
+/*	$NetBSD: mlx.c,v 1.40 2006/04/14 20:53:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.39 2006/03/25 23:10:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.40 2006/04/14 20:53:38 christos Exp $");
 
 #include "ld.h"
 
@@ -1848,13 +1848,12 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 
  out:
 	if (mc != NULL) {
+		/* Copy out status and data */
+		mu->mu_status = mc->mc_status;
 		if (mapped)
 			mlx_ccb_unmap(mlx, mc);
 		mlx_ccb_free(mlx, mc);
 	}
-
-	/* Copy out status and data */
-	mu->mu_status = mc->mc_status;
 
 	if (kbuf != NULL) {
 		if (mu->mu_datasize > 0 && (mu->mu_bufdir & MU_XFER_IN) != 0) {
