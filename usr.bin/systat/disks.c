@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.15 2005/02/26 18:58:45 dsl Exp $	*/
+/*	$NetBSD: disks.c,v 1.16 2006/04/14 13:14:06 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.15 2005/02/26 18:58:45 dsl Exp $");
+__RCSID("$NetBSD: disks.c,v 1.16 2006/04/14 13:14:06 blymn Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -42,16 +42,16 @@ __RCSID("$NetBSD: disks.c,v 1.15 2005/02/26 18:58:45 dsl Exp $");
 
 #include "systat.h"
 #include "extern.h"
-#include "dkstats.h"
+#include "drvstats.h"
 
-static void dkselect(char *args, int truefalse, int selections[]);
+static void drvselect(char *args, int truefalse, int selections[]);
 
 void
 disks_add(char *args)
 {
 
 	if (args)
-		dkselect(args, 1, dk_select);
+		drvselect(args, 1, drv_select);
 }
 
 void
@@ -59,7 +59,7 @@ disks_remove(char *args)
 {
 
 	if (args)
-		dkselect(args, 0, dk_select);
+		drvselect(args, 0, drv_select);
 }
 
 void
@@ -68,19 +68,19 @@ disks_drives(char *args)
 	int i;
 
 	if (args) {
-		for (i = 0; i < dk_ndrive; i++)
-			dk_select[i] = 0;
+		for (i = 0; i < ndrive; i++)
+			drv_select[i] = 0;
 		disks_add(args);
 	} else {
 		move(CMDLINE, 0);
 		clrtoeol();
-		for (i = 0; i < dk_ndrive; i++)
+		for (i = 0; i < ndrive; i++)
 			printw("%s ", dr_name[i]);
 	}
 }
 
 static void
-dkselect(char *args, int truefalse, int selections[])
+drvselect(char *args, int truefalse, int selections[])
 {
 	char *cp;
 	int i;
@@ -98,12 +98,12 @@ dkselect(char *args, int truefalse, int selections[])
 			*cp++ = '\0';
 		if (cp - args == 0)
 			break;
-		for (i = 0; i < dk_ndrive; i++)
+		for (i = 0; i < ndrive; i++)
 			if (strcmp(args, dr_name[i]) == 0) {
 				selections[i] = truefalse;
 				break;
 			}
-		if (i >= dk_ndrive)
+		if (i >= ndrive)
 			error("%s: unknown drive", args);
 		args = cp;
 	}
