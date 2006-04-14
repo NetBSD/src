@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.16 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.17 2006/04/14 23:43:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.16 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.17 2006/04/14 23:43:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,9 +481,10 @@ llc_ctlinput(prc, addr, info)
 
 	case PRC_CONNECT_REQUEST:
 		if (linkp == 0) {
-			if ((linkp = llc_newlink((struct sockaddr_dl *) nlrt->rt_gateway,
+			if (nlrt == NULL ||
+			    (linkp = llc_newlink((struct sockaddr_dl *) nlrt->rt_gateway,
 						 nlrt->rt_ifp, nlrt,
-						 pcb, llrt)) == 0)
+						 pcb, llrt)) == NULL)
 				return (0);
 			((struct npaidbentry *)llrt->rt_llinfo)->np_link = linkp;
 			i = splnet();
