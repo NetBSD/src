@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.114 2006/04/14 23:09:16 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.115 2006/04/14 23:17:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.114 2006/04/14 23:09:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.115 2006/04/14 23:17:24 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -918,7 +918,8 @@ tcp_usrclosed(struct tcpcb *tp)
 #endif
 		else
 			so = NULL;
-		soisdisconnected(so);
+		if (so)
+			soisdisconnected(so);
 		/*
 		 * If we are in FIN_WAIT_2, we arrived here because the
 		 * application did a shutdown of the send side.  Like the
