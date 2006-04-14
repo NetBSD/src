@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.171 2006/04/14 17:04:06 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.172 2006/04/14 17:07:23 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.171 2006/04/14 17:04:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.172 2006/04/14 17:07:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3092,13 +3092,15 @@ ohci_device_intr_close(usbd_pipe_handle pipe)
 		usb_delay_ms(&sc->sc_bus, 2);
 
 	for (p = sc->sc_eds[pos]; p && p->next != sed; p = p->next)
-		;
+		continue;
+	if (p != NULL) {
+		p->next = sed->next;
+		p->ed.ed_nexted = sed->ed.ed_nexted;
+	}
 #ifdef DIAGNOSTIC
-	if (p == NULL)
+	else
 		panic("ohci_device_intr_close: ED not found");
 #endif
-	p->next = sed->next;
-	p->ed.ed_nexted = sed->ed.ed_nexted;
 	splx(s);
 
 	for (j = 0; j < nslots; j++)
