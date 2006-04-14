@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.22 2006/03/28 18:29:42 riz Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.23 2006/04/14 18:50:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -2351,14 +2351,16 @@ sk_intr(void *xsc)
 		}
 
 		/* Then MAC interrupts. */
-		if (status & SK_ISR_MAC1 && (ifp0->if_flags & IFF_RUNNING)) {
+		if ((status & SK_ISR_MAC1) && ifp0 &&
+		    (ifp0->if_flags & IFF_RUNNING)) {
 			if (sc->sk_type == SK_GENESIS)
 				sk_intr_xmac(sc_if0);
 			else
 				sk_intr_yukon(sc_if0);
 		}
 
-		if (status & SK_ISR_MAC2 && (ifp1->if_flags & IFF_RUNNING)) {
+		if ((status & SK_ISR_MAC2) && ifp1 &&
+		    (ifp1->if_flags & IFF_RUNNING)) {
 			if (sc->sk_type == SK_GENESIS)
 				sk_intr_xmac(sc_if1);
 			else
