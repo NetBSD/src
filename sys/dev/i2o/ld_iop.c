@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.20 2006/03/29 06:45:05 thorpej Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.21 2006/04/14 20:17:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.20 2006/03/29 06:45:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.21 2006/04/14 20:17:34 christos Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -502,7 +502,7 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 	if (!err && rb->reqstatus != I2O_STATUS_SUCCESS) {
 		detail = le16toh(rb->detail);
 #ifdef I2OVERBOSE
-		if (detail > sizeof(ld_iop_errors) / sizeof(ld_iop_errors[0]))
+		if (detail >= __arraycount(ld_iop_errors))
 			errstr = "<unknown>";
 		else
 			errstr = ld_iop_errors[detail];
