@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.42 2003/06/11 17:26:32 drochner Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.43 2006/04/14 13:19:03 blymn Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.42 2003/06/11 17:26:32 drochner Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.43 2006/04/14 13:19:03 blymn Exp $");
 #endif
 #endif
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: rstat_proc.c,v 1.42 2003/06/11 17:26:32 drochner Exp $");
 #ifdef BSD
 #include <sys/sysctl.h>
 #include <uvm/uvm_extern.h>
-#include "dkstats.h"
+#include "drvstats.h"
 #else
 #include <sys/dk.h>
 #endif
@@ -222,13 +222,13 @@ updatestat(int dummy)
 	sincelastreq++;
 
 	/* 
-	 * dkreadstats reads in the "disk_count" as well as the "disklist"
+	 * drvreadstats reads in the "disk_count" as well as the "disklist"
 	 * statistics.  It also retrieves "hz" and the "cp_time" array.
 	 */
-	dkreadstats();
+	drvreadstats();
 	memset(stats_all.s3.dk_xfer, 0, sizeof(stats_all.s3.dk_xfer));
-	for (i = 0; i < dk_ndrive && i < DK_NDRIVE; i++)
-		stats_all.s3.dk_xfer[i] = cur.dk_rxfer[i] + cur.dk_wxfer[i];
+	for (i = 0; i < ndrive && i < DK_NDRIVE; i++)
+		stats_all.s3.dk_xfer[i] = cur.rxfer[i] + cur.wxfer[i];
 
 #ifdef BSD
 	for (i = 0; i < CPUSTATES; i++)
@@ -354,7 +354,7 @@ setup()
 		numintfs++;
 		off = (long)ifnet.if_list.tqe_next;
 	}
-	dkinit(0);
+	drvinit(0);
 }
 
 /*
@@ -363,7 +363,7 @@ setup()
 int
 havedisk()
 {
-	return dk_ndrive != 0;
+	return ndrive != 0;
 }
 
 void
