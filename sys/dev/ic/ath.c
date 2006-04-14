@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.70 2006/04/02 05:52:50 gdamore Exp $	*/
+/*	$NetBSD: ath.c,v 1.71 2006/04/14 20:20:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.70 2006/04/02 05:52:50 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.71 2006/04/14 20:20:33 christos Exp $");
 #endif
 
 /*
@@ -3601,8 +3601,6 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			}
 			rix = sc->sc_mcastrix;
 			txrate = rt->info[rix].rateCode;
-			if (shortPreamble)
-				txrate |= rt->info[rix].shortPreamble;
 			try0 = 1;
 		} else {
 			ath_rate_findrate(sc, an, shortPreamble, pktlen,
