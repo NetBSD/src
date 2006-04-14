@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.103 2006/03/07 23:16:20 jmcneill Exp $	*/
+/*	$NetBSD: auich.c,v 1.104 2006/04/14 13:02:57 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.103 2006/03/07 23:16:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.104 2006/04/14 13:02:57 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -850,7 +850,7 @@ auich_reset_codec(void *v)
 		printf("%s: auich_reset_codec: time out\n", sc->sc_dev.dv_xname);
 		return ETIMEDOUT;
 	}
-#ifdef DEBUG
+#ifdef AUICH_DEBUG
 	if (status & ICH_SCR)
 		printf("%s: The 2nd codec is ready.\n",
 		       sc->sc_dev.dv_xname);
