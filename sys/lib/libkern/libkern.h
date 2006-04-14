@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.59 2006/03/27 21:18:33 dyoung Exp $	*/
+/*	$NetBSD: libkern.h,v 1.60 2006/04/14 18:24:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -203,14 +203,14 @@ tolower(int ch)
 #endif
 #endif
 
-#ifndef DIAGNOSTIC
+#if !defined(DIAGNOSTIC) && !defined(__COVERITY__)
 #define _DIAGASSERT(a)	(void)0
 #ifdef lint
 #define	KASSERT(e)	/* NOTHING */
 #else /* !lint */
 #define	KASSERT(e)	((void)0)
 #endif /* !lint */
-#else /* DIAGNOSTIC */
+#else /* DIAGNOSTIC || __COVERITY__ */
 #define _DIAGASSERT(a)	assert(a)
 #ifdef __STDC__
 #define	KASSERT(e)	(__predict_true((e)) ? (void)0 :		    \
