@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.26 2006/03/10 15:53:55 christos Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.27 2006/04/14 22:23:52 christos Exp $	*/
 
 /*-
  *
@@ -5173,6 +5173,7 @@ rxintr_cleanup(softc_t *sc)
       }
     else /* 2) link mbufs. */
       {
+      KASSERT(last_mbuf != NULL);
       last_mbuf->m_next = new_mbuf;
       /* M_PKTHDR should be set in the first mbuf only. */
       new_mbuf->m_flags &= ~M_PKTHDR;
