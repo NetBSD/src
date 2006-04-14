@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.4.8 2006/04/13 22:25:29 elad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.4.9 2006/04/14 10:02:48 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.8 2006/04/13 22:25:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.9 2006/04/14 10:02:48 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2030,6 +2030,8 @@ nfs_getreq(nd, nfsd, has_header)
 
 		len = fxdr_unsigned(int, *tl);
 		if (len < 0 || len > RPCAUTH_UNIXGIDS) {
+			kauth_cred_free(nd->nd_cr);
+			nd->nd_cr = NULL;
 			m_freem(mrep);
 			return (EBADRPC);
 		}
@@ -2047,6 +2049,8 @@ nfs_getreq(nd, nfsd, has_header)
 
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
+			kauth_cred_free(nd->nd_cr);
+			kauth_cred_free(nd->nd_cr);
 			m_freem(mrep);
 			return (EBADRPC);
 		}

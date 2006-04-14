@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.88.8.5 2006/03/12 17:15:15 elad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.88.8.6 2006/04/14 10:02:48 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.8.5 2006/03/12 17:15:15 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.8.6 2006/04/14 10:02:48 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -627,6 +627,8 @@ nfssvc_nfsd(nsd, argp, l)
 		}
 		if (error || (slp->ns_flag & SLP_VALID) == 0) {
 			if (nd) {
+				if (nd->nd_cr != NULL)
+					kauth_cred_destroy(nd->nd_cr);
 				pool_put(&nfs_srvdesc_pool, nd);
 				nd = NULL;
 			}
@@ -814,6 +816,8 @@ nfssvc_nfsd(nsd, argp, l)
 				break;
 			}
 			if (nd) {
+				if (nd->nd_cr != NULL)
+					kauth_cred_destroy(nd->nd_cr);
 				pool_put(&nfs_srvdesc_pool, nd);
 				nd = NULL;
 			}
@@ -903,6 +907,8 @@ nfsrv_zapsock(slp)
 	for (nwp = LIST_FIRST(&slp->ns_tq); nwp; nwp = nnwp) {
 		nnwp = LIST_NEXT(nwp, nd_tq);
 		LIST_REMOVE(nwp, nd_tq);
+		if (nwp->nd_cr != NULL)
+			kauth_cred_destroy(nwp->nd_cr);
 		pool_put(&nfs_srvdesc_pool, nwp);
 	}
 	splx(s);
