@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.7 2006/04/11 15:52:07 rpaulo Exp $	*/
+/*	$NetBSD: sbp.c,v 1.8 2006/04/14 21:44:18 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -2514,7 +2514,7 @@ END_DEBUG
 SBP_DEBUG(1)
 			printf("%s:%d:%d:func_code 0x%04x: "
 				"Invalid target (target needed)\n",
-				device_get_nameunit(sbp->fd.dev),
+				sbp ? device_get_nameunit(sbp->fd.dev) : "???",
 				SCSI_XFER_TARGET(sxfer), SCSI_XFER_LUN(sxfer),
 				SCSI_XFER_FUNCCODE(sxfer));
 END_DEBUG
