@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.41 2006/04/14 20:56:26 christos Exp $	*/
+/*	$NetBSD: mlx.c,v 1.42 2006/04/14 21:06:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.41 2006/04/14 20:56:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.42 2006/04/14 21:06:47 christos Exp $");
 
 #include "ld.h"
 
@@ -1611,11 +1611,8 @@ mlx_enquire(struct mlx_softc *mlx, int command, size_t bufsize,
 
 	/* We got an error, and we allocated a result. */
 	if (rv != 0 && result != NULL) {
-		if (handler != NULL && mc != NULL) {
-			if (mapped)
-				mlx_ccb_unmap(mlx, mc);
+		if (mc != NULL)
 			mlx_ccb_free(mlx, mc);
-		}
 		free(result, M_DEVBUF);
 		result = NULL;
 	}
