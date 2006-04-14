@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.209 2006/04/14 22:53:53 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.210 2006/04/14 22:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209 2006/04/14 22:53:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.210 2006/04/14 22:55:32 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -283,6 +283,7 @@ trap(frame)
 
 	if (!KVM86MODE && !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
 		type |= T_USER;
+		KASSERT(l != NULL);
 		l->l_md.md_regs = frame;
 		pcb->pcb_cr2 = 0;		
 	}
