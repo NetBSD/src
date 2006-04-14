@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.10 2006/04/14 21:39:50 christos Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.11 2006/04/14 21:47:04 christos Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -934,7 +934,8 @@ struct fwbus_attach_args {
 #define SBP_DEVICE_FREEZE(d, x)	scsipi_periph_freeze((d)->periph, (x));
 #define SBP_DEVICE_THAW(d, x)						\
 	do {								\
-		scsipi_periph_thaw((d)->periph, (x));			\
+		if ((d)->periph)					\
+			scsipi_periph_thaw((d)->periph, (x));		\
 		/* XXXX */						\
 		scsipi_channel_thaw(&(d)->target->sbp->sc_channel, 0);	\
 	} while (/*CONSTCOND*/0)
