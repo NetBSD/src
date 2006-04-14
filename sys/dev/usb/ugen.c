@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.80 2006/03/28 17:38:35 thorpej Exp $	*/
+/*	$NetBSD: ugen.c,v 1.81 2006/04/14 16:39:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.80 2006/03/28 17:38:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.81 2006/04/14 16:39:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -986,6 +986,7 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 		return (err);
 	for (endptno = 0; endptno < nendpt; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
+		KASSERT(ed != NULL);
 		endpt = ed->bEndpointAddress;
 		dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
 		sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)][dir];
