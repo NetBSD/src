@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.4 2006/04/05 21:42:49 perseant Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.5 2006/04/14 00:58:32 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -694,7 +694,7 @@ calc_cb(struct clfs *fs, int sn, struct clfs_seguse *t)
 	benefit = (int64_t)fs->lfs_ssize - t->nbytes -
 		  (t->nsums + 1) * fs->lfs_fsize;
 	if (fs->lfs_bsize > fs->lfs_fsize) /* fragmentation */
-		benefit -= fs->lfs_bsize;
+		benefit -= (fs->lfs_bsize / 2);
 	if (benefit <= 0) {
 		t->priority = 0;
 		return;
@@ -937,6 +937,9 @@ check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
 		}
 		if (bip[i].bi_lbn == LFS_UNUSED_LBN)
 			continue;
+		if (bip[i].bi_lbn < NDADDR)
+			continue;
+
 		ufs_getlbns((struct lfs *)fs, NULL, (daddr_t)bip[i].bi_lbn, in, &num);
 		for (j = 0; j < num; j++) {
 			check_or_add(bip[i].bi_inode, in[j].in_lbn,
