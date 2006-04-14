@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.571 2006/04/12 13:48:52 jmmv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.572 2006/04/14 09:50:16 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.571 2006/04/12 13:48:52 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.572 2006/04/14 09:50:16 jmmv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -321,7 +321,7 @@ void	native_loader(int, int, struct bootinfo_source *, paddr_t, int, int);
 void
 native_loader(int bl_boothowto, int bl_bootdev,
     struct bootinfo_source *bl_bootinfo, paddr_t bl_esym,
-    int bl_biosbasemem, int bl_biosextmem)
+    int bl_biosextmem, int bl_biosbasemem)
 {
 #define RELOC(type, x) ((type)((vaddr_t)(x) - KERNBASE))
 
