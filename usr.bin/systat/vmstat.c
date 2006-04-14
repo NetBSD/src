@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.64 2006/03/20 20:36:38 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.65 2006/04/14 13:14:06 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.64 2006/03/20 20:36:38 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.65 2006/04/14 13:14:06 blymn Exp $");
 #endif /* not lint */
 
 /*
@@ -55,8 +55,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.64 2006/03/20 20:36:38 dsl Exp $");
 
 #include "systat.h"
 #include "extern.h"
-#include "dkstats.h"
-#include "tpstats.h"
+#include "drvstats.h"
 #include "utmpentry.h"
 #include "vmstat.h"
 
@@ -75,7 +74,6 @@ static void allocinfo(struct Info *);
 static void copyinfo(struct Info *, struct Info *);
 static float cputime(int);
 static void dinfo(int, int, int);
-static void tinfo(int, int, int);
 static void getinfo(struct Info *);
 static int ucount(void);
 
@@ -222,9 +220,7 @@ initvmstat(void)
 		}
 	}
 	hertz = stathz ? stathz : hz;
-	if (!dkinit(1))
-		return(0);
-	if (!tpinit(1))
+	if (!drvinit(1))
 		return(0);
 
 	/* Old style interrupt counts - deprecated */
@@ -497,8 +493,7 @@ showvmstat(void)
 
 	cpuswap();
 	if (display_mode == TIME) {
-		dkswap();
-		tpswap();
+		drvswap();
 		etime = cur.cp_etime;
 		/* < 5 ticks - ignore this trash */
 		if ((etime * hertz) < 1.0) {
@@ -552,14 +547,9 @@ showvmstat(void)
 
 	/* Disks */
 	for (l = 0, i = 0, r = DISKROW, c = DISKCOL;
-	     i < (dk_ndrive + tp_ndrive); i++) {
-		if (i < dk_ndrive) {
-			if (!dk_select[i])
-				continue;
-		} else {
-			if (!tp_select[i - dk_ndrive])
-				continue;
-		}
+	     i < ndrive; i++) {
+		if (!drv_select[i])
+			continue;
 
 		if (disk_horiz)
 			c += DISKCOLWIDTH;
@@ -583,10 +573,7 @@ showvmstat(void)
 		}
 		l++;
 
-		if (i < dk_ndrive)
-			dinfo(i, r, c);
-		else
-			tinfo(i - dk_ndrive, r, c);
+		dinfo(i, r, c);
 	}
 	/* blank out if we lost any disks */
 	for (i = l; i < last_disks; i++) {
@@ -793,8 +780,7 @@ getinfo(struct Info *stats)
 	int i;
 
 	cpureadstats();
-	dkreadstats();
-	tpreadstats();
+	drvreadstats();
 	NREAD(X_NCHSTATS, &stats->nchstats, sizeof stats->nchstats);
 	if (nintr)
 		NREAD(X_INTRCNT, stats->intrcnt, nintr * LONG);
@@ -854,48 +840,20 @@ dinfo(int dn, int r, int c)
 	mvprintw(r, c, "%*.*s", DISKCOLWIDTH, DISKCOLWIDTH, dr_name[dn]);
 	ADV;
 
-	putint((int)(cur.dk_seek[dn]/etime+0.5), r, c, DISKCOLWIDTH);
+	putint((int)(cur.seek[dn]/etime+0.5), r, c, DISKCOLWIDTH);
 	ADV;
-	putint((int)((cur.dk_rxfer[dn]+cur.dk_wxfer[dn])/etime+0.5),
+	putint((int)((cur.rxfer[dn]+cur.wxfer[dn])/etime+0.5),
 	    r, c, DISKCOLWIDTH);
 	ADV;
-	puthumanint((cur.dk_rbytes[dn] + cur.dk_wbytes[dn]) / etime + 0.5,
+	puthumanint((cur.rbytes[dn] + cur.wbytes[dn]) / etime + 0.5,
 		    r, c, DISKCOLWIDTH);
 	ADV;
 
 	/* time busy in disk activity */
-	atime = cur.dk_time[dn].tv_sec + cur.dk_time[dn].tv_usec / 1000000.0;
+	atime = cur.time[dn].tv_sec + cur.time[dn].tv_usec / 1000000.0;
 	atime = atime * 100.0 / etime;
 	if (atime >= 100)
 		putint(100, r, c, DISKCOLWIDTH);
 	else
 		putfloat(atime, r, c, DISKCOLWIDTH, 1, 1);
 }
-
-static void
-tinfo(int dn, int r, int c)
-{
-	double atime;
-
-	mvprintw(r, c, "%*.*s", DISKCOLWIDTH, DISKCOLWIDTH, tp_name[dn]);
-	ADV;
-	ADV; /* skip over the seeks column - not relevant for tape drives */
-
-	putint((int)((cur_tape.rxfer[dn]+cur_tape.wxfer[dn])/etime+0.5),
-	    r, c, DISKCOLWIDTH);
-	ADV;
-	puthumanint((cur_tape.rbytes[dn] + cur_tape.wbytes[dn]) / etime + 0.5,
-		    r, c, DISKCOLWIDTH);
-	ADV;
-
-	/* time busy in disk activity */
-	atime = cur_tape.time[dn].tv_sec + cur_tape.time[dn].tv_usec / 1000000.0;
-	atime = atime * 100.0 / etime;
-	if (atime >= 100)
-		putint(100, r, c, DISKCOLWIDTH);
-	else
-		putfloat(atime, r, c, DISKCOLWIDTH, 1, 1);
-#undef ADV
-}
-
-
