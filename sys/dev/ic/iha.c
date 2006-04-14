@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.32 2006/03/19 06:22:45 rtr Exp $ */
+/*	$NetBSD: iha.c,v 1.33 2006/04/14 20:51:41 christos Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.32 2006/03/19 06:22:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.33 2006/04/14 20:51:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,13 +679,16 @@ iha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			scb->status = STATUS_RENT;
 			TAILQ_REMOVE(&sc->sc_freescb, scb, chain);
 		}
-#ifdef DIAGNOSTIC
 		else {
-			scsipi_printaddr(periph);
 			printf("unable to allocate scb\n");
+#ifdef DIAGNOSTIC
+			scsipi_printaddr(periph);
 			panic("iha_scsipi_request");
-		}
+#else
+			splx(s);
+			return;
 #endif
+		}
 		splx(s);
 
 		scb->target = periph->periph_target;
