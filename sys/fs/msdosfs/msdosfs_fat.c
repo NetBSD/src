@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.8 2006/04/15 02:56:51 christos Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.9 2006/04/15 02:58:12 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.8 2006/04/15 02:56:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.9 2006/04/15 02:58:12 christos Exp $");
 
 /*
  * kernel include files.
@@ -873,6 +873,7 @@ freeclusterchain(pmp, cluster)
 			lbn = bn;
 		}
 		usemap_free(pmp, cluster);
+		KASSERT(bp != NULL);
 		switch (pmp->pm_fatmask) {
 		case FAT12_MASK:
 			readcn = getushort(&bp->b_data[bo]);
