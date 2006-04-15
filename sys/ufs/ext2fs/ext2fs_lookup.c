@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.42 2006/03/18 13:49:19 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.43 2006/04/15 05:31:18 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.42 2006/03/18 13:49:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.43 2006/04/15 05:31:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,6 +390,7 @@ searchloop:
 		 * directory. Complete checks can be run by patching
 		 * "dirchk" to be true.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct ext2fs_direct *)
 			((char *)bp->b_data + entryoffsetinblock);
 		if (ep->e2d_reclen == 0 ||
