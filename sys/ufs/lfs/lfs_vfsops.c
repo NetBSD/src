@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.203 2006/04/10 23:51:50 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.204 2006/04/15 05:19:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.203 2006/04/10 23:51:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.204 2006/04/15 05:19:08 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1950,7 +1950,7 @@ lfs_issequential_hole(const struct ufsmount *ump,
 static int
 lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 {
-	int i, s, error, run;
+	int i, s, error, run, haveeof = 0;
 	int fs_bshift;
 	vaddr_t kva;
 	off_t eof, offset, startoffset = 0;
@@ -2004,6 +2004,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	    vp, pgs, npages, flags);
 
 	GOP_SIZE(vp, vp->v_size, &eof, 0);
+	haveeof = 1;
 
 	if (vp->v_type == VREG)
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
@@ -2217,7 +2218,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		DLOG((DLOG_PAGE, "lfs_gop_write: clean pages dirtied\n"));
 	else if ((pgs[0]->offset & fs->lfs_bmask) != 0)
 		DLOG((DLOG_PAGE, "lfs_gop_write: not on block boundary\n"));
-	else if (startoffset >= eof)
+	else if (haveeof && startoffset >= eof)
 		DLOG((DLOG_PAGE, "lfs_gop_write: ino %d start 0x%" PRIx64
 		      " eof 0x%" PRIx64 " npages=%d\n", VTOI(vp)->i_number,
 		      pgs[0]->offset, eof, npages));
