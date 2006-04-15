@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.135 2006/03/28 20:58:39 pavel Exp $
+# $NetBSD: GENERIC,v 1.136 2006/04/15 12:53:09 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.135 $"
+#ident		"GENERIC-$Revision: 1.136 $"
 
 maxusers	32		# estimated number of users
 
@@ -293,6 +293,10 @@ we1		at isa? port 0x300 iomem 0xcc000 irq 10
 # PLATFORM_NEC_RD94
 necpb*		at mainbus0	# NEC RISCstation PCI host bridge.
 pci*		at necpb?
+pci*		at ppb? bus ?
+options 	PCI_NETBSD_CONFIGURE
+
+ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 
 # PCI cryptographic devices
 hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
