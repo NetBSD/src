@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.8,v 1.15 2004/06/08 03:28:42 wiz Exp $
+.\" $NetBSD: wsmoused.8,v 1.16 2006/04/15 17:53:03 jmmv Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 6, 2003
+.Dd April 15, 2006
 .Dt WSMOUSED 8
 .Os
 .Sh NAME
@@ -133,15 +133,6 @@ you want to execute do not require superuser privileges.
 An alternative is to use
 .Xr su 1
 as part of the command string in the configuration file.
-.Pp
-When enabling the kernel option
-.Cd options WSDISPLAY_CHARFUNCS ,
-only needed by the
-.Sq selection
-mode, be absolutely sure that
-.Pa /dev/ttyE*
-devices have restrictive permissions; the mouse uses some functions
-that could allow terminal snooping if improperly set.
 .Sh NOTES
 The following notes apply to all work modes:
 .Bl -bullet
@@ -161,9 +152,6 @@ The mouse cursor is only visible for a short period of time.
 It will disappear
 when you stop moving it to avoid console corruption (which happens if
 it is visible and there is text output).
-.It
-.Cd options WSDISPLAY_CHARFUNCS
-is needed in your kernel configuration file.
 .It
 You need to change the getty program which is run in the first
 virtual terminal to use
