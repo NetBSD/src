@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.103 2006/04/15 00:44:18 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.104 2006/04/15 01:37:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.103 2006/04/15 00:44:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.104 2006/04/15 01:37:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1712,8 +1712,10 @@ out:
 		vput(vp);
 		KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	}
-	diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
-	vrele(dirp);
+	if (dirp) {
+		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
+		vrele(dirp);
+	}
 	nfsm_reply(NFSX_SRVFH(1) + NFSX_POSTOPATTR(1) + NFSX_WCCDATA(1));
 	if (!error) {
 		nfsm_srvpostop_fh(fhp);
