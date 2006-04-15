@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.234 2006/04/15 00:40:20 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.235 2006/04/15 01:51:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.234 2006/04/15 00:40:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.235 2006/04/15 01:51:47 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -3092,8 +3092,11 @@ nfs_lookitup(dvp, name, len, cred, l, npp)
 		    if (np->n_fhsize > NFS_SMALLFH && fhlen <= NFS_SMALLFH) {
 			free((caddr_t)np->n_fhp, M_NFSBIGFH);
 			np->n_fhp = &np->n_fh;
-		    } else if (np->n_fhsize <= NFS_SMALLFH && fhlen>NFS_SMALLFH)
+		    }
+#if NFS_SMALLFH < NFSX_V3FHMAX
+		    else if (np->n_fhsize <= NFS_SMALLFH && fhlen>NFS_SMALLFH)
 			np->n_fhp =(nfsfh_t *)malloc(fhlen,M_NFSBIGFH,M_WAITOK);
+#endif
 		    memcpy((caddr_t)np->n_fhp, (caddr_t)nfhp, fhlen);
 		    np->n_fhsize = fhlen;
 		    newvp = NFSTOV(np);
