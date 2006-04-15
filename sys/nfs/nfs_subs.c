@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.159 2006/04/15 01:41:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.159 2006/04/15 01:41:46 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2374,6 +2374,7 @@ nfs_zeropad(mp, len, nul)
 			}
 			count -= m->m_len;
 		}
+		KASSERT(m && m->m_next);
 		m_freem(m->m_next);
 		m->m_next = NULL;
 	}
