@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.100 2006/03/24 19:24:38 rpaulo Exp $	*/
+/*	$NetBSD: nd6.c,v 1.101 2006/04/15 00:09:29 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.100 2006/03/24 19:24:38 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.101 2006/04/15 00:09:29 christos Exp $");
 
 #include "opt_ipsec.h"
 
@@ -2297,11 +2297,11 @@ fill_drlist(oldp, oldlenp, ol)
 	}
 
 	if (oldp) {
-		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
 		if (l > ol)
 			error = ENOMEM;
-	} else
-		*oldlenp = l;
+	}
+	if (oldlenp)
+		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
 
 	splx(s);
 
