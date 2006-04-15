@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.89 2006/04/15 01:31:11 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.90 2006/04/15 01:35:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.89 2006/04/15 01:31:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.90 2006/04/15 01:35:12 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -716,7 +716,8 @@ nfssvc_nfsd(nsd, argp, l)
 #endif
 				mreq = NULL;
 				netexport_rdlock();
-				if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
+				if (writes_todo || nd == NULL ||
+				     (!(nd->nd_flag & ND_NFSV3) &&
 				     nd->nd_procnum == NFSPROC_WRITE &&
 				     nfsrvw_procrastinate > 0 && !notstarted))
 					error = nfsrv_writegather(&nd, slp,
