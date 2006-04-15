@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.32 2006/04/14 19:51:21 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.33 2006/04/15 16:36:03 he Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.32 2006/04/14 19:51:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.33 2006/04/15 16:36:03 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -581,7 +581,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 
 		if (aex->ae_numldrives > __arraycount(aex->ae_drivestate)) {
 			aprint_error("%s: Inquiry returned more drives (%d)"
-			   " than the array can handle (%d)\n",
+			   " than the array can handle (%zd)\n",
 			   amr->amr_dv.dv_xname, aex->ae_numldrives,
 			   __arraycount(aex->ae_drivestate));
 			aex->ae_numldrives = __arraycount(aex->ae_drivestate);
@@ -690,7 +690,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	 */
 	if (ae->ae_ldrv.al_numdrives > __arraycount(ae->ae_ldrv.al_size)) {
 		aprint_error("%s: Inquiry returned more drives (%d)"
-		   " than the array can handle (%d)\n",
+		   " than the array can handle (%zd)\n",
 		   amr->amr_dv.dv_xname, ae->ae_ldrv.al_numdrives,
 		   __arraycount(ae->ae_ldrv.al_size));
 		ae->ae_ldrv.al_numdrives = __arraycount(ae->ae_ldrv.al_size);
