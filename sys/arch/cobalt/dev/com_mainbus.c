@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.11 2006/04/06 11:50:19 tsutsui Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.12 2006/04/15 13:26:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.11 2006/04/06 11:50:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.12 2006/04/15 13:26:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ com_mainbus_cnprobe(struct consdev *cn)
 	 */
 	if ((bi_flags = lookup_bootinfo(BTINFO_FLAGS)) == NULL) {
 		/* No boot information, probe console now */
-		console_present = *(volatile u_int32_t *)
+		console_present = *(volatile uint32_t *)
 					MIPS_PHYS_TO_KSEG1(0x0020001c);
 	} else {
 		/* Get the value determined by the boot loader. */
