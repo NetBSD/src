@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.114 2006/04/02 13:25:34 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.115 2006/04/15 04:47:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.114 2006/04/02 13:25:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.115 2006/04/15 04:47:11 christos Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1529,7 +1529,8 @@ pool_drain(void *arg)
 		drainpp = LIST_NEXT(pp, pr_poollist);
 	}
 	simple_unlock(&pool_head_slock);
-	pool_reclaim(pp);
+	if (pp)
+		pool_reclaim(pp);
 	splx(s);
 }
 
