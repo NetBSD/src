@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.57 2006/04/15 05:05:44 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.58 2006/04/15 05:07:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.57 2006/04/15 05:05:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.58 2006/04/15 05:07:15 christos Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -1078,7 +1078,7 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 	coalesce = (ex->ex_flags & EXF_NOCOALESCE) == 0;
 	simple_unlock(&ex->ex_slock);
 
-	if (coallesce) {
+	if (coalesce) {
 		/* Allocate a region descriptor. */
 		nrp = extent_alloc_region_descriptor(ex, flags);
 		if (nrp == NULL)
