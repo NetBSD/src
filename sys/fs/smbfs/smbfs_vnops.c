@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.49 2006/04/15 02:53:49 christos Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.50 2006/04/15 02:55:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.49 2006/04/15 02:53:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.50 2006/04/15 02:55:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -956,7 +956,6 @@ smbfs_strategy(v)
 	struct lwp *l;
 	int error = 0;
 
-	p = l->l_proc;
 	SMBVDEBUG("\n");
 	if ((bp->b_flags & (B_PHYS|B_ASYNC)) == (B_PHYS|B_ASYNC))
 		panic("smbfs physio/async");
