@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.41 2006/03/23 11:16:47 hannken Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.42 2006/04/15 05:29:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.41 2006/03/23 11:16:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.42 2006/04/15 05:29:10 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -147,7 +147,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, struct ucred *cred,
 			uvm_vnp_setsize(vp, ip->i_ffs1_size);
 			ip->i_ffs1_db[nb] = ufs_rw32((u_int32_t)newb, needswap);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			if (bpp) {
+			if (bpp && *bpp) {
 				if (flags & B_SYNC)
 					bwrite(*bpp);
 				else
