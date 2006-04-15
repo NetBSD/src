@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.196 2005/12/11 12:24:58 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.197 2006/04/15 02:29:12 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.196 2005/12/11 12:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.197 2006/04/15 02:29:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1996,7 +1996,10 @@ tcp_established(struct tcpcb *tp)
 		bufsize = rt->rt_rmx.rmx_recvpipe;
 	else
 #endif
+	{
+		KASSERT(so != NULL);
 		bufsize = so->so_rcv.sb_hiwat;
+	}
 	if (bufsize > tp->t_ourmss) {
 		bufsize = roundup(bufsize, tp->t_ourmss);
 		if (bufsize > sb_max)
