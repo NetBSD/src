@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.232 2006/04/14 13:09:06 blymn Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.233 2006/04/15 00:36:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.232 2006/04/14 13:09:06 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.233 2006/04/15 00:36:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -2216,7 +2216,7 @@ nfs_symlink(v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct vnode *newvp = (struct vnode *)0;
 	const int v3 = NFS_ISV3(dvp);
-	int rexmit;
+	int rexmit = 0;
 	struct nfsnode *dnp = VTONFS(dvp);
 
 	*ap->a_vpp = NULL;
