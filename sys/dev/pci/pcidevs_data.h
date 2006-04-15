@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.780 2006/04/06 04:07:31 simonb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.781 2006/04/15 21:15:27 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.780 2006/04/06 04:06:52 simonb Exp
+ *	NetBSD: pcidevs,v 1.781 2006/04/15 21:14:32 jmcneill Exp
  */
 
 /*
@@ -2280,6 +2280,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Guillemot",
 	},
 	{
+	    PCI_VENDOR_TURTLE_BEACH,
+	    "Turtle Beach",
+	},
+	{
 	    PCI_VENDOR_S3,
 	    "S3",
 	},
@@ -2356,7 +2360,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 579;
+const int pci_nvendors = 580;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -4522,6 +4526,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280,
 	    "CS4280 CrystalClear Audio Interface",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4615,
+	    "CS4615",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4281,
@@ -10348,6 +10356,10 @@ static const struct pci_product pci_products[] = {
 	    "ET6000",
 	},
 	{
+	    PCI_VENDOR_TURTLE_BEACH, PCI_PRODUCT_TURTLE_BEACH_SANTA_CRUZ,
+	    "Santa Cruz",
+	},
+	{
 	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C881,
 	    "UM82C881 486 Chipset",
 	},
@@ -11188,4 +11200,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2207;
+const int pci_nproducts = 2209;
