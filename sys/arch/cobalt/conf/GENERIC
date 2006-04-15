@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2006/04/08 12:41:11 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.94 2006/04/15 13:33:05 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.94 $"
 
 maxusers	32
 
@@ -155,6 +155,8 @@ config		netbsd	root on ? type ?
 mainbus0 	at root
 
 cpu0 		at mainbus?
+
+mcclock0	at mainbus? addr 0x10000070
 
 com0		at mainbus? addr 0x1c800000 level 3
 options 	COM_16650
