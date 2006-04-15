@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.781 2006/04/06 04:07:31 simonb Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.782 2006/04/15 21:15:27 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.780 2006/04/06 04:06:52 simonb Exp
+ *	NetBSD: pcidevs,v 1.781 2006/04/15 21:14:32 jmcneill Exp
  */
 
 /*
@@ -617,6 +617,7 @@
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_MEDIAQ	0x4d51		/* MediaQ */
 #define	PCI_VENDOR_GUILLEMOT	0x5046		/* Guillemot */
+#define	PCI_VENDOR_TURTLE_BEACH	0x5053		/* Turtle Beach */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
@@ -1281,6 +1282,7 @@
 #define	PCI_PRODUCT_CIRRUS_CL_CD4400	0x4400		/* CL-CD4400 Communications Controller */
 #define	PCI_PRODUCT_CIRRUS_CS4610	0x6001		/* CS4610 SoundFusion Audio Accelerator */
 #define	PCI_PRODUCT_CIRRUS_CS4280	0x6003		/* CS4280 CrystalClear Audio Interface */
+#define	PCI_PRODUCT_CIRRUS_CS4615	0x6004		/* CS4615 */
 #define	PCI_PRODUCT_CIRRUS_CS4281	0x6005		/* CS4281 CrystalClear Audio Interface */
 
 /* Adaptec's AAR-1210SA serial ATA RAID controller uses the CMDTECH chip */
@@ -3087,6 +3089,9 @@
 #define	PCI_PRODUCT_TSENG_ET4000_W32P_C	0x3206		/* ET4000w32p rev C */
 #define	PCI_PRODUCT_TSENG_ET4000_W32P_D	0x3207		/* ET4000w32p rev D */
 #define	PCI_PRODUCT_TSENG_ET6000	0x3208		/* ET6000 */
+
+/* Turtle Beach products */
+#define	PCI_PRODUCT_TURTLE_BEACH_SANTA_CRUZ	0x3357		/* Santa Cruz */
 
 /* UMC products */
 #define	PCI_PRODUCT_UMC_UM82C881	0x0001		/* UM82C881 486 Chipset */
