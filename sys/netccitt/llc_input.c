@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.18 2006/04/14 23:45:43 christos Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.19 2006/04/15 01:42:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.18 2006/04/14 23:45:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.19 2006/04/15 01:42:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ llcintr()
 			   	else frame->llc_window = sapinfo->si_window;
 			 	frame->llc_fid = 9;			/* XXX */
 			  	frame->llc_class =
-				    sapinfo ? sapinfo->si_class : 1
+				    sapinfo ? sapinfo->si_class : 1;
 			 	frame->llc_ssap = frame->llc_dsap;
 			} else {
 			 	frame->llc_window = 0;
