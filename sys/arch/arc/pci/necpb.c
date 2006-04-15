@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.23 2006/04/15 09:01:11 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.24 2006/04/15 09:07:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.23 2006/04/15 09:01:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.24 2006/04/15 09:07:50 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -443,8 +443,9 @@ necpb_intr(uint32_t mask, struct clockframe *cf)
 {
 	uint32_t vector, stat;
 	struct necpb_intrhand *p;
-	int i;
+	int i, handled;
 
+	handled = 0;
 	vector = in32(RD94_SYS_INTSTAT2) & 0xffff;
 
 	if (vector == 0x4000) {
@@ -457,8 +458,10 @@ necpb_intr(uint32_t mask, struct clockframe *cf)
 #endif
 				p = necpb_inttbl[i];
 				while (p != NULL) {
-					(*p->ih_func)(p->ih_arg);
-					p->ih_evcnt.ev_count++;
+					if ((*p->ih_func)(p->ih_arg)) {
+						p->ih_evcnt.ev_count++;
+						handled |= 1;
+					}
 					p = p->ih_next;
 				}
 			}
@@ -468,9 +471,11 @@ necpb_intr(uint32_t mask, struct clockframe *cf)
 	} else {
 		printf("eint %d\n", vector & 0xff);
 #if 0
-		eisa_intr(vector & 0xff);
+		if (eisa_intr(vector & 0xff)) {
+			handled |= 1;
+		}
 #endif
 	}
 
-	return ~MIPS_INT_MASK_2;
+	return handled ? ~MIPS_INT_MASK_2 : ~0;
 }
