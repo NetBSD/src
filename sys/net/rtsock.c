@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.82 2006/04/15 02:07:34 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.83 2006/04/15 02:14:44 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.82 2006/04/15 02:07:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.83 2006/04/15 02:14:44 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -930,6 +930,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		rtm->rtm_flags = rt->rt_flags;
 		rtm->rtm_use = rt->rt_use;
 		rtm->rtm_rmx = rt->rt_rmx;
+		KASSERT(rt->rt_ifp != NULL);
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
 		rtm->rtm_addrs = info.rti_addrs;
