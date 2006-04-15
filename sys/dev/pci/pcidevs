@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.780 2006/04/06 04:06:52 simonb Exp $
+$NetBSD: pcidevs,v 1.781 2006/04/15 21:14:32 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -610,6 +610,7 @@ vendor NETVIN		0x4a14	NetVin
 vendor BUSLOGIC2	0x4b10	Buslogic (2nd PCI Vendor ID)
 vendor MEDIAQ		0x4d51	MediaQ
 vendor GUILLEMOT	0x5046	Guillemot
+vendor TURTLE_BEACH	0x5053	Turtle Beach
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
 vendor C4T		0x6374	c't Magazin
@@ -1274,6 +1275,7 @@ product CIRRUS CL_GD7541	0x1204	CL-GD7541
 product CIRRUS CL_CD4400	0x4400	CL-CD4400 Communications Controller
 product CIRRUS CS4610		0x6001	CS4610 SoundFusion Audio Accelerator
 product CIRRUS CS4280		0x6003	CS4280 CrystalClear Audio Interface
+product CIRRUS CS4615		0x6004	CS4615
 product CIRRUS CS4281		0x6005	CS4281 CrystalClear Audio Interface
 
 /* Adaptec's AAR-1210SA serial ATA RAID controller uses the CMDTECH chip */
@@ -3080,6 +3082,9 @@ product TSENG ET4000_W32P_B	0x3205	ET4000w32p rev B
 product TSENG ET4000_W32P_C	0x3206	ET4000w32p rev C
 product TSENG ET4000_W32P_D	0x3207	ET4000w32p rev D
 product TSENG ET6000		0x3208	ET6000
+
+/* Turtle Beach products */
+product TURTLE_BEACH SANTA_CRUZ	0x3357	Santa Cruz
 
 /* UMC products */
 product UMC UM82C881	0x0001	UM82C881 486 Chipset
