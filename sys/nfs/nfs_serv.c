@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.106 2006/04/15 01:54:46 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.107 2006/04/15 01:58:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.106 2006/04/15 01:54:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.107 2006/04/15 01:58:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1692,9 +1692,6 @@ abort:
 		}
 		nqsrv_getl(nd.ni_dvp, ND_WRITE);
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
-		if (error) {
-			goto out;
-		}
 		if (error)
 			goto out;
 		if (nd.ni_cnd.cn_flags & ISSYMLINK) {
