@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.233 2006/04/15 00:36:23 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.234 2006/04/15 00:40:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.233 2006/04/15 00:36:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.234 2006/04/15 00:40:20 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1929,7 +1929,7 @@ nfs_removerpc(dvp, name, namelen, cred, l)
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
-	int rexmit;
+	int rexmit = 0;
 	struct nfsnode *dnp = VTONFS(dvp);
 
 	nfsstats.rpccnt[NFSPROC_REMOVE]++;
@@ -2069,7 +2069,7 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, l)
 	int error = 0, fwccflag = NFSV3_WCCRATTR, twccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(fdvp);
-	int rexmit;
+	int rexmit = 0;
 	struct nfsnode *fdnp = VTONFS(fdvp);
 
 	nfsstats.rpccnt[NFSPROC_RENAME]++;
@@ -2129,7 +2129,7 @@ nfs_link(v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	/* XXX Should be const and initialised? */
 	int v3;
-	int rexmit;
+	int rexmit = 0;
 	struct nfsnode *np;
 
 	if (dvp->v_mount != vp->v_mount) {
@@ -2308,7 +2308,7 @@ nfs_mkdir(v)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	int gotvp = 0;
-	int rexmit;
+	int rexmit = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 
@@ -2400,7 +2400,7 @@ nfs_rmdir(v)
 	int32_t t2;
 	caddr_t bpos, dpos;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
-	int rexmit;
+	int rexmit = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 	struct nfsnode *dnp;
