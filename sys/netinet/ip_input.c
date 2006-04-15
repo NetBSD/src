@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.224 2006/02/18 17:47:07 joerg Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.225 2006/04/15 02:24:12 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.224 2006/02/18 17:47:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.225 2006/04/15 02:24:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -732,7 +732,7 @@ ip_input(struct mbuf *m)
 	}
 	if (ia != NULL)
 		goto ours;
-	if (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
+	if (m->m_pkthdr.rcvif && m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
 		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
