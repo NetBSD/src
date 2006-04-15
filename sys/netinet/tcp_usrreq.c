@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.115 2006/04/14 23:17:24 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.116 2006/04/15 00:29:25 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.115 2006/04/14 23:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.116 2006/04/15 00:29:25 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1223,12 +1223,10 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 		    elem_count = name[3];
 		    if (elem_size != sizeof(pcb))
 			    return EINVAL;
-		    pf2 = pf;
 	} else {
 		    len = 0;
 		    elem_count = INT_MAX;
 		    elem_size = sizeof(pcb);
-		    pf2 = 0;
 	}
 	error = 0;
 	dp = oldp;
@@ -1245,6 +1243,7 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 	pf = oname[1];
 	proto = oname[2];
+	pf2 = (oldp != NULL) ? pf : 0;
 
 	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
 #ifdef INET
