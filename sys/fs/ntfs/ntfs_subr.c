@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.22 2006/03/17 23:29:08 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.23 2006/04/15 04:06:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.22 2006/03/17 23:29:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.23 2006/04/15 04:06:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,6 +223,7 @@ ntfs_ntvattrget(
 	nextaalp = NULL;
 
 	for(; len > 0; aalp = nextaalp) {
+		KASSERT(aalp != NULL);
 		dprintf(("ntfs_ntvattrget: "
 		    "attrlist: ino: %d, attr: 0x%x, vcn: %qu\n",
 		    aalp->al_inumber, aalp->al_type,
