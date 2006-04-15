@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.18 2006/04/12 19:45:17 jmmv Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.19 2006/04/15 17:54:34 jmmv Exp $
 .\"
 .\" Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 12, 2006
+.Dd April 15, 2006
 .Dt WSDISPLAY 9
 .Os
 .Sh NAME
@@ -121,8 +121,6 @@ It has the following members:
 	int	(*load_font)(void *, void *,
 			struct wsdisplay_font *);
 	void	(*pollc)(void *, int);
-	int	(*getwschar)(void *, struct wsdisplay_char *);
-	int	(*putwschar)(void *, struct wsdisplay_char *);
 	void	(*scroll)(void *, void *, int);
 .Ed
 .Pp
@@ -152,14 +150,6 @@ member defines a function for loading a new font into the display.
 The
 .Fa pollc
 member defines a function for polling the console.
-The
-.Fa getwschar
-member defines a function for retrieving a character from the display,
-given its position.
-The
-.Fa putwschar
-member defines a function for putting a character on the display,
-given its position and attributes.
 The
 .Fa scroll
 member defines a function for scrolling the contents of the display.
