@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.74 2006/03/30 12:40:06 yamt Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.75 2006/04/15 05:32:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.74 2006/03/30 12:40:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.75 2006/04/15 05:32:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -285,6 +285,7 @@ searchloop:
 		 * directory. Complete checks can be run by patching
 		 * "dirchk" to be true.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct direct *)((char *)bp->b_data + entryoffsetinblock);
 		if (ep->d_reclen == 0 ||
 		    (dirchk && ufs_dirbadentry(vdp, ep, entryoffsetinblock))) {
