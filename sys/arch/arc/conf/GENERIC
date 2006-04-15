@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.136 2006/04/15 12:53:09 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.137 2006/04/15 12:58:26 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.136 $"
+#ident		"GENERIC-$Revision: 1.137 $"
 
 maxusers	32		# estimated number of users
 
@@ -342,6 +342,7 @@ tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 #### MII/PHY support
 
+bmtphy*		at mii? phy ?		# Broadcom BCM5201 and BCM5202 PHYs
 exphy*		at mii? phy ?		# 3Com internal PHYs
 icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 inphy*		at mii? phy ?		# Intel 82555 PHYs
