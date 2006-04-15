@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.21 2005/11/15 15:07:37 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.22 2006/04/15 08:52:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.21 2005/11/15 15:07:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.22 2006/04/15 08:52:00 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.21 2005/11/15 15:07:37 tsutsui Exp $");
 #include <arc/jazz/rd94.h>
 #include <arc/pci/necpbvar.h>
 
+#include "ioconf.h"
+
 int	necpbmatch(struct device *, struct cfdata *, void *);
 void	necpbattach(struct device *, struct device *, void *);
 
@@ -118,8 +120,6 @@ uint32_t	necpb_intr(uint32_t, struct clockframe *);
 
 CFATTACH_DECL(necpb, sizeof(struct necpb_softc),
     necpbmatch, necpbattach, NULL, NULL);
-
-extern struct cfdriver necpb_cd;
 
 static struct necpb_intrhand	*necpb_inttbl[4];
 
