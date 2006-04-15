@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.56 2006/04/02 09:27:05 dsl Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.57 2006/04/15 05:05:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.56 2006/04/02 09:27:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.57 2006/04/15 05:05:44 christos Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -1039,7 +1039,7 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 {
 	struct extent_region *rp, *nrp = NULL;
 	u_long end = start + (size - 1);
-	int exflags;
+	int coalesce;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -1075,10 +1075,10 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 	 * XXX have to lock to read it!
 	 */
 	simple_lock(&ex->ex_slock);
-	exflags = ex->ex_flags;
+	coalesce = (ex->ex_flags & EXF_NOCOALESCE) == 0;
 	simple_unlock(&ex->ex_slock);
 
-	if ((exflags & EXF_NOCOALESCE) == 0) {
+	if (coallesce) {
 		/* Allocate a region descriptor. */
 		nrp = extent_alloc_region_descriptor(ex, flags);
 		if (nrp == NULL)
@@ -1134,7 +1134,7 @@ extent_free(struct extent *ex, u_long start, u_long size, int flags)
 		 * The following cases all require that EXF_NOCOALESCE
 		 * is not set.
 		 */
-		if (ex->ex_flags & EXF_NOCOALESCE)
+		if (!coalesce)
 			continue;
 
 		/* Case 2. */
