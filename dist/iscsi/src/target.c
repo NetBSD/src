@@ -204,7 +204,11 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 			return -1;
 		}
-#define AHS_CLEANUP { if(scsi_cmd.ahs != NULL) iscsi_free_atomic(scsi_cmd.ahs);}
+#define AHS_CLEANUP do {						\
+	if (scsi_cmd.ahs != NULL) {					\
+		iscsi_free_atomic(scsi_cmd.ahs);			\
+	}								\
+} while (/* CONSTCOND */ 0)
 		if (iscsi_sock_msg(sess->sock, 0, (unsigned)scsi_cmd.ahs_len, scsi_cmd.ahs, 0) != scsi_cmd.ahs_len) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_msg() failed\n");
 			AHS_CLEANUP;
@@ -226,7 +230,7 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 				break;
 			default:
 				iscsi_trace_error(__FILE__, __LINE__, "unknown AHS type %x\n", ahs_type);
-				AHS_CLEANUP
+				AHS_CLEANUP;
 				return -1;
 			}
 		}
@@ -265,7 +269,11 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 		uint32_t        offset, trans_len;
 		int             fragment_flag = 0;
 		int             offset_inc;
-#define SG_CLEANUP {if (fragment_flag) iscsi_free_atomic(sg_new);}
+#define SG_CLEANUP do {							\
+	if (fragment_flag) {						\
+		iscsi_free_atomic(sg_new);				\
+	}								\
+} while (/* CONSTCOND */ 0)
 		if (scsi_cmd.output) {
 			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sending %u bytes bi-directional input data\n", scsi_cmd.bidi_trans_len);
 			trans_len = scsi_cmd.bidi_trans_len;
@@ -574,8 +582,18 @@ text_command_t(target_session_t * sess, uint8_t *header)
 	int			 len_out = 0;
 	int			 i;
 
-#define TC_CLEANUP { if (text_in != NULL) iscsi_free_atomic(text_in);if (text_out != NULL) iscsi_free_atomic(text_out);}
-#define TC_ERROR {TC_CLEANUP; return -1;}
+#define TC_CLEANUP do {							\
+	if (text_in != NULL) {						\
+		iscsi_free_atomic(text_in);				\
+	}								\
+	if (text_out != NULL) {						\
+		iscsi_free_atomic(text_out);				\
+	}								\
+} while (/* CONSTCOND */ 0)
+#define TC_ERROR {							\
+	TC_CLEANUP;							\
+	return -1;							\
+}
 	/* Get text args */
 
 	if (iscsi_text_cmd_decap(header, &text_cmd) != 0) {
@@ -704,8 +722,18 @@ login_command_t(target_session_t * sess, uint8_t *header)
 
 	/* Initialize response */
 
-#define LC_CLEANUP { if (text_in != NULL) iscsi_free_atomic(text_in);if (text_out != NULL) iscsi_free_atomic(text_out);}
-#define LC_ERROR {TC_CLEANUP; return -1;}
+#define LC_CLEANUP do {							\
+	if (text_in != NULL) {						\
+		iscsi_free_atomic(text_in);				\
+	}								\
+	if (text_out != NULL) {						\
+		iscsi_free_atomic(text_out);				\
+	}								\
+} while (/* CONSTCOND */ 0)
+#define LC_ERROR {							\
+	TC_CLEANUP;							\
+	return -1;							\
+}
 
 	(void) memset(&rsp, 0x0, sizeof(rsp));
 	rsp.status_class = ISCSI_LOGIN_STATUS_INITIATOR_ERROR;
@@ -900,7 +928,7 @@ response:
 		LC_CLEANUP;
 		return -1;
 	}
-	if (cmd.transit && (cmd.nsg == ISCSI_LOGIN_STAGE_FULL_FEATURE)) {
+	if (cmd.transit && cmd.nsg == ISCSI_LOGIN_STAGE_FULL_FEATURE) {
 
 		printf("**************************************************\n");
 		printf("*                LOGIN SUCCESSFUL                *\n");
@@ -932,9 +960,9 @@ response:
 static int 
 logout_command_t(target_session_t * sess, uint8_t *header)
 {
-	iscsi_logout_cmd_args_t cmd;
-	iscsi_logout_rsp_args_t rsp;
-	uint8_t   rsp_header[ISCSI_HEADER_LEN];
+	iscsi_logout_cmd_args_t	cmd;
+	iscsi_logout_rsp_args_t	rsp;
+	uint8_t			rsp_header[ISCSI_HEADER_LEN];
 
 	(void) memset(&rsp, 0x0, sizeof(rsp));
 	if (iscsi_logout_cmd_decap(header, &cmd) != 0) {
@@ -970,14 +998,16 @@ logout_command_t(target_session_t * sess, uint8_t *header)
 	printf("* %20s:%20u      *\n", "TSIH", sess->tsih);
 	printf("**************************************************\n");
 
-#ifdef HAVE_SYSLOG_H
+#ifdef HAVE_SYSLOG
 	syslog(LOG_INFO, "< %s logout from %s on %s", param_val(sess->params, "SessionType"), param_val(sess->params, "InitiatorName"), sess->initiator);
 #endif
 
 	sess->IsLoggedIn = 0;
 
-	free(sess->sess_params.cred.user);
-	sess->sess_params.cred.user = NULL;
+	if (sess->sess_params.cred.user) {
+		free(sess->sess_params.cred.user);
+		sess->sess_params.cred.user = NULL;
+	}
 
 	return 0;
 }
@@ -1256,7 +1286,12 @@ target_transfer_data(target_session_t * sess, iscsi_scsi_cmd_args_t * args, stru
 	iscsi_write_data_t data;
 	struct iovec   *iov, *iov_ptr = NULL;
 	int             iov_len;
-#define TTD_CLEANUP {if (iov_ptr != NULL) iscsi_free_atomic(iov_ptr);}
+
+#define TTD_CLEANUP do {						\
+	if (iov_ptr != NULL) {						\
+		iscsi_free_atomic(iov_ptr);				\
+	}								\
+} while (/* CONSTCOND */ 0)
 
 	args->bytes_recv = 0;
 	if ((!sess->sess_params.immediate_data) && args->length) {
