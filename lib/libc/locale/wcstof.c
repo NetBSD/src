@@ -1,4 +1,4 @@
-/* $NetBSD: wcstod.c,v 1.9 2006/04/15 12:17:23 tnozaki Exp $ */
+/* $NetBSD: wcstof.c,v 1.1 2006/04/15 12:17:23 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcstod.c,v 1.9 2006/04/15 12:17:23 tnozaki Exp $");
+__RCSID("$NetBSD: wcstof.c,v 1.1 2006/04/15 12:17:23 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -41,21 +41,12 @@ __RCSID("$NetBSD: wcstod.c,v 1.9 2006/04/15 12:17:23 tnozaki Exp $");
 #include <wchar.h>
 #include <wctype.h>
 
-#ifndef __HAVE_LONG_DOUBLE
-#ifdef __strong_alias
-__strong_alias(_wcstold,wcstod)
-#endif
 #ifdef __weak_alias
-__weak_alias(wcstold,_wcstold)
-#endif
+__weak_alias(wcstof,_wcstof)
 #endif
 
-#ifdef __weak_alias
-__weak_alias(wcstod,_wcstod)
-#endif
-
-#define _FUNCNAME	wcstod
-#define _RETURN_TYPE	double
-#define _STRTOD_FUNC	strtod
+#define _FUNCNAME	wcstof
+#define _RETURN_TYPE	float
+#define _STRTOD_FUNC	strtof
 
 #include "_wcstod.h"

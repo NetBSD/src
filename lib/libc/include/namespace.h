@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.111 2006/03/15 17:35:18 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.112 2006/04/15 12:17:23 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -608,6 +608,9 @@
 #define wait			_wait
 #define wait3			_wait3
 #define waitpid			_waitpid
+#define wcstod			_wcstod
+#define wcstof			_wcstof
+#define wcstold			_wcstold
 #define wcwidth			_wcwidth
 #define xdr_accepted_reply	_xdr_accepted_reply
 #define xdr_array		_xdr_array
