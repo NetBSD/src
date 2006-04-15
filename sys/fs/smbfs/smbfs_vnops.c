@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.48 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.49 2006/04/15 02:53:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.48 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.49 2006/04/15 02:53:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1421,12 +1421,15 @@ smbfs_lookup(v)
 		cnp->cn_flags |= SAVENAME;
 
 	if ((cnp->cn_flags & MAKEENTRY)) {
-		if (!error && (cnp->cn_nameiop != DELETE || !islastcn)) {
+		KASSERT(error == 0);
+		if (cnp->cn_nameiop != DELETE || !islastcn) {
 			VTOSMB(*vpp)->n_ctime = VTOSMB(*vpp)->n_mtime.tv_sec;
 			cache_enter(dvp, *vpp, cnp);
+#ifdef notdef
 		} else if (error == ENOENT && cnp->cn_nameiop != CREATE) {
 			VTOSMB(*vpp)->n_nctime = VTOSMB(*vpp)->n_mtime.tv_sec;
 			cache_enter(dvp, *vpp, cnp);
+#endif
 		}
 	}
 
