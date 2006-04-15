@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.197 2006/04/15 02:29:12 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.198 2006/04/15 02:30:39 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.197 2006/04/15 02:29:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.198 2006/04/15 02:30:39 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1929,7 +1929,10 @@ tcp_mss_from_peer(struct tcpcb *tp, int offer)
 		bufsize = rt->rt_rmx.rmx_sendpipe;
 	else
 #endif
+	{
+		KASSERT(so != NULL);
 		bufsize = so->so_snd.sb_hiwat;
+	}
 	if (bufsize < mss)
 		mss = bufsize;
 	else {
