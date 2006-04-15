@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.141 2006/03/07 17:13:53 pooka Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.142 2006/04/15 04:50:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.141 2006/03/07 17:13:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.142 2006/04/15 04:50:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1774,7 +1774,7 @@ fdcheckstd(l)
 			continue;
 		snprintf(which, sizeof(which), ",%d", i);
 		strlcat(closed, which, sizeof(closed));
-		if (devnull < 0) {
+		if (devnullfp == NULL) {
 			if ((error = falloc(p, &fp, &fd)) != 0)
 				return (error);
 			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
