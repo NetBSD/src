@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.26 2006/04/14 13:09:05 blymn Exp $	*/
+/*	$NetBSD: fd.c,v 1.27 2006/04/15 08:49:47 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.26 2006/04/14 13:09:05 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.27 2006/04/15 08:49:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.26 2006/04/14 13:09:05 blymn Exp $");
 #include <arc/jazz/fdreg.h>
 #include <arc/jazz/fdcvar.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 #define FDUNIT(dev)	DISKUNIT(dev)
@@ -184,8 +185,6 @@ struct fd_softc {
 /* floppy driver configuration */
 int fdprobe(struct device *, struct cfdata *, void *);
 void fdattach(struct device *, struct device *, void *);
-
-extern struct cfdriver fd_cd;
 
 CFATTACH_DECL(fd, sizeof(struct fd_softc), fdprobe, fdattach, NULL, NULL);
 
