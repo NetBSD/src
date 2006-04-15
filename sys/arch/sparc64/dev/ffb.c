@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.25 2006/04/12 20:22:00 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.26 2006/04/15 17:48:23 jmmv Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.25 2006/04/12 20:22:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.26 2006/04/15 17:48:23 jmmv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -136,8 +136,6 @@ struct wsdisplay_accessops ffb_accessops = {
 	ffb_show_screen,
 	NULL,	/* load font */
 	NULL,	/* pollc */
-	NULL,	/* getwschar */
-	NULL,	/* putwschar */
 	NULL,	/* scroll */
 };
 

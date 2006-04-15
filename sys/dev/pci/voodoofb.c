@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.3 2006/04/12 23:11:56 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.4 2006/04/15 17:48:23 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.3 2006/04/12 23:11:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.4 2006/04/15 17:48:23 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,8 +198,6 @@ struct wsdisplay_accessops voodoofb_accessops = {
 	voodoofb_mmap,
 	NULL,	/* load_font */
 	NULL,	/* polls */
-	NULL,	/* getwschar */
-	NULL,	/* putwschar */
 	NULL,	/* scroll */
 };
 

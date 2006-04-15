@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.30 2006/04/12 19:38:24 jmmv Exp $ */
+/*	$NetBSD: cgsix.c,v 1.31 2006/04/15 17:48:24 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.30 2006/04/12 19:38:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.31 2006/04/15 17:48:24 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,8 +192,6 @@ struct wsdisplay_accessops cgsix_accessops = {
 	cgsix_show_screen,
 	NULL, 	/* load_font */
 	NULL,	/* pollc */
-	NULL,	/* getwschar */
-	NULL,	/* putwschar */
 	NULL	/* scroll */
 };
 

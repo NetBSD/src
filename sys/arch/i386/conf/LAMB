@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.62 2006/03/28 20:58:40 pavel Exp $
+#	$NetBSD: LAMB,v 1.63 2006/04/15 17:48:23 jmmv Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -200,10 +200,6 @@ options 	PCDISPLAY_SOFTCURSOR
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 #options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

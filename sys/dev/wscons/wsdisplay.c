@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.96 2006/04/13 01:15:27 macallan Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.97 2006/04/15 17:48:24 jmmv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.96 2006/04/13 01:15:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.97 2006/04/15 17:48:24 jmmv Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -1133,28 +1133,6 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 				(scr->scr_dconf->wsemulcookie, WSEMUL_SYNCFONT);
 		return (error);
 #undef d
-
-#if defined(WSDISPLAY_CHARFUNCS)
-	case WSDISPLAYIO_GETWSCHAR:
-#define d ((struct wsdisplay_char *)data)
-		if (!sc->sc_accessops->getwschar)
-			return (EINVAL);
-		return ((*sc->sc_accessops->getwschar)
-			(scr->scr_dconf->emulcookie, d));
-#undef d
-
-	case WSDISPLAYIO_PUTWSCHAR:
-#define d ((struct wsdisplay_char *)data)
-		if (!sc->sc_accessops->putwschar)
-			return (EINVAL);
-		return ((*sc->sc_accessops->putwschar)
-			(scr->scr_dconf->emulcookie, d));
-#undef d
-#else
-	case WSDISPLAYIO_PUTWSCHAR:
-	case WSDISPLAYIO_GETWSCHAR:
-		return ENODEV;
-#endif /* WSDISPLAY_CHARFUNCS */
 
 #ifdef WSDISPLAY_CUSTOM_OUTPUT
 	case WSDISPLAYIO_GMSGATTRS:
