@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.104 2006/04/15 01:37:46 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.105 2006/04/15 01:39:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.104 2006/04/15 01:37:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.105 2006/04/15 01:39:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1556,8 +1556,10 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 			if (memcmp(cverf, oldverf, NFSX_V3CREATEVERF))
 				error = EEXIST;
 		}
-		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
-		vrele(dirp);
+		if (dirp) {
+			diraft_ret = VOP_GETATTR(dirp, &diraft, cred, lwp);
+			vrele(dirp);
+		}
 	}
 	nfsm_reply(NFSX_SRVFH(v3) + NFSX_FATTR(v3) + NFSX_WCCDATA(v3));
 	if (v3) {
