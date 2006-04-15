@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.24 2006/04/15 09:07:50 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.25 2006/04/15 12:53:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.24 2006/04/15 09:07:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.25 2006/04/15 12:53:09 tsutsui Exp $");
+
+#include "opt_pci.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,6 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.24 2006/04/15 09:07:50 tsutsui Exp $");
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#ifdef PCI_NETBSD_CONFIGURE
+#include <dev/pci/pciconf.h>
+#include <dev/pci/pcidevs.h>
+#endif
 
 #include <arc/jazz/rd94.h>
 #include <arc/pci/necpbvar.h>
@@ -114,6 +120,11 @@ const char *	necpb_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void *		necpb_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*func)(void *), void *);
 void		necpb_intr_disestablish(pci_chipset_tag_t, void *);
+#ifdef PCI_NETBSD_CONFIGURE
+void		necpb_conf_interrupt(pci_chipset_tag_t, int, int, int, int,
+		    int *);
+int		necpb_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
+#endif
 
 uint32_t	necpb_intr(uint32_t, struct clockframe *);
 
@@ -150,8 +161,10 @@ void
 necpb_init(struct necpb_context *ncp)
 {
 	pci_chipset_tag_t pc;
+#ifndef PCI_NETBSD_CONFIGURE
 	pcitag_t tag;
 	pcireg_t csr;
+#endif
 
 	if (ncp->nc_initialized)
 		return;
@@ -179,7 +192,12 @@ necpb_init(struct necpb_context *ncp)
 	pc->pc_intr_string = necpb_intr_string;
 	pc->pc_intr_establish = necpb_intr_establish;
 	pc->pc_intr_disestablish = necpb_intr_disestablish;
+#ifdef PCI_NETBSD_CONFIGURE
+	pc->pc_conf_interrupt = necpb_conf_interrupt;
+	pc->pc_conf_hook = necpb_conf_hook;
+#endif
 
+#ifndef PCI_NETBSD_CONFIGURE
 	/*
 	 * XXX:
 	 *  NEC's firmware does not configure PCI devices completely.
@@ -206,6 +224,7 @@ necpb_init(struct necpb_context *ncp)
 	    PCI_COMMAND_MASTER_ENABLE;
 	necpb_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	necpb_conf_write(pc, tag, PCI_MAPREG_ROM, 0);
+#endif
 
 	ncp->nc_initialized = 1;
 }
@@ -226,6 +245,13 @@ necpbattach(struct device *parent, struct device *self, void *aux)
 	necpb_init(sc->sc_ncp);
 
 	pc = &sc->sc_ncp->nc_pc;
+#ifdef PCI_NETBSD_CONFIGURE
+	pc->pc_ioext = extent_create("necpbio", 0x00100000, 0x01ffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	pc->pc_memext = extent_create("necpbmem", 0x08000000, 0x3fffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0, 0);
+#endif
 
 	out32(RD94_SYS_PCI_INTMASK, 0xf);
 
@@ -317,6 +343,7 @@ necpb_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
 	int pin = pa->pa_intrpin;
+	int swiz = pa->pa_intrswiz % 4;
 	int bus, dev;
 
 	if (pin == 0) {
@@ -333,19 +360,20 @@ necpb_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	necpb_decompose_tag(pc, intrtag, &bus, &dev, NULL);
 	if (bus != 0) {
+		printf("necpb_intr_map: unknown bus %d\n", bus);
 		*ihp = -1;
 		return 1;
 	}
 
 	switch (dev) {
 	case 3:
-		*ihp = (pin + 2) % 4;
+		*ihp = (pin - swiz + 2) % 4;
 		break;
 	case 4:
-		*ihp = (pin + 1) % 4;
+		*ihp = (pin - swiz + 1) % 4;
 		break;
 	case 5:
-		*ihp = (pin + 0) % 4;
+		*ihp = (pin - swiz + 0) % 4;
 		break;
 	default:
 		*ihp = -1;
@@ -479,3 +507,29 @@ necpb_intr(uint32_t mask, struct clockframe *cf)
 
 	return handled ? ~MIPS_INT_MASK_2 : ~0;
 }
+
+#ifdef PCI_NETBSD_CONFIGURE
+void
+necpb_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func,
+    int swiz, int *iline)
+{
+
+	return;
+}
+
+int
+necpb_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func,
+    pcireg_t id)
+{
+
+	/* ignore bogus IDs */
+	if (id == 0)
+		return 0;
+
+	/* don't configure bridges */
+	if (bus == 0 && (dev == 1 || dev == 2))
+		return 0;
+
+	return PCI_CONF_DEFAULT;
+}
+#endif
