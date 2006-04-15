@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.16 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.17 2006/04/15 03:56:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.16 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.17 2006/04/15 03:56:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -556,7 +556,7 @@ loop:
 	else
 		un->un_pid = -1;
 #endif
-	if (cnp && (lowervp != NULLVP)) {
+	if (dvp && cnp && (lowervp != NULLVP)) {
 		un->un_hash = cnp->cn_hash;
 		un->un_path = malloc(cnp->cn_namelen+1, M_TEMP, M_WAITOK);
 		memcpy(un->un_path, cnp->cn_nameptr, cnp->cn_namelen);
