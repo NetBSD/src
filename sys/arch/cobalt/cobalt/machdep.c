@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2006/04/09 01:29:38 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2006/04/15 11:28:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2006/04/09 01:29:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2006/04/15 11:28:52 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -104,6 +104,18 @@ char *	root_bstr = NULL;
 int	bootunit = -1;
 int	bootpart = -1;
 
+u_int cobalt_id;
+static const char * const cobalt_model[] =
+{
+	NULL,
+	NULL,
+	NULL,
+	"Cobalt Qube 2700",
+	"Cobalt RaQ",
+	"Cobalt Qube 2",
+	"Cobalt RaQ 2"
+};
+#define COBALT_MODELS	__arraycount(cobalt_model)
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -111,6 +123,7 @@ int mem_cluster_cnt;
 void	mach_init(unsigned int, u_int, char*);
 void	decode_bootstring(void);
 static char *	strtok_light(char *, const char);
+static u_int read_board_id(void);
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
@@ -181,6 +194,13 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	}
 #endif
 
+	cobalt_id = read_board_id();
+	if (cobalt_id >= COBALT_MODELS || cobalt_model[cobalt_id] == NULL)
+		sprintf(cpu_model, "Cobalt unknown model (board ID %u)",
+		    cobalt_id);
+	else
+		strcpy(cpu_model, cobalt_model[cobalt_id]);
+
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 
 	consinit();
@@ -227,8 +247,6 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 		kgdb_connect(0);
 #endif
 
-	strcpy(cpu_model, "Cobalt Microserver");
-
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
@@ -267,6 +285,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
+	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -560,4 +579,35 @@ lookup_bootinfo(int type)
 	    (size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
 
 	return NULL;
+}
+
+/*
+ * Get board ID of cobalt models.
+ * 
+ * The board ID info is stored at the PCI config register
+ * on the PCI-ISA bridge part of the VIA VT82C586 chipset.
+ * We can't use pci_conf_read(9) yet here, so read it directly.
+ */
+static u_int
+read_board_id(void)
+{
+	volatile uint32_t *pcicfg_addr, *pcicfg_data;
+	uint32_t reg;
+
+#define PCIB_PCI_BUS		0
+#define PCIB_PCI_DEV		9
+#define PCIB_PCI_FUNC		0
+#define PCIB_BOARD_ID_REG	0x94
+#define COBALT_BOARD_ID(reg)	((reg & 0x000000f0) >> 4)
+
+	pcicfg_addr = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_ADDR);
+	pcicfg_data = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_DATA);
+
+	*pcicfg_addr = PCICFG_ENABLE |
+	    (PCIB_PCI_BUS << 16) | (PCIB_PCI_DEV << 11) | (PCIB_PCI_FUNC << 8) |
+	    PCIB_BOARD_ID_REG;
+	reg = *pcicfg_data;
+	*pcicfg_addr = 0;
+
+	return COBALT_BOARD_ID(reg); 
 }
