@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.7 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.8 2006/04/15 02:56:51 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.7 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.8 2006/04/15 02:56:51 christos Exp $");
 
 /*
  * kernel include files.
@@ -239,6 +239,7 @@ pcbmap(dep, findcn, bnp, cnp, sp)
 				brelse(bp);
 			return (EIO);
 		}
+		KASSERT(bp != NULL);
 		if (FAT32(pmp))
 			cn = getulong(&bp->b_data[bo]);
 		else
