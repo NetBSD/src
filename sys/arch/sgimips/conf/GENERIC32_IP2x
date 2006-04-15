@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.47 2006/03/28 20:58:41 pavel Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.48 2006/04/15 17:48:23 jmmv Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.47 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.48 $"
 
 maxusers	32
 
@@ -192,10 +192,6 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 
 
 # Kernel root file system and dump configuration.

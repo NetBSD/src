@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.31 2006/04/12 20:08:20 jmmv Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.32 2006/04/15 17:48:23 jmmv Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,9 +28,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.31 2006/04/12 20:08:20 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.32 2006/04/15 17:48:23 jmmv Exp $");
 
-#include "opt_wsdisplay_compat.h" /* for WSDISPLAY_CHARFUNCS */
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
 #include <sys/param.h>
@@ -291,14 +290,14 @@ pcdisplay_replaceattr(void *id, long oldattr, long newattr)
 }
 #endif /* WSDISPLAY_CUSTOM_OUTPUT */
 
-#ifdef WSDISPLAY_CHARFUNCS
 int
-pcdisplay_getwschar(void *id, struct wsdisplay_char *wschar)
+pcdisplay_getwschar(struct pcdisplayscreen *scr, struct wsdisplay_char *wschar)
 {
-	struct pcdisplayscreen *scr = id;
 	int off;
 	uint16_t chardata;
 	uint8_t attrbyte;
+
+	KASSERT(scr != NULL && wschar != NULL);
 
 	off = wschar->row * scr->type->ncols + wschar->col;
 	if (off >= scr->type->ncols * scr->type->nrows)
@@ -322,12 +321,13 @@ pcdisplay_getwschar(void *id, struct wsdisplay_char *wschar)
 }
 
 int
-pcdisplay_putwschar(void *id, struct wsdisplay_char *wschar)
+pcdisplay_putwschar(struct pcdisplayscreen *scr, struct wsdisplay_char *wschar)
 {
-	struct pcdisplayscreen *scr = id;
 	int off;
 	uint16_t chardata;
 	uint8_t attrbyte;
+
+	KASSERT(scr != NULL && wschar != NULL);
 
 	off = wschar->row * scr->type->ncols + wschar->col;
 	if (off >= (scr->type->ncols * scr->type->nrows))
@@ -348,4 +348,3 @@ pcdisplay_putwschar(void *id, struct wsdisplay_char *wschar)
 
 	return 0;
 }
-#endif /* WSDISPLAY_CHARFUNCS */
