@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.28 2006/04/15 02:48:32 christos Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.29 2006/04/15 02:49:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.28 2006/04/15 02:48:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.29 2006/04/15 02:49:25 christos Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -336,7 +336,7 @@ bp_whoami(bpsin, my_ip, gw_ip, l)
 	error = krpc_call(bpsin, PMAPPROG, PMAPVERS,
 			PMAPPROC_CALLIT, &m, &from, l);
 	if (error) {
-		m_freem(m, MT_DATA);
+		m_freem(m);
 		return error;
 	}
 
