@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.159 2006/04/15 01:41:46 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.160 2006/04/15 01:45:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.159 2006/04/15 01:41:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.160 2006/04/15 01:45:15 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1450,6 +1450,7 @@ retry:
 			 * We're allocating a new entry, so bump the
 			 * generation number.
 			 */
+			KASSERT(np->n_dirgens);
 			gen = ++np->n_dirgens[hashent];
 			if (gen == 0) {
 				np->n_dirgens[hashent]++;
