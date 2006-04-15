@@ -1,4 +1,4 @@
-# $NetBSD: TODO.i18n,v 1.5 2004/01/20 12:08:13 yamt Exp $
+# $NetBSD: TODO.i18n,v 1.6 2006/04/15 12:21:44 tnozaki Exp $
 
 NetBSD I18N support status / TODO
 
@@ -38,8 +38,8 @@ fgetws         sm
 fputwc         sm
 fputws         sm
 fwide          sm
-fwprintf       -
-fwscanf        -
+fwprintf       sm
+fwscanf        sm
 getwc          sm
 getwchar       sm
 mbrlen         sm
@@ -48,15 +48,15 @@ mbsinit        sm
 mbsrtowcs      sm
 putwc          sm
 putwchar       sm
-swprintf       -
-swscanf        -
+swprintf       sm
+swscanf        sm
 ungetwc        sm
-vfwprintf      -
-vfwscanf       -
-vwprintf       -
-vswprintf      -
-vswscanf       -
-vwscanf        -
+vfwprintf      sm
+vfwscanf       sm
+vwprintf       sm
+vswprintf      sm
+vswscanf       sm
+vwscanf        sm
 wcrtomb        sm
 wcscat         sm
 wcschr         sm
@@ -64,7 +64,7 @@ wcscmp         sm
 wcscoll        i                        LC_COLLATE not supported.
 wcscpy         sm
 wcscspn        sm
-wcsftime       -
+wcsftime       sm
 wcslen         sm
 wcsncat        sm
 wcsncmp        sm
@@ -74,11 +74,11 @@ wcsrchr        sm
 wcsrtombs      sm
 wcsspn         sm
 wcsstr         sm
-wcstod         s
-wcstof         -        SUSv3
+wcstod         sm
+wcstof         sm       SUSv3
 wcstok         sm
 wcstol         s
-wcstold        -        SUSv3
+wcstold        sm       SUSv3
 wcstoll        s        SUSv3
 wcstoul        s
 wcstoull       s        SUSv3
@@ -90,8 +90,8 @@ wmemcmp        sm
 wmemcpy        sm
 wmemmove       sm
 wmemset        sm
-wprintf        -
-wscanf         -
+wprintf        sm
+wscanf         sm
 
 
 wctype.h
