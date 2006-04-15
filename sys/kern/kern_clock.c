@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.97 2006/04/15 00:34:42 elad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.98 2006/04/15 02:12:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.97 2006/04/15 00:34:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.98 2006/04/15 02:12:49 christos Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1012,6 +1012,7 @@ statclock(struct clockframe *frame)
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct proc *p;
+	struct lwp *l;
 
 	/*
 	 * Notice changes in divisor frequency, and adjust clock
@@ -1026,7 +1027,8 @@ statclock(struct clockframe *frame)
 			setstatclockrate(profhz);
 		}
 	}
-	p = (curlwp ? curlwp->l_proc : NULL);
+	l = curlwp;
+	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
 		KASSERT(p != NULL);
 
