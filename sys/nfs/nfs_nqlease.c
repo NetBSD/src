@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.60 2006/04/15 01:16:40 christos Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.61 2006/04/15 01:52:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.60 2006/04/15 01:16:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.61 2006/04/15 01:52:44 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1171,8 +1171,6 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		free((caddr_t)nuidp, M_NFSUID);
 	}
 	free((caddr_t)nmp, M_NFSMNT);
-	if (error == EWOULDBLOCK)
-		error = 0;
 	return (error);
 }
 #endif /* NFS */
