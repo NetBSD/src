@@ -756,7 +756,7 @@ iscsi_logout_cmd_decap(uint8_t *header, iscsi_logout_cmd_args_t * cmd)
 	RETURN_NOT_EQUAL("Bytes 4-7", *((uint32_t *) (void *) (header + 4)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 8-11", *((uint32_t *) (void *) (header + 8)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 12-15", *((uint32_t *) (void *) (header + 12)), 0, NO_CLEANUP, 1);
-	RETURN_NOT_EQUAL("Bytes 22-23", *((uint32_t *) (void *) (header + 22)), 0, NO_CLEANUP, 1);
+	RETURN_NOT_EQUAL("Bytes 22-23", *((uint16_t *) (void *) (header + 22)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 32-35", *((uint32_t *) (void *) (header + 32)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 36-39", *((uint32_t *) (void *) (header + 36)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 40-43", *((uint32_t *) (void *) (header + 40)), 0, NO_CLEANUP, 1);
@@ -793,8 +793,8 @@ iscsi_logout_rsp_encap(uint8_t *header, iscsi_logout_rsp_args_t * rsp)
 	*((uint32_t *) (void *) (header + 24)) = ISCSI_HTONL(rsp->StatSN);	/* StatSN */
 	*((uint32_t *) (void *) (header + 28)) = ISCSI_HTONL(rsp->ExpCmdSN);	/* ExpCmdSN */
 	*((uint32_t *) (void *) (header + 32)) = ISCSI_HTONL(rsp->MaxCmdSN);	/* MaxCmdSN */
-	*((uint32_t *) (void *) (header + 40)) = ISCSI_HTONS(rsp->Time2Wait);	/* Time2Wait */
-	*((uint32_t *) (void *) (header + 42)) = ISCSI_HTONS(rsp->Time2Retain);	/* Time2Retain */
+	*((uint16_t *) (void *) (header + 40)) = ISCSI_HTONS(rsp->Time2Wait);	/* Time2Wait */
+	*((uint16_t *) (void *) (header + 42)) = ISCSI_HTONS(rsp->Time2Retain);	/* Time2Retain */
 
 	return 0;
 }
