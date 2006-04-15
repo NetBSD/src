@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.88 2006/01/05 11:22:56 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.89 2006/04/15 01:31:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88 2006/01/05 11:22:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.89 2006/04/15 01:31:11 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1056,7 +1056,7 @@ nfssvc_iod(l)
 	struct nfs_iod *myiod;
 	struct nfsmount *nmp;
 	int error = 0;
-	struct proc *p = l ? l->l_proc : NULL;
+	struct proc *p = l->l_proc;
 
 	/*
 	 * Assign my position or return error if too many already running
