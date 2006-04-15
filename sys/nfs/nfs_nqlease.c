@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.58 2006/03/27 20:20:46 martin Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.59 2006/04/15 00:45:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.58 2006/03/27 20:20:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.59 2006/04/15 00:45:49 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -730,7 +730,7 @@ nqnfsrv_getlease(nfsd, slp, lwp, mrq)
 	int error = 0;
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	int flags, rdonly, cache;
+	int flags, rdonly, cache = 0;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
