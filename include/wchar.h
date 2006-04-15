@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.24 2005/05/15 21:10:52 christos Exp $	*/
+/*	$NetBSD: wchar.h,v 1.25 2006/04/15 12:17:22 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -146,6 +146,9 @@ double wcstod(const wchar_t * __restrict, wchar_t ** __restrict);
 
 #if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) > 199901L || \
     defined(_NETBSD_SOURCE)
+float wcstof(const wchar_t * __restrict, wchar_t ** __restrict);
+long double wcstold(const wchar_t * __restrict, wchar_t ** __restrict);
+
 /* LONGLONG */
 long long int wcstoll(const wchar_t * __restrict,
 	wchar_t ** __restrict, int);
