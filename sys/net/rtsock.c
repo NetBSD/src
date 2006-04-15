@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.81 2006/02/21 22:01:17 rpaulo Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.82 2006/04/15 02:07:34 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81 2006/02/21 22:01:17 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.82 2006/04/15 02:07:34 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -494,7 +494,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 	}
 	/* Check for bad data length.  */
 	if (cp != cplim) {
-		if (i == RTAX_NETMASK + 1 &&
+		if (i == RTAX_NETMASK + 1 && sa &&
 		    cp - ROUNDUP(sa->sa_len) + sa->sa_len == cplim)
 			/*
 			 * The last sockaddr was netmask.
