@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.129 2006/03/16 15:57:59 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.130 2006/04/15 02:25:24 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.129 2006/03/16 15:57:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.130 2006/04/15 02:25:24 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -422,8 +422,8 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef	LLC
 /*	case AF_NSAP: */
 	case AF_CCITT: {
-		struct sockaddr_dl *sdl =
-			(struct sockaddr_dl *) rt -> rt_gateway;
+		struct sockaddr_dl *sdl = rt ? 
+			(struct sockaddr_dl *) rt -> rt_gateway : NULL;
 
 		if (sdl && sdl->sdl_family == AF_LINK
 		    && sdl->sdl_alen > 0) {
