@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.39 2006/04/11 16:57:47 xtraeme Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.40 2006/04/15 02:42:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.39 2006/04/11 16:57:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.40 2006/04/15 02:42:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,9 +576,11 @@ out:
 		brelse(bp);
 
 	if (error) {
-		if (ntmp->ntm_ad)
-			free(ntmp->ntm_ad, M_NTFSMNT);
-		free(ntmp, M_NTFSMNT);
+		if (ntmp) {
+			if (ntmp->ntm_ad)
+				free(ntmp->ntm_ad, M_NTFSMNT);
+			free(ntmp, M_NTFSMNT);
+		}
 	}
 
 	return (error);
