@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.105 2006/04/15 01:39:15 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.106 2006/04/15 01:54:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.105 2006/04/15 01:39:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.106 2006/04/15 01:54:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2033,8 +2033,10 @@ out1:
 nfsmout:
 	if (fdirp)
 		vrele(fdirp);
+#ifdef notdef
 	if (tdirp)
 		vrele(tdirp);
+#endif
 	if (tond.ni_cnd.cn_nameiop) {
 		vrele(tond.ni_startdir);
 		PNBUF_PUT(tond.ni_cnd.cn_pnbuf);
