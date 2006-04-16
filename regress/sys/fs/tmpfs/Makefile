@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/03/18 17:09:35 jmmv Exp $
+#	$NetBSD: Makefile,v 1.3 2006/04/16 16:21:05 simonb Exp $
 
 tests=	t_mount
 tests+=	t_statvfs
@@ -27,7 +27,7 @@ tests+=	t_readdir
 
 regress: ${tests}
 .for t in	${tests}
-	@./${t} ${TEST_ARGS}
+	@SUBRDIR=${.CURDIR} ${.CURDIR}/${t} ${TEST_ARGS}
 .endfor
 
 PROG=	h_tools

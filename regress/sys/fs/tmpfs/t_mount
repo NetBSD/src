@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_mount,v 1.5 2006/03/26 16:19:04 jmmv Exp $
+# $NetBSD: t_mount,v 1.6 2006/04/16 16:21:05 simonb Exp $
 #
 # Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,4 +81,4 @@ test_run() {
 	rmdir ${Work_Dir}
 }
 
-. ./h_funcs.subr
+. ${SUBRDIR}/h_funcs.subr
