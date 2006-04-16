@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.43 2006/04/16 08:26:42 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.44 2006/04/16 16:29:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.43 2006/04/16 08:26:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.44 2006/04/16 16:29:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -786,14 +786,14 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
-		panic("_bus_dmamap_sync: mix PRE and POST");
+		panic("_bus_dmamap_sync_mips3: mix PRE and POST");
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
-		      offset, map->dm_mapsize);
+		panic("_bus_dmamap_sync_mips3: bad offset %lu "
+		    "(map size is %lu)", offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad length");
+		panic("_bus_dmamap_sync_mips3: bad length");
 #endif
 
 	/*
@@ -866,7 +866,7 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		vaddr = map->dm_segs[i]._ds_vaddr;
 
 #ifdef BUS_DMA_DEBUG
-		printf("bus_dmamap_sync: flushing segment %d "
+		printf("bus_dmamap_sync_mips3: flushing segment %d "
 		    "(0x%lx+%lx, 0x%lx+0x%lx) (olen = %ld)...", i,
 		    vaddr, offset, vaddr, offset + minlen - 1, len);
 #endif
