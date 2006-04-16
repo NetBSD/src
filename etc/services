@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.81 2005/11/21 12:29:41 rpaulo Exp $
+#	$NetBSD: services,v 1.82 2006/04/16 23:29:29 rpaulo Exp $
 #
 # Network services, Internet style
 #
@@ -338,6 +338,10 @@ rpc2portmap	369/tcp
 rpc2portmap	369/udp			# Coda portmapper
 codaauth2	370/tcp
 codaauth2	370/udp			# Coda authentication server
+
+# Iana registered dict port numbers
+dict		2628/tcp		# DICT
+dict		2628/udp
 
 venus		2430/tcp		# codacon port
 venus		2430/udp		# Venus callback/wbc interface
