@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.61 2006/04/16 00:30:22 tsutsui Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.62 2006/04/16 00:35:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.61 2006/04/16 00:30:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.62 2006/04/16 00:35:10 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -225,8 +225,8 @@ epic_attach(sc)
 	/*
 	 * Read the Ethernet address from the EEPROM.
 	 */
-	epic_read_eeprom(sc, 0, (sizeof(myea) / sizeof(myea[0])), myea);
-	for (i = 0; i < sizeof(myea)/ sizeof(myea[0]); i++) {
+	epic_read_eeprom(sc, 0, __arraycount(myea), myea);
+	for (i = 0; i < __arraycount(myea); i++) {
 		enaddr[i * 2]     = myea[i] & 0xff;
 		enaddr[i * 2 + 1] = myea[i] >> 8;
 	}
@@ -234,9 +234,8 @@ epic_attach(sc)
 	/*
 	 * ...and the device name.
 	 */
-	epic_read_eeprom(sc, 0x2c, (sizeof(mydevname) / sizeof(mydevname[0])),
-	    mydevname);
-	for (i = 0; i < sizeof(mydevname) / sizeof(mydevname[0]); i++) {
+	epic_read_eeprom(sc, 0x2c, __arraycount(mydevname), mydevname);
+	for (i = 0; i < __arraycount(mydevname); i++) {
 		devname[i * 2]     = mydevname[i] & 0xff;
 		devname[i * 2 + 1] = mydevname[i] >> 8;
 	}
