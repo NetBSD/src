@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16 2006/04/15 11:33:33 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.17 2006/04/16 08:10:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -516,7 +516,7 @@ typedef struct cobalt_bus_dmamap		*bus_dmamap_t;
 struct cobalt_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
+	vaddr_t		_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct cobalt_bus_dma_segment	bus_dma_segment_t;
 
