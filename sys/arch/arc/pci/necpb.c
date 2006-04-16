@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.25 2006/04/15 12:53:09 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.26 2006/04/16 05:09:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.25 2006/04/15 12:53:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.26 2006/04/16 05:09:58 tsutsui Exp $");
 
 #include "opt_pci.h"
 
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.25 2006/04/15 12:53:09 tsutsui Exp $");
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/platform.h>
+
+#include <mips/cache.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -250,7 +252,8 @@ necpbattach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	pc->pc_memext = extent_create("necpbmem", 0x08000000, 0x3fffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
-	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0, 0);
+	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
+	    mips_dcache_align);
 #endif
 
 	out32(RD94_SYS_PCI_INTMASK, 0xf);
