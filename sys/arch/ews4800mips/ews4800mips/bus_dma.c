@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3 2006/04/16 08:57:20 tsutsui Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.4 2006/04/16 16:39:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.3 2006/04/16 08:57:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2006/04/16 16:39:36 tsutsui Exp $");
 
 /* #define	BUS_DMA_DEBUG */
 #include <sys/param.h>
@@ -400,7 +400,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	int i, useindex;
 
 	/*
-	 * Mising PRE and POST operations is not allowed.
+	 * Mixing PRE and POST operations is not allowed.
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
