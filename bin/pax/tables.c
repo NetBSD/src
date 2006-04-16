@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.25 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: tables.c,v 1.26 2006/04/16 16:20:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.25 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: tables.c,v 1.26 2006/04/16 16:20:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1144,7 +1144,21 @@ add_dir(char *name, int nlen, struct stat *psb, int frc_mode)
 {
 #ifdef DIRS_USE_FILE
 	DIRDATA dblk;
+#else
+	DIRDATA *dblk;
+#endif
+	char realname[MAXPATHLEN], *rp;
 
+	if (havechd && *name != '/') {
+		if ((rp = realpath(name, realname)) == NULL) {
+			tty_warn(1, "Cannot canonicalize %s", name);
+			return;
+		}
+		name = rp;
+		nlen = strlen(name);
+	}
+
+#ifdef DIRS_USE_FILE
 	if (dirfd < 0)
 		return;
 
@@ -1181,7 +1195,6 @@ add_dir(char *name, int nlen, struct stat *psb, int frc_mode)
 	    "Unable to store mode and times for created directory: %s",name);
 	return;
 #else
-	DIRDATA *dblk;
 
 	if ((dblk = malloc(sizeof(*dblk))) == NULL ||
 	    (dblk->name = strdup(name)) == NULL) {
