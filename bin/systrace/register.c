@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.17 2006/04/15 20:35:24 provos Exp $	*/
+/*	$NetBSD: register.c,v 1.18 2006/04/16 05:19:02 provos Exp $	*/
 /*	$OpenBSD: register.c,v 1.11 2002/08/05 14:49:27 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -94,6 +94,11 @@ systrace_initcb(void)
 	intercept_register_translation("netbsd", "setuid", 0, &ic_uidt);
 	intercept_register_translation("netbsd", "setuid", 0, &ic_uname);
 
+	/* 28: sendmsg */
+	X(intercept_register_sccb("netbsd", "sendmsg", trans_cb, NULL));
+	intercept_register_translation("netbsd", "sendmsg", 1,
+	    &ic_translate_sendmsg);
+	
 	/* 33: access [fsread] */
 	X(intercept_register_sccb("netbsd", "access", trans_cb, NULL));
 	tl = intercept_register_transfn("netbsd", "access", 0);
@@ -347,6 +352,11 @@ systrace_initcb(void)
  	X(intercept_register_sccb("native", "socket", trans_cb, NULL));
  	intercept_register_translation("native", "socket", 0, &ic_sockdom);
  	intercept_register_translation("native", "socket", 1, &ic_socktype);
+
+	/* sendmsg */
+	X(intercept_register_sccb("native", "sendmsg", trans_cb, NULL));
+	intercept_register_translation("native", "sendmsg", 1,
+	    &ic_translate_sendmsg);
 
 	/* connect */
 	X(intercept_register_sccb("native", "connect", trans_cb, NULL));
