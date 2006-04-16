@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.42 2006/04/15 17:48:23 jmmv Exp $	*/
+/*	$NetBSD: machfb.c,v 1.43 2006/04/16 15:41:52 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.42 2006/04/15 17:48:23 jmmv Exp $");
+	"$NetBSD: machfb.c,v 1.43 2006/04/16 15:41:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1773,7 +1773,7 @@ machfb_fbattach(struct mach64_softc *sc)
 	fb->fb_type.fb_width = sc->virt_x;
 	fb->fb_type.fb_height = sc->virt_y;
 	
-	fb->fb_pixels = (void *)sc->sc_aperbase;
+	fb->fb_pixels = (caddr_t)sc->sc_aperbase;
 	fb_attach(fb, sc->sc_console);
 }
 
