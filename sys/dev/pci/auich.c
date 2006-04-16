@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.105 2006/04/16 07:40:00 christos Exp $	*/
+/*	$NetBSD: auich.c,v 1.106 2006/04/16 23:07:16 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.105 2006/04/16 07:40:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.106 2006/04/16 23:07:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,8 +588,9 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	case 0x203a161f:	/* Gateway 4028GZ */
 	case 0x204c161f:	/* Kvazar-Micro Senator 3592XT */
 	case 0x8144104d:	/* Sony VAIO PCG-TR* */
-	case 0x81c0104d:	/* Sony VAIO type T */
 	case 0x8197104d:	/* Sony S1XP */
+	case 0x81c0104d:	/* Sony VAIO type T */
+	case 0x81c5104d:	/* Sony VAIO VGN-B1XP */
 		sc->sc_codecflags = AC97_HOST_INVERTED_EAMP;
 		break;
 	default:
