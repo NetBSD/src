@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.26 2006/04/16 05:09:58 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.27 2006/04/16 07:10:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.26 2006/04/16 05:09:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.27 2006/04/16 07:10:45 tsutsui Exp $");
 
 #include "opt_pci.h"
 
@@ -96,9 +96,9 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.26 2006/04/16 05:09:58 tsutsui Exp $");
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 #ifdef PCI_NETBSD_CONFIGURE
 #include <dev/pci/pciconf.h>
-#include <dev/pci/pcidevs.h>
 #endif
 
 #include <arc/jazz/rd94.h>
@@ -165,7 +165,8 @@ necpb_init(struct necpb_context *ncp)
 	pci_chipset_tag_t pc;
 #ifndef PCI_NETBSD_CONFIGURE
 	pcitag_t tag;
-	pcireg_t csr;
+	pcireg_t id, class, csr;
+	u_int dev;
 #endif
 
 	if (ncp->nc_initialized)
@@ -206,26 +207,23 @@ necpb_init(struct necpb_context *ncp)
 	 *  We need to disable expansion ROM and enable mem/io/busmaster
 	 *  bits here.
 	 */
-	tag = necpb_make_tag(pc, 0, 3, 0);
-	csr = necpb_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	necpb_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-	necpb_conf_write(pc, tag, PCI_MAPREG_ROM, 0);
+	for (dev = 3; dev <= 5; dev++) {
+		tag = necpb_make_tag(pc, 0, dev, 0);
+		id = necpb_conf_read(pc, tag, PCI_ID_REG);
 
-	tag = necpb_make_tag(pc, 0, 4, 0);
-	csr = necpb_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	necpb_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-	necpb_conf_write(pc, tag, PCI_MAPREG_ROM, 0);
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
 
-	tag = necpb_make_tag(pc, 0, 5, 0);
-	csr = necpb_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	necpb_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-	necpb_conf_write(pc, tag, PCI_MAPREG_ROM, 0);
+		class = necpb_conf_read(pc, tag, PCI_CLASS_REG);
+		csr = necpb_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
+		    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_PCI) {
+			csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
+			necpb_conf_write(pc, tag, PCI_MAPREG_ROM, 0);
+		}
+		csr |= PCI_COMMAND_MASTER_ENABLE;
+		necpb_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+	}
 #endif
 
 	ncp->nc_initialized = 1;
