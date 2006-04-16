@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.60 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.61 2006/04/16 00:30:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.60 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.61 2006/04/16 00:30:22 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -242,9 +242,9 @@ epic_attach(sc)
 	}
 
 	devname[sizeof(mydevname)] = '\0';
-	for (i = sizeof(mydevname) - 1; i >= 0; i--) {
-		if (devname[i] == ' ')
-			devname[i] = '\0';
+	for (i = sizeof(mydevname) ; i > 0; i--) {
+		if (devname[i - 1] == ' ')
+			devname[i - 1] = '\0';
 		else
 			break;
 	}
