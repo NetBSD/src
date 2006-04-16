@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.96 2006/04/14 16:57:01 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.97 2006/04/16 16:20:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.96 2006/04/14 16:57:01 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.97 2006/04/16 16:20:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,6 +197,11 @@ int ford[] = {F_USTAR, F_TAR,
  * filename record separator
  */
 int sep = '\n';
+
+/*
+ * Do we have -C anywhere?
+ */
+int havechd = 0;
 
 /*
  * options()
@@ -998,6 +1003,7 @@ tar_options(int argc, char **argv)
 			 */
 			break;
 		case 'C':
+			havechd++;
 			chdname = optarg;
 			break;
 		case 'H':
@@ -1185,11 +1191,13 @@ tar_options(int argc, char **argv)
 							continue;
 						}
 						if (strcmp(str, "-C") == 0) {
+							havechd++;
 							dirisnext = 1;
 							free(str);
 							continue;
 						}
 						if (strncmp(str, "-C ", 3) == 0) {
+							havechd++;
 							if (dir)
 								free(dir);
 							dir = strdup(str + 3);
@@ -1215,6 +1223,7 @@ tar_options(int argc, char **argv)
 					if (*++argv == NULL)
  						break;
 					chdname = *argv++;
+					havechd++;
 				} else if (pat_add(*argv++, chdname) < 0)
 					tar_usage();
 				else

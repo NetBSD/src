@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.50 2006/02/11 11:04:57 dsl Exp $	*/
+/*	$NetBSD: extern.h,v 1.51 2006/04/16 16:20:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -201,6 +201,7 @@ int getoldopt(int, char **, const char *, struct option *, int *);
 extern FSUB fsub[];
 extern int ford[];
 extern int sep;
+extern int havechd;
 void options(int, char **);
 OPLIST * opt_next(void);
 int opt_add(const char *);
