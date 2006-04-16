@@ -37,6 +37,15 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the `nsl' library (-lnsl). */
+/* #undef HAVE_LIBNSL */
+
+/* Define to 1 if you have the `resolv' library (-lresolv). */
+#define HAVE_LIBRESOLV 1
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+/* #undef HAVE_LIBSOCKET */
+
 /* Define to 1 if the system has the type `long long'. */
 #define HAVE_LONG_LONG 1
 
@@ -149,13 +158,13 @@
 #define PACKAGE_NAME "netbsd-iscsi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netbsd-iscsi 20060327"
+#define PACKAGE_STRING "netbsd-iscsi 20060416"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netbsd-iscsi"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20060327"
+#define PACKAGE_VERSION "20060416"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
