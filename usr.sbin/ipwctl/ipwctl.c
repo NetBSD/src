@@ -1,4 +1,4 @@
-/*	$NetBSD: ipwctl.c,v 1.6 2006/04/17 17:50:51 rpaulo Exp $	*/
+/*	$NetBSD: ipwctl.c,v 1.7 2006/04/17 20:55:28 rpaulo Exp $	*/
 /*	Id: ipwctl.c,v 1.1.2.1 2004/08/19 16:24:50 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipwctl.c,v 1.6 2006/04/17 17:50:51 rpaulo Exp $");
+__RCSID("$NetBSD: ipwctl.c,v 1.7 2006/04/17 20:55:28 rpaulo Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -54,7 +54,6 @@ __RCSID("$NetBSD: ipwctl.c,v 1.6 2006/04/17 17:50:51 rpaulo Exp $");
 
 static void usage(void) __attribute__((__noreturn__));
 static int do_req(const char *, unsigned long, void *);
-static void kill_firmware(const char *);
 static void get_radio_state(const char *);
 static void get_statistics(const char *);
 
@@ -83,10 +82,6 @@ main(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, "kr")) != -1) {
 		switch (ch) {
-		case 'k':
-			kill_firmware(iface);
-			return EX_OK;
-
 		case 'r':
 			get_radio_state(iface);
 			return EX_OK;
@@ -105,8 +100,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "Usage:  %s -i iface\n"
-	    "\t%s -i iface -k\n"
-	    "\t%s -i iface -r\n", getprogname(), getprogname(), getprogname());
+	    "\t%s -i iface -r\n", getprogname(), getprogname());
 
 	exit(EX_USAGE);
 }
@@ -129,13 +123,6 @@ do_req(const char *iface, unsigned long req, void *data)
 	(void)close(s);
 	errno = serrno;
 	return error;
-}
-
-static void
-kill_firmware(const char *iface)
-{
-	if (do_req(iface, SIOCSKILLFW, NULL) == -1)
-		err(EX_OSERR, "Can't kill firmware");
 }
 
 static void
