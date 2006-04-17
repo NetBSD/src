@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.871 2006/04/15 12:17:22 tnozaki Exp $
+#	$NetBSD: mi,v 1.872 2006/04/17 23:31:24 salo Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4370,6 +4370,7 @@
 ./usr/share/man/cat3/setstate.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setterm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/setttyent.0		comp-c-catman		.cat
+./usr/share/man/cat3/setttyentpath.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setusercontext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setusershell.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setutxent.0		comp-c-catman		.cat
@@ -8334,6 +8335,7 @@
 ./usr/share/man/man3/setstate.3			comp-c-man		.man
 ./usr/share/man/man3/setterm.3			comp-c-man		.man
 ./usr/share/man/man3/setttyent.3		comp-c-man		.man
+./usr/share/man/man3/setttyentpath.3		comp-c-man		.man
 ./usr/share/man/man3/setusercontext.3		comp-c-man		.man
 ./usr/share/man/man3/setusershell.3		comp-c-man		.man
 ./usr/share/man/man3/setutxent.3		comp-c-man		.man
