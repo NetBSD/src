@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.9.12.3 2006/02/26 22:02:44 riz Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.9.12.4 2006/04/17 18:07:59 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.9.12.3 2006/02/26 22:02:44 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.9.12.4 2006/04/17 18:07:59 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 				bus_space_unmap(sc->sc_st, sc->sc_sh,
 				    I82802_IOSIZE);
 #ifdef DIAGNOSTIC
-				aprint_verbose("%s: unable to read from "
+				printf("%s: unable to read from "
 				    "random number generator.\n",
 				    sc->sc_dev.dv_xname);
 #endif
