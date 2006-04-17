@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.614 2006/04/17 16:15:40 christos Exp $
+# $NetBSD: mi,v 1.615 2006/04/17 19:07:45 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -896,7 +896,7 @@
 ./usr/libexec/postfix/pipe			base-postfix-bin	postfix
 ./usr/libexec/postfix/proxymap			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmgr			base-postfix-bin	postfix
-./usr/libexec/postfix/qmqpd			base-postfix-bin	postfix
+./usr/libexec/postfix/qmqpd			base-obsolete		obsolete
 ./usr/libexec/postfix/scache			base-postfix-bin	postfix
 ./usr/libexec/postfix/sendmail			base-postfix-bin	postfix
 ./usr/libexec/postfix/showq			base-postfix-bin	postfix
