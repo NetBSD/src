@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.24 2006/04/14 18:54:51 christos Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.25 2006/04/17 13:02:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -2373,7 +2373,7 @@ sk_intr(void *xsc)
 			    sc_if0->sk_phytype == SK_PHYTYPE_BCOM)
 				sk_intr_bcom(sc_if0);
 
-			if (sc_if0 != NULL &&
+			if (sc_if1 != NULL &&
 			    sc_if1->sk_phytype == SK_PHYTYPE_BCOM)
 				sk_intr_bcom(sc_if1);
 		}
