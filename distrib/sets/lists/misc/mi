@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.130 2006/03/16 17:38:46 jwise Exp $
+# $NetBSD: mi,v 1.131 2006/04/17 16:15:40 christos Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -228,6 +228,8 @@
 ./usr/share/doc/html/postfix/postsuper.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/proxymap.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/qmgr.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/qmgr.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/qmqpd.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/qshape.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/queuing.html	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/rate.html		misc-obsolete		obsolete
