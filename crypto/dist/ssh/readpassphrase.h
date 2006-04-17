@@ -1,4 +1,4 @@
-/*	$NetBSD: readpassphrase.h,v 1.3 2005/02/13 06:01:36 christos Exp $	*/
+/*	$NetBSD: readpassphrase.h,v 1.3.2.1 2006/04/17 23:11:11 tron Exp $	*/
 /*	$OpenBSD: readpassphrase.h,v 1.1 2000/11/21 00:48:38 millert Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 
 __BEGIN_DECLS
 char * readpassphrase __P((const char *, char *, size_t, int));
+char * getpass __P((const char *));
 __END_DECLS
 
 #endif /* !_READPASSPHRASE_H_ */
