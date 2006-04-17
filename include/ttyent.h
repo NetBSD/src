@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyent.h,v 1.13 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: ttyent.h,v 1.14 2006/04/17 23:29:21 salo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,6 +69,9 @@ struct ttyent {
 __BEGIN_DECLS
 struct ttyent *getttyent(void);
 struct ttyent *getttynam(const char *);
+#if defined(_NETBSD_SOURCE)
+int setttyentpath(const char *);
+#endif /* defined(_NETBSD_SOURCE) */
 int setttyent(void);
 int endttyent(void);
 __END_DECLS

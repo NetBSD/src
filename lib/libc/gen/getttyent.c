@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.22 2005/05/14 15:43:47 christos Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.23 2006/04/17 23:29:21 salo Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.22 2005/05/14 15:43:47 christos Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.23 2006/04/17 23:29:21 salo Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,7 @@ __weak_alias(endttyent,_endttyent)
 __weak_alias(getttyent,_getttyent)
 __weak_alias(getttynam,_getttynam)
 __weak_alias(setttyent,_setttyent)
+__weak_alias(setttyentpath,_setttyentpath)
 #endif
 
 static FILE *tf;
@@ -216,15 +217,21 @@ value(char *p)
 }
 
 int
-setttyent(void)
+setttyentpath(const char *path)
 {
 	lineno = 0;
 	if (tf) {
 		rewind(tf);
 		return 1;
-	} else if ((tf = fopen(_PATH_TTYS, "r")) != NULL)
+	} else if ((tf = fopen(path, "r")) != NULL)
 		return 1;
 	return 0;
+}
+
+int
+setttyent(void)
+{
+	return setttyentpath(_PATH_TTYS);
 }
 
 int

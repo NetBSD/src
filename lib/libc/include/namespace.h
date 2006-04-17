@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.114 2006/04/16 17:03:32 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.115 2006/04/17 23:29:21 salo Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -498,6 +498,7 @@
 #define setservent_r		_setservent_r
 #define setstate		_setstate
 #define setttyent		_setttyent
+#define setttyentpath		_setttyentpath
 #define settimeofday		_settimeofday
 #define setusershell		_setusershell
 #define shm_open		_shm_open
