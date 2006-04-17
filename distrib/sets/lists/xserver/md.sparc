@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.18 2006/04/17 00:43:23 macallan Exp $
+# $NetBSD: md.sparc,v 1.19 2006/04/17 21:07:38 macallan Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -196,6 +196,7 @@
 ./usr/X11R6/man/man1/xf86cfg.1			-unknown-		.man
 ./usr/X11R6/man/man1/xf86config.1		-unknown-		.man
 ./usr/X11R6/man/man4/acecad.4			-unknown-		.man
+./usr/X11R6/man/man4/ati.4			-unknown-		.man
 ./usr/X11R6/man/man4/citron.4			-unknown-		.man
 ./usr/X11R6/man/man4/dmc.4			-unknown-		.man
 ./usr/X11R6/man/man4/dynapro.4			-unknown-		.man
@@ -211,6 +212,8 @@
 ./usr/X11R6/man/man4/palmax.4			-unknown-		.man
 ./usr/X11R6/man/man4/penmount.4			-unknown-		.man
 ./usr/X11R6/man/man4/pnozz.4			-unknown-		.man
+./usr/X11R6/man/man4/r128.4			-unknown-		.man
+./usr/X11R6/man/man4/radeon.4			-unknown-		.man
 ./usr/X11R6/man/man4/sunbw2.4			-unknown-		.man
 ./usr/X11R6/man/man4/suncg14.4			-unknown-		.man
 ./usr/X11R6/man/man4/suncg3.4			-unknown-		.man
