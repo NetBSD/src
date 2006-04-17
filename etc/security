@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.96 2006/01/29 23:17:24 rpaulo Exp $
+#	$NetBSD: security,v 1.97 2006/04/17 07:38:53 veego Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -808,7 +808,7 @@ if checkyesno check_disklabels; then
 	xargs rm < $LABELS
 
 		# generate disklabels of all disks excluding:	cd fd md st
-	disks=`iostat -x | awk 'NR > 1 && $1 !~ /^[cfm]d|st/ { print $1; }'`
+	disks=`iostat -x | awk 'NR > 1 && $1 !~ /^[cfm]d|st|nfs/ { print $1; }'`
 	for i in $disks; do
 		disklabel $i > "$work_dir/disklabel.$i" 2>/dev/null
 	done
