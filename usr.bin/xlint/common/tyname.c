@@ -1,3 +1,5 @@
+/*	$NetBSD: tyname.c,v 1.3 2006/04/17 06:53:06 skrll Exp $	*/
+
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.2 2005/06/14 03:40:31 skd Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.3 2006/04/17 06:53:06 skrll Exp $");
 #endif
 
 #include <ctype.h>
