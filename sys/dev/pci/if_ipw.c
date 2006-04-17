@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.18 2006/04/17 19:06:51 rpaulo Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.19 2006/04/17 20:57:24 rpaulo Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.18 2006/04/17 19:06:51 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.19 2006/04/17 20:57:24 rpaulo Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1738,14 +1738,6 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCGRADIO:
 		error = ipw_get_radio(sc, (int *)ifr->ifr_data);
-		break;
-
-	case SIOCSKILLFW:
-		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
-			break;
-
-		ipw_reset(sc);
 		break;
 
 	case SIOCSIFMEDIA:
