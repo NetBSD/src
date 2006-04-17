@@ -37,6 +37,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the <libkern/OSByteOrder.h> header file. */
+/* #undef HAVE_LIBKERN_OSBYTEORDER_H */
+
 /* Define to 1 if you have the `nsl' library (-lnsl). */
 /* #undef HAVE_LIBNSL */
 

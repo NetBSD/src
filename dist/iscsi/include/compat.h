@@ -30,6 +30,10 @@
 #include <machine/endian.h>
 #endif
 
+#ifdef HAVE_LIBKERN_OSBYTEORDER_H
+#include <libkern/OSByteOrder.h>
+#endif
+
 #ifndef HAVE_STRLCPY
 size_t strlcpy(char *, const char *, size_t);
 #endif
@@ -39,7 +43,9 @@ size_t strlcpy(char *, const char *, size_t);
 #endif
 
 #ifndef HTOBE64
-#  if _BYTE_ORDER == _BIG_ENDIAN
+#  if defined(HAVE_LIBKERN_OSBYTEORDER_H)
+#    define HTOBE64(x)      (x) = OSSwapBigToHostInt64((u_int64_t)(x))
+#  elif _BYTE_ORDER == _BIG_ENDIAN
 #    define HTOBE64(x)      (x)
 #  else   /* LITTLE_ENDIAN */
 #    define HTOBE64(x)      (x) = __bswap64((u_int64_t)(x))
