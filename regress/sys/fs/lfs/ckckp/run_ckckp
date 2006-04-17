@@ -1,0 +1,13 @@
+#!/bin/ksh
+
+TMPMP=$1
+LFSCDEV=$2
+PLEX=$3
+COUNT=$4
+UTILDIR=`pwd`
+
+$UTILDIR/ckckp $TMPMP $LFSCDEV &
+(cd $TMPMP; $UTILDIR/cleanalot_async -n $COUNT -p $PLEX)
+kill %1
+
+exit 0
