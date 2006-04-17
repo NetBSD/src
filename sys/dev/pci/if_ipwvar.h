@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.10 2006/04/17 19:06:51 rpaulo Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.11 2006/04/17 20:57:24 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -174,7 +174,5 @@ struct ipw_softc {
 
 #define	sc_if	sc_ec.ec_if
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE1	_IOWR('i', 140, struct ifreq)
