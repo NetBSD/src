@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.178 2006/04/02 17:45:58 riz Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.179 2006/04/17 18:08:37 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2165,3 +2165,8 @@ sys/netinet/in.c				1.105
 	non existant address.
 	[seanb, ticket #6040]
 
+sys/arch/i386/pci/pchb_rnd.c			patch
+
+	PR port-i386/33264: Fix build of kernels with the DIAGNOSTIC option
+	defined in the kernel configuration.
+	[tron, ticket #6049]
