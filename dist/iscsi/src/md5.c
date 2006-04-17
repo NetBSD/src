@@ -64,8 +64,9 @@ MD5Init(struct MD5Context *ctx)
  * of bytes.
  */
 void
-MD5Update(struct MD5Context *ctx, md5byte const *buf, uint32_t len)
+MD5Update(struct MD5Context *ctx, void const *vbuf, uint32_t len)
 {
+	md5byte const *buf = vbuf;
 	UWORD32 t;
 
 	/* Update byte count */
