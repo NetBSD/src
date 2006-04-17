@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.61 2006/04/10 20:17:59 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.62 2006/04/17 23:19:22 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1276,4 +1276,18 @@ sys/arch/m68k/include/frame.h			1.25
 
 	Fix build problems caused by recent "signal.h" changes.
 	[oster, ticket #1249]
+
+crypto/dist/ssh/includes.h			1.12
+crypto/dist/ssh/namespace.h			new file
+crypto/dist/ssh/readpassphrase.c		1.7
+crypto/dist/ssh/readpassphrase.h		1.6
+distrib/sets/lists/base/shl.mi			patch
+lib/libpam/libpam/Makefile			1.6 via patch
+lib/libssh/shlib_version			patch
+share/mk/bsd.prog.mk				1.208
+
+	Make PAM work on NetBSD ports without shared library support.
+	This fixes PR lib/32421.
+	[tsutsui, ticket #1256]
+
 
