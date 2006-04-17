@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.10 2005/09/13 04:14:17 christos Exp $	 */
+/* $NetBSD: pass6.c,v 1.11 2006/04/17 19:05:16 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -424,7 +424,7 @@ pass6(void)
 		pwarn("could roll forward from %" PRIx32 " to %" PRIx32 "\n",
 			fs->lfs_offset, lastgood);
 
-	if (!preen && reply("roll forward") == 0)
+	if (!preen && reply("ROLL FORWARD") == 0)
 		return;
 	/*
 	 * Pass 1: find inode blocks.  We ignore the Ifile inode but accept
@@ -501,7 +501,7 @@ pass6(void)
 				if (dp->di_nlink < 0 ||
 				    dp->di_u.inumber < 0 ||
 				    dp->di_size < 0) {
-					pwarn("bad inode at %" PRIx32 "\n",
+					pwarn("BAD INODE AT 0x%" PRIx32 "\n",
 						ibdaddr);
 					brelse(ibp);
 					brelse(bp);

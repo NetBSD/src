@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.20 2006/03/17 15:53:46 rumble Exp $ */
+/* $NetBSD: lfs.c,v 1.21 2006/04/17 19:05:16 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -576,6 +576,8 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	fs->lfs_ivnode = lfs_raw_vget(fs,
 		(dummy_read ? LFS_IFILE_INUM : fs->lfs_ifile), devvp->v_fd,
 		idaddr);
+	if (fs->lfs_ivnode == NULL)
+		return NULL;
 
 	register_vget((void *)fs, lfs_vget);
 

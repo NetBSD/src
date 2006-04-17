@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.27 2005/09/23 12:10:34 jmmv Exp $	 */
+/* $NetBSD: main.c,v 1.28 2006/04/17 19:05:16 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -64,7 +64,6 @@ main(int argc, char **argv)
 	int ret = 0;
 	const char *optstring = "b:dfi:m:npPqy";
 
-	sync();
 	skipclean = 1;
 	exitonfail = 0;
 	idaddr = 0x0;
