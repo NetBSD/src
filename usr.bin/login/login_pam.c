@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.16 2006/03/22 15:36:49 christos Exp $       */
+/*     $NetBSD: login_pam.c,v 1.17 2006/04/17 16:29:44 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.16 2006/03/22 15:36:49 christos Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.17 2006/04/17 16:29:44 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -137,8 +137,7 @@ main(int argc, char *argv[])
 	login_cap_t *lc = NULL;
 	pam_handle_t *pamh = NULL;
 	int pam_err;
-	void *oint;
-	void *oabrt;
+	sig_t oint, oabrt, oquit, oalrm;
 	const void *newuser;
 	int pam_silent = PAM_SILENT;
 	pid_t xpid, pid;
@@ -151,10 +150,12 @@ main(int argc, char *argv[])
 	nested = NULL;
 	need_chpass = require_chpass = 0;
 
-	(void)signal(SIGALRM, timedout);
+	oabrt = signal(SIGABRT, SIG_IGN);
+	oalrm = signal(SIGALRM, timedout);
+	oint = signal(SIGINT, SIG_IGN);
+	oquit = signal(SIGQUIT, SIG_IGN);
+
 	(void)alarm(timeout);
-	(void)signal(SIGQUIT, SIG_IGN);
-	(void)signal(SIGINT, SIG_IGN);
 	(void)setpriority(PRIO_PROCESS, 0, 0);
 
 	openlog("login", 0, LOG_AUTH);
@@ -528,11 +529,8 @@ skip_auth:
 	/*
 	 * Fork because we need to call pam_closesession as root.
 	 * Make sure signals cannot kill the parent.
-	 * This is copied from crontab(8), which has to
-         * cope with a similar situation.
+	 * This has been handled in the begining of main.
 	 */
-	oint = signal(SIGINT, SIG_IGN);
-	oabrt = signal(SIGABRT, SIG_IGN);
 
 	switch(pid = fork()) {
 	case -1:
@@ -574,8 +572,10 @@ skip_auth:
 			exit(EXIT_FAILURE);
 		}
 		
-		(void)signal(SIGINT, oint);
 		(void)signal(SIGABRT, oabrt);
+		(void)signal(SIGALRM, oalrm);
+		(void)signal(SIGINT, oint);
+		(void)signal(SIGQUIT, oquit);
 		if ((pam_err = pam_close_session(pamh, 0)) != PAM_SUCCESS) {
 			syslog(LOG_ERR, "pam_close_session: %s",
 			    pam_strerror(pamh, pam_err));
@@ -673,17 +673,17 @@ skip_auth:
 
 	login_close(lc);
 
-	(void)signal(SIGALRM, SIG_DFL);
-	(void)signal(SIGQUIT, SIG_DFL);
-	(void)signal(SIGINT, SIG_DFL);
-	(void)signal(SIGTSTP, SIG_IGN);
 
 	tbuf[0] = '-';
 	(void)strlcpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
 	    p + 1 : pwd->pw_shell, sizeof(tbuf) - 1);
 
-	(void)signal(SIGINT, oint);
 	(void)signal(SIGABRT, oabrt);
+	(void)signal(SIGALRM, oalrm);
+	(void)signal(SIGINT, oint);
+	(void)signal(SIGQUIT, oquit);
+	(void)signal(SIGTSTP, SIG_IGN);
+
 	execlp(pwd->pw_shell, tbuf, NULL);
 	err(EXIT_FAILURE, "%s", pwd->pw_shell);
 }
