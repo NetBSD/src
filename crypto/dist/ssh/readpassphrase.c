@@ -1,4 +1,4 @@
-/*	$NetBSD: readpassphrase.c,v 1.4 2005/02/13 06:01:36 christos Exp $	*/
+/*	$NetBSD: readpassphrase.c,v 1.4.4.1 2006/04/17 23:14:53 tron Exp $	*/
 /*
  * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
@@ -26,6 +26,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "includes.h"
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.7 2001/08/07 19:34:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
