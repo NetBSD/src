@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.17 2005/09/13 04:14:17 christos Exp $	 */
+/* $NetBSD: pass5.c,v 1.18 2006/04/17 19:05:16 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -91,25 +91,25 @@ pass5(void)
 		LFS_SEGENTRY(su, fs, i, bp);
 		if (!preen && !(su->su_flags & SEGUSE_DIRTY) &&
 		    seg_table[i].su_nbytes > 0) {
-			pwarn("%d bytes contained in 'clean' segment %d\n",
+			pwarn("CLEAN SEGMENT %d CLAIMS %d BYTES\n",
 			    seg_table[i].su_nbytes, i);
-			if (reply("dirty segment")) {
+			if (reply("MARK SEGMENT DIRTY")) {
 				su->su_flags |= SEGUSE_DIRTY;
 				++diddirty;
 			}
 		}
 		if (!preen && (su->su_flags & SEGUSE_DIRTY) &&
 		    su->su_nbytes != seg_table[i].su_nbytes) {
-			pwarn("segment %d claims %d bytes but has %d",
+			pwarn("SEGMENT %d CLAIMS %d BYTES BUT HAS %d",
 			    i, su->su_nbytes, seg_table[i].su_nbytes);
 			if ((int32_t)su->su_nbytes >
 			    (int32_t)seg_table[i].su_nbytes)
-				pwarn(" (high by %d)\n", su->su_nbytes -
+				pwarn(" (HIGH BY %d)\n", su->su_nbytes -
 				    seg_table[i].su_nbytes);
 			else
-				pwarn(" (low by %d)\n", -su->su_nbytes +
+				pwarn(" (LOW BY %d)\n", -su->su_nbytes +
 				    seg_table[i].su_nbytes);
-			if (reply("fix")) {
+			if (reply("FIX")) {
 				su->su_nbytes = seg_table[i].su_nbytes;
 				++diddirty;
 			}
@@ -153,25 +153,25 @@ pass5(void)
 		pwarn("NOTE: when using -i, expect discrepancies in dmeta,"
 		      " avail, nclean, bfree\n");
 	if (dmeta != fs->lfs_dmeta) {
-		pwarn("dmeta given as %d, should be %ld\n", fs->lfs_dmeta,
+		pwarn("DMETA GIVEN AS %d, SHOULD BE %ld\n", fs->lfs_dmeta,
 		    dmeta);
-		if (preen || reply("fix")) {
+		if (preen || reply("FIX")) {
 			fs->lfs_dmeta = dmeta;
 			sbdirty();
 		}
 	}
 	if (avail != fs->lfs_avail) {
-		pwarn("avail given as %d, should be %ld\n", fs->lfs_avail,
+		pwarn("AVAIL GIVEN AS %d, SHOULE BE %ld\n", fs->lfs_avail,
 		    avail);
-		if (preen || reply("fix")) {
+		if (preen || reply("FIX")) {
 			fs->lfs_avail = avail;
 			sbdirty();
 		}
 	}
 	if (nclean != fs->lfs_nclean) {
-		pwarn("nclean given as %d, should be %d\n", fs->lfs_nclean,
+		pwarn("NCLEAN GIVEN AS %d, SHOULE BE %d\n", fs->lfs_nclean,
 		    nclean);
-		if (preen || reply("fix")) {
+		if (preen || reply("FIX")) {
 			fs->lfs_nclean = nclean;
 			sbdirty();
 		}
@@ -183,12 +183,13 @@ pass5(void)
 		labelskew = btofsb(fs, LFS_LABELPAD);
 	if (fs->lfs_bfree > fs->lfs_dsize - bb - labelskew ||
 	    fs->lfs_bfree < fs->lfs_dsize - ubb - labelskew) {
-		pwarn("bfree given as %d, should be between %ld and %ld\n",
-		    fs->lfs_bfree, fs->lfs_dsize - ubb - labelskew,
+		pwarn("BFREE GIVEN AS %d, SHOULD BE BETWEEN %ld AND %ld\n",
+		    fs->lfs_bfree, MAX(0, fs->lfs_dsize - ubb - labelskew),
 		    fs->lfs_dsize - bb - labelskew);
-		if (preen || reply("fix")) {
-			fs->lfs_bfree = fs->lfs_dsize - labelskew -
-			    (ubb + bb) / 2;
+		if (preen || reply("FIX")) {
+			fs->lfs_bfree =
+				(MAX(0, fs->lfs_dsize - labelskew - ubb) +
+				 fs->lfs_dsize - labelskew - bb) / 2;
 			sbdirty();
 		}
 	}

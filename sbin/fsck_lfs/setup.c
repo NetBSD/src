@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.26 2005/09/13 04:14:17 christos Exp $ */
+/* $NetBSD: setup.c,v 1.27 2006/04/17 19:05:16 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ setup(const char *dev)
 		}
 	}
 	if (fs->lfs_bmask != fs->lfs_bsize - 1) {
-		pwarn("INCORRECT BMASK=%x IN SUPERBLOCK (should be %x)",
+		pwarn("INCORRECT BMASK=0x%x IN SUPERBLOCK (should be 0x%x)",
 		    (unsigned int) fs->lfs_bmask,
 		    (unsigned int) fs->lfs_bsize - 1);
 		fs->lfs_bmask = fs->lfs_bsize - 1;
