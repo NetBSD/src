@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.52 2006/03/16 18:43:34 jwise Exp $
+#	$NetBSD: bsd.x11.mk,v 1.53 2006/04/17 12:50:51 uwe Exp $
 
 .include <bsd.init.mk>
 
@@ -72,6 +72,7 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
     ${MACHINE} == "cats"	|| \
     ${MACHINE} == "i386"	|| \
     ${MACHINE} == "macppc"	|| \
+    ${MACHINE} == "netwinder"	|| \
     ${MACHINE} == "sgimips"	|| \
     ${MACHINE} == "sparc64"	|| \
     ${MACHINE} == "sparc"
