@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.248 2006/04/12 20:35:42 macallan Exp $
+#	$NetBSD: files.pci,v 1.249 2006/04/17 17:31:43 rpaulo Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -773,7 +773,7 @@ file	dev/pci/if_re_pci.c		re_pci
 #file	dev/if_ndis/if_ndis_pci.c
 
 # Intel PRO/Wireless 2100
-device	ipw: ifnet, arp, wlan
+device	ipw: ifnet, arp, wlan, firmload
 attach	ipw at pci
 file	dev/pci/if_ipw.c		ipw
 
