@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.3 2006/02/22 08:56:46 he Exp $ */
+/* $NetBSD: defs.h,v 1.4 2006/04/17 16:44:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2005 Alistair Crooks.  All rights reserved.
@@ -29,6 +29,8 @@
  */
 #ifndef DEFS_H_
 #define DEFS_H_
+
+#include "config.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
