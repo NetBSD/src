@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.13 2006/04/12 19:38:23 jmmv Exp $ */
+/* $NetBSD: vesafb.c,v 1.14 2006/04/17 13:59:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.13 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.14 2006/04/17 13:59:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,6 +260,9 @@ vesafb_attach(parent, dev, aux)
 
 	vesafb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 	vcons_init_screen(&sc->sc_vd, &vesafb_console_screen, 1, &defattr);
+#ifndef SPLASHSCREEN
+	vcons_redraw_screen(&vesafb_console_screen);
+#endif
 
 	vesafb_stdscreen.ncols = ri->ri_cols;
 	vesafb_stdscreen.nrows = ri->ri_rows;
