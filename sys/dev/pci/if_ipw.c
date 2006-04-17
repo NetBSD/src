@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.17 2006/04/17 17:29:08 rpaulo Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.18 2006/04/17 19:06:51 rpaulo Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.17 2006/04/17 17:29:08 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.18 2006/04/17 19:06:51 rpaulo Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -220,7 +220,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = memt;
 	sc->sc_sh = memh;
 	sc->sc_dmat = pa->pa_dmat;
-	strncpy(sc->sc_fwname, "ipw2100-1.2.fw", 16);
+	strncpy(sc->sc_fwname, "ipw2100-1.2.fw", 24);
 
 	/* disable interrupts */
 	CSR_WRITE_4(sc, IPW_CSR_INTR_MASK, 0);
@@ -1750,11 +1750,11 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFMEDIA:
 		if (ifr->ifr_media & IFM_IEEE80211_ADHOC)
-			strncpy(sc->sc_fwname, "ipw2100-1.2-i.fw", 16);
+			strncpy(sc->sc_fwname, "ipw2100-1.2-i.fw", 24);
 		else if (ifr->ifr_media & IFM_IEEE80211_MONITOR)
-			strncpy(sc->sc_fwname, "ipw2100-1.2-p.fw", 16);
+			strncpy(sc->sc_fwname, "ipw2100-1.2-p.fw", 24);
 		else
-			strncpy(sc->sc_fwname, "ipw2100-1.2.fw", 16);
+			strncpy(sc->sc_fwname, "ipw2100-1.2.fw", 24);
 
 		ipw_free_firmware(sc);
 		/* FALLTRHOUGH */		
