@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/04/17 16:16:42 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2006/04/17 19:18:59 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/html
 PFX_DAEMONS= anvil.8.html bounce.8.html cleanup.8.html discard.8.html \
 	error.8.html flush.8.html lmtp.8.html local.8.html \
 	master.8.html oqmgr.8.html pickup.8.html pipe.8.html proxymap.8.html \
-	qmgr.8.html qmqpd.8.html scache.8.html showq.8.html smtp.8.html \
+	qmgr.8.html scache.8.html showq.8.html smtp.8.html \
 	smtpd.8.html spawn.8.html tlsmgr.8.html trivial-rewrite.8.html \
 	verify.8.html virtual.8.html
 PFX_COMMANDS= postalias.1.html postcat.1.html \
