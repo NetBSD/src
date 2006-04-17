@@ -1393,7 +1393,8 @@ gld${EMULATION_NAME}_place_orphan (lang_input_statement_type *file, asection *s)
   else if (strncmp (secname, ".rel", 4) == 0
 	   && (s->flags & SEC_LOAD) != 0)
     place = &hold[orphan_rel];
-  else if ((s->flags & SEC_CODE) == 0)
+  else if ((s->flags & SEC_CODE) == 0
+	   && hold[orphan_rodata].os != NULL)
     place = &hold[orphan_rodata];
   else
     place = &hold[orphan_text];
