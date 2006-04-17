@@ -3222,7 +3222,8 @@ done
 
 
 
-for ac_header in asm/byteorder.h sys/byteorder.h byteswap.h machine/endian.h
+
+for ac_header in asm/byteorder.h sys/byteorder.h libkern/OSByteOrder.h byteswap.h machine/endian.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
