@@ -13,7 +13,7 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(sys/types.h sys/param.h sys/stat.h sys/time.h sys/mman.h sys/uio.h sys/socket.h sys/time.h sys/vfs.h)
 AC_CHECK_HEADERS(arpa/inet.h netinet/in.h netinet/tcp.h netdb.h)
-AC_CHECK_HEADERS(asm/byteorder.h sys/byteorder.h byteswap.h machine/endian.h)
+AC_CHECK_HEADERS(asm/byteorder.h sys/byteorder.h libkern/OSByteOrder.h byteswap.h machine/endian.h)
 AC_CHECK_HEADERS(ctype.h errno.h fcntl.h pthread.h pwd.h signal.h stdlib.h syslog.h unistd.h string.h stdarg.h utime.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
