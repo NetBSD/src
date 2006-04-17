@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.5 2006/04/12 19:38:22 jmmv Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.6 2006/04/17 15:59:47 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -262,7 +262,7 @@ lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;			/* turn on/off LCD controller */
 	}
 
-	return pxa2x0_lcd_ioctl(v, cmd, data, flag, l);
+	return pxa2x0_lcd_ioctl(v, vs, cmd, data, flag, l);
 }
 
 int

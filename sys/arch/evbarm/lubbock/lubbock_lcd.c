@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.4 2006/04/12 19:38:22 jmmv Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.5 2006/04/17 15:59:47 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.4 2006/04/12 19:38:22 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.5 2006/04/17 15:59:47 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;			/* turn on/off LCD controller */
 	}
 
-	return pxa2x0_lcd_ioctl( v, cmd, data, flag, l );
+	return pxa2x0_lcd_ioctl( v, vs, cmd, data, flag, l );
 }
 
 int
