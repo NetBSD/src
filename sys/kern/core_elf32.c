@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.23 2006/03/12 20:25:26 cube Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.24 2006/04/17 22:05:23 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.23 2006/03/12 20:25:26 cube Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.24 2006/04/17 22:05:23 christos Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -350,7 +350,8 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 		cpi.cpi_svgid = p->p_cred->p_svgid;
 
 		cpi.cpi_nlwps = p->p_nlwps;
-		strlcpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
+		(void)strncpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
+		cpi.cpi_name[sizeof(cpi.cpi_name) - 1] = '\0';
 
 		nhdr.n_namesz = sizeof(ELF_NOTE_NETBSD_CORE_NAME);
 		nhdr.n_descsz = sizeof(cpi);
