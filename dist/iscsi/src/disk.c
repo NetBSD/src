@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.13 2006/03/31 23:22:24 agc Exp $ */
+/* $NetBSD: disk.c,v 1.14 2006/04/17 16:58:31 thorpej Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -1141,7 +1141,7 @@ disk_write(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint8_t lun, uin
 {
 	uint64_t        byte_offset = lba * disks.v[sess->d].blocklen;
 	uint64_t        num_bytes = len * disks.v[sess->d].blocklen;
-	char           *ptr = NULL;
+	uint8_t        *ptr = NULL;
 	struct iovec    sg;
 	uint64_t        extra = 0;
 
@@ -1207,7 +1207,7 @@ disk_read(target_session_t * sess, iscsi_scsi_cmd_args_t * args, uint32_t lba, u
 	uint64_t        byte_offset = lba * disks.v[sess->d].blocklen;
 	uint64_t        num_bytes = len * disks.v[sess->d].blocklen;
 	uint64_t        extra = 0;
-	char           *ptr = NULL;
+	uint8_t        *ptr = NULL;
 	uint32_t        n;
 	int             rc;
 	static void    *last_ptr[CONFIG_DISK_MAX_LUNS];
