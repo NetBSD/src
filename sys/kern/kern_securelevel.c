@@ -1,4 +1,4 @@
-/* $NetBSD: kern_securelevel.c,v 1.1 2006/04/17 03:39:39 elad Exp $ */
+/* $NetBSD: kern_securelevel.c,v 1.2 2006/04/17 03:45:19 elad Exp $ */
 
 #include "opt_insecure.h"
 
@@ -16,10 +16,16 @@ static int sysctl_kern_securelevel(SYSCTLFN_PROTO);
 SYSCTL_SETUP(sysctl_kern_securelevel_setup, "sysctl kern.securelevel setup")
 {
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,   
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "securelevel",
 		       SYSCTL_DESCR("System security level"),
-		       sysctl_kern_securelevel, 0, &securelevel, 0,  
+		       sysctl_kern_securelevel, 0, &securelevel, 0,
 		       CTL_KERN, KERN_SECURELVL, CTL_EOL);
 }
 
