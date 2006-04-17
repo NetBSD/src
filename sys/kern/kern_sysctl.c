@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.194 2006/04/02 09:07:57 dsl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.195 2006/04/17 03:39:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,10 +75,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.194 2006/04/02 09:07:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.195 2006/04/17 03:39:39 elad Exp $");
 
 #include "opt_defcorename.h"
-#include "opt_insecure.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -162,12 +161,6 @@ char domainname[MAXHOSTNAMELEN];
 int domainnamelen;
 
 long hostid;
-
-#ifdef INSECURE
-int securelevel = -1;
-#else
-int securelevel = 0;
-#endif
 
 #ifndef DEFCORENAME
 #define	DEFCORENAME	"%n.core"
