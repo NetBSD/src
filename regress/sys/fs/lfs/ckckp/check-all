@@ -1,0 +1,108 @@
+#!/usr/pkg/bin/perl
+
+#
+# Use dumplfs to find all locations of the Ifile inode on a given disk.
+# Order these by serial number and call fsck_lfs on the raw disk for each.
+# If any fsck gives errors (lines containing "!", with a few exceptions)
+# print an error code with the daddr of the failing Ifile inode location.
+#
+
+$rdev = $ARGV[0];
+$sstart = $ARGV[1];
+$rollid = 0;
+open(DUMPLFS, "dumplfs $rdev |");
+
+# Look for "roll_id" so we don't use garbage
+while (<DUMPLFS>) {
+	if (m/roll_id *([x0-9a-f]*)/) {
+		$rollid = $1;
+		last;
+	}
+}
+
+# Now look for inodes and segment summaries.  Build a hash table of these
+# based on serial number.  Ignore any with serial numbers lower than $sstart.
+
+%iloc = ();
+while (<DUMPLFS>) {
+	if (m/roll_id *([0-9a-f]*)/) {
+		# print "rollid $1\n";
+		if ("0x$1" ne $rollid) {
+			# Skip the rest of this segment
+			while(<DUMPLFS>) {
+				last if m/SEGMENT/;
+			}
+			next;
+		}
+	}
+	if (m/serial *([0-9]*)/) {
+		$serno = $1;
+		# print "serno $serno\n";
+		if ($serno < $sstart) {
+			# Skip the rest of this partial segment
+			while(<DUMPLFS>) {
+				last if m/Segment Summary/;
+			}
+			next;
+		}
+	}
+	if (m/0x([0-9a-f]*)/) {
+		foreach $ss (split "0x", $_) {
+			if ($ss =~ m/^([0-9a-f][0-9a-f]*)/) {
+				# print "iblk 0x$1\n";
+				$daddr = $1;
+				if (m/[^0-9]1v1/) {
+					# print "** ifblk 0x$daddr\n";
+					$iloc{$serno} = $daddr;
+				}
+			}
+		}
+	}
+	if (m/SEGMENT/) {
+		print;
+	}
+}
+close(DUMPLFS);
+
+#
+# Now fsck each checkpoint in turn, beginning with $sstart.
+# Look for lines containing only caps or "!", but ignore known
+# false positives.
+#
+$error = 0;
+open(LOG, ">>check-all.log");
+foreach $k (sort { $a <=> $b } keys %iloc) {
+	$a = $iloc{$k};
+	print "fsck_lfs -n -f -i 0x$a $ARGV[0]\n";
+	open(FSCK, "fsck_lfs -n -f -i 0x$a $ARGV[0] |");
+	while(<FSCK>) {
+		print LOG;
+		chomp;
+
+		# Known false positives (mismatch between sb and ifile,
+		# which should be expected given we're using an arbitrarily
+		# old version fo the ifile)
+		if (m/AVAIL GIVEN/ ||
+		    m/BFREE GIVEN/ ||
+		    m/DMETA GIVEN/ ||
+		    m/NCLEAN GIVEN/) {
+			next;
+		}
+
+		# Fsck reports errors in ALL CAPS
+		# But don't count hex numbers as "lowercase".
+		s/0x[0-9a-f]*//g;
+		if (m/[A-Z]/ && ! m/[a-z]/) {
+			$error = 1;
+			last;
+		}
+	}
+	close(FSCK);
+	print "$error $k 0x$a\n";
+	last if $error;
+}
+
+# If there were no checkpoints, print *something*
+if ($#iloc == 0) {
+	print "0 $sstart 0\n";
+}
