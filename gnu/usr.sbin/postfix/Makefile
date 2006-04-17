@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2005/08/18 22:30:36 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.15 2006/04/17 16:11:20 christos Exp $
 
 # The first four/five of these are libraries and have to be built first.
 
@@ -12,7 +12,7 @@ SUBDIR=	util global dns masterlib .WAIT
 SUBDIR+=README_FILES anvil bounce cleanup discard error flush html \
 	lmtp local man master oqmgr pickup pipe postalias \
 	postcat postconf postdrop postfix postkick postlock \
-	postlog postmap postqueue postsuper proxymap qmgr scache \
+	postlog postmap postqueue postsuper proxymap qmgr qmqpd scache \
 	sendmail showq smtp smtpd spawn trivial-rewrite verify \
 	virtual proxymap
 
