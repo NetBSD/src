@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.51.8.2 2006/03/08 18:47:24 elad Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.51.8.3 2006/04/18 15:57:54 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,11 @@
 #ifndef _UFS_FFS_FFS_EXTERN_H_
 #define _UFS_FFS_FFS_EXTERN_H_
 
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/kauth.h>
+#else
+typedef void *kauth_cred_t;
+#endif /* !HAVE_NBTOOL_CONFIG_H */
 
 /*
  * Sysctl values for the fast filesystem.
