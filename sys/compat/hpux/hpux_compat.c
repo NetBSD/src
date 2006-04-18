@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.73.10.2 2006/03/10 14:28:51 elad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.73.10.3 2006/04/18 12:07:59 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.73.10.2 2006/03/10 14:28:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.73.10.3 2006/04/18 12:07:59 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1054,6 +1054,7 @@ hpux_sys_getaccess(l, v, retval)
 	kauth_cred_t cred;
 	struct vnode *vp;
 	struct nameidata nd;
+	gid_t gid;
 
 	/*
 	 * Build an appropriate credential structure
@@ -1063,7 +1064,7 @@ hpux_sys_getaccess(l, v, retval)
 	case 65502:	/* UID_EUID */
 		break;
 	case 65503:	/* UID_RUID */
-		cred->cr_uid = p->p_cred->p_ruid;
+		kauth_cred_seteuid(cred, kauth_cred_getuid(p->p_cred));
 		break;
 	case 65504:	/* UID_SUID */
 		error = EINVAL;
@@ -1071,29 +1072,31 @@ hpux_sys_getaccess(l, v, retval)
 	default:
 		if (SCARG(uap, uid) > 65504)
 			error = EINVAL;
-		cred->cr_uid = SCARG(uap, uid);
+		kauth_cred_seteuid(cred, SCARG(uap, uid));
 		break;
 	}
 	switch (SCARG(uap, ngroups)) {
 	case -1:	/* NGROUPS_EGID */
-		cred->cr_ngroups = 1;
+		gid = kauth_cred_getegid(cred);
+		kauth_cred_setgroups(cred, &gid, 1, -1);
 		break;
 	case -5:	/* NGROUPS_EGID_SUPP */
 		break;
 	case -2:	/* NGROUPS_RGID */
-		cred->cr_ngroups = 1;
-		cred->cr_gid = p->p_cred->p_rgid;
+		kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
+		gid = kauth_cred_geteuid(gid);
+		kauth_cred_setgroups(cred, &gid, 1, -1);
 		break;
 	case -6:	/* NGROUPS_RGID_SUPP */
-		cred->cr_gid = p->p_cred->p_rgid;
+		kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
 		break;
 	case -3:	/* NGROUPS_SGID */
 	case -7:	/* NGROUPS_SGID_SUPP */
 		error = EINVAL;
 		break;
 	case -4:	/* NGROUPS_SUPP */
-		if (cred->cr_ngroups > 1)
-			cred->cr_gid = cred->cr_groups[1];
+		if (kauth_cred_ngroups(cred) > 1)
+			kauth_cred_setegid(cred, kauth_cred_group(cred, 1));
 		else
 			error = EINVAL;
 		break;
@@ -1105,13 +1108,8 @@ hpux_sys_getaccess(l, v, retval)
 					   sizeof(lgroups[0]));
 		else
 			error = EINVAL;
-		if (error == 0) {
-			int gid;
-
-			for (gid = 0; gid < SCARG(uap, ngroups); gid++)
-				cred->cr_groups[gid] = lgroups[gid];
-			cred->cr_ngroups = SCARG(uap, ngroups);
-		}
+		if (error == 0)
+			kauth_cred_setgroups(cred, lgroups, ngroups, -1);
 		break;
 	}
 	/*
