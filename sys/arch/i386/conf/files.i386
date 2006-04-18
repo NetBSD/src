@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.285 2006/04/04 03:13:12 gdamore Exp $
+#	$NetBSD: files.i386,v 1.286 2006/04/18 16:49:19 rittera Exp $
 #
 # new style config file for i386 architecture
 #
@@ -384,7 +384,7 @@ file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
 file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
 # NDIS compatibilty (COMPAT_NDIS)
-# include "compat/ndis/files.ndis"
+include "compat/ndis/files.ndis"
 
 # Win32 binary compatibility (COMPAT_PECOFF)
 include	"compat/pecoff/files.pecoff"

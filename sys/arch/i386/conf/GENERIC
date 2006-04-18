@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.743 2006/04/15 17:48:23 jmmv Exp $
+# $NetBSD: GENERIC,v 1.744 2006/04/18 16:49:19 rittera Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.743 $"
+#ident 		"GENERIC-$Revision: 1.744 $"
 
 maxusers	32		# estimated number of users
 
@@ -146,8 +146,7 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_MACH	# binary compatibility with Mach binaries
 #options 	COMPAT_DARWIN	# binary compatibility with Darwin binaries
 #options 	EXEC_MACHO	# exec MACH-O binaries
-#options		COMPAT_NDIS	# NDIS network driver
-#makeoptions	CFLAGS+="-DNDIS_DRV_DATA=\"ndis_data\""
+#options 	COMPAT_NDIS	# NDIS network driver
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
