@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-token.l,v 1.3 2004/01/11 21:10:35 mdodd Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf-token.l,v 1.2 2006/03/30 23:21:06 rittera Exp $");
+__RCSID("$NetBSD: inf-token.l,v 1.3 2006/04/18 16:49:19 rittera Exp $");
 #endif
 
 #include <regex.h>

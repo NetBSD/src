@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf.c,v 1.13.2.1 2005/02/18 16:30:10 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf.c,v 1.2 2006/03/30 23:21:06 rittera Exp $");
+__RCSID("$NetBSD: inf.c,v 1.3 2006/04/18 16:49:19 rittera Exp $");
 #endif
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.249 2006/04/17 17:31:43 rpaulo Exp $
+#	$NetBSD: files.pci,v 1.250 2006/04/18 16:49:19 rittera Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -767,10 +767,10 @@ attach	re at pci with re_pci
 file	dev/pci/if_re_pci.c		re_pci
 
 # Windows NDIS drivers (Experimental)
-#device 	ndis
-#attach 	ndis at pci
-#file	dev/if_ndis/if_ndis.c
-#file	dev/if_ndis/if_ndis_pci.c
+device 	ndis
+attach 	ndis at pci
+file	dev/if_ndis/if_ndis.c		ndis
+file	dev/if_ndis/if_ndis_pci.c	ndis
 
 # Intel PRO/Wireless 2100
 device	ipw: ifnet, arp, wlan, firmload

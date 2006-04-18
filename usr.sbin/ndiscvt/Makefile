@@ -2,7 +2,9 @@
 
 .PATH:	${.CURDIR}/../../sys/compat/ndis
 
+.if ${MACHINE} == "i386"
 PROG=	ndiscvt
+.endif
 SRCS=	ndiscvt.c
 SRCS+=	subr_pe.c
 SRCS+=	inf.c inf-token.l inf-parse.y
