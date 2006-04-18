@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.39.4.2 2006/03/14 02:52:47 elad Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.39.4.3 2006/04/18 12:05:54 elad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.39.4.2 2006/03/14 02:52:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.39.4.3 2006/04/18 12:05:54 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -757,7 +757,6 @@ darwin_fill_kproc(p, dkp)
 	struct lwp *l;
 	struct darwin_extern_proc *dep;
 	struct darwin_eproc *de;
-	int i;
 
 	printf("fillkproc: pid %d\n", p->p_pid);
 	l = proc_representative_lwp(p);
@@ -824,7 +823,7 @@ darwin_fill_kproc(p, dkp)
 	de->e_ucred.cr_uid = kauth_cred_geteuid(p->p_cred);
 	de->e_ucred.cr_ngroups = kauth_cred_ngroups(p->p_cred);
 	kauth_cred_getgroups(p->p_cred, de->e_ucred.cr_groups,
-	    sizeof(de->e_ucred.cr_groups) / sizeof(de->e_ucred.cr_groups[0]))
+	    sizeof(de->e_ucred.cr_groups) / sizeof(de->e_ucred.cr_groups[0]));
 	de->e_vm.vm_refcnt = p->p_vmspace->vm_refcnt;
 	de->e_vm.vm_rssize = p->p_vmspace->vm_rssize;
 	de->e_vm.vm_swrss = p->p_vmspace->vm_swrss;

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.9.10.1 2006/03/08 01:48:37 elad Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.9.10.2 2006/04/18 12:05:54 elad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.9.10.1 2006/03/08 01:48:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.9.10.2 2006/04/18 12:05:54 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -800,7 +800,7 @@ darwin_sys_getattrlist(l, v, retval)
 out3:
 	vput(vp);
 out2:
-	crfree(cred);
+	kauth_cred_free(cred);
 	free(tbuf, M_TEMP);
 
 	return error;
