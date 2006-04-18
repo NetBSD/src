@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.72 2006/03/17 15:53:46 rumble Exp $	*/
+/*	$NetBSD: init.c,v 1.73 2006/04/18 11:40:26 salo Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.72 2006/03/17 15:53:46 rumble Exp $");
+__RCSID("$NetBSD: init.c,v 1.73 2006/04/18 11:40:26 salo Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,12 +135,6 @@ state_func_t death(void);
 enum { AUTOBOOT, FASTBOOT } runcom_mode = AUTOBOOT;
 
 void transition(state_t);
-#ifndef LETS_GET_SMALL
-state_t requested_transition = runcom;
-#else /* LETS_GET_SMALL */
-state_t requested_transition = single_user;
-#endif /* LETS_GET_SMALL */
-
 void setctty(const char *);
 
 typedef struct init_session {
@@ -174,15 +168,30 @@ int getsecuritylevel(void);
 int setupargv(session_t *, struct ttyent *);
 int clang;
 
-#ifndef LETS_GET_SMALL
-void clear_session_logs(session_t *, int);
-#endif
-
 int start_session_db(void);
 void add_session(session_t *);
 void del_session(session_t *);
 session_t *find_session(pid_t);
 DB *session_db;
+
+int do_setttyent(void);
+
+#ifndef LETS_GET_SMALL
+state_t requested_transition = runcom;
+
+void clear_session_logs(session_t *, int);
+state_func_t runetcrc(int);
+
+#ifdef CHROOT
+int did_multiuser_chroot = 0;
+char rootdir[PATH_MAX];
+int shouldchroot(void);
+int createsysctlnode(void);
+#endif /* CHROOT */
+
+#else /* LETS_GET_SMALL */
+state_t requested_transition = single_user;
+#endif /* !LETS_GET_SMALL */
 
 #ifdef MFS_DEV_IF_NO_CONSOLE
 
@@ -309,6 +318,11 @@ main(int argc, char **argv)
 	(void)close(1);
 	(void)close(2);
 
+#if !defined(LETS_GET_SMALL) && defined(CHROOT)
+	/* Create "init.root" sysctl node. */
+	createsysctlnode();
+#endif /* !LETS_GET_SMALL && CHROOT*/
+
 	/*
 	 * Start the state machine.
 	 */
@@ -392,6 +406,29 @@ warning(const char *message, ...)
 	vsyslog(LOG_ALERT, message, ap);
 	va_end(ap);
 	closelog();
+
+#if 0
+	/*
+	 * XXX: syslog seems to just plain not work in console-only
+	 * XXX: situation... that should be fixed.  Let's leave this
+	 * XXX: note + code here in case someone gets in trouble and
+	 * XXX: wants to debug. -- Jachym Holecek <freza@liberouter.org>
+	 */
+	{
+		char errbuf[1024];
+		int fd, len;
+
+		/* We can't do anything on errors, anyway... */
+		fd = open(_PATH_CONSOLE, O_WRONLY);
+		if (fd == -1)
+			return ;
+
+		/* %m will get lost... */
+		len = vsnprintf(errbuf, sizeof(errbuf), message, ap);
+		(void)write(fd, (void *)errbuf, len);
+		(void)close(fd);
+	}
+#endif
 }
 
 /*
@@ -566,6 +603,11 @@ single_user(void)
 	char altshell[128];
 #endif /* ALTSHELL */
 
+#if !defined(LETS_GET_SMALL) && defined(CHROOT)
+	/* Clear previous idea, just in case. */
+	did_multiuser_chroot = 0;
+#endif /* !LETS_GET_SMALL && CHROOT */
+
 	/*
 	 * If the kernel is in secure mode, downgrade it to insecure mode.
 	 */
@@ -722,11 +764,10 @@ single_user(void)
 }
 
 #ifndef LETS_GET_SMALL
-/*
- * Run the system startup script.
- */
+
+/* ARGSUSED */
 state_func_t
-runcom(void)
+runetcrc(int trychroot)
 {
 	pid_t pid, wpid;
 	int status;
@@ -745,10 +786,19 @@ runcom(void)
 
 		argv[0] = "sh";
 		argv[1] = _PATH_RUNCOM;
-		argv[2] = runcom_mode == AUTOBOOT ? "autoboot" : 0;
+		argv[2] = (runcom_mode == AUTOBOOT ? "autoboot" : 0);
 		argv[3] = 0;
 
 		(void)sigprocmask(SIG_SETMASK, &sa.sa_mask, NULL);
+
+#ifdef CHROOT
+		if (trychroot)
+			if (chroot(rootdir) != 0) {
+				warning("failed to chroot to %s, error: %m",
+				    rootdir);
+				_exit(1); 	/* force single user mode */
+			}
+#endif /* CHROOT */
 
 		(void)execv(INIT_BSHELL, __UNCONST(argv));
 		stall("can't exec %s for %s: %m", INIT_BSHELL, _PATH_RUNCOM);
@@ -805,6 +855,43 @@ runcom(void)
 	if (WEXITSTATUS(status))
 		return (state_func_t)single_user;
 
+	return (state_func_t) read_ttys;
+}
+
+/*
+ * Run the system startup script.
+ */
+state_func_t
+runcom(void)
+{
+	state_func_t next_step;
+
+	/* Run /etc/rc and choose next state depending on the result. */
+	next_step = runetcrc(0);
+	if (next_step != (state_func_t) read_ttys)
+		return (state_func_t) next_step;
+
+#ifdef CHROOT
+	/*
+	 * If init.root sysctl does not point to "/", we'll chroot and run
+	 * The Real(tm) /etc/rc now.  Global variable rootdir will tell us
+	 * where to go.
+	 */
+	if (shouldchroot()) {
+		next_step = runetcrc(1);
+		if (next_step != (state_func_t) read_ttys)
+			return (state_func_t) next_step;
+
+		did_multiuser_chroot = 1;
+	} else {
+		did_multiuser_chroot = 0;
+	}
+#endif /* CHROOT */
+
+	/*
+	 * Regardless of whether in chroot or not, we booted successfuly.
+	 * It's time to spawn gettys (ie. next_step's value at this point).
+	 */
 	runcom_mode = AUTOBOOT;		/* the default */
 	/* NB: should send a message to the session logger to avoid blocking. */
 #ifdef SUPPORT_UTMPX
@@ -1034,8 +1121,19 @@ read_ttys(void)
 		free_session(sp);
 	}
 	sessions = NULL;
-	if (start_session_db())
-		return (state_func_t)single_user;
+
+	if (start_session_db()) {
+		warning("read_ttys: start_session_db failed, death\n");
+#ifdef CHROOT
+		/* If /etc/rc ran in chroot, we want to kill any survivors. */
+		if (did_multiuser_chroot)
+			return (state_func_t)death;
+		else
+#endif /* CHROOT */
+			return (state_func_t)single_user;
+	}
+
+	do_setttyent();
 
 	/*
 	 * Allocate a session entry for each active port.
@@ -1044,7 +1142,6 @@ read_ttys(void)
 	while ((typ = getttyent()) != NULL)
 		if ((snext = new_session(sp, ++session_index, typ)) != NULL)
 			sp = snext;
-
 	endttyent();
 
 	return (state_func_t)multi_user;
@@ -1101,6 +1198,16 @@ start_getty(session_t *sp)
 
 	if (pid)
 		return pid;
+
+#ifdef CHROOT
+	/* If /etc/rc did proceed inside chroot, we have to try as well. */
+	if (did_multiuser_chroot)
+		if (chroot(rootdir) != 0) {
+			stall("can't chroot getty '%s' inside %s: %m",
+			    sp->se_getty_argv[0], rootdir);
+			_exit(1);
+		}
+#endif /* CHROOT */
 
 	if (current_time > sp->se_started &&
 	    current_time - sp->se_started < GETTY_SPACING) {
@@ -1248,6 +1355,8 @@ clean_ttys(void)
 
 	for (sp = sessions; sp; sp = sp->se_next)
 		sp->se_flags &= ~SE_PRESENT;
+
+	do_setttyent();
 
 	devlen = sizeof(_PATH_DEV) - 1;
 	while ((typ = getttyent()) != NULL) {
@@ -1501,6 +1610,7 @@ mfs_dev(void)
 			    mfile[0].len ? "./MAKEDEV" : "/etc/MAKEDEV",
 			    "init", NULL); 
 		_exit(1);
+		/* NOTREACHED */
 
 	case -1:
 		break;
@@ -1518,3 +1628,115 @@ mfs_dev(void)
 	return (-1);
 }
 #endif
+
+int
+do_setttyent(void)
+{
+	endttyent();
+#ifdef CHROOT
+	if (did_multiuser_chroot) {
+		char path[PATH_MAX];
+
+		snprintf(path, sizeof(path), "%s/%s", rootdir, _PATH_TTYS);
+
+		return setttyentpath(path);
+	} else
+#endif /* CHROOT */
+		return setttyent();
+}
+
+#if !defined(LETS_GET_SMALL) && defined(CHROOT)
+
+int
+createsysctlnode()
+{
+	struct sysctlnode node;
+	int mib[2];
+	size_t len;
+
+	/*
+	 * Create top-level dynamic sysctl node.  Its child nodes will only
+	 * be readable by the superuser, since regular mortals should not
+	 * care ("Sssh, it's a secret!").  Additionally, both nodes become
+	 * read-only at securelevel 1.
+	 */
+	len = sizeof(struct sysctlnode);
+	mib[0] = CTL_CREATE;
+
+	memset(&node, 0, len);
+	node.sysctl_flags = SYSCTL_VERSION | CTLFLAG_READWRITE |
+	    CTLFLAG_PRIVATE | CTLFLAG_READONLY1 | CTLTYPE_NODE;
+	node.sysctl_num = CTL_CREATE;
+	snprintf(node.sysctl_name, SYSCTL_NAMELEN, "init");
+	if (sysctl(&mib[0], 1, &node, &len, &node, len) == -1) {
+		warning("could not create init node, error = %d", errno);
+		return (-1);
+	}
+
+	/*
+	 * Create second level dynamic node capable of holding pathname.
+	 * Provide "/" as the default value.
+	 */
+	len = sizeof(struct sysctlnode);
+	mib[0] = node.sysctl_num;
+	mib[1] = CTL_CREATE;
+
+	memset(&node, 0, len);
+	node.sysctl_flags = SYSCTL_VERSION | CTLFLAG_READWRITE |
+	    CTLFLAG_READONLY1 | CTLTYPE_STRING | CTLFLAG_OWNDATA;
+	node.sysctl_size = _POSIX_PATH_MAX;
+	node.sysctl_data = __UNCONST("/");
+	node.sysctl_num = CTL_CREATE;
+	snprintf(node.sysctl_name, SYSCTL_NAMELEN, "root");
+	if (sysctl(&mib[0], 2, NULL, NULL, &node, len) == -1) {
+		warning("could not create init.root node, error = %d", errno);
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+shouldchroot()
+{
+	struct sysctlnode node;
+	size_t len, cnt;
+	int mib;
+
+	len = sizeof(struct sysctlnode);
+
+	if (sysctlbyname("init.root", rootdir, &len, NULL, 0) == -1) {
+		warning("could not read init.root, error = %d", errno);
+
+		/* Child killed our node. Recreate it. */
+		if (errno == ENOENT) {
+			/* Destroy whatever is left, recreate from scratch. */
+			if (sysctlnametomib("init", &mib, &cnt) != -1) {
+				memset(&node, 0, sizeof(node));
+				node.sysctl_flags = SYSCTL_VERSION;
+				node.sysctl_num = mib;
+				mib = CTL_DESTROY;
+
+				(void)sysctl(&mib, 1, NULL, NULL, &node,
+				    sizeof(node));
+			}
+
+			createsysctlnode();
+		}
+
+		/* We certainly won't chroot. */
+		return (0);
+	}
+
+	if (rootdir[len] != '\0' || strlen(rootdir) != len - 1) {
+		warning("init.root is not a string");
+		return (0);
+	}
+
+	if (strcmp(rootdir, "/") == 0)
+		return (0);
+
+	return (1);
+}
+
+#endif /* !LETS_GET_SMALL && CHROOT */
