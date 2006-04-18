@@ -1,4 +1,4 @@
-/* $NetBSD: sem.c,v 1.3 2003/11/19 00:40:03 uwe Exp $ */
+/* $NetBSD: sem.c,v 1.4 2006/04/18 12:21:05 simonb Exp $ */
 
 /****************************************************************************
  *
@@ -43,6 +43,7 @@
 #include <errno.h>
 #include <semaphore.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #define NTHREADS 10
 
@@ -71,6 +72,9 @@ static void usem(void);
 int
 main()
 {
+
+	assert(-1 != sysconf(_SC_SEMAPHORES));
+
 #ifdef DEBUG
 	printf("Test begin\n");
 #endif
