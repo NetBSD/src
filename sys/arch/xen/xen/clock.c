@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 2006/04/04 21:08:47 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.21 2006/04/18 21:19:01 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 2006/04/04 21:08:47 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2006/04/18 21:19:01 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ get_tsc_offset_ns(void)
 	tsc_delta = cpu_counter() - shadow_tsc_stamp;
 	offset = tsc_delta * 1000000000ULL / cpu_frequency(ci);
 #ifdef XEN_CLOCK_DEBUG
-	if (offset > 10 * NS_PER_TICK)
+	if (offset > 10000000000ULL)
 		printf("get_tsc_offset_ns: tsc_delta=%llu offset=%llu\n",
 		    tsc_delta, offset); 
 #endif
