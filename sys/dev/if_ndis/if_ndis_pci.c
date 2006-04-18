@@ -75,7 +75,7 @@ __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24
 #include <compat/ndis/cfg_var.h>
 #include <dev/if_ndis/if_ndisvar.h>
 
-#include NDIS_DRV_DATA
+#include "ndis_driver_data.h"
 
 #ifdef __NetBSD__
 #ifndef NDIS_LKM
