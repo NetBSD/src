@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.202 2006/03/28 17:38:29 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.203 2006/04/18 19:15:27 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.202 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.203 2006/04/18 19:15:27 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.202 2006/03/28 17:38:29 thorpej Exp $");
 #include <sys/conf.h>
 #include <sys/audioio.h>
 #include <sys/device.h>
+#include <sys/lock.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -157,9 +158,11 @@ static void audio_destruct_rfilters(struct audio_softc *);
 static void audio_stream_dtor(audio_stream_t *);
 static int audio_stream_ctor(audio_stream_t *, const audio_params_t *, int);
 static void stream_filter_list_append
-	(stream_filter_list_t *, stream_filter_factory_t, const audio_params_t *);
+	(stream_filter_list_t *, stream_filter_factory_t,
+	 const audio_params_t *);
 static void stream_filter_list_prepend
-	(stream_filter_list_t *, stream_filter_factory_t, const audio_params_t *);
+	(stream_filter_list_t *, stream_filter_factory_t,
+	 const audio_params_t *);
 static void stream_filter_list_set
 	(stream_filter_list_t *, int, stream_filter_factory_t,
 	 const audio_params_t *);
@@ -306,6 +309,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	sc->hw_hdl = hdlp;
 	sc->sc_dev = parent;
 	sc->sc_opencnt = 0;
+	simple_lock_init(&sc->sc_pfiltlock);
 
 	error = audio_alloc_ring(sc, &sc->sc_pr, AUMODE_PLAY, AU_RING_SIZE);
 	if (error) {
@@ -658,6 +662,8 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 	audio_params_t *to_param;
 	int i, n;
 
+	simple_lock(&sc->sc_pfiltlock);
+
 	memset(pf, 0, sizeof(pf));
 	memset(ps, 0, sizeof(ps));
 	from_param = pp;
@@ -681,6 +687,7 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 				pf[i]->dtor(pf[i]);
 			audio_stream_dtor(&ps[i]);
 		}
+		simple_unlock(&sc->sc_pfiltlock);
 		return EINVAL;
 	}
 
@@ -710,6 +717,8 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 	}
 	audio_print_params("[HW]", &sc->sc_pr.s.param);
 #endif /* AUDIO_DEBUG */
+
+	simple_unlock(&sc->sc_pfiltlock);
 	return 0;
 }
 
@@ -788,12 +797,16 @@ audio_destruct_pfilters(struct audio_softc *sc)
 {
 	int i;
 
+	simple_lock(&sc->sc_pfiltlock);
+
 	for (i = 0; i < sc->sc_npfilters; i++) {
 		sc->sc_pfilters[i]->dtor(sc->sc_pfilters[i]);
 		sc->sc_pfilters[i] = NULL;
 		audio_stream_dtor(&sc->sc_pstreams[i]);
 	}
 	sc->sc_npfilters = 0;
+
+	simple_unlock(&sc->sc_pfiltlock);
 }
 
 static void
@@ -860,10 +873,12 @@ stream_filter_list_set(stream_filter_list_t *list, int i,
 		       stream_filter_factory_t factory,
 		       const audio_params_t *param)
 {
+
 	if (i < 0 || i >= AUDIO_MAX_FILTERS) {
 		printf("%s: invalid index: %d\n", __func__, i);
 		return;
 	}
+
 	list->filters[i].factory = factory;
 	list->filters[i].param = *param;
 	if (list->req_size <= i)
@@ -1897,12 +1912,21 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 * work with a temporary audio_stream_t to narrow
 		 * splaudio() enclosure
 		 */
+
+		simple_lock(&sc->sc_pfiltlock);
 		if (sc->sc_npfilters > 0) {
 			filter = sc->sc_pfilters[0];
 			filter->set_fetcher(filter, &ufetcher.base);
 		}
 		cc = stream.end - stream.start;
+		if (sc->sc_npfilters > 0) {
+			fetcher = &sc->sc_pfilters[sc->sc_npfilters - 1]->base;
+		} else {
+			fetcher = &ufetcher.base;
+		}
 		error = fetcher->fetch_to(fetcher, &stream, cc);
+		simple_unlock(&sc->sc_pfiltlock);
+
 		s = splaudio();
 		if (sc->sc_npfilters > 0) {
 			cb->fstamp += audio_stream_get_used(sc->sc_pustream)
@@ -1947,6 +1971,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			audio_fill_silence(&cb->s.param, einp, cc);
 		}
 	}
+
 	return error;
 }
 
