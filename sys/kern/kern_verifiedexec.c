@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.48.10.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.48.10.2 2006/04/18 12:02:14 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.48.10.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.48.10.2 2006/04/18 12:02:14 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -720,7 +720,7 @@ veriexec_report(const u_char *msg, const u_char *filename,
 			f("veriexec: %s [%s, %ld:%" PRIu64 ", pid=%u, uid=%u, "
 			    "gid=%u%s", msg, filename, va->va_fsid,
 			    va->va_fileid, l->l_proc->p_pid,
-			    l->l_proc->p_cred->p_ruid,
-			    l->l_proc->p_cred->p_rgid, die ? "]" : "]\n");
+			    kauth_cred_getuid(l->l_proc->p_cred),
+			    kauth_cred_getgid(l->l_proc->p_cred), die ? "]" : "]\n");
 	}
 }
