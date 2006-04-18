@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.22.4.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.22.4.2 2006/04/18 12:03:18 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.22.4.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.22.4.2 2006/04/18 12:03:18 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -225,9 +225,9 @@ tmpfs_lookup(void *v)
 			    (cnp->cn_nameiop == DELETE ||
 			    cnp->cn_nameiop == RENAME)) {
 				if ((dnode->tn_mode & S_ISTXT) != 0 &&
-				    cnp->cn_cred->cr_uid != 0 &&
-				    cnp->cn_cred->cr_uid != dnode->tn_uid &&
-				    cnp->cn_cred->cr_uid != tnode->tn_uid)
+				    kauth_cred_geteuid(cnp->cn_cred) != 0 &&
+				    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
+				    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid)
 					return EPERM;
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred,
 				    cnp->cn_lwp);
