@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.18.4.2 2006/03/10 14:23:39 elad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.18.4.3 2006/04/18 12:03:18 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.18.4.2 2006/03/10 14:23:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.18.4.3 2006/04/18 12:03:18 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -495,7 +495,7 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 		parent = NULL;
 
 	/* Allocate a node that represents the new file. */
-	error = tmpfs_alloc_node(tmp, vap->va_type, cnp->cn_cred->cr_uid,
+	error = tmpfs_alloc_node(tmp, vap->va_type, kauth_cred_geteuid(cnp->cn_cred),
 	    dnode->tn_gid, vap->va_mode, parent, target, vap->va_rdev,
 	    cnp->cn_lwp->l_proc, &node);
 	if (error != 0)
@@ -970,11 +970,11 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct proc *p)
 	/* XXX: The following comes from UFS code, and can be found in
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
-	if (cred->cr_uid != node->tn_uid &&
+	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)))
 		return error;
-	if (cred->cr_uid == 0) {
+	if (kauth_cred_geteuid(cred) == 0) {
 		/* The super-user is only allowed to change flags if the file
 		 * wasn't protected before and the securelevel is zero. */
 		if ((node->tn_flags & (SF_IMMUTABLE | SF_APPEND)) &&
@@ -1012,7 +1012,7 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct proc *p)
 int
 tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
 {
-	int error;
+	int error, ismember = 0;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1030,15 +1030,16 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct proc *p)
 	/* XXX: The following comes from UFS code, and can be found in
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
-	if (cred->cr_uid != node->tn_uid &&
+	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				       &p->p_acflag)))
 		return error;
-	if (cred->cr_uid != 0) {
+	if (kauth_cred_geteuid(cred) != 0) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return EFTYPE;
 
-		if (!groupmember(node->tn_gid, cred) && (mode & S_ISGID))
+		if ((kauth_cred_ismember_gid(cred, node->tn_gid,
+		    &ismember) != 0 || !ismember) && (mode & S_ISGID))
 			return EPERM;
 	}
 
@@ -1065,7 +1066,7 @@ int
 tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
     struct proc *p)
 {
-	int error;
+	int error, ismember = 0;
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1091,9 +1092,9 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	/* XXX: The following comes from UFS code, and can be found in
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
-	if ((cred->cr_uid != node->tn_uid || uid != node->tn_uid ||
-	    (gid != node->tn_gid && !(cred->cr_gid == node->tn_gid ||
-	     groupmember(gid, cred)))) &&
+	if ((kauth_cred_geteuid(cred) != node->tn_uid || uid != node->tn_uid ||
+	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == node->tn_gid ||
+	     (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 					&p->p_acflag)) != 0))
 		return error;
@@ -1195,7 +1196,7 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	/* XXX: The following comes from UFS code, and can be found in
 	 * several other file systems.  Shouldn't this be centralized
 	 * somewhere? */
-	if (cred->cr_uid != node->tn_uid &&
+	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
 				       &l->l_proc->p_acflag)) &&
 	    ((vaflags & VA_UTIMES_NULL) == 0 ||
