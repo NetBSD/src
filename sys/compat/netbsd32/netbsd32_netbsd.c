@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.100.4.2 2006/03/14 02:52:47 elad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.100.4.3 2006/04/18 13:34:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.2 2006/03/14 02:52:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.3 2006/04/18 13:34:47 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -956,7 +956,6 @@ netbsd32_getgroups(l, v, retval)
 	int ngrp;
 	int error;
 	gid_t *grbuf;
-	int i;
 
 	ngrp = SCARG(uap, gidsetsize);
 	if (ngrp == 0) {
