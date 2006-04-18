@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.204 2006/04/15 05:19:08 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.205 2006/04/18 23:40:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.204 2006/04/15 05:19:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.205 2006/04/18 23:40:47 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1070,8 +1070,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 
 	/* Before rolling forward, lock so vget will sleep for other procs */
-	fs->lfs_flags = LFS_NOTYET;
-	fs->lfs_rfpid = p->p_pid;
+	if (p) {
+		fs->lfs_flags = LFS_NOTYET;
+		fs->lfs_rfpid = p->p_pid;
+	}
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
 	ump->um_lfs = fs;
@@ -1211,7 +1213,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * monotonically increasing serial number instead of a timestamp.
 	 */
 	do_rollforward = (!(fs->lfs_pflags & LFS_PF_CLEAN) &&
-			  lfs_do_rfw && fs->lfs_version > 1);
+			  lfs_do_rfw && fs->lfs_version > 1 && p != NULL);
 	if (do_rollforward) {
 		u_int64_t nextserial;
 		/*
