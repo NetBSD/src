@@ -1,4 +1,4 @@
-.\"	$NetBSD: init.8,v 1.37 2005/11/13 18:39:53 elad Exp $
+.\"	$NetBSD: init.8,v 1.38 2006/04/18 11:40:26 salo Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)init.8	8.6 (Berkeley) 5/26/95
 .\"
-.Dd November 13, 2005
+.Dd April 18, 2006
 .Dt INIT 8
 .Os
 .Sh NAME
@@ -78,11 +78,28 @@ exits with a non-zero (error) exit code, commence single user
 operation by giving the super-user a shell on the console by going
 to state 1 (single user).
 Otherwise, proceed to state 3.
+.Pp
+If value of the
+.Dq init.root
+sysctl node is not equal to
+.Pa /
+at this point, the
+.Pa /etc/rc
+process will be run inside a
+.Xr chroot 2
+indicated by sysctl with the same error handling as above.
 .It
 Set up ttys as specified in
 .Xr ttys 5 .
 See below for more information.
 On completion, continue to state 4.
+If we did chroot in state 2, each
+.Xr getty 8
+process will be run in the same
+.Xr chroot 2
+path as in 2 (that is, the value of
+.Dq init.root
+sysctl is not re-read).
 .It
 Multi-user operation.
 Depending upon the signal received, change state appropriately;
@@ -129,6 +146,26 @@ The password check is skipped if the
 .Sq console
 is marked as
 .Dq secure .
+.Pp
+It should be noted that while
+.Nm
+has the ability to start multi-user operation inside a
+.Xr chroot 2
+environment, the
+.Nm
+process itself will always run in the
+.Dq original root directory .
+This also implies that single-user mode is always started in the original
+root, giving the possibility to create multi-user sessions in different
+root directories over time. The
+.Dq init.root
+sysctl node is fabricated by
+.Nm
+at startup and re-created any time it's found to be missing. Type of the
+node is string capable of holding full pathname, and is only accessible by
+the superuser (unless explicitly destroyed and re-created with different
+specification). The node becomes read-only after securelevel 1 has been
+reached.
 .Pp
 The kernel runs with four different levels of security.
 Any superuser process can raise the security level, but only
@@ -403,7 +440,8 @@ device driver because of a persistent device error condition.
 .Xr mfs 8 ,
 .Xr rc 8 ,
 .Xr reboot 8 ,
-.Xr shutdown 8
+.Xr shutdown 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 A
 .Nm
