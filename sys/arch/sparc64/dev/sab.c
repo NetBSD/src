@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.26 2006/03/28 17:38:27 thorpej Exp $	*/
+/*	$NetBSD: sab.c,v 1.27 2006/04/18 00:09:37 martin Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.26 2006/03/28 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.27 2006/04/18 00:09:37 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1109,7 +1109,7 @@ sabtty_reset(struct sabtty_softc *sc)
 	SAB_WRITE(sc, SAB_CCR1, SAB_CCR1_ODS | SAB_CCR1_BCR | SAB_CCR1_CM_7);
 	SAB_WRITE(sc, SAB_CCR2, SAB_CCR2_BDF | SAB_CCR2_SSEL | SAB_CCR2_TOE);
 	SAB_WRITE(sc, SAB_CCR3, 0);
-	SAB_WRITE(sc, SAB_CCR4, SAB_CCR4_MCK4 | SAB_CCR4_EBRG);
+	SAB_WRITE(sc, SAB_CCR4, SAB_CCR4_MCK4 | SAB_CCR4_EBRG | SAB_CCR4_ICD);
 	SAB_WRITE(sc, SAB_MODE, SAB_MODE_RTS | SAB_MODE_FCTS | SAB_MODE_RAC);
 	SAB_WRITE(sc, SAB_RFC,
 	    SAB_RFC_DPS | SAB_RFC_RFDF | SAB_RFC_RFTH_32CHAR);
