@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.3 2006/03/31 03:20:20 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.4 2006/04/18 16:49:19 rittera Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -123,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.3 2006/03/31 03:20:20 rittera Exp $");
 #define NDIS_IMAGE
 #define NDIS_REGVALS
 
-#include NDIS_DRV_DATA
+#include "ndis_driver_data.h"
 
 #ifdef __FreeBSD__
 int ndis_attach			(device_t);
