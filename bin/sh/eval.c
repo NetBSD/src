@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.85 2006/03/17 17:20:47 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.86 2006/04/18 14:44:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.85 2006/03/17 17:20:47 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.86 2006/04/18 14:44:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1093,7 +1093,7 @@ prehash(union node *n)
 {
 	struct cmdentry entry;
 
-	if (n->type == NCMD && n->ncmd.args)
+	if (n && n->type == NCMD && n->ncmd.args)
 		if (goodname(n->ncmd.args->narg.text))
 			find_command(n->ncmd.args->narg.text, &entry, 0,
 				     pathval());
