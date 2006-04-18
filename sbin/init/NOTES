@@ -1,4 +1,4 @@
-$NetBSD: NOTES,v 1.2 1995/03/18 14:56:29 cgd Exp $
+$NetBSD: NOTES,v 1.3 2006/04/18 11:40:26 salo Exp $
 
 POSIX and init:
 --------------
@@ -101,8 +101,13 @@ init is responsible for utmp and wtmp maintenance (ick)
 
 necessary states and state transitions (gleaned from the man page):
 	1: single user shell (with password checking?); on exit, go to 2
-	2: rc script: on exit 0, go to 3; on exit N (error), go to 1
-	3: read ttys file: on completion, go to 4
+	2: run rc script, on exit 0 check if init.root sysctl != "/", if it
+           differs then fork + chroot into the value of init.root and run
+           /etc/rc inside the chroot: on exit 0, go to 3; on exit N (error),
+           go to 1 (applies also to /etc/rc when init.root == "/")
+	3: read ttys file: on completion, go to 4.  If we did chroot in
+	   state 2, we chroot after forking each getty to the same dir
+	   (init.root is not re-read)
 	4: multi-user operation: on SIGTERM, go to 7; on SIGHUP, go to 5;
 		on SIGTSTP, go to 6
 	5: clean up mode (re-read ttys file, killing off controlling processes
