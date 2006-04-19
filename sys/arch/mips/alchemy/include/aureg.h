@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.15 2006/03/01 18:35:28 shige Exp $ */
+/* $NetBSD: aureg.h,v 1.15.4.1 2006/04/19 02:33:12 elad Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -109,13 +109,11 @@
 #define	IC_MASK_SET			0x70
 #define	IC_MASK_CLEAR			0x74
 
-#define	IC_RISING_EDGE_DETECT		0x78	/* Check/clear rising edge interrupts */
-#define	IC_RISING_EDGE_DETECT_CLEAR	0x78
+#define	IC_RISING_EDGE			0x78	/* Check/clear rising edge */
 
-#define	IC_FAILLING_EDGE_DETECT		0x7c	/* Check/clear falling edge interrupts */
-#define	IC_FAILLING_EDGE_DETECT_CLEAR	0x7c
+#define	IC_FALLING_EDGE			0x7c	/* Check/clear falling edge */
 
-#define	IC_TEST_BIT			0x80	/* single bit source select testing register */
+#define	IC_TEST_BIT			0x80	/* single bit source select */
 
 /*
  *	Interrupt Configuration Register Functions
@@ -149,15 +147,15 @@
 #define	MAC1_BASE		0x10510000
 #define	MACx_SIZE		0x28
 
-#define	AU1500_MAC0_BASE	0x11500000	/* Grr, difference on Au1500 */
-#define	AU1500_MAC1_BASE	0x11510000	/* Grr, difference on Au1500 */
+#define	AU1500_MAC0_BASE	0x11500000	/* Grr, different on Au1500 */
+#define	AU1500_MAC1_BASE	0x11510000	/* Grr, different on Au1500 */
 
 #define	MAC0_ENABLE		0x10520000
 #define	MAC1_ENABLE		0x10520004
 #define	MACENx_SIZE		0x04
 
-#define	AU1500_MAC0_ENABLE	0x11520000	/* Grr, difference on Au1500 */
-#define	AU1500_MAC1_ENABLE	0x11520004	/* Grr, difference on Au1500 */
+#define	AU1500_MAC0_ENABLE	0x11520000	/* Grr, different on Au1500 */
+#define	AU1500_MAC1_ENABLE	0x11520004	/* Grr, different on Au1500 */
 
 #define	MAC0_DMA_BASE		0x14004000
 #define	MAC1_DMA_BASE		0x14004200

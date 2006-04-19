@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.25 2006/02/05 05:01:49 cube Exp $
+#	$NetBSD: TS7200,v 1.25.4.1 2006/04/19 02:32:21 elad Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -479,10 +479,6 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 #options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 # console scrolling support.
 #options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console

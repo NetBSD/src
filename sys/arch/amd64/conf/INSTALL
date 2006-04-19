@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.47 2006/02/05 05:01:48 cube Exp $
+# $NetBSD: INSTALL,v 1.47.4.1 2006/04/19 02:31:58 elad Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.47 $"
+#ident 		"INSTALL-$Revision: 1.47.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -149,10 +149,6 @@ options 	PCDISPLAY_SOFTCURSOR
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 #options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
 
@@ -318,6 +314,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # RAID controllers and devices
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
@@ -421,6 +418,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
@@ -482,6 +480,7 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 pnaphy*	at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy*	at mii? phy ?			# Realtek 8169S/8110 internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs

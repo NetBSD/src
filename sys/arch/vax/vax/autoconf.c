@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.87 2006/02/26 18:59:46 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.87.4.1 2006/04/19 02:33:57 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87 2006/02/26 18:59:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87.4.1 2006/04/19 02:33:57 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -362,7 +362,7 @@ booted_sd(struct device *dev, void *aux)
 	if ((jmfr("si",  ppdev, BDEV_SD) == 0 ||	/* new name */
 	     jmfr("asc", ppdev, BDEV_SD) == 0 ||
 	     jmfr("asc", ppdev, BDEV_SDN) == 0) &&
-	    (ppdev->dv_cfdata->cf_loc[VSBUSCF_CSR] == rpb.csrphy))
+	    (device_cfdata(ppdev)->cf_loc[VSBUSCF_CSR] == rpb.csrphy))
 			return 1;
 
 	return 0; /* Where did we come from??? */

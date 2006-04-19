@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.19 2006/03/05 22:01:32 aymeric Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.19.2.1 2006/04/19 02:31:58 elad Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.19 2006/03/05 22:01:32 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.19.2.1 2006/04/19 02:31:58 elad Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -113,27 +113,24 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	struct pcmciabus_attach_args paa;
 	vaddr_t pcmcia_base;
 	vaddr_t i;
-	int ret;
 
 	printf("\n");
 
 	gayle_init();
 
-	ret = uvm_map(kernel_map, &pcmcia_base,
-		GAYLE_PCMCIA_END - GAYLE_PCMCIA_START, NULL,
-		UVM_UNKNOWN_OFFSET, 0,
-		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-		UVM_INH_NONE, UVM_ADV_RANDOM, 0));
-	if (ret != 0) {
+	pcmcia_base = uvm_km_alloc(kernel_map,
+				   GAYLE_PCMCIA_END - GAYLE_PCMCIA_START,
+				   0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	if (pcmcia_base == 0) {
 		printf("attach failed (no virtual memory)\n");
 		return;
 	}
 
 	for (i = GAYLE_PCMCIA_START; i < GAYLE_PCMCIA_END; i += PAGE_SIZE)
-		pmap_enter(kernel_map->pmap,
+		pmap_enter(vm_map_pmap(kernel_map),
 		    i - GAYLE_PCMCIA_START + pcmcia_base, i,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-	pmap_update(kernel_map->pmap);
+	pmap_update(vm_map_pmap(kernel_map));
 
 	/* override the one-byte access methods for I/O space */
 	pcmio_bs_methods = amiga_bus_stride_1;

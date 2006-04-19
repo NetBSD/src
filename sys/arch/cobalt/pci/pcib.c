@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.11 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.11.10.1 2006/04/19 02:32:21 elad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11.10.1 2006/04/19 02:32:21 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,10 +55,7 @@ CFATTACH_DECL(pcib, sizeof(struct device),
 static struct cobalt_intrhand icu[IO_ICUSIZE];
 
 static int
-pcib_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcib_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -70,38 +67,33 @@ pcib_match(parent, match, aux)
 }
 
 static void
-pcib_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+pcib_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("\n%s: %s, rev %d\n", self->dv_xname, devinfo,
-					PCI_REVISION(pa->pa_class));
+	    PCI_REVISION(pa->pa_class));
 
 	/*
 	 * Initialize ICU. Since we block all these interrupts with
 	 * splbio(), we can just enable all of them all the time here.
 	 */
-	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1) = 0x10;
-	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1+1) = 0xff;
-	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2) = 0x10;
-	*(volatile u_int8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2+1) = 0xff;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1) = 0x10;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1 +1 ) =
+	    0xff;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2) = 0x10;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2 + 1) =
+	    0xff;
 	wbflush();
 
 	cpu_intr_establish(4, IPL_NONE, icu_intr, NULL);
 }
 
 void *
-icu_intr_establish(irq, type, level, func, arg)
-	int irq;
-	int type;
-	int level;
-	int (*func)(void *);
-	void *arg;
+icu_intr_establish(int irq, int type, int level, int (*func)(void *),
+    void *arg)
 {
 	int i;
 
@@ -118,8 +110,7 @@ icu_intr_establish(irq, type, level, func, arg)
 }
 
 void
-icu_intr_disestablish(cookie)
-	void *cookie;
+icu_intr_disestablish(void *cookie)
 {
 	struct cobalt_intrhand *ih = cookie;
 
@@ -130,8 +121,7 @@ icu_intr_disestablish(cookie)
 }
 
 int
-icu_intr(arg)
-	void *arg;
+icu_intr(void *arg)
 {
 	int i;
 

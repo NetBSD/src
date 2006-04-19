@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171 2006/02/05 05:01:56 cube Exp $
+# $NetBSD: GENERIC,v 1.171.4.1 2006/04/19 02:33:11 elad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.171 $"
+#ident 		"GENERIC-$Revision: 1.171.4.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -331,7 +331,7 @@ pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

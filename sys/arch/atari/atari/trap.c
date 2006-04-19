@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79.10.1 2006/03/08 00:43:05 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.79.10.2 2006/04/19 02:32:15 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.10.1 2006/03/08 00:43:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.10.2 2006/04/19 02:32:15 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -671,10 +671,10 @@ trap(type, code, v, frame)
 			panictrap(type, code, v, &frame);
 		}
 #endif
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x) -> %x\n",
 			       map, va, ftype, rv);
 #endif
 		/*
@@ -708,7 +708,7 @@ trap(type, code, v, frame)
 				trapcpfault(l, &frame);
 				return;
 			}
-			printf("\nvm_fault(%p, %lx, %x, 0) -> %x\n",
+			printf("\nvm_fault(%p, %lx, %x) -> %x\n",
 			       map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);

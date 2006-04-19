@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.42.10.2 2006/03/10 14:53:59 elad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.42.10.3 2006/04/19 02:32:07 elad Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.10.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.10.3 2006/04/19 02:32:07 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.10.2 2006/03/10 14:53:59 elad Exp $"
 
 #include <arc/arc/arcbios.h>
 #include <arc/dev/pcconsvar.h>
+
+#include "ioconf.h"
 
 #define	XFREE86_BUG_COMPAT
 
@@ -172,8 +174,6 @@ void do_async_update(u_char);
 void pccnputc(dev_t, int c);
 int pccngetc(dev_t);
 void pccnpollc(dev_t, int);
-
-extern struct cfdriver pc_cd;
 
 dev_type_open(pcopen);
 dev_type_close(pcclose);

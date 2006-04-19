@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.29.2.2 2006/03/10 14:53:59 elad Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.29.2.3 2006/04/19 02:32:15 elad Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.29.2.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.29.2.3 2006/04/19 02:32:15 elad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -330,7 +330,7 @@ sacom_attach_subr(struct sacom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&sacom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		delay(10000); /* XXX */
 		printf("%s: console\n", sc->sc_dev.dv_xname);
@@ -368,7 +368,7 @@ sacom_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&sacom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	mn |= COMDIALOUT_MASK;
@@ -1518,7 +1518,7 @@ sacomcninit(struct consdev *cp)
 {
 	if (cp == NULL) {
 		/* XXX cp == NULL means that MMU is disabled. */
-		sacomconsioh = SACOM3_HW_BASE;
+		sacomconsioh = SACOM3_BASE;
 		sacomconstag = &sa11x0_bs_tag;
 		cn_tab = &sacomcons;
 		return;

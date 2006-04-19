@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.14.10.2 2006/03/10 14:53:59 elad Exp $	*/
+/*	$NetBSD: console.c,v 1.14.10.3 2006/04/19 02:32:08 elad Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14.10.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14.10.3 2006/04/19 02:32:08 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -290,8 +290,8 @@ vconsole_spawn(dev, vc)
 	new->SPAWN ( new );
 	new->vtty = 1;
 
-	MALLOC (new->charmap, int *, sizeof(int)*((new->xchars)*(new->ychars)), 
-	    M_DEVBUF, M_NOWAIT );
+	new->charmap = (int *)malloc(sizeof(int)*((new->xchars)*(new->ychars)), 
+	    M_DEVBUF, M_NOWAIT);
 /*	printf("spawn:charmap=%08x\n", new->charmap);*/
 
 	if (new->charmap==0)
@@ -312,8 +312,8 @@ vconsole_addcharmap(vc)
 {
 	int counter=0;
 
-	MALLOC (vc->charmap, int *, sizeof(int)*((vc->xchars)*(vc->ychars)),
-	    M_DEVBUF, M_NOWAIT );
+	vc->charmap = (int *)malloc(sizeof(int)*((vc->xchars)*(vc->ychars)),
+	    M_DEVBUF, M_NOWAIT);
 /*	printf("vc=%08x charmap=%08x\n", vc, vc->charmap);*/
 	for ( counter=0; counter<((vc->xchars)*(vc->ychars)); counter++ )
 		(vc->charmap)[counter]=' ';

@@ -1,3 +1,4 @@
+/* $NetBSD: xs_wire.h,v 1.2.2.1 2006/04/19 02:34:03 elad Exp $ */
 /*
  * Details of the "wire" protocol between Xen Store Daemon and client
  * library or guest kernel.

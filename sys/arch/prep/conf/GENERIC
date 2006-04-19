@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2006/02/23 19:44:02 garbled Exp $
+# $NetBSD: GENERIC,v 1.113.4.1 2006/04/19 02:33:33 elad Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,18 +24,11 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.113 $"
+#ident		"GENERIC-$Revision: 1.113.4.1 $"
 
 maxusers	32
 
 # Platform support
-options 	PLATFORM_IBM_6015		# IBM RS/6000 40P
-options 	PLATFORM_IBM_6040		# IBM ThinkPad 820
-options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
-options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
-options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
-options		PLATFORM_IBM_7024		# IBM RS/6000 7024-E20/E30
-options 	PLATFORM_MOTOROLA_ULMB60XA	# Motorola ULMB60xA (?)
 
 options 	OPENPIC				# OpenPIC support (7043-140)
 
@@ -161,6 +154,8 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	RESIDUAL_DATA_DUMP	# verbosely dump residual data
+#options		NVRAM_DUMP	# verbosely dump contents of nvram.
+				# Warning: output may not be ascii!
 
 #options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
@@ -231,8 +226,7 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 #isapnp0	at isa?
 
 # on-board I/O for IBM Personal Power Series 830 IDE controller
-obio0	at mainbus0
-
+pnpbus0	at mainbus0
 
 # Console Devices
 
@@ -252,6 +246,7 @@ isabeep0 at pcppi?			# "keyboard" beep
 mcclock0 at isa? port 0x70		# mc146818 and compatible
 mkclock0 at isa? port 0x74		# mk48t18 and compatible
 
+nvram*	at pnpbus?
 
 # Cryptographic Devices
 
@@ -309,12 +304,13 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-
 # IDE and related devices
 
-# IBM Personal Power Series 830 IDE controller
-wdc0	at obio? port 0x1f0 irq 13
-wdc1	at obio? port 0x170 irq 13
+# IDE controller found on most Power Personal machines
+wdc*	at pnpbus?
+
+#fdc0 at pnpbus?	# standard ISA floppy controller
+#fd0 at fdc0 drive ?
 
 # ISA Plug-and-Play IDE controllers
 #wdc*	at isapnp?
@@ -543,14 +539,14 @@ pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl			# Serial Line IP
+#pseudo-device	sl			# Serial Line IP
 pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
@@ -588,4 +584,3 @@ pseudo-device	wsfont
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

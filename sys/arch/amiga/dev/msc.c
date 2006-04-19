@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.31.10.2 2006/03/10 14:53:59 elad Exp $ */
+/*	$NetBSD: msc.c,v 1.31.10.3 2006/04/19 02:31:59 elad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.31.10.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.31.10.3 2006/04/19 02:31:59 elad Exp $");
 
 #include "msc.h"
 
@@ -252,7 +252,7 @@ mscattach(struct device *pdp, struct device *dp, void *auxp)
 	int Count;
 
 	zap = (struct zbus_args *)auxp;
-	unit = dp->dv_unit;
+	unit = device_unit(dp);
 
 	/*
 	 * Make config msgs look nicer.
