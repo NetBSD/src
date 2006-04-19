@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.111 2006/03/01 12:38:44 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.111.4.1 2006/04/19 03:58:21 elad Exp $	*/
 
 /*
  *
@@ -84,7 +84,6 @@
  */
 
 typedef unsigned int uvm_flag_t;
-typedef int vm_fault_t;
 
 typedef int vm_inherit_t;	/* XXX: inheritance codes */
 typedef off_t voff_t;		/* XXX: offset within a uvm_object */
@@ -486,7 +485,6 @@ extern struct uvmexp uvmexp;
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_map.h>
-#include <uvm/uvm_fault.h>
 #include <uvm/uvm_pager.h>
 
 /*
@@ -575,9 +573,9 @@ void			ubc_release(void *, int);
 void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 
 /* uvm_fault.c */
-int			uvm_fault(struct vm_map *, vaddr_t, vm_fault_t,
-			    vm_prot_t);
-				/* handle a page fault */
+#define uvm_fault(m, a, p) uvm_fault_internal(m, a, p, 0)
+int		uvm_fault_internal(struct vm_map *, vaddr_t, vm_prot_t, int);
+			/* handle a page fault */
 
 /* uvm_glue.c */
 #if defined(KGDB)
