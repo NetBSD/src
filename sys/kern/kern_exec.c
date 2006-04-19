@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.214.4.3 2006/03/10 00:11:55 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.214.4.4 2006/04/19 05:13:59 elad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.4.3 2006/03/10 00:11:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.4.4 2006/04/19 05:13:59 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -142,6 +142,17 @@ struct uvm_object *emul_netbsd_object;
 void	syscall(void);
 #endif
 
+static const struct sa_emul saemul_netbsd = {
+	sizeof(ucontext_t),
+	sizeof(struct sa_t),
+	sizeof(struct sa_t *),
+	NULL,
+	NULL,
+	cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext,
+	sa_ucsp
+};
+
 /* NetBSD emul struct */
 const struct emul emul_netbsd = {
 	"netbsd",
@@ -185,6 +196,8 @@ const struct emul emul_netbsd = {
 	NULL,
 
 	uvm_default_mapaddr,
+	NULL,
+	&saemul_netbsd,
 };
 
 #ifdef LKM
@@ -1196,7 +1209,7 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 {
 	struct execsw_entry *et, *e1;
 
-	MALLOC(et, struct execsw_entry *, sizeof(struct execsw_entry),
+	et = (struct execsw_entry *) malloc(sizeof(struct execsw_entry),
 			M_TEMP, M_WAITOK);
 	et->next = NULL;
 	et->es = esp;
@@ -1228,6 +1241,8 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 #ifdef DIAGNOSTIC
 		panic("execw[] entry with unknown priority %d found",
 			et->es->es_prio);
+#else
+		free(et, M_TEMP);
 #endif
 		break;
 	}
@@ -1285,7 +1300,7 @@ exec_init(int init_boot)
 	for(i=0; list; i++) {
 		new_es[i] = list->es;
 		e1 = list->next;
-		FREE(list, M_TEMP);
+		free(list, M_TEMP);
 		list = e1;
 	}
 

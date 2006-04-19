@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.109.4.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.109.4.2 2006/04/19 05:13:59 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.109.4.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.109.4.2 2006/04/19 05:13:59 elad Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -442,6 +442,11 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 				if (psize > limit)
 					limit = psize;
 			}
+		}
+
+		if (base_ph == NULL) {
+			error = ENOEXEC;
+			goto bad;
 		}
 
 		/*
