@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-parse.y,v 1.2 2004/01/02 04:31:06 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf-parse.y,v 1.5 2006/04/19 17:52:24 martin Exp $");
+__RCSID("$NetBSD: inf-parse.y,v 1.6 2006/04/19 20:38:49 martin Exp $");
 #endif 
 
 
@@ -75,7 +75,7 @@ inf_list
 inf
 	: SECTION EOL
 		{ section_add($1); }
-	| WORD EQUALS assign_list EOL
+	| WORD EQUALS assign EOL
 		{ assign_add($1); }
 	| WORD COMMA regkey EOL
 		{ regkey_add($1); }
@@ -84,15 +84,18 @@ inf
 	| EOL
 	;
 
-assign_list:	assign
-	| assign_list COMMA assign
-	;
-
 assign
 	: WORD
 		{ push_word($1); }
 	| STRING
 		{ push_word($1); }
+	| WORD COMMA assign
+		{ push_word($1); }
+	| STRING COMMA assign
+		{ push_word($1); }
+	| COMMA assign
+		{ push_word(NULL); }
+	|
 	;
 
 regkey
