@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.216.2.3 2006/03/30 22:30:27 elad Exp $	*/
+/*	$NetBSD: proc.h,v 1.216.2.4 2006/04/19 04:36:01 elad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -87,6 +87,7 @@ struct pgrp {
 struct exec_package;
 struct ps_strings;
 struct ras;
+struct sa_emul;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -126,12 +127,15 @@ struct emul {
 #endif
 					/* Emulation specific sysctl data */
 	struct sysctlnode *e_sysctlovly;
-	int		(*e_fault)(struct proc *, vaddr_t, int, int);
+	int		(*e_fault)(struct proc *, vaddr_t, int);
 
 	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t);
 
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
+
+	/* SA-related information */
+	const struct sa_emul *e_sa;
 };
 
 /*
@@ -283,13 +287,15 @@ struct proc {
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
 #define	P_CONTROLT	0x00000002 /* Has a controlling terminal */
-#define	P_SYSCALL	0x00000004 /* process has PT_SYSCALL enabled */
+#define	P_INMEM	     /* 0x00000004 */	L_INMEM
 #define	P_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
 #define	P_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	P_PROFIL	0x00000020 /* Has started profiling */
+#define	P_SELECT     /* 0x00000040 */	L_SELECT
+#define	P_SINTR	     /* 0x00000080 */	L_SINTR
 #define	P_SUGID		0x00000100 /* Had set id privileges since last exec */
 #define	P_SYSTEM	0x00000200 /* System proc: no sigs, stats or swapping */
-#define	P_SA		0x00000400 /* Using scheduler activations */
+#define	P_SA	     /* 0x00000400 */	L_SA
 #define	P_TRACED	0x00000800 /* Debugged process being traced */
 #define	P_WAITED	0x00001000 /* Debugging process has waited for child */
 #define	P_WEXIT		0x00002000 /* Working on exiting */
@@ -305,7 +311,14 @@ struct proc {
 #define	P_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	P_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	P_STOPEXIT	0x02000000 /* Will be stopped at process exit */
+#define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
+#define	P_UNUSED4    	0x08000000
+#define	P_UNUSED3	0x10000000
+#define	P_UNUSED2	0x20000000
+#define	P_UNUSED1	0x40000000
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
+
+#define	P_SHARED	(L_INMEM|L_SELECT|L_SINTR|L_SA)
 
 /*
  * Macro to compute the exit signal to be delivered.

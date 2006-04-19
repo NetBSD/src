@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.152 2006/02/25 00:58:36 wiz Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.152.4.1 2006/04/19 04:36:02 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -201,7 +201,7 @@ struct ctlname {
 #define	KERN_SECURELVL	 	 9	/* int: system security level */
 #define	KERN_HOSTNAME		10	/* string: hostname */
 #define	KERN_HOSTID		11	/* int: host identifier */
-#define	KERN_CLOCKRATE		12	/* struct: struct clockrate */
+#define	KERN_CLOCKRATE		12	/* struct: struct clockinfo */
 #define	KERN_VNODE		13	/* struct: vnode structures */
 #define	KERN_PROC		14	/* struct: process entries */
 #define	KERN_FILE		15	/* struct: file entries */
@@ -359,6 +359,17 @@ struct ctlname {
 	{ "cp_id", CTLTYPE_STRUCT }, \
 	{ "hardclock_ticks", CTLTYPE_INT }, \
 }
+
+/*
+ *  KERN_CLOCKRATE structure
+ */
+struct clockinfo {
+	int	hz;		/* clock frequency */
+	int	tick;		/* micro-seconds per hz tick */
+	int	tickadj;	/* clock skew rate for adjtime() */
+	int	stathz;		/* statistics clock frequency */
+	int	profhz;		/* profiling clock frequency */
+};
 
 /*
  * KERN_PROC subtypes
@@ -703,15 +714,14 @@ struct kinfo_file {
 #define	HW_USERMEM	 6		/* int: non-kernel memory (bytes) */
 #define	HW_PAGESIZE	 7		/* int: software page size */
 #define	HW_DISKNAMES	 8		/* string: disk drive names */
-#define	HW_DISKSTATS	 9		/* struct: diskstats[] */
+#define	HW_IOSTATS	 9		/* struct: iostats[] */
 #define	HW_MACHINE_ARCH	10		/* string: machine architecture */
 #define	HW_ALIGNBYTES	11		/* int: ALIGNBYTES for the kernel */
 #define	HW_CNMAGIC	12		/* string: console magic sequence(s) */
 #define	HW_PHYSMEM64	13		/* quad: total memory (bytes) */
 #define	HW_USERMEM64	14		/* quad: non-kernel memory (bytes) */
-#define	HW_TAPENAMES	15		/* string: tape drive names */
-#define	HW_TAPESTATS	16		/* struct: tapestats[] */
-#define	HW_MAXID	16		/* number of valid hw ids */
+#define	HW_IOSTATNAMES	15		/* string: iostat names */
+#define	HW_MAXID	15		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -722,8 +732,8 @@ struct kinfo_file {
 	{ "physmem", CTLTYPE_INT }, \
 	{ "usermem", CTLTYPE_INT }, \
 	{ "pagesize", CTLTYPE_INT }, \
-	{ "disknames", CTLTYPE_STRING }, \
-	{ "diskstats", CTLTYPE_STRUCT }, \
+	{ "drivenames", CTLTYPE_STRING }, \
+	{ "drivestats", CTLTYPE_STRUCT }, \
 	{ "machine_arch", CTLTYPE_STRING }, \
 	{ "alignbytes", CTLTYPE_INT }, \
 	{ "cnmagic", CTLTYPE_STRING }, \
@@ -1074,8 +1084,6 @@ int	old_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
  * these helpers are in other files (XXX so should the nodes be) or
  * are used by more than one node
  */
-int	sysctl_hw_disknames(SYSCTLFN_PROTO);
-int	sysctl_hw_diskstats(SYSCTLFN_PROTO);
 int	sysctl_hw_tapenames(SYSCTLFN_PROTO);
 int	sysctl_hw_tapestats(SYSCTLFN_PROTO);
 int	sysctl_kern_vnode(SYSCTLFN_PROTO);

@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.47.4.1 2006/03/08 00:26:16 elad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.47.4.2 2006/04/19 04:32:08 elad Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.47.4.1 2006/03/08 00:26:16 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.47.4.2 2006/04/19 04:32:08 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1677,14 +1677,14 @@ coda_readdir(void *v)
 printf("coda_readdir: Internally Opening %p\n", vp);
 #endif
 	    if (error) return(error);
-	}
+	} else
+	    vp = cp->c_ovp;
 
 	/* Have UFS handle the call. */
 	CODADEBUG(CODA_READDIR, myprintf((
 				"indirect readdir: fid = %s, refcnt = %d\n",
 				coda_f2s(&cp->c_fid), vp->v_usecount)); )
-	error = VOP_READDIR(cp->c_ovp, uiop, cred, eofflag, cookies,
-			       ncookies);
+	error = VOP_READDIR(vp, uiop, cred, eofflag, cookies, ncookies);
 	if (error)
 	    MARK_INT_FAIL(CODA_READDIR_STATS);
 	else
