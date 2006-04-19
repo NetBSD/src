@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_schedctl.h,v 1.3.10.1 2006/04/19 04:01:25 elad Exp $ */
+/* $NetBSD: svr4_schedctl.c,v 1.2.4.2 2006/04/19 04:01:25 elad Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,11 +36,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SVR4_32_SCHEDCTL_H_
-#define _SVR4_32_SCHEDCTL_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_schedctl.c,v 1.2.4.2 2006/04/19 04:01:25 elad Exp $");
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/filedesc.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
+#include <sys/malloc.h>
+#include <sys/vnode.h>
+
+#include <sys/sa.h>
+#include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
-#include <compat/svr4_32/svr4_32_types.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_syscallargs.h>
+#include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_fcntl.h>
 
-#endif  /* !_SVR4_32_SCHEDCTL_H_ */
+#include <compat/svr4/svr4_schedctl.h>
 
+int
+svr4_sys_schedctl(struct lwp *l, void *v, register_t *retval)
+{
+
+	return 0; /* XXX */
+}
