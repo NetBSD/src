@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.14.4.2 2006/03/10 14:53:59 elad Exp $	*/
+/*	$NetBSD: plcom.c,v 1.14.4.3 2006/04/19 02:32:21 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.4.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.4.3 2006/04/19 02:32:21 elad Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -364,7 +364,9 @@ plcom_enable_debugport(struct plcom_softc *sc)
 	sc->sc_cr = CR_RIE | CR_RTIE | CR_UARTEN;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, plcom_cr, sc->sc_cr);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, sc->sc_dev.dv_unit, sc->sc_mcr);
+	/* XXX device_unit() abuse */
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
+	    sc->sc_mcr);
 	PLCOM_UNLOCK(sc);
 	splx(s);
 }
@@ -437,7 +439,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&plcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}
@@ -500,7 +502,7 @@ plcom_detach(self, flags)
 	maj = cdevsw_lookup_major(&plcom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	mn |= PLCOMDIALOUT_MASK;
@@ -1375,7 +1377,8 @@ plcom_loadchannelregs(struct plcom_softc *sc)
 	bus_space_write_1(iot, ioh, plcom_dlbl, sc->sc_dlbl);
 	bus_space_write_1(iot, ioh, plcom_dlbh, sc->sc_dlbh);
 	bus_space_write_1(iot, ioh, plcom_lcr, sc->sc_lcr);
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, sc->sc_dev.dv_unit,
+	/* XXX device_unit() abuse */
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
 	    sc->sc_mcr_active = sc->sc_mcr);
 
 	bus_space_write_1(iot, ioh, plcom_cr, sc->sc_cr);
@@ -1433,7 +1436,8 @@ plcom_hwiflow(struct plcom_softc *sc)
 		SET(sc->sc_mcr, sc->sc_mcr_rts);
 		SET(sc->sc_mcr_active, sc->sc_mcr_rts);
 	}
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, sc->sc_dev.dv_unit,
+	/* XXX device_unit() abuse */
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
 	    sc->sc_mcr_active);
 }
 
@@ -2135,7 +2139,8 @@ plcominit(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 #if 0
 	/* Ought to do something like this, but we have no sc to
 	   dereference. */
-	sc->sc_set_mcr(sc->sc_set_mcr_arg, sc->sc_dev.dv_unit,
+	/* XXX device_unit() abuse */
+	sc->sc_set_mcr(sc->sc_set_mcr_arg, device_unit(&sc->sc_dev),
 	    MCR_DTR | MCR_RTS);
 #endif
 

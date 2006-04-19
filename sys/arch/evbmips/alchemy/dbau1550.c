@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550.c,v 1.5 2006/02/23 03:51:40 gdamore Exp $ */
+/* $NetBSD: dbau1550.c,v 1.5.4.1 2006/04/19 02:32:32 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.5 2006/02/23 03:51:40 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.5.4.1 2006/04/19 02:32:32 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -225,8 +225,6 @@ dbau1550_slot_enable(int slot)
 	uint16_t	vcc, vpp;
 	int		shift;
 
-	printf("enable slot %d\n", slot);
-
 	status = GET16(DBAU1550_STATUS);
 	switch (slot) {
 	case 0:
@@ -246,15 +244,12 @@ dbau1550_slot_enable(int slot)
 	case DBAU1550_STATUS_PCMCIA_VS_GND:
 		vcc = DBAU1550_PCMCIA_VCC_GND;
 		vpp = DBAU1550_PCMCIA_VPP_GND;
-		printf("enable slot %d GND\n", slot);
 		break;
 	case DBAU1550_STATUS_PCMCIA_VS_5V:
 		vcc = DBAU1550_PCMCIA_VCC_5V;
 		vpp = DBAU1550_PCMCIA_VPP_VCC;
-		printf("enable slot %d 5V\n", slot);
 		break;
 	default:	/* covers both 3.3v cases */
-		printf("enable slot %d 3.3V\n", slot);
 		vcc = DBAU1550_PCMCIA_VCC_3V;
 		vpp = DBAU1550_PCMCIA_VPP_VCC;
 		break;
@@ -281,11 +276,12 @@ dbau1550_slot_enable(int slot)
 	status |= (DBAU1550_PCMCIA_RST << shift);
 	PUT16(DBAU1550_PCMCIA, status);
 	wbflush();
-	tsleep(&status, PWAIT, "pcmcia_reset_finish", mstohz(100));
+
+	/* spec says 20 msec, but experience shows even 200 is not enough */
+	tsleep(&status, PWAIT, "pcmcia_reset_finish", mstohz(1000));
 
 	/* NOTE: WE DO NOT SUPPORT DIFFERENT VCC/VPP LEVELS! */
 	/* This means that 12V cards are not supported! */
-	printf("enable slot %d done\n", slot);
 }
 
 void
@@ -294,7 +290,6 @@ dbau1550_slot_disable(int slot)
 	int		shift;
 	uint16_t	status;
 
-	printf("disable slot %d\n", slot);
 	switch (slot) {
 	case 0:
 		shift = DBAU1550_PCMCIA_PC0_SHIFT;
@@ -308,7 +303,6 @@ dbau1550_slot_disable(int slot)
 	status &= ~(DBAU1550_PCMCIA_MASK);
 	PUT16(DBAU1550_PCMCIA, status);
 	wbflush();
-	printf("disable slot %d done\n", slot);
 }
 
 int

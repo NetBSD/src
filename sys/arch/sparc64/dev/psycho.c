@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.78 2006/02/25 02:28:57 wiz Exp $	*/
+/*	$NetBSD: psycho.c,v 1.78.4.1 2006/04/19 02:33:45 elad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.78 2006/02/25 02:28:57 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.78.4.1 2006/04/19 02:33:45 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -150,8 +150,8 @@ CFATTACH_DECL(psycho, sizeof(struct psycho_softc),
  * appears as two "simba"'s underneath the sabre.
  *
  * "psycho" and "psycho+" is a dual UPA to PCI bridge.  It sits on the UPA bus
- * and manages two PCI buses.  "psycho" has two 64-bit 33MHz buses, while
- * "psycho+" controls both a 64-bit 33Mhz and a 64-bit 66Mhz PCI bus.  You
+ * and manages two PCI buses.  "psycho" has two 64-bit 33 MHz buses, while
+ * "psycho+" controls both a 64-bit 33 MHz and a 64-bit 66 MHz PCI bus.  You
  * will usually find a "psycho+" since I don't think the original "psycho"
  * ever shipped, and if it did it would be in the U30.  
  *

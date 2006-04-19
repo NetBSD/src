@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.47.4.2 2006/03/10 14:54:01 elad Exp $	*/
+/*	$NetBSD: ofb.c,v 1.47.4.3 2006/04/19 02:33:12 elad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.47.4.2 2006/03/10 14:54:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.47.4.3 2006/04/19 02:33:12 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -92,8 +92,8 @@ struct wsscreen_list ofb_screenlist = {
 	sizeof(_ofb_scrlist) / sizeof(struct wsscreen_descr *), _ofb_scrlist
 };
 
-static int	ofb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	ofb_mmap(void *, off_t, int);
+static int	ofb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	ofb_mmap(void *, void *, off_t, int);
 static int	copy_rom_font(void);
 
 static int	ofb_init_rasops(int, struct rasops_info *);
@@ -343,7 +343,7 @@ ofb_is_console()
 }
 
 static int
-ofb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ofb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct ofb_softc *sc = vd->cookie;
@@ -408,7 +408,7 @@ ofb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-ofb_mmap(void *v, off_t offset, int prot)
+ofb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct ofb_softc *sc = vd->cookie;

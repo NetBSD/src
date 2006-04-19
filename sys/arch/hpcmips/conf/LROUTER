@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.32 2006/02/05 05:01:50 cube Exp $
+# 	$NetBSD: LROUTER,v 1.32.4.1 2006/04/19 02:32:39 elad Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -190,7 +190,7 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 # for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan

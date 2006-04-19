@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.68.10.2 2006/03/10 14:54:01 elad Exp $ */
+/*	$NetBSD: scn.c,v 1.68.10.3 2006/04/19 02:33:26 elad Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.10.2 2006/03/10 14:54:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.10.3 2006/04/19 02:33:26 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -822,7 +822,7 @@ scnattach(parent, self, aux)
 	boolean_t console, first;
 
 	sc = (void *) self;
-	unit = self->dv_unit;
+	unit = device_unit(self);
 
 	duartno = SCN_ADDR2DUART(ca->ca_addr);	/* get chip number */
 	channel = SCN_ADDR2CHAN(ca->ca_addr);	/* get channel on chip */
@@ -832,10 +832,7 @@ scnattach(parent, self, aux)
 	first =	(duart->base == NULL);
 
 	/* pick up "flags" (SCN_xxx) from config file */
-	if (self->dv_cfdata)	/* paranoia */
-		sc->sc_swflags = ca->ca_flags;
-	else
-		sc->sc_swflags = 0;
+	sc->sc_swflags = ca->ca_flags;
 
 	console = SCN_ISCONSOLE(ca->ca_addr);
 	if (console) {

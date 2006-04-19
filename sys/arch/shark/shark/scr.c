@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.16 2006/02/26 05:31:54 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.16.4.1 2006/04/19 02:33:44 elad Exp $	*/
 
 /*
  * Copyright 1997
@@ -50,7 +50,7 @@
 **    ISO 7816-3 (the Smart Card spec)
 **
 **    This driver puts a high load on the system due to the need
-**    to interrupt at a high rate (up to 50 Khz) during bit detection.
+**    to interrupt at a high rate (up to 50 kHz) during bit detection.
 **     
 **
 **    The driver is dived into the standard top half ioctl, and bottom
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.16 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.16.4.1 2006/04/19 02:33:44 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -161,15 +161,6 @@ __KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.16 2006/02/26 05:31:54 thorpej Exp $");
 ** Macro to extract the minor device number from the device Identifier 
 */
 #define SCRUNIT(x)      (minor(x))
-
-/* 
-** Macros to clear/set/test bit flags. 
-*/
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
-#define ISCLR(t, f)     ( ((t) & (f)) == 0)
-
 
 /*
 ** some macros to assist in debugging
@@ -710,7 +701,7 @@ int scrprobe(parent, match, aux)
     int                     rv = 0;           
 
     KERN_DEBUG (scrdebug, SCRPROBE_DEBUG_INFO,("scrprobe: called, name = %s\n",
-                                               parent->dv_cfdata->cf_name));
+                                               device_cfdata(parent)->cf_name));
 
     if (device_is_a(parent, "ofisascr") && devices == 0)
     {
@@ -2494,7 +2485,7 @@ static void ATRSM (struct scr_softc * sc,int cmd)
                         sc->atrKCount = 1;
     
                         /* if there are no TDx following set T0 protocol */
-                        if (ISCLR(sc->atrY,ATR_Y_TD))
+                        if (!ISSET(sc->atrY,ATR_Y_TD))
                         {
                             sc->protocolType    = PROTOCOL_T0;      
                         }

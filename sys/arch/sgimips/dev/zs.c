@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.28 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.28.10.1 2006/04/19 02:33:40 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.28 2005/12/11 12:18:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.28.10.1 2006/04/19 02:33:40 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -225,7 +225,7 @@ zs_hpc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	zs_unit = zsc->zsc_dev.dv_unit;
+	zs_unit = device_unit(&zsc->zsc_dev);
 	printf("\n");
 
 	/*

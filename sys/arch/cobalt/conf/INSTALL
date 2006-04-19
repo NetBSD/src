@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.18 2006/02/05 05:01:49 cube Exp $
+# $NetBSD: INSTALL,v 1.18.4.1 2006/04/19 02:32:21 elad Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.18 $"
+#ident 		"INSTALL-$Revision: 1.18.4.1 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 
@@ -142,6 +142,8 @@ config		netbsd	root on ? type nfs
 mainbus0 	at root
 
 cpu0 		at mainbus?
+
+mcclock0	at mainbus? addr 0x10000070
 
 com0		at mainbus? addr 0x1c800000 level 3
 options 	COM_16650

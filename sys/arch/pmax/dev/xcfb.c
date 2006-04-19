@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.41 2005/12/11 12:18:36 christos Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.41.10.1 2006/04/19 02:33:32 elad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.41 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.41.10.1 2006/04/19 02:33:32 elad Exp $");
 
 #include "dtop.h"
 #if NDTOP == 0
@@ -178,7 +178,7 @@ void *aux;
 {
 	struct tc_attach_args *ta = aux;
 	caddr_t base = (caddr_t)ta->ta_addr;
-	int unit = self->dv_unit;
+	int unit = device_unit(self);
 	struct fbinfo *fi;
 
 	if (xcfb_fi)

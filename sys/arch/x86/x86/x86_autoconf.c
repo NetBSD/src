@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.13 2006/02/26 06:17:44 thorpej Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.13.4.1 2006/04/19 02:34:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@ matchbiosdisks(void)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_name);
+		    dv->dv_xname, device_cfdata(dv)->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
@@ -151,8 +151,8 @@ matchbiosdisks(void)
 			if (bmajor == -1)
 				return;
 			
-			if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART),
-				   &tv))
+			if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv),
+				   RAW_PART), &tv))
 				panic("matchbiosdisks: can't alloc vnode");
 
 			error = VOP_OPEN(tv, FREAD, NOCRED, 0);
@@ -234,7 +234,7 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	 * Fake a temporary vnode for the disk, open it, and read
 	 * and hash the sectors.
 	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART), &tmpvn))
 		panic("findroot: can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
@@ -307,7 +307,7 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 	 * Fake a temporary vnode for the disk, open it, and read
 	 * the disklabel for comparison.
 	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART), &tmpvn))
 		panic("findroot: can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
@@ -396,7 +396,7 @@ findroot(void)
 			if (device_class(dv) != DV_DISK)
 				continue;
 
-			cd = dv->dv_cfdata;
+			cd = device_cfdata(dv);
 			len = strlen(cd->cf_name);
 
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
@@ -467,12 +467,10 @@ findroot(void)
 				 * the BIOS device number.  (This is the old
 				 * behavior.)  Needs some ideas how to handle
 				 * the BIOS's "swap floppy drive" options.
-				 *
-				 * XXXJRT This use of the unit number is
-				 * totally bogus!
 				 */
+				/* XXX device_unit() abuse */
 				if ((bid->biosdev & 0x80) != 0 ||
-				    dv->dv_unit != bid->biosdev)
+				    device_unit(dv) != bid->biosdev)
 				    	continue;
 				goto bootdisk_found;
 			}

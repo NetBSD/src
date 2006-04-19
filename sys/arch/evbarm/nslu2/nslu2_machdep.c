@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.1 2006/02/28 20:40:33 scw Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.1.6.1 2006/04/19 02:32:31 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.1 2006/02/28 20:40:33 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.1.6.1 2006/04/19 02:32:31 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -329,10 +329,9 @@ cpu_reboot(int howto, char *bootstr)
 	/* Make sure IRQ's are disabled */
 	IRQdisable;
 
-	if (howto & RB_HALT) {
+	if ((howto & (RB_HALT | RB_POWERDOWN)) == RB_HALT) {
 		printf("The operating system has halted.\n");
-		printf("Please press any key to %s.\n\n",
-		    (howto & RB_POWERDOWN) ? "power down" : "reboot");
+		printf("Please press any key to reboot.\n\n");
 		cngetc();
 	}
 

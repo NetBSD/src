@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.16 2006/02/26 05:31:54 thorpej Exp $        */
+/*      $NetBSD: opms.c,v 1.16.4.1 2006/04/19 02:33:44 elad Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.16 2006/02/26 05:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.16.4.1 2006/04/19 02:33:44 elad Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -362,7 +362,7 @@ opmsattach(parent, self, aux)
     void          *aux;
 {
     struct opms_softc          *sc = (void *)self;
-    int                       irq = self->dv_cfdata->cf_loc[SPCKBDCF_IRQ];
+    int                       irq = device_cfdata(self)->cf_loc[SPCKBDCF_IRQ];
     struct isa_attach_args    *ia = aux;                   
 
     printf(" irq %d\n", irq);

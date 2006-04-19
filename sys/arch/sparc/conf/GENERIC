@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.185 2006/02/05 05:02:02 cube Exp $
+# $NetBSD: GENERIC,v 1.185.4.1 2006/04/19 02:33:44 elad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.185 $"
+#ident 		"GENERIC-$Revision: 1.185.4.1 $"
 
 maxusers	32
 
@@ -595,7 +595,7 @@ pseudo-device	ipfilter
 ## for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan
@@ -614,7 +614,9 @@ audioamd0	at sbus0 slot ? offset ?		# sun4m
 
 audiocs0	at sbus0 slot ? offset ?		# SUNW,CS4231
 
-dbri0		at sbus0 slot ? offset ?		# SUNW,DBRI[s3|e]
+#options	DBRI_DEBUG	# noisy debug output from the dbri driver
+#options	DBRI_BIG_BUFFER	# use bigger DMA buffers, for slow CPUs
+dbri*		at sbus? slot ? offset ?		# SUNW,DBRI[s3|e]
 
 audio*		at audiobus?
 

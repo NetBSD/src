@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.55 2006/03/01 12:38:11 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.55.4.1 2006/04/19 02:32:45 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.55 2006/03/01 12:38:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.55.4.1 2006/04/19 02:32:45 elad Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -490,6 +490,7 @@ ptrace_machdep_dorequest(l, lt, req, addr, data)
 			uio.uio_offset = 0;
 			uio.uio_resid = sizeof(struct xmmregs);
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+			uio.uio_vmspace = vm;
 			error = process_machdep_doxmmregs(l, lt, &uio);
 			uvmspace_free(vm);
 			return error;

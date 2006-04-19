@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.30.2.2 2006/03/10 14:54:50 elad Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.30.2.3 2006/04/19 02:33:44 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.30.2.2 2006/03/10 14:54:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.30.2.3 2006/04/19 02:33:44 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,9 @@ struct tctrl_softc {
 	struct	envsys_basic_info sc_binfo[ENVSYS_NUMSENSORS];
 	struct	envsys_range sc_range[ENVSYS_NUMSENSORS];
 
-	struct	sysmon_pswitch sc_smcontext;
+	struct	sysmon_pswitch sc_sm_pbutton;	/* power button */
+	struct	sysmon_pswitch sc_sm_lid;	/* lid state */
+	struct	sysmon_pswitch sc_sm_ac;	/* AC adaptor presence */
 	int	sc_powerpressed;
 	
 	/* hardware status stuff */
@@ -197,6 +199,9 @@ static int tctrl_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
 static int tctrl_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
 
 static void tctrl_power_button_pressed(void *);
+static void tctrl_lid_state(struct tctrl_softc *);
+static void tctrl_ac_state(struct tctrl_softc *);
+
 static int tctrl_powerfail(void *);
 
 static void tctrl_create_event_thread(void *);
@@ -310,6 +315,8 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 	lockinit(&sc->sc_requestlock, PUSER, "tctrl_req", 0, 0);
 	/* setup sensors and register the power button */
 	tctrl_sensor_setup(sc);
+	tctrl_lid_state(sc);
+	tctrl_ac_state(sc);
 
 	/* initialize the LCD */
 	tctrl_init_lcd();
@@ -790,6 +797,7 @@ tctrl_read_event_status(struct tctrl_softc *sc)
 	if (v & TS102_EVENT_STATUS_DC_STATUS_CHANGE) {
 		splx(s);
 		tctrl_read_ext_status();
+		tctrl_ac_state(sc);
 		s = splts102();
 		if (tctrl_apm_record_event(sc, APM_POWER_CHANGE))
 			printf("%s: main power %s\n", sc->sc_dev.dv_xname,
@@ -800,6 +808,7 @@ tctrl_read_event_status(struct tctrl_softc *sc)
 	if (v & TS102_EVENT_STATUS_LID_STATUS_CHANGE) {
 		splx(s);
 		tctrl_read_ext_status();
+		tctrl_lid_state(sc);
 		tctrl_setup_bitport();
 #ifdef TCTRLDEBUG
 		printf("%s: lid %s\n", sc->sc_dev.dv_xname,
@@ -1093,7 +1102,6 @@ tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	struct apm_event_info *evp;
 	struct tctrl_softc *sc;
 	int i;
-	uint16_t a;
 	uint8_t c;
 
 	if (tctrl_cd.cd_devs == NULL
@@ -1144,13 +1152,8 @@ tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 			else
 				powerp->battery_state = APM_BATT_UNKNOWN;
 		}
-		req.cmdbuf[0] = TS102_OP_RD_EXT_STATUS;
-		req.cmdlen = 1;
-		req.rsplen = 3;
-		req.p = l->l_proc;
-		tadpole_request(&req, 0);
-		a = req.rspbuf[0] * 256 + req.rspbuf[1];
-		if (a & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE)
+		
+		if (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE)
 			powerp->ac_state = APM_AC_ON;
 		else
 			powerp->ac_state = APM_AC_OFF;
@@ -1335,11 +1338,25 @@ tctrl_sensor_setup(struct tctrl_softc *sc)
 	sysmon_task_queue_init();
 
 	sc->sc_powerpressed = 0;
-	memset(&sc->sc_smcontext, 0, sizeof(struct sysmon_pswitch));
-	sc->sc_smcontext.smpsw_name = sc->sc_dev.dv_xname;
-	sc->sc_smcontext.smpsw_type = PSWITCH_TYPE_POWER;
-	if (sysmon_pswitch_register(&sc->sc_smcontext) != 0)
+	memset(&sc->sc_sm_pbutton, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_sm_pbutton.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_sm_pbutton.smpsw_type = PSWITCH_TYPE_POWER;
+	if (sysmon_pswitch_register(&sc->sc_sm_pbutton) != 0)
 		printf("%s: unable to register power button with sysmon\n",
+		    sc->sc_dev.dv_xname);
+
+	memset(&sc->sc_sm_lid, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_sm_lid.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_sm_lid.smpsw_type = PSWITCH_TYPE_LID;
+	if (sysmon_pswitch_register(&sc->sc_sm_lid) != 0)
+		printf("%s: unable to register lid switch with sysmon\n",
+		    sc->sc_dev.dv_xname);
+
+	memset(&sc->sc_sm_ac, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_sm_ac.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_sm_ac.smpsw_type = PSWITCH_TYPE_ACADAPTER;
+	if (sysmon_pswitch_register(&sc->sc_sm_ac) != 0)
+		printf("%s: unable to register AC adaptor with sysmon\n",
 		    sc->sc_dev.dv_xname);
 }
 
@@ -1348,8 +1365,28 @@ tctrl_power_button_pressed(void *arg)
 {
 	struct tctrl_softc *sc = arg;
 
-	sysmon_pswitch_event(&sc->sc_smcontext, PSWITCH_EVENT_PRESSED);
+	sysmon_pswitch_event(&sc->sc_sm_pbutton, PSWITCH_EVENT_PRESSED);
 	sc->sc_powerpressed = 0;
+}
+
+static void
+tctrl_lid_state(struct tctrl_softc *sc)
+{
+	int state;
+	
+	state = (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) ? 
+	    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED;
+	sysmon_pswitch_event(&sc->sc_sm_lid, state);
+}
+
+static void
+tctrl_ac_state(struct tctrl_softc *sc)
+{
+	int state;
+	
+	state = (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE) ? 
+	    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED;
+	sysmon_pswitch_event(&sc->sc_sm_ac, state);
 }
 
 static int
@@ -1496,18 +1533,18 @@ tctrl_event_thread(void *v)
 			tsleep(&sc->sc_events, PWAIT, "probe_disk", hz);
 	}			
 	printf("found %s\n", sd->sc_dev.dv_xname);
-	rcount = sd->sc_dk.dk_rxfer;
-	wcount = sd->sc_dk.dk_wxfer;
+	rcount = sd->sc_dk.dk_stats->rxfer;
+	wcount = sd->sc_dk.dk_stats->wxfer;
 
 	tctrl_read_event_status(sc);
 	
 	while (1) {
 		tsleep(&sc->sc_events, PWAIT, "tctrl_event", ticks);
 		s = splhigh();
-		if ((rcount != sd->sc_dk.dk_rxfer) || 
-		    (wcount != sd->sc_dk.dk_wxfer)) {
-			rcount = sd->sc_dk.dk_rxfer;
-			wcount = sd->sc_dk.dk_wxfer;
+		if ((rcount != sd->sc_dk.dk_stats->rxfer) || 
+		    (wcount != sd->sc_dk.dk_stats->wxfer)) {
+			rcount = sd->sc_dk.dk_stats->rxfer;
+			wcount = sd->sc_dk.dk_stats->wxfer;
 			sc->sc_lcdwanted |= TS102_LCD_DISK_ACTIVE;
 		} else
 			sc->sc_lcdwanted &= ~TS102_LCD_DISK_ACTIVE;

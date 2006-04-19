@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.104.4.1 2006/03/08 00:43:05 elad Exp $ */
+/* $NetBSD: trap.c,v 1.104.4.2 2006/04/19 02:31:57 elad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104.4.1 2006/03/08 00:43:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104.4.2 2006/04/19 02:31:57 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,7 +499,7 @@ do_fault:
 			}
 
 			va = trunc_page((vaddr_t)a0);
-			rv = uvm_fault(map, va, 0, ftype);
+			rv = uvm_fault(map, va, ftype);
 
 			/*
 			 * If this was a stack access we keep track of the

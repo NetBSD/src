@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.7.4.2 2006/03/10 14:53:59 elad Exp $ */
+/*	$NetBSD: epcom.c,v 1.7.4.3 2006/04/19 02:32:07 elad Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.7.4.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.7.4.3 2006/04/19 02:32:07 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -190,10 +190,6 @@ struct consdev epcomcons = {
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
 			device_is_active(&(sc)->sc_dev))
 
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
-
 void
 epcom_attach_subr(struct epcom_softc *sc)
 {
@@ -240,7 +236,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&epcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.23.4.2 2006/03/10 14:53:59 elad Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.23.4.3 2006/04/19 02:32:08 elad Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.23.4.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.23.4.3 2006/04/19 02:32:08 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -183,10 +183,6 @@ struct consdev ixpcomcons = {
 #define	COM_LOCK(sc);
 #define	COM_UNLOCK(sc);
 
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
-
 #define CFLAGS2CR_MASK	(CR_PE | CR_OES | CR_SBS | CR_DSS | CR_BRD)
 
 void
@@ -239,7 +235,7 @@ ixpcom_attach_subr(sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&ixpcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}

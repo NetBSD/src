@@ -1,4 +1,4 @@
-/* $NetBSD: au_wired_space.c,v 1.2 2006/02/16 01:50:19 gdamore Exp $ */
+/* $NetBSD: au_wired_space.c,v 1.2.6.1 2006/04/19 02:33:12 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,15 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.2 2006/02/16 01:50:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.2.6.1 2006/04/19 02:33:12 elad Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
- * Alchemy parts, e.g. PCI and PCMCIA spaces.  These spaces require
- * the use of wired TLB entries.
- *
- * Earlier Alchemy parts with all of peripherials located in the
- * bottom 4GB of physical memory, do not need this.
+ * Alchemy parts, e.g. PCI and PCMCIA spaces.  These spaces can be
+ * accessed using wired TLB entries.
  */
 
 #include <sys/param.h>
