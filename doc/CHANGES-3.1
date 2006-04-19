@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.65 2006/04/18 21:17:14 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.66 2006/04/19 15:54:58 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1301,4 +1301,19 @@ sys/dev/audiovar.h				1.35 via patch
 
 	PR kern/32563: Fix the 'audioctl of death' problem.
 	[jmcneill, ticket #1277]
+
+sys/arch/mips/include/cpu.h			1.77
+sys/arch/mips/mips/fp.S				1.30
+
+	Avoid kernel panics caused by binaries compiled with "-mips2" or
+	better. This fixes PR port-mips/27298.
+	[tsutsui, ticket #1259]
+
+sys/arch/mips/conf/files.mips			1.54
+sys/arch/mips/mips/fp.S				1.31
+sys/arch/mips/mips/mips_fputrap.c		1.3-1.4
+
+	Update FPE trapsignal functions for new siginfo.
+	This fixes PR port-mips/26410.
+	[tsutsui, ticket #1260]
 
