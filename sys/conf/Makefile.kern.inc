@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.75 2006/04/19 07:06:22 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.76 2006/04/19 07:08:17 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -306,7 +306,7 @@ MKDEP_CFLAGS?=	${CFLAGS}
 SSRCS=${MD_SFILES} ${SFILES}
 CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
 SRCS=${SSRCS} ${CSRCS}
-DEPS=	${SRCS:T:R:S/$/.d/g}
+DEPS=	${SRCS:T:O:u:R:S/$/.d/g}
 
 .for _s in ${SSRCS}
 ${_s:T:R}.d: ${_s} assym.h config_time.h
