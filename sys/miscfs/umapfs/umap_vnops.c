@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.35.10.1 2006/03/08 01:34:34 elad Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.35.10.2 2006/04/19 04:52:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.35.10.1 2006/03/08 01:34:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.35.10.2 2006/04/19 04:52:47 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ umap_bypass(v)
 			printf("umap_bypass: returning-user was %d\n",
 			    kauth_cred_geteuid(credp));
 
-		if (savecredp != NOCRED) {
+		if (savecredp != NOCRED && credpp) {
 			kauth_cred_free(credp);
 			*credpp = savecredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && credpp &&
@@ -384,7 +384,7 @@ umap_lookup(v)
 		umap_mapids(mp, compcredp);
 	}
 
-	if ((flags & LAYERFS_MBYPASSDEBUG) && kauth_cred_geteuid(compcredp) != 0)
+	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp && kauth_cred_geteuid(compcredp) != 0)
 		printf("umap_lookup: component credit user now %d, group %d\n",
 		    kauth_cred_geteuid(compcredp), kauth_cred_getegid(compcredp));
 
@@ -426,7 +426,8 @@ umap_lookup(v)
 			    kauth_cred_geteuid(compcredp));
 
 	if (savecompcredp != NOCRED) {
-		kauth_cred_free(compcredp);
+		if (compcredp)
+			kauth_cred_free(compcredp);
 		cnp->cn_cred = savecompcredp;
 		if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
 				kauth_cred_geteuid(savecompcredp) != 0)

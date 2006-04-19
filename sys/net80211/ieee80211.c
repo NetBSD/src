@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.44 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.44.4.1 2006/04/19 04:46:11 elad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.44 2006/03/02 03:38:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.44.4.1 2006/04/19 04:46:11 elad Exp $");
 #endif
 
 /*
@@ -280,7 +280,7 @@ ieee80211_mhz2ieee(u_int freq, u_int flags)
 			return (freq - 2407) / 5;
 		else
 			return 15 + ((freq - 2512) / 20);
-	} else if (flags & IEEE80211_CHAN_5GHZ) {	/* 5Ghz band */
+	} else if (flags & IEEE80211_CHAN_5GHZ) {	/* 5 GHz band */
 		return (freq - 5000) / 5;
 	} else {				/* either, guess */
 		if (freq == 2484)
@@ -326,7 +326,7 @@ ieee80211_ieee2mhz(u_int chan, u_int flags)
 			return 2407 + chan*5;
 		else
 			return 2512 + ((chan-15)*20);
-	} else if (flags & IEEE80211_CHAN_5GHZ) {/* 5Ghz band */
+	} else if (flags & IEEE80211_CHAN_5GHZ) {/* 5 GHz band */
 		return 5000 + (chan*5);
 	} else {				/* either, guess */
 		if (chan == 14)

@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.28 2005/12/11 23:05:25 thorpej Exp $   */
+/*	$NetBSD: slcompress.c,v 1.28.10.1 2006/04/19 04:46:10 elad Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.28 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.28.10.1 2006/04/19 04:46:10 elad Exp $");
 
 #include "opt_inet.h"
 #ifdef INET
@@ -433,7 +433,7 @@ sl_uncompress_tcp(u_char **bufp, int len, u_int type, struct slcompress *comp)
 	int vjlen;
 	u_int hlen;
 
-	cp = bufp? *bufp: NULL;
+	cp = *bufp;
 	vjlen = sl_uncompress_tcp_core(cp, len, len, type, comp, &hdr, &hlen);
 	if (vjlen < 0)
 		return (0);	/* error */

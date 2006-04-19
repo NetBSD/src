@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.9.10.1 2006/03/08 01:34:34 elad Exp $ */
+/* $NetBSD: genfs_node.h,v 1.9.10.2 2006/04/19 04:52:46 elad Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -62,8 +62,6 @@ struct genfs_ops {
 	(void)0;
 
 /* Flags to GOP_SIZE */
-#define	GOP_SIZE_READ	0x1	/* Advise how many pages to read */
-#define	GOP_SIZE_WRITE	0x2	/* Tell how many pages to write */
 #define	GOP_SIZE_MEM	0x4	/* in-memory size */
 
 /* Flags to GOP_MARKUPDATE */
