@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.86.4.4 2006/03/30 22:30:27 elad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.86.4.5 2006/04/19 05:13:59 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,9 +69,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86.4.4 2006/03/30 22:30:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.86.4.5 2006/04/19 05:13:59 elad Exp $");
 
 #include "opt_kstack.h"
+#include "opt_maxuprc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1235,7 +1236,9 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 
 	/* XXXCDC: how should locking work here? */
 
-	if ((p->p_flag & P_WEXIT) != 0 ||
+	/* curproc exception is for coredump. */
+
+	if ((p != curproc && (p->p_flag & P_WEXIT) != 0) ||
 	    (p->p_vmspace->vm_refcnt < 1)) { /* XXX */
 		return EFAULT;
 	}

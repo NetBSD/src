@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.87.2.1 2006/03/08 00:53:41 elad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.87.2.2 2006/04/19 05:14:00 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.87.2.1 2006/03/08 00:53:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.87.2.2 2006/04/19 05:14:00 elad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -1053,7 +1053,7 @@ ptyioctl(dev, cmd, data, flag, l)
 #ifndef NO_DEV_PTM
 	/* Allow getting the name from either the master or the slave */
 	if (cmd == TIOCPTSNAME)
-		return pty_fill_ptmget(dev, -1, -1, data);
+		return pty_fill_ptmget(l, dev, -1, -1, data);
 #endif
 
 	cdev = cdevsw_lookup(dev);

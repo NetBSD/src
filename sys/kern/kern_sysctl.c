@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.190.4.2 2006/03/10 13:53:24 elad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.190.4.3 2006/04/19 05:13:59 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,10 +75,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.190.4.2 2006/03/10 13:53:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.190.4.3 2006/04/19 05:13:59 elad Exp $");
 
 #include "opt_defcorename.h"
-#include "opt_insecure.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -162,12 +161,6 @@ char domainname[MAXHOSTNAMELEN];
 int domainnamelen;
 
 long hostid;
-
-#ifdef INSECURE
-int securelevel = -1;
-#else
-int securelevel = 0;
-#endif
 
 #ifndef DEFCORENAME
 #define	DEFCORENAME	"%n.core"
@@ -349,6 +342,14 @@ sysctl_lock(struct lwp *l, void *oldp, size_t savelen)
 		return (error);
 
 	if (l != NULL && oldp != NULL && savelen) {
+		/*
+		 * be lazy - memory is locked for short time only, so
+		 * just do a basic check against system limit
+		 */
+		if (uvmexp.wired + atop(savelen) > uvmexp.wiredmax) {
+			lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
+			return (ENOMEM);
+		}
 		error = uvm_vslock(l->l_proc, oldp, savelen, VM_PROT_WRITE);
 		if (error) {
 			(void) lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
@@ -809,22 +810,25 @@ sysctl_create(SYSCTLFN_ARGS)
 	 * know what they collided with
 	 */
 	node = pnode->sysctl_child;
-	if (((flags & CTLFLAG_ANYNUMBER) && node) ||
-	    (node && node->sysctl_flags & CTLFLAG_ANYNUMBER))
-		return (EINVAL);
-	for (ni = at = 0; ni < pnode->sysctl_clen; ni++) {
-		if (nm == node[ni].sysctl_num ||
-		    strcmp(nnode.sysctl_name, node[ni].sysctl_name) == 0) {
-			/*
-			 * ignore error here, since we
-			 * are already fixed on EEXIST
-			 */
-			(void)sysctl_cvt_out(l, v, &node[ni], oldp,
-					     *oldlenp, oldlenp);
-			return (EEXIST);
+	at = 0;
+	if (node) {
+		if ((flags | node->sysctl_flags) & CTLFLAG_ANYNUMBER)
+			/* No siblings for a CTLFLAG_ANYNUMBER node */
+			return EINVAL;
+		for (ni = 0; ni < pnode->sysctl_clen; ni++) {
+			if (nm == node[ni].sysctl_num ||
+			    strcmp(nnode.sysctl_name, node[ni].sysctl_name) == 0) {
+				/*
+				 * ignore error here, since we
+				 * are already fixed on EEXIST
+				 */
+				(void)sysctl_cvt_out(l, v, &node[ni], oldp,
+						     *oldlenp, oldlenp);
+				return (EEXIST);
+			}
+			if (nm > node[ni].sysctl_num)
+				at++;
 		}
-		if (nm > node[ni].sysctl_num)
-			at++;
 	}
 
 	/*
@@ -985,6 +989,8 @@ sysctl_create(SYSCTLFN_ARGS)
 			if (flags & CTLFLAG_OWNDATA) {
 				own = malloc(sz, M_SYSCTLDATA,
 					     M_WAITOK|M_CANFAIL);
+				if (own == NULL)
+					return ENOMEM;
 				if (nnode.sysctl_data == NULL)
 					memset(own, 0, sz);
 				else {
@@ -1070,8 +1076,11 @@ sysctl_create(SYSCTLFN_ARGS)
 			error = sysctl_alloc(pnode, 1);
 		else
 			error = sysctl_alloc(pnode, 0);
-		if (error)
+		if (error) {
+			if (own != NULL)
+				free(own, M_SYSCTLDATA);
 			return (error);
+		}
 	}
 	node = pnode->sysctl_child;
 
@@ -1094,8 +1103,11 @@ sysctl_create(SYSCTLFN_ARGS)
 	 */
 	if (pnode->sysctl_clen == pnode->sysctl_csize) {
 		error = sysctl_realloc(pnode);
-		if (error)
+		if (error) {
+			if (own != NULL)
+				free(own, M_SYSCTLDATA);
 			return (error);
+		}
 		node = pnode->sysctl_child;
 	}
 
@@ -1163,6 +1175,7 @@ sysctl_create(SYSCTLFN_ARGS)
 	     pnode = pnode->sysctl_parent)
 		pnode->sysctl_ver = nm;
 
+	/* If this fails, the node is already added - the user won't know! */
 	error = sysctl_cvt_out(l, v, node, oldp, *oldlenp, oldlenp);
 
 	return (error);
@@ -2332,13 +2345,14 @@ sysctl_free(struct sysctlnode *rnode)
 {
 	struct sysctlnode *node, *pnode;
 
+	if (rnode == NULL)
+		rnode = &sysctl_root;
+
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_free: rnode %p wrong version\n", rnode);
 		return;
 	}
 
-	if (rnode == NULL)
-		rnode = &sysctl_root;
 	pnode = rnode;
 
 	node = pnode->sysctl_child;
