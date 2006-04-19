@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.90.2.2 2006/03/10 14:39:03 elad Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.90.2.3 2006/04/19 03:26:39 elad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,9 +31,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.90.2.2 2006/03/10 14:39:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.90.2.3 2006/04/19 03:26:39 elad Exp $");
 
-#include "opt_wsdisplay_border.h"
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
 #include "opt_compat_netbsd.h"
@@ -414,7 +413,7 @@ wsdisplay_closescreen(struct wsdisplay_softc *sc, struct wsscreen *scr)
 #endif
 
 	/* nuke the vnodes */
-	mn = WSDISPLAYMINOR(sc->sc_dv.dv_unit, idx);
+	mn = WSDISPLAYMINOR(device_unit(&sc->sc_dv), idx);
 	vdevgone(maj, mn, mn, VCHR);
 }
 
@@ -531,7 +530,7 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 		ap->console = 0;
 
 	wsdisplay_common_attach(sc, ap->console,
-	     sc->sc_dv.dv_cfdata->wsemuldisplaydevcf_kbdmux, ap->scrdata,
+	     device_cfdata(&sc->sc_dv)->wsemuldisplaydevcf_kbdmux, ap->scrdata,
 	     ap->accessops, ap->accesscookie);
 
 	if (ap->console) {
@@ -540,7 +539,8 @@ wsdisplay_emul_attach(struct device *parent, struct device *self, void *aux)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(self->dv_unit, 0));
+		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(device_unit(self),
+					 0));
 	}
 }
 
@@ -579,7 +579,7 @@ wsdisplay_noemul_attach(struct device *parent, struct device *self, void *aux)
 	struct wsdisplaydev_attach_args *ap = aux;
 
 	wsdisplay_common_attach(sc, 0,
-	    sc->sc_dv.dv_cfdata->wsemuldisplaydevcf_kbdmux, NULL,
+	    device_cfdata(&sc->sc_dv)->wsemuldisplaydevcf_kbdmux, NULL,
 	    ap->accessops, ap->accesscookie);
 }
 
@@ -613,7 +613,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	if (kbdmux >= 0)
 		mux = wsmux_getmux(kbdmux);
 	else
-		mux = wsmux_create("dmux", sc->sc_dv.dv_unit);
+		mux = wsmux_create("dmux", device_unit(&sc->sc_dv));
 	/* XXX panic()ing isn't nice, but attach cannot fail */
 	if (mux == NULL)
 		panic("wsdisplay_common_attach: no memory");
@@ -1014,8 +1014,9 @@ int
 wsdisplay_param(struct device *dev, u_long cmd, struct wsdisplay_param *dp)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
-					   (caddr_t)dp, 0, NULL));
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+					   sc->sc_focus->scr_dconf->emulcookie,
+					   cmd, (caddr_t)dp, 0, NULL));
 }
 
 int
@@ -1078,8 +1079,8 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
 
-	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
-		    flag, l);
+	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+	        scr->scr_dconf->emulcookie, cmd, data, flag, l);
 
 	    return (0);
 #undef d
@@ -1134,28 +1135,6 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		return (error);
 #undef d
 
-#if defined(WSDISPLAY_CHARFUNCS)
-	case WSDISPLAYIO_GETWSCHAR:
-#define d ((struct wsdisplay_char *)data)
-		if (!sc->sc_accessops->getwschar)
-			return (EINVAL);
-		return ((*sc->sc_accessops->getwschar)
-			(scr->scr_dconf->emulcookie, d));
-#undef d
-
-	case WSDISPLAYIO_PUTWSCHAR:
-#define d ((struct wsdisplay_char *)data)
-		if (!sc->sc_accessops->putwschar)
-			return (EINVAL);
-		return ((*sc->sc_accessops->putwschar)
-			(scr->scr_dconf->emulcookie, d));
-#undef d
-#else
-	case WSDISPLAYIO_PUTWSCHAR:
-	case WSDISPLAYIO_GETWSCHAR:
-		return ENODEV;
-#endif /* WSDISPLAY_CHARFUNCS */
-
 #ifdef WSDISPLAY_CUSTOM_OUTPUT
 	case WSDISPLAYIO_GMSGATTRS:
 #define d ((struct wsdisplay_msgattrs *)data)
@@ -1181,30 +1160,11 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	case WSDISPLAYIO_SMSGATTRS:
 		return (ENODEV);
 #endif
-
-#ifdef WSDISPLAY_CUSTOM_BORDER
-	case WSDISPLAYIO_GBORDER:
-		if (!sc->sc_accessops->getborder)
-			return (EINVAL);
-		*(u_int *)data = (*sc->sc_accessops->getborder)
-			       (scr->scr_dconf->emulcookie);
-		return (0);
-	case WSDISPLAYIO_SBORDER:
-		if (!sc->sc_accessops->setborder)
-			return (EINVAL);
-		return (*sc->sc_accessops->setborder)
-		    (scr->scr_dconf->emulcookie, (*(u_int *)data));
-#else /* WSDISPLAY_CUSTOM_BORDER */
-	case WSDISPLAYIO_GBORDER:
-	case WSDISPLAYIO_SBORDER:
-		return (ENODEV);
-#endif /* WSDISPLAY_CUSTOM_BORDER */
-
 	}
 
 	/* check ioctls for display */
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
-	    flag, l));
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+	    scr->scr_dconf->emulcookie, cmd, data, flag, l));
 }
 
 int
@@ -1383,7 +1343,8 @@ wsdisplaymmap(dev_t dev, off_t offset, int prot)
 		return (-1);
 
 	/* pass mmap to display */
-	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie, offset, prot));
+	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie,
+	    scr->scr_dconf->emulcookie, offset, prot));
 }
 
 void

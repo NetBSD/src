@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.69 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.69.10.1 2006/04/19 03:26:30 elad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
 #define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
-#define USBDEVUNIT(bdev) ((bdev).dv_unit)
+#define USBDEVUNIT(bdev) device_unit(&(bdev))
 #define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 #define USBGETSOFTC(d) ((void *)(d))
 

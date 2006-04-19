@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.22 2006/03/01 12:38:13 yamt Exp $	*/
+/*	$NetBSD: urio.c,v 1.22.4.1 2006/04/19 03:26:30 elad Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.22 2006/03/01 12:38:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.22.4.1 2006/04/19 03:26:30 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ USB_DETACH(urio)
 #endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 #elif defined(__FreeBSD__)
 	/* XXX not implemented yet */

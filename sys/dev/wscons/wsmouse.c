@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.43 2006/03/05 16:04:37 jmmv Exp $ */
+/* $NetBSD: wsmouse.c,v 1.43.2.1 2006/04/19 03:26:39 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.43 2006/03/05 16:04:37 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.43.2.1 2006/04/19 03:26:39 elad Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -258,7 +258,7 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 
 #if NWSMUX > 0
 	sc->sc_base.me_ops = &wsmouse_srcops;
-	mux = sc->sc_base.me_dv.dv_cfdata->wsmousedevcf_mux;
+	mux = device_cfdata(&sc->sc_base.me_dv)->wsmousedevcf_mux;
 	if (mux >= 0) {
 		error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);
 		if (error)
@@ -267,7 +267,7 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 			printf(" mux %d", mux);
 	}
 #else
-	if (sc->sc_base.me_dv.dv_cfdata->wsmousedevcf_mux >= 0)
+	if (device_cfdata(&sc->sc_base.me_dv)->wsmousedevcf_mux >= 0)
 		printf(" (mux ignored)");
 #endif
 
@@ -333,7 +333,7 @@ wsmouse_detach(struct device  *self, int flags)
 	maj = cdevsw_lookup_major(&wsmouse_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);

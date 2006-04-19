@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: modelines2c.awk,v 1.1 2006/03/04 02:34:27 gdamore Exp $
+#	$NetBSD: modelines2c.awk,v 1.1.4.1 2006/04/19 03:26:39 elad Exp $
 #
 # Copyright (c) 2006 Itronix Inc.
 # All rights reserved.
@@ -107,7 +107,7 @@ NR == 1 {
 
 	modestr = sprintf("%dx%dx%d%s", hdisplay, vdisplay, vrefresh, iflag);
 
-#	printf("/* %dx%d%s refresh %dHz, hsync %d KHz */\n",
+#	printf("/* %dx%d%s refresh %d Hz, hsync %d kHz */\n",
 #	    hdisplay, vdisplay, iflag, vrefresh, hrefresh/1000);
 	printf("M(\"%s\",%d,%d,%d,%d,%d,%d,%d,%d,%d,%s),\n",
 	    modestr,

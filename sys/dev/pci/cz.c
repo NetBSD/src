@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.35.2.2 2006/03/10 14:39:02 elad Exp $	*/
+/*	$NetBSD: cz.c,v 1.35.2.3 2006/04/19 03:25:33 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.35.2.2 2006/03/10 14:39:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.35.2.3 2006/04/19 03:25:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,7 +422,7 @@ cz_attach(struct device *parent,
 
 		tp = ttymalloc();
 		tp->t_dev = makedev(cdevsw_lookup_major(&cz_cdevsw),
-		    (cz->cz_dev.dv_unit * ZFIRM_MAX_CHANNELS) + i);
+		    (device_unit(&cz->cz_dev) * ZFIRM_MAX_CHANNELS) + i);
 		tp->t_oproc = czttystart;
 		tp->t_param = czttyparam;
 		tty_attach(tp);
