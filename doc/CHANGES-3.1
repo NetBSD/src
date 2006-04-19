@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.66 2006/04/19 15:54:58 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.67 2006/04/19 20:08:13 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1316,4 +1316,11 @@ sys/arch/mips/mips/mips_fputrap.c		1.3-1.4
 	Update FPE trapsignal functions for new siginfo.
 	This fixes PR port-mips/26410.
 	[tsutsui, ticket #1260]
+
+lib/libpthread/arch/i386/pthread_md.h		1.7
+
+	Instead of using hard-coded values for various registers, get them 
+	rom the current context. Valid values can change depending on how
+	the kernel is setup. i386 and amd64 happen to be setup differently.
+	[cube, ticket #1265]
 
