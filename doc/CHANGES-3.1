@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.67 2006/04/19 20:08:13 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.68 2006/04/19 21:03:22 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1323,4 +1323,12 @@ lib/libpthread/arch/i386/pthread_md.h		1.7
 	rom the current context. Valid values can change depending on how
 	the kernel is setup. i386 and amd64 happen to be setup differently.
 	[cube, ticket #1265]
+
+sys/dev/audio.c					1.204 via patch
+sys/dev/audio_if.h				1.61
+sys/dev/audiovar.h				1.36
+
+	Don't use simple_locks; we can't hold them while calling malloc and
+	friends.
+	[jmcneill, ticket #1281]
 
