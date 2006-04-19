@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.76 2005/06/02 09:42:57 lukem Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.77 2006/04/19 21:18:50 pavel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.76 2005/06/02 09:42:57 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.77 2006/04/19 21:18:50 pavel Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,6 +242,7 @@ int	UseNameService = 1;	/* make domain name queries */
 int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 int	NoRepeat = 0;		/* disable "repeated"; log always */
+int	RemoteAddDate = 0;	/* always add date to messages from network */
 int	SyncKernel = 0;		/* write kernel messages synchronously */
 int	UniquePriority = 0;	/* only log specified priority */
 int	LogFacPri = 0;		/* put facility and priority in log messages: */
@@ -263,7 +264,7 @@ void	logmsg(int, char *, char *, int);
 void	log_deadchild(pid_t, int, const char *);
 int	matches_spec(const char *, const char *,
 		     char *(*)(const char *, const char *));
-void	printline(char *, char *);
+void	printline(char *, char *, int);
 void	printsys(char *);
 int	p_open(char *, pid_t *);
 void	trim_localdomain(char *);
@@ -313,7 +314,7 @@ main(int argc, char *argv[])
 
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "dnsSf:m:p:P:ru:g:t:Uv")) != -1)
+	while ((ch = getopt(argc, argv, "dnsSf:m:p:P:ru:g:t:TUv")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -353,6 +354,9 @@ main(int argc, char *argv[])
 			root = optarg;
 			if (*root == '\0')
 				usage();
+			break;
+		case 'T':
+			RemoteAddDate = 1;
 			break;
 		case 'u':
 			user = optarg;
@@ -601,7 +605,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dnrSsUv] [-f config_file] [-g group] [-m mark_interval]\n"
+	    "usage: %s [-dnrSsTUv] [-f config_file] [-g group] [-m mark_interval]\n"
 	    "\t[-P file_list] [-p log_socket [-p log_socket2 ...]]\n"
 	    "\t[-t chroot_dir] [-u user]\n", getprogname());
 	exit(1);
@@ -665,7 +669,7 @@ dispatch_read_funix(struct kevent *ev)
 	    (struct sockaddr *)&fromunix, &sunlen);
 	if (rv > 0) {
 		linebuf[rv] = '\0';
-		printline(LocalHostName, linebuf);
+		printline(LocalHostName, linebuf, 0);
 	} else if (rv < 0 && errno != EINTR) {
 		logerror("recvfrom() unix `%s'", myname.sun_path);
 	}
@@ -708,7 +712,8 @@ dispatch_read_finet(struct kevent *ev)
 
 	linebuf[rv] = '\0';
 	if (!reject)
-		printline(cvthname(&frominet), linebuf);
+		printline(cvthname(&frominet), linebuf,
+			  RemoteAddDate ? ADDDATE : 0);
 }
 
 /*
@@ -770,7 +775,7 @@ logpath_fileadd(char ***lp, int *szp, int *maxszp, char *file)
  * on the appropriate log files.
  */
 void
-printline(char *hname, char *msg)
+printline(char *hname, char *msg, int flags)
 {
 	int c, pri;
 	char *p, *q, line[MAXLINE + 1];
@@ -817,7 +822,7 @@ printline(char *hname, char *msg)
 	}
 	*q = '\0';
 
-	logmsg(pri, line, hname, 0);
+	logmsg(pri, line, hname, flags);
 }
 
 /*

@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.38 2006/01/20 21:48:41 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.39 2006/04/19 21:18:50 pavel Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd January 20, 2006
+.Dd April 19, 2006
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -123,6 +123,12 @@ and similar attacks.
 to
 .Ar chroot_dir
 after the sockets and log files have been opened.
+.It Fl T
+Always use the local time and date for messages received from the
+network, instead of the timestamp field supplied in the message
+by the remote host.
+This is useful if some of the originating hosts can't keep time
+properly or are unable to generate a correct timestamp.
 .It Fl u Ar user
 Set UID to
 .Ar user
@@ -187,6 +193,13 @@ Note: the normal log socket must now also be passed to
 The logged message includes the date, time, and hostname (or pathname of
 the log socket).
 Commonly, the program name and the process id is included.
+.Pp
+The date and time are taken from the received message.
+If the format of the timestamp field is incorrect, time obtained from
+the local host is used instead.
+This can be overriden by the
+.Fl T
+flag.
 .Pp
 Accesses from UDP socket can be filtered by libwrap configuration files, like
 .Pa /etc/hosts.deny .
