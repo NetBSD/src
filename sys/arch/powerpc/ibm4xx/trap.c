@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31.2.2 2006/03/08 00:43:13 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.31.2.3 2006/04/19 02:33:32 elad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.31.2.2 2006/03/08 00:43:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.31.2.3 2006/04/19 02:33:32 elad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -197,7 +197,7 @@ trap(struct trapframe *frame)
 			    frame->srr0,
 			    (ftype & VM_PROT_WRITE) ? "write" : "read",
 			    (void *)va, frame->tf_xtra[TF_ESR]));
-			rv = uvm_fault(map, trunc_page(va), 0, ftype);
+			rv = uvm_fault(map, trunc_page(va), ftype);
 			KERNEL_UNLOCK();
 			if (map != kernel_map)
 				l->l_flag &= ~L_SA_PAGEFAULT;
@@ -236,7 +236,7 @@ trap(struct trapframe *frame)
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
-		    0, ftype);
+		    ftype);
 		if (rv == 0) {
 			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
@@ -271,7 +271,7 @@ trap(struct trapframe *frame)
 		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
 		    frame->srr0, frame));
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
-		    0, ftype);
+		    ftype);
 		if (rv == 0) {
 			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);

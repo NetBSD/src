@@ -1,3 +1,4 @@
+/* $NetBSD: ring.h,v 1.2.2.1 2006/04/19 02:34:03 elad Exp $ */
 /******************************************************************************
  * ring.h
  * 
@@ -182,12 +183,12 @@ typedef struct __name##_back_ring __name##_back_ring_t
     (((_cons) - (_r)->rsp_prod_pvt) >= RING_SIZE(_r))
 
 #define RING_PUSH_REQUESTS(_r) do {                                     \
-    x86_lfence(); /* back sees requests /before/ updated producer index */ \
+    x86_sfence(); /* back sees requests /before/ updated producer index */ \
     (_r)->sring->req_prod = (_r)->req_prod_pvt;                         \
 } while (0)
 
 #define RING_PUSH_RESPONSES(_r) do {                                    \
-    x86_lfence(); /* front sees responses /before/ updated producer index */ \
+    x86_sfence(); /* front sees responses /before/ updated producer index */ \
     (_r)->sring->rsp_prod = (_r)->rsp_prod_pvt;                         \
 } while (0)
 
@@ -226,7 +227,7 @@ typedef struct __name##_back_ring __name##_back_ring_t
     RING_IDX __new = (_r)->req_prod_pvt;                                \
     x86_lfence(); /* back sees requests /before/ updated producer index */ \
     (_r)->sring->req_prod = __new;                                      \
-    x86_sfence(); /* back sees new requests /before/ we check req_event */ \
+    x86_lfence(); /* back sees new requests /before/ we check req_event */ \
     (_notify) = ((RING_IDX)(__new - (_r)->sring->req_event) <           \
                  (RING_IDX)(__new - __old));                            \
 } while (0)
@@ -236,7 +237,7 @@ typedef struct __name##_back_ring __name##_back_ring_t
     RING_IDX __new = (_r)->rsp_prod_pvt;                                \
     x86_lfence(); /* front sees responses /before/ updated producer index */ \
     (_r)->sring->rsp_prod = __new;                                      \
-    x86_sfence(); /* front sees new responses /before/ we check rsp_event */ \
+    x86_lfence(); /* front sees new responses /before/ we check rsp_event */ \
     (_notify) = ((RING_IDX)(__new - (_r)->sring->rsp_event) <           \
                  (RING_IDX)(__new - __old));                            \
 } while (0)

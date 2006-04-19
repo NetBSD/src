@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.13.2.2 2006/03/10 14:54:51 elad Exp $	*/
+/*	$NetBSD: xencons.c,v 1.13.2.3 2006/04/19 02:34:03 elad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.13.2.2 2006/03/10 14:54:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.13.2.3 2006/04/19 02:34:03 elad Exp $");
 
 #include "opt_xen.h"
 
@@ -199,10 +199,10 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 		maj = cdevsw_lookup_major(&xencons_cdevsw);
 
 		/* There can be only one, but it can have any unit number. */
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		aprint_verbose("%s: console major %d, unit %d\n",
-		    sc->sc_dev.dv_xname, maj, sc->sc_dev.dv_unit);
+		    sc->sc_dev.dv_xname, maj, device_unit(&sc->sc_dev));
 
 		sc->sc_tty->t_dev = cn_tab->cn_dev;
 

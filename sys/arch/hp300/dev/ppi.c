@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.32 2006/02/23 05:37:47 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.32.4.1 2006/04/19 02:32:38 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.32 2006/02/23 05:37:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.32.4.1 2006/04/19 02:32:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ ppistart(void *arg)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppistart(%x)\n", sc->sc_dev.dv_unit);
+		printf("ppistart(%x)\n", device_unit(&sc->sc_dev));
 #endif
 	sc->sc_flags &= ~PPIF_DELAY;
 	wakeup(sc);
@@ -259,7 +259,7 @@ ppitimo(void *arg)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppitimo(%x)\n", sc->sc_dev.dv_unit);
+		printf("ppitimo(%x)\n", device_unit(&sc->sc_dev));
 #endif
 	sc->sc_flags &= ~(PPIF_UIO|PPIF_TIMO);
 	wakeup(sc);
@@ -301,7 +301,7 @@ ppirw(dev_t dev, struct uio *uio)
 	if (uio->uio_resid == 0)
 		return(0);
 
-	ctlr = device_parent(&sc->sc_dev)->dv_unit;
+	ctlr = device_unit(device_parent(&sc->sc_dev));
 	slave = sc->sc_slave;
 
 #ifdef DEBUG

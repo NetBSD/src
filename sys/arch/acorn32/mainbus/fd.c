@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.24 2006/02/23 05:37:46 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.24.4.1 2006/04/19 02:31:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.24 2006/02/23 05:37:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.24.4.1 2006/04/19 02:31:57 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -412,7 +412,7 @@ fdcattach(parent, self, aux)
 	 * The NVRAM info only tells us about the first two disks on the
 	 * `primary' floppy controller.
 	 */
-	if (fdc->sc_dev.dv_unit == 0)
+	if (device_unit(&fdc->sc_dev) == 0)
 		type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
 	else
 		type = -1;
@@ -1030,7 +1030,7 @@ loop:
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 
-		fd->sc_dk.dk_seek++;
+		iostat_seek(fd->sc_dk.dk_stats);
 		disk_busy(&fd->sc_dk);
 
 		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);

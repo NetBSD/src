@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.17.2.2 2006/03/10 14:53:59 elad Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.17.2.3 2006/04/19 02:32:07 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.17.2.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.17.2.3 2006/04/19 02:32:07 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -205,7 +205,7 @@ fcom_attach(parent, self, aux)
 		/* locate the major number */
 		major = cdevsw_lookup_major(&fcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(major, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(major, device_unit(&sc->sc_dev));
 		printf(": console");
 	}
 	printf("\n");

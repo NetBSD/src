@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.40 2006/02/05 05:01:48 cube Exp $
+#	$NetBSD: P4032,v 1.40.4.1 2006/04/19 02:31:57 elad Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.40 $"
+#ident 		"P4032-$Revision: 1.40.4.1 $"
 
 maxusers 32
 
@@ -323,7 +323,7 @@ pseudo-device	vnd
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator

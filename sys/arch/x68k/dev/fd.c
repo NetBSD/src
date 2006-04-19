@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.68 2006/02/23 05:37:48 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.68.4.1 2006/04/19 02:33:57 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68 2006/02/23 05:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68.4.1 2006/04/19 02:33:57 elad Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1109,7 +1109,7 @@ loop:
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 
-		fd->sc_dk.dk_seek++;
+		iostat_seek(fd->sc_dk.dk_stats);
 		disk_busy(&fd->sc_dk);
 
 		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);
@@ -1655,7 +1655,8 @@ fd_mountroot_hook(struct device *dev)
 	struct fdc_softc *fdc = (void*) device_parent(&fd->sc_dev);
 	int c;
 
-	fd_do_eject(fdc, dev->dv_unit);
+	/* XXX device_unit() abuse */
+	fd_do_eject(fdc, device_unit(dev));
 	printf("Insert filesystem floppy and press return.");
 	for (;;) {
 		c = cngetc();

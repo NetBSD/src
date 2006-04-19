@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.23 2006/02/23 19:44:02 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.23.4.1 2006/04/19 02:33:33 elad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2006/02/23 19:44:02 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23.4.1 2006/04/19 02:33:33 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2006/02/23 19:44:02 garbled Exp
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/platform.h>
+#include <machine/pnp.h>
 
 #include <dev/isa/isavar.h>
 
@@ -83,6 +84,21 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
+
+void
+prep_pci_get_chipset_tag(pci_chipset_tag_t pc)
+{
+	int i;
+
+	i = pci_chipset_tag_type();
+
+	if (i == PCIBridgeIndirect)
+		prep_pci_get_chipset_tag_indirect(pc);
+	else if (i == PCIBridgeDirect)
+		prep_pci_get_chipset_tag_direct(pc);
+	else
+		panic("Unknown PCI chipset tag configuration method");
+}
 
 int
 prep_pci_bus_maxdevs(void *v, int busno)
@@ -192,7 +208,7 @@ prep_pci_conf_interrupt(void *v, int bus, int dev, int pin,
     int swiz, int *iline)
 {
 
-	(*platform->pci_intr_fixup)(bus, dev, pin, swiz, iline);
+	pci_intr_fixup_pnp(bus, dev, pin, swiz, iline);
 }
 
 int

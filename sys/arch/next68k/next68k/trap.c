@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56.4.1 2006/03/08 00:43:07 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.56.4.2 2006/04/19 02:33:26 elad Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56.4.1 2006/03/08 00:43:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56.4.2 2006/04/19 02:33:26 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -676,16 +676,16 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv != 0) {
 				bva = HPMMBASEADDR(va);
-				rv = uvm_fault(map, bva, 0, ftype);
+				rv = uvm_fault(map, bva, ftype);
 				if (rv == 0)
 					(void) pmap_mapmulti(map->pmap, va);
 			}
 		} else
 #endif
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 #endif
 		/*
@@ -717,7 +717,7 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		if (type == T_MMUFLT) {
 			if (l->l_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);

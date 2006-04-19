@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.25.4.2 2006/03/10 14:54:50 elad Exp $	*/
+/*	$NetBSD: sab.c,v 1.25.4.3 2006/04/19 02:33:45 elad Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.4.2 2006/03/10 14:54:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.4.3 2006/04/19 02:33:45 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -435,7 +435,7 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 			cn_tab->cn_pollc = sab_cnpollc;
 			cn_tab->cn_getc = sab_cngetc;
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
-			cn_tab->cn_dev = makedev(maj, self->dv_unit);
+			cn_tab->cn_dev = makedev(maj, device_unit(self));
 			shutdownhook_establish(sabtty_shutdown, sc);
 			cn_init_magic(&sabtty_cnm_state);
 			cn_set_magic("\047\001"); /* default magic is BREAK */
@@ -446,7 +446,7 @@ sabtty_attach(struct device *parent, struct device *self, void *aux)
 			sabtty_cons_output = sc;
 			cn_tab->cn_putc = sab_cnputc;
 			maj = cdevsw_lookup_major(&sabtty_cdevsw);
-			cn_tab->cn_dev = makedev(maj, self->dv_unit);
+			cn_tab->cn_dev = makedev(maj, device_unit(self));
 		}
 		aprint_normal(": console %s", acc);
 	} else {
@@ -1109,7 +1109,7 @@ sabtty_reset(struct sabtty_softc *sc)
 	SAB_WRITE(sc, SAB_CCR1, SAB_CCR1_ODS | SAB_CCR1_BCR | SAB_CCR1_CM_7);
 	SAB_WRITE(sc, SAB_CCR2, SAB_CCR2_BDF | SAB_CCR2_SSEL | SAB_CCR2_TOE);
 	SAB_WRITE(sc, SAB_CCR3, 0);
-	SAB_WRITE(sc, SAB_CCR4, SAB_CCR4_MCK4 | SAB_CCR4_EBRG);
+	SAB_WRITE(sc, SAB_CCR4, SAB_CCR4_MCK4 | SAB_CCR4_EBRG | SAB_CCR4_ICD);
 	SAB_WRITE(sc, SAB_MODE, SAB_MODE_RTS | SAB_MODE_FCTS | SAB_MODE_RAC);
 	SAB_WRITE(sc, SAB_RFC,
 	    SAB_RFC_DPS | SAB_RFC_RFDF | SAB_RFC_RFTH_32CHAR);

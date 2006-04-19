@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.129.2.2 2006/03/08 00:43:13 elad Exp $ */
+/*	$NetBSD: trap.c,v 1.129.2.3 2006/04/19 02:33:49 elad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129.2.2 2006/03/08 00:43:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129.2.3 2006/04/19 02:33:49 elad Exp $");
 
 #define NEW_FPSTATE
 
@@ -1108,13 +1108,13 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 				    va, (long)tf->tf_pc);
 			}
 #endif
-			rv = uvm_fault(kernel_map, va, 0, access_type);
+			rv = uvm_fault(kernel_map, va, access_type);
 #ifdef DEBUG
 			if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
 				printf("data_access_fault: kernel "
-					"uvm_fault(%p, %lx, %x, %x) "
+					"uvm_fault(%p, %lx, %x) "
 					"sez %x -- %s\n",
-					kernel_map, va, 0, access_type, rv,
+					kernel_map, va, access_type, rv,
 					rv ? "failure" : "success");
 #endif
 			if (rv == 0)
@@ -1133,15 +1133,15 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 	/* alas! must call the horrible vm code */
 	onfault = (vaddr_t)l->l_addr->u_pcb.pcb_onfault;
 	l->l_addr->u_pcb.pcb_onfault = NULL;
-	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
+	rv = uvm_fault(&vm->vm_map, va, access_type);
 	l->l_addr->u_pcb.pcb_onfault = (void *)onfault;
 
 #ifdef DEBUG
 	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
-		printf("data_access_fault: %s uvm_fault(%p, %lx, %x, %x) "
+		printf("data_access_fault: %s uvm_fault(%p, %lx, %x) "
 			"sez %x -- %s\n",
 			&vm->vm_map == kernel_map ? "kernel!!!" : "user",
-			&vm->vm_map, va, 0, access_type, rv,
+			&vm->vm_map, va, access_type, rv,
 			rv ? "failure" : "success");
 #endif
 
@@ -1472,12 +1472,12 @@ text_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
+	rv = uvm_fault(&vm->vm_map, va, access_type);
 
 #ifdef DEBUG
 	if (trapdebug & (TDB_TXTFLT | TDB_FOLLOW))
 		printf("text_access_fault: uvm_fault(%p, %lx, %x) sez %x\n",
-		       &vm->vm_map, va, 0, rv);
+		       &vm->vm_map, va, access_type, rv);
 #endif
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1656,7 +1656,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
+	rv = uvm_fault(&vm->vm_map, va, access_type);
 
 	/*
 	 * If this was a stack access we keep track of the maximum

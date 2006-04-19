@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2005/12/11 12:17:50 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3.10.1 2006/04/19 02:33:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -46,8 +46,6 @@
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
-
-#include <prep/dev/obiovar.h>
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);

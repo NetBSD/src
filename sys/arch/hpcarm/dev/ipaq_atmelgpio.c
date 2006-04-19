@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.10 2006/03/04 14:36:19 peter Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.10.4.1 2006/04/19 02:32:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.10 2006/03/04 14:36:19 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.10.4.1 2006/04/19 02:32:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: ipaq_atmelgpio.c,v 1.10 2006/03/04 14:36:19 peter Ex
 #include <hpcarm/dev/ipaq_gpioreg.h>
 #include <hpcarm/dev/ipaq_atmel.h>
 #include <hpcarm/dev/ipaq_atmelvar.h>
-#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
-#include <hpcarm/sa11x0/sa11x0_comreg.h>
-#include <hpcarm/sa11x0/sa11x0_reg.h>
+
+#include <arm/sa11x0/sa11x0_gpioreg.h>
+#include <arm/sa11x0/sa11x0_comreg.h>
+#include <arm/sa11x0/sa11x0_reg.h>
 
 #ifdef ATMEL_DEBUG
 #define DPRINTF(x) printf x
@@ -99,7 +100,7 @@ atmelgpio_attach(parent, self, aux)
 	struct atmelgpio_softc *sc = (struct atmelgpio_softc *)self;
 	struct ipaq_softc *psc = (struct ipaq_softc *)parent;
 
-	struct atmel_rx *rxbuf;
+	struct atmel_rx rxbuf;
 
 	printf("\n");
 	printf("%s: Atmel microcontroller GPIO\n",  sc->sc_dev.dv_xname);
@@ -117,15 +118,15 @@ atmelgpio_attach(parent, self, aux)
 	atmelgpio_init(sc);
 
 #if 1  /* this is sample */
-	rxtx_data(sc, STATUS_BATTERY, 0, NULL, rxbuf); 
+	rxtx_data(sc, STATUS_BATTERY, 0, NULL, &rxbuf); 
 
-	printf("ac_status          = %x\n", rxbuf->data[0]);
-	printf("Battery kind       = %x\n", rxbuf->data[1]);
+	printf("ac_status          = %x\n", rxbuf.data[0]);
+	printf("Battery kind       = %x\n", rxbuf.data[1]);
 	printf("Voltage            = %d mV\n",
-		1000 * (rxbuf->data[3] << 8 | rxbuf->data[2]) /228);
-	printf("Battery Status     = %x\n", rxbuf->data[4]);
+		1000 * (rxbuf.data[3] << 8 | rxbuf.data[2]) /228);
+	printf("Battery Status     = %x\n", rxbuf.data[4]);
 	printf("Battery percentage = %d\n",
-		425 * (rxbuf->data[3] << 8 | rxbuf->data[2]) /1000 - 298);
+		425 * (rxbuf.data[3] << 8 | rxbuf.data[2]) /1000 - 298);
 #endif
 
 	/*

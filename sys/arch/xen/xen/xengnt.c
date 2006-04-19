@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.1 2006/03/06 20:30:40 bouyer Exp $      */
+/*      $NetBSD: xengnt.c,v 1.1.2.1 2006/04/19 02:34:03 elad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -43,7 +43,7 @@
 #include <machine/xen.h>
 #include <machine/granttables.h>
 
-#define XENDEBUG
+#undef XENDEBUG
 #ifdef XENDEBUG
 #define DPRINTF(x) printf x
 #else
@@ -126,6 +126,7 @@ static void
 xengnt_free_entry(grant_ref_t entry)
 {
 	int s = splvm();
+	KASSERT((entry >> 5) < NR_BITMASK_ENTRIES);
 	gnt_entries_bitmask[entry >> 5] |= (1 << (entry & 0x1f));
 	splx(s);
 }

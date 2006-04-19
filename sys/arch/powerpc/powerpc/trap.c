@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.109.10.1 2006/03/08 00:43:13 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.109.10.2 2006/04/19 02:33:33 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109.10.1 2006/03/08 00:43:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109.10.2 2006/04/19 02:33:33 elad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -175,7 +175,7 @@ trap(struct trapframe *frame)
 
 			onfault = pcb->pcb_onfault;
 			pcb->pcb_onfault = NULL;
-			rv = uvm_fault(map, trunc_page(va), 0, ftype);
+			rv = uvm_fault(map, trunc_page(va), ftype);
 			pcb->pcb_onfault = onfault;
 
 			if (map != kernel_map) {
@@ -250,7 +250,7 @@ trap(struct trapframe *frame)
 			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
-		rv = uvm_fault(map, trunc_page(frame->dar), 0, ftype);
+		rv = uvm_fault(map, trunc_page(frame->dar), ftype);
 		if (rv == 0) {
 			/*
 			 * Record any stack growth...
@@ -325,7 +325,7 @@ trap(struct trapframe *frame)
 			l->l_flag |= L_SA_PAGEFAULT;
 		}
 		ftype = VM_PROT_EXECUTE;
-		rv = uvm_fault(map, trunc_page(frame->srr0), 0, ftype);
+		rv = uvm_fault(map, trunc_page(frame->srr0), ftype);
 		if (rv == 0) {
 			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);

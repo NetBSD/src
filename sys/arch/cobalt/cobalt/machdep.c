@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2005/12/24 20:06:58 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.56.10.1 2006/04/19 02:32:21 elad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2005/12/24 20:06:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56.10.1 2006/04/19 02:32:21 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -69,6 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2005/12/24 20:06:58 perry Exp $");
 
 #include <dev/cons.h>
 
+#include <arch/cobalt/dev/gtreg.h>
+#define GT_BASE		0x14000000	/* XXX */
+
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
@@ -81,9 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2005/12/24 20:06:58 perry Exp $");
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
-
-/* For sysctl. */
-extern char cpu_model[];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
@@ -104,6 +104,18 @@ char *	root_bstr = NULL;
 int	bootunit = -1;
 int	bootpart = -1;
 
+u_int cobalt_id;
+static const char * const cobalt_model[] =
+{
+	NULL,
+	NULL,
+	NULL,
+	"Cobalt Qube 2700",
+	"Cobalt RaQ",
+	"Cobalt Qube 2",
+	"Cobalt RaQ 2"
+};
+#define COBALT_MODELS	__arraycount(cobalt_model)
 
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
@@ -111,6 +123,7 @@ int mem_cluster_cnt;
 void	mach_init(unsigned int, u_int, char*);
 void	decode_bootstring(void);
 static char *	strtok_light(char *, const char);
+static u_int read_board_id(void);
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
@@ -127,10 +140,7 @@ extern struct user *proc0paddr;
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(memsize, bim, bip)
-	unsigned int memsize;
-	u_int  bim;
-	char   *bip;
+mach_init(unsigned int memsize, u_int bim, char *bip)
 {
 	caddr_t kernend, v;
 	u_long first, last;
@@ -184,6 +194,13 @@ mach_init(memsize, bim, bip)
 	}
 #endif
 
+	cobalt_id = read_board_id();
+	if (cobalt_id >= COBALT_MODELS || cobalt_model[cobalt_id] == NULL)
+		sprintf(cpu_model, "Cobalt unknown model (board ID %u)",
+		    cobalt_id);
+	else
+		strcpy(cpu_model, cobalt_model[cobalt_id]);
+
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 
 	consinit();
@@ -230,15 +247,13 @@ mach_init(memsize, bim, bip)
 		kgdb_connect(0);
 #endif
 
-	strcpy(cpu_model, "Cobalt Microserver");
-
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	last = mem_clusters[0].start + mem_clusters[0].size;
 	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-		VM_FREELIST_DEFAULT);
+	    VM_FREELIST_DEFAULT);
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -261,7 +276,7 @@ mach_init(memsize, bim, bip)
  * Allocate memory for variable-sized tables,
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -270,6 +285,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
+	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -279,12 +295,12 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 	/*
 	 * Allocate a submap for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -299,10 +315,9 @@ cpu_startup()
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
+
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
 		savectx((struct user *)curpcb);
@@ -333,7 +348,7 @@ cpu_reboot(howto, bootstr)
 	if (howto & RB_DUMP)
 		dumpsys();
 
-haltsys:
+ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
@@ -351,14 +366,14 @@ haltsys:
 	*(volatile char *)MIPS_PHYS_TO_KSEG1(LED_ADDR) = LED_RESET;
 	printf("WARNING: reboot failed!\n");
 
-	for (;;);
+	for (;;)
+		;
 }
 
 unsigned long cpuspeed;
 
 inline void
-delay(n)
-	unsigned long n;
+delay(unsigned long n)
 {
 	volatile register long N = cpuspeed * n;
 
@@ -369,7 +384,7 @@ delay(n)
 
 static struct cobalt_intrhand intrtab[NINTR];
 
-const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
@@ -377,12 +392,9 @@ const u_int32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 };
 
 void *
-cpu_intr_establish(level, ipl, func, arg)
-	int level;
-	int ipl;
-	int (*func)(void *);
-	void *arg;
+cpu_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 {
+
 	if (level < 0 || level >= NINTR)
 		panic("invalid interrupt level");
 
@@ -397,8 +409,7 @@ cpu_intr_establish(level, ipl, func, arg)
 }
 
 void
-cpu_intr_disestablish(cookie)
-	void *cookie;
+cpu_intr_disestablish(void *cookie)
 {
 	struct cobalt_intrhand *ih = cookie;
 
@@ -409,23 +420,19 @@ cpu_intr_disestablish(cookie)
 }
 
 void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
+cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
-	static u_int32_t cycles;
+	static uint32_t cycles;
 	int i;
 
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_0) {
-		volatile u_int32_t *irq_src =
-				(u_int32_t *)MIPS_PHYS_TO_KSEG1(0x14000c18);
+		volatile uint32_t *irq_src =
+		    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
 
-		if (*irq_src & 0x00000100) {
+		if ((*irq_src & T0EXP) != 0) {
 			*irq_src = 0;
 
 			cf.pc = pc;
@@ -472,8 +479,8 @@ cpu_intr(status, cause, pc, ipending)
 void
 decode_bootstring(void)
 {
-	char * work;
-	char * equ;
+	char *work;
+	char *equ;
 	int i;
 
 	/* break apart bootstring on ' ' boundries  and itterate*/
@@ -523,13 +530,11 @@ decode_bootstring(void)
 
 
 static char *
-strtok_light(str, sep)
-	char * str;
-	const char sep;
+strtok_light(char *str, const char sep)
 {
-	static char * proc;
-	char * head;
-	char * work;
+	static char *proc;
+	char *head;
+	char *work;
 
 	if (str != NULL)
 		proc = str;
@@ -553,8 +558,7 @@ strtok_light(str, sep)
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -562,17 +566,48 @@ lookup_bootinfo(type)
 	/* Check for a bootinfo record first. */
 	if (help == NULL) {
 		printf("##### help == NULL\n");
-		return (NULL);
+		return NULL;
 	}
 
 	do {
 		bt = (struct btinfo_common *)help;
 		printf("Type %d @0x%x\n", bt->type, (u_int)bt);
 		if (bt->type == type)
-			return ((void *)help);
+			return (void *)help;
 		help += bt->next;
 	} while (bt->next != 0 &&
-		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+	    (size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
 
-	return (NULL);
+	return NULL;
+}
+
+/*
+ * Get board ID of cobalt models.
+ * 
+ * The board ID info is stored at the PCI config register
+ * on the PCI-ISA bridge part of the VIA VT82C586 chipset.
+ * We can't use pci_conf_read(9) yet here, so read it directly.
+ */
+static u_int
+read_board_id(void)
+{
+	volatile uint32_t *pcicfg_addr, *pcicfg_data;
+	uint32_t reg;
+
+#define PCIB_PCI_BUS		0
+#define PCIB_PCI_DEV		9
+#define PCIB_PCI_FUNC		0
+#define PCIB_BOARD_ID_REG	0x94
+#define COBALT_BOARD_ID(reg)	((reg & 0x000000f0) >> 4)
+
+	pcicfg_addr = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_ADDR);
+	pcicfg_data = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_DATA);
+
+	*pcicfg_addr = PCICFG_ENABLE |
+	    (PCIB_PCI_BUS << 16) | (PCIB_PCI_DEV << 11) | (PCIB_PCI_FUNC << 8) |
+	    PCIB_BOARD_ID_REG;
+	reg = *pcicfg_data;
+	*pcicfg_addr = 0;
+
+	return COBALT_BOARD_ID(reg); 
 }

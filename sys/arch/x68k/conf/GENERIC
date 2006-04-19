@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.125 2006/02/05 05:02:06 cube Exp $
+# $NetBSD: GENERIC,v 1.125.4.1 2006/04/19 02:33:57 elad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.125 $"
+#ident 		"GENERIC-$Revision: 1.125.4.1 $"
 
 maxusers	8
 
@@ -495,7 +495,7 @@ pseudo-device	bpfilter
 ## for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan

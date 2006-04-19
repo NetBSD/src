@@ -1,3 +1,4 @@
+/* $NetBSD: physdev.h,v 1.1.1.1.10.1 2006/04/19 02:34:03 elad Exp $ */
 
 #ifndef __XEN_PUBLIC_PHYSDEV_H__
 #define __XEN_PUBLIC_PHYSDEV_H__

@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.14 2006/02/25 02:28:56 wiz Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.14.4.1 2006/04/19 02:33:18 elad Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.14 2006/02/25 02:28:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.14.4.1 2006/04/19 02:33:18 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,8 +197,8 @@ mips_mcclock_to_mhz(unsigned iters)
 	 *
 	 * r3000-core DECstations values fit to:
 	 *     iters per 4ms tick = 425 * MHz)
-	 *     instructions per mhz = kHz * 575
-	 * with about 2 Mhz slop to allow for variation.
+	 *     instructions per MHz = kHz * 575
+	 * with about 2 MHz slop to allow for variation.
 	 */
 
 #ifdef MIPS3_PLUS

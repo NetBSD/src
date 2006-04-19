@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.133 2006/03/04 01:21:08 nakayama Exp $
+# 	$NetBSD: GENERIC32,v 1.133.4.1 2006/04/19 02:33:45 elad Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.133 $"
+#ident 		"GENERIC-$Revision: 1.133.4.1 $"
 
 maxusers	64
 
@@ -163,6 +163,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	PTYFS		# /dev/pts/N support
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 #file-system	TMPFS		# experimental - Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
@@ -501,6 +502,7 @@ inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 igphy*	at mii? phy ?			# Intel IGP01E1000
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
@@ -672,7 +674,7 @@ pseudo-device	ipfilter
 ## for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 
 #### CardBus and PCMCIA devices
@@ -844,4 +846,7 @@ pseudo-device	fss		4	# file system snapshot device
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+# a pseudo device needed for SMBFS
+pseudo-device   nsmb		# experimental - SMB requester
 

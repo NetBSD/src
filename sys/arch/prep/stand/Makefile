@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2005/12/11 12:18:48 christos Exp $
+#	$NetBSD: Makefile,v 1.4.10.1 2006/04/19 02:33:39 elad Exp $
 
-SUBDIR=	common .WAIT boot_com0 boot mkbootimage installboot
+SUBDIR=	common .WAIT boot_com0 boot mkbootimage #installboot
 
 .include <bsd.subdir.mk>

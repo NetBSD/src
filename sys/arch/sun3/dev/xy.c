@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.53.10.2 2006/03/10 14:54:51 elad Exp $	*/
+/*	$NetBSD: xy.c,v 1.53.10.3 2006/04/19 02:33:50 elad Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.53.10.2 2006/03/10 14:54:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.53.10.3 2006/04/19 02:33:50 elad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -262,7 +262,7 @@ xygetdisklabel(struct xy_softc *xy, void *b)
 	/* Required parameter for readdisklabel() */
 	xy->sc_dk.dk_label->d_secsize = XYFM_BPS;
 
-	err = readdisklabel(MAKEDISKDEV(0, xy->sc_dev.dv_unit, RAW_PART),
+	err = readdisklabel(MAKEDISKDEV(0, device_unit(&xy->sc_dev), RAW_PART),
 					xydummystrat,
 				xy->sc_dk.dk_label, xy->sc_dk.dk_cpulabel);
 	if (err) {
@@ -472,7 +472,7 @@ xymatch(struct device *parent, struct cfdata *cf, void *aux)
 	int xy_unit;
 
 	/* Match only on the "wired-down" controller+disk. */
-	xy_unit = parent->dv_unit * 2 + xa->driveno;
+	xy_unit = device_unit(parent) * 2 + xa->driveno;
 	if (cf->cf_unit != xy_unit)
 		return (0);
 

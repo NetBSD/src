@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_leds.c,v 1.1 2006/02/28 20:40:33 scw Exp $	*/
+/*	$NetBSD: nslu2_leds.c,v 1.1.6.1 2006/04/19 02:32:31 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.1 2006/02/28 20:40:33 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.1.6.1 2006/04/19 02:32:31 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ slugled_callout(void *arg)
 			continue;
 		}
 
-		dkbusy = dk->dk_busy;
+		dkbusy = dk->dk_stats->busy;
 		t = dk->dk_timestamp;
 		splx(s);
 

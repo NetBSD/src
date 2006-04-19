@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.2.2.1 2006/04/19 02:34:08 elad Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.2 2006/03/06 20:21:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.2.2.1 2006/04/19 02:34:08 elad Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -60,15 +60,16 @@ xenbus_watch_path(struct xenbus_device *dev, char *path,
 	int err;
 
 	watch->node = path;
-	watch->callback = callback;
+	watch->xbw_callback = callback;
 
 	err = register_xenbus_watch(watch);
 
 	if (err) {
 		watch->node = NULL;
-		watch->callback = NULL;
+		watch->xbw_callback = NULL;
 		xenbus_dev_fatal(dev, err, "adding watch on %s", path);
 	}
+	err = 0;
 
 	return err;
 }
@@ -80,7 +81,10 @@ xenbus_watch_path2(struct xenbus_device *dev, const char *path,
 					const char **, unsigned int))
 {
 	int err;
-	char *state =
+	char *state;
+
+	DPRINTK("xenbus_watch_path2 path %s path2 %s\n", path, path2);
+	state =
 		malloc(strlen(path) + 1 + strlen(path2) + 1, M_DEVBUF,
 		    M_NOWAIT);
 	if (!state) {
@@ -113,12 +117,13 @@ xenbus_switch_state(struct xenbus_device *dev,
 	   resurrect that directory.
 	 */
 
-	int current_state;
+	u_long current_state;
 
-	int err = xenbus_scanf(xbt, dev->xbusd_path, "state", "%d",
-			       &current_state);
-	if ((err == 1 && (XenbusState)current_state == state) ||
-	    err == 0)
+	int err = xenbus_read_ul(xbt, dev->xbusd_path, "state", &current_state);
+	if (err)
+		return 0;
+
+	if ((XenbusState)current_state == state)
 		return 0;
 
 	err = xenbus_printf(xbt, dev->xbusd_path, "state", "%d", state);
@@ -128,7 +133,6 @@ xenbus_switch_state(struct xenbus_device *dev,
 	}
 	return 0;
 }
-
 
 /**
  * Return the path to the error node for the given device, or NULL on failure.
@@ -249,9 +253,9 @@ xenbus_alloc_evtchn(struct xenbus_device *dev, int *port)
 XenbusState
 xenbus_read_driver_state(const char *path)
 {
-	XenbusState result;
+	u_long result;
 
-	int err = xenbus_gather(NULL, path, "state", "%d", &result, NULL);
+	int err = xenbus_read_ul(NULL, path, "state", &result);
 	if (err)
 		result = XenbusStateClosed;
 
