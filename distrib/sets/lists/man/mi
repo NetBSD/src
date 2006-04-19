@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.878 2006/04/17 22:09:39 christos Exp $
+# $NetBSD: mi,v 1.879 2006/04/19 10:58:18 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2021,6 +2021,7 @@
 ./usr/share/man/cat8/ncdcs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ndbootd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/ndc.0			man-obsolete		obsolete
+./usr/share/man/cat8/ndiscvt.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ndp.0			man-netutil-catman	inet6,.cat
 ./usr/share/man/cat8/netbsd32.0			man-sys-catman		.cat
 ./usr/share/man/cat8/netgroup_mkdb.0		man-nis-catman		.cat
@@ -4343,6 +4344,7 @@
 ./usr/share/man/man8/ncdcs.8			man-sysutil-man		.man
 ./usr/share/man/man8/ndbootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/ndc.8			man-obsolete		obsolete
+./usr/share/man/man8/ndiscvt.8			man-netutil-man		.man
 ./usr/share/man/man8/ndp.8			man-netutil-man		inet6,.man
 ./usr/share/man/man8/netbsd32.8			man-sys-man		.man
 ./usr/share/man/man8/netgroup_mkdb.8		man-nis-man		.man
