@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.60 2006/04/18 19:15:27 jmcneill Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.61 2006/04/19 14:10:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -37,7 +37,6 @@
 #ifndef _SYS_DEV_AUDIO_IF_H_
 #define _SYS_DEV_AUDIO_IF_H_
 #include <sys/types.h>
-#include <sys/lock.h>
 #include <sys/audioio.h>
 
 /* check we have an audio(4) configured into kernel */
