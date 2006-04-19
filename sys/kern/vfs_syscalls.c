@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.238.4.2 2006/03/10 13:53:24 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.238.4.3 2006/04/19 05:14:00 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238.4.2 2006/03/10 13:53:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238.4.3 2006/04/19 05:14:00 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1229,6 +1229,7 @@ sys_getfh(struct lwp *l, void *v, register_t *retval)
 	vput(vp);
 	if (error)
 		return (error);
+	KASSERT(fh.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	error = copyout(&fh, (caddr_t)SCARG(uap, fhp), sizeof (fh));
 	return (error);
 }

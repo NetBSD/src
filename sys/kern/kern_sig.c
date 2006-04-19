@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.217.2.2 2006/03/10 11:53:55 elad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.217.2.3 2006/04/19 05:13:59 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.217.2.2 2006/03/10 11:53:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.217.2.3 2006/04/19 05:13:59 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -2106,7 +2106,7 @@ coredump(struct lwp *l, const char *pattern)
 	 * unless it was specifically requested to allow set-id coredumps.
 	 */
 	if ((p->p_flag & P_SUGID) && !security_setidcore_dump)
-		return (EPERM);
+		return EPERM;
 
 	/*
 	 * Refuse to core if the data + stack + user size is larger than
@@ -2115,7 +2115,7 @@ coredump(struct lwp *l, const char *pattern)
 	 */
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
-		return (EFBIG);		/* better error code? */
+		return EFBIG;		/* better error code? */
 
 restart:
 	/*
@@ -2130,7 +2130,7 @@ restart:
 		goto done;
 	}
 
-	if (p->p_flag & P_SUGID && security_setidcore_dump)
+	if ((p->p_flag & P_SUGID) && security_setidcore_dump)
 		pattern = security_setidcore_path;
 
 	if (pattern == NULL)
@@ -2138,26 +2138,21 @@ restart:
 	if (name == NULL) {
 		name = PNBUF_GET();
 	}
-	error = build_corename(p, name, pattern, MAXPATHLEN);
-	if (error != 0) {
+	if ((error = build_corename(p, name, pattern, MAXPATHLEN)) != 0)
 		goto done;
-	}
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
-	error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE, S_IRUSR | S_IWUSR);
-	if (error) {
+	if ((error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE,
+	    S_IRUSR | S_IWUSR)) != 0)
 		goto done;
-	}
 	vp = nd.ni_vp;
 
 	if (vn_start_write(vp, &mp, V_NOWAIT) != 0) {
 		VOP_UNLOCK(vp, 0);
-		if ((error = vn_close(vp, FWRITE, cred, l)) != 0) {
+		if ((error = vn_close(vp, FWRITE, cred, l)) != 0)
 			goto done;
-		}
 		if ((error = vn_start_write(NULL, &mp,
-		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0) {
+		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
 			goto done;
-		}
 		goto restart;
 	}
 
@@ -2170,7 +2165,7 @@ restart:
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
 
-	if (p->p_flag & P_SUGID && security_setidcore_dump) {
+	if ((p->p_flag & P_SUGID) && security_setidcore_dump) {
 		vattr.va_uid = security_setidcore_owner;
 		vattr.va_gid = security_setidcore_group;
 		vattr.va_mode = security_setidcore_mode;
@@ -2194,10 +2189,9 @@ restart:
 	if (error == 0)
 		error = error1;
 done:
-	if (name != NULL) {
+	if (name != NULL)
 		PNBUF_PUT(name);
-	}
-	return (error);
+	return error;
 }
 
 /*

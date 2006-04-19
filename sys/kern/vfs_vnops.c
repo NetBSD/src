@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.106.4.1 2006/03/08 00:53:41 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.106.4.2 2006/04/19 05:14:00 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.106.4.1 2006/03/08 00:53:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.106.4.2 2006/04/19 05:14:00 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -351,7 +351,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 {
 	struct uio auio;
 	struct iovec aiov;
-	struct mount *mp;
+	struct mount *mp = NULL;
 	int error;
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
@@ -375,7 +375,6 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 	if (segflg == UIO_SYSSPACE) {
 		UIO_SETUP_SYSSPACE(&auio);
 	} else {
-		KASSERT(l == curlwp);
 		auio.uio_vmspace = l->l_proc->p_vmspace;
 	}
 	if (rw == UIO_READ) {
