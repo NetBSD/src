@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.41.10.2 2006/03/10 14:39:02 elad Exp $	*/
+/*	$NetBSD: dhu.c,v 1.41.10.3 2006/04/19 03:26:07 elad Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.41.10.2 2006/03/10 14:39:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.41.10.3 2006/04/19 03:26:07 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,7 @@ dhu_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct dhu_softc *sc = (void *)self;
+	struct dhu_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 	unsigned c;
 	int n, i;

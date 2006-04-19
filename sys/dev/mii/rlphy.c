@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.5 2006/02/28 22:52:34 kleink Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.5.4.1 2006/04/19 03:25:23 elad Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.5 2006/02/28 22:52:34 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.5.4.1 2006/04/19 03:25:23 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,16 +69,23 @@ const struct mii_phy_funcs rlphy_funcs = {
 	rlphy_service, rlphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc rlphys[] = {
+	{ MII_OUI_yyREALTEK,		MII_MODEL_yyREALTEK_RTL8201L,
+          MII_STR_yyREALTEK_RTL8201L },
+	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP101,
+	  MII_STR_ICPLUS_IP101 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	/* Test for RealTek 8201L PHY */
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_REALTEK &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
-		return 10;
-	}
+	if (mii_phy_match(ma, rlphys) != NULL)
+		return (10);
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 ||
 	    MII_MODEL(ma->mii_id2) != 0)
@@ -97,7 +104,7 @@ rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 void
 rlphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
@@ -309,7 +316,7 @@ rlphy_status(struct mii_softc *sc)
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */
-		if (device_is_a(sc->mii_dev.dv_parent, "rtk")) {
+		if (device_is_a(device_parent(&sc->mii_dev), "rtk")) {
 			if (PHY_READ(sc, RTK_MEDIASTAT) & RTK_MEDIASTAT_SPEED10)
 				mii->mii_media_active |= IFM_10_T;
 			else

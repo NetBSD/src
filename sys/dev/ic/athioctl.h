@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.11 2006/03/02 03:38:45 dyoung Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.11.4.1 2006/04/19 03:24:37 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -137,8 +137,8 @@ struct ath_diag {
 	(1 << IEEE80211_RADIOTAP_RATE)		| \
 	(1 << IEEE80211_RADIOTAP_CHANNEL)	| \
 	(1 << IEEE80211_RADIOTAP_ANTENNA)	| \
-	(1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL)	| \
-	(1 << IEEE80211_RADIOTAP_DBM_ANTNOISE)	| \
+	(1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)	| \
+	(1 << IEEE80211_RADIOTAP_DB_ANTNOISE)	| \
 	0)
 
 struct ath_rx_radiotap_header {

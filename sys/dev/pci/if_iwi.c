@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.45.4.2 2006/03/10 14:39:02 elad Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.45.4.3 2006/04/19 03:25:34 elad Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.45.4.2 2006/03/10 14:39:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.45.4.3 2006/04/19 03:25:34 elad Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -473,7 +473,9 @@ iwi_detach(struct device* self, int flags)
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 
-	iwi_stop(ifp, 1);
+	if (ifp != NULL)
+		iwi_stop(ifp, 1);
+
 	iwi_free_firmware(sc);
 
 #if NBPFILTER > 0
@@ -844,20 +846,25 @@ static void
 iwi_powerhook(int why, void *arg)
 {
         struct iwi_softc *sc = arg;
+	pci_chipset_tag_t pc = sc->sc_pct;
+	pcitag_t tag = sc->sc_pcitag;
 	int s;
 
 	s = splnet();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
-		iwi_suspend(sc);
+		pci_conf_capture(pc, tag, &sc->sc_pciconf);
 		break;
 	case PWR_RESUME:
-		iwi_resume(sc);
+		pci_conf_restore(pc, tag, &sc->sc_pciconf);
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
+		iwi_suspend(sc);
+		break;
 	case PWR_SOFTRESUME:
+		iwi_resume(sc);
 		break;
 	}
 	splx(s);
