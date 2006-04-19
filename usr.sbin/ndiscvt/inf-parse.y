@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-parse.y,v 1.2 2004/01/02 04:31:06 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf-parse.y,v 1.3 2006/04/18 16:49:19 rittera Exp $");
+__RCSID("$NetBSD: inf-parse.y,v 1.4 2006/04/19 15:45:21 christos Exp $");
 #endif 
 
 
@@ -46,8 +46,8 @@ __RCSID("$NetBSD: inf-parse.y,v 1.3 2006/04/18 16:49:19 rittera Exp $");
 
 #include "inf.h"
 
-extern int yyparse (void);
-extern int yylex (void);
+extern int yyparse(void);
+extern int yylex(void);
 extern void yyerror(const char *);
 %}
 

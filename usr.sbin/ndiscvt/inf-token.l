@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf-token.l,v 1.3 2004/01/11 21:10:35 mdodd Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf-token.l,v 1.3 2006/04/18 16:49:19 rittera Exp $");
+__RCSID("$NetBSD: inf-token.l,v 1.4 2006/04/19 15:45:21 christos Exp $");
 #endif
 
 #include <regex.h>
@@ -45,13 +45,14 @@ __RCSID("$NetBSD: inf-token.l,v 1.3 2006/04/18 16:49:19 rittera Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "y.tab.h"
+#include "inf-parse.h"
 
 int lineno = 1;
 #define YY_NO_UNPUT
 
 int yylex(void);
-void yyerror(const char *);
+void ndiscvt_error(const char *);
+int ndiscvt_wrap(void);
 
 static void
 update_lineno(const char *cp)
@@ -78,10 +79,10 @@ update_lineno(const char *cp)
 			char *walker;
 			int i;
 			update_lineno(yytext);
-			yylval.str = (char *)malloc(blen);
-			if (yylval.str == NULL)
+			ndiscvt_lval.str = (char *)malloc(blen);
+			if (ndiscvt_lval.str == NULL)
 				goto out;
-			walker = yylval.str;
+			walker = ndiscvt_lval.str;
 			for (i = 1; i <= len; i++) {
 				if (yytext[i] == '\"') {
 					switch (yytext[i + 1]) {
@@ -118,17 +119,23 @@ update_lineno(const char *cp)
 \[[a-zA-Z0-9%&\{\}\-\.\/_\\\*\ ]+\]	{
 				int len = strlen(yytext);
 				yytext[len-1] = '\0';
-				yylval.str = strdup(yytext+1);
+				ndiscvt_lval.str = strdup(yytext+1);
 				return SECTION;
 			}
 [a-zA-Z0-9%&\{\}\-\.\/_\\\*]+		{
-				yylval.str = strdup(yytext);
+				ndiscvt_lval.str = strdup(yytext);
 				return WORD;
 			}
 %%
 
 void
-yyerror(const char *s)
+ndiscvt_error(const char *s)
 {
 	errx(1, "line %d: %s%s %s.", lineno, yytext, yytext?":":"", s);
+}
+
+int
+ndiscvt_wrap(void)
+{
+	return 1;
 }

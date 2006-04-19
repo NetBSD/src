@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/inf.c,v 1.13.2.1 2005/02/18 16:30:10 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: inf.c,v 1.3 2006/04/18 16:49:19 rittera Exp $");
+__RCSID("$NetBSD: inf.c,v 1.4 2006/04/19 15:45:21 christos Exp $");
 #endif
 
 
@@ -56,8 +56,8 @@ __RCSID("$NetBSD: inf.c,v 1.3 2006/04/18 16:49:19 rittera Exp $");
 #endif
 
 
-extern FILE *yyin;
-int yyparse (void);
+extern FILE *ndiscvt_in;
+int ndiscvt_parse (void);
 
 const char *words[W_MAX];	/* More than we'll need. */
 int idx;
@@ -89,8 +89,8 @@ inf_parse (FILE *fp, FILE *outfp)
 	TAILQ_INIT(&ah);
 
 	ofp = outfp;
-	yyin = fp;
-	yyparse();
+	ndiscvt_in = fp;
+	ndiscvt_parse();
 
 	dump_deviceids_pci();
 	dump_deviceids_pcmcia();
