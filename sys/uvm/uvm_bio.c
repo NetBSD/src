@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.44 2006/02/22 22:28:18 drochner Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.44.4.1 2006/04/19 03:58:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.44 2006/02/22 22:28:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.44.4.1 2006/04/19 03:58:21 elad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -364,7 +364,7 @@ again:
 		uvm_lock_pageq();
 		uvm_pageactivate(pg);
 		uvm_unlock_pageq();
-		pg->flags &= ~(PG_BUSY);
+		pg->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		simple_unlock(&uobj->vmobjlock);
 	}
