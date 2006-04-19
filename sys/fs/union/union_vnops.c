@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.14.10.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.14.10.2 2006/04/19 05:03:56 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.14.10.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.14.10.2 2006/04/19 05:03:56 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,12 +513,14 @@ union_lookup(v)
 			 * upper-level shadow directory.  Be careful with
 			 * locks/etc!
 			 */
-			dun->un_flags &= ~UN_ULOCK;
-			VOP_UNLOCK(upperdvp, 0);
-			uerror = union_mkshadow(um, upperdvp, cnp, &uppervp);
-			vn_lock(upperdvp, LK_EXCLUSIVE | LK_RETRY);
-			dun->un_flags |= UN_ULOCK;
-
+			if (upperdvp) {
+				dun->un_flags &= ~UN_ULOCK;
+				VOP_UNLOCK(upperdvp, 0);
+				uerror = union_mkshadow(um, upperdvp, cnp,
+				    &uppervp);
+				vn_lock(upperdvp, LK_EXCLUSIVE | LK_RETRY);
+				dun->un_flags |= UN_ULOCK;
+			}
 			if (uerror) {
 				if (lowervp != NULLVP) {
 					vput(lowervp);

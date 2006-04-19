@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.16.4.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.16.4.2 2006/04/19 05:03:56 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -286,8 +286,8 @@ struct tmpfs_mount {
 struct tmpfs_fid {
 	uint16_t		tf_len;
 	uint16_t		tf_pad;
+	uint32_t		tf_gen;
 	ino_t			tf_id;
-	unsigned long		tf_gen;
 };
 
 /* --------------------------------------------------------------------- */

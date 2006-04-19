@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.12.10.5 2006/03/11 16:47:12 elad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.12.10.6 2006/04/19 05:03:56 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.10.5 2006/03/11 16:47:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.10.6 2006/04/19 05:03:56 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -952,7 +952,7 @@ ptyfs_itimes(struct ptyfsnode *ptyfs, const struct timespec *acc,
 	KASSERT(ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY));
 	if (ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_MODIFY)) {
 		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			acc = ts = nanotime(&tsb);
 		ptyfs->ptyfs_atime = *acc;
 	}
 	if (ptyfs->ptyfs_flag & PTYFS_MODIFY) {
