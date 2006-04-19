@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.57 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.57.4.1 2006/04/19 04:46:11 elad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.57 2006/03/02 03:38:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.57.4.1 2006/04/19 04:46:11 elad Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1780,7 +1780,7 @@ ieee80211_saveie(u_int8_t **iep, const u_int8_t *ie)
 	if (*iep == NULL || (*iep)[1] != ie[1]) {
 		if (*iep != NULL)
 			FREE(*iep, M_DEVBUF);
-		MALLOC(*iep, void*, ielen, M_DEVBUF, M_NOWAIT);
+		*iep = malloc(ielen, M_DEVBUF, M_NOWAIT);
 	}
 	if (*iep != NULL)
 		memcpy(*iep, ie, ielen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.52 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: in6.h,v 1.52.4.1 2006/04/19 04:46:11 elad Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -358,6 +358,9 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IN6_IS_SCOPE_LINKLOCAL(a)	\
 	((IN6_IS_ADDR_LINKLOCAL(a)) ||	\
 	 (IN6_IS_ADDR_MC_LINKLOCAL(a)))
+
+#define	IN6_IS_SCOPE_EMBEDDABLE(__a)	\
+    (IN6_IS_SCOPE_LINKLOCAL(__a) || IN6_IS_ADDR_MC_INTFACELOCAL(__a))
 
 #define IFA6_IS_DEPRECATED(a) \
 	((a)->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME && \

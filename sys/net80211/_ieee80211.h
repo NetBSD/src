@@ -103,7 +103,7 @@ enum ieee80211_roamingmode {
  * Channels are specified by frequency and attributes.
  */
 struct ieee80211_channel {
-	u_int16_t	ic_freq;	/* setting in Mhz */
+	u_int16_t	ic_freq;	/* setting in MHz */
 	u_int16_t	ic_flags;	/* see below */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.58 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.58.10.1 2006/04/19 04:46:10 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.58 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.58.10.1 2006/04/19 04:46:10 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -414,8 +414,8 @@ fddi_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef	LLC
 /*	case AF_NSAP: */
 	case AF_CCITT: {
-		struct sockaddr_dl *sdl =
-			(struct sockaddr_dl *) rt->rt_gateway;
+		struct sockaddr_dl *sdl = rt ? 
+			(struct sockaddr_dl *) rt->rt_gateway : NULL;
 
 		if (sdl && sdl->sdl_family == AF_LINK
 		    && sdl->sdl_alen > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.99 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: nd6.c,v 1.99.2.1 2006/04/19 04:46:12 elad Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.99 2006/03/05 23:47:08 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.99.2.1 2006/04/19 04:46:12 elad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -114,6 +114,7 @@ static void nd6_slowtimo __P((void *));
 static int regen_tmpaddr __P((struct in6_ifaddr *));
 static struct llinfo_nd6 *nd6_free __P((struct rtentry *, int));
 static void nd6_llinfo_timer __P((void *));
+static void clear_llinfo_pqueue __P((struct llinfo_nd6 *));
 
 struct callout nd6_slowtimo_ch = CALLOUT_INITIALIZER;
 struct callout nd6_timer_ch = CALLOUT_INITIALIZER;
@@ -457,14 +458,20 @@ nd6_llinfo_timer(arg)
 		} else {
 			struct mbuf *m = ln->ln_hold;
 			if (m) {
+				struct mbuf *m0;
+
 				/*
 				 * assuming every packet in ln_hold has
 				 * the same IP header
 				 */
-				ln->ln_hold = NULL;
+				m0 = m->m_nextpkt;
+				m->m_nextpkt = NULL;
 				icmp6_error2(m, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0, rt->rt_ifp);
-			}
+
+				ln->ln_hold = m0;
+				clear_llinfo_pqueue(ln);
+ 			}
 			(void)nd6_free(rt, 0);
 			ln = NULL;
 		}
@@ -1378,8 +1385,7 @@ nd6_rtrequest(req, rt, info)
 		nd6_llinfo_settimer(ln, -1);
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
-		if (ln->ln_hold)
-			m_freem(ln->ln_hold);
+		clear_llinfo_pqueue(ln);
 		Free((caddr_t)ln);
 	}
 }
@@ -2059,7 +2065,7 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 		while (i >= nd6_maxqueuelen) {
 			m_hold = ln->ln_hold;
 			ln->ln_hold = ln->ln_hold->m_nextpkt;
-			m_free(m_hold);
+			m_freem(m_hold);
 			i--;
 		}
 	} else {
@@ -2179,6 +2185,22 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 	return (1);
 }
 
+static void 
+clear_llinfo_pqueue(ln)
+	struct llinfo_nd6 *ln;
+{
+	struct mbuf *m_hold, *m_hold_next;
+
+	for (m_hold = ln->ln_hold; m_hold; m_hold = m_hold_next) {
+		m_hold_next = m_hold->m_nextpkt;
+		m_hold->m_nextpkt = NULL;
+		m_freem(m_hold);
+	}
+
+	ln->ln_hold = NULL;
+	return;
+}
+ 
 int
 nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 	int name;
@@ -2275,11 +2297,11 @@ fill_drlist(oldp, oldlenp, ol)
 	}
 
 	if (oldp) {
-		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
 		if (l > ol)
 			error = ENOMEM;
-	} else
-		*oldlenp = l;
+	}
+	if (oldlenp)
+		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
 
 	splx(s);
 

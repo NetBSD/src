@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.25.10.2 2006/03/10 15:14:17 elad Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.25.10.3 2006/04/19 04:46:19 elad Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.25.10.2 2006/03/10 15:14:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.25.10.3 2006/04/19 04:46:19 elad Exp $");
 
 #include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
@@ -155,7 +155,6 @@ idp_output(struct mbuf *m0, ...)
 	struct mbuf *m;
 	struct idp *idp;
 	int len = m0->m_pkthdr.len;
-	struct mbuf *mprev = NULL;
 	extern int idpcksum;
 	va_list ap;
 
@@ -168,6 +167,11 @@ idp_output(struct mbuf *m0, ...)
 	 */
 
 	if (len & 1) {
+		struct mbuf *mprev;
+
+		for (mprev = NULL, m = m0; m; m = m->m_next)
+			mprev = m;
+
 		m = mprev;
 		if ((m->m_flags & M_EXT) == 0 &&
 			(m->m_len + m->m_data < &m->m_dat[MLEN])) {

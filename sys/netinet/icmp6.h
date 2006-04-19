@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.34 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.34.2.1 2006/04/19 04:46:11 elad Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -112,9 +112,9 @@ struct icmp6_hdr {
 #endif
 
 #define ND_ROUTER_SOLICIT		133	/* router solicitation */
-#define ND_ROUTER_ADVERT		134	/* router advertisment */
+#define ND_ROUTER_ADVERT		134	/* router advertisement */
 #define ND_NEIGHBOR_SOLICIT		135	/* neighbor solicitation */
-#define ND_NEIGHBOR_ADVERT		136	/* neighbor advertisment */
+#define ND_NEIGHBOR_ADVERT		136	/* neighbor advertisement */
 #define ND_REDIRECT			137	/* redirect */
 
 #define ICMP6_ROUTER_RENUMBERING	138	/* router renumbering */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.83 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.83.2.1 2006/04/19 04:46:12 elad Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.83 2006/03/05 23:47:08 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.83.2.1 2006/04/19 04:46:12 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1030,7 +1030,6 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 {
-
 #ifdef SO_TIMESTAMP
 	if (in6p->in6p_socket->so_options & SO_TIMESTAMP) {
 		struct timeval tv;
@@ -1063,9 +1062,8 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		struct in6_pktinfo pi6;
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
-		pi6.ipi6_ifindex = (m && m->m_pkthdr.rcvif)
-					? m->m_pkthdr.rcvif->if_index
-					: 0;
+		pi6.ipi6_ifindex = m->m_pkthdr.rcvif ?
+		    m->m_pkthdr.rcvif->if_index : 0;
 		*mp = sbcreatecontrol((caddr_t) &pi6,
 		    sizeof(struct in6_pktinfo), IPV6_PKTINFO, IPPROTO_IPV6);
 		if (*mp)

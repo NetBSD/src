@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.90.4.1 2006/03/08 01:34:34 elad Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.90.4.2 2006/04/19 04:52:46 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.90.4.1 2006/03/08 01:34:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.90.4.2 2006/04/19 04:52:46 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -786,7 +786,7 @@ fdesc_readdir(v)
 			default:
 				KASSERT(fdp != NULL);
 				j = (int)i - 2;
-				if (fdp->fd_ofiles[j] == NULL ||
+				if (fdp == NULL || fdp->fd_ofiles[j] == NULL ||
 				    FILE_IS_USABLE(fdp->fd_ofiles[j]) == 0)
 					continue;
 				d.d_fileno = j + FD_STDIN;
