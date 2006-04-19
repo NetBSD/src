@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.4.9 2006/04/14 10:02:48 elad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.4.10 2006/04/19 05:06:37 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.9 2006/04/14 10:02:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.10 2006/04/19 05:06:37 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2254,7 +2254,8 @@ nfsrv_rcv(so, arg, waitflag)
 	}
 
 	KASSERT(so == slp->ns_so);
-#if 1
+#define NFS_TEST_HEAVY
+#ifdef NFS_TEST_HEAVY
 	/*
 	 * Define this to test for nfsds handling this under heavy load.
 	 *
@@ -2269,6 +2270,7 @@ nfsrv_rcv(so, arg, waitflag)
 	slp->ns_flag &= ~SLP_NEEDQ;
 	simple_unlock(&slp->ns_lock);
 	if (so->so_type == SOCK_STREAM) {
+#ifndef NFS_TEST_HEAVY
 		/*
 		 * If there are already records on the queue, defer soreceive()
 		 * to an nfsd so that there is feedback to the TCP layer that
@@ -2278,6 +2280,7 @@ nfsrv_rcv(so, arg, waitflag)
 			setflags |= SLP_NEEDQ;
 			goto dorecs;
 		}
+#endif
 
 		/*
 		 * Do soreceive().

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.37.4.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.37.4.2 2006/04/19 05:03:56 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.4.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.4.2 2006/04/19 05:03:56 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,6 +409,8 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	int error, ronly, i;
 	struct vnode *vp;
 
+	ntmp = NULL;
+
 	/*
 	 * Flush out any old buffers remaining from a previous use.
 	 */
@@ -572,6 +574,14 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
+
+	if (error) {
+		if (ntmp) {
+			if (ntmp->ntm_ad)
+				free(ntmp->ntm_ad, M_NTFSMNT);
+			free(ntmp, M_NTFSMNT);
+		}
+	}
 
 	return (error);
 }

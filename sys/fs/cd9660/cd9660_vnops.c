@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.20.4.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.20.4.2 2006/04/19 05:03:55 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.20.4.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.20.4.2 2006/04/19 05:03:55 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,6 +491,7 @@ cd9660_readdir(v)
 		/*
 		 * Get pointer to next entry.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct iso_directory_record *)
 			((char *)bp->b_data + entryoffsetinblock);
 
