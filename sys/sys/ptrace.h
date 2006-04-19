@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.36 2006/03/05 07:21:38 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.36.4.1 2006/04/19 04:36:02 elad Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -82,9 +82,21 @@ struct ptrace_lwpinfo {
 
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
 struct reg;
+#ifndef process_reg32
+#define process_reg32 struct reg
+#endif
+#ifndef process_reg64
+#define process_reg64 struct reg
+#endif
 #endif
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
 struct fpreg;
+#ifndef process_fpreg32
+#define process_fpreg32 struct fpreg
+#endif
+#ifndef process_fpreg64
+#define process_fpreg64 struct fpreg
+#endif
 #endif
 
 int	process_doregs(struct lwp *, struct lwp *, struct uio *);
@@ -101,9 +113,21 @@ void	process_stoptrace(struct lwp *);
 void	proc_reparent(struct proc *, struct proc *);
 #ifdef PT_GETFPREGS
 int	process_read_fpregs(struct lwp *, struct fpreg *);
+#ifndef process_read_fpregs32
+#define process_read_fpregs32	process_read_fpregs
+#endif
+#ifndef process_read_fpregs64
+#define process_read_fpregs64	process_read_fpregs
+#endif
 #endif
 #ifdef PT_GETREGS
 int	process_read_regs(struct lwp *, struct reg *);
+#ifndef process_read_regs32
+#define process_read_regs32	process_read_regs
+#endif
+#ifndef process_read_regs64
+#define process_read_regs64	process_read_regs
+#endif
 #endif
 int	process_set_pc(struct lwp *, caddr_t);
 int	process_sstep(struct lwp *, int);
