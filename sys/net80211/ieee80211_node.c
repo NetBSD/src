@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.52 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.52.4.1 2006/04/19 04:46:11 elad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.52 2006/03/02 03:38:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.52.4.1 2006/04/19 04:46:11 elad Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -130,9 +130,8 @@ ieee80211_node_lateattach(struct ieee80211com *ic)
 
 	if (ic->ic_max_aid > IEEE80211_AID_MAX)
 		ic->ic_max_aid = IEEE80211_AID_MAX;
-	MALLOC(ic->ic_aid_bitmap, u_int32_t *,
-		howmany(ic->ic_max_aid, 32) * sizeof(u_int32_t),
-		M_DEVBUF, M_NOWAIT | M_ZERO);
+	ic->ic_aid_bitmap = malloc(howmany(ic->ic_max_aid, 32) *
+	    sizeof(u_int32_t), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ic->ic_aid_bitmap == NULL) {
 		/* XXX no way to recover */
 		printf("%s: no memory for AID bitmap!\n", __func__);
@@ -141,8 +140,7 @@ ieee80211_node_lateattach(struct ieee80211com *ic)
 
 	/* XXX defer until using hostap/ibss mode */
 	ic->ic_tim_len = howmany(ic->ic_max_aid, 8) * sizeof(u_int8_t);
-	MALLOC(ic->ic_tim_bitmap, u_int8_t *, ic->ic_tim_len,
-		M_DEVBUF, M_NOWAIT | M_ZERO);
+	ic->ic_tim_bitmap = malloc(ic->ic_tim_len, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ic->ic_tim_bitmap == NULL) {
 		/* XXX no way to recover */
 		printf("%s: no memory for TIM bitmap!\n", __func__);
@@ -588,7 +586,7 @@ ieee80211_node_compare(struct ieee80211com *ic,
 		if (maxa != maxb)
 			return maxa - maxb;
 		/* XXX use freq for channel preference */
-		/* for now just prefer 5Ghz band to all other bands */
+		/* for now just prefer 5 GHz band to all other bands */
 		if (IEEE80211_IS_CHAN_5GHZ(a->ni_chan) &&
 		   !IEEE80211_IS_CHAN_5GHZ(b->ni_chan))
 			return 1;
@@ -846,28 +844,42 @@ ieee80211_sta_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 int
-ieee80211_get_rate(struct ieee80211com *ic)
+ieee80211_get_rate(const struct ieee80211_node * const ni)
 {
 #define	RATE(_ix)	(ni->ni_rates.rs_rates[(_ix)] & IEEE80211_RATE_VAL)
 	int ix, rate;
-	const struct ieee80211_node *ni;
+	struct ieee80211com *ic = ni->ni_ic;
 	const struct ieee80211_rateset *rs;
 
-	ni = ic->ic_bss;
-
+	IASSERT(ni != NULL, ("ni != NULL"));
+	IASSERT(ieee80211_node_refcnt(ni) > 0,
+	    ("refcnt(ni) == %d", ieee80211_node_refcnt(ni)));
+	IASSERT(ic != NULL, ("ic != NULL"));
 	if (ic->ic_fixed_rate != IEEE80211_FIXED_RATE_NONE) {
 		rs = &ic->ic_sup_rates[ic->ic_curmode];
 		rate = rs->rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
 		for (ix = ni->ni_rates.rs_nrates - 1;
 		     ix >= 0 && RATE(ix) != rate; ix--)
 			;
-		IASSERT(ix >= 0,
-			("fixed rate %d not in rate set", ic->ic_fixed_rate));
+		if (ix < 0) {
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG,
+			    "%s: fixed rate %d (%d.%d Mb/s) not in rate set",
+			    __func__, ic->ic_fixed_rate, (rate * 5) / 10,
+			    (rate * 5) % 10);
+			goto no_rate;
+		}
 	} else if (ic->ic_state == IEEE80211_S_RUN)
 		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-	else
-		rate = 0;
-
+	else {
+no_rate:
+		rs = &ni->ni_rates;
+		/* Choose node's lowest basic rate, or else its lowest rate. */
+		for (ix = 0; ix < rs->rs_nrates; ix++) {
+			if (rs->rs_rates[ix] & IEEE80211_RATE_BASIC)
+				return rs->rs_rates[ix] & IEEE80211_RATE_VAL;
+		}
+		return ni->ni_rates.rs_rates[0] & IEEE80211_RATE_VAL;
+	}
 	return rate & IEEE80211_RATE_VAL;
 }
 
@@ -2389,9 +2401,9 @@ ieee80211_node_table_init(struct ieee80211com *ic,
 	nt->nt_timeout = timeout;
 	nt->nt_keyixmax = keyixmax;
 	if (nt->nt_keyixmax > 0) {
-		MALLOC(nt->nt_keyixmap, struct ieee80211_node **,
-			keyixmax * sizeof(struct ieee80211_node *),
-			M_80211_NODE, M_NOWAIT | M_ZERO);
+		nt->nt_keyixmap = malloc(keyixmax *
+		    sizeof(struct ieee80211_node *), M_80211_NODE,
+		    M_NOWAIT | M_ZERO);
 		if (nt->nt_keyixmap == NULL)
 			if_printf(ic->ic_ifp,
 			    "Cannot allocate key index map with %u entries\n",

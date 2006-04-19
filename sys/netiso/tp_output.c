@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.27.10.2 2006/03/10 15:14:17 elad Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.27.10.3 2006/04/19 04:46:19 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.27.10.2 2006/03/10 15:14:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.27.10.3 2006/04/19 04:46:19 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -413,7 +413,7 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 		error = ENOTSOCK;
 		goto done;
 	}
-	if (*mp == NULL) {
+	if (mp && *mp == NULL) {
 		struct mbuf *m;
 
 		MGET(m, M_DONTWAIT, TPMT_SONAME);	/* does off, type, next */

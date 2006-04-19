@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.8.2 2006/03/10 15:20:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.8.3 2006/04/19 04:46:12 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -1011,7 +1011,7 @@ in6_src_sysctl(oldp, oldlenp, newp, newlen)
 	}
 	if (oldp || oldlenp) {
 		struct walkarg w;
-		size_t oldlen = (oldlenp ? *oldlenp : 0);
+		size_t oldlen = *oldlenp;
 
 		bzero(&w, sizeof(w));
 		w.w_given = oldlen;

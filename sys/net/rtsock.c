@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.81.4.2 2006/03/10 15:05:23 elad Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.81.4.3 2006/04/19 04:46:10 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81.4.2 2006/03/10 15:05:23 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81.4.3 2006/04/19 04:46:10 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -494,7 +494,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 	}
 	/* Check for bad data length.  */
 	if (cp != cplim) {
-		if (i == RTAX_NETMASK + 1 &&
+		if (i == RTAX_NETMASK + 1 && sa &&
 		    cp - ROUNDUP(sa->sa_len) + sa->sa_len == cplim)
 			/*
 			 * The last sockaddr was netmask.
@@ -930,6 +930,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		rtm->rtm_flags = rt->rt_flags;
 		rtm->rtm_use = rt->rt_use;
 		rtm->rtm_rmx = rt->rt_rmx;
+		KASSERT(rt->rt_ifp != NULL);
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
 		rtm->rtm_addrs = info.rti_addrs;

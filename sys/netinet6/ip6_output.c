@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.95.2.2 2006/03/10 15:20:54 elad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.95.2.3 2006/04/19 04:46:12 elad Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.95.2.2 2006/03/10 15:20:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.95.2.3 2006/04/19 04:46:12 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -845,6 +845,7 @@ skip_ipsec2:;
 	tlen = m->m_pkthdr.len;
 
 	dontfrag = 0;
+#ifdef notdef
 	if (dontfrag && alwaysfrag) {	/* case 4 */
 		/* conflicting request - can't transmit */
 		error = EMSGSIZE;
@@ -871,7 +872,7 @@ skip_ipsec2:;
 		error = EMSGSIZE;
 		goto bad;
 	}
-
+#endif
 	/*
 	 * transmit packet without fragmentation
 	 */
