@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.231.4.1 2006/03/08 01:06:28 elad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.231.4.2 2006/04/19 05:06:37 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.231.4.1 2006/03/08 01:06:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.231.4.2 2006/04/19 05:06:37 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.231.4.1 2006/03/08 01:06:28 elad Exp
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/disk.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
@@ -1240,7 +1241,7 @@ nfs_readrpc(vp, uiop)
 	caddr_t bpos, dpos, cp2;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct nfsmount *nmp;
-	int error = 0, len, retlen, tsiz, eof;
+	int error = 0, len, retlen, tsiz, eof, byte_count;
 	const int v3 = NFS_ISV3(vp);
 	struct nfsnode *np = VTONFS(vp);
 #ifndef NFS_V2_ONLY
@@ -1254,6 +1255,8 @@ nfs_readrpc(vp, uiop)
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
+	iostat_busy(nmp->nm_stats);
+	byte_count = 0; /* count bytes actually transferred */
 	while (tsiz > 0) {
 		nfsstats.rpccnt[NFSPROC_READ]++;
 		len = (tsiz > nmp->nm_rsize) ? nmp->nm_rsize : tsiz;
@@ -1288,6 +1291,7 @@ nfs_readrpc(vp, uiop)
 		nfsm_mtouio(uiop, retlen);
 		m_freem(mrep);
 		tsiz -= retlen;
+		byte_count += retlen;
 #ifndef NFS_V2_ONLY
 		if (v3) {
 			if (eof || retlen == 0)
@@ -1298,6 +1302,7 @@ nfs_readrpc(vp, uiop)
 			tsiz = 0;
 	}
 nfsmout:
+	iostat_unbusy(nmp->nm_stats, byte_count, 1);
 	return (error);
 }
 
@@ -1347,7 +1352,7 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	int committed = NFSV3WRITE_FILESYNC;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfs_writerpc_context ctx;
-	int s;
+	int s, byte_count;
 	struct lwp *l = NULL;
 	size_t origresid;
 #ifndef NFS_V2_ONLY
@@ -1376,6 +1381,8 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 retry:
 	origresid = uiop->uio_resid;
 	KASSERT(origresid == uiop->uio_iov->iov_len);
+	iostat_busy(nmp->nm_stats);
+	byte_count = 0; /* count of bytes actually written */
 	while (tsiz > 0) {
 		uint32_t datalen; /* data bytes need to be allocated in mbuf */
 		uint32_t backup;
@@ -1508,6 +1515,7 @@ retry:
 		if (error)
 			break;
 		tsiz -= len;
+		byte_count += len;
 		if (stalewriteverf) {
 			*stalewriteverfp = TRUE;
 			stalewriteverf = FALSE;
@@ -1528,6 +1536,7 @@ retry:
 		}
 	}
 nfsmout:
+	iostat_unbusy(nmp->nm_stats, byte_count, 0);
 	if (pageprotected) {
 		/*
 		 * wait until mbufs go away.
@@ -1920,7 +1929,7 @@ nfs_removerpc(dvp, name, namelen, cred, l)
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
-	int rexmit;
+	int rexmit = 0;
 	struct nfsnode *dnp = VTONFS(dvp);
 
 	nfsstats.rpccnt[NFSPROC_REMOVE]++;
@@ -2060,7 +2069,7 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, l)
 	int error = 0, fwccflag = NFSV3_WCCRATTR, twccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(fdvp);
-	int rexmit;
+	int rexmit = 0;
 	struct nfsnode *fdnp = VTONFS(fdvp);
 
 	nfsstats.rpccnt[NFSPROC_RENAME]++;
@@ -2120,7 +2129,7 @@ nfs_link(v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	/* XXX Should be const and initialised? */
 	int v3;
-	int rexmit;
+	int rexmit = 0;
 	struct nfsnode *np;
 
 	if (dvp->v_mount != vp->v_mount) {
@@ -2207,7 +2216,7 @@ nfs_symlink(v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	struct vnode *newvp = (struct vnode *)0;
 	const int v3 = NFS_ISV3(dvp);
-	int rexmit;
+	int rexmit = 0;
 	struct nfsnode *dnp = VTONFS(dvp);
 
 	*ap->a_vpp = NULL;
@@ -2299,7 +2308,7 @@ nfs_mkdir(v)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	int gotvp = 0;
-	int rexmit;
+	int rexmit = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 
@@ -2391,7 +2400,7 @@ nfs_rmdir(v)
 	int32_t t2;
 	caddr_t bpos, dpos;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
-	int rexmit;
+	int rexmit = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 	struct nfsnode *dnp;
@@ -3083,8 +3092,11 @@ nfs_lookitup(dvp, name, len, cred, l, npp)
 		    if (np->n_fhsize > NFS_SMALLFH && fhlen <= NFS_SMALLFH) {
 			free((caddr_t)np->n_fhp, M_NFSBIGFH);
 			np->n_fhp = &np->n_fh;
-		    } else if (np->n_fhsize <= NFS_SMALLFH && fhlen>NFS_SMALLFH)
+		    }
+#if NFS_SMALLFH < NFSX_V3FHMAX
+		    else if (np->n_fhsize <= NFS_SMALLFH && fhlen>NFS_SMALLFH)
 			np->n_fhp =(nfsfh_t *)malloc(fhlen,M_NFSBIGFH,M_WAITOK);
+#endif
 		    memcpy((caddr_t)np->n_fhp, (caddr_t)nfhp, fhlen);
 		    np->n_fhsize = fhlen;
 		    newvp = NFSTOV(np);

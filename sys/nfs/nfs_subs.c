@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158.4.7 2006/03/14 02:50:43 elad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.158.4.8 2006/04/19 05:06:37 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.7 2006/03/14 02:50:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.8 2006/04/19 05:06:37 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1450,6 +1450,7 @@ retry:
 			 * We're allocating a new entry, so bump the
 			 * generation number.
 			 */
+			KASSERT(np->n_dirgens);
 			gen = ++np->n_dirgens[hashent];
 			if (gen == 0) {
 				np->n_dirgens[hashent]++;
@@ -2374,6 +2375,7 @@ nfs_zeropad(mp, len, nul)
 			}
 			count -= m->m_len;
 		}
+		KASSERT(m && m->m_next);
 		m_freem(m->m_next);
 		m->m_next = NULL;
 	}
