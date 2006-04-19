@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.73.8.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.73.8.2 2006/04/19 03:54:14 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.73.8.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.73.8.2 2006/04/19 03:54:14 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -285,6 +285,7 @@ searchloop:
 		 * directory. Complete checks can be run by patching
 		 * "dirchk" to be true.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct direct *)((char *)bp->b_data + entryoffsetinblock);
 		if (ep->d_reclen == 0 ||
 		    (dirchk && ufs_dirbadentry(vdp, ep, entryoffsetinblock))) {
@@ -1339,7 +1340,7 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 
 	ip = VTOI(vp);
 	KASSERT(vp->v_size == ip->i_size);
-	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_READ);
+	GOP_SIZE(vp, vp->v_size, &eof, 0);
 	lbn = offset >> bshift;
 	for (run = 0; run <= dirrablks;) {
 		const off_t curoff = lbn << bshift;

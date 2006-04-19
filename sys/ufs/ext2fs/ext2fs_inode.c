@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.52.10.1 2006/03/08 01:39:11 elad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.52.10.2 2006/04/19 03:54:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.52.10.1 2006/03/08 01:39:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.52.10.2 2006/04/19 03:54:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,7 +507,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
 		/* XXX ondisk32 */
-		MALLOC(copy, int32_t *, fs->e2fs_bsize, M_TEMP, M_WAITOK);
+		copy = malloc(fs->e2fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->e2fs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,
 			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (u_int32_t));
