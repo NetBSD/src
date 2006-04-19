@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.28.14.1 2006/04/19 15:39:06 tron Exp $	*/
+/*	$NetBSD: fp.S,v 1.28.14.2 2006/04/19 15:49:13 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -4967,7 +4967,7 @@ STATIC_XLEAF(bcemul_sigill)
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curlwp)		# get current process
 	li	a1, SIGILL
-	j	_C_LABEL(trapsignal)
+	j	_C_LABEL(fpemul_trapsignal)
 END(fpemul_sigill)
 
 STATIC_LEAF(fpemul_sigfpe)
@@ -4981,7 +4981,7 @@ STATIC_LEAF(fpemul_sigfpe)
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curlwp)		# get current process
 	li	a1, SIGFPE
-	j	_C_LABEL(trapsignal)
+	j	_C_LABEL(fpemul_trapsignal)
 END(fpemul_sigfpe)
 
 #ifdef SOFTFLOAT
@@ -4996,6 +4996,6 @@ STATIC_LEAF(bcemul_sigfpe)
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curlwp)		# get current process
 	li	a1, SIGFPE
-	j	_C_LABEL(trapsignal)
+	j	_C_LABEL(fpemul_trapsignal)
 END(bcemul_sigfpe)
 #endif
