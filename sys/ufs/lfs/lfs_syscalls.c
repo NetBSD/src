@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.108.10.2 2006/03/10 14:21:11 elad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.108.10.3 2006/04/19 03:54:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.108.10.2 2006/03/10 14:21:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.108.10.3 2006/04/19 03:54:11 elad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -233,7 +233,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	struct inode *ip = NULL;
 	struct lfs *fs;
 	struct mount *mntp;
-	struct vnode *vp;
+	struct vnode *vp = NULL;
 	ino_t lastino;
 	daddr_t b_daddr, v_daddr;
 	int cnt, error;
@@ -923,11 +923,11 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	simple_lock(&fs->lfs_interlock);
 	fs->lfs_bfree += sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
 		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
-	simple_unlock(&fs->lfs_interlock);
 	fs->lfs_dmeta -= sup->su_nsums * btofsb(fs, fs->lfs_sumsize) +
 		btofsb(fs, sup->su_ninos * fs->lfs_ibsize);
 	if (fs->lfs_dmeta < 0)
 		fs->lfs_dmeta = 0;
+	simple_unlock(&fs->lfs_interlock);
 	sup->su_flags &= ~SEGUSE_DIRTY;
 	LFS_WRITESEGENTRY(sup, fs, segnum, bp);
 
@@ -938,9 +938,9 @@ lfs_do_segclean(struct lfs *fs, unsigned long segnum)
 	cip->bfree = fs->lfs_bfree;
 	simple_lock(&fs->lfs_interlock);
 	cip->avail = fs->lfs_avail - fs->lfs_ravail - fs->lfs_favail;
+	wakeup(&fs->lfs_avail);
 	simple_unlock(&fs->lfs_interlock);
 	(void) LFS_BWRITE_LOG(bp);
-	wakeup(&fs->lfs_avail);
 
 	if (lfs_dostats)
 		++lfs_stats.segs_reclaimed;
@@ -973,7 +973,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	timeradd(tv, &time, tv);
 	timeout = hzto(tv);
 	splx(s);
-	error = tsleep(addr, PCATCH | PUSER, "segment", timeout);
+	error = tsleep(addr, PCATCH | PVFS, "segment", timeout);
 	return (error == ERESTART ? EINTR : 0);
 }
 
