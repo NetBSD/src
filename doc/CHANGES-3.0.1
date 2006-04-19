@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.38 2006/04/19 15:55:04 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.39 2006/04/19 21:03:46 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -384,4 +384,12 @@ sys/arch/mips/mips/mips_fputrap.c		1.3-1.4
 	Update FPE trapsignal functions for new siginfo.
 	This fixes PR port-mips/26410.
 	[tsutsui, ticket #1260]
+
+sys/dev/audio.c					1.204 via patch
+sys/dev/audio_if.h				1.61
+sys/dev/audiovar.h				1.36
+
+	Don't use simple_locks; we can't hold them while calling malloc and
+	friends.
+	[jmcneill, ticket #1281]
 
