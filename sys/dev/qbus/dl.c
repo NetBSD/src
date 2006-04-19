@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.31.10.2 2006/03/10 14:39:02 elad Exp $	*/
+/*	$NetBSD: dl.c,v 1.31.10.3 2006/04/19 03:26:07 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.31.10.2 2006/03/10 14:39:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.31.10.3 2006/04/19 03:26:07 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ dl_match (struct device *parent, struct cfdata *cf, void *aux)
 static void
 dl_attach (struct device *parent, struct device *self, void *aux)
 {
-	struct dl_softc *sc = (void *)self;
+	struct dl_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 
 	sc->sc_iot = ua->ua_iot;

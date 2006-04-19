@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.27 2006/03/06 21:53:17 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.27.2.1 2006/04/19 03:26:08 elad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.27 2006/03/06 21:53:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.27.2.1 2006/04/19 03:26:08 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,10 +194,13 @@ static uint8_t	p9100_ramdac_read_ctl(struct p9100_softc *, int);
 static void	p9100_ramdac_write_ctl(struct p9100_softc *, int, uint8_t);
 
 static void 	p9100_init_engine(struct p9100_softc *);
-static void	p9100_sync(struct p9100_softc *);
 
+#if NWSDISPLAY > 0
+static void	p9100_sync(struct p9100_softc *);
 static void	p9100_bitblt(void *, int, int, int, int, int, int, uint32_t);
 static void 	p9100_rectfill(void *, int, int, int, int, uint32_t);
+static void	p9100_clearscreen(struct p9100_softc *);
+
 static void	p9100_setup_mono(struct p9100_softc *, int, int, int, int, 
 		    uint32_t, uint32_t); 
 static void	p9100_feed_line(struct p9100_softc *, int, uint8_t *);
@@ -216,16 +219,17 @@ static int	p9100_allocattr(void *, int, int, int, long *);
 
 static int	p9100_putcmap(struct p9100_softc *, struct wsdisplay_cmap *);
 static int 	p9100_getcmap(struct p9100_softc *, struct wsdisplay_cmap *);
-static int	p9100_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	p9100_mmap(void *, off_t, int);
-
-static void	p9100_clearscreen(struct p9100_softc *);
+static int	p9100_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	p9100_mmap(void *, void *, off_t, int);
 		
 /*static int	p9100_load_font(void *, void *, struct wsdisplay_font *);*/
 
 static void	p9100_init_screen(void *, struct vcons_screen *, int, 
 	    long *);
+#endif
+
 static void	p9100_init_cursor(struct p9100_softc *);
+
 static void	p9100_set_fbcursor(struct p9100_softc *);
 static void	p9100_setcursorcmap(struct p9100_softc *);
 static void	p9100_loadcursor(struct p9100_softc *);
@@ -237,6 +241,7 @@ static void p9100_power_hook(int, void *);
 
 static void p9100_set_extvga(void *, int);
 
+#if NWSDISPLAY > 0
 struct wsdisplay_accessops p9100_accessops = {
 	p9100_ioctl,
 	p9100_mmap,
@@ -245,12 +250,9 @@ struct wsdisplay_accessops p9100_accessops = {
 	NULL,	/* vcons_show_screen */
 	NULL,	/* load_font */
 	NULL,	/* polls */
-	NULL,	/* getwschar */
-	NULL,	/* putwschar */
 	NULL,	/* scroll */
-	NULL,	/* getborder */
-	NULL	/* setborder */
 };
+#endif
 
 #define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset == (off & 0xffffff80)) { \
 		sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, \
@@ -307,7 +309,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 
 	fb->fb_driver = &p9100fbdriver;
 	fb->fb_device = &sc->sc_dev;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 #ifdef PNOZZ_EMUL_CG3
 	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
 #else
@@ -455,13 +457,6 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 		wsdisplay_cnattach(&p9100_defscreendesc, ri, 0, 0, defattr);
 	}
 
-	p9100_init_cursor(sc);
-	
-	/* register with power management */
-	sc->sc_video = 1;
-	sc->sc_powerstate = PWR_RESUME;
-	powerhook_establish(p9100_power_hook, sc);
-
 	aa.console = isconsole;
 	aa.scrdata = &p9100_screenlist;
 	aa.accessops = &p9100_accessops;
@@ -469,8 +464,16 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 #endif
+	/* cursor sprite handling */
+	p9100_init_cursor(sc);
+
 	/* attach the fb */
 	fb_attach(fb, isconsole);
+
+	/* register with power management */
+	sc->sc_video = 1;
+	sc->sc_powerstate = PWR_RESUME;
+	powerhook_establish(p9100_power_hook, sc);
 	
 #if NTCTRL > 0
 	/* register callback for external monitor status change */
@@ -681,6 +684,32 @@ p9100_ctl_write_4(struct p9100_softc *sc, bus_size_t off, uint32_t v)
 	bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh, off, v);
 }
 
+/* initialize the drawing engine */
+static void
+p9100_init_engine(struct p9100_softc *sc)
+{
+	/* reset clipping rectangles */
+	uint32_t rmax = ((sc->sc_width & 0x3fff) << 16) | 
+	    (sc->sc_height & 0x3fff);
+
+	sc->sc_last_offset = 0xffffffff;
+
+	p9100_ctl_write_4(sc, WINDOW_OFFSET, 0);
+	p9100_ctl_write_4(sc, WINDOW_MIN, 0);
+	p9100_ctl_write_4(sc, WINDOW_MAX, rmax);
+	p9100_ctl_write_4(sc, BYTE_CLIP_MIN, 0);
+	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, rmax);
+	p9100_ctl_write_4(sc, DRAW_MODE, 0);
+	p9100_ctl_write_4(sc, PLANE_MASK, 0xffffffff);	
+	p9100_ctl_write_4(sc, PATTERN0, 0xffffffff);	
+	p9100_ctl_write_4(sc, PATTERN1, 0xffffffff);	
+	p9100_ctl_write_4(sc, PATTERN2, 0xffffffff);	
+	p9100_ctl_write_4(sc, PATTERN3, 0xffffffff);	
+}
+
+/* we only need these in the wsdisplay case */
+#if NWSDISPLAY > 0
+
 /* wait until the engine is idle */
 static void
 p9100_sync(struct p9100_softc *sc)
@@ -707,29 +736,6 @@ p9100_set_color_reg(struct p9100_softc *sc, int reg, int32_t col)
 			out = col;
 	}
 	p9100_ctl_write_4(sc, reg, out);
-}
-
-/* initialize the drawing engine */
-static void
-p9100_init_engine(struct p9100_softc *sc)
-{
-	/* reset clipping rectangles */
-	uint32_t rmax = ((sc->sc_width & 0x3fff) << 16) | 
-	    (sc->sc_height & 0x3fff);
-
-	sc->sc_last_offset = 0xffffffff;
-
-	p9100_ctl_write_4(sc, WINDOW_OFFSET, 0);
-	p9100_ctl_write_4(sc, WINDOW_MIN, 0);
-	p9100_ctl_write_4(sc, WINDOW_MAX, rmax);
-	p9100_ctl_write_4(sc, BYTE_CLIP_MIN, 0);
-	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, rmax);
-	p9100_ctl_write_4(sc, DRAW_MODE, 0);
-	p9100_ctl_write_4(sc, PLANE_MASK, 0xffffffff);	
-	p9100_ctl_write_4(sc, PATTERN0, 0xffffffff);	
-	p9100_ctl_write_4(sc, PATTERN1, 0xffffffff);	
-	p9100_ctl_write_4(sc, PATTERN2, 0xffffffff);	
-	p9100_ctl_write_4(sc, PATTERN3, 0xffffffff);	
 }
 
 /* screen-to-screen blit */
@@ -849,6 +855,7 @@ p9100_clearscreen(struct p9100_softc *sc)
 	
 	p9100_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, sc->sc_bg);
 }
+#endif /* NWSDISPLAY > 0 */
 
 static uint8_t
 p9100_ramdac_read(struct p9100_softc *sc, bus_size_t off)
@@ -1033,6 +1040,7 @@ p9100mmap(dev_t dev, off_t off, int prot)
 }
 
 /* wscons stuff */
+#if NWSDISPLAY > 0
 
 static void
 p9100_cursor(void *cookie, int on, int row, int col)
@@ -1112,7 +1120,8 @@ p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
  */
 
 int
-p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+p9100_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct p9100_softc *sc = vd->cookie;
@@ -1168,7 +1177,7 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-p9100_mmap(void *v, off_t offset, int prot)
+p9100_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct p9100_softc *sc = vd->cookie;	
@@ -1391,6 +1400,8 @@ p9100_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 	return 0;
 }
 #endif
+
+#endif /* NWSDISPLAY > 0 */
 
 static int
 p9100_intr(void *arg)

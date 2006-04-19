@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.5 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: sbp.c,v 1.5.4.1 2006/04/19 03:25:08 elad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1200,7 +1200,8 @@ fw_kthread_create0(void *arg)
 
 	/* create thread */
 	if (kthread_create1(sbp_scsipi_scan_target,
-	    &sbp->target, &sbp->proc, "sbp%d_attach", sbp->fd.dev->dv_unit)) {
+	    &sbp->target, &sbp->proc, "sbp%d_attach",
+	    device_unit(sbp->fd.dev))) {
 
 		device_printf(sbp->fd.dev, "unable to create thread");
 		panic("fw_kthread_create");
@@ -2331,10 +2332,18 @@ END_DEBUG
 static void
 sbp_scsipi_detach_sdev(struct sbp_dev *sdev)
 {
-	struct sbp_target *target = sdev->target;
-	struct sbp_softc *sbp = target->sbp;
+	struct sbp_target *target;
+	struct sbp_softc *sbp;
+
 	if (sdev == NULL)
 		return;
+
+	target = sdev->target;
+	if (target == NULL)
+		return;
+
+	sbp = target->sbp;
+
 	if (sdev->status == SBP_DEV_DEAD)
 		return;
 	if (sdev->status == SBP_DEV_RESET)
@@ -2505,7 +2514,7 @@ END_DEBUG
 SBP_DEBUG(1)
 			printf("%s:%d:%d:func_code 0x%04x: "
 				"Invalid target (target needed)\n",
-				device_get_nameunit(sbp->fd.dev),
+				sbp ? device_get_nameunit(sbp->fd.dev) : "???",
 				SCSI_XFER_TARGET(sxfer), SCSI_XFER_LUN(sxfer),
 				SCSI_XFER_FUNCCODE(sxfer));
 END_DEBUG

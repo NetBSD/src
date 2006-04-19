@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.1 2006/03/06 18:35:24 bouyer Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.1.2.1 2006/04/19 03:25:38 elad Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.1 2006/03/06 18:35:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.1.2.1 2006/04/19 03:25:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,21 @@ static const struct pciide_product_desc pciide_svwsata_products[] =  {
 	{ PCI_PRODUCT_SERVERWORKS_K2_SATA,
 	  0,
 	  "ServerWorks K2 SATA Controller",
+	  svwsata_chip_map
+	},
+	{ PCI_PRODUCT_SERVERWORKS_FRODO4_SATA,
+	  0,
+	  "ServerWorks Frodo4 SATA Controller",
+	  svwsata_chip_map
+	},
+	{ PCI_PRODUCT_SERVERWORKS_FRODO8_SATA,
+	  0,
+	  "ServerWorks Frodo8 SATA Controller",
+	  svwsata_chip_map
+	},
+	{ PCI_PRODUCT_SERVERWORKS_HT1000_SATA,
+	  0,
+	  "ServerWorks HT-1000 SATA Controller",
 	  svwsata_chip_map
 	},
 	{ 0,
@@ -89,6 +104,13 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
+	/* The 4-port version has a dummy second function. */
+	if (pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PCI_MAPREG_START + 0x14) == 0) {
+		aprint_normal("\n");
+		return;
+	}
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
 			   PCI_MAPREG_TYPE_MEM |
@@ -169,7 +191,7 @@ svwsata_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.dma_start = pciide_dma_start;
 	sc->sc_wdcdev.dma_finish = pciide_dma_finish;
 
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags &
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
 		aprint_normal(
 		    ", but unused (forced off by config file)");

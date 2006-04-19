@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.4 2006/02/18 05:04:12 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.4.4.1 2006/04/19 03:24:35 elad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -91,13 +91,13 @@ lmtemp_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 lmtemp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct lmtemp_softc *sc = (struct lmtemp_softc *)self;
+	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	int ptype;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
-	sc->sc_is_ds75 = sc->sc_dev.dv_cfdata->cf_flags & 1;
+	sc->sc_is_ds75 = device_cfdata(&sc->sc_dev)->cf_flags & 1;
 
 	aprint_naive(": Temperature Sensor\n");
 	aprint_normal(": %s Temperature Sensor\n",
@@ -126,7 +126,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	    ptype != PROP_STRING)
 		strcpy(sc->sc_info[0].desc, sc->sc_dev.dv_xname);
 
-	/* Hook info system monitor. */
+	/* Hook into system monitor. */
 	sc->sc_sysmon.sme_ranges = lmtemp_ranges;
 	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
 	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
@@ -265,7 +265,7 @@ lmtemp_decode_ds75(const uint8_t *buf)
 
 	/*
 	 * Sign-extend the MSB byte, and add in the fractions of a
-	 * degree contained in the LSB (prescision 1/16th DegC).
+	 * degree contained in the LSB (precision 1/16th DegC).
 	 */
 	temp = (int8_t)buf[0];
 	temp = (temp << 4) | ((buf[1] >> 4) & 0xf);

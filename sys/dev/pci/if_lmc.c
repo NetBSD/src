@@ -1,5 +1,6 @@
+/*	$NetBSD: if_lmc.c,v 1.25.4.1 2006/04/19 03:25:34 elad Exp $	*/
+
 /*-
- * $NetSBD$
  *
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
  * All rights reserved.
@@ -5172,6 +5173,7 @@ rxintr_cleanup(softc_t *sc)
       }
     else /* 2) link mbufs. */
       {
+      KASSERT(last_mbuf != NULL);
       last_mbuf->m_next = new_mbuf;
       /* M_PKTHDR should be set in the first mbuf only. */
       new_mbuf->m_flags &= ~M_PKTHDR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.61.4.2 2006/03/10 14:39:03 elad Exp $	*/
+/*	$NetBSD: ucom.c,v 1.61.4.3 2006/04/19 03:26:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.4.2 2006/03/10 14:39:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.4.3 2006/04/19 03:26:29 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ USB_DETACH(ucom)
 	maj = cdevsw_lookup_major(&ucom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	DPRINTF(("ucom_detach: maj=%d mn=%d\n", maj, mn));
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | UCOMDIALOUT_MASK, mn | UCOMDIALOUT_MASK, VCHR);

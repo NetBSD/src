@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030.c,v 1.5 2006/02/17 18:45:40 macallan Exp $	*/
+/*	$NetBSD: adm1030.c,v 1.5.4.1 2006/04/19 03:24:35 elad Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.5 2006/02/17 18:45:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.5.4.1 2006/04/19 03:24:35 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ adm1030c_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct adm1030c_softc *sc = (struct adm1030c_softc *)self;
+	struct adm1030c_softc *sc = device_private(self);
 	struct i2c_attach_args *args = aux;
 
 	sc->parent = parent;

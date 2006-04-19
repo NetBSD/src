@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.9 2006/03/02 01:24:00 dyoung Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.9.4.1 2006/04/19 03:24:33 elad Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.9 2006/03/02 01:24:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.9.4.1 2006/04/19 03:24:33 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.9 2006/03/02 01:24:00 dyoung Ex
 
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ic/athhal.h>
+#include <contrib/dev/ath/ah.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -145,7 +145,7 @@ void
 ath_cardbus_attach(struct device *parent, struct device *self,
 	void *aux)
 {
-	struct ath_cardbus_softc *csc = (void *)self;
+	struct ath_cardbus_softc *csc = device_private(self);
 	struct ath_softc *sc = &csc->sc_ath;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -206,7 +206,7 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 int
 ath_cardbus_detach(struct device *self, int flags)
 {
-	struct ath_cardbus_softc *csc = (void *)self;
+	struct ath_cardbus_softc *csc = device_private(self);
 	struct ath_softc *sc = &csc->sc_ath;
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv;

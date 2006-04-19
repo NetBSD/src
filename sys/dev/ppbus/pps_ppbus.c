@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.4 2005/12/25 18:43:31 rpaulo Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.4.10.1 2006/04/19 03:26:00 elad Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.4 2005/12/25 18:43:31 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.4.10.1 2006/04/19 03:26:00 elad Exp $");
 
 #include "opt_ntp.h"
 
@@ -87,7 +87,7 @@ pps_probe(struct device *parent, struct cfdata *match, void *aux)
 static void
 pps_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pps_softc *sc = (struct pps_softc *)self;
+	struct pps_softc *sc = device_private(self);
 
 	sc->ppbus = parent;
 

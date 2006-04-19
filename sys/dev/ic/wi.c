@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.212.4.2 2006/03/10 14:39:02 elad Exp $	*/
+/*	$NetBSD: wi.c,v 1.212.4.3 2006/04/19 03:24:41 elad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.212.4.2 2006/03/10 14:39:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.212.4.3 2006/04/19 03:24:41 elad Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -575,12 +575,12 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 #endif
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
-	sc->sc_rxtap.wr_ihdr.it_len = sizeof(sc->sc_rxtapu);
-	sc->sc_rxtap.wr_ihdr.it_present = WI_RX_RADIOTAP_PRESENT;
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(WI_RX_RADIOTAP_PRESENT);
 
 	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
-	sc->sc_txtap.wt_ihdr.it_len = sizeof(sc->sc_txtapu);
-	sc->sc_txtap.wt_ihdr.it_present = WI_TX_RADIOTAP_PRESENT;
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sizeof(sc->sc_txtapu));
+	sc->sc_txtap.wt_ihdr.it_present = htole32(WI_TX_RADIOTAP_PRESENT);
 
 	/* Attach is successful. */
 	sc->sc_attached = 1;

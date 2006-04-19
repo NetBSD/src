@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.23 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.23.10.1 2006/04/19 03:26:20 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.23 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.23.10.1 2006/04/19 03:26:20 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ sunkbd_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
-	struct kbd_sun_softc *k = (void *) self;
+	struct kbd_sun_softc *k = device_private(self);
 	struct kbd_ms_tty_attach_args *args = aux;
 	struct tty *tp = args->kmta_tp;
 	struct cons_channel *cc;

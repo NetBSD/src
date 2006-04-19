@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.31 2006/02/21 04:31:33 thorpej Exp $	*/
+/*	$NetBSD: irframe.c,v 1.31.4.1 2006/04/19 03:25:08 elad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.31 2006/02/21 04:31:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.31.4.1 2006/04/19 03:25:08 elad Exp $");
 
 #include "irframe.h"
 
@@ -109,7 +109,7 @@ irframe_match(struct device *parent, struct cfdata *match, void *aux)
 void
 irframe_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct irframe_softc *sc = (struct irframe_softc *)self;
+	struct irframe_softc *sc = device_private(self);
 	struct ir_attach_args *ia = aux;
 	const char *delim;
 	int speeds = 0;
@@ -153,7 +153,7 @@ irframe_attach(struct device *parent, struct device *self, void *aux)
 int
 irframe_activate(struct device *self, enum devact act)
 {
-	/*struct irframe_softc *sc = (struct irframe_softc *)self;*/
+	/*struct irframe_softc *sc = device_private(self);*/
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -168,7 +168,7 @@ irframe_activate(struct device *self, enum devact act)
 int
 irframe_detach(struct device *self, int flags)
 {
-	/*struct irframe_softc *sc = (struct irframe_softc *)self;*/
+	/*struct irframe_softc *sc = device_private(self);*/
 	int maj, mn;
 
 	/* XXX needs reference count */
@@ -177,7 +177,7 @@ irframe_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&irframe_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);

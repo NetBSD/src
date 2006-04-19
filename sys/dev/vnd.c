@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.141.4.1 2006/03/08 01:44:48 elad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.141.4.2 2006/04/19 03:24:24 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.4.1 2006/03/08 01:44:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.4.2 2006/04/19 03:24:24 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -272,8 +272,6 @@ vnd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
 	pseudo_disk_init(&sc->sc_dkdev);
-
-	aprint_normal("%s: vnode disk driver\n", self->dv_xname);
 }
 
 static int
@@ -308,8 +306,8 @@ vnd_destroy(struct device *dev)
 	int error;
 	struct cfdata *cf;
 
-	cf = dev->dv_cfdata;
-	error = config_detach(dev, 0);
+	cf = device_cfdata(dev);
+	error = config_detach(dev, DETACH_QUIET);
 	if (error)
 		return error;
 	free(cf, M_DEVBUF);
@@ -868,6 +866,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, l);
 		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
+		KASSERT(l);
 		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_proc->p_cred, l);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
@@ -1150,6 +1149,7 @@ unlock_and_exit:
 		struct vnd_ouser *vnu;
 		struct vattr va;
 		vnu = (struct vnd_ouser *)data;
+		KASSERT(l);
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
 			vnu->vnu_dev = va.va_fsid;
@@ -1170,6 +1170,7 @@ unlock_and_exit:
 		struct vnd_user *vnu;
 		struct vattr va;
 		vnu = (struct vnd_user *)data;
+		KASSERT(l);
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
 			vnu->vnu_dev = va.va_fsid;
@@ -1379,7 +1380,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(vnd->sc_dev.dv_unit, i);
+		mn = DISKMINOR(device_unit(&vnd->sc_dev), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		if (mn != myminor) /* XXX avoid to kill own vnode */
 			vdevgone(cmaj, mn, mn, VCHR);

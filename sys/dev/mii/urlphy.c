@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.14 2006/02/28 22:40:15 kleink Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.14.4.1 2006/04/19 03:25:23 elad Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.14 2006/02/28 22:40:15 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.14.4.1 2006/04/19 03:25:23 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ urlphy_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 urlphy_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
