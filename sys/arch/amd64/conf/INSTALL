@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.51 2006/04/15 17:48:23 jmmv Exp $
+# $NetBSD: INSTALL,v 1.52 2006/04/19 10:31:44 drochner Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.51 $"
+#ident 		"INSTALL-$Revision: 1.52 $"
 
 maxusers	32		# estimated number of users
 
@@ -139,7 +139,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 #options 	WSDISPLAY_COMPAT_USL		# VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
