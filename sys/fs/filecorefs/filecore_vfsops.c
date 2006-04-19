@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.23.4.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.23.4.2 2006/04/19 18:26:38 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.23.4.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.23.4.2 2006/04/19 18:26:38 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -377,8 +377,8 @@ filecore_mountfs(devvp, mp, l, argp)
 	fcmp->fc_devvp = devvp;
 	fcmp->fc_mntflags = argp->flags;
 	if (argp->flags & FILECOREMNT_USEUID) {
-		fcmp->fc_uid = l->l_proc->p_cred->p_ruid;
-		fcmp->fc_gid = l->l_proc->p_cred->p_rgid;
+		fcmp->fc_uid = kauth_cred_getuid(l->l_proc->p_cred);
+		fcmp->fc_gid = kauth_cred_getgid(l->l_proc->p_cred);
 	} else {
 		fcmp->fc_uid = argp->uid;
 		fcmp->fc_gid = argp->gid;
