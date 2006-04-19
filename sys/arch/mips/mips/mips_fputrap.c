@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.1.28.1 2006/04/19 15:49:28 tron Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.1.28.2 2006/04/19 15:51:18 tron Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -94,7 +94,9 @@ fpemul_trapsignal(struct lwp *l, unsigned int sig, unsigned int code)
 {
 	ksiginfo_t ksi;
 
+#if DEBUG
 	printf("emul_trapsignal(%x,%x)\n", sig, code);
+#endif
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = sig;
