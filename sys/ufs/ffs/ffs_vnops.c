@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.77.10.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.77.10.2 2006/04/19 03:54:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.77.10.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.77.10.2 2006/04/19 03:54:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -545,10 +545,6 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 	daddr_t olbn, nlbn;
-
-	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
-	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
-		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
 
 	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);

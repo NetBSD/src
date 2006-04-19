@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.90 2006/03/05 17:33:33 christos Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.90.2.1 2006/04/19 03:54:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.90 2006/03/05 17:33:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.90.2.1 2006/04/19 03:54:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,8 +251,10 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
 		vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
 #endif
-		if (error)
+		if (error) {
 			return error;
+			simple_unlock(&fs->lfs_interlock);
+		}
 	}
 #ifdef DEBUG
 	if (slept) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.59.10.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.59.10.2 2006/04/19 03:54:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.59.10.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.59.10.2 2006/04/19 03:54:09 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -390,7 +390,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	bb = (long)fragstofsb(fs, numfrags(fs, nsize - osize));
 	error = 0;
 
-	ASSERT_DUNNO_SEGLOCK(fs);
+	ASSERT_NO_SEGLOCK(fs);
 
 	/*
 	 * Get the seglock so we don't enlarge blocks while a segment

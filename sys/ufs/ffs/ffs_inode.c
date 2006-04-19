@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.79.10.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.79.10.2 2006/04/19 03:54:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.79.10.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.79.10.2 2006/04/19 03:54:09 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -651,7 +651,7 @@ ffs_itimes(struct inode *ip, const struct timespec *acc,
 
 	if (ip->i_flag & IN_ACCESS) {
 		if (acc == NULL)
-			acc = ts == NULL ? (ts = nanotime(&tsb)) : ts;
+			acc = ts = nanotime(&tsb);
 		DIP_ASSIGN(ip, atime, acc->tv_sec);
 		DIP_ASSIGN(ip, atimensec, acc->tv_nsec);
 	}
