@@ -27,6 +27,6 @@ CLEANFILES+= y.tab.c y.tab.h
 
 
 y.tab.h: inf-parse.y
-	${YACC} -v -d inf-parse.y
+	${YACC} -v -d ${.CURDIR}/inf-parse.y
 
 .include <bsd.prog.mk>
