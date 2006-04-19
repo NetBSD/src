@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.615 2006/04/17 19:07:45 christos Exp $
+# $NetBSD: mi,v 1.616 2006/04/19 10:58:17 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1083,6 +1083,7 @@
 ./usr/sbin/ncdcs				base-sysutil-root
 ./usr/sbin/ndbootd				base-bootserver-bin
 ./usr/sbin/ndc					base-obsolete		obsolete
+./usr/sbin/ndiscvt				base-sysutil-bin
 ./usr/sbin/ndp					base-netutil-bin	inet6
 ./usr/sbin/netgroup_mkdb			base-nis-bin
 ./usr/sbin/nfsd					base-nfsserver-bin
