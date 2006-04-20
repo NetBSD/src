@@ -53,9 +53,9 @@
 .\"           *  PLEASE DO NOT "UN-IFDEF" THIS FILE!  *
 .\"           * * * * * * * * * * * * * * * * * * * * *
 .\"
-.\" $NetBSD: lmc.4,v 1.11 2006/02/11 23:02:56 christos Exp $
+.\" $NetBSD: lmc.4,v 1.12 2006/04/20 16:54:11 christos Exp $
 .\"
-.Dd February 1, 2006
+.Dd April 11, 2006
 .Dt LMC 4
 .Os
 .\" Os sets \*(oS or \*[operating-system]
@@ -148,6 +148,7 @@ neither SPPP nor Netgraph are configured into the kernel.
 .\} \" FreeBSD Synopsis
 .if \n[allos] .Ss NetBSD & OpenBSD Synopsis
 .if (\n[nbsd] : \n[obsd]) \{\
+This driver is built into the GENERIC kernel so it should "just work".
 The driver can be loaded into a running kernel with
 .Xr modload 8 .
 .Bd -unfilled -offset indent -compact
@@ -182,7 +183,7 @@ SPPP is not configured into the kernel.
 .\} \" NetBSD & OpenBSD Synopsis
 .if \n[allos] .Ss BSD/OS Synopsis
 .if \n[bsdi] \{\
-The driver can be built into a kernel by adding the following to
+The driver can be built into a custom kernel by adding the following to
 .Pa /sys/i386/conf/YOURKERNEL :
 .Bd -unfilled -offset indent -compact
 .Cd lmc*	at pci?
@@ -241,14 +242,8 @@ Messages similar to the following will appear in
 .Ic Cronyx Ltd, Synchronous PPP and CISCO HDLC (c) 1994
 .Ic Linux port (c) 1998 Building Number Three Ltd & Jan 'Yenya' Kasprzak.
 .Ic HDLC support module revision 1.18
+.Ic LMC Driver version 2006/1/20; Options NAPI GEN_HDLC SYNC_PPP.
 .Ic hdlc0: <LMC T3 card> at pci 0000:00:13.0 irq 11
-.Ed
-.Pp
-When the card is
-.Ic ifconfig Ns ed ,
-a message like this will appear:
-.Bd -unfilled -offset indent -compact
-.Ic hdlc0: LMC Driver rev 2006/1/20, Options NAPI GEN_HDLC SYNC_PPP
 .Ed
 .Pp
 The driver can send and receive raw IP packets even if
@@ -391,10 +386,11 @@ T1 cards use a
 framer and line interface chip.
 .El
 .Pp
-Line protocols exist above device drivers and below internet protocols.
+Line protocol stacks exist above device drivers
+and below internet protocol stacks.
 They typically encapsulate packets in HDLC frames and deal with
 higher-level issues like protocol multiplexing and security.
-The driver is compatible with several line protocol packages:
+The driver is compatible with several line protocol stacks:
 .Bl -tag -width "GenericHDLC" -offset indent
 .if \n[fbsd] \{\
 .It Sy Netgraph
@@ -448,31 +444,31 @@ displays interface configuration and status.
 .Bd -unfilled -offset indent
 .Ic lmcconfig lmc0 -X 1
 .Ed
-selects the built-in RawIP line protocol package.
+selects the built-in RawIP line protocol stack.
 .if (\n[fbsd] : \n[nbsd] : \n[obsd]) \{\
 .Bd -unfilled -offset indent
 .Ic lmcconfig lmc0 -X 2 -x 2
 .Ed
-selects the SPPP package and the PPP protocol. \}
+selects the SPPP stack and the PPP protocol. \}
 .if \n[bsdi] \{\
 .Bd -unfilled -offset indent
 .Ic lmcconfig lmc0 -X 3 -x 2
 .Ed
-selects the P2P package and the PPP protocol. \}
+selects the P2P stack and the PPP protocol. \}
 .if \n[linux] \{\
 .Bd -unfilled -offset indent
 .Ic lmcconfig lmc0 -X 4 -x 2
 .Ed
-selects the GenericHDLC package and the PPP protocol.
+selects the GenericHDLC stack and the PPP protocol.
 .Bd -unfilled -offset indent
 .Ic lmcconfig lmc0 -X 5 -x 2
 .Ed
-selects the SyncPPP package and the PPP protocol. \}
+selects the SyncPPP stack and the PPP protocol. \}
 .if (\n[fbsd] \{\
 .Bd -unfilled -offset indent
 .Ic lmcconfig lmc0 -X 6
 .Ed
-selects the Netgraph package. \}
+selects the Netgraph stack. \}
 .if (\n[fbsd] : \n[nbsd] : \n[obsd] : \n[bsdi]) \{\
 .Pp
 Some configuration options are available through
@@ -509,7 +505,7 @@ selects the on-board crystal oscillator as the transmitter clock. \} \}
 .Ic ifconfig lmc0 debug
 .Ed
 enables debugging output from the device driver and from
-the line protocol module above it.
+the line protocol stack above it.
 .Bd -unfilled -offset indent
 .Ic lmcconfig lmc0 -D
 .Ed
@@ -682,10 +678,11 @@ must be run before
 and the GenericHDLC kernel code are documented in
 .Pa /usr/src/linux/Documentation/networking/generic-hdlc.txt
 and at
-.Pa http://hq.pm.waw.pl/hdlc/
+.Pa http://www.kernel.org:/pub/linux/utils/net/hdlc
 .Pp
 Configure a PPP link using GenericHDLC with
 .Bd -unfilled -offset indent -compact
+.Ic lmcconfig lmc0 -X 4 -x 2
 .Ic sethdlc hdlc0 ppp
 .Ic ifconfig hdlc0 10.0.0.1 pointopoint 10.0.0.2
 .Ed
@@ -698,6 +695,7 @@ Configure a PPP link using SyncPPP with
 .Pp
 Configure a Cisco-HDLC link using GenericHDLC with
 .Bd -unfilled -offset indent -compact
+.Ic lmcconfig lmc0 -X 4
 .Ic sethdlc hdlc0 cisco
 .Ic ifconfig hdlc0 10.0.0.1 pointopoint 10.0.0.2
 .Ed
@@ -710,6 +708,7 @@ Configure a Cisco-HDLC link using SyncPPP with
 .Pp
 Configure a Frame-Relay DTE link using GenericHDLC with
 .Bd -unfilled -offset indent -compact
+.Ic lmcconfig lmc0 -X 4
 .Ic sethdlc hdlc0 fr lmi ansi [dce]
 .Ic sethdlc hdlc0 create 500
 .Ic ifconfig hdlc0 up
@@ -725,6 +724,7 @@ link management interfaces (LMIs).
 .Pp
 Configure a RAWIP link using GenericHDLC with
 .Bd -unfilled -offset indent -compact
+.Ic lmcconfig lmc0 -X 4
 .Ic sethdlc hdlc0 hdlc
 .Ic ifconfig hdlc0 10.0.0.1 pointopoint 10.0.0.2
 .Ed
@@ -1023,7 +1023,7 @@ the Packet Filter
 .Xr pf 4 
 and \}
 the
-.Xr ALTQ 4
+.Xr altq 4
 Hierarchical Fair Service Curve
 queue discipline to be configured in
 .Pa conf/YOURKERNEL :
@@ -1267,11 +1267,19 @@ to the distant input signal.
 .\"
 .Sh SEE ALSO
 .\"
+.if \n[fbsd] .Xr tcpdump 1 ,
+.if \n[nbsd] .Xr tcpdump 1 ,
+.if \n[obsd] .Xr tcpdump 1 ,
+.if \n[bsdi] .Xr tcpdump 1 ,
 .Xr ioctl 2 ,
 .if \n[fbsd] .Xr bpf 4 ,
 .if \n[nbsd] .Xr bpf 4 ,
 .if \n[obsd] .Xr bpf 4 ,
 .if \n[bsdi] .Xr bpf 4 ,
+.if \n[fbsd] .Xr de 4 ,
+.if \n[nbsd] .Xr de 4 ,
+.if \n[obsd] .Xr de 4 ,
+.if \n[bsdi] .Xr de 4 ,
 .if \n[fbsd] .Xr kld 4 ,
 .if \n[fbsd] .Xr netgraph 4 ,
 .if \n[bsdi] .Xr p2p 4 ,
@@ -1290,13 +1298,11 @@ to the distant input signal.
 .if \n[nbsd] .Xr init 8 ,
 .if \n[obsd] .Xr init 8 ,
 .Xr lmcconfig 8 ,
-.if \n[nbsd] .Xr altqd 8 ,
 .if \n[obsd] .Xr altqd 8 ,
 .if \n[nbsd] .Xr altqd 8 ,
-.if \n[obsd] .Xr lkm 8 ,
+.if \n[fbsd] .Xr kldload 8 ,
 .if \n[nbsd] .Xr lkm 8 ,
 .if \n[obsd] .Xr lkm 8 ,
-.if \n[obsd] .Xr modload 8 ,
 .if \n[nbsd] .Xr modload 8 ,
 .if \n[obsd] .Xr modload 8 ,
 .if \n[fbsd] .Xr kldload 8 ,
@@ -1314,9 +1320,9 @@ to the distant input signal.
 .if \n[bsdi] .Xr ifnet 9 .
 .Pp
 .Bd -unfilled
-.Pa http://www.sbei.com/
+.Pa http://www.sbei.net/
 .if \n[linux] \{\
-.Pa http://hq.pm.waw.pl/hdlc/
+.Pa http://www.kernel.org:/pub/linux/utils/net/hdlc
 .Pa file://usr/src/linux/Documentation/networking/generic-hdlc.txt \}
 .Ed
 .\"

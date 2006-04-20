@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: lmcconfig.c,v 1.7 2006/02/11 23:02:10 christos Exp $
+ * $NetBSD: lmcconfig.c,v 1.8 2006/04/20 16:53:19 christos Exp $
  *
  * First author: Michael Graff.
  * Copyright (c) 1997-2000 Lan Media Corp.
@@ -80,6 +80,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <net/if.h>
 /* and finally... */
 # include "if_lmc.h"
@@ -630,19 +631,19 @@ void print_card_type()
   printf("Card type:\t\t");
   switch(status.card_type)
     {
-    case LMC_CSID_HSSI:
+    case CSID_LMC_HSSI:
       printf("HSSI (lmc5200)\n");
       break;
-    case LMC_CSID_T3:
+    case CSID_LMC_T3:
       printf("T3 (lmc5245)\n");
       break;
-    case LMC_CSID_SSI:
+    case CSID_LMC_SSI:
       printf("SSI (lmc1000)\n");
       break;
-    case LMC_CSID_T1E1:
+    case CSID_LMC_T1E1:
       printf("T1E1 (lmc1200)\n");
       break;
-    case LMC_CSID_HSSIc:
+    case CSID_LMC_HSSIc:
       printf("HSSI (lmc5200C)\n");
       break;
     default:
@@ -682,65 +683,65 @@ void print_line_prot()
   const char *on = "On", *off = "Off";
 
   printf("Line Prot/Pkg:\t\t");
-  switch (status.line_prot)
+  switch (status.proto)
     {
     case 0:
       printf("NotSet/");
       break;
-    case PROT_IP_HDLC:
+    case PROTO_IP_HDLC:
       printf("IP-in-HDLC/");
       break;
-    case PROT_PPP:
+    case PROTO_PPP:
       printf("PPP/");
       break;
-    case PROT_C_HDLC:
+    case PROTO_C_HDLC:
       printf("Cisco-HDLC/");
       break;
-    case PROT_FRM_RLY:
+    case PROTO_FRM_RLY:
       printf("Frame-Relay/");
       break;
-    case PROT_ETH_HDLC:
+    case PROTO_ETH_HDLC:
       printf("Ether-in-HDLC/");
       break;
-    case PROT_X25:
+    case PROTO_X25:
       printf("X25+LAPB/");
       break;
     default:
-      printf("Unknown line_prot: %d/", status.line_prot);
+      printf("Unknown proto: %d/", status.proto);
       break;
     }
 
-  switch (status.line_pkg)
+  switch (status.stack)
     {
     case 0:
       printf("NotSet\n");
       break;
-    case PKG_RAWIP:
+    case STACK_RAWIP:
       printf("Driver\n");
       break;
-    case PKG_SPPP:
+    case STACK_SPPP:
       printf("SPPP\n");
       break;
-    case PKG_P2P:
+    case STACK_P2P:
       printf("P2P\n");
       break;
-    case PKG_GEN_HDLC:
+    case STACK_GEN_HDLC:
       printf("GenHDLC\n");
       break;
-    case PKG_SYNC_PPP:
+    case STACK_SYNC_PPP:
       printf("SyncPPP\n");
       break;
-    case PKG_NETGRAPH:
+    case STACK_NETGRAPH:
       printf("Netgraph\n");
       break;
     default:
-      printf("Unknown line_pkg: %d\n", status.line_pkg);
+      printf("Unknown stack: %d\n", status.stack);
       break;
     }
 
-  if ((status.line_pkg == PKG_SPPP) ||
-      (status.line_pkg == PKG_SYNC_PPP) ||
-     ((status.line_pkg == PKG_GEN_HDLC) && (status.line_prot == PROT_PPP)))
+  if ((status.stack == STACK_SPPP) ||
+      (status.stack == STACK_SYNC_PPP) ||
+     ((status.stack == STACK_GEN_HDLC) && (status.proto == PROTO_PPP)))
     printf("Keep-alive pkts:\t%s\n", status.keep_alive ? on : off);
   }
 
@@ -1164,7 +1165,7 @@ void print_summary()
   {
   switch(status.card_type)
     {
-    case LMC_CSID_HSSI:
+    case CSID_LMC_HSSI:
       {
       print_card_name();
       print_card_type();
@@ -1179,7 +1180,7 @@ void print_summary()
       print_events();
       break;
       }
-    case LMC_CSID_T3:
+    case CSID_LMC_T3:
       {
       print_card_name();
       print_card_type();
@@ -1195,7 +1196,7 @@ void print_summary()
       print_events();
       break;
       }
-    case LMC_CSID_SSI:
+    case CSID_LMC_SSI:
       {
       print_card_name();
       print_card_type();
@@ -1212,7 +1213,7 @@ void print_summary()
       print_events();
       break;
       }
-    case LMC_CSID_T1E1:
+    case CSID_LMC_T1E1:
       {
       print_card_name();
       print_card_type();
@@ -1231,7 +1232,7 @@ void print_summary()
       print_events();
       break;
       }
-    case LMC_CSID_HSSIc:
+    case CSID_LMC_HSSIc:
       {
       print_card_name();
       print_card_type();
@@ -1306,15 +1307,19 @@ void print_t3_dsu()
 
   printf("Framing:       \t\t%s\n", ctl1   & CTL1_M13MODE    ? "M13" : "CPAR");
   print_tx_speed();
-  printf("Scrambler:     \t\t%s\n", mii16  & MII16_DS3_SCRAM ? yes : no);
-  printf("Scram poly:    \t\t%s\n", mii16  & MII16_DS3_POLY  ? "X^20" : "X^43");
+  if ((mii16 & MII16_DS3_SCRAM)==0)
+    printf("Scrambler:     \t\toff\n");
+  else if (mii16 & MII16_DS3_POLY)
+    printf("Scrambler:     \t\tX^20+X^17+1\n");
+  else
+    printf("Scrambler:     \t\tX^43+1\n");
   printf("Cable length   \t\t%s\n", mii16  & MII16_DS3_ZERO  ? "Short" : "Long");
   printf("Line    loop:  \t\t%s\n", mii16  & MII16_DS3_LNLBK ? yes : no);
   printf("Payload loop:  \t\t%s\n", ctl12  & CTL12_RTPLOOP   ? yes : no);
   printf("Frame   loop:  \t\t%s\n", ctl1   & CTL1_3LOOP      ? yes : no);
   printf("Host    loop:  \t\t%s\n", mii16  & MII16_DS3_TRLBK ? yes : no);
   printf("Transmit RAI:  \t\t%s\n", ctl1   & CTL1_XTX        ? no  : yes);
-  printf("Receive  RAI   \t\t%s\n", stat16 & STAT16_XERR     ? yes : no);
+  printf("Receive  RAI:  \t\t%s\n", stat16 & STAT16_XERR     ? yes : no);
   printf("Transmit AIS:  \t\t%s\n", ctl1   & CTL1_TXAIS      ? yes : no);
   printf("Receive  AIS:  \t\t%s\n", stat16 & STAT16_RAIS     ? yes : no);
   printf("Transmit IDLE: \t\t%s\n", ctl1   & CTL1_TXIDL      ? yes : no);
@@ -1333,7 +1338,7 @@ void print_t3_dsu()
   printf("Last Tx  FEAC msg:\t0x%02X (%s)\n",
    read_framer(T3CSR_TX_FEAC)  & 0x3F,
    print_t3_bop(read_framer(T3CSR_TX_FEAC) & 0x3F));
-  printf("Last dbl FEAC msg;\t0x%02X (%s)\n",
+  printf("Last dbl FEAC msg:\t0x%02X (%s)\n",
    read_framer(T3CSR_DBL_FEAC) & 0x3F,
    print_t3_bop(read_framer(T3CSR_DBL_FEAC) & 0x3F));
   printf("Last Rx  FEAC msg:\t0x%02X (%s)\n",
@@ -2145,7 +2150,7 @@ void main_cmd(int argc, char **argv)
       case '1': /* T1 commands */
         {
         if (verbose) printf("Doing T1 settings\n");
-        if (status.card_type != LMC_CSID_T1E1)
+        if (status.card_type != CSID_LMC_T1E1)
           {
           printf("T1 settings only apply to T1E1 cards\n");
           exit(1);
@@ -2156,7 +2161,7 @@ void main_cmd(int argc, char **argv)
       case '3': /* T3 commands */
         {
         if (verbose) printf("Doing T3 settings\n");
-        if (status.card_type != LMC_CSID_T3)
+        if (status.card_type != CSID_LMC_T3)
           {
           printf("T3 settings only apply to T3 cards\n");
           exit(1);
@@ -2166,9 +2171,9 @@ void main_cmd(int argc, char **argv)
         }
       case 'a': /* clock source */
         {
-        if ((status.card_type != LMC_CSID_T1E1) ||
-            (status.card_type != LMC_CSID_HSSI) ||
-            (status.card_type != LMC_CSID_HSSIc))
+        if ((status.card_type != CSID_LMC_T1E1) ||
+            (status.card_type != CSID_LMC_HSSI) ||
+            (status.card_type != CSID_LMC_HSSIc))
           {
           if (verbose) print_tx_clk_src();
           config.tx_clk_src = strtoul(optarg, NULL, 0);
@@ -2228,8 +2233,8 @@ void main_cmd(int argc, char **argv)
 	}
       case 'e': /* set DTE (default) */
         {
-        if ((status.card_type == LMC_CSID_SSI) ||
-            (status.card_type == LMC_CSID_HSSIc))
+        if ((status.card_type == CSID_LMC_SSI) ||
+            (status.card_type == CSID_LMC_HSSIc))
           {
           config.dte_dce = CFG_DTE;
           if (verbose) print_dte_dce();
@@ -2241,8 +2246,8 @@ void main_cmd(int argc, char **argv)
 	}
       case 'E': /* set DCE */
         {
-        if ((status.card_type == LMC_CSID_SSI) ||
-            (status.card_type == LMC_CSID_HSSIc))
+        if ((status.card_type == CSID_LMC_SSI) ||
+            (status.card_type == CSID_LMC_HSSIc))
           {
           config.dte_dce = CFG_DCE;
           if (verbose) print_dte_dce();
@@ -2254,8 +2259,8 @@ void main_cmd(int argc, char **argv)
 	}
       case 'f': /* set synth osc freq */
         {
-        if ((status.card_type == LMC_CSID_SSI) ||
-            (status.card_type == LMC_CSID_HSSIc))
+        if ((status.card_type == CSID_LMC_SSI) ||
+            (status.card_type == CSID_LMC_HSSIc))
           {
           synth_freq(strtoul(optarg, NULL, 0));
           write_synth(config.synth);
@@ -2449,23 +2454,23 @@ void main_cmd(int argc, char **argv)
       case 'x': /* <number> set line protocol */
         {
         config.keep_alive = 1; /* required for LMI operation */
-        config.line_prot = strtoul(optarg, NULL, 0);
-        if (verbose) printf("line protocol set to %d\n", config.line_prot);
+        config.proto = strtoul(optarg, NULL, 0);
+        if (verbose) printf("line protocol set to %d\n", config.proto);
         update = 1;
         break;
 	}
       case 'X': /* <number> set line package */
         {
         config.keep_alive = 1; /* required for LMI operation */
-        config.line_pkg = strtoul(optarg, NULL, 0);
-        if (verbose) printf("line package set to %d\n", config.line_pkg);
+        config.stack = strtoul(optarg, NULL, 0);
+        if (verbose) printf("line package set to %d\n", config.stack);
         update = 1;
         break;
 	}
       case 'y': /* disable SPPP keep-alive packets */
         {
-        if ((config.line_pkg  == PKG_SPPP) &&
-            (config.line_prot == PROT_FRM_RLY))
+        if ((config.stack == STACK_SPPP) &&
+            (config.proto == PROTO_FRM_RLY))
           printf("keep-alives must be ON for Frame-Relay/SPPP\n");
         else
           {
