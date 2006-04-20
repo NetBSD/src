@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.3 2005/03/16 17:25:32 briggs Exp $ */
+/* $NetBSD: ciphy.c,v 1.3.2.1 2006/04/20 03:14:45 snj Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.3 2005/03/16 17:25:32 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.3.2.1 2006/04/20 03:14:45 snj Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -365,6 +365,12 @@ ciphy_fixup(struct mii_softc *sc)
 	model = MII_MODEL(PHY_READ(sc, CIPHY_MII_PHYIDR2));
 	status = PHY_READ(sc, CIPHY_MII_AUXCSR);
 	speed = status & CIPHY_AUXCSR_SPEED;
+
+	if (strcmp(sc->mii_dev.dv_parent->dv_cfdriver->cd_name, "nfe") == 0) {
+		/* need to set for 2.5V RGMII for NVIDIA adapters */
+		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_INTSEL_RGMII);
+		PHY_SETBIT(sc, CIPHY_MII_ECTL1, CIPHY_IOVOL_2500MV);
+	}
 
 	switch (model) {
 	case MII_MODEL_CICADA_CS8201:
