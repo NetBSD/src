@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.8 2006/04/15 06:18:56 dogcow Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.9 2006/04/20 18:58:06 dogcow Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.8 2006/04/15 06:18:56 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.9 2006/04/20 18:58:06 dogcow Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -252,7 +252,7 @@ xbd_xenbus_detach(struct device *dev, int flags)
 	if (sc->sc_shutdown == 0) {
 		sc->sc_shutdown = 1;
 		/* wait for requests to complete */
-		while (sc->sc_dksc.sc_dkdev.dk_stats->busy > 0)
+		while (sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
 	}
 	splx(s);
@@ -377,7 +377,7 @@ static void xbd_backend_changed(struct device *dev, XenbusState new_state)
 		s = splbio();
 		sc->sc_shutdown = 1;
 		/* wait for requests to complete */
-		while (sc->sc_dksc.sc_dkdev.dk_stats->busy > 0)
+		while (sc->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
 		splx(s);
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
