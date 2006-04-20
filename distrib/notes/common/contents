@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.116 2005/08/22 04:02:30 riz Exp $
+.\"	$NetBSD: contents,v 1.117 2006/04/20 00:05:32 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,8 +63,8 @@ A gzipped
 kernel containing code for everything supported in this release.
 .if \n[hpcmips] \{\
 This kernel runs on Vr41xx and TX3922 CPUs only.
-.\} .\" hpcmips
-.\} .\" !atari/mac68k/sgimips/evgppc
+.\} \" hpcmips
+.\} \" !atari/mac68k/sgimips/evgppc
 .if \n[macppc]:\n[sparc]:\n[i386]:\n[amd64] \{\
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
@@ -557,7 +557,7 @@ everything described below.
 .if \n[evbsh3] .setsize 17 46
 .if \n[evbsh5] .setsize 105 294
 .if \n[hp300] .setsize 16 46
-.if \n[hp700] .setsize 20 67		.\" XXX old
+.if \n[hp700] .setsize 20 67		\" XXX old
 .if \n[hpcarm] .setsize 18 50
 .if \n[hpcmips] .setsize 20 73
 .if \n[hpcsh] .setsize 17 46
@@ -585,11 +585,11 @@ everything described below.
 .if \n[shark] .setsize 18 50
 .if \n[sparc] .setsize 18 51
 .if \n[sparc64] .setsize 18 56
-.if \n[sun2] .setsize 53 118		.\" XXX old
+.if \n[sun2] .setsize 53 118		\" XXX old
 .if \n[sun3] .setsize 16 45
 .if \n[vax] .setsize 15 44
 .if \n[x68k] .setsize 16 46
-.if \n[xen-i386] .setsize 19 45		.\" XXX old
+.if \n[xen-i386] .setsize 19 45		\" XXX old
 .showsize
 .
 .It Sy comp
@@ -622,7 +622,7 @@ system call and library manual pages.
 .if \n[evbsh3] .setsize 20 71
 .if \n[evbsh5] .setsize 23 85
 .if \n[hp300] .setsize 18 69
-.if \n[hp700] .setsize 9 42			.\" XXX old
+.if \n[hp700] .setsize 9 42			\" XXX old
 .if \n[hpcarm] .setsize 21 76
 .if \n[hpcmips] .setsize 21 88
 .if \n[hpcsh] .setsize 20 71
@@ -650,11 +650,11 @@ system call and library manual pages.
 .if \n[shark] .setsize 21 76
 .if \n[sparc] .setsize 21 77
 .if \n[sparc64] .setsize 22 88
-.if \n[sun2] .setsize 13 46			.\" XXX old
+.if \n[sun2] .setsize 13 46			\" XXX old
 .if \n[sun3] .setsize 18 69
 .if \n[vax] .setsize 14 54
 .if \n[x68k] .setsize 18 69
-.if \n[xen-i386] .setsize 15 54			.\" XXX old
+.if \n[xen-i386] .setsize 15 54			\" XXX old
 .showsize
 .
 .It Sy etc
@@ -831,7 +831,7 @@ that your system may need to boot.
 You
 .Em must
 install this distribution set.
-.showsize 3 7				.\" XXX old
+.showsize 3 7				\" XXX old
 .\}
 .el \{\
 .ie \n[sparc] \{\
