@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.63.4.4 2006/04/19 05:13:59 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.63.4.5 2006/04/20 00:54:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.4.4 2006/04/19 05:13:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.4.5 2006/04/20 00:54:33 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2871,8 +2871,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_svgid = kauth_cred_getsvgid(p->p_cred);
 
 	ki->p_ngroups = kauth_cred_ngroups(p->p_cred);
-	kauth_cred_getgroups(p->p_cred, ki->p_groups,
-	    sizeof(ki->p_groups) / sizeof(ki->p_groups[0]));
+	kauth_cred_getgroups(p->p_cred, ki->p_groups, ki->p_ngroups);
 
 	ki->p_jobc = p->p_pgrp->pg_jobc;
 	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
