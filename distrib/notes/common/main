@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.303 2006/03/17 03:23:28 rittera Exp $
+.\"	$NetBSD: main,v 1.304 2006/04/20 00:57:33 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +104,7 @@ You are reading the
 .Em \*[format]
 version.
 .
-.if \n[i386]:\n[macppc]:\n[sparc]:\n[sparc64]:\n[amd64] \{
+.if \n[i386]:\n[macppc]:\n[sparc]:\n[sparc64]:\n[amd64] \{\
 .Ss "Quick install notes for the impatient"
 .Pp
 This section contains some brief notes describing what you need to
@@ -205,7 +205,7 @@ and
 .Pa etc.tgz .
 In a typical workstation installation you will probably want
 all the installation sets.
-.if \n[i386] \{
+.if \n[i386] \{\
 .It
 Write the floppy images directly to a pair of floppies.
 If you have problems writing a raw image to a floppy,
@@ -220,7 +220,7 @@ in the
 .Pa i386/installation/misc/
 directory may be of help.
 .\}
-.if \n[macppc] \{
+.if \n[macppc] \{\
 .It
 If your \*M has a floppy drive, create the pair of boot floppies using 
 .Ic suntar
@@ -235,14 +235,14 @@ system with floppy support).  If your system has Open Firmware 3, drag
 to your hard drive icon (the top level of the drive, not the desktop).
 If you are using the CD image, burn it now.
 .\}
-.if \n[sparc] \{
+.if \n[sparc] \{\
 .It
 Make sure your sparc's CD-ROM drive is bootable.
 Burn the CD.
 Otherwise, write the floppy images directly to a pair of floppies
 (after uncompressing disk1.gz).
 .\}
-.if \n[sparc64] \{
+.if \n[sparc64] \{\
 .It
 Burn the CD or put the installation kernel and bootloader 
 at the root level of a bootable
