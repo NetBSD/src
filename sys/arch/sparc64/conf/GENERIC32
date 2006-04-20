@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.98.2.12 2006/04/20 03:44:36 snj Exp $
+# 	$NetBSD: GENERIC32,v 1.98.2.13 2006/04/20 03:45:37 snj Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98.2.12 $"
+#ident 		"GENERIC-$Revision: 1.98.2.13 $"
 
 maxusers	64
 
@@ -498,6 +498,7 @@ inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 igphy*	at mii? phy ?			# Intel IGP01E1000
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
