@@ -1,9 +1,9 @@
-.\"	$NetBSD: prep,v 1.2 2004/05/13 00:26:25 cl Exp $
+.\"	$NetBSD: prep,v 1.3 2006/04/20 03:44:01 uwe Exp $
 .
 .(tag instop
 .It Em "Domain-0 / privileged" installation
 Configure grub to boot the existing
-.Nx /i386
+.Nx Ns /i386
 installation and the new
 .Nx*M
 installation:
@@ -19,7 +19,7 @@ root (hd0,3,a)
 .	tag)
 .It
 add entries to boot
-.Nx /i386 :
+.Nx Ns /i386 :
 .	(tag
 .It Pa
 title NetBSD
@@ -50,7 +50,7 @@ module /grub/netbsd-GENERIC.gz
 .bullet)
 .Pp
 Note: The example configuration above assumes that the
-.Nx /i386
+.Nx Ns /i386
 installation is on partition wd0a and the
 .Nx
 slice is the third fdisk partition.  Refer to the grub documentation if
