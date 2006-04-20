@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.87.8.1 2006/03/08 01:01:13 elad Exp $	*/
+/*	$NetBSD: buf.h,v 1.87.8.2 2006/04/20 02:34:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -82,11 +82,11 @@
 #if defined(_KERNEL)
 #include <sys/workqueue.h>
 #endif /* defined(_KERNEL) */
-#include <sys/kauth.h>
 
 struct buf;
 struct mount;
 struct vnode;
+struct kauth_cred;
 
 #define NOLIST ((struct buf *)0x87654321)
 
@@ -270,11 +270,11 @@ void	bdirty(struct buf *);
 void	bdwrite(struct buf *);
 void	biodone(struct buf *);
 int	biowait(struct buf *);
-int	bread(struct vnode *, daddr_t, int, kauth_cred_t, struct buf **);
-int	breada(struct vnode *, daddr_t, int, daddr_t, int, kauth_cred_t,
+int	bread(struct vnode *, daddr_t, int, struct kauth_cred *, struct buf **);
+int	breada(struct vnode *, daddr_t, int, daddr_t, int, struct kauth_cred *,
 	       struct buf **);
 int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
-	       kauth_cred_t, struct buf **);
+	       struct kauth_cred *, struct buf **);
 void	brelse(struct buf *);
 void	bremfree(struct buf *);
 void	bufinit(void);
