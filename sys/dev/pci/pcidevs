@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.28 2006/04/08 23:29:19 tron Exp $
+$NetBSD: pcidevs,v 1.701.2.29 2006/04/20 03:04:18 snj Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -377,7 +377,7 @@ vendor CANOPUS		0x114b	Canopus
 vendor ANNABOOKS	0x114c	Annabooks
 vendor IC		0x114d	IC
 vendor NIKON		0x114e	Nikon Systems
-vendor DIGIINTERNAT	0x114f	Digi International
+vendor DIGI		0x114f	Digi International
 vendor TMC		0x1150	Thinking Machines
 vendor JAE		0x1151	JAE Electronics
 vendor MEGATEK		0x1152	Megatek
@@ -482,7 +482,7 @@ vendor DOCTECH		0x11c4	Document Technologies
 vendor SHIVA		0x11c5	Shiva
 vendor DCMDATA		0x11c7	DCM Data Systems
 vendor DOLPHIN		0x11c8	Dolphin Interconnect Solutions
-vendor MRTMAGMA		0x11c9	Mesa Ridge Technologies (MAGMA)
+vendor MAGMA		0x11c9	Mesa Ridge Technologies (MAGMA)
 vendor LSISYS		0x11ca	LSI Systems
 vendor SPECIALIX	0x11cb	Specialix Research
 vendor MKC		0x11cc	Michels & Kleberhoff Computer
@@ -493,6 +493,7 @@ vendor SEGA		0x11db	SEGA Enterprises
 vendor ZORAN		0x11de	Zoran
 vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
+vendor COMTROL		0x11fe	Comtrol
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
 vendor O2MICRO		0x1217	O2 Micro
@@ -538,6 +539,7 @@ vendor SIIG		0x131f	Siig
 vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media
 vendor NETGEAR		0x1385	Netgear
+vendor MOXA		0x1393	Moxa Technologies
 vendor LEVELONE		0x1394	Level One
 vendor COLOGNECHIP	0x1397	Cologne Chip Designs
 vendor HIFN		0x13a3	Hifn
@@ -577,6 +579,7 @@ vendor NDC		0x15e8	National Datacomm
 vendor ACTIONTEC	0x1668	Action Tec Electronics
 vendor ATHEROS		0x168c	Atheros Communications
 vendor GLOBALSUN	0x16ab	Global Sun Tech
+vendor SAFENET		0x16ae	SafeNet
 vendor LINKSYS		0x1737	Linksys
 vendor ALTIMA		0x173b	Altima
 vendor ANTARES		0x1754	Antares Microsystems
@@ -993,6 +996,7 @@ product ATI RAGE_IIC_AGP_B 	0x4757	3D Rage IIC (AGP)
 product ATI MACH64_GX		0x4758	Mach64 GX
 product ATI RAGE_IIC		0x4759	3D Rage IIC
 product ATI RAGE_IIC_AGP_P	0x475a	3D Rage IIC (AGP)
+product ATI RADEON_9000_PRO	0x4966	Radeon 9000 Pro
 product ATI RAGE_LT_PRO_AGP	0x4c42	3D Rage LT Pro (AGP 133MHz)
 product ATI RAGE_LT_PRO_AGP66	0x4c44	3D Rage LT Pro (AGP 66MHz)
 product ATI RAGE_MOB_M3_PCI	0x4c45	Rage Mobility M3
@@ -1071,6 +1075,9 @@ product ATI MACH64_VT4		0x5656	Mach64 VT4
 product ATI RS300_HB		0x5833	RS300 Host Bridge
 product ATI RADEON_9100_IGP	0x5834	Radeon 9100 IGP
 product ATI RS300_AGP		0x5838	RS300 AGP Interface
+product ATI RADEON_9200_PRO_S	0x5940	Radeon 9200 Pro Secondary
+product ATI RADEON_9200_S	0x5941	Radeon 9200 Secondary
+product ATI RADEON_9200_PRO	0x5960	Radeon 9200 Pro
 product ATI RADEON_9200		0x5961	Radeon 9200
 product ATI RADEON_9200_2	0x5962	Radeon 9200
 product ATI RADEON_9200_3	0x5963	Radeon 9200
@@ -1318,6 +1325,23 @@ product COMPEX NE2KETHER	0x1401	Ethernet
 product COMPEX RL100ATX		0x2011	RL100-ATX 10/100 Ethernet
 product COMPEX RL100TX		0x9881	RL100-TX 10/100 Ethernet
 
+/* Comtrol products */
+product COMTROL ROCKETPORT32EXT	0x0001	RocketPort 32 port external
+product COMTROL ROCKETPORT8EXT	0x0002	RocketPort 8 port external
+product COMTROL ROCKETPORT16EXT	0x0003	RocketPort 16 port external
+product COMTROL ROCKETPORT4QUAD	0x0004	RocketPort 4 port w/ quad cable
+product COMTROL ROCKETPORT8OCTA	0x0005	RocketPort 8 port w/ octa cable
+product COMTROL ROCKETPORT8RJ	0x0006	RocketPort 8 port w/ RJ11s
+product COMTROL ROCKETPORT4RJ	0x0007	RocketPort 4 port w/ RJ11s
+product COMTROL ROCKETPORT8DB	0x0008	RocketPort 8 port w/ DB78
+product COMTROL ROCKETPORT16DB	0x0009	RocketPort 16 port w/ DB78
+product COMTROL ROCKETPORTP4	0x000a	RocketPort Plus 4 port
+product COMTROL ROCKETPORTP8	0x000b	RocketPort Plus 8 port
+product COMTROL ROCKETMODEM6	0x000c	RocketModem 6 port
+product COMTROL ROCKETMODEM4	0x000d	RocketModem 4 port
+product COMTROL ROCKETPORTP232	0x000e	RocketPort 2 port RS232
+product COMTROL ROCKETPORTP422	0x000f	RocketPort 2 port RS422
+
 /* Conexant Systems products */
 product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
 product CONEXANT 56KFAXMODEM	0x1085	HW 56K Fax Modem
@@ -1430,7 +1454,9 @@ product DPT RAID_2005S	0xa511	Zero Channel SmartRAID (I2O)
 product DPT MEMCTLR	0x1012	Memory Controller
 
 /* Dolphin products */
-product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
+product DOLPHIN PCISCI32	0x0658	PCI-SCI Bridge (32-bit, 33 MHz)
+product DOLPHIN PCISCI64	0xd665	PCI-SCI Bridge (64-bit, 33 MHz)
+product DOLPHIN PCISCI66	0xd667	PCI-SCI Bridge (64-bit, 66 MHz)
 
 /* Domex products */
 product DOMEX PCISCSI	0x0001	DMX-3191D
@@ -1627,6 +1653,7 @@ product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
 product IBM GXT800P	0x005e	GXT-800P
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM 133PCIX	0x01a7	133 PCI-X Bridge
+product IBM SERVERAID4	0x01bd	ServeRAID 4/5
 product IBM MPIC2	0xffff	MPIC-II
 
 /* Conexant (iCompression, GlobeSpan) products */
@@ -2080,6 +2107,10 @@ product MADGE SMARTRN2		0x0002	Smart 16/4 PCI Ringnode Mk2
 product MADGE COLLAGE25		0x1000	Collage 25 ATM adapter
 product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 
+/* MAGMA products */
+product MAGMA SERIAL16		0x0010	16 DMA PCI-SLRS
+product MAGMA SERIAL4		0x0011	4 DMA PCI-SLRS
+
 /* Matrox products */
 product MATROX ATLAS		0x0518	MGA PX2085 (\"Atlas\")
 product MATROX MILLENNIUM	0x0519	MGA Millennium 2064W (\"Storm\")
@@ -2105,6 +2136,9 @@ product MIDDLE_DIGITAL WEASEL_VGA	0x9050	Weasel Virtual VGA
 product MIDDLE_DIGITAL WEASEL_SERIAL	0x9051	Weasel Serial Port
 product MIDDLE_DIGITAL WEASEL_CONTROL	0x9052	Weasel Control
 
+/* Mitsubishi products */
+product MITSUBISHIELEC TORNADO	0x0308	Tornado 3000 AGP
+
 /* Motorola products */
 product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
@@ -2114,6 +2148,15 @@ product MOT MPC8245	0x0006	MPC8245 \"Kahlua II\" Host Bridge
 product MOT RAVEN	0x4801	Raven Host Bridge & Multi-Processor Interrupt Controller
 product MOT FALCON	0x4802	Falcon ECC Memory Controller Chip Set
 product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
+
+/* Moxa Technologies products */
+product	MOXA C104H	0x1040	C104H
+product	MOXA CP104	0x1041	CP104UL
+product	MOXA CP114	0x1141	CP114
+product	MOXA C168H	0x1680	C168H
+
+/* Mutech products */
+product MUTECH MV1000	0x0001	MV1000
 
 /* Mylex products */
 product MYLEX RAID_V2		0x0001	DAC960 RAID (v2 interface)
@@ -2267,20 +2310,26 @@ product NVIDIA	RIVATNT2	0x0028	RIVA TNT2
 product NVIDIA	RIVATNT2U	0x0029	RIVA TNT2 Ultra
 product NVIDIA	VANTA		0x002c	Vanta
 product NVIDIA	RIVATNT2M64	0x002d	RIVA TNT2 Model 64
+product NVIDIA	MCP04_IDE	0x0035	MCP04 IDE
+product NVIDIA	MCP04_SATA	0x0036	MCP04 SATA
+product NVIDIA	MCP04_LAN1	0x0037	MCP04 Ethernet
+product NVIDIA	MCP04_LAN2	0x0038	MCP04 Ethernet
+product NVIDIA	MCP04_SATA2	0x003e	MCP04 SATA
 product NVIDIA	GEFORCE_6800U	0x0040	GeForce 6800 Ultra
 product NVIDIA	GEFORCE_6800	0x0041	GeForce 6800
 product NVIDIA	GEFORCE_6800LE	0x0042	GeForce 6800LE
 product NVIDIA	GEFORCE_6800GT	0x0045	GeForce 6800 GT
 product	NVIDIA	NFORCE4_SMBUS	0x0052	nForce4 SMBus
 product NVIDIA	NFORCE4_ATA133	0x0053	nForce4 ATA133 IDE
-product	NVIDIA	NFORCE4_SATA1	0x0054	nForce4 Serial ATA 1
-product	NVIDIA	NFORCE4_SATA2	0x0055	nForce4 Serial ATA 2
-product	NVIDIA	NFORCE4_NET	0x0057	nForce4 Ethernet
+product NVIDIA	NFORCE4_SATA1	0x0054	nForce4 Serial ATA 1
+product NVIDIA	NFORCE4_SATA2	0x0055	nForce4 Serial ATA 2
+product NVIDIA	NFORCE4_LAN1	0x0056	nForce4 Ethernet
+product NVIDIA	NFORCE4_LAN2	0x0057	nForce4 Ethernet
 product NVIDIA	NFORCE4_AC	0x0059	nForce4 AC-97
 product NVIDIA	NFORCE2_PCIB	0x0060	nForce2 PCI-ISA bridge
 product NVIDIA	NFORCE2_SMBUS	0x0064	nForce2 SMBus Controller
 product NVIDIA	NFORCE2_ATA133	0x0065	nForce2 ATA133 IDE
-product NVIDIA	NFORCE2_NET	0x0066	nForce2 Ethernet
+product NVIDIA	NFORCE2_LAN	0x0066	nForce2 Ethernet
 product NVIDIA	NFORCE2_OHCI	0x0067	nForce2 USB Host Controller
 product NVIDIA	NFORCE2_EHCI	0x0068	nForce2 USB2 Host Controller
 product NVIDIA	NFORCE2_MCPT_AC	0x006a	nForce2 MCP-T AC-97
@@ -2290,30 +2339,38 @@ product NVIDIA	NFORCE2_FW	0x006e	nForce2 Firewire Controller
 product NVIDIA	NFORCE2_400_PCIB	0x0080	nForce2 Ultra 400 PCI-ISA bridge
 product NVIDIA	NFORCE2_400_SMBUS	0x0084	nForce2 Ultra 400 SMBus Controller
 product NVIDIA	NFORCE2_400_ATA133	0x0085	nForce2 Ultra 400 ATA133 IDE
+product NVIDIA	NFORCE2_400_LAN1	0x0086	nForce2 Ultra 400 Ethernet
 product NVIDIA	NFORCE2_400_OHCI	0x0087	nForce2 Ultra 400 USB Host Controller
 product NVIDIA	NFORCE2_400_EHCI	0x0088	nForce2 Ultra 400 USB2 Host Controller
 product NVIDIA	NFORCE2_400_MCPT_AC	0x008a	nForce2 Ultra 400 AC-97
 product NVIDIA	NFORCE2_400_PPB		0x008b	nForce2 Ultra 400 PCI-PCI bridge
+product NVIDIA	NFORCE2_400_LAN2	0x008c	nForce2 Ultra 400 Ethernet
 product NVIDIA	NFORCE2_400_SATA	0x008e	nForce2 Ultra 400 Serial ATA Controller
 product NVIDIA	NFORCE3_PCHB	0x00d1	nForce3 Host-PCI bridge
 product NVIDIA	NFORCE3_PCIB	0x00d0	nForce3 PCI-ISA bridge
 product NVIDIA	NFORCE3_SMBUS	0x00d4	nForce3 SMBus controller
 product NVIDIA	NFORCE3_ATA133	0x00d5	nForce3 ATA133 IDE
+product NVIDIA	NFORCE3_LAN1	0x00d6	nForce3 Ethernet
 product NVIDIA	NFORCE3_OHCI	0x00d7	nForce3 USB Host Controller
 product NVIDIA	NFORCE3_EHCI	0x00d8	nForce3 USB2 Host Controller
 product NVIDIA	NFORCE3_MCPT_AC	0x00da	nForce3 MCP-T AC-97
 product NVIDIA	NFORCE3_PPB	0x00dd	nForce3 PCI-PCI bridge
+product NVIDIA	NFORCE3_LAN4	0x00df	nForce3 ethernet #4
+product NVIDIA	NFORCE3_250_PCIB	0x00e0	nForce3 250 PCI-ISA bridge
 product NVIDIA	NFORCE3_250_PCHB	0x00e1	nForce3 250 Host-PCI bridge
 product NVIDIA	NFORCE3_250_AGP		0x00e2	nForce3 250 AGP
-product NVIDIA	NFORCE3_250_PCIB	0x00e0	nForce3 250 PCI-ISA bridge
+product NVIDIA	NFORCE3_250_SATA	0x00e3	nForce3 250 Serial ATA Controller
 product NVIDIA	NFORCE3_250_SMBUS	0x00e4	nForce3 250 SMBus Controller
 product NVIDIA	NFORCE3_250_ATA133	0x00e5	nForce3 250 ATA133 IDE
 product NVIDIA	NFORCE3_250_SATA	0x00e3	nForce3 250 Serial ATA Controller
+product NVIDIA	NFORCE3_250_LAN		0x00e6	nForce3 250 Ethernet
 product NVIDIA	NFORCE3_250_OHCI	0x00e7	nForce3 250 USB Host Controller
 product NVIDIA	NFORCE3_250_EHCI	0x00e8	nForce3 250 USB2 Host Controller
 product NVIDIA	NFORCE3_250_MCPT_AC	0x00ea	nForce3 250 MCP-T AC-97
 product NVIDIA	NFORCE3_250_PPB		0x00ed	nForce3 250 PCI-PCI bridge
 product NVIDIA	ALADDINTNT2	0x00a0	Aladdin TNT2
+product NVIDIA	QUADRO4_280NVS2	0x00fd	Quadro4 280 NVS
+product NVIDIA	QUADROFX3400SLI	0x00fd	Quadro FX 3400 SLI
 product NVIDIA	GEFORCE256	0x0100	GeForce 256
 product NVIDIA	GEFORCEDDR	0x0101	GeForce DDR
 product NVIDIA	QUADRO		0x0103	Quadro
@@ -2325,6 +2382,7 @@ product NVIDIA	GEFORCE2	0x0150	GeForce2 GTS
 product NVIDIA	GEFORCE2DDR	0x0151	GeForce2 GTS (DDR)
 product NVIDIA	GEFORCE2BR	0x0152	GeForce2 GTS
 product NVIDIA	QUADRO2		0x0153	Quadro2
+product NVIDIA	GEFORCE6200	0x0161	GeForce 6200TC
 product NVIDIA	GEFORCE4_MX460	0x0170	GeForce4 MX 460
 product NVIDIA	GEFORCE4_MX440	0x0171	GeForce4 MX 440
 product NVIDIA	GEFORCE4_MX420	0x0172	GeForce4 MX 420
@@ -2340,6 +2398,8 @@ product NVIDIA	QUADRO4_380XGL	0x018b	Quadro4 380 XGL
 product NVIDIA	GEFORCE2_IGP	0x01a0	GeForce2 Integrated GPU
 product NVIDIA	NFORCE_MCP_AC	0x01b1	nForce MCP AC-97
 product NVIDIA	NFORCE_ATA100	0x01bc	nForce ATA100 IDE
+product NVIDIA	NFORCE_USB	0x01c2	nForce USB
+product NVIDIA	NFORCE_LAN	0x01c3	nForce Ethetnet
 product NVIDIA	NFORCE2_PCHB	0x01e0	nForce2 Host-PCI Bridge
 product NVIDIA	NFORCE2_PPB2	0x01e8	nForce2 PCI-PCI Bridge
 product NVIDIA	NFORCE2_MEM1	0x01eb	nForce2 Memory Controller
@@ -2361,9 +2421,10 @@ product NVIDIA	QUADRO4_700XGL	0x025b	Quadro4 700XGL
 product NVIDIA	NFORCE430_PCIB	0x0260	nForce430 PCI-ISA bridge
 product NVIDIA	NFORCE430_SMBUS	0x0264	nForce430 SMBus Controller
 product NVIDIA	NFORCE430_ATA133	0x0265	nForce430 ATA133 IDE Controller
-product NVIDIA	NFORCE430_SATA1	0x0266	nForce430 Serial SATA Controller 1
-product NVIDIA	NFORCE430_SATA2	0x0267	nForce430 Serial SATA Controller 2
-product NVIDIA	NFORCE430_NET	0x0269	nForce430 Gigabit Ethernet Controller
+product NVIDIA	NFORCE430_SATA1	0x0266	nForce430 Serial SATA Controller
+product NVIDIA	NFORCE430_SATA2	0x0267	nForce430 Serial SATA Controller
+product NVIDIA	NFORCE430_LAN1	0x0268	nForce430 Gigabit Ethernet Controller
+product NVIDIA	NFORCE430_LAN2	0x0269	nForce430 Gigabit Ethernet Controller
 product NVIDIA	NFORCE430_AC	0x026c	nForce430 AC-97
 product NVIDIA	NFORCE430_OHCI	0x026d	nForce430 USB Controller
 product NVIDIA	NFORCE430_EHCI	0x026e	nForce430 USB2 Controller
@@ -2389,7 +2450,14 @@ product NVIDIA	GF_FX5900	0x0331	GeForce FX 5900
 product NVIDIA	GF_FX5900XT	0x0332	GeForce FX 5900XT
 product NVIDIA	GF_FX5950U	0x0333	GeForce FX 5950 Ultra
 product NVIDIA	QUADRO_FX_3000	0x0338	Quadro FX 3000
-product	NVIDIA	GF_FX5700_LE	0x0343	GeForce FX 5700 LE
+product NVIDIA	GF_FX5700_LE	0x0343	GeForce FX 5700 LE
+product NVIDIA	MCP55_SMB	0x0368	MCP55 SMBus
+product NVIDIA	MCP55_IDE	0x036e	MCP55 IDE
+product NVIDIA	MCP55_HDA	0x0371	HD Audio
+product NVIDIA	MCP55_LAN1	0x0372	MCP55 LAN
+product NVIDIA	MCP55_LAN2	0x0373	MCP55 LAN
+product NVIDIA	MCP55_SATA	0x037e	MCP55 SATA
+product NVIDIA	MCP55_SATA2	0x037f	MCP55 SATA
 
 /* Nvidia & SGS-Thomson Microelectronics */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
@@ -2561,6 +2629,9 @@ product S3 SAVAGE_IXC	0x8c2e	Savage/IXC
 product S3 SAVAGE2000	0x9102	Savage2000
 product S3 SONICVIBES	0xca00	SonicVibes
 
+/* SafeNet products */
+product SAFENET SAFEXCEL	0x1141 SafeXcel
+
 /* Samsung Semiconductor products */
 product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
 
@@ -2652,6 +2723,7 @@ product SIIG CYBER20_4S850	0x2052	Cyber20x 4S 16850 PCI
 product SIIG CYBER20_2S1P550	0x2060	Cyber20x 2S1P 16550 PCI
 product SIIG CYBER20_2S1P650	0x2061	Cyber20x 2S1P 16650 PCI
 product SIIG CYBER20_2S1P850	0x2062	Cyber20x 2S1P 16850 PCI
+product SIIG PCISERIAL8000P	0x2082	PCI Serial 8000 Plus
 
 /* Silicon Integrated System products */
 product SIS 86C201		0x0001	86C201
