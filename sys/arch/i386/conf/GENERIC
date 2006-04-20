@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.746 2006/04/19 10:31:44 drochner Exp $
+# $NetBSD: GENERIC,v 1.747 2006/04/20 15:58:52 perry Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.746 $"
+#ident 		"GENERIC-$Revision: 1.747 $"
 
 maxusers	32		# estimated number of users
 
@@ -254,7 +254,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_COLATTR=""
 #options 	WS_KERNEL_MONOATTR=""
 # customization of console border color
-options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+options 	WSDISPLAY_CUSTOM_BORDER	# custom border colors via wsconsctl(8)
 #options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
@@ -607,7 +607,7 @@ dpti*	at iop? tid 0			# DPT/Adaptec control interface
 #gpio*	at gscpcib?
 
 # 1-Wire support
-#gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bus bitbanging via gpio
+#gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bitbanging via gpio
 #onewire*	at gpioow?
 
 # 1-Wire devices
@@ -950,7 +950,7 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
-rgephy*	at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
