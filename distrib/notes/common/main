@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.305 2006/04/20 01:05:47 uwe Exp $
+.\"	$NetBSD: main,v 1.306 2006/04/20 01:32:48 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -630,7 +630,7 @@ distribution.
 .It Li README.files
 README describing the distribution's contents.
 .It Li TODO
-.Nx 's
+.Nx Ns 's
 todo list (also somewhat incomplete and out of date).
 .It Pa patches/
 Post-release source code patches.
