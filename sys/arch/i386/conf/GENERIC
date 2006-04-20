@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.661.2.10 2006/04/20 03:17:32 snj Exp $
+# $NetBSD: GENERIC,v 1.661.2.11 2006/04/20 14:30:29 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.661.2.10 $"
+#ident 		"GENERIC-$Revision: 1.661.2.11 $"
 
 maxusers	32		# estimated number of users
 
@@ -661,6 +661,7 @@ aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at eisa? slot ?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family
