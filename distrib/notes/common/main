@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.306 2006/04/20 01:32:48 uwe Exp $
+.\"	$NetBSD: main,v 1.307 2006/04/20 02:20:39 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1421,6 +1421,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta UCHIYAMA Yasushi Ta Mt uch@NetBSD.org
 .It Ta Masao Uebayashi Ta Mt uebayasi@NetBSD.org
 .It Ta Shuichiro URATA Ta Mt ur@NetBSD.org
+.It Ta Valeriy E. Ushakov Ta Mt uwe@NetBSD.org
 .It Ta Todd Vierling Ta Mt tv@NetBSD.org
 .It Ta Aymeric Vincent Ta Mt aymeric@NetBSD.org
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.org
