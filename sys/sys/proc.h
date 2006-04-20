@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.216.2.4 2006/04/19 04:36:01 elad Exp $	*/
+/*	$NetBSD: proc.h,v 1.216.2.5 2006/04/20 01:37:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -52,7 +52,6 @@
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 #include <sys/event.h>
-#include <sys/kauth.h>
 
 /*
  * One structure allocated per session.
@@ -88,6 +87,7 @@ struct exec_package;
 struct ps_strings;
 struct ras;
 struct sa_emul;
+struct kauth_cred;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -162,7 +162,7 @@ struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
 
 	/* Substructures: */
-	kauth_cred_t	p_cred;		/* Credentials */
+	struct kauth_cred *p_cred;	/* Credentials */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
 	struct pstats	*p_stats;	/* Accounting/statistics (PROC ONLY) */
