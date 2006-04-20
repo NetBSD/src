@@ -5,10 +5,10 @@ WARNS?=	4
 .PATH:	${.CURDIR}/../../sys/compat/ndis
 
 .if ${MACHINE} == "i386"
-MAN=	ndiscvt.8
 PROG=	ndiscvt
 .endif
 
+MAN=	ndiscvt.8
 SRCS=	ndiscvt.c
 SRCS+=	subr_pe.c
 SRCS+=	inf.c inf-token.l inf-parse.y
