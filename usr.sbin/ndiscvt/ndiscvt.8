@@ -1,4 +1,4 @@
-.\" $NetBSD: ndiscvt.8,v 1.3 2006/04/19 17:01:50 rittera Exp $
+.\" $NetBSD: ndiscvt.8,v 1.4 2006/04/20 02:56:42 rittera Exp $
 .\"
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com> All rights reserved.
@@ -48,6 +48,8 @@ NDIS drivers for use with
 .Op Fl n Ar devname
 .Op Fl o Ar outfile
 .Fl s Ar sysfile
+.\".Nm
+.\".Op Fl f Ar firmfile
 .Sh DESCRIPTION
 The
 .Nm
@@ -55,7 +57,8 @@ utility transforms a
 .Tn Windows\[rg]
 NDIS driver into a data file which
 is used to build an
-.Xr ndis 4
+.\".Xr ndis 4
+ndis
 compatibility driver module.
 .Tn Windows\[rg]
 drivers consist of two main parts: a
@@ -94,6 +97,102 @@ This is useful for debugging purposes only.
 .Sh OPTIONS
 The options are as follows:
 .Bl -tag -offset indent -width XfXfirmfileXX
+.\"***************************************************************************
+.\" The section describing the -f option for firmware has been commented out
+.\" Because this is not currently supported on NetBSD.
+.\"***************************************************************************
+.\".It Fl f Ar firmfile
+.\"A few NDIS drivers come with additional files that the core
+.\"driver module will load during initialization time.
+.\"Typically,
+.\"these files contain firmware which the driver will transfer to
+.\"the device in order to make it fully operational.
+.\"In
+.\".Tn Windows\[rg] ,
+.\"these files are usually just copied into one of the system
+.\"directories along with the driver itself.
+.\".Pp
+.\"In
+.\".Nx
+.\"there are two mechanism for loading these files.
+.\"If the driver
+.\"is built as a loadable kernel module which is loaded after the
+.\"kernel has finished booting
+.\"(and after the root filesystem has
+.\"been mounted),
+.\"the extra files can simply be copied to the
+.\".Pa /compat/ndis
+.\"directory, and they will be loaded into the kernel on demand when the
+.\"the driver needs them.
+.\".Pp
+.\"If however the driver is required to bootstrap the system
+.\"(i.e. if
+.\"the NDIS-based network interface is to be used for diskless/PXE
+.\"booting),
+.\"the files need to be pre-loaded by the bootstrap
+.\"loader in order to be accessible, since the driver will need them
+.\"before the root file system has been mounted.
+.\"However, the bootstrap
+.\"loader is only able to load files that are shared
+.\".Nx
+.\"binary objects.
+.\".Pp
+.\"The
+.\".Fl f
+.\"flag can be used to convert an arbitrary file
+.\".Ar firmfile
+.\"into shared object format
+.\"(the actual conversion is done using
+.\"the
+.\".Xr objcopy 1
+.\"and
+.\".Xr ld 1
+.\"commands).
+.\"The resulting files can then be copied to the
+.\".Pa /boot/kernel
+.\"directory, and can be pre-loaded directly from the boot loader
+.\"prompt, or automatically by editing the
+.\".Xr loader.conf 5
+.\"file.
+.\"If desired, the files can also be loaded into memory
+.\"at runtime using the
+.\".Xr kldload 8
+.\"command.
+.\".Pp
+.\"When an NDIS driver tries to open an external file, the
+.\".Xr ndisapi 9
+.\"code will first search for a loaded kernel module that matches the
+.\"name specified in the open request, and if that fails, it will then
+.\"try to open the file from the
+.\".Pa /compat/ndis
+.\"directory as well.
+.\"Note that during kernel bootstrap, the ability
+.\"to open files from
+.\".Pa /compat/ndis
+.\"is disabled: only the module search will be performed.
+.\".Pp
+.\"When using the
+.\".Fl f
+.\"flag,
+.\".Nm
+.\"will generate both a relocatable object file
+.\"(with a
+.\".Pa .o
+.\"extension)
+.\"and a shared object file
+.\"(with a
+.\".Pa .ko
+.\"extension).
+.\"The shared object is the one that should be placed in
+.\"the
+.\".Pa /boot/kernel
+.\"directory.
+.\"The relocatable object file is useful if the user wishes
+.\"to create a completely static kernel image: the object file can be
+.\"linked into the kernel directly along with the driver itself.
+.\"Some
+.\"editing of the kernel configuration files will be necessary in order
+.\"to have the extra object included in the build.
 .It Fl i Ar inffile
 Open and parse the specified
 .Pa .INF
@@ -103,7 +202,6 @@ The
 utility will parse this file and emit a device identification
 structure and registry key configuration structures which will be
 used by the
-.\" Replace these once ndis(4) and ndisapi(9) manual pages are available
 .\".Xr ndis 4
 ndis
 driver and
@@ -174,6 +272,7 @@ easier and then convert the image into a data array.
 .Xr ld 1 ,
 .Xr objcopy 1 ,
 .\".Xr ndis 4 ,
+.\".Xr kldload 8 ,
 .\".Xr ndisapi 9
 .Sh HISTORY
 The
