@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.307 2006/04/20 02:20:39 uwe Exp $
+.\"	$NetBSD: main,v 1.308 2006/04/20 03:04:34 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1085,11 +1085,12 @@ If you're one of them, and would like to mentioned, tell us!)
 .\"
 .\" XXX created by list-portmasters.pl
 .\"
-.It Ta                                Ta Mt                      Ta Sy 
+.It Ta Ta Ta
 .It Ta Allen Briggs                   Ta Mt    briggs@NetBSD.org Ta Sy sandpoint
 .It Ta Anders Magnusson               Ta Mt     ragge@NetBSD.org Ta Sy vax
 .It Ta Andrey Petrov                  Ta Mt    petrov@NetBSD.org Ta Sy sparc64
 .It Ta Ben Harris                     Ta Mt     bjh21@NetBSD.org Ta Sy acorn26
+.It Ta Cherry G. Mathew               Ta Mt    cherry@NetBSD.org Ta Sy ia64
 .It Ta Chris Gilbert                  Ta Mt     chris@NetBSD.org Ta Sy cats
 .It Ta Christian Limpach              Ta Mt        cl@NetBSD.org Ta Sy xen
 .It Ta Eduardo Horvath                Ta Mt       eeh@NetBSD.org Ta Sy evbppc
@@ -1121,7 +1122,6 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Matt Thomas                    Ta Mt      matt@NetBSD.org Ta Sy netwinder
 .It Ta Matthias Drochner              Ta Mt  drochner@NetBSD.org Ta Sy cesfic
 .It Ta NISHIMURA Takeshi              Ta Mt   nsmrtks@NetBSD.org Ta Sy x68k
-.It Ta NONAKA Kimihiro                Ta Mt    nonaka@NetBSD.org Ta Sy prep
 .It Ta Nathan Williams                Ta Mt   nathanw@NetBSD.org Ta Sy sun3
 .It Ta Noriyuki Soda                  Ta Mt      soda@NetBSD.org Ta Sy arc
 .It Ta Paul Kranenburg                Ta Mt        pk@NetBSD.org Ta Sy sparc
@@ -1140,6 +1140,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Steve Woodford                 Ta Mt       scw@NetBSD.org Ta Sy mvme68k
 .It Ta Steve Woodford                 Ta Mt       scw@NetBSD.org Ta Sy mvmeppc
 .It Ta Takayoshi Kochi                Ta Mt     kochi@NetBSD.org Ta Sy ia64
+.It Ta Tim Rightnour                  Ta Mt   garbled@NetBSD.org Ta Sy prep
 .It Ta Tohru Nishimura                Ta Mt  nisimura@NetBSD.org Ta Sy luna68k
 .It Ta Tsubai Masanari                Ta Mt    tsubai@NetBSD.org Ta Sy macppc
 .It Ta Tsubai Masanari                Ta Mt    tsubai@NetBSD.org Ta Sy newsmips
@@ -1147,7 +1148,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta UCHIYAMA Yasushi               Ta Mt       uch@NetBSD.org Ta Sy playstation2
 .It Ta Wayne Knowles                  Ta Mt       wdk@NetBSD.org Ta Sy mipsco
 .It Ta Wolfgang Solfrank              Ta Mt        ws@NetBSD.org Ta Sy ofppc
-.It Ta Ta
+.It Ta Ta Ta
 .
 .br_ne 1i
 .It Em "The NetBSD \*V Release Engineering team:"
