@@ -1,0 +1,80 @@
+2006-03-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from mainline
+	2006-01-18  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	* btest-gcc.sh: gcc.sum has moved to gcc/testsuite/gcc/gcc.sum.
+	g++.sum has moved to gcc/testsuite/g++/g++.sum.
+	objc.sum has moved to gcc/testsuite/objc/objc.sum.
+
+2006-02-28  Release Manager
+
+	* GCC 4.1.0 released.
+
+2005-06-07  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* btest-gcc.sh: Add support for option
+	--add-passes-despite-regression.
+
+2005-06-06  Hans-Peter Nilsson  <hp@axis.com>
+
+	* btest-gcc.sh <Build>: Don't pass --with-newlib when target is
+	"*-linux*".
+
+	* btest-gcc.sh (TESTLOGS): Make libstdc++.sum optional.
+
+2004-11-07  James A. Morrison  <phython@gcc.gnu.org>
+
+	* README: Update website URL.
+
+2004-10-27  Geoffrey Keating  <geoffk@apple.com>
+
+	* btest-gcc.sh (TESTLOGS): The libstdc++-v3 test log is called
+	libstd++.sum not libstdc++-v3.sum.
+
+2004-10-26  Geoffrey Keating  <geoffk@apple.com>
+
+	* btest-gcc.sh (TESTLOGS): Examine regressions in libstdc++,
+	libffi, and libjava.
+
+2004-05-13  Andrew Pinski  <pinskia@physics.uc.edu>
+
+	* btest-gcc.sh: Remove g77.sum from TESTLOGS.
+
+2003-09-18  Andreas Tobler  <a.tobler@schweiz.ch>
+
+	* btest-gcc.sh: Add make check-target-libffi.
+
+2003-07-31  Andreas Tobler  <a.tobler@schweiz.ch>
+
+	* btest-gcc.sh: Add make check-target-libjava.
+
+2002-10-22  Geoffrey Keating  <geoffk@apple.com>
+
+	* btest-gcc.sh: Add gdb.sum to TESTLOGS only when GDB testsuite is run.
+
+2002-10-11  Geoffrey Keating  <geoffk@apple.com>
+
+	* objs-gcc.sh: Don't install GDB testsuite if GDB was not built.
+	* btest-gcc.sh: Don't run GDB testsuite if it doesn't exist.
+
+2002-10-09  Phil Edwards  <pme@gcc.gnu.org>
+
+	* btest-gcc.sh, objs-gcc.sh:  Update TARGET comments.
+
+2002-10-09  Geoffrey Keating  <geoffk@apple.com>
+
+	* objs-gcc.sh: On (non-linux) native hosts, use 'make bootstrap'.
+
+2002-03-09  Geoffrey Keating  <geoffk@redhat.com>
+
+	* btest-gcc.sh: For crosses, assume newlib and GNU binutils.
+	* site.exp: Correct mips-elf triplet.
+
+2002-01-31  Geoffrey Keating  <geoffk@redhat.com>
+
+	* btest-gcc.sh: New file.
+	* objs-gcc.sh: New file.
+	* site.exp: New file.
+	* ChangeLog: New file.
+	* README: New file.
