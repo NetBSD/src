@@ -41,9 +41,9 @@
 .\" this program; if not, write to the Free Software Foundation, Inc., 59
 .\" Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 .\"
-.\" $NetBSD: lmcconfig.8,v 1.3 2006/02/11 23:02:10 christos Exp $
+.\" $NetBSD: lmcconfig.8,v 1.4 2006/04/20 16:53:19 christos Exp $
 .\"
-.Dd February 1, 2006
+.Dd April 11, 2006
 .Dt LMCCONFIG 8
 .Os
 .ie (\n(.y < 19) .nr ssfix 1
@@ -121,9 +121,11 @@ If
 is present and the interface name ends with a colon
 then Netgraph control messages are used,
 otherwise the
-.Xr ifnet 9
+.if (\n[fbsd] : \n[nbsd] : \n[obsd] : \n[bsdi]) .Xr ifnet 9
+.if \n[linux] netdevice
 kernel interface and socket
-.Xr ioctl 2
+.if (\n[fbsd] : \n[nbsd] : \n[obsd] : \n[bsdi]) .Xr ioctl 2
+.if \n[linux] ioctl
 system calls are used.
 .\}
 .It Fl 1
@@ -301,10 +303,10 @@ section.
 Set the line control protocol to
 .Ar number .
 Line control protocols are listed below along with the operating
-systems that implement them and the packages that include them.
+systems that implement them and the stacks that include them.
 .Pp
 .Bl -column "1" "FrameRelay" "fnobl" "dspgsn" -compact
-.It x Ta Em Protocol Ta Em OpSys Ta Em Package
+.It x Ta Em Protocol Ta Em OpSys Ta Em Stack
 .It 1 Ta "IPinHDLC"   Ta "FNOBL" Ta "D--G-N"
 .It 2 Ta "PPP"        Ta "FNOBL" Ta "-SPGYN"
 .It 3 Ta "CiscoHDLC"  Ta "FNOBL" Ta "-SPGYN"
@@ -313,16 +315,16 @@ systems that implement them and the packages that include them.
 .El
 .Bd -unfilled
 OpSys: FreeBSD NetBSD OpenBSD BSD/OS Linux.
-Package: Driver SPPP P2P GenHDLC sYncPPP Netgraph.
+Stack: Driver SPPP P2P GenHDLC sYncPPP Netgraph.
 .Ed
 .It Fl X Ar number
-Set the line control package to
+Set the line control protocol stack to
 .Ar number .
-Line control packages are listed below along with the operating
+Line control protocol stacks are listed below along with the operating
 systems that include them and the protocols that they implement.
 .Pp
 .Bl -column "1" "FrameRelay" "fnobl" "ipcfe" -compact
-.It X Ta Em Package Ta Em OpSys Ta Em Protocol
+.It X Ta Em Stack Ta Em OpSys Ta Em Protocol
 .It 1 Ta "Driver"     Ta "FNOBL" Ta "I----"
 .It 2 Ta "SPPP"       Ta "FNO--" Ta "-PCF-"
 .It 3 Ta "P2P"        Ta "---B-" Ta "-PCF-"
@@ -783,8 +785,7 @@ the user is not privileged and tried to alter an interface's configuration.
 .\"
 .Xr ioctl 2 ,
 .Xr lmc 4 ,
-.if \n[fbsd] \{\
-.Xr netgraph 4 ,\}
+.if \n[fbsd] .Xr netgraph 4 ,
 .Xr ifconfig 8 ,
 .Xr ifnet 9
 .Pp
