@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.304 2006/04/20 00:57:33 uwe Exp $
+.\"	$NetBSD: main,v 1.305 2006/04/20 01:05:47 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -941,7 +941,7 @@ instead.
 .Pp
 If you are unsure of what man page you are looking for, enter
 .Pp
-.Ic apropos Ar subject-word
+.Dl # Ic apropos Ar subject-word
 .Pp
 where
 .Ar subject-word
