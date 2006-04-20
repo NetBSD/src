@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.27.10.1 2006/03/08 01:01:13 elad Exp $	*/
+/*	$NetBSD: resource.h,v 1.27.10.2 2006/04/20 01:06:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,9 @@
 
 #include <sys/featuretest.h>
 #include <sys/time.h>
+#ifdef _KERNEL
 #include <sys/kauth.h>
+#endif
 
 /*
  * Process priority specifications to get/setpriority.
