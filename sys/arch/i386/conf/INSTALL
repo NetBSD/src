@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.262 2005/03/01 02:33:51 itojun Exp $
+#	$NetBSD: INSTALL,v 1.262.2.1 2006/04/20 03:17:32 snj Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -518,6 +518,7 @@ le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
