@@ -1,4 +1,4 @@
-.\"	$NetBSD: instopt,v 1.2 2004/05/13 11:15:38 wiz Exp $
+.\"	$NetBSD: instopt,v 1.3 2006/04/20 03:44:01 uwe Exp $
 .
 There are two different installation procedures for
 .Nx*M .
@@ -11,9 +11,9 @@ installation to be run as a non-privileged domain.
 .
 .Pp
 For a privileged domain-0 installation, you have to first install
-.Nx /i386.
+.Nx Ns /i386 .
 The
-.Nx /i386
+.Nx Ns /i386
 distribution and installation instructions are available at
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-\*V/i386/
 .
