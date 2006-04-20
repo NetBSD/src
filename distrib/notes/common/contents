@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.117 2006/04/20 00:05:32 uwe Exp $
+.\"	$NetBSD: contents,v 1.118 2006/04/20 01:22:56 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -162,7 +162,8 @@ This is the kernel you should use when you want to install via
 netboot, from a CD-R, or an HFS partition on Open Firmware 3 systems.
 .			It Pa netbsd-INSTALL.gz
 A gzipped
-.Nx kernel containing code only for Open Firmware 1.0.5, 1.1.22, 2.0.x,
+.Nx
+kernel containing code only for Open Firmware 1.0.5, 1.1.22, 2.0.x,
 and 2.4 systems (i.e. those that have floppy drives).
 It has a RAM-disk installer.
 .\}
