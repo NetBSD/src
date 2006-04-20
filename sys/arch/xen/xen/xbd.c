@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.33 2006/04/15 17:54:12 matt Exp $ */
+/* $NetBSD: xbd.c,v 1.34 2006/04/20 12:13:51 blymn Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.33 2006/04/15 17:54:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.34 2006/04/20 12:13:51 blymn Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -1044,7 +1044,7 @@ xbd_detach(struct device *dv, int flags)
 	xs->sc_shutdown = 1;
 
 	/* And give it some time to settle if it's busy. */
-	if (xs->sc_dksc.sc_dkdev.dk_stats->busy > 0)
+	if (xs->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
 		tsleep(&xs, PWAIT, "xbdetach", hz);
 
 	/* locate the major number */

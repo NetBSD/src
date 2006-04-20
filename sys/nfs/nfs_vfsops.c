@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.153 2006/04/14 13:09:06 blymn Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.154 2006/04/20 12:13:53 blymn Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.153 2006/04/14 13:09:06 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.154 2006/04/20 12:13:53 blymn Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -807,10 +807,12 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	VOP_UNLOCK(*vpp, 0);
 
 	nmp->nm_stats = iostat_alloc(IOSTAT_NFS);
-	nmp->nm_stats->parent = nmp;
+	nmp->nm_stats->io_parent = nmp;
 	  /* generate a ficticious drive name for the nfs mount */
-	MALLOC(nmp->nm_stats->name, char *, IOSTATNAMELEN, M_NFSMNT, M_WAITOK);
-	snprintf(nmp->nm_stats->name, IOSTATNAMELEN, "nfs%u", nfs_mount_count);
+	MALLOC(nmp->nm_stats->io_name, char *, IOSTATNAMELEN, M_NFSMNT,
+	       M_WAITOK);
+	snprintf(nmp->nm_stats->io_name, IOSTATNAMELEN, "nfs%u",
+		 nfs_mount_count);
 	nfs_mount_count++;
 
 	return (0);
@@ -886,7 +888,7 @@ nfs_unmount(mp, mntflags, l)
 	 * nfs_mount_count here for good reason - we may not be unmounting
 	 * the last thing mounted.
 	 */
-	FREE(nmp->nm_stats->name, M_NFSMNT);
+	FREE(nmp->nm_stats->io_name, M_NFSMNT);
 	iostat_free(nmp->nm_stats);
 
 	/*

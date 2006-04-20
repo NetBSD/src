@@ -1,4 +1,4 @@
-/*	$NetBSD: dklist.c,v 1.6 2006/04/14 13:20:48 blymn Exp $	*/
+/*	$NetBSD: dklist.c,v 1.7 2006/04/20 12:13:53 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dklist.c,v 1.6 2006/04/14 13:20:48 blymn Exp $");
+__RCSID("$NetBSD: dklist.c,v 1.7 2006/04/20 12:13:53 blymn Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -207,10 +207,10 @@ mlx_disk_add_all(void)
 	/* Try to add each disk to the list. */
 	for (i = 0; i < ndrives; i++) {
 		deref_kptr(kd, drv, &cur_drive, sizeof(cur_drive));
-		deref_kptr(kd, cur_drive.name, buf, sizeof(buf));
-		if (cur_drive.type == IOSTAT_DISK)
+		deref_kptr(kd, cur_drive.io_name, buf, sizeof(buf));
+		if (cur_drive.io_type == IOSTAT_DISK)
 			mlx_disk_add0(buf);
-		drv = TAILQ_NEXT(&cur_drive, link);
+		drv = TAILQ_NEXT(&cur_drive, io_link);
 	}
 
 	kvm_close(kd);
