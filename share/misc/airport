@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.24.2.2 2006/04/20 03:31:39 snj Exp $
+#	$NetBSD: airport,v 1.24.2.3 2006/04/20 03:32:39 snj Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -168,6 +168,7 @@ LGB:Long Beach Daugherty Field, California, USA
 LGW:Gatwick, London, UK
 LHR:Heathrow, London, UK
 LIH:Lihue, Hawaii, USA
+LIS:Aeroporto da Portela de Sacavem, Lisboa, Portugal
 LIT:Little Rock Regional, Arkansas, USA
 LNK:Lincoln Municipal, Nebraska, USA
 LON:All Airports around London, United Kingdom
