@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.68 2006/04/19 21:03:22 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.69 2006/04/20 03:27:33 snj Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1331,4 +1331,25 @@ sys/dev/audiovar.h				1.36
 	Don't use simple_locks; we can't hold them while calling malloc and
 	friends.
 	[jmcneill, ticket #1281]
+
+distrib/sets/lists/man/mi			1.863
+share/man/man4/Makefile				1.377
+share/man/man4/nfe.4				1.1-1.2
+sys/arch/amd64/conf/GENERIC			1.88
+sys/arch/amd64/conf/INSTALL			1.48
+sys/arch/i386/conf/GENERIC			1.733
+sys/arch/i386/conf/INSTALL			1.282
+sys/arch/i386/conf/XEN0				1.35
+sys/dev/mii/ciphy.c				1.5
+sys/dev/mii/ciphyreg.h				1.4 via patch
+sys/dev/pci/files.pci				1.244 via patch
+sys/dev/pci/if_nfe.c				1.1-1.3
+sys/dev/pci/if_nfereg.h				1.1
+sys/dev/pci/if_nfevar.h				1.1
+sys/dev/pci/pcidevs				1.775 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add NVIDIA nForce MCP Ethernet driver nfe(4).
+	[tron, ticket #1266]
 
