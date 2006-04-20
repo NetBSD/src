@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.74 2006/04/14 13:09:06 blymn Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.75 2006/04/20 12:13:53 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.74 2006/04/14 13:09:06 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.75 2006/04/20 12:13:53 blymn Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -174,8 +174,8 @@ disk_find(char *name)
 
 	stat = iostat_find(name);
 
-	if ((stat != NULL) && (stat->type == IOSTAT_DISK))
-		return stat->parent;
+	if ((stat != NULL) && (stat->io_type == IOSTAT_DISK))
+		return stat->io_parent;
 
         return (NULL);
 }
@@ -214,8 +214,8 @@ disk_attach0(struct disk *diskp)
 	 * Set up the stats collection.
 	 */
 	diskp->dk_stats = iostat_alloc(IOSTAT_DISK);
-        diskp->dk_stats->parent = (void *) diskp;
-        diskp->dk_stats->name = diskp->dk_name;
+        diskp->dk_stats->io_parent = (void *) diskp;
+        diskp->dk_stats->io_name = diskp->dk_name;
 
 }
 
