@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.1 2006/04/14 13:12:37 blymn Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.2 2006/04/20 12:13:53 blymn Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -222,13 +222,13 @@ drvreadstats(void)
 	} else {
 		for (i = 0; i < ndrive; i++) {
 			deref_kptr(p, &cur_drive, sizeof(cur_drive));
-			cur.rxfer[i] = cur_drive.rxfer;
-			cur.wxfer[i] = cur_drive.wxfer;
-			cur.seek[i] = cur_drive.seek;
-			cur.rbytes[i] = cur_drive.rbytes;
-			cur.wbytes[i] = cur_drive.wbytes;
-			timerset(&(cur_drive.time), &(cur.time[i]));
-			p = cur_drive.link.tqe_next;
+			cur.rxfer[i] = cur_drive.io_rxfer;
+			cur.wxfer[i] = cur_drive.io_wxfer;
+			cur.seek[i] = cur_drive.io_seek;
+			cur.rbytes[i] = cur_drive.io_rbytes;
+			cur.wbytes[i] = cur_drive.io_wbytes;
+			timerset(&(cur_drive.io_time), &(cur.time[i]));
+			p = cur_drive.io_link.tqe_next;
 		}
 
 		deref_nl(X_TK_NIN, &cur.tk_nin, sizeof(cur.tk_nin));
@@ -426,13 +426,13 @@ drvinit(int selected)
 		for (i = 0; i < ndrive; i++) {
 			char	buf[10];
 			deref_kptr(p, &cur_drive, sizeof(cur_drive));
-			deref_kptr(cur_drive.name, buf, sizeof(buf));
+			deref_kptr(cur_drive.io_name, buf, sizeof(buf));
 			cur.name[i] = strdup(buf);
 			if (!cur.name[i])
 				err(1, "strdup");
 			cur.select[i] = selected;
 
-			p = cur_drive.link.tqe_next;
+			p = cur_drive.io_link.tqe_next;
 		}
 	}
 
