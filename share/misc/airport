@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.24.2.1 2005/10/22 03:44:51 riz Exp $
+#	$NetBSD: airport,v 1.24.2.2 2006/04/20 03:31:39 snj Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from http://www.mapping.com/airportcodes.html.
@@ -161,6 +161,7 @@ LAS:Las Vegas McCarran International, Nevada, USA
 LAX:Los Angeles International, California, USA
 LCJ:Lodz [Lublinek], Poland
 LCH:Lake Charles, Louisiana, USA
+LCY:London City, London, UK
 LFT:Lafayette, Louisiana, USA
 LGA:New York La Guardia, New York, USA
 LGB:Long Beach Daugherty Field, California, USA
