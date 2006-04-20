@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.11 2006/01/12 20:33:20 garbled Exp $ */
+/*	$NetBSD: progress.c,v 1.12 2006/04/20 23:20:55 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.11 2006/01/12 20:33:20 garbled Exp $");
+__RCSID("$NetBSD: progress.c,v 1.12 2006/04/20 23:20:55 hubertf Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -132,8 +132,16 @@ main(int argc, char *argv[])
 		err(1, "%s", infile);
 
 	/* stat() to get the filesize unless overridden, or -z */
-	if (!zflag && !lflag && (fstat(fd, &statb) == 0))
-		filesize = statb.st_size;
+	if (!zflag && !lflag && (fstat(fd, &statb) == 0)) {
+		if (S_ISFIFO(statb.st_mode)) {
+			/* stat(2) on pipe may return only the
+			 * first few bytes with more coming.
+			 * Don't trust!
+			 */
+		} else {
+			filesize = statb.st_size;
+		}
+	}
 
 	/* gzip -l the file if we have the name and -z is given */
 	if (zflag && !lflag && infile != NULL) {
