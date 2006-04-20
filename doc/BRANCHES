@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.75 2006/04/11 12:33:36 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.76 2006/04/20 10:56:08 elad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -898,12 +898,13 @@ Branch:		elad-kernelauth
 Description:	Native NetBSD implementation of Apple's kernel authorization
 		based on TN2127. This is a "clean-room" implementation to
 		avoid any licensing issues.
-Status:		Inactive
+Status:		Active
 Start Date:	Tue Mar	 7 2006
 End Date:
 Base Tag:	elad-kernelauth-base
 Maintainer:	Elad Efrat <elad@NetBSD.org>
-Scope:		src/sys
+Scope:		src/sys, src/share/man/man9/Makefile,
+		src/share/man/man9/kauth.h, src/distrib/sets/lists/comp/mi
 Notes:
 
 
