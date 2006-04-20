@@ -1,14 +1,14 @@
-.\"	$NetBSD: xfer,v 1.2 2004/05/13 00:26:25 cl Exp $
+.\"	$NetBSD: xfer,v 1.3 2006/04/20 03:44:01 uwe Exp $
 .
 .(tag instop
 .It Em "Domain-0 / privileged" installation
 On the already installed
-.Nx /i386
+.Nx Ns /i386
 system:
 .(bullet
 install the grub bootloader from pkgsrc (see Installing third
 party packages in the
-.Nx /i386
+.Nx Ns /i386
 installation notes).
 .It
 download the Xen binary from:
