@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2006/04/21 16:52:15 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 2006/04/21 17:04:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2006/04/21 16:52:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2006/04/21 17:04:26 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -337,7 +337,7 @@ cpu_startup(void)
 	printf("avail memory = %s\n", pbuf);
 }
 
-int	waittime = -1;
+static int waittime = -1;
 
 void
 cpu_reboot(int howto, char *bootstr)
