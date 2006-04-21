@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.13.2.3 2006/03/17 15:18:50 tron Exp $	*/
+/*	$NetBSD: fss.c,v 1.13.2.4 2006/04/21 12:08:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.13.2.3 2006/03/17 15:18:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.13.2.4 2006/04/21 12:08:50 tron Exp $");
 
 #include "fss.h"
 
@@ -1376,6 +1376,7 @@ fss_bs_thread(void *arg)
 			bp->b_error = nbp->b_error;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
+			FSS_LOCK(sc, s);
 			continue;
 		}
 
@@ -1432,6 +1433,7 @@ fss_bs_thread(void *arg)
 				bp->b_resid = bp->b_bcount;
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
+				FSS_LOCK(sc, s);
 				break;
 			}
 
