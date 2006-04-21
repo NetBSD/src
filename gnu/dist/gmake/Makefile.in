@@ -293,6 +293,8 @@ all: config.h
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno
 $(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_Makefile.in:
 	cd $(top_srcdir) && \
 	  $(AUTOMAKE) --gnu  Makefile
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
@@ -301,6 +303,8 @@ Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 $(top_builddir)/config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
 $(srcdir)/configure:  $(srcdir)/configure.in $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_configure:
 	cd $(srcdir) && $(AUTOCONF)
 
 $(ACLOCAL_M4):  configure.in acinclude.m4 config/codeset.m4 config/gettext.m4 config/glibc21.m4 config/iconv.m4 config/intdiv0.m4 config/inttypes-pri.m4 config/inttypes.m4 config/inttypes_h.m4 config/isc-posix.m4 config/lcmessage.m4 config/lib-ld.m4 config/lib-link.m4 config/lib-prefix.m4 config/progtest.m4 config/stdint_h.m4 config/uintmax_t.m4 config/ulonglong.m4
@@ -317,6 +321,8 @@ stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
 
 $(srcdir)/config.h.in:  $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config.h.in:
 	cd $(top_srcdir) && $(AUTOHEADER)
 	touch $(srcdir)/config.h.in
 
