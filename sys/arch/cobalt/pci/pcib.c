@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.13 2006/04/21 15:46:07 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.14 2006/04/21 16:27:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13 2006/04/21 15:46:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14 2006/04/21 16:27:33 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,14 +95,16 @@ void *
 icu_intr_establish(int irq, int type, int level, int (*func)(void *),
     void *arg)
 {
+	struct cobalt_intrhand *ih;
 	int i;
 
 	for (i = 0; i < IO_ICUSIZE; i++) {
-		if (icu[i].ih_func == NULL) {
-			icu[i].cookie_type = COBALT_COOKIE_TYPE_ICU;
-			icu[i].ih_func = func;
-			icu[i].ih_arg = arg;
-			return &icu[i];
+		ih = &icu[i];
+		if (ih->ih_func == NULL) {
+			ih->ih_cookie_type = COBALT_COOKIE_TYPE_ICU;
+			ih->ih_func = func;
+			ih->ih_arg = arg;
+			return ih;
 		}
 	}
 
@@ -114,9 +116,10 @@ icu_intr_disestablish(void *cookie)
 {
 	struct cobalt_intrhand *ih = cookie;
 
-	if (ih->cookie_type == COBALT_COOKIE_TYPE_ICU) {
+	if (ih->ih_cookie_type == COBALT_COOKIE_TYPE_ICU) {
 		ih->ih_func = NULL;
 		ih->ih_arg = NULL;
+		ih->ih_cookie_type = 0;
 	}
 }
 
