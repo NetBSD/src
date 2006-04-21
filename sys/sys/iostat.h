@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.h,v 1.4 2006/04/21 13:53:30 yamt Exp $	*/
+/*	$NetBSD: iostat.h,v 1.5 2006/04/21 13:56:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -81,8 +81,7 @@ struct io_sysctl {
  * together in drivelist.
  */
 
-struct io_stats
-{
+struct io_stats {
 	char		*io_name;  /* device name */
 	void		*io_parent; /* pointer to what we are attached to */
 	int		io_type;   /* type of device the state belong to */
