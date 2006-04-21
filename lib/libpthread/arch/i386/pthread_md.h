@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.5 2004/02/11 21:04:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.5.4.1 2006/04/21 21:50:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define _LIB_PTHREAD_I386_MD_H
 
 #include <sys/ucontext.h>
+#include <ucontext.h>
 
 extern int (*_md_getcontext_u)(ucontext_t *);
 extern int (*_md_setcontext_u)(const ucontext_t *);
@@ -75,18 +76,30 @@ pthread__sp(void)
 /*
  * Set initial, sane values for registers whose values aren't just
  * "don't care".
- * 0x2b is GSEL(GUDATA_SEL, SEL_UPL), and
- * 0x23 is GSEL(GUCODE_SEL, SEL_UPL), from arch/i386/include/segments.h.
- * 0x202 is PSL_USERSET from arch/i386/include/psl.h
+ *
+ * We use the current context instead of a guessed one because we cannot
+ * assume how the GDT entries are ordered:  what is true on i386 is not
+ * true anymore on amd64.
  */
 #define _INITCONTEXT_U_MD(ucp)						\
-	(ucp)->uc_mcontext.__gregs[_REG_GS] = 0x2b,			\
-	(ucp)->uc_mcontext.__gregs[_REG_FS] = 0x2b,			\
-	(ucp)->uc_mcontext.__gregs[_REG_ES] = 0x2b,			\
-	(ucp)->uc_mcontext.__gregs[_REG_DS] = 0x2b,			\
-	(ucp)->uc_mcontext.__gregs[_REG_CS] = 0x23,			\
-	(ucp)->uc_mcontext.__gregs[_REG_SS] = 0x2b,			\
-	(ucp)->uc_mcontext.__gregs[_REG_EFL] = 0x202;
+	do {								\
+		ucontext_t ucur;					\
+		(void)getcontext(&ucur);				\
+		(ucp)->uc_mcontext.__gregs[_REG_GS] =			\
+		    ucur.uc_mcontext.__gregs[_REG_GS],			\
+		(ucp)->uc_mcontext.__gregs[_REG_FS] =			\
+		    ucur.uc_mcontext.__gregs[_REG_FS],			\
+		(ucp)->uc_mcontext.__gregs[_REG_ES] =			\
+		    ucur.uc_mcontext.__gregs[_REG_ES],			\
+		(ucp)->uc_mcontext.__gregs[_REG_DS] =			\
+		    ucur.uc_mcontext.__gregs[_REG_DS],			\
+		(ucp)->uc_mcontext.__gregs[_REG_CS] =			\
+		    ucur.uc_mcontext.__gregs[_REG_CS],			\
+		(ucp)->uc_mcontext.__gregs[_REG_SS] =			\
+		    ucur.uc_mcontext.__gregs[_REG_SS],			\
+		(ucp)->uc_mcontext.__gregs[_REG_EFL] =			\
+		    ucur.uc_mcontext.__gregs[_REG_EFL];			\
+	} while (/*CONSTCOND*/0);
 
 /*
  * Usable stack space below the ucontext_t. 
