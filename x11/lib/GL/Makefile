@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2005/09/24 13:51:46 chs Exp $
+#	$NetBSD: Makefile,v 1.14 2006/04/21 21:46:06 sketch Exp $
 
 .include <bsd.own.mk>
 
@@ -99,7 +99,7 @@ SRCS.tnl=	t_array_api.c t_array_import.c t_context.c t_eval_api.c \
 		t_vb_texmat.c t_vb_vertex.c
 
 
-.for fn in ${SRCS.glx} ${SRCS.dri} ${SRCS.drm} ${SRCS.mesa ${SRCS.ac} \
+.for fn in ${SRCS.glx} ${SRCS.dri} ${SRCS.drm} ${SRCS.mesa} ${SRCS.ac} \
 	   ${SRCS.math} ${SRCS.swrast} ${SRCS.ss} ${SRCS.tnl}
 CPPFLAGS.${fn}+=-I${X11SRCDIR.xc}/lib/GL/dri \
 		-I${X11SRCDIR.xc}/lib/GL/glx \
