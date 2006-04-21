@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.41 2005/12/24 20:55:03 perry Exp $	*/
+/*	$NetBSD: dump.h,v 1.42 2006/04/21 15:00:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,6 +39,13 @@ union dinode {
 };
 #define DIP(dp, field) \
 	(is_ufs2 ? (dp)->dp2.di_##field : (dp)->dp1.di_##field)
+
+#define DIP_SET(dp, field, val) do {		\
+	if (is_ufs2)				\
+		(dp)->dp2.di_##field = (val);	\
+	else					\
+		(dp)->dp1.di_##field = (val);	\
+} while (0)
 
 /*
  * Filestore-independent UFS data, so code can be more easily shared

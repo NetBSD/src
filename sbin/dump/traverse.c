@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.45 2005/08/19 02:07:18 christos Exp $	*/
+/*	$NetBSD: traverse.c,v 1.46 2006/04/21 15:00:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.45 2005/08/19 02:07:18 christos Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.46 2006/04/21 15:00:49 skrll Exp $");
 #endif
 #endif /* not lint */
 
@@ -488,8 +488,8 @@ dumpino(union dinode *dp, ino_t ino)
 	 * as a zero length file.
 	 */
 	if (DIP(dp, flags) & SF_SNAPSHOT) {
-		DIP(dp, size) = 0;
-		DIP(dp, flags) &= ~SF_SNAPSHOT;
+		DIP_SET(dp, size, 0);
+		DIP_SET(dp, flags, DIP(dp, flags) & ~SF_SNAPSHOT);
 	}
 	if (!is_ufs2) {
 		if (needswap)
