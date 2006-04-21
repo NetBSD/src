@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.8 2006/04/21 13:53:30 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.9 2006/04/21 13:58:10 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.8 2006/04/21 13:53:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.9 2006/04/21 13:58:10 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -135,15 +135,11 @@ iostat_alloc(int32_t type)
 	int s;
 	struct io_stats *stats;
 
-	stats = malloc(sizeof(struct io_stats), M_DEVBUF, M_WAITOK);
+	stats = malloc(sizeof(struct io_stats), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (stats == NULL)
 		panic("iostat_alloc: cannot allocate memory for stats buffer");
 
 	stats->io_type = type;
-	stats->io_rxfer = 0;
-	stats->io_rbytes = 0;
-	stats->io_wxfer = 0;
-	stats->io_wbytes = 0;
 
 	/*
 	 * Set the attached timestamp.
@@ -151,9 +147,6 @@ iostat_alloc(int32_t type)
 	s = splclock();
 	stats->io_attachtime = mono_time;
 	splx(s);
-
-	timerclear(&stats->io_time);
-	timerclear(&stats->io_timestamp);
 
 	/*
 	 * Link into the drivelist.
