@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.217 2006/04/13 01:11:08 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.218 2006/04/21 14:03:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.217 2006/04/13 01:11:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.218 2006/04/21 14:03:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -199,7 +199,7 @@ extern struct vm_map *pager_map; /* XXX */
  * => map must be locked
  */
 #define uvm_map_entry_link(map, after_where, entry) do { \
-	KASSERT(entry->start < entry->end); \
+	uvm_mapent_check(entry); \
 	(map)->nentries++; \
 	(entry)->prev = (after_where); \
 	(entry)->next = (after_where)->next; \
@@ -214,6 +214,7 @@ extern struct vm_map *pager_map; /* XXX */
  * => map must be locked
  */
 #define uvm_map_entry_unlink(map, entry) do { \
+	uvm_mapent_check(entry); \
 	(map)->nentries--; \
 	(entry)->next->prev = (entry)->prev; \
 	(entry)->prev->next = (entry)->next; \
@@ -259,6 +260,13 @@ static struct vm_map_entry *
 		    struct uvm_mapent_reservation *);
 static void	uvm_mapent_copy(struct vm_map_entry *, struct vm_map_entry *);
 static void	uvm_mapent_free(struct vm_map_entry *);
+#if defined(DEBUG)
+static void	_uvm_mapent_check(const struct vm_map_entry *, const char *,
+		    int);
+#define	uvm_mapent_check(map)	_uvm_mapent_check(map, __FILE__, __LINE__)
+#else /* defined(DEBUG) */
+#define	uvm_mapent_check(e)	/* nothing */
+#endif /* defined(DEBUG) */
 static struct vm_map_entry *
 		uvm_kmapent_alloc(struct vm_map *, int);
 static void	uvm_kmapent_free(struct vm_map_entry *);
@@ -560,6 +568,41 @@ uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
 	    ((char *)src));
 }
 
+#if defined(DEBUG)
+static void
+_uvm_mapent_check(const struct vm_map_entry *entry, const char *file, int line)
+{
+
+	if (entry->start >= entry->end) {
+		goto bad;
+	}
+	if (UVM_ET_ISOBJ(entry)) {
+		if (entry->object.uvm_obj == NULL) {
+			goto bad;
+		}
+	} else if (UVM_ET_ISSUBMAP(entry)) {
+		if (entry->object.sub_map == NULL) {
+			goto bad;
+		}
+	} else {
+		if (entry->object.uvm_obj != NULL ||
+		    entry->object.sub_map != NULL) {
+			goto bad;
+		}
+	}
+	if (!UVM_ET_ISOBJ(entry)) {
+		if (entry->offset != 0) {
+			goto bad;
+		}
+	}
+
+	return;
+
+bad:
+	panic("%s: bad entry %p (%s:%d)", __func__, entry, file, line);
+}
+#endif /* defined(DEBUG) */
+
 /*
  * uvm_map_entry_unwire: unwire a map entry
  *
@@ -636,6 +679,38 @@ uvm_map_init(void)
  */
 
 /*
+ * uvm_mapent_splitadj: adjust map entries for splitting, after uvm_mapent_copy.
+ */
+
+static void
+uvm_mapent_splitadj(struct vm_map_entry *entry1, struct vm_map_entry *entry2,
+    vaddr_t splitat)
+{
+	vaddr_t adj;
+
+	KASSERT(entry1->start < splitat);
+	KASSERT(splitat < entry1->end);
+
+	adj = splitat - entry1->start;
+	entry1->end = entry2->start = splitat;
+
+	if (entry1->aref.ar_amap) {
+		amap_splitref(&entry1->aref, &entry2->aref, adj);
+	}
+	if (UVM_ET_ISSUBMAP(entry1)) {
+		/* ... unlikely to happen, but play it safe */
+		 uvm_map_reference(entry1->object.sub_map);
+	} else if (UVM_ET_ISOBJ(entry1)) {
+		KASSERT(entry1->object.uvm_obj != NULL); /* suppress coverity */
+		entry2->offset += adj;
+		if (entry1->object.uvm_obj->pgops &&
+		    entry1->object.uvm_obj->pgops->pgo_reference)
+			entry1->object.uvm_obj->pgops->pgo_reference(
+			    entry1->object.uvm_obj);
+	}
+}
+
+/*
  * uvm_map_clip_start: ensure that the entry begins at or after
  *	the starting address, if it doesn't we split the entry.
  *
@@ -649,11 +724,11 @@ uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
     vaddr_t start, struct uvm_mapent_reservation *umr)
 {
 	struct vm_map_entry *new_entry;
-	vaddr_t new_adj;
 
 	/* uvm_map_simplify_entry(map, entry); */ /* XXX */
 
 	uvm_tree_sanity(map, "clip_start entry");
+	uvm_mapent_check(entry);
 
 	/*
 	 * Split off the front portion.  note that we must insert the new
@@ -662,31 +737,8 @@ uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
 	 */
 	new_entry = uvm_mapent_alloc_split(map, entry, 0, umr);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
-
-	new_entry->end = start;
-	new_adj = start - new_entry->start;
-	if (entry->object.uvm_obj)
-		entry->offset += new_adj;	/* shift start over */
-
-	/* Does not change order for the RB tree */
-	entry->start = start;
-
-	if (new_entry->aref.ar_amap) {
-		amap_splitref(&new_entry->aref, &entry->aref, new_adj);
-	}
-
+	uvm_mapent_splitadj(new_entry, entry, start);
 	uvm_map_entry_link(map, entry->prev, new_entry);
-
-	if (UVM_ET_ISSUBMAP(entry)) {
-		/* ... unlikely to happen, but play it safe */
-		 uvm_map_reference(new_entry->object.sub_map);
-	} else {
-		if (UVM_ET_ISOBJ(entry) && entry->object.uvm_obj &&
-		    entry->object.uvm_obj->pgops &&
-		    entry->object.uvm_obj->pgops->pgo_reference)
-			entry->object.uvm_obj->pgops->pgo_reference(
-			    entry->object.uvm_obj);
-	}
 
 	uvm_tree_sanity(map, "clip_start leave");
 }
@@ -704,10 +756,10 @@ void
 uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end,
     struct uvm_mapent_reservation *umr)
 {
-	struct vm_map_entry *	new_entry;
-	vaddr_t new_adj; /* #bytes we move start forward */
+	struct vm_map_entry *new_entry;
 
 	uvm_tree_sanity(map, "clip_end entry");
+	uvm_mapent_check(entry);
 
 	/*
 	 *	Create a new entry and insert it
@@ -715,29 +767,8 @@ uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end,
 	 */
 	new_entry = uvm_mapent_alloc_split(map, entry, 0, umr);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
-
-	new_entry->start = entry->end = end;
-	new_adj = end - entry->start;
-	if (new_entry->object.uvm_obj)
-		new_entry->offset += new_adj;
-
-	if (entry->aref.ar_amap)
-		amap_splitref(&entry->aref, &new_entry->aref, new_adj);
-
-	uvm_rb_fixup(map, entry);
-
+	uvm_mapent_splitadj(entry, new_entry, end);
 	uvm_map_entry_link(map, entry, new_entry);
-
-	if (UVM_ET_ISSUBMAP(entry)) {
-		/* ... unlikely to happen, but play it safe */
-		uvm_map_reference(new_entry->object.sub_map);
-	} else {
-		if (UVM_ET_ISOBJ(entry) &&
-		    entry->object.uvm_obj->pgops &&
-		    entry->object.uvm_obj->pgops->pgo_reference)
-			entry->object.uvm_obj->pgops->pgo_reference(
-			    entry->object.uvm_obj);
-	}
 
 	uvm_tree_sanity(map, "clip_end leave");
 }
@@ -1336,6 +1367,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 			*entry = cur;
 			UVMHIST_LOG(maphist,"<- got it via hint (0x%x)",
 			    cur, 0, 0, 0);
+			uvm_mapent_check(*entry);
 			return (TRUE);
 		}
 
@@ -1393,6 +1425,7 @@ got:
 					cur, 0, 0, 0);
 				KDASSERT((*entry)->start <= address);
 				KDASSERT(address < (*entry)->end);
+				uvm_mapent_check(*entry);
 				return (TRUE);
 			}
 			break;
