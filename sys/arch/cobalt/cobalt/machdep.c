@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2006/04/21 18:17:45 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2006/04/21 18:21:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2006/04/21 18:17:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2006/04/21 18:21:30 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2006/04/21 18:17:45 tsutsui Exp $")
 
 #include <cobalt/cobalt/clockvar.h>
 
-#include <arch/cobalt/dev/gtreg.h>
+#include <cobalt/dev/gtreg.h>
 #define GT_BASE		0x14000000	/* XXX */
 
 #ifdef KGDB
