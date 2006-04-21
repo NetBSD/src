@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2006/04/21 16:27:33 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 2006/04/21 16:52:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2006/04/21 16:27:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2006/04/21 16:52:15 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -103,6 +103,8 @@ char *	nfsroot_bstr = NULL;
 char *	root_bstr = NULL;
 int	bootunit = -1;
 int	bootpart = -1;
+
+int cpuspeed;
 
 u_int cobalt_id;
 static const char * const cobalt_model[] =
@@ -200,6 +202,29 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 		    cobalt_id);
 	else
 		strcpy(cpu_model, cobalt_model[cobalt_id]);
+
+	switch (cobalt_id) {
+	case COBALT_ID_QUBE2700:
+	case COBALT_ID_RAQ:
+		cpuspeed = 150; /* MHz */
+		break;
+	case COBALT_ID_QUBE2:
+	case COBALT_ID_RAQ2:
+		cpuspeed = 250; /* MHz */
+		break;
+	default:
+		/* assume the fastest, so that delay(9) works */
+		cpuspeed = 250;
+		break;
+	}
+	curcpu()->ci_cpu_freq = cpuspeed * 1000 * 1000;
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+	curcpu()->ci_divisor_delay =
+	    ((curcpu()->ci_cpu_freq + (1000000 / 2)) / 1000000);
+	/* all models have Rm5200, which is CPU_MIPS_DOUBLE_COUNT */
+	curcpu()->ci_cycles_per_hz /= 2;
+	curcpu()->ci_divisor_delay /= 2;
+	MIPS_SET_CI_RECIPRICAL(curcpu());
 
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 
@@ -368,16 +393,6 @@ cpu_reboot(int howto, char *bootstr)
 
 	for (;;)
 		;
-}
-
-unsigned long cpuspeed;
-
-inline void
-delay(unsigned long n)
-{
-	volatile register long N = cpuspeed * n;
-
-	while (--N > 0);
 }
 
 #define NINTR	6
