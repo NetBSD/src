@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.16 2006/04/16 05:11:07 tsutsui Exp $	*/
+/*	$NetBSD: gt.c,v 1.17 2006/04/21 19:04:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.16 2006/04/16 05:11:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.17 2006/04/21 19:04:57 tsutsui Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -155,6 +155,9 @@ gt_timer_init(struct gt_softc *sc)
 	/* stop timer0 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL) & ~ENTC0);
+	/* mask timer0 interrupt */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK,
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK) & ~T0EXP);
 
 	timer_start = gt_timer0_init;
 	timer_read  = gt_timer0_read;
@@ -173,6 +176,9 @@ gt_timer0_init(void *cookie)
 	/* start timer0 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL) | ENTC0);
+	/* unmask timer0 interrupt */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK,
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK) | T0EXP);
 }
 
 static long
