@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.7 2006/04/21 13:52:23 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.8 2006/04/21 13:53:30 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.7 2006/04/21 13:52:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.8 2006/04/21 13:53:30 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -109,23 +109,21 @@ struct simplelock iostatlist_slock = SIMPLELOCK_INITIALIZER;
  * name provided.
  */
 struct io_stats *
-iostat_find(char *name)
+iostat_find(const char *name)
 {
 	struct io_stats *iostatp;
 
-	if ((name == NULL) || (iostat_count <= 0))
-		return (NULL);
+	KASSERT(name != NULL);
 
 	simple_lock(&iostatlist_slock);
-	for (iostatp = TAILQ_FIRST(&iostatlist); iostatp != NULL;
-	    iostatp = TAILQ_NEXT(iostatp, io_link))
+	TAILQ_FOREACH(iostatp, &iostatlist, io_link) {
 		if (strcmp(iostatp->io_name, name) == 0) {
-			simple_unlock(&iostatlist_slock);
-			return (iostatp);
+			break;
 		}
+	}
 	simple_unlock(&iostatlist_slock);
 
-	return (NULL);
+	return iostatp;
 }
 
 /*

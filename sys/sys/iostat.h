@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.h,v 1.3 2006/04/21 13:48:57 yamt Exp $	*/
+/*	$NetBSD: iostat.h,v 1.4 2006/04/21 13:53:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ TAILQ_HEAD(iostatlist_head, io_stats);	/* the iostatlist is a TAILQ */
 #ifdef _KERNEL
 void	iostat_busy(struct io_stats *);
 void	iostat_unbusy(struct io_stats *, long, int);
-struct io_stats *iostat_find(char *);
+struct io_stats *iostat_find(const char *);
 struct io_stats *iostat_alloc(int32_t);
 void	iostat_free(struct io_stats *);
 void	iostat_seek(struct io_stats *);
