@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.44 2005/12/24 20:55:04 perry Exp $	*/
+/*	$NetBSD: fsck.h,v 1.45 2006/04/21 15:00:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -56,6 +56,13 @@ union dinode {
 };
 #define       DIP(dp, field) \
 	(is_ufs2 ? (dp)->dp2.di_##field : (dp)->dp1.di_##field)
+
+#define       DIP_SET(dp, field, val) do {	\
+	if (is_ufs2)				\
+		(dp)->dp2.di_##field = (val);	\
+	else					\
+		(dp)->dp1.di_##field = (val);	\
+} while (0)
 
 #ifndef BUFSIZ
 #define BUFSIZ 1024
@@ -120,6 +127,12 @@ struct bufarea {
 #define       IBLK(bp, i) \
 	(is_ufs2 ?  (bp)->b_un.b_indir2[i] : (bp)->b_un.b_indir1[i])
 
+#define       IBLK_SET(bp, i, val) do {		\
+	if (is_ufs2)				\
+		(bp)->b_un.b_indir2[i] = (val);	\
+	else					\
+		(bp)->b_un.b_indir1[i] = (val);	\
+} while (0)
 
 #define	B_INUSE 1
 
