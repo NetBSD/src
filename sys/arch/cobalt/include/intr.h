@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2006/04/21 16:08:51 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.19 2006/04/21 16:27:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -102,7 +102,7 @@ struct cobalt_intrhand {
 	LIST_ENTRY(cobalt_intrhand) ih_q;
 	int (*ih_func)(void *);
 	void *ih_arg;
-	int cookie_type;
+	int ih_cookie_type;
 #define	COBALT_COOKIE_TYPE_CPU	0x1
 #define	COBALT_COOKIE_TYPE_ICU	0x2
 };
