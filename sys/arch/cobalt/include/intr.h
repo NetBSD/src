@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2006/04/21 16:27:33 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.20 2006/04/21 18:17:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -62,6 +62,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
+#include <sys/device.h>
 #include <mips/cpuregs.h>
 
 int  _splraise(int);
@@ -105,6 +106,9 @@ struct cobalt_intrhand {
 	int ih_cookie_type;
 #define	COBALT_COOKIE_TYPE_CPU	0x1
 #define	COBALT_COOKIE_TYPE_ICU	0x2
+
+	struct evcnt ih_evcnt;
+	char ih_evname[32];
 };
 
 #include <mips/softintr.h>

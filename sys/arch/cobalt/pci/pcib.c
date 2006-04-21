@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.16 2006/04/21 17:16:17 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.17 2006/04/21 18:17:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.16 2006/04/21 17:16:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.17 2006/04/21 18:17:45 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -104,6 +104,10 @@ icu_intr_establish(int irq, int type, int level, int (*func)(void *),
 			ih->ih_cookie_type = COBALT_COOKIE_TYPE_ICU;
 			ih->ih_func = func;
 			ih->ih_arg = arg;
+			snprintf(ih->ih_evname, sizeof(ih->ih_evname),
+			    "irq %d", irq);
+			evcnt_attach_dynamic(&ih->ih_evcnt, EVCNT_TYPE_INTR,
+			    NULL, "icu", ih->ih_evname);
 			return ih;
 		}
 	}
@@ -120,6 +124,7 @@ icu_intr_disestablish(void *cookie)
 		ih->ih_func = NULL;
 		ih->ih_arg = NULL;
 		ih->ih_cookie_type = 0;
+		evcnt_detach(&ih->ih_evcnt);
 	}
 }
 
@@ -137,6 +142,7 @@ icu_intr(void *arg)
 			break;
 
 		if ((*ih->ih_func)(ih->ih_arg)) {
+			ih->ih_evcnt.ev_count++;
 			handled = 1;
 		}
 	}
