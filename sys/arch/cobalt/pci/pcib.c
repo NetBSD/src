@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.12 2006/04/05 15:50:48 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.13 2006/04/21 15:46:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.12 2006/04/05 15:50:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13 2006/04/21 15:46:07 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.12 2006/04/05 15:50:48 tsutsui Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <dev/isa/isareg.h>
+
+#define PCIB_BASE	0x10000000	/* XXX */
 
 static int	pcib_match(struct device *, struct cfdata *, void *);
 static void	pcib_attach(struct device *, struct device *, void *);
@@ -80,12 +82,10 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	 * Initialize ICU. Since we block all these interrupts with
 	 * splbio(), we can just enable all of them all the time here.
 	 */
-	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1) = 0x10;
-	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1 +1 ) =
-	    0xff;
-	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2) = 0x10;
-	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2 + 1) =
-	    0xff;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(PCIB_BASE + IO_ICU1) = 0x10;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(PCIB_BASE + IO_ICU1 + 1) = 0xff;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(PCIB_BASE + IO_ICU2) = 0x10;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(PCIB_BASE + IO_ICU2 + 1) = 0xff;
 	wbflush();
 
 	cpu_intr_establish(4, IPL_NONE, icu_intr, NULL);
