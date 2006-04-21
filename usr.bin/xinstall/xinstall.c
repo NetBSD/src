@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.93 2005/10/01 20:25:45 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.94 2006/04/21 16:36:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.93 2005/10/01 20:25:45 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.94 2006/04/21 16:36:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1045,6 +1045,7 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 	metalog_lock.l_type = F_WRLCK;
 	if (fcntl(fileno(metafp), F_SETLKW, &metalog_lock) == -1) {
 		warn("can't lock %s", metafile);
+		free(buf);
 		return;
 	}
 
