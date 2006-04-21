@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.77 2006/04/21 13:51:24 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.78 2006/04/21 13:53:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.77 2006/04/21 13:51:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.78 2006/04/21 13:53:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -166,7 +166,7 @@ diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
  * name provided.
  */
 struct disk *
-disk_find(char *name)
+disk_find(const char *name)
 {
 	struct io_stats *stat;
 
