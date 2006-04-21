@@ -5,15 +5,22 @@
 
 #include <machine/asm.h>
 
-#include "abi.h"
-
-RCSID("$NetBSD: s_scalbn.S,v 1.7 2003/07/26 19:25:03 salo Exp $")
+RCSID("$NetBSD: s_scalbn.S,v 1.7.4.1 2006/04/21 21:45:56 tron Exp $")
 
 ENTRY(scalbn)
-	XMM_TWO_ARG_DOUBLE_PROLOGUE
-	fildl	ARG_DOUBLE_TWO
-	fldl	ARG_DOUBLE_ONE
+#ifdef __x86_64__
+	movl %edi,-12(%rsp)
+	fildl -12(%rsp)
+	movsd %xmm0,-8(%rsp)
+	fldl -8(%rsp)
 	fscale
-	fstp	%st(1)		/* bug fix for fp stack overflow */
-	XMM_DOUBLE_EPILOGUE
+	fstpl -8(%rsp)
+	movsd -8(%rsp),%xmm0
+	fstp %st(0)
+#else
+	fildl 12(%esp)
+	fldl 4(%esp)
+	fscale
+	fstp %st(1)		/* clean up stack */
+#endif
 	ret
