@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.50 2006/04/11 02:24:08 riz Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.51 2006/04/21 21:54:11 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -663,4 +663,29 @@ sys/dev/pci/pcidevs_data.h			regen
 	"Command Interface to SCSI-3 Support" command interface.  Driver
 	ported from OpenBSD by Tonnerre Lombard -- thanks!
 	[he, ticket #10409]
+
+lib/libm/arch/i387/s_scalbn.S			1.8
+lib/libm/arch/i387/s_scalbnf.S			1.7
+
+	Fix the ldexp() bug reported on the port-amd64 mailing list.
+	[drochner, ticket #10412]
+
+etc/rc.subr					1.66
+
+	In order to handle some perl scripts running as daemons, add a
+	pattern which also matches "`basename $interpreter`: $command" in the
+	ps listing. This fixes PR bin/31932.
+	[he, ticket #10413]
+
+lib/libpthread/arch/i386/pthread_md.h		1.7
+
+	Instead of using hard-coded values for various registers, get them 
+	rom the current context. Valid values can change depending on how
+	the kernel is setup. i386 and amd64 happen to be setup differently.
+	[cube, ticket #10448]
+
+sys/dev/ic/ciss.c				1.2
+
+	Repair commands with no SCSI transfer.
+	[martti, ticket #10451]
 
