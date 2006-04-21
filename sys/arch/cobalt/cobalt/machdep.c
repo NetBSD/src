@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2006/04/15 11:28:52 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2006/04/21 16:27:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2006/04/15 11:28:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2006/04/21 16:27:33 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -394,18 +394,21 @@ const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
 void *
 cpu_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 {
+	struct cobalt_intrhand *ih;
 
 	if (level < 0 || level >= NINTR)
 		panic("invalid interrupt level");
 
-	if (intrtab[level].ih_func != NULL)
+	ih = &intrtab[level];
+
+	if (ih->ih_func != NULL)
 		panic("cannot share CPU interrupts");
 
-	intrtab[level].cookie_type = COBALT_COOKIE_TYPE_CPU;
-	intrtab[level].ih_func = func;
-	intrtab[level].ih_arg = arg;
+	ih->ih_cookie_type = COBALT_COOKIE_TYPE_CPU;
+	ih->ih_func = func;
+	ih->ih_arg = arg;
 
-	return &intrtab[level];
+	return ih;
 }
 
 void
@@ -413,9 +416,10 @@ cpu_intr_disestablish(void *cookie)
 {
 	struct cobalt_intrhand *ih = cookie;
 
-	if (ih->cookie_type == COBALT_COOKIE_TYPE_CPU) {
+	if (ih->ih_cookie_type == COBALT_COOKIE_TYPE_CPU) {
 		ih->ih_func = NULL;
 		ih->ih_arg = NULL;
+		ih->ih_cookie_type = 0;
 	}
 }
 
