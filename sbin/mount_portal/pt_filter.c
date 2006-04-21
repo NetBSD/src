@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.6 2006/03/21 21:34:01 christos Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.7 2006/04/21 15:00:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.6 2006/03/21 21:34:01 christos Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.7 2006/04/21 15:00:49 skrll Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -91,6 +91,7 @@ portal_rfilter(struct portal_cred *pcr, char *key, char **v, int kso, int *fdp)
 	char   *path;
 	FILE   *fp;
 	int     error = 0;
+	char	percent_s[] = "%s";
 
 	/* We don't use this parameter. */
 	(void) kso;
@@ -124,7 +125,7 @@ portal_rfilter(struct portal_cred *pcr, char *key, char **v, int kso, int *fdp)
 	 * v[3] could be NULL, or could point to "".
 	 */
 	if (!v[3] || strlen(v[3]) == 0)
-	  (const char *)v[3] = "%s";	/* Handle above assumption. */
+		v[3] = percent_s;	/* Handle above assumption. */
 	path = key;
 	/* Strip out stripkey if it matches leading part of key. */
 	if (!strncmp(v[1], key, strlen(v[1])))
