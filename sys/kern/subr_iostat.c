@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.5 2006/04/21 13:50:38 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.6 2006/04/21 13:51:24 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,20 +75,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.5 2006/04/21 13:50:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.6 2006/04/21 13:51:24 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/bufq.h>
-#include <sys/syslog.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
+#include <sys/iostat.h>
 #include <sys/sysctl.h>
-#include <lib/libkern/libkern.h>
 
 /*
  * Function prototypes for sysctl nodes
