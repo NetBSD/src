@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2006/04/21 17:04:26 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2006/04/21 17:55:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2006/04/21 17:04:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2006/04/21 17:55:27 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -443,11 +443,12 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
 	static uint32_t cycles;
-	int i;
+	struct cobalt_intrhand *ih;
 
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_0) {
+		/* GT64x11 timer0 for hardclock */
 		volatile uint32_t *irq_src =
 		    (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_INTR_CAUSE);
 
@@ -461,13 +462,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		}
 		cause &= ~MIPS_INT_MASK_0;
 	}
-
-	for (i = 0; i < 5; i++) {
-		if (ipending & (MIPS_INT_MASK_0 << i))
-			if (intrtab[i].ih_func != NULL)
-				if ((*intrtab[i].ih_func)(intrtab[i].ih_arg))
-					cause &= ~(MIPS_INT_MASK_0 << i);
-	}
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_5) {
 		cycles = mips3_cp0_count_read();
@@ -481,7 +476,48 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 #endif
 		cause &= ~MIPS_INT_MASK_5;
 	}
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
+	if (ipending & MIPS_INT_MASK_3) {
+		/* 16650 serial */
+		ih = &intrtab[3];
+		if (ih->ih_func != NULL) {
+			if ((*ih->ih_func)(ih->ih_arg)) {
+				cause &= ~MIPS_INT_MASK_3;
+			}
+		}
+	}
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	if (ipending & MIPS_INT_MASK_1) {
+		/* tulip primary */
+		ih = &intrtab[1];
+		if (ih->ih_func != NULL) {
+			if ((*ih->ih_func)(ih->ih_arg)) {
+				cause &= ~MIPS_INT_MASK_1;
+			}
+		}
+	}
+	if (ipending & MIPS_INT_MASK_2) {
+		/* tulip secondary */
+		ih = &intrtab[2];
+		if (ih->ih_func != NULL) {
+			if ((*ih->ih_func)(ih->ih_arg)) {
+				cause &= ~MIPS_INT_MASK_2;
+			}
+		}
+	}
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	if (ipending & MIPS_INT_MASK_4) {
+		/* ICU interrupts */
+		ih = &intrtab[4];
+		if (ih->ih_func != NULL) {
+			if ((*ih->ih_func)(ih->ih_arg)) {
+				cause &= ~MIPS_INT_MASK_4;
+			}
+		}
+	}
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	/* software interrupt */
