@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.14 2006/04/21 16:27:33 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.15 2006/04/21 17:14:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14 2006/04/21 16:27:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15 2006/04/21 17:14:08 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,14 +126,20 @@ icu_intr_disestablish(void *cookie)
 int
 icu_intr(void *arg)
 {
-	int i;
+	struct cobalt_intrhand *ih;
+	int i, handled;
+
+	handled = 0;
 
 	for (i = 0; i < IO_ICUSIZE; i++) {
-		if (icu[i].ih_func == NULL)
+		ih = &icu[i];
+		if (ih->ih_func == NULL)
 			return 0;
 
-		(*icu[i].ih_func)(icu[i].ih_arg);
+		if ((*ih->ih_func)(ih->ih_arg)) {
+			handled = 1;
+		}
 	}
 
-	return 0;
+	return handled;
 }
