@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.3 2006/04/21 13:48:57 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.4 2006/04/21 13:49:32 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.3 2006/04/21 13:48:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.4 2006/04/21 13:49:32 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -145,8 +145,7 @@ iostat_alloc(int32_t type)
 	stats = malloc(sizeof(struct io_stats), M_DEVBUF, M_NOWAIT);
 
 	if (stats == NULL)
-		panic("iostat_alloc: cannot allocate memory for stats "
-		      "buffer");
+		panic("iostat_alloc: cannot allocate memory for stats buffer");
 
 	stats->io_type = type;
 	stats->io_rxfer = 0;
