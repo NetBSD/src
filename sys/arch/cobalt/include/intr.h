@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2006/01/04 12:29:21 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.18 2006/04/21 16:08:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -64,13 +64,13 @@
 
 #include <mips/cpuregs.h>
 
-extern int		_splraise(int);
-extern int		_spllower(int);
-extern int		_splset(int);
-extern int		_splget(void);
-extern void		_splnone(void);
-extern void		_setsoftintr(int);
-extern void		_clrsoftintr(int);
+int  _splraise(int);
+int  _spllower(int);
+int  _splset(int);
+int  _splget(void);
+void _splnone(void);
+void _setsoftintr(int);
+void _clrsoftintr(int);
 
 #define splhigh()       _splraise(MIPS_INT_MASK)
 #define spl0()          (void)_spllower(0)
@@ -97,8 +97,6 @@ extern void		_clrsoftintr(int);
 #define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define splsoftserial()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
-
-extern unsigned int	intrcnt[];
 
 struct cobalt_intrhand {
 	LIST_ENTRY(cobalt_intrhand) ih_q;
