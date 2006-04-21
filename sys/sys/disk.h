@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.34 2006/04/14 13:09:07 blymn Exp $	*/
+/*	$NetBSD: disk.h,v 1.35 2006/04/21 13:48:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -293,9 +293,9 @@ void	disk_detach(struct disk *);
 void	pseudo_disk_init(struct disk *);
 void	pseudo_disk_attach(struct disk *);
 void	pseudo_disk_detach(struct disk *);
-void    disk_busy(struct disk *);
-void    disk_unbusy(struct disk *, long, int);
-struct  disk *disk_find(char *);
+void	disk_busy(struct disk *);
+void	disk_unbusy(struct disk *, long, int);
+struct disk *disk_find(char *);
 
 int	dkwedge_add(struct dkwedge_info *);
 int	dkwedge_del(struct dkwedge_info *);

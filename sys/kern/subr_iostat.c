@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.2 2006/04/20 12:13:53 blymn Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.3 2006/04/21 13:48:57 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.2 2006/04/20 12:13:53 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.3 2006/04/21 13:48:57 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -105,8 +105,8 @@ iostati_getnames(int disk_only, char *oldp, size_t *oldlenp, const void *newp,
  * A global list of all drives attached to the system.  May grow or
  * shrink over time.
  */
-struct	iostatlist_head iostatlist = TAILQ_HEAD_INITIALIZER(iostatlist);
-int	iostat_count;		/* number of drives in global drivelist */
+struct iostatlist_head iostatlist = TAILQ_HEAD_INITIALIZER(iostatlist);
+int iostat_count;		/* number of drives in global drivelist */
 struct simplelock iostatlist_slock = SIMPLELOCK_INITIALIZER;
 
 /*
@@ -136,8 +136,8 @@ iostat_find(char *name)
 /*
  * Allocate and initialise memory for the i/o statistics.
  */
-struct
-io_stats *iostat_alloc(int32_t type)
+struct io_stats *
+iostat_alloc(int32_t type)
 {
 	int s;
 	struct io_stats *stats;
@@ -182,9 +182,9 @@ void
 iostat_free(struct io_stats *stats)
 {
 
-	  /*
-	   * Remove from the iostat list.
-	   */
+	/*
+	 * Remove from the iostat list.
+	 */
 	if (iostat_count == 0)
 		panic("iostat_free: iostat_count == 0");
 	simple_lock(&iostatlist_slock);
@@ -255,18 +255,21 @@ iostat_unbusy(struct io_stats *stats, long bcount, int read)
 void
 iostat_seek(struct io_stats *stats)
 {
+
 	stats->io_seek++;
 }
 
 static int
 sysctl_hw_disknames(SYSCTLFN_ARGS)
 {
+
 	return iostati_getnames(1, oldp, oldlenp, newp, namelen);
 }
 
 static int
 sysctl_hw_iostatnames(SYSCTLFN_ARGS)
 {
+
 	return iostati_getnames(0, oldp, oldlenp, newp, namelen);
 }
 
@@ -397,6 +400,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_io_stats_setup, "sysctl i/o stats setup")
 {
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "disknames",
