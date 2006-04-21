@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.42 2005/06/27 01:25:35 christos Exp $	*/
+/*	$NetBSD: pass2.c,v 1.43 2006/04/21 15:00:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.42 2005/06/27 01:25:35 christos Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.43 2006/04/21 15:00:49 skrll Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,8 +115,8 @@ pass2(void)
 			exit(EEXIT);
 		}
 		dp = ginode(ROOTINO);
-		DIP(dp, mode) =
-		    iswap16((iswap16(DIP(dp, mode)) & ~IFMT) | IFDIR);
+		DIP_SET(dp, mode,
+		    iswap16((iswap16(DIP(dp, mode)) & ~IFMT) | IFDIR));
 		inodirty();
 		break;
 
@@ -162,7 +162,7 @@ pass2(void)
 			inp->i_isize = roundup(MINDIRSIZE, dirblksiz);
 			if (reply("FIX") == 1) {
 				dp = ginode(inp->i_number);
-				DIP(dp, size) = iswap64(inp->i_isize);
+				DIP_SET(dp, size, iswap64(inp->i_isize));
 				inodirty();
 			} else
 				markclean = 0;
@@ -182,7 +182,7 @@ pass2(void)
 			inp->i_isize = roundup(inp->i_isize, dirblksiz);
 			if (preen || reply("ADJUST") == 1) {
 				dp = ginode(inp->i_number);
-				DIP(dp, size) = iswap64(inp->i_isize);
+				DIP_SET(dp, size, iswap64(inp->i_isize));
 				inodirty();
 			} else
 				markclean = 0;
