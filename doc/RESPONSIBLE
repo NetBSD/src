@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.66 2006/04/07 19:03:01 riz Exp $
+#	$NetBSD: RESPONSIBLE,v 1.67 2006/04/21 15:03:18 lukem Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -25,19 +25,19 @@ file		christos, pooka
 grep		simonb, wiz
 groff		wiz
 gzip		mrg, atatat
-installboot(mi)	lukem
+installboot(mi)	core
 kerberos	lha, joda
 less/more	mrg
 make		christos, sjg
 named(bind)	christos
 ntp		simonb, jonathan
-openssh		lukem, christos
+openssh		christos
 pax/tar		christos
 ping		christos
 ping6		itojun
 pkg_install	agc, hubertf
 postfix		perry
-postinstall	lukem
+postinstall	core
 ppp(async)	christos
 ppp(sync)	martin?
 racoon		manu
@@ -63,7 +63,7 @@ kerberos	lha, joda
 openssl		thorpej, christos
 pcap		itojun
 pthread		nathanw
-resolver(bind)	lukem, christos
+resolver(bind)	christos
 softfloat	bjh21
 tz		kleink
 
@@ -260,7 +260,7 @@ i386 bootblocks	dsl, drochner, fvdl, christos
 
 Misc:
 
-Build Tools	lukem
+Build Tools	core
 Man Pages	wiz
-Release Tools	lukem
+Release Tools	core
 Standards Guru	kleink
