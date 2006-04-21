@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.15 2006/04/21 17:14:08 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.16 2006/04/21 17:16:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15 2006/04/21 17:14:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.16 2006/04/21 17:16:17 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,7 +134,7 @@ icu_intr(void *arg)
 	for (i = 0; i < IO_ICUSIZE; i++) {
 		ih = &icu[i];
 		if (ih->ih_func == NULL)
-			return 0;
+			break;
 
 		if ((*ih->ih_func)(ih->ih_arg)) {
 			handled = 1;
