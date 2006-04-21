@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.6 2006/04/21 13:51:24 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.7 2006/04/21 13:52:23 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.6 2006/04/21 13:51:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.7 2006/04/21 13:52:23 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -409,7 +409,7 @@ SYSCTL_SETUP(sysctl_io_stats_setup, "sysctl i/o stats setup")
 		       CTL_HW, HW_IOSTATNAMES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "drivestats",
+		       CTLTYPE_STRUCT, "iostats",
 		       SYSCTL_DESCR("Statistics on device I/O operations"),
 		       sysctl_hw_iostats, 0, NULL, 0,
 		       CTL_HW, HW_IOSTATS, CTL_EOL);
