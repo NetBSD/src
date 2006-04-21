@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2006/04/05 15:03:27 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2006/04/21 16:52:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2006/04/05 15:03:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2006/04/21 16:52:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,6 @@ extern char	bootstring[];
 extern int	netboot;
 extern int	bootunit;
 extern int	bootpart;
-
-int		cpuspeed = 100;		/* Until we know more precisely. */
 
 void
 cpu_configure(void)
