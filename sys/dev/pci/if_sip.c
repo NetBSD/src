@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.101.2.2 2006/04/21 11:57:35 tron Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.101.2.3 2006/04/21 12:03:38 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.101.2.2 2006/04/21 11:57:35 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.101.2.3 2006/04/21 12:03:38 tron Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -309,6 +309,16 @@ struct sip_softc {
 	struct sip_txsq sc_txfreeq;	/* free Tx descsofts */
 	struct sip_txsq sc_txdirtyq;	/* dirty Tx descsofts */
 
+	/* values of interface state at last init */
+	struct {
+		/* if_capenable */
+		uint64_t	if_capenable;
+		/* ec_capenable */
+		int		ec_capenable;
+		/* VLAN_ATTACHED */
+		int		is_vlan;
+	}	sc_prev;
+		
 	short	sc_if_flags;
 
 	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
@@ -1015,6 +1025,9 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	sc->sc_prev.ec_capenable = sc->sc_ethercom.ec_capenable;
+	sc->sc_prev.is_vlan = VLAN_ATTACHED(&(sc)->sc_ethercom);
+	sc->sc_prev.if_capenable = ifp->if_capenable;
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
@@ -1568,11 +1581,20 @@ SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 * filter when setting promiscuous or debug mode.  Otherwise
 		 * fall through to ether_ioctl, which will reset the chip.
 		 */
+
+#define COMPARE_EC(sc) (((sc)->sc_prev.ec_capenable			\
+			 == (sc)->sc_ethercom.ec_capenable)		\
+			&& ((sc)->sc_prev.is_vlan ==			\
+			    VLAN_ATTACHED(&(sc)->sc_ethercom) ))
+
+#define COMPARE_IC(sc, ifp) ((sc)->sc_prev.if_capenable == (ifp)->if_capenable)
+
 #define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
 		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
 		    == (IFF_UP|IFF_RUNNING))
 		    && ((ifp->if_flags & (~RESETIGN))
-		    == (sc->sc_if_flags & (~RESETIGN)))) {
+		    == (sc->sc_if_flags & (~RESETIGN)))
+		    && COMPARE_EC(sc) && COMPARE_IC(sc, ifp)) {
 			/* Set up the receive filter. */
 			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
 			error = 0;
@@ -2571,6 +2593,9 @@ SIP_DECL(init)(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_if_flags = ifp->if_flags;
+	sc->sc_prev.ec_capenable = sc->sc_ethercom.ec_capenable;
+	sc->sc_prev.is_vlan = VLAN_ATTACHED(&(sc)->sc_ethercom);
+	sc->sc_prev.if_capenable = ifp->if_capenable;
 
  out:
 	if (error)
