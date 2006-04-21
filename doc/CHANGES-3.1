@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.72 2006/04/20 15:05:27 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.73 2006/04/21 12:30:25 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1372,4 +1372,36 @@ sys/arch/i386/conf/INSTALL_TINY			1.102
 
 	Added ciss(4).
 	[martti, ticket #1258]
+
+sys/dev/ic/ciss.c				1.2
+
+	Repair commands with no SCSI transfer.
+	[martti, ticket #1275]
+
+sys/dev/pci/if_sip.c				1.107
+
+	PR kern/32644: Fix VLAN tagging in gsip(4) driver.
+	[pavel, ticket #1279]
+
+sys/dev/pci/if_sip.c				1.106
+
+	PR kern/32900 and 33216: Fix checksum support in the gsip(4) driver.
+	[pavel, ticket #1280]
+
+sys/dev/fss.c					1.24
+
+	Fix locking issue in fss(4).
+	[hannken, ticket #1282]
+
+sbin/dump/main.c				1.61
+
+	Emit "a snapshot of" message for snap_internal case too.
+	[hannken, ticket #1283]
+
+sys/arch/hp300/include/param.h			1.46
+sys/arch/mvme68k/include/param.h		1.27
+
+	Fix a huge number of "pkgsrc" build problems in by avoiding
+	inclusion of "sys/device.h" unless we are building a kernel.
+	[oster, ticket #1284]
 
