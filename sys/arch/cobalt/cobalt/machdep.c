@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2006/04/21 17:55:27 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2006/04/21 18:17:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2006/04/21 17:55:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2006/04/21 18:17:45 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2006/04/21 17:55:27 tsutsui Exp $")
 
 #include <dev/cons.h>
 
+#include <cobalt/cobalt/clockvar.h>
+
 #include <arch/cobalt/dev/gtreg.h>
 #define GT_BASE		0x14000000	/* XXX */
 
@@ -105,6 +107,9 @@ int	bootunit = -1;
 int	bootpart = -1;
 
 int cpuspeed;
+
+struct evcnt hardclock_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "cpu", "hardclock");
 
 u_int cobalt_id;
 static const char * const cobalt_model[] =
@@ -422,6 +427,9 @@ cpu_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 	ih->ih_cookie_type = COBALT_COOKIE_TYPE_CPU;
 	ih->ih_func = func;
 	ih->ih_arg = arg;
+	snprintf(ih->ih_evname, sizeof(ih->ih_evname), "level %d", level);
+	evcnt_attach_dynamic(&ih->ih_evcnt, EVCNT_TYPE_INTR, NULL,
+	    "cpu", ih->ih_evname);
 
 	return ih;
 }
@@ -435,6 +443,7 @@ cpu_intr_disestablish(void *cookie)
 		ih->ih_func = NULL;
 		ih->ih_arg = NULL;
 		ih->ih_cookie_type = 0;
+		evcnt_detach(&ih->ih_evcnt);
 	}
 }
 
@@ -459,6 +468,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			cf.sr = status;
 
 			hardclock(&cf);
+			hardclock_ev.ev_count++;
 		}
 		cause &= ~MIPS_INT_MASK_0;
 	}
@@ -484,6 +494,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		if (ih->ih_func != NULL) {
 			if ((*ih->ih_func)(ih->ih_arg)) {
 				cause &= ~MIPS_INT_MASK_3;
+				ih->ih_evcnt.ev_count++;
 			}
 		}
 	}
@@ -495,6 +506,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		if (ih->ih_func != NULL) {
 			if ((*ih->ih_func)(ih->ih_arg)) {
 				cause &= ~MIPS_INT_MASK_1;
+				ih->ih_evcnt.ev_count++;
 			}
 		}
 	}
@@ -504,6 +516,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		if (ih->ih_func != NULL) {
 			if ((*ih->ih_func)(ih->ih_arg)) {
 				cause &= ~MIPS_INT_MASK_2;
+				ih->ih_evcnt.ev_count++;
 			}
 		}
 	}
@@ -515,6 +528,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		if (ih->ih_func != NULL) {
 			if ((*ih->ih_func)(ih->ih_arg)) {
 				cause &= ~MIPS_INT_MASK_4;
+				/* evcnt for ICU is done in icu_intr() */
 			}
 		}
 	}

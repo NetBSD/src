@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2006/04/21 16:52:15 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19 2006/04/21 18:17:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2006/04/21 16:52:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2006/04/21 18:17:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2006/04/21 16:52:15 tsutsui Exp $"
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+
+#include <cobalt/cobalt/clockvar.h>
 
 extern char	bootstring[];
 extern int	netboot;
@@ -48,6 +50,8 @@ cpu_configure(void)
 	softintr_init();
 
 	(void)splhigh();
+
+	evcnt_attach_static(&hardclock_ev);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
