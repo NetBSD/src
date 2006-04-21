@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57.2.1 2005/04/21 19:04:34 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.57.2.2 2006/04/21 12:19:07 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.57.2.1 2005/04/21 19:04:34 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.57.2.2 2006/04/21 12:19:07 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -459,7 +459,7 @@ main(int argc, char *argv[])
  	msg("Date of last level %c dump: %s", lastlevel,
 		spcl.c_ddate == 0 ? "the epoch\n" : ctime(&date));
 	msg("Dumping ");
-	if (snap_backup != NULL)
+	if (snap_backup != NULL || snap_internal)
 		msgtail("a snapshot of ");
 	if (dirc != 0)
 		msgtail("a subset of ");
