@@ -32,7 +32,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $NetBSD: main.c,v 1.16 2005/06/12 20:04:22 christos Exp $ */
+/* $NetBSD: main.c,v 1.17 2006/04/22 20:51:09 christos Exp $ */
 
 
 #include "flexdef.h"
@@ -670,7 +670,7 @@ char **argv;
 						sawcmpflag = true;
 						}
 
-					for ( ++i; arg[i] != '\0'; ++i )
+					for ( i = 2; arg[i] != '\0'; ++i )
 						switch ( arg[i] )
 							{
 							case 'a':
