@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.25 2006/02/22 07:10:26 dogcow Exp $	*/
+/*	$NetBSD: installboot.c,v 1.26 2006/04/22 19:57:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.25 2006/02/22 07:10:26 dogcow Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.26 2006/04/22 19:57:04 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -252,15 +252,13 @@ main(int argc, char *argv[])
 	}
 
 	if (argc >= 2) {
-		params->stage1 = argv[1];
-		if ((params->s1fd = open(params->stage1, O_RDONLY, 0600)) == -1)
-			err(1, "Opening primary bootstrap `%s'",
-			    params->stage1);
+		if ((params->s1fd = open(argv[1], O_RDONLY, 0600)) == -1)
+			err(1, "Opening primary bootstrap `%s'", argv[1]);
 		if (fstat(params->s1fd, &params->s1stat) == -1)
-			err(1, "Examining primary bootstrap `%s'",
-			    params->stage1);
+			err(1, "Examining primary bootstrap `%s'", argv[1]);
 		if (!S_ISREG(params->s1stat.st_mode))
-			errx(1, "`%s' must be a regular file", params->stage1);
+			errx(1, "`%s' must be a regular file", argv[1]);
+		params->stage1 = argv[1];
 	}
 	assert(params->machine != NULL);
 
