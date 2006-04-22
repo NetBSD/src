@@ -1,4 +1,4 @@
-/*	$NetBSD: mulsi3.S,v 1.1 2005/12/20 19:28:50 christos Exp $	*/
+/*	$NetBSD: ashrsi3.S,v 1.4 2006/04/22 22:48:54 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -29,10 +29,18 @@
 #include <machine/asm.h>
 
 #ifdef PIC	/* XXX: uwe */
-	.hidden __mulsi3
+	.hidden __ashrsi3
 #endif
 
-NENTRY(__mulsi3)
-	mul.l	r4, r5
+NENTRY(__ashrsi3)
+	tst	r5, r5
+	bt	noshift
+
+	neg	r5, r5
+	shad	r5, r4
 	rts
-	 sts	macl, r0
+	 mov	r4, r0
+
+noshift:
+	rts
+	 mov	r4, r0
