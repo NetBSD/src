@@ -1,18 +1,22 @@
-/*	$NetBSD: tpstats.h,v 1.1 2005/08/07 12:21:46 blymn Exp $	*/
+/*	$NetBSD: drvstats.h,v 1.1.2.2 2006/04/22 02:54:47 simonb Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
- *
- * This code is derived from code donated to the NetBSD Foundation, Inc.
- * by Brett Lymn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project
+ *      by John M. Vinopal.
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -32,23 +36,31 @@
 #include <sys/sched.h>
 #include <unistd.h>
 
-/* Tape drive entry to hold the information we're interested in. */
-struct _tape {
-	int		 *select;	/* Display stats for selected tapes. */
-	char		**name;		/* Tape drive names (st0, etc). */
+/* poseur disk entry to hold the information we're interested in. */
+struct _drive {
+	int		 *select;	/* Display stats for selected disks. */
+	char		**name;	/* Disk names (sd0, wd1, etc). */
 	u_int64_t	 *rxfer;	/* # of read transfers. */
 	u_int64_t	 *wxfer;	/* # of write transfers. */
+	u_int64_t	 *seek;	/* # of seeks (currently unused). */
 	u_int64_t	 *rbytes;	/* # of bytes read. */
 	u_int64_t	 *wbytes;	/* # of bytes written. */
-	struct timeval	 *time;		/* Time spent in tape i/o. */
+	struct timeval	 *time;	/* Time spent in disk i/o. */
+	u_int64_t	  tk_nin;	/* TTY Chars in. */
+	u_int64_t	  tk_nout;	/* TTY Chars out. */
+	u_int64_t	  cp_time[CPUSTATES];	/* System timer ticks. */
+	int	 	  cp_ncpu;		/* Number of cpu's */
+	double		  cp_etime;		/* Elapsed time */
 };
 
-extern struct _tape	cur_tape;
-extern char		**tp_name;
-extern int		*tp_select, tp_ndrive;
+extern struct _drive	cur;
+extern char		**dr_name;
+extern int		*drv_select, ndrive;
 
-int	tpinit(int);
-void	tpreadstats(void);
-void	tpswap(void);
-
-
+int	drvinit(int);
+void	cpureadstats(void);
+void	drvreadstats(void);
+void	tkreadstats(void);
+void	cpuswap(void);
+void	drvswap(void);
+void	tkswap(void);
