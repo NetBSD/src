@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35 2004/02/02 18:43:39 he Exp $
+#	$NetBSD: Makefile.inc,v 1.36 2006/04/22 02:57:29 uwe Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -99,7 +99,8 @@ ${TARG}.more.toc: ${SRCS}
 
 
 release: check_RELEASEDIR .WAIT ${TARGS}
-	${RELEASE_INSTALL} ${TARGS} ${RELEASEDIR}/${MACHINE}
+	${INSTALL} -d -m 755 ${RELEASEDIR}/${RELEASEMACHINEDIR}
+	${RELEASE_INSTALL} ${TARGS} ${RELEASEDIR}/${RELEASEMACHINEDIR}
 
 cleannotes:
 	rm -f [Ee]rrs mklog core *.core ${TARGS} ${TOCS} \
