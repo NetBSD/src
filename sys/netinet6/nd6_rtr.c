@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.54.4.2 2006/04/22 11:40:13 simonb Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.54.4.3 2006/04/22 13:42:07 simonb Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.54.4.2 2006/04/22 11:40:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.54.4.3 2006/04/22 13:42:07 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -913,7 +913,7 @@ nd6_prelist_add(pr, dr, newp)
 		free(new, M_IP6NDP);
 		return(error);
 	}
-	new->ndpr_lastupdate = time.tv_sec;
+	new->ndpr_lastupdate = time_second;
 	if (newp != NULL)
 		*newp = new;
 
@@ -1044,7 +1044,7 @@ prelist_update(new, dr, m, mcast)
 			pr->ndpr_vltime = new->ndpr_vltime;
 			pr->ndpr_pltime = new->ndpr_pltime;
 			(void)in6_init_prefix_ltimes(pr); /* XXX error case? */
-			pr->ndpr_lastupdate = time.tv_sec;
+			pr->ndpr_lastupdate = time_second;
 		}
 
 		if (new->ndpr_raf_onlink &&
@@ -1135,7 +1135,6 @@ prelist_update(new, dr, m, mcast)
 	{
 		struct in6_ifaddr *ifa6;
 		u_int32_t remaininglifetime;
-		long time_second = time.tv_sec;
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -1900,7 +1899,6 @@ in6_tmpifadd(ia0, forcegen, dad_delay)
 	int updateflags;
 	u_int32_t randid[2];
 	u_int32_t vltime0, pltime0;
-	time_t time_second = (time_t)time.tv_sec;
 
 	memset(&ifra, 0, sizeof(ifra));
 	strncpy(ifra.ifra_name, if_name(ifp), sizeof(ifra.ifra_name));
