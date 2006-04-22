@@ -1,7 +1,7 @@
-/*	$NetBSD: movstr_i4.S,v 1.1 2005/12/20 19:28:50 christos Exp $	*/
+/*	$NetBSD: movstr.S,v 1.6 2006/04/22 22:48:54 uwe Exp $	*/
 
 /*-
- * Copyright (C) 2002 SHIMIZU Ryo.  All rights reserved.
+ * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,48 +29,65 @@
 #include <machine/asm.h>
 
 #ifdef PIC	/* XXX: uwe */
-	.hidden __movstr_i4_odd
+	.hidden __movstr
 #endif
 
-NENTRY(__movstr_i4_odd)
-	add	#-8,r4
-	nop
-odd_loop:
-	mov.l	@r5+,r0
-	add	#8,r4
-	mov.l	@r5+,r1
-	dt	r6
-	mov.l	r0,@(0,r4)
-	bf/s	odd_loop
-	 mov.l	r1,@(4,r4)
+NENTRY(__movstr)
+	mov	#16, r0
+	cmp/gt	r0, r6
+	bf	loop2
 
-	mov.l	@r5+,r0
-	mov.l	@r5+,r1
-	mov.l	@r5+,r2
-	mov.l	r0,@(8,r4)
-	mov.l	r1,@(12,r4)
+	.align	2
+loop1:
+	mov.l	@r5+, r0
+	mov.l	r0, @r4
+	mov.l	@r5+, r0
+	mov.l	r0, @(4, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(8, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(12, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(16, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(20, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(24, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(28, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(32, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(36, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(40, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(44, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(48, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(52, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(56, r4)
+	mov.l	@r5+, r0
+	mov.l	r0, @(60, r4)
+	add	#-16, r6
+	add	#64, r4
+
+	mov	#16, r0
+	cmp/gt	r0, r6
+	bt	loop1
+
+loop2:
+	add	#-32, r6
+	.align	2
+1:
+	mov.l	@r5+, r0
+	mov.l	r0, @r4
+	add	#4, r4
+	add	#1, r6
+	tst	r6, r6
+	bf	1b
+
 	rts
-	 mov.l	r2,@(16,r4)
-
-
-#ifdef PIC	/* XXX: uwe */
-	.hidden __movstr_i4_even
-#endif
-
-NENTRY(__movstr_i4_even)
-	add	#-8,r4
-	nop
-even_loop:
-	mov.l	@r5+,r0
-	add	#8,r4
-	mov.l	@r5+,r1
-	dt	r6
-	mov.l	r0,@(0,r4)
-	bf/s	even_loop
-	 mov.l	r1,@(4,r4)
-
-	mov.l	@r5+,r0
-	mov.l	@r5+,r1
-	mov.l	r0,@(8,r4)
-	rts
-	 mov.l	r1,@(12,r4)
+	 nop
