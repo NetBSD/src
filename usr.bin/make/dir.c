@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.48 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.49 2006/04/22 18:47:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.48 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.49 2006/04/22 18:47:10 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.48 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.49 2006/04/22 18:47:10 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1510,7 +1510,7 @@ Dir_AddDir(Lst path, const char *name)
 	ln = Lst_Find(openDirectories, (ClientData)UNCONST(name), DirFindName);
     if (ln != NILLNODE) {
 	p = (Path *)Lst_Datum(ln);
-	if (Lst_Member(path, (ClientData)p) == NILLNODE) {
+	if (path && Lst_Member(path, (ClientData)p) == NILLNODE) {
 	    p->refCount += 1;
 	    (void)Lst_AtEnd(path, (ClientData)p);
 	}
