@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.5 2006/04/22 12:56:36 rpaulo Exp $
+#	$NetBSD: postfix-files,v 1.6 2006/04/22 16:05:16 rpaulo Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -221,7 +221,7 @@ $sample_directory/sample-tls.cf:f:root:-:644:o
 $sample_directory/sample-transport.cf:f:root:-:644:o
 $sample_directory/sample-verify.cf:f:root:-:644:o
 $sample_directory/sample-virtual.cf:f:root:-:644:o
-#$readme_directory/AAAREADME:f:root:-:644
+$readme_directory/AAAREADME:f:root:-:644
 $readme_directory/ADDRESS_CLASS_README:f:root:-:644
 $readme_directory/ADDRESS_REWRITING_README:f:root:-:644
 $readme_directory/ADDRESS_VERIFICATION_README:f:root:-:644
@@ -232,7 +232,7 @@ $readme_directory/BUILTIN_FILTER_README:f:root:-:644
 $readme_directory/CONNECTION_CACHE_README:f:root:-:644
 $readme_directory/CONTENT_INSPECTION_README:f:root:-:644
 $readme_directory/DATABASE_README:f:root:-:644
-#$readme_directory/DB_README:f:root:-:644
+$readme_directory/DB_README:f:root:-:644
 $readme_directory/DEBUG_README:f:root:-:644
 $readme_directory/ETRN_README:f:root:-:644
 $readme_directory/FILTER_README:f:root:-:644
@@ -275,10 +275,10 @@ $html_directory/ADDRESS_VERIFICATION_README.html:f:root:-:644
 $html_directory/BACKSCATTER_README.html:f:root:-:644
 $html_directory/BASIC_CONFIGURATION_README.html:f:root:-:644
 $html_directory/BUILTIN_FILTER_README.html:f:root:-:644
-$html_directory/CDB_README.html:f:root:-:644
-#$html_directory/CONNECTION_CACHE_README.html:f:root:-:644
+#$html_directory/CDB_README.html:f:root:-:644
+$html_directory/CONNECTION_CACHE_README.html:f:root:-:644
 $html_directory/CONTENT_INSPECTION_README.html:f:root:-:644
-$html_directory/CYRUS_README.html:f:root:-:644
+#$html_directory/CYRUS_README.html:f:root:-:644
 $html_directory/DATABASE_README.html:f:root:-:644
 $html_directory/DB_README.html:f:root:-:644
 $html_directory/DEBUG_README.html:f:root:-:644
@@ -287,14 +287,14 @@ $html_directory/FILTER_README.html:f:root:-:644
 #$html_directory/INSTALL.html:f:root:-:644
 $html_directory/IPV6_README.html:f:root:-:644
 $html_directory/LDAP_README.html:f:root:-:644
-$html_directory/LINUX_README.html:f:root:-:644
+#$html_directory/LINUX_README.html:f:root:-:644
 $html_directory/LMTP_README.html:f:root:-:644
 $html_directory/LOCAL_RECIPIENT_README.html:f:root:-:644
 $html_directory/MAILDROP_README.html:f:root:-:644
 $html_directory/MYSQL_README.html:f:root:-:644
 $html_directory/NFS_README.html:f:root:-:644
 $html_directory/OVERVIEW.html:f:root:-:644
-$html_directory/PACKAGE_README.html:f:root:-:644
+#$html_directory/PACKAGE_README.html:f:root:-:644
 $html_directory/PCRE_README.html:f:root:-:644
 $html_directory/PGSQL_README.html:f:root:-:644
 $html_directory/QMQP_README.html:f:root:-:644
@@ -308,7 +308,7 @@ $html_directory/SMTPD_PROXY_README.html:f:root:-:644
 $html_directory/STANDARD_CONFIGURATION_README.html:f:root:-:644
 $html_directory/TLS_README.html:f:root:-:644
 $html_directory/TUNING_README.html:f:root:-:644
-$html_directory/ULTRIX_README.html:f:root:-:644
+#$html_directory/ULTRIX_README.html:f:root:-:644
 $html_directory/UUCP_README.html:f:root:-:644
 $html_directory/VERP_README.html:f:root:-:644
 $html_directory/VIRTUAL_README.html:f:root:-:644
