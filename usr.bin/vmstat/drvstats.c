@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.22 2005/02/26 21:19:18 dsl Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.2.2.2 2006/04/22 02:54:47 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -36,7 +36,7 @@
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
-#include <sys/disk.h>
+#include <sys/iostat.h>
 
 #include <err.h>
 #include <fcntl.h>
@@ -47,7 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "dkstats.h"
+#include "drvstats.h"
 
 static struct nlist namelist[] = {
 #define	X_TK_NIN	0
@@ -58,15 +58,15 @@ static struct nlist namelist[] = {
 	{ "_hz" },		/* ticks per second */
 #define	X_STATHZ	3
 	{ "_stathz" },
-#define	X_DISK_COUNT	4
-	{ "_disk_count" },	/* number of disks */
-#define	X_DISKLIST	5
-	{ "_disklist" },	/* TAILQ of disks */
+#define	X_DRIVE_COUNT	4
+	{ "_iostat_count" },	/* number of drives */
+#define	X_DRIVELIST	5
+	{ "_iostatlist" },	/* TAILQ of drives */
 	{ NULL },
 };
 
 /* Structures to hold the statistics. */
-struct _disk	cur, last;
+struct _drive	cur, last;
 
 /* Kernel pointers: nlistf and memf defined in calling program. */
 static kvm_t	*kd = NULL;
@@ -74,14 +74,14 @@ extern char	*nlistf;
 extern char	*memf;
 extern int	hz;
 
-/* Pointer to list of disks. */
-static struct disk		*dk_drivehead = NULL;
-/* sysctl hw.diskstats buffer. */
-static struct disk_sysctl	*dk_drives = NULL;
+/* Pointer to list of drives. */
+static struct io_stats	*iostathead = NULL;
+/* sysctl hw.drivestats buffer. */
+static struct io_sysctl	*drives = NULL;
 
 /* Backward compatibility references. */
-int		dk_ndrive = 0;
-int		*dk_select;
+int		ndrive = 0;
+int		*drv_select;
 char		**dr_name;
 
 #define	KVM_ERROR(_string) do {						\
@@ -111,11 +111,10 @@ static void deref_kptr(void *, void *, size_t);
  * the delta values in the 'cur' structure.
  */
 void
-dkswap(void)
+drvswap(void)
 {
-	double etime;
 	u_int64_t tmp;
-	int	i, state;
+	int	i;
 
 #define	SWAP(fld) do {							\
 	tmp = cur.fld;							\
@@ -123,30 +122,46 @@ dkswap(void)
 	last.fld = tmp;							\
 } while (/* CONSTCOND */0)
 
-	for (i = 0; i < dk_ndrive; i++) {
+	for (i = 0; i < ndrive; i++) {
 		struct timeval	tmp_timer;
 
-		if (!cur.dk_select[i])
+		if (!cur.select[i])
 			continue;
 
 		/* Delta Values. */
-		SWAP(dk_rxfer[i]);
-		SWAP(dk_wxfer[i]);
-		SWAP(dk_seek[i]);
-		SWAP(dk_rbytes[i]);
-		SWAP(dk_wbytes[i]);
+		SWAP(rxfer[i]);
+		SWAP(wxfer[i]);
+		SWAP(seek[i]);
+		SWAP(rbytes[i]);
+		SWAP(wbytes[i]);
 
 		/* Delta Time. */
 		timerclear(&tmp_timer);
-		timerset(&(cur.dk_time[i]), &tmp_timer);
-		timersub(&tmp_timer, &(last.dk_time[i]), &(cur.dk_time[i]));
-		timerclear(&(last.dk_time[i]));
-		timerset(&tmp_timer, &(last.dk_time[i]));
+		timerset(&(cur.time[i]), &tmp_timer);
+		timersub(&tmp_timer, &(last.time[i]), &(cur.time[i]));
+		timerclear(&(last.time[i]));
+		timerset(&tmp_timer, &(last.time[i]));
 	}
-	for (i = 0; i < CPUSTATES; i++)
-		SWAP(cp_time[i]);
+}
+
+void
+tkswap(void)
+{
+	u_int64_t tmp;
+
 	SWAP(tk_nin);
 	SWAP(tk_nout);
+}
+
+void
+cpuswap(void)
+{
+	double etime;
+	u_int64_t tmp;
+	int	i, state;
+
+	for (i = 0; i < CPUSTATES; i++)
+		SWAP(cp_time[i]);
 
 	etime = 0;
 	for (state = 0; state < CPUSTATES; ++state) {
@@ -158,40 +173,39 @@ dkswap(void)
 	etime /= cur.cp_ncpu;
 
 	cur.cp_etime = etime;
-
-#undef SWAP
 }
+#undef SWAP
 
 /*
- * Read the disk statistics for each disk in the disk list.
+ * Read the drive statistics for each drive in the drive list.
  * Also collect statistics for tty i/o and CPU ticks.
  */
 void
-dkreadstats(void)
+drvreadstats(void)
 {
-	struct disk	cur_disk, *p;
+	struct io_stats	cur_drive, *p;
 	size_t		size;
 	int		mib[3];
 	int		i;
 
-	p = dk_drivehead;
+	p = iostathead;
 
 	if (memf == NULL) {
 		mib[0] = CTL_HW;
-		mib[1] = HW_DISKSTATS;
-		mib[2] = sizeof(struct disk_sysctl);
+		mib[1] = HW_IOSTATS;
+		mib[2] = sizeof(struct io_sysctl);
 
-		size = dk_ndrive * sizeof(struct disk_sysctl);
-		if (sysctl(mib, 3, dk_drives, &size, NULL, 0) < 0)
-			err(1, "sysctl hw.diskstats failed");
-		for (i = 0; i < dk_ndrive; i++) {
-			cur.dk_rxfer[i] = dk_drives[i].dk_rxfer;
-			cur.dk_wxfer[i] = dk_drives[i].dk_wxfer;
-			cur.dk_seek[i] = dk_drives[i].dk_seek;
-			cur.dk_rbytes[i] = dk_drives[i].dk_rbytes;
-			cur.dk_wbytes[i] = dk_drives[i].dk_wbytes;
-			cur.dk_time[i].tv_sec = dk_drives[i].dk_time_sec;
-			cur.dk_time[i].tv_usec = dk_drives[i].dk_time_usec;
+		size = ndrive * sizeof(struct io_sysctl);
+		if (sysctl(mib, 3, drives, &size, NULL, 0) < 0)
+			err(1, "sysctl hw.iostats failed");
+		for (i = 0; i < ndrive; i++) {
+			cur.rxfer[i] = drives[i].rxfer;
+			cur.wxfer[i] = drives[i].wxfer;
+			cur.seek[i] = drives[i].seek;
+			cur.rbytes[i] = drives[i].rbytes;
+			cur.wbytes[i] = drives[i].wbytes;
+			cur.time[i].tv_sec = drives[i].time_sec;
+			cur.time[i].tv_usec = drives[i].time_usec;
 		}
 
 		mib[0] = CTL_KERN;
@@ -206,15 +220,15 @@ dkreadstats(void)
 		if (sysctl(mib, 3, &cur.tk_nout, &size, NULL, 0) < 0)
 			cur.tk_nout = 0;
 	} else {
-		for (i = 0; i < dk_ndrive; i++) {
-			deref_kptr(p, &cur_disk, sizeof(cur_disk));
-			cur.dk_rxfer[i] = cur_disk.dk_rxfer;
-			cur.dk_wxfer[i] = cur_disk.dk_wxfer;
-			cur.dk_seek[i] = cur_disk.dk_seek;
-			cur.dk_rbytes[i] = cur_disk.dk_rbytes;
-			cur.dk_wbytes[i] = cur_disk.dk_wbytes;
-			timerset(&(cur_disk.dk_time), &(cur.dk_time[i]));
-			p = cur_disk.dk_link.tqe_next;
+		for (i = 0; i < ndrive; i++) {
+			deref_kptr(p, &cur_drive, sizeof(cur_drive));
+			cur.rxfer[i] = cur_drive.io_rxfer;
+			cur.wxfer[i] = cur_drive.io_wxfer;
+			cur.seek[i] = cur_drive.io_seek;
+			cur.rbytes[i] = cur_drive.io_rbytes;
+			cur.wbytes[i] = cur_drive.io_wbytes;
+			timerset(&(cur_drive.io_time), &(cur.time[i]));
+			p = cur_drive.io_link.tqe_next;
 		}
 
 		deref_nl(X_TK_NIN, &cur.tk_nin, sizeof(cur.tk_nin));
@@ -237,14 +251,67 @@ dkreadstats(void)
 }
 
 /*
+ * Read collect statistics for tty i/o.
+ */
+
+void
+tkreadstats(void)
+{
+	size_t		size;
+	int		mib[3];
+
+	if (memf == NULL) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_TKSTAT;
+		mib[2] = KERN_TKSTAT_NIN;
+		size = sizeof(cur.tk_nin);
+		if (sysctl(mib, 3, &cur.tk_nin, &size, NULL, 0) < 0)
+			cur.tk_nin = 0;
+
+		mib[2] = KERN_TKSTAT_NOUT;
+		size = sizeof(cur.tk_nout);
+		if (sysctl(mib, 3, &cur.tk_nout, &size, NULL, 0) < 0)
+			cur.tk_nout = 0;
+	} else {
+		deref_nl(X_TK_NIN, &cur.tk_nin, sizeof(cur.tk_nin));
+		deref_nl(X_TK_NOUT, &cur.tk_nout, sizeof(cur.tk_nout));
+	}
+}
+
+/*
+ * Read collect statistics for CPU ticks.
+ */
+
+void
+cpureadstats(void)
+{
+	size_t		size;
+	int		mib[2];
+
+	/*
+	 * XXX Need to locate the `correct' CPU when looking for this
+	 * XXX in crash dumps.  Just don't report it for now, in that
+	 * XXX case.
+	 */
+	size = sizeof(cur.cp_time);
+	memset(cur.cp_time, 0, size);
+	if (memf == NULL) {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_CP_TIME;
+		if (sysctl(mib, 2, cur.cp_time, &size, NULL, 0) < 0)
+			memset(cur.cp_time, 0, sizeof(cur.cp_time));
+	}
+}
+
+/*
  * Perform all of the initialization and memory allocation needed to
- * track disk statistics.
+ * track drive statistics.
  */
 int
-dkinit(int selected)
+drvinit(int selected)
 {
-	struct disklist_head disk_head;
-	struct disk	cur_disk, *p;
+	struct iostatlist_head iostat_head;
+	struct io_stats	cur_drive, *p;
 	struct clockinfo clockinfo;
 	char		errbuf[_POSIX2_LINE_MAX];
 	size_t		size;
@@ -271,17 +338,17 @@ dkinit(int selected)
 			hz = clockinfo.hz;
 
 		mib[0] = CTL_HW;
-		mib[1] = HW_DISKSTATS;
-		mib[2] = sizeof(struct disk_sysctl);
+		mib[1] = HW_IOSTATS;
+		mib[2] = sizeof(struct io_sysctl);
 		if (sysctl(mib, 3, NULL, &size, NULL, 0) == -1)
-			err(1, "sysctl hw.diskstats failed");
-		dk_ndrive = size / sizeof(struct disk_sysctl);
+			err(1, "sysctl hw.drivestats failed");
+		ndrive = size / sizeof(struct io_sysctl);
 
 		if (size == 0) {
 			warnx("No drives attached.");
 		} else {
-			dk_drives = (struct disk_sysctl *)malloc(size);
-			if (dk_drives == NULL)
+			drives = (struct io_sysctl *)malloc(size);
+			if (drives == NULL)
 				errx(1, "Memory allocation failure.");
 		}
 	} else {
@@ -295,16 +362,17 @@ dkinit(int selected)
 			KVM_ERROR("kvm_nlist failed to read symbols.");
 
 		/* Get the number of attached drives. */
-		deref_nl(X_DISK_COUNT, &dk_ndrive, sizeof(dk_ndrive));
+		deref_nl(X_DRIVE_COUNT, &ndrive, sizeof(ndrive));
 
-		if (dk_ndrive < 0)
-			errx(1, "invalid _disk_count %d.", dk_ndrive);
-		else if (dk_ndrive == 0) {
+		if (ndrive < 0)
+			errx(1, "invalid _drive_count %d.", ndrive);
+		else if (ndrive == 0) {
 			warnx("No drives attached.");
 		} else {
-			/* Get a pointer to the first disk. */
-			deref_nl(X_DISKLIST, &disk_head, sizeof(disk_head));
-			dk_drivehead = disk_head.tqh_first;
+			/* Get a pointer to the first drive. */
+			deref_nl(X_DRIVELIST, &iostat_head,
+				 sizeof(iostat_head));
+			iostathead = iostat_head.tqh_first;
 		}
 
 		/* Get ticks per second. */
@@ -314,57 +382,57 @@ dkinit(int selected)
 	}
 
 	/* Allocate space for the statistics. */
-	cur.dk_time = calloc(dk_ndrive, sizeof(struct timeval));
-	cur.dk_rxfer = calloc(dk_ndrive, sizeof(u_int64_t));
-	cur.dk_wxfer = calloc(dk_ndrive, sizeof(u_int64_t));
-	cur.dk_seek = calloc(dk_ndrive, sizeof(u_int64_t));
-	cur.dk_rbytes = calloc(dk_ndrive, sizeof(u_int64_t));
-	cur.dk_wbytes = calloc(dk_ndrive, sizeof(u_int64_t));
-	last.dk_time = calloc(dk_ndrive, sizeof(struct timeval));
-	last.dk_rxfer = calloc(dk_ndrive, sizeof(u_int64_t));
-	last.dk_wxfer = calloc(dk_ndrive, sizeof(u_int64_t));
-	last.dk_seek = calloc(dk_ndrive, sizeof(u_int64_t));
-	last.dk_rbytes = calloc(dk_ndrive, sizeof(u_int64_t));
-	last.dk_wbytes = calloc(dk_ndrive, sizeof(u_int64_t));
-	cur.dk_select = calloc(dk_ndrive, sizeof(int));
-	cur.dk_name = calloc(dk_ndrive, sizeof(char *));
+	cur.time = calloc(ndrive, sizeof(struct timeval));
+	cur.rxfer = calloc(ndrive, sizeof(u_int64_t));
+	cur.wxfer = calloc(ndrive, sizeof(u_int64_t));
+	cur.seek = calloc(ndrive, sizeof(u_int64_t));
+	cur.rbytes = calloc(ndrive, sizeof(u_int64_t));
+	cur.wbytes = calloc(ndrive, sizeof(u_int64_t));
+	last.time = calloc(ndrive, sizeof(struct timeval));
+	last.rxfer = calloc(ndrive, sizeof(u_int64_t));
+	last.wxfer = calloc(ndrive, sizeof(u_int64_t));
+	last.seek = calloc(ndrive, sizeof(u_int64_t));
+	last.rbytes = calloc(ndrive, sizeof(u_int64_t));
+	last.wbytes = calloc(ndrive, sizeof(u_int64_t));
+	cur.select = calloc(ndrive, sizeof(int));
+	cur.name = calloc(ndrive, sizeof(char *));
 
-	if (cur.dk_time == NULL || cur.dk_rxfer == NULL ||
-	    cur.dk_wxfer == NULL || cur.dk_seek == NULL ||
-	    cur.dk_rbytes == NULL || cur.dk_wbytes == NULL ||
-	    last.dk_time == NULL || last.dk_rxfer == NULL ||
-	    last.dk_wxfer == NULL || last.dk_seek == NULL ||
-	    last.dk_rbytes == NULL || last.dk_wbytes == NULL ||
-	    cur.dk_select == NULL || cur.dk_name == NULL)
+	if (cur.time == NULL || cur.rxfer == NULL ||
+	    cur.wxfer == NULL || cur.seek == NULL ||
+	    cur.rbytes == NULL || cur.wbytes == NULL ||
+	    last.time == NULL || last.rxfer == NULL ||
+	    last.wxfer == NULL || last.seek == NULL ||
+	    last.rbytes == NULL || last.wbytes == NULL ||
+	    cur.select == NULL || cur.name == NULL)
 		errx(1, "Memory allocation failure.");
 
 	/* Set up the compatibility interfaces. */
-	dk_select = cur.dk_select;
-	dr_name = cur.dk_name;
+	drv_select = cur.select;
+	dr_name = cur.name;
 
-	/* Read the disk names and set intial selection. */
+	/* Read the drive names and set intial selection. */
 	if (memf == NULL) {
 		mib[0] = CTL_HW;		/* Should be still set from */
-		mib[1] = HW_DISKSTATS;		/* ... above, but be safe... */
-		mib[2] = sizeof(struct disk_sysctl);
-		if (sysctl(mib, 3, dk_drives, &size, NULL, 0) == -1)
-			err(1, "sysctl hw.diskstats failed");
-		for (i = 0; i < dk_ndrive; i++) {
-			cur.dk_name[i] = dk_drives[i].dk_name;
-			cur.dk_select[i] = selected;
+		mib[1] = HW_IOSTATS;		/* ... above, but be safe... */
+		mib[2] = sizeof(struct io_sysctl);
+		if (sysctl(mib, 3, drives, &size, NULL, 0) == -1)
+			err(1, "sysctl hw.iostats failed");
+		for (i = 0; i < ndrive; i++) {
+			cur.name[i] = drives[i].name;
+			cur.select[i] = selected;
 		}
 	} else {
-		p = dk_drivehead;
-		for (i = 0; i < dk_ndrive; i++) {
+		p = iostathead;
+		for (i = 0; i < ndrive; i++) {
 			char	buf[10];
-			deref_kptr(p, &cur_disk, sizeof(cur_disk));
-			deref_kptr(cur_disk.dk_name, buf, sizeof(buf));
-			cur.dk_name[i] = strdup(buf);
-			if (!cur.dk_name[i])
+			deref_kptr(p, &cur_drive, sizeof(cur_drive));
+			deref_kptr(cur_drive.io_name, buf, sizeof(buf));
+			cur.name[i] = strdup(buf);
+			if (!cur.name[i])
 				err(1, "strdup");
-			cur.dk_select[i] = selected;
+			cur.select[i] = selected;
 
-			p = cur_disk.dk_link.tqe_next;
+			p = cur_drive.io_link.tqe_next;
 		}
 	}
 
