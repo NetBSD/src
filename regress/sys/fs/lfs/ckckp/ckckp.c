@@ -13,8 +13,9 @@ int main(int argc, char **argv)
 	char cmd[BUFSIZ], s[BUFSIZ];
 	FILE *pp;
 
-	if (argv[1] == NULL || argv[2] == NULL)
-		errx(1, "usage: %s <fs-root> <raw-dev>\n", argv[0]);
+	if (argc < 5)
+		errx(1, "usage: %s <fs-root> <raw-dev> <save-filename> "
+		     "<work-filename>\n", argv[0]);
 
 	fd = open(argv[1], 0, 0);
 	if (fd < 0)
@@ -37,7 +38,8 @@ int main(int argc, char **argv)
 		 * numeric code: zero for okay, nonzero for a failure.
 		 */
 		printf("Verifying all checkpoints from s/n %d\n", sno);
-		sprintf(cmd, "./check-all %s %d", argv[2], sno);
+		sprintf(cmd, "./check-all %s %s %s %d", argv[2], argv[3],
+			argv[4], sno);
 		pp = popen(cmd, "r");
 		s[0] = '\0';
 		while(fgets(s, BUFSIZ, pp) != NULL)
