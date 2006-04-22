@@ -1,4 +1,4 @@
-/*	$NetBSD: geodereg.h,v 1.4.6.2 2006/04/22 11:37:34 simonb Exp $	*/
+/*	$NetBSD: geodereg.h,v 1.4.6.3 2006/04/22 13:55:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -126,12 +126,12 @@
 #define SC1100_GCB_TMVALUE_L		0x08    /* timer value */
 
 #define SC1100_GCB_TMSTS_B		0x0c    /* status */
-#define SC1100_TMSTS_OVFL		BIT(0)  /* set: overflow */
+#define SC1100_TMSTS_OVFL		__BIT(0)  /* set: overflow */
 
 #define SC1100_GCB_TMCNFG_B		0x0d    /* configuration */
-#define SC1100_TMCNFG_TM27MPD		BIT(2)  /* set: power down on SUSPA# */
-#define SC1100_TMCNFG_TMCLKSEL		BIT(1)  /* set: 27MHz clock, clear: 1MHz */
-#define SC1100_TMCNFG_TMEN		BIT(0)  /* set: timer interrupt enabled */
+#define SC1100_TMCNFG_TM27MPD		__BIT(2)  /* set: power down on SUSPA# */
+#define SC1100_TMCNFG_TMCLKSEL		__BIT(1)  /* set: 27MHz clock, clear: 1MHz */
+#define SC1100_TMCNFG_TMEN		__BIT(0)  /* set: timer interrupt enabled */
 
 #define SC1100_GCB_IID_B		0x3c    /* chip identification register */
 
