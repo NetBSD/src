@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.10 2005/10/31 23:21:25 dyoung Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.11 2006/04/22 17:38:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.10 2005/10/31 23:21:25 dyoung Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.11 2006/04/22 17:38:20 christos Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -84,6 +84,7 @@ cd9660_add_boot_disk(const char *boot_info)
 	if (filename == NULL) {
 		warnx("supply boot disk information in the format "
 		    "'system;filename'");
+		free(temp);
 		return 0;
 	}
 
@@ -95,6 +96,7 @@ cd9660_add_boot_disk(const char *boot_info)
 	}
 	if ((new_image = malloc(sizeof(*new_image))) == NULL) {
 		warn("%s: malloc", __func__);
+		free(temp);
 		return 0;
 	}
 	(void)memset(new_image, 0, sizeof(*new_image));
@@ -111,12 +113,16 @@ cd9660_add_boot_disk(const char *boot_info)
 	else {
 		warnx("boot disk system must be "
 		      "i386, powerpc, macppc, or mac68k");
+		free(temp);
+		free(new_image);
 		return 0;
 	}
 
 
 	if ((new_image->filename = strdup(filename)) == NULL) {
 		warn("%s: strdup", __func__);
+		free(temp);
+		free(new_image);
 		return 0;
 	}
 
