@@ -1,4 +1,4 @@
-/*	$NetBSD: lr0.c,v 1.7 2003/08/07 11:17:53 agc Exp $	*/
+/*	$NetBSD: lr0.c,v 1.8 2006/04/22 18:16:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lr0.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: lr0.c,v 1.7 2003/08/07 11:17:53 agc Exp $");
+__RCSID("$NetBSD: lr0.c,v 1.8 2006/04/22 18:16:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -548,6 +548,9 @@ set_derives()
     short *rules;
 
     derives = NEW2(nsyms, short *);
+    if (start_symbol >= nsyms)
+	return;
+
     rules = NEW2(nvars + nrules, short);
 
     k = 0;
