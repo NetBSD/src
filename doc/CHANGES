@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.609 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.610 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -165,7 +165,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	rlphy(4): Realtek 8139/8201L PHY. From OpenBSD [xtraeme 20060104]
 	build.sh: Add experimental ability to build syspkgs. [apb 20060104]
 	postfix(1): Updated to 2.2.8. [rpaulo 20060109]
-	ews4800mips: Add sysinst support. [20060109]
+	ews4800mips: Add sysinst support. [tsutsui 20060109]
 	zlib: Updated to 1.2.3 and shared between kernel and userland.
 		[christos 20060114]
 	firmload: Add an API for loading firmware images used by hardware
