@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.26 2004/07/09 12:10:43 wiz Exp $	*/
+/*	$NetBSD: fgen.l,v 1.27 2006/04/22 17:51:09 christos Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -47,7 +47,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.26 2004/07/09 12:10:43 wiz Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.27 2006/04/22 17:51:09 christos Exp $");
 #endif
 
 %}
@@ -1273,6 +1273,8 @@ tokenize(input)
 			alias->name = strdup(token->text);
 			token = yylex();
 			if (token == NULL) {
+				free(alias->name);
+				free(alias);
 				(void)printf( "EOF in alias definition\n");
 				return;
 			}			
