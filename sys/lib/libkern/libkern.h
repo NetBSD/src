@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.61 2006/04/15 01:09:34 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.62 2006/04/22 15:33:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,6 +35,7 @@
 #define _LIB_LIBKERN_LIBKERN_H_
 
 #include <sys/types.h>
+#include <sys/inttypes.h>
 #include <sys/null.h>
 
 #ifndef LIBKERN_INLINE
@@ -330,4 +331,5 @@ size_t	 strlcpy __P((char *, const char *, size_t));
 size_t	 strlcat __P((char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));
 u_long	 strtoul __P((const char *, char **, int));
+uintmax_t strtoumax __P((const char *, char **, int));
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

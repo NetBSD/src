@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoumax.c,v 1.6 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: strtoumax.c,v 1.1 2006/04/22 15:33:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -29,12 +29,13 @@
  * SUCH DAMAGE.
  */
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "from: @(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoumax.c,v 1.6 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: strtoumax.c,v 1.1 2006/04/22 15:33:33 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +51,11 @@ __RCSID("$NetBSD: strtoumax.c,v 1.6 2005/11/29 03:12:00 christos Exp $");
 __weak_alias(strtoumax, _strtoumax)
 #endif
 
+#else /* !_KERNEL && !_STANDALONE */
+#include <sys/param.h>
+#include <lib/libkern/libkern.h>
+#endif /* !_KERNEL && !_STANDALONE */
+
 /*
  * Convert a string to an uintmax_t.
  *
@@ -57,7 +63,7 @@ __weak_alias(strtoumax, _strtoumax)
  * alphabets and digits are each contiguous.
  */
 uintmax_t
-_strtoumax(nptr, endptr, base)
+strtoumax(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
 	int base;
@@ -99,18 +105,28 @@ _strtoumax(nptr, endptr, base)
 	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
 		if (isdigit(c))
 			c -= '0';
-		else if (isalpha(c))
+		else if (isalpha(c)) {
+#if defined(_KERNEL) || defined(_STANDALONE)
+			c = toupper(c) - 'A' + 10;
+#else
 			c -= isupper(c) ? 'A' - 10 : 'a' - 10;
-		else
+#endif
+		} else
 			break;
 		if (c >= base)
 			break;
 		if (any < 0)
 			continue;
 		if (acc > cutoff || (acc == cutoff && c > cutlim)) {
+#if defined(_KERNEL) || defined(_STANDALONE)
+			if (endptr)
+				*endptr = __UNCONST(nptr);
+			return UINTMAX_MAX;
+#else
 			any = -1;
 			acc = UINTMAX_MAX;
 			errno = ERANGE;
+#endif
 		} else {
 			any = 1;
 			acc *= (uintmax_t)base;
