@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.1 2006/04/07 14:21:32 cherry Exp $	*/
+/*	$NetBSD: exit.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/exit.c,v 1.2 2003/04/03 21:36:29 obrien Exp $"); */
 
 #include <sys/param.h>
 #include <sys/time.h>
