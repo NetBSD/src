@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.95.4.2 2006/04/22 11:40:11 simonb Exp $	*/
+/*	$NetBSD: in6.c,v 1.95.4.3 2006/04/22 13:42:07 simonb Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.95.4.2 2006/04/22 11:40:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.95.4.3 2006/04/22 13:42:07 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -951,7 +951,7 @@ in6_update_ifa(ifp, ifra, ia, flags)
 	}
 
 	/* update timestamp */
-	ia->ia6_updatetime = time.tv_sec;
+	ia->ia6_updatetime = time_second;
 
 	/* set prefix mask */
 	if (ifra->ifra_prefixmask.sin6_len) {

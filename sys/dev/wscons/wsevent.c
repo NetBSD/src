@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.17.6.1 2006/04/22 11:39:44 simonb Exp $ */
+/* $NetBSD: wsevent.c,v 1.17.6.2 2006/04/22 13:42:07 simonb Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.17.6.1 2006/04/22 11:39:44 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.17.6.2 2006/04/22 13:42:07 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -339,7 +339,6 @@ int
 wsevent_inject(struct wseventvar *ev, struct wscons_event *events,
     size_t nevents)
 {
-	int oldspl;
 	size_t avail, i;
 	struct timespec t;
 
@@ -355,9 +354,7 @@ wsevent_inject(struct wseventvar *ev, struct wscons_event *events,
 		return ENOSPC;
 
 	/* Use the current time for all events. */
-	oldspl = splhigh();
-	TIMEVAL_TO_TIMESPEC(&time, &t);
-	splx(oldspl);
+	getnanotime(&t);
 
 	/* Inject the events. */
 	for (i = 0; i < nevents; i++) {
