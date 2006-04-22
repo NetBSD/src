@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.431 2006/04/12 17:30:16 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.432 2006/04/22 16:09:50 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -662,6 +662,10 @@ Mailing List:	postfix-users@postfix.org
 Responsible:	perry, rpaulo
 License:	Several. See src/gnu/dist/postfix
 Notes:
+HTML documentation should be kept in sync with the README_FILES.
+src/gnu/dist/postfix/conf/postfix-files must be kept in sync with our
+directory layout (the easiest way to check is by running ``postfix
+set-permissions'').
 
 Package:	ppp
 Version:	2.4.3 [with 2.4.4b1 changes]
