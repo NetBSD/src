@@ -1,4 +1,6 @@
-/*	$NetBSD: README,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: README,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/README,v 1.1 2001/06/09 16:49:49 dfr Exp $ */
+
 /*-
 
 Files in this directory and subdirectories are subject to the following

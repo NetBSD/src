@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 2006/04/07 14:21:32 cherry Exp $	*/
+/*	$NetBSD: start.S,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
 	
 /*-
  * Copyright (c) 2003 Marcel Moolenaar
@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: src/sys/boot/ia64/skiload/start.S,v 1.1 2003/07/17 01:49:59 marcel Exp $
  */
 
 #define	STACKSIZE	16384

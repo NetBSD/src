@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.1 2006/04/07 14:21:32 cherry Exp $	*/
+/*	$NetBSD: efinet.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/efi/libefi/efinet.c,v 1.6 2004/01/04 23:28:16 obrien Exp $"); */
 
 #include <sys/param.h>
 #include <netinet/in.h>

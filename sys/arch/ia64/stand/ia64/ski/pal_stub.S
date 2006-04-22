@@ -1,4 +1,4 @@
-/*	$NetBSD: pal_stub.S,v 1.1 2006/04/07 14:21:32 cherry Exp $	*/
+/*	$NetBSD: pal_stub.S,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
 	
 /*-
  * Copyright (c) 2003 Marcel Moolenaar
@@ -27,7 +27,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD$: src/sys/boot/ia64/libski/pal_stub.S,v 1.3 2003/11/09 07:42:16 marcel Exp $
  */
 
 #include <machine/asm.h>

@@ -1,4 +1,5 @@
-$NetBSD: version,v 1.2 2006/04/08 14:52:09 cherry Exp $	
+$NetBSD: version,v 1.3 2006/04/22 07:58:53 cherry Exp $	
+$FreeBSD: src/sys/boot/efi/loader/version,v 1.5 2002/12/10 20:11:20 marcel Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important.  Make sure the current version number is on line 6.

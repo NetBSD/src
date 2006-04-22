@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2006/04/07 14:21:32 cherry Exp $	 */
+/*	$NetBSD: conf.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	 */
 
 /*
  * Copyright (c) 2004
@@ -27,6 +27,7 @@
 
 
 #include <sys/cdefs.h>
+
 #include <sys/types.h>
 
 #include <lib/libsa/stand.h>

@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-# $FreeBSD$
-#	$NetBSD: newvers.sh,v 1.1 2006/04/07 14:21:29 cherry Exp $
+# $FreeBSD: src/sys/boot/common/newvers.sh,v 1.5 2004/07/01 06:40:12 ps Exp $
+#	$NetBSD: newvers.sh,v 1.2 2006/04/22 07:58:53 cherry Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
