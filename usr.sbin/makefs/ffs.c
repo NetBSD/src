@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.38 2006/03/18 12:35:41 rtr Exp $	*/
+/*	$NetBSD: ffs.c,v 1.39 2006/04/22 17:40:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.38 2006/03/18 12:35:41 rtr Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.39 2006/04/22 17:40:49 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -1022,7 +1022,7 @@ ffs_make_dirbuf(dirbuf_t *dbuf, const char *name, fsnode *node, int needswap)
 		dbuf->size += DIRBLKSIZ;
 		memset(dbuf->buf + dbuf->size - DIRBLKSIZ, 0, DIRBLKSIZ);
 		dbuf->cur = dbuf->size - DIRBLKSIZ;
-	} else {				/* shrink end of previous */
+	} else if (dp) {			/* shrink end of previous */
 		dp->d_reclen = ufs_rw16(llen,needswap);
 		dbuf->cur += llen;
 	}
