@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.105 2006/04/22 19:28:51 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.106 2006/04/22 19:32:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.105 2006/04/22 19:28:51 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.106 2006/04/22 19:32:35 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.105 2006/04/22 19:28:51 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.106 2006/04/22 19:32:35 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3283,6 +3283,8 @@ cleanup:
     if (delim != '\0')
 	Error("Unclosed substitution for %s (%c missing)",
 	      v->name, delim);
+    if (v->flags & VAR_JUNK)
+	free(v);
     return (var_Error);
 }
 
