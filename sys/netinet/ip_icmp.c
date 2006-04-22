@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.97 2005/11/10 13:40:38 christos Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.97.8.1 2006/04/22 11:40:10 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.97 2005/11/10 13:40:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.97.8.1 2006/04/22 11:40:10 simonb Exp $");
 
 #include "opt_ipsec.h"
 
@@ -167,9 +167,9 @@ LIST_HEAD(, icmp_mtudisc_callback) icmp_mtudisc_callbacks =
     LIST_HEAD_INITIALIZER(&icmp_mtudisc_callbacks);
 
 #if 0
-static int	ip_next_mtu(int, int);
+static u_int	ip_next_mtu(u_int, int);
 #else
-/*static*/ int	ip_next_mtu(int, int);
+/*static*/ u_int	ip_next_mtu(u_int, int);
 #endif
 
 extern int icmperrppslim;
@@ -405,7 +405,7 @@ icmp_input(struct mbuf *m, ...)
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
-	if (m->m_len < i && (m = m_pullup(m, i)) == 0) {
+	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == 0) {
 		icmpstat.icps_tooshort++;
 		return;
 	}
@@ -1123,8 +1123,8 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
  * given current value MTU.  If DIR is less than zero, a larger plateau
  * is returned; otherwise, a smaller value is returned.
  */
-int
-ip_next_mtu(int mtu, int dir)	/* XXX */
+u_int
+ip_next_mtu(u_int mtu, int dir)	/* XXX */
 {
 	int i;
 

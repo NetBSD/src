@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut.h,v 1.1 2002/12/09 12:16:20 scw Exp $	*/
+/*	$NetBSD: walnut.h,v 1.1.40.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /* include/eval.h, openbios_walnut, walnut_bios 8/10/00 14:35:05 */
 /*-----------------------------------------------------------------------------+
@@ -142,11 +142,11 @@
 #define	 SW_SEL1	 0x20	   /* use test clock for master clock */
 #define	 SW_SEL0	 0x10	   /* use 405GP arbiter */
 #define  FSEL_B          0x0c      /* use for mask */
-#define  FSEL_SDRAM100   0x01      /* select 100Mhz SDRAM */
-#define  FSEL_SDRAM66    0x03      /* select 66Mhz SDRAM */   
+#define  FSEL_SDRAM100   0x01      /* select 100 MHz SDRAM */
+#define  FSEL_SDRAM66    0x03      /* select 66 MHz SDRAM */   
 #define  FSEL_A          0x03      /* use for mask */
-#define  FSEL_PCI_66     0x01      /* select 66Mhz async int PCI */
-#define  FSEL_PCI_33     0x03      /* select 33Mhz async int PCI */   
+#define  FSEL_PCI_66     0x01      /* select 66 MHz async int PCI */
+#define  FSEL_PCI_33     0x03      /* select 33 MHz async int PCI */   
 #define FPGA_SPARE1     0x0e    /* Spare inputs - read only */
 #define FPGA_SPARE2     0x0f    /* Spare outputs */
 #define	FPGA_SIZE	FPGA_SPARE2

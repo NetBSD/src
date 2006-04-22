@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_60.h,v 1.6 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: cacheops_60.h,v 1.6.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * Invalidate entire TLB.
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 TBIA_60(void)
 {
 	__asm volatile (" .word 0xf518" ); /*  pflusha */
@@ -48,7 +48,7 @@ TBIA_60(void)
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 TBIS_60(vaddr_t va)
 {
 	register vaddr_t	r_va __asm("%a0") = va;
@@ -69,7 +69,7 @@ TBIS_60(vaddr_t va)
 /*
  * Invalidate supervisor side of TLB
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 TBIAS_60(void)
 {
 	int	tmp;
@@ -88,7 +88,7 @@ TBIAS_60(void)
 /*
  * Invalidate user side of TLB
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 TBIAU_60(void)
 {
 	int	tmp;
@@ -107,14 +107,14 @@ TBIAU_60(void)
 /*
  * Invalidate instruction cache
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 ICIA_60(void)
 {
 	/* inva ic (also clears branch cache) */
 	__asm volatile (" .word 0xf498;");
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 ICPA_60(void)
 {
 	/* inva ic (also clears branch cache) */
@@ -124,25 +124,25 @@ ICPA_60(void)
 /*
  * Invalidate data cache.
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCIA_60(void)
 {
 	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCIS_60(void)
 {
 	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCIU_60(void)
 {
 	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCIAS_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
@@ -150,20 +150,20 @@ DCIAS_60(paddr_t pa)
 	__asm volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 PCIA_60(void)
 {
 	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCFA_60(void)
 {
 	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 /* invalidate instruction physical cache line */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 ICPL_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
@@ -172,7 +172,7 @@ ICPL_60(paddr_t pa)
 }
 
 /* invalidate instruction physical cache page */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 ICPP_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
@@ -181,7 +181,7 @@ ICPP_60(paddr_t pa)
 }
 
 /* invalidate data physical cache line */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCPL_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
@@ -190,7 +190,7 @@ DCPL_60(paddr_t pa)
 }
 
 /* invalidate data physical cache page */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCPP_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
@@ -199,14 +199,14 @@ DCPP_60(paddr_t pa)
 }
 
 /* invalidate data physical all */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCPA_60(void)
 {
 	__asm volatile (" .word 0xf458;"); /* cinva dc */
 }
 
 /* data cache flush line */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCFL_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;
@@ -215,7 +215,7 @@ DCFL_60(paddr_t pa)
 }
 
 /* data cache flush page */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 DCFP_60(paddr_t pa)
 {
 	register paddr_t	r_pa __asm("%a0") = pa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.13 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.13.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,16 +50,16 @@
 
 /* iommmu registers */
 struct iommureg {
-	u_int64_t	iommu_cr;	/* IOMMU control register */
-	u_int64_t	iommu_tsb;	/* IOMMU TSB base register */
-	u_int64_t	iommu_flush;	/* IOMMU flush register */
+	uint64_t	iommu_cr;	/* IOMMU control register */
+	uint64_t	iommu_tsb;	/* IOMMU TSB base register */
+	uint64_t	iommu_flush;	/* IOMMU flush register */
 };
 
 /* streaming buffer registers */
 struct iommu_strbuf {
-	u_int64_t	strbuf_ctl;	/* streaming buffer control reg */
-	u_int64_t	strbuf_pgflush;	/* streaming buffer page flush */
-	u_int64_t	strbuf_flushsync;/* streaming buffer flush sync */
+	uint64_t	strbuf_ctl;	/* streaming buffer control reg */
+	uint64_t	strbuf_pgflush;	/* streaming buffer page flush */
+	uint64_t	strbuf_flushsync;/* streaming buffer flush sync */
 };
 
 #define	IOMMUREG(x)	(offsetof(struct iommureg, x))

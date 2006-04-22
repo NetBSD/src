@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.33 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.33.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.33 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.33.6.1 2006/04/22 11:38:54 simonb Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -3207,7 +3207,7 @@ ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 
 			/*
 			 * Harpoon2A assumed that there would be a
-			 * fallback rate between 160MHz and 80Mhz,
+			 * fallback rate between 160 MHz and 80 MHz,
 			 * so 7 is used as the period factor rather
 			 * than 8 for 160MHz.
 			 */

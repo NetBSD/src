@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.11 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.11.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -3260,7 +3260,7 @@ register SEQINTCTL {
  * Single byte window into the Sequencer Instruction Ram area starting
  * at the address specified by OVLYADDR.  To write a full instruction word,
  * simply write four bytes in succession.  OVLYADDR will increment after the
- * most significant instrution byte (the byte with the parity bit) is written.
+ * most significant instruction byte (the byte with the parity bit) is written.
  */
 register SEQRAM {
 	address			0x0DA

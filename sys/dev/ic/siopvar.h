@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.23 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.23.6.1 2006/04/22 11:38:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -98,8 +98,8 @@ struct siop_lunsw {
 	u_int32_t lunsw_size; /* size of this lun sw */
 };
 
-static inline void siop_table_sync(struct siop_cmd *, int);
-static inline void
+static __inline void siop_table_sync(struct siop_cmd *, int);
+static __inline void
 siop_table_sync(siop_cmd, ops)
 	struct siop_cmd *siop_cmd;
 	int ops;

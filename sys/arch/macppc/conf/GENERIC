@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.222 2006/02/02 21:32:09 reinoud Exp $
+# $NetBSD: GENERIC,v 1.222.2.1 2006/04/22 11:37:41 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.222 $"
+#ident 		"GENERIC-$Revision: 1.222.2.1 $"
 
 maxusers	32
 
@@ -171,6 +171,14 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 # wscons options
 #options 	WSEMUL_SUN			# sun terminal emulation
 options 	WSEMUL_VT100			# VT100 / VT220 emulation
+
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+
+#options 	FONT_GALLANT12x22
+
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22
 
@@ -410,6 +418,9 @@ uhub*	at uhub? port ? configuration ? interface ?
 
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 
+pbms*	at uhidev? reportid ?				# PowerBook 15" mouse
+wsmouse* at pbms?
+
 ums*	at uhidev? reportid ?				# USB Mice
 wsmouse* at ums?
 
@@ -487,7 +498,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 audio*	at eap?
 #audio*	at eso?
 #audio*	at fms?
-#audio*	at snapper?
+audio*	at snapper?
 #audio*	at sv?
 audio*	at uaudio?
 
@@ -503,7 +514,7 @@ midi*	at eap?			# 137[01] MIDI port
 #pseudo-device 	crypto			# /dev/crypto device
 					# (disabled, requires generic softints)
 #pseudo-device	swcrypto		# software crypto implementation
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
@@ -520,17 +531,17 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	tun		4	# network tunneling over tty
+pseudo-device	sl			# Serial Line IP
+pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

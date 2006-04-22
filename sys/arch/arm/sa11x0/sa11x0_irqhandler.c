@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.6 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.6.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.6 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.6.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include "opt_irqstats.h"
 
@@ -109,7 +109,7 @@ u_int irqblock[NIRQS];
 
 extern void set_spl_masks(void);
 static int fakeintr(void *);
-#ifdef DEBUG
+#ifdef INTR_DEBUG
 static int dumpirqhandlers(void);
 #endif
 void intr_calculatemasks(void);
@@ -192,7 +192,7 @@ sa11x0_intr_evcnt(sa11x0_chipset_tag_t ic, int irq)
 
 void *
 sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
-		      int (*ih_fun)(void *), void *ih_arg)
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	int saved_cpsr;
 	struct irqhandler **p, *q, *ih;
@@ -250,7 +250,7 @@ sa11x0_intr_establish(sa11x0_chipset_tag_t ic, int irq, int type, int level,
 	irq_setmasks();
 
 	SetCPSR(I32_bit, saved_cpsr & I32_bit);
-#ifdef DEBUG
+#ifdef INTR_DEBUG
 	dumpirqhandlers();
 #endif
 	return (ih);
@@ -310,9 +310,9 @@ fakeintr(void *p)
 	return 0;
 }
 
-#ifdef DEBUG
+#ifdef INTR_DEBUG
 int
-dumpirqhandlers()
+dumpirqhandlers(void)
 {
 	int irq;
 	struct irqhandler *p;

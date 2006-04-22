@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.12.2.1 2006/02/04 14:18:52 simonb Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.12.2.2 2006/04/22 11:40:06 simonb Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.12.2.1 2006/02/04 14:18:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.12.2.2 2006/04/22 11:40:06 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -123,7 +123,6 @@ static int	tap_detach(struct device*, int);
 
 /* Ethernet address helper functions */
 
-static char	*tap_ether_sprintf(char *, const u_char *);
 static int	tap_ether_aton(u_char *, char *);
 
 CFATTACH_DECL(tap, sizeof(struct tap_softc),
@@ -257,6 +256,9 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	struct tap_softc *sc = (struct tap_softc *)self;
 	struct ifnet *ifp;
 	const struct sysctlnode *node;
+	u_int8_t enaddr[ETHER_ADDR_LEN] =
+	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
+	char enaddrstr[3 * ETHER_ADDR_LEN];
 	uint32_t ui;
 	int error;
 
@@ -273,7 +275,7 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(enaddr+3, (u_int8_t *)&ui, 3);
 
 	aprint_normal("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    tap_ether_sprintf(enaddrstr, enaddr));
+	    ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
 
 	/*
 	 * Why 1000baseT? Why not? You can add more.
@@ -327,7 +329,8 @@ tap_attach(struct device *parent, struct device *self, void *aux)
 	    &node, CTLFLAG_READWRITE,
 	    CTLTYPE_STRING, sc->sc_dev.dv_xname, NULL,
 	    tap_sysctl_handler, 0, sc, 18,
-	    CTL_NET, AF_LINK, tap_node, sc->sc_dev.dv_unit, CTL_EOL)) != 0)
+	    CTL_NET, AF_LINK, tap_node, device_unit(&sc->sc_dev),
+	    CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_createv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
 
@@ -381,7 +384,7 @@ tap_detach(struct device* self, int flags)
 	 * CTL_EOL.
 	 */
 	if ((error = sysctl_destroyv(NULL, CTL_NET, AF_LINK, tap_node,
-	    sc->sc_dev.dv_unit, CTL_EOL)) != 0)
+	    device_unit(&sc->sc_dev), CTL_EOL)) != 0)
 		aprint_error("%s: sysctl_destroyv returned %d, ignoring\n",
 		    sc->sc_dev.dv_xname, error);
 	ether_ifdetach(ifp);
@@ -619,7 +622,7 @@ tap_clone_destroy(struct ifnet *ifp)
 int
 tap_clone_destroyer(struct device *dev)
 {
-	struct cfdata *cf = dev->dv_cfdata;
+	struct cfdata *cf = device_cfdata(dev);
 	int error;
 
 	if ((error = config_detach(dev, 0)) != 0)
@@ -686,7 +689,7 @@ tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
  *
  * That magic value is interpreted by sys_open() which then replaces the
  * current file descriptor by the new one (through a magic member of struct
- * proc, p_dupfd).
+ * lwp, l_dupfd).
  *
  * The tap device is flagged as being busy since it otherwise could be
  * externally accessed through the corresponding device node with the cdevsw
@@ -712,7 +715,7 @@ tap_dev_cloner(struct lwp *l)
 	sc->sc_flags |= TAP_INUSE;
 
 	return fdclone(l, fp, fd, FREAD|FWRITE, &tap_fileops,
-	    (void *)(intptr_t)sc->sc_dev.dv_unit);
+	    (void *)(intptr_t)device_unit(&sc->sc_dev));
 }
 
 /*
@@ -1268,12 +1271,12 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	struct ifnet *ifp;
 	int error;
 	size_t len;
-	char addr[18];
+	char addr[3 * ETHER_ADDR_LEN];
 
 	node = *rnode;
 	sc = node.sysctl_data;
 	ifp = &sc->sc_ec.ec_if;
-	(void)tap_ether_sprintf(addr, LLADDR(ifp->if_sadl));
+	(void)ether_snprintf(addr, sizeof(addr), LLADDR(ifp->if_sadl));
 	node.sysctl_data = addr;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -1324,57 +1327,4 @@ tap_ether_aton(u_char *dest, char *str)
 	}
 	memcpy(dest, val, 6);
 	return (0);
-}
-
-/*
- * ether_sprintf made thread-safer.
- *
- * Copied over from sys/net/if_ethersubr.c, with a change to avoid the use
- * of a static buffer.
- */
-
-/*
- * Copyright (c) 1982, 1989, 1993
- *      The Regents of the University of California.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *      @(#)if_ethersubr.c      8.2 (Berkeley) 4/4/96
- */
-
-static char *
-tap_ether_sprintf(char *dest, const u_char *ap)
-{
-	char *cp = dest;
-	int i;
-
-	for (i = 0; i < 6; i++) {
-		*cp++ = hexdigits[*ap >> 4];
-		*cp++ = hexdigits[*ap++ & 0xf];
-		*cp++ = ':';
-	}
-	*--cp = 0;
-	return (dest);
 }

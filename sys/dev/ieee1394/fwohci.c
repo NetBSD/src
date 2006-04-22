@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.91 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.91.6.1 2006/04/22 11:39:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.91 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.91.6.1 2006/04/22 11:39:05 simonb Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -548,10 +548,13 @@ fwohci_probe_phy(struct fwohci_softc *sc, device_t dev)
 			/* set aPhyEnhanceEnable */
 			OWRITE(sc, OHCI_HCCCTL, OHCI_HCC_PHYEN);
 			OWRITE(sc, OHCI_HCCCTLCLR, OHCI_HCC_PRPHY);
-		} else {
+		}
+#if 0
+		else {
 			/* for safe */
 			reg2 &= ~0x83;
 		}
+#endif
 		reg2 = fwphy_wrdata(sc, 5, reg2);
 	}
 

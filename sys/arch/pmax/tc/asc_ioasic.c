@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.15 2003/04/02 04:20:32 thorpej Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.15.34.1 2006/04/22 11:37:52 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.15 2003/04/02 04:20:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.15.34.1 2006/04/22 11:37:52 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,7 +153,7 @@ asc_ioasic_attach(parent, self, aux)
 	sc->sc_id = 7;
 	sc->sc_freq = 25000000;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_BIO,

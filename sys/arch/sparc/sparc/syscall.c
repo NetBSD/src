@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: syscall.c,v 1.5.6.1 2006/04/22 11:37:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,11 +49,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.6.1 2006/04/22 11:37:59 simonb Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
 
@@ -66,9 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5 2005/12/24 20:07:37 perry Exp $");
 #include <sys/syscall.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -189,19 +184,11 @@ save_fpu(struct trapframe *tf)
 void
 syscall_intern(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-	p->p_md.md_syscall = syscall_plain;
+	else
+		p->p_md.md_syscall = syscall_plain;
 }
 
 /*
@@ -238,9 +225,6 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args.i);
-#endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
@@ -290,10 +274,6 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 		tf->tf_npc = i + 4;
 		break;
 	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);

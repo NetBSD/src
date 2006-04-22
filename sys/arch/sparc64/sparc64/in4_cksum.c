@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.7 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: in4_cksum.c,v 1.7.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1995 Matthew R. Green.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.7 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.7.6.1 2006/04/22 11:38:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,12 +89,12 @@ __KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.7 2005/12/24 20:07:37 perry Exp $");
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 
-extern int in_cksum_internal __P((struct mbuf *, int len, int offset, int sum));
+extern int in_cksum_internal(struct mbuf *, int len, int offset, int sum);
 
 int
 in4_cksum(m, nxt, off, len)
 	struct mbuf *m;
-	u_int8_t nxt;
+	uint8_t nxt;
 	int off, len;
 {
 	u_char *w;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.105 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.105.6.1 2006/04/22 11:37:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105.6.1 2006/04/22 11:37:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,10 +427,10 @@ trapmmufault(type, code, v, fp, l, sticks)
 	}
 
 	if (mmudebug)
-		printf("vm_fault(%p,%lx,%d,0)\n", map, va, ftype);
+		printf("vm_fault(%p,%lx,%d)\n", map, va, ftype);
 #endif
 
-	rv = uvm_fault(map, va, 0, ftype);
+	rv = uvm_fault(map, va, ftype);
 
 #ifdef DEBUG
 	if (mmudebug)
@@ -523,7 +523,7 @@ nogo:
 			trapcpfault(l, fp);
 			return;
 		}
-		printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+		printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 		    map, va, ftype, rv);
 		printf("  type %x, code [mmu,,ssw]: %x\n",
 		       type, code);
@@ -829,7 +829,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 #endif
 			wb_rc = uvm_fault(wb_map,
 			    trunc_page((vm_offset_t)wb_addr),
-			    0, VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE);
 
 			if (wb_rc != 0)
 				return (wb_rc);
@@ -862,7 +862,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 
 			wb_rc = uvm_fault(wb_map,
 			    trunc_page((vm_offset_t)wb_addr + wb_extra_page),
-			    0, VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE);
 
 			if (wb_rc != 0)
 				return (wb_rc);

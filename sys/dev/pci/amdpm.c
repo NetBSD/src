@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.10 2006/01/28 23:31:24 kleink Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.10.4.1 2006/04/22 11:39:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.10 2006/01/28 23:31:24 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.10.4.1 2006/04/22 11:39:13 simonb Exp $");
 
 #include "opt_amdpm.h"
 
@@ -48,29 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.10 2006/01/28 23:31:24 kleink Exp $");
 #include <sys/callout.h>
 #include <sys/rnd.h>
 
+#include <dev/i2c/i2cvar.h>
+
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/amdpmreg.h>
-
-struct amdpm_softc {
-	struct device sc_dev;
-
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_tag;
-
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;		/* PMxx space */
-
-	struct callout sc_rnd_ch;
-	rndsource_element_t sc_rnd_source;
-#ifdef AMDPM_RND_COUNTERS
-	struct evcnt sc_rnd_hits;
-	struct evcnt sc_rnd_miss;
-	struct evcnt sc_rnd_data[256];
-#endif
-};
+#include <dev/pci/amdpmvar.h>
+#include <dev/pci/amdpm_smbusreg.h>
 
 static void	amdpm_rnd_callout(void *);
 
@@ -121,6 +107,13 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
 #endif
 
+	/* enable random # generation and pm i/o space for AMD-8111 */
+	if (PCI_PRODUCT(pa->pa_id)  == PCI_PRODUCT_AMD_PBC8111_ACPI) {
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG, reg|
+		    AMDPM_RNGEN|AMDPM_PMIOEN);
+	}
+
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
 	if ((reg & AMDPM_PMIOEN) == 0) {
 		aprint_error("%s: PMxx space isn't enabled\n",
@@ -133,6 +126,11 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: failed to map PMxx space\n",
 		    sc->sc_dev.dv_xname);
 		return;
+	}
+
+	/* try to attach devices on the smbus */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI) {
+		amdpm_smbus_attach(sc);
 	}
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);

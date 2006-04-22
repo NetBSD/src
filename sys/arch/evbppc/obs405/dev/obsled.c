@@ -1,4 +1,4 @@
-/*	$NetBSD: obsled.c,v 1.4 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: obsled.c,v 1.4.6.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.4 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obsled.c,v 1.4.6.1 2006/04/22 11:37:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,10 +83,10 @@ obsled_attach(struct device *parent, struct device *self, void *aux)
 	struct sysctlnode *node;
 	int err, node_mib;
 	char led_name[5];
-	/* int led = (1 << sc->sc_dev.dv_unit); */
+	/* int led = (1 << device_unit(&sc->sc_dev)); */
 
 	snprintf(led_name, sizeof(led_name),
-		"led%d", (1 << sc->sc_dev.dv_unit) & 0x7);
+		"led%d", (1 << device_unit(&sc->sc_dev)) & 0x7);
         aprint_naive(": OpenBlockS %s\n", led_name);
         aprint_normal(": OpenBlockS %s\n", led_name);
 
@@ -186,11 +186,10 @@ obs266_led_set(int led)
 	 * Do you have something better idea?
 	 */
         for (dp = TAILQ_FIRST(dlp); dp != NULL; dp = TAILQ_NEXT(dp, dv_list)) {
-		if (dp->dv_cfdata != NULL
-			&& strcmp(dp->dv_cfdata->cf_name, "obsled") == 0) {
+		if (device_is_a(dp, "obsles")) {
 			struct obsled_softc *sc = (struct obsled_softc *)dp;
 			sc->sc_led_state =
-				(led & (1 << dp->dv_unit)) >> dp->dv_unit;
+			    (led & (1 << device_unit(dp))) >> device_unit(dp);
 			obsled_set_state(sc);
 		}
 	}

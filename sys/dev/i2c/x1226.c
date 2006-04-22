@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.7 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: x1226.c,v 1.7.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.7 2005/12/11 12:21:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.7.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ xrtc_match(struct device *parent, struct cfdata *cf, void *arg)
 static void
 xrtc_attach(struct device *parent, struct device *self, void *arg)
 {
-	struct xrtc_softc *sc = (struct xrtc_softc *)self;
+	struct xrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
 	aprint_naive(": Real-time Clock/NVRAM\n");

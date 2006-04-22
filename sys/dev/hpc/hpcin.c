@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.8 2002/10/02 16:33:49 thorpej Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.8.38.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.8 2002/10/02 16:33:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcin.c,v 1.8.38.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ void
 hpcin_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpcioman_attach_args *hma = aux;
-	struct hpcin_softc *sc = (void *)self;
+	struct hpcin_softc *sc = device_private(self);
 
 	if (hma->hma_hc == NULL ||
 	    hma->hma_type == HPCIOMANCF_EVTYPE_DEFAULT ||

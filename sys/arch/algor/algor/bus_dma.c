@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.15.6.1 2006/04/22 11:37:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2005/12/11 12:16:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15.6.1 2006/04/22 11:37:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = NULL;
 	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -125,8 +125,8 @@ extern paddr_t kvtophys(vaddr_t);	/* XXX */
  */
 static int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
-    void *buf, bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
-    int *segp, int first)
+    void *buf, bus_size_t buflen, struct vmspace *vm, int flags,
+    paddr_t *lastaddrp, int *segp, int first)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
@@ -140,8 +140,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (p != NULL)
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+		if (!VMSPACE_IS_KERNEL_P(vm))
+			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
 			    vaddr, &curaddr);
 		else
 			curaddr = kvtophys(vaddr);
@@ -237,6 +237,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 {
 	paddr_t lastaddr;
 	int seg, error;
+	struct vmspace *vm;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -248,13 +249,19 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
+
 	seg = 0;
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen,
-	    p, flags, &lastaddr, &seg, 1);
+	    vm, flags, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
-		map->_dm_proc = p;
+		map->_dm_vmspace = vm;
 
 		/*
 		 * For linear buffers, we support marking the mapping
@@ -301,14 +308,14 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		error = _bus_dmamap_load_buffer(t, map,
-		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
+		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
+	 	    vmspace_kernel(), flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
-		map->_dm_proc = NULL;	/* always kernel */
+		map->_dm_vmspace = vmspace_kernel();	/* always kernel */
 	}
 	return (error);
 }
@@ -323,7 +330,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
 	struct iovec *iov;
 	caddr_t addr;
 
@@ -337,15 +343,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("_bus_dmamap_load_uio: "
-			    "USERSPACE but no proc");
-#endif
-	}
-
 	first = 1;
 	seg = 0;
 	error = 0;
@@ -357,8 +354,8 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
 		addr = (caddr_t)iov[i].iov_base;
 
-		error = _bus_dmamap_load_buffer(t, map,
-		    addr, minlen, p, flags, &lastaddr, &seg, first);
+		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
+		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		resid -= minlen;
@@ -366,7 +363,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
-		map->_dm_proc = p;
+		map->_dm_vmspace = uio->uio_vmspace;
 	}
 	return (error);
 }
@@ -472,7 +469,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *
 	 * This should be true the vast majority of the time.
 	 */
-	if (__predict_true(map->_dm_proc == NULL || map->_dm_proc == curproc))
+	if (__predict_true(VMSPACE_IS_KERNEL_P(map->_dm_vmspace) ||
+	    map->_dm_vmspace == curproc->p_vmspace))
 		useindex = 0;
 	else
 		useindex = 1;

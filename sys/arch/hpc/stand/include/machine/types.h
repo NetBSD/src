@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.6 2006/01/14 21:35:26 uwe Exp $	*/
+/*	$NetBSD: types.h,v 1.6.4.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /* Windows CE architecture */
 
@@ -31,8 +31,8 @@ typedef uint16_t		u_int16_t;
 typedef uint32_t		u_int32_t;
 typedef uint64_t		u_int64_t;
 
-typedef uint32_t		off_t;
-#define	off_t			uint32_t
+typedef int32_t			off_t;
+#define	off_t			int32_t
 #ifndef _TIME_T_DEFINED
 #if _WIN32_WCE < 210
 typedef long			time_t;

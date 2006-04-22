@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2005/12/24 20:07:31 perry Exp $	*/
+/*	$NetBSD: boot.c,v 1.11.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,11 +45,6 @@
 
 char *names[] = {
 	"in()",
-#if 0
-	"fd(0,0,0)netbsd", "fd(0,0,0)netbsd.gz",
-	"fd(0,0,0)netbsd.old", "fd(0,0,0)netbsd.old.gz",
-	"fd(0,0,0)onetbsd", "fd(0,0,0)onetbsd.gz"
-#endif
 };
 #define	NUMNAMES (sizeof (names) / sizeof (names[0]))
 
@@ -67,13 +62,11 @@ RESIDUAL residual;
 extern u_long ns_per_tick;
 extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
 
-void boot __P((void *, u_long));
-static void exec_kernel __P((char *));
+void boot(void *, u_long);
+static void exec_kernel(char *);
 
 void
-boot(resp, loadaddr)
-	void *resp;
-	u_long loadaddr;
+boot(void *resp, u_long loadaddr)
 {
 	extern char _end[], _edata[];
 	int n = 0;
@@ -88,6 +81,9 @@ boot(resp, loadaddr)
 	 * console init
 	 */
 	cnname = cninit(&addr, &speed);
+#ifdef VGA_RESET
+	vga_reset((u_char *)0xc0000000);
+#endif
 
 	/* make bootinfo */
 	/*
@@ -156,8 +152,7 @@ boot(resp, loadaddr)
  * Exec kernel
  */
 static void
-exec_kernel(name)
-	char *name;
+exec_kernel(char *name)
 {
 	int howto = 0;
 	char c, *ptr;
@@ -165,9 +160,9 @@ exec_kernel(name)
 #ifdef DBMONITOR
 	int go_monitor;
 	extern int db_monitor __P((void));
-#endif /* DBMONITOR */
 
 ret:
+#endif /* DBMONITOR */
 	printf("\nBoot: ");
 	memset(namebuf, 0, sizeof (namebuf));
 	(void)tgets(namebuf);

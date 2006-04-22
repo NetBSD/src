@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.2 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.2.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,6 +46,7 @@
 #define	I2C_F_LAST		0x02	/* last byte of read */
 #define	I2C_F_STOP		0x04	/* send stop after byte */
 #define	I2C_F_POLL		0x08	/* poll, don't sleep */
+#define	I2C_F_PEC		0x10	/* smbus packet error checking */
 
 /*
  * This structure provides the interface between the i2c framework
@@ -89,10 +90,14 @@ typedef struct i2c_controller {
 	int	(*ic_write_byte)(void *, uint8_t, int);
 } *i2c_tag_t;
 
+/* I2C bus types */
+#define	I2C_TYPE_SMBUS	1
+
 /* Used to attach the i2c framework to the controller. */
 struct i2cbus_attach_args {
 	const char *iba_name;		/* bus name ("iic") */
 	i2c_tag_t iba_tag;		/* the controller */
+	int iba_type;			/* bus type */
 };
 
 /* Used to attach devices on the i2c bus. */
@@ -100,6 +105,7 @@ struct i2c_attach_args {
 	i2c_tag_t	ia_tag;		/* our controller */
 	i2c_addr_t	ia_addr;	/* address of device */
 	int		ia_size;	/* size (for EEPROMs) */
+	int		ia_type;	/* bus type */
 };
 
 /*
@@ -137,7 +143,16 @@ int	iic_exec(i2c_tag_t, i2c_op_t, i2c_addr_t, const void *,
 	    size_t, void *, size_t, int);
 
 int	iic_smbus_write_byte(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t, int);
+int	iic_smbus_write_word(i2c_tag_t, i2c_addr_t, uint8_t, uint16_t, int);
 int	iic_smbus_read_byte(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *, int);
+int	iic_smbus_read_word(i2c_tag_t, i2c_addr_t, uint8_t, uint16_t *, int);
 int	iic_smbus_receive_byte(i2c_tag_t, i2c_addr_t, uint8_t *, int);
+int	iic_smbus_send_byte(i2c_tag_t, i2c_addr_t, uint8_t, int);
+int	iic_smbus_quick_read(i2c_tag_t, i2c_addr_t, int);
+int	iic_smbus_quick_write(i2c_tag_t, i2c_addr_t, int);
+int	iic_smbus_block_read(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *,
+	    size_t, int);
+int	iic_smbus_block_write(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *,
+	    size_t, int);
 
 #endif /* _DEV_I2C_I2CVAR_H_ */

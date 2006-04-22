@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.15 2005/12/29 21:08:26 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.15.6.1 2006/04/22 11:40:09 simonb Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -223,6 +223,7 @@ extern	int ieee80211_compute_duration(const struct ieee80211_frame_min *,
 		const struct ieee80211_key *, int,
 		uint32_t, int, int, struct ieee80211_duration *,
 		struct ieee80211_duration *, int *, int);
+void	ieee80211_beacon_miss(struct ieee80211com *);
 void	ieee80211_print_essid(const u_int8_t *, int);
 void	ieee80211_dump_pkt(const u_int8_t *, int, int, int);
 

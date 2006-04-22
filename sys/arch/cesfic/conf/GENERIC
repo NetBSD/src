@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.40 2006/02/02 21:32:08 reinoud Exp $
+# $NetBSD: GENERIC,v 1.40.2.1 2006/04/22 11:37:21 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -132,13 +132,13 @@ zstty*		at zsc? channel ?
 le*		at mainbus0		# LANCE ethernet interfaces
 
 pseudo-device	pty		64	# pseudo ptys
-#pseudo-device	sl		4	# SLIP network interfaces
-#pseudo-device	ppp		4	# PPP network interfaces
+#pseudo-device	sl			# SLIP network interfaces
+#pseudo-device	ppp			# PPP network interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#pseudo-device	bpfilter	16	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-#pseudo-device	vnd		4	# vnode pseudo-disks
+#pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices

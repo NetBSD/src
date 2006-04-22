@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.42 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: midi.c,v 1.42.6.1 2006/04/22 11:38:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.42 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.42.6.1 2006/04/22 11:38:45 simonb Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -192,7 +192,7 @@ mididetach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&midi_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);

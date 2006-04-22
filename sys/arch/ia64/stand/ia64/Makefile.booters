@@ -1,0 +1,80 @@
+#	$NetBSD: Makefile.booters,v 1.1.6.2 2006/04/22 11:37:39 simonb Exp $
+
+.include <bsd.own.mk>
+
+STRIPFLAG=
+BINMODE=444
+
+LIBCRT0=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
+
+COPTS=	-Os -ffreestanding
+
+IA64_STAND_DIR?= $S/arch/ia64/stand
+
+.PATH: ${IA64_STAND_DIR}/efi
+
+CPPFLAGS += -nostdlib -nostdinc -I${.OBJDIR} -I${IA64_STAND_DIR} -I${IA64_STAND_DIR}/efi/include 
+
+# Options used when building standalone components
+CFLAGS+=	-ffreestanding -fshort-wchar -Wformat -D_STANDALONE
+LDFLAGS+=	#-nostdlib
+CPPFLAGS+=	-D_STANDALONE
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN: machine 
+.NOPATH: machine i386 x86
+.endif
+
+realdepend realall: machine i386 x86 lib
+CLEANFILES+= machine i386 x86
+
+machine:
+	-rm -f $@
+	ln -s $S/arch/${MACHINE_ARCH}/include $@
+
+i386::
+	-rm -f $@
+	ln -s $S/arch/i386/include $@
+
+x86::
+	-rm -f $@
+	ln -s $S/arch/x86/include $@
+
+
+${OBJS}: machine i386 x86 lib
+
+lib:
+.ifdef LIBOBJ
+	-rm -f $@
+	ln -s ${LIBOBJ}/lib .
+	[ -d ${LIBOBJ}/lib ] || mkdir ${LIBOBJ}/lib
+.else
+	mkdir lib
+.endif
+
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+### find out what to use for libz
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+
+### find out what to use for libsa
+SA_AS=		library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes" "SA_INCLUDE_NET=no"
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}
+
+
+cleandir distclean: cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib
+
+LIBLIST=${LIBKERN} ${LIBSA} ${LIBZ} ${LIBKERN}

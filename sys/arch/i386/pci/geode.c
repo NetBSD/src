@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.3.6.1 2006/02/28 20:25:08 kardel Exp $	*/
+/*	$NetBSD: geode.c,v 1.3.6.2 2006/04/22 11:37:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.3.6.1 2006/02/28 20:25:08 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.3.6.2 2006/04/22 11:37:33 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,8 @@ geode_gcb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	if (bus_space_map(sc->sc_iot, (bus_addr_t)cba, SC1100_GCB_SIZE, 0,
 	    &sc->sc_ioh) != 0) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: unable to map registers\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 

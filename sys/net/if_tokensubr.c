@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.34.6.1 2006/02/04 14:18:52 simonb Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.34.6.2 2006/04/22 11:40:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.34.6.1 2006/02/04 14:18:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.34.6.2 2006/04/22 11:40:06 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -402,8 +402,8 @@ token_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef	LLC
 /*	case AF_NSAP: */
 	case AF_CCITT: {
-		struct sockaddr_dl *sdl =
-		    (struct sockaddr_dl *) rt -> rt_gateway;
+		struct sockaddr_dl *sdl = rt ? 
+		    (struct sockaddr_dl *) rt -> rt_gateway : NULL;
 
 		if (sdl && sdl->sdl_family == AF_LINK
 		    && sdl->sdl_alen > 0) {

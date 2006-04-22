@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.21 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.21.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -230,7 +230,7 @@ isic_isapnp_attach(parent, self, aux)
 		"Unknown Version"
 	};
 
-	struct isic_softc *sc = (void *)self;
+	struct isic_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;
 	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
 	int i;

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.6 2005/12/11 12:21:02 christos Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.6.6.1 2006/04/22 11:38:46 simonb Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.6 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.6.6.1 2006/04/22 11:38:46 simonb Exp $");
 
 #include "opt_atppc.h"
 
@@ -121,7 +121,8 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dev_ok = ATPPC_NOATTACH;
 
-	printf(": AT Parallel Port\n");
+	aprint_naive(": AT Parallel Port\n");
+	aprint_normal(": AT Parallel Port\n");
 
 	/* parse resources */
 	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
@@ -132,7 +133,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		printf("%s: unable to find i/o register resource\n",
+		aprint_error("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -140,7 +141,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our IRQ */
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		printf("%s: unable to find irq resource\n",
+		aprint_error("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -149,7 +150,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our DRQ */
 	drq = acpi_res_drq(&res, 0);
 	if (drq == NULL) {
-		printf("%s: unable to find drq resource\n",
+		aprint_error("%s: unable to find drq resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -164,7 +165,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length, 0,
 		&sc->sc_ioh) != 0) {
-		printf("%s: attempt to map bus space failed, device not "
+		aprintf_error("%s: attempt to map bus space failed, device not "
 			"properly attached.\n", self->dv_xname);
 		goto out;
 	}

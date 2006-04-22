@@ -1,0 +1,26 @@
+#	$NetBSD: files.linux32,v 1.2.10.2 2006/04/22 11:38:14 simonb Exp $
+#
+# Config file description for machine-independent Linux 32 bit compat code.
+# Included by ports that need it.
+
+# ports should define any machine-specific files they need in their
+# own file lists.
+
+file	compat/linux32/common/linux32_dirent.c	compat_linux32
+file	compat/linux32/common/linux32_exec.c	compat_linux32
+file	compat/linux32/common/linux32_exec_elf32.c compat_linux32 & exec_elf32
+file	compat/linux32/common/linux32_fcntl.c	compat_linux32
+file	compat/linux32/common/linux32_ioctl.c	compat_linux32
+file	compat/linux32/common/linux32_mman.c	compat_linux32
+file	compat/linux32/common/linux32_resource.c	compat_linux32
+file	compat/linux32/common/linux32_sched.c	compat_linux32
+file	compat/linux32/common/linux32_signal.c	compat_linux32
+file	compat/linux32/common/linux32_socket.c	compat_linux32
+file	compat/linux32/common/linux32_socketcall.c	compat_linux32
+file	compat/linux32/common/linux32_stat.c	compat_linux32
+file	compat/linux32/common/linux32_sysctl.c	compat_linux32
+file	compat/linux32/common/linux32_time.c	compat_linux32
+file	compat/linux32/common/linux32_termios.c	compat_linux32
+file	compat/linux32/common/linux32_unistd.c	compat_linux32
+file	compat/linux32/common/linux32_utsname.c	compat_linux32
+file	compat/linux32/common/linux32_wait.c	compat_linux32

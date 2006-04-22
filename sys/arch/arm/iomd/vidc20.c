@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.13 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.13.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.13 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20.c,v 1.13.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,7 +77,7 @@ int *vidc_base = (int *)VIDC_BASE;
 
 
 /*
- * vidc_fref is the reference frequency in Mhz of the detected VIDC
+ * vidc_fref is the reference frequency in MHz of the detected VIDC
  * (dependent on IOMD/IOC)
  * XXX default is RPC600 ?
  */

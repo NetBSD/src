@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.16 2005/12/11 12:17:59 christos Exp $ */
+/* $NetBSD: bus_dma.c,v 1.16.6.1 2006/04/22 11:37:40 simonb Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16.6.1 2006/04/22 11:37:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2005/12/11 12:17:59 christos Exp $"
 #include <m68k/cacheops.h>
 
 int	_bus_dmamap_load_buffer_direct_common __P((bus_dma_tag_t,
-	    bus_dmamap_t, void *, bus_size_t, struct proc *, int,
+	    bus_dmamap_t, void *, bus_size_t, struct vmspace *, int,
 	    paddr_t *, int *, int));
 
 /*
@@ -142,13 +142,13 @@ _bus_dmamap_destroy(t, map)
  * first indicates if this is the first invocation of this function.
  */
 int
-_bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
+_bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, vm, flags,
     lastaddrp, segp, first)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 	void *buf;
 	bus_size_t buflen;
-	struct proc *p;
+	struct vmspace *vm;
 	int flags;
 	paddr_t *lastaddrp;
 	int *segp;
@@ -167,8 +167,8 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (p != NULL)
-			rv = pmap_extract(p->p_vmspace->vm_map.pmap,
+		if (!VMSPACE_IS_KERNEL_P(vm))
+			rv = pmap_extract(vm_map_pmap(&vm->vm_map),
 			    vaddr, &curaddr);
 		else
 			rv = pmap_extract(pmap_kernel(), vaddr, &curaddr);
@@ -253,6 +253,7 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 {
 	paddr_t lastaddr;
 	int seg, error;
+	struct vmspace *vm;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -264,9 +265,15 @@ _bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
+
 	seg = 0;
 	error = _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen,
-	    p, flags, &lastaddr, &seg, 1);
+	    vm, flags, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -310,7 +317,8 @@ _bus_dmamap_load_mbuf_direct(t, map, m0, flags)
 		if (m->m_len == 0)
 			continue;
 		error = _bus_dmamap_load_buffer_direct_common(t, map,
-		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
+		    m->m_data, m->m_len, vmspace_kernel(), flags, &lastaddr,
+		    &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -333,7 +341,6 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	paddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
 	struct iovec *iov;
 	caddr_t addr;
 
@@ -347,14 +354,6 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_lwp->l_proc;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("_bus_dmamap_load_direct_common: USERSPACE but no proc");
-#endif
-	}
-
 	first = 1;
 	seg = 0;
 	error = 0;
@@ -367,7 +366,8 @@ _bus_dmamap_load_uio_direct(t, map, uio, flags)
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer_direct_common(t, map,
-		    addr, minlen, p, flags, &lastaddr, &seg, first);
+		    addr, minlen, uio->uio_vmspace, flags, &lastaddr, &seg,
+		    first);
 		first = 0;
 
 		resid -= minlen;

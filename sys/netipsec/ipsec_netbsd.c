@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.15 2005/12/11 12:25:05 christos Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.15.6.1 2006/04/22 11:40:13 simonb Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.15 2005/12/11 12:25:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.15.6.1 2006/04/22 11:40:13 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -359,6 +359,36 @@ sysctl_fast_ipsec(SYSCTLFN_ARGS)
 	return (0);
 }
 
+#ifdef IPSEC_DEBUG
+static int
+sysctl_fast_ipsec_test(SYSCTLFN_ARGS)
+{
+	int t, error;
+	struct sysctlnode node;
+
+	node = *rnode; 
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (t < 0 || t > 1)
+		return EINVAL;
+
+	if (rnode->sysctl_data == &ipsec_replay)
+		printf("fast_ipsec: Anti-Replay service %s\n",
+		    (t == 1) ? "deactivated" : "activated");
+	else if (rnode->sysctl_data == &ipsec_integrity)
+		 printf("fast_ipsec: HMAC corruption %s\n",
+		     (t == 0) ? "deactivated" : "activated");
+
+	*(int*)rnode->sysctl_data = t;
+
+	return 0;
+}
+#endif
+
 /* XXX will need a different oid at parent */
 SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 {
@@ -551,4 +581,20 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 		       NULL, 0, &ipsecstat, sizeof(ipsecstat),
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       CTL_CREATE, CTL_EOL);
+#ifdef IPSEC_DEBUG
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "test_replay",
+		       SYSCTL_DESCR("Emulate replay attack"),
+		       sysctl_fast_ipsec_test, 0, &ipsec_replay, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "test_integrity",
+		       SYSCTL_DESCR("Emulate man-in-the-middle attack"),
+		       sysctl_fast_ipsec_test, 0, &ipsec_integrity, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
+#endif
 }

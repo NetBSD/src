@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.13 2006/02/03 19:58:21 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.13.2.1 2006/04/22 11:38:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 2006/02/03 19:58:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13.2.1 2006/04/22 11:38:09 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,6 +102,17 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.13 2006/02/03 19:58:21 bouyer Exp 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#include "opt_mpbios.h"
+#include "opt_mpacpi.h"
+
+#ifdef MPBIOS
+#include <machine/mpbiosvar.h>
+#endif
+
+#ifdef MPACPI
+#include <machine/mpacpi.h>
+#endif
 
 #include "opt_pci_conf_mode.h"
 

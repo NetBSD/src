@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.21 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.21.6.1 2006/04/22 11:39:13 simonb Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.21 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.21.6.1 2006/04/22 11:39:13 simonb Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -236,10 +236,10 @@ static const char *pci_bus_modes[] =
 	"PCI bus mode unknown",
 	"PCI bus mode unknown",
 	"PCI bus mode unknown",
-	"PCI-X 101-133Mhz",
-	"PCI-X 67-100Mhz",
-	"PCI-X 50-66Mhz",
-	"PCI 33 or 66Mhz"
+	"PCI-X 101-133 MHz",
+	"PCI-X 67-100 MHz",
+	"PCI-X 50-66 MHz",
+	"PCI 33 or 66 MHz"
 };
 
 #define		TESTMODE	0x00000800ul

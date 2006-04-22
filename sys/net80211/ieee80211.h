@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.16 2005/12/10 23:26:35 elad Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.16.6.1 2006/04/22 11:40:08 simonb Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -421,15 +421,17 @@ struct ieee80211_tim_ie {
 	u_int8_t	tim_bitmap[1];		/* variable-length bitmap */
 } __packed;
 
+struct ieee80211_band {
+	u_int8_t schan;			/* starting channel */
+	u_int8_t nchan;			/* number channels */
+	u_int8_t maxtxpwr;		/* tx power cap */
+} __packed;
+
 struct ieee80211_country_ie {
 	u_int8_t	ie;			/* IEEE80211_ELEMID_COUNTRY */
 	u_int8_t	len;
 	u_int8_t	cc[3];			/* ISO CC+(I)ndoor/(O)utdoor */
-	struct {
-		u_int8_t schan;			/* starting channel */
-		u_int8_t nchan;			/* number channels */
-		u_int8_t maxtxpwr;		/* tx power cap */
-	} band[4] __packed;			/* up to 4 sub bands */
+	struct ieee80211_band band[4];		/* up to 4 sub bands */
 } __packed;
 
 #define IEEE80211_CHALLENGE_LEN		128

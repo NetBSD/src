@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.127 2006/02/02 21:32:08 reinoud Exp $
+# $NetBSD: GENERIC,v 1.127.2.1 2006/04/22 11:37:26 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.127 $"
+#ident 		"GENERIC-$Revision: 1.127.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -274,23 +274,23 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# vnode pseudo-disks
+pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-pseudo-device	bpfilter	8	# Berkeley packet filter
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	ipfilter 		# IP Filter package
 pseudo-device	loop			# loopback network interface
-pseudo-device	ppp		4	# PPP network interfaces
+pseudo-device	ppp			# PPP network interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		4	# SLIP network interfaces
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
-pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	sl			# SLIP network interfaces
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 

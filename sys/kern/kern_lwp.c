@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.33 2005/11/12 02:28:31 chs Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.33.8.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33 2005/11/12 02:28:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33.8.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -87,7 +87,8 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 	newuc = pool_get(&lwp_uc_pool, PR_WAITOK);
 
-	error = copyin(SCARG(uap, ucp), newuc, sizeof(*newuc));
+	error = copyin(SCARG(uap, ucp), newuc,
+	    l->l_proc->p_emul->e_sa->sae_ucsize);
 	if (error)
 		return (error);
 

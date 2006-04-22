@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.7 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.7.6.1 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7.6.1 2006/04/22 11:39:59 simonb Exp $");
 
 #include "opt_ptm.h"
 
@@ -289,7 +289,7 @@ pty_sethandler(struct ptm_pty *nptm)
 }
 
 int
-pty_fill_ptmget(dev_t dev, int cfd, int sfd, void *data)
+pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data)
 {
 	struct ptmget *ptmg = data;
 	int error;
@@ -300,11 +300,11 @@ pty_fill_ptmget(dev_t dev, int cfd, int sfd, void *data)
 	ptmg->cfd = cfd == -1 ? minor(dev) : cfd;
 	ptmg->sfd = sfd == -1 ? minor(dev) : sfd;
 
-	error = (*ptm->makename)(ptm, ptmg->cn, sizeof(ptmg->cn), dev, 'p');
+	error = (*ptm->makename)(ptm, l, ptmg->cn, sizeof(ptmg->cn), dev, 'p');
 	if (error)
 		return error;
 
-	return (*ptm->makename)(ptm, ptmg->sn, sizeof(ptmg->sn), dev, 't');
+	return (*ptm->makename)(ptm, l, ptmg->sn, sizeof(ptmg->sn), dev, 't');
 }
 
 void
@@ -372,7 +372,7 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			goto bad;
 
 		/* now, put the indices and names into struct ptmget */
-		return pty_fill_ptmget(newdev, cfd, sfd, data);
+		return pty_fill_ptmget(l, newdev, cfd, sfd, data);
 	default:
 		DPRINTF(("ptmioctl EINVAL\n"));
 		return EINVAL;

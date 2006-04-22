@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.12 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.12.6.1 2006/04/22 11:39:57 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.12 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.12.6.1 2006/04/22 11:39:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,7 +395,7 @@ detrunc(dep, length, flags, cred, l)
 	int error;
 	int allerror;
 	u_long eofentry;
-	u_long chaintofree;
+	u_long chaintofree = 0;
 	daddr_t bn, lastblock;
 	int boff;
 	int isadir = dep->de_Attributes & ATTR_DIRECTORY;

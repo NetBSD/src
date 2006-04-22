@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.4 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,6 +44,9 @@
 #define	_I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
 
+static uint8_t	iic_smbus_crc8(uint16_t);
+static uint8_t	iic_smbus_pec(int, uint8_t *, uint8_t *);
+
 /*
  * iic_exec:
  *
@@ -62,6 +65,37 @@ iic_exec(i2c_tag_t tag, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 	uint8_t *buf = vbuf;
 	int error;
 	size_t len;
+
+	if ((flags & I2C_F_PEC) && cmdlen > 0 && tag->ic_exec != NULL) {
+		uint8_t data[33]; /* XXX */
+		uint8_t b[3];
+
+		b[0] = addr << 1;
+		b[1] = cmd[0];
+
+		switch (buflen) {
+		case 0:
+			data[0] = iic_smbus_pec(2, b, NULL);
+			buflen++;
+			break;
+		case 1:
+			b[2] = buf[0];
+			data[0] = iic_smbus_pec(3, b, NULL);
+			data[1] = b[2];
+			buflen++;
+			break;
+		case 2:
+			break;
+		default:
+			memcpy(data, vbuf, sizeof(vbuf));
+			data[sizeof(vbuf)] = iic_smbus_pec(2, b, data);
+			buflen++;
+			break;
+		}
+
+		return ((*tag->ic_exec)(tag->ic_cookie, op, addr, cmd,
+					cmdlen, data, buflen, flags));
+	}
 
 	/*
 	 * Defer to the controller if it provides an exec function.  Use
@@ -128,6 +162,24 @@ iic_smbus_write_byte(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
 }
 
 /*
+ * iic_smbus_write_word:
+ *
+ *	Perform an SMBus "write word" operation.
+ */
+int
+iic_smbus_write_word(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
+    uint16_t val, int flags)
+{
+	uint8_t vbuf[2];
+
+	vbuf[0] = val & 0xff;
+	vbuf[1] = (val >> 8) & 0xff;
+
+	return (iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &cmd, 1,
+			 vbuf, 2, flags));
+}
+
+/*
  * iic_smbus_read_byte:
  *
  *	Perform an SMBus "read byte" operation.
@@ -142,6 +194,20 @@ iic_smbus_read_byte(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
 }
 
 /*
+ * iic_smbus_read_word:
+ *
+ *	Perform an SMBus "read word" operation.
+ */
+int
+iic_smbus_read_word(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
+    uint16_t *valp, int flags)
+{
+
+	return (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, &cmd, 1,
+			 (uint8_t *)valp, 2, flags));
+}
+
+/*
  * iic_smbus_receive_byte:
  *
  *	Perform an SMBus "receive byte" operation.
@@ -153,4 +219,111 @@ iic_smbus_receive_byte(i2c_tag_t tag, i2c_addr_t addr, uint8_t *valp,
 
 	return (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, NULL, 0,
 			 valp, 1, flags));
+}
+
+/*
+ * iic_smbus_send_byte:
+ *
+ *	Perform an SMBus "send byte" operation.
+ */
+int
+iic_smbus_send_byte(i2c_tag_t tag, i2c_addr_t addr, uint8_t val, int flags)
+{
+
+	return (iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, NULL, 0,
+			 &val, 1, flags));
+}
+
+/*
+ * iic_smbus_quick_read:
+ *
+ *	Perform an SMBus "quick read" operation.
+ */
+int
+iic_smbus_quick_read(i2c_tag_t tag, i2c_addr_t addr, int flags)
+{
+
+	return (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, NULL, 0,
+			 NULL, 0, flags));
+}
+
+/*
+ * iic_smbus_quick_write:
+ *
+ *	Perform an SMBus "quick write" operation.
+ */
+int
+iic_smbus_quick_write(i2c_tag_t tag, i2c_addr_t addr, int flags)
+{
+
+	return (iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, NULL, 0,
+			 NULL, 0, flags));
+}
+
+/*
+ * iic_smbus_block_read:
+ *
+ *	Perform an SMBus "block read" operation.
+ */
+int
+iic_smbus_block_read(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
+    uint8_t *vbuf, size_t buflen, int flags)
+{
+
+	return (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, &cmd, 1,
+			 vbuf, buflen, flags));
+}
+
+/*
+ * iic_smbus_block_write:
+ *
+ *	Perform an SMBus "block write" operation.
+ */
+int
+iic_smbus_block_write(i2c_tag_t tag, i2c_addr_t addr, uint8_t cmd,
+    uint8_t *vbuf, size_t buflen, int flags)
+{
+
+	return (iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, &cmd, 1,
+			 vbuf, buflen, flags));
+}
+
+/*
+ * iic_smbus_crc8
+ *
+ *	Private helper for calculating packet error checksum
+ */
+static uint8_t
+iic_smbus_crc8(uint16_t data)
+{
+	int i;
+
+	for (i = 0; i < 8; i++) {
+		if (data & 0x8000)
+			data = data ^ (0x1070U << 3);
+		data = data << 1; 
+	}
+
+	return (uint8_t)(data >> 8);
+}
+
+/*
+ * iic_smbus_pec
+ *
+ *	Private function for calculating packet error checking on SMBus
+ *	packets.
+ */
+static uint8_t
+iic_smbus_pec(int count, uint8_t *s, uint8_t *r)
+{
+	int i;
+	uint8_t crc = 0;
+
+	for (i = 0; i < count; i++)
+		crc = iic_smbus_crc8((crc ^ s[i]) << 8);
+	if (r != NULL)
+		for (i = 0; i <= r[0]; i++)
+			crc = iic_smbus_crc8((crc ^ r[i]) << 8);
+
+	return crc;
 }

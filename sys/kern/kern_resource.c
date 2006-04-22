@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.99 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.99.6.1 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.99 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.99.6.1 2006/04/22 11:39:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.99 2005/12/11 12:24:29 christos 
 #include <sys/file.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
+#include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
@@ -611,7 +612,8 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	struct proc *ptmp, *p;
 	struct plimit *lim;
 	int error = 0, len;
-	char cname[MAXPATHLEN], *tmp;
+	char *cname;
+	char *tmp;
 	struct sysctlnode node;
 
 	/*
@@ -630,11 +632,12 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	if (error)
 		return (error);
 
+	cname = PNBUF_GET();
 	/*
 	 * let them modify a temporary copy of the core name
 	 */
 	node = *rnode;
-	strlcpy(cname, ptmp->p_limit->pl_corename, sizeof(cname));
+	strlcpy(cname, ptmp->p_limit->pl_corename, MAXPATHLEN);
 	node.sysctl_data = cname;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
@@ -643,8 +646,9 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	 * heard it before...
 	 */
 	if (error || newp == NULL ||
-	    strcmp(cname, ptmp->p_limit->pl_corename) == 0)
-		return (error);
+	    strcmp(cname, ptmp->p_limit->pl_corename) == 0) {
+		goto done;
+	}
 
 	/*
 	 * no error yet and cname now has the new core name in it.
@@ -652,19 +656,25 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	 * or end in ".core" or "/core".
 	 */
 	len = strlen(cname);
-	if (len < 4)
-		return (EINVAL);
-	if (strcmp(cname + len - 4, "core") != 0)
-		return (EINVAL);
-	if (len > 4 && cname[len - 5] != '/' && cname[len - 5] != '.')
-		return (EINVAL);
+	if (len < 4) {
+		error = EINVAL;
+	} else if (strcmp(cname + len - 4, "core") != 0) {
+		error = EINVAL;
+	} else if (len > 4 && cname[len - 5] != '/' && cname[len - 5] != '.') {
+		error = EINVAL;
+	}
+	if (error != 0) {
+		goto done;
+	}
 
 	/*
 	 * hmm...looks good.  now...where do we put it?
 	 */
 	tmp = malloc(len + 1, M_TEMP, M_WAITOK|M_CANFAIL);
-	if (tmp == NULL)
-		return (ENOMEM);
+	if (tmp == NULL) {
+		error = ENOMEM;
+		goto done;
+	}
 	strlcpy(tmp, cname, len + 1);
 
 	lim = ptmp->p_limit;
@@ -676,8 +686,9 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	if (lim->pl_corename != defcorename)
 		free(lim->pl_corename, M_TEMP);
 	lim->pl_corename = tmp;
-
-	return (error);
+done:
+	PNBUF_PUT(cname);
+	return error;
 }
 
 /*

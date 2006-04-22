@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.37 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: MALTA,v 1.37.6.1 2006/04/22 11:37:24 simonb Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.37 $"
+#ident 		"MALTA-$Revision: 1.37.6.1 $"
 
 maxusers	32
 
@@ -53,7 +53,7 @@ options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
@@ -300,21 +300,21 @@ audio*		at clct?
 #options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 #pseudo-device	fss		4		# file system snapshot device
 pseudo-device	md		1		# memory disk device (ramdisk)
-#pseudo-device	vnd		4		# disk-like interface to files
+#pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
-pseudo-device	bpfilter	8		# Berkeley packet filter
+pseudo-device	bpfilter			# Berkeley packet filter
 #pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
-#pseudo-device	ppp		2		# Point-to-Point Protocol
-#pseudo-device	sl		2		# Serial Line IP
-#pseudo-device	strip		2		# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2		# network tunneling over tty
-#pseudo-device	gre		2		# generic L3 over IP tunnel
+#pseudo-device	ppp				# Point-to-Point Protocol
+#pseudo-device	sl				# Serial Line IP
+#pseudo-device	strip				# Starmode Radio IP (Metricom)
+#pseudo-device	tun				# network tunneling over tty
+#pseudo-device	gre				# generic L3 over IP tunnel
 #pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
-#pseudo-device	gif		4		# RFC1933 tunnel
-#pseudo-device	faith		1		# IPv[46] tcp relay translation
-#pseudo-device	stf		1		# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gif				# RFC1933 tunnel
+#pseudo-device	faith				# IPv[46] tcp relay translation
+#pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # Miscellaneous pseudo-devices

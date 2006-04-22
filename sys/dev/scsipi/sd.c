@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.244 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.244.6.1 2006/04/22 11:39:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.244 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.244.6.1 2006/04/22 11:39:29 simonb Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -212,7 +212,7 @@ sdmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 sdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct sd_softc *sd = (void *)self;
+	struct sd_softc *sd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 	int error, result;
@@ -345,7 +345,7 @@ sdactivate(struct device *self, enum devact act)
 static int
 sddetach(struct device *self, int flags)
 {
-	struct sd_softc *sd = (struct sd_softc *) self;
+	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
@@ -354,7 +354,7 @@ sddetach(struct device *self, int flags)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = SDMINOR(self->dv_unit, i);
+		mn = SDMINOR(device_unit(self), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
@@ -410,7 +410,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (sd == NULL)
 		return (ENXIO);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sd->sc_dev))
 		return (ENODEV);
 
 	part = SDPART(dev);
@@ -657,7 +657,7 @@ sdstrategy(struct buf *bp)
 	 * If the device has been made invalid, error out
 	 */
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0 ||
-	    (sd->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+	    !device_is_active(&sd->sc_dev)) {
 		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
 		else
@@ -1310,8 +1310,8 @@ sdgetdisklabel(struct sd_softc *sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit, RAW_PART),
-	    sdstrategy, lp, sd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(MAKESDDEV(0, device_unit(&sd->sc_dev),
+	    RAW_PART), sdstrategy, lp, sd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
@@ -1444,7 +1444,7 @@ sdsize(dev_t dev)
 	if (sd == NULL)
 		return (-1);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sd->sc_dev))
 		return (-1);
 
 	part = SDPART(dev);
@@ -1502,7 +1502,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sd->sc_dev))
 		return (ENODEV);
 
 	periph = sd->sc_periph;

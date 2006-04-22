@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.12 2006/01/16 21:45:38 yamt Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.12.4.1 2006/04/22 11:40:09 simonb Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.12 2006/01/16 21:45:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.12.4.1 2006/04/22 11:40:09 simonb Exp $");
 #endif
 
 /*
@@ -234,6 +234,11 @@ ieee80211_sysctl_attach(struct ieee80211com *ic)
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "driver_caps", SYSCTL_DESCR("driver capabilities"),
 	    NULL, 0, &ic->ic_caps, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+	if ((rc = sysctl_createv(&ic->ic_sysctllog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "bmiss_max", SYSCTL_DESCR("consecutive beacon misses before scanning"),
+	    NULL, 0, &ic->ic_bmiss_max, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	return;
@@ -507,6 +512,25 @@ if_printf(struct ifnet *ifp, const char *fmt, ...)
 
 	va_end(ap);
 	return;
+}
+
+/*
+ * Set the m_data pointer of a newly-allocated mbuf
+ * to place an object of the specified size at the
+ * end of the mbuf, longword aligned.
+ */
+void
+m_align(struct mbuf *m, int len)
+{
+       int adjust;
+
+       if (m->m_flags & M_EXT)
+	       adjust = m->m_ext.ext_size - len;
+       else if (m->m_flags & M_PKTHDR)
+	       adjust = MHLEN - len;
+       else
+	       adjust = MLEN - len;
+       m->m_data += adjust &~ (sizeof(long)-1);
 }
 
 /*

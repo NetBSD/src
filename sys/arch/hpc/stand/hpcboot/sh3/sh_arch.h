@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.9 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.9.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ public:
 		// 2nd boot loader access cache address array. run on P2.
 		//
 		if (super::setupLoader()) {
-			(u_int32_t)_loader_addr |= 0x20000000;
+			(uint32_t)_loader_addr |= 0x20000000;
 			DPRINTF
 			    ((TEXT("loader address moved to P2-area 0x%08x\n"),
 				(unsigned)_loader_addr));
@@ -191,9 +191,9 @@ SH##x##::boot_func(struct BootArgs *bi, struct PageTag *p)		\
 									\
 	SH ## x ## _MMU_DISABLE();					\
 	do {								\
-		u_int32_t *dst =(u_int32_t *)p->dst;			\
-		u_int32_t *src =(u_int32_t *)p->src;			\
-		u_int32_t sz = p->sz / sizeof (int);			\
+		uint32_t *dst =(uint32_t *)p->dst;			\
+		uint32_t *src =(uint32_t *)p->src;			\
+		uint32_t sz = p->sz / sizeof (int);			\
 		if (p->src == ~0)					\
 			while (sz--)					\
 				*dst++ = 0;				\
@@ -214,8 +214,8 @@ SH##x##::boot_func(struct BootArgs *bi, struct PageTag *p)		\
 //  (don't block) use under privilege mode.
 //
 __BEGIN_DECLS
-u_int32_t suspendIntr(void);
-void resumeIntr(u_int32_t);
+uint32_t suspendIntr(void);
+void resumeIntr(uint32_t);
 __END_DECLS
 
 #endif // _HPCBOOT_SH_ARCH_H_

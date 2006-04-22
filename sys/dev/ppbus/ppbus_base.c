@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.11 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.11.6.1 2006/04/22 11:39:25 simonb Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.11 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.11.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -59,7 +59,7 @@ int
 ppbus_io(struct device * dev, int iop, u_char * addr, int cnt, u_char byte)
 {
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
-	return (bus->ppbus_io(dev->dv_parent, iop, addr, cnt, byte));
+	return (bus->ppbus_io(device_parent(dev), iop, addr, cnt, byte));
 }
 
 /* Execute microsequence */
@@ -67,7 +67,7 @@ int
 ppbus_exec_microseq(struct device * dev, struct ppbus_microseq ** sequence)
 {
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
-	return (bus->ppbus_exec_microseq(dev->dv_parent, sequence));
+	return (bus->ppbus_exec_microseq(device_parent(dev), sequence));
 }
 
 /* Read instance variables of ppbus */
@@ -81,7 +81,7 @@ ppbus_read_ivar(struct device * dev, int index, unsigned int * val)
 	case PPBUS_IVAR_INTR:
 	case PPBUS_IVAR_EPP_PROTO:
 	case PPBUS_IVAR_DMA:
-		return (bus->ppbus_read_ivar(dev->dv_parent, index, val));
+		return (bus->ppbus_read_ivar(device_parent(dev), index, val));
 
 	case PPBUS_IVAR_IEEE:
 		*val = (bus->sc_use_ieee == PPBUS_ENABLE_IEEE) ? 1 : 0;
@@ -104,7 +104,7 @@ ppbus_write_ivar(struct device * dev, int index, unsigned int * val)
 	case PPBUS_IVAR_INTR:
 	case PPBUS_IVAR_EPP_PROTO:
 	case PPBUS_IVAR_DMA:
-		return (bus->ppbus_write_ivar(dev->dv_parent, index, val));
+		return (bus->ppbus_write_ivar(device_parent(dev), index, val));
 
 	case PPBUS_IVAR_IEEE:
 		bus->sc_use_ieee = ((*val != 0) ? PPBUS_ENABLE_IEEE :
@@ -196,8 +196,8 @@ ppbus_set_mode(struct device * dev, int mode, int options)
 
 	if(!error) {
 		/* Set mode and update mode of ppbus to actual mode */
-		error = bus->ppbus_setmode(dev->dv_parent, mode);
-		bus->sc_mode = bus->ppbus_getmode(dev->dv_parent);
+		error = bus->ppbus_setmode(device_parent(dev), mode);
+		bus->sc_mode = bus->ppbus_getmode(device_parent(dev));
 	}
 
 	/* Update host state if necessary */
@@ -234,7 +234,7 @@ ppbus_write(struct device * dev, char * buf, int len, int how, size_t * cnt)
 		}
 	}
 
-	return (bus->ppbus_write(bus->sc_dev.dv_parent, buf, len, how, cnt));
+	return (bus->ppbus_write(device_parent(&bus->sc_dev), buf, len, how, cnt));
 }
 
 /* Read charaters from the port */
@@ -251,7 +251,7 @@ ppbus_read(struct device * dev, char * buf, int len, int how, size_t * cnt)
 		}
 	}
 
-	return (bus->ppbus_read(dev->dv_parent, buf, len, how, cnt));
+	return (bus->ppbus_read(device_parent(dev), buf, len, how, cnt));
 }
 
 /* Reset the EPP timeout bit in the status register */
@@ -261,7 +261,7 @@ ppbus_reset_epp_timeout(struct device * dev)
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
 
 	if(bus->sc_capabilities & PPBUS_HAS_EPP) {
-		bus->ppbus_reset_epp_timeout(dev->dv_parent);
+		bus->ppbus_reset_epp_timeout(device_parent(dev));
 		return 0;
 	}
 	else {
@@ -276,7 +276,7 @@ ppbus_ecp_sync(struct device * dev)
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
 
 	if(bus->sc_capabilities & PPBUS_HAS_ECP) {
-		bus->ppbus_ecp_sync(dev->dv_parent);
+		bus->ppbus_ecp_sync(device_parent(dev));
 		return 0;
 	}
 	else {
@@ -292,7 +292,7 @@ ppbus_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * addr,
 	struct ppbus_softc * ppbus = (struct ppbus_softc *) dev;
 
 	if(ppbus->sc_capabilities & PPBUS_HAS_DMA)
-		return (ppbus->ppbus_dma_malloc(dev->dv_parent, buf, addr,
+		return (ppbus->ppbus_dma_malloc(device_parent(dev), buf, addr,
 			size));
 	else
 		return ENODEV;
@@ -306,7 +306,7 @@ ppbus_dma_free(struct device * dev, caddr_t * buf, bus_addr_t * addr,
 	struct ppbus_softc * ppbus = (struct ppbus_softc *) dev;
 
 	if(ppbus->sc_capabilities & PPBUS_HAS_DMA) {
-		ppbus->ppbus_dma_free(dev->dv_parent, buf, addr, size);
+		ppbus->ppbus_dma_free(device_parent(dev), buf, addr, size);
 		return 0;
 	}
 	else {
@@ -320,7 +320,7 @@ int ppbus_add_handler(struct device * dev, void (*func)(void *), void * arg)
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
 
 	if(bus->sc_capabilities & PPBUS_HAS_INTR)
-		return bus->ppbus_add_handler(dev->dv_parent, func, arg);
+		return bus->ppbus_add_handler(device_parent(dev), func, arg);
 	else
 		return ENODEV;
 }
@@ -331,7 +331,7 @@ int ppbus_remove_handler(struct device * dev, void (*func)(void *))
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
 
 	if(bus->sc_capabilities & PPBUS_HAS_INTR)
-		return bus->ppbus_remove_handler(dev->dv_parent, func);
+		return bus->ppbus_remove_handler(device_parent(dev), func);
 	else
 		return ENODEV;
 }

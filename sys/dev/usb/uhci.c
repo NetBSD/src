@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.192 2005/12/24 23:41:34 perry Exp $	*/
+/*	$NetBSD: uhci.c,v 1.192.6.1 2006/04/22 11:39:38 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.192 2005/12/24 23:41:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.192.6.1 2006/04/22 11:39:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,9 +698,19 @@ void
 uhci_shutdown(void *v)
 {
 	uhci_softc_t *sc = v;
+	int s;
 
 	DPRINTF(("uhci_shutdown: stopping the HC\n"));
+
+	/*
+	 * Use polling mode to prevent the interrupts shutting
+	 * us down before we shut them down.
+	 */
+	s = splhardusb();
+	sc->sc_bus.use_polling++;
 	uhci_run(sc, 0); /* stop the controller */
+	sc->sc_bus.use_polling--;
+	splx(s);
 }
 
 /*
@@ -1950,6 +1960,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		usb_uncallout(xfer->timeout_handle, uhci_timeout, xfer);
 		usb_transfer_complete(xfer);
 		splx(s);
+		return;
 	}
 
 	if (xfer->device->bus->intr_context || !curproc)
@@ -3204,6 +3215,8 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		DPRINTFN(2,("uhci_root_ctrl_control wValue=0x%04x\n", value));
+		if (len == 0)
+			break;
 		switch(value >> 8) {
 		case UDESC_DEVICE:
 			if ((value & 0xff) != 0) {
@@ -3233,8 +3246,6 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &uhci_endpd, l);
 			break;
 		case UDESC_STRING:
-			if (len == 0)
-				break;
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
@@ -3369,6 +3380,8 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
+		if (len == 0)
+			break;
 		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;

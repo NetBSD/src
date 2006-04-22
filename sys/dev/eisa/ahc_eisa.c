@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.30 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.30.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.30 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.30.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ ahc_eisa_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 ahc_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ahc_softc *ahc = (void *)self;
+	struct ahc_softc *ahc = device_private(self);
 	struct eisa_attach_args *ea = aux;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;

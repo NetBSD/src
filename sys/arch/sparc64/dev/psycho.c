@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.76 2006/02/01 20:21:38 martin Exp $	*/
+/*	$NetBSD: psycho.c,v 1.76.2.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.76 2006/02/01 20:21:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.76.2.1 2006/04/22 11:37:59 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -77,54 +77,53 @@ int psycho_debug = 0x0;
 
 #include "ioconf.h"
 
-static pci_chipset_tag_t psycho_alloc_chipset __P((struct psycho_pbm *, int,
-						   pci_chipset_tag_t));
-static struct extent *psycho_alloc_extent __P((struct psycho_pbm *, int, int,
-					       const char *));
-static void psycho_get_bus_range __P((int, int *));
-static void psycho_get_ranges __P((int, struct psycho_ranges **, int *));
-static void psycho_set_intr __P((struct psycho_softc *, int, void *, 
-	u_int64_t *, u_int64_t *));
+static pci_chipset_tag_t psycho_alloc_chipset(struct psycho_pbm *, int,
+	pci_chipset_tag_t);
+static struct extent *psycho_alloc_extent(struct psycho_pbm *, int, int,
+	const char *);
+static void psycho_get_bus_range(int, int *);
+static void psycho_get_ranges(int, struct psycho_ranges **, int *);
+static void psycho_set_intr(struct psycho_softc *, int, void *, uint64_t *,
+	uint64_t *);
 
 /* Interrupt handlers */
-static int psycho_ue __P((void *));
-static int psycho_ce __P((void *));
-static int psycho_bus_a __P((void *));
-static int psycho_bus_b __P((void *));
-static int psycho_powerfail __P((void *));
-static int psycho_wakeup __P((void *));
+static int psycho_ue(void *);
+static int psycho_ce(void *);
+static int psycho_bus_a(void *);
+static int psycho_bus_b(void *);
+static int psycho_powerfail(void *);
+static int psycho_wakeup(void *);
 
 
 /* IOMMU support */
-static void psycho_iommu_init __P((struct psycho_softc *, int));
+static void psycho_iommu_init(struct psycho_softc *, int);
 
 /*
  * bus space and bus DMA support for UltraSPARC `psycho'.  note that most
  * of the bus DMA support is provided by the iommu dvma controller.
  */
-static int get_childspace __P((int));
-static struct psycho_ranges *get_psychorange __P((struct psycho_pbm *, int));
+static int get_childspace(int);
+static struct psycho_ranges *get_psychorange(struct psycho_pbm *, int);
 
-static paddr_t psycho_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t, 
-				    int, int));
-static int _psycho_bus_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
-				vaddr_t, bus_space_handle_t *));
-static void *psycho_intr_establish __P((bus_space_tag_t, int, int,
-				int (*) __P((void *)), void *, void(*)__P((void))));
+static paddr_t psycho_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
+static int _psycho_bus_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	vaddr_t, bus_space_handle_t *);
+static void *psycho_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
+	void *, void(*)(void));
 
-static int psycho_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-				   bus_size_t, struct proc *, int));
-static void psycho_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-static int psycho_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int));
-static void psycho_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-				    bus_size_t, int));
-int psycho_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-			     bus_dma_segment_t *, int, int *, int));
-void psycho_dmamem_free __P((bus_dma_tag_t, bus_dma_segment_t *, int));
-int psycho_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
-			   caddr_t *, int));
-void psycho_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
+static int psycho_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+	struct proc *, int);
+static void psycho_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+static int psycho_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	bus_dma_segment_t *, int, bus_size_t, int);
+static void psycho_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	bus_size_t, int);
+int psycho_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
+	bus_dma_segment_t *, int, int *, int);
+void psycho_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
+int psycho_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
+	caddr_t *, int);
+void psycho_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
 
 /* base pci_chipset */
 extern struct sparc_pci_chipset _sparc_pci_chipset;
@@ -136,9 +135,9 @@ static void psycho_power_button_pressed(void *arg);
 /*
  * autoconfiguration
  */
-static	int	psycho_match __P((struct device *, struct cfdata *, void *));
-static	void	psycho_attach __P((struct device *, struct device *, void *));
-static	int	psycho_print __P((void *aux, const char *p));
+static	int	psycho_match(struct device *, struct cfdata *, void *);
+static	void	psycho_attach(struct device *, struct device *, void *);
+static	int	psycho_print(void *aux, const char *p);
 
 CFATTACH_DECL(psycho, sizeof(struct psycho_softc),
     psycho_match, psycho_attach, NULL, NULL);
@@ -151,8 +150,8 @@ CFATTACH_DECL(psycho, sizeof(struct psycho_softc),
  * appears as two "simba"'s underneath the sabre.
  *
  * "psycho" and "psycho+" is a dual UPA to PCI bridge.  It sits on the UPA bus
- * and manages two PCI buses.  "psycho" has two 64-bit 33MHz buses, while
- * "psycho+" controls both a 64-bit 33Mhz and a 64-bit 66Mhz PCI bus.  You
+ * and manages two PCI buses.  "psycho" has two 64-bit 33 MHz buses, while
+ * "psycho+" controls both a 64-bit 33 MHz and a 64-bit 66 MHz PCI bus.  You
  * will usually find a "psycho+" since I don't think the original "psycho"
  * ever shipped, and if it did it would be in the U30.  
  *
@@ -196,10 +195,7 @@ struct psycho_names {
 };
 
 static	int
-psycho_match(parent, match, aux)
-	struct device	*parent;
-	struct cfdata	*match;
-	void		*aux;
+psycho_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	char *model = prom_getpropstring(ma->ma_node, "model");
@@ -224,7 +220,7 @@ static void psycho_dump_intmap(struct psycho_softc *sc);
 static void
 psycho_dump_intmap(struct psycho_softc *sc)
 {
-	volatile u_int64_t *intrmapptr = NULL;
+	volatile uint64_t *intrmapptr = NULL;
 
 	printf("psycho_dump_intmap: OBIO\n");
 
@@ -263,9 +259,7 @@ psycho_dump_intmap(struct psycho_softc *sc)
  *	  just copy it's tags and addresses.
  */
 static	void
-psycho_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+psycho_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)self;
 	struct psycho_softc *osc = NULL;
@@ -273,7 +267,7 @@ psycho_attach(parent, self, aux)
 	struct pcibus_attach_args pba;
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
-	u_int64_t csr;
+	uint64_t csr;
 	int psycho_br[2], n, i;
 	bus_space_handle_t pci_ctl;
 	char *model = prom_getpropstring(ma->ma_node, "model");
@@ -514,7 +508,7 @@ found:
 			&sc->sc_regs->power_clr_int);
 		psycho_register_power_button(sc);
 		if (sc->sc_mode != PSYCHO_MODE_SABRE) {
-			/* sabre doesn't have these interrups */
+			/* sabre doesn't have these interrupts */
 			psycho_set_intr(sc, 15, psycho_bus_b,
 					&sc->sc_regs->pciberr_int_map, 
 					&sc->sc_regs->pciberr_clr_int);
@@ -646,9 +640,7 @@ found:
 }
 
 static	int
-psycho_print(aux, p)
-	void *aux;
-	const char *p;
+psycho_print(void *aux, const char *p)
 {
 
 	if (p == NULL)
@@ -657,12 +649,8 @@ psycho_print(aux, p)
 }
 
 static void
-psycho_set_intr(sc, ipl, handler, mapper, clearer)
-	struct psycho_softc *sc;
-	int ipl;
-	void *handler;
-	u_int64_t *mapper;
-	u_int64_t *clearer;
+psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
+	uint64_t *mapper, uint64_t *clearer)
 {
 	struct intrhand *ih;
 
@@ -718,10 +706,7 @@ psycho_power_button_pressed(void *arg)
  * allocate a PCI chipset tag and set it's cookie.
  */
 static pci_chipset_tag_t
-psycho_alloc_chipset(pp, node, pc)
-	struct psycho_pbm *pp;
-	int node;
-	pci_chipset_tag_t pc;
+psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
 {
 	pci_chipset_tag_t npc;
 	
@@ -739,11 +724,7 @@ psycho_alloc_chipset(pp, node, pc)
  * create extent for free bus space, then allocate assigned regions.
  */
 static struct extent *
-psycho_alloc_extent(pp, node, ss, name)
-	struct psycho_pbm *pp;
-	int node;
-	int ss;
-	const char *name;
+psycho_alloc_extent(struct psycho_pbm *pp, int node, int ss, const char *name)
 {
 	struct psycho_registers *pa = NULL;
 	struct psycho_ranges *pr;
@@ -818,9 +799,7 @@ ret:
  * grovel the OBP for various psycho properties
  */
 static void
-psycho_get_bus_range(node, brp)
-	int node;
-	int *brp;
+psycho_get_bus_range(int node, int *brp)
 {
 	int n, error;
 
@@ -835,10 +814,7 @@ psycho_get_bus_range(node, brp)
 }
 
 static void
-psycho_get_ranges(node, rp, np)
-	int node;
-	struct psycho_ranges **rp;
-	int *np;
+psycho_get_ranges(int node, struct psycho_ranges **rp, int *np)
 {
 
 	if (prom_getprop(node, "ranges", sizeof(**rp), np, rp))
@@ -851,8 +827,7 @@ psycho_get_ranges(node, rp, np)
  */
 
 static int
-psycho_ue(arg)
-	void *arg;
+psycho_ue(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
@@ -885,8 +860,7 @@ psycho_ue(arg)
 	return (1);
 }
 static int 
-psycho_ce(arg)
-	void *arg;
+psycho_ce(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
@@ -901,8 +875,7 @@ psycho_ce(arg)
 	return (1);
 }
 static int 
-psycho_bus_a(arg)
-	void *arg;
+psycho_bus_a(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
@@ -918,8 +891,7 @@ psycho_bus_a(arg)
 	return (1);
 }
 static int 
-psycho_bus_b(arg)
-	void *arg;
+psycho_bus_b(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
@@ -936,8 +908,7 @@ psycho_bus_b(arg)
 }
 
 static int 
-psycho_powerfail(arg)
-	void *arg;
+psycho_powerfail(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 
@@ -953,8 +924,7 @@ psycho_powerfail(arg)
 }
 
 static 
-int psycho_wakeup(arg)
-	void *arg;
+int psycho_wakeup(void *arg)
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
 
@@ -972,13 +942,11 @@ int psycho_wakeup(arg)
  * initialise the IOMMU..
  */
 void
-psycho_iommu_init(sc, tsbsize)
-	struct psycho_softc *sc;
-	int tsbsize;
+psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 {
 	char *name;
 	struct iommu_state *is = sc->sc_is;
-	u_int32_t iobase = -1;
+	uint32_t iobase = -1;
 	int *vdma = NULL;
 	int nitem;
 
@@ -1026,9 +994,7 @@ psycho_iommu_init(sc, tsbsize)
  * below here is bus space and bus DMA support
  */
 bus_space_tag_t
-psycho_alloc_bus_tag(pp, type)
-	struct psycho_pbm *pp;
-	int type;
+psycho_alloc_bus_tag(struct psycho_pbm *pp, int type)
 {
 	struct psycho_softc *sc = pp->pp_sc;
 	bus_space_tag_t bt;
@@ -1049,8 +1015,7 @@ psycho_alloc_bus_tag(pp, type)
 }
 
 bus_dma_tag_t
-psycho_alloc_dma_tag(pp)
-	struct psycho_pbm *pp;
+psycho_alloc_dma_tag(struct psycho_pbm *pp)
 {
 	struct psycho_softc *sc = pp->pp_sc;
 	bus_dma_tag_t dt, pdt = sc->sc_dmatag;
@@ -1087,8 +1052,7 @@ psycho_alloc_dma_tag(pp)
  */
 
 static int
-get_childspace(type)
-	int type;
+get_childspace(int type)
 {
 	int ss;
 
@@ -1116,9 +1080,7 @@ get_childspace(type)
 }
 
 static struct psycho_ranges *
-get_psychorange(pp, ss)
-	struct psycho_pbm *pp;
-	int ss;
+get_psychorange(struct psycho_pbm *pp, int ss)
 {
 	int i;
 
@@ -1131,13 +1093,8 @@ get_psychorange(pp, ss)
 }
 
 static int
-_psycho_bus_map(t, offset, size, flags, unused, hp)
-	bus_space_tag_t t;
-	bus_addr_t offset;
-	bus_size_t size;
-	int	flags;
-	vaddr_t unused;
-	bus_space_handle_t *hp;
+_psycho_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
+	int flags, vaddr_t unused, bus_space_handle_t *hp)
 {
 	struct psycho_pbm *pp = t->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
@@ -1168,12 +1125,8 @@ _psycho_bus_map(t, offset, size, flags, unused, hp)
 }
 
 static paddr_t
-psycho_bus_mmap(t, paddr, off, prot, flags)
-	bus_space_tag_t t;
-	bus_addr_t paddr;
-	off_t off;
-	int prot;
-	int flags;
+psycho_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
+	int flags)
 {
 	bus_addr_t offset = paddr;
 	struct psycho_pbm *pp = t->cookie;
@@ -1204,9 +1157,7 @@ psycho_bus_mmap(t, paddr, off, prot, flags)
  * Get a PCI offset address from bus_space_handle_t.
  */
 bus_addr_t
-psycho_bus_offset(t, hp)
-	bus_space_tag_t t;
-	bus_space_handle_t *hp;
+psycho_bus_offset(bus_space_tag_t t, bus_space_handle_t *hp)
 {
 	struct psycho_pbm *pp = t->cookie;
 	struct psycho_ranges *pr;
@@ -1244,18 +1195,13 @@ psycho_bus_offset(t, hp)
  * install an interrupt handler for a PCI device
  */
 void *
-psycho_intr_establish(t, ihandle, level, handler, arg, fastvec)
-	bus_space_tag_t t;
-	int ihandle;
-	int level;
-	int (*handler) __P((void *));
-	void *arg;
-	void (*fastvec) __P((void));	/* ignored */
+psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
+	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
 	struct psycho_pbm *pp = t->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
 	struct intrhand *ih;
-	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
+	volatile uint64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	int64_t imap = 0;
 	int ino;
 	long vec = INTVEC(ihandle); 
@@ -1370,13 +1316,8 @@ found:
  * hooks into the iommu dvma calls.
  */
 int
-psycho_dmamap_load(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+psycho_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+	bus_size_t buflen, struct proc *p, int flags)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 
@@ -1384,9 +1325,7 @@ psycho_dmamap_load(t, map, buf, buflen, p, flags)
 }
 
 void
-psycho_dmamap_unload(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+psycho_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 
@@ -1394,13 +1333,8 @@ psycho_dmamap_unload(t, map)
 }
 
 int
-psycho_dmamap_load_raw(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+psycho_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+	bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 
@@ -1408,12 +1342,8 @@ psycho_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 }
 
 void
-psycho_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+psycho_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+	bus_size_t len, int ops)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 
@@ -1431,15 +1361,9 @@ psycho_dmamap_sync(t, map, offset, len, ops)
 }
 
 int
-psycho_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	bus_size_t alignment;
-	bus_size_t boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+psycho_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+	bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+	int flags)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 
@@ -1448,10 +1372,7 @@ psycho_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 }
 
 void
-psycho_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+psycho_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 
@@ -1459,13 +1380,8 @@ psycho_dmamem_free(t, segs, nsegs)
 }
 
 int
-psycho_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+psycho_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+	size_t size, caddr_t *kvap, int flags)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 
@@ -1473,10 +1389,7 @@ psycho_dmamem_map(t, segs, nsegs, size, kvap, flags)
 }
 
 void
-psycho_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+psycho_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 

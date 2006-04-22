@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.39 2005/12/11 12:23:22 christos Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.39.6.1 2006/04/22 11:39:24 simonb Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.39 2005/12/11 12:23:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.39.6.1 2006/04/22 11:39:24 simonb Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1455,7 +1455,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	int unit;
 
 	bktr = (bktr_ptr_t)self;
-	unit = bktr->bktr_dev.dv_unit;
+	unit = device_unit(&bktr->bktr_dev);
         bktr->dmat = pa->pa_dmat;
 
 	printf("\n");

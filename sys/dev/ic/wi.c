@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.211 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: wi.c,v 1.211.6.1 2006/04/22 11:38:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.211 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.211.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -574,12 +574,12 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 #endif
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
-	sc->sc_rxtap.wr_ihdr.it_len = sizeof(sc->sc_rxtapu);
-	sc->sc_rxtap.wr_ihdr.it_present = WI_RX_RADIOTAP_PRESENT;
+	sc->sc_rxtap.wr_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.wr_ihdr.it_present = htole32(WI_RX_RADIOTAP_PRESENT);
 
 	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
-	sc->sc_txtap.wt_ihdr.it_len = sizeof(sc->sc_txtapu);
-	sc->sc_txtap.wt_ihdr.it_present = WI_TX_RADIOTAP_PRESENT;
+	sc->sc_txtap.wt_ihdr.it_len = htole16(sizeof(sc->sc_txtapu));
+	sc->sc_txtap.wt_ihdr.it_present = htole32(WI_TX_RADIOTAP_PRESENT);
 
 	/* Attach is successful. */
 	sc->sc_attached = 1;
@@ -675,7 +675,7 @@ wi_intr(void *arg)
 	u_int16_t status;
 
 	if (sc->sc_enabled == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 ||
+	    !device_is_active(&sc->sc_dev) ||
 	    (ifp->if_flags & IFF_RUNNING) == 0)
 		return 0;
 
@@ -1360,7 +1360,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return ENXIO;
 
 	s = splnet();

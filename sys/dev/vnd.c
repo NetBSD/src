@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.135 2006/02/02 06:57:35 cube Exp $	*/
+/*	$NetBSD: vnd.c,v 1.135.2.1 2006/04/22 11:38:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.135 2006/02/02 06:57:35 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.135.2.1 2006/04/22 11:38:46 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -272,8 +272,6 @@ vnd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
 	pseudo_disk_init(&sc->sc_dkdev);
-
-	aprint_normal("%s: vnode disk driver\n", self->dv_xname);
 }
 
 static int
@@ -306,11 +304,13 @@ int
 vnd_destroy(struct device *dev)
 {
 	int error;
+	struct cfdata *cf;
 
-	error = config_detach(dev, 0);
+	cf = device_cfdata(dev);
+	error = config_detach(dev, DETACH_QUIET);
 	if (error)
 		return error;
-	free(dev->dv_cfdata, M_DEVBUF);
+	free(cf, M_DEVBUF);
 	return 0;
 }
 
@@ -468,7 +468,11 @@ vndstrategy(struct buf *bp)
 	 * Do bounds checking and adjust transfer.  If there's an error,
 	 * the bounds check will flag that for us.
 	 */
-	if (DISKPART(bp->b_dev) != RAW_PART) {
+	if (DISKPART(bp->b_dev) == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    vnd->sc_size) <= 0)
+			goto done;
+	} else {
 		if (bounds_check_with_label(&vnd->sc_dkdev,
 		    bp, vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING)) <= 0)
 			goto done;
@@ -582,7 +586,7 @@ vndthread(void *arg)
 		bp->b_flags = (obp->b_flags & B_READ) | B_CALL;
 		bp->b_iodone = vndiodone;
 		bp->b_private = obp;
-		bp->b_vp = NULL;
+		bp->b_vp = vnd->sc_vp;
 		bp->b_data = obp->b_data;
 		bp->b_bcount = bp->b_resid = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
@@ -594,8 +598,13 @@ vndthread(void *arg)
 		vnd->sc_active++;
 		splx(s);
 
-		if ((flags & B_READ) == 0)
+		if ((flags & B_READ) == 0) {
+			s = splbio();
+			V_INCR_NUMOUTPUT(bp->b_vp);
+			splx(s);
+
 			vn_start_write(vnd->sc_vp, &mp, V_WAIT);
+		}
 
 		/* Instrumentation. */
 		disk_busy(&vnd->sc_dkdev);
@@ -641,12 +650,8 @@ vndthread(void *arg)
 				nra = 0;
 #endif
 
-			if ((off = bn % bsize) != 0)
-				sz = bsize - off;
-			else
-				sz = (1 + nra) * bsize;
-			if (resid < sz)
-				sz = resid;
+			off = bn % bsize;
+			sz = MIN(((off_t)1 + nra) * bsize - off, resid);
 #ifdef	DEBUG
 			if (vnddebug & VDB_IO)
 				printf("vndstrategy: vp %p/%p bn 0x%qx/0x%" PRIx64
@@ -772,12 +777,6 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 
 	vnd = device_lookup(&vnd_cd, *un);
 	if (vnd == NULL)
-		/*
-		 * vnconfig(8) has weird expectations to list the
-		 * devices.
-		 * It will stop as soon as it gets ENXIO, but
-		 * will continue if it gets something else...
-		 */
 		return (*un >= vnd_cd.cd_ndevs) ? ENXIO : -1;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0)
@@ -867,6 +866,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, l);
 		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
+		KASSERT(l);
 		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_proc->p_ucred, l);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
@@ -1149,6 +1149,7 @@ unlock_and_exit:
 		struct vnd_ouser *vnu;
 		struct vattr va;
 		vnu = (struct vnd_ouser *)data;
+		KASSERT(l);
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
 			vnu->vnu_dev = va.va_fsid;
@@ -1169,6 +1170,7 @@ unlock_and_exit:
 		struct vnd_user *vnu;
 		struct vattr va;
 		vnu = (struct vnd_user *)data;
+		KASSERT(l);
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
 			vnu->vnu_dev = va.va_fsid;
@@ -1307,8 +1309,8 @@ vndsetcred(struct vnd_softc *vnd, struct ucred *cred)
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_resid = aiov.iov_len;
+	UIO_SETUP_SYSSPACE(&auio);
 	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
 	if (error == 0) {
@@ -1378,7 +1380,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(vnd->sc_dev.dv_unit, i);
+		mn = DISKMINOR(device_unit(&vnd->sc_dev), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		if (mn != myminor) /* XXX avoid to kill own vnode */
 			vdevgone(cmaj, mn, mn, VCHR);
@@ -1606,7 +1608,7 @@ compstrategy(struct buf *bp, off_t bn)
 
 	/* set up constants for data move */
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	/* read, and transfer the data */
 	addr = bp->b_data;

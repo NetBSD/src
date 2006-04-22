@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465var.h,v 1.2 2002/03/28 15:27:02 uch Exp $	*/
+/*	$NetBSD: hd64465var.h,v 1.2.44.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,10 +41,10 @@
 /*
  * HD64465 register access macro.
  */
-#define hd64465_reg_read_1(r)		(*((volatile u_int8_t *)(r)))
-#define hd64465_reg_write_1(r, v)	(*((volatile u_int8_t *)(r)) = (v))
-#define hd64465_reg_read_2(r)		(*((volatile u_int16_t *)(r)))
-#define hd64465_reg_write_2(r, v)	(*((volatile u_int16_t *)(r)) = (v))
+#define hd64465_reg_read_1(r)		(*((volatile uint8_t *)(r)))
+#define hd64465_reg_write_1(r, v)	(*((volatile uint8_t *)(r)) = (v))
+#define hd64465_reg_read_2(r)		(*((volatile uint16_t *)(r)))
+#define hd64465_reg_write_2(r, v)	(*((volatile uint16_t *)(r)) = (v))
 
 /*
  * HD64465 modules canonical ID.

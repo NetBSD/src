@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.74 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.74.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74 2005/12/11 12:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74.6.1 2006/04/22 11:37:26 simonb Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -398,7 +398,7 @@ cpu_rootconf(void)
 		if (vops != NULL && vops->vfs_mountroot == mountroot) {
 			for (dd = dev_data_list.lh_first;
 			    dd != NULL; dd = dd->dd_list.le_next) {
-				if (dd->dd_dev->dv_class == DV_IFNET) {
+				if (device_class(dd->dd_dev) == DV_IFNET) {
 					/* Got it! */
 					dv = dd->dd_dev;
 					break;
@@ -420,7 +420,7 @@ cpu_rootconf(void)
 	/*
 	 * If we booted from tape, ask the user.
 	 */
-	if (booted_device != NULL && booted_device->dv_class == DV_TAPE)
+	if (booted_device != NULL && device_class(booted_device) == DV_TAPE)
 		boothowto |= RB_ASKNAME;
 
 	setroot(dv, booted_partition);
@@ -452,8 +452,7 @@ device_register(struct device *dev, void *aux)
 	 * we can mount as root.
 	 */
 
-	MALLOC(dd, struct dev_data *, sizeof(struct dev_data),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	dd = malloc(sizeof(struct dev_data), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (dd == NULL)
 		panic("device_register: can't allocate dev_data");
 
@@ -464,7 +463,7 @@ device_register(struct device *dev, void *aux)
 	 * using the lowest select code network interface,
 	 * so we ignore all but the first.
 	 */
-	if (dev->dv_class == DV_IFNET && seen_netdevice == 0) {
+	if (device_class(dev) == DV_IFNET && seen_netdevice == 0) {
 		struct dio_attach_args *da = aux;
 
 		seen_netdevice = 1;
@@ -472,16 +471,16 @@ device_register(struct device *dev, void *aux)
 		goto linkup;
 	}
 
-	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    memcmp(dev->dv_xname, "nhpib", 5) == 0 ||
-	    memcmp(dev->dv_xname, "spc", 3) == 0) {
+	if (device_is_a(dev, "fhpib") ||
+	    device_is_a(dev, "nhpib") ||
+	    device_is_a(dev, "spc")) {
 		struct dio_attach_args *da = aux;
 
 		dd->dd_scode = da->da_scode;
 		goto linkup;
 	}
 
-	if (memcmp(dev->dv_xname, "rd", 2) == 0) {
+	if (device_is_a(dev, "rd")) {
 		struct hpibbus_attach_args *ha = aux;
 
 		dd->dd_slave = ha->ha_slave;
@@ -489,7 +488,7 @@ device_register(struct device *dev, void *aux)
 		goto linkup;
 	}
 
-	if (memcmp(dev->dv_xname, "sd", 2) == 0) {
+	if (device_is_a(dev, "sd")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		dd->dd_slave = sa->sa_periph->periph_target;
@@ -506,13 +505,13 @@ device_register(struct device *dev, void *aux)
  linkup:
 	LIST_INSERT_HEAD(&dev_data_list, dd, dd_list);
 
-	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
-	    memcmp(dev->dv_xname, "nhpib", 5) == 0) {
+	if (device_is_a(dev, "fhpib") ||
+	    device_is_a(dev, "nhpib")) {
 		dev_data_insert(dd, &dev_data_list_hpib);
 		return;
 	}
 
-	if (memcmp(dev->dv_xname, "spc", 3) == 0) {
+	if (device_is_a(dev, "spc")) {
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
@@ -553,7 +552,7 @@ findbootdev(void)
 	if (netboot) {
 		for (dd = dev_data_list.lh_first; dd != NULL;
 		    dd = dd->dd_list.le_next) {
-			if (dd->dd_dev->dv_class == DV_IFNET) {
+			if (device_class(dd->dd_dev) == DV_IFNET) {
 				/*
 				 * Found it!
 				 */
@@ -576,8 +575,8 @@ findbootdev(void)
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 0 && memcmp(booted_device->dv_xname, "ct", 2)) ||
-		    (type == 2 && memcmp(booted_device->dv_xname, "rd", 2))) {
+		if ((type == 0 && !device_is_a(booted_device, "ct")) ||
+		    (type == 2 && !device_is_a(booted_device, "rd"))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -598,7 +597,7 @@ findbootdev(void)
 		/*
 		 * Sanity check.
 		 */
-		if ((type == 4 && memcmp(booted_device->dv_xname, "sd", 2))) {
+		if ((type == 4 && !device_is_a(booted_device, "sd"))) {
 			printf("WARNING: boot device/type mismatch!\n");
 			printf("device = %s, type = %d\n",
 			    booted_device->dv_xname, type);
@@ -643,7 +642,7 @@ findbootdev_slave(ddlist_t *ddlist, int ctlr, int slave, int punit)
 		 * "sd" -> "scsibus" -> "spc"
 		 * "rd" -> "hpibbus" -> "fhpib"
 		 */
-		if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
+		if (device_parent(device_parent(dd->dd_dev)) != cdd->dd_dev)
 			continue;
 
 		if (dd->dd_slave == slave &&
@@ -686,7 +685,7 @@ setbootdev(void)
 	 * If the root device is network, we're done
 	 * early.
 	 */
-	if (root_device->dv_class == DV_IFNET) {
+	if (device_class(root_device) == DV_IFNET) {
 		bootdev = MAKEBOOTDEV(6, 0, 0, 0, 0);
 		goto out;
 	}
@@ -694,11 +693,11 @@ setbootdev(void)
 	/*
 	 * Determine device type.
 	 */
-	if (memcmp(root_device->dv_xname, "rd", 2) == 0)
+	if (device_is_a(root_device, "rd"))
 		type = 2;
-	else if (memcmp(root_device->dv_xname, "sd", 2) == 0)
+	else if (device_is_a(root_device, "sd"))
 		type = 4;
-	else if (memcmp(root_device->dv_xname, "md", 2) == 0)
+	else if (device_is_a(root_device, "md"))
 		goto out;
 	else {
 		printf("WARNING: strange root device!\n");
@@ -719,7 +718,8 @@ setbootdev(void)
 		 */
 		for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
 		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
-			if (cdd->dd_dev == root_device->dv_parent->dv_parent) {
+			if (cdd->dd_dev ==
+			    device_parent(device_parent(root_device))) {
 				/*
 				 * Found it!
 				 */

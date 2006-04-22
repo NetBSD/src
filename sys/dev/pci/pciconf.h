@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.h,v 1.10 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pciconf.h,v 1.10.6.1 2006/04/22 11:39:15 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -49,13 +49,14 @@ int	pci_configure_bus(pci_chipset_tag_t, struct extent *,
 void	pci_conf_interrupt(pci_chipset_tag_t, int, int, int, int, int *);
 #endif
 
-#define PCI_CONF_MAP_IO		0x01
-#define PCI_CONF_MAP_MEM	0x02
-#define PCI_CONF_MAP_ROM	0x04
-#define PCI_CONF_ENABLE_IO	0x08
-#define PCI_CONF_ENABLE_MEM	0x10
-#define PCI_CONF_ENABLE_BM	0x20
-#define PCI_CONF_ENABLE_PARITY	0x40
-#define PCI_CONF_ENABLE_SERR	0x80
-
-#define PCI_CONF_ALL		0xff
+#define PCI_CONF_MAP_IO		0x0001
+#define PCI_CONF_MAP_MEM	0x0002
+#define PCI_CONF_MAP_ROM	0x0004
+#define PCI_CONF_ENABLE_IO	0x0008
+#define PCI_CONF_ENABLE_MEM	0x0010
+#define PCI_CONF_ENABLE_BM	0x0020
+#define PCI_CONF_ENABLE_PARITY	0x0040
+#define PCI_CONF_ENABLE_SERR	0x0080
+#define PCI_CONF_ENABLE_ROM	0x0100
+#define PCI_CONF_DEFAULT	0x00ff
+#define PCI_CONF_ALL		0x01ff

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.38 2002/09/27 15:35:34 provos Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.38.38.1 2006/04/22 11:37:11 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.38 2002/09/27 15:35:34 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.38.38.1 2006/04/22 11:37:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,9 +171,7 @@ dec_3000_500_device_register(dev, aux)
 	static struct device *scsidev;
 	static struct device *tcdsdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
+	struct device *parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -194,7 +192,7 @@ dec_3000_500_device_register(dev, aux)
 	 * as the right channel.  then we find the actual scsi
 	 * device we came from.  note: no SCSI LUN support (yet).
 	 */
-	if (scsiboot && (strcmp(name, "tcds") == 0)) {
+	if (scsiboot && device_is_a(dev, "tcds")) {
 		struct tc_attach_args *tcargs = aux;
 
 		if (b->slot != tcargs->ta_slot)
@@ -206,7 +204,7 @@ dec_3000_500_device_register(dev, aux)
 #endif
 	}
 	if (scsiboot && tcdsdev &&
-	    (strcmp(name, "asc") == 0)) {
+	    device_is_a(dev, "asc")) {
 		struct tcdsdev_attach_args *ta = aux;
 
 		if (parent != (struct device *)tcdsdev)
@@ -222,12 +220,12 @@ dec_3000_500_device_register(dev, aux)
 	}
 
 	if (scsiboot && scsidev &&
-	    (strcmp(name, "sd") == 0 ||
-	     strcmp(name, "st") == 0 ||
-	     strcmp(name, "cd") == 0)) {
+	    (device_is_a(dev, "sd") ||
+	     device_is_a(dev, "st") ||
+	     device_is_a(dev, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != scsidev)
+		if (device_parent(parent) != scsidev)
 			return;
 
 		if (b->unit / 100 != sa->sa_periph->periph_target)
@@ -237,12 +235,12 @@ dec_3000_500_device_register(dev, aux)
 
 		switch (b->boot_dev_type) {
 		case 0:
-			if (strcmp(name, "sd") &&
-			    strcmp(name, "cd"))
+			if (!device_is_a(dev, "sd") &&
+			    !device_is_a(dev, "cd"))
 				return;
 			break;
 		case 1:
-			if (strcmp(name, "st"))
+			if (!device_is_a(dev, "st"))
 				return;
 			break;
 		default:
@@ -258,9 +256,8 @@ dec_3000_500_device_register(dev, aux)
 	}
 
 	if (netboot) {
-                if (b->slot == 7 && strcmp(name, "le") == 0 &&
-		    strcmp(parent->dv_cfdata->cf_name, "ioasic")
-		     == 0) {
+                if (b->slot == 7 && device_is_a(dev, "le") &&
+		    device_is_a(parent, "ioasic")) {
 			/*
 			 * no need to check ioasic_attach_args, since only
 			 * one le on ioasic.

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.88 2005/12/07 12:40:46 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.88.6.1 2006/04/22 11:37:11 simonb Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -335,9 +335,9 @@ wsmouse*	at	pms?
 
 pseudo-device	loop		1
 pseudo-device	md		1
-pseudo-device	ppp		1
+pseudo-device	ppp		
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
-pseudo-device	sl		1
+pseudo-device	sl		
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	fss		4	# file system snapshot device

@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.27 2005/12/11 12:21:02 christos Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.27.6.1 2006/04/22 11:38:46 simonb Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.27 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.27.6.1 2006/04/22 11:38:46 simonb Exp $");
 
 #include "rnd.h"
 
@@ -118,7 +118,8 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_resources res;
 	ACPI_STATUS rv;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_ic = aa->aa_ic;
 	asc->sc_node = aa->aa_node;
@@ -132,7 +133,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		printf("%s: unable to find i/o register resource\n",
+		aprint_error("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -140,7 +141,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our IRQ */
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		printf("%s: unable to find irq resource\n",
+		aprint_error("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -148,7 +149,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our DRQ */
 	drq = acpi_res_drq(&res, 0);
 	if (drq == NULL) {
-		printf("%s: unable to find drq resource\n",
+		aprint_error("%s: unable to find drq resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -157,7 +158,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = aa->aa_iot;
 	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
 		    0, &asc->sc_baseioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		goto out;
 	}
 
@@ -168,13 +169,13 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	case 6:
 		if (bus_space_subregion(sc->sc_iot, asc->sc_baseioh, 2, 4,
 		    &sc->sc_ioh)) {
-			printf("%s: unable to subregion i/o space\n",
+			aprint_error("%s: unable to subregion i/o space\n",
 			    sc->sc_dev.dv_xname);
 			goto out;
 		}
 		break;
 	default:
-		printf("%s: unknown size: %d of io mapping\n",
+		aprint_error("%s: unknown size: %d of io mapping\n",
 		    sc->sc_dev.dv_xname, io->ar_length);
 		goto out;
 	}
@@ -187,16 +188,16 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (ctlio == NULL) {
 		if (bus_space_map(sc->sc_iot, io->ar_base + io->ar_length + 1,
 		    1, 0, &sc->sc_fdctlioh)) {
-			printf("%s: unable to force map ctl i/o space\n",
+			aprint_error("%s: unable to force map ctl i/o space\n",
 			    sc->sc_dev.dv_xname);
 			goto out;
 		}
-		printf("%s: ctl io %x did't probe. Forced attach\n",
+		aprint_verbose("%s: ctl io %x did't probe. Forced attach\n",
 		    sc->sc_dev.dv_xname, io->ar_base + io->ar_length + 1);
 	} else {
 		if (bus_space_map(sc->sc_iot, ctlio->ar_base, ctlio->ar_length,
 		    0, &sc->sc_fdctlioh)) {
-			printf("%s: unable to map ctl i/o space\n",
+			aprint_error("%s: unable to map ctl i/o space\n",
 			    sc->sc_dev.dv_xname);
 			goto out;
 		}
@@ -217,7 +218,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		 * probe without pnp
 		 */
 #ifdef ACPI_FDC_DEBUG
-		printf("%s: unable to enumerate, attempting normal probe\n",
+		aprint_debug("%s: unable to enumerate, attempting normal probe\n",
 		    sc->sc_dev.dv_xname);
 #endif
 	}
@@ -241,19 +242,19 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &abuf);
 	if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_FDC_DEBUG
-		printf("%s: failed to evaluate _FDE: %s\n",
+		aprint_normal("%s: failed to evaluate _FDE: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 #endif
 		return drives;
 	}
 	fde = (ACPI_OBJECT *)abuf.Pointer;
 	if (fde->Type != ACPI_TYPE_BUFFER) {
-		printf("%s: expected BUFFER, got %d\n", sc->sc_dev.dv_xname,
+		aprint_error("%s: expected BUFFER, got %d\n", sc->sc_dev.dv_xname,
 		    fde->Type);
 		goto out;
 	}
 	if (fde->Buffer.Length < 5 * sizeof(UINT32)) {
-		printf("%s: expected buffer len of %lu, got %d\n",
+		aprint_error("%s: expected buffer len of %lu, got %d\n",
 		    sc->sc_dev.dv_xname,
 		    (unsigned long)(5 * sizeof(UINT32)), fde->Buffer.Length);
 		goto out;
@@ -269,7 +270,7 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	for (i = 0; i < 4; i++) {
 		if (p[i]) drives |= (1 << i);
 #ifdef ACPI_FDC_DEBUG
-		printf("%s: drive %d %sattached\n", sc->sc_dev.dv_xname, i,
+		aprint_normal("%s: drive %d %sattached\n", sc->sc_dev.dv_xname, i,
 		    p[i] ? "" : "not ");
 #endif
 	}
@@ -304,7 +305,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &abuf);
 		if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_FDC_DEBUG
-			printf("%s: failed to evaluate _FDI: %s on drive %d\n",
+			aprint_normal("%s: failed to evaluate _FDI: %s on drive %d\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(rv), i);
 #endif
 			/* XXX if _FDI fails, assume 1.44MB floppy */
@@ -313,7 +314,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 		}
 		fdi = (ACPI_OBJECT *)abuf.Pointer;
 		if (fdi->Type != ACPI_TYPE_PACKAGE) {
-			printf("%s: expected PACKAGE, got %d\n",
+			aprint_error("%s: expected PACKAGE, got %d\n",
 			    sc->sc_dev.dv_xname, fdi->Type);
 			goto out;
 		}
@@ -351,7 +352,7 @@ fdc_acpi_nvtotype(char *fdc, int nvraminfo, int drive)
 		return &fdc_acpi_fdtypes[4];
 	default:
 #ifdef ACPI_FDC_DEBUG
-		printf("%s: drive %d: unknown device type 0x%x\n",
+		aprint_normal("%s: drive %d: unknown device type 0x%x\n",
 		    fdc, drive, type);
 #endif
 		return NULL;

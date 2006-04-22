@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.116.6.1 2006/02/04 14:12:49 simonb Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.116.6.2 2006/04/22 11:40:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.116.6.1 2006/02/04 14:12:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.116.6.2 2006/04/22 11:40:05 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -151,20 +151,25 @@ int nkern_dirs = 2;
 #endif
 
 int kernfs_try_fileop(kfstype, kfsfileop, void *, int);
+int kernfs_try_xread(kfstype, const struct kernfs_node *, char *,
+    size_t, int);
 int kernfs_try_xwrite(kfstype, const struct kernfs_node *, char *,
     size_t, int);
 
+static int kernfs_default_xread(void *v);
 static int kernfs_default_xwrite(void *v);
 static int kernfs_default_fileop_getattr(void *);
 
 /* must include all fileop's */
 const struct kernfs_fileop kernfs_default_fileops[] = {
+  { .kf_fileop = KERNFS_XREAD },
   { .kf_fileop = KERNFS_XWRITE },
   { .kf_fileop = KERNFS_FILEOP_OPEN },
   { .kf_fileop = KERNFS_FILEOP_GETATTR,
     .kf_genop = {kernfs_default_fileop_getattr} },
   { .kf_fileop = KERNFS_FILEOP_IOCTL },
   { .kf_fileop = KERNFS_FILEOP_CLOSE },
+  { .kf_fileop = KERNFS_FILEOP_READ, .kf_genop = {kernfs_default_xread} },
   { .kf_fileop = KERNFS_FILEOP_WRITE, .kf_genop = {kernfs_default_xwrite} },
 };
 
@@ -905,7 +910,7 @@ kernfs_setattr(v)
 }
 
 int
-kernfs_read(v)
+kernfs_default_xread(v)
 	void *v;
 {
 	struct vop_read_args /* {
@@ -933,6 +938,21 @@ kernfs_read(v)
 	if ((error = kernfs_xread(kfs, off, &bf, sizeof(strbuf), &len)) == 0)
 		error = uiomove(bf, len, uio);
 	return (error);
+}
+
+int
+kernfs_read(v)
+	void *v;
+{
+	struct vop_read_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		int  a_ioflag;
+		struct ucred *a_cred;
+	} */ *ap = v;
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
+
+	return kernfs_try_fileop(kfs->kfs_type, KERNFS_FILEOP_READ, v, 0);
 }
 
 static int
@@ -1012,10 +1032,11 @@ kernfs_setdirentfileno_kt(struct dirent *d, const struct kern_target *kt,
 		return error;
 	if (kt->kt_tag == KFSdevice) {
 		struct vattr va;
-		if ((error = VOP_GETATTR(vp, &va, ap->a_cred,
-		    ap->a_uio->uio_segflg == UIO_USERSPACE ?
-		    ap->a_uio->uio_lwp : &lwp0)) != 0)
-			return (error);
+
+		error = VOP_GETATTR(vp, &va, ap->a_cred, curlwp);
+		if (error != 0) {
+			return error;
+		}
 		d->d_fileno = va.va_fileid;
 	} else {
 		kfs = VTOKERN(vp);
@@ -1116,9 +1137,9 @@ kernfs_readdir(v)
 						break;
 				} else {
 					dkt = SIMPLEQ_NEXT(dkt, dkt_queue);
-					if (dkt == NULL)
-						break;
 				}
+				if (dkt == NULL)
+					break;
 				kt = &dkt->dkt_kt;
 			}
 			if (kt->kt_tag == KFSdevice) {

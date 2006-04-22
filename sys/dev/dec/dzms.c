@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.13 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: dzms.c,v 1.13.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.13 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.13.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,8 @@ dzms_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct dz_softc *dz = (void *)parent;
-	struct dzms_softc *dzms = (void *)self;
+	struct dz_softc *dz = device_private(parent);
+	struct dzms_softc *dzms = device_private(self);
 	struct dzkm_attach_args *daa = aux;
 	struct dz_linestate *ls;
 	struct wsmousedev_attach_args a;

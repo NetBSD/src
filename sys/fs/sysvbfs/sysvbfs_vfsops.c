@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.1.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.1.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,7 +184,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if ((error = VOP_OPEN(devvp, FREAD, NOCRED, l)) != 0)
 		return error;
 
-	/* Get partition infomation */
+	/* Get partition information */
 	if ((error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l)) != 0)
 		return error;
 

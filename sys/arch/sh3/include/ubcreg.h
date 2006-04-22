@@ -1,4 +1,4 @@
-/*	$NetBSD: ubcreg.h,v 1.3 2002/04/28 17:10:37 uch Exp $	*/
+/*	$NetBSD: ubcreg.h,v 1.3.44.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -68,17 +68,17 @@
 
 #ifndef _LOCORE
 #if defined(SH3) && defined(SH4)
-extern u_int32_t __sh_BARA;
-extern u_int32_t __sh_BAMRA;
-extern u_int32_t __sh_BASRA;
-extern u_int32_t __sh_BBRA;
-extern u_int32_t __sh_BARB;
-extern u_int32_t __sh_BAMRB;
-extern u_int32_t __sh_BASRB;
-extern u_int32_t __sh_BBRB;
-extern u_int32_t __sh_BDRB;
-extern u_int32_t __sh_BDMRB;
-extern u_int32_t __sh_BRCR;
+extern uint32_t __sh_BARA;
+extern uint32_t __sh_BAMRA;
+extern uint32_t __sh_BASRA;
+extern uint32_t __sh_BBRA;
+extern uint32_t __sh_BARB;
+extern uint32_t __sh_BAMRB;
+extern uint32_t __sh_BASRB;
+extern uint32_t __sh_BBRB;
+extern uint32_t __sh_BDRB;
+extern uint32_t __sh_BDMRB;
+extern uint32_t __sh_BRCR;
 #endif /* SH3 && SH4 */
 #endif /* !_LOCORE */
 

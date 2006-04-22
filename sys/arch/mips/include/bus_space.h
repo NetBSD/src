@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.2 2002/03/18 01:01:54 simonb Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.2.48.1 2006/04/22 11:37:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
 #include <sys/types.h>
 
 #ifdef _KERNEL
+
+#define	__BUS_SPACE_HAS_STREAM_METHODS	1
+
 /*
  * Turn on BUS_SPACE_DEBUG if the global DEBUG option is enabled.
  */
@@ -210,6 +213,62 @@ struct mips_bus_space {
 	void		(*bs_wr_8)(void *, bus_space_handle_t, bus_size_t,
 			    const uint64_t *, bus_size_t);
 
+	/* read (single) stream */
+	uint8_t		(*bs_rs_1)(void *, bus_space_handle_t, bus_size_t);
+	uint16_t	(*bs_rs_2)(void *, bus_space_handle_t, bus_size_t);
+	uint32_t	(*bs_rs_4)(void *, bus_space_handle_t, bus_size_t);
+	uint64_t	(*bs_rs_8)(void *, bus_space_handle_t, bus_size_t);
+
+	/* read multiple stream */
+	void		(*bs_rms_1)(void *, bus_space_handle_t, bus_size_t,
+			    uint8_t *, bus_size_t);
+	void		(*bs_rms_2)(void *, bus_space_handle_t, bus_size_t,
+			    uint16_t *, bus_size_t);
+	void		(*bs_rms_4)(void *, bus_space_handle_t, bus_size_t,
+			    uint32_t *, bus_size_t);
+	void		(*bs_rms_8)(void *, bus_space_handle_t, bus_size_t,
+			    uint64_t *, bus_size_t);
+					
+	/* read region stream */
+	void		(*bs_rrs_1)(void *, bus_space_handle_t, bus_size_t,
+			    uint8_t *, bus_size_t);
+	void		(*bs_rrs_2)(void *, bus_space_handle_t, bus_size_t,
+			    uint16_t *, bus_size_t);
+	void		(*bs_rrs_4)(void *, bus_space_handle_t, bus_size_t,
+			    uint32_t *, bus_size_t);
+	void		(*bs_rrs_8)(void *, bus_space_handle_t, bus_size_t,
+			    uint64_t *, bus_size_t);
+					
+	/* write (single) stream */
+	void		(*bs_ws_1)(void *, bus_space_handle_t, bus_size_t,
+			    uint8_t);
+	void		(*bs_ws_2)(void *, bus_space_handle_t, bus_size_t,
+			    uint16_t);
+	void		(*bs_ws_4)(void *, bus_space_handle_t, bus_size_t,
+			    uint32_t);
+	void		(*bs_ws_8)(void *, bus_space_handle_t, bus_size_t,
+			    uint64_t);
+
+	/* write multiple stream */
+	void		(*bs_wms_1)(void *, bus_space_handle_t, bus_size_t,
+			    const uint8_t *, bus_size_t);
+	void		(*bs_wms_2)(void *, bus_space_handle_t, bus_size_t,
+			    const uint16_t *, bus_size_t);
+	void		(*bs_wms_4)(void *, bus_space_handle_t, bus_size_t,
+			    const uint32_t *, bus_size_t);
+	void		(*bs_wms_8)(void *, bus_space_handle_t, bus_size_t,
+			    const uint64_t *, bus_size_t);
+					
+	/* write region stream */
+	void		(*bs_wrs_1)(void *, bus_space_handle_t, bus_size_t,
+			    const uint8_t *, bus_size_t);
+	void		(*bs_wrs_2)(void *, bus_space_handle_t, bus_size_t,
+			    const uint16_t *, bus_size_t);
+	void		(*bs_wrs_4)(void *, bus_space_handle_t, bus_size_t,
+			    const uint32_t *, bus_size_t);
+	void		(*bs_wrs_8)(void *, bus_space_handle_t, bus_size_t,
+			    const uint64_t *, bus_size_t);
+
 	/* set multiple */
 	void		(*bs_sm_1)(void *, bus_space_handle_t, bus_size_t,
 			    uint8_t, bus_size_t);
@@ -260,14 +319,14 @@ struct mips_bus_space_translation {
 #define	__bs_c(a,b)		__CONCAT(a,b)
 #define	__bs_opname(op,size)	__bs_c(__bs_c(__bs_c(bs_,op),_),size)
 
-#define	__bs_rs(sz, tn, t, h, o)					\
+#define	__bs_r(type, sz, tn, t, h, o)					\
 	(__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr"),		\
-	 (*(t)->__bs_opname(r,sz))((t)->bs_cookie, h, o))
+	 (*(t)->__bs_opname(type,sz))((t)->bs_cookie, h, o))
 
-#define	__bs_ws(sz, tn, t, h, o, v)					\
+#define	__bs_w(type, sz, tn, t, h, o, v)				\
 do {									\
 	__BUS_SPACE_ADDRESS_SANITY((h) + (o), tn, "bus addr");		\
-	(*(t)->__bs_opname(w,sz))((t)->bs_cookie, h, o, v);		\
+	(*(t)->__bs_opname(type,sz))((t)->bs_cookie, h, o, v);		\
 } while (0)
 
 #define	__bs_nonsingle(type, sz, tn, t, h, o, a, c)			\
@@ -346,14 +405,34 @@ do {									\
 #define	BUS_SPACE_BARRIER_READ	0x01
 #define	BUS_SPACE_BARRIER_WRITE	0x02
 
+/*
+ * New style.
+ */
+#define	BUS_SPACE_BARRIER_SYNC		0x03
+#define	BUS_SPACE_BARRIER_READ_BEFORE_READ	BUS_SPACE_BARRIER_READ
+#define	BUS_SPACE_BARRIER_READ_BEFORE_WRITE	BUS_SPACE_BARRIER_READ
+#define	BUS_SPACE_BARRIER_WRITE_BEFORE_READ	BUS_SPACE_BARRIER_WRITE
+#define	BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE	BUS_SPACE_BARRIER_WRITE
 
 /*
  * Bus read (single) operations.
  */
-#define	bus_space_read_1(t, h, o)	__bs_rs(1,uint8_t,(t),(h),(o))
-#define	bus_space_read_2(t, h, o)	__bs_rs(2,uint16_t,(t),(h),(o))
-#define	bus_space_read_4(t, h, o)	__bs_rs(4,uint32_t,(t),(h),(o))
-#define	bus_space_read_8(t, h, o)	__bs_rs(8,uint64_t,(t),(h),(o))
+#define	bus_space_read_1(t, h, o)					\
+	__bs_r(r,1,uint8_t,(t),(h),(o))
+#define	bus_space_read_2(t, h, o)					\
+	__bs_r(r,2,uint16_t,(t),(h),(o))
+#define	bus_space_read_4(t, h, o)					\
+	__bs_r(r,4,uint32_t,(t),(h),(o))
+#define	bus_space_read_8(t, h, o)					\
+	__bs_r(r,8,uint64_t,(t),(h),(o))
+#define	bus_space_read_stream_1(t, h, o)				\
+	__bs_r(rs,1,uint8_t,(t),(h),(o))
+#define	bus_space_read_stream_2(t, h, o)				\
+	__bs_r(rs,2,uint16_t,(t),(h),(o))
+#define	bus_space_read_stream_4(t, h, o)				\
+	__bs_r(rs,4,uint32_t,(t),(h),(o))
+#define	bus_space_read_stream_8(t, h, o)				\
+	__bs_r(rs,8,uint64_t,(t),(h),(o))
 
 
 /*
@@ -367,6 +446,14 @@ do {									\
 	__bs_nonsingle(rm,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_8(t, h, o, a, c)				\
 	__bs_nonsingle(rm,8,uint64_t,(t),(h),(o),(a),(c))
+#define	bus_space_read_multi_stream_1(t, h, o, a, c)			\
+	__bs_nonsingle(rms,1,uint8_t,(t),(h),(o),(a),(c))
+#define	bus_space_read_multi_stream_2(t, h, o, a, c)			\
+	__bs_nonsingle(rms,2,uint16_t,(t),(h),(o),(a),(c))
+#define	bus_space_read_multi_stream_4(t, h, o, a, c)			\
+	__bs_nonsingle(rms,4,uint32_t,(t),(h),(o),(a),(c))
+#define	bus_space_read_multi_stream_8(t, h, o, a, c)			\
+	__bs_nonsingle(rms,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
@@ -380,15 +467,35 @@ do {									\
 	__bs_nonsingle(rr,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_8(t, h, o, a, c)				\
 	__bs_nonsingle(rr,8,uint64_t,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_stream_1(t, h, o, a, c)			\
+	__bs_nonsingle(rrs,1,uint8_t,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_stream_2(t, h, o, a, c)			\
+	__bs_nonsingle(rrs,2,uint16_t,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_stream_4(t, h, o, a, c)			\
+	__bs_nonsingle(rrs,4,uint32_t,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_stream_8(t, h, o, a, c)			\
+	__bs_nonsingle(rrs,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus write (single) operations.
  */
-#define	bus_space_write_1(t, h, o, v)	__bs_ws(1,uint8_t,(t),(h),(o),(v))
-#define	bus_space_write_2(t, h, o, v)	__bs_ws(2,uint16_t,(t),(h),(o),(v))
-#define	bus_space_write_4(t, h, o, v)	__bs_ws(4,uint32_t,(t),(h),(o),(v))
-#define	bus_space_write_8(t, h, o, v)	__bs_ws(8,uint64_t,(t),(h),(o),(v))
+#define	bus_space_write_1(t, h, o, v)					\
+	__bs_w(w,1,uint8_t,(t),(h),(o),(v))
+#define	bus_space_write_2(t, h, o, v)					\
+	__bs_w(w,2,uint16_t,(t),(h),(o),(v))
+#define	bus_space_write_4(t, h, o, v)					\
+	__bs_w(w,4,uint32_t,(t),(h),(o),(v))
+#define	bus_space_write_8(t, h, o, v)					\
+	__bs_w(w,8,uint64_t,(t),(h),(o),(v))
+#define	bus_space_write_stream_1(t, h, o, v)				\
+	__bs_w(ws,1,uint8_t,(t),(h),(o),(v))
+#define	bus_space_write_stream_2(t, h, o, v)				\
+	__bs_w(ws,2,uint16_t,(t),(h),(o),(v))
+#define	bus_space_write_stream_4(t, h, o, v)				\
+	__bs_w(ws,4,uint32_t,(t),(h),(o),(v))
+#define	bus_space_write_stream_8(t, h, o, v)				\
+	__bs_w(ws,8,uint64_t,(t),(h),(o),(v))
 
 
 /*
@@ -402,6 +509,14 @@ do {									\
 	__bs_nonsingle(wm,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
 	__bs_nonsingle(wm,8,uint64_t,(t),(h),(o),(a),(c))
+#define	bus_space_write_multi_stream_1(t, h, o, a, c)			\
+	__bs_nonsingle(wms,1,uint8_t,(t),(h),(o),(a),(c))
+#define	bus_space_write_multi_stream_2(t, h, o, a, c)			\
+	__bs_nonsingle(wms,2,uint16_t,(t),(h),(o),(a),(c))
+#define	bus_space_write_multi_stream_4(t, h, o, a, c)			\
+	__bs_nonsingle(wms,4,uint32_t,(t),(h),(o),(a),(c))
+#define	bus_space_write_multi_stream_8(t, h, o, a, c)			\
+	__bs_nonsingle(wms,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
@@ -415,6 +530,14 @@ do {									\
 	__bs_nonsingle(wr,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_8(t, h, o, a, c)				\
 	__bs_nonsingle(wr,8,uint64_t,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_stream_1(t, h, o, a, c)			\
+	__bs_nonsingle(wrs,1,uint8_t,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_stream_2(t, h, o, a, c)			\
+	__bs_nonsingle(wrs,2,uint16_t,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_stream_4(t, h, o, a, c)			\
+	__bs_nonsingle(wrs,4,uint32_t,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_stream_8(t, h, o, a, c)			\
+	__bs_nonsingle(wrs,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
@@ -455,34 +578,7 @@ do {									\
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
 	__bs_copy(8, uint64_t, (t), (h1), (o1), (h2), (o2), (c))
 
-/*
- * Bus stream operations--defined in terms of non-stream counterparts
- */
-#define	__BUS_SPACE_HAS_STREAM_METHODS	1
-#define	bus_space_read_stream_1		bus_space_read_1
-#define	bus_space_read_stream_2		bus_space_read_2
-#define	bus_space_read_stream_4		bus_space_read_4
-#define	bus_space_read_stream_8		bus_space_read_8
-#define	bus_space_read_multi_stream_1	bus_space_read_multi_1
-#define	bus_space_read_multi_stream_2	bus_space_read_multi_2
-#define	bus_space_read_multi_stream_4	bus_space_read_multi_4
-#define	bus_space_read_multi_stream_8	bus_space_read_multi_8
-#define	bus_space_read_region_stream_1	bus_space_read_region_1
-#define	bus_space_read_region_stream_2	bus_space_read_region_2
-#define	bus_space_read_region_stream_4	bus_space_read_region_4
-#define	bus_space_read_region_stream_8	bus_space_read_region_8
-#define	bus_space_write_stream_1	bus_space_write_1
-#define	bus_space_write_stream_2	bus_space_write_2
-#define	bus_space_write_stream_4	bus_space_write_4
-#define	bus_space_write_stream_8	bus_space_write_8
-#define	bus_space_write_multi_stream_1	bus_space_write_multi_1
-#define	bus_space_write_multi_stream_2	bus_space_write_multi_2
-#define	bus_space_write_multi_stream_4	bus_space_write_multi_4
-#define	bus_space_write_multi_stream_8	bus_space_write_multi_8
-#define	bus_space_write_region_stream_1	bus_space_write_region_1
-#define	bus_space_write_region_stream_2	bus_space_write_region_2
-#define	bus_space_write_region_stream_4	bus_space_write_region_4
-#define	bus_space_write_region_stream_8	bus_space_write_region_8
+
 #endif /* _KERNEL */
 
 #endif /* _MIPS_BUS_SPACE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135 2005/12/11 12:19:36 christos Exp $	   */
+/*	$NetBSD: pmap.c,v 1.135.6.1 2006/04/22 11:38:08 simonb Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1201,7 +1201,7 @@ pmap_map(virtuell, pstart, pend, prot)
 	pstart=(uint)pstart &0x7fffffff;
 	pend=(uint)pend &0x7fffffff;
 	virtuell=(uint)virtuell &0x7fffffff;
-	(uint)pentry= (((uint)(virtuell)>>VAX_PGSHIFT)*4)+(uint)Sysmap;
+	pentry = (int *)((((uint)(virtuell)>>VAX_PGSHIFT)*4)+(uint)Sysmap);
 	for(count=pstart;count<pend;count+=VAX_NBPG){
 		*pentry++ = (count>>VAX_PGSHIFT)|PG_V|
 		    (prot & VM_PROT_WRITE ? PG_KW : PG_KR);

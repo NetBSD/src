@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.37 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.37.6.1 2006/04/22 11:39:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.37 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.37.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ ep_isa_probe(parent, match, aux)
 	int slot, iobase, irq, i;
 	u_int16_t vendor, model, eeprom_addr_cfg;
 	struct ep_isa_done_probe *er;
-	int bus = parent->dv_unit;
+	int bus = device_unit(parent);
 
 	if (ISA_DIRECT_CONFIG(ia))
 		return (0);
@@ -182,7 +182,7 @@ ep_isa_probe(parent, match, aux)
 	 */
 	for (er = ep_isa_all_probes.lh_first; er != NULL;
 	    er = er->er_link.le_next)
-		if (er->er_bus == parent->dv_unit)
+		if (er->er_bus == device_unit(parent))
 			goto bus_probed;
 
 	/*
@@ -205,7 +205,7 @@ ep_isa_probe(parent, match, aux)
 	}
 
 	for (slot = 0; slot < MAXEPCARDS; slot++) {
-		elink_reset(iot, ioh, parent->dv_unit);
+		elink_reset(iot, ioh, device_unit(parent));
 		elink_idseq(iot, ioh, ELINK_509_POLY);
 
 		/* Untag all the adapters so they will talk to us. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.86 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.86.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.86 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.86.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1184,7 +1184,7 @@ ex_intr(arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	for (;;) {
@@ -1493,7 +1493,7 @@ ex_tick(arg)
 	struct ex_softc *sc = arg;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.7 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.7.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7.6.1 2006/04/22 11:38:02 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -324,15 +324,15 @@ compat_16_sys___sigreturn14(l, v, retval)
 #endif
 	/* take only psr ICC field */
 #ifdef __arch64__
-	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
+	tf->tf_tstate = (uint64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
 #else
-	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
+	tf->tf_tstate = (uint64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
 #endif
-	tf->tf_pc = (u_int64_t)scp->sc_pc;
-	tf->tf_npc = (u_int64_t)scp->sc_npc;
-	tf->tf_global[1] = (u_int64_t)scp->sc_g1;
-	tf->tf_out[0] = (u_int64_t)scp->sc_o0;
-	tf->tf_out[6] = (u_int64_t)scp->sc_sp;
+	tf->tf_pc = (uint64_t)scp->sc_pc;
+	tf->tf_npc = (uint64_t)scp->sc_npc;
+	tf->tf_global[1] = (uint64_t)scp->sc_g1;
+	tf->tf_out[0] = (uint64_t)scp->sc_o0;
+	tf->tf_out[6] = (uint64_t)scp->sc_sp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sigreturn14: return trapframe pc=%p sp=%p tstate=%llx\n",

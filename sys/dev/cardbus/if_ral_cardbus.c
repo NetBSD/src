@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.3 2005/12/11 12:21:15 christos Exp $ */
+/*	$NetBSD: if_ral_cardbus.c,v 1.3.6.1 2006/04/22 11:38:51 simonb Exp $ */
 /*	$OpenBSD: if_ral_cardbus.c,v 1.5 2005/05/16 01:36:25 brad Exp $  */
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.3 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.3.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -97,7 +97,7 @@ ral_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 void
 ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
+	struct ral_cardbus_softc *csc = device_private(self);
 	struct ral_softc *sc = &csc->sc_sc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -143,7 +143,7 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 int
 ral_cardbus_detach(struct device *self, int flags)
 {
-	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
+	struct ral_cardbus_softc *csc = device_private(self);
 	struct ral_softc *sc = &csc->sc_sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;

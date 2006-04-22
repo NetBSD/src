@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.7.6.1 2006/04/22 11:37:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.6.1 2006/04/22 11:37:12 simonb Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -184,8 +184,6 @@ void	sysbeep __P((int, int));
 void	rtcinit __P((void));
 int	rtcget __P((mc_todregs *));
 void	rtcput __P((mc_todregs *));
-int 	bcdtobin __P((int));
-int	bintobcd __P((int));
 
 static inline int gettick_broken_latch __P((void));
 
@@ -645,22 +643,6 @@ rtcput(regs)
 
 	rtcinit();
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
-}
-
-int
-bcdtobin(n)
-	int n;
-{
-
-	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
-}
-
-int
-bintobcd(n)
-	int n;
-{
-
-	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
 
 static int timeset;

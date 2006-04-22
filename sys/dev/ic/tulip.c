@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.141 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: tulip.c,v 1.141.6.1 2006/04/22 11:38:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.141 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.141.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -315,6 +315,7 @@ tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 	case TULIP_CHIP_MX98715A:	/* 21143-like */
 	case TULIP_CHIP_MX98715AEC_X:	/* 21143-like */
 	case TULIP_CHIP_MX98725:	/* 21143-like */
+	case TULIP_CHIP_RS7112:		/* 21143-like */
 		/*
 		 * Run these chips in ring mode.
 		 */
@@ -1077,7 +1078,7 @@ tlp_intr(void *arg)
 	 * possibly have come from us.
 	 */
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	/* Disable interrupts on the DM9102 (interrupt edge bug). */
@@ -1583,16 +1584,21 @@ tlp_reset(struct tulip_softc *sc)
 	TULIP_WRITE(sc, CSR_BUSMODE, BUSMODE_SWR);
 
 	/*
-	 * Xircom and ASIX clones don't bring themselves out of 
-	 * reset automatically.
+	 * Xircom, ASIX and Conexant clones don't bring themselves
+	 * out of reset automatically.
 	 * Instead, we have to wait at least 50 PCI cycles, and then
 	 * clear SWR.
 	 */
-	if (sc->sc_chip == TULIP_CHIP_X3201_3 ||
-	    sc->sc_chip == TULIP_CHIP_AX88140 ||
-	    sc->sc_chip == TULIP_CHIP_AX88141) {
-		delay(10);
-		TULIP_WRITE(sc, CSR_BUSMODE, 0);
+	switch (sc->sc_chip) {
+		case TULIP_CHIP_X3201_3:
+		case TULIP_CHIP_AX88140:
+		case TULIP_CHIP_AX88141:
+		case TULIP_CHIP_RS7112:
+			delay(10);
+			TULIP_WRITE(sc, CSR_BUSMODE, 0);
+			break;
+		default:
+			break;
 	}
 
 	for (i = 0; i < 1000; i++) {
@@ -3164,6 +3170,7 @@ tlp_idle(struct tulip_softc *sc, u_int32_t bits)
 			case TULIP_CHIP_AN983:
 			case TULIP_CHIP_AN985:
 			case TULIP_CHIP_DM9102A:
+			case TULIP_CHIP_RS7112:
 				/*
 				 * Filter the message out on noisy chips.
 				 */
@@ -3231,7 +3238,7 @@ tlp_mii_tick(void *arg)
 	struct tulip_softc *sc = arg;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();
@@ -5209,7 +5216,7 @@ tlp_2114x_nway_tick(void *arg)
 	struct mii_data *mii = &sc->sc_mii;
 	int s, ticks;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();
@@ -5644,7 +5651,7 @@ tlp_pnic_nway_tick(void *arg)
 	struct tulip_softc *sc = arg;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();
@@ -6194,3 +6201,51 @@ tlp_asix_tmsw_setmedia(struct tulip_softc *sc)
 	/* XXX PHY handling. */
 	return (tlp_mii_setmedia(sc));
 }
+
+/*
+ * RS7112 media switch.  Handles only MII attached to the SIO.
+ * We only have a PHY at 1.
+ */
+void   tlp_rs7112_tmsw_init(struct tulip_softc *);
+
+const struct tulip_mediasw tlp_rs7112_mediasw = {
+	tlp_rs7112_tmsw_init, tlp_mii_getmedia, tlp_mii_setmedia
+};
+
+void
+tlp_rs7112_tmsw_init(struct tulip_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	/*
+	 * We don't attach any media info structures to the ifmedia
+	 * entries, so if we're using a pre-init function that needs
+	 * that info, override it to one that doesn't.
+	 */
+	if (sc->sc_preinit == tlp_2114x_preinit)
+		sc->sc_preinit = tlp_2114x_mii_preinit;
+
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
+	sc->sc_mii.mii_writereg = tlp_bitbang_mii_writereg;
+	sc->sc_mii.mii_statchg = sc->sc_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, tlp_mediachange,
+	    tlp_mediastatus);
+
+	/*
+	 * The RS7112 reports a PHY at 0 (possibly HomePNA?)
+	 * and 1 (ethernet). We attach ethernet only.
+	 */
+	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
+	    MII_OFFSET_ANY, 0);
+
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else {
+		sc->sc_flags |= TULIPF_HAS_MII;
+		sc->sc_tick = tlp_mii_tick;
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+	}
+}
+

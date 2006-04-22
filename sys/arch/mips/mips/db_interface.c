@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.55 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.55.6.1 2006/04/22 11:37:42 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.55 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.55.6.1 2006/04/22 11:37:42 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.55 2005/12/24 20:07:19 perry Exp 
 #include <mips/mips_opcode.h>
 #include <dev/cons.h>
 
+#include <machine/int_fmtio.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #ifndef KGDB
@@ -367,13 +368,13 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 			db_printf("TLB%c%2d Hi 0x%08x ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
 				i, tlb.tlb_hi);
-			db_printf("Lo0=0x%08x %c%c attr %x ",
-				(unsigned)mips_tlbpfn_to_paddr(tlb.tlb_lo0),
+			db_printf("Lo0=0x%09" PRIx64 " %c%c attr %x ",
+				(uint64_t)mips_tlbpfn_to_paddr(tlb.tlb_lo0),
 				(tlb.tlb_lo0 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo0 & MIPS3_PG_G) ? 'G' : ' ',
 				(tlb.tlb_lo0 >> 3) & 7);
-			db_printf("Lo1=0x%08x %c%c attr %x sz=%x\n",
-				(unsigned)mips_tlbpfn_to_paddr(tlb.tlb_lo1),
+			db_printf("Lo1=0x%09" PRIx64 " %c%c attr %x sz=%x\n",
+				(uint64_t)mips_tlbpfn_to_paddr(tlb.tlb_lo1),
 				(tlb.tlb_lo1 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo1 & MIPS3_PG_G) ? 'G' : ' ',
 				(tlb.tlb_lo1 >> 3) & 7,
@@ -395,8 +396,8 @@ db_kvtophys_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 		 * Cast the physical address -- some platforms, while
 		 * being ILP32, may be using 64-bit paddr_t's.
 		 */
-		db_printf("0x%lx -> 0x%qx\n", addr,
-		    (unsigned long long) kvtophys(addr));
+		db_printf("0x%lx -> 0x%" PRIx64 "\n", addr,
+		    (uint64_t) kvtophys(addr));
 	} else
 		printf("not a kernel virtual address\n");
 }

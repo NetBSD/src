@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.7 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.7.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.7 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.7.6.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,9 +52,20 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.7 2005/12/11 12:19:00 christos Exp $"
 void
 db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-	char *src;
+	char *src = (char *)addr;
 
-	src = (char *)addr;
+	/* properly aligned 4-byte */
+	if (size == 4 && ((addr & 3) == 0) && (((uintptr_t)data & 3) == 0)) {
+		*(uint32_t *)data = *(uint32_t *)src;
+		return;
+	}
+
+	/* properly aligned 2-byte */
+	if (size == 2 && ((addr & 1) == 0) && (((uintptr_t)data & 1) == 0)) {
+		*(uint16_t *)data = *(uint16_t *)src;
+		return;
+	}
+
 	while (size-- > 0)
 		*data++ = *src++;
 }
@@ -65,9 +76,19 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
-	char *dst;
+	char *dst = (char *)addr;
 
-	dst = (char *)addr;
+	/* properly aligned 4-byte */
+	if (size == 4 && ((addr & 3) == 0) && (((uintptr_t)data & 3) == 0)) {
+		*(uint32_t *)dst = *(const uint32_t *)data;
+		return;
+	}
+
+	/* properly aligned 2-byte */
+	if (size == 2 && ((addr & 1) == 0) && (((uintptr_t)data & 1) == 0)) {
+		*(uint16_t *)dst = *(const uint16_t *)data;
+		return;
+	}
 
 	while (size-- > 0)
 		*dst++ = *data++;

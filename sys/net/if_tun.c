@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.78 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.78.6.1 2006/04/22 11:40:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.78 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.78.6.1 2006/04/22 11:40:06 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -345,8 +345,9 @@ tunclose(dev_t dev, int flag, int mode, struct lwp *l)
 			/* find internet addresses and delete routes */
 			struct ifaddr *ifa;
 			IFADDR_FOREACH(ifa, ifp) {
-#ifdef INET
-				if (ifa->ifa_addr->sa_family == AF_INET) {
+#if defined(INET) || defined(INET6)
+				if (ifa->ifa_addr->sa_family == AF_INET ||
+				    ifa->ifa_addr->sa_family == AF_INET6) {
 					rtinit(ifa, (int)RTM_DELETE,
 					       tp->tun_flags & TUN_DSTADDR
 							? RTF_HOST
@@ -396,6 +397,23 @@ tuninit(struct tun_softc *tp)
 			}
 		}
 #endif
+#ifdef INET6
+		if (ifa->ifa_addr->sa_family == AF_INET6) {
+			struct sockaddr_in6 *sin;
+
+			sin = (struct sockaddr_in6 *)ifa->ifa_addr;
+			if (!IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr))
+				tp->tun_flags |= TUN_IASET;
+
+			if (ifp->if_flags & IFF_POINTOPOINT) {
+				sin = (struct sockaddr_in6 *)ifa->ifa_dstaddr;
+				if (sin &&
+				    !IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr))
+					tp->tun_flags |= TUN_DSTADDR;
+			} else
+				tp->tun_flags &= ~TUN_DSTADDR;
+		}
+#endif /* INET6 */
 	}
 
 	return;
@@ -447,6 +465,10 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		case AF_INET:
 			break;
 #endif
+#ifdef INET6
+		case AF_INET6:
+			break;
+#endif
 		default:
 			error = EAFNOSUPPORT;
 			break;
@@ -474,8 +496,9 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct tun_softc *tp = ifp->if_softc;
 	int		s;
 	int		error;
-#ifdef INET
+#if defined(INET) || defined(INET6)
 	int		mlen;
+	uint32_t	*af;
 #endif
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
@@ -503,8 +526,13 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif
 
 	switch(dst->sa_family) {
+#ifdef INET6
+	case AF_INET6:
+#endif
 #ifdef INET
 	case AF_INET:
+#endif
+#if defined(INET) || defined(INET6)
 		if (tp->tun_flags & TUN_PREPADDR) {
 			/* Simple link-layer header */
 			M_PREPEND(m0, dst->sa_len, M_DONTWAIT);
@@ -514,6 +542,27 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 				goto out;
 			}
 			bcopy(dst, mtod(m0, char *), dst->sa_len);
+		}
+
+		if (tp->tun_flags & TUN_IFHEAD) {
+			/* Prepend the address family */
+			M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
+			if (m0 == NULL) {
+				IF_DROP(&ifp->if_snd);
+				error = ENOBUFS;
+				goto out;
+			}
+			af = mtod(m0,uint32_t *);
+			*af = htonl(dst->sa_family);
+		} else {
+#ifdef INET     
+			if (dst->sa_family != AF_INET)
+#endif
+			{
+				m_freem(m0);
+				error = EAFNOSUPPORT;
+				goto out;
+			}
 		}
 		/* FALLTHROUGH */
 	case AF_UNSPEC:
@@ -595,10 +644,23 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TUNSLMODE:
-		if (*(int *)data)
+		if (*(int *)data) {
 			tp->tun_flags |= TUN_PREPADDR;
-		else
+			tp->tun_flags &= ~TUN_IFHEAD;
+		} else
 			tp->tun_flags &= ~TUN_PREPADDR;
+		break;
+
+	case TUNSIFHEAD:
+		if (*(int *)data) {
+			tp->tun_flags |= TUN_IFHEAD;
+			tp->tun_flags &= ~TUN_PREPADDR;
+		} else
+			tp->tun_flags &= ~TUN_IFHEAD;
+		break;
+
+	case TUNGIFHEAD:
+		*(int *)data = (tp->tun_flags & TUN_IFHEAD);
 		break;
 
 	case FIONBIO:
@@ -748,6 +810,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	struct ifqueue	*ifq;
 	struct sockaddr	dst;
 	int		isr, error = 0, s, tlen, mlen;
+	uint32_t	family;
 
 	s = splnet();
 	tp = tun_find_unit(dev);
@@ -781,6 +844,13 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 					goto out0;
 				}
 		}
+	} else if (tp->tun_flags & TUN_IFHEAD) {
+		if (uio->uio_resid < sizeof(family)){
+			error = EIO;
+			goto out0;
+		}
+		error = uiomove((caddr_t)&family, sizeof(family), uio);
+		dst.sa_family = ntohl(family);
 	} else {
 #ifdef INET
 		dst.sa_family = AF_INET;
@@ -799,6 +869,12 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	case AF_INET:
 		ifq = &ipintrq;
 		isr = NETISR_IP;
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		ifq = &ip6intrq;
+		isr = NETISR_IPV6;
 		break;
 #endif
 	default:
@@ -844,7 +920,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, AF_INET, top);
+		bpf_mtap_af(ifp->if_bpf, dst.sa_family, top);
 #endif
 
 	s = splnet();

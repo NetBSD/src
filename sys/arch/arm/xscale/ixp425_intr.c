@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.12 2005/12/24 20:06:52 perry Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.12.6.1 2006/04/22 11:37:18 simonb Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.12 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.12.6.1 2006/04/22 11:37:18 simonb Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -432,7 +432,7 @@ ixp425_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 		panic("ixp425_intr_establish: IRQ %d out of range", irq);
 #ifdef DEBUG
 	printf("ixp425_intr_establish(irq=%d, ipl=%d, func=%08x, arg=%08x)\n",
-               irq, ipl, (u_int32_t) func, (u_int32_t) arg);
+	       irq, ipl, (u_int32_t) func, (u_int32_t) arg);
 #endif
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_impl.h,v 1.4 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: bufq_impl.h,v 1.4.6.1 2006/04/22 11:40:18 simonb Exp $	*/
 /*	NetBSD: bufq.h,v 1.3 2005/03/31 11:28:53 yamt Exp	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
@@ -92,13 +92,13 @@ struct bufq_state {
 	const struct bufq_strat *bq_strat;
 };
 
-static inline void *bufq_private(const struct bufq_state *) __unused;
-static inline int buf_inorder(const struct buf *, const struct buf *, int)
+static __inline void *bufq_private(const struct bufq_state *) __unused;
+static __inline int buf_inorder(const struct buf *, const struct buf *, int)
     __unused;
 
 #include <sys/null.h> /* for NULL */
 
-static inline void *
+static __inline void *
 bufq_private(const struct bufq_state *bufq)
 {
 
@@ -108,7 +108,7 @@ bufq_private(const struct bufq_state *bufq)
 /*
  * Check if two buf's are in ascending order.
  */
-static inline int
+static __inline int
 buf_inorder(const struct buf *bp, const struct buf *bq, int sortby)
 {
 

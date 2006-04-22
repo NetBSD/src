@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.216 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.216.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.213 2005/11/07 16:37:28 tsutsui Exp
+ *	NetBSD: pcmciadevs,v 1.215 2006/03/23 02:14:42 christos Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -88,6 +88,7 @@
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_BELKIN	0x01bf	/* Belkin */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
 #define	PCMCIA_VENDOR_FARALLON	0x0200	/* Farallon Communications */
 #define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
@@ -207,6 +208,10 @@
 /* BreezeCOM */
 #define	PCMCIA_CIS_BREEZECOM_BREEZENET	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_BREEZECOM_BREEZENET	0x0102
+
+/* Belkin */
+#define	PCMCIA_CIS_BELKIN_F5D5020	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_BELKIN_F5D5020	0x2328
 
 /* BUFFALO */
 #define	PCMCIA_CIS_BUFFALO_WLI_PCM_S11	{ NULL, NULL, NULL, NULL }

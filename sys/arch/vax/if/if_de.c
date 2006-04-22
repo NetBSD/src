@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.42 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: if_de.c,v 1.42.6.1 2006/04/22 11:38:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.42 2005/12/11 12:19:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.42.6.1 2006/04/22 11:38:06 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -207,7 +207,7 @@ deattach(parent, self, aux)
 	addr->pcsr0 = PCSR0_RSET;
 	(void)dewait(ds, "reset");
 
-	ds->ds_ubaddr = uballoc((void *)ds->ds_dev.dv_parent,
+	ds->ds_ubaddr = uballoc((void *)device_parent(&ds->ds_dev),
 	    (char *)&ds->ds_pcbb, sizeof (struct de_pcbb), 0);
 	addr->pcsr2 = ds->ds_ubaddr & 0xffff;
 	addr->pcsr3 = (ds->ds_ubaddr >> 16) & 0x3;
@@ -218,7 +218,7 @@ deattach(parent, self, aux)
 	addr->pclow = CMD_GETCMD;
 	(void)dewait(ds, "read addr ");
 
-	ubarelse((void *)ds->ds_dev.dv_parent, &ds->ds_ubaddr);
+	ubarelse((void *)device_parent(&ds->ds_dev), &ds->ds_ubaddr);
 	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, myaddr, sizeof (myaddr));
 	printf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
 		ether_sprintf(myaddr));
@@ -273,14 +273,15 @@ deinit(ds)
 	if (ds->ds_flags & DSF_RUNNING)
 		return;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		if (if_ubaminit(&ds->ds_deuba, (void *)ds->ds_dev.dv_parent,
+		if (if_ubaminit(&ds->ds_deuba,
+		    (void *)device_parent(&ds->ds_dev),
 		    sizeof (struct ether_header), (int)vax_btoc(ETHERMTU),
 		    ds->ds_ifr, NRCV, ds->ds_ifw, NXMT) == 0) { 
 			printf("%s: can't initialize\n", ds->ds_dev.dv_xname);
 			ds->ds_if.if_flags &= ~IFF_UP;
 			return;
 		}
-		ds->ds_ubaddr = uballoc((void *)ds->ds_dev.dv_parent,
+		ds->ds_ubaddr = uballoc((void *)device_parent(&ds->ds_dev),
 		    INCORE_BASE(ds), INCORE_SIZE(ds), 0);
 	}
 	addr = ds->ds_vaddr;
@@ -384,7 +385,8 @@ destart(ifp)
 			panic("deuna xmit in progress");
 		len = if_ubaput(&ds->ds_deuba, &ds->ds_ifw[ds->ds_xfree], m);
 		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP) {
-			struct uba_softc *uh = (void *)ds->ds_dev.dv_parent;
+			struct uba_softc *uh =
+			    (void *)device_parent(&ds->ds_dev);
 
 			if (uh->uh_ubapurge)
 				(*uh->uh_ubapurge)
@@ -514,7 +516,8 @@ derecv(unit)
 	while ((rp->r_flags & RFLG_OWN) == 0) {
 		ds->ds_if.if_ipackets++;
 		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP) {
-			struct uba_softc *uh = (void *)ds->ds_dev.dv_parent;
+			struct uba_softc *uh =
+			     (void *)device_parent(&ds->ds_dev);
 
 			if (uh->uh_ubapurge)
 				(*uh->uh_ubapurge)
@@ -694,8 +697,8 @@ dewait(ds, fn)
 	addr->pchigh = csr0 >> 8;
 	if (csr0 & PCSR0_PCEI) {
 		char bits[64];
-		printf("de%d: %s failed, csr0=%s ", ds->ds_dev.dv_unit, fn,
-		    bitmask_snprintf(csr0, PCSR0_BITS, bits, sizeof(bits)));
+		printf("de%d: %s failed, csr0=%s ", device_unit(&ds->ds_dev),
+		    fn, bitmask_snprintf(csr0, PCSR0_BITS, bits, sizeof(bits)));
 		printf("csr1=%s\n", bitmask_snprintf(addr->pcsr1, PCSR1_BITS,
 		    bits, sizeof(bits)));
 	}

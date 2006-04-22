@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.149.4.1 2006/02/04 14:03:58 simonb Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.149.4.2 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.149.4.1 2006/02/04 14:03:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.149.4.2 2006/04/22 11:38:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,10 +113,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.149.4.1 2006/02/04 14:03:58 simonb 
 #include <compat/linux/common/linux_dirent.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_misc.h>
+#ifndef COMPAT_LINUX32
+#include <compat/linux/common/linux_limit.h>
+#endif
 #include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_reboot.h>
 #include <compat/linux/common/linux_emuldata.h>
 
+#ifndef COMPAT_LINUX32
 const int linux_ptrace_request_map[] = {
 	LINUX_PTRACE_TRACEME,	PT_TRACE_ME,
 	LINUX_PTRACE_PEEKTEXT,	PT_READ_I,
@@ -127,9 +131,9 @@ const int linux_ptrace_request_map[] = {
 	LINUX_PTRACE_KILL,	PT_KILL,
 	LINUX_PTRACE_ATTACH,	PT_ATTACH,
 	LINUX_PTRACE_DETACH,	PT_DETACH,
-#ifdef PT_STEP
+# ifdef PT_STEP
 	LINUX_PTRACE_SINGLESTEP,	PT_STEP,
-#endif
+# endif
 	-1
 };
 
@@ -161,18 +165,17 @@ const struct linux_mnttypes linux_fstypes[] = {
 };
 const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 
-#ifdef DEBUG_LINUX
+# ifdef DEBUG_LINUX
 #define DPRINTF(a)	uprintf a
-#else
+# else
 #define DPRINTF(a)
-#endif
+# endif
 
 /* Local linux_misc.c functions: */
-#ifndef __amd64__
+# ifndef __amd64__
 static void bsd_to_linux_statfs __P((const struct statvfs *,
     struct linux_statfs *));
-#endif
-static int linux_to_bsd_limit __P((int));
+# endif
 static void linux_to_bsd_mmap_args __P((struct sys_mmap_args *,
     const struct linux_sys_mmap_args *));
 static int linux_mmap __P((struct lwp *, struct linux_sys_mmap_args *,
@@ -244,13 +247,13 @@ linux_sys_wait4(l, v, retval)
 		options |= WALLSIG;
 	if (linux_options & LINUX_WAIT4_WCLONE)
 		options |= WALTSIG;
-#ifdef DIAGNOSTIC
+# ifdef DIAGNOSTIC
 	if (linux_options & LINUX_WAIT4_WNOTHREAD)
 		printf("WARNING: %s: linux process %d.%d called "
 		       "waitpid with __WNOTHREAD set!",
 		       __FILE__, p->p_pid, l->l_lid);
 
-#endif
+# endif
 
 	SCARG(&w4a, pid) = SCARG(uap, pid);
 	SCARG(&w4a, status) = status;
@@ -304,7 +307,7 @@ linux_sys_brk(l, v, retval)
 	return 0;
 }
 
-#ifndef __amd64__
+# ifndef __amd64__
 /*
  * Convert NetBSD statvfs structure to Linux statfs structure.
  * Linux doesn't have f_flag, and we can't set f_frsize due
@@ -430,7 +433,7 @@ linux_sys_fstatfs(l, v, retval)
 
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
-#endif /* __amd64__ */
+# endif /* !__amd64__ */
 
 /*
  * uname(). Just copy the info from the various strings stored in the
@@ -453,11 +456,11 @@ linux_sys_uname(l, v, retval)
 	strncpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strncpy(luts.l_release, linux_release, sizeof(luts.l_release));
 	strncpy(luts.l_version, linux_version, sizeof(luts.l_version));
-#ifdef LINUX_UNAME_ARCH
+# ifdef LINUX_UNAME_ARCH
 	strncpy(luts.l_machine, LINUX_UNAME_ARCH, sizeof(luts.l_machine));
-#else
+# else
 	strncpy(luts.l_machine, machine, sizeof(luts.l_machine));
-#endif
+# endif
 	strncpy(luts.l_domainname, domainname, sizeof(luts.l_domainname));
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
@@ -717,9 +720,9 @@ linux_sys_mprotect(l, v, retval)
 	p = l->l_proc;
 	map = &p->p_vmspace->vm_map;
 	vm_map_lock(map);
-#ifdef notdef
+# ifdef notdef
 	VM_MAP_RANGE_CHECK(map, start, end);
-#endif
+# endif
 	if (!uvm_map_lookup_entry(map, start, &entry) || entry->start > start) {
 		vm_map_unlock(map);
 		return ENOMEM;
@@ -870,10 +873,9 @@ again:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
 	/*
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
@@ -1124,8 +1126,9 @@ linux_sys_personality(l, v, retval)
 	retval[0] = 0;
 	return 0;
 }
+#endif /* !COMPAT_LINUX32 */
 
-#if defined(__i386__) || defined(__m68k__)
+#if defined(__i386__) || defined(__m68k__) || defined(COMPAT_LINUX32)
 /*
  * The calls are here because of type conversions.
  */
@@ -1246,7 +1249,10 @@ linux_sys_getgroups16(l, v, retval)
 		kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
 		lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 		if (bset == NULL || kbset == NULL || lset == NULL)
-			return ENOMEM;
+		{
+			error = ENOMEM;
+			goto out;
+		}
 		SCARG(&bsa, gidsetsize) = n;
 		SCARG(&bsa, gidset) = bset;
 		error = sys_getgroups(l, &bsa, retval);
@@ -1294,8 +1300,11 @@ linux_sys_setgroups16(l, v, retval)
 	bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
 	lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 	kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
-	if (lset == NULL || bset == NULL)
-		return ENOMEM;
+	if (bset == NULL || kbset == NULL || lset == NULL)
+	{
+		error = ENOMEM;
+		goto out;
+	}
 	error = copyin(SCARG(uap, gidset), lset, n * sizeof (linux_gid_t));
 	if (error != 0)
 		goto out;
@@ -1317,8 +1326,9 @@ out:
 	return error;
 }
 
-#endif /* __i386__ || __m68k__ || __amd64__ */
+#endif /* __i386__ || __m68k__ || COMPAT_LINUX32 */
 
+#ifndef COMPAT_LINUX32
 /*
  * We have nonexistent fsuid equal to uid.
  * If modification is requested, refuse.
@@ -1343,7 +1353,7 @@ linux_sys_setfsuid(l, v, retval)
 }
 
 /* XXX XXX XXX */
-#ifndef alpha
+# ifndef alpha
 int
 linux_sys_getfsuid(l, v, retval)
 	struct lwp *l;
@@ -1352,7 +1362,7 @@ linux_sys_getfsuid(l, v, retval)
 {
 	return sys_getuid(l, v, retval);
 }
-#endif
+# endif
 
 int
 linux_sys_setresuid(l, v, retval)
@@ -1622,59 +1632,6 @@ linux_sys_sysinfo(l, v, retval)
 	return (copyout(&si, SCARG(uap, arg), sizeof si));
 }
 
-#ifdef LINUX_LARGEFILE64
-#define bsd_to_linux_rlimit1(l, b, f) \
-    (l)->f = ((b)->f == RLIM_INFINITY || \
-	     ((b)->f & 0x8000000000000000UL) != 0) ? \
-    LINUX_RLIM_INFINITY : (b)->f
-#else
-#define bsd_to_linux_rlimit1(l, b, f) \
-    (l)->f = ((b)->f == RLIM_INFINITY || \
-	     ((b)->f & 0xffffffff00000000ULL) != 0) ? \
-    LINUX_RLIM_INFINITY : (int32_t)(b)->f
-#endif
-#define bsd_to_linux_rlimit(l, b) \
-    bsd_to_linux_rlimit1(l, b, rlim_cur); \
-    bsd_to_linux_rlimit1(l, b, rlim_max)
-
-#define linux_to_bsd_rlimit1(b, l, f) \
-    (b)->f = (l)->f == LINUX_RLIM_INFINITY ? RLIM_INFINITY : (l)->f
-#define linux_to_bsd_rlimit(b, l) \
-    linux_to_bsd_rlimit1(b, l, rlim_cur); \
-    linux_to_bsd_rlimit1(b, l, rlim_max)
-
-static int
-linux_to_bsd_limit(lim)
-	int lim;
-{
-	switch (lim) {
-	case LINUX_RLIMIT_CPU:
-		return RLIMIT_CPU;
-	case LINUX_RLIMIT_FSIZE:
-		return RLIMIT_FSIZE;
-	case LINUX_RLIMIT_DATA:
-		return RLIMIT_DATA;
-	case LINUX_RLIMIT_STACK:
-		return RLIMIT_STACK;
-	case LINUX_RLIMIT_CORE:
-		return RLIMIT_CORE;
-	case LINUX_RLIMIT_RSS:
-		return RLIMIT_RSS;
-	case LINUX_RLIMIT_NPROC:
-		return RLIMIT_NPROC;
-	case LINUX_RLIMIT_NOFILE:
-		return RLIMIT_NOFILE;
-	case LINUX_RLIMIT_MEMLOCK:
-		return RLIMIT_MEMLOCK;
-	case LINUX_RLIMIT_AS:
-	case LINUX_RLIMIT_LOCKS:
-		return -EOPNOTSUPP;
-	default:
-		return -EINVAL;
-	}
-}
-
-
 int
 linux_sys_getrlimit(l, v, retval)
 	struct lwp *l;
@@ -1683,21 +1640,21 @@ linux_sys_getrlimit(l, v, retval)
 {
 	struct linux_sys_getrlimit_args /* {
 		syscallarg(int) which;
-#ifdef LINUX_LARGEFILE64
+# ifdef LINUX_LARGEFILE64
 		syscallarg(struct rlimit *) rlp;
-#else
+# else
 		syscallarg(struct orlimit *) rlp;
-#endif
+# endif
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args ap;
 	struct rlimit rl;
-#ifdef LINUX_LARGEFILE64
+# ifdef LINUX_LARGEFILE64
 	struct rlimit orl;
-#else
+# else
 	struct orlimit orl;
-#endif
+# endif
 	int error;
 
 	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
@@ -1721,21 +1678,21 @@ linux_sys_setrlimit(l, v, retval)
 {
 	struct linux_sys_setrlimit_args /* {
 		syscallarg(int) which;
-#ifdef LINUX_LARGEFILE64
+# ifdef LINUX_LARGEFILE64
 		syscallarg(struct rlimit *) rlp;
-#else
+# else
 		syscallarg(struct orlimit *) rlp;
-#endif
+# endif
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args ap;
 	struct rlimit rl;
-#ifdef LINUX_LARGEFILE64
+# ifdef LINUX_LARGEFILE64
 	struct rlimit orl;
-#else
+# else
 	struct orlimit orl;
-#endif
+# endif
 	int error;
 
 	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
@@ -1750,7 +1707,7 @@ linux_sys_setrlimit(l, v, retval)
 	return sys_setrlimit(l, &ap, retval);
 }
 
-#if !defined(__mips__) && !defined(__amd64__)
+# if !defined(__mips__) && !defined(__amd64__)
 /* XXX: this doesn't look 100% common, at least mips doesn't have it */
 int
 linux_sys_ugetrlimit(l, v, retval)
@@ -1760,7 +1717,7 @@ linux_sys_ugetrlimit(l, v, retval)
 {
 	return linux_sys_getrlimit(l, v, retval);
 }
-#endif
+# endif
 
 /*
  * This gets called for unsupported syscalls. The difference to sys_nosys()
@@ -1775,3 +1732,5 @@ linux_sys_nosys(l, v, retval)
 {
 	return (ENOSYS);
 }
+
+#endif /* !COMPAT_LINUX32 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.32 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.32.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.32 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.32.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -119,7 +119,7 @@ ofdisk_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 ofdisk_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ofdisk_softc *of = (void *)self;
+	struct ofdisk_softc *of = device_private(self);
 	struct ofbus_attach_args *oba = aux;
 	char child[64];
 	int l;

@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.6 2005/12/14 00:32:29 christos Exp $ */
+/*	$NetBSD: epcom.c,v 1.6.6.1 2006/04/22 11:37:17 simonb Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.6 2005/12/14 00:32:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.6.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -188,11 +188,7 @@ struct consdev epcomcons = {
 #define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			ISSET((sc)->sc_dev.dv_flags, DVF_ACTIVE))
-
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
+			device_is_active(&(sc)->sc_dev))
 
 void
 epcom_attach_subr(struct epcom_softc *sc)
@@ -240,7 +236,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&epcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
@@ -459,7 +455,7 @@ epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (ISSET(sc->sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB

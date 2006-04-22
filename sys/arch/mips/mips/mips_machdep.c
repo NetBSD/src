@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.184 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.184.6.1 2006/04/22 11:37:42 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.184 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.184.6.1 2006/04/22 11:37:42 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -381,6 +381,8 @@ static const struct pridtab cputab[] = {
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4Kc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_4KEc, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc"			},
+	{ MIPS_PRID_CID_MTI, MIPS_4KEc_R2, -1, -1, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KEc (Rev 2)"		},
 	{ MIPS_PRID_CID_MTI, MIPS_4KSc, -1, -1,	-1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,	"4KSc"			},
 	{ MIPS_PRID_CID_MTI, MIPS_5Kc, -1, -1,	-1, 0,
@@ -395,19 +397,19 @@ static const struct pridtab cputab[] = {
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1000 (Rev 2 core)" 	},
 
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1500, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
-						"Au1500 (Rev 1 core)"	},
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1500, -1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
-						"Au1500 (Rev 2 core)" 	},
-
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1100, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1100 (Rev 1 core)"	},
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1100, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
 						"Au1100 (Rev 2 core)" 	},
+
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1500, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1500 (Rev 1 core)"	},
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1500, -1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
+						"Au1500 (Rev 2 core)" 	},
 
 	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1550, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT | CPU_MIPS_I_D_CACHE_COHERENT,
@@ -823,8 +825,15 @@ mips_vector_init(void)
 			    MIPSNN_GET(CFG_AT, cfg));
 		}
 
-		if (MIPSNN_GET(CFG_AR, cfg) != MIPSNN_CFG_AR_REV1)
-			printf("WARNING: MIPS32/64 arch revision != revision 1!\n");
+		switch (MIPSNN_GET(CFG_AR, cfg)) {
+		case MIPSNN_CFG_AR_REV1:
+		case MIPSNN_CFG_AR_REV2:
+			break;
+		default:
+			printf("WARNING: MIPS32/64 arch revision %d "
+			    "unknown!\n", MIPSNN_GET(CFG_AR, cfg));
+			break;
+		}
 
 		/* figure out MMU type (and number of TLB entries) */
 		switch (MIPSNN_GET(CFG_MT, cfg)) {

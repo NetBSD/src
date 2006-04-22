@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.62 2006/01/04 21:42:51 xtraeme Exp $
+$NetBSD: miidevs,v 1.62.4.1 2006/04/22 11:39:11 simonb Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ oui BROADCOM			0x001018	Broadcom Corporation
 oui CICADA			0x0003F1	Cicada Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
+oui ICPLUS			0x0090c3	IC Plus Corp.
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x00207b	Level 1
@@ -150,6 +151,9 @@ model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 model xxDAVICOM DM9101		0x0000 DM9101 (AMD Am79C873) 10/100 media interface
 model xxDAVICOM DM9102		0x0004 DM9102 10/100 media interface
 
+/* IC Plus Corp. PHYs */
+model ICPLUS IP101		0x0005 IP101 10/100 PHY
+
 /* Integrated Circuit Systems PHYs */
 model ICS 1889			0x0001 ICS1889 10/100 media interface
 model ICS 1890			0x0002 ICS1890 10/100 media interface
@@ -189,6 +193,7 @@ model MYSON MTD803		0x0000 MTD803 3-in-1 media interface
 model xxNATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model xxNATSEMI DP83843		0x0001 DP83843 10/100 media interface
 model xxNATSEMI DP83815		0x0002 DP83815 10/100 media interface
+model xxNATSEMI DP83847		0x0003 DP83847 10/100 media interface
 model xxNATSEMI DP83891		0x0005 DP83891 1000BASE-T media interface
 model xxNATSEMI DP83861		0x0006 DP83861 1000BASE-T media interface
 

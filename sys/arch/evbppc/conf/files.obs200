@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs200,v 1.2 2005/12/11 12:17:11 christos Exp $
+#	$NetBSD: files.obs200,v 1.2.6.1 2006/04/22 11:37:25 simonb Exp $
 #	Original Tag: files.obs405,v 1.9 2005/01/24 18:47:37 shige Exp
 #
 # obs200-specific configuration info
@@ -30,3 +30,15 @@ include "dev/wscons/files.wscons"
 # Raster operations
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
+
+#
+# Machine-independent CardBus drivers
+#
+include "dev/cardbus/files.cardbus"
+include "dev/pcmcia/files.pcmcia"
+
+file arch/evbppc/obs405/rbus_machdep.c		cardbus
+
+include "dev/usb/files.usb"
+
+include "dev/ieee1394/files.ieee1394"

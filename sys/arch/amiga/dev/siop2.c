@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.25 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: siop2.c,v 1.25.6.1 2006/04/22 11:37:13 simonb Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.25 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.25.6.1 2006/04/22 11:37:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1646,7 +1646,7 @@ siopngintr(register struct siop_softc *sc)
 }
 
 /*
- * This is based on the Progressive Peripherals 33Mhz Zeus driver and will
+ * This is based on the Progressive Peripherals 33 MHz Zeus driver and will
  * not be correct for other 53c710 boards.
  *
  */

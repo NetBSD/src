@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.12 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.12.6.1 2006/04/22 11:37:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.12 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.12.6.1 2006/04/22 11:37:51 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.12 2005/12/11 12:18:31 christos Exp $
 #include <ddb/db_access.h>
 
 static void	set_pte __P((vaddr_t, pt_entry_t));
-static void	db_write_text __P((vaddr_t, size_t, char *));
+static void	db_write_text __P((vaddr_t, size_t, const char *));
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -109,7 +109,7 @@ static void
 db_write_text(addr, size, data)
 	vaddr_t	addr;
 	size_t size;
-	char *data;
+	const char *data;
 {
 	char *dst;
 	pt_entry_t oldpte, tmppte;
@@ -168,24 +168,24 @@ void
 db_write_bytes(addr, size, data)
 	vaddr_t addr;
 	size_t size;
-	char *data;
+	const char *data;
 {
 	char *dst = (char *)addr;
 	extern char kernel_text[], etext[];
 
 	/* If any part is in kernel text, use db_write_text() */
 	if ((dst < etext) && ((dst + size) > kernel_text)) {
-		db_write_text((vaddr_t)dst, size, data);
+		db_write_text(addr, size, data);
 		return;
 	}
 
 	if (size == 4) {
-		*((int *)dst) = *((int *)data);
+		*((int *)dst) = *((const int *)data);
 		return;
 	}
 
 	if (size == 2) {
-		*((short*)dst) = *((short*)data);
+		*((short*)dst) = *((const short *)data);
 		return;
 	}
 

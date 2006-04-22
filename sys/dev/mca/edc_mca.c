@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.32 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.32.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.32 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.32.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include "rnd.h"
 
@@ -156,7 +156,7 @@ edc_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct edc_mca_softc *sc = (void *) self;
+	struct edc_mca_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;
 	struct ed_attach_args eda;
 	int pos2, pos3, pos4;

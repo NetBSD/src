@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.54 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.54.6.1 2006/04/22 11:38:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.54 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.54.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -895,7 +895,7 @@ smc91cxx_intr(arg)
 	u_int16_t packetno, tx_status, card_stats;
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	SMC_SELECT_BANK(sc, 2);
@@ -1612,7 +1612,7 @@ smc91cxx_tick(arg)
 		panic("smc91cxx_tick");
 #endif
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();

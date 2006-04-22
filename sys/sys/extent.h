@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.13 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: extent.h,v 1.13.6.1 2006/04/22 11:40:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -109,23 +109,15 @@ struct	extent *extent_create(const char *, u_long, u_long,
 void	extent_destroy(struct extent *);
 int	extent_alloc_subregion1(struct extent *, u_long, u_long,
 	    u_long, u_long, u_long, u_long, int, u_long *);
+int	extent_alloc_subregion(struct extent *, u_long, u_long,
+	    u_long, u_long, u_long, int, u_long *);
 int	extent_alloc_region(struct extent *, u_long, u_long, int);
+int	extent_alloc1(struct extent *, u_long, u_long, u_long, u_long, int,
+	    u_long *);
+int	extent_alloc(struct extent *, u_long, u_long, u_long, int, u_long *);
 int	extent_free(struct extent *, u_long, u_long, int);
 void	extent_print(struct extent *);
 
-/* Simple case of extent_alloc_subregion() */
-#define extent_alloc(_ex, _size, _alignment, _boundary, _flags, _result) \
-	extent_alloc_subregion1((_ex), (_ex)->ex_start, (_ex)->ex_end,	\
-	(_size), (_alignment), 0, (_boundary), (_flags), (_result))
-#define extent_alloc1(_ex, _size, _alignment, _skew, _boundary, \
-			_flags, _result) \
-	extent_alloc_subregion1((_ex), (_ex)->ex_start, (_ex)->ex_end,	\
-	(_size), (_alignment), (_skew), (_boundary), (_flags), (_result))
-/* Compat version of extent_alloc_subregion() */
-#define extent_alloc_subregion(_ex, _start, _end, _size, _alignment, \
-				_boundary, _flags, _result) \
-	extent_alloc_subregion1((_ex), (_start), (_end),	\
-	(_size), (_alignment), 0, (_boundary), (_flags), (_result))
 #endif /* _KERNEL || _EXTENT_TESTING */
 
 #endif /* ! _SYS_EXTENT_H_ */

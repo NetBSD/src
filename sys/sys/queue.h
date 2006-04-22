@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.44 2005/11/11 15:04:04 yamt Exp $	*/
+/*	$NetBSD: queue.h,v 1.44.8.1 2006/04/22 11:40:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -657,5 +657,14 @@ struct {								\
 #define	CIRCLEQ_LAST(head)		((head)->cqh_last)
 #define	CIRCLEQ_NEXT(elm, field)	((elm)->field.cqe_next)
 #define	CIRCLEQ_PREV(elm, field)	((elm)->field.cqe_prev)
+
+#define CIRCLEQ_LOOP_NEXT(head, elm, field)				\
+	(((elm)->field.cqe_next == (void *)(head))			\
+	    ? ((head)->cqh_first)					\
+	    : (elm->field.cqe_next))
+#define CIRCLEQ_LOOP_PREV(head, elm, field)				\
+	(((elm)->field.cqe_prev == (void *)(head))			\
+	    ? ((head)->cqh_last)					\
+	    : (elm->field.cqe_prev))
 
 #endif	/* !_SYS_QUEUE_H_ */

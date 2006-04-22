@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.h,v 1.8 2005/12/11 12:19:10 christos Exp $	*/
+/*	$NetBSD: sparc64.h,v 1.8.6.1 2006/04/22 11:38:02 simonb Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,21 +34,21 @@
 #define	_MACHINE_SPARC64_H_
 
 struct mem_region {
-	u_int64_t start;
-	u_int64_t size;
+	uint64_t start;
+	uint64_t size;
 };
 
 int prom_set_trap_table (vaddr_t);
-u_int64_t prom_vtop (vaddr_t);
+uint64_t prom_vtop (vaddr_t);
 vaddr_t prom_claim_virt (vaddr_t, int);
 vaddr_t prom_alloc_virt (int, int);
 int prom_free_virt (vaddr_t, int);
 int prom_unmap_virt (vaddr_t, int);
-int prom_map_phys (u_int64_t, off_t, vaddr_t, int);
-u_int64_t prom_alloc_phys (int , int);
-u_int64_t prom_claim_phys (paddr_t, int);
+int prom_map_phys (uint64_t, off_t, vaddr_t, int);
+uint64_t prom_alloc_phys (int , int);
+uint64_t prom_claim_phys (paddr_t, int);
 int prom_free_phys (paddr_t, int);
-u_int64_t prom_get_msgbuf (int, int);
+uint64_t prom_get_msgbuf (int, int);
 
 void prom_stopself(void);
 void prom_startcpu(u_int, void *, u_long);

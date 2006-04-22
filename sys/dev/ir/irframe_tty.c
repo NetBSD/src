@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.31 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.31.6.1 2006/04/22 11:39:06 simonb Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -68,11 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31 2005/12/11 12:22:02 christos Ex
 #include <dev/ir/sir.h>
 #include <dev/ir/irdaio.h>
 #include <dev/ir/irframevar.h>
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 #ifdef IRFRAMET_DEBUG
 #define DPRINTF(x)	if (irframetdebug) printf x
@@ -315,7 +310,7 @@ irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 	error = 0;
 	switch (cmd) {
 	case IRFRAMETTY_GET_DEVICE:
-		*(int *)data = sc->sc_irp.sc_dev.dv_unit;
+		*(int *)data = device_unit(&sc->sc_irp.sc_dev);
 		break;
 	case IRFRAMETTY_GET_DONGLE:
 		*(int *)data = sc->sc_dongle;

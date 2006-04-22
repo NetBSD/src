@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.26 2005/12/27 17:25:41 chs Exp $	*/
+/*	$NetBSD: aac.c,v 1.26.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.26 2005/12/27 17:25:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.26.6.1 2006/04/22 11:38:54 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,7 +1051,7 @@ aac_ccb_free(struct aac_softc *sc, struct aac_ccb *ac)
 	 * an intermediate stage may have destroyed them.  They're left
 	 * initialised here for debugging purposes only.
 	 */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP54*/)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP64*/)ac->ac_fib);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: oosiop_jazzio.c,v 1.4 2005/12/11 12:16:39 christos Exp $ */
+/* $NetBSD: oosiop_jazzio.c,v 1.4.6.1 2006/04/22 11:37:16 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.4 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.4.6.1 2006/04/22 11:37:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,12 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.4 2005/12/11 12:16:39 christos E
 #include <dev/ic/oosiopvar.h>
 #include <arc/jazz/jazziovar.h>
 
+#include "ioconf.h"
+
 int	oosiop_jazzio_match(struct device *, struct cfdata *, void *);
 void	oosiop_jazzio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(oosiop_jazzio, sizeof(struct oosiop_softc),
     oosiop_jazzio_match, oosiop_jazzio_attach, NULL, NULL);
-extern struct cfdriver oosiop_cd;
 
 /*
  * Match driver based on name

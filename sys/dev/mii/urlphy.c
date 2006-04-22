@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.11 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.11.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.11 2005/12/11 12:22:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.11.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ urlphy_match(struct device *parent, struct cfdata *match, void *aux)
 	/*
 	 * Make sure the parent is an 'url' device.
 	 */
-	if (strcmp(parent->dv_cfdata->cf_name, "url") != 0)
+	if (!device_is_a(parent, "url"))
 		return(0);
 
 	return (10);
@@ -96,7 +96,7 @@ urlphy_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 urlphy_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
@@ -141,7 +141,7 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
 
-	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->mii_dev))
 		return (ENXIO);
 
 	switch (cmd) {

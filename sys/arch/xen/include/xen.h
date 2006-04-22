@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.19 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.19.4.1 2006/04/22 11:38:11 simonb Exp $	*/
 
 /*
  *
@@ -187,7 +187,7 @@ do {									\
 #else
 #define XATOMIC_T uint32_t
 #endif
-static inline XATOMIC_T
+static __inline XATOMIC_T
 xen_atomic_xchg(volatile XATOMIC_T *ptr, unsigned long val)
 {
 	unsigned long result;
@@ -196,6 +196,20 @@ xen_atomic_xchg(volatile XATOMIC_T *ptr, unsigned long val)
 	    "xchgl %0,%1"
 	    :"=r" (result)
 	    :"m" (*ptr), "0" (val)
+	    :"memory");
+
+	return result;
+}
+
+static inline uint16_t
+xen_atomic_cmpxchg16(volatile uint16_t *ptr, uint16_t  val, uint16_t newval)
+{
+	unsigned long result;
+
+        __asm volatile(__LOCK_PREFIX
+	    "cmpxchgw %w1,%2"
+	    :"=a" (result)
+	    :"q"(newval), "m" (*ptr), "0" (val)
 	    :"memory");
 
 	return result;
@@ -211,7 +225,7 @@ xen_atomic_clearbits_l (volatile XATOMIC_T *ptr, unsigned long bits) {
 	__asm volatile("lock ; andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
 
-static inline int
+static __inline int
 xen_atomic_test_and_clear_bit(volatile void *ptr, int bitno)
 {
         int result;
@@ -224,7 +238,7 @@ xen_atomic_test_and_clear_bit(volatile void *ptr, int bitno)
         return result;
 }
 
-static inline int
+static __inline int
 xen_atomic_test_and_set_bit(volatile void *ptr, int bitno)
 {
         int result;
@@ -237,14 +251,14 @@ xen_atomic_test_and_set_bit(volatile void *ptr, int bitno)
         return result;
 }
 
-static inline int
+static __inline int
 xen_constant_test_bit(const volatile void *ptr, int bitno)
 {
 	return ((1UL << (bitno & 31)) &
 	    (((const volatile XATOMIC_T *) ptr)[bitno >> 5])) != 0;
 }
 
-static inline int
+static __inline int
 xen_variable_test_bit(const volatile void *ptr, int bitno)
 {
 	int result;
@@ -262,7 +276,7 @@ xen_variable_test_bit(const volatile void *ptr, int bitno)
 	 xen_constant_test_bit((ptr),(bitno)) : \
 	 xen_variable_test_bit((ptr),(bitno)))
 
-static inline void
+static __inline void
 xen_atomic_set_bit(volatile void *ptr, int bitno)
 {
         __asm volatile(__LOCK_PREFIX
@@ -271,7 +285,7 @@ xen_atomic_set_bit(volatile void *ptr, int bitno)
 	    :"Ir" (bitno));
 }
 
-static inline void
+static __inline void
 xen_atomic_clear_bit(volatile void *ptr, int bitno)
 {
         __asm volatile(__LOCK_PREFIX
@@ -282,7 +296,7 @@ xen_atomic_clear_bit(volatile void *ptr, int bitno)
 
 #undef XATOMIC_T
 
-static inline void
+static __inline void
 wbinvd(void)
 {
 	xpq_flush_cache();

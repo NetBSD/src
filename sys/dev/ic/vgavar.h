@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.23 2005/12/11 12:21:29 christos Exp $ */
+/* $NetBSD: vgavar.h,v 1.23.6.1 2006/04/22 11:38:56 simonb Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -84,14 +84,14 @@ struct vga_softc {
 	struct vga_config *sc_vc;
 };
 
-static inline u_int8_t 	_vga_attr_read(struct vga_handle *, int);
-static inline void 	_vga_attr_write(struct vga_handle *, int, u_int8_t);
-static inline u_int8_t 	_vga_ts_read(struct vga_handle *, int);
-static inline void 	_vga_ts_write(struct vga_handle *, int, u_int8_t);
-static inline u_int8_t 	_vga_gdc_read(struct vga_handle *, int);
-static inline void 	_vga_gdc_write(struct vga_handle *, int, u_int8_t);
+static __inline u_int8_t 	_vga_attr_read(struct vga_handle *, int);
+static __inline void 	_vga_attr_write(struct vga_handle *, int, u_int8_t);
+static __inline u_int8_t 	_vga_ts_read(struct vga_handle *, int);
+static __inline void 	_vga_ts_write(struct vga_handle *, int, u_int8_t);
+static __inline u_int8_t 	_vga_gdc_read(struct vga_handle *, int);
+static __inline void 	_vga_gdc_write(struct vga_handle *, int, u_int8_t);
 
-static inline u_int8_t
+static __inline u_int8_t
 _vga_attr_read(struct vga_handle *vh, int reg)
 {
 	u_int8_t res;
@@ -111,7 +111,7 @@ _vga_attr_read(struct vga_handle *vh, int reg)
 	return (res);
 }
 
-static inline void
+static __inline void
 _vga_attr_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
 
@@ -128,7 +128,7 @@ _vga_attr_write(struct vga_handle *vh, int reg, u_int8_t val)
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, 0, 0x20);
 }
 
-static inline u_int8_t
+static __inline u_int8_t
 _vga_ts_read(struct vga_handle *vh, int reg)
 {
 
@@ -136,7 +136,7 @@ _vga_ts_read(struct vga_handle *vh, int reg)
 	return (bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_DATA));
 }
 
-static inline void
+static __inline void
 _vga_ts_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
 
@@ -144,7 +144,7 @@ _vga_ts_write(struct vga_handle *vh, int reg, u_int8_t val)
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_DATA, val);
 }
 
-static inline u_int8_t
+static __inline u_int8_t
 _vga_gdc_read(struct vga_handle *vh, int reg)
 {
 
@@ -152,7 +152,7 @@ _vga_gdc_read(struct vga_handle *vh, int reg)
 	return (bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_DATA));
 }
 
-static inline void
+static __inline void
 _vga_gdc_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
 

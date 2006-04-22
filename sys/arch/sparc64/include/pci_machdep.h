@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.17 2005/12/11 12:19:10 christos Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.17.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -53,7 +53,7 @@ struct sparc_pci_chipset {
  * scalar type.  But we really need to store both the OFW node and
  * the bus/device/function info in it.  (We'd like to store more, 
  * like all the ofw properties, but we don't need to.)  Luckily,
- * both are 32-bit values, so we can squeeze them into a u_int64_t
+ * both are 32-bit values, so we can squeeze them into a uint64_t
  * with a little help from some macros.
  */
 
@@ -62,9 +62,9 @@ struct sparc_pci_chipset {
 #define	PCITAG_BUS(t)		((PCITAG_OFFSET(t)>>16)&0xff)
 #define	PCITAG_DEV(t)		((PCITAG_OFFSET(t)>>11)&0x1f)
 #define	PCITAG_FUN(t)		((PCITAG_OFFSET(t)>>8)&0x7)
-#define	PCITAG_CREATE(n,b,d,f)	(((u_int64_t)(n)<<32)|((b)<<16)|((d)<<11)|((f)<<8))
+#define	PCITAG_CREATE(n,b,d,f)	(((uint64_t)(n)<<32)|((b)<<16)|((d)<<11)|((f)<<8))
 #define	PCITAG_SETNODE(t,n)	((t)&0xffffffff)|(((n)<<32)
-typedef u_int64_t pcitag_t; 
+typedef uint64_t pcitag_t; 
 
 
 void		pci_attach_hook(struct device *, struct device *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.12 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.12.6.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.12 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.12.6.1 2006/04/22 11:37:25 simonb Exp $");
 
 #include "opt_ev64260.h"
 
@@ -240,7 +240,7 @@ gtpci_md_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func,
 	if (bus == 0 && dev == 0)	/* don't configure GT */
 		return 0;
 
-	return PCI_CONF_ALL;
+	return PCI_CONF_DEFAULT;
 }
 
 int

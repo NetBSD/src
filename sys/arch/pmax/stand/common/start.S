@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.18 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: start.S,v 1.18.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -159,4 +159,4 @@ LEAF(prom_write)
 	li	v0, DEC_PROM_WRITE
 	j	v0
 	nop
-END(prom_read)
+END(prom_write)

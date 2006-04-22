@@ -1,4 +1,4 @@
-/*	$NetBSD: timerreg.h,v 1.4 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: timerreg.h,v 1.4.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
 #define T_MODE_CLKS(x)		((x) & T_MODE_CLKS_MASK)
 #define T_MODE_CLKS_CLR(x)	((x) & ~T_MODE_CLKS_MASK)
 
-#define T_MODE_CLKS_BUSCLK1		0	/* 150Mhz */
+#define T_MODE_CLKS_BUSCLK1		0	/* 150 MHz */
 #define T_MODE_CLKS_BUSCLK16		1	/* 150 / 16 */
 #define T_MODE_CLKS_BUSCLK256		2	/* 150 / 256 */
 #define T_MODE_CLKS_HBLNK		3	/* H-Blank */

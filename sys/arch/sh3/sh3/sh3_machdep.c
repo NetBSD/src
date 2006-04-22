@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.58 2006/01/21 04:26:56 uwe Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.58.4.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.58 2006/01/21 04:26:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.58.4.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -134,7 +134,7 @@ struct md_upte *curupte;	/* SH3 wired u-area hack */
 #error "IOM_RAM_BEGIN is physical address. not P1 address."
 #endif
 
-#define	VBR	(u_int8_t *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN)
+#define	VBR	(uint8_t *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN)
 vaddr_t ram_start = SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 /* exception handler holder (sh3/sh3/exception_vector.S) */
 extern char sh_vector_generic[], sh_vector_generic_end[];
@@ -148,7 +148,7 @@ extern char sh4_vector_tlbmiss[], sh4_vector_tlbmiss_end[];
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int dumpsize;			/* pages */
 long dumplo;	 		/* blocks */
 

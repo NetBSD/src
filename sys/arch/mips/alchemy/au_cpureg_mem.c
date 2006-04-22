@@ -1,4 +1,4 @@
-/* $NetBSD: au_cpureg_mem.c,v 1.3 2005/12/11 12:18:06 christos Exp $ */
+/* $NetBSD: au_cpureg_mem.c,v 1.3.6.1 2006/04/22 11:37:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_cpureg_mem.c,v 1.3 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_cpureg_mem.c,v 1.3.6.1 2006/04/22 11:37:41 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -49,9 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: au_cpureg_mem.c,v 1.3 2005/12/11 12:18:06 christos E
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
 
-#define	CHIP		au_cpureg
-#define	CHIP_MEM	/* defined */
-#define	CHIP_ACCESSTYPE	uint32_t
+#define	CHIP			au_cpureg
+#define	CHIP_MEM		/* defined */
+#define	CHIP_ACCESS_SIZE	4
 
 /* MEM region 1 */
 #define	CHIP_W1_BUS_START(v)	0x00000000UL

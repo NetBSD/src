@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.15 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.15.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,11 +130,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15.6.1 2006/04/22 11:37:56 simonb Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,9 +147,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2005/12/11 12:19:02 christos Exp $"
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/trap.h>
@@ -165,16 +160,9 @@ void
 syscall_intern(struct proc *p)
 {
 
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
 	else
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-#endif
 		p->p_md.md_syscall = syscall_plain;
 }
 
@@ -246,10 +234,6 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 
 	args += hidden;
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = tf->tf_caller.r3;
 	error = (*callp->sy_call)(l, args, rval);
@@ -273,10 +257,6 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 		tf->tf_caller.r0 = 1;	/* Status returned in r0 */
 		break;
 	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif
 }
 
 static void

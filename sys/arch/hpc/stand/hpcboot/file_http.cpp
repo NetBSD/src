@@ -1,4 +1,4 @@
-/*	$NetBSD: file_http.cpp,v 1.10 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: file_http.cpp,v 1.10.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -188,15 +188,15 @@ HttpFile::setRoot(TCHAR *server)
 			DPRINTF((TEXT("can't get host by name.\n")));
 			return FALSE;
 		}
-		u_int8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
+		uint8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
 		DPRINTF((TEXT("%d.%d.%d.%d "), b[0], b[1], b[2], b[3]));
 		if (connect(h,(const struct sockaddr *)&_sockaddr,
 		    sizeof(struct sockaddr_in)) == 0)
 			goto connected;
 	} else {
-		for (u_int8_t **addr_list =(u_int8_t **)entry->h_addr_list;
+		for (uint8_t **addr_list =(uint8_t **)entry->h_addr_list;
 		    *addr_list; addr_list++) {
-			u_int8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
+			uint8_t *b = &_sockaddr.sin_addr.S_un.S_un_b.s_b1;
 			for (int i = 0; i < 4; i++)
 				b[i] = addr_list[0][i];
 
@@ -217,7 +217,7 @@ HttpFile::setRoot(TCHAR *server)
 }
 
 BOOL
-HttpFile::open(const TCHAR *name, u_int32_t flag)
+HttpFile::open(const TCHAR *name, uint32_t flag)
 {
 
 	_reset_state();

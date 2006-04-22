@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.48 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.48.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.48 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.48.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -252,7 +252,7 @@ tlp_cardbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct tulip_cardbus_softc *csc = (void *)self;
+	struct tulip_cardbus_softc *csc = device_private(self);
 	struct tulip_softc *sc = &csc->sc_tulip;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -491,7 +491,7 @@ tlp_cardbus_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct tulip_cardbus_softc *csc = (void *)self;
+	struct tulip_cardbus_softc *csc = device_private(self);
 	struct tulip_softc *sc = &csc->sc_tulip;
 	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv;

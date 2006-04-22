@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.31.6.1 2006/02/04 14:03:58 simonb Exp $	*/
+/*	$NetBSD: amr.c,v 1.31.6.2 2006/04/22 11:39:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.31.6.1 2006/02/04 14:03:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.31.6.2 2006/04/22 11:39:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,6 +579,13 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			return (-1);
 		}
 
+		if (aex->ae_numldrives > __arraycount(aex->ae_drivestate)) {
+			aprint_error("%s: Inquiry returned more drives (%d)"
+			   " than the array can handle (%zu)\n",
+			   amr->amr_dv.dv_xname, aex->ae_numldrives,
+			   __arraycount(aex->ae_drivestate));
+			aex->ae_numldrives = __arraycount(aex->ae_drivestate);
+		}
 		if (aex->ae_numldrives > AMR_MAX_UNITS) {
 			aprint_error(
 			    "%s: adjust AMR_MAX_UNITS to %d (currently %d)"
@@ -681,6 +688,13 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	/*
 	 * Record state of logical drives.
 	 */
+	if (ae->ae_ldrv.al_numdrives > __arraycount(ae->ae_ldrv.al_size)) {
+		aprint_error("%s: Inquiry returned more drives (%d)"
+		   " than the array can handle (%zu)\n",
+		   amr->amr_dv.dv_xname, ae->ae_ldrv.al_numdrives,
+		   __arraycount(ae->ae_ldrv.al_size));
+		ae->ae_ldrv.al_numdrives = __arraycount(ae->ae_ldrv.al_size);
+	}
 	if (ae->ae_ldrv.al_numdrives > AMR_MAX_UNITS) {
 		aprint_error("%s: adjust AMR_MAX_UNITS to %d (currently %d)\n",
 		    amr->amr_dv.dv_xname, ae->ae_ldrv.al_numdrives,
@@ -689,7 +703,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	} else
 		amr->amr_numdrives = ae->ae_ldrv.al_numdrives;
 
-	for (i = 0; i < AMR_MAX_UNITS; i++) {
+	for (i = 0; i < amr->amr_numdrives; i++) {
 		amr->amr_drive[i].al_size = le32toh(ae->ae_ldrv.al_size[i]);
 		amr->amr_drive[i].al_state = ae->ae_ldrv.al_state[i];
 		amr->amr_drive[i].al_properties = ae->ae_ldrv.al_properties[i];
@@ -876,7 +890,7 @@ amr_thread(void *cookie)
 		amr_ccb_free(amr, ac);
 
 		al = amr->amr_drive;
-		for (i = 0; i < AMR_MAX_UNITS; i++, al++) {
+		for (i = 0; i < __arraycount(ae->ae_ldrv.al_state); i++, al++) {
 			if (al->al_dv == NULL)
 				continue;
 			if (al->al_state == ae->ae_ldrv.al_state[i])

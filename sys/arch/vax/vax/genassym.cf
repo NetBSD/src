@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28 2005/12/11 12:19:36 christos Exp $
+#	$NetBSD: genassym.cf,v 1.28.6.1 2006/04/22 11:38:08 simonb Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -53,8 +53,10 @@ define	L_ADDR		offsetof(struct lwp, l_addr)
 define	L_BACK		offsetof(struct lwp, l_back)
 define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_STAT		offsetof(struct lwp, l_stat)
+define	L_PROC		offsetof(struct lwp, l_proc)
 
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
+define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
 
 define	PH_RLINK	offsetof(struct prochd, ph_rlink)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.318 2006/01/15 19:51:06 abs Exp $ */
+/*	$NetBSD: wd.c,v 1.318.4.1 2006/04/22 11:38:51 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.318 2006/01/15 19:51:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.318.4.1 2006/04/22 11:38:51 simonb Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -441,7 +441,7 @@ wddetach(struct device *self, int flags)
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = WDMINOR(self->dv_unit, i);
+		mn = WDMINOR(device_unit(self), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
@@ -883,7 +883,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (wd == NULL)
 		return (ENXIO);
 
-	if ((wd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (! device_is_active(&wd->sc_dev))
 		return (ENODEV);
 
 	part = WDPART(dev);
@@ -1060,8 +1060,9 @@ wdgetdisklabel(struct wd_softc *wd)
 		wd->drvp->drive_flags |= DRIVE_RESET;
 		splx(s);
 	}
-	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-	    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(MAKEWDDEV(0, device_unit(&wd->sc_dev),
+				  RAW_PART), wdstrategy, lp,
+				  wd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -1074,7 +1075,7 @@ wdgetdisklabel(struct wd_softc *wd)
 			wd->drvp->drive_flags |= DRIVE_RESET;
 			splx(s);
 		}
-		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit,
+		errstring = readdisklabel(MAKEWDDEV(0, device_unit(&wd->sc_dev),
 		    RAW_PART), wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {
@@ -1340,10 +1341,9 @@ bad:
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_resid = fop->df_count;
-		auio.uio_segflg = 0;
 		auio.uio_offset =
 			fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
-		auio.uio_lwp = l;
+		auio.uio_vmspace = l->l_proc->p_vmspace;
 		error = physio(wdformat, NULL, dev, B_WRITE, minphys,
 		    &auio);
 		fop->df_count -= auio.uio_resid;
@@ -1385,10 +1385,9 @@ bad:
 			wi->wi_uio.uio_iovcnt = 1;
 			wi->wi_uio.uio_resid = atareq->datalen;
 			wi->wi_uio.uio_offset = 0;
-			wi->wi_uio.uio_segflg = UIO_USERSPACE;
 			wi->wi_uio.uio_rw =
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
-			wi->wi_uio.uio_lwp = l;
+			wi->wi_uio.uio_vmspace = l->l_proc->p_vmspace;
 			error1 = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
 			    minphys, &wi->wi_uio);

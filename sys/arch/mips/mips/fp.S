@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.29 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: fp.S,v 1.29.6.1 2006/04/22 11:37:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #include <mips/asm.h>
-#include <mips/cpuregs.h>
+#include <mips/cpu.h>
 #include <mips/trap.h>
 
 #include "assym.h"
@@ -4967,7 +4967,7 @@ STATIC_XLEAF(bcemul_sigill)
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curlwp)		# get current process
 	li	a1, SIGILL
-	j	_C_LABEL(trapsignal)
+	j	_C_LABEL(fpemul_trapsignal)
 END(fpemul_sigill)
 
 STATIC_LEAF(fpemul_sigfpe)
@@ -4981,7 +4981,7 @@ STATIC_LEAF(fpemul_sigfpe)
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curlwp)		# get current process
 	li	a1, SIGFPE
-	j	_C_LABEL(trapsignal)
+	j	_C_LABEL(fpemul_trapsignal)
 END(fpemul_sigfpe)
 
 #ifdef SOFTFLOAT
@@ -4996,6 +4996,6 @@ STATIC_LEAF(bcemul_sigfpe)
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curlwp)		# get current process
 	li	a1, SIGFPE
-	j	_C_LABEL(trapsignal)
+	j	_C_LABEL(fpemul_trapsignal)
 END(bcemul_sigfpe)
 #endif

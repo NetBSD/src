@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.1 2006/01/17 06:08:49 thorpej Exp $	*/
+/*	$NetBSD: firmload.c,v 1.1.6.1 2006/04/22 11:38:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.1 2006/01/17 06:08:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.1.6.1 2006/04/22 11:38:45 simonb Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -77,7 +77,7 @@ firmware_handle_free(firmware_handle_t fh)
 
 #if !defined(FIRMWARE_PATHS)
 #define	FIRMWARE_PATHS		\
-	"/libdata/firmware:/usr/libdata/firmware:/usr/pkg/libdata/firmware"
+	"/libdata/firmware:/usr/libdata/firmware:/usr/pkg/libdata/firmware:/usr/pkg/libdata"
 #endif
 
 static char firmware_paths[PATH_MAX+1] = FIRMWARE_PATHS;

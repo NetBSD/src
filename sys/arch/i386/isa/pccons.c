@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.175 2005/12/24 20:07:11 perry Exp $	*/
+/*	$NetBSD: pccons.c,v 1.175.6.1 2006/04/22 11:37:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175 2005/12/24 20:07:11 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175.6.1 2006/04/22 11:37:33 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -776,7 +776,7 @@ pcattach(struct device *parent, struct device *self, void *aux)
 		maj = cdevsw_lookup_major(&pc_cdevsw);
 
 		/* There can be only one, but it can have any unit number. */
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		printf("%s: console\n", sc->sc_dev.dv_xname);
 	}

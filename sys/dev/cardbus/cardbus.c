@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.68 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.68.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.68 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.68.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include "opt_cardbus.h"
 
@@ -116,7 +116,7 @@ cardbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 STATIC void
 cardbusattach(struct device *parent, struct device *self, void *aux)
 {
-	struct cardbus_softc *sc = (void *)self;
+	struct cardbus_softc *sc = device_private(self);
 	struct cbslot_attach_args *cba = aux;
 
 	sc->sc_bus = cba->cba_bus;
@@ -392,12 +392,13 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	cc = sc->sc_cc;
 	cf = sc->sc_cf;
 
-	DPRINTF(("cardbus_attach_card: cb%d start\n", sc->sc_dev.dv_unit));
+	DPRINTF(("cardbus_attach_card: cb%d start\n",
+		 device_unit(&sc->sc_dev)));
 
 	/* inspect initial voltage */
 	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
 		DPRINTF(("cardbusattach: no CardBus card on cb%d\n",
-		    sc->sc_dev.dv_unit));
+		    device_unit(&sc->sc_dev)));
 		return (0);
 	}
 
@@ -408,7 +409,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 int
 cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 {
-	struct cardbus_softc *sc = (struct cardbus_softc *)self;
+	struct cardbus_softc *sc = device_private(self);
 	cardbus_chipset_tag_t cc;
 	cardbus_function_tag_t cf;
 	cardbustag_t tag;
@@ -426,7 +427,7 @@ cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
 	/* inspect initial voltage */
 	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
 		DPRINTF(("cardbusattach: no CardBus card on cb%d\n",
-		    sc->sc_dev.dv_unit));
+		    device_unit(&sc->sc_dev)));
 		return (0);
 	}
 
@@ -668,10 +669,10 @@ cardbus_detach_card(struct cardbus_softc *sc)
 void
 cardbus_childdetached(struct device *self, struct device *child)
 {
-	struct cardbus_softc *sc = (struct cardbus_softc *)self;
+	struct cardbus_softc *sc = device_private(self);
 	struct cardbus_devfunc *ct;
 
-	ct = sc->sc_funcs[child->dv_locators[CARDBUSCF_FUNCTION]];
+	ct = sc->sc_funcs[device_locator(child, CARDBUSCF_FUNCTION)];
 	KASSERT(ct->ct_device == child);
 
 	sc->sc_poweron_func &= ~(1 << ct->ct_func);

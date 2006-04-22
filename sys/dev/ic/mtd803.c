@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.9 2005/12/11 12:21:28 christos Exp $ */
+/* $NetBSD: mtd803.c,v 1.9.6.1 2006/04/22 11:38:56 simonb Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.9 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.9.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -792,8 +792,7 @@ mtd_irq_h(args)
 	u_int32_t status;
 	int r = 0;
 
-	if (!(ifp->if_flags & IFF_RUNNING) ||
-		!(sc->dev.dv_flags & DVF_ACTIVE))
+	if (!(ifp->if_flags & IFF_RUNNING) || !device_is_active(&sc->dev))
 		return 0;
 
 	/* Disable interrupts */

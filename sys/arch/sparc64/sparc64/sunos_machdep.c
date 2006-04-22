@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.22 2005/12/11 12:19:15 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.22.6.1 2006/04/22 11:38:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.22 2005/12/11 12:19:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.22.6.1 2006/04/22 11:38:03 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -78,7 +78,7 @@ struct sunos_sigcontext {
 struct sunos_sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* code */
-	u_int32_t	sf_scp;			/* SunOS user addr of sigcontext */
+	uint32_t	sf_scp;			/* SunOS user addr of sigcontext */
 	int	sf_addr;		/* SunOS compat, always 0 for now */
 	struct	sunos_sigcontext sf_sc;	/* actual sigcontext */
 };
@@ -197,7 +197,7 @@ sunos_sendsig(ksi, mask)
 	addr = (long)catcher;	/* user does his own trampolining */
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
+	tf->tf_out[6] = (uint64_t)(u_int)(u_long)newsp;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sunos_sendsig: about to return to catcher %p thru %p\n", 

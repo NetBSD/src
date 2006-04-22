@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.6 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: sscom_var.h,v 1.6.6.1 2006/04/22 11:37:17 simonb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -187,11 +187,6 @@ struct sscom_softc {
 	int	(* read_modem_status)( struct sscom_softc * );
 	void	(* set_modem_control)( struct sscom_softc * );
 };
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 /* UART register address, etc. */
 struct sscom_uart_info {

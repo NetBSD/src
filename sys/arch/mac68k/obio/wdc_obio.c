@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.20 2006/01/16 20:30:19 bouyer Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.20.4.1 2006/04/22 11:37:41 simonb Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.20 2006/01/16 20:30:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.20.4.1 2006/04/22 11:37:41 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -218,7 +218,8 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ch_sc = chp;
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags & ATAC_CAP_NOIRQ)
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
+	    ATAC_CAP_NOIRQ)
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_NOIRQ;
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;

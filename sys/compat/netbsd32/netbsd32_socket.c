@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.16 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.16.6.1 2006/04/22 11:38:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.16 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.16.6.1 2006/04/22 11:38:17 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -83,7 +83,7 @@ netbsd32_recvmsg(l, v, retval)
 	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
 		if ((u_int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
-		MALLOC(iov, struct iovec *,
+		iov = (struct iovec *)malloc(
 		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
 		       M_WAITOK);
 	} else if ((u_int)msg.msg_iovlen > 0)
@@ -133,9 +133,8 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 		return (error);
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
-	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_lwp = l;
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	auio.uio_offset = 0;			/* XXX */
 	auio.uio_resid = 0;
 	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
@@ -161,7 +160,7 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 	if (KTRPOINT(p, KTR_GENIO)) {
 		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 
-		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		ktriov = (struct iovec *)malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
 #endif
@@ -265,7 +264,7 @@ netbsd32_sendmsg(l, v, retval)
 	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
 		if ((u_int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
-		MALLOC(iov, struct iovec *,
+		iov = (struct iovec *)malloc(
 		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
 		       M_WAITOK);
 	} else if ((u_int)msg.msg_iovlen > 0)

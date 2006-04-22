@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.51 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: sii.c,v 1.51.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.51 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.51.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 #include "sii.h"
 /*
@@ -315,7 +315,8 @@ sii_Reset(sc, reset)
 	/*
 	 * Set host adapter ID (from PROM sciiidN variable).
 	 */
-	regs->id = SII_ID_IO | prom_scsiid(sc->sc_dev.dv_unit);
+	/* XXX device_unit() abuse */
+	regs->id = SII_ID_IO | prom_scsiid(device_unit(&sc->sc_dev));
 	/*
 	 * Enable SII to drive the SCSI bus.
 	 */

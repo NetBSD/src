@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.8 2002/04/28 17:10:36 uch Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.8.44.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -82,22 +82,22 @@
 
 #ifndef _LOCORE
 #if defined(SH3) && defined(SH4)
-extern u_int32_t __sh_R64CNT;
-extern u_int32_t __sh_RSECCNT;
-extern u_int32_t __sh_RMINCNT;
-extern u_int32_t __sh_RHRCNT;
-extern u_int32_t __sh_RWKCNT;
-extern u_int32_t __sh_RDAYCNT;
-extern u_int32_t __sh_RMONCNT;
-extern u_int32_t __sh_RYRCNT;
-extern u_int32_t __sh_RSECAR;
-extern u_int32_t __sh_RMINAR;
-extern u_int32_t __sh_RHRAR;
-extern u_int32_t __sh_RWKAR;
-extern u_int32_t __sh_RDAYAR;
-extern u_int32_t __sh_RMONAR;
-extern u_int32_t __sh_RCR1;
-extern u_int32_t __sh_RCR2;
+extern uint32_t __sh_R64CNT;
+extern uint32_t __sh_RSECCNT;
+extern uint32_t __sh_RMINCNT;
+extern uint32_t __sh_RHRCNT;
+extern uint32_t __sh_RWKCNT;
+extern uint32_t __sh_RDAYCNT;
+extern uint32_t __sh_RMONCNT;
+extern uint32_t __sh_RYRCNT;
+extern uint32_t __sh_RSECAR;
+extern uint32_t __sh_RMINAR;
+extern uint32_t __sh_RHRAR;
+extern uint32_t __sh_RWKAR;
+extern uint32_t __sh_RDAYAR;
+extern uint32_t __sh_RMONAR;
+extern uint32_t __sh_RCR1;
+extern uint32_t __sh_RCR2;
 #endif /* SH3 && SH4 */
 #endif /* !_LOCORE */
 

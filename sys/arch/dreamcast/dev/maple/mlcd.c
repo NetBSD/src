@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.6 2005/12/24 20:06:59 perry Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.6.6.1 2006/04/22 11:37:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.6 2005/12/24 20:06:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.6.6.1 2006/04/22 11:37:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -313,8 +313,8 @@ mlcddetach(struct device *self, int flags)
 	/*
 	 * revoke vnodes
 	 */
-	minor_l = MLCD_MINOR(self->dv_unit, 0);
-	minor_h = MLCD_MINOR(self->dv_unit, sc->sc_npt - 1);
+	minor_l = MLCD_MINOR(device_unit(self), 0);
+	minor_h = MLCD_MINOR(device_unit(self), sc->sc_npt - 1);
 	vdevgone(cdevsw_lookup_major(&mlcd_cdevsw), minor_l, minor_h, VCHR);
 
 	/*

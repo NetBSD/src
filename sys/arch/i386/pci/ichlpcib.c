@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.11 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.11.6.1 2006/04/22 11:37:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.11 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.11.6.1 2006/04/22 11:37:34 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,7 +160,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 		lpcib_tcotimer_tick_to_second(LPCIB_TCOTIMER_MAX_TICK);
 
 	if (sysmon_wdog_register(&sc->sc_smw)) {
-		printf("%s: unable to register TCO timer"
+		aprint_error("%s: unable to register TCO timer"
 		       "as a sysmon watchdog device.\n",
 		       sc->sc_dev.dv_xname);
 		return;
@@ -174,7 +174,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	if (pci_mapreg_map(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
 		sysmon_wdog_unregister(&sc->sc_smw);
-		printf("%s: can't map i/o space; "
+		aprint_error("%s: can't map i/o space; "
 		       "TCO timer disabled\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -204,7 +204,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					LPCIB_PCI_GEN_STA);
 		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
-			printf("%s: TCO timer reboot disabled by hardware; "
+			aprint_error("%s: TCO timer reboot disabled by hardware; "
 			       "hope SMBIOS properly handles it.\n",
 			       sc->sc_dev.dv_xname);
 			ioreg |= LPCIB_SMI_EN_TCO_EN;
@@ -214,7 +214,8 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	if (ioreg & LPCIB_SMI_EN_GBL_SMI_EN)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN, ioreg);
 
-	printf("%s: TCO (watchdog) timer configured.\n", sc->sc_dev.dv_xname);
+	aprint_verbose("%s: TCO (watchdog) timer configured.\n",
+	    sc->sc_dev.dv_xname);
 
 	return;
 }
@@ -343,9 +344,9 @@ speedstep_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 		/* XXX save the sc for IO tag/handle */
 		speedstep_cookie = sc;
 
-		printf("%s: SpeedStep enabled\n", sc->sc_dev.dv_xname);
+		aprint_verbose("%s: SpeedStep enabled\n", sc->sc_dev.dv_xname);
 	} else
-		printf("%s: No SpeedStep\n", sc->sc_dev.dv_xname);
+		aprint_verbose("%s: No SpeedStep\n", sc->sc_dev.dv_xname);
 
 	return;
 

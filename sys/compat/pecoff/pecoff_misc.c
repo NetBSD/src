@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.12 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.12.6.1 2006/04/22 11:38:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.12 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.12.6.1 2006/04/22 11:38:17 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
@@ -283,7 +282,7 @@ pecoff_sys_symlink(l, v, retval)
 }
 
 
-int
+ssize_t
 pecoff_sys_readlink(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -579,6 +578,38 @@ pecoff_sys_lutimes(l, v, retval)
 	return sys_lutimes(l, v, retval);
 }
 
+#ifdef COMPAT_30
+int
+pecoff_sys___stat13(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct proc *p = l->l_proc;
+	struct pecoff_sys___stat13_args *uap = v;
+	caddr_t sg = stackgap_init(p, 0);
+
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+
+	return compat_30_sys___stat13(l, v, retval);
+}
+
+
+int
+pecoff_sys___lstat13(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct proc *p = l->l_proc;
+	struct pecoff_sys___lstat13_args *uap = v;
+	caddr_t sg = stackgap_init(p, 0);
+
+	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
+
+	return compat_30_sys___lstat13(l, v, retval);
+}
+#endif
 
 int
 pecoff_sys___stat30(l, v, retval)

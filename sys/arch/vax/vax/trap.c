@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2005/12/24 20:07:41 perry Exp $     */
+/*	$NetBSD: trap.c,v 1.98.6.1 2006/04/22 11:38:08 simonb Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,11 +33,10 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
@@ -60,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2005/12/24 20:07:41 perry Exp $");
 #include <machine/trap.h>
 #include <machine/pmap.h>
 #include <machine/cpu.h>
+#include <machine/userret.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -68,20 +68,14 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2005/12/24 20:07:41 perry Exp $");
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #ifdef TRAPDEBUG
-volatile int startsysc = 0, faultdebug = 0;
+volatile int faultdebug = 0;
 #endif
 
 int	cpu_printfataltraps = 0;
 
-static inline void userret (struct lwp *, struct trapframe *, u_quad_t);
-
 void	trap (struct trapframe *);
-void	syscall (struct trapframe *);
 
 const char * const traptypes[]={
 	"reserved addressing",
@@ -115,54 +109,6 @@ int no_traps = 18;
 		return;						\
 	}
 
-/*
- * userret:
- *
- *	Common code used by various execption handlers to
- *	return to usermode.
- */
-static inline void
-userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
-{
-	int sig;
-	struct proc *p = l->l_proc;
-
-	/* Generate UNBLOCKED upcall. */
-	if (l->l_flag & L_SA_BLOCKING)
-		sa_unblock_userret(l);
-
-	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-	l->l_priority = l->l_usrpri;
-	if (curcpu()->ci_want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(0);
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
-	}
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/*
-	 * If profiling, charge system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, frame->pc,
-		    (int)(p->p_sticks - oticks) * psratio);
-	}
-	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
-}
 
 void
 trap(struct trapframe *frame)
@@ -276,7 +222,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		} else
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
-		rv = uvm_fault(map, addr, 0, ftype);
+		rv = uvm_fault(map, addr, ftype);
 		if (rv != 0) {
 			if (umode == 0) {
 				KERNEL_UNLOCK();
@@ -390,110 +336,6 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	exptr->r9 = (u_long) l->l_proc->p_psstr;	/* for ELF */
 }
 
-void
-syscall(struct trapframe *frame)
-{
-	const struct sysent *callp;
-	u_quad_t oticks;
-	int nsys;
-	int err, rval[2], args[8];
-	struct trapframe *exptr;
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-
-#ifdef TRAPDEBUG
-if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
-	       syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
-		p->p_pid,frame);
-#endif
-	uvmexp.syscalls++;
- 
-	exptr = l->l_addr->u_pcb.framep = frame;
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
-	oticks = p->p_sticks;
-
-	if (frame->code == SYS___syscall) {
-		int g = *(int *)(frame->ap);
-
-		frame->code = *(int *)(frame->ap + 4);
-		frame->ap += 8;
-		*(int *)(frame->ap) = g - 2;
-	}
-
-	if ((unsigned long) frame->code >= nsys)
-		callp += p->p_emul->e_nosys;
-	else
-		callp += frame->code;
-
-	rval[0] = 0;
-	rval[1] = frame->r1;
-	KERNEL_PROC_LOCK(l);
-	if (callp->sy_narg) {
-		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
-		if (err) {
-			KERNEL_PROC_UNLOCK(l);
-			goto bad;
-		}
-	}
-
-	if ((err = trace_enter(l, frame->code, frame->code, NULL, args)) != 0)
-		goto out;
-
-	err = (*callp->sy_call)(curlwp, args, rval);
-out:
-	KERNEL_PROC_UNLOCK(l);
-	exptr = l->l_addr->u_pcb.framep;
-
-#ifdef TRAPDEBUG
-if(startsysc)
-	printf("retur %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, frame %p\n",
-	       syscallnames[exptr->code], exptr->pc, exptr->psl,exptr->sp,
-		p->p_pid,err,rval[0],rval[1],exptr); /* } */
-#endif
-
-bad:
-	switch (err) {
-	case 0:
-		exptr->r1 = rval[1];
-		exptr->r0 = rval[0];
-		exptr->psl &= ~PSL_C;
-		break;
-
-	case EJUSTRETURN:
-		break;
-
-	case ERESTART:
-		exptr->pc -= (exptr->code > 63 ? 4 : 2);
-		break;
-
-	default:
-		exptr->r0 = err;
-		exptr->psl |= PSL_C;
-		break;
-	}
-
-	trace_exit(l, frame->code, args, rval, err);
-
-	userret(l, frame, oticks);
-}
-
-void
-child_return(void *arg)
-{
-        struct lwp *l = arg;
-
-	KERNEL_PROC_UNLOCK(l);
-	userret(l, l->l_addr->u_pcb.framep, 0);
-
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
-		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
-	}
-#endif
-}
 
 /* 
  * Start a new LWP

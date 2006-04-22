@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.4 2005/12/24 20:07:42 perry Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.4.6.1 2006/04/22 11:38:09 simonb Exp $	*/
 /*	NetBSD: bus.h,v 1.8 2005/03/09 19:04:46 matt Exp	*/
 
 /*-
@@ -157,10 +157,10 @@ struct x86_bus_dma_cookie {
 #if !defined(_BUS_VIRT_TO_BUS)
 #include <uvm/uvm_extern.h>
 
-static inline bus_addr_t _bus_virt_to_bus(struct pmap *, vaddr_t);
+static __inline bus_addr_t _bus_virt_to_bus(struct pmap *, vaddr_t);
 #define	_BUS_VIRT_TO_BUS(pm, va) _bus_virt_to_bus((pm), (va))
 
-static inline bus_addr_t
+static __inline bus_addr_t
 _bus_virt_to_bus(struct pmap *pm, vaddr_t va)
 {
 	paddr_t pa;

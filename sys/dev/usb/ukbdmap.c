@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.16 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.16.6.1 2006/04/22 11:39:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.16 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.16.6.1 2006/04/22 11:39:38 simonb Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -148,6 +148,11 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(99), 			KS_KP_Delete,	KS_KP_Decimal,
     KC(100),			KS_backslash,	KS_bar,
     KC(101),			KS_Menu,
+/* ... */
+    KC(104), 			KS_f13,
+    KC(105), 			KS_f14,
+    KC(106), 			KS_f15,
+    KC(107), 			KS_f16,
 /* ... */
     KC(109),			KS_Power,
 /* ... many unmapped keys ... */
@@ -420,11 +425,12 @@ Static const keysym_t ukbd_keydesc_es[] = {
     KC(37),  KS_8,		KS_parenleft,
     KC(38),  KS_9,		KS_parenright,
     KC(39),  KS_0,		KS_equal,
-    KC(45),  KS_grave,		KS_question,
+    KC(45),  KS_apostrophe,	KS_question,
     KC(46),  KS_exclamdown,	KS_questiondown,
     KC(47),  KS_dead_grave,	KS_dead_circumflex, KS_bracketleft,
     KC(48),  KS_plus,		KS_asterisk,	KS_bracketright,
     KC(49),  KS_ccedilla,	KS_Ccedilla,	KS_braceright,
+    KC(50),  KS_ccedilla,	KS_Ccedilla,	KS_braceright,
     KC(51),  KS_ntilde,
     KC(52),  KS_dead_acute,	KS_dead_diaeresis, KS_braceleft,
     KC(53),  KS_degree,		KS_ordfeminine,	KS_backslash,

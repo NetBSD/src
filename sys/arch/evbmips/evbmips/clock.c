@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.6.6.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6.6.1 2006/04/22 11:37:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,43 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2005/12/11 12:17:11 christos Exp $");
 #include <mips/locore.h>
 
 #include <dev/clock_subr.h>
-
 #include <evbmips/evbmips/clockvar.h>
 
-#define MINYEAR 2000 /* "today" */
-#define UNIX_YEAR_OFFSET 0
-
-struct device *clockdev;
-const struct clockfns *clockfns;
-int clockinitted;
-
-void
-clockattach(struct device *dev, const struct clockfns *fns)
-{
-
-	/*
-	 * Just bookkeeping.
-	 */
-	printf("\n");
-
-	if (clockfns != NULL)
-		panic("clockattach: multiple clocks");
-	clockdev = dev;
-	clockfns = fns;
-}
-
-/*
- * Machine-dependent clock routines.
- *
- * Startrtclock restarts the real-time clock, which provides
- * hardclock interrupts to kern_clock.c.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.  Its primary function is to use some file
- * system information in case the hardare clock lost state.
- *
- * Resettodr restores the time of day hardware after a time change.
- */
+todr_chip_handle_t todr_handle = NULL;
 
 /*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
@@ -136,9 +102,6 @@ clockattach(struct device *dev, const struct clockfns *fns)
 void
 cpu_initclocks(void)
 {
-
-	if (clockfns == NULL)
-		panic("cpu_initclocks: no clock attached");
 
 	next_cp0_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
 	mips3_cp0_compare_write(next_cp0_clk_intr);
@@ -155,99 +118,68 @@ cpu_initclocks(void)
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
         }
-
-	/*
-	 * Get the clock (well, the TODR, anyway) started.
-	 */
-	(*clockfns->cf_init)(clockdev);
 }
 
 /*
- * We assume newhz is either stathz or profhz, and that neither will
- * change after being set up above.  Could recalculate intervals here
- * but that would be a drag.
+ * Attach the clock device to todr_handle.
  */
 void
-setstatclockrate(int newhz)
+todr_attach(todr_chip_handle_t todr)
 {
 
-	/* nothing we can do */
+        if (todr_handle) {
+                printf("todr_attach: TOD already configured\n");
+		return;
+	}
+        todr_handle = todr;
 }
 
 /*
- * Initialze the time of day register, based on the time base which is, e.g.
- * from a filesystem.  Base provides the time to within six months,
- * and the time of year clock (if any) provides the rest.
+ * Set up the system's time, given a `reasonable' time value.
  */
 void
 inittodr(time_t base)
 {
-	struct clocktime ct;
-	int year;
-	struct clock_ymdhms dt;
-	time_t deltat;
-	int badbase;
+	int badbase = 0, waszero = base == 0;
 
-	if (base < (MINYEAR-1970)*SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = (MINYEAR-1970)*SECYR;
+	if (base < 5 * SECYR) {
+		/*
+		 * If base is 0, assume filesystem time is just unknown
+		 * in stead of preposterous. Don't bark.
+		 */
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
+		/* not going to use it anyway, if the chip is readable */
+		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
-	} else
-		badbase = 0;
+	}
 
-	(*clockfns->cf_get)(clockdev, base, &ct);
-#ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
-	       ct.hour, ct.min, ct.sec);
-#endif
-	clockinitted = 1;
+	if ((todr_handle == NULL) ||
+	    (todr_gettime(todr_handle, &time) != 0) ||
+	    (time.tv_sec == 0)) {
 
-	year = 1900 + UNIX_YEAR_OFFSET + ct.year;
-	if (year < 1970)
-		year += 100;
-	/* simple sanity checks (2037 = time_t overflow) */
-	if (year < MINYEAR || year > 2037 ||
-	    ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
-	    ct.day > 31 || ct.hour > 23 || ct.min > 59 || ct.sec > 59) {
+		if (todr_handle != NULL)
+			printf("WARNING: preposterous TOD clock time");
+		else
+			printf("WARNING: no TOD clock present");
+
 		/*
 		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
+		 * anything better, resetting the clock.
 		 */
 		time.tv_sec = base;
-		if (!badbase) {
-			printf("WARNING: preposterous clock chip time\n");
+		if (!badbase)
 			resettodr();
-		}
-		goto bad;
-	}
+	} else {
+		int deltat = time.tv_sec - base;
 
-	dt.dt_year = year;
-	dt.dt_mon = ct.mon;
-	dt.dt_day = ct.day;
-	dt.dt_hour = ct.hour;
-	dt.dt_min = ct.min;
-	dt.dt_sec = ct.sec;
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-#ifdef DEBUG
-	printf("=>%ld (%ld)\n", time.tv_sec, base);
-#endif
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
 		if (deltat < 0)
 			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
+		if (waszero || deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %ld days",
-		    time.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
+		printf("WARNING: clock %s %d days",
+		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
 	}
-bad:
 	printf(" -- CHECK AND RESET THE DATE!\n");
 }
 
@@ -261,28 +193,24 @@ bad:
 void
 resettodr(void)
 {
-	struct clock_ymdhms dt;
-	struct clocktime ct;
-
-	if (!clockinitted)
+	if (time.tv_sec == 0)
 		return;
 
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
+	if (todr_handle)
+		if (todr_settime(todr_handle, &time) != 0)
+			printf("Cannot set TOD clock time\n");
+}
 
-	/* rt clock wants 2 digits */
-	ct.year = (dt.dt_year - UNIX_YEAR_OFFSET) % 100;
-	ct.mon = dt.dt_mon;
-	ct.day = dt.dt_day;
-	ct.hour = dt.dt_hour;
-	ct.min = dt.dt_min;
-	ct.sec = dt.dt_sec;
-	ct.dow = dt.dt_wday;
-#ifdef DEBUG
-	printf("setclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
-	       ct.hour, ct.min, ct.sec);
-#endif
+/*
+ * We assume newhz is either stathz or profhz, and that neither will
+ * change after being set up above.  Could recalculate intervals here
+ * but that would be a drag.
+ */
+void
+setstatclockrate(int newhz)
+{
 
-	(*clockfns->cf_set)(clockdev, &ct);
+	/* nothing we can do */
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.12 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.12.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.12 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.12.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include "rnd.h"
 
@@ -154,7 +154,7 @@ ld_cac_start(struct ld_softc *ld, struct buf *bp)
 	struct cac_context cc;
 
 	sc = (struct ld_cac_softc *)ld;
-	cac = (struct cac_softc *)ld->sc_dv.dv_parent;
+	cac = (struct cac_softc *)device_parent(&ld->sc_dv);
 
 	cc.cc_handler = ld_cac_done;
 	cc.cc_context = bp;
@@ -179,7 +179,7 @@ ld_cac_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 	sc = (struct ld_cac_softc *)ld;
 
-	return (cac_cmd((struct cac_softc *)ld->sc_dv.dv_parent,
+	return (cac_cmd((struct cac_softc *)device_parent(&ld->sc_dv),
 	    CAC_CMD_WRITE_MEDIA, data, blkcnt * ld->sc_secsize,
 	    sc->sc_hwunit, blkno, CAC_CCB_DATA_OUT, NULL));
 }

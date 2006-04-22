@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.23 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: exception.c,v 1.23.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,13 +79,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23.6.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.23 2005/12/11 12:19:00 christos Exp 
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #ifdef DDB
 #include <sh3/db_machdep.h>
@@ -372,7 +367,7 @@ do {									\
 		l->l_flag |= L_SA_PAGEFAULT;
 	}
 
-	err = uvm_fault(map, va, 0, ftype);
+	err = uvm_fault(map, va, ftype);
 
 	/* User stack extension */
 	if (map != kernel_map &&

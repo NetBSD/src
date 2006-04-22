@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.5 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: firewire.c,v 1.5.6.1 2006/04/22 11:39:05 simonb Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -1664,7 +1664,7 @@ fw_bus_probe_thread(void *arg)
 			fw_attach_dev(fc);
 		} else if (fc->status == FWBUSDETACH)
 			break;
-		tsleep((void *)fc, FWPRI, "-", 0);
+		tsleep((void *)fc, FWPRI, "fwprobe", 0);
 	}
 	FW_UNLOCK;
 	wakeup(fc);
@@ -1801,8 +1801,10 @@ fw_rcv_copy(struct fw_rcv_buf *rb)
 			    rb->xfer->recv.pay_len, len - res);
 			len = res;
 		}
-		bcopy(rb->vec->iov_base, p, len);
-		p += len;
+		if (p) {
+			bcopy(rb->vec->iov_base, p, len);
+			p += len;
+		}
 		res -= len;
 		plen -= len;
 		if (res == 0 || plen == 0)

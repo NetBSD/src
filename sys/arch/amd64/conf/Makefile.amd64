@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.9 2005/11/30 21:50:47 dsl Exp $
+#	$NetBSD: Makefile.amd64,v 1.9.6.1 2006/04/22 11:37:12 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -102,31 +102,31 @@ clock.o: config_time.h
 %LOAD
 
 %RULES
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
-# XXX -	Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
+
+
+# XXX -	Ugly, but make doesn't easily handle .o.uu (assumes it's a suffix)
 # XXX -	Also, config has no simple was to just add foo.o to the Makefile.
 #	It needs a pathname of some sort for "object"
-.if !empty(OBJS:M\/athhal-x86_64-elf.hal.o)
-OBJS:=${OBJS:C/\/athhal-x86_64-elf.hal.o/athhal-x86_64-elf.hal.o/}
+.if !empty(OBJS:M\/athhal.o)
+OBJS:=${OBJS:C/\/athhal.o/athhal.o/}
 
-.PATH: $S/contrib/arch/amd64/dev
+.PATH: $S/contrib/dev/ath/public
 ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${UUDECODE} -p $> \> ${.TARGET}; \
 		rm -f ${.TARGET}; \
 		${UUDECODE} -p $> > ${.TARGET}
 
-athhal-x86_64-elf.hal.o: athhal-x86_64-elf.hal.o.uue
+athhal.o: x86_64-elf.hal.o.uu
 	${ATH_UUDEC}
 .if defined(COPTS) && !empty(COPTS:M-fno-asynchronous-unwind-tables)
 	${_MKSHECHO}\
 	${OBJCOPY} -R .eh_frame $@
 	${OBJCOPY} -R .eh_frame $@
 .endif
-
-all depend:	opt_ah.h
-opt_ah.h:	athhal-x86_64-elf.opt_ah.h
-	ln -s ${.ALLSRC} ${.TARGET}
 .endif
 
 ##

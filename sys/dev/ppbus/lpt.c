@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.15 2005/12/25 18:43:31 rpaulo Exp $ */
+/* $NetBSD: lpt.c,v 1.15.6.1 2006/04/22 11:39:25 simonb Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.15 2005/12/25 18:43:31 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.15.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -134,7 +134,7 @@ lpt_probe(struct device * parent, struct cfdata * match, void * aux)
 static void
 lpt_attach(struct device * parent, struct device * self, void * aux)
 {
-	struct lpt_softc * sc = (struct lpt_softc *) self;
+	struct lpt_softc * sc = device_private(self);
 	struct ppbus_device_softc * ppbdev = &(sc->ppbus_dev);
 	struct ppbus_attach_args * args = aux;
 	char buf[64];
@@ -189,7 +189,7 @@ lpt_attach(struct device * parent, struct device * self, void * aux)
 static int
 lpt_detach(struct device * self, int flags)
 {
-	struct lpt_softc * lpt = (struct lpt_softc *) self;
+	struct lpt_softc * lpt = device_private(self);
 	struct ppbus_device_softc * ppbdev = (struct ppbus_device_softc *) lpt;
 	int err;
 
@@ -213,9 +213,9 @@ lpt_detach(struct device * self, int flags)
 
 	/* Free memory buffers */
 	if(ppbdev->capabilities & PPBUS_HAS_DMA) {
-		ppbus_dma_free(self->dv_parent, &(lpt->sc_inbuf),
+		ppbus_dma_free(device_parent(self), &(lpt->sc_inbuf),
 			&(lpt->sc_in_baddr), BUFSIZE);
-		ppbus_dma_free(self->dv_parent, &(lpt->sc_outbuf),
+		ppbus_dma_free(device_parent(self), &(lpt->sc_outbuf),
 			&(lpt->sc_out_baddr), BUFSIZE);
 	} else {
 		free(lpt->sc_inbuf, M_DEVBUF);
@@ -236,7 +236,7 @@ lpt_request_ppbus(struct lpt_softc * lpt, int how)
 	struct device * dev = (struct device *) lpt;
 	int error;
 
-	error = ppbus_request_bus(dev->dv_parent, dev, how, (hz));
+	error = ppbus_request_bus(device_parent(dev), dev, how, (hz));
 	if (!(error)) {
 		lpt->sc_state |= HAVEBUS;
 	}
@@ -256,7 +256,7 @@ lpt_release_ppbus(struct lpt_softc * lpt, int how)
 	int error;
 
 	if(lpt->sc_state & HAVEBUS) {
-		error = ppbus_release_bus(dev->dv_parent, dev, how, (hz));
+		error = ppbus_release_bus(device_parent(dev), dev, how, (hz));
 		if(!(error))
 			lpt->sc_state &= ~HAVEBUS;
 		else
@@ -426,7 +426,7 @@ lptopen(dev_t dev_id, int flags, int fmt, struct lwp *l)
 
 	lpt = (struct lpt_softc *) dev;
 
-	ppbus = dev->dv_parent;
+	ppbus = device_parent(dev);
 	ppbus_dev = &(lpt->ppbus_dev);
 
 	/* Request the ppbus */
@@ -533,13 +533,13 @@ lptread(dev_t dev_id, struct uio *uio, int ioflag)
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to read using device which does "
 			"not own the bus(%s).\n", __func__, dev->dv_xname,
-			dev->dv_parent->dv_xname));
+			device_parent(dev)->dv_xname));
 		return (ENODEV);
 	}
 
 	sc->sc_state &= ~INTERRUPTED;
 	while (uio->uio_resid) {
-		error = ppbus_read(dev->dv_parent, sc->sc_outbuf,
+		error = ppbus_read(device_parent(dev), sc->sc_outbuf,
 			min(BUFSIZE, uio->uio_resid), 0, &len);
 
 		/* If error or no more data, stop */
@@ -576,7 +576,7 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to write using device which does "
 			"not own the bus(%s).\n", __func__, dev->dv_xname,
-			dev->dv_parent->dv_xname));
+			device_parent(dev)->dv_xname));
 		return EINVAL;
 	}
 
@@ -591,7 +591,7 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 		if (error)
 			break;
 
-		error = ppbus_write(dev->dv_parent, sc->sc_inbuf, n, ioflag,
+		error = ppbus_write(device_parent(dev), sc->sc_inbuf, n, ioflag,
 			&cnt);
 		if (error) {
 			if (error != EWOULDBLOCK)
@@ -618,13 +618,13 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to perform ioctl on device which "
 			"does not own the bus(%s).\n", __func__, dev->dv_xname,
-			dev->dv_parent->dv_xname));
+			device_parent(dev)->dv_xname));
 		return EBUSY;
 	}
 
 	switch (cmd) {
 	case LPTGMODE:
-        	switch (ppbus_get_mode(dev->dv_parent)) {
+        	switch (ppbus_get_mode(device_parent(dev))) {
 		case PPBUS_COMPATIBLE:
 			val = mode_standard;
 			break;
@@ -678,7 +678,7 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		}
 
 		if (!error)
-			error = ppbus_set_mode(dev->dv_parent, val, 0);
+			error = ppbus_set_mode(device_parent(dev), val, 0);
 
 		break;
 
@@ -686,21 +686,21 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		fl = 0;
 
 		/* DMA */
-		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
+		error = ppbus_read_ivar(device_parent(dev), PPBUS_IVAR_DMA, &val);
 		if (error)
 			break;
 		if (val)
 			fl |= LPT_DMA;
 
 		/* IEEE mode negotiation */
-		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
+		error = ppbus_read_ivar(device_parent(dev), PPBUS_IVAR_IEEE, &val);
 		if (error)
 			break;
 		if (val)
 			fl |= LPT_IEEE;
 
 		/* interrupts */
-		error = ppbus_read_ivar(dev->dv_parent, PPBUS_IVAR_INTR, &val);
+		error = ppbus_read_ivar(device_parent(dev), PPBUS_IVAR_INTR, &val);
 		if (error)
 			break;
 		if (val)
@@ -717,19 +717,19 @@ lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct lwp *l)
 
 		/* DMA */
 		val = (fl & LPT_DMA);
-		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_DMA, &val);
+		error = ppbus_write_ivar(device_parent(dev), PPBUS_IVAR_DMA, &val);
 		if (error)
 			break;
 
 		/* IEEE mode negotiation */
 		val = (fl & LPT_IEEE);
-		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_IEEE, &val);
+		error = ppbus_write_ivar(device_parent(dev), PPBUS_IVAR_IEEE, &val);
 		if (error)
 			break;
 
 		/* interrupts */
 		val = (fl & LPT_INTR);
-		error = ppbus_write_ivar(dev->dv_parent, PPBUS_IVAR_INTR, &val);
+		error = ppbus_write_ivar(device_parent(dev), PPBUS_IVAR_INTR, &val);
 		if (error)
 			break;
 

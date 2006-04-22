@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.19 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.19.6.1 2006/04/22 11:38:12 simonb Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19.6.1 2006/04/22 11:38:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19 2005/12/11 12:19:50 christos Exp
 #ifdef _KERNEL_OPT
 #include "opt_coda_compat.h"
 #endif
+
+/*
+ * Isize and Osize are the sizes of the input and output arguments.
+ * SEMI-INVARIANT: name##_size (e.g. coda_readlink_size) is the max of
+ * the input and output.  This invariant is not well maintained, but
+ * should be true after ALLOC_*.  Isize is modified after allocation
+ * by STRCPY below - this is in general unsafe and needs fixing.
+ */
 
 #define DECL_NO_IN(name) 				\
     struct coda_in_hdr *inp;				\
@@ -98,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19 2005/12/11 12:19:50 christos Exp
     bcopy(name, (char *)inp + (int)inp->struc, len); \
     ((char*)inp + (int)inp->struc)[len++] = 0; \
     Isize += len
+/* XXX verify that Isize has not overrun available storage */
 
 #ifdef CODA_COMPAT_5
 
@@ -107,6 +116,8 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19 2005/12/11 12:19:50 christos Exp
           (in)->pgid = p ? p->p_pgid : -1; \
           (in)->sid = (p && p->p_session && p->p_session->s_leader) ? \
 		(p->p_session->s_leader->p_pid) : -1; \
+	  KASSERT(cred != NULL); \
+	  KASSERT(cred != FSCRED); \
           if (ident != NOCRED) {                              \
 	      (in)->cred.cr_uid = ident->cr_uid;              \
 	      (in)->cred.cr_groupid = ident->cr_gid;          \
@@ -122,6 +133,8 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19 2005/12/11 12:19:50 christos Exp
 	  (in)->opcode = (op); 			\
 	  (in)->pid = p ? p->p_pid : -1;        \
           (in)->pgid = p ? p->p_pgid : -1;	\
+	  KASSERT(cred != NULL); \
+	  KASSERT(cred != FSCRED); \
           if (ident != NOCRED) {                \
 	      (in)->uid = ident->cr_uid;        \
           } else {                              \
@@ -129,6 +142,9 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19 2005/12/11 12:19:50 christos Exp
           }                                                   \
 
 #endif
+
+#define INIT_IN_L(in, op, ident, l)		\
+	INIT_IN(in, op, ident, (l ? l->l_proc : NULL))
 
 #define	CNV_OFLAG(to, from) 				\
     do { 						\
@@ -215,12 +231,13 @@ venus_open(void *mdp, CodaFid *fid, int flag,
     ALLOC(coda_open);			/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_OPEN, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_OPEN, cred, l);
     inp->Fid = *fid;
     CNV_OFLAG(cflag, flag);
     inp->flags = cflag;
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
+    KASSERT(outp != NULL);
     if (!error) {
 	*dev =  outp->dev;
 	*inode = outp->inode;
@@ -238,7 +255,7 @@ venus_close(void *mdp, CodaFid *fid, int flag,
     DECL_NO_OUT(coda_close);		/* sets Isize & Osize */
     ALLOC_NO_OUT(coda_close);		/* sets inp & outp */
 
-    INIT_IN(&inp->ih, CODA_CLOSE, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_CLOSE, cred, l);
     inp->Fid = *fid;
     CNV_OFLAG(cflag, flag);
     inp->flags = cflag;
@@ -279,7 +296,7 @@ venus_ioctl(void *mdp, CodaFid *fid,
     coda_ioctl_size = VC_MAXMSGSIZE;
     ALLOC(coda_ioctl);			/* sets inp & outp */
 
-    INIT_IN(&inp->ih, CODA_IOCTL, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_IOCTL, cred, l);
     inp->Fid = *fid;
 
     /* command was mutated by increasing its size field to reflect the
@@ -290,8 +307,10 @@ venus_ioctl(void *mdp, CodaFid *fid,
     tmp = ((com >> 16) & IOCPARM_MASK) - sizeof (char *) - sizeof (int);
     inp->cmd |= (tmp & IOCPARM_MASK) <<	16;
 
-    if (iap->vi.in_size < 0 || iap->vi.in_size > VC_MAXMSGSIZE)
+    if (iap->vi.in_size < 0 || iap->vi.in_size > VC_MAXMSGSIZE) {
+	CODA_FREE(inp, coda_ioctl_size);
 	return (EINVAL);
+    }
 
     inp->rwflag = flag;
     inp->len = iap->vi.in_size;
@@ -330,7 +349,7 @@ venus_getattr(void *mdp, CodaFid *fid,
     ALLOC(coda_getattr);			/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_GETATTR, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_GETATTR, cred, l);
     inp->Fid = *fid;
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
@@ -350,7 +369,7 @@ venus_setattr(void *mdp, CodaFid *fid, struct vattr *vap,
     ALLOC_NO_OUT(coda_setattr);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_SETATTR, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_SETATTR, cred, l);
     inp->Fid = *fid;
     CNV_V2VV_ATTR(&inp->attr, vap);
 
@@ -368,7 +387,7 @@ venus_access(void *mdp, CodaFid *fid, int mode,
     ALLOC_NO_OUT(coda_access);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_ACCESS, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_ACCESS, cred, l);
     inp->Fid = *fid;
     inp->flags = mode;
 
@@ -384,21 +403,53 @@ venus_readlink(void *mdp, CodaFid *fid,
 /*out*/	char **str, int *len)
 {
     DECL(coda_readlink);			/* sets Isize & Osize */
+    /* XXX coda_readlink_size should not be set here */
     coda_readlink_size += CODA_MAXPATHLEN;
+    Osize += CODA_MAXPATHLEN;
     ALLOC(coda_readlink);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_READLINK, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_READLINK, cred, l);
     inp->Fid = *fid;
 
-    Osize += CODA_MAXPATHLEN;
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
+    KASSERT(outp != NULL);
+    if (error != 0)
+	    goto out;
+
+    /* Check count for reasonableness */
+    if (outp->count <= 0 || outp->count > CODA_MAXPATHLEN) {
+	    printf("venus_readlink: bad count %d\n", outp->count);
+	    error = EINVAL;
+	    goto out;
+    }
+
+    /*
+     * Check data pointer for reasonableness.  It must point after
+     * itself, and within the allocated region.
+     */
+    if ((intptr_t) outp->data < sizeof(struct coda_readlink_out) ) {
+	    printf("venus_readlink: data pointer %lld too low\n",
+		   (long long)((intptr_t) outp->data));
+	    error = EINVAL;
+	    goto out;
+    }
+    
+    if ((intptr_t) outp->data + outp->count >
+	sizeof(struct coda_readlink_out) + CODA_MAXPATHLEN) {
+	    printf("venus_readlink: data pointer %lld too high\n",
+		   (long long)((intptr_t) outp->data));
+	    error = EINVAL;
+	    goto out;
+    }
+
     if (!error) {
 	    CODA_ALLOC(*str, char *, outp->count);
 	    *len = outp->count;
 	    bcopy((char *)outp + (int)(long)outp->data, *str, *len);
     }
 
+out:
     CODA_FREE(inp, coda_readlink_size);
     return error;
 }
@@ -411,7 +462,7 @@ venus_fsync(void *mdp, CodaFid *fid,
     ALLOC_NO_OUT(coda_fsync);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_FSYNC, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_FSYNC, cred, l);
     inp->Fid = *fid;
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
@@ -431,7 +482,7 @@ venus_lookup(void *mdp, CodaFid *fid,
     ALLOC(coda_lookup);			/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_LOOKUP, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_LOOKUP, cred, l);
     inp->Fid = *fid;
 
     /* NOTE:
@@ -445,9 +496,11 @@ venus_lookup(void *mdp, CodaFid *fid,
      */
     inp->name = Isize;
     inp->flags = CLU_CASE_SENSITIVE;	/* doesn't really matter for BSD */
+    /* This is safe because we preallocated len+1 extra. */
     STRCPY(name, nm, len);		/* increments Isize */
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
+    KASSERT(outp != NULL);
     if (!error) {
 	*VFid = outp->Fid;
 	*vtype = outp->vtype;
@@ -468,7 +521,7 @@ venus_create(void *mdp, CodaFid *fid,
     ALLOC(coda_create);			/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_CREATE, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_CREATE, cred, l);
     inp->Fid = *fid;
     inp->excl = exclusive ? C_O_EXCL : 0;
     inp->mode = mode<<6;
@@ -478,6 +531,7 @@ venus_create(void *mdp, CodaFid *fid,
     STRCPY(name, nm, len);		/* increments Isize */
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
+    KASSERT(outp != NULL);
     if (!error) {
 	*VFid = outp->Fid;
 	CNV_VV2V_ATTR(attr, &outp->attr);
@@ -497,7 +551,7 @@ venus_remove(void *mdp, CodaFid *fid,
     ALLOC_NO_OUT(coda_remove);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_REMOVE, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_REMOVE, cred, l);
     inp->Fid = *fid;
 
     inp->name = Isize;
@@ -519,7 +573,7 @@ venus_link(void *mdp, CodaFid *fid, CodaFid *tfid,
     ALLOC_NO_OUT(coda_link);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_LINK, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_LINK, cred, l);
     inp->sourceFid = *fid;
     inp->destFid = *tfid;
 
@@ -542,7 +596,7 @@ venus_rename(void *mdp, CodaFid *fid, CodaFid *tfid,
     ALLOC_NO_OUT(coda_rename);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_RENAME, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_RENAME, cred, l);
     inp->sourceFid = *fid;
     inp->destFid = *tfid;
 
@@ -569,7 +623,7 @@ venus_mkdir(void *mdp, CodaFid *fid,
     ALLOC(coda_mkdir);			/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_MKDIR, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_MKDIR, cred, l);
     inp->Fid = *fid;
     CNV_V2VV_ATTR(&inp->attr, va);
 
@@ -577,6 +631,7 @@ venus_mkdir(void *mdp, CodaFid *fid,
     STRCPY(name, nm, len);		/* increments Isize */
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
+    KASSERT(outp != NULL);
     if (!error) {
 	*VFid = outp->Fid;
 	CNV_VV2V_ATTR(ova, &outp->attr);
@@ -596,7 +651,7 @@ venus_rmdir(void *mdp, CodaFid *fid,
     ALLOC_NO_OUT(coda_rmdir);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_RMDIR, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_RMDIR, cred, l);
     inp->Fid = *fid;
 
     inp->name = Isize;
@@ -618,7 +673,7 @@ venus_symlink(void *mdp, CodaFid *fid,
     ALLOC_NO_OUT(coda_symlink);		/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_SYMLINK, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_SYMLINK, cred, l);
     inp->Fid = *fid;
     CNV_V2VV_ATTR(&inp->attr, va);
 
@@ -645,13 +700,14 @@ venus_readdir(void *mdp, CodaFid *fid,
     ALLOC(coda_readdir);			/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_READDIR, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_READDIR, cred, l);
     inp->Fid = *fid;
     inp->count = count;
     inp->offset = offset;
 
     Osize = VC_MAXMSGSIZE;
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
+    KASSERT(outp != NULL);
     if (!error) {
 	bcopy((char *)outp + (int)(long)outp->data, buffer, outp->size);
 	*len = outp->size;
@@ -669,9 +725,10 @@ venus_statfs(void *mdp, struct ucred *cred, struct lwp *l,
     ALLOC(coda_statfs);			/* sets inp & outp */
 
     /* send the open to venus. */
-    INIT_IN(&inp->ih, CODA_STATFS, cred, l->l_proc);
+    INIT_IN_L(&inp->ih, CODA_STATFS, cred, l);
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
+    KASSERT(outp != NULL);
     if (!error) {
         *fsp = outp->stat;
     }
@@ -693,6 +750,7 @@ venus_fhtovp(void *mdp, CodaFid *fid,
     inp->Fid = *fid;
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
+    KASSERT(outp != NULL);
     if (!error) {
 	*VFid = outp->Fid;
 	*vtype = outp->vtype;

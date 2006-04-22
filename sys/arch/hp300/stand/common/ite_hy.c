@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_hy.c,v 1.6 2006/01/28 12:00:57 tsutsui Exp $	*/
+/*	$NetBSD: ite_hy.c,v 1.6.4.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -327,12 +327,12 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
 		dstBit = dx & 0x1f;
 
 		while (h--) {
-			getandputrop(psrc, srcBit, dstBit, w, pdst, func)
+			getandputrop(psrc, srcBit, dstBit, w, pdst, func);
 		        pdst += width;
 			psrc += width;
 		}
 	} else {
-		maskbits(dx, w, startmask, endmask, nlMiddle)
+		maskbits(dx, w, startmask, endmask, nlMiddle);
 		if (startmask)
 			nstart = 32 - (dx & 0x1f);
 		else
@@ -354,7 +354,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
 
 			if (startmask) {
 				getandputrop(psrc, (sx & 0x1f),
-				    (dx & 0x1f), nstart, pdst, func)
+				    (dx & 0x1f), nstart, pdst, func);
 				pdst++;
 				if (srcStartOver)
 					psrc++;
@@ -370,7 +370,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
 			} else {
 				nl = nlMiddle + 1;
 				while (--nl) {
-					getunalignedword(psrc, xoffSrc, tmpSrc)
+					getunalignedword(psrc, xoffSrc, tmpSrc);
 					DoRop(*pdst, func, tmpSrc, *pdst);
 					pdst++;
 					psrc++;

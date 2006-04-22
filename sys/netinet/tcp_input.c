@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.238.2.1 2006/02/04 14:18:52 simonb Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.238.2.2 2006/04/22 11:40:10 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.238.2.1 2006/02/04 14:18:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.238.2.2 2006/04/22 11:40:10 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1292,6 +1292,7 @@ findpcb:
 			m_freem(in6p->in6p_options);
 			in6p->in6p_options = 0;
 		}
+		KASSERT(ip6 != NULL);
 		ip6_savecontrol(in6p, &in6p->in6p_options, ip6, m);
 	}
 #endif
@@ -2430,8 +2431,8 @@ step6:
 	 * Don't look at window if no ACK: TAC's send garbage on first SYN.
 	 */
 	if ((tiflags & TH_ACK) && (SEQ_LT(tp->snd_wl1, th->th_seq) ||
-	    (tp->snd_wl1 == th->th_seq && SEQ_LT(tp->snd_wl2, th->th_ack)) ||
-	    (tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd))) {
+	    (tp->snd_wl1 == th->th_seq && (SEQ_LT(tp->snd_wl2, th->th_ack) ||
+	    (tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd))))) {
 		/* keep track of pure window updates */
 		if (tlen == 0 &&
 		    tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd)

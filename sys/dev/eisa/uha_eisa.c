@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.23 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.23.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.23 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.23.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -116,7 +116,7 @@ static void
 uha_eisa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
-	struct uha_softc *sc = (void *)self;
+	struct uha_softc *sc = device_private(self);
 	bus_space_tag_t iot = ea->ea_iot;
 	bus_dma_tag_t dmat = ea->ea_dmat;
 	bus_space_handle_t ioh;

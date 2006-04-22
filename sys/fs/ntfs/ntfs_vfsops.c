@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.36 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.36.6.1 2006/04/22 11:39:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.36 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.36.6.1 2006/04/22 11:39:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ ntfs_mountroot()
 	int error;
 	struct ntfs_args args;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	if ((error = vfs_rootmountalloc(MOUNT_NTFS, "root_device", &mp))) {
@@ -409,6 +409,8 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	int error, ronly, i;
 	struct vnode *vp;
 
+	ntmp = NULL;
+
 	/*
 	 * Flush out any old buffers remaining from a previous use.
 	 */
@@ -572,6 +574,14 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
+
+	if (error) {
+		if (ntmp) {
+			if (ntmp->ntm_ad)
+				free(ntmp->ntm_ad, M_NTFSMNT);
+			free(ntmp, M_NTFSMNT);
+		}
+	}
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.44 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: mfb.c,v 1.44.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.44 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.44.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +150,8 @@ static const struct wsscreen_list mfb_screenlist = {
 	sizeof(_mfb_scrlist) / sizeof(struct wsscreen_descr *), _mfb_scrlist
 };
 
-static int	mfbioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	mfbmmap(void *, off_t, int);
+static int	mfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	mfbmmap(void *, void *, off_t, int);
 
 static int	mfb_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -213,10 +213,7 @@ static const u_int8_t flip[256] = {
 };
 
 static int
-mfbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mfbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -227,11 +224,9 @@ mfbmatch(parent, match, aux)
 }
 
 static void
-mfbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mfbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mfb_softc *sc = (struct mfb_softc *)self;
+	struct mfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
@@ -279,8 +274,7 @@ mfbattach(parent, self, aux)
 }
 
 static void
-mfb_common_init(ri)
-	struct rasops_info *ri;
+mfb_common_init(struct rasops_info *ri)
 {
 	caddr_t base;
 	int cookie;
@@ -328,12 +322,7 @@ mfb_common_init(ri)
 }
 
 static int
-mfbioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+mfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct mfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -410,10 +399,7 @@ mfbioctl(v, cmd, data, flag, l)
 }
 
 static paddr_t
-mfbmmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+mfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct mfb_softc *sc = v;
 
@@ -423,12 +409,8 @@ mfbmmap(v, offset, prot)
 }
 
 static int
-mfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+mfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct mfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -447,9 +429,7 @@ mfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-mfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+mfb_free_screen(void *v, void *cookie)
 {
 	struct mfb_softc *sc = v;
 
@@ -460,20 +440,15 @@ mfb_free_screen(v, cookie)
 }
 
 static int
-mfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+mfb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 
 	return (0);
 }
 
 /* EXPORT */ int
-mfb_cnattach(addr)
-	tc_addr_t addr;
+mfb_cnattach(tc_addr_t addr)
 {
 	struct rasops_info *ri;
 	long defattr;
@@ -488,8 +463,7 @@ mfb_cnattach(addr)
 }
 
 static int
-mfbintr(arg)
-	void *arg;
+mfbintr(void *arg)
 {
 	struct mfb_softc *sc = arg;
 	caddr_t base, vdac, curs;
@@ -583,8 +557,7 @@ mfbintr(arg)
 }
 
 static void
-mfbhwinit(mfbbase)
-	caddr_t mfbbase;
+mfbhwinit(caddr_t mfbbase)
 {
 	caddr_t vdac, curs;
 	int i;
@@ -630,9 +603,7 @@ mfbhwinit(mfbbase)
 }
 
 static int
-set_cursor(sc, p)
-	struct mfb_softc *sc;
-	struct wsdisplay_cursor *p;
+set_cursor(struct mfb_softc *sc, struct wsdisplay_cursor *p)
 {
 #define	cc (&sc->sc_cursor)
 	u_int v, count = 0, icount = 0, index = 0;
@@ -687,17 +658,13 @@ set_cursor(sc, p)
 }
 
 static int
-get_cursor(sc, p)
-	struct mfb_softc *sc;
-	struct wsdisplay_cursor *p;
+get_cursor(struct mfb_softc *sc, struct wsdisplay_cursor *p)
 {
 	return (EPASSTHROUGH); /* XXX */
 }
 
 static void
-set_curpos(sc, curpos)
-	struct mfb_softc *sc;
-	struct wsdisplay_curpos *curpos;
+set_curpos(struct mfb_softc *sc, struct wsdisplay_curpos *curpos)
 {
 	struct rasops_info *ri = sc->sc_ri;
 	int x = curpos->x, y = curpos->y;

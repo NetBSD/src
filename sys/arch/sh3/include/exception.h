@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.h,v 1.7 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: exception.h,v 1.7.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -170,9 +170,9 @@
 
 #ifndef _LOCORE
 #if defined(SH3) && defined(SH4)
-extern u_int32_t __sh_TRA;
-extern u_int32_t __sh_EXPEVT;
-extern u_int32_t __sh_INTEVT;
+extern uint32_t __sh_TRA;
+extern uint32_t __sh_EXPEVT;
+extern uint32_t __sh_INTEVT;
 #endif /* SH3 && SH4 */
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.21 2005/12/07 09:10:12 tsutsui Exp $
+# $NetBSD: NULL,v 1.21.6.1 2006/04/22 11:37:15 simonb Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -305,17 +305,17 @@ a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 #uk*	at scsibus? target ? lun ?	# scsi unknown
 
 #pseudo-device	loop			# loopback network interface
-#pseudo-device	sl		1	# SLIP network interfaces
-#pseudo-device	ppp		1	# PPP network interfaces
-#pseudo-device	tun		1	# network tunnel line discipline
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	bpfilter	16	# Berkeley packet filter
+#pseudo-device	sl			# SLIP network interfaces
+#pseudo-device	ppp			# PPP network interfaces
+#pseudo-device	tun			# network tunnel line discipline
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP Filter package
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
 
-#pseudo-device	vnd		4	# vnode pseudo-disks
+#pseudo-device	vnd			# vnode pseudo-disks
 #pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 

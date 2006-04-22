@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.16 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.16.6.1 2006/04/22 11:40:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.16 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_input.c,v 1.16.6.1 2006/04/22 11:40:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,8 @@ llcintr()
 			   		frame->llc_window = linkp->llcl_window;
 			   	else frame->llc_window = sapinfo->si_window;
 			 	frame->llc_fid = 9;			/* XXX */
-			  	frame->llc_class = sapinfo->si_class;
+			  	frame->llc_class =
+				    sapinfo ? sapinfo->si_class : 1;
 			 	frame->llc_ssap = frame->llc_dsap;
 			} else {
 			 	frame->llc_window = 0;
@@ -481,9 +482,10 @@ llc_ctlinput(prc, addr, info)
 
 	case PRC_CONNECT_REQUEST:
 		if (linkp == 0) {
-			if ((linkp = llc_newlink((struct sockaddr_dl *) nlrt->rt_gateway,
+			if (nlrt == NULL ||
+			    (linkp = llc_newlink((struct sockaddr_dl *) nlrt->rt_gateway,
 						 nlrt->rt_ifp, nlrt,
-						 pcb, llrt)) == 0)
+						 pcb, llrt)) == NULL)
 				return (0);
 			((struct npaidbentry *)llrt->rt_llinfo)->np_link = linkp;
 			i = splnet();

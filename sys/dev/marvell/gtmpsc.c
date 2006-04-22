@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.14 2005/12/24 20:27:41 perry Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.14.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.14 2005/12/24 20:27:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.14.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include "opt_kgdb.h"
 
@@ -421,7 +421,7 @@ gtmpsc_loadchannelregs(struct gtmpsc_softc *sc)
 STATIC int
 gtmpscmatch(struct device *parent, struct cfdata *self, void *aux)
 {
-	struct gt_softc *gt = (struct gt_softc *) parent;
+	struct gt_softc *gt = device_private(parent);
 	struct gt_attach_args *ga = aux;
 
 	return GT_MPSCOK(gt, ga, &gtmpsc_cd);
@@ -431,8 +431,8 @@ STATIC void
 gtmpscattach(struct device *parent, struct device *self, void *aux)
 {
 	struct gt_attach_args *ga = aux;
-	struct gt_softc *gt = (struct gt_softc *) parent;
-	struct gtmpsc_softc *sc = (struct gtmpsc_softc *) self;
+	struct gt_softc *gt = device_private(parent);
+	struct gtmpsc_softc *sc = device_private(self);
 	gtmpsc_poll_sdma_t *vmps;
 	gtmpsc_poll_sdma_t *pmps;
 	struct tty *tp;
@@ -527,7 +527,7 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	if (cn_tab == &gtmpsc_consdev &&
 	    cn_tab->cn_dev == makedev(0, sc->gtmpsc_unit)) {
 		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&gtmpsc_cdevsw),
-		    sc->gtmpsc_dev.dv_unit);
+		    device_unit(&sc->gtmpsc_dev));
 		is_console = 1;
 	}
 

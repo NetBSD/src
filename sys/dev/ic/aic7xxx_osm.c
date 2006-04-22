@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.20 2005/12/05 18:29:45 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.20.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.20 2005/12/05 18:29:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.20.6.1 2006/04/22 11:38:54 simonb Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -55,8 +55,8 @@ static int	ahc_poll(struct ahc_softc *ahc, int wait);
 static void	ahc_setup_data(struct ahc_softc *ahc,
 			       struct scsipi_xfer *xs, struct scb *scb);
 static void	ahc_set_recoveryscb(struct ahc_softc *ahc, struct scb *scb);
-static int	ahc_ioctl(struct scsipi_channel *channel, u_long cmd, caddr_t addr, int flag,
-			  struct proc *p);
+static int	ahc_ioctl(struct scsipi_channel *channel, u_long cmd,
+			  caddr_t addr, int flag, struct proc *p);
 
 
 
@@ -74,7 +74,7 @@ ahc_attach(struct ahc_softc *ahc)
 	for (i = 0; i < AHC_NUM_TARGETS; i++)
 		TAILQ_INIT(&ahc->untagged_queues[i]);
 
-        ahc_lock(ahc, &s);
+	ahc_lock(ahc, &s);
 
 	ahc->sc_adapter.adapt_dev = &ahc->sc_dev;
 	ahc->sc_adapter.adapt_nchannels = (ahc->features & AHC_TWIN) ? 2 : 1;
@@ -87,11 +87,11 @@ ahc_attach(struct ahc_softc *ahc)
 	ahc->sc_adapter.adapt_request = ahc_action;
 
 	ahc->sc_channel.chan_adapter = &ahc->sc_adapter;
-        ahc->sc_channel.chan_bustype = &scsi_bustype;
-        ahc->sc_channel.chan_channel = 0;
-        ahc->sc_channel.chan_ntargets = (ahc->features & AHC_WIDE) ? 16 : 8;
-        ahc->sc_channel.chan_nluns = 8 /*AHC_NUM_LUNS*/;
-        ahc->sc_channel.chan_id = ahc->our_id;
+	ahc->sc_channel.chan_bustype = &scsi_bustype;
+	ahc->sc_channel.chan_channel = 0;
+	ahc->sc_channel.chan_ntargets = (ahc->features & AHC_WIDE) ? 16 : 8;
+	ahc->sc_channel.chan_nluns = 8 /*AHC_NUM_LUNS*/;
+	ahc->sc_channel.chan_id = ahc->our_id;
 	ahc->sc_channel.chan_flags |= SCSIPI_CHAN_CANGROW;
 
 	if (ahc->features & AHC_TWIN) {
@@ -149,7 +149,7 @@ void
 ahc_done(struct ahc_softc *ahc, struct scb *scb)
 {
 	struct scsipi_xfer *xs;
-  	struct scsipi_periph *periph;
+	struct scsipi_periph *periph;
 	u_long s;
 
 	xs = scb->xs;
@@ -235,9 +235,9 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		scb->flags &= ~SCB_FREEZE_QUEUE;
 	}
 
-        ahc_lock(ahc, &s);
+	ahc_lock(ahc, &s);
 	ahc_free_scb(ahc, scb);
-        ahc_unlock(ahc, &s);
+	ahc_unlock(ahc, &s);
 
 	scsipi_done(xs);
 }
@@ -280,8 +280,8 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	  {
 		struct scsipi_xfer *xs;
 		struct scsipi_periph *periph;
-	        struct scb *scb;
-        	struct hardware_scb *hscb;
+		struct scb *scb;
+		struct hardware_scb *hscb;
 		u_int target_id;
 		u_int our_id;
 		u_long ss;
@@ -290,7 +290,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		periph = xs->xs_periph;
 
 		target_id = periph->periph_target;
-                our_id = ahc->our_id;
+		our_id = ahc->our_id;
 
 		SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("ahc_action\n"));
 
@@ -332,7 +332,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 #ifdef AHC_DEBUG
 		printf("%s: ADAPTER_REQ_GROW_RESOURCES\n", ahc_name(ahc));
 #endif
-  		chan->chan_adapter->adapt_openings += ahc_alloc_scbs(ahc);
+		chan->chan_adapter->adapt_openings += ahc_alloc_scbs(ahc);
 		if (ahc->scb_data->numscbs >= AHC_SCB_MAX_ALLOC)
 			chan->chan_flags &= ~SCSIPI_CHAN_CANGROW;
 		return;
@@ -344,7 +344,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		int target_id, our_id, first;
 		u_int width;
 		char channel;
-		u_int ppr_options, period, offset;
+		u_int ppr_options = 0, period, offset;
 		struct ahc_syncrate *syncrate;
 		uint16_t old_autoneg;
 
@@ -478,7 +478,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	ahc = (void *)xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
 
 	if (nsegments != 0) {
-		struct	  ahc_dma_seg *sg;
+		struct ahc_dma_seg *sg;
 		bus_dma_segment_t *end_seg;
 		int op;
 
@@ -555,7 +555,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		scb->hscb->control |= ULTRAENB;
 
 	if ((tstate->discenable & mask) != 0)
-	    	scb->hscb->control |= DISCENB;
+		scb->hscb->control |= DISCENB;
 
 	if (xs->xs_tag_type)
 		scb->hscb->control |= xs->xs_tag_type;
@@ -687,7 +687,7 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 	if (xs->datalen) {
 		int error;
 
-                error = bus_dmamap_load(ahc->parent_dmat,
+		error = bus_dmamap_load(ahc->parent_dmat,
 					scb->dmamap, xs->data,
 					xs->datalen, NULL,
 					((xs->xs_control & XS_CTL_NOSLEEP) ?
@@ -695,17 +695,17 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 					BUS_DMA_STREAMING |
 					((xs->xs_control & XS_CTL_DATA_IN) ?
 					 BUS_DMA_READ : BUS_DMA_WRITE));
-                if (error) {
+		if (error) {
 #ifdef AHC_DEBUG
-                        printf("%s: in ahc_setup_data(): bus_dmamap_load() "
+			printf("%s: in ahc_setup_data(): bus_dmamap_load() "
 			       "= %d\n",
 			       ahc_name(ahc), error);
 #endif
-                        xs->error = XS_RESOURCE_SHORTAGE;
-                        scsipi_done(xs);
-                        return;
-                }
-                ahc_execute_scb(scb,
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
+			return;
+		}
+		ahc_execute_scb(scb,
 				scb->dmamap->dm_segs,
 				scb->dmamap->dm_nsegs);
 	} else {
@@ -841,7 +841,7 @@ bus_reset:
 
 				ahc_print_path(ahc, scb);
 				printf("Other SCB Timeout%s",
-			 	       (scb->flags & SCB_OTHERTCL_TIMEOUT) != 0
+				       (scb->flags & SCB_OTHERTCL_TIMEOUT) != 0
 				       ? " again\n" : "\n");
 				scb->flags |= SCB_OTHERTCL_TIMEOUT;
 				newtimeout = MAX(active_scb->xs->timeout,
@@ -886,7 +886,7 @@ bus_reset:
 				      2 * hz, ahc_timeout, active_scb);
 			ahc_unpause(ahc);
 		} else {
-			int	 disconnected;
+			int disconnected;
 
 			/* XXX Shouldn't panic.  Just punt instead? */
 			if ((scb->flags & SCB_TARGET_SCB) != 0)
@@ -998,15 +998,15 @@ void
 ahc_platform_set_tags(struct ahc_softc *ahc,
 		      struct ahc_devinfo *devinfo, int enable)
 {
-        struct ahc_tmode_tstate *tstate;
+	struct ahc_tmode_tstate *tstate;
 
-        ahc_fetch_transinfo(ahc, devinfo->channel, devinfo->our_scsiid,
-                            devinfo->target, &tstate);
+	ahc_fetch_transinfo(ahc, devinfo->channel, devinfo->our_scsiid,
+			    devinfo->target, &tstate);
 
-        if (enable)
-                tstate->tagenable |= devinfo->target_mask;
+	if (enable)
+		tstate->tagenable |= devinfo->target_mask;
 	else
-	  	tstate->tagenable &= ~devinfo->target_mask;
+		tstate->tagenable &= ~devinfo->target_mask;
 }
 
 int

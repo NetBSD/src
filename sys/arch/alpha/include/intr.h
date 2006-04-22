@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.54 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: intr.h,v 1.54.6.1 2006/04/22 11:37:11 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ extern volatile unsigned long ssir;
 /* IPL-lowering/restoring macros */
 void	spl0(void);
 
-static inline void
+static __inline void
 splx(int s)
 {
 	if (s == ALPHA_PSL_IPL_0 && ssir != 0)
@@ -171,7 +171,7 @@ splx(int s)
 #define	spllowersoftclock()	((void)alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT))
 
 /* IPL-raising functions/macros */
-static inline int
+static __inline int
 _splraise(int s)
 {
 	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.6 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.6.6.1 2006/04/22 11:37:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.6 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.6.6.1 2006/04/22 11:37:09 simonb Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -81,6 +81,9 @@ extern int want_resched; /* XXX should be in <machine/cpu.h> */
 
 /*
  * Find the highest-priority runnable process and switch to it.
+ *
+ * If l1 is NULL, we're switching away from a dying process.  We hope it's
+ * safe to run on its stack until the switch.
  */
 int
 cpu_switch(struct lwp *l1, struct lwp *newl)
@@ -89,6 +92,7 @@ cpu_switch(struct lwp *l1, struct lwp *newl)
 	struct prochd *q;
 	struct lwp *l2;
 	struct proc *p2;
+	struct switchframe *dummy;
 	/*
 	 * We enter here with interrupts blocked and sched_lock held.
 	 */
@@ -117,7 +121,8 @@ cpu_switch(struct lwp *l1, struct lwp *newl)
 #endif
 	if (l2 == l1)
 		return (0);
-	pmap_deactivate(l1);
+	if (l1 != NULL)
+		pmap_deactivate(l1);
 	pmap_activate(l2);
 
 	/* Check for Restartable Atomic Sequences. */
@@ -131,7 +136,8 @@ cpu_switch(struct lwp *l1, struct lwp *newl)
 			tf->tf_pc = (register_t) pc;
 	}
 
-	cpu_loswitch(&l1->l_addr->u_pcb.pcb_sf, l2->l_addr->u_pcb.pcb_sf);
+	cpu_loswitch(l1 ? &l1->l_addr->u_pcb.pcb_sf : &dummy,
+	    l2->l_addr->u_pcb.pcb_sf);
 	/* We only get back here after the other process has run. */
 	return (1);
 }

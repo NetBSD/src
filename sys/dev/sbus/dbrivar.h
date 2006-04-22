@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.3 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.3.6.1 2006/04/22 11:39:28 simonb Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -41,6 +41,8 @@
  *
  */
 
+#ifndef DBRI_VAR_H
+#define DBRI_VAR_H
 
 #define	DBRI_NUM_COMMANDS	64
 #define	DBRI_NUM_DESCRIPTORS	64
@@ -55,7 +57,7 @@ enum direction {
 
 /* DBRI DMA transmit descriptor */
 struct dbri_mem {
-	volatile u_int32_t	flags;
+	volatile uint32_t	flags;
 		#define TX_EOF	0x80000000	/* End of frame marker */
 		#define TX_BCNT(x)	((x&0x3fff)<<16)
 		#define TX_BINT	0x00008000	/* interrupt when EOF */
@@ -63,23 +65,23 @@ struct dbri_mem {
 		#define TX_IDLE	0x00002000	/* send idles after data */
 		#define TX_FCNT(x)	(x&0x1fff)
 		
-	volatile u_int32_t	ba;		/* tx/rx buffer address */
-	volatile u_int32_t	nda;		/* next descriptor address */
-	volatile u_int32_t	status;
+	volatile uint32_t	ba;		/* tx/rx buffer address */
+	volatile uint32_t	nda;		/* next descriptor address */
+	volatile uint32_t	status;
 		#define TS_OK		0x0001	/* transmission completed */
 		#define TS_ABORT	0x0004	/* transmission aborted */
 		#define TS_UNDERRUN	0x0008	/* DMA underrun */
 };
 
 struct dbri_pipe {
-	u_int32_t	sdp;		/* SDP command word */
+	uint32_t	sdp;		/* SDP command word */
 	enum direction	direction;
 	int		next;		/* next pipe in linked list */
 	int		prev;		/* previous pipe in linked list */
 	int		cycle;		/* offset of timeslot (bits) */
 	int		length;		/* length of timeslot (bits) */
 	int		desc;		/* index of active descriptor */
-	volatile u_int32_t	*prec;	/* pointer to received fixed data */
+	volatile uint32_t	*prec;	/* pointer to received fixed data */
 };
 
 struct dbri_desc {
@@ -95,7 +97,7 @@ struct dbri_desc {
 };
 
 struct dbri_dma {
-	volatile u_int32_t	command[DBRI_NUM_COMMANDS];
+	volatile uint32_t	command[DBRI_NUM_COMMANDS];
 	volatile int32_t	intr[DBRI_INT_BLOCKS];
 	struct dbri_mem		desc[DBRI_NUM_DESCRIPTORS];
 	bus_dmamap_t		dmamap;
@@ -110,7 +112,9 @@ struct dbri_softc {
 	bus_dma_tag_t	sc_dmat;
 	bus_dmamap_t	sc_dmamap;
 	bus_dma_segment_t sc_dmaseg;
-
+	
+	int		sc_have_powerctl;
+	int		sc_powerstate;
 	int		sc_burst;	/* DVMA burst size in effect */
 	
 	bus_addr_t	sc_dmabase;	/* VA of buffer we provide */
@@ -134,7 +138,7 @@ struct dbri_softc {
 	int		sc_latt, sc_ratt;
 	int		sc_ctl_mode;
 	
-	u_int32_t	sc_version;
+	uint32_t	sc_version;
 	int		sc_chi_pipe_in;
 	int		sc_chi_pipe_out;
 	int		sc_chi_bpf;
@@ -147,7 +151,7 @@ struct dbri_softc {
 };
 
 #define dbri_dma_off(member, elem)	\
-	((u_int32_t)(unsigned long)	\
+	((uint32_t)(unsigned long)	\
 	 (&(((struct dbri_dma *)0)->member[elem])))
 
 #if 1
@@ -163,3 +167,5 @@ struct dbri_softc {
 
 #define	DBRI_SDP_MODE(v)		((v) & (7 << 13))
 #define DBRI_PIPE(v)			((v) << 0)
+
+#endif /* DBRI_VAR_H */

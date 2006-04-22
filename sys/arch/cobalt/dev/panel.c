@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.8 2005/12/11 12:17:06 christos Exp $ */
+/* $NetBSD: panel.c,v 1.8.6.1 2006/04/22 11:37:21 simonb Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.8 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.8.6.1 2006/04/22 11:37:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.8 2005/12/11 12:17:06 christos Exp $");
 #include <dev/ic/hd44780var.h>
 #include <dev/ic/lcdkp_subr.h>
 
+#include "ioconf.h"
+
 #define PANEL_POLLRATE	(hz / 10)
+#define PANEL_REGION	0x20
 #define DATA_OFFSET	0x10
 
 struct panel_softc {
@@ -68,9 +71,10 @@ static void	panel_attach(struct device *, struct device *, void *);
 
 static void	panel_soft(void *);
 
-static u_int8_t	panel_cbt_kprread(bus_space_tag_t, bus_space_handle_t);
-static u_int8_t	panel_cbt_hdreadreg(struct hd44780_chip *, u_int32_t, u_int32_t);
-static void	panel_cbt_hdwritereg(struct hd44780_chip *, u_int32_t, u_int32_t, u_int8_t);
+static uint8_t	panel_cbt_kprread(bus_space_tag_t, bus_space_handle_t);
+static uint8_t	panel_cbt_hdreadreg(struct hd44780_chip *, uint32_t, uint32_t);
+static void	panel_cbt_hdwritereg(struct hd44780_chip *, uint32_t, uint32_t,
+    uint8_t);
 
 dev_type_open(panelopen);
 dev_type_close(panelclose);
@@ -84,25 +88,18 @@ const struct cdevsw panel_cdevsw = {
 	nostop, notty, panelpoll, nommap,
 };
 
-extern struct cfdriver panel_cd;
-
 CFATTACH_DECL(panel, sizeof(struct panel_softc),
     panel_match, panel_attach, NULL, NULL);
 
 static int
-panel_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+panel_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
 	return 1;
 }
 
 static void
-panel_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+panel_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct panel_softc *sc = (void *)self;
 	struct mainbus_attach_args *maa = aux;
@@ -117,9 +114,13 @@ panel_attach(parent, self, aux)
 	};
 
 	sc->sc_lcd.sc_iot = maa->ma_iot;
-	sc->sc_lcd.sc_ioir = maa->ma_ioh;
+	if (bus_space_map(sc->sc_lcd.sc_iot, maa->ma_addr, PANEL_REGION,
+	    0, &sc->sc_lcd.sc_ioir)) {
+		printf(": unable to map registers\n");
+		return;
+	}
 	bus_space_subregion(sc->sc_lcd.sc_iot, sc->sc_lcd.sc_ioir, DATA_OFFSET,
-			    1, &sc->sc_lcd.sc_iodr);
+	    1, &sc->sc_lcd.sc_iodr);
 
 	sc->sc_lcd.sc_dev_ok = 1;
 	sc->sc_lcd.sc_cols = 16;
@@ -146,22 +147,20 @@ panel_attach(parent, self, aux)
 	printf("\n");
 }
 
-static u_int8_t
-panel_cbt_kprread(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+static uint8_t
+panel_cbt_kprread(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
+
 	delay(HD_TIMEOUT_NORMAL);
 	return (bus_space_read_4(iot, ioh, 0x00) >> 24) & 0xff;
 }
 
 
 static void
-panel_cbt_hdwritereg(hd, en, rs, dat)
-	struct hd44780_chip *hd;
-	u_int32_t en, rs;
-	u_int8_t dat;
+panel_cbt_hdwritereg(struct hd44780_chip *hd, uint32_t en, uint32_t rs,
+    uint8_t dat)
 {
+
 	if (rs) 
 		bus_space_write_4(hd->sc_iot, hd->sc_iodr, 0x00, dat << 24);
 	else
@@ -169,47 +168,41 @@ panel_cbt_hdwritereg(hd, en, rs, dat)
 	delay(HD_TIMEOUT_NORMAL);
 }
 
-static u_int8_t
-panel_cbt_hdreadreg(hd, en, rs)
-	struct hd44780_chip *hd;
-	u_int32_t en, rs;
+static uint8_t
+panel_cbt_hdreadreg(struct hd44780_chip *hd, uint32_t en, uint32_t rs)
 {
+
 	delay(HD_TIMEOUT_NORMAL);
 	if (rs)
-		return (bus_space_read_4(hd->sc_iot, hd->sc_iodr, 0x00) >> 24) & 0xff;
+		return (bus_space_read_4(hd->sc_iot, hd->sc_iodr, 0x00) >> 24)
+		    & 0xff;
 	else
-		return (bus_space_read_4(hd->sc_iot, hd->sc_ioir, 0x00) >> 24) & 0xff;
+		return (bus_space_read_4(hd->sc_iot, hd->sc_ioir, 0x00) >> 24)
+		    & 0xff;
 }
 
 int
-panelopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+panelopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
-	return ((sc->sc_lcd.sc_dev_ok == 0) ? ENXIO : 0);
+
+	return (sc->sc_lcd.sc_dev_ok == 0) ? ENXIO : 0;
 }
 
 int
-panelclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+panelclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
+
 	selwakeup(&sc->sc_selq);
 	return 0;
 }
 
 int
-panelread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+panelread(dev_t dev, struct uio *uio, int flag)
 {
 	int error;
-	u_int8_t b;
+	uint8_t b;
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
 
 	if (uio->uio_resid < sizeof(b))
@@ -222,10 +215,7 @@ panelread(dev, uio, flag)
 }
 
 int
-panelwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+panelwrite(dev_t dev, struct uio *uio, int flag)
 {
 	int error;
 	struct hd44780_io io;
@@ -244,22 +234,15 @@ panelwrite(dev, uio, flag)
 }
 
 int
-panelioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+panelioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
+
 	return hd44780_ioctl_subr(&sc->sc_lcd, cmd, data);
 }
 
 int
-panelpoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+panelpoll(dev_t dev, int events, struct lwp *l)
 {
 	int revents = 0;
 
@@ -279,10 +262,10 @@ panelpoll(dev, events, l)
 }
 
 static void
-panel_soft(arg)
-	void *arg;
+panel_soft(void *arg)
 {
 	struct panel_softc *sc = arg;
+
 	if (lcdkp_scankey(&sc->sc_kp) != 0)
 		selwakeup(&sc->sc_selq);
 	else

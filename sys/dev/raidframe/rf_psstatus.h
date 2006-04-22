@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.h,v 1.12 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_psstatus.h,v 1.12.6.1 2006/04/22 11:39:28 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -122,7 +122,8 @@ struct RF_PSStatusHeader_s {
 #define RF_PSS_BUFFERWAIT      0x00000020	/* someone is waiting for a
 						 * buffer for this RU */
 
-int rf_ConfigurePSStatus(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
+int rf_ConfigurePSStatus(RF_ShutdownList_t **);
+void rf_InitPSStatus(RF_Raid_t *);
 RF_PSStatusHeader_t *rf_MakeParityStripeStatusTable(RF_Raid_t *);
 void rf_FreeParityStripeStatusTable(RF_Raid_t *, RF_PSStatusHeader_t *);
 RF_ReconParityStripeStatus_t *rf_LookupRUStatus(RF_Raid_t *, RF_PSStatusHeader_t *,

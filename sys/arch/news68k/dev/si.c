@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.17 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: si.c,v 1.17.6.1 2006/04/22 11:37:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.17 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.17.6.1 2006/04/22 11:37:45 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ si_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct si_softc *sc = (struct si_softc *)self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
-	struct cfdata *cf = self->dv_cfdata;
+	struct cfdata *cf = device_cfdata(self);
 	struct hb_attach_args *ha = aux;
 
 	ncr_sc->sc_regt = ha->ha_bust;

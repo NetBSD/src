@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_iomd.c,v 1.9 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: kbd_iomd.c,v 1.9.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_iomd.c,v 1.9 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_iomd.c,v 1.9.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,8 @@ kbd_iomd_attach(parent, self, aux)
 	if (!sc->sc_ih)
 		panic("%s: Cannot claim RX interrupt", sc->sc_device.dv_xname);
 
-	if (sc->sc_device.dv_unit == 0)
+	/* XXX device_unit() abuse */
+	if (device_unit(&sc->sc_device) == 0)
 		console_kbd = sc;
 }
 

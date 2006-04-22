@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 2003/06/23 13:06:56 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.11.34.1 2006/04/22 11:37:51 simonb Exp $
 
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -70,12 +70,11 @@ define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_BACK			offsetof(struct lwp, l_back)
 define	L_FORW			offsetof(struct lwp, l_forw)
+define	L_PRIORITY		offsetof(struct lwp, l_priority)
+define	L_PROC	 		offsetof(struct lwp, l_proc)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN 		offsetof(struct lwp, l_wchan)
-define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	P_VMSPACE		offsetof(struct proc, p_vmspace)
-define	P_FLAG			offsetof(struct proc, p_flag)
-define	P_PID			offsetof(struct proc, p_pid)
+define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	V_INTR			offsetof(struct uvmexp, intrs)
 

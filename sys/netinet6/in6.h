@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.51.4.1 2006/02/04 14:18:52 simonb Exp $	*/
+/*	$NetBSD: in6.h,v 1.51.4.2 2006/04/22 11:40:12 simonb Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -359,6 +359,9 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 	((IN6_IS_ADDR_LINKLOCAL(a)) ||	\
 	 (IN6_IS_ADDR_MC_LINKLOCAL(a)))
 
+#define	IN6_IS_SCOPE_EMBEDDABLE(__a)	\
+    (IN6_IS_SCOPE_LINKLOCAL(__a) || IN6_IS_ADDR_MC_INTFACELOCAL(__a))
+
 #define IFA6_IS_DEPRECATED(a) \
 	((a)->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME && \
 	 (u_int32_t)((time_second - (a)->ia6_updatetime)) > \
@@ -617,7 +620,7 @@ struct cmsghdr;
  *	NOTE: We expect the src and dst addresses to be 16-bit
  *	aligned!
  */
-static inline u_int16_t __attribute__((__unused__))
+static __inline u_int16_t __attribute__((__unused__))
 in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
     u_int32_t len, u_int32_t nxt)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.7 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.7.6.1 2006/04/22 11:37:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -137,6 +137,8 @@ typedef __greg32_t	__gregset32_t[_NGREG32];
 #define _REG32_EFL	16
 #define _REG32_UESP	17
 #define _REG32_SS	18
+
+#define _UC_MACHINE32_SP(uc)	((uc)->uc_mcontext.__gregs[_REG32_UESP])
 
 /*
  * Floating point register state

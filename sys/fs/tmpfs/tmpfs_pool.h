@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.h,v 1.4 2005/12/03 17:34:44 christos Exp $	*/
+/*	$NetBSD: tmpfs_pool.h,v 1.4.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -40,9 +40,6 @@
 #ifndef _FS_TMPFS_TMPFS_POOL_H_
 #define _FS_TMPFS_TMPFS_POOL_H_
 
-#if !defined(_KERNEL)
-#error not supposed to be exposed to userland.
-#endif
 
 /* --------------------------------------------------------------------- */
 
@@ -93,6 +90,7 @@ struct tmpfs_str_pool {
 };
 
 /* --------------------------------------------------------------------- */
+#ifdef _KERNEL
 
 /*
  * Convenience functions and macros to manipulate a tmpfs_pool.
@@ -115,5 +113,7 @@ void	tmpfs_str_pool_init(struct tmpfs_str_pool *, struct tmpfs_mount *);
 void	tmpfs_str_pool_destroy(struct tmpfs_str_pool *);
 char *	tmpfs_str_pool_get(struct tmpfs_str_pool *, size_t, int);
 void	tmpfs_str_pool_put(struct tmpfs_str_pool *, char *, size_t);
+
+#endif
 
 #endif /* _FS_TMPFS_TMPFS_POOL_H_ */

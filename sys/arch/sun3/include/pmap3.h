@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.40 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.40.6.1 2006/04/22 11:38:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ extern segsz_t pmap_wired_pages(pmap_t);
 /* Map a given physical region to a virtual region */
 extern vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);
 
-static inline void
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.69 2005/12/27 17:20:54 chs Exp $
+#	$NetBSD: files.macppc,v 1.69.6.1 2006/04/22 11:37:41 simonb Exp $
 #
 # macppc-specific configuration info
 
@@ -78,14 +78,15 @@ device uni_n: uni_n
 attach uni_n at mainbus
 file arch/macppc/dev/uni-n.c			uni_n
 
-# PCI bus support
-include "dev/pci/files.pci"
-
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
+include "dev/usb/files.usb"
 
-device ofb: wsemuldisplaydev, rasops8
+# PCI bus support
+include "dev/pci/files.pci"
+
+device ofb: wsemuldisplaydev, rasops8, vcons
 attach ofb at pci
 file arch/macppc/dev/ofb.c			ofb needs-flag
 
@@ -158,6 +159,10 @@ device ams: wsmousedev
 attach ams at adb
 file arch/macppc/dev/ams.c			ams
 
+device pbms: wsmousedev
+attach pbms at uhidbus
+file arch/macppc/dev/pbms.c			pbms
+
 device abtn
 attach abtn at adb
 file arch/macppc/dev/abtn.c			abtn
@@ -185,7 +190,6 @@ device macofcons: tty
 attach macofcons at pci
 file arch/macppc/dev/ofcons.c			macofcons needs-flag
 
-include "dev/usb/files.usb"
 include "dev/ieee1394/files.ieee1394"
 
 #
@@ -210,9 +214,6 @@ file arch/macppc/dev/ki2c.c			ki2c
 device snapper: audiobus, auconv, mulaw, aurateconv
 attach snapper at obio
 file arch/macppc/dev/snapper.c			snapper
-
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-powerpc-be-eabi.hal.o	ath
 
 include "arch/macppc/conf/majors.macppc"
 

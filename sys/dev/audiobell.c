@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.2 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.2.6.1 2006/04/22 11:38:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.2 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.2.6.1 2006/04/22 11:38:45 simonb Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -145,7 +145,7 @@ audiobell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
 	if (poll) return;
 
 	/* If not configured, we can't beep. */
-	if (audioopen(AUDIO_DEVICE | audio->dv_unit, FWRITE, 0, NULL) != 0)
+	if (audioopen(AUDIO_DEVICE | device_unit(audio), FWRITE, 0, NULL) != 0)
 		return;
 
 	buf = malloc(period * 8, M_TEMP, M_WAITOK);
@@ -158,13 +158,12 @@ audiobell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = 0;
 	auio.uio_resid = period * 8;
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&auio);
 
-	audiowrite(AUDIO_DEVICE | audio->dv_unit, &auio, 0);
+	audiowrite(AUDIO_DEVICE | device_unit(audio), &auio, 0);
 
 out:
 	if (buf != NULL) free(buf, M_TEMP);
-	audioclose(AUDIO_DEVICE | audio->dv_unit, FWRITE, 0, NULL);
+	audioclose(AUDIO_DEVICE | device_unit(audio), FWRITE, 0, NULL);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.17 2005/12/11 12:21:02 christos Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.17.6.1 2006/04/22 11:38:46 simonb Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.17 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.17.6.1 2006/04/22 11:38:46 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,18 +172,19 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	sc->sc_devnode = aa->aa_node;
 
-	printf(": ACPI Thermal Zone\n");
+	aprint_naive(": ACPI Thermal Zone\n");
+	aprint_normal(": ACPI Thermal Zone\n");
 
 	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TZP", &v);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to get polling interval; using default of",
+		aprint_verbose("%s: unable to get polling interval; using default of",
 		    sc->sc_dev.dv_xname);
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
 	} else {
 		sc->sc_zone.tzp = v;
-		printf("%s: polling interval is", sc->sc_dev.dv_xname);
+		aprint_verbose("%s: polling interval is", sc->sc_dev.dv_xname);
 	}
-	printf(" %d.%ds\n", sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
+	aprint_verbose(" %d.%ds\n", sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
 
 	/* XXX a value of 0 means "polling is not necessary" */
 	if (sc->sc_zone.tzp == 0)
@@ -197,7 +198,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
 	    ACPI_SYSTEM_NOTIFY, acpitz_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to install SYSTEM NOTIFY handler: %s\n",
+		aprint_error("%s: unable to install SYSTEM NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}

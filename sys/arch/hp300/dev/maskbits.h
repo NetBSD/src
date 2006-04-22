@@ -1,4 +1,4 @@
-/*	$NetBSD: maskbits.h,v 1.7 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: maskbits.h,v 1.7.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -52,40 +52,43 @@ and the number of whole longwords between the ends.
 
 */
 
-#define maskbits(x, w, startmask, endmask, nlw) \
-    startmask = starttab[(x)&0x1f]; \
-    endmask = endtab[((x)+(w)) & 0x1f]; \
-    if (startmask) \
-	nlw = (((w) - (32 - ((x)&0x1f))) >> 5); \
-    else \
-	nlw = (w) >> 5;
+#define maskbits(x, w, startmask, endmask, nlw)				\
+do {									\
+	startmask = starttab[(x) & 0x1f];				\
+	endmask = endtab[((x)+(w)) & 0x1f];				\
+	if (startmask)							\
+		nlw = (((w) - (32 - ((x)&0x1f))) >> 5);			\
+	else								\
+		nlw = (w) >> 5;						\
+} while (/* CONSTCOND */ 0)
 
-#define FASTGETBITS(psrc, x, w, dst) \
-    __asm ("bfextu %3{%1:%2},%0" \
-    : "=d" (dst) : "di" (x), "di" (w), "o" (*(char *)(psrc)))
+#define FASTGETBITS(psrc, x, w, dst)					\
+    __asm ("bfextu %3{%1:%2},%0"					\
+	: "=d" (dst) : "di" (x), "di" (w), "o" (*(char *)(psrc)))
 
-#define FASTPUTBITS(src, x, w, pdst) \
-    __asm ("bfins %3,%0{%1:%2}" \
-	 : "=o" (*(char *)(pdst)) \
-	 : "di" (x), "di" (w), "d" (src))
+#define FASTPUTBITS(src, x, w, pdst)					\
+    __asm ("bfins %3,%0{%1:%2}"						\
+	: "=o" (*(char *)(pdst))					\
+	: "di" (x), "di" (w), "d" (src))
 
-#define getandputrop(psrc, srcbit, dstbit, width, pdst, rop) \
-{ \
-  unsigned int _tmpsrc, _tmpdst; \
-  FASTGETBITS(pdst, dstbit, width, _tmpdst); \
-  FASTGETBITS(psrc, srcbit, width, _tmpsrc); \
-  DoRop(_tmpdst, rop, _tmpsrc, _tmpdst); \
-  FASTPUTBITS(_tmpdst, dstbit, width, pdst); \
-}
+#define getandputrop(psrc, srcbit, dstbit, width, pdst, rop)		\
+do {									\
+	unsigned int _tmpsrc, _tmpdst;					\
+	FASTGETBITS(pdst, dstbit, width, _tmpdst);			\
+	FASTGETBITS(psrc, srcbit, width, _tmpsrc);			\
+	DoRop(_tmpdst, rop, _tmpsrc, _tmpdst);				\
+	FASTPUTBITS(_tmpdst, dstbit, width, pdst);			\
+} while (/* CONSTCOND */ 0)
 
 #define getandputrop0(psrc, srcbit, width, pdst, rop) \
-    	getandputrop(psrc, srcbit, 0, width, pdst, rop)
+	getandputrop(psrc, srcbit, 0, width, pdst, rop)
 
-#define getunalignedword(psrc, x, dst) { \
-        int _tmp; \
-        FASTGETBITS(psrc, x, 32, _tmp); \
-        dst = _tmp; \
-}
+#define getunalignedword(psrc, x, dst)					\
+do {									\
+	int _tmp;							\
+	FASTGETBITS(psrc, x, 32, _tmp);					\
+	dst = _tmp;							\
+} while (/* CONSTCOND */ 0)
 
 #define fnCLEAR(src, dst)       (0)
 #define fnCOPY(src, dst)        (src)
@@ -93,20 +96,20 @@ and the number of whole longwords between the ends.
 #define fnCOPYINVERTED(src, dst)(~src)
 
 #define DoRop(result, alu, src, dst) \
-{ \
-    if (alu == RR_COPY) \
-        result = fnCOPY (src, dst); \
-    else \
-        switch (alu) \
-        { \
-          case RR_CLEAR: \
-            result = fnCLEAR (src, dst); \
-            break; \
-          case RR_XOR: \
-            result = fnXOR (src, dst); \
-            break; \
-          case RR_COPYINVERTED: \
-            result = fnCOPYINVERTED (src, dst); \
-            break; \
-        } \
-}
+do {									\
+	if (alu == RR_COPY)						\
+		result = fnCOPY (src, dst);				\
+	else {								\
+		switch (alu) {						\
+		case RR_CLEAR:						\
+			result = fnCLEAR (src, dst);			\
+			break;						\
+		case RR_XOR:						\
+			result = fnXOR (src, dst);			\
+			break;						\
+		case RR_COPYINVERTED:					\
+			result = fnCOPYINVERTED (src, dst);		\
+			break;						\
+		}							\
+	}								\
+} while (/* CONSTCOND */ 0)

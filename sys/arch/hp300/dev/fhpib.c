@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.30 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.30.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.30 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.30.6.1 2006/04/22 11:37:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,8 @@ fhpibattach(struct device *parent, struct device *self, void *aux)
 static void
 fhpibreset(struct hpibbus_softc *hs)
 {
-	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
+	struct fhpib_softc *sc =
+	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
 	struct fhpibdevice *hd = sc->sc_regs;
 
 	hd->hpib_cid = 0xFF;
@@ -240,7 +241,8 @@ fhpibifc(struct fhpibdevice *hd)
 static int
 fhpibsend(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 {
-	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
+	struct fhpib_softc *sc =
+	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
 	struct fhpibdevice *hd = sc->sc_regs;
 	int cnt = origcnt;
 	int timo;
@@ -301,7 +303,8 @@ senderr:
 static int
 fhpibrecv(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 {
-	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
+	struct fhpib_softc *sc =
+	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
 	struct fhpibdevice *hd = sc->sc_regs;
 	int cnt = origcnt;
 	int timo;
@@ -363,7 +366,8 @@ static void
 fhpibgo(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int count,
     int rw, int timo)
 {
-	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
+	struct fhpib_softc *sc =
+	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
 	struct fhpibdevice *hd = sc->sc_regs;
 	int i;
 	char *addr = ptr;
@@ -454,7 +458,8 @@ static void
 fhpibdmadone(void *arg)
 {
 	struct hpibbus_softc *hs = arg;
-	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
+	struct fhpib_softc *sc =
+	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
 	int s = splbio();
 
 	if (hs->sc_flags & HPIBF_IO) {
@@ -480,7 +485,8 @@ fhpibdmadone(void *arg)
 static void
 fhpibdone(struct hpibbus_softc *hs)
 {
-	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
+	struct fhpib_softc *sc =
+	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
 	struct fhpibdevice *hd = sc->sc_regs;
 	char *addr;
 	int cnt;
@@ -489,7 +495,8 @@ fhpibdone(struct hpibbus_softc *hs)
 	hs->sc_addr += cnt;
 	hs->sc_count -= cnt;
 #ifdef DEBUG
-	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == sc->sc_dev.dv_unit)
+	if ((fhpibdebug & FDB_DMA) &&
+	    fhpibdebugunit == device_unit(&sc->sc_dev))
 		printf("fhpibdone: addr %p cnt %d\n",
 		       hs->sc_addr, hs->sc_count);
 #endif
@@ -546,7 +553,8 @@ fhpibintr(void *arg)
 		return(0);
 	}
 #ifdef DEBUG
-	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == sc->sc_dev.dv_unit)
+	if ((fhpibdebug & FDB_DMA) &&
+	    fhpibdebugunit == device_unit(&sc->sc_dev))
 		printf("fhpibintr: flags %x\n", hs->sc_flags);
 #endif
 	hq = hs->sc_queue.tqh_first;
@@ -575,7 +583,7 @@ fhpibintr(void *arg)
 #ifdef DEBUG
 		stat0 = fhpibppoll(hs);
 		if ((fhpibdebug & FDB_PPOLL) &&
-		    fhpibdebugunit == sc->sc_dev.dv_unit)
+		    fhpibdebugunit == device_unit(&sc->sc_dev))
 			printf("fhpibintr: got PPOLL status %x\n", stat0);
 		if ((stat0 & (0x80 >> hq->hq_slave)) == 0) {
 			/*
@@ -586,9 +594,10 @@ fhpibintr(void *arg)
 			stat0 = fhpibppoll(hs);
 			if ((stat0 & (0x80 >> hq->hq_slave)) == 0 &&
 			    (fhpibdebug & FDB_PPOLL) &&
-			    fhpibdebugunit == sc->sc_dev.dv_unit)
+			    fhpibdebugunit == device_unit(&sc->sc_dev))
 				printf("fhpibintr: PPOLL: unit %d slave %d stat %x\n",
-				       sc->sc_dev.dv_unit, hq->hq_slave, stat0);
+				       device_unit(&sc->sc_dev), hq->hq_slave,
+				       stat0);
 		}
 #endif
 		hs->sc_flags &= ~HPIBF_PPOLL;
@@ -600,7 +609,8 @@ fhpibintr(void *arg)
 static int
 fhpibppoll(struct hpibbus_softc *hs)
 {
-	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
+	struct fhpib_softc *sc =
+	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
 	struct fhpibdevice *hd = sc->sc_regs;
 	int ppoll;
 
@@ -644,7 +654,8 @@ static void
 fhpibppwatch(void *arg)
 {
 	struct hpibbus_softc *hs = arg;
-	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
+	struct fhpib_softc *sc =
+	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
 	struct fhpibdevice *hd = sc->sc_regs;
 	int slave;
 
@@ -660,7 +671,8 @@ fhpibppwatch(void *arg)
 			callout_reset(&sc->sc_ppwatch_ch, 1, fhpibppwatch, sc);
 		return;
 	}
-	if ((fhpibdebug & FDB_PPOLL) && sc->sc_dev.dv_unit == fhpibdebugunit)
+	if ((fhpibdebug & FDB_PPOLL) &&
+	    device_unit(&sc->sc_dev) == fhpibdebugunit)
 		printf("fhpibppwatch: sense request on %s\n",
 		    sc->sc_dev.dv_xname);
 #endif

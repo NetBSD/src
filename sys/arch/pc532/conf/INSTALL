@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.38 2005/12/07 12:40:47 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.38.6.1 2006/04/22 11:37:51 simonb Exp $
 #
 # INSTALL -- install kernel
 #
@@ -56,8 +56,8 @@ se* at scsibus0 target ? lun ?			# Cabletron EA412/EA419
 pseudo-device	md				# Memory disk
 #pseudo-device	fss 4				# file system snapshot device
 pseudo-device	loop 1				# loopback network
-pseudo-device	sl 1				# compressed SLIP
-pseudo-device	ppp 1				# Point-to-Point Protocol
+pseudo-device	sl 				# compressed SLIP
+pseudo-device	ppp 				# Point-to-Point Protocol
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 
 pseudo-device	rnd			# /dev/random and in-kernel generator

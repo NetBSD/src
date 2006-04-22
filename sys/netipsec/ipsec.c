@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.19 2005/12/11 12:25:05 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.19.6.1 2006/04/22 11:40:13 simonb Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.19 2005/12/11 12:25:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.19.6.1 2006/04/22 11:40:13 simonb Exp $");
 
 /*
  * IPsec controller part.
@@ -104,6 +104,18 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.19 2005/12/11 12:25:05 christos Exp $");
 
 #ifdef IPSEC_DEBUG
 int ipsec_debug = 1;
+
+/*      
+ * When set to 1, IPsec will send packets with the same sequence number.
+ * This allows to verify if the other side has proper replay attacks detection.
+ */
+int ipsec_replay = 0;
+
+/*  
+ * When set 1, IPsec will send packets with corrupted HMAC.
+ * This allows to verify if the other side properly detects modified packets.
+ */
+int ipsec_integrity = 0;
 #else
 int ipsec_debug = 0;
 #endif
@@ -172,6 +184,10 @@ SYSCTL_INT(_net_inet_ipsec, OID_AUTO,
 	crypto_support,	CTLFLAG_RW,	&crypto_support,0, "");
 SYSCTL_STRUCT(_net_inet_ipsec, OID_AUTO,
 	ipsecstats,	CTLFLAG_RD,	&newipsecstat,	newipsecstat, "");
+SYSCTL_INT(_net_inet_ipsec, OID_AUTO, test_replay, CTLFLAG_RW, &ipsec_replay, 0,
+    "Emulate replay attack");
+SYSCTL_INT(_net_inet_ipsec, OID_AUTO, test_integrity, CTLFLAG_RW,
+    &ipsec_integrity, 0, "Emulate man-in-the-middle attack");
 #endif /* __FreeBSD__ */
 
 #ifdef INET6
@@ -442,7 +458,7 @@ key_allocsp_default(const char* where, int tag)
  *		others	: error occurred.
  *	others:	a pointer to SP
  *
- * NOTE: IPv6 mapped adddress concern is implemented here.
+ * NOTE: IPv6 mapped address concern is implemented here.
  */
 struct secpolicy *
 ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
@@ -470,7 +486,7 @@ ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
  *		others	: error occurred.
  *	others:	a pointer to SP
  *
- * NOTE: IPv6 mapped adddress concern is implemented here.
+ * NOTE: IPv6 mapped address concern is implemented here.
  */
 static struct secpolicy *
 ipsec_getpolicybysock(m, dir, inp, error)

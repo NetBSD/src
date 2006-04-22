@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.6.1 2006/04/22 11:37:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.6.1 2006/04/22 11:37:49 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -89,17 +89,19 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 2005/12/11 12:18:23 christos Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
-#include <sys/syscall.h>
-#include <sys/user.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/syscall.h>
+#include <sys/user.h>
 #include <sys/userret.h>
 
-#include <machine/db_machdep.h>
-#include <machine/trap.h>
-#include <machine/cpu.h>
+#include <m68k/frame.h>
 #include <m68k/cacheops.h>
+
+#include <machine/cpu.h>
+#include <machine/db_machdep.h>
 #include <machine/reg.h>
+#include <machine/trap.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -114,12 +116,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 2005/12/11 12:18:23 christos Exp $");
 #include <compat/sunos/sunos_syscall.h>
 #endif
 
-int writeback(struct frame *fp, int docachepush);
-void trap(int type, u_int code, u_int v, struct frame frame);
+int	writeback(struct frame *fp, int docachepush);
+void	trap(int type, u_int code, u_int v, struct frame frame);
 
 #ifdef DEBUG
-void dumpssw(u_short);
-void dumpwb(int, u_short, u_int, u_int);
+void	dumpssw(u_short);
+void	dumpwb(int, u_short, u_int, u_int);
 #endif
 
 static inline void userret(struct lwp *l, struct frame *fp,
@@ -143,7 +145,7 @@ const char *trap_type[] = {
 	"Coprocessor violation",
 	"Async system trap"
 };
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
+const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
@@ -203,14 +205,13 @@ int mmupid = -1;
 #define MDB_ISPID(p)	((p) == mmupid)
 #endif
 
-
 /*
  * trap and syscall both need the following work done before returning
  * to user mode.
  */
 static inline void
-userret(struct lwp *l, struct frame *fp, u_quad_t oticks, u_int faultaddr,
-    int fromtrap)
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks,
+    u_int faultaddr, int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
@@ -285,14 +286,14 @@ machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
  */
 /*ARGSUSED*/
 void
-trap(int type, unsigned code, unsigned v, struct frame frame)
+trap(int type, u_int code, u_int v, struct frame frame)
 {
 	extern char fubail[], subail[];
 	struct lwp *l;
 	struct proc *p;
 	ksiginfo_t ksi;
 	int s;
-	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
+	u_quad_t sticks = 0 /* XXX initializer works around compiler bug */;
 
 	uvmexp.traps++;
 	l = curlwp;
@@ -348,7 +349,7 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		}
 		regdump((struct trapframe *)&frame, 128);
 		type &= ~T_USER;
-		if (type < trap_types)
+		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap");
 
@@ -419,7 +420,7 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		break;
 
 #ifdef M68040
-	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
+	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 		/* XXX need to FSAVE */
 		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",
@@ -531,8 +532,8 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		}
 #endif
 		/* FALLTHROUGH */
-	case T_TRACE:
-	case T_TRAP15|T_USER:
+	case T_TRACE:		/* tracing a trap instruction */
+	case T_TRAP15|T_USER:	/* SUN user trace trap */
 		frame.f_sr &= ~PSL_T;
 		ksi.ksi_signo = SIGTRAP;
 		break;
@@ -616,16 +617,16 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv != 0) {
 				bva = HPMMBASEADDR(va);
-				rv = uvm_fault(map, bva, 0, ftype);
+				rv = uvm_fault(map, bva, ftype);
 				if (rv == 0)
 					(void) pmap_mapmulti(map->pmap, va);
 			}
 		} else
 #endif
-		rv = uvm_fault(map, va, 0, ftype);
+		rv = uvm_fault(map, va, ftype);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 #endif
 		/*
@@ -657,7 +658,7 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		if (type == T_MMUFLT) {
 			if (l->l_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
@@ -694,11 +695,11 @@ struct writebackstats {
 	int wbsize[4];
 } wbstats;
 
-char *f7sz[] = { "longword", "byte", "word", "line" };
-char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
-char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
-		 "M-code", "k-data", "k-code", "RES" };
-char wberrstr[] =
+static const char *f7sz[] = { "longword", "byte", "word", "line" };
+static const char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
+static const char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
+			      "M-code", "k-data", "k-code", "RES" };
+static const char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 #endif
 
@@ -778,8 +779,8 @@ writeback(struct frame *fp, int docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			memcpy((caddr_t)(f->f_fa & ~0xf), (caddr_t)&f->f_pd0,
-			    16);
+			memcpy((caddr_t)(f->f_fa & ~0xF),
+			    (caddr_t)&f->f_pd0, 16);
 		else
 			err = suline((caddr_t)(f->f_fa & ~0xF),
 			    (caddr_t)&f->f_pd0);
@@ -970,7 +971,8 @@ dumpssw(u_short ssw)
 void
 dumpwb(int num, u_short s, u_int a, u_int d)
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	paddr_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",

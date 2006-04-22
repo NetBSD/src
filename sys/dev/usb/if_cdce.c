@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.8 2005/11/28 13:31:09 augustss Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.8.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.8 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.8.6.1 2006/04/22 11:39:37 simonb Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -254,7 +254,7 @@ USB_ATTACH(cdce)
 		printf("%s: faking address\n", USBDEVNAME(sc->cdce_dev));
 		eaddr[0]= 0x2a;
 		memcpy(&eaddr[1], &hardclock_ticks, sizeof(u_int32_t));
-		eaddr[5] = (u_int8_t)(sc->cdce_dev.dv_unit);
+		eaddr[5] = (u_int8_t)(device_unit(&sc->cdce_dev));
 	} else {
 		int j;
 

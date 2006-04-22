@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.16.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16.6.1 2006/04/22 11:37:31 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,15 +68,14 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 	/* CPU  */
-	config_found(self, &(struct mainbus_attach_args){.ma_name = "cpu"},
-	    mainbus_print);
+	config_found_ia(self, "mainbus",
+	    &(struct mainbus_attach_args){.ma_name = "cpu"}, mainbus_print);
 
 	/* Devices */
 	config_search_ia(mainbus_search, self, "mainbus", 0);
 
 	/* APM */
-	config_found(self, &(struct mainbus_attach_args){.ma_name = "hpcapm"},
-	    mainbus_print);
+	config_found_ia(self, "hpcapmif", NULL, mainbus_print);
 }
 
 static int
@@ -91,9 +90,6 @@ mainbus_search(struct device *parent, struct cfdata *cf,
 		return (0);
 
 	if (strcmp(cf->cf_name, "cpu") == 0)
-		return 0;
-
-	if (strcmp(cf->cf_name, "hpcapm") == 0)
 		return 0;
 
 	maa.ma_name = cf->cf_name;

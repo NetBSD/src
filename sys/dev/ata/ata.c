@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.73 2006/01/22 16:40:56 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.73.4.1 2006/04/22 11:38:51 simonb Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.73 2006/01/22 16:40:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.73.4.1 2006/04/22 11:38:51 simonb Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1033,7 +1033,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	struct device *drv_dev = drvp->drv_softc;
-	int cf_flags = drv_dev->dv_cfdata->cf_flags;
+	int cf_flags = device_cfdata(drv_dev)->cf_flags;
 
 	/* if drive or controller don't know its mode, we can't do much */
 	if ((drvp->drive_flags & DRIVE_MODE) == 0 ||
@@ -1274,7 +1274,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		else if (drvp->PIO_cap > 2)
 			drvp->ata_vers = 2; /* should be at last ATA-2 */
 	}
-	cf_flags = drv_dev->dv_cfdata->cf_flags;
+	cf_flags = device_cfdata(drv_dev)->cf_flags;
 	if (cf_flags & ATA_CONFIG_PIO_SET) {
 		s = splbio();
 		drvp->PIO_mode =

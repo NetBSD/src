@@ -1,4 +1,4 @@
-/*	$NetBSD: file_fat.cpp,v 1.3 2002/02/04 17:31:05 uch Exp $	*/
+/*	$NetBSD: file_fat.cpp,v 1.3.48.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ FatFile::setRoot(TCHAR *drive)
 }
 
 BOOL
-FatFile::open(const TCHAR *name, u_int32_t flags)
+FatFile::open(const TCHAR *name, uint32_t flags)
 {
 	// drive + filename
 	wsprintf(_filename, TEXT("%s%s"), _drive, name);

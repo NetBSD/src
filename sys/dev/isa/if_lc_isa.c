@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.23 2005/12/11 12:22:02 christos Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.23.6.1 2006/04/22 11:39:06 simonb Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.23 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.23.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,6 @@ lemac_isa_find(sc, ia, attach)
 
 	ia->ia_ndrq = 0;
 
-	if (rv == 0 && attach)
-		bus_space_unmap(sc->sc_memt, sc->sc_memh, msiz);
 outio:
 	if (rv == 0 || !attach)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, LEMAC_IOSIZE);

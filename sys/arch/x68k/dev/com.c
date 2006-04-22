@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.37 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.37.6.1 2006/04/22 11:38:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.37 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.37.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -208,11 +208,6 @@ extern int kgdb_debug_init;
 
 #define	COMUNIT(x)	(minor(x) & 0x7F)
 #define	COMDIALOUT(x)	(minor(x) & 0x80)
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 static int
 comspeed(long speed)

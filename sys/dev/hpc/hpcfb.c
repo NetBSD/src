@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.34 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.34.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.34 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.34.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.34 2005/12/11 12:21:22 christos Exp $";
+    "$NetBSD: hpcfb.c,v 1.34.6.1 2006/04/22 11:38:52 simonb Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,8 @@ int	hpcfbmatch(struct device *, struct cfdata *, void *);
 void	hpcfbattach(struct device *, struct device *, void *);
 int	hpcfbprint(void *, const char *);
 
-int	hpcfb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-paddr_t	hpcfb_mmap(void *, off_t, int);
+int	hpcfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+paddr_t	hpcfb_mmap(void *, void *, off_t, int);
 
 void	hpcfb_refresh_screen(struct hpcfb_softc *);
 void	hpcfb_doswitch(struct hpcfb_softc *);
@@ -292,7 +292,7 @@ hpcfbmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 hpcfbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct hpcfb_softc *sc = (struct hpcfb_softc *)self;
+	struct hpcfb_softc *sc = device_private(self);
 	struct hpcfb_attach_args *ha = aux;
 	struct wsemuldisplaydev_attach_args wa;
 
@@ -550,7 +550,8 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 }
 
 int
-hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+hpcfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct hpcfb_softc *sc = v;
 	struct hpcfb_devconfig *dc = sc->sc_dc;
@@ -624,7 +625,7 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 paddr_t
-hpcfb_mmap(void *v, off_t offset, int prot)
+hpcfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct hpcfb_softc *sc = v;
 

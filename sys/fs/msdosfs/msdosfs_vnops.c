@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.25.4.1 2006/02/04 14:12:49 simonb Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.25.4.2 2006/04/22 11:39:57 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.25.4.1 2006/02/04 14:12:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.25.4.2 2006/04/22 11:39:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,7 +561,7 @@ msdosfs_write(v)
 	vsize_t bytelen;
 	off_t oldoff;
 	struct uio *uio = ap->a_uio;
-	struct proc *p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
+	struct proc *p = curproc;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
@@ -599,8 +599,7 @@ msdosfs_write(v)
 	/*
 	 * If they've exceeded their filesize limit, tell them about it.
 	 */
-	if (p &&
-	    ((uio->uio_offset + uio->uio_resid) >
+	if (((uio->uio_offset + uio->uio_resid) >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
 		psignal(p, SIGXFSZ);
 		return (EFBIG);
@@ -1871,8 +1870,10 @@ msdosfs_detimes(struct denode *dep, const struct timespec *acc,
 	/* XXX just call getnanotime early and use result if needed? */
 	dep->de_flag |= DE_MODIFIED;
 	if (dep->de_flag & DE_UPDATE) {
-		if (mod == NULL)
-			mod = ts == NULL ? (getnanotime(&tsb), ts = &tsb) : ts;
+		if (mod == NULL) {
+			getnanotime(&tsb);
+			mod = ts = &tsb;
+		}
 		unix2dostime(mod, gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 	}

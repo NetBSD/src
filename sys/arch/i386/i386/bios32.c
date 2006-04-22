@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.9 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: bios32.c,v 1.9.6.1 2006/04/22 11:37:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.9 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.9.6.1 2006/04/22 11:37:32 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,12 +114,12 @@ bios32_init()
 
 		entry = *(uint32_t *)(p + 4);
 
-		printf("BIOS32 rev. %d found at 0x%lx\n",
+		aprint_normal("BIOS32 rev. %d found at 0x%lx\n",
 		    *(p + 8), entry);
 
 		if (entry < BIOS32_START ||
 		    entry >= BIOS32_END) {
-			printf("BIOS32 entry point outside "
+			aprint_error("BIOS32 entry point outside "
 			    "allowable range\n");
 			entry = 0;
 		}
@@ -158,8 +158,8 @@ bios32_service(service, e, ei)
 	entry = ebx + edx;
 
 	if (entry < BIOS32_START || entry >= BIOS32_END) {
-		printf("bios32: entry point for service %c%c%c%c is outside "
-		    "allowable range\n",
+		aprint_error("BIOS32: entry point for service %c%c%c%c is "
+		    "outside allowable range\n",
 		    service & 0xff,
 		    (service >> 8) & 0xff,
 		    (service >> 16) & 0xff,

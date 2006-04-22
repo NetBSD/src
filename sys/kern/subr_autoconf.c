@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.103 2005/12/24 19:12:23 perry Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.103.6.1 2006/04/22 11:39:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.103 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.103.6.1 2006/04/22 11:39:59 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -89,11 +89,20 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.103 2005/12/24 19:12:23 perry Ex
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/properties.h>
 #include <machine/limits.h>
 
 #include "opt_userconf.h"
 #ifdef USERCONF
 #include <sys/userconf.h>
+#endif
+
+#ifdef __i386__
+#include "opt_splash.h"
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+#include <dev/splash/splash.h>
+extern struct splash_progress *splash_progress_state;
+#endif
 #endif
 
 /*
@@ -129,7 +138,7 @@ static struct cftable initcftable;
 /*
  * Database of device properties.
  */
-propdb_t dev_propdb;
+static propdb_t dev_propdb;
 
 #define	ROOT ((device_t)NULL)
 
@@ -797,6 +806,11 @@ config_found_sm_loc(device_t parent,
 {
 	cfdata_t cf;
 
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
+
 	if ((cf = config_search_loc(submatch, parent, ifattr, locs, aux)))
 		return(config_attach_loc(parent, cf, locs, aux, print));
 	if (print) {
@@ -804,6 +818,12 @@ config_found_sm_loc(device_t parent,
 			twiddle();
 		aprint_normal("%s", msgs[(*print)(aux, parent->dv_xname)]);
 	}
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
+
 	return (NULL);
 }
 
@@ -902,6 +922,11 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	int myunit;
 	char num[10];
 	const struct cfiattrdata *ia;
+
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	KASSERT(cd != NULL);
@@ -1016,7 +1041,15 @@ config_attach_loc(device_t parent, cfdata_t cf,
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 	(*ca->ca_attach)(parent, dev, aux);
+#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
+	if (splash_progress_state)
+		splash_progress_update(splash_progress_state);
+#endif
 	config_process_deferred(&deferred_config_queue, dev);
 	return (dev);
 }
@@ -1467,3 +1500,147 @@ config_finalize(void)
 	}
 }
 
+/*
+ * Wrappers around prop_*() for handling device properties.
+ */
+int
+devprop_set(device_t dev, const char *name, void *val, size_t len,
+    int type, int wait)
+{
+
+	return (prop_set(dev_propdb, dev, name, val, len, type, wait));
+}
+
+size_t
+devprop_list(device_t dev, char *names, size_t len)
+{
+
+	return (prop_list(dev_propdb, dev, names, len));
+}
+
+size_t
+devprop_get(device_t dev, const char *name, void *val, size_t len, int *typep)
+{
+
+	return (prop_get(dev_propdb, dev, name, val, len, typep));
+}
+
+int
+devprop_delete(device_t dev, const char *name)
+{
+
+	return (prop_delete(dev_propdb, dev, name));
+}
+
+int
+devprop_copy(device_t from, device_t to, int wait)
+{
+
+	return (prop_copy(dev_propdb, from, to, wait));
+}
+
+/*
+ * device_lookup:
+ *
+ *	Look up a device instance for a given driver.
+ */
+void *
+device_lookup(cfdriver_t cd, int unit)
+{
+
+	if (unit < 0 || unit >= cd->cd_ndevs)
+		return (NULL);
+	
+	return (cd->cd_devs[unit]);
+}
+
+/*
+ * Accessor functions for the device_t type.
+ */
+devclass_t
+device_class(device_t dev)
+{
+
+	return (dev->dv_class);
+}
+
+cfdata_t
+device_cfdata(device_t dev)
+{
+
+	return (dev->dv_cfdata);
+}
+
+cfdriver_t
+device_cfdriver(device_t dev)
+{
+
+	return (dev->dv_cfdriver);
+}
+
+cfattach_t
+device_cfattach(device_t dev)
+{
+
+	return (dev->dv_cfattach);
+}
+
+int
+device_unit(device_t dev)
+{
+
+	return (dev->dv_unit);
+}
+
+const char *
+device_xname(device_t dev)
+{
+
+	return (dev->dv_xname);
+}
+
+device_t
+device_parent(device_t dev)
+{
+
+	return (dev->dv_parent);
+}
+
+boolean_t
+device_is_active(device_t dev)
+{
+
+	return ((dev->dv_flags & DVF_ACTIVE) != 0);
+}
+
+int
+device_locator(device_t dev, u_int locnum)
+{
+
+	KASSERT(dev->dv_locators != NULL);
+	return (dev->dv_locators[locnum]);
+}
+
+void *
+device_private(device_t dev)
+{
+
+	/*
+	 * For now, at least, "struct device" is the first thing in
+	 * the driver's private data.  So, we just return ourselves.
+	 */
+	return (dev);
+}
+
+/*
+ * device_is_a:
+ *
+ *	Returns true if the device is an instance of the specified
+ *	driver.
+ */
+boolean_t
+device_is_a(device_t dev, const char *dname)
+{
+
+	return (strcmp(dev->dv_cfdriver->cd_name, dname) == 0);
+}

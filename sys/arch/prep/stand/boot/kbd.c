@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.1 2000/02/29 15:21:50 nonaka Exp $	*/
+/*	$NetBSD: kbd.c,v 1.1.62.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(CONS_FB) || defined(CONS_VGA)
+#ifdef CONS_VGA
 #include <lib/libsa/stand.h>
 #include "boot.h"
 
@@ -80,8 +80,7 @@ const u_char keycode[] = {
 };
 
 int
-kbd(noblock)
-	int noblock;
+kbd(int noblock)
 {
 	u_char dt, brk, act;
 	int first = 1;
@@ -169,7 +168,7 @@ loop:
 }
 
 void
-kbdreset()
+kbdreset(void)
 {
 	u_char c;
 	int i;
@@ -198,11 +197,11 @@ kbdreset()
 }
 
 int
-kbd_getc()
+kbd_getc(void)
 {
 	int c;
 	while ((c = kbd(0)) == 0)
 		;
 	return (c);
 }
-#endif /* CONS_FB || CONS_VGA*/
+#endif /* CONS_VGA */

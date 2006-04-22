@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2000/02/29 15:21:52 nonaka Exp $
+$NetBSD: README,v 1.1.62.1 2006/04/22 11:37:54 simonb Exp $
 
 Contents.
 	boot        NetBSD/prep boot-loader
@@ -15,5 +15,4 @@ How to make bootable floppy disk image.
 	        $ (cd mkbootimage; make)
 	 $ mkbootimage/mkbootimage boot/boot /tmp/boot.fs
 	    To make kernel attached bootable floppy image:
-	        $ gzip -c ../compile/YOUR_KERNEL/netbsd > /tmp/netbsd.gz
-	        $ mkbootimage/mkbootimage boot/boot /tmp/boot.fs /tmp/netbsd.gz
+		    $ mkbootimage/mkbootimage -b boot/boot -k ../compile/YOUR_KERNEL/netbsd /tmp/boot.fs

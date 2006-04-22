@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.31 2005/12/24 23:24:07 perry Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.31.6.1 2006/04/22 11:38:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.31 2005/12/24 23:24:07 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.31.6.1 2006/04/22 11:38:05 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ si_obio_attach(struct device *parent, struct device *self, void *args)
 {
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
-	struct cfdata *cf = self->dv_cfdata;
+	struct cfdata *cf = device_cfdata(self);
 	struct confargs *ca = args;
 
 	/* Get options from config flags if specified. */

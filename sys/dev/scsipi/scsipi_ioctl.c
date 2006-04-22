@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.57 2005/12/14 21:55:47 reinoud Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.57.6.1 2006/04/22 11:39:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.57 2005/12/14 21:55:47 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.57.6.1 2006/04/22 11:39:29 simonb Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -305,6 +305,9 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("scsipi_do_ioctl(0x%lx)\n", cmd));
 
+	if (addr == NULL)
+		return EINVAL;
+
 	/* Check for the safe-ness of this request. */
 	switch (cmd) {
 	case OSCIOCIDENTIFY:
@@ -337,10 +340,13 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 			si->si_uio.uio_iovcnt = 1;
 			si->si_uio.uio_resid = len;
 			si->si_uio.uio_offset = 0;
-			si->si_uio.uio_segflg = (flag & FKIOCTL) ? UIO_SYSSPACE : UIO_USERSPACE;
 			si->si_uio.uio_rw =
 			    (screq->flags & SCCMD_READ) ? UIO_READ : UIO_WRITE;
-			si->si_uio.uio_lwp = l;
+			if ((flag & FKIOCTL) == 0) {
+				si->si_uio.uio_vmspace = l->l_proc->p_vmspace;
+			} else {
+				UIO_SETUP_SYSSPACE(&si->si_uio);
+			}
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
 			    periph->periph_channel->chan_adapter->adapt_minphys,
@@ -384,14 +390,14 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 		case SCSIPI_BUSTYPE_SCSI:
 			sca->type = TYPE_SCSI;
 			sca->addr.scsi.scbus =
-			    periph->periph_dev->dv_parent->dv_unit;
+			    device_unit(device_parent(periph->periph_dev));
 			sca->addr.scsi.target = periph->periph_target;
 			sca->addr.scsi.lun = periph->periph_lun;
 			return (0);
 		case SCSIPI_BUSTYPE_ATAPI:
 			sca->type = TYPE_ATAPI;
 			sca->addr.atapi.atbus =
-			    periph->periph_dev->dv_parent->dv_unit;
+			    device_unit(device_parent(periph->periph_dev));
 			sca->addr.atapi.drive = periph->periph_target;
 			return (0);
 		}
@@ -404,7 +410,8 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 
 		switch (scsipi_periph_bustype(periph)) {
 		case SCSIPI_BUSTYPE_SCSI:
-			sca->scbus = periph->periph_dev->dv_parent->dv_unit;
+			sca->scbus =
+			    device_unit(device_parent(periph->periph_dev));
 			sca->target = periph->periph_target;
 			sca->lun = periph->periph_lun;
 			return (0);

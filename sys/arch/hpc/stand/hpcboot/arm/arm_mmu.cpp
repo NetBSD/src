@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_mmu.cpp,v 1.4 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_mmu.cpp,v 1.4.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ MemoryManager_ArmMMU::~MemoryManager_ArmMMU(void)
 BOOL
 MemoryManager_ArmMMU::init(void)
 {
-	u_int32_t reg;
+	uint32_t reg;
 
 	_kmode = SetKMode(1);
 	// Check system mode
@@ -78,7 +78,7 @@ paddr_t
 MemoryManager_ArmMMU::searchPage(vaddr_t vaddr)
 {
 	paddr_t daddr, paddr = ~0;
-	u_int32_t desc1, desc2;
+	uint32_t desc1, desc2;
 
 	// set marker.
 	memset(LPVOID(vaddr), 0xa5, _page_size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.30 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.30.6.1 2006/04/22 11:40:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.30 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.30.6.1 2006/04/22 11:40:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,11 +125,6 @@ static const vfs_namemap_t signames[] = {
 };
 
 int procfs_control(struct lwp *, struct lwp *, int, int);
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 int
 procfs_control(curl, l, op, sig)

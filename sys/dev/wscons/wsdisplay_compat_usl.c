@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.30 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.30.6.1 2006/04/22 11:39:44 simonb Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.30 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.30.6.1 2006/04/22 11:39:44 simonb Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -354,7 +354,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		     u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct proc *p = l->l_proc;
-	int intarg, res;
+	int intarg = 0, res;
 	u_long req;
 	void *arg;
 	struct usl_syncdata *sd;

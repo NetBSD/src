@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.60 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.60.6.1 2006/04/22 11:38:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.60 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.60.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -89,12 +89,12 @@ void	epic_shutdown(void *);
 void	epic_reset(struct epic_softc *);
 void	epic_rxdrain(struct epic_softc *);
 int	epic_add_rxbuf(struct epic_softc *, int);
-void	epic_read_eeprom(struct epic_softc *, int, int, u_int16_t *);
+void	epic_read_eeprom(struct epic_softc *, int, int, uint16_t *);
 void	epic_set_mchash(struct epic_softc *);
 void	epic_fixup_clock_source(struct epic_softc *);
 int	epic_mii_read(struct device *, int, int);
 void	epic_mii_write(struct device *, int, int, int);
-int	epic_mii_wait(struct epic_softc *, u_int32_t);
+int	epic_mii_wait(struct epic_softc *, uint32_t);
 void	epic_tick(void *);
 
 void	epic_statchg(struct device *);
@@ -121,8 +121,8 @@ epic_attach(sc)
 	int rseg, error, miiflags;
 	u_int i;
 	bus_dma_segment_t seg;
-	u_int8_t enaddr[ETHER_ADDR_LEN], devname[12 + 1];
-	u_int16_t myea[ETHER_ADDR_LEN / 2], mydevname[6];
+	uint8_t enaddr[ETHER_ADDR_LEN], devname[12 + 1];
+	uint16_t myea[ETHER_ADDR_LEN / 2], mydevname[6];
 	char *nullbuf;
 
 	callout_init(&sc->sc_mii_callout);
@@ -225,8 +225,8 @@ epic_attach(sc)
 	/*
 	 * Read the Ethernet address from the EEPROM.
 	 */
-	epic_read_eeprom(sc, 0, (sizeof(myea) / sizeof(myea[0])), myea);
-	for (i = 0; i < sizeof(myea)/ sizeof(myea[0]); i++) {
+	epic_read_eeprom(sc, 0, __arraycount(myea), myea);
+	for (i = 0; i < __arraycount(myea); i++) {
 		enaddr[i * 2]     = myea[i] & 0xff;
 		enaddr[i * 2 + 1] = myea[i] >> 8;
 	}
@@ -234,17 +234,16 @@ epic_attach(sc)
 	/*
 	 * ...and the device name.
 	 */
-	epic_read_eeprom(sc, 0x2c, (sizeof(mydevname) / sizeof(mydevname[0])),
-	    mydevname);
-	for (i = 0; i < sizeof(mydevname) / sizeof(mydevname[0]); i++) {
+	epic_read_eeprom(sc, 0x2c, __arraycount(mydevname), mydevname);
+	for (i = 0; i < __arraycount(mydevname); i++) {
 		devname[i * 2]     = mydevname[i] & 0xff;
 		devname[i * 2 + 1] = mydevname[i] >> 8;
 	}
 
 	devname[sizeof(mydevname)] = '\0';
-	for (i = sizeof(mydevname) - 1; i >= 0; i--) {
-		if (devname[i] == ' ')
-			devname[i] = '\0';
+	for (i = sizeof(mydevname) ; i > 0; i--) {
+		if (devname[i - 1] == ' ')
+			devname[i - 1] = '\0';
 		else
 			break;
 	}
@@ -616,7 +615,7 @@ epic_intr(arg)
 	struct epic_txdesc *txd;
 	struct epic_descsoft *ds;
 	struct mbuf *m;
-	u_int32_t intstat, rxstatus, txstatus;
+	uint32_t intstat, rxstatus, txstatus;
 	int i, claimed = 0;
 	u_int len;
 
@@ -930,10 +929,10 @@ epic_init(ifp)
 	struct epic_softc *sc = ifp->if_softc;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+	uint8_t *enaddr = LLADDR(ifp->if_sadl);
 	struct epic_txdesc *txd;
 	struct epic_descsoft *ds;
-	u_int32_t genctl, reg0;
+	uint32_t genctl, reg0;
 	int i, error = 0;
 
 	/*
@@ -1114,7 +1113,7 @@ epic_stop(ifp, disable)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct epic_descsoft *ds;
-	u_int32_t reg;
+	uint32_t reg;
 	int i;
 
 	/*
@@ -1170,11 +1169,11 @@ void
 epic_read_eeprom(sc, word, wordcnt, data)
 	struct epic_softc *sc;
 	int word, wordcnt;
-	u_int16_t *data;
+	uint16_t *data;
 {
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	u_int16_t reg;
+	uint16_t reg;
 	int i, x;
 
 #define	EEPROM_WAIT_READY(st, sh) \
@@ -1300,7 +1299,7 @@ epic_set_mchash(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int32_t hash, mchash[4];
+	uint32_t hash, mchash[4];
 
 	/*
 	 * Set up the multicast address filter by passing all multicast
@@ -1364,7 +1363,7 @@ epic_set_mchash(sc)
 int
 epic_mii_wait(sc, rw)
 	struct epic_softc *sc;
-	u_int32_t rw;
+	uint32_t rw;
 {
 	int i;
 
@@ -1431,7 +1430,7 @@ epic_statchg(self)
 	struct device *self;
 {
 	struct epic_softc *sc = (struct epic_softc *)self;
-	u_int32_t txcon, miicfg;
+	uint32_t txcon, miicfg;
 
 	/*
 	 * Update loopback bits in TXCON to reflect duplex mode.
@@ -1486,7 +1485,7 @@ epic_mediachange(ifp)
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia *ifm = &mii->mii_media;
 	int media = ifm->ifm_cur->ifm_media;
-	u_int32_t miicfg;
+	uint32_t miicfg;
 	struct mii_softc *miisc;
 	int cfg;
 

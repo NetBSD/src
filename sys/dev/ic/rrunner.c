@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.51 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.51.6.1 2006/04/22 11:38:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.51 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.51.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -202,7 +202,7 @@ eshconfig(sc)
 	int error;
 	int i;
 
-	esh_softc_debug[sc->sc_dev.dv_unit] = sc;
+	esh_softc_debug[device_unit(&sc->sc_dev)] = sc;
 	sc->sc_flags = 0;
 
 	TAILQ_INIT(&sc->sc_dmainfo_freelist);
@@ -726,7 +726,7 @@ esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 
 #ifdef ESH_PRINTF
 	printf("esh_fpopen:  opening board %d, ulp %d\n",
-	    sc->sc_dev.dv_unit, ulp);
+	    device_unit(&sc->sc_dev), ulp);
 #endif
 
 	/* If the card is not up, initialize it. */
@@ -948,7 +948,7 @@ esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 
 #ifdef ESH_PRINTF
 	printf("esh_fpclose:  closing unit %d, ulp %d\n",
-	    sc->sc_dev.dv_unit, ulp);
+	    device_unit(&sc->sc_dev), ulp);
 #endif
 	assert(ring);
 	assert(ring_ctl);

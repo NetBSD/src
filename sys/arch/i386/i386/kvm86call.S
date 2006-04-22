@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86call.S,v 1.6 2005/12/11 12:17:41 christos Exp $ */
+/* $NetBSD: kvm86call.S,v 1.6.6.1 2006/04/22 11:37:32 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 Jonathan Lemon
@@ -30,12 +30,11 @@
  * $FreeBSD: src/sys/i386/i386/vm86bios.s,v 1.28 2001/12/11 23:33:40 jhb Exp $
  */
 
-#include <machine/param.h>
 #include <machine/asm.h>
 
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.6 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.6.6.1 2006/04/22 11:37:32 simonb Exp $");
 
 	.data
 	.align 4

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.19 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: iopl.c,v 1.19.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.19 2005/12/11 12:21:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.19.6.1 2006/04/22 11:38:54 simonb Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -218,7 +218,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	u_int tmp;
 	u_int32_t tmp1, tmp2, tmp3;
 
-	sc = (struct iopl_softc *)self;
+	sc = device_private(self);
 	iop = (struct iop_softc *)parent;
 	ia = (struct iop_attach_args *)aux;
 	ifp = &sc->sc_if.sci_if;
@@ -724,7 +724,7 @@ iopl_rx_post(struct iopl_softc *sc)
 		/*
 		 * Finally, post the message frame to the device.
 		 */
-		iop_post((struct iop_softc *)sc->sc_dv.dv_parent, mb);
+		iop_post((struct iop_softc *)device_parent(&sc->sc_dv), mb);
 	}
 }
 
@@ -745,7 +745,7 @@ iopl_intr_pg(struct device *dv, struct iop_msg *im, void *reply)
 
 	rb = (struct i2o_reply *)reply;
 	sc = (struct iopl_softc *)dv;
-	iop = (struct iop_softc *)dv->dv_parent;
+	iop = (struct iop_softc *)device_parent(dv);
 	ifp = &sc->sc_if.sci_if;
 
 	if ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0) {
@@ -1231,8 +1231,8 @@ static void
 iopl_getpg(struct iopl_softc *sc, int pg)
 {
 
-	iop_field_get_all((struct iop_softc *)sc->sc_dv.dv_parent, sc->sc_tid,
-	    pg, &sc->sc_pb, sizeof(sc->sc_pb), &sc->sc_ii_pg);
+	iop_field_get_all((struct iop_softc *)device_parent(&sc->sc_dv),
+	    sc->sc_tid, pg, &sc->sc_pb, sizeof(sc->sc_pb), &sc->sc_ii_pg);
 }
 
 /*
@@ -1292,7 +1292,7 @@ iopl_ifmedia_change(struct ifnet *ifp)
 	u_int8_t fdx;
 
 	sc = ifp->if_softc;
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
 	subtype = IFM_SUBTYPE(sc->sc_ifmedia.ifm_cur->ifm_media);
 	if (subtype == IFM_AUTO)
@@ -1363,7 +1363,7 @@ iopl_init(struct ifnet *ifp)
 	uint64_t ifcap;
 
 	sc = ifp->if_softc;
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
 	s = splbio();
 	flg = sc->sc_flags;
@@ -1564,7 +1564,7 @@ iopl_start(struct ifnet *ifp)
 		return;
 
 	sc = (struct iopl_softc *)ifp->if_softc;
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 	mf = (struct i2o_lan_packet_send *)mb;
 	frameleft = -1;
 	nxmits = 0;
@@ -1828,7 +1828,7 @@ iopl_filter_generic(struct iopl_softc *sc, u_int64_t *tbl)
 	u_int32_t tmp1;
 
 	ifp = &sc->sc_if.sci_if;
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
 	/*
 	 * Clear out the existing multicast table and set in the new one, if

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.10 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: rf.c,v 1.10.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.10 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.10.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -330,7 +330,7 @@ rfcprobedens(struct rfc_softc *rfc_sc, int dnum)
 void
 rfc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct rfc_softc *rfc_sc = (struct rfc_softc *)self;
+	struct rfc_softc *rfc_sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 	struct rfc_attach_args rfc_aa;
 	int i;
@@ -444,12 +444,12 @@ rf_match(struct device *parent, struct cfdata *match, void *aux)
 void
 rf_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct rf_softc *rf_sc = (struct rf_softc *)self;
+	struct rf_softc *rf_sc = device_private(self);
 	struct rfc_attach_args *rfc_aa = (struct rfc_attach_args *)aux;
 	struct rfc_softc *rfc_sc;
 	struct disklabel *dl;
 
-	rfc_sc = (struct rfc_softc *)rf_sc->sc_dev.dv_parent;
+	rfc_sc = (struct rfc_softc *)device_parent(&rf_sc->sc_dev);
 	rf_sc->sc_dnum = rfc_aa->dnum;
 	rf_sc->sc_state = 0;
 	rf_sc->sc_disk.dk_name = rf_sc->sc_dev.dv_xname;
@@ -570,7 +570,7 @@ rfstrategy(struct buf *buf)
 		biodone(buf);
 		return;
 	}
-	rfc_sc = (struct rfc_softc *)rf_sc->sc_dev.dv_parent;
+	rfc_sc = (struct rfc_softc *)device_parent(&rf_sc->sc_dev);
 	/* We are going to operate on a non-open dev? PANIC! */
 	if ((rf_sc->sc_state & 1 << (DISKPART(buf->b_dev) + RFS_OPEN_SHIFT))
 	    == 0)
@@ -968,7 +968,7 @@ rfopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	if (unit >= rf_cd.cd_ndevs || (rf_sc = rf_cd.cd_devs[unit]) == NULL) {
 		return(ENXIO);
 	}
-	rfc_sc = (struct rfc_softc *)rf_sc->sc_dev.dv_parent;
+	rfc_sc = (struct rfc_softc *)device_parent(&rf_sc->sc_dev);
 	dl = rf_sc->sc_disk.dk_label;
 	switch (DISKPART(dev)) {
 		case 0:			/* Part. a is single density. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.22 2005/12/24 20:45:08 perry Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.22.6.1 2006/04/22 11:38:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -67,7 +67,7 @@ int netbsd32_elf32_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 #endif /* EXEC_ELF32 */
 
-static inline int netbsd32_copyargs __P((struct lwp *, struct exec_package *,
+static __inline int netbsd32_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 
 void netbsd32_setregs (struct lwp *, struct exec_package *, u_long stack);
@@ -79,7 +79,7 @@ extern char netbsd32_esigcode[], netbsd32_sigcode[];
 /*
  * We need to copy out all pointers as 32-bit values.
  */
-static inline int
+static __inline int
 netbsd32_copyargs(l, pack, arginfo, stackp, argp)
 	struct lwp *l;
 	struct exec_package *pack;

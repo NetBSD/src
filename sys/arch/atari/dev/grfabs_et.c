@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.24 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.24.6.1 2006/04/22 11:37:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.24 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.24.6.1 2006/04/22 11:37:20 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -464,9 +464,6 @@ et_probe_card()
 		/* enable memory interleave */
 		WCrt(ba, CRT_ID_RASCAS_CONFIG, 0xa0);
 		WCrt(ba, CRT_ID_VIDEO_CONFIG2, 0x89);
-
-		/* release KEY */
-		vgaw(ba, GREG_DISPMODECONTROL, 0x00);
 #endif
 	}
 

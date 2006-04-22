@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.16 2005/12/11 12:19:36 christos Exp $ */
+/*	$NetBSD: scb.c,v 1.16.6.1 2006/04/22 11:38:08 simonb Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scb.c,v 1.16 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scb.c,v 1.16.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ scb_init(paddr_t avail_start)
 	/* Init the whole SCB with interrupt catchers */
 	for (i = 0; i < (scb_size * VAX_NBPG)/4; i++) {
 		ivec[i] = &scb_vec[i];
-		(int)ivec[i] |= 1; /* On istack, please */
+		*(uintptr_t *)&ivec[i] |= 1; /* On istack, please */
 		scb_vec[i] = idsptch;
 		scb_vec[i].hoppaddr = scb_stray;
 		scb_vec[i].pushlarg = (void *) (i * 4);

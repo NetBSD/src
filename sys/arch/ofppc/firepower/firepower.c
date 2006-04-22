@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.14 2005/12/11 12:18:29 christos Exp $	*/
+/*	$NetBSD: firepower.c,v 1.14.6.1 2006/04/22 11:37:51 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.14 2005/12/11 12:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower.c,v 1.14.6.1 2006/04/22 11:37:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,11 +121,6 @@ firepower_cons_init(void)
 {
 }
 
-#define DEVICE_IS(dev, name) \
-	(!strncmp((dev)->dv_xname, (name), sizeof(name) - 1) && \
-	 (dev)->dv_xname[sizeof(name) - 1] >= '0' && \
-	 (dev)->dv_xname[sizeof(name) - 1] <= '9')
-
 /*
  * firepower_device_register:
  *
@@ -145,18 +140,18 @@ firepower_device_register(struct device *dev, void *aux)
 		return;
 
 	/* Skip over devices not represented in the OF tree. */
-	if (DEVICE_IS(dev, "mainbus")) {
+	if (device_is_a(dev, "mainbus")) {
 		parent = dev;
 		return;
 	}
-	if (DEVICE_IS(dev, "atapibus") || DEVICE_IS(dev, "scsibus"))
+	if (device_is_a(dev, "atapibus") || device_is_a(dev, "scsibus"))
 		return;
 
-	if (DEVICE_IS(dev->dv_parent, "atapibus") ||
-	    DEVICE_IS(dev->dv_parent, "scsibus")) {
-		if (dev->dv_parent->dv_parent != parent)
+	if (device_is_a(device_parent(dev), "atapibus") ||
+	    device_is_a(device_parent(dev), "scsibus")) {
+		if (device_parent(device_parent(dev)) != parent)
 			return;
-	} else if (dev->dv_parent != parent) {
+	} else if (device_parent(dev) != parent) {
 		return;
 	}
 
@@ -181,23 +176,23 @@ firepower_device_register(struct device *dev, void *aux)
 		addr = strtoul(paddr + 1, NULL, 0x10);
 	}
 
-	if (DEVICE_IS(dev->dv_parent, "mainbus")) {
+	if (device_is_a(device_parent(dev), "mainbus")) {
 		struct ofbus_attach_args *oba = aux;
 		
 		if (strcmp(oba->oba_busname, "cpu") == 0)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "ofbus")) {
+	} else if (device_is_a(device_parent(dev), "ofbus")) {
 		struct ofbus_attach_args *oba = aux;
 
 		if (strncmp(oba->oba_ofname, cp, clen))
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "pci")) {
+	} else if (device_is_a(device_parent(dev), "pci")) {
 		struct pci_attach_args *pa = aux;
 
 		if (addr != pa->pa_device)
 			return;
-	} else if (DEVICE_IS(dev->dv_parent, "scsibus") ||
-		   DEVICE_IS(dev->dv_parent, "atapibus")) {
+	} else if (device_is_a(device_parent(dev), "scsibus") ||
+		   device_is_a(device_parent(dev), "atapibus")) {
 		struct scsipibus_attach_args *sa = aux;
 
 		/* periph_target is target for scsi, drive # for atapi */

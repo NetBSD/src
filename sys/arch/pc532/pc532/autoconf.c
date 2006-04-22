@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40.6.1 2006/04/22 11:37:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40.6.1 2006/04/22 11:37:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -108,8 +108,7 @@ device_register(dev, aux)
 {
 	static int found;
 	static struct device *booted_controller;
-	struct device *parent = dev->dv_parent;
-	const char *name = dev->dv_cfdata->cf_name;
+	struct device *parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -117,7 +116,7 @@ device_register(dev, aux)
 	/*
 	 * Check for NCR SCSI controller.
 	 */
-	if (strcmp(name, "ncr") == 0) {
+	if (device_is_a(dev, "ncr")) {
 		booted_controller = dev;
 		return;
 	}
@@ -128,11 +127,11 @@ device_register(dev, aux)
 	 * If we found the boot controller, if check disk/cdrom device
 	 * on that controller matches.
 	 */
-	if (booted_controller && (strcmp(name, "sd") == 0 ||
-	    strcmp(name, "cd") == 0)) {
+	if (booted_controller &&
+	    (device_is_a(dev, "sd") || device_is_a(dev, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != booted_controller)
+		if (device_parent(parent) != booted_controller)
 			return;
 		if (B_UNIT(bootdev) != sa->sa_periph->periph_target)
 			return;

@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.9 2005/12/11 12:17:09 christos Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.9.6.1 2006/04/22 11:37:24 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Interface to plcom (PL010) serial driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.9 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_ifpga.c,v 1.9.6.1 2006/04/22 11:37:24 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -75,7 +75,7 @@ plcom_ifpga_attach(struct device *parent, struct device *self, void *aux)
 
 	isc->sc_iot = ifa->ifa_iot;
 	isc->sc_ioh = ifa->ifa_sc_ioh;
-	sc->sc_iounit = sc->sc_dev.dv_unit;
+	sc->sc_iounit = device_unit(&sc->sc_dev);
 	sc->sc_frequency = IFPGA_UART_CLK;
 	sc->sc_iot = ifa->ifa_iot;
 	sc->sc_hwflags = 0;

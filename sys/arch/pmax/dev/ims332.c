@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.19 2005/12/24 20:07:25 perry Exp $	*/
+/*	$NetBSD: ims332.c,v 1.19.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.19 2005/12/24 20:07:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.19.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,8 @@ ims332init(fi)
 	DELAY(1);	/* specs sez 50ns.. */
 	deassert_ims332_reset_bit(reset);
 
-	/* CLOCKIN appears to receive a 6.25 Mhz clock --> PLL 12 for
-           75Mhz monitor */
+	/* CLOCKIN appears to receive a 6.25 MHz clock --> PLL 12 for
+           75 MHz monitor */
 	ims332_write_register (fi, IMS332_REG_BOOT,
 			       12 | IMS332_BOOT_CLOCK_PLL);
 

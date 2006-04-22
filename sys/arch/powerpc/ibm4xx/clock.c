@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.14.6.1 2006/04/22 11:37:53 simonb Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14.6.1 2006/04/22 11:37:53 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,7 @@ void decr_intr(struct clockframe *);	/* called from trap_subr.S */
 void stat_intr(struct clockframe *);	/* called from trap_subr.S */
 
 #ifdef FAST_STAT_CLOCK
-/* Stat clock runs at ~ 1.5KHz */
+/* Stat clock runs at ~ 1.5 kHz */
 #define PERIOD_POWER	17
 #define TCR_PERIOD	TCR_FP_2_17
 #else

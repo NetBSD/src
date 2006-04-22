@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.3 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: epcom.c,v 1.3.6.1 2006/04/22 11:37:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -63,7 +63,7 @@ cons_init(void)
 
 	while(!ISSET(EPCOM_READ(Flag), Flag_TXFE));
 
-	/* Make UART base freq 7Mhz */
+	/* Make UART base freq 7 MHz */
 	pwrcnt = SYSCON_READ(PwrCnt);
 	pwrcnt &= ~(PwrCnt_UARTBAUD);
 	SYSCON_WRITE(PwrCnt, pwrcnt);

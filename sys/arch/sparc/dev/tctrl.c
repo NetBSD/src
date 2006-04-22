@@ -1,7 +1,7 @@
-/*	$NetBSD: tctrl.c,v 1.29 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.29.6.1 2006/04/22 11:37:57 simonb Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29.6.1 2006/04/22 11:37:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/tty.h>
@@ -51,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29 2005/12/11 12:19:05 christos Exp $");
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
@@ -70,7 +70,21 @@ __KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29 2005/12/11 12:19:05 christos Exp $");
 
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmon_taskq.h>
+
 #include "sysmon_envsys.h"
+
+/*#define TCTRLDEBUG*/
+
+/* disk spinner */
+#include <sys/disk.h>
+#include <dev/scsipi/sdvar.h>
+
+/* ethernet carrier */
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_ether.h>
+#include <net/if_media.h>
+#include <dev/ic/lancevar.h>
 
 extern struct cfdriver tctrl_cd;
 
@@ -108,8 +122,11 @@ struct tctrl_softc {
 	unsigned int	sc_flags;
 #define TCTRL_SEND_REQUEST		0x0001
 #define TCTRL_APM_CTLOPEN		0x0002
-	unsigned int	sc_wantdata;
-	volatile unsigned short	sc_lcdstate;
+	uint32_t	sc_wantdata;
+	uint32_t	sc_ext_pending;
+	volatile uint16_t	sc_lcdstate;
+	uint16_t	sc_lcdwanted;
+	
 	enum { TCTRL_IDLE, TCTRL_ARGS,
 		TCTRL_ACK, TCTRL_DATA } sc_state;
 	uint8_t		sc_cmdbuf[16];
@@ -136,14 +153,32 @@ struct tctrl_softc {
 	struct	envsys_basic_info sc_binfo[ENVSYS_NUMSENSORS];
 	struct	envsys_range sc_range[ENVSYS_NUMSENSORS];
 
-	struct	sysmon_pswitch sc_smcontext;
+	struct	sysmon_pswitch sc_sm_pbutton;	/* power button */
+	struct	sysmon_pswitch sc_sm_lid;	/* lid state */
+	struct	sysmon_pswitch sc_sm_ac;	/* AC adaptor presence */
 	int	sc_powerpressed;
+	
+	/* hardware status stuff */
+	int sc_lid;	/* 1 - open, 0 - closed */
+	int sc_power_state;
+	int sc_spl;
+	
+	/*
+	 * we call this when we detect connection or removal of an external
+	 * monitor. 0 for no monitor, !=0 for monitor present
+	 */
+	void (*sc_video_callback)(void *, int);
+	void *sc_video_callback_cookie;
+	int sc_extvga;
+	
+	uint32_t sc_events;
+	struct proc *sc_thread;		/* event thread */
+
+	struct lock sc_requestlock;
 };
 
 #define TCTRL_STD_DEV		0
 #define TCTRL_APMCTL_DEV	8
-
-static struct callout tctrl_event_ch = CALLOUT_INITIALIZER;
 
 static int tctrl_match(struct device *, struct cfdata *, void *);
 static void tctrl_attach(struct device *, struct device *, void *);
@@ -155,7 +190,7 @@ static int tctrl_intr(void *);
 static void tctrl_setup_bitport(void);
 static void tctrl_setup_bitport_nop(void);
 static void tctrl_read_ext_status(void);
-static void tctrl_read_event_status(void *);
+static void tctrl_read_event_status(struct tctrl_softc *);
 static int tctrl_apm_record_event(struct tctrl_softc *, u_int);
 static void tctrl_init_lcd(void);
 
@@ -164,7 +199,17 @@ static int tctrl_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
 static int tctrl_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
 
 static void tctrl_power_button_pressed(void *);
+static void tctrl_lid_state(struct tctrl_softc *);
+static void tctrl_ac_state(struct tctrl_softc *);
+
 static int tctrl_powerfail(void *);
+
+static void tctrl_create_event_thread(void *);
+static void tctrl_event_thread(void *);
+void tctrl_update_lcd(struct tctrl_softc *);
+
+static void tctrl_lock(struct tctrl_softc *);
+static void tctrl_unlock(struct tctrl_softc *);
 
 CFATTACH_DECL(tctrl, sizeof(struct tctrl_softc),
     tctrl_match, tctrl_attach, NULL, NULL);
@@ -234,7 +279,7 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* See what the external status is */
-
+	sc->sc_ext_status = 0;
 	tctrl_read_ext_status();
 	if (sc->sc_ext_status != 0) {
 		const char *sep;
@@ -254,19 +299,36 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 	tctrl_setup_bitport_nop();
 	tctrl_write(sc, TS102_REG_UCTRL_INT,
 		    TS102_UCTRL_INT_RXNE_REQ|TS102_UCTRL_INT_RXNE_MSK);
-
+	sc->sc_lid = (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) == 0;
+	sc->sc_power_state = PWR_RESUME;
+	
+	sc->sc_extvga = (sc->sc_ext_status &
+	    TS102_EXT_STATUS_EXTERNAL_VGA_ATTACHED) != 0;
+	sc->sc_video_callback = NULL;
+	
+	
 	sc->sc_wantdata = 0;
 	sc->sc_event_count = 0;
+	sc->sc_ext_pending = 0;
+		sc->sc_ext_pending = 0;
 
+	lockinit(&sc->sc_requestlock, PUSER, "tctrl_req", 0, 0);
 	/* setup sensors and register the power button */
 	tctrl_sensor_setup(sc);
+	tctrl_lid_state(sc);
+	tctrl_ac_state(sc);
 
 	/* initialize the LCD */
 	tctrl_init_lcd();
 
 	/* initialize sc_lcdstate */
 	sc->sc_lcdstate = 0;
-	tctrl_set_lcd(2, 0);
+	sc->sc_lcdwanted = 0;
+	tadpole_set_lcd(2, 0);
+	
+	/* fire up the LCD event thread */
+	sc->sc_events = 0;
+	kthread_create(tctrl_create_event_thread, sc);
 }
 
 static int
@@ -304,9 +366,11 @@ tctrl_intr(void *arg)
 		switch (sc->sc_state) {
 		case TCTRL_IDLE:
 			if (d == 0xfa) {
-				/* external event */
-				callout_reset(&tctrl_event_ch, 1,
-				    tctrl_read_event_status, NULL);
+				/* 
+				 * external event,
+				 * set a flag and wakeup the event thread 
+				 */
+				sc->sc_ext_pending = 1;
 			} else {
 				printf("%s: (op=0x%02x): unexpected data (0x%02x)\n",
 					sc->sc_dev.dv_xname, sc->sc_op, d);
@@ -409,7 +473,7 @@ tctrl_setup_bitport_nop(void)
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	req.cmdbuf[0] = TS102_OP_CTL_BITPORT;
 	req.cmdbuf[1] = 0xff;
-	req.cmdbuf[2] = 0;
+	req.cmdbuf[2] = 0x00;
 	req.cmdlen = 3;
 	req.rsplen = 2;
 	req.p = NULL;
@@ -428,11 +492,10 @@ tctrl_setup_bitport(void)
 
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	s = splts102();
+	req.cmdbuf[2] = 0;
 	if ((sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN)
 	    || (!sc->sc_tft_on)) {
 		req.cmdbuf[2] = TS102_BITPORT_TFTPWR;
-	} else {
-		req.cmdbuf[2] = 0;
 	}
 	req.cmdbuf[0] = TS102_OP_CTL_BITPORT;
 	req.cmdbuf[1] = ~TS102_BITPORT_TFTPWR;
@@ -576,6 +639,47 @@ tctrl_init_lcd(void)
 	tadpole_request(&req, 1);
 }
 
+/* sc_lcdwanted -> lcd_state */
+void
+tctrl_update_lcd(struct tctrl_softc *sc)
+{
+	struct tctrl_req req;
+	int s;
+
+	s = splhigh();
+	if (sc->sc_lcdwanted == sc->sc_lcdstate) {
+		splx(s);
+		return;
+	}
+	sc->sc_lcdstate = sc->sc_lcdwanted;
+	splx(s);
+	
+	/*
+	 * the mask setup on this particular command is *very* bizzare
+	 * and totally undocumented.
+	 */
+	req.cmdbuf[0] = TS102_OP_CTL_LCD;
+
+	/* leave caps-lock alone */
+	req.cmdbuf[2] = (u_int8_t)(sc->sc_lcdstate & 0xfe);
+	req.cmdbuf[3] = (u_int8_t)((sc->sc_lcdstate & 0x100)>>8);
+
+	req.cmdbuf[1] = 1;
+	req.cmdbuf[4] = 0;
+	
+
+	/* XXX this thing is weird.... */
+	req.cmdlen = 3;
+	req.rsplen = 2;
+	
+	/* below are the values one would expect but which won't work */
+#if 0
+	req.cmdlen = 5;
+	req.rsplen = 4;
+#endif
+	req.p = NULL;
+	tadpole_request(&req, 1);
+}
 
 
 /*
@@ -584,51 +688,25 @@ tctrl_init_lcd(void)
  */
 
 void
-tctrl_set_lcd(int what, unsigned short which)
+tadpole_set_lcd(int what, unsigned short which)
 {
 	struct tctrl_softc *sc;
-	struct tctrl_req req;
 	int s;
 
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
-	s = splts102();
 
-	/* provide a quick exit to save CPU time */
-	if ((what == 1 && sc->sc_lcdstate & which) ||
-	    (what == 0 && !(sc->sc_lcdstate & which))) {
-		splx(s);
-		return;
+	s = splhigh();
+	switch (what) {
+		case 0:
+			sc->sc_lcdwanted &= ~which;
+			break;
+		case 1:
+			sc->sc_lcdwanted |= which;
+			break;
+		case 2:
+			sc->sc_lcdwanted ^= which;
+			break;
 	}
-	/*
-	 * the mask setup on this particular command is *very* bizzare
-	 * and totally undocumented.
-	 */
-	if ((what == 1) || (what == 2 && !(sc->sc_lcdstate & which))) {
-		req.cmdbuf[2] = (uint8_t)(which&0xff);
-		req.cmdbuf[3] = (uint8_t)((which&0x100)>>8);
-		sc->sc_lcdstate|=which;
-	} else {
-		req.cmdbuf[2] = 0;
-		req.cmdbuf[3] = 0;
-		sc->sc_lcdstate&=(~which);
-	}
-	req.cmdbuf[0] = TS102_OP_CTL_LCD;
-	req.cmdbuf[1] = (uint8_t)((~which)&0xff);
-	req.cmdbuf[4] = (uint8_t)((~which>>8)&1);
-
-
-	/* XXX this thing is weird.... */
-	req.cmdlen = 3;
-	req.rsplen = 2;
-
-	/* below are the values one would expect but which won't work */
-#if 0
-	req.cmdlen = 5;
-	req.rsplen = 4;
-#endif
-	req.p = NULL;
-	tadpole_request(&req, 1);
-
 	splx(s);
 }
 
@@ -649,7 +727,7 @@ tctrl_read_ext_status(void)
 #endif
 	tadpole_request(&req, 1);
 	s = splts102();
-	sc->sc_ext_status = req.rspbuf[0] * 256 + req.rspbuf[1];
+	sc->sc_ext_status = (req.rspbuf[0] << 8) + req.rspbuf[1];
 	splx(s);
 #ifdef TCTRLDEBUG
 	printf("post read: sc->sc_ext_status = 0x%x\n", sc->sc_ext_status);
@@ -680,14 +758,12 @@ tctrl_apm_record_event(struct tctrl_softc *sc, u_int event_type)
 }
 
 static void
-tctrl_read_event_status(void *arg)
+tctrl_read_event_status(struct tctrl_softc *sc)
 {
-	struct tctrl_softc *sc;
 	struct tctrl_req req;
-	int s;
-	unsigned int v;
+	int s, lid;
+	uint32_t v;
 
-	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	req.cmdbuf[0] = TS102_OP_RD_EVENT_STATUS;
 	req.cmdlen = 1;
 	req.rsplen = 3;
@@ -704,6 +780,7 @@ tctrl_read_event_status(void *arg)
 	}
 	if (v & TS102_EVENT_STATUS_SHUTDOWN_REQUEST) {
 		printf("%s: SHUTDOWN REQUEST!\n", sc->sc_dev.dv_xname);
+		tctrl_powerfail(sc);
 	}
 	if (v & TS102_EVENT_STATUS_VERY_LOW_POWER_WARNING) {
 /*printf("%s: VERY LOW POWER WARNING!\n", sc->sc_dev.dv_xname);*/
@@ -720,6 +797,7 @@ tctrl_read_event_status(void *arg)
 	if (v & TS102_EVENT_STATUS_DC_STATUS_CHANGE) {
 		splx(s);
 		tctrl_read_ext_status();
+		tctrl_ac_state(sc);
 		s = splts102();
 		if (tctrl_apm_record_event(sc, APM_POWER_CHANGE))
 			printf("%s: main power %s\n", sc->sc_dev.dv_xname,
@@ -730,17 +808,59 @@ tctrl_read_event_status(void *arg)
 	if (v & TS102_EVENT_STATUS_LID_STATUS_CHANGE) {
 		splx(s);
 		tctrl_read_ext_status();
+		tctrl_lid_state(sc);
 		tctrl_setup_bitport();
 #ifdef TCTRLDEBUG
 		printf("%s: lid %s\n", sc->sc_dev.dv_xname,
 		    (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN)
 		    ? "closed" : "opened");
 #endif
+		lid = (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) == 0;
 	}
+	if (v & TS102_EVENT_STATUS_EXTERNAL_VGA_STATUS_CHANGE) {
+		int vga;
+		splx(s);
+		tctrl_read_ext_status();
+		vga = (sc->sc_ext_status &
+		    TS102_EXT_STATUS_EXTERNAL_VGA_ATTACHED) != 0;
+		if (vga != sc->sc_extvga) {
+			sc->sc_extvga = vga;
+			if (sc->sc_video_callback != NULL) {
+				sc->sc_video_callback(
+				    sc->sc_video_callback_cookie,
+				    sc->sc_extvga);
+			}
+		}
+	}
+#ifdef DIAGNOSTIC
+	if (v & TS102_EVENT_STATUS_EXT_MOUSE_STATUS_CHANGE) {
+		splx(s);
+		tctrl_read_ext_status();
+		if (sc->sc_ext_status &
+		    TS102_EXT_STATUS_EXTERNAL_MOUSE_ATTACHED) {
+			printf("tctrl: external mouse detected\n");
+		}
+	}
+#endif
+	sc->sc_ext_pending = 0;
 	splx(s);
 }
 
-void
+static void
+tctrl_lock(struct tctrl_softc *sc)
+{
+
+	lockmgr(&sc->sc_requestlock, LK_EXCLUSIVE, NULL);
+}
+
+static void
+tctrl_unlock(struct tctrl_softc *sc)
+{
+
+	lockmgr(&sc->sc_requestlock, LK_RELEASE, NULL);
+}
+
+int
 tadpole_request(struct tctrl_req *req, int spin)
 {
 	struct tctrl_softc *sc;
@@ -749,22 +869,26 @@ tadpole_request(struct tctrl_req *req, int spin)
 	if (tctrl_cd.cd_devs == NULL
 	    || tctrl_cd.cd_ndevs == 0
 	    || tctrl_cd.cd_devs[TCTRL_STD_DEV] == NULL) {
-		return;
+		return ENODEV;
 	}
 
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
-	while (sc->sc_wantdata != 0) {
-		if (req->p != NULL)
-			tsleep(&sc->sc_wantdata, PLOCK, "tctrl_lock", 10);
-		else
-			DELAY(1);
-	}
+	tctrl_lock(sc);
+
 	if (spin)
 		s = splhigh();
 	else
 		s = splts102();
 	sc->sc_flags |= TCTRL_SEND_REQUEST;
 	memcpy(sc->sc_cmdbuf, req->cmdbuf, req->cmdlen);
+#ifdef DIAGNOSTIC
+	if (sc->sc_wantdata != 0) {
+		splx(s);
+		printf("tctrl: we lost the race\n");
+		tctrl_unlock(sc);
+		return EAGAIN;
+	}
+#endif
 	sc->sc_wantdata = 1;
 	sc->sc_rsplen = req->rsplen;
 	sc->sc_cmdlen = req->cmdlen;
@@ -773,22 +897,42 @@ tadpole_request(struct tctrl_req *req, int spin)
 	/* we spin for certain commands, like poweroffs */
 	if (spin) {
 /*		for (i = 0; i < 30000; i++) {*/
-		while (sc->sc_wantdata == 1) {
+		i = 0;
+		while ((sc->sc_wantdata == 1) && (i < 30000)) {
 			tctrl_intr(sc);
 			DELAY(1);
+			i++;
 		}
+#ifdef DIAGNOSTIC
+		if (i >= 30000) {
+			printf("tctrl: timeout busy waiting for micro controller request!\n");
+			sc->sc_wantdata = 0;
+			splx(s);
+			tctrl_unlock(sc);
+			return EAGAIN;
+		}
+#endif
 	} else {
+		int timeout = 5 * (sc->sc_rsplen + sc->sc_cmdlen);
 		tctrl_intr(sc);
 		i = 0;
 		while (((sc->sc_rspoff != sc->sc_rsplen) ||
 		    (sc->sc_cmdoff != sc->sc_cmdlen)) &&
-		    (i < (5 * sc->sc_rsplen + sc->sc_cmdlen)))
+		    (i < timeout))
 			if (req->p != NULL) {
 				tsleep(sc, PWAIT, "tctrl_data", 15);
 				i++;
-			}
-			else
+			} else
 				DELAY(1);
+#ifdef DIAGNOSTIC
+		if (i >= timeout) {
+			printf("tctrl: timeout waiting for microcontroller request\n");
+			sc->sc_wantdata = 0;
+			splx(s);
+			tctrl_unlock(sc);
+			return EAGAIN;
+		}
+#endif
 	}
 	/*
 	 * we give the user a reasonable amount of time for a command
@@ -799,6 +943,9 @@ tadpole_request(struct tctrl_req *req, int spin)
 	sc->sc_wantdata = 0;
 	memcpy(req->rspbuf, sc->sc_rspbuf, req->rsplen);
 	splx(s);
+	
+	tctrl_unlock(sc);
+	return 0;
 }
 
 void
@@ -955,8 +1102,6 @@ tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	struct apm_event_info *evp;
 	struct tctrl_softc *sc;
 	int i;
-	/*u_int j;*/
-	uint16_t a;
 	uint8_t c;
 
 	if (tctrl_cd.cd_devs == NULL
@@ -968,10 +1113,14 @@ tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
         switch (cmd) {
 
 	case APM_IOC_STANDBY:
-		return(EOPNOTSUPP); /* for now */
+		/* turn off backlight and so on ? */
+		
+		return 0; /* for now */
 
 	case APM_IOC_SUSPEND:
-		return(EOPNOTSUPP); /* for now */
+		/* not sure what to do here - we can't really suspend */
+		
+		return 0; /* for now */
 
 	case OAPM_IOC_GETPOWER:
 	case APM_IOC_GETPOWER:
@@ -1003,13 +1152,8 @@ tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 			else
 				powerp->battery_state = APM_BATT_UNKNOWN;
 		}
-		req.cmdbuf[0] = TS102_OP_RD_EXT_STATUS;
-		req.cmdlen = 1;
-		req.rsplen = 3;
-		req.p = l->l_proc;
-		tadpole_request(&req, 0);
-		a = req.rspbuf[0] * 256 + req.rspbuf[1];
-		if (a & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE)
+		
+		if (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE)
 			powerp->ac_state = APM_AC_ON;
 		else
 			powerp->ac_state = APM_AC_OFF;
@@ -1129,32 +1273,6 @@ tctrlkqfilter(dev_t dev, struct knote *kn)
 	return (0);
 }
 
-/* DO NOT SET THIS OPTION */
-#ifdef TADPOLE_BLINK
-void
-cpu_disk_unbusy(int busy)
-{
-	static struct timeval tctrl_ds_timestamp;
-        struct timeval dv_time, diff_time;
-	struct tctrl_softc *sc;
-
-	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
-
-	/* quickly bail */
-	if (!(sc->sc_lcdstate & TS102_LCD_DISK_ACTIVE) || busy > 0)
-		return;
-
-        /* we aren't terribly concerned with precision here */
-        dv_time = mono_time;
-        timersub(&dv_time, &tctrl_ds_timestamp, &diff_time);
-
-	if (diff_time.tv_sec > 0) {
-                tctrl_set_lcd(0, TS102_LCD_DISK_ACTIVE);
-		tctrl_ds_timestamp = mono_time;
-	}
-}
-#endif
-
 static void
 tctrl_sensor_setup(struct tctrl_softc *sc)
 {
@@ -1219,11 +1337,25 @@ tctrl_sensor_setup(struct tctrl_softc *sc)
 	sysmon_task_queue_init();
 
 	sc->sc_powerpressed = 0;
-	memset(&sc->sc_smcontext, 0, sizeof(struct sysmon_pswitch));
-	sc->sc_smcontext.smpsw_name = sc->sc_dev.dv_xname;
-	sc->sc_smcontext.smpsw_type = PSWITCH_TYPE_POWER;
-	if (sysmon_pswitch_register(&sc->sc_smcontext) != 0)
+	memset(&sc->sc_sm_pbutton, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_sm_pbutton.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_sm_pbutton.smpsw_type = PSWITCH_TYPE_POWER;
+	if (sysmon_pswitch_register(&sc->sc_sm_pbutton) != 0)
 		printf("%s: unable to register power button with sysmon\n",
+		    sc->sc_dev.dv_xname);
+
+	memset(&sc->sc_sm_lid, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_sm_lid.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_sm_lid.smpsw_type = PSWITCH_TYPE_LID;
+	if (sysmon_pswitch_register(&sc->sc_sm_lid) != 0)
+		printf("%s: unable to register lid switch with sysmon\n",
+		    sc->sc_dev.dv_xname);
+
+	memset(&sc->sc_sm_ac, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_sm_ac.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_sm_ac.smpsw_type = PSWITCH_TYPE_ACADAPTER;
+	if (sysmon_pswitch_register(&sc->sc_sm_ac) != 0)
+		printf("%s: unable to register AC adaptor with sysmon\n",
 		    sc->sc_dev.dv_xname);
 }
 
@@ -1232,8 +1364,28 @@ tctrl_power_button_pressed(void *arg)
 {
 	struct tctrl_softc *sc = arg;
 
-	sysmon_pswitch_event(&sc->sc_smcontext, PSWITCH_EVENT_PRESSED);
+	sysmon_pswitch_event(&sc->sc_sm_pbutton, PSWITCH_EVENT_PRESSED);
 	sc->sc_powerpressed = 0;
+}
+
+static void
+tctrl_lid_state(struct tctrl_softc *sc)
+{
+	int state;
+	
+	state = (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) ? 
+	    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED;
+	sysmon_pswitch_event(&sc->sc_sm_lid, state);
+}
+
+static void
+tctrl_ac_state(struct tctrl_softc *sc)
+{
+	int state;
+	
+	state = (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE) ? 
+	    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED;
+	sysmon_pswitch_event(&sc->sc_sm_ac, state);
 }
 
 static int
@@ -1341,4 +1493,83 @@ tctrl_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
 
 	/* There is nothing to set here. */
 	return (EINVAL);
+}
+
+static void
+tctrl_create_event_thread(void *v)
+{
+	struct tctrl_softc *sc = v;
+	const char *name = sc->sc_dev.dv_xname;
+	
+	if (kthread_create1(tctrl_event_thread, sc, &sc->sc_thread, "%s",
+	    name) != 0) {
+		printf("%s: unable to create event kthread", name);
+	}
+}
+
+static void
+tctrl_event_thread(void *v)
+{
+	struct tctrl_softc *sc = v;
+	struct device *dv;
+	struct sd_softc *sd = NULL;
+	struct lance_softc *le = NULL;
+	int ticks = hz/2;
+	int rcount, wcount;
+	int s;
+	
+	while (sd == NULL) {
+		for (dv = alldevs.tqh_first; dv; dv = dv->dv_list.tqe_next) {
+			if (strcmp(dv->dv_xname, "sd0") == 0) {
+			    	sd = (struct sd_softc *)dv;
+			}
+			if (le == NULL) {
+				if (strcmp(dv->dv_xname, "le0") == 0)
+					le = (struct lance_softc *)dv;
+			}
+		}
+		if (sd == NULL)
+			tsleep(&sc->sc_events, PWAIT, "probe_disk", hz);
+	}			
+	printf("found %s\n", sd->sc_dev.dv_xname);
+	rcount = sd->sc_dk.dk_stats->io_rxfer;
+	wcount = sd->sc_dk.dk_stats->io_wxfer;
+
+	tctrl_read_event_status(sc);
+	
+	while (1) {
+		tsleep(&sc->sc_events, PWAIT, "tctrl_event", ticks);
+		s = splhigh();
+		if ((rcount != sd->sc_dk.dk_stats->io_rxfer) || 
+		    (wcount != sd->sc_dk.dk_stats->io_wxfer)) {
+			rcount = sd->sc_dk.dk_stats->io_rxfer;
+			wcount = sd->sc_dk.dk_stats->io_wxfer;
+			sc->sc_lcdwanted |= TS102_LCD_DISK_ACTIVE;
+		} else
+			sc->sc_lcdwanted &= ~TS102_LCD_DISK_ACTIVE;
+		if (le != NULL) {
+			if (le->sc_havecarrier != 0) {
+				sc->sc_lcdwanted |= TS102_LCD_LAN_ACTIVE;
+			} else
+				sc->sc_lcdwanted &= ~TS102_LCD_LAN_ACTIVE;
+		}
+		splx(s);
+		tctrl_update_lcd(sc);
+		if (sc->sc_ext_pending)
+			tctrl_read_event_status(sc);
+	}
+}
+
+void
+tadpole_register_callback(void (*callback)(void *, int), void *cookie)
+{
+	struct tctrl_softc *sc;
+
+	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
+	sc->sc_video_callback = callback;
+	sc->sc_video_callback_cookie = cookie;
+	if (sc->sc_video_callback != NULL) {
+		sc->sc_video_callback(sc->sc_video_callback_cookie,
+		    sc->sc_extvga);
+	}
 }

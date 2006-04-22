@@ -1,0 +1,31 @@
+#	$NetBSD: files.atheros,v 1.1.8.2 2006/04/22 11:37:42 simonb Exp $
+
+file	arch/mips/atheros/ar531x_intr.c
+file	arch/mips/atheros/ar531x_timer.c
+file	arch/mips/atheros/ar531x_board.c
+
+# Atheros system bus
+device	arbus { [addr=-1] }
+attach	arbus at mainbus
+file	arch/mips/atheros/arbus.c		arbus
+
+# On-chip UART device
+attach	com at arbus with com_arbus
+file	arch/mips/atheros/dev/com_arbus.c	com_arbus
+
+# On-chip ethernet device(s)
+device	ae: ether, ifnet, arp, mii
+attach	ae at arbus
+file	arch/mips/atheros/dev/if_ae.c		ae
+
+# On-chip WLAN device(s)
+#attach	ath at arbus with ath_arbus
+#file	arch/mips/atheros/dev/if_ath_arbus.c	ath_arbus
+
+# Atheros HAL
+#object	/athhal-mips-be-elf.hal.o		ath
+
+# On-chip GPIO
+#device	argpio: gpiobus
+#attach	argpio at arbus
+#file	arch/mips/atheros/dev/argpio.c		argpio

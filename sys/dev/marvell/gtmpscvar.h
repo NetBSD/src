@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscvar.h,v 1.6 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtmpscvar.h,v 1.6.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -126,11 +126,6 @@ typedef struct gtmpsc_softc {
 	unsigned int cnt_tx_from_ldisc;
 	unsigned int cnt_tx_to_sdma;
 } gtmpsc_softc_t;
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)       (t) |= (f)
-#define	CLR(t, f)       (t) &= ~(f)
-#define	ISSET(t, f)     ((t) & (f))
 
 /* Make receiver interrupt 8 times a second */
 #define	GTMPSC_MAXIDLE(baudrate)  ((baudrate) / (10 * 8)) /* There are 10 bits

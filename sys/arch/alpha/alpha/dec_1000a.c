@@ -1,4 +1,4 @@
-/* $NetBSD: dec_1000a.c,v 1.21 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: dec_1000a.c,v 1.21.6.1 2006/04/22 11:37:10 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.21 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_1000a.c,v 1.21.6.1 2006/04/22 11:37:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,9 +258,7 @@ dec_1000a_device_register(dev, aux)
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
+	struct device *parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -276,7 +274,7 @@ dec_1000a_device_register(dev, aux)
 	}
 
 	if (pcidev == NULL) {
-		if (strcmp(name, "pci"))
+		if (!device_is_a(dev, "pci"))
 			return;
 		else {
 			struct pcibus_attach_args *pba = aux;
@@ -323,12 +321,14 @@ dec_1000a_device_register(dev, aux)
 	if (!diskboot)
 		return;
 
-	if (!strcmp(name, "sd") || !strcmp(name, "st") || !strcmp(name, "cd")) {
+	if (device_is_a(dev, "sd") ||
+	    device_is_a(dev, "st") ||
+	    device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 		int unit;
 
-		if (parent->dv_parent != ctrlrdev)
+		if (device_parent(parent) != ctrlrdev)
 			return;
 
 		unit = periph->periph_target * 100 + periph->periph_lun;

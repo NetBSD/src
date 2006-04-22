@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.40 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: pm.c,v 1.40.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.40 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.40.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 
 #include <sys/param.h>
@@ -166,7 +166,7 @@ pmattach(parent, self, aux)
 	if (pm_fi)
 		fi = pm_fi;
 	else {
-		if (fballoc(&fi) < 0 || pminit(fi, base, self->dv_unit) < 0)
+		if (fballoc(&fi) < 0 || pminit(fi, base, device_unit(self)) < 0)
 			return; /* failed */
 	}
 	((struct fbsoftc *)self)->sc_fi = fi;

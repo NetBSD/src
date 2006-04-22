@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.12 2006/01/23 21:45:02 uwe Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.12.4.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.12 2006/01/23 21:45:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.12.4.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -229,10 +229,10 @@ sh3_switch_setup(struct lwp *l)
 {
 	pt_entry_t *pte;
 	struct md_upte *md_upte = l->l_md.md_upte;
-	u_int32_t vpn;
+	uint32_t vpn;
 	int i;
 
-	vpn = (u_int32_t)l->l_addr;
+	vpn = (uint32_t)l->l_addr;
 	vpn &= ~PGOFSET;
 	for (i = 0; i < UPAGES; i++, vpn += PAGE_SIZE, md_upte++) {
 		pte = __pmap_kpte_lookup(vpn);
@@ -254,10 +254,10 @@ sh4_switch_setup(struct lwp *l)
 {
 	pt_entry_t *pte;
 	struct md_upte *md_upte = l->l_md.md_upte;
-	u_int32_t vpn;
+	uint32_t vpn;
 	int i, e;
 
-	vpn = (u_int32_t)l->l_addr;
+	vpn = (uint32_t)l->l_addr;
 	vpn &= ~PGOFSET;
 	e = SH4_UTLB_ENTRY - UPAGES;
 	for (i = 0; i < UPAGES; i++, e++, vpn += PAGE_SIZE) {

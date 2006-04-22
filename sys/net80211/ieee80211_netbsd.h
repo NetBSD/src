@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.9 2005/12/10 23:26:35 elad Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.9.6.1 2006/04/22 11:40:09 simonb Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -183,6 +183,9 @@ int ieee80211_node_dectestref(struct ieee80211_node *ni);
 struct mbuf *ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen);
 #define	M_PWR_SAV	M_PROTO1		/* bypass PS handling */
 #define	M_MORE_DATA	M_LINK3			/* more data frames to follow */
+#define	M_FRAG		M_LINK4			/* 802.11 fragment */
+#define	M_FIRSTFRAG	M_LINK5			/* first 802.11 fragment */
+#define	M_FF		M_LINK6			/* "fast frames" */
 /*
  * Encode WME access control bits in the PROTO flags.
  * This is safe since it's passed directly in to the
@@ -259,6 +262,7 @@ struct ieee80211_michael_event {
 	     var = nextvar)
 
 void	if_printf(struct ifnet *, const char *, ...);
+void	m_align(struct mbuf *, int);
 int	m_append(struct mbuf *, int, const caddr_t);
 void	get_random_bytes(void *, size_t);
 

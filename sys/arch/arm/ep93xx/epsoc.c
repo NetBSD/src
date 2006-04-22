@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.5 2005/11/12 05:33:23 hamajima Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.5.8.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.5 2005/11/12 05:33:23 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.5.8.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,7 +152,7 @@ epsoc_attach(struct device *parent, struct device *self, void *aux)
 		else
 			fclk = 14745600ULL;
 	}
-	printf("%s: fclk %lld.%02lld Mhz hclk %lld.%02lld Mhz pclk %lld.%02lld Mhz\n", 
+	printf("%s: fclk %lld.%02lld MHz hclk %lld.%02lld MHz pclk %lld.%02lld MHz\n", 
 		sc->sc_dev.dv_xname,
 		fclk / 1000000, (fclk % 1000000 + 5000) / 10000, 
 		hclk / 1000000, (hclk % 1000000 + 5000) / 10000, 

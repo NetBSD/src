@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.18 2005/12/06 13:37:35 christos Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.18.6.1 2006/04/22 11:38:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18 2005/12/06 13:37:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18.6.1 2006/04/22 11:38:17 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -51,6 +51,22 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.18 2005/12/06 13:37:35 christos 
 #include <compat/netbsd32/netbsd32_conv.h>
 
 #ifdef NTP
+
+#ifdef PPS_SYNC
+/*
+ * The following variables are used only if the PPS signal discipline
+ * is configured in the kernel.
+ */
+extern int pps_shift;		/* interval duration (s) (shift) */
+extern long pps_freq;		/* pps frequency offset (scaled ppm) */
+extern long pps_jitter;		/* pps jitter (us) */
+extern long pps_stabil;		/* pps stability (scaled ppm) */
+extern long pps_jitcnt;		/* jitter limit exceeded */
+extern long pps_calcnt;		/* calibration intervals */
+extern long pps_errcnt;		/* calibration errors */
+extern long pps_stbcnt;		/* stability limit exceeded */
+#endif /* PPS_SYNC */
+
 int
 netbsd32_ntp_gettime(l, v, retval)
 	struct lwp *l;

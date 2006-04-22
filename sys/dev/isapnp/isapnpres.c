@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.15 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.15.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.15 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.15.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,7 +519,7 @@ parse:
 		if (len >= ISAPNP_MAX_TAGSIZE) {
 			printf("%s: Maximum tag size exceeded, card %d\n",
 			    sc->sc_dev.dv_xname, c + 1);
-			len = ISAPNP_MAX_TAGSIZE;
+			len = ISAPNP_MAX_TAGSIZE - 1;
 			if (++warned == 10)
 				goto bad;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.9 2006/01/05 12:21:00 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.9.4.1 2006/04/22 11:40:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9 2006/01/05 12:21:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.4.1 2006/04/22 11:40:15 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -246,6 +246,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 		error = EOPNOTSUPP;
 		goto out_locked;
 	}
+	KASSERT(fid.fid_len <= _VFS_MAXFIDSZ);
 	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
 	    mp->mnt_op->vfs_fhtovp != NULL);
 
@@ -738,6 +739,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 		return error;
 
 	vput(rvp);
+	KASSERT(nfs_pub.np_handle.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 
 	/*
 	 * If an indexfile was specified, pull it in.

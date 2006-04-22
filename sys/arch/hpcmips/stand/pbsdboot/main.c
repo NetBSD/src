@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.60 2005/12/04 17:42:23 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.60.6.1 2006/04/22 11:37:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -69,7 +69,7 @@ TCHAR *version_string =
 	TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 	TEXT("All rights reserved.\r\n")
 	TEXT("\r\n")
-	TEXT("http://www.NetBSD.org/Ports/hpcmips\r\n");
+	TEXT("http://www.NetBSD.org/Ports/hpcmips/\r\n");
 
 /*-----------------------------------------------------------------------------
 

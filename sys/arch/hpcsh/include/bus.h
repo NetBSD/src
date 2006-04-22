@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.11.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -145,84 +145,84 @@ struct hpcsh_bus_space {
 	void *		(*hbs_vaddr)(void *, bus_space_handle_t);
 
 	/* read (single) */
-	u_int8_t	(*hbs_r_1)(void *, bus_space_handle_t,
+	uint8_t		(*hbs_r_1)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int16_t	(*hbs_r_2)(void *, bus_space_handle_t,
+	uint16_t	(*hbs_r_2)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int32_t	(*hbs_r_4)(void *, bus_space_handle_t,
+	uint32_t	(*hbs_r_4)(void *, bus_space_handle_t,
 			    bus_size_t);
-	u_int64_t	(*hbs_r_8)(void *, bus_space_handle_t,
+	uint64_t	(*hbs_r_8)(void *, bus_space_handle_t,
 			    bus_size_t);
 
 	/* read multiple */
 	void		(*hbs_rm_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*hbs_rm_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*hbs_rm_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*hbs_rm_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* read region */
 	void		(*hbs_rr_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t *, bus_size_t);
+			    bus_size_t, uint8_t *, bus_size_t);
 	void		(*hbs_rr_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t *, bus_size_t);
+			    bus_size_t, uint16_t *, bus_size_t);
 	void		(*hbs_rr_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t *, bus_size_t);
+			    bus_size_t, uint32_t *, bus_size_t);
 	void		(*hbs_rr_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t *, bus_size_t);
+			    bus_size_t, uint64_t *, bus_size_t);
 					
 	/* write (single) */
 	void		(*hbs_w_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t);
+			    bus_size_t, uint8_t);
 	void		(*hbs_w_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t);
+			    bus_size_t, uint16_t);
 	void		(*hbs_w_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t);
+			    bus_size_t, uint32_t);
 	void		(*hbs_w_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t);
+			    bus_size_t, uint64_t);
 
 	/* write multiple */
 	void		(*hbs_wm_1)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*hbs_wm_2)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*hbs_wm_4)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*hbs_wm_8)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 					
 	/* write region */
 	void		(*hbs_wr_1)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int8_t *, bus_size_t);
+			    bus_size_t, const uint8_t *, bus_size_t);
 	void		(*hbs_wr_2)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int16_t *, bus_size_t);
+			    bus_size_t, const uint16_t *, bus_size_t);
 	void		(*hbs_wr_4)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int32_t *, bus_size_t);
+			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*hbs_wr_8)(void *, bus_space_handle_t,
-			    bus_size_t, const u_int64_t *, bus_size_t);
+			    bus_size_t, const uint64_t *, bus_size_t);
 
 	/* set multiple */
 	void		(*hbs_sm_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*hbs_sm_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*hbs_sm_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 	void		(*hbs_sm_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t);
+			    bus_size_t, uint64_t, bus_size_t);
 
 	/* set region */
 	void		(*hbs_sr_1)(void *, bus_space_handle_t,
-			    bus_size_t, u_int8_t, bus_size_t);
+			    bus_size_t, uint8_t, bus_size_t);
 	void		(*hbs_sr_2)(void *, bus_space_handle_t,
-			    bus_size_t, u_int16_t, bus_size_t);
+			    bus_size_t, uint16_t, bus_size_t);
 	void		(*hbs_sr_4)(void *, bus_space_handle_t,
-			    bus_size_t, u_int32_t, bus_size_t);
+			    bus_size_t, uint32_t, bus_size_t);
 	void		(*hbs_sr_8)(void *, bus_space_handle_t,
-			    bus_size_t, u_int64_t, bus_size_t);
+			    bus_size_t, uint64_t, bus_size_t);
 
 	/* copy */
 	void		(*hbs_c_1)(void *, bus_space_handle_t, bus_size_t,
@@ -454,110 +454,110 @@ void bus_space_destroy(bus_space_tag_t);
 /*
  * Bus read (single) operations.
  */
-#define	bus_space_read_1(t, h, o)	__hbs_rs(1,u_int8_t,(t),(h),(o))
-#define	bus_space_read_2(t, h, o)	__hbs_rs(2,u_int16_t,(t),(h),(o))
-#define	bus_space_read_4(t, h, o)	__hbs_rs(4,u_int32_t,(t),(h),(o))
-#define	bus_space_read_8(t, h, o)	__hbs_rs(8,u_int64_t,(t),(h),(o))
+#define	bus_space_read_1(t, h, o)	__hbs_rs(1,uint8_t,(t),(h),(o))
+#define	bus_space_read_2(t, h, o)	__hbs_rs(2,uint16_t,(t),(h),(o))
+#define	bus_space_read_4(t, h, o)	__hbs_rs(4,uint32_t,(t),(h),(o))
+#define	bus_space_read_8(t, h, o)	__hbs_rs(8,uint64_t,(t),(h),(o))
 
 
 /*
  * Bus read multiple operations.
  */
 #define	bus_space_read_multi_1(t, h, o, a, c)				\
-	__hbs_nonsingle(rm,1,u_int8_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(rm,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_2(t, h, o, a, c)				\
-	__hbs_nonsingle(rm,2,u_int16_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(rm,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_4(t, h, o, a, c)				\
-	__hbs_nonsingle(rm,4,u_int32_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(rm,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_multi_8(t, h, o, a, c)				\
-	__hbs_nonsingle(rm,8,u_int64_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(rm,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus read region operations.
  */
 #define	bus_space_read_region_1(t, h, o, a, c)				\
-	__hbs_nonsingle(rr,1,u_int8_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(rr,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_2(t, h, o, a, c)				\
-	__hbs_nonsingle(rr,2,u_int16_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(rr,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_4(t, h, o, a, c)				\
-	__hbs_nonsingle(rr,4,u_int32_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(rr,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_read_region_8(t, h, o, a, c)				\
-	__hbs_nonsingle(rr,8,u_int64_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(rr,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus write (single) operations.
  */
-#define	bus_space_write_1(t, h, o, v)	__hbs_ws(1,u_int8_t,(t),(h),(o),(v))
-#define	bus_space_write_2(t, h, o, v)	__hbs_ws(2,u_int16_t,(t),(h),(o),(v))
-#define	bus_space_write_4(t, h, o, v)	__hbs_ws(4,u_int32_t,(t),(h),(o),(v))
-#define	bus_space_write_8(t, h, o, v)	__hbs_ws(8,u_int64_t,(t),(h),(o),(v))
+#define	bus_space_write_1(t, h, o, v)	__hbs_ws(1,uint8_t,(t),(h),(o),(v))
+#define	bus_space_write_2(t, h, o, v)	__hbs_ws(2,uint16_t,(t),(h),(o),(v))
+#define	bus_space_write_4(t, h, o, v)	__hbs_ws(4,uint32_t,(t),(h),(o),(v))
+#define	bus_space_write_8(t, h, o, v)	__hbs_ws(8,uint64_t,(t),(h),(o),(v))
 
 
 /*
  * Bus write multiple operations.
  */
 #define	bus_space_write_multi_1(t, h, o, a, c)				\
-	__hbs_nonsingle(wm,1,u_int8_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(wm,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_2(t, h, o, a, c)				\
-	__hbs_nonsingle(wm,2,u_int16_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(wm,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_4(t, h, o, a, c)				\
-	__hbs_nonsingle(wm,4,u_int32_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(wm,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-	__hbs_nonsingle(wm,8,u_int64_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(wm,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Bus write region operations.
  */
 #define	bus_space_write_region_1(t, h, o, a, c)				\
-	__hbs_nonsingle(wr,1,u_int8_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(wr,1,uint8_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_2(t, h, o, a, c)				\
-	__hbs_nonsingle(wr,2,u_int16_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(wr,2,uint16_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_4(t, h, o, a, c)				\
-	__hbs_nonsingle(wr,4,u_int32_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(wr,4,uint32_t,(t),(h),(o),(a),(c))
 #define	bus_space_write_region_8(t, h, o, a, c)				\
-	__hbs_nonsingle(wr,8,u_int64_t,(t),(h),(o),(a),(c))
+	__hbs_nonsingle(wr,8,uint64_t,(t),(h),(o),(a),(c))
 
 
 /*
  * Set multiple operations.
  */
 #define	bus_space_set_multi_1(t, h, o, v, c)				\
-	__hbs_set(sm,1,u_int8_t,(t),(h),(o),(v),(c))
+	__hbs_set(sm,1,uint8_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_2(t, h, o, v, c)				\
-	__hbs_set(sm,2,u_int16_t,(t),(h),(o),(v),(c))
+	__hbs_set(sm,2,uint16_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_4(t, h, o, v, c)				\
-	__hbs_set(sm,4,u_int32_t,(t),(h),(o),(v),(c))
+	__hbs_set(sm,4,uint32_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_multi_8(t, h, o, v, c)				\
-	__hbs_set(sm,8,u_int64_t,(t),(h),(o),(v),(c))
+	__hbs_set(sm,8,uint64_t,(t),(h),(o),(v),(c))
 
 
 /*
  * Set region operations.
  */
 #define	bus_space_set_region_1(t, h, o, v, c)				\
-	__hbs_set(sr,1,u_int8_t,(t),(h),(o),(v),(c))
+	__hbs_set(sr,1,uint8_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_2(t, h, o, v, c)				\
-	__hbs_set(sr,2,u_int16_t,(t),(h),(o),(v),(c))
+	__hbs_set(sr,2,uint16_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_4(t, h, o, v, c)				\
-	__hbs_set(sr,4,u_int32_t,(t),(h),(o),(v),(c))
+	__hbs_set(sr,4,uint32_t,(t),(h),(o),(v),(c))
 #define	bus_space_set_region_8(t, h, o, v, c)				\
-	__hbs_set(sr,8,u_int64_t,(t),(h),(o),(v),(c))
+	__hbs_set(sr,8,uint64_t,(t),(h),(o),(v),(c))
 
 
 /*
  * Copy region operations.
  */
 #define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)			\
-	__hbs_copy(1, u_int8_t, (t), (h1), (o1), (h2), (o2), (c))
+	__hbs_copy(1, uint8_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)			\
-	__hbs_copy(2, u_int16_t, (t), (h1), (o1), (h2), (o2), (c))
+	__hbs_copy(2, uint16_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)			\
-	__hbs_copy(4, u_int32_t, (t), (h1), (o1), (h2), (o2), (c))
+	__hbs_copy(4, uint32_t, (t), (h1), (o1), (h2), (o2), (c))
 #define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)			\
-	__hbs_copy(8, u_int64_t, (t), (h1), (o1), (h2), (o2), (c))
+	__hbs_copy(8, uint64_t, (t), (h1), (o1), (h2), (o2), (c))
 
 /*
  * Bus stream operations--defined in terms of non-stream counterparts
@@ -730,7 +730,7 @@ struct hpcsh_bus_dmamap {
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	/*
 	 * Private cookie to be used by the DMA back-end.

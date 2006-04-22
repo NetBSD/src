@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.8 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.8.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -232,7 +232,7 @@ nextirq:
         msr     cpsr_all, r0
 
 #ifdef INTR_DEBUG
-	adr	r0, dbg_str
+	adr	r0, Ldbg_str
 	mov	r1, #3
 	ldr	r2, [r10, #(SAIPIC_MR)]
 	bl	_C_LABEL(printf)

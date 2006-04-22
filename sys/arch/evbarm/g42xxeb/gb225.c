@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225.c,v 1.4 2005/12/11 12:17:08 christos Exp $ */
+/*	$NetBSD: gb225.c,v 1.4.6.1 2006/04/22 11:37:23 simonb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -219,7 +219,8 @@ static int
 opio_intr( void *arg )
 {
 	struct opio_softc *sc = (struct opio_softc *)arg;
-	struct obio_softc *bsc = (struct obio_softc *)sc->sc_dev.dv_parent;
+	struct obio_softc *bsc =
+	    (struct obio_softc *)device_parent(&sc->sc_dev);
 
 	/* avoid further interrupts while debouncing */
 	obio_intr_mask(bsc, sc->sc_ih);
@@ -271,7 +272,8 @@ static void
 opio_debounce(void *arg)
 {
 	struct opio_softc *sc = arg;
-	struct obio_softc *osc = (struct obio_softc *)sc->sc_dev.dv_parent;
+	struct obio_softc *osc =
+	    (struct obio_softc *)device_parent(&sc->sc_dev);
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int flag = 0;

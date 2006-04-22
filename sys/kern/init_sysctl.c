@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.61 2006/02/02 17:48:51 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.61.2.1 2006/04/22 11:39:58 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.61 2006/02/02 17:48:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.61.2.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -125,10 +125,12 @@ sysctl_ncpus(void)
 }
 #endif /* MULTIPROCESSOR */
 
+#ifdef DIAGNOSTIC
+static int sysctl_kern_trigger_panic(SYSCTLFN_PROTO);
+#endif
 static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
-static int sysctl_kern_securelevel(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
 static int sysctl_setlen(SYSCTLFN_PROTO);
 static int sysctl_kern_clockrate(SYSCTLFN_PROTO);
@@ -330,12 +332,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 				    "execve(2)"),
 		       NULL, ARG_MAX, NULL, 0,
 		       CTL_KERN, KERN_ARGMAX, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "securelevel",
-		       SYSCTL_DESCR("System security level"),
-		       sysctl_kern_securelevel, 0, &securelevel, 0,
-		       CTL_KERN, KERN_SECURELVL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "hostname",
@@ -740,6 +736,14 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Perform a crash dump on system panic"),
 		       NULL, 0, &dumponpanic, 0,
 		       CTL_KERN, KERN_DUMP_ON_PANIC, CTL_EOL);
+#ifdef DIAGNOSTIC
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "panic_now",
+		       SYSCTL_DESCR("Trigger a panic"),
+		       sysctl_kern_trigger_panic, 0, NULL, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "root_partition",
@@ -902,18 +906,6 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 		       SYSCTL_DESCR("Software page size"),
 		       NULL, PAGE_SIZE, NULL, 0,
 		       CTL_HW, HW_PAGESIZE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "disknames",
-		       SYSCTL_DESCR("List of disk devices present"),
-		       sysctl_hw_disknames, 0, NULL, 0,
-		       CTL_HW, HW_DISKNAMES, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "diskstats",
-		       SYSCTL_DESCR("Statistics on disk operation"),
-		       sysctl_hw_diskstats, 0, NULL, 0,
-		       CTL_HW, HW_DISKSTATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine_arch",
@@ -1095,6 +1087,27 @@ SYSCTL_SETUP(sysctl_security_setup, "sysctl security subtree setup")
  * ********************************************************************
  */
 
+#ifdef DIAGNOSTIC
+static int
+sysctl_kern_trigger_panic(SYSCTLFN_ARGS)
+{
+	int newtrig, error;
+	struct sysctlnode node;
+
+	newtrig = 0;
+	node = *rnode;
+	node.sysctl_data = &newtrig;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (newtrig != 0)
+		panic("Panic triggered");
+
+	return (error);
+}
+#endif
+
 /*
  * sysctl helper routine for kern.maxvnodes.  drain vnodes if
  * new value is lower than desiredvnodes and then calls reinit
@@ -1187,30 +1200,6 @@ sysctl_kern_maxproc(SYSCTLFN_ARGS)
 	maxproc = nmaxproc;
 
 	return (0);
-}
-
-/*
- * sysctl helper routine for kern.securelevel.  ensures that the value
- * only rises unless the caller has pid 1 (assumed to be init).
- */
-static int
-sysctl_kern_securelevel(SYSCTLFN_ARGS)
-{
-	int newsecurelevel, error;
-	struct sysctlnode node;
-
-	newsecurelevel = securelevel;
-	node = *rnode;
-	node.sysctl_data = &newsecurelevel;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if (newsecurelevel < securelevel && l && l->l_proc->p_pid != 1)
-		return (EPERM);
-	securelevel = newsecurelevel;
-
-	return (error);
 }
 
 /*
@@ -1450,26 +1439,31 @@ static int
 sysctl_kern_defcorename(SYSCTLFN_ARGS)
 {
 	int error;
-	char newcorename[MAXPATHLEN];
+	char *newcorename;
 	struct sysctlnode node;
 
+	newcorename = PNBUF_GET();
 	node = *rnode;
 	node.sysctl_data = &newcorename[0];
 	memcpy(node.sysctl_data, rnode->sysctl_data, MAXPATHLEN);
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
+	if (error || newp == NULL) {
+		goto done;
+	}
 
 	/*
 	 * when sysctl_lookup() deals with a string, it's guaranteed
 	 * to come back nul terminated.  so there.  :)
 	 */
-	if (strlen(newcorename) == 0)
-		return (EINVAL);
-
-	memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
-
-	return (0);
+	if (strlen(newcorename) == 0) {
+		error = EINVAL;
+	} else {
+		memcpy(rnode->sysctl_data, node.sysctl_data, MAXPATHLEN);
+		error = 0;
+	}
+done:
+	PNBUF_PUT(newcorename);
+	return error;
 }
 
 /*
@@ -2435,9 +2429,8 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = psstr_addr;
 	auio.uio_resid = sizeof(pss);
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&auio);
 	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
@@ -2467,9 +2460,8 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = sizeof(argv);
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&auio);
 	error = uvm_io(&vmspace->vm_map, &auio);
 	if (error)
 		goto done;
@@ -2489,9 +2481,8 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		auio.uio_offset = argv + len;
 		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
 		auio.uio_resid = xlen;
-		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = uvm_io(&vmspace->vm_map, &auio);
 		if (error)
 			goto done;
@@ -2941,7 +2932,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_back = PTRTOUINT64(l->l_back);
 		ki->p_addr = PTRTOUINT64(l->l_addr);
 		ki->p_stat = l->l_stat;
-		ki->p_flag |= l->l_flag;
+		ki->p_flag |= l->l_flag & P_SHARED;
 		ki->p_swtime = l->l_swtime;
 		ki->p_slptime = l->l_slptime;
 		if (l->l_stat == LSONPROC) {

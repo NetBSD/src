@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.16 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: zx.c,v 1.16.6.1 2006/04/22 11:39:28 simonb Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.16 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.16.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	fb->fb_driver = &zx_fbdriver;
 	fb->fb_device = &sc->sc_dv;
-	fb->fb_flags = sc->sc_dv.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dv)->cf_flags & FB_USERMASK;
 	fb->fb_pfour = NULL;
 	fb->fb_linebytes = 8192;
 

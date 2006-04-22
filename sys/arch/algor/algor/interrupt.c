@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.7 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7.6.1 2006/04/22 11:37:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2005/12/11 12:16:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7.6.1 2006/04/22 11:37:10 simonb Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
@@ -69,8 +68,6 @@ void	*(*algor_intr_establish)(int, int (*)(void *), void *);
 void	(*algor_intr_disestablish)(void *);
 
 void	(*algor_iointr)(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-
-struct algor_soft_intrhand *softnet_intrhand;
 
 u_long	cycles_per_hz;
 
@@ -129,8 +126,6 @@ const u_int32_t ipl_si_to_sr[_IPL_NSOFT] = {
 	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
 };
 
-struct algor_soft_intr algor_soft_intrs[_IPL_NSOFT];
-
 struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
@@ -153,9 +148,6 @@ void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	struct clockframe cf;
-	struct algor_soft_intr *asi;
-	struct algor_soft_intrhand *sih;
-	int i, s;
 
 	uvmexp.intrs++;
 
@@ -187,107 +179,5 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 
 	_clrsoftintr(ipending);
 
-	for (i = _IPL_NSOFT - 1; i >= 0; i--) {
-		if ((ipending & ipl_si_to_sr[i]) == 0)
-			continue;
-
-		asi = &algor_soft_intrs[i];
-
-		if (TAILQ_FIRST(&asi->softintr_q) != NULL)
-			asi->softintr_evcnt.ev_count++;
-
-		for (;;) {
-			s = splhigh();
-
-			sih = TAILQ_FIRST(&asi->softintr_q);
-			if (sih != NULL) {
-				TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-				sih->sih_pending = 0;
-			}
-
-			splx(s);
-
-			if (sih == NULL)
-				break;
-
-			uvmexp.softs++;
-			(*sih->sih_fn)(sih->sih_arg);
-		}
-	}
-}
-
-/*
- * softintr_init:
- *
- *	Initialize the software interrupt system.
- */
-void
-softintr_init(void)
-{
-	static const char *softintr_names[] = IPL_SOFTNAMES;
-	struct algor_soft_intr *asi;
-	int i;
-
-	for (i = 0; i < _IPL_NSOFT; i++) {
-		asi = &algor_soft_intrs[i];
-		TAILQ_INIT(&asi->softintr_q);
-		asi->softintr_ipl = IPL_SOFT + i;
-		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
-		    NULL, "soft", softintr_names[i]);
-	}
-
-	/* XXX Establish legacy soft interrupt handlers. */
-	softnet_intrhand = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *))netintr, NULL);
-
-	assert(softnet_intrhand != NULL);
-}
-
-/*
- * softintr_establish:		[interface]
- *
- *	Register a software interrupt handler.
- */
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct algor_soft_intr *asi;
-	struct algor_soft_intrhand *sih;
-
-	if (__predict_false(ipl >= (IPL_SOFT + _IPL_NSOFT) ||
-			    ipl < IPL_SOFT))
-		panic("softintr_establish");
-
-	asi = &algor_soft_intrs[ipl - IPL_SOFT];
-
-	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
-	if (__predict_true(sih != NULL)) {
-		sih->sih_intrhead = asi;
-		sih->sih_fn = func;
-		sih->sih_arg = arg;
-		sih->sih_pending = 0;
-	}
-	return (sih);
-}
-
-/*
- * softintr_disestablish:	[interface]
- *
- *	Unregister a software interrupt handler.
- */
-void
-softintr_disestablish(void *arg)
-{
-	struct algor_soft_intrhand *sih = arg;
-	struct algor_soft_intr *asi = sih->sih_intrhead;
-	int s;
-
-	s = splhigh();
-	if (sih->sih_pending) {
-		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-		sih->sih_pending = 0;
-	}
-	splx(s);
-
-	free(sih, M_DEVBUF);
+	softintr_dispatch(ipending);
 }

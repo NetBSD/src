@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.11 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.11.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.11 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.11.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ an_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 void
 an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct an_isapnp_softc *isc = (void *) self;
+	struct an_isapnp_softc *isc = device_private(self);
 	struct an_softc *sc = &isc->sc_an;
 	struct isapnp_attach_args *ipa = aux;
 
@@ -127,9 +127,11 @@ an_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	/* Establish the interrupt handler. */
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, an_intr, sc);
-	if (isc->sc_ih == NULL)
+	if (isc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	if (an_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",

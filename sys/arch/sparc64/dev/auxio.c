@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.14 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: auxio.c,v 1.14.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.14 2005/12/11 12:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.14.6.1 2006/04/22 11:37:59 simonb Exp $");
 
 #include "opt_auxio.h"
 
@@ -102,12 +102,11 @@ static void auxio_blink(void *);
 int do_blink = 1;
 
 static void
-auxio_blink(x)
-	void *x;
+auxio_blink(void *x)
 {
 	struct auxio_softc *sc = x;
 	int s;
-	u_int32_t led;
+	uint32_t led;
 
 	if (do_blink == 0)
 		return;
@@ -138,8 +137,7 @@ auxio_blink(x)
 #endif
 
 void
-auxio_attach_common(sc)
-	struct auxio_softc *sc;
+auxio_attach_common(struct auxio_softc *sc)
 {
 #ifdef BLINK
 	static int do_once = 1;
@@ -154,10 +152,7 @@ auxio_attach_common(sc)
 }
 
 int
-auxio_ebus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+auxio_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -165,9 +160,7 @@ auxio_ebus_match(parent, cf, aux)
 }
 
 void
-auxio_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+auxio_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct ebus_attach_args *ea = aux;
@@ -218,10 +211,7 @@ auxio_ebus_attach(parent, self, aux)
 }
 
 int
-auxio_sbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+auxio_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -229,9 +219,7 @@ auxio_sbus_match(parent, cf, aux)
 }
 
 void
-auxio_sbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+auxio_sbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct sbus_attach_args *sa = aux;

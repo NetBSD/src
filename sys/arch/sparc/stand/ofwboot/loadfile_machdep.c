@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.1 2006/01/27 18:31:12 cdi Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.1.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,16 +49,16 @@
 
 
 #define MAXSEGNUM	50
-#define hi(val)		((u_int32_t)(((val) >> 32) & (u_int32_t)-1))
-#define lo(val)		((u_int32_t)((val) & (u_int32_t)-1))
+#define hi(val)		((uint32_t)(((val) >> 32) & (uint32_t)-1))
+#define lo(val)		((uint32_t)((val) & (uint32_t)-1))
 
 #define roundup2(x, y)	(((x)+((y)-1))&(~((y)-1)))
 
 
 typedef int phandle_t;
 
-extern void	itlb_enter(vaddr_t, u_int32_t, u_int32_t);
-extern void	dtlb_enter(vaddr_t, u_int32_t, u_int32_t);
+extern void	itlb_enter(vaddr_t, uint32_t, uint32_t);
+extern void	dtlb_enter(vaddr_t, uint32_t, uint32_t);
 extern vaddr_t	itlb_va_to_pa(vaddr_t);
 extern vaddr_t	dtlb_va_to_pa(vaddr_t);
 

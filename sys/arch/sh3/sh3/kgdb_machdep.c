@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.12 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.12.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12.6.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -197,7 +197,7 @@ kgdb_signal(int type)
 void
 kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
-	u_int32_t r;
+	uint32_t r;
 
 	memset(gdb_regs, 0, KGDB_NUMREGS * sizeof(kgdb_reg_t));
 	gdb_regs[ 0] = regs->tf_r0;

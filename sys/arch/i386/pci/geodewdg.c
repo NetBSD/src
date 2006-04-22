@@ -1,4 +1,4 @@
-/*	$NetBSD: geodewdg.c,v 1.1.2.1 2006/02/28 20:25:08 kardel Exp $	*/
+/*	$NetBSD: geodewdg.c,v 1.1.2.2 2006/04/22 11:37:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.1.2.1 2006/02/28 20:25:08 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.1.2.2 2006/04/22 11:37:34 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ geode_wdog_enable(struct geode_wdog_softc *sc)
 
 	wdcnfg &= ~(SC1100_WDCNFG_WD32KPD | SC1100_WDCNFG_WDPRES_MASK |
 	            SC1100_WDCNFG_WDTYPE1_MASK | SC1100_WDCNFG_WDTYPE2_MASK);
-	wdcnfg |= LSHIFT(sc->sc_prescale, SC1100_WDCNFG_WDPRES_MASK);
+	wdcnfg |= SHIFTIN(sc->sc_prescale, SC1100_WDCNFG_WDPRES_MASK);
         wdcnfg |= SC1100_WDCNFG_WDTYPE1_RESET | SC1100_WDCNFG_WDTYPE2_NOACTION;
 
 	bus_space_write_2(sc->sc_gcb_dev->sc_iot, sc->sc_gcb_dev->sc_ioh, SC1100_GCB_WDCNFG, wdcnfg);
@@ -229,7 +229,8 @@ geode_wdog_attach(struct device *parent, struct device *self, void *aux)
 	struct geode_wdog_softc *sc = (void *) self;
 	uint8_t wdsts;
 
-	printf(": AMD Geode SC1100 Watchdog Timer\n");
+	aprint_naive(": Watchdog Timer\n");
+	aprint_normal(": AMD Geode SC1100 Watchdog Timer\n");
 
 
 	/*
@@ -252,7 +253,8 @@ geode_wdog_attach(struct device *parent, struct device *self, void *aux)
 	    wdsts));
 
 	if (wdsts & SC1100_WDSTS_WDRST)
-		printf("%s: WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n",
+		aprint_error(
+		    "%s: WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n",
 		    sc->sc_dev.dv_xname);
 
 	/* reset WDOVF by writing 1 to it */
@@ -260,7 +262,7 @@ geode_wdog_attach(struct device *parent, struct device *self, void *aux)
 	    wdsts & SC1100_WDSTS_WDOVF);
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		printf("%s: unable to register watchdog with sysmon\n",
+		aprint_error("%s: unable to register watchdog with sysmon\n",
 		    sc->sc_dev.dv_xname);
 
 	/* cancel any pending countdown */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.12 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.12.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12.6.1 2006/04/22 11:38:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2005/12/11 12:19:14 christos Exp 
  *
  * There are 5 different fields that can be used to identify which
  * operation is encoded into a particular 32-bit insn. There are 3
- * formats for instuctions, which one being used is determined by
+ * formats for instructions, which one being used is determined by
  * bits 30-31 of the insn. Here are the bit fields and their names:
  *
  * 1100 0000 0000 0000 0000 0000 0000 0000 op field, determines format

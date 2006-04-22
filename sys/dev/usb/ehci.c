@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.108 2006/01/17 12:30:00 xtraeme Exp $ */
+/*	$NetBSD: ehci.c,v 1.108.4.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.108 2006/01/17 12:30:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.108.4.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1723,6 +1723,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		DPRINTFN(8,("ehci_root_ctrl_start: wValue=0x%04x\n", value));
+		if (len == 0)
+			break;
 		switch(value >> 8) {
 		case UDESC_DEVICE:
 			if ((value & 0xff) != 0) {
@@ -1771,8 +1773,6 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &ehci_endpd, l);
 			break;
 		case UDESC_STRING:
-			if (len == 0)
-				break;
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
@@ -1907,6 +1907,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 #endif
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
+		if (len == 0)
+			break;
 		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;

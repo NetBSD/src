@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.73 2005/12/24 23:24:01 perry Exp $ */
+/* $NetBSD: locore.h,v 1.73.6.1 2006/04/22 11:37:42 simonb Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -130,12 +130,12 @@ void	mips3_sd(uint64_t *, uint64_t);
 #endif	/* MIPS3 || MIPS4 || MIPS32 || MIPS64 */
 
 #if defined(MIPS3) || defined(MIPS4) || defined(MIPS64)
-static inline uint32_t	mips3_lw_a64(uint64_t addr)
+static __inline uint32_t	mips3_lw_a64(uint64_t addr)
 		    __attribute__((__unused__));
-static inline void	mips3_sw_a64(uint64_t addr, uint32_t val)
+static __inline void	mips3_sw_a64(uint64_t addr, uint32_t val)
 		    __attribute__ ((__unused__));
 
-static inline uint32_t
+static __inline uint32_t
 mips3_lw_a64(uint64_t addr)
 {
 	uint32_t addrlo, addrhi;
@@ -165,7 +165,7 @@ mips3_lw_a64(uint64_t addr)
 	return (rv);
 }
 
-static inline void
+static __inline void
 mips3_sw_a64(uint64_t addr, uint32_t val)
 {
 	uint32_t addrlo, addrhi;

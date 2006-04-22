@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.12 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.12.6.1 2006/04/22 11:37:16 simonb Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.12 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma_jazz.c,v 1.12.6.1 2006/04/22 11:37:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ typedef struct jazz_tlbmap {
 } *jazz_tlbmap_t;
 
 static int	jazz_bus_dmamap_alloc_sgmap(bus_dma_tag_t,
-		    bus_dma_segment_t *, int, bus_size_t, struct proc *, int);
+		    bus_dma_segment_t *, int, bus_size_t, int);
 static void	jazz_bus_dmamap_free_sgmap(bus_dma_tag_t,
 		    bus_dma_segment_t *, int);
 
@@ -88,7 +88,7 @@ jazz_bus_dma_tag_init(bus_dma_tag_t t)
 
 static int
 jazz_bus_dmamap_alloc_sgmap(bus_dma_tag_t t, bus_dma_segment_t *segs,
-    int nsegs, bus_size_t boundary, struct proc *p, int flags)
+    int nsegs, bus_size_t boundary, int flags)
 {
 	jazz_dma_pte_t *dmapte;
 	bus_addr_t addr;
@@ -208,10 +208,17 @@ jazz_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		/* just use pre-allocated DMA TLB for the buffer */
 		jazz_tlbmap_t tlbmap;
 		bus_size_t off;
+		struct vmspace *vm;
+
+		if (p != NULL) {
+			vm = p->p_vmspace;
+		} else {
+			vm = vmspace_kernel();
+		}
 
 		tlbmap = (jazz_tlbmap_t)map->_dm_cookie;
 		off = jazz_dma_page_offs(buf);
-		jazz_dmatlb_map_va(p, (vaddr_t)buf, buflen, tlbmap->ptebase);
+		jazz_dmatlb_map_va(vm, (vaddr_t)buf, buflen, tlbmap->ptebase);
 
 		map->dm_segs[0].ds_addr = tlbmap->vaddr + off;
 		map->dm_segs[0].ds_len = buflen;
@@ -226,7 +233,7 @@ jazz_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		/* allocate DMA TLB for each dmamap segment */
 		error = jazz_bus_dmamap_alloc_sgmap(t, map->dm_segs,
-		    map->dm_nsegs, map->_dm_boundary, p, flags);
+		    map->dm_nsegs, map->_dm_boundary, flags);
 	}
 	return error;
 }
@@ -247,7 +254,7 @@ jazz_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	error = _bus_dmamap_load_mbuf(t, map, m0, flags);
 	if (error == 0) {
 		error = jazz_bus_dmamap_alloc_sgmap(t, map->dm_segs,
-		    map->dm_nsegs, map->_dm_boundary, NULL, flags);
+		    map->dm_nsegs, map->_dm_boundary, flags);
 	}
 	return error;
 }
@@ -268,9 +275,7 @@ jazz_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	error = jazz_bus_dmamap_load_uio(t, map, uio, flags);
 	if (error == 0) {
 		error = jazz_bus_dmamap_alloc_sgmap(t, map->dm_segs,
-		    map->dm_nsegs, map->_dm_boundary,
-		    uio->uio_segflg == UIO_USERSPACE ? uio->uio_lwp->l_proc :
-		    NULL, flags);
+		    map->dm_nsegs, map->_dm_boundary, flags);
 	}
 	return error;
 }
@@ -291,7 +296,7 @@ jazz_bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	error = _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags);
 	if (error == 0) {
 		error = jazz_bus_dmamap_alloc_sgmap(t, map->dm_segs,
-		    map->dm_nsegs, map->_dm_boundary, NULL, flags);
+		    map->dm_nsegs, map->_dm_boundary, flags);
 	}
 	return error;
 }

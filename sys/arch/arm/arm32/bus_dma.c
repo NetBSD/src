@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.47 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.47.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.47 2005/12/24 20:06:47 perry Exp $");
 #include <arm/cpufunc.h>
 
 int	_bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int);
+	    bus_size_t, struct vmspace *, int);
 struct arm32_dma_range *_bus_dma_inrange(struct arm32_dma_range *,
 	    int, bus_addr_t);
 
@@ -207,7 +207,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->_dm_origbuf = NULL;
 	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = vmspace_kernel();
 	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -239,7 +239,7 @@ _bus_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	map->dm_nsegs = 0;
 	map->_dm_origbuf = NULL;
 	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = NULL;
 
 	free(map, M_DMAMAP);
 }
@@ -253,6 +253,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
+	struct vmspace *vm;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_load: t=%p map=%p buf=%p len=%lx p=%p f=%d\n",
@@ -269,15 +270,21 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
+
 	/* _bus_dmamap_load_buffer() clears this if we're not... */
 	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
 
-	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags);
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->_dm_origbuf = buf;
 		map->_dm_buftype = ARM32_BUFTYPE_LINEAR;
-		map->_dm_proc = p;
+		map->_dm_vmspace = vm;
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load: error=%d\n", error);
@@ -384,14 +391,14 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 		default:
 			error = _bus_dmamap_load_buffer(t, map, m->m_data,
-			    m->m_len, NULL, flags);
+			    m->m_len, vmspace_kernel(), flags);
 		}
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->_dm_origbuf = m0;
 		map->_dm_buftype = ARM32_BUFTYPE_MBUF;
-		map->_dm_proc = NULL;	/* always kernel */
+		map->_dm_vmspace = vmspace_kernel();	/* always kernel */
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load_mbuf: error=%d\n", error);
@@ -408,7 +415,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 {
 	int i, error;
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
 	struct iovec *iov;
 	caddr_t addr;
 
@@ -421,14 +427,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
-
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
-#endif
-	}
 
 	/* _bus_dmamap_load_buffer() clears this if we're not... */
 	map->_dm_flags |= ARM32_DMAMAP_COHERENT;
@@ -443,7 +441,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags);
+		    uio->uio_vmspace, flags);
 
 		resid -= minlen;
 	}
@@ -451,7 +449,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		map->dm_mapsize = uio->uio_resid;
 		map->_dm_origbuf = uio;
 		map->_dm_buftype = ARM32_BUFTYPE_UIO;
-		map->_dm_proc = p;
+		map->_dm_vmspace = uio->uio_vmspace;
 	}
 	return (error);
 }
@@ -488,7 +486,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->dm_nsegs = 0;
 	map->_dm_origbuf = NULL;
 	map->_dm_buftype = ARM32_BUFTYPE_INVALID;
-	map->_dm_proc = NULL;
+	map->_dm_vmspace = NULL;
 }
 
 static inline void
@@ -525,8 +523,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	bus_size_t minlen, moff;
 	vaddr_t maddr;
 
-	for (moff = offset, m = m0; m != NULL && len != 0;
-	     m = m->m_next) {
+	for (moff = offset, m = m0; m != NULL && len != 0; m = m->m_next) {
 		/* Find the beginning mbuf. */
 		if (moff >= m->m_len) {
 			moff -= m->m_len;
@@ -702,8 +699,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 * vmspace has not been active since the last time a full
 	 * cache flush was performed, we don't need to do anything.
 	 */
-	if (__predict_false(map->_dm_proc != NULL &&
-	    map->_dm_proc->p_vmspace->vm_map.pmap->pm_cstate.cs_cache_d == 0))
+	if (__predict_false(!VMSPACE_IS_KERNEL_P(map->_dm_vmspace) &&
+	    vm_map_pmap(&map->_dm_vmspace->vm_map)->pm_cstate.cs_cache_d == 0))
 		return;
 
 	switch (map->_dm_buftype) {
@@ -950,7 +947,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  */
 int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags)
+    bus_size_t buflen, struct vmspace *vm, int flags)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr;
@@ -966,10 +963,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	    buf, buflen, flags);
 #endif	/* DEBUG_DMA */
 
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
-	else
-		pmap = pmap_kernel();
+	pmap = vm_map_pmap(&vm->vm_map);
 
 	while (buflen > 0) {
 		/*

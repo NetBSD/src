@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.9 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.9.6.1 2006/04/22 11:39:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.9 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.9.6.1 2006/04/22 11:39:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,6 +436,21 @@ UMQ_DEF(ROLAND, ROLAND_PCR, 0) = {
 };
 
 /*
+ * ROLAND UM-3EX
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM3, 0, 1, 1) = {
+	/* out */
+	{ 0, 3 },
+	/* in */
+	{ 1, 3 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UM3, 0) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM3, 0),
+	UMQ_TERMINATOR
+};
+
+/*
  * quirk list
  */
 struct umidi_quirk umidi_quirklist[] = {
@@ -463,6 +478,7 @@ struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(ROLAND, ROLAND_UA101F, 2),
 	UMQ_REG(ROLAND, ROLAND_FANTOMX, 0),
 	UMQ_REG(ROLAND, ROLAND_PCR, 0),
+	UMQ_REG(ROLAND, ROLAND_UM3, 0),
 	UMQ_TERMINATOR
 };
 

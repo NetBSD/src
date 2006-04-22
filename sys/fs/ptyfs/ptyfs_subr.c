@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.5 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.5.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.5 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.5.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		 * from the inode
 		 */
 		if ((error = (*ptyfs_save_ptm->makename)(
-			ptyfs_save_ptm, ttyname, sizeof(ttyname),
+			ptyfs_save_ptm, l, ttyname, sizeof(ttyname),
 			ptyfs->ptyfs_pty, ptyfs->ptyfs_type == PTYFSpts ? 't'
 			: 'p')) != 0)
 				goto out;

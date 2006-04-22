@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.40 2005/12/24 23:41:34 perry Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.40.6.1 2006/04/22 11:39:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.40 2005/12/24 23:41:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.40.6.1 2006/04/22 11:39:46 simonb Exp $");
 
 #include "opt_wsfont.h"
 
@@ -714,7 +714,7 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 	if (font->encoding == WSDISPLAY_FONTENC_ISO)
 		return (c);
 
-	if (font->encoding < 0 || font->encoding > MAX_ENCODING)
+	if (font->encoding < 0 || font->encoding >= MAX_ENCODING)
 		return (-1);
 
 	hi = (c >> 8);

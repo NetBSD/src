@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.50 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.50.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.50 2005/12/11 12:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.50.6.1 2006/04/22 11:37:59 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,33 +97,25 @@ ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
  */
 
 void
-pci_attach_hook(parent, self, pba)
-	struct device *parent;
-	struct device *self;
-	struct pcibus_attach_args *pba;
+pci_attach_hook(struct device *parent, struct device *self,
+	struct pcibus_attach_args *pba)
 {
 }
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 
 	return 32;
 }
 
 pcitag_t
-pci_make_tag(pc, b, d, f)
-	pci_chipset_tag_t pc;
-	int b;
-	int d;
-	int f;
+pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 {
 	struct psycho_pbm *pp = pc->cookie;
 	struct ofw_pci_register reg;
 	pcitag_t tag;
-	int (*valid) __P((void *));
+	int (*valid)(void *);
 	int node, len;
 #ifdef DEBUG
 	char name[80];
@@ -252,10 +244,7 @@ pci_make_tag(pc, b, d, f)
 }
 
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)
@@ -384,10 +373,7 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 
 /* assume we are mapped little-endian/side-effect */
 pcireg_t
-pci_conf_read(pc, tag, reg)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
+pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
@@ -415,11 +401,7 @@ pci_conf_read(pc, tag, reg)
 }
 
 void
-pci_conf_write(pc, tag, reg, data)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int reg;
-	pcireg_t data;
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
@@ -442,9 +424,7 @@ pci_conf_write(pc, tag, reg, data)
 }
 
 static int
-pci_find_ino(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_find_ino(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct psycho_pbm *pp = pa->pa_pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
@@ -499,9 +479,7 @@ pci_find_ino(pa, ihp)
  * XXX: how does this deal with multiple interrupts for a device?
  */
 int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t tag = pa->pa_tag;
 	int interrupts, *intp;
@@ -537,9 +515,7 @@ pci_intr_map(pa, ihp)
 }
 
 const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char str[16];
 
@@ -551,9 +527,7 @@ pci_intr_string(pc, ih)
 }
 
 const struct evcnt *
-pci_intr_evcnt(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -561,12 +535,8 @@ pci_intr_evcnt(pc, ih)
 }
 
 void *
-pci_intr_establish(pc, ih, level, func, arg)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level;
-	int (*func) __P((void *));
-	void *arg;
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+	int (*func)(void *), void *arg)
 {
 	void *cookie;
 	struct psycho_pbm *pp = (struct psycho_pbm *)pc->cookie;
@@ -579,9 +549,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 }
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
 	DPRINTF(SPDB_INTR, ("pci_intr_disestablish: cookie %p\n", cookie));

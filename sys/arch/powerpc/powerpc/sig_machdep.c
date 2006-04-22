@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.24 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.24.6.1 2006/04/22 11:37:53 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.24 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.24.6.1 2006/04/22 11:37:53 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -223,8 +223,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	/* Restore GPR context, if any. */
 	if (flags & _UC_CPU) {
-		if (!PSL_USEROK_P(gr[_REG_MSR]))
-			return (EINVAL);
+		/*
+		 * Accept all user-settable bits without complaint;
+		 * userland should not need to know the machine-specific
+		 * MSR value.
+		 */
+		gr[_REG_MSR] = (gr[_REG_MSR] & PSL_USERMOD) | PSL_USERSET;
 
 #ifdef PPC_HAVE_FPU
 		/*

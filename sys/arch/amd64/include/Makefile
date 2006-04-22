@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2006/02/03 23:33:31 jmmv Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2006/04/22 11:37:12 simonb Exp $
 
 INCSDIR= /usr/include/amd64
 
-INCS=	ansi.h aout_machdep.h autoconf.h asm.h atomic.h \
+INCS=	ansi.h aout_machdep.h asm.h atomic.h \
 	bootinfo.h bswap.h bus.h byte_swap.h \
 	cdefs.h cpu.h cpufunc.h \
 	disklabel.h \
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h autoconf.h asm.h atomic.h \
 	intr.h intrdefs.h \
 	joystick.h \
 	kcore.h \
-	limits.h lock.h \
+	limits.h linux32_machdep.h lock.h \
 	math.h mcontext.h mtrr.h \
 	netbsd32_machdep.h \
 	param.h pcb.h pci_machdep.h pio.h pmap.h pmc.h proc.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.41 2005/12/29 21:08:26 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.41.6.1 2006/04/22 11:40:09 simonb Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.41 2005/12/29 21:08:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.41.6.1 2006/04/22 11:40:09 simonb Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -160,7 +160,7 @@ ieee80211_send_setup(struct ieee80211com *ic,
  */
 static int
 ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
-    struct mbuf *m, int type)
+    struct mbuf *m, int type, int timer)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_frame *wh;
@@ -212,7 +212,13 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 #endif
 	IEEE80211_NODE_STAT(ni, tx_mgmt);
 	IF_ENQUEUE(&ic->ic_mgtq, m);
-	ifp->if_timer = 1;
+	if (timer) {
+		/*
+		 * Set the mgt frame timeout.
+		 */
+		ic->ic_mgt_timer = timer;
+		ifp->if_timer = 1;
+	}
 	(*ifp->if_start)(ifp);
 	return 0;
 }
@@ -786,7 +792,8 @@ ieee80211_compute_duration(const struct ieee80211_frame_min *wh,
     struct ieee80211_duration *dn, int *npktp, int debug)
 {
 	int ack, rc;
-	int firstlen,	/* first fragment's payload + overhead length */
+	int cryptolen,	/* crypto overhead: header+trailer */
+	    firstlen,	/* first fragment's payload + overhead length */
 	    hdrlen,	/* header length w/o driver padding */
 	    lastlen,	/* last fragment's payload length w/ overhead */
 	    lastlen0,	/* last fragment's payload length w/o overhead */
@@ -805,8 +812,10 @@ ieee80211_compute_duration(const struct ieee80211_frame_min *wh,
 	overlen = IEEE80211_CRC_LEN;
 
 	if (wk != NULL) {
-		paylen -= wk->wk_cipher->ic_header;
-		overlen += wk->wk_cipher->ic_header;
+		cryptolen = wk->wk_cipher->ic_header +
+		            wk->wk_cipher->ic_trailer;
+		paylen -= cryptolen;
+		overlen += cryptolen;
 	}
 
 	npkt = paylen / fraglen;
@@ -1586,12 +1595,8 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		senderr(EINVAL, is_tx_unknownmgt);
 		/* NOTREACHED */
 	}
-
-	ret = ieee80211_mgmt_output(ic, ni, m, type);
-	if (ret == 0) {
-		if (timer)
-			ic->ic_mgt_timer = timer;
-	} else {
+	ret = ieee80211_mgmt_output(ic, ni, m, type, timer);
+	if (ret != 0) {
 bad:
 		ieee80211_free_node(ni);
 	}

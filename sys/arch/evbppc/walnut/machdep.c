@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25.6.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25.6.1 2006/04/22 11:37:25 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -412,13 +412,16 @@ cpu_startup(void)
 		panic("Cannot create board info database");
 
 	if (board_info_set("mem-size", &board_data.mem_size, 
-		sizeof(&board_data.mem_size), PROP_CONST, 0))
+		sizeof(board_data.mem_size), PROP_CONST, 0))
 		panic("setting mem-size");
+	if (board_info_set("emac0-mac-addr", &board_data.mac_address_local,
+		sizeof(board_data.mac_address_local), PROP_CONST, 0))
+		panic("setting emac0-mac-addr");
 	if (board_info_set("sip0-mac-addr", &board_data.mac_address_pci, 
-		sizeof(&board_data.mac_address_pci), PROP_CONST, 0))
+		sizeof(board_data.mac_address_pci), PROP_CONST, 0))
 		panic("setting sip0-mac-addr");
 	if (board_info_set("processor-frequency", &board_data.processor_speed, 
-		sizeof(&board_data.processor_speed), PROP_CONST, 0))
+		sizeof(board_data.processor_speed), PROP_CONST, 0))
 		panic("setting processor-frequency");
 
 	/*
