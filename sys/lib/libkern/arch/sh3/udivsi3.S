@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.1 2005/12/20 19:28:50 christos Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.6 2006/04/22 22:48:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: udivsi3.S,v 1.1 2005/12/20 19:28:50 christos Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.6 2006/04/22 22:48:54 uwe Exp $")
 #endif
 
 /*

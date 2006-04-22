@@ -1,4 +1,4 @@
-/*	$NetBSD: ashlsi3.S,v 1.1 2005/12/20 19:28:50 christos Exp $	*/
+/*	$NetBSD: ashlsi3.S,v 1.4 2006/04/22 22:48:54 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
