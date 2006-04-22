@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.c,v 1.13 2003/08/07 11:16:42 agc Exp $	*/
+/*	$NetBSD: dohits.c,v 1.14 2006/04/22 18:02:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dohits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: dohits.c,v 1.13 2003/08/07 11:16:42 agc Exp $");
+__RCSID("$NetBSD: dohits.c,v 1.14 2006/04/22 18:02:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,6 +142,7 @@ const char *file,	/* Name of file to scan for whitespace prefix */
 	    }
 	} while (line[strlen(line)-1] != '\n');
     }
+    (void)fclose(ourfile);
 }
 
 static void
@@ -184,6 +185,7 @@ const char *file,	/* Name of file to scan for #define prefix */
 	    }
 	} while (line[strlen(line)-1] != '\n');
     }
+    (void)fclose(ourfile);
 }
 
 static char *savechr(c)
