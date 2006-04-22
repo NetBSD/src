@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: console.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/common/console.c,v 1.6 2003/08/25 23:30:41 obrien Exp $"); */
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>

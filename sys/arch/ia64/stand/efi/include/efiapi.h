@@ -1,4 +1,5 @@
-/*	$NetBSD: efiapi.h,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: efiapi.h,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/efiapi.h,v 1.6 2003/12/10 19:08:09 jhb Exp $ */
 #ifndef _EFI_API_H
 #define _EFI_API_H
 

@@ -1,4 +1,5 @@
-	$NetBSD: version,v 1.1 2006/04/07 16:23:08 cherry Exp $	
+	$NetBSD: version,v 1.2 2006/04/22 07:58:53 cherry Exp $	
+$FreeBSD: src/sys/boot/ia64/skiload/version,v 1.2 2002/03/30 23:52:34 marcel Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important.  Make sure the current version number is on line 6.

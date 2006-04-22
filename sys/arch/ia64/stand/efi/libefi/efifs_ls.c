@@ -1,4 +1,4 @@
-/*	$NetBSD: efifs_ls.c,v 1.1 2006/04/07 14:21:32 cherry Exp $	 */
+/*	$NetBSD: efifs_ls.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -54,6 +54,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Based on libsa/ufs_ls.c */
 
 #include <dirent.h>
 #include <sys/param.h>

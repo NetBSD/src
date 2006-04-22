@@ -1,4 +1,6 @@
-/*	$NetBSD: efistdarg.h,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: efistdarg.h,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/efistdarg.h,v 1.1 2001/06/09 16:49:49 dfr Exp $ */
+
 #ifndef _EFISTDARG_H_
 #define _EFISTDARG_H_
 
