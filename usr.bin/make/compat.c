@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.60 2005/08/08 16:42:54 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.61 2006/04/22 18:43:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.60 2005/08/08 16:42:54 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.61 2006/04/22 18:43:06 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.60 2005/08/08 16:42:54 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.61 2006/04/22 18:43:06 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -215,6 +215,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     ReturnStatus  retstat;    	/* Status of fork */
     LstNode 	  cmdNode;  	/* Node where current command is located */
     const char  **av;	    	/* Argument vector for thing to exec */
+    char	**mav;		/* Copy of the argument vector for freeing */
     int	    	  argc;	    	/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
     Boolean 	  local;    	/* TRUE if command should be executed
@@ -328,12 +329,14 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	av = shargv;
 	argc = 0;
 	bp = NULL;
+	mav = NULL;
     } else {
 	/*
 	 * No meta-characters, so no need to exec a shell. Break the command
 	 * into words to form an argument vector we can execute.
 	 */
-	av = (const char **)brk_string(cmd, &argc, TRUE, &bp);
+	mav =  brk_string(cmd, &argc, TRUE, &bp);
+	av = (const char **)mav;
     }
 
     local = TRUE;
@@ -354,10 +357,10 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	execError("exec", av[0]);
 	_exit(1);
     }
-    if (bp) {
-	free(av);
+    if (mav)
+	free(mav);
+    if (bp)
 	free(bp);
-    }
     Lst_Replace(cmdNode, (ClientData) NULL);
 
     /*
