@@ -2,11 +2,13 @@
 
 TMPMP=$1
 LFSCDEV=$2
-PLEX=$3
-COUNT=$4
+GFILE=$3
+WFILE=$4
+PLEX=$5
+COUNT=$6
 UTILDIR=`pwd`
 
-$UTILDIR/ckckp $TMPMP $LFSCDEV &
+$UTILDIR/ckckp $TMPMP $LFSCDEV $GFILE $WFILE &
 (cd $TMPMP; $UTILDIR/cleanalot_async -n $COUNT -p $PLEX)
 kill %1
 
