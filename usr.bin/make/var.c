@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.104 2006/03/31 21:58:08 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.105 2006/04/22 19:28:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.104 2006/03/31 21:58:08 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.105 2006/04/22 19:28:51 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.104 2006/03/31 21:58:08 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.105 2006/04/22 19:28:51 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -414,6 +414,33 @@ VarFind(const char *name, GNode *ctxt, int flags)
 
 /*-
  *-----------------------------------------------------------------------
+ * VarFreeEnv  --
+ *	If the variable is an environment variable, free it
+ *
+ * Input:
+ *	v		the variable
+ *	destroy		true if the value buffer should be destroyed.
+ *
+ * Results:
+ *	1 if it is an environment variable 0 ow.
+ *
+ * Side Effects:
+ *	The variable is free'ed if it is an environent variable.
+ *-----------------------------------------------------------------------
+ */
+static Boolean
+VarFreeEnv(Var *v, Boolean destroy)
+{
+    if ((v->flags & VAR_FROM_ENV) == 0)
+	return FALSE;
+    free(v->name);
+    Buf_Destroy(v->val, destroy);
+    free(v);
+    return TRUE;
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * VarAdd  --
  *	Add a new variable of name name and value val to the given context
  *
@@ -655,10 +682,8 @@ Var_Exists(const char *name, GNode *ctxt)
 
     if (v == (Var *)NIL) {
 	return(FALSE);
-    } else if (v->flags & VAR_FROM_ENV) {
-	free(v->name);
-	Buf_Destroy(v->val, TRUE);
-	free(v);
+    } else {
+	(void)VarFreeEnv(v, TRUE);
     }
     return(TRUE);
 }
@@ -688,12 +713,8 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
     *frp = NULL;
     if (v != (Var *)NIL) {
 	char *p = ((char *)Buf_GetAll(v->val, NULL));
-	if (v->flags & VAR_FROM_ENV) {
-	    free(v->name);
-	    Buf_Destroy(v->val, FALSE);
-	    free(v);
+	if (VarFreeEnv(v, FALSE))
 	    *frp = p;
-	}
 	return p;
     } else {
 	return (NULL);
@@ -2067,6 +2088,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			*lengthPtr = tstr-start+1;
 			*WR(tstr) = endc;
 			Buf_Destroy(buf, TRUE);
+			VarFreeEnv(v, TRUE);
 			return(val);
 		    }
 		    break;
@@ -3212,10 +3234,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 	     */
 	    *freePtr = nstr;
 	}
-	if (nstr != (char *)Buf_GetAll(v->val, NULL))
-	    Buf_Destroy(v->val, destroy);
-	free(v->name);
-	free(v);
+	VarFreeEnv(v, destroy);
     } else if (v->flags & VAR_JUNK) {
 	/*
 	 * Perform any free'ing needed and set *freePtr to FALSE so the caller
