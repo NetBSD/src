@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.31 2006/04/02 00:15:53 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.32 2006/04/22 18:53:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.31 2006/04/02 00:15:53 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.32 2006/04/22 18:53:32 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.31 2006/04/02 00:15:53 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.32 2006/04/22 18:53:32 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1356,6 +1356,14 @@ Cond_Eval(char *line)
     }
     if (!isElse) {
 	condTop -= 1;
+	if (condTop < 0) {
+	    /*
+	     * This is the one case where we can definitely proclaim a fatal
+	     * error. If we don't, we're hosed.
+	     */
+	    Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
+	    return (COND_INVALID);
+	}
 	finalElse[condTop][skipIfLevel] = FALSE;
     } else if ((skipIfLevel != 0) || condStack[condTop]) {
 	/*
@@ -1369,18 +1377,9 @@ Cond_Eval(char *line)
 	return (COND_SKIP);
     }
 
-    if (condTop < 0) {
-	/*
-	 * This is the one case where we can definitely proclaim a fatal
-	 * error. If we don't, we're hosed.
-	 */
-	Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
-	return (COND_INVALID);
-    } else {
-	condStack[condTop] = value;
-	skipLine = !value;
-	return (value ? COND_PARSE : COND_SKIP);
-    }
+    condStack[condTop] = value;
+    skipLine = !value;
+    return (value ? COND_PARSE : COND_SKIP);
 }
 
 
