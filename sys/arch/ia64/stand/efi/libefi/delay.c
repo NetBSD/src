@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.c,v 1.1 2006/04/07 14:21:32 cherry Exp $	*/
+/*	$NetBSD: delay.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/efi/libefi/delay.c,v 1.3 2003/04/03 21:36:29 obrien Exp $"); */
 
 #include <efi.h>
 #include <efilib.h>

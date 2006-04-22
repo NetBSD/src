@@ -1,4 +1,6 @@
-/*	$NetBSD: efipart.h,v 1.1 2006/04/07 14:21:29 cherry Exp $	*/
+/*	$NetBSD: efipart.h,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/efipart.h,v 1.2 2002/05/19 03:17:20 marcel Exp $ */
+
 #ifndef _EFI_PART_H
 #define _EFI_PART_H
 
