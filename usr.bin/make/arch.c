@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.49 2006/03/31 21:58:08 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.50 2006/04/22 18:38:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.49 2006/03/31 21:58:08 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.50 2006/04/22 18:38:38 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.49 2006/03/31 21:58:08 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.50 2006/04/22 18:38:38 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -923,7 +923,7 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
 		isdigit((unsigned char)arhPtr->ar_name[sizeof(AR_EFMT1) - 1])) {
 
 		unsigned int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1)-1]);
-		char ename[MAXPATHLEN];
+		char ename[MAXPATHLEN + 1];
 
 		if (elen > MAXPATHLEN) {
 			fclose(arch);
