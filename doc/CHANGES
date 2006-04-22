@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.608 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.609 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -165,6 +165,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	rlphy(4): Realtek 8139/8201L PHY. From OpenBSD [xtraeme 20060104]
 	build.sh: Add experimental ability to build syspkgs. [apb 20060104]
 	postfix(1): Updated to 2.2.8. [rpaulo 20060109]
+	ews4800mips: Add sysinst support. [20060109]
 	zlib: Updated to 1.2.3 and shared between kernel and userland.
 		[christos 20060114]
 	firmload: Add an API for loading firmware images used by hardware
@@ -245,7 +246,16 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	lfs: Better handling of the page cache, particularly in regard to
 		not writing us out of space.  New cleaner daemon.
 		Various other fixes and improvements.  [perseant 20060414]
+	cobalt: Add code to identify Cobalt models. [tsutsui 20060415]
+	arc: Add support for pci_configure_bus(9) (a.k.a. options
+		PCI_NETBSD_CONFIGURE) so that PCI devices over ppb(4) work
+		properly on PCI based NEC machines. [tsutsui 20060415]
+	cobalt: Switch cobalt port to use MI todr(9) functions and MI mc146818
+		driver. [tsutsui 20060415]
 	evbarm: Add support for the I-O DATA HDL-G.  [nonaka 20060416]
+	sgimips: Switch macepci for O2 to use MI pci_configure_bus(9) rather
+		than its own PCI fixup code. [tsutsui 20060417]
 	init(8): Support for running multi-user in a chroot() environment.
 		Allows / file system on e.g., cgd(4), vnd(4) or ccd(4)
 		volumes. [salo 20060418]
+	cobalt: Account interrupts by evcnt(9). [tsutsui 20060421]
