@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.2.6 2006/02/28 21:04:27 kardel Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.2.7 2006/04/22 22:41:39 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.6 2006/02/28 21:04:27 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.7 2006/04/22 22:41:39 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -25,6 +25,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.6 2006/02/28 21:04:27 kardel E
 #include <sys/timepps.h>
 #include <sys/timetc.h>
 #include <sys/timex.h>
+
+/*
+ * maximum name length for TC names in sysctl interface
+ */
+#define MAX_TCNAMELEN	64
 
 /*
  * A large step happens on boot.  This constant detects such steps.
@@ -119,7 +124,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	int error;
-	char newname[32];
+	char newname[MAX_TCNAMELEN];
 	struct timecounter *newtc, *tc;
 
 	tc = timecounter;
@@ -151,6 +156,8 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 		(void)newtc->tc_get_timecount(newtc);
 
 		timecounter = newtc;
+
+		/* XXX unlock */
 
 		return (0);
 	}
@@ -186,8 +193,9 @@ sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 		if (where == NULL) {
 			needed += sizeof(buf);  /* be conservative */
 		} else {
-			slen = snprintf(buf, sizeof(buf), "%s%s(%d)",
-					spc, tc->tc_name, tc->tc_quality);
+			slen = snprintf(buf, sizeof(buf), "%s%s(q=%d, f=%" PRId64
+					" Hz)", spc, tc->tc_name, tc->tc_quality,
+					tc->tc_frequency);
 			if (left < slen + 1)
 				break;
 			/* XXX use sysctl_copyout? (from sysctl_hw_disknames) */
@@ -228,7 +236,7 @@ SYSCTL_SETUP(sysctl_timecounter_setup, "sysctl timecounter setup")
 			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			       CTLTYPE_STRING, "hardware",
 			       SYSCTL_DESCR("currently active time counter"),
-			       sysctl_kern_timecounter_hardware, 0, NULL, 0,
+			       sysctl_kern_timecounter_hardware, 0, NULL, MAX_TCNAMELEN,
 			       CTL_KERN, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 		sysctl_createv(clog, 0, NULL, NULL,
@@ -282,8 +290,8 @@ tc_delta(struct timehands *th)
 	struct timecounter *tc;
 
 	tc = th->th_counter;
-	return ((tc->tc_get_timecount(tc) - th->th_offset_count) &
-	    tc->tc_counter_mask);
+	return ((tc->tc_get_timecount(tc) - 
+		 th->th_offset_count) & tc->tc_counter_mask);
 }
 
 /*
@@ -563,7 +571,6 @@ tc_windup(void)
 	th->th_offset_count &= th->th_counter->tc_counter_mask;
 	bintime_addx(&th->th_offset, th->th_scale * delta);
 
-#ifdef PPS_SYNC
 	/*
 	 * Hardware latching timecounters may not generate interrupts on
 	 * PPS events, so instead we poll them.  There is a finite risk that
@@ -574,7 +581,6 @@ tc_windup(void)
 	 */
 	if (tho->th_counter->tc_poll_pps)
 		tho->th_counter->tc_poll_pps(tho->th_counter);
-#endif /* PPS_SYNC */
 
 	/*
 	 * Deal with NTP second processing.  The for loop normally
