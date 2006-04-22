@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.14 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: spkr.c,v 1.14.6.1 2006/04/22 11:37:20 simonb Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.14 2005/12/11 12:17:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.14.6.1 2006/04/22 11:37:20 simonb Exp $");
 
 #include "spkr.h"
 #if NSPKR > 0
@@ -428,8 +428,7 @@ spkrprobe (parent, match, aux)
 	 * the console drivers. (We really wish we could be the
 	 * child of a real keyboard controller driver.)
 	 */
-	if ((parent == NULL) ||
-	    (strcmp(parent->dv_cfdata->cf_name, "pc") != 0))
+	if (parent == NULL || !device_is_a(parent, "pc"))
 		return (0);
 	if (match->cf_loc[PCKBDCF_PORT] != PITAUX_PORT)
 		return (0);
@@ -445,7 +444,7 @@ spkrattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf(" port 0x%x\n", self->dv_cfdata->cf_loc[PCKBDCF_PORT]);
+	printf(" port 0x%x\n", device_cfdata(self)->cf_loc[PCKBDCF_PORT]);
 	spkr_attached = 1;
 }
 

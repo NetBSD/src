@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.34 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: cz.c,v 1.34.6.1 2006/04/22 11:39:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.34 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.34.6.1 2006/04/22 11:39:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,11 +188,6 @@ static int	cztty_to_tiocm(struct cztty_softc *sc);
 static void	cztty_diag(void *arg);
 
 extern struct cfdriver cz_cd;
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
 
 /*
  * Macros to read and write the PLX.
@@ -427,7 +422,7 @@ cz_attach(struct device *parent,
 
 		tp = ttymalloc();
 		tp->t_dev = makedev(cdevsw_lookup_major(&cz_cdevsw),
-		    (cz->cz_dev.dv_unit * ZFIRM_MAX_CHANNELS) + i);
+		    (device_unit(&cz->cz_dev) * ZFIRM_MAX_CHANNELS) + i);
 		tp->t_oproc = czttystart;
 		tp->t_param = czttyparam;
 		tty_attach(tp);

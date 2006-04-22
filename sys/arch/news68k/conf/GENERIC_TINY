@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.47 2005/12/07 12:40:47 tsutsui Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.47.6.1 2006/04/22 11:37:45 simonb Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.47 $"
+#ident 		"GENERIC_TINY-$Revision: 1.47.6.1 $"
 
 maxusers	4
 
@@ -210,7 +210,7 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	md		1	# memory disk device
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	cgd		4	# cryptographic disk devices
@@ -225,18 +225,18 @@ pseudo-device	vnd		4	# disk-like interface to files
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
-pseudo-device	sl		2	# SLIP interfaces
-pseudo-device	ppp		2	# PPP interfaces
+pseudo-device	sl			# SLIP interfaces
+pseudo-device	ppp			# PPP interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	tun		4	# Network "tunnel" device
+pseudo-device	tun			# Network "tunnel" device
 pseudo-device	tap			# virtual Ethernet
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	bpfilter	16	# Berkeley Packet Filter
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	ipfilter		# ip filter
-#pseudo-device	strip		1	# Starmode Radio IP (Metricom)
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

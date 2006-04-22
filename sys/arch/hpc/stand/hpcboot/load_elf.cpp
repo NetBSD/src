@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.15 2006/01/14 23:23:32 uwe Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.15.4.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,13 +111,22 @@ ElfLoader::memorySize()
 	int i;
 	Elf_Phdr *ph = _ph;
 	size_t sz = 0;
+	size_t extra = 0;
 
 	DPRINTF((TEXT("file size: ")));
 	for (i = 0; i < _eh.e_phnum; i++, ph++) {
 		if (ph->p_type == PT_LOAD) {
 			size_t filesz = ph->p_filesz;
-			DPRINTF((TEXT("+0x%x"), filesz));
+			DPRINTF((TEXT("%s0x%x"),
+				 sz == 0 ? "" : "+",
+				 filesz));
 			sz += _mem->roundPage(filesz);
+			// compensate for partial last tag
+			extra += _mem->getTaggedPageSize();
+			if (filesz < ph->p_memsz)
+				// compensate for zero clear
+				extra += _mem->getTaggedPageSize();
+
 		}
 	}
 
@@ -126,7 +135,12 @@ ElfLoader::memorySize()
 	if (symblk_sz) {
 		sz += symblk_sz;
 		DPRINTF((TEXT(" = 0x%x]"), symblk_sz));
+		// XXX: compensate for partial tags after ELF header and symtab
+		extra += 2 * _mem->getTaggedPageSize();
 	}
+
+	sz += extra;
+	DPRINTF((TEXT("+[extra: 0x%x]"), extra));
 
 	DPRINTF((TEXT(" = 0x%x bytes\n"), sz));
 	return sz;

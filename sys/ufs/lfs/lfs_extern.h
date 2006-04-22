@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.75 2006/01/14 17:41:17 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.75.4.1 2006/04/22 11:40:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@ int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 int lfs_valloc(struct vnode *, int, struct ucred *, struct vnode **);
 int lfs_vfree(struct vnode *, ino_t, int);
+void lfs_order_freelist(struct lfs *);
 
 /* lfs_balloc.c */
 int lfs_balloc(struct vnode *, off_t, int, struct ucred *, int, struct buf **);
@@ -183,7 +184,7 @@ struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_imtime(struct lfs *);
 int lfs_vflush(struct vnode *);
 int lfs_segwrite(struct mount *, int);
-void lfs_writefile(struct lfs *, struct segment *, struct vnode *);
+int lfs_writefile(struct lfs *, struct segment *, struct vnode *);
 int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
 int lfs_gatherblock(struct segment *, struct buf *, int *);
 int lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *));
@@ -212,6 +213,7 @@ void *lfs_malloc(struct lfs *, size_t, int);
 void lfs_free(struct lfs *, void *, int);
 int lfs_seglock(struct lfs *, unsigned long);
 void lfs_segunlock(struct lfs *);
+void lfs_segunlock_relock(struct lfs *);
 int lfs_writer_enter(struct lfs *, const char *);
 void lfs_writer_leave(struct lfs *);
 
@@ -245,6 +247,7 @@ int lfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
 void lfs_gop_size(struct vnode *, off_t, off_t *, int);
 int lfs_putpages_ext(void *, int);
 int lfs_gatherpages(struct vnode *);
+void lfs_flush_pchain(struct lfs *);
 
 int lfs_bwrite	 (void *);
 int lfs_fsync	 (void *);

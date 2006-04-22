@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.61 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.61.6.1 2006/04/22 11:40:12 simonb Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.61 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.61.6.1 2006/04/22 11:40:12 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -160,8 +160,7 @@ const struct ip6protosw inet6sw[] = {
 { SOCK_RAW,	&inet6domain,	IPPROTO_ICMPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   icmp6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
   rip6_usrreq,
-  icmp6_init,	icmp6_fasttimo,	0,		0,
-  NULL,
+  icmp6_init,	0,		0,		0,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_DSTOPTS,PR_ATOMIC|PR_ADDR,
   dest6_input,	0,	 	0,		0,
@@ -266,6 +265,7 @@ int	ip6_auto_flowlabel = 1;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
 				 * walk list every 5 sec. */
+int	ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
 int	ip6_v6only = 1;
 
 int	ip6_keepfaith = 0;

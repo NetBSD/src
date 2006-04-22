@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.68 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uhid.c,v 1.68.6.1 2006/04/22 11:39:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.68 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.68.6.1 2006/04/22 11:39:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ uhid_detach(struct device *self, int flags)
 #endif
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 #if 0

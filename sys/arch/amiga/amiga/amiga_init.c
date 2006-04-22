@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.91 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.91.6.1 2006/04/22 11:37:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.91 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.91.6.1 2006/04/22 11:37:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,7 @@ alloc_z2mem(amount)
 
 int kernel_copyback = 1;
 
+__attribute__ ((no_instrument_function))
 void
 start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	boot_part, loadbase)

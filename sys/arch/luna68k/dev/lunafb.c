@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.13 2005/12/11 12:17:52 christos Exp $ */
+/* $NetBSD: lunafb.c,v 1.13.6.1 2006/04/22 11:37:40 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.13 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.13.6.1 2006/04/22 11:37:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,9 @@ static const struct wsscreen_list omfb_screenlist = {
 	sizeof(_omfb_scrlist) / sizeof(struct wsscreen_descr *), _omfb_scrlist
 };
 
-static int   omfbioctl __P((void *, u_long, caddr_t, int, struct lwp *));
-static paddr_t omfbmmap __P((void *, off_t, int));
+static int   omfbioctl __P((void *, void *, u_long, caddr_t, int,
+		            struct lwp *));
+static paddr_t omfbmmap __P((void *, void *, off_t, int));
 static int   omfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void  omfb_free_screen __P((void *, void *));
@@ -230,8 +231,9 @@ omfb_cnattach()
 }
 
 static int
-omfbioctl(v, cmd, data, flag, l)
+omfbioctl(v, vs, cmd, data, flag, l)
 	void *v;
+	void *vs;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -277,8 +279,9 @@ omfbioctl(v, cmd, data, flag, l)
  * offset, allowing for the given protection, or return -1 for error.
  */
 static paddr_t
-omfbmmap(v, offset, prot)
+omfbmmap(v, vs, offset, prot)
 	void *v;
+	void *vs;
 	off_t offset;
 	int prot;
 {

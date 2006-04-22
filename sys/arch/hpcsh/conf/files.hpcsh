@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.45 2006/01/03 01:15:04 uwe Exp $
+#	$NetBSD: files.hpcsh,v 1.45.4.1 2006/04/22 11:37:31 simonb Exp $
 #
 maxpartitions 8
 
@@ -21,7 +21,10 @@ file	arch/hpcsh/hpcsh/kloader_machdep.c
 defflag debug_kloader.h			KLOADER_DEBUG
 defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
 
-device	mainbus { [id = -1] }
+# power management
+include "dev/hpc/files.hpcapm"
+
+device	mainbus { [id = -1] }: hpcapmif
 
 #
 # H/PC Platform common files.
@@ -34,13 +37,6 @@ include "dev/hpc/files.hpcfb"
 
 include "arch/hpc/conf/files.debug"
 file	arch/hpcsh/hpcsh/debug.c
-
-# power management
-include "dev/hpc/apm/files.apm"
-device	hpcapm: apmdevif
-attach	hpcapm at mainbus
-file	dev/hpc/hpcapm.c			hpcapm
-
 
 #
 # Machine-independent SCSI drivers

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.49 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.49.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49 2005/12/11 12:18:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49.6.1 2006/04/22 11:37:40 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mac68k.h"
@@ -320,7 +320,7 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 			zsc_args.hwflags |= ZS_HWFLAG_NO_CTS;
 
 		printf("zsc%d channel %d: d_speed %6d DCD clk %ld CTS clk %ld",
-				self->dv_unit, channel, cs->cs_defspeed,
+				device_unit(self), channel, cs->cs_defspeed,
 				xcs->cs_clocks[1].clk, xcs->cs_clocks[2].clk);
 
 		/* Set defaults in our "extended" chanstate. */

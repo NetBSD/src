@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.22 2005/12/08 03:05:40 thorpej Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.22.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.22 2005/12/08 03:05:40 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.22.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -82,6 +82,11 @@ static int	ELFNAMEEND(coredump_note)(struct proc *, struct lwp *, void *,
 
 #define	ELFROUNDSIZE	4	/* XXX Should it be sizeof(Elf_Word)? */
 #define	elfround(x)	roundup((x), ELFROUNDSIZE)
+
+#define elf_process_read_regs	CONCAT(process_read_regs, ELFSIZE)
+#define elf_process_read_fpregs	CONCAT(process_read_fpregs, ELFSIZE)
+#define elf_reg			CONCAT(process_reg, ELFSIZE)
+#define elf_fpreg		CONCAT(process_fpreg, ELFSIZE)
 
 int
 ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
@@ -345,7 +350,8 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 		cpi.cpi_svgid = p->p_cred->p_svgid;
 
 		cpi.cpi_nlwps = p->p_nlwps;
-		strlcpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
+		(void)strncpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
+		cpi.cpi_name[sizeof(cpi.cpi_name) - 1] = '\0';
 
 		nhdr.n_namesz = sizeof(ELF_NOTE_NETBSD_CORE_NAME);
 		nhdr.n_descsz = sizeof(cpi);
@@ -395,9 +401,9 @@ ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
 	int size, notesize, error;
 	int namesize;
 	char name[64+ELFROUNDSIZE];
-	struct reg intreg;
+	elf_reg intreg;
 #ifdef PT_GETFPREGS
-	struct fpreg freg;
+	elf_fpreg freg;
 #endif
 
 	size = 0;
@@ -410,7 +416,7 @@ ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
 	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(intreg));
 	if (iocookie) {
 		PHOLD(l);
-		error = process_read_regs(l, &intreg);
+		error = elf_process_read_regs(l, &intreg);
 		PRELE(l);
 		if (error)
 			return (error);
@@ -431,7 +437,7 @@ ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
 	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(freg));
 	if (iocookie) {
 		PHOLD(l);
-		error = process_read_fpregs(l, &freg);
+		error = elf_process_read_fpregs(l, &freg);
 		PRELE(l);
 		if (error)
 			return (error);

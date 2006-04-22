@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.13 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.13.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.13 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.13.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 #include "debug_playstation2.h"
 
@@ -208,8 +208,8 @@ STATIC void _gsfb_eraserows(void *, int, int, long);
 STATIC int _gsfb_allocattr(void *, int, int, int, long *);
 
 /* access ops */
-STATIC int _gsfb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-STATIC paddr_t _gsfb_mmap(void *, off_t, int);
+STATIC int _gsfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+STATIC paddr_t _gsfb_mmap(void *, void *, off_t, int);
 STATIC int _gsfb_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
 STATIC void _gsfb_free_screen(void *, void *);
@@ -316,13 +316,16 @@ void
 gsfbcninit(struct consdev *cndev)
 {
 	paddr_t paddr = MIPS_KSEG0_TO_PHYS(gsfb_init_cmd_640x480);
-	long defattr =  ATTR_BG_SET(WSCOL_BLACK) | ATTR_FG_SET(WSCOL_WHITE);
+	u_int32_t *buf = (void *)MIPS_PHYS_TO_KSEG1(paddr);
+	long defattr =  ATTR_BG_SET(WS_DEFAULT_BG) | ATTR_FG_SET(WS_DEFAULT_FG);
 
 	gsfb.is_console = 1;
 
 	gsfb_hwinit();
 	gsfb_swinit();
 
+	/* Set the screen to the default background color at boot */
+	buf[28] = gsfb_ansi_psmct32[ATTR_BG_GET(defattr)];
 	gsfb_dma_kick(paddr, sizeof gsfb_init_cmd_640x480);
 #ifdef GSFB_DEBUG_MONITOR
 	{
@@ -400,8 +403,7 @@ gsfb_set_cursor_pos(u_int32_t *p, int x, int y, int w, int h)
 	x *= w;
 	y *= h;
 	p[20] = ((x << 4) & 0xffff) | ((y << 20) & 0xffff0000);
-	p[28] = (((x + w - 1) << 4) & 0xffff) |
-	    (((y + h - 1) << 20) & 0xffff0000);
+	p[28] = (((x + w) << 4) & 0xffff) | (((y + h) << 20) & 0xffff0000);
 }
 
 int
@@ -511,8 +513,8 @@ _gsfb_allocattr(void *cookie, int fg, int bg, int flags, long *attr)
 		return (EINVAL);
 
 	if ((flags & WSATTR_WSCOLORS) == 0) {
-		fg = WSCOL_WHITE;
-		bg = WSCOL_BLACK;
+		fg = WS_DEFAULT_FG;
+		bg = WS_DEFAULT_BG;
 	}
 
 	if ((flags & WSATTR_HILIT) != 0)
@@ -527,14 +529,15 @@ _gsfb_allocattr(void *cookie, int fg, int bg, int flags, long *attr)
 }
 
 int
-_gsfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+_gsfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 
 	return (EPASSTHROUGH); /* Inappropriate ioctl for device */
 }
 
 paddr_t
-_gsfb_mmap(void *v, off_t offset, int prot)
+_gsfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 
 	return (-1); /* can't mmap */
@@ -545,7 +548,7 @@ _gsfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
     int *curxp, int *curyp, long *attrp)
 {
 
-	*attrp = ATTR_BG_SET(WSCOL_BLACK) | ATTR_FG_SET(WSCOL_WHITE);
+	*attrp = ATTR_BG_SET(WS_DEFAULT_BG) | ATTR_FG_SET(WS_DEFAULT_FG);
 
 	return (0);
 }

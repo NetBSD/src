@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.83 2005/12/11 12:21:29 christos Exp $ */
+/* $NetBSD: vga.c,v 1.83.6.1 2006/04/22 11:38:56 simonb Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-/* for WSCONS_SUPPORT_PCVTFONTS and WSDISPLAY_CHARFUNCS */
+/* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
 /* for WSDISPLAY_CUSTOM_BORDER */
 #include "opt_wsdisplay_border.h"
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.83 2005/12/11 12:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.83.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.83 2005/12/11 12:21:29 christos Exp $");
 #include <dev/wsfont/wsfont.h>
 
 #include <dev/ic/pcdisplay.h>
+
+#ifdef __i386__
+#include <arch/i386/bios/vesafbvar.h>
+#endif
 
 int vga_no_builtinfont = 0;
 
@@ -262,21 +266,17 @@ const struct wsscreen_list vga_screenlist = {
 	_vga_scrlist_mono
 };
 
-static int	vga_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	vga_mmap(void *, off_t, int);
+static int	vga_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	vga_mmap(void *, void *, off_t, int);
 static int	vga_alloc_screen(void *, const struct wsscreen_descr *,
 				 void **, int *, int *, long *);
 static void	vga_free_screen(void *, void *);
 static int	vga_show_screen(void *, void *, int,
 				void (*)(void *, int, int), void *);
 static int	vga_load_font(void *, void *, struct wsdisplay_font *);
-#ifdef WSDISPLAY_CHARFUNCS
-static int	vga_getwschar(void *, struct wsdisplay_char *);
-static int	vga_putwschar(void *, struct wsdisplay_char *);
-#endif /* WSDISPLAY_CHARFUNCS */
 #ifdef WSDISPLAY_CUSTOM_BORDER
-static u_int	vga_getborder(void *);
-static int	vga_setborder(void *, u_int);
+static int	vga_getborder(struct vga_config *, u_int *);
+static int	vga_setborder(struct vga_config *, u_int);
 #endif /* WSDISPLAY_CUSTOM_BORDER */
 
 void vga_doswitch(struct vga_config *);
@@ -289,25 +289,11 @@ const struct wsdisplay_accessops vga_accessops = {
 	vga_show_screen,
 	vga_load_font,
 	NULL,
-#ifdef WSDISPLAY_CHARFUNCS
-	vga_getwschar,
-	vga_putwschar,
-#else /* WSDISPLAY_CHARFUNCS */
-	NULL,
-	NULL,
-#endif /* WSDISPLAY_CHARFUNCS */
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	vga_scroll,
 #else
 	NULL,
 #endif
-#ifdef WSDISPLAY_CUSTOM_BORDER
-	vga_getborder,
-	vga_setborder,
-#else /* WSDISPLAY_CUSTOM_BORDER */
-	NULL,
-	NULL,
-#endif /* WSDISPLAY_CUSTOM_BORDER */
 };
 
 /*
@@ -720,6 +706,17 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 int
 vga_is_console(bus_space_tag_t iot, int type)
 {
+#ifdef __i386__
+	struct device *dv;
+	struct vesafb_softc *vesafb;
+
+	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
+		if (strncmp(dv->dv_xname, "vesafb", 6) == 0) {
+			vesafb = (struct vesafb_softc *)dv;
+			if (vesafb->sc_isconsole)
+				return (0);
+		}
+#endif
 	if (vgaconsole &&
 	    !vga_console_attached &&
 	    iot == vga_console_vc.hdl.vh_iot &&
@@ -760,9 +757,10 @@ vga_set_video(struct vga_config *vc, int state)
 }
 
 int
-vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vga_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct vga_config *vc = v;
+	struct vgascreen *scr = vs;
 	const struct vga_funcs *vf = vc->vc_funcs;
 
 	switch (cmd) {
@@ -782,6 +780,24 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case WSDISPLAYIO_SVIDEO:
 		vga_set_video(vc, *(int *)data == WSDISPLAYIO_VIDEO_ON);
 		return 0;
+
+	case WSDISPLAYIO_GETWSCHAR:
+		KASSERT(scr != NULL);
+		return pcdisplay_getwschar(&scr->pcs,
+		    (struct wsdisplay_char *)data);
+
+	case WSDISPLAYIO_PUTWSCHAR:
+		KASSERT(scr != NULL);
+		return pcdisplay_putwschar(&scr->pcs,
+		    (struct wsdisplay_char *)data);
+
+#ifdef WSDISPLAY_CUSTOM_BORDER
+	case WSDISPLAYIO_GBORDER:
+		return (vga_getborder(vc, (u_int *)data));
+
+	case WSDISPLAYIO_SBORDER:
+		return (vga_setborder(vc, *(u_int *)data));
+#endif
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
@@ -804,7 +820,7 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-vga_mmap(void *v, off_t offset, int prot)
+vga_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vga_config *vc = v;
 	const struct vga_funcs *vf = vc->vc_funcs;
@@ -1401,57 +1417,36 @@ vga_putchar(void *c, int row, int col, u_int uc, long attr)
 	pcdisplay_putchar(c, row, col, uc, attr);
 }
 
-
-#ifdef WSDISPLAY_CHARFUNCS
-int
-vga_getwschar(void *cookie, struct wsdisplay_char *wschar)
-{
-	struct vgascreen *scr = cookie;
-
-	if (scr == NULL) return 0;
-	return (pcdisplay_getwschar(&scr->pcs, wschar));
-}
-
-int
-vga_putwschar(void *cookie, struct wsdisplay_char *wschar)
-{
-	struct vgascreen *scr = cookie;
-
-	if (scr == NULL) return 0;
-	return (pcdisplay_putwschar(&scr->pcs, wschar));
-}
-#endif /* WSDISPLAY_CHARFUNCS */
-
 #ifdef WSDISPLAY_CUSTOM_BORDER
-static u_int
-vga_getborder(void *cookie)
+static int
+vga_getborder(struct vga_config *vc, u_int *valuep)
 {
-	struct vgascreen *scr = cookie;
-	struct vga_handle *vh;
+	struct vga_handle *vh = &vc->hdl;
 	u_int idx;
 	u_int8_t value;
 
-	if (scr == NULL) return EINVAL;
-	vh = &scr->cfg->hdl;
-	if (vh->vh_mono) return ENODEV;
+	if (vh->vh_mono)
+		return ENODEV;
 
 	value = _vga_attr_read(vh, VGA_ATC_OVERSCAN);
-	for (idx = 0; idx < sizeof(fgansitopc); idx++)
-		if (fgansitopc[idx] == value)
-			break;
-	return idx == sizeof(fgansitopc) ? 0 : idx;
+	for (idx = 0; idx < sizeof(fgansitopc); idx++) {
+		if (fgansitopc[idx] == value) {
+			*valuep = idx;
+			return (0);
+		}
+	}
+	return (EIO);
 }
 
 static int
-vga_setborder(void *cookie, u_int value)
+vga_setborder(struct vga_config *vc, u_int value)
 {
-	struct vgascreen *scr = cookie;
-	struct vga_handle *vh;
+	struct vga_handle *vh = &vc->hdl;
 
-	if (scr == NULL) return EINVAL;
-	vh = &scr->cfg->hdl;
-	if (vh->vh_mono) return ENODEV;
-	if (value >= sizeof(fgansitopc)) return EINVAL;
+	if (vh->vh_mono)
+		return ENODEV;
+	if (value >= sizeof(fgansitopc))
+		return EINVAL;
 
 	_vga_attr_write(vh, VGA_ATC_OVERSCAN, fgansitopc[value]);
 	return (0);

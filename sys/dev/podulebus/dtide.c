@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.21 2006/01/16 20:30:19 bouyer Exp $ */
+/* $NetBSD: dtide.c,v 1.21.4.1 2006/04/22 11:39:25 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.21 2006/01/16 20:30:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.21.4.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -80,7 +80,7 @@ static void
 dtide_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
-	struct dtide_softc *sc = (void *)self;
+	struct dtide_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct ata_channel *ch;
 	int i, j;

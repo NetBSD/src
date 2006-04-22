@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.15 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.15.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.15 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.15.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ static void
 fwohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
-	struct fwohci_cardbus_softc *sc = (struct fwohci_cardbus_softc *)self;
+	struct fwohci_cardbus_softc *sc = device_private(self);
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
@@ -160,7 +160,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 int
 fwohci_cardbus_detach(struct device *self, int flags)
 {
-	struct fwohci_cardbus_softc *sc = (struct fwohci_cardbus_softc *)self;
+	struct fwohci_cardbus_softc *sc = device_private(self);
 	cardbus_devfunc_t ct = sc->sc_ct;
 	int rv;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.114 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: elink3.c,v 1.114.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.114 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.114.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -731,7 +731,7 @@ ep_tick(arg)
 		panic("ep_tick");
 #endif
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();
@@ -1410,8 +1410,7 @@ epintr(arg)
 	u_int16_t status;
 	int ret = 0;
 
-	if (sc->enabled == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (sc->enabled == 0 || !device_is_active(&sc->sc_dev))
 		return (0);
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.9 2006/01/16 20:30:19 bouyer Exp $	*/
+/*	$NetBSD: artsata.c,v 1.9.4.1 2006/04/22 11:39:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -351,7 +351,7 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_dma_iot = sc->sc_ba5_st;
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags &
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
 		aprint_normal(
 		    ", but unused (forced off by config file)\n");

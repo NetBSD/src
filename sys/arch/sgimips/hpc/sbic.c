@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.19 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: sbic.c,v 1.19.6.1 2006/04/22 11:37:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.19 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.19.6.1 2006/04/22 11:37:55 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -221,7 +221,7 @@ wd33c93_attach(struct wd33c93_softc *dev)
 		return;
 	}
 
-	dev->sc_cfflags = dev->sc_dev.dv_cfdata->cf_flags;
+	dev->sc_cfflags = device_cfdata(&dev->sc_dev)->cf_flags;
 	wd33c93_init(dev);
 
 	dev->sc_child = config_found(&dev->sc_dev, &dev->sc_channel,
@@ -2176,7 +2176,7 @@ wd33c93_update_xfer_mode(struct wd33c93_softc *sc, int target)
  *
  * cycle = DIV / (2 * CLK)
  * DIV = FS + 2
- * best we can do is 200ns at 20Mhz, 2 cycles
+ * best we can do is 200ns at 20 MHz, 2 cycles
  */
 int
 wd33c93_div2stp(struct wd33c93_softc *dev, int div)

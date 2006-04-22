@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.4 2005/12/11 12:17:32 christos Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.4.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.4 2005/12/11 12:17:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.4.6.1 2006/04/22 11:37:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,7 @@ static void	sacc_attach(struct device *, struct device *, void *);
 static int	sacc_intr(void *);
 
 struct platid_data sacc_platid_table[] = {
-	{ &platid_mask_MACH_HP_JORNADA_720, (void *)1 },
-	{ &platid_mask_MACH_HP_JORNADA_720JP, (void *)1 },
+	{ &platid_mask_MACH_HP_JORNADA_7XX, (void *)1 },
 	{ NULL, NULL }
 };
 
@@ -86,7 +85,7 @@ static void
 sacc_attach(struct device *parent, struct device *self, void *aux)
 {
 	int i, gpiopin;
-	u_int32_t skid;
+	uint32_t skid;
 	struct sacc_softc *sc = (struct sacc_softc *)self;
 	struct sa11x0_softc *psc = (struct sa11x0_softc *)parent;
 	struct sa11x0_attach_args *sa = aux;
@@ -139,7 +138,7 @@ static int
 sacc_intr(void *arg)
 {
 	int i;
-	u_int32_t mask;
+	uint32_t mask;
 	struct sacc_intrvec intstat;
 	struct sacc_softc *sc = arg;
 	struct sacc_intrhand *ih;

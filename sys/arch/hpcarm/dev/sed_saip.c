@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.15 2005/12/11 12:17:32 christos Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.15.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.15 2005/12/11 12:17:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.15.6.1 2006/04/22 11:37:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.15 2005/12/11 12:17:32 christos Exp $
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/reboot.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
@@ -61,30 +59,28 @@ __KERNEL_RCSID(0, "$NetBSD: sed_saip.c,v 1.15 2005/12/11 12:17:32 christos Exp $
 #include <dev/hpc/hpcfbio.h>
 #include <dev/hpc/hpccmapvar.h>
 
-#include <arch/hpcarm/dev/sed1356var.h>
+#include <hpcarm/dev/sed1356var.h>
 
-#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while(0);
+#ifdef SED_DEBUG
+#define VPRINTF(arg)	do { if (bootverbose) printf arg; } while (0);
+#else
+#define VPRINTF(arg)	/* nothing */
+#endif
 
 /*
- *  function prototypes
+ * Function prototypes.
  */
-int	sed1356match(struct device *, struct cfdata *, void *);
-void	sed1356attach(struct device *, struct device *, void *);
-int	sed1356_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-paddr_t	sed1356_mmap(void *, off_t, int);
+static int	sed1356_match(struct device *, struct cfdata *, void *);
+static void	sed1356_attach(struct device *, struct device *, void *);
+static int	sed1356_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	sed1356_mmap(void *, off_t, int);
 
-
-extern	struct bus_space sa11x0_bs_tag;
-extern	int j720lcdpower(void *, int, long, void *);	/* XXX */
-
-static int sed1356_init(struct hpcfb_fbconf *);
-static void sed1356_power(int, void *);
-static void sed1356_update_powerstate(struct sed1356_softc *, int);
-void	sed1356_init_backlight(struct sed1356_softc *, int);
-void	sed1356_init_brightness(struct sed1356_softc *, int);
-void	sed1356_init_contrast(struct sed1356_softc *, int);
-void	sed1356_set_brightness(struct sed1356_softc *, int);
-void	sed1356_set_contrast(struct sed1356_softc *, int);
+static int	sed1356_init(struct hpcfb_fbconf *);
+static void	sed1356_power(int, void *);
+static void	sed1356_update_powerstate(struct sed1356_softc *, int);
+static void	sed1356_init_backlight(struct sed1356_softc *, int);
+static void	sed1356_set_brightness(struct sed1356_softc *, int);
+static void	sed1356_set_contrast(struct sed1356_softc *, int);
 
 #if defined __mips__ || defined __sh__ || defined __arm__
 #define __BTOP(x)		((paddr_t)(x) >> PGSHIFT)
@@ -94,10 +90,17 @@ void	sed1356_set_contrast(struct sed1356_softc *, int);
 #endif
 
 /*
- *  static variables
+ * External functions/variables.
+ */
+extern struct cfdriver sed_cd;
+extern struct bus_space sa11x0_bs_tag;
+extern int j720lcd_power(void *, int, long, void *);   /* XXX */
+
+/*
+ * Static variables.
  */
 CFATTACH_DECL(sed, sizeof(struct sed1356_softc),
-    sed1356match, sed1356attach, NULL, NULL);
+    sed1356_match, sed1356_attach, NULL, NULL);
 struct hpcfb_accessops sed1356_ha = {
 	sed1356_ioctl, sed1356_mmap
 };
@@ -105,24 +108,22 @@ struct hpcfb_accessops sed1356_ha = {
 static int attach_flag = 0;
 
 /*
- *  function bodies
+ * Function bodies.
  */
-int
-sed1356match(struct device *parent, struct cfdata *match, void *aux)
+static int
+sed1356_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	/* XXX check version register */
 	return 1;
 }
 
-void
-sed1356attach(struct device *parent, struct device *self, void *aux)
+static void
+sed1356_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sed1356_softc *sc = (struct sed1356_softc *)self;
 	struct hpcfb_attach_args ha;
 	int console = (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) ? 0 : 1;
-
-	printf("\n");
 
 	if (attach_flag) {
 		panic("%s(%d): sed1356 attached twice", __FILE__, __LINE__);
@@ -133,11 +134,12 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 		/* just return so that hpcfb will not be attached */
 		return;
 	}
+	printf("\n");
 
 	sc->sc_iot = &sa11x0_bs_tag;
 	sc->sc_parent = (struct sa11x0_softc *)parent;
 	if (bus_space_map(sc->sc_iot, (bus_addr_t)bootinfo->fb_addr & ~0x3fffff,
-			  0x200, 0, &sc->sc_regh)) {
+	    0x200, 0, &sc->sc_regh)) {
 		printf("%s: unable to map register\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -148,23 +150,23 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("\n");
 	printf("%s: framebuffer address: 0x%08lx\n", 
-		sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
+	    sc->sc_dev.dv_xname, (u_long)bootinfo->fb_addr);
 
 	/* Add a suspend hook to power saving */
 	sc->sc_powerstate = 0;
 	sc->sc_powerhook = powerhook_establish(sed1356_power, sc);
 	if (sc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 
-	/* initialize backlight brightness and lcd contrast */
+	/* Initialize backlight brightness and lcd contrast */
 	sc->sc_lcd_inited = 0;
 	sed1356_init_brightness(sc, 1);
 	sed1356_init_contrast(sc, 1);
 	sed1356_init_backlight(sc, 1);
 
 	if (console && hpcfb_cnattach(&sc->sc_fbconf) != 0)
-		panic("sed1356attach: cannot init fb console");
+		panic("sed1356_attach: cannot init fb console");
 
 	ha.ha_console = console;
 	ha.ha_accessops = &sed1356_ha;
@@ -180,7 +182,7 @@ sed1356attach(struct device *parent, struct device *self, void *aux)
 	if (platid_match(&platid, &platid_mask_MACH_HP_JORNADA_7XX)) {
 		config_hook(CONFIG_HOOK_POWERCONTROL,
 			    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-			    CONFIG_HOOK_SHARE, j720lcdpower, sc);
+			    CONFIG_HOOK_SHARE, j720lcd_power, sc);
 	}
 
 	config_found(self, &ha, hpcfbprint);
@@ -198,7 +200,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 	    bootinfo->fb_width == 0 ||
 	    bootinfo->fb_height == 0) {
 		printf("no frame buffer information.\n");
-		return (-1);
+		return -1;
 	}
 
 	/* zero fill */
@@ -217,7 +219,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 			   bootinfo->fb_height * bootinfo->fb_line_bytes,
 			   0, &fb->hf_baseaddr)) {
 		printf("unable to map framebuffer\n");
-		return (-1);
+		return -1;
 	}
 	fb->hf_offset		= (u_long)bootinfo->fb_addr -
 				      __PTOB(__BTOP(bootinfo->fb_addr));
@@ -295,11 +297,10 @@ sed1356_init(struct hpcfb_fbconf *fb)
 
 	default:
 		printf("unsupported type %d.\n", bootinfo->fb_type);
-		return (-1);
-		break;
+		return -1;
 	}
 
-	return (0); /* no error */
+	return 0; /* no error */
 }
 
 static void 
@@ -326,18 +327,18 @@ sed1356_update_powerstate(struct sed1356_softc *sc, int updates)
 	if (updates & PWRSTAT_LCD)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCD,
-		    (void*)!(sc->sc_powerstate & 
+		    (void *)!(sc->sc_powerstate & 
 				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)));
 
 	if (updates & PWRSTAT_BACKLIGHT)
 		config_hook_call(CONFIG_HOOK_POWERCONTROL,
 		    CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
-		    (void*)(!(sc->sc_powerstate & 
+		    (void *)(!(sc->sc_powerstate & 
 				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
 			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
 }
 
-int
+static int
 sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sed1356_softc *sc = (struct sed1356_softc *)v;
@@ -351,7 +352,7 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		/*
 		 * XXX should be able to handle color map in 4/8 bpp mode.
 		 */
-		return (EINVAL);
+		return EINVAL;
 	
 	case WSDISPLAYIO_SVIDEO:
 		if (*(int *)data == WSDISPLAYIO_VIDEO_OFF)
@@ -362,32 +363,33 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return 0;
 
 	case WSDISPLAYIO_GVIDEO:
-		*(int *)data = (sc->sc_powerstate&PWRSTAT_VIDEOOFF) ? 
-				WSDISPLAYIO_VIDEO_OFF:WSDISPLAYIO_VIDEO_ON;
+		*(int *)data = (sc->sc_powerstate & PWRSTAT_VIDEOOFF) ? 
+				WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
 		return 0;
 
-
 	case WSDISPLAYIO_GETPARAM:
-		dispparam = (struct wsdisplay_param*)data;
+		dispparam = (struct wsdisplay_param *)data;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
 			VPRINTF(("sed1356_ioctl: GET:BACKLIGHT\n"));
 			sed1356_init_brightness(sc, 0);
 			sed1356_init_backlight(sc, 0);
 			VPRINTF(("sed1356_ioctl: GET:(real)BACKLIGHT %d\n",
-				 (sc->sc_powerstate&PWRSTAT_BACKLIGHT)? 1: 0));
+			    (sc->sc_powerstate & PWRSTAT_BACKLIGHT) ? 1: 0));
 			dispparam->min = 0;
 			dispparam->max = 1;
 			if (sc->sc_max_brightness > 0)
-				dispparam->curval = sc->sc_brightness > 0? 1: 0;
+				dispparam->curval = (sc->sc_brightness > 0) ?
+				    1 : 0;
 			else
 				dispparam->curval =
-				    (sc->sc_powerstate&PWRSTAT_BACKLIGHT) ? 1: 0;
+				    (sc->sc_powerstate & PWRSTAT_BACKLIGHT) ?
+				    1 : 0;
 			VPRINTF(("sed1356_ioctl: GET:BACKLIGHT:%d(%s)\n",
-				dispparam->curval,
-				sc->sc_max_brightness > 0? "brightness": "light"));
+			    dispparam->curval, (sc->sc_max_brightness > 0) ?
+			    "brightness": "light"));
 			return 0;
-			break;
+
 		case WSDISPLAYIO_PARAM_CONTRAST:
 			VPRINTF(("sed1356_ioctl: GET:CONTRAST\n"));
 			sed1356_init_contrast(sc, 0);
@@ -395,13 +397,14 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 				dispparam->min = 0;
 				dispparam->max = sc->sc_max_contrast;
 				dispparam->curval = sc->sc_contrast;
-				VPRINTF(("sed1356_ioctl: GET:CONTRAST max=%d, current=%d\n", sc->sc_max_contrast, sc->sc_contrast));
+				VPRINTF(("sed1356_ioctl: GET:CONTRAST max=%d,"
+				    " current=%d\n", sc->sc_max_contrast,
+				    sc->sc_contrast));
 				return 0;
-			} else {
-				VPRINTF(("sed1356_ioctl: GET:CONTRAST EINVAL\n"));
-				return (EINVAL);
 			}
-			break;	
+			VPRINTF(("sed1356_ioctl: GET:CONTRAST EINVAL\n"));
+			return EINVAL;
+
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			VPRINTF(("sed1356_ioctl: GET:BRIGHTNESS\n"));
 			sed1356_init_brightness(sc, 0);
@@ -409,164 +412,174 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 				dispparam->min = 0;
 				dispparam->max = sc->sc_max_brightness;
 				dispparam->curval = sc->sc_brightness;
-				VPRINTF(("sed1356_ioctl: GET:BRIGHTNESS max=%d, current=%d\n", sc->sc_max_brightness, sc->sc_brightness));
+				VPRINTF(("sed1356_ioctl: GET:BRIGHTNESS max=%d,"
+				    " current=%d\n", sc->sc_max_brightness,
+				    sc->sc_brightness));
 				return 0;
-			} else {
-				VPRINTF(("sed1356_ioctl: GET:BRIGHTNESS EINVAL\n"));
-				return (EINVAL);
-			}
-			return (EINVAL);
+			}	
+			VPRINTF(("sed1356_ioctl: GET:BRIGHTNESS EINVAL\n"));
+			return EINVAL;
+
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
-		return (0);
+		break;
 
 	case WSDISPLAYIO_SETPARAM:
 		dispparam = (struct wsdisplay_param*)data;
 		switch (dispparam->param) {
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
 			VPRINTF(("sed1356_ioctl: SET:BACKLIGHT\n"));
-			if (dispparam->curval < 0 ||
-			    1 < dispparam->curval)
-				return (EINVAL);
+			if (dispparam->curval < 0 || 1 < dispparam->curval)
+				return EINVAL;
 			sed1356_init_brightness(sc, 0);
-			VPRINTF(("sed1356_ioctl: SET:max brightness=%d\n", sc->sc_max_brightness));
+			VPRINTF(("sed1356_ioctl: SET:max brightness=%d\n",
+			    sc->sc_max_brightness));
 			if (sc->sc_max_brightness > 0) { /* dimmer */
 				if (dispparam->curval == 0){
-					sc->sc_brightness_save = sc->sc_brightness;
-					sed1356_set_brightness(sc, 0);	/* min */
+					sc->sc_brightness_save =
+					    sc->sc_brightness;
+					sed1356_set_brightness(sc, 0); /* min */
 				} else {
 					if (sc->sc_brightness_save == 0)
-						sc->sc_brightness_save = sc->sc_max_brightness;
-					sed1356_set_brightness(sc, sc->sc_brightness_save);
+						sc->sc_brightness_save =
+						    sc->sc_max_brightness;
+					sed1356_set_brightness(sc,
+					    sc->sc_brightness_save);
 				}
-				VPRINTF(("sed1356_ioctl: SET:BACKLIGHT:brightness=%d\n", sc->sc_brightness));
+				VPRINTF(("sed1356_ioctl: SET:BACKLIGHT:"
+				    "brightness=%d\n", sc->sc_brightness));
 			} else { /* off */
 				if (dispparam->curval == 0)
 					sc->sc_powerstate &= ~PWRSTAT_BACKLIGHT;
 				else
 					sc->sc_powerstate |= PWRSTAT_BACKLIGHT;
-				VPRINTF(("sed1356_ioctl: SET:BACKLIGHT:powerstate %d\n",
-						(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
+				VPRINTF(("sed1356_ioctl: SET:BACKLIGHT:"
+				    "powerstate %d\n", (sc->sc_powerstate &
+				    PWRSTAT_BACKLIGHT) ? 1 : 0));
 				sed1356_update_powerstate(sc, PWRSTAT_BACKLIGHT);
 				VPRINTF(("sed1356_ioctl: SET:BACKLIGHT:%d\n",
-					(sc->sc_powerstate & PWRSTAT_BACKLIGHT)?1:0));
+				    (sc->sc_powerstate & PWRSTAT_BACKLIGHT) ?
+				    1 : 0));
 			}
 			return 0;
-			break;
+
 		case WSDISPLAYIO_PARAM_CONTRAST:
 			VPRINTF(("sed1356_ioctl: SET:CONTRAST\n"));
 			sed1356_init_contrast(sc, 0);
 			if (dispparam->curval < 0 ||
 			    sc->sc_max_contrast < dispparam->curval)
-				return (EINVAL);
+				return EINVAL;
 			if (sc->sc_max_contrast > 0) {
+#ifdef SED_DEBUG
 				int org = sc->sc_contrast;
+#endif
 				sed1356_set_contrast(sc, dispparam->curval);	
-				VPRINTF(("sed1356_ioctl: SET:CONTRAST org=%d, current=%d\n", org, sc->sc_contrast));
+				VPRINTF(("sed1356_ioctl: SET:CONTRAST org=%d,"
+				    " current=%d\n", org, sc->sc_contrast));
 				return 0;
-			} else {
-				VPRINTF(("sed1356_ioctl: SET:CONTRAST EINVAL\n"));
-				return (EINVAL);
 			}
-			break;
+			VPRINTF(("sed1356_ioctl: SET:CONTRAST EINVAL\n"));
+			return EINVAL;
+
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS\n"));
 			sed1356_init_brightness(sc, 0);
 			if (dispparam->curval < 0 ||
 			    sc->sc_max_brightness < dispparam->curval)
-				return (EINVAL);
+				return EINVAL;
 			if (sc->sc_max_brightness > 0) {
+#ifdef SED_DEBUG
 				int org = sc->sc_brightness;
+#endif
 				sed1356_set_brightness(sc, dispparam->curval);	
-				VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS org=%d, current=%d\n", org, sc->sc_brightness));
+				VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS org=%d,"
+				    " current=%d\n", org, sc->sc_brightness));
 				return 0;
-			} else {
-				VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS EINVAL\n"));
-				return (EINVAL);
 			}
-			break;
+			VPRINTF(("sed1356_ioctl: SET:BRIGHTNESS EINVAL\n"));
+			return EINVAL;
+
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
-		return (0);
+		return 0;
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;
 		if (fbconf->hf_conf_index != 0 &&
 		    fbconf->hf_conf_index != HPCFB_CURRENT_CONFIG) {
-			return (EINVAL);
+			return EINVAL;
 		}
 		*fbconf = sc->sc_fbconf;	/* structure assignment */
-		return (0);
+		return 0;
 	case HPCFBIO_SCONF:
 		fbconf = (struct hpcfb_fbconf *)data;
 		if (fbconf->hf_conf_index != 0 &&
 		    fbconf->hf_conf_index != HPCFB_CURRENT_CONFIG) {
-			return (EINVAL);
+			return EINVAL;
 		}
 		/*
 		 * nothing to do because we have only one configuration
 		 */
-		return (0);
+		return 0;
 	case HPCFBIO_GDSPCONF:
 		dspconf = (struct hpcfb_dspconf *)data;
 		if ((dspconf->hd_unit_index != 0 &&
 		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
 		    (dspconf->hd_conf_index != 0 &&
 		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
-			return (EINVAL);
+			return EINVAL;
 		}
 		*dspconf = sc->sc_dspconf;	/* structure assignment */
-		return (0);
+		return 0;
 	case HPCFBIO_SDSPCONF:
 		dspconf = (struct hpcfb_dspconf *)data;
 		if ((dspconf->hd_unit_index != 0 &&
 		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
 		    (dspconf->hd_conf_index != 0 &&
 		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
-			return (EINVAL);
+			return EINVAL;
 		}
 		/*
 		 * nothing to do
 		 * because we have only one unit and one configuration
 		 */
-		return (0);
+		return 0;
 	case HPCFBIO_GOP:
 	case HPCFBIO_SOP:
 		/*
 		 * curently not implemented...
 		 */
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 
-paddr_t
+static paddr_t
 sed1356_mmap(void *ctx, off_t offset, int prot)
 {
 	struct sed1356_softc *sc = (struct sed1356_softc *)ctx;
 
 	if (offset < 0 ||
 	    (sc->sc_fbconf.hf_bytes_per_plane +
-		sc->sc_fbconf.hf_offset) <  offset)
+	     sc->sc_fbconf.hf_offset) < offset)
 		return -1;
 
 	return __BTOP((u_long)bootinfo->fb_addr + offset);
 }
 
-
-void
+static void
 sed1356_init_backlight(struct sed1356_softc *sc, int inattach)
 {
 	int val = -1;
 
-	if (sc->sc_lcd_inited&BACKLIGHT_INITED)
+	if (sc->sc_lcd_inited & BACKLIGHT_INITED)
 		return;
 
-	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
+	if (config_hook_call(CONFIG_HOOK_GET,
+	    CONFIG_HOOK_POWER_LCDLIGHT, &val) != -1) {
 		/* we can get real light state */
 		VPRINTF(("sed1356_init_backlight: real backlight=%d\n", val));
 		if (val == 0)
@@ -593,20 +606,22 @@ sed1356_init_brightness(struct sed1356_softc *sc, int inattach)
 {
 	int val = -1;
 
-	if (sc->sc_lcd_inited&BRIGHTNESS_INITED)
+	if (sc->sc_lcd_inited & BRIGHTNESS_INITED)
 		return;
 
 	VPRINTF(("sed1356_init_brightness\n"));
-	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
+	if (config_hook_call(CONFIG_HOOK_GET,
+	    CONFIG_HOOK_BRIGHTNESS_MAX, &val) != -1) {
 		/* we can get real brightness max */
-		VPRINTF(("sed1356_init_brightness: real brightness max=%d\n", val));
+		VPRINTF(("sed1356_init_brightness: "
+		    "real brightness max=%d\n", val));
 		sc->sc_max_brightness = val;
 		val = -1;
-		if (config_hook_call(CONFIG_HOOK_GET, 
-		     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+		if (config_hook_call(CONFIG_HOOK_GET,
+		    CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
 			/* we can get real brightness */
-			VPRINTF(("sed1356_init_brightness: real brightness=%d\n", val));
+			VPRINTF(("sed1356_init_brightness: "
+			    "real brightness=%d\n", val));
 			sc->sc_brightness_save = sc->sc_brightness = val;
 		} else {
 			sc->sc_brightness_save =
@@ -615,9 +630,9 @@ sed1356_init_brightness(struct sed1356_softc *sc, int inattach)
 		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
 	} else if (inattach) {
 		/* 
-		   we cannot get real brightness in attach time
-		   because brightness device not yet attached.
-		   we will retry in !inattach.
+		 * we cannot get real brightness in attach time
+		 * because brightness device not yet attached.
+		 * we will retry in !inattach.
 		 */
 		sc->sc_max_brightness = -1;
 		sc->sc_brightness = -1;
@@ -626,8 +641,6 @@ sed1356_init_brightness(struct sed1356_softc *sc, int inattach)
 		/* we cannot get real brightness */
 		sc->sc_lcd_inited |= BRIGHTNESS_INITED;
 	}
-
-	return;
 }
 
 void
@@ -635,20 +648,22 @@ sed1356_init_contrast(struct sed1356_softc *sc, int inattach)
 {
 	int val = -1;
 
-	if (sc->sc_lcd_inited&CONTRAST_INITED)
+	if (sc->sc_lcd_inited & CONTRAST_INITED)
 		return;
 
 	VPRINTF(("sed1356_init_contrast\n"));
-	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
+	if (config_hook_call(CONFIG_HOOK_GET,
+	    CONFIG_HOOK_CONTRAST_MAX, &val) != -1) {
 		/* we can get real contrast max */
-		VPRINTF(("sed1356_init_contrast: real contrast max=%d\n", val));
+		VPRINTF(("sed1356_init_contrast: "
+		    "real contrast max=%d\n", val));
 		sc->sc_max_contrast = val;
 		val = -1;
-		if (config_hook_call(CONFIG_HOOK_GET, 
-		     CONFIG_HOOK_CONTRAST, &val) != -1) {
+		if (config_hook_call(CONFIG_HOOK_GET,
+		    CONFIG_HOOK_CONTRAST, &val) != -1) {
 			/* we can get real contrast */
-			VPRINTF(("sed1356_init_contrast: real contrast=%d\n", val));
+			VPRINTF(("sed1356_init_contrast: "
+			    "real contrast=%d\n", val));
 			sc->sc_contrast = val;
 		} else {
 			sc->sc_contrast = sc->sc_max_contrast;
@@ -656,9 +671,9 @@ sed1356_init_contrast(struct sed1356_softc *sc, int inattach)
 		sc->sc_lcd_inited |= CONTRAST_INITED;
 	} else if (inattach) {
 		/* 
-		   we cannot get real contrast in attach time
-		   because contrast device not yet attached.
-		   we will retry in !inattach.
+		 * we cannot get real contrast in attach time
+		 * because contrast device not yet attached.
+		 * we will retry in !inattach.
 		 */
 		sc->sc_max_contrast = -1;
 		sc->sc_contrast = -1;
@@ -666,30 +681,41 @@ sed1356_init_contrast(struct sed1356_softc *sc, int inattach)
 		/* we cannot get real contrast */
 		sc->sc_lcd_inited |= CONTRAST_INITED;
 	}
-
-	return;
 }
 
-void
+static void
 sed1356_set_brightness(struct sed1356_softc *sc, int val)
 {
 	sc->sc_brightness = val;
 
 	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS, &val);
-	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
+	if (config_hook_call(CONFIG_HOOK_GET,
+	    CONFIG_HOOK_BRIGHTNESS, &val) != -1) {
 		sc->sc_brightness = val;
 	}
 }
 
-void
+static void
 sed1356_set_contrast(struct sed1356_softc *sc, int val)
 {
 	sc->sc_contrast = val;
 
 	config_hook_call(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST, &val);
-	if (config_hook_call(CONFIG_HOOK_GET, 
-	     CONFIG_HOOK_CONTRAST, &val) != -1) {
+	if (config_hook_call(CONFIG_HOOK_GET,
+	    CONFIG_HOOK_CONTRAST, &val) != -1) {
 		sc->sc_contrast = val;
 	}
+}
+
+void
+sed1356_toggle_lcdlight(void)
+{
+	struct sed1356_softc *sc = sed_cd.cd_devs[0];
+
+	if (sc->sc_powerstate & PWRSTAT_VIDEOOFF)
+		sc->sc_powerstate &= ~PWRSTAT_VIDEOOFF;
+	else
+		sc->sc_powerstate |= PWRSTAT_VIDEOOFF;
+
+	sed1356_update_powerstate(sc, PWRSTAT_ALL);
 }

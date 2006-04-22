@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.72 2005/12/07 12:40:48 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.72.6.1 2006/04/22 11:38:08 simonb Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.72 $"
+#ident 		"INSTALL-$Revision: 1.72.6.1 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -281,6 +281,6 @@ ne*	at neptune? addr 0x300			# NE2000 or clone
 
 pseudo-device	md		1	# boot floppy image
 pseudo-device	loop
-pseudo-device	sl		1
+pseudo-device	sl		
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	rnd

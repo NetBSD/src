@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46.6.1 2006/04/22 11:37:53 simonb Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -118,7 +118,7 @@ struct cpu_info {
 };
 
 #ifdef MULTIPROCESSOR
-static inline int
+static __inline int
 cpu_number(void)
 {
 	int pir;
@@ -147,7 +147,7 @@ void	cpu_boot_secondary_processors(void);
 
 extern struct cpu_info cpu_info[];
 
-static inline struct cpu_info *
+static __inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;
@@ -160,7 +160,7 @@ curcpu(void)
 #define curpcb			(curcpu()->ci_curpcb)
 #define curpm			(curcpu()->ci_curpm)
 
-static inline register_t
+static __inline register_t
 mfmsr(void)
 {
 	register_t msr;
@@ -169,14 +169,14 @@ mfmsr(void)
 	return msr;
 }
 
-static inline void
+static __inline void
 mtmsr(register_t msr)
 {
 
 	__asm volatile ("mtmsr %0" : : "r"(msr));
 }
 
-static inline uint32_t
+static __inline uint32_t
 mftbl(void)
 {
 	uint32_t tbl;
@@ -192,7 +192,7 @@ mftbl(void)
 	return tbl;
 }
 
-static inline uint64_t
+static __inline uint64_t
 mftb(void)
 {
 	uint64_t tb;
@@ -220,7 +220,7 @@ mftb(void)
 	return tb;
 }
 
-static inline uint32_t
+static __inline uint32_t
 mfrtcl(void)
 {
 	uint32_t rtcl;
@@ -229,7 +229,7 @@ mfrtcl(void)
 	return rtcl;
 }
 
-static inline void
+static __inline void
 mfrtc(uint32_t *rtcp)
 {
 	uint32_t tmp;
@@ -243,7 +243,7 @@ mfrtc(uint32_t *rtcp)
 	    : "=r"(*rtcp), "=r"(*(rtcp + 1)), "=r"(tmp) :: "cr0");
 }
 
-static inline uint32_t
+static __inline uint32_t
 mfpvr(void)
 {
 	uint32_t pvr;

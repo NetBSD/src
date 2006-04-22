@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.18 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.18.6.1 2006/04/22 11:37:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.18 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.18.6.1 2006/04/22 11:37:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ zs_ap_attach(struct device *parent, struct device *self, void *aux)
 	volatile u_int *esccregs = (void *)(apa->apa_hwbase + ESCC_REG);
 	static int didintr;
 
-	zs_unit = zsc->zsc_dev.dv_unit;
+	zs_unit = device_unit(&zsc->zsc_dev);
 	zsaddr[zs_unit] = (caddr_t)apa->apa_hwbase;
 
 	printf(" slot%d addr 0x%lx\n", apa->apa_slotno, apa->apa_hwbase);

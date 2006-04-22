@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.14 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.14.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.14 2005/12/11 12:21:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.14.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include "rnd.h"
 
@@ -200,7 +200,7 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 		dev_t dev;
 
 		bmajor = devsw_name2blk(adi->adi_dev->dv_xname, NULL, 0);
-		dev = MAKEDISKDEV(bmajor, adi->adi_dev->dv_unit, RAW_PART);
+		dev = MAKEDISKDEV(bmajor, device_unit(adi->adi_dev), RAW_PART);
 		error = bdevvp(dev, &vp);
 		if (error)
 			break;

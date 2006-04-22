@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.8 2005/11/12 11:54:29 rpaulo Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.8.8.1 2006/04/22 11:38:46 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.8 2005/11/12 11:53:30 rpaulo Exp
+ *	# NetBSD: acpidevs,v 1.10 2006/03/01 09:29:47 cube Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -358,7 +358,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0A03",
-	    "PCI Bus",
+	    "PCI/PCI-X Host Bridge",
 	},
 	{
 	    "PNP0A04",
@@ -366,15 +366,15 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0A05",
-	    "Generic ACPI Bus",
+	    "Generic Container Device",
 	},
 	{
 	    "PNP0A06",
-	    "Generic ACPI Extended-IO Bus (EIO bus)",
+	    "Generic Container Device",
 	},
 	{
 	    "PNP0A08",
-	    "ACPI Three-wire Device Bus",
+	    "PCI Express/PCI-X Mode-2 Host Bridge",
 	},
 	{
 	    "PNP0800",
@@ -463,6 +463,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0C13",
 	    "Plug and Play BIOS (used when ACPI mode cannot be used)",
+	},
+	{
+	    "PNP0C80",
+	    "Memory Device",
 	},
 	{
 	    "PNP0E00",
@@ -1279,5 +1283,33 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNPC001",
 	    "Compaq 2400/9600 Modem (TBD)",
+	},
+	{
+	    "ACPI0001",
+	    "SMBus 1.0 Host Controller",
+	},
+	{
+	    "ACPI0002",
+	    "Smart Battery Subsystem",
+	},
+	{
+	    "ACPI0003",
+	    "AC Device",
+	},
+	{
+	    "ACPI0004",
+	    "Module Device",
+	},
+	{
+	    "ACPI0005",
+	    "SMBus 2.0 Host Controller",
+	},
+	{
+	    "ACPI0006",
+	    "GPE Block Device",
+	},
+	{
+	    "INT0800",
+	    "Intel FWH Random Number Generator",
 	},
 };

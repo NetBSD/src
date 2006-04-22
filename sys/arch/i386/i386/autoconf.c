@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.82.2.2 2006/03/02 21:18:22 kardel Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.82.2.3 2006/04/22 11:37:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82.2.2 2006/03/02 21:18:22 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82.2.3 2006/04/22 11:37:32 simonb Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82.2.2 2006/03/02 21:18:22 kardel Exp
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <machine/autoconf.h>
-#include <machine/multiboot.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <machine/gdt.h>
@@ -141,17 +139,4 @@ cpu_configure(void)
 #if NLAPIC > 0
 	lapic_tpr = 0;
 #endif
-}
-
-void
-cpu_rootconf(void)
-{
-
-	x86_matchbiosdisks();
-
-#ifdef MULTIBOOT
-	multiboot_pre_findroot();
-#endif
-
-	x86_cpu_rootconf();
 }

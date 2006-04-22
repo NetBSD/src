@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.cpp,v 1.7 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: memory.cpp,v 1.7.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -95,8 +95,8 @@ MemoryManager::reservePage(vsize_t size, BOOL page_commit)
 		DPRINTF((TEXT("can't allocate memory for translation table.\n")));
 		return FALSE;
 	}
-	DPRINTF((TEXT("address translation table %d pages.(%d byte)\n"), npage,
-	    tabsz));
+	DPRINTF((TEXT("address translation table %d pages. (0x%x bytes)\n"),
+		 npage, tabsz));
 
 	if (page_commit)
 		vbase = vaddr_t(VirtualAlloc(0, vsize, MEM_RESERVE,
@@ -210,7 +210,7 @@ MemoryManager::getTaggedPage(vaddr_t &v, paddr_t &p,
 }
 
 vaddr_t
-MemoryManager::mapPhysicalPage(paddr_t paddr, psize_t size, u_int32_t flags)
+MemoryManager::mapPhysicalPage(paddr_t paddr, psize_t size, uint32_t flags)
 {
 	paddr_t pstart = truncPage(paddr);
 	paddr_t pend = roundPage(paddr + size);
@@ -239,11 +239,11 @@ MemoryManager::unmapPhysicalPage(vaddr_t vaddr)
 		DPRINTF((TEXT("can't release memory\n")));
 }
 
-u_int32_t
+uint32_t
 MemoryManager::readPhysical4(paddr_t paddr)
 {
 	vaddr_t v = mapPhysicalPage(paddr, 4, PAGE_READONLY);
-	u_int32_t val = *(u_int32_t *)v;
+	uint32_t val = *(uint32_t *)v;
 	unmapPhysicalPage(v);
 	return val;
 }

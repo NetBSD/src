@@ -1,4 +1,4 @@
-# $NetBSD: std.hpcsh,v 1.7 2005/12/11 12:17:36 christos Exp $
+# $NetBSD: std.hpcsh,v 1.7.6.1 2006/04/22 11:37:31 simonb Exp $
 #
 # standard, required NetBSD/hpcsh 'options'
 
@@ -9,6 +9,5 @@ options 	EXEC_SCRIPT	# exec #! scripts
 options 	IOM_RAM_BEGIN=0x0c000000
 
 makeoptions	ENDIAN="-EL"
-#makeoptions	LDSCRIPTBASE="shl-coff.x"	# for COFF kernel
-makeoptions	LDSCRIPTBASE="shl-elf.x"	# for ELF kernel
+makeoptions	DEFTEXTADDR="0x8c001000"
 makeoptions	MACHINE_ARCH=sh3el

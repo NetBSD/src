@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_arch.h,v 1.3 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_arch.h,v 1.3.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,14 +63,14 @@ public:
 
 __BEGIN_DECLS
 // Coprocessor 15
-u_int32_t GetCop15Reg0(void);
-u_int32_t GetCop15Reg1(void);	void SetCop15Reg1(u_int32_t);
-u_int32_t GetCop15Reg2(void);	void SetCop15Reg2(u_int32_t);
-u_int32_t GetCop15Reg3(void);	void SetCop15Reg3(u_int32_t);
-u_int32_t GetCop15Reg5(void);
-u_int32_t GetCop15Reg6(void);
-u_int32_t GetCop15Reg13(void);	void SetCop15Reg13(u_int32_t);
-u_int32_t GetCop15Reg14(void);
+uint32_t GetCop15Reg0(void);
+uint32_t GetCop15Reg1(void);	void SetCop15Reg1(uint32_t);
+uint32_t GetCop15Reg2(void);	void SetCop15Reg2(uint32_t);
+uint32_t GetCop15Reg3(void);	void SetCop15Reg3(uint32_t);
+uint32_t GetCop15Reg5(void);
+uint32_t GetCop15Reg6(void);
+uint32_t GetCop15Reg13(void);	void SetCop15Reg13(uint32_t);
+uint32_t GetCop15Reg14(void);
 
 // Interrupt
 void EI(void);
@@ -88,8 +88,8 @@ void FlushITLB(void);
 void FlushDTLB(void);
 void FlushDTLBS(vaddr_t);
 
-u_int32_t GetCPSR(void);
-void SetCPSR(u_int32_t);
+uint32_t GetCPSR(void);
+void SetCPSR(uint32_t);
 void SetSVCMode(void);
 void SetSystemMode(void);
 

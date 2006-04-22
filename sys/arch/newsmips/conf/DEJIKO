@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.20 2005/12/07 09:10:17 tsutsui Exp $
+# 	$NetBSD: DEJIKO,v 1.20.6.1 2006/04/22 11:37:49 simonb Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -77,8 +77,8 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	ipfilter		# ip filter
-pseudo-device	bpfilter	16	# Berkeley Packet Filter
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	bpfilter		# Berkeley Packet Filter
+pseudo-device	vnd			# disk-like interface to files
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem

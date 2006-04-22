@@ -1,11 +1,11 @@
-/*	$NetBSD: autoconf.c,v 1.11 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,36 +15,33 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
  * Setup the system to run on the current machine.
- *
- * Configure() is called at boot time and initializes the vba 
- * device tables and the memory controller monitoring.  Available
- * devices are determined (from possibilities mentioned in ioconf.c),
- * and the drivers are initialized.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2005/12/11 12:18:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.6.1 2006/04/22 11:37:54 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +50,28 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2005/12/11 12:18:48 christos Exp $
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <machine/pte.h>
 #include <machine/intr.h>
 
-static void findroot __P((void));
+#include <dev/pci/pcivar.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/ata/atavar.h>
+#include <dev/ic/wdcvar.h>
+#include <machine/isa_machdep.h>
+#include <dev/isa/isareg.h>
+#include <prep/pnpbus/pnpbusvar.h>
+
+#include "opt_nvram.h"
+
+u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
+extern char bootpath[256];
+
+static void findroot(void);
 
 /*
  * Determine i/o configuration for a machine.
@@ -65,8 +79,6 @@ static void findroot __P((void));
 void
 cpu_configure()
 {
-	/* startrtclock(); */
-
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
@@ -89,40 +101,157 @@ cpu_rootconf()
 	setroot(booted_device, booted_partition);
 }
 
-u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
+/*
+ * On the PReP, we do not have the fw-boot-device readable until the NVRAM
+ * device is attached.  This occurs rather late in the autoconf process.
+ * We build a OWF-like device node name for each device and store it in
+ * fw-path.  Later when trying to figure out our boot device, we will match
+ * it against these strings.  This serves a dual purpose, because if we ever
+ * wish to change the bootlist on the machine via the NVRAM, we will have to
+ * plug in these addresses for each device we want to use.  The kernel can
+ * then query each device for fw-path, and generate a bootlist string.
+ */
+
+void
+device_register(struct device *dev, void *aux)
+{
+	struct device *parent, *d;
+	char devpath[256], dtmp[256];
+	size_t len;
+	int found = 0;
+
+	/* Certain devices will *never* be bootable.  short circuit them. */
+
+	if (device_is_a(dev, "com") || device_is_a(dev, "attimer") ||
+	    device_is_a(dev, "pcppi") || device_is_a(dev, "mcclock") ||
+	    device_is_a(dev, "mkclock") || device_is_a(dev, "lpt"))
+		return;
+
+	if (device_is_a(dev, "mainbus"))
+		parent = dev;
+	else
+		parent = device_parent(dev);
+
+	len = devprop_get(parent, "fw-path", dtmp, 255, NULL);
+
+	if (device_is_a(dev, "mainbus")) {
+		sprintf(devpath, "/");
+		len = strlen(devpath) + 1;
+		devprop_set(dev, "fw-path", devpath, len, PROP_STRING, 0);
+		return;
+	} else if (len == -1)
+		return;
+
+	if (device_is_a(dev, "pci")) {
+		sprintf(devpath, "%spci@%x/", dtmp,
+		    prep_io_space_tag.pbs_offset);
+		found++;
+	}
+	if (device_is_a(parent, "pci")) {
+		struct pci_attach_args *pa = aux;
+
+		sprintf(devpath, "%spci%x,%x@%x,%x", dtmp,
+		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
+		    pa->pa_device, pa->pa_function);
+		found++;
+	}
+	if (device_is_a(dev, "pnpbus")) {
+		/* because the pnpbus attaches at mainbus, we need to manually
+		 * grab it's parent device components.  We grab them from
+		 * ISA because thats the most likely attachment. 
+		 */
+		len = -1;
+		TAILQ_FOREACH(d, &alldevs, dv_list) {
+			if (device_is_a(d, "isa")) {
+				len = devprop_get(d, "fw-path", dtmp,
+				    255, NULL);
+				break;
+			}
+		}
+		if (len != -1) {
+			strcpy(devpath, dtmp);
+			found++;
+		}
+	}
+	if (device_is_a(parent, "pnpbus")) {
+		struct pnpbus_dev_attach_args *pna = aux;
+		struct pnpbus_io *io;
+
+		sprintf(devpath, "%s/%s@", dtmp, pna->pna_devid);
+		io = SIMPLEQ_FIRST(&pna->pna_res.io);
+		if (io != NULL)
+			sprintf(devpath, "%s%x", devpath, io->minbase);
+		found++;
+	}
+
+	if (!found)
+		strcpy(devpath, dtmp);
+
+	/* we can't trust the device tag on the ethernet, because
+	 * the spec lies about how it is formed.  Therefore we will leave it
+	 * blank, and trim the end off any ethernet stuff. */
+	if (device_class(dev) == DV_IFNET)
+		sprintf(devpath, "%s:", devpath);
+	else if (device_is_a(dev, "cd"))
+		sprintf(devpath, "%s/cdrom@", devpath);
+	else if (device_class(dev) == DV_DISK)
+		sprintf(devpath, "%s/harddisk@", devpath);
+	else if (device_class(dev) == DV_TAPE)
+		sprintf(devpath, "%s/tape@", devpath);
+	else if (device_is_a(dev, "fd"))
+		sprintf(devpath, "%s/floppy@", devpath);
+
+	if (device_is_a(parent, "scsibus") || device_is_a(parent, "atapibus")) {
+		struct scsipibus_attach_args *sa = aux;
+
+		/* periph_target is target for scsi, drive # for atapi */
+		sprintf(devpath, "%s%d", devpath, sa->sa_periph->periph_target);
+		if (device_is_a(parent, "scsibus"))
+			sprintf(devpath, "%s,%d", devpath,
+			    sa->sa_periph->periph_lun);
+	} else if (device_is_a(parent, "atabus") ||
+	    device_is_a(parent, "pciide")) {
+		struct ata_device *adev = aux;
+
+		sprintf(devpath, "%s%d", devpath, adev->adev_drv_data->drive);
+	} else if (device_is_a(dev, "fd")) {
+		/* XXX device_unit() abuse */
+		sprintf(devpath, "%s%d", devpath, device_unit(dev));
+	}
+
+	len = strlen(devpath) + 1;
+	devprop_set(dev, "fw-path", devpath, len, PROP_STRING, 0);
+#if defined(NVRAM_DUMP)
+	printf("prop %s\n", devpath);
+#endif
+}
 
 /*
- * Attempt to find the device from which we were booted.
- * If we can do so, and not instructed not to do so,
- * change rootdev to correspond to the load device.
+ * This routine looks at each device, and tries to match them to the bootpath
  */
+
 void
 findroot(void)
 {
-	int unit, part;
-	struct device *dv;
-	char buf[32];
-	const char *name;
+	struct device *d;
+	char *cp;
+	char devpath[256];
+	size_t len;
 
-#if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
-#endif
+	/* first trim the ethernet crap off the bootpath */
+	cp = strchr(bootpath, ':');
+	if (cp != NULL) {
+		cp++;
+		*cp = '\0';
+	}
 
-	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-		return;
-
-	name = devsw_blk2name((bootdev >> B_TYPESHIFT) & B_TYPEMASK);
-	if (name == NULL)
-		return;
-
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-
-	sprintf(buf, "%s%d", name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (strcmp(buf, dv->dv_xname) == 0) {
-			booted_device = dv;
-			booted_partition = part;
+	TAILQ_FOREACH(d, &alldevs, dv_list) {
+		len = devprop_get(d, "fw-path", devpath, 255, NULL);
+		if (len == -1)
+			continue;
+		if (strncmp(devpath, bootpath, len) == 0) {
+			booted_device = d;
+			booted_partition = 0; /* XXX ??? */
 			return;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.41 2006/01/29 09:57:59 jdolecek Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.41.4.1 2006/04/22 11:40:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -280,6 +280,7 @@ void	ether_ifattach(struct ifnet *, const u_int8_t *);
 void	ether_ifdetach(struct ifnet *);
 
 char	*ether_sprintf(const u_int8_t *);
+char	*ether_snprintf(char *, size_t, const u_int8_t *);
 
 u_int32_t ether_crc32_le(const u_int8_t *, size_t);
 u_int32_t ether_crc32_be(const u_int8_t *, size_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -98,7 +98,7 @@ extern paddr_t pmap_unmap_poolpage(vaddr_t);
 
 #define	pmap_phys_address(x)		(x)
 
-static inline void
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */

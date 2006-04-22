@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.15 2005/12/11 12:21:28 christos Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.15.6.1 2006/04/22 11:38:56 simonb Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -51,11 +51,11 @@ struct pcdisplay_handle {
 	bus_space_handle_t ph_ioh_6845, ph_memh;
 };
 
-static inline u_int8_t _pcdisplay_6845_read(struct pcdisplay_handle *, int);
-static inline void _pcdisplay_6845_write(struct pcdisplay_handle *, int,
+static __inline u_int8_t _pcdisplay_6845_read(struct pcdisplay_handle *, int);
+static __inline void _pcdisplay_6845_write(struct pcdisplay_handle *, int,
 					 u_int8_t);
 
-static inline u_int8_t _pcdisplay_6845_read(ph, reg)
+static __inline u_int8_t _pcdisplay_6845_read(ph, reg)
 	struct pcdisplay_handle *ph;
 	int reg;
 {
@@ -63,7 +63,7 @@ static inline u_int8_t _pcdisplay_6845_read(ph, reg)
 	return (bus_space_read_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_DATA));
 }
 
-static inline void _pcdisplay_6845_write(ph, reg, val)
+static __inline void _pcdisplay_6845_write(ph, reg, val)
 	struct pcdisplay_handle *ph;
 	int reg;
 	u_int8_t val;
@@ -90,5 +90,5 @@ void	pcdisplay_copyrows(void *, int, int, int);
 void	pcdisplay_eraserows(void *, int, int, long);
 void	pcdisplay_replaceattr(void *, long, long);
 struct wsdisplay_char;
-int	pcdisplay_getwschar(void *, struct wsdisplay_char *);
-int	pcdisplay_putwschar(void *, struct wsdisplay_char *);
+int	pcdisplay_getwschar(struct pcdisplayscreen *, struct wsdisplay_char *);
+int	pcdisplay_putwschar(struct pcdisplayscreen *, struct wsdisplay_char *);

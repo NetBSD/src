@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.42 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: autoconf.h,v 1.42.6.1 2006/04/22 11:37:59 simonb Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -96,24 +96,24 @@
 
 /* Device register space description */
 struct rom_reg {
-	u_int32_t	rr_iospace;	/* register space (obio, etc) */
-	u_int32_t	rr_paddr;	/* register physical address */
-	u_int32_t	rr_len;		/* register length */
+	uint32_t	rr_iospace;	/* register space (obio, etc) */
+	uint32_t	rr_paddr;	/* register physical address */
+	uint32_t	rr_len;		/* register length */
 };
 
 /* Interrupt information */
 struct rom_intr {
-	u_int32_t	int_pri;	/* priority (IPL) */
-	u_int32_t	int_vec;	/* vector (always 0?) */
+	uint32_t	int_pri;	/* priority (IPL) */
+	uint32_t	int_vec;	/* vector (always 0?) */
 };
 
 /* Address translation accross busses */
 struct rom_range {		/* Only used on v3 PROMs */
-	u_int32_t	cspace;		/* Client space */
-	u_int32_t	coffset;	/* Client offset */
-	u_int32_t	pspace;		/* Parent space */
-	u_int32_t	poffset;	/* Parent offset */
-	u_int32_t	size;		/* Size in bytes of this range */
+	uint32_t	cspace;		/* Client space */
+	uint32_t	coffset;	/* Client offset */
+	uint32_t	pspace;		/* Parent space */
+	uint32_t	poffset;	/* Parent offset */
+	uint32_t	size;		/* Size in bytes of this range */
 };
 
 /* Attach arguments presented by mainbus_attach() */
@@ -148,7 +148,7 @@ union obio_attach_args {
 #define OBIO_BUS_MAP_USE_ROM	BUS_SPACE_MAP_BUS1
 
 /* obio bus helper that finds ROM mappings; exported for autoconf.c */
-int	obio_find_rom_map __P((bus_addr_t, int, bus_space_handle_t *));
+int	obio_find_rom_map(bus_addr_t, int, bus_space_handle_t *);
 
 
 /*
@@ -159,13 +159,13 @@ int	obio_find_rom_map __P((bus_addr_t, int, bus_space_handle_t *));
  */
 struct device;
 struct cfdata;
-int	matchbyname __P((struct device *, struct cfdata *cf, void *aux));
+int	matchbyname(struct device *, struct cfdata *cf, void *aux);
 
 /*
  * `clockfreq' produces a printable representation of a clock frequency
  * (this is just a frill).
  */
-char	*clockfreq __P((int freq));
+char	*clockfreq(int freq);
 
 /* Openprom V2 style boot path */
 struct bootpath {
@@ -175,12 +175,12 @@ struct bootpath {
 };
 
 /* Parse a disk string into a dev_t, return device struct pointer */
-struct	device *parsedisk __P((char *, int, int, dev_t *));
+struct	device *parsedisk(char *, int, int, dev_t *);
 
 /* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
-void	mountroot_hook_establish __P((void (*) __P((struct device *)),
-				      struct device *));
+void	mountroot_hook_establish(void (*)(struct device *),
+				 struct device *);
 
-void	bootstrap __P((void));
-struct device *getdevunit __P((const char *, int));
-int	romgetcursoraddr __P((int **, int **));
+void	bootstrap(void);
+struct device *getdevunit(const char *, int);
+int	romgetcursoraddr(int **, int **);

@@ -1,4 +1,4 @@
-/* $NetBSD: al2210reg.h,v 1.3 2005/12/11 12:21:25 christos Exp $ */
+/* $NetBSD: al2210reg.h,v 1.3.6.1 2006/04/22 11:38:54 simonb Exp $ */
 
 /*
  * Copyright (c) 2004 David Young.  All rights reserved.
@@ -49,8 +49,8 @@
 /*
  * Serial bus format for Airoha AL2210 2.4GHz transceiver.
  */
-#define	AL2210_TWI_DATA_MASK	BITS(23, 4)
-#define	AL2210_TWI_ADDR_MASK	BITS(3, 0)
+#define	AL2210_TWI_DATA_MASK	__BITS(23, 4)
+#define	AL2210_TWI_ADDR_MASK	__BITS(3, 0)
 
 /*
  * Registers for Airoha AL2210.
@@ -60,7 +60,7 @@
  * to waste my time right now.
  */
 #define AL2210_CHANNEL		0x0
-#define		AL2210_CHANNEL_B_MASK		BITS(10, 5)	/* Counter B */
+#define		AL2210_CHANNEL_B_MASK		__BITS(10, 5)	/* Counter B */
 #define		AL2210_CHANNEL_B_2412MHZ	0x396
 #define		AL2210_CHANNEL_B_2417MHZ	0x396
 #define		AL2210_CHANNEL_B_2422MHZ	0x396
@@ -75,7 +75,7 @@
 #define		AL2210_CHANNEL_B_2467MHZ	0x39a
 #define		AL2210_CHANNEL_B_2472MHZ	0x39a
 #define		AL2210_CHANNEL_B_2484MHZ	0x39b
-#define		AL2210_CHANNEL_A_MASK		BITS(4, 0)	/* Counter A */
+#define		AL2210_CHANNEL_A_MASK		__BITS(4, 0)	/* Counter A */
 #define		AL2210_CHANNEL_A_2412MHZ	0x0c
 #define		AL2210_CHANNEL_A_2417MHZ	0x11
 #define		AL2210_CHANNEL_A_2422MHZ	0x16
@@ -92,25 +92,26 @@
 #define		AL2210_CHANNEL_A_2484MHZ	0x14
 
 #define AL2210_SYNTHESIZER	0x1
-#define		AL2210_SYNTHESIZER_R_MASK	BITS(4, 0)	/* Reference
+#define		AL2210_SYNTHESIZER_R_MASK	__BITS(4, 0)	/* Reference
 								 * divider
+								 */
 #define AL2210_RECEIVER		0x2
 /* Rx VAGC Detector Negative Edge Threshold */
-#define		AL2210_RECEIVER_AGCDET_P_MASK	BITS(16, 15)
+#define		AL2210_RECEIVER_AGCDET_P_MASK	__BITS(16, 15)
 #define		AL2210_RECEIVER_AGCDET_P_0_4V	0	/* 0.4V */
 #define		AL2210_RECEIVER_AGCDET_P_0_3V	1	/* 0.3V */
 #define		AL2210_RECEIVER_AGCDET_P_0_2V	2	/* 0.2V */
 #define		AL2210_RECEIVER_AGCDET_P_RSVD	3	/* reserved */
 /* Rx VAGC Detector Negative Edge Threshold */
-#define		AL2210_RECEIVER_AGCDET_N_MASK	BITS(14, 13)
+#define		AL2210_RECEIVER_AGCDET_N_MASK	__BITS(14, 13)
 #define		AL2210_RECEIVER_AGCDET_N_0_4V	0	/* 0.4V */
 #define		AL2210_RECEIVER_AGCDET_N_0_3V	1	/* 0.3V */
 #define		AL2210_RECEIVER_AGCDET_N_0_2V	2	/* 0.2V */
 #define		AL2210_RECEIVER_AGCDET_N_RSVD	3	/* reserved */
 /* AGC detector control, 1: enable, 0: disable. */
-#define		AL2210_RECEIVER_AGCDETENA	BIT(11)
+#define		AL2210_RECEIVER_AGCDETENA	__BIT(11)
 /* Rx filter bandwidth select */
-#define		AL2210_RECEIVER_BW_SEL_MASK	BITS(4, 2)
+#define		AL2210_RECEIVER_BW_SEL_MASK	__BITS(4, 2)
 #define		AL2210_RECEIVER_BW_SEL_9_5MHZ	0
 #define		AL2210_RECEIVER_BW_SEL_9MHZ	1
 #define		AL2210_RECEIVER_BW_SEL_8_5MHZ	2
@@ -125,44 +126,44 @@
  * "Full scale" current is 300uA.  (Is full-scale at PABIAS2 = 0 or
  * at PABIAS2 = 15?)
  */
-#define		AL2210_TRANSMITTER_PABIAS2_MASK	BITS(7, 4)
+#define		AL2210_TRANSMITTER_PABIAS2_MASK	__BITS(7, 4)
 /* 1st-stage power amplifier current control.  Units of 20uA.
  * "Full scale" current is 300uA.  (Is full-scale at PABIAS2 = 0 or
  * at PABIAS2 = 15?)
  */
-#define		AL2210_TRANSMITTER_PABIAS1_MASK	BITS(3, 0)
+#define		AL2210_TRANSMITTER_PABIAS1_MASK	__BITS(3, 0)
 
 #define AL2210_CONFIG1		0x4
 
 #define AL2210_CONFIG2		0x5
 /* Regulator power.  0: on, 1: off. */
-#define		AL2210_CONFIG2_REGPD_MASK	BIT(19)
+#define		AL2210_CONFIG2_REGPD_MASK	__BIT(19)
 /* XO clock setting.   0: 44MHz, 1: 22MHz. */
-#define		AL2210_CONFIG2_XTAL_SC_MASK	BIT(10)
+#define		AL2210_CONFIG2_XTAL_SC_MASK	__BIT(10)
 
 /* DC Offset Calibration (DCOC) */
 #define AL2210_CONFIG3		0x6
 /* Select 1MHz DCOC timing. */
-#define		AL2210_CONFIG3_AGC_DET_PATT_1MHZ	BIT(17)
+#define		AL2210_CONFIG3_AGC_DET_PATT_1MHZ	__BIT(17)
 /* Select 100kHz DCOC timing. */
-#define		AL2210_CONFIG3_AGC_DET_PATT_100KHZ	BIT(16)
-#define		AL2210_CONFIG3_LNA_GAIN_PATT_1MHZ	BITS(15)
-#define		AL2210_CONFIG3_LNA_GAIN_PATT_100KHZ	BITS(14)
-#define		AL2210_CONFIG3_RXON_PATT_1MHZ		BITS(13)
-#define		AL2210_CONFIG3_RXON_PATT_1OOKHZ		BITS(12)
+#define		AL2210_CONFIG3_AGC_DET_PATT_100KHZ	__BIT(16)
+#define		AL2210_CONFIG3_LNA_GAIN_PATT_1MHZ	__BITS(15)
+#define		AL2210_CONFIG3_LNA_GAIN_PATT_100KHZ	__BITS(14)
+#define		AL2210_CONFIG3_RXON_PATT_1MHZ		__BITS(13)
+#define		AL2210_CONFIG3_RXON_PATT_1OOKHZ		__BITS(12)
 /* 1MHz DCOC duration?  Microseconds. */
-#define		AL2210_CONFIG3_CNT_1M_AGC_MASK		BITS(11, 8)
-#define		AL2210_CONFIG3_CNT_1M_LNA_MASK		BITS(7, 4)
-#define		AL2210_CONFIG3_CNT_1M_RXON_MASK		BITS(3, 0)
+#define		AL2210_CONFIG3_CNT_1M_AGC_MASK		__BITS(11, 8)
+#define		AL2210_CONFIG3_CNT_1M_LNA_MASK		__BITS(7, 4)
+#define		AL2210_CONFIG3_CNT_1M_RXON_MASK		__BITS(3, 0)
 
 #define AL2210_CONFIG4		0x7
 /* 100kHz DCOC duration?  Microseconds. */
-#define		AL2210_CONFIG4_CNT_100K_AGC_MASK	BITS(11, 8)
-#define		AL2210_CONFIG4_CNT_100K_LNA_MASK	BITS(7, 4)
-#define		AL2210_CONFIG4_CNT_100K_RXON_MASK	BITS(3, 0)
+#define		AL2210_CONFIG4_CNT_100K_AGC_MASK	__BITS(11, 8)
+#define		AL2210_CONFIG4_CNT_100K_LNA_MASK	__BITS(7, 4)
+#define		AL2210_CONFIG4_CNT_100K_RXON_MASK	__BITS(3, 0)
 
 #define AL2210_CONFIG5		0x8
-#define		AL2210_CONFIG5_TXF_BW_MASK		BITS(9, 8)
+#define		AL2210_CONFIG5_TXF_BW_MASK		__BITS(9, 8)
 #define		AL2210_CONFIG5_TXF_BW_12MHZ		3
 #define		AL2210_CONFIG5_TXF_BW_11MHZ		2
 #define		AL2210_CONFIG5_TXF_BW_10MHZ		1

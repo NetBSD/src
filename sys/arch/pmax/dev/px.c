@@ -1,4 +1,4 @@
-/*	$NetBSD: px.c,v 1.50 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: px.c,v 1.50.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.50 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.50.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -319,10 +319,11 @@ px_attach(parent, self, aux)
 
 	/* Init the card only if it hasn't been done before... */
 	if (!px_cons_info || slotbase != (caddr_t)px_cons_info->pxi_slotbase)
-		px_init((struct fbinfo *)1, slotbase, sc->px_dv.dv_unit, 0);
+		px_init((struct fbinfo *)1, slotbase, device_unit(&sc->px_dv),
+		    0);
 
 	/* px_init() fills in px_unit[#] */
-	pxi = px_unit[sc->px_dv.dv_unit];
+	pxi = px_unit[device_unit(&sc->px_dv)];
 	sc->px_info = pxi;
 
 	/* Now grab the interrupt */

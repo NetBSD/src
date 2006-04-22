@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.21 2006/01/29 21:42:42 dsl Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.21.4.1 2006/04/22 11:40:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -251,8 +251,8 @@ struct ext2_gd {
  * a power of 3, 5 or 7
  */
 
-static inline int cg_has_sb(int) __attribute__((__unused__));
-static inline int
+static __inline int cg_has_sb(int) __attribute__((__unused__));
+static __inline int
 cg_has_sb(i)
 	int i;
 {

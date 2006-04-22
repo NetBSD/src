@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.18 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.18.6.1 2006/04/22 11:37:12 simonb Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.18 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.18.6.1 2006/04/22 11:37:12 simonb Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -85,7 +85,7 @@ static bscr(pcmio_bscr1, u_int8_t);
 CFATTACH_DECL(pccard, sizeof(struct pccard_softc),
     pccard_probe, pccard_attach, NULL, NULL);
 
-struct pcmcia_chip_functions chip_functions = {
+static struct pcmcia_chip_functions chip_functions = {
 	pcf_mem_alloc,		pcf_mem_free,
 	pcf_mem_map,		pcf_mem_unmap,
 	pcf_io_alloc,		pcf_io_free,
@@ -95,7 +95,7 @@ struct pcmcia_chip_functions chip_functions = {
 	pcf_socket_settype
 };
 
-struct amiga_bus_space_methods pcmio_bs_methods;
+static struct amiga_bus_space_methods pcmio_bs_methods;
 
 static u_int8_t *reset_card_reg;
 
@@ -111,29 +111,26 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 {
 	struct pccard_softc *self = (struct pccard_softc *) myself;
 	struct pcmciabus_attach_args paa;
-	vaddr_t pcmcia_base = GAYLE_PCMCIA_START;
+	vaddr_t pcmcia_base;
 	vaddr_t i;
-	int ret;
 
 	printf("\n");
 
 	gayle_init();
 
-	ret = uvm_map(kernel_map, &pcmcia_base,
-		GAYLE_PCMCIA_END - GAYLE_PCMCIA_START, NULL,
-		UVM_UNKNOWN_OFFSET, 0,
-		UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-		UVM_INH_NONE, UVM_ADV_RANDOM, 0));
-	if (ret != 0) {
+	pcmcia_base = uvm_km_alloc(kernel_map,
+				   GAYLE_PCMCIA_END - GAYLE_PCMCIA_START,
+				   0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+	if (pcmcia_base == 0) {
 		printf("attach failed (no virtual memory)\n");
 		return;
 	}
 
 	for (i = GAYLE_PCMCIA_START; i < GAYLE_PCMCIA_END; i += PAGE_SIZE)
-		pmap_enter(kernel_map->pmap,
+		pmap_enter(vm_map_pmap(kernel_map),
 		    i - GAYLE_PCMCIA_START + pcmcia_base, i,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
-	pmap_update(kernel_map->pmap);
+	pmap_update(vm_map_pmap(kernel_map));
 
 	/* override the one-byte access methods for I/O space */
 	pcmio_bs_methods = amiga_bus_stride_1;
@@ -146,15 +143,15 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	pcmio_bs_methods.bssr1 = pcmio_bssr1;
 	pcmio_bs_methods.bscr1 = pcmio_bscr1;
 
-	reset_card_reg = (u_int8_t *) pcmcia_base - GAYLE_PCMCIA_START +
-	    GAYLE_PCMCIA_RESET;
+	reset_card_reg = (u_int8_t *) pcmcia_base +
+	    (GAYLE_PCMCIA_RESET - GAYLE_PCMCIA_START);
 
-	self->io_space.base = (u_int) pcmcia_base - GAYLE_PCMCIA_START +
-	    GAYLE_PCMCIA_IO_START;
+	self->io_space.base = (bus_addr_t) pcmcia_base +
+	    (GAYLE_PCMCIA_IO_START - GAYLE_PCMCIA_START);
 	self->io_space.absm = &pcmio_bs_methods;
 
-	self->attr_space.base = (u_int) pcmcia_base - GAYLE_PCMCIA_START +
-	    GAYLE_PCMCIA_ATTR_START;
+	self->attr_space.base = (bus_addr_t) pcmcia_base +
+	    (GAYLE_PCMCIA_ATTR_START - GAYLE_PCMCIA_START);
 	self->attr_space.absm = &amiga_bus_stride_1;
 
 	/* XXX we should check if the 4M of common memory are actually
@@ -162,7 +159,7 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	 * For now, we just do as if the 4M were RAM and make common memory
 	 * point to attribute memory, which is OK for some I/O cards.
 	 */
-	self->mem_space.base = (u_int) pcmcia_base;
+	self->mem_space.base = (bus_addr_t) pcmcia_base;
 	self->mem_space.absm = &amiga_bus_stride_1;
 
 	self->devs[0].sc = self;
@@ -183,7 +180,12 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	self->devs[0].card =
 		config_found(myself, &paa, simple_devprint);
 	if (self->devs[0].card == NULL) {
-		printf("attach failed, config_found_sm() returned NULL\n");
+		printf("attach failed, config_found() returned NULL\n");
+		pmap_remove(kernel_map->pmap, pcmcia_base,
+		    pcmcia_base + (GAYLE_PCMCIA_END - GAYLE_PCMCIA_START));
+		pmap_update(kernel_map->pmap);
+		uvm_deallocate(kernel_map, pcmcia_base,
+			GAYLE_PCMCIA_END - GAYLE_PCMCIA_START);
 		return;
 	}
 

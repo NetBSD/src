@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.31 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.31.6.1 2006/04/22 11:37:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.31 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.31.6.1 2006/04/22 11:37:34 simonb Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -173,18 +173,15 @@ pcibios_init(void)
 		return;
 	}
 
-	printf("PCI BIOS rev. %d.%d found at 0x%lx\n", rev_maj, rev_min >> 4,
-	    ei.bei_entry);
-#ifdef PCIBIOSVERBOSE
-	printf("pcibios: config mechanism %s%s, special cycles %s%s, "
+	aprint_normal("PCI BIOS rev. %d.%d found at 0x%lx\n",
+	    rev_maj, rev_min >> 4, ei.bei_entry);
+	aprint_verbose("pcibios: config mechanism %s%s, special cycles %s%s, "
 	    "last bus %d\n",
 	    mech1 ? "[1]" : "[x]",
 	    mech2 ? "[2]" : "[x]",
 	    scmech1 ? "[1]" : "[x]",
 	    scmech2 ? "[2]" : "[x]",
 	    pcibios_max_bus);
-
-#endif
 
 	/*
 	 * The PCI BIOS tells us the config mechanism; fill it in now
@@ -211,7 +208,7 @@ pcibios_init(void)
 		switch (rv) {
 		case -1:
 			/* Non-fatal error. */
-			printf("Warning: unable to fix up PCI interrupt "
+			aprint_error("Warning: unable to fix up PCI interrupt "
 			    "routing\n");
 			break;
 
@@ -259,22 +256,23 @@ pcibios_pir_init(void)
 		for (i = 0; i < tablesize; i++)
 			cksum += *(unsigned char *)(p + i);
 
-		printf("PCI IRQ Routing Table rev. %d.%d found at 0x%lx, "
+		aprint_normal(
+		    "PCI IRQ Routing Table rev. %d.%d found at 0x%lx, "
 		    "size %d bytes (%d entries)\n", rev_maj, rev_min, pa,
 		    tablesize, (tablesize - 32) / 16);
 
 		if (cksum != 0) {
-			printf("pcibios_pir_init: bad IRQ table checksum\n");
+			aprint_error("pcibios_pir_init: bad IRQ table checksum\n");
 			continue;
 		}
 
 		if (tablesize < 32 || (tablesize % 16) != 0) {
-			printf("pcibios_pir_init: bad IRQ table size\n");
+			aprint_error("pcibios_pir_init: bad IRQ table size\n");
 			continue;
 		}
 
 		if (rev_maj != 1 || rev_min != 0) {
-			printf("pcibios_pir_init: unsupported IRQ table "
+			aprint_error("pcibios_pir_init: unsupported IRQ table "
 			    "version\n");
 			continue;
 		}
@@ -286,13 +284,13 @@ pcibios_pir_init(void)
 		pcibios_pir_table = malloc(tablesize - 32, M_DEVBUF,
 		    M_NOWAIT);
 		if (pcibios_pir_table == NULL) {
-			printf("pcibios_pir_init: no memory for $PIR\n");
+			aprint_error("pcibios_pir_init: no memory for $PIR\n");
 			return;
 		}
 		memcpy(pcibios_pir_table, p + 32, tablesize - 32);
 		pcibios_pir_table_nentries = (tablesize - 32) / 16;
 
-		printf("PCI Interrupt Router at %03d:%02d:%01d",
+		aprint_verbose("PCI Interrupt Router at %03d:%02d:%01d",
 		    pcibios_pir_header.router_bus,
 		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
 		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
@@ -301,11 +299,11 @@ pcibios_pir_init(void)
 			if (devinfo) {
 				pci_devinfo(pcibios_pir_header.compat_router,
 				    0, 0, devinfo, 256);
-				printf(" (%s compatible)", devinfo);
+				aprint_verbose(" (%s compatible)", devinfo);
 				free(devinfo, M_DEVBUF);
 			}
 		}
-		printf("\n");
+		aprint_verbose("\n");
 		pcibios_print_exclirq();
 
 #ifdef PCIBIOS_LIBRETTO_FIXUP
@@ -332,19 +330,19 @@ pcibios_pir_init(void)
 	pcibios_pir_table = malloc(pcibios_pir_table_nentries *
 	    sizeof(*pcibios_pir_table), M_DEVBUF, M_NOWAIT);
 	if (pcibios_pir_table == NULL) {
-		printf("pcibios_pir_init: no memory for $PIR\n");
+		aprint_error("pcibios_pir_init: no memory for $PIR\n");
 		return;
 	}
 	if (pcibios_get_intr_routing(pcibios_pir_table,
 	    &pcibios_pir_table_nentries,
 	    &pcibios_pir_header.exclusive_irq) != PCIBIOS_SUCCESS) {
-		printf("No PCI IRQ Routing information available.\n");
+		aprint_normal("No PCI IRQ Routing information available.\n");
 		free(pcibios_pir_table, M_DEVBUF);
 		pcibios_pir_table = NULL;
 		pcibios_pir_table_nentries = 0;
 		return;
 	}
-	printf("PCI BIOS has %d Interrupt Routing table entries\n",
+	aprint_verbose("PCI BIOS has %d Interrupt Routing table entries\n",
 	    pcibios_pir_table_nentries);
 	pcibios_print_exclirq();
 
@@ -473,11 +471,11 @@ pcibios_return_code(uint16_t ax, const char *func)
 		break;
 
 	default:
-		printf("%s: unknown return code 0x%x\n", func, rv);
+		aprint_error("%s: unknown return code 0x%x\n", func, rv);
 		return (rv);
 	}
 
-	printf("%s: %s\n", func, errstr);
+	aprint_error("%s: %s\n", func, errstr);
 	return (rv);
 }
 
@@ -487,12 +485,12 @@ pcibios_print_exclirq(void)
 	int i;
 
 	if (pcibios_pir_header.exclusive_irq) {
-		printf("PCI Exclusive IRQs:");
+		aprint_verbose("PCI Exclusive IRQs:");
 		for (i = 0; i < 16; i++) {
 			if (pcibios_pir_header.exclusive_irq & (1 << i))
-				printf(" %d", i);
+				aprint_verbose(" %d", i);
 		}
-		printf("\n");
+		aprint_verbose("\n");
 	}
 }
 
@@ -623,7 +621,7 @@ pcibios_biosroute(int bus, int device, int func, int pin, int irq)
 	uint16_t ax, bx, cx;
 	int rv;
 
-	printf("pcibios_biosroute: b,d,f=%d,%d,%d pin=%x irq=%d\n",
+	aprint_debug("pcibios_biosroute: b,d,f=%d,%d,%d pin=%x irq=%d\n",
 	       bus, device, func, pin+0xa, irq);
 
 	bx = (bus << 8) | (device << 3) | func;

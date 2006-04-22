@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9 2005/12/11 12:17:05 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.6.1 2006/04/22 11:37:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/12/11 12:17:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.6.1 2006/04/22 11:37:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -36,16 +36,31 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9 2005/12/11 12:17:05 christos Exp $");
 
 #include <dev/clock_subr.h>
 
-#include <dev/ic/mc146818reg.h>
+#include <mips/locore.h>
 
 #include <cobalt/cobalt/clockvar.h>
+
+static	todr_chip_handle_t todr_handle;
 
 void (*timer_start)(void *);
 long (*timer_read)(void *);
 void *timer_cookie;
 
+/*
+ * Common parts of todclock autoconfiguration.
+ */
 void
-cpu_initclocks()
+todr_attach(todr_chip_handle_t handle)
+{
+
+	if (todr_handle)
+		panic("todr_attach: too many todclocks configured");
+
+	todr_handle = handle;
+}
+
+void
+cpu_initclocks(void)
 {
 
 	/* start timer */
@@ -56,83 +71,75 @@ cpu_initclocks()
 	return;
 }
 
-u_int
-mc146818_read(sc, reg)
-	void *sc;
-	u_int reg;
+/*
+ * Set up the system's time, given a `reasonable' time value.
+ */
+void
+inittodr(time_t base)
 {
-	(*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000070))) = reg;
-	return (*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000071)));
+	int badbase, waszero;
+
+	if (todr_handle == NULL)
+		panic("inittodr: no todclock configured");
+
+	badbase = 0;
+	waszero = (base == 0);
+
+	if (base < 5 * SECYR) {
+		/*
+		 * If base is 0, assume filesystem time is just unknown
+		 * in stead of preposterous. Don't bark.
+		 */
+		if (base != 0)
+			printf("WARNING: preposterous time in file system\n");
+		/* not going to use it anyway, if the chip is readable */
+		/* 2006/4/1	12:00:00 */
+		base = 36 * SECYR + 91 * SECDAY + SECDAY / 2;
+		badbase = 1;
+	}
+
+	if (todr_gettime(todr_handle, &time) != 0 ||
+	    time.tv_sec == 0) {
+		printf("WARNING: bad date in battery clock");
+		/*
+		 * Believe the time in the file system for lack of
+		 * anything better, resetting the clock.
+		 */
+		time.tv_sec = base;
+		if (!badbase)
+			resettodr();
+	} else {
+		int deltat = time.tv_sec - base;
+
+		if (deltat < 0)
+			deltat = -deltat;
+		if (waszero || deltat < 2 * SECDAY)
+			return;
+		printf("WARNING: clock %s %d days",
+		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+	}
+	printf(" -- CHECK AND RESET THE DATE!\n");
 }
 
+/*
+ * Reset the clock based on the current time.
+ * Used when the current clock is preposterous, when the time is changed,
+ * and when rebooting.  Do nothing if the time is not yet known, e.g.,
+ * when crashing during autoconfig.
+ */
 void
-mc146818_write(sc, reg, datum)
-	void *sc;
-	u_int reg;
-	u_int datum;
+resettodr(void)
 {
-	(*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000070))) = reg;
-	(*(volatile u_int8_t *)(MIPS_PHYS_TO_KSEG1(0x10000071))) = datum;
-}
 
-void
-inittodr(base)
-	time_t base;
-{
-	struct clock_ymdhms dt;
-	mc_todregs regs;
-	int s;
-
-	s = splclock();
-	MC146818_GETTOD(NULL, &regs)
-	splx(s);
-
-	dt.dt_year = FROMBCD(regs[MC_YEAR]) + 2000;
-	dt.dt_mon = FROMBCD(regs[MC_MONTH]);
-	dt.dt_day = FROMBCD(regs[MC_DOM]);
-	dt.dt_wday = FROMBCD(regs[MC_DOW]);
-	dt.dt_hour = FROMBCD(regs[MC_HOUR]);
-	dt.dt_min = FROMBCD(regs[MC_MIN]);
-	dt.dt_sec = FROMBCD(regs[MC_SEC]);
-
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-
-	return;
-}
-
-void
-resettodr()
-{
-	mc_todregs regs;
-	struct clock_ymdhms dt;
-	int s;
-
-	if (cold == 1)
+	if (time.tv_sec == 0)
 		return;
 
-	s = splclock();
-	MC146818_GETTOD(NULL, &regs);
-	splx(s);
-
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
-	regs[MC_YEAR] = TOBCD(dt.dt_year % 100);
-	regs[MC_MONTH] = TOBCD(dt.dt_mon);
-	regs[MC_DOM] = TOBCD(dt.dt_day);
-	regs[MC_DOW] = TOBCD(dt.dt_wday);
-	regs[MC_HOUR] = TOBCD(dt.dt_hour);
-	regs[MC_MIN] = TOBCD(dt.dt_min);
-	regs[MC_SEC] = TOBCD(dt.dt_sec);
-
-	s = splclock();
-	MC146818_PUTTOD(NULL, &regs);
-	splx(s);
-
-	return;
+	if (todr_settime(todr_handle, &time) != 0)
+		printf("resettodr: cannot set time in time-of-day clock\n");
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 	/* XXX */
 
@@ -166,4 +173,30 @@ microtime(struct timeval *tvp)
 
 	lasttime = *tvp;
 	splx(s);
+}
+
+void
+delay(unsigned int n)
+{
+	uint32_t cur, last, delta, usecs;
+
+	last = mips3_cp0_count_read();
+	delta = usecs = 0;
+
+	while (n > usecs) {
+		cur = mips3_cp0_count_read();
+
+		/* Check to see if the timer has wrapped around. */
+		if (cur < last)
+			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
+		else
+			delta += (cur - last);
+
+		last = cur;
+
+		if (delta >= curcpu()->ci_divisor_delay) {
+			usecs += delta / curcpu()->ci_divisor_delay;
+			delta %= curcpu()->ci_divisor_delay;
+		}
+	}
 }

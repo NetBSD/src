@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.17 2005/12/11 12:19:10 christos Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.17.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*
  * Mach Operating System
@@ -79,7 +79,7 @@ extern db_regs_t		ddb_regs;
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0x91d02001	/* breakpoint instruction */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
-#define	BKPT_SET(inst)	(BKPT_INST)
+#define	BKPT_SET(inst, addr)	(BKPT_INST)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	\
 	((type) == T_BREAKPOINT || (type) == T_KGDB_EXEC)
@@ -91,14 +91,14 @@ extern db_regs_t		ddb_regs;
  */
 #define SOFTWARE_SSTEP
 
-boolean_t	db_inst_trap_return __P((int inst));
-boolean_t	db_inst_return __P((int inst));
-boolean_t	db_inst_call __P((int inst));
-boolean_t	db_inst_branch __P((int inst));
-int		db_inst_load __P((int inst));
-int		db_inst_store __P((int inst));
-boolean_t	db_inst_unconditional_flow_transfer __P((int inst));
-db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
+boolean_t	db_inst_trap_return(int inst);
+boolean_t	db_inst_return(int inst);
+boolean_t	db_inst_call(int inst);
+boolean_t	db_inst_branch(int inst);
+int		db_inst_load(int inst);
+int		db_inst_store(int inst);
+boolean_t	db_inst_unconditional_flow_transfer(int inst);
+db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 
 #define inst_trap_return(ins)	db_inst_trap_return(ins)
 #define inst_return(ins)	db_inst_return(ins)
@@ -117,7 +117,7 @@ db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
 
 #define DB_MACHINE_COMMANDS
 
-int kdb_trap __P((int, struct trapframe64 *));
+int kdb_trap(int, struct trapframe64 *);
 
 /*
  * We will use elf symbols in DDB when they work.

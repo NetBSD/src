@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.45 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.45.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.45 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.45.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -223,10 +223,10 @@ check_shell:
 	/* and set up the fake args list, for later */
 	MALLOC(shellargp, char **, 4 * sizeof(char *), M_EXEC, M_WAITOK);
 	tmpsap = shellargp;
-	MALLOC(*tmpsap, char *, shellnamelen + 1, M_EXEC, M_WAITOK);
+	*tmpsap = malloc(shellnamelen + 1, M_EXEC, M_WAITOK);
 	strlcpy(*tmpsap++, shellname, shellnamelen + 1);
 	if (shellarg != NULL) {
-		MALLOC(*tmpsap, char *, shellarglen + 1, M_EXEC, M_WAITOK);
+		*tmpsap = malloc(shellarglen + 1, M_EXEC, M_WAITOK);
 		strlcpy(*tmpsap++, shellarg, shellarglen + 1);
 	}
 	MALLOC(*tmpsap, char *, MAXPATHLEN, M_EXEC, M_WAITOK);

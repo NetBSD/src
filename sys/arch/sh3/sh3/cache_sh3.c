@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.11 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.11.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.11 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.11.6.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,14 +58,14 @@ int sh_cache_way_size;
 int sh_cache_way_shift;
 int sh_cache_entry_mask;
 
-static inline void cache_sh3_op_line_16_nway(int, vaddr_t, u_int32_t);
-static inline void cache_sh3_op_8lines_16_nway(int, vaddr_t, u_int32_t);
+static inline void cache_sh3_op_line_16_nway(int, vaddr_t, uint32_t);
+static inline void cache_sh3_op_8lines_16_nway(int, vaddr_t, uint32_t);
 
 void
 sh3_cache_config()
 {
 	size_t cache_size;
-	u_int32_t r;
+	uint32_t r;
 
 	/* Determine cache size */
 	switch (cpu_product) {
@@ -142,7 +142,7 @@ sh3_cache_config()
  *
  */
 static inline void
-cache_sh3_op_line_16_nway(int n, vaddr_t va, u_int32_t bits)
+cache_sh3_op_line_16_nway(int n, vaddr_t va, uint32_t bits)
 {
 	vaddr_t cca;
 	int way;
@@ -164,9 +164,9 @@ cache_sh3_op_line_16_nway(int n, vaddr_t va, u_int32_t bits)
  *
  */
 static inline void
-cache_sh3_op_8lines_16_nway(int n, vaddr_t va, u_int32_t bits)
+cache_sh3_op_8lines_16_nway(int n, vaddr_t va, uint32_t bits)
 {
-	volatile u_int32_t *cca;
+	volatile uint32_t *cca;
 	int way;
 
 	/* extract entry # */
@@ -174,7 +174,7 @@ cache_sh3_op_8lines_16_nway(int n, vaddr_t va, u_int32_t bits)
 
 	/* operate for each way */
 	for (way = 0; way < n; way++) {
-		cca = (volatile u_int32_t *)
+		cca = (volatile uint32_t *)
 		    (SH3_CCA | way << sh_cache_way_shift | va);
 		cca[ 0] &= ~bits;
 		cca[ 4] &= ~bits;

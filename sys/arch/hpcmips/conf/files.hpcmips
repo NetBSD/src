@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.99 2005/12/11 12:17:33 christos Exp $
+#	$NetBSD: files.hpcmips,v 1.99.6.1 2006/04/22 11:37:30 simonb Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -24,9 +24,16 @@ include "dev/scsipi/files.scsipi"
 include "dev/ata/files.ata"
 
 #
+# APM emulation
+#
+
+include "dev/hpc/files.hpcapm"
+file	arch/hpcmips/hpcmips/hpcapm_machdep.c	hpcapm
+
+#
 # Bus-independent devices
 #
-device mainbus { [platform = -1] }
+device mainbus { [platform = -1] }: hpcapmif
 attach mainbus at root
 
 device cpu				# not optional
@@ -86,15 +93,6 @@ include "arch/hpc/conf/files.debug"
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
-
-#
-# power management
-#
-include "dev/hpc/apm/files.apm"
-device hpcapm: apmdevif
-attach hpcapm at mainbus
-file	dev/hpc/hpcapm.c			hpcapm
-file	arch/hpcmips/hpcmips/hpcapm_machdep.c	hpcapm
 
 #
 # ISA bus support

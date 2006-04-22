@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.18 2006/01/16 20:30:19 bouyer Exp $	*/
+/*	$NetBSD: hcide.c,v 1.18.4.1 2006/04/22 11:39:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.18 2006/01/16 20:30:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.18.4.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -79,7 +79,7 @@ hcide_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 hcide_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct hcide_softc *sc = (void *)self;
+	struct hcide_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct podulebus_attach_args *pa = aux;
 	struct ata_channel *ch;

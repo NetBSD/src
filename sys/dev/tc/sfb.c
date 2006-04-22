@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.68 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: sfb.c,v 1.68.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.68 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.68.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,8 +175,8 @@ static const struct wsscreen_list sfb_screenlist = {
 	sizeof(_sfb_scrlist) / sizeof(struct wsscreen_descr *), _sfb_scrlist
 };
 
-static int	sfbioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	sfbmmap(void *, off_t, int);
+static int	sfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	sfbmmap(void *, void *, off_t, int);
 
 static int	sfb_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -248,10 +248,7 @@ static const u_int8_t shuffle[256] = {
 };
 
 static int
-sfbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sfbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -261,11 +258,9 @@ sfbmatch(parent, match, aux)
 }
 
 static void
-sfbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sfbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct sfb_softc *sc = (struct sfb_softc *)self;
+	struct sfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
@@ -315,8 +310,7 @@ sfbattach(parent, self, aux)
 }
 
 static void
-sfb_cmap_init(sc)
-	struct sfb_softc *sc;
+sfb_cmap_init(struct sfb_softc *sc)
 {
 	struct hwcmap256 *cm;
 	const u_int8_t *p;
@@ -332,8 +326,7 @@ sfb_cmap_init(sc)
 }
 
 static void
-sfb_common_init(ri)
-	struct rasops_info *ri;
+sfb_common_init(struct rasops_info *ri)
 {
 	caddr_t base, asic;
 	int hsetup, vsetup, vbase, cookie;
@@ -400,12 +393,7 @@ sfb_common_init(ri)
 }
 
 static int
-sfbioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+sfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -483,8 +471,7 @@ sfbioctl(v, cmd, data, flag, l)
 }
 
 static void
-sfb_screenblank(sc)
-	struct sfb_softc *sc;
+sfb_screenblank(struct sfb_softc *sc)
 {
 	struct rasops_info *ri;
 	caddr_t asic;
@@ -496,10 +483,7 @@ sfb_screenblank(sc)
 }
 
 static paddr_t
-sfbmmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+sfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct sfb_softc *sc = v;
 
@@ -509,12 +493,8 @@ sfbmmap(v, offset, prot)
 }
 
 static int
-sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+sfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct sfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -533,9 +513,7 @@ sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-sfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+sfb_free_screen(void *v, void *cookie)
 {
 	struct sfb_softc *sc = v;
 
@@ -546,20 +524,15 @@ sfb_free_screen(v, cookie)
 }
 
 static int
-sfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+sfb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 
 	return (0);
 }
 
 /* EXPORT */ int
-sfb_cnattach(addr)
-	tc_addr_t addr;
+sfb_cnattach(tc_addr_t addr)
 {
 	struct rasops_info *ri;
 	long defattr;
@@ -574,8 +547,7 @@ sfb_cnattach(addr)
 }
 
 static int
-sfbintr(arg)
-	void *arg;
+sfbintr(void *arg)
 {
 	struct sfb_softc *sc = arg;
 	caddr_t base, asic, vdac;
@@ -676,8 +648,7 @@ done:
 }
 
 static void
-sfbhwinit(base)
-	caddr_t base;
+sfbhwinit(caddr_t base)
 {
 	caddr_t vdac = base + SFB_RAMDAC_OFFSET;
 	const u_int8_t *p;
@@ -745,9 +716,7 @@ sfbhwinit(base)
 }
 
 static int
-get_cmap(sc, p)
-	struct sfb_softc *sc;
-	struct wsdisplay_cmap *p;
+get_cmap(struct sfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
 	int error;
@@ -766,9 +735,7 @@ get_cmap(sc, p)
 }
 
 static int
-set_cmap(sc, p)
-	struct sfb_softc *sc;
-	struct wsdisplay_cmap *p;
+set_cmap(struct sfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	struct hwcmap256 cmap;
 	u_int index = p->index, count = p->count;
@@ -797,9 +764,7 @@ set_cmap(sc, p)
 }
 
 static int
-set_cursor(sc, p)
-	struct sfb_softc *sc;
-	struct wsdisplay_cursor *p;
+set_cursor(struct sfb_softc *sc, struct wsdisplay_cursor *p)
 {
 #define	cc (&sc->sc_cursor)
 	u_int v, index = 0, count = 0, icount = 0;
@@ -861,18 +826,14 @@ set_cursor(sc, p)
 }
 
 static int
-get_cursor(sc, p)
-	struct sfb_softc *sc;
-	struct wsdisplay_cursor *p;
+get_cursor(struct sfb_softc *sc, struct wsdisplay_cursor *p)
 {
 
 	return (EPASSTHROUGH); /* XXX */
 }
 
 static void
-set_curpos(sc, curpos)
-	struct sfb_softc *sc;
-	struct wsdisplay_curpos *curpos;
+set_curpos(struct sfb_softc *sc, struct wsdisplay_curpos *curpos)
 {
 	struct rasops_info *ri = sc->sc_ri;
 	int x = curpos->x, y = curpos->y;
@@ -941,8 +902,7 @@ set_curpos(sc, curpos)
  * Paint the cursor.
  */
 static void
-sfb_do_cursor(ri)
-	struct rasops_info *ri;
+sfb_do_cursor(struct rasops_info *ri)
 {
 	caddr_t sfb, p;
 	int scanspan, height, width, align, x, y;
@@ -981,11 +941,7 @@ sfb_do_cursor(ri)
  * Paint a character.
  */
 static void
-sfb_putchar(id, row, col, uc, attr)
-	void *id;
-	int row, col;
-	u_int uc;
-	long attr;
+sfb_putchar(void *id, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = id;
 	caddr_t sfb, p;
@@ -1040,9 +996,7 @@ sfb_putchar(id, row, col, uc, attr)
  * Copy characters in a line.
  */
 static void
-sfb_copycols(id, row, srccol, dstcol, ncols)
-	void *id;
-	int row, srccol, dstcol, ncols;
+sfb_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 {
 	struct rasops_info *ri = id;
 	caddr_t sp, dp, basex, sfb;
@@ -1169,10 +1123,7 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
  * Clear characters in a line.
  */
 static void
-sfb_erasecols(id, row, startcol, ncols, attr)
-	void *id;
-	int row, startcol, ncols;
-	long attr;
+sfb_erasecols(void *id, int row, int startcol, int ncols, long attr)
 {
 	struct rasops_info *ri = id;
 	caddr_t sfb, p;
@@ -1231,9 +1182,7 @@ sfb_erasecols(id, row, startcol, ncols, attr)
  * Copy lines.
  */
 static void
-sfb_copyrows(id, srcrow, dstrow, nrows)
-	void *id;
-	int srcrow, dstrow, nrows;
+sfb_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = id;
 	caddr_t sfb, p;
@@ -1292,10 +1241,7 @@ sfb_copyrows(id, srcrow, dstrow, nrows)
  * Erase lines.
  */
 void
-sfb_eraserows(id, startrow, nrows, attr)
-	void *id;
-	int startrow, nrows;
-	long attr;
+sfb_eraserows(void *id, int startrow, int nrows, long attr)
 {
 	struct rasops_info *ri = id;
 	caddr_t sfb, p;

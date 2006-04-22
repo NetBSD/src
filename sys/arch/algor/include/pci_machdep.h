@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6.6.1 2006/04/22 11:37:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -113,5 +113,3 @@ struct algor_pci_chipset {
     ((c)->pc_pciide_compat_intr_establish == NULL ? NULL :		\
      (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),	\
 	(ch), (f), (a)))
-
-int	algor_get_ethaddr(struct pci_attach_args *, u_int8_t *);

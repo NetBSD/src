@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.30 2005/12/11 12:19:56 christos Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.30.6.1 2006/04/22 11:38:13 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.30 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.30.6.1 2006/04/22 11:38:13 simonb Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -102,7 +102,7 @@ static char darwin_iomouse_properties[] = "<dict ID=\"0\"><key>dpi</key><integer
 static char darwin_iohidsystem_properties[] = "<dict ID=\"0\"><key>CFBundleIdentifier</key><string ID=\"1\">com.apple.iokit.IOHIDSystem</string><key>IOClass</key><string ID=\"2\">IOHIDSystem</string><key>IOMatchCategory</key><string ID=\"3\">IOHID</string><key>IOProviderClass</key><string ID=\"4\">IOResources</string><key>IOResourceMatch</key><string ID=\"5\">IOKit</string><key>IOProbeScore</key><integer size=\"32\" ID=\"6\">0x0</integer><key>HIDParameters</key><dict ID=\"7\"><key>HIDClickTime</key><data ID=\"8\">AAAAAB3NZQA=</data><key>HIDAutoDimThreshold</key><data ID=\"9\">AAAARdlkuAA=</data><key>HIDAutoDimBrightness</key><data ID=\"10\">AAAAAA==</data><key>HIDClickSpace</key><data ID=\"11\">AAAAAA==</data><key>HIDKeyRepeat</key><data ID=\"12\">AAAAAAHJw4A=</data><key>HIDInitialKeyRepeat</key><data ID=\"13\">AAAAABZaC8A=</data><key>HIDPointerAcceleration</key><data ID=\"14\">AACAAA==</data><key>HIDScrollAcceleration</key><data ID=\"15\">AABQAA==</data><key>HIDPointerButtonMode</key><data ID=\"16\">AAAAAg==</data><key>HIDF12EjectDelay</key><data ID=\"17\">AAAA+g==</data><key>HIDSlowKeysDelay</key><data ID=\"18\">AAAAAA==</data><key>HIDStickyKeysDisabled</key><data ID=\"19\">AAAAAA==</data><key>HIDStickyKeysOn</key><data ID=\"20\">AAAAAA==</data><key>HIDStickyKeysShiftToggles</key><data ID=\"21\">AAAAAA==</data><key>HIDMouseAcceleration</key><data ID=\"22\">AAGzMw==</data><key>Clicking</key><data ID=\"23\">AA==</data><key>DragLock</key><reference IDREF=\"23\"/><key>Dragging</key><reference IDREF=\"23\"/><key>JitterNoMove</key><integer size=\"32\" ID=\"24\">0x1</integer><key>JitterNoClick</key><integer size=\"32\" ID=\"25\">0x1</integer><key>PalmNoAction When Typing</key><integer size=\"32\" ID=\"26\">0x1</integer><key>PalmNoAction Permanent</key><integer size=\"32\" ID=\"27\">0x1</integer><key>TwofingerNoAction</key><integer size=\"32\" ID=\"28\">0x1</integer><key>OutsidezoneNoAction When Typing</key><integer size=\"32\" ID=\"29\">0x1</integer><key>Use Panther Settings for W</key><integer size=\"32\" ID=\"30\">0x0</integer><key>Trackpad Jitter Milliseconds</key><integer size=\"32\" ID=\"31\">0xc0</integer><key>USBMouseStopsTrackpad</key><integer size=\"32\" ID=\"32\">0x0</integer><key>HIDWaitCursorFrameInterval</key><data ID=\"33\">AfygVw==</data></dict><key>HIDAutoDimTime</key><data ID=\"34\">AAAAAAAAAAA=</data><key>HIDIdleTime</key><data ID=\"35\">AAAjRKwYjsI=</data><key>HIDAutoDimState</key><data ID=\"36\">AAAAAQ==</data><key>HIDBrightness</key><data ID=\"37\">AAAAQA==</data></dict>";
 
 struct mach_iokit_devclass darwin_iokbd_devclass = {
-	"(unkown)",
+	"(unknown)",
 	{ &mach_ioroot_devclass, NULL },
 	darwin_iokbd_properties,
 	NULL,
@@ -116,7 +116,7 @@ struct mach_iokit_devclass darwin_iokbd_devclass = {
 };
 
 struct mach_iokit_devclass darwin_iomouse_devclass = {
-	"(unkown)",
+	"(unknown)",
 	{ &mach_ioroot_devclass, NULL },
 	darwin_iomouse_properties,
 	NULL,
@@ -130,7 +130,7 @@ struct mach_iokit_devclass darwin_iomouse_devclass = {
 };
 
 struct mach_iokit_devclass darwin_ioresources_devclass = {
-	"(unkown)",
+	"(unknown)",
 	{ &mach_ioroot_devclass, NULL },
 	darwin_ioresources_properties,
 	NULL,
@@ -477,9 +477,8 @@ darwin_iohidsystem_thread(args)
 		aiov.iov_len = sizeof(wsevt);
 		auio.uio_resid = sizeof(wsevt);
 		auio.uio_offset = 0;
-		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 
 		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0) {
 #ifdef DEBUG_DARWIN
@@ -581,7 +580,7 @@ darwin_findwsmux(dev, mux)
 		return ENODEV;
 
 	major = cdevsw_lookup_major(&wsmux_cdevsw);
-	minor = wsm_sc->sc_base.me_dv.dv_unit;
+	minor = device_unit(&wsm_sc->sc_base.me_dv);
 	*dev = makedev(major, minor);
 
 	return 0;

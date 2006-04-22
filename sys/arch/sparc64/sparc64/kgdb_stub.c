@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.16 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.16.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.16 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.16.6.1 2006/04/22 11:38:02 simonb Exp $");
 
 #include "opt_kgdb.h"
 
@@ -129,30 +129,28 @@ int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
 #if defined(SUN4M)
 #define getpte4m(va)		lda(((vaddr_t)va & 0xFFFFF000) | \
 				     ASI_SRMMUFP_L3, ASI_SRMMUFP)
-void	setpte4m __P((vaddr_t, int));
+void	setpte4m(vaddr_t, int);
 #endif
 
 #define	getpte4(va)		lda(va, ASI_PTE)
 #define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
 
-void kgdb_copy __P((char *, char *, int));
-void kgdb_zero __P((char *, int));
-static void kgdb_send __P((u_int, u_char *, int));
-static int kgdb_recv __P((u_char *, int *));
-static int computeSignal __P((int));
-void regs_to_gdb __P((struct trapframe *, u_long *));
-void gdb_to_regs __P((struct trapframe *, u_long *));
-int kgdb_trap __P((int, struct trapframe *));
-int kgdb_acc __P((caddr_t, int, int, int));
-void kdb_mkwrite __P((caddr_t, int));
+void kgdb_copy(register char *, register char *, register int);
+void kgdb_zero(register char *, register int);
+static void kgdb_send(register u_int, register u_char *, register int);
+static int kgdb_recv(u_char *, int *);
+static int computeSignal(int);
+void regs_to_gdb(struct trapframe *, u_long *);
+void gdb_to_regs(struct trapframe *, u_long *);
+int kgdb_trap(int, struct trapframe *);
+int kgdb_acc(caddr_t, int, int, int);
+void kdb_mkwrite(register caddr_t, register int);
 
 /*
  * This little routine exists simply so that bcopy() can be debugged.
  */
 void
-kgdb_copy(src, dst, len)
-	register char *src, *dst;
-	register int len;
+kgdb_copy(register char *src, register char *dst, register int len)
 {
 
 	while (--len >= 0)
@@ -161,16 +159,14 @@ kgdb_copy(src, dst, len)
 
 /* ditto for bzero */
 void
-kgdb_zero(ptr, len)
-	register char *ptr;
-	register int len;
+kgdb_zero(register char *ptr, register int len)
 {
 	while (--len >= 0)
 		*ptr++ = (char) 0;
 }
 
-static int (*kgdb_getc) __P((void *));
-static void (*kgdb_putc) __P((void *, int));
+static int (*kgdb_getc)(void *);
+static void (*kgdb_putc)(void *, int);
 static void *kgdb_ioarg;
 
 #define GETC()	((*kgdb_getc)(kgdb_ioarg))
@@ -190,10 +186,7 @@ static void *kgdb_ioarg;
 }
 
 void
-kgdb_attach(getfn, putfn, ioarg)
-	int (*getfn) __P((void *));
-	void (*putfn) __P((void *, int));
-	void *ioarg;
+kgdb_attach(int (*getfn)(void *), void (*putfn)(void *, int), void *ioarg)
 {
 
 	kgdb_getc = getfn;
@@ -205,10 +198,7 @@ kgdb_attach(getfn, putfn, ioarg)
  * Send a message.  The host gets one chance to read it.
  */
 static void
-kgdb_send(type, bp, len)
-	register u_int type;
-	register u_char *bp;
-	register int len;
+kgdb_send(register u_int type, register u_char *bp, register int len)
 {
 	register u_char csum;
 	register u_char *ep = bp + len;
@@ -228,9 +218,7 @@ kgdb_send(type, bp, len)
 }
 
 static int
-kgdb_recv(bp, lenp)
-	u_char *bp;
-	int *lenp;
+kgdb_recv(u_char *bp, int *lenp)
 {
 	register u_char c, csum;
 	register int escape, len;
@@ -298,8 +286,7 @@ restart:
  * XXX should this be done at the other end?
  */
 static int
-computeSignal(type)
-	int type;
+computeSignal(int type)
 {
 	int sigval;
 
@@ -400,9 +387,7 @@ kgdb_panic()
  * understood by gdb.
  */
 void
-regs_to_gdb(tf, gdb_regs)
-	struct trapframe *tf;
-	u_long *gdb_regs;
+regs_to_gdb(struct trapframe *tf, u_long *gdb_regs)
 {
 
 	/* %g0..%g7 and %o0..%o7: from trapframe */
@@ -430,9 +415,7 @@ regs_to_gdb(tf, gdb_regs)
  * Reverse the above.
  */
 void
-gdb_to_regs(tf, gdb_regs)
-	struct trapframe *tf;
-	u_long *gdb_regs;
+gdb_to_regs(struct trapframe *tf, u_long *gdb_regs)
 {
 
 	kgdb_copy((caddr_t)&gdb_regs[1], (caddr_t)&tf->tf_global[1], 15 * 4);
@@ -452,9 +435,7 @@ static u_char outbuffer[SL_RPCSIZE];
  * a remote gdb.
  */
 int
-kgdb_trap(type, tf)
-	int type;
-	register struct trapframe *tf;
+kgdb_trap(int type, register struct trapframe *tf)
 {
 	register u_long len;
 	caddr_t addr;
@@ -654,9 +635,7 @@ extern char *kernel_map;			/* XXX! */
  * Plus this lets us debug kernacc. (%%% XXX)
  */
 int
-kgdb_acc(addr, len, rw, usertoo)
-	caddr_t addr;
-	int len, rw, usertoo;
+kgdb_acc(caddr_t addr, int len, int rw, int usertoo)
 {
 	int pte;
 
@@ -702,9 +681,7 @@ kgdb_acc(addr, len, rw, usertoo)
 }
 
 void
-kdb_mkwrite(addr, len)
-	register caddr_t addr;
-	register int len;
+kdb_mkwrite(register caddr_t addr, register int len)
 {
 	if (CPU_ISSUN4 || CPU_ISSUN4C && kernel_map != NULL) {
 		chgkprot(addr, len, B_WRITE);

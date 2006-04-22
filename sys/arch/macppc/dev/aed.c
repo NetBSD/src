@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.16 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: aed.c,v 1.16.6.1 2006/04/22 11:37:41 simonb Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.16 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.16.6.1 2006/04/22 11:37:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,7 +132,7 @@ aedattach(parent, self, aux)
 	sc->sc_repeating = -1;          /* not repeating */
 
 	/* Pull in the options flags. */ 
-	sc->sc_options = (sc->sc_dev.dv_cfdata->cf_flags | aed_options);
+	sc->sc_options = (device_cfdata(&sc->sc_dev)->cf_flags | aed_options);
 
 	sc->sc_ioproc = NULL;
 	

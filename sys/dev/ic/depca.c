@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.11 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: depca.c,v 1.11.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.11 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.11.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ depca_print(void *aux, const char *pnp)
 void
 depca_wrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 {
-	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
+	struct depca_softc *dsc = (void *) device_parent(&sc->sc_dev);
 
 	bus_space_write_2(dsc->sc_iot, dsc->sc_ioh, DEPCA_RAP, port);
 	bus_space_write_2(dsc->sc_iot, dsc->sc_ioh, DEPCA_RDP, val);
@@ -154,7 +154,7 @@ depca_wrcsr(struct lance_softc *sc, u_int16_t port, u_int16_t val)
 u_int16_t
 depca_rdcsr(struct lance_softc *sc, u_int16_t port)
 {
-	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
+	struct depca_softc *dsc = (void *) device_parent(&sc->sc_dev);
 
 	bus_space_write_2(dsc->sc_iot, dsc->sc_ioh, DEPCA_RAP, port);
 	return (bus_space_read_2(dsc->sc_iot, dsc->sc_ioh, DEPCA_RDP));
@@ -326,7 +326,7 @@ depca_intredge(void *arg)
 void
 depca_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 {
-	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
+	struct depca_softc *dsc = (void *) device_parent(&sc->sc_dev);
 
 	bus_space_write_region_1(dsc->sc_memt, dsc->sc_memh, boff,
 	    from, len);
@@ -335,7 +335,7 @@ depca_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 void
 depca_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 {
-	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
+	struct depca_softc *dsc = (void *) device_parent(&sc->sc_dev);
 
 	bus_space_read_region_1(dsc->sc_memt, dsc->sc_memh, boff,
 	    to, len);
@@ -344,7 +344,7 @@ depca_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 void
 depca_zerobuf(struct lance_softc *sc, int boff, int len)
 {
-	struct depca_softc *dsc = (void *) sc->sc_dev.dv_parent;
+	struct depca_softc *dsc = (void *) device_parent(&sc->sc_dev);
 
 	bus_space_set_region_1(dsc->sc_memt, dsc->sc_memh, boff,
 	    0x00, len);

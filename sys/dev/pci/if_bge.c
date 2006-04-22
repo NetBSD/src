@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.102 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.102.6.1 2006/04/22 11:39:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.102 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.102.6.1 2006/04/22 11:39:14 simonb Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -162,7 +162,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.102 2005/12/24 20:27:42 perry Exp $");
  * full link bandwidth, due to ACKs and window updates lingering
  * in the RX queue during the 30-to-40-frame interrupt-mitigation window.
  */
-struct bge_load_rx_thresh {
+static const struct bge_load_rx_thresh {
 	int rx_ticks;
 	int rx_max_bds; }
 bge_rx_threshes[] = {
@@ -179,81 +179,53 @@ bge_rx_threshes[] = {
 static int	bge_auto_thresh = 1;
 static int	bge_rx_thresh_lvl;
 
-#ifdef __NetBSD__
-static int bge_rxthresh_nodenum;
-#endif /* __NetBSD__ */
+static int	bge_rxthresh_nodenum;
 
-int bge_probe(struct device *, struct cfdata *, void *);
-void bge_attach(struct device *, struct device *, void *);
-void bge_powerhook(int, void *);
-void bge_release_resources(struct bge_softc *);
-void bge_txeof(struct bge_softc *);
-void bge_rxeof(struct bge_softc *);
+static int	bge_probe(device_t, cfdata_t, void *);
+static void	bge_attach(device_t, device_t, void *);
+static void	bge_powerhook(int, void *);
+static void	bge_release_resources(struct bge_softc *);
+static void	bge_txeof(struct bge_softc *);
+static void	bge_rxeof(struct bge_softc *);
 
-void bge_tick(void *);
-void bge_stats_update(struct bge_softc *);
-int bge_encap(struct bge_softc *, struct mbuf *, u_int32_t *);
-static inline int bge_cksum_pad(struct mbuf *pkt);
-static inline int bge_compact_dma_runt(struct mbuf *pkt);
+static void	bge_tick(void *);
+static void	bge_stats_update(struct bge_softc *);
+static int	bge_encap(struct bge_softc *, struct mbuf *, u_int32_t *);
 
-int bge_intr(void *);
-void bge_start(struct ifnet *);
-int bge_ioctl(struct ifnet *, u_long, caddr_t);
-int bge_init(struct ifnet *);
-void bge_stop(struct bge_softc *);
-void bge_watchdog(struct ifnet *);
-void bge_shutdown(void *);
-int bge_ifmedia_upd(struct ifnet *);
-void bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+static int	bge_intr(void *);
+static void	bge_start(struct ifnet *);
+static int	bge_ioctl(struct ifnet *, u_long, caddr_t);
+static int	bge_init(struct ifnet *);
+static void	bge_stop(struct bge_softc *);
+static void	bge_watchdog(struct ifnet *);
+static void	bge_shutdown(void *);
+static int	bge_ifmedia_upd(struct ifnet *);
+static void	bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-u_int8_t bge_eeprom_getbyte(struct bge_softc *, int, u_int8_t *);
-int bge_read_eeprom(struct bge_softc *, caddr_t, int, int);
+static void	bge_setmulti(struct bge_softc *);
 
-void bge_setmulti(struct bge_softc *);
-
-void bge_handle_events(struct bge_softc *);
-int bge_alloc_jumbo_mem(struct bge_softc *);
-void bge_free_jumbo_mem(struct bge_softc *);
-void *bge_jalloc(struct bge_softc *);
-void bge_jfree(struct mbuf *, caddr_t, size_t, void *);
-int bge_newbuf_std(struct bge_softc *, int, struct mbuf *, bus_dmamap_t);
-int bge_newbuf_jumbo(struct bge_softc *, int, struct mbuf *);
-int bge_init_rx_ring_std(struct bge_softc *);
-void bge_free_rx_ring_std(struct bge_softc *);
-int bge_init_rx_ring_jumbo(struct bge_softc *);
-void bge_free_rx_ring_jumbo(struct bge_softc *);
-void bge_free_tx_ring(struct bge_softc *);
-int bge_init_tx_ring(struct bge_softc *);
-
-int bge_chipinit(struct bge_softc *);
-int bge_blockinit(struct bge_softc *);
-int bge_setpowerstate(struct bge_softc *, int);
-
-#ifdef notdef
-u_int8_t bge_vpd_readbyte(struct bge_softc *, int);
-void bge_vpd_read_res(struct bge_softc *, struct vpd_res *, int);
-void bge_vpd_read(struct bge_softc *);
+static void	bge_handle_events(struct bge_softc *);
+static int	bge_alloc_jumbo_mem(struct bge_softc *);
+#if 0 /* XXX */
+static void	bge_free_jumbo_mem(struct bge_softc *);
 #endif
+static void	*bge_jalloc(struct bge_softc *);
+static void	bge_jfree(struct mbuf *, caddr_t, size_t, void *);
+static int	bge_newbuf_std(struct bge_softc *, int, struct mbuf *,
+			       bus_dmamap_t);
+static int	bge_newbuf_jumbo(struct bge_softc *, int, struct mbuf *);
+static int	bge_init_rx_ring_std(struct bge_softc *);
+static void	bge_free_rx_ring_std(struct bge_softc *);
+static int	bge_init_rx_ring_jumbo(struct bge_softc *);
+static void	bge_free_rx_ring_jumbo(struct bge_softc *);
+static void	bge_free_tx_ring(struct bge_softc *);
+static int	bge_init_tx_ring(struct bge_softc *);
 
-u_int32_t bge_readmem_ind(struct bge_softc *, int);
-void bge_writemem_ind(struct bge_softc *, int, int);
-#ifdef notdef
-u_int32_t bge_readreg_ind(struct bge_softc *, int);
-#endif
-void bge_writereg_ind(struct bge_softc *, int, int);
+static int	bge_chipinit(struct bge_softc *);
+static int	bge_blockinit(struct bge_softc *);
+static int	bge_setpowerstate(struct bge_softc *, int);
 
-int bge_miibus_readreg(struct device *, int, int);
-void bge_miibus_writereg(struct device *, int, int, int);
-void bge_miibus_statchg(struct device *);
-
-void bge_reset(struct bge_softc *);
-
-void	bge_set_thresh(struct ifnet *  /*ifp*/, int /*lvl*/);
-void	bge_update_all_threshes(int /*lvl*/);
-
-void bge_dump_status(struct bge_softc *);
-void bge_dump_rxbd(struct bge_rx_bd *);
-
+static void	bge_reset(struct bge_softc *);
 
 #define BGE_DEBUG
 #ifdef BGE_DEBUG
@@ -319,10 +291,8 @@ int	bge_tso_debug = 0;
 CFATTACH_DECL(bge, sizeof(struct bge_softc),
     bge_probe, bge_attach, NULL, NULL);
 
-u_int32_t
-bge_readmem_ind(sc, off)
-	struct bge_softc *sc;
-	int off;
+static u_int32_t
+bge_readmem_ind(struct bge_softc *sc, int off)
 {
 	struct pci_attach_args	*pa = &(sc->bge_pa);
 	pcireg_t val;
@@ -332,10 +302,8 @@ bge_readmem_ind(sc, off)
 	return val;
 }
 
-void
-bge_writemem_ind(sc, off, val)
-	struct bge_softc *sc;
-	int off, val;
+static void
+bge_writemem_ind(struct bge_softc *sc, int off, int val)
 {
 	struct pci_attach_args	*pa = &(sc->bge_pa);
 
@@ -344,10 +312,8 @@ bge_writemem_ind(sc, off, val)
 }
 
 #ifdef notdef
-u_int32_t
-bge_readreg_ind(sc, off)
-	struct bge_softc *sc;
-	int off;
+static u_int32_t
+bge_readreg_ind(struct bge_softc *sc, int off)
 {
 	struct pci_attach_args	*pa = &(sc->bge_pa);
 
@@ -356,10 +322,8 @@ bge_readreg_ind(sc, off)
 }
 #endif
 
-void
-bge_writereg_ind(sc, off, val)
-	struct bge_softc *sc;
-	int off, val;
+static void
+bge_writereg_ind(struct bge_softc *sc, int off, int val)
 {
 	struct pci_attach_args	*pa = &(sc->bge_pa);
 
@@ -368,10 +332,8 @@ bge_writereg_ind(sc, off, val)
 }
 
 #ifdef notdef
-u_int8_t
-bge_vpd_readbyte(sc, addr)
-	struct bge_softc *sc;
-	int addr;
+static u_int8_t
+bge_vpd_readbyte(struct bge_softc *sc, int addr)
 {
 	int i;
 	u_int32_t val;
@@ -395,11 +357,8 @@ bge_vpd_readbyte(sc, addr)
 	return((val >> ((addr % 4) * 8)) & 0xFF);
 }
 
-void
-bge_vpd_read_res(sc, res, addr)
-	struct bge_softc *sc;
-	struct vpd_res *res;
-	int addr;
+static void
+bge_vpd_read_res(struct bge_softc *sc, struct vpd_res *res, int addr)
 {
 	int i;
 	u_int8_t *ptr;
@@ -409,9 +368,8 @@ bge_vpd_read_res(sc, res, addr)
 		ptr[i] = bge_vpd_readbyte(sc, i + addr);
 }
 
-void
-bge_vpd_read(sc)
-	struct bge_softc *sc;
+static void
+bge_vpd_read(struct bge_softc *sc)
 {
 	int pos = 0, i;
 	struct vpd_res res;
@@ -463,11 +421,8 @@ bge_vpd_read(sc)
  * auto access interface for reading the EEPROM. We use the auto
  * access method.
  */
-u_int8_t
-bge_eeprom_getbyte(sc, addr, dest)
-	struct bge_softc *sc;
-	int addr;
-	u_int8_t *dest;
+static u_int8_t
+bge_eeprom_getbyte(struct bge_softc *sc, int addr, u_int8_t *dest)
 {
 	int i;
 	u_int32_t byte = 0;
@@ -509,12 +464,8 @@ bge_eeprom_getbyte(sc, addr, dest)
 /*
  * Read a sequence of bytes from the EEPROM.
  */
-int
-bge_read_eeprom(sc, dest, off, cnt)
-	struct bge_softc *sc;
-	caddr_t dest;
-	int off;
-	int cnt;
+static int
+bge_read_eeprom(struct bge_softc *sc, caddr_t dest, int off, int cnt)
 {
 	int err = 0, i;
 	u_int8_t byte = 0;
@@ -529,10 +480,8 @@ bge_read_eeprom(sc, dest, off, cnt)
 	return(err ? 1 : 0);
 }
 
-int
-bge_miibus_readreg(dev, phy, reg)
-	struct device *dev;
-	int phy, reg;
+static int
+bge_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct bge_softc *sc = (struct bge_softc *)dev;
 	u_int32_t val;
@@ -584,10 +533,8 @@ done:
 	return(val & 0xFFFF);
 }
 
-void
-bge_miibus_writereg(dev, phy, reg, val)
-	struct device *dev;
-	int phy, reg, val;
+static void
+bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
 	struct bge_softc *sc = (struct bge_softc *)dev;
 	u_int32_t saved_autopoll;
@@ -621,9 +568,8 @@ bge_miibus_writereg(dev, phy, reg, val)
 	}
 }
 
-void
-bge_miibus_statchg(dev)
-	struct device *dev;
+static void
+bge_miibus_statchg(device_t dev)
 {
 	struct bge_softc *sc = (struct bge_softc *)dev;
 	struct mii_data *mii = &sc->bge_mii;
@@ -669,7 +615,7 @@ bge_miibus_statchg(dev)
  * Update rx threshold levels to values in a particular slot
  * of the interrupt-mitigation table bge_rx_threshes.
  */
-void
+static void
 bge_set_thresh(struct ifnet *ifp, int lvl)
 {
 	struct bge_softc *sc = ifp->if_softc;
@@ -694,7 +640,7 @@ bge_set_thresh(struct ifnet *ifp, int lvl)
 /*
  * Update Rx thresholds of all bge devices
  */
-void
+static void
 bge_update_all_threshes(int lvl)
 {
 	struct ifnet *ifp;
@@ -722,9 +668,8 @@ bge_update_all_threshes(int lvl)
 /*
  * Handle events that have triggered interrupts.
  */
-void
-bge_handle_events(sc)
-	struct bge_softc		*sc;
+static void
+bge_handle_events(struct bge_softc *sc)
 {
 
 	return;
@@ -734,9 +679,8 @@ bge_handle_events(sc)
  * Memory management for jumbo frames.
  */
 
-int
-bge_alloc_jumbo_mem(sc)
-	struct bge_softc		*sc;
+static int
+bge_alloc_jumbo_mem(struct bge_softc *sc)
 {
 	caddr_t			ptr, kva;
 	bus_dma_segment_t	seg;
@@ -829,9 +773,8 @@ out:
 /*
  * Allocate a jumbo buffer.
  */
-void *
-bge_jalloc(sc)
-	struct bge_softc		*sc;
+static void *
+bge_jalloc(struct bge_softc *sc)
 {
 	struct bge_jpool_entry   *entry;
 
@@ -850,12 +793,8 @@ bge_jalloc(sc)
 /*
  * Release a jumbo buffer.
  */
-void
-bge_jfree(m, buf, size, arg)
-	struct mbuf	*m;
-	caddr_t		buf;
-	size_t		size;
-	void		*arg;
+static void
+bge_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
 	struct bge_jpool_entry *entry;
 	struct bge_softc *sc;
@@ -892,12 +831,8 @@ bge_jfree(m, buf, size, arg)
 /*
  * Intialize a standard receive ring descriptor.
  */
-int
-bge_newbuf_std(sc, i, m, dmamap)
-	struct bge_softc	*sc;
-	int			i;
-	struct mbuf		*m;
-	bus_dmamap_t dmamap;
+static int
+bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 {
 	struct mbuf		*m_new = NULL;
 	struct bge_rx_bd	*r;
@@ -959,11 +894,8 @@ bge_newbuf_std(sc, i, m, dmamap)
  * Initialize a jumbo receive ring descriptor. This allocates
  * a jumbo buffer from the pool managed internally by the driver.
  */
-int
-bge_newbuf_jumbo(sc, i, m)
-	struct bge_softc *sc;
-	int i;
-	struct mbuf *m;
+static int
+bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 {
 	struct mbuf *m_new = NULL;
 	struct bge_rx_bd *r;
@@ -1022,9 +954,8 @@ bge_newbuf_jumbo(sc, i, m)
  * 256 ring entries and hope that our CPU is fast enough to keep up with
  * the NIC.
  */
-int
-bge_init_rx_ring_std(sc)
-	struct bge_softc *sc;
+static int
+bge_init_rx_ring_std(struct bge_softc *sc)
 {
 	int i;
 
@@ -1044,9 +975,8 @@ bge_init_rx_ring_std(sc)
 	return(0);
 }
 
-void
-bge_free_rx_ring_std(sc)
-	struct bge_softc *sc;
+static void
+bge_free_rx_ring_std(struct bge_softc *sc)
 {
 	int i;
 
@@ -1067,9 +997,8 @@ bge_free_rx_ring_std(sc)
 	sc->bge_flags &= ~BGE_RXRING_VALID;
 }
 
-int
-bge_init_rx_ring_jumbo(sc)
-	struct bge_softc *sc;
+static int
+bge_init_rx_ring_jumbo(struct bge_softc *sc)
 {
 	int i;
 	volatile struct bge_rcb *rcb;
@@ -1094,9 +1023,8 @@ bge_init_rx_ring_jumbo(sc)
 	return(0);
 }
 
-void
-bge_free_rx_ring_jumbo(sc)
-	struct bge_softc *sc;
+static void
+bge_free_rx_ring_jumbo(struct bge_softc *sc)
 {
 	int i;
 
@@ -1115,9 +1043,8 @@ bge_free_rx_ring_jumbo(sc)
 	sc->bge_flags &= ~BGE_JUMBO_RXRING_VALID;
 }
 
-void
-bge_free_tx_ring(sc)
-	struct bge_softc *sc;
+static void
+bge_free_tx_ring(struct bge_softc *sc)
 {
 	int i, freed;
 	struct txdmamap_pool_entry *dma;
@@ -1149,9 +1076,8 @@ bge_free_tx_ring(sc)
 	sc->bge_flags &= ~BGE_TXRING_VALID;
 }
 
-int
-bge_init_tx_ring(sc)
-	struct bge_softc *sc;
+static int
+bge_init_tx_ring(struct bge_softc *sc)
 {
 	int i;
 	bus_dmamap_t dmamap;
@@ -1198,9 +1124,8 @@ bge_init_tx_ring(sc)
 	return(0);
 }
 
-void
-bge_setmulti(sc)
-	struct bge_softc *sc;
+static void
+bge_setmulti(struct bge_softc *sc)
 {
 	struct ethercom		*ac = &sc->ethercom;
 	struct ifnet		*ifp = &ac->ec_if;
@@ -1284,9 +1209,8 @@ int bge_swapindex = 0;
  * Do endian, PCI and DMA initialization. Also check the on-board ROM
  * self-test results.
  */
-int
-bge_chipinit(sc)
-	struct bge_softc *sc;
+static int
+bge_chipinit(struct bge_softc *sc)
 {
 	u_int32_t		cachesize;
 	int			i;
@@ -1487,9 +1411,8 @@ bge_chipinit(sc)
 	return(0);
 }
 
-int
-bge_blockinit(sc)
-	struct bge_softc *sc;
+static int
+bge_blockinit(struct bge_softc *sc)
 {
 	volatile struct bge_rcb		*rcb;
 	bus_size_t		rcb_addr;
@@ -2206,6 +2129,10 @@ static const struct bge_product {
 	  PCI_PRODUCT_BROADCOM_BCM5714,
 	  "Broadcom BCM5714/5715 Gigabit Ethernet",
 	  },
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5789,
+	  "Broadcom BCM5789 Gigabit Ethernet",
+	  },
 
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5721,
@@ -2288,10 +2215,8 @@ bge_lookup(const struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
-bge_setpowerstate(sc, powerlevel)
-	struct bge_softc *sc;
-	int powerlevel;
+static int
+bge_setpowerstate(struct bge_softc *sc, int powerlevel)
 {
 #ifdef NOTYET
 	u_int32_t pm_ctl = 0;
@@ -2345,11 +2270,8 @@ bge_setpowerstate(sc, powerlevel)
  * of the compiled-in string. This is a little slow, but it guarantees
  * we'll always announce the right product name.
  */
-int
-bge_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+bge_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -2359,10 +2281,8 @@ bge_probe(parent, match, aux)
 	return (0);
 }
 
-void
-bge_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+bge_attach(device_t parent, device_t self, void *aux)
 {
 	struct bge_softc	*sc = (struct bge_softc *)self;
 	struct pci_attach_args	*pa = aux;
@@ -2733,9 +2653,8 @@ bge_attach(parent, self, aux)
 		    sc->bge_dev.dv_xname);
 }
 
-void
-bge_release_resources(sc)
-	struct bge_softc *sc;
+static void
+bge_release_resources(struct bge_softc *sc)
 {
 	if (sc->bge_vpd_prodname != NULL)
 		free(sc->bge_vpd_prodname, M_DEVBUF);
@@ -2744,9 +2663,8 @@ bge_release_resources(sc)
 		free(sc->bge_vpd_readonly, M_DEVBUF);
 }
 
-void
-bge_reset(sc)
-	struct bge_softc *sc;
+static void
+bge_reset(struct bge_softc *sc)
 {
 	struct pci_attach_args *pa = &sc->bge_pa;
 	u_int32_t cachesize, command, pcistate, new_pcistate;
@@ -2904,9 +2822,8 @@ bge_reset(sc)
  * 2) the frame is from the standard receive ring
  */
 
-void
-bge_rxeof(sc)
-	struct bge_softc *sc;
+static void
+bge_rxeof(struct bge_softc *sc)
 {
 	struct ifnet *ifp;
 	int stdcnt = 0, jumbocnt = 0;
@@ -3049,9 +2966,8 @@ bge_rxeof(sc)
 		CSR_WRITE_4(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
 }
 
-void
-bge_txeof(sc)
-	struct bge_softc *sc;
+static void
+bge_txeof(struct bge_softc *sc)
 {
 	struct bge_tx_bd *cur_tx = NULL;
 	struct ifnet *ifp;
@@ -3119,9 +3035,8 @@ bge_txeof(sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 }
 
-int
-bge_intr(xsc)
-	void *xsc;
+static int
+bge_intr(void *xsc)
 {
 	struct bge_softc *sc;
 	struct ifnet *ifp;
@@ -3214,9 +3129,8 @@ bge_intr(xsc)
 	return (1);
 }
 
-void
-bge_tick(xsc)
-	void *xsc;
+static void
+bge_tick(void *xsc)
 {
 	struct bge_softc *sc = xsc;
 	struct mii_data *mii = &sc->bge_mii;
@@ -3258,9 +3172,8 @@ bge_tick(xsc)
 	splx(s);
 }
 
-void
-bge_stats_update(sc)
-	struct bge_softc *sc;
+static void
+bge_stats_update(struct bge_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	bus_size_t stats = BGE_MEMWIN_START + BGE_STATS_BLOCK;
@@ -3504,11 +3417,8 @@ bge_compact_dma_runt(struct mbuf *pkt)
  * Encapsulate an mbuf chain in the tx ring  by coupling the mbuf data
  * pointers to descriptors.
  */
-int
-bge_encap(sc, m_head, txidx)
-	struct bge_softc *sc;
-	struct mbuf *m_head;
-	u_int32_t *txidx;
+static int
+bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct bge_tx_bd	*f = NULL;
 	u_int32_t		frag, cur, cnt = 0;
@@ -3795,9 +3705,8 @@ doit:
  * Main transmit routine. To avoid having to do mbuf copies, we put pointers
  * to the mbuf data regions directly in the transmit descriptors.
  */
-void
-bge_start(ifp)
-	struct ifnet *ifp;
+static void
+bge_start(struct ifnet *ifp)
 {
 	struct bge_softc *sc;
 	struct mbuf *m_head = NULL;
@@ -3875,9 +3784,8 @@ bge_start(ifp)
 	ifp->if_timer = 5;
 }
 
-int
-bge_init(ifp)
-	struct ifnet *ifp;
+static int
+bge_init(struct ifnet *ifp)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	u_int16_t *m;
@@ -3969,9 +3877,8 @@ bge_init(ifp)
 /*
  * Set media options.
  */
-int
-bge_ifmedia_upd(ifp)
-	struct ifnet *ifp;
+static int
+bge_ifmedia_upd(struct ifnet *ifp)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
@@ -4009,10 +3916,8 @@ bge_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-void
-bge_ifmedia_sts(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+static void
+bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
@@ -4037,11 +3942,8 @@ bge_ifmedia_sts(ifp, ifmr)
 	    sc->bge_flowflags;
 }
 
-int
-bge_ioctl(ifp, command, data)
-	struct ifnet *ifp;
-	u_long command;
-	caddr_t data;
+static int
+bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -4071,7 +3973,7 @@ bge_ioctl(ifp, command, data)
 			    sc->bge_if_flags & IFF_PROMISC) {
 				BGE_CLRBIT(sc, BGE_RX_MODE,
 				    BGE_RXMODE_RX_PROMISC);
-			} else
+			} else if (!(sc->bge_if_flags & IFF_UP))
 				bge_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING) {
@@ -4127,9 +4029,8 @@ bge_ioctl(ifp, command, data)
 	return(error);
 }
 
-void
-bge_watchdog(ifp)
-	struct ifnet *ifp;
+static void
+bge_watchdog(struct ifnet *ifp)
 {
 	struct bge_softc *sc;
 
@@ -4166,9 +4067,8 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-void
-bge_stop(sc)
-	struct bge_softc *sc;
+static void
+bge_stop(struct bge_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 
@@ -4253,9 +4153,8 @@ bge_stop(sc)
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
-void
-bge_shutdown(xsc)
-	void *xsc;
+static void
+bge_shutdown(void *xsc)
 {
 	struct bge_softc *sc = (struct bge_softc *)xsc;
 
@@ -4339,7 +4238,7 @@ err:
 	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
-void
+static void
 bge_powerhook(int why, void *hdl)
 {
 	struct bge_softc *sc = (struct bge_softc *)hdl;

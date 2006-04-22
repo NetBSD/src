@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.54 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: libkern.h,v 1.54.6.1 2006/04/22 11:40:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #include <sys/null.h>
 
 #ifndef LIBKERN_INLINE
-#define LIBKERN_INLINE	static inline
+#define LIBKERN_INLINE	static __inline
 #define LIBKERN_BODY
 #endif
 
@@ -171,6 +171,26 @@ tolower(int ch)
 }
 #endif
 
+/*
+ * Return the number of elements in a statically-allocated array,
+ * __x.
+ */
+#define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
+
+/* __BIT(n): nth bit, where __BIT(0) == 0x1. */
+#define	__BIT(__n) (((__n) == 32) ? 0 : ((uint32_t)1 << (__n)))
+
+/* __BITS(m, n): bits m through n, m < n. */
+#define	__BITS(__m, __n)	\
+	((__BIT(MAX((__m), (__n)) + 1) - 1) ^ (__BIT(MIN((__m), (__n))) - 1))
+
+/* find least significant bit that is set */
+#define	__LOWEST_SET_BIT(__mask) ((((__mask) - 1) & (__mask)) ^ (__mask))
+
+#define	SHIFTOUT(__x, __mask) (((__x) & (__mask)) / __LOWEST_SET_BIT(__mask))
+#define	SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
+#define	SHIFTOUT_MASK(__mask) SHIFTOUT((__mask), (__mask))
+
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
 #else
@@ -180,6 +200,12 @@ tolower(int ch)
 #else
 #define	assert(e)	(__predict_true((e)) ? (void)0 :		    \
 			    __assert("", __FILE__, __LINE__, "e"))
+#endif
+#endif
+
+#ifdef __COVERITY__
+#ifndef DIAGNOSTIC
+#define DIAGNOSTIC
 #endif
 #endif
 
@@ -245,6 +271,7 @@ void	*memset __P((void *, int, size_t));
 char	*strcpy __P((char *, const char *));
 int	 strcmp __P((const char *, const char *));
 size_t	 strlen __P((const char *));
+char	*strsep(char **, const char *);
 #if __GNUC_PREREQ__(2, 95)
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
@@ -275,6 +302,10 @@ int	 ffs __P((int));
 
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
+unsigned int
+	bcdtobin __P((unsigned int));
+unsigned int
+	bintobcd __P((unsigned int));
 u_int32_t
 	inet_addr __P((const char *));
 struct in_addr;

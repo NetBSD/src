@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.73 2005/12/12 22:44:04 dsl Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.73.6.1 2006/04/22 11:38:21 simonb Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -77,7 +77,7 @@ CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-sign-compare
 .endif
 
-CFLAGS+=	${CPUFLAGS} -ffreestanding
+CFLAGS+=	-ffreestanding
 CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	${CPUFLAGS} -D_LOCORE
 
@@ -175,7 +175,7 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
-SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
+SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
@@ -306,7 +306,7 @@ MKDEP_CFLAGS?=	${CFLAGS}
 SSRCS=${MD_SFILES} ${SFILES}
 CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
 SRCS=${SSRCS} ${CSRCS}
-DEPS=	${SRCS:T:R:S/$/.d/g}
+DEPS=	${SRCS:T:O:u:R:S/$/.d/g}
 
 .for _s in ${SSRCS}
 ${_s:T:R}.d: ${_s} assym.h config_time.h

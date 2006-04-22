@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.235 2005/12/12 16:26:33 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.235.6.1 2006/04/22 11:40:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.235 2005/12/12 16:26:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.235.6.1 2006/04/22 11:40:00 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -340,13 +340,12 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 		mp->mnt_flag &=
 		  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-		    MNT_MAGICLINKS);
+		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
 		mp->mnt_flag |= SCARG(uap, flags) &
 		   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 		    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 		    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-		    MNT_IGNORE | MNT_MAGICLINKS);
+		    MNT_IGNORE);
 	}
 	/*
 	 * Mount the filesystem.
@@ -728,7 +727,7 @@ done:
 	if (cwdi->cwdi_rdir != NULL) {
 		size_t len;
 		char *bp;
-		char *path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+		char *path = PNBUF_GET();
 		if (!path)
 			return ENOMEM;
 
@@ -737,7 +736,7 @@ done:
 		error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp, path,
 		    MAXPATHLEN / 2, 0, l);
 		if (error) {
-			free(path, M_TEMP);
+			PNBUF_PUT(path);
 			return error;
 		}
 		len = strlen(bp);
@@ -760,7 +759,7 @@ done:
 			else
 				error = EPERM;
 		}
-		free(path, M_TEMP);
+		PNBUF_PUT(path);
 	}
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return error;
@@ -1221,6 +1220,7 @@ sys_getfh(struct lwp *l, void *v, register_t *retval)
 	vput(vp);
 	if (error)
 		return (error);
+	KASSERT(fh.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 	error = copyout(&fh, (caddr_t)SCARG(uap, fhp), sizeof (fh));
 	return (error);
 }
@@ -2252,8 +2252,8 @@ sys_readlink(struct lwp *l, void *v, register_t *retval)
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_USERSPACE;
-		auio.uio_lwp = l;
+		KASSERT(l == curlwp);
+		auio.uio_vmspace = l->l_proc->p_vmspace;
 		auio.uio_resid = SCARG(uap, count);
 		error = VOP_READLINK(vp, &auio, p->p_ucred);
 	}

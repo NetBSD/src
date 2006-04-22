@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.27 2005/12/29 22:27:17 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.27.6.1 2006/04/22 11:38:56 simonb Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -322,32 +322,32 @@ struct rtw_rf {
 	struct rtw_bbpset	rf_bbpset;
 };
 
-static inline void
+static __inline void
 rtw_rf_destroy(struct rtw_rf *rf)
 {
 	(*rf->rf_destroy)(rf);
 }
 
-static inline int
+static __inline int
 rtw_rf_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
 	return (*rf->rf_init)(rf, freq, opaque_txpower, power);
 }
 
-static inline int
+static __inline int
 rtw_rf_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
 {
 	return (*rf->rf_pwrstate)(rf, power);
 }
 
-static inline int
+static __inline int
 rtw_rf_tune(struct rtw_rf *rf, u_int freq)
 {
 	return (*rf->rf_tune)(rf, freq);
 }
 
-static inline int
+static __inline int
 rtw_rf_txpower(struct rtw_rf *rf, uint8_t opaque_txpower)
 {
 	return (*rf->rf_txpower)(rf, opaque_txpower);
@@ -361,7 +361,7 @@ struct rtw_rfbus {
 	rtw_rf_write_t		b_write;
 };
 
-static inline int
+static __inline int
 rtw_rfbus_write(struct rtw_rfbus *bus, enum rtw_rfchipid rfchipid, u_int addr,
     uint32_t val)
 {

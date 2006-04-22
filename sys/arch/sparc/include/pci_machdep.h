@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.5 2005/12/11 12:19:06 christos Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.5.6.1 2006/04/22 11:37:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -40,7 +40,7 @@
  */
 typedef struct sparc_pci_chipset *pci_chipset_tag_t;
 typedef u_int pci_intr_handle_t;
-typedef u_int64_t pcitag_t; 
+typedef uint64_t pcitag_t; 
 
 
 /*
@@ -60,15 +60,15 @@ struct sparc_pci_chipset {
 /* 
  * The MI PCI code expects pcitag_t to be a scalar type.  But besides
  * the bus/device/function we need to store the OFW node as well.  We
- * can squeeze them into a u_int64_t with a little help from some
+ * can squeeze them into a uint64_t with a little help from some
  * macros.  And while we are at it mangle bus/device/function into a
  * form directly suitable for pci mode1 configuration address port.
  */
 #define	PCITAG_CREATE(n,b,d,f)	\
-	(((u_int64_t)(n)<<32)|0x80000000U|((b)<<16)|((d)<<11)|((f)<<8))
+	(((uint64_t)(n)<<32)|0x80000000U|((b)<<16)|((d)<<11)|((f)<<8))
 
-#define	PCITAG_NODE(t)		((u_int32_t)(((t)>>32)&0xffffffff))
-#define	PCITAG_OFFSET(t)	((u_int32_t)((t)&0xffffffff))
+#define	PCITAG_NODE(t)		((uint32_t)(((t)>>32)&0xffffffff))
+#define	PCITAG_OFFSET(t)	((uint32_t)((t)&0xffffffff))
 #define PCITAG_BUS(t)		((PCITAG_OFFSET(t)>>16)&0xFF)
 #define PCITAG_DEV(t)		((PCITAG_OFFSET(t)>>11)&0x1F)
 #define PCITAG_FUN(t)		((PCITAG_OFFSET(t)>>8)&0x7)

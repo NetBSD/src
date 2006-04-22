@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.16 2002/07/11 21:14:29 augustss Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.16.38.1 2006/04/22 11:39:38 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
@@ -50,7 +50,17 @@
 #define  PCI_USBREV_1_1		0x11
 
 #define PCI_LEGSUP		0xc0	/* Legacy Support register */
+#define  PCI_LEGSUP_A20PTS	0x8000	/* End of A20GATE passthru status */
 #define  PCI_LEGSUP_USBPIRQDEN	0x2000	/* USB PIRQ D Enable */
+#define  PCI_LEGSUP_USBIRQS	0x1000	/* USB IRQ status */
+#define  PCI_LEGSUP_TBY64W	0x0800	/* Trap by 64h write status */
+#define  PCI_LEGSUP_TBY64R	0x0400	/* Trap by 64h read status */
+#define  PCI_LEGSUP_TBY60W	0x0200	/* Trap by 60h write status */
+#define  PCI_LEGSUP_TBY60R	0x0100	/* Trap by 60h read status */
+#define  PCI_LEGSUP_SMIEPTE	0x0080	/* SMI at end of passthru enable */
+#define  PCI_LEGSUP_PSS		0x0040	/* Passthru status */
+#define  PCI_LEGSUP_A20PTEN	0x0020	/* A20GATE passthru enable */
+#define  PCI_LEGSUP_USBSMIEN	0x0010	/* Enable SMI# generation */
 
 #define PCI_CBIO		0x20	/* configuration base IO */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.3 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.3.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -162,13 +162,13 @@
  *  - The timer is clocked at approximately 0.6 seconds
  *  - 6 bit; values of 0-3 will be ignored and should not be attempted
  */
-static inline int
+static __inline int
 lpcib_tcotimer_tick_to_second(int tick)
 {
 	return tick * 6 / 10;
 }
 
-static inline int
+static __inline int
 lpcib_tcotimer_second_to_tick(int tick)
 {
 	return tick * 10 / 6;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.12 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.12.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12 2005/12/11 12:24:29 christos E
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/select.h>
+#include <sys/filedesc.h>
 #include <sys/tty.h>
 #include <sys/pty.h>
 
@@ -75,7 +76,8 @@ int	ptyfs_vget(struct mount *, ino_t, struct vnode **);
 
 static int ptyfs__allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
     dev_t, char);
-static int ptyfs__makename(struct ptm_pty *, char *, size_t, dev_t, char);
+static int ptyfs__makename(struct ptm_pty *, struct lwp *, char *, size_t,
+    dev_t, char);
 static void ptyfs__getvattr(struct ptm_pty *, struct proc *, struct vattr *);
 
 /*
@@ -91,9 +93,35 @@ struct ptm_pty ptm_ptyfspty = {
 	NULL
 };
 
+static const char *
+ptyfs__getpath(struct lwp *l, const struct mount *mp)
+{
+	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
+	char buf[sizeof(mp->mnt_stat.f_mntonname) + 32];
+	size_t len;
+	char *bp;
+	int error;
+
+	if (cwdi->cwdi_rdir == NULL)
+		return mp->mnt_stat.f_mntonname;
+
+	bp = buf + sizeof(buf);
+	*--bp = '\0';
+	error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
+	    buf, sizeof(buf) / 2, 0, l);
+	if (error)	/* XXX */
+		return mp->mnt_stat.f_mntonname;
+
+	len = strlen(bp);
+	if (len >= sizeof(mp->mnt_stat.f_mntonname))	/* XXX */
+		return mp->mnt_stat.f_mntonname;
+	else
+		return &mp->mnt_stat.f_mntonname[len];
+}
+
 static int
-ptyfs__makename(struct ptm_pty *pt, char *tbuf, size_t bufsiz, dev_t dev,
-    char ms)
+ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
+    dev_t dev, char ms)
 {
 	struct mount *mp = pt->arg;
 	size_t len;
@@ -104,7 +132,7 @@ ptyfs__makename(struct ptm_pty *pt, char *tbuf, size_t bufsiz, dev_t dev,
 		len = snprintf(tbuf, bufsiz, "/dev/null");
 		break;
 	case 't':
-		len = snprintf(tbuf, bufsiz, "%s/%d", mp->mnt_stat.f_mntonname,
+		len = snprintf(tbuf, bufsiz, "%s/%d", ptyfs__getpath(l, mp),
 		    minor(dev));
 		break;
 	default:

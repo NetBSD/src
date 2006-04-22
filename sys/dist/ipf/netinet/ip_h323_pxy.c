@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.3 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.3.6.1 2006/04/22 11:39:54 simonb Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -34,7 +34,7 @@
 #include "opt_ipfilter.h"
 #endif
 
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.3 2005/12/11 12:24:21 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.3.6.1 2006/04/22 11:39:54 simonb Exp $");
 
 #define IPF_H323_PROXY
 
@@ -254,7 +254,7 @@ nat_t *nat;
 	tcp = (tcphdr_t *)fin->fin_dp;
 	ipaddr = nat->nat_inip.s_addr;
 	data = (caddr_t)tcp + (TCP_OFF(tcp) << 2);
-	datlen = ip->ip_len - fin->fin_hlen - (TCP_OFF(tcp) << 2);
+	datlen = fin->fin_dlen - (TCP_OFF(tcp) << 2);
 	if (find_port(ipaddr, data, datlen, &off, &port) == 0) {
 		fr_info_t fi;
 		nat_t     *nat2;

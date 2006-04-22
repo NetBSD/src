@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.12 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.12.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.12 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.12.6.1 2006/04/22 11:37:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ grfdev_attach(struct grfdev_softc *sc,
 	if (sc->sc_isconsole)
 		sc->sc_data = gp = &grf_cn;
 	else {
-		MALLOC(sc->sc_data, struct grf_data *, sizeof(struct grf_data),
+		sc->sc_data = malloc(sizeof(struct grf_data),
 		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (sc->sc_data == NULL) {
 			printf("\n%s: can't allocate grf data\n",

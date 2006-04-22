@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.62 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.62.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.62 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.62.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -189,7 +189,7 @@ mb86960_attach(struct mb86960_softc *sc, uint8_t *myea)
 void
 mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 {
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
+	struct cfdata *cf = device_cfdata(&sc->sc_dev);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int i;
 
@@ -1095,7 +1095,7 @@ mb86960_intr(void *arg)
 	uint8_t tstat, rstat;
 
 	if ((sc->sc_stat & FE_STAT_ENABLED) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 #if FE_DEBUG >= 4

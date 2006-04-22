@@ -1,12 +1,12 @@
-/*	$NetBSD: machdep.c,v 1.570.2.2 2006/02/28 20:28:53 kardel Exp $	*/
+/*	$NetBSD: machdep.c,v 1.570.2.3 2006/04/22 11:37:32 simonb Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum and by Jason R. Thorpe of the Numerical Aerospace
- * Simulation Facility, NASA Ames Research Center.
+ * by Charles M. Hannum, by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center and by Julio M. Merino Vidal.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570.2.2 2006/02/28 20:28:53 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570.2.3 2006/04/22 11:37:32 simonb Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -275,6 +275,114 @@ void	add_mem_cluster(uint64_t, uint64_t, uint32_t);
 #endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
 extern int time_adjusted;
+
+struct bootinfo	bootinfo;
+int *esym;
+extern int boothowto;
+
+/* Base memory reported by BIOS. */
+#ifndef REALBASEMEM
+int	biosbasemem = 0;
+#else
+int	biosbasemem = REALBASEMEM;
+#endif
+
+/* Extended memory reported by BIOS. */
+#ifndef REALEXTMEM
+int	biosextmem = 0;
+#else
+int	biosextmem = REALEXTMEM;
+#endif
+
+/* Representation of the bootinfo structure constructed by a NetBSD native
+ * boot loader.  Only be used by native_loader(). */
+struct bootinfo_source {
+	uint32_t bs_naddrs;
+	paddr_t bs_addrs[1]; /* Actually longer. */
+};
+
+/* Only called by locore.h; no need to be in a header file. */
+void	native_loader(int, int, struct bootinfo_source *, paddr_t, int, int);
+
+/*
+ * Called as one of the very first things during system startup (just after
+ * the boot loader gave control to the kernel image), this routine is in
+ * charge of retrieving the parameters passed in by the boot loader and
+ * storing them in the appropriate kernel variables.
+ *
+ * WARNING: Because the kernel has not yet relocated itself to KERNBASE,
+ * special care has to be taken when accessing memory because absolute
+ * addresses (referring to kernel symbols) do not work.  So:
+ *
+ *     1) Avoid jumps to absolute addresses (such as gotos and switches).
+ *     2) To access global variables use their physical address, which
+ *        can be obtained using the RELOC macro.
+ */
+void
+native_loader(int bl_boothowto, int bl_bootdev,
+    struct bootinfo_source *bl_bootinfo, paddr_t bl_esym,
+    int bl_biosextmem, int bl_biosbasemem)
+{
+#define RELOC(type, x) ((type)((vaddr_t)(x) - KERNBASE))
+
+	*RELOC(int *, &boothowto) = bl_boothowto;
+
+#ifdef COMPAT_OLDBOOT
+	/*
+	 * Pre-1.3 boot loaders gave the boot device as a parameter
+	 * (instead of a bootinfo entry).
+	 */
+	*RELOC(int *, &bootdev) = bl_bootdev;
+#endif
+
+	/*
+	 * The boot loader provides a physical, non-relocated address
+	 * for the symbols table's end.  We need to convert it to a
+	 * virtual address.
+	 */
+	if (bl_esym != 0)
+		*RELOC(int **, &esym) = (int *)((vaddr_t)bl_esym + KERNBASE);
+	else
+		*RELOC(int **, &esym) = 0;
+
+	/*
+	 * Copy bootinfo entries (if any) from the boot loader's
+	 * representation to the kernel's bootinfo space.
+	 */
+	if (bl_bootinfo != NULL) {
+		size_t i;
+		uint8_t *data;
+		struct bootinfo *bidest;
+
+		bidest = RELOC(struct bootinfo *, &bootinfo);
+
+		data = &bidest->bi_data[0];
+
+		for (i = 0; i < bl_bootinfo->bs_naddrs; i++) {
+			struct btinfo_common *bc;
+
+			bc = (struct btinfo_common *)(bl_bootinfo->bs_addrs[i]);
+
+			if ((paddr_t)(data + bc->len) >
+			    (paddr_t)(&bidest->bi_data[0] + BOOTINFO_MAXSIZE))
+				break;
+
+			memcpy(data, bc, bc->len);
+			data += bc->len;
+		}
+		bidest->bi_nentries = i;
+	}
+
+	/*
+	 * Configure biosbasemem and biosextmem only if they were not
+	 * explicitly given during the kernel's build.
+	 */
+	if (*RELOC(int *, &biosbasemem) == 0)
+		*RELOC(int *, &biosbasemem) = bl_biosbasemem;
+	if (*RELOC(int *, &biosextmem) == 0)
+		*RELOC(int *, &biosextmem) = bl_biosextmem;
+#undef RELOC
+}
 
 /*
  * Machine-dependent startup code
@@ -1869,7 +1977,6 @@ init386(paddr_t first_avail)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
-		extern int *esym;
 		struct btinfo_symtab *symtab;
 
 #ifdef DDB

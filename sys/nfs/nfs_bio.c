@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.141 2006/01/14 08:57:40 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.141.4.1 2006/04/22 11:40:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.141 2006/01/14 08:57:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.141.4.1 2006/04/22 11:40:14 simonb Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -85,7 +85,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct buf *bp = NULL, *rabp;
-	struct lwp *l = uio->uio_lwp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct nfsdircache *ndp = NULL, *nndp = NULL;
 	caddr_t baddr;
@@ -94,6 +93,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	struct dirent *dp, *pdp, *edp, *ep;
 	off_t curoff = 0;
 	int advice;
+	struct lwp *l = curlwp;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
@@ -498,7 +498,7 @@ nfs_write(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
-	struct lwp *l = uio->uio_lwp;
+	struct lwp *l = curlwp;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct ucred *cred = ap->a_cred;
@@ -957,6 +957,7 @@ nfs_doio_read(bp, uiop)
 			memset((char *)bp->b_data + diff, 0, len);
 			uiop->uio_resid = 0;
 		}
+#if 0
 		if (uiop->uio_lwp && (vp->v_flag & VTEXT) &&
 		    (((nmp->nm_flag & NFSMNT_NQNFS) &&
 		      NQNFS_CKINVALID(vp, np, ND_READ) &&
@@ -968,6 +969,7 @@ nfs_doio_read(bp, uiop)
 			uiop->uio_lwp->l_proc->p_holdcnt++;
 #endif
 		}
+#endif
 		break;
 	case VLNK:
 		KASSERT(uiop->uio_offset == (off_t)0);
@@ -1271,9 +1273,8 @@ nfs_doio(bp)
 
 	uiop->uio_iov = &io;
 	uiop->uio_iovcnt = 1;
-	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_lwp = NULL;
 	uiop->uio_offset = (((off_t)bp->b_blkno) << DEV_BSHIFT);
+	UIO_SETUP_SYSSPACE(uiop);
 	io.iov_base = bp->b_data;
 	io.iov_len = uiop->uio_resid = bp->b_bcount;
 

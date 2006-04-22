@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.96.6.2 2006/02/28 20:59:53 kardel Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.96.6.3 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96.6.2 2006/02/28 20:59:53 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96.6.3 2006/04/22 11:39:58 simonb Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1105,7 +1105,7 @@ proftick(struct clockframe *frame)
 		}
 #endif
 #ifdef PROC_PC
-                if (p && p->p_flag & P_PROFIL)
+                if (p && (p->p_flag & P_PROFIL))
                         addupc_intr(p, PROC_PC(p));
 #endif
 	}
@@ -1125,8 +1125,8 @@ statclock(struct clockframe *frame)
 #endif
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
-	struct lwp *l;
 	struct proc *p;
+	struct lwp *l;
 
 	/*
 	 * Notice changes in divisor frequency, and adjust clock
@@ -1142,9 +1142,11 @@ statclock(struct clockframe *frame)
 		}
 	}
 	l = curlwp;
-	p = (l ? l->l_proc : 0);
+	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
-		if (p->p_flag & P_PROFIL && profsrc == PROFSRC_CLOCK)
+		KASSERT(p != NULL);
+
+		if ((p->p_flag & P_PROFIL) && profsrc == PROFSRC_CLOCK)
 			addupc_intr(p, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0)
 			return;
@@ -1172,7 +1174,7 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #ifdef LWP_PC
-		if (p && profsrc == PROFSRC_CLOCK && p->p_flag & P_PROFIL)
+		if (p && profsrc == PROFSRC_CLOCK && (p->p_flag & P_PROFIL))
 			addupc_intr(p, LWP_PC(l));
 #endif
 		if (--spc->spc_pscnt > 0)
@@ -1201,7 +1203,7 @@ statclock(struct clockframe *frame)
 	}
 	spc->spc_pscnt = psdiv;
 
-	if (l != NULL) {
+	if (p != NULL) {
 		++p->p_cpticks;
 		/*
 		 * If no separate schedclock is provided, call it here

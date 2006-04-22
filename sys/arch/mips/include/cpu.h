@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.76 2005/12/24 22:50:08 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.76.6.1 2006/04/22 11:37:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -110,13 +110,25 @@ do {									\
 #endif
 
 #ifdef _KERNEL
-#ifndef _LOCORE
-extern struct cpu_info cpu_info_store;
+#ifdef _LKM
+/* Assume all CPU architectures are valid for LKM's */
+#define	MIPS1	1
+#define	MIPS3	1
+#define	MIPS4	1
+#define	MIPS32	1
+#define	MIPS64	1
+#endif
 
-#define	curcpu()	(&cpu_info_store)
-#define	cpu_number()	(0)
-#define	cpu_proc_fork(p1, p2)
-#endif /* !_LOCORE */
+#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 0
+#error at least one of MIPS1, MIPS3, MIPS4, MIPS32 or MIPS64 must be specified
+#endif
+
+/* Shortcut for MIPS3 or above defined */
+#if defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)
+#define	MIPS3_PLUS	1
+#else
+#undef MIPS3_PLUS
+#endif
 
 /*
  * Macros to find the CPU architecture we're on at run-time,
@@ -133,6 +145,12 @@ extern struct cpu_info cpu_info_store;
 #define	CPU_ARCH_MIPS64	(1 << 6)
 
 #ifndef _LOCORE
+extern struct cpu_info cpu_info_store;
+
+#define	curcpu()	(&cpu_info_store)
+#define	cpu_number()	(0)
+#define	cpu_proc_fork(p1, p2)
+
 /* XXX simonb
  * Should the following be in a cpu_info type structure?
  * And how many of these are per-cpu vs. per-system?  (Ie,
@@ -160,19 +178,6 @@ extern u_int mips3_pg_shift;
 #define	CPU_MIPS_D_CACHE_COHERENT	0x0400	/* D-cache is fully coherent */
 #define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
 #define	MIPS_NOT_SUPP			0x8000
-
-#ifdef _LKM
-/* Assume all CPU architectures are valid for LKM's */
-#define	MIPS1	1
-#define	MIPS3	1
-#define	MIPS4	1
-#define	MIPS32	1
-#define	MIPS64	1
-#endif
-
-#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 0
-#error at least one of MIPS1, MIPS3, MIPS4, MIPS32 or MIPS64 must be specified
-#endif
 
 #if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 1
 #ifdef MIPS1
@@ -237,13 +242,6 @@ extern u_int mips3_pg_shift;
 
 #define	MIPS_HAS_CLOCK	(cpu_arch >= CPU_ARCH_MIPS3)
 #endif /* run-time test */
-
-/* Shortcut for MIPS3 or above defined */
-#if defined(MIPS3) || defined(MIPS4) || defined(MIPS32) || defined(MIPS64)
-#define	MIPS3_PLUS	1
-#else
-#undef MIPS3_PLUS
-#endif
 
 
 /*

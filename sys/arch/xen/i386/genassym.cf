@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2006/01/15 22:09:51 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.6.4.1 2006/04/22 11:38:09 simonb Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -316,6 +316,7 @@ ifdef XEN3
 define START_INFO_SHARED_INFO	offsetof(struct start_info, shared_info)
 define START_INFO_FLAGS		offsetof(struct start_info, flags)
 define START_INFO_CONSOLE_MFN	offsetof(struct start_info, console_mfn)
+define START_INFO_STORE_MFN	offsetof(struct start_info, store_mfn)
 else
 define START_INFO_SHARED_INFO	offsetof(start_info_t, shared_info)
 endif

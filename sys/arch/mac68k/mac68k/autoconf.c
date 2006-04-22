@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.64 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64.6.1 2006/04/22 11:37:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ extern	struct cfdriver		scsibus_cd;
 				if (periph != NULL) {
 					sc_dev = (struct device *)
 							periph->periph_dev;
-					return sc_dev->dv_unit;
+					return device_unit(sc_dev);
 				}
 			}
 		}
@@ -195,7 +195,7 @@ extern	struct cfdriver		scsibus_cd;
 		    target, lun);
 		if (periph != NULL) {
 			sc_dev = (struct device *) periph->periph_dev;
-			return sc_dev->dv_unit;
+			return device_unit(sc_dev);
 		}
 	}
 	return -1;

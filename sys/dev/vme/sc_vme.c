@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_vme.c,v 1.12 2005/12/11 12:24:07 christos Exp $	*/
+/*	$NetBSD: sc_vme.c,v 1.12.6.1 2006/04/22 11:39:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000,2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.12 2005/12/11 12:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_vme.c,v 1.12.6.1 2006/04/22 11:39:44 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -232,7 +232,9 @@ sc_vme_attach(parent, self, aux)
 
 	/* Do the common attach stuff. */
 	printf("%s", sc->sc_dev.dv_xname);
-	sunscpal_attach(sc, (sc->sc_dev.dv_cfdata->cf_flags ? sc->sc_dev.dv_cfdata->cf_flags : sunsc_vme_options));
+	sunscpal_attach(sc, (device_cfdata(&sc->sc_dev)->cf_flags ?
+			     device_cfdata(&sc->sc_dev)->cf_flags :
+			     sunsc_vme_options));
 }
 
 static int

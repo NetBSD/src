@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.27 2005/12/24 23:24:00 perry Exp $ */
+/*	$NetBSD: txcom.c,v 1.27.6.1 2006/04/22 11:37:30 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27.6.1 2006/04/22 11:37:30 simonb Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -69,9 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27 2005/12/24 23:24:00 perry Exp $");
 
 #include <hpcmips/tx/tx39clockreg.h> /* XXX */
 
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 /* 
  * UARTA channel has DTR, DSR, RTS, CTS lines. and they  wired to MFIO/IO port.
  */
@@ -254,7 +251,7 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&txcom_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		printf(": console");
 	}

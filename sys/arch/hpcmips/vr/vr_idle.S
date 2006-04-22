@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.9 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.9.6.1 2006/04/22 11:37:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,14 +58,14 @@
  * profiling.
  */
 LEAF(vr_idle)
-	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
-	nop
 	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
 #if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop
 #endif
+	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
+	nop
 
 	/* Try to zero some free pages. */
 	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO

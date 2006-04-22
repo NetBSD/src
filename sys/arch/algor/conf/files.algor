@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.19 2005/12/11 12:16:08 christos Exp $
+#	$NetBSD: files.algor,v 1.19.6.1 2006/04/22 11:37:10 simonb Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -41,6 +41,8 @@ file	arch/algor/algor/interrupt.c
 file	arch/algor/algor/led.c
 file	arch/algor/algor/machdep.c
 file	arch/algor/algor/pmon.c
+
+file	arch/mips/mips/softintr.c
 
 #
 # The autoconfiguration root.

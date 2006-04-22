@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.3 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: userret.h,v 1.3.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -51,12 +51,12 @@
 
 #include <sys/userret.h>
 
-static inline void userret __P((struct lwp *, int,  u_quad_t));
+static __inline void userret(struct lwp *, int,  u_quad_t);
 /*
  * Define the code needed before returning to user mode, for
  * trap, mem_access_fault, and syscall.
  */
-static inline void
+static __inline void
 userret(struct lwp *l, int pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
@@ -80,7 +80,7 @@ userret(struct lwp *l, int pc, u_quad_t oticks)
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
-static inline void share_fpu __P((struct lwp *, struct trapframe64 *));
+static __inline void share_fpu(struct lwp *, struct trapframe64 *);
 /*
  * If someone stole the FPU while we were away, do not enable it
  * on return.  This is not done in userret() above as it must follow
@@ -89,7 +89,7 @@ static inline void share_fpu __P((struct lwp *, struct trapframe64 *));
  *
  * Oh, and don't touch the FPU bit if we're returning to the kernel.
  */
-static inline void
+static __inline void
 share_fpu(struct lwp *l, struct trapframe64 *tf)
 {
 	if (!(tf->tf_tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) &&

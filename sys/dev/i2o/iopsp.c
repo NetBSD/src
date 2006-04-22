@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.21 2006/01/29 21:42:42 dsl Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.21.4.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.21 2006/01/29 21:42:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.21.4.1 2006/04/22 11:38:54 simonb Exp $");
 
 #include "opt_i2o.h"
 
@@ -136,8 +136,8 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	ia = (struct iop_attach_args *)aux;
-	sc = (struct iopsp_softc *)self;
-	iop = (struct iop_softc *)parent;
+	sc = device_private(self);
+	iop = device_private(parent);
 
 	/* Register us as an initiator. */
 	sc->sc_ii.ii_dv = self;
@@ -244,7 +244,7 @@ iopsp_reconfig(struct device *dv)
 #endif
 
 	sc = (struct iopsp_softc *)dv;
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 	sc_chan = &sc->sc_channel;
 
 	/* Anything to do? */
@@ -369,7 +369,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 	struct i2o_hba_bus_scan mf;
 	int rv;
 
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
 	rv = lockmgr(&iop->sc_conflock, LK_EXCLUSIVE, NULL);
 	if (rv != 0) {
@@ -416,7 +416,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	sc = (void *)chan->chan_adapter->adapt_dev;
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -534,7 +534,7 @@ iopsp_scsi_abort(struct iopsp_softc *sc, int atid, struct iop_msg *aim)
 	struct iop_softc *iop;
 	int rv, s;
 
-	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 	im = iop_msg_alloc(iop, IM_POLL);
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_scsi_scb_abort);
@@ -566,7 +566,7 @@ iopsp_intr(struct device *dv, struct iop_msg *im, void *reply)
 
 	sc = (struct iopsp_softc *)dv;
 	xs = (struct scsipi_xfer *)im->im_dvcontext;
-	iop = (struct iop_softc *)dv->dv_parent;
+	iop = (struct iop_softc *)device_parent(dv);
 	rb = reply;
 
 	SC_DEBUG(xs->xs_periph, SCSIPI_DB2, ("iopsp_intr\n"));

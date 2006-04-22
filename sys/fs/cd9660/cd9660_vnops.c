@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.19 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.19.6.1 2006/04/22 11:39:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.19 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.19.6.1 2006/04/22 11:39:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,9 +218,8 @@ cd9660_getattr(v)
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_lwp = NULL;
 		auio.uio_resid = MAXPATHLEN;
+		UIO_SETUP_SYSSPACE(&auio);
 		rdlnk.a_uio = &auio;
 		rdlnk.a_vp = ap->a_vp;
 		rdlnk.a_cred = ap->a_cred;
@@ -492,6 +491,7 @@ cd9660_readdir(v)
 		/*
 		 * Get pointer to next entry.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct iso_directory_record *)
 			((char *)bp->b_data + entryoffsetinblock);
 
@@ -633,6 +633,7 @@ cd9660_readlink(v)
 	u_short	symlen;
 	int	error;
 	char	*symname;
+	boolean_t use_pnbuf;
 
 	ip  = VTOI(ap->a_vp);
 	imp = ip->i_mnt;
@@ -672,19 +673,21 @@ cd9660_readlink(v)
 	 * Now get a buffer
 	 * Abuse a namei buffer for now.
 	 */
-	if (uio->uio_segflg == UIO_SYSSPACE &&
-	    uio->uio_iov->iov_len >= MAXPATHLEN)
-		symname = uio->uio_iov->iov_base;
-	else
+	use_pnbuf = !VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
+	    uio->uio_iov->iov_len < MAXPATHLEN;
+	if (use_pnbuf) {
 		symname = PNBUF_GET();
+	} else {
+		symname = uio->uio_iov->iov_base;
+	}
 
 	/*
 	 * Ok, we just gathering a symbolic name in SL record.
 	 */
 	if (cd9660_rrip_getsymname(dirp, symname, &symlen, imp) == 0) {
-		if (uio->uio_segflg != UIO_SYSSPACE ||
-		    uio->uio_iov->iov_len < MAXPATHLEN)
+		if (use_pnbuf) {
 			PNBUF_PUT(symname);
+		}
 		brelse(bp);
 		return (EINVAL);
 	}
@@ -696,8 +699,7 @@ cd9660_readlink(v)
 	/*
 	 * return with the symbolic name to caller's.
 	 */
-	if (uio->uio_segflg != UIO_SYSSPACE ||
-	    uio->uio_iov->iov_len < MAXPATHLEN) {
+	if (use_pnbuf) {
 		error = uiomove(symname, symlen, uio);
 		PNBUF_PUT(symname);
 		return (error);

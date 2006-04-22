@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.h,v 1.7 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: cache_sh3.h,v 1.7.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -115,13 +115,13 @@
  */
 #define	SH3_CACHE_8K_FLUSH(maxway)					\
 do {									\
-	u_int32_t __e, __w, __wa, __a;					\
+	uint32_t __e, __w, __wa, __a;					\
 									\
 	for (__w = 0; __w < maxway; __w++) {				\
 		__wa = SH3_CCA | __w << CCA_8K_WAY_SHIFT;		\
 		for (__e = 0; __e < CCA_8K_ENTRY; __e++)	{	\
 			__a = __wa |(__e << CCA_ENTRY_SHIFT);		\
-			(*(volatile u_int32_t *)__a) &=		\
+			(*(volatile uint32_t *)__a) &=		\
 				~(CCA_U | CCA_V);			\
 		}							\
 	}								\
@@ -129,13 +129,13 @@ do {									\
 
 #define	SH3_CACHE_16K_FLUSH()						\
 do {									\
-	u_int32_t __e, __w, __wa, __a;					\
+	uint32_t __e, __w, __wa, __a;					\
 									\
 	for (__w = 0; __w < SH3_CACHE_16K_WAY; __w++) {			\
 		__wa = SH3_CCA | __w << CCA_16K_WAY_SHIFT;		\
 		for (__e = 0; __e < CCA_16K_ENTRY; __e++)	{	\
 			__a = __wa |(__e << CCA_ENTRY_SHIFT);		\
-			(*(volatile u_int32_t *)__a) &=		\
+			(*(volatile uint32_t *)__a) &=		\
 				~(CCA_U | CCA_V);			\
 		}							\
 	}								\

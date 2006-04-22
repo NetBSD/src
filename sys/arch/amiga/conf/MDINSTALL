@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.24 2005/12/07 12:40:46 tsutsui Exp $
+#	$NetBSD: MDINSTALL,v 1.24.6.1 2006/04/22 11:37:12 simonb Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -276,13 +276,13 @@ st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cds
 
 pseudo-device	loop			# loopback network interface
-pseudo-device	sl		1	# SLIP network interfaces
-pseudo-device	ppp		1	# PPP network interfaces
+pseudo-device	sl			# SLIP network interfaces
+pseudo-device	ppp			# PPP network interfaces
 
 pseudo-device	view		10	# views
 pseudo-device	pty			# pseudo-terminals
 
-pseudo-device	vnd		4	# vnode pseudo-disks
+pseudo-device	vnd			# vnode pseudo-disks
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator

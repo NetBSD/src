@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.28 2005/12/11 12:19:15 christos Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.28.6.1 2006/04/22 11:38:02 simonb Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.28 2005/12/11 12:19:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.28.6.1 2006/04/22 11:38:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.28 2005/12/11 12:19:15 christos Ex
 
 static u_int mmuh = -1, memh = -1;
 
-static u_int get_mmu_handle __P((void));
-static u_int get_memory_handle __P((void));
+static u_int get_mmu_handle(void);
+static u_int get_memory_handle(void);
 
 static u_int 
 get_mmu_handle()
@@ -160,7 +160,7 @@ prom_vtop(vaddr)
 		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
 		    (int)(args.phys_lo>>32), (int)args.phys_lo);
 #endif
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo); 
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(uint32_t)args.phys_lo); 
 }
 
 /* 
@@ -398,7 +398,7 @@ prom_alloc_phys(len, align)
 	args.len = len;
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(u_int32_t)args.phys_lo);
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(uint32_t)args.phys_lo);
 }
 
 /* 
@@ -441,7 +441,7 @@ prom_claim_phys(phys, len)
 	args.phys_lo = HDL2CELL(phys);
 	if (openfirmware(&args) != 0)
 		return -1;
-	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(u_int32_t)args.rphys_lo);
+	return (paddr_t)((((paddr_t)args.rphys_hi)<<32)|(uint32_t)args.rphys_lo);
 }
 
 /* 
@@ -538,7 +538,7 @@ prom_get_msgbuf(len, align)
 			args.status = -1;
 			if (openfirmware(&args) == 0 && args.status == 0) {
 				return (((paddr_t)args.phys_hi<<32)|
-					(u_int32_t)args.phys_lo);
+					(uint32_t)args.phys_lo);
 			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
 		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
 	} else prom_printf("prom_get_msgbuf: test failed\r\n");

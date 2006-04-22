@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file.h,v 1.4 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: file.h,v 1.4.6.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ public:
 	BOOL &setDebug(void) { return _debug; }
 
 	virtual BOOL setRoot(TCHAR *) = 0;
-	virtual BOOL open(const TCHAR *, u_int32_t = OPEN_EXISTING) = 0;
+	virtual BOOL open(const TCHAR *, uint32_t = OPEN_EXISTING) = 0;
 	virtual size_t size(void) = 0;
 	virtual size_t realsize(void) { return size(); };
 	virtual BOOL close(void) = 0;
@@ -83,13 +83,13 @@ private:
 	int _gz_magic[2];
 	int _z_err;		/* error code for last stream operation */
 	int _z_eof;		/* set if end of input file */
-	u_int8_t _inbuf[Z_BUFSIZE];	/* input buffer */
-	u_int32_t _crc;		/* crc32 of uncompressed data */
+	uint8_t _inbuf[Z_BUFSIZE];	/* input buffer */
+	uint32_t _crc;		/* crc32 of uncompressed data */
 	BOOL _compressed;
 
 	void _reset(void);
 	int _get_byte(void);
-	u_int32_t _get_long(void);
+	uint32_t _get_long(void);
 	void _check_header(void);
 	size_t _skip_compressed(off_t);
 
@@ -103,7 +103,7 @@ public:
 	virtual ~FileManager(void);
 
 	BOOL setRoot(TCHAR *);
-	BOOL open(const TCHAR *, u_int32_t);
+	BOOL open(const TCHAR *, uint32_t);
 	size_t size(void);
 	size_t realsize(void);
 	BOOL close(void);

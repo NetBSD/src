@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.94 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: malloc.h,v 1.94.6.1 2006/04/22 11:40:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -163,6 +163,10 @@ do {									\
 	unsigned long __size = (unsigned long)(size);			\
 	struct kmembuckets *__kbp = &kmembuckets[BUCKETINDX(__size)];	\
 	int __s = splvm();						\
+	switch (__size) {						\
+	case size:	/* fail to compile if size is not const */	\
+		break;							\
+	}								\
 	simple_lock(&malloc_slock);					\
 	if (__kbp->kb_next == NULL) {					\
 		simple_unlock(&malloc_slock);				\

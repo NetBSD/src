@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.19 2005/12/11 12:24:00 christos Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.19.6.1 2006/04/22 11:39:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.19 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.19.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,16 +86,16 @@ __KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.19 2005/12/11 12:24:00 christos Exp $");
 #define	PXG_I860_START_OFFSET	0x380000	/* i860 start register */
 #define	PXG_I860_RESET_OFFSET	0x3c0000	/* i860 stop register */
 
-void	pxg_attach(struct device *, struct device *, void *);
-int	pxg_intr(void *);
-int	pxg_match(struct device *, struct cfdata *, void *);
+static void	pxg_attach(struct device *, struct device *, void *);
+static int	pxg_intr(void *);
+static int	pxg_match(struct device *, struct cfdata *, void *);
 
-void	pxg_init(struct stic_info *);
-int	pxg_ioctl(struct stic_info *, u_long, caddr_t, int, struct lwp *);
-u_int32_t	*pxg_pbuf_get(struct stic_info *);
-int	pxg_pbuf_post(struct stic_info *, u_int32_t *);
-int	pxg_probe_planes(struct stic_info *);
-int	pxg_probe_sram(struct stic_info *);
+static void	pxg_init(struct stic_info *);
+static int	pxg_ioctl(struct stic_info *, u_long, caddr_t, int, struct lwp *);
+static uint32_t	*pxg_pbuf_get(struct stic_info *);
+static int	pxg_pbuf_post(struct stic_info *, u_int32_t *);
+static int	pxg_probe_planes(struct stic_info *);
+static int	pxg_probe_sram(struct stic_info *);
 
 void	pxg_cnattach(tc_addr_t);
 
@@ -115,7 +115,7 @@ static const char *pxg_types[] = {
 	"PMAGB-FB",
 };
 
-int
+static int
 pxg_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *ta;
@@ -130,7 +130,7 @@ pxg_match(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 pxg_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct stic_info *si;
@@ -138,7 +138,7 @@ pxg_attach(struct device *parent, struct device *self, void *aux)
 	struct pxg_softc *pxg;
 	int console;
 
-	pxg = (struct pxg_softc *)self;
+	pxg = device_private(self);
 	ta = (struct tc_attach_args *)aux;
 
 	if (ta->ta_addr == stic_consinfo.si_slotbase) {
@@ -188,7 +188,7 @@ pxg_cnattach(tc_addr_t addr)
 	stic_cnattach(si);
 }
 
-void
+static void
 pxg_init(struct stic_info *si)
 {
 	volatile u_int32_t *slot;
@@ -228,7 +228,7 @@ pxg_init(struct stic_info *si)
 	stic_init(si);
 }
 
-int
+static int
 pxg_probe_sram(struct stic_info *si)
 {
 	volatile u_int32_t *a, *b;
@@ -241,7 +241,7 @@ pxg_probe_sram(struct stic_info *si)
 	return ((*a == *b) ? 0x20000 : 0x40000);
 }
 
-int
+static int
 pxg_probe_planes(struct stic_info *si)
 {
 	volatile u_int32_t *vdac;
@@ -273,7 +273,7 @@ pxg_probe_planes(struct stic_info *si)
 	return (8);
 }
 
-int
+static int
 pxg_intr(void *cookie)
 {
 #ifdef notyet
@@ -309,7 +309,7 @@ pxg_intr(void *cookie)
 	return (1);
 }
 
-u_int32_t *
+static uint32_t *
 pxg_pbuf_get(struct stic_info *si)
 {
 	u_long off;
@@ -319,7 +319,7 @@ pxg_pbuf_get(struct stic_info *si)
 	return ((u_int32_t *)((caddr_t)si->si_buf + off));
 }
 
-int
+static int
 pxg_pbuf_post(struct stic_info *si, u_int32_t *buf)
 {
 	volatile u_int32_t *poll, junk;
@@ -355,7 +355,7 @@ pxg_pbuf_post(struct stic_info *si, u_int32_t *buf)
 	return (-1);
 }
 
-int
+static int
 pxg_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
 	  struct lwp *l)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.18 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: systrace.h,v 1.18.6.1 2006/04/22 11:40:21 simonb Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -191,11 +191,6 @@ struct systrace_replace {
 
 #ifdef _KERNEL
 #include <sys/namei.h>
-
-/* XXX: these shouldn't be here. */
-#define SET(t, f)	((t) |= (f))
-#define	ISSET(t, f)	((t) & (f))
-#define	CLR(t, f)	((t) &= ~(f))
 
 struct fsystrace {
 	struct lock lock;

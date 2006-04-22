@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.114 2005/12/11 23:05:24 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.114.6.1 2006/04/22 11:40:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -775,8 +775,6 @@ extern struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
 extern struct ifnet *lo0ifp;
 extern size_t if_indexlim;
-
-char	*ether_sprintf(const u_char *);
 
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.6 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.6.6.1 2006/04/22 11:38:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.6 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.6.6.1 2006/04/22 11:38:12 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
-#include "opt_ktrace.h"
 #include "fss.h"
 
 #include <sys/param.h>
@@ -60,9 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.6 2005/12/11 12:19:56 christos
 #include <sys/sysctl.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 
 #include <compat/sys/mount.h>
 

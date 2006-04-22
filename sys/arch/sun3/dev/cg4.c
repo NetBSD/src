@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.33 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: cg4.c,v 1.33.6.1 2006/04/22 11:38:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.33 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.33.6.1 2006/04/22 11:38:05 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ cg4attach(struct device *parent, struct device *self, void *args)
 	fb->fb_driver = &cg4_fbdriver;
 	fb->fb_private = sc;
 	fb->fb_name  = sc->sc_dev.dv_xname;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
 
 	/*
 	 * The config flag 0x10 if set means we are
@@ -296,7 +296,8 @@ cg4attach(struct device *parent, struct device *self, void *args)
 	 */
 	if (fb->fb_pfour)
 		fb_pfour_setsize(fb);
-	else if (sc->sc_dev.dv_unit == 0)
+	/* XXX device_unit() abuse */
+	else if (device_unit(&sc->sc_dev) == 0)
 		fb_eeprom_setsize(fb);
 	else {
 		/* Guess based on machine ID. */

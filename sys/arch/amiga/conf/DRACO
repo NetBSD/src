@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.109 2006/02/03 00:41:26 reinoud Exp $
+# $NetBSD: DRACO,v 1.109.2.1 2006/04/22 11:37:12 simonb Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.49 2006/02/03 00:40:16 reinoud Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.52 2006/03/28 20:58:39 pavel Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.109.2.1 $"
 
 
 maxusers	8
@@ -327,17 +327,17 @@ ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
 
 pseudo-device	loop			# loopback network interface
-pseudo-device	sl		1	# SLIP network interfaces
-pseudo-device	ppp		1	# PPP network interfaces
+pseudo-device	sl			# SLIP network interfaces
+pseudo-device	ppp			# PPP network interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	tun		1	# network tunnel line discipline
+pseudo-device	tun			# network tunnel line discipline
 pseudo-device	tap			# virtual Ethernet
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	bpfilter	16	# Berkeley packet filter
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
@@ -352,7 +352,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 
-pseudo-device	vnd		4	# vnode pseudo-disks
+pseudo-device	vnd			# vnode pseudo-disks
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices

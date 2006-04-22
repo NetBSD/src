@@ -1,4 +1,4 @@
-/* $NetBSD: gtreg.h,v 1.2 2005/12/11 12:17:06 christos Exp $ */
+/* $NetBSD: gtreg.h,v 1.2.6.1 2006/04/22 11:37:21 simonb Exp $ */
 /*
  * Copyright (c) 2003
  *     KIYOHARA Takashi.  All rights reserved.
@@ -85,5 +85,10 @@
 #define GT_PCI_MASK		0xc24
 
 #define GT_PCICFG_ADDR		0xcf8
+#define  PCICFG_REG		0x000000ff
+#define  PCICFG_FUNC		0x00000700
+#define  PCICFG_DEV		0x0000f800
+#define  PCICFG_BUS		0x00ff0000
+#define  PCICFG_ENABLE		0x80000000
 
 #define GT_PCICFG_DATA		0xcfc

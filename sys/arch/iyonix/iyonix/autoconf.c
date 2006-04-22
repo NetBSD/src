@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2005/12/11 12:17:51 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2005/12/11 12:17:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.6.1 2006/04/22 11:37:40 simonb Exp $");
 
 #include "opt_md.h"
 
@@ -50,13 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2005/12/11 12:17:51 christos Exp $"
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
+#include <iyonix/iyonix/iyonixvar.h>
+
 struct device *booted_device;
 int booted_partition;
-
-void	(*iyonix_device_register)(struct device *, void *);
 
 /*
  * Set up the root device from the boot args
@@ -95,10 +98,41 @@ cpu_configure(void)
 	spl0();
 }
 
+#define BUILTIN_ETHERNET_P(pa)	\
+	((pa)->pa_bus == 0 && (pa)->pa_device == 4 && (pa)->pa_function == 0)
+
+#define SETPROP(x, y, z) do {						\
+			if (devprop_set(dev, x,				\
+			    y, z, 0, 0) != 0)				\
+				printf("WARNING: unable to set " x " "	\
+				   "property for %s\n", dev->dv_xname);	\
+			} while (/*CONSTCOND*/0)
+
 void
 device_register(struct device *dev, void *aux)
 {
+	struct device *pdev;
 
-	if (iyonix_device_register != NULL)
-		(*iyonix_device_register)(dev, aux);
+	if ((pdev = device_parent(dev)) != NULL &&
+	    device_is_a(pdev, "pci")) {
+		struct pci_attach_args *pa = aux;
+
+		if (BUILTIN_ETHERNET_P(pa)) {
+			uint16_t cfg1, cfg2, swdpin;
+
+			/*
+			 * We set these configuration registers to 0,
+			 * because it's the closest we have to "leave them
+			 * alone". That and, it works.
+			 */
+			cfg1 = 0;
+			cfg2 = 0;
+			swdpin = 0;
+
+			SETPROP("mac-addr", iyonix_macaddr, ETHER_ADDR_LEN);
+			SETPROP("i82543-cfg1", &cfg1, sizeof(cfg1));
+			SETPROP("i82543-cfg2", &cfg2, sizeof(cfg2));
+			SETPROP("i82543-swdpin", &swdpin, sizeof(swdpin));
+		}
+	}
 }

@@ -1,5 +1,4 @@
-
-#	$NetBSD: files.i386,v 1.277.2.2 2006/02/28 20:25:08 kardel Exp $
+#	$NetBSD: files.i386,v 1.277.2.3 2006/04/22 11:37:32 simonb Exp $
 #
 # new style config file for i386 architecture
 #
@@ -189,7 +188,7 @@ device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
 	      agp_via
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb			needs-flag
-file	arch/i386/pci/pchb_rnd.c	pchb & rnd
+file	arch/x86/pci/pchb_rnd.c		pchb & rnd
 
 # AMD Elan SC520 System Controller (PCI-Host bridge)
 device	elansc: sysmon_wdog, gpiobus
@@ -219,7 +218,7 @@ file	arch/i386/pci/pceb.c		pceb
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib
+file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib | viapcib
 
 # PCI-LPC bridges
 device	ichlpcib: isabus, sysmon_wdog
@@ -229,6 +228,10 @@ file	arch/i386/pci/ichlpcib.c	ichlpcib
 device	gscpcib: isabus, gpiobus
 attach	gscpcib at pci
 file	arch/i386/pci/gscpcib.c		gscpcib
+
+device	viapcib: isabus, i2cbus
+attach	viapcib at pci
+file	arch/i386/pci/viapcib.c		viapcib
 
 # PCI-MCA bridges
 device	pcmb: mcabus
@@ -390,6 +393,9 @@ file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 file	arch/i386/i386/freebsd_sigcode.S	compat_freebsd
 file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
+# NDIS compatibilty (COMPAT_NDIS)
+include "compat/ndis/files.ndis"
+
 # Win32 binary compatibility (COMPAT_PECOFF)
 include	"compat/pecoff/files.pecoff"
 
@@ -494,9 +500,11 @@ defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
 
-device vesarasterviii: rasops8
-attach vesarasterviii at vesabios
-file	arch/i386/bios/vesa_raster8.c	vesarasterviii
+device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash
+attach vesafb at vesabios
+file	arch/i386/bios/vesafb.c		vesafb needs-flag
+defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
+defflag opt_vesafb.h	VESAFB_PM
 
 device vesatext
 attach vesatext at vesabios
@@ -508,8 +516,5 @@ defflag	opt_est.h	EST_FREQ_USERWRITE
 
 # AMD PowerNow K7
 file   arch/i386/i386/powernow_k7.c	powernow_k7
-
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-i386-elf.hal.o	ath
 
 include "arch/i386/conf/majors.i386"

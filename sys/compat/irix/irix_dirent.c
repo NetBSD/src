@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.15 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.15.6.1 2006/04/22 11:38:13 simonb Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.15 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.15.6.1 2006/04/22 11:38:13 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -123,10 +123,9 @@ again:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
 	/*
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
@@ -283,10 +282,9 @@ again:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
 	/*
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.

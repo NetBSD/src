@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.17 2005/12/11 12:21:01 christos Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.17.6.1 2006/04/22 11:38:46 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.17 2005/12/11 12:21:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.17.6.1 2006/04/22 11:38:46 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,8 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 
-	printf(": ACPI AC Adapter\n");
+	aprint_naive(": ACPI AC Adapter\n");
+	aprint_normal(": ACPI AC Adapter\n");
 
 	sc->sc_node = aa->aa_node;
 	simple_lock_init(&sc->sc_lock);
@@ -167,7 +168,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;
 	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		printf("%s: unable to register with sysmon\n",
+		aprint_error("%s: unable to register with sysmon\n",
 		       sc->sc_dev.dv_xname);
 		return;
 	}
@@ -175,7 +176,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpiacad_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		aprint_error("%s: unable to register DEVICE NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
@@ -184,7 +185,7 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_SYSTEM_NOTIFY, acpiacad_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		printf("%s: unable to register SYSTEM NOTIFY handler: %s\n",
+		aprint_error("%s: unable to register SYSTEM NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
@@ -318,7 +319,7 @@ acpiacad_init_envsys(struct acpiacad_softc *sc)
 	sc->sc_sysmon.sme_envsys_version = 1000;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
-		printf("%s: unable to register with sysmon\n",
+		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 }
 

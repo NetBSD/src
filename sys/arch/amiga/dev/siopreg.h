@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.13 2005/12/11 12:16:28 christos Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.13.6.1 2006/04/22 11:37:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -564,10 +564,10 @@ typedef volatile siop_regmap_t *siop_regmap_p;
 
 #ifndef ARCH_720
 #define	SIOP_DCNTL_CF_MASK	0xc0	/* Clock frequency dividers:
-						0 --> 37.51..50.00 Mhz, div=2
-						1 --> 25.01..37.50 Mhz, div=1.5
-						2 --> 16.67..25.00 Mhz, div=1
-						3 --> 50.01..66.67 Mhz, div=3
+						0 --> 37.51..50.00 MHz, div=2
+						1 --> 25.01..37.50 MHz, div=1.5
+						2 --> 16.67..25.00 MHz, div=1
+						3 --> 50.01..66.67 MHz, div=3
 					 */
 #else
 #define	SIOP_DCNTL_STE		0x80	/* Size Throttle Enable */

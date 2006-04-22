@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.27 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: interwave.c,v 1.27.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.27 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.27.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,7 +517,7 @@ iw_set_speed(struct iw_softc *sc, u_long freq, char in)
 	cfig3 = 0;		/* XXX gcc -Wall */
 
 	/*
-	 * if the frequency is between 3493Hz and 32KHz we can use a more
+	 * if the frequency is between 3493 Hz and 32 kHz we can use a more
 	 * accurate frequency than the ones listed above base on the formula
 	 * FREQ/((16*(48+x))) where FREQ is either FREQ_1 (24576000Hz) or
 	 * FREQ_2 (16934400Hz) and x is the value to be written to either
@@ -526,8 +526,8 @@ iw_set_speed(struct iw_softc *sc, u_long freq, char in)
 	 *
 	 * NOT IMPLEMENTED!
 	 *
-	 * Note that if you have a 'bad' XTAL_1 (higher than 18.5 MHz), 44.8KHz
-	 * and 38.4KHz modes will provide wrong frequencies to output.
+	 * Note that if you have a 'bad' XTAL_1 (higher than 18.5 MHz), 44.8 kHz
+	 * and 38.4 kHz modes will provide wrong frequencies to output.
 	 */
 
 

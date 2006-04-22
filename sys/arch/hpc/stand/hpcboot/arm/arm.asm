@@ -1,4 +1,4 @@
-;	$NetBSD: arm.asm,v 1.5 2005/12/11 12:17:28 christos Exp $	
+;	$NetBSD: arm.asm,v 1.5.6.1 2006/04/22 11:37:28 simonb Exp $	
 ;
 ; Copyright (c) 2001 The NetBSD Foundation, Inc.
 ; All rights reserved.
@@ -317,7 +317,7 @@
 ;
 ;	UART test
 ;
-	; boot_func (u_int32_t mapaddr, u_int32_t bootinfo, u_int32_t flags)
+	; boot_func (uint32_t mapaddr, uint32_t bootinfo, uint32_t flags)
 	;
 	EXPORT	|boot_func|
 |boot_func| PROC

@@ -1,0 +1,15 @@
+# $NetBSD: std.atheros,v 1.1.8.2 2006/04/22 11:37:24 simonb Exp $
+
+machine evbmips mips
+include		"conf/std"	# MI standard options
+
+options MIPS3_ENABLE_CLOCK_INTR
+
+options	EXEC_ELF32	# exec ELF32 binaries
+options	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	DEFTEXTADDR="0x80020000"
+makeoptions	BOARDTYPE="atheros"
+
+include 	"arch/evbmips/conf/files.atheros"
+include 	"arch/mips/conf/files.atheros"

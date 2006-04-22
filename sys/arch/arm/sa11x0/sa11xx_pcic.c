@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.6 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.6.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.6 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.6.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,8 +116,7 @@ struct pcmcia_chip_functions sa11x0_pcmcia_functions = {
 
 
 void
-sapcic_kthread_create(arg)
-	void *arg;
+sapcic_kthread_create(void *arg)
 {
 	struct sapcic_socket *so = arg;
 
@@ -140,8 +139,7 @@ sapcic_kthread_create(arg)
 }
 
 static void
-sapcic_event_thread(arg)
-	void *arg;
+sapcic_event_thread(void *arg)
 {
 	struct sapcic_socket *so = arg;
 	int newstatus, s;
@@ -206,9 +204,7 @@ sapcic_event_thread(arg)
 }
 
 static void
-sapcic_delay(timo, wmesg)
-	int timo;		/* in milliseconds */
-	const char *wmesg;
+sapcic_delay(int timo, const char *wmesg)
 {
 #ifdef DIAGNOSTIC
 	if (curlwp == NULL)
@@ -219,8 +215,7 @@ sapcic_delay(timo, wmesg)
 }
 
 int
-sapcic_intr(arg)
-	void *arg;
+sapcic_intr(void *arg)
 {
 	struct sapcic_socket *so = arg;
 
@@ -231,10 +226,8 @@ sapcic_intr(arg)
 }
 
 static int
-sapcic_mem_alloc(pch, size, pmh)
-	pcmcia_chipset_handle_t pch;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pmh;
+sapcic_mem_alloc(pcmcia_chipset_handle_t pch, bus_size_t size,
+    struct pcmcia_mem_handle *pmh)
 {
 	struct sapcic_socket *so = pch;
 
@@ -246,21 +239,14 @@ sapcic_mem_alloc(pch, size, pmh)
 
 
 static void
-sapcic_mem_free(pch, pmh)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_mem_handle *pmh;
+sapcic_mem_free(pcmcia_chipset_handle_t pch, struct pcmcia_mem_handle *pmh)
 {
 }
 
 static int
-sapcic_mem_map(pch, kind, card_addr, size, pmh, offsetp, windowp)
-	pcmcia_chipset_handle_t pch;
-	int kind;
-	bus_addr_t card_addr;
-	bus_size_t size;
-	struct pcmcia_mem_handle *pmh;
-	bus_addr_t *offsetp;
-	int *windowp;
+sapcic_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr,
+    bus_size_t size, struct pcmcia_mem_handle *pmh, bus_addr_t *offsetp,
+    int *windowp)
 {
 	struct sapcic_socket *so = pch;
 	int error;
@@ -292,9 +278,7 @@ sapcic_mem_map(pch, kind, card_addr, size, pmh, offsetp, windowp)
 }
 
 static void
-sapcic_mem_unmap(pch, window)
-	pcmcia_chipset_handle_t pch;
-	int window;
+sapcic_mem_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 	struct sapcic_socket *so = pch;
 
@@ -302,12 +286,8 @@ sapcic_mem_unmap(pch, window)
 }
 
 static int
-sapcic_io_alloc(pch, start, size, align, pih)
-	pcmcia_chipset_handle_t pch;
-	bus_addr_t start;
-	bus_size_t size;
-	bus_size_t align;
-	struct pcmcia_io_handle *pih;
+sapcic_io_alloc(pcmcia_chipset_handle_t pch, bus_addr_t start,
+    bus_size_t size, bus_size_t align, struct pcmcia_io_handle *pih)
 {
 	struct sapcic_socket *so = pch;
 	int error;
@@ -331,9 +311,7 @@ sapcic_io_alloc(pch, start, size, align, pih)
 }
 
 static void
-sapcic_io_free(pch, pih)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_io_handle *pih;
+sapcic_io_free(pcmcia_chipset_handle_t pch, struct pcmcia_io_handle *pih)
 {
 	struct sapcic_socket *so = pch;
 
@@ -341,30 +319,19 @@ sapcic_io_free(pch, pih)
 }
 
 static int
-sapcic_io_map(pch, width, offset, size, pih, windowp)
-	pcmcia_chipset_handle_t pch;
-	int width;
-	bus_addr_t offset;
-	bus_size_t size;
-	struct pcmcia_io_handle *pih;
-	int *windowp;
+sapcic_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
+    bus_size_t size, struct pcmcia_io_handle *pih, int *windowp)
 {
 	return (0);
 }
 
-static void sapcic_io_unmap(pch, window)
-	pcmcia_chipset_handle_t pch;
-	int window;
+static void sapcic_io_unmap(pcmcia_chipset_handle_t pch, int window)
 {
 }
 
 static void *
-sapcic_intr_establish(pch, pf, ipl, fct, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct)(void *);
-	void *arg;
+sapcic_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
+    int ipl, int (*fct)(void *), void *arg)
 {
 	struct sapcic_socket *so = pch;
 
@@ -374,9 +341,7 @@ sapcic_intr_establish(pch, pf, ipl, fct, arg)
 }
 
 static void
-sapcic_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+sapcic_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct sapcic_socket *so = pch;
 
@@ -384,8 +349,7 @@ sapcic_intr_disestablish(pch, ih)
 }
 
 static void
-sapcic_socket_enable(pch)
-	pcmcia_chipset_handle_t pch;
+sapcic_socket_enable(pcmcia_chipset_handle_t pch)
 {
 	struct sapcic_socket *so = pch;
 	int i;
@@ -461,8 +425,7 @@ sapcic_socket_enable(pch)
 }
 
 static void
-sapcic_socket_disable(pch)
-	pcmcia_chipset_handle_t pch;
+sapcic_socket_disable(pcmcia_chipset_handle_t pch)
 {
 	struct sapcic_socket *so = pch;
 
@@ -476,9 +439,7 @@ sapcic_socket_disable(pch)
 }
 
 static void
-sapcic_socket_settype(pch, type)
-	pcmcia_chipset_handle_t pch;
-	int type;
+sapcic_socket_settype(pcmcia_chipset_handle_t pch, int type)
 {
 
 	/* XXX nothing to do */

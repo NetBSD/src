@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.2 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: viper_machdep.c,v 1.2.6.1 2006/04/22 11:37:24 simonb Exp $	*/
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.2 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.2.6.1 2006/04/22 11:37:24 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -413,7 +413,7 @@ initarm(void *arg)
 	/* Register devmap for devices we mapped in start */
 	pmap_devmap_register(viper_devmap);
 
-	/* start 32.768KHz OSC */
+	/* start 32.768 kHz OSC */
 	ioreg_write(VIPER_CLKMAN_VBASE + 0x08, 2);
 	/* Get ready for splfoo() */
 	pxa2x0_intr_bootstrap(VIPER_INTCTL_VBASE);

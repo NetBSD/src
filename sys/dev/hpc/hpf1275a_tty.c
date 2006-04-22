@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.4 2005/12/18 23:57:07 uwe Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.4 2005/12/18 23:57:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $");
+
+#include "opt_wsdisplay_compat.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,7 +63,9 @@ struct hpf1275a_softc {
 	struct tty *sc_tp;		/* back reference to the tty */
 	struct device *sc_wskbd;	/* wskbd child */
 	int sc_enabled;
-
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int sc_rawkbd;
+#endif
 };
 
 
@@ -116,7 +120,7 @@ static struct wskbd_mapdata hpf1275a_wskbd_keymapdata = {
 
 
 /* F1275A scancodes -> XT scancodes so that we can use pckbd_keydesctab. */
-static uint8_t hpf1275a_to_xtscan[128] = {
+static const uint8_t hpf1275a_to_xtscan[128] = {
 	[0x04] = 30,		/* a */
 	[0x05] = 48,		/* b */
 	[0x06] = 46,		/* c */
@@ -253,7 +257,7 @@ hpf1275a_match(struct device *self, struct cfdata *cfdata, void *arg)
 static void
 hpf1275a_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = device_private(self);
 	struct wskbddev_attach_args wska;
 
 	wska.console = 0;
@@ -262,6 +266,9 @@ hpf1275a_attach(struct device *parent, struct device *self, void *aux)
 	wska.accesscookie = sc;
 
 	sc->sc_enabled = 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	sc->sc_rawkbd = 0;
+#endif
 	sc->sc_wskbd = config_found(self, &wska, wskbddevprint);
 }
 
@@ -272,7 +279,7 @@ hpf1275a_attach(struct device *parent, struct device *self, void *aux)
 static int
 hpf1275a_detach(struct device *self, int flags)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = device_private(self);
 	int error;
 
 	if (sc->sc_wskbd == NULL)
@@ -368,12 +375,22 @@ hpf1275a_input(int c, struct tty *tp)
 
 	xtscan = hpf1275a_to_xtscan[code];
 	if (xtscan == 0) {
-		printf("hpf1275a: unknown code 0x%x\n", code);
+		printf("%s: unknown code 0x%x\n", sc->sc_dev.dv_xname, code);
 		return (0);
 	}
 
 	KASSERT(sc->sc_wskbd != NULL);
-	wskbd_input(sc->sc_wskbd, type, xtscan);
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	if (sc->sc_rawkbd) {
+		u_char data[16];
+		int n;
+
+		n = pckbd_encode(type, xtscan, data);
+		wskbd_rawinput(sc->sc_wskbd, data, n);
+	} else
+#endif
+		wskbd_input(sc->sc_wskbd, type, xtscan);
 
 	return (0);
 }
@@ -382,7 +399,7 @@ hpf1275a_input(int c, struct tty *tp)
 static int
 hpf1275a_wskbd_enable(void *self, int on)
 {
-	struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self;
+	struct hpf1275a_softc *sc = self;
 
 	sc->sc_enabled = on;
 	return (0);
@@ -403,7 +420,9 @@ static int
 hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
 		     struct lwp *l)
 {
-	/* struct hpf1275a_softc *sc = (struct hpf1275a_softc *)self; */
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct hpf1275a_softc *sc = self;
+#endif
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -413,6 +432,12 @@ hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
 	case WSKBDIO_GETLEDS:
 		*(int *)data = 0; /* this keyboard has no leds */
 		return (0);
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = (*(int *)data == WSKBD_RAW);
+		return (0);
+#endif
 
 	default:
 		return (EPASSTHROUGH);

@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.8 2005/12/29 22:27:17 dyoung Exp $ */
+/* $NetBSD: rtwphy.c,v 1.8.6.1 2006/04/22 11:38:56 simonb Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.8 2005/12/29 22:27:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.8.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ rtw_bbp_init(struct rtw_regs *regs, struct rtw_bbpset *bb, int antdiv,
 	if (antdiv)
 		sys2 |= RTW_BBP_SYS2_ANTDIV;
 	sys3 = bb->bb_sys3 |
-	    LSHIFT(cs_threshold, RTW_BBP_SYS3_CSTHRESH_MASK);
+	    SHIFTIN(cs_threshold, RTW_BBP_SYS3_CSTHRESH_MASK);
 
 #define	RTW_BBP_WRITE_OR_RETURN(reg, val) \
 	if ((rc = rtw_bbp_write(regs, reg, val)) != 0) \
@@ -194,16 +194,16 @@ rtw_sa2400_tune(struct rtw_rf *rf, u_int freq)
 	 */
 	int n = freq / 4, nf = (freq % 4) * 2;
 
-	syna = LSHIFT(nf, SA2400_SYNA_NF_MASK) | LSHIFT(n, SA2400_SYNA_N_MASK);
+	syna = SHIFTIN(nf, SA2400_SYNA_NF_MASK) | SHIFTIN(n, SA2400_SYNA_N_MASK);
 	verify_syna(freq, syna);
 
 	/* Divide the 44MHz crystal down to 4MHz. Set the fractional
 	 * compensation charge pump value to agree with the fractional
 	 * modulus.
 	 */
-	synb = LSHIFT(11, SA2400_SYNB_R_MASK) | SA2400_SYNB_L_NORMAL |
+	synb = SHIFTIN(11, SA2400_SYNB_R_MASK) | SA2400_SYNB_L_NORMAL |
 	    SA2400_SYNB_ON | SA2400_SYNB_ONE |
-	    LSHIFT(80, SA2400_SYNB_FC_MASK); /* agrees w/ SA2400_SYNA_FM = 0 */
+	    SHIFTIN(80, SA2400_SYNB_FC_MASK); /* agrees w/ SA2400_SYNA_FM = 0 */
 
 	sync = SA2400_SYNC_CP_NORMAL;
 
@@ -255,7 +255,7 @@ rtw_sa2400_manrx_init(struct rtw_sa2400 *sa)
 	 */
 	manrx = SA2400_MANRX_AHSN;
 	manrx |= SA2400_MANRX_TEN;
-	manrx |= LSHIFT(1023, SA2400_MANRX_RXGAIN_MASK);
+	manrx |= SHIFTIN(1023, SA2400_MANRX_RXGAIN_MASK);
 
 	return rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_MANRX,
 	    manrx);
@@ -344,10 +344,10 @@ rtw_sa2400_agc_init(struct rtw_sa2400 *sa)
 {
 	uint32_t agc;
 
-	agc = LSHIFT(25, SA2400_AGC_MAXGAIN_MASK);
-	agc |= LSHIFT(7, SA2400_AGC_BBPDELAY_MASK);
-	agc |= LSHIFT(15, SA2400_AGC_LNADELAY_MASK);
-	agc |= LSHIFT(27, SA2400_AGC_RXONDELAY_MASK);
+	agc = SHIFTIN(25, SA2400_AGC_MAXGAIN_MASK);
+	agc |= SHIFTIN(7, SA2400_AGC_BBPDELAY_MASK);
+	agc |= SHIFTIN(15, SA2400_AGC_LNADELAY_MASK);
+	agc |= SHIFTIN(27, SA2400_AGC_RXONDELAY_MASK);
 
 	return rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_AGC,
 	    agc);
@@ -638,7 +638,7 @@ rtw_max2820_tune(struct rtw_rf *rf, u_int freq)
 		return -1;
 
 	return rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM, MAX2820_CHANNEL,
-	    LSHIFT(freq - 2400, MAX2820_CHANNEL_CF_MASK));
+	    SHIFTIN(freq - 2400, MAX2820_CHANNEL_CF_MASK));
 }
 
 static void
@@ -684,8 +684,8 @@ rtw_max2820_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
 	 */
 	if ((rc = rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM, MAX2820_RECEIVE,
 	    MAX2820_RECEIVE_DL_DEFAULT |
-	    LSHIFT(4, MAX2820A_RECEIVE_1C_MASK) |
-	    LSHIFT(1, MAX2820A_RECEIVE_2C_MASK))) != 0)
+	    SHIFTIN(4, MAX2820A_RECEIVE_1C_MASK) |
+	    SHIFTIN(1, MAX2820A_RECEIVE_2C_MASK))) != 0)
 		return rc;
 
 	return rtw_rfbus_write(bus, RTW_RFCHIPID_MAXIM, MAX2820_TRANSMIT,

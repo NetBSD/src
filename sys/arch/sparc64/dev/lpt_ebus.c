@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.19 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.19.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.19 2005/12/11 12:19:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.19.6.1 2006/04/22 11:37:59 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.19 2005/12/11 12:19:09 christos Exp $
 
 #include <dev/ic/lptvar.h>
 
-int	lpt_ebus_match __P((struct device *, struct cfdata *, void *));
-void	lpt_ebus_attach __P((struct device *, struct device *, void *));
+int	lpt_ebus_match(struct device *, struct cfdata *, void *);
+void	lpt_ebus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_ebus, sizeof(struct lpt_softc),
     lpt_ebus_match, lpt_ebus_attach, NULL, NULL);
@@ -57,10 +57,7 @@ CFATTACH_DECL(lpt_ebus, sizeof(struct lpt_softc),
 #define	ROM_LPT_NAME	"ecpp"
 
 int
-lpt_ebus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lpt_ebus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -71,9 +68,7 @@ lpt_ebus_match(parent, match, aux)
 }
 
 void
-lpt_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;

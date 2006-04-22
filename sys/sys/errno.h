@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.37 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: errno.h,v 1.37.6.1 2006/04/22 11:40:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -167,7 +167,12 @@
 /* File system extended attribute errors */
 #define	ENOATTR		93		/* Attribute not found */
 
-#define	ELAST		93		/* Must equal largest errno */
+/* Realtime, XSI STREAMS option errors */
+#define	EMULTIHOP	94		/* Multihop attempted */ 
+#define	ENOLINK		95		/* Link has been severed */
+#define	EPROTO		96		/* Protocol error */
+
+#define	ELAST		96		/* Must equal largest errno */
 
 #ifdef _KERNEL
 /* pseudo-errors returned inside kernel to modify return to process */

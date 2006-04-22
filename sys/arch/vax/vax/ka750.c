@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.38 2005/12/11 12:19:36 christos Exp $ */
+/*	$NetBSD: ka750.c,v 1.38.6.1 2006/04/22 11:38:08 simonb Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.38 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.38.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,7 +175,7 @@ ka750_memenable(struct device *parent, struct device *self, void *aux)
 	struct mcr750 *mcr = (struct mcr750 *)sa->sa_ioh;
 	int k, l, m, cardinfo;
 	
-	mcraddr[self->dv_unit] = (caddr_t)sa->sa_ioh;
+	mcraddr[device_unit(self)] = (caddr_t)sa->sa_ioh;
 
 	/* We will use this info for error reporting - later! */
 	cardinfo = mcr->mc_inf;

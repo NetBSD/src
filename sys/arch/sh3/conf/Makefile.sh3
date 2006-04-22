@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.21 2005/12/11 12:18:58 christos Exp $
+#	$NetBSD: Makefile.sh3,v 1.21.6.1 2006/04/22 11:37:55 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -59,9 +59,8 @@ locore.o: ${THISSH3}/${MACHINE}/locore.S assym.h
 ##
 ## (5) link settings
 ##
-# LINKFORMAT possibly set by individual sh3 port
-# LDSCRIPTBASE comes from the kernel's config
-LINKFORMAT?=	-T ${THISSH3}/conf/${LDSCRIPTBASE}
+TEXTADDR?=	${DEFTEXTADDR}
+LINKFLAGS_NORMAL=	-X
 
 ##
 ## (6) port specific target dependencies

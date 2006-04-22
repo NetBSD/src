@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.39 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: ld.c,v 1.39.6.1 2006/04/22 11:38:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.39 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.39.6.1 2006/04/22 11:38:45 simonb Exp $");
 
 #include "rnd.h"
 
@@ -224,7 +224,7 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(sc->sc_dv.dv_unit, i);
+		mn = DISKMINOR(device_unit(&sc->sc_dv), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
@@ -709,8 +709,8 @@ ldgetdisklabel(struct ld_softc *sc)
 	ldgetdefaultlabel(sc, sc->sc_dk.dk_label);
 
 	/* Call the generic disklabel extraction routine. */
-	errstring = readdisklabel(MAKEDISKDEV(0, sc->sc_dv.dv_unit, RAW_PART),
-	    ldstrategy, sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(MAKEDISKDEV(0, device_unit(&sc->sc_dv),
+	    RAW_PART), ldstrategy, sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
 	if (errstring != NULL)
 		printf("%s: %s\n", sc->sc_dv.dv_xname, errstring);
 

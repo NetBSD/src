@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.155 2006/01/21 14:09:35 reinoud Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.155.4.1 2006/04/22 11:40:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -77,11 +77,12 @@
  *		UNIX Operating System (Addison Welley, 1989)
  */
 
+#include "fs_ffs.h"
 #include "opt_bufcache.h"
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.155 2006/01/21 14:09:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.155.4.1 2006/04/22 11:40:00 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,11 +138,6 @@ int count_lock_queue(void); /* XXX */
 static int checkfreelist(struct buf *, struct bqueue *);
 #endif
 
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
-
 /*
  * Definitions for the buffer hash lists.
  */
@@ -189,16 +185,16 @@ static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 
 /* XXX - somewhat gross.. */
 #if MAXBSIZE == 0x2000
-#define NMEMPOOLS 4
-#elif MAXBSIZE == 0x4000
 #define NMEMPOOLS 5
-#elif MAXBSIZE == 0x8000
+#elif MAXBSIZE == 0x4000
 #define NMEMPOOLS 6
-#else
+#elif MAXBSIZE == 0x8000
 #define NMEMPOOLS 7
+#else
+#define NMEMPOOLS 8
 #endif
 
-#define MEMPOOL_INDEX_OFFSET 10		/* smallest pool is 1k */
+#define MEMPOOL_INDEX_OFFSET 9	/* smallest pool is 512 bytes */
 #if (1 << (NMEMPOOLS + MEMPOOL_INDEX_OFFSET - 1)) != MAXBSIZE
 #error update vfs_bio buffer memory parameters
 #endif
@@ -1806,7 +1802,7 @@ nestiobuf_iodone(struct buf *bp)
 		error = EIO;
 	}
 
-	donebytes = bp->b_bufsize; /* ignore b_resid ! */
+	donebytes = bp->b_bufsize;
 
 	putiobuf(bp);
 	nestiobuf_done(mbp, donebytes, error);

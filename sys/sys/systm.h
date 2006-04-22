@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.183.6.1 2006/02/04 14:27:09 simonb Exp $	*/
+/*	$NetBSD: systm.h,v 1.183.6.2 2006/04/22 11:40:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -75,6 +75,10 @@
 
 #include <machine/endian.h>
 
+#ifdef _KERNEL
+#include <sys/types.h>
+#endif
+
 struct clockframe;
 struct device;
 struct lwp;
@@ -83,6 +87,7 @@ struct timeval;
 struct tty;
 struct uio;
 struct vnode;
+struct vmspace;
 
 extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
@@ -247,6 +252,8 @@ typedef int	(*copyout_t)(const void *, void *, size_t);
 
 int	copyin_proc(struct proc *, const void *, void *, size_t);
 int	copyout_proc(struct proc *, const void *, void *, size_t);
+int	copyin_vmspace(struct vmspace *, const void *, void *, size_t);
+int	copyout_vmspace(struct vmspace *, const void *, void *, size_t);
 
 int	ioctl_copyin(int ioctlflags, const void *src, void *dst, size_t len);
 int	ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len);
@@ -356,9 +363,12 @@ void	doforkhooks(struct proc *, struct proc *);
 /*
  * kernel syscall tracing/debugging hooks.
  */
+#ifdef _KERNEL
+boolean_t trace_is_enabled(struct proc *);
 int	trace_enter(struct lwp *, register_t, register_t,
 	    const struct sysent *, void *);
 void	trace_exit(struct lwp *, register_t, void *, register_t [], int);
+#endif
 
 int	uiomove(void *, size_t, struct uio *);
 int	uiomove_frombuf(void *, size_t, struct uio *);

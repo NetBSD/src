@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlbvar.h,v 1.3 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: jazzdmatlbvar.h,v 1.3.6.1 2006/04/22 11:37:16 simonb Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -30,7 +30,7 @@ void	jazz_dmatlb_init(bus_space_tag_t iot, bus_addr_t ioaddr);
 jazz_dma_pte_t *jazz_dmatlb_alloc(int npte, bus_size_t boundary,
 	    int flags, bus_addr_t *addr);
 void	jazz_dmatlb_free(bus_addr_t addr, int npte);
-void	jazz_dmatlb_map_va(struct proc *p, vaddr_t va, vsize_t size,
+void	jazz_dmatlb_map_va(struct vmspace *vm, vaddr_t va, vsize_t size,
 	    jazz_dma_pte_t *dma_pte);
 void	jazz_dmatlb_map_pa(paddr_t pa, psize_t size, jazz_dma_pte_t *dma_pte);
 void	jazz_dmatlb_flush(void);

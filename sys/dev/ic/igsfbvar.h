@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.11 2005/12/24 23:41:33 perry Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.11.6.1 2006/04/22 11:38:55 simonb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -75,7 +75,7 @@ struct igsfb_devconfig {
 	bus_size_t dc_vmemsz;
 
 	/* resolution */
-	int dc_width, dc_height, dc_depth;
+	int dc_width, dc_height, dc_depth, dc_stride;
 
 	/* part of video memory mapped for wsscreen */
 	bus_space_handle_t dc_fbh;
@@ -98,13 +98,9 @@ struct igsfb_devconfig {
 	((((dc)->dc_hwflags) & (IGSFB_HW_BSWAP | IGSFB_HW_BE_SELECT))	\
 		== IGSFB_HW_BSWAP)
 
-	int dc_nscreens;		/* can do only a single screen */
-
 	int dc_blanked;			/* screen is currently blanked */
 	int dc_curenb;			/* cursor sprite enabled */
 	int dc_mapped;			/* currently in mapped mode */
-
-	struct rasops_info dc_ri;
 
 	/* saved dc_ri.ri_ops.putchar */
 	void (*dc_ri_putchar)(void *, int, int, u_int, long);
@@ -114,6 +110,10 @@ struct igsfb_devconfig {
 
 	/* precomputed bit table for cursor sprite 1bpp -> 2bpp conversion */
 	uint16_t dc_bexpand[256];
+
+	/* virtual console support */
+	struct vcons_data dc_vd;
+	struct vcons_screen dc_console;
 };
 
 
@@ -128,28 +128,22 @@ struct igsfb_softc {
  * Access sugar for indexed registers
  */
 
-static inline uint8_t
+static __inline uint8_t
 igs_idx_read(bus_space_tag_t, bus_space_handle_t, u_int, uint8_t);
-static inline void
+static __inline void
 igs_idx_write(bus_space_tag_t, bus_space_handle_t, u_int, uint8_t, uint8_t);
 
-static inline uint8_t
-igs_idx_read(t, h, idxport, idx)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	u_int idxport;
-	uint8_t idx;
+static __inline uint8_t
+igs_idx_read(bus_space_tag_t t, bus_space_handle_t h,
+	     u_int idxport, uint8_t idx)
 {
 	bus_space_write_1(t, h, idxport, idx);
 	return (bus_space_read_1(t, h, idxport + 1));
 }
 
-static inline void
-igs_idx_write(t, h, idxport, idx, val)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	u_int idxport;
-	uint8_t idx, val;
+static __inline void
+igs_idx_write(bus_space_tag_t t, bus_space_handle_t h,
+	      u_int idxport, uint8_t idx, uint8_t val)
 {
 	bus_space_write_1(t, h, idxport, idx);
 	bus_space_write_1(t, h, idxport + 1, val);
@@ -176,14 +170,12 @@ igs_idx_write(t, h, idxport, idx, val)
 #define igs_attr_read(t,h,x)	\
 	(igs_idx_read((t),(h),IGS_ATTR_IDX,(x)))
 
-static inline void
+static __inline void
 igs_attr_write(bus_space_tag_t, bus_space_handle_t, uint8_t, uint8_t);
 
-static inline void
-igs_attr_write(t, h, idx, val)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	uint8_t idx, val;
+static __inline void
+igs_attr_write(bus_space_tag_t t, bus_space_handle_t h,
+	       uint8_t idx, uint8_t val)
 {
 	bus_space_write_1(t, h, IGS_ATTR_IDX, idx);
 	bus_space_write_1(t, h, IGS_ATTR_IDX, val); /* sic, same register */

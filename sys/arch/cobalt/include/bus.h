@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 2005/12/24 20:06:58 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.13.6.1 2006/04/22 11:37:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 /*
  * Utility macros; do not use outside this file.
  */
-#define	__PB_TYPENAME_PREFIX(BITS)	___CONCAT(u_int,BITS)
+#define	__PB_TYPENAME_PREFIX(BITS)	___CONCAT(uint,BITS)
 #define	__PB_TYPENAME(BITS)		___CONCAT(__PB_TYPENAME_PREFIX(BITS),_t)
 
 /*
@@ -119,7 +119,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size);
 
 /*
- *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
+ *	uintN_t bus_space_read_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset);
  *
  * Read a 1, 2, 4, or 8 byte quantity from bus space
@@ -127,13 +127,13 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_read_1(t, h, o)					\
-     ((void) t, (*(volatile u_int8_t *)((h) + (o))))
+     ((void) t, (*(volatile uint8_t *)((h) + (o))))
 
 #define	bus_space_read_2(t, h, o)					\
-     ((void) t, (*(volatile u_int16_t *)((h) + (o))))
+     ((void) t, (*(volatile uint16_t *)((h) + (o))))
 
 #define	bus_space_read_4(t, h, o)					\
-     ((void) t, (*(volatile u_int32_t *)((h) + (o))))
+     ((void) t, (*(volatile uint32_t *)((h) + (o))))
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
@@ -142,18 +142,18 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count);
+ *	    uintN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
  */
 
 #define __COBALT_bus_space_read_multi(BYTES,BITS)				\
-static inline void __CONCAT(bus_space_read_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -179,7 +179,7 @@ __COBALT_bus_space_read_multi(4,32)
 /*
  *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count);
+ *	    uintN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle and starting at `offset' and copy into
@@ -187,11 +187,11 @@ __COBALT_bus_space_read_multi(4,32)
  */
 
 #define __COBALT_bus_space_read_region(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_read_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -219,7 +219,7 @@ __COBALT_bus_space_read_region(4,32)
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value);
+ *	    uintN_t value);
  *
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
@@ -228,19 +228,19 @@ __COBALT_bus_space_read_region(4,32)
 #define	bus_space_write_1(t, h, o, v)					\
 do {									\
 	(void) t;							\
-	*(volatile u_int8_t *)((h) + (o)) = (v);			\
+	*(volatile uint8_t *)((h) + (o)) = (v);			\
 } while (0)
 
 #define	bus_space_write_2(t, h, o, v)					\
 do {									\
 	(void) t;							\
-	*(volatile u_int16_t *)((h) + (o)) = (v);			\
+	*(volatile uint16_t *)((h) + (o)) = (v);			\
 } while (0)
 
 #define	bus_space_write_4(t, h, o, v)					\
 do {									\
 	(void) t;							\
-	*(volatile u_int32_t *)((h) + (o)) = (v);			\
+	*(volatile uint32_t *)((h) + (o)) = (v);			\
 } while (0)
 
 #if 0	/* Cause a link error for bus_space_write_8 */
@@ -250,18 +250,18 @@ do {									\
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count);
+ *	    const uintN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
  */
 
 #define __COBALT_bus_space_write_multi(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_write_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -288,18 +288,18 @@ __COBALT_bus_space_write_multi(4,32)
 /*
  *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count);
+ *	    const uintN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
  */
 
 #define __COBALT_bus_space_write_region(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_write_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -327,7 +327,7 @@ __COBALT_bus_space_write_region(4,32)
 
 /*
  *	void bus_space_set_multi_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
  *	    size_t count);
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
@@ -335,11 +335,11 @@ __COBALT_bus_space_write_region(4,32)
  */
 
 #define __COBALT_bus_space_set_multi(BYTES,BITS)				\
-static inline void __CONCAT(bus_space_set_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -365,7 +365,7 @@ __COBALT_bus_space_set_multi(4,32)
 
 /*
  *	void bus_space_set_region_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
  *	    size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
@@ -373,11 +373,11 @@ __COBALT_bus_space_set_multi(4,32)
  */
 
 #define __COBALT_bus_space_set_region(BYTES,BITS)				\
-static inline void __CONCAT(bus_space_set_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -414,13 +414,13 @@ __COBALT_bus_space_set_region(4,32)
  */
 
 #define	__COBALT_copy_region(BYTES)					\
-static inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	(bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count);						\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h1, h2;					\
@@ -516,7 +516,7 @@ typedef struct cobalt_bus_dmamap		*bus_dmamap_t;
 struct cobalt_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
+	vaddr_t		_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct cobalt_bus_dma_segment	bus_dma_segment_t;
 
@@ -602,7 +602,7 @@ struct cobalt_bus_dmamap {
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-	struct proc	*_dm_proc;	/* proc that owns this mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns this mapping */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.

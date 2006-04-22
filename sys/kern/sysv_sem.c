@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.59.6.1 2006/02/04 14:30:17 simonb Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.59.6.2 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59.6.1 2006/02/04 14:30:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59.6.2 2006/04/22 11:39:59 simonb Exp $");
 
 #define SYSVSEM
 
@@ -414,6 +414,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
 	case GETALL:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return (error);
+		KASSERT(arg != NULL);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
 			error = copyout(&semaptr->_sem_base[i].semval,
 			    &arg->array[i], sizeof(arg->array[i]));
@@ -435,6 +436,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
 			return (error);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return (EINVAL);
+		KASSERT(arg != NULL);
 		semaptr->_sem_base[semnum].semval = arg->val;
 		semundo_clear(ix, semnum);
 		wakeup(semaptr);
@@ -443,6 +445,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, void *v,
 	case SETALL:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
 			return (error);
+		KASSERT(arg != NULL);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
 			error = copyin(&arg->array[i],
 			    &semaptr->_sem_base[i].semval,

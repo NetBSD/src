@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.29 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.29.6.1 2006/04/22 11:39:57 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.29 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.29.6.1 2006/04/22 11:39:57 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -191,7 +191,7 @@ msdosfs_mountroot()
 	int error;
 	struct msdosfs_args args;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	if ((error = vfs_rootmountalloc(MOUNT_MSDOS, "root_device", &mp))) {

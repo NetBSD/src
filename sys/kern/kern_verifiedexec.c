@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.48 2005/12/12 16:26:33 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.48.6.1 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.48 2005/12/12 16:26:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.48.6.1 2006/04/22 11:39:59 simonb Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -530,21 +530,12 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 	if (idx >= vhe->npages)
 		return (0);
 
-	ctx = (void *) malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
-	fp = (u_char *) malloc(vhe->ops->hash_len, M_TEMP, M_WAITOK);
-
-	kva = 0;
-	error = uvm_map(kernel_map, &kva, PAGE_SIZE, NULL,
-			UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_READ,
-			UVM_PROT_READ, UVM_INH_NONE, UVM_ADV_NORMAL,
-			UVM_FLAG_NOMERGE));
-	if (error)
-		goto bad;
-
+	ctx = malloc(vhe->ops->context_size, M_TEMP, M_WAITOK);
+	fp = malloc(vhe->ops->hash_len, M_TEMP, M_WAITOK);
+	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
 
 	page_fp = (u_char *) vhe->page_fp + (vhe->ops->hash_len * idx);
-
 	(vhe->ops->init)(ctx);
 	(vhe->ops->update)(ctx, (void *) kva,
 			   ((vhe->npages - 1) == idx) ? vhe->last_page_size
@@ -552,7 +543,7 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 	(vhe->ops->final)(fp, ctx);
 
 	pmap_kremove(kva, PAGE_SIZE);
-	uvm_unmap(kernel_map, kva, kva + PAGE_SIZE);
+	uvm_km_free(kernel_map, kva, PAGE_SIZE, UVM_KMF_VAONLY);
 
 	error = veriexec_fp_cmp(vhe->ops, page_fp, fp);
 	if (error) {
@@ -581,7 +572,6 @@ veriexec_page_verify(struct veriexec_hash_entry *vhe, struct vattr *va,
 		}
 	}
 
-bad:
 	free(ctx, M_TEMP);
 	free(fp, M_TEMP);
 

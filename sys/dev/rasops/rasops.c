@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.50 2006/01/29 21:42:41 dsl Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.50.4.1 2006/04/22 11:39:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.50 2006/01/29 21:42:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.50.4.1 2006/04/22 11:39:28 simonb Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -466,11 +466,12 @@ rasops_copyrows(cookie, src, dst, num)
 	void *cookie;
 	int src, dst, num;
 {
-	int32_t *sp, *dp, *srp, *drp;
+	int32_t *sp, *dp, *hp, *srp, *drp, *hrp;
 	struct rasops_info *ri;
 	int n8, n1, cnt, delta;
 
 	ri = (struct rasops_info *)cookie;
+	hp = hrp = NULL;
 
 #ifdef RASOPS_CLIPPING
 	if (dst == src)
@@ -503,20 +504,32 @@ rasops_copyrows(cookie, src, dst, num)
 	if (dst < src) {
 		srp = (int32_t *)(ri->ri_bits + src * ri->ri_yscale);
 		drp = (int32_t *)(ri->ri_bits + dst * ri->ri_yscale);
+		if (ri->ri_hwbits)
+			hrp = (int32_t *)(ri->ri_hwbits + dst *
+			    ri->ri_yscale);
 		delta = ri->ri_stride;
 	} else {
 		src = ri->ri_font->fontheight * src + num - 1;
 		dst = ri->ri_font->fontheight * dst + num - 1;
 		srp = (int32_t *)(ri->ri_bits + src * ri->ri_stride);
 		drp = (int32_t *)(ri->ri_bits + dst * ri->ri_stride);
+		if (ri->ri_hwbits)
+			hrp = (int32_t *)(ri->ri_hwbits + dst *
+			    ri->ri_stride);
+		
 		delta = -ri->ri_stride;
 	}
 
 	while (num--) {
 		dp = drp;
 		sp = srp;
+		if (ri->ri_hwbits)
+			hp = hrp;
+
 		DELTA(drp, delta, int32_t *);
 		DELTA(srp, delta, int32_t *);
+		if (ri->ri_hwbits)
+			DELTA(hrp, delta, int32_t *);
 
 		for (cnt = n8; cnt; cnt--) {
 			dp[0] = sp[0];
@@ -530,9 +543,27 @@ rasops_copyrows(cookie, src, dst, num)
 			dp += 8;
 			sp += 8;
 		}
+		if (ri->ri_hwbits) {
+			sp -= (8 * n8);
+			for (cnt = n8; cnt; cnt--) {
+				hp[0] = sp[0];
+				hp[1] = sp[1];
+				hp[2] = sp[2];
+				hp[3] = sp[3];
+				hp[4] = sp[4];
+				hp[5] = sp[5];
+				hp[6] = sp[6];
+				hp[7] = sp[7];
+				hp += 8;
+				sp += 8;
+			}
+		}
 
-		for (cnt = n1; cnt; cnt--)
+		for (cnt = n1; cnt; cnt--) {
 			*dp++ = *sp++;
+			if (ri->ri_hwbits)
+				*hp++ = *(sp - 1);
+		}
 	}
 }
 
@@ -548,10 +579,11 @@ rasops_copycols(cookie, row, src, dst, num)
 	int row, src, dst, num;
 {
 	struct rasops_info *ri;
-	u_char *sp, *dp;
+	u_char *sp, *dp, *hp;
 	int height;
 
 	ri = (struct rasops_info *)cookie;
+	hp = NULL;
 
 #ifdef RASOPS_CLIPPING
 	if (dst == src)
@@ -587,9 +619,15 @@ rasops_copycols(cookie, row, src, dst, num)
 
 	sp = ri->ri_bits + row + src * ri->ri_xscale;
 	dp = ri->ri_bits + row + dst * ri->ri_xscale;
+	if (ri->ri_hwbits)
+		hp = ri->ri_hwbits + row + dst * ri->ri_xscale;
 
 	while (height--) {
 		memmove(dp, sp, num);
+		if (ri->ri_hwbits) {
+			memcpy(hp, sp, num);
+			hp += ri->ri_stride;
+		}
 		dp += ri->ri_stride;
 		sp += ri->ri_stride;
 	}
@@ -733,9 +771,11 @@ rasops_eraserows(cookie, row, num, attr)
 {
 	struct rasops_info *ri;
 	int np, nw, cnt, delta;
-	int32_t *dp, clr;
+	int32_t *dp, *hp, clr;
+	int i;
 
 	ri = (struct rasops_info *)cookie;
+	hp = NULL;
 
 #ifdef RASOPS_CLIPPING
 	if (row < 0) {
@@ -763,34 +803,44 @@ rasops_eraserows(cookie, row, num, attr)
 		nw = (ri->ri_stride >> 2) & 7;
 		num = ri->ri_height;
 		dp = (int32_t *)ri->ri_origbits;
+		if (ri->ri_hwbits)
+			hp = (int32_t *)ri->ri_hwbits;
 		delta = 0;
 	} else {
 		np = ri->ri_emustride >> 5;
 		nw = (ri->ri_emustride >> 2) & 7;
 		num *= ri->ri_font->fontheight;
 		dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
+		if (ri->ri_hwbits)
+			hp = (int32_t *)(ri->ri_hwbits + row *
+			    ri->ri_yscale);
 		delta = ri->ri_delta;
 	}
 
 	while (num--) {
 		for (cnt = np; cnt; cnt--) {
-			dp[0] = clr;
-			dp[1] = clr;
-			dp[2] = clr;
-			dp[3] = clr;
-			dp[4] = clr;
-			dp[5] = clr;
-			dp[6] = clr;
-			dp[7] = clr;
+			for (i = 0; i < 8; i++) {
+				dp[i] = clr;
+				if (ri->ri_hwbits)
+					hp[i] = clr;
+			}
 			dp += 8;
+			if (ri->ri_hwbits)
+				hp += 8;
 		}
 
 		for (cnt = nw; cnt; cnt--) {
 			*(int32_t *)dp = clr;
 			DELTA(dp, 4, int32_t *);
+			if (ri->ri_hwbits) {
+				*(int32_t *)hp = clr;
+				DELTA(hp, 4, int32_t *);
+			}
 		}
 
 		DELTA(dp, delta, int32_t *);
+		if (ri->ri_hwbits)
+			DELTA(hp, delta, int32_t *);
 	}
 }
 
@@ -803,12 +853,17 @@ rasops_do_cursor(ri)
 	struct rasops_info *ri;
 {
 	int full1, height, cnt, slop1, slop2, row, col;
-	u_char *dp, *rp;
+	u_char *dp, *rp, *hrp, *hp;
+
+	hrp = hp = NULL;
 
 	row = ri->ri_crow;
 	col = ri->ri_ccol;
 
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
+	if (ri->ri_hwbits)
+		hrp = ri->ri_hwbits + row * ri->ri_yscale + col
+		    * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	slop1 = (4 - ((long)rp & 3)) & 3;
 
@@ -823,10 +878,18 @@ rasops_do_cursor(ri)
 		while (height--) {
 			dp = rp;
 			rp += ri->ri_stride;
+			if (ri->ri_hwbits) {
+				hp = hrp;
+				hrp += ri->ri_stride;
+			}
 
 			for (cnt = full1; cnt; cnt--) {
 				*(int32_t *)dp ^= ~0;
 				dp += 4;
+				if (ri->ri_hwbits) {
+					*(int32_t *)hp ^= ~0;
+					hp += 4;
+				}
 			}
 		}
 	} else {
@@ -834,25 +897,46 @@ rasops_do_cursor(ri)
 		while (height--) {
 			dp = rp;
 			rp += ri->ri_stride;
+			if (ri->ri_hwbits) {
+				hp = hrp;
+				hrp += ri->ri_stride;
+			}
 
-			if (slop1 & 1)
+			if (slop1 & 1) {
 				*dp++ ^= ~0;
+				if (ri->ri_hwbits)
+					*hp++ ^= ~0;
+			}
 
 			if (slop1 & 2) {
 				*(int16_t *)dp ^= ~0;
 				dp += 2;
+				if (ri->ri_hwbits) {
+					*(int16_t *)hp ^= ~0;
+					hp += 2;
+				}
 			}
 
 			for (cnt = full1; cnt; cnt--) {
 				*(int32_t *)dp ^= ~0;
 				dp += 4;
+				if (ri->ri_hwbits) {
+					*(int32_t *)hp ^= ~0;
+					hp += 4;
+				}
 			}
 
-			if (slop2 & 1)
+			if (slop2 & 1) {
 				*dp++ ^= ~0;
+				if (ri->ri_hwbits)
+					*hp++ ^= ~0;
+			}
 
-			if (slop2 & 2)
+			if (slop2 & 2) {
 				*(int16_t *)dp ^= ~0;
+				if (ri->ri_hwbits)
+					*(int16_t *)hp ^= ~0;
+			}
 		}
 	}
 }
@@ -868,9 +952,11 @@ rasops_erasecols(cookie, row, col, num, attr)
 {
 	int n8, height, cnt, slop1, slop2, clr;
 	struct rasops_info *ri;
-	int32_t *rp, *dp;
+	int32_t *rp, *dp, *hrp, *hp;
+	int i;
 
 	ri = (struct rasops_info *)cookie;
+	hrp = hp = NULL;
 
 #ifdef RASOPS_CLIPPING
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
@@ -890,6 +976,9 @@ rasops_erasecols(cookie, row, col, num, attr)
 
 	num = num * ri->ri_xscale;
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	if (ri->ri_hwbits)
+		hrp = (int32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
+		    col*ri->ri_xscale);
 	height = ri->ri_font->fontheight;
 	clr = ri->ri_devcmap[(attr >> 16) & 0xf];
 
@@ -902,9 +991,16 @@ rasops_erasecols(cookie, row, col, num, attr)
 			while (height--) {
 				dp = rp;
 				DELTA(rp, ri->ri_stride, int32_t *);
+				if (ri->ri_hwbits) {
+					hp = hrp;
+					DELTA(hrp, ri->ri_stride, int32_t *);
+				}
 
-				for (cnt = num; cnt; cnt--)
+				for (cnt = num; cnt; cnt--) {
 					*dp++ = clr;
+					if (ri->ri_hwbits)
+						*hp++ = clr;
+				}
 			}
 		} else if (((num | ri->ri_xscale) & 1) == 0) {
 			/*
@@ -916,20 +1012,36 @@ rasops_erasecols(cookie, row, col, num, attr)
 			while (height--) {
 				dp = rp;
 				DELTA(rp, ri->ri_stride, int32_t *);
+				if (ri->ri_hwbits) {
+					hp = hrp;
+					DELTA(hrp, ri->ri_stride, int32_t *);
+				}
 
 				for (cnt = num; cnt; cnt--) {
 					*(int16_t *)dp = clr;
 					DELTA(dp, 2, int32_t *);
+					if (ri->ri_hwbits) {
+						*(int16_t *)hp = clr;
+						DELTA(hp, 2, int32_t *);
+					}
 				}
 			}
 		} else {
 			while (height--) {
 				dp = rp;
 				DELTA(rp, ri->ri_stride, int32_t *);
+				if (ri->ri_hwbits) {
+					hp = hrp;
+					DELTA(hrp, ri->ri_stride, int32_t *);
+				}
 
 				for (cnt = num; cnt; cnt--) {
 					*(u_char *)dp = clr;
 					DELTA(dp, 1, int32_t *);
+					if (ri->ri_hwbits) {
+						*(u_char *)hp = clr;
+						DELTA(hp, 1, int32_t *);
+					}
 				}
 			}
 		}
@@ -946,42 +1058,63 @@ rasops_erasecols(cookie, row, col, num, attr)
 	while (height--) {
 		dp = rp;
 		DELTA(rp, ri->ri_stride, int32_t *);
+		if (ri->ri_hwbits) {
+			hp = hrp;
+			DELTA(hrp, ri->ri_stride, int32_t *);
+		}
 
 		/* Align span to 4 bytes */
 		if (slop1 & 1) {
 			*(u_char *)dp = clr;
 			DELTA(dp, 1, int32_t *);
+			if (ri->ri_hwbits) {
+				*(u_char *)hp = clr;
+				DELTA(hp, 1, int32_t *);
+			}
 		}
 
 		if (slop1 & 2) {
 			*(int16_t *)dp = clr;
 			DELTA(dp, 2, int32_t *);
+			if (ri->ri_hwbits) {
+				*(int16_t *)hp = clr;
+				DELTA(hp, 2, int32_t *);
+			}
 		}
 
 		/* Write 32 bytes per loop */
 		for (cnt = n8; cnt; cnt--) {
-			dp[0] = clr;
-			dp[1] = clr;
-			dp[2] = clr;
-			dp[3] = clr;
-			dp[4] = clr;
-			dp[5] = clr;
-			dp[6] = clr;
-			dp[7] = clr;
+			for (i = 0; i < 8; i++) {
+				dp[i] = clr;
+				if (ri->ri_hwbits)
+					hp[i] = clr;
+			}
 			dp += 8;
+			if (ri->ri_hwbits)
+				hp += 8;
 		}
 
 		/* Write 4 bytes per loop */
-		for (cnt = num; cnt; cnt--)
+		for (cnt = num; cnt; cnt--) {
 			*dp++ = clr;
+			if (ri->ri_hwbits)
+				*hp++ = clr;
+		}
 
 		/* Write unaligned trailing slop */
 		if (slop2 & 1) {
 			*(u_char *)dp = clr;
 			DELTA(dp, 1, int32_t *);
+			if (ri->ri_hwbits) {
+				*(u_char *)hp = clr;
+				DELTA(hp, 1, int32_t *);
+			}
 		}
 
-		if (slop2 & 2)
+		if (slop2 & 2) {
 			*(int16_t *)dp = clr;
+			if (ri->ri_hwbits)
+				*(int16_t *)hp = clr;
+		}
 	}
 }

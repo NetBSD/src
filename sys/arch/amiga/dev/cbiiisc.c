@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.14 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.14.6.1 2006/04/22 11:37:12 simonb Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.14 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.14.6.1 2006/04/22 11:37:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ cbiiiscattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * CTEST7 = 00
 	 */
-	sc->sc_clock_freq = 50;		/* Clock = 50 Mhz >> */
+	sc->sc_clock_freq = 50;		/* Clock = 50 MHz >> */
 	sc->sc_ctest7 = 0x00;
 	sc->sc_dcntl = 0x20;		/* XXX ?? */
 

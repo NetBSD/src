@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.76 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.76.6.1 2006/04/22 11:37:16 simonb Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.76 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.76.6.1 2006/04/22 11:37:16 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2178,6 +2178,7 @@ sa11x0_setup(args)
 	cpu_idcache_wbinv_all();
 
 	/* Set the control register */    
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_SA1100 || CPU_SA1110 */

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_common.c,v 1.6 2005/12/11 12:21:29 christos Exp $ */
+/* $NetBSD: vga_common.c,v 1.6.6.1 2006/04/22 11:38:56 simonb Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_common.c,v 1.6 2005/12/11 12:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_common.c,v 1.6.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -38,6 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: vga_common.c,v 1.6 2005/12/11 12:21:29 christos Exp 
 #include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
+
+#ifdef __i386__
+#include <arch/i386/bios/vesafbvar.h>
+#endif
 
 /*
  * The following functions implement back-end configuration grabbing
@@ -51,8 +55,21 @@ vga_common_probe(bus_space_tag_t iot, bus_space_tag_t memt)
 	u_int16_t vgadata;
 	int gotio_vga, gotio_6845, gotmem, mono, rv;
 	int dispoffset;
+#ifdef __i386__
+	struct device *dv;
+	struct vesafb_softc *vesafb;
+#endif
 
 	gotio_vga = gotio_6845 = gotmem = rv = 0;
+
+#ifdef __i386__
+	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
+		if (strncmp(dv->dv_xname, "vesafb", 6) == 0) {
+			vesafb = (struct vesafb_softc *)dv;
+			if (vesafb->sc_isconsole)
+				goto bad;
+		}
+#endif
 
 	if (bus_space_map(iot, 0x3c0, 0x10, 0, &ioh_vga))
 		goto bad;

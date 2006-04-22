@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.13 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.13.6.1 2006/04/22 11:39:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,11 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)       (t) |= (f)
-#define CLR(t, f)       (t) &= ~(f)
-#define ISSET(t, f)     ((t) & (f))
 
 /* just for ucom_attach_args, not in the config namespace */
 #define UCOM_UNK_PORTNO (-1)

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.57 2005/12/11 12:19:08 christos Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.57.6.1 2006/04/22 11:37:59 simonb Exp $
 
 #=========================================================================
 #
@@ -143,6 +143,9 @@ machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
 %LOAD
 
 %RULES
+
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

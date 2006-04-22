@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.4 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -74,7 +74,7 @@ rs5c372rtc_match(struct device *parent, struct cfdata *cf, void *arg)
 static void
 rs5c372rtc_attach(struct device *parent, struct device *self, void *arg)
 {
-	struct rs5c372rtc_softc *sc = (struct rs5c372rtc_softc *)self;
+	struct rs5c372rtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
 	aprint_naive(": Real-time Clock\n");

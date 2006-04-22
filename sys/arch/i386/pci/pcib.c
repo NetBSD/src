@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.37 2005/12/11 12:17:44 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.37.6.1 2006/04/22 11:37:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.37 2005/12/11 12:17:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.37.6.1 2006/04/22 11:37:34 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,7 +160,7 @@ pcibmatch(struct device *parent, struct cfdata *match, void *aux)
 	 * The Cyrix cs5530 PCI host bridge does not have a broken
 	 * latch on the i8254 clock core, unlike its predecessors
 	 * the cs5510 and cs5520. This reverses the setting from
-	 * i386/1386/identcpu.c where it argueably should not have
+	 * i386/i386/identcpu.c where it arguably should not have
 	 * been set in the first place. XXX
 	 */
 	case PCI_VENDOR_CYRIX:
@@ -190,14 +190,15 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Just print out a description and defer configuration
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	config_defer(self, pcib_callback);

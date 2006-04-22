@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2003/04/02 07:36:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16.34.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -94,10 +94,10 @@
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define	VM_PHYSSEG_NOADD
 
-#define	sh3_round_page(x)	((((u_int32_t)(x)) + PGOFSET) & ~PGOFSET)
-#define	sh3_trunc_page(x)	((u_int32_t)(x) & ~PGOFSET)
-#define	sh3_btop(x)		((u_int32_t)(x) >> PGSHIFT)
-#define	sh3_ptob(x)		((u_int32_t)(x) << PGSHIFT)
+#define	sh3_round_page(x)	((((uint32_t)(x)) + PGOFSET) & ~PGOFSET)
+#define	sh3_trunc_page(x)	((uint32_t)(x) & ~PGOFSET)
+#define	sh3_btop(x)		((uint32_t)(x) >> PGSHIFT)
+#define	sh3_ptob(x)		((uint32_t)(x) << PGSHIFT)
 
 /* pmap-specific data store in the vm_page structure. */
 #define	__HAVE_VM_PAGE_MD

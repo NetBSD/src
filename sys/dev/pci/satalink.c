@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.28 2006/01/16 20:30:19 bouyer Exp $	*/
+/*	$NetBSD: satalink.c,v 1.28.4.1 2006/04/22 11:39:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -529,7 +529,7 @@ sii3114_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.dma_start = pciide_dma_start;
 	sc->sc_wdcdev.dma_finish = pciide_dma_finish;
 
-	if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags &
+	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
 		aprint_normal(
 		    ", but unused (forced off by config file)");

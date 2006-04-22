@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.17 2006/01/16 22:59:36 christos Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.17.4.1 2006/04/22 11:39:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.17 2006/01/16 22:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.17.4.1 2006/04/22 11:39:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,9 @@ struct agp_intel_softc {
 #define	CHIP_I845	0x3
 #define	CHIP_I850	0x4
 #define	CHIP_I865	0x5
+
+	void			*sc_powerhook;
+	struct pci_conf_state	sc_pciconf;
 };
 
 static u_int32_t agp_intel_get_aperture(struct agp_softc *);
@@ -71,6 +74,7 @@ static int agp_intel_set_aperture(struct agp_softc *, u_int32_t);
 static int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
 static int agp_intel_unbind_page(struct agp_softc *, off_t);
 static void agp_intel_flush_tlb(struct agp_softc *);
+static void agp_intel_powerhook(int, void *);
 
 static struct agp_methods agp_intel_methods = {
 	agp_intel_get_aperture,
@@ -254,6 +258,11 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 			AGP_INTEL_ERRSTS, 0x70);
 	}
 
+	isc->sc_powerhook = powerhook_establish(agp_intel_powerhook, sc);
+	if (isc->sc_powerhook == NULL)
+		aprint_error("%s: couldn't establish powerhook\n",
+		    sc->as_dev.dv_xname);
+
 	return (0);
 }
 
@@ -264,6 +273,9 @@ agp_intel_detach(struct agp_softc *sc)
 	int error;
 	pcireg_t reg;
 	struct agp_intel_softc *isc = sc->as_chipc;
+
+	if (isc->sc_powerhook)
+		powerhook_disestablish(isc->sc_powerhook);
 
 	error = agp_generic_detach(sc);
 	if (error)
@@ -378,4 +390,31 @@ agp_intel_flush_tlb(struct agp_softc *sc)
 			0x2280);
 		}
 	}
+}
+
+static void
+agp_intel_powerhook(int why, void *opaque)
+{
+	struct agp_softc *sc;
+	struct agp_intel_softc *isc;
+
+	sc = (struct agp_softc *)opaque;
+	isc = (struct agp_intel_softc *)sc->as_chipc;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		pci_conf_capture(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
+		break;
+	case PWR_RESUME:
+		pci_conf_restore(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
+		agp_flush_cache();
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+
+	return;
 }

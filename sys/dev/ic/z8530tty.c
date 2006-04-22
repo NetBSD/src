@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.102.6.1 2006/02/04 14:00:40 simonb Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.102.6.2 2006/04/22 11:38:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.6.1 2006/02/04 14:00:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.6.2 2006/04/22 11:38:56 simonb Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -246,11 +246,6 @@ struct zstty_softc {
 #endif /* !__HAVE_TIMECOUNTER */
 };
 
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
-
 /* Definition of the driver for autoconfig. */
 static int	zstty_match(struct device *, struct cfdata *, void *);
 static void	zstty_attach(struct device *, struct device *, void *);
@@ -341,7 +336,7 @@ zstty_attach(parent, self, aux)
 {
 	struct zsc_softc *zsc = (void *) parent;
 	struct zstty_softc *zst = (void *) self;
-	struct cfdata *cf = self->dv_cfdata;
+	struct cfdata *cf = device_cfdata(self);
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	struct tty *tp;
@@ -354,7 +349,7 @@ zstty_attach(parent, self, aux)
 	callout_init(&zst->zst_diag_ch);
 	cn_init_magic(&zstty_cnm_state);
 
-	tty_unit = zst->zst_dev.dv_unit;
+	tty_unit = device_unit(&zst->zst_dev);
 	channel = args->channel;
 	cs = zsc->zsc_cs[channel];
 	cs->cs_private = zst;
@@ -419,7 +414,12 @@ zstty_attach(parent, self, aux)
 	tty_attach(tp);
 
 	zst->zst_tty = tp;
-	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_WAITOK);
+	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
+	if (zst->zst_rbuf == NULL) {
+		aprint_error("%s: unable to allocate ring buffer\n",
+		    zst->zst_dev.dv_xname);
+		return;
+	}
 	zst->zst_ebuf = zst->zst_rbuf + (zstty_rbuf_size << 1);
 	/* Disable the high water mark. */
 	zst->zst_r_hiwat = 0;

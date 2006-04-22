@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2005/12/24 20:06:46 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29.6.1 2006/04/22 11:37:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2005/12/24 20:06:46 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.6.1 2006/04/22 11:37:10 simonb Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -189,9 +189,6 @@ struct p5064_config p5064_configuration;
 #include <algor/algor/algor_p6032var.h>
 struct p6032_config p6032_configuration;
 #endif 
-
-/* The following are used externally (sysctl_hw). */
-extern char	cpu_model[];
 
 struct	user *proc0paddr;
 
@@ -746,39 +743,4 @@ cpu_reboot(int howto, char *bootstr)
 	led_display('R', 'S', 'T', 'F');
 	for (;;)
 		/* spin forever */ ;
-}
-
-/*
- * XXX This shouldn't be here -- it should be done w/ devprops,
- * XXX but we don't have those yet.
- */
-int
-algor_get_ethaddr(struct pci_attach_args *pa, u_int8_t *buf)
-{
-
-#if defined(ALGOR_P4032)
-	if (pa->pa_bus != 0 || pa->pa_device != 5 || pa->pa_function != 0)
-		return (0);
-#elif defined(ALGOR_P5064)
-	if (pa->pa_bus != 0 || pa->pa_device != 0 || pa->pa_function != 0)
-		return (0);
-#elif defined(ALGOR_P6032)
-	if (pa->pa_bus != 0 || pa->pa_device != 16 || pa->pa_function != 0)
-		return (0);
-#endif
-
-	if (buf != NULL)
-		memcpy(buf, algor_ethaddr, sizeof(algor_ethaddr));
-#if defined(ALGOR_P4032)
-	/*
-	 * XXX This is gross, disgusting, and otherwise vile, but
-	 * XXX V962 rev. < B2 have broken DMA FIFOs.  Give the
-	 * XXX on-board Ethernet a different DMA window that
-	 * XXX has pre-fetching enabled so that Ethernet performance
-	 * XXX doesn't completely suck.
-	 */
-	pa->pa_dmat = &p4032_configuration.ac_pci_pf_dmat;
-	pa->pa_dmat64 = NULL;
-#endif
-	return (1);
 }

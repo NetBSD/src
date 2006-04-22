@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.2 2006/02/03 23:33:30 jmmv Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.2.2.1 2006/04/22 11:37:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.2 2006/02/03 23:33:30 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.2.2.1 2006/04/22 11:37:32 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.2 2006/02/03 23:33:30 jmmv Exp $");
 #include <sys/exec_elf.h>
 #include <sys/optstr.h>
 
-#include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/multiboot.h>
 
@@ -196,30 +195,9 @@ multiboot_post_reloc(void)
 	setup_howto(mi);
 	setup_bootpath(mi);
 	setup_biosgeom(mi);
+	setup_bootdisk(mi);
 	setup_memmap(mi);
 	setup_syms(mi);
-}
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Sets up the kernel if it was booted by a Multiboot-compliant boot
- * loader.  This is executed before calling findroot() in cpu_rootconf().
- * At this point, there is not much more to do.  We only seize this call
- * to set up the default root device because all device drivers have
- * already been initialized and are available for us to use.
- */
-void
-multiboot_pre_findroot(void)
-{
-	struct multiboot_info *mi;
-	
-	if (! Multiboot_Loader)
-		return;
-
-	mi = &Multiboot_Info;
-
-	setup_bootdisk(mi);
 }
 
 /* --------------------------------------------------------------------- */
@@ -495,25 +473,28 @@ setup_bootdisk(struct multiboot_info *mi)
 	if (!found && (mi->mi_flags & MULTIBOOT_INFO_HAS_BOOT_DEVICE)) {
 		const char *devprefix;
 
-		devprefix = x86_findbiosdisk(mi->mi_boot_device_drive);
-		if (devprefix == NULL) {
-			switch (mi->mi_boot_device_drive) {
-			case 0x00:	devprefix = "fd0";	break;
-			case 0x01:	devprefix = "fd1";	break;
-			default:	devprefix = "";
-			}
+		/* Attempt to match the BIOS boot disk to a device.  There
+		 * is not much we can do to get it right.  (Well, strictly
+		 * speaking, we could, but it is certainly not worth the
+		 * extra effort.) */
+		switch (mi->mi_boot_device_drive) {
+		case 0x00:	devprefix = "fd0";	break;
+		case 0x01:	devprefix = "fd1";	break;
+		case 0x80:	devprefix = "wd0";	break;
+		case 0x81:	devprefix = "wd1";	break;
+		case 0x82:	devprefix = "wd2";	break;
+		case 0x83:	devprefix = "wd3";	break;
+		default:	devprefix = "wd0";
 		}
 
-		if (devprefix[0] != '\0') {
-			strcpy(bi.devname, devprefix);
-			if (mi->mi_boot_device_part2 != 0xFF)
-				bi.devname[3] = mi->mi_boot_device_part2 + 'a';
-			else
-				bi.devname[3] = 'a';
-			bi.devname[4] = '\0';
+		strcpy(bi.devname, devprefix);
+		if (mi->mi_boot_device_part2 != 0xFF)
+			bi.devname[3] = mi->mi_boot_device_part2 + 'a';
+		else
+			bi.devname[3] = 'a';
+		bi.devname[4] = '\0';
 
-			found = TRUE;
-		}
+		found = TRUE;
 	}
 
 	if (found) {

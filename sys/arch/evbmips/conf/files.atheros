@@ -1,0 +1,30 @@
+#	$NetBSD: files.atheros,v 1.2.8.2 2006/04/22 11:37:24 simonb Exp $
+
+file	arch/evbmips/atheros/mach_intr.c
+
+file	arch/evbmips/atheros/autoconf.c
+file	arch/evbmips/atheros/machdep.c
+
+file	arch/mips/mips/bus_dma.c
+file	arch/evbmips/evbmips/clock.c
+file	arch/evbmips/evbmips/disksubr.c
+file	arch/evbmips/evbmips/interrupt.c
+
+file	arch/mips/mips/softintr.c
+
+
+# System bus
+device	mainbus { }
+attach	mainbus at root
+file	arch/evbmips/alchemy/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/evbmips/atheros/cpu.c		cpu
+
+# Machine-independent WS console drivers
+#include "dev/wsfont/files.wsfont"
+#include "dev/wscons/files.wscons"
+
+# Memory Disk
+file	dev/md_root.c				memory_disk_hooks

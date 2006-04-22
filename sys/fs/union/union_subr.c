@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.15 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.15.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.15 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.15.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -556,7 +556,7 @@ loop:
 	else
 		un->un_pid = -1;
 #endif
-	if (cnp && (lowervp != NULLVP)) {
+	if (dvp && cnp && (lowervp != NULLVP)) {
 		un->un_hash = cnp->cn_hash;
 		un->un_path = malloc(cnp->cn_namelen+1, M_TEMP, M_WAITOK);
 		memcpy(un->un_path, cnp->cn_nameptr, cnp->cn_namelen);
@@ -637,9 +637,8 @@ union_copyfile(fvp, tvp, cred, l)
 	 * give up at the first sign of trouble.
 	 */
 
-	uio.uio_lwp = NULL;
-	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_offset = 0;
+	UIO_SETUP_SYSSPACE(&uio);
 
 	VOP_UNLOCK(fvp, 0);			/* XXX */
 	VOP_LEASE(fvp, l, cred, LEASE_READ);

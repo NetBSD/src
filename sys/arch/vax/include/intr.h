@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.19 2005/12/24 20:07:41 perry Exp $	*/
+/* 	$NetBSD: intr.h,v 1.19.6.1 2006/04/22 11:38:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -152,7 +152,7 @@ struct softintr_handler {
 extern void *softintr_establish(int, void (*)(void *), void *);
 extern void softintr_disestablish(void *);
 
-static inline void
+static __inline void
 softintr_schedule(void *arg)
 {
 	struct softintr_handler * const sh = arg;

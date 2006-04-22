@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.2 2005/12/24 20:07:37 perry Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.2.6.1 2006/04/22 11:38:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,21 +50,21 @@
 
 #define	cpu_hascounter()	(1)
 
-static inline uint64_t
+static __inline uint64_t
 cpu_counter(void)
 {
 
 	return (tick());
 }
 
-static inline uint32_t
+static __inline uint32_t
 cpu_counter32(void)
 {
 
 	return (tick() & 0xffffffffUL);
 }
 
-static inline uint64_t
+static __inline uint64_t
 cpu_frequency(struct cpu_info *ci)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.27 2006/01/04 21:10:09 perry Exp $	*/
+/*	$NetBSD: pfil.h,v 1.27.4.1 2006/04/22 11:40:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -100,7 +100,7 @@ int	pfil_head_unregister(struct pfil_head *);
 
 struct pfil_head *pfil_head_get(int, u_long);
 
-static inline struct packet_filter_hook *
+static __inline struct packet_filter_hook *
 pfil_hook_get(int dir, struct pfil_head *ph)
 {
 

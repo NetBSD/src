@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.106.4.1 2006/02/04 14:18:52 simonb Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.106.4.2 2006/04/22 11:40:12 simonb Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.106.4.1 2006/02/04 14:18:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.106.4.2 2006/04/22 11:40:12 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -376,7 +376,7 @@ ipsec_get_tag(m)
  *		others	: error occurred.
  *	others:	a pointer to SP
  *
- * NOTE: IPv6 mapped adddress concern is implemented here.
+ * NOTE: IPv6 mapped address concern is implemented here.
  */
 struct secpolicy *
 ipsec4_getpolicybysock(m, dir, so, error)

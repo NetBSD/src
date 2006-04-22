@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.11 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.11.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.11 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465.c,v 1.11.6.1 2006/04/22 11:37:31 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ hd64465_attach(struct device *parent, struct device *self, void *aux)
 {
 	const struct hd64465_module *module;
 	struct hd64465_attach_args ha;
-	u_int16_t r;
+	uint16_t r;
 	int i;
 
 	printf("\n");
@@ -148,7 +148,7 @@ void *
 hd64465_intr_establish(int irq, int mode, int level,
     int (*func)(void *), void *arg)
 {
-	u_int16_t r;
+	uint16_t r;
 	int s;
 
 	s = splhigh();
@@ -194,7 +194,7 @@ hd64465_shutdown()
 void
 hd64465_info()
 {
-	u_int16_t r;
+	uint16_t r;
 
 	dbg_bit_print_msg(_reg_read_2(SH4_ICR), "SH4_ICR");
 	r = hd64465_reg_read_2(HD64465_NIMR);

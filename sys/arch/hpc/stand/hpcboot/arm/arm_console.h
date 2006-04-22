@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_console.h,v 1.5 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_console.h,v 1.5.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ private:
 	}
 
 	void __tx_busy(void) {
-		u_int8_t reg;
+		uint8_t reg;
 		do
 			reg = VOLATILE_REF8(_uart_busy);
 		while ((reg & 0x1) == 0x1 ||(reg & 0x4) == 0);
@@ -70,7 +70,7 @@ private:
 	void __putc(const char s) {
 		__tx_busy(); // wait until previous transmit done.
 		VOLATILE_REF8(_uart_transmit) =
-		    static_cast <u_int8_t>(0xff & s);
+		    static_cast <uint8_t>(0xff & s);
 	}
 
 public:

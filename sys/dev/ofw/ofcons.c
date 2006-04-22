@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.24 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.24.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -105,7 +105,7 @@ ofcons_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ofcons_softc *sc = (struct ofcons_softc *) self;
+	struct ofcons_softc *sc = device_private(self);
 
 	printf("\n");
 

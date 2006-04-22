@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.29 2005/11/25 16:16:46 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.29.6.1 2006/04/22 11:39:13 simonb Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.29 2005/11/25 16:16:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.29.6.1 2006/04/22 11:39:13 simonb Exp $");
 
 #include "rnd.h"
 
@@ -2127,7 +2127,7 @@ hifn_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 	if ((comp && mac) || (comp && cry))
 		return (EINVAL);
 
-	*sidp = HIFN_SID(sc->sc_dv.dv_unit, i);
+	*sidp = HIFN_SID(device_unit(&sc->sc_dv), i);
 	sc->sc_sessions[i].hs_state = HS_STATE_USED;
 
 	return (0);

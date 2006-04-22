@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.9.6.1 2006/02/04 14:03:58 simonb Exp $ */
+/* $NetBSD: pms.c,v 1.9.6.2 2006/04/22 11:39:24 simonb Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -28,7 +28,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.9.6.1 2006/02/04 14:03:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.9.6.2 2006/04/22 11:39:24 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ pmsprobe(struct device *parent, struct cfdata *match, void *aux)
 void
 pmsattach(struct device *parent, struct device *self, void *aux)
 {
-	struct pms_softc *sc = (void *)self;
+	struct pms_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
 	struct wsmousedev_attach_args a;
 	u_char cmd[2], resp[2];

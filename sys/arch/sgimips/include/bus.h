@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16 2005/12/24 20:07:32 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.16.6.1 2006/04/22 11:37:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -160,11 +160,11 @@ u_int64_t bus_space_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
  */
 
 #define __SGIMIPS_bus_space_read_multi(BYTES,BITS)				\
-static inline void __CONCAT(bus_space_read_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -198,11 +198,11 @@ __SGIMIPS_bus_space_read_multi(4,32)
  */
 
 #define __SGIMIPS_bus_space_read_region(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_read_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -255,11 +255,11 @@ void	bus_space_write_8(bus_space_tag_t, bus_space_handle_t, bus_size_t,
  */
 
 #define __SGIMIPS_bus_space_write_multi(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_write_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -293,11 +293,11 @@ __SGIMIPS_bus_space_write_multi(4,32)
  */
 
 #define __SGIMIPS_bus_space_write_region(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_write_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -333,11 +333,11 @@ __SGIMIPS_bus_space_write_region(4,32)
  */
 
 #define __SGIMIPS_bus_space_set_multi(BYTES,BITS)				\
-static inline void __CONCAT(bus_space_set_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -371,11 +371,11 @@ __SGIMIPS_bus_space_set_multi(4,32)
  */
 
 #define __SGIMIPS_bus_space_set_region(BYTES,BITS)				\
-static inline void __CONCAT(bus_space_set_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -412,13 +412,13 @@ __SGIMIPS_bus_space_set_region(4,32)
  */
 
 #define	__SGIMIPS_copy_region(BYTES)					\
-static inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	(bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count);						\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h1, h2;					\
@@ -514,7 +514,7 @@ typedef struct sgimips_bus_dmamap		*bus_dmamap_t;
 struct sgimips_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
+	vaddr_t		_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct sgimips_bus_dma_segment	bus_dma_segment_t;
 
@@ -609,7 +609,7 @@ struct sgimips_bus_dmamap {
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.

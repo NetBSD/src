@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.4 2005/12/11 12:19:37 christos Exp $ */
+/*	$NetBSD: lcspx.c,v 1.4.6.1 2006/04/22 11:38:08 simonb Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.4 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.4.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,8 +131,8 @@ static  u_char *qf;
 	    line * SPX_XWIDTH + dot]
 
 
-static int	lcspx_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	lcspx_mmap(void *, off_t, int);
+static int	lcspx_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	lcspx_mmap(void *, void *, off_t, int);
 static int	lcspx_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
 static void	lcspx_free_screen(void *, void *);
@@ -367,7 +367,8 @@ lcspx_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 }
 
 int
-lcspx_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+lcspx_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct wsdisplay_fbinfo *fb = (void *)data;
 
@@ -408,7 +409,7 @@ lcspx_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-lcspx_mmap(void *v, off_t offset, int prot)
+lcspx_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	if (offset >= SPXSIZE || offset < 0)
 		return -1;

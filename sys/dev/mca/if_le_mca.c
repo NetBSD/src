@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.12 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.12.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.12 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.12.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ le_mca_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 le_mca_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct le_mca_softc *lesc = (struct le_mca_softc *) self;
+	struct le_mca_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct mca_attach_args *ma = aux;
 	int i, pos2, pos3, pos4, irq, membase, supmedia=0;

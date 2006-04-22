@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.94.6.1 2006/02/04 14:12:50 simonb Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.94.6.2 2006/04/22 11:40:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.94.6.1 2006/02/04 14:12:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.94.6.2 2006/04/22 11:40:22 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -209,7 +209,7 @@ ext2fs_mountroot(void)
 	struct ufsmount *ump;
 	int error;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	if ((error = vfs_rootmountalloc(MOUNT_EXT2FS, "root_device", &mp))) {
@@ -702,8 +702,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	return (0);
 
 out:
-	if (bp)
-		brelse(bp);
+	KASSERT(bp != NULL);
+	brelse(bp);
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT);
 		free(ump, M_UFSMNT);

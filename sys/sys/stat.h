@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.53 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: stat.h,v 1.53.6.1 2006/04/22 11:40:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -204,6 +204,7 @@ struct stat {
 #define	UF_IMMUTABLE	0x00000002	/* file may not be changed */
 #define	UF_APPEND	0x00000004	/* writes to file may only append */
 #define UF_OPAQUE	0x00000008	/* directory is opaque wrt. union */
+/*	UF_NOUNLINK	0x00000010	   [NOT IMPLEMENTED] */
 /*
  * Super-user changeable flags.
  */
@@ -211,6 +212,7 @@ struct stat {
 #define	SF_ARCHIVED	0x00010000	/* file is archived */
 #define	SF_IMMUTABLE	0x00020000	/* file may not be changed */
 #define	SF_APPEND	0x00040000	/* writes to file may only append */
+/*	SF_NOUNLINK	0x00100000	   [NOT IMPLEMENTED] */
 #define	SF_SNAPSHOT	0x00200000	/* snapshot inode */
 
 #ifdef _KERNEL

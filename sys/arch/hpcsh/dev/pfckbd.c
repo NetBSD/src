@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.18 2006/01/21 23:16:57 uwe Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.18.4.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Matrix scan keyboard connected to SH7709, SH7709A PFC module.
+ * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
+ */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.18 2006/01/21 23:16:57 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.18.4.1 2006/04/22 11:37:31 simonb Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -62,14 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.18 2006/01/21 23:16:57 uwe Exp $");
 #endif
 #include <machine/debug.h>
 
-STATIC int pfckbd_match(struct device *, struct cfdata *, void *);
-STATIC void pfckbd_attach(struct device *, struct device *, void *);
-STATIC void (*pfckbd_callout_lookup(void))(void *);
-STATIC void pfckbd_callout_unknown(void *);
-STATIC void pfckbd_callout_hp(void *);
-STATIC void pfckbd_callout_hitachi(void *);
-
-STATIC struct pfckbd_core {
+static struct pfckbd_core {
 	int pc_attached;
 	int pc_enabled;
 	struct callout pc_soft_ch;
@@ -79,8 +76,27 @@ STATIC struct pfckbd_core {
 	void (*pc_callout)(void *);
 } pfckbd_core;
 
+static int pfckbd_match(struct device *, struct cfdata *, void *);
+static void pfckbd_attach(struct device *, struct device *, void *);
+
+CFATTACH_DECL(pfckbd, sizeof(struct device),
+    pfckbd_match, pfckbd_attach, NULL, NULL);
+
+static void pfckbd_ifsetup(struct pfckbd_core *);
+
+/* callbacks for hpckbd */
+static int pfckbd_input_establish(void *, struct hpckbd_if *);
+static int pfckbd_poll(void *);
+
+static void pfckbd_input(struct pfckbd_core *, int, uint16_t);
+
+static void (*pfckbd_callout_lookup(void))(void *);
+static void pfckbd_callout_unknown(void *);
+static void pfckbd_callout_hp(void *);
+static void pfckbd_callout_hitachi(void *);
+
 /* callout function table. this function is platfrom specific. */
-STATIC const struct {
+static const struct {
 	platid_mask_t *platform;
 	void (*func)(void *);
 } pfckbd_calloutfunc_table[] = {
@@ -88,91 +104,56 @@ STATIC const struct {
 	{ &platid_mask_MACH_HITACHI	, pfckbd_callout_hitachi }
 };
 
-CFATTACH_DECL(pfckbd, sizeof(struct device),
-    pfckbd_match, pfckbd_attach, NULL, NULL);
 
-STATIC int pfckbd_poll(void *);
-STATIC void pfckbd_ifsetup(struct pfckbd_core *);
-STATIC int pfckbd_input_establish(void *, struct hpckbd_if *);
-STATIC void pfckbd_input(struct hpckbd_if *, uint16_t *, uint16_t, int);
-
-/*
- * Matrix scan keyboard connected to SH7709, SH7709A PFC module.
- * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
- */
 void
 pfckbd_cnattach()
 {
 	struct pfckbd_core *pc = &pfckbd_core;
-	
-	if ((cpu_product != CPU_PRODUCT_7709) &&
-	    (cpu_product != CPU_PRODUCT_7709A))
+
+	if ((cpu_product != CPU_PRODUCT_7709)
+	    && (cpu_product != CPU_PRODUCT_7709A))
 		return;
 
 	/* initialize interface */
 	pfckbd_ifsetup(pc);
 
-	/* attach console */
+	/* attach descendants */
 	hpckbd_cnattach(&pc->pc_if);
 }
 
-int
+static int
 pfckbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	if ((cpu_product != CPU_PRODUCT_7709) &&
-	    (cpu_product != CPU_PRODUCT_7709A))
-		return (0);
+	if ((cpu_product != CPU_PRODUCT_7709)
+	    && (cpu_product != CPU_PRODUCT_7709A))
+		return 0;
 
-	return (!pfckbd_core.pc_attached);
+	return !pfckbd_core.pc_attached; /* attach only once */
 }
 
-void
+static void
 pfckbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpckbd_attach_args haa;
-	
+
 	printf("\n");
 
-	/* pfckbd is singleton. no more attach */
 	pfckbd_core.pc_attached = 1;
+
 	pfckbd_ifsetup(&pfckbd_core);
 
 	/* attach hpckbd */
-	haa.haa_ic = &pfckbd_core.pc_if; /* tell the hpckbd to my interface */
+	haa.haa_ic = &pfckbd_core.pc_if; /* tell hpckbd our interface */
 	config_found(self, &haa, hpckbd_print);
 
 	/* install callout handler */
 	callout_init(&pfckbd_core.pc_soft_ch);
-	callout_reset(&pfckbd_core.pc_soft_ch, 1, pfckbd_core.pc_callout,
-	    &pfckbd_core);
+	callout_reset(&pfckbd_core.pc_soft_ch, 1,
+		      pfckbd_core.pc_callout, &pfckbd_core);
 }
 
-int
-pfckbd_input_establish(void *ic, struct hpckbd_if *kbdif)
-{
-	struct pfckbd_core *pc = ic;
-
-	/* save hpckbd interface */
-	pc->pc_hpckbd = kbdif;
-	/* ok to transact hpckbd */
-	pc->pc_enabled = 1;
-
-	return 0;
-}
-
-int
-pfckbd_poll(void *arg)
-{
-	struct pfckbd_core *pc = arg;
-
-	if (pc->pc_enabled)
-		(*pc->pc_callout)(arg);
-
-	return 0;
-}
-
-void
+static void
 pfckbd_ifsetup(struct pfckbd_core *pc)
 {
 	int i;
@@ -180,6 +161,7 @@ pfckbd_ifsetup(struct pfckbd_core *pc)
 	pc->pc_if.hii_ctx = pc;
 	pc->pc_if.hii_establish	= pfckbd_input_establish;
 	pc->pc_if.hii_poll = pfckbd_poll;
+
 	for (i = 0; i < 8; i++)
 		pc->pc_column[i] = 0xdfff;
 
@@ -187,57 +169,95 @@ pfckbd_ifsetup(struct pfckbd_core *pc)
 	pc->pc_callout = pfckbd_callout_lookup();
 }
 
-void
-pfckbd_input(struct hpckbd_if *hpckbd, uint16_t *buf, uint16_t data,
-    int column)
+
+/*
+ * Callback for hpckbd_initif
+ */
+static int
+pfckbd_input_establish(void *ic, struct hpckbd_if *kbdif)
+{
+	struct pfckbd_core *pc = ic;
+
+	pc->pc_hpckbd = kbdif;	/* save hpckbd interface */
+	pc->pc_enabled = 1;	/* ok to talk to hpckbd */
+
+	return 0;
+}
+
+/*
+ * Callback for hpckbd_cngetc
+ */
+static int
+pfckbd_poll(void *ic)
+{
+	struct pfckbd_core *pc = ic;
+
+	if (pc->pc_enabled)
+		(*pc->pc_callout)(pc);
+
+	return 0;
+}
+
+/*
+ * Called by platform specific scan routines to report key events to hpckbd
+ */
+static void
+pfckbd_input(struct pfckbd_core *pc, int column, uint16_t data)
 {
 	int row, type, val;
 	unsigned int edge, mask;
 
-	edge = data ^ buf[column];
-	if (edge) {
-		buf[column] = data;
+	edge = data ^ pc->pc_column[column];
+	if (edge == 0)
+		return;		/* no changes in this column */
 
-		for (row = 0, mask = 1; row < 16; row++, mask <<= 1) {
-			if (mask & edge) {
-				type = mask & data ? 0 : 1;
-				val = row * 8 + column;
-				DPRINTF("(%2d, %2d) %d \n",
-				    row, column, type);
-				hpckbd_input(hpckbd, type, val);
-			}
+	pc->pc_column[column] = data;
+
+	for (row = 0, mask = 1; row < 16; ++row, mask <<= 1) {
+		if (mask & edge) {
+			type = mask & data ? /* up */ 0 : /* down */ 1;
+			DPRINTF("(%2d, %2d) %d \n", row, column, type);
+
+			val = row * 8 + column;
+			hpckbd_input(pc->pc_hpckbd, type, val);
 		}
 	}
 }
 
+
 /*
- * Platform dependent routines.
+ * Platform dependent scan routines.
  */
 
 /* Look up appropriate callback handler */
-void (*pfckbd_callout_lookup())(void *)
+static void
+(*pfckbd_callout_lookup())(void *)
 {
-	int i, n = sizeof(pfckbd_calloutfunc_table) /
-	    sizeof(pfckbd_calloutfunc_table[0]);
-	
+	int i, n;
+
+	n = sizeof(pfckbd_calloutfunc_table)
+		/ sizeof(pfckbd_calloutfunc_table[0]);
+
 	for (i = 0; i < n; i++)
 		if (platid_match(&platid,
-		    pfckbd_calloutfunc_table[i].platform))
-			return (pfckbd_calloutfunc_table[i].func);
+				 pfckbd_calloutfunc_table[i].platform))
+			return pfckbd_calloutfunc_table[i].func;
 
-	return (pfckbd_callout_unknown);
+	return pfckbd_callout_unknown;
 }
 
 /* Placeholder for unknown platform */
-void
+static void
 pfckbd_callout_unknown(void *arg)
 {
 
 	printf("%s: unknown keyboard switch\n", __func__);
 }
 
-/* HP Jornada680/690, HP620LX */
-void
+/*
+ * HP Jornada680/690, HP620LX
+ */
+static void
 pfckbd_callout_hp(void *arg)
 {
 #define PFCKBD_HP_PDCR_MASK 0xcc0c
@@ -293,10 +313,10 @@ pfckbd_callout_hp(void *arg)
 		delay(50);
 
 		/* read sense */
-		data = _reg_read_1(SH7709_PFDR) |
-		    (_reg_read_1(SH7709_PCDR) << 8);
+		data = _reg_read_1(SH7709_PFDR)
+			| (_reg_read_1(SH7709_PCDR) << 8);
 
-		pfckbd_input(pc->pc_hpckbd, pc->pc_column, data, column);
+		pfckbd_input(pc, column, data);
 	}
 
 	/* scan no lines */
@@ -316,8 +336,10 @@ pfckbd_callout_hp(void *arg)
 	callout_schedule(&pc->pc_soft_ch, 1);
 }
 
-/* HITACH PERSONA (HPW-50PAD) */
-void
+/*
+ * HITACH PERSONA (HPW-50PAD)
+ */
+static void
 pfckbd_callout_hitachi(void *arg)
 {
 #define PFCKBD_HITACHI_PCCR_MASK 0xfff3
@@ -404,12 +426,11 @@ pfckbd_callout_hitachi(void *arg)
 
 		/* read sense */
 		data[i & 0x1] =
-		    ((_reg_read_1(SH7709_PCDR) & PFCKBD_HITACHI_PCDR_SNS_MASK) |
-		    (_reg_read_1(SH7709_PFDR) & PFCKBD_HITACHI_PFDR_SNS_MASK));
+		    (_reg_read_1(SH7709_PCDR) & PFCKBD_HITACHI_PCDR_SNS_MASK)
+		  | (_reg_read_1(SH7709_PFDR) & PFCKBD_HITACHI_PFDR_SNS_MASK);
 
 		if (i & 0x1)
-			pfckbd_input(pc->pc_hpckbd, pc->pc_column,
-				     (data[0] | (data[1] << 8)), (i >> 1));
+			pfckbd_input(pc, (i >> 1), (data[0] | (data[1] << 8)));
 	}
 
 	/* scan no lines */

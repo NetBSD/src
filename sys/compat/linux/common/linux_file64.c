@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.30 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.30.6.1 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.30 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.30.6.1 2006/04/22 11:38:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.30 2005/12/11 12:20:19 christos E
 #include <compat/linux/linux_syscallargs.h>
 
 #ifndef alpha
+
+# ifndef COMPAT_LINUX32
 
 static void bsd_to_linux_stat __P((struct stat *, struct linux_stat64 *));
 static int linux_do_stat64 __P((struct lwp *, void *, register_t *, int));
@@ -105,14 +107,14 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_atime   = bsp->st_atime;
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
-#ifdef LINUX_STAT64_HAS_NSEC
+#  ifdef LINUX_STAT64_HAS_NSEC
 	lsp->lst_atime_nsec   = bsp->st_atimensec;
 	lsp->lst_mtime_nsec   = bsp->st_mtimensec;
 	lsp->lst_ctime_nsec   = bsp->st_ctimensec;
-#endif
-#if LINUX_STAT64_HAS_BROKEN_ST_INO
+#  endif
+#  if LINUX_STAT64_HAS_BROKEN_ST_INO
 	lsp->__lst_ino   = (linux_ino_t) bsp->st_ino;
-#endif
+#  endif
 }
 
 /*
@@ -265,8 +267,9 @@ linux_sys_ftruncate64(l, v, retval)
 
 	return sys_ftruncate(l, &ta, retval);
 }
+# endif /* !COMPAT_LINUX32 */
 
-#if !defined(__m68k__) && !defined(__amd64__)
+# if !defined(__m68k__) && (!defined(__amd64__) || defined(COMPAT_LINUX32))
 static void bsd_to_linux_flock64 __P((struct linux_flock64 *,
     const struct flock *));
 static void linux_to_bsd_flock64 __P((struct flock *,
@@ -375,7 +378,7 @@ linux_sys_fcntl64(l, v, retval)
 		return linux_sys_fcntl(l, v, retval);
 	}
 }
-#endif /* !m68k && !amd64 */
+# endif /* !m69k && !amd64  && !COMPAT_LINUX32 */
 
 #endif /* !alpha */
 
@@ -393,6 +396,7 @@ linux_sys_fcntl64(l, v, retval)
  *
  * Note that this doesn't handle union-mounted filesystems.
  */
+#ifndef COMPAT_LINUX32
 int
 linux_sys_getdents64(l, v, retval)
 	struct lwp *l;
@@ -453,10 +457,9 @@ again:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
+	UIO_SETUP_SYSSPACE(&auio);
 	/*
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
@@ -530,3 +533,4 @@ out1:
 	FILE_UNUSE(fp, l);
 	return error;
 }
+#endif /* !COMPAT_LINUX32 */

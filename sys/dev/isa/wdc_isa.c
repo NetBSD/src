@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.48 2006/01/16 20:30:19 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.48.4.1 2006/04/22 11:39:06 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.48 2006/01/16 20:30:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.48.4.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 	struct wdc_isa_softc *sc = (void *)self;
 	struct wdc_regs *wdr;
 	struct isa_attach_args *ia = aux;
-	int wdc_cf_flags = self->dv_cfdata->cf_flags;
+	int wdc_cf_flags = device_cfdata(self)->cf_flags;
 	int i;
 
 	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;

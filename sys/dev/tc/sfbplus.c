@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.23 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: sfbplus.c,v 1.23.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.23 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.23.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,8 @@ static const struct wsscreen_list sfb_screenlist = {
 	sizeof(_sfb_scrlist) / sizeof(struct wsscreen_descr *), _sfb_scrlist
 };
 
-static int	sfbioctl(void *, u_long, caddr_t, int, struct proc *);
-static paddr_t	sfbmmap(void *, off_t, int);
+static int	sfbioctl(void *, void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	sfbmmap(void *, void *, off_t, int);
 
 static int	sfb_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -239,10 +239,7 @@ static const u_int8_t shuffle[256] = {
 };
 
 static int
-sfbpmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sfbpmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -253,11 +250,9 @@ sfbpmatch(parent, match, aux)
 }
 
 static void
-sfbpattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sfbpattach(struct device *parent, struct device *self, void *aux)
 {
-	struct sfbp_softc *sc = (struct sfbp_softc *)self;
+	struct sfbp_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
@@ -322,8 +317,7 @@ sfbpattach(parent, self, aux)
 }
 
 static void
-sfbp_cmap_init(sc)
-	struct sfb_softc *sc;
+sfbp_cmap_init(struct sfbp_softc *sc)
 {
 	struct hwcmap256 *cm;
 	const u_int8_t *p;
@@ -342,8 +336,7 @@ sfbp_cmap_init(sc)
 }
 
 static void
-sfbp_common_init(ri)
-	struct rasops_info *ri;
+sfbp_common_init(struct rasops_info *ri)
 {
 	caddr_t base, asic;
 	int i, depth, hsetup, vsetup, vbase, cookie;
@@ -435,12 +428,7 @@ sfbp_common_init(ri)
 }
 
 static int
-sfbioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+sfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct sfbp_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -519,10 +507,7 @@ sfbioctl(v, cmd, data, flag, p)
 }
 
 paddr_t
-sfbmmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+sfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct sfbp_softc *sc = v;
 
@@ -532,12 +517,8 @@ sfbmmap(v, offset, prot)
 }
 
 static int
-sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+sfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct sfbp_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -556,9 +537,7 @@ sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 void
-sfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+sfb_free_screen(void *v, void *cookie)
 {
 	struct sfbp_softc *sc = v;
 
@@ -569,20 +548,15 @@ sfb_free_screen(v, cookie)
 }
 
 static int
-sfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+sfb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 
 	return (0);
 }
 
 int
-sfbp_cnattach(addr)
-	tc_addr_t addr;
+sfbp_cnattach(tc_addr_t addr)
 {
 	struct rasops_info *ri;
 	long defattr;
@@ -597,8 +571,7 @@ sfbp_cnattach(addr)
 }
 
 static int
-sfbpintr(arg)
-	void *arg;
+sfbpintr(void *arg)
 {
 #define	cc (&sc->sc_cursor)
 	struct sfbp_softc *sc = arg;
@@ -633,8 +606,7 @@ done:
 }
 
 static void
-bt459init(vdac)
-	caddr_t vdac;
+bt459init(caddr_t vdac)
 {
 	const u_int8_t *p;
 	int i;
@@ -701,8 +673,7 @@ bt459init(vdac)
 }
 
 static void
-bt463init(vdac)
-	caddr_t vdac;
+bt463init(caddr_t vdac)
 {
 	int i;
 
@@ -730,9 +701,7 @@ bt463init(vdac)
 }
 
 static int
-get_cmap(sc, p)
-	struct sfbp_softc *sc;
-	struct wsdisplay_cmap *p;
+get_cmap(struct sfbp_softc *sc, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
 	int error;
@@ -751,9 +720,7 @@ get_cmap(sc, p)
 }
 
 static int
-set_cmap(sc, p)
-	struct sfbp_softc *sc;
-	struct wsdisplay_cmap *p;
+set_cmap(struct sfbp_softc *sc, struct wsdisplay_cmap *p)
 {
 	struct hwcmap256 cmap;
 	u_int index = p->index, count = p->count;
@@ -782,9 +749,7 @@ set_cmap(sc, p)
 }
 
 static int
-set_cursor(sc, p)
-	struct sfbp_softc *sc;
-	struct wsdisplay_cursor *p;
+set_cursor(struct sfbp_softc *sc, struct wsdisplay_cursor *p)
 {
 #define	cc (&sc->sc_cursor)
 	u_int v, index = 0, count = 0, icount = 0;
@@ -846,17 +811,13 @@ set_cursor(sc, p)
 }
 
 static int
-get_cursor(sc, p)
-	struct sfbp_softc *sc;
-	struct wsdisplay_cursor *p;
+get_cursor(struct sfbp_softc *sc, struct wsdisplay_cursor *p)
 {
 	return (EPASSTHROUGH); /* XXX */
 }
 
 static void
-set_curpos(sc, curpos)
-	struct sfbp_softc *sc;
-	struct wsdisplay_curpos *curpos;
+set_curpos(struct sfbp_softc *sc, struct wsdisplay_curpos *curpos)
 {
 	struct rasops_info *ri = sc->sc_ri;
 	int x = curpos->x, y = curpos->y;
@@ -874,9 +835,7 @@ set_curpos(sc, curpos)
 }
 
 static void
-bt459visible(hw, on)
-	caddr_t hw;
-	int on;
+bt459visible(caddr_t hw, int on)
 {
 	hw += SFB_RAMDAC_OFFSET;
 	SELECT(hw, BT459_IREG_CCR);
@@ -885,17 +844,13 @@ bt459visible(hw, on)
 }
 
 static void
-sfbpvisible(hw, on)
-	caddr_t hw;
-	int on;
+sfbpvisible(caddr_t hw, int on)
 {
 	/* XXX use SFBplus ASIC XX */
 }
 
 static void
-bt459locate(hw, cc)
-	caddr_t hw;
-	struct hwcursor64 *cc;
+bt459locate(caddr_t hw, struct hwcursor64 *cc)
 {
 	int x, y, s;
 
@@ -916,9 +871,7 @@ bt459locate(hw, cc)
 }
 
 static void
-sfbplocate(hw, cc)
-	caddr_t hw;
-	struct hwcursor64 *cc;
+sfbplocate(caddr_t hw, struct hwcursor64 *cc)
 {
 	int x, y;
 
@@ -931,9 +884,7 @@ sfbplocate(hw, cc)
 }
 
 static void
-bt459color(hw, cp)
-	caddr_t hw;
-	u_int8_t *cp;
+bt459color(caddr_t hw, u_int8_t *cp)
 {
 
 	hw += SFB_RAMDAC_OFFSET;
@@ -949,17 +900,12 @@ bt459color(hw, cp)
 }
 
 static void
-bt463color(hw, cp)
-	caddr_t hw;
-	u_int8_t *cp;
+bt463color(caddr_t hw, u_int8_t *cp)
 {
 }
 
 static void
-bt459shape(hw, size, image)
-	caddr_t hw;
-	struct wsdisplay_curpos *size;
-	u_int64_t *image;
+bt459shape(caddr_t hw, struct wsdisplay_curpos *size, u_int64_t *image)
 {
 	u_int8_t *ip, *mp, img, msk;
 	u_int8_t u;
@@ -998,18 +944,13 @@ bt459shape(hw, size, image)
 }
 
 static void
-sfbpshape(hw, size, image)
-	caddr_t hw;
-	struct wsdisplay_curpos *size;
-	u_int64_t *image;
+sfbpshape(caddr_t hw, struct wsdisplay_curpos *size, u_int64_t *image)
 {
 	/* XXX use SFBplus ASIC XXX */
 }
 
 static void
-bt459setlut(hw, cm)
-	caddr_t hw;
-	struct hwcmap256 *cm;
+bt459setlut(caddr_t hw, struct hwcmap265 *cm)
 {
 	int index;
 
@@ -1023,9 +964,7 @@ bt459setlut(hw, cm)
 }
 
 static void
-noplut(hw, cm)
-	caddr_t hw;
-	struct hwcmap256 *cm;
+noplut(caddr_t hw, struct hwcmap265 *cm)
 {
 }
 
@@ -1111,11 +1050,7 @@ noplut(hw, cm)
  * Actually write a string to the frame buffer.
  */
 static void
-sfbp_putchar(id, row, col, uc, attr)
-	void *id;
-	int row, col;
-	u_int uc;
-	long attr;
+sfbp_putchar(void *id, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = id;
 	caddr_t sfb, p;
@@ -1169,10 +1104,7 @@ sfbp_putchar(id, row, col, uc, attr)
  * Clear characters in a line.
  */
 static void
-sfbp_erasecols(id, row, startcol, ncols, attr)
-	void *id;
-	int row, startcol, ncols;
-	long attr;
+sfbp_erasecols(void *id, int row, int startcol, int ncols, long attr)
 {
 	struct rasops_info *ri = id;
 	caddr_t sfb, p;
@@ -1234,9 +1166,7 @@ sfbp_erasecols(id, row, startcol, ncols, attr)
  * Copy lines.
  */
 static void
-sfbp_copyrows(id, srcrow, dstrow, nrows)
-	void *id;
-	int srcrow, dstrow, nrows;
+sfbp_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = id;
 	caddr_t sfb, p;
@@ -1296,9 +1226,7 @@ sfbp_copyrows(id, srcrow, dstrow, nrows)
 
 
 static void
-sfbp_copyrows(id, srcrow, dstrow, nrows)
-	void *id;
-	int srcrow, dstrow, nrows;
+sfbp_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = id;
 	caddr_t sfb, p, q;
@@ -1365,10 +1293,7 @@ sfbp_copyrows(id, srcrow, dstrow, nrows)
  * Erase lines.
  */
 static void
-sfbp_eraserows(id, startrow, nrows, attr)
-	void *id;
-	int startrow, nrows;
-	long attr;
+sfbp_eraserows(void *id, int startrow, int nrows, long attr)
 {
 	struct rasops_info *ri = id;
 	caddr_t sfb, p;

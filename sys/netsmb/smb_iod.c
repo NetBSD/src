@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.25 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.25.6.1 2006/04/22 11:40:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.25 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.25.6.1 2006/04/22 11:40:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 	/*
 	 * Check for fatal errors
 	 */
-	if (SMB_TRAN_FATAL(vcp, error)) {
+	if (vcp && SMB_TRAN_FATAL(vcp, error)) {
 		/*
 		 * No further attempts should be made
 		 */

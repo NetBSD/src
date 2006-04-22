@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14.6.1 2006/04/22 11:37:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.6.1 2006/04/22 11:37:30 simonb Exp $");
 
 #include "opt_md.h"
 
@@ -95,7 +95,7 @@ get_device(const char *name)
 	else if (*cp != '\0' && *cp != ' ')
 		return;
 	sprintf(buf, "%s%d", devname, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;
@@ -108,7 +108,7 @@ get_device(const char *name)
 static void
 set_root_device(void)
 {
-            
+
 	if (boot_file[0] != '\0')
 		get_device(boot_file);
 	else

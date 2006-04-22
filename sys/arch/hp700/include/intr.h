@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.6.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -83,8 +83,8 @@ extern int softnetmask;
 /* 
  * Add a mask to cpl, and return the old value of cpl.
  */
-static inline int splraise __P((int)); 
-static inline int  
+static __inline int splraise __P((int)); 
+static __inline int  
 splraise(ncpl)
 	register int ncpl;
 {

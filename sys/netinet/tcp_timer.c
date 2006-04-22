@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.73 2005/12/11 12:24:58 christos Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.73.6.1 2006/04/22 11:40:11 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.73 2005/12/11 12:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.73.6.1 2006/04/22 11:40:11 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -566,6 +566,7 @@ tcp_timer_keep(void *arg)
 	if (tp->t_in6pcb)
 		so = tp->t_in6pcb->in6p_socket;
 #endif
+	KASSERT(so != NULL);
 	if (so->so_options & SO_KEEPALIVE &&
 	    tp->t_state <= TCPS_CLOSE_WAIT) {
 	    	if ((tcp_maxidle > 0) &&

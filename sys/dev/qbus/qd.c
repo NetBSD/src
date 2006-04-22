@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.34 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: qd.c,v 1.34.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.34 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.34.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -736,7 +736,7 @@ void qd_attach(parent, self, aux)
 
 	printf("\n");
 
-	unit = self->dv_unit;		/* get QDSS number */
+	unit = device_unit(self);		/* get QDSS number */
 
 	/* Set interrupt vectors for interrupt handlers */
 
@@ -899,7 +899,7 @@ qdclose(dev, flag, mode, p)
 	qd = &qdmap[unit];
 
 	uh = (struct uba_softc *)
-	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
+	     device_parent((struct device *)(qd_cd.cd_devs[unit]));
 
 
 	if ((minor_dev & 0x03) == 2) {
@@ -1102,7 +1102,7 @@ qdioctl(dev, cmd, datap, flags, p)
 	struct uba_softc *uh;
 
 	uh = (struct uba_softc *)
-	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
+	     device_parent((struct device *)(qd_cd.cd_devs[unit]));
 
 	/*
 	* service graphic device ioctl commands
@@ -1718,7 +1718,7 @@ qd_strategy(bp)
 	unit = (minor(bp->b_dev) >> 2) & 0x07;
 
 	uh = (struct uba_softc *)
-	     (((struct device *)(qd_cd.cd_devs[unit]))->dv_parent);
+	     device_parent((struct device *)(qd_cd.cd_devs[unit]));
 
 	/*
 	* init pointers
@@ -2066,15 +2066,16 @@ qddint(arg)
 	volatile struct dga *dga;
 	volatile struct adder *adder;
 	int cookie;			/* DMA adrs for QDSS */
+	int unit = device_unit(dv);
 
 	(void)spl4();			/* allow interval timer in */
 
 	/*
 	* init pointers
 	*/
-	header = DMAheader[dv->dv_unit];	    /* register for optimization */
-	dga = (struct dga *) qdmap[dv->dv_unit].dga;
-	adder = (struct adder *) qdmap[dv->dv_unit].adder;
+	header = DMAheader[unit];    /* register for optimization */
+	dga = (struct dga *) qdmap[unit].dga;
+	adder = (struct adder *) qdmap[unit].adder;
 
 	/*
 	* if this interrupt flagged as bogus for interrupt flushing purposes..
@@ -2090,18 +2091,18 @@ qddint(arg)
 	if (dga->csr & DMA_ERR) {
 
 		if (dga->csr & PARITY_ERR)
-		    printf("qd%d: qddint: DMA hardware parity fault.\n", dv->dv_unit);
+		    printf("qd%d: qddint: DMA hardware parity fault.\n", unit);
 
 		if (dga->csr & BUS_ERR)
-		    printf("qd%d: qddint: DMA hardware bus error.\n", dv->dv_unit);
+		    printf("qd%d: qddint: DMA hardware bus error.\n", unit);
 	}
 
 	/*
 	* if this was a DMA from user space...
 	*/
-	if (qdflags[dv->dv_unit].user_dma) {
-		qdflags[dv->dv_unit].user_dma = 0;
-		wakeup((caddr_t)&qdflags[dv->dv_unit].user_dma);
+	if (qdflags[unit].user_dma) {
+		qdflags[unit].user_dma = 0;
+		wakeup((caddr_t)&qdflags[unit].user_dma);
 		return;
 	}
 
@@ -2120,7 +2121,7 @@ qddint(arg)
 		header->newest = header->oldest;
 		header->used = 0;
 
-		selnotify(&qdrsel[dv->dv_unit], 0);
+		selnotify(&qdrsel[unit], 0);
 
 		if (dga->bytcnt_lo != 0) {
 			dga->bytcnt_lo = 0;
@@ -2135,7 +2136,7 @@ qddint(arg)
 	* wakeup "select" client.
 	*/
 	if (DMA_ISFULL(header)) {
-		selnotify(&qdrsel[dv->dv_unit], 0);
+		selnotify(&qdrsel[unit], 0);
 	}
 
 	header->DMAreq[header->oldest].DMAdone |= REQUEST_DONE;
@@ -2151,7 +2152,7 @@ qddint(arg)
 	* if no more DMA pending, wake up "select" client and exit
 	*/
 	if (DMA_ISEMPTY(header)) {
-		selnotify(&qdrsel[dv->dv_unit], 0);
+		selnotify(&qdrsel[unit], 0);
 		DMA_CLRACTIVE(header);  /* flag DMA done */
 		return;
 	}
@@ -2199,7 +2200,7 @@ qddint(arg)
 		}
 		break;
 	default:
-		printf("qd%d: qddint: illegal DMAtype parameter.\n", dv->dv_unit);
+		printf("qd%d: qddint: illegal DMAtype parameter.\n", unit);
 		DMA_CLRACTIVE(header);	/* flag DMA done */
 		return;
 	}
@@ -2245,10 +2246,11 @@ qdaint(arg)
 	volatile short *red;
 	volatile short *green;
 	volatile short *blue;
+	int unit = device_unit(dv);
 
 	(void)spl4();			/* allow interval timer in */
 
-	adder = (struct adder *) qdmap[dv->dv_unit].adder;
+	adder = (struct adder *) qdmap[unit].adder;
 
 	/*
 	* service the vertical blank interrupt (VSYNC bit) by loading
@@ -2256,12 +2258,12 @@ qdaint(arg)
 	*/
 	if (adder->status & VSYNC) {
 		adder->status &= ~VSYNC;	/* clear the interrupt */
-		cbuf = color_buf[dv->dv_unit];
+		cbuf = color_buf[unit];
 		if (cbuf->status & LOAD_COLOR_MAP) {
 
-			red = (short *) qdmap[dv->dv_unit].red;
-			green = (short *) qdmap[dv->dv_unit].green;
-			blue = (short *) qdmap[dv->dv_unit].blue;
+			red = (short *) qdmap[unit].red;
+			green = (short *) qdmap[unit].green;
+			blue = (short *) qdmap[unit].blue;
 
 			for (i = cbuf->count, rgbp = cbuf->rgb;
 			     --i >= 0; rgbp++) {
@@ -2280,7 +2282,7 @@ qdaint(arg)
 	if (adder->status & FRAME_SYNC) {
 		adder->status &= ~FRAME_SYNC;	/* clear the interrupt */
 
-		if (scroll[dv->dv_unit]->status & LOAD_REGS) {
+		if (scroll[unit]->status & LOAD_REGS) {
 
 			for (i = 1000, adder->status = 0; i > 0 &&
 			     !(adder->status&ID_SCROLL_READY); --i)
@@ -2292,22 +2294,22 @@ qdaint(arg)
 				return;
 			}
 
-			adder->ID_scroll_data = scroll[dv->dv_unit]->viper_constant;
+			adder->ID_scroll_data = scroll[unit]->viper_constant;
 			adder->ID_scroll_command = ID_LOAD | SCROLL_CONSTANT;
 
 			adder->y_scroll_constant =
-				scroll[dv->dv_unit]->y_scroll_constant;
-			adder->y_offset_pending = scroll[dv->dv_unit]->y_offset;
+				scroll[unit]->y_scroll_constant;
+			adder->y_offset_pending = scroll[unit]->y_offset;
 
-			if (scroll[dv->dv_unit]->status & LOAD_INDEX) {
+			if (scroll[unit]->status & LOAD_INDEX) {
 
 				adder->x_index_pending =
-					scroll[dv->dv_unit]->x_index_pending;
+					scroll[unit]->x_index_pending;
 				adder->y_index_pending =
-					scroll[dv->dv_unit]->y_index_pending;
+					scroll[unit]->y_index_pending;
 			}
 
-			scroll[dv->dv_unit]->status = 0x00;
+			scroll[unit]->status = 0x00;
 		}
 	}
 }
@@ -2336,17 +2338,18 @@ qdiint(arg)
 	u_short key;
 	char do_wakeup = 0;		/* flag to do a select wakeup call */
 	char a, b, c;			/* mouse button test variables */
+	int unit = device_unit(dv);
 
 	(void)spl4();			/* allow interval timer in */
 
-	eqh = eq_header[dv->dv_unit];		/* optimized as a register */
-	new_rep = &current_rep[dv->dv_unit];
-	duart = (struct duart *) qdmap[dv->dv_unit].duart;
+	eqh = eq_header[unit];		/* optimized as a register */
+	new_rep = &current_rep[unit];
+	duart = (struct duart *) qdmap[unit].duart;
 
 	/*
 	* if the graphic device is turned on..
 	*/
-	if (qdflags[dv->dv_unit].inuse & GRAPHIC_DEV) {
+	if (qdflags[unit].inuse & GRAPHIC_DEV) {
 		/*
 		* empty DUART
 		*/
@@ -2409,7 +2412,7 @@ qdiint(arg)
 			* pick up the mouse input (if any)  */
 
 			if ((status = duart->statusB) & RCV_RDY  &&
-			    qdflags[dv->dv_unit].pntr_id == MOUSE_ID) {
+			    qdflags[unit].pntr_id == MOUSE_ID) {
 
 				if (status & 0x70) {
 					duart->cmdB = 0x40;
@@ -2464,17 +2467,17 @@ qdiint(arg)
 						/*
 						* calculate acceleration factor, if needed	*/
 
-						if (qdflags[dv->dv_unit].curs_acc > ACC_OFF) {
+						if (qdflags[unit].curs_acc > ACC_OFF) {
 
-							if (qdflags[dv->dv_unit].curs_thr <= new_rep->dx)
+							if (qdflags[unit].curs_thr <= new_rep->dx)
 							    new_rep->dx +=
-							    (new_rep->dx - qdflags[dv->dv_unit].curs_thr)
-							    * qdflags[dv->dv_unit].curs_acc;
+							    (new_rep->dx - qdflags[unit].curs_thr)
+							    * qdflags[unit].curs_acc;
 
-							if (qdflags[dv->dv_unit].curs_thr <= new_rep->dy)
+							if (qdflags[unit].curs_thr <= new_rep->dy)
 							    new_rep->dy +=
-							    (new_rep->dy - qdflags[dv->dv_unit].curs_thr)
-							    * qdflags[dv->dv_unit].curs_acc;
+							    (new_rep->dy - qdflags[unit].curs_thr)
+							    * qdflags[unit].curs_acc;
 						}
 
 						/*
@@ -2505,7 +2508,7 @@ qdiint(arg)
 						/*
 						* update cursor screen position */
 
-						dga = (struct dga *) qdmap[dv->dv_unit].dga;
+						dga = (struct dga *) qdmap[unit].dga;
 						dga->x_cursor = TRANX(eqh->curs_pos.x);
 						dga->y_cursor = TRANY(eqh->curs_pos.y);
 
@@ -2542,7 +2545,7 @@ GET_MBUTTON:
 					* if button state has changed */
 
 					a = new_rep->state & 0x07;    /*mask nonbutton bits */
-					b = last_rep[dv->dv_unit].state & 0x07;
+					b = last_rep[unit].state & 0x07;
 
 					if (a ^ b) {
 
@@ -2590,11 +2593,11 @@ GET_MBUTTON:
 
 					/* refresh last report */
 
-					last_rep[dv->dv_unit] = current_rep[dv->dv_unit];
+					last_rep[unit] = current_rep[unit];
 
 				}  /* get last byte of report */
 			} else if ((status = duart->statusB)&RCV_RDY &&
-				   qdflags[dv->dv_unit].pntr_id == TABLET_ID) {
+				   qdflags[unit].pntr_id == TABLET_ID) {
 				/*
 				* pickup tablet input, if any
 				*/
@@ -2656,9 +2659,9 @@ GET_MBUTTON:
 					/*
 					* update cursor position coordinates */
 
-					new_rep->dx /= qdflags[dv->dv_unit].tab_res;
+					new_rep->dx /= qdflags[unit].tab_res;
 					new_rep->dy = (2200 - new_rep->dy)
-					    / qdflags[dv->dv_unit].tab_res;
+					    / qdflags[unit].tab_res;
 
 					if (new_rep->dx > 1023) {
 						new_rep->dx = 1023;
@@ -2680,7 +2683,7 @@ GET_MBUTTON:
 						/*
 						* update cursor screen position */
 
-						dga = (struct dga *) qdmap[dv->dv_unit].dga;
+						dga = (struct dga *) qdmap[unit].dga;
 						dga->x_cursor = TRANX(eqh->curs_pos.x);
 						dga->y_cursor = TRANY(eqh->curs_pos.y);
 
@@ -2721,7 +2724,7 @@ GET_TBUTTON:
 					* if button state has changed */
 
 					a = new_rep->state & 0x1E;   /* mask nonbutton bits */
-					b = last_rep[dv->dv_unit].state & 0x1E;
+					b = last_rep[unit].state & 0x1E;
 
 					if (a ^ b) {
 
@@ -2770,7 +2773,7 @@ GET_TBUTTON:
 
 					/* refresh last report */
 
-					last_rep[dv->dv_unit] = current_rep[dv->dv_unit];
+					last_rep[unit] = current_rep[unit];
 
 				} /* get last byte of report */
 			} /* pick up tablet input */
@@ -2781,7 +2784,7 @@ GET_TBUTTON:
 		* do select wakeup
 		*/
 		if (do_wakeup) {
-			selnotify(&qdrsel[dv->dv_unit], 0);
+			selnotify(&qdrsel[unit], 0);
 			do_wakeup = 0;
 		}
 	} else {
@@ -2791,10 +2794,10 @@ GET_TBUTTON:
 		if (qdpolling)
 			return;
 
-		if (dv->dv_unit >= qd_cd.cd_ndevs || qd_cd.cd_devs[dv->dv_unit] == NULL)
+		if (unit >= qd_cd.cd_ndevs || qd_cd.cd_devs[unit] == NULL)
 			return;		/* no such device or address */
 
-		tp = qd_tty[dv->dv_unit << 2];
+		tp = qd_tty[unit << 2];
 
 		/*
 		 * Get a character from the keyboard.

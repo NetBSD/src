@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.h,v 1.7 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: eeprom.h,v 1.7.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #ifdef	_KERNEL
 extern	char *eeprom_va;
-int	eeprom_uio __P((struct uio *));
+int	eeprom_uio(struct uio *);
 #define DEV_EEPROM      11      /* minor device 11 is eeprom */
 #endif	/* _KERNEL */
 

@@ -1,0 +1,84 @@
+# $NetBSD: GENERIC.SKI,v 1.1.6.2 2006/04/22 11:37:35 simonb Exp $
+#
+# GENERIC machine description file
+#
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel does not include all options, subsystems
+# and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+include 	"arch/ia64/conf/std.ia64"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.1.6.2 $"
+
+maxusers	32		# estimated number of users
+
+# CPU support.  At least one is REQUIRED.
+#options	IA64_CPU
+
+# CPU-related options.
+
+# Standard system options
+
+options 	USERCONF	# userconf(4) support
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC	# expensive kernel consistency checks
+options 	DEBUG		# expensive debugging checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+#options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	KGDB		# remote debugger
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
+#options		MALLOC_DEBUG
+#options		MALLOCLOG
+makeoptions	DEBUG="-g"	# compile full symbol table
+
+# File systems
+file-system 	MFS		# UFS
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+#config		netbsd	root on sd0a type ffs
+#config		netbsd	root on ? type nfs
+
+#
+# Device configuration
+#
+
+mainbus0 at root
+
+cpu* at mainbus?
+#ioapic* at mainbus?
+
+
+# Pull in optional local configuration
+include	"arch/ia64/conf/GENERIC.local"
+
+# Console Devices
+#ssccons*	at mainbus0		# Ski console interface driver
+#wsdisplay*	at ssccons0 console ?
+#wskbd*		at ssccons0 console ?
+
+# Pseudo-Devices
+
+
+# wscons pseudo-devices
+pseudo-device	ssccons			# Ski emulator console
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont
+pseudo-device	ksyms			# /dev/ksyms

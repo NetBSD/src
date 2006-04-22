@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.9 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.9.4.1 2006/04/22 11:38:09 simonb Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9 2006/01/15 22:09:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9.4.1 2006/04/22 11:38:09 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -1097,8 +1097,8 @@ identifycpu(struct cpu_info *ci)
 				vendorname = (char *)&ci->ci_vendor[0];
 			else
 				vendorname = "Unknown";
-			if (family > CPU_MAXFAMILY)
-				family = CPU_MAXFAMILY;
+			if (family >= CPU_MAXFAMILY)
+				family = CPU_MINFAMILY;
 			class = family - 3;
 			modifier = "";
 			name = "";
@@ -1174,8 +1174,10 @@ identifycpu(struct cpu_info *ci)
 		 * being probed.. */
 		ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
 #endif /* XEN3 */
+#if 0
 #ifndef NO_TSC_TIME
 		microtime_func = cc_microtime;
+#endif
 #endif
 	}
 

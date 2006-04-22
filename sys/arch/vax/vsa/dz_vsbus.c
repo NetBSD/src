@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.36 2005/12/11 12:19:37 christos Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.36.6.1 2006/04/22 11:38:08 simonb Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.36 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.36.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -277,7 +277,8 @@ dzcnprobe(struct consdev *cndev)
 	else
 		cndev->cn_pri = CN_NORMAL;
 	cndev->cn_dev = makedev(cdevsw_lookup_major(&dz_cdevsw), diagcons);
-	(vaddr_t)dz = dz_regs = iospace;
+	dz_regs = iospace;
+	dz = (void *)dz_regs;
 	ioaccess(iospace, ioaddr, 1);
 }
 

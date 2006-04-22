@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.100 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.100.6.1 2006/04/22 11:39:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.100 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.100.6.1 2006/04/22 11:39:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,7 +762,7 @@ uaudio_add_mixer(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 	uaudio_determine_class(&iot[id], &mix);
 	mix.type = MIX_SIGNED_16;
 	mix.ctlunit = AudioNvolume;
-#define BIT(bno) ((bm[bno / 8] >> (7 - bno % 8)) & 1)
+#define _BIT(bno) ((bm[bno / 8] >> (7 - bno % 8)) & 1)
 	for (p = i = 0; i < d->bNrInPins; i++) {
 		chs = uaudio_get_cluster(d->baSourceId[i], iot).bNrChannels;
 		mc = 0;
@@ -770,7 +770,7 @@ uaudio_add_mixer(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 			mo = 0;
 			for (o = 0; o < ochs; o++) {
 				bno = (p + c) * ochs + o;
-				if (BIT(bno))
+				if (_BIT(bno))
 					mo++;
 			}
 			if (mo == 1)
@@ -781,7 +781,7 @@ uaudio_add_mixer(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 			for (c = 0; c < chs; c++)
 				for (o = 0; o < ochs; o++) {
 					bno = (p + c) * ochs + o;
-					if (BIT(bno))
+					if (_BIT(bno))
 						mix.wValue[k++] =
 							MAKE(p+c+1, o+1);
 				}
@@ -793,7 +793,7 @@ uaudio_add_mixer(struct uaudio_softc *sc, const struct io_terminal *iot, int id)
 		} else {
 			/* XXX */
 		}
-#undef BIT
+#undef _BIT
 		p += chs;
 	}
 
@@ -1594,11 +1594,13 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	if (offs > size)
 		return USBD_INVAL;
 
+#ifdef UAUDIO_MULTIPLE_ENDPOINTS
 	if (sync && id->bNumEndpoints <= 1) {
 		printf("%s: a sync-pipe endpoint but no other endpoint\n",
 		       USBDEVNAME(sc->sc_dev));
 		return USBD_INVAL;
 	}
+#endif
 	if (!sync && id->bNumEndpoints > 1) {
 		printf("%s: non sync-pipe endpoint but multiple endpoints\n",
 		       USBDEVNAME(sc->sc_dev));

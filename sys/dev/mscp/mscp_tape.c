@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.26 2005/12/11 12:22:47 christos Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.26.6.1 2006/04/22 11:39:11 simonb Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.26 2005/12/11 12:22:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.26.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -161,7 +161,7 @@ mtattach(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	struct	mt_softc *mt = (void *)self;
+	struct	mt_softc *mt = device_private(self);
 	struct	drive_attach_args *da = aux;
 	struct	mscp *mp = da->da_mp;
 	struct	mscp_softc *mi = (void *)parent;
@@ -181,10 +181,11 @@ mt_putonline(mt)
 	struct mt_softc *mt;
 {
 	struct	mscp *mp;
-	struct	mscp_softc *mi = (struct mscp_softc *)mt->mt_dev.dv_parent;
+	struct	mscp_softc *mi =
+	    (struct mscp_softc *)device_parent(&mt->mt_dev);
 	volatile int i;
 
-	(volatile int)mt->mt_state = MT_OFFLINE;
+	((volatile struct mt_softc *) mt)->mt_state = MT_OFFLINE;
 	mp = mscp_getcp(mi, MSCP_WAIT);
 	mp->mscp_opcode = M_OP_ONLINE;
 	mp->mscp_unit = mt->mt_hwunit;
@@ -280,7 +281,7 @@ mtstrategy(bp)
 	}
 
 	mt->mt_waswrite = bp->b_flags & B_READ ? 0 : 1;
-	mscp_strategy(bp, mt->mt_dev.dv_parent);
+	mscp_strategy(bp, device_parent(&mt->mt_dev));
 	return;
 
 bad:
@@ -443,11 +444,8 @@ mtioctl(dev, cmd, data, flag, l)
 {
 	int unit = mtunit(dev);
 	struct mt_softc *mt = mt_cd.cd_devs[unit];
-	struct	mtop *mtop;
-	struct	mtget *mtget;
-	int error = 0, count;
-
-	count = mtop->mt_count;
+	struct mtop *mtop;
+	int error = 0;
 
 	switch (cmd) {
 
@@ -461,8 +459,7 @@ mtioctl(dev, cmd, data, flag, l)
 			error = mtcmd(mt, mtop->mt_op, mtop->mt_count, 0);
 
 	case MTIOCGET:
-		mtget = (void *)data;
-		mtget->mt_type = MT_ISTMSCP;
+		((struct mtget *)data)->mt_type = MT_ISTMSCP;
 		/* XXX we need to fill in more fields here */
 		break;
 
@@ -500,7 +497,7 @@ mtcmd(mt, cmd, count, complete)
 	int cmd, count, complete;
 {
 	struct mscp *mp;
-	struct mscp_softc *mi = (void *)mt->mt_dev.dv_parent;
+	struct mscp_softc *mi = (void *)device_parent(&mt->mt_dev);
 	volatile int i;
 
 	mp = mscp_getcp(mi, MSCP_WAIT);

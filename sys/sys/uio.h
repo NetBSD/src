@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.33 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: uio.h,v 1.33.6.1 2006/04/22 11:40:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -81,10 +81,10 @@ struct uio {
 	int	uio_iovcnt;	/* number of iovecs in array */
 	off_t	uio_offset;	/* offset into file this uio corresponds to */
 	size_t	uio_resid;	/* residual i/o count */
-	enum	uio_seg uio_segflg; /* see above */
 	enum	uio_rw uio_rw;	/* see above */
-	struct	lwp *uio_lwp;	/* LWP if UIO_USERSPACE */
+	struct	vmspace *uio_vmspace;
 };
+#define	UIO_SETUP_SYSSPACE(uio)	uio_setup_sysspace(uio)
 
 #endif /* __UIO_EXPOSE */
 
@@ -101,6 +101,8 @@ struct uio {
 MALLOC_DECLARE(M_IOV);
 
 #define UIO_SMALLIOV	8		/* 8 on stack, else malloc */
+
+void uio_setup_sysspace(struct uio *);
 #endif
 
 #ifndef	_KERNEL

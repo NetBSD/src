@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.18 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.18.6.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -100,6 +100,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("ARM STRONGARM SA1100") },
 	{ &platid_mask_CPU_ARM_STRONGARM_SA1110,
 	 TEXT("ARM STRONGARM SA1110") },
+	{ &platid_mask_CPU_ARM_XSCALE,
+	 TEXT("ARM XSCALE") },
+	{ &platid_mask_CPU_ARM_XSCALE_PXA250,
+	 TEXT("ARM XSCALE PXA250") },
 #endif /* hpcarm */
 #ifdef hpcmips
 	{ &platid_mask_MACH_NEC,
@@ -340,6 +344,10 @@ struct platid_name platid_name_table[] = {
 	 TEXT("Compaq iPAQ H3600") },
 	{ &platid_mask_MACH_COMPAQ_IPAQ_H3660,
 	 TEXT("Compaq iPAQ H3660") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H39XX,
+	 TEXT("Compaq iPAQ H39XX") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H3900,
+	 TEXT("Compaq iPAQ H3900") },
 #endif /* hpcarm */
 #ifdef hpcsh
 	{ &platid_mask_MACH_COMPAQ_AERO,
@@ -433,9 +441,19 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_HP_JORNADA_7XX,
 	 TEXT("HP Jornada 7XX") },
 	{ &platid_mask_MACH_HP_JORNADA_720,
-	 TEXT("HP Jornada 720") },
+	 TEXT("HP Jornada 720 (US/UK)") },
 	{ &platid_mask_MACH_HP_JORNADA_720JP,
 	 TEXT("HP Jornada 720 (Japanese)") },
+	{ &platid_mask_MACH_HP_JORNADA_720EU,
+	 TEXT("HP Jornada 720 (European)") },
+	{ &platid_mask_MACH_HP_JORNADA_720DE,
+	 TEXT("HP Jornada 720 (German)") },
+	{ &platid_mask_MACH_HP_JORNADA_720FR,
+	 TEXT("HP Jornada 720 (French)") },
+	{ &platid_mask_MACH_HP_JORNADA_720SV,
+	 TEXT("HP Jornada 720 (Scandinavian)") },
+	{ &platid_mask_MACH_HP_JORNADA_720ES,
+	 TEXT("HP Jornada 720 (Spanish)") },
 	{ &platid_mask_MACH_HP_JORNADA_8XX,
 	 TEXT("HP Jornada 8XX") },
 	{ &platid_mask_MACH_HP_JORNADA_820,

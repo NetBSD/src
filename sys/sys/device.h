@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.84 2005/12/24 19:01:28 perry Exp $ */
+/* $NetBSD: device.h,v 1.84.6.1 2006/04/22 11:40:18 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -103,6 +103,8 @@ typedef enum devact {
 } devact_t;
 
 typedef struct cfdata *cfdata_t;
+typedef struct cfdriver *cfdriver_t;
+typedef struct cfattach *cfattach_t;
 typedef struct device *device_t;
 
 struct device {
@@ -110,14 +112,14 @@ struct device {
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
 	cfdata_t	dv_cfdata;	/* config data that found us
 					   (NULL if pseudo-device) */
-	struct	cfdriver *dv_cfdriver;	/* our cfdriver */
-	struct	cfattach *dv_cfattach;	/* our cfattach */
-	int	dv_unit;		/* device unit number */
-	char	dv_xname[16];		/* external name (name + unit) */
-	device_t dv_parent;		/* pointer to parent device
+	cfdriver_t	dv_cfdriver;	/* our cfdriver */
+	cfattach_t	dv_cfattach;	/* our cfattach */
+	int		dv_unit;	/* device unit number */
+	char		dv_xname[16];	/* external name (name + unit) */
+	device_t	dv_parent;	/* pointer to parent device
 					   (NULL if pesudo- or root node) */
-	int	dv_flags;		/* misc. flags; see below */
-	int	*dv_locators;		/* our actual locators (optional) */
+	int		dv_flags;	/* misc. flags; see below */
+	int		*dv_locators;	/* our actual locators (optional) */
 };
 
 /* dv_flags */
@@ -303,8 +305,6 @@ extern int booted_partition;		/* or the partition on that device */
 
 extern volatile int config_pending; 	/* semaphore for mountroot */
 
-extern propdb_t dev_propdb;		/* device properties database */
-
 void	config_init(void);
 void	configure(void);
 
@@ -350,13 +350,29 @@ void	config_pending_decr(void);
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
 
+int	devprop_set(device_t, const char *, void *, size_t, int, int);
+size_t	devprop_list(device_t, char *, size_t);
+size_t	devprop_get(device_t, const char *, void *, size_t, int *);
+int	devprop_delete(device_t, const char *);
+int	devprop_copy(device_t, device_t, int);
+
+void		*device_lookup(cfdriver_t, int);
 #ifdef __HAVE_DEVICE_REGISTER
-void	device_register(device_t, void *);
+void		device_register(device_t, void *);
 #endif
 
-/* convenience definitions */
-#define	device_lookup(cfd, unit)					\
-	(((unit) < (cfd)->cd_ndevs) ? (cfd)->cd_devs[(unit)] : NULL)
+devclass_t	device_class(device_t);
+cfdata_t	device_cfdata(device_t);
+cfdriver_t	device_cfdriver(device_t);
+cfattach_t	device_cfattach(device_t);
+int		device_unit(device_t);
+const char	*device_xname(device_t);
+device_t	device_parent(device_t);
+boolean_t	device_is_active(device_t);
+int		device_locator(device_t, u_int);
+void		*device_private(device_t);
+
+boolean_t	device_is_a(device_t, const char *);
 
 #endif /* _KERNEL */
 

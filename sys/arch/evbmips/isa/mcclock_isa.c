@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.6 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.6.6.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.6 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.6.6.1 2006/04/22 11:37:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -38,33 +38,26 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.6 2005/12/11 12:17:11 christos Exp
 
 #include <machine/bus.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>
-
-#include <evbmips/evbmips/clockvar.h>
-#include <evbmips/dev/mcclockvar.h>
+#include <dev/ic/mc146818var.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-struct mcclock_isa_softc {
-	struct mcclock_softc	sc_mcclock;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-};
+/*
+ * Note the Algorithmics PMON firmware uses a different year base.
+ */
+#define	ALGOR_YEAR_ZERO		1920
 
 static int	mcclock_isa_match(struct device *, struct cfdata *, void *);
 static void	mcclock_isa_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(mcclock_isa, sizeof (struct mcclock_isa_softc),
+CFATTACH_DECL(mcclock_isa, sizeof (struct mc146818_softc),
     mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
-static void	mcclock_isa_write(struct mcclock_softc *, u_int, u_int);
-static u_int	mcclock_isa_read(struct mcclock_softc *, u_int);
-
-const struct mcclock_busfns mcclock_isa_busfns = {
-	mcclock_isa_write, mcclock_isa_read,
-};
+static void	mcclock_isa_write(struct mc146818_softc *, u_int, u_int);
+static u_int	mcclock_isa_read(struct mc146818_softc *, u_int);
 
 static int
 mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
@@ -109,33 +102,47 @@ static void
 mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)self;
+	struct mc146818_softc *sc = (struct mc146818_softc *)self;
 
-	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
-	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh))
+	sc->sc_bst = ia->ia_iot;
+	if (bus_space_map(sc->sc_bst, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_bsh))
 		panic("mcclock_isa_attach: couldn't map clock I/O space");
 
-	mcclock_attach(&sc->sc_mcclock, &mcclock_isa_busfns);
+	sc->sc_year0 = ALGOR_YEAR_ZERO;
+	sc->sc_flag = MC146818_NO_CENT_ADJUST;
+	sc->sc_mcread = mcclock_isa_read;
+	sc->sc_mcwrite = mcclock_isa_write;
+	sc->sc_getcent = NULL;
+	sc->sc_setcent = NULL;
+
+	/*
+	 * Turn interrupts off, just in case.  Need to leave the SQWE
+	 * set, because that's the DRAM refresh signal on Rev. B boards.
+	 */
+	mcclock_isa_write(sc, MC_REGB, MC_REGB_SQWE | MC_REGB_BINARY |
+	    MC_REGB_24HR);
+
+	mc146818_attach(sc);
+
+	todr_attach(&sc->sc_handle);
 }
 
-static void
-mcclock_isa_write(struct mcclock_softc *mcsc, u_int reg, u_int datum)
+void
+mcclock_isa_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 {
-	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)mcsc;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_bst;
+	bus_space_handle_t ioh = sc->sc_bsh;
 
 	bus_space_write_1(iot, ioh, 0, reg);
 	bus_space_write_1(iot, ioh, 1, datum);
 }
 
-static u_int
-mcclock_isa_read(struct mcclock_softc *mcsc, u_int reg)
+u_int
+mcclock_isa_read(struct mc146818_softc *sc, u_int reg)
 {
-	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)mcsc;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_bst;
+	bus_space_handle_t ioh = sc->sc_bsh;
 
 	bus_space_write_1(iot, ioh, 0, reg);
 	return bus_space_read_1(iot, ioh, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.89 2006/01/06 09:21:44 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.89.4.1 2006/04/22 11:40:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.89 2006/01/06 09:21:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.89.4.1 2006/04/22 11:40:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,11 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.89 2006/01/06 09:21:44 yamt Exp $");
 #include <ufs/lfs/lfs_extern.h>
 
 #include <uvm/uvm.h>
-
-/* Macros to clear/set/test flags. */
-# define	SET(t, f)	(t) |= (f)
-# define	CLR(t, f)	(t) &= ~(f)
-# define	ISSET(t, f)	((t) & (f))
 
 /*
  * LFS block write function.
@@ -256,8 +251,10 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
 		vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
 #endif
-		if (error)
+		if (error) {
 			return error;
+			simple_unlock(&fs->lfs_interlock);
+		}
 	}
 #ifdef DEBUG
 	if (slept) {

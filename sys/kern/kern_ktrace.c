@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.100.6.1 2006/02/04 14:30:17 simonb Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.100.6.2 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.100.6.1 2006/02/04 14:30:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.100.6.2 2006/04/22 11:39:58 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -963,15 +963,12 @@ sys_ktrace(struct lwp *l, void *v, register_t *retval)
 	struct proc *curp = l->l_proc;
 	struct vnode *vp = NULL;
 	struct file *fp = NULL;
-	int ops = SCARG(uap, ops);
 	struct nameidata nd;
 	int error = 0;
 	int fd;
 
-	ops = KTROP(ops) | (ops & KTRFLAG_DESCEND);
-
 	curp->p_traceflag |= KTRFAC_ACTIVE;
-	if ((ops & KTROP_CLEAR) == 0) {
+	if (KTROP(SCARG(uap, ops)) != KTROP_CLEAR) {
 		/*
 		 * an operation which requires a file argument.
 		 */
@@ -1119,11 +1116,10 @@ ktrwrite(struct ktr_desc *ktd, struct ktrace_entry *kte)
 next:
 	auio.uio_iov = iov = &aiov[0];
 	auio.uio_offset = 0;
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_resid = 0;
 	auio.uio_iovcnt = 0;
-	auio.uio_lwp = curlwp;
+	UIO_SETUP_SYSSPACE(&auio);
 	do {
 		kth = &kte->kte_kth;
 

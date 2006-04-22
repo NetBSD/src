@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_shm.h,v 1.7 2005/11/10 18:33:37 christos Exp $	*/
+/*	$NetBSD: linux_shm.h,v 1.7.8.1 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ struct linux_shm_info {
 
 
 /* Pretend the sys_shmat and sys_shmctl syscalls are defined */
+#ifndef __amd64__
 struct linux_sys_shmat_args {
 	syscallarg(int) shmid;
 	syscallarg(void *) shmaddr;
@@ -118,6 +119,7 @@ struct linux_sys_shmctl_args {
 	syscallarg(int) cmd;
 	syscallarg(struct linux_shmid_ds *) buf;
 };
+#endif
 
 #ifdef SYSVSHM
 #ifdef _KERNEL

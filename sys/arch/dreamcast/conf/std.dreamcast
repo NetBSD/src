@@ -1,4 +1,4 @@
-# $NetBSD: std.dreamcast,v 1.7 2005/12/11 12:17:06 christos Exp $
+# $NetBSD: std.dreamcast,v 1.7.6.1 2006/04/22 11:37:21 simonb Exp $
 #
 # standard, required NetBSD/dreamcast 'options'
 
@@ -18,4 +18,4 @@ options 	IOM_RAM_BEGIN=0x0c000000
 options 	IOM_RAM_SIZE=0x01000000         # 16MB
 
 makeoptions	ENDIAN="-EL"
-makeoptions	LDSCRIPTBASE="shl.x"	# for little endian
+makeoptions	DEFTEXTADDR="0x8c001000"

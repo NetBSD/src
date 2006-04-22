@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.4 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.4.6.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -26,40 +26,6 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
-/*
- * Definitions for CPU-independent clock handling for the alpha and pmax.
- */
-
-/*
- * clocktime structure:
- *
- * structure passed to TOY clocks when setting them.  broken out this
- * way, so that the time_t -> field conversion can be shared.
- */
-struct clocktime {
-	int	year;			/* year - 1900 */
-	int	mon;			/* month (1 - 12) */
-	int	day;			/* day (1 - 31) */
-	int	hour;			/* hour (0 - 23) */
-	int	min;			/* minute (0 - 59) */
-	int	sec;			/* second (0 - 59) */
-	int	dow;			/* day of week (0 - 6; 0 = Sunday) */
-};
-
-/*
- * clockfns structure:
- *
- * function switch used by chip-independent clock code, to access
- * chip-dependent routines.
- */
-struct clockfns {
-	void	(*cf_init)(struct device *);
-	void	(*cf_get)(struct device *, time_t, struct clocktime *);
-	void	(*cf_set)(struct device *, struct clocktime *);
-};
-
-void clockattach(struct device *, const struct clockfns *);
 
 /* XXX need better places for following two declarations */
 /* CP0 count register;  set in interrupt handler, used by microtime. */

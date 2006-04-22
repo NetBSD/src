@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.23 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.23.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -710,13 +710,13 @@ void mac68k_bssr4_gen(bus_space_tag_t, bus_space_handle_t *, bus_size_t,
  */
 
 #define	__MAC68K_copy_region_N(BYTES)					\
-static inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	(bus_space_tag_t,						\
 	    bus_space_handle_t, bus_size_t,				\
 	    bus_space_handle_t, bus_size_t,				\
 	    bus_size_t);						\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(					\
 	bus_space_tag_t t,						\
 	bus_space_handle_t h1,						\

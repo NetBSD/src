@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.2 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.2.6.1 2006/04/22 11:37:53 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,7 +45,7 @@ extern int kgdbregs[NREG];
 extern char kgdbstep;
 
 /* Doesn't handle overlapping regions */
-inline extern void
+__inline extern void
 kgdbcopy(s,d,n)
 	void *s, *d;
 	int n;
@@ -56,7 +56,7 @@ kgdbcopy(s,d,n)
 		*dp++ = *sp++;
 }
 
-inline extern void
+__inline extern void
 kgdbzero(d,n)
 	void *d;
 	int n;
@@ -67,7 +67,7 @@ kgdbzero(d,n)
 		*dp++ = 0;
 }
 
-inline extern int
+__inline extern int
 kgdbcmp(s,d,n)
 	void *s, *d;
 {

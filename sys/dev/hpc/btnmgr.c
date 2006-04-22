@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.15 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.15.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.15 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.15.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #define BTNMGRDEBUG
 
@@ -185,7 +185,7 @@ void
 btnmgrattach(struct device *parent, struct device *self, void *aux)
 {
 	int id;
-	struct btnmgr_softc *sc = (struct btnmgr_softc *)self;
+	struct btnmgr_softc *sc = device_private(self);
 	struct wskbddev_attach_args wa;
 
 	printf("\n");

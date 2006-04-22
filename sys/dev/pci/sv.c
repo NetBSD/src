@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.31 2005/12/11 12:22:50 christos Exp $ */
+/*      $NetBSD: sv.c,v 1.31.6.1 2006/04/22 11:39:16 simonb Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.31 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.31.6.1 2006/04/22 11:39:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -691,7 +691,7 @@ sv_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
 
 	val = p->sample_rate * 65536 / 48000;
 	/*
-	 * If the sample rate is exactly 48KHz, the fraction would overflow the
+	 * If the sample rate is exactly 48 kHz, the fraction would overflow the
 	 * register, so we have to bias it.  This causes a little clock drift.
 	 * The drift is below normal crystal tolerance (.0001%), so although
 	 * this seems a little silly, we can pretty much ignore it.

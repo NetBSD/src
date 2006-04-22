@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.26 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.26.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.26 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.26.6.1 2006/04/22 11:37:26 simonb Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -641,12 +641,12 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 		dstBit = dx & 0x1f;
 
 		while (h--) {
-			getandputrop(psrc, srcBit, dstBit, w, pdst, func)
+			getandputrop(psrc, srcBit, dstBit, w, pdst, func);
 			pdst += width;
 			psrc += width;
 		}
 	} else {
-		maskbits(dx, w, startmask, endmask, nlMiddle)
+		maskbits(dx, w, startmask, endmask, nlMiddle);
 		if (startmask)
 			nstart = 32 - (dx & 0x1f);
 		else
@@ -670,7 +670,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 
 				if (startmask) {
 					getandputrop(psrc, (sx & 0x1f),
-					    (dx & 0x1f), nstart, pdst, func)
+					    (dx & 0x1f), nstart, pdst, func);
 					pdst++;
 					if (srcStartOver)
 						psrc++;
@@ -688,7 +688,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 					nl = nlMiddle + 1;
 					while (--nl) {
 						getunalignedword(psrc,
-						    xoffSrc, tmpSrc)
+						    xoffSrc, tmpSrc);
 						DoRop(*pdst, func, tmpSrc,
 						    *pdst);
 						pdst++;
@@ -728,7 +728,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 				while (--nl) {
 					--psrc;
 					--pdst;
-					getunalignedword(psrc, xoffSrc, tmpSrc)
+					getunalignedword(psrc, xoffSrc, tmpSrc);
 					DoRop(*pdst, func, tmpSrc, *pdst);
 				}
 
@@ -737,7 +737,7 @@ hyper_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx, int h,
 						--psrc;
 					--pdst;
 					getandputrop(psrc, (sx & 0x1f),
-					    (dx & 0x1f), nstart, pdst, func)
+					    (dx & 0x1f), nstart, pdst, func);
 				}
 
 				pdstLine += width;

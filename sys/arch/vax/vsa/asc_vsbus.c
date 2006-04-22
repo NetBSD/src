@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.32 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.32.6.1 2006/04/22 11:38:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.32 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.32.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
@@ -253,7 +253,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_id = (clk_page[0xbc/2] >> clk_tweak) & 7;
 	sc->sc_freq = ASC_FREQUENCY;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr53c9x_intr,

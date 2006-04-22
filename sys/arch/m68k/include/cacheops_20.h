@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_20.h,v 1.7 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: cacheops_20.h,v 1.7.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * Invalidate entire TLB.
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 TBIA_20(void)
 {
 	__asm volatile (" pflusha");
@@ -48,7 +48,7 @@ TBIA_20(void)
 /*
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 TBIS_20(vaddr_t	va)
 {
 
@@ -58,7 +58,7 @@ TBIS_20(vaddr_t	va)
 /*
  * Invalidate supervisor side of TLB
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 TBIAS_20(void)
 {
 	__asm volatile (" pflushs #4,#4");
@@ -67,7 +67,7 @@ TBIAS_20(void)
 /*
  * Invalidate user side of TLB
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 TBIAU_20(void)
 {
 	__asm volatile (" pflushs #0,#4;");
@@ -76,13 +76,13 @@ TBIAU_20(void)
 /*
  * Invalidate instruction cache
  */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 ICIA_20(void)
 {
 	__asm volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 ICPA_20(void)
 {
 	__asm volatile (" movc %0,%%cacr;" : : "d" (IC_CLEAR));
@@ -102,7 +102,7 @@ ICPA_20(void)
 #define	DCFA_20()
 #define	DCPA_20()
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 PCIA_20(void)
 {
 	__asm volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));

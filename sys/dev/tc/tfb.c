@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.47 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: tfb.c,v 1.47.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.47 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.47.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,8 +202,8 @@ static const struct wsscreen_list tfb_screenlist = {
 	sizeof(_tfb_scrlist) / sizeof(struct wsscreen_descr *), _tfb_scrlist
 };
 
-static int	tfbioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	tfbmmap(void *, off_t, int);
+static int	tfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	tfbmmap(void *, void *, off_t, int);
 
 static int	tfb_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -267,10 +267,7 @@ static const u_int8_t flip[256] = {
 };
 
 static int
-tfbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tfbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -283,11 +280,9 @@ tfbmatch(parent, match, aux)
 
 
 static void
-tfbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tfbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct tfb_softc *sc = (struct tfb_softc *)self;
+	struct tfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
@@ -334,8 +329,7 @@ tfbattach(parent, self, aux)
 }
 
 static void
-tfb_common_init(ri)
-	struct rasops_info *ri;
+tfb_common_init(struct rasops_info *ri)
 {
 	caddr_t base;
 	int cookie;
@@ -383,8 +377,7 @@ tfb_common_init(ri)
 }
 
 static void
-tfb_cmap_init(sc)
-	struct tfb_softc *sc;
+tfb_cmap_init(struct tfb_softc *sc)
 {
 	struct hwcmap256 *cm;
 	const u_int8_t *p;
@@ -400,12 +393,7 @@ tfb_cmap_init(sc)
 }
 
 static int
-tfbioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+tfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct tfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -486,10 +474,7 @@ tfbioctl(v, cmd, data, flag, l)
 }
 
 static paddr_t
-tfbmmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+tfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct tfb_softc *sc = v;
 
@@ -499,12 +484,8 @@ tfbmmap(v, offset, prot)
 }
 
 static int
-tfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+tfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct tfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -523,9 +504,7 @@ tfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-tfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+tfb_free_screen(void *v, void *cookie)
 {
 	struct tfb_softc *sc = v;
 
@@ -536,20 +515,15 @@ tfb_free_screen(v, cookie)
 }
 
 static int
-tfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+tfb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 
 	return (0);
 }
 
 /* EXPORT */ int
-tfb_cnattach(addr)
-	tc_addr_t addr;
+tfb_cnattach(tc_addr_t addr)
 {
 	struct rasops_info *ri;
 	long defattr;
@@ -564,8 +538,7 @@ tfb_cnattach(addr)
 }
 
 static int
-tfbintr(arg)
-	void *arg;
+tfbintr(void *arg)
 {
 	struct tfb_softc *sc = arg;
 	caddr_t base, vdac, curs;
@@ -672,8 +645,7 @@ done:
 }
 
 static void
-tfbhwinit(tfbbase)
-	caddr_t tfbbase;
+tfbhwinit(caddr_t tfbbase)
 {
 	caddr_t vdac, curs;
 	const u_int8_t *p;
@@ -749,9 +721,7 @@ tfbhwinit(tfbbase)
 }
 
 static int
-get_cmap(sc, p)
-	struct tfb_softc *sc;
-	struct wsdisplay_cmap *p;
+get_cmap(struct tfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
 	int error;
@@ -770,9 +740,7 @@ get_cmap(sc, p)
 }
 
 static int
-set_cmap(sc, p)
-	struct tfb_softc *sc;
-	struct wsdisplay_cmap *p;
+set_cmap(struct tfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	struct hwcmap256 cmap;
 	u_int index = p->index, count = p->count;
@@ -800,9 +768,7 @@ set_cmap(sc, p)
 }
 
 static int
-set_cursor(sc, p)
-	struct tfb_softc *sc;
-	struct wsdisplay_cursor *p;
+set_cursor(struct tfb_softc *sc, struct wsdisplay_cursor *p)
 {
 #define	cc (&sc->sc_cursor)
 	u_int v, index = 0, count = 0, icount = 0;
@@ -864,17 +830,13 @@ set_cursor(sc, p)
 }
 
 static int
-get_cursor(sc, p)
-	struct tfb_softc *sc;
-	struct wsdisplay_cursor *p;
+get_cursor(struct tfb_softc *sc, struct wsdisplay_cursor *p)
 {
 	return (EPASSTHROUGH); /* XXX */
 }
 
 static void
-set_curpos(sc, curpos)
-	struct tfb_softc *sc;
-	struct wsdisplay_curpos *curpos;
+set_curpos(struct tfb_softc *sc, struct wsdisplay_curpos *curpos)
 {
 	struct rasops_info *ri = sc->sc_ri;
 	int x = curpos->x, y = curpos->y;

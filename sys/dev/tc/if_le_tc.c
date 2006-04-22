@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.18 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.18.6.1 2006/04/22 11:39:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.18 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.18.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include "opt_inet.h"
 
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_tc.c,v 1.18 2005/12/11 12:24:00 christos Exp $
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
 
-int	le_tc_match(struct device *, struct cfdata *, void *);
-void	le_tc_attach(struct device *, struct device *, void *);
+static int	le_tc_match(struct device *, struct cfdata *, void *);
+static void	le_tc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(le_tc, sizeof(struct le_softc),
     le_tc_match, le_tc_attach, NULL, NULL);
@@ -70,11 +70,8 @@ CFATTACH_DECL(le_tc, sizeof(struct le_softc),
 #define	LE_OFFSET_LANCE		0x100000
 #define	LE_OFFSET_ROM		0x1c0000
 
-int
-le_tc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+le_tc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *d = aux;
 
@@ -84,12 +81,10 @@ le_tc_match(parent, match, aux)
 	return (1);
 }
 
-void
-le_tc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+le_tc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct le_softc *lesc = (void *)self;
+	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct tc_attach_args *d = aux;
 

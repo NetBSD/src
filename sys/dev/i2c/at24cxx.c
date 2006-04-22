@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.4 2005/12/13 20:55:46 abs Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -109,7 +109,7 @@ seeprom_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 seeprom_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct seeprom_softc *sc = (struct seeprom_softc *)self;
+	struct seeprom_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 
 	sc->sc_tag = ia->ia_tag;

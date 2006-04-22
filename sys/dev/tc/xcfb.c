@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.39 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: xcfb.c,v 1.39.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.39 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.39.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,8 +123,8 @@ static const struct wsscreen_list xcfb_screenlist = {
 	sizeof(_xcfb_scrlist) / sizeof(struct wsscreen_descr *), _xcfb_scrlist
 };
 
-static int	xcfbioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	xcfbmmap(void *, off_t, int);
+static int	xcfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	xcfbmmap(void *, void *, off_t, int);
 
 static int	xcfb_alloc_screen(void *, const struct wsscreen_descr *,
 				       void **, int *, int *, long *);
@@ -203,10 +203,7 @@ static const u_int8_t shuffle[256] = {
 };
 
 static int
-xcfbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+xcfbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -217,11 +214,9 @@ xcfbmatch(parent, match, aux)
 }
 
 static void
-xcfbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xcfbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct xcfb_softc *sc = (struct xcfb_softc *)self;
+	struct xcfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
@@ -264,8 +259,7 @@ xcfbattach(parent, self, aux)
 }
 
 static void
-xcfb_cmap_init(sc)
-	struct xcfb_softc *sc;
+xcfb_cmap_init(struct xcfb_softc *sc)
 {
 	struct hwcmap256 *cm;
 	const u_int8_t *p;
@@ -281,8 +275,7 @@ xcfb_cmap_init(sc)
 }
 
 static void
-xcfb_common_init(ri)
-	struct rasops_info *ri;
+xcfb_common_init(struct rasops_info *ri)
 {
 	int cookie;
 
@@ -327,7 +320,7 @@ xcfb_common_init(ri)
 }
 
 int
-xcfb_cnattach()
+xcfb_cnattach(void)
 {
 	struct rasops_info *ri;
 	long defattr;
@@ -342,8 +335,7 @@ xcfb_cnattach()
 }
 
 static void
-xcfbhwinit(base)
-	caddr_t base;
+xcfbhwinit(caddr_t base)
 {
 	volatile u_int32_t *csr;
 	u_int32_t i;
@@ -401,12 +393,7 @@ xcfbhwinit(base)
 }
 
 static int
-xcfbioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+xcfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct xcfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -483,10 +470,7 @@ xcfbioctl(v, cmd, data, flag, l)
 }
 
 static paddr_t
-xcfbmmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+xcfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 
 	if (offset >= XCFB_FB_SIZE || offset < 0)
@@ -495,12 +479,8 @@ xcfbmmap(v, offset, prot)
 }
 
 static int
-xcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+xcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct xcfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -519,9 +499,7 @@ xcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-xcfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+xcfb_free_screen(void *v, void *cookie)
 {
 	struct xcfb_softc *sc = v;
 
@@ -532,20 +510,15 @@ xcfb_free_screen(v, cookie)
 }
 
 static int
-xcfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+xcfb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 
 	return (0);
 }
 
 static int
-xcfbintr(v)
-	void *v;
+xcfbintr(void *v)
 {
 	struct xcfb_softc *sc = v;
 	u_int32_t *intr, i;
@@ -558,8 +531,7 @@ xcfbintr(v)
 }
 
 static void
-xcfb_screenblank(sc)
-	struct xcfb_softc *sc;
+xcfb_screenblank(struct xcfb_softc *sc)
 {
 	if (sc->sc_blanked)
 		sc->sc_csr |= IMS332_CSR_A_FORCE_BLANK;
@@ -569,9 +541,7 @@ xcfb_screenblank(sc)
 }
 
 static int
-get_cmap(sc, p)
-	struct xcfb_softc *sc;
-	struct wsdisplay_cmap *p;
+get_cmap(struct xcfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
 	int error;
@@ -590,9 +560,7 @@ get_cmap(sc, p)
 }
 
 static int
-set_cmap(sc, p)
-	struct xcfb_softc *sc;
-	struct wsdisplay_cmap *p;
+set_cmap(struct xcfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	struct hwcmap256 cmap;
 	u_int index = p->index, count = p->count;
@@ -617,9 +585,7 @@ set_cmap(sc, p)
 }
 
 static int
-set_cursor(sc, p)
-	struct xcfb_softc *sc;
-	struct wsdisplay_cursor *p;
+set_cursor(struct xcfb_softc *sc, struct wsdisplay_cursor *p)
 {
 #define	cc (&sc->sc_cursor)
 	u_int v, index = 0, count = 0, icount = 0;
@@ -687,17 +653,13 @@ set_cursor(sc, p)
 }
 
 static int
-get_cursor(sc, p)
-	struct xcfb_softc *sc;
-	struct wsdisplay_cursor *p;
+get_cursor(struct xcfb_softc *sc, struct wsdisplay_cursor *p)
 {
 	return (EPASSTHROUGH); /* XXX */
 }
 
 static void
-set_curpos(sc, curpos)
-	struct xcfb_softc *sc;
-	struct wsdisplay_curpos *curpos;
+set_curpos(struct xcfb_softc *sc, struct wsdisplay_curpos *curpos)
 {
 	struct rasops_info *ri = sc->sc_ri;
 	int x = curpos->x, y = curpos->y;
@@ -715,8 +677,7 @@ set_curpos(sc, curpos)
 }
 
 static void
-ims332_loadcmap(cm)
-	struct hwcmap256 *cm;
+ims332_loadcmap(struct hwcmap256 *cm)
 {
 	int i;
 	u_int32_t rgb;
@@ -728,8 +689,7 @@ ims332_loadcmap(cm)
 }
 
 static void
-ims332_set_curpos(sc)
-	struct xcfb_softc *sc;
+ims332_set_curpos(struct xcfb_softc *sc)
 {
 	struct wsdisplay_curpos *curpos = &sc->sc_cursor.cc_pos;
 	u_int32_t pos;
@@ -742,8 +702,7 @@ ims332_set_curpos(sc)
 }
 
 static void
-ims332_load_curcmap(sc)
-	struct xcfb_softc *sc;
+ims332_load_curcmap(struct xcfb_softc *sc)
 {
 	u_int8_t *cp = sc->sc_cursor.cc_color;
 	u_int32_t rgb;
@@ -758,8 +717,7 @@ ims332_load_curcmap(sc)
 }
 
 static void
-ims332_load_curshape(sc)
-	struct xcfb_softc *sc;
+ims332_load_curshape(struct xcfb_softc *sc)
 {
 	u_int i, img, msk, bits;
 	u_int8_t u, *ip, *mp;
@@ -793,9 +751,7 @@ ims332_load_curshape(sc)
 }
 
 static void
-ims332_write_reg(regno, val)
-	int regno;
-	u_int32_t val;
+ims332_write_reg(int regno, u_int32_t val)
 {
 	caddr_t high8 = (caddr_t)(ioasic_base + IMS332_HIGH);
 	caddr_t low16 = (caddr_t)(ioasic_base + IMS332_WLOW) + (regno << 4);
@@ -806,8 +762,7 @@ ims332_write_reg(regno, val)
 
 #if 0
 static u_int32_t
-ims332_read_reg(regno)
-	int regno;
+ims332_read_reg(int regno)
 {
 	caddr_t high8 = (caddr_t)(ioasic_base + IMS332_HIGH);
 	caddr_t low16 = (caddr_t)(ioasic_base + IMS332_RLOW) + (regno << 4);

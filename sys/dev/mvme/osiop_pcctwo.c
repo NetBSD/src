@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.9 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.9.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.9 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.9.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ osiop_pcctwo_attach(parent, self, args)
 	int clk, ctest7;
 
 	pa = (struct pcctwo_attach_args *) args;
-	sc = (struct osiop_pcctwo_softc *) self;
+	sc = device_private(self);
 
 	/*
 	 * On the '17x the siop's clock is the same as the CPU clock.

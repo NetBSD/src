@@ -1,5 +1,35 @@
-/* $NetBSD: machdep.c,v 1.23 2006/01/27 23:05:16 gdamore Exp $ */
+/* $NetBSD: machdep.c,v 1.23.4.1 2006/04/22 11:37:24 simonb Exp $ */
 
+/*-
+ * Copyright (c) 2006 Itronix Inc.
+ * All rights reserved.
+ *
+ * Portions written by Garrett D'Amore for Itronix Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Itronix Inc. may not be used to endorse
+ *    or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */ 
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -77,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2006/01/27 23:05:16 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.4.1 2006/04/22 11:37:24 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,7 +145,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2006/01/27 23:05:16 gdamore Exp $")
 #include <mips/locore.h>
 #include <machine/yamon.h>
 
-#include <evbmips/alchemy/pb1000var.h>
+#include <evbmips/alchemy/board.h>
+#include <mips/alchemy/dev/aupcivar.h>
+#include <mips/alchemy/dev/aupcmciavar.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
@@ -128,9 +160,6 @@ int	aucomcnrate = 0;
 #endif /* NAUCOM > 0 */
 
 #include "ohci.h"
-
-/* The following are used externally (sysctl_hw). */
-extern char	cpu_model[];
 
 struct	user *proc0paddr;
 
@@ -149,29 +178,32 @@ int mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
 yamon_env_var *yamon_envp;
-struct pb1000_config pb1000_configuration;
+struct mips_bus_space alchemy_cpuregt;
 
 void	mach_init(int, char **, yamon_env_var *, u_long); /* XXX */
 
 void
 mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 {
-	struct pb1000_config *pbc = &pb1000_configuration;
 	bus_space_handle_t sh;
 	caddr_t kernend;
 	const char *cp;
 	u_long first, last;
 	caddr_t v;
 	int freqok, howto, i;
+	const struct alchemy_board *board;
 
 	extern char edata[], end[];	/* XXX */
+
+	board = board_info();
+	KASSERT(board != NULL);
 
 	/* clear the BSS segment */
 	kernend = (caddr_t)mips_round_page(end);
 	memset(edata, 0, kernend - (caddr_t)edata);
 
 	/* set CPU model info for sysctl_hw */
-	strcpy(cpu_model, "Alchemy Semiconductor Pb1000");
+	strcpy(cpu_model, board->ab_name);
 
 	/* save the yamon environment pointer */
 	yamon_envp = envp;
@@ -203,17 +235,22 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Initialize bus space tags.
 	 */
-	au_cpureg_bus_mem_init(&pbc->pc_cpuregt, pbc);
-	aubus_st = &pbc->pc_cpuregt;		/* XXX: for aubus.c */
+	au_cpureg_bus_mem_init(&alchemy_cpuregt, &alchemy_cpuregt);
+	aubus_st = &alchemy_cpuregt;
 
 	/*
 	 * Calibrate the timer if YAMON failed to tell us.
 	 */
 	if (!freqok) {
-		bus_space_map(&pbc->pc_cpuregt, PC_BASE, PC_SIZE, 0, &sh);
-		au_cal_timers(&pbc->pc_cpuregt, sh);
-		bus_space_unmap(&pbc->pc_cpuregt, sh, PC_SIZE);
+		bus_space_map(aubus_st, PC_BASE, PC_SIZE, 0, &sh);
+		au_cal_timers(aubus_st, sh);
+		bus_space_unmap(aubus_st, sh, PC_SIZE);
 	}
+
+	/*
+	 * Perform board-specific initialization.
+	 */
+	board->ab_init();
 
 	/*
 	 * Bring up the console.
@@ -232,9 +269,11 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 		aucomcnrate = strtoul(cp, NULL, 0);
 
 	if (aucomcnrate == 0) {
-		panic("pb1000: The `modetty0' YAMON variable not set. "
-		    "Either set it to the speed of the console and try again, "
-		    "or build a kernel with the `CONSPEED' option.");
+		printf("FATAL: `modetty0' YAMON variable not set.  Set it\n");
+		printf("       to the speed of the console and try again.\n");
+		printf("       Or, build a kernel with the `CONSPEED' "
+		    "option.\n");
+		panic("mach_init");
 	}
 #endif /* CONSPEED */
 
@@ -244,12 +283,12 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * character time = (1000000 / (defaultrate / 10))
 	 */
 	delay(160000000 / aucomcnrate);
-	if (aucomcnattach(&pbc->pc_cpuregt, UART0_BASE, aucomcnrate,
+	if (aucomcnattach(aubus_st, UART0_BASE, aucomcnrate,
 	    curcpu()->ci_cpu_freq / 4, COM_TYPE_AU1x00,
 	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
-		panic("pb1000: unable to initialize serial console");
+		panic("mach_init: unable to initialize serial console");
 #else
-	panic("pb1000: not configured to use serial console");
+	panic("mach_init: not configured to use serial console");
 #endif /* NAUCOM > 0 */
 
 	/*
@@ -293,7 +332,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 			printf("       the amount of memory (in MB) and try again.\n");
 			printf("       Or, build a kernel with the `MEMSIZE' "
 			    "option.\n");
-			panic("pb1000_init");
+			panic("mach_init");
 		}
 	}
 #endif /* MEMSIZE */
@@ -405,10 +444,14 @@ void
 cpu_reboot(int howto, char *bootstr)
 {
 	static int waittime = -1;
+	const struct alchemy_board *board;
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
 		savectx((struct user *)curpcb);
+
+	board = board_info();
+	KASSERT(board != NULL);
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)
@@ -447,6 +490,31 @@ cpu_reboot(int howto, char *bootstr)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
+	if ((boothowto & RB_POWERDOWN) == RB_POWERDOWN)
+		if (board && board->ab_poweroff)
+			board->ab_poweroff();
+
+	/*
+	 * YAMON may autoboot (depending on settings), and we cannot pass
+	 * flags to it (at least I haven't figured out how to yet), so
+	 * we "pseudo-halt" now.
+	 */
+	if (boothowto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* For proper keyboard command handling */
+		cngetc();
+		cnpollc(0);
+	}
+
+	/*
+	 * Try to use board-specific reset logic, which might involve a better
+	 * hardware reset.
+	 */
+	if (board->ab_reboot)
+		board->ab_reboot();
+
 #if 1
 	/* XXX
 	 * For some reason we are leaving the ethernet MAC in a state where
@@ -465,4 +533,27 @@ cpu_reboot(int howto, char *bootstr)
 	for (;;)
 		/* spin forever */ ;	/* XXX */
 	/*NOTREACHED*/
+}
+
+/*
+ * Export our interrupt map function so aupci can find it.
+ */
+int
+aupci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	const struct alchemy_board *board;
+
+	board = board_info();
+	if (board->ab_pci_intr_map != NULL)
+		return (board->ab_pci_intr_map(pa, ihp));
+	return 1;
+}
+
+struct aupcmcia_machdep *
+aupcmcia_machdep(void)
+{
+	const struct alchemy_board *board;
+
+	board = board_info();
+	return (board->ab_pcmcia);
 }

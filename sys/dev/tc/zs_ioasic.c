@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.29 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.29.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.29 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.29.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -90,24 +90,23 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.29 2005/12/11 12:24:00 christos Exp 
 /*
  * Helpers for console support.
  */
-void	zs_ioasic_cninit(tc_addr_t, tc_offset_t, int);
-int	zs_ioasic_cngetc(dev_t);
-void	zs_ioasic_cnputc(dev_t, int);
-void	zs_ioasic_cnpollc(dev_t, int);
+static void	zs_ioasic_cninit(tc_addr_t, tc_offset_t, int);
+static int	zs_ioasic_cngetc(dev_t);
+static void	zs_ioasic_cnputc(dev_t, int);
+static void	zs_ioasic_cnpollc(dev_t, int);
 
 struct consdev zs_ioasic_cons = {
 	NULL, NULL, zs_ioasic_cngetc, zs_ioasic_cnputc,
 	zs_ioasic_cnpollc, NULL, NULL, NULL, NODEV, CN_NORMAL,
 };
 
-tc_offset_t zs_ioasic_console_offset;
-int zs_ioasic_console_channel;
-int zs_ioasic_console;
-struct zs_chanstate zs_ioasic_conschanstate_store;
+static tc_offset_t zs_ioasic_console_offset;
+static int zs_ioasic_console_channel;
+static int zs_ioasic_console;
+static struct zs_chanstate zs_ioasic_conschanstate_store;
 
-int	zs_ioasic_isconsole(tc_offset_t, int);
-int	zs_getc(struct zs_chanstate *);
-void	zs_putc(struct zs_chanstate *, int);
+static int	zs_ioasic_isconsole(tc_offset_t, int);
+static void	zs_putc(struct zs_chanstate *, int);
 
 /*
  * Some warts needed by z8530tty.c
@@ -141,7 +140,7 @@ struct zsdevice {
 	struct	zshan zs_chan_a;
 };
 
-static u_char zs_ioasic_init_reg[16] = {
+static const u_char zs_ioasic_init_reg[16] = {
 	0,	/* 0: CMD (reset, etc.) */
 	0,	/* 1: No interrupts yet. */
 	0xf0,	/* 2: IVECT */
@@ -160,12 +159,8 @@ static u_char zs_ioasic_init_reg[16] = {
 	ZSWR15_BREAK_IE,
 };
 
-struct zshan *zs_ioasic_get_chan_addr(tc_addr_t, int);
-
-struct zshan *
-zs_ioasic_get_chan_addr(zsaddr, channel)
-	tc_addr_t zsaddr;
-	int channel;
+static struct zshan *
+zs_ioasic_get_chan_addr(tc_addr_t zsaddr, int channel)
 {
 	struct zsdevice *addr;
 	struct zshan *zc;
@@ -191,27 +186,24 @@ zs_ioasic_get_chan_addr(zsaddr, channel)
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-int	zs_ioasic_match(struct device *, struct cfdata *, void *);
-void	zs_ioasic_attach(struct device *, struct device *, void *);
-int	zs_ioasic_print(void *, const char *name);
-int	zs_ioasic_submatch(struct device *, struct cfdata *,
-				const int *, void *);
+static int	zs_ioasic_match(struct device *, struct cfdata *, void *);
+static void	zs_ioasic_attach(struct device *, struct device *, void *);
+static int	zs_ioasic_print(void *, const char *name);
+static int	zs_ioasic_submatch(struct device *, struct cfdata *,
+				   const int *, void *);
 
 CFATTACH_DECL(zsc_ioasic, sizeof(struct zsc_softc),
     zs_ioasic_match, zs_ioasic_attach, NULL, NULL);
 
 /* Interrupt handlers. */
-int	zs_ioasic_hardintr(void *);
-void	zs_ioasic_softintr(void *);
+static int	zs_ioasic_hardintr(void *);
+static void	zs_ioasic_softintr(void *);
 
 /*
  * Is the zs chip present?
  */
-int
-zs_ioasic_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+zs_ioasic_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 	tc_addr_t zs_addr;
@@ -236,13 +228,10 @@ zs_ioasic_match(parent, cf, aux)
 /*
  * Attach a found zs.
  */
-void
-zs_ioasic_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+static void
+zs_ioasic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct zsc_softc *zs = (void *) self;
+	struct zsc_softc *zs = device_private(self);
 	struct zsc_attach_args zs_args;
 	struct zs_chanstate *cs;
 	struct ioasicdev_attach_args *d = aux;
@@ -367,10 +356,8 @@ zs_ioasic_attach(parent, self, aux)
 	splx(s);
 }
 
-int
-zs_ioasic_print(aux, name)
-	void *aux;
-	const char *name;
+static int
+zs_ioasic_print(void *aux, const char *name)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -383,12 +370,9 @@ zs_ioasic_print(aux, name)
 	return (UNCONF);
 }
 
-int
-zs_ioasic_submatch(parent, cf, locs, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *locs;
-	void *aux;
+static int
+zs_ioasic_submatch(struct device *parent, struct cfdata *cf, const int *locs,
+    void *aux)
 {
 	struct zsc_softc *zs = (void *)parent;
 	struct zsc_attach_args *pa = aux;
@@ -431,9 +415,8 @@ zs_ioasic_submatch(parent, cf, locs, aux)
 /*
  * Hardware interrupt handler.
  */
-int
-zs_ioasic_hardintr(arg)
-	void *arg;
+static int
+zs_ioasic_hardintr(void *arg)
 {
 	struct zsc_softc *zsc = arg;
 
@@ -455,9 +438,8 @@ zs_ioasic_hardintr(arg)
 /*
  * Software-level interrupt (character processing, lower priority).
  */
-void
-zs_ioasic_softintr(arg)
-	void *arg;
+static void
+zs_ioasic_softintr(void *arg)
 {
 	struct zsc_softc *zsc = arg;
 	int s;
@@ -471,9 +453,7 @@ zs_ioasic_softintr(arg)
  * MD functions for setting the baud rate and control modes.
  */
 int
-zs_set_speed(cs, bps)
-	struct zs_chanstate *cs;
-	int bps;	/* bits per second */
+zs_set_speed(struct zs_chanstate *cs, int bps /*bits per second*/)
 {
 	int tconst, real_bps;
 
@@ -504,9 +484,7 @@ zs_set_speed(cs, bps)
 }
 
 int
-zs_set_modes(cs, cflag)
-	struct zs_chanstate *cs;
-	int cflag;	/* bits per second */
+zs_set_modes(struct zs_chanstate *cs, int cflag)
 {
 	u_long privflags = (u_long)cs->cs_private;
 	int s;
@@ -568,9 +546,7 @@ zs_set_modes(cs, cflag)
 #endif
 
 u_int
-zs_read_reg(cs, reg)
-	struct zs_chanstate *cs;
-	u_int reg;
+zs_read_reg(struct zs_chanstate *cs, u_int reg)
 {
 	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 	unsigned val;
@@ -585,9 +561,7 @@ zs_read_reg(cs, reg)
 }
 
 void
-zs_write_reg(cs, reg, val)
-	struct zs_chanstate *cs;
-	u_int reg, val;
+zs_write_reg(struct zs_chanstate *cs, u_int reg, u_int val)
 {
 	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 
@@ -600,8 +574,7 @@ zs_write_reg(cs, reg, val)
 }
 
 u_int
-zs_read_csr(cs)
-	struct zs_chanstate *cs;
+zs_read_csr(struct zs_chanstate *cs)
 {
 	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 	unsigned val;
@@ -613,9 +586,7 @@ zs_read_csr(cs)
 }
 
 void
-zs_write_csr(cs, val)
-	struct zs_chanstate *cs;
-	u_int val;
+zs_write_csr(struct zs_chanstate *cs, u_int val)
 {
 	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 
@@ -625,8 +596,7 @@ zs_write_csr(cs, val)
 }
 
 u_int
-zs_read_data(cs)
-	struct zs_chanstate *cs;
+zs_read_data(struct zs_chanstate *cs)
 {
 	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 	unsigned val;
@@ -638,9 +608,7 @@ zs_read_data(cs)
 }
 
 void
-zs_write_data(cs, val)
-	struct zs_chanstate *cs;
-	u_int val;
+zs_write_data(struct zs_chanstate *cs, u_int val)
 {
 	volatile struct zshan *zc = (volatile void *)cs->cs_reg_csr;
 
@@ -657,8 +625,7 @@ zs_write_data(cs, val)
  * Handle user request to enter kernel debugger.
  */
 void
-zs_abort(cs)
-	struct zs_chanstate *cs;
+zs_abort(struct zs_chanstate *cs)
 {
 	int rr0;
 
@@ -681,8 +648,7 @@ zs_abort(cs)
  * Polled input char.
  */
 int
-zs_getc(cs)
-	struct zs_chanstate *cs;
+zs_getc(struct zs_chanstate *cs)
 {
 	int s, c, rr0;
 
@@ -705,10 +671,8 @@ zs_getc(cs)
 /*
  * Polled output char.
  */
-void
-zs_putc(cs, c)
-	struct zs_chanstate *cs;
-	int c;
+static void
+zs_putc(struct zs_chanstate *cs, int c)
 {
 	register int s, rr0;
 
@@ -734,11 +698,8 @@ zs_putc(cs, c)
  *	Initialize the serial channel for either a keyboard or
  *	a serial console.
  */
-void
-zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
-	tc_addr_t ioasic_addr;
-	tc_offset_t zs_offset;
-	int channel;
+static void
+zs_ioasic_cninit(tc_addr_t ioasic_addr, tc_offset_t zs_offset, int channel)
 {
 	struct zs_chanstate *cs;
 	tc_addr_t zs_addr;
@@ -809,10 +770,7 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
  *	Initialize and attach a serial console.
  */
 void
-zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
-	tc_addr_t ioasic_addr;
-	tc_offset_t zs_offset;
-	int channel;
+zs_ioasic_cnattach(tc_addr_t ioasic_addr, tc_offset_t zs_offset, int channel)
 {
 	struct zs_chanstate *cs = &zs_ioasic_conschanstate_store;
 	extern const struct cdevsw zstty_cdevsw;
@@ -833,10 +791,8 @@ zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
  *	Initialize and attach a keyboard.
  */
 int
-zs_ioasic_lk201_cnattach(ioasic_addr, zs_offset, channel)
-	tc_addr_t ioasic_addr;
-	tc_offset_t zs_offset;
-	int channel;
+zs_ioasic_lk201_cnattach(tc_addr_t ioasic_addr, tc_offset_t zs_offset,
+    int channel)
 {
 #if (NZSKBD > 0)
 	struct zs_chanstate *cs = &zs_ioasic_conschanstate_store;
@@ -850,10 +806,8 @@ zs_ioasic_lk201_cnattach(ioasic_addr, zs_offset, channel)
 #endif
 }
 
-int
-zs_ioasic_isconsole(offset, channel)
-	tc_offset_t offset;
-	int channel;
+static int
+zs_ioasic_isconsole(tc_offset_t offset, int channel)
 {
 
 	if (zs_ioasic_console &&
@@ -867,9 +821,8 @@ zs_ioasic_isconsole(offset, channel)
 /*
  * Polled console input putchar.
  */
-int
-zs_ioasic_cngetc(dev)
-	dev_t dev;
+static int
+zs_ioasic_cngetc(dev_t dev)
 {
 
 	return (zs_getc(&zs_ioasic_conschanstate_store));
@@ -878,10 +831,8 @@ zs_ioasic_cngetc(dev)
 /*
  * Polled console output putchar.
  */
-void
-zs_ioasic_cnputc(dev, c)
-	dev_t dev;
-	int c;
+static void
+zs_ioasic_cnputc(dev_t dev, int c)
 {
 
 	zs_putc(&zs_ioasic_conschanstate_store, c);
@@ -890,10 +841,8 @@ zs_ioasic_cnputc(dev, c)
 /*
  * Set polling/no polling on console.
  */
-void
-zs_ioasic_cnpollc(dev, onoff)
-	dev_t dev;
-	int onoff;
+static void
+zs_ioasic_cnpollc(dev_t dev, int onoff)
 {
 
 	/* XXX ??? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.37 2006/01/29 21:42:41 dsl Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.37.4.1 2006/04/22 11:39:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.37 2006/01/29 21:42:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.37.4.1 2006/04/22 11:39:13 simonb Exp $");
 
 #include "midi.h"
 
@@ -103,13 +103,16 @@ static int  cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
 				  void *, const audio_params_t *);
 static int  cs4280_trigger_input(void *, void *, void *, int, void (*)(void *),
 				 void *, const audio_params_t *);
-
+#if 0
 static int cs4280_reset_codec(void *);
+#endif
+static enum ac97_host_flags cs4280_flags_codec(void *);
 
 /* For PowerHook */
 static void cs4280_power(int, void *);
 
 /* Internal functions */
+static const struct cs4280_card_t * cs4280_identify_card(struct pci_attach_args *);
 static void cs4280_set_adc_rate(struct cs428x_softc *, int );
 static void cs4280_set_dac_rate(struct cs428x_softc *, int );
 static int  cs4280_download(struct cs428x_softc *, const uint32_t *, uint32_t,
@@ -125,6 +128,29 @@ static int  cs4280_check_images(struct cs428x_softc *);
 static int  cs4280_checkimage(struct cs428x_softc *, uint32_t *, uint32_t,
 			      uint32_t);
 #endif
+
+/* Special cards */
+struct cs4280_card_t
+{
+	pcireg_t id;
+	enum cs428x_flags flags;
+};
+
+#define _card(vend, prod, flags) \
+	{PCI_ID_CODE(vend, prod), flags}
+
+static const struct cs4280_card_t cs4280_cards[] = {
+#if 0	/* untested, from ALSA driver */
+	_card(PCI_VENDOR_MITAC, PCI_PRODUCT_MITAC_MI6020,
+	      CS428X_FLAG_INVAC97EAMP),
+#endif
+	_card(PCI_VENDOR_TURTLE_BEACH, PCI_PRODUCT_TURTLE_BEACH_SANTA_CRUZ,
+	      CS428X_FLAG_INVAC97EAMP)
+};
+
+#undef _card
+
+#define CS4280_CARDS_SIZE (sizeof(cs4280_cards)/sizeof(cs4280_cards[0]))
 
 static const struct audio_hw_if cs4280_hw_if = {
 	NULL,			/* open */
@@ -206,6 +232,7 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	struct cs428x_softc *sc;
 	struct pci_attach_args *pa;
 	pci_chipset_tag_t pc;
+	const struct cs4280_card_t *cs_card;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t reg;
@@ -221,6 +248,16 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
+
+	cs_card = cs4280_identify_card(pa);
+	if (cs_card != NULL) {
+		aprint_normal("%s: %s %s\n",sc->sc_dev.dv_xname,
+			      pci_findvendor(cs_card->id),
+			      pci_findproduct(cs_card->id));
+		sc->sc_flags = cs_card->flags;
+	} else {
+		sc->sc_flags = CS428X_FLAG_NONE;
+	}
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_BA0,
@@ -303,7 +340,12 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.attach = cs428x_attach_codec;
 	sc->host_if.read   = cs428x_read_codec;
 	sc->host_if.write  = cs428x_write_codec;
+#if 0
 	sc->host_if.reset  = cs4280_reset_codec;
+#else
+	sc->host_if.reset  = NULL;
+#endif
+	sc->host_if.flags  = cs4280_flags_codec;
 	if (ac97_attach(&sc->host_if, self) != 0) {
 		aprint_error("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
 		return;
@@ -356,6 +398,10 @@ cs4280_intr(void *p)
 	intr = BA0READ4(sc, CS4280_HISR);
 	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
 
+	/* not for us ? */
+	if ((intr & HISR_INTENA) == 0)
+		return 0;
+
 	/* Playback Interrupt */
 	if (intr & HISR_PINT) {
 		handled = 1;
@@ -364,18 +410,19 @@ cs4280_intr(void *p)
 		if (sc->sc_prun) {
 			if ((sc->sc_pi%sc->sc_pcount) == 0)
 				sc->sc_pintr(sc->sc_parg);
+			/* copy buffer */
+			++sc->sc_pi;
+			empty_dma = sc->sc_pdma->addr;
+			if (sc->sc_pi&1)
+				empty_dma += sc->hw_blocksize;
+			memcpy(empty_dma, sc->sc_pn, sc->hw_blocksize);
+			sc->sc_pn += sc->hw_blocksize;
+			if (sc->sc_pn >= sc->sc_pe)
+				sc->sc_pn = sc->sc_ps;
 		} else {
-			printf("unexpected play intr\n");
+			printf("%s: unexpected play intr\n",
+			       sc->sc_dev.dv_xname);
 		}
-		/* copy buffer */
-		++sc->sc_pi;
-		empty_dma = sc->sc_pdma->addr;
-		if (sc->sc_pi&1)
-			empty_dma += sc->hw_blocksize;
-		memcpy(empty_dma, sc->sc_pn, sc->hw_blocksize);
-		sc->sc_pn += sc->hw_blocksize;
-		if (sc->sc_pn >= sc->sc_pe)
-			sc->sc_pn = sc->sc_ps;
 		BA1WRITE4(sc, CS4280_PFIE, mem);
 	}
 	/* Capture Interrupt */
@@ -386,64 +433,70 @@ cs4280_intr(void *p)
 		handled = 1;
 		mem = BA1READ4(sc, CS4280_CIE);
 		BA1WRITE4(sc, CS4280_CIE, (mem & ~CIE_CI_MASK) | CIE_CI_DISABLE);
-		++sc->sc_ri;
-		empty_dma = sc->sc_rdma->addr;
-		if ((sc->sc_ri&1) == 0)
-			empty_dma += sc->hw_blocksize;
 
-		/*
-		 * XXX
-		 * I think this audio data conversion should be
-		 * happend in upper layer, but I put this here
-		 * since there is no conversion function available.
-		 */
-		switch(sc->sc_rparam) {
-		case CF_16BIT_STEREO:
-			/* just copy it */
-			memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
-			sc->sc_rn += sc->hw_blocksize;
-			break;
-		case CF_16BIT_MONO:
-			for (i = 0; i < 512; i++) {
-				rdata  = *((int16_t *)empty_dma)>>1;
-				empty_dma += 2;
-				rdata += *((int16_t *)empty_dma)>>1;
-				empty_dma += 2;
-				*((int16_t *)sc->sc_rn) = rdata;
-				sc->sc_rn += 2;
+		if (sc->sc_rrun) {
+			++sc->sc_ri;
+			empty_dma = sc->sc_rdma->addr;
+			if ((sc->sc_ri&1) == 0)
+				empty_dma += sc->hw_blocksize;
+
+			/*
+			 * XXX
+			 * I think this audio data conversion should be
+			 * happend in upper layer, but I put this here
+			 * since there is no conversion function available.
+			 */
+			switch(sc->sc_rparam) {
+			case CF_16BIT_STEREO:
+				/* just copy it */
+				memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
+				sc->sc_rn += sc->hw_blocksize;
+				break;
+			case CF_16BIT_MONO:
+				for (i = 0; i < 512; i++) {
+					rdata  = *((int16_t *)empty_dma)>>1;
+					empty_dma += 2;
+					rdata += *((int16_t *)empty_dma)>>1;
+					empty_dma += 2;
+					*((int16_t *)sc->sc_rn) = rdata;
+					sc->sc_rn += 2;
+				}
+				break;
+			case CF_8BIT_STEREO:
+				for (i = 0; i < 512; i++) {
+					rdata = *((int16_t*)empty_dma);
+					empty_dma += 2;
+					*sc->sc_rn++ = rdata >> 8;
+					rdata = *((int16_t*)empty_dma);
+					empty_dma += 2;
+					*sc->sc_rn++ = rdata >> 8;
+				}
+				break;
+			case CF_8BIT_MONO:
+				for (i = 0; i < 512; i++) {
+					rdata =	 *((int16_t*)empty_dma) >>1;
+					empty_dma += 2;
+					rdata += *((int16_t*)empty_dma) >>1;
+					empty_dma += 2;
+					*sc->sc_rn++ = rdata >>8;
+				}
+				break;
+			default:
+				/* Should not reach here */
+				printf("%s: unknown sc->sc_rparam: %d\n",
+				       sc->sc_dev.dv_xname, sc->sc_rparam);
 			}
-			break;
-		case CF_8BIT_STEREO:
-			for (i = 0; i < 512; i++) {
-				rdata = *((int16_t*)empty_dma);
-				empty_dma += 2;
-				*sc->sc_rn++ = rdata >> 8;
-				rdata = *((int16_t*)empty_dma);
-				empty_dma += 2;
-				*sc->sc_rn++ = rdata >> 8;
-			}
-			break;
-		case CF_8BIT_MONO:
-			for (i = 0; i < 512; i++) {
-				rdata =	 *((int16_t*)empty_dma) >>1;
-				empty_dma += 2;
-				rdata += *((int16_t*)empty_dma) >>1;
-				empty_dma += 2;
-				*sc->sc_rn++ = rdata >>8;
-			}
-			break;
-		default:
-			/* Should not reach here */
-			printf("unknown sc->sc_rparam: %d\n", sc->sc_rparam);
+			if (sc->sc_rn >= sc->sc_re)
+				sc->sc_rn = sc->sc_rs;
 		}
-		if (sc->sc_rn >= sc->sc_re)
-			sc->sc_rn = sc->sc_rs;
 		BA1WRITE4(sc, CS4280_CIE, mem);
+
 		if (sc->sc_rrun) {
 			if ((sc->sc_ri%(sc->sc_rcount)) == 0)
 				sc->sc_rintr(sc->sc_rarg);
 		} else {
-			printf("unexpected record intr\n");
+			printf("%s: unexpected record intr\n",
+			       sc->sc_dev.dv_xname);
 		}
 	}
 
@@ -890,8 +943,9 @@ cs4280_power(int why, void *v)
 		}
 		sc->sc_suspend = why;
 		cs4280_init(sc, 0);
+#if 0
 		cs4280_reset_codec(sc);
-
+#endif
 		/* restore ac97 registers */
 		(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 
@@ -922,6 +976,7 @@ cs4280_power(int why, void *v)
 	}
 }
 
+#if 0 /* XXX buggy and not required */
 /* control AC97 codec */
 static int
 cs4280_reset_codec(void *addr)
@@ -957,10 +1012,38 @@ cs4280_reset_codec(void *addr)
 			return ETIMEDOUT;
 		}
 	}
+
+	return 0;
+}
+#endif
+
+static enum ac97_host_flags cs4280_flags_codec(void *addr)
+{
+	struct cs428x_softc *sc;
+
+	sc = addr;
+	if (sc->sc_flags & CS428X_FLAG_INVAC97EAMP)
+		return AC97_HOST_INVERTED_EAMP;
+
 	return 0;
 }
 
 /* Internal functions */
+
+static const struct cs4280_card_t *
+cs4280_identify_card(struct pci_attach_args *pa)
+{
+	pcireg_t idreg;
+	u_int16_t i;
+
+	idreg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	for (i = 0; i < CS4280_CARDS_SIZE; i++) {
+		if (idreg == cs4280_cards[i].id)
+			return &cs4280_cards[i];
+	}
+
+	return NULL;
+}
 
 static void
 cs4280_set_adc_rate(struct cs428x_softc *sc, int rate)
@@ -1125,7 +1208,7 @@ cs4280_set_dac_rate(struct cs428x_softc *sc, int rate)
 	BA1WRITE4(sc, CS4280_PPI, ppi);
 }
 
-/* Download Proceessor Code and Data image */
+/* Download Processor Code and Data image */
 static int
 cs4280_download(struct cs428x_softc *sc, const uint32_t *src,
 		uint32_t offset, uint32_t len)

@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.5 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.4 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.4.6.1 2006/04/22 11:40:08 simonb Exp $");
 #endif
 
 /*
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.4 2005/12/11 12:24:54 ch
 #include <sys/socket.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <net/if_media.h>
 
 #include <net80211/ieee80211_var.h>

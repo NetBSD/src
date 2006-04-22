@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_iic.c,v 1.1 2005/11/13 06:33:05 hamajima Exp $	*/
+/*	$NetBSD: armadillo9_iic.c,v 1.1.10.1 2006/04/22 11:37:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.1 2005/11/13 06:33:05 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.1.10.1 2006/04/22 11:37:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.1 2005/11/13 06:33:05 hamajima 
 #include <dev/i2c/i2c_bitbang.h>
 #include <arm/ep93xx/epsocvar.h> 
 #include <arm/ep93xx/epgpiovar.h>
+#include <evbarm/armadillo/armadillo9var.h>
 
 #include "seeprom.h"
 #if NSEEPROM > 0
@@ -93,7 +94,6 @@ armadillo9iic_attach(struct device *parent, struct device *self, void *aux)
 	struct i2cbus_attach_args iba;
 #if NSEEPROM > 0
 	struct epgpio_attach_args *ga = aux;
-	u_int8_t enaddr[ETHER_ADDR_LEN];
 #endif
 	lockinit(&sc->sc_buslock, PRIBIO|PCATCH, "armadillo9iiclk", 0, 0);
 
@@ -128,13 +128,12 @@ armadillo9iic_attach(struct device *parent, struct device *self, void *aux)
 	config_found(&sc->sc_dev, &iba, iicbus_print);
 
 #if NSEEPROM > 0
-	/* read and set mac address */
-	if (!seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x00, 128,
-				   (uint8_t *)enaddr, ETHER_ADDR_LEN)
-	    && (prop_set(dev_propdb, 0, "mac-addr",
-			 enaddr, ETHER_ADDR_LEN, PROP_ARRAY, 0) != 0)) {
-		printf("WARNING: unable to set mac-addr property for %s\n",
-		       sc->sc_dev.dv_xname);
+	/* read mac address */
+	/* XXX This should probably be done elsewhere, earlier in bootstrap. */
+	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x00, 128,
+				   armadillo9_ethaddr, ETHER_ADDR_LEN) != 0) {
+		printf("%s: WARNING: unable to read MAC address from SEEPROM\n",
+		    sc->sc_dev.dv_xname);
 	}
 #endif
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sbsmbus.c,v 1.12 2005/12/11 12:18:13 christos Exp $ */
+/* $NetBSD: sbsmbus.c,v 1.12.6.1 2006/04/22 11:37:44 simonb Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.12 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbsmbus.c,v 1.12.6.1 2006/04/22 11:37:44 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ smbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	for (i = 0; i < smbus_dev_count; i++) {
-		if (self->dv_unit != smbus_devs[i].sa_interface)
+		if (device_unit(self) != smbus_devs[i].sa_interface)
 			continue;
 
 		memset(&sa, 0, sizeof sa);

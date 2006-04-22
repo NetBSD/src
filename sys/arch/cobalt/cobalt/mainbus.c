@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2005/12/11 12:17:05 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13.6.1 2006/04/22 11:37:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2005/12/11 12:17:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13.6.1 2006/04/22 11:37:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,19 +48,14 @@ CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 static int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
+
 	return 1;
 }
 
 static void
-mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args ma;
 
@@ -74,18 +69,14 @@ mainbus_attach(parent, self, aux)
 }
 
 static int
-mainbus_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+mainbus_search(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	do {
 		ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
 		ma->ma_iot = 0;
-		ma->ma_ioh = MIPS_PHYS_TO_KSEG1(ma->ma_addr);
 		ma->ma_level = cf->cf_loc[MAINBUSCF_LEVEL];
 		if (config_match(parent, cf, ma) > 0)
 			config_attach(parent, cf, ma, mainbus_print);
@@ -95,9 +86,7 @@ mainbus_search(parent, cf, ldesc, aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 	struct mainbus_attach_args *ma = aux;
 

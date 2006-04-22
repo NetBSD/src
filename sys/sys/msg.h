@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.18 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: msg.h,v 1.18.6.1 2006/04/22 11:40:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -190,10 +190,16 @@ int	msgsnd(int, const void *, size_t, int);
 ssize_t	msgrcv(int, void *, size_t, long, int);
 __END_DECLS
 #else
+#include <sys/systm.h>
+
 struct proc;
 
 void	msginit(void);
 int	msgctl1(struct proc *, int, int, struct msqid_ds *);
+int	msgsnd1(struct proc *, int, const char *, size_t, int, size_t,
+    copyin_t);
+int	msgrcv1(struct proc *, int, char *, size_t, long, int, size_t,
+    copyout_t, register_t *);
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */

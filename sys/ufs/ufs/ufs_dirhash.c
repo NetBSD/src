@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.10 2006/01/14 17:41:18 yamt Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.10.4.1 2006/04/22 11:40:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -163,9 +163,9 @@ ufsdirhash_build(struct inode *ip)
 		DIRHASHLIST_UNLOCK();
 		return (-1);
 	}
-	MALLOC(dh->dh_hash, doff_t **, narrays * sizeof(dh->dh_hash[0]),
+	dh->dh_hash = (doff_t **)malloc(narrays * sizeof(dh->dh_hash[0]),
 	    M_DIRHASH, M_NOWAIT | M_ZERO);
-	MALLOC(dh->dh_blkfree, u_int8_t *, nblocks * sizeof(dh->dh_blkfree[0]),
+	dh->dh_blkfree = (u_int8_t *)malloc(nblocks * sizeof(dh->dh_blkfree[0]),
 	    M_DIRHASH, M_NOWAIT);
 	if (dh->dh_hash == NULL || dh->dh_blkfree == NULL)
 		goto fail;

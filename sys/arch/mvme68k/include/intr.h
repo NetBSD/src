@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.6.1 2006/04/22 11:37:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 
 #ifndef _LOCORE
 
-static inline void
+static __inline void
 splx(int sr)
 {
 

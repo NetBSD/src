@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.8 2005/12/28 09:29:48 christos Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.8.6.1 2006/04/22 11:39:55 simonb Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -16,7 +16,9 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
-#include <sys/fcntl.h>
+#if !defined(AIX)
+# include <sys/fcntl.h>
+#endif
 #if !defined(_KERNEL) && !defined(__KERNEL__)
 # include <stdio.h>
 # include <string.h>
@@ -35,7 +37,8 @@ struct file;
 #include <sys/socket.h>
 #if defined(_KERNEL)
 # if !defined(__NetBSD__) && !defined(sun) && !defined(__osf__) && \
-     !defined(__OpenBSD__) && !defined(__hpux) && !defined(__sgi)
+     !defined(__OpenBSD__) && !defined(__hpux) && !defined(__sgi) && \
+     !defined(AIX)
 #  include <sys/ctype.h>
 # endif
 # include <sys/systm.h>
@@ -94,9 +97,6 @@ struct file;
 # include "netinet/ip_irc_pxy.c"
 # include "netinet/ip_raudio_pxy.c"
 # include "netinet/ip_h323_pxy.c"
-# ifdef	IPFILTER_PRO
-#  include "netinet/ip_msnrpc_pxy.c"
-# endif
 # include "netinet/ip_netbios_pxy.c"
 #endif
 #include "netinet/ip_ipsec_pxy.c"
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.12 2005/03/03 14:28:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.16 2006/03/29 11:19:56 darrenr Exp";
 #endif
 
 #ifdef INET
@@ -327,8 +327,7 @@ int mode;
 		if (error == 0)
 			error = appr_ctl(&ctl);
 
-		if ((ctl.apc_dsize > 0) && (ptr != NULL) &&
-		    (ctl.apc_data == ptr)) {
+		if (ptr != NULL) {
 			KFREES(ptr, ctl.apc_dsize);
 		}
 		break;
@@ -567,8 +566,8 @@ nat_t *nat;
 		if (err != 0) {
 			short adjlen = err & 0xffff;
 
-			s1 = LONG_SUM(ip->ip_len - adjlen);
-			s2 = LONG_SUM(ip->ip_len);
+			s1 = LONG_SUM(fin->fin_plen - adjlen);
+			s2 = LONG_SUM(fin->fin_plen);
 			CALC_SUMD(s1, s2, sd);
 			fix_outcksum(fin, &ip->ip_sum, sd);
 		}
@@ -589,19 +588,23 @@ nat_t *nat;
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6)
 			if (dosum)
 				tcp->th_sum = fr_cksum(fin->fin_qfm, ip,
-						       IPPROTO_TCP, tcp);
+						       IPPROTO_TCP, tcp,
+						       fin->fin_plen);
 #else
 			tcp->th_sum = fr_cksum(fin->fin_m, ip,
-					       IPPROTO_TCP, tcp);
+					       IPPROTO_TCP, tcp,
+					       fin->fin_plen);
 #endif
 		} else if ((udp != NULL) && (udp->uh_sum != 0)) {
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6)
 			if (dosum)
 				udp->uh_sum = fr_cksum(fin->fin_qfm, ip,
-						       IPPROTO_UDP, udp);
+						       IPPROTO_UDP, udp,
+						       fin->fin_plen);
 #else
 			udp->uh_sum = fr_cksum(fin->fin_m, ip,
-					       IPPROTO_UDP, udp);
+					       IPPROTO_UDP, udp,
+					       fin->fin_plen);
 #endif
 		}
 #endif
@@ -694,9 +697,9 @@ int inc;
 	tcp = (tcphdr_t *)fin->fin_dp;
 	out = fin->fin_out;
 	/*
-	 * ip_len has already been adjusted by 'inc'.
+	 * fin->fin_plen has already been adjusted by 'inc'.
 	 */
-	nlen = ip->ip_len;
+	nlen = fin->fin_plen;
 	nlen -= (IP_HL(ip) << 2) + (TCP_OFF(tcp) << 2);
 
 	inc2 = inc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.4 2005/12/11 12:24:44 christos Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.4.6.1 2006/04/22 11:40:05 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,6 +27,9 @@
  */
 
 #include <machine/asm.h>
+
+#undef _LOCORE
+#define	_LOCORE		/* XXX not really, just assembly-code source */
 #include <machine/endian.h>
 
 ENTRY(bswap16)
@@ -34,6 +37,7 @@ ENTRY(bswap16)
 ALTENTRY(ntohs)
 ALTENTRY(htons)
 #endif
+	extu.w	r4, r4
 	rts
 	 swap.b	r4, r0
 
@@ -41,5 +45,5 @@ ALTENTRY(htons)
 ENTRY(ntohs)
 ALTENTRY(htons)
 	rts
-	 mov	r4, r0
+	 extu.w	r4, r0
 #endif

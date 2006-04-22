@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.20 2005/12/07 12:40:47 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.20.6.1 2006/04/22 11:37:44 simonb Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -87,9 +87,9 @@ ch*	at scsibus? target ? lun ?	# SCSI changer devices
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
-#pseudo-device	sl		2	# SLIP interfaces
-#pseudo-device	ppp		2	# PPP interfaces
-#pseudo-device	tun		4	# Network "tunnel" device
+#pseudo-device	sl			# SLIP interfaces
+#pseudo-device	ppp			# PPP interfaces
+#pseudo-device	tun			# Network "tunnel" device
 pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	fss		4	# file system snapshot device

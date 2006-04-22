@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.9 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.9.6.1 2006/04/22 11:39:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9.6.1 2006/04/22 11:39:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -218,6 +218,7 @@ searchloop:
 		/*
 		 * Get pointer to next entry.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct iso_directory_record *)
 			((char *)bp->b_data + entryoffsetinblock);
 

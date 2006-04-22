@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_obio.c,v 1.2 2005/12/11 12:17:08 christos Exp $ */
+/*	$NetBSD: if_ne_obio.c,v 1.2.6.1 2006/04/22 11:37:23 simonb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.2 2005/12/11 12:17:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.2.6.1 2006/04/22 11:37:23 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ ne_obio_enable(struct dp8390_softc *dsc)
 
 	printf("%s: enabled\n", dsc->sc_dev.dv_xname);
 
-	psc = (struct obio_softc *)dsc->sc_dev.dv_parent;
+	psc = (struct obio_softc *)device_parent(&dsc->sc_dev);
 
 	/* Establish the interrupt handler. */
 	sc->sc_ih = obio_intr_establish(psc, sc->intr_no, IPL_NET,
@@ -226,8 +226,10 @@ void debug_obio_ne(struct dp8390_softc *);
 void
 debug_obio_ne(struct dp8390_softc *sc)
 {
-	struct obio_softc *osc = (struct obio_softc *)(sc->sc_dev.dv_parent);
-	struct pxa2x0_softc *psc = (struct pxa2x0_softc *)(osc->sc_dev.dv_parent);
+	struct obio_softc *osc =
+	    (struct obio_softc *)device_parent(&sc->sc_dev);
+	struct pxa2x0_softc *psc =
+	    (struct pxa2x0_softc *)device_parent(&osc->sc_dev);
 
 	printf( "ISR=%02x obio: pending=(%x,%x) mask=%x pending=%x mask=%x\n",
 	    bus_space_read_1(sc->sc_regt, sc->sc_regh,

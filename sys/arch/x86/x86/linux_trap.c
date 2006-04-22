@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.2 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.2.6.1 2006/04/22 11:38:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.2 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.2.6.1 2006/04/22 11:38:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,10 +147,10 @@ linux_trapsignal(struct lwp *l, const ksiginfo_t *ksi)
 	case SIGFPE:
 	case SIGSEGV:
 		KASSERT(KSI_TRAP_P(ksi));
-		if (ksi->ksi_trap <= ASIZE(trapno_to_x86_vec)) {
+		if (ksi->ksi_trap < ASIZE(trapno_to_x86_vec)) {
 			ksiginfo_t nksi = *ksi;
 			nksi.ksi_trap = trapno_to_x86_vec[ksi->ksi_trap];
-			if (nksi.ksi_trap <= ASIZE(linux_x86_vec_to_sig)) {
+			if (nksi.ksi_trap < ASIZE(linux_x86_vec_to_sig)) {
 				nksi.ksi_signo 
 				    = linux_x86_vec_to_sig[nksi.ksi_trap];
 			} else {

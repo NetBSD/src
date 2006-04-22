@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.10 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.10.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 // framebuffer configuration table can be found in machine_config.cpp
 //
 
-FrameBufferInfo::FrameBufferInfo(u_int32_t cpu, u_int32_t machine)
+FrameBufferInfo::FrameBufferInfo(uint32_t cpu, uint32_t machine)
 {
 	struct framebuffer_info *tab = _table;
 	platid_mask_t target, entry;

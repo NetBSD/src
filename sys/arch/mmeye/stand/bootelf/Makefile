@@ -1,4 +1,10 @@
-#	$NetBSD: Makefile,v 1.11 2006/01/26 22:39:08 he Exp $
+#	$NetBSD: Makefile,v 1.11.4.1 2006/04/22 11:37:44 simonb Exp $
+#
+# NOTE: This program is *not* standalone, but a userlevel program -- this
+#       program was run from within boot-only, NetBSD-as-bootloader as a
+#       userlevel program, then in-kernel boot code loads another NetBSD
+#	image and jumps to it.
+#
 
 PROG=	bootelf
 SRCS=	alloc.c boot.c byteorder.c loadfile.c loadfile_elf32.c
@@ -8,9 +14,9 @@ LIBSA=	${.CURDIR}/../../../../lib/libsa
 
 .PATH: ${LIBSA}
 
-CFLAGS+= -D_STANDALONE -ffreestanding
-CPPFLAGS+= -I${LIBSA} -I${.OBJDIR}
-LDSTATIC= -static
+CFLAGS+=	-ffreestanding
+CPPFLAGS+=	-I${.CURDIR}/../../../.. -I${.OBJDIR}
+LDSTATIC=	-static
 
 CLEANFILES+=	machine
 

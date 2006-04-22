@@ -1,4 +1,4 @@
-/*	$NetBSD: residual.c,v 1.5 2005/12/11 12:18:48 christos Exp $	*/
+/*      $NetBSD: residual.c,v 1.5.6.1 2006/04/22 11:37:54 simonb Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,29 +37,33 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.5 2005/12/11 12:18:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.5.6.1 2006/04/22 11:37:54 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/inttypes.h>
 
 #include <machine/residual.h>
 #include <machine/pnp.h>
 
-int dump_residual_data = 1;
+#include "opt_residual.h"
 
+#ifdef RESIDUAL_DATA_DUMP
 static void make_pnp_device_tree(void *);
 static void bustype_subr(DEVICE_ID *);
 
+int dump_residual_data = 1;
+
 #define	NELEMS(array)	((size_t)(sizeof(array)/sizeof(array[0])))
 
-static char *FirmwareSupplier[] = {
+static const char *FirmwareSupplier[] = {
 	"IBMFirmware",
 	"MotoFirmware",
 	"FirmWorks",
 	"Bull",
 };
 
-static char *FirmwareSupports[] = {
+static const char *FirmwareSupports[] = {
 	"Conventional",
 	"OpenFirmware",
 	"Diagnostics",
@@ -74,24 +78,24 @@ static char *FirmwareSupports[] = {
 	"FW_Boot_Path",
 };
 
-static char *EndianSwitchMethod[] = {
+static const char *EndianSwitchMethod[] = {
 	"Unknown",
 	"UsePort92",
 	"UsePCIConfigA8",
 	"UseFF001030",
 };
 
-static char *SpreadIOMethod[] = {
+static const char *SpreadIOMethod[] = {
 	"UsePort850",
 };
 
-static char *CacheAttrib[] = {
+static const char *CacheAttrib[] = {
 	"None",
 	"Split cache",
 	"Combined cache",
 };
 
-static char *Usage[] = {
+static const char *Usage[] = {
 	"FirmwareStack",
 	"FirmwareHeap",
 	"FirmwareCode",
@@ -110,7 +114,7 @@ static char *Usage[] = {
 	"Other",
 };
 
-static char *BusId[] = {
+static const char *BusId[] = {
 	"ISA",
 	"EISA",
 	"PCI",
@@ -122,7 +126,7 @@ static char *BusId[] = {
 	"VME",
 };
 
-static char *Flags[] = {
+static const char *Flags[] = {
 	"Output",
 	"Input",
 	"ConsoleOut",
@@ -140,6 +144,103 @@ static char *Flags[] = {
 	"Enabled",
 };
 
+#endif /* RESIDUAL_DATA_DUMP */
+
+
+/*
+ * Convert a pnp DevId to a string.
+ */
+
+void
+pnp_devid_to_string(uint32_t devid, char *s)
+{
+	uint8_t p[4];
+	uint32_t l;
+
+	if (res->Revision == 0)
+		l = le32toh(devid);
+	else
+		l = be32toh(devid);
+	p[0] = (l >> 24) & 0xff;
+	p[1] = (l >> 16) & 0xff;
+	p[2] = (l >> 8) & 0xff;
+	p[3] = l & 0xff;
+
+	*s++ = ((p[0] >> 2) & 0x1f) + 'A' - 1;
+	*s++ = (((p[0] & 0x03) << 3) | ((p[1] >> 5) & 0x07)) + 'A' - 1;
+	*s++ = (p[1] & 0x1f) + 'A' - 1;
+	*s++ = HEXDIGITS[(p[2] >> 4) & 0xf];
+	*s++ = HEXDIGITS[p[2] & 0xf];
+	*s++ = HEXDIGITS[(p[3] >> 4) & 0xf];
+	*s++ = HEXDIGITS[p[3] & 0xf];
+	*s = '\0';
+}
+
+/*
+ * Count the number of a specific deviceid on the pnp tree.
+ */
+
+int
+count_pnp_devices(const char *devid)
+{
+	PPC_DEVICE *ppc_dev;
+	int i, found=0;
+	uint32_t ndev;
+	char deviceid[8];
+
+	ndev = be32toh(res->ActualNumDevices);
+	ppc_dev = res->Devices;
+
+	for (i = 0; i < ((ndev > MAX_DEVICES) ? MAX_DEVICES : ndev); i++) {
+		DEVICE_ID *id = &ppc_dev[i].DeviceId;
+
+		pnp_devid_to_string(id->DevId, deviceid);
+		if (strcmp(deviceid, devid) == 0)
+			found++;
+	}
+	return found;
+}
+
+/*
+ * find and return a pointer to the N'th device of a given type.
+ */
+
+PPC_DEVICE *
+find_nth_pnp_device(const char *devid, int busid, int n)
+{
+	PPC_DEVICE *ppc_dev;
+	int i, found=0;
+	uint32_t ndev, l, bid = 0;
+	char deviceid[8];
+
+	ndev = be32toh(res->ActualNumDevices);
+	ppc_dev = res->Devices;
+	n++;
+
+	if (busid != 0)
+		bid = 1UL << busid;
+
+	for (i = 0; i < ((ndev > MAX_DEVICES) ? MAX_DEVICES : ndev); i++) {
+		DEVICE_ID *id = &ppc_dev[i].DeviceId;
+
+		if (bid) {
+			printf("???\n");
+			l = be32toh(id->BusId);
+			if ((l & bid) == 0)
+				continue;
+		}
+		pnp_devid_to_string(id->DevId, deviceid);
+		if (strcmp(deviceid, devid) == 0) {
+			found++;
+			if (found == n)
+				return &ppc_dev[i];
+		}
+	}
+	return NULL;
+}
+
+#ifdef RESIDUAL_DATA_DUMP
+
 void
 print_residual_device_info(void)
 {
@@ -148,7 +249,7 @@ print_residual_device_info(void)
 	MEM_MAP *mem_map;
 	PPC_MEM *ppc_mem;
 	PPC_DEVICE *ppc_dev;
-	char *str;
+	const char *str;
 	unsigned long l;
 	unsigned short s;
 	unsigned long nmseg;
@@ -158,7 +259,7 @@ print_residual_device_info(void)
 	int ncpu;
 	int first;
 	int i, j;
-	unsigned char p[4];
+	char deviceid[9];
 
 	if (!dump_residual_data)
 		return;
@@ -176,51 +277,51 @@ print_residual_device_info(void)
 	 */
 	vpd = &res->VitalProductData;
 	printf("\nVPD\n");
-	printf("\tPrintableModel = %-32s\n", vpd->PrintableModel);
-	printf("\tSerial = %-16s\n", vpd->Serial);
+	printf("  PrintableModel = %-32s\n", vpd->PrintableModel);
+	printf("  Serial = %-16s\n", vpd->Serial);
 
 	l = be32toh(vpd->FirmwareSupplier);
-	printf("\tFirmwareSupplier = %s\n",
+	printf("  FirmwareSupplier = %s\n",
 	    (l >= NELEMS(FirmwareSupplier)) ? "Unknown" : FirmwareSupplier[l]);
 	l = be32toh(vpd->FirmwareSupports);
-	printf("\tFirmwareSupports = 0x%08lx\n", l);
+	printf("  FirmwareSupports = 0x%08lx\n", l);
 	for (first = 1, i = 0; i < sizeof(unsigned long) * 8; i++) {
 		if ((l & (1UL << i)) != 0) {
-			printf("\t\t: %s\n", i >= NELEMS(FirmwareSupports)
+			printf("    : %s\n", i >= NELEMS(FirmwareSupports)
 			    ? "Unknown" : FirmwareSupports[i]);
 			   first = 0;
 		}
 	}
 	if (first)
-		printf("\t\t: None\n");
+		printf("    : None\n");
 
-	printf("\tNvramSize = %ld\n", be32toh(vpd->NvramSize));
-	printf("\tNumSIMMSlots = %ld\n", be32toh(vpd->NumSIMMSlots));
+	printf("  NvramSize = %ld\n", be32toh(vpd->NvramSize));
+	printf("  NumSIMMSlots = %ld\n", be32toh(vpd->NumSIMMSlots));
 	s = be16toh(vpd->EndianSwitchMethod);
-	printf("\tEndianSwitchMethod = %s\n",
+	printf("  EndianSwitchMethod = %s\n",
 	    (s >= NELEMS(EndianSwitchMethod))
 	      ? "Unknown" : EndianSwitchMethod[s]);
 	s = be16toh(vpd->SpreadIOMethod);
-	printf("\tSpreadIOMethod = %s\n",
+	printf("  SpreadIOMethod = %s\n",
 	    (s >= NELEMS(SpreadIOMethod)) ? "Unknown" : SpreadIOMethod[s]);
-	printf("\tSmpIar = %ld\n", be32toh(vpd->SmpIar));
-	printf("\tRAMErrLogOffset = %ld\n", be32toh(vpd->RAMErrLogOffset));
-	printf("\tProcessorHz = %ld\n", be32toh(vpd->ProcessorHz));
-	printf("\tProcessorBusHz = %ld\n", be32toh(vpd->ProcessorBusHz));
-	printf("\tTimeBaseDivisor = %ld\n", be32toh(vpd->TimeBaseDivisor));
-	printf("\tWordWidth = %ld\n", be32toh(vpd->WordWidth));
+	printf("  SmpIar = %ld\n", be32toh(vpd->SmpIar));
+	printf("  RAMErrLogOffset = %ld\n", be32toh(vpd->RAMErrLogOffset));
+	printf("  ProcessorHz = %ld\n", be32toh(vpd->ProcessorHz));
+	printf("  ProcessorBusHz = %ld\n", be32toh(vpd->ProcessorBusHz));
+	printf("  TimeBaseDivisor = %ld\n", be32toh(vpd->TimeBaseDivisor));
+	printf("  WordWidth = %ld\n", be32toh(vpd->WordWidth));
 	page_size = be32toh(vpd->PageSize);
-	printf("\tPageSize = %ld\n", page_size);
-	printf("\tCoherenceBlockSize = %ld\n",be32toh(vpd->CoherenceBlockSize));
-	printf("\tGranuleSize = %ld\n", be32toh(vpd->GranuleSize));
+	printf("  PageSize = %ld\n", page_size);
+	printf("  CoherenceBlockSize = %ld\n",be32toh(vpd->CoherenceBlockSize));
+	printf("  GranuleSize = %ld\n", be32toh(vpd->GranuleSize));
 
-	printf("\tL1 Cache variables\n");
-	printf("\t\tCacheSize = %ld\n", be32toh(vpd->CacheSize));
+	printf("  L1 Cache variables\n");
+	printf("    CacheSize = %ld\n", be32toh(vpd->CacheSize));
 	l = be32toh(vpd->CacheAttrib);
-	printf("\t\tCacheAttrib = %s\n",
+	printf("    CacheAttrib = %s\n",
 	    (s >= NELEMS(CacheAttrib)) ? "Unknown" : CacheAttrib[s]);
-	printf("\t\tCacheAssoc = %ld\n", be32toh(vpd->CacheAssoc));
-	printf("\t\tCacheLineSize = %ld\n", be32toh(vpd->CacheLineSize));
+	printf("    CacheAssoc = %ld\n", be32toh(vpd->CacheAssoc));
+	printf("    CacheLineSize = %ld\n", be32toh(vpd->CacheLineSize));
 
 	/*
 	 * PPC_CPU
@@ -232,8 +333,8 @@ print_residual_device_info(void)
 	ppc_cpu = res->Cpus;
 	for (i = 0; i < ((ncpu > MAX_CPUS) ? MAX_CPUS : ncpu); i++) {
 		printf("%d:\n", i);
-		printf("\tCpuType = %08lx\n", be32toh(ppc_cpu[i].CpuType));
-		printf("\tCpuNumber = %d\n", ppc_cpu[i].CpuNumber);
+		printf("  CpuType = %08lx\n", be32toh(ppc_cpu[i].CpuType));
+		printf("  CpuNumber = %d\n", ppc_cpu[i].CpuNumber);
 		switch (ppc_cpu[i].CpuState) {
 		case CPU_GOOD:
 			str = "CPU is present, and active";
@@ -254,7 +355,7 @@ print_residual_device_info(void)
 			str = "Unknown state";
 			break;
 		}
-		printf("\tCpuState: %s (%d)\n", str, ppc_cpu[i].CpuState);
+		printf("  CpuState: %s (%d)\n", str, ppc_cpu[i].CpuState);
 	}
 
 	printf("\n");
@@ -275,7 +376,7 @@ print_residual_device_info(void)
 
 		printf("%d:\n", i);
 		l = be32toh(mem_map[i].Usage);
-		printf("\tUsage = ");
+		printf("  Usage = ");
 		for (first = 1, j = 0; j < sizeof(unsigned long) * 8; j++) {
 			if ((l & (1UL << j)) != 0) {
 				printf("%s%s", first ? "" : ", ",
@@ -284,10 +385,10 @@ print_residual_device_info(void)
 			}
 		}
 		printf(" (0x%08lx)\n", l);
-		printf("\tBasePage  = 0x%05lx000\n",
+		printf("  BasePage  = 0x%05lx000\n",
 		    be32toh(mem_map[i].BasePage));
 		pc = be32toh(mem_map[i].PageCount);
-		printf("\tPageCount = 0x%08lx (%ld page%s)\n",
+		printf("  PageCount = 0x%08lx (%ld page%s)\n",
 		    page_size * pc, pc, pc == 1 ? "" : "s");
 	}
 
@@ -300,7 +401,7 @@ print_residual_device_info(void)
 	ppc_mem = res->Memories;
 	for (i = 0; i < ((nmem > MAX_MEMS) ? MAX_MEMS : nmem); i++) {
 		printf("%d:\n", i);
-		printf("\tSIMMSize = %ld MB\n", be32toh(ppc_mem[i].SIMMSize));
+		printf("  SIMMSize = %ld MB\n", be32toh(ppc_mem[i].SIMMSize));
 	}
 
 	/*
@@ -316,9 +417,9 @@ print_residual_device_info(void)
 
 		printf("\n%d:\n", i);
 
-		printf("\tDEVICE_ID\n");
+		printf("  DEVICE_ID\n");
 		l = be32toh(id->BusId);
-		printf("\t\tBusId = ");
+		printf("    BusId = ");
 		for (j = 0; j < sizeof(unsigned long) * 8; j++) {
 			if ((l & (1UL << j)) != 0) {
 				printf("%s",
@@ -327,46 +428,37 @@ print_residual_device_info(void)
 			}
 		}
 		printf("\n");
-		l = be32toh(id->DevId);
-		p[0] = (l >> 24) & 0xff;
-		p[1] = (l >> 16) & 0xff;
-		p[2] = (l >> 8) & 0xff;
-		p[3] = l & 0xff;
-		printf("\t\tDevId = 0x%08lx (%c%c%c%c%c%c%c)\n", l,
-		    ((p[0] >> 2) & 0x1f) + 'A' - 1,
-		    (((p[0] & 0x03) << 3) | ((p[1] >> 5) & 0x07)) + 'A' - 1,
-		    (p[1] & 0x1f) + 'A' - 1,
-		    HEXDIGITS[(p[2] >> 4) & 0xf], HEXDIGITS[p[2] & 0xf],
-		    HEXDIGITS[(p[3] >> 4) & 0xf], HEXDIGITS[p[3] & 0xf]);
-		printf("\t\tSerialNum = 0x%08lx\n", be32toh(id->SerialNum));
+		pnp_devid_to_string(id->DevId, deviceid);
+		printf("    DevId = 0x%08lx (%s)\n", id->DevId, deviceid);
+		printf("    SerialNum = 0x%08lx\n", be32toh(id->SerialNum));
 		l = be32toh(id->Flags);
-		printf("\t\tFlags = 0x%08lx\n", l);
+		printf("    Flags = 0x%08lx\n", l);
 		for (first = 1, j = 0; j < sizeof(unsigned long) * 8; j++) {
 			if ((l & (1UL << j)) != 0) {
-				printf("\t\t\t: %s\n",
+				printf("      : %s\n",
 				    j >= NELEMS(Flags) ? "Unknown" : Flags[j]);
 				first = 0;
 			}
 		}
 		if (first)
-			printf("\t\t\t: None\n");
+			printf("      : None\n");
 
 		bustype_subr(id);
 
-		printf("\tBUS_ACCESS\n");
-		printf("\t\tinfo0 = %d\n", bus->PnPAccess.CSN);
-		printf("\t\tinfo1 = %d\n", bus->PnPAccess.LogicalDevNumber);
+		printf("  BUS_ACCESS\n");
+		printf("    info0 = %d\n", bus->PnPAccess.CSN);
+		printf("    info1 = %d\n", bus->PnPAccess.LogicalDevNumber);
 
 		l = be32toh(ppc_dev[i].AllocatedOffset);
-		printf("\tAllocatedOffset  = 0x%08lx\n", l);
+		printf("  AllocatedOffset  = 0x%08lx\n", l);
 		make_pnp_device_tree(res->DevicePnPHeap + l);
 
 		l = be32toh(ppc_dev[i].PossibleOffset);
-		printf("\tPossibleOffset   = 0x%08lx\n", l);
+		printf("  PossibleOffset   = 0x%08lx\n", l);
 		make_pnp_device_tree(res->DevicePnPHeap + l);
 
 		l = be32toh(ppc_dev[i].CompatibleOffset);
-		printf("\tCompatibleOffset = 0x%08lx\n", l);
+		printf("  CompatibleOffset = 0x%08lx\n", l);
 		make_pnp_device_tree(res->DevicePnPHeap + l);
 	}
 }
@@ -415,7 +507,7 @@ pnp_small_pkt(void *v)
 		struct _S3_Pack *p = v;
 		unsigned char *q = p->CompatId;
 
-		printf("\t\tCompatibleDevice = %c%c%c%c%c%c%c\n",
+		printf("    CompatibleDevice = %c%c%c%c%c%c%c\n",
 		    ((q[0] >> 2) & 0x1f) + 'A' - 1,
 		    (((q[0] & 0x03) << 3) | ((q[1] >> 5) & 0x07)) + 'A' - 1,
 		    (q[1] & 0x1f) + 'A' - 1,
@@ -427,7 +519,7 @@ pnp_small_pkt(void *v)
 	case IRQFormat: {
 		struct _S4_Pack *p = v;
 
-		printf("\t\tIRQ: ");
+		printf("    IRQ: ");
 		for (first = 1, j = 0; j < 2; j++) {
 			for (i = 0; i < 8; i++) {
 				if (p->IRQMask[j] & (1 << i)) {
@@ -441,7 +533,7 @@ pnp_small_pkt(void *v)
 			printf("None ");
 
 		if (size == 3) {
-			static char *IRQInfo[] = {
+			static const char *IRQInfo[] = {
 				"high true edge sensitive",
 				"low true edge sensitive",
 				"high true level sensitive",
@@ -469,7 +561,7 @@ IRQout:
 	case DMAFormat: {
 		struct _S5_Pack *p = v;
 
-		printf("\t\tDMA: ");
+		printf("    DMA: ");
 		for (first = 1, i = 0; i < 8; i++) {
 			if (p->DMAMask & (1 << i)) {
 				printf("%s%d", first ? "" : ", ", i);
@@ -500,19 +592,19 @@ IRQout:
 
 		if (len != 1) {
 			if (iomin == iomax)
-				printf("\t\tIOPort: 0x%x-0x%x",
+				printf("    IOPort: 0x%x-0x%x",
 				    iomin, iomin + len-1);
 			else
-				printf("\t\tIOPort: min 0x%x-0x%x,"
+				printf("    IOPort: min 0x%x-0x%x,"
 				    " max 0x%x-0x%x (%d byte%s align)",
 				      iomin, iomin + len-1,
 				      iomax, iomax + len-1,
 				      align, align != 1 ? "s" : "");
 		} else {
 			if (iomin == iomax)
-				printf("\t\tIOPort: 0x%x", iomin);
+				printf("    IOPort: 0x%x", iomin);
 			else
-				printf("\t\tIOPort: min 0x%x, max 0x%x"
+				printf("    IOPort: min 0x%x, max 0x%x"
 				    " (%d byte%s align)",
 				      iomin, iomax,
 				      align, align != 1 ? "s" : "");
@@ -530,10 +622,10 @@ IRQout:
 		len = p->IONum;
 
 		if (len != 1)
-			printf("\t\tFixedIOPort: 0x%x-0x%x",
+			printf("    FixedIOPort: 0x%x-0x%x",
 			    ioport, ioport + len - 1);
 		else
-			printf("\t\tFixedIOPort: 0x%x", ioport);
+			printf("    FixedIOPort: 0x%x", ioport);
 		printf("\n");
 		}
 		break;
@@ -541,7 +633,7 @@ IRQout:
 	case SmallVendorItem: {
 		unsigned char *p = v;
 
-		printf("\t\tSmallVendorItem: ");
+		printf("    SmallVendorItem: ");
 		switch (p[1]) {
 		case 1:
 			printf("%c%c%c",
@@ -557,7 +649,7 @@ IRQout:
 		printf("\n");
 		for (i = 0; i < size - 1; i++) {
 			if ((i % 16) == 0)
-				printf("\t\t\t");
+				printf("      ");
 			printf("%02x ", p[i + 1]);
 			if ((i % 16) == 15)
 				printf("\n");
@@ -584,6 +676,254 @@ IRQout:
 	return size;
 }
 
+/*
+ * large vendor items
+ */
+
+static void large_vendor_default_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_floppy_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_l2cache_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_pcibridge_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_bat_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_bba_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_scsi_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_pms_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_gaddr_subr(struct _L4_PPCPack *p, int size);
+static void large_vendor_isaintr_subr(struct _L4_PPCPack *p, int size);
+
+static void
+large_vendor_default_subr(struct _L4_PPCPack *p, int size)
+{
+	int i;
+
+	for (i = 0; i < size - 3; i++) {
+		if ((i % 16) == 0)
+			printf("      ");
+		printf("%02x ", p->PPCData[i]);
+		if ((i % 16) == 15)
+			printf("\n");
+	}
+	if ((i % 16) != 0)
+		printf("\n");
+}
+
+static void
+large_vendor_floppy_subr(struct _L4_PPCPack *p, int size)
+{
+	int i;
+	const char *str;
+
+	for (i = 0; i < (size - 4) / 2; i++) {
+		switch (p->PPCData[i*2]) {
+		case 0:
+			str = "Not present";
+			break;
+		case 1:
+			str = "3.5\" 2MiB";
+			break;
+		case 2:
+			str = "3.5\" 4MiB";
+			break;
+		case 3:
+			str = "5.25\" 1.6MiB";
+			break;
+		default:
+			str = "Unknown type";
+			break;
+		}
+		printf("      Floppy drive %d, %s", i, str);
+		if (p->PPCData[i*2 + 1] & 0x01)
+			printf(", Media sense");
+		if (p->PPCData[i*2 + 1] & 0x02)
+			printf(", Auto eject");
+		if (p->PPCData[i*2 + 1] & 0x04)
+			printf(", Alt speed");
+		printf("\n");
+	}
+}
+
+static void
+large_vendor_l2cache_subr(struct _L4_PPCPack *p, int size)
+{
+	static const unsigned char *L2type[] =
+	    { "None", "WriteThru", "CopyBack" };
+	static const unsigned char *L2assoc[] =
+	    { "None", "DirectMapped", "2-way set" };
+	static const unsigned char *L2hw[] =
+	    { "None", "Invalidate", "Flush", "Unknown" };
+
+	printf("      %u K %s %s %s L2 cache\n"
+	    "\t%hd/%hd bytes line/sector size\n",
+	    le32dec(&p->PPCData[0]), L2type[p->PPCData[10]],
+	    L2assoc[le16dec(&p->PPCData[4])],
+	    L2hw[p->PPCData[11]], le16dec(&p->PPCData[6]),
+	    le16dec(&p->PPCData[8]));
+}
+
+static void
+large_vendor_pcibridge_subr(struct _L4_PPCPack *p, int size)
+{
+	int i;
+	char tmpstr[30], *t;
+	static const unsigned char *inttype[] =
+	    { "8259", "MPIC", "RS6k BUID %d" };
+
+	/* rev 0 residual has no valid pcibridge data */
+	if (res->Revision == 0) {
+		large_vendor_default_subr(p, size);
+		return;
+	}
+
+	printf("    PCI Bridge parameters\n"
+	    "      ConfigBaseAddress 0x%0" PRIx64" \n"
+	    "      ConfigBaseData 0x%0" PRIx64 "\n"
+	    "      Bus number %d\n",
+	    le64dec(&p->PPCData[0]), le64dec(&p->PPCData[8]), p->PPCData[16]);
+
+	printf("    PCI Bridge Slot Data\n");
+	/* offset 20 begins irqmap, of 12 bytes each */
+	for (i = 20; i < size - 4; i += 12) {
+		int j, first;
+		if (p->PPCData[i])
+			printf("      PCI Slot %d", p->PPCData[i]);
+		else
+			printf("      Integrated PCI device");
+		for (j = 0, first = 1, t = tmpstr; j < 4; j++) {
+			int line = le16dec(&p->PPCData[i+4+(j*2)]);
+
+			if (line != 0xffff) { /*unusable*/
+				if (first)
+					first = 0;
+				else
+					*t++ = '/';
+				*t++ = 'A' + j;
+			}
+		}
+		*t = '\0';
+		printf(" DevFunc 0x%02x\n", p->PPCData[i + 1]);
+		if (!first) {
+			printf("        interrupt line(s) %s routed to",
+			    tmpstr);
+			sprintf(tmpstr, inttype[p->PPCData[i + 2] - 1],
+			    p->PPCData[i + 3]);
+			printf(" %s line(s) ", tmpstr);
+			for (j = 0, first = 1, t = tmpstr; j < 4; j++) {
+				int line = le16dec(&p->PPCData[i+4+(j*2)]);
+
+				if (line != 0xffff) {
+					if (first)
+						first = 0;
+					else
+						*t++ = '/';
+					t += sprintf(t, "%d(%c)", line & 0x7fff,
+					    line & 0x8000 ? 'E' : 'L');
+				}
+			}
+			printf("%s\n", tmpstr);
+		}
+	}
+}
+
+static void
+large_vendor_bat_subr(struct _L4_PPCPack *p, int size)
+{
+	static const unsigned char *convtype[] =
+	    { "Bus Memory", "Bus I/O", "DMA" };
+	static const unsigned char *transtype[] =
+	    { "direct", "mapped", "PPC special storage segment" };
+
+	printf("      Bridge address translation, %s decoding:\n"
+	    "      Parent Base\tBus Base\tRange\t   Conversion\tTranslation\n"
+	    "      0x%8.8" PRIx64 "\t0x%8.8" PRIx64 "\t0x%8.8" PRIx64
+	    " %s%s%s\n",
+	    p->PPCData[0] & 1 ? "positive" : "subtractive",
+	    le64dec(&p->PPCData[4]), le64dec(&p->PPCData[12]),
+	    le64dec(&p->PPCData[20]), convtype[p->PPCData[2] - 1],
+	    p->PPCData[2] == 3 ? "\t\t" : "\t",
+	    transtype[p->PPCData[1] - 1]);
+}
+
+static void
+large_vendor_bba_subr(struct _L4_PPCPack *p, int size)
+{
+	printf("      Bus speed %ld Hz, %d slot(s)\n",
+	    (long)le32dec(&p->PPCData), p->PPCData[4]);
+}
+
+static void
+large_vendor_scsi_subr(struct _L4_PPCPack *p, int size)
+{
+	int i;
+
+	printf("    SCSI buses: %d id(s):", p->PPCData[0]);
+	for (i = 1; i <= p->PPCData[0]; i++)
+		printf("\t\t\t%d%c", p->PPCData[i],
+		    i == p->PPCData[0] ? '\n' : ',');
+}
+
+static void
+large_vendor_pms_subr(struct _L4_PPCPack *p, int size)
+{
+	unsigned int flags;
+	int i;
+	static const unsigned char *power[] = {
+	    "Hibernation", "Suspend", "Laptop lid events", "Laptop battery",
+	    "Modem-triggered resume from hibernation",
+	    "Modem-triggered resume from suspend",
+	    "Timer-triggered resume from hibernation",
+	    "Timer-triggered resume from suspend",
+	    "Timer-triggered hibernation from suspend",
+	    "Software-controlled power switch", "External resume trigger",
+	    "Software main power switch can be overridden by hardware",
+	    "Resume button", "Automatic transition between states is inhibited"
+	};
+
+	printf("      Power management attributes:");
+	flags = le32dec(&p->PPCData);
+	if (!flags) {
+		printf(" (none)\n");
+		return;
+	}
+	printf("\n");
+	for (i = 0; i < 14; i++)
+		if (flags & 1 << i)
+			printf("\t%s\n", power[i]);
+	if (flags & 0xffffc000)
+		printf("\tunknown flags (0x%8.8x)\n", flags);
+}
+
+static void
+large_vendor_gaddr_subr(struct _L4_PPCPack *p, int size)
+{
+	static const unsigned char *addrtype[] = { "I/O", "Memory", "System" };
+
+	printf("      %s address (%d bits), at 0x%" PRIx64 " size 0x%"
+	    PRIx64 " bytes\n", addrtype[p->PPCData[0] - 1], p->PPCData[1],
+	    le64dec(&p->PPCData[4]), le64dec(&p->PPCData[12]));
+}
+
+static void
+large_vendor_isaintr_subr(struct _L4_PPCPack *p, int size)
+{
+	int i;
+	char tmpstr[30];
+	static const unsigned char *inttype[] =
+	    { "8259", "MPIC", "RS6k BUID %d" };
+
+	sprintf(tmpstr, inttype[p->PPCData[0] - 1], p->PPCData[1]);
+	printf("      ISA interrupts routed to %s lines\n\t", tmpstr);
+
+	for (i = 0; i < 16; i++) {
+		int line = le16dec(&p->PPCData[2 + 2*i]);
+
+		if (line != 0xffff)
+			printf(" %d(IRQ%d)", line, i);
+		if (i == 8)
+			printf("\n\t");
+	}
+	printf("\n");
+}
+
 static int
 pnp_large_pkt(void *v)
 {
@@ -591,26 +931,44 @@ pnp_large_pkt(void *v)
 	unsigned char *q = v;
 	int item, size;
 	int i;
+	static struct large_vendor_type {
+		const char	*str;
+		void	(*func)(struct _L4_PPCPack *p, int sz);
+	} Large_Vendor_Type[] = {
+		{ "None",			NULL },
+		{ "Diskette Drive",		large_vendor_floppy_subr },
+		{ "L2 Cache",			large_vendor_l2cache_subr },
+		{ "PCI Bridge",			large_vendor_pcibridge_subr },
+		{ "Display",			large_vendor_default_subr },
+		{ "Bridge Address Translation",	large_vendor_bat_subr },
+		{ "Bus Bridge Attributes",	large_vendor_bba_subr },
+		{ "SCSI Controller Information",large_vendor_scsi_subr },
+		{ "Power Management Support",	large_vendor_pms_subr },
+		{ "Generic Address",		large_vendor_gaddr_subr },
+		{ "ISA Bridge Information",	large_vendor_isaintr_subr },
+		{ "Video Channels",		large_vendor_default_subr },
+		{ "Power Control",		large_vendor_default_subr },
+		{ "Memory SIMM PD Data",	large_vendor_default_subr },
+		{ "System Interrupts",		large_vendor_default_subr },
+		{ "Error Log",			large_vendor_default_subr },
+		{ "Extended VPD",		large_vendor_default_subr },
+		{ "Timebase Control",		large_vendor_default_subr },
+	};
 
 	item = tag_large_item_name(tag);
 	size = (q[1] | (q[2] << 8)) + 3 /* tag + length */;
 
 	switch (item) {
 	case LargeVendorItem: {
-		unsigned char *p = v;
+		struct _L4_Pack *pack = v;
+		struct _L4_PPCPack *p =  &pack->L4_Data.L4_PPCPack;
 
-		printf("\t\tLargeVendorItem:\n");
-		for (i = 0; i < size - 3; i++) {
-			if ((i % 16) == 0)
-				printf("\t\t\t");
-			printf("%02x ", p[i + 3]);
-			if ((i % 16) == 15)
-				printf("\n");
-		}
-		if ((i % 16) != 0)
-			printf("\n");
-		}
+		printf("    LargeVendorItem: %s\n",
+		    Large_Vendor_Type[p->Type].str);
+		if (p->Type <= 17 && Large_Vendor_Type[p->Type].func != NULL)
+			(*Large_Vendor_Type[p->Type].func)(p, size);
 		break;
+	}
 	
 	default: {
 		unsigned char *p = v;
@@ -647,7 +1005,7 @@ static void
 bustype_subr(DEVICE_ID *id)
 {
 	static struct bustype {
-		char	*str;
+		const char	*str;
 		void	(*func)(DEVICE_ID *);
 	} BaseType[] = {
 		{ "Reserved"			, NULL },
@@ -666,7 +1024,7 @@ bustype_subr(DEVICE_ID *id)
 
 	type = (id->BaseType >= NELEMS(BaseType)) ? 0 : id->BaseType;
 
-	printf("\t\tBaseType = %s (%d)\n", BaseType[type].str, id->BaseType);
+	printf("    BaseType = %s (%d)\n", BaseType[type].str, id->BaseType);
 	if (BaseType[type].func != NULL)
 		(*BaseType[type].func)(id);
 }
@@ -674,11 +1032,11 @@ bustype_subr(DEVICE_ID *id)
 static void
 mass_subr(DEVICE_ID *id)
 {
-	static char *IDEController_tabel[] = {
+	static const char *IDEController_tabel[] = {
 		"GeneralIDE",
 		"ATACompatible",
 	};
-	static char *FloppyController_table[] = {
+	static const char *FloppyController_table[] = {
 		"GeneralFloppy",
 		"Compatible765",
 		"NS398_Floppy",
@@ -687,7 +1045,7 @@ mass_subr(DEVICE_ID *id)
 		"NS2E_Floppy",
 		"CHRP_Floppy",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case SCSIController:
@@ -716,14 +1074,14 @@ mass_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
 
 static void
 nic_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case EthernetController:
@@ -746,14 +1104,14 @@ nic_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
 
 static void
 display_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case VGAController:
@@ -776,18 +1134,18 @@ display_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
 
 static void
 mm_subr(DEVICE_ID *id)
 {
-	static char *AudioController_table[] = {
+	static const char *AudioController_table[] = {
 		"GeneralAudio",
 		"CS4232Audio",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case VideoController:
@@ -807,14 +1165,14 @@ mm_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
 
 static void
 mem_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case RAM:
@@ -833,19 +1191,19 @@ mem_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
 
 static void
 bridge_subr(DEVICE_ID *id)
 {
-	static char *PCIBridge_table[] = {
+	static const char *PCIBridge_table[] = {
 		"GeneralPCIBridge",
 		"PCIBridgeIndirect",
 		"PCIBridgeRS6K",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case HostProcessorBridge:
@@ -885,14 +1243,14 @@ bridge_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
 
 static void
 comm_subr(DEVICE_ID *id)
 {
-	static char *RS232Device_table[] = {
+	static const char *RS232Device_table[] = {
 		"GeneralRS232",
 		"COMx",
 		"Compatible16450",
@@ -902,7 +1260,7 @@ comm_subr(DEVICE_ID *id)
 		"NS15CSerPort",
 		"NS2ESerPort",
 	};
-	static char *ATCompatibleParallelPort_table[] = {
+	static const char *ATCompatibleParallelPort_table[] = {
 		"GeneralParPort",
 		"LPTx",
 		"NS398ParPort",
@@ -910,7 +1268,7 @@ comm_subr(DEVICE_ID *id)
 		"NS15CParPort",
 		"NS2EParPort",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case RS232Device:
@@ -931,57 +1289,57 @@ comm_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
 
 static void
 sys_subr(DEVICE_ID *id)
 {
-	static char *PIC_table[] = {
+	static const char *PIC_table[] = {
 		"GeneralPIC",
 		"ISA_PIC",
 		"EISA_PIC",
 		"MPIC",
 		"RS6K_PIC",
 	};
-	static char *DMAController_table[] = {
+	static const char *DMAController_table[] = {
 		"GeneralDMA",
 		"ISA_DMA",
 		"EISA_DMA",
 	};
-	static char *SystemTimer_table[] = {
+	static const char *SystemTimer_table[] = {
 		"GeneralTimer",
 		"ISA_Timer",
 		"EISA_Timer",
 	};
-	static char *RealTimeClock_table[] = {
+	static const char *RealTimeClock_table[] = {
 		"GeneralRTC",
 		"ISA_RTC",
 	};
-	static char *L2Cache_table[] = {
+	static const char *L2Cache_table[] = {
 		"None",
 		"StoreThruOnly",
 		"StoreInEnabled",
 		"RS6KL2Cache",
 	};
-	static char *NVRAM_table[] = {
+	static const char *NVRAM_table[] = {
 		"IndirectNVRAM",
 		"DirectNVRAM",
 		"IndirectNVRAM24",
 	};
-	static char *PowerManagement_table[] = {
+	static const char *PowerManagement_table[] = {
 		"GeneralPowerManagement",
 		"EPOWPowerManagement",
 		"PowerControl",
 	};
-	static char *GraphicAssist_table[] = {
+	static const char *GraphicAssist_table[] = {
 		"Unknown",
 		"TransferData",
 		"IGMC32",
 		"IGMC64",
 	};
-	static char *OperatorPanel_table[] = {
+	static const char *OperatorPanel_table[] = {
 		"GeneralOPPanel",
 		"HarddiskLight",
 		"CDROMLight",
@@ -991,7 +1349,7 @@ sys_subr(DEVICE_ID *id)
 		"SystemStatusLED",
 		"CHRP_SystemStatusLED",
 	};
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case ProgrammableInterruptController:
@@ -1067,14 +1425,14 @@ sys_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
 
 static void
 input_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case KeyboardController:
@@ -1097,14 +1455,14 @@ input_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
 
 static void
 service_subr(DEVICE_ID *id)
 {
-	char *p, *q = NULL;
+	const char *p, *q = NULL;
 
 	switch (id->SubType) {
 	case GeneralMemoryController:
@@ -1115,6 +1473,8 @@ service_subr(DEVICE_ID *id)
 		break;
 	}
 
-	printf("\t\tSubType = %s (%d)\n", p, id->SubType);
-	printf("\t\tInterface = %s (%d)\n", q ? q : "None", id->Interface);
+	printf("    SubType = %s (%d)\n", p, id->SubType);
+	printf("    Interface = %s (%d)\n", q ? q : "None", id->Interface);
 }
+
+#endif /* RESIDUAL_DATA_DUMP */

@@ -1,5 +1,5 @@
-	$NetBSD: syscalls.master,v 1.15 2005/11/17 17:07:03 christos Exp $
-; based on NetBSD: syscalls.master,v 1.128 2003/03/18 18:08:49 christos Exp
+	$NetBSD: syscalls.master,v 1.15.6.1 2006/04/22 11:38:17 simonb Exp $
+; based on NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -176,7 +176,7 @@
 56	STD		{ int pecoff_sys_revoke(const char *path); }
 57	STD		{ int pecoff_sys_symlink(const char *path, \
 			    const char *link); }
-58	STD		{ int pecoff_sys_readlink(const char *path, char *buf, \
+58	STD		{ ssize_t pecoff_sys_readlink(const char *path, char *buf, \
 			    size_t count); }
 59	STD		{ int pecoff_sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
@@ -230,13 +230,13 @@
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	NOARGS		{ int sys_fsync(int fd); }
-96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
+96	NOARGS		{ int sys_setpriority(int which, id_t who, int prio); }
 97	NOARGS		{ int sys_socket(int domain, int type, int protocol); }
 98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 99	EXCL		{ int sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
-100	NOARGS		{ int sys_getpriority(int which, int who); }
+100	NOARGS		{ int sys_getpriority(int which, id_t who); }
 101	EXCL		{ int sys_send(int s, caddr_t buf, int len, \
 			    int flags); } osend
 102	EXCL		{ int sys_recv(int s, caddr_t buf, int len, \
@@ -262,7 +262,7 @@
 			    osendmsg
 115	OBSOL		vtrace
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
-			    struct timezone *tzp); }
+			    void *tzp); }
 117	NOARGS		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, unsigned int *avalsize); }
@@ -272,7 +272,7 @@
 121	NOARGS		{ ssize_t sys_writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
 122	NOARGS		{ int sys_settimeofday(const struct timeval *tv, \
-			    const struct timezone *tzp); }
+			    void *tzp); }
 123	NOARGS		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
 125	EXCL		{ int sys_recvfrom(int s, caddr_t buf, size_t len, \
@@ -430,8 +430,8 @@
 200	STD		{ int pecoff_sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); }
-202	NOARGS		{ int sys___sysctl(int *name, u_int namelen, \
-			    void *old, size_t *oldlenp, void *new, \
+202	NOARGS		{ int sys___sysctl(const int *name, u_int namelen, \
+			    void *old, size_t *oldlenp, const void *new, \
 			    size_t newlen); }
 203	NOARGS		{ int sys_mlock(const void *addr, size_t len); }
 204	NOARGS		{ int sys_munlock(const void *addr, size_t len); }
@@ -540,7 +540,7 @@
 ; Syscall 246 is free for any use
 ;
 246	UNIMPL
-#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
+#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
 247	NOARGS		{ int sys__ksem_init(unsigned int value, semid_t *idp); }
 248	NOARGS		{ int sys__ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, semid_t *idp); }
@@ -580,8 +580,10 @@
 269	UNIMPL
 270	STD		{ int pecoff_sys___posix_rename(const char *from, \
 			    const char *to); }
-271	NOARGS		{ int sys_swapctl(int cmd, const void *arg, int misc); }
-272	NOARGS		{ int sys___getdents30(int fd, char *buf, size_t count); }
+271	NOARGS		{ int sys_swapctl(int cmd, void *arg, int misc); }
+#ifdef COMPAT_30
+272	NOARGS		{ int compat_30_sys_getdents(int fd, char *buf, size_t count); }
+#endif
 273	NOARGS		{ int sys_minherit(void *addr, size_t len, \
 			    int inherit); }
 274	STD		{ int pecoff_sys_lchmod(const char *path, mode_t mode); }
@@ -590,11 +592,13 @@
 276	STD		{ int pecoff_sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
 277	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
-278	STD		{ int pecoff_sys___stat30(const char *path, \
-			    struct stat *ub); }
-279	NOARGS		{ int sys___fstat30(int fd, struct stat *sb); }
-280	STD		{ int pecoff_sys___lstat30(const char *path, \
-			    struct stat *ub); }
+#ifdef COMPAT_30
+278	STD		{ int pecoff_sys___stat13(const char *path, \
+			    struct stat30 *ub); }
+279	NOARGS		{ int compat_30_sys___fstat13(int fd, struct stat30 *sb); }
+280	STD		{ int pecoff_sys___lstat13(const char *path, \
+			    struct stat30 *ub); }
+#endif
 281	NOARGS		{ int sys___sigaltstack14( \
 			    const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
@@ -697,23 +701,24 @@
 329	UNIMPL
 ; Scheduler activation syscalls
 330	NOARGS		{ int sys_sa_register(sa_upcall_t new, \
-				sa_upcall_t *old, int flags); }
+				sa_upcall_t *old, int flags, \
+				ssize_t stackinfo_offset); }
 331	NOARGS		{ int sys_sa_stacks(int num, stack_t *stacks); }
 332	NOARGS		{ int sys_sa_enable(void); }
 333	NOARGS		{ int sys_sa_setconcurrency(int concurrency); }
 334	NOARGS		{ int sys_sa_yield(void); }
 335	NOARGS		{ int sys_sa_preempt(int sa_id); }
+336	OBSOL		sys_sa_unblockyield
 ;
-; Syscalls 336-339 are reserved for other scheduler activation syscalls.
+; Syscalls 337-339 are reserved for other scheduler activation syscalls.
 ;
-336	UNIMPL
 337	UNIMPL
 338	UNIMPL
 339	UNIMPL
 340	NOARGS		{ int sys___sigaction_sigtramp(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa, \
-			    void *tramp, int vers); }
+			    const void *tramp, int vers); }
 341	NOARGS		{ int sys_pmc_get_info(int ctr, int op, void *args); }
 342	NOARGS		{ int sys_pmc_control(int ctr, int op, void *args); }
 343	NOARGS		{ int sys_rasctl(caddr_t addr, size_t len, int op); }
@@ -745,3 +750,74 @@
 			    int flags); }
 359	NOARGS		{ int sys_fhstatvfs1(const fhandle_t *fhp, \
 			    struct statvfs *buf, int flags); }
+360	NOARGS		{ int sys_extattrctl(const char *path, int cmd, \
+			    const char *filename, int attrnamespace, \
+			    const char *attrname); }
+361	NOARGS		{ int sys_extattr_set_file(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    const void *data, size_t nbytes); }
+362	NOARGS		{ ssize_t sys_extattr_get_file(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    void *data, size_t nbytes); }
+363	NOARGS		{ int sys_extattr_delete_file(const char *path, \
+			    int attrnamespace, const char *attrname); }
+364	NOARGS		{ int sys_extattr_set_fd(int fd, \
+			    int attrnamespace, const char *attrname, \
+			    const void *data, size_t nbytes); }
+365	NOARGS		{ ssize_t sys_extattr_get_fd(int fd, \
+			    int attrnamespace, const char *attrname, \
+			    void *data, size_t nbytes); }
+366	NOARGS		{ int sys_extattr_delete_fd(int fd, \
+			    int attrnamespace, const char *attrname); }
+367	NOARGS		{ int sys_extattr_set_link(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    const void *data, size_t nbytes); }
+368	NOARGS		{ ssize_t sys_extattr_get_link(const char *path, \
+			    int attrnamespace, const char *attrname, \
+			    void *data, size_t nbytes); }
+369	NOARGS		{ int sys_extattr_delete_link(const char *path, \
+			    int attrnamespace, const char *attrname); }
+370	NOARGS		{ ssize_t sys_extattr_list_fd(int fd, \
+			    int attrnamespace, void *data, size_t nbytes); }
+371	NOARGS		{ ssize_t sys_extattr_list_file(const char *path, \
+			    int attrnamespace, void *data, size_t nbytes); }
+372	NOARGS		{ ssize_t sys_extattr_list_link(const char *path, \
+			    int attrnamespace, void *data, size_t nbytes); }
+373	NOARGS		{ int sys_pselect(int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, const struct timespec *ts, \
+			    const sigset_t *mask); }
+374	NOARGS		{ int sys_pollts(struct pollfd *fds, u_int nfds, \
+			    const struct timespec *ts, const sigset_t *mask); }
+375	NOARGS		{ int sys_setxattr(const char *path, \
+			    const char *name, void *value, size_t size, \
+			    int flags); }
+376	NOARGS		{ int sys_lsetxattr(const char *path, \
+			    const char *name, void *value, size_t size, \
+			    int flags); }
+377	NOARGS		{ int sys_fsetxattr(int fd, \
+			    const char *name, void *value, size_t size, \
+			    int flags); }
+378	NOARGS		{ int sys_getxattr(const char *path, \
+			    const char *name, void *value, size_t size); }
+379	NOARGS		{ int sys_lgetxattr(const char *path, \
+			    const char *name, void *value, size_t size); }
+380	NOARGS		{ int sys_fgetxattr(int fd, \
+			    const char *name, void *value, size_t size); }
+381	NOARGS		{ int sys_listxattr(const char *path, \
+			    char *list, size_t size); }
+382	NOARGS		{ int sys_llistxattr(const char *path, \
+			    char *list, size_t size); }
+383	NOARGS		{ int sys_flistxattr(int fd, \
+			    char *list, size_t size); }
+384	NOARGS		{ int sys_removexattr(const char *path, \
+			    const char *name); }
+385	NOARGS		{ int sys_lremovexattr(const char *path, \
+			    const char *name); }
+386	NOARGS		{ int sys_fremovexattr(int fd, \
+			    const char *name); }
+387	STD		{ int pecoff_sys___stat30(const char *path, struct stat *ub); }
+388	NOARGS		{ int sys___fstat30(int fd, struct stat *sb); }
+389	STD		{ int pecoff_sys___lstat30(const char *path, struct stat *ub); }
+390	NOARGS		{ int sys___getdents30(int fd, char *buf, size_t count); }
+391	NOARGS		{ int sys_posix_fadvise(int fd, off_t offset, \
+			    off_t len, int advice); }

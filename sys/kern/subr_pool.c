@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.111.4.1 2006/02/04 14:30:17 simonb Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.111.4.2 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.111.4.1 2006/02/04 14:30:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.111.4.2 2006/04/22 11:39:59 simonb Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -183,6 +183,7 @@ static void	pool_prime_page(struct pool *, caddr_t,
 		    struct pool_item_header *);
 static void	pool_update_curpage(struct pool *);
 
+static int	pool_grow(struct pool *, int);
 void		*pool_allocator_alloc(struct pool *, int);
 void		pool_allocator_free(struct pool *, void *);
 
@@ -467,12 +468,26 @@ void
 pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc)
 {
-	int off, slack;
+#ifdef DEBUG
+	struct pool *pp1;
+#endif
 	size_t trysize, phsize;
-	int s;
+	int off, slack, s;
 
 	KASSERT((1UL << (CHAR_BIT * sizeof(pool_item_freelist_t))) - 2 >=
 	    PHPOOL_FREELIST_NELEM(PHPOOL_MAX - 1));
+
+#ifdef DEBUG
+	/*
+	 * Check that the pool hasn't already been initialised and
+	 * added to the list of all pools.
+	 */
+	LIST_FOREACH(pp1, &pool_head, pr_poollist) {
+		if (pp == pp1)
+			panic("pool_init: pool %s already initialised",
+			    wchan);
+	}
+#endif
 
 #ifdef POOL_DIAGNOSTIC
 	/*
@@ -482,35 +497,19 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		flags |= PR_LOGGING;
 #endif
 
-#ifdef POOL_SUBPAGE
-	/*
-	 * XXX We don't provide a real `nointr' back-end
-	 * yet; all sub-pages come from a kmem back-end.
-	 * maybe some day...
-	 */
-	if (palloc == NULL) {
-		extern struct pool_allocator pool_allocator_kmem_subpage;
-		palloc = &pool_allocator_kmem_subpage;
-	}
-	/*
-	 * We'll assume any user-specified back-end allocator
-	 * will deal with sub-pages, or simply don't care.
-	 */
-#else
 	if (palloc == NULL)
 		palloc = &pool_allocator_kmem;
+#ifdef POOL_SUBPAGE
+	if (size > palloc->pa_pagesz) {
+		if (palloc == &pool_allocator_kmem)
+			palloc = &pool_allocator_kmem_fullpage;
+		else if (palloc == &pool_allocator_nointr)
+			palloc = &pool_allocator_nointr_fullpage;
+	}		
 #endif /* POOL_SUBPAGE */
 	if ((palloc->pa_flags & PA_INITIALIZED) == 0) {
-		if (palloc->pa_pagesz == 0) {
-#ifdef POOL_SUBPAGE
-			if (palloc == &pool_allocator_kmem)
-				palloc->pa_pagesz = PAGE_SIZE;
-			else
-				palloc->pa_pagesz = POOL_SUBPAGE;
-#else
+		if (palloc->pa_pagesz == 0)
 			palloc->pa_pagesz = PAGE_SIZE;
-#endif /* POOL_SUBPAGE */
-		}
 
 		TAILQ_INIT(&palloc->pa_list);
 
@@ -883,6 +882,8 @@ pool_get(struct pool *pp, int flags)
 	 * has no items in its bucket.
 	 */
 	if ((ph = pp->pr_curpage) == NULL) {
+		int error;
+
 #ifdef DIAGNOSTIC
 		if (pp->pr_nitems != 0) {
 			simple_unlock(&pp->pr_slock);
@@ -898,18 +899,9 @@ pool_get(struct pool *pp, int flags)
 		 * may block.
 		 */
 		pr_leave(pp);
-		simple_unlock(&pp->pr_slock);
-		v = pool_allocator_alloc(pp, flags);
-		if (__predict_true(v != NULL))
-			ph = pool_alloc_item_header(pp, v, flags);
-
-		if (__predict_false(v == NULL || ph == NULL)) {
-			if (v != NULL)
-				pool_allocator_free(pp, v);
-
-			simple_lock(&pp->pr_slock);
-			pr_enter(pp, file, line);
-
+		error = pool_grow(pp, flags);
+		pr_enter(pp, file, line);
+		if (error != 0) {
 			/*
 			 * We were unable to allocate a page or item
 			 * header, but we released the lock during
@@ -937,14 +929,7 @@ pool_get(struct pool *pp, int flags)
 			pr_leave(pp);
 			ltsleep(pp, PSWP, pp->pr_wchan, hz, &pp->pr_slock);
 			pr_enter(pp, file, line);
-			goto startover;
 		}
-
-		/* We have more memory; add it to the pool */
-		simple_lock(&pp->pr_slock);
-		pr_enter(pp, file, line);
-		pool_prime_page(pp, v, ph);
-		pp->pr_npagealloc++;
 
 		/* Start the allocation process over. */
 		goto startover;
@@ -1217,35 +1202,56 @@ pool_put(struct pool *pp, void *v)
 #endif
 
 /*
+ * pool_grow: grow a pool by a page.
+ *
+ * => called with pool locked.
+ * => unlock and relock the pool.
+ * => return with pool locked.
+ */
+
+static int
+pool_grow(struct pool *pp, int flags)
+{
+	struct pool_item_header *ph = NULL;
+	char *cp;
+
+	simple_unlock(&pp->pr_slock);
+	cp = pool_allocator_alloc(pp, flags);
+	if (__predict_true(cp != NULL)) {
+		ph = pool_alloc_item_header(pp, cp, flags);
+	}
+	if (__predict_false(cp == NULL || ph == NULL)) {
+		if (cp != NULL) {
+			pool_allocator_free(pp, cp);
+		}
+		simple_lock(&pp->pr_slock);
+		return ENOMEM;
+	}
+
+	simple_lock(&pp->pr_slock);
+	pool_prime_page(pp, cp, ph);
+	pp->pr_npagealloc++;
+	return 0;
+}
+
+/*
  * Add N items to the pool.
  */
 int
 pool_prime(struct pool *pp, int n)
 {
-	struct pool_item_header *ph = NULL;
-	caddr_t cp;
 	int newpages;
+	int error = 0;
 
 	simple_lock(&pp->pr_slock);
 
 	newpages = roundup(n, pp->pr_itemsperpage) / pp->pr_itemsperpage;
 
 	while (newpages-- > 0) {
-		simple_unlock(&pp->pr_slock);
-		cp = pool_allocator_alloc(pp, PR_NOWAIT);
-		if (__predict_true(cp != NULL))
-			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-
-		if (__predict_false(cp == NULL || ph == NULL)) {
-			if (cp != NULL)
-				pool_allocator_free(pp, cp);
-			simple_lock(&pp->pr_slock);
+		error = pool_grow(pp, PR_NOWAIT);
+		if (error) {
 			break;
 		}
-
-		simple_lock(&pp->pr_slock);
-		pool_prime_page(pp, cp, ph);
-		pp->pr_npagealloc++;
 		pp->pr_minpages++;
 	}
 
@@ -1253,7 +1259,7 @@ pool_prime(struct pool *pp, int n)
 		pp->pr_maxpages = pp->pr_minpages + 1;	/* XXX */
 
 	simple_unlock(&pp->pr_slock);
-	return (0);
+	return error;
 }
 
 /*
@@ -1355,34 +1361,15 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 static int
 pool_catchup(struct pool *pp)
 {
-	struct pool_item_header *ph = NULL;
-	caddr_t cp;
 	int error = 0;
 
 	while (POOL_NEEDS_CATCHUP(pp)) {
-		/*
-		 * Call the page back-end allocator for more memory.
-		 *
-		 * XXX: We never wait, so should we bother unlocking
-		 * the pool descriptor?
-		 */
-		simple_unlock(&pp->pr_slock);
-		cp = pool_allocator_alloc(pp, PR_NOWAIT);
-		if (__predict_true(cp != NULL))
-			ph = pool_alloc_item_header(pp, cp, PR_NOWAIT);
-		if (__predict_false(cp == NULL || ph == NULL)) {
-			if (cp != NULL)
-				pool_allocator_free(pp, cp);
-			error = ENOMEM;
-			simple_lock(&pp->pr_slock);
+		error = pool_grow(pp, PR_NOWAIT);
+		if (error) {
 			break;
 		}
-		simple_lock(&pp->pr_slock);
-		pool_prime_page(pp, cp, ph);
-		pp->pr_npagealloc++;
 	}
-
-	return (error);
+	return error;
 }
 
 static void
@@ -1547,7 +1534,8 @@ pool_drain(void *arg)
 		drainpp = LIST_NEXT(pp, pr_poollist);
 	}
 	simple_unlock(&pool_head_slock);
-	pool_reclaim(pp);
+	if (pp)
+		pool_reclaim(pp);
 	splx(s);
 }
 
@@ -2181,23 +2169,42 @@ pool_cache_reclaim(struct pool_cache *pc, struct pool_pagelist *pq,
 void	*pool_page_alloc(struct pool *, int);
 void	pool_page_free(struct pool *, void *);
 
+#ifdef POOL_SUBPAGE
+struct pool_allocator pool_allocator_kmem_fullpage = {
+	pool_page_alloc, pool_page_free, 0,
+};
+#else
 struct pool_allocator pool_allocator_kmem = {
 	pool_page_alloc, pool_page_free, 0,
 };
+#endif
 
 void	*pool_page_alloc_nointr(struct pool *, int);
 void	pool_page_free_nointr(struct pool *, void *);
 
+#ifdef POOL_SUBPAGE
+struct pool_allocator pool_allocator_nointr_fullpage = {
+	pool_page_alloc_nointr, pool_page_free_nointr, 0,
+};
+#else
 struct pool_allocator pool_allocator_nointr = {
 	pool_page_alloc_nointr, pool_page_free_nointr, 0,
 };
+#endif
 
 #ifdef POOL_SUBPAGE
 void	*pool_subpage_alloc(struct pool *, int);
 void	pool_subpage_free(struct pool *, void *);
 
-struct pool_allocator pool_allocator_kmem_subpage = {
-	pool_subpage_alloc, pool_subpage_free, 0,
+struct pool_allocator pool_allocator_kmem = {
+	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
+};
+
+void	*pool_subpage_alloc_nointr(struct pool *, int);
+void	pool_subpage_free_nointr(struct pool *, void *);
+
+struct pool_allocator pool_allocator_nointr = {
+	pool_subpage_alloc, pool_subpage_free, POOL_SUBPAGE,
 };
 #endif /* POOL_SUBPAGE */
 
@@ -2373,19 +2380,19 @@ pool_subpage_free(struct pool *pp, void *v)
 
 /* We don't provide a real nointr allocator.  Maybe later. */
 void *
-pool_page_alloc_nointr(struct pool *pp, int flags)
+pool_subpage_alloc_nointr(struct pool *pp, int flags)
 {
 
 	return (pool_subpage_alloc(pp, flags));
 }
 
 void
-pool_page_free_nointr(struct pool *pp, void *v)
+pool_subpage_free_nointr(struct pool *pp, void *v)
 {
 
 	pool_subpage_free(pp, v);
 }
-#else
+#endif /* POOL_SUBPAGE */
 void *
 pool_page_alloc_nointr(struct pool *pp, int flags)
 {
@@ -2400,4 +2407,3 @@ pool_page_free_nointr(struct pool *pp, void *v)
 
 	uvm_km_free_poolpage_cache(kernel_map, (vaddr_t) v);
 }
-#endif /* POOL_SUBPAGE */

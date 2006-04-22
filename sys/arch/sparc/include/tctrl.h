@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.h,v 1.2 2000/03/14 21:23:45 jdc Exp $	*/
+/*	$NetBSD: tctrl.h,v 1.2.62.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,13 +39,13 @@
 #define	_MACHINE_TCTRL_H
 
 struct tctrl_req {
-	u_int8_t        cmdbuf[16];
-	u_int8_t        cmdlen;
-	u_int8_t        cmdoff;
+	uint8_t        cmdbuf[16];
+	uint8_t        cmdlen;
+	uint8_t        cmdoff;
 	struct proc     *p;
-	u_int8_t        rspbuf[16];
-	u_int8_t        rspoff;
-	u_int8_t        rsplen;
+	uint8_t        rspbuf[16];
+	uint8_t        rspoff;
+	uint8_t        rsplen;
 };
 typedef struct tctrl_req tctrl_req_t;
 

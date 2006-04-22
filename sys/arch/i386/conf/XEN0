@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.27 2006/01/31 16:42:10 xtraeme Exp $
+# $NetBSD: XEN0,v 1.27.4.1 2006/04/22 11:37:32 simonb Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -242,6 +242,13 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 # Hardware monitors
 
+# AMD 768 and 8111 power/ACPI controllers
+amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
+#iic*	at amdpm?			# sensors below are on this bus
+#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
+#adt7463c* at iic? addr 0x2D		# Tyan S2881
+#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
 
@@ -272,6 +279,7 @@ le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
@@ -349,6 +357,7 @@ rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
@@ -417,6 +426,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
@@ -650,28 +660,24 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 
-# Vinum
-# pseudo-device	vinum		8	# Vinum
-# options 	VINUMDEBUG
-
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		32	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	tun		2	# network tunneling over tty
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	tun			# network tunneling over tty
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

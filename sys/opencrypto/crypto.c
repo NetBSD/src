@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.12.4.1 2006/02/04 14:26:06 simonb Exp $ */
+/*	$NetBSD: crypto.c,v 1.12.4.2 2006/04/22 11:40:18 simonb Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.12.4.1 2006/02/04 14:26:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.12.4.2 2006/04/22 11:40:18 simonb Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.12.4.1 2006/02/04 14:26:06 simonb Exp $
 #include <opencrypto/cryptodev.h>
 #include <sys/kthread.h>
 #include <sys/once.h>
+#include <sys/sysctl.h>
 
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
@@ -121,6 +122,37 @@ SYSCTL_INT(_kern, OID_AUTO, userasymcrypto, CTLFLAG_RW,
 SYSCTL_INT(_kern, OID_AUTO, cryptodevallowsoft, CTLFLAG_RW,
 	   &crypto_devallowsoft, 0,
 	   "Enable/disable use of software asym crypto support");
+#endif
+#ifdef __NetBSD__
+SYSCTL_SETUP(sysctl_opencrypto_setup, "sysctl opencrypto subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "usercrypto",
+		       SYSCTL_DESCR("Enable/disable user-mode access to "
+			   "crypto support"),
+		       NULL, 0, &crypto_usercrypto, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "userasymcrypto",
+		       SYSCTL_DESCR("Enable/disable user-mode access to "
+			   "asymmetric crypto support"),
+		       NULL, 0, &crypto_userasymcrypto, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "cryptodevallowsoft",
+		       SYSCTL_DESCR("Enable/disable use of software "
+			   "asymmetric crypto support"),
+		       NULL, 0, &crypto_devallowsoft, 0,
+		       CTL_KERN, CTL_CREATE, CTL_EOL);
+}
 #endif
 
 MALLOC_DEFINE(M_CRYPTO_DATA, "crypto", "crypto session records");

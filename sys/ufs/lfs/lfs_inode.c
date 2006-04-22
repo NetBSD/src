@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.100 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.100.6.1 2006/04/22 11:40:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100.6.1 2006/04/22 11:40:25 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -425,7 +425,11 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * which we want to keep.  Lastblock is -1 when
 	 * the file is truncated to 0.
 	 */
-	lastblock = lblkno(fs, length + fs->lfs_bsize - 1) - 1;
+	/* Avoid sign overflow - XXX assumes that off_t is a quad_t. */
+	if (length > QUAD_MAX - fs->lfs_bsize)
+		lastblock = lblkno(fs, QUAD_MAX - fs->lfs_bsize);
+	else
+		lastblock = lblkno(fs, length + fs->lfs_bsize - 1) - 1;
 	lastiblock[SINGLE] = lastblock - NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - NINDIR(fs) * NINDIR(fs);
@@ -573,6 +577,17 @@ done:
 		panic("lfs_truncate: persistent blocks");
 	}
 #endif
+
+	/*
+	 * If we truncated to zero, take us off the paging queue.
+	 */
+	simple_lock(&fs->lfs_interlock);
+	if (oip->i_size == 0 && oip->i_flags & IN_PAGING) {
+		oip->i_flags &= ~IN_PAGING;
+		TAILQ_REMOVE(&fs->lfs_pchainhd, oip, i_lfs_pchain);
+	}
+	simple_unlock(&fs->lfs_interlock);
+
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA
 	(void) chkdq(oip, -blocksreleased, NOCRED, 0);

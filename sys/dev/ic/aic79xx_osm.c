@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.14 2005/12/05 18:29:45 bouyer Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.14.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.14 2005/12/05 18:29:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.14.6.1 2006/04/22 11:38:54 simonb Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic7xxx_cam.h>
@@ -367,7 +367,7 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		u_int width;
 		int s;
 		char channel;
-		u_int ppr_options, period, offset;
+		u_int ppr_options = 0, period, offset;
 		uint16_t old_autoneg;
 
 		target_id = xm->xm_target;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sw.c,v 1.16 2005/11/16 01:14:35 uwe Exp $	*/
+/*	$NetBSD: sw.c,v 1.16.6.1 2006/04/22 11:37:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.16 2005/11/16 01:14:35 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sw.c,v 1.16.6.1 2006/04/22 11:37:57 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -299,9 +299,9 @@ sw_attach(struct device *parent, struct device *self, void *aux)
 	 * Pull in the options flags.  Allow the user to completely
 	 * override the default values.
 	 */
-	if ((ncr_sc->sc_dev.dv_cfdata->cf_flags & SW_OPTIONS_MASK) != 0)
+	if ((device_cfdata(&ncr_sc->sc_dev)->cf_flags & SW_OPTIONS_MASK) != 0)
 		sc->sc_options =
-		    (ncr_sc->sc_dev.dv_cfdata->cf_flags & SW_OPTIONS_MASK);
+		    device_cfdata(&ncr_sc->sc_dev)->cf_flags & SW_OPTIONS_MASK;
 
 	/*
 	 * Initialize fields used by the MI code

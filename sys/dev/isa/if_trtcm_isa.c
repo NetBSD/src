@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.10 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.10.6.1 2006/04/22 11:39:06 simonb Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.10 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.10.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -214,7 +214,7 @@ trtcm_isa_probe(parent, match, aux)
 	void *aux;
 {
 	struct isa_attach_args	*ia = aux;
-	int	bus = parent->dv_unit;
+	int	bus = device_unit(parent);
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	u_int	msiz;

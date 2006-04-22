@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.67 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: fd.c,v 1.67.6.1 2006/04/22 11:38:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.67 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.67.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -681,7 +681,7 @@ fdstrategy(struct buf *bp)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
-		struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+		struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
@@ -701,7 +701,7 @@ done:
 void
 fdstart(struct fd_softc *fd)
 {
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 	int active = fdc->sc_drives.tqh_first != 0;
 
 	/* Link into controller queue. */
@@ -716,7 +716,7 @@ fdstart(struct fd_softc *fd)
 void
 fdfinish(struct fd_softc *fd, struct buf *bp)
 {
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
@@ -778,7 +778,7 @@ void
 fd_motor_off(void *arg)
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (struct fdc_softc*) fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (struct fdc_softc*) device_parent(&fd->sc_dev);
 	int s;
 
 	DPRINTF(("fd_motor_off:\n"));
@@ -797,7 +797,7 @@ void
 fd_motor_on(void *arg)
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 	int s;
 
 	DPRINTF(("fd_motor_on:\n"));
@@ -875,7 +875,7 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	    fd->sc_type != type)
 		return EBUSY;
 
-	fdc = (void *)fd->sc_dev.dv_parent;
+	fdc = (void *)device_parent(&fd->sc_dev);
 	if ((fd->sc_flags & FD_OPEN) == 0) {
 		/* Lock eject button */
 		bus_space_write_1(fdc->sc_iot, fdc->sc_ioh, fdout,
@@ -905,7 +905,7 @@ fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
  	int unit = FDUNIT(dev);
 	struct fd_softc *fd = fd_cd.cd_devs[unit];
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 
 	DPRINTF(("fdclose %d\n", unit));
 
@@ -944,7 +944,7 @@ fdcstart(struct fdc_softc *fdc)
 void
 fdcstatus(struct device *dv, int n, const char *s)
 {
-	struct fdc_softc *fdc = (void *)dv->dv_parent;
+	struct fdc_softc *fdc = (void *)device_parent(dv);
 	char bits[64];
 
 	if (n == 0) {
@@ -1109,7 +1109,7 @@ loop:
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 
-		fd->sc_dk.dk_seek++;
+		iostat_seek(fd->sc_dk.dk_stats);
 		disk_busy(&fd->sc_dk);
 
 		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);
@@ -1509,7 +1509,7 @@ int
 fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
-	struct fdc_softc *fdc = (void*) fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void*) device_parent(&fd->sc_dev);
 	int unit = FDUNIT(dev);
 	int part = DISKPART(dev);
 	struct disklabel buffer;
@@ -1652,10 +1652,11 @@ void
 fd_mountroot_hook(struct device *dev)
 {
 	struct fd_softc *fd = (void*) dev;
-	struct fdc_softc *fdc = (void*) fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void*) device_parent(&fd->sc_dev);
 	int c;
 
-	fd_do_eject(fdc, dev->dv_unit);
+	/* XXX device_unit() abuse */
+	fd_do_eject(fdc, device_unit(dev));
 	printf("Insert filesystem floppy and press return.");
 	for (;;) {
 		c = cngetc();

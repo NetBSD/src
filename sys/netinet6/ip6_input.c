@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.82 2006/01/23 23:01:40 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.82.4.1 2006/04/22 11:40:12 simonb Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.82 2006/01/23 23:01:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.82.4.1 2006/04/22 11:40:12 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -129,6 +129,8 @@ static int ip6qmaxlen = IFQ_MAXLEN;
 struct in6_ifaddr *in6_ifaddr;
 struct ifqueue ip6intrq;
 
+extern struct callout in6_tmpaddrtimer_ch;
+
 int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
 int ip6_sourcecheck_interval;		/* XXX */
@@ -170,6 +172,7 @@ ip6_init()
 	addrsel_policy_init();
 	nd6_init();
 	frag6_init();
+	ip6_desync_factor = arc4random() % MAX_TEMP_DESYNC_FACTOR;
 
 	ip6_init2((void *)0);
 
@@ -192,6 +195,13 @@ ip6_init2(dummy)
 	/* nd6_timer_init */
 	callout_init(&nd6_timer_ch);
 	callout_reset(&nd6_timer_ch, hz, nd6_timer, NULL);
+
+	/* timer for regeneranation of temporary addresses randomize ID */
+	callout_init(&in6_tmpaddrtimer_ch);
+	callout_reset(&in6_tmpaddrtimer_ch,
+		      (ip6_temp_preferred_lifetime - ip6_desync_factor -
+		       ip6_temp_regen_advance) * hz,
+		      in6_tmpaddrtimer, NULL);
 }
 
 /*
@@ -209,6 +219,11 @@ ip6intr()
 		splx(s);
 		if (m == 0)
 			return;
+		/* drop the packet if IPv6 operation is disabled on the IF */
+		if ((ND_IFINFO(m->m_pkthdr.rcvif)->flags & ND6_IFF_IFDISABLED)) {
+			m_freem(m);
+			return;
+		}
 		ip6_input(m);
 	}
 }
@@ -602,7 +617,7 @@ ip6_input(m)
 		if (ip6->ip6_plen == 0 && plen == 0) {
 			/*
 			 * Note that if a valid jumbo payload option is
-			 * contained, ip6_hoptops_input() must set a valid
+			 * contained, ip6_hopopts_input() must set a valid
 			 * (non-zero) payload length to the variable plen.
 			 */
 			ip6stat.ip6s_badoptions++;
@@ -1015,7 +1030,6 @@ ip6_savecontrol(in6p, mp, ip6, m)
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 {
-
 #ifdef SO_TIMESTAMP
 	if (in6p->in6p_socket->so_options & SO_TIMESTAMP) {
 		struct timeval tv;
@@ -1048,9 +1062,8 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		struct in6_pktinfo pi6;
 		bcopy(&ip6->ip6_dst, &pi6.ipi6_addr, sizeof(struct in6_addr));
 		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
-		pi6.ipi6_ifindex = (m && m->m_pkthdr.rcvif)
-					? m->m_pkthdr.rcvif->if_index
-					: 0;
+		pi6.ipi6_ifindex = m->m_pkthdr.rcvif ?
+		    m->m_pkthdr.rcvif->if_index : 0;
 		*mp = sbcreatecontrol((caddr_t) &pi6,
 		    sizeof(struct in6_pktinfo), IPV6_PKTINFO, IPPROTO_IPV6);
 		if (*mp)
@@ -1337,6 +1350,9 @@ ip6_nexthdr(m, off, proto, nxtp)
 
 	switch (proto) {
 	case IPPROTO_IPV6:
+		/* do not chase beyond intermediate IPv6 headers */
+		if (off != 0)
+			return -1;
 		if (m->m_pkthdr.len < off + sizeof(ip6))
 			return -1;
 		m_copydata(m, off, sizeof(ip6), (caddr_t)&ip6);
@@ -1696,6 +1712,27 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 #endif /* IPNOPRIVPORTS */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "use_tempaddr",
+		       SYSCTL_DESCR("Use temporary address"),
+		       NULL, 0, &ip6_use_tempaddr, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "temppltime",
+		       SYSCTL_DESCR("preferred lifetime of a temporary address"),
+		       NULL, 0, &ip6_temp_preferred_lifetime, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "tempvltime",
+		       SYSCTL_DESCR("valid lifetime of a temporary address"),
+		       NULL, 0, &ip6_temp_valid_lifetime, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxfrags",
 		       SYSCTL_DESCR("Maximum fragments in reassembly queue"),
 		       NULL, 0, &ip6_maxfrags, 0,
@@ -1715,4 +1752,11 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 		       NULL, 0, &ip6_use_defzone, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_USE_DEFAULTZONE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "mcast_pmtu",
+		       SYSCTL_DESCR("Enable pMTU discovery for multicast packet"),
+		       NULL, 0, &ip6_mcast_pmtu, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.86 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.86.6.1 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86.6.1 2006/04/22 11:39:59 simonb Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -63,11 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.86 2005/12/11 12:24:30 christos Exp $"
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~((unsigned)(f))
-#define	ISSET(t, f)	((t) & (f))
 
 #define BUFSIZ 100		/* Chunk size iomoved to/from user */
 
@@ -1058,7 +1053,7 @@ ptyioctl(dev, cmd, data, flag, l)
 #ifndef NO_DEV_PTM
 	/* Allow getting the name from either the master or the slave */
 	if (cmd == TIOCPTSNAME)
-		return pty_fill_ptmget(dev, -1, -1, data);
+		return pty_fill_ptmget(l, dev, -1, -1, data);
 #endif
 
 	cdev = cdevsw_lookup(dev);

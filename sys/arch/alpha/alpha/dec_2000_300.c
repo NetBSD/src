@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.9 2003/06/14 17:01:07 thorpej Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.9.34.1 2006/04/22 11:37:10 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.9 2003/06/14 17:01:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.9.34.1 2006/04/22 11:37:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,9 +208,7 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 	static int found, initted, scsiboot, netboot;
 	static struct device *eisadev, *isadev, *scsidev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
+	struct device *parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -224,10 +222,10 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 		initted = 1;
 	}
 
-	if (eisadev == NULL && strcmp(name, "eisa") == 0)
+	if (eisadev == NULL && device_is_a(dev, "eisa"))
 		eisadev = dev;
 
-	if (isadev == NULL && strcmp(name, "isa") == 0)
+	if (isadev == NULL && device_is_a(dev, "isa"))
 		isadev = dev;
 
 	if (scsiboot && (scsidev == NULL)) {
@@ -248,12 +246,12 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 	}
 
 	if (scsiboot &&
-	    (!strcmp(name, "sd") ||
-	     !strcmp(name, "st") ||
-	     !strcmp(name, "cd"))) {
+	    (device_is_a(dev, "sd") ||
+	     device_is_a(dev, "st") ||
+	     device_is_a(dev, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != scsidev)
+		if (device_parent(parent) != scsidev)
 			return;
 
 		if (b->unit / 100 != sa->sa_periph->periph_target)
@@ -263,12 +261,12 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 
 		switch (b->boot_dev_type) {
 		case 0:
-			if (strcmp(name, "sd") &&
-			    strcmp(name, "cd"))
+			if (!device_is_a(dev, "sd") &&
+			    !device_is_a(dev, "cd"))
 				return;
 			break;
 		case 1:
-			if (strcmp(name, "st"))
+			if (!device_is_a(dev, "st"))
 				return;
 			break;
 		default:

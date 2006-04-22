@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.4 2005/12/11 12:17:29 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: sh3_dev.cpp,v 1.4.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct SH3dev::intr_priority SH3dev::_ipr_table[] = {
 };
 
 void
-SH3dev::dump(u_int8_t bit)
+SH3dev::dump(uint8_t bit)
 {
 	int kmode;
 
@@ -134,7 +134,7 @@ SH3dev::icu_control()
 		"low level",
 		"reserved",
 	};
-	u_int16_t r;
+	uint16_t r;
 
 	// PINT0-15
 	DPRINTF((TEXT("PINT enable(on |)  :")));
@@ -236,7 +236,7 @@ SH3dev::pfc_dump()
 void
 SH3dev::tmu_dump()
 {
-	u_int8_t r8;
+	uint8_t r8;
 
 	DPRINTF((TEXT("<<<TMU>>>\n")));
 	/* Common */
@@ -266,8 +266,8 @@ void
 SH3dev::tmu_channel_dump(int unit, paddr_t tcor, paddr_t tcnt,
     paddr_t tcr)
 {
-	u_int32_t r32;
-	u_int16_t r16;
+	uint32_t r32;
+	uint16_t r16;
 
 	DPRINTF((TEXT("TMU#%d:"), unit));
 #define	DBG_BIT_PRINT(r, m)	_dbg_bit_print(r, SH3_TCR_##m, #m)
@@ -303,8 +303,8 @@ SH3dev::tmu_channel_dump(int unit, paddr_t tcor, paddr_t tcnt,
 void
 SH3dev::hd64461_dump(platid_t &platform)
 {
-	u_int16_t r16;
-	u_int8_t r8;
+	uint16_t r16;
+	uint8_t r8;
 
 #define	MATCH(p)						\
 	platid_match(&platform, &platid_mask_MACH_##p)
@@ -319,7 +319,7 @@ SH3dev::hd64461_dump(platid_t &platform)
 
 #if 0
 	DPRINTF((TEXT("frame buffer test start\n")));
-	u_int8_t *fb = reinterpret_cast<u_int8_t *>(HD64461_FBBASE);
+	uint8_t *fb = reinterpret_cast<uint8_t *>(HD64461_FBBASE);
 
 	for (int i = 0; i < 320 * 240 * 2 / 8; i++)
 		*fb++ = 0xff;
@@ -613,8 +613,8 @@ SH3dev::hd64461_dump(platid_t &platform)
 }
 
 #ifdef SH7709TEST
-u_int32_t sh7707_fb_dma_addr;
-u_int16_t val;
+uint32_t sh7707_fb_dma_addr;
+uint16_t val;
 int s;
 
 s = suspendIntr();

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.1 2006/01/04 21:52:17 xtraeme Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.1.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.1 2006/01/04 21:52:17 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.1.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,22 +69,29 @@ const struct mii_phy_funcs rlphy_funcs = {
 	rlphy_service, rlphy_status, mii_phy_reset,
 };
 
+static const struct mii_phydesc rlphys[] = {
+	{ MII_OUI_yyREALTEK,		MII_MODEL_yyREALTEK_RTL8201L,
+          MII_STR_yyREALTEK_RTL8201L },
+	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP101,
+	  MII_STR_ICPLUS_IP101 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	/* Test for RealTek 8201L PHY */
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_REALTEK &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
-		return 10;
-	}
+	if (mii_phy_match(ma, rlphys) != NULL)
+		return (10);
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 ||
 	    MII_MODEL(ma->mii_id2) != 0)
 		return 0;
 
-	if (strcmp(parent->dv_cfdata->cf_name, "rtk") != 0)
+	if (!device_is_a(parent, "rtk"))
 		return 0;
 
 	/*
@@ -97,7 +104,7 @@ rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 void
 rlphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
@@ -132,7 +139,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	int rv;
 
-	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->mii_dev))
 		return ENXIO;
 
 	/*
@@ -309,9 +316,7 @@ rlphy_status(struct mii_softc *sc)
 		 *   can test the 'SPEED10' bit of the MAC's media status
 		 *   register.
 		 */
-		if (strcmp("rtk",
-		    sc->mii_dev.dv_parent->dv_cfdata->cf_name)
-		    == 0) {
+		if (device_is_a(device_parent(&sc->mii_dev), "rtk")) {
 			if (PHY_READ(sc, RTK_MEDIASTAT) & RTK_MEDIASTAT_SPEED10)
 				mii->mii_media_active |= IFM_10_T;
 			else

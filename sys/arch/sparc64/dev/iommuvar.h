@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.12 2002/06/20 18:26:24 eeh Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.12.38.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -66,28 +66,26 @@ struct iommu_state {
 };
 
 /* interfaces for PCI/SBUS code */
-void	iommu_init __P((char *, struct iommu_state *, int, u_int32_t));
-void	iommu_reset __P((struct iommu_state *));
-void    iommu_enter __P((struct strbuf_ctl *, vaddr_t, int64_t, int));
-void    iommu_remove __P((struct iommu_state *, vaddr_t, size_t));
-paddr_t iommu_extract __P((struct iommu_state *, vaddr_t));
+void	iommu_init(char *, struct iommu_state *, int, uint32_t);
+void	iommu_reset(struct iommu_state *);
+void    iommu_enter(struct strbuf_ctl *, vaddr_t, int64_t, int);
+void    iommu_remove(struct iommu_state *, vaddr_t, size_t);
+paddr_t iommu_extract(struct iommu_state *, vaddr_t);
 
-int	iommu_dvmamap_load __P((bus_dma_tag_t, struct strbuf_ctl *,
-	    bus_dmamap_t, void *, bus_size_t, struct proc *, int));
-void	iommu_dvmamap_unload __P((bus_dma_tag_t, struct strbuf_ctl *,
-	    bus_dmamap_t));
-int	iommu_dvmamap_load_raw __P((bus_dma_tag_t, struct strbuf_ctl *,
-	    bus_dmamap_t, bus_dma_segment_t *, int, int, bus_size_t));
-void	iommu_dvmamap_sync __P((bus_dma_tag_t, struct strbuf_ctl *,
-	    bus_dmamap_t, bus_addr_t, bus_size_t, int));
-int	iommu_dvmamem_alloc __P((bus_dma_tag_t, struct strbuf_ctl *,
-	    bus_size_t, bus_size_t, bus_size_t, bus_dma_segment_t *,
-	    int, int *, int));
-void	iommu_dvmamem_free __P((bus_dma_tag_t, struct strbuf_ctl *,
-	    bus_dma_segment_t *, int));
-int	iommu_dvmamem_map __P((bus_dma_tag_t, struct strbuf_ctl *,
-	    bus_dma_segment_t *, int, size_t, caddr_t *, int));
-void	iommu_dvmamem_unmap __P((bus_dma_tag_t, struct strbuf_ctl *,
-	    caddr_t, size_t));
+int	iommu_dvmamap_load(bus_dma_tag_t, struct strbuf_ctl *, bus_dmamap_t,
+		void *, bus_size_t, struct proc *, int);
+void	iommu_dvmamap_unload(bus_dma_tag_t, struct strbuf_ctl *, bus_dmamap_t);
+int	iommu_dvmamap_load_raw(bus_dma_tag_t, struct strbuf_ctl *, bus_dmamap_t,
+		bus_dma_segment_t *, int, int, bus_size_t);
+void	iommu_dvmamap_sync(bus_dma_tag_t, struct strbuf_ctl *, bus_dmamap_t,
+		bus_addr_t, bus_size_t, int);
+int	iommu_dvmamem_alloc(bus_dma_tag_t, struct strbuf_ctl *, bus_size_t,
+		bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int);
+void	iommu_dvmamem_free(bus_dma_tag_t, struct strbuf_ctl *,
+		bus_dma_segment_t *, int);
+int	iommu_dvmamem_map(bus_dma_tag_t, struct strbuf_ctl *,
+		bus_dma_segment_t *, int, size_t, caddr_t *, int);
+void	iommu_dvmamem_unmap(bus_dma_tag_t, struct strbuf_ctl *, caddr_t,
+		size_t);
 
 #endif /* _SPARC64_DEV_IOMMUVAR_H_ */

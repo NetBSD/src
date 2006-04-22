@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.28 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28.6.1 2006/04/22 11:37:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28.6.1 2006/04/22 11:37:30 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		"vrip", "vr4102ip", "vr4122ip",
 		"vr4181ip",			/* 2. System BUS */
 		"txsim",			
-		"bivideo", "btnmgr", "hpcapm",	/* 3. misc */
+		"bivideo", "btnmgr", 		/* 3. misc */
 	};
 	struct mainbus_attach_args ma;
 	int i;
@@ -99,6 +99,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		ma.ma_name = devnames[i];
 		config_search_ia(mainbus_search, self, "mainbus", &ma);
 	}
+
+	/* APM */
+	config_found_ia(self, "hpcapmif", NULL, mainbus_print);
 }
 
 int

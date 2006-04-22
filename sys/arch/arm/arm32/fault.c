@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.56 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: fault.c,v 1.56.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.56 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.56.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,7 @@ data_abort_handler(trapframe_t *tf)
 
 	onfault = pcb->pcb_onfault;
 	pcb->pcb_onfault = NULL;
-	error = uvm_fault(map, va, 0, ftype);
+	error = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;
 
 	if (map != kernel_map)
@@ -481,7 +481,7 @@ data_abort_handler(trapframe_t *tf)
 			return;
 		}
 
-		printf("\nuvm_fault(%p, %lx, %x, 0) -> %x\n", map, va, ftype,
+		printf("\nuvm_fault(%p, %lx, %x) -> %x\n", map, va, ftype,
 		    error);
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
@@ -848,7 +848,7 @@ prefetch_abort_handler(trapframe_t *tf)
 		l->l_flag |= L_SA_PAGEFAULT;
 	}
 
-	error = uvm_fault(map, va, 0, VM_PROT_READ);
+	error = uvm_fault(map, va, VM_PROT_READ);
 
 	if (map != kernel_map)
 		l->l_flag &= ~L_SA_PAGEFAULT;

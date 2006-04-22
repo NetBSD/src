@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.17 2005/11/16 00:49:03 uwe Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.17.6.1 2006/04/22 11:37:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.17 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.17.6.1 2006/04/22 11:37:57 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -143,7 +143,7 @@ espattach_obio(struct device *parent, struct device *self, void *aux)
 	 * Find the DMA by poking around the dma device structures
 	 */
 	esc->sc_dma = (struct lsi64854_softc *)
-			getdevunit("dma", sc->sc_dev.dv_unit);
+			getdevunit("dma", device_unit(&sc->sc_dev));
 
 	/*
 	 * and a back pointer to us, for DMA
@@ -168,7 +168,7 @@ espattach_obio(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_glue = &esp_obio_glue;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	/*

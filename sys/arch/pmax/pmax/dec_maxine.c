@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.47 2005/12/24 20:07:25 perry Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.47.6.1 2006/04/22 11:37:52 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.47 2005/12/24 20:07:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.47.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ dec_maxine_intr(status, cause, pc, ipending)
 		cause &= ~MIPS_INT_MASK_1;
 	}
 
-	/* If clock interrups were enabled, re-enable them ASAP. */
+	/* If clock interrupts were enabled, re-enable them ASAP. */
 	_splset(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_1));
 
 	if (ipending & MIPS_INT_MASK_3) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26.6.1 2006/04/22 11:37:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.6.1 2006/04/22 11:37:30 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 2005/12/11 12:17:33 christos Exp $"
 #include <machine/bus_dma_hpcmips.h>
 
 static int _hpcmips_bd_map_load_buffer(bus_dmamap_t, void *, bus_size_t,
-    struct proc *, int, vaddr_t *, int *, int);
+    struct vmspace *, int, vaddr_t *, int *, int);
 
 paddr_t	kvtophys(vaddr_t);	/* XXX */
 
@@ -146,7 +146,7 @@ _hpcmips_bd_map_destroy(bus_dma_tag_t t, bus_dmamap_t map)
  */
 static int
 _hpcmips_bd_map_load_buffer(bus_dmamap_t mapx, void *buf, bus_size_t buflen,
-    struct proc *p, int flags, vaddr_t *lastaddrp, int *segp, int first)
+    struct vmspace *vm, int flags, vaddr_t *lastaddrp, int *segp, int first)
 {
 	struct bus_dmamap_hpcmips *map = (struct bus_dmamap_hpcmips *)mapx;
 	bus_size_t sgsize;
@@ -161,8 +161,8 @@ _hpcmips_bd_map_load_buffer(bus_dmamap_t mapx, void *buf, bus_size_t buflen,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		if (p != NULL)
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+		if (!VMSPACE_IS_KERNEL_P(vm))
+			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
 			    vaddr, &curaddr);
 		else
 			curaddr = kvtophys(vaddr);
@@ -237,6 +237,7 @@ _hpcmips_bd_map_load(bus_dma_tag_t t, bus_dmamap_t mapx, void *buf,
 	struct bus_dmamap_hpcmips *map = (struct bus_dmamap_hpcmips *)mapx;
 	vaddr_t lastaddr;
 	int seg, error;
+	struct vmspace *vm;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -248,9 +249,15 @@ _hpcmips_bd_map_load(bus_dma_tag_t t, bus_dmamap_t mapx, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
+
 	seg = 0;
 	error = _hpcmips_bd_map_load_buffer(mapx, buf, buflen,
-	    p, flags, &lastaddr, &seg, 1);
+	    vm, flags, &lastaddr, &seg, 1);
 	if (error == 0) {
 		map->bdm.dm_mapsize = buflen;
 		map->bdm.dm_nsegs = seg + 1;
@@ -301,8 +308,8 @@ _hpcmips_bd_map_load_mbuf(bus_dma_tag_t t, bus_dmamap_t mapx, struct mbuf *m0,
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		error = _hpcmips_bd_map_load_buffer(mapx,
-		    m->m_data, m->m_len, NULL, flags, &lastaddr, &seg, first);
+		error = _hpcmips_bd_map_load_buffer(mapx, m->m_data, m->m_len,
+		    vmspace_kernel(), flags, &lastaddr, &seg, first);
 		first = 0;
 	}
 	if (error == 0) {
@@ -323,7 +330,6 @@ _hpcmips_bd_map_load_uio(bus_dma_tag_t t, bus_dmamap_t mapx, struct uio *uio,
 	vaddr_t lastaddr;
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
 	struct iovec *iov;
 	caddr_t addr;
 
@@ -337,14 +343,6 @@ _hpcmips_bd_map_load_uio(bus_dma_tag_t t, bus_dmamap_t mapx, struct uio *uio,
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("_hpcmips_bd_map_load_uio: USERSPACE but no proc");
-#endif
-	}
-
 	first = 1;
 	seg = 0;
 	error = 0;
@@ -357,7 +355,7 @@ _hpcmips_bd_map_load_uio(bus_dma_tag_t t, bus_dmamap_t mapx, struct uio *uio,
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _hpcmips_bd_map_load_buffer(mapx, addr, minlen,
-		    p, flags, &lastaddr, &seg, first);
+		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
 		first = 0;
 
 		resid -= minlen;
@@ -413,7 +411,7 @@ _hpcmips_bd_map_sync(bus_dma_tag_t t, bus_dmamap_t mapx, bus_addr_t offset,
 	int i;
 
 	/*
-	 * Mising PRE and POST operations is not allowed.
+	 * Mixing PRE and POST operations is not allowed.
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)

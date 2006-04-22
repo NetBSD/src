@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 2006/01/23 20:19:08 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8.4.1 2006/04/22 11:38:11 simonb Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -378,7 +378,7 @@ boolean_t			pmap_pageidlezero(paddr_t);
  */
 
 /*ARGSUSED*/
-static inline void
+static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
@@ -389,7 +389,7 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-inline static void __attribute__((__unused__))
+__inline static void __attribute__((__unused__))
 pmap_update_pg(vaddr_t va)
 {
 #if defined(I386_CPU)
@@ -404,7 +404,7 @@ pmap_update_pg(vaddr_t va)
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-inline static void __attribute__((__unused__))
+__inline static void __attribute__((__unused__))
 pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
 #if defined(I386_CPU)
@@ -427,7 +427,7 @@ pmap_update_2pg(vaddr_t va, vaddr_t vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-inline static void __attribute__((__unused__))
+__inline static void __attribute__((__unused__))
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -447,7 +447,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-inline static void __attribute__((__unused__))
+__inline static void __attribute__((__unused__))
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -470,7 +470,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 #include <lib/libkern/libkern.h>
 
-static inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __attribute__((__unused__))
 vtopte(vaddr_t va)
 {
 
@@ -479,7 +479,7 @@ vtopte(vaddr_t va)
 	return (PTE_BASE + x86_btop(va));
 }
 
-static inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __attribute__((__unused__))
 kvtopte(vaddr_t va)
 {
 
@@ -503,7 +503,7 @@ kvtopte(vaddr_t va)
  * machine-dependent code only.
  */
 
-static inline paddr_t __attribute__((__unused__))
+static __inline paddr_t __attribute__((__unused__))
 vtomach(vaddr_t va)
 {
 	pt_entry_t pte;

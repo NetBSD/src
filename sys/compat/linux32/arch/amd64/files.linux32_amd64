@@ -1,0 +1,10 @@
+#	$NetBSD: files.linux32_amd64,v 1.1.10.2 2006/04/22 11:38:14 simonb Exp $
+#
+# Config file description for amd64-dependent Linux 32 bit compat code.
+
+file	compat/linux32/arch/amd64/linux32_syscalls.c	compat_linux32
+file	compat/linux32/arch/amd64/linux32_sysent.c	compat_linux32
+file	compat/linux32/arch/amd64/linux32_machdep.c	compat_linux32
+file	compat/linux32/arch/amd64/linux32_missing.c	compat_linux32
+
+file	compat/linux/common/linux_oldmmap.c		compat_linux32

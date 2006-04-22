@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 2005/12/27 17:28:27 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.6.1 2006/04/22 11:37:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22 2005/12/27 17:28:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.22.6.1 2006/04/22 11:37:11 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -482,7 +482,7 @@ faultcommon:
 		/* Fault the original page in. */
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
-		error = uvm_fault(map, va, 0, ftype);
+		error = uvm_fault(map, va, ftype);
 		pcb->pcb_onfault = onfault;
 		if (error == 0) {
 			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
@@ -510,7 +510,7 @@ faultcommon:
 				KERNEL_UNLOCK();
 				goto copyfault;
 			}
-			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
+			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
 		}

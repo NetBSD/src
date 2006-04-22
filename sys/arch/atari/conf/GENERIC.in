@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.58 2006/02/03 00:40:16 reinoud Exp $
+#	$NetBSD: GENERIC.in,v 1.58.2.1 2006/04/22 11:37:20 simonb Exp $
 #
 # Generic atari
 #
@@ -245,18 +245,18 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #endif
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop			# Loopback network
-pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
+pseudo-device	vnd			# 3 pseudo disks (see vnconfig)
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	md		3	# Boot memory disk
 
 #ifndef INSTALL_KERNEL
-pseudo-device	bpfilter	2	# berkeley packet filters
-pseudo-device	tun		2	# network tunnel
+pseudo-device	bpfilter		# berkeley packet filters
+pseudo-device	tun			# network tunnel
 pseudo-device	tap			# virtual Ethernet
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #ifndef NO_PHYS_NETWORK
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging

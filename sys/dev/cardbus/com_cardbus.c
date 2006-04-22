@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.15 2005/12/11 12:21:15 christos Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.15.6.1 2006/04/22 11:38:51 simonb Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.15 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.15.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,8 +205,8 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 static void
 com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 {
-	struct com_softc *sc = (struct com_softc*)self;
-	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)self;
+	struct com_softc *sc = device_private(self);
+	struct com_cardbus_softc *csc = device_private(self);
 	struct cardbus_attach_args *ca = aux;
 
 	csc->cc_ct = ca->ca_ct;
@@ -295,7 +295,7 @@ com_cardbus_enable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
 	struct cardbus_softc *psc =
-		(struct cardbus_softc *)sc->sc_dev.dv_parent;
+		(struct cardbus_softc *)device_parent(&sc->sc_dev);
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
@@ -323,7 +323,7 @@ com_cardbus_disable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
 	struct cardbus_softc *psc =
-		(struct cardbus_softc *)sc->sc_dev.dv_parent;
+		(struct cardbus_softc *)device_parent(&sc->sc_dev);
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
@@ -336,9 +336,9 @@ com_cardbus_disable(struct com_softc *sc)
 static int
 com_cardbus_detach(struct device *self, int flags)
 {
-	struct com_cardbus_softc *csc = (struct com_cardbus_softc *) self;
-	struct com_softc *sc = (struct com_softc *) self;
-	struct cardbus_softc *psc = (struct cardbus_softc *)self->dv_parent;
+	struct com_cardbus_softc *csc = device_private(self);
+	struct com_softc *sc = device_private(self);
+	struct cardbus_softc *psc = device_private(device_parent(self));
 	int error;
 
 	if ((error = com_detach(self, flags)) != 0)

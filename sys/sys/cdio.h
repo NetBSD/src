@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.24 2006/02/02 14:48:02 reinoud Exp $	*/
+/*	$NetBSD: cdio.h,v 1.24.2.1 2006/04/22 11:40:18 simonb Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -311,11 +311,12 @@ struct mmc_discinfo {
 #define MMC_CAP_STRICTOVERWRITE	(1 <<  8)  /* only writes a packet at a time */
 #define MMC_CAP_PSEUDOOVERWRITE (1 <<  9)  /* overwrite through replacement  */
 #define MMC_CAP_ZEROLINKBLK	(1 << 10)  /* zero link block length capable */
+#define MMC_CAP_HW_DEFECTFREE	(1 << 11)  /* hardware defect management     */
 
 #define MMC_CAP_FLAGBITS \
     "\10\1SEQUENTIAL\2RECORDABLE\3ERASABLE\4BLANKABLE\5FORMATTABLE" \
     "\6REWRITABLE\7MRW\10PACKET\11STRICTOVERWRITE\12PSEUDOOVERWRITE" \
-    "\13ZEROLINKBLK"
+    "\13ZEROLINKBLK\14HW_DEFECTFREE"
 
 #define MMC_STATE_EMPTY		0
 #define MMC_STATE_INCOMPLETE	1

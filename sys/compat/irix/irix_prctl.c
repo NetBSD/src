@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.28 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.28.6.1 2006/04/22 11:38:13 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.28 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.28.6.1 2006/04/22 11:38:13 simonb Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -705,10 +705,9 @@ irix_prda_init(p)
 }
 
 int
-irix_vm_fault(p, vaddr, fault_type, access_type)
+irix_vm_fault(p, vaddr, access_type)
 	struct proc *p;
 	vaddr_t vaddr;
-	vm_fault_t fault_type;
 	vm_prot_t access_type;
 {
 	int error;
@@ -719,11 +718,11 @@ irix_vm_fault(p, vaddr, fault_type, access_type)
 	map = &p->p_vmspace->vm_map;
 
 	if (ied->ied_share_group == NULL || ied->ied_shareaddr == 0)
-		return uvm_fault(map, vaddr, fault_type, access_type);
+		return uvm_fault(map, vaddr, access_type);
 
 	/* share group version */
 	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_EXCLUSIVE, NULL);
-	error = uvm_fault(map, vaddr, fault_type, access_type);
+	error = uvm_fault(map, vaddr, access_type);
 	irix_vm_sync(p);
 	(void)lockmgr(&ied->ied_share_group->isg_lock, LK_RELEASE, NULL);
 

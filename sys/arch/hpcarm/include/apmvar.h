@@ -1,11 +1,11 @@
-/*	$NetBSD: apmvar.h,v 1.4 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.4.6.1 2006/04/22 11:37:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus
+ * by Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,62 +39,7 @@
 #ifndef _MACHINE_APMVAR_H_
 #define _MACHINE_APMVAR_H_
 
-struct apm_attach_args {
-	int aaa_magic;
-};
-#define APM_ATTACH_ARGS_MAGIC 0x0061706d
-
-/* 
- * All definitions from here are duplicated in i386 and macppc
- * versions. The definitions are the same, it is probably worth
- * moving them in a MI place.
- */
-
-#define	 APM_AC_OFF		0x00
-#define	 APM_AC_ON		0x01
-#define	 APM_AC_BACKUP		0x02
-#define	 APM_AC_UNKNOWN		0xff
-#define	 APM_BATT_HIGH		0x00
-#define	 APM_BATT_LOW		0x01
-#define	 APM_BATT_CRITICAL	0x02
-#define	 APM_BATT_CHARGING	0x03
-#define	 APM_BATT_ABSENT	0x04
-#define	 APM_BATT_UNKNOWN	0xff
-#define	 APM_BATT_LIFE_UNKNOWN	0xff
-
-#define  APM_STANDBY_REQ	0x0001
-#define  APM_SUSPEND_REQ	0x0002
-#define  APM_NORMAL_RESUME	0x0003
-#define  APM_CRIT_RESUME	0x0004
-#define  APM_BATTERY_LOW	0x0005
-#define  APM_POWER_CHANGE	0x0006
-#define  APM_CRIT_SUSPEND_REQ	0x0008
-#define  APM_USER_STANDBY_REQ	0x0009
-#define  APM_USER_SUSPEND_REQ	0x000A
-#define  APM_SYS_STANDBY_RESUME	0x000B
-
-struct apm_power_info {
-	u_char battery_state;
-	u_char ac_state;
-	u_char battery_life;
-	u_char spare1;
-	u_int minutes_left;	     /* estimate */
-	u_int nbattery;
-	u_int batteryid;
-	u_int spare2[4];
-}; 
-
-struct apm_event_info {
-        u_int type;
-	u_int index;
-	u_int spare[8]; 
-};  
-
-/* ioctl definitions */
-#define APM_IOC_STANDBY _IO('A', 1)
-#define APM_IOC_SUSPEND _IO('A', 2)
-#define APM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) 
-
-#define APM_IOC_NEXTEVENT _IOR('A', 4, struct apm_event_info)
+#include <dev/apm/apmbios.h>
+#include <dev/apm/apmio.h>
 
 #endif /* _MACHINE_APMVAR_H_ */

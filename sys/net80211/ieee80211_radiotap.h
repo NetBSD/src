@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.5 2005/01/22 20:12:05 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.14 2005/12/10 23:26:35 elad Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.14.6.1 2006/04/22 11:40:09 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -32,11 +32,11 @@
 #ifndef _NET80211_IEEE80211_RADIOTAP_H_
 #define _NET80211_IEEE80211_RADIOTAP_H_
 
-/* A generic radio capture format is desirable. There is one for
- * Linux, but it is neither rigidly defined (there were not even
- * units given for some fields) nor easily extensible.
+/* A generic radio capture format is desirable. It must be
+ * rigidly defined (e.g., units for fields should be given),
+ * and easily extensible.
  *
- * I suggest the following extensible radio capture format. It is
+ * The following is an extensible radio capture format. It is
  * based on a bitmap indicating which fields are present.
  *
  * I am trying to describe precisely what the application programmer
@@ -57,7 +57,11 @@
  */
 #define IEEE80211_RADIOTAP_HDRLEN	64
 
-/* The radio capture header precedes the 802.11 header. */
+/*
+ * The radio capture header precedes the 802.11 header.
+ *
+ * Note well: all radiotap fields are little-endian.
+ */
 struct ieee80211_radiotap_header {
 	u_int8_t	it_version;	/* Version 0. Only increases
 					 * for drastic changes,
@@ -79,7 +83,8 @@ struct ieee80211_radiotap_header {
 					 */
 } __attribute__((__packed__));
 
-/* Name                                 Data type       Units
+/*
+ * Name                                 Data type       Units
  * ----                                 ---------       -----
  *
  * IEEE80211_RADIOTAP_TSFT              u_int64_t       microseconds

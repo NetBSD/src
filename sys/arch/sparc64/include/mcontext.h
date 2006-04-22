@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.6 2005/12/11 12:19:10 christos Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.6.6.1 2006/04/22 11:38:02 simonb Exp $	*/
 
 #ifndef _SPARC64_MCONTEXT_H_
 #define _SPARC64_MCONTEXT_H_
@@ -8,6 +8,10 @@
 #define _NGREG32	19	/* %psr, pc, npc, %g1-7, %o0-7 */
 typedef	int	__greg32_t;
 typedef	__greg32_t	__gregset32_t[_NGREG32];
+
+typedef unsigned int	netbsd32___greg32p_t;
+typedef unsigned int	netbsd32___fqp_t;
+typedef unsigned int	netbsd32___gwindows32p_t;
 
 #define	_REG32_PSR	0
 #define	_REG32_PC	1
@@ -38,7 +42,7 @@ typedef struct {
 /* Description of available register windows. */
 typedef struct {
 	int		__wbcnt;
-	__greg32_t *	__spbuf[_SPARC_MAXREGWINDOW];
+	netbsd32___greg32p_t	__spbuf[_SPARC_MAXREGWINDOW];
 	__rwindow32_t	__wbuf[_SPARC_MAXREGWINDOW];
 } __gwindows32_t;
 
@@ -48,18 +52,24 @@ typedef struct {
 		unsigned int	__fpu_regs[32];
 		double		__fpu_dregs[16];
 	} __fpu_fr;				/* FPR contents */
-	struct __fq *	__fpu_q;		/* pointer to FPU insn queue */
+	netbsd32___fqp_t	__fpu_q;	/* pointer to FPU insn queue */
 	unsigned int	__fpu_fsr;		/* %fsr */
 	unsigned char	__fpu_qcnt;		/* # entries in __fpu_q */
 	unsigned char	__fpu_q_entrysize; 	/* size of a __fpu_q entry */
 	unsigned char	__fpu_en;		/* this context valid? */
 } __fpregset32_t;
 
+/* `Extra Register State'(?) */
+typedef struct {
+	unsigned int	__xrs_id;	/* See below */
+	unsigned int	__xrs_ptr;	/* points into filler area */
+} __xrs32_t;
+
 typedef struct {
 	__gregset32_t	__gregs;	/* GPR state */
-	__gwindows32_t *__gwins;	/* may point to register windows */
+	netbsd32___gwindows32p_t __gwins;/* may point to register windows */
 	__fpregset32_t	__fpregs;	/* FPU state, if any */
-	__xrs_t		__xrs;		/* may indicate extra reg state */
+	__xrs32_t	__xrs;		/* may indicate extra reg state */
 } mcontext32_t;
 
 #define	_UC_SETSTACK	0x00010000

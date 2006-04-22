@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.3 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.3.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.3 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.3.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ tiara_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct tiara_softc *isc = (struct tiara_softc *)self;
+	struct tiara_softc *isc = device_private(self);
 	struct mb86950_softc *sc = &isc->sc_mb86950;
 	struct mca_attach_args *ma = aux;
 	bus_space_tag_t iot = ma->ma_iot;

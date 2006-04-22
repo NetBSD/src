@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.42 2006/02/03 00:43:32 reinoud Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.42.2.1 2006/04/22 11:37:20 simonb Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.19 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.58 2006/02/03 00:40:16 reinoud Exp $
+#		NetBSD: GENERIC.in,v 1.61 2006/03/28 20:58:39 pavel Exp $
 include "arch/atari/conf/std.milan"
 
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -121,15 +121,17 @@ pseudo-device pppoe # PPP over Ethernet (RFC 2516)
 
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device vnd 3 # 3 pseudo disks (see vnconfig)
+pseudo-device vnd # 3 pseudo disks (see vnconfig)
 
 pseudo-device md 3 # Boot memory disk
 
-pseudo-device bpfilter 2 # berkeley packet filters
-pseudo-device tun 2 # network tunnel
+pseudo-device bpfilter # berkeley packet filters
+pseudo-device tun # network tunnel
 pseudo-device tap # virtual Ethernet
 
-pseudo-device gif 4 # IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
+
+pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device vlan # IEEE 802.1q encapsulation
 pseudo-device bridge # simple inter-network bridging

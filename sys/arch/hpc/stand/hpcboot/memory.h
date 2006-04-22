@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: memory.h,v 1.6 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: memory.h,v 1.6.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -103,17 +103,17 @@ public:
 		vsize_t tsz = getTaggedPageSize();
 		return ((sz + tsz - 1) / tsz) * _page_size;
 	}
-	u_int32_t roundPage(u_int32_t v) { return ROUND(v, _page_size); }
-	u_int32_t truncPage(u_int32_t v) { return TRUNC(v, _page_size); }
-	u_int32_t roundRegion(u_int32_t v)
-		{ return ROUND(v, u_int32_t(WCE_REGION_SIZE)); }
-	u_int32_t truncRegion(u_int32_t v)
-		{ return TRUNC(v, u_int32_t(WCE_REGION_SIZE)); }
+	uint32_t roundPage(uint32_t v) { return ROUND(v, _page_size); }
+	uint32_t truncPage(uint32_t v) { return TRUNC(v, _page_size); }
+	uint32_t roundRegion(uint32_t v)
+		{ return ROUND(v, uint32_t(WCE_REGION_SIZE)); }
+	uint32_t truncRegion(uint32_t v)
+		{ return TRUNC(v, uint32_t(WCE_REGION_SIZE)); }
 
 	// Physical address ops.
-	vaddr_t mapPhysicalPage(paddr_t paddr, psize_t size, u_int32_t flags);
+	vaddr_t mapPhysicalPage(paddr_t paddr, psize_t size, uint32_t flags);
 	void unmapPhysicalPage(vaddr_t vaddr);
-	u_int32_t readPhysical4(paddr_t paddr);
+	uint32_t readPhysical4(paddr_t paddr);
 	// return physical address of coresspoing virtual address.
 	virtual paddr_t searchPage(vaddr_t vaddr) = 0;
 
@@ -159,14 +159,14 @@ private:
 	paddr_t _search_guess;
 
 	// Memory marker
-	u_int32_t _magic0, _magic1;
-	volatile u_int32_t *_magic_addr;
+	uint32_t _magic0, _magic1;
+	volatile uint32_t *_magic_addr;
 	enum {
 		MAGIC_CHECK_DONE	= 0xac1dcafe,
 		MAGIC_CHECK_DUMMY	= 0xa5a5a5a5
 	};
 	void setMagic(vaddr_t v) {
-		_magic_addr =(u_int32_t *)v;
+		_magic_addr =(uint32_t *)v;
 		while ((_magic0 = Random()) == MAGIC_CHECK_DONE)
 			;
 		while ((_magic1 = Random()) == MAGIC_CHECK_DONE)
@@ -175,7 +175,7 @@ private:
 		_magic_addr[1] = _magic1;
 	}
 	BOOL checkMagic(vaddr_t v) {
-		volatile u_int32_t *marker =(u_int32_t *)v;
+		volatile uint32_t *marker =(uint32_t *)v;
 		return (marker[0] == _magic0) && (marker[1] == _magic1);
 	}
 	void clearMagic(void) {

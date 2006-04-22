@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.h,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: sbp.h,v 1.2.6.1 2006/04/22 11:39:05 simonb Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -219,9 +219,9 @@ struct scsi3_sense_data {
 #define SSD_RESPONSE_CODE_VALID 0x80
 	uint8_t segment_number;
 	uint8_t flags;
-	uint8_t infomation[4];
+	uint8_t information[4];
 	uint8_t asl;		/* Additional sense length */
-	uint8_t csi[4];		/* Command-specific infomation */
+	uint8_t csi[4];		/* Command-specific information */
 	uint8_t asc;		/* Additional sense code */
 	uint8_t ascq;		/* Additional sense code qualifier */
 	uint8_t fruc;		/* Field replaceable unit code */

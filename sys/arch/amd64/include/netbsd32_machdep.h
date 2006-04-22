@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.8 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.8.6.1 2006/04/22 11:37:12 simonb Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -130,6 +130,41 @@ struct x86_64_set_mtrr_args32 {
 	uint32_t n;
 };
 
+struct netbsd32_saframe {
+	int			sa_ra;
+	int			sa_type;
+	netbsd32_pointer_t	sa_sas;
+	int			sa_events;
+	int			sa_interrupted;
+	netbsd32_pointer_t	sa_arg;
+};
+
+struct env87 {
+	int32_t		en_cw;
+	int32_t		en_sw;
+	int32_t		en_tw;
+	int32_t		en_fip;
+	uint16_t	en_fcs;
+	uint16_t	en_opcode;
+	int32_t		en_foo;
+	int32_t		en_fos;
+} __attribute__((packed));
+
+struct fpacc87 {
+	uint8_t 	fp_bytes[10];
+} __attribute__((packed));
+
+struct save87 {
+	struct env87	sv_env;
+	struct fpacc87	sv_ac[8];
+	int32_t		sv_ex_sw;
+	int32_t		sv_ex_tw;
+	uint8_t		sv_pad[8 * 2 - 2 * 4];
+} __attribute__((packed));
+
 #define NETBSD32_MID_MACHINE MID_I386
+
+int netbsd32_process_read_regs(struct lwp *, struct reg32 *);
+int netbsd32_process_read_fpregs(struct lwp *, struct fpreg32 *);
 
 #endif /* _MACHINE_NETBSD32_H_ */

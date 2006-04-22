@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.7.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -536,13 +536,13 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	__MACHINE_copy_region_N(BYTES)					\
-static inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	__P((bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count));						\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h1, h2;					\

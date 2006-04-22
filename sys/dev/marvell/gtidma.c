@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.8 2005/12/24 23:00:49 perry Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.8.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.8 2005/12/24 23:00:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.8.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -283,8 +283,8 @@ idma_attach(
 	struct device * const self,
 	void * const aux)
 {
-	struct gt_softc * const gtsc = (struct gt_softc *)parent;
-	idma_softc_t * const sc = (idma_softc_t *)self;
+	struct gt_softc * const gtsc = device_private(parent);
+	idma_softc_t * const sc = device_private(self);
 	struct gt_attach_args * const ga = aux;
 	unsigned int i;
 	void *ih;

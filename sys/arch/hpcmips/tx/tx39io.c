@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.18 2005/12/11 12:17:34 christos Exp $ */
+/*	$NetBSD: tx39io.c,v 1.18.6.1 2006/04/22 11:37:30 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.18 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.18.6.1 2006/04/22 11:37:30 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.18 2005/12/11 12:17:34 christos Exp $")
 #endif
 #include <machine/debug.h>
 
-#define	ISSET(x, s)	((x) & (1 << (s)))
+#define	ISBITSET(x, s)	((x) & (1 << (s)))
 
 int	tx39io_match(struct device *, struct cfdata *, void *);
 void	tx39io_attach(struct device *, struct device *, void *);
@@ -461,7 +461,7 @@ mfio_dump(hpcio_chip_t arg)
 		/* MFIO port has power down state */
 		printf("MFIO %2d:     -       ", i);
 		__print_port_status(stat, i);
-		printf(ISSET(stat->u.select, i) ? "  MFIO(%s)\n" : "  %s\n",
+		printf(ISBITSET(stat->u.select, i) ? "  MFIO(%s)\n" : "  %s\n",
 		       map[i].std_pin_name);
 	}
 	printf("%s", line);
@@ -480,7 +480,7 @@ io_dump(hpcio_chip_t arg)
 	for (i = tx39io_get_io_max(tc) - 1; i >= 0 ; i--) {
 		/* IO port has debouncer */
 		printf("IO   %2d:    %s      ", i,
-		       ISSET(stat->u.debounce, i) ? "On " : "Off");
+		       ISBITSET(stat->u.debounce, i) ? "On " : "Off");
 		__print_port_status(stat, i);
 		printf("    -\n");
 	}
@@ -490,8 +490,8 @@ static void
 __print_port_status(struct tx39io_port_status *stat, int i)
 {
 	printf("%s       %d       %d     %s",
-	       ISSET(stat->dir, i) ? "Out" : "In ",
-	       ISSET(stat->out, i) ? 1 : 0,
-	       ISSET(stat->in, i) ? 1 : 0,
-	       ISSET(stat->power, i) ? "Down  ": "Active");
+	       ISBITSET(stat->dir, i) ? "Out" : "In ",
+	       ISBITSET(stat->out, i) ? 1 : 0,
+	       ISBITSET(stat->in, i) ? 1 : 0,
+	       ISBITSET(stat->power, i) ? "Down  ": "Active");
 }

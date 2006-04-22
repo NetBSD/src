@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.28 2005/12/11 12:19:38 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.28.6.1 2006/04/22 11:38:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.28 2005/12/11 12:19:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.28.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	struct zs_chanstate *cs;
 	int r, s, zs_unit, channel;
 
-	zs_unit = zsc->zsc_dev.dv_unit;
+	zs_unit = device_unit(&zsc->zsc_dev);
 	zsc->zsc_addr = (void*) ia->ia_addr;
 
 	ia->ia_size = 8;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2003/06/16 20:01:05 thorpej Exp $ */
+/*	$NetBSD: intr.h,v 1.7.34.1 2006/04/22 11:37:59 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ softintr_disestablish(void *cookie);
  * structure, which is otherwise internal to intr.c.
  */
 #if defined(SUN4M) || defined(SUN4D)
-extern void	raise __P((int, int));
+extern void	raise(int, int);
 #if !(defined(SUN4) || defined(SUN4C))
 #define softintr_schedule(cookie)	raise(0, *((int *) (cookie)))
 #else /* both defined */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.157 2005/12/11 12:25:26 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.157.6.1 2006/04/22 11:40:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157 2005/12/11 12:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.6.1 2006/04/22 11:40:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,6 +273,10 @@ lfs_fsync(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error, wait;
+
+	/* If we're mounted read-only, don't try to sync. */
+	if (VTOI(vp)->i_lfs->lfs_ronly)
+		return 0;
 
 	/*
 	 * Trickle sync checks for need to do a checkpoint after possible
@@ -1101,14 +1105,15 @@ lfs_strategy(void *v)
 				      "lfs_strategy: sleeping on ino %d lbn %"
 				      PRId64 "\n", ip->i_number, bp->b_lblkno));
 				simple_lock(&fs->lfs_interlock);
-				if (fs->lfs_seglock)
+				if (fs->lfs_seglock) {
 					ltsleep(&fs->lfs_seglock,
 						(PRIBIO + 1) | PNORELOCK,
 						"lfs_strategy", 0,
 						&fs->lfs_interlock);
-				/* Things may be different now; start over. */
-				slept = 1;
-				break;
+					slept = 1;
+					break;
+				}
+				simple_unlock(&fs->lfs_interlock);
 			}
 		}
 		simple_lock(&fs->lfs_interlock);
@@ -1129,7 +1134,7 @@ lfs_flush_dirops(struct lfs *fs)
 	struct segment *sp;
 	int needunlock;
 
-	ASSERT_NO_SEGLOCK(fs);
+	ASSERT_MAYBE_SEGLOCK(fs);
 
 	if (fs->lfs_ronly)
 		return;
@@ -1182,8 +1187,10 @@ lfs_flush_dirops(struct lfs *fs)
 		 * make sure that we don't clear IN_MODIFIED
 		 * unnecessarily.
 		 */
-		if (vp->v_flag & VXLOCK)
+		if (vp->v_flag & (VXLOCK | VFREEING)) {
+			simple_lock(&fs->lfs_interlock);
 			continue;
+		}
 		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
 			needunlock = 1;
 		} else {
@@ -1209,6 +1216,98 @@ lfs_flush_dirops(struct lfs *fs)
 	simple_unlock(&fs->lfs_interlock);
 	/* We've written all the dirops there are */
 	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+	(void) lfs_writeseg(fs, sp);
+	lfs_segunlock(fs);
+}
+
+/*
+ * Flush all vnodes for which the pagedaemon has requested pageouts.
+ * Skip over any files that are marked VDIROP (since lfs_flush_dirop()
+ * has just run, this would be an error).  If we have to skip a vnode
+ * for any reason, just skip it; if we have to wait for the cleaner,
+ * abort.  The writer daemon will call us again later.
+ */
+void
+lfs_flush_pchain(struct lfs *fs)
+{
+	struct inode *ip, *nip;
+	struct vnode *vp;
+	extern int lfs_dostats;
+	struct segment *sp;
+	int error;
+
+	ASSERT_NO_SEGLOCK(fs);
+
+	if (fs->lfs_ronly)
+		return;
+
+	simple_lock(&fs->lfs_interlock);
+	if (TAILQ_FIRST(&fs->lfs_pchainhd) == NULL) {
+		simple_unlock(&fs->lfs_interlock);
+		return;
+	} else
+		simple_unlock(&fs->lfs_interlock);
+
+	/* Get dirops out of the way */
+	lfs_flush_dirops(fs);
+
+	if (lfs_dostats)
+		++lfs_stats.flush_invoked;
+
+	/*
+	 * Inline lfs_segwrite/lfs_writevnodes, but just for pageouts.
+	 */
+	lfs_imtime(fs);
+	lfs_seglock(fs, 0);
+	sp = fs->lfs_sp;
+
+	/*
+	 * lfs_writevnodes, optimized to clear pageout requests.
+	 * Only write non-dirop files that are in the pageout queue.
+	 * We're very conservative about what we write; we want to be
+	 * fast and async.
+	 */
+	simple_lock(&fs->lfs_interlock);
+    top:
+	for (ip = TAILQ_FIRST(&fs->lfs_pchainhd); ip != NULL; ip = nip) {
+		nip = TAILQ_NEXT(ip, i_lfs_pchain);
+		vp = ITOV(ip);
+
+		if (!(ip->i_flags & IN_PAGING))
+			goto top;
+
+		if (vp->v_flag & (VXLOCK|VDIROP))
+			continue;
+		if (vp->v_type != VREG)
+			continue;
+		if (lfs_vref(vp))
+			continue;
+		simple_unlock(&fs->lfs_interlock);
+
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0) {
+			lfs_vunref(vp);
+			simple_lock(&fs->lfs_interlock);
+			continue;
+		}
+
+		error = lfs_writefile(fs, sp, vp);
+		if (!VPISEMPTY(vp) && !WRITEINPROG(vp) &&
+		    !(ip->i_flag & IN_ALLMOD)) {
+			LFS_SET_UINO(ip, IN_MODIFIED);
+		}
+		(void) lfs_writeinode(fs, sp, ip);
+
+		VOP_UNLOCK(vp, 0);
+		lfs_vunref(vp);
+
+		simple_lock(&fs->lfs_interlock);
+
+		if (error == EAGAIN) {
+			lfs_writeseg(fs, sp);
+			break;
+		}
+	}
+	simple_unlock(&fs->lfs_interlock);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
 }
@@ -1326,6 +1425,7 @@ lfs_fcntl(void *v)
 		oclean = cip->clean;
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
+		fs->lfs_sp->seg_flags |= SEGM_PROT;
 		lfs_segunlock(fs);
 		lfs_writer_leave(fs);
 
@@ -1368,6 +1468,40 @@ lfs_fcntl(void *v)
 	    case LFCNRESIZE:
 		/* Resize the filesystem */
 		return lfs_resize_fs(fs, *(int *)ap->a_data);
+
+	    case LFCNWRAPSTOP:
+		/*
+		 * Hold lfs_newseg at segment 0; sleep until the filesystem
+		 * wraps around.  For debugging purposes, so an external
+		 * agent can log every segment in the filesystem as it
+		 * was written, and we can regression-test checkpoint
+		 * validity in the general case.
+		 */
+		VOP_UNLOCK(ap->a_vp, 0);
+		simple_lock(&fs->lfs_interlock);
+		fs->lfs_nowrap = 1;
+		error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER | PNORELOCK,
+			"segwrap", 0, &fs->lfs_interlock);
+		if (error) {
+			fs->lfs_nowrap = 0;
+			wakeup(&fs->lfs_nowrap);
+		}
+		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
+		return 0;
+
+	    case LFCNWRAPGO:
+		/*
+		 * Having done its work, the agent wakes up the writer.
+		 * It sleeps until a new segment is selected.
+		 */
+		VOP_UNLOCK(ap->a_vp, 0);
+		simple_lock(&fs->lfs_interlock);
+		fs->lfs_nowrap = 0;
+		wakeup(&fs->lfs_nowrap);
+                ltsleep(&fs->lfs_nextseg, PCATCH | PUSER | PNORELOCK,
+                        "segment", 0, &fs->lfs_interlock);
+		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
+		return 0;
 
 	    default:
 		return ufs_fcntl(v);
@@ -1429,6 +1563,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int dirty;	/* number of dirty pages in a block */
 	int tdirty;
 	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
+	int pagedaemon = (curproc == uvm.pagedaemon_proc);
 
 	ASSERT_MAYBE_SEGLOCK(fs);
   top:
@@ -1478,6 +1613,21 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				}
 			}
 			KASSERT(pg != NULL);
+
+			/*
+			 * If we're holding the segment lock, we can deadlocked
+			 * against a process that has our page and is waiting
+			 * for the cleaner, while the cleaner waits for the
+			 * segment lock.  Just bail in that case.
+			 */
+			if ((pg->flags & PG_BUSY) &&
+			    (pagedaemon || LFS_SEGLOCK_HELD(fs))) {
+				if (by_list && i > 0)
+					uvm_page_unbusy(pgs, i);
+				DLOG((DLOG_PAGE, "lfs_putpages: avoiding 3-way or pagedaemon deadlock\n"));
+				return -1;
+			}
+
 			while (pg->flags & PG_BUSY) {
 				pg->flags |= PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(pg, &vp->v_interlock, 0,
@@ -1549,21 +1699,6 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		}
 	}
 
-	/*
-	 * If any pages were dirty, mark this inode as "pageout requested",
-	 * and put it on the paging queue.
-	 * XXXUBC locking (check locking on dchainhd too)
-	 */
-#ifdef notyet
-	if (any_dirty) {
-		if (!(ip->i_flags & IN_PAGING)) {
-			ip->i_flags |= IN_PAGING;
-			simple_lock(&fs->lfs_interlock);
-			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
-			simple_unlock(&fs->lfs_interlock);
-		}
-	}
-#endif
 	return any_dirty;
 }
 
@@ -1646,6 +1781,14 @@ lfs_putpages(void *v)
 		}
 		splx(s);
 		simple_unlock(&vp->v_interlock);
+		
+		/* Remove us from paging queue, if we were on it */
+		simple_lock(&fs->lfs_interlock);
+		if (ip->i_flags & IN_PAGING) {
+			ip->i_flags &= ~IN_PAGING;
+			TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
+		}
+		simple_unlock(&fs->lfs_interlock);
 		return 0;
 	}
 
@@ -1653,7 +1796,8 @@ lfs_putpages(void *v)
 
 	/*
 	 * Ignore requests to free pages past EOF but in the same block
-	 * as EOF, unless the request is synchronous. (XXX why sync?)
+	 * as EOF, unless the request is synchronous.  (If the request is
+	 * sync, it comes from lfs_truncate.)
 	 * XXXUBC Make these pages look "active" so the pagedaemon won't
 	 * XXXUBC bother us with them again.
 	 */
@@ -1723,8 +1867,13 @@ lfs_putpages(void *v)
 		int r;
 
 		/* If no pages are dirty, we can just use genfs_putpages. */
-		if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
-				ap->a_flags, 1) != 0)
+		r = check_dirty(fs, vp, startoffset, endoffset, blkeof,
+				ap->a_flags, 1);
+		if (r < 0) {
+			simple_unlock(&vp->v_interlock);
+			return EDEADLK;
+		}
+		if (r > 0)
 			break;
 
 		/*
@@ -1753,10 +1902,16 @@ lfs_putpages(void *v)
 	 */
 	if (pagedaemon) {
 		simple_lock(&fs->lfs_interlock);
-		++fs->lfs_pdflush;
-		simple_unlock(&fs->lfs_interlock);
+		if (!(ip->i_flags & IN_PAGING)) {
+			ip->i_flags |= IN_PAGING;
+			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
+		}
+		simple_lock(&lfs_subsys_lock);
 		wakeup(&lfs_writer_daemon);
+		simple_unlock(&lfs_subsys_lock);
+		simple_unlock(&fs->lfs_interlock);
 		simple_unlock(&vp->v_interlock);
+		preempt(1);
 		return EWOULDBLOCK;
 	}
 
@@ -1861,9 +2016,17 @@ lfs_putpages(void *v)
 	 * well.
 	 */
 again:
-	check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags, 0);
+	if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
+	    ap->a_flags, 0) < 0) {
+		simple_unlock(&vp->v_interlock);
+		sp->vp = NULL;
+		if (!seglocked)
+			lfs_segunlock(fs);
+		return EDEADLK;
+	}
 
-	if ((error = genfs_putpages(v)) == EDEADLK) {
+	error = genfs_putpages(v);
+	if (error == EDEADLK || error == EAGAIN) {
 		DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
 		      " EDEADLK [2] ino %d off %x (seg %d)\n",
 		      ip->i_number, fs->lfs_offset,
@@ -1891,8 +2054,10 @@ again:
 		preempt(1);
 
 		/* We've lost the interlock.  Start over. */
-		simple_lock(&vp->v_interlock);
-		goto again;
+		if (error == EDEADLK) {
+			simple_lock(&vp->v_interlock);
+			goto again;
+		}
 	}
 
 	KASSERT(sp->vp == vp);
@@ -1936,6 +2101,17 @@ again:
 	lfs_writeseg(fs, fs->lfs_sp);
 
 	/*
+	 * Remove us from paging queue, since we've now written all our
+	 * pages.
+	 */
+	simple_lock(&fs->lfs_interlock);
+	if (ip->i_flags & IN_PAGING) {
+		ip->i_flags &= ~IN_PAGING;
+		TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
+	}
+	simple_unlock(&fs->lfs_interlock);
+
+	/*
 	 * XXX - with the malloc/copy writeseg, the pages are freed by now
 	 * even if we don't wait (e.g. if we hold a nested lock).  This
 	 * will not be true if we stop using malloc/copy.
@@ -1976,10 +2152,6 @@ lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 	daddr_t olbn, nlbn;
-
-	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
-	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
-		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
 
 	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);

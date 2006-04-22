@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_subr.c,v 1.7 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: debug_subr.c,v 1.7.6.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.7 2005/12/11 12:17:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.7.6.1 2006/04/22 11:37:27 simonb Exp $");
 
 #include "debug_hpc.h"
 
@@ -52,10 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: debug_subr.c,v 1.7 2005/12/11 12:17:25 christos Exp 
 static const char onoff[2] = "_x";
 
 void
-__dbg_bit_print(u_int32_t a, int len, int start, int end, const char *title,
+__dbg_bit_print(uint32_t a, int len, int start, int end, const char *title,
     int flags)
 {
-	u_int32_t j, j1;
+	uint32_t j, j1;
 	int i, n;
 	char buf[64];
 
@@ -95,7 +95,7 @@ __dbg_bit_print(u_int32_t a, int len, int start, int end, const char *title,
 }
 
 void
-dbg_bitmask_print(u_int32_t reg, u_int32_t mask, const char *name)
+dbg_bitmask_print(uint32_t reg, uint32_t mask, const char *name)
 {
 
 	printf("%s[%c] ", name, onoff[reg & mask ? 1 : 0]);
@@ -133,7 +133,7 @@ dbg_draw_line(int n)
 /*
  * LCD test routines for 8bpp, 16bpp LCD.
  */
-static const u_int8_t img[1024] = {
+static const uint8_t img[1024] = {
 	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
 	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
 	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
@@ -264,7 +264,7 @@ static const u_int8_t img[1024] = {
 	0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
 };
 
-static const u_int16_t rgb565_clut[256] = {
+static const uint16_t rgb565_clut[256] = {
 	0x0000, 0x8000, 0x0400, 0x8400, 0x0080, 0x8080, 0x0480, 0x8480,
 	0xc6e0, 0xa6f0, 0x29ea, 0x29ff, 0x2ae0, 0x2af5, 0x2aea, 0x2aff,
 	0x2be0, 0x2bf5, 0x2bea, 0x2bff, 0x2ce0, 0x2cf5, 0x2cea, 0x2cff,
@@ -299,7 +299,7 @@ static const u_int16_t rgb565_clut[256] = {
 	0x8480, 0xf800, 0x07e0, 0xffe0, 0x00ff, 0xf8ff, 0x07ff, 0xffff
 };
 
-static u_int16_t __color_tab16[] = {
+static uint16_t __color_tab16[] = {
 	RGB565_BLACK,
 	RGB565_RED,
 	RGB565_GREEN,
@@ -346,10 +346,10 @@ dbg_lcd_test()
 void
 __dbg_lcd_test8(vaddr_t fbaddr, int w, int h)
 {
-	u_int8_t *fb, *fb_start = (u_int8_t *)fbaddr;
+	uint8_t *fb, *fb_start = (uint8_t *)fbaddr;
 	int i, x, y, y_start, y_end, len, skip;
-	u_int16_t *fb16;
-	u_int32_t *fb32;
+	uint16_t *fb16;
+	uint32_t *fb32;
 	
 	/* 
 	 * Clear screen (BLACK)
@@ -393,7 +393,7 @@ __dbg_lcd_test8(vaddr_t fbaddr, int w, int h)
 	y_start = y_end;
 	y_end = y_start + 32;
 	i = 0;
-	fb16 = (u_int16_t *)fb;
+	fb16 = (uint16_t *)fb;
 	skip /= 2;
 	for (y = y_start; y < y_end; y++, fb16 += skip)
 		for (x = 0; x < 16; x++, i += 2)
@@ -407,7 +407,7 @@ __dbg_lcd_test8(vaddr_t fbaddr, int w, int h)
 	y_start = y_end;
 	y_end = y_start + 32;
 	i = 0;
-	fb32 = (u_int32_t *)(fb + 32 * w);
+	fb32 = (uint32_t *)(fb + 32 * w);
 	skip /= 2;
 	for (y = y_start; y < y_end; y++, fb32 += skip)
 		for (x = 0; x < 8; x++, i += 4)
@@ -425,10 +425,10 @@ __dbg_lcd_test8(vaddr_t fbaddr, int w, int h)
 void
 __dbg_lcd_test16(vaddr_t fbaddr, int w, int h)
 {
-	u_int16_t *fb, *fb_start = (u_int16_t *)fbaddr;
-	u_int16_t pat;
+	uint16_t *fb, *fb_start = (uint16_t *)fbaddr;
+	uint16_t pat;
 	int i, x, y, y_start, y_end, len, skip;
-	u_int32_t *fb32;
+	uint32_t *fb32;
 
 	/* 
 	 * Clear screen (BLACK)
@@ -474,7 +474,7 @@ __dbg_lcd_test16(vaddr_t fbaddr, int w, int h)
 	y_start = y_end;
 	y_end = y_start + 32;
 	i = 0;
-	fb32 = (u_int32_t *)fb;
+	fb32 = (uint32_t *)fb;
 	skip /= 2;
 	for (y = y_start; y < y_end; y++, fb32 += skip)
 		for (x = 0; x < 16; x++, i += 2)

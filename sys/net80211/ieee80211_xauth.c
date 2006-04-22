@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_xauth.c,v 1.2 2004/12/31 22:42:38 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_xauth.c,v 1.4 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_xauth.c,v 1.4.6.1 2006/04/22 11:40:09 simonb Exp $");
 #endif
 
 /*
@@ -75,3 +75,9 @@ static const struct ieee80211_authenticator xauth = {
 	.ia_node_join	= NULL,
 	.ia_node_leave	= NULL,
 };
+
+IEEE80211_CRYPTO_SETUP(ieee80211_external_auth_setup)
+{
+	ieee80211_authenticator_register(IEEE80211_AUTH_8021X, &xauth);
+	ieee80211_authenticator_register(IEEE80211_AUTH_WPA, &xauth);
+}

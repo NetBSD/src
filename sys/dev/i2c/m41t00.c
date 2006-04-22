@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.5 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.5.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -99,7 +99,7 @@ m41t00_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 m41t00_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct m41t00_softc *sc = (struct m41t00_softc *)self;
+	struct m41t00_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 
 	sc->sc_tag = ia->ia_tag;

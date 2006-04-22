@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_extint.c,v 1.6 2005/12/24 20:06:52 perry Exp $ */
+/* $NetBSD: s3c2410_extint.c,v 1.6.6.1 2006/04/22 11:37:17 simonb Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.6 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_extint.c,v 1.6.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ ssextio_search(struct device *parent, struct cfdata *cf,
 	       const int *ldesc, void *aux)
 {
 	struct ssextio_softc *sc = (struct ssextio_softc *)parent;
-	struct s3c24x0_softc *cpuc =(struct s3c24x0_softc *)sc->sc_dev.dv_parent;
+	struct s3c24x0_softc *cpuc =(struct s3c24x0_softc *) device_parent(&sc->sc_dev);
 	struct s3c2xx0_attach_args sa;
 
 	sa.sa_sc = sc;

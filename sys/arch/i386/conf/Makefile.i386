@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.142.6.1 2006/02/04 15:08:44 simonb Exp $
+#	$NetBSD: Makefile.i386,v 1.142.6.2 2006/04/22 11:37:32 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -104,21 +104,8 @@ clock.o: config_time.h
 
 %RULES
 
-# XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
-# XXX - Also, config has no simple was to just add foo.o to the Makefile. 
-#       It needs a pathname of some sort for "object"        
-.if !empty(OBJS:M\/athhal-i386-elf.hal.o)
-OBJS:=${OBJS:C/\/athhal-i386-elf.hal.o/athhal-i386-elf.hal.o/}
- 
-.PATH: $S/contrib/arch/i386/dev
-ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
-		${_MKSHECHO}\
-		${UUDECODE} -p $> \> ${.TARGET}; \
-		rm -f ${.TARGET}; \
-		${UUDECODE} -p $> > ${.TARGET}
-athhal-i386-elf.hal.o: athhal-i386-elf.hal.o.uue
-	${ATH_UUDEC}
-.endif
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

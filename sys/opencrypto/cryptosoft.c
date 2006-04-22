@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.11 2005/11/25 16:41:31 thorpej Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.11.6.1 2006/04/22 11:40:18 simonb Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.11 2005/11/25 16:41:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.11.6.1 2006/04/22 11:40:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -642,7 +642,7 @@ swcr_compdec(struct cryptodesc *crd, struct swcr_data *sw,
 	 * copy in a buffer.
 	 */
 
-	MALLOC(data, u_int8_t *, crd->crd_len, M_CRYPTO_DATA,  M_NOWAIT);
+	data = malloc(crd->crd_len, M_CRYPTO_DATA, M_NOWAIT);
 	if (data == NULL)
 		return (EINVAL);
 	COPYDATA(outtype, buf, crd->crd_skip, crd->crd_len, data);
@@ -756,8 +756,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 	*sid = i;
 
 	while (cri) {
-		MALLOC(*swd, struct swcr_data *, sizeof(struct swcr_data),
-		    M_CRYPTO_DATA, M_NOWAIT);
+		*swd = malloc(sizeof **swd, M_CRYPTO_DATA, M_NOWAIT);
 		if (*swd == NULL) {
 			swcr_freesession(NULL, i);
 			return ENOBUFS;
