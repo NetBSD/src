@@ -1,5 +1,60 @@
-/* $NetBSD: tsc.c,v 1.1.1.1.2.5 2006/02/28 20:44:46 kardel Exp $ */
+/* $NetBSD: tsc.c,v 1.1.1.1.2.6 2006/04/22 23:09:31 kardel Exp $ */
 
+
+/*-
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * re-implementation of TSC for MP systems merging cc_microtime and
+ * TSC for timecounters by Frank Kardel
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* basic calibration ideas are (kern_microtime.c): */
+/******************************************************************************
+ *                                                                            *
+ * Copyright (c) David L. Mills 1993, 1994                                    *
+ *                                                                            *
+ * Permission to use, copy, modify, and distribute this software and its      *
+ * documentation for any purpose and without fee is hereby granted, provided  *
+ * that the above copyright notice appears in all copies and that both the    *
+ * copyright notice and this permission notice appear in supporting           *
+ * documentation, and that the name University of Delaware not be used in     *
+ * advertising or publicity pertaining to distribution of the software        *
+ * without specific, written prior permission.  The University of Delaware    *
+ * makes no representations about the suitability this software for any       *
+ * purpose.  It is provided "as is" without express or implied warranty.      *
+ *                                                                            *
+ ******************************************************************************/
+
+/* reminiscents from older version of this file are: */
 /*-
  * Copyright (c) 1998-2003 Poul-Henning Kamp
  * All rights reserved.
@@ -28,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.1.1.2.5 2006/02/28 20:44:46 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.1.1.2.6 2006/04/22 23:09:31 kardel Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -40,6 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.1.1.1.2.5 2006/02/28 20:44:46 kardel Exp $
 #include <sys/kernel.h>
 #include <sys/power.h>
 #include <sys/reboot.h>	/* XXX for bootverbose */
+#include <machine/cpu.h>
+#include <machine/cpu_counter.h>
 #include <machine/clock.h>
 #include <machine/specialreg.h>
 
@@ -47,11 +104,16 @@ uint64_t	tsc_freq;
 u_int		tsc_present;
 int		tsc_is_broken = 0;
 
-static	unsigned tsc_get_timecount(struct timecounter *tc);
+static int64_t tsc_cal_val;  /* last calibrate time stamp */
+
+static timecounter_get_t tsc_get_timecount;
+static timecounter_pps_t tsc_calibrate;
+
+void tsc_calibrate_cpu(struct cpu_info *);
 
 static struct timecounter tsc_timecounter = {
 	tsc_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
+	tsc_calibrate,		/* once per second - used to calibrate cpu TSC */
  	~0u,			/* counter_mask */
 	0,			/* frequency */
 	 "TSC",			/* name */
@@ -74,92 +136,20 @@ init_TSC(void)
 	if (bootverbose)
 	        printf("Calibrating TSC clock ... ");
 
-	tscval[0] = rdtsc();
-	DELAY(1000000);
-	tscval[1] = rdtsc();
+	do {
+		tscval[0] = rdtsc();
+		DELAY(1000000);
+		tscval[1] = rdtsc();
+	} while (tscval[1] < tscval[0]);
 
 	tsc_freq = tscval[1] - tscval[0];
 	if (bootverbose)
-		printf("TSC clock: %ju Hz\n", (intmax_t)tsc_freq);
+		printf("TSC clock: %" PRId64 " Hz\n", tsc_freq);
 }
-
-#ifdef MULTIPROCESSOR
-static int mp_tsc_ok = 0;
-
-#if 0
-/*
- * XXX
- * this sysctl makes only limited sense as initialisation
- * is finished by the time this can be set. maybe there will
- * be a sysctl setting functionality some time in the future.
- */
-SYSCTL_SETUP(sysctl_timecounter_setup, "sysctl timecounter setup")
-{
-	const struct sysctlnode *node;
-
-	sysctl_createv(clog, 0, NULL, &node,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "timecounter",
-		       SYSCTL_DESCR("allow usage of TSC on multi processors"),
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-
-	if (node != NULL) {
-		sysctl_createv(clog, 0, NULL, NULL,
-			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			       CTLTYPE_INT, "smp_tsc_ok",
-			       SYSCTL_DESCR(
-			       "allow usage of TSC on multi processors"),
-			       NULL, 0, &mp_tsc_ok, 0,
-			       CTL_MACHDEP, node->sysctl_num, CTL_CREATE,
-			       CTL_EOL);
-	}
-
-}
-#endif
-#endif	/* MULTIPROCESSOR */
 
 void
 init_TSC_tc(void)
 {
-
-#ifdef __FreeBSD__
-	/*
-	 * We can not use the TSC if we support APM. Precise timekeeping
-	 * on an APM'ed machine is at best a fools pursuit, since 
-	 * any and all of the time spent in various SMM code can't 
-	 * be reliably accounted for.  Reading the RTC is your only
-	 * source of reliable time info.  The i8254 looses too of course
-	 * but we need to have some kind of time...
-	 * We don't know at this point whether APM is going to be used
-	 * or not, nor when it might be activated.  Play it safe.
-	 */
-	if (power_pm_get_type() == POWER_PM_TYPE_APM) {
-		tsc_timecounter.tc_quality = -1000;
-		if (bootverbose)
-			printf("TSC timecounter disabled: APM enabled.\n");
-	}
-#endif /* __FreeBSD__ */
-
-#ifdef MULTIPROCESSOR
-	extern u_int32_t cpus_attached;
-	/* 
-	 * FreeBSD comment:
-	 * We can not use the TSC in SMP mode unless the TSCs on all CPUs
-	 * are somehow synchronized.  Some hardware configurations do
-	 * this, but we have no way of determining whether this is the
-	 * case, so we do not use the TSC in multi-processor systems
-	 * unless the user indicated (by setting kern.timecounter.smp_tsc
-	 * to 1) that he believes that his TSCs are synchronized.
-	 */
-	if (cpus_attached & ~1 && !mp_tsc_ok)
-		tsc_timecounter.tc_quality = -100;
-
-	/*
-	 * XXX - implement NetBSD MP TSC strategy
-	 */
-#endif
-
 	if (tsc_present && tsc_freq != 0 && !tsc_is_broken) {
 		tsc_timecounter.tc_frequency = tsc_freq;
 		tc_init(&tsc_timecounter);
@@ -188,9 +178,136 @@ SYSCTL_PROC(_machdep, OID_AUTO, tsc_freq, CTLTYPE_QUAD | CTLFLAG_RW,
     0, sizeof(u_int), sysctl_machdep_tsc_freq, "IU", "");
 #endif /* __FreeBSD__ */
 
+/*
+ * pick up tick count scaled to reference tick count
+ */
 static u_int
 tsc_get_timecount(struct timecounter *tc)
 {
+	struct cpu_info *ci = curcpu();
+	int64_t cc;
+	int s;
 
-	return (rdtsc());
+	if (ci->ci_cc.cc_denom == 0) {
+		/*
+		 * This is our first time here on this CPU.  Just
+		 * start with reasonable initial values.
+		 */
+	        ci->ci_cc.cc_cc    = cpu_counter32();
+		ci->ci_cc.cc_val   = 0;
+		ci->ci_cc.cc_denom = cpu_frequency(ci);
+		if (ci->ci_cc.cc_denom == 0)
+			ci->ci_cc.cc_denom = tsc_freq;
+		ci->ci_cc.cc_delta = ci->ci_cc.cc_denom;
+	}
+
+	s = splipi();
+
+	/* determine local delta ticks */
+	cc = cpu_counter32() - ci->ci_cc.cc_cc;
+
+	if (cc < 0)
+		cc += 0x100000000LL;
+
+	/* scale to primary */
+	cc = (cc * ci->ci_cc.cc_delta) / ci->ci_cc.cc_denom + ci->ci_cc.cc_val;
+
+	splx(s);
+
+	return cc;
+}
+
+/*
+ * called once per second via the pps callback
+ * for the calibration of the TSC counters.
+ * it is called only for the PRIMARY cpu. all
+ * other cpus are called via a broadcast IPI
+ */
+static void
+tsc_calibrate(struct timecounter *tc)
+{
+	struct cpu_info *ci = curcpu();
+	
+	/* pick up reference ticks */
+	tsc_cal_val = cpu_counter32();
+
+#if defined(MULTIPROCESSOR)
+	x86_broadcast_ipi(X86_IPI_MICROSET);
+#endif
+
+	tsc_calibrate_cpu(ci);
+}
+
+/*
+ * This routine is called about once per second directly by the master
+ * processor and via an interprocessor interrupt for other processors.
+ * It determines the CC frequency of each processor relative to the
+ * master clock and the time this determination is made.  These values
+ * are used by tsc_get_timecount() to interpolate the ticks between
+ * timer interrupts.  Note that we assume the kernel variables have
+ * been zeroed early in life.
+ */
+void
+tsc_calibrate_cpu(struct cpu_info *ci)
+{
+	int64_t val;
+	int64_t delta, denom;
+#ifdef TIMECOUNTER_DEBUG
+	int64_t factor, old_factor;
+#endif
+	/* XXX must check: Note: Clock interrupts are already blocked. */
+
+	val = tsc_cal_val;
+
+	denom = ci->ci_cc.cc_cc;
+	ci->ci_cc.cc_cc = cpu_counter32();
+
+	if (ci->ci_cc.cc_denom == 0) {
+		/*
+		 * This is our first time here on this CPU.  Just
+		 * start with reasonable initial values.
+		 */
+		ci->ci_cc.cc_val = val;
+		ci->ci_cc.cc_denom = cpu_frequency(ci);
+		if (ci->ci_cc.cc_denom == 0)
+			ci->ci_cc.cc_denom = tsc_freq;
+		ci->ci_cc.cc_delta = ci->ci_cc.cc_denom;
+		return;
+	}
+
+#ifdef TIMECOUNTER_DEBUG
+	old_factor = (ci->ci_cc.cc_delta * 1000 ) / ci->ci_cc.cc_denom;
+#endif
+
+	/* local ticks per period */
+	denom = ci->ci_cc.cc_cc - denom;
+	if (denom < 0)
+		denom += 0x100000000LL;
+
+	ci->ci_cc.cc_denom = denom;
+
+	/* reference ticks per period */
+	delta = val - ci->ci_cc.cc_val;
+	if (delta < 0)
+		delta += 0x100000000LL;
+
+	ci->ci_cc.cc_val = val;
+	ci->ci_cc.cc_delta = delta;
+
+#ifdef TIMECOUNTER_DEBUG
+	factor = (delta * 1000) / denom - old_factor;
+	if (factor < 0)
+		factor = -factor;
+
+	if (factor > old_factor / 10)
+		printf("tsc_calibrate_cpu[%lu]: 10%% exceeded - delta %"
+		       PRId64 ", denom %" PRId64 ", factor %" PRId64
+		       ", old factor %" PRId64"\n", ci->ci_cpuid,
+		       delta, denom, (delta * 1000) / denom, old_factor);
+#endif
+
+#if 0
+	printf("tsc_calibrate_cpu[%lu]: delta %" PRId64
+	       ", denom %" PRId64 ", factor %" PRId64 "\n", ci->ci_cpuid, delta, denom, (delta * 1000) / denom);
+#endif
 }
