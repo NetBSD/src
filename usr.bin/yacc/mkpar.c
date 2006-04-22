@@ -1,4 +1,4 @@
-/*	$NetBSD: mkpar.c,v 1.9 2003/08/07 11:17:53 agc Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.10 2006/04/22 18:08:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mkpar.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: mkpar.c,v 1.9 2003/08/07 11:17:53 agc Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.10 2006/04/22 18:08:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -283,44 +283,48 @@ remove_conflicts()
 		SRcount++;
 		p->suppressed = 1;
 	    }
-	    else if (pref->action_code == SHIFT)
+	    else 
 	    {
-		if (pref->prec > 0 && p->prec > 0)
+		assert(pref != NULL);
+		if (pref->action_code == SHIFT)
 		{
-		    if (pref->prec < p->prec)
+		    if (pref->prec > 0 && p->prec > 0)
 		    {
-			pref->suppressed = 2;
-			pref = p;
-		    }
-		    else if (pref->prec > p->prec)
-		    {
-			p->suppressed = 2;
-		    }
-		    else if (pref->assoc == LEFT)
-		    {
-			pref->suppressed = 2;
-			pref = p;
-		    }
-		    else if (pref->assoc == RIGHT)
-		    {
-			p->suppressed = 2;
+			if (pref->prec < p->prec)
+			{
+			    pref->suppressed = 2;
+			    pref = p;
+			}
+			else if (pref->prec > p->prec)
+			{
+			    p->suppressed = 2;
+			}
+			else if (pref->assoc == LEFT)
+			{
+			    pref->suppressed = 2;
+			    pref = p;
+			}
+			else if (pref->assoc == RIGHT)
+			{
+			    p->suppressed = 2;
+			}
+			else
+			{
+			    pref->suppressed = 2;
+			    p->suppressed = 2;
+			}
 		    }
 		    else
 		    {
-			pref->suppressed = 2;
-			p->suppressed = 2;
+			SRcount++;
+			p->suppressed = 1;
 		    }
 		}
 		else
 		{
-		    SRcount++;
+		    RRcount++;
 		    p->suppressed = 1;
 		}
-	    }
-	    else
-	    {
-		RRcount++;
-		p->suppressed = 1;
 	    }
 	}
 	SRtotal += SRcount;
