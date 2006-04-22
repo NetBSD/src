@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.7 2006/03/23 01:27:08 riz Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.8 2006/04/22 17:33:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.7 2006/03/23 01:27:08 riz Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.8 2006/04/22 17:33:55 christos Exp $");
 #endif  /* !__lint */
 
 static int cd9660_write_volume_descriptors(FILE *);
@@ -261,7 +261,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 	int written;
 	iso_directory_record_cd9660 temp_record;
 	cd9660node *temp;
-	int ca = 0;
+	int ca = 0, rv = 0;
 
 	/* Todo : clean up variables */
 
@@ -290,10 +290,8 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 			    temp_file_name, 0);
 			ret = cd9660_copy_file(fd, writenode->fileDataSector,
 			    temp_file_name);
-			if (ret == 0) {
-				free(temp_file_name);
-				return 0;
-			}
+			if (ret == 0)
+				goto out;
 		}
 	} else {
 		/*
@@ -346,8 +344,7 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 
 			if (ferror(fd)) {
 				warnx("%s: write error", __func__);
-				free(temp_file_name);
-				return 0;
+				goto out;
 			}
 			cur_sector_offset += temp_record.length[0];
 
@@ -367,14 +364,15 @@ cd9660_write_file(FILE *fd, cd9660node *writenode)
 		 * Recurse on children.
 		 */
 		TAILQ_FOREACH(temp, &writenode->cn_children, cn_next_child) {
-			if ((ret = cd9660_write_file(fd, temp)) == 0) {
-				free(temp_file_name);
-				return 0;
-			}
+			if ((ret = cd9660_write_file(fd, temp)) == 0)
+				goto out;
 		}
 	}
+	rv = 1;
+out:
 	free(temp_file_name);
-	return 1;
+	free(buf);
+	return rv;
 }
 
 /*
