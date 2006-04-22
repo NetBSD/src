@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.43 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: ite.c,v 1.43.6.1 2006/04/22 11:38:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.43 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.43.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -245,7 +245,7 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 			kbd_ite = ip;
 		}
 		ip->grf = gp;
-		iteinit(ip->device.dv_unit); /* XXX */
+		iteinit(device_unit(&ip->device)); /* XXX */
 		printf(": rows %d cols %d", ip->rows, ip->cols);
 		if (kbd_ite == NULL)
 			kbd_ite = ip;
@@ -287,7 +287,7 @@ iteinit(dev_t dev)
 	ip->cursorx = 0;
 	ip->cursory = 0;
 
-	ip->isw = &itesw[ip->device.dv_unit]; /* XXX */
+	ip->isw = &itesw[device_unit(&ip->device)]; /* XXX */
 	SUBR_INIT(ip);
 	SUBR_CURSOR(ip, DRAW_CURSOR);
 	if (!ip->tabs)
@@ -761,7 +761,7 @@ ite_filter(c)
 	struct key key;
 	int s, i;
 
-	if (!kbd_ite || !(kbd_tty = ite_tty[kbd_ite->device.dv_unit]))
+	if (!kbd_ite || !(kbd_tty = ite_tty[device_unit(&kbd_ite->device)]))
 		return;
 
 	/* have to make sure we're at spltty in here */
@@ -2131,7 +2131,7 @@ iteputchar(int c, struct ite_softc *ip)
 
 	case BEL:
 #if NBELL > 0
-		if (kbd_ite && ite_tty[kbd_ite->device.dv_unit])
+		if (kbd_ite && ite_tty[device_unit(&kbd_ite->device)])
 			opm_bell();
 #endif
 		break;

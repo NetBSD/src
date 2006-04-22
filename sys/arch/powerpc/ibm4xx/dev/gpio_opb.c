@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_opb.c,v 1.4 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: gpio_opb.c,v 1.4.6.1 2006/04/22 11:37:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -38,179 +38,181 @@
 
 #include <machine/pio.h>
 
+#include <sys/gpio.h>
+#include <dev/gpio/gpiovar.h>
+
 #include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
 #include <powerpc/ibm4xx/dev/gpioreg.h>
-#include <powerpc/ibm4xx/dev/gpiovar.h>
 
-struct ppcgpio_softc {
+struct gpio_opb_softc {
 	struct device		sc_dev;		/* device generic */
-	struct gpio_controller	sc_gpio;	/* GPIO controller */
-        u_long			sc_addr;	/* GPIO controller address */
+	/* GPIO interface */
+	bus_space_tag_t		sc_gpio_iot;
+	bus_space_handle_t	sc_gpio_ioh;
+	struct gpio_chipset_tag	sc_gpio_gc;
+	gpio_pin_t		sc_gpio_pins[GPIO_NPINS];
 };
 
-static int	gpio_print(void *, const char *);
-static int	gpio_search(struct device *, struct cfdata *,
-			const int *ldesc, void *aux);
-static int	gpio_match(struct device *, struct cfdata *, void *);
-static void	gpio_attach(struct device *, struct device *, void *);
+static int	gpio_opb_match(struct device *, struct cfdata *, void *);
+static void	gpio_opb_attach(struct device *, struct device *, void *);
 
-static int	gpio_or_read(void *, int);
-static int	gpio_tcr_read(void *, int);
-static int	gpio_odr_read(void *, int);
-static int	gpio_ir_read(void *, int);
-static void	gpio_or_write(void *arg, int addr, int bit);
-static void	gpio_tcr_write(void *arg, int addr, int bit);
-static void	gpio_odr_write(void *arg, int addr, int bit);
+CFATTACH_DECL(opbgpio, sizeof(struct gpio_opb_softc),
+	gpio_opb_match, gpio_opb_attach, NULL, NULL);
 
-static int	gpio_read_bit(void *, int, int);
-static void	gpio_write_bit(void *, int, int, int);
-static uint32_t	gpio_read(void *, int);
-static void	gpio_write(void *, int, uint32_t);
+static int	gpio_opb_pin_read(void *, int);
+static void	gpio_opb_pin_write(void *, int, int);
+static void	gpio_opb_pin_ctl(void *, int, int);
 
-CFATTACH_DECL(ppcgpio, sizeof(struct ppcgpio_softc),
-    gpio_match, gpio_attach, NULL, NULL);
 
 static int
-gpio_print(void *aux, const char *pnp)
+gpio_opb_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct gpio_attach_args *gaa = aux;
-
-	aprint_normal(" addr GPIO#%d", gaa->ga_addr);
-
-	return (UNCONF);
-}
-
-static int
-gpio_search(struct device *parent, struct cfdata *cf,
-	const int *ldesc, void *aux)
-{
-	struct ppcgpio_softc *sc = (void *)parent;
-	struct gpio_attach_args gaa;
-
-	gaa.ga_tag = &sc->sc_gpio;
-	gaa.ga_addr = cf->cf_loc[PPCGPIOCF_ADDR];
-
-	if (config_match(parent, cf, &gaa) > 0)
-		config_attach(parent, cf, &gaa, gpio_print);
-
-	return (0);
-}
-
-static int
-gpio_match(struct device *parent, struct cfdata *cf, void *args)
-{
-	struct opb_attach_args *oaa = args;
+	struct opb_attach_args *oaa = aux;
 
 	if (strcmp(oaa->opb_name, cf->cf_name) != 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
-gpio_attach(struct device *parent, struct device *self, void *aux)
+gpio_opb_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ppcgpio_softc *sc = (struct ppcgpio_softc *)self;
+	struct gpio_opb_softc *sc = (struct gpio_opb_softc *)self;
 	struct opb_attach_args *oaa = aux;
+	struct gpiobus_attach_args gba;
+	int i;
+	uint32_t reg1, reg2, reg3;
 
 	aprint_naive(": GPIO controller\n");
 	aprint_normal(": On-Chip GPIO controller\n");
 
-	sc->sc_addr = oaa->opb_addr;
-	sc->sc_gpio.cookie = sc;
-	sc->sc_gpio.io_or_read = gpio_or_read;
-	sc->sc_gpio.io_tcr_read = gpio_tcr_read;
-	sc->sc_gpio.io_odr_read = gpio_odr_read;
-	sc->sc_gpio.io_ir_read = gpio_ir_read;
-	sc->sc_gpio.io_or_write = gpio_or_write;
-	sc->sc_gpio.io_tcr_write = gpio_tcr_write;
-	sc->sc_gpio.io_odr_write = gpio_odr_write;
+	/* Map GPIO I/O space */
+	sc->sc_gpio_iot = oaa->opb_bt;
+	bus_space_map(sc->sc_gpio_iot, oaa->opb_addr,
+		GPIO_NREG, 0, &sc->sc_gpio_ioh);
 
-	(void) config_search_ia(gpio_search, self, "gpio", NULL);
+	/* Read current register status */
+	reg1 = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_IR);
+	reg2 = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_TCR);
+	reg3 = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_ODR);
+
+	/* Initialize ping array */
+	for (i = 0 ; i < GPIO_NPINS ; i++) {
+		int p = i + 1;
+		sc->sc_gpio_pins[i].pin_num = i;
+		sc->sc_gpio_pins[i].pin_caps = GPIO_PIN_INOUT
+						| GPIO_PIN_OPENDRAIN
+						| GPIO_PIN_TRISTATE;
+
+		/* current defaults */
+		sc->sc_gpio_pins[i].pin_flags =
+			((reg3 >> GPIO_PIN_SHIFT(p)) & 0x01)
+			? GPIO_PIN_OPENDRAIN
+			: (((reg2 >> GPIO_PIN_SHIFT(p)) & 0x01)
+				? GPIO_PIN_INOUT
+				: GPIO_PIN_TRISTATE);
+		sc->sc_gpio_pins[i].pin_state =
+			((reg1 >> GPIO_PIN_SHIFT(p)) & 0x01);
+		sc->sc_gpio_pins[i].pin_mapped = 0;
+	}
+
+	/* Create controller tag */
+	sc->sc_gpio_gc.gp_cookie = sc;
+	sc->sc_gpio_gc.gp_pin_read = gpio_opb_pin_read;
+	sc->sc_gpio_gc.gp_pin_write = gpio_opb_pin_write;
+	sc->sc_gpio_gc.gp_pin_ctl = gpio_opb_pin_ctl;
+
+	gba.gba_gc = &sc->sc_gpio_gc;
+	gba.gba_pins = sc->sc_gpio_pins;
+	gba.gba_npins = GPIO_NPINS;
+
+	/* Attach GPIO framework */
+	(void) config_found(&sc->sc_dev, &gba, gpiobus_print);
 }
 
 static int
-gpio_or_read(void *arg, int addr)
+gpio_opb_pin_read(void *arg, int pin)
 {
-	return (gpio_read_bit(arg, GPIO_OR, addr));
-}
+	struct gpio_opb_softc *sc = arg;
+	uint32_t data;
+	int p;
 
-static int
-gpio_tcr_read(void *arg, int addr)
-{
-	return (gpio_read_bit(arg, GPIO_TCR, addr));
-}
+	p = pin % GPIO_NPINS;
+	p = p + 1;
 
-static int
-gpio_odr_read(void *arg, int addr)
-{
-	return (gpio_read_bit(arg, GPIO_ODR, addr));
-}
+	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_IR);
 
-static int
-gpio_ir_read(void *arg, int addr)
-{
-	gpio_write_bit(arg, GPIO_ODR, addr, 0);
-	gpio_write_bit(arg, GPIO_TCR, addr, 0);
-	return (gpio_read_bit(arg, GPIO_ODR, addr));
+	return (data >> GPIO_PIN_SHIFT(p)) & 0x01;
 }
 
 static void
-gpio_or_write(void *arg, int addr, int bit)
+gpio_opb_pin_write(void *arg, int pin, int value)
 {
-	gpio_write_bit(arg, GPIO_ODR, addr, 0);
-	gpio_write_bit(arg, GPIO_TCR, addr, 1);
-	gpio_write_bit(arg, GPIO_OR, addr, bit);
+	struct gpio_opb_softc *sc = arg;
+	uint32_t data;
+	int p;
+
+	p = pin % GPIO_NPINS;
+	p = p + 1;
+
+	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_OR);
+	if (value == 0) {
+		data &= ~(1 << GPIO_PIN_SHIFT(p));
+	} else if (value == 1) {
+		data |= (1 << GPIO_PIN_SHIFT(p));
+	}
+
+	bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_OR, data);
 }
 
 static void
-gpio_tcr_write(void *arg, int addr, int bit)
+gpio_opb_pin_ctl(void *arg, int pin, int flags)
 {
-	gpio_write_bit(arg, GPIO_TCR, addr, bit);
-}
+	struct gpio_opb_softc *sc = arg;
+	uint32_t data;
+	int p;
 
-static void
-gpio_odr_write(void *arg, int addr, int bit)
-{
-	gpio_write_bit(arg, GPIO_ODR, addr, bit);
-}
+	p = pin % GPIO_NPINS;
+	p = p + 1;
 
-static int
-gpio_read_bit(void *arg, int offset, int addr)
-{
-	uint32_t rv = gpio_read(arg, offset);
-	uint32_t mask = GPIO_SBIT(addr);
+	if (flags & GPIO_PIN_INOUT) {
+		/* GPIOn_ODR register bit is 0 */
+		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_ODR);
+		data &= ~(1 << GPIO_PIN_SHIFT(p));
+		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_ODR, data);
+		/* GPIOn_TCR register bit is 1 */
+		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_TCR);
+		data |= (1 << GPIO_PIN_SHIFT(p));
+		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_TCR, data);
+	}
 
-	return ((rv & mask) >> GPIO_SHIFT(addr));
-}
+	if (flags & GPIO_PIN_TRISTATE) {
+		/* GPIOn_ODR register bit is 0 */
+		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_ODR);
+		data &= ~(1 << GPIO_PIN_SHIFT(p));
+		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_ODR, data);
+		/* GPIOn_TCR register bit is 0 */
+		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_TCR);
+		data &= ~(1 << GPIO_PIN_SHIFT(p));
+		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_TCR, data);
+	}
 
-void
-gpio_write_bit(void *arg, int offset, int addr, int bit)
-{
-	uint32_t rv = gpio_read(arg, offset);
-	uint32_t mask = GPIO_SBIT(addr);
-
-	rv = rv & ~mask;
-	rv = rv | ((bit << GPIO_SHIFT(addr)) & mask);
-	gpio_write(arg, offset, rv);
-}
-
-static uint32_t
-gpio_read(void *arg, int offset)
-{
-	struct ppcgpio_softc *sc = arg;
-	uint32_t rv;
-
-        rv = inl(sc->sc_addr + offset);
-
-	return rv;
-}
-
-static void
-gpio_write(void *arg, int offset, uint32_t out)
-{
-	struct ppcgpio_softc *sc = arg;
-
-        outl((sc->sc_addr + offset), out);
+	if (flags & GPIO_PIN_OPENDRAIN) {
+		/* GPIOn_ODR register bit is 1 */
+		data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_ODR);
+		data |= (1 << GPIO_PIN_SHIFT(p));
+		bus_space_write_4(sc->sc_gpio_iot, sc->sc_gpio_ioh,
+					GPIO_ODR, data);
+	}
 }

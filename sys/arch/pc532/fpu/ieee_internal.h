@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_internal.h,v 1.8 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: ieee_internal.h,v 1.8.6.1 2006/04/22 11:37:51 simonb Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -128,31 +128,19 @@ struct operand {
   union t_conv data;
 };
 
-
 int ieee_undfl(struct operand *, struct operand *,
 	       struct operand *, int, state *);
-
 int ieee_ovfl(struct operand *, struct operand *,
 	      struct operand *, int, state *);
-
 int ieee_dze(struct operand *, struct operand *,
 	     struct operand *, int, state *);
-
 int ieee_invop(struct operand *, struct operand *,
 	       struct operand *, int, state *);
-
 int ieee_add(double, double *);
-
 int ieee_mul(double, double *);
-
 int ieee_div(double, double *);
-
 int ieee_dot(double, double, double *);
-
 void ieee_cmp(double, double, state *);
-
 int ieee_normalize(union t_conv *);
-
 int ieee_scalb(double, double *);
-
 #endif /* _IEEE_INTERNAL_H_ */

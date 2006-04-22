@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mca.c,v 1.9 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: if_ne_mca.c,v 1.9.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.9 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.9.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ static const int ne_mca_iobase[] = {
 void
 ne_mca_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ne_mca_softc *psc = (struct ne_mca_softc *)self;
+	struct ne_mca_softc *psc = device_private(self);
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct mca_attach_args *ma = aux;

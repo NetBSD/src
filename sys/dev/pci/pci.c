@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.97 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pci.c,v 1.97.6.1 2006/04/22 11:39:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.97 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.97.6.1 2006/04/22 11:39:15 simonb Exp $");
 
 #include "opt_pci.h"
 
@@ -352,9 +352,8 @@ pcidevdetached(struct device *sc, struct device *dev)
 	struct pci_softc *psc = (struct pci_softc *)sc;
 	int d, f;
 
-	KASSERT(dev->dv_locators);
-	d = dev->dv_locators[PCICF_DEV];
-	f = dev->dv_locators[PCICF_FUNCTION];
+	d = device_locator(dev, PCICF_DEV);
+	f = device_locator(dev, PCICF_FUNCTION);
 
 	KASSERT(psc->PCI_SC_DEVICESC(d, f) == dev);
 

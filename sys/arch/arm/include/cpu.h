@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -240,7 +240,7 @@ extern int astpending;
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;		/* resched() was called */
+extern int want_resched;	/* resched() was called */
 #define	need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*

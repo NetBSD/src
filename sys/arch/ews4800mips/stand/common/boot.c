@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2006/01/26 16:26:58 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.4.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ set_device_capability(void)
 	if (booted_device > NVSRAM_BOOTDEV_MAX ||
 	    booted_device < NVSRAM_BOOTDEV_MIN) {
 		printf(
-		    "invalid booted device. NVSRAM infomation isn't valid\n");
+		    "invalid booted device. NVSRAM information isn't valid\n");
 	} else {
 		DEVICE_CAPABILITY.booted_device = booted_device;
 	}

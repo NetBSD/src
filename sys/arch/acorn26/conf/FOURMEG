@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.25 2005/12/07 12:40:46 tsutsui Exp $
+# $NetBSD: FOURMEG,v 1.25.6.1 2006/04/22 11:37:09 simonb Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -190,7 +190,7 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
 arcvideo0	at root			# On-board video
 wsdisplay0	at arcvideo0
 
-#pseudo-device	bpfilter	16
+#pseudo-device	bpfilter
 #pseudo-device	ccd		4
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
@@ -200,13 +200,13 @@ pseudo-device	loop		1
 pseudo-device	md		1
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_ROOT_SIZE=
-#pseudo-device	ppp		4
+#pseudo-device	ppp		
 pseudo-device	pty
-#pseudo-device	sl		4
-#pseudo-device	vnd		4
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	sl		
+#pseudo-device	vnd		
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.14 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.14.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.14 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.14.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,10 +140,7 @@ static struct ncr53c9x_glue asc_tcds_glue = {
 };
 
 static int
-asc_tcds_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+asc_tcds_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/* We always exist. */
@@ -156,12 +153,10 @@ asc_tcds_match(parent, cf, aux)
  * Attach this instance, and then all the sub-devices
  */
 static void
-asc_tcds_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+asc_tcds_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcdsdev_attach_args *tcdsdev = aux;
-	struct asc_softc *asc = (struct asc_softc *)self;
+	struct asc_softc *asc = device_private(self);
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
 	int error;
 
@@ -240,8 +235,7 @@ asc_tcds_attach(parent, self, aux)
 }
 
 static void
-tcds_dma_reset(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -257,11 +251,8 @@ tcds_dma_reset(sc)
  * start a DMA transfer or keep it going
  */
 int
-tcds_dma_setup(sc, addr, len, ispullup, dmasize)
-	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
-	size_t *len, *dmasize;
-	int ispullup;				/* DMA into main memory */
+tcds_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+    int ispullup, size_t *dmasize)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	struct tcds_slotconfig *tcds = asc->sc_tcds;
@@ -317,8 +308,7 @@ tcds_dma_setup(sc, addr, len, ispullup, dmasize)
 }
 
 static void
-tcds_dma_go(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -330,8 +320,7 @@ tcds_dma_go(sc)
 }
 
 static void
-tcds_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_stop(struct ncr53c9x_softc *sc)
 {
 #if 0
 	struct asc_softc *asc = (struct asc_softc *)sc;
@@ -350,8 +339,7 @@ tcds_dma_stop(sc)
  * return 1 if it was a DMA continue.
  */
 static int
-tcds_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	struct tcds_slotconfig *tcds = asc->sc_tcds;
@@ -477,9 +465,7 @@ tcds_dma_intr(sc)
  * Glue functions.
  */
 static u_char
-asc_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+asc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	u_int32_t v;
@@ -491,10 +477,7 @@ asc_read_reg(sc, reg)
 }
 
 static void
-asc_write_reg(sc, reg, val)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char val;
+asc_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -503,8 +486,7 @@ asc_write_reg(sc, reg, val)
 }
 
 static int
-tcds_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	int x;
@@ -516,8 +498,7 @@ tcds_dma_isintr(sc)
 }
 
 static int
-tcds_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -525,8 +506,7 @@ tcds_dma_isactive(sc)
 }
 
 static void
-tcds_clear_latched_intr(sc)
-	struct ncr53c9x_softc *sc;
+tcds_clear_latched_intr(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 

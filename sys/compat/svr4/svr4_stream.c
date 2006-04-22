@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.55 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.55.6.1 2006/04/22 11:38:21 simonb Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.55 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.55.6.1 2006/04/22 11:38:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -163,7 +163,7 @@ show_ioc(str, ioc)
 	struct svr4_strioctl	*ioc;
 {
 	u_char *ptr;
-	int error;
+	int error, len;
 
 	len = ioc->len;
 	if (len > 1024)

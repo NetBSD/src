@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.10 2006/01/29 21:42:42 dsl Exp $	*/
+/*	$NetBSD: we.c,v 1.10.4.1 2006/04/22 11:38:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.10 2006/01/29 21:42:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.10.4.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,11 +150,11 @@ we_config(self, wsc, typestr)
 	/*
 	 * Allow user to override 16-bit mode.  8-bit takes precedence.
 	 */
-	if (self->dv_cfdata->cf_flags & DP8390_FORCE_16BIT_MODE) {
+	if (device_cfdata(self)->cf_flags & DP8390_FORCE_16BIT_MODE) {
 		wsc->sc_flags |= WE_16BIT_ENABLE;
 		forced_16bit = 1;
 	}
-	if (self->dv_cfdata->cf_flags & DP8390_FORCE_8BIT_MODE)
+	if (device_cfdata(self)->cf_flags & DP8390_FORCE_8BIT_MODE)
 		wsc->sc_flags &= ~WE_16BIT_ENABLE;
 
 	/* Registers are linear. */
@@ -255,7 +255,7 @@ we_config(self, wsc, typestr)
 	sc->mem_start = 0;
 	/* sc->mem_size has to be set by frontend */
 
-	sc->sc_flags = self->dv_cfdata->cf_flags;
+	sc->sc_flags = device_cfdata(self)->cf_flags;
 
 	/* Do generic parts of attach. */
 	if (wsc->sc_type & WE_SOFTCONFIG)

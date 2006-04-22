@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.90 2005/12/11 12:24:01 christos Exp $        */
+/*      $NetBSD: ukbd.c,v 1.90.6.1 2006/04/22 11:39:38 simonb Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.90 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.90.6.1 2006/04/22 11:39:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,7 +528,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	 */
 	if (ukbdtrace) {
 		struct ukbdtraceinfo *p = &ukbdtracedata[ukbdtraceindex];
-		p->unit = sc->sc_hdev.sc_dev.dv_unit;
+		p->unit = device_unit(&sc->sc_hdev.sc_dev);
 		microtime(&p->tv);
 		p->ud = *ud;
 		if (++ukbdtraceindex >= UKBDTRACESIZE)

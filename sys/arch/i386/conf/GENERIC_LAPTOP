@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.172 2006/02/03 17:36:38 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.172.2.1 2006/04/22 11:37:32 simonb Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.172 $"
+#ident 		"GENERIC-$Revision: 1.172.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -223,7 +223,7 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
 #options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver
 # allocate a number of virtual screens at autoconfiguration time
@@ -344,6 +344,8 @@ options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 # PCI bridges
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
+#viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
+#iic*	at viapcib?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
@@ -354,6 +356,7 @@ agp* 	at pchb?
 
 # ISA bus support
 #isa0	at ichlpcib?
+#isa0	at viapcib?
 isa0	at mainbus?
 isa0	at pcib?
 
@@ -589,6 +592,7 @@ ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # PCMCIA network interfaces
@@ -716,7 +720,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters
@@ -881,24 +885,24 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
-pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

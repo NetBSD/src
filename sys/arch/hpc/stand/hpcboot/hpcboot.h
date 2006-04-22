@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.h,v 1.8 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: hpcboot.h,v 1.8.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -109,10 +109,10 @@ struct BootSetupArgs {
 };
 
 struct PageTag {
-	u_int32_t next;	/* next tagged page kernel virtual address; */
-	u_int32_t src;	/* kernel virtual or physical address */
-	u_int32_t dst;	/* kernel virtual or physical address */
-	u_int32_t sz;	/* copy size or zero-clear size; */
+	uint32_t next;	/* next tagged page kernel virtual address; */
+	uint32_t src;	/* kernel virtual or physical address */
+	uint32_t dst;	/* kernel virtual or physical address */
+	uint32_t sz;	/* copy size or zero-clear size; */
 };
 
 struct BootArgs {
@@ -123,15 +123,15 @@ struct BootArgs {
 	struct bootinfo bi;
 };
 
-#define	VOLATILE_REF(x)			(*(volatile u_int32_t *)(x))
-#define	VOLATILE_REF16(x)		(*(volatile u_int16_t *)(x))
-#define	VOLATILE_REF8(x)		(*(volatile u_int8_t *)(x))
-#define	_reg_read_1(a)		(*(volatile u_int8_t *)(a))
-#define	_reg_read_2(a)		(*(volatile u_int16_t *)(a))
-#define	_reg_read_4(a)		(*(volatile u_int32_t *)(a))
-#define	_reg_write_1(a, v)	(*(volatile u_int8_t *)(a) = (v))
-#define	_reg_write_2(a, v)	(*(volatile u_int16_t *)(a) = (v))
-#define	_reg_write_4(a, v)	(*(volatile u_int32_t *)(a) = (v))
+#define	VOLATILE_REF(x)			(*(volatile uint32_t *)(x))
+#define	VOLATILE_REF16(x)		(*(volatile uint16_t *)(x))
+#define	VOLATILE_REF8(x)		(*(volatile uint8_t *)(x))
+#define	_reg_read_1(a)		(*(volatile uint8_t *)(a))
+#define	_reg_read_2(a)		(*(volatile uint16_t *)(a))
+#define	_reg_read_4(a)		(*(volatile uint32_t *)(a))
+#define	_reg_write_1(a, v)	(*(volatile uint8_t *)(a) = (v))
+#define	_reg_write_2(a, v)	(*(volatile uint16_t *)(a) = (v))
+#define	_reg_write_4(a, v)	(*(volatile uint32_t *)(a) = (v))
 
 #ifdef ARM
 #define	ptokv(x)	(x)			/* UNCACHED FLAT */
@@ -157,8 +157,8 @@ void CacheSync(int);
 #define	GETVFRAMELEN		6145
 
 /* debug utility */
-void _bitdisp(u_int32_t, int, int, int, int);
-void _dbg_bit_print(u_int32_t, u_int32_t, const char *);
+void _bitdisp(uint32_t, int, int, int, int);
+void _dbg_bit_print(uint32_t, uint32_t, const char *);
 #define	bitdisp(a) _bitdisp((a), 0, 0, 0, 1)
 __END_DECLS
 

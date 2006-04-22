@@ -1,4 +1,4 @@
-$NetBSD: Options,v 1.8 2001/11/24 06:53:17 isaki Exp $
+$NetBSD: Options,v 1.8.48.1 2006/04/22 11:37:26 simonb Exp $
 
 Here is a list of hp300 specific kernel compilation options and what they
 mean:
@@ -9,34 +9,34 @@ HAVEVAC
 	HP350 is.
 
 HP320
-	Support for old hp320 machines: 16mhz 68020, HP MMU, 16mhz 68881
+	Support for old hp320 machines: 16 MHz 68020, HP MMU, 16 MHz 68881
 	and VAC.  Compiles in support for a VAC, HP MMU, and the 98620A
 	16-bit DMA channel.  Forces the definition of HAVEVAC.
 
 HP350
-	Support for old hp350 machines: 25mhz 68020, HP MMU, 20mhz 68881
+	Support for old hp350 machines: 25 MHz 68020, HP MMU, 20 MHz 68881
 	and VAC.  Compiles in support for a VAC and the HP MMU.  Differs
 	from HP320 in that it has no support for 16-bit DMA controller.
 	Forces the definition of HAVEVAC.
 
 HP330
-	Support for old hp330 (and 318/319) machines: 16mhz 68020, 68851 PMMU
-	and 16mhz 68881.  Compiles in support for PMMU.
+	Support for old hp330 (and 318/319) machines: 16 MHz 68020, 68851 PMMU
+	and 16 MHz 68881.  Compiles in support for PMMU.
 
 HP340
 HP360
-	Support for old 340 and hp360 machines: 25mhz 68030+MMU and 25mhz
+	Support for old 340 and hp360 machines: 25 MHz 68030+MMU and 25 MHz
 	68882.  Compiles in support for PMMU and 68030.  Differs from HP330
 	in support for 68030 on-chip data cache.
 
 HP370
-	Support for old hp370 (and current 345/375/400) machines: 33 (50) mhz
-	68030+MMU and 33 (50) mhz 68882.  Compiles in support for PMMU, 68030
+	Support for old hp370 (and current 345/375/400) machines: 33 (50) MHz
+	68030+MMU and 33 (50) MHz 68882.  Compiles in support for PMMU, 68030
 	and off-chip physically addressed cache.  Differs from 360 in only one
 	place, in dealing with flushing the external cache.
 
 HP380
-	Support for "current" hp380/425 (and 433) machines: 25 (33) mhz 68040
+	Support for "current" hp380/425 (and 433) machines: 25 (33) MHz 68040
 	with MMU/FPU.  Compiles in support for 68040.
 
 FPSP

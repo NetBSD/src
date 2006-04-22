@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.4 2005/12/24 23:24:01 perry Exp $ */
+/*	$NetBSD: pio.h,v 1.4.6.1 2006/04/22 11:37:53 simonb Exp $ */
 /*	$OpenBSD: pio.h,v 1.1 1997/10/13 10:53:47 pefo Exp $ */
 
 /*
@@ -39,33 +39,33 @@
  * I/O macros.
  */
 
-static inline void __outb __P((volatile u_int8_t *a, u_int8_t v));
-static inline void __outw __P((volatile u_int16_t *a, u_int16_t v));
-static inline void __outl __P((volatile u_int32_t *a, u_int32_t v));
-static inline void __outwrb __P((volatile u_int16_t *a, u_int16_t v));
-static inline void __outlrb __P((volatile u_int32_t *a, u_int32_t v));
-static inline u_int8_t __inb __P((volatile u_int8_t *a));
-static inline u_int16_t __inw __P((volatile u_int16_t *a));
-static inline u_int32_t __inl __P((volatile u_int32_t *a));
-static inline u_int16_t __inwrb __P((volatile u_int16_t *a));
-static inline u_int32_t __inlrb __P((volatile u_int32_t *a));
-static inline void __outsb __P((volatile u_int8_t *, const u_int8_t *,
+static __inline void __outb __P((volatile u_int8_t *a, u_int8_t v));
+static __inline void __outw __P((volatile u_int16_t *a, u_int16_t v));
+static __inline void __outl __P((volatile u_int32_t *a, u_int32_t v));
+static __inline void __outwrb __P((volatile u_int16_t *a, u_int16_t v));
+static __inline void __outlrb __P((volatile u_int32_t *a, u_int32_t v));
+static __inline u_int8_t __inb __P((volatile u_int8_t *a));
+static __inline u_int16_t __inw __P((volatile u_int16_t *a));
+static __inline u_int32_t __inl __P((volatile u_int32_t *a));
+static __inline u_int16_t __inwrb __P((volatile u_int16_t *a));
+static __inline u_int32_t __inlrb __P((volatile u_int32_t *a));
+static __inline void __outsb __P((volatile u_int8_t *, const u_int8_t *,
 	size_t));
-static inline void __outsw __P((volatile u_int16_t *, const u_int16_t *,
+static __inline void __outsw __P((volatile u_int16_t *, const u_int16_t *,
 	size_t));
-static inline void __outsl __P((volatile u_int32_t *, const u_int32_t *,
+static __inline void __outsl __P((volatile u_int32_t *, const u_int32_t *,
 	size_t));
-static inline void __outswrb __P((volatile u_int16_t *, const u_int16_t *,
+static __inline void __outswrb __P((volatile u_int16_t *, const u_int16_t *,
 	size_t));
-static inline void __outslrb __P((volatile u_int32_t *, const u_int32_t *,
+static __inline void __outslrb __P((volatile u_int32_t *, const u_int32_t *,
 	size_t));
-static inline void __insb __P((volatile u_int8_t *, u_int8_t *, size_t));
-static inline void __insw __P((volatile u_int16_t *, u_int16_t *, size_t));
-static inline void __insl __P((volatile u_int32_t *, u_int32_t *, size_t));
-static inline void __inswrb __P((volatile u_int16_t *, u_int16_t *, size_t));
-static inline void __inslrb __P((volatile u_int32_t *, u_int32_t *, size_t));
+static __inline void __insb __P((volatile u_int8_t *, u_int8_t *, size_t));
+static __inline void __insw __P((volatile u_int16_t *, u_int16_t *, size_t));
+static __inline void __insl __P((volatile u_int32_t *, u_int32_t *, size_t));
+static __inline void __inswrb __P((volatile u_int16_t *, u_int16_t *, size_t));
+static __inline void __inslrb __P((volatile u_int32_t *, u_int32_t *, size_t));
 
-static inline void
+static __inline void
 __outb(a,v)
 	volatile u_int8_t *a;
 	u_int8_t v;
@@ -74,7 +74,7 @@ __outb(a,v)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __outw(a,v)
 	volatile u_int16_t *a;
 	u_int16_t v;
@@ -83,7 +83,7 @@ __outw(a,v)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __outl(a,v)
 	volatile u_int32_t *a;
 	u_int32_t v;
@@ -92,7 +92,7 @@ __outl(a,v)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __outwrb(a,v)
 	volatile u_int16_t *a;
 	u_int16_t v;
@@ -101,7 +101,7 @@ __outwrb(a,v)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __outlrb(a,v)
 	volatile u_int32_t *a;
 	u_int32_t v;
@@ -110,7 +110,7 @@ __outlrb(a,v)
 	__asm volatile("eieio; sync");
 }
 
-static inline u_int8_t
+static __inline u_int8_t
 __inb(a)
 	volatile u_int8_t *a;
 {
@@ -121,7 +121,7 @@ __inb(a)
 	return _v_;
 }
 
-static inline u_int16_t
+static __inline u_int16_t
 __inw(a)
 	volatile u_int16_t *a;
 {
@@ -132,7 +132,7 @@ __inw(a)
 	return _v_;
 }
 
-static inline u_int32_t
+static __inline u_int32_t
 __inl(a)
 	volatile u_int32_t *a;
 {
@@ -143,7 +143,7 @@ __inl(a)
 	return _v_;
 }
 
-static inline u_int16_t
+static __inline u_int16_t
 __inwrb(a)
 	volatile u_int16_t *a;
 {
@@ -154,7 +154,7 @@ __inwrb(a)
 	return _v_;
 }
 
-static inline u_int32_t
+static __inline u_int32_t
 __inlrb(a)
 	volatile u_int32_t *a;
 {
@@ -190,7 +190,7 @@ __inlrb(a)
 #define	in32rb(a)	inlrb(a)
 
 
-static inline void
+static __inline void
 __outsb(a,s,c)
 	volatile u_int8_t *a;
 	const u_int8_t *s;
@@ -201,7 +201,7 @@ __outsb(a,s,c)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __outsw(a,s,c)
 	volatile u_int16_t *a;
 	const u_int16_t *s;
@@ -212,7 +212,7 @@ __outsw(a,s,c)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __outsl(a,s,c)
 	volatile u_int32_t *a;
 	const u_int32_t *s;
@@ -223,7 +223,7 @@ __outsl(a,s,c)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __outswrb(a,s,c)
 	volatile u_int16_t *a;
 	const u_int16_t *s;
@@ -234,7 +234,7 @@ __outswrb(a,s,c)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __outslrb(a,s,c)
 	volatile u_int32_t *a;
 	const u_int32_t *s;
@@ -245,7 +245,7 @@ __outslrb(a,s,c)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __insb(a,d,c)
 	volatile u_int8_t *a;
 	u_int8_t *d;
@@ -256,7 +256,7 @@ __insb(a,d,c)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __insw(a,d,c)
 	volatile u_int16_t *a;
 	u_int16_t *d;
@@ -267,7 +267,7 @@ __insw(a,d,c)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __insl(a,d,c)
 	volatile u_int32_t *a;
 	u_int32_t *d;
@@ -278,7 +278,7 @@ __insl(a,d,c)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __inswrb(a,d,c)
 	volatile u_int16_t *a;
 	u_int16_t *d;
@@ -289,7 +289,7 @@ __inswrb(a,d,c)
 	__asm volatile("eieio; sync");
 }
 
-static inline void
+static __inline void
 __inslrb(a,d,c)
 	volatile u_int32_t *a;
 	u_int32_t *d;

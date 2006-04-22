@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.21 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: trm.c,v 1.21.6.1 2006/04/22 11:39:16 simonb Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.21 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.21.6.1 2006/04/22 11:39:16 simonb Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -1065,18 +1065,25 @@ static void
 trm_timeout(void *arg)
 {
 	struct trm_srb *srb = (struct trm_srb *)arg;
-	struct scsipi_xfer *xs = srb->xs;
-	struct scsipi_periph *periph = xs->xs_periph;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
 	struct trm_softc *sc;
 	int s;
 
-	if (xs == NULL)
-		printf("trm_timeout called with xs == NULL\n");
-
-	else {
-		scsipi_printaddr(xs->xs_periph);
-		printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
+	if (srb == NULL) {
+		printf("trm_timeout called with srb == NULL\n");
+		return;
 	}
+
+	xs = srb->xs;
+	if (xs == NULL) {
+		printf("trm_timeout called with xs == NULL\n");
+		return;
+	}
+
+	periph = xs->xs_periph;
+	scsipi_printaddr(xs->xs_periph);
+	printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
 
 	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 

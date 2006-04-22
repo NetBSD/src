@@ -1,7 +1,7 @@
-/*	$NetBSD: riscosdisk.c,v 1.1 2002/12/28 23:57:38 reinoud Exp $	*/
+/*	$NetBSD: riscosdisk.c,v 1.1.36.1 2006/04/22 11:37:10 simonb Exp $	*/
 
 /*-
- * Copyright (c) 2001 Ben Harris
+ * Copyright (c) 2001, 2006 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,43 +27,133 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/disklabel.h>
 #include <lib/libsa/stand.h>
 #include <riscoscalls.h>
+#include <riscosdisk.h>
+#include <riscospart.h>
 
 #include <stdarg.h>
 
 struct riscosdisk {
+	void	*privword;
 	int	drive;
-	/* SWI numbers */
-	int	describe_disc;
-	int	disc_op;
+	daddr_t	boff;
 };
 
+static void *
+rodisk_getprivateword(char const *fsname)
+{
+	void *privword;
+	char module[20];
+	os_error *err;
+
+	/* XXX The %c dance is because libsa printf can't do %% */
+	snprintf(module, sizeof(module), "FileCore%c%s", '%', fsname);
+	err = xosmodule_lookup(module, NULL, NULL, NULL, &privword, NULL);
+	if (err != NULL)
+		return NULL;
+	return privword;
+}
+
 int
-rodisk_open(struct open_file *f, ...)
+rodisk_open(struct open_file *f, ... /* char const *fsname, int drive,
+    int partition */)
 {
 	va_list ap;
+	struct disklabel dl;
 	char const *fsname;
-	int drive;
-	size_t buflen;
-	char *buf;
+	int drive, partition, nfd, nhd, err;
 	struct riscosdisk *rd;
+	void *privword;
 
 	va_start(ap, f);
 	fsname = va_arg(ap, char const *);
 	drive = va_arg(ap, int);
+	partition = va_arg(ap, int);
 	va_end(ap);
 
-	rd = (struct riscosdisk *) alloc(sizeof(*rd));
+	if ((privword = rodisk_getprivateword(fsname)) == NULL)
+		return ECTLR;
+	if (xfilecore_drives(&privword, NULL, &nfd, &nhd) != NULL)
+		return ECTLR;
+	if (drive < 0 ||
+	    (drive < 4 && drive >= nfd) ||
+	    drive >= nhd + 4)
+		return EUNIT;
 
-	buflen = strlen(fsname) + 13;
-	buf = alloc(buflen);
-	sprintf(buf, "%s_DescribeDisc", fsname);
-	if (xos_swi_number_from_string(buf, &rd->describe_disc) != NULL)
-		return ENODEV;
-	sprintf(buf, "%s_DiscOp", fsname);
-	if (xos_swi_number_from_string(buf, &rd->disc_op) != NULL)
-		return ENODEV;
-	
+	rd = alloc(sizeof(*rd));
+	rd->privword = privword;
+	rd->drive = drive;
+	rd->boff = 0;
+	f->f_devdata = rd;
+	if (partition != RAW_PART) {
+		err = getdisklabel_acorn(f, &dl);
+		if (err != 0) {
+			dealloc(rd, sizeof(*rd));
+			return err;
+		}
+		if (partition >= dl.d_npartitions ||
+		    dl.d_partitions[partition].p_size == 0) {
+			dealloc(rd, sizeof(*rd));
+			return EPART;
+		}
+		rd->boff = dl.d_partitions[partition].p_offset;
+	}
+	return 0;
+}
 
+int
+rodisk_close(struct open_file *f)
+{
+	struct riscosdisk *rd = f->f_devdata;
 
+	dealloc(rd, sizeof *rd);
+	return 0;
+}
+
+int
+rodisk_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
+    void *buf, size_t *rsize)
+{
+	struct riscosdisk *rd = devdata;
+	size_t resid;
+	uint32_t daddr, ndaddr;
+	void *nbuf;
+	os_error *err;
+
+	if (flag != F_READ)
+		return EROFS;
+
+	dblk += rd->boff;
+
+	if (rsize) *rsize = 0;
+	if (dblk < 1 << (29 - DEV_BSHIFT)) {
+		daddr = (dblk * DEV_BSIZE) | (rd->drive << 29);
+		if ((err = xfilecorediscop_read_sectors(0, daddr, buf, size,
+		    &rd->privword, &ndaddr, &nbuf, &resid)) != NULL)
+			goto eio;
+	} else if (dblk < 1 << 29) {
+		daddr = dblk | (rd->drive << 29);
+		if ((err = xfilecoresectorop_read_sectors(0, daddr, buf, size,
+		    &rd->privword, &ndaddr, &nbuf, &resid)) != NULL)
+			goto eio;
+	} else if (dblk < 1LL << (64 - DEV_BSHIFT)){
+		struct filecore_daddr64 daddr64;
+		daddr64.drive = rd->drive;
+		daddr64.daddr = dblk * DEV_BSIZE;
+		if ((err = xfilecorediscop64_read_sectors(0, &daddr64, buf,
+		    size, NULL, &rd->privword, &ndaddr, &nbuf, &resid)) !=
+		    NULL)
+			goto eio;
+	} else
+		return EIO;
+	if (rsize)
+		*rsize = size - resid;
+	return 0;
+eio:
+	printf("Error: %s\n", err->errmess);
+	return EIO;
+}

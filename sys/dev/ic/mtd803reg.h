@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803reg.h,v 1.1 2002/11/07 21:56:59 martin Exp $ */
+/* $NetBSD: mtd803reg.h,v 1.1.40.1 2006/04/22 11:38:56 simonb Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #define MTD_TSR			0x48		/* Tally ctr for TSR */
 #define MTD_PHYBASE		0x4c		/* PHY status & control */
 #define MTD_OUI			0x50		/* OUI register */
-#define MTD_LPAR		0x54		/* Link Partner, Advertisment */
+#define MTD_LPAR		0x54		/* Link Partner, Advertisement */
 #define MTD_WUECSR		0x5c		/* Wake-up Events CSR */
 
 #define MTD_ALL_ADDR		0xffffffff	/* Mask all addresses */
@@ -251,7 +251,7 @@
 #define MTD_OUI_REVISION	0x000f0000	/* Revision number (0x0) */
 #define MTD_OUI_LOW		0x0000ffff	/* OUI Low register (0x0302) */
 
-/* Link Partner Ability Register and Advertisment Register */
+/* Link Partner Ability Register and Advertisement Register */
 #define MTD_LPAR_LP_NEXTPAGE	0x80000000	/* Next page */
 #define MTD_LPAR_LP_ACK		0x40000000	/* Acknowledge */
 #define MTD_LPAR_LP_RMTFAULT	0x20000000	/* Remote fault detected */

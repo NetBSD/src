@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.133 2005/12/24 20:27:52 perry Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.133.6.1 2006/04/22 11:39:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.133 2005/12/24 20:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.133.6.1 2006/04/22 11:39:29 simonb Exp $");
 
 #include "opt_scsi.h"
 
@@ -525,7 +525,7 @@ scsipi_put_xs(struct scsipi_xfer *xs)
 		wakeup(periph);
 	} else {
 		if (periph->periph_switch->psw_start != NULL &&
-		    (periph->periph_dev->dv_flags & DVF_ACTIVE)) {
+		    device_is_active(periph->periph_dev)) {
 			SC_DEBUG(periph, SCSIPI_DB2,
 			    ("calling private start()\n"));
 			(*periph->periph_switch->psw_start)(periph);
@@ -1321,6 +1321,20 @@ scsipi_done(struct scsipi_xfer *xs)
 	/*
 	 * The resource this command was using is now free.
 	 */
+	if (xs->xs_status & XS_STS_DONE) {
+		/* XXX in certain circumstances, such as a device
+		 * being detached, a xs that has already been
+		 * scsipi_done()'d by the main thread will be done'd
+		 * again by scsibusdetach(). Putting the xs on the
+		 * chan_complete queue causes list corruption and
+		 * everyone dies. This prevents that, but perhaps
+		 * there should be better coordination somewhere such
+		 * that this won't ever happen (and can be turned into
+		 * a KASSERT().
+		 */
+		splx(s);
+		goto out;
+	}
 	scsipi_put_resource(chan);
 	xs->xs_periph->periph_sent--;
 

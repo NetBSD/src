@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.29 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.29.6.1 2006/04/22 11:40:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.29 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.29.6.1 2006/04/22 11:40:14 simonb Exp $");
 
 #include "opt_nfs_boot.h"
 
@@ -226,12 +226,10 @@ static const u_int8_t vm_rfc1048[4] = { 99, 130, 83, 99 };
 static int bootpc_call __P((struct nfs_diskless *, struct lwp *));
 static void bootp_extract __P((struct bootp *, int, struct nfs_diskless *));
 
-/* #define DEBUG	XXX */
-
-#ifdef	DEBUG
-#define DPRINT(s) printf("nfs_boot: %s\n", s)
+#ifdef	DEBUG_NFS_BOOT_DHCP
+#define DPRINTF(s)  printf s
 #else
-#define DPRINT(s) (void)0
+#define DPRINTF(s)
 #endif
 
 
@@ -330,11 +328,13 @@ bootpcheck(m, context)
 	 * Is this a valid reply?
 	 */
 	if (m->m_pkthdr.len < BOOTP_SIZE_MIN) {
-		DPRINT("short packet");
+		DPRINTF(("bootpcheck: short packet %d < %d\n", m->m_pkthdr.len,
+		    BOOTP_SIZE_MIN));
 		return (-1);
 	}
 	if (m->m_pkthdr.len > BOOTP_SIZE_MAX) {
-		DPRINT("long packet");
+		DPRINTF(("bootpcheck: long packet %d > %d\n", m->m_pkthdr.len,
+		    BOOTP_SIZE_MAX));
 		return (-1);
 	}
 
@@ -343,25 +343,35 @@ bootpcheck(m, context)
 	 */
 	if (m->m_len < offsetof(struct bootp, bp_sname)) {
 		m = m_pullup(m, offsetof(struct bootp, bp_sname));
-		if (m == NULL)
+		if (m == NULL) {
+			DPRINTF(("bootpcheck: m_pullup failed\n"));
 			return (-1);
+		}
 	}
 	bootp = mtod(m, struct bootp*);
 
 	if (bootp->bp_op != BOOTREPLY) {
-		DPRINT("not reply");
+		DPRINTF(("bootpcheck: op %d is not reply\n", bootp->bp_op));
 		return (-1);
 	}
 	if (bootp->bp_hlen != bpc->halen) {
-		DPRINT("bad hwa_len");
+		DPRINTF(("bootpcheck: hlen %d != %d\n", bootp->bp_hlen,
+		    bpc->halen));
 		return (-1);
 	}
 	if (memcmp(bootp->bp_chaddr, bpc->haddr, bpc->halen)) {
-		DPRINT("wrong hwaddr");
+#ifdef DEBUG_NFS_BOOT_DHCP
+		char bp_chaddr[3 * bpc->halen], haddr[3 * bpc->halen];
+#endif
+		DPRINTF(("bootpcheck: incorrect hwaddr %s != %s\n",
+		    ether_snprintf(bp_chaddr, sizeof(bp_chaddr),
+		    bootp->bp_chaddr),
+		    ether_snprintf(haddr, sizeof(haddr), bpc->haddr)));
 		return (-1);
 	}
 	if (bootp->bp_xid != bpc->xid) {
-		DPRINT("wrong xid");
+		DPRINTF(("bootpcheck: xid %d != %d\n", bootp->bp_xid,
+		    bpc->xid));
 		return (-1);
 	}
 
@@ -499,13 +509,13 @@ bootpc_call(nd, lwp)
 		m = NULL;	/* was consumed */
 	}
 	if (error) {
-		DPRINT("SO_DONTROUTE");
+		DPRINTF(("bootpc_call: SO_DONTROUTE failed %d\n", error));
 		goto out;
 	}
 
 	/* Enable broadcast. */
 	if ((error = nfs_boot_enbroadcast(so))) {
-		DPRINT("SO_BROADCAST");
+		DPRINTF(("bootpc_call: SO_BROADCAST failed %d\n", error));
 		goto out;
 	}
 
@@ -525,13 +535,13 @@ bootpc_call(nd, lwp)
 		m = NULL;	/* was consumed */
 	}
 	if (error) {
-		DPRINT("IP_MULTICAST_TTL");
+		DPRINTF(("bootpc_call: IP_MULTICAST_TTL failed %d\n", error));
 		goto out;
 	}
 
 	/* Set the receive timeout for the socket. */
 	if ((error = nfs_boot_setrecvtimo(so))) {
-		DPRINT("SO_RCVTIMEO");
+		DPRINTF(("bootpc_call: SO_RCVTIMEO failed %d\n", error));
 		goto out;
 	}
 
@@ -539,7 +549,7 @@ bootpc_call(nd, lwp)
 	 * Bind the local endpoint to a bootp client port.
 	 */
 	if ((error = nfs_boot_sobind_ipport(so, IPPORT_BOOTPC, lwp))) {
-		DPRINT("bind failed\n");
+		DPRINTF(("bootpc_call: bind failed %d\n", error));
 		goto out;
 	}
 

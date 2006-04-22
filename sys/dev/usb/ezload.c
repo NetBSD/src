@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.10 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: ezload.c,v 1.10.6.1 2006/04/22 11:39:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.10 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.10.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,10 +161,7 @@ ezload_downloads_and_reset(usbd_device_handle dev, const struct ezdata **recs)
 		if (err)
 			return (err);
 	}
-	if (err)
-		return (err);
 	usbd_delay_ms(dev, 250);
-	/*(void)ezload_reset(dev, 0);*/
 	err = ezload_reset(dev, 0);
 	usbd_delay_ms(dev, 250);
 	return (err);

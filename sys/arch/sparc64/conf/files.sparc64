@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.97 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: files.sparc64,v 1.97.6.1 2006/04/22 11:37:59 simonb Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info

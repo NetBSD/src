@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.216 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.216.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.213 2005/11/07 16:37:28 tsutsui Exp
+ *	NetBSD: pcmciadevs,v 1.215 2006/03/23 02:14:42 christos Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -258,6 +258,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "BreezeCOM",
 	    "BreezeCOM BreezeNET",	}
+	,
+	{
+	    PCMCIA_VENDOR_BELKIN, PCMCIA_PRODUCT_BELKIN_F5D5020,
+	    PCMCIA_CIS_BELKIN_F5D5020,
+	    0,
+	    "Belkin",
+	    "Belkin F5D5020 PCMCIA Network Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
@@ -2019,6 +2026,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_BELKIN,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Belkin",
 	    NULL,
 	},
 	{

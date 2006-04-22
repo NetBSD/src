@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.13 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.13.6.1 2006/04/22 11:37:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -520,13 +520,13 @@ typedef u_long	bus_space_handle_t;
  */
 
 #define	__NEXT68K_copy_region_N(BYTES)					\
-static inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	(bus_space_tag_t,						\
 	 bus_space_handle_t, bus_size_t,				\
 	 bus_space_handle_t, bus_size_t,				\
 	 bus_size_t);							\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h1, h2;					\

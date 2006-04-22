@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.13.6.2 2006/02/04 12:12:11 simonb Exp $	*/
+/*	$NetBSD: timepps.h,v 1.13.6.3 2006/04/22 11:40:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -172,22 +172,22 @@ extern  int pps_kc_hardpps_mode;
 #include <sys/cdefs.h>
 #include <sys/ioctl.h>
 
-static inline int time_pps_create(int, pps_handle_t *);
-static inline int time_pps_destroy(pps_handle_t);
-static inline int time_pps_setparams(pps_handle_t, const pps_params_t *);
-static inline int time_pps_getparams(pps_handle_t, pps_params_t *);
-static inline int time_pps_getcap(pps_handle_t, int *);
-static inline int time_pps_fetch(pps_handle_t, const int, pps_info_t *,
+static __inline int time_pps_create(int, pps_handle_t *);
+static __inline int time_pps_destroy(pps_handle_t);
+static __inline int time_pps_setparams(pps_handle_t, const pps_params_t *);
+static __inline int time_pps_getparams(pps_handle_t, pps_params_t *);
+static __inline int time_pps_getcap(pps_handle_t, int *);
+static __inline int time_pps_fetch(pps_handle_t, const int, pps_info_t *,
 	const struct timespec *);
 #if 0
-static inline int time_pps_wait(pps_handle_t, const struct timespec *,
+static __inline int time_pps_wait(pps_handle_t, const struct timespec *,
 	pps_info_t *);
 #endif
 
-static inline int time_pps_kcbind(pps_handle_t, const int, const int,
+static __inline int time_pps_kcbind(pps_handle_t, const int, const int,
 	const int);
 
-static inline int
+static __inline int
 time_pps_create(int filedes, pps_handle_t *handle)
 {
 	int error;
@@ -200,35 +200,35 @@ time_pps_create(int filedes, pps_handle_t *handle)
 	return (0);
 }
 
-static inline int
+static __inline int
 time_pps_destroy(pps_handle_t handle)
 {
 
 	return (ioctl(handle, PPS_IOC_DESTROY, 0));
 }
 
-static inline int
+static __inline int
 time_pps_setparams(pps_handle_t handle, const pps_params_t *ppsparams)
 {
 
 	return (ioctl(handle, PPS_IOC_SETPARAMS, __UNCONST(ppsparams)));
 }
 
-static inline int
+static __inline int
 time_pps_getparams(pps_handle_t handle, pps_params_t *ppsparams)
 {
 
 	return (ioctl(handle, PPS_IOC_GETPARAMS, ppsparams));
 }
 
-static inline int
+static __inline int
 time_pps_getcap(pps_handle_t handle, int *mode)
 {
 
 	return (ioctl(handle, PPS_IOC_GETCAP, mode));
 }
 
-static inline int
+static __inline int
 time_pps_fetch(pps_handle_t handle, const int tsformat, pps_info_t *ppsinfobuf,
     const struct timespec *timeout)
 {
@@ -246,7 +246,7 @@ time_pps_fetch(pps_handle_t handle, const int tsformat, pps_info_t *ppsinfobuf,
 	return (error);
 }
 
-static inline int
+static __inline int
 time_pps_kcbind(pps_handle_t handle, const int kernel_consumer, const int edge,
     const int tsformat)
 {

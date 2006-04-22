@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.9 2005/12/31 18:26:14 matt Exp $ */
+/* $NetBSD: envsys.h,v 1.9.4.1 2006/04/22 11:40:18 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ static const char * const envsysunitnames[] = {
 #define ENVSYS_FAVGVALID	0x00000010  /* avg for this sens is valid */
 #define ENVSYS_FFRACVALID	0x00000020  /* display fraction of max */
 
-#define ENVSYS_GTREDATA _IOWR('E', 2, envsys_temp_data_t)
+#define ENVSYS_GTREDATA _IOWR('E', 2, envsys_tre_data_t)
 
 /* set and check sensor info */
 
@@ -130,7 +130,7 @@ typedef struct envsys_basic_info envsys_rpm_info_t;
 typedef struct envsys_basic_info envsys_electrical_info_t;
 typedef struct envsys_basic_info envsys_basic_info_t;
 
-#define ENVSYS_STREINFO _IOWR('E', 3, envsys_temp_info_t)
-#define ENVSYS_GTREINFO _IOWR('E', 4, envsys_temp_info_t)
+#define ENVSYS_STREINFO _IOWR('E', 3, envsys_basic_info_t)
+#define ENVSYS_GTREINFO _IOWR('E', 4, envsys_basic_info_t)
 
 #endif /* _SYS_ENVSYS_H_ */

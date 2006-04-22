@@ -1,4 +1,35 @@
-/* $NetBSD: aurtc.c,v 1.7 2005/12/11 12:18:06 christos Exp $ */
+/* $NetBSD: aurtc.c,v 1.7.6.1 2006/04/22 11:37:41 simonb Exp $ */
+
+/*-
+ * Copyright (c) 2006 Itronix Inc.
+ * All rights reserved.
+ *
+ * Written by Garrett D'Amore for Itronix Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of Itronix Inc. may not be used to endorse
+ *    or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY ITRONIX INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL ITRONIX INC. BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,32 +66,44 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.7 2005/12/11 12:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurtc.c,v 1.7.6.1 2006/04/22 11:37:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <dev/clock_subr.h>
 
-#include <evbmips/evbmips/clockvar.h>
+#include <machine/bus.h>
+
 #include <mips/alchemy/include/aureg.h>
+#include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
+
+#define	REGVAL(x) (*(volatile uint32_t *)(MIPS_PHYS_TO_KSEG1(PC_BASE + (x))))
+#define	GETREG(x)	(REGVAL(x))
+#define	PUTREG(x,v)	(REGVAL(x) = (v))
+
+struct aurtc_softc {
+	struct device		sc_dev;
+	struct todr_chip_handle	sc_tch;
+	void			*sc_shutdownhook;
+};
 
 static int	aurtc_match(struct device *, struct cfdata *, void *);
 static void	aurtc_attach(struct device *, struct device *, void *);
+static int	aurtc_gettime(todr_chip_handle_t, volatile struct timeval *);
+static int	aurtc_settime(todr_chip_handle_t, volatile struct timeval *);
+static int	aurtc_getcal(todr_chip_handle_t, int *);
+static int	aurtc_setcal(todr_chip_handle_t, int);
+static void	aurtc_shutdown(void *);
 
-static void	aurtc_init(struct device *);
-static void	aurtc_get(struct device *, time_t, struct clocktime *);
-static void	aurtc_set(struct device *, struct clocktime *);
-
-CFATTACH_DECL(aurtc, sizeof (struct device),
+CFATTACH_DECL(aurtc, sizeof (struct aurtc_softc),
     aurtc_match, aurtc_attach, NULL, NULL);
-
-const struct clockfns aurtc_clockfns = {
-	aurtc_init, aurtc_get, aurtc_set,
-};
 
 int
 aurtc_match(struct device *parent, struct cfdata *match, void *aux)
@@ -76,63 +119,84 @@ aurtc_match(struct device *parent, struct cfdata *match, void *aux)
 void
 aurtc_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct aurtc_softc *sc = (struct aurtc_softc *)self;
 
-	printf(": Au1X00 programmable clock");	/* \n in clockattach */
-	clockattach(self, &aurtc_clockfns);
-}
+	printf(": Au1X00 programmable clock\n");
+	
+	sc->sc_tch.cookie = sc;
+	sc->sc_tch.bus_cookie = NULL;
+	sc->sc_tch.todr_gettime = aurtc_gettime;
+	sc->sc_tch.todr_settime = aurtc_settime;
+	sc->sc_tch.todr_getcal = aurtc_getcal;
+	sc->sc_tch.todr_setcal = aurtc_setcal;
+	sc->sc_tch.todr_setwen = NULL;
 
-void
-aurtc_init(struct device *dev)
-{
+	sc->sc_shutdownhook = shutdownhook_establish(aurtc_shutdown, NULL);
 
-	/* We don't use the aurtc for the hardclock interrupt. */
-}
-
-/*
- * Note the fake "aurtc" on the Alchemy pb1000 uses a different year base.
- */
-#define	PB1000_YEAR_OFFSET	100
-
-/*
- * Get the time of day, based on the clock's value and/or the base value.
- */
-void
-aurtc_get(struct device *dev, time_t base, struct clocktime *ct)
-{
-	struct clock_ymdhms ymdhms;
-	time_t secs;
-
-	secs = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(PC_BASE + PC_COUNTER_READ_0);
-
-	clock_secs_to_ymdhms(secs, &ymdhms);
-
-	ct->sec = ymdhms.dt_sec;
-	ct->min = ymdhms.dt_min;
-	ct->hour = ymdhms.dt_hour;
-	ct->dow = ymdhms.dt_wday;
-	ct->day = ymdhms.dt_day;
-	ct->mon = ymdhms.dt_mon;
-	ct->year = ymdhms.dt_year - PB1000_YEAR_OFFSET;
+	todr_attach(&sc->sc_tch);
 }
 
 /*
- * Reset the TODR based on the time value.
+ * Note that our RTC only has second resolution.
  */
-void
-aurtc_set(struct device *dev, struct clocktime *ct)
+
+int
+aurtc_gettime(todr_chip_handle_t tch, volatile struct timeval *tv)
 {
-	struct clock_ymdhms ymdhms;
-	time_t secs;
+	int			s;
 
-	ymdhms.dt_sec = ct->sec;
-	ymdhms.dt_min = ct->min;
-	ymdhms.dt_hour = ct->hour;
-	ymdhms.dt_wday = ct->dow;
-	ymdhms.dt_day = ct->day;
-	ymdhms.dt_mon = ct->mon;
-	ymdhms.dt_year = ct->year + PB1000_YEAR_OFFSET;
+	s = splclock();
+	tv->tv_sec = GETREG(PC_COUNTER_READ_0);
+	splx(s);
+	return 0;
+}
 
-	secs = clock_ymdhms_to_secs(&ymdhms);
+int
+aurtc_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
+{
+	int			s;
+	struct timeval		tv;
 
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(PC_BASE + PC_COUNTER_READ_0) = secs;
+	s = splclock();
+	tv = *tvp;
+	splx(s);
+
+	/* wait for the clock register to be idle */
+	while (GETREG(PC_COUNTER_CONTROL) & CC_C0S) {
+		continue;
+	}
+
+	PUTREG(PC_COUNTER_WRITE0, tv.tv_sec);
+
+	/*
+	 * It could take a second or two for the clock change to take effect.
+	 * We don't want to make settimeofday() take that long, so we don't
+	 * wait here, but instead wait in flush.  This can have a bad effect
+	 * for settimeofday() calls with a short window between them.
+	 */
+	return 0;
+}
+
+int
+aurtc_getcal(todr_chip_handle_t tch, int *vp)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+aurtc_setcal(todr_chip_handle_t tch, int v)
+{
+
+	return EOPNOTSUPP;
+}
+
+void
+aurtc_shutdown(void *arg)
+{
+
+	/* wait for the clock register to be idle */
+	while (GETREG(PC_COUNTER_CONTROL) & CC_C0S) {
+		continue;
+	}
 }

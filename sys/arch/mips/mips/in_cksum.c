@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.c,v 1.11 2005/12/11 12:18:09 christos Exp $ */
+/* $NetBSD: in_cksum.c,v 1.11.6.1 2006/04/22 11:37:42 simonb Exp $ */
 
 /*
  * Copyright (c) 1993 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.11 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.11.6.1 2006/04/22 11:37:42 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,9 +218,9 @@ fastsum(union memptr buf, int n, unsigned int oldsum, int odd_aligned)
 	/* handle trailing byte and short (possibly) unaligned payloads */
 	while (n-- > 0) {
 #if BYTE_ORDER == BIG_ENDIAN
-		sum += *buf.c << 8;
+		sum += *(buf.c++) << 8;
 #else
-		sum += *buf.c;
+		sum += *(buf.c++);
 #endif
 	}
 

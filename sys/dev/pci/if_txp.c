@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.14 2005/12/28 09:15:32 christos Exp $ */
+/* $NetBSD: if_txp.c,v 1.14.6.1 2006/04/22 11:39:14 simonb Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.14 2005/12/28 09:15:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.14.6.1 2006/04/22 11:39:14 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -953,7 +953,7 @@ txp_alloc_rings(sc)
 	struct txp_boot_record *boot;
 	struct txp_swdesc *sd;
 	u_int32_t r;
-	int i, j;
+	int i, j, nb;
 
 	/* boot record */
 	if (txp_dma_malloc(sc, sizeof(struct txp_boot_record), &sc->sc_boot_dma,
@@ -1091,9 +1091,11 @@ txp_alloc_rings(sc)
 	boot->br_rxbuf_hi = htole32(sc->sc_rxbufring_dma.dma_paddr >> 32);
 	boot->br_rxbuf_siz = htole32(RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc));
 	sc->sc_rxbufs = (struct txp_rxbuf_desc *)sc->sc_rxbufring_dma.dma_vaddr;
-	for (i = 0; i < RXBUF_ENTRIES; i++) {
+	for (nb = 0; nb < RXBUF_ENTRIES; nb++) {
 		sd = (struct txp_swdesc *)malloc(sizeof(struct txp_swdesc),
 		    M_DEVBUF, M_NOWAIT);
+		/* stash away pointer */
+		bcopy(&sd, __UNVOLATILE(&sc->sc_rxbufs[nb].rb_vaddrlo), sizeof(sd));
 		if (sd == NULL)
 			break;
 
@@ -1120,12 +1122,10 @@ txp_alloc_rings(sc)
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-		/* stash away pointer */
-		bcopy(&sd, __UNVOLATILE(&sc->sc_rxbufs[i].rb_vaddrlo), sizeof(sd));
 
-		sc->sc_rxbufs[i].rb_paddrlo =
+		sc->sc_rxbufs[nb].rb_paddrlo =
 		    ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr) & 0xffffffff;
-		sc->sc_rxbufs[i].rb_paddrhi =
+		sc->sc_rxbufs[nb].rb_paddrhi =
 		    ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr) >> 32;
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxbufring_dma.dma_map,
@@ -1182,6 +1182,14 @@ txp_alloc_rings(sc)
 bail:
 	txp_dma_free(sc, &sc->sc_zero_dma);
 bail_rxbufring:
+	if (nb == RXBUF_ENTRIES)
+		nb--;
+	for (i = 0; i <= nb; i++) {
+		bcopy(__UNVOLATILE(&sc->sc_rxbufs[i].rb_vaddrlo), &sd,
+		    sizeof(sd));
+		if (sd)
+			free(sd, M_DEVBUF);
+	}
 	txp_dma_free(sc, &sc->sc_rxbufring_dma);
 bail_rspring:
 	txp_dma_free(sc, &sc->sc_rspring_dma);

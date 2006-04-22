@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.21 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.21.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.21 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.21.6.1 2006/04/22 11:37:31 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,8 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	ACPI_STATUS rv;
 	UINT32 value, result;
 
-	printf(": Toshiba VALD\n");
+	aprint_naive(": Toshiba VALD\n");
+	aprint_normal(": Toshiba VALD\n");
 
 	sc->sc_node = aa->aa_node;
 
@@ -202,20 +203,22 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	rv = acpi_eval_integer(ACPI_ROOT_OBJECT, "\\_SB_.ADP1._PSR",
 	    &sc->sc_ac_status);
 	if (ACPI_FAILURE(rv))
-		printf("%s: Unable to evaluate _PSR: %s\n",
+		aprint_error("%s: Unable to evaluate _PSR: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 	else
-		printf("AC adaptor status %sconnected\n",
+		aprint_verbose("%s: AC adaptor %sconnected\n",
+		    sc->sc_dev.dv_xname,
 		    (sc->sc_ac_status == 0 ? "not ": ""));
 
 	/* Get LCD backlight status. */
 	rv = vald_acpi_ghci_get(sc, GHCI_BACKLIGHT, &value, &result);
 	if (ACPI_SUCCESS(rv)) {
 		if (result != 0)
-			printf("%s: can't get backlight status error=%d\n",
+			aprint_error("%s: can't get backlight status error=%d\n",
 			    sc->sc_dev.dv_xname, result);
 		else
-			printf("LCD backlight status %s\n",
+			aprint_verbose("%s: LCD backlight %s\n",
+			    sc->sc_dev.dv_xname,
 			    ((value == GHCI_ON) ? "on" : "off"));
 	}
 
@@ -223,12 +226,12 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	rv = vald_acpi_ghci_set(sc, GHCI_SYSTEM_EVENT_FIFO, GHCI_ENABLE,
 	    &result);
 	if (ACPI_SUCCESS(rv) && result != 0)
-		printf("%s: can't enable SystemEventFIFO error=%d\n",
+		aprint_error("%s: can't enable SystemEventFIFO error=%d\n",
 		    sc->sc_dev.dv_xname, result);
 
 	rv = vald_acpi_ghci_set(sc, GHCI_HOTKEY_EVENT, GHCI_ENABLE, &result);
 	if (ACPI_SUCCESS(rv) && result != 0)
-		printf("%s: can't enable HotkeyEvent error=%d\n",
+		aprint_error("%s: can't enable HotkeyEvent error=%d\n",
 		    sc->sc_dev.dv_xname, result);
 
 	/* Check SystemFIFO events. */
@@ -245,7 +248,7 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, vald_acpi_notify_handler, sc);
 	if (ACPI_FAILURE(rv))
-		printf("%s: can't install DEVICE NOTIFY handler: %s\n",
+		aprint_error("%s: can't install DEVICE NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 }
 

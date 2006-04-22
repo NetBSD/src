@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.76.6.1 2006/02/04 14:03:58 simonb Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.76.6.2 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.76.6.1 2006/02/04 14:03:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.76.6.2 2006/04/22 11:38:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.76.6.1 2006/02/04 14:03:58
 #define DPRINTF(a)
 #endif
 
+#ifndef COMPAT_LINUX32
 #if !defined(__m68k__)
 static void bsd_to_linux_statfs64(const struct statvfs *,
 	struct linux_statfs64  *);
@@ -181,8 +182,9 @@ linux_sys_alarm(l, v, retval)
 
 	return 0;
 }
+#endif /* !COMPAT_LINUX32 */
 
-#ifndef __amd64__
+#if !defined(__amd64__) || defined(COMPAT_LINUX32)
 int
 linux_sys_nice(l, v, retval)
 	struct lwp *l;
@@ -199,8 +201,9 @@ linux_sys_nice(l, v, retval)
 	SCARG(&bsa, prio) = SCARG(uap, incr);
         return sys_setpriority(l, &bsa, retval);
 }
-#endif
+#endif /* !__amd64__ || COMPAT_LINUX32 */
 
+#ifndef COMPAT_LINUX32
 #ifndef __amd64__
 /*
  * The old Linux readdir was only able to read one entry at a time,
@@ -541,3 +544,4 @@ linux_sys_fstatfs64(l, v, retval)
 	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
 }
 #endif /* !__m68k__ */
+#endif /* !COMPAT_LINUX32 */

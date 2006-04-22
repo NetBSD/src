@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.21 2006/01/12 13:36:17 yamt Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.21.4.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.21 2006/01/12 13:36:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.21.4.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,7 @@ smbfs_doio(struct buf *bp, struct ucred *cr, struct lwp *l)
 
 	uiop->uio_iov = &io;
 	uiop->uio_iovcnt = 1;
-	uiop->uio_segflg = UIO_SYSSPACE;
+	UIO_SETUP_SYSSPACE(uiop);
 
 	smb_makescred(&scred, l, cr);
 

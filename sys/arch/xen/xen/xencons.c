@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.11.4.1 2006/04/22 11:38:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.11 2006/01/15 22:09:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.11.4.1 2006/04/22 11:38:11 simonb Exp $");
 
 #include "opt_xen.h"
 
@@ -199,10 +199,10 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 		maj = cdevsw_lookup_major(&xencons_cdevsw);
 
 		/* There can be only one, but it can have any unit number. */
-		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
 		aprint_verbose("%s: console major %d, unit %d\n",
-		    sc->sc_dev.dv_xname, maj, sc->sc_dev.dv_unit);
+		    sc->sc_dev.dv_xname, maj, device_unit(&sc->sc_dev));
 
 		sc->sc_tty->t_dev = cn_tab->cn_dev;
 
@@ -584,8 +584,11 @@ xenconscn_getc(dev_t dev)
 	int ret;
 #endif
 
+#ifndef XEN3
 	if (xencons_console_device == NULL) {
 		printf("xenconscn_getc(): not console\n");
+		while (1)
+			;  /* loop here instead of in ddb */
 		return 0;
 	}
 
@@ -593,6 +596,7 @@ xenconscn_getc(dev_t dev)
 		printf("xenconscn_getc() but not polling\n");
 		return 0;
 	}
+#endif
 	if (xen_start_info.flags & SIF_INITDOMAIN) {
 		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
 			;

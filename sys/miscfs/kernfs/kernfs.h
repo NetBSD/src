@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.26 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.26.6.1 2006/04/22 11:40:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,11 +144,13 @@ void kernfs_revoke_sp(struct secpolicy *);
  * Data types for the kernfs file operations.
  */
 typedef enum {
+	KERNFS_XREAD,
 	KERNFS_XWRITE,
 	KERNFS_FILEOP_CLOSE,
 	KERNFS_FILEOP_GETATTR,
 	KERNFS_FILEOP_IOCTL,
 	KERNFS_FILEOP_OPEN,
+	KERNFS_FILEOP_READ,
 	KERNFS_FILEOP_WRITE,
 } kfsfileop;
 
@@ -158,6 +160,8 @@ struct kernfs_fileop {
 	union {
 		void			*_kf_genop;
 		int			(*_kf_vop)(void *);
+		int			(*_kf_xread)
+			(const struct kernfs_node *, char *, size_t);
 		int			(*_kf_xwrite)
 			(const struct kernfs_node *, char *, size_t);
 	} _kf_opfn;
@@ -165,6 +169,7 @@ struct kernfs_fileop {
 };
 #define	kf_genop	_kf_opfn
 #define	kf_vop		_kf_opfn._kf_vop
+#define	kf_xread	_kf_opfn._kf_xread
 #define	kf_xwrite	_kf_opfn._kf_xwrite
 
 typedef struct kern_target kernfs_parentdir_t;

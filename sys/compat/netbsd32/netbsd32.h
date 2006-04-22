@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.48 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.48.6.1 2006/04/22 11:38:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -47,6 +47,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/ucontext.h>
+#include <compat/sys/ucontext.h>
 
 /*
  * first, define the basic types we need.
@@ -115,6 +116,8 @@ typedef netbsd32_pointer_t netbsd32_ucontextp;
 
 /* from <sys/types.h> */
 typedef netbsd32_pointer_t netbsd32_fd_setp_t;
+typedef netbsd32_intptr_t netbsd32_semid_t;
+typedef netbsd32_pointer_t netbsd32_semidp_t;
 
 /* from <sys/uio.h> */
 typedef netbsd32_pointer_t netbsd32_iovecp_t;
@@ -287,6 +290,13 @@ struct netbsd32_msqid_ds14 {
 	netbsd32_long	msg_pad4[4];
 };
 
+/* from  <sys/sa.h> */
+typedef netbsd32_pointer_t netbsd32_sa_upcall_t;
+typedef netbsd32_pointer_t netbsd32_sa_upcallp_t;
+
+void	netbsd32_cpu_upcall(struct lwp *, int, int, int, void *, void *,
+    void *, sa_upcall_t);
+
 /* from <sys/sem.h> */
 typedef netbsd32_pointer_t netbsd32_semp_t;
 
@@ -318,6 +328,7 @@ struct netbsd32_semid_ds14 {
 };
 
 typedef u_int32_t netbsd32_semunu_t;
+typedef netbsd32_pointer_t netbsd32_semunp_t;
 union netbsd32_semun {
 	int	val;		/* value for SETVAL */
 	netbsd32_semid_dsp_t buf; /* buffer for IPC_STAT & IPC_SET */
@@ -408,6 +419,9 @@ struct netbsd32_sigevent {
 	netbsd32_voidp	sigev_notify_function;
 	netbsd32_voidp	sigev_notify_attributes;
 };
+
+/* from <sys/sigtypes.h> */
+typedef netbsd32_pointer_t netbsd32_stackp_t;
 
 /* from <sys/socket.h> */
 typedef netbsd32_pointer_t netbsd32_sockaddrp_t;

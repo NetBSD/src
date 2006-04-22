@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.26 2005/12/26 18:41:36 perry Exp $ */
+/* $NetBSD: sched.h,v 1.26.6.1 2006/04/22 11:40:19 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -201,8 +201,9 @@ void scheduler_wait_hook(struct proc *, struct proc *);
 
 extern struct simplelock sched_lock;
 
-#define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock))
-#define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock) == 0)
+#define	SCHED_ASSERT_LOCKED()	simple_lock_assert_locked(&sched_lock, "sched_lock")
+#define	SCHED_ASSERT_UNLOCKED()	simple_lock_assert_unlocked(&sched_lock, "sched_lock")
+
 
 #define	SCHED_LOCK(s)							\
 do {									\

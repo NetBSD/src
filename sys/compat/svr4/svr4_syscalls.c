@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscalls.c,v 1.73 2005/12/11 12:20:26 christos Exp $ */
+/* $NetBSD: svr4_syscalls.c,v 1.73.6.1 2006/04/22 11:38:21 simonb Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscalls.c,v 1.73 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscalls.c,v 1.73.6.1 2006/04/22 11:38:21 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -31,6 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscalls.c,v 1.73 2005/12/11 12:20:26 christos 
 #include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_resource.h>
 #include <compat/svr4/svr4_acl.h>
+#include <compat/svr4/svr4_schedctl.h>
 #endif /* _KERNEL_OPT */
 
 const char *const svr4_syscallnames[] = {
@@ -252,7 +253,7 @@ const char *const svr4_syscallnames[] = {
 	"setregid",			/* 203 = setregid */
 	"#204 (unimplemented install_utrap)",		/* 204 = unimplemented install_utrap */
 	"#205 (unimplemented signotify)",		/* 205 = unimplemented signotify */
-	"#206 (unimplemented schedctl)",		/* 206 = unimplemented schedctl */
+	"schedctl",			/* 206 = schedctl */
 	"#207 (unimplemented pset)",		/* 207 = unimplemented pset */
 	"#208 (unimplemented)",		/* 208 = unimplemented */
 	"resolvepath",			/* 209 = resolvepath */

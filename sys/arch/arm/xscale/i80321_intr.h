@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.7 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.7.6.1 2006/04/22 11:37:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -59,9 +59,9 @@ i80321_set_intrmask(void)
 		: "r" (intr_enabled & ICU_INT_HWMASK));
 }
 
-#define INT_SWMASK                                                      \
-        ((1U << ICU_INT_bit26) | (1U << ICU_INT_bit22) |                \
-         (1U << ICU_INT_bit5)  | (1U << ICU_INT_bit4))
+#define INT_SWMASK							\
+	((1U << ICU_INT_bit26) | (1U << ICU_INT_bit22) |		\
+	 (1U << ICU_INT_bit5)  | (1U << ICU_INT_bit4))
 
 static inline void __attribute__((__unused__))
 i80321_splx(int new)

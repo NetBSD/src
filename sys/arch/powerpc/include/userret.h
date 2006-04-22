@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.12 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: userret.h,v 1.12.6.1 2006/04/22 11:37:53 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,7 +41,7 @@
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
-static inline void
+static __inline void
 userret(struct lwp *l, struct trapframe *frame)
 {
 	struct cpu_info * const ci = curcpu();

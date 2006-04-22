@@ -1,4 +1,4 @@
-#	$NetBSD: files.armadillo9,v 1.1 2005/11/13 06:33:06 hamajima Exp $
+#	$NetBSD: files.armadillo9,v 1.1.10.1 2006/04/22 11:37:22 simonb Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -12,14 +12,14 @@ include "arch/arm/ep93xx/files.ep93xx"
 
 attach	epsoc at mainbus
 
-attach	epcom at epsoc with epcom_ts
-file	arch/evbarm/tsarm/epcom_ts.c
+attach	epcom at epsoc with armadillo9com
+file	arch/evbarm/armadillo/armadillo9_com.c	armadillo9com
 
 device	armadillo9iic: i2cbus, i2c_bitbang
 attach	armadillo9iic at epgpio
 file	arch/evbarm/armadillo/armadillo9_iic.c	armadillo9iic
 
 attach	eppcic at epsoc with armadillo9pcic
-file	arch/evbarm/armadillo/armadillo9_pcic.c
+file	arch/evbarm/armadillo/armadillo9_pcic.c	armadillo9pcic
 
 include	"dev/pcmcia/files.pcmcia"

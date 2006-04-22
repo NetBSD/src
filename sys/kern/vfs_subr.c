@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.261 2006/01/18 14:26:55 reinoud Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.261.4.1 2006/04/22 11:40:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.261 2006/01/18 14:26:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.261.4.1 2006/04/22 11:40:00 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -130,6 +130,7 @@ int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
 extern int dovfsusermount;	/* 1 => permit any user to mount filesystems */
+extern int vfs_magiclinks;	/* 1 => expand "magic" symlinks */
 
 /*
  * Insq/Remq for the vnode usage lists.
@@ -1970,6 +1971,12 @@ SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
 		       SYSCTL_DESCR("List of file systems present"),
 		       sysctl_vfs_generic_fstypes, 0, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "magiclinks",
+		       SYSCTL_DESCR("Whether \"magic\" symlinks are expanded"),
+		       NULL, 0, &vfs_magiclinks, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_MAGICLINKS, CTL_EOL);
 }
 
 
@@ -2186,12 +2193,12 @@ extern struct simplelock bqueue_slock; /* XXX */
 void
 vfs_shutdown(void)
 {
-	struct lwp *l = curlwp;
-	struct proc *p;
+	struct lwp *l;
 
-	/* XXX we're certainly not running in proc0's context! */
-	if (l == NULL || (p = l->l_proc) == NULL)
-		p = &proc0;
+	/* XXX we're certainly not running in lwp0's context! */
+	l = curlwp;
+	if (l == NULL)
+		l = &lwp0;
 
 	printf("syncing disks... ");
 
@@ -2243,7 +2250,7 @@ vfs_mountroot(void)
 	if (root_device == NULL)
 		panic("vfs_mountroot: root device unknown");
 
-	switch (root_device->dv_class) {
+	switch (device_class(root_device)) {
 	case DV_IFNET:
 		if (rootdev != NODEV)
 			panic("vfs_mountroot: rootdev set for DV_IFNET "
@@ -2296,14 +2303,14 @@ vfs_mountroot(void)
 
 	if (v == NULL) {
 		printf("no file system for %s", root_device->dv_xname);
-		if (root_device->dv_class == DV_DISK)
+		if (device_class(root_device) == DV_DISK)
 			printf(" (dev 0x%x)", rootdev);
 		printf("\n");
 		error = EFTYPE;
 	}
 
 done:
-	if (error && root_device->dv_class == DV_DISK) {
+	if (error && device_class(root_device) == DV_DISK) {
 		VOP_CLOSE(rootvp, FREAD, FSCRED, curlwp);
 		vrele(rootvp);
 	}
@@ -2580,8 +2587,9 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 {
 	char bf[1024];
 
-	(*pr)("  vp %p lblkno 0x%"PRIx64" blkno 0x%"PRIx64" dev 0x%x\n",
-		  bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_dev);
+	(*pr)("  vp %p lblkno 0x%"PRIx64" blkno 0x%"PRIx64" rawblkno 0x%"
+	    PRIx64 " dev 0x%x\n",
+	    bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_rawblkno, bp->b_dev);
 
 	bitmask_snprintf(bp->b_flags, buf_flagbits, bf, sizeof(bf));
 	(*pr)("  error %d flags 0x%s\n", bp->b_error, bf);

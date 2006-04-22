@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.8 2005/11/12 11:53:30 rpaulo Exp $
+# $NetBSD: acpidevs,v 1.8.8.1 2006/04/22 11:38:46 simonb Exp $
 #
 # Extracted from:
 # http://www.microsoft.com/hwdev/download/resources/specs/devids.txt
@@ -104,11 +104,11 @@ PNP09FF	Plug and Play Monitors (VESA DDC)
 PNP0A00	ISA Bus
 PNP0A01	EISA Bus
 PNP0A02	MCA Bus
-PNP0A03	PCI Bus
+PNP0A03	PCI/PCI-X Host Bridge
 PNP0A04	VESA/VL Bus
-PNP0A05	Generic ACPI Bus
-PNP0A06	Generic ACPI Extended-IO Bus (EIO bus)
-PNP0A08	ACPI Three-wire Device Bus
+PNP0A05	Generic Container Device
+PNP0A06	Generic Container Device
+PNP0A08	PCI Express/PCI-X Mode-2 Host Bridge
 #-- Real Time Clock, BIOS, System board devices--
 PNP0800	AT-style speaker sound
 PNP0B00	AT Real-Time Clock
@@ -132,6 +132,7 @@ PNP0C10	ACPI system indicator device
 PNP0C11	ACPI thermal zone
 PNP0C12	Device Bay Controller
 PNP0C13	Plug and Play BIOS (used when ACPI mode cannot be used)
+PNP0C80	Memory Device
 #--PCMCIA Controller Chipsets--
 PNP0E00	Intel 82365-Compatible PCMCIA Controller
 PNP0E01	Cirrus Logic CL-PD6720 PCMCIA Controller
@@ -299,7 +300,7 @@ PNP8327	IBM Token Ring (All Types)
 PNP8385	Remote Network Access Driver
 PNP8387	RNA Point-to-point Protocol Driver
 PNP8388	Reserved for Microsoft Networking components
-PNP8389		Peer IrLAN infrared driver (Microsoft-supplied)
+PNP8389	Peer IrLAN infrared driver (Microsoft-supplied)
 PNP8390	Generic network adapter
 NSC6001	NSC IrDA Fast Infrared Port
 # ***** SCSI, Proprietary CD Adapters - PNPAxxx **********
@@ -342,3 +343,12 @@ PNPB02F	Joystick/Game port
 # ***** Modems - PNPCxxx-Dxxx****************************
 PNPC000	Compaq 14400 Modem (TBD)
 PNPC001	Compaq 2400/9600 Modem (TBD)
+# ***** ACPI specific devices *****
+ACPI0001	SMBus 1.0 Host Controller
+ACPI0002	Smart Battery Subsystem
+ACPI0003	AC Device
+ACPI0004	Module Device
+ACPI0005	SMBus 2.0 Host Controller
+ACPI0006	GPE Block Device
+# **** Others ****
+INT0800	Intel FWH Random Number Generator

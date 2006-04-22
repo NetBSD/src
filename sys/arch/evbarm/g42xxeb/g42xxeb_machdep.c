@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.6 2005/12/24 20:06:59 perry Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.6.6.1 2006/04/22 11:37:23 simonb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -442,7 +442,7 @@ initarm(void *arg)
 
 	LEDSTEP_P();
 
-	/* start 32.768KHz OSC */
+	/* start 32.768 kHz OSC */
 	ioreg_write(G42XXEB_CLKMAN_VBASE + 0x08, 2);
 	/* Get ready for splfoo() */
 	pxa2x0_intr_bootstrap(G42XXEB_INTCTL_VBASE);

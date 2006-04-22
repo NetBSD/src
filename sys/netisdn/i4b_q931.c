@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.18 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_q931.c,v 1.18.6.1 2006/04/22 11:40:13 simonb Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.18 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.18.6.1 2006/04/22 11:40:13 simonb Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -298,7 +298,7 @@ i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 			{
 				case 0x80:	/* speech */
 				case 0x89:	/* restricted digital info */
-				case 0x90:	/* 3.1KHz audio */
+				case 0x90:	/* 3.1 kHz audio */
 /* XXX */				cd->bprot = BPROT_NONE;
 					NDBGL3(L3_P_MSG, "IEI_BEARERCAP - Telephony");
 					break;

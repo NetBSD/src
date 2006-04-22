@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.19 2005/12/21 22:35:41 rjs Exp $
+#	$NetBSD: files.amd64,v 1.19.6.1 2006/04/22 11:37:12 simonb Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -111,6 +111,7 @@ defparam			PCI_CONF_MODE
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/amd64/pci/pchb.c			pchb
+file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 
 # PCI-ISA bridges
 device	pcib: isabus
@@ -169,6 +170,12 @@ file	arch/amd64/amd64/linux_sigcode.S		compat_linux
 file	arch/amd64/amd64/linux_syscall.c		compat_linux
 file	arch/x86/x86/linux_trap.c			compat_linux
 
+# Linux 32 bit compatibility (COMPAT_LINUX32)
+include "compat/linux32/files.linux32"
+include "compat/linux32/arch/amd64/files.linux32_amd64"
+file	arch/amd64/amd64/linux32_sigcode.S		compat_linux32
+file	arch/amd64/amd64/linux32_syscall.c		compat_linux32
+
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
 
@@ -190,8 +197,5 @@ include	"dev/ieee1394/files.ieee1394"
 
 include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup.c	acpi
-
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-x86_64-elf.hal.o	ath
 
 include	"arch/amd64/conf/majors.amd64"

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.57 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.57.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.57 2005/12/24 23:41:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.57.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -658,7 +658,7 @@ dp8390_intr(arg)
 #endif
 
 	if (sc->sc_enabled == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 
 	/* Set NIC to page 0 registers. */

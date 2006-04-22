@@ -1,3 +1,5 @@
+/*	$NetBSD: athrate-amrr.c,v 1.5.6.1 2006/04/22 11:38:54 simonb Exp $ */
+
 /*-
  * Copyright (c) 2004 INRIA
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -37,7 +39,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.5.6.1 2006/04/22 11:38:54 simonb Exp $");
+#endif
 
 /*
  * AMRR rate control. See:
@@ -73,7 +80,7 @@ __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.10 2005/08/09 10:19
 
 #include <dev/ic/athvar.h>
 #include <dev/ic/athrate-amrr.h>
-#include <contrib/dev/ic/athhal_desc.h>
+#include <contrib/dev/ath/ah_desc.h>
 
 #define	AMRR_DEBUG
 #ifdef AMRR_DEBUG
@@ -205,9 +212,6 @@ ath_rate_update(struct ath_softc *sc, struct ieee80211_node *ni, int rate)
 		(ni->ni_rates.rs_rates[rate] & IEEE80211_RATE_VAL) / 2 : 0);
 
 	ni->ni_txrate = rate;
-	/* XXX management/control frames always go at the lowest speed */
-	an->an_tx_mgtrate = rt->info[0].rateCode;
-	an->an_tx_mgtratesp = an->an_tx_mgtrate | rt->info[0].shortPreamble;
 	/*
 	 * Before associating a node has no rate set setup
 	 * so we can't calculate any transmit codes to use.
@@ -248,7 +252,7 @@ ath_rate_update(struct ath_softc *sc, struct ieee80211_node *ni, int rate)
 				/* NB: only do this if we didn't already do it above */
 				amn->amn_tx_rate3 = rt->info[0].rateCode;
 				amn->amn_tx_rate3sp =
-					an->an_tx_mgtrate | rt->info[0].shortPreamble;
+					an->an_tx_rate3 | rt->info[0].shortPreamble;
 			} else {
 				amn->amn_tx_rate3 = amn->amn_tx_rate3sp = 0;
 			}

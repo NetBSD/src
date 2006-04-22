@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 2005/12/11 12:19:45 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45.6.1 2006/04/22 11:38:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45 2005/12/11 12:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.45.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -202,7 +202,7 @@ device_register(struct device *dev, void *aux)
 	 * not available driver independantly later.
 	 * For disks, there is nothing useful available at attach time.
 	 */
-	if (dev->dv_class == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET) {
 		majdev = B_TYPE(bootdev);
 		if (X68K_BOOT_DEV_IS_NETIF(majdev)) {
 			sprintf(tname, "%s%d",
@@ -261,8 +261,8 @@ scsi_find(dev_t bdev)
 
 		for (scsibus = TAILQ_FIRST(&alldevs); scsibus;
 					scsibus = TAILQ_NEXT(scsibus, dv_list))
-			if (scsibus->dv_parent
-			    && !strcmp(tname, scsibus->dv_parent->dv_xname))
+			if (device_parent(scsibus)
+			    && !strcmp(tname, device_parent(scsibus)->dv_xname))
 				break;
 	}
 	if (!scsibus)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.32 2005/12/11 12:23:51 christos Exp $ */
+/*	$NetBSD: ses.c,v 1.32.6.1 2006/04/22 11:39:29 simonb Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.32 2005/12/11 12:23:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.32.6.1 2006/04/22 11:39:29 simonb Exp $");
 
 #include "opt_scsi.h"
 
@@ -215,7 +215,7 @@ static void
 ses_attach(struct device *parent, struct device *self, void *aux)
 {
 	const char *tname;
-	struct ses_softc *softc = (void *)self;
+	struct ses_softc *softc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
@@ -396,11 +396,15 @@ sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case SESIOC_GETNOBJ:
+		if (addr == NULL)
+			return EINVAL;
 		error = copyout(&ssc->ses_nobjects, addr,
 		    sizeof (ssc->ses_nobjects));
 		break;
 
 	case SESIOC_GETOBJMAP:
+		if (addr == NULL)
+			return EINVAL;
 		for (uobj = addr, i = 0; i != ssc->ses_nobjects; i++, uobj++) {
 			obj.obj_id = i;
 			obj.subencid = ssc->ses_objmap[i].subenclosure;
@@ -413,6 +417,8 @@ sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct lwp *l)
 		break;
 
 	case SESIOC_GETENCSTAT:
+		if (addr == NULL)
+			return EINVAL;
 		error = (*ssc->ses_vec.get_encstat)(ssc, 1);
 		if (error)
 			break;
@@ -422,6 +428,8 @@ sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct lwp *l)
 		break;
 
 	case SESIOC_SETENCSTAT:
+		if (addr == NULL)
+			return EINVAL;
 		error = copyin(addr, &tmp, sizeof (ses_encstat));
 		if (error)
 			break;
@@ -429,6 +437,8 @@ sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct lwp *l)
 		break;
 
 	case SESIOC_GETOBJSTAT:
+		if (addr == NULL)
+			return EINVAL;
 		error = copyin(addr, &objs, sizeof (ses_objstat));
 		if (error)
 			break;
@@ -447,6 +457,8 @@ sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct lwp *l)
 		break;
 
 	case SESIOC_SETOBJSTAT:
+		if (addr == NULL)
+			return EINVAL;
 		error = copyin(addr, &objs, sizeof (ses_objstat));
 		if (error)
 			break;

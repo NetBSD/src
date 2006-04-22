@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.27 2006/01/16 20:30:19 bouyer Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.27.4.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.27 2006/01/16 20:30:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.27.4.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ wdc_ofisa_probe(struct device *parent, struct cfdata *cf, void *aux)
 static void
 wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct wdc_ofisa_softc *sc = (void *)self;
+	struct wdc_ofisa_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg[2];

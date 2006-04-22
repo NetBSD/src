@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.10 2005/11/28 13:31:09 augustss Exp $ */
+/*	$NetBSD: if_ural.c,v 1.10.6.1 2006/04/22 11:39:37 simonb Exp $ */
 /*	$OpenBSD: if_ral.c,v 1.38 2005/07/07 08:33:22 jsg Exp $  */
 /*	$FreeBSD: /a/cvsroot/freebsd.repo/ncvs/src/sys/dev/usb/if_ural.c,v 1.10 2005/07/10 00:17:05 sam Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.10 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.10.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -1979,7 +1979,7 @@ ural_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_key *wk;
 	struct ural_rx_data *data;
-	uint16_t sta[11], tmp;
+	uint16_t sta_tmp[11], tmp;
 	usbd_status error;
 	int i, ntries;
 
@@ -2019,7 +2019,7 @@ ural_init(struct ifnet *ifp)
 	ural_set_chan(sc, ic->ic_curchan);
 
 	/* clear statistic registers (STA_CSR0 to STA_CSR10) */
-	ural_read_multi(sc, RAL_STA_CSR0, sta, sizeof sta);
+	ural_read_multi(sc, RAL_STA_CSR0, sta_tmp, sizeof sta_tmp);
 
 	ural_set_txantenna(sc, 1);
 	ural_set_rxantenna(sc, 1);

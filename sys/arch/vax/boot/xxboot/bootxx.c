@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.23 2006/01/27 07:33:47 he Exp $ */
+/* $NetBSD: bootxx.c,v 1.23.4.1 2006/04/22 11:38:06 simonb Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -166,8 +166,8 @@ Xmain()
 			read(io, &tmp, sizeof(tmp));
 			off += sizeof(tmp);
 		}
-		read(io, (void *) ph.p_paddr, ph.p_filesz);
-		memset((void *) (ph.p_paddr + ph.p_filesz), 0,
+		read(io, (void *) hdr.elf.e_entry, ph.p_filesz);
+		memset((void *) (hdr.elf.e_entry + ph.p_filesz), 0,
 		       ph.p_memsz - ph.p_filesz);
 	} else {
 		goto die;

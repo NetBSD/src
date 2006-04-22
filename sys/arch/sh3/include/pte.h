@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.10 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: pte.h,v 1.10.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -93,6 +93,6 @@
 #define	_PG_PCMCIA_ATTR16	0x00000e00	/* 16 bit attribute */
 
 #ifndef _LOCORE
-typedef u_int32_t pt_entry_t;
+typedef uint32_t pt_entry_t;
 #endif /* _LOCORE */
 #endif /* !_SH3_PTE_H_ */

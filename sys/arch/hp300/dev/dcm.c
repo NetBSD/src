@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.68 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: dcm.c,v 1.68.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.68 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.68.6.1 2006/04/22 11:37:26 simonb Exp $");
 
 #include "opt_kgdb.h"
 
@@ -397,7 +397,7 @@ dcmattach(struct device *parent, struct device *self, void *aux)
 	struct dcm_softc *sc = (struct dcm_softc *)self;
 	struct dio_attach_args *da = aux;
 	struct dcmdevice *dcm;
-	int brd = self->dv_unit;
+	int brd = device_unit(self);
 	int scode = da->da_scode;
 	int i, mbits, code;
 
@@ -438,8 +438,8 @@ dcmattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Extract configuration info from flags. */
-	sc->sc_softCAR = self->dv_cfdata->cf_flags & DCM_SOFTCAR;
-	sc->sc_flags |= self->dv_cfdata->cf_flags & DCM_FLAGMASK;
+	sc->sc_softCAR = device_cfdata(self)->cf_flags & DCM_SOFTCAR;
+	sc->sc_flags |= device_cfdata(self)->cf_flags & DCM_FLAGMASK;
 
 	/* Mark our unit as configured. */
 	sc->sc_flags |= DCM_ACTIVE;
@@ -720,7 +720,7 @@ dcmintr(void *arg)
 	struct dcm_softc *sc = arg;
 	struct dcmdevice *dcm = sc->sc_dcm;
 	struct dcmischeme *dis = &sc->sc_scheme;
-	int brd = sc->sc_dev.dv_unit;
+	int brd = device_unit(&sc->sc_dev);
 	int code, i;
 	int pcnd[4], mcode, mcnd[4];
 

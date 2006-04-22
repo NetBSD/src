@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.86 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.86.6.1 2006/04/22 11:40:00 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.86 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.86.6.1 2006/04/22 11:40:00 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +229,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
+		KASSERT(l != NULL);
 		error = unp_bind(unp, nam, l);
 		break;
 
@@ -238,6 +239,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
+		KASSERT(l != NULL);
 		error = unp_connect(so, nam, l);
 		break;
 
@@ -306,8 +308,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * has the side-effect of preventing a caller from
 		 * forging SCM_CREDS.
 		 */
-		if (control && (error = unp_internalize(control, l))) {
-			goto die;
+		if (control) {
+			KASSERT(l != NULL);
+			if ((error = unp_internalize(control, l)) != 0)
+				goto die;
 		}
 		switch (so->so_type) {
 
@@ -317,6 +321,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					error = EISCONN;
 					goto die;
 				}
+				KASSERT(l != NULL);
 				error = unp_connect(so, nam, l);
 				if (error) {
 				die:
@@ -330,6 +335,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					goto die;
 				}
 			}
+			KASSERT(p != NULL);
 			error = unp_output(m, control, unp, p);
 			if (nam)
 				unp_disconnect(unp);
@@ -339,8 +345,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		case SOCK_STREAM:
 #define	rcv (&so2->so_rcv)
 #define	snd (&so->so_snd)
-			if (unp->unp_conn == 0)
-				panic("uipc 3");
+			if (unp->unp_conn == NULL) {
+				error = ENOTCONN;
+				break;
+			}
 			so2 = unp->unp_conn->unp_socket;
 			if (unp->unp_conn->unp_flags & UNP_WANTCRED) {
 				/*
@@ -381,6 +389,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_ABORT:
 		unp_drop(unp, ECONNABORTED);
 
+		KASSERT(so->so_head == NULL);
 #ifdef DIAGNOSTIC
 		if (so->so_pcb == 0)
 			panic("uipc 5: drop killed pcb");

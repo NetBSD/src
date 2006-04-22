@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2005/11/27 14:01:45 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.6.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _EVBMIPS_INTR_H_
-#define _EVBMIPS_INTR_H_
+#define	_EVBMIPS_INTR_H_
 
 #include <sys/device.h>
 #include <sys/lock.h>
@@ -83,13 +83,13 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-#define IST_LEVEL_HIGH	4	/* level triggered, active high */
-#define IST_LEVEL_LOW	5       /* level triggered, active low */
+#define	IST_LEVEL_HIGH	4	/* level triggered, active high */
+#define	IST_LEVEL_LOW	5       /* level triggered, active low */
 
 #ifdef	_KERNEL
 
-extern const u_int32_t ipl_sr_bits[_IPL_N];
-extern const u_int32_t ipl_si_to_sr[_IPL_NSOFT];
+extern const uint32_t ipl_sr_bits[_IPL_N];
+extern const uint32_t ipl_si_to_sr[_IPL_NSOFT];
 
 extern int		_splraise(int);
 extern int		_spllower(int);
@@ -121,7 +121,7 @@ struct evbmips_intrhand {
 
 void	evbmips_intr_init(void);
 void	intr_init(void);
-void	evbmips_iointr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+void	evbmips_iointr(uint32_t, uint32_t, uint32_t, uint32_t);
 void	*evbmips_intr_establish(int, int (*)(void *), void *);
 void	evbmips_intr_disestablish(void *);
 #endif /* _KERNEL */

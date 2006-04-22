@@ -1,0 +1,59 @@
+#	$NetBSD: DBAU1550,v 1.8.2.2 2006/04/22 11:37:24 simonb Exp $
+#
+# Kernel config for the AMD Alchemy DBAu1550 evaluation board.
+
+include		"arch/evbmips/conf/ALCHEMY"
+
+no options 	ALCHEMY_AU1000
+no options 	ALCHEMY_AU1100
+no options 	ALCHEMY_AU1500
+no options 	ALCHEMY_AU1550
+no options 	ALCHEMY_GENERIC
+
+# configure out local board support
+
+options 	ALCHEMY_AU1550
+options 	ALCHEMY_DBAU1550
+options 	PCI_NETBSD_CONFIGURE
+
+aupci*		at aubus? addr ?
+pci*		at aupci?
+aupcmcia*	at aubus? addr ?
+pcmcia*		at aupcmcia?
+
+
+# PCMCIA devices
+wdc*		at pcmcia? function ?		# IDE
+atabus*		at wdc?
+an*		at pcmcia? function ?		# Aironet (802.11b)
+#wi*		at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+#ep*		at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+#ne*		at pcmcia? function ?		# NE2000-compatible Ethernet
+#mhzc*		at pcmcia? function ?		# 3Com/MHz Combo
+#com*		at mhzc?
+#sm*		at mhzc?
+
+# Note that this is just fairly random selection of PCI devices.
+
+# Ethernet cards
+ath*		at pci? dev ? function ?	# Atheros WLAN 
+bge*		at pci? dev ? function ?	# Broadcom GigE
+fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+ral*		at pci?	dev ? function ?	# Ralink WLAN
+re*		at pci? dev ? function ?	# Realtek 8169 GigE
+rtk*		at pci? dev ? function ?	# Realtek 8129/8139
+sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+tlp*		at pci? dev ? function ?	# DEC Tulip Ethernet
+vge*		at pci? dev ? function ?	# VIA GigE
+wi*		at pci? dev ? function ?	# Intersil PRISM WLAN
+
+# (on-board) IDE controller
+hptide*		at pci? dev ? function ?	# Triones/HighPoint IDE
+
+atabus*		at ata?
+wd*		at atabus? drive ? flags 0x0000
+
+atapibus*	at atabus?
+cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown

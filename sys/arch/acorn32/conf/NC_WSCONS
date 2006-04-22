@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.43 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: NC_WSCONS,v 1.43.6.1 2006/04/22 11:37:09 simonb Exp $
 #
 #	NC - with wscons
 #
@@ -293,14 +293,14 @@ podulebus0	at root
 ne*	at podulebus?			# NE2000 clone cards
 
 pseudo-device	loop	1		# network loopback
-#pseudo-device	bpfilter 8		# packet filter
-#pseudo-device	sl	2		# CSLIP
-#pseudo-device	ppp	2		# PPP
-#pseudo-device	tun	2		# network tunneling over tty
+#pseudo-device	bpfilter		# packet filter
+#pseudo-device	sl			# CSLIP
+#pseudo-device	ppp			# PPP
+#pseudo-device	tun			# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
-#pseudo-device	strip	4		# STRIP
+#pseudo-device	strip			# STRIP
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	vnd	4		# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	fss	4		# file system snapshot device
 pseudo-device	md	1		# Ramdisk driver

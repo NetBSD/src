@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.47 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.47.6.1 2006/04/22 11:37:11 simonb Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -335,7 +335,7 @@ unsigned long	alpha_implver(void);
 
 /* XXX Expose the insn wrappers to userspace, for now. */
 
-static inline unsigned long
+static __inline unsigned long
 alpha_rpcc(void)
 {
 	unsigned long v0;
@@ -366,7 +366,7 @@ void		alpha_pal_wrvptptr(unsigned long);
 #define	alpha_pal_imb()	__asm volatile("call_pal %0 # PAL_imb"	\
 				: : "i" (PAL_imb) : "memory")
 
-static inline unsigned long
+static __inline unsigned long
 alpha_pal_rdmces(void)
 {
 	register unsigned long v0 __asm("$0");
@@ -380,7 +380,7 @@ alpha_pal_rdmces(void)
 	return (v0);
 }
 
-static inline unsigned long
+static __inline unsigned long
 alpha_pal_rdps(void)
 {
 	register unsigned long v0 __asm("$0");
@@ -394,7 +394,7 @@ alpha_pal_rdps(void)
 	return (v0);
 }
 
-static inline unsigned long
+static __inline unsigned long
 alpha_pal_rdunique(void)
 {
 	register unsigned long v0 __asm("$0");
@@ -406,7 +406,7 @@ alpha_pal_rdunique(void)
 	return (v0);
 }
 
-static inline unsigned long
+static __inline unsigned long
 alpha_pal_rdusp(void)
 {
 	register unsigned long v0 __asm("$0");
@@ -420,7 +420,7 @@ alpha_pal_rdusp(void)
 	return (v0);
 }
 
-static inline unsigned long
+static __inline unsigned long
 alpha_pal_rdval(void)
 {
 	register unsigned long v0 __asm("$0");
@@ -434,7 +434,7 @@ alpha_pal_rdval(void)
 	return (v0);
 }
 
-static inline unsigned long
+static __inline unsigned long
 alpha_pal_swpctx(unsigned long ctx)
 {
 	register unsigned long a0 __asm("$16") = ctx;
@@ -449,7 +449,7 @@ alpha_pal_swpctx(unsigned long ctx)
 	return (v0);
 }
 
-static inline unsigned long
+static __inline unsigned long
 alpha_pal_swpipl(unsigned long ipl)
 {
 	register unsigned long a0 __asm("$16") = ipl;
@@ -464,7 +464,7 @@ alpha_pal_swpipl(unsigned long ipl)
 	return (v0);
 }
 
-static inline void
+static __inline void
 alpha_pal_tbi(unsigned long op, vaddr_t va)
 {
 	register unsigned long a0 __asm("$16") = op;
@@ -477,7 +477,7 @@ alpha_pal_tbi(unsigned long op, vaddr_t va)
 		: "$1", "$22", "$23", "$24", "$25");
 }
 
-static inline unsigned long
+static __inline unsigned long
 alpha_pal_whami(void)
 {
 	register unsigned long v0 __asm("$0");
@@ -491,7 +491,7 @@ alpha_pal_whami(void)
 	return (v0);
 }
 
-static inline void
+static __inline void
 alpha_pal_wrfen(unsigned long onoff)
 {
 	register unsigned long a0 __asm("$16") = onoff;
@@ -503,7 +503,7 @@ alpha_pal_wrfen(unsigned long onoff)
 		: "$1", "$22", "$23", "$24", "$25");
 }
 
-static inline void
+static __inline void
 alpha_pal_wripir(unsigned long cpu_id)
 {
 	register unsigned long a0 __asm("$16") = cpu_id;
@@ -515,7 +515,7 @@ alpha_pal_wripir(unsigned long cpu_id)
 		: "$1", "$22", "$23", "$24", "$25");
 }
 
-static inline void
+static __inline void
 alpha_pal_wrunique(unsigned long unique)
 {
 	register unsigned long a0 __asm("$16") = unique;
@@ -525,7 +525,7 @@ alpha_pal_wrunique(unsigned long unique)
 		: "i" (PAL_wrunique), "0" (a0));
 }
 
-static inline void
+static __inline void
 alpha_pal_wrusp(unsigned long usp)
 {
 	register unsigned long a0 __asm("$16") = usp;
@@ -537,7 +537,7 @@ alpha_pal_wrusp(unsigned long usp)
 		: "$1", "$22", "$23", "$24", "$25");
 }
 
-static inline void
+static __inline void
 alpha_pal_wrmces(unsigned long mces)
 {
 	register unsigned long a0 __asm("$16") = mces;
@@ -549,7 +549,7 @@ alpha_pal_wrmces(unsigned long mces)
 		: "$1", "$22", "$23", "$24", "$25");
 }
 
-static inline void
+static __inline void
 alpha_pal_wrval(unsigned long val)
 {
 	register unsigned long a0 __asm("$16") = val;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.96 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: i82557.c,v 1.96.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.96 2005/12/24 20:27:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.96.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1123,7 +1123,7 @@ fxp_intr(void *arg)
 	int claimed = 0;
 	u_int8_t statack;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || sc->sc_enabled == 0)
+	if (!device_is_active(&sc->sc_dev) || sc->sc_enabled == 0)
 		return (0);
 	/*
 	 * If the interface isn't running, don't try to
@@ -1432,7 +1432,7 @@ fxp_tick(void *arg)
 	struct fxp_stats *sp = &sc->sc_control_data->fcd_stats;
 	int s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return;
 
 	s = splnet();

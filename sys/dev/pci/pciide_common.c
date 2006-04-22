@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.30 2006/01/17 00:40:49 bouyer Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.30.4.1 2006/04/22 11:39:15 simonb Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.30 2006/01/17 00:40:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.30.4.1 2006/04/22 11:39:15 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -401,7 +401,7 @@ pciide_mapreg_dma(sc, pa)
 			sc->sc_wdcdev.dma_finish = pciide_dma_finish;
 		}
 
-		if (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags &
+		if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 		    PCIIDE_OPTIONS_NODMA) {
 			aprint_normal(
 			    ", but unused (forced off by config file)");
@@ -870,7 +870,7 @@ default_chip_map(sc, pa)
 		aprint_normal("%s: bus-master DMA support present",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		if (sc->sc_pp == &default_product_desc &&
-		    (sc->sc_wdcdev.sc_atac.atac_dev.dv_cfdata->cf_flags &
+		    (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 		    PCIIDE_OPTIONS_DMA) == 0) {
 			aprint_normal(", but unused (no driver support)");
 			sc->sc_dma_ok = 0;

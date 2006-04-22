@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.64.4.1 2006/02/04 14:18:52 simonb Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.64.4.2 2006/04/22 11:40:06 simonb Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.4.1 2006/02/04 14:18:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.4.2 2006/04/22 11:40:06 simonb Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -708,7 +708,8 @@ breakbreak:;
 	}
 
 done:
-	m_freem(m);
+	if (m)
+		m_freem(m);
 	return;
 }
 

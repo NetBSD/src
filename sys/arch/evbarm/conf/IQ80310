@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.50 2005/12/07 09:10:12 tsutsui Exp $
+#	$NetBSD: IQ80310,v 1.50.6.1 2006/04/22 11:37:22 simonb Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -141,7 +141,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=240000
+options 	SYMTAB_SPACE=270000
 
 config		netbsd		root on ? type ?
 config		netbsd-fxp0	root on fxp0 type nfs
@@ -226,11 +226,11 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices

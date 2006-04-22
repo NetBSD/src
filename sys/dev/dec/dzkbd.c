@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.15 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.15.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.15 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.15.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,8 @@ dzkbd_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 dzkbd_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct dz_softc *dz = (void *)parent;
-	struct dzkbd_softc *dzkbd = (void *)self;
+	struct dz_softc *dz = device_private(parent);
+	struct dzkbd_softc *dzkbd = device_private(self);
 	struct dzkm_attach_args *daa = aux;
 	struct dz_linestate *ls;
 	struct dzkbd_internal *dzi;

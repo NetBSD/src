@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.169 2005/12/19 21:57:27 tron Exp $	*/
+/*	$NetBSD: ohci.c,v 1.169.6.1 2006/04/22 11:39:38 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.169 2005/12/19 21:57:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.169.6.1 2006/04/22 11:39:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2167,6 +2167,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
 		usb_transfer_complete(xfer);
 		splx(s);
+		return;
 	}
 
 	if (xfer->device->bus->intr_context || !curproc)
@@ -2420,6 +2421,8 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		DPRINTFN(8,("ohci_root_ctrl_control wValue=0x%04x\n", value));
+		if (len == 0)
+			break;
 		switch(value >> 8) {
 		case UDESC_DEVICE:
 			if ((value & 0xff) != 0) {
@@ -2449,8 +2452,6 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &ohci_endpd, l);
 			break;
 		case UDESC_STRING:
-			if (len == 0)
-				break;
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
@@ -2571,6 +2572,8 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
+		if (len == 0)
+			break;
 		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;
@@ -3089,7 +3092,7 @@ ohci_device_intr_close(usbd_pipe_handle pipe)
 		usb_delay_ms(&sc->sc_bus, 2);
 
 	for (p = sc->sc_eds[pos]; p && p->next != sed; p = p->next)
-		;
+		continue;
 #ifdef DIAGNOSTIC
 	if (p == NULL)
 		panic("ohci_device_intr_close: ED not found");

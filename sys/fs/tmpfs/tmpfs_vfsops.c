@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.10 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.10.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.10 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.10.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -231,7 +231,7 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		if (node->tn_type == VDIR) {
 			struct tmpfs_dirent *de;
 
-			de = TAILQ_FIRST(&node->tn_dir);
+			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
 			while (de != NULL) {
 				struct tmpfs_dirent *nde;
 

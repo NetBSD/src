@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.6 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.6.6.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -55,13 +55,13 @@ config_call_tag config_connect(int, long);
 void	config_disconnect(config_call_tag crx);
 int	config_connected_call(config_call_tag, void *);
 
-static inline int
+static __inline int
 config_hook_call(int type, long id, void *msg)
 {
 	return __config_hook_call(type, id, msg, 0);
 }
 
-static inline int
+static __inline int
 config_hook_call_reverse(int type, long id, void *msg)
 {
 	return __config_hook_call(type, id, msg, 1);

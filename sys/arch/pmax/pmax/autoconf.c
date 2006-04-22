@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.68 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.68.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,9 +203,7 @@ device_register(dev, aux)
 {
 	static int found, initted, scsiboot, netboot;
 	static struct device *ioasicdev;
-	struct device *parent = dev->dv_parent;
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
+	struct device *parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -220,7 +218,7 @@ device_register(dev, aux)
 	/*
 	 * Check if IOASIC was the boot slot.
 	 */
-	if (strcmp(name, "ioasic") == 0) {
+	if (device_is_a(dev, "ioasic")) {
 		struct tc_attach_args *ta = aux;
 
 		if (ta->ta_slot == booted_slot)
@@ -231,7 +229,7 @@ device_register(dev, aux)
 	/*
 	 * Check for ASC controller on either IOASIC or TC option card.
 	 */
-	if (scsiboot && strcmp(name, "asc") == 0) {
+	if (scsiboot && device_is_a(dev, "asc")) {
 		struct tc_attach_args *ta = aux;
 
 		/*
@@ -251,7 +249,7 @@ device_register(dev, aux)
 	 * If an SII device is configured, it's currently the only
 	 * possible SCSI boot device.
 	 */
-	if (scsiboot && strcmp(name, "sii") == 0) {
+	if (scsiboot && device_is_a(dev, "sii")) {
 		booted_controller = dev;
 		return;
 	}
@@ -260,12 +258,13 @@ device_register(dev, aux)
 	 * If we found the boot controller, if check disk/tape/cdrom device
 	 * on that controller matches.
 	 */
-	if (booted_controller && (strcmp(name, "sd") == 0 ||
-	    strcmp(name, "st") == 0 ||
-	    strcmp(name, "cd") == 0)) {
+	if (booted_controller &&
+	    (device_is_a(dev, "sd") ||
+	     device_is_a(dev, "st") ||
+	     device_is_a(dev, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != booted_controller)
+		if (device_parent(parent) != booted_controller)
 			return;
 		if (booted_unit != sa->sa_periph->periph_target)
 			return;
@@ -287,15 +286,15 @@ device_register(dev, aux)
 #endif
 		     /* Only one Ethernet interface at IOASIC. */
 		     parent == ioasicdev)
-		    && strcmp(name, "le") == 0) {
+		    && device_is_a(dev, "le")) {
 			booted_device = dev;
 			found = 1;
 			return;
 		}
 
 		/* allow any TC network adapter */
-		if (dev->dv_cfdriver->cd_class == DV_IFNET &&
-		    strcmp(parent->dv_cfdriver->cd_name, "tc") == 0 &&
+		if (device_class(dev) == DV_IFNET &&
+		    device_is_a(parent, "tc") &&
 		    ta->ta_slot == booted_slot) {
 			booted_device = dev;
 			found = 1;

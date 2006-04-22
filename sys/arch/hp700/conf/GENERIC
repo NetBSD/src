@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61 2006/02/02 21:32:08 reinoud Exp $
+# $NetBSD: GENERIC,v 1.61.2.1 2006/04/22 11:37:27 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.61.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -195,7 +195,7 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -205,10 +205,6 @@ options 	PCDISPLAY_SOFTCURSOR
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 #options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 # console scrolling support.
 #options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
@@ -540,24 +536,24 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
-pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

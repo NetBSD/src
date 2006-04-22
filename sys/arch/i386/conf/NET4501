@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.45 2005/12/20 05:35:29 thorpej Exp $
+# $NetBSD: NET4501,v 1.45.6.1 2006/04/22 11:37:32 simonb Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.45 $"
+#ident 		"NET4501-$Revision: 1.45.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -202,6 +202,11 @@ pci*	at mainbus? bus ?
 # PCI bridges
 elansc*	at pci? dev ? function ?	# Elan SC520 System Controller
 gpio* 	at elansc?
+#gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bus bitbanging via gpio
+#onewire*	at gpioow?
+
+# 1-Wire devices
+#owtemp* 	at onewire?			# Temperature sensors
 
 # ISA bus support
 isa0	at mainbus?
@@ -266,19 +271,19 @@ nsphyter* at mii? phy ?			# NS83843 PHYs
 # Pseudo-Devices
 
 # network pseudo-devices
-pseudo-device	bpfilter	16	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	ppp		2	# Point-to-Point Protocol
+#pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#pseudo-device	sl		2	# Serial Line IP
-#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 

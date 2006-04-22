@@ -1,4 +1,4 @@
-/*	$NetBSD: inkernel.c,v 1.5 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: inkernel.c,v 1.5.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -63,8 +63,7 @@ init_in(u_long ladr)
 }
 
 int
-inopen(p)
-	struct open_file *p;
+inopen(struct open_file *p)
 {
 
 	if (kern_len)
@@ -73,21 +72,15 @@ inopen(p)
 }
 
 int
-inclose(p)
-	struct open_file *p;
+inclose(struct open_file *p)
 {
 
 	return (0);
 }
 
 int
-instrategy(devdata, func, blk, size, buf, rsize)
-	void *devdata;	/* device uniq data */
-	int func;	/* function (read or write) */
-	daddr_t blk;	/* block number */
-	size_t size;	/* request size in bytes */
-	void *buf;	/* buffer */
-	size_t *rsize;	/* bytes transferred */
+instrategy(void *devdata, int func, daddr_t blk, size_t size, void *buf,
+	size_t *rsize)
 {
 
 	memcpy(buf, (char *)KERNENTRY + ((long)blk * DEV_BSIZE), size);

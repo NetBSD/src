@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.28 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: EV64260,v 1.28.6.1 2006/04/22 11:37:25 simonb Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -255,22 +255,22 @@ viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 atabus* 	at ata? channel ?
 wd*		at atabus? drive ? flags 0x0000
 
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
-#pseudo-device	ppp		2	# Point-to-Point Protocol
-#pseudo-device	sl		2	# Serial Line IP
-#pseudo-device	tun		4	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator

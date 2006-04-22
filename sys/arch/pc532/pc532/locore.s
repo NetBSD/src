@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.80 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.80.6.1 2006/04/22 11:37:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -1129,7 +1129,9 @@ GLOBAL(cinvend)
 ASENTRY_NOPROFILE(svc_handler)
 	KENTER
 	lprd	sb,0			/* Kernel code expects sb to be 0 */
-	bsr	_C_LABEL(syscall)
+	movd	L_PROC(_C_LABEL(curlwp)(sb)),r3
+	movd	P_MD_SYSCALL(r3), r0
+	jsr	0(r0);
 rei:	CHECKAST
 	KEXIT
 

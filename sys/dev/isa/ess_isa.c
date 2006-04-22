@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.14 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.14.6.1 2006/04/22 11:39:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.14 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.14.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ ess_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_audio2.drq = ia->ia_ndrq > 1 ? ia->ia_drq[1].ir_drq : -1;
 
 #if NJOY_ESS > 0
-	if (sc->sc_dev.dv_cfdata->cf_flags & 1) {
+	if (device_cfdata(&sc->sc_dev)->cf_flags & 1) {
 		sc->sc_joy_iot = ia->ia_iot;
 		if (!bus_space_map(sc->sc_joy_iot, 0x201, 1, 0,
 				   &sc->sc_joy_ioh))

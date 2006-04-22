@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.4 2005/12/11 12:19:47 christos Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.4.6.1 2006/04/22 11:38:09 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.4 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.4.6.1 2006/04/22 11:38:09 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -569,6 +569,11 @@ i686_mtrr_setone(struct mtrr *mtrrp, struct proc *p)
 				}
 				mp->type = mtrrp->type;
 				if (mtrrp->flags & MTRR_PRIVATE) {
+					/*
+					 * Private mappings are bound to a
+					 * process. This has been checked in
+					 * i686_mtrr_validate()
+					 */
 					mp->flags |= MTRR_PRIVATE;
 					mp->owner = p->p_pid;
 				}

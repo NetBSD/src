@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.23 2005/12/11 12:23:56 christos Exp $ */
+/*	$NetBSD: fb.c,v 1.23.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.23 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.23.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ fbopen(dev, flags, mode, l)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 		
-	nunit = fbl->fb_dev->fb_device->dv_unit;
+	nunit = device_unit(fbl->fb_dev->fb_device);
 	return (fbl->fb_dev->fb_driver->fbd_open)(makedev(0, nunit), flags,
 	    mode, l);
 }
@@ -241,7 +241,7 @@ fbclose(dev, flags, mode, l)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
-	nunit = fbl->fb_dev->fb_device->dv_unit;
+	nunit = device_unit(fbl->fb_dev->fb_device);
 	return (fbl->fb_dev->fb_driver->fbd_close)(makedev(0, nunit), flags,
 	    mode, l);
 }
@@ -263,7 +263,7 @@ fbioctl(dev, cmd, data, flags, l)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
-	nunit = fbl->fb_dev->fb_device->dv_unit;
+	nunit = device_unit(fbl->fb_dev->fb_device);
 	return (fbl->fb_dev->fb_driver->fbd_ioctl)(makedev(0, nunit), cmd, 
 	    data, flags, l);
 }
@@ -283,7 +283,7 @@ fbpoll(dev, events, l)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
-	nunit = fbl->fb_dev->fb_device->dv_unit;
+	nunit = device_unit(fbl->fb_dev->fb_device);
 	return (fbl->fb_dev->fb_driver->fbd_poll)(makedev(0, nunit), events,
 	    l);
 }
@@ -302,7 +302,7 @@ fbkqfilter(dev, kn)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
-	nunit = fbl->fb_dev->fb_device->dv_unit;
+	nunit = device_unit(fbl->fb_dev->fb_device);
 	return (fbl->fb_dev->fb_driver->fbd_kqfilter)(makedev(0, nunit), kn);
 }
 
@@ -321,7 +321,7 @@ fbmmap(dev, off, prot)
 	if (fbl == NULL || fbl->fb_dev == NULL)
 		return (ENXIO);
 
-	nunit = fbl->fb_dev->fb_device->dv_unit;
+	nunit = device_unit(fbl->fb_dev->fb_device);
 	paddr_t (*map)(dev_t, off_t, int) = fbl->fb_dev->fb_driver->fbd_mmap;
 
 	if (map == NULL)

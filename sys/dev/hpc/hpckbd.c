@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.14 2005/12/11 12:21:22 christos Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.14.6.1 2006/04/22 11:38:52 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.14 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.14.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ struct hpckbd_eventq {
 struct hpckbd_core {
 	struct hpckbd_if	hc_if;
 	struct hpckbd_ic_if	*hc_ic;
-	const u_int8_t		*hc_keymap;
+	const uint8_t		*hc_keymap;
 	const int		*hc_special;
 	int			hc_polling;
 	int			hc_console;
@@ -155,7 +155,7 @@ void
 hpckbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpckbd_attach_args *haa = aux;
-	struct hpckbd_softc *sc = (void*)self;
+	struct hpckbd_softc *sc = device_private(self);
 	struct hpckbd_ic_if *ic = haa->haa_ic;
 	struct wskbddev_attach_args wa;
 
@@ -270,7 +270,7 @@ hpckbd_keymap_setup(struct hpckbd_core *hc, const keysym_t *map, int mapsize)
 	/* fix keydesc table */
 	/* 
 	 * XXX The way this is done is really wrong.  The __UNCONST()
-	 * is a hint as to what is wrong.  This actally ends up modifying
+	 * is a hint as to what is wrong.  This actually ends up modifying
 	 * initialized data which is marked "const".
 	 * The reason we get away with it here is apparently that text
 	 * and read-only data gets mapped read/write on the platforms
@@ -348,7 +348,8 @@ __hpckbd_input(void *arg, int flag, int scancode)
 		type = WSCONS_EVENT_KEY_UP;
 	}
 
-	if ((key = hc->hc_keymap[scancode]) == UNK) {
+	key = hc->hc_keymap[scancode];
+	if (key == UNK) {
 #ifdef DEBUG
 		printf("hpckbd: unknown scan code %#x (%d, %d)\n",
 		    scancode, scancode >> 3,
@@ -384,18 +385,18 @@ __hpckbd_input(void *arg, int flag, int scancode)
 	}
 
 	if (hc->hc_polling) {
-		if (hpckbd_putevent(hc, type, hc->hc_keymap[scancode]) == 0)
-			printf("hpckbd: queue over flow");
+		if (hpckbd_putevent(hc, type, key) == 0)
+			printf("hpckbd: queue over flow\n");
 	} else {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 		if (hc->hc_rawkbd) {
 			int n;
 			u_char data[16];
-			n = pckbd_encode(type, hc->hc_keymap[scancode], data);
+			n = pckbd_encode(type, key, data);
 			wskbd_rawinput(hc->hc_wskbddev, data, n);
 		} else
 #endif
-			wskbd_input(hc->hc_wskbddev, type, hc->hc_keymap[scancode]);
+			wskbd_input(hc->hc_wskbddev, type, key);
 	}
 
 	return (0);

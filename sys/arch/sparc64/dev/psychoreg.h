@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.11 2003/05/17 01:48:22 nakayama Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.11.34.1 2006/04/22 11:37:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Eduardo E. Horvath
@@ -44,11 +44,11 @@
 
 struct psychoreg {
 	struct upareg {
-		u_int64_t	upa_portid;	/* UPA port ID register */		/* 1fe.0000.0000 */
-		u_int64_t	upa_config;	/* UPA config register */		/* 1fe.0000.0008 */
+		uint64_t	upa_portid;	/* UPA port ID register */		/* 1fe.0000.0000 */
+		uint64_t	upa_config;	/* UPA config register */		/* 1fe.0000.0008 */
 	} sys_upa;
 
-	u_int64_t	psy_csr;		/* PSYCHO control/status register */	/* 1fe.0000.0010 */
+	uint64_t	psy_csr;		/* PSYCHO control/status register */	/* 1fe.0000.0010 */
 	/* 
 	 * 63     59     55     50     45     4        3       2     1      0
 	 * +------+------+------+------+--//---+--------+-------+-----+------+
@@ -65,160 +65,160 @@ struct psychoreg {
 #define PSYCHO_CSR_IAP		2	/* invert UPA address parity */
 #define PSYCHO_CSR_MODE		1	/* UPA/PCI handshake */
 
-	u_int64_t	pad0;
-	u_int64_t	psy_ecccr;		/* ECC control register */		/* 1fe.0000.0020 */
-	u_int64_t	reserved;							/* 1fe.0000.0028 */
-	u_int64_t	psy_ue_afsr;		/* Uncorrectable Error AFSR */		/* 1fe.0000.0030 */
+	uint64_t	pad0;
+	uint64_t	psy_ecccr;		/* ECC control register */		/* 1fe.0000.0020 */
+	uint64_t	reserved;							/* 1fe.0000.0028 */
+	uint64_t	psy_ue_afsr;		/* Uncorrectable Error AFSR */		/* 1fe.0000.0030 */
 #define	PSYCHO_UE_AFSR_BITS	"\177\020"				\
 	"b\27BLK\0b\070P_DTE\0b\071S_DTE\0b\072S_DWR\0b\073S_DRD\0b"	\
 	"\075P_DWR\0b\076P_DRD\0\0"
-	u_int64_t	psy_ue_afar;		/* Uncorrectable Error AFAR */		/* 1fe.0000.0038 */
-	u_int64_t	psy_ce_afsr;		/* Correctable Error AFSR */		/* 1fe.0000.0040 */
-	u_int64_t	psy_ce_afar;		/* Correctable Error AFAR */		/* 1fe.0000.0048 */
+	uint64_t	psy_ue_afar;		/* Uncorrectable Error AFAR */		/* 1fe.0000.0038 */
+	uint64_t	psy_ce_afsr;		/* Correctable Error AFSR */		/* 1fe.0000.0040 */
+	uint64_t	psy_ce_afar;		/* Correctable Error AFAR */		/* 1fe.0000.0048 */
 
-	u_int64_t	pad1[22];
+	uint64_t	pad1[22];
 
 	struct perfmon {
-		u_int64_t	pm_cr;		/* Performance monitor control reg */	/* 1fe.0000.0100 */
-		u_int64_t	pm_count;	/* Performance monitor counter reg */	/* 1fe.0000.0108 */
+		uint64_t	pm_cr;		/* Performance monitor control reg */	/* 1fe.0000.0100 */
+		uint64_t	pm_count;	/* Performance monitor counter reg */	/* 1fe.0000.0108 */
 	} psy_pm;
 
-	u_int64_t	pad2[30];
+	uint64_t	pad2[30];
 
 	struct iommureg psy_iommu;							/* 1fe.0000.0200,0210 */
 
-	u_int64_t	pad3[317];
+	uint64_t	pad3[317];
 
-	u_int64_t	pcia_slot0_int;		/* PCI bus a slot 0 irq map reg */	/* 1fe.0000.0c00 */
-	u_int64_t	pcia_slot1_int;		/* PCI bus a slot 1 irq map reg */	/* 1fe.0000.0c08 */
-	u_int64_t	pcia_slot2_int;		/* PCI bus a slot 2 irq map reg (IIi)*/	/* 1fe.0000.0c10 */
-	u_int64_t	pcia_slot3_int;		/* PCI bus a slot 3 irq map reg (IIi)*/	/* 1fe.0000.0c18 */
-	u_int64_t	pcib_slot0_int;		/* PCI bus b slot 0 irq map reg */	/* 1fe.0000.0c20 */
-	u_int64_t	pcib_slot1_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c28 */
-	u_int64_t	pcib_slot2_int;		/* PCI bus b slot 2 irq map reg */	/* 1fe.0000.0c30 */
-	u_int64_t	pcib_slot3_int;		/* PCI bus b slot 3 irq map reg */	/* 1fe.0000.0c38 */
+	uint64_t	pcia_slot0_int;		/* PCI bus a slot 0 irq map reg */	/* 1fe.0000.0c00 */
+	uint64_t	pcia_slot1_int;		/* PCI bus a slot 1 irq map reg */	/* 1fe.0000.0c08 */
+	uint64_t	pcia_slot2_int;		/* PCI bus a slot 2 irq map reg (IIi)*/	/* 1fe.0000.0c10 */
+	uint64_t	pcia_slot3_int;		/* PCI bus a slot 3 irq map reg (IIi)*/	/* 1fe.0000.0c18 */
+	uint64_t	pcib_slot0_int;		/* PCI bus b slot 0 irq map reg */	/* 1fe.0000.0c20 */
+	uint64_t	pcib_slot1_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c28 */
+	uint64_t	pcib_slot2_int;		/* PCI bus b slot 2 irq map reg */	/* 1fe.0000.0c30 */
+	uint64_t	pcib_slot3_int;		/* PCI bus b slot 3 irq map reg */	/* 1fe.0000.0c38 */
 
-	u_int64_t	pad4[120];
+	uint64_t	pad4[120];
 
-	u_int64_t	scsi_int_map;		/* SCSI interrupt map reg */		/* 1fe.0000.1000 */
-	u_int64_t	ether_int_map;		/* ethernet interrupt map reg */	/* 1fe.0000.1008 */
-	u_int64_t	bpp_int_map;		/* parallel interrupt map reg */	/* 1fe.0000.1010 */
-	u_int64_t	audior_int_map;		/* audio record interrupt map reg */	/* 1fe.0000.1018 */
-	u_int64_t	audiop_int_map;		/* audio playback interrupt map reg */	/* 1fe.0000.1020 */
-	u_int64_t	power_int_map;		/* power fail interrupt map reg */	/* 1fe.0000.1028 */
-	u_int64_t	ser_kbd_ms_int_map;	/* serial/kbd/mouse interrupt map reg *//* 1fe.0000.1030 */
-	u_int64_t	fd_int_map;		/* floppy interrupt map reg */		/* 1fe.0000.1038 */
-	u_int64_t	spare_int_map;		/* spare interrupt map reg */		/* 1fe.0000.1040 */
-	u_int64_t	kbd_int_map;		/* kbd [unused] interrupt map reg */	/* 1fe.0000.1048 */
-	u_int64_t	mouse_int_map;		/* mouse [unused] interrupt map reg */	/* 1fe.0000.1050 */
-	u_int64_t	serial_int_map;		/* second serial interrupt map reg */	/* 1fe.0000.1058 */
-	u_int64_t	timer0_int_map;		/* timer 0 interrupt map reg */		/* 1fe.0000.1060 */
-	u_int64_t	timer1_int_map;		/* timer 1 interrupt map reg */		/* 1fe.0000.1068 */
-	u_int64_t	ue_int_map;		/* UE interrupt map reg */		/* 1fe.0000.1070 */
-	u_int64_t	ce_int_map;		/* CE interrupt map reg */		/* 1fe.0000.1078 */
-	u_int64_t	pciaerr_int_map;	/* PCI bus a error interrupt map reg */	/* 1fe.0000.1080 */
-	u_int64_t	pciberr_int_map;	/* PCI bus b error interrupt map reg */	/* 1fe.0000.1088 */
-	u_int64_t	pwrmgt_int_map;		/* power mgmt wake interrupt map reg */	/* 1fe.0000.1090 */
-	u_int64_t	ffb0_int_map;		/* FFB0 graphics interrupt map reg */	/* 1fe.0000.1098 */
-	u_int64_t	ffb1_int_map;		/* FFB1 graphics interrupt map reg */	/* 1fe.0000.10a0 */
+	uint64_t	scsi_int_map;		/* SCSI interrupt map reg */		/* 1fe.0000.1000 */
+	uint64_t	ether_int_map;		/* ethernet interrupt map reg */	/* 1fe.0000.1008 */
+	uint64_t	bpp_int_map;		/* parallel interrupt map reg */	/* 1fe.0000.1010 */
+	uint64_t	audior_int_map;		/* audio record interrupt map reg */	/* 1fe.0000.1018 */
+	uint64_t	audiop_int_map;		/* audio playback interrupt map reg */	/* 1fe.0000.1020 */
+	uint64_t	power_int_map;		/* power fail interrupt map reg */	/* 1fe.0000.1028 */
+	uint64_t	ser_kbd_ms_int_map;	/* serial/kbd/mouse interrupt map reg *//* 1fe.0000.1030 */
+	uint64_t	fd_int_map;		/* floppy interrupt map reg */		/* 1fe.0000.1038 */
+	uint64_t	spare_int_map;		/* spare interrupt map reg */		/* 1fe.0000.1040 */
+	uint64_t	kbd_int_map;		/* kbd [unused] interrupt map reg */	/* 1fe.0000.1048 */
+	uint64_t	mouse_int_map;		/* mouse [unused] interrupt map reg */	/* 1fe.0000.1050 */
+	uint64_t	serial_int_map;		/* second serial interrupt map reg */	/* 1fe.0000.1058 */
+	uint64_t	timer0_int_map;		/* timer 0 interrupt map reg */		/* 1fe.0000.1060 */
+	uint64_t	timer1_int_map;		/* timer 1 interrupt map reg */		/* 1fe.0000.1068 */
+	uint64_t	ue_int_map;		/* UE interrupt map reg */		/* 1fe.0000.1070 */
+	uint64_t	ce_int_map;		/* CE interrupt map reg */		/* 1fe.0000.1078 */
+	uint64_t	pciaerr_int_map;	/* PCI bus a error interrupt map reg */	/* 1fe.0000.1080 */
+	uint64_t	pciberr_int_map;	/* PCI bus b error interrupt map reg */	/* 1fe.0000.1088 */
+	uint64_t	pwrmgt_int_map;		/* power mgmt wake interrupt map reg */	/* 1fe.0000.1090 */
+	uint64_t	ffb0_int_map;		/* FFB0 graphics interrupt map reg */	/* 1fe.0000.1098 */
+	uint64_t	ffb1_int_map;		/* FFB1 graphics interrupt map reg */	/* 1fe.0000.10a0 */
 	
-	u_int64_t	pad5[107];
+	uint64_t	pad5[107];
 
 	/* Note: clear interrupt 0 registers are not really used */
-	u_int64_t	pcia0_clr_int[4];	/* PCI a slot 0 clear int regs 0..7 */	/* 1fe.0000.1400-1418 */
-	u_int64_t	pcia1_clr_int[4];	/* PCI a slot 1 clear int regs 0..7 */	/* 1fe.0000.1420-1438 */
-	u_int64_t	pcia2_clr_int[4];	/* PCI a slot 2 clear int regs 0..7 */	/* 1fe.0000.1440-1458 */
-	u_int64_t	pcia3_clr_int[4];	/* PCI a slot 3 clear int regs 0..7 */	/* 1fe.0000.1480-1478 */
-	u_int64_t	pcib0_clr_int[4];	/* PCI b slot 0 clear int regs 0..7 */	/* 1fe.0000.1480-1498 */
-	u_int64_t	pcib1_clr_int[4];	/* PCI b slot 1 clear int regs 0..7 */	/* 1fe.0000.14a0-14b8 */
-	u_int64_t	pcib2_clr_int[4];	/* PCI b slot 2 clear int regs 0..7 */	/* 1fe.0000.14c0-14d8 */
-	u_int64_t	pcib3_clr_int[4];	/* PCI b slot 3 clear int regs 0..7 */	/* 1fe.0000.14d0-14f8 */
+	uint64_t	pcia0_clr_int[4];	/* PCI a slot 0 clear int regs 0..7 */	/* 1fe.0000.1400-1418 */
+	uint64_t	pcia1_clr_int[4];	/* PCI a slot 1 clear int regs 0..7 */	/* 1fe.0000.1420-1438 */
+	uint64_t	pcia2_clr_int[4];	/* PCI a slot 2 clear int regs 0..7 */	/* 1fe.0000.1440-1458 */
+	uint64_t	pcia3_clr_int[4];	/* PCI a slot 3 clear int regs 0..7 */	/* 1fe.0000.1480-1478 */
+	uint64_t	pcib0_clr_int[4];	/* PCI b slot 0 clear int regs 0..7 */	/* 1fe.0000.1480-1498 */
+	uint64_t	pcib1_clr_int[4];	/* PCI b slot 1 clear int regs 0..7 */	/* 1fe.0000.14a0-14b8 */
+	uint64_t	pcib2_clr_int[4];	/* PCI b slot 2 clear int regs 0..7 */	/* 1fe.0000.14c0-14d8 */
+	uint64_t	pcib3_clr_int[4];	/* PCI b slot 3 clear int regs 0..7 */	/* 1fe.0000.14d0-14f8 */
 
-	u_int64_t	pad6[96];
+	uint64_t	pad6[96];
 
-	u_int64_t	scsi_clr_int;		/* SCSI clear int reg */		/* 1fe.0000.1800 */
-	u_int64_t	ether_clr_int;		/* ethernet clear int reg */		/* 1fe.0000.1808 */
-	u_int64_t	bpp_clr_int;		/* parallel clear int reg */		/* 1fe.0000.1810 */
-	u_int64_t	audior_clr_int;		/* audio record clear int reg */	/* 1fe.0000.1818 */
-	u_int64_t	audiop_clr_int;		/* audio playback clear int reg */	/* 1fe.0000.1820 */
-	u_int64_t	power_clr_int;		/* power fail clear int reg */		/* 1fe.0000.1828 */
-	u_int64_t	ser_kb_ms_clr_int;	/* serial/kbd/mouse clear int reg */	/* 1fe.0000.1830 */
-	u_int64_t	fd_clr_int;		/* floppy clear int reg */		/* 1fe.0000.1838 */
-	u_int64_t	spare_clr_int;		/* spare clear int reg */		/* 1fe.0000.1840 */
-	u_int64_t	kbd_clr_int;		/* kbd [unused] clear int reg */	/* 1fe.0000.1848 */
-	u_int64_t	mouse_clr_int;		/* mouse [unused] clear int reg */	/* 1fe.0000.1850 */
-	u_int64_t	serial_clr_int;		/* second serial clear int reg */	/* 1fe.0000.1858 */
-	u_int64_t	timer0_clr_int;		/* timer 0 clear int reg */		/* 1fe.0000.1860 */
-	u_int64_t	timer1_clr_int;		/* timer 1 clear int reg */		/* 1fe.0000.1868 */
-	u_int64_t	ue_clr_int;		/* UE clear int reg */			/* 1fe.0000.1870 */
-	u_int64_t	ce_clr_int;		/* CE clear int reg */			/* 1fe.0000.1878 */
-	u_int64_t	pciaerr_clr_int;	/* PCI bus a error clear int reg */	/* 1fe.0000.1880 */
-	u_int64_t	pciberr_clr_int;	/* PCI bus b error clear int reg */	/* 1fe.0000.1888 */
-	u_int64_t	pwrmgt_clr_int;		/* power mgmt wake clr interrupt reg */	/* 1fe.0000.1890 */
+	uint64_t	scsi_clr_int;		/* SCSI clear int reg */		/* 1fe.0000.1800 */
+	uint64_t	ether_clr_int;		/* ethernet clear int reg */		/* 1fe.0000.1808 */
+	uint64_t	bpp_clr_int;		/* parallel clear int reg */		/* 1fe.0000.1810 */
+	uint64_t	audior_clr_int;		/* audio record clear int reg */	/* 1fe.0000.1818 */
+	uint64_t	audiop_clr_int;		/* audio playback clear int reg */	/* 1fe.0000.1820 */
+	uint64_t	power_clr_int;		/* power fail clear int reg */		/* 1fe.0000.1828 */
+	uint64_t	ser_kb_ms_clr_int;	/* serial/kbd/mouse clear int reg */	/* 1fe.0000.1830 */
+	uint64_t	fd_clr_int;		/* floppy clear int reg */		/* 1fe.0000.1838 */
+	uint64_t	spare_clr_int;		/* spare clear int reg */		/* 1fe.0000.1840 */
+	uint64_t	kbd_clr_int;		/* kbd [unused] clear int reg */	/* 1fe.0000.1848 */
+	uint64_t	mouse_clr_int;		/* mouse [unused] clear int reg */	/* 1fe.0000.1850 */
+	uint64_t	serial_clr_int;		/* second serial clear int reg */	/* 1fe.0000.1858 */
+	uint64_t	timer0_clr_int;		/* timer 0 clear int reg */		/* 1fe.0000.1860 */
+	uint64_t	timer1_clr_int;		/* timer 1 clear int reg */		/* 1fe.0000.1868 */
+	uint64_t	ue_clr_int;		/* UE clear int reg */			/* 1fe.0000.1870 */
+	uint64_t	ce_clr_int;		/* CE clear int reg */			/* 1fe.0000.1878 */
+	uint64_t	pciaerr_clr_int;	/* PCI bus a error clear int reg */	/* 1fe.0000.1880 */
+	uint64_t	pciberr_clr_int;	/* PCI bus b error clear int reg */	/* 1fe.0000.1888 */
+	uint64_t	pwrmgt_clr_int;		/* power mgmt wake clr interrupt reg */	/* 1fe.0000.1890 */
 
-	u_int64_t	pad7[45];
+	uint64_t	pad7[45];
 
-	u_int64_t	intr_retry_timer;	/* interrupt retry timer */		/* 1fe.0000.1a00 */
+	uint64_t	intr_retry_timer;	/* interrupt retry timer */		/* 1fe.0000.1a00 */
 
-	u_int64_t	pad8[63];
+	uint64_t	pad8[63];
 
 	struct timer_counter {
-		u_int64_t	tc_count;	/* timer/counter 0/1 count register */	/* 1fe.0000.1c00,1c10 */
-		u_int64_t	tc_limit;	/* timer/counter 0/1 limit register */	/* 1fe.0000.1c08,1c18 */
+		uint64_t	tc_count;	/* timer/counter 0/1 count register */	/* 1fe.0000.1c00,1c10 */
+		uint64_t	tc_limit;	/* timer/counter 0/1 limit register */	/* 1fe.0000.1c08,1c18 */
 	} tc[2];
 
-	u_int64_t	pci_dma_write_sync;	/* PCI DMA write sync register (IIi) */	/* 1fe.0000.1c20 */
+	uint64_t	pci_dma_write_sync;	/* PCI DMA write sync register (IIi) */	/* 1fe.0000.1c20 */
 
-	u_int64_t	pad9[123];
+	uint64_t	pad9[123];
 
 	struct pci_ctl {
-		u_int64_t	pci_csr;	/* PCI a/b control/status register */	/* 1fe.0000.2000,4000 */
-		u_int64_t	pad10;
-		u_int64_t	pci_afsr;	/* PCI a/b AFSR register */		/* 1fe.0000.2010,4010 */
-		u_int64_t	pci_afar;	/* PCI a/b AFAR register */		/* 1fe.0000.2018,4018 */
-		u_int64_t	pci_diag;	/* PCI a/b diagnostic register */	/* 1fe.0000.2020,4020 */
-		u_int64_t	pci_tasr;	/* PCI target address space reg (IIi)*/	/* 1fe.0000.2028,4028 */
+		uint64_t	pci_csr;	/* PCI a/b control/status register */	/* 1fe.0000.2000,4000 */
+		uint64_t	pad10;
+		uint64_t	pci_afsr;	/* PCI a/b AFSR register */		/* 1fe.0000.2010,4010 */
+		uint64_t	pci_afar;	/* PCI a/b AFAR register */		/* 1fe.0000.2018,4018 */
+		uint64_t	pci_diag;	/* PCI a/b diagnostic register */	/* 1fe.0000.2020,4020 */
+		uint64_t	pci_tasr;	/* PCI target address space reg (IIi)*/	/* 1fe.0000.2028,4028 */
 
-		u_int64_t	pad11[250];
+		uint64_t	pad11[250];
 
 		/* This is really the IOMMU's, not the PCI bus's */
 		struct iommu_strbuf pci_strbuf;						/* 1fe.0000.2800-210 */
 #define psy_iommu_strbuf psy_pcictl[0].pci_strbuf
 		
-		u_int64_t	pad12[765];
+		uint64_t	pad12[765];
 	} psy_pcictl[2];			/* For PCI a and b */
 
 	/* NB: FFB0 and FFB1 intr map regs also appear at 1fe.0000.6000 and 1fe.0000.8000 respectively */
-	u_int64_t	pad13[2048];
+	uint64_t	pad13[2048];
 
-	u_int64_t	dma_scb_diag0;		/* DMA scoreboard diag reg 0 */		/* 1fe.0000.a000 */
-	u_int64_t	dma_scb_diag1;		/* DMA scoreboard diag reg 1 */		/* 1fe.0000.a008 */
+	uint64_t	dma_scb_diag0;		/* DMA scoreboard diag reg 0 */		/* 1fe.0000.a000 */
+	uint64_t	dma_scb_diag1;		/* DMA scoreboard diag reg 1 */		/* 1fe.0000.a008 */
 
-	u_int64_t	pad14[126];
+	uint64_t	pad14[126];
 
-	u_int64_t	iommu_svadiag;		/* IOMMU virtual addr diag reg */	/* 1fe.0000.a400 */
-	u_int64_t	iommu_tlb_comp_diag;	/* IOMMU TLB tag compare diag reg */	/* 1fe.0000.a408 */
+	uint64_t	iommu_svadiag;		/* IOMMU virtual addr diag reg */	/* 1fe.0000.a400 */
+	uint64_t	iommu_tlb_comp_diag;	/* IOMMU TLB tag compare diag reg */	/* 1fe.0000.a408 */
 	
-	u_int64_t	pad15[30];
+	uint64_t	pad15[30];
 
-	u_int64_t	iommu_queue_diag[16];	/* IOMMU LRU queue diag */		/* 1fe.0000.a500-a578 */
-	u_int64_t	tlb_tag_diag[16];	/* TLB tag diag */			/* 1fe.0000.a580-a5f8 */
-	u_int64_t	tlb_data_diag[16];	/* TLB data RAM diag */			/* 1fe.0000.a600-a678 */
+	uint64_t	iommu_queue_diag[16];	/* IOMMU LRU queue diag */		/* 1fe.0000.a500-a578 */
+	uint64_t	tlb_tag_diag[16];	/* TLB tag diag */			/* 1fe.0000.a580-a5f8 */
+	uint64_t	tlb_data_diag[16];	/* TLB data RAM diag */			/* 1fe.0000.a600-a678 */
 
-	u_int64_t	pad16[48];
+	uint64_t	pad16[48];
 
-	u_int64_t	pci_int_diag;		/* PCI int state diag reg */		/* 1fe.0000.a800 */
-	u_int64_t	obio_int_diag;		/* OBIO and misc int state diag reg */	/* 1fe.0000.a808 */
+	uint64_t	pci_int_diag;		/* PCI int state diag reg */		/* 1fe.0000.a800 */
+	uint64_t	obio_int_diag;		/* OBIO and misc int state diag reg */	/* 1fe.0000.a808 */
 
-	u_int64_t	pad17[254];
+	uint64_t	pad17[254];
 
 	struct strbuf_diag {
-		u_int64_t	strbuf_data_diag[128];	/* streaming buffer data RAM diag */	/* 1fe.0000.b000-b3f8 */
-		u_int64_t	strbuf_error_diag[128];	/* streaming buffer error status diag *//* 1fe.0000.b400-b7f8 */
-		u_int64_t	strbuf_pg_tag_diag[16];	/* streaming buffer page tag diag */	/* 1fe.0000.b800-b878 */
-		u_int64_t	pad18[16];
-		u_int64_t	strbuf_ln_tag_diag[16];	/* streaming buffer line tag diag */	/* 1fe.0000.b900-b978 */
-		u_int64_t	pad19[208];
+		uint64_t	strbuf_data_diag[128];	/* streaming buffer data RAM diag */	/* 1fe.0000.b000-b3f8 */
+		uint64_t	strbuf_error_diag[128];	/* streaming buffer error status diag *//* 1fe.0000.b400-b7f8 */
+		uint64_t	strbuf_pg_tag_diag[16];	/* streaming buffer page tag diag */	/* 1fe.0000.b800-b878 */
+		uint64_t	pad18[16];
+		uint64_t	strbuf_ln_tag_diag[16];	/* streaming buffer line tag diag */	/* 1fe.0000.b900-b978 */
+		uint64_t	pad19[208];
 	} psy_strbufdiag[2];					/* For PCI a and b */
 
 	/* 
@@ -282,7 +282,7 @@ struct psychoreg {
  */
 
 /*
- * For the physical adddresses split into 3 32 bit values, we deocde
+ * For the physical addresses split into 3 32 bit values, we deocde
  * them like the following (IEEE1275 PCI Bus binding 2.0, 2.2.1.1
  * Numerical Representation):
  *
@@ -322,37 +322,37 @@ struct psychoreg {
 #define TAG2FN(tag)	((tag) >> 8) & 0x7;
 
 struct psycho_registers {
-	u_int32_t	phys_hi;
-	u_int32_t	phys_mid;
-	u_int32_t	phys_lo;
-	u_int32_t	size_hi;
-	u_int32_t	size_lo;
+	uint32_t	phys_hi;
+	uint32_t	phys_mid;
+	uint32_t	phys_lo;
+	uint32_t	size_hi;
+	uint32_t	size_lo;
 };
 
 struct psycho_ranges {
-	u_int32_t	cspace;
-	u_int32_t	child_hi;
-	u_int32_t	child_lo;
-	u_int32_t	phys_hi;
-	u_int32_t	phys_lo;
-	u_int32_t	size_hi;
-	u_int32_t	size_lo;
+	uint32_t	cspace;
+	uint32_t	child_hi;
+	uint32_t	child_lo;
+	uint32_t	phys_hi;
+	uint32_t	phys_lo;
+	uint32_t	size_hi;
+	uint32_t	size_lo;
 };
 
 struct psycho_interrupt_map {
-	u_int32_t	phys_hi;
-	u_int32_t	phys_mid;
-	u_int32_t	phys_lo;
-	u_int32_t	intr;
+	uint32_t	phys_hi;
+	uint32_t	phys_mid;
+	uint32_t	phys_lo;
+	uint32_t	intr;
 	int32_t		child_node;
-	u_int32_t	child_intr;
+	uint32_t	child_intr;
 };
 
 struct psycho_interrupt_map_mask {
-	u_int32_t	phys_hi;
-	u_int32_t	phys_mid;
-	u_int32_t	phys_lo;
-	u_int32_t	intr;
+	uint32_t	phys_hi;
+	uint32_t	phys_mid;
+	uint32_t	phys_lo;
+	uint32_t	intr;
 };
 
 #endif /* _SPARC64_DEV_PSYCHOREG_H_ */

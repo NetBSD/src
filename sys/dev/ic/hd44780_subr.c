@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.8 2005/12/11 12:21:26 christos Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.8.6.1 2006/04/22 11:38:55 simonb Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.8 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.8.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,8 +88,8 @@ const struct wsdisplay_emulops hlcd_emulops = {
 	hlcd_allocattr
 };
 
-static int	hlcd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	hlcd_mmap(void *, off_t, int);
+static int	hlcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	hlcd_mmap(void *, void *, off_t, int);
 static int	hlcd_alloc_screen(void *, const struct wsscreen_descr *,
 		    void **, int *, int *, long *);
 static void	hlcd_free_screen(void *, void *);
@@ -228,8 +228,9 @@ hlcd_allocattr(id, fg, bg, flags, attrp)
 }
 
 static int
-hlcd_ioctl(v, cmd, data, flag, l)
+hlcd_ioctl(v, vs, cmd, data, flag, l)
 	void *v;
+	void *vs;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -255,8 +256,9 @@ hlcd_ioctl(v, cmd, data, flag, l)
 }
 
 static paddr_t
-hlcd_mmap(v, offset, prot)
+hlcd_mmap(v, vs, offset, prot)
 	void *v;
+	void *vs;
 	off_t offset;
 	int prot;
 {

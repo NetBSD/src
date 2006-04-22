@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.91 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.91.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.91 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.91.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.91 2005/12/11 12:24:29 christos Exp 
 #include "opt_compat_darwin.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_compat_linux32.h"
 #include "opt_compat_aout_m68k.h"
 #include "opt_compat_vax1k.h"
 #include "opt_compat_pecoff.h"
@@ -156,6 +157,9 @@ int ELF64NAME2(netbsd,probe)(struct lwp *, struct exec_package *,
 #include <compat/netbsd32/netbsd32_exec.h>
 #ifdef COMPAT_SUNOS
 #include <compat/sunos32/sunos32_exec.h>
+#endif
+#ifdef COMPAT_LINUX32
+#include <compat/linux32/common/linux32_exec.h>
 #endif
 #endif
 
@@ -301,6 +305,21 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf32,
 	  exec_setup_stack },		/* XXX XXX XXX */
 	  /* This one should go first so it matches instead of native */
+
+#ifdef COMPAT_LINUX32 
+        /* Linux Elf32 on 64-bit */
+        { sizeof (Elf32_Ehdr),
+          exec_elf32_makecmds,
+          { ELF32NAME2(linux32,probe) },
+          &emul_linux32,
+          EXECSW_PRIO_FIRST, 
+	  LINUX32_ELF_AUX_ARGSIZ,
+          linux32_elf32_copyargs,
+          NULL,
+          coredump_elf32,
+          exec_setup_stack },           /* XXX XXX XXX */
+          /* This one should go first so it matches instead of native */
+#endif 
 
 #ifdef COMPAT_SVR4_32
 	/* SVR4 Elf32 on 64-bit */

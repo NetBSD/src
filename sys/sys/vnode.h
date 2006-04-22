@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.152 2005/12/29 14:53:47 tsutsui Exp $	*/
+/*	$NetBSD: vnode.h,v 1.152.6.1 2006/04/22 11:40:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -303,15 +303,15 @@ void holdrelel(struct vnode *);
 void vholdl(struct vnode *);
 void vref(struct vnode *);
 
-static inline void holdrele(struct vnode *) __attribute__((__unused__));
-static inline void vhold(struct vnode *) __attribute__((__unused__));
+static __inline void holdrele(struct vnode *) __attribute__((__unused__));
+static __inline void vhold(struct vnode *) __attribute__((__unused__));
 
 #define	VATTR_NULL(vap)	vattr_null(vap)
 
 /*
  * decrease buf or page ref
  */
-static inline void
+static __inline void
 holdrele(struct vnode *vp)
 {
 
@@ -323,7 +323,7 @@ holdrele(struct vnode *vp)
 /*
  * increase buf or page ref
  */
-static inline void
+static __inline void
 vhold(struct vnode *vp)
 {
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.20 2006/01/26 20:07:34 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.20.4.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.20 2006/01/26 20:07:34 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.20.4.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -157,20 +157,22 @@ tmpfs_lookup(void *v)
 
 	/* We cannot be requesting the parent directory of the root node. */
 	KASSERT(IMPLIES(dnode->tn_type == VDIR &&
-	    dnode->tn_parent == dnode, !(cnp->cn_flags & ISDOTDOT)));
+	    dnode->tn_spec.tn_dir.tn_parent == dnode,
+	    !(cnp->cn_flags & ISDOTDOT)));
 
 	if (cnp->cn_flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp, 0);
 
 		/* Allocate a new vnode on the matching entry. */
-		error = tmpfs_alloc_vp(dvp->v_mount, dnode->tn_parent, vpp);
+		error = tmpfs_alloc_vp(dvp->v_mount,
+		    dnode->tn_spec.tn_dir.tn_parent, vpp);
 
 		if (cnp->cn_flags & LOCKPARENT &&
 		    cnp->cn_flags & ISLASTCN) {
 			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) != 0)
 				cnp->cn_flags |= PDIRUNLOCK;
 		}
-		dnode->tn_parent->tn_lookup_dirent = NULL;
+		dnode->tn_spec.tn_dir.tn_parent->tn_lookup_dirent = NULL;
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		VREF(dvp);
 		*vpp = dvp;
@@ -222,11 +224,15 @@ tmpfs_lookup(void *v)
 			if ((cnp->cn_flags & ISLASTCN) &&
 			    (cnp->cn_nameiop == DELETE ||
 			    cnp->cn_nameiop == RENAME)) {
+				if ((dnode->tn_mode & S_ISTXT) != 0 &&
+				    cnp->cn_cred->cr_uid != 0 &&
+				    cnp->cn_cred->cr_uid != dnode->tn_uid &&
+				    cnp->cn_cred->cr_uid != tnode->tn_uid)
+					return EPERM;
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred,
 				    cnp->cn_lwp);
 				if (error != 0)
 					goto out;
-				/* TODO: Check sticky bit. */
 				tnode->tn_lookup_dirent = de;
 			}
 
@@ -434,7 +440,7 @@ tmpfs_getattr(void *v)
 	vap->va_gen = node->tn_gen;
 	vap->va_flags = node->tn_flags;
 	vap->va_rdev = (vp->v_type == VBLK || vp->v_type == VCHR) ?
-		node->tn_rdev : VNOVAL;
+		node->tn_spec.tn_dev.tn_rdev : VNOVAL;
 	vap->va_bytes = round_page(node->tn_size);
 	vap->va_filerev = VNOVAL;
 	vap->va_vaflags = 0;
@@ -535,7 +541,7 @@ tmpfs_read(void *v)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
-	uobj = node->tn_aobj;
+	uobj = node->tn_spec.tn_reg.tn_aobj;
 	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 	error = 0;
 	while (error == 0 && uio->uio_resid > 0) {
@@ -602,7 +608,7 @@ tmpfs_write(void *v)
 			goto out;
 	}
 
-	uobj = node->tn_aobj;
+	uobj = node->tn_spec.tn_reg.tn_aobj;
 	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 	error = 0;
 	while (error == 0 && uio->uio_resid > 0) {
@@ -880,17 +886,17 @@ tmpfs_rename(void *v)
 			 * directory being moved.  Otherwise, we'd end up
 			 * with stale nodes. */
 			n = tdnode;
-			while (n != n->tn_parent) {
+			while (n != n->tn_spec.tn_dir.tn_parent) {
 				if (n == fnode) {
 					error = EINVAL;
 					goto out_locked;
 				}
-				n = n->tn_parent;
+				n = n->tn_spec.tn_dir.tn_parent;
 			}
 
 			/* Adjust the parent pointer. */
 			TMPFS_VALIDATE_DIR(fnode);
-			de->td_node->tn_parent = tdnode;
+			de->td_node->tn_spec.tn_dir.tn_parent = tdnode;
 
 			/* As a result of changing the target of the '..'
 			 * entry, the link count of the source and target
@@ -1008,7 +1014,7 @@ tmpfs_rmdir(void *v)
 	tmp = VFS_TO_TMPFS(dvp->v_mount);
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_DIR(vp);
-	KASSERT(node->tn_parent == dnode);
+	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/* Get the directory entry associated with node (vp).  This was
 	 * filled by tmpfs_lookup while looking up the entry. */
@@ -1036,8 +1042,8 @@ tmpfs_rmdir(void *v)
 	node->tn_links--;
 	node->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_CHANGED | \
 	    TMPFS_NODE_MODIFIED;
-	node->tn_parent->tn_links--;
-	node->tn_parent->tn_status |= TMPFS_NODE_ACCESSED | \
+	node->tn_spec.tn_dir.tn_parent->tn_links--;
+	node->tn_spec.tn_dir.tn_parent->tn_status |= TMPFS_NODE_ACCESSED | \
 	    TMPFS_NODE_CHANGED | TMPFS_NODE_MODIFIED;
 
 	/* Notify modification of parent directory and release it. */
@@ -1159,7 +1165,8 @@ outok:
 				off = TMPFS_DIRCOOKIE_DOTDOT;
 			} else {
 				if (off == TMPFS_DIRCOOKIE_DOTDOT) {
-					de = TAILQ_FIRST(&node->tn_dir);
+					de = TAILQ_FIRST(&node->tn_spec.
+					    tn_dir.tn_dir);
 				} else if (de != NULL) {
 					de = TAILQ_NEXT(de, td_entries);
 				} else {
@@ -1203,8 +1210,8 @@ tmpfs_readlink(void *v)
 
 	node = VP_TO_TMPFS_NODE(vp);
 
-	error = uiomove(node->tn_link, MIN(node->tn_size, uio->uio_resid),
-	    uio);
+	error = uiomove(node->tn_spec.tn_lnk.tn_link,
+	    MIN(node->tn_size, uio->uio_resid), uio);
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -1383,7 +1390,7 @@ tmpfs_getpages(void *v)
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
 
 	node = VP_TO_TMPFS_NODE(vp);
-	uobj = node->tn_aobj;
+	uobj = node->tn_spec.tn_reg.tn_aobj;
 
 	/* We currently don't rely on PGO_PASTEOF. */
 
@@ -1440,7 +1447,7 @@ tmpfs_putpages(void *v)
 		return 0;
 	}
 
-	uobj = node->tn_aobj;
+	uobj = node->tn_spec.tn_reg.tn_aobj;
 	simple_unlock(&vp->v_interlock);
 
 	simple_lock(&uobj->vmobjlock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.6 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.6.6.1 2006/04/22 11:39:54 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.9 2005/03/28 11:09:55 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.11 2005/06/18 02:41:32 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -16,18 +16,16 @@
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
 
-#if defined(__STDC__) || defined(__GNUC__)
+#if defined(__STDC__) || defined(__GNUC__) || defined(_AIX51)
 #define	SIOCADNAT	_IOW('r', 60, struct ipfobj)
 #define	SIOCRMNAT	_IOW('r', 61, struct ipfobj)
 #define	SIOCGNATS	_IOWR('r', 62, struct ipfobj)
 #define	SIOCGNATL	_IOWR('r', 63, struct ipfobj)
-#define	SIOCPROXY	_IOWR('r', 64, struct ap_control)
 #else
 #define	SIOCADNAT	_IOW(r, 60, struct ipfobj)
 #define	SIOCRMNAT	_IOW(r, 61, struct ipfobj)
 #define	SIOCGNATS	_IOWR(r, 62, struct ipfobj)
 #define	SIOCGNATL	_IOWR(r, 63, struct ipfobj)
-#define	SIOCPROXY	_IOWR(r, 64, struct ap_control)
 #endif
 
 #undef	LARGE_NAT	/* define	this if you're setting up a system to NAT
@@ -297,6 +295,7 @@ typedef	struct	natget	{
 } natget_t;
 
 
+#undef	tr_flags
 typedef	struct	nattrpnt	{
 	struct	in_addr	tr_dstip;	/* real destination IP# */
 	struct	in_addr	tr_srcip;	/* real source IP# */

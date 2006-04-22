@@ -1,4 +1,4 @@
-/* $NetBSD: mips_fputrap.c,v 1.2 2005/12/11 12:18:09 christos Exp $ */
+/* $NetBSD: mips_fputrap.c,v 1.2.6.1 2006/04/22 11:37:42 simonb Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -33,6 +33,7 @@
 #include <sys/siginfo.h>
 #include <mips/cpuregs.h>
 
+#ifndef SOFTFLOAT
 void mips_fpuexcept(struct lwp *, unsigned int);
 void mips_fpuillinst(struct lwp *, unsigned int, unsigned long);
 static int fpustat2sicode(unsigned int);
@@ -83,4 +84,23 @@ fpustat2sicode(unsigned int fpustat)
 		if (fpustat & fpecodes[i].bit)
 			return (fpecodes[i].code);
 	return (FPE_FLTINV);
+}
+#endif /* !SOFTFLOAT */
+
+void fpemul_trapsignal(struct lwp *, unsigned int, unsigned int);
+
+void
+fpemul_trapsignal(struct lwp *l, unsigned int sig, unsigned int code)
+{
+	ksiginfo_t ksi;
+
+#if DEBUG
+	printf("emul_trapsignal(%x,%x)\n", sig, code);
+#endif
+
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = sig;
+	ksi.ksi_code = 1; /* XXX */
+	ksi.ksi_trap = code;
+	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 }

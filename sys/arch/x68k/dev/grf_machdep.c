@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.25 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.25.6.1 2006/04/22 11:38:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.25 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_machdep.c,v 1.25.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include "locators.h"
 
@@ -218,7 +218,7 @@ grfattach(struct device *parent, struct device *dp, void *aux)
 		return;
 	}
 
-	cf = dp->dv_cfdata;
+	cf = device_cfdata(dp);
 	addr = cf->cf_loc[GRFBCF_ADDR];
 	grfinit(dp, addr);
 

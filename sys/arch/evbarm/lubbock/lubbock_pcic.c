@@ -1,4 +1,4 @@
-/*      $NetBSD: lubbock_pcic.c,v 1.2 2005/12/11 12:17:09 christos Exp $	*/
+/*      $NetBSD: lubbock_pcic.c,v 1.2.6.1 2006/04/22 11:37:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.2 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.2.6.1 2006/04/22 11:37:24 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,8 @@ static void
 lubbock_set_power(struct sapcic_socket *so, int arg)
 {
 	struct sacc_softc *sc = so->pcictag_cookie;
-	struct obio_softc *bsc = (struct obio_softc *)sc->sc_dev.dv_parent;
+	struct obio_softc *bsc =
+	    (struct obio_softc *)device_parent(&sc->sc_dev);
 	int s;
 	uint16_t tmp;
 

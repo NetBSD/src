@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.50 2005/11/28 21:03:20 bouyer Exp $
+ * $Id: aic7xxxvar.h,v 1.50.6.1 2006/04/22 11:38:54 simonb Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -171,8 +171,8 @@ struct seeprom_descriptor;
 	((scsiid) & OID)
 #define SCSIID_CHANNEL(ahc, scsiid) \
 	((((ahc)->features & AHC_TWIN) != 0) \
-        ? ((((scsiid) & TWIN_CHNLB) != 0) ? 'B' : 'A') \
-       : 'A')
+	? ((((scsiid) & TWIN_CHNLB) != 0) ? 'B' : 'A') \
+	: 'A')
 #define	SCB_IS_SCSIBUS_B(ahc, scb) \
 	(SCSIID_CHANNEL(ahc, (scb)->hscb->scsiid) == 'B')
 #define	SCB_GET_OUR_ID(scb) \
@@ -190,7 +190,7 @@ struct seeprom_descriptor;
 #ifdef AHC_DEBUG
 #define SCB_IS_SILENT(scb)					\
 	((ahc_debug & AHC_SHOW_MASKED_ERRORS) == 0		\
-      && (((scb)->flags & SCB_SILENT) != 0))
+	&& (((scb)->flags & SCB_SILENT) != 0))
 #else
 #define SCB_IS_SILENT(scb)					\
 	(((scb)->flags & SCB_SILENT) != 0)
@@ -225,7 +225,7 @@ struct seeprom_descriptor;
  * The maximum transfer per S/G segment.
  * Limited by MAXPHYS or a 24-bit counter.
  */
-#define AHC_MAXTRANSFER_SIZE	 MIN(MAXPHYS,0x00ffffff)
+#define AHC_MAXTRANSFER_SIZE	MIN(MAXPHYS,0x00ffffff)
 
 /*
  * The maximum amount of SCB storage in hardware on a controller.
@@ -415,8 +415,7 @@ typedef enum {
 	AHC_USEDEFAULTS	      = 0x004,  /*
 					 * For cards without an seeprom
 					 * or a BIOS to initialize the chip's
-					 * SRAM, we use the default target
-					 * settings.
+					 * SRAM, we use the default settings.
 					 */
 	AHC_SEQUENCER_DEBUG   = 0x008,
 	AHC_SHARED_SRAM	      = 0x010,
@@ -455,7 +454,14 @@ typedef enum {
 	AHC_LSCBS_ENABLED     = 0x2000000, /* 64Byte SCBs enabled */
 	AHC_SCB_CONFIG_USED   = 0x4000000, /* No SEEPROM but SCB2 had info. */
 	AHC_NO_BIOS_INIT      = 0x8000000, /* No BIOS left over settings. */
-	AHC_DISABLE_PCI_PERR  = 0x10000000
+	AHC_DISABLE_PCI_PERR  = 0x10000000,
+	AHC_USETARGETDEFAULTS = 0x20000000 /* 
+					    * For cards without an seeprom but
+					    * with BIOS which initializes chip's
+					    * SRAM with some conservative target
+					    * settings, we use the default
+					    * SCSI target settings.
+					    */
 } ahc_flag;
 
 /************************* Hardware  SCB Definition ***************************/
@@ -877,8 +883,8 @@ struct ahc_syncrate {
  * to parity errors in each phase table.
  */
 struct ahc_phase_table_entry {
-        uint8_t phase;
-        uint8_t mesg_out; /* Message response to parity errors */
+	uint8_t phase;
+	uint8_t mesg_out; /* Message response to parity errors */
 	const char *phasemsg;
 };
 

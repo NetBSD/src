@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.2 2002/10/02 05:31:47 thorpej Exp $ */
+/* $NetBSD: timekeeper.c,v 1.2.38.1 2006/04/22 11:37:40 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.2 2002/10/02 05:31:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.2.38.1 2006/04/22 11:37:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,12 +60,6 @@ struct timekeeper_softc {
 	int sc_nvramsize;
 	u_int8_t sc_image[2040];
 };
-
-/*
- * BCD to decimal and decimal to BCD.
- */
-#define FROMBCD(x)      (((x) >> 4) * 10 + ((x) & 0xf))
-#define TOBCD(x)        (((x) / 10 * 16) + ((x) % 10))
 
 static int  clock_match __P((struct device *, struct cfdata *, void *));
 static void clock_attach __P((struct device *, struct device *, void *));

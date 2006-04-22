@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.141 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.141.6.1 2006/04/22 11:40:10 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.141 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.141.6.1 2006/04/22 11:40:10 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -248,7 +248,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	struct rtentry *rt;
 	struct ifnet *ifp;
 	int size;
-	int iphlen;
+	int hdrlen;
 	int optlen;
 
 #ifdef DIAGNOSTIC
@@ -258,12 +258,12 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	switch (tp->t_family) {
 #ifdef INET
 	case AF_INET:
-		iphlen = sizeof(struct ip);
+		hdrlen = sizeof(struct ip) + sizeof(struct tcphdr);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		iphlen = sizeof(struct ip6_hdr);
+		hdrlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
 		break;
 #endif
 	default:
@@ -300,21 +300,19 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			 * smaller than 1280, use 1280 as packet size and
 			 * attach fragment header.
 			 */
-			size = IPV6_MMTU - iphlen - sizeof(struct ip6_frag) -
-			    sizeof(struct tcphdr);
+			size = IPV6_MMTU - hdrlen - sizeof(struct ip6_frag);
 		} else
-			size = rt->rt_rmx.rmx_mtu - iphlen -
-			    sizeof(struct tcphdr);
+			size = rt->rt_rmx.rmx_mtu - hdrlen;
 #else
-		size = rt->rt_rmx.rmx_mtu - iphlen - sizeof(struct tcphdr);
+		size = rt->rt_rmx.rmx_mtu - hdrlen;
 #endif
 	} else if (ifp->if_flags & IFF_LOOPBACK)
-		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		size = ifp->if_mtu - hdrlen;
 #ifdef INET
 	else if (inp && tp->t_mtudisc)
-		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		size = ifp->if_mtu - hdrlen;
 	else if (inp && in_localaddr(inp->inp_faddr))
-		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+		size = ifp->if_mtu - hdrlen;
 #endif
 #ifdef INET6
 	else if (in6p) {
@@ -324,7 +322,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			struct in_addr d;
 			bcopy(&in6p->in6p_faddr.s6_addr32[3], &d, sizeof(d));
 			if (tp->t_mtudisc || in_localaddr(d))
-				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+				size = ifp->if_mtu - hdrlen;
 		} else
 #endif
 		{
@@ -333,7 +331,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			 * or the node must use packet size <= 1280.
 			 */
 			size = tp->t_mtudisc ? IN6_LINKMTU(ifp) : IPV6_MMTU;
-			size -= (iphlen + sizeof(struct tcphdr));
+			size -= hdrlen;
 		}
 	}
 #endif

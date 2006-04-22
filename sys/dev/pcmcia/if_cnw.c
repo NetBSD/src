@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.32 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.32.6.1 2006/04/22 11:39:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.32 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.32.6.1 2006/04/22 11:39:24 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -908,7 +908,7 @@ cnw_intr(arg)
 	int ret, status, rser, tser;
 
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_RUNNING) == 0 ||
-	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	    !device_is_active(&sc->sc_dev))
 		return (0);
 	ifp->if_timer = 0;	/* stop watchdog timer */
 

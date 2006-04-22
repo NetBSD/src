@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.21 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.21.6.1 2006/04/22 11:40:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.21 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.21.6.1 2006/04/22 11:40:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -389,9 +389,8 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		auio.uio_iovcnt = 1;
 		auio.uio_offset = rwrq->ioc_offset;
 		auio.uio_resid = rwrq->ioc_cnt;
-		auio.uio_segflg = UIO_USERSPACE;
 		auio.uio_rw = (cmd == SMBIOC_READ) ? UIO_READ : UIO_WRITE;
-		auio.uio_lwp = l;
+		auio.uio_vmspace = l->l_proc->p_vmspace;
 		if (cmd == SMBIOC_READ)
 			error = smb_read(ssp, rwrq->ioc_fh, &auio, &scred);
 		else

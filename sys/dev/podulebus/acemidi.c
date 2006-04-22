@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.10 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: acemidi.c,v 1.10.6.1 2006/04/22 11:39:25 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.10 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.10.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -78,7 +78,7 @@ acemidi_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 acemidi_attach(struct device *parent, struct device *self, void *aux)
 {
-/*	struct acemidi_softc *sc = (void *)self; */
+/*	struct acemidi_softc *sc = device_private(self); */
 /*	struct podulebus_attach_args *pa = aux; */
 
 	printf("\n");
@@ -95,7 +95,7 @@ com_acemidi_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 com_acemidi_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct com_acemidi_softc *sc = (void *)self;
+	struct com_acemidi_softc *sc = device_private(self);
 	struct com_softc *csc = &sc->sc_com;
 	struct podulebus_attach_args *pa = aux;
 

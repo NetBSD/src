@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.17 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: asc.c,v 1.17.6.1 2006/04/22 11:37:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.17 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.17.6.1 2006/04/22 11:37:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.17 2005/12/11 12:16:39 christos Exp $");
 
 #define ASC_NPORTS	0x10
 #define ASC_ID_53CF94	0xa2	/* XXX should be in MI ncr53c9xreg.h? */
+#define ASC_ID_FAS216	0x12	/* XXX should be in MI ncr53c9xreg.h? */
 
 struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
@@ -128,6 +129,7 @@ asc_attach(struct device *parent, struct device *self, void *aux)
 	struct asc_softc *asc = (void *)self;
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
 	bus_space_tag_t iot;
+	uint8_t asc_id;
 
 #if 0
 	/* Need info from platform dependent config?? */
@@ -178,7 +180,8 @@ asc_attach(struct device *parent, struct device *self, void *aux)
 	DELAY(25);
 	asc_write_reg(sc, NCR_CMD, NCRCMD_DMA | NCRCMD_NOP);
 	DELAY(25);
-	if (asc_read_reg(sc, NCR_TCH) == ASC_ID_53CF94) {
+	asc_id = asc_read_reg(sc, NCR_TCH);
+	if (asc_id == ASC_ID_53CF94 || asc_id == ASC_ID_FAS216) {
 		/* XXX should be have NCR_VARIANT_NCR53CF94? */
 		sc->sc_rev = NCR_VARIANT_NCR53C94;
 		sc->sc_cfg2 = NCRCFG2_SCSI2 | NCRCFG2_FE;

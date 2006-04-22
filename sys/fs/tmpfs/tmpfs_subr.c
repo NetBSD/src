@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.17.6.2 2006/02/05 11:42:39 simonb Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.17.6.3 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.17.6.2 2006/02/05 11:42:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.17.6.3 2006/04/22 11:39:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -143,16 +143,17 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	switch (nnode->tn_type) {
 	case VBLK:
 	case VCHR:
-		nnode->tn_rdev = rdev;
+		nnode->tn_spec.tn_dev.tn_rdev = rdev;
 		break;
 
 	case VDIR:
-		TAILQ_INIT(&nnode->tn_dir);
-		nnode->tn_parent = (parent == NULL) ? nnode : parent;
-		nnode->tn_readdir_lastn = 0;
-		nnode->tn_readdir_lastp = NULL;
+		TAILQ_INIT(&nnode->tn_spec.tn_dir.tn_dir);
+		nnode->tn_spec.tn_dir.tn_parent =
+		    (parent == NULL) ? nnode : parent;
+		nnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
+		nnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 		nnode->tn_links++;
-		nnode->tn_parent->tn_links++;
+		nnode->tn_spec.tn_dir.tn_parent->tn_links++;
 		break;
 
 	case VFIFO:
@@ -163,19 +164,20 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	case VLNK:
 		KASSERT(strlen(target) < MAXPATHLEN);
 		nnode->tn_size = strlen(target);
-		nnode->tn_link = tmpfs_str_pool_get(&tmp->tm_str_pool,
-		    nnode->tn_size, 0);
-		if (nnode->tn_link == NULL) {
+		nnode->tn_spec.tn_lnk.tn_link =
+		    tmpfs_str_pool_get(&tmp->tm_str_pool, nnode->tn_size, 0);
+		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
 			nnode->tn_type = VNON;
 			tmpfs_free_node(tmp, nnode);
 			return ENOSPC;
 		}
-		memcpy(nnode->tn_link, target, nnode->tn_size);
+		memcpy(nnode->tn_spec.tn_lnk.tn_link, target, nnode->tn_size);
 		break;
 
 	case VREG:
-		nnode->tn_aobj = uao_create(INT32_MAX - PAGE_SIZE, 0);
-		nnode->tn_aobj_pages = 0;
+		nnode->tn_spec.tn_reg.tn_aobj =
+		    uao_create(INT32_MAX - PAGE_SIZE, 0);
+		nnode->tn_spec.tn_reg.tn_aobj_pages = 0;
 		break;
 
 	default:
@@ -231,15 +233,15 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 		break;
 
 	case VLNK:
-		tmpfs_str_pool_put(&tmp->tm_str_pool, node->tn_link,
-		    node->tn_size);
+		tmpfs_str_pool_put(&tmp->tm_str_pool,
+		    node->tn_spec.tn_lnk.tn_link, node->tn_size);
 		pages = 0;
 		break;
 
 	case VREG:
-		if (node->tn_aobj != NULL)
-			uao_detach(node->tn_aobj);
-		pages = node->tn_aobj_pages;
+		if (node->tn_spec.tn_reg.tn_aobj != NULL)
+			uao_detach(node->tn_spec.tn_reg.tn_aobj);
+		pages = node->tn_spec.tn_reg.tn_aobj_pages;
 		break;
 
 	default:
@@ -372,7 +374,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		/* FALLTHROUGH */
 	case VCHR:
 		vp->v_op = tmpfs_specop_p;
-		nvp = checkalias(vp, node->tn_rdev, mp);
+		nvp = checkalias(vp, node->tn_spec.tn_dev.tn_rdev, mp);
 		if (nvp != NULL) {
 			/* Discard unneeded vnode, but save its inode. */
 			nvp->v_data = vp->v_data;
@@ -398,7 +400,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		break;
 
 	case VDIR:
-		vp->v_flag = node->tn_parent == node ? VROOT : 0;
+		vp->v_flag = node->tn_spec.tn_dir.tn_parent == node ? VROOT : 0;
 		break;
 
 	case VFIFO:
@@ -546,7 +548,7 @@ tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
 
 	dnode = VP_TO_TMPFS_DIR(vp);
 
-	TAILQ_INSERT_TAIL(&dnode->tn_dir, de, td_entries);
+	TAILQ_INSERT_TAIL(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
 	dnode->tn_size += sizeof(struct tmpfs_dirent);
 	dnode->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_CHANGED | \
 	    TMPFS_NODE_MODIFIED;
@@ -569,12 +571,12 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 
 	dnode = VP_TO_TMPFS_DIR(vp);
 
-	if (dnode->tn_readdir_lastp == de) {
-		dnode->tn_readdir_lastn = 0;
-		dnode->tn_readdir_lastp = NULL;
+	if (dnode->tn_spec.tn_dir.tn_readdir_lastp == de) {
+		dnode->tn_spec.tn_dir.tn_readdir_lastn = 0;
+		dnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 	}
 
-	TAILQ_REMOVE(&dnode->tn_dir, de, td_entries);
+	TAILQ_REMOVE(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
 	dnode->tn_size -= sizeof(struct tmpfs_dirent);
 	dnode->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_CHANGED | \
 	    TMPFS_NODE_MODIFIED;
@@ -605,7 +607,7 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
 	found = 0;
-	TAILQ_FOREACH(de, &node->tn_dir, td_entries) {
+	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
 		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
@@ -673,7 +675,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 	TMPFS_VALIDATE_DIR(node);
 	KASSERT(uio->uio_offset == TMPFS_DIRCOOKIE_DOTDOT);
 
-	dent.d_fileno = node->tn_parent->tn_id;
+	dent.d_fileno = node->tn_spec.tn_dir.tn_parent->tn_id;
 	dent.d_type = DT_DIR;
 	dent.d_namlen = 2;
 	dent.d_name[0] = '.';
@@ -688,7 +690,7 @@ tmpfs_dir_getdotdotdent(struct tmpfs_node *node, struct uio *uio)
 		if (error == 0) {
 			struct tmpfs_dirent *de;
 
-			de = TAILQ_FIRST(&node->tn_dir);
+			de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir);
 			if (de == NULL)
 				uio->uio_offset = TMPFS_DIRCOOKIE_EOF;
 			else
@@ -711,12 +713,12 @@ tmpfs_dir_lookupbycookie(struct tmpfs_node *node, off_t cookie)
 {
 	struct tmpfs_dirent *de;
 
-	if (cookie == node->tn_readdir_lastn &&
-	    node->tn_readdir_lastp != NULL) {
-		return node->tn_readdir_lastp;
+	if (cookie == node->tn_spec.tn_dir.tn_readdir_lastn &&
+	    node->tn_spec.tn_dir.tn_readdir_lastp != NULL) {
+		return node->tn_spec.tn_dir.tn_readdir_lastp;
 	}
 
-	TAILQ_FOREACH(de, &node->tn_dir, td_entries) {
+	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		if (TMPFS_DIRCOOKIE(de) == cookie) {
 			break;
 		}
@@ -822,11 +824,12 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 	/* Update the offset and cache. */
 	if (de == NULL) {
 		uio->uio_offset = TMPFS_DIRCOOKIE_EOF;
-		node->tn_readdir_lastn = 0;
-		node->tn_readdir_lastp = NULL;
+		node->tn_spec.tn_dir.tn_readdir_lastn = 0;
+		node->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 	} else {
-		node->tn_readdir_lastn = uio->uio_offset = TMPFS_DIRCOOKIE(de);
-		node->tn_readdir_lastp = de;
+		node->tn_spec.tn_dir.tn_readdir_lastn = uio->uio_offset =
+		    TMPFS_DIRCOOKIE(de);
+		node->tn_spec.tn_dir.tn_readdir_lastp = de;
 	}
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
@@ -864,7 +867,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	 * its own. */
 	oldsize = node->tn_size;
 	oldpages = round_page(oldsize) / PAGE_SIZE;
-	KASSERT(oldpages == node->tn_aobj_pages);
+	KASSERT(oldpages == node->tn_spec.tn_reg.tn_aobj_pages);
 	newpages = round_page(newsize) / PAGE_SIZE;
 
 	if (newpages > oldpages &&
@@ -873,7 +876,7 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		goto out;
 	}
 
-	node->tn_aobj_pages = newpages;
+	node->tn_spec.tn_reg.tn_aobj_pages = newpages;
 
 	tmp->tm_pages_used += (newpages - oldpages);
 	node->tn_size = newsize;
@@ -886,7 +889,9 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		 */
 
 		if (newpages < oldpages) {
-			struct uvm_object *uobj = node->tn_aobj;
+			struct uvm_object *uobj;
+			
+			uobj = node->tn_spec.tn_reg.tn_aobj;
 
 			simple_lock(&uobj->vmobjlock);
 			uao_dropswap_range(uobj, newpages, oldpages);

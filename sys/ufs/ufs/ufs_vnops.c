@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.138.6.1 2006/02/04 14:12:50 simonb Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.138.6.2 2006/04/22 11:40:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.138.6.1 2006/02/04 14:12:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.138.6.2 2006/04/22 11:40:27 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1597,7 +1597,7 @@ ufs_readdir(void *v)
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = uio->uio_offset;
 	auio.uio_resid = rcount;
-	auio.uio_segflg = UIO_SYSSPACE;
+	UIO_SETUP_SYSSPACE(&auio);
 	auio.uio_rw = UIO_READ;
 	cdbuf = malloc(rcount, M_TEMP, M_WAITOK);
 	aiov.iov_base = cdbuf;

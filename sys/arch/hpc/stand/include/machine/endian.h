@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.7 2006/01/14 21:17:37 uwe Exp $	*/
+/*	$NetBSD: endian.h,v 1.7.4.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /* Windows CE architecture */
 
@@ -15,7 +15,7 @@
  * ugliness, pull a copy here, so that we can hack it privately.
  */
 
-/*	From: NetBSD: endian.h,v 1.20 2005/12/27 17:21:34 perry Exp	*/
+/*	From: NetBSD: endian.h,v 1.23 2006/02/04 01:07:20 uwe Exp	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -121,6 +121,8 @@ __END_DECLS
 
 #ifndef _LOCORE
 
+#include <machine/bswap.h>
+
 /*
  * Macros for network/external number representation conversion.
  */
@@ -137,6 +139,14 @@ __END_DECLS
 
 #else	/* LITTLE_ENDIAN || !defined(__lint__) */
 
+/* XXX: uwe: Use ntohl &co supplied by WinCE. */
+#if 0
+#define	ntohl(x)	bswap32((uint32_t)(x))
+#define	ntohs(x)	bswap16((uint16_t)(x))
+#define	htonl(x)	bswap32((uint32_t)(x))
+#define	htons(x)	bswap16((uint16_t)(x))
+#endif
+
 #define	NTOHL(x)	(x) = ntohl((uint32_t)(x))
 #define	NTOHS(x)	(x) = ntohs((uint16_t)(x))
 #define	HTONL(x)	(x) = htonl((uint32_t)(x))
@@ -146,8 +156,6 @@ __END_DECLS
 /*
  * Macros to convert to a specific endianness.
  */
-
-#include <machine/bswap.h>
 
 #if BYTE_ORDER == BIG_ENDIAN
 

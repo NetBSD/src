@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.43 2006/01/31 14:11:25 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.43.4.1 2006/04/22 11:40:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.43 2006/01/31 14:11:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.43.4.1 2006/04/22 11:40:28 simonb Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.43 2006/01/31 14:11:25 yamt Exp $");
  */
 
 static int	ubc_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **,
-			  int, int, vm_fault_t, vm_prot_t, int);
+			  int, int, vm_prot_t, int);
 static struct ubc_map *ubc_find_mapping(struct uvm_object *, voff_t);
 
 /*
@@ -204,7 +204,7 @@ ubc_init(void)
 
 static int
 ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
-    int ign3, int ign4, vm_fault_t fault_type, vm_prot_t access_type,
+    int ign3, int ign4, vm_prot_t access_type,
     int flags)
 {
 	struct uvm_object *uobj;
@@ -364,7 +364,7 @@ again:
 		uvm_lock_pageq();
 		uvm_pageactivate(pg);
 		uvm_unlock_pageq();
-		pg->flags &= ~(PG_BUSY);
+		pg->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		simple_unlock(&uobj->vmobjlock);
 	}

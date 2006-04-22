@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.16 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.16.6.1 2006/04/22 11:38:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.16 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.16.6.1 2006/04/22 11:38:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,6 +281,9 @@ netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 	si32->si_errno = si->si_errno;
 
 	switch (si32->si_signo) {
+	case 0:	/* SA */
+		si32->si_sigval.sival_int = si->si_sigval.sival_int;
+		break;
 	case SIGILL:
 	case SIGBUS:
 	case SIGSEGV:

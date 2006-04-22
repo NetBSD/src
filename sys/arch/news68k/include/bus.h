@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2005/12/24 20:07:20 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.6.6.1 2006/04/22 11:37:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -546,13 +546,13 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
  */
 
 #define	__NEWS68K_copy_region_N(BYTES)					\
-static inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	(bus_space_tag_t,						\
 	 bus_space_handle_t bsh1, bus_size_t off1,			\
 	 bus_space_handle_t bsh2, bus_size_t off2,			\
 	 bus_size_t count);						\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(bus_space_tag_t t,		\
     bus_space_handle_t h1, bus_space_handle_t h2,			\
     bus_size_t o1, bus_size_t o2, bus_size_t c)				\

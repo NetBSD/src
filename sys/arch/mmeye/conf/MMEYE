@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.32 2005/12/07 09:10:16 tsutsui Exp $
+#	$NetBSD: MMEYE,v 1.32.6.1 2006/04/22 11:37:44 simonb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -99,9 +99,9 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss		4	# file system snapshot device
-#pseudo-device	bpfilter	8	# Berkeley packet filter
+#pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals

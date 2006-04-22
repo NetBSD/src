@@ -103,7 +103,7 @@ enum ieee80211_roamingmode {
  * Channels are specified by frequency and attributes.
  */
 struct ieee80211_channel {
-	u_int16_t	ic_freq;	/* setting in Mhz */
+	u_int16_t	ic_freq;	/* setting in MHz */
 	u_int16_t	ic_flags;	/* see below */
 };
 
@@ -141,6 +141,12 @@ struct ieee80211_channel {
 	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 #define	IEEE80211_CHAN_108G \
 	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
+
+#define	IEEE80211_CHAN_ALL \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_GFSK | \
+	 IEEE80211_CHAN_CCK | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_DYN)
+#define	IEEE80211_CHAN_ALLTURBO \
+	(IEEE80211_CHAN_ALL | IEEE80211_CHAN_TURBO)
 
 #define	IEEE80211_IS_CHAN_FHSS(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_FHSS) == IEEE80211_CHAN_FHSS)

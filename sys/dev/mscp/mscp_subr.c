@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.30 2005/12/11 12:22:47 christos Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.30.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.30 2005/12/11 12:22:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_subr.c,v 1.30.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,7 +166,7 @@ mscp_attach(parent, self, aux)
 	void *aux;
 {
 	struct	mscp_attach_args *ma = aux;
-	struct	mscp_softc *mi = (void *)self;
+	struct	mscp_softc *mi = device_private(self);
 	struct mscp *mp2;
 	volatile struct mscp *mp;
 	volatile int i;
@@ -354,7 +354,7 @@ mscp_init(mi)
 	if (status == 0)
 		return 1; /* Init failed */
 	if (READ_SA & MP_ERR) {
-		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
 		return 1;
 	}
 
@@ -363,7 +363,7 @@ mscp_init(mi)
 	    MP_IE | (mi->mi_ivec >> 2));
 	status = mscp_waitstep(mi, STEP1MASK, STEP1GOOD);
 	if (status == 0) {
-		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
 		return 1;
 	}
 
@@ -373,7 +373,7 @@ mscp_init(mi)
 	    (vax_cputype == VAX_780 || vax_cputype == VAX_8600 ? MP_PI : 0));
 	status = mscp_waitstep(mi, STEP2MASK, STEP2GOOD(mi->mi_ivec >> 2));
 	if (status == 0) {
-		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
 		return 1;
 	}
 
@@ -381,7 +381,7 @@ mscp_init(mi)
 	WRITE_SW((mi->mi_dmam->dm_segs[0].ds_addr >> 16));
 	status = mscp_waitstep(mi, STEP3MASK, STEP3GOOD);
 	if (status == 0) {
-		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
+		(*mi->mi_mc->mc_saerror)(device_parent(&mi->mi_dev), 0);
 		return 1;
 	}
 	i = READ_SA & 0377;
@@ -544,7 +544,7 @@ mscp_kickaway(mi)
 		if ((mp = mscp_getcp(mi, MSCP_DONTWAIT)) == NULL) {
 			if (mi->mi_credits > MSCP_MINCREDITS)
 				printf("%s: command ring too small\n",
-				    mi->mi_dev.dv_parent->dv_xname);
+				    device_parent(&mi->mi_dev)->dv_xname);
 			/*
 			 * By some (strange) reason we didn't get a MSCP packet.
 			 * Just return and wait for free packets.
@@ -568,7 +568,8 @@ mscp_kickaway(mi)
 		mi->mi_xi[next].mxi_inuse = 1;
 		bp->b_resid = next;
 		(*mi->mi_me->me_fillin)(bp, mp);
-		(*mi->mi_mc->mc_go)(mi->mi_dev.dv_parent, &mi->mi_xi[next]);
+		(*mi->mi_mc->mc_go)(device_parent(&mi->mi_dev),
+		    &mi->mi_xi[next]);
 		(void)BUFQ_GET(mi->mi_resq);
 	}
 }

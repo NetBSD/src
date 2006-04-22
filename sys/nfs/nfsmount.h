@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.37 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.37.6.1 2006/04/22 11:40:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,9 @@
 
 #ifndef _NFS_NFSMOUNT_H_
 #define _NFS_NFSMOUNT_H_
+#ifdef _KERNEL
+#include <sys/disk.h>
+#endif
 
 /*
  * Arguments to mount NFS
@@ -167,6 +170,7 @@ struct	nfsmount {
 	int	nm_iflag;		/* internal flags */
 	int	nm_waiters;		/* number of waiting listeners.. */
 	long	nm_wcckludgetime;	/* see nfs_check_wccdata() */
+	struct io_stats *nm_stats;	/* per nfs mount statistics */
 };
 
 /*

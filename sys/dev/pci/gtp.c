@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.10 2005/12/11 12:22:49 christos Exp $ */
+/* $NetBSD: gtp.c,v 1.10.6.1 2006/04/22 11:39:13 simonb Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 /* Gemtek PCI Radio Card Device Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.10 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.10.6.1 2006/04/22 11:39:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ gtp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gtp_softc *sc = (struct gtp_softc *) self;
 	struct pci_attach_args *pa = aux;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
+	struct cfdata *cf = device_cfdata(&sc->sc_dev);
 	pci_chipset_tag_t pc = pa->pa_pc;
 	bus_size_t iosize;
 	pcireg_t csr;

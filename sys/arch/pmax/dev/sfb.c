@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.43 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: sfb.c,v 1.43.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.43 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.43.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ sfbattach(parent, self, aux)
 {
 	struct tc_attach_args *ta = aux;
 	caddr_t sfbaddr = (caddr_t)ta->ta_addr;
-	int unit = self->dv_unit;
+	int unit = device_unit(self);
 	struct fbinfo *fi;
 
 	if (sfb_fi)

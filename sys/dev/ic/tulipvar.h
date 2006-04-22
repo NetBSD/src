@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.57 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.57.6.1 2006/04/22 11:38:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -153,7 +153,8 @@ typedef enum {
 	TULIP_CHIP_AN985     = 22,	/* ADMtek AN985 */
 	TULIP_CHIP_AX88140   = 23,	/* ASIX AX88140 */
 	TULIP_CHIP_AX88141   = 24,	/* ASIX AX88141 */
-	TULIP_CHIP_X3201_3   = 25	/* Xircom X3201-3 */
+	TULIP_CHIP_X3201_3   = 25,	/* Xircom X3201-3 */
+	TULIP_CHIP_RS7112    = 26	/* Conexant RS7112 LANfinity */
 } tulip_chip_t;
 
 #define	TULIP_CHIP_NAMES						\
@@ -184,6 +185,7 @@ typedef enum {
 	"ASIX AX88140",							\
 	"ASIX AX88141",							\
 	"Xircom X3201-3",						\
+	"Conexant RS7112",						\
 }
 
 struct tulip_softc;
@@ -596,6 +598,7 @@ extern const struct tulip_mediasw tlp_al981_mediasw;
 extern const struct tulip_mediasw tlp_an985_mediasw;
 extern const struct tulip_mediasw tlp_dm9102_mediasw;
 extern const struct tulip_mediasw tlp_asix_mediasw;
+extern const struct tulip_mediasw tlp_rs7112_mediasw;
 
 void	tlp_attach(struct tulip_softc *, const u_int8_t *);
 int	tlp_activate(struct device *, enum devact);

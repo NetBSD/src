@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.109 2006/01/21 13:34:15 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.109.4.1 2006/04/22 11:40:28 simonb Exp $	*/
 
 /*
  *
@@ -84,7 +84,6 @@
  */
 
 typedef unsigned int uvm_flag_t;
-typedef int vm_fault_t;
 
 typedef int vm_inherit_t;	/* XXX: inheritance codes */
 typedef off_t voff_t;		/* XXX: offset within a uvm_object */
@@ -322,7 +321,7 @@ struct uvmexp {
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 
-	/* stat counters */
+	/* stat counters.  XXX: should be 64-bit counters */
 	int faults;		/* page fault count */
 	int traps;		/* trap count */
 	int intrs;		/* interrupt count */
@@ -347,7 +346,7 @@ struct uvmexp {
 	int colorhit;		/* pagealloc where we got optimal color */
 	int colormiss;		/* pagealloc where we didn't */
 
-	/* fault subcounters */
+	/* fault subcounters.  XXX: should be 64-bit counters */
 	int fltnoram;	/* number of times fault was out of ram */
 	int fltnoanon;	/* number of times fault was out of anons */
 	int fltpgwait;	/* number of times fault had to wait on a page */
@@ -367,7 +366,7 @@ struct uvmexp {
 	int flt_prcopy;	/* number of times fault promotes with copy (2b) */
 	int flt_przero;	/* number of times fault promotes with zerofill (2b) */
 
-	/* daemon counters */
+	/* daemon counters.  XXX: should be 64-bit counters */
 	int pdwoke;	/* number of times daemon woke up */
 	int pdrevs;	/* number of times daemon rev'd clock hand */
 	int pdswout;	/* number of times daemon called for swapout */
@@ -486,7 +485,6 @@ extern struct uvmexp uvmexp;
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_map.h>
-#include <uvm/uvm_fault.h>
 #include <uvm/uvm_pager.h>
 
 /*
@@ -511,6 +509,7 @@ struct vmspace {
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
 	caddr_t vm_minsaddr;	/* user VA at top of stack */
 };
+#define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
 
 #ifdef _KERNEL
 
@@ -574,9 +573,9 @@ void			ubc_release(void *, int);
 void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 
 /* uvm_fault.c */
-int			uvm_fault(struct vm_map *, vaddr_t, vm_fault_t,
-			    vm_prot_t);
-				/* handle a page fault */
+#define uvm_fault(m, a, p) uvm_fault_internal(m, a, p, 0)
+int		uvm_fault_internal(struct vm_map *, vaddr_t, vm_prot_t, int);
+			/* handle a page fault */
 
 /* uvm_glue.c */
 #if defined(KGDB)
@@ -639,6 +638,7 @@ void			uvmspace_init(struct vmspace *, struct pmap *,
 			    vaddr_t, vaddr_t);
 void			uvmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 struct vmspace		*uvmspace_fork(struct vmspace *);
+void			uvmspace_addref(struct vmspace *);
 void			uvmspace_free(struct vmspace *);
 void			uvmspace_share(struct proc *, struct proc *);
 void			uvmspace_unshare(struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.13 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.13.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.13 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.13.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,9 +109,9 @@ pwctl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	int *loc;
-	struct pwctl_softc *sc = (void*)self;
+	struct pwctl_softc *sc = device_private(self);
 
-	loc = sc->sc_dev.dv_cfdata->cf_loc;
+	loc = device_cfdata(&sc->sc_dev)->cf_loc;
 	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, loc[HPCIOIFCF_IOCHIP]);
 	sc->sc_port = loc[HPCIOIFCF_PORT];
 	sc->sc_id = loc[HPCIOIFCF_ID];

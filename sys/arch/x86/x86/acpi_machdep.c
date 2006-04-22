@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.8 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.8.6.1 2006/04/22 11:38:09 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.6.1 2006/04/22 11:38:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ struct acpi_intr_defer {
 	LIST_ENTRY(acpi_intr_defer) list;
 };
 
-LIST_HEAD(, acpi_intr_defer) acpi_intr_deferq =
+static LIST_HEAD(, acpi_intr_defer) acpi_intr_deferq =
     LIST_HEAD_INITIALIZER(acpi_intr_deferq);
 
 ACPI_STATUS

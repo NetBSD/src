@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.51 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.51.6.1 2006/04/22 11:37:57 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.51 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.51.6.1 2006/04/22 11:37:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ cgtwoattach(struct device *parent, struct device *self, void *aux)
 	fb->fb_driver = &cgtwofbdriver;
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_type.fb_type = FBTYPE_SUN2COLOR;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
 
 	fb->fb_type.fb_depth = 8;
 	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);

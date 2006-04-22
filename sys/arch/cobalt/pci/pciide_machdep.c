@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.6 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.6.6.1 2006/04/22 11:37:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6.6.1 2006/04/22 11:37:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,12 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.6 2005/12/11 12:17:06 christos 
 #include <machine/intr.h>
 
 void *
-pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func)(void *);
-	void *arg;
+pciide_machdep_compat_intr_establish(struct device *dev,
+    struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	int irq;
 	void *cookie;
@@ -53,8 +49,8 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	irq = PCIIDE_COMPAT_IRQ(chan);
 	cookie = icu_intr_establish(irq, IST_EDGE, IPL_BIO, func, arg);
 	if (cookie == NULL)
-		return (NULL);
+		return NULL;
 	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
 	    PCIIDE_CHANNEL_NAME(chan), irq);
-	return (cookie);
+	return cookie;
 }

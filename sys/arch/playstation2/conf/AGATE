@@ -1,7 +1,7 @@
 #
 # -- SCPH-18000 used by uch@NetBSD.org
 #
-# 	$NetBSD: AGATE,v 1.9 2005/12/11 12:18:34 christos Exp $
+# 	$NetBSD: AGATE,v 1.9.6.1 2006/04/22 11:37:51 simonb Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -31,4 +31,4 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
 
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol

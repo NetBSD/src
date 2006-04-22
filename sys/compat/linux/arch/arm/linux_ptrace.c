@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.3 2003/01/18 08:02:47 thorpej Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.3.34.1 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.3 2003/01/18 08:02:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.3.34.1 2006/04/22 11:38:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -94,11 +94,6 @@ struct linux_reg {
 #define LINUX_REG_PC	15
 #define LINUX_REG_CPSR	16
 #define LINUX_REG_ORIG_R0 17
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 int
 linux_sys_ptrace_arch(l, v, retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.28.6.1 2006/02/04 14:18:53 simonb Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.28.6.2 2006/04/22 11:40:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.28.6.1 2006/02/04 14:18:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.28.6.2 2006/04/22 11:40:14 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -696,8 +696,11 @@ tp_attach(struct socket *so, int protocol)
 	ASSERT(tpcb->tp_nlproto->nlp_afamily == tpcb->tp_domain);
 
 	/* nothing to do for iso case */
-	if (dom == AF_INET)
+	if (dom == AF_INET) {
+		/* tp_set_npcb sets it */
+		KASSERT(so->so_pcb != NULL);
 		sotoinpcb(so)->inp_ppcb = (caddr_t) tpcb;
+	}
 
 	return 0;
 

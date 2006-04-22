@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.261.6.1 2006/02/04 14:37:37 simonb Exp $	*/
+/*	$NetBSD: init_main.c,v 1.261.6.2 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,18 +71,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261.6.1 2006/02/04 14:37:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261.6.2 2006/04/22 11:39:58 simonb Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
-#include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
 #include "opt_posix.h"
-#include "opt_rootfs_magiclinks.h"
 #include "opt_syscall_debug.h"
-#include "opt_systrace.h"
 #include "opt_sysv.h"
 #include "opt_verified_exec.h"
 
@@ -130,9 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.261.6.1 2006/02/04 14:37:37 simonb E
 #endif
 #ifdef P1003_1B_SEMAPHORE
 #include <sys/ksem.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #include <sys/domain.h>
 #include <sys/namei.h>
@@ -428,9 +422,6 @@ main(void)
 #endif /* __HAVE_TIMECOUNTER */
 
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
-#ifdef ROOTFS_MAGICLINKS
-	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_MAGICLINKS;
-#endif
 	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
 
 	/*
@@ -515,7 +506,6 @@ main(void)
 void
 setrootfstime(time_t t)
 {
-
 	rootfstime = t;
 }
 

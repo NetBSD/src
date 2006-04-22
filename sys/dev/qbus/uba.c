@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.73 2005/12/11 12:23:29 christos Exp $	   */
+/*	$NetBSD: uba.c,v 1.73.6.1 2006/04/22 11:39:25 simonb Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.73 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.73.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -110,7 +110,7 @@ uba_enqueue(struct uba_unit *uu)
 	struct uba_softc *uh;
 	int s;
 
-	uh = (void *)((struct device *)(uu->uu_softc))->dv_parent;
+	uh = (void *)device_parent((struct device *)(uu->uu_softc));
 
 	s = spluba();
 	SIMPLEQ_INSERT_TAIL(&uh->uh_resq, uu, uu_resq);
@@ -144,7 +144,7 @@ uba_done(struct uba_softc *uh)
 void
 uba_reset_establish(void (*reset)(struct device *), struct device *dev)
 {
-	struct uba_softc *uh = (void *)dev->dv_parent;
+	struct uba_softc *uh = (void *)device_parent(dev);
 	struct uba_reset *ur;
 
 	ur = malloc(sizeof(struct uba_reset), M_DEVBUF, M_NOWAIT);

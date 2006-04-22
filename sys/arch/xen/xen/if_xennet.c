@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.42 2006/02/01 19:12:02 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.42.2.1 2006/04/22 11:38:11 simonb Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.42 2006/02/01 19:12:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.42.2.1 2006/04/22 11:38:11 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -197,7 +197,7 @@ void xennet_start(struct ifnet *);
 int  xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
 void xennet_watchdog(struct ifnet *ifp);
 
-CFATTACH_DECL(xennet, sizeof(struct xennet_softc),
+CFATTACH_DECL(xennet_hypervisor, sizeof(struct xennet_softc),
     xennet_match, xennet_attach, NULL, NULL);
 
 #define RX_MAX_ENTRIES (NETIF_RX_RING_SIZE - 2)
@@ -325,8 +325,7 @@ find_device(int handle)
 	struct xennet_softc *xs = NULL;
 
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_cfattach == NULL ||
-		    dv->dv_cfattach->ca_attach != xennet_attach)
+		if (!device_is_a(dv, "xennet"))
 			continue;
 		xs = (struct xennet_softc *)dv;
 		if (xs->sc_ifno == handle)
@@ -385,8 +384,7 @@ xennet_driver_count_connected(void)
 
 	netctrl.xc_interfaces = netctrl.xc_connected = 0;
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_cfattach == NULL ||
-		    dv->dv_cfattach->ca_attach != xennet_attach)
+		if (!device_is_a(dv, "xennet"))
 			continue;
 		xs = (struct xennet_softc *)dv;
 		netctrl.xc_interfaces++;
@@ -550,7 +548,7 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 		 * we've probably just requeued some packets.
 		 */
 		sc->sc_backend_state = BEST_CONNECTED;
-		__insn_barrier();
+		x86_sfence();
 		hypervisor_notify_via_evtchn(status->evtchn);  
 		network_tx_buf_gc(sc);
 
@@ -787,16 +785,21 @@ xen_network_handler(void *arg)
 			 * memory, copy data and push the receive
 			 * buffer back to the hypervisor.
 			 */
-			m->m_len = MHLEN;
-			m->m_pkthdr.len = 0;
-			m_copyback(m, 0, rx->status, pktp);
-			xennet_rx_push_buffer(sc, rx->id);
-			if (m->m_pkthdr.len < rx->status) {
-				/* out of memory, just drop packets */
-				ifp->if_ierrors++;
-				m_freem(m);
-				continue;
+			if (rx->status > MHLEN) {
+				MCLGET(m, M_DONTWAIT);
+				if (__predict_false(
+				    (m->m_flags & M_EXT) == 0)) {
+					/* out of memory, just drop packets */
+					ifp->if_ierrors++;
+					m_freem(m);
+					xennet_rx_push_buffer(sc, rx->id);
+					continue;
+				}
 			}
+					
+			m->m_len = m->m_pkthdr.len = rx->status;
+			memcpy(mtod(m, void *), pktp, rx->status);
+			xennet_rx_push_buffer(sc, rx->id);
 		}
 
 #ifdef XENNET_DEBUG_DUMP

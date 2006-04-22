@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 2006/02/02 21:32:09 reinoud Exp $
+# $NetBSD: GENERIC,v 1.69.2.1 2006/04/22 11:37:40 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.69.2.1 $"
 
 maxusers	8
 
@@ -180,25 +180,25 @@ st* at scsibus? target ? lun ?		# SCSI tapes
 #ss* at scsibus? target ? lun ?		# SCSI scanners
 #uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
-pseudo-device	bpfilter	2	# Berkeley Packet Filter
+pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	ccd		2	# concatenated and striped disks
 #pseudo-device	cgd		2	# cryptographic disks
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	ipfilter	1	# ip filter
 pseudo-device	loop		1	# loopback interface; required
 pseudo-device	md		1	# memory disk device
-#pseudo-device	ppp		1	# PPP interfaces
+#pseudo-device	ppp			# PPP interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	raid		2	# RAIDframe disk driver
 pseudo-device	fss		4	# file system snapshot device
-#pseudo-device	sl		1	# SLIP interfaces
-#pseudo-device	tun		2	# Network "tunnel" device
+#pseudo-device	sl			# SLIP interfaces
+#pseudo-device	tun			# Network "tunnel" device
 #pseudo-device	tap			# virtual Ethernet
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
-#pseudo-device	vnd		2	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem

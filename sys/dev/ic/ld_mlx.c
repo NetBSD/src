@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.10 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.10.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.10 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.10.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include "rnd.h"
 
@@ -154,7 +154,7 @@ ld_mlx_detach(struct device *dv, int flags)
 	if ((rv = ldbegindetach((struct ld_softc *)dv, flags)) != 0)
 		return (rv);
 	ldenddetach((struct ld_softc *)dv);
-	mlx_flush((struct mlx_softc *)dv->dv_parent, 1);
+	mlx_flush((struct mlx_softc *)device_parent(dv), 1);
 
 	return (0);
 }
@@ -168,7 +168,7 @@ ld_mlx_dobio(struct ld_mlx_softc *sc, void *data, int datasize, int blkno,
 	int s, rv;
 	bus_addr_t sgphys;
 
-	mlx = (struct mlx_softc *)sc->sc_ld.sc_dv.dv_parent;
+	mlx = (struct mlx_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	if ((rv = mlx_ccb_alloc(mlx, &mc, bp == NULL)) != 0)
 		return (rv);
@@ -233,7 +233,7 @@ ld_mlx_handler(struct mlx_ccb *mc)
 	mx = &mc->mc_mx;
 	bp = mx->mx_context;
 	sc = (struct ld_mlx_softc *)mx->mx_dv;
-	mlx = (struct mlx_softc *)sc->sc_ld.sc_dv.dv_parent;
+	mlx = (struct mlx_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	if (mc->mc_status != MLX_STATUS_OK) {
 		bp->b_flags |= B_ERROR;

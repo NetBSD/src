@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.24 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: mesh.c,v 1.24.6.1 2006/04/22 11:37:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.24 2005/12/24 20:07:15 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.24.6.1 2006/04/22 11:37:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -219,7 +219,7 @@ mesh_attach(parent, self, aux)
 	sc->sc_irq = ca->ca_intr[0];
 	sc->sc_dmareg = mapiodev(reg[2], reg[3]);
 
-	sc->sc_cfflags = self->dv_cfdata->cf_flags;
+	sc->sc_cfflags = device_cfdata(self)->cf_flags;
 	sc->sc_meshid = mesh_read_reg(sc, MESH_MESH_ID) & 0x1f;
 #if 0
 	if (sc->sc_meshid != (MESH_SIGNATURE & 0x1f) {

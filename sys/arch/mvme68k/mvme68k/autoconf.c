@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40.6.1 2006/04/22 11:37:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.40.6.1 2006/04/22 11:37:45 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,14 +151,12 @@ device_register(dev, aux)
 {
 	static struct device *controller;
 	static int foundboot;
-	struct device *parent = dev->dv_parent;
-	const char *name = dev->dv_cfdata->cf_name;
+	struct device *parent = device_parent(dev);
 
 	if (foundboot)
 		return;
 
 	if (controller == NULL && parent) {
-		const char *pname = parent->dv_cfdata->cf_name;
 
 		switch (machineid) {
 #ifdef MVME147
@@ -168,17 +166,17 @@ device_register(dev, aux)
 			 * onboard scsi and ethernet. So ensure this
 			 * device's parent is the PCC driver.
 			 */
-			if (strcmp(pname, "pcc"))
+			if (!device_is_a(parent, "pcc"))
 				return;
 
 			if (bootaddr == PCC_PADDR(PCC_WDSC_OFF) &&
-			    strcmp(name, "wdsc") == 0) {
+			    device_is_a(dev, "wdsc")) {
 				controller = dev;
 				return;
 			}
 
 			if (bootaddr == PCC_PADDR(PCC_LE_OFF) &&
-			    strcmp(name, "le") == 0) {
+			    device_is_a(dev, "le")) {
 				booted_device = dev;
 				foundboot = 1;
 				return;
@@ -197,17 +195,17 @@ device_register(dev, aux)
 			 * 17x onboard scsi and ethernet. So ensure this
 			 * device's parent is the PCCTWO driver.
 			 */
-			if (strcmp(pname, "pcctwo"))
+			if (!device_is_a(parent, "pcctwo"))
 				return;
 
 			if (bootaddr == PCCTWO_PADDR(PCCTWO_NCRSC_OFF) &&
-			    strcmp(name, "osiop") == 0) {
+			    device_is_a(dev, "osiop")) {
 				controller = dev;
 				return;
 			}
 
 			if (bootaddr == PCCTWO_PADDR(PCCTWO_IE_OFF) &&
-			    strcmp(name, "ie") == 0) {
+			    device_is_a(dev, "ie")) {
 				booted_device = dev;
 				foundboot = 1;
 				return;
@@ -226,12 +224,12 @@ device_register(dev, aux)
 	/*
 	 * Find out which device on the scsibus we booted from
 	 */
-	if (strcmp(name, "sd") == 0 ||
-	    strcmp(name, "cd") == 0 ||
-	    strcmp(name, "st") == 0) {
+	if (device_is_a(dev, "sd") ||
+	    device_is_a(dev, "cd") ||
+	    device_is_a(dev, "st")) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (parent->dv_parent != controller ||
+		if (device_parent(parent) != controller ||
 		    bootdevlun != sa->sa_periph->periph_target)
 			return;
 

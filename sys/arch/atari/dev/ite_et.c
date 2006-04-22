@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.18 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.18.6.1 2006/04/22 11:37:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.18 2005/12/11 12:16:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.18.6.1 2006/04/22 11:37:20 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ void		*auxp;
 	}
 
 	gp = (struct grf_softc *)dp;
-	gp->g_unit = gp->g_device.dv_unit;
+	gp->g_unit = device_unit(&gp->g_device);
 	grfsp[gp->g_unit] = gp;
 
 	if((cfdata_grf != NULL) && (gp->g_unit == congrf.g_unit)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hilreg.h,v 1.8 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: hilreg.h,v 1.8.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -193,7 +193,7 @@ struct	hil_dev {
 /* HIL packet headers */
 #define	HIL_MOUSEDATA   0x2
 #define	HIL_KBDDATA     0x40
-  
+
 #define	HIL_MOUSEMOTION	0x02	/* mouse movement event */
 #define	HIL_KBDBUTTON	0x40	/* keyboard button event */
 #define	HIL_MOUSEBUTTON 0x40	/* mouse button event */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_adaptec.c,v 1.2 2005/12/11 12:21:14 christos Exp $	*/
+/*	$NetBSD: ata_raid_adaptec.c,v 1.2.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.2 2005/12/11 12:21:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.2.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -80,7 +80,7 @@ ata_raid_read_config_adaptec(struct wd_softc *sc)
 	bmajor = devsw_name2blk(sc->sc_dev.dv_xname, NULL, 0);
 
 	/* Get a vnode for the raw partition of this disk. */
-	dev = MAKEDISKDEV(bmajor, sc->sc_dev.dv_unit, RAW_PART);
+	dev = MAKEDISKDEV(bmajor, device_unit(&sc->sc_dev), RAW_PART);
 	error = bdevvp(dev, &vp);
 	if (error)
 		goto out;
@@ -163,7 +163,7 @@ ata_raid_read_config_adaptec(struct wd_softc *sc)
 			aai->aai_interleave = aai->aai_capacity;
 	}
 
-	atabus = (struct atabus_softc *) sc->sc_dev.dv_parent;
+	atabus = (struct atabus_softc *) device_parent(&sc->sc_dev);
 	drive = atabus->sc_chan->ch_channel;
 	if (drive >= aai->aai_ndisks) {
 		aprint_error("%s: drive number %d doesn't make sense within "

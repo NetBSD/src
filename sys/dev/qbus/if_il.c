@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.12 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: if_il.c,v 1.12.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.12 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.12.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -161,7 +161,7 @@ void
 ilattach(struct device *parent, struct device *self, void *aux)
 {
 	struct uba_attach_args *ua = aux;
-	struct il_softc *sc = (struct il_softc *)self;
+	struct il_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 	int error;
 
@@ -272,7 +272,8 @@ ilinit(struct ifnet *ifp)
 		return 0;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		if (if_ubainit(&sc->sc_ifuba, (void *)sc->sc_dev.dv_parent,
+		if (if_ubainit(&sc->sc_ifuba,
+		    (void *)device_parent(&sc->sc_dev),
 		    ETHER_MAX_LEN)) {
 			printf("%s: can't initialize\n", sc->sc_dev.dv_xname);
 			sc->sc_if.if_flags &= ~IFF_UP;
@@ -280,7 +281,7 @@ ilinit(struct ifnet *ifp)
 		}
 		sc->sc_ui.ui_size = sizeof(sc->sc_isu);
 		sc->sc_ui.ui_vaddr = (caddr_t)&sc->sc_isu;
-		uballoc((void *)sc->sc_dev.dv_parent, &sc->sc_ui, 0);
+		uballoc((void *)device_parent(&sc->sc_dev), &sc->sc_ui, 0);
 	}
 	sc->sc_scaninterval = ILWATCHINTERVAL;
 	ifp->if_timer = sc->sc_scaninterval;

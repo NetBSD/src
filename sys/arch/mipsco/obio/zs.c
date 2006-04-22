@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 2005/12/11 12:18:13 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.18.6.1 2006/04/22 11:37:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18.6.1 2006/04/22 11:37:44 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -223,7 +223,7 @@ zs_attach(parent, self, aux)
 		return;
 	}
 
-	zs_unit = zsc->zsc_dev.dv_unit;
+	zs_unit = device_unit(&zsc->zsc_dev);
 	printf("\n");
 
 	/*

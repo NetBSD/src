@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.12 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: anvar.h,v 1.12.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -36,6 +36,8 @@
 #ifndef _DEV_IC_ANVAR_H
 #define _DEV_IC_ANVAR_H
 
+#include <net80211/ieee80211_radiotap.h>
+
 #define AN_TIMEOUT	65536
 #define	AN_MAGIC	0x414e
 
@@ -70,6 +72,33 @@ struct an_wepkey {
 	int			an_wep_key[16];
 	int			an_wep_keylen;
 };
+
+/* Radio capture format for Aironet */
+#define AN_RX_RADIOTAP_PRESENT  ((1 << IEEE80211_RADIOTAP_FLAGS) | \
+                                 (1 << IEEE80211_RADIOTAP_RATE) | \
+	                         (1 << IEEE80211_RADIOTAP_CHANNEL) | \
+                                 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
+
+struct an_rx_radiotap_header {
+        struct ieee80211_radiotap_header        ar_ihdr;
+        u_int8_t                                ar_flags;
+        u_int8_t                                ar_rate;
+        u_int16_t                               ar_chan_freq;
+        u_int16_t                               ar_chan_flags;
+        int8_t                                  ar_antsignal;
+} __attribute__((__packed__));
+
+#define AN_TX_RADIOTAP_PRESENT  ((1 << IEEE80211_RADIOTAP_FLAGS) | \
+                                 (1 << IEEE80211_RADIOTAP_RATE) | \
+                                 (1 << IEEE80211_RADIOTAP_CHANNEL))
+
+struct an_tx_radiotap_header {
+        struct ieee80211_radiotap_header        at_ihdr;
+        u_int8_t                                at_flags;
+        u_int8_t                                at_rate;
+        u_int16_t                               at_chan_freq;
+        u_int16_t                               at_chan_flags;
+} __attribute__((__packed__));
 
 #define	AN_GAPLEN_MAX	8
 
@@ -116,9 +145,22 @@ struct an_softc	{
 		struct an_rid_leapkey	sc_leapkey;
 		struct an_rid_encap	sc_encap;
 	}			sc_buf;
+
+	/* radiotap header */
+	caddr_t			sc_drvbpf;
+	union {
+		struct an_rx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_rxtapu;
+	union {
+		struct an_tx_radiotap_header	tap;
+		u_int8_t			pad[64];
+	} sc_txtapu;
 };
 
 #define	sc_if	sc_ec.ec_if
+#define	sc_rxtap	sc_rxtapu.tap
+#define	sc_txtap	sc_txtapu.tap
 
 int	an_attach(struct an_softc *);
 int	an_detach(struct an_softc *);

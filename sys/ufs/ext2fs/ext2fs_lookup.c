@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.39 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.39.6.1 2006/04/22 11:40:22 simonb Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.39 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.39.6.1 2006/04/22 11:40:22 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,10 +162,10 @@ ext2fs_readdir(void *v)
 	auio = *uio;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_segflg = UIO_SYSSPACE;
 	aiov.iov_len = e2fs_count;
 	auio.uio_resid = e2fs_count;
-	MALLOC(dirbuf, caddr_t, e2fs_count, M_TEMP, M_WAITOK);
+	UIO_SETUP_SYSSPACE(&auio);
+	dirbuf = malloc(e2fs_count, M_TEMP, M_WAITOK);
 	if (ap->a_ncookies) {
 		nc = ncookies = e2fs_count / 16;
 		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
@@ -390,6 +390,7 @@ searchloop:
 		 * directory. Complete checks can be run by patching
 		 * "dirchk" to be true.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct ext2fs_direct *)
 			((char *)bp->b_data + entryoffsetinblock);
 		if (ep->e2d_reclen == 0 ||
@@ -498,12 +499,6 @@ searchloop:
 			dp->i_offset = roundup(ext2fs_size(dp), dirblksiz);
 			dp->i_count = 0;
 			enduseful = dp->i_offset;
-		} else if (nameiop == DELETE) {
-			dp->i_offset = slotoffset;
-			if ((dp->i_offset & (dirblksiz - 1)) == 0)
-				dp->i_count = 0;
-			else
-				dp->i_count = dp->i_offset - prevoff;
 		} else {
 			dp->i_offset = slotoffset;
 			dp->i_count = slotsize;
@@ -818,8 +813,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_rw = UIO_WRITE;
-		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = VOP_WRITE(dvp, &auio, IO_SYNC, cnp->cn_cred);
 		if (dirblksiz > dvp->v_mount->mnt_stat.f_bsize)
 			/* XXX should grow with balloc() */

@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.5 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.5.6.1 2006/04/22 11:38:55 simonb Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.5 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.5.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.5 2005/12/11 12:21:27 christos Exp 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>
@@ -64,10 +65,7 @@ static void	igsfb_video_on(struct igsfb_devconfig *);
  * Enable chip.
  */
 int
-igsfb_enable(iot, iobase, ioflags)
-	bus_space_tag_t iot;
-	bus_addr_t iobase;
-	int ioflags;
+igsfb_enable(bus_space_tag_t iot, bus_addr_t iobase, int ioflags)
 {
 	bus_space_handle_t vdoh;
 	bus_space_handle_t vseh;
@@ -112,7 +110,7 @@ igsfb_enable(iot, iobase, ioflags)
 	bus_space_unmap(iot, regh, IGS_REG_SIZE);
   out2:	bus_space_unmap(iot, vseh, 1);
   out1:	bus_space_unmap(iot, vdoh, 1);
-  out0: return (ret);
+  out0: return ret;
 }
 
 
@@ -121,8 +119,7 @@ igsfb_enable(iot, iobase, ioflags)
  * This is common for all video modes.
  */
 static void
-igsfb_init_seq(dc)
-	struct igsfb_devconfig *dc;
+igsfb_init_seq(struct igsfb_devconfig *dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
@@ -143,12 +140,12 @@ igsfb_init_seq(dc)
 		      IGS_SEQ_RESET_SYNC | IGS_SEQ_RESET_ASYNC);
 }
 
+
 /*
  * Init CRTC to 640x480 8bpp at 60Hz
  */
 static void
-igsfb_init_crtc(dc)
-	struct igsfb_devconfig *dc;
+igsfb_init_crtc(struct igsfb_devconfig *dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
@@ -190,8 +187,7 @@ igsfb_init_crtc(dc)
  * This is common for all video modes.
  */
 static void
-igsfb_init_grfx(dc)
-	struct igsfb_devconfig *dc;
+igsfb_init_grfx(struct igsfb_devconfig *dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
@@ -213,8 +209,7 @@ igsfb_init_grfx(dc)
  * This is common for all video modes.
  */
 static void
-igsfb_init_attr(dc)
-	struct igsfb_devconfig *dc;
+igsfb_init_attr(struct igsfb_devconfig *dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
@@ -237,8 +232,7 @@ igsfb_init_attr(dc)
  * When done with ATTR controller, call this to unblank the screen.
  */
 static void
-igsfb_video_on(dc)
-	struct igsfb_devconfig *dc;
+igsfb_video_on(struct igsfb_devconfig *dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
@@ -253,8 +247,7 @@ igsfb_video_on(dc)
  * Latch VCLK (b0/b1) and MCLK (b2/b3) values.
  */
 static void
-igsfb_freq_latch(dc)
-	struct igsfb_devconfig *dc;
+igsfb_freq_latch(struct igsfb_devconfig *dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
@@ -266,8 +259,7 @@ igsfb_freq_latch(dc)
 
 
 static void
-igsfb_init_ext(dc)
-	struct igsfb_devconfig *dc;
+igsfb_init_ext(struct igsfb_devconfig *dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
@@ -342,8 +334,7 @@ igsfb_init_ext(dc)
 
 
 static void
-igsfb_init_dac(dc)
-	struct igsfb_devconfig *dc;
+igsfb_init_dac(struct igsfb_devconfig *dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
@@ -365,8 +356,7 @@ igsfb_init_dac(dc)
 
 
 void
-igsfb_1024x768_8bpp_60Hz(dc)
-	struct igsfb_devconfig *dc;
+igsfb_1024x768_8bpp_60Hz(struct igsfb_devconfig *dc)
 {
 	bus_space_tag_t iot = dc->dc_iot;
 	bus_space_handle_t ioh = dc->dc_ioh;
@@ -422,8 +412,7 @@ igsfb_1024x768_8bpp_60Hz(dc)
  * igs-video-init from krups prom
  */
 void
-igsfb_hw_setup(dc)
-	struct igsfb_devconfig *dc;
+igsfb_hw_setup(struct igsfb_devconfig *dc)
 {
 
 	igsfb_init_seq(dc);

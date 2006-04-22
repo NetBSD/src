@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.13 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: pci_6600.c,v 1.13.6.1 2006/04/22 11:37:11 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.13 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.13.6.1 2006/04/22 11:37:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ pci_6600_pickintr(pcp)
 			cp = alpha_shared_intr_string(dec_6600_pci_intr, i);
 			sprintf(cp, "irq %d", i);
 			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-			    dec_6600_pci_intr, 1), EVCNT_TYPE_INTR, NULL,
+			    dec_6600_pci_intr, i), EVCNT_TYPE_INTR, NULL,
 			    "dec_6600", cp);
 		}
 #if NSIO

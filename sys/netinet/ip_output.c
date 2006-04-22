@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.159 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.159.6.1 2006/04/22 11:40:10 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.159 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.159.6.1 2006/04/22 11:40:10 simonb Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -140,9 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.159 2005/12/11 12:24:57 christos Exp
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
-#ifdef IPSEC_NAT_T
-#include <netinet/udp.h>
-#endif
 #endif /*IPSEC*/
 
 #ifdef FAST_IPSEC
@@ -150,6 +147,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.159 2005/12/11 12:24:57 christos Exp
 #include <netipsec/key.h>
 #include <netipsec/xform.h>
 #endif	/* FAST_IPSEC*/
+
+#ifdef IPSEC_NAT_T
+#include <netinet/udp.h>
+#endif
 
 static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
@@ -225,11 +226,11 @@ ip_output(struct mbuf *m0, ...)
 	struct ip_moptions *imo;
 	struct socket *so;
 	va_list ap;
-#ifdef IPSEC
-	struct secpolicy *sp = NULL;
 #ifdef IPSEC_NAT_T
 	int natt_frag = 0;
 #endif
+#ifdef IPSEC
+	struct secpolicy *sp = NULL;
 #endif /*IPSEC*/
 #ifdef FAST_IPSEC
 	struct inpcb *inp;
@@ -707,6 +708,21 @@ skip_ipsec:
 	 *    sp == NULL, error != 0	    discard packet, report error
 	 */
 	if (sp != NULL) {
+#ifdef IPSEC_NAT_T
+		/*
+		 * NAT-T ESP fragmentation: don't do IPSec processing now,
+		 * we'll do it on each fragmented packet.
+		 */
+		if (sp->req->sav &&
+		    ((sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP) ||
+		     (sp->req->sav->natt_type & UDP_ENCAP_ESPINUDP_NON_IKE))) {
+			if (ntohs(ip->ip_len) > sp->req->sav->esp_frag) {
+				natt_frag = 1;
+				mtu = sp->req->sav->esp_frag;
+				goto spd_done;
+			}
+		}
+#endif /* IPSEC_NAT_T */
 		/* Loop detection, check if ipsec processing already done */
 		IPSEC_ASSERT(sp->req != NULL, ("ip_output: no ipsec request"));
 		for (mtag = m_tag_first(m); mtag != NULL;
@@ -932,6 +948,7 @@ spd_done:
 #ifdef IPSEC
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
+#endif /* IPSEC */
 
 #ifdef IPSEC_NAT_T
 			/*
@@ -945,7 +962,6 @@ spd_done:
 				    ro, flags, imo, so, mtu_p);
 			} else
 #endif /* IPSEC_NAT_T */
-#endif /* IPSEC */
 			{
 				KASSERT((m->m_pkthdr.csum_flags &
 				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);

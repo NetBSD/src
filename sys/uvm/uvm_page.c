@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.109 2005/12/24 20:45:10 perry Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.109.6.1 2006/04/22 11:40:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.109 2005/12/24 20:45:10 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.109.6.1 2006/04/22 11:40:29 simonb Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.109 2005/12/24 20:45:10 perry Exp $")
 #include <sys/vnode.h>
 #include <sys/proc.h>
 
-#define UVM_PAGE_C              /* pull in uvm_page_i.h functions */
 #include <uvm/uvm.h>
 
 /*
@@ -1482,10 +1481,24 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 void
 uvm_page_own(struct vm_page *pg, const char *tag)
 {
+	struct uvm_object *uobj;
+	struct vm_anon *anon;
+
 	KASSERT((pg->flags & (PG_PAGEOUT|PG_RELEASED)) == 0);
+
+	uobj = pg->uobject;
+	anon = pg->uanon;
+	if (uobj != NULL) {
+		LOCK_ASSERT(simple_lock_held(&uobj->vmobjlock));
+	} else if (anon != NULL) {
+		LOCK_ASSERT(simple_lock_held(&anon->an_lock));
+	}
+
+	KASSERT((pg->flags & PG_WANTED) == 0);
 
 	/* gain ownership? */
 	if (tag) {
+		KASSERT((pg->flags & PG_BUSY) != 0);
 		if (pg->owner_tag) {
 			printf("uvm_page_own: page %p already owned "
 			    "by proc %d [%s]\n", pg,
@@ -1498,6 +1511,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 	}
 
 	/* drop ownership */
+	KASSERT((pg->flags & PG_BUSY) == 0);
 	if (pg->owner_tag == NULL) {
 		printf("uvm_page_own: dropping ownership of an non-owned "
 		    "page (%p)\n", pg);
@@ -1591,4 +1605,206 @@ uvm_pageidlezero(void)
 quit:
 	uvm_unlock_fpageq(s);
 	KERNEL_UNLOCK();
+}
+
+/*
+ * uvm_lock_fpageq: lock the free page queue
+ *
+ * => free page queue can be accessed in interrupt context, so this
+ *	blocks all interrupts that can cause memory allocation, and
+ *	returns the previous interrupt level.
+ */
+
+int
+uvm_lock_fpageq(void)
+{
+	int s;
+
+	s = splvm();
+	simple_lock(&uvm.fpageqlock);
+	return (s);
+}
+
+/*
+ * uvm_unlock_fpageq: unlock the free page queue
+ *
+ * => caller must supply interrupt level returned by uvm_lock_fpageq()
+ *	so that it may be restored.
+ */
+
+void
+uvm_unlock_fpageq(int s)
+{
+
+	simple_unlock(&uvm.fpageqlock);
+	splx(s);
+}
+
+/*
+ * uvm_pagelookup: look up a page
+ *
+ * => caller should lock object to keep someone from pulling the page
+ *	out from under it
+ */
+
+struct vm_page *
+uvm_pagelookup(struct uvm_object *obj, voff_t off)
+{
+	struct vm_page *pg;
+	struct pglist *buck;
+
+	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
+	simple_lock(&uvm.hashlock);
+	TAILQ_FOREACH(pg, buck, hashq) {
+		if (pg->uobject == obj && pg->offset == off) {
+			break;
+		}
+	}
+	simple_unlock(&uvm.hashlock);
+	KASSERT(pg == NULL || obj->uo_npages != 0);
+	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
+		(pg->flags & PG_BUSY) != 0);
+	return(pg);
+}
+
+/*
+ * uvm_pagewire: wire the page, thus removing it from the daemon's grasp
+ *
+ * => caller must lock page queues
+ */
+
+void
+uvm_pagewire(struct vm_page *pg)
+{
+	UVM_LOCK_ASSERT_PAGEQ();
+	if (pg->wire_count == 0) {
+		uvm_pagedequeue(pg);
+		uvmexp.wired++;
+	}
+	pg->wire_count++;
+}
+
+/*
+ * uvm_pageunwire: unwire the page.
+ *
+ * => activate if wire count goes to zero.
+ * => caller must lock page queues
+ */
+
+void
+uvm_pageunwire(struct vm_page *pg)
+{
+	UVM_LOCK_ASSERT_PAGEQ();
+	pg->wire_count--;
+	if (pg->wire_count == 0) {
+		uvm_pageactivate(pg);
+		uvmexp.wired--;
+	}
+}
+
+/*
+ * uvm_pagedeactivate: deactivate page
+ *
+ * => caller must lock page queues
+ * => caller must check to make sure page is not wired
+ * => object that page belongs to must be locked (so we can adjust pg->flags)
+ * => caller must clear the reference on the page before calling
+ */
+
+void
+uvm_pagedeactivate(struct vm_page *pg)
+{
+	UVM_LOCK_ASSERT_PAGEQ();
+	if (pg->pqflags & PQ_ACTIVE) {
+		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+		pg->pqflags &= ~PQ_ACTIVE;
+		uvmexp.active--;
+	}
+	if ((pg->pqflags & PQ_INACTIVE) == 0) {
+		KASSERT(pg->wire_count == 0);
+		TAILQ_INSERT_TAIL(&uvm.page_inactive, pg, pageq);
+		pg->pqflags |= PQ_INACTIVE;
+		uvmexp.inactive++;
+	}
+}
+
+/*
+ * uvm_pageactivate: activate page
+ *
+ * => caller must lock page queues
+ */
+
+void
+uvm_pageactivate(struct vm_page *pg)
+{
+	UVM_LOCK_ASSERT_PAGEQ();
+	uvm_pagedequeue(pg);
+	if (pg->wire_count == 0) {
+		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
+		pg->pqflags |= PQ_ACTIVE;
+		uvmexp.active++;
+	}
+}
+
+/*
+ * uvm_pagedequeue: remove a page from any paging queue
+ */
+
+void
+uvm_pagedequeue(struct vm_page *pg)
+{
+	if (pg->pqflags & PQ_ACTIVE) {
+		UVM_LOCK_ASSERT_PAGEQ();
+		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+		pg->pqflags &= ~PQ_ACTIVE;
+		uvmexp.active--;
+	} else if (pg->pqflags & PQ_INACTIVE) {
+		UVM_LOCK_ASSERT_PAGEQ();
+		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
+		pg->pqflags &= ~PQ_INACTIVE;
+		uvmexp.inactive--;
+	}
+}
+
+/*
+ * uvm_pagezero: zero fill a page
+ *
+ * => if page is part of an object then the object should be locked
+ *	to protect pg->flags.
+ */
+
+void
+uvm_pagezero(struct vm_page *pg)
+{
+	pg->flags &= ~PG_CLEAN;
+	pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+}
+
+/*
+ * uvm_pagecopy: copy a page
+ *
+ * => if page is part of an object then the object should be locked
+ *	to protect pg->flags.
+ */
+
+void
+uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
+{
+
+	dst->flags &= ~PG_CLEAN;
+	pmap_copy_page(VM_PAGE_TO_PHYS(src), VM_PAGE_TO_PHYS(dst));
+}
+
+/*
+ * uvm_page_lookup_freelist: look up the free list for the specified page
+ */
+
+int
+uvm_page_lookup_freelist(struct vm_page *pg)
+{
+	int lcv;
+
+	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
+	KASSERT(lcv != -1);
+	return (vm_physmem[lcv].free_list);
 }

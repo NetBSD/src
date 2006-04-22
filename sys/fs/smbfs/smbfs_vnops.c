@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.48 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.48.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.48 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.48.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -952,23 +952,20 @@ smbfs_strategy(v)
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
 	struct ucred *cr;
-	struct proc *p;
 	struct lwp *l;
 	int error = 0;
 
-	p = l->l_proc;
 	SMBVDEBUG("\n");
 	if ((bp->b_flags & (B_PHYS|B_ASYNC)) == (B_PHYS|B_ASYNC))
 		panic("smbfs physio/async");
 	if (bp->b_flags & B_ASYNC) {
 		l = NULL;
-		p = NULL;
+		cr = NULL;
 	} else {
 		l = curlwp;	/* XXX */
-		p = l->l_proc;
+		cr = l->l_proc->p_ucred;
 	}
 
-	cr = p->p_ucred; /* XXX */
 
 	if ((bp->b_flags & B_ASYNC) == 0)
 		error = smbfs_doio(bp, cr, l);
@@ -1421,12 +1418,15 @@ smbfs_lookup(v)
 		cnp->cn_flags |= SAVENAME;
 
 	if ((cnp->cn_flags & MAKEENTRY)) {
-		if (!error && (cnp->cn_nameiop != DELETE || !islastcn)) {
+		KASSERT(error == 0);
+		if (cnp->cn_nameiop != DELETE || !islastcn) {
 			VTOSMB(*vpp)->n_ctime = VTOSMB(*vpp)->n_mtime.tv_sec;
 			cache_enter(dvp, *vpp, cnp);
+#ifdef notdef
 		} else if (error == ENOENT && cnp->cn_nameiop != CREATE) {
 			VTOSMB(*vpp)->n_nctime = VTOSMB(*vpp)->n_mtime.tv_sec;
 			cache_enter(dvp, *vpp, cnp);
+#endif
 		}
 	}
 

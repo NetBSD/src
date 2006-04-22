@@ -1,4 +1,4 @@
-# $NetBSD: files.apm,v 1.2 2005/12/11 12:21:22 christos Exp $
+# $NetBSD: files.apm,v 1.2.6.1 2006/04/22 11:38:52 simonb Exp $
 
 #
 # Common APM support files
@@ -7,7 +7,7 @@ defflag	opt_apmdev.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
 			APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG
 			APM_POWER_PRINT
 defparam opt_apmdev.h	APMDEBUG_VALUE APM_DISABLE_INTERRUPTS
-device	apmdevif {}
+define	apmdevif {}
 device	apmdev
 attach	apmdev at apmdevif
 file	dev/hpc/apm/apmdev.c		apmdev needs-count

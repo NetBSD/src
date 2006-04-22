@@ -1,4 +1,4 @@
-/*	$NetBSD: gpioreg.h,v 1.3 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: gpioreg.h,v 1.3.6.1 2006/04/22 11:37:53 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -52,11 +52,13 @@
  *	1	1	0	X	0	Forced to high impedance state
  */
 
+/* GPIO pins */
+#define GPIO_NPINS		(24)
+
 /* GPIO Registers 0x00-0x7f */
 #define GPIO_NREG		(0x80)
 
-#define GPIO_SHIFT(n)		(31 - n)
-#define GPIO_SBIT(n)		(1 << GPIO_SHIFT(n))
+#define GPIO_PIN_SHIFT(n)	(31 - n)
 
 /* Offset */
 #define	GPIO_OR			(0x00)	/* Output */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.30.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30.6.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include "opt_pclock.h"
 #include "opt_hz.h"
@@ -75,16 +75,16 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2005/12/11 12:19:00 christos Exp $");
  */
 struct {
 	/* Hard clock */
-	u_int32_t hz_cnt;	/* clock interrupt interval count */
-	u_int32_t cpucycle_1us;	/* calibrated loop variable (1 us) */
-	u_int32_t tmuclk;	/* source clock of TMU0 (Hz) */
+	uint32_t hz_cnt;	/* clock interrupt interval count */
+	uint32_t cpucycle_1us;	/* calibrated loop variable (1 us) */
+	uint32_t tmuclk;	/* source clock of TMU0 (Hz) */
 
 	/* RTC ops holder. default SH RTC module */
 	struct rtc_ops rtc;
 	int rtc_initialized;
 
-	u_int32_t pclock;	/* PCLOCK */
-	u_int32_t cpuclock;	/* CPU clock */
+	uint32_t pclock;	/* PCLOCK */
+	uint32_t cpuclock;	/* CPU clock */
 	int flags;
 } sh_clock = {
 #ifdef PCLOCK
@@ -98,7 +98,7 @@ struct {
 	}
 };
 
-u_int32_t maxwdog;
+uint32_t maxwdog;
 
 /* TMU */
 /* interrupt handler is timing critical. prepared for each. */
@@ -119,7 +119,7 @@ do {									\
 void
 sh_clock_init(int flags, struct rtc_ops *rtc)
 {
-	u_int32_t s, t0, t1 __attribute__((__unused__));
+	uint32_t s, t0, t1 __attribute__((__unused__));
 
 	sh_clock.flags = flags;
 	if (rtc != NULL)
@@ -371,9 +371,9 @@ int
 sh3_clock_intr(void *arg) /* trap frame */
 {
 #if (NWDOG > 0)
-	u_int32_t i;
+	uint32_t i;
 
-	i = (u_int32_t)SHREG_WTCNT_R;
+	i = (uint32_t)SHREG_WTCNT_R;
 	if (i > maxwdog)
 		maxwdog = i;
 	wdog_wr_cnt(0);			/* reset to zero */
@@ -391,9 +391,9 @@ int
 sh4_clock_intr(void *arg) /* trap frame */
 {
 #if (NWDOG > 0)
-	u_int32_t i;
+	uint32_t i;
 
-	i = (u_int32_t)SHREG_WTCNT_R;
+	i = (uint32_t)SHREG_WTCNT_R;
 	if (i > maxwdog)
 		maxwdog = i;
 	wdog_wr_cnt(0);			/* reset to zero */
@@ -428,7 +428,7 @@ sh_rtc_get(void *cookie, time_t base, struct clock_ymdhms *dt)
 	_reg_bclr_1(SH_(RCR1), SH_RCR1_CIE);
 
 	do {
-		u_int8_t r = _reg_read_1(SH_(RCR1));
+		uint8_t r = _reg_read_1(SH_(RCR1));
 		r &= ~SH_RCR1_CF;
 		r |= SH_RCR1_AF; /* don't clear alarm flag */
 		_reg_write_1(SH_(RCR1), r);
@@ -463,7 +463,7 @@ sh_rtc_get(void *cookie, time_t base, struct clock_ymdhms *dt)
 void
 sh_rtc_set(void *cookie, struct clock_ymdhms *dt)
 {
-	u_int8_t r;
+	uint8_t r;
 
 	/* stop clock */
 	r = _reg_read_1(SH_(RCR2));
@@ -487,4 +487,3 @@ sh_rtc_set(void *cookie, struct clock_ymdhms *dt)
 	/* start clock */
 	_reg_write_1(SH_(RCR2), r | SH_RCR2_START);
 }
-

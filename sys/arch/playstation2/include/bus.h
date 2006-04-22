@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.8.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -302,7 +302,7 @@ struct playstation2_bus_space {
 #ifdef __write_8
 #error "can't override __write_8"
 #endif
-static inline void
+static __inline void
 __write_8(bus_addr_t a, u_int64_t v)
 {
 	__asm volatile(

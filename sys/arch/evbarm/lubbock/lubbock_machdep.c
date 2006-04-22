@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.10 2005/12/24 20:07:03 perry Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.10.6.1 2006/04/22 11:37:24 simonb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.10 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.10.6.1 2006/04/22 11:37:24 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -446,7 +446,7 @@ initarm(void *arg)
 
 	LEDSTEP_P();
 
-	/* start 32.768KHz OSC */
+	/* start 32.768 kHz OSC */
 	ioreg_write(LUBBOCK_CLKMAN_VBASE + 0x08, 2);
 	/* Get ready for splfoo() */
 	pxa2x0_intr_bootstrap(LUBBOCK_INTCTL_VBASE);

@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.2 2005/12/11 12:17:08 christos Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.2.6.1 2006/04/22 11:37:23 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -103,7 +103,7 @@ const struct wsscreen_list lcd_screen_list = {
 	lcd_scr_descr
 };
 
-int	lcd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
 
 int	lcd_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
@@ -173,7 +173,7 @@ const struct lcd_panel_geometry toshiba_LTM035 =
 
     LCDPANEL_SINGLE|LCDPANEL_ACTIVE|   /* LCDPANEL_PCP| */
     LCDPANEL_VSP|LCDPANEL_HSP,
-    11,				/* clock divider, 4.5MHz at 100Mhz */
+    11,				/* clock divider, 4.5 MHz at 100 MHz */
 				/* required: 4.28..4.7 MHz  */
     0xff,			/* AC bias pin freq */
 
@@ -240,10 +240,10 @@ void lcd_attach( struct device *parent, struct device *self, void *aux )
 #if NWSDISPLAY > 0
 
 int
-lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 	uint16_t reg;
 
 	switch (cmd) {
@@ -262,7 +262,7 @@ lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;			/* turn on/off LCD controller */
 	}
 
-	return pxa2x0_lcd_ioctl(v, cmd, data, flag, l);
+	return pxa2x0_lcd_ioctl(v, vs, cmd, data, flag, l);
 }
 
 int
@@ -270,7 +270,7 @@ lcd_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 	uint16_t reg;
 
 	pxa2x0_lcd_show_screen(v,cookie,waitok,cb,cbarg);

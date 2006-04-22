@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.107 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.107.6.1 2006/04/22 11:38:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.107 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.107.6.1 2006/04/22 11:38:45 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,9 +222,10 @@ const struct cdevsw ccd_cdevsw = {
 static	void printiinfo(struct ccdiinfo *);
 #endif
 
-/* Non-private for the benefit of libkvm. */
-struct	ccd_softc *ccd_softc;
-int	numccd = 0;
+/* Publically visible for the benefit of libkvm and ccdconfig(8). */
+struct ccd_softc 	*ccd_softc;
+const int		ccd_softc_elemsize = sizeof(struct ccd_softc);
+int			numccd = 0;
 
 /*
  * Called by main() during pseudo-device attachment.  All we need
@@ -243,7 +244,7 @@ ccdattach(int num)
 		return;
 	}
 
-	ccd_softc = (struct ccd_softc *)malloc(num * sizeof(struct ccd_softc),
+	ccd_softc = (struct ccd_softc *)malloc(num * ccd_softc_elemsize,
 	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (ccd_softc == NULL) {
 		printf("WARNING: no memory for concatenated disks\n");

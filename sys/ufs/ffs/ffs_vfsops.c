@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.179.4.1 2006/02/04 14:12:50 simonb Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.179.4.2 2006/04/22 11:40:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.179.4.1 2006/02/04 14:12:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.179.4.2 2006/04/22 11:40:24 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -150,7 +150,7 @@ ffs_mountroot(void)
 	struct ufsmount *ump;
 	int error;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	if ((error = vfs_rootmountalloc(MOUNT_FFS, "root_device", &mp))) {

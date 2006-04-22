@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.16 2005/12/10 23:26:35 elad Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.16.6.1 2006/04/22 11:40:09 simonb Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -423,27 +423,38 @@ struct ieee80211req {
 #define	SIOCG80211STATS		_IOWR('i', 236, struct ifreq)
 #endif /* __FreeBSD__ */
 
-#ifdef __FreeBSD__
+#ifdef __NetBSD__
+#define	SIOCS80211		 _IOW('i', 244, struct ieee80211req)
+#define	SIOCG80211		_IOWR('i', 245, struct ieee80211req)
+#define	SIOCG80211STATS		_IOWR('i', 246, struct ifreq)
+#define	SIOCG80211ZSTATS	_IOWR('i', 247, struct ifreq)
+#ifdef COMPAT_20
+#define	OSIOCG80211STATS	_IOWR('i', 242, struct ifreq)
+#define	OSIOCG80211ZSTATS	_IOWR('i', 243, struct ifreq)
+#endif /* COMPAT_20 */
+#endif /* __NetBSD__ */
+
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define IEEE80211_IOC_SSID		1
-#endif /* __FreeBSD__ */
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define IEEE80211_IOC_NUMSSIDS		2
 #define IEEE80211_IOC_WEP		3
 #define 	IEEE80211_WEP_NOSUP	-1
 #define 	IEEE80211_WEP_OFF	0
 #define 	IEEE80211_WEP_ON	1
 #define 	IEEE80211_WEP_MIXED	2
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define IEEE80211_IOC_WEPKEY		4
-#endif /* __FreeBSD__ */
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define IEEE80211_IOC_NUMWEPKEYS	5
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define IEEE80211_IOC_WEPTXKEY		6
-#endif /* __FreeBSD__ */
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define IEEE80211_IOC_AUTHMODE		7
 #define IEEE80211_IOC_STATIONNAME	8
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define IEEE80211_IOC_CHANNEL		9
-#endif /* __FreeBSD__ */
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define IEEE80211_IOC_POWERSAVE		10
 #define 	IEEE80211_POWERSAVE_NOSUP	-1
 #define 	IEEE80211_POWERSAVE_OFF		0
@@ -458,9 +469,9 @@ struct ieee80211req {
 #define 	IEEE80211_PROTMODE_CTS		1
 #define 	IEEE80211_PROTMODE_RTSCTS	2
 #define	IEEE80211_IOC_TXPOWER		14	/* global tx power limit */
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 #define	IEEE80211_IOC_BSSID		15
-#endif /* __FreeBSD__ */
+#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 #define	IEEE80211_IOC_ROAMING		16	/* roaming mode */
 #define	IEEE80211_IOC_PRIVACY		17	/* privacy invoked */
 #define	IEEE80211_IOC_DROPUNENCRYPTED	18	/* discard unencrypted frames */
@@ -502,6 +513,7 @@ struct ieee80211req {
 #define	IEEE80211_IOC_ADDMAC		54	/* add sta to MAC ACL table */
 #define	IEEE80211_IOC_DELMAC		55	/* del sta from MAC ACL table */
 #define	IEEE80211_IOC_PUREG		56	/* pure 11g (no 11b stations) */
+#define	IEEE80211_IOC_MCAST_RATE	72	/* tx rate for mcast frames */
 #define	IEEE80211_IOC_FRAGTHRESHOLD	73	/* tx fragmentation threshold */
 
 /*
@@ -594,14 +606,6 @@ struct ieee80211_bssid {
 #define	SIOCS80211BSSID		 _IOW('i', 240, struct ieee80211_bssid)
 #define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
 
-#ifdef COMPAT_20
-#define	OSIOCG80211STATS	_IOWR('i', 242, struct ifreq)
-#define	OSIOCG80211ZSTATS	_IOWR('i', 243, struct ifreq)
-#endif /* COMPAT_20 */
-#define	SIOCS80211		 _IOW('i', 244, struct ieee80211req)
-#define	SIOCG80211		_IOWR('i', 245, struct ieee80211req)
-#define	SIOCG80211STATS		_IOWR('i', 246, struct ifreq)
-#define	SIOCG80211ZSTATS	_IOWR('i', 247, struct ifreq)
 #endif
 
 #endif /* !_NET80211_IEEE80211_IOCTL_H_ */

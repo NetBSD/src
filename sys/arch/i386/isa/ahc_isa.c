@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.28 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.28.6.1 2006/04/22 11:37:33 simonb Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.28 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.28.6.1 2006/04/22 11:37:33 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,16 +210,16 @@ ahc_isa_idstring(bus_space_tag_t iot, bus_space_handle_t ioh, char *idstring)
 	/* Check for device existence */
 	if (EISA_VENDID_NODEV(vid)) {
 #if 0
-		printf("ahc_isa_idstring: no device at 0x%lx\n",
+		aprint_error("ahc_isa_idstring: no device at 0x%lx\n",
 		    ioh); /* XXX knows about ioh guts */
-		printf("\t(0x%x, 0x%x)\n", vid[0], vid[1]);
+		aprint_error("\t(0x%x, 0x%x)\n", vid[0], vid[1]);
 #endif
 		return (0);
 	}
 
 	/* And check that the firmware didn't biff something badly */
 	if (EISA_VENDID_IDDELAY(vid)) {
-		printf("ahc_isa_idstring: BIOS biffed it at 0x%lx\n",
+		aprint_error("ahc_isa_idstring: BIOS biffed it at 0x%lx\n",
 		    ioh);	/* XXX knows about ioh guts */
 		return (0);
 	}
@@ -264,7 +264,7 @@ ahc_isa_match(struct isa_attach_args *ia, bus_addr_t iobase)
 		 * be common on machines configured to look for
 		 * ahc_eisa and ahc_isa.
 		 */
-		printf("ahc_isa_match: can't map I/O space for 0x%x\n",
+		aprint_error("ahc_isa_match: can't map I/O space for 0x%x\n",
 		    iobase);
 #endif
 		return (0);
@@ -285,7 +285,7 @@ ahc_isa_match(struct isa_attach_args *ia, bus_addr_t iobase)
 
 	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 	    ia->ia_irq[0].ir_irq != irq) {
-		printf("ahc_isa_match: irq mismatch (kernel %d, card %d)\n",
+		aprint_error("ahc_isa_match: irq mismatch (kernel %d, card %d)\n",
 		    ia->ia_irq[0].ir_irq, irq);
 		return (0);
 	}
@@ -337,7 +337,7 @@ ahc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	 */
 	for (as = ahc_isa_all_slots.lh_first; as != NULL;
 	    as = as->link.le_next)
-		if (as->bus == parent->dv_unit)
+		if (as->bus == device_unit(parent))
 			goto found_slot_marker;
 
 	/*
@@ -348,7 +348,7 @@ ahc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	if (as == NULL)
 		panic("ahc_isa_probe: can't allocate slot marker");
 
-	as->bus = parent->dv_unit;
+	as->bus = device_unit(parent);
 	as->slot = AHC_ISA_MIN_SLOT;
 	LIST_INSERT_HEAD(&ahc_isa_all_slots, as, link);
 
@@ -378,26 +378,28 @@ ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 	char idstring[EISA_IDSTRINGLEN];
 	u_char intdef;
 
+	aprint_naive(": SCSI controller\n");
+
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ia->ia_io[0].ir_size,
 	    0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 	if (!ahc_isa_idstring(iot, ioh, idstring)) {
-		printf(": can't read ID string\n");
+		aprint_error(": can't read ID string\n");
 		goto free_io;
 	}
 	if ((irq = ahc_aic77xx_irq(iot, ioh)) < 0) {
-		printf(": ahc_aic77xx_irq failed\n");
+		aprint_error(": ahc_aic77xx_irq failed\n");
 		goto free_io;
 	}
 
 	if (strcmp(idstring, "ADP7756") == 0) {
-		printf(": %s\n", EISA_PRODUCT_ADP7756);
+		aprint_normal(": %s\n", EISA_PRODUCT_ADP7756);
 	} else if (strcmp(idstring, "ADP7757") == 0) {
-		printf(": %s\n", EISA_PRODUCT_ADP7757);
+		aprint_normal(": %s\n", EISA_PRODUCT_ADP7757);
 	} else {
-		printf(": unknown device type %s\n", idstring);
+		aprint_error(": unknown device type %s\n", idstring);
 		goto free_io;
 	}
 
@@ -437,7 +439,7 @@ ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 	ahc->ih = isa_intr_establish(ia->ia_ic, irq,
 	    intrtype, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		printf("%s: couldn't establish %s interrupt\n",
+		aprint_error("%s: couldn't establish %s interrupt\n",
 		       ahc->sc_dev.dv_xname, intrtypestr);
 		goto free_io;
 	}
@@ -447,7 +449,7 @@ ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 	 * usefull for debugging irq problems
 	 */
 	if (bootverbose) {
-		printf("%s: Using %s interrupts\n",
+		aprint_verbose("%s: Using %s interrupts\n",
 		       ahc->sc_dev.dv_xname, intrtypestr);
 	}
 
@@ -492,23 +494,24 @@ aha2840_load_seeprom(struct ahc_softc *ahc)
 	sd.sd_DI = DI_2840;
 
 	if (bootverbose)
-		printf("%s: Reading SEEPROM...", ahc_name(ahc));
+		aprint_verbose("%s: Reading SEEPROM...", ahc_name(ahc));
 	have_seeprom = read_seeprom(&sd, (uint16_t *)&sc,
 				    /*start_addr*/0, sizeof(sc)/2);
 
 	if (have_seeprom) {
 		if (verify_seeprom_cksum(&sc) == 0) {
 			if(bootverbose)
-				printf ("checksum error\n");
+				aprint_verbose ("checksum error\n");
 			have_seeprom = 0;
 		} else if (bootverbose) {
-			printf("done.\n");
+			aprint_verbose("done.\n");
 		}
 	}
 
 	if (!have_seeprom) {
 		if (bootverbose)
-			printf("%s: No SEEPROM available\n", ahc_name(ahc));
+			aprint_verbose("%s: No SEEPROM available\n",
+			    ahc_name(ahc));
 		ahc->flags |= AHC_USEDEFAULTS;
 	} else {
 		/*

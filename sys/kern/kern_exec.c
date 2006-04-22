@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.212 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.212.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.212 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.212.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -142,6 +142,17 @@ struct uvm_object *emul_netbsd_object;
 void	syscall(void);
 #endif
 
+static const struct sa_emul saemul_netbsd = {
+	sizeof(ucontext_t),
+	sizeof(struct sa_t),
+	sizeof(struct sa_t *),
+	NULL,
+	NULL,
+	cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext,
+	sa_ucsp
+};
+
 /* NetBSD emul struct */
 const struct emul emul_netbsd = {
 	"netbsd",
@@ -185,6 +196,8 @@ const struct emul emul_netbsd = {
 	NULL,
 
 	uvm_default_mapaddr,
+	NULL,
+	&saemul_netbsd,
 };
 
 #ifdef LKM
@@ -402,6 +415,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	size_t			len;
 	char			*stack;
 	struct ps_strings	arginfo;
+	struct ps_strings	*aip = &arginfo;
 	struct vmspace		*vm;
 	char			**tmpfap;
 	int			szsigcode;
@@ -734,10 +748,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	p->p_psnenv = offsetof(struct ps_strings, ps_nenvstr);
 
 	/* copy out the process's ps_strings structure */
-	if ((error = copyout(&arginfo, (char *)p->p_psstr,
+	if ((error = copyout(aip, (char *)p->p_psstr,
 	    sizeof(arginfo))) != 0) {
 		DPRINTF(("execve: ps_strings copyout %p->%p size %ld failed\n",
-		       &arginfo, (char *)p->p_psstr, (long)sizeof(arginfo)));
+		       aip, (char *)p->p_psstr, (long)sizeof(arginfo)));
 		goto exec_abort;
 	}
 
@@ -830,7 +844,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
-	if (p->p_flag & P_TRACED)
+	if ((p->p_flag & (P_TRACED|P_SYSCALL)) == P_TRACED)
 		psignal(p, SIGTRAP);
 
 	free(pack.ep_hdr, M_EXEC);
@@ -1194,7 +1208,7 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 {
 	struct execsw_entry *et, *e1;
 
-	MALLOC(et, struct execsw_entry *, sizeof(struct execsw_entry),
+	et = (struct execsw_entry *) malloc(sizeof(struct execsw_entry),
 			M_TEMP, M_WAITOK);
 	et->next = NULL;
 	et->es = esp;
@@ -1226,6 +1240,8 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 #ifdef DIAGNOSTIC
 		panic("execw[] entry with unknown priority %d found",
 			et->es->es_prio);
+#else
+		free(et, M_TEMP);
 #endif
 		break;
 	}
@@ -1283,7 +1299,7 @@ exec_init(int init_boot)
 	for(i=0; list; i++) {
 		new_es[i] = list->es;
 		e1 = list->next;
-		FREE(list, M_TEMP);
+		free(list, M_TEMP);
 		list = e1;
 	}
 

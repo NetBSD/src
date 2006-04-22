@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.h,v 1.5 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.h,v 1.5.6.1 2006/04/22 11:38:21 simonb Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -39,21 +39,39 @@
 #ifndef	_SVR4_SOCKIO_H_
 #define	_SVR4_SOCKIO_H_
 
-#define	SVR4_IFF_UP		0x0001
-#define	SVR4_IFF_BROADCAST	0x0002
-#define	SVR4_IFF_DEBUG		0x0004
-#define	SVR4_IFF_LOOPBACK	0x0008
-#define	SVR4_IFF_POINTOPOINT	0x0010
-#define	SVR4_IFF_NOTRAILERS	0x0020
-#define	SVR4_IFF_RUNNING	0x0040
-#define	SVR4_IFF_NOARP		0x0080
-#define	SVR4_IFF_PROMISC	0x0100
-#define	SVR4_IFF_ALLMULTI	0x0200
-#define	SVR4_IFF_INTELLIGENT	0x0400
-#define	SVR4_IFF_MULTICAST	0x0800
-#define	SVR4_IFF_MULTI_BCAST	0x1000
-#define	SVR4_IFF_UNNUMBERED	0x2000
-#define	SVR4_IFF_PRIVATE	0x8000
+
+#define	SVR4_IFF_UP		0x00000001
+#define	SVR4_IFF_BROADCAST	0x00000002
+#define	SVR4_IFF_DEBUG		0x00000004
+#define	SVR4_IFF_LOOPBACK	0x00000008
+#define	SVR4_IFF_POINTOPOINT	0x00000010
+#define	SVR4_IFF_NOTRAILERS	0x00000020
+#define	SVR4_IFF_RUNNING	0x00000040
+#define	SVR4_IFF_NOARP		0x00000080
+#define	SVR4_IFF_PROMISC	0x00000100
+#define	SVR4_IFF_ALLMULTI	0x00000200
+#define	SVR4_IFF_INTELLIGENT	0x00000400
+#define	SVR4_IFF_MULTICAST	0x00000800
+#define	SVR4_IFF_MULTI_BCAST	0x00001000
+#define	SVR4_IFF_UNNUMBERED	0x00002000
+#define	SVR4_IFF_DHCPRUNNING	0x00004000
+#define	SVR4_IFF_PRIVATE	0x00008000
+#define	SVR4_IFF_NOXMIT		0x00010000
+#define	SVR4_IFF_NOLOCAL	0x00020000
+#define	SVR4_IFF_DEPRECATED	0x00040000
+#define	SVR4_IFF_ADDRCONF	0x00080000
+#define	SVR4_IFF_ROUTER		0x00100000
+#define	SVR4_IFF_NONUD		0x00200000
+#define	SVR4_IFF_ANYCAST	0x00400000
+#define	SVR4_IFF_NORTEXCH	0x00800000
+#define	SVR4_IFF_IPV4		0x01000000
+#define	SVR4_IFF_IPV6		0x02000000
+#define	SVR4_IFF_MIPRUNNING	0x04000000
+#define	SVR4_IFF_NOFAILOVER	0x08000000
+#define	SVR4_IFF_FAILED		0x10000000
+#define	SVR4_IFF_STANDBY	0x20000000
+#define	SVR4_IFF_INACTIVE	0x40000000
+#define	SVR4_IFF_OFFLINE	0x80000000
 
 struct svr4_ifreq {
 #define	SVR4_IFNAMSIZ	16
@@ -81,6 +99,83 @@ struct svr4_ifreq {
 
 };
 
+typedef struct lif_ifinfo_req {
+	uint8_t			lir_maxhops;
+	uint32_t		lir_reachtime;
+	uint32_t		lir_reachretrans;
+	uint32_t		lir_maxmtu;
+} lif_ifinfo_req_t;
+
+#define	SVR4_ND_MAX_HDW_LEN	64
+typedef struct svr4_lif_nd_req {
+	struct sockaddr_storage	lnr_addr;
+	uint8_t			lnr_state_create;
+	uint8_t			lnr_state_same_lla;
+	uint8_t			lnr_state_diff_lla;
+	int			lnr_hdw_len;
+	int			lnr_flags;
+	int			lnr_pad0;
+	char			lnr_hdw_addr[SVR4_ND_MAX_HDW_LEN];
+} lif_nd_req_t;
+
+struct svr4_lifreq {
+#define	SVR4_LIFNAMSIZ	32
+	char			lifr_name[SVR4_LIFNAMSIZ];
+	union {
+		int		lifru_addrlen;
+		u_int		lifru_ppa;
+	} lifr_lifru1;
+#define	lifr_addrlen		lifr_lifru1.lifru_addrlen
+#define	lifr_ppa		lifr_lifru1.lifru_ppa
+	u_int			lifr_movetoindex;
+	union {
+		struct sockaddr_storage lifru_addr;
+		struct sockaddr_storage lifru_dstaddr;
+		struct sockaddr_storage lifru_broadaddr;
+		struct sockaddr_storage lifru_token;
+		struct sockaddr_storage lifru_subnet;
+		int		lifru_index;
+		uint64_t	lifru_flags;
+		int		lifru_metric;
+		u_int		lifru_mtu;
+		char		lifru_data[1];
+		char		lifru_enaddr[6];
+		int		lif_muxid[2];
+		struct svr4_lif_nd_req	lifru_nd_req;
+		struct lif_ifinfo_req	lifru_ifinfo_req;
+		char		lifru_groupname[SVR4_LIFNAMSIZ];
+		u_int		lifru_delay;
+	} lifr_lifru;
+};
+
+#define	svr4_lifr_addr		lifr_lifru.lifru_addr
+#define	svr4_lifr_dstaddr	lifr_lifru.lifru_dstaddr
+#define	svr4_lifr_broadaddr	lifr_lifru.lifru_broadaddr
+#define	svr4_lifr_token		lifr_lifru.lifru_token
+#define	svr4_lifr_subnet	lifr_lifru.lifru_subnet
+#define	svr4_lifr_index		lifr_lifru.lifru_index
+#define	svr4_lifr_flags		lifr_lifru.lifru_flags
+#define	svr4_lifr_metric	lifr_lifru.lifru_metric
+#define	svr4_lifr_mtu		lifr_lifru.lifru_mtu
+#define	svr4_lifr_data		lifr_lifru.lifru_data
+#define	svr4_lifr_enaddr	lifr_lifru.lifru_enaddr
+#define	svr4_lifr_index		lifr_lifru.lifru_index
+#define	svr4_lifr_ip_muxid	lifr_lifru.lif_muxid[0]
+#define	svr4_lifr_arp_muxid	lifr_lifru.lif_muxid[1]
+#define	svr4_lifr_nd		lifr_lifru.lifru_nd_req
+#define	svr4_lifr_ifinfo	lifr_lifru.lifru_ifinfo_req
+#define	svr4_lifr_groupname	lifr_lifru.lifru_groupname
+#define	svr4_lifr_delay		lifr_lifru.lifru_delay
+
+
+typedef u_short svr4_sa_family_t;
+
+struct svr4_lifnum {
+	svr4_sa_family_t	lifn_family;
+	int			lifn_flags;
+	int			lifn_count;
+};
+
 struct svr4_ifconf {
 	int	svr4_ifc_len;
 	union {
@@ -97,5 +192,7 @@ struct svr4_ifconf {
 #define	SVR4_SIOCGIFFLAGS	SVR4_IOWR('i', 17, struct svr4_ifreq)
 #define	SVR4_SIOCGIFCONF	SVR4_IOWR('i', 20, struct svr4_ifconf)
 #define	SVR4_SIOCGIFNUM		SVR4_IOR('i', 87, int)
+#define	SVR4_SIOCGLIFFLAGS	SVR4_IOWR('i', 117, struct svr4_lifreq)
+#define	SVR4_SIOCGLIFNUM	SVR4_IOWR('i', 130, struct svr4_lifnum)
 
 #endif /* !_SVR4_SOCKIO_H_ */

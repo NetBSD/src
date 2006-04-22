@@ -1,7 +1,7 @@
-/* $NetBSD: vesa_text.c,v 1.6 2005/12/11 12:17:40 christos Exp $ */
+/* $NetBSD: vesa_text.c,v 1.6.6.1 2006/04/22 11:37:31 simonb Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesa_text.c,v 1.6 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesa_text.c,v 1.6.6.1 2006/04/22 11:37:31 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +49,12 @@ vesatext_attach(parent, dev, aux)
 	struct vesabiosdev_attach_args *vaa = aux;
 	int i;
 
+	aprint_naive("\n");
+	aprint_normal(": VESA text device\n");
+
 	sc->sc_modes = malloc(vaa->vbaa_nmodes * sizeof(int),
 			      M_DEVBUF, M_NOWAIT);
 	sc->sc_nmodes = vaa->vbaa_nmodes;
 	for (i = 0; i < vaa->vbaa_nmodes; i++)
 		sc->sc_modes[i] = vaa->vbaa_modes[i];
-
-	printf("\n");
 }

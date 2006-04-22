@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.40 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.40.6.1 2006/04/22 11:37:50 simonb Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.40 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.40.6.1 2006/04/22 11:37:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,8 +230,8 @@ nextdma_init(struct nextdma_softc *nsc)
 		state = nd_bsr4 (DD_CSR);
 
 #if 1
-		/* mourning (a 25Mhz 68040 mono slab) appears to set BUSEXC
-		 * milo (a 25Mhz 68040 mono cube) didn't have this problem
+		/* mourning (a 25 MHz 68040 mono slab) appears to set BUSEXC
+		 * milo (a 25 MHz 68040 mono cube) didn't have this problem
 		 * Darrin B. Jewell <jewell@mit.edu>  Mon May 25 07:53:05 1998
 		 */
 		state &= (DMACSR_COMPLETE | DMACSR_SUPDATE | DMACSR_ENABLE);

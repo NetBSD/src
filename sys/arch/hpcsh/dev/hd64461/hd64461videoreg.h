@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461videoreg.h,v 1.2 2005/12/18 21:47:10 uwe Exp $	*/
+/*	$NetBSD: hd64461videoreg.h,v 1.2.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,10 +105,10 @@
  *	select CL2 frequency
  *	0x0	15 MHz (color) 15/2 (monochrome)
  *	0x1	2.5 MHz
- *	0x2	3.75 Mhz
- *	0x4	5 Mhz
- *	0x8	7.5 Mhz
- *	0x10	10 Mhz
+ *	0x2	3.75 MHz
+ *	0x4	5 MHz
+ *	0x8	7.5 MHz
+ *	0x10	10 MHz
  */
 #define HD64461_LCDLDR3_CG_COLOR16	0x8
 #define HD64461_LCDLDR3_CG_COLOR8	0x4

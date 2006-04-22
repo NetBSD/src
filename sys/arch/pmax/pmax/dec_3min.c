@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.54 2005/12/24 20:07:25 perry Exp $ */
+/* $NetBSD: dec_3min.c,v 1.54.6.1 2006/04/22 11:37:52 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.54 2005/12/24 20:07:25 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.54.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,7 +433,7 @@ dec_3min_intr(status, cause, pc, ipending)
 			pmax_clock_evcnt.ev_count++;
 		}
 
-		/* If clock interrups were enabled, re-enable them ASAP. */
+		/* If clock interrupts were enabled, re-enable them ASAP. */
 		if (old_mask & KMIN_INTR_CLOCK) {
 			/* ioctl interrupt mask to splclock and higher */
 			*(u_int32_t *)(ioasic_base + IOASIC_IMSK)

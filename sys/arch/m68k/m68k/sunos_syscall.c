@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.9 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.9.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,12 +110,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.9 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.9.6.1 2006/04/22 11:37:40 simonb Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,12 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.9 2005/12/11 12:17:59 christos E
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -149,16 +140,9 @@ void
 sunos_syscall_intern(struct proc *p)
 {
 
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = sunos_syscall_fancy;
 	else
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = sunos_syscall_fancy;
-	else
-#endif
 		p->p_md.md_syscall = sunos_syscall_plain;
 }
 
@@ -227,10 +211,6 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 			goto bad;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
 	error = (*callp->sy_call)(l, args, rval);
@@ -269,10 +249,6 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		if (error == ERESTART)
 			frame->f_regs[SP] -= sizeof (int);
 	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval)
-#endif
 }
 
 static void

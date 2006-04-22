@@ -1,0 +1,60 @@
+#	$NetBSD: DBAU1500,v 1.8.2.2 2006/04/22 11:37:24 simonb Exp $
+#
+# Kernel config for the AMD Alchemy DBAu1500 evaluation board.
+
+include		"arch/evbmips/conf/ALCHEMY"
+
+no options 	ALCHEMY_AU1000
+no options 	ALCHEMY_AU1100
+no options 	ALCHEMY_AU1500
+no options 	ALCHEMY_AU1550
+no options 	ALCHEMY_GENERIC
+
+# configure out local board support
+
+options 	ALCHEMY_AU1500
+options 	ALCHEMY_DBAU1500
+options 	PCI_NETBSD_CONFIGURE
+
+# XXX AU1500 PCI seems busted, at least on the DBAU1500.  Attempts to use
+# commands like "dd if=/dev/zero of=/tmp/f bs=64k count=1000" result in
+# kernel panics when running diskless with / mounted over a PCI NIC.
+#
+# Additionally early steppings (AB, AC) of the AU1500 are incredibly buggy
+# and are unlikely to perform properly without special software workarounds
+# that I have not yet figured out.
+#
+# Finally, the AU1500 pci bus is completely hopeless when it comes to making
+# PCI-PCI bridges (such as multiport ethernet cards).  The design is flawed,
+# and has not been fixed in at least the AD stepping of the AU1500.
+#
+# I would welcome some constructive feedback or correction to any or all of
+# these problems.  Please include gdamore@netbsd.org if you figure this out.
+#
+aupci*	at aubus? addr ?
+pci*	at aupci?
+
+# Note that this is just fairly random selection of PCI devices.
+
+# Ethernet cards
+ath*		at pci? dev ? function ?	# Atheros WLAN 
+bge*		at pci? dev ? function ?	# Broadcom GigE
+fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+ral*		at pci?	dev ? function ?	# Ralink WLAN
+re*		at pci? dev ? function ?	# Realtek 8169 GigE
+rtk*		at pci? dev ? function ?	# Realtek 8129/8139
+sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+tlp*		at pci? dev ? function ?	# DEC Tulip Ethernet
+vge*		at pci? dev ? function ?	# VIA GigE
+wi*		at pci? dev ? function ?	# Intersil PRISM WLAN
+
+# (on-board) IDE controller
+hptide*		at pci? dev ? function ?	# Triones/HighPoint IDE
+
+atabus*		at ata?
+wd*		at atabus? drive ? flags 0x0000
+
+atapibus*	at atabus?
+cd*		at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*		at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown

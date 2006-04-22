@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.25 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.25.6.1 2006/04/22 11:37:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.25 2005/12/11 12:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.25.6.1 2006/04/22 11:37:32 simonb Exp $");
 
 #include "ioapic.h"
 
@@ -149,26 +149,24 @@ int
 eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
 {
 	if (irq >= NUM_LEGACY_IRQS) {
-		printf("eisa_intr_map: bad IRQ %d\n", irq);
+		aprint_error("eisa_intr_map: bad IRQ %d\n", irq);
 		*ihp = -1;
 		return 1;
 	}
 	if (irq == 2) {
-		printf("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
+		aprint_verbose("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
 		irq = 9;
 	}
 
 #if NIOAPIC > 0
-
 	if (mp_busses != NULL) {
 		if (intr_find_mpmapping(mp_eisa_bus, irq, ihp) == 0 ||
 		    intr_find_mpmapping(mp_isa_bus, irq, ihp) == 0) {
 			*ihp |= irq;
 			return 0;
 		} else
-			printf("eisa_intr_map: no MP mapping found\n");
+			aprint_verbose("eisa_intr_map: no MP mapping found\n");
 	}
-	printf("eisa_intr_map: no MP mapping found\n");
 #endif
 
 	*ihp = irq;
@@ -220,7 +218,7 @@ eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih,
 	if (ih & APIC_INT_VIA_APIC) {
 		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
 		if (pic == NULL) {
-			printf("eisa_intr_establish: bad ioapic %d\n",
+			aprint_error("eisa_intr_establish: bad ioapic %d\n",
 			    APIC_IRQ_APIC(ih));
 			return NULL;
 		}

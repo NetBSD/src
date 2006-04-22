@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.h,v 1.8 2006/01/24 00:01:22 uwe Exp $	*/
+/*	$NetBSD: mmu.h,v 1.8.4.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ void sh3_mmu_start(void);
 void sh3_tlb_invalidate_addr(int, vaddr_t);
 void sh3_tlb_invalidate_asid(int);
 void sh3_tlb_invalidate_all(void);
-void sh3_tlb_update(int, vaddr_t, u_int32_t);
+void sh3_tlb_update(int, vaddr_t, uint32_t);
 #endif
 
 #ifdef SH4
@@ -74,18 +74,18 @@ void sh4_mmu_start(void);
 void sh4_tlb_invalidate_addr(int, vaddr_t);
 void sh4_tlb_invalidate_asid(int);
 void sh4_tlb_invalidate_all(void);
-void sh4_tlb_update(int, vaddr_t, u_int32_t);
+void sh4_tlb_update(int, vaddr_t, uint32_t);
 #endif
 
 
 #if defined(SH3) && defined(SH4)
-extern u_int32_t __sh_PTEH;
+extern uint32_t __sh_PTEH;
 
 extern void (*__sh_mmu_start)(void);
 extern void (*__sh_tlb_invalidate_addr)(int, vaddr_t);
 extern void (*__sh_tlb_invalidate_asid)(int);
 extern void (*__sh_tlb_invalidate_all)(void);
-extern void (*__sh_tlb_update)(int, vaddr_t, u_int32_t);
+extern void (*__sh_tlb_update)(int, vaddr_t, uint32_t);
 
 #define	sh_mmu_start()			(*__sh_mmu_start)()
 #define	sh_tlb_invalidate_addr(a, va)	(*__sh_tlb_invalidate_addr)(a, va)

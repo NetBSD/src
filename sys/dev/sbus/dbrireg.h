@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrireg.h,v 1.3 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: dbrireg.h,v 1.3.6.1 2006/04/22 11:39:28 simonb Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -40,6 +40,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifndef DBRI_REG_H
+#define DBRI_REG_H
 
 #define DBRI_REG0		0x00L	/* status and control */
 #define	  DBRI_COMMAND_VALID	(1<<15)
@@ -127,3 +130,5 @@
 #define	DBRI_TD_FINAL		(1<<15)	/* final interrupt */
 #define	DBRI_TD_IDLE		(1<<13)	/* transmit idle characters */
 #define	DBRI_TD_TBC		(1<<0)	/* transmit buffer complete */
+
+#endif /* DBRI_REG_H */

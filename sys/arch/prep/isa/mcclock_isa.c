@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.14 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.14.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.14 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.14.6.1 2006/04/22 11:37:54 simonb Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -47,21 +47,18 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.14 2005/12/11 12:18:47 christos Ex
 
 #define	MCCLOCK_NPORTS	2
 
-int	mcclock_isa_match __P((struct device *, struct cfdata *, void *));
-void	mcclock_isa_attach __P((struct device *, struct device *, void *));
+int	mcclock_isa_match(struct device *, struct cfdata *, void *);
+void	mcclock_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mcclock_isa, sizeof (struct mc146818_softc),
     mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
-void	mcclock_isa_write __P((struct mc146818_softc *, u_int, u_int));
-u_int	mcclock_isa_read __P((struct mc146818_softc *, u_int));
+void	mcclock_isa_write(struct mc146818_softc *, u_int, u_int);
+u_int	mcclock_isa_read(struct mc146818_softc *, u_int);
 
 
 int
-mcclock_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct mc146818_softc mc146818, *sc;
@@ -133,9 +130,7 @@ mcclock_isa_match(parent, match, aux)
 }
 
 void
-mcclock_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mc146818_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -159,9 +154,7 @@ mcclock_isa_attach(parent, self, aux)
 }
 
 void
-mcclock_isa_write(sc, reg, datum)
-	struct mc146818_softc *sc;
-	u_int reg, datum;
+mcclock_isa_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -174,9 +167,7 @@ mcclock_isa_write(sc, reg, datum)
 }
 
 u_int
-mcclock_isa_read(sc, reg)
-	struct mc146818_softc *sc;
-	u_int reg;
+mcclock_isa_read(struct mc146818_softc *sc, u_int reg)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;

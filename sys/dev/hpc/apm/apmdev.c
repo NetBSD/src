@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.4 2005/12/11 12:21:22 christos Exp $ */
+/*	$NetBSD: apmdev.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.4 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include "opt_apmdev.h"
 
@@ -884,6 +884,7 @@ apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		}
 		break;
 
+	case OAPM_IOC_GETPOWER:
 	case APM_IOC_GETPOWER:
 		powerp = (struct apm_power_info *)data;
 		if ((error = sc->ops->get_powstat(sc->cookie, powerp)) != 0) {

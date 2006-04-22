@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.15 2005/12/11 12:23:29 christos Exp $ */
+/*	$NetBSD: ts.c,v 1.15.6.1 2006/04/22 11:39:25 simonb Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.15 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.15.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #undef	TSDEBUG
 
@@ -231,8 +231,8 @@ tsmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 tsattach(struct device *parent, struct device *self, void *aux)
 {
-	struct uba_softc *uh = (void *)parent;
-	struct ts_softc *sc = (void *)self;
+	struct uba_softc *uh = device_private(parent);
+	struct ts_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 	int error;
 	char *t;
@@ -300,7 +300,7 @@ tsinit(struct ts_softc *sc)
 		 * buffer into Unibus address space.
 		 */
 		sc->sc_ui.ui_size = sizeof(struct ts);
-		if ((ubmemalloc((void *)sc->sc_dev.dv_parent,
+		if ((ubmemalloc((void *)device_parent(&sc->sc_dev),
 		    &sc->sc_ui, UBA_CANTWAIT)))
 			return;
 		sc->sc_vts = (void *)sc->sc_ui.ui_vaddr;
@@ -791,7 +791,7 @@ tsintr(void *arg)
 #endif
 		if (bp != &sc->ts_cbuf) {	/* no ioctl */
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_dmam);
-			uba_done((void *)sc->sc_dev.dv_parent);
+			uba_done((void *)device_parent(&sc->sc_dev));
 		}
 		bp->b_resid = sc->sc_vts->status.rbpcr;
 		if ((bp->b_flags & B_ERROR) == 0)

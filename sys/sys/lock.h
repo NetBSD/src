@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.63 2006/01/02 21:53:30 uwe Exp $	*/
+/*	$NetBSD: lock.h,v 1.63.4.1 2006/04/22 11:40:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -327,22 +327,32 @@ void	_spinlock_acquire_count(volatile struct lock *, int, const char *,
 #define	spinlock_release_all(l)	_spinlock_release_all((l), __FILE__, __LINE__)
 #define	spinlock_acquire_count(l, c) _spinlock_acquire_count((l), (c),	\
 					__FILE__, __LINE__)
+
 #else
 int	spinlock_release_all(volatile struct lock *);
 void	spinlock_acquire_count(volatile struct lock *, int);
 #endif
 
 #if defined(LOCKDEBUG)
-void	_simple_lock(volatile struct simplelock *, const char *, int);
-int	_simple_lock_try(volatile struct simplelock *, const char *, int);
-void	_simple_unlock(volatile struct simplelock *, const char *, int);
-int	_simple_lock_held(volatile struct simplelock *);
-void	simple_lock_only_held(volatile struct simplelock *, const char *);
+
+void _simple_lock(volatile struct simplelock *, const char *, int);
+int  _simple_lock_try(volatile struct simplelock *, const char *, int);
+void _simple_unlock(volatile struct simplelock *, const char *, int);
+int  _simple_lock_held(volatile struct simplelock *);
+void simple_lock_only_held(volatile struct simplelock *, const char *);
+void _simple_lock_assert_locked(volatile struct simplelock *, const char *,
+    const char *, int l);
+void _simple_lock_assert_unlocked(volatile struct simplelock *, const char *,
+    const char *, int l);
 
 #define	simple_lock(alp)	_simple_lock((alp), __FILE__, __LINE__)
 #define	simple_lock_try(alp)	_simple_lock_try((alp), __FILE__, __LINE__)
 #define	simple_unlock(alp)	_simple_unlock((alp), __FILE__, __LINE__)
 #define	simple_lock_held(alp)	_simple_lock_held((alp))
+#define simple_lock_assert_locked(alp,lockname)	\
+	_simple_lock_assert_locked((alp),(lockname), __FILE__, __LINE__)
+#define simple_lock_assert_unlocked(alp,lockname) \
+	_simple_lock_assert_unlocked((alp),(lockname), __FILE__, __LINE__)
 
 #define	LOCK_ASSERT(x)		KASSERT(x)
 
@@ -357,17 +367,23 @@ void	simple_lock_switchcheck(void);
 #define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
 #define	LOCK_ASSERT(x)		/* nothing */
 #define	simple_lock_only_held(x,y)		/* nothing */
+#define simple_lock_assert_locked(alp,lockname)	/* nothing */
+#define simple_lock_assert_unlocked(alp,lockname)	/* nothing */
 #else
 #define	simple_lock_try(alp)	(1)
 #ifndef __lint__
 #define	simple_lock_init(alp)	(void)(alp)
 #define	simple_lock(alp)	(void)(alp)
 #define	simple_unlock(alp)	(void)(alp)
+#define simple_lock_assert_locked(alp,lockname)	(void)(alp)
+#define simple_lock_assert_unlocked(alp,lockname)	(void)(alp)
 #else /* __lint__ */
 #define	simple_lock_init(alp)	/* nothing */
 #define	simple_lock(alp)	/* nothing */
 #define	simple_unlock(alp)	/* nothing */
 #define	simple_lock_only_held(x,y)		/* nothing */
+#define simple_lock_assert_locked(alp,lockname)	/* nothing */
+#define simple_lock_assert_unlocked(alp,lockname)	/* nothing */
 #endif /* __lint__ */
 #define	LOCK_ASSERT(x)		/* nothing */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.16 2005/12/11 12:23:44 christos Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.16.6.1 2006/04/22 11:39:28 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.16 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.16.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ cgthreeattach_sbus(parent, self, args)
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	fb->fb_device = &sc->sc_dev;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
 
 	fb->fb_type.fb_depth = 8;

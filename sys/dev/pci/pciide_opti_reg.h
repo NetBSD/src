@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_opti_reg.h,v 1.9 2005/12/24 23:41:34 perry Exp $	*/
+/*	$NetBSD: pciide_opti_reg.h,v 1.9.6.1 2006/04/22 11:39:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  * break things in subtle ways if the wdc registers are accessed
  * by an interrupt routine while this magic sequence is executing.
  */
-static inline u_int8_t __attribute__((__unused__))
+static __inline u_int8_t __attribute__((__unused__))
 opti_read_config(struct ata_channel *chp, int reg)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
@@ -137,7 +137,7 @@ opti_read_config(struct ata_channel *chp, int reg)
 	return rv;
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 opti_write_config(struct ata_channel *chp, int reg, u_int8_t val)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);

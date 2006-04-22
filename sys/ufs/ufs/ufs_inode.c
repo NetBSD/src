@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.57 2005/12/23 23:20:00 rpaulo Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.57.6.1 2006/04/22 11:40:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.57 2005/12/23 23:20:00 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.57.6.1 2006/04/22 11:40:27 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -201,8 +201,10 @@ int
 ufs_balloc_range(struct vnode *vp, off_t off, off_t len, struct ucred *cred,
     int flags)
 {
-	off_t oldeof, neweof, oldeob, oldeop, neweob, pagestart;
-	off_t eob;
+	off_t neweof;	/* file size after the operation */
+	off_t neweob;	/* offset next to the last block after the operation */
+	off_t pagestart; /* starting offset of range covered by pgs */
+	off_t eob;	/* offset next to allocated blocks */
 	struct uvm_object *uobj;
 	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages;
@@ -214,20 +216,8 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, struct ucred *cred,
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x len 0x%x u_size 0x%x",
 		    vp, off, len, vp->v_size);
 
-	oldeof = vp->v_size;
-	GOP_SIZE(vp, oldeof, &oldeop, GOP_SIZE_WRITE);
-	GOP_SIZE(vp, oldeof, &oldeob, GOP_SIZE_READ);
-
-	/*
-	 * If we need to map pages in the former last block,
-	 * do so now.
-	 */
-	if (oldeob != oldeop) {
-		uvm_vnp_zerorange(vp, oldeop, oldeob - oldeop);
-	}
-
 	neweof = MAX(vp->v_size, off + len);
-	GOP_SIZE(vp, neweof, &neweob, GOP_SIZE_WRITE);
+	GOP_SIZE(vp, neweof, &neweob, 0);
 
 	error = 0;
 	uobj = &vp->v_uobj;
@@ -282,7 +272,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, struct ucred *cred,
 	 * (since they now have backing store) and unbusy them.
 	 */
 
-	GOP_SIZE(vp, off + len, &eob, GOP_SIZE_WRITE);
+	GOP_SIZE(vp, off + len, &eob, 0);
 	simple_lock(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
 		if (error) {

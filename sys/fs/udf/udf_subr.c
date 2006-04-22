@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.2.2.1 2006/04/22 11:39:58 simonb Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.2.2.1 2006/04/22 11:39:58 simonb Exp $");
 #endif /* not lint */
 
 
@@ -484,7 +484,7 @@ udf_update_discinfo(struct udf_mount *ump)
 	di->link_block_penalty	= 0;
 
 	di->mmc_cur     = MMC_CAP_RECORDABLE | MMC_CAP_REWRITABLE |
-		MMC_CAP_ZEROLINKBLK;
+		MMC_CAP_ZEROLINKBLK | MMC_CAP_HW_DEFECTFREE;
 	di->mmc_cap    = di->mmc_cur;
 	di->disc_flags = MMC_DFLAGS_UNRESTRICTED;
 
@@ -918,13 +918,16 @@ udf_retrieve_lvint(struct udf_mount *ump, struct logvol_int_desc **lvintp)
 	/* clean up the mess, esp. when there is an error */
 	if (dscr)
 		free(dscr, M_UDFVOLD);
-	if (error && lvint)
+
+	if (error && lvint) {
 		free(lvint, M_UDFVOLD);
-	*lvintp = lvint;
+		lvint = NULL;
+	};
 
 	if (!lvint)
 		error = ENOENT;
 
+	*lvintp = lvint;
 	return error;
 }
 
@@ -1357,7 +1360,7 @@ udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
 			error = udf_read_sparables(ump, mapping);
 			break;
 		case UDF_VTOP_TYPE_META :
-			/* load metafile and metabitmapfile FE/EFEs */
+			/* TODO load metafile and metabitmapfile FE/EFEs */
 			break;
 		default:
 			break;
@@ -2398,7 +2401,7 @@ udf_read_fid_stream(struct vnode *vp, uint64_t *offset,
 	dir_uio.uio_rw     = UIO_READ;	/* read into this space */
 	dir_uio.uio_iovcnt = 1;
 	dir_uio.uio_iov    = &dir_iovec;
-	dir_uio.uio_segflg = UIO_SYSSPACE;
+	UIO_SETUP_SYSSPACE(&dir_uio);
 	dir_iovec.iov_base = fid;
 	dir_iovec.iov_len  = lb_size;
 	dir_uio.uio_offset = *offset;

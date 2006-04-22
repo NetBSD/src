@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.14.4.1 2006/04/22 11:38:09 simonb Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -420,6 +420,11 @@ start:
 	orl	$(PG_V|PG_RW), %eax;
 	movl	%eax, (%ebx)
 	addl	$4,%ebx
+	movl	RELOC(start_info_union)+START_INFO_STORE_MFN,%eax
+	shll	$PGSHIFT,%eax
+	orl	$(PG_V|PG_RW), %eax;
+	movl	%eax, (%ebx)
+	addl	$4,%ebx
 1:
 #endif
 
@@ -448,12 +453,14 @@ start:
 	movl	%edx,_C_LABEL(HYPERVISOR_shared_info)
 	addl	$PAGE_SIZE,%edx			# shared_inf
 #ifdef XEN3
-	/* set console page virtual address if not domain0 */
+	/* set console and xenstore pages virtual address if not domain0 */
 	movl	RELOC(start_info_union)+START_INFO_FLAGS,%eax
 	testl	$SIF_INITDOMAIN, %eax;
 	jnz	1f
 	movl	%edx,_C_LABEL(xencons_interface)
 	addl	$PAGE_SIZE,%edx			# xencons_interface
+	movl	%edx,_C_LABEL(xenstore_interface)
+	addl	$PAGE_SIZE,%edx			# xenstore_interface
 1:
 #endif
 	movl	%edx,_C_LABEL(atdevbase)

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.27 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.27.6.1 2006/04/22 11:37:12 simonb Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.27 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.27.6.1 2006/04/22 11:37:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1506,7 +1506,7 @@ cc_init_ntsc_a2024(void)
 		bzero(a24_this, sizeof(dmode_t));
 		bzero(a24_this_data, sizeof(dmdata_t));
 
-		a24_this->name = "ntsc: A2024 15khz";
+		a24_this->name = "ntsc: A2024 15 kHz";
 		a24_this->nominal_size.width = 1024;
 		a24_this->nominal_size.height = 800;
 		a24_this_data->max_size.width = 1024;
@@ -2984,7 +2984,7 @@ cc_init_pal_a2024(void)
 		bzero(p24_this, sizeof(dmode_t));
 		bzero(p24_this_data, sizeof(dmdata_t));
 
-		p24_this->name = "pal: A2024 15khz";
+		p24_this->name = "pal: A2024 15 kHz";
 		p24_this->nominal_size.width = 1024;
 		p24_this->nominal_size.height = 1024;
 		p24_this_data->max_size.width = 1024;

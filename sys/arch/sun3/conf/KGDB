@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.47 2005/12/07 09:10:20 tsutsui Exp $
+#	$NetBSD: KGDB,v 1.47.6.1 2006/04/22 11:38:05 simonb Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -199,16 +199,16 @@ pseudo-device	md		2
 
 # Misc.
 pseudo-device	loop		1	# network loopback
-pseudo-device	bpfilter	8	# packet filter
-pseudo-device	sl		2	# CSLIP
-pseudo-device	ppp		2	# PPP
-pseudo-device	tun		2	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	bpfilter		# packet filter
+pseudo-device	sl			# CSLIP
+pseudo-device	ppp			# PPP
+pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	ipfilter		# ip filter
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	vnd		4	# paging to files
+#pseudo-device	vnd			# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	fss		4	# file system snapshot device

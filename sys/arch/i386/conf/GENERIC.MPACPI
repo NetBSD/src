@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.56 2006/01/04 20:43:18 dsl Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.56.4.1 2006/04/22 11:37:32 simonb Exp $
 #
 #	GENERIC.MP -- Generic, plus enable Multiprocessor support.
 #

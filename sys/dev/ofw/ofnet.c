@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.34 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.34.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.34 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.34.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -126,7 +126,7 @@ ofnet_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 ofnet_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ofnet_softc *of = (void *)self;
+	struct ofnet_softc *of = device_private(self);
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;
 	struct ofbus_attach_args *oba = aux;
 	char path[256];
@@ -136,7 +136,7 @@ ofnet_attach(struct device *parent, struct device *self, void *aux)
 	of->sc_phandle = oba->oba_phandle;
 #if NIPKDB_OFN > 0
 	if (kifp &&
-	    kifp->unit - 1 == of->sc_dev.dv_unit &&
+	    kifp->unit - 1 == device_unit(&of->sc_dev) &&
 	    OF_instance_to_package(kifp->port) == oba->oba_phandle)  {
 		ipkdb_of = of;
 		of->sc_ihandle = kifp->port;

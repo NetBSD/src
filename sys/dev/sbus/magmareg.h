@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.10 2005/12/24 20:27:52 perry Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.10.6.1 2006/04/22 11:39:28 simonb Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert
@@ -204,9 +204,9 @@ struct mbpp_softc {
 /* internal function prototypes */
 
 int cd1400_compute_baud(speed_t, int, int *, int *);
-inline void cd1400_write_ccr(struct cd1400 *, u_char);
-inline u_char cd1400_read_reg(struct cd1400 *, int);
-inline void cd1400_write_reg(struct cd1400 *, int, u_char);
+__inline void cd1400_write_ccr(struct cd1400 *, u_char);
+__inline u_char cd1400_read_reg(struct cd1400 *, int);
+__inline void cd1400_write_reg(struct cd1400 *, int, u_char);
 void cd1400_enable_transmitter(struct cd1400 *, int);
 
 int magma_match(struct device *, struct cfdata *, void *);

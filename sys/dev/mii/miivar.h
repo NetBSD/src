@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.44 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: miivar.h,v 1.44.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -209,11 +209,11 @@ struct mii_media {
 #ifdef _KERNEL
 
 #define	PHY_READ(p, r) \
-	(*(p)->mii_pdata->mii_readreg)((p)->mii_dev.dv_parent, \
+	(*(p)->mii_pdata->mii_readreg)(device_parent(&(p)->mii_dev), \
 	    (p)->mii_phy, (r))
 
 #define	PHY_WRITE(p, r, v) \
-	(*(p)->mii_pdata->mii_writereg)((p)->mii_dev.dv_parent, \
+	(*(p)->mii_pdata->mii_writereg)(device_parent(&(p)->mii_dev), \
 	    (p)->mii_phy, (r), (v))
 
 #define	PHY_SERVICE(p, d, o) \
@@ -252,7 +252,6 @@ int	mii_phy_tick(struct mii_softc *);
 
 void	mii_phy_status(struct mii_softc *);
 void	mii_phy_update(struct mii_softc *, int);
-int	mii_phy_statusmsg(struct mii_softc *);
 
 u_int	mii_phy_flowstatus(struct mii_softc *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.13 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.13.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.13 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.13.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,9 +72,9 @@ struct saost_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	u_int32_t	sc_clock_count;
-	u_int32_t	sc_statclock_count;
-	u_int32_t	sc_statclock_step;
+	uint32_t	sc_clock_count;
+	uint32_t	sc_statclock_count;
+	uint32_t	sc_statclock_step;
 };
 
 static struct saost_softc *saost_sc = NULL;
@@ -90,19 +90,13 @@ CFATTACH_DECL(saost, sizeof(struct saost_softc),
     saost_match, saost_attach, NULL, NULL);
 
 static int
-saost_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+saost_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	return (1);
 }
 
 void
-saost_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+saost_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct saost_softc *sc = (struct saost_softc*)self;
 	struct sa11x0_attach_args *sa = aux;
@@ -126,11 +120,10 @@ saost_attach(parent, self, aux)
 }
 
 static int
-clockintr(arg)
-	void *arg;
+clockintr(void *arg)
 {
 	struct clockframe *frame = arg;
-	u_int32_t oscr, nextmatch, oldmatch;
+	uint32_t oscr, nextmatch, oldmatch;
 	int s;
 
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
@@ -170,11 +163,10 @@ clockintr(arg)
 }
 
 static int
-statintr(arg)
-	void *arg;
+statintr(void *arg)
 {
 	struct clockframe *frame = arg;
-	u_int32_t oscr, nextmatch, oldmatch;
+	uint32_t oscr, nextmatch, oldmatch;
 	int s;
 
 	bus_space_write_4(saost_sc->sc_iot, saost_sc->sc_ioh,
@@ -215,10 +207,9 @@ statintr(arg)
 
 
 void
-setstatclockrate(schz)
-	int schz;
+setstatclockrate(int schz)
 {
-	u_int32_t count;
+	uint32_t count;
 
 	saost_sc->sc_statclock_step = TIMER_FREQUENCY / schz;
 	count = bus_space_read_4(saost_sc->sc_iot, saost_sc->sc_ioh, SAOST_CR);
@@ -229,13 +220,13 @@ setstatclockrate(schz)
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	stathz = STATHZ;
 	profhz = stathz;
 	saost_sc->sc_statclock_step = TIMER_FREQUENCY / stathz;
 
-	printf("clock: hz=%d stathz = %d\n", hz, stathz);
+	printf("clock: hz=%d stathz=%d\n", hz, stathz);
 
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
 	saost_sc->sc_clock_count = TIMER_FREQUENCY / hz;
@@ -256,7 +247,7 @@ cpu_initclocks()
 }
 
 int
-gettick()
+gettick(void)
 {
 	int counter;
 	u_int savedints;
@@ -270,8 +261,7 @@ gettick()
 }
 
 void
-microtime(tvp)
-	register struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s, tm, deltatm;
 	static struct timeval lasttime;
@@ -311,10 +301,9 @@ microtime(tvp)
 }
 
 void
-delay(usecs)
-	u_int usecs;
+delay(u_int usecs)
 {
-	u_int32_t xtick, otick, delta;
+	uint32_t xtick, otick, delta;
 	int j, csec, usec;
 
 	csec = usecs / 10000;
@@ -346,13 +335,12 @@ delay(usecs)
 }
 
 void
-resettodr()
+resettodr(void)
 {
 }
 
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	time.tv_sec = base;
 	time.tv_usec = 0;

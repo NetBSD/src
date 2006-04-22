@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.4 2005/12/07 19:02:36 rjs Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.4.6.1 2006/04/22 11:37:11 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.4 2005/12/07 19:02:36 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.4.6.1 2006/04/22 11:37:11 simonb Exp $");
 
-#include "opt_syscall_debug.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
 #include "opt_compat_linux.h"
 
 #include <sys/param.h>
@@ -51,12 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.4 2005/12/07 19:02:36 rjs Exp $"
 #include <sys/signal.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -77,26 +68,16 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.4 2005/12/07 19:02:36 rjs Exp $"
 
 void linux_syscall_intern(struct proc *);
 static void linux_syscall_plain(struct trapframe *);
-#if defined(KTRACE) || defined(SYSTRACE)
 static void linux_syscall_fancy(struct trapframe *);
-#endif
 
 void
 linux_syscall_intern(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = linux_syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = linux_syscall_fancy;
-		return;
-	} 
-#endif
-	p->p_md.md_syscall = linux_syscall_plain;
+	else
+		p->p_md.md_syscall = linux_syscall_plain;
 }
 
 /*
@@ -156,10 +137,6 @@ linux_syscall_plain(struct trapframe *frame)
 		}
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, argp);
-#endif /* SYSCALL_DEBUG */
-
 	rval[0] = 0;
 	rval[1] = 0;
 	KERNEL_PROC_LOCK(l);
@@ -189,13 +166,9 @@ linux_syscall_plain(struct trapframe *frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
-#endif /* SYSCALL_DEBUG */
 	userret(l);
 }
 
-#if defined(KTRACE) || defined(SYSTRACE)
 static void
 linux_syscall_fancy(struct trapframe *frame)
 {
@@ -284,4 +257,3 @@ out:
 
 	userret(l);
 }
-#endif

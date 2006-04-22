@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcivar.h,v 1.6 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: gtpcivar.h,v 1.6.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -58,7 +58,7 @@ struct gtpci_chipset {
 
 
 #ifdef _KERNEL
-static uint32_t inline
+static uint32_t __inline
 gtpci_read(struct gtpci_chipset *gtpc, bus_size_t reg)
 {
 	uint32_t rv;
@@ -70,7 +70,7 @@ gtpci_read(struct gtpci_chipset *gtpc, bus_size_t reg)
 	return rv;
 }
 
-static void inline
+static void __inline
 gtpci_write(struct gtpci_chipset *gtpc, bus_size_t reg, uint32_t val)
 {
 	(void) bus_space_read_4(gtpc->gtpc_gt_memt, gtpc->gtpc_gt_memh,

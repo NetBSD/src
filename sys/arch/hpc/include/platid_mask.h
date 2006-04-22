@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.18 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.18.6.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -152,6 +152,14 @@ extern platid_t platid_mask_CPU_ARM_STRONGARM_SA1100;
 extern platid_t platid_mask_CPU_ARM_STRONGARM_SA1110;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define GENERIC_ARM_STRONGARM_SA1110 ((int)&platid_mask_CPU_ARM_STRONGARM_SA1110)
+#endif
+extern platid_t platid_mask_CPU_ARM_XSCALE;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_ARM_XSCALE ((int)&platid_mask_CPU_ARM_XSCALE)
+#endif
+extern platid_t platid_mask_CPU_ARM_XSCALE_PXA250;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_ARM_XSCALE_PXA250 ((int)&platid_mask_CPU_ARM_XSCALE_PXA250)
 #endif
 #endif /* hpcarm */
 #ifdef hpcmips
@@ -615,6 +623,14 @@ extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H3660;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define COMPAQ_IPAQ_H3660 ((int)&platid_mask_MACH_COMPAQ_IPAQ_H3660)
 #endif
+extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H39XX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_IPAQ_H39XX ((int)&platid_mask_MACH_COMPAQ_IPAQ_H39XX)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H3900;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_IPAQ_H3900 ((int)&platid_mask_MACH_COMPAQ_IPAQ_H3900)
+#endif
 #endif /* hpcarm */
 #ifdef hpcsh
 extern platid_t platid_mask_MACH_COMPAQ_AERO;
@@ -792,6 +808,26 @@ extern platid_t platid_mask_MACH_HP_JORNADA_720;
 extern platid_t platid_mask_MACH_HP_JORNADA_720JP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_720JP ((int)&platid_mask_MACH_HP_JORNADA_720JP)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720EU;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720EU ((int)&platid_mask_MACH_HP_JORNADA_720EU)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720DE;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720DE ((int)&platid_mask_MACH_HP_JORNADA_720DE)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720FR;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720FR ((int)&platid_mask_MACH_HP_JORNADA_720FR)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720SV;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720SV ((int)&platid_mask_MACH_HP_JORNADA_720SV)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_720ES;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_720ES ((int)&platid_mask_MACH_HP_JORNADA_720ES)
 #endif
 extern platid_t platid_mask_MACH_HP_JORNADA_8XX;
 #ifdef PLATID_DEFINE_MASK_NICKNAME

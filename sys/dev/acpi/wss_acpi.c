@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.14 2005/12/11 12:21:02 christos Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.14.6.1 2006/04/22 11:38:46 simonb Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.14 2005/12/11 12:21:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.14.6.1 2006/04/22 11:38:46 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,8 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	ACPI_STATUS rv;
 	struct wss_acpi_hint *wah;
 
-	printf(": NeoMagic 256AV audio\n");
+	aprint_naive(": NeoMagic 256AV audio\n");
+	aprint_normal(": NeoMagic 256AV audio\n");
 
 	wah = &wss_acpi_hints[
 	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.Value)];
@@ -141,19 +142,19 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	dspio = acpi_res_io(&res, wah->io_region_idx_ad1848);
 	oplio = acpi_res_io(&res, wah->io_region_idx_opl);
 	if (dspio == NULL || oplio == NULL) {
-		printf("%s: unable to find i/o registers resource\n",
+		aprint_error("%s: unable to find i/o registers resource\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 		goto out;
 	}
 	if (bus_space_map(sc->sc_iot, dspio->ar_base, dspio->ar_length,
 	    0, &sc->sc_ioh) != 0) {
-		printf("%s: unable to map i/o registers\n",
+		aprint_error("%s: unable to map i/o registers\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 		goto out;
 	}
 	if (bus_space_map(sc->sc_iot, oplio->ar_base, oplio->ar_length,
 	    0, &sc->sc_opl_ioh) != 0) {
-		printf("%s: unable to map opl i/o registers\n",
+		aprint_error("%s: unable to map opl i/o registers\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 		goto out;
 	}
@@ -163,7 +164,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Find our IRQ */
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		printf("%s: unable to find irq resource\n",
+		aprint_error("%s: unable to find irq resource\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 		/* XXX bus_space_unmap */
 		goto out;
@@ -174,7 +175,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	playdrq = acpi_res_drq(&res, 0);
 	recdrq = acpi_res_drq(&res, 1);
 	if (playdrq == NULL || recdrq == NULL) {
-		printf("%s: unable to find drq resources\n",
+		aprint_error("%s: unable to find drq resources\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 		/* XXX bus_space_unmap */
 		goto out;
@@ -188,13 +189,13 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Look for the ad1848 */
 	if (!ad1848_isa_probe(&sc->sc_ad1848)) {
-		printf("%s: ad1848 probe failed\n",
+		aprint_error("%s: ad1848 probe failed\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 		/* XXX cleanup */
 		goto out;
 	}
 
-	printf("%s", sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
+	aprint_normal("%s", sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 	/* Attach our wss device */
 	wssattach(sc);
 

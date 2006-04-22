@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.53 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: ncr.c,v 1.53.6.1 2006/04/22 11:37:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.53 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.53.6.1 2006/04/22 11:37:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ static void	ncr_wait_not_req __P((struct ncr5380_softc *sc));
 /*
  * Some constants.
  */
-#define PDMA_ADDRESS	((volatile u_char *) 0xffe00000)
-#define	NCR5380		((volatile u_char *) 0xffd00000)
+#define	PDMA_ADDRESS	0xffe00000
+#define	NCR5380		0xffd00000
 
 /*
  * Bit allocation in config's sc_flags field.
@@ -132,14 +132,14 @@ ncr_attach(parent, self, aux)
 	/*
 	 * Initialize NCR5380 register addresses.
 	 */
-	sc->sci_r0 = NCR5380 + 0;
-	sc->sci_r1 = NCR5380 + 1;
-	sc->sci_r2 = NCR5380 + 2;
-	sc->sci_r3 = NCR5380 + 3;
-	sc->sci_r4 = NCR5380 + 4;
-	sc->sci_r5 = NCR5380 + 5;
-	sc->sci_r6 = NCR5380 + 6;
-	sc->sci_r7 = NCR5380 + 7;
+	sc->sci_r0 = (volatile u_char *)NCR5380 + 0;
+	sc->sci_r1 = (volatile u_char *)NCR5380 + 1;
+	sc->sci_r2 = (volatile u_char *)NCR5380 + 2;
+	sc->sci_r3 = (volatile u_char *)NCR5380 + 3;
+	sc->sci_r4 = (volatile u_char *)NCR5380 + 4;
+	sc->sci_r5 = (volatile u_char *)NCR5380 + 5;
+	sc->sci_r6 = (volatile u_char *)NCR5380 + 6;
+	sc->sci_r7 = (volatile u_char *)NCR5380 + 7;
 
 	sc->sc_rev = NCR_VARIANT_DP8490;
 
@@ -257,7 +257,7 @@ ncr_pdma_in(sc, phase, datalen, data)
 	int phase, datalen;
 	u_char *data;
 {
-	volatile u_char *pdma = PDMA_ADDRESS;
+	volatile u_char *pdma = (void *)PDMA_ADDRESS;
 	int resid, s;
 
 	s = splbio();
@@ -332,7 +332,7 @@ ncr_pdma_out(sc, phase, datalen, data)
 	int phase, datalen;
 	u_char *data;
 {
-	volatile u_char *pdma = PDMA_ADDRESS;
+	u_char *pdma = (void *)PDMA_ADDRESS;
 	int i, s, resid;
 	u_char icmd;
 
@@ -366,7 +366,7 @@ ncr_pdma_out(sc, phase, datalen, data)
 				resid += 4; /* Overshot */
 				goto interrupt;
 			}
-			movsd(data, (u_char *)pdma, NCR_TSIZE_OUT / 4);
+			movsd(data, pdma, NCR_TSIZE_OUT / 4);
 		}
 		if (ncr_ready(sc) == 0) {
 			resid += 4; /* Overshot */
@@ -377,11 +377,11 @@ ncr_pdma_out(sc, phase, datalen, data)
 	if (resid) {
 		int t;
 		t = resid / sizeof(int);
-		movsd(data, (u_char *)pdma, t);
+		movsd(data, pdma, t);
 		t *= sizeof(int);
 		resid -= t;
 
-		movsb(data, (u_char *)pdma, resid);
+		movsb(data, pdma, resid);
 		resid = 0;
 	}
 	for (i = TIMEOUT; i > 0; i--) {

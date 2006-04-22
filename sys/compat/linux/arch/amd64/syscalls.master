@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 2005/11/23 16:14:57 manu Exp $
+	$NetBSD: syscalls.master,v 1.9.6.1 2006/04/22 11:38:13 simonb Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -34,6 +34,7 @@
 ; #include's are copied to the syscall names and switch definition files only.
 
 #if defined(_KERNEL_OPT)
+#include "opt_sysv.h"
 #include "opt_compat_43.h"
 #endif
 
@@ -47,6 +48,8 @@
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
@@ -107,9 +110,17 @@
 26	STD		{ int linux_sys_msync(caddr_t addr, int len, int fl); }
 27	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 28	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
+#ifdef SYSVSHM
+29	STD		{ int linux_sys_shmget(key_t key, size_t size, int shmflg); }
+30	STD		{ int linux_sys_shmat(int shmid, void *shmaddr, \
+			    int shmflg, u_long *raddr); }
+31	STD		{ int linux_sys_shmctl(int shmid, int cmd, \
+			    struct linux_shmid_ds *buf); }
+#else
 29	UNIMPL		shmget
 30	UNIMPL		shmat
 31	UNIMPL		shmctl
+#endif
 32	NOARGS		{ int sys_dup(u_int fd); }
 33	NOARGS		{ int sys_dup2(u_int from, u_int to); }
 34	STD		{ int linux_sys_pause(void); }
@@ -164,14 +175,36 @@
 			    int options, struct rusage *rusage); }
 62	STD		{ int linux_sys_kill(int pid, int signum); }
 63	STD		{ int linux_sys_uname(struct linux_utsname *up); }
+#ifdef SYSVSEM
+64	NOARGS		{ int sys_semget(key_t key, int nsems, int semflg); }
+65	NOARGS		{ int sys_semop(int semid, struct sembuf *sops, \
+			    size_t nsops); }
+66	STD		{ int linux_sys_semctl(int semid, int semnum, \
+			    int cmd, union linux_semun arg); }
+#else
 64	UNIMPL		semget
 65	UNIMPL		semop
 66	UNIMPL		semctl
+#endif
+#ifdef SYSVSHM
+67	NOARGS		{ int sys_shmdt(const void *shmaddr); }
+#else
 67	UNIMPL		shmdt
+#endif
+#ifdef SYSVMSG
+68	NOARGS		{ int sys_msgget(key_t key, int msgflg); }
+69	NOARGS		{ int sys_msgsnd(int msqid, void *msgp, size_t msgsz, \
+			    int msgflg); }
+70	NOARGS		{ ssize_t sys_msgrcv(int msqid, void *msgp, \
+			    size_t msgsz, long msgtyp, int msgflg); }
+71	STD		{ int linux_sys_msgctl(int msqid, int cmd, \
+			    struct linux_msqid_ds *buf); }
+#else
 68	UNIMPL		msgget
 69	UNIMPL		msgsnd
 70	UNIMPL		msgrcv
 71	UNIMPL		msgctl
+#endif
 72	STD		{ int linux_sys_fcntl(int fd, int cmd, void *arg); }
 73	NOARGS		{ int sys_flock(int fd, int how); }
 74	NOARGS		{ int sys_fsync(int fd); }

@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.2 2005/12/11 12:17:09 christos Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.2.6.1 2006/04/22 11:37:24 simonb Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.2 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.2.6.1 2006/04/22 11:37:24 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ sskbd_attach(struct device *parent, struct device *self, void *aux)
 		    sc->dev.dv_xname);
 
 	/* setup SPI control register, and prescaler */
-	s3c24x0_spi_setup((struct ssspi_softc *)self->dv_parent, 
+	s3c24x0_spi_setup((struct ssspi_softc *)device_parent(self), 
 			  SPCON_SMOD_INT | SPCON_ENSCK | 
 			  SPCON_MSTR | SPCON_IDLELOW_RISING,
 			  100*1000, 0);

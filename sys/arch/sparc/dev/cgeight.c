@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.42 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.42.6.1 2006/04/22 11:37:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.42 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.42.6.1 2006/04/22 11:37:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ cgeightattach(struct device *parent, struct device *self, void *aux)
 	fb->fb_driver = &cgeightfbdriver;
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_type.fb_type = FBTYPE_MEMCOLOR;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 	fb->fb_flags |= FB_PFOUR;
 
 	ramsize = PFOUR_COLOR_OFF_END - PFOUR_COLOR_OFF_OVERLAY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.47 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.47.6.1 2006/04/22 11:39:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -352,6 +352,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_TYPE_MASK			0x00000001
 
 #define	PCI_MAPREG_TYPE_MEM			0x00000000
+#define	PCI_MAPREG_TYPE_ROM			0x00000000
 #define	PCI_MAPREG_TYPE_IO			0x00000001
 #define	PCI_MAPREG_ROM_ENABLE			0x00000001
 
@@ -699,6 +700,43 @@ struct pci_vpd {
  *
  *	Z0-ZZ		User/Product Specific
  */
+
+/*
+ * PCI Expansion Rom
+ */
+
+struct pci_rom_header {
+	uint16_t		romh_magic;	/* 0xAA55 little endian */
+	uint8_t			romh_reserved[22];
+	uint16_t		romh_data_ptr;	/* pointer to pci_rom struct */
+} __attribute__((__packed__));
+
+#define	PCI_ROM_HEADER_MAGIC	0xAA55		/* little endian */
+
+struct pci_rom {
+	uint32_t		rom_signature;
+	pci_vendor_id_t		rom_vendor;
+	pci_product_id_t	rom_product;
+	uint16_t		rom_vpd_ptr;	/* reserved in PCI 2.2 */
+	uint16_t		rom_data_len;
+	uint8_t			rom_data_rev;
+	pci_interface_t		rom_interface;	/* the class reg is 24-bits */
+	pci_subclass_t		rom_subclass;	/* in little endian */
+	pci_class_t		rom_class;
+	uint16_t		rom_len;	/* code length / 512 byte */
+	uint16_t		rom_rev;	/* code revision level */
+	uint8_t			rom_code_type;	/* type of code */
+	uint8_t			rom_indicator;
+	uint16_t		rom_reserved;
+	/* Actual data. */
+} __attribute__((__packed__));
+
+#define	PCI_ROM_SIGNATURE	0x52494350	/* "PCIR", endian reversed */
+#define	PCI_ROM_CODE_TYPE_X86	0		/* Intel x86 BIOS */
+#define	PCI_ROM_CODE_TYPE_OFW	1		/* Open Firmware */
+#define	PCI_ROM_CODE_TYPE_HPPA	2		/* HP PA/RISC */
+
+#define	PCI_ROM_INDICATOR_LAST	0x80
 
 /*
  * Threshold below which 32bit PCI DMA needs bouncing.

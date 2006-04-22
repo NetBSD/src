@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.8 2005/12/11 12:22:16 christos Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.8.6.1 2006/04/22 11:39:09 simonb Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.8 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.8.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ cs_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cs_softc *sc = (void *)self;
+	struct cs_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;
 #ifdef notyet
 	struct cs_softc_isa *isc = (void *)sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vga.c,v 1.4 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: vga.c,v 1.4.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -87,11 +87,11 @@ struct screen {
 u_short	pccolor;		/* color/attributes for tty output */
 u_short	pccolor_so;		/* color/attributes, standout mode */
 
-static void cursor __P((void));
-static void initscreen __P((void));
-void fillw __P((u_short, u_short *, int));
-void video_on __P((void));
-void video_off __P((void));
+static void cursor(void);
+static void initscreen(void);
+void fillw(u_short, u_short *, int);
+void video_on(void);
+void video_off(void);
 
 /*
  * cursor() sets an offset (0-1999) into the 80x25 text area   
@@ -131,10 +131,7 @@ initscreen()
 }
 
 void
-fillw(val, buf, num)
-	u_short val;
-	u_short *buf;
-	int num;
+fillw(u_short val, u_short *buf, int num)
 {
 	/* Need to byte swap value */
 	u_short tmp;
@@ -397,8 +394,7 @@ vga_putc(int c)
 }
 
 void
-vga_puts(s)
-	char *s;
+vga_puts(char *s)
 {
 	char c;
 	while ((c = *s++)) {
@@ -407,7 +403,7 @@ vga_puts(s)
 }
 
 void
-video_on()
+video_on(void)
 {
 
 	/* Enable video */
@@ -416,7 +412,7 @@ video_on()
 }
 
 void
-video_off()
+video_off(void)
 {
 
 	/* Disable video */
@@ -425,8 +421,7 @@ video_off()
 }
 
 void
-vga_init(ISA_mem)
-	u_char *ISA_mem;
+vga_init(u_char *ISA_mem)
 {
 	struct screen *d = &screen;
 

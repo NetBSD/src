@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicreg.h,v 1.3 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: sbicreg.h,v 1.3.6.1 2006/04/22 11:37:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -101,10 +101,10 @@
  * My ID register, and/or CDB Size
  */
 
-#define SBIC_ID_FS_8_10         0x00    /* Input clock is  8-10 Mhz */
-                                    /* 11 Mhz is invalid */
-#define SBIC_ID_FS_12_15        0x40    /* Input clock is 12-15 Mhz */
-#define SBIC_ID_FS_16_20        0x80    /* Input clock is 16-20 Mhz */
+#define SBIC_ID_FS_8_10         0x00    /* Input clock is  8-10 MHz */
+                                    /* 11 MHz is invalid */
+#define SBIC_ID_FS_12_15        0x40    /* Input clock is 12-15 MHz */
+#define SBIC_ID_FS_16_20        0x80    /* Input clock is 16-20 MHz */
 #define SBIC_ID_EHP             0x10    /* Enable host parity */
 #define SBIC_ID_EAF             0x08    /* Enable Advanced Features */
 #define SBIC_ID_MASK            0x07
@@ -126,7 +126,7 @@
 
 /*
  * Timeout period register
- * [val in msecs, input clk in 0.1 Mhz]
+ * [val in msecs, input clk in 0.1 MHz]
  */
 
 #define SBIC_TIMEOUT(val,clk)   ((((val) * (clk)) / 800) + 1)

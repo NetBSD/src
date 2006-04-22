@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.29 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.29.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -77,12 +77,10 @@
  */
 
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
-#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -94,9 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2005/12/11 12:16:41 christos Exp $"
 #include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -217,19 +212,11 @@ void syscall_fancy(struct trapframe *, struct lwp *, u_int32_t);
 void
 syscall_intern(struct proc *p)
 {
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-#ifdef SYSTRACE
-	if (p->p_flag & P_SYSTRACE) {
-		p->p_md.md_syscall = syscall_fancy;
-		return;
-	}
-#endif
-	p->p_md.md_syscall = syscall_plain;
+	else
+		p->p_md.md_syscall = syscall_plain;
 }
 
 void

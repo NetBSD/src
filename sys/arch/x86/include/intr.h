@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2005/12/24 20:07:42 perry Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.6.1 2006/04/22 11:38:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -115,9 +115,9 @@ struct intrhand {
 
 extern void Xspllower(int);
 
-static inline int splraise(int);
-static inline void spllower(int);
-static inline void softintr(int);
+static __inline int splraise(int);
+static __inline void spllower(int);
+static __inline void softintr(int);
 
 /*
  * Convert spl level to local APIC level
@@ -127,7 +127,7 @@ static inline void softintr(int);
 /*
  * Add a mask to cpl, and return the old value of cpl.
  */
-static inline int
+static __inline int
 splraise(int nlevel)
 {
 	int olevel;
@@ -144,7 +144,7 @@ splraise(int nlevel)
  * Restore a value to cpl (unmasking interrupts).  If any unmasked
  * interrupts are pending, call Xspllower() to process them.
  */
-static inline void
+static __inline void
 spllower(int nlevel)
 {
 	struct cpu_info *ci = curcpu();
@@ -191,7 +191,7 @@ spllower(int nlevel)
  *
  * XXX always scheduled on the current CPU.
  */
-static inline void
+static __inline void
 softintr(int sir)
 {
 	struct cpu_info *ci = curcpu();

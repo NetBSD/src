@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10.6.1 2006/04/22 11:38:09 simonb Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,12 +45,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2005/12/11 12:19:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10.6.1 2006/04/22 11:38:09 simonb Exp $");
 
+#include "opt_xen.h"
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
 #include "opt_nfs_boot.h"
-#include "xennet.h"
+#include "xennet_hypervisor.h"
+#include "xennet_xenbus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,24 +248,23 @@ matchbiosdisks(void)
 	 */
 	n = -1;
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_class != DV_DISK)
+		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_name);
+		    dv->dv_xname, device_cfdata(dv)->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
 			sprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
-			    "%s%d", dv->dv_cfdata->cf_name,
-			    dv->dv_unit);
+			    "%s", dv->dv_xname);
 
 			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
 			if (bmajor == -1)
 				return;
 
-			if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART),
-			    &tv))
+			if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv),
+				   RAW_PART), &tv))
 				panic("matchbiosdisks: can't alloc vnode");
 
 			error = VOP_OPEN(tv, FREAD, NOCRED, 0);
@@ -347,7 +348,8 @@ match_harddisk(struct device *dv, struct btinfo_bootdisk *bid)
 	 * Fake a temporary vnode for the disk, open
 	 * it, and read the disklabel for comparison.
 	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, bid->partition), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), bid->partition),
+			       &tmpvn))
 		panic("findroot can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
@@ -427,18 +429,19 @@ findroot(void)
 		 */
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
-			if (!strcmp(dv->dv_cfdata->cf_name, "fd")) {
+			if (device_is_a(dv, "fd")) {
 				/*
 				 * Assume the configured unit number matches
 				 * the BIOS device number.  (This is the old
 				 * behaviour.)  Needs some ideas how to handle
 				 * BIOS's "swap floppy drive" options.
 				 */
+				/* XXX device_unit() abuse */
 				if ((bid->biosdev & 0x80) ||
-				    dv->dv_unit != bid->biosdev)
+				    device_unit(dv) != bid->biosdev)
 					continue;
 
 				goto found;
@@ -544,8 +547,8 @@ device_register(struct device *dev, void *aux)
 	 * not available driver independantly later.
 	 * For disks, there is nothing useful available at attach time.
 	 */
-#if NXENNET > 0
-	if (dev->dv_class == DV_IFNET) {
+#if NXENNET_HYPERVISOR > 0 || NXENNET_XENBUS > 0
+	if (device_class(dev) == DV_IFNET) {
 		union xen_cmdline_parseinfo xcp;
 
 		xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
@@ -557,7 +560,7 @@ device_register(struct device *dev, void *aux)
 		}
 	}
 #endif
-	if (dev->dv_class == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET) {
 		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
 		if (bin == NULL)
 			return;
@@ -571,7 +574,7 @@ device_register(struct device *dev, void *aux)
 		 */
 
 		if (bin->bus == BI_BUS_ISA &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_name, "isa")) {
+		    device_is_a(device_parent(dev), "isa")) {
 			struct isa_attach_args *iaa = aux;
 
 			/* compare IO base address */
@@ -582,7 +585,7 @@ device_register(struct device *dev, void *aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci")) {
+		    device_is_a(device_parent(dev), "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 
@@ -614,14 +617,13 @@ found:
 static int
 is_valid_disk(struct device *dv)
 {
-	const char *name;
 
-	if (dv->dv_class != DV_DISK)
+	if (device_class(dv) != DV_DISK)
 		return (0);
 
-	name = dv->dv_cfdata->cf_name;
-
-	return (strcmp(name, "sd") == 0 || strcmp(name, "wd") == 0 ||
-	    strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0 ||
-	    strcmp(name, "xbd") == 0);
+	return (device_is_a(dv, "sd") ||
+		device_is_a(dv, "wd") ||
+		device_is_a(dv, "ld") ||
+		device_is_a(dv, "ed") ||
+		device_is_a(dv, "xbd"));
 }

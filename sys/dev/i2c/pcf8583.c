@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.3 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.3.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -105,7 +105,7 @@ pcfrtc_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 pcfrtc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pcfrtc_softc *sc = (struct pcfrtc_softc *)self;
+	struct pcfrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	uint8_t cmdbuf[1], csr;
 

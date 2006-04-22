@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001, 2005 The NetBSD Foundation, Inc.
@@ -726,7 +726,7 @@ typedef struct ews4800mips_bus_dmamap		*bus_dmamap_t;
 struct ews4800mips_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
+	vaddr_t		_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct ews4800mips_bus_dma_segment	bus_dma_segment_t;
 
@@ -817,6 +817,7 @@ struct ews4800mips_bus_dmamap {
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.

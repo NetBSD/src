@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.11 2006/01/29 11:35:11 augustss Exp $	*/
+/*	$NetBSD: cir.c,v 1.11.4.1 2006/04/22 11:39:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.11 2006/01/29 11:35:11 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.11.4.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ cir_match(struct device *parent, struct cfdata *match, void *aux)
 void
 cir_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct cir_softc *sc = (struct cir_softc *)self;
+	struct cir_softc *sc = device_private(self);
 	struct ir_attach_args *ia = aux;
 
 	sc->sc_methods = ia->ia_methods;
@@ -107,7 +107,7 @@ cir_attach(struct device *parent, struct device *self, void *aux)
 int
 cir_activate(struct device *self, enum devact act)
 {
-	/*struct cir_softc *sc = (struct cir_softc *)self;*/
+	/*struct cir_softc *sc = device_private(self);*/
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -123,14 +123,14 @@ cir_activate(struct device *self, enum devact act)
 int
 cir_detach(struct device *self, int flags)
 {
-	/*struct cir_softc *sc = (struct cir_softc *)self;*/
+	/*struct cir_softc *sc = device_private(self);*/
 	int maj, mn;
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&cir_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);
@@ -145,7 +145,7 @@ ciropen(dev_t dev, int flag, int mode, struct proc *p)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 	if (sc->sc_open)
 		return (EBUSY);
@@ -183,7 +183,7 @@ cirread(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 	return (sc->sc_methods->im_read(sc->sc_handle, uio, flag));
 }
@@ -196,7 +196,7 @@ cirwrite(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 	return (sc->sc_methods->im_write(sc->sc_handle, uio, flag));
 }
@@ -210,7 +210,7 @@ cirioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 
 	switch (cmd) {
@@ -244,7 +244,7 @@ cirpoll(dev_t dev, int events, struct proc *p)
 	sc = device_lookup(&cir_cd, CIRUNIT(dev));
 	if (sc == NULL)
 		return (POLLERR);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (POLLERR);
 
 	revents = 0;

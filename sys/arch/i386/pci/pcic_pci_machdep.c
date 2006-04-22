@@ -1,4 +1,4 @@
-/*	$NetBSD: pcic_pci_machdep.c,v 1.4 2005/12/11 12:17:44 christos Exp $	*/
+/*	$NetBSD: pcic_pci_machdep.c,v 1.4.6.1 2006/04/22 11:37:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.4 2005/12/11 12:17:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.4.6.1 2006/04/22 11:37:34 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,8 @@ pcic_pci_machdep_pcic_intr_establish(struct pcic_softc *sc, int (*fct)(void *))
 	if (isa_intr_alloc(NULL, PCIC_CSC_INTR_IRQ_VALIDMASK &
 			   pcic_isa_intr_alloc_mask, IST_EDGE, &(sc->irq)))
 		return (NULL);
-	printf("%s: interrupting at irq %d\n", sc->dev.dv_xname, sc->irq);
+	aprint_normal("%s: interrupting at irq %d\n", sc->dev.dv_xname,
+	    sc->irq);
 	return (isa_intr_establish(NULL, sc->irq, IST_EDGE, IPL_TTY,
 				   fct, sc));
 }

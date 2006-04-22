@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.24 2005/12/07 09:10:16 tsutsui Exp $
+#	$NetBSD: VME177,v 1.24.6.1 2006/04/22 11:37:44 simonb Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -26,8 +26,10 @@ file-system 	NFS
 file-system 	KERNFS
 file-system 	MFS
 file-system 	CD9660
+file-system	NULLFS
 #file-system	MSDOSFS
 #file-system	UNION
+file-system	TMPFS
 #file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER
@@ -69,9 +71,10 @@ options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 
 pseudo-device	sl
-pseudo-device	ppp 2
+pseudo-device	ppp 
 pseudo-device	loop
 pseudo-device	bpfilter
+pseudo-device	ksyms
 pseudo-device	pty
 pseudo-device	rnd
 pseudo-device	clockctl		# user control of clock subsystem

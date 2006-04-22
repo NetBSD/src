@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $	*/
+/*	$NetBSD: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $
+ * $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $");
 #endif /* __NetBSD__ && _STANDALONE */
 #endif /* __KERNEL__ */
 #endif /* _KERNEL || KERNEL */
-
 
 #ifndef local
 #  define local static
@@ -295,7 +294,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -657,7 +656,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
 
 /* #include "deflate.h" */
 
@@ -2031,7 +2030,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -4768,6 +4767,8 @@ uIntf *v;               /* working area: values in order of bit length */
 
       /* backup over finished tables */
       mask = (1 << w) - 1;      /* needed on HP, cc -O bug */
+      if (h == -1)
+	return Z_BUF_ERROR;
       while ((i & mask) != x[h])
       {
         h--;                    /* don't need to update q */
@@ -5907,7 +5908,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.23 2006/01/14 18:58:05 christos Exp $ */
+/* @(#) $Id: zlib.c,v 1.23.4.1 2006/04/22 11:40:08 simonb Exp $ */
 
 /* #include "zlib.h" */
 

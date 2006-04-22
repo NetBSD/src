@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.23 2005/12/11 12:19:05 christos Exp $       */
+/*      $NetBSD: pccons.c,v 1.23.6.1 2006/04/22 11:37:56 simonb Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.23 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.23.6.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -603,7 +603,7 @@ kbd_init(bus_space_tag_t     iot,
 **
 **  IMPLICIT INPUTS:
 **
-**     addr_6845    -  Base adddress of the video registers 
+**     addr_6845    -  Base address of the video registers 
 **
 **  IMPLICIT OUTPUTS:
 **
@@ -651,7 +651,7 @@ set_cursor_shape(struct pc_softc *sc)
 **
 **  IMPLICIT INPUTS:
 **
-**     addr_6845    -  Base adddress of the video registers 
+**     addr_6845    -  Base address of the video registers 
 **
 **  IMPLICIT OUTPUTS:
 **

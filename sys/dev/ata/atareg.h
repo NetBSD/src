@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.25 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: atareg.h,v 1.25.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -145,7 +145,7 @@
 
 #ifdef _KERNEL
 /* Convert a 32-bit command to a 48-bit command. */
-static inline int __unused
+static __inline int __unused
 atacmd_to48(int cmd32)
 {
 	switch (cmd32) {
@@ -174,7 +174,7 @@ atacmd_to48(int cmd32)
 
 #ifdef _KERNEL
 /* Convert a 32-bit command to a Native SATA Queued command. */
-static inline int __unused
+static __inline int __unused
 atacmd_tostatq(int cmd32)
 {
 	switch (cmd32) {

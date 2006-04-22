@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.14 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.14.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.14 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.14.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ ep_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ep_softc *sc = (void *)self;
+	struct ep_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;
 	bus_space_handle_t ioh;
 	int pos4, pos5, iobase, irq, media;

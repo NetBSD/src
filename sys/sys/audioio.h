@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.29 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: audioio.h,v 1.29.6.1 2006/04/22 11:40:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -36,6 +36,9 @@
 
 #ifndef _SYS_AUDIOIO_H_
 #define _SYS_AUDIOIO_H_
+
+#include <sys/types.h>
+#include <sys/ioccom.h>
 
 /*
  * Audio device

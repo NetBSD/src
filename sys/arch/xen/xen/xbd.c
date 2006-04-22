@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.27 2005/12/26 10:36:47 yamt Exp $ */
+/* $NetBSD: xbd.c,v 1.27.6.1 2006/04/22 11:38:11 simonb Exp $ */
 
 /*
  *
@@ -33,9 +33,9 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.27 2005/12/26 10:36:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.27.6.1 2006/04/22 11:38:11 simonb Exp $");
 
-#include "xbd.h"
+#include "xbd_hypervisor.h"
 #include "rnd.h"
 
 #include <sys/types.h>
@@ -80,9 +80,9 @@ static void	send_interface_connect(void);
 static void xbd_attach(struct device *, struct device *, void *);
 static int xbd_detach(struct device *, int);
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 int xbd_match(struct device *, struct cfdata *, void *);
-CFATTACH_DECL(xbd, sizeof(struct xbd_softc),
+CFATTACH_DECL(xbd_hypervisor, sizeof(struct xbd_softc),
     xbd_match, xbd_attach, xbd_detach, NULL);
 
 extern struct cfdriver xbd_cd;
@@ -123,7 +123,7 @@ dev_type_strategy(xbdstrategy);
 dev_type_dump(xbddump);
 dev_type_size(xbdsize);
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 const struct bdevsw xbd_bdevsw = {
 	xbdopen, xbdclose, xbdstrategy, xbdioctl,
 	xbddump, xbdsize, D_DISK
@@ -212,7 +212,7 @@ static struct dk_intf dkintf_scsi = {
 };
 #endif
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 static struct xbd_attach_args xbd_ata = {
 	.xa_device = "xbd",
 	.xa_dkintf = &dkintf_esdi,
@@ -397,7 +397,7 @@ getxbd_softc(dev_t dev)
 
 	DPRINTF_FOLLOW(("getxbd_softc(0x%x): major = %d unit = %d\n", dev,
 	    major(dev), unit));
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 	if (major(dev) == xbd_major)
 		return device_lookup(&xbd_cd, unit);
 #endif
@@ -566,8 +566,7 @@ connect_interface(blkif_fe_interface_status_t *status)
 	/* Probe for discs attached to the interface. */
 	// xlvbd_init();
 	MALLOC(vbd_info, vdisk_t *, MAX_VBDS * sizeof(vdisk_t),
-	    M_DEVBUF, M_WAITOK);
-	memset(vbd_info, 0, MAX_VBDS * sizeof(vdisk_t));
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 	nr_vbds  = get_vbd_info(vbd_info);
 	if (nr_vbds <= 0)
 		goto out;
@@ -613,8 +612,7 @@ find_device(vdisk_t *xd)
 	struct xbd_softc *xs = NULL;
 
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (dv->dv_cfattach == NULL ||
-		    dv->dv_cfattach->ca_attach != xbd_attach)
+		if (!device_is_a(dv, "xbd"))
 			continue;
 		xs = (struct xbd_softc *)dv;
 		if (xd == NULL || xs->sc_xd_device == xd->device)
@@ -927,7 +925,7 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 	blkctrl.xc_parent = self;
 	blkctrl.xc_cfprint = print;
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 	xbd_major = devsw_name2blk("xbd", NULL, 0);
 #endif
 #if NWD > 0
@@ -966,7 +964,7 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 	return 0;
 }
 
-#if NXBD > 0
+#if NXBD_HYPERVISOR > 0
 int
 xbd_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -1046,7 +1044,7 @@ xbd_detach(struct device *dv, int flags)
 	xs->sc_shutdown = 1;
 
 	/* And give it some time to settle if it's busy. */
-	if (xs->sc_dksc.sc_dkdev.dk_busy > 0)
+	if (xs->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
 		tsleep(&xs, PWAIT, "xbdetach", hz);
 
 	/* locate the major number */
@@ -1054,7 +1052,7 @@ xbd_detach(struct device *dv, int flags)
 	cmaj = cdevsw_lookup_major(&xbd_cdevsw);
 
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(dv->dv_unit, i);
+		mn = DISKMINOR(device_unit(dv), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}

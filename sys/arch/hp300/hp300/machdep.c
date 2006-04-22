@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185 2005/12/11 12:17:18 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2005/12/11 12:17:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185.6.1 2006/04/22 11:37:26 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -1028,7 +1028,7 @@ lookup_bootinfo(int type)
 	return (NULL);
 }
 
-#ifdef PANICBUTTON
+#if defined(PANICBUTTON) && !defined(DDB)
 /*
  * Declare these so they can be patched.
  */
@@ -1047,7 +1047,7 @@ candbtimer(void *arg)
 
 	crashandburn = 0;
 }
-#endif /* PANICBUTTON */
+#endif /* PANICBUTTON & !DDB */
 
 static int innmihand;	/* simple mutex */
 
@@ -1092,7 +1092,7 @@ nmihand(struct frame frame)
 				printf("\n");
 				crashandburn = 1;
 				callout_reset(&candbtimer_ch, hz / candbdiv,
-				    candbtiner, NULL);
+				    candbtimer, NULL);
 			}
 		} else
 #endif /* PANICBUTTON */

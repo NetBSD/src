@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 2005/12/24 20:07:10 perry Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -63,7 +63,7 @@ typedef long kgdb_reg_t;
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0x00010000	/* break 0,8 */
 #define	BKPT_SIZE	sizeof(int)
-#define	BKPT_SET(inst)	BKPT_INST
+#define	BKPT_SET(inst, addr)	BKPT_INST
 
 #define	IS_BREAKPOINT_TRAP(type, code) (type != T_RECOVERY)
 #define	IS_WATCHPOINT_TRAP(type, code) 0
@@ -82,33 +82,33 @@ typedef long kgdb_reg_t;
 
 #define DB_VALID_BREAKPOINT(addr) db_valid_breakpoint(addr)
 
-static inline int inst_call(u_int ins) {
+static __inline int inst_call(u_int ins) {
 	return (ins & 0xfc00e000) == 0xe8000000 ||
 	       (ins & 0xfc00e000) == 0xe8004000 ||
 	       (ins & 0xfc000000) == 0xe4000000;
 }
-static inline int inst_branch(u_int ins) {
+static __inline int inst_branch(u_int ins) {
 	return (ins & 0xf0000000) == 0xe0000000 ||
 	       (ins & 0xf0000000) == 0xc0000000 ||
 	       (ins & 0xf0000000) == 0xa0000000 ||
 	       (ins & 0xf0000000) == 0x80000000;
 }
-static inline int inst_load(u_int ins) {
+static __inline int inst_load(u_int ins) {
 	return (ins & 0xf0000000) == 0x40000000 ||
 	       (ins & 0xf4000200) == 0x24000000 ||
 	       (ins & 0xfc000200) == 0x0c000000 ||
 	       (ins & 0xfc001fc0) != 0x0c0011c0;
 }
-static inline int inst_store(u_int ins) {
+static __inline int inst_store(u_int ins) {
 	return (ins & 0xf0000000) == 0x60000000 ||
 	       (ins & 0xf4000200) == 0x24000200 ||
 	       (ins & 0xfc000200) == 0x0c000200;
 }
-static inline int inst_return(u_int ins) {
+static __inline int inst_return(u_int ins) {
 	return (ins & 0xfc00e000) == 0xe800c000 ||
 	       (ins & 0xfc000000) == 0xe0000000;
 }
-static inline int inst_trap_return(u_int ins)	{
+static __inline int inst_trap_return(u_int ins)	{
 	return (ins & 0xfc001fc0) == 0x00000ca0;
 }
 

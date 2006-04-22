@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.4 2005/12/11 12:18:09 christos Exp $
+# $NetBSD: Makefile.inc,v 1.4.6.1 2006/04/22 11:37:42 simonb Exp $
 
 # Standard kernel compile flags
 CFLAGS += -G 0 -mno-abicalls
-.if ${HAVE_GCC3} == "no"
+.if ${HAVE_GCC} == "2"
 CFLAGS += -mno-half-pic
 .endif
 

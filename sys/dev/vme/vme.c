@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.17 2005/12/11 12:24:07 christos Exp $ */
+/* $NetBSD: vme.c,v 1.17.6.1 2006/04/22 11:39:44 simonb Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.17 2005/12/11 12:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.17.6.1 2006/04/22 11:39:44 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ vmesubmatch1(bus, dev, ldesc, aux)
 
 	v.va_vct = sc->sc_vct; /* for space allocation */
 
-	(*sc->slaveconfig)(bus->dv_parent, &v);
+	(*sc->slaveconfig)(device_parent(bus), &v);
 	return (0);
 }
 
@@ -251,7 +251,7 @@ vmedetach(dev)
 
 	if (sc->slaveconfig) {
 		/* allow bus master to free its bus ressources */
-		(*sc->slaveconfig)(dev->dv_parent, 0);
+		(*sc->slaveconfig)(device_parent(dev), 0);
 	}
 
 	/* extent maps should be empty now */

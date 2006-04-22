@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.421 2006/01/27 06:11:58 dogcow Exp $
+$NetBSD: usbdevs,v 1.421.4.1 2006/04/22 11:39:38 simonb Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -385,6 +385,7 @@ vendor CHICONY2		0x0c45	Chicony Electronics
 vendor SEALEVEL		0x0c52	Sealevel System
 vendor LUWEN		0x0c76	EasyDisk
 vendor ZCOM		0x0cde	Z-Com
+vendor QUALCOMM_K	0x0c88	Qualcomm Kyocera
 vendor TANGTOP		0x0d3d	Tangtop
 vendor SMC3		0x0d5c	Standard Microsystems
 vendor PEN		0x0d7d	Pen Drive
@@ -407,6 +408,7 @@ vendor JRC		0x1145	Japan Radio Company
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
+vendor TOPFIELD		0x11db	Topfield Co., Ltd
 vendor TSUNAMI		0x1241	Tsunami
 vendor TARGUS		0x1267	Targus
 vendor CREATIVE2	0x1292	Creative Labs
@@ -450,6 +452,7 @@ vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
+vendor USRP		0xfffe	GNU Radio USRP
 
 /*
  * List of known products.  Grouped by vendor.
@@ -529,6 +532,7 @@ product ADDONICS2 205		0xa001	Cable 205
 product ADMTEK PEGASUS		0x0986	AN986 USB Ethernet
 product ADMTEK PEGASUSII	0x8511	AN8511 USB Ethernet
 product ADMTEK PEGASUSII_2	0x8513	AN8513 Ethernet
+product ADMTEK PEGASUSII_3      0x8515  ADM8515 USB 2.0 Ethernet
 
 /* ADS products */
 product ADS UBS10BT		0x0008	UBS-10BT Ethernet
@@ -587,8 +591,10 @@ product ANCHOR EZLINK		0x2720	EZLINK
 product AOX USB101		0x0008	USB ethernet controller engine
 
 /* Apple Computer products */
+product APPLE EXT_KBD		0x020c	Apple Extended USB Keyboard
 product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE MIGHTYMOUSE	0x0304	Mighty Mouse
+product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
 
 /* Asahi Optical products */
@@ -782,6 +788,7 @@ product DELL X3			0x4002	Axim X3 PDA
 product DELL X30		0x4003	Axim X30 PDA
 product DELL BC02		0x8000	BC02 Bluetooth USB Adapter
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
+product	DELL TM350		0x8103	TrueMobile 350 Bluetooth USB Adapter
 
 /* DeLorme products */
 product DELORME EARTHMATE	0x0100	Earthmate GPS
@@ -1241,6 +1248,7 @@ product LOGITECH WMRPAD		0xc20a	WingMan RumblePad
 product LOGITECH WMJOY		0xc281	WingMan Force joystick
 product LOGITECH BB13		0xc401	USB-PS/2 Trackball
 product LOGITECH BB18		0xc404	TrackMan Wheel
+product LOGITECH MARBLEMOUSE	0xc408	Marble Mouse
 product LOGITECH RK53		0xc501	Cordless mouse
 product LOGITECH RB6		0xc503	Cordless keyboard
 product LOGITECH CDO		0xc504	Cordless Desktop Optical
@@ -1572,6 +1580,8 @@ product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 /* Qualcomm products */
 product QUALCOMM CDMA_MSM	0x6000	CDMA Technologies MSM phone
 
+product QUALCOMM_K CDMA_MSM_K	0x17da	Qualcomm Kyocera CDMA Technologies MSM
+
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 
@@ -1620,6 +1630,8 @@ product ROLAND UA3FX		0x0051	EDIROL UA-3FX USB audio I/F
 product ROLAND FANTOMX		0x006d	Fantom-X MIDI Synth.
 product ROLAND UA101		0x007d	EDIROL UA-101
 product ROLAND UA101F		0x008d	EDIROL UA-101 USB1
+product ROLAND UA1EX		0x0096	EDIROL UA-1EX
+product ROLAND UM3		0x009A	EDIROL UM-3
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
@@ -1836,6 +1848,9 @@ product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
 /* Todos Data System products */
 product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard Reader
 
+/* Topfield Co. Ltd products */
+product TOPFIELD TF5000PVR	0x1000	TF5000PVR Digital Video Recorder
+
 /* Toshiba Corporation products */
 product TOSHIBA POCKETPC_E740	0x0706	PocketPC e740
 
@@ -1869,6 +1884,9 @@ product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 
 /* U.S. Robotics products */
 product USR USR1120		0x00eb	USR1120 WLAN
+
+/* GNU Radio USRP */
+product USRP USRPv2		0x0002	USRP Revision 2
 
 /* VidzMedia products */
 product VIDZMEDIA MONSTERTV	0x4fb1	MonsterTV P2H

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.8 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.8.6.1 2006/04/22 11:38:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.8 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.8.6.1 2006/04/22 11:38:09 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -62,30 +62,30 @@ print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
 		return sep;
 
 	if (sep == NULL)
-		printf("%s: ", ci->ci_dev->dv_xname);
+		aprint_verbose("%s: ", ci->ci_dev->dv_xname);
 	else
-		printf("%s", sep);
+		aprint_verbose("%s", sep);
 	if (name != NULL)
-		printf("%s ", name);
+		aprint_verbose("%s ", name);
 
 	if (cai->cai_string != NULL) {
-		printf("%s ", cai->cai_string);
+		aprint_verbose("%s ", cai->cai_string);
 	} else {
 		format_bytes(cbuf, sizeof(cbuf), cai->cai_totalsize);
-		printf("%s %dB/line ", cbuf, cai->cai_linesize);
+		aprint_verbose("%s %dB/line ", cbuf, cai->cai_linesize);
 	}
 	switch (cai->cai_associativity) {
 	case    0:
-		printf("disabled");
+		aprint_verbose("disabled");
 		break;
 	case    1:
-		printf("direct-mapped");
+		aprint_verbose("direct-mapped");
 		break;
 	case 0xff:
-		printf("fully associative");
+		aprint_verbose("fully associative");
 		break;
 	default:
-		printf("%d-way", cai->cai_associativity);
+		aprint_verbose("%d-way", cai->cai_associativity);
 		break;
 	}
 	return ", ";
@@ -102,29 +102,29 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 		return sep;
 
 	if (sep == NULL)
-		printf("%s: ", ci->ci_dev->dv_xname);
+		aprint_verbose("%s: ", ci->ci_dev->dv_xname);
 	else
-		printf("%s", sep);
+		aprint_verbose("%s", sep);
 	if (name != NULL)
-		printf("%s ", name);
+		aprint_verbose("%s ", name);
 
 	if (cai->cai_string != NULL) {
-		printf("%s", cai->cai_string);
+		aprint_verbose("%s", cai->cai_string);
 	} else {
 		format_bytes(cbuf, sizeof(cbuf), cai->cai_linesize);
-		printf("%d %s entries ", cai->cai_totalsize, cbuf);
+		aprint_verbose("%d %s entries ", cai->cai_totalsize, cbuf);
 		switch (cai->cai_associativity) {
 		case 0:
-			printf("disabled");
+			aprint_verbose("disabled");
 			break;
 		case 1:
-			printf("direct-mapped");
+			aprint_verbose("direct-mapped");
 			break;
 		case 0xff:
-			printf("fully associative");
+			aprint_verbose("fully associative");
 			break;
 		default:
-			printf("%d-way", cai->cai_associativity);
+			aprint_verbose("%d-way", cai->cai_associativity);
 			break;
 		}
 	}
@@ -343,23 +343,23 @@ x86_print_cacheinfo(struct cpu_info *ci)
 		sep = print_cache_config(ci, CAI_ICACHE, "I-cache", NULL);
 		sep = print_cache_config(ci, CAI_DCACHE, "D-cache", sep);
 		if (sep != NULL)
-			printf("\n");
+			aprint_verbose("\n");
 	}
 	if (ci->ci_cinfo[CAI_L2CACHE].cai_totalsize != 0) {
 		sep = print_cache_config(ci, CAI_L2CACHE, "L2 cache", NULL);
 		if (sep != NULL)
-			printf("\n");
+			aprint_verbose("\n");
 	}
 	if (ci->ci_cinfo[CAI_ITLB].cai_totalsize != 0) {
 		sep = print_tlb_config(ci, CAI_ITLB, "ITLB", NULL);
 		sep = print_tlb_config(ci, CAI_ITLB2, NULL, sep);
 		if (sep != NULL)
-			printf("\n");
+			aprint_verbose("\n");
 	}
 	if (ci->ci_cinfo[CAI_DTLB].cai_totalsize != 0) {
 		sep = print_tlb_config(ci, CAI_DTLB, "DTLB", NULL);
 		sep = print_tlb_config(ci, CAI_DTLB2, NULL, sep);
 		if (sep != NULL)
-			printf("\n");
+			aprint_verbose("\n");
 	}
 }

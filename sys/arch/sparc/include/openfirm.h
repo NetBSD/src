@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.5 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.5.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,7 +41,7 @@
 
 #ifdef SUN4U
 /* All cells are 8 byte slots */
-typedef u_int64_t cell_t;
+typedef uint64_t cell_t;
 #ifdef __arch64__
 #define HDL2CELL(x)	(cell_t)(u_int)(int)(x)
 #define ADR2CELL(x)	(cell_t)(x)
@@ -51,7 +51,7 @@ typedef u_int64_t cell_t;
 #endif
 #else /* SUN4U */
 /* All cells are 4 byte slots */
-typedef u_int32_t cell_t;
+typedef uint32_t cell_t;
 #define HDL2CELL(x)	(cell_t)(x)
 #define ADR2CELL(x)	(cell_t)(x)
 #endif /* SUN4U */

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.757.2.2 2006/02/04 13:55:05 simonb Exp $
+#	$NetBSD: files,v 1.757.2.3 2006/04/22 11:38:21 simonb Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -85,6 +85,7 @@ defflag				COMPAT_HPUX
 defflag				COMPAT_IBCS2
 defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX
+defflag				COMPAT_LINUX32
 defflag				COMPAT_OSF1
 defflag				COMPAT_SUNOS
 defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
@@ -167,7 +168,7 @@ defparam			SB_MAX
 defflag				SOFTDEP			# XXX files.ufs?
 defflag				QUOTA			# XXX files.ufs?
 defflag				VNODE_LOCKDEBUG
-defflag				ROOTFS_MAGICLINKS
+defflag				MAGICLINKS
 
 # buffer cache size options
 #
@@ -231,6 +232,7 @@ define	atapi		{ }
 define	radiodev	{ }
 define	gpibdev		{[address = -1]}
 define	gpiobus		{ }
+define	onewirebus	{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
@@ -275,6 +277,12 @@ define	rasops16
 define	rasops24
 define	rasops32
 
+# splash screen support
+include "dev/splash/files.splash"
+
+# videomode support
+include "dev/videomode/files.videomode"
+
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, token ring, atm and eco(net).
 #
@@ -318,11 +326,6 @@ include "dev/mii/files.mii"
 # RAIDframe
 #
 include "dev/raidframe/files.raidframe"
-
-#
-# Vinum
-#
-include "dev/vinum/files.vinum"
 
 #
 # Hardware-assisted data mover API
@@ -374,6 +377,11 @@ file	dev/ic/cac.c			cac
 
 attach	ld at cac with ld_cac
 file	dev/ic/ld_cac.c			ld_cac
+
+# HP/Compaq Command Interface for SCSI-3 Support
+#
+device ciss: scsi
+file	dev/ic/ciss.c			ciss
 
 # Mylex DAC960 RAID controllers
 #
@@ -506,14 +514,13 @@ file	dev/ic/wi.c			wi
 
 # Atheros 5210/5211/5212 multi-mode 802.11
 #
-# XXX: All the AH_ stuff should be renamed to ATHHAL_!!! 
-defflag	opt_athhal.h	AH_ASSERT AH_DEBUG AH_DEBUG_ALQ AH_REGOPS_FUNC
-
+defflag	opt_athhal.h	ATHHAL_ASSERT ATHHAL_DEBUG ATHHAL_DEBUG_ALQ
 device	ath: arp, wlan, ifnet
 file	dev/ic/ath.c					ath
 file	dev/ic/ath_netbsd.c				ath
 file	dev/ic/athrate-sample.c				ath
-file	contrib/dev/ic/athhal_osdep.c			ath
+file	contrib/dev/ath/netbsd/ah_osdep.c		ath
+object	/athhal.o					ath
 
 # ADMtek ADM8211 802.11
 #
@@ -913,6 +920,7 @@ define	wsdisplaydev		{[kbdmux = 1]}
 define	wsemuldisplaydev	{[console = -1], [kbdmux = 1]}
 define	wskbddev		{[console = -1], [mux = 1]}
 define	wsmousedev		{[mux = 0]}
+define	vcons
 # attribute to pull in raster support
 #
 define	wsrasteremulops
@@ -935,7 +943,7 @@ file	dev/ic/vga_subr.c	vga | vga_rasterconsole
 file	dev/ic/vga_common.c	vga | vga_rasterconsole
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
-device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8
+device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8, vcons
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
@@ -1066,7 +1074,7 @@ defpseudo vnd { }:	disk
 defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
 defpseudo cgd:		disk, des, blowfish, cast128, rijndael
-defpseudo md:		disk
+defpseudo md { }:	disk
 defpseudo fss:		disk
 
 defpseudo pty:		tty
@@ -1227,6 +1235,7 @@ file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_resource.c
 file	kern/kern_sa.c
+file	kern/kern_securelevel.c
 file	kern/kern_sig.c
 file	kern/kern_systrace.c		systrace
 file	kern/kern_subr.c
@@ -1243,6 +1252,7 @@ file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
+file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_extent.c
 file	kern/subr_log.c
@@ -1392,4 +1402,7 @@ include	"net/agr/files.agr"
 #
 # General Purpose Input/Output framework
 #
+define	onewire_bitbang
 include	"dev/gpio/files.gpio"
+
+include "dev/onewire/files.onewire"

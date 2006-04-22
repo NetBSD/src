@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.10 2005/12/24 23:41:33 perry Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.10.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*
  * Copyright 1997
@@ -185,9 +185,9 @@ struct cs_softc {
  * Inlines for reading/writing the packet page area.
  */
 
-static inline u_int16_t _cs_read_port(struct cs_softc *, int);
+static __inline u_int16_t _cs_read_port(struct cs_softc *, int);
 
-static inline u_int16_t
+static __inline u_int16_t
 _cs_read_port(struct cs_softc *sc, int off)
 {
 	u_int16_t result;
@@ -209,9 +209,9 @@ _cs_read_port(struct cs_softc *sc, int off)
 	return result;
 }
 
-static inline u_int16_t _CS_READ_PACKET_PAGE_IO(struct cs_softc *, int);
+static __inline u_int16_t _CS_READ_PACKET_PAGE_IO(struct cs_softc *, int);
 
-static inline u_int16_t
+static __inline u_int16_t
 _CS_READ_PACKET_PAGE_IO(struct cs_softc *sc, int offset)
 {
 
@@ -219,9 +219,9 @@ _CS_READ_PACKET_PAGE_IO(struct cs_softc *sc, int offset)
 	return (_cs_read_port(sc, PORT_PKTPG_DATA));
 }
 
-static inline u_int16_t CS_READ_PACKET_PAGE_IO(struct cs_softc *, int);
+static __inline u_int16_t CS_READ_PACKET_PAGE_IO(struct cs_softc *, int);
 
-static inline u_int16_t
+static __inline u_int16_t
 CS_READ_PACKET_PAGE_IO(struct cs_softc *sc, int offset)
 {
 

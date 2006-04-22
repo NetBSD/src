@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.29 2005/12/07 12:40:48 tsutsui Exp $
+# $NetBSD: RAMDISK,v 1.29.6.1 2006/04/22 11:38:03 simonb Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -223,20 +223,20 @@ pcons0	at mainbus0			# PROM console
 
 #### Miscellaneous.
 pseudo-device	loop		1	# network loopback
-#pseudo-device	bpfilter	8	# packet filter
-pseudo-device	sl		2	# CSLIP
-#pseudo-device	ppp		2	# PPP
-#pseudo-device	tun		2	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	bpfilter		# packet filter
+pseudo-device	sl			# CSLIP
+#pseudo-device	ppp			# PPP
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	ipfilter		# ip filter
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty		4	# pseudo-terminals
-#pseudo-device	vnd		4	# paging to files
+#pseudo-device	vnd			# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

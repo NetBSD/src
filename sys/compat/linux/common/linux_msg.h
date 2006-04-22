@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_msg.h,v 1.6 2003/01/18 08:04:37 thorpej Exp $	*/
+/*	$NetBSD: linux_msg.h,v 1.6.34.1 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -98,11 +98,13 @@ struct linux_msginfo {
 #define LINUX_MSG_INFO	12
 
 /* Pretend the sys_msgctl syscall is defined */
+#ifndef __amd64__
 struct linux_sys_msgctl_args {
 	syscallarg(int) msqid;
 	syscallarg(int) cmd;
 	syscallarg(struct linux_msqid_ds *) buf;
 };
+#endif
 
 
 #ifdef SYSVMSG

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.12.6.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -703,7 +703,7 @@ do {									\
  */
 
 #define	__HP300_copy_region_N(BYTES)					\
-static inline void __unused						\
+static __inline void __unused						\
 __CONCAT(bus_space_copy_region_,BYTES)(bus_space_tag_t t,		\
     bus_space_handle_t h1, bus_size_t o1, bus_space_handle_t h2,	\
     bus_size_t o2, bus_size_t c)					\

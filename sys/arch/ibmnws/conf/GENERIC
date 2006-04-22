@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.21 2006/02/02 21:32:09 reinoud Exp $
+#	$NetBSD: GENERIC,v 1.21.2.1 2006/04/22 11:37:39 simonb Exp $
 #
 #
 
@@ -76,7 +76,7 @@ options 	NFS_BOOT_DHCP
 # different kernel output - see dev/wscons/wsdisplayvar.h
 #options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -268,7 +268,7 @@ audio*	at audiobus?
 pseudo-device	md		1	# memory disk device (ramdisk)
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# network tap
+pseudo-device	bpfilter		# network tap
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices

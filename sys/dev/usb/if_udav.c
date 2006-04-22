@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.8 2005/11/28 13:31:09 augustss Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.8.6.1 2006/04/22 11:39:37 simonb Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.8 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.8.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -265,7 +265,7 @@ USB_ATTACH(udav)
 	/* Print Ethernet Address */
 	printf("%s: Ethernet address %s\n", devname, ether_sprintf(eaddr));
 
-	/* initialize interface infomation */
+	/* initialize interface information */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;

@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.2 2005/12/11 12:17:09 christos Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.2.6.1 2006/04/22 11:37:24 simonb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.2 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.2.6.1 2006/04/22 11:37:24 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ const struct wsscreen_list lcd_screen_list = {
 	lcd_scr_descr
 };
 
-int	lcd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
 
 int	lcd_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
@@ -215,10 +215,10 @@ void lcd_attach( struct device *parent, struct device *self, void *aux )
 #if NWSDISPLAY > 0
 
 int
-lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 	uint16_t reg;
 
 	switch (cmd) {
@@ -234,7 +234,7 @@ lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;			/* turn on/off LCD controller */
 	}
 
-	return pxa2x0_lcd_ioctl( v, cmd, data, flag, l );
+	return pxa2x0_lcd_ioctl( v, vs, cmd, data, flag, l );
 }
 
 int
@@ -242,7 +242,7 @@ lcd_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 	struct obio_softc *osc = 
-	    (struct obio_softc *)((struct device *)v)->dv_parent;
+	    (struct obio_softc *) device_parent((struct device *)v);
 
 	pxa2x0_lcd_show_screen(v,cookie,waitok,cb,cbarg);
 	

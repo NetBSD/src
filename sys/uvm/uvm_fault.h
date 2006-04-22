@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.h,v 1.18 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_fault.h,v 1.18.6.1 2006/04/22 11:40:28 simonb Exp $	*/
 
 /*
  *
@@ -38,15 +38,6 @@
 #define _UVM_UVM_FAULT_H_
 
 /*
- * fault types
- */
-
-#define VM_FAULT_INVALID ((vm_fault_t) 0x0)	/* invalid mapping */
-#define VM_FAULT_PROTECT ((vm_fault_t) 0x1)	/* protection */
-#define VM_FAULT_WIRE	 ((vm_fault_t) 0x2)	/* wire mapping */
-#define VM_FAULT_WIREMAX ((vm_fault_t) 0x3)	/* wire, allow maxprot */
-
-/*
  * fault data structures
  */
 
@@ -75,8 +66,7 @@ struct uvm_faultinfo {
 int uvmfault_anonget(struct uvm_faultinfo *, struct vm_amap *,
 		     struct vm_anon *);
 
-int uvm_fault_wire(struct vm_map *, vaddr_t, vaddr_t, vm_fault_t,
-		   vm_prot_t);
+int uvm_fault_wire(struct vm_map *, vaddr_t, vaddr_t, vm_prot_t, int);
 void uvm_fault_unwire(struct vm_map *, vaddr_t, vaddr_t);
 void uvm_fault_unwire_locked(struct vm_map *, vaddr_t, vaddr_t);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.223.6.1 2006/02/04 14:18:52 simonb Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.223.6.2 2006/04/22 11:40:10 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223.6.1 2006/02/04 14:18:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.223.6.2 2006/04/22 11:40:10 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -732,7 +732,7 @@ ip_input(struct mbuf *m)
 	}
 	if (ia != NULL)
 		goto ours;
-	if (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
+	if (m->m_pkthdr.rcvif && m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST) {
 		IFADDR_FOREACH(ifa, m->m_pkthdr.rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
@@ -1839,10 +1839,10 @@ ip_forward(struct mbuf *m, int srcrt)
 
 	dest = 0;
 #ifdef DIAGNOSTIC
-	if (ipprintfs)
-		printf("forward: src %2.2x dst %2.2x ttl %x\n",
-		    ntohl(ip->ip_src.s_addr),
-		    ntohl(ip->ip_dst.s_addr), ip->ip_ttl);
+	if (ipprintfs) {
+		printf("forward: src %s ", inet_ntoa(ip->ip_src));
+		printf("dst %s ttl %x\n", inet_ntoa(ip->ip_dst), ip->ip_ttl);
+	}
 #endif
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;

@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.57 2005/12/11 12:22:16 christos Exp $
+$NetBSD: isapnpdevs,v 1.57.6.1 2006/04/22 11:39:09 simonb Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -148,6 +148,7 @@ devlogic	fmv	FUJ01D1		0	Fujitsu FMV-184
  */
 devlogic	joy	AZT0003		0	Aztech AZT2320 GAME PORT
 devlogic	joy	AZT3001		0	Aztech GAME PORT
+devlogic	joy	AZT3004		0	Aztech AZT1020 GAME PORT
 devlogic	joy	CSC0001		0	CS4235
 devlogic	joy	CSCA801		0	Terratec EWS64XL
 devlogic	joy	CTL7001		0	Creative Awe64
@@ -177,6 +178,7 @@ devlogic	le	BUF0001		0	Melco Inc. LGY-IV
  */
 devlogic	mpu	AZT0002		0	Aztech AZT2320 MPU401 MIDI
 devlogic	mpu	AZT2001		0	Aztech MPU401 MIDI
+devlogic	mpu	AZT2004		0	Aztech AZT1020 MPU401 MIDI
 devlogic	mpu	CSC0003		0	CS4235 MPU401 MIDI
 
 /*
@@ -199,6 +201,7 @@ devlogic	sb	ADS7150		0	AD1815
 devlogic	sb	ADS7180		0	AD1816
 devlogic	sb	AZT1003		0	Aztech 1003 Audio
 devlogic	sb	AZT1008		0	Aztech 1008
+devlogic	sb	AZT1016		0	Aztech 1020
 devlogic	sb	CTL0001		0	SB
 devlogic	sb	CTL0031		0	SB AWE32
 devlogic	sb	CTL0041		0	SB16 PnP (CT4131)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.61 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.61.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.61.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -599,18 +599,14 @@ cpu_alloc_idlepcb(struct cpu_info *ci)
 	vaddr_t uaddr;
 	struct pcb *pcb;
 	struct trapframe *tf;
-	int error;
 
 	/*
 	 * Generate a kernel stack and PCB (in essence, a u-area) for the
 	 * new CPU.
 	 */
-	if (uvm_uarea_alloc(&uaddr)) {
-		error = uvm_fault_wire(kernel_map, uaddr, uaddr + USPACE,
-		    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
-		if (error)
-			return error;
-	}
+	uaddr = uvm_km_alloc(kernel_map, USPACE, 0, UVM_KMF_WIRED);
+	if (!uaddr)
+		return ENOMEM;
 	ci->ci_idlepcb = pcb = (struct pcb *)uaddr;
 
 	/*

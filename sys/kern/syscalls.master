@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp $
+	$NetBSD: syscalls.master,v 1.150.6.1 2006/04/22 11:39:59 simonb Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -411,8 +411,8 @@
 200	STD		{ int sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	STD		{ int sys_ftruncate(int fd, int pad, off_t length); }
-202	STD		{ int sys___sysctl(int *name, u_int namelen, \
-			    void *old, size_t *oldlenp, void *new, \
+202	STD		{ int sys___sysctl(const int *name, u_int namelen, \
+			    void *old, size_t *oldlenp, const void *new, \
 			    size_t newlen); }
 203	STD		{ int sys_mlock(const void *addr, size_t len); }
 204	STD		{ int sys_munlock(const void *addr, size_t len); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.22 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.22.6.1 2006/04/22 11:39:28 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.22 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.22.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -427,11 +427,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				/* Create a dag for this parity stripe */
 				InitHdrNode(&tempdag_h, raidPtr, desc);
 				dagList->numDags++;
-				if (dag_h == NULL) {
-					dag_h = tempdag_h;
-				} else {
-					lastdag_h->next = tempdag_h;
-				}
+				dag_h = tempdag_h;
 				lastdag_h = tempdag_h;
 
 				(stripeFuncs->fp) (raidPtr, asm_p, tempdag_h, bp, flags, tempdag_h->allocList);
@@ -445,12 +441,6 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 		if ((numStripesBailed > 0) || (numStripeUnitsBailed > 0)) {
 			stripeNum = 0;
 			stripeUnitNum = 0;
-			if (dag_h->asmList) {
-				endASMList = dag_h->asmList;
-				while (endASMList->next)
-					endASMList = endASMList->next;
-			} else
-				endASMList = NULL;
 			/* walk through io, stripe by stripe */
 			/* here we build up dag_h->asmList for this dag...
 			   we need all of these asm's to do the IO, and
@@ -458,8 +448,19 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			   later time */
 			stripeFuncs = stripeFuncsList;
 			failed_stripe = failed_stripes_list;
+			dagList = desc->dagList;
+
 			for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
-				if (stripeFuncs->fp == NULL) {
+
+				dag_h = dagList->dags;
+				if (dag_h->asmList) {
+					endASMList = dag_h->asmList;
+					while (endASMList->next)
+						endASMList = endASMList->next;
+				} else
+					endASMList = NULL;
+
+				if (stripeFuncs->fp == NULL) {					
 					numStripeUnits = asm_p->numStripeUnitsAccessed;
 					/* walk through stripe, stripe unit by
 					 * stripe unit */
@@ -499,6 +500,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 					stripeNum++;
 					failed_stripe = failed_stripe->next;
 				}
+				dagList = dagList->next; /* need to move in stride with stripeFuncs */
 				stripeFuncs = stripeFuncs->next;
 			}
 			RF_ASSERT(stripeNum == numStripesBailed);

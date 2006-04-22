@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.29 2005/12/11 12:19:35 christos Exp $ */
+/*	$NetBSD: ts.c,v 1.29.6.1 2006/04/22 11:38:08 simonb Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.29 2005/12/11 12:19:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.29.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #define TS11_COMPAT	/* don't use extended features provided by TS05 */
 
@@ -251,7 +251,7 @@ tsinit (sc)
 	struct ts_softc *sc;
 {
 	volatile struct tsdevice *tsregs;
-	int unit = sc->sc_dev.dv_unit;
+	int unit = device_unit(&sc->sc_dev);
 	struct uba_unit *uu;
 	
 	uu = &sc->sc_unit;
@@ -262,7 +262,7 @@ tsinit (sc)
 		 * buffer into Unibus address space.
 		 */
 		sc->sc_ubainfo = uballoc((struct uba_softc *)
-		    sc->sc_dev.dv_parent,
+		    device_parent(&sc->sc_dev),
 		    (caddr_t)&ts[unit], sizeof (struct ts), TS_UBAFLAGS);
 		sc->sc_ts = (struct ts *)(UBAI_ADDR(sc->sc_ubainfo));
 		sc->sc_mapped = 1;
@@ -427,7 +427,7 @@ tsstart (sc, bp)
 	register struct ts_softc *sc;
 	register struct buf *bp;
 {
-	int ctlr = sc->sc_dev.dv_unit;
+	int ctlr = device_unit(&sc->sc_dev);
 	volatile struct tsdevice *tsreg = ts[ctlr].reg;
 	register struct tscmd *tscmdp = &ts[ctlr].cmd;
 	register struct buf *dp;
@@ -486,7 +486,8 @@ tsstart (sc, bp)
 			printf ("unsupported cpu %d in tsstart.\n", vax_cputype);
 		} /* end switch (vax_cputype) */
 
-		if ((i = ubasetup(sc->sc_dev.dv_parent->dv_unit, bp, i)) == 0) {
+		if ((i = ubasetup(device_unit(device_parent(&sc->sc_dev)),
+				  bp, i)) == 0) {
 			/*
 			 * For some reasons which I don't (yet? :) understand,
 			 * tmscp.c initiates in this situation a GET-UNIT
@@ -714,7 +715,7 @@ tsmatch(parent, match, aux)
 	struct uba_attach_args *ua = aux;
 	struct tsdevice *tsregs = (struct tsdevice*)ua->ua_addr;
 	volatile unsigned int sr, timeout, count;
-	int ctlr = sc->sc_dev.dv_unit;
+	int ctlr = device_unit(&sc->sc_dev);
 
 	ts_wtab[ctlr] = NULL;
 	sc->sc_ts = &ts[ctlr];
@@ -779,7 +780,7 @@ tsattach(parent, self, aux)
 	void *aux;
 {
 	struct ts_softc *sc = (void *)self;
-	int ctlr = sc->sc_dev.dv_unit;
+	int ctlr = device_unit(&sc->sc_dev);
 	struct tsmsg *tsmsgp = &ts[ctlr].msg;
 
 	trace (("tsslave (%x, %x)\n", ui, reg));
@@ -925,13 +926,13 @@ tsintr(ctlr)
 
 			if (bp != &ts_cbuf[ctlr]) {	/* no ioctl */
 				ubarelse((struct uba_softc *)
-				    sc->sc_dev.dv_parent,
+				    device_parent(&sc->sc_dev),
 				    (int *)&bp->b_ubinfo);
 #if VAX750 || VAXANY
 				if (vax_cputype == VAX_750 &&
 				    sc->sc_unit.uu_ubinfo != 0)
 					ubarelse((struct uba_softc *)
-					    sc->sc_dev.dv_parent,
+					    device_parent(&sc->sc_dev),
 					    &sc->sc_unit.uu_ubinfo);
 					/* XXX */
 #endif
@@ -1078,7 +1079,7 @@ tsintr(ctlr)
 		ts_wtab[ctlr] = NULL;		/* pseudo unlink */
 
 		if (bp != &ts_cbuf[ctlr]) 	/* no ioctl */
-			ubarelse((struct uba_softc *)sc->sc_dev.dv_parent,
+			ubarelse((struct uba_softc *)device_parent(&sc->sc_dev),
 			    (int *)&bp->b_ubinfo);
 
 		if ((sr & TS_TC) != TS_TC_NORM)

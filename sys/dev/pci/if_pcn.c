@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.28 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.28.6.1 2006/04/22 11:39:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "opt_pcn.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.28 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.28.6.1 2006/04/22 11:39:14 simonb Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -529,6 +529,18 @@ static int
 pcn_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+
+	/*
+	 * IBM Makes a PCI variant of this card which shows up as a
+	 * Trident Microsystems 4DWAVE DX (ethernet network, revision 0x25)
+	 * this card is truly a pcn card, so we have a special case match for
+	 * it
+	 */
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TRIDENT &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TRIDENT_4DWAVE_DX &&
+	    PCI_CLASS(pa->pa_class) == PCI_CLASS_NETWORK)
+		return(1);
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
 		return (0);

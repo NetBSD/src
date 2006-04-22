@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.50 2005/12/27 00:26:58 chs Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.50.6.1 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.50 2005/12/27 00:26:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.50.6.1 2006/04/22 11:39:59 simonb Exp $");
 
 #include "opt_systrace.h"
 
@@ -1180,8 +1180,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	uio.uio_iovcnt = 1;
 	uio.uio_offset = (off_t)(unsigned long)io->strio_offs;
 	uio.uio_resid = io->strio_len;
-	uio.uio_segflg = UIO_USERSPACE;
-	uio.uio_lwp = l;
+	uio.uio_vmspace = l->l_proc->p_vmspace;
 
 #ifdef __NetBSD__
 	error = process_domem(l, proc_representative_lwp(t), &uio);
@@ -1462,6 +1461,11 @@ systrace_scriptname(struct proc *p, char *dst)
 
 	systrace_lock();
 	strp = p->p_systrace;
+	if (strp == NULL) {
+		systrace_unlock();
+		return (EINVAL);
+	}
+
 	fst = strp->parent;
 
 	SYSTRACE_LOCK(fst, curlwp);
@@ -1474,15 +1478,13 @@ systrace_scriptname(struct proc *p, char *dst)
 		goto out;
 	}
 
-	if (strp != NULL) {
-		if (strp->scriptname[0] == '\0') {
-			error = ENOENT;
-			goto out;
-		}
-
-		strlcpy(dst, strp->scriptname, MAXPATHLEN);
-		strp->isscript = 1;
+	if (strp->scriptname[0] == '\0') {
+		error = ENOENT;
+		goto out;
 	}
+
+	strlcpy(dst, strp->scriptname, MAXPATHLEN);
+	strp->isscript = 1;
 
  out:
 	strp->scriptname[0] = '\0';

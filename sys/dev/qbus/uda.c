@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.53 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: uda.c,v 1.53.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.53 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.53.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -201,7 +201,7 @@ bad:
 void
 udaattach(struct device *parent, struct device *self, void *aux)
 {
-	struct	uda_softc *sc = (void *)self;
+	struct	uda_softc *sc = device_private(self);
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *uh = (void *)parent;
 	struct	mscp_attach_args ma;
@@ -245,8 +245,7 @@ udaattach(struct device *parent, struct device *self, void *aux)
 	 * ctlr type it is, we check what is generated and later
 	 * set the correct vcid.
 	 */
-	ma.ma_type = (strcmp(self->dv_cfdata->cf_name, "mtc") ?
-	    MSCPBUS_DISK : MSCPBUS_TAPE);
+	ma.ma_type = (device_is_a(self, "mtc") ? MSCPBUS_TAPE : MSCPBUS_DISK);
 
 	ma.ma_mc = &uda_mscp_ctlr;
 	ma.ma_type |= MSCPBUS_UDA;
@@ -418,7 +417,7 @@ udaintr(void *arg)
 	 * Handle buffer purge requests.
 	 * XXX - should be done in bus_dma_sync().
 	 */
-	uh = (void *)sc->sc_dev.dv_parent;
+	uh = (void *)device_parent(&sc->sc_dev);
 #ifdef notyet
 	if (ud->mp_ca.ca_bdp) {
 		if (uh->uh_ubapurge)
@@ -469,6 +468,6 @@ udactlrdone(struct device *usc)
 	int s;
 
 	s = spluba();
-	uba_done((struct uba_softc *)sc->sc_dev.dv_parent);
+	uba_done((struct uba_softc *)device_parent(&sc->sc_dev));
 	splx(s);
 }

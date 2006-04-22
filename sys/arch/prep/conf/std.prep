@@ -1,4 +1,4 @@
-#	$NetBSD: std.prep,v 1.9 2005/12/11 12:18:47 christos Exp $
+#	$NetBSD: std.prep,v 1.9.6.1 2006/04/22 11:37:53 simonb Exp $
 #
 # standard, required NetBSD/prep 'options'
 
@@ -13,3 +13,4 @@ options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_AOUT	# exec a.out binaries
 
 options 	INTSTK=0x2000
+options		PCKBCNOTEST	# 7043 and 7248 fail this test.

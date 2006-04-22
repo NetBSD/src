@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.88.4.1 2006/02/04 14:12:50 simonb Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.88.4.2 2006/04/22 11:40:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.4.1 2006/02/04 14:12:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.4.2 2006/04/22 11:40:15 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -717,7 +717,8 @@ nfssvc_nfsd(nsd, argp, l)
 #endif
 				mreq = NULL;
 				netexport_rdlock();
-				if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
+				if (writes_todo || nd == NULL ||
+				     (!(nd->nd_flag & ND_NFSV3) &&
 				     nd->nd_procnum == NFSPROC_WRITE &&
 				     nfsrvw_procrastinate > 0 && !notstarted))
 					error = nfsrv_writegather(&nd, slp,
@@ -1060,7 +1061,7 @@ nfssvc_iod(l)
 	struct nfs_iod *myiod;
 	struct nfsmount *nmp;
 	int error = 0;
-	struct proc *p = l ? l->l_proc : NULL;
+	struct proc *p = l->l_proc;
 
 	/*
 	 * Assign my position or return error if too many already running

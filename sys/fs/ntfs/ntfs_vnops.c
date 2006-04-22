@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.27 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.27.6.1 2006/04/22 11:39:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.27 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.27.6.1 2006/04/22 11:39:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,9 @@ ntfs_read(ap)
 	u_int64_t toread;
 	int error;
 
-	dprintf(("ntfs_read: ino: %llu, off: %qd resid: %qd, segflg: %d\n",
+	dprintf(("ntfs_read: ino: %llu, off: %qd resid: %qd\n",
 	    (unsigned long long)ip->i_number, (long long)uio->uio_offset,
-	    (long long)uio->uio_resid, uio->uio_segflg));
+	    (long long)uio->uio_resid));
 
 	dprintf(("ntfs_read: filesize: %qu",(long long)fp->f_size));
 
@@ -421,9 +421,9 @@ ntfs_write(ap)
 	size_t written;
 	int error;
 
-	dprintf(("ntfs_write: ino: %llu, off: %qd resid: %qd, segflg: %d\n",
+	dprintf(("ntfs_write: ino: %llu, off: %qd resid: %qd\n",
 	    (unsigned long long)ip->i_number, (long long)uio->uio_offset,
-	    (long long)uio->uio_resid, uio->uio_segflg));
+	    (long long)uio->uio_resid));
 	dprintf(("ntfs_write: filesize: %qu",(long long)fp->f_size));
 
 	if (uio->uio_resid + uio->uio_offset > fp->f_size) {
@@ -697,7 +697,8 @@ ntfs_readdir(ap)
 #endif
 
 		dprintf(("ntfs_readdir: %d cookies\n",ncookies));
-		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
+		if (!VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
+		    uio->uio_iovcnt != 1)
 			panic("ntfs_readdir: unexpected uio from NFS server");
 		dpStart = (struct dirent *)
 		     ((caddr_t)uio->uio_iov->iov_base -

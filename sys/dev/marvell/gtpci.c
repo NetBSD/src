@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.13 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.13.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.13 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.13.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -197,7 +197,7 @@ static const struct pci_init {
 int
 gtpci_match(struct device *parent, struct cfdata *self, void *aux)
 {
-	struct gt_softc * const gt = (struct gt_softc *) parent;
+	struct gt_softc * const gt = device_private(parent);
 	struct gt_attach_args * const ga = aux;
 
 	return GT_PCIOK(gt, ga, &gtpci_cd);
@@ -221,8 +221,8 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcibus_attach_args pba;
 	struct gt_attach_args * const ga = aux;
-	struct gt_softc * const gt = (struct gt_softc *) parent;
-	struct gtpci_softc * const gtp = (struct gtpci_softc *) self;
+	struct gt_softc * const gt = device_private(parent);
+	struct gtpci_softc * const gtp = device_private(self);
 	struct gtpci_chipset * const gtpc = &gtp->gtpci_gtpc;
 	struct pci_chipset * const pc = &gtpc->gtpc_pc;
 	const int busno = ga->ga_unit;

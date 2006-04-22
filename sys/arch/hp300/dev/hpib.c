@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.31 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: hpib.c,v 1.31.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.31 2005/12/11 12:17:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.31.6.1 2006/04/22 11:37:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,13 +163,12 @@ hpibbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ba = ha->ha_ba;
 	*(ha->ha_softcpp) = sc;			/* XXX */
 
-	hpibreset(self->dv_unit);		/* XXX souldn't be here */
+	hpibreset(device_unit(self));		/* XXX souldn't be here */
 
 	/*
 	 * Initialize the DMA queue entry.
 	 */
-	MALLOC(sc->sc_dq, struct dmaqueue *, sizeof(struct dmaqueue),
-	    M_DEVBUF, M_NOWAIT);
+	sc->sc_dq = malloc(sizeof(struct dmaqueue), M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dq == NULL) {
 		printf("%s: can't allocate DMA queue entry\n", self->dv_xname);
 		return;
@@ -197,7 +196,7 @@ hpibbus_attach_children(struct hpibbus_softc *sc)
 		 * Plotters won't identify themselves, and
 		 * get the same value as non-existent devices.
 		 */
-		ha.ha_id = hpibid(sc->sc_dev.dv_unit, slave);
+		ha.ha_id = hpibid(device_unit(&sc->sc_dev), slave);
 
 		ha.ha_slave = slave;	/* not to be modified by children */
 		ha.ha_punit = 0;	/* children modify this */

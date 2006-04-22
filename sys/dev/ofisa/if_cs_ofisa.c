@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.14 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.14.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.14 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.14.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ cs_ofisa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cs_softc *sc = (struct cs_softc *) self;
+	struct cs_softc *sc = device_private(self);
 	struct cs_softc_isa *isc = (void *)sc;
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg[2];

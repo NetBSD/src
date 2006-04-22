@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.44 2006/01/19 15:09:57 he Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.44.4.1 2006/04/22 11:37:57 simonb Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -200,7 +200,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 	fb->fb_driver = &cgfourteenfbdriver;
 	fb->fb_device = &sc->sc_dev;
 	/* Mask out invalid flags from the user. */
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 
 	/*
 	 * We're emulating a cg3/8, so represent ourselves as one
@@ -522,8 +522,8 @@ cgfourteenpoll(dev_t dev, int events, struct lwp *l)
 static void
 cg14_init(struct cgfourteen_softc *sc)
 {
-	volatile u_int32_t *clut;
-	volatile u_int8_t  *xlut;
+	volatile uint32_t *clut;
+	volatile uint8_t  *xlut;
 	int i;
 
 	/*
@@ -537,8 +537,8 @@ cg14_init(struct cgfourteen_softc *sc)
 	sc->sc_savectl = sc->sc_ctl->ctl_mctl;
 	sc->sc_savehwc = sc->sc_hwc->curs_ctl;
 
-	clut = (volatile u_int32_t *) sc->sc_clut1->clut_lut;
-	xlut = (volatile u_int8_t *) sc->sc_xlut->xlut_lut;
+	clut = (volatile uint32_t *) sc->sc_clut1->clut_lut;
+	xlut = (volatile uint8_t *) sc->sc_xlut->xlut_lut;
 	for (i = 0; i < CG14_CLUT_SIZE; i++) {
 		sc->sc_saveclut.cm_chip[i] = clut[i];
 		sc->sc_savexlut[i] = xlut[i];

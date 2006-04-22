@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.43 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: esp.c,v 1.43.6.1 2006/04/22 11:37:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.43 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.43.6.1 2006/04/22 11:37:41 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -269,7 +269,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_id = 7;
 
-	/* gimme Mhz */
+	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
 	/*

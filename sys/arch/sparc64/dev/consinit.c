@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.20 2005/12/17 17:58:02 jdc Exp $	*/
+/*	$NetBSD: consinit.c,v 1.20.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.20 2005/12/17 17:58:02 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.20.6.1 2006/04/22 11:37:59 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -62,12 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.20 2005/12/17 17:58:02 jdc Exp $");
 
 #include <dev/usb/ukbdvar.h>
 
-static void prom_cnprobe __P((struct consdev *));
-static void prom_cninit __P((struct consdev *));
-int  prom_cngetc __P((dev_t));
-static void prom_cnputc __P((dev_t, int));
-static void prom_cnpollc __P((dev_t, int));
-static void prom_cnputc __P((dev_t, int));
+static void prom_cnprobe(struct consdev *);
+static void prom_cninit(struct consdev *);
+int  prom_cngetc(dev_t);
+static void prom_cnputc(dev_t, int);
+static void prom_cnpollc(dev_t, int);
 
 /*
  * The console is set to this one initially,
@@ -91,8 +90,7 @@ struct consdev consdev_prom = {
 struct consdev *cn_tab = &consdev_prom;
 
 void
-prom_cnprobe(cd)
-	struct consdev *cd;
+prom_cnprobe(struct consdev *cd)
 {
 #if NPCONS > 0
 	int maj;
@@ -105,8 +103,7 @@ prom_cnprobe(cd)
 }
 
 int
-prom_cngetc(dev)
-	dev_t dev;
+prom_cngetc(dev_t dev)
 {
 	unsigned char ch = '\0';
 	int l;
@@ -127,8 +124,7 @@ prom_cngetc(dev)
 }
 
 static void
-prom_cninit(cn)
-	struct consdev *cn;
+prom_cninit(struct consdev *cn)
 {
 }
 
@@ -136,9 +132,7 @@ prom_cninit(cn)
  * PROM console output putchar.
  */
 static void
-prom_cnputc(dev, c)
-	dev_t dev;
-	int c;
+prom_cnputc(dev_t dev, int c)
 {
 	int s;
 	char c0 = (c & 0x7f);
@@ -149,9 +143,7 @@ prom_cnputc(dev, c)
 }
 
 void
-prom_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+prom_cnpollc(dev_t dev, int on)
 {
 	if (on) {
                 /* Entering debugger. */

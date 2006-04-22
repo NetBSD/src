@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.36 2006/01/01 12:12:44 xtraeme Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.36.4.1 2006/04/22 11:37:34 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.36 2006/01/01 12:12:44 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.36.4.1 2006/04/22 11:37:34 simonb Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -138,6 +138,8 @@ const struct pciintr_icu_table {
 	  piix_init },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82371SB_ISA,
 	  piix_init },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82440MX_ISA,
+	  piix_init },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AA_LPC,
 	  piix_init },			/* ICH */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801AB_LPC,
@@ -156,8 +158,16 @@ const struct pciintr_icu_table {
 	  ich_init },			/* ICH4M */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801EB_LPC,
 	  ich_init },			/* ICH5 */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801FB_LPC,
+	  ich_init },			/* ICH6/ICH6R */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801FBM_LPC,
 	  ich_init },			/* ICH6M */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801G_LPC,
+	  ich_init },			/* ICH7/ICH7R */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801GBM_LPC,
+	  ich_init },			/* ICH7-M */
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801GHM_LPC,
+	  ich_init },			/* ICH7DH/ICH7-M DH */
 
 	{ PCI_VENDOR_OPTI,	PCI_PRODUCT_OPTI_82C558,
 	  opti82c558_init },

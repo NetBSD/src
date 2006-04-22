@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.50.6.1 2006/02/04 14:00:40 simonb Exp $	*/
+/*	$NetBSD: comvar.h,v 1.50.6.2 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -153,11 +153,6 @@ struct com_softc {
 #endif
 	struct simplelock	sc_lock;
 };
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 int comprobe1(bus_space_tag_t, bus_space_handle_t);
 int comintr(void *);

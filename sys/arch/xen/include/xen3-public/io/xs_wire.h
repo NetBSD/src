@@ -1,3 +1,4 @@
+/* $NetBSD: xs_wire.h,v 1.1.1.1.6.1 2006/04/22 11:38:11 simonb Exp $ */
 /*
  * Details of the "wire" protocol between Xen Store Daemon and client
  * library or guest kernel.
@@ -101,8 +102,8 @@ typedef uint32_t XENSTORE_RING_IDX;
 struct xenstore_domain_interface {
     char req[XENSTORE_RING_SIZE]; /* Requests to xenstore daemon. */
     char rsp[XENSTORE_RING_SIZE]; /* Replies and async watch events. */
-    XENSTORE_RING_IDX req_cons, req_prod;
-    XENSTORE_RING_IDX rsp_cons, rsp_prod;
+    volatile XENSTORE_RING_IDX req_cons, req_prod;
+    volatile XENSTORE_RING_IDX rsp_cons, rsp_prod;
 };
 
 #endif /* _XS_WIRE_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.13 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.13.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -74,7 +74,7 @@ struct psycho_pbm {
 	int				pp_busmax;
 	struct pp_busnode {
 		int	node;
-		int	(*valid) __P((void *));
+		int	(*valid)(void *);
 		void	*arg;
 	}				(*pp_busnode)[256];
 	int				pp_flags;
@@ -135,11 +135,11 @@ struct psycho_softc {
 };
 
 /* get a PCI offset address from bus_space_handle_t */
-bus_addr_t psycho_bus_offset __P((bus_space_tag_t, bus_space_handle_t *));
+bus_addr_t psycho_bus_offset(bus_space_tag_t, bus_space_handle_t *);
 
 /* config space is per-psycho.  mem/io/DMA are per-pci bus */
-bus_dma_tag_t psycho_alloc_dma_tag __P((struct psycho_pbm *));
-bus_space_tag_t psycho_alloc_bus_tag __P((struct psycho_pbm *, int));
+bus_dma_tag_t psycho_alloc_dma_tag(struct psycho_pbm *);
+bus_space_tag_t psycho_alloc_bus_tag(struct psycho_pbm *, int);
 
 #define psycho_alloc_config_tag(pp) psycho_alloc_bus_tag((pp), PCI_CONFIG_BUS_SPACE)
 #define psycho_alloc_mem_tag(pp) psycho_alloc_bus_tag((pp), PCI_MEMORY_BUS_SPACE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.12 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.12.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.12 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465uart.c,v 1.12.6.1 2006/04/22 11:37:31 simonb Exp $");
 
 #include "opt_kgdb.h"
 
@@ -87,9 +87,9 @@ CFATTACH_DECL(hd64465uart, sizeof(struct hd64465uart_softc),
     hd64465uart_match, hd64465uart_attach, NULL, NULL);
 
 STATIC void hd64465uart_init(void);
-STATIC u_int8_t hd64465uart_read_1(void *, bus_space_handle_t, bus_size_t);
+STATIC uint8_t hd64465uart_read_1(void *, bus_space_handle_t, bus_size_t);
 STATIC void hd64465uart_write_1(void *, bus_space_handle_t, bus_size_t,
-    u_int8_t);
+    uint8_t);
 
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #ifndef COMCN_SPEED
@@ -205,17 +205,17 @@ hd64465uart_init()
 	hd64465uart_chip.io_tag->hbs_w_1 = hd64465uart_write_1;
 }
 
-u_int8_t
+uint8_t
 hd64465uart_read_1(void *t, bus_space_handle_t h, bus_size_t ofs)
 {
 
-	return *(volatile u_int8_t *)(h + (ofs << 1));
+	return *(volatile uint8_t *)(h + (ofs << 1));
 }
 
 void
 hd64465uart_write_1(void *t, bus_space_handle_t h, bus_size_t ofs,
-    u_int8_t val)
+    uint8_t val)
 {
 
-	*(volatile u_int8_t *)(h + (ofs << 1)) = val;	
+	*(volatile uint8_t *)(h + (ofs << 1)) = val;	
 }

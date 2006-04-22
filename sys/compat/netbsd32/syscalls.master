@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.41 2005/12/11 12:20:22 christos Exp $
+	$NetBSD: syscalls.master,v 1.41.6.1 2006/04/22 11:38:17 simonb Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -42,6 +42,7 @@
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#include "opt_posix.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -412,16 +413,31 @@
 			    netbsd32_timespecp_t timeout); }
 245	UNIMPL
 246	UNIMPL
-247	UNIMPL
-248	UNIMPL
-249	UNIMPL
-250	UNIMPL
-251	UNIMPL
-252	UNIMPL
-253	UNIMPL
-254	UNIMPL
-255	UNIMPL
-256	UNIMPL
+#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
+247	STD		{ int netbsd32__ksem_init(unsigned int value, netbsd32_semidp_t idp); }
+248	STD		{ int netbsd32__ksem_open(const netbsd32_charp name, int oflag, \
+			    mode_t mode, unsigned int value, netbsd32_semidp_t idp); }
+249	STD		{ int netbsd32__ksem_unlink(const netbsd32_charp name); }
+250	STD		{ int netbsd32__ksem_close(netbsd32_semid_t id); }
+251	STD		{ int netbsd32__ksem_post(netbsd32_semid_t id); }
+252	STD		{ int netbsd32__ksem_wait(netbsd32_semid_t id); }
+253	STD		{ int netbsd32__ksem_trywait(netbsd32_semid_t id); }
+254	STD		{ int netbsd32__ksem_getvalue(netbsd32_semid_t id, \
+			    netbsd32_intp value); }
+255	STD		{ int netbsd32__ksem_destroy(netbsd32_semid_t id); }
+256	UNIMPL		sys__ksem_timedwait
+#else
+247	EXCL		sys__ksem_init
+248	EXCL		sys__ksem_open
+249	EXCL 		sys__ksem_unlink
+250	EXCL		sys__ksem_close
+251	EXCL		sys__ksem_post
+252	EXCL		sys__ksem_wait
+253	EXCL		sys__ksem_trywait
+254	EXCL		sys__ksem_getvalue
+255	EXCL		sys__ksem_destroy
+256	UNIMPL		sys__ksem_timedwait
+#endif
 257	UNIMPL
 258	UNIMPL
 259	UNIMPL
@@ -479,7 +495,7 @@
 			    netbsd32_statp_t buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
 301	STD		{ int netbsd32___semctl14(int semid, int semnum, int cmd, \
-			    union netbsd32_semun3* arg); }
+			    ... netbsd32_semunp_t arg); }
 #else
 301	EXCL		__semctl14
 #endif
@@ -508,15 +524,17 @@
 ;
 ; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
 ;
-309	UNIMPL
-310	UNIMPL
-311	UNIMPL
-312	UNIMPL
-313	UNIMPL
-314	UNIMPL
-315	UNIMPL
-316	UNIMPL
-317	UNIMPL
+309	STD		{ int netbsd32__lwp_create(const netbsd32_ucontextp ucp, \
+			    netbsd32_u_long flags, netbsd32_lwpidp new_lwp); }
+310	NOARGS		{ int sys__lwp_exit(void); }
+311	NOARGS		{ lwpid_t sys__lwp_self(void); }
+312	STD		{ int netbsd32__lwp_wait(lwpid_t wait_for, \
+			    netbsd32_lwpidp departed); }
+313	STD		{ int netbsd32__lwp_suspend(lwpid_t target); }
+314	STD		{ int netbsd32__lwp_continue(lwpid_t target); }
+315	STD		{ int netbsd32__lwp_wakeup(lwpid_t target); }
+316	NOARGS		{ void *sys__lwp_getprivate(void); }
+317	STD		{ void netbsd32__lwp_setprivate(netbsd32_voidp ptr); }
 318	UNIMPL
 319	UNIMPL
 320	UNIMPL
@@ -529,13 +547,15 @@
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
-330	UNIMPL
-331	UNIMPL
-332	UNIMPL
-333	UNIMPL
-334	UNIMPL
-335	UNIMPL
-336	UNIMPL
+330	STD		{ int netbsd32_sa_register(netbsd32_sa_upcall_t new, \
+			    netbsd32_sa_upcallp_t old, int flags, \
+			    netbsd32_ssize_t stackinfo_offset); }
+331	STD		{ int netbsd32_sa_stacks(int num, netbsd32_stackp_t stacks); }
+332	NOARGS		{ int sys_sa_enable(void); }
+333	STD		{ int netbsd32_sa_setconcurrency(int concurrency); }
+334	NOARGS		{ int sys_sa_yield(void); }
+335	STD		{ int netbsd32_sa_preempt(int sa_id); }
+336	OBSOL		sys_sa_unblockyield
 337	UNIMPL
 338	UNIMPL
 339	UNIMPL

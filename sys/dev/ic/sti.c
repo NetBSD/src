@@ -1,4 +1,4 @@
-/* $NetBSD: sti.c,v 1.5 2005/12/11 12:21:28 christos Exp $ */
+/* $NetBSD: sti.c,v 1.5.6.1 2006/04/22 11:38:56 simonb Exp $ */
 
 /*	$OpenBSD: sti.c,v 1.35 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.5 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.5.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include "wsdisplay.h"
 
@@ -74,8 +74,8 @@ struct wsdisplay_emulops sti_emulops = {
 	sti_alloc_attr
 };
 
-int sti_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-paddr_t sti_mmap(void *, off_t, int);
+int sti_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+paddr_t sti_mmap(void *, void *, off_t, int);
 int sti_alloc_screen(void *, const struct wsscreen_descr *,
 	void **, int *, int *, long *);
 	void sti_free_screen(void *, void *);
@@ -582,7 +582,7 @@ sti_setcment(struct sti_softc *sc, u_int i, u_char r, u_char g, u_char b)
 }
 
 int
-sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sti_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sti_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -683,7 +683,7 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 paddr_t
-sti_mmap(void *v, off_t offset, int prot)
+sti_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	/* XXX not finished */
 	return -1;

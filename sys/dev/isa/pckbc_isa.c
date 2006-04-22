@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.17 2005/12/11 12:22:03 christos Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.17.6.1 2006/04/22 11:39:06 simonb Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.17 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.17.6.1 2006/04/22 11:39:06 simonb Exp $");
+
+#include "opt_pckbc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,12 +120,14 @@ pckbc_isa_match(parent, match, aux)
 			goto out;
 		}
 		res = pckbc_poll_data1(&t, PCKBC_KBD_SLOT);
+#ifndef PCKBCNOTEST
 		if (res != 0x55) {
-#ifdef DEBUG
+#ifdef PCKBCDEBUG
 			printf("kbc selftest: %x\n", res);
 #endif
 			ok = 0;
 		}
+#endif /* PCKBCNOTEST */
  out:
 		bus_space_unmap(iot, ioh_d, 1);
 		bus_space_unmap(iot, ioh_c, 1);

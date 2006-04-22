@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xxreg.h,v 1.5 2005/11/12 05:33:23 hamajima Exp $ */
+/*	$NetBSD: ep93xxreg.h,v 1.5.8.1 2006/04/22 11:37:17 simonb Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -171,6 +171,7 @@
 #define   EP93XX_SYSCON_TEOI	0x00000018UL
 #define   EP93XX_SYSCON_ClkSet1	0x00000020UL
 #define   EP93XX_SYSCON_ClkSet2	0x00000024UL
+#define   EP93XX_SYSCON_DeviceCfg	0x00000080UL
 #define   EP93XX_SYSCON_ChipID	0x00000094UL
 #define  EP93XX_APB_TIMERS	0x00010000UL
 #define  EP93XX_APB_UART1	0x000c0000UL

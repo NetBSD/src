@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.10 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.10.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,12 +110,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.10 2005/12/11 12:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.10.6.1 2006/04/22 11:37:40 simonb Exp $");
 
-#include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
-#include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,12 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.10 2005/12/11 12:17:59 christos 
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -146,16 +137,9 @@ void
 linux_syscall_intern(struct proc *p)
 {
 
-#ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (trace_is_enabled(p))
 		p->p_md.md_syscall = linux_syscall_fancy;
 	else
-#endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		p->p_md.md_syscall = linux_syscall_fancy;
-	else
-#endif
 		p->p_md.md_syscall = linux_syscall_plain;
 }
 
@@ -202,10 +186,6 @@ linux_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
 	error = (*callp->sy_call)(l, args, rval);
@@ -238,10 +218,6 @@ linux_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		frame->f_sr |= PSL_C;	/* carry bit */
 		break;
 	}
-
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
 }
 
 static void

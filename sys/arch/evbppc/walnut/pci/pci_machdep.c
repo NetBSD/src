@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5.6.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5.6.1 2006/04/22 11:37:25 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -267,5 +267,5 @@ pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, pcireg_t id)
 		/* Don't configure the bridge and PCI probe. */
 		return 0;
 	}
-	return PCI_CONF_ALL & ~PCI_CONF_MAP_ROM;
+	return PCI_CONF_DEFAULT;
 }

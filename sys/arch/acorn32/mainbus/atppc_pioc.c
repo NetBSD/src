@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pioc.c,v 1.2 2005/12/11 12:16:05 christos Exp $ */
+/* $NetBSD: atppc_pioc.c,v 1.2.6.1 2006/04/22 11:37:10 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -32,7 +32,7 @@
 #include "opt_atppc.h"
 
 #include <sys/param.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pioc.c,v 1.2 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pioc.c,v 1.2.6.1 2006/04/22 11:37:10 simonb Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -114,7 +114,7 @@ atppc_pioc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dev_ok = ATPPC_ATTACHED;
 
 	/* Assign interrupt handler */
-	if (!(self->dv_cfdata->cf_flags & ATPPC_FLAG_DISABLE_INTR)) {
+	if (!(device_cfdata(self)->cf_flags & ATPPC_FLAG_DISABLE_INTR)) {
 		if (pa->pa_irq != MAINBUSCF_IRQ_DEFAULT) {
 			/* Establish interrupt handler. */
 			sc->sc_ieh = intr_claim(pa->pa_irq, IPL_TTY, "atppc",

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.9 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.9.6.1 2006/04/22 11:37:25 simonb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -151,7 +151,8 @@ options	EMAC_EVENT_COUNTERS
 gpiic0	at opb? addr ? irq ?		# On-chip IIC controller
 iic0	at gpiic?			# I2C bus
 
-ppcgpio0 at opb? addr ? irq ?		# On-chip GPIO controller
+opbgpio0 at opb? addr ? irq ?		# On-chip GPIO controller
+gpio*	at opbgpio?			# GPIO bus
 
 pchb0	at plb?				# PCI-Host bridges
 
@@ -173,9 +174,10 @@ slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 atabus* at ata?
 
-tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+rlphy*  at mii? phy ?			# Realtek 8139/8201L PHYs
+tqphy*  at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 #cardslot* at cbb?
@@ -208,7 +210,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 #vga*	at pci? dev ? function ?
 #wsdisplay* at vga? console ?
 
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
@@ -216,15 +218,15 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	ppp		2	# Point-to-Point Protocol
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	tun		4	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	sl			# Serial Line IP
+pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator

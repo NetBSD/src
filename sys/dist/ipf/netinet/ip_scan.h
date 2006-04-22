@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.h,v 1.2 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_scan.h,v 1.2.6.1 2006/04/22 11:39:55 simonb Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_scan.h,v 2.9 2003/07/25 22:05:01 darrenr Exp
+ * Id: ip_scan.h,v 2.9.2.1 2005/06/12 07:18:29 darrenr Exp
  */
 
 #ifndef __IP_SCAN_H__
@@ -27,7 +27,7 @@ struct ip;
 struct ipstate;
 
 
-#if defined(__STDC__) || defined(__GNUC__)
+#if defined(__STDC__) || defined(__GNUC__) || defined(_AIX51)
 # define	SIOCADSCA	_IOWR('r', 60, struct ipscan *)
 # define	SIOCRMSCA	_IOWR('r', 61, struct ipscan *)
 # define	SIOCGSCST	_IOWR('r', 62, struct ipscan *)

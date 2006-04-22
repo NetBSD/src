@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.9 2005/12/11 12:23:22 christos Exp $ */
+/* $NetBSD: pckbd.c,v 1.9.6.1 2006/04/22 11:39:24 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.9 2005/12/11 12:23:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.9.6.1 2006/04/22 11:39:24 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,7 @@ pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
 void
 pckbdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct pckbd_softc *sc = (void *)self;
+	struct pckbd_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
 	struct wskbddev_attach_args a;
 	int isconsole;

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.146 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.146.4.1 2006/04/22 11:40:11 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146.4.1 2006/04/22 11:40:11 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -95,11 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146 2006/01/21 00:15:36 rpaulo Exp 
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
-#ifdef IPSEC_NAT_T
-#include <netinet6/ipsec.h>
-#include <netinet6/esp.h>
-#endif
-
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
@@ -124,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146 2006/01/21 00:15:36 rpaulo Exp 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
+#include <netipsec/esp.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
@@ -131,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.146 2006/01/21 00:15:36 rpaulo Exp 
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/esp.h>
 #include <netkey/key.h>
 #endif /*IPSEC*/
 
@@ -1549,7 +1546,11 @@ udp4_espinudp(mp, off, src, so)
 	((u_int16_t *)(tag + 1))[1] = dport;
 	m_tag_prepend(n, tag);
 
+#ifdef FAST_IPSEC
+	ipsec4_common_input(n, iphdrlen);
+#else
 	esp4_input(n, iphdrlen);
+#endif
 
 	/* We handled it, it shoudln't be handled by UDP */
 	return 1;

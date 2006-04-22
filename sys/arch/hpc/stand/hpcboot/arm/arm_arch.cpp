@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_arch.cpp,v 1.5 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: arm_arch.cpp,v 1.5.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ ARMArchitecture::setupLoader()
 	vaddr_t v;
 	vsize_t sz = BOOT_FUNC_END - BOOT_FUNC_START;
 
-	// chcek 2nd bootloader size.
+	// check 2nd bootloader size.
 	if (sz > _mem->getPageSize()) {
 		DPRINTF((TEXT("2nd bootloader size(%dbyte) is larger than page size(%d).\n"),
 		    sz, _mem->getPageSize()));

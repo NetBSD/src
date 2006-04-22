@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.10 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.10.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.10.6.1 2006/04/22 11:37:31 simonb Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -243,8 +243,8 @@ _bus_space_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 
 	if (error) {
 		DPRINTF("failed. base=0x%08x rstart=0x%08x, rend=0x%08x"
-		    " size=0x%08x\n", (u_int32_t)base, (u_int32_t)rstart,
-		    (u_int32_t)rend, (u_int32_t)size);
+		    " size=0x%08x\n", (uint32_t)base, (uint32_t)rstart,
+		    (uint32_t)rend, (uint32_t)size);
 		return (error);
 	}
 

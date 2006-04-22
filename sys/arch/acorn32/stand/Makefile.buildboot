@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.8 2005/12/11 12:16:08 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.8.6.1 2006/04/22 11:37:10 simonb Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -16,7 +16,17 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
+MKMODULE?=no
+.if ${MKMODULE} == "yes"
+RISCOSTYPE ?= ffa
+LINKFLAGS+=-shared -Bsymbolic --no-undefined -T ${.CURDIR}/../module.ldscript
+CFLAGS+=-DRISCOS_MODULE
+.else
 RISCOSTYPE ?= ff8
+RELOC=8000
+# -N (OMAGIC) since we don't need a gap between text and data.
+LINKFLAGS+=-N -Ttext ${RELOC}
+.endif
 
 SRCS+=		vers.c
 CLEANFILES+=	vers.c
@@ -52,10 +62,8 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no SA_USE_LOADFILE=yes SA_USE_CREAD=yes
+SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no
 CPPFLAGS+=	-DLIBSA_NO_RAW_ACCESS \
-		-DLIBSA_SINGLE_FILESYSTEM=riscos \
-		-DLIBSA_NO_FS_WRITE \
 		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET \
 		-DHEAP_VARIABLE
 .include "${S}/lib/libsa/Makefile.inc"
@@ -66,16 +74,14 @@ RISCOS_AS=		library
 .include "${S}/arch/acorn32/stand/lib/Makefile.inc"
 LIBRISCOS=		${RISCOSLIB}
 
-RELOC=8000
-# -N (OMAGIC) since we don't need a gap between text and data.
-LINKFLAGS=-N
-
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS}
-	${LD} -o ${.TARGET} ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
-	    ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBRISCOS} ${LIBSA}
+	${_MKTARGET_LINK}
+	${LD} -o ${.TARGET} ${LINKFLAGS} ${OBJS} \
+	    --start-group ${LIBSA} ${LIBZ} ${LIBRISCOS} ${LIBKERN} --end-group
 	${SIZE} ${.TARGET}
 
 ${PROG},${RISCOSTYPE}: ${PROG}
+	${_MKTARGET_CREATE}
 	${OBJCOPY} --output-target=binary ${.ALLSRC} ${.TARGET}
 
 realall: ${PROG},${RISCOSTYPE}

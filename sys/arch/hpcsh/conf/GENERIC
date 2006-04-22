@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.64 2006/02/02 21:32:09 reinoud Exp $
+# $NetBSD: GENERIC,v 1.64.2.1 2006/04/22 11:37:31 simonb Exp $
 #
 # GENERIC machine description file
 #
@@ -97,9 +97,9 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVRATE=19200
-#options 	"KGDB_DEVNAME=\"scif\""		# HP Jornada
-#options 	"KGDB_DEVNAME=\"hd64461uart\""	# HITACHI PERSONA (SH3)
-#options 	"KGDB_DEVNAME=\"hd64465uart\""	# HITACHI PERSONA (SH4)
+#options 	KGDB_DEVNAME="\"scif\""		# HP Jornada
+#options 	KGDB_DEVNAME="\"hd64461uart\""	# HITACHI PERSONA (SH3)
+#options 	KGDB_DEVNAME="\"hd64465uart\""	# HITACHI PERSONA (SH4)
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
@@ -313,14 +313,14 @@ com*	at pcmcia? function ?		# Modems and serial cards
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		1	# serial-line IP ports
-pseudo-device	bpfilter	2	# Berkeley packet filter
+pseudo-device	ppp			# serial-line IP ports
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if

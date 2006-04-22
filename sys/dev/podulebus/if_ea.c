@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.11 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: if_ea.c,v 1.11.6.1 2006/04/22 11:39:25 simonb Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.11 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.11.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -103,7 +103,7 @@ eaprobe(struct device *parent, struct cfdata *cf, void *aux)
 void
 eaattach(struct device *parent, struct device *self, void *aux)
 {
-	struct ea_softc *sc = (void *)self;
+	struct ea_softc *sc = device_private(self);
 	struct podulebus_attach_args *pa = aux;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	char *ptr;

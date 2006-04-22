@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.28 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: autri.c,v 1.28.6.1 2006/04/22 11:39:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.28 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.28.6.1 2006/04/22 11:39:13 simonb Exp $");
 
 #include "midi.h"
 
@@ -481,6 +481,13 @@ autri_match(struct device *parent, struct cfdata *match, void *aux)
 	case PCI_VENDOR_TRIDENT:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_TRIDENT_4DWAVE_DX:
+			/*
+			 * IBM makes a pcn network card and improperly
+			 * sets the vendor and product ID's.  Avoid matching.
+			 */
+			if (PCI_CLASS(pa->pa_class) == PCI_CLASS_NETWORK)
+				return 0;
+		/* FALLTHROUGH */
 		case PCI_PRODUCT_TRIDENT_4DWAVE_NX:
 			return 1;
 		}
@@ -1361,7 +1368,7 @@ autri_trigger_input(void *addr, void *start, void *end, int blksize,
 	}
 
 #if 0
-	/* 4DWAVE only allows capturing at a 48KHz rate */
+	/* 4DWAVE only allows capturing at a 48 kHz rate */
 	if (sc->sc_devid == AUTRI_DEVICE_ID_4DWAVE_DX ||
 	    sc->sc_devid == AUTRI_DEVICE_ID_4DWAVE_NX)
 		param->sample_rate = 48000;

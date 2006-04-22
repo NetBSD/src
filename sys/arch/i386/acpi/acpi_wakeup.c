@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.21.4.1 2006/02/04 15:06:38 simonb Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.21.4.2 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21.4.1 2006/02/04 15:06:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21.4.2 2006/04/22 11:37:31 simonb Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21.4.1 2006/02/04 15:06:38 simonb 
 
 #include "acpi.h"
 
+#include <dev/ic/i8253reg.h>
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
 #define ACPI_MACHDEP_PRIVATE
@@ -96,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21.4.1 2006/02/04 15:06:38 simonb 
 #include "acpi_wakecode.h"
 
 
-paddr_t	phys_wakeup = 0;
+static paddr_t phys_wakeup = 0;
 
 uint32_t
 acpi_md_get_npages_of_wakecode(void)
@@ -429,7 +430,7 @@ acpi_md_sleep(int state)
 		 * XXX must the local APIC be re-inited?
 		 */
 
-		initrtclock();
+		initrtclock(TIMER_FREQ);
 		inittodr(time_second);
 
 #ifdef ACPI_PRINT_REG

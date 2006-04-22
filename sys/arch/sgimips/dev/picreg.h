@@ -1,4 +1,4 @@
-/*	$NetBSD: picreg.h,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: picreg.h,v 1.4.6.1 2006/04/22 11:37:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -38,7 +38,7 @@
 #define PIC_CPUCTRL_IBREFILL	0x0008	/* instruction block refill */
 #define PIC_CPUCTRL_GDMAINTR	0x0010	/* gfx intr on completion */
 #define PIC_CPUCTRL_GDMASYNC	0x0020	/* gfx dma sync */
-#define PIC_CPUCTRL_FREFRESH	0x0040	/* fast refresh on 33mhz+ gio */
+#define PIC_CPUCTRL_FREFRESH	0x0040	/* fast refresh on 33 MHz+ gio */
 #define PIC_CPUCTRL_NOVMEERR	0x0080	/* disables vme bus errors */
 #define PIC_CPUCTRL_FREFRESHB	0x0080	/* fast refresh on revs. a+b */
 #define PIC_CPUCTRL_GR2		0x0100	/* gio gr2 mode (?) */

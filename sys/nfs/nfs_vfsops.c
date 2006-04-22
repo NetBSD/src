@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.151.6.1 2006/02/04 14:10:02 simonb Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.151.6.2 2006/04/22 11:40:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.151.6.1 2006/02/04 14:10:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.151.6.2 2006/04/22 11:40:16 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,6 +77,12 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.151.6.1 2006/02/04 14:10:02 simonb 
 
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
+
+/*
+ * keep a count of the nfs mounts to generate ficticious drive names
+ * for the per drive stats.
+ */
+unsigned int nfs_mount_count = 0;
 
 MALLOC_DEFINE(M_NFSMNT, "NFS mount", "NFS mount structure");
 
@@ -313,7 +319,7 @@ nfs_mountroot()
 
 	l = curlwp; /* XXX */
 
-	if (root_device->dv_class != DV_IFNET)
+	if (device_class(root_device) != DV_IFNET)
 		return (ENODEV);
 
 	/*
@@ -811,6 +817,15 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	nmp->nm_vnode = *vpp;
 	VOP_UNLOCK(*vpp, 0);
 
+	nmp->nm_stats = iostat_alloc(IOSTAT_NFS);
+	nmp->nm_stats->io_parent = nmp;
+	  /* generate a ficticious drive name for the nfs mount */
+	MALLOC(nmp->nm_stats->io_name, char *, IOSTATNAMELEN, M_NFSMNT,
+	       M_WAITOK);
+	snprintf(nmp->nm_stats->io_name, IOSTATNAMELEN, "nfs%u",
+		 nfs_mount_count);
+	nfs_mount_count++;
+
 	return (0);
 bad:
 	nfs_disconnect(nmp);
@@ -878,6 +893,14 @@ nfs_unmount(mp, mntflags, l)
 	 * will go away cleanly.
 	 */
 	nmp->nm_iflag |= NFSMNT_DISMNT;
+
+	/*
+	 * Clean up the stats... note that we carefully avoid decrementing
+	 * nfs_mount_count here for good reason - we may not be unmounting
+	 * the last thing mounted.
+	 */
+	FREE(nmp->nm_stats->io_name, M_NFSMNT);
+	iostat_free(nmp->nm_stats);
 
 	/*
 	 * There are two reference counts to get rid of here

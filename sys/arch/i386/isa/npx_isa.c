@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.10 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.10.6.1 2006/04/22 11:37:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.10 2005/12/11 12:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.10.6.1 2006/04/22 11:37:33 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,8 +143,10 @@ npx_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = ia->ia_iot;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	if (bus_space_map(sc->sc_iot, 0xf0, 16, 0, &sc->sc_ioh)) {
-		printf("\n");
 		panic("npxattach: unable to map I/O space");
 	}
 
@@ -152,16 +154,16 @@ npx_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (sc->sc_type) {
 	case NPX_INTERRUPT:
-		printf("\n");
 		lcr0(rcr0() & ~CR0_NE);
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 		    IST_EDGE, IPL_NONE, (int (*)(void *))npxintr, 0);
 		break;
 	case NPX_EXCEPTION:
-		printf(": using exception 16\n");
+		aprint_verbose("%s: using exception 16\n", sc->sc_dev.dv_xname);
 		break;
 	case NPX_BROKEN:
-		printf(": error reporting broken; not using\n");
+		aprint_error("%s: error reporting broken; not using\n",
+		    sc->sc_dev.dv_xname);
 		sc->sc_type = NPX_NONE;
 		return;
 	case NPX_NONE:

@@ -1,10 +1,10 @@
+/* $NetBSD: if_lmc.c,v 1.23.6.1 2006/04/22 11:39:14 simonb Exp $ */
+
 /*-
- * $NetBSD: if_lmc.c,v 1.23 2005/12/06 03:01:45 christos Exp $
- *
- * Copyright (c) 2002-2004 David Boggs. <boggs@boggs.palo-alto.ca.us>
+ * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
  * All rights reserved.
  *
- * BSD License:
+ * BSD LICENSE:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,32 +27,33 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * GNU General Public License:
+ * GNU GENERAL PUBLIC LICENSE:
  *
- * This program is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU General Public License as published by the Free 
- * Software Foundation; either version 2 of the License, or (at your option) 
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
- * 
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 
+ * this program; if not, write to the Free Software Foundation, Inc., 59
  * Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * Description:
+ * DESCRIPTION:
  *
  * This is an open-source Unix device driver for PCI-bus WAN interface cards.
  * It sends and receives packets in HDLC frames over synchronous links.
- * A generic PC plus Unix plus some SBE/LMC cards makes an OPEN router.
+ * A generic PC plus Unix plus some LMC cards makes an OPEN router.
  * This driver works with FreeBSD, NetBSD, OpenBSD, BSD/OS and Linux.
- * It has been tested on i386 (32-bit little-end), Sparc (64-bit big-end),
- * and Alpha (64-bit little-end) architectures.
+ * It has been tested on i386 (32-bit little-end), PowerPC (32-bit
+ * big-end), Sparc (64-bit big-end), and Alpha (64-bit little-end)
+ * architectures.
  *
- * History and Authors:
+ * HISTORY AND AUTHORS:
  *
  * Ron Crane had the neat idea to use a Fast Ethernet chip as a PCI
  * interface and add an Ethernet-to-HDLC gate array to make a WAN card.
@@ -67,32 +68,30 @@
  * for three more cards and wrote the first version of lmcconfig.
  * During 2002-5 David Boggs rewrote it and now feels responsible for it.
  *
- * Responsible Individual:
+ * RESPONSIBLE INDIVIDUAL:
  *
  * Send bug reports and improvements to <boggs@boggs.palo-alto.ca.us>.
  */
-#if __FreeBSD__
+#if defined(__FreeBSD__)
 # include <sys/param.h>	/* OS version */
-# define  IFNET 1
 # include "opt_inet.h"	/* INET */
 # include "opt_inet6.h"	/* INET6 */
 # include "opt_netgraph.h" /* NETGRAPH */
-# ifdef HAVE_KERNEL_OPTION_HEADERS
+# if defined(HAVE_KERNEL_OPTION_HEADERS)
 #  include "opt_device_polling.h" /* DEVICE_POLLING */
 # else
 #  include "opt_global.h" /* ALTQ, DEVICE_POLLING */
 # endif
-# if (__FreeBSD_version >= 500000)
-#  define  NSPPP 1	/* No count devices in FreeBSD 5 */
-#  include "opt_bpf.h"	/* DEV_BPF */
-#  define NBPFILTER DEV_BPF
-# else  /* FreeBSD-4 */
-#  include "sppp.h"	/* NSPPP */
-#  include "bpf.h"	/* NBPF */
-#  define NBPFILTER NBPF
-# endif
-# define  P2P 0		/* not in FreeBSD */
-# define  GEN_HDLC 0	/* not in FreeBSD */
+# include "opt_bpf.h"	/* DEV_BPF */
+# define NBPFILTER DEV_BPF
+# define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
+# define IFNET 1
+# define NETDEV 0
+# define NAPI 0
+# define SPPP 1
+# define P2P 0
+# define GEN_HDLC 0
+# define SYNC_PPP 0
 #
 # include <sys/systm.h>
 # include <sys/kernel.h>
@@ -100,9 +99,10 @@
 # include <sys/mbuf.h>
 # include <sys/socket.h>
 # include <sys/sockio.h>
+# include <sys/lock.h>
+# include <sys/mutex.h>
 # include <sys/module.h>
 # include <sys/bus.h>
-# include <sys/lock.h>
 # include <net/if.h>
 # include <net/if_types.h>
 # include <net/if_media.h>
@@ -113,51 +113,50 @@
 # include <sys/rman.h>
 # include <vm/vm.h>
 # include <vm/pmap.h>
-# if (__FreeBSD_version >= 500000)
-#  include <sys/mutex.h>
-#  include <dev/pci/pcivar.h>
-# else /* FreeBSD-4 */
-#  include <sys/proc.h>
-#  include <pci/pcivar.h>
-# endif
+# include <dev/pci/pcivar.h>
 # if NETGRAPH
 #  include <netgraph/ng_message.h>
 #  include <netgraph/netgraph.h>
 # endif
-# if (INET || INET6)
+# if INET || INET6
 #  include <netinet/in.h>
 #  include <netinet/in_var.h>
 # endif
-# if NSPPP
+# if SPPP
 #  include <net/if_sppp.h>
 # endif
 # if NBPFILTER
 #  include <net/bpf.h>
 # endif
-# ifndef NETGRAPH
+# if !defined(NETGRAPH)
 #  define NETGRAPH 0
 # endif
-# ifndef DEVICE_POLLING
+# if !defined(DEVICE_POLLING)
 #  define DEVICE_POLLING 0
 # endif
-# ifndef ALTQ
+# if !defined(ALTQ)
 #  define ALTQ 0
 # endif
 /* and finally... */
 # include <dev/lmc/if_lmc.h>
 #endif /*__FreeBSD__*/
 
-#if __NetBSD__
+#if defined(__NetBSD__)
 # include <sys/param.h>	/* OS version */
-# define  IFNET 1
+/* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
-# define  NETGRAPH 0	/* not in NetBSD */
-# define  DEVICE_POLLING 0 /* not in NetBSD */
-# define  NSPPP 1	/* No count devices */
-# define  P2P 0		/* not in NetBSD */
 # include "opt_altq_enabled.h" /* ALTQ */
 # include "bpfilter.h"	/* NBPFILTER */
-# define  GEN_HDLC 0	/* not in NetBSD */
+# define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
+# define IFNET 1
+# define NETDEV 0
+# define NAPI 0
+# define SPPP 1
+# define P2P 0
+# define GEN_HDLC 0
+# define SYNC_PPP 0
+# define NETGRAPH 0
+# define DEVICE_POLLING 0
 #
 # include <sys/systm.h>
 # include <sys/kernel.h>
@@ -166,52 +165,49 @@
 # include <sys/socket.h>
 # include <sys/sockio.h>
 # include <sys/device.h>
-# include <sys/lock.h>
+# include <sys/reboot.h>
 # include <net/if.h>
 # include <net/if_types.h>
 # include <net/if_media.h>
 # include <net/netisr.h>
 # include <machine/bus.h>
 # include <machine/intr.h>
+# include <machine/lock.h>
+# include <machine/types.h>
 # include <dev/pci/pcivar.h>
-# if (__NetBSD_Version__ >= 106000000)
-#  include <uvm/uvm_extern.h>
-# else
-#  include <vm/vm.h>
-# endif
-# if (INET || INET6)
+# include <uvm/uvm_extern.h>
+# if INET || INET6
 #  include <netinet/in.h>
 #  include <netinet/in_var.h>
 # endif
-# if NSPPP
-#  if (__NetBSD_Version__ >= 106000000)
-#   include <net/if_spppvar.h>
-#  else
-#   include <net/if_sppp.h>
-#  endif
+# if SPPP
+#  include <net/if_spppvar.h>
 # endif
 # if NBPFILTER
 #  include <net/bpf.h>
 # endif
-# ifndef ALTQ
+# if !defined(ALTQ)
 #  define ALTQ 0
 # endif
 /* and finally... */
 # include "if_lmc.h"
 #endif /*__NetBSD__*/
 
-#if __OpenBSD__
+#if defined(__OpenBSD__)
 # include <sys/param.h>	/* OS version */
-# define  IFNET 1
 /* -DINET  is passed on the compiler command line */
 /* -DINET6 is passed on the compiler command line */
-# define  NETGRAPH 0	/* not in OpenBSD */
-# define  DEVICE_POLLING 0 /* not in OpenBSD */
-# include "sppp.h"	/* NSPPP */
-# define  P2P 0		/* not in OpenBSD */
 /* -DALTQ  is passed on the compiler command line */
 # include "bpfilter.h"	/* NBPFILTER */
-# define  GEN_HDLC 0	/* not in OpenBSD */
+# define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
+# define IFNET 1
+# define NAPI 0
+# define SPPP 1
+# define P2P 0
+# define GEN_HDLC 0
+# define SYNC_PPP 0
+# define NETGRAPH 0
+# define DEVICE_POLLING 0
 #
 # include <sys/systm.h>
 # include <sys/kernel.h>
@@ -222,55 +218,57 @@
 # include <sys/socket.h>
 # include <sys/sockio.h>
 # include <sys/device.h>
-# include <sys/lock.h>
 # include <net/if.h>
 # include <net/if_types.h>
 # include <net/if_media.h>
 # include <net/netisr.h>
 # include <machine/bus.h>
 # include <machine/intr.h>
+# include <machine/lock.h>
+# include <uvm/uvm_extern.h>
 # include <dev/pci/pcivar.h>
-# if (OpenBSD >= 200206)
-#  include <uvm/uvm_extern.h>
-# else
-#  include <vm/vm.h>
-# endif
-# if (INET || INET6)
+# if INET || INET6
 #  include <netinet/in.h>
 #  include <netinet/in_var.h>
 # endif
-# if NSPPP
+# if SPPP
 #  include <net/if_sppp.h>
 # endif
 # if NBPFILTER
 #  include <net/bpf.h>
 # endif
-# ifndef ALTQ
+# if !defined(ALTQ)
 #  define ALTQ 0
 # endif
+# undef   NETDEV
+# define  NETDEV 0
 /* and finally... */
 # include "if_lmc.h"
 #endif /*__OpenBSD__*/
 
-#if __bsdi__
+#if defined(__bsdi__)
 # include <sys/param.h>	/* OS version */
-# define  IFNET 1
 /* -DINET  is passed on the compiler command line */
 /* -DINET6 is passed on the compiler command line */
-# define  NETGRAPH 0	/* not in BSD/OS */
-# define  DEVICE_POLLING 0 /* not in BSD/OS */
-# define  NSPPP 0	/* not in BSD/OS */
 /* -DPPP   is passed on the compiler command line */
 /* -DCISCO_HDLC is passed on the compiler command line */
 /* -DFR    is passed on the compiler command line */
-# if (PPP || CISCO_HDLC || FR)
+# if PPP || CISCO_HDLC || FR
 #  define P2P 1
 # else
 #  define P2P 0
 # endif
-# define  ALTQ 0	/* not in BSD/OS */
 # include "bpfilter.h"	/* NBPFILTER */
-# define  GEN_HDLC 0	/* not in BSD/OS */
+# define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
+# define IFNET 1
+# define NETDEV 0
+# define NAPI 0
+# define ALTQ 0
+# define SPPP 0
+# define GEN_HDLC 0
+# define SYNC_PPP 0
+# define NETGRAPH 0
+# define DEVICE_POLLING 0
 #
 # include <sys/kernel.h>
 # include <sys/malloc.h>
@@ -278,17 +276,19 @@
 # include <sys/socket.h>
 # include <sys/sockio.h>
 # include <sys/device.h>
+# include <sys/reboot.h>
 # include <sys/lock.h>
 # include <net/if.h>
 # include <net/if_types.h>
 # include <net/if_media.h>
 # include <net/netisr.h>
+# include <net/raw_cb.h>
 # include <vm/vm.h>
 # include <i386/isa/dma.h>
 # include <i386/isa/isavar.h>
 # include <i386/include/cpu.h>
 # include <i386/pci/pci.h>
-# if (INET || INET6)
+# if INET || INET6
 #  include <netinet/in.h>
 #  include <netinet/in_var.h>
 # endif
@@ -303,27 +303,56 @@
 # include "if_lmc.h"
 #endif /*__bsdi__*/
 
-#if __linux__
+#if defined(__linux__)
+# include <linux/version.h> /* OS version */
 # include <linux/config.h>
-# if (CONFIG_HDLC || CONFIG_HDLC_MODULE)
+# if CONFIG_LANMEDIA_GENHDLC
 #  define GEN_HDLC 1
 # else
 #  define GEN_HDLC 0
 # endif
-# define IFNET 0	/* different in Linux */
-# define NETGRAPH 0	/* not in Linux */
-# define DEVICE_POLLING 0 /* different in Linux */
-# define NSPPP 0	/* different in Linux */
-# define P2P 0		/* not in Linux */
-# define ALTQ 0		/* different in Linux */
-# define NBPFILTER 0	/* different in Linux */
+# if CONFIG_LANMEDIA_SYNCPPP
+#  define SYNC_PPP 1
+# else
+#  define SYNC_PPP 0
+# endif
+# if CONFIG_LANMEDIA_NAPI
+#  define NAPI 1
+# else
+#  define NAPI 0
+# endif
+# define IOREF_CSR 1	/* 1=IO refs; 0=MEM refs */
+# define BSD 0
+# define IFNET 0
+# define NETDEV 1
+# define ALTQ 0
+# define P2P 0
+# define SPPP 0
+# define NETGRAPH 0
+# define NBPFILTER 0
+# define DEVICE_POLLING 0
 #
-# include <linux/pci.h>
+# include <asm/byteorder.h>
+# include <asm/semaphore.h>
+# include <asm/uaccess.h>
 # include <linux/delay.h>
-# include <linux/netdevice.h>
+# include <linux/errno.h>
 # include <linux/if_arp.h>
+# include <linux/init.h>
+# include <linux/kernel.h>
+# include <linux/module.h>
+# include <linux/moduleparam.h>
+# include <linux/netdevice.h>
+# include <linux/pci.h>
+# include <linux/sched.h>
+# include <linux/skbuff.h>
+# include <linux/slab.h>
+# include <linux/spinlock.h>
 # if GEN_HDLC
 #  include <linux/hdlc.h>
+# endif
+# if SYNC_PPP
+#  include <net/syncppp.h>
 # endif
 /* and finally... */
 # include "if_lmc.h"
@@ -331,27 +360,27 @@
 
 /* The SROM is a generic 93C46 serial EEPROM (64 words by 16 bits). */
 /* Data is set up before the RISING edge of CLK; CLK is parked low. */
-static void
-shift_srom_bits(softc_t *sc, u_int32_t data, u_int32_t len)
+static void  /* context: process */
+srom_shift_bits(softc_t *sc, u_int32_t data, u_int32_t len)
   {
-  u_int32_t csr = READ_CSR(TLP_SROM_MII);
+  u_int32_t csr = READ_CSR(sc, TLP_SROM_MII);
   for (; len>0; len--)
     {  /* MSB first */
     if (data & (1<<(len-1)))
       csr |=  TLP_SROM_DIN;	/* DIN setup */
     else
       csr &= ~TLP_SROM_DIN;	/* DIN setup */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     csr |=  TLP_SROM_CLK;	/* CLK rising edge */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     csr &= ~TLP_SROM_CLK;	/* CLK falling edge */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     }
   }
 
 /* Data is sampled on the RISING edge of CLK; CLK is parked low. */
-static u_int16_t
-read_srom(softc_t *sc, u_int8_t addr)
+static u_int16_t  /* context: process */
+srom_read(softc_t *sc, u_int8_t addr)
   {
   int i;
   u_int32_t csr;
@@ -359,297 +388,294 @@ read_srom(softc_t *sc, u_int8_t addr)
 
   /* Enable SROM access. */
   csr = (TLP_SROM_SEL | TLP_SROM_RD | TLP_MII_MDOE);
-  WRITE_CSR(TLP_SROM_MII, csr);
+  WRITE_CSR(sc, TLP_SROM_MII, csr);
   /* CS rising edge prepares SROM for a new cycle. */
   csr |= TLP_SROM_CS;
-  WRITE_CSR(TLP_SROM_MII, csr);	/* assert CS */
-  shift_srom_bits(sc,  6,   4);		/* issue read cmd */
-  shift_srom_bits(sc, addr, 6);		/* issue address */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);	/* assert CS */
+  srom_shift_bits(sc,  6,   4);		/* issue read cmd */
+  srom_shift_bits(sc, addr, 6);		/* issue address */
   for (data=0, i=16; i>=0; i--)		/* read ->17<- bits of data */
     {  /* MSB first */
-    csr = READ_CSR(TLP_SROM_MII);	/* DOUT sampled */
+    csr = READ_CSR(sc, TLP_SROM_MII);	/* DOUT sampled */
     data = (data<<1) | ((csr & TLP_SROM_DOUT) ? 1:0);
     csr |=  TLP_SROM_CLK;		/* CLK rising edge */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     csr &= ~TLP_SROM_CLK;		/* CLK falling edge */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     }
   /* Disable SROM access. */
-  WRITE_CSR(TLP_SROM_MII, TLP_MII_MDOE);
+  WRITE_CSR(sc, TLP_SROM_MII, TLP_MII_MDOE);
 
   return data;
   }
 
 /* The SROM is formatted by the mfgr and should NOT be written! */
 /* But lmcconfig can rewrite it in case it gets overwritten somehow. */
-/* IOCTL SYSCALL: can sleep. */
-static void
-write_srom(softc_t *sc, u_int8_t addr, u_int16_t data)
+static void  /* context: process */
+srom_write(softc_t *sc, u_int8_t addr, u_int16_t data)
   {
   u_int32_t csr;
   int i;
 
   /* Enable SROM access. */
   csr = (TLP_SROM_SEL | TLP_SROM_RD | TLP_MII_MDOE);
-  WRITE_CSR(TLP_SROM_MII, csr);
+  WRITE_CSR(sc, TLP_SROM_MII, csr);
 
   /* Issue write-enable command. */
   csr |= TLP_SROM_CS;
-  WRITE_CSR(TLP_SROM_MII, csr);	/* assert CS */
-  shift_srom_bits(sc,  4, 4);		/* issue write enable cmd */
-  shift_srom_bits(sc, 63, 6);		/* issue address */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);	/* assert CS */
+  srom_shift_bits(sc,  4, 4);		/* issue write enable cmd */
+  srom_shift_bits(sc, 63, 6);		/* issue address */
   csr &= ~TLP_SROM_CS;
-  WRITE_CSR(TLP_SROM_MII, csr);	/* deassert CS */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);	/* deassert CS */
 
   /* Issue erase command. */
   csr |= TLP_SROM_CS;
-  WRITE_CSR(TLP_SROM_MII, csr);	/* assert CS */
-  shift_srom_bits(sc, 7, 4);		/* issue erase cmd */
-  shift_srom_bits(sc, addr, 6);		/* issue address */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);	/* assert CS */
+  srom_shift_bits(sc, 7, 4);		/* issue erase cmd */
+  srom_shift_bits(sc, addr, 6);		/* issue address */
   csr &= ~TLP_SROM_CS;
-  WRITE_CSR(TLP_SROM_MII, csr);	/* deassert CS */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);	/* deassert CS */
 
   /* Issue write command. */
   csr |= TLP_SROM_CS;
-  WRITE_CSR(TLP_SROM_MII, csr);	/* assert CS */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);	/* assert CS */
   for (i=0; i<10; i++)  /* 100 ms max wait */
-    if ((READ_CSR(TLP_SROM_MII) & TLP_SROM_DOUT)==0) SLEEP(10000);
-  shift_srom_bits(sc, 5, 4);		/* issue write cmd */
-  shift_srom_bits(sc, addr, 6);		/* issue address */
-  shift_srom_bits(sc, data, 16);	/* issue data */
+    if ((READ_CSR(sc, TLP_SROM_MII) & TLP_SROM_DOUT)==0) SLEEP(10000);
+  srom_shift_bits(sc, 5, 4);		/* issue write cmd */
+  srom_shift_bits(sc, addr, 6);		/* issue address */
+  srom_shift_bits(sc, data, 16);	/* issue data */
   csr &= ~TLP_SROM_CS;
-  WRITE_CSR(TLP_SROM_MII, csr);	/* deassert CS */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);	/* deassert CS */
 
   /* Issue write-disable command. */
   csr |= TLP_SROM_CS;
-  WRITE_CSR(TLP_SROM_MII, csr);	/* assert CS */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);	/* assert CS */
   for (i=0; i<10; i++)  /* 100 ms max wait */
-    if ((READ_CSR(TLP_SROM_MII) & TLP_SROM_DOUT)==0) SLEEP(10000);
-  shift_srom_bits(sc, 4, 4);		/* issue write disable cmd */
-  shift_srom_bits(sc, 0, 6);		/* issue address */
+    if ((READ_CSR(sc, TLP_SROM_MII) & TLP_SROM_DOUT)==0) SLEEP(10000);
+  srom_shift_bits(sc, 4, 4);		/* issue write disable cmd */
+  srom_shift_bits(sc, 0, 6);		/* issue address */
   csr &= ~TLP_SROM_CS;
-  WRITE_CSR(TLP_SROM_MII, csr);	/* deassert CS */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);	/* deassert CS */
 
   /* Disable SROM access. */
-  WRITE_CSR(TLP_SROM_MII, TLP_MII_MDOE);
+  WRITE_CSR(sc, TLP_SROM_MII, TLP_MII_MDOE);
   }
 
-/* Not all boards have BIOS roms. */
+/* Not all cards have BIOS roms. */
 /* The BIOS ROM is an AMD 29F010 1Mbit (128K by 8) EEPROM. */
-static u_int8_t
-read_bios(softc_t *sc, u_int32_t addr)
+static u_int8_t  /* context: process */
+bios_read(softc_t *sc, u_int32_t addr)
   {
   u_int32_t srom_mii;
 
   /* Load the BIOS rom address register. */
-  WRITE_CSR(TLP_BIOS_ROM, addr);
+  WRITE_CSR(sc, TLP_BIOS_ROM, addr);
 
   /* Enable the BIOS rom. */
   srom_mii = TLP_BIOS_SEL | TLP_BIOS_RD | TLP_MII_MDOE;
-  WRITE_CSR(TLP_SROM_MII, srom_mii);
+  WRITE_CSR(sc, TLP_SROM_MII, srom_mii);
 
   /* Wait at least 20 PCI cycles. */
   DELAY(20);
 
   /* Read the BIOS rom data. */
-  srom_mii = READ_CSR(TLP_SROM_MII);
+  srom_mii = READ_CSR(sc, TLP_SROM_MII);
 
   /* Disable the BIOS rom. */
-  WRITE_CSR(TLP_SROM_MII, TLP_MII_MDOE);
+  WRITE_CSR(sc, TLP_SROM_MII, TLP_MII_MDOE);
 
   return (u_int8_t)srom_mii & 0xFF;
   }
 
-static void
-write_bios_phys(softc_t *sc, u_int32_t addr, u_int8_t data)
+static void  /* context: process */
+bios_write_phys(softc_t *sc, u_int32_t addr, u_int8_t data)
   {
   u_int32_t srom_mii;
 
   /* Load the BIOS rom address register. */
-  WRITE_CSR(TLP_BIOS_ROM, addr);
+  WRITE_CSR(sc, TLP_BIOS_ROM, addr);
 
   /* Enable the BIOS rom. */
   srom_mii = TLP_BIOS_SEL | TLP_BIOS_WR | TLP_MII_MDOE;
 
   /* Load the data into the data register. */
   srom_mii = (srom_mii & 0xFFFFFF00) | (data & 0xFF);
-  WRITE_CSR(TLP_SROM_MII, srom_mii);
+  WRITE_CSR(sc, TLP_SROM_MII, srom_mii);
 
   /* Wait at least 20 PCI cycles. */
   DELAY(20);
 
   /* Disable the BIOS rom. */
-  WRITE_CSR(TLP_SROM_MII, TLP_MII_MDOE);
+  WRITE_CSR(sc, TLP_SROM_MII, TLP_MII_MDOE);
   }
 
-/* IOCTL SYSCALL: can sleep. */
-static void
-write_bios(softc_t *sc, u_int32_t addr, u_int8_t data)
+static void  /* context: process */
+bios_write(softc_t *sc, u_int32_t addr, u_int8_t data)
   {
   u_int8_t read_data;
 
   /* this sequence enables writing */
-  write_bios_phys(sc, 0x5555, 0xAA);
-  write_bios_phys(sc, 0x2AAA, 0x55);
-  write_bios_phys(sc, 0x5555, 0xA0);
-  write_bios_phys(sc, addr,   data);
+  bios_write_phys(sc, 0x5555, 0xAA);
+  bios_write_phys(sc, 0x2AAA, 0x55);
+  bios_write_phys(sc, 0x5555, 0xA0);
+  bios_write_phys(sc, addr,   data);
 
   /* Wait for the write operation to complete. */
-  for (;;)  /* interruptable syscall */
+  for (;;)  /* interruptible syscall */
     {
     for (;;)
       {
-      read_data = read_bios(sc, addr);
+      read_data = bios_read(sc, addr);
       if ((read_data & 0x80) == (data & 0x80)) break;
       if  (read_data & 0x20)
         {  /* Data sheet says read it again. */
-        read_data = read_bios(sc, addr);
+        read_data = bios_read(sc, addr);
         if ((read_data & 0x80) == (data & 0x80)) break;
-        if (DRIVER_DEBUG)
-          printf("%s: write_bios() failed; rom addr=0x%x\n",
+        if (sc->config.debug)
+          printf("%s: bios_write() failed; rom addr=0x%x\n",
            NAME_UNIT, addr);
         return;
         }
       }
-    read_data = read_bios(sc, addr);
+    read_data = bios_read(sc, addr);
     if (read_data == data) break;
     }
   }
 
-/* IOCTL SYSCALL: can sleep. */
-static void
-erase_bios(softc_t *sc)
+static void  /* context: process */
+bios_erase(softc_t *sc)
   {
   unsigned char read_data;
 
   /* This sequence enables erasing: */
-  write_bios_phys(sc, 0x5555, 0xAA);
-  write_bios_phys(sc, 0x2AAA, 0x55);
-  write_bios_phys(sc, 0x5555, 0x80);
-  write_bios_phys(sc, 0x5555, 0xAA);
-  write_bios_phys(sc, 0x2AAA, 0x55);
-  write_bios_phys(sc, 0x5555, 0x10);
+  bios_write_phys(sc, 0x5555, 0xAA);
+  bios_write_phys(sc, 0x2AAA, 0x55);
+  bios_write_phys(sc, 0x5555, 0x80);
+  bios_write_phys(sc, 0x5555, 0xAA);
+  bios_write_phys(sc, 0x2AAA, 0x55);
+  bios_write_phys(sc, 0x5555, 0x10);
 
   /* Wait for the erase operation to complete. */
-  for (;;) /* interruptable syscall */
+  for (;;) /* interruptible syscall */
     {
     for (;;)
       {
-      read_data = read_bios(sc, 0);
+      read_data = bios_read(sc, 0);
       if (read_data & 0x80) break;
       if (read_data & 0x20)
         {  /* Data sheet says read it again. */
-        read_data = read_bios(sc, 0);
+        read_data = bios_read(sc, 0);
         if (read_data & 0x80) break;
-        if (DRIVER_DEBUG)
-          printf("%s: erase_bios() failed\n", NAME_UNIT);
+        if (sc->config.debug)
+          printf("%s: bios_erase() failed\n", NAME_UNIT);
         return;
         }
       }
-    read_data = read_bios(sc, 0);
+    read_data = bios_read(sc, 0);
     if (read_data == 0xFF) break;
     }
   }
 
 /* MDIO is 3-stated between tranactions. */
 /* MDIO is set up before the RISING edge of MDC; MDC is parked low. */
-static void
-shift_mii_bits(softc_t *sc, u_int32_t data, u_int32_t len)
+static void  /* context: process */
+mii_shift_bits(softc_t *sc, u_int32_t data, u_int32_t len)
   {
-  u_int32_t csr = READ_CSR(TLP_SROM_MII);
+  u_int32_t csr = READ_CSR(sc, TLP_SROM_MII);
   for (; len>0; len--)
     {  /* MSB first */
     if (data & (1<<(len-1)))
       csr |=  TLP_MII_MDOUT; /* MDOUT setup */
     else
       csr &= ~TLP_MII_MDOUT; /* MDOUT setup */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     csr |=  TLP_MII_MDC;     /* MDC rising edge */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     csr &= ~TLP_MII_MDC;     /* MDC falling edge */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     }
   }
 
 /* The specification for the MII is IEEE Std 802.3 clause 22. */
 /* MDIO is sampled on the RISING edge of MDC; MDC is parked low. */
-static u_int16_t
-read_mii(softc_t *sc, u_int8_t regad)
+static u_int16_t  /* context: process */
+mii_read(softc_t *sc, u_int8_t regad)
   {
   int i;
   u_int32_t csr;
   u_int16_t data = 0;
  
-  WRITE_CSR(TLP_SROM_MII, TLP_MII_MDOUT);
+  WRITE_CSR(sc, TLP_SROM_MII, TLP_MII_MDOUT);
 
-  shift_mii_bits(sc, 0xFFFFF, 20);	/* preamble */
-  shift_mii_bits(sc, 0xFFFFF, 20);	/* preamble */
-  shift_mii_bits(sc, 1, 2);		/* start symbol */
-  shift_mii_bits(sc, 2, 2);		/* read op */
-  shift_mii_bits(sc, 0, 5);		/* phyad=0 */
-  shift_mii_bits(sc, regad, 5);		/* regad */
-  csr = READ_CSR(TLP_SROM_MII);
+  mii_shift_bits(sc, 0xFFFFF, 20);	/* preamble */
+  mii_shift_bits(sc, 0xFFFFF, 20);	/* preamble */
+  mii_shift_bits(sc, 1, 2);		/* start symbol */
+  mii_shift_bits(sc, 2, 2);		/* read op */
+  mii_shift_bits(sc, 0, 5);		/* phyad=0 */
+  mii_shift_bits(sc, regad, 5);		/* regad */
+  csr = READ_CSR(sc, TLP_SROM_MII);
   csr |= TLP_MII_MDOE;
-  WRITE_CSR(TLP_SROM_MII, csr);
-  shift_mii_bits(sc, 0, 2);		/* turn-around */
+  WRITE_CSR(sc, TLP_SROM_MII, csr);
+  mii_shift_bits(sc, 0, 2);		/* turn-around */
   for (i=15; i>=0; i--)			/* data */
     {  /* MSB first */
-    csr = READ_CSR(TLP_SROM_MII);	/* MDIN sampled */
+    csr = READ_CSR(sc, TLP_SROM_MII);	/* MDIN sampled */
     data = (data<<1) | ((csr & TLP_MII_MDIN) ? 1:0);
     csr |=  TLP_MII_MDC;		/* MDC rising edge */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     csr &= ~TLP_MII_MDC;		/* MDC falling edge */
-    WRITE_CSR(TLP_SROM_MII, csr);
+    WRITE_CSR(sc, TLP_SROM_MII, csr);
     }
   return data;
   }
 
-static void
-write_mii(softc_t *sc, u_int8_t regad, u_int16_t data)
+static void  /* context: process */
+mii_write(softc_t *sc, u_int8_t regad, u_int16_t data)
   {
-  WRITE_CSR(TLP_SROM_MII, TLP_MII_MDOUT);
-  shift_mii_bits(sc, 0xFFFFF, 20);	/* preamble */
-  shift_mii_bits(sc, 0xFFFFF, 20);	/* preamble */
-  shift_mii_bits(sc, 1, 2);		/* start symbol */
-  shift_mii_bits(sc, 1, 2);		/* write op */
-  shift_mii_bits(sc, 0, 5);		/* phyad=0 */
-  shift_mii_bits(sc, regad, 5);		/* regad */
-  shift_mii_bits(sc, 2, 2);		/* turn-around */
-  shift_mii_bits(sc, data, 16);		/* data */
-  WRITE_CSR(TLP_SROM_MII, TLP_MII_MDOE);
+  WRITE_CSR(sc, TLP_SROM_MII, TLP_MII_MDOUT);
+  mii_shift_bits(sc, 0xFFFFF, 20);	/* preamble */
+  mii_shift_bits(sc, 0xFFFFF, 20);	/* preamble */
+  mii_shift_bits(sc, 1, 2);		/* start symbol */
+  mii_shift_bits(sc, 1, 2);		/* write op */
+  mii_shift_bits(sc, 0, 5);		/* phyad=0 */
+  mii_shift_bits(sc, regad, 5);		/* regad */
+  mii_shift_bits(sc, 2, 2);		/* turn-around */
+  mii_shift_bits(sc, data, 16);		/* data */
+  WRITE_CSR(sc, TLP_SROM_MII, TLP_MII_MDOE);
   if (regad == 16) sc->led_state = data; /* a small optimization */
   }
 
 static void
-set_mii16_bits(softc_t *sc, u_int16_t bits)
+mii16_set_bits(softc_t *sc, u_int16_t bits)
   {
-  u_int16_t mii16 = read_mii(sc, 16);
+  u_int16_t mii16 = mii_read(sc, 16);
   mii16 |= bits;
-  write_mii(sc, 16, mii16);
+  mii_write(sc, 16, mii16);
   }
 
 static void
-clr_mii16_bits(softc_t *sc, u_int16_t bits)
+mii16_clr_bits(softc_t *sc, u_int16_t bits)
   {
-  u_int16_t mii16 = read_mii(sc, 16);
+  u_int16_t mii16 = mii_read(sc, 16);
   mii16 &= ~bits;
-  write_mii(sc, 16, mii16);
+  mii_write(sc, 16, mii16);
   }
 
 static void
-set_mii17_bits(softc_t *sc, u_int16_t bits)
+mii17_set_bits(softc_t *sc, u_int16_t bits)
   {
-  u_int16_t mii17 = read_mii(sc, 17);
+  u_int16_t mii17 = mii_read(sc, 17);
   mii17 |= bits;
-  write_mii(sc, 17, mii17);
+  mii_write(sc, 17, mii17);
   }
 
 static void
-clr_mii17_bits(softc_t *sc, u_int16_t bits)
+mii17_clr_bits(softc_t *sc, u_int16_t bits)
   {
-  u_int16_t mii17 = read_mii(sc, 17);
+  u_int16_t mii17 = mii_read(sc, 17);
   mii17 &= ~bits;
-  write_mii(sc, 17, mii17);
+  mii_write(sc, 17, mii17);
   }
 
 /*
@@ -663,22 +689,22 @@ static void
 led_off(softc_t *sc, u_int16_t led)
   {
   if ((led & sc->led_state) == led) return;
-  set_mii16_bits(sc, led);
+  mii16_set_bits(sc, led);
   }
 
 static void
 led_on(softc_t *sc, u_int16_t led)
   {
   if ((led & sc->led_state) == 0) return;
-  clr_mii16_bits(sc, led);
+  mii16_clr_bits(sc, led);
   }
 
 static void
 led_inv(softc_t *sc, u_int16_t led)
   {
-  u_int16_t mii16 = read_mii(sc, 16);
+  u_int16_t mii16 = mii_read(sc, 16);
   mii16 ^= led;
-  write_mii(sc, 16, mii16);
+  mii_write(sc, 16, mii16);
   }
 
 /*
@@ -687,17 +713,17 @@ led_inv(softc_t *sc, u_int16_t led)
  * The hardware interface is an Intel-style 8-bit muxed A/D bus.
  */
 static void
-write_framer(softc_t *sc, u_int16_t addr, u_int8_t data)
+framer_write(softc_t *sc, u_int16_t addr, u_int8_t data)
   {
-  write_mii(sc, 17, addr);
-  write_mii(sc, 18, data);
+  mii_write(sc, 17, addr);
+  mii_write(sc, 18, data);
   }
 
 static u_int8_t
-read_framer(softc_t *sc, u_int16_t addr)
+framer_read(softc_t *sc, u_int16_t addr)
   {
-  write_mii(sc, 17, addr);
-  return (u_int8_t)read_mii(sc, 18);
+  mii_write(sc, 17, addr);
+  return (u_int8_t)mii_read(sc, 18);
   }
 
 /* Tulip's hardware implementation of General Purpose IO
@@ -714,89 +740,87 @@ read_framer(softc_t *sc, u_int16_t addr)
  */
 
 static void
-make_gpio_input(softc_t *sc, u_int32_t bits)
+gpio_make_input(softc_t *sc, u_int32_t bits)
   {
   sc->gpio_dir &= ~bits;
-  WRITE_CSR(TLP_GPIO, TLP_GPIO_DIR | (sc->gpio_dir));
+  WRITE_CSR(sc, TLP_GPIO, TLP_GPIO_DIR | (sc->gpio_dir));
   }
 
 static void
-make_gpio_output(softc_t *sc, u_int32_t bits)
+gpio_make_output(softc_t *sc, u_int32_t bits)
   {
   sc->gpio_dir |= bits;
-  WRITE_CSR(TLP_GPIO, TLP_GPIO_DIR | (sc->gpio_dir));
+  WRITE_CSR(sc, TLP_GPIO, TLP_GPIO_DIR | (sc->gpio_dir));
   }
 
 static u_int32_t
-read_gpio(softc_t *sc)
+gpio_read(softc_t *sc)
   {
-  return READ_CSR(TLP_GPIO);
+  return READ_CSR(sc, TLP_GPIO);
   }
 
 static void
-set_gpio_bits(softc_t *sc, u_int32_t bits)
+gpio_set_bits(softc_t *sc, u_int32_t bits)
   {
-  WRITE_CSR(TLP_GPIO, (read_gpio(sc) |  bits) & 0xFF);
+  WRITE_CSR(sc, TLP_GPIO, (gpio_read(sc) |  bits) & 0xFF);
   }
 
 static void
-clr_gpio_bits(softc_t *sc, u_int32_t bits)
+gpio_clr_bits(softc_t *sc, u_int32_t bits)
   {
-  WRITE_CSR(TLP_GPIO, (read_gpio(sc) & ~bits) & 0xFF);
+  WRITE_CSR(sc, TLP_GPIO, (gpio_read(sc) & ~bits) & 0xFF);
   }
 
 /* Reset ALL of the flip-flops in the gate array to zero. */
 /* This does NOT change the gate array programming. */
 /* Called during initialization so it must not sleep. */
-static void
-reset_xilinx(softc_t *sc)
+static void  /* context: kernel (boot) or process (syscall) */
+xilinx_reset(softc_t *sc)
   {
   /* Drive RESET low to force initialization. */
-  clr_gpio_bits(sc, GPIO_RESET);
-  make_gpio_output(sc, GPIO_RESET);
+  gpio_clr_bits(sc, GPIO_RESET);
+  gpio_make_output(sc, GPIO_RESET);
 
   /* Hold RESET low for more than 10 uSec. */
   DELAY(50);
 
   /* Done with RESET; make it an input. */
-  make_gpio_input(sc,  GPIO_RESET);
+  gpio_make_input(sc,  GPIO_RESET);
   }
 
 /* Load Xilinx gate array program from on-board rom. */
 /* This changes the gate array programming. */
-/* IOCTL SYSCALL: can sleep. */
-static void
-load_xilinx_from_rom(softc_t *sc)
+static void  /* context: process */
+xilinx_load_from_rom(softc_t *sc)
   {
   int i;
 
   /* Drive MODE low to load from ROM rather than GPIO. */
-  clr_gpio_bits(sc, GPIO_MODE);
-  make_gpio_output(sc, GPIO_MODE);
+  gpio_clr_bits(sc, GPIO_MODE);
+  gpio_make_output(sc, GPIO_MODE);
 
   /* Drive DP & RESET low to force configuration. */
-  clr_gpio_bits(sc, GPIO_RESET | GPIO_DP);
-  make_gpio_output(sc, GPIO_RESET | GPIO_DP);
+  gpio_clr_bits(sc, GPIO_RESET | GPIO_DP);
+  gpio_make_output(sc, GPIO_RESET | GPIO_DP);
 
   /* Hold RESET & DP low for more than 10 uSec. */
   DELAY(50);
 
   /* Done with RESET & DP; make them inputs. */
-  make_gpio_input(sc, GPIO_DP | GPIO_RESET);
+  gpio_make_input(sc, GPIO_DP | GPIO_RESET);
 
   /* BUSY-WAIT for Xilinx chip to configure itself from ROM bits. */
   for (i=0; i<100; i++) /* 1 sec max delay */
-    if ((read_gpio(sc) & GPIO_DP) == 0) SLEEP(10000);
+    if ((gpio_read(sc) & GPIO_DP)==0) SLEEP(10000);
 
   /* Done with MODE; make it an input. */
-  make_gpio_input(sc, GPIO_MODE);
+  gpio_make_input(sc, GPIO_MODE);
   }
 
 /* Load the Xilinx gate array program from userland bits. */
 /* This changes the gate array programming. */
-/* IOCTL SYSCALL: can sleep. */
-static int
-load_xilinx_from_file(softc_t *sc, char *addr, u_int32_t len)
+static int  /* context: process */
+xilinx_load_from_file(softc_t *sc, char *addr, u_int32_t len)
   {
   char *data;
   int i, j, error;
@@ -814,102 +838,103 @@ load_xilinx_from_file(softc_t *sc, char *addr, u_int32_t len)
     }
 
   /* Drive MODE high to load from GPIO rather than ROM. */
-  set_gpio_bits(sc, GPIO_MODE);
-  make_gpio_output(sc, GPIO_MODE);
+  gpio_set_bits(sc, GPIO_MODE);
+  gpio_make_output(sc, GPIO_MODE);
 
   /* Drive DP & RESET low to force configuration. */
-  clr_gpio_bits(sc, GPIO_RESET | GPIO_DP);
-  make_gpio_output(sc, GPIO_RESET | GPIO_DP);
+  gpio_clr_bits(sc, GPIO_RESET | GPIO_DP);
+  gpio_make_output(sc, GPIO_RESET | GPIO_DP);
 
   /* Hold RESET & DP low for more than 10 uSec. */
   DELAY(50);
   
   /* Done with RESET & DP; make them inputs. */
-  make_gpio_input(sc, GPIO_RESET | GPIO_DP);
+  gpio_make_input(sc, GPIO_RESET | GPIO_DP);
 
   /* BUSY-WAIT for Xilinx chip to clear its config memory. */
-  make_gpio_input(sc, GPIO_INIT);
+  gpio_make_input(sc, GPIO_INIT);
   for (i=0; i<10000; i++) /* 1 sec max delay */
-    if ((read_gpio(sc) & GPIO_INIT)==0) SLEEP(10000);
+    if ((gpio_read(sc) & GPIO_INIT)==0) SLEEP(10000);
 
   /* Configure CLK and DATA as outputs. */
-  set_gpio_bits(sc, GPIO_CLK);  /* park CLK high */
-  make_gpio_output(sc, GPIO_CLK | GPIO_DATA);
+  gpio_set_bits(sc, GPIO_CLK);  /* park CLK high */
+  gpio_make_output(sc, GPIO_CLK | GPIO_DATA);
 
   /* Write bits to Xilinx; CLK is parked HIGH. */
   /* DATA is set up before the RISING edge of CLK. */
   for (i=0; i<len; i++)
     for (j=0; j<8; j++)
       {  /* LSB first */
-      if ((data[i] & (1<<j)) != 0)
-        set_gpio_bits(sc, GPIO_DATA); /* DATA setup */
+      if (data[i] & (1<<j))
+        gpio_set_bits(sc, GPIO_DATA); /* DATA setup */
       else
-        clr_gpio_bits(sc, GPIO_DATA); /* DATA setup */
-      clr_gpio_bits(sc, GPIO_CLK); /* CLK falling edge */
-      set_gpio_bits(sc, GPIO_CLK); /* CLK rising edge */
+        gpio_clr_bits(sc, GPIO_DATA); /* DATA setup */
+      gpio_clr_bits(sc, GPIO_CLK); /* CLK falling edge */
+      gpio_set_bits(sc, GPIO_CLK); /* CLK rising edge */
       }
 
   /* Stop driving all Xilinx-related signals. */
   /* Pullup and pulldown resistors take over. */
-  make_gpio_input(sc, GPIO_CLK | GPIO_DATA | GPIO_MODE);
+  gpio_make_input(sc, GPIO_CLK | GPIO_DATA | GPIO_MODE);
 
   free(data, M_TEMP);
+
   return 0;
   }
 
 /* Write fragments of a command into the synthesized oscillator. */
 /* DATA is set up before the RISING edge of CLK.  CLK is parked low. */
 static void
-shift_synth_bits(softc_t *sc, u_int32_t data, u_int32_t len)
+synth_shift_bits(softc_t *sc, u_int32_t data, u_int32_t len)
   {
   int i;
 
   for (i=0; i<len; i++)
     { /* LSB first */
-    if ((data & (1<<i)) != 0)
-      set_gpio_bits(sc, GPIO_DATA); /* DATA setup */
+    if (data & (1<<i))
+      gpio_set_bits(sc, GPIO_DATA); /* DATA setup */
     else
-      clr_gpio_bits(sc, GPIO_DATA); /* DATA setup */
-    set_gpio_bits(sc, GPIO_CLK);    /* CLK rising edge */
-    clr_gpio_bits(sc, GPIO_CLK);    /* CLK falling edge */
+      gpio_clr_bits(sc, GPIO_DATA); /* DATA setup */
+    gpio_set_bits(sc, GPIO_CLK);    /* CLK rising edge */
+    gpio_clr_bits(sc, GPIO_CLK);    /* CLK falling edge */
     }
   }
 
 /* Write a command to the synthesized oscillator on SSI and HSSIc. */
-static void
-write_synth(softc_t *sc, struct synth *synth)
+static void  /* context: process */
+synth_write(softc_t *sc, struct synth *synth)
   {
   /* SSI cards have a programmable prescaler */
-  if (sc->status.card_type == TLP_CSID_SSI)
+  if (sc->status.card_type == CSID_LMC_SSI)
     {
     if (synth->prescale == 9) /* divide by 512 */
-      set_mii17_bits(sc, MII17_SSI_PRESCALE);
+      mii17_set_bits(sc, MII17_SSI_PRESCALE);
     else                      /* divide by  32 */
-      clr_mii17_bits(sc, MII17_SSI_PRESCALE);
+      mii17_clr_bits(sc, MII17_SSI_PRESCALE);
     }
 
-  clr_gpio_bits(sc,    GPIO_DATA | GPIO_CLK);
-  make_gpio_output(sc, GPIO_DATA | GPIO_CLK);
+  gpio_clr_bits(sc,    GPIO_DATA | GPIO_CLK);
+  gpio_make_output(sc, GPIO_DATA | GPIO_CLK);
 
   /* SYNTH is a low-true chip enable for the AV9110 chip. */
-  set_gpio_bits(sc,    GPIO_SSI_SYNTH);
-  make_gpio_output(sc, GPIO_SSI_SYNTH);
-  clr_gpio_bits(sc,    GPIO_SSI_SYNTH);
+  gpio_set_bits(sc,    GPIO_SSI_SYNTH);
+  gpio_make_output(sc, GPIO_SSI_SYNTH);
+  gpio_clr_bits(sc,    GPIO_SSI_SYNTH);
 
   /* Serially shift the command into the AV9110 chip. */
-  shift_synth_bits(sc, synth->n, 7);
-  shift_synth_bits(sc, synth->m, 7);
-  shift_synth_bits(sc, synth->v, 1);
-  shift_synth_bits(sc, synth->x, 2);
-  shift_synth_bits(sc, synth->r, 2);
-  shift_synth_bits(sc, 0x16, 5); /* enable clk/x output */
+  synth_shift_bits(sc, synth->n, 7);
+  synth_shift_bits(sc, synth->m, 7);
+  synth_shift_bits(sc, synth->v, 1);
+  synth_shift_bits(sc, synth->x, 2);
+  synth_shift_bits(sc, synth->r, 2);
+  synth_shift_bits(sc, 0x16, 5); /* enable clk/x output */
 
   /* SYNTH (chip enable) going high ends the command. */
-  set_gpio_bits(sc,   GPIO_SSI_SYNTH);
-  make_gpio_input(sc, GPIO_SSI_SYNTH);
+  gpio_set_bits(sc,   GPIO_SSI_SYNTH);
+  gpio_make_input(sc, GPIO_SSI_SYNTH);
 
   /* Stop driving serial-related signals; pullups/pulldowns take over. */
-  make_gpio_input(sc, GPIO_DATA | GPIO_CLK);
+  gpio_make_input(sc, GPIO_DATA | GPIO_CLK);
 
   /* remember the new synthesizer parameters */
   if (&sc->config.synth != synth) sc->config.synth = *synth;
@@ -918,124 +943,62 @@ write_synth(softc_t *sc, struct synth *synth)
 /* Write a command to the DAC controlling the VCXO on some T3 adapters. */
 /* The DAC is a TI-TLV5636: 12-bit resolution and a serial interface. */
 /* DATA is set up before the FALLING edge of CLK.  CLK is parked HIGH. */
-static void
-write_dac(softc_t *sc, u_int16_t data)
+static void  /* context: process */
+dac_write(softc_t *sc, u_int16_t data)
   {
   int i;
 
   /* Prepare to use DATA and CLK. */
-  set_gpio_bits(sc,    GPIO_DATA | GPIO_CLK);
-  make_gpio_output(sc, GPIO_DATA | GPIO_CLK);
+  gpio_set_bits(sc,    GPIO_DATA | GPIO_CLK);
+  gpio_make_output(sc, GPIO_DATA | GPIO_CLK);
 
   /* High-to-low transition prepares DAC for new value. */
-  set_gpio_bits(sc,    GPIO_T3_DAC);
-  make_gpio_output(sc, GPIO_T3_DAC);
-  clr_gpio_bits(sc,    GPIO_T3_DAC);
+  gpio_set_bits(sc,    GPIO_T3_DAC);
+  gpio_make_output(sc, GPIO_T3_DAC);
+  gpio_clr_bits(sc,    GPIO_T3_DAC);
 
   /* Serially shift command bits into DAC. */
   for (i=0; i<16; i++)
     { /* MSB first */
-    if ((data & (1<<(15-i))) != 0)
-      set_gpio_bits(sc, GPIO_DATA); /* DATA setup */
+    if (data & (1<<(15-i)))
+      gpio_set_bits(sc, GPIO_DATA); /* DATA setup */
     else
-      clr_gpio_bits(sc, GPIO_DATA); /* DATA setup */
-    clr_gpio_bits(sc, GPIO_CLK);    /* CLK falling edge */
-    set_gpio_bits(sc, GPIO_CLK);    /* CLK rising edge */
+      gpio_clr_bits(sc, GPIO_DATA); /* DATA setup */
+    gpio_clr_bits(sc, GPIO_CLK);    /* CLK falling edge */
+    gpio_set_bits(sc, GPIO_CLK);    /* CLK rising edge */
     }
 
   /* Done with DAC; make it an input; loads new value into DAC. */
-  set_gpio_bits(sc,   GPIO_T3_DAC);
-  make_gpio_input(sc, GPIO_T3_DAC);
+  gpio_set_bits(sc,   GPIO_T3_DAC);
+  gpio_make_input(sc, GPIO_T3_DAC);
 
   /* Stop driving serial-related signals; pullups/pulldowns take over. */
-  make_gpio_input(sc, GPIO_DATA | GPIO_CLK);
+  gpio_make_input(sc, GPIO_DATA | GPIO_CLK);
   }
 
-/* begin HSSI card code */
+/* Begin HSSI card code */
 
-/* Must not sleep. */
-static void
-hssi_config(softc_t *sc)
+static struct card hssi_card =
   {
-  if (sc->status.card_type == 0)
-    { /* defaults */
-    sc->status.card_type  = READ_PCI_CFG(sc, TLP_CSID);
-    sc->config.crc_len    = CFG_CRC_16;
-    sc->config.loop_back  = CFG_LOOP_NONE;
-    sc->config.tx_clk_src = CFG_CLKMUX_ST;
-    sc->config.dte_dce    = CFG_DTE;
-    sc->config.synth.n    = 52; /* 52.000 Mbs */
-    sc->config.synth.m    = 5;
-    sc->config.synth.v    = 0;
-    sc->config.synth.x    = 0;
-    sc->config.synth.r    = 0;
-    sc->config.synth.prescale = 2;
-    }
-
-  /* set CRC length */
-  if (sc->config.crc_len == CFG_CRC_32)
-    set_mii16_bits(sc, MII16_HSSI_CRC32);
-  else
-    clr_mii16_bits(sc, MII16_HSSI_CRC32);
-
-  /* Assert pin LA in HSSI conn: ask modem for local loop. */
-  if (sc->config.loop_back == CFG_LOOP_LL)
-    set_mii16_bits(sc, MII16_HSSI_LA);
-  else
-    clr_mii16_bits(sc, MII16_HSSI_LA);
-
-  /* Assert pin LB in HSSI conn: ask modem for remote loop. */
-  if (sc->config.loop_back == CFG_LOOP_RL)
-    set_mii16_bits(sc, MII16_HSSI_LB);
-  else
-    clr_mii16_bits(sc, MII16_HSSI_LB);
-
-  if (sc->status.card_type == TLP_CSID_HSSI)
-    {
-    /* set TXCLK src */
-    if (sc->config.tx_clk_src == CFG_CLKMUX_ST)
-      set_gpio_bits(sc, GPIO_HSSI_TXCLK);
-    else
-      clr_gpio_bits(sc, GPIO_HSSI_TXCLK);
-    make_gpio_output(sc, GPIO_HSSI_TXCLK);
-    }
-  else if (sc->status.card_type == TLP_CSID_HSSIc)
-    {  /* cPCI HSSI rev C has extra features */
-    /* Set TXCLK source. */
-    u_int16_t mii16 = read_mii(sc, 16);
-    mii16 &= ~MII16_HSSI_CLKMUX;
-    mii16 |= (sc->config.tx_clk_src&3)<<13;
-    write_mii(sc, 16, mii16);
-
-    /* cPCI HSSI implements loopback towards the net. */
-    if (sc->config.loop_back == CFG_LOOP_LINE)
-      set_mii16_bits(sc, MII16_HSSI_LOOP);
-    else
-      clr_mii16_bits(sc, MII16_HSSI_LOOP);
-
-    /* Set DTE/DCE mode. */
-    if (sc->config.dte_dce == CFG_DCE)
-      set_gpio_bits(sc, GPIO_HSSI_DCE);
-    else
-      clr_gpio_bits(sc, GPIO_HSSI_DCE);
-    make_gpio_output(sc, GPIO_HSSI_DCE);
-
-    /* Program the synthesized oscillator. */
-    write_synth(sc, &sc->config.synth);
-    }
-  }
+  .ident    = hssi_ident,
+  .watchdog = hssi_watchdog,
+  .ioctl    = hssi_ioctl,
+  .attach   = hssi_attach,
+  .detach   = hssi_detach,
+  };
 
 static void
 hssi_ident(softc_t *sc)
   {
+  printf(", EIA-613");
   }
 
-/* Called once a second; must not sleep. */
-static int
+static void  /* context: softirq */
 hssi_watchdog(softc_t *sc)
   {
-  u_int16_t mii16 = read_mii(sc, 16) & MII16_HSSI_MODEM;
-  int link_status = STATUS_UP;
+  u_int16_t mii16 = mii_read(sc, 16) & MII16_HSSI_MODEM;
+
+  sc->status.link_state = STATE_UP;
 
   led_inv(sc, MII16_HSSI_LED_UL);  /* Software is alive. */
   led_on(sc, MII16_HSSI_LED_LL);  /* always on (SSI cable) */
@@ -1044,22 +1007,22 @@ hssi_watchdog(softc_t *sc)
   if (sc->status.tx_speed == 0)
     {
     led_on(sc, MII16_HSSI_LED_UR);
-    link_status = STATUS_DOWN;
+    sc->status.link_state = STATE_DOWN;
     }
   else
     led_off(sc, MII16_HSSI_LED_UR);
 
   /* Is the modem ready? */
-  if ((mii16 & MII16_HSSI_CA) == 0)
+  if ((mii16 & MII16_HSSI_CA)==0)
     {
     led_off(sc, MII16_HSSI_LED_LR);
-    link_status = STATUS_DOWN;
+    sc->status.link_state = STATE_DOWN;
     }
   else
     led_on(sc, MII16_HSSI_LED_LR);
 
   /* Print the modem control signals if they changed. */
-  if ((DRIVER_DEBUG) && (mii16 != sc->last_mii16))
+  if ((sc->config.debug) && (mii16 != sc->last_mii16))
     {
     const char *on = "ON ", *off = "OFF";
     printf("%s: TA=%s CA=%s LA=%s LB=%s LC=%s TM=%s\n", NAME_UNIT,
@@ -1079,30 +1042,27 @@ hssi_watchdog(softc_t *sc)
 
   /* If a loop back is in effect, link status is UP */
   if (sc->config.loop_back != CFG_LOOP_NONE)
-    link_status = STATUS_UP;
-
-  return link_status;
+    sc->status.link_state = STATE_UP;
   }
 
-/* IOCTL SYSCALL: can sleep (but doesn't). */
-static int
+static int  /* context: process */
 hssi_ioctl(softc_t *sc, struct ioctl *ioctl)
   {
   int error = 0;
 
   if (ioctl->cmd == IOCTL_SNMP_SIGS)
     {
-    u_int16_t mii16 = read_mii(sc, 16);
+    u_int16_t mii16 = mii_read(sc, 16);
     mii16 &= ~MII16_HSSI_MODEM;
     mii16 |= (MII16_HSSI_MODEM & ioctl->data);
-    write_mii(sc, 16, mii16);
+    mii_write(sc, 16, mii16);
     }
   else if (ioctl->cmd == IOCTL_SET_STATUS)
     {
-    if (ioctl->data != 0)
-      set_mii16_bits(sc, MII16_HSSI_TA);
+    if (ioctl->data)
+      mii16_set_bits(sc, MII16_HSSI_TA);
     else
-      clr_mii16_bits(sc, MII16_HSSI_TA);
+      mii16_clr_bits(sc, MII16_HSSI_TA);
     }
   else
     error = EINVAL;
@@ -1110,86 +1070,117 @@ hssi_ioctl(softc_t *sc, struct ioctl *ioctl)
   return error;
   }
 
-/* begin DS3 card code */
-
 /* Must not sleep. */
 static void
-t3_config(softc_t *sc)
+hssi_attach(softc_t *sc, struct config *config)
   {
-  int i;
-  u_int8_t ctl1;
-
-  if (sc->status.card_type == 0)
-    { /* defaults */
-    sc->status.card_type  = TLP_CSID_T3;
+  if (config == NULL) /* startup config */
+    {
+    sc->status.card_type  = READ_PCI_CFG(sc, TLP_CSID);
     sc->config.crc_len    = CFG_CRC_16;
     sc->config.loop_back  = CFG_LOOP_NONE;
-    sc->config.format     = CFG_FORMAT_T3CPAR;
-    sc->config.cable_len  = 10; /* meters */
-    sc->config.scrambler  = CFG_SCRAM_DL_KEN;
-    sc->config.tx_clk_src = CFG_CLKMUX_INT;
-
-    /* Center the VCXO -- get within 20 PPM of 44736000. */
-    write_dac(sc, 0x9002); /* set Vref = 2.048 volts */
-    write_dac(sc, 2048); /* range is 0..4095 */
+    sc->config.tx_clk_src = CFG_CLKMUX_ST;
+    sc->config.dte_dce    = CFG_DTE;
+    sc->config.synth.n    = 52; /* 52.000 Mbs */
+    sc->config.synth.m    = 5;
+    sc->config.synth.v    = 0;
+    sc->config.synth.x    = 0;
+    sc->config.synth.r    = 0;
+    sc->config.synth.prescale = 2;
     }
+  else if (config != &sc->config) /* change config */
+    {
+    u_int32_t *old_synth = (u_int32_t *)&sc->config.synth;
+    u_int32_t *new_synth = (u_int32_t *)&config->synth;
+    if ((sc->config.crc_len    == config->crc_len)    &&
+        (sc->config.loop_back  == config->loop_back)  &&
+        (sc->config.tx_clk_src == config->tx_clk_src) &&
+        (sc->config.dte_dce    == config->dte_dce)    &&
+        (*old_synth            == *new_synth))
+      return; /* nothing changed */
+    sc->config.crc_len    = config->crc_len;
+    sc->config.loop_back  = config->loop_back;
+    sc->config.tx_clk_src = config->tx_clk_src;
+    sc->config.dte_dce    = config->dte_dce;
+    *old_synth            = *new_synth;
+    }
+  /* If (config == &sc->config) then the FPGA microcode
+   * was just initialized and the current config should
+   * be reloaded into the card.
+   */
 
-  /* Set cable length. */
-  if (sc->config.cable_len > 30)
-    clr_mii16_bits(sc, MII16_DS3_ZERO);
-  else
-    set_mii16_bits(sc, MII16_DS3_ZERO);
-
-  /* Set payload scrambler polynomial. */
-  if (sc->config.scrambler == CFG_SCRAM_LARS)
-    set_mii16_bits(sc, MII16_DS3_POLY);
-  else
-    clr_mii16_bits(sc, MII16_DS3_POLY);
-
-  /* Set payload scrambler on/off. */
-  if (sc->config.scrambler == CFG_SCRAM_OFF)
-    clr_mii16_bits(sc, MII16_DS3_SCRAM);
-  else
-    set_mii16_bits(sc, MII16_DS3_SCRAM);
-
-  /* Set CRC length. */
+  /* set CRC length */
   if (sc->config.crc_len == CFG_CRC_32)
-    set_mii16_bits(sc, MII16_DS3_CRC32);
+    mii16_set_bits(sc, MII16_HSSI_CRC32);
   else
-    clr_mii16_bits(sc, MII16_DS3_CRC32);
+    mii16_clr_bits(sc, MII16_HSSI_CRC32);
 
-  /* Loopback towards host thru the line interface. */
-  if (sc->config.loop_back == CFG_LOOP_OTHER)
-    set_mii16_bits(sc, MII16_DS3_TRLBK);
+  /* Assert pin LA in HSSI conn: ask modem for local loop. */
+  if (sc->config.loop_back == CFG_LOOP_LL)
+    mii16_set_bits(sc, MII16_HSSI_LA);
   else
-    clr_mii16_bits(sc, MII16_DS3_TRLBK);
+    mii16_clr_bits(sc, MII16_HSSI_LA);
 
-  /* Loopback towards network thru the line interface. */
-  if (sc->config.loop_back == CFG_LOOP_LINE)
-    set_mii16_bits(sc, MII16_DS3_LNLBK);
-  else if (sc->config.loop_back == CFG_LOOP_DUAL)
-    set_mii16_bits(sc, MII16_DS3_LNLBK);
+  /* Assert pin LB in HSSI conn: ask modem for remote loop. */
+  if (sc->config.loop_back == CFG_LOOP_RL)
+    mii16_set_bits(sc, MII16_HSSI_LB);
   else
-    clr_mii16_bits(sc, MII16_DS3_LNLBK);
+    mii16_clr_bits(sc, MII16_HSSI_LB);
 
-  /* Configure T3 framer chip; write EVERY writeable register. */
-  ctl1 = CTL1_SER | CTL1_XTX;
-  if (sc->config.loop_back == CFG_LOOP_INWARD) ctl1 |= CTL1_3LOOP;
-  if (sc->config.loop_back == CFG_LOOP_DUAL)   ctl1 |= CTL1_3LOOP;
-  if (sc->config.format == CFG_FORMAT_T3M13)   ctl1 |= CTL1_M13MODE;
-  write_framer(sc, T3CSR_CTL1,     ctl1);
-  write_framer(sc, T3CSR_TX_FEAC,  CTL5_EMODE);
-  write_framer(sc, T3CSR_CTL8,     CTL8_FBEC);
-  write_framer(sc, T3CSR_CTL12,    CTL12_DLCB1 | CTL12_C21 | CTL12_MCB1);
-  write_framer(sc, T3CSR_DBL_FEAC, 0);
-  write_framer(sc, T3CSR_CTL14,    CTL14_RGCEN | CTL14_TGCEN);
-  write_framer(sc, T3CSR_INTEN,    0);
-  write_framer(sc, T3CSR_CTL20,    CTL20_CVEN);
+  if (sc->status.card_type == CSID_LMC_HSSI)
+    {
+    /* set TXCLK src */
+    if (sc->config.tx_clk_src == CFG_CLKMUX_ST)
+      gpio_set_bits(sc, GPIO_HSSI_TXCLK);
+    else
+      gpio_clr_bits(sc, GPIO_HSSI_TXCLK);
+    gpio_make_output(sc, GPIO_HSSI_TXCLK);
+    }
+  else if (sc->status.card_type == CSID_LMC_HSSIc)
+    {  /* cPCI HSSI rev C has extra features */
+    /* Set TXCLK source. */
+    u_int16_t mii16 = mii_read(sc, 16);
+    mii16 &= ~MII16_HSSI_CLKMUX;
+    mii16 |= (sc->config.tx_clk_src&3)<<13;
+    mii_write(sc, 16, mii16);
 
-  /* Clear error counters and latched error bits */
-  /*  that may have happened while initializing. */
-  for (i=0; i<21; i++) read_framer(sc, i);
+    /* cPCI HSSI implements loopback towards the net. */
+    if (sc->config.loop_back == CFG_LOOP_LINE)
+      mii16_set_bits(sc, MII16_HSSI_LOOP);
+    else
+      mii16_clr_bits(sc, MII16_HSSI_LOOP);
+
+    /* Set DTE/DCE mode. */
+    if (sc->config.dte_dce == CFG_DCE)
+      gpio_set_bits(sc, GPIO_HSSI_DCE);
+    else
+      gpio_clr_bits(sc, GPIO_HSSI_DCE);
+    gpio_make_output(sc, GPIO_HSSI_DCE);
+
+    /* Program the synthesized oscillator. */
+    synth_write(sc, &sc->config.synth);
+    }
   }
+
+static void
+hssi_detach(softc_t *sc)
+  {
+  mii16_clr_bits(sc, MII16_HSSI_TA);
+  led_on(sc, MII16_LED_ALL);
+  }
+
+/* End HSSI card code */
+
+/* Begin DS3 card code */
+
+static struct card t3_card =
+  {
+  .ident    = t3_ident,
+  .watchdog = t3_watchdog,
+  .ioctl    = t3_ioctl,
+  .attach   = t3_attach,
+  .detach   = t3_detach,
+  };
 
 static void
 t3_ident(softc_t *sc)
@@ -1197,20 +1188,20 @@ t3_ident(softc_t *sc)
   printf(", TXC03401 rev B");
   }
 
-/* Called once a second; must not sleep. */
-static int
+static void  /* context: softirq */
 t3_watchdog(softc_t *sc)
   {
   u_int16_t CV;
   u_int8_t CERR, PERR, MERR, FERR, FEBE;
   u_int8_t ctl1, stat16, feac;
-  int link_status = STATUS_UP;
   u_int16_t mii16;
 
+  sc->status.link_state = STATE_UP;
+
   /* Read the alarm registers. */
-  ctl1   = read_framer(sc, T3CSR_CTL1);
-  stat16 = read_framer(sc, T3CSR_STAT16);
-  mii16  = read_mii(sc, 16);
+  ctl1   = framer_read(sc, T3CSR_CTL1);
+  stat16 = framer_read(sc, T3CSR_STAT16);
+  mii16  = mii_read(sc, 16);
 
   /* Always ignore the RTLOC alarm bit. */
   stat16 &= ~STAT16_RTLOC;
@@ -1219,7 +1210,7 @@ t3_watchdog(softc_t *sc)
   led_inv(sc, MII16_DS3_LED_GRN);
 
   /* Receiving Alarm Indication Signal (AIS). */
-  if ((stat16 & STAT16_RAIS) != 0) /* receiving ais */
+  if (stat16 & STAT16_RAIS) /* receiving ais */
     led_on(sc, MII16_DS3_LED_BLU);
   else if (ctl1 & CTL1_TXAIS) /* sending ais */
     led_inv(sc, MII16_DS3_LED_BLU);
@@ -1227,7 +1218,7 @@ t3_watchdog(softc_t *sc)
     led_off(sc, MII16_DS3_LED_BLU);
 
   /* Receiving Remote Alarm Indication (RAI). */
-  if ((stat16 & STAT16_XERR) != 0) /* receiving rai */
+  if (stat16 & STAT16_XERR) /* receiving rai */
     led_on(sc, MII16_DS3_LED_YEL);
   else if ((ctl1 & CTL1_XTX) == 0) /* sending rai */
     led_inv(sc, MII16_DS3_LED_YEL);
@@ -1236,19 +1227,19 @@ t3_watchdog(softc_t *sc)
 
   /* If certain status bits are set then the link is 'down'. */
   /* The bad bits are: rxlos rxoof rxais rxidl xerr. */
-  if ((stat16 & ~(STAT16_FEAC | STAT16_SEF)) != 0)
-    link_status = STATUS_DOWN;
+  if (stat16 & ~(STAT16_FEAC | STAT16_SEF))
+    sc->status.link_state = STATE_DOWN;
 
   /* Declare local Red Alarm if the link is down. */
-  if (link_status == STATUS_DOWN)
+  if (sc->status.link_state == STATE_DOWN)
     led_on(sc, MII16_DS3_LED_RED);
-  else if (sc->loop_timer != 0) /* loopback is active */
+  else if (sc->loop_timer) /* loopback is active */
     led_inv(sc, MII16_DS3_LED_RED);
   else
     led_off(sc, MII16_DS3_LED_RED);
 
   /* Print latched error bits if they changed. */
-  if ((DRIVER_DEBUG) && ((stat16 & ~STAT16_FEAC) != sc->last_stat16))
+  if ((sc->config.debug) && ((stat16 & ~STAT16_FEAC) != sc->last_stat16))
     {
     const char *on = "ON ", *off = "OFF";
     printf("%s: RLOS=%s ROOF=%s RAIS=%s RIDL=%s SEF=%s XERR=%s\n",
@@ -1262,21 +1253,21 @@ t3_watchdog(softc_t *sc)
     }
 
   /* Check and print error counters if non-zero. */
-  CV   = read_framer(sc, T3CSR_CVHI)<<8;
-  CV  += read_framer(sc, T3CSR_CVLO);
-  PERR = read_framer(sc, T3CSR_PERR);
-  CERR = read_framer(sc, T3CSR_CERR);
-  FERR = read_framer(sc, T3CSR_FERR);
-  MERR = read_framer(sc, T3CSR_MERR);
-  FEBE = read_framer(sc, T3CSR_FEBE);
+  CV   = framer_read(sc, T3CSR_CVHI)<<8;
+  CV  += framer_read(sc, T3CSR_CVLO);
+  PERR = framer_read(sc, T3CSR_PERR);
+  CERR = framer_read(sc, T3CSR_CERR);
+  FERR = framer_read(sc, T3CSR_FERR);
+  MERR = framer_read(sc, T3CSR_MERR);
+  FEBE = framer_read(sc, T3CSR_FEBE);
 
   /* CV is invalid during LOS. */
-  if ((stat16 & STAT16_RLOS)!=0) CV = 0;
+  if (stat16 & STAT16_RLOS) CV = 0;
   /* CERR & FEBE are invalid in M13 mode */
   if (sc->config.format == CFG_FORMAT_T3M13) CERR = FEBE = 0;
   /* FEBE is invalid during AIS. */
-  if ((stat16 & STAT16_RAIS)!=0) FEBE = 0;
-  if (DRIVER_DEBUG && (CV || PERR || CERR || FERR || MERR || FEBE))
+  if (stat16 & STAT16_RAIS) FEBE = 0;
+  if (sc->config.debug && (CV || PERR || CERR || FERR || MERR || FEBE))
     printf("%s: CV=%u PERR=%u CERR=%u FERR=%u MERR=%u FEBE=%u\n",
      NAME_UNIT, CV,   PERR,   CERR,   FERR,   MERR,   FEBE);
 
@@ -1291,10 +1282,10 @@ t3_watchdog(softc_t *sc)
   /* Check for FEAC messages (FEAC not defined in M13 mode). */
   if (FORMAT_T3CPAR && (stat16 & STAT16_FEAC)) do
     {
-    feac = read_framer(sc, T3CSR_FEAC_STK);
+    feac = framer_read(sc, T3CSR_FEAC_STK);
     if ((feac & FEAC_STK_VALID)==0) break;
     /* Ignore RxFEACs while a far end loopback has been requested. */
-    if ((sc->status.snmp.t3.line & TLOOP_FAR_LINE)!=0) continue;
+    if (sc->status.snmp.t3.line & TLOOP_FAR_LINE) continue;
     switch (feac & FEAC_STK_FEAC)
       {
       case T3BOP_LINE_UP:   break;
@@ -1303,102 +1294,102 @@ t3_watchdog(softc_t *sc)
         {
         if (sc->last_FEAC == T3BOP_LINE_DOWN)
           {
-          if (DRIVER_DEBUG)
+          if (sc->config.debug)
             printf("%s: Received a 'line loopback deactivate' FEAC msg\n", NAME_UNIT);
-          clr_mii16_bits(sc, MII16_DS3_LNLBK);
+          mii16_clr_bits(sc, MII16_DS3_LNLBK);
           sc->loop_timer = 0;
 	  }
         if (sc->last_FEAC == T3BOP_LINE_UP)
           {
-          if (DRIVER_DEBUG)
+          if (sc->config.debug)
             printf("%s: Received a 'line loopback activate' FEAC msg\n", NAME_UNIT);
-          set_mii16_bits(sc, MII16_DS3_LNLBK);
+          mii16_set_bits(sc, MII16_DS3_LNLBK);
           sc->loop_timer = 300;
 	  }
         break;
         }
       case T3BOP_OOF:
         {
-        if (DRIVER_DEBUG)
+        if (sc->config.debug)
           printf("%s: Received a 'far end LOF' FEAC msg\n", NAME_UNIT);
         break;
 	}
       case T3BOP_IDLE:
         {
-        if (DRIVER_DEBUG)
+        if (sc->config.debug)
           printf("%s: Received a 'far end IDL' FEAC msg\n", NAME_UNIT);
         break;
 	}
       case T3BOP_AIS:
         {
-        if (DRIVER_DEBUG)
+        if (sc->config.debug)
           printf("%s: Received a 'far end AIS' FEAC msg\n", NAME_UNIT);
         break;
 	}
       case T3BOP_LOS:
         {
-        if (DRIVER_DEBUG)
+        if (sc->config.debug)
           printf("%s: Received a 'far end LOS' FEAC msg\n", NAME_UNIT);
         break;
 	}
       default:
         {
-        if (DRIVER_DEBUG)
+        if (sc->config.debug)
           printf("%s: Received a 'type 0x%02X' FEAC msg\n", NAME_UNIT, feac & FEAC_STK_FEAC);
         break;
 	}
       }
     sc->last_FEAC = feac & FEAC_STK_FEAC;
-    } while ((feac & FEAC_STK_MORE) != 0);
+    } while (feac & FEAC_STK_MORE);
   stat16 &= ~STAT16_FEAC;
 
   /* Send Service-Affecting priority FEAC messages */
   if (((sc->last_stat16 ^ stat16) & 0xF0) && (FORMAT_T3CPAR))
     {
     /* Transmit continuous FEACs */
-    write_framer(sc, T3CSR_CTL14,
-     read_framer(sc, T3CSR_CTL14) & ~CTL14_FEAC10);
-    if      ((stat16 & STAT16_RLOS)!=0)
-      write_framer(sc, T3CSR_TX_FEAC, 0xC0 + T3BOP_LOS);
-    else if ((stat16 & STAT16_ROOF)!=0)
-      write_framer(sc, T3CSR_TX_FEAC, 0xC0 + T3BOP_OOF);
-    else if ((stat16 & STAT16_RAIS)!=0)
-      write_framer(sc, T3CSR_TX_FEAC, 0xC0 + T3BOP_AIS);
-    else if ((stat16 & STAT16_RIDL)!=0)
-      write_framer(sc, T3CSR_TX_FEAC, 0xC0 + T3BOP_IDLE);
+    framer_write(sc, T3CSR_CTL14,
+     framer_read(sc, T3CSR_CTL14) & ~CTL14_FEAC10);
+    if      (stat16 & STAT16_RLOS)
+      framer_write(sc, T3CSR_TX_FEAC, 0xC0 + T3BOP_LOS);
+    else if (stat16 & STAT16_ROOF)
+      framer_write(sc, T3CSR_TX_FEAC, 0xC0 + T3BOP_OOF);
+    else if (stat16 & STAT16_RAIS)
+      framer_write(sc, T3CSR_TX_FEAC, 0xC0 + T3BOP_AIS);
+    else if (stat16 & STAT16_RIDL)
+      framer_write(sc, T3CSR_TX_FEAC, 0xC0 + T3BOP_IDLE);
     else
-      write_framer(sc, T3CSR_TX_FEAC, CTL5_EMODE);
+      framer_write(sc, T3CSR_TX_FEAC, CTL5_EMODE);
     }
 
   /* Start sending RAI, Remote Alarm Indication. */
-  if (((stat16 & STAT16_ROOF)!=0) && ((stat16 & STAT16_RLOS)==0) &&
-   ((sc->last_stat16 & STAT16_ROOF)==0))
-    write_framer(sc, T3CSR_CTL1, ctl1 &= ~CTL1_XTX);
+  if ((stat16 & STAT16_ROOF) && !(stat16 & STAT16_RLOS) &&
+   !(sc->last_stat16 & STAT16_ROOF))
+    framer_write(sc, T3CSR_CTL1, ctl1 &= ~CTL1_XTX);
   /* Stop sending RAI, Remote Alarm Indication. */
-  else if (((stat16 & STAT16_ROOF)==0) && ((sc->last_stat16 & STAT16_ROOF)!=0))
-    write_framer(sc, T3CSR_CTL1, ctl1 |=  CTL1_XTX);
+  else if (!(stat16 & STAT16_ROOF) && (sc->last_stat16 & STAT16_ROOF))
+    framer_write(sc, T3CSR_CTL1, ctl1 |=  CTL1_XTX);
 
   /* Start sending AIS, Alarm Indication Signal */
-  if (((stat16 & STAT16_RLOS)!=0) && ((sc->last_stat16 & STAT16_RLOS)==0))
+  if ((stat16 & STAT16_RLOS) && !(sc->last_stat16 & STAT16_RLOS))
     {
-    set_mii16_bits(sc, MII16_DS3_FRAME);
-    write_framer(sc, T3CSR_CTL1, ctl1 |  CTL1_TXAIS);
+    mii16_set_bits(sc, MII16_DS3_FRAME);
+    framer_write(sc, T3CSR_CTL1, ctl1 |  CTL1_TXAIS);
     }
   /* Stop sending AIS, Alarm Indication Signal */
-  else if (((stat16 & STAT16_RLOS)==0) && ((sc->last_stat16 & STAT16_RLOS)!=0))
+  else if (!(stat16 & STAT16_RLOS) && (sc->last_stat16 & STAT16_RLOS))
     {
-    clr_mii16_bits(sc, MII16_DS3_FRAME);
-    write_framer(sc, T3CSR_CTL1, ctl1 & ~CTL1_TXAIS);
+    mii16_clr_bits(sc, MII16_DS3_FRAME);
+    framer_write(sc, T3CSR_CTL1, ctl1 & ~CTL1_TXAIS);
     }
 
   /* Time out loopback requests. */
-  if (sc->loop_timer != 0)
+  if (sc->loop_timer)
     if (--sc->loop_timer == 0)
-      if ((mii16 & MII16_DS3_LNLBK)!=0)
+      if (mii16 & MII16_DS3_LNLBK)
         {
-        if (DRIVER_DEBUG)
+        if (sc->config.debug)
           printf("%s: Timeout: Loop Down after 300 seconds\n", NAME_UNIT);
-        clr_mii16_bits(sc, MII16_DS3_LNLBK); /* line loopback off */
+        mii16_clr_bits(sc, MII16_DS3_LNLBK); /* line loopback off */
         }
 
   /* SNMP error counters */
@@ -1409,7 +1400,7 @@ t3_watchdog(softc_t *sc)
 
   /* SNMP Line Status */
   sc->status.snmp.t3.line = 0;
-  if ((ctl1  & CTL1_XTX)==0)   sc->status.snmp.t3.line |= TLINE_TX_RAI;
+  if (!(ctl1 & CTL1_XTX))      sc->status.snmp.t3.line |= TLINE_TX_RAI;
   if (stat16 & STAT16_XERR)    sc->status.snmp.t3.line |= TLINE_RX_RAI;
   if (ctl1   & CTL1_TXAIS)     sc->status.snmp.t3.line |= TLINE_TX_AIS;
   if (stat16 & STAT16_RAIS)    sc->status.snmp.t3.line |= TLINE_RX_AIS;
@@ -1431,13 +1422,10 @@ t3_watchdog(softc_t *sc)
 
   /* If an INWARD loopback is in effect, link status is UP */
   if (sc->config.loop_back != CFG_LOOP_NONE) /* XXX INWARD ONLY */
-    link_status = STATUS_UP;
-
-  return link_status;
+    sc->status.link_state = STATE_UP;
   }
 
-/* IOCTL SYSCALL: can sleep. */
-static void
+static void  /* context: process */
 t3_send_dbl_feac(softc_t *sc, int feac1, int feac2)
   {
   u_int8_t tx_feac;
@@ -1446,25 +1434,24 @@ t3_send_dbl_feac(softc_t *sc, int feac1, int feac2)
   /* The FEAC transmitter could be sending a continuous */
   /*  FEAC msg when told to send a double FEAC message. */
   /* So save the current state of the FEAC transmitter. */
-  tx_feac = read_framer(sc, T3CSR_TX_FEAC);
+  tx_feac = framer_read(sc, T3CSR_TX_FEAC);
   /* Load second FEAC code and stop FEAC transmitter. */
-  write_framer(sc, T3CSR_TX_FEAC,  CTL5_EMODE + feac2);
+  framer_write(sc, T3CSR_TX_FEAC,  CTL5_EMODE + feac2);
   /* FEAC transmitter sends 10 more FEACs and then stops. */
   SLEEP(20000); /* sending one FEAC takes 1700 uSecs */
   /* Load first FEAC code and start FEAC transmitter. */
-  write_framer(sc, T3CSR_DBL_FEAC, CTL13_DFEXEC + feac1);
+  framer_write(sc, T3CSR_DBL_FEAC, CTL13_DFEXEC + feac1);
   /* Wait for double FEAC sequence to complete -- about 70 ms. */
   for (i=0; i<10; i++) /* max delay 100 ms */
-    if (read_framer(sc, T3CSR_DBL_FEAC) & CTL13_DFEXEC) SLEEP(10000);
-  /* Flush received FEACS; don't respond to our own loop cmd! */
-  while (read_framer(sc, T3CSR_FEAC_STK) & FEAC_STK_VALID) DELAY(1); /* XXX HANG */
+    if (framer_read(sc, T3CSR_DBL_FEAC) & CTL13_DFEXEC) SLEEP(10000);
+  /* Flush received FEACS; do not respond to our own loop cmd! */
+  while (framer_read(sc, T3CSR_FEAC_STK) & FEAC_STK_VALID) DELAY(1);
   /* Restore previous state of the FEAC transmitter. */
   /* If it was sending a continous FEAC, it will resume. */
-  write_framer(sc, T3CSR_TX_FEAC, tx_feac);
+  framer_write(sc, T3CSR_TX_FEAC, tx_feac);
   }
 
-/* IOCTL SYSCALL: can sleep. */
-static int
+static int  /* context: process */
 t3_ioctl(softc_t *sc, struct ioctl *ioctl)
   {
   int error = 0;
@@ -1493,40 +1480,52 @@ t3_ioctl(softc_t *sc, struct ioctl *ioctl)
       {
       if (ioctl->data == CFG_LOOP_NONE)
         {
-        clr_mii16_bits(sc, MII16_DS3_FRAME);
-        clr_mii16_bits(sc, MII16_DS3_TRLBK);
-        clr_mii16_bits(sc, MII16_DS3_LNLBK);
-        write_framer(sc, T3CSR_CTL1,
-         read_framer(sc, T3CSR_CTL1) & ~CTL1_3LOOP);
-        write_framer(sc, T3CSR_CTL12,
-         read_framer(sc, T3CSR_CTL12) & ~(CTL12_RTPLOOP | CTL12_RTPLLEN));
+        mii16_clr_bits(sc, MII16_DS3_FRAME);
+        mii16_clr_bits(sc, MII16_DS3_TRLBK);
+        mii16_clr_bits(sc, MII16_DS3_LNLBK);
+        framer_write(sc, T3CSR_CTL1,
+         framer_read(sc, T3CSR_CTL1) & ~CTL1_3LOOP);
+        framer_write(sc, T3CSR_CTL12,
+         framer_read(sc, T3CSR_CTL12) & ~(CTL12_RTPLOOP | CTL12_RTPLLEN));
 	}
       else if (ioctl->data == CFG_LOOP_LINE)
-        set_mii16_bits(sc, MII16_DS3_LNLBK);
+        mii16_set_bits(sc, MII16_DS3_LNLBK);
       else if (ioctl->data == CFG_LOOP_OTHER)
-        set_mii16_bits(sc, MII16_DS3_TRLBK);
+        mii16_set_bits(sc, MII16_DS3_TRLBK);
       else if (ioctl->data == CFG_LOOP_INWARD)
-        write_framer(sc, T3CSR_CTL1,
-         read_framer(sc, T3CSR_CTL1) | CTL1_3LOOP);
+        framer_write(sc, T3CSR_CTL1,
+         framer_read(sc, T3CSR_CTL1) | CTL1_3LOOP);
       else if (ioctl->data == CFG_LOOP_DUAL)
         {
-        set_mii16_bits(sc, MII16_DS3_LNLBK);
-        write_framer(sc, T3CSR_CTL1,
-         read_framer(sc, T3CSR_CTL1) | CTL1_3LOOP);
+        mii16_set_bits(sc, MII16_DS3_LNLBK);
+        framer_write(sc, T3CSR_CTL1,
+         framer_read(sc, T3CSR_CTL1) | CTL1_3LOOP);
 	}
       else if (ioctl->data == CFG_LOOP_PAYLOAD)
         {
-        set_mii16_bits(sc, MII16_DS3_FRAME);
-        write_framer(sc, T3CSR_CTL12,
-         read_framer(sc, T3CSR_CTL12) |  CTL12_RTPLOOP);
-        write_framer(sc, T3CSR_CTL12,
-         read_framer(sc, T3CSR_CTL12) |  CTL12_RTPLLEN);
+        mii16_set_bits(sc, MII16_DS3_FRAME);
+        framer_write(sc, T3CSR_CTL12,
+         framer_read(sc, T3CSR_CTL12) |  CTL12_RTPLOOP);
+        framer_write(sc, T3CSR_CTL12,
+         framer_read(sc, T3CSR_CTL12) |  CTL12_RTPLLEN);
         DELAY(25); /* at least two frames (22 uS) */
-        write_framer(sc, T3CSR_CTL12,
-         read_framer(sc, T3CSR_CTL12) & ~CTL12_RTPLLEN);
+        framer_write(sc, T3CSR_CTL12,
+         framer_read(sc, T3CSR_CTL12) & ~CTL12_RTPLLEN);
 	}
       else
         error = EINVAL;
+      break;
+      }
+    case IOCTL_SET_STATUS:
+      {
+#if 0
+      if (ioctl->data)
+        framer_write(sc, T3CSR_CTL1,
+         framer_read(sc, T3CSR_CTL1) & ~CTL1_TXIDL);
+      else /* off */
+        framer_write(sc, T3CSR_CTL1,
+         framer_read(sc, T3CSR_CTL1) |  CTL1_TXIDL);
+#endif
       break;
       }
     default:
@@ -1537,70 +1536,121 @@ t3_ioctl(softc_t *sc, struct ioctl *ioctl)
   return error;
   }
 
-/* begin SSI card code */
-
 /* Must not sleep. */
 static void
-ssi_config(softc_t *sc)
+t3_attach(softc_t *sc, struct config *config)
   {
-  if (sc->status.card_type == 0)
-    { /* defaults */
-    sc->status.card_type  = TLP_CSID_SSI;
+  int i;
+  u_int8_t ctl1;
+
+  if (config == NULL) /* startup config */
+    {
+    sc->status.card_type  = CSID_LMC_T3;
     sc->config.crc_len    = CFG_CRC_16;
     sc->config.loop_back  = CFG_LOOP_NONE;
-    sc->config.tx_clk_src = CFG_CLKMUX_ST;
-    sc->config.dte_dce    = CFG_DTE;
-    sc->config.synth.n    = 51; /* 1.536 MHz */
-    sc->config.synth.m    = 83;
-    sc->config.synth.v    =  1;
-    sc->config.synth.x    =  1;
-    sc->config.synth.r    =  1;
-    sc->config.synth.prescale = 4;
+    sc->config.format     = CFG_FORMAT_T3CPAR;
+    sc->config.cable_len  = 10; /* meters */
+    sc->config.scrambler  = CFG_SCRAM_DL_KEN;
+    sc->config.tx_clk_src = CFG_CLKMUX_INT;
+
+    /* Center the VCXO -- get within 20 PPM of 44736000. */
+    dac_write(sc, 0x9002); /* set Vref = 2.048 volts */
+    dac_write(sc, 2048); /* range is 0..4095 */
+    }
+  else if (config != &sc->config) /* change config */
+    {
+    if ((sc->config.crc_len    == config->crc_len)   &&
+        (sc->config.loop_back  == config->loop_back) &&
+        (sc->config.format     == config->format)    &&
+        (sc->config.cable_len  == config->cable_len) &&
+        (sc->config.scrambler  == config->scrambler) &&
+        (sc->config.tx_clk_src == config->tx_clk_src))
+      return; /* nothing changed */
+    sc->config.crc_len    = config->crc_len;
+    sc->config.loop_back  = config->loop_back;
+    sc->config.format     = config->format;
+    sc->config.cable_len  = config->cable_len;
+    sc->config.scrambler  = config->scrambler;
+    sc->config.tx_clk_src = config->tx_clk_src;
     }
 
-  /* Disable the TX clock driver while programming the oscillator. */
-  clr_gpio_bits(sc, GPIO_SSI_DCE);
-  make_gpio_output(sc, GPIO_SSI_DCE);
-
-  /* Program the synthesized oscillator. */
-  write_synth(sc, &sc->config.synth);
-
-  /* Set DTE/DCE mode. */
-  /* If DTE mode then DCD & TXC are received. */
-  /* If DCE mode then DCD & TXC are driven. */
-  /* Boards with MII rev=4.0 don't drive DCD. */
-  if (sc->config.dte_dce == CFG_DCE)
-    set_gpio_bits(sc, GPIO_SSI_DCE);
+  /* Set cable length. */
+  if (sc->config.cable_len > 30)
+    mii16_clr_bits(sc, MII16_DS3_ZERO);
   else
-    clr_gpio_bits(sc, GPIO_SSI_DCE);
-  make_gpio_output(sc, GPIO_SSI_DCE);
+    mii16_set_bits(sc, MII16_DS3_ZERO);
+
+  /* Set payload scrambler polynomial. */
+  if (sc->config.scrambler == CFG_SCRAM_LARS)
+    mii16_set_bits(sc, MII16_DS3_POLY);
+  else
+    mii16_clr_bits(sc, MII16_DS3_POLY);
+
+  /* Set payload scrambler on/off. */
+  if (sc->config.scrambler == CFG_SCRAM_OFF)
+    mii16_clr_bits(sc, MII16_DS3_SCRAM);
+  else
+    mii16_set_bits(sc, MII16_DS3_SCRAM);
 
   /* Set CRC length. */
   if (sc->config.crc_len == CFG_CRC_32)
-    set_mii16_bits(sc, MII16_SSI_CRC32);
+    mii16_set_bits(sc, MII16_DS3_CRC32);
   else
-    clr_mii16_bits(sc, MII16_SSI_CRC32);
+    mii16_clr_bits(sc, MII16_DS3_CRC32);
 
-  /* Loop towards host thru cable drivers and receivers. */
-  /* Asserts DCD at the far end of a null modem cable. */
-  if (sc->config.loop_back == CFG_LOOP_PINS)
-    set_mii16_bits(sc, MII16_SSI_LOOP);
+  /* Loopback towards host thru the line interface. */
+  if (sc->config.loop_back == CFG_LOOP_OTHER)
+    mii16_set_bits(sc, MII16_DS3_TRLBK);
   else
-    clr_mii16_bits(sc, MII16_SSI_LOOP);
+    mii16_clr_bits(sc, MII16_DS3_TRLBK);
 
-  /* Assert pin LL in modem conn: ask modem for local loop. */
-  /* Asserts TM at the far end of a null modem cable. */
-  if (sc->config.loop_back == CFG_LOOP_LL)
-    set_mii16_bits(sc, MII16_SSI_LL);
+  /* Loopback towards network thru the line interface. */
+  if (sc->config.loop_back == CFG_LOOP_LINE)
+    mii16_set_bits(sc, MII16_DS3_LNLBK);
+  else if (sc->config.loop_back == CFG_LOOP_DUAL)
+    mii16_set_bits(sc, MII16_DS3_LNLBK);
   else
-    clr_mii16_bits(sc, MII16_SSI_LL);
+    mii16_clr_bits(sc, MII16_DS3_LNLBK);
 
-  /* Assert pin RL in modem conn: ask modem for remote loop. */
-  if (sc->config.loop_back == CFG_LOOP_RL)
-    set_mii16_bits(sc, MII16_SSI_RL);
-  else
-    clr_mii16_bits(sc, MII16_SSI_RL);
+  /* Configure T3 framer chip; write EVERY writeable register. */
+  ctl1 = CTL1_SER | CTL1_XTX;
+  if (sc->config.format    == CFG_FORMAT_T3M13) ctl1 |= CTL1_M13MODE;
+  if (sc->config.loop_back == CFG_LOOP_INWARD)  ctl1 |= CTL1_3LOOP;
+  if (sc->config.loop_back == CFG_LOOP_DUAL)    ctl1 |= CTL1_3LOOP;
+  framer_write(sc, T3CSR_CTL1,     ctl1);
+  framer_write(sc, T3CSR_TX_FEAC,  CTL5_EMODE);
+  framer_write(sc, T3CSR_CTL8,     CTL8_FBEC);
+  framer_write(sc, T3CSR_CTL12,    CTL12_DLCB1 | CTL12_C21 | CTL12_MCB1);
+  framer_write(sc, T3CSR_DBL_FEAC, 0);
+  framer_write(sc, T3CSR_CTL14,    CTL14_RGCEN | CTL14_TGCEN);
+  framer_write(sc, T3CSR_INTEN,    0);
+  framer_write(sc, T3CSR_CTL20,    CTL20_CVEN);
+
+  /* Clear error counters and latched error bits */
+  /*  that may have happened while initializing. */
+  for (i=0; i<21; i++) framer_read(sc, i);
   }
+
+static void
+t3_detach(softc_t *sc)
+  {
+  framer_write(sc, T3CSR_CTL1,
+   framer_read(sc, T3CSR_CTL1) |  CTL1_TXIDL);
+  led_on(sc, MII16_LED_ALL);
+  }
+
+/* End DS3 card code */
+
+/* Begin SSI card code */
+
+static struct card ssi_card =
+  {
+  .ident    = ssi_ident,
+  .watchdog = ssi_watchdog,
+  .ioctl    = ssi_ioctl,
+  .attach   = ssi_attach,
+  .detach   = ssi_detach,
+  };
 
 static void
 ssi_ident(softc_t *sc)
@@ -1608,13 +1658,13 @@ ssi_ident(softc_t *sc)
   printf(", LTC1343/44");
   }
 
-/* Called once a second; must not sleep. */
-static int
+static void  /* context: softirq */
 ssi_watchdog(softc_t *sc)
   {
   u_int16_t cable;
-  u_int16_t mii16 = read_mii(sc, 16) & MII16_SSI_MODEM;
-  int link_status = STATUS_UP;
+  u_int16_t mii16 = mii_read(sc, 16) & MII16_SSI_MODEM;
+
+  sc->status.link_state = STATE_UP;
 
   /* Software is alive. */
   led_inv(sc, MII16_SSI_LED_UL);
@@ -1623,19 +1673,19 @@ ssi_watchdog(softc_t *sc)
   if (sc->status.tx_speed == 0)
     {
     led_on(sc, MII16_SSI_LED_UR);
-    link_status = STATUS_DOWN;
+    sc->status.link_state = STATE_DOWN;
     }
   else
     led_off(sc, MII16_SSI_LED_UR);
 
   /* Check the external cable. */
-  cable = read_mii(sc, 17);
+  cable = mii_read(sc, 17);
   cable = cable &  MII17_SSI_CABLE_MASK;
   cable = cable >> MII17_SSI_CABLE_SHIFT;
   if (cable == 7)
     {
     led_off(sc, MII16_SSI_LED_LL); /* no cable */
-    link_status = STATUS_DOWN;
+    sc->status.link_state = STATE_DOWN;
     }
   else
     led_on(sc, MII16_SSI_LED_LL);
@@ -1643,22 +1693,22 @@ ssi_watchdog(softc_t *sc)
   /* The unit at the other end of the cable is ready if: */
   /*  DTE mode and DCD pin is asserted */
   /*  DCE mode and DSR pin is asserted */
-  if (((sc->config.dte_dce == CFG_DTE) && ((mii16 & MII16_SSI_DCD)==0)) ||
-      ((sc->config.dte_dce == CFG_DCE) && ((mii16 & MII16_SSI_DSR)==0)))
+  if (((sc->config.dte_dce == CFG_DTE) && !(mii16 & MII16_SSI_DCD)) ||
+      ((sc->config.dte_dce == CFG_DCE) && !(mii16 & MII16_SSI_DSR)))
     {
     led_off(sc, MII16_SSI_LED_LR);
-    link_status = STATUS_DOWN;
+    sc->status.link_state = STATE_DOWN;
     }
   else
     led_on(sc, MII16_SSI_LED_LR);
 
-  if (DRIVER_DEBUG && (cable != sc->status.cable_type))
+  if (sc->config.debug && (cable != sc->status.cable_type))
     printf("%s: SSI cable type changed to '%s'\n",
      NAME_UNIT, ssi_cables[cable]);
   sc->status.cable_type = cable;
 
   /* Print the modem control signals if they changed. */
-  if ((DRIVER_DEBUG) && (mii16 != sc->last_mii16))
+  if ((sc->config.debug) && (mii16 != sc->last_mii16))
     {
     const char *on = "ON ", *off = "OFF";
     printf("%s: DTR=%s DSR=%s RTS=%s CTS=%s DCD=%s RI=%s LL=%s RL=%s TM=%s\n",
@@ -1682,30 +1732,27 @@ ssi_watchdog(softc_t *sc)
 
   /* If a loop back is in effect, link status is UP */
   if (sc->config.loop_back != CFG_LOOP_NONE)
-    link_status = STATUS_UP;
-
-  return link_status;
+    sc->status.link_state = STATE_UP;
   }
 
-/* IOCTL SYSCALL: can sleep (but doesn't). */
-static int
+static int  /* context: process */
 ssi_ioctl(softc_t *sc, struct ioctl *ioctl)
   {
   int error = 0;
 
   if (ioctl->cmd == IOCTL_SNMP_SIGS)
     {
-    u_int16_t mii16 = read_mii(sc, 16);
+    u_int16_t mii16 = mii_read(sc, 16);
     mii16 &= ~MII16_SSI_MODEM;
     mii16 |= (MII16_SSI_MODEM & ioctl->data);
-    write_mii(sc, 16, mii16);
+    mii_write(sc, 16, mii16);
     }
   else if (ioctl->cmd == IOCTL_SET_STATUS)
     {
-    if (ioctl->data != 0)
-      set_mii16_bits(sc, (MII16_SSI_DTR | MII16_SSI_RTS | MII16_SSI_DCD));
+    if (ioctl->data)
+      mii16_set_bits(sc, (MII16_SSI_DTR | MII16_SSI_RTS | MII16_SSI_DCD));
     else
-      clr_mii16_bits(sc, (MII16_SSI_DTR | MII16_SSI_RTS | MII16_SSI_DCD));
+      mii16_clr_bits(sc, (MII16_SSI_DTR | MII16_SSI_RTS | MII16_SSI_DCD));
     }
   else
     error = EINVAL;
@@ -1713,106 +1760,640 @@ ssi_ioctl(softc_t *sc, struct ioctl *ioctl)
   return error;
   }
 
-/* begin T1E1 card code */
+/* Must not sleep. */
+static void
+ssi_attach(softc_t *sc, struct config *config)
+  {
+  if (config == NULL) /* startup config */
+    {
+    sc->status.card_type  = CSID_LMC_SSI;
+    sc->config.crc_len    = CFG_CRC_16;
+    sc->config.loop_back  = CFG_LOOP_NONE;
+    sc->config.tx_clk_src = CFG_CLKMUX_ST;
+    sc->config.dte_dce    = CFG_DTE;
+    sc->config.synth.n    = 51; /* 1.536 MHz */
+    sc->config.synth.m    = 83;
+    sc->config.synth.v    =  1;
+    sc->config.synth.x    =  1;
+    sc->config.synth.r    =  1;
+    sc->config.synth.prescale = 4;
+    }
+  else if (config != &sc->config) /* change config */
+    {
+    u_int32_t *old_synth = (u_int32_t *)&sc->config.synth;
+    u_int32_t *new_synth = (u_int32_t *)&config->synth;
+    if ((sc->config.crc_len    == config->crc_len)    &&
+        (sc->config.loop_back  == config->loop_back)  &&
+        (sc->config.tx_clk_src == config->tx_clk_src) &&
+        (sc->config.dte_dce    == config->dte_dce)    &&
+        (*old_synth            == *new_synth))
+      return; /* nothing changed */
+    sc->config.crc_len    = config->crc_len;
+    sc->config.loop_back  = config->loop_back;
+    sc->config.tx_clk_src = config->tx_clk_src;
+    sc->config.dte_dce    = config->dte_dce;
+    *old_synth            = *new_synth;
+    }
+
+  /* Disable the TX clock driver while programming the oscillator. */
+  gpio_clr_bits(sc, GPIO_SSI_DCE);
+  gpio_make_output(sc, GPIO_SSI_DCE);
+
+  /* Program the synthesized oscillator. */
+  synth_write(sc, &sc->config.synth);
+
+  /* Set DTE/DCE mode. */
+  /* If DTE mode then DCD & TXC are received. */
+  /* If DCE mode then DCD & TXC are driven. */
+  /* Boards with MII rev=4.0 do not drive DCD. */
+  if (sc->config.dte_dce == CFG_DCE)
+    gpio_set_bits(sc, GPIO_SSI_DCE);
+  else
+    gpio_clr_bits(sc, GPIO_SSI_DCE);
+  gpio_make_output(sc, GPIO_SSI_DCE);
+
+  /* Set CRC length. */
+  if (sc->config.crc_len == CFG_CRC_32)
+    mii16_set_bits(sc, MII16_SSI_CRC32);
+  else
+    mii16_clr_bits(sc, MII16_SSI_CRC32);
+
+  /* Loop towards host thru cable drivers and receivers. */
+  /* Asserts DCD at the far end of a null modem cable. */
+  if (sc->config.loop_back == CFG_LOOP_PINS)
+    mii16_set_bits(sc, MII16_SSI_LOOP);
+  else
+    mii16_clr_bits(sc, MII16_SSI_LOOP);
+
+  /* Assert pin LL in modem conn: ask modem for local loop. */
+  /* Asserts TM at the far end of a null modem cable. */
+  if (sc->config.loop_back == CFG_LOOP_LL)
+    mii16_set_bits(sc, MII16_SSI_LL);
+  else
+    mii16_clr_bits(sc, MII16_SSI_LL);
+
+  /* Assert pin RL in modem conn: ask modem for remote loop. */
+  if (sc->config.loop_back == CFG_LOOP_RL)
+    mii16_set_bits(sc, MII16_SSI_RL);
+  else
+    mii16_clr_bits(sc, MII16_SSI_RL);
+  }
+
+static void
+ssi_detach(softc_t *sc)
+  {
+  mii16_clr_bits(sc, (MII16_SSI_DTR | MII16_SSI_RTS | MII16_SSI_DCD));
+  led_on(sc, MII16_LED_ALL);
+  }
+
+/* End SSI card code */
+
+/* Begin T1E1 card code */
+
+static struct card t1_card =
+  {
+  .ident    = t1_ident,
+  .watchdog = t1_watchdog,
+  .ioctl    = t1_ioctl,
+  .attach   = t1_attach,
+  .detach   = t1_detach,
+  };
+
+static void
+t1_ident(softc_t *sc)
+  {
+  printf(", Bt837%x rev %x",
+   framer_read(sc, Bt8370_DID)>>4,
+   framer_read(sc, Bt8370_DID)&0x0F);
+  }
+
+static void  /* context: softirq */
+t1_watchdog(softc_t *sc)
+  {
+  u_int16_t LCV = 0, FERR = 0, CRC = 0, FEBE = 0;
+  u_int8_t alm1, alm3, loop, isr0;
+  int i;
+
+  sc->status.link_state = STATE_UP;
+
+  /* Read the alarm registers */
+  alm1 = framer_read(sc, Bt8370_ALM1);
+  alm3 = framer_read(sc, Bt8370_ALM3);
+  loop = framer_read(sc, Bt8370_LOOP);
+  isr0 = framer_read(sc, Bt8370_ISR0);
+
+  /* Always ignore the SIGFRZ alarm bit, */
+  alm1 &= ~ALM1_SIGFRZ;
+  if (FORMAT_T1ANY)  /* ignore RYEL in T1 modes */
+    alm1 &= ~ALM1_RYEL;
+  else if (FORMAT_E1NONE) /* ignore all alarms except LOS */
+    alm1 &= ALM1_RLOS;
+
+  /* Software is alive. */
+  led_inv(sc, MII16_T1_LED_GRN);
+
+  /* Receiving Alarm Indication Signal (AIS). */
+  if      (alm1 & ALM1_RAIS) /* receiving ais */
+    led_on(sc, MII16_T1_LED_BLU);
+  else if (alm1 & ALM1_RLOS) /* sending ais */
+    led_inv(sc, MII16_T1_LED_BLU);
+  else
+    led_off(sc, MII16_T1_LED_BLU);
+
+  /* Receiving Remote Alarm Indication (RAI). */
+  if (alm1 & (ALM1_RMYEL | ALM1_RYEL)) /* receiving rai */
+    led_on(sc, MII16_T1_LED_YEL);
+  else if (alm1 & ALM1_RLOF) /* sending rai */
+    led_inv(sc, MII16_T1_LED_YEL);
+  else
+    led_off(sc, MII16_T1_LED_YEL);
+
+  /* If any alarm bits are set then the link is 'down'. */
+  /* The bad bits are: rmyel ryel rais ralos rlos rlof. */
+  /* Some alarm bits have been masked by this point. */
+  if (alm1) sc->status.link_state = STATE_DOWN;
+
+  /* Declare local Red Alarm if the link is down. */
+  if (sc->status.link_state == STATE_DOWN)
+    led_on(sc, MII16_T1_LED_RED);
+  else if (sc->loop_timer) /* loopback is active */
+    led_inv(sc, MII16_T1_LED_RED);
+  else
+    led_off(sc, MII16_T1_LED_RED);
+
+  /* Print latched error bits if they changed. */
+  if ((sc->config.debug) && (alm1 != sc->last_alm1))
+    {
+    const char *on = "ON ", *off = "OFF";
+    printf("%s: RLOF=%s RLOS=%s RALOS=%s RAIS=%s RYEL=%s RMYEL=%s\n",
+     NAME_UNIT,
+     (alm1 & ALM1_RLOF)  ? on : off,
+     (alm1 & ALM1_RLOS)  ? on : off,
+     (alm1 & ALM1_RALOS) ? on : off,
+     (alm1 & ALM1_RAIS)  ? on : off,
+     (alm1 & ALM1_RYEL)  ? on : off,
+     (alm1 & ALM1_RMYEL) ? on : off);
+    }
+
+  /* Check and print error counters if non-zero. */
+  LCV = framer_read(sc, Bt8370_LCV_LO)  +
+        (framer_read(sc, Bt8370_LCV_HI)<<8);
+  if (!FORMAT_E1NONE)
+    FERR = framer_read(sc, Bt8370_FERR_LO) +
+          (framer_read(sc, Bt8370_FERR_HI)<<8);
+  if (FORMAT_E1CRC || FORMAT_T1ESF)
+    CRC  = framer_read(sc, Bt8370_CRC_LO)  +
+          (framer_read(sc, Bt8370_CRC_HI)<<8);
+  if (FORMAT_E1CRC)
+    FEBE = framer_read(sc, Bt8370_FEBE_LO) +
+          (framer_read(sc, Bt8370_FEBE_HI)<<8);
+  /* Only LCV is valid if Out-Of-Frame */
+  if (FORMAT_E1NONE) FERR = CRC = FEBE = 0;
+  if ((sc->config.debug) && (LCV || FERR || CRC || FEBE))
+    printf("%s: LCV=%u FERR=%u CRC=%u FEBE=%u\n",
+     NAME_UNIT, LCV,   FERR,   CRC,   FEBE);
+
+  /* Driver keeps crude link-level error counters (SNMP is better). */
+  sc->status.cntrs.lcv_errs  += LCV;
+  sc->status.cntrs.frm_errs  += FERR;
+  sc->status.cntrs.crc_errs  += CRC;
+  sc->status.cntrs.febe_errs += FEBE;
+
+  /* Check for BOP messages in the ESF Facility Data Link. */
+  if ((FORMAT_T1ESF) && (framer_read(sc, Bt8370_ISR1) & 0x80))
+    {
+    u_int8_t bop_code = framer_read(sc, Bt8370_RBOP) & 0x3F;
+
+    switch (bop_code)
+      {
+      case T1BOP_OOF:
+        {
+        if ((sc->config.debug) && !(sc->last_alm1 & ALM1_RMYEL))
+          printf("%s: Receiving a 'yellow alarm' BOP msg\n", NAME_UNIT);
+        break;
+        }
+      case T1BOP_LINE_UP:
+        {
+        if (sc->config.debug)
+          printf("%s: Received a 'line loopback activate' BOP msg\n", NAME_UNIT);
+        framer_write(sc, Bt8370_LOOP, LOOP_LINE);
+        sc->loop_timer = 305;
+        break;
+        }
+      case T1BOP_LINE_DOWN:
+        {
+        if (sc->config.debug)
+          printf("%s: Received a 'line loopback deactivate' BOP msg\n", NAME_UNIT);
+        framer_write(sc, Bt8370_LOOP,
+         framer_read(sc, Bt8370_LOOP) & ~LOOP_LINE);
+        sc->loop_timer = 0;
+        break;
+        }
+      case T1BOP_PAY_UP:
+        {
+        if (sc->config.debug)
+          printf("%s: Received a 'payload loopback activate' BOP msg\n", NAME_UNIT);
+        framer_write(sc, Bt8370_LOOP, LOOP_PAYLOAD);
+        sc->loop_timer = 305;
+        break;
+        }
+      case T1BOP_PAY_DOWN:
+        {
+        if (sc->config.debug)
+          printf("%s: Received a 'payload loopback deactivate' BOP msg\n", NAME_UNIT);
+        framer_write(sc, Bt8370_LOOP,
+         framer_read(sc, Bt8370_LOOP) & ~LOOP_PAYLOAD);
+        sc->loop_timer = 0;
+        break;
+        }
+      default:
+        {
+        if (sc->config.debug)
+          printf("%s: Received a type 0x%02X BOP msg\n", NAME_UNIT, bop_code);
+        break;
+        }
+      }
+    }
+
+  /* Check for HDLC pkts in the ESF Facility Data Link. */
+  if ((FORMAT_T1ESF) && (framer_read(sc, Bt8370_ISR2) & 0x70))
+    {
+    /* while (not fifo-empty && not start-of-msg) flush fifo */
+    while ((framer_read(sc, Bt8370_RDL1_STAT) & 0x0C)==0)
+      framer_read(sc, Bt8370_RDL1);
+    /* If (not fifo-empty), then begin processing fifo contents. */
+    if ((framer_read(sc, Bt8370_RDL1_STAT) & 0x0C) == 0x08)
+      {
+      u_int8_t msg[64];
+      u_int8_t stat = framer_read(sc, Bt8370_RDL1);
+      sc->status.cntrs.fdl_pkts++;
+      for (i=0; i<(stat & 0x3F); i++)
+        msg[i] = framer_read(sc, Bt8370_RDL1);
+      /* Is this FDL message a T1.403 performance report? */
+      if (((stat & 0x3F)==11) &&
+          ((msg[0]==0x38) || (msg[0]==0x3A)) &&
+           (msg[1]==1)   &&  (msg[2]==3))
+        /* Copy 4 PRs from FDL pkt to SNMP struct. */
+        memcpy(sc->status.snmp.t1.prm, msg+3, 8);
+      }
+    }
+
+  /* Check for inband loop up/down commands. */
+  if (FORMAT_T1ANY)
+    {
+    u_int8_t isr6   = framer_read(sc, Bt8370_ISR6);
+    u_int8_t alarm2 = framer_read(sc, Bt8370_ALM2);
+    u_int8_t tlb    = framer_read(sc, Bt8370_TLB);
+
+    /* Inband Code == Loop Up && On Transition && Inband Tx Inactive */
+    if ((isr6 & 0x40) && (alarm2 & 0x40) && !(tlb & 1))
+      { /* CSU loop up is 10000 10000 ... */
+      if (sc->config.debug)
+        printf("%s: Received a 'CSU Loop Up' inband msg\n", NAME_UNIT);
+      framer_write(sc, Bt8370_LOOP, LOOP_LINE); /* Loop up */
+      sc->loop_timer = 305;
+      }
+    /* Inband Code == Loop Down && On Transition && Inband Tx Inactive */
+    if ((isr6 & 0x80) && (alarm2 & 0x80) && !(tlb & 1))
+      { /* CSU loop down is 100 100 100 ... */
+      if (sc->config.debug)
+        printf("%s: Received a 'CSU Loop Down' inband msg\n", NAME_UNIT);
+      framer_write(sc, Bt8370_LOOP,
+       framer_read(sc, Bt8370_LOOP) & ~LOOP_LINE); /* loop down */
+      sc->loop_timer = 0;
+      }
+    }
+
+  /* Manually send Yellow Alarm BOP msgs. */
+  if (FORMAT_T1ESF)
+    {
+    u_int8_t isr7 = framer_read(sc, Bt8370_ISR7);
+
+    if ((isr7 & 0x02) && (alm1 & 0x02)) /* RLOF on-transition */
+      { /* Start sending continuous Yellow Alarm BOP messages. */
+      framer_write(sc, Bt8370_BOP,  RBOP_25 | TBOP_CONT);
+      framer_write(sc, Bt8370_TBOP, 0x00); /* send BOP; order matters */
+      }
+    else if ((isr7 & 0x02) && !(alm1 & 0x02)) /* RLOF off-transition */
+      { /* Stop sending continuous Yellow Alarm BOP messages. */
+      framer_write(sc, Bt8370_BOP,  RBOP_25 | TBOP_OFF);
+      }
+    }
+
+  /* Time out loopback requests. */
+  if (sc->loop_timer)
+    if (--sc->loop_timer == 0)
+      if (loop)
+        {
+        if (sc->config.debug)
+          printf("%s: Timeout: Loop Down after 300 seconds\n", NAME_UNIT);
+        framer_write(sc, Bt8370_LOOP, loop & ~(LOOP_PAYLOAD | LOOP_LINE));
+        }
+
+  /* RX Test Pattern status */
+  if ((sc->config.debug) && (isr0 & 0x10))
+    printf("%s: RX Test Pattern Sync\n", NAME_UNIT);
+
+  /* SNMP Error Counters */
+  sc->status.snmp.t1.lcv  = LCV;
+  sc->status.snmp.t1.fe   = FERR;
+  sc->status.snmp.t1.crc  = CRC;
+  sc->status.snmp.t1.febe = FEBE;
+
+  /* SNMP Line Status */
+  sc->status.snmp.t1.line = 0;
+  if  (alm1 & ALM1_RMYEL)  sc->status.snmp.t1.line |= TLINE_RX_RAI;
+  if  (alm1 & ALM1_RYEL)   sc->status.snmp.t1.line |= TLINE_RX_RAI;
+  if  (alm1 & ALM1_RLOF)   sc->status.snmp.t1.line |= TLINE_TX_RAI;
+  if  (alm1 & ALM1_RAIS)   sc->status.snmp.t1.line |= TLINE_RX_AIS;
+  if  (alm1 & ALM1_RLOS)   sc->status.snmp.t1.line |= TLINE_TX_AIS;
+  if  (alm1 & ALM1_RLOF)   sc->status.snmp.t1.line |= TLINE_LOF;
+  if  (alm1 & ALM1_RLOS)   sc->status.snmp.t1.line |= TLINE_LOS;
+  if  (alm3 & ALM3_RMAIS)  sc->status.snmp.t1.line |= T1LINE_RX_TS16_AIS;
+  if  (alm3 & ALM3_SRED)   sc->status.snmp.t1.line |= T1LINE_TX_TS16_LOMF;
+  if  (alm3 & ALM3_SEF)    sc->status.snmp.t1.line |= T1LINE_SEF;
+  if  (isr0 & 0x10)        sc->status.snmp.t1.line |= T1LINE_RX_TEST;
+  if ((alm1 & ALM1_RMYEL) && (FORMAT_E1CAS))
+                           sc->status.snmp.t1.line |= T1LINE_RX_TS16_LOMF;
+
+  /* SNMP Loopback Status */
+  sc->status.snmp.t1.loop &= ~(TLOOP_FAR_LINE | TLOOP_FAR_PAYLOAD);
+  if (sc->config.loop_back == CFG_LOOP_TULIP)
+                           sc->status.snmp.t1.loop |= TLOOP_NEAR_OTHER;
+  if (loop & LOOP_PAYLOAD) sc->status.snmp.t1.loop |= TLOOP_NEAR_PAYLOAD;
+  if (loop & LOOP_LINE)    sc->status.snmp.t1.loop |= TLOOP_NEAR_LINE;
+  if (loop & LOOP_ANALOG)  sc->status.snmp.t1.loop |= TLOOP_NEAR_OTHER;
+  if (loop & LOOP_FRAMER)  sc->status.snmp.t1.loop |= TLOOP_NEAR_INWARD;
+
+  /* Remember this state until next time. */
+  sc->last_alm1 = alm1;
+
+  /* If an INWARD loopback is in effect, link status is UP */
+  if (sc->config.loop_back != CFG_LOOP_NONE) /* XXX INWARD ONLY */
+    sc->status.link_state = STATE_UP;
+  }
+
+static void  /* context: process */
+t1_send_bop(softc_t *sc, int bop_code)
+  {
+  u_int8_t bop;
+  int i;
+
+  /* The BOP transmitter could be sending a continuous */
+  /*  BOP msg when told to send this BOP_25 message. */
+  /* So save and restore the state of the BOP machine. */
+  bop = framer_read(sc, Bt8370_BOP);
+  framer_write(sc, Bt8370_BOP, RBOP_OFF | TBOP_OFF);
+  for (i=0; i<40; i++) /* max delay 400 ms. */
+    if (framer_read(sc, Bt8370_BOP_STAT) & 0x80) SLEEP(10000);
+  /* send 25 repetitions of bop_code */
+  framer_write(sc, Bt8370_BOP, RBOP_OFF | TBOP_25);
+  framer_write(sc, Bt8370_TBOP, bop_code); /* order matters */
+  /* wait for tx to stop */
+  for (i=0; i<40; i++) /* max delay 400 ms. */
+    if (framer_read(sc, Bt8370_BOP_STAT) & 0x80) SLEEP(10000);
+  /* Restore previous state of the BOP machine. */
+  framer_write(sc, Bt8370_BOP, bop);
+  }
+
+static int  /* context: process */
+t1_ioctl(softc_t *sc, struct ioctl *ioctl)
+  {
+  int error = 0;
+
+  switch (ioctl->cmd)
+    {
+    case IOCTL_SNMP_SEND:  /* set opstatus? */
+      {
+      switch (ioctl->data)
+        {
+        case TSEND_NORMAL:
+          {
+          framer_write(sc, Bt8370_TPATT, 0x00); /* tx pattern generator off */
+          framer_write(sc, Bt8370_RPATT, 0x00); /* rx pattern detector off */
+          framer_write(sc, Bt8370_TLB,   0x00); /* tx inband generator off */
+          break;
+	  }
+        case TSEND_LINE:
+          {
+          if (FORMAT_T1ESF)
+            t1_send_bop(sc, T1BOP_LINE_UP);
+          else if (FORMAT_T1SF)
+            {
+            framer_write(sc, Bt8370_LBP, 0x08); /* 10000 10000 ... */
+            framer_write(sc, Bt8370_TLB, 0x05); /* 5 bits, framed, start */
+	    }
+          sc->status.snmp.t1.loop |= TLOOP_FAR_LINE;
+          break;
+	  }
+        case TSEND_PAYLOAD:
+          {
+          t1_send_bop(sc, T1BOP_PAY_UP);
+          sc->status.snmp.t1.loop |= TLOOP_FAR_PAYLOAD;
+          break;
+	  }
+        case TSEND_RESET:
+          {
+          if (sc->status.snmp.t1.loop == TLOOP_FAR_LINE)
+            {
+            if (FORMAT_T1ESF)
+              t1_send_bop(sc, T1BOP_LINE_DOWN);
+            else if (FORMAT_T1SF)
+              {
+              framer_write(sc, Bt8370_LBP, 0x24); /* 100100 100100 ... */
+              framer_write(sc, Bt8370_TLB, 0x09); /* 6 bits, framed, start */
+	      }
+            sc->status.snmp.t1.loop &= ~TLOOP_FAR_LINE;
+	    }
+          if (sc->status.snmp.t1.loop == TLOOP_FAR_PAYLOAD)
+            {
+            t1_send_bop(sc, T1BOP_PAY_DOWN);
+            sc->status.snmp.t1.loop &= ~TLOOP_FAR_PAYLOAD;
+	    }
+          break;
+	  }
+        case TSEND_QRS:
+          {
+          framer_write(sc, Bt8370_TPATT, 0x1E); /* framed QRSS */
+          break;
+	  }
+        default:
+          {
+          error = EINVAL;
+          break;
+	  }
+	}
+      break;
+      }
+    case IOCTL_SNMP_LOOP:  /* set opstatus = test? */
+      {
+      u_int8_t new_loop = 0;
+
+      if      (ioctl->data == CFG_LOOP_NONE)
+        new_loop = 0;
+      else if (ioctl->data == CFG_LOOP_PAYLOAD)
+        new_loop = LOOP_PAYLOAD;
+      else if (ioctl->data == CFG_LOOP_LINE)
+        new_loop = LOOP_LINE;
+      else if (ioctl->data == CFG_LOOP_OTHER)
+        new_loop = LOOP_ANALOG;
+      else if (ioctl->data == CFG_LOOP_INWARD)
+        new_loop = LOOP_FRAMER;
+      else if (ioctl->data == CFG_LOOP_DUAL)
+        new_loop = LOOP_DUAL;
+      else
+        error = EINVAL;
+      if (!error)
+        {
+        framer_write(sc, Bt8370_LOOP, new_loop);
+        sc->config.loop_back = ioctl->data;
+	}
+      break;
+      }
+    case IOCTL_SET_STATUS:
+      {
+#if 0
+      if (ioctl->data)
+        mii16_set_bits(sc, MII16_T1_XOE);
+      else
+        mii16_clr_bits(sc, MII16_T1_XOE);
+#endif
+      break;
+      }
+    default:
+      error = EINVAL;
+      break;
+    }
+
+  return error;
+  }
 
 /* Must not sleep. */
 static void
-t1_config(softc_t *sc)
+t1_attach(softc_t *sc, struct config *config)
   {
   int i;
   u_int8_t pulse, lbo, gain;
 
-  if (sc->status.card_type == 0)
-    {  /* defaults */
-    sc->status.card_type   = TLP_CSID_T1E1;
+  if (config == NULL) /* startup config */
+    {
+    /* Disable transmitter output drivers. */
+    mii16_clr_bits(sc, MII16_T1_XOE);
+    /* Bt8370 occasionally powers up in a loopback mode. */
+    /* Data sheet says zero LOOP reg and do a sw-reset. */
+    framer_write(sc, Bt8370_LOOP, 0x00); /* no loopback */
+    framer_write(sc, Bt8370_CR0,  0x80); /* sw-reset */
+    for (i=0; i<10; i++) /* wait for sw-reset to clear; max 10 ms */
+      if (framer_read(sc, Bt8370_CR0) & 0x80) DELAY(1000);
+
+    sc->status.card_type   = CSID_LMC_T1E1;
     sc->config.crc_len     = CFG_CRC_16;
     sc->config.loop_back   = CFG_LOOP_NONE;
-    sc->config.tx_clk_src  = CFG_CLKMUX_INT;
+    sc->config.tx_clk_src  = CFG_CLKMUX_RT; /* loop timed */
+#if 1 /* USA */ /* decide using time zone? */
     sc->config.format      = CFG_FORMAT_T1ESF;
+#else /* REST OF PLANET */
+    sc->config.format      = CFG_FORMAT_E1FASCRC;
+#endif
+    sc->config.time_slots  = 0xFFFFFFFF;
     sc->config.cable_len   = 10;
-    sc->config.time_slots  = 0x01FFFFFE;
     sc->config.tx_pulse    = CFG_PULSE_AUTO;
-    sc->config.rx_gain     = CFG_GAIN_AUTO;
+    sc->config.rx_gain_max = CFG_GAIN_AUTO;
     sc->config.tx_lbo      = CFG_LBO_AUTO;
-
-    /* Bt8370 occasionally powers up in a loopback mode. */
-    /* Data sheet says zero LOOP reg and do a s/w reset. */
-    write_framer(sc, Bt8370_LOOP, 0x00); /* no loopback */
-    write_framer(sc, Bt8370_CR0,  0x80); /* s/w reset */
-    for (i=0; i<10; i++) /* max delay 10 ms */
-      if (read_framer(sc, Bt8370_CR0) & 0x80) DELAY(1000);
+    }
+  else if (config != &sc->config) /* change config */
+    {
+    if ((sc->config.crc_len     == config->crc_len)     &&
+        (sc->config.loop_back   == config->loop_back)   &&
+        (sc->config.tx_clk_src  == config->tx_clk_src)  &&
+        (sc->config.format      == config->format)      &&
+        (sc->config.time_slots  == config->time_slots)  &&
+        (sc->config.cable_len   == config->cable_len)   &&
+        (sc->config.tx_pulse    == config->tx_pulse)    &&
+        (sc->config.rx_gain_max == config->rx_gain_max) &&
+        (sc->config.tx_lbo      == config->tx_lbo))
+      return; /* nothing changed */
+    sc->config.crc_len     = config->crc_len;
+    sc->config.loop_back   = config->loop_back;
+    sc->config.tx_clk_src  = config->tx_clk_src;
+    sc->config.format      = config->format;
+    sc->config.cable_len   = config->cable_len;
+    sc->config.time_slots  = config->time_slots;
+    sc->config.tx_pulse    = config->tx_pulse;
+    sc->config.rx_gain_max = config->rx_gain_max;
+    sc->config.tx_lbo      = config->tx_lbo;
     }
 
   /* Set CRC length. */
   if (sc->config.crc_len == CFG_CRC_32)
-    set_mii16_bits(sc, MII16_T1_CRC32);
+    mii16_set_bits(sc, MII16_T1_CRC32);
   else
-    clr_mii16_bits(sc, MII16_T1_CRC32);
+    mii16_clr_bits(sc, MII16_T1_CRC32);
 
   /* Invert HDLC payload data in SF/AMI mode. */
   /* HDLC stuff bits satisfy T1 pulse density. */
   if (FORMAT_T1SF)
-    set_mii16_bits(sc, MII16_T1_INVERT);
+    mii16_set_bits(sc, MII16_T1_INVERT);
   else
-    clr_mii16_bits(sc, MII16_T1_INVERT);
+    mii16_clr_bits(sc, MII16_T1_INVERT);
 
   /* Set the transmitter output impedance. */
-  if (FORMAT_E1ANY) set_mii16_bits(sc, MII16_T1_Z);
+  if (FORMAT_E1ANY) mii16_set_bits(sc, MII16_T1_Z);
 
   /* 001:CR0 -- Control Register 0 - T1/E1 and frame format */
-  write_framer(sc, Bt8370_CR0, sc->config.format);
+  framer_write(sc, Bt8370_CR0, sc->config.format);
 
   /* 002:JAT_CR -- Jitter Attenuator Control Register */
   if (sc->config.tx_clk_src == CFG_CLKMUX_RT) /* loop timing */
-    write_framer(sc, Bt8370_JAT_CR, 0xA3); /* JAT in RX path */
+    framer_write(sc, Bt8370_JAT_CR, 0xA3); /* JAT in RX path */
   else
     { /* 64-bit elastic store; free-running JCLK and CLADO */
-    write_framer(sc, Bt8370_JAT_CR, 0x4B); /* assert jcenter */
-    write_framer(sc, Bt8370_JAT_CR, 0x43); /* release jcenter */
+    framer_write(sc, Bt8370_JAT_CR, 0x4B); /* assert jcenter */
+    framer_write(sc, Bt8370_JAT_CR, 0x43); /* release jcenter */
     }
 
   /* 00C-013:IERn -- Interrupt Enable Registers */
   for (i=Bt8370_IER7; i<=Bt8370_IER0; i++)
-    write_framer(sc, i, 0); /* no interrupts; polled */
+    framer_write(sc, i, 0); /* no interrupts; polled */
 
   /* 014:LOOP -- loopbacks */
   if      (sc->config.loop_back == CFG_LOOP_PAYLOAD)
-    write_framer(sc, Bt8370_LOOP, LOOP_PAYLOAD);
+    framer_write(sc, Bt8370_LOOP, LOOP_PAYLOAD);
   else if (sc->config.loop_back == CFG_LOOP_LINE)
-    write_framer(sc, Bt8370_LOOP, LOOP_LINE);
+    framer_write(sc, Bt8370_LOOP, LOOP_LINE);
   else if (sc->config.loop_back == CFG_LOOP_OTHER)
-    write_framer(sc, Bt8370_LOOP, LOOP_ANALOG);
+    framer_write(sc, Bt8370_LOOP, LOOP_ANALOG);
   else if (sc->config.loop_back == CFG_LOOP_INWARD)
-    write_framer(sc, Bt8370_LOOP, LOOP_FRAMER);
+    framer_write(sc, Bt8370_LOOP, LOOP_FRAMER);
   else if (sc->config.loop_back == CFG_LOOP_DUAL)
-    write_framer(sc, Bt8370_LOOP, LOOP_DUAL);
+    framer_write(sc, Bt8370_LOOP, LOOP_DUAL);
   else
-    write_framer(sc, Bt8370_LOOP, 0x00); /* no loopback */
+    framer_write(sc, Bt8370_LOOP, 0x00); /* no loopback */
 
   /* 015:DL3_TS -- Data Link 3 */
-  write_framer(sc, Bt8370_DL3_TS, 0x00); /* disabled */
+  framer_write(sc, Bt8370_DL3_TS, 0x00); /* disabled */
 
   /* 018:PIO -- Programmable I/O */
-  write_framer(sc, Bt8370_PIO, 0xFF); /* all pins are outputs */
+  framer_write(sc, Bt8370_PIO, 0xFF); /* all pins are outputs */
 
   /* 019:POE -- Programmable Output Enable */
-  write_framer(sc, Bt8370_POE, 0x00); /* all outputs are enabled */
+  framer_write(sc, Bt8370_POE, 0x00); /* all outputs are enabled */
 
   /* 01A;CMUX -- Clock Input Mux */
   if (sc->config.tx_clk_src == CFG_CLKMUX_EXT)
-    write_framer(sc, Bt8370_CMUX, 0x0C); /* external timing */
+    framer_write(sc, Bt8370_CMUX, 0x0C); /* external timing */
   else
-    write_framer(sc, Bt8370_CMUX, 0x0F); /* internal timing */
+    framer_write(sc, Bt8370_CMUX, 0x0F); /* internal timing */
 
   /* 020:LIU_CR -- Line Interface Unit Config Register */
-  write_framer(sc, Bt8370_LIU_CR, 0xC1); /* reset LIU, squelch */
+  framer_write(sc, Bt8370_LIU_CR, 0xC1); /* reset LIU, squelch */
 
   /* 022:RLIU_CR -- RX Line Interface Unit Config Reg */
-  /* Errata sheet says don't use freeze-short, but we do anyway! */
-  write_framer(sc, Bt8370_RLIU_CR, 0xB1); /* AGC=2048, Long Eye */
+  /* Errata sheet says do not use freeze-short, but we do anyway! */
+  framer_write(sc, Bt8370_RLIU_CR, 0xB1); /* AGC=2048, Long Eye */
 
   /* Select Rx sensitivity based on cable length. */
-  if ((gain = sc->config.rx_gain) == CFG_GAIN_AUTO)
+  if ((gain = sc->config.rx_gain_max) == CFG_GAIN_AUTO)
     {
     if      (sc->config.cable_len > 2000)
       gain = CFG_GAIN_EXTEND;
@@ -1825,50 +2406,50 @@ t1_config(softc_t *sc)
     }
 
   /* 024:VGA_MAX -- Variable Gain Amplifier Max gain */
-  write_framer(sc, Bt8370_VGA_MAX, gain);
+  framer_write(sc, Bt8370_VGA_MAX, gain);
 
   /* 028:PRE_EQ -- Pre Equalizer */
   if (gain == CFG_GAIN_EXTEND)
-    write_framer(sc, Bt8370_PRE_EQ, 0xE6);  /* ON; thresh 6 */
+    framer_write(sc, Bt8370_PRE_EQ, 0xE6);  /* ON; thresh 6 */
   else
-    write_framer(sc, Bt8370_PRE_EQ, 0xA6);  /* OFF; thresh 6 */
+    framer_write(sc, Bt8370_PRE_EQ, 0xA6);  /* OFF; thresh 6 */
 
   /* 038-03C:GAINn -- RX Equalizer gain thresholds */
-  write_framer(sc, Bt8370_GAIN0, 0x24);
-  write_framer(sc, Bt8370_GAIN1, 0x28);
-  write_framer(sc, Bt8370_GAIN2, 0x2C);
-  write_framer(sc, Bt8370_GAIN3, 0x30);
-  write_framer(sc, Bt8370_GAIN4, 0x34);
+  framer_write(sc, Bt8370_GAIN0, 0x24);
+  framer_write(sc, Bt8370_GAIN1, 0x28);
+  framer_write(sc, Bt8370_GAIN2, 0x2C);
+  framer_write(sc, Bt8370_GAIN3, 0x30);
+  framer_write(sc, Bt8370_GAIN4, 0x34);
 
   /* 040:RCR0 -- Receiver Control Register 0 */
   if      (FORMAT_T1ESF)
-    write_framer(sc, Bt8370_RCR0, 0x05); /* B8ZS, 2/5 FErrs */
+    framer_write(sc, Bt8370_RCR0, 0x05); /* B8ZS, 2/5 FErrs */
   else if (FORMAT_T1SF)
-    write_framer(sc, Bt8370_RCR0, 0x84); /* AMI,  2/5 FErrs */
+    framer_write(sc, Bt8370_RCR0, 0x84); /* AMI,  2/5 FErrs */
   else if (FORMAT_E1NONE)
-    write_framer(sc, Bt8370_RCR0, 0x41); /* HDB3, rabort */
+    framer_write(sc, Bt8370_RCR0, 0x41); /* HDB3, rabort */
   else if (FORMAT_E1CRC)
-    write_framer(sc, Bt8370_RCR0, 0x09); /* HDB3, 3 FErrs or 915 CErrs */
+    framer_write(sc, Bt8370_RCR0, 0x09); /* HDB3, 3 FErrs or 915 CErrs */
   else  /* E1 no CRC */
-    write_framer(sc, Bt8370_RCR0, 0x19); /* HDB3, 3 FErrs */
+    framer_write(sc, Bt8370_RCR0, 0x19); /* HDB3, 3 FErrs */
 
   /* 041:RPATT -- Receive Test Pattern configuration */
-  write_framer(sc, Bt8370_RPATT, 0x3E); /* looking for framed QRSS */
+  framer_write(sc, Bt8370_RPATT, 0x3E); /* looking for framed QRSS */
 
   /* 042:RLB -- Receive Loop Back code detector config */
-  write_framer(sc, Bt8370_RLB, 0x09); /* 6 bits down; 5 bits up */
+  framer_write(sc, Bt8370_RLB, 0x09); /* 6 bits down; 5 bits up */
 
   /* 043:LBA -- Loop Back Activate code */
-  write_framer(sc, Bt8370_LBA, 0x08); /* 10000 10000 10000 ... */
+  framer_write(sc, Bt8370_LBA, 0x08); /* 10000 10000 10000 ... */
 
   /* 044:LBD -- Loop Back Deactivate code */
-  write_framer(sc, Bt8370_LBD, 0x24); /* 100100 100100 100100 ... */
+  framer_write(sc, Bt8370_LBD, 0x24); /* 100100 100100 100100 ... */
 
   /* 045:RALM -- Receive Alarm signal configuration */
-  write_framer(sc, Bt8370_RALM, 0x0C); /* yel_intg rlof_intg */
+  framer_write(sc, Bt8370_RALM, 0x0C); /* yel_intg rlof_intg */
 
   /* 046:LATCH -- Alarm/Error/Counter Latch register */
-  write_framer(sc, Bt8370_LATCH, 0x1F); /* stop_cnt latch_{cnt,err,alm} */
+  framer_write(sc, Bt8370_LATCH, 0x1F); /* stop_cnt latch_{cnt,err,alm} */
 
   /* Select Pulse Shape based on cable length (T1 only). */
   if ((pulse = sc->config.tx_pulse) == CFG_PULSE_AUTO)
@@ -1911,1115 +2492,1193 @@ t1_config(softc_t *sc)
     }
 
   /* 068:TLIU_CR -- Transmit LIU Control Register */
-  write_framer(sc, Bt8370_TLIU_CR, (0x40 | (lbo & 0x30) | (pulse & 0x0E)));
+  framer_write(sc, Bt8370_TLIU_CR, (0x40 | (lbo & 0x30) | (pulse & 0x0E)));
 
   /* 070:TCR0 -- Transmit Framer Configuration */
-  write_framer(sc, Bt8370_TCR0, sc->config.format>>1);
+  framer_write(sc, Bt8370_TCR0, sc->config.format>>1);
 
   /* 071:TCR1 -- Transmitter Configuration */
   if (FORMAT_T1SF)
-    write_framer(sc, Bt8370_TCR1, 0x43); /* tabort, AMI PDV enforced */
+    framer_write(sc, Bt8370_TCR1, 0x43); /* tabort, AMI PDV enforced */
   else
-    write_framer(sc, Bt8370_TCR1, 0x41); /* tabort, B8ZS or HDB3 */
+    framer_write(sc, Bt8370_TCR1, 0x41); /* tabort, B8ZS or HDB3 */
 
   /* 072:TFRM -- Transmit Frame format       MYEL YEL MF FE CRC FBIT */
   if      (sc->config.format == CFG_FORMAT_T1ESF)
-    write_framer(sc, Bt8370_TFRM, 0x0B); /*  -   YEL MF -  CRC FBIT */
+    framer_write(sc, Bt8370_TFRM, 0x0B); /*  -   YEL MF -  CRC FBIT */
   else if (sc->config.format == CFG_FORMAT_T1SF)
-    write_framer(sc, Bt8370_TFRM, 0x19); /*  -   YEL MF -   -  FBIT */
+    framer_write(sc, Bt8370_TFRM, 0x19); /*  -   YEL MF -   -  FBIT */
   else if (sc->config.format == CFG_FORMAT_E1FAS)
-    write_framer(sc, Bt8370_TFRM, 0x11); /*  -   YEL -  -   -  FBIT */
+    framer_write(sc, Bt8370_TFRM, 0x11); /*  -   YEL -  -   -  FBIT */
   else if (sc->config.format == CFG_FORMAT_E1FASCRC)
-    write_framer(sc, Bt8370_TFRM, 0x1F); /*  -   YEL MF FE CRC FBIT */
+    framer_write(sc, Bt8370_TFRM, 0x1F); /*  -   YEL MF FE CRC FBIT */
   else if (sc->config.format == CFG_FORMAT_E1FASCAS)
-    write_framer(sc, Bt8370_TFRM, 0x31); /* MYEL YEL -  -   -  FBIT */
+    framer_write(sc, Bt8370_TFRM, 0x31); /* MYEL YEL -  -   -  FBIT */
   else if (sc->config.format == CFG_FORMAT_E1FASCRCCAS)
-    write_framer(sc, Bt8370_TFRM, 0x3F); /* MYEL YEL MF FE CRC FBIT */
+    framer_write(sc, Bt8370_TFRM, 0x3F); /* MYEL YEL MF FE CRC FBIT */
   else if (sc->config.format == CFG_FORMAT_E1NONE)
-    write_framer(sc, Bt8370_TFRM, 0x00); /* NO FRAMING BITS AT ALL! */
+    framer_write(sc, Bt8370_TFRM, 0x00); /* NO FRAMING BITS AT ALL! */
 
   /* 073:TERROR -- Transmit Error Insert */
-  write_framer(sc, Bt8370_TERROR, 0x00); /* no errors, please! */
+  framer_write(sc, Bt8370_TERROR, 0x00); /* no errors, please! */
 
   /* 074:TMAN -- Transmit Manual Sa-byte/FEBE configuration */
-  write_framer(sc, Bt8370_TMAN, 0x00); /* none */
+  framer_write(sc, Bt8370_TMAN, 0x00); /* none */
 
   /* 075:TALM -- Transmit Alarm Signal Configuration */
   if (FORMAT_E1ANY)
-    write_framer(sc, Bt8370_TALM, 0x38); /* auto_myel auto_yel auto_ais */
+    framer_write(sc, Bt8370_TALM, 0x38); /* auto_myel auto_yel auto_ais */
   else if (FORMAT_T1ANY)
-    write_framer(sc, Bt8370_TALM, 0x18); /* auto_yel auto_ais */
+    framer_write(sc, Bt8370_TALM, 0x18); /* auto_yel auto_ais */
 
   /* 076:TPATT -- Transmit Test Pattern Configuration */
-  write_framer(sc, Bt8370_TPATT, 0x00); /* disabled */
+  framer_write(sc, Bt8370_TPATT, 0x00); /* disabled */
 
   /* 077:TLB -- Transmit Inband Loopback Code Configuration */
-  write_framer(sc, Bt8370_TLB, 0x00); /* disabled */
+  framer_write(sc, Bt8370_TLB, 0x00); /* disabled */
 
   /* 090:CLAD_CR -- Clack Rate Adapter Configuration */
   if (FORMAT_T1ANY)
-    write_framer(sc, Bt8370_CLAD_CR, 0x06); /* loop filter gain 1/2^6 */
+    framer_write(sc, Bt8370_CLAD_CR, 0x06); /* loop filter gain 1/2^6 */
   else
-    write_framer(sc, Bt8370_CLAD_CR, 0x08); /* loop filter gain 1/2^8 */
+    framer_write(sc, Bt8370_CLAD_CR, 0x08); /* loop filter gain 1/2^8 */
 
   /* 091:CSEL -- CLAD frequency Select */
   if (FORMAT_T1ANY)
-    write_framer(sc, Bt8370_CSEL, 0x55); /* 1544 kHz */
+    framer_write(sc, Bt8370_CSEL, 0x55); /* 1544 kHz */
   else
-    write_framer(sc, Bt8370_CSEL, 0x11); /* 2048 kHz */
+    framer_write(sc, Bt8370_CSEL, 0x11); /* 2048 kHz */
 
   /* 092:CPHASE -- CLAD Phase detector */
   if (FORMAT_T1ANY)
-    write_framer(sc, Bt8370_CPHASE, 0x22); /* phase compare @  386 kHz */
+    framer_write(sc, Bt8370_CPHASE, 0x22); /* phase compare @  386 kHz */
   else
-    write_framer(sc, Bt8370_CPHASE, 0x00); /* phase compare @ 2048 kHz */
+    framer_write(sc, Bt8370_CPHASE, 0x00); /* phase compare @ 2048 kHz */
 
   if (FORMAT_T1ESF) /* BOP & PRM are enabled in T1ESF mode only. */
     {
     /* 0A0:BOP -- Bit Oriented Protocol messages */
-    write_framer(sc, Bt8370_BOP, RBOP_25 | TBOP_OFF);
+    framer_write(sc, Bt8370_BOP, RBOP_25 | TBOP_OFF);
     /* 0A4:DL1_TS -- Data Link 1 Time Slot Enable */
-    write_framer(sc, Bt8370_DL1_TS, 0x40); /* FDL bits in odd frames */
+    framer_write(sc, Bt8370_DL1_TS, 0x40); /* FDL bits in odd frames */
     /* 0A6:DL1_CTL -- Data Link 1 Control */
-    write_framer(sc, Bt8370_DL1_CTL, 0x03); /* FCS mode, TX on, RX on */
+    framer_write(sc, Bt8370_DL1_CTL, 0x03); /* FCS mode, TX on, RX on */
     /* 0A7:RDL1_FFC -- Rx Data Link 1 Fifo Fill Control */
-    write_framer(sc, Bt8370_RDL1_FFC, 0x30); /* assert "near full" at 48 */
+    framer_write(sc, Bt8370_RDL1_FFC, 0x30); /* assert "near full" at 48 */
     /* 0AA:PRM -- Performance Report Messages */
-    write_framer(sc, Bt8370_PRM, 0x80);
+    framer_write(sc, Bt8370_PRM, 0x80);
     }
 
   /* 0D0:SBI_CR -- System Bus Interface Configuration Register */
   if (FORMAT_T1ANY)
-    write_framer(sc, Bt8370_SBI_CR, 0x47); /* 1.544 with 24 TS +Fbits */
+    framer_write(sc, Bt8370_SBI_CR, 0x47); /* 1.544 with 24 TS +Fbits */
   else
-    write_framer(sc, Bt8370_SBI_CR, 0x46); /* 2.048 with 32 TS */
+    framer_write(sc, Bt8370_SBI_CR, 0x46); /* 2.048 with 32 TS */
 
   /* 0D1:RSB_CR -- Receive System Bus Configuration Register */
   /* Change RINDO & RFSYNC on falling edge of RSBCLKI. */
-  write_framer(sc, Bt8370_RSB_CR, 0x70);
+  framer_write(sc, Bt8370_RSB_CR, 0x70);
 
   /* 0D2,0D3:RSYNC_{TS,BIT} -- Receive frame Sync offset */
-  write_framer(sc, Bt8370_RSYNC_BIT, 0x00);
-  write_framer(sc, Bt8370_RSYNC_TS,  0x00);
+  framer_write(sc, Bt8370_RSYNC_BIT, 0x00);
+  framer_write(sc, Bt8370_RSYNC_TS,  0x00);
 
   /* 0D4:TSB_CR -- Transmit System Bus Configuration Register */
   /* Change TINDO & TFSYNC on falling edge of TSBCLKI. */
-  write_framer(sc, Bt8370_TSB_CR, 0x30);
+  framer_write(sc, Bt8370_TSB_CR, 0x30);
 
   /* 0D5,0D6:TSYNC_{TS,BIT} -- Transmit frame Sync offset */
-  write_framer(sc, Bt8370_TSYNC_BIT, 0x00);
-  write_framer(sc, Bt8370_TSYNC_TS,  0x00);
+  framer_write(sc, Bt8370_TSYNC_BIT, 0x00);
+  framer_write(sc, Bt8370_TSYNC_TS,  0x00);
 
-  /* 0D7:RSIG_CR -- Receive SIGnalling Configuratin Register */
-  write_framer(sc, Bt8370_RSIG_CR, 0x00);
+  /* 0D7:RSIG_CR -- Receive SIGnalling Configuration Register */
+  framer_write(sc, Bt8370_RSIG_CR, 0x00);
 
   /* Assign and configure 64Kb TIME SLOTS. */
   /* TS24..TS1 must be assigned for T1, TS31..TS0 for E1. */
   /* Timeslots with no user data have RINDO and TINDO off. */
-  for (i=0; i<32; i++)
+  for (sc->status.time_slots = 0, i=0; i<32; i++)
     {
     /* 0E0-0FF:SBCn -- System Bus Per-Channel Control */
     if      (FORMAT_T1ANY && (i==0 || i>24))
-      write_framer(sc, Bt8370_SBCn +i, 0x00); /* not assigned in T1 mode */
+      framer_write(sc, Bt8370_SBCn +i, 0x00); /* not assigned in T1 mode */
     else if (FORMAT_E1ANY && (i==0)  && !FORMAT_E1NONE)
-      write_framer(sc, Bt8370_SBCn +i, 0x01); /* assigned, TS0  o/h bits */
+      framer_write(sc, Bt8370_SBCn +i, 0x01); /* assigned, TS0  o/h bits */
     else if (FORMAT_E1CAS && (i==16) && !FORMAT_E1NONE)
-      write_framer(sc, Bt8370_SBCn +i, 0x01); /* assigned, TS16 o/h bits */
-    else if ((sc->config.time_slots & (1<<i)) != 0)
-      write_framer(sc, Bt8370_SBCn +i, 0x0D); /* assigned, RINDO, TINDO */
+      framer_write(sc, Bt8370_SBCn +i, 0x01); /* assigned, TS16 o/h bits */
+    else if ((sc->status.time_slots |= (sc->config.time_slots & (1<<i))))
+      framer_write(sc, Bt8370_SBCn +i, 0x0D); /* assigned, RINDO, TINDO */
     else
-      write_framer(sc, Bt8370_SBCn +i, 0x01); /* assigned, idle */
+      framer_write(sc, Bt8370_SBCn +i, 0x01); /* assigned, idle */
 
     /* 100-11F:TPCn -- Transmit Per-Channel Control */
     if      (FORMAT_E1CAS && (i==0))
-      write_framer(sc, Bt8370_TPCn +i, 0x30); /* tidle, sig=0000 (MAS) */
+      framer_write(sc, Bt8370_TPCn +i, 0x30); /* tidle, sig=0000 (MAS) */
     else if (FORMAT_E1CAS && (i==16))
-      write_framer(sc, Bt8370_TPCn +i, 0x3B); /* tidle, sig=1011 (XYXX) */
+      framer_write(sc, Bt8370_TPCn +i, 0x3B); /* tidle, sig=1011 (XYXX) */
     else if ((sc->config.time_slots & (1<<i)) == 0)
-      write_framer(sc, Bt8370_TPCn +i, 0x20); /* tidle: use TSLIP_LOn */
+      framer_write(sc, Bt8370_TPCn +i, 0x20); /* tidle: use TSLIP_LOn */
     else
-      write_framer(sc, Bt8370_TPCn +i, 0x00); /* nothing special */
+      framer_write(sc, Bt8370_TPCn +i, 0x00); /* nothing special */
 
     /* 140-15F:TSLIP_LOn -- Transmit PCM Slip Buffer */
-    write_framer(sc, Bt8370_TSLIP_LOn +i, 0x7F); /* idle chan data */
+    framer_write(sc, Bt8370_TSLIP_LOn +i, 0x7F); /* idle chan data */
     /* 180-19F:RPCn -- Receive Per-Channel Control */
-    write_framer(sc, Bt8370_RPCn +i, 0x00);   /* nothing special */
+    framer_write(sc, Bt8370_RPCn +i, 0x00);   /* nothing special */
     }
 
   /* Enable transmitter output drivers. */
-  set_mii16_bits(sc, MII16_T1_XOE);
+  mii16_set_bits(sc, MII16_T1_XOE);
   }
 
 static void
-t1_ident(softc_t *sc)
+t1_detach(softc_t *sc)
   {
-  printf(", Bt837%x rev %x",
-   read_framer(sc, Bt8370_DID)>>4,
-   read_framer(sc, Bt8370_DID)&0x0F);
+  led_on(sc, MII16_LED_ALL);
   }
 
-/* Called once a second; must not sleep. */
+/* End T1E1 card code */
+
+#if NETGRAPH /* FreeBSD */
+
+static struct stack netgraph_stack =
+  {
+  .ioctl    = netgraph_ioctl,
+  .input    = netgraph_input,
+  .output   = netgraph_output,
+  .watchdog = netgraph_watchdog,
+  .open     = netgraph_open,
+  .attach   = netgraph_attach,
+  .detach   = netgraph_detach,
+  };
+
+static int  /* context: process */
+netgraph_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+  {
+  if (sc->config.debug)
+    printf("%s: netgraph_ioctl() was called\n", NAME_UNIT);
+
+  return EINVAL;
+  }
+
+static void  /* context: interrupt */
+netgraph_input(softc_t *sc, struct mbuf *m)
+  {
+  int error;  /* ignore error */
+
+  NG_SEND_DATA_ONLY(error, sc->ng_hook, m);
+  }
+
+static void  /* context: interrupt */
+netgraph_output(softc_t *sc)
+  {
+  if (!IFQ_IS_EMPTY(&sc->ng_fastq))
+    IFQ_DEQUEUE(&sc->ng_fastq, sc->tx_mbuf);
+  else
+    IFQ_DEQUEUE(&sc->ng_sndq,  sc->tx_mbuf);
+  }
+
+static void  /* context: softirq */
+netgraph_watchdog(softc_t *sc)
+  {
+  sc->status.stack = STACK_NETGRAPH;
+  sc->status.proto = PROTO_NONE;
+  }
+
 static int
-t1_watchdog(softc_t *sc)
+netgraph_open(softc_t *sc, struct config *config)
   {
-  u_int16_t LCV = 0, FERR = 0, CRC = 0, FEBE = 0;
-  u_int8_t alm1, alm3, loop, isr0;
-  int link_status = STATUS_UP;
-  int i;
+  sc->config.proto = PROTO_NONE;
 
-  /* Read the alarm registers */
-  alm1 = read_framer(sc, Bt8370_ALM1);
-  alm3 = read_framer(sc, Bt8370_ALM3);
-  loop = read_framer(sc, Bt8370_LOOP);
-  isr0 = read_framer(sc, Bt8370_ISR0);
-
-  /* Always ignore the SIGFRZ alarm bit, */
-  alm1 &= ~ALM1_SIGFRZ;
-  if (FORMAT_T1ANY)  /* ignore RYEL in T1 modes */
-    alm1 &= ~ALM1_RYEL;
-  else if (FORMAT_E1NONE) /* ignore all alarms except LOS */
-    alm1 &= ALM1_RLOS;
-
-  /* Software is alive. */
-  led_inv(sc, MII16_T1_LED_GRN);
-
-  /* Receiving Alarm Indication Signal (AIS). */
-  if ((alm1 & ALM1_RAIS)!=0) /* receiving ais */
-    led_on(sc, MII16_T1_LED_BLU);
-  else if ((alm1 & ALM1_RLOS)!=0) /* sending ais */
-    led_inv(sc, MII16_T1_LED_BLU);
-  else
-    led_off(sc, MII16_T1_LED_BLU);
-
-  /* Receiving Remote Alarm Indication (RAI). */
-  if ((alm1 & (ALM1_RMYEL | ALM1_RYEL))!=0) /* receiving rai */
-    led_on(sc, MII16_T1_LED_YEL);
-  else if ((alm1 & ALM1_RLOF)!=0) /* sending rai */
-    led_inv(sc, MII16_T1_LED_YEL);
-  else
-    led_off(sc, MII16_T1_LED_YEL);
-
-  /* If any alarm bits are set then the link is 'down'. */
-  /* The bad bits are: rmyel ryel rais ralos rlos rlof. */
-  /* Some alarm bits have been masked by this point. */
-  if (alm1 != 0) link_status = STATUS_DOWN;
-
-  /* Declare local Red Alarm if the link is down. */
-  if (link_status == STATUS_DOWN)
-    led_on(sc, MII16_T1_LED_RED);
-  else if (sc->loop_timer != 0) /* loopback is active */
-    led_inv(sc, MII16_T1_LED_RED);
-  else
-    led_off(sc, MII16_T1_LED_RED);
-
-  /* Print latched error bits if they changed. */
-  if ((DRIVER_DEBUG) && (alm1 != sc->last_alm1))
-    {
-    const char *on = "ON ", *off = "OFF";
-    printf("%s: RLOF=%s RLOS=%s RALOS=%s RAIS=%s RYEL=%s RMYEL=%s\n",
-     NAME_UNIT,
-     (alm1 & ALM1_RLOF)  ? on : off,
-     (alm1 & ALM1_RLOS)  ? on : off,
-     (alm1 & ALM1_RALOS) ? on : off,
-     (alm1 & ALM1_RAIS)  ? on : off,
-     (alm1 & ALM1_RYEL)  ? on : off,
-     (alm1 & ALM1_RMYEL) ? on : off);
-    }
-
-  /* Check and print error counters if non-zero. */
-  LCV = read_framer(sc, Bt8370_LCV_LO)  +
-        (read_framer(sc, Bt8370_LCV_HI)<<8);
-  if (!FORMAT_E1NONE)
-    FERR = read_framer(sc, Bt8370_FERR_LO) +
-          (read_framer(sc, Bt8370_FERR_HI)<<8);
-  if (FORMAT_E1CRC || FORMAT_T1ESF)
-    CRC  = read_framer(sc, Bt8370_CRC_LO)  +
-          (read_framer(sc, Bt8370_CRC_HI)<<8);
-  if (FORMAT_E1CRC)
-    FEBE = read_framer(sc, Bt8370_FEBE_LO) +
-          (read_framer(sc, Bt8370_FEBE_HI)<<8);
-  /* Only LCV is valid if Out-Of-Frame */
-  if (FORMAT_E1NONE) FERR = CRC = FEBE = 0;
-  if ((DRIVER_DEBUG) && (LCV || FERR || CRC || FEBE))
-    printf("%s: LCV=%u FERR=%u CRC=%u FEBE=%u\n",
-     NAME_UNIT, LCV,   FERR,   CRC,   FEBE);
-
-  /* Driver keeps crude link-level error counters (SNMP is better). */
-  sc->status.cntrs.lcv_errs  += LCV;
-  sc->status.cntrs.frm_errs  += FERR;
-  sc->status.cntrs.crc_errs  += CRC;
-  sc->status.cntrs.febe_errs += FEBE;
-
-  /* Check for BOP messages in the ESF Facility Data Link. */
-  if ((FORMAT_T1ESF) && (read_framer(sc, Bt8370_ISR1) & 0x80))
-    {
-    u_int8_t bop_code = read_framer(sc, Bt8370_RBOP) & 0x3F;
-
-    switch (bop_code)
-      {
-      case T1BOP_OOF:
-        {
-        if ((DRIVER_DEBUG) && ((sc->last_alm1 & ALM1_RMYEL)==0))
-          printf("%s: Receiving a 'yellow alarm' BOP msg\n", NAME_UNIT);
-        break;
-        }
-      case T1BOP_LINE_UP:
-        {
-        if (DRIVER_DEBUG)
-          printf("%s: Received a 'line loopback activate' BOP msg\n", NAME_UNIT);
-        write_framer(sc, Bt8370_LOOP, LOOP_LINE);
-        sc->loop_timer = 305;
-        break;
-        }
-      case T1BOP_LINE_DOWN:
-        {
-        if (DRIVER_DEBUG)
-          printf("%s: Received a 'line loopback deactivate' BOP msg\n", NAME_UNIT);
-        write_framer(sc, Bt8370_LOOP,
-         read_framer(sc, Bt8370_LOOP) & ~LOOP_LINE);
-        sc->loop_timer = 0;
-        break;
-        }
-      case T1BOP_PAY_UP:
-        {
-        if (DRIVER_DEBUG)
-          printf("%s: Received a 'payload loopback activate' BOP msg\n", NAME_UNIT);
-        write_framer(sc, Bt8370_LOOP, LOOP_PAYLOAD);
-        sc->loop_timer = 305;
-        break;
-        }
-      case T1BOP_PAY_DOWN:
-        {
-        if (DRIVER_DEBUG)
-          printf("%s: Received a 'payload loopback deactivate' BOP msg\n", NAME_UNIT);
-        write_framer(sc, Bt8370_LOOP,
-         read_framer(sc, Bt8370_LOOP) & ~LOOP_PAYLOAD);
-        sc->loop_timer = 0;
-        break;
-        }
-      default:
-        {
-        if (DRIVER_DEBUG)
-          printf("%s: Received a type 0x%02X BOP msg\n", NAME_UNIT, bop_code);
-        break;
-        }
-      }
-    }
-
-  /* Check for HDLC pkts in the ESF Facility Data Link. */
-  if ((FORMAT_T1ESF) && (read_framer(sc, Bt8370_ISR2) & 0x70))
-    {
-    /* while (not fifo-empty && not start-of-msg) flush fifo */
-    while ((read_framer(sc, Bt8370_RDL1_STAT) & 0x0C) == 0)
-      read_framer(sc, Bt8370_RDL1);
-    /* If (not fifo-empty), then begin processing fifo contents. */
-    if ((read_framer(sc, Bt8370_RDL1_STAT) & 0x0C) == 0x08)
-      {
-      u_int8_t msg[64];
-      u_int8_t stat = read_framer(sc, Bt8370_RDL1);
-      sc->status.cntrs.fdl_pkts++;
-      for (i=0; i<(stat & 0x3F); i++)
-        msg[i] = read_framer(sc, Bt8370_RDL1);
-      /* Is this FDL message a T1.403 performance report? */
-      if (((stat & 0x3F)==11) &&
-          ((msg[0]==0x38) || (msg[0]==0x3A)) &&
-           (msg[1]==1)   &&  (msg[2]==3))
-        /* Copy 4 PRs from FDL pkt to SNMP struct. */
-        memcpy(sc->status.snmp.t1.prm, msg+3, 8);
-      }
-    }
-
-  /* Check for inband loop up/down commands. */
-  if (FORMAT_T1ANY)
-    {
-    u_int8_t isr6   = read_framer(sc, Bt8370_ISR6);
-    u_int8_t alarm2 = read_framer(sc, Bt8370_ALM2);
-    u_int8_t tlb    = read_framer(sc, Bt8370_TLB);
-
-    /* Inband Code == Loop Up && On Transition && Inband Tx Inactive */
-    if ((isr6 & 0x40) && (alarm2 & 0x40) && ((tlb & 1)==0))
-      { /* CSU loop up is 10000 10000 ... */
-      if (DRIVER_DEBUG)
-        printf("%s: Received a 'CSU Loop Up' inband msg\n", NAME_UNIT);
-      write_framer(sc, Bt8370_LOOP, LOOP_LINE); /* Loop up */
-      sc->loop_timer = 305;
-      }
-    /* Inband Code == Loop Down && On Transition && Inband Tx Inactive */
-    if ((isr6 & 0x80) && (alarm2 & 0x80) && ((tlb & 1)==0))
-      { /* CSU loop down is 100 100 100 ... */
-      if (DRIVER_DEBUG)
-        printf("%s: Received a 'CSU Loop Down' inband msg\n", NAME_UNIT);
-      write_framer(sc, Bt8370_LOOP,
-       read_framer(sc, Bt8370_LOOP) & ~LOOP_LINE); /* loop down */
-      sc->loop_timer = 0;
-      }
-    }
-
-  /* Manually send Yellow Alarm BOP msgs. */
-  if (FORMAT_T1ESF)
-    {
-    u_int8_t isr7 = read_framer(sc, Bt8370_ISR7);
-
-    if ((isr7 & 0x02) && (alm1 & 0x02)) /* RLOF on-transition */
-      { /* Start sending continuous Yellow Alarm BOP messages. */
-      write_framer(sc, Bt8370_BOP,  RBOP_25 | TBOP_CONT);
-      write_framer(sc, Bt8370_TBOP, 0x00); /* send BOP; order matters */
-      }
-    else if ((isr7 & 0x02) && ((alm1 & 0x02)==0)) /* RLOF off-transition */
-      { /* Stop sending continuous Yellow Alarm BOP messages. */
-      write_framer(sc, Bt8370_BOP,  RBOP_25 | TBOP_OFF);
-      }
-    }
-
-  /* Time out loopback requests. */
-  if (sc->loop_timer != 0)
-    if (--sc->loop_timer == 0)
-      if (loop != 0)
-        {
-        if (DRIVER_DEBUG)
-          printf("%s: Timeout: Loop Down after 300 seconds\n", NAME_UNIT);
-        write_framer(sc, Bt8370_LOOP, loop & ~(LOOP_PAYLOAD | LOOP_LINE));
-        }
-
-  /* RX Test Pattern status */
-  if ((DRIVER_DEBUG) && (isr0 & 0x10))
-    printf("%s: RX Test Pattern Sync\n", NAME_UNIT);
-
-  /* SNMP Error Counters */
-  sc->status.snmp.t1.lcv  = LCV;
-  sc->status.snmp.t1.fe   = FERR;
-  sc->status.snmp.t1.crc  = CRC;
-  sc->status.snmp.t1.febe = FEBE;
-
-  /* SNMP Line Status */
-  sc->status.snmp.t1.line = 0;
-  if  (alm1 & ALM1_RMYEL)  sc->status.snmp.t1.line |= TLINE_RX_RAI;
-  if  (alm1 & ALM1_RYEL)   sc->status.snmp.t1.line |= TLINE_RX_RAI;
-  if  (alm1 & ALM1_RLOF)   sc->status.snmp.t1.line |= TLINE_TX_RAI;
-  if  (alm1 & ALM1_RAIS)   sc->status.snmp.t1.line |= TLINE_RX_AIS;
-  if  (alm1 & ALM1_RLOS)   sc->status.snmp.t1.line |= TLINE_TX_AIS;
-  if  (alm1 & ALM1_RLOF)   sc->status.snmp.t1.line |= TLINE_LOF;
-  if  (alm1 & ALM1_RLOS)   sc->status.snmp.t1.line |= TLINE_LOS;
-  if  (alm3 & ALM3_RMAIS)  sc->status.snmp.t1.line |= T1LINE_RX_TS16_AIS;
-  if  (alm3 & ALM3_SRED)   sc->status.snmp.t1.line |= T1LINE_TX_TS16_LOMF;
-  if  (alm3 & ALM3_SEF)    sc->status.snmp.t1.line |= T1LINE_SEF;
-  if  (isr0 & 0x10)        sc->status.snmp.t1.line |= T1LINE_RX_TEST;
-  if ((alm1 & ALM1_RMYEL) && (FORMAT_E1CAS))
-                           sc->status.snmp.t1.line |= T1LINE_RX_TS16_LOMF;
-
-  /* SNMP Loopback Status */
-  sc->status.snmp.t1.loop &= ~(TLOOP_FAR_LINE | TLOOP_FAR_PAYLOAD);
-  if (sc->config.loop_back == CFG_LOOP_TULIP)
-                           sc->status.snmp.t1.loop |= TLOOP_NEAR_OTHER;
-  if (loop & LOOP_PAYLOAD) sc->status.snmp.t1.loop |= TLOOP_NEAR_PAYLOAD;
-  if (loop & LOOP_LINE)    sc->status.snmp.t1.loop |= TLOOP_NEAR_LINE;
-  if (loop & LOOP_ANALOG)  sc->status.snmp.t1.loop |= TLOOP_NEAR_OTHER;
-  if (loop & LOOP_FRAMER)  sc->status.snmp.t1.loop |= TLOOP_NEAR_INWARD;
-
-  /* Remember this state until next time. */
-  sc->last_alm1 = alm1;
-
-  /* If an INWARD loopback is in effect, link status is UP */
-  if (sc->config.loop_back != CFG_LOOP_NONE) /* XXX INWARD ONLY */
-    link_status = STATUS_UP;
-
-  return link_status;
+  return 0;
   }
 
-/* IOCTL SYSCALL: can sleep. */
-static void
-t1_send_bop(softc_t *sc, int bop_code)
-  {
-  u_int8_t bop;
-  int i;
-
-  /* The BOP transmitter could be sending a continuous */
-  /*  BOP msg when told to send this BOP_25 message. */
-  /* So save and restore the state of the BOP machine. */
-  bop = read_framer(sc, Bt8370_BOP);
-  write_framer(sc, Bt8370_BOP, RBOP_OFF | TBOP_OFF);
-  for (i=0; i<40; i++) /* max delay 400 ms. */
-    if (read_framer(sc, Bt8370_BOP_STAT) & 0x80) SLEEP(10000);
-  /* send 25 repetitions of bop_code */
-  write_framer(sc, Bt8370_BOP, RBOP_OFF | TBOP_25);
-  write_framer(sc, Bt8370_TBOP, bop_code); /* order matters */
-  /* wait for tx to stop */
-  for (i=0; i<40; i++) /* max delay 400 ms. */
-    if (read_framer(sc, Bt8370_BOP_STAT) & 0x80) SLEEP(10000);
-  /* Restore previous state of the BOP machine. */
-  write_framer(sc, Bt8370_BOP, bop);
-  }
-
-/* IOCTL SYSCALL: can sleep. */
 static int
-t1_ioctl(softc_t *sc, struct ioctl *ioctl)
+netgraph_attach(softc_t *sc, struct config *config)
   {
+  int error;
+
+  if ((error = ng_attach(sc)))
+    return error;
+
+  sc->config.proto = PROTO_NONE;
+  sc->stack = &netgraph_stack;
+
+  return 0;
+  }
+
+static int  /* never fails */
+netgraph_detach(softc_t *sc)
+  {
+  ng_detach(sc);
+
+  sc->config.stack = STACK_NONE;
+  sc->config.proto = PROTO_NONE;
+  sc->stack = NULL;
+
+  return 0;
+  }
+
+#endif /* NETGRAPH */
+
+#if SYNC_PPP  /* Linux */
+
+static struct stack sync_ppp_stack =
+  {
+  .ioctl    = sync_ppp_ioctl,
+  .type     = sync_ppp_type,
+  .mtu      = sync_ppp_mtu,
+  .watchdog = sync_ppp_watchdog,
+  .open     = sync_ppp_open,
+  .attach   = sync_ppp_attach,
+  .detach   = sync_ppp_detach,
+  };
+
+static int  /* context: process */
+sync_ppp_ioctl(softc_t *sc, struct ifreq *ifr, int cmd)
+  {
+  return sppp_do_ioctl(sc->netdev, ifr, cmd);
+  }
+
+static int  /* context: interrupt */
+sync_ppp_type(softc_t *sc, struct sk_buff *skb)
+  {
+  return htons(ETH_P_WAN_PPP);
+  }
+
+static int  /* context: process */
+sync_ppp_mtu(softc_t *sc, int mtu)
+  {
+  return ((mtu < 128) || (mtu > PPP_MTU)) ? -EINVAL : 0;
+  }
+
+static void  /* context: softirq */
+sync_ppp_watchdog(softc_t *sc)
+  {
+  /* Notice when the link comes up. */
+  if ((sc->last_link_state != STATE_UP) &&
+    (sc->status.link_state == STATE_UP))
+    sppp_reopen(sc->netdev);
+
+  /* Notice when the link goes down. */
+  if ((sc->last_link_state == STATE_UP) &&
+    (sc->status.link_state != STATE_UP))
+    sppp_close(sc->netdev);
+
+  /* Report current line protocol. */
+  sc->status.stack = STACK_SYNC_PPP;
+  if (sc->sppp->pp_flags & PP_CISCO)
+    sc->status.proto = PROTO_C_HDLC;
+  else
+    sc->status.proto = PROTO_PPP;
+
+  /* Report keep-alive status. */
+  sc->status.keep_alive = sc->sppp->pp_flags & PP_KEEPALIVE;
+  }
+
+static int  /* never fails */
+sync_ppp_open(softc_t *sc, struct config *config)
+  {
+  /* Refresh the keep_alive flag. */
+  if (config->keep_alive)
+    sc->sppp->pp_flags |=  PP_KEEPALIVE;
+  else
+    sc->sppp->pp_flags &= ~PP_KEEPALIVE;
+  sc->config.keep_alive = config->keep_alive;
+
+  /* Done if proto is not changing. */
+  if (config->proto == sc->config.proto)
+    return 0;
+
+  /* Close */
+  sppp_close(sc->netdev);
+
+  /* Change line protocol. */
+  switch (config->proto)
+    {
+    case PROTO_PPP:
+      sc->sppp->pp_flags  &= ~PP_CISCO;
+      sc->netdev->type = ARPHRD_PPP;
+      sc->config.proto = PROTO_PPP;
+      break;
+    default:
+    case PROTO_C_HDLC:
+      sc->sppp->pp_flags  |=  PP_CISCO;
+      sc->netdev->type = ARPHRD_CISCO;
+      sc->config.proto = PROTO_C_HDLC;
+      break;
+    }
+
+  /* Open */
+  sppp_open(sc->netdev);
+
+  return 0;
+  }
+
+static int  /* never fails */
+sync_ppp_attach(softc_t *sc, struct config *config)
+  {
+  sc->ppd = &sc->ppp_dev;      /* struct ppp_device*  */
+  sc->netdev->priv = &sc->ppd; /* struct ppp_device** */
+  sc->ppp_dev.dev = sc->netdev;
+  sc->sppp = &sc->ppp_dev.sppp;
+
+  sppp_attach(&sc->ppp_dev);
+  sc->netdev->do_ioctl = netdev_ioctl;
+  config->keep_alive = 1;
+
+  sc->config.stack = STACK_SYNC_PPP;
+  sc->stack = &sync_ppp_stack;
+
+  return 0;
+  }
+
+static int  /* never fails */
+sync_ppp_detach(softc_t *sc)
+  {
+  sppp_close(sc->netdev);
+  sppp_detach(sc->netdev);
+
+  netdev_setup(sc->netdev);
+  sc->config.stack = STACK_NONE;
+  sc->config.proto = PROTO_NONE;
+  sc->stack = NULL;
+
+  return 0;
+  }
+
+#endif /* SYNC_PPP */
+
+#if GEN_HDLC  /* Linux only */
+
+static struct stack gen_hdlc_stack =
+  {
+  .ioctl    = gen_hdlc_ioctl,
+  .type     = gen_hdlc_type,
+  .mtu      = gen_hdlc_mtu,
+  .watchdog = gen_hdlc_watchdog,
+  .open     = gen_hdlc_open,
+  .attach   = gen_hdlc_attach,
+  .detach   = gen_hdlc_detach,
+  };
+
+static int  /* context: process */
+gen_hdlc_ioctl(softc_t *sc, struct ifreq *ifr, int cmd)
+  {
+  te1_settings settings;
   int error = 0;
 
-  switch (ioctl->cmd)
-    {
-    case IOCTL_SNMP_SEND:  /* set opstatus? */
+  if (cmd == SIOCWANDEV)
+    switch (ifr->ifr_settings.type)
       {
-      switch (ioctl->data)
+      case IF_GET_IFACE: /* get interface config */
         {
-        case TSEND_NORMAL:
-          {
-          write_framer(sc, Bt8370_TPATT, 0x00); /* tx pattern generator off */
-          write_framer(sc, Bt8370_RPATT, 0x00); /* rx pattern detector off */
-          write_framer(sc, Bt8370_TLB,   0x00); /* tx inband generator off */
-          break;
-	  }
-        case TSEND_LINE:
-          {
-          if (FORMAT_T1ESF)
-            t1_send_bop(sc, T1BOP_LINE_UP);
-          else if (FORMAT_T1SF)
-            {
-            write_framer(sc, Bt8370_LBP, 0x08); /* 10000 10000 ... */
-            write_framer(sc, Bt8370_TLB, 0x05); /* 5 bits, framed, start */
-	    }
-          sc->status.snmp.t1.loop |= TLOOP_FAR_LINE;
-          break;
-	  }
-        case TSEND_PAYLOAD:
-          {
-          t1_send_bop(sc, T1BOP_PAY_UP);
-          sc->status.snmp.t1.loop |= TLOOP_FAR_PAYLOAD;
-          break;
-	  }
-        case TSEND_RESET:
-          {
-          if (sc->status.snmp.t1.loop == TLOOP_FAR_LINE)
-            {
-            if (FORMAT_T1ESF)
-              t1_send_bop(sc, T1BOP_LINE_DOWN);
-            else if (FORMAT_T1SF)
-              {
-              write_framer(sc, Bt8370_LBP, 0x24); /* 100100 100100 ... */
-              write_framer(sc, Bt8370_TLB, 0x09); /* 6 bits, framed, start */
-	      }
-            sc->status.snmp.t1.loop &= ~TLOOP_FAR_LINE;
-	    }
-          if (sc->status.snmp.t1.loop == TLOOP_FAR_PAYLOAD)
-            {
-            t1_send_bop(sc, T1BOP_PAY_DOWN);
-            sc->status.snmp.t1.loop &= ~TLOOP_FAR_PAYLOAD;
-	    }
-          break;
-	  }
-        case TSEND_QRS:
-          {
-          write_framer(sc, Bt8370_TPATT, 0x1E); /* framed QRSS */
-          break;
-	  }
-        default:
-          {
-          error = EINVAL;
-          break;
-	  }
-	}
-      break;
-      }
-    case IOCTL_SNMP_LOOP:  /* set opstatus = test? */
-      {
-      u_int8_t new_loop = 0;
+        unsigned int size;
 
-      if (ioctl->data == CFG_LOOP_NONE)
-        new_loop = 0;
-      else if (ioctl->data == CFG_LOOP_PAYLOAD)
-        new_loop = LOOP_PAYLOAD;
-      else if (ioctl->data == CFG_LOOP_LINE)
-        new_loop = LOOP_LINE;
-      else if (ioctl->data == CFG_LOOP_OTHER)
-        new_loop = LOOP_ANALOG;
-      else if (ioctl->data == CFG_LOOP_INWARD)
-        new_loop = LOOP_FRAMER;
-      else if (ioctl->data == CFG_LOOP_DUAL)
-        new_loop = LOOP_DUAL;
-      else
-        error = EINVAL;
-      if (error == 0)
+        /* NOTE: This assumes struct sync_serial_settings has the */
+        /* same layout as the first part of struct te1_settings. */
+        if (sc->status.card_type == CSID_LMC_T1E1)
+          {
+          if (FORMAT_T1ANY) ifr->ifr_settings.type = IF_IFACE_T1;
+          if (FORMAT_E1ANY) ifr->ifr_settings.type = IF_IFACE_E1;
+          size = sizeof(te1_settings);
+	  }
+        else
+          {
+          ifr->ifr_settings.type = IF_IFACE_SYNC_SERIAL;
+          size = sizeof(sync_serial_settings);
+	  }
+        if (ifr->ifr_settings.size < size)
+          {
+          ifr->ifr_settings.size = size;
+          return -ENOBUFS;
+	  }
+        ifr->ifr_settings.size = size;
+
+        if (sc->config.tx_clk_src == CFG_CLKMUX_ST)
+          settings.clock_type = CLOCK_EXT;
+        if (sc->config.tx_clk_src == CFG_CLKMUX_INT)
+          settings.clock_type = CLOCK_TXINT;
+        if (sc->config.tx_clk_src == CFG_CLKMUX_RT)
+          settings.clock_type = CLOCK_TXFROMRX;
+        settings.loopback = (sc->config.loop_back != CFG_LOOP_NONE) ? 1:0;
+        settings.clock_rate = sc->status.tx_speed;
+        if (sc->status.card_type == CSID_LMC_T1E1)
+          settings.slot_map = sc->status.time_slots;
+
+        error = copy_to_user(ifr->ifr_settings.ifs_ifsu.te1,
+         &settings, size);
+        break;
+        }
+      case IF_IFACE_SYNC_SERIAL: /* set interface config */
+      case IF_IFACE_T1:
+      case IF_IFACE_E1:
         {
-        write_framer(sc, Bt8370_LOOP, new_loop);
-        sc->config.loop_back = ioctl->data;
-	}
-      break;
+        struct config config = sc->config;
+
+        if (!capable(CAP_NET_ADMIN)) return -EPERM;
+        if (ifr->ifr_settings.size > sizeof(te1_settings))
+          return -ENOBUFS;
+        error = copy_from_user(&settings,
+         ifr->ifr_settings.ifs_ifsu.te1, sizeof(te1_settings));
+
+        if      (settings.clock_type == CLOCK_EXT)
+          config.tx_clk_src = CFG_CLKMUX_ST;
+        else if (settings.clock_type == CLOCK_TXINT)
+          config.tx_clk_src = CFG_CLKMUX_INT;
+        else if (settings.clock_type == CLOCK_TXFROMRX)
+          config.tx_clk_src = CFG_CLKMUX_RT;
+
+        if (settings.loopback)
+          config.loop_back = CFG_LOOP_TULIP;
+        else
+          config.loop_back = CFG_LOOP_NONE;
+
+        tulip_loop(sc, &config);
+        sc->card->attach(sc, &config);
+        break;
+        }
+      default:  /* Pass the rest to the line pkg. */
+        {
+        error = hdlc_ioctl(sc->netdev, ifr, cmd);
+        break;
+        }
       }
-    default:
-      error = EINVAL;
-      break;
-    }
+    else
+      error = -EINVAL;
 
   return error;
   }
 
-static
-struct card hssi_card =
+static int  /* context: interrupt */
+gen_hdlc_type(softc_t *sc, struct sk_buff *skb)
   {
-  .config   = hssi_config,
-  .ident    = hssi_ident,
-  .watchdog = hssi_watchdog,
-  .ioctl    = hssi_ioctl,
-  };
+  return hdlc_type_trans(skb, sc->netdev);
+  }
 
-static
-struct card t3_card =
+static int  /* context: process */
+gen_hdlc_mtu(softc_t *sc, int mtu)
   {
-  .config   = t3_config,
-  .ident    = t3_ident,
-  .watchdog = t3_watchdog,
-  .ioctl    = t3_ioctl,
-  };
+  return ((mtu < 68) || (mtu > HDLC_MAX_MTU)) ? -EINVAL : 0;
+  }
 
-static
-struct card ssi_card =
+static void  /* context: softirq */
+gen_hdlc_watchdog(softc_t *sc)
   {
-  .config   = ssi_config,
-  .ident    = ssi_ident,
-  .watchdog = ssi_watchdog,
-  .ioctl    = ssi_ioctl,
-  };
+  /* Notice when the link comes up. */
+  if ((sc->last_link_state != STATE_UP) &&
+    (sc->status.link_state == STATE_UP))
+    hdlc_set_carrier(1, sc->netdev);
 
-static
-struct card t1_card =
-  {
-  .config   = t1_config,
-  .ident    = t1_ident,
-  .watchdog = t1_watchdog,
-  .ioctl    = t1_ioctl,
-  };
+  /* Notice when the link goes down. */
+  if ((sc->last_link_state == STATE_UP) &&
+    (sc->status.link_state != STATE_UP))
+    hdlc_set_carrier(0, sc->netdev);
 
-static void
-check_intr_status(softc_t *sc)
-  {
-  u_int32_t status, cfcs, op_mode;
-  u_int32_t missed, overruns;
-
-  /* Check for four unusual events:
-   *  1) fatal PCI bus errors       - some are recoverable
-   *  2) transmitter FIFO underruns - increase fifo threshold
-   *  3) receiver FIFO overruns     - clear potential hangup
-   *  4) no receive descs or bufs   - count missed packets
-   */
-
-  /* 1) A fatal bus error causes a Tulip to stop initiating bus cycles. */
-  /* Module unload/load or boot are the only fixes for Parity Errors. */
-  /* Master and Target Aborts can be cleared and life may continue. */
-  status = READ_CSR(TLP_STATUS);
-  if ((status & TLP_STAT_FATAL_ERROR) != 0)
+  /* Report current line protocol. */
+  sc->status.stack = STACK_GEN_HDLC;
+  switch (sc->hdlcdev->proto.id)
     {
-    u_int32_t fatal = (status & TLP_STAT_FATAL_BITS)>>TLP_STAT_FATAL_SHIFT;
-    printf("%s: FATAL PCI BUS ERROR: %s%s%s%s\n", NAME_UNIT,
-     (fatal == 0) ? "PARITY ERROR" : "",
-     (fatal == 1) ? "MASTER ABORT" : "",
-     (fatal == 2) ? "TARGET ABORT" : "",
-     (fatal >= 3) ? "RESERVED (?)" : "");
-    cfcs = READ_PCI_CFG(sc, TLP_CFCS);  /* try to clear it */
-    cfcs &= ~(TLP_CFCS_MSTR_ABORT | TLP_CFCS_TARG_ABORT);
-    WRITE_PCI_CFG(sc, TLP_CFCS, cfcs);
-    }
-
-  /* 2) If the transmitter fifo underruns, increase the transmit fifo */
-  /*  threshold: the number of bytes required to be in the fifo */
-  /*  before starting the transmitter (cost: increased tx delay). */
-  /* The TX_FSM must be stopped to change this parameter. */
-  if ((status & TLP_STAT_TX_UNDERRUN) != 0)
-    {
-    op_mode = READ_CSR(TLP_OP_MODE);
-    /* enable store-and-forward mode if tx_threshold tops out? */
-    if ((op_mode & TLP_OP_TX_THRESH) < TLP_OP_TX_THRESH)
+    case IF_PROTO_PPP:
       {
-      op_mode += 0x4000;  /* increment TX_THRESH field; can't overflow */
-      WRITE_CSR(TLP_OP_MODE, op_mode & ~TLP_OP_TX_RUN);
-      /* Wait for the TX FSM to stop; it might be processing a pkt. */
-      while (READ_CSR(TLP_STATUS) & TLP_STAT_TX_FSM); /* XXX HANG */
-      WRITE_CSR(TLP_OP_MODE, op_mode); /* restart tx */
-      if (DRIVER_DEBUG)
-        printf("%s: tx underrun; tx fifo threshold now %d bytes\n",
-         NAME_UNIT, 128<<((op_mode>>TLP_OP_TR_SHIFT)&3));
+      struct sppp* sppp = &sc->hdlcdev->state.ppp.pppdev.sppp;
+      sc->status.keep_alive = sppp->pp_flags & PP_KEEPALIVE;
+      sc->status.proto = PROTO_PPP;
+      break;
       }
-    }
-
-  /* 3) Errata memo from Digital Equipment Corp warns that 21140A */
-  /* receivers through rev 2.2 can hang if the fifo overruns. */
-  /* Recommended fix: stop and start the RX FSM after an overrun. */
-  missed = READ_CSR(TLP_MISSED);
-  if ((overruns = ((missed & TLP_MISS_OVERRUN)>>TLP_OVERRUN_SHIFT)) != 0)
-    {
-    if (DRIVER_DEBUG)
-      printf("%s: rx overrun cntr=%d\n", NAME_UNIT, overruns);
-    sc->status.cntrs.overruns += overruns;
-    if ((READ_PCI_CFG(sc, TLP_CFRV) & 0xFF) <= 0x22)
-      {
-      op_mode = READ_CSR(TLP_OP_MODE);
-      WRITE_CSR(TLP_OP_MODE, op_mode & ~TLP_OP_RX_RUN);
-      /* Wait for the RX FSM to stop; it might be processing a pkt. */
-      while (READ_CSR(TLP_STATUS) & TLP_STAT_RX_FSM); /* XXX HANG */
-      WRITE_CSR(TLP_OP_MODE, op_mode);  /* restart rx */
-      }
-    }
-
-  /* 4) When the receiver is enabled and a packet arrives, but no DMA */
-  /*  descriptor is available, the packet is counted as 'missed'. */
-  /* The receiver should never miss packets; warn if it happens. */
-  if ((missed = (missed & TLP_MISS_MISSED)) != 0)
-    {
-    if (DRIVER_DEBUG)
-      printf("%s: rx missed %d pkts\n", NAME_UNIT, missed);
-    sc->status.cntrs.missed += missed;
+    case IF_PROTO_CISCO:
+      sc->status.proto = PROTO_C_HDLC;
+      break;
+    case IF_PROTO_FR:
+      sc->status.proto = PROTO_FRM_RLY;
+      break;
+    case IF_PROTO_HDLC:
+      sc->status.proto = PROTO_IP_HDLC;
+      break;
+    case IF_PROTO_X25:
+      sc->status.proto = PROTO_X25;
+      break;
+    case IF_PROTO_HDLC_ETH:
+      sc->status.proto = PROTO_ETH_HDLC;
+      break;
+    default:
+      sc->status.proto = PROTO_NONE;
+      break;
     }
   }
 
-static void /* This is where the work gets done. */
-core_interrupt(void *arg, int check_status)
-  {
-  softc_t *sc = arg;
-  int activity;
-
-  /* If any CPU is inside this critical section, then */
-  /* other CPUs should go away without doing anything. */
-  if (BOTTOM_TRYLOCK == 0)
-    {
-    sc->status.cntrs.lck_intr++;
-    return;
-    }
-
-  /* Clear pending card interrupts. */
-  WRITE_CSR(TLP_STATUS, READ_CSR(TLP_STATUS));
-
-  /* In Linux, pci_alloc_consistent() means DMA descriptors */
-  /*  don't need explicit syncing. */
-#if BSD
-  {
-  struct desc_ring *ring = &sc->txring;
-  DMA_SYNC(sc->txring.map, sc->txring.size_descs,
-   BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-  ring = &sc->rxring;
-  DMA_SYNC(sc->rxring.map, sc->rxring.size_descs,
-   BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-  }
-#endif
-
-  do  /* This is the main loop for interrupt processing. */
-    {
-    activity  = txintr_cleanup(sc);
-    activity += txintr_setup(sc);
-    activity += rxintr_cleanup(sc);
-    activity += rxintr_setup(sc);
-    } while (activity);
-
-#if BSD
-  {
-  struct desc_ring *ring = &sc->txring;
-  DMA_SYNC(sc->txring.map, sc->txring.size_descs,
-   BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-  ring = &sc->rxring;
-  DMA_SYNC(sc->rxring.map, sc->rxring.size_descs,
-   BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-  }
-#endif
-
-  /* As the interrupt is dismissed, check for four unusual events. */
-  if (check_status) check_intr_status(sc);
-
-  BOTTOM_UNLOCK;
-  }
-
-/* user_interrupt() may be called from a syscall or a softirq */
-static void
-user_interrupt(softc_t *sc, int check_status)
-  {
-  DISABLE_INTR; /* noop on FreeBSD-5 and Linux */
-  core_interrupt(sc, check_status);
-  ENABLE_INTR;  /* noop on FreeBSD-5 and Linux */
-  }
-
-/* This is the core ioctl procedure. */
-/* It handles IOCTLs from lmcconfig(8). */
-/* It must not run when card watchdogs run. */
-/* Called from a syscall (user context; no spinlocks). */
-/* This procedure can SLEEP. */
 static int
-core_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+gen_hdlc_open(softc_t *sc, struct config *config)
   {
-  struct iohdr  *iohdr  = (struct iohdr  *) data;
-  struct ioctl  *ioctl  = (struct ioctl  *) data;
-  struct status *status = (struct status *) data;
-  struct config *config = (struct config *) data;
   int error = 0;
 
-  /* All structs start with a string and a cookie. */
-  if (((struct iohdr *)data)->cookie != NGM_LMC_COOKIE)
-    return EINVAL;
-
-  switch (cmd)
+  /* Refresh the keep_alive flag. */
+  if (sc->hdlcdev->proto.id == IF_PROTO_PPP)
     {
-    case LMCIOCGSTAT:
-      {
-      *status = sc->status;
-      iohdr->cookie = NGM_LMC_COOKIE;
-      break;
-      }
-    case LMCIOCGCFG:
-      {
-      *config = sc->config;
-      iohdr->cookie = NGM_LMC_COOKIE;
-      break;
-      }
-    case LMCIOCSCFG:
-      {
-      if ((error = CHECK_CAP)) break;
-      config_proto(sc, config);
-      sc->config = *config;
-      sc->card->config(sc);
-      break;
-      }
-    case LMCIOCREAD:
-      {
-      if (ioctl->cmd == IOCTL_RW_PCI)
-        {
-        if (ioctl->address > 252) { error = EFAULT; break; }
-        ioctl->data = READ_PCI_CFG(sc, ioctl->address);
-	}
-      else if (ioctl->cmd == IOCTL_RW_CSR)
-        {
-        if (ioctl->address > 15) { error = EFAULT; break; }
-        ioctl->data = READ_CSR(ioctl->address*TLP_CSR_STRIDE);
-	}
-      else if (ioctl->cmd == IOCTL_RW_SROM)
-        {
-        if (ioctl->address > 63)  { error = EFAULT; break; }
-        ioctl->data = read_srom(sc, ioctl->address);
-	}
-      else if (ioctl->cmd == IOCTL_RW_BIOS)
-        ioctl->data = read_bios(sc, ioctl->address);
-      else if (ioctl->cmd == IOCTL_RW_MII)
-        ioctl->data = read_mii(sc, ioctl->address);
-      else if (ioctl->cmd == IOCTL_RW_FRAME)
-        ioctl->data = read_framer(sc, ioctl->address);
-      else
-        error = EINVAL;
-      break;
-      }
-    case LMCIOCWRITE:
-      {
-      if ((error = CHECK_CAP)) break;
-      if (ioctl->cmd == IOCTL_RW_PCI)
-        {
-        if (ioctl->address > 252) { error = EFAULT; break; }
-        WRITE_PCI_CFG(sc, ioctl->address, ioctl->data);
-	}
-      else if (ioctl->cmd == IOCTL_RW_CSR)
-        {
-        if (ioctl->address > 15) { error = EFAULT; break; }
-        WRITE_CSR(ioctl->address*TLP_CSR_STRIDE, ioctl->data);
-	}
-      else if (ioctl->cmd == IOCTL_RW_SROM)
-        {
-        if (ioctl->address > 63)  { error = EFAULT; break; }
-        write_srom(sc, ioctl->address, ioctl->data); /* can sleep */
-	}
-      else if (ioctl->cmd == IOCTL_RW_BIOS)
-        {
-        if (ioctl->address == 0) erase_bios(sc);
-        write_bios(sc, ioctl->address, ioctl->data); /* can sleep */
-	}
-      else if (ioctl->cmd == IOCTL_RW_MII)
-        write_mii(sc, ioctl->address, ioctl->data);
-      else if (ioctl->cmd == IOCTL_RW_FRAME)
-        write_framer(sc, ioctl->address, ioctl->data);
-      else if (ioctl->cmd == IOCTL_WO_SYNTH)
-        write_synth(sc, (struct synth *)&ioctl->data);
-      else if (ioctl->cmd == IOCTL_WO_DAC)
-        {
-        write_dac(sc, 0x9002); /* set Vref = 2.048 volts */
-        write_dac(sc, ioctl->data & 0xFFF);
-	}
-      else
-        error = EINVAL;
-      break;
-      }
-    case LMCIOCTL:
-      {
-      if ((error = CHECK_CAP)) break;
-      if (ioctl->cmd == IOCTL_XILINX_RESET)
-        {
-        reset_xilinx(sc);
-        sc->card->config(sc);
-	}
-      else if (ioctl->cmd == IOCTL_XILINX_ROM)
-        {
-        load_xilinx_from_rom(sc); /* can sleep */
-        sc->card->config(sc);
-	}
-      else if (ioctl->cmd == IOCTL_XILINX_FILE)
-        {
-        /* load_xilinx_from_file() can sleep. */
-        error = load_xilinx_from_file(sc, ioctl->ucode, ioctl->data);
-        if (error != 0) load_xilinx_from_rom(sc); /* try the rom */
-        sc->card->config(sc);
-        set_status(sc, (error==0));  /* XXX */
-	}
-      else if (ioctl->cmd == IOCTL_RESET_CNTRS)
-        {
-        memset(&sc->status.cntrs, 0, sizeof(struct event_cntrs));
-        microtime(&sc->status.cntrs.reset_time);
-        }
-      else
-        error = sc->card->ioctl(sc, ioctl); /* can sleep */
-      break;
-      }
-    default:
-      error = EINVAL;
-      break;
+    struct sppp* sppp = &sc->hdlcdev->state.ppp.pppdev.sppp;
+    if (config->keep_alive)
+      sppp->pp_flags |=  PP_KEEPALIVE;
+    else
+      sppp->pp_flags &= ~PP_KEEPALIVE;
+    sc->config.keep_alive = config->keep_alive;
     }
+
+  /* Done if proto is not changing. */
+  if (config->proto == sc->config.proto)
+    return 0;
+
+  /* Close */
+  hdlc_close(sc->netdev);
+
+  /* Generic-HDLC gets protocol params using copy_from_user().
+   * This is a problem for a kernel-resident device driver.
+   * Luckily, PPP does not need any params so no copy_from_user().
+   */
+
+  /* Change line protocol. */
+  if (config->proto == PROTO_PPP)
+    {
+    struct ifreq ifr;
+    ifr.ifr_settings.size = 0;
+    ifr.ifr_settings.type = IF_PROTO_PPP;
+    hdlc_ioctl(sc->netdev, &ifr, SIOCWANDEV);
+    }
+  /* Changing to any protocol other than PPP */
+  /*  requires using the 'sethdlc' program. */
+
+  /* Open */
+  if ((error = hdlc_open(sc->netdev)))
+    {
+    if (sc->config.debug)
+      printk("%s: hdlc_open(): error %d\n", NAME_UNIT, error);
+    if (error == -ENOSYS)
+      printk("%s: Try 'sethdlc %s hdlc|ppp|cisco|fr'\n",
+       NAME_UNIT, NAME_UNIT);
+    sc->config.proto = PROTO_NONE;
+    }
+  else
+    sc->config.proto = config->proto;
 
   return error;
   }
 
-/* This is the core watchdog procedure. */
-/* It calculates link speed, and calls the card-specific watchdog code. */
-/* Calls interrupt() in case one got lost; also kick-starts the device. */
-/* ioctl syscalls and card watchdog routines must be interlocked.       */
-/* This procedure must not sleep. */
-static void
-core_watchdog(softc_t *sc)
+static int  /* never fails */
+gen_hdlc_attach(softc_t *sc, struct config *config)
   {
-  /* Read and restart the Tulip timer. */
-  u_int32_t tx_speed = READ_CSR(TLP_TIMER);
-  WRITE_CSR(TLP_TIMER, 0xFFFF);
+  sc->netdev->priv = sc->hdlcdev;
 
-  /* Measure MII clock using a timer in the Tulip chip.
-   * This timer counts transmitter bits divided by 4096.
-   * Since this is called once a second the math is easy.
-   * This is only correct when the link is NOT sending pkts.
-   * On a fully-loaded link, answer will be HALF actual rate.
-   * Clock rate during pkt is HALF clk rate between pkts.
-   * Measuring clock rate really measures link utilization!
-   */
-  sc->status.tx_speed = (0xFFFF - (tx_speed & 0xFFFF)) << 12;
+  /* hdlc_attach(sc->netdev); */
+  sc->netdev->mtu = HDLC_MAX_MTU;
+  sc->hdlcdev->attach = gen_hdlc_card_params;
+  sc->hdlcdev->xmit = netdev_start;
+  config->keep_alive = 1;
 
-  /* The first status reset time is when the calendar clock is set. */
-  if (sc->status.cntrs.reset_time.tv_sec < 1000)
-    microtime(&sc->status.cntrs.reset_time);
+  sc->config.stack = STACK_GEN_HDLC;
+  sc->stack = &gen_hdlc_stack;
 
-  /* Update hardware (operational) status. */
-  /* Call the card-specific watchdog routines. */
-  if (TOP_TRYLOCK != 0)
-    {
-    sc->status.oper_status = sc->card->watchdog(sc);
-
-    /* Increment a counter which tells user-land */
-    /*  observers that SNMP state has been updated. */
-    sc->status.ticks++;
-
-    TOP_UNLOCK;
-    }
-  else
-    sc->status.cntrs.lck_watch++;
-
-  /* In case an interrupt gets lost... */
-  user_interrupt(sc, 1);
+  return 0;
   }
 
-/* Configure line protocol stuff.
- * Called by attach_card() during module init.
- * Called by core_ioctl()  when lmcconfig writes sc->config.
- * Called by detach_card() during module shutdown.
- */
-static void
-config_proto(softc_t *sc, struct config *config)
+static int  /* never fails */
+gen_hdlc_detach(softc_t *sc)
   {
-  /* Switch from RAWIP to line protocol stack. */
-  if ((sc->config.line_pkg == PKG_RAWIP) &&
-         (config->line_pkg != PKG_RAWIP))
+  hdlc_close(sc->netdev);
+  /* hdlc_detach(sc->netdev); */
+  hdlc_proto_detach(sc->hdlcdev);
+  memset(&sc->hdlcdev->proto, 0, sizeof sc->hdlcdev->proto);
+
+  netdev_setup(sc->netdev);
+  sc->config.stack = STACK_NONE;
+  sc->config.proto = PROTO_NONE;
+  sc->stack = NULL;
+
+  return 0;
+  }
+
+static int
+gen_hdlc_card_params(struct net_device *netdev,
+ unsigned short encoding, unsigned short parity)
+  {
+  softc_t *sc = NETDEV2SC(netdev);
+  struct config config = sc->config;
+
+  /* Encoding does not seem to apply to synchronous interfaces, */
+  /* but Parity seems to be generic-HDLC's name for CRC. */
+  if (parity == PARITY_CRC32_PR1_CCITT)
+    config.crc_len = CFG_CRC_32;
+  if (parity == PARITY_CRC16_PR1_CCITT)
+    config.crc_len = CFG_CRC_16;
+  sc->card->attach(sc, &config);
+
+  return 0;
+  }
+
+#endif /* GEN_HDLC */
+
+#if P2P  /* BSD/OS */
+
+static struct stack p2p_stack =
+  {
+  .ioctl    = p2p_stack_ioctl,
+  .input    = p2p_stack_input,
+  .output   = p2p_stack_output,
+  .watchdog = p2p_stack_watchdog,
+  .open     = p2p_stack_open,
+  .attach   = p2p_stack_attach,
+  .detach   = p2p_stack_detach,
+  };
+
+static int  /* context: process */
+p2p_stack_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+  {
+  return p2p_ioctl(sc->ifp, cmd, data);
+  }
+
+static void  /* context: interrupt */
+p2p_stack_input(softc_t *sc, struct mbuf *mbuf)
+  {
+  struct mbuf *new_mbuf = mbuf;
+
+  while (new_mbuf)
     {
-#if NSPPP
-    LMC_BPF_DETACH;
-    sppp_attach(sc->ifp);
-    LMC_BPF_ATTACH(DLT_PPP, 4);
-    sc->sppp->pp_tls = sppp_tls;
-    sc->sppp->pp_tlf = sppp_tlf;
-    /* Force reconfiguration of SPPP params. */
-    sc->config.line_prot = 0;
-    sc->config.keep_alive = config->keep_alive ? 0:1;
-#elif P2P
-    int error = 0;
-    sc->p2p->p2p_proto = 0; /* force p2p_attach */
-    if ((error = p2p_attach(sc->p2p))) /* calls bpfattach() */
-      {
-      printf("%s: p2p_attach() failed; error %d\n", NAME_UNIT, error);
-      config->line_pkg = PKG_RAWIP;  /* still in RAWIP mode */
-      }
-    else
-      {
-      sc->p2p->p2p_mdmctl = p2p_mdmctl; /* set DTR */
-      sc->p2p->p2p_getmdm = p2p_getmdm; /* get DCD */
-      }
-#elif GEN_HDLC
-    int error = 0;
-    sc->net_dev->mtu = HDLC_MAX_MTU;
-    if ((error = hdlc_open(sc->net_dev)))
-      {
-      printf("%s: hdlc_open() failed; error %d\n", NAME_UNIT, error);
-      printf("%s: Try 'sethdlc %s ppp'\n", NAME_UNIT, NAME_UNIT);
-      config->line_pkg = PKG_RAWIP;  /* still in RAWIP mode */
-      }
-#else /* no line protocol stack was configured */
-    config->line_pkg = PKG_RAWIP;  /* still in RAWIP mode */
-#endif
+    sc->p2p->p2p_hdrinput(sc->p2p, new_mbuf->m_data, new_mbuf->m_len);
+    new_mbuf = new_mbuf->m_next;
+    }
+  sc->p2p->p2p_input(sc->p2p, NULL);
+  m_freem(mbuf);
+  }
+
+static void  /* context: interrupt */
+p2p_stack_output(softc_t *sc)
+  {
+  if (!IFQ_IS_EMPTY(&sc->p2p->p2p_isnd))
+    IFQ_DEQUEUE(&sc->p2p->p2p_isnd, sc->tx_mbuf);
+  else
+    IFQ_DEQUEUE(&sc->ifp->if_snd,   sc->tx_mbuf);
+  }
+
+static void  /* context: softirq */
+p2p_stack_watchdog(softc_t *sc)
+  {
+  /* Notice change in link status. */
+  if ((sc->last_link_state != sc->status.link_state) &&
+   /* if_slowtimo() can run before raw_init() has inited rawcb. */
+   (sc->p2p->p2p_modem != NULL) && (rawcb.rcb_next != NULL))
+    (*sc->p2p->p2p_modem)(sc->p2p, sc->status.link_state==STATE_UP);
+
+  /* Report current line protocol. */
+  sc->status.stack = STACK_P2P;
+  switch (sc->ifp->if_type)
+    {
+    case IFT_PPP:
+      sc->status.proto = PROTO_PPP;
+      break;
+    case IFT_PTPSERIAL:
+      sc->status.proto = PROTO_C_HDLC;
+      break;
+    case IFT_FRELAY:
+      sc->status.proto = PROTO_FRM_RLY;
+      break;
+    default:
+      sc->status.proto = PROTO_NONE;
+      break;
+    }
+  }
+
+static int
+p2p_stack_open(softc_t *sc, struct config *config)
+  {
+  int error = 0;
+
+  /* Done if proto is not changing. */
+  if (config->proto == sc->config.proto)
+    return 0;
+
+  if (error = p2p_stack_detach(sc))
+    return error;
+
+  /* Change line protocol. */
+  switch (config->proto)
+    {
+    case PROTO_PPP:
+      sc->ifp->if_type = IFT_PPP;
+      sc->config.proto = PROTO_PPP;
+      break;
+    case PROTO_C_HDLC:
+      sc->ifp->if_type = IFT_PTPSERIAL;
+      sc->config.proto = PROTO_C_HDLC;
+      break;
+    case PROTO_FRM_RLY:
+      sc->ifp->if_type = IFT_FRELAY;
+      sc->config.proto = PROTO_FRM_RLY;
+      break;
+    default:
+    case PROTO_NONE:
+      sc->ifp->if_type = IFT_NONE;
+      sc->config.proto = PROTO_NONE;
+      return 0;
     }
 
-  /* Switch from line protocol stack to RAWIP. */
-  if ((sc->config.line_pkg != PKG_RAWIP) &&
-         (config->line_pkg == PKG_RAWIP))
+  error = p2p_stack_attach(sc, config);
+
+  return error;
+  }
+
+static int
+p2p_stack_attach(softc_t *sc, struct config *config)
+  {
+  int error;
+
+  sc->p2p = &sc->p2pcom;
+  sc->p2p->p2p_proto = 0; /* force p2p_attach to re-init */
+
+  if ((error = p2p_attach(sc->p2p))) /* calls bpfattach() */
     {
-#if NSPPP
-    LMC_BPF_DETACH;
-    sppp_flush(sc->ifp);
-    sppp_detach(sc->ifp);
-    ifnet_setup(sc->ifp);
-    LMC_BPF_ATTACH(DLT_RAW, 0);
-#elif P2P
-    int error = 0;
-    if_qflush(&sc->p2p->p2p_isnd);
-    if ((error = p2p_detach(sc->p2p)))
-      {
-      printf("%s: p2p_detach() failed; error %d\n",  NAME_UNIT, error);
-      printf("%s: Try 'ifconfig %s down -remove'\n", NAME_UNIT, NAME_UNIT);
-      config->line_pkg = PKG_P2P; /* not in RAWIP mode; still attached to P2P */
-      }
-    else
-      {
-      ifnet_setup(sc->ifp);
-      LMC_BPF_ATTACH(DLT_RAW, 0);
-      }
-#elif GEN_HDLC
-    hdlc_proto_detach(sc->hdlc_dev);
-    hdlc_close(sc->net_dev);
-    netdev_setup(sc->net_dev);
-#endif
+    if (sc->config.debug)
+      printf("%s: p2p_attach(): error %d\n", NAME_UNIT, error);
+    if (error == EPFNOSUPPORT)
+      printf("%s: Try 'ifconfig %s linktype ppp|frelay|chdlc'\n",
+       NAME_UNIT, NAME_UNIT);
+    sc->config.stack = STACK_NONE; /* not attached to P2P */
+    return error;
+    }
+  sc->p2p->p2p_mdmctl = p2p_mdmctl;
+  sc->p2p->p2p_getmdm = p2p_getmdm;
+
+  sc->config.stack = STACK_P2P;
+  sc->stack = &p2p_stack;
+
+  return 0;
+  }
+
+static int
+p2p_stack_detach(softc_t *sc)
+  {
+  int error = 0;
+
+  if ((error = p2p_detach(sc->p2p))) /* calls bfpdetach() */
+    {
+    if (sc->config.debug)
+      printf("%s: p2p_detach(): error %d\n",  NAME_UNIT, error);
+    if (error == EBUSY)
+      printf("%s: Try 'ifconfig %s down -remove'\n",
+       NAME_UNIT, NAME_UNIT);
+    sc->config.stack = STACK_P2P; /* still attached to P2P */
+    return error;
     }
 
-#if NSPPP
+  ifnet_setup(sc->ifp);
+  sc->config.stack = STACK_NONE;
+  sc->config.proto = PROTO_NONE;
+  sc->stack = NULL;
 
-# ifndef PP_FR
+  return error;
+  }
+
+/* Callout from P2P: */
+/* Get the state of DCD (Data Carrier Detect). */
+static int  /* never fails */
+p2p_getmdm(struct p2pcom *p2p, caddr_t result)
+  {
+  softc_t *sc = IFP2SC(&p2p->p2p_if);
+
+  /* Non-zero is not good enough; TIOCM_CAR is 0x40. */
+  *(int *)result = (sc->status.link_state==STATE_UP) ? TIOCM_CAR : 0;
+
+  return 0;
+  }
+
+/* Callout from P2P: */
+/* Set the state of DTR (Data Terminal Ready). */
+static int  /* never fails */
+p2p_mdmctl(struct p2pcom *p2p, int flag)
+  {
+  softc_t *sc = IFP2SC(&p2p->p2p_if);
+
+  set_ready(sc, flag);
+
+  return 0;
+  }
+
+#endif /* P2P */
+
+#if SPPP  /* FreeBSD, NetBSD, OpenBSD */
+
+static struct stack sppp_stack =
+  {
+  .ioctl    = sppp_stack_ioctl,
+  .input    = sppp_stack_input,
+  .output   = sppp_stack_output,
+  .watchdog = sppp_stack_watchdog,
+  .open     = sppp_stack_open,
+  .attach   = sppp_stack_attach,
+  .detach   = sppp_stack_detach,
+  };
+
+# if !defined(PP_FR)
 #  define PP_FR 0
 # endif
-
-# ifndef DLT_C_HDLC
+# if !defined(DLT_C_HDLC)
 #  define DLT_C_HDLC DLT_PPP
 # endif
-
-# ifndef DLT_FRELAY
+# if !defined(DLT_FRELAY)
 #  define DLT_FRELAY DLT_PPP
 # endif
 
-  if (config->line_pkg != PKG_RAWIP)
-    {
-    /* Check for change to PPP protocol. */
-    if ((sc->config.line_prot != PROT_PPP) &&
-           (config->line_prot == PROT_PPP))
-      {
-      LMC_BPF_DETACH;
-# if (__NetBSD__ || __OpenBSD__)
-      sc->sppp->pp_flags &= ~PP_CISCO;
-# elif __FreeBSD__
-      sc->ifp->if_flags  &= ~IFF_LINK2;
-      sc->sppp->pp_flags &= ~PP_FR;
-# endif
-      LMC_BPF_ATTACH(DLT_PPP, 4);
-      sppp_ioctl(sc->ifp, SIOCSIFFLAGS, NULL);
-      }
-
-    /* Check for change to C_HDLC protocol. */
-    if ((sc->config.line_prot != PROT_C_HDLC) &&
-           (config->line_prot == PROT_C_HDLC))
-      {
-      LMC_BPF_DETACH;
-# if (__NetBSD__ || __OpenBSD__)
-      sc->sppp->pp_flags |=  PP_CISCO;
-# elif __FreeBSD__
-      sc->ifp->if_flags  |=  IFF_LINK2;
-      sc->sppp->pp_flags &= ~PP_FR;
-# endif
-      LMC_BPF_ATTACH(DLT_C_HDLC, 4);
-      sppp_ioctl(sc->ifp, SIOCSIFFLAGS, NULL);
-      }
-
-    /* Check for change to Frame Relay protocol. */
-    if ((sc->config.line_prot != PROT_FRM_RLY) &&
-           (config->line_prot == PROT_FRM_RLY))
-      {
-      LMC_BPF_DETACH;
-# if (__NetBSD__ || __OpenBSD__)
-      sc->sppp->pp_flags &= ~PP_CISCO;
-# elif __FreeBSD__
-      sc->ifp->if_flags  &= ~IFF_LINK2;
-      sc->sppp->pp_flags |= PP_FR;
-# endif
-      LMC_BPF_ATTACH(DLT_FRELAY, 4);
-      sppp_ioctl(sc->ifp, SIOCSIFFLAGS, NULL);
-      }
-
-    /* Check for disabling keep-alives. */
-    if ((sc->config.keep_alive != 0) &&
-           (config->keep_alive == 0))
-      sc->sppp->pp_flags &= ~PP_KEEPALIVE;
-
-    /* Check for enabling keep-alives. */
-    if ((sc->config.keep_alive == 0) &&
-           (config->keep_alive != 0))
-      sc->sppp->pp_flags |=  PP_KEEPALIVE;	
-    }
-
-#endif /* NSPPP */
-
-  /* Loop back through the TULIP Ethernet chip; (no CRC). */
-  /* Data sheet says stop DMA before changing OPMODE register. */
-  /* But that's not as simple as it sounds; works anyway. */
-  /* Check for enabling loopback thru Tulip chip. */
-  if ((sc->config.loop_back != CFG_LOOP_TULIP) &&
-         (config->loop_back == CFG_LOOP_TULIP))
-    {
-    u_int32_t op_mode = READ_CSR(TLP_OP_MODE);
-    op_mode |= TLP_OP_INT_LOOP;
-    WRITE_CSR(TLP_OP_MODE, op_mode);
-    config->crc_len = CFG_CRC_0;
-    }
-
-  /* Check for disabling loopback thru Tulip chip. */
-  if ((sc->config.loop_back == CFG_LOOP_TULIP) &&
-         (config->loop_back != CFG_LOOP_TULIP))
-    {
-    u_int32_t op_mode = READ_CSR(TLP_OP_MODE);
-    op_mode &= ~TLP_OP_LOOP_MODE;
-    WRITE_CSR(TLP_OP_MODE, op_mode);
-    config->crc_len = CFG_CRC_16;
-    }
+static int  /* context: process */
+sppp_stack_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+  {
+  return sppp_ioctl(sc->ifp, cmd, data);
   }
 
-/* Administrative status of the driver (UP or DOWN) has changed. */
-/* A card-specific action may be required: T1 and T3 cards: no-op. */
-/* HSSI and SSI cards change the state of modem ready signals. */
-static void
-set_status(softc_t *sc, int status)
+static void  /* context: interrupt */
+sppp_stack_input(softc_t *sc, struct mbuf *mbuf)
   {
-  struct ioctl ioctl;
+  sppp_input(sc->ifp, mbuf);
+  }
 
-  ioctl.cmd = IOCTL_SET_STATUS;
-  ioctl.data = status;
+static void  /* context: interrupt */
+sppp_stack_output(softc_t *sc)
+  {
+  sc->tx_mbuf = sppp_dequeue(sc->ifp);
+  }
 
-  sc->card->ioctl(sc, &ioctl);
+static void  /* context: softirq */
+sppp_stack_watchdog(softc_t *sc)
+  {
+  /* Notice when the link comes up. */
+  if ((sc->last_link_state != STATE_UP) &&
+    (sc->status.link_state == STATE_UP))
+    sppp_tls(sc->sppp);
+
+  /* Notice when the link goes down. */
+  if ((sc->last_link_state == STATE_UP) &&
+    (sc->status.link_state != STATE_UP))
+    sppp_tlf(sc->sppp);
+
+  /* Report current line protocol. */
+  sc->status.stack = STACK_SPPP;
+# if defined(__FreeBSD__)
+  if (sc->sppp->pp_flags & PP_FR)
+    sc->status.proto = PROTO_FRM_RLY;
+  else if (sc->ifp->if_flags  & IFF_LINK2)
+# elif defined(__NetBSD__) || defined(__OpenBSD__)
+  if (sc->sppp->pp_flags & PP_CISCO)
+# endif
+    sc->status.proto = PROTO_C_HDLC;
+  else
+    sc->status.proto = PROTO_PPP;
+
+  /* Report keep-alive status. */
+  sc->status.keep_alive = sc->sppp->pp_flags & PP_KEEPALIVE;
+  }
+
+static int  /* never fails */
+sppp_stack_open(softc_t *sc, struct config *config)
+  {
+  /* Refresh the keep_alive flag. */
+  if (config->keep_alive)
+    sc->sppp->pp_flags |=  PP_KEEPALIVE;
+  else
+    sc->sppp->pp_flags &= ~PP_KEEPALIVE;
+  sc->config.keep_alive = config->keep_alive;
+
+  /* Done if proto is not changing. */
+  if (config->proto == sc->config.proto)
+    return 0;
+
+  /* Close */
+  sc->ifp->if_flags &= ~IFF_UP; /* down */
+  sppp_ioctl(sc->ifp, SIOCSIFFLAGS, NULL);
+
+  /* Change line protocol. */
+  LMC_BPF_DETACH(sc);
+  switch (config->proto)
+    {
+    case PROTO_PPP:
+      {
+# if defined(__FreeBSD__)
+      sc->ifp->if_flags  &= ~IFF_LINK2;
+      sc->sppp->pp_flags &= ~PP_FR;
+# elif defined(__NetBSD__) || defined(__OpenBSD__)
+      sc->sppp->pp_flags &= ~PP_CISCO;
+# endif
+      LMC_BPF_ATTACH(sc, DLT_PPP, 4);
+      sc->config.proto = PROTO_PPP;
+      break;
+      }
+
+    default:
+    case PROTO_C_HDLC:
+      {
+# if defined(__FreeBSD__)
+      sc->ifp->if_flags  |=  IFF_LINK2;
+      sc->sppp->pp_flags &= ~PP_FR;
+# elif defined(__NetBSD__) || defined(__OpenBSD__)
+      sc->sppp->pp_flags |=  PP_CISCO;
+# endif
+      LMC_BPF_ATTACH(sc, DLT_C_HDLC, 4);
+      sc->config.proto = PROTO_C_HDLC;
+      break;
+      }
+
+# if defined(__FreeBSD__)
+    case PROTO_FRM_RLY:
+      {
+      sc->ifp->if_flags  &= ~IFF_LINK2;
+      sc->sppp->pp_flags |= PP_FR;
+      sc->sppp->pp_flags |= PP_KEEPALIVE;
+      sc->config.keep_alive = 1;
+      LMC_BPF_ATTACH(sc, DLT_FRELAY, 4);
+      sc->config.proto = PROTO_FRM_RLY;
+      break;
+      }
+# endif
+    } /* switch(config->proto) */
+
+  /* Open */
+  sc->ifp->if_flags |= IFF_UP; /* up and not running */
+  sppp_ioctl(sc->ifp, SIOCSIFFLAGS, NULL);
+
+  return 0;
+  }
+
+static int  /* never fails */
+sppp_stack_attach(softc_t *sc, struct config *config)
+  {
+# if defined(__FreeBSD__)
+  sc->sppp = sc->ifp->if_l2com;
+# else
+  sc->sppp = &sc->spppcom;
+# endif
+
+  LMC_BPF_ATTACH(sc, DLT_RAW, 0);
+  sppp_attach(sc->ifp);
+  sc->sppp->pp_tls = sppp_tls;
+  sc->sppp->pp_tlf = sppp_tlf;
+  config->keep_alive = 1;
+
+  sc->config.stack = STACK_SPPP;
+  sc->stack = &sppp_stack;
+
+  return 0;
+  }
+
+static int  /* never fails */
+sppp_stack_detach(softc_t *sc)
+  {
+  sc->ifp->if_flags &= ~IFF_UP; /* down */
+  sppp_ioctl(sc->ifp, SIOCSIFFLAGS, NULL); /* close() */
+  sppp_detach(sc->ifp);
+  LMC_BPF_DETACH(sc);
+
+  ifnet_setup(sc->ifp);
+  sc->config.stack = STACK_NONE;
+  sc->config.proto = PROTO_NONE;
+  sc->stack = NULL;
+
+  return 0;
+  }
+
+/* Callout from SPPP: */
+static void
+sppp_tls(struct sppp *sppp)
+  {
+  /* Calling pp_up/down() required by PPP mode in OpenBSD. */
+  /* Calling pp_up/down() panics      PPP mode in NetBSD. */
+  /* Calling pp_up/down() breaks    Cisco mode in FreeBSD. */
+# if defined(__FreeBSD__)
+  if (!(sppp->pp_mode  & IFF_LINK2) && /* not Cisco */
+      !(sppp->pp_flags & PP_FR))       /* not FrmRly */
+# elif defined(__NetBSD__) || defined(__OpenBSD__)
+  if (!(sppp->pp_flags & PP_CISCO))    /* not Cisco */
+# endif
+    sppp->pp_up(sppp);
+  }
+
+/* Callout from SPPP: */
+static void
+sppp_tlf(struct sppp *sppp)
+  {
+  /* Calling pp_up/down() required by PPP mode in OpenBSD. */
+  /* Calling pp_up/down() panics      PPP mode in NetBSD. */
+  /* Calling pp_up/down() breaks    Cisco mode in FreeBSD. */
+# if defined(__FreeBSD__)
+  if (!(sppp->pp_mode  & IFF_LINK2) && /* not Cisco */
+      !(sppp->pp_flags & PP_FR))       /* not FrmRly */
+# elif defined(__NetBSD__) || defined(__OpenBSD__)
+  if (!(sppp->pp_flags & PP_CISCO))    /* not Cisco */
+# endif
+    sppp->pp_down(sppp);
+  }
+
+#endif /* SPPP */
+
+/* RawIP is built into the driver. */
+
+static struct stack rawip_stack =
+  {
+#if IFNET
+  .ioctl    = rawip_ioctl,
+  .input    = rawip_input,
+  .output   = rawip_output,
+#elif NETDEV
+  .ioctl    = rawip_ioctl,
+  .type     = rawip_type,
+  .mtu      = rawip_mtu,
+#endif
+  .watchdog = rawip_watchdog,
+  .open     = rawip_open,
+  .attach   = rawip_attach,
+  .detach   = rawip_detach,
+  };
+
+#if IFNET
+
+static int  /* context: process */
+rawip_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+  {
+  struct ifreq *ifr = (struct ifreq *) data;
+  int error = 0;
+
+  switch (cmd)
+    {
+    case SIOCADDMULTI:
+    case SIOCDELMULTI:
+      if (sc->config.debug)
+        printf("%s: rawip_ioctl: SIOCADD/DELMULTI\n", NAME_UNIT);
+    case SIOCAIFADDR:
+    case SIOCSIFFLAGS:
+    case SIOCSIFDSTADDR:
+      break;
+    case SIOCSIFADDR:
+      sc->ifp->if_flags |= IFF_UP; /* a Unix tradition */
+      break;
+    case SIOCSIFMTU:
+      if ((ifr->ifr_mtu < 72) || (ifr->ifr_mtu > 65535))
+        error = EINVAL;
+      else
+        sc->ifp->if_mtu = ifr->ifr_mtu;
+      break;
+    default:
+      error = EINVAL;
+      break;
+    }
+
+  return error;
+  }
+
+static void  /* context: interrupt */
+rawip_input(softc_t *sc, struct mbuf *mbuf)
+  {
+  ifnet_input(sc->ifp, mbuf);
+  }
+
+static void  /* context: interrupt */
+rawip_output(softc_t *sc)
+  {
+  IFQ_DEQUEUE(&sc->ifp->if_snd, sc->tx_mbuf);
+  }
+
+#elif NETDEV
+
+static int  /* context: process */
+rawip_ioctl(softc_t *sc, struct ifreq *ifr, int cmd)
+  {
+  if (sc->config.debug)
+    printk("%s: rawip_ioctl; cmd=0x%08x\n", NAME_UNIT, cmd);
+  return -EINVAL;
+  }
+
+static int  /* context: interrupt */
+rawip_type(softc_t *sc, struct sk_buff *skb)
+  {
+  if (skb->data[0]>>4 == 4)
+    return htons(ETH_P_IP);
+  else if (skb->data[0]>>4 == 6)
+    return htons(ETH_P_IPV6);
+  else
+    return htons(ETH_P_HDLC);
+  }
+
+static int  /* Process Context */
+rawip_mtu(softc_t *sc, int mtu)
+  {
+  return ((mtu < 72) || (mtu > 65535)) ? -EINVAL : 0;
+  }
+
+#endif /* IFNET */
+
+static void  /* context: softirq */
+rawip_watchdog(softc_t *sc)
+  {
+#if IFNET
+  if ((sc->status.link_state == STATE_UP) &&
+      (sc->ifp->if_flags & IFF_UP))
+# if defined(__FreeBSD__)
+    sc->ifp->if_drv_flags |= IFF_DRV_RUNNING;
+# else
+    sc->ifp->if_flags |= IFF_RUNNING;
+# endif
+  if ((sc->status.link_state != STATE_UP) ||
+     !(sc->ifp->if_flags & IFF_UP))
+# if defined(__FreeBSD__)
+    sc->ifp->if_drv_flags &= ~IFF_DRV_RUNNING;
+# else
+    sc->ifp->if_flags &= ~IFF_RUNNING;
+# endif
+#endif /* IFNET */
+
+  /* Report current line protocol. */
+  sc->status.stack = STACK_RAWIP;
+  sc->status.proto = PROTO_IP_HDLC;
+  }
+
+static int
+rawip_open(softc_t *sc, struct config *config)
+  {
+  sc->config.proto = PROTO_IP_HDLC;
+
+  return 0;
+  }
+
+static int
+rawip_attach(softc_t *sc, struct config *config)
+  {
+#if IFNET
+  LMC_BPF_ATTACH(sc, DLT_RAW, 0);
+#endif
+
+  sc->config.stack = STACK_RAWIP;
+  sc->stack = &rawip_stack;
+
+  return 0;
+  }
+
+static int
+rawip_detach(softc_t *sc)
+  {
+#if IFNET
+  LMC_BPF_DETACH(sc);
+  ifnet_setup(sc->ifp);
+#elif NETDEV
+  netdev_setup(sc->netdev);
+#endif
+
+  sc->config.stack = STACK_NONE;
+  sc->config.proto = PROTO_NONE;
+  sc->stack = NULL;
+
+  return 0;
   }
 
 #if IFNET
 
 /* Called to give a newly arrived pkt to higher levels. */
 /* Called from rxintr_cleanup() with bottom_lock held. */
-/* RAWIP mode is the only time this is used. */
+/* This is only used with rawip_stack on a BSD. */
 static void
-raw_input(struct ifnet *ifp, struct mbuf *mbuf)
+ifnet_input(struct ifnet *ifp, struct mbuf *mbuf)
   {
   softc_t *sc = IFP2SC(ifp);
   struct ifqueue *intrq;
@@ -3030,7 +3689,7 @@ raw_input(struct ifnet *ifp, struct mbuf *mbuf)
   if (mbuf->m_data[0]>>4 == 4)
     {
     isr = NETISR_IP;
-#  if (__FreeBSD_version < 500000)
+#  if !defined(__FreeBSD__)
     intrq = &ipintrq;
 #  endif
     }
@@ -3040,142 +3699,103 @@ raw_input(struct ifnet *ifp, struct mbuf *mbuf)
   if (mbuf->m_data[0]>>4 == 6)
     {
     isr = NETISR_IPV6;
-#  if (__FreeBSD_version < 500000)
+#  if !defined(__FreeBSD__)
     intrq = &ip6intrq;
 #  endif
     }
 # endif /* INET6 */
 
-  if (isr != 0)
+  if (isr)
     {
-# if (__FreeBSD_version >= 500000)
+# if defined(__FreeBSD__)
     netisr_dispatch(isr, mbuf);
 # else
-    if (IF_QFULL(intrq) == 0)
+    if (!IF_QFULL(intrq))
       {
-      /* raw_input() ENQUEUES in a hard interrupt. */
+      /* ifnet_input() ENQUEUES in a hard interrupt. */
       /* ip_input() DEQUEUES in a soft interrupt. */
       /* Some BSD QUEUE routines are not interrupt-safe. */
       DISABLE_INTR; /* noop in FreeBSD */
       IF_ENQUEUE(intrq, mbuf);
-      ENABLE_INTR;
+      ENABLE_INTR;  /* noop in FreeBSD */
       schednetisr(isr); /* wake up the network code */
       }
-    else
+    else /* intrq is full */
       {
       m_freem(mbuf);
       sc->status.cntrs.idrops++;
-      if (DRIVER_DEBUG)
-        printf("%s: raw_input: rx pkt dropped: intrq full\n", NAME_UNIT);
+      if (sc->config.debug)
+        printf("%s: ifnet_input: rx pkt dropped: intrq full\n", NAME_UNIT);
       }
-# endif /* (__FreeBSD_version >= 500000) */
+# endif /* __FreeBSD__ */
     }
-  else
+  else /* isr is zero */
     {
     m_freem(mbuf);
     sc->status.cntrs.idrops++;
-    if (DRIVER_DEBUG)
-      printf("%s: raw_input: rx pkt dropped: not IPv4 or IPv6\n", NAME_UNIT);
+    if (sc->config.debug)
+      printf("%s: ifnet_input: rx pkt dropped: not IPv4 or IPv6\n", NAME_UNIT);
     }
   }
 
-/* sppp and p2p replace this with their own proc. */
-/* Called from a syscall (user context; no spinlocks). */
-/* RAWIP mode is the only time this is used. */
-static int
-raw_output(struct ifnet *ifp, struct mbuf *m,
+/* sppp and p2p replace this with their own proc.
+ * This is only used with rawip_stack on a BSD.
+ * This procedure is very similar to ng_rcvdata().
+ */
+static int  /* context: process */
+ifnet_output(struct ifnet *ifp, struct mbuf *m,
  struct sockaddr *dst, struct rtentry *rt)
   {
   softc_t *sc = IFP2SC(ifp);
   int error = 0;
 
   /* Fail if the link is down. */
-  if (sc->status.oper_status != STATUS_UP)
+  if (sc->status.link_state != STATE_UP)
     {
     m_freem(m);
     sc->status.cntrs.odrops++;
-    if (DRIVER_DEBUG)
-      printf("%s: raw_output: tx pkt dropped: link down\n", NAME_UNIT);
+    if (sc->config.debug)
+      printf("%s: ifnet_output: tx pkt dropped: link down\n", NAME_UNIT);
     return ENETDOWN;
     }
 
-# if NETGRAPH
-  /* Netgraph has priority over the ifnet kernel interface. */
-  if (sc->ng_hook != NULL)
-    {
-    m_freem(m);
-    sc->status.cntrs.odrops++;
-    if (DRIVER_DEBUG)
-      printf("%s: raw_output: tx pkt dropped: netgraph active\n", NAME_UNIT);
-    return EBUSY;
-    }
-# endif
-
-  /* raw_output() ENQUEUEs in a syscall or softirq. */
+  /* ifnet_output() ENQUEUEs in a syscall or softirq. */
   /* txintr_setup() DEQUEUEs in a hard interrupt. */
   /* Some BSD QUEUE routines are not interrupt-safe. */
   {
-  DISABLE_INTR;
-# if (__FreeBSD_version >= 503000)
+  DISABLE_INTR; /* noop in FreeBSD */
+#if defined(__FreeBSD__)
   IFQ_ENQUEUE(&ifp->if_snd, m, error);
-# else
+#else
   IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
-# endif
-  ENABLE_INTR;
+#endif
+  ENABLE_INTR; /* noop in FreeBSD */
   }
 
-  if (error==0)
-    user_interrupt(sc, 0); /* start the transmitter */
-  else
+  if (error)
     {
-    m_freem(m);
     sc->status.cntrs.odrops++;
-    if (DRIVER_DEBUG)
-      printf("%s: raw_output: IFQ_ENQUEUE() failed; error %d\n",
+    if (sc->config.debug)
+      printf("%s: ifnet_output: tx pkt dropped: IFQ_ENQUEUE(): error %d\n",
        NAME_UNIT, error);
     }
+  else
+    /* Process tx pkts; do not process rx pkts. */
+    lmc_interrupt(sc, 0, 0);
 
   return error;
   }
 
-/* Called from a syscall (user context; no spinlocks). */
-/* RAWIP mode is the only time this is used. */
-static int
-raw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
-  {
-  struct ifreq *ifr = (struct ifreq *) data;
-  int error = 0;
-
-  switch (cmd)
-    {
-    case SIOCAIFADDR:
-    case SIOCSIFFLAGS:
-    case SIOCSIFDSTADDR:
-    case SIOCADDMULTI:
-    case SIOCDELMULTI:
-      break;
-    case SIOCSIFADDR:
-      ifp->if_flags |= IFF_UP;	/* a Unix tradition */
-      break;
-    case SIOCSIFMTU:
-      ifp->if_mtu = ifr->ifr_mtu;
-      break;
-    default:
-      error = EINVAL;
-      break;
-    }
-  return error;
-  }
-
-/* Called from a syscall (user context; no spinlocks). */
-static int
+static int  /* context: process */
 ifnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
   {
   softc_t *sc = IFP2SC(ifp);
   struct ifreq *ifr = (struct ifreq *) data;
   int error = 0;
 
-  TOP_LOCK;
+  /* Aquire ioctl/watchdog interlock. */
+  if ((error = TOP_LOCK(sc))) return error;
+
   switch (cmd)
     {
     /* Catch the IOCTLs used by lmcconfig. */
@@ -3185,33 +3805,25 @@ ifnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
     case LMCIOCREAD:
     case LMCIOCWRITE:
     case LMCIOCTL:
-      error = core_ioctl(sc, cmd, data);
+      error = lmc_ioctl(sc, cmd, data);
       break;
 
-# if (__FreeBSD__ || (__NetBSD_Version__ >= 106000000))
+# if defined(__FreeBSD__) || defined(__NetBSD__)
     case SIOCSIFCAP:
 #  if DEVICE_POLLING
-      if (((ifr->ifr_reqcap & IFCAP_POLLING) != 0) &&
-        ((ifp->if_capenable & IFCAP_POLLING) == 0) &&
-#  if (__FreeBSD_version >= 600000)
-       ((error = ether_poll_register(bsd_poll, ifp)) == 0))
-#  else
-       ((error = ether_poll_register(bsd_poll, ifp) ? 0 : EINVAL) == 0))
-#  endif
+      if ((ifr->ifr_reqcap & IFCAP_POLLING) &&
+       !(ifp->if_capenable & IFCAP_POLLING) &&
+       !(error = ether_poll_register(bsd_poll, ifp)))
         { /* enable polling */
-        WRITE_CSR(TLP_INT_ENBL, TLP_INT_DISABLE);
+        WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_DISABLE);
         ifp->if_capenable |= IFCAP_POLLING;
         }
-      else if (((ifr->ifr_reqcap & IFCAP_POLLING) == 0) &&
-             ((ifp->if_capenable & IFCAP_POLLING) != 0) &&
-#  if (__FreeBSD_version >= 600000)
-            ((error = ether_poll_deregister(ifp)) == 0))
-#  else
-            ((error = ether_poll_deregister(ifp) ? 0 : EINVAL) == 0))
-#  endif
+      else if (!(ifr->ifr_reqcap & IFCAP_POLLING) &&
+              (ifp->if_capenable & IFCAP_POLLING) &&
+             !(error = ether_poll_deregister(ifp)))
         { /* disable polling */
         ifp->if_capenable &= ~IFCAP_POLLING;
-        WRITE_CSR(TLP_INT_ENBL, TLP_INT_TXRX);
+        WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_TXRX);
         }
       else
         error = EINVAL;
@@ -3224,210 +3836,131 @@ ifnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
       error = ifmedia_ioctl(ifp, ifr, &sc->ifm, cmd);
       break;
 
-# if (OpenBSD >= 200411)  /* OpenBSD-3.6 */
+# if defined(__OpenBSD__)
     case SIOCSIFTIMESLOT:
-      if (sc->status.card_type == TLP_CSID_T1E1)
+      if (sc->status.card_type == CSID_LMC_T1E1)
         {
         struct config config = sc->config;
         if ((error = copyin(ifr->ifr_data, &config.time_slots,
-         sizeof config.time_slots))) break;
-        config.iohdr.cookie = NGM_LMC_COOKIE;
-        error = core_ioctl(sc, LMCIOCSCFG, (caddr_t)&config);
+         sizeof sc->config.time_slots))) break;
+        sc->card->attach(sc, &config);
 	}
       else
         error = EINVAL;
       break;
     case SIOCGIFTIMESLOT:
-      if (sc->status.card_type == TLP_CSID_T1E1)
-        error = copyout(&sc->config.time_slots, ifr->ifr_data,
-         sizeof sc->config.time_slots);
+      if (sc->status.card_type == CSID_LMC_T1E1)
+        error = copyout(&sc->status.time_slots, ifr->ifr_data,
+         sizeof sc->status.time_slots);
       else
         error = EINVAL;
       break;
-# endif /* OpenBSD >= 200411 */
+# endif /* OpenBSD */
 
     /* Pass the rest to the line protocol. */
     default:
-      if (sc->config.line_pkg == PKG_RAWIP)
-        error =  raw_ioctl(ifp, cmd, data);
+      if (sc->stack)
+        error = sc->stack->ioctl(sc, cmd, data);
       else
-# if NSPPP
-        error = sppp_ioctl(ifp, cmd, data);
-# elif P2P
-        error =  p2p_ioctl(ifp, cmd, data);
-# else
-        error = EINVAL;
-# endif
+        error = ENOSYS;
       break;
     }
 
-  if (DRIVER_DEBUG && (error!=0))
-    printf("%s: ifnet_ioctl: op=%c%c len=%3lu grp='%c' num=%3lu error=%d\n",
-     NAME_UNIT, cmd&0x80000000?'I':' ', cmd&0x40000000?'O':' ',
+  /* release ioctl/watchdog interlock */
+  TOP_UNLOCK(sc);
+
+  if (error && sc->config.debug)
+    printf("%s: ifnet_ioctl: op=IO%s%s len=%3lu grp='%c' num=%3lu err=%d\n",
+     NAME_UNIT, cmd&IOC_IN ? "W":"", cmd&IOC_OUT ? "R":"",
      IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xFF, error);
 
-  TOP_UNLOCK;
   return error;
   }
 
-/* Called from a syscall (user context; no spinlocks). */
-static void
+static void  /* context: process */
 ifnet_start(struct ifnet *ifp)
   {
   softc_t *sc = IFP2SC(ifp);
 
-  /* Start the transmitter; incoming pkts are NOT processed. */
-  user_interrupt(sc, 0);
+  /* Process tx pkts; do not process rx pkts. */
+  lmc_interrupt(sc, 0, 0);
   }
 
-/* Called from a softirq once a second. */
-static void
+static void  /* context: softirq */
 ifnet_watchdog(struct ifnet *ifp)
   {
   softc_t *sc = IFP2SC(ifp);
-  u_int8_t old_oper_status = sc->status.oper_status;
-  struct event_cntrs *cntrs = &sc->status.cntrs;
+  struct cntrs *cntrs = &sc->status.cntrs;
 
-  core_watchdog(sc); /* updates oper_status */
+  lmc_watchdog(sc); /* updates link_state */
 
-#if NETGRAPH
-  if (sc->ng_hook != NULL)
-    {
-    sc->status.line_pkg  = PKG_NG;
-    sc->status.line_prot = 0;
-    }
-  else
-#endif
-  if (sc->config.line_pkg == PKG_RAWIP)
-    {
-    sc->status.line_pkg  = PKG_RAWIP;
-    sc->status.line_prot = PROT_IP_HDLC;
-    }
-  else
-    {
-# if P2P
-    /* Notice change in link status. */
-    if ((old_oper_status != sc->status.oper_status) && (sc->p2p->p2p_modem))
-      (*sc->p2p->p2p_modem)(sc->p2p, sc->status.oper_status==STATUS_UP);
-
-    /* Notice change in line protocol. */
-    sc->status.line_pkg = PKG_P2P;
-    switch (sc->ifp->if_type)
-      {
-      case IFT_PPP:
-        sc->status.line_prot = PROT_PPP;
-        break;
-      case IFT_PTPSERIAL:
-        sc->status.line_prot = PROT_C_HDLC;
-        break;
-      case IFT_FRELAY:
-        sc->status.line_prot = PROT_FRM_RLY;
-        break;
-      default:
-        sc->status.line_prot = 0;
-        break;
-      }
-
-# elif NSPPP
-    /* Notice change in link status. */
-    if     ((old_oper_status != STATUS_UP) &&
-     (sc->status.oper_status == STATUS_UP))  /* link came up */
-      sppp_tls(sc->sppp);
-    if     ((old_oper_status == STATUS_UP) &&
-     (sc->status.oper_status != STATUS_UP))  /* link went down */
-      sppp_tlf(sc->sppp);
-
-    /* Notice change in line protocol. */
-    sc->status.line_pkg = PKG_SPPP;
-#  if __FreeBSD__
-    if (sc->sppp->pp_flags & PP_FR)
-      sc->status.line_prot = PROT_FRM_RLY;
-    else if (sc->ifp->if_flags  & IFF_LINK2)
-#  elif (__NetBSD__ || __OpenBSD__)
-    if (sc->sppp->pp_flags & PP_CISCO)
-#  endif
-      sc->status.line_prot = PROT_C_HDLC;
-    else
-      sc->status.line_prot = PROT_PPP;
-
-# else /* NSPPP */
-    /* Suppress compiler warning. */
-    if (old_oper_status == STATUS_UP);
-# endif
-    }
-
-  /* Copy statistics from sc to ifp. */
-  ifp->if_baudrate = sc->status.tx_speed;
-  ifp->if_ipackets = cntrs->ipackets;
-  ifp->if_opackets = cntrs->opackets;
-  ifp->if_ibytes   = cntrs->ibytes;
-  ifp->if_obytes   = cntrs->obytes;
-  ifp->if_ierrors  = cntrs->ierrors;
-  ifp->if_oerrors  = cntrs->oerrors;
-  ifp->if_iqdrops  = cntrs->idrops;
-
-# if ((__FreeBSD_version >= 500000) || __OpenBSD__ || __NetBSD__)
-  if (sc->status.oper_status == STATUS_UP)
+# if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+  if (sc->status.link_state == STATE_UP)
     ifp->if_link_state = LINK_STATE_UP;
   else
     ifp->if_link_state = LINK_STATE_DOWN;
 # endif
 
+  /* Copy statistics from sc to ifp. */
+  ifp->if_baudrate = sc->status.tx_speed;
+  ifp->if_ibytes   = cntrs->ibytes;
+  ifp->if_obytes   = cntrs->obytes;
+  ifp->if_ipackets = cntrs->ipackets;
+  ifp->if_opackets = cntrs->opackets;
+  ifp->if_ierrors  = cntrs->ierrors;
+  ifp->if_oerrors  = cntrs->oerrors;
+  ifp->if_iqdrops  = cntrs->idrops;
+
+  /* If the interface debug flag is set, set the driver debug flag. */
+  if (sc->ifp->if_flags & IFF_DEBUG)
+    sc->config.debug = 1;
+
   /* Call this procedure again after one second. */
   ifp->if_timer = 1;
   }
 
-/* Called from ifnet_attach() during ifnet initialization. */
-/* Called from config_proto() when switching back to RawIP. */
-/* Note similarity to linux's netdev_setup(). */
+/* This setup is for RawIP; SPPP and P2P change many items. */
+/* Note the similarity to linux's netdev_setup(). */
 static void
 ifnet_setup(struct ifnet *ifp)
   {
-  ifp->if_flags      = IFF_UP | IFF_POINTOPOINT;
-# if (__FreeBSD_version >= 600000)
-  ifp->if_drv_flags |= IFF_DRV_RUNNING;
-# else
-  ifp->if_flags     |= IFF_RUNNING;
+  ifp->if_flags    = IFF_POINTOPOINT;
+  ifp->if_flags   |= IFF_SIMPLEX;
+  ifp->if_flags   |= IFF_NOARP;
+# if defined(__FreeBSD__) || defined(__NetBSD__)
+  ifp->if_input    = ifnet_input;
 # endif
-# if ((__NetBSD_Version__ >= 105000000) || \
-     (__FreeBSD_version >= 500000))
-  ifp->if_input      = raw_input;	/* everyone ignores this */
-# endif
-  ifp->if_output     = raw_output;	/* sppp & p2p change this */
-  ifp->if_start      = ifnet_start;	/* sppp changes this */
-  ifp->if_ioctl      = ifnet_ioctl;
-  ifp->if_watchdog   = ifnet_watchdog;
-  ifp->if_timer      = 1;
-  ifp->if_mtu        = MAX_DESC_LEN;	/* sppp & p2p change this */
-  ifp->if_type       = IFT_PTPSERIAL;	/* p2p changes this */
+  ifp->if_output   = ifnet_output;
+  ifp->if_start    = ifnet_start;
+  ifp->if_ioctl    = ifnet_ioctl;
+  ifp->if_watchdog = ifnet_watchdog;
+  ifp->if_timer    = 1;
+  ifp->if_type     = IFT_PTPSERIAL;
+  ifp->if_addrlen  = 0;
+  ifp->if_hdrlen   = 0;
+  ifp->if_mtu      = MAX_DESC_LEN;
   }
 
+/* Attach the ifnet kernel interface. */
+/* context: kernel (boot) or process (syscall) */
 static int
 ifnet_attach(softc_t *sc)
   {
-# if (__FreeBSD_version >= 600000)
-  sc->ifp  = if_alloc(NSPPP ? IFT_PPP : IFT_OTHER);
+# if defined(__FreeBSD__)
+  sc->ifp = if_alloc(SPPP ? IFT_PPP : IFT_OTHER);
   if (sc->ifp == NULL) return ENOMEM;
-# endif
-# if NSPPP
-#  if (__FreeBSD_version >= 600000)
-  sc->sppp = sc->ifp->if_l2com;
-#  else
-  sc->ifp  = &sc->spppcom.pp_if;
-  sc->sppp = &sc->spppcom;
-#  endif
+# elif SPPP
+  sc->ifp = &sc->spppcom.pp_if;
 # elif P2P
-  sc->ifp  = &sc->p2pcom.p2p_if;
-  sc->p2p  = &sc->p2pcom;
-# elif (__FreeBSD_version < 600000)
-  sc->ifp  = &sc->ifnet;
+  sc->ifp = &sc->p2pcom.p2p_if;
+# else
+  sc->ifp = &sc->ifnet;
 # endif
 
-  /* Initialize the network interface struct. */
   sc->ifp->if_softc = sc;
   ifnet_setup(sc->ifp);
 
-# if ((__FreeBSD_version >= 500000) || (OpenBSD >= 200411))
+# if defined(__FreeBSD__) || defined(__OpenBSD__)
   sc->ifp->if_capabilities |= IFCAP_JUMBO_MTU;
 # endif
 # if DEVICE_POLLING
@@ -3435,49 +3968,42 @@ ifnet_attach(softc_t *sc)
 # endif
 
   /* Every OS does it differently! */
-# if (__FreeBSD__ && (__FreeBSD_version < 502000))
-  (const char *)sc->ifp->if_name = device_get_name(sc->dev);
-  sc->ifp->if_unit  = device_get_unit(sc->dev);
-# elif (__FreeBSD_version >= 502000)
+# if defined(__FreeBSD__)
   sc->ifp->if_dname = device_get_name(sc->dev);
   sc->ifp->if_dunit = device_get_unit(sc->dev);
   strlcpy(sc->ifp->if_xname, device_get_nameunit(sc->dev), IFNAMSIZ);
-# elif __NetBSD__
+# elif defined(__NetBSD__)
   strcpy(sc->ifp->if_xname, sc->dev.dv_xname);
-# elif __OpenBSD__
+# elif defined(__OpenBSD__)
   bcopy(sc->dev.dv_xname, sc->ifp->if_xname, IFNAMSIZ);
-# elif __bsdi__
+# elif defined(__bsdi__)
   sc->ifp->if_name  = sc->dev.dv_cfdata->cf_driver->cd_name;
   sc->ifp->if_unit  = sc->dev.dv_unit;
 # endif
 
-  /* ALTQ output queue initialization. */
   IFQ_SET_MAXLEN(&sc->ifp->if_snd, SNDQ_MAXLEN);
   IFQ_SET_READY(&sc->ifp->if_snd);
 
-  /* Attach to the ifnet kernel interface. */
   if_attach(sc->ifp);
 
-# if ((__NetBSD_Version__ >= 106000000) || (OpenBSD >= 200211))
+# if defined(__NetBSD__) || defined(__OpenBSD__)
   if_alloc_sadl(sc->ifp);
 # endif
 
-  /* Attach Berkeley Packet Filter. */
-  LMC_BPF_ATTACH(DLT_RAW, 0);
-
-  /* Setup ifmedia mechanism.*/
   ifmedia_setup(sc);
 
   return 0;
   }
 
+/* Detach the ifnet kernel interface. */
+/* context: kernel (boot) or process (syscall). */
 static void
 ifnet_detach(softc_t *sc)
   {
-# if __OpenBSD__ || __NetBSD__
-  ifmedia_delete_instance(&sc->ifm, IFM_INST_ANY);
-# elif __FreeBSD__
+# if defined(__FreeBSD__)
   ifmedia_removeall(&sc->ifm);
+# elif defined(__NetBSD__) || defined(__OpenBSD__)
+  ifmedia_delete_instance(&sc->ifm, IFM_INST_ANY);
 # endif
 
 # if DEVICE_POLLING
@@ -3485,18 +4011,16 @@ ifnet_detach(softc_t *sc)
     ether_poll_deregister(sc->ifp);
 # endif
 
-  /* Detach Berkeley Packet Filter. */
-  LMC_BPF_DETACH;
+  IFQ_PURGE(&sc->ifp->if_snd);
 
-# if ((__NetBSD_Version__ >= 106000000) || (OpenBSD >= 200211))
+# if defined(__NetBSD__) || defined(__OpenBSD__)
   if_free_sadl(sc->ifp);
 # endif
 
-  /* Detach from the ifnet kernel interface. */
   if_detach(sc->ifp);
 
-# if (__FreeBSD_version >= 600000)
-  if_free_type(sc->ifp, NSPPP ? IFT_PPP : IFT_OTHER);
+# if defined(__FreeBSD__)
+  if_free_type(sc->ifp, SPPP ? IFT_PPP : IFT_OTHER);
 # endif
   }
 
@@ -3507,22 +4031,20 @@ ifmedia_setup(softc_t *sc)
   ifmedia_init(&sc->ifm, IFM_OMASK | IFM_GMASK | IFM_IMASK,
    ifmedia_change, ifmedia_status);
 
-# if (OpenBSD >= 200411)  /* OpenBSD-3.6 */
-  if (sc->status.card_type == TLP_CSID_T3)
+# if defined(__OpenBSD__)
+  if (sc->status.card_type == CSID_LMC_T3)
     {
     ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_T3, 0, NULL);
     ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_T3_M13, 0, NULL);
     ifmedia_set(&sc->ifm, IFM_TDM | IFM_TDM_T3);
     }
-  else if  (sc->status.card_type == TLP_CSID_T1E1)
+  else if  (sc->status.card_type == CSID_LMC_T1E1)
     {
     ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_T1, 0, NULL);
     ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_T1_AMI, 0, NULL);
     ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_E1, 0, NULL);
     ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_E1_G704, 0, NULL);
-# if (OpenBSD >= 200511)  /* OpenBSD-3.8 */
     ifmedia_add(&sc->ifm, IFM_TDM | IFM_TDM_E1_G704_CRC4, 0, NULL);
-# endif  /* (OpenBSD >= 200511) */
     ifmedia_set(&sc->ifm, IFM_TDM | IFM_TDM_T1);
     }
   else
@@ -3533,10 +4055,10 @@ ifmedia_setup(softc_t *sc)
 # else /* FreeBSD, NetBSD, BSD/OS */
   ifmedia_add(&sc->ifm, IFM_ETHER | IFM_NONE, 0, NULL);
   ifmedia_set(&sc->ifm, IFM_ETHER | IFM_NONE);
-# endif  /* (OpenBSD >= 200411) */
+# endif  /* OpenBSD */
   }
 
-/* SIOCSIFMEDIA: user context, no spinlocks. */
+/* SIOCSIFMEDIA: context: process. */
 static int
 ifmedia_change(struct ifnet *ifp)
   {
@@ -3545,16 +4067,16 @@ ifmedia_change(struct ifnet *ifp)
   int media = sc->ifm.ifm_media;
   int error;
 
-# if (OpenBSD >= 200411)  /* OpenBSD-3.6 */
+# if defined(__OpenBSD__)
   /* ifconfig lmc0 media t1 */
-  if      (sc->status.card_type == TLP_CSID_T3)
+  if      (sc->status.card_type == CSID_LMC_T3)
     {
     if      ((media & IFM_TMASK) == IFM_TDM_T3)
       config.format = CFG_FORMAT_T3CPAR;
     else if ((media & IFM_TMASK) == IFM_TDM_T3_M13)
       config.format = CFG_FORMAT_T3M13;
     }
-  else if (sc->status.card_type == TLP_CSID_T1E1)
+  else if (sc->status.card_type == CSID_LMC_T1E1)
     {
     if      ((media & IFM_TMASK) == IFM_TDM_T1)
       config.format = CFG_FORMAT_T1ESF;
@@ -3564,35 +4086,29 @@ ifmedia_change(struct ifnet *ifp)
       config.format = CFG_FORMAT_E1NONE;
     else if ((media & IFM_TMASK) == IFM_TDM_E1_G704)
       config.format = CFG_FORMAT_E1FAS;
-# if (OpenBSD >= 200511)  /* OpenBSD-3.8 */
     else if ((media & IFM_TMASK) == IFM_TDM_E1_G704_CRC4)
       config.format = CFG_FORMAT_E1FASCRC;
-# endif  /* (OpenBSD >= 200511) */
     }
 
   /* ifconfig lmc0 mediaopt hdlc-crc16 */
   if (media & IFM_TDM_HDLC_CRC16)
-    config.crc_len = CFG_CRC_16;
-  else
-    config.crc_len = CFG_CRC_32;
+    config.proto = PROTO_C_HDLC;
 
   /* ifconfig lmc0 mediaopt ppp */
   if (media & IFM_TDM_PPP)
-    config.line_prot = PROT_PPP;
+    config.proto = PROTO_PPP;
 
   /* ifconfig lmc0 mediaopt framerelay-ansi */
   if (media & IFM_TDM_FR_ANSI)
-    config.line_prot = PROT_FRM_RLY;
-# endif  /* (OpenBSD >= 200411) */
+    config.proto = PROTO_FRM_RLY;
 
-# if (OpenBSD >= 200511)  /* OpenBSD-3.8 */
   /* ifconfig lmc0 mediaopt master */
   if ((media & IFM_TDM_MASTER) &&
-   (sc->status.card_type == TLP_CSID_T1E1))
+   (sc->status.card_type == CSID_LMC_T1E1))
     config.tx_clk_src = CFG_CLKMUX_INT; /* xtal */
   else
     config.tx_clk_src = CFG_CLKMUX_RT; /* loop */
-# endif  /* (OpenBSD >= 200511) */
+# endif  /* OpenBSD */
 
   /* ifconfig lmc0 mediaopt loopback */
   if (media & IFM_LOOP)
@@ -3600,109 +4116,421 @@ ifmedia_change(struct ifnet *ifp)
   else
     config.loop_back = CFG_LOOP_NONE;
 
-  /* Set ConFiGuration. */
-  config.iohdr.cookie = NGM_LMC_COOKIE;
-  error = core_ioctl(sc, LMCIOCSCFG, (caddr_t)&config);
+  error = open_proto(sc, &config);
+  tulip_loop(sc, &config);
+  sc->card->attach(sc, &config);
 
   return error;
   }
 
-/* SIOCGIFMEDIA: user context, no spinlocks. */
+/* SIOCGIFMEDIA: context: process. */
 static void
 ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
   {
   softc_t *sc = IFP2SC(ifp);
 
   ifmr->ifm_status = IFM_AVALID;
-  if (sc->status.oper_status == STATUS_UP)
+  if (sc->status.link_state == STATE_UP)
     ifmr->ifm_status |= IFM_ACTIVE;
 
   if (sc->config.loop_back != CFG_LOOP_NONE)
     ifmr->ifm_active |= IFM_LOOP;
 
-# if (OpenBSD >= 200411)  /* OpenBSD-3.6 */
-  if (sc->config.crc_len == CFG_CRC_16)
+# if defined(__OpenBSD__)
+  if (sc->status.proto == PROTO_C_HDLC)
     ifmr->ifm_active |= IFM_TDM_HDLC_CRC16;
 
-  if (sc->status.line_prot == PROT_PPP)
+  if (sc->status.proto == PROTO_PPP)
     ifmr->ifm_active |= IFM_TDM_PPP;
 
-  if (sc->status.line_prot == PROT_FRM_RLY)
+  if (sc->status.proto == PROTO_FRM_RLY)
     ifmr->ifm_active |= IFM_TDM_FR_ANSI;
-# endif  /* (OpenBSD >= 200411) */
 
-# if (OpenBSD >= 200511)  /* OpenBSD-3.8 */
   if (sc->config.tx_clk_src == CFG_CLKMUX_INT)
     ifmr->ifm_active |= IFM_TDM_MASTER;
-# endif  /* (OpenBSD >= 200511) */
+# endif  /* OpenBSD */
   }
-
-# if P2P
-
-/* Callout from P2P: */
-/* Get the state of DCD (Data Carrier Detect). */
-static int
-p2p_getmdm(struct p2pcom *p2p, caddr_t result)
-  {
-  softc_t *sc = IFP2SC(&p2p->p2p_if);
-
-  /* Non-zero isn't good enough; TIOCM_CAR is 0x40. */
-  *(int *)result = (sc->status.oper_status==STATUS_UP) ? TIOCM_CAR : 0;
-
-  return 0;
-  }
-
-/* Callout from P2P: */
-/* Set the state of DTR (Data Terminal Ready). */
-static int
-p2p_mdmctl(struct p2pcom *p2p, int flag)
-  {
-  softc_t *sc = IFP2SC(&p2p->p2p_if);
-
-  set_status(sc, flag);
-
-  return 0;
-  }
-
-# endif /* P2P */
-
-# if NSPPP
-
-/* Callout from SPPP: */
-static void
-sppp_tls(struct sppp *sppp)
-  {
-#  if __FreeBSD__
-  if (!(sppp->pp_mode  & IFF_LINK2) &&
-      !(sppp->pp_flags & PP_FR))
-#  elif __NetBSD__ || __OpenBSD__
-  if (!(sppp->pp_flags & PP_CISCO))
-#  endif
-    sppp->pp_up(sppp);
-  }
-
-/* Callout from SPPP: */
-static void
-sppp_tlf(struct sppp *sppp)
-  {
-#  if __FreeBSD__
-  if (!(sppp->pp_mode  & IFF_LINK2) &&
-      !(sppp->pp_flags & PP_FR))
-#  elif __NetBSD__ || __OpenBSD__
-  if (!(sppp->pp_flags & PP_CISCO))
-#  endif
-    sppp->pp_down(sppp);
-  }
-
-# endif /* NSPPP */
 
 #endif  /* IFNET */
 
+#if NETDEV
+
+/* This net_device method is called when IFF_UP goes true. */
+static int  /* context: process */
+netdev_open(struct net_device *netdev)
+  {
+  softc_t *sc = NETDEV2SC(netdev);
+
+  WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_TXRX);
+  netif_start_queue(sc->netdev);
+  set_ready(sc, 1);
+
+  return 0;
+  }
+
+/* This net_device method is called when IFF_UP goes false. */
+static int  /* context: process */
+netdev_stop(struct net_device *netdev)
+  {
+  softc_t *sc = NETDEV2SC(netdev);
+
+  set_ready(sc, 0);
+  netif_stop_queue(sc->netdev);
+  WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_DISABLE);
+
+  return 0;
+  }
+
+/* This net_device method hands outgoing packets to the transmitter. */
+/* With txintr_setup(), it implements output flow control. */
+static int  /* context: netdev->xmit_lock held; BHs disabled */
+netdev_start(struct sk_buff *skb, struct net_device *netdev)
+  {
+  softc_t *sc = NETDEV2SC(netdev);
+
+  if (sc->tx_skb == NULL)
+    {
+    /* Put this skb where the transmitter will see it. */
+    sc->tx_skb = skb;
+
+    /* Process tx pkts; do not process rx pkts. */
+    lmc_interrupt(sc, 0, 0);
+
+    return NETDEV_TX_OK;
+    }
+  else
+    {
+    /* txintr_setup() calls netif_wake_queue(). */
+    netif_stop_queue(netdev);
+    return NETDEV_TX_BUSY;
+    }
+  }
+
+# if NAPI
+
+/* This net_device method services the card without interrupts. */
+/* With rxintr_cleanup(), it implements input flow control. */
+static int  /* context: softirq */
+netdev_poll(struct net_device *netdev, int *budget)
+  {
+  softc_t *sc = NETDEV2SC(netdev);
+  int received;
+
+  /* Handle the card interrupt with kernel ints enabled. */
+  /* Allow processing up to netdev->quota incoming packets. */
+  /* This is the ONLY time lmc_interrupt() may process rx pkts. */
+  /* Otherwise (sc->quota == 0) and rxintr_cleanup() is a NOOP. */
+  lmc_interrupt(sc, min(netdev->quota, *budget), 0);
+
+  /* Report number of rx packets processed. */
+  received = netdev->quota - sc->quota;
+  netdev->quota -= received;
+  *budget       -= received;
+
+  /* If quota prevented processing all rx pkts, leave rx ints disabled. */
+  if (sc->quota == 0)  /* this is off by one...but harmless */
+    {
+    WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_TX);
+    return 1; /* more pkts to handle -- reschedule */
+    }
+
+  /* Remove self from poll list. */
+  netif_rx_complete(netdev);
+
+  /* Enable card interrupts. */
+  WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_TXRX);
+
+  return 0; /* all pkts handled -- success */
+  }
+
+# endif /* NAPI */
+
+/* This net_device method handles IOCTL syscalls. */
+static int  /* context: process */
+netdev_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
+  {
+  softc_t *sc = NETDEV2SC(netdev);
+  int error = 0;
+
+  /* Aquire ioctl/watchdog interlock. */
+  if ((error = TOP_LOCK(sc))) return error;
+
+  if ((cmd >= SIOCDEVPRIVATE) && (cmd <= SIOCDEVPRIVATE+15))
+    {
+    struct iohdr *iohdr = (struct iohdr *)ifr;
+    u_int16_t direction = iohdr->direction;
+    u_int16_t length = iohdr->length;
+    char *user_addr = (char *)iohdr->iohdr;
+    char *kern_addr = NULL;
+
+    if (iohdr->cookie != NGM_LMC_COOKIE)
+      error = -EINVAL;
+
+    /* Emulate a BSD-style IOCTL syscall. */
+    if (!error)
+      error = (kern_addr = kmalloc(length, GFP_KERNEL)) ? 0: -ENOMEM;
+    if (!error && (direction & DIR_IOW))
+      error = copy_from_user(kern_addr, user_addr, length);
+    if (!error)
+      error = -lmc_ioctl(sc, (unsigned long)cmd, kern_addr);
+    if (!error && (direction & DIR_IOR))
+      error = copy_to_user(user_addr, kern_addr, length);
+    kfree(kern_addr);
+    }
+  else if (sc->stack)
+    error = sc->stack->ioctl(sc, ifr, cmd);
+  else
+    error = -ENOSYS;
+# if GEN_HDLC
+  /* If generic-HDLC is present but not the currently-attached
+   * stack, call hdlc_ioctl() anyway because proto must
+   * be set using SIOCWANDEV or hdlc_open() will fail.
+   */
+  if (sc->stack != &gen_hdlc_stack)
+    hdlc_ioctl(sc->netdev, ifr, cmd); /* ignore error result */
+# endif
+
+  /* Release ioctl/watchdog interlock. */
+  TOP_UNLOCK(sc);
+
+  if (error && sc->config.debug)
+    printk("%s: netdev_ioctl; cmd=0x%08x error=%d\n",
+     NAME_UNIT, cmd, error);
+
+  return error;
+  }
+
+/* This net_device method sets the Maximum Tranmit Unit. */
+/* This driver does not limit MTU; stacks and protos do. */
+static int
+netdev_mtu(struct net_device *netdev, int mtu)
+  {
+  softc_t *sc = NETDEV2SC(netdev);
+  int error = 0;
+
+  if (sc->stack)
+    error = sc->stack->mtu(sc, mtu);
+  else
+    error = -ENOSYS;
+
+  if (!error)
+     netdev->mtu = mtu;
+
+  return error;
+  }
+
+/* This net_device method restarts the transmitter if it hangs. */
+static void  /* BHs disabled */
+netdev_timeout(struct net_device *netdev)
+  {
+  softc_t *sc = NETDEV2SC(netdev);
+
+  /* Process tx pkts; do not process rx pkts. */
+  lmc_interrupt(sc, 0, 0);
+  }
+
+/* This net_device method returns a pointer to device statistics. */
+static struct net_device_stats *  /* context: process */
+netdev_stats(struct net_device *netdev)
+  {
+  softc_t *sc = NETDEV2SC(netdev);
+
+# if GEN_HDLC
+  return &sc->hdlcdev->stats;
+# else
+  return &sc->netdev_stats;
+# endif
+  }
+
+static void  /* context: softirq */
+netdev_watchdog(unsigned long softc)
+  {
+  softc_t *sc = (softc_t *)softc;
+  struct cntrs *cntrs = &sc->status.cntrs;
+  struct net_device_stats *stats = netdev_stats(sc->netdev);
+
+  lmc_watchdog(sc); /* updates link_state */
+
+  /* Notice when the link comes up. */
+  if ((sc->last_link_state != STATE_UP) &&
+    (sc->status.link_state == STATE_UP))
+    {
+    netif_wake_queue(sc->netdev);
+    netif_carrier_on(sc->netdev);
+    }
+
+  /* Notice when the link goes down. */
+  if ((sc->last_link_state == STATE_UP) &&
+    (sc->status.link_state != STATE_UP))
+    {
+    netif_tx_disable(sc->netdev);
+    netif_carrier_off(sc->netdev);
+    }
+
+  /* Copy statistics from sc to netdev. */
+  stats->rx_bytes         = cntrs->ibytes;
+  stats->tx_bytes         = cntrs->obytes;
+  stats->rx_packets       = cntrs->ipackets;
+  stats->tx_packets       = cntrs->opackets;
+  stats->rx_errors        = cntrs->ierrors;
+  stats->tx_errors        = cntrs->oerrors;
+  stats->rx_dropped       = cntrs->idrops;
+  stats->rx_missed_errors = cntrs->missed;
+  stats->tx_dropped       = cntrs->odrops;
+  stats->rx_fifo_errors   = cntrs->fifo_over;
+  stats->rx_over_errors   = cntrs->overruns;
+  stats->tx_fifo_errors   = cntrs->fifo_under;
+/*stats->tx_under_errors  = cntrs=>underruns; */
+
+  /* If the interface debug flag is set, set the driver debug flag. */
+  if (sc->netdev->flags & IFF_DEBUG)
+    sc->config.debug = 1;
+
+  /* Call this procedure again after one second. */
+  sc->wd_timer.expires = jiffies + HZ -8; /* -8 is a FUDGE factor */
+  add_timer(&sc->wd_timer);
+  }
+
+/* This setup is for RawIP; Generic-HDLC changes many items. */
+/* Note the similarity to BSD's ifnet_setup(). */
+static void
+netdev_setup(struct net_device *netdev)
+  {
+  netdev->flags           = IFF_POINTOPOINT;
+  netdev->flags          |= IFF_NOARP;
+  netdev->open            = netdev_open;
+  netdev->stop            = netdev_stop;
+  netdev->hard_start_xmit = netdev_start;
+# if NAPI
+  netdev->poll            = netdev_poll;
+  netdev->weight          = 32; /* sc->rxring.num_descs; */
+# endif
+  netdev->rebuild_header  = NULL; /* no arp */
+  netdev->hard_header     = NULL; /* no arp */
+  netdev->do_ioctl        = netdev_ioctl;
+  netdev->change_mtu      = netdev_mtu;
+  netdev->tx_timeout      = netdev_timeout;
+  netdev->get_stats       = netdev_stats;
+  netdev->watchdog_timeo  = 1 * HZ;
+  netdev->mtu             = MAX_DESC_LEN;
+  netdev->type            = ARPHRD_HDLC;
+  netdev->hard_header_len = 16;
+  netdev->addr_len        = 0;
+  netdev->tx_queue_len    = SNDQ_MAXLEN;
+/* The receiver generates frag-lists for packets >4032 bytes.   */
+/* The transmitter accepts scatter/gather lists and frag-lists. */
+/* However Linux linearizes outgoing packets since our hardware */
+/*  does not compute soft checksums.  All that work for nothing! */
+/*netdev->features       |= NETIF_F_SG; */
+/*netdev->features       |= NETIF_F_FRAGLIST; */
+  }
+
+/* Attach the netdevice kernel interface. */
+/* context: kernel (boot) or process (syscall). */
+static int
+netdev_attach(softc_t *sc)
+  {
+  int error;
+
+# if GEN_HDLC /* generic-hdlc line protocol pkg configured */
+
+  /* Allocate space for the HDLC network device struct. */
+  /* Allocating a netdev and attaching to generic-HDLC should be separate. */
+  if ((sc->netdev = alloc_hdlcdev(sc)) == NULL)
+    {
+    printk("%s: netdev_attach: alloc_hdlcdev() failed\n", DEVICE_NAME);
+    return -ENOMEM;
+    }
+
+  /* Initialize the basic network device struct. */
+  /* This clobbers some netdev stuff set by alloc_hdlcdev(). */
+  /* Our get_stats() and change_mtu() do the right thing. */
+  netdev_setup(sc->netdev);
+
+  /* HACK: make the private eco-net pointer -> struct softc. */
+  sc->netdev->ec_ptr = sc;
+
+  /* Cross-link pcidev and netdev. */
+  SET_NETDEV_DEV(sc->netdev, &sc->pcidev->dev);
+  sc->netdev->mem_end   = pci_resource_end(sc->pcidev, 1);
+  sc->netdev->mem_start = pci_resource_start(sc->pcidev, 1);
+  sc->netdev->base_addr = pci_resource_start(sc->pcidev, 0);
+  sc->netdev->irq       = sc->pcidev->irq;
+
+  /* Initialize the HDLC extension to the network device. */
+  sc->hdlcdev         = sc->netdev->priv;
+  sc->hdlcdev->attach = gen_hdlc_card_params;
+  sc->hdlcdev->xmit   = netdev_start; /* the REAL hard_start_xmit() */
+
+  if ((error = register_hdlc_device(sc->netdev)))
+    {
+    printk("%s: register_hdlc_device(): error %d\n", DEVICE_NAME, error);
+    free_netdev(sc->netdev);
+    return error;
+    }
+
+# else
+
+  /* Allocate and initialize the basic network device struct. */
+  if ((sc->netdev = alloc_netdev(0, DEVICE_NAME"%d", netdev_setup)) == NULL)
+    {
+    printk("%s: netdev_attach: alloc_netdev() failed\n", DEVICE_NAME);
+    return -ENOMEM;
+    }
+
+  /* HACK: make the private eco-net pointer -> struct softc. */
+  sc->netdev->ec_ptr = sc;
+
+  /* Cross-link pcidev and netdev. */
+  SET_NETDEV_DEV(sc->netdev, &sc->pcidev->dev);
+  sc->netdev->mem_end   = pci_resource_end(sc->pcidev, 1);
+  sc->netdev->mem_start = pci_resource_start(sc->pcidev, 1);
+  sc->netdev->base_addr = pci_resource_start(sc->pcidev, 0);
+  sc->netdev->irq       = sc->pcidev->irq;
+
+  if ((error = register_netdev(sc->netdev)))
+    {
+    printk("%s: register_netdev(): error %d\n", DEVICE_NAME, error);
+    free_netdev(sc->netdev);
+    return error;
+    }
+
+# endif /* GEN_HDLC */
+
+  /* Arrange to call netdev_watchdog() once a second. */
+  init_timer(&sc->wd_timer);
+  sc->wd_timer.expires  = jiffies + HZ; /* now plus one second */
+  sc->wd_timer.function = &netdev_watchdog;
+  sc->wd_timer.data     = (unsigned long) sc;
+  add_timer(&sc->wd_timer);
+
+  return 0; /* success */
+  }
+
+/* Detach the netdevice kernel interface. */
+/* context: kernel (boot) or process (syscall). */
+static void
+netdev_detach(softc_t *sc)
+  {
+  if (sc->pcidev == NULL) return;
+  if (sc->netdev == NULL) return;
+
+  netdev_stop(sc->netdev); /* check for not inited */
+  del_timer(&sc->wd_timer);
+
+# if GEN_HDLC
+  unregister_hdlc_device(sc->netdev);
+# else
+  unregister_netdev(sc->netdev);
+# endif
+
+  free_netdev(sc->netdev);
+  }
+
+#endif /* NETDEV */
+
 #if NETGRAPH
 
-/* Netgraph changed significantly between FreeBSD-4 and -5. */
-/* These are backward compatibility shims for FreeBSD-4. */
-# if (__FreeBSD_version >= 500000)
 /* These next two macros should be added to netgraph */
 #  define NG_TYPE_REF(type) atomic_add_int(&(type)->refs, 1)
 #  define NG_TYPE_UNREF(type)	\
@@ -3712,42 +4540,22 @@ do {				\
   else				\
     atomic_subtract_int(&(type)->refs, 1); \
    } while (0)
-# else /* FreeBSD-4 */
-#  define NGI_GET_MSG(item, msg)	/* nothing */
-#  define NG_HOOK_FORCE_QUEUE(hook)	/* nothing */
-#  define NG_TYPE_REF(type) atomic_add_int(&(type)->refs, 1)
-#  define NG_TYPE_UNREF(type)	\
-do {				\
-  if ((type)->refs == 1)	\
-    LIST_REMOVE(type, types);	\
-  else				\
-    atomic_subtract_int(&(type)->refs, 1); \
-   } while (0)
-# endif
 
 /* It is an error to construct new copies of this Netgraph node. */
 /* All instances are constructed by ng_attach and are persistent. */
-# if (__FreeBSD_version >= 500000)
-static int ng_constructor(node_p  node) { return EINVAL; }
-# else /* FreeBSD-4 */
-static int ng_constructor(node_p *node) { return EINVAL; }
-# endif
+static int ng_constructor(node_p  node)
+  { return EINVAL; }
 
 /* Incoming Netgraph control message. */
-# if (__FreeBSD_version >= 500000)
 static int
 ng_rcvmsg(node_p node, item_p item, hook_p lasthook)
   {
   struct ng_mesg *msg;
-# else /* FreeBSD-4 */
-static int
-ng_rcvmsg(node_p node, struct ng_mesg *msg,
- const char *retaddr,  struct ng_mesg **rptr)
-  {
-# endif
   struct ng_mesg *resp = NULL;
   softc_t *sc = NG_NODE_PRIVATE(node);
   int error = 0;
+
+  if ((error = TOP_LOCK(sc))) return error;
 
   NGI_GET_MSG(item, msg);
   if (msg->header.typecookie == NGM_LMC_COOKIE)
@@ -3762,8 +4570,8 @@ ng_rcvmsg(node_p node, struct ng_mesg *msg,
       case LMCIOCTL:
         {
         /* Call the core ioctl procedure. */
-        error = core_ioctl(sc, msg->header.cmd, msg->data);
-        if ((msg->header.cmd & IOC_OUT) != 0)
+        error = lmc_ioctl(sc, msg->header.cmd, msg->data);
+        if (msg->header.cmd & IOC_OUT)
           { /* synchronous response */
           NG_MKRESPONSE(resp, msg, sizeof(struct ng_mesg) +
            IOCPARM_LEN(msg->header.cmd), M_NOWAIT);
@@ -3792,11 +4600,12 @@ ng_rcvmsg(node_p node, struct ng_mesg *msg,
       sprintf(s, "Card type = <%s>\n"
        "This driver considers the link to be %s.\n"
        "Use lmcconfig to configure this interface.\n",
-       sc->dev_desc, (sc->status.oper_status==STATUS_UP) ? "UP" : "DOWN");
+       sc->dev_desc, (sc->status.link_state==STATE_UP) ? "UP" : "DOWN");
       resp->header.arglen = strlen(s) +1;
       }
     }
   else
+    error = EINVAL;
 /* Netgraph should be able to read and write these
  *  parameters with text-format control messages:
  *  SSI	     HSSI     T1E1     T3
@@ -3811,19 +4620,12 @@ ng_rcvmsg(node_p node, struct ng_mesg *msg,
  *                    lbo
  * Someday I'll implement this...
  */
-    error = EINVAL;
 
   /* Handle synchronous response. */
-# if (__FreeBSD_version >= 500000)
   NG_RESPOND_MSG(error, node, item, resp);
   NG_FREE_MSG(msg);
-# else /* FreeBSD-4 */
-  if (rptr != NULL)
-    *rptr = resp;
-  else if (resp != NULL)
-    FREE(resp, M_NETGRAPH);
-  FREE(msg, M_NETGRAPH);
-# endif
+
+  TOP_UNLOCK(sc);
 
   return error;
   }
@@ -3832,14 +4634,9 @@ ng_rcvmsg(node_p node, struct ng_mesg *msg,
 static int
 ng_shutdown(node_p node)
   {
-# if (__FreeBSD_version >= 500000)
   /* unless told to really die, bounce back to life */
   if ((node->nd_flags & NG_REALLY_DIE)==0)
     node->nd_flags &= ~NG_INVALID; /* bounce back to life */
-# else /* FreeBSD-4 */
-  ng_cutlinks(node);
-  node->flags &= ~NG_INVALID;  /* bounce back to life */
-# endif
 
   return 0;
   }
@@ -3851,10 +4648,13 @@ ng_newhook(node_p node, hook_p hook, const char *name)
   softc_t *sc = NG_NODE_PRIVATE(node);
 
   /* Hook name must be 'rawdata'. */
-  if (strncmp(name, "rawdata", 7) != 0)	return EINVAL;
+  if (strncmp(name, "rawdata", 7)) return EINVAL;
+
+  /* Is netgraph the current package? */
+  if (sc->stack != &netgraph_stack) return EBUSY;
 
   /* Is our hook connected? */
-  if (sc->ng_hook != NULL) return EBUSY;
+  if (sc->ng_hook) return EBUSY;
 
   /* Accept the hook. */
   sc->ng_hook = hook;
@@ -3868,16 +4668,16 @@ static int
 ng_connect(hook_p hook)
   {
   /* Probably not at splnet, force outward queueing. */
-  NG_HOOK_FORCE_QUEUE(NG_HOOK_PEER(hook)); /* fbsd-5 */
+  NG_HOOK_FORCE_QUEUE(NG_HOOK_PEER(hook));
+
   return 0; /* always accept */
   }
 
-/* Receive data in mbufs from another Netgraph node. */
-/* Transmit an mbuf-chain on the communication link. */
-/* This procedure is very similar to raw_output(). */
-/* Called from a syscall (user context; no spinlocks). */
-# if (__FreeBSD_version >= 500000)
-static int
+/* Receive data in mbufs from another Netgraph node.
+ * Transmit an mbuf-chain on the communication link.
+ * This procedure is very similar to ifnet_output().
+ */
+static int  /* context: process */
 ng_rcvdata(hook_p hook, item_p item)
   {
   softc_t *sc = NG_NODE_PRIVATE(NG_HOOK_NODE(hook));
@@ -3888,23 +4688,14 @@ ng_rcvdata(hook_p hook, item_p item)
   NGI_GET_M(item, m);
   NGI_GET_META(item, meta);
   NG_FREE_ITEM(item);
-# else /* FreeBSD-4 */
-static int
-ng_rcvdata(hook_p hook, struct mbuf *m, meta_p meta)
-  {
-  softc_t *sc = NG_NODE_PRIVATE(NG_HOOK_NODE(hook));
-  int error = 0;
-# endif
-
-  /* This macro must not store into meta! */
   NG_FREE_META(meta);
 
   /* Fail if the link is down. */
-  if (sc->status.oper_status  != STATUS_UP)
+  if (sc->status.link_state != STATE_UP)
     {
     m_freem(m);
     sc->status.cntrs.odrops++;
-    if (DRIVER_DEBUG)
+    if (sc->config.debug)
       printf("%s: ng_rcvdata: tx pkt dropped: link down\n", NAME_UNIT);
     return ENETDOWN;
     }
@@ -3913,8 +4704,8 @@ ng_rcvdata(hook_p hook, struct mbuf *m, meta_p meta)
   /* txintr_setup() DEQUEUEs in a hard interrupt. */
   /* Some BSD QUEUE routines are not interrupt-safe. */
   {
-  DISABLE_INTR;
-# if (__FreeBSD_version >= 503000)
+  DISABLE_INTR; /* noop in FreeBSD */
+# if defined(__FreeBSD__)
   if (meta==NULL)
     IFQ_ENQUEUE(&sc->ng_sndq, m, error);
   else
@@ -3925,19 +4716,19 @@ ng_rcvdata(hook_p hook, struct mbuf *m, meta_p meta)
   else
     IFQ_ENQUEUE(&sc->ng_fastq, m, NULL, error);
 # endif
-  ENABLE_INTR;
+  ENABLE_INTR;  /* noop in FreeBSD */
   }
 
-  if (error==0)
-    user_interrupt(sc, 0); /* start the transmitter */
-  else
+  if (error)
     {
-    m_freem(m);
     sc->status.cntrs.odrops++;
-    if (DRIVER_DEBUG)
-      printf("%s: ng_rcvdata: IFQ_ENQUEUE() failed; error %d\n",
+    if (sc->config.debug)
+      printf("%s: ng_rcvdata: tx pkt dropped: IFQ_ENQUEUE(): error %d\n",
        NAME_UNIT, error);
     }
+  else
+    /* Process tx pkts; do not process rx pkts. */
+    lmc_interrupt(sc, 0, 0);
 
   return error;
   }
@@ -3963,54 +4754,41 @@ struct ng_type ng_type =
   .mod_event	= NULL,
   .constructor	= ng_constructor,
   .rcvmsg	= ng_rcvmsg,
-# if (__FreeBSD_version >=503000)
   .close	= NULL,
-# endif
   .shutdown	= ng_shutdown,
   .newhook	= ng_newhook,
   .findhook	= NULL,
   .connect	= ng_connect,
   .rcvdata	= ng_rcvdata,
-# if (__FreeBSD__ && (__FreeBSD_version < 500000))
-  .rcvdataq	= ng_rcvdata,
-# endif
   .disconnect	= ng_disconnect,
   };
 
-# if (IFNET == 0)
-/* Called from a softirq once a second. */
-static void
+static void  /* context: softirq */
 ng_watchdog(void *arg)
   {
   softc_t *sc = arg;
 
   /* Call the core watchdog procedure. */
-  core_watchdog(sc);
-
-  /* Set line protocol and package status. */
-  sc->status.line_pkg  = PKG_NG;
-  sc->status.line_prot = 0;
+  lmc_watchdog(sc);
 
   /* Call this procedure again after one second. */
   callout_reset(&sc->ng_callout, hz, ng_watchdog, sc);
   }
-# endif
 
-/* Attach to the Netgraph kernel interface (/sys/netgraph).
- * It is called once for each physical card during device attach.
- * This is effectively ng_constructor.
- */
+/* Attach the Netgraph kernel interface. */
+/* This is effectively ng_constructor. */
+/* context: kernel (boot) or process (syscall) */
 static int
 ng_attach(softc_t *sc)
   {
   int error;
 
   /* If this node type is not known to Netgraph then register it. */
-  if (ng_type.refs == 0) /* or: if (ng_findtype(&ng_type) == NULL) */
+  if (ng_findtype(ng_type.name) == NULL)
     {
     if ((error = ng_newtype(&ng_type)))
       {
-      printf("%s: ng_newtype() failed; error %d\n", NAME_UNIT, error);
+      printf("%s: ng_newtype(): error %d\n", NAME_UNIT, error);
       return error;
       }
     }
@@ -4021,7 +4799,7 @@ ng_attach(softc_t *sc)
   if ((error = ng_make_node_common(&ng_type, &sc->ng_node)))
     {
     NG_TYPE_UNREF(&ng_type);
-    printf("%s: ng_make_node_common() failed; error %d\n", NAME_UNIT, error);
+    printf("%s: ng_make_node_common(): error %d\n", NAME_UNIT, error);
     return error;
     }
 
@@ -4030,17 +4808,15 @@ ng_attach(softc_t *sc)
     {
     NG_NODE_UNREF(sc->ng_node);
     NG_TYPE_UNREF(&ng_type);
-    printf("%s: ng_name_node() failed; error %d\n", NAME_UNIT, error);
+    printf("%s: ng_name_node(): error %d\n", NAME_UNIT, error);
     return error;
     }
 
-# if (__FreeBSD_version >= 500000)
   /* Initialize the send queue mutexes. */
-  mtx_init(&sc->ng_sndq.ifq_mtx,  NAME_UNIT, "sndq",  MTX_DEF);
-  mtx_init(&sc->ng_fastq.ifq_mtx, NAME_UNIT, "fastq", MTX_DEF);
-# endif
+  mtx_init(&sc->ng_sndq.ifq_mtx,  NAME_UNIT, "ng sndq",  MTX_DEF);
+  mtx_init(&sc->ng_fastq.ifq_mtx, NAME_UNIT, "ng fastq", MTX_DEF);
 
-  /* Put a backpointer to the softc in the netgraph node. */
+  /* Put a backpointer to softc in the netgraph node. */
   NG_NODE_SET_PRIVATE(sc->ng_node, sc);
 
   /* ALTQ output queue initialization. */
@@ -4051,37 +4827,30 @@ ng_attach(softc_t *sc)
 
   /* If ifnet is present, it will call watchdog. */
   /* Otherwise, arrange to call watchdog here. */
-# if (IFNET == 0)
-  /* Arrange to call ng_watchdog() once a second. */
-#  if (__FreeBSD_version >= 500000)
-  callout_init(&sc->ng_callout, 0);
-#  else  /* FreeBSD-4 */
-  callout_init(&sc->ng_callout);
-#  endif
-  callout_reset(&sc->ng_callout, hz, ng_watchdog, sc);
-# endif
+  if (IFNET==0)
+    {
+    /* Arrange to call ng_watchdog() once a second. */
+    callout_init(&sc->ng_callout, 0);
+    callout_reset(&sc->ng_callout, hz, ng_watchdog, sc);
+    }
 
   return 0;
   }
 
+/* Detach the Netgraph kernel interface. */
+/* context: kernel (boot) or process (syscall) */
 static void
 ng_detach(softc_t *sc)
   {
-# if (IFNET == 0)
-  callout_stop(&sc->ng_callout);
-# endif
-# if (__FreeBSD_version >= 500000)
+  if (IFNET==0)
+    callout_stop(&sc->ng_callout);
+  IFQ_PURGE(&sc->ng_fastq);
+  IFQ_PURGE(&sc->ng_sndq);
   mtx_destroy(&sc->ng_sndq.ifq_mtx);
   mtx_destroy(&sc->ng_fastq.ifq_mtx);
   ng_rmnode_self(sc->ng_node); /* free hook */
   NG_NODE_UNREF(sc->ng_node);  /* free node */
   NG_TYPE_UNREF(&ng_type);
-# else /* FreeBSD-4 */
-  ng_unname(sc->ng_node);      /* free name */
-  ng_cutlinks(sc->ng_node);    /* free hook */
-  NG_NODE_UNREF(sc->ng_node);  /* free node */
-  NG_TYPE_UNREF(&ng_type);
-# endif
   }
 
 #endif /* NETGRAPH */
@@ -4092,7 +4861,7 @@ ng_detach(softc_t *sc)
  * Handling Linux and the BSDs with CPP directives would
  *  make the code unreadable, so there are two versions.
  * Conceptually, the two versions do the same thing and
- *  core_interrupt() doesn't know they are different.
+ *  lmc_interrupt() does not know they are different.
  *
  * We are "standing on the head of a pin" in these routines.
  * Tulip CSRs can be accessed, but nothing else is interrupt-safe!
@@ -4100,6 +4869,7 @@ ng_detach(softc_t *sc)
  */
 
 /* Initialize a DMA descriptor ring. */
+/* context: kernel (boot) or process (syscall) */
 static int  /* BSD version */
 create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   {
@@ -4115,17 +4885,14 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
     return EINVAL;
     }
 
-# if __FreeBSD__
+# if defined(__FreeBSD__)
 
   /* Create a DMA tag for descriptors and buffers. */
   if ((error = bus_dma_tag_create(NULL, 4, 0, BUS_SPACE_MAXADDR_32BIT,
    BUS_SPACE_MAXADDR, NULL, NULL, PAGE_SIZE, 2, PAGE_SIZE, BUS_DMA_ALLOCNOW,
-#  if (__FreeBSD_version >= 502000)
-   NULL, NULL,
-#  endif
-   &ring->tag)))
+   NULL, NULL, &ring->tag)))
     {
-    printf("%s: bus_dma_tag_create() failed: error %d\n", NAME_UNIT, error);
+    printf("%s: bus_dma_tag_create(): error %d\n", NAME_UNIT, error);
     return error;
     }
 
@@ -4134,16 +4901,16 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   if ((error = bus_dmamem_alloc(ring->tag, (void**)&ring->first,
    BUS_DMA_NOWAIT | BUS_DMA_COHERENT | BUS_DMA_ZERO, &ring->map)))
     {
-    printf("%s: bus_dmamem_alloc() failed; error %d\n", NAME_UNIT, error);
+    printf("%s: bus_dmamem_alloc(): error %d\n", NAME_UNIT, error);
     return error;
     }
   descs = ring->first;
 
-  /* Map kernel virtual address to PCI address for DMA descriptor array. */
+  /* Map kernel virt addr to PCI bus addr for DMA descriptor array. */
   if ((error = bus_dmamap_load(ring->tag, ring->map, descs, size_descs,
    fbsd_dmamap_load, ring, 0)))
     {
-    printf("%s: bus_dmamap_load() failed; error %d\n", NAME_UNIT, error);
+    printf("%s: bus_dmamap_load(): error %d\n", NAME_UNIT, error);
     return error;
     }
   ring->dma_addr = ring->segs[0].ds_addr;
@@ -4152,11 +4919,11 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   for (i=0; i<num_descs; i++)
     if ((error = bus_dmamap_create(ring->tag, 0, &descs[i].map)))
       {
-      printf("%s: bus_dmamap_create() failed; error %d\n", NAME_UNIT, error);
+      printf("%s: bus_dmamap_create(): error %d\n", NAME_UNIT, error);
       return error;
       }
 
-# elif (__NetBSD__ || __OpenBSD__)
+# elif defined(__NetBSD__) || defined(__OpenBSD__)
 
   /* Use the DMA tag passed to attach() for descriptors and buffers. */
   ring->tag = sc->pa_dmat;
@@ -4165,7 +4932,7 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   if ((error = bus_dmamem_alloc(ring->tag, size_descs, PAGE_SIZE, 0,
    ring->segs, 1, &ring->nsegs, BUS_DMA_NOWAIT)))
     {
-    printf("%s: bus_dmamem_alloc() failed; error %d\n", NAME_UNIT, error);
+    printf("%s: bus_dmamem_alloc(): error %d\n", NAME_UNIT, error);
     return error;
     }
 
@@ -4173,7 +4940,7 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   if ((error = bus_dmamem_map(ring->tag, ring->segs, ring->nsegs,
    size_descs, (caddr_t *)&ring->first, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)))
     {
-    printf("%s: bus_dmamem_map() failed; error %d\n", NAME_UNIT, error);
+    printf("%s: bus_dmamem_map(): error %d\n", NAME_UNIT, error);
     return error;
     }
   descs = ring->first; /* suppress compiler warning about aliasing */
@@ -4183,15 +4950,15 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   if ((error = bus_dmamap_create(ring->tag, size_descs, 1,
    size_descs, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ring->map)))
     {
-    printf("%s: bus_dmamap_create() failed; error %d\n", NAME_UNIT, error);
+    printf("%s: bus_dmamap_create(): error %d\n", NAME_UNIT, error);
     return error;
     }
 
-  /* Map kernel virtual address to PCI address for DMA descriptor array. */
+  /* Map kernel virt addr to PCI bus addr for DMA descriptor array. */
   if ((error = bus_dmamap_load(ring->tag, ring->map, descs, size_descs,
    0, BUS_DMA_NOWAIT)))
     {
-    printf("%s: bus_dmamap_load() failed; error %d\n", NAME_UNIT, error);
+    printf("%s: bus_dmamap_load(): error %d\n", NAME_UNIT, error);
     return error;
     }
   ring->dma_addr = ring->map->dm_segs[0].ds_addr;
@@ -4201,11 +4968,11 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
     if ((error = bus_dmamap_create(ring->tag, MAX_DESC_LEN, 2,
      MAX_CHUNK_LEN, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &descs[i].map)))
       {
-      printf("%s: bus_dmamap_create() failed; error %d\n", NAME_UNIT, error);
+      printf("%s: bus_dmamap_create(): error %d\n", NAME_UNIT, error);
       return error;
       }
 
-# elif __bsdi__
+# elif defined(__bsdi__)
 
   /* Allocate wired physical memory for DMA descriptor array. */
   if ((ring->first = malloc(size_descs, M_DEVBUF, M_NOWAIT)) == NULL)
@@ -4216,7 +4983,7 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   descs = ring->first;
   memset(descs, 0, size_descs);
 
-  /* Map kernel virtual address to PCI address for DMA descriptor array. */
+  /* Map kernel virt addr to PCI bus addr for DMA descriptor array. */
   ring->dma_addr = vtophys(descs); /* Relax! BSD/OS only. */
 
 # endif
@@ -4235,6 +5002,7 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   }
 
 /* Destroy a DMA descriptor ring */
+/* context: kernel (boot) or process (syscall) */
 static void  /* BSD version */
 destroy_ring(softc_t *sc, struct desc_ring *ring)
   {
@@ -4242,11 +5010,11 @@ destroy_ring(softc_t *sc, struct desc_ring *ring)
   struct mbuf *m;
 
   /* Free queued mbufs. */
-  while ((m = mbuf_dequeue(ring)) != NULL)
+  while ((m = mbuf_dequeue(ring)))
     m_freem(m);
 
   /* TX may have one pkt that is not on any queue. */
-  if (sc->tx_mbuf != NULL)
+  if (sc->tx_mbuf)
     {
     m_freem(sc->tx_mbuf);
     sc->tx_mbuf = NULL;
@@ -4259,47 +5027,45 @@ destroy_ring(softc_t *sc, struct desc_ring *ring)
     if (ring->read++ == ring->last) ring->read = ring->first;
     }
 
-# if __FreeBSD__
+# if defined(__FreeBSD__)
 
   /* Free the dmamaps of all DMA descriptors. */
   for (desc=ring->first; desc!=ring->last+1; desc++)
-    if (desc->map != NULL)
+    if (desc->map)
       bus_dmamap_destroy(ring->tag, desc->map);
-
   /* Unmap PCI address for DMA descriptor array. */
-  if (ring->dma_addr != 0)
+  if (ring->dma_addr)
     bus_dmamap_unload(ring->tag, ring->map);
   /* Free kernel memory for DMA descriptor array. */
-  if (ring->first != NULL)
+  if (ring->first)
     bus_dmamem_free(ring->tag, ring->first, ring->map);
   /* Free the DMA tag created for this ring. */
-  if (ring->tag != NULL)
+  if (ring->tag)
     bus_dma_tag_destroy(ring->tag);
 
-# elif (__NetBSD__ || __OpenBSD__)
+# elif defined(__NetBSD__) || defined(__OpenBSD__)
 
   /* Free the dmamaps of all DMA descriptors. */
   for (desc=ring->first; desc!=ring->last+1; desc++)
-    if (desc->map != NULL)
+    if (desc->map)
       bus_dmamap_destroy(ring->tag, desc->map);
-
   /* Unmap PCI address for DMA descriptor array. */
-  if (ring->dma_addr != 0)
+  if (ring->dma_addr)
     bus_dmamap_unload(ring->tag, ring->map);
   /* Free dmamap for DMA descriptor array. */
-  if (ring->map != NULL)
+  if (ring->map)
     bus_dmamap_destroy(ring->tag, ring->map);
   /* Unmap kernel address for DMA descriptor array. */
-  if (ring->first != NULL)
+  if (ring->first)
     bus_dmamem_unmap(ring->tag, (caddr_t)ring->first, ring->size_descs);
   /* Free kernel memory for DMA descriptor array. */
-  if (ring->segs[0].ds_addr != 0)
+  if (ring->segs[0].ds_addr)
     bus_dmamem_free(ring->tag, ring->segs, ring->nsegs);
 
-# elif __bsdi__
+# elif defined(__bsdi__)
 
   /* Free kernel memory for DMA descriptor array. */
-  if (ring->first != NULL)
+  if (ring->first)
     free(ring->first, M_DEVBUF);
 
 # endif
@@ -4328,7 +5094,7 @@ static struct mbuf*  /* BSD version */
 mbuf_dequeue(struct desc_ring *ring)
   {
   struct mbuf *m = ring->head;
-  if (m != NULL)
+  if (m)
     if ((ring->head = m->m_nextpkt) == NULL)
       ring->tail = NULL;
   return m;
@@ -4356,8 +5122,8 @@ rxintr_cleanup(softc_t *sc)
   /* ASSERTION: If there is a descriptor in the ring and the hardware has */
   /*  finished with it, then that descriptor will have RX_FIRST_DESC set. */
   if ((ring->read != ring->write) && /* descriptor ring not empty */
-     ((ring->read->status & TLP_DSTS_OWNER) == 0) && /* hardware done */
-     ((ring->read->status & TLP_DSTS_RX_FIRST_DESC) == 0)) /* should be set */
+     !(ring->read->status & TLP_DSTS_OWNER) && /* hardware done */
+     !(ring->read->status & TLP_DSTS_RX_FIRST_DESC)) /* should be set */
     panic("%s: rxintr_cleanup: rx-first-descriptor not set.\n", NAME_UNIT);
 
   /* First decide if a complete packet has arrived. */
@@ -4403,7 +5169,7 @@ rxintr_cleanup(softc_t *sc)
     desc_len = last_desc->length1 + last_desc->length2;
     /* If bouncing, copy bounce buf to mbuf. */
     DMA_SYNC(last_desc->map, desc_len, BUS_DMASYNC_POSTREAD);
-    /* Unmap kernel virtual address to PCI address. */
+    /* Unmap kernel virtual address to PCI bus address. */
     bus_dmamap_unload(ring->tag, last_desc->map);
 
     /* 1) Put pkt info in pkthdr of first mbuf. */
@@ -4419,6 +5185,7 @@ rxintr_cleanup(softc_t *sc)
       }
     else /* 2) link mbufs. */
       {
+      KASSERT(last_mbuf != NULL);
       last_mbuf->m_next = new_mbuf;
       /* M_PKTHDR should be set in the first mbuf only. */
       new_mbuf->m_flags &= ~M_PKTHDR;
@@ -4428,19 +5195,19 @@ rxintr_cleanup(softc_t *sc)
     /* 3) Set mbuf lengths. */
     new_mbuf->m_len = (pkt_len >= desc_len) ? desc_len : pkt_len;
     pkt_len -= new_mbuf->m_len;
-    } while ((last_desc->status & TLP_DSTS_RX_LAST_DESC) == 0);
+    } while ((last_desc->status & TLP_DSTS_RX_LAST_DESC)==0);
 
   /* Decide whether to accept or to drop this packet. */
   /* RxHDLC sets MIIERR for bad CRC, abort and partial byte at pkt end. */
-  if (((last_desc->status & TLP_DSTS_RX_BAD) == 0) &&
-   (sc->status.oper_status == STATUS_UP) &&
+  if (!(last_desc->status & TLP_DSTS_RX_BAD) &&
+   (sc->status.link_state == STATE_UP) &&
    (first_mbuf->m_pkthdr.len > 0))
     {
     /* Optimization: copy a small pkt into a small mbuf. */
     if (first_mbuf->m_pkthdr.len <= COPY_BREAK)
       {
       MGETHDR(new_mbuf, M_DONTWAIT, MT_DATA);
-      if (new_mbuf != NULL)
+      if (new_mbuf)
         {
         new_mbuf->m_pkthdr.rcvif = first_mbuf->m_pkthdr.rcvif;
         new_mbuf->m_pkthdr.len   = first_mbuf->m_pkthdr.len;
@@ -4457,54 +5224,29 @@ rxintr_cleanup(softc_t *sc)
     sc->status.cntrs.ipackets++;
 
     /* Berkeley Packet Filter */
-    LMC_BPF_MTAP(first_mbuf);
+    LMC_BPF_MTAP(sc, first_mbuf);
 
     /* Give this good packet to the network stacks. */
     sc->quota--;
-# if NETGRAPH
-    if (sc->ng_hook != NULL) /* is hook connected? */
-      {
-      int error;  /* ignore error */
-#  if (__FreeBSD_version >= 500000)
-      NG_SEND_DATA_ONLY(error, sc->ng_hook, first_mbuf);
-#  else /* FreeBSD-4 */
-      error = ng_send_dataq(sc->ng_hook, first_mbuf, NULL);
-#  endif
-      return 1;  /* did something */
-      }
-# endif /* NETGRAPH */
-    if (sc->config.line_pkg == PKG_RAWIP)
-      raw_input(sc->ifp, first_mbuf);
+    if (sc->stack)
+      sc->stack->input(sc, first_mbuf);
     else
       {
-# if NSPPP
-      sppp_input(sc->ifp, first_mbuf);
-# elif P2P
-      new_mbuf = first_mbuf;
-      while (new_mbuf != NULL)
-        {
-        sc->p2p->p2p_hdrinput(sc->p2p, new_mbuf->m_data, new_mbuf->m_len);
-        new_mbuf = new_mbuf->m_next;
-        }
-      sc->p2p->p2p_input(sc->p2p, NULL);
-      m_freem(first_mbuf);
-# else
       m_freem(first_mbuf);
       sc->status.cntrs.idrops++;
-# endif
       }
     }
-  else if (sc->status.oper_status != STATUS_UP)
+  else if (sc->status.link_state != STATE_UP)
     {
     /* If the link is down, this packet is probably noise. */
     m_freem(first_mbuf);
     sc->status.cntrs.idrops++;
-    if (DRIVER_DEBUG)
+    if (sc->config.debug)
       printf("%s: rxintr_cleanup: rx pkt dropped: link down\n", NAME_UNIT);
     }
   else /* Log and drop this bad packet. */
     {
-    if (DRIVER_DEBUG)
+    if (sc->config.debug)
       printf("%s: RX bad pkt; len=%d %s%s%s%s\n",
        NAME_UNIT, first_mbuf->m_pkthdr.len,
        (last_desc->status & TLP_DSTS_RX_MII_ERR)  ? " miierr"  : "",
@@ -4540,17 +5282,17 @@ rxintr_setup(softc_t *sc)
   MGETHDR(m, M_DONTWAIT, MT_DATA);
   if (m == NULL)
     {
-    sc->status.cntrs.rxdma++;
-    if (DRIVER_DEBUG)
+    sc->status.cntrs.rxbuf++;
+    if (sc->config.debug)
       printf("%s: rxintr_setup: MGETHDR() failed\n", NAME_UNIT);
     return 0;
     }
   MCLGET(m, M_DONTWAIT);
-  if ((m->m_flags & M_EXT) == 0)
+  if ((m->m_flags & M_EXT)==0)
     {
     m_freem(m);
-    sc->status.cntrs.rxdma++;
-    if (DRIVER_DEBUG)
+    sc->status.cntrs.rxbuf++;
+    if (sc->config.debug)
       printf("%s: rxintr_setup: MCLGET() failed\n", NAME_UNIT);
     return 0;
     }
@@ -4559,38 +5301,38 @@ rxintr_setup(softc_t *sc)
   mbuf_enqueue(ring, m);
 
   /* Write a DMA descriptor into the ring. */
-  /* Hardware won't see it until the OWNER bit is set. */
+  /* Hardware will not see it until the OWNER bit is set. */
   desc = ring->write;
   /* Advance the ring write pointer. */
   if (ring->write++ == ring->last) ring->write = ring->first;
 
   desc_len = (MCLBYTES < MAX_DESC_LEN) ? MCLBYTES : MAX_DESC_LEN;
-  /* Map kernel virtual address to PCI address. */
+  /* Map kernel virt addr to PCI bus addr. */
   if ((error = DMA_LOAD(desc->map, m->m_data, desc_len)))
-    printf("%s: bus_dmamap_load(rx) failed; error %d\n", NAME_UNIT, error);
+    printf("%s: bus_dmamap_load(rx): error %d\n", NAME_UNIT, error);
   /* Invalidate the cache for this mbuf. */
   DMA_SYNC(desc->map, desc_len, BUS_DMASYNC_PREREAD);
 
   /* Set up the DMA descriptor. */
-# if __FreeBSD__
+# if defined(__FreeBSD__)
   desc->address1 = ring->segs[0].ds_addr;
-# elif (__NetBSD__ || __OpenBSD__)
+# elif defined(__NetBSD__) || defined(__OpenBSD__)
   desc->address1 = desc->map->dm_segs[0].ds_addr;
-# elif __bsdi__
+# elif defined(__bsdi__)
   desc->address1 = vtophys(m->m_data); /* Relax! BSD/OS only. */
 # endif
   desc->length1  = desc_len>>1;
   desc->address2 = desc->address1 + desc->length1;
   desc->length2  = desc_len>>1;
 
-  /* Before setting the OWNER bit, flush the cache (memory barrier). */
+  /* Before setting the OWNER bit, flush cache backing DMA descriptors. */
   DMA_SYNC(ring->map, ring->size_descs, BUS_DMASYNC_PREWRITE);
 
   /* Commit the DMA descriptor to the hardware. */
   desc->status = TLP_DSTS_OWNER;
 
   /* Notify the receiver that there is another buffer available. */
-  WRITE_CSR(TLP_RX_POLL, 1);
+  WRITE_CSR(sc, TLP_RX_POLL, 1);
 
   return 1; /* did something */
   }
@@ -4604,7 +5346,7 @@ txintr_cleanup(softc_t *sc)
   struct dma_desc *desc;
 
   while ((ring->read != ring->write) && /* while ring is not empty */
-        ((ring->read->status & TLP_DSTS_OWNER) == 0))
+        !(ring->read->status & TLP_DSTS_OWNER))
     {
     /* Read a DMA descriptor from the ring. */
     desc = ring->read;
@@ -4613,27 +5355,35 @@ txintr_cleanup(softc_t *sc)
 
     /* This is a no-op on most architectures. */
     DMA_SYNC(desc->map, desc->length1 + desc->length2, BUS_DMASYNC_POSTWRITE);
-    /* Unmap kernel virtual address to PCI address. */
+    /* Unmap kernel virtual address to PCI bus address. */
     bus_dmamap_unload(ring->tag, desc->map);
 
     /* If this descriptor is the last segment of a packet, */
     /*  then dequeue and free the corresponding mbuf chain. */
-    if ((desc->control & TLP_DCTL_TX_LAST_SEG) != 0)
+    if (desc->control & TLP_DCTL_TX_LAST_SEG)
       {
       struct mbuf *m;
+
       if ((m = mbuf_dequeue(ring)) == NULL)
         panic("%s: txintr_cleanup: expected an mbuf\n", NAME_UNIT);
 
-      /* Include CRC and one flag byte in output byte count. */
-      sc->status.cntrs.obytes += m->m_pkthdr.len + sc->config.crc_len +1;
-      sc->status.cntrs.opackets++;
-
-      /* Berkeley Packet Filter */
-      LMC_BPF_MTAP(m);
-
       /* The only bad TX status is fifo underrun. */
-      if ((desc->status & TLP_DSTS_TX_UNDERRUN) != 0)
+      if (desc->status & TLP_DSTS_TX_UNDERRUN)
+        {
+        if (sc->config.debug)
+          printf("%s: txintr_cleanup: tx fifo underrun\n", NAME_UNIT);
         sc->status.cntrs.fifo_under++;
+        sc->status.cntrs.oerrors++;
+	}
+      else
+        {
+        /* Include CRC and one flag byte in output byte count. */
+        sc->status.cntrs.obytes += m->m_pkthdr.len + sc->config.crc_len +1;
+        sc->status.cntrs.opackets++;
+
+        /* Berkeley Packet Filter */
+        LMC_BPF_MTAP(sc, m);
+	}
 
       m_freem(m);
       return 1;  /* did something */
@@ -4644,7 +5394,7 @@ txintr_cleanup(softc_t *sc)
   }
 
 /* Build DMA descriptors for a transmit packet mbuf chain. */
-static int /* 0=success; 1=error */ /* BSD version */
+static int  /* 0=success; 1=error */ /* BSD version */
 txintr_setup_mbuf(softc_t *sc, struct mbuf *m)
   {
   struct desc_ring *ring = &sc->txring;
@@ -4652,7 +5402,7 @@ txintr_setup_mbuf(softc_t *sc, struct mbuf *m)
   unsigned int desc_len;
 
   /* build DMA descriptors for a chain of mbufs. */
-  while (m != NULL)
+  while (m)
     {
     char *data = m->m_data;
     int length = m->m_len; /* zero length mbufs happen! */
@@ -4668,20 +5418,20 @@ txintr_setup_mbuf(softc_t *sc, struct mbuf *m)
         for (; ring->temp!=ring->write;
          ring->temp = (ring->temp==ring->first)? ring->last : ring->temp-1)
           bus_dmamap_unload(ring->tag, ring->temp->map);
-        sc->status.cntrs.txdma++;
+        sc->status.cntrs.txdma++; /* IFF_OACTIVE? */
         return 1;
 	}
 
       /* Provisionally, write a descriptor into the ring. */
-      /* But don't change the REAL ring write pointer. */
-      /* Hardware won't see it until the OWNER bit is set. */
+      /* But do not change the REAL ring write pointer. */
+      /* Hardware will not see it until the OWNER bit is set. */
       desc = ring->temp;
       /* Advance the temporary ring write pointer. */
       if (ring->temp++ == ring->last) ring->temp = ring->first;
 
       /* Clear all control bits except the END_RING bit. */
       desc->control &= TLP_DCTL_END_RING;
-      /* Don't pad short packets up to 64 bytes. */
+      /* Do not pad short packets up to 64 bytes. */
       desc->control |= TLP_DCTL_TX_NO_PAD;
       /* Use Tulip's CRC-32 generator, if appropriate. */
       if (sc->config.crc_len != CFG_CRC_32)
@@ -4691,21 +5441,21 @@ txintr_setup_mbuf(softc_t *sc, struct mbuf *m)
         desc->status = TLP_DSTS_OWNER;
 
       desc_len = (length > MAX_CHUNK_LEN) ? MAX_CHUNK_LEN : length;
-      /* Map kernel virtual address to PCI address. */
+      /* Map kernel virt addr to PCI bus addr. */
       if ((error = DMA_LOAD(desc->map, data, desc_len)))
-        printf("%s: bus_dmamap_load(tx) failed; error %d\n", NAME_UNIT, error);
+        printf("%s: bus_dmamap_load(tx): error %d\n", NAME_UNIT, error);
       /* Flush the cache and if bouncing, copy mbuf to bounce buf. */
       DMA_SYNC(desc->map, desc_len, BUS_DMASYNC_PREWRITE);
 
       /* Prevent wild fetches if mapping fails (nsegs==0). */
       desc->length1  = desc->length2  = 0;
       desc->address1 = desc->address2 = 0;
-# if (__FreeBSD__ || __NetBSD__ || __OpenBSD__)
+# if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
         {
-#  if __FreeBSD__
+#  if defined(__FreeBSD__)
         bus_dma_segment_t *segs = ring->segs;
         int nsegs = ring->nsegs;
-#  elif (__NetBSD__ || __OpenBSD__)
+#  elif defined(__NetBSD__) || defined(__OpenBSD__)
         bus_dma_segment_t *segs = desc->map->dm_segs;
         int nsegs = desc->map->dm_nsegs;
 #  endif
@@ -4720,7 +5470,7 @@ txintr_setup_mbuf(softc_t *sc, struct mbuf *m)
           desc->length2  = segs[1].ds_len;
           }
         }
-# elif __bsdi__
+# elif defined(__bsdi__)
       desc->address1 = vtophys(data); /* Relax! BSD/OS only. */
       desc->length1  = desc_len;
 # endif
@@ -4730,7 +5480,7 @@ txintr_setup_mbuf(softc_t *sc, struct mbuf *m)
       } /* while (length > 0) */
 
     m = m->m_next;
-    } /* while (m != NULL) */
+    } /* while (m) */
 
   return 0; /* success */
   }
@@ -4744,42 +5494,18 @@ txintr_setup(softc_t *sc)
   struct desc_ring *ring = &sc->txring;
   struct dma_desc *first_desc, *last_desc;
 
-  /* Protect against half-up links: Don't transmit */
-  /*  if the receiver can't hear the far end. */
-  if (sc->status.oper_status != STATUS_UP) return 0;
+  /* Protect against half-up links: Do not transmit */
+  /*  if the receiver can not hear the far end. */
+  if (sc->status.link_state != STATE_UP) return 0;
 
   /* Pick a packet to transmit. */
-# if NETGRAPH
-  if ((sc->ng_hook != NULL) && (sc->tx_mbuf == NULL))
-    {
-    if (!IFQ_IS_EMPTY(&sc->ng_fastq))
-      IFQ_DEQUEUE(&sc->ng_fastq, sc->tx_mbuf);
-    else
-      IFQ_DEQUEUE(&sc->ng_sndq,  sc->tx_mbuf);
-    }
-  else
-# endif
-  if (sc->tx_mbuf == NULL)
-    {
-    if (sc->config.line_pkg == PKG_RAWIP)
-      IFQ_DEQUEUE(&sc->ifp->if_snd, sc->tx_mbuf);
-    else
-      {
-# if NSPPP
-      sc->tx_mbuf = sppp_dequeue(sc->ifp);
-# elif P2P
-      if (!IFQ_IS_EMPTY(&sc->p2p->p2p_isnd))
-        IFQ_DEQUEUE(&sc->p2p->p2p_isnd, sc->tx_mbuf);
-      else
-        IFQ_DEQUEUE(&sc->ifp->if_snd, sc->tx_mbuf);
-# endif
-      }
-    }
-  if (sc->tx_mbuf == NULL) return 0;  /* no pkt to transmit */
+  if ((sc->tx_mbuf == NULL) && sc->stack)
+    sc->stack->output(sc);
+  if  (sc->tx_mbuf == NULL) return 0;  /* no pkt to transmit */
 
   /* Build DMA descriptors for an outgoing mbuf chain. */
   ring->temp = ring->write; /* temporary ring write pointer */
-  if (txintr_setup_mbuf(sc, sc->tx_mbuf) != 0) return 0;
+  if (txintr_setup_mbuf(sc, sc->tx_mbuf)) return 0;
 
   /* Enqueue the mbuf; txintr_cleanup will free it. */
   mbuf_enqueue(ring, sc->tx_mbuf);
@@ -4803,20 +5529,20 @@ txintr_setup(softc_t *sc)
   /* Commit the DMA descriptors to the software. */
   ring->write = ring->temp;
 
-  /* Before setting the OWNER bit, flush the cache (memory barrier). */
+  /* Before setting the OWNER bit, flush cache backing DMA descriptors. */
   DMA_SYNC(ring->map, ring->size_descs, BUS_DMASYNC_PREWRITE);
 
   /* Commit the DMA descriptors to the hardware. */
   first_desc->status = TLP_DSTS_OWNER;
 
   /* Notify the transmitter that there is another packet to send. */
-  WRITE_CSR(TLP_TX_POLL, 1);
+  WRITE_CSR(sc, TLP_TX_POLL, 1);
 
   return 1; /* did something */
   }
 
-/* The kernel calls this when a hardware interrupt happens. */
-static intr_return_t
+/* BSD kernels call this when a hardware interrupt happens. */
+static intr_return_t  /* context: interrupt */
 bsd_interrupt(void *arg)
   {
   softc_t *sc = arg;
@@ -4827,1133 +5553,43 @@ bsd_interrupt(void *arg)
 # endif
 
   /* Cut losses early if this is not our interrupt. */
-  if ((READ_CSR(TLP_STATUS) & TLP_INT_TXRX) == 0)
+  if ((READ_CSR(sc, TLP_STATUS) & TLP_INT_TXRX)==0)
     return IRQ_NONE;
 
-  WRITE_CSR(TLP_INT_ENBL, TLP_INT_DISABLE);
-
-  sc->quota = sc->rxring.num_descs; /* input flow NOT controlled */
-  core_interrupt(sc, 0); /* don't check status */
-
-  WRITE_CSR(TLP_INT_ENBL, TLP_INT_TXRX);
+  /* Process tx and rx pkts. */
+  lmc_interrupt(sc, sc->rxring.num_descs, 0);
 
   return IRQ_HANDLED;
   }
 
+#endif /* BSD */
+
 # if DEVICE_POLLING
+
 /* This procedure services the card without interrupts. */
 /* With rxintr_cleanup(), it implements input flow control. */
-static void
+static void  /* context: softirq */
 bsd_poll(struct ifnet *ifp, enum poll_cmd cmd, int quota)
   {
   softc_t *sc = IFP2SC(ifp);
 
-#  if (__FreeBSD_version < 600000)
-  if (cmd == POLL_DEREGISTER)
-    {
-    ifp->if_capenable &= ~IFCAP_POLLING;
-    WRITE_CSR(TLP_INT_ENBL, TLP_INT_TXRX);
-    return;
-    }
-#  endif
-
   /* Cut losses early if this is not our interrupt. */
-  if ((READ_CSR(TLP_STATUS) & TLP_INT_TXRX) == 0)
+  if ((READ_CSR(sc, TLP_STATUS) & TLP_INT_TXRX)==0)
     return;
 
-  sc->quota = quota;  /* input flow IS controlled */
-  core_interrupt(sc, (cmd==POLL_AND_CHECK_STATUS));
+  /* Process all tx pkts and up to quota rx pkts. */
+  lmc_interrupt(sc, quota, (cmd==POLL_AND_CHECK_STATUS));
   }
+
 # endif /* DEVICE_POLLING */
 
-# if __FreeBSD__
-static void /* *** FreeBSD ONLY *** Callout from bus_dmamap_load() */
-fbsd_dmamap_load(void *arg, bus_dma_segment_t *segs, int nsegs, int error)
-  {
-  struct desc_ring *ring = arg;
-  ring->nsegs = error ? 0 : nsegs;
-  ring->segs[0] = segs[0];
-  ring->segs[1] = segs[1];
-  }
-# endif
-
-#endif /* BSD */
-
-/* The next few procedures initialize the card. */
-
-/* Returns 0 on success; error code on failure. */
-static int
-startup_card(softc_t *sc)
-  {
-  int num_rx_descs, error = 0;
-  u_int32_t tlp_bus_pbl, tlp_bus_cal, tlp_op_tr;
-  u_int32_t tlp_cfdd, tlp_cfcs;
-  u_int32_t tlp_cflt, tlp_csid, tlp_cfit;
-
-  /* Make sure the COMMAND bits are reasonable. */
-  tlp_cfcs = READ_PCI_CFG(sc, TLP_CFCS);
-  tlp_cfcs &= ~TLP_CFCS_MWI_ENABLE;
-  tlp_cfcs |=  TLP_CFCS_BUS_MASTER;
-  tlp_cfcs |=  TLP_CFCS_MEM_ENABLE;
-  tlp_cfcs |=  TLP_CFCS_IO_ENABLE;
-  tlp_cfcs |=  TLP_CFCS_PAR_ERROR;
-  tlp_cfcs |=  TLP_CFCS_SYS_ERROR;
-  WRITE_PCI_CFG(sc, TLP_CFCS, tlp_cfcs);
-
-  /* Set the LATENCY TIMER to the recommended value, */
-  /*  and make sure the CACHE LINE SIZE is reasonable. */
-  tlp_cfit = READ_PCI_CFG(sc, TLP_CFIT);
-  tlp_cflt = READ_PCI_CFG(sc, TLP_CFLT);
-  tlp_cflt &= ~TLP_CFLT_LATENCY;
-  tlp_cflt |= (tlp_cfit & TLP_CFIT_MAX_LAT)>>16;
-  /* "prgmbl burst length" and "cache alignment" used below. */
-  switch(tlp_cflt & TLP_CFLT_CACHE)
-    {
-    case 8: /* 8 bytes per cache line */
-      { tlp_bus_pbl = 32; tlp_bus_cal = 1; break; }
-    case 16:
-      { tlp_bus_pbl = 32; tlp_bus_cal = 2; break; }
-    case 32:
-      { tlp_bus_pbl = 32; tlp_bus_cal = 3; break; }
-    default:
-      {
-      tlp_bus_pbl = 32; tlp_bus_cal = 1;
-      tlp_cflt &= ~TLP_CFLT_CACHE;
-      tlp_cflt |= 8;
-      break;
-      }
-    }
-  WRITE_PCI_CFG(sc, TLP_CFLT, tlp_cflt);
-
-  /* Make sure SNOOZE and SLEEP modes are disabled. */
-  tlp_cfdd = READ_PCI_CFG(sc, TLP_CFDD);
-  tlp_cfdd &= ~TLP_CFDD_SLEEP;
-  tlp_cfdd &= ~TLP_CFDD_SNOOZE;
-  WRITE_PCI_CFG(sc, TLP_CFDD, tlp_cfdd);
-  DELAY(11*1000); /* Tulip wakes up in 10 ms max */
-
-  /* Software Reset the Tulip chip; stops DMA and Interrupts. */
-  /* This does not change the PCI config regs just set above. */
-  WRITE_CSR(TLP_BUS_MODE, TLP_BUS_RESET); /* self-clearing */
-  DELAY(5);  /* Tulip is dead for 50 PCI cycles after reset. */
-
-  /* Reset the Xilinx Field Programmable Gate Array. */
-  reset_xilinx(sc); /* side effect: turns on all four LEDs */
-
-  /* Configure card-specific stuff (framers, line interfaces, etc.). */
-  sc->card->config(sc);
-
-  /* Initializing cards can glitch clocks and upset fifos. */
-  /* Reset the FIFOs between the Tulip and Xilinx chips. */
-  set_mii16_bits(sc, MII16_FIFO);
-  clr_mii16_bits(sc, MII16_FIFO);
-
-  /* Initialize the PCI busmode register. */
-  /* The PCI bus cycle type "Memory Write and Invalidate" does NOT */
-  /*  work cleanly in any version of the 21140A, so don't enable it! */
-  WRITE_CSR(TLP_BUS_MODE,
-        (tlp_bus_cal ? TLP_BUS_READ_LINE : 0) |
-        (tlp_bus_cal ? TLP_BUS_READ_MULT : 0) |
-        (tlp_bus_pbl<<TLP_BUS_PBL_SHIFT) |
-        (tlp_bus_cal<<TLP_BUS_CAL_SHIFT) |
-   ((BYTE_ORDER == BIG_ENDIAN) ? TLP_BUS_DESC_BIGEND : 0) |
-   ((BYTE_ORDER == BIG_ENDIAN) ? TLP_BUS_DATA_BIGEND : 0) |
-                TLP_BUS_DSL_VAL |
-                TLP_BUS_ARB);
-
-  /* Pick number of RX descriptors and TX fifo threshold. */
-  /* tx_threshold in bytes: 0=128, 1=256, 2=512, 3=1024 */
-  tlp_csid = READ_PCI_CFG(sc, TLP_CSID);
-  switch(tlp_csid)
-    {
-    case TLP_CSID_HSSI:		/* 52 Mb/s */
-    case TLP_CSID_HSSIc:	/* 52 Mb/s */
-    case TLP_CSID_T3:		/* 45 Mb/s */
-      { num_rx_descs = 48; tlp_op_tr = 2; break; }
-    case TLP_CSID_SSI:		/* 10 Mb/s */
-      { num_rx_descs = 32; tlp_op_tr = 1; break; }
-    case TLP_CSID_T1E1:		/*  2 Mb/s */
-      { num_rx_descs = 16; tlp_op_tr = 0; break; }
-    default:
-      { num_rx_descs = 16; tlp_op_tr = 0; break; }
-    }
-
-  /* Create DMA descriptors and initialize list head registers. */
-  if ((error = create_ring(sc, &sc->txring, NUM_TX_DESCS))) return error;
-  WRITE_CSR(TLP_TX_LIST, sc->txring.dma_addr);
-  if ((error = create_ring(sc, &sc->rxring, num_rx_descs))) return error;
-  WRITE_CSR(TLP_RX_LIST, sc->rxring.dma_addr);
-
-  /* Initialize the operating mode register. */
-  WRITE_CSR(TLP_OP_MODE, TLP_OP_INIT | (tlp_op_tr<<TLP_OP_TR_SHIFT));
-
-  /* Read the missed frame register (result ignored) to zero it. */
-  error = READ_CSR( TLP_MISSED); /* error is used as a bit-dump */
-
-  /* Disable rx watchdog and tx jabber features. */
-  WRITE_CSR(TLP_WDOG, TLP_WDOG_INIT);
-
-  return 0;
-  }
-
-/* Stop DMA and Interrupts; free descriptors and buffers. */
-static void
-shutdown_card(void *arg)
-  {
-  softc_t *sc = arg;
-
-  /* Leave the LEDs in the state they were in after power-on. */
-  led_on(sc, MII16_LED_ALL);
-
-  /* Software reset the Tulip chip; stops DMA and Interrupts */
-  WRITE_CSR(TLP_BUS_MODE, TLP_BUS_RESET); /* self-clearing */
-  DELAY(5);  /* Tulip is dead for 50 PCI cycles after reset. */
-
-  /* Disconnect from the PCI bus except for config cycles. */
-  /* Hmmm; Linux syslogs a warning that IO and MEM are disabled. */
-  WRITE_PCI_CFG(sc, TLP_CFCS, TLP_CFCS_MEM_ENABLE | TLP_CFCS_IO_ENABLE);
-
-  /* Free the DMA descriptor rings. */
-  destroy_ring(sc, &sc->txring);
-  destroy_ring(sc, &sc->rxring);
-  }
-
-/* Start the card and attach a kernel interface and line protocol. */
-static int
-attach_card(softc_t *sc, const char *intrstr)
-  {
-  struct config config;
-  u_int32_t tlp_cfrv;
-  u_int16_t mii3;
-  u_int8_t *ieee;
-  int i, error = 0;
-
-  /* Start the card. */
-  if ((error = startup_card(sc))) return error;
-
-  /* Attach a kernel interface. */
-#if NETGRAPH
-  if ((error = ng_attach(sc))) return error;
-  sc->flags |= FLAG_NETGRAPH;
-#endif
-#if IFNET
-  if ((error = ifnet_attach(sc))) return error;
-  sc->flags |= FLAG_IFNET;
-#endif
-
-  /* Attach a line protocol stack. */
-  sc->config.line_pkg = PKG_RAWIP;
-  config = sc->config;	/* get current config */
-  config.line_pkg = 0;	/* select external stack */
-  config.line_prot = PROT_C_HDLC;
-  config.keep_alive = 1;
-  config_proto(sc, &config); /* reconfigure */
-  sc->config = config;	/* save new configuration */
-
-  /* Print interesting hardware-related things. */
-  mii3 = read_mii(sc, 3);
-  tlp_cfrv = READ_PCI_CFG(sc, TLP_CFRV);
-  printf("%s: PCI rev %d.%d, MII rev %d.%d", NAME_UNIT,
-   (tlp_cfrv>>4) & 0xF, tlp_cfrv & 0xF, (mii3>>4) & 0xF, mii3 & 0xF);
-  ieee = (u_int8_t *)sc->status.ieee;
-  for (i=0; i<3; i++) sc->status.ieee[i] = read_srom(sc, 10+i);
-  printf(", IEEE addr %02x:%02x:%02x:%02x:%02x:%02x",
-   ieee[0], ieee[1], ieee[2], ieee[3], ieee[4], ieee[5]);
-  sc->card->ident(sc);
-  printf(" %s\n", intrstr);
-
-  /* Print interesting software-related things. */
-  printf("%s: Driver rev %d.%d.%d", NAME_UNIT,
-   DRIVER_MAJOR_VERSION, DRIVER_MINOR_VERSION, DRIVER_SUB_VERSION);
-  printf(", Options %s%s%s%s%s%s%s%s%s\n",
-   NETGRAPH ? "NETGRAPH " : "",
-   GEN_HDLC ? "GEN_HDLC " : "",
-   NSPPP ? "SPPP " : "",
-   P2P ? "P2P " : "",
-   ALTQ ? "ALTQ " : "",
-   NBPFILTER ? "BPF " : "",
-   DEVICE_POLLING ? "POLL " : "",
-   IOREF_CSR ? "IO_CSR " : "MEM_CSR ",
-   (BYTE_ORDER == BIG_ENDIAN) ? "BIG_END " : "LITTLE_END ");
-
-  /* Enable card interrupts. */
-  WRITE_CSR(TLP_INT_ENBL, TLP_INT_TXRX);
-
-  /* Make the card appear to be "ready" (Set DTR etc). */
-  set_status(sc, 1);
-
-  return 0;
-  }
-
-/* Detach from the kernel and shutdown the hardware. */
-static void
-detach_card(softc_t *sc)
-  {
-  struct config config;
-
-  /* Make the card appear to be "not ready" (Clear DTR etc). */
-  set_status(sc, 0);
-
-  /* Reset the Tulip chip; stops DMA and Interrupts. */
-  shutdown_card(sc);
-
-  /* Detach netgraph interface. */
-#if NETGRAPH
-  if (sc->flags & FLAG_NETGRAPH)
-    {
-    IFQ_PURGE(&sc->ng_fastq);
-    IFQ_PURGE(&sc->ng_sndq);
-    ng_detach(sc);
-    }
-#endif
-
-  /* Detach external line protocol stack. */
-  if (sc->config.line_pkg != PKG_RAWIP)
-    {
-    config = sc->config;
-    config.line_pkg = PKG_RAWIP;
-    config_proto(sc, &config);
-    sc->config = config;
-    }
-
-#if IFNET
-  /* Detach ifnet interface. */
-  if (sc->flags & FLAG_IFNET)
-    {
-    IFQ_PURGE(&sc->ifp->if_snd);
-    ifnet_detach(sc);
-    }
-#endif
-  }
-
-#if __FreeBSD__
-
-/* This is the I/O configuration interface for FreeBSD */
-
-static int
-fbsd_probe(device_t dev)
-  {
-  u_int32_t cfid = pci_read_config(dev, TLP_CFID, 4);
-  u_int32_t csid = pci_read_config(dev, TLP_CSID, 4);
-
-  /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-  if (cfid != TLP_CFID_TULIP) return ENXIO;
-  switch (csid)
-    {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
-      device_set_desc(dev, HSSI_DESC);
-      break;
-    case TLP_CSID_T3:
-      device_set_desc(dev,   T3_DESC);
-      break;
-    case TLP_CSID_SSI:
-      device_set_desc(dev,  SSI_DESC);
-      break;
-    case TLP_CSID_T1E1:
-      device_set_desc(dev, T1E1_DESC);
-      break;
-    default:
-      return ENXIO;
-    }
-  return 0;
-  }
-
-static int
-fbsd_detach(device_t dev)
-  {
-  softc_t *sc = device_get_softc(dev);
-
-  /* Stop the card and detach from the kernel. */
-  detach_card(sc);
-
-  /* Release resources. */
-  if (sc->irq_cookie != NULL)
-    bus_teardown_intr(dev, sc->irq_res, sc->irq_cookie);
-  if (sc->irq_res != NULL)
-    bus_release_resource(dev, SYS_RES_IRQ, sc->irq_res_id, sc->irq_res);
-  if (sc->csr_res != NULL)
-    bus_release_resource(dev, sc->csr_res_type, sc->csr_res_id, sc->csr_res);
-
-# if (__FreeBSD_version >= 500000)
-  mtx_destroy(&sc->top_mtx);
-  mtx_destroy(&sc->bottom_mtx);
-# endif
-  return 0; /* no error */
-  }
-
-static void
-fbsd_shutdown(device_t dev)
-  {
-  shutdown_card(device_get_softc(dev));
-  }
-
-static int
-fbsd_attach(device_t dev)
-  {
-  softc_t *sc = device_get_softc(dev);
-  int error;
-
-  /* READ/WRITE_PCI_CFG need this. */
-  sc->dev = dev;
-
-  /* What kind of card are we driving? */
-  switch (READ_PCI_CFG(sc, TLP_CSID))
-    {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
-      sc->card = &hssi_card;
-      break;
-    case TLP_CSID_T3:
-      sc->card =   &t3_card;
-      break;
-    case TLP_CSID_SSI:
-      sc->card =  &ssi_card;
-      break;
-    case TLP_CSID_T1E1:
-      sc->card =   &t1_card;
-      break;
-    default:
-      return ENXIO;
-    }
-  sc->dev_desc = device_get_desc(dev);
-
-  /* Allocate PCI memory or IO resources to access the Tulip chip CSRs. */
-# if IOREF_CSR
-  sc->csr_res_id   = TLP_CBIO;
-  sc->csr_res_type = SYS_RES_IOPORT;
-# else
-  sc->csr_res_id   = TLP_CBMA;
-  sc->csr_res_type = SYS_RES_MEMORY;
-# endif
-  sc->csr_res = bus_alloc_resource(dev, sc->csr_res_type, &sc->csr_res_id,
-   0, ~0, 1, RF_ACTIVE);
-  if (sc->csr_res == NULL)
-    {
-    printf("%s: bus_alloc_resource(csr) failed.\n", NAME_UNIT);
-    return ENXIO;
-    }
-  sc->csr_tag    = rman_get_bustag(sc->csr_res);
-  sc->csr_handle = rman_get_bushandle(sc->csr_res); 
-
-  /* Allocate PCI interrupt resources for the card. */
-  sc->irq_res_id = 0;
-  sc->irq_res = bus_alloc_resource(dev, SYS_RES_IRQ, &sc->irq_res_id,
-   0, ~0, 1, RF_ACTIVE | RF_SHAREABLE);
-  if (sc->irq_res == NULL)
-    {
-    printf("%s: bus_alloc_resource(irq) failed.\n", NAME_UNIT);
-    fbsd_detach(dev);
-    return ENXIO;
-    }
-  if ((error = bus_setup_intr(dev, sc->irq_res, INTR_TYPE_NET | INTR_MPSAFE,
-   bsd_interrupt, sc, &sc->irq_cookie)))
-    {
-    printf("%s: bus_setup_intr() failed; error %d\n", NAME_UNIT, error);
-    fbsd_detach(dev);
-    return error;
-    }
-
-# if (__FreeBSD_version >= 500000)
-  /* Initialize the top-half and bottom-half locks. */
-  mtx_init(&sc->top_mtx,    NAME_UNIT, "top half lock",    MTX_DEF);
-  mtx_init(&sc->bottom_mtx, NAME_UNIT, "bottom half lock", MTX_DEF);
-# endif
-
-  /* Start the card and attach a kernel interface and line protocol. */
-  if ((error = attach_card(sc, ""))) detach_card(sc);
-  return error;
-  }
-
-static device_method_t methods[] =
-  {
-  DEVMETHOD(device_probe,    fbsd_probe),
-  DEVMETHOD(device_attach,   fbsd_attach),
-  DEVMETHOD(device_detach,   fbsd_detach),
-  DEVMETHOD(device_shutdown, fbsd_shutdown),
-  /* This driver does not suspend and resume. */
-  { 0, 0 }
-  };
-
-static driver_t driver =
-  {
-  .name    = DEVICE_NAME,
-  .methods = methods,
-# if (__FreeBSD_version >= 500000)
-  .size    = sizeof(softc_t),
-# else /* FreeBSD-4 */
-  .softc   = sizeof(softc_t),
-# endif
-  };
-
-static devclass_t devclass;
-
-DRIVER_MODULE(if_lmc, pci, driver, devclass, 0, 0);
-MODULE_VERSION(if_lmc, 2);
-MODULE_DEPEND(if_lmc, pci, 1, 1, 1);
-# if NETGRAPH
-MODULE_DEPEND(if_lmc, netgraph, NG_ABI_VERSION, NG_ABI_VERSION, NG_ABI_VERSION);
-# endif
-# if NSPPP
-MODULE_DEPEND(if_lmc, sppp, 1, 1, 1);
-# endif
-
-#endif  /* __FreeBSD__ */
-
-#if __NetBSD__
-
-/* This is the I/O configuration interface for NetBSD. */
-
-static int
-nbsd_match(struct device *parent, struct cfdata *match, void *aux)
-  {
-  struct pci_attach_args *pa = aux;
-  u_int32_t cfid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CFID);
-  u_int32_t csid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CSID);	
-
-  /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-  if (cfid != TLP_CFID_TULIP) return 0;
-  switch (csid)
-    {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
-    case TLP_CSID_T3:
-    case TLP_CSID_SSI:
-    case TLP_CSID_T1E1:
-      return 100;
-    default:
-      return 0;
-    }
-  }
-
-static int
-nbsd_detach(struct device *self, int flags)
-  {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
-
-  /* Stop the card and detach from the kernel. */
-  detach_card(sc);
-
-  /* Release resources. */
-  if (sc->sdh_cookie != NULL)
-    shutdownhook_disestablish(sc->sdh_cookie);
-  if (sc->irq_cookie != NULL)
-    pci_intr_disestablish(sc->pa_pc, sc->irq_cookie);
-  if (sc->csr_handle)
-    bus_space_unmap(sc->csr_tag, sc->csr_handle, TLP_CSR_SIZE);
-
-  return 0; /* no error */
-  }
-
-static void
-nbsd_attach(struct device *parent, struct device *self, void *aux)
-  {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
-  struct pci_attach_args *pa = aux;
-  const char *intrstr;
-  bus_addr_t csr_addr;
-  int error;
-
-  /* READ/WRITE_PCI_CFG need these. */
-  sc->pa_pc   = pa->pa_pc;
-  sc->pa_tag  = pa->pa_tag;
-  /* bus_dma needs this. */
-  sc->pa_dmat = pa->pa_dmat;
-
-  /* What kind of card are we driving? */
-  switch (READ_PCI_CFG(sc, TLP_CSID))
-    {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
-      sc->dev_desc =  HSSI_DESC;
-      sc->card     = &hssi_card;
-      break;
-    case TLP_CSID_T3:
-      sc->dev_desc =    T3_DESC;
-      sc->card     =   &t3_card;
-      break;
-    case TLP_CSID_SSI:
-      sc->dev_desc =   SSI_DESC;
-      sc->card     =  &ssi_card;
-      break;
-    case TLP_CSID_T1E1:
-      sc->dev_desc =  T1E1_DESC;
-      sc->card     =   &t1_card;
-      break;
-    default:
-      return;
-    }
-  printf(": %s\n", sc->dev_desc);
-
-  /* Allocate PCI resources to access the Tulip chip CSRs. */
-# if IOREF_CSR
-  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBIO) & -2;
-  sc->csr_tag = pa->pa_iot;	/* bus_space tag for IO refs */
-# else
-  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBMA);
-  sc->csr_tag = pa->pa_memt;	/* bus_space tag for MEM refs */
-# endif
-  if ((error = bus_space_map(sc->csr_tag, csr_addr,
-   TLP_CSR_SIZE, 0, &sc->csr_handle)))
-    {
-    printf("%s: bus_space_map() failed; error %d\n", NAME_UNIT, error);
-    return;
-    }
-
-  /* Allocate PCI interrupt resources. */
-  if ((error = pci_intr_map(pa, &sc->intr_handle)))
-    {
-    printf("%s: pci_intr_map() failed; error %d\n", NAME_UNIT, error);
-    nbsd_detach(self, 0);
-    return;
-    }
-  sc->irq_cookie = pci_intr_establish(pa->pa_pc, sc->intr_handle,
-   IPL_NET, bsd_interrupt, sc);
-  if (sc->irq_cookie == NULL)
-    {
-    printf("%s: pci_intr_establish() failed\n", NAME_UNIT);
-    nbsd_detach(self, 0);
-    return;
-    }
-  intrstr = pci_intr_string(pa->pa_pc, sc->intr_handle);
-
-  /* Install a shutdown hook. */
-  sc->sdh_cookie = shutdownhook_establish(shutdown_card, sc);
-  if (sc->sdh_cookie == NULL)
-    {
-    printf("%s: shutdown_hook_establish() failed\n", NAME_UNIT);
-    nbsd_detach(self, 0);
-    return;
-    }
-
-  /* Initialize the top-half and bottom-half locks. */
-  simple_lock_init(&sc->top_lock);
-  simple_lock_init(&sc->bottom_lock);
-
-  /* Start the card and attach a kernel interface and line protocol. */
-  if ((error = attach_card(sc, intrstr))) detach_card(sc);
-  }
-
-# if (__NetBSD_Version__ >= 106080000) /* 1.6H */
-CFATTACH_DECL(lmc, sizeof(softc_t),
- nbsd_match, nbsd_attach, nbsd_detach, NULL);
-# else
-struct cfattach lmc_ca =
-  {
-/*.ca_name	= DEVICE_NAME, */
-  .ca_devsize	= sizeof(softc_t),
-  .ca_match	= nbsd_match,
-  .ca_attach	= nbsd_attach,
-  .ca_detach	= nbsd_detach,
-  .ca_activate	= NULL,
-  };
-# endif
-
-# if (__NetBSD_Version__ >= 106080000)
-#  if (__NetBSD_Version__ >= 399000000)
-extern struct cfdriver lmc_cd;
-#  else
-CFDRIVER_DECL(lmc, DV_IFNET, NULL);
-#  endif
-# else
-static struct cfdriver lmc_cd =
-  {
-  .cd_name	= DEVICE_NAME,
-  .cd_class	= DV_IFNET,
-  .cd_ndevs	= 0,
-  .cd_devs	= NULL,
-  };
-# endif
-
-/* cfdata is declared static, unseen outside this module. */
-/* It is used for LKM; config builds its own in ioconf.c. */
-static struct cfdata lmc_cf =
-  {
-# if (__NetBSD_Version__ >= 106080000)
-  .cf_name	= DEVICE_NAME,
-  .cf_atname    = DEVICE_NAME,
-# else
-  .cf_driver	= &lmc_cd,
-  .cf_attach	= &lmc_ca,
-# endif
-  .cf_unit	= 0,
-  .cf_fstate	= FSTATE_STAR,
-  };
-
-# if (__NetBSD_Version__ >= 106080000)
-MOD_MISC(DEVICE_NAME)
-# else
-static struct lkm_misc _module =
-  {
-  .lkm_name	= DEVICE_NAME,
-  .lkm_type	= LM_MISC,
-  .lkm_offset	= 0,
-  .lkm_ver	= LKM_VERSION,
-  };
-# endif
-
-/* From /sys/dev/pci/pci.c (no public prototype). */
-int pciprint(void *, const char *);
-
-static int lkm_nbsd_match(struct pci_attach_args *pa)
-  { return nbsd_match(0, 0, pa); }
-
-/* LKM loader finds this by appending "_lkmentry" to filename "if_lmc". */
-int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
-  {
-  int i, error = 0;
-
-  if (ver != LKM_VERSION) return EINVAL;
-  switch (cmd)
-    {
-    case LKM_E_LOAD:
-      {
-      struct cfdriver* pcicd;
-
-      lkmtp->private.lkm_misc = &_module;
-      if ((pcicd = config_cfdriver_lookup("pci")) == NULL)
-        {
-        printf("%s: config_cfdriver_lookup(pci) failed; error %d\n",
-         lmc_cd.cd_name, error);
-        return error;
-	}
-# if (__NetBSD_Version__ >= 106080000)
-      if ((error = config_cfdriver_attach(&lmc_cd)))
-        {
-        printf("%s: config_cfdriver_attach() failed; error %d\n",
-         lmc_cd.cd_name, error);
-        return error;
-        }
-      if ((error = config_cfattach_attach(lmc_cd.cd_name, &lmc_ca)))
-        {
-        printf("%s: config_cfattach_attach() failed; error %d\n",
-         lmc_cd.cd_name, error);
-        config_cfdriver_detach(&lmc_cd);
-        return error;
-        }
-# endif
-      for (i=0; i<pcicd->cd_ndevs; i++)
-        {
-        int dev;
-        /* A pointer to a device is a pointer to its softc. */
-        struct pci_softc *sc = pcicd->cd_devs[i];
-        if (sc == NULL) continue;
-        for (dev=0; dev<sc->sc_maxndevs; dev++)
-          {
-          struct pci_attach_args pa;
-          pcitag_t tag = pci_make_tag(sc->sc_pc, sc->sc_bus, dev, 0);
-          if (pci_probe_device(sc, tag, lkm_nbsd_match, &pa) != 0)
-            config_attach(pcicd->cd_devs[i], &lmc_cf, &pa, pciprint);
-            /* config_attach doesn't return on failure; it calls panic. */
-          }
-	}
-      break;
-      }
-    case LKM_E_UNLOAD:
-      {
-      for (i=lmc_cd.cd_ndevs-1; i>=0; i--)
-        {
-        struct device *dev = lmc_cd.cd_devs[i];
-        if (dev == NULL) continue;
-        if ((error = config_detach(dev, 0)))
-          {
-          printf("%s: config_detach() failed; error %d\n",
-           dev->dv_xname, error);
-          return error;
-	  }
-	}
-# if (__NetBSD_Version__ >= 106080000)
-      if ((error = config_cfattach_detach(lmc_cd.cd_name, &lmc_ca)))
-        {
-        printf("%s: config_cfattach_detach() failed; error %d\n",
-         lmc_cd.cd_name, error);
-        return error;
-        }
-      if ((error = config_cfdriver_detach(&lmc_cd)))
-        {
-        printf("%s: config_cfdriver_detach() failed; error %d\n",
-         lmc_cd.cd_name, error);
-        return error;
-        }
-# endif
-      break;
-      }
-    case LKM_E_STAT:
-      break;
-    }
-
-  return error;
-  }
-
-#endif  /* __NetBSD__ */
-
-#if __OpenBSD__
-
-/* This is the I/O configuration interface for OpenBSD. */
-
-static int
-obsd_match(struct device *parent, void *match, void *aux)
-  {
-  struct pci_attach_args *pa = aux;
-  u_int32_t cfid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CFID);
-  u_int32_t csid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CSID);	
-
-  /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-  if (cfid != TLP_CFID_TULIP) return 0;
-  switch (csid)
-    {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
-    case TLP_CSID_T3:
-    case TLP_CSID_SSI:
-    case TLP_CSID_T1E1:
-      return 100; /* match better than other 21140 drivers */
-    default:
-      return 0;
-    }
-  }
-
-static int
-obsd_detach(struct device *self, int flags)
-  {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
-
-  /* Stop the card and detach from the kernel. */
-  detach_card(sc);
-
-  /* Release resources. */
-  if (sc->sdh_cookie != NULL)
-    shutdownhook_disestablish(sc->sdh_cookie);
-  if (sc->irq_cookie != NULL)
-    pci_intr_disestablish(sc->pa_pc, sc->irq_cookie);
-  if (sc->csr_handle)
-    bus_space_unmap(sc->csr_tag, sc->csr_handle, TLP_CSR_SIZE);
-
-  return 0; /* no error */
-  }
-
-static void
-obsd_attach(struct device *parent, struct device *self, void *aux)
-  {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
-  struct pci_attach_args *pa = aux;
-  const char *intrstr;
-  bus_addr_t csr_addr;
-  int error;
-
-  /* READ/WRITE_PCI_CFG need these. */
-  sc->pa_pc   = pa->pa_pc;
-  sc->pa_tag  = pa->pa_tag;
-  /* bus_dma needs this. */
-  sc->pa_dmat = pa->pa_dmat;
-
-  /* What kind of card are we driving? */
-  switch (READ_PCI_CFG(sc, TLP_CSID))
-    {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
-      sc->dev_desc =  HSSI_DESC;
-      sc->card     = &hssi_card;
-      break;
-    case TLP_CSID_T3:
-      sc->dev_desc =    T3_DESC;
-      sc->card     =   &t3_card;
-      break;
-    case TLP_CSID_SSI:
-      sc->dev_desc =   SSI_DESC;
-      sc->card     =  &ssi_card;
-      break;
-    case TLP_CSID_T1E1:
-      sc->dev_desc =  T1E1_DESC;
-      sc->card     =   &t1_card;
-      break;
-    default:
-      return;
-    }
-  printf(": %s\n", sc->dev_desc);
-
-  /* Allocate PCI resources to access the Tulip chip CSRs. */
-# if IOREF_CSR
-  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBIO) & -2;
-  sc->csr_tag = pa->pa_iot;	/* bus_space tag for IO refs */
-# else
-  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBMA);
-  sc->csr_tag = pa->pa_memt;	/* bus_space tag for MEM refs */
-# endif
-  if ((error = bus_space_map(sc->csr_tag, csr_addr,
-   TLP_CSR_SIZE, 0, &sc->csr_handle)))
-    {
-    printf("%s: bus_space_map() failed; error %d\n", NAME_UNIT, error);
-    return;
-    }
-
-  /* Allocate PCI interrupt resources. */
-  if ((error = pci_intr_map(pa, &sc->intr_handle)))
-    {
-    printf("%s: pci_intr_map() failed; error %d\n", NAME_UNIT, error);
-    obsd_detach(self, 0);
-    return;
-    }
-  sc->irq_cookie = pci_intr_establish(pa->pa_pc, sc->intr_handle,
-   IPL_NET, bsd_interrupt, sc, self->dv_xname);
-  if (sc->irq_cookie == NULL)
-    {
-    printf("%s: pci_intr_establish() failed\n", NAME_UNIT);
-    obsd_detach(self, 0);
-    return;
-    }
-  intrstr = pci_intr_string(pa->pa_pc, sc->intr_handle);
-
-  /* Install a shutdown hook. */
-  sc->sdh_cookie = shutdownhook_establish(shutdown_card, sc);
-  if (sc->sdh_cookie == NULL)
-    {
-    printf("%s: shutdown_hook_establish() failed\n", NAME_UNIT);
-    obsd_detach(self, 0);
-    return;
-    }
-
-  /* Initialize the top-half and bottom-half locks. */
-  simple_lock_init(&sc->top_lock);
-  simple_lock_init(&sc->bottom_lock);
-
-  /* Start the card and attach a kernel interface and line protocol. */
-  if ((error = attach_card(sc, intrstr))) detach_card(sc);
-  }
-
-struct cfattach lmc_ca =
-  {
-  .ca_devsize	= sizeof(softc_t),
-  .ca_match	= obsd_match,
-  .ca_attach	= obsd_attach,
-  .ca_detach	= obsd_detach,
-  .ca_activate	= NULL,
-  };
-
-struct cfdriver lmc_cd =
-  {
-  .cd_name	= DEVICE_NAME,
-  .cd_devs	= NULL,
-  .cd_class	= DV_IFNET,
-  .cd_indirect	= 0,
-  .cd_ndevs	= 0,
-  };
-
-/* cfdata is declared static, unseen outside this module. */
-/* It is used for LKM; config builds its own in ioconf.c. */
-static struct cfdata lmc_cfdata =
-  {
-  .cf_attach	= &lmc_ca,
-  .cf_driver	= &lmc_cd,
-  .cf_unit	= 0,
-  .cf_fstate	= FSTATE_STAR,
-  };
-
-static struct lkm_any _module =
-  {
-  .lkm_name	= DEVICE_NAME,
-  .lkm_type	= LM_MISC,
-  .lkm_offset	= 0,
-  .lkm_ver	= LKM_VERSION,
-  };
-
-/* From /sys/dev/pci/pci.c (no public prototype). */
-int pciprint(void *, const char *);
-
-extern struct cfdriver pci_cd;
-
-/* LKM loader finds this by appending "_lkmentry" to filename "if_lmc". */
-int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
-  {
-  int i, error = 0;
-
-  if (ver != LKM_VERSION) return EINVAL;
-  switch (cmd)
-    {
-    case LKM_E_LOAD:
-      {  /* XXX This works for ONE card on pci0 of a i386 machine! XXX */
-      lkmtp->private.lkm_any = &_module;
-      for (i=0; i<pci_cd.cd_ndevs; i++)
-        {
-        struct pci_attach_args pa;
-        struct device *parent = pci_cd.cd_devs[i];
-        if (parent == NULL) continue; /* dead clone? */
-        if ((parent->dv_unit)!=0) continue; /* only bus zero */
-        /* XXX For machine independence, need: pcibus_attach_args. XXX */
-        /* XXX See NetBSD's sys/dev/pci/pci.c/pci_probe_device.    XXX */
-        /* XXX Why isn't there an LKM network interface module?    XXX */
-        pa.pa_pc    = NULL;					/* XXX */
-        pa.pa_bus   = 0;					/* XXX */
-        pa.pa_iot   = I386_BUS_SPACE_IO;			/* XXX */
-        pa.pa_memt  = I386_BUS_SPACE_MEM;			/* XXX */
-        pa.pa_dmat  = &pci_bus_dma_tag;				/* XXX */
-        for (pa.pa_device=0; pa.pa_device<32; pa.pa_device++)	/* XXX */
-          {
-          int intr;
-          pa.pa_function = 0; /* DEC-21140A has function 0 only    XXX */
-          pa.pa_tag = pci_make_tag(pa.pa_pc, pa.pa_bus, pa.pa_device, 0);
-          pa.pa_id = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_ID_REG);
-          if ((pa.pa_id & 0xFFFF) == 0xFFFF) continue;
-          if ((pa.pa_id & 0xFFFF) == 0) continue;
-          /* XXX this only works for pci0 -- no swizzelling        XXX */
-          pa.pa_intrswiz = 0;
-          pa.pa_intrtag = pa.pa_tag;
-          intr = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_INTERRUPT_REG);
-          pa.pa_intrline = PCI_INTERRUPT_LINE(intr);
-          pa.pa_intrpin = ((PCI_INTERRUPT_PIN(intr) -1) % 4) +1;
-          if (obsd_match(parent, &lmc_cfdata, &pa))
-            config_attach(parent, &lmc_cfdata, &pa, pciprint);
-          /* config_attach doesn't return on failure; it calls panic. */
-          }
-	}
-      break;
-      }
-    case LKM_E_UNLOAD:
-      {
-      for (i=lmc_cd.cd_ndevs-1; i>=0; i--)
-        {
-        struct device *dev = lmc_cd.cd_devs[i];
-        if (dev == NULL) continue;
-        if ((error = config_detach(dev, 0)))
-          printf("%s: config_detach() failed; error %d\n", dev->dv_xname, error);
-        }
-      break;
-      }
-    case LKM_E_STAT:
-      break;
-    }
-
-  return error;
-  }
-
-#endif  /* __OpenBSD__ */
-
-#if __bsdi__
-
-/* This is the I/O configuration interface for BSD/OS. */
-
-static int
-bsdi_match(pci_devaddr_t *pa)
-  {
-  u_int32_t cfid = pci_inl(pa, TLP_CFID);
-  u_int32_t csid = pci_inl(pa, TLP_CSID);
-
-  /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-  if (cfid != TLP_CFID_TULIP) return 0;
-  switch (csid)
-    {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
-    case TLP_CSID_T3:
-    case TLP_CSID_SSI:
-    case TLP_CSID_T1E1:
-      return 1;
-    default:
-      return 0;
-    }
-  }
-
-static int
-bsdi_probe(struct device *parent, struct cfdata *cf, void *aux)
-  {
-  struct isa_attach_args *ia = aux;
-  pci_devaddr_t *pa = NULL;
-  pci_devres_t res;
-
-  /* This must be a PCI bus. */
-  if (ia->ia_bustype != BUS_PCI) return 0;
-
-  /* Scan PCI bus for our boards. */
-  if ((pa = pci_scan(bsdi_match)) == 0) return 0;
-
-  /* Scan config space for IO and MEM base registers and IRQ info. */
-  pci_getres(pa, &res, 1, ia);
-
-  /* Crucial: pass pci_devaddr to bsdi_attach in ia_aux. */
-  ia->ia_aux = (void *)pa;
-
-  return 1;
-  }
-
-static void
-bsdi_attach(struct device *parent, struct device *self, void *aux)
-  {
-  softc_t *sc = (softc_t *)self; /* device is first in softc */
-  struct isa_attach_args *ia = aux;
-  pci_devaddr_t *pa = ia->ia_aux; /* this is crucial! */
-  int error;
-
-  /* READ/WRITE_PCI_CFG need this. */
-  sc->cfgbase = *pa;
-
-  /* What kind of card are we driving? */
-  switch (READ_PCI_CFG(sc, TLP_CSID))
-    {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
-      sc->dev_desc =  HSSI_DESC;
-      sc->card     = &hssi_card;
-      break;
-    case TLP_CSID_T3:
-      sc->dev_desc =    T3_DESC;
-      sc->card     =   &t3_card;
-      break;
-    case TLP_CSID_SSI:
-      sc->dev_desc =   SSI_DESC;
-      sc->card     =  &ssi_card;
-      break;
-    case TLP_CSID_T1E1:
-      sc->dev_desc =  T1E1_DESC;
-      sc->card     =   &t1_card;
-      break;
-    default:
-      return;
-    }
-  printf(": %s\n", sc->dev_desc);
-
-  /* Allocate PCI memory or IO resources to access the Tulip chip CSRs. */
-  sc->csr_iobase  = ia->ia_iobase;
-  sc->csr_membase = (u_int32_t *)mapphys((vm_offset_t)ia->ia_maddr, TLP_CSR_SIZE);
-
-  /* Attach to the PCI bus. */
-  isa_establish(&sc->id, &sc->dev);
-
-  /* Allocate PCI interrupt resources for the card. */
-  sc->ih.ih_fun = bsd_interrupt;
-  sc->ih.ih_arg = sc;
-  intr_establish(ia->ia_irq, &sc->ih, DV_NET);
-
-  /* Install a shutdown hook. */
-  sc->ats.func = shutdown_card;
-  sc->ats.arg = sc;
-  atshutdown(&sc->ats, ATSH_ADD);
-
-  /* Initialize the top-half and bottom-half locks. */
-  simple_lock_init(&sc->top_lock);
-  simple_lock_init(&sc->bottom_lock);
-
-  /* Start the card and attach a kernel interface and line protocol. */
-  if ((error = attach_card(sc, ""))) detach_card(sc);
-  }
-
-struct cfdriver lmccd =
-  {
-  .cd_devs	= NULL,
-  .cd_name	= DEVICE_NAME,
-  .cd_match	= bsdi_probe,
-  .cd_attach	= bsdi_attach,
-  .cd_class	= DV_IFNET,
-  .cd_devsize	= sizeof(softc_t),
-  };
-#endif  /* __bsdi__ */
-
-#if __linux__
+#if defined(__linux__)
 
 /* There are TWO VERSIONS of interrupt/DMA code: Linux & BSD.
  * Handling Linux and the BSDs with CPP directives would
  *  make the code unreadable, so there are two versions.
  * Conceptually, the two versions do the same thing and
- *  core_interrupt() doesn't know they are different.
+ *  lmc_interrupt() does not know they are different.
  *
  * We are "standing on the head of a pin" in these routines.
  * Tulip CSRs can be accessed, but nothing else is interrupt-safe!
@@ -5961,18 +5597,19 @@ struct cfdriver lmccd =
  */
 
 /* Initialize a DMA descriptor ring. */
+/* context: kernel (boot) or process (syscall) */
 static int  /* Linux version */
 create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   {
   struct dma_desc *descs;
   int size_descs = sizeof(struct dma_desc)*num_descs;
 
-  /* Allocate and map memory for DMA descriptor array. */
-  if ((descs = pci_alloc_consistent(sc->pci_dev, size_descs,
+  /* Allocate and map CACHE COHERENT memory for DMA descriptor array. */
+  if ((descs = pci_alloc_consistent(sc->pcidev, size_descs,
    &ring->dma_addr)) == NULL)
     {
     printk("%s: pci_alloc_consistent() failed\n", NAME_UNIT);
-    return ENOMEM;
+    return -ENOMEM;
     }
   memset(descs, 0, size_descs);
 
@@ -5990,34 +5627,35 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
   }
 
 /* Destroy a DMA descriptor ring */
+/* context: kernel (boot) or process (syscall) */
 static void  /* Linux version */
 destroy_ring(softc_t *sc, struct desc_ring *ring)
   {
   struct sk_buff *skb;
 
   /* Free queued skbuffs. */
-  while ((skb = skbuff_dequeue(ring)) != NULL)
+  while ((skb = skbuff_dequeue(ring)))
     dev_kfree_skb(skb);
 
   /* TX may have one pkt that is not on any queue. */
-  if (sc->tx_skb != NULL)
+  if (sc->tx_skb)
     {
     dev_kfree_skb(sc->tx_skb);
     sc->tx_skb = NULL;
     }
 
-  if (ring->first != NULL)
+  if (ring->first)
     {
     /* Unmap active DMA descriptors. */
     while (ring->read != ring->write)
       {
-      pci_unmap_single(sc->pci_dev, ring->read->address1,
+      pci_unmap_single(sc->pcidev, ring->read->address1,
        ring->read->length1 + ring->read->length2, PCI_DMA_BIDIRECTIONAL);
       if (ring->read++ == ring->last) ring->read = ring->first;
       }
 
     /* Unmap and free memory for DMA descriptor array. */
-    pci_free_consistent(sc->pci_dev, ring->size_descs, ring->first,
+    pci_free_consistent(sc->pcidev, ring->size_descs, ring->first,
      ring->dma_addr);
     }
   }
@@ -6044,7 +5682,7 @@ static struct sk_buff*  /* Linux version */
 skbuff_dequeue(struct desc_ring *ring)
   {
   struct sk_buff *skb = ring->head;
-  if (skb != NULL)
+  if (skb)
     if ((ring->head = skb->next) == NULL)
       ring->tail = NULL;
   return skb;
@@ -6071,8 +5709,8 @@ rxintr_cleanup(softc_t *sc)
   /* ASSERTION: If there is a descriptor in the ring and the hardware has */
   /*  finished with it, then that descriptor will have RX_FIRST_DESC set. */
   if ((ring->read != ring->write) && /* descriptor ring not empty */
-     ((ring->read->status & TLP_DSTS_OWNER) == 0) && /* hardware done */
-     ((ring->read->status & TLP_DSTS_RX_FIRST_DESC) == 0)) /* should be set */
+     !(ring->read->status & TLP_DSTS_OWNER) && /* hardware done */
+     !(ring->read->status & TLP_DSTS_RX_FIRST_DESC)) /* should be set */
     panic("%s: rxintr_cleanup: rx-first-descriptor not set.\n", NAME_UNIT);
 
   /* First decide if a complete packet has arrived. */
@@ -6088,6 +5726,7 @@ rxintr_cleanup(softc_t *sc)
     pkt_len += last_desc->length1 + last_desc->length2; /* entire desc filled */
     if (last_desc++->control & TLP_DCTL_END_RING) last_desc = ring->first; /* ring wrap */
     }
+  sc->netdev->last_rx = jiffies; /* timestamp arrival of new packet */
 
   /* A complete packet has arrived; how long is it? */
   /* H/w ref man shows RX pkt length as a 14-bit field. */
@@ -6116,8 +5755,8 @@ rxintr_cleanup(softc_t *sc)
       panic("%s: rxintr_cleanup: expected an skbuff\n", NAME_UNIT);
 
     desc_len = last_desc->length1 + last_desc->length2;
-    /* Unmap kernel virtual addresss to PCI address. */
-    pci_unmap_single(sc->pci_dev, last_desc->address1,
+    /* Unmap kernel virtual addresss to PCI bus address. */
+    pci_unmap_single(sc->pcidev, last_desc->address1,
      desc_len, PCI_DMA_FROMDEVICE);
 
     /* Set skbuff length. */
@@ -6128,23 +5767,14 @@ rxintr_cleanup(softc_t *sc)
     if (last_desc == first_desc)
       {
       first_skb = new_skb;
-      if (sc->config.line_pkg == PKG_RAWIP)
-        {
-        if      (first_skb->data[0]>>4 == 4)
-          first_skb->protocol = htons(ETH_P_IP);
-        else if (first_skb->data[0]>>4 == 6)
-          first_skb->protocol = htons(ETH_P_IPV6);
-	}
+      if (sc->stack)
+        first_skb->protocol = sc->stack->type(sc, first_skb);
       else
-# if GEN_HDLC
-        first_skb->protocol = hdlc_type_trans(first_skb, sc->net_dev);
-# else
         first_skb->protocol = htons(ETH_P_HDLC);
-# endif
-      first_skb->mac.raw = first_skb->data;
-      first_skb->dev = sc->net_dev;
-      do_gettimeofday(&first_skb->stamp);
-      sc->net_dev->last_rx = jiffies;
+      first_skb->pkt_type   = PACKET_HOST;
+      first_skb->mac.raw    = first_skb->data;
+      first_skb->ip_summed  = CHECKSUM_NONE;
+      first_skb->dev        = sc->netdev;
       }
     else /* 2) link skbuffs. */
       {
@@ -6153,23 +5783,24 @@ rxintr_cleanup(softc_t *sc)
       if (skb_shinfo(first_skb)->frag_list == NULL)
         skb_shinfo(first_skb)->frag_list = new_skb;
       else
+        /* ASSERT(last_skb != NULL); */
         last_skb->next = new_skb;
       /* 3) set skbuff lengths. */
       first_skb->len      += new_skb->len;
       first_skb->data_len += new_skb->len;
       }
     last_skb = new_skb;
-    } while ((last_desc->status & TLP_DSTS_RX_LAST_DESC) == 0);
+    } while ((last_desc->status & TLP_DSTS_RX_LAST_DESC)==0);
 
   /* Decide whether to accept or to drop this packet. */
   /* RxHDLC sets MIIERR for bad CRC, abort and partial byte at pkt end. */
-  if (((last_desc->status & TLP_DSTS_RX_BAD) == 0) &&
-   (sc->status.oper_status == STATUS_UP) &&
+  if (!(last_desc->status & TLP_DSTS_RX_BAD) &&
+   (sc->status.link_state == STATE_UP) &&
    (first_skb->len > 0))
     {
     /* Optimization: copy a small pkt into a small skbuff. */
     if (first_skb->len <= COPY_BREAK)
-      if ((new_skb = skb_copy(first_skb, GFP_ATOMIC)) != NULL)
+      if ((new_skb = skb_copy(first_skb, GFP_ATOMIC)))
         {
         dev_kfree_skb_any(first_skb);
         first_skb = new_skb;
@@ -6180,20 +5811,29 @@ rxintr_cleanup(softc_t *sc)
     sc->status.cntrs.ipackets++;
 
     /* Give this good packet to the network stacks. */
-    netif_receive_skb(first_skb);  /* NAPI */
     sc->quota--;
+# if NAPI
+    netif_receive_skb(first_skb);
+# else
+    if (netif_rx(first_skb) == NET_RX_DROP)
+      {
+      sc->status.cntrs.idrops++;
+      if (sc->config.debug && printk_ratelimit())
+        printk("%s: rxintr_cleanup: rx pkt dropped by kernel\n", NAME_UNIT);
+      }
+# endif
     }
-  else if (sc->status.oper_status != STATUS_UP)
+  else if (sc->status.link_state != STATE_UP)
     {
     /* If the link is down, this packet is probably noise. */
-    sc->status.cntrs.idrops++;
     dev_kfree_skb_any(first_skb);
-    if (DRIVER_DEBUG)
+    sc->status.cntrs.idrops++;
+    if (sc->config.debug && printk_ratelimit())
       printk("%s: rxintr_cleanup: rx pkt dropped: link down\n", NAME_UNIT);
     }
   else /* Log and drop this bad packet. */
     {
-    if (DRIVER_DEBUG)
+    if (sc->config.debug && printk_ratelimit())
       printk("%s: RX bad pkt; len=%d %s%s%s%s\n",
        NAME_UNIT, first_skb->len,
        (last_desc->status & TLP_DSTS_RX_MII_ERR)  ? " miierr"  : "",
@@ -6227,39 +5867,40 @@ rxintr_setup(softc_t *sc)
   /* Allocate an skbuff. */
   if ((skb = dev_alloc_skb(MAX_DESC_LEN)) == NULL)
     {
-    sc->status.cntrs.rxdma++;
-    if (DRIVER_DEBUG)
+    sc->status.cntrs.rxbuf++;
+    if (sc->config.debug && printk_ratelimit())
       printk("%s: rxintr_setup: dev_alloc_skb() failed\n", NAME_UNIT);
     return 0;
     }
-  skb->dev = sc->net_dev;
+  skb->dev = sc->netdev;
 
   /* Queue the skbuff for later processing by rxintr_cleanup. */
   skbuff_enqueue(ring, skb);
 
   /* Write a DMA descriptor into the ring. */
-  /* Hardware won't see it until the OWNER bit is set. */
+  /* Hardware will not see it until the OWNER bit is set. */
   desc = ring->write;
   /* Advance the ring write pointer. */
   if (ring->write++ == ring->last) ring->write = ring->first;
 
-  /* Map kernel virtual addresses to PCI addresses. */
-  dma_addr = pci_map_single(sc->pci_dev, skb->data,
+  /* Map kernel virt addr to PCI bus addr; invalidate cache. */
+  dma_addr = pci_map_single(sc->pcidev, skb->data,
    MAX_DESC_LEN, PCI_DMA_FROMDEVICE);
+
   /* Set up the DMA descriptor. */
   desc->address1 = dma_addr;
   desc->length1  = MAX_CHUNK_LEN;
   desc->address2 = desc->address1 + desc->length1;
   desc->length2  = MAX_CHUNK_LEN;
 
-  /* Before setting the OWNER bit, flush the cache (memory barrier). */
+  /* Before setting the OWNER bit, force descriptor writes to complete. */
   wmb(); /* write memory barrier */
 
   /* Commit the DMA descriptor to the hardware. */
   desc->status = TLP_DSTS_OWNER;
 
   /* Notify the receiver that there is another buffer available. */
-  WRITE_CSR(TLP_RX_POLL, 1);
+  WRITE_CSR(sc, TLP_RX_POLL, 1);
 
   return 1; /* did something */
   }
@@ -6273,34 +5914,39 @@ txintr_cleanup(softc_t *sc)
   struct dma_desc *desc;
 
   while ((ring->read != ring->write) && /* ring is not empty */
-        ((ring->read->status & TLP_DSTS_OWNER) == 0))
+        !(ring->read->status & TLP_DSTS_OWNER))
     {
     /* Read a DMA descriptor from the ring. */
     desc = ring->read;
     /* Advance the ring read pointer. */
     if (ring->read++ == ring->last) ring->read = ring->first;
-    /* Unmap kernel virtual address to PCI address. */
-    pci_unmap_single(sc->pci_dev, desc->address1,
+
+    /* Unmap kernel virtual address to PCI bus address. */
+    pci_unmap_single(sc->pcidev, desc->address1,
      desc->length1 + desc->length2, PCI_DMA_TODEVICE);
 
     /* If this descriptor is the last segment of a packet, */
     /*  then dequeue and free the corresponding skbuff. */
-    if ((desc->control & TLP_DCTL_TX_LAST_SEG) != 0)
+    if (desc->control & TLP_DCTL_TX_LAST_SEG)
       {
       struct sk_buff *skb;
+
       if ((skb = skbuff_dequeue(ring)) == NULL)
         panic("%s: txintr_cleanup: expected an sk_buff\n", NAME_UNIT);
 
-      /* Include CRC and one flag byte in output byte count. */
-      sc->status.cntrs.obytes += skb->len + sc->config.crc_len +1;
-      sc->status.cntrs.opackets++;
-
       /* The only bad TX status is fifo underrun. */
-      if ((desc->status & TLP_DSTS_TX_UNDERRUN) != 0)
+      if (desc->status & TLP_DSTS_TX_UNDERRUN)
         {
-        sc->status.cntrs.fifo_under++; /* also increment oerrors? */
-        if (DRIVER_DEBUG)
+        if (sc->config.debug)
           printk("%s: txintr_cleanup: tx fifo underrun\n", NAME_UNIT);
+        sc->status.cntrs.fifo_under++;
+        sc->status.cntrs.oerrors++;
+	}
+      else
+        {
+        /* Include CRC and one flag byte in output byte count. */
+        sc->status.cntrs.obytes += skb->len + sc->config.crc_len +1;
+        sc->status.cntrs.opackets++;
 	}
 
       dev_kfree_skb_any(skb);
@@ -6313,7 +5959,7 @@ txintr_cleanup(softc_t *sc)
 
 /* Build DMA descriptors for a tranmit packet fragment, */
 /* Assertion: fragment is contiguous in physical memory. */
-static int /* 0=success; 1=error */ /* linux version */
+static int  /* 0=success; 1=error */ /* linux version */
 txintr_setup_frag(softc_t *sc, char *data, int length)
   {
   struct desc_ring *ring = &sc->txring;
@@ -6328,22 +5974,22 @@ txintr_setup_frag(softc_t *sc, char *data, int length)
       { /* Not enough DMA descriptors; try later. */
       for (; ring->temp!=ring->write;
        ring->temp = (ring->temp==ring->first)? ring->last : ring->temp-1)
-        pci_unmap_single(sc->pci_dev, ring->temp->address1,
+        pci_unmap_single(sc->pcidev, ring->temp->address1,
          ring->temp->length1 + ring->temp->length2, PCI_DMA_FROMDEVICE);
       sc->status.cntrs.txdma++;
       return 1;
       }
 
     /* Provisionally, write a DMA descriptor into the ring. */
-    /* But don't change the REAL ring write pointer. */
-    /* Hardware won't see it until the OWNER bit is set. */
+    /* But do not change the REAL ring write pointer. */
+    /* Hardware will not see it until the OWNER bit is set. */
     desc = ring->temp;
     /* Advance the temporary ring write pointer. */
     if (ring->temp++ == ring->last) ring->temp = ring->first;
 
     /* Clear all control bits except the END_RING bit. */
     desc->control &= TLP_DCTL_END_RING;
-    /* Don't pad short packets up to 64 bytes */
+    /* Do not pad short packets up to 64 bytes */
     desc->control |= TLP_DCTL_TX_NO_PAD;
     /* Use Tulip's CRC-32 generator, if appropriate. */
     if (sc->config.crc_len != CFG_CRC_32)
@@ -6353,8 +5999,8 @@ txintr_setup_frag(softc_t *sc, char *data, int length)
       desc->status = TLP_DSTS_OWNER;
 
     desc_len = (length >= MAX_DESC_LEN) ? MAX_DESC_LEN : length;
-    /* Map kernel virtual address to PCI address. */
-    dma_addr = pci_map_single(sc->pci_dev, data, desc_len, PCI_DMA_TODEVICE);
+    /* Map kernel virt addr to PCI bus addr; flush cache. */
+    dma_addr = pci_map_single(sc->pcidev, data, desc_len, PCI_DMA_TODEVICE);
     /* If it will fit in one chunk, do so, otherwise split it. */
     if (desc_len <= MAX_CHUNK_LEN)
       {
@@ -6380,7 +6026,7 @@ txintr_setup_frag(softc_t *sc, char *data, int length)
   }
 
 /* NB: this procedure is recursive! */
-static int /* 0=success; 1=error */
+static int  /* 0=success; 1=error */
 txintr_setup_skb(softc_t *sc, struct sk_buff *skb)
   {
   struct sk_buff *list;
@@ -6391,7 +6037,7 @@ txintr_setup_skb(softc_t *sc, struct sk_buff *skb)
     return 1;
 
   /* Next, handle the VM pages in the Scatter/Gather list. */
-  if (skb_shinfo(skb)->nr_frags != 0)
+  if (skb_shinfo(skb)->nr_frags)
     for (i=0; i<skb_shinfo(skb)->nr_frags; i++)
       {
       skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
@@ -6401,7 +6047,7 @@ txintr_setup_skb(softc_t *sc, struct sk_buff *skb)
       }
 
   /* Finally, handle the skbuffs in the frag_list. */
-  if ((list = skb_shinfo(skb)->frag_list) != NULL)
+  if ((list = skb_shinfo(skb)->frag_list))
     for (; list; list=list->next)
       if (txintr_setup_skb(sc, list)) /* recursive! */
         return 1;
@@ -6418,22 +6064,23 @@ txintr_setup(softc_t *sc)
   struct desc_ring *ring = &sc->txring;
   struct dma_desc *first_desc, *last_desc;
 
-  /* Protect against half-up links: Don't transmit */
-  /*  if the receiver can't hear the far end. */
-  if (sc->status.oper_status != STATUS_UP) return 0;
+  /* Protect against half-up links: Do not transmit */
+  /*  if the receiver can not hear the far end. */
+  if (sc->status.link_state != STATE_UP) return 0;
 
   /* Pick a packet to transmit. */
-  /* linux_start() puts packets in sc->tx_skb. */
+  /* netdev_start() puts packets in sc->tx_skb. */
   if (sc->tx_skb == NULL)
     {
-    if (netif_queue_stopped(sc->net_dev) != 0)
-      netif_wake_queue(sc->net_dev);
+    /* netdev_start() calls netif_stop_queue() sometimes. */
+    if (netif_queue_stopped(sc->netdev))
+      netif_wake_queue(sc->netdev);
     return 0; /* no pkt to transmit */
     }
 
   /* Build DMA descriptors for an outgoing skbuff. */
   ring->temp = ring->write; /* temporary ring write pointer */
-  if (txintr_setup_skb(sc, sc->tx_skb) != 0) return 0;
+  if (txintr_setup_skb(sc, sc->tx_skb)) return 0;
 
   /* Enqueue the skbuff; txintr_cleanup will free it. */
   skbuff_enqueue(ring, sc->tx_skb);
@@ -6457,601 +6104,1677 @@ txintr_setup(softc_t *sc)
   /* Commit the DMA descriptors to the software. */
   ring->write = ring->temp;
 
-  /* Before setting the OWNER bit, flush the cache (memory barrier). */
+  /* Before setting the OWNER bit, force descriptor writes to complete. */
   wmb(); /* write memory barrier */
 
   /* Commit the DMA descriptors to the hardware. */
   first_desc->status = TLP_DSTS_OWNER;
 
   /* Notify the transmitter that there is another packet to send. */
-  WRITE_CSR(TLP_TX_POLL, 1);
+  WRITE_CSR(sc, TLP_TX_POLL, 1);
 
-  sc->net_dev->trans_start = jiffies;
+  sc->netdev->trans_start = jiffies;
 
   return 1; /* did something */
   }
 
-/* The kernel calls this when a hardware interrupt happens. */
-static irqreturn_t
-linux_interrupt(int irq, void *dev, struct pt_regs *regs)
+/* Linux kernels call this when a hardware interrupt happens. */
+static irqreturn_t  /* context: interrupt */
+linux_interrupt(int irq, void *arg, struct pt_regs *regs)
   {
-  struct net_device *net_dev = dev;
-  softc_t *sc = dev_to_hdlc(net_dev)->priv;
+  softc_t *sc = arg;
 
   /* Cut losses early if this is not our interrupt. */
-  if ((READ_CSR(TLP_STATUS) & TLP_INT_TXRX) == 0)
+  if ((READ_CSR(sc, TLP_STATUS) & TLP_INT_TXRX)==0)
     return IRQ_NONE;
 
-  /* Disable card interrupts. */
-  WRITE_CSR(TLP_INT_ENBL, TLP_INT_DISABLE);
+# if NAPI
 
-  /* Handle the card interrupt with the dev->poll method. */
-  if (netif_rx_schedule_prep(net_dev))
-    __netif_rx_schedule(net_dev);  /* NAPI - add to poll list */
+  /* Disable card interrupts. */
+  WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_DISABLE);
+
+  /* Add self to poll list. */
+  if (netif_rx_schedule_prep(sc->netdev))
+    __netif_rx_schedule(sc->netdev);
   else
     printk("%s: interrupt while on poll list\n", NAME_UNIT);
+
+# else /* not NAPI */
+
+  /* Process tx and rx pkts. */
+  lmc_interrupt(sc, sc->rxring,num_descs, 0);
+
+# endif /* NAPI */
 
   return IRQ_HANDLED;
   }
 
-/* This net_device method services the card without interrupts. */
-/* With rxintr_cleanup(), it implements input flow control. */
+#endif /* __linux__ */
+
+/* Open a line protocol. */
+/* context: kernel (boot) or process (syscall) */
 static int
-linux_poll(struct net_device *net_dev, int *budget)
+open_proto(softc_t *sc, struct config *config)
   {
-  softc_t *sc = dev_to_hdlc(net_dev)->priv;
-  int received;
+  int error = 0;
 
-  /* Yes, we do NAPI. */
-  /* Allow processing up to net_dev->quota incoming packets. */
-  /* This is the ONLY time core_interrupt() may process rx pkts. */
-  /* Otherwise (sc->quota == 0) and rxintr_cleanup() is a NOOP. */
-  sc->quota = net_dev->quota;
+  if (sc->stack)
+    error = sc->stack->open(sc, config);
+  else
+    error = BSD ? ENOSYS : -ENOSYS;
 
-  /* Handle the card interrupt with kernel ints enabled. */
-  /* Process rx pkts (and tx pkts, too). */
-  /* Card interrupts are disabled. */
-  core_interrupt(sc, 0);
+  return error;
+  }
 
-  /* Report number of rx packets processed. */
-  received = net_dev->quota - sc->quota;
-  net_dev->quota -= received;
-  *budget        -= received;
+/* Attach a line protocol stack. */
+/* context: kernel (boot) or process (syscall) */
+static int
+attach_stack(softc_t *sc, struct config *config)
+  {
+  int error = 0;
+  struct stack *stack = NULL;
 
-  /* if quota prevented processing all rx pkts, leave rx ints disabled */
-  if (sc->quota == 0)  /* this is off by one...but harmless */
+  /* Done if stack is not changing. */
+  if (sc->config.stack == config->stack)
+    return 0;
+
+  /* Detach the current stack. */
+  if (sc->stack && ((error = sc->stack->detach(sc))))
+    return error;
+
+  switch (config->stack)
     {
-    WRITE_CSR(TLP_INT_ENBL, TLP_INT_TX);
-    return 1; /* more pkts to handle -- reschedule */
+    case STACK_RAWIP: /* built-in */
+      stack = &rawip_stack;
+      break;
+
+#if SPPP
+    case STACK_SPPP:
+      stack = &sppp_stack;
+      break;
+#endif
+
+#if P2P
+    case STACK_P2P:
+      stack = &p2p_stack;
+      break;
+#endif
+
+#if GEN_HDLC
+    case STACK_GEN_HDLC:
+      stack = &gen_hdlc_stack;
+      break;
+#endif
+
+#if SYNC_PPP
+    case STACK_SYNC_PPP:
+      stack = &sync_ppp_stack;
+      break;
+#endif
+
+#if NETGRAPH
+    case STACK_NETGRAPH:
+      stack = &netgraph_stack;
+      break;
+#endif
+
+    default:
+      stack = NULL;
+      break;
     }
 
-  sc->quota = 0;  /* disable rx pkt processing by rxintr_cleanup() */
-  netif_rx_complete(net_dev); /* NAPI - remove from poll list */
+  if (stack)
+    error = stack->attach(sc, config);
+  else
+    error = BSD ? ENOSYS : -ENOSYS;
 
-  /* Enable card interrupts. */
-  WRITE_CSR(TLP_INT_ENBL, TLP_INT_TXRX);
+  return error;
+  }
+
+
+/*
+ * This handles IOCTLs from lmcconfig(8).
+ * Must not run when card watchdogs run.
+ * Always called with top_lock held.
+ */
+static int  /* context: process */
+lmc_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+  {
+  struct iohdr  *iohdr  = (struct iohdr  *) data;
+  struct ioctl  *ioctl  = (struct ioctl  *) data;
+  struct status *status = (struct status *) data;
+  struct config *config = (struct config *) data;
+  int error = 0;
+
+  /* All structs start with a string and a cookie. */
+  if (iohdr->cookie != NGM_LMC_COOKIE)
+    return EINVAL;
+
+  switch (cmd)
+    {
+    case LMCIOCGSTAT:
+      {
+      *status = sc->status;
+      iohdr->cookie = NGM_LMC_COOKIE;
+      break;
+      }
+    case LMCIOCGCFG:
+      {
+      *config = sc->config;
+      iohdr->cookie = NGM_LMC_COOKIE;
+      break;
+      }
+    case LMCIOCSCFG:
+      {
+      if ((error = CHECK_CAP)) break;
+      if ((error = attach_stack(sc, config)));
+      else error = open_proto(sc, config);
+      tulip_loop(sc, config);
+      sc->card->attach(sc, config);
+      sc->config.debug = config->debug;
+      break;
+      }
+    case LMCIOCREAD:
+      {
+      if (ioctl->cmd == IOCTL_RW_PCI)
+        {
+        if (ioctl->address > 252) { error = EFAULT; break; }
+        ioctl->data = READ_PCI_CFG(sc, ioctl->address);
+	}
+      else if (ioctl->cmd == IOCTL_RW_CSR)
+        {
+        if (ioctl->address >  15) { error = EFAULT; break; }
+        ioctl->data = READ_CSR(sc, ioctl->address*TLP_CSR_STRIDE);
+	}
+      else if (ioctl->cmd == IOCTL_RW_SROM)
+        {
+        if (ioctl->address >  63) { error = EFAULT; break; }
+        ioctl->data = srom_read(sc, ioctl->address);
+	}
+      else if (ioctl->cmd == IOCTL_RW_BIOS)
+        ioctl->data = bios_read(sc, ioctl->address);
+      else if (ioctl->cmd == IOCTL_RW_MII)
+        ioctl->data = mii_read(sc, ioctl->address);
+      else if (ioctl->cmd == IOCTL_RW_FRAME)
+        ioctl->data = framer_read(sc, ioctl->address);
+      else
+        error = EINVAL;
+      break;
+      }
+    case LMCIOCWRITE:
+      {
+      if ((error = CHECK_CAP)) break;
+      if (ioctl->cmd == IOCTL_RW_PCI)
+        {
+        if (ioctl->address > 252) { error = EFAULT; break; }
+        WRITE_PCI_CFG(sc, ioctl->address, ioctl->data);
+	}
+      else if (ioctl->cmd == IOCTL_RW_CSR)
+        {
+        if (ioctl->address >  15) { error = EFAULT; break; }
+        WRITE_CSR(sc, ioctl->address*TLP_CSR_STRIDE, ioctl->data);
+	}
+      else if (ioctl->cmd == IOCTL_RW_SROM)
+        {
+        if (ioctl->address >  63) { error = EFAULT; break; }
+        srom_write(sc, ioctl->address, ioctl->data); /* can sleep */
+	}
+      else if (ioctl->cmd == IOCTL_RW_BIOS)
+        {
+        if (ioctl->address == 0) bios_erase(sc);
+        bios_write(sc, ioctl->address, ioctl->data); /* can sleep */
+	}
+      else if (ioctl->cmd == IOCTL_RW_MII)
+        mii_write(sc, ioctl->address, ioctl->data);
+      else if (ioctl->cmd == IOCTL_RW_FRAME)
+        framer_write(sc, ioctl->address, ioctl->data);
+      else if (ioctl->cmd == IOCTL_WO_SYNTH)
+        synth_write(sc, (struct synth *)&ioctl->data);
+      else if (ioctl->cmd == IOCTL_WO_DAC)
+        {
+        dac_write(sc, 0x9002); /* set Vref = 2.048 volts */
+        dac_write(sc, ioctl->data & 0xFFF);
+	}
+      else
+        error = EINVAL;
+      break;
+      }
+    case LMCIOCTL:
+      {
+      if ((error = CHECK_CAP)) break;
+      if (ioctl->cmd == IOCTL_XILINX_RESET)
+        {
+        xilinx_reset(sc);
+        sc->card->attach(sc, &sc->config);
+	}
+      else if (ioctl->cmd == IOCTL_XILINX_ROM)
+        {
+        xilinx_load_from_rom(sc);
+        sc->card->attach(sc, &sc->config);
+	}
+      else if (ioctl->cmd == IOCTL_XILINX_FILE)
+        {
+        error = xilinx_load_from_file(sc, ioctl->ucode, ioctl->data);
+        if (error) xilinx_load_from_rom(sc); /* try the rom */
+        sc->card->attach(sc, &sc->config);
+	}
+      else if (ioctl->cmd == IOCTL_RESET_CNTRS)
+        reset_cntrs(sc);
+      else
+        error = sc->card->ioctl(sc, ioctl);
+      break;
+      }
+    default:
+      error = EINVAL;
+      break;
+    }
+
+  return error;
+  }
+
+/* This is the core watchdog procedure.
+ * ioctl syscalls and card watchdog routines must be interlocked.
+ * Called by ng_watchdog(), ifnet_watchdog() and netdev_watchdog().
+ */
+static void  /* context: softirq */
+lmc_watchdog(softc_t *sc)
+  {
+  /* Read and restart the Tulip timer. */
+  u_int32_t tx_speed = READ_CSR(sc, TLP_TIMER);
+  WRITE_CSR(sc, TLP_TIMER, 0xFFFF);
+
+  /* Measure MII clock using a timer in the Tulip chip.
+   * This timer counts transmitter bits divided by 4096.
+   * Since this is called once a second the math is easy.
+   * This is only correct when the link is NOT sending pkts.
+   * On a fully-loaded link, answer will be HALF actual rate.
+   * Clock rate during pkt is HALF clk rate between pkts.
+   * Measuring clock rate really measures link utilization!
+   */
+  sc->status.tx_speed = (0xFFFF - (tx_speed & 0xFFFF)) << 12;
+
+  /* Call the card-specific watchdog routine. */
+  if (TOP_TRYLOCK(sc))
+    {
+    /* Remember link_state before updating it. */
+    sc->last_link_state = sc->status.link_state;
+    /* Update status.link_state. */
+    sc->card->watchdog(sc);
+
+    /* Increment a counter which tells user-land */
+    /*  observers that SNMP state has been updated. */
+    sc->status.ticks++;
+
+    TOP_UNLOCK(sc);
+    }
+  else
+    sc->status.cntrs.lck_watch++;
+
+  /* Kernel date/time can take up to 5 seconds to start running. */
+  if ((sc->status.ticks > 3) && /* h/w should be stable by now */
+      (sc->status.cntrs.reset_time.tv_sec < 1000))
+    {
+    microtime(&sc->status.cntrs.reset_time);
+    if (sc->status.cntrs.reset_time.tv_sec > 1000)
+      reset_cntrs(sc);
+    }
+
+  /* Call the stack-specific watchdog routine. */
+  if (sc->stack)
+    sc->stack->watchdog(sc);
+
+  /* In case an interrupt gets lost, process tx and rx pkts */
+  lmc_interrupt(sc, sc->rxring.num_descs, 1);
+  }
+
+/* Administrative status of the driver (UP or DOWN) has changed.
+ * A card-specific action is taken:
+ *  HSSI: drop TA.
+ * (T3:   send T3 idle ckt signal. )
+ *  SSI:  drop RTS, DTR and DCD
+ * (T1:   disable line interface tx; )
+ */
+static void
+set_ready(softc_t *sc, int status)
+  {
+  struct ioctl ioctl;
+
+  ioctl.cmd = IOCTL_SET_STATUS;
+  ioctl.data = status;
+
+  sc->card->ioctl(sc, &ioctl);
+  }
+
+static void
+reset_cntrs(softc_t *sc)
+  {
+  memset(&sc->status.cntrs, 0, sizeof(struct cntrs));
+  microtime(&sc->status.cntrs.reset_time);
+  }
+
+static void  /* context: process, softirq, interrupt! */
+lmc_interrupt(void *arg, int quota, int check_status)
+  {
+  softc_t *sc = arg;
+  int activity;
+
+  /* Do this FIRST!  Otherwise UPs deadlock and MPs spin. */
+  WRITE_CSR(sc, TLP_STATUS, READ_CSR(sc, TLP_STATUS));
+
+  /* If any CPU is inside this critical section, then */
+  /*  other CPUs should go away without doing anything. */
+  if (BOTTOM_TRYLOCK(sc) == 0)
+    {
+    sc->status.cntrs.lck_intr++;
+    return;
+    }
+
+  /* In Linux, pci_alloc_consistent() means DMA */
+  /*  descriptors do not need explicit syncing? */
+#if BSD
+  {
+  struct desc_ring *ring = &sc->txring;
+  DMA_SYNC(sc->txring.map, sc->txring.size_descs,
+   BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+  ring = &sc->rxring;
+  DMA_SYNC(sc->rxring.map, sc->rxring.size_descs,
+   BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+  }
+#endif
+
+  /* This is the main loop for interrupt processing. */
+  sc->quota = quota;
+  do
+    {
+    activity  = txintr_cleanup(sc);
+    activity += txintr_setup(sc);
+    activity += rxintr_cleanup(sc);
+    activity += rxintr_setup(sc);
+    } while (activity);
+
+#if BSD
+  {
+  struct desc_ring *ring = &sc->txring;
+  DMA_SYNC(sc->txring.map, sc->txring.size_descs,
+   BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+  ring = &sc->rxring;
+  DMA_SYNC(sc->rxring.map, sc->rxring.size_descs,
+   BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+  }
+#endif
+
+  /* As the interrupt is dismissed, check for four unusual events. */
+  if (check_status) check_intr_status(sc);
+
+  BOTTOM_UNLOCK(sc);
+  }
+
+/* Check for four unusual events:
+ *  1) fatal PCI bus errors       - some are recoverable
+ *  2) transmitter FIFO underruns - increase fifo threshold
+ *  3) receiver FIFO overruns     - clear potential hangup
+ *  4) no receive descs or bufs   - count missed packets
+ */
+static void
+check_intr_status(softc_t *sc)
+  {
+  u_int32_t status, cfcs, op_mode;
+  u_int32_t missed, overruns;
+
+  /* 1) A fatal bus error causes a Tulip to stop initiating bus cycles.
+   * Module unload/load or boot are the only fixes for Parity Errors.
+   * Master and Target Aborts can be cleared and life may continue.
+   */
+  status = READ_CSR(sc, TLP_STATUS);
+  if (status & TLP_STAT_FATAL_ERROR)
+    {
+    u_int32_t fatal = (status & TLP_STAT_FATAL_BITS)>>TLP_STAT_FATAL_SHIFT;
+    printf("%s: FATAL PCI BUS ERROR: %s%s%s%s\n", NAME_UNIT,
+     (fatal == 0) ? "PARITY ERROR" : "",
+     (fatal == 1) ? "MASTER ABORT" : "",
+     (fatal == 2) ? "TARGET ABORT" : "",
+     (fatal >= 3) ? "RESERVED (?)" : "");
+    cfcs = READ_PCI_CFG(sc, TLP_CFCS);  /* try to clear it */
+    cfcs &= ~(TLP_CFCS_MSTR_ABORT | TLP_CFCS_TARG_ABORT);
+    WRITE_PCI_CFG(sc, TLP_CFCS, cfcs);
+    }
+
+  /* 2) If the transmitter fifo underruns, increase the transmit fifo
+   *  threshold: the number of bytes required to be in the fifo
+   *  before starting the transmitter (cost: increased tx delay).
+   * The TX_FSM must be stopped to change this parameter.
+   */
+  if (status & TLP_STAT_TX_UNDERRUN)
+    {
+    op_mode = READ_CSR(sc, TLP_OP_MODE);
+    /* enable store-and-forward mode if tx_threshold tops out? */
+    if ((op_mode & TLP_OP_TX_THRESH) < TLP_OP_TX_THRESH)
+      {
+      op_mode += 0x4000;  /* increment TX_THRESH field; can not overflow */
+      WRITE_CSR(sc, TLP_OP_MODE, op_mode & ~TLP_OP_TX_RUN);
+      /* Wait for the TX FSM to stop; it might be processing a pkt. */
+      while (READ_CSR(sc, TLP_STATUS) & TLP_STAT_TX_FSM); /* XXX HANG */
+      WRITE_CSR(sc, TLP_OP_MODE, op_mode); /* restart tx */
+
+      if (sc->config.debug)
+        printf("%s: tx fifo underrun; threshold now %d bytes\n",
+         NAME_UNIT, 128<<((op_mode>>TLP_OP_TR_SHIFT)&3));
+      sc->status.cntrs.underruns++;
+      }
+    }
+
+  /* 3) Errata memo from Digital Equipment Corp warns that 21140A
+   *  receivers through rev 2.2 can hang if the fifo overruns.
+   * Recommended fix: stop and start the RX FSM after an overrun.
+   */
+  missed = READ_CSR(sc, TLP_MISSED);
+  if ((overruns = ((missed & TLP_MISS_OVERRUN)>>TLP_OVERRUN_SHIFT)))
+    {
+    if ((READ_PCI_CFG(sc, TLP_CFRV) & 0xFF) <= 0x22)
+      {
+      op_mode = READ_CSR(sc, TLP_OP_MODE);
+      WRITE_CSR(sc, TLP_OP_MODE, op_mode & ~TLP_OP_RX_RUN);
+      /* Wait for the RX FSM to stop; it might be processing a pkt. */
+      while (READ_CSR(sc, TLP_STATUS) & TLP_STAT_RX_FSM); /* XXX HANG */
+      WRITE_CSR(sc, TLP_OP_MODE, op_mode);  /* restart rx */
+      }
+    if (sc->config.debug)
+      printf("%s: rx fifo overruns=%d\n", NAME_UNIT, overruns);
+    sc->status.cntrs.overruns += overruns;
+    }
+
+  /* 4) When the receiver is enabled and a packet arrives, but no DMA
+   *  descriptor is available, the packet is counted as 'missed'.
+   * The receiver should never miss packets; warn if it happens.
+   */
+  if ((missed = (missed & TLP_MISS_MISSED)))
+    {
+    if (sc->config.debug)
+      printf("%s: rx missed %d pkts\n", NAME_UNIT, missed);
+    sc->status.cntrs.missed += missed;
+    }
+  }
+
+/* Initialize the driver. */
+/* context: kernel (boot) or process (syscall) */
+static int
+lmc_attach(softc_t *sc)
+  {
+  int error = 0;
+  struct config config;
+
+  /* Attach the Tulip PCI bus interface. */
+  if ((error = tulip_attach(sc))) return error;
+
+  /* Reset the Xilinx Field Programmable Gate Array. */
+  xilinx_reset(sc); /* side effect: turns on all four LEDs */
+
+  /* Attach card-specific stuff. */
+  sc->card->attach(sc, NULL); /* changes sc->config */
+
+  /* Reset the FIFOs between Gate array and Tulip chip. */
+  mii16_set_bits(sc, MII16_FIFO);
+  mii16_clr_bits(sc, MII16_FIFO);
+
+#if IFNET
+  /* Attach the ifnet kernel interface. */
+  if ((error = ifnet_attach(sc))) return error;
+#endif
+
+#if NETDEV
+  /* Attach the netdevice kernel interface. */
+  if ((error = netdev_attach(sc))) return error;
+#endif
+
+  /* Attach a protocol stack and open a line protocol. */
+  config = sc->config;
+  config.stack = STACK_RAWIP;
+  attach_stack(sc, &config);
+  config.proto = PROTO_IP_HDLC;
+  open_proto(sc, &config);
+
+  /* Print obscure card information. */
+  if (BOOT_VERBOSE)
+    {
+    u_int32_t cfrv = READ_PCI_CFG(sc, TLP_CFRV);
+    u_int16_t mii3 = mii_read(sc, 3);
+    u_int16_t srom[3];
+    u_int8_t  *ieee = (u_int8_t *)srom;
+    int i;
+
+    printf("%s", NAME_UNIT);
+    printf(": PCI rev %d.%d", (cfrv>>4) & 0xF, cfrv & 0xF);
+    printf(", MII rev %d.%d", (mii3>>4) & 0xF, mii3 & 0xF);
+    for (i=0; i<3; i++) srom[i] = srom_read(sc, 10+i);
+    printf(", IEEE addr %02x:%02x:%02x:%02x:%02x:%02x",
+     ieee[0], ieee[1], ieee[2], ieee[3], ieee[4], ieee[5]);
+    sc->card->ident(sc);
+    }
+
+/* BSDs enable card interrupts and appear "ready" here. */
+/* Linux does this in netdev_open(). */
+#if BSD
+  set_ready(sc, 1);
+  WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_TXRX);
+#endif
+
   return 0;
   }
 
-/* These next routines are similar to BSD's ifnet kernel/driver interface. */
-
-/* This net_device method hands outgoing packets to the transmitter. */
-/* With txintr_setup(), it implements output flow control. */
-/* Called from a syscall (user context; no spinlocks). */
-static int
-linux_start(struct sk_buff *skb, struct net_device *net_dev)
+/* context: kernel (boot) or process (syscall) */
+static void
+lmc_detach(softc_t *sc)
   {
-  softc_t *sc = dev_to_hdlc(net_dev)->priv;
+  /* Disable card interrupts and appear "not ready". */
+  set_ready(sc, 0);
+  WRITE_CSR(sc, TLP_INT_ENBL, TLP_INT_DISABLE);
 
-  if (sc->tx_skb == NULL)
+  /* Detach the line protocol package. */
+  if (sc->stack)
+    sc->stack->detach(sc);
+
+#if IFNET
+  /* Detach the ifnet kernel interface. */
+  ifnet_detach(sc);
+#endif
+
+#if NETDEV
+  /* Detach the netdevice kernel interface. */
+  netdev_detach(sc);
+#endif
+
+  /* Detach framers, line interfaces, etc. on the card. */
+  sc->card->detach(sc);
+
+  /* Detach the Tulip PCI bus interface. */
+  tulip_detach(sc);
+  }
+
+/* Loop back through the TULIP Ethernet chip; (no CRC).
+ * Data sheet says stop DMA before changing OPMODE register.
+ * But that's not as simple as it sounds; works anyway.
+ */
+static void
+tulip_loop(softc_t *sc, struct config *config)
+  {
+  /* Check for enabling loopback thru Tulip chip. */
+  if ((sc->config.loop_back != CFG_LOOP_TULIP) &&
+         (config->loop_back == CFG_LOOP_TULIP))
     {
-    /* Put this skb where the transmitter will see it. */
-    sc->tx_skb = skb;
-
-    /* Start the transmitter; incoming pkts are NOT processed. */
-    user_interrupt(sc, 0);
-
-    /* If the tx didn't take the skb then stop the queue. */
-    /* This can happen if another CPU is in core_interrupt(). */
-    if (sc->tx_skb != NULL) netif_stop_queue(net_dev);
-
-    return 0;
+    u_int32_t op_mode = READ_CSR(sc, TLP_OP_MODE);
+    op_mode |= TLP_OP_INT_LOOP;
+    WRITE_CSR(sc, TLP_OP_MODE, op_mode);
+    config->crc_len = CFG_CRC_0;
     }
 
-  /* This shouldn't happen; skb is NOT consumed. */
-  if (netif_queue_stopped(net_dev))
-    printk("%s: dev->start() called with queue stopped\n", NAME_UNIT);
-  else
-    netif_stop_queue(net_dev);
+  /* Check for disabling loopback thru Tulip chip. */
+  if ((sc->config.loop_back == CFG_LOOP_TULIP) &&
+         (config->loop_back != CFG_LOOP_TULIP))
+    {
+    u_int32_t op_mode = READ_CSR(sc, TLP_OP_MODE);
+    op_mode &= ~TLP_OP_LOOP_MODE;
+    WRITE_CSR(sc, TLP_OP_MODE, op_mode);
+    config->crc_len = CFG_CRC_16;
+    }
+
+  sc->config.loop_back = config->loop_back;
+  }
+
+/* Attach the Tulip PCI bus interface.
+ * Allocate DMA descriptors and enable DMA.
+ * Returns 0 on success; error code on failure.
+ * context: kernel (boot) or process (syscall)
+ */
+static int
+tulip_attach(softc_t *sc)
+  {
+  int num_rx_descs, error = 0;
+  u_int32_t bus_pbl, bus_cal, op_tr;
+  u_int32_t cfdd, cfcs, cflt, csid, cfit;
+
+  /* Make sure the COMMAND bits are reasonable. */
+  cfcs = READ_PCI_CFG(sc, TLP_CFCS);
+  cfcs &= ~TLP_CFCS_MWI_ENABLE;
+  cfcs |=  TLP_CFCS_BUS_MASTER;
+  cfcs |=  TLP_CFCS_MEM_ENABLE;
+  cfcs |=  TLP_CFCS_IO_ENABLE;
+  cfcs |=  TLP_CFCS_PAR_ERROR;
+  cfcs |=  TLP_CFCS_SYS_ERROR;
+  WRITE_PCI_CFG(sc, TLP_CFCS, cfcs);
+
+  /* Set the LATENCY TIMER to the recommended value, */
+  /*  and make sure the CACHE LINE SIZE is reasonable. */
+  cfit = READ_PCI_CFG(sc, TLP_CFIT);
+  cflt = READ_PCI_CFG(sc, TLP_CFLT);
+  cflt &= ~TLP_CFLT_LATENCY;
+  cflt |= (cfit & TLP_CFIT_MAX_LAT)>>16;
+  /* "prgmbl burst length" and "cache alignment" used below. */
+  switch(cflt & TLP_CFLT_CACHE)
+    {
+    case 8: /* 8 bytes per cache line */
+      { bus_pbl = 32; bus_cal = 1; break; }
+    case 16:
+      { bus_pbl = 32; bus_cal = 2; break; }
+    case 32:
+      { bus_pbl = 32; bus_cal = 3; break; }
+    default:
+      {
+      bus_pbl = 32; bus_cal = 1;
+      cflt &= ~TLP_CFLT_CACHE;
+      cflt |= 8;
+      break;
+      }
+    }
+  WRITE_PCI_CFG(sc, TLP_CFLT, cflt);
+
+  /* Make sure SNOOZE and SLEEP modes are disabled. */
+  cfdd = READ_PCI_CFG(sc, TLP_CFDD);
+  cfdd &= ~TLP_CFDD_SLEEP;
+  cfdd &= ~TLP_CFDD_SNOOZE;
+  WRITE_PCI_CFG(sc, TLP_CFDD, cfdd);
+  DELAY(11*1000); /* Tulip wakes up in 10 ms max */
+
+  /* Software Reset the Tulip chip; stops DMA and Interrupts. */
+  /* This does not change the PCI config regs just set above. */
+  WRITE_CSR(sc, TLP_BUS_MODE, TLP_BUS_RESET); /* self-clearing */
+  DELAY(5);  /* Tulip is dead for 50 PCI cycles after reset. */
+
+  /* Initialize the PCI busmode register. */
+  /* The PCI bus cycle type "Memory Write and Invalidate" does NOT */
+  /*  work cleanly in any version of the 21140A, so do not enable it! */
+  WRITE_CSR(sc, TLP_BUS_MODE,
+        (bus_cal ? TLP_BUS_READ_LINE : 0) |
+        (bus_cal ? TLP_BUS_READ_MULT : 0) |
+        (bus_pbl<<TLP_BUS_PBL_SHIFT) |
+        (bus_cal<<TLP_BUS_CAL_SHIFT) |
+   ((BYTE_ORDER == BIG_ENDIAN) ? TLP_BUS_DESC_BIGEND : 0) |
+   ((BYTE_ORDER == BIG_ENDIAN) ? TLP_BUS_DATA_BIGEND : 0) |
+                TLP_BUS_DSL_VAL |
+                TLP_BUS_ARB);
+
+  /* Pick number of RX descriptors and TX fifo threshold. */
+  /* tx_threshold in bytes: 0=128, 1=256, 2=512, 3=1024 */
+  csid = READ_PCI_CFG(sc, TLP_CSID);
+  switch(csid)
+    {
+    case CSID_LMC_HSSI:		/* 52 Mb/s */
+    case CSID_LMC_HSSIc:	/* 52 Mb/s */
+    case CSID_LMC_T3:		/* 45 Mb/s */
+      { num_rx_descs = 48; op_tr = 2; break; }
+    case CSID_LMC_SSI:		/* 10 Mb/s */
+      { num_rx_descs = 32; op_tr = 1; break; }
+    case CSID_LMC_T1E1:		/*  2 Mb/s */
+      { num_rx_descs = 16; op_tr = 0; break; }
+    default:
+      { num_rx_descs = 16; op_tr = 0; break; }
+    }
+
+  /* Create DMA descriptors and initialize list head registers. */
+  if ((error = create_ring(sc, &sc->txring, NUM_TX_DESCS))) return error;
+  WRITE_CSR(sc, TLP_TX_LIST, sc->txring.dma_addr);
+  if ((error = create_ring(sc, &sc->rxring, num_rx_descs))) return error;
+  WRITE_CSR(sc, TLP_RX_LIST, sc->rxring.dma_addr);
+
+  /* Initialize the operating mode register. */
+  WRITE_CSR(sc, TLP_OP_MODE, TLP_OP_INIT | (op_tr<<TLP_OP_TR_SHIFT));
+
+  /* Read the missed frame register (result ignored) to zero it. */
+  error = READ_CSR(sc, TLP_MISSED); /* error is used as a bit-dump */
+
+  /* Disable rx watchdog and tx jabber features. */
+  WRITE_CSR(sc, TLP_WDOG, TLP_WDOG_INIT);
+
+  return 0;
+  }
+
+/* Detach the Tulip PCI bus interface. */
+/* Disable DMA and free DMA descriptors. */
+/* context: kernel (boot) or process (syscall) */
+static void
+tulip_detach(void *arg)
+  {
+  softc_t *sc = arg;
+
+  /* Software reset the Tulip chip; stops DMA and Interrupts. */
+  WRITE_CSR(sc, TLP_BUS_MODE, TLP_BUS_RESET); /* self-clearing */
+  DELAY(5);  /* Tulip is dead for 50 PCI cycles after reset. */
+
+  /* Disconnect from the PCI bus except for config cycles. */
+  /* Hmmm; Linux syslogs a warning that IO and MEM are disabled. */
+  WRITE_PCI_CFG(sc, TLP_CFCS, TLP_CFCS_MEM_ENABLE | TLP_CFCS_IO_ENABLE);
+
+  /* Free the DMA descriptor rings. */
+  destroy_ring(sc, &sc->txring);
+  destroy_ring(sc, &sc->rxring);
+  }
+
+/* Called during config probing -- softc does not yet exist. */
+static void
+print_driver_info(void)
+  {
+  /* Print driver information once only. */
+  if (driver_announced++ == 0)
+    {
+    printf("LMC driver version %d/%d/%d; options",
+     VER_YEAR, VER_MONTH, VER_DAY);
+    if (ALTQ)           printf(" ALTQ");
+    if (NBPFILTER)      printf(" BPF");
+    if (NAPI)           printf(" NAPI");
+    if (DEVICE_POLLING) printf(" POLL");
+    if (P2P)            printf(" P2P");
+    if (SPPP)           printf(" SPPP");
+    if (GEN_HDLC)       printf(" GEN_HDLC");
+    if (SYNC_PPP)       printf(" SYNC_PPP");
+    if (NETGRAPH)       printf(" NETGRAPH");
+    printf(".\n");
+    }
+  }
+
+#if defined(__FreeBSD__)
+
+/* This is the I/O configuration interface for FreeBSD */
+
+/* Looking for a DEC 21140A chip on any Lan Media Corp card. */
+/* context: kernel (boot) or process (syscall) */
+static int
+fbsd_probe(device_t dev)
+  {
+  u_int32_t cfid = pci_read_config(dev, TLP_CFID, 4);
+  u_int32_t csid = pci_read_config(dev, TLP_CSID, 4);
+
+  if (cfid != TLP_CFID_TULIP) return ENXIO;
+  switch (csid)
+    {
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
+      device_set_desc(dev, HSSI_DESC);
+      break;
+    case CSID_LMC_T3:
+      device_set_desc(dev,   T3_DESC);
+      break;
+    case CSID_LMC_SSI:
+      device_set_desc(dev,  SSI_DESC);
+      break;
+    case CSID_LMC_T1E1:
+      device_set_desc(dev, T1E1_DESC);
+      break;
+    default:
+      return ENXIO;
+    }
+
+  print_driver_info();
+  return 0;
+  }
+
+/* FreeBSD bottom-half initialization. */
+/* context: kernel (boot) or process (syscall) */
+static int
+fbsd_attach(device_t dev)
+  {
+  softc_t *sc = device_get_softc(dev);
+  int error;
+
+  /* for READ/WRITE_PCI_CFG() */
+  sc->dev = dev;
+
+  /* What kind of card are we driving? */
+  switch (READ_PCI_CFG(sc, TLP_CSID))
+    {
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
+      sc->dev_desc =  HSSI_DESC;
+      sc->card     = &hssi_card;
+      break;
+    case CSID_LMC_T3:
+      sc->dev_desc =    T3_DESC;
+      sc->card     =   &t3_card;
+      break;
+    case CSID_LMC_SSI:
+      sc->dev_desc =   SSI_DESC;
+      sc->card     =  &ssi_card;
+      break;
+    case CSID_LMC_T1E1:
+      sc->dev_desc =  T1E1_DESC;
+      sc->card     =   &t1_card;
+      break;
+    }
+
+  /* Allocate PCI memory or IO resources to access the Tulip chip CSRs. */
+# if IOREF_CSR
+  sc->csr_res_id   = TLP_CBIO;
+  sc->csr_res_type = SYS_RES_IOPORT;
+# else
+  sc->csr_res_id   = TLP_CBMA;
+  sc->csr_res_type = SYS_RES_MEMORY;
+# endif
+  sc->csr_res = bus_alloc_resource(dev, sc->csr_res_type, &sc->csr_res_id,
+   0, ~0, 1, RF_ACTIVE);
+  if (sc->csr_res == NULL)
+    {
+    printf("%s: bus_alloc_resource(csr) failed\n", NAME_UNIT);
+    return ENXIO;
+    }
+  sc->csr_tag    = rman_get_bustag(sc->csr_res);
+  sc->csr_handle = rman_get_bushandle(sc->csr_res); 
+
+  /* Allocate PCI interrupt resources for the card. */
+  sc->irq_res_id = 0;
+  sc->irq_res = bus_alloc_resource(dev, SYS_RES_IRQ, &sc->irq_res_id,
+   0, ~0, 1, RF_ACTIVE | RF_SHAREABLE);
+  if (sc->irq_res == NULL)
+    {
+    printf("%s: bus_alloc_resource(irq) failed\n", NAME_UNIT);
+    fbsd_detach(dev);
+    return ENXIO;
+    }
+  if ((error = bus_setup_intr(dev, sc->irq_res, INTR_TYPE_NET | INTR_MPSAFE,
+   bsd_interrupt, sc, &sc->irq_cookie)))
+    {
+    printf("%s: bus_setup_intr(): error %d\n", NAME_UNIT, error);
+    fbsd_detach(dev);
+    return error;
+    }
+
+  /* Initialize the top-half and bottom-half locks. */
+  mtx_init(&sc->top_lock, NAME_UNIT, "top-half lock", MTX_DEF);
+  sc->bottom_lock = 0;
+
+  /* Initialize the driver. */
+  if ((error = lmc_attach(sc))) fbsd_detach(dev);
+
+  return error;
+  }
+
+/* context: kernel (boot) or process (syscall) */
+static int
+fbsd_detach(device_t dev)
+  {
+  softc_t *sc = device_get_softc(dev);
+
+  /* Detach from the bus and the kernel. */
+  lmc_detach(sc);
+
+  /* Release resources. */
+  if (sc->irq_cookie)
+    bus_teardown_intr(dev, sc->irq_res, sc->irq_cookie);
+  if (sc->irq_res)
+    bus_release_resource(dev, SYS_RES_IRQ, sc->irq_res_id, sc->irq_res);
+  if (sc->csr_res)
+    bus_release_resource(dev, sc->csr_res_type, sc->csr_res_id, sc->csr_res);
+
+  /* Destroy locks. */
+  mtx_destroy(&sc->top_lock);
+
+  return 0;
+  }
+
+static void
+fbsd_shutdown(device_t dev)
+  {
+  tulip_detach(device_get_softc(dev));
+  }
+
+static void  /* Callout from bus_dmamap_load() */
+fbsd_dmamap_load(void *arg, bus_dma_segment_t *segs, int nsegs, int error)
+  {
+  struct desc_ring *ring = arg;
+  ring->nsegs = error ? 0 : nsegs;
+  ring->segs[0] = segs[0];
+  ring->segs[1] = segs[1];
+  }
+
+static device_method_t methods[] =
+  {
+  DEVMETHOD(device_probe,    fbsd_probe),
+  DEVMETHOD(device_attach,   fbsd_attach),
+  DEVMETHOD(device_detach,   fbsd_detach),
+  DEVMETHOD(device_shutdown, fbsd_shutdown),
+  /* This driver does not suspend and resume. */
+  { 0, 0 }
+  };
+
+static driver_t driver =
+  {
+  .name    = DEVICE_NAME,
+  .methods = methods,
+  .size    = sizeof(softc_t),
+  };
+
+static devclass_t devclass;
+
+DRIVER_MODULE(if_lmc, pci, driver, devclass, 0, 0);
+MODULE_VERSION(if_lmc, 2);
+MODULE_DEPEND(if_lmc, pci, 1, 1, 1);
+# if NETGRAPH
+MODULE_DEPEND(if_lmc, netgraph, NG_ABI_VERSION, NG_ABI_VERSION, NG_ABI_VERSION);
+# endif
+# if SPPP
+MODULE_DEPEND(if_lmc, sppp, 1, 1, 1);
+# endif
+
+#endif  /* __FreeBSD__ */
+
+#if defined(__NetBSD__)
+
+/* This is the I/O configuration interface for NetBSD. */
+
+/* Looking for a DEC 21140A chip on any Lan Media Corp card. */
+/* context: kernel (boot) or process (syscall) */
+static int
+nbsd_match(struct device *parent, struct cfdata *match, void *aux)
+  {
+  struct pci_attach_args *pa = aux;
+  u_int32_t cfid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CFID);
+  u_int32_t csid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CSID);	
+
+  if (cfid != TLP_CFID_TULIP) return 0;
+  switch (csid)
+    {
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
+    case CSID_LMC_T3:
+    case CSID_LMC_SSI:
+    case CSID_LMC_T1E1:
+      print_driver_info();
+      return 100;
+    default:
+      return 0;
+    }
+  }
+
+/* NetBSD bottom-half initialization. */
+/* context: kernel (boot) or process (syscall) */
+static void
+nbsd_attach(struct device *parent, struct device *self, void *aux)
+  {
+  softc_t *sc = (softc_t *)self; /* device is first in softc */
+  struct pci_attach_args *pa = aux;
+  const char *intrstr;
+  bus_addr_t csr_addr;
+  int error;
+
+  /* for READ/WRITE_PCI_CFG() */
+  sc->pa_pc   = pa->pa_pc;
+  sc->pa_tag  = pa->pa_tag;
+  sc->pa_dmat = pa->pa_dmat;
+
+  /* What kind of card are we driving? */
+  switch (READ_PCI_CFG(sc, TLP_CSID))
+    {
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
+      sc->dev_desc =  HSSI_DESC;
+      sc->card     = &hssi_card;
+      break;
+    case CSID_LMC_T3:
+      sc->dev_desc =    T3_DESC;
+      sc->card     =   &t3_card;
+      break;
+    case CSID_LMC_SSI:
+      sc->dev_desc =   SSI_DESC;
+      sc->card     =  &ssi_card;
+      break;
+    case CSID_LMC_T1E1:
+      sc->dev_desc =  T1E1_DESC;
+      sc->card     =   &t1_card;
+      break;
+    default:
+      return;
+    }
+
+  /* Allocate PCI resources to access the Tulip chip CSRs. */
+# if IOREF_CSR
+  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBIO) & -2;
+  sc->csr_tag = pa->pa_iot;	/* bus_space tag for IO refs */
+# else
+  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBMA);
+  sc->csr_tag = pa->pa_memt;	/* bus_space tag for MEM refs */
+# endif
+  if ((error = bus_space_map(sc->csr_tag, csr_addr,
+   TLP_CSR_SIZE, 0, &sc->csr_handle)))
+    {
+    aprint_error("%s: bus_space_map(): error %d\n", NAME_UNIT, error);
+    return;
+    }
+
+  /* Allocate PCI interrupt resources. */
+  if (pci_intr_map(pa, &sc->intr_handle))
+    {
+    aprint_error("%s: pci_intr_map() failed\n", NAME_UNIT);
+    nbsd_detach(self, 0);
+    return;
+    }
+  if ((sc->irq_cookie = pci_intr_establish(pa->pa_pc, sc->intr_handle,
+   IPL_NET, bsd_interrupt, sc)) == NULL)
+    {
+    aprint_error("%s: pci_intr_establish() failed\n", NAME_UNIT);
+    nbsd_detach(self, 0);
+    return;
+    }
+  intrstr = pci_intr_string(pa->pa_pc, sc->intr_handle);
+  aprint_normal(" %s: %s\n", intrstr, sc->dev_desc);
+  aprint_naive(": %s\n", sc->dev_desc);
+
+  /* Install a shutdown hook. */
+  if ((sc->sdh_cookie = shutdownhook_establish(tulip_detach, sc)) == NULL)
+    {
+    aprint_error("%s: shutdown_hook_establish() failed\n", NAME_UNIT);
+    nbsd_detach(self, 0);
+    return;
+    }
+
+  /* Initialize the top-half and bottom-half locks. */
+  __cpu_simple_lock_init(&sc->top_lock);
+  __cpu_simple_lock_init(&sc->bottom_lock);
+
+  /* Initialize the driver. */
+  if ((error = lmc_attach(sc))) nbsd_detach(self, 0);
+  }
+
+/* context: kernel (boot) or process (syscall) */
+static int
+nbsd_detach(struct device *self, int flags)
+  {
+  softc_t *sc = (softc_t *)self; /* device is first in softc */
+
+  /* Detach from the bus and the kernel. */
+  lmc_detach(sc);
+
+  /* Release resources. */
+  if (sc->sdh_cookie)
+    shutdownhook_disestablish(sc->sdh_cookie);
+  if (sc->irq_cookie)
+    pci_intr_disestablish(sc->pa_pc, sc->irq_cookie);
+  if (sc->csr_handle)
+    bus_space_unmap(sc->csr_tag, sc->csr_handle, TLP_CSR_SIZE);
+
+  return 0;
+  }
+
+CFATTACH_DECL(lmc, sizeof(softc_t),		/* lmc_ca */
+ nbsd_match, nbsd_attach, nbsd_detach, NULL);
+
+# if defined(LKM)
+
+static struct cfattach *cfattach[] = { &lmc_ca, NULL };
+static const struct cfattachlkminit cfattachs[] =
+  { { DEVICE_NAME, cfattach }, { NULL } };
+
+static CFDRIVER_DECL(lmc, DV_IFNET, NULL);	/* lmc_cd */
+static struct cfdriver *cfdrivers[] = { &lmc_cd, NULL };
+
+static int pci_locators[] = { -1, 0 }; /* device, function */
+static const struct cfparent pci_parent = { "pci", "pci", DVUNIT_ANY };
+static struct cfdata cfdatas[] =
+  { { DEVICE_NAME, DEVICE_NAME, 0, FSTATE_STAR,
+      pci_locators, 0, &pci_parent }, { 0 } };
+
+MOD_DRV("if_"DEVICE_NAME, cfdrivers, cfattachs, cfdatas);
+
+int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
+  { LKM_DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc); }
+
+# endif /* LKM */
+
+#endif  /* __NetBSD__ */
+
+#if defined(__OpenBSD__)
+
+/* This is the I/O configuration interface for OpenBSD. */
+
+/* Looking for a DEC 21140A chip on any Lan Media Corp card. */
+/* context: kernel (boot) or process (syscall) */
+static int
+obsd_match(struct device *parent, void *match, void *aux)
+  {
+  struct pci_attach_args *pa = aux;
+  u_int32_t cfid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CFID);
+  u_int32_t csid = pci_conf_read(pa->pa_pc, pa->pa_tag, TLP_CSID);	
+
+  if (cfid != TLP_CFID_TULIP) return 0;
+  switch (csid)
+    {
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
+    case CSID_LMC_T3:
+    case CSID_LMC_SSI:
+    case CSID_LMC_T1E1:
+      print_driver_info();
+      return 100; /* match better than other 21140 drivers */
+    default:
+      return 0;
+    }
+  }
+
+/* OpenBSD bottom-half initialization. */
+/* context: kernel (boot) or process (syscall) */
+static void
+obsd_attach(struct device *parent, struct device *self, void *aux)
+  {
+  softc_t *sc = (softc_t *)self; /* device is first in softc */
+  struct pci_attach_args *pa = aux;
+  const char *intrstr;
+  bus_addr_t csr_addr;
+  int error;
+
+  /* for READ/WRITE_PCI_CFG() */
+  sc->pa_pc   = pa->pa_pc;
+  sc->pa_tag  = pa->pa_tag;
+  sc->pa_dmat = pa->pa_dmat;
+
+  /* What kind of card are we driving? */
+  switch (READ_PCI_CFG(sc, TLP_CSID))
+    {
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
+      sc->dev_desc =  HSSI_DESC;
+      sc->card     = &hssi_card;
+      break;
+    case CSID_LMC_T3:
+      sc->dev_desc =    T3_DESC;
+      sc->card     =   &t3_card;
+      break;
+    case CSID_LMC_SSI:
+      sc->dev_desc =   SSI_DESC;
+      sc->card     =  &ssi_card;
+      break;
+    case CSID_LMC_T1E1:
+      sc->dev_desc =  T1E1_DESC;
+      sc->card     =   &t1_card;
+      break;
+    default:
+      return;
+    }
+
+  /* Allocate PCI resources to access the Tulip chip CSRs. */
+# if IOREF_CSR
+  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBIO) & -2;
+  sc->csr_tag = pa->pa_iot;	/* bus_space tag for IO refs */
+# else
+  csr_addr = (bus_addr_t)READ_PCI_CFG(sc, TLP_CBMA);
+  sc->csr_tag = pa->pa_memt;	/* bus_space tag for MEM refs */
+# endif
+  if ((error = bus_space_map(sc->csr_tag, csr_addr,
+   TLP_CSR_SIZE, 0, &sc->csr_handle)))
+    {
+    printf("%s: bus_space_map(): error %d\n", NAME_UNIT, error);
+    return;
+    }
+
+  /* Allocate PCI interrupt resources. */
+  if (pci_intr_map(pa, &sc->intr_handle))
+    {
+    printf("%s: pci_intr_map() failed\n", NAME_UNIT);
+    obsd_detach(self, 0);
+    return;
+    }
+  if ((sc->irq_cookie = pci_intr_establish(pa->pa_pc, sc->intr_handle,
+   IPL_NET, bsd_interrupt, sc, self->dv_xname)) == NULL)
+    {
+    printf("%s: pci_intr_establish() failed\n", NAME_UNIT);
+    obsd_detach(self, 0);
+    return;
+    }
+  intrstr = pci_intr_string(pa->pa_pc, sc->intr_handle);
+  printf(" %s: %s\n", intrstr, sc->dev_desc);
+
+  /* Install a shutdown hook. */
+  if ((sc->sdh_cookie = shutdownhook_establish(tulip_detach, sc)) == NULL)
+    {
+    printf("%s: shutdown_hook_establish() failed\n", NAME_UNIT);
+    obsd_detach(self, 0);
+    return;
+    }
+
+  /* Initialize the top-half and bottom-half locks. */
+  __cpu_simple_lock_init(&sc->top_lock);
+  __cpu_simple_lock_init(&sc->bottom_lock);
+
+  /* Initialize the driver. */
+  if ((error = lmc_attach(sc))) obsd_detach(self, 0);
+  }
+
+/* context: kernel (boot) or process (syscall) */
+static int
+obsd_detach(struct device *self, int flags)
+  {
+  softc_t *sc = (softc_t *)self; /* device is first in softc */
+
+  /* Detach from the bus and the kernel. */
+  lmc_detach(sc);
+
+  /* Release resources. */
+  if (sc->sdh_cookie)
+    shutdownhook_disestablish(sc->sdh_cookie);
+  if (sc->irq_cookie)
+    pci_intr_disestablish(sc->pa_pc, sc->irq_cookie);
+  if (sc->csr_handle)
+    bus_space_unmap(sc->csr_tag, sc->csr_handle, TLP_CSR_SIZE);
+
+  return 0;
+  }
+
+struct cfattach lmc_ca =
+  {
+  .ca_devsize	= sizeof(softc_t),
+  .ca_match	= obsd_match,
+  .ca_attach	= obsd_attach,
+  .ca_detach	= obsd_detach,
+  .ca_activate	= NULL,
+  };
+
+# if defined(LKM)
+
+struct cfdriver lmc_cd =
+  {
+  .cd_name	= DEVICE_NAME,
+  .cd_devs	= NULL,
+  .cd_class	= DV_IFNET,
+  .cd_indirect	= 0,
+  .cd_ndevs	= 0,
+  };
+
+/* cfdata is declared static, unseen outside this module. */
+/* It is used for LKM; config builds its own in ioconf.c. */
+static struct cfdata lmc_cfdata =
+  {
+  .cf_attach	= &lmc_ca,
+  .cf_driver	= &lmc_cd,
+  .cf_unit	= 0,
+  .cf_fstate	= FSTATE_STAR,
+  };
+
+static struct lkm_any _module =
+  {
+  .lkm_name	= "if_"DEVICE_NAME,
+  .lkm_type	= LM_MISC,
+  .lkm_offset	= 0,
+  .lkm_ver	= LKM_VERSION,
+  };
+
+/* From /sys/dev/pci/pci.c (no public prototype). */
+int pciprint(void *, const char *);
+
+/* struct cfdriver for pci bus; lmc cards are all pci devices. */
+extern struct cfdriver pci_cd;
+
+/* XXX This has only been tested on the i386 architecture.  */
+/* XXX To do this right, need struct pcibus_attach_args.    */
+/* XXX struct pcibus_attach_args exists only while booting. */
+/* LKM finds this by appending "_lkmentry" to filename "if_lmc"(.o). */
+int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
+  {
+  int i, error = 0;
+
+  if (ver != LKM_VERSION) return EINVAL;
+  switch (cmd)
+    {
+    case LKM_E_LOAD:
+      {
+      lkmtp->private.lkm_any = &_module;
+      for (i=0; i<pci_cd.cd_ndevs; i++)
+        {  /* for each pci bus... */
+        int devnum, maxdevs;
+        struct pci_attach_args pa;
+        struct device *parent = pci_cd.cd_devs[i];
+        /* This is ugly: only way to get pci_chipset_tag. */
+        struct pci_sc { struct device dev; pci_chipset_tag_t pc; };
+        struct pci_sc *pci_sc = pci_cd.cd_devs[i];
+
+        if (parent == NULL) continue; /* no pci bus */
+        pa.pa_pc   = pci_sc->pc;
+        pa.pa_iot  = 0;	/* XXX arch_BUS_SPACE_IO  */
+        pa.pa_memt = 1;	/* XXX arch_BUS_SPACE_MEM; */
+        pa.pa_dmat = &pci_bus_dma_tag;
+        pa.pa_bus  = parent->dv_unit;
+        pa.pa_function = 0; /* DEC-21140A has function 0 only */
+        maxdevs = pci_bus_maxdevs(pa.pa_pc, pa.pa_bus);
+        for (devnum=0; devnum<maxdevs; devnum++)
+          { /* for each pci device... */
+          pcireg_t intr;
+          pa.pa_device = devnum;
+          pa.pa_tag   = pci_make_tag (pa.pa_pc, pa.pa_bus, pa.pa_device, 0);
+          pa.pa_id    = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_ID_REG);
+          if (PCI_VENDOR(pa.pa_id) == 0xFFFF) continue;
+          if (PCI_VENDOR(pa.pa_id) == 0) continue;
+          pa.pa_class = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_CLASS_REG);
+          /* XXX i386 only; need struct pcibus_attach_args to swizzle */
+          pa.pa_intrswiz = 0;
+          pa.pa_intrtag = pa.pa_tag;
+          intr = pci_conf_read(pa.pa_pc, pa.pa_tag, PCI_INTERRUPT_REG);
+          pa.pa_intrpin = ((PCI_INTERRUPT_PIN(intr) -1) % 4) +1;
+          pa.pa_intrline =  PCI_INTERRUPT_LINE(intr);
+          if (obsd_match(parent, &lmc_cfdata, &pa))
+            config_attach(parent, &lmc_cfdata, &pa, pciprint);
+          /* config_attach does not return on failure; it calls panic. */
+          }
+	}
+      break;
+      }
+    case LKM_E_UNLOAD:
+      {
+      for (i=lmc_cd.cd_ndevs-1; i>=0; i--)
+        {
+        struct device *dev = lmc_cd.cd_devs[i];
+        if (dev == NULL) continue;
+        if ((error = config_detach(dev, 0)))
+          printf("%s: config_detach(): error %d\n",
+           dev->dv_xname, error);
+        }
+      break;
+      }
+    case LKM_E_STAT:
+      break;
+    }
+
+  return error;
+  }
+
+# endif /* LKM */
+
+#endif  /* __OpenBSD__ */
+
+#if defined(__bsdi__)
+
+/* This is the I/O configuration interface for BSD/OS. */
+
+/* Looking for a DEC 21140A chip on any Lan Media Corp card. */
+/* context: kernel (boot) or process (syscall) */
+static int
+bsdi_match(pci_devaddr_t *pa)
+  {
+  u_int32_t cfid = pci_inl(pa, TLP_CFID);
+  u_int32_t csid = pci_inl(pa, TLP_CSID);
+
+  if (cfid != TLP_CFID_TULIP) return 0;
+  switch (csid)
+    {
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
+    case CSID_LMC_T3:
+    case CSID_LMC_SSI:
+    case CSID_LMC_T1E1:
+      return 1;
+    default:
+      return 0;
+    }
+  }
+
+static int  /* context: kernel (boot) */
+bsdi_probe(struct device *parent, struct cfdata *cf, void *aux)
+  {
+  struct isa_attach_args *ia = aux;
+  pci_devaddr_t *pa = NULL;
+  pci_devres_t res;
+
+  /* This must be a PCI bus. */
+  if (ia->ia_bustype != BUS_PCI) return 0;
+
+  /* Scan PCI bus for our cards. */
+  if ((pa = pci_scan(bsdi_match)) == NULL) return 0;
+  print_driver_info(); /* found a card */
+
+  /* Scan config space for IO and MEM base registers and IRQ info. */
+  pci_getres(pa, &res, 1, ia);
+
+  /* Pass matching PCI addr (bus+device+function) in ia_aux. */
+  ia->ia_aux = (void *)pa;
 
   return 1;
   }
 
-/* This net_device method restarts the transmitter if it hangs. */
-/* Called from a softirq. */
-static void
-linux_timeout(struct net_device *net_dev)
+/* BSD/OS bottom-half initialization. */
+static void  /* context: kernel (boot) */
+bsdi_attach(struct device *parent, struct device *self, void *aux)
   {
-  softc_t *sc = dev_to_hdlc(net_dev)->priv;
+  softc_t *sc = (softc_t *)self; /* device is first in softc */
+  struct isa_attach_args *ia = aux;
+  pci_devaddr_t *pa = ia->ia_aux;
+  int error;
 
-  /* Start the transmitter; incoming packets are NOT processed. */
-  user_interrupt(sc, 1);
+  /* for READ/WRITE_PCI_CFG() */
+  sc->cfgbase = *pa;  /* bus+device+function */
+
+  /* What kind of card are we driving? */
+  switch (READ_PCI_CFG(sc, TLP_CSID))
+    {
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
+      sc->dev_desc =  HSSI_DESC;
+      sc->card     = &hssi_card;
+      break;
+    case CSID_LMC_T3:
+      sc->dev_desc =    T3_DESC;
+      sc->card     =   &t3_card;
+      break;
+    case CSID_LMC_SSI:
+      sc->dev_desc =   SSI_DESC;
+      sc->card     =  &ssi_card;
+      break;
+    case CSID_LMC_T1E1:
+      sc->dev_desc =  T1E1_DESC;
+      sc->card     =   &t1_card;
+      break;
+    default:
+      return;
+    }
+  aprint_naive(": %s\n", sc->dev_desc);
+  aprint_normal(": %s\n", sc->dev_desc);
+
+  /* Allocate PCI memory or IO resources to access the Tulip chip CSRs. */
+  sc->csr_iobase  = ia->ia_iobase;
+  sc->csr_membase = (u_int32_t *)mapphys((vm_offset_t)ia->ia_maddr, TLP_CSR_SIZE);
+
+  /* Attach to the PCI bus. */
+  isa_establish(&sc->id, &sc->dev);
+
+  /* Allocate PCI interrupt resources for the card. */
+  sc->ih.ih_fun = bsd_interrupt;
+  sc->ih.ih_arg = sc;
+  intr_establish(ia->ia_irq, &sc->ih, DV_NET);
+
+  /* Install a shutdown hook. */
+  sc->ats.func = tulip_detach;
+  sc->ats.arg = sc;
+  atshutdown(&sc->ats, ATSH_ADD);
+
+  /* Initialize the top-half and bottom-half locks. */
+  simple_lock_init(&sc->top_lock);
+  simple_lock_init(&sc->bottom_lock);
+
+  /* Initialize the driver. */
+  if ((error = lmc_attach(sc))) lmc_detach(sc);
   }
 
-/* This net_device method handles IOCTL syscalls. */
-/* Called from a syscall (user context; no spinlocks; can sleep). */
-static int
-linux_ioctl(struct net_device *net_dev, struct ifreq *ifr, int cmd)
+struct cfdriver lmccd =
   {
-  softc_t *sc = dev_to_hdlc(net_dev)->priv;
-  int error = 0;
+  .cd_devs	= NULL,
+  .cd_name	= DEVICE_NAME,
+  .cd_match	= bsdi_probe,
+  .cd_attach	= bsdi_attach,
+  .cd_class	= DV_IFNET,
+  .cd_devsize	= sizeof(softc_t),
+  };
+#endif  /* __bsdi__ */
 
-  TOP_LOCK;
-  if ((cmd >= SIOCDEVPRIVATE) && (cmd <= SIOCDEVPRIVATE+15))
-    {
-    struct iohdr *iohdr = (struct iohdr *)ifr;
-    u_int16_t direction = iohdr->direction;
-    u_int16_t length = iohdr->length;
-    char *user_addr = (char *)iohdr->iohdr;
-    char *kern_addr;
-
-    if (iohdr->cookie != NGM_LMC_COOKIE) return -EINVAL;
-
-    /* Emulate a BSD-style IOCTL syscall. */
-    kern_addr = kmalloc(length, GFP_KERNEL);
-    if (kern_addr == NULL)
-      error = -ENOMEM;
-    if ((error == 0) && ((direction & DIR_IOW) != 0))
-      error = copy_from_user(kern_addr, user_addr, length);
-    if (error == 0)
-      error = -core_ioctl(sc, (unsigned long)cmd, kern_addr);
-    if ((error == 0) && ((direction & DIR_IOR) != 0))
-      error = copy_to_user(user_addr, kern_addr, length);
-    kfree(kern_addr);
-    }
-# if GEN_HDLC
-  else if (cmd == SIOCWANDEV)
-    {
-    const size_t size = sizeof(sync_serial_settings);
-
-    switch (ifr->ifr_settings.type)
-      {
-      case IF_GET_IFACE: /* get interface config */
-        {
-        ifr->ifr_settings.type = IF_IFACE_SYNC_SERIAL;
-        if (ifr->ifr_settings.size < size)
-          {
-          ifr->ifr_settings.size = size;
-          error = -ENOBUFS;
-	  }
-        else
-          {
-          if (sc->config.tx_clk_src == CFG_CLKMUX_ST)
-            sc->hdlc_settings.clock_type = CLOCK_EXT;
-          if (sc->config.tx_clk_src == CFG_CLKMUX_INT)
-            sc->hdlc_settings.clock_type = CLOCK_TXINT;
-          if (sc->config.tx_clk_src == CFG_CLKMUX_RT)
-            sc->hdlc_settings.clock_type = CLOCK_TXFROMRX;
-          sc->hdlc_settings.loopback = (sc->config.loop_back != CFG_LOOP_NONE) ? 1:0;
-          sc->hdlc_settings.clock_rate = sc->status.tx_speed;
-          error = copy_to_user(ifr->ifr_settings.ifs_ifsu.sync,
-           &sc->hdlc_settings, size);
-	  }
-        break;
-	}
-      case IF_IFACE_SYNC_SERIAL: /* set interface config */
-        {
-        if (!capable(CAP_NET_ADMIN))
-          error = -EPERM;
-        if (error == 0) 
-          error = copy_from_user(&sc->hdlc_settings,
-          ifr->ifr_settings.ifs_ifsu.sync, size);
-        /* hdlc_settings are currently ignored. */
-        break;
-	}
-      default:  /* Pass the rest to the line protocol code. */
-        {
-        error = hdlc_ioctl(net_dev, ifr, cmd);
-        break;
-	}
-      }
-    }
-# endif /* GEN_HDLC */
-  else /* unknown IOCTL command */
-    error = -EINVAL;
-
-  if (DRIVER_DEBUG)
-    printk("%s: linux_ioctl; cmd=0x%08x error=%d\n",
-     NAME_UNIT, cmd, error);
-
-  TOP_UNLOCK;
-  return error;
-  }
-
-/* This net_device method returns a pointer to device statistics. */
-static struct net_device_stats *
-linux_stats(struct net_device *net_dev)
-  {
-# if GEN_HDLC
-  return &dev_to_hdlc(net_dev)->stats;
-# else
-  softc_t *sc = net_dev->priv;
-  return &sc->net_stats;
-# endif
-  }
-
-/* Called from a softirq once a second. */
-static void
-linux_watchdog(unsigned long softc)
-  {
-  softc_t *sc = (softc_t *)softc;
-  u_int8_t old_oper_status = sc->status.oper_status;
-  struct event_cntrs *cntrs = &sc->status.cntrs;
-  struct net_device_stats *stats = linux_stats(sc->net_dev);
-
-  core_watchdog(sc); /* updates oper_status */
-
-  /* Notice change in link status. */
-  if     ((old_oper_status != STATUS_UP) &&
-   (sc->status.oper_status == STATUS_UP))  /* link came up */
-    {
-    hdlc_set_carrier(1, sc->net_dev);
-    netif_wake_queue(sc->net_dev);
-    }
-  if     ((old_oper_status == STATUS_UP) &&
-   (sc->status.oper_status != STATUS_UP))  /* link went down */
-    {
-    hdlc_set_carrier(0, sc->net_dev);
-    netif_stop_queue(sc->net_dev);
-    }
-
-  /* Notice change in line protocol. */
-  if (sc->config.line_pkg == PKG_RAWIP)
-    {
-    sc->status.line_pkg  = PKG_RAWIP;
-    sc->status.line_prot = PROT_IP_HDLC;
-    }
-# if GEN_HDLC
-  else
-    {
-    sc->status.line_pkg  = PKG_GEN_HDLC;
-    switch (sc->hdlc_dev->proto.id)
-      {
-      case IF_PROTO_PPP:
-        sc->status.line_prot = PROT_PPP;
-        break;
-      case IF_PROTO_CISCO:
-        sc->status.line_prot = PROT_C_HDLC;
-        break;
-      case IF_PROTO_FR:
-        sc->status.line_prot = PROT_FRM_RLY;
-        break;
-      case IF_PROTO_HDLC:
-        sc->status.line_prot = PROT_IP_HDLC;
-        break;
-      case IF_PROTO_X25:
-        sc->status.line_prot = PROT_X25;
-        break;
-      case IF_PROTO_HDLC_ETH:
-        sc->status.line_prot = PROT_ETH_HDLC;
-        break;
-      default:
-        sc->status.line_prot = 0;
-        break;
-      }
-    }
-# endif /* GEN_HDLC */
-
-  /* Copy statistics from sc to net_dev for get_stats(). */
-  stats->rx_packets       = cntrs->ipackets;
-  stats->tx_packets       = cntrs->opackets;
-  stats->rx_bytes         = cntrs->ibytes;
-  stats->tx_bytes         = cntrs->obytes;
-  stats->rx_errors        = cntrs->ierrors;
-  stats->tx_errors        = cntrs->oerrors;
-  stats->rx_dropped       = cntrs->idrops;
-  stats->tx_dropped       = cntrs->odrops;
-  stats->rx_fifo_errors   = cntrs->fifo_over;
-  stats->tx_fifo_errors   = cntrs->fifo_under;
-  stats->rx_missed_errors = cntrs->missed;
-  stats->rx_over_errors   = cntrs->overruns;
-
-  /* Call this procedure again after one second. */
-  sc->wd_timer.expires = jiffies + HZ; /* now plus one second */
-  add_timer(&sc->wd_timer);
-  }
+#if defined(__linux__)
 
 /* This is the I/O configuration interface for Linux. */
 
-/* This net_device method is called when IFF_UP goes false. */
-static int
-linux_stop(struct net_device *net_dev)
-  {
-  softc_t *sc = dev_to_hdlc(net_dev)->priv;
-
-  /* Stop the card and detach from the kernel. */
-  detach_card(sc);  /* doesn't fail */
-
-  free_irq(net_dev->irq, net_dev); /* doesn't fail */
-
-  del_timer(&sc->wd_timer); /* return value ignored */
-
-  return 0;
-  }
-
-/* This net_device method is called when IFF_UP goes true. */
-static int
-linux_open(struct net_device *net_dev)
-  {
-  softc_t *sc = dev_to_hdlc(net_dev)->priv;
-  int error;
-
-  /* Allocate PCI interrupt resources for the card. */
-  if ((error = request_irq(net_dev->irq, &linux_interrupt, SA_SHIRQ,
-   NAME_UNIT, net_dev)))
-    {
-    printk("%s: request_irq() failed; error %d\n", NAME_UNIT, error);
-    return error;
-    }
-
-  /* Arrange to call linux_watchdog() once a second. */
-  init_timer(&sc->wd_timer);
-  sc->wd_timer.expires  = jiffies + HZ; /* now plus one second */
-  sc->wd_timer.function = &linux_watchdog;
-  sc->wd_timer.data     = (unsigned long) sc;
-  add_timer(&sc->wd_timer);
-
-  /* Start the card and attach a kernel interface and line protocol. */
-  if ((error = -attach_card(sc, "")))
-    linux_stop(net_dev);
-  else
-    {
-    net_dev->weight = sc->rxring.num_descs; /* input flow control */
-    netif_start_queue(net_dev);            /* output flow control */
-    }
-
-  return error;
-  }
-
-# if GEN_HDLC
-static int
-hdlc_attach(struct net_device *net_dev,
- unsigned short encoding, unsigned short parity)
-  { return 0; }
-# endif
-
-/* This pci_driver method is called during shutdown or module-unload. */
-/* This is called from user context; can sleep; no spinlocks! */
-static void __exit
-linux_remove(struct pci_dev *pci_dev)
-  {
-  struct net_device *net_dev = (struct net_device *)pci_get_drvdata(pci_dev);
-  softc_t *sc = dev_to_hdlc(net_dev)->priv;
-
-  if (net_dev == NULL) return;
-
-  /* Assume that linux_stop() has already been called. */
-  if (sc->flags & FLAG_NETDEV)
-# if GEN_HDLC
-    unregister_hdlc_device(net_dev);
-# else
-    unregister_netdev(net_dev);
-# endif
-
-# if (IOREF_CSR == 0)
-  if (sc->csr_membase != NULL)
-    iounmap(sc->csr_membase);
-# endif
-
-  pci_disable_device(pci_dev);
-
-  if (sc->csr_iobase != 0)
-    pci_release_regions(pci_dev);
-
-  pci_set_drvdata(pci_dev, NULL);
-
-  kfree(sc);
-  free_netdev(net_dev);
-  }
-
-/* Called from linux_probe() during module initialization. */
-/* Called from config_proto() when switching back to RawIP. */
-/* Note similarity to BSD's ifnet_setup(). */
-static void
-netdev_setup(struct net_device *net_dev)
-  {
-  net_dev->flags           = IFF_POINTOPOINT;
-  net_dev->flags          |= IFF_RUNNING;
-  net_dev->open            = linux_open;
-  net_dev->stop            = linux_stop;
-  net_dev->hard_start_xmit = linux_start;
-  net_dev->do_ioctl        = linux_ioctl;
-  net_dev->get_stats       = linux_stats;
-  net_dev->tx_timeout      = linux_timeout;
-  net_dev->poll            = linux_poll;
-  net_dev->watchdog_timeo  = 1 * HZ;
-  net_dev->tx_queue_len    = SNDQ_MAXLEN;
-  net_dev->mtu             = MAX_DESC_LEN;
-  net_dev->type            = ARPHRD_RAWHDLC;
-/* The receiver generates frag-lists for packets >4032 bytes.   */
-/* The transmitter accepts scatter/gather lists and frag-lists. */
-/* However Linux linearizes outgoing packets since our hardware */
-/*  doesn't compute soft checksums.  All that work for nothing! */
-/*net_dev->features       |= NETIF_F_SG; */
-/*net_dev->features       |= NETIF_F_FRAGLIST; */
-  }
-
 /* This pci_driver method is called during boot or module-load. */
-/* This is called from user context; can sleep; no spinlocks! */
+/* Looking for a DEC 21140A chip on any Lan Media Corp card. */
+/* context: kernel (boot) or process (syscall) */
 static int __init
-linux_probe(struct pci_dev *pci_dev, const struct pci_device_id *id)
+linux_probe(struct pci_dev *pcidev, const struct pci_device_id *id)
   {
-  u_int32_t cfid, csid;
-  struct net_device *net_dev;
-  softc_t *sc;
-  int error;
+  u_int32_t cfid;
+  u_int32_t csid;
 
-  /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
-  pci_read_config_dword(pci_dev, TLP_CFID, &cfid);
+  pci_read_config_dword(pcidev, TLP_CFID, &cfid);
+  pci_read_config_dword(pcidev, TLP_CSID, &csid);
+
   if (cfid != TLP_CFID_TULIP) return -ENXIO;
-  pci_read_config_dword(pci_dev, TLP_CSID, &csid);
   switch (csid)
     {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
-    case TLP_CSID_T3:
-    case TLP_CSID_SSI:
-    case TLP_CSID_T1E1:
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
+    case CSID_LMC_T3:
+    case CSID_LMC_SSI:
+    case CSID_LMC_T1E1:
+      print_driver_info();
       break;
     default:
       return -ENXIO;
     }
 
-  /* Declare that these cards use 32-bit single-address PCI cycles. */
-  if ((error = pci_set_dma_mask(pci_dev, DMA_32BIT_MASK)))
-    {
-    printk("%s: pci_set_dma_mask() failed; error %d\n", DEVICE_NAME, error);
-    return error;
-    }
-  pci_set_consistent_dma_mask(pci_dev, DMA_32BIT_MASK); /* can't fail */
+  /* Factor this task the way BSDs do. */
+  return linux_attach(pcidev);
+  }
 
-# if GEN_HDLC /* generic-hdlc line protocols */
+/* Linux bottom-half initialization. */
+/* context: kernel (boot) or process (syscall) */
+static int __init
+linux_attach(struct pci_dev *pcidev)
+  {
+  softc_t *sc;
+  int error;
 
-  /* device driver instance data, aka Soft Context or sc */
-  if ((sc = kmalloc(sizeof(softc_t), GFP_KERNEL)) == NULL)
+  /* Allocate the software context, softc, also known as sc. */
+  if ((sc = kzalloc(sizeof(softc_t), GFP_KERNEL)) == NULL)
     {
-    printk("%s: kmalloc() failed\n", DEVICE_NAME);
+    printk("%s: kzalloc() failed\n", DEVICE_NAME);
     return -ENOMEM;
     }
-  memset(sc, 0, sizeof(softc_t));
+  /* for linux_remove() */
+  pci_set_drvdata(pcidev, sc);
 
-  /* Allocate space for the HDLC network device struct. */
-  if ((net_dev = alloc_hdlcdev(sc)) == NULL)
-    {
-    printk("%s: alloc_hdlcdev() failed\n", DEVICE_NAME);
-    kfree(sc);
-    return -ENOMEM;
-    }
-
-  /* Initialize the network device struct. */
-  netdev_setup(net_dev);
-
-  /* Initialize the HDLC extension to the network device. */
-  sc->hdlc_dev         = dev_to_hdlc(net_dev);
-  sc->hdlc_dev->attach = hdlc_attach; /* noop for this driver */
-  sc->hdlc_dev->xmit   = linux_start; /* the REAL hard_start_xmit() */
-
-# else /* GEN_HDLC */ /* no line protocol. */
-
-  /* Allocate space for the bare network device struct. */
-  net_dev = alloc_netdev(sizeof(softc_t), DEVICE_NAME"%d", netdev_setup);
-  if (net_dev == NULL)
-    {
-    printk("%s: alloc_netdev() failed\n", DEVICE_NAME);
-    return -ENOMEM;
-    }
-  /* device driver instance data, aka Soft Context or sc */
-  sc = net_dev->priv;
-
-# endif /* GEN_HDLC */
-
-  sc->net_dev = net_dev;  /* NAME_UNIT macro needs this */
-  sc->pci_dev = pci_dev;  /* READ/WRITE_PCI_CFG macros need this */
-
-  /* Cross-link pci_dev and net_dev. */
-  pci_set_drvdata(pci_dev, net_dev);      /* pci_dev->driver_data = net_dev */
-  SET_NETDEV_DEV(net_dev, &pci_dev->dev); /* net_dev->class_dev.dev = &pci_dev->dev */
-  SET_MODULE_OWNER(net_dev);              /* ??? NOOP in linux-2.6.3. ??? */
-
-  /* Sets cfcs.io and cfcs.mem; sets pci_dev->irq based on cfit.int */
-  if ((error = pci_enable_device(pci_dev)))
-    {
-    printk("%s: pci_enable_device() failed; error %d\n", DEVICE_NAME, error);
-    linux_remove(pci_dev);
-    return error;
-    }
-  net_dev->irq = pci_dev->irq; /* linux_open/stop need this */
-
-  /* Allocate PCI memory and IO resources to access the Tulip chip CSRs. */
-  if ((error = pci_request_regions(pci_dev, DEVICE_NAME)))
-    {
-    printk("%s: pci_request_regions() failed; error %d\n", DEVICE_NAME, error);
-    linux_remove(pci_dev);
-    return error;
-    }
-  net_dev->base_addr = pci_resource_start(pci_dev, 0);
-  net_dev->mem_start = pci_resource_start(pci_dev, 1);
-  net_dev->mem_end   = pci_resource_end(pci_dev, 1);
-  sc->csr_iobase     = net_dev->base_addr;
-
-# if (IOREF_CSR == 0)
-  sc->csr_membase = ioremap_nocache(net_dev->mem_start, TLP_CSR_SIZE);
-  if (sc->csr_membase == NULL)
-    {
-    printk("%s: ioremap_nocache() failed\n", DEVICE_NAME);
-    linux_remove(pci_dev);
-    return -EFAULT;
-    }
-# endif
-
-  /* Sets cfcs.master, enabling PCI DMA; checks latency timer value. */
-  pci_set_master(pci_dev); /* Later, attach_card() does this too. */
-
-  /* Initialize the top-half and bottom-half locks. */
-  /* Top_lock must be initialized before net_dev is registered. */
-  init_MUTEX(&sc->top_lock);
-  spin_lock_init(&sc->bottom_lock);
-
-# if GEN_HDLC
-  if ((error = register_hdlc_device(net_dev)))
-    {
-    printk("%s: register_hdlc_device() failed; error %d\n", DEVICE_NAME, error);
-    linux_remove(pci_dev);
-    return error;
-    }
-# else
-  if ((error = register_netdev(net_dev)))
-    {
-    printk("%s: register_netdev() failed; error %d\n", DEVICE_NAME, error);
-    linux_remove(pci_dev);
-    return error;
-    }
-# endif
-  /* The NAME_UNIT macro now works.  Use DEVICE_NAME before this. */
-  sc->flags |= FLAG_NETDEV;
+  /* for READ/WRITE_PCI_CFG() */
+  sc->pcidev = pcidev;
 
   /* What kind of card are we driving? */
   switch (READ_PCI_CFG(sc, TLP_CSID))
     {
-    case TLP_CSID_HSSI:
-    case TLP_CSID_HSSIc:
+    case CSID_LMC_HSSI:
+    case CSID_LMC_HSSIc:
       sc->dev_desc =  HSSI_DESC;
       sc->card     = &hssi_card;
       break;
-    case TLP_CSID_T3:
+    case CSID_LMC_T3:
       sc->dev_desc =    T3_DESC;
       sc->card     =   &t3_card;
       break;
-    case TLP_CSID_SSI:
+    case CSID_LMC_SSI:
       sc->dev_desc =   SSI_DESC;
       sc->card     =  &ssi_card;
       break;
-    case TLP_CSID_T1E1:
+    case CSID_LMC_T1E1:
       sc->dev_desc =  T1E1_DESC;
       sc->card     =   &t1_card;
       break;
-    default: /* shouldn't happen! */
-      linux_remove(pci_dev);
+    default: /* should not happen! */
+      kfree(sc);
       return -ENXIO;
     }
 
-  /* Announce the hardware on the console. */
-  printk("%s: <%s> io 0x%04lx/9 mem 0x%08lx/25 rom 0x%08lx/14 irq %d pci %s\n",
-   NAME_UNIT, sc->dev_desc, pci_resource_start(pci_dev, 0),
-   pci_resource_start(pci_dev, 1), pci_resource_start(pci_dev, 6),
-   pci_dev->irq, pci_name(pci_dev));
+  /* Declare that these cards use 32-bit single-address PCI cycles. */
+  if ((error = pci_set_dma_mask(pcidev, DMA_32BIT_MASK)))
+    {
+    printk("%s: pci_set_dma_mask(): error %d\n", DEVICE_NAME, error);
+    linux_remove(pcidev);
+    return error;
+    }
+  pci_set_consistent_dma_mask(pcidev, DMA_32BIT_MASK); /* can not fail */
 
-  return 0;
+  /* Allocate PCI resources to access the Tulip chip CSRs. */
+  /* Since PCI resources will not change, request them now. */
+  if ((error = pci_request_regions(pcidev, DEVICE_NAME)))
+    {
+    printk("%s: pci_request_regions(): error %d\n", DEVICE_NAME, error);
+    linux_remove(pcidev);
+    return error;
+    }
+  if ((sc->csr_cookie = pci_iomap(pcidev, (IOREF_CSR ? 0:1),
+   TLP_CSR_SIZE)) == NULL)
+    {
+    printk("%s: pci_iomap() failed\n", DEVICE_NAME);
+    linux_remove(pcidev);
+    return -EFAULT;
+    }
+
+  /* Set cfcs.master, enabling busmaster DMA; check bus latency value. */
+  pci_set_master(pcidev);
+  /* Set cfcs.io and cfcs.mem; set pcidev->irq based on cfit.int. */
+  if ((error = pci_enable_device(pcidev)))
+    {
+    printk("%s: pci_enable_device(): error %d\n", DEVICE_NAME, error);
+    linux_remove(pcidev);
+    return error;
+    }
+
+  /* Allocate PCI interrupt resources for the card. */
+  /* Since the interrupt is shared, request it now. */
+  if ((error = request_irq(pcidev->irq, &linux_interrupt, SA_SHIRQ,
+   DEVICE_NAME, sc)))
+    {
+    printk("%s: request_irq(): error %d\n", DEVICE_NAME, error);
+    linux_remove(pcidev);
+    return error;
+    }
+
+  /* Initialize the top-half and bottom-half locks. */
+  /* Top_lock must be initialized before lmc_attach() is called. */
+  init_MUTEX(&sc->top_lock);
+  sc->bottom_lock = 0;
+
+  /* Install module parameter. */
+  sc->config.debug = debug;
+
+  /* Initialize the driver. */
+  /* The NAME_UNIT macro works after lmc_attach. */
+  /* Use DEVICE_NAME before this. */
+  if ((error = lmc_attach(sc)))
+    linux_remove(pcidev);
+  else
+    {
+    /* Describe the hardware. */
+    printk("%s: <%s> at pci %s irq %d\n", NAME_UNIT,
+     sc->dev_desc, pci_name(pcidev), pcidev->irq);
+    if (BOOT_VERBOSE)
+      printk("%s: io 0x%04lx/9 mem 0x%08lx/25 rom 0x%08lx/14\n", NAME_UNIT,
+       pci_resource_start(pcidev, 0), pci_resource_start(pcidev, 1),
+       pci_resource_start(pcidev, 6));
+    }
+
+  return error;
+  }
+
+/* This pci_driver method is called during shutdown or module-unload. */
+/* context: kernel (boot) or process (syscall) */
+static void __exit  /* This is detach() in BSD parlance. */
+linux_remove(struct pci_dev *pcidev)
+  {
+  softc_t *sc = pci_get_drvdata(pcidev);
+
+  /* Detach from the bus and the kernel. */
+  lmc_detach(sc);
+
+  /* Release resources. */
+  free_irq(pcidev->irq, sc);
+  if (sc->csr_cookie)
+    pci_iounmap(pcidev, sc->csr_cookie);
+  if (pci_resource_start(pcidev, 0))
+    pci_release_regions(pcidev);
+  pci_disable_device(pcidev);
+
+  kfree(sc);
+  }
+
+static u_int32_t
+READ_PCI_CFG(softc_t *sc, u_int32_t addr)
+  {
+  u_int32_t data;
+  pci_read_config_dword(sc->pcidev, addr, &data);
+  return data;
   }
 
 /* This pci driver knows how to drive these devices: */
@@ -7059,7 +7782,7 @@ static __initdata struct pci_device_id pci_device_id_tbl[] =
   {
   /* Looking for a DEC 21140A chip on any Lan Media Corp card. */
     { 0x1011, 0x0009, 0x1376, PCI_ANY_ID, 0, 0, 0 },
-    {      0,      0,      0,          0, 0, 0, 0 }
+    { 0, }
   };
 MODULE_DEVICE_TABLE(pci, pci_device_id_tbl);
 
@@ -7082,8 +7805,13 @@ static void __exit linux_modunload(void)
   { pci_unregister_driver(&pci_driver); }
 module_exit(linux_modunload);
 
+module_param(debug, int, 0);
+MODULE_PARM_DESC(debug, "Extra messages during operation");
+module_param(verbose, int, 0);
+MODULE_PARM_DESC(verbose, "Extra messages during startup");
+
 MODULE_LICENSE("Dual BSD/GPL");
-MODULE_DESCRIPTION("Device driver for SBE/LMC Wide-Area Network cards");
+MODULE_DESCRIPTION("Device driver for LMC Wide-Area Network cards");
 MODULE_AUTHOR("David Boggs <boggs@boggs.palo-alto.ca.us>");
 
 #endif /* __linux__ */

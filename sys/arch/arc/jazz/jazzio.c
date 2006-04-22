@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.15 2005/11/15 15:07:36 tsutsui Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.15.6.1 2006/04/22 11:37:16 simonb Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.15 2005/11/15 15:07:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.15.6.1 2006/04/22 11:37:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.15 2005/11/15 15:07:36 tsutsui Exp $");
 #include <arc/jazz/dma.h>
 #include <arc/jazz/pckbc_jazzioreg.h>
 
+#include "ioconf.h"
+
 void arc_sysreset(bus_addr_t, bus_size_t);
 
 struct jazzio_softc {
@@ -65,7 +67,6 @@ int	jazzioprint(void *, const char *);
 
 CFATTACH_DECL(jazzio, sizeof(struct jazzio_softc),
     jazziomatch, jazzioattach, NULL, NULL);
-extern struct cfdriver jazzio_cd;
 
 void	jazzio_intr_establish(int, int (*)(void *), void *);
 void	jazzio_intr_disestablish(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.33 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.33.6.1 2006/04/22 11:38:16 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,10 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.33 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.33.6.1 2006/04/22 11:38:16 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

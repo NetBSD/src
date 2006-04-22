@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.6 2005/12/23 23:20:00 rpaulo Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.6.6.1 2006/04/22 11:40:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.6 2005/12/23 23:20:00 rpaulo Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.6.6.1 2006/04/22 11:40:27 simonb Exp $");
 
 #include "opt_ffs.h"
 
@@ -377,9 +377,8 @@ ufs_extattr_iterate_directory(struct ufsmount *ump, struct vnode *dvp,
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = l;
 	auio.uio_offset = 0;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	vargs.a_desc = NULL;
 	vargs.a_vp = dvp;
@@ -633,9 +632,8 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	aiov.iov_len = sizeof(struct ufs_extattr_fileheader);
 	auio.uio_resid = sizeof(struct ufs_extattr_fileheader);
 	auio.uio_offset = (off_t) 0;
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_lwp = l;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	VOP_LEASE(backing_vnode, l, l->l_proc->p_ucred, LEASE_WRITE);
 	vn_lock(backing_vnode, LK_SHARED | LK_RETRY);
@@ -891,10 +889,9 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 	local_aio.uio_iov = &local_aiov;
 	local_aio.uio_iovcnt = 1;
 	local_aio.uio_rw = UIO_READ;
-	local_aio.uio_segflg = UIO_SYSSPACE;
-	local_aio.uio_lwp = l;
 	local_aio.uio_offset = base_offset;
 	local_aio.uio_resid = sizeof(struct ufs_extattr_header);
+	UIO_SETUP_SYSSPACE(&local_aio);
 
 	/*
 	 * Acquire locks.
@@ -1113,10 +1110,9 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 	local_aio.uio_iov = &local_aiov;
 	local_aio.uio_iovcnt = 1;
 	local_aio.uio_rw = UIO_WRITE;
-	local_aio.uio_segflg = UIO_SYSSPACE;
-	local_aio.uio_lwp = l;
 	local_aio.uio_offset = base_offset;
 	local_aio.uio_resid = sizeof(struct ufs_extattr_header);
+	UIO_SETUP_SYSSPACE(&local_aio);
 
 	/*
 	 * Acquire locks.
@@ -1216,10 +1212,9 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 	local_aio.uio_iov = &local_aiov;
 	local_aio.uio_iovcnt = 1;
 	local_aio.uio_rw = UIO_READ;
-	local_aio.uio_segflg = UIO_SYSSPACE;
-	local_aio.uio_lwp = l;
 	local_aio.uio_offset = base_offset;
 	local_aio.uio_resid = sizeof(struct ufs_extattr_header);
+	UIO_SETUP_SYSSPACE(&local_aio);
 
 	VOP_LEASE(attribute->uele_backing_vnode, l, cred, LEASE_WRITE);
 
@@ -1272,10 +1267,9 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 	local_aio.uio_iov = &local_aiov;
 	local_aio.uio_iovcnt = 1;
 	local_aio.uio_rw = UIO_WRITE;
-	local_aio.uio_segflg = UIO_SYSSPACE;
-	local_aio.uio_lwp = l;
 	local_aio.uio_offset = base_offset;
 	local_aio.uio_resid = sizeof(struct ufs_extattr_header);
+	UIO_SETUP_SYSSPACE(&local_aio);
 
 	ioflag = IO_NODELOCKED;
 	if (ufs_extattr_sync)

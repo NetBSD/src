@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.58 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.58.6.1 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58.6.1 2006/04/22 11:38:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58 2005/12/11 12:20:19 christos E
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
+#include <lib/libkern/libkern.h>
+
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -90,7 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.58 2005/12/11 12:20:19 christos E
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_socket.h>
+#if !defined(__alpha__) && !defined(__amd64__)
 #include <compat/linux/common/linux_socketcall.h>
+#endif
 #include <compat/linux/common/linux_sockio.h>
 
 #include <compat/linux/linux_syscallargs.h>
@@ -184,25 +188,28 @@ static const int bsd_to_linux_domain_[AF_MAX] = {
 	-1,		/* pseudo_AF_HDRCMPLT */
 };
 
-static const int bsd_to_linux_msg_flags_[] = {
-	MSG_OOB,		LINUX_MSG_OOB,
-	MSG_PEEK,		LINUX_MSG_PEEK,
-	MSG_DONTROUTE,		LINUX_MSG_DONTROUTE,
-	MSG_EOR,		LINUX_MSG_EOR,
-	MSG_TRUNC,		LINUX_MSG_TRUNC,
-	MSG_CTRUNC,		LINUX_MSG_CTRUNC,
-	MSG_WAITALL,		LINUX_MSG_WAITALL,
-	MSG_DONTWAIT,		LINUX_MSG_DONTWAIT,
-	MSG_BCAST,		0,		/* not supported, clear */
-	MSG_MCAST,		0,		/* not supported, clear */
-	-1, /* not supp */	LINUX_MSG_PROBE,
-	-1, /* not supp */	LINUX_MSG_FIN,
-	-1, /* not supp */	LINUX_MSG_SYN,
-	-1, /* not supp */	LINUX_MSG_CONFIRM,
-	-1, /* not supp */	LINUX_MSG_RST,
-	-1, /* not supp */	LINUX_MSG_ERRQUEUE,
-	-1, /* not supp */	LINUX_MSG_NOSIGNAL,
-	-1, /* not supp */	LINUX_MSG_MORE,
+static const struct {
+	int bfl;
+	int lfl;
+} bsd_to_linux_msg_flags_[] = {
+	{MSG_OOB,		LINUX_MSG_OOB},
+	{MSG_PEEK,		LINUX_MSG_PEEK},
+	{MSG_DONTROUTE,		LINUX_MSG_DONTROUTE},
+	{MSG_EOR,		LINUX_MSG_EOR},
+	{MSG_TRUNC,		LINUX_MSG_TRUNC},
+	{MSG_CTRUNC,		LINUX_MSG_CTRUNC},
+	{MSG_WAITALL,		LINUX_MSG_WAITALL},
+	{MSG_DONTWAIT,		LINUX_MSG_DONTWAIT},
+	{MSG_BCAST,		0},		/* not supported, clear */
+	{MSG_MCAST,		0},		/* not supported, clear */
+	{-1, /* not supp */	LINUX_MSG_PROBE},
+	{-1, /* not supp */	LINUX_MSG_FIN},
+	{-1, /* not supp */	LINUX_MSG_SYN},
+	{-1, /* not supp */	LINUX_MSG_CONFIRM},
+	{-1, /* not supp */	LINUX_MSG_RST},
+	{-1, /* not supp */	LINUX_MSG_ERRQUEUE},
+	{-1, /* not supp */	LINUX_MSG_NOSIGNAL},
+	{-1, /* not supp */	LINUX_MSG_MORE},
 };
 
 /*
@@ -241,10 +248,9 @@ linux_to_bsd_msg_flags(lflag)
 	if (lflag == 0)
 		return (0);
 
-	for(i=0; i < sizeof(bsd_to_linux_msg_flags_)/
-	    sizeof(bsd_to_linux_msg_flags_[0])/2; i += 2) {
-		bfl = bsd_to_linux_msg_flags_[i];
-		lfl = bsd_to_linux_msg_flags_[i+1];
+	for(i = 0; i < __arraycount(bsd_to_linux_msg_flags_); i++) {
+		bfl = bsd_to_linux_msg_flags_[i].bfl;
+		lfl = bsd_to_linux_msg_flags_[i].lfl;
 
 		if (lfl == 0)
 			continue;
@@ -270,10 +276,9 @@ bsd_to_linux_msg_flags(bflag)
 	if (bflag == 0)
 		return (0);
 
-	for(i=0; i < sizeof(bsd_to_linux_msg_flags_)/
-	    sizeof(bsd_to_linux_msg_flags_[0])/2; i += 2) {
-		bfl = bsd_to_linux_msg_flags_[i];
-		lfl = bsd_to_linux_msg_flags_[i+1];
+	for(i = 0; i < __arraycount(bsd_to_linux_msg_flags_); i++) {
+		bfl = bsd_to_linux_msg_flags_[i].bfl;
+		lfl = bsd_to_linux_msg_flags_[i].lfl;
 
 		if (bfl <= 0)
 			continue;
@@ -1672,7 +1677,7 @@ linux_sys_send(l, v, retval)
 
 	return (sys_sendto(l, &bsa, retval));
 }
-#endif /* __amd64__ */
+#endif
 
 int
 linux_sys_accept(l, v, retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.90 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.90.6.1 2006/04/22 11:39:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.90 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.90.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -825,7 +825,8 @@ gusattach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh1, ioh2, ioh3, ioh4;
 	int		iobase, i;
-	unsigned char	c,d,m;
+	unsigned char	c, m;
+	int d = -1;
 	const struct audio_hw_if *hwif;
 
 	sc = (void *) self;
@@ -892,12 +893,17 @@ gusattach(struct device *parent, struct device *self, void *aux)
 	c = ((unsigned char) gus_irq_map[ia->ia_irq[0].ir_irq]) |
 	    GUSMASK_BOTH_RQ;
 
-	if (sc->sc_recdrq == sc->sc_playdrq)
-		d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
-				GUSMASK_BOTH_RQ);
-	else
-		d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
-				gus_drq_map[sc->sc_recdrq] << 3);
+	if (sc->sc_playdrq != -1) {
+		if (sc->sc_recdrq == sc->sc_playdrq)
+			d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
+			    GUSMASK_BOTH_RQ);
+		else if (sc->sc_recdrq != -1)
+			d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
+			    gus_drq_map[sc->sc_recdrq] << 3);
+	}
+	if (d == -1)
+		printf("%s: WARNING: Cannot initialize drq\n",
+		    sc->sc_dev.dv_xname);
 
 	/*
 	 * Program the IRQ and DMA channels on the GUS.  Note that we hardwire
@@ -1472,7 +1478,7 @@ gus_dmaout_timeout(void *arg)
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 #if 0
 	/* XXX we will dmadone below? */
-	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_playdrq);
+	isa_dmaabort(device_parent(&sc->sc_dev), sc->sc_playdrq);
 #endif
 
 	gus_dmaout_dointr(sc);
@@ -2390,7 +2396,7 @@ gus_round_blocksize(void * addr, int blocksize,
 		FREE(sc->sc_deintr_buf, M_DEVBUF);
 		sc->sc_deintr_buf = NULL;
 	}
-	MALLOC(sc->sc_deintr_buf, void *, blocksize>>1, M_DEVBUF, M_WAITOK);
+	sc->sc_deintr_buf = malloc(blocksize>>1, M_DEVBUF, M_WAITOK);
 
 	sc->sc_blocksize = blocksize;
 	/* multi-buffering not quite working yet. */

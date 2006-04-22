@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.26 2005/12/11 12:21:26 christos Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.26.6.1 2006/04/22 11:38:55 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.26 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.26.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -89,11 +89,7 @@ static int 	clmpcc_modem_control(struct clmpcc_chan *, int, int);
 /*
  * These should be in a header file somewhere...
  */
-#define	ISSET(v, f)	(((v) & (f)) != 0)
 #define	ISCLR(v, f)	(((v) & (f)) == 0)
-#define SET(v, f)	(v) |= (f)
-#define CLR(v, f)	(v) &= ~(f)
-
 
 extern struct cfdriver clmpcc_cd;
 

@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.71 2005/12/07 12:40:47 tsutsui Exp $
+#	$NetBSD: TX3922,v 1.71.6.1 2006/04/22 11:37:30 simonb Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -226,7 +226,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # USB Handspring Visor
@@ -341,13 +341,13 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop		1	# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux
@@ -361,5 +361,6 @@ pseudo-device	clockctl		# user control of clock subsystem
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # for IPv6
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

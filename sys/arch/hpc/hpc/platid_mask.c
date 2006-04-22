@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.18 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.18.6.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -153,6 +153,14 @@ platid_t platid_mask_CPU_ARM_STRONGARM_SA1100 = {{
 }};
 platid_t platid_mask_CPU_ARM_STRONGARM_SA1110 = {{
 	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_WILD
+}};
+platid_t platid_mask_CPU_ARM_XSCALE = {{
+	PLATID_CPU_ARM_XSCALE,
+	PLATID_WILD
+}};
+platid_t platid_mask_CPU_ARM_XSCALE_PXA250 = {{
+	PLATID_CPU_ARM_XSCALE_PXA250,
 	PLATID_WILD
 }};
 #endif /* hpcarm */
@@ -617,6 +625,14 @@ platid_t platid_mask_MACH_COMPAQ_IPAQ_H3660 = {{
 	PLATID_CPU_ARM_STRONGARM_SA1110,
 	PLATID_MACH_COMPAQ_IPAQ_H3660
 }};
+platid_t platid_mask_MACH_COMPAQ_IPAQ_H39XX = {{
+	PLATID_WILD,
+	PLATID_MACH_COMPAQ_IPAQ_H39XX
+}};
+platid_t platid_mask_MACH_COMPAQ_IPAQ_H3900 = {{
+	PLATID_CPU_ARM_XSCALE_PXA250,
+	PLATID_MACH_COMPAQ_IPAQ_H3900
+}};
 #endif /* hpcarm */
 #ifdef hpcsh
 platid_t platid_mask_MACH_COMPAQ_AERO = {{
@@ -794,6 +810,26 @@ platid_t platid_mask_MACH_HP_JORNADA_720 = {{
 platid_t platid_mask_MACH_HP_JORNADA_720JP = {{
 	PLATID_CPU_ARM_STRONGARM_SA1110,
 	PLATID_MACH_HP_JORNADA_720JP
+}};
+platid_t platid_mask_MACH_HP_JORNADA_720EU = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_HP_JORNADA_720EU
+}};
+platid_t platid_mask_MACH_HP_JORNADA_720DE = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_HP_JORNADA_720DE
+}};
+platid_t platid_mask_MACH_HP_JORNADA_720FR = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_HP_JORNADA_720FR
+}};
+platid_t platid_mask_MACH_HP_JORNADA_720SV = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_HP_JORNADA_720SV
+}};
+platid_t platid_mask_MACH_HP_JORNADA_720ES = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_HP_JORNADA_720ES
 }};
 platid_t platid_mask_MACH_HP_JORNADA_8XX = {{
 	PLATID_WILD,

@@ -1,4 +1,4 @@
-# $NetBSD: std.mmeye,v 1.10 2005/12/11 12:18:16 christos Exp $
+# $NetBSD: std.mmeye,v 1.10.6.1 2006/04/22 11:37:44 simonb Exp $
 #
 # standard, required NetBSD/mmeye 'options'
 
@@ -13,4 +13,4 @@ options 	IOM_ROM_SIZE=0x00200000		# 2MB
 options 	EXEC_SCRIPT			# exec #! scripts
 
 makeoptions	ENDIAN="-EB"
-makeoptions	LDSCRIPTBASE="sh.x"		# for big endian
+makeoptions	DEFTEXTADDR="0x8c010000"

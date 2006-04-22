@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.35 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.35.6.1 2006/04/22 11:40:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.35 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.35.6.1 2006/04/22 11:40:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ umap_bypass(v)
 			printf("umap_bypass: returning-user was %d\n",
 			    credp->cr_uid);
 
-		if (savecredp != NOCRED) {
+		if (savecredp != NOCRED && credpp) {
 			crfree(credp);
 			*credpp = savecredp;
 			if ((flags & LAYERFS_MBYPASSDEBUG) && credpp &&
@@ -380,7 +380,8 @@ umap_lookup(v)
 		umap_mapids(mp, compcredp);
 	}
 
-	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp->cr_uid != 0)
+	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
+	    compcredp->cr_uid != 0)
 		printf("umap_lookup: component credit user now %d, group %d\n",
 		    compcredp->cr_uid, compcredp->cr_gid);
 
@@ -417,12 +418,13 @@ umap_lookup(v)
 	 * Free duplicate cred structure and restore old one.
 	 */
 	if ((flags & LAYERFS_MBYPASSDEBUG) && compcredp &&
-					compcredp->cr_uid != 0)
+	    compcredp->cr_uid != 0)
 		printf("umap_lookup: returning-component-user was %d\n",
 			    compcredp->cr_uid);
 
 	if (savecompcredp != NOCRED) {
-		crfree(compcredp);
+		if (compcredp)
+			crfree(compcredp);
 		cnp->cn_cred = savecompcredp;
 		if ((flags & LAYERFS_MBYPASSDEBUG) && savecompcredp &&
 				savecompcredp->cr_uid != 0)

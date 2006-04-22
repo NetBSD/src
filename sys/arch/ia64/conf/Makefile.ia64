@@ -1,0 +1,93 @@
+#	$NetBSD: Makefile.ia64,v 1.1.6.2 2006/04/22 11:37:35 simonb Exp $
+
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/ia64/conf/``machineid''
+# after which you should do
+#	config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/ia64/conf/Makefile.ia64
+# after which config should be rerun for all machines of that type.
+#
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
+
+MACHINE_ARCH=	ia64
+USETOOLS?=	no
+NEED_OWN_INSTALL_TARGET?=no
+.include <bsd.own.mk>
+
+##
+## (1) port identification
+##
+IA64=		$S/arch/ia64
+GENASSYM_CONF=	${IA64}/ia64/genassym.cf
+
+##
+## (2) compile settings
+##
+CPPFLAGS+=	-mconstant-gp -Dia64
+AFLAGS+=	-x assembler-with-cpp -Wa,-x 
+
+##
+## (3) libkern and compat
+##
+KERN_AS=	obj
+
+##
+## (4) local objects, compile rules, and dependencies
+##
+MD_OBJS=	locore.o 
+MD_CFILES=
+MD_SFILES=	${IA64}/ia64/locore.S
+
+locore.o: ${IA64}/ia64/locore.S assym.h
+	${NORMAL_S}
+##
+## (5) link settings
+##
+##TEXTADDR?=	0xdeadbeeffeeddead
+LINKFLAGS_NORMAL=	-X
+KERN_LDSCRIPT?=	kern.ldscript
+LINKFORMAT=	-T ${IA64}/conf/${KERN_LDSCRIPT}
+
+##
+## (6) port specific target dependencies
+##
+
+clock.o: config_time.h
+
+##
+## (7) misc settings
+##
+
+##
+## (8) config(8) generated machinery
+##
+%INCLUDES
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+%LOAD
+
+%RULES
+
+
+##
+## (9) port independent kernel machinery
+##
+.include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND

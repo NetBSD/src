@@ -1,4 +1,4 @@
-/*	$NetBSD: devreg.c,v 1.5 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: devreg.c,v 1.5.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devreg.c,v 1.5 2005/12/11 12:19:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devreg.c,v 1.5.6.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -49,57 +49,57 @@ __KERNEL_RCSID(0, "$NetBSD: devreg.c,v 1.5 2005/12/11 12:19:00 christos Exp $");
 #include <sh3/tmureg.h>
 
 /* MMU */
-u_int32_t __sh_PTEH;
-u_int32_t __sh_TTB;
-u_int32_t __sh_TEA;
-u_int32_t __sh_TRA;
-u_int32_t __sh_EXPEVT;
-u_int32_t __sh_INTEVT;
+uint32_t __sh_PTEH;
+uint32_t __sh_TTB;
+uint32_t __sh_TEA;
+uint32_t __sh_TRA;
+uint32_t __sh_EXPEVT;
+uint32_t __sh_INTEVT;
 
 /* UBC */
-u_int32_t __sh_BARA;
-u_int32_t __sh_BAMRA;
-u_int32_t __sh_BASRA;
-u_int32_t __sh_BBRA;
-u_int32_t __sh_BARB;
-u_int32_t __sh_BAMRB;
-u_int32_t __sh_BASRB;
-u_int32_t __sh_BBRB;
-u_int32_t __sh_BDRB;
-u_int32_t __sh_BDMRB;
-u_int32_t __sh_BRCR;
+uint32_t __sh_BARA;
+uint32_t __sh_BAMRA;
+uint32_t __sh_BASRA;
+uint32_t __sh_BBRA;
+uint32_t __sh_BARB;
+uint32_t __sh_BAMRB;
+uint32_t __sh_BASRB;
+uint32_t __sh_BBRB;
+uint32_t __sh_BDRB;
+uint32_t __sh_BDMRB;
+uint32_t __sh_BRCR;
 
 /* RTC */
-u_int32_t __sh_R64CNT;
-u_int32_t __sh_RSECCNT;
-u_int32_t __sh_RMINCNT;
-u_int32_t __sh_RHRCNT;
-u_int32_t __sh_RWKCNT;
-u_int32_t __sh_RDAYCNT;
-u_int32_t __sh_RMONCNT;
-u_int32_t __sh_RYRCNT;
-u_int32_t __sh_RSECAR;
-u_int32_t __sh_RMINAR;
-u_int32_t __sh_RHRAR;
-u_int32_t __sh_RWKAR;
-u_int32_t __sh_RDAYAR;
-u_int32_t __sh_RMONAR;
-u_int32_t __sh_RCR1;
-u_int32_t __sh_RCR2;
+uint32_t __sh_R64CNT;
+uint32_t __sh_RSECCNT;
+uint32_t __sh_RMINCNT;
+uint32_t __sh_RHRCNT;
+uint32_t __sh_RWKCNT;
+uint32_t __sh_RDAYCNT;
+uint32_t __sh_RMONCNT;
+uint32_t __sh_RYRCNT;
+uint32_t __sh_RSECAR;
+uint32_t __sh_RMINAR;
+uint32_t __sh_RHRAR;
+uint32_t __sh_RWKAR;
+uint32_t __sh_RDAYAR;
+uint32_t __sh_RMONAR;
+uint32_t __sh_RCR1;
+uint32_t __sh_RCR2;
 
 /* TMU */
-u_int32_t __sh_TOCR;
-u_int32_t __sh_TSTR;
-u_int32_t __sh_TCOR0;
-u_int32_t __sh_TCNT0;
-u_int32_t __sh_TCR0;
-u_int32_t __sh_TCOR1;
-u_int32_t __sh_TCNT1;
-u_int32_t __sh_TCR1;
-u_int32_t __sh_TCOR2;
-u_int32_t __sh_TCNT2;
-u_int32_t __sh_TCR2;
-u_int32_t __sh_TCPR2;
+uint32_t __sh_TOCR;
+uint32_t __sh_TSTR;
+uint32_t __sh_TCOR0;
+uint32_t __sh_TCNT0;
+uint32_t __sh_TCR0;
+uint32_t __sh_TCOR1;
+uint32_t __sh_TCNT1;
+uint32_t __sh_TCR1;
+uint32_t __sh_TCOR2;
+uint32_t __sh_TCNT2;
+uint32_t __sh_TCR2;
+uint32_t __sh_TCPR2;
 
 #define	SH3REG(x)	__sh_ ## x = SH3_ ## x
 #define	SH4REG(x)	__sh_ ## x = SH4_ ## x

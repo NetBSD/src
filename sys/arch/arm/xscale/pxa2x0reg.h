@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.7 2005/12/11 12:16:52 christos Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.7.6.1 2006/04/22 11:37:18 simonb Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -266,8 +266,8 @@ struct pxa2x0_dma_desc {
 #define CKEN_I2C	(1<<14)
 #define CKEN_LCD	(1<<16)
 
-#define OSCC_OOK	(1<<0)	/* 32.768KHz oscillator status */
-#define OSCC_OON	(1<<1)	/* 32.768KHz oscillator */
+#define OSCC_OOK	(1<<0)	/* 32.768 kHz oscillator status */
+#define OSCC_OON	(1<<1)	/* 32.768 kHz oscillator */
 
 /*
  * RTC
@@ -466,8 +466,8 @@ struct pxa2x0_dma_desc {
 #define LCDC_LCCR3	0x00c	/* Controller Control Register 2 */
 #define  LCCR3_BPP_SHIFT 24		/* Bits per pixel */
 #define  LCCR3_BPP	(0x07<<LCCR3_BPP_SHIFT)
-#define LCDC_LCCR4	0x010	/* Controller Control Register 3 */
-#define LCDC_LCCR5	0x014	/* Controller Control Register 3 */
+#define LCDC_LCCR4	0x010	/* Controller Control Register 4 */
+#define LCDC_LCCR5	0x014	/* Controller Control Register 5 */
 #define LCDC_FBR0	0x020	/* DMA ch0 frame branch register */
 #define LCDC_FBR1	0x024	/* DMA ch1 frame branch register */
 #define LCDC_FBR2	0x028	/* DMA ch2 frame branch register */

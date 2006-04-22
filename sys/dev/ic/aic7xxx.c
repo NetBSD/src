@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.117 2005/11/28 21:03:19 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.117.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.117 2005/11/28 21:03:19 bouyer Exp $
+ * $Id: aic7xxx.c,v 1.117.6.1 2006/04/22 11:38:54 simonb Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.117 2005/11/28 21:03:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.117.6.1 2006/04/22 11:38:54 simonb Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -82,7 +82,7 @@ const char *ahc_chip_names[] =
  * Hardware error codes.
  */
 struct ahc_hard_error_entry {
-        uint8_t errno;
+	uint8_t errno;
 	const char *errmesg;
 };
 
@@ -829,7 +829,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		printf("data overrun detected %s."
 		       "  Tag == 0x%x.\n",
 		       ahc_phase_table[i].phasemsg,
-  		       scb->hscb->tag);
+		       scb->hscb->tag);
 		ahc_print_path(ahc, scb);
 		printf("%s seen Data Phase.  Length = %ld.  NumSGs = %d.\n",
 		       ahc_inb(ahc, SEQ_FLAGS) & DPHASE ? "Have" : "Haven't",
@@ -4634,10 +4634,17 @@ ahc_init(struct ahc_softc *ahc)
 
 	/* Grab the disconnection disable table and invert it for our needs */
 	if ((ahc->flags & AHC_USEDEFAULTS) != 0) {
-		printf("%s: Host Adapter Bios disabled.  Using default SCSI "
-			"device parameters\n", ahc_name(ahc));
+		printf("%s: Host Adapter BIOS disabled. Using default SCSI "
+			"host and target device parameters\n", ahc_name(ahc));
 		ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B|
 			      AHC_TERM_ENB_A|AHC_TERM_ENB_B;
+		discenable = ALL_TARGETS_MASK;
+		if ((ahc->features & AHC_ULTRA) != 0)
+			ultraenb = ALL_TARGETS_MASK;
+	} else if ((ahc->flags & AHC_USETARGETDEFAULTS) != 0) {
+		printf("%s: Host Adapter has no SEEPROM. Using default SCSI"
+		    " target parameters\n", ahc_name(ahc));
+		ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B;
 		discenable = ALL_TARGETS_MASK;
 		if ((ahc->features & AHC_ULTRA) != 0)
 			ultraenb = ALL_TARGETS_MASK;
@@ -4671,7 +4678,7 @@ ahc_init(struct ahc_softc *ahc)
 					    target_id, &tstate);
 		/* Default to async narrow across the board */
 		memset(tinfo, 0, sizeof(*tinfo));
-		if (ahc->flags & AHC_USEDEFAULTS) {
+		if (ahc->flags & (AHC_USEDEFAULTS | AHC_USETARGETDEFAULTS)) {
 			if ((ahc->features & AHC_WIDE) != 0)
 				tinfo->user.width = MSG_EXT_WDTR_BUS_16_BIT;
 
@@ -4842,7 +4849,7 @@ ahc_init(struct ahc_softc *ahc)
 
 	/*
 	 * Setup the allowed SCSI Sequences based on operational mode.
-	 * If we are a target, we'll enalbe select in operations once
+	 * If we are a target, we'll enable select in operations once
 	 * we've had a lun enabled.
 	 */
 	scsiseq_template = ENSELO|ENAUTOATNO|ENAUTOATNP;
@@ -7395,19 +7402,19 @@ ahc_createdmamem(tag, size, flags, mapp, vaddr, baddr, seg, nseg, myname, what)
 
 	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
 				       BUS_DMA_WAITOK | flags, mapp)) != 0) {
-                printf("%s: failed to create DMA map for %s, error = %d\n",
+		printf("%s: failed to create DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
-        }
+	}
 	level++;
 
 
 	if ((error = bus_dmamap_load(tag, *mapp, *vaddr, size, NULL,
 				     BUS_DMA_WAITOK)) != 0) {
-                printf("%s: failed to load DMA map for %s, error = %d\n",
+		printf("%s: failed to load DMA map for %s, error = %d\n",
 			myname, what, error);
 		goto out;
-        }
+	}
 
 	*baddr = (*mapp)->dm_segs[0].ds_addr;
 

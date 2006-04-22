@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.11 2005/12/11 12:16:52 christos Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.11.6.1 2006/04/22 11:37:18 simonb Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.11 2005/12/11 12:16:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.11.6.1 2006/04/22 11:37:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,7 +344,7 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc,
 	struct pxa2x0_lcd_screen *scr = NULL;
 	int width, height;
 	bus_size_t size;
-        int error, pallet_size;
+	int error, pallet_size;
 	int busdma_flag = (cold ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	struct lcd_dma_descriptor *desc;
 	paddr_t buf_pa, desc_pa;
@@ -389,15 +389,17 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc,
 	size = roundup(size,16) + 3 * sizeof (struct lcd_dma_descriptor)
 	    + pallet_size;
 
-        error = bus_dmamem_alloc(sc->dma_tag, size, 16, 0,
+	error = bus_dmamem_alloc(sc->dma_tag, size, 16, 0,
 	    scr->segs, 1, &(scr->nsegs), busdma_flag);
 
-        if (error || scr->nsegs != 1) {
-		/* XXX: Actually we can handle nsegs>1 case by means
-                   of multiple DMA descriptors for a panel.  it will
-                   makes code here a bit hairly */
+	if (error || scr->nsegs != 1) {
+		/* XXX:
+		 * Actually we can handle nsegs>1 case by means
+		 * of multiple DMA descriptors for a panel.  It
+		 * will make code here a bit hairly.
+		 */
 		goto bad;
-        }
+	}
 
 	error = bus_dmamem_map(sc->dma_tag, scr->segs, scr->nsegs,
 	    size, (caddr_t *)&(scr->buf_va), busdma_flag | BUS_DMA_COHERENT);
@@ -610,7 +612,8 @@ pxa2x0_lcd_free_screen(void *v, void *cookie)
 }
 
 int
-pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pxa2x0_lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct pxa2x0_lcd_softc *sc = v;
 	struct wsdisplay_fbinfo *wsdisp_info;
@@ -664,7 +667,7 @@ pxa2x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 paddr_t
-pxa2x0_lcd_mmap(void *v, off_t offset, int prot)
+pxa2x0_lcd_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct pxa2x0_lcd_softc *sc = v;
 	struct pxa2x0_lcd_screen *screen = sc->active;  /* ??? */

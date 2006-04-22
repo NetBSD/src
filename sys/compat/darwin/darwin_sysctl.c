@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.38 2005/12/11 12:19:56 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.38.6.1 2006/04/22 11:38:13 simonb Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.38 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.38.6.1 2006/04/22 11:38:13 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -989,9 +989,8 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	auio.uio_iovcnt = 1;
 	auio.uio_offset = (vaddr_t)p->p_psstr;
 	auio.uio_resid = sizeof(pss);
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&auio);
 	if ((error = uvm_io(&p->p_vmspace->vm_map, &auio)) != 0)
 		goto done;
 
@@ -1010,9 +1009,8 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = sizeof(argv);
-	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_READ;
-	auio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&auio);
 	if ((error = uvm_io(&p->p_vmspace->vm_map, &auio)) != 0)
 		goto done;
 
@@ -1032,9 +1030,8 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 		auio.uio_offset = argv + len;
 		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
 		auio.uio_resid = xlen;
-		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = uvm_io(&p->p_vmspace->vm_map, &auio);
 		if (error)
 			goto done;
@@ -1094,9 +1091,8 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 		auio.uio_offset = argv + len;
 		xlen = PAGE_SIZE - ((argv + len) & PAGE_MASK);
 		auio.uio_resid = xlen;
-		auio.uio_segflg = UIO_SYSSPACE;
 		auio.uio_rw = UIO_READ;
-		auio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&auio);
 		error = uvm_io(&p->p_vmspace->vm_map, &auio);
 		if (error)
 			goto done;

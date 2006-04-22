@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.18 2006/01/15 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.18.4.1 2006/04/22 11:38:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -143,7 +143,7 @@ void hypervisor_set_ipending(u_int32_t, int, int);
  * Assembler stubs for hyper-calls.
  */
 
-static inline int
+static __inline int
 HYPERVISOR_set_trap_table(trap_info_t *table)
 {
     int ret;
@@ -158,7 +158,7 @@ HYPERVISOR_set_trap_table(trap_info_t *table)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_set_gdt(unsigned long *frame_list, int entries)
 {
     int ret;
@@ -173,7 +173,7 @@ HYPERVISOR_set_gdt(unsigned long *frame_list, int entries)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_stack_switch(unsigned long ss, unsigned long esp)
 {
     int ret;
@@ -188,7 +188,7 @@ HYPERVISOR_stack_switch(unsigned long ss, unsigned long esp)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_set_callbacks(
     unsigned long event_selector, unsigned long event_address,
     unsigned long failsafe_selector, unsigned long failsafe_address)
@@ -206,7 +206,7 @@ HYPERVISOR_set_callbacks(
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_dom0_op(dom0_op_t *dom0_op)
 {
     int ret;
@@ -222,7 +222,7 @@ HYPERVISOR_dom0_op(dom0_op_t *dom0_op)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_set_debugreg(int reg, unsigned long value)
 {
     int ret;
@@ -237,7 +237,7 @@ HYPERVISOR_set_debugreg(int reg, unsigned long value)
     return ret;
 }
 
-static inline unsigned long
+static __inline unsigned long
 HYPERVISOR_get_debugreg(int reg)
 {
     unsigned long ret;
@@ -253,7 +253,7 @@ HYPERVISOR_get_debugreg(int reg)
 }
 
 #ifdef XEN3
-static inline int
+static __inline int
 HYPERVISOR_mmu_update(mmu_update_t *req, int count, int *success_count,
     domid_t domid)
 {
@@ -270,7 +270,7 @@ HYPERVISOR_mmu_update(mmu_update_t *req, int count, int *success_count,
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_mmuext_op(struct mmuext_op *op, int count, int *success_count,
     domid_t domid)
 {
@@ -288,7 +288,7 @@ HYPERVISOR_mmuext_op(struct mmuext_op *op, int count, int *success_count,
 }
 
 #if 0
-static inline int
+static __inline int
 HYPERVISOR_fpu_taskswitch(int set)
 {
     long ret;
@@ -302,7 +302,7 @@ HYPERVISOR_fpu_taskswitch(int set)
 }
 #else /* 0 */
 /* Xen2 compat: always i38HYPERVISOR_fpu_taskswitch(1) */
-static inline int
+static __inline int
 HYPERVISOR_fpu_taskswitch(void)
 {
     long ret;
@@ -316,7 +316,7 @@ HYPERVISOR_fpu_taskswitch(void)
 }
 #endif /* 0 */
 
-static inline int
+static __inline int
 HYPERVISOR_update_descriptor(uint64_t ma, uint32_t word1, uint32_t word2)
 {
     int ret;
@@ -334,7 +334,7 @@ HYPERVISOR_update_descriptor(uint64_t ma, uint32_t word1, uint32_t word2)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_memory_op(unsigned int cmd, void *arg)
 {
     int ret;
@@ -349,7 +349,7 @@ HYPERVISOR_memory_op(unsigned int cmd, void *arg)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_update_va_mapping(unsigned long page_nr, unsigned long new_val,
     unsigned long flags)
 {
@@ -372,7 +372,7 @@ HYPERVISOR_update_va_mapping(unsigned long page_nr, unsigned long new_val,
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_xen_version(int cmd, void *arg)
 {
     int ret;
@@ -387,7 +387,7 @@ HYPERVISOR_xen_version(int cmd, void *arg)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count)
 {
     int ret;
@@ -402,7 +402,7 @@ HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
     unsigned long new_val, unsigned long flags, domid_t domid)
 {
@@ -420,7 +420,7 @@ HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_vcpu_op(int cmd, int vcpuid, void *extra_args)
 {
     long ret;
@@ -436,7 +436,7 @@ HYPERVISOR_vcpu_op(int cmd, int vcpuid, void *extra_args)
     return ret;
 }
 
-static inline long
+static __inline long
 HYPERVISOR_yield(void)
 {
     long ret;
@@ -451,7 +451,7 @@ HYPERVISOR_yield(void)
     return ret;
 }
 
-static inline long
+static __inline long
 HYPERVISOR_block(void)
 {
     long ret;
@@ -466,7 +466,7 @@ HYPERVISOR_block(void)
     return ret;
 }
 
-static inline long
+static __inline long
 HYPERVISOR_shutdown(void)
 {
     long ret;
@@ -482,7 +482,7 @@ HYPERVISOR_shutdown(void)
     return ret;
 }
 
-static inline long
+static __inline long
 HYPERVISOR_reboot(void)
 {
     long ret;
@@ -498,7 +498,7 @@ HYPERVISOR_reboot(void)
     return ret;
 }
 
-static inline long
+static __inline long
 HYPERVISOR_suspend(unsigned long srec)
 {
     long ret;
@@ -514,7 +514,7 @@ HYPERVISOR_suspend(unsigned long srec)
     return ret;
 }
 
-static inline long
+static __inline long
 HYPERVISOR_set_timer_op(uint64_t timeout)
 {
     long ret;
@@ -525,13 +525,13 @@ HYPERVISOR_set_timer_op(uint64_t timeout)
     __asm volatile (
         TRAP_INSTR
         : "=a" (ret), "=b" (ign1), "=c" (ign2)
-	: "0" (__HYPERVISOR_set_timer_op), "b" (timeout_lo), "c" (timeout_hi)
+	: "0" (__HYPERVISOR_set_timer_op), "1" (timeout_lo), "2" (timeout_hi)
 	: "memory");
 
     return ret;
 }
 #else /* XEN3 */
-static inline int
+static __inline int
 HYPERVISOR_mmu_update(mmu_update_t *req, int count, int *success_count)
 {
     int ret;
@@ -547,7 +547,7 @@ HYPERVISOR_mmu_update(mmu_update_t *req, int count, int *success_count)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_fpu_taskswitch(void)
 {
     int ret;
@@ -558,7 +558,7 @@ HYPERVISOR_fpu_taskswitch(void)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_update_descriptor(unsigned long pa, unsigned long word1,
     unsigned long word2)
 {
@@ -575,7 +575,7 @@ HYPERVISOR_update_descriptor(unsigned long pa, unsigned long word1,
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_yield(void)
 {
     int ret;
@@ -590,7 +590,7 @@ HYPERVISOR_yield(void)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_block(void)
 {
     int ret;
@@ -605,7 +605,7 @@ HYPERVISOR_block(void)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_shutdown(void)
 {
     int ret;
@@ -621,7 +621,7 @@ HYPERVISOR_shutdown(void)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_reboot(void)
 {
     int ret;
@@ -637,7 +637,7 @@ HYPERVISOR_reboot(void)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_suspend(unsigned long srec)
 {
     int ret;
@@ -654,7 +654,7 @@ HYPERVISOR_suspend(unsigned long srec)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_set_fast_trap(int idx)
 {
     int ret;
@@ -669,7 +669,7 @@ HYPERVISOR_set_fast_trap(int idx)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_dom_mem_op(unsigned int op, unsigned long *extent_list,
     unsigned long nr_extents, unsigned int extent_order)
 {
@@ -687,7 +687,7 @@ HYPERVISOR_dom_mem_op(unsigned int op, unsigned long *extent_list,
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_update_va_mapping(unsigned long page_nr, unsigned long new_val,
     unsigned long flags)
 {
@@ -710,7 +710,7 @@ HYPERVISOR_update_va_mapping(unsigned long page_nr, unsigned long new_val,
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_xen_version(int cmd)
 {
     int ret;
@@ -725,7 +725,7 @@ HYPERVISOR_xen_version(int cmd)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count)
 {
     int ret;
@@ -740,7 +740,7 @@ HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
     unsigned long new_val, unsigned long flags, domid_t domid)
 {
@@ -757,7 +757,7 @@ HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
     return ret;
 }
 
-static inline long
+static __inline long
 HYPERVISOR_set_timer_op(uint64_t timeout)
 {
     long ret;
@@ -775,7 +775,7 @@ HYPERVISOR_set_timer_op(uint64_t timeout)
 }
 #endif /* XEN3 */
 
-static inline int
+static __inline int
 HYPERVISOR_multicall(void *call_list, int nr_calls)
 {
     int ret;
@@ -791,7 +791,7 @@ HYPERVISOR_multicall(void *call_list, int nr_calls)
 }
 
 
-static inline int
+static __inline int
 HYPERVISOR_event_channel_op(void *op)
 {
     int ret;
@@ -806,7 +806,7 @@ HYPERVISOR_event_channel_op(void *op)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_console_io(int cmd, int count, char *str)
 {
     int ret;
@@ -821,7 +821,7 @@ HYPERVISOR_console_io(int cmd, int count, char *str)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_physdev_op(void *physdev_op)
 {
     int ret;
@@ -836,7 +836,7 @@ HYPERVISOR_physdev_op(void *physdev_op)
     return ret;
 }
 
-static inline int
+static __inline int
 HYPERVISOR_vm_assist(unsigned int cmd, unsigned int type)
 {
     int ret;
@@ -856,7 +856,7 @@ HYPERVISOR_vm_assist(unsigned int cmd, unsigned int type)
  * callback mask. We do this in a very simple manner, by making a call
  * down into Xen. The pending flag will be checked by Xen on return. 
  */
-static inline void hypervisor_force_callback(void)
+static __inline void hypervisor_force_callback(void)
 {
 #ifdef XEN3
 	(void)HYPERVISOR_xen_version(0, (void*)0);
@@ -865,7 +865,7 @@ static inline void hypervisor_force_callback(void)
 #endif
 } __attribute__((no_instrument_function)) /* used by mcount */
 
-static inline void
+static __inline void
 hypervisor_notify_via_evtchn(unsigned int port)
 {
 	evtchn_op_t op;

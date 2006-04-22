@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.13 2005/12/11 12:22:18 christos Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.13.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.13 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.13.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ com_mca_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct com_mca_softc *isc = (void *)self;
+	struct com_mca_softc *isc = device_private(self);
 	struct com_softc *sc = &isc->sc_com;
 	int iobase, irq;
 	struct mca_attach_args *ma = aux;

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.6 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.6.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright(c) 1996, 2001, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ FileManager::setRoot(TCHAR *drive)
 }
 
 BOOL
-FileManager::open(const TCHAR *name, u_int32_t flags)
+FileManager::open(const TCHAR *name, uint32_t flags)
 {
 	if (!_file->open(name, flags))
 		return FALSE;
@@ -102,7 +102,7 @@ size_t
 FileManager::_read(void *buf, size_t len)
 {
 	// starting point for crc computation
-	u_int8_t *start = reinterpret_cast<u_int8_t *>(buf);
+	uint8_t *start = reinterpret_cast<uint8_t *>(buf);
 
 	if (_z_err == Z_DATA_ERROR || _z_err == Z_ERRNO) {
 		return -1;
@@ -110,14 +110,14 @@ FileManager::_read(void *buf, size_t len)
 	if (_z_err == Z_STREAM_END) {
 		return 0;  // EOF
 	}
-	_stream->next_out = reinterpret_cast<u_int8_t *>(buf);
+	_stream->next_out = reinterpret_cast<uint8_t *>(buf);
 	_stream->avail_out = len;
 
 	int got;
 	while (_stream->avail_out != 0) {
 		if (!_compressed) {
 			// Copy first the lookahead bytes
-			u_int32_t n = _stream->avail_in;
+			uint32_t n = _stream->avail_in;
 			if (n > _stream->avail_out)
 				n = _stream->avail_out;
 			if (n > 0) {
@@ -295,18 +295,18 @@ FileManager::_get_byte()
 	return *(_stream->next_in)++;
 }
 
-u_int32_t
+uint32_t
 FileManager::_get_long()
 {
-	u_int32_t x = static_cast<u_int32_t>(_get_byte());
+	uint32_t x = static_cast<uint32_t>(_get_byte());
 	int c;
 
-	x +=(static_cast<u_int32_t>(_get_byte())) << 8;
-	x +=(static_cast<u_int32_t>(_get_byte())) << 16;
+	x +=(static_cast<uint32_t>(_get_byte())) << 8;
+	x +=(static_cast<uint32_t>(_get_byte())) << 16;
 	c = _get_byte();
 	if (c == EOF)
 		_z_err = Z_DATA_ERROR;
-	x +=(static_cast<u_int32_t>(c)) << 24;
+	x +=(static_cast<uint32_t>(c)) << 24;
 
 	return x;
 }

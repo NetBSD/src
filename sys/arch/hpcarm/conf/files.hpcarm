@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.54 2006/01/03 23:11:00 peter Exp $
+#	$NetBSD: files.hpcarm,v 1.54.4.1 2006/04/22 11:37:28 simonb Exp $
 #
 # hpcarm specific configuration info
 #
@@ -17,10 +17,6 @@ define todservice {}
 # Memory disk driver
 file	dev/md_root.c				memory_disk_hooks
 
-# Standard keyboard driver
-#device	kbd
-#file	arch/hpcarm/dev/kbd.c			kbd needs-flag
-
 # Generic MD files
 file	arch/hpcarm/hpcarm/autoconf.c
 file	arch/hpcarm/hpcarm/intr.c
@@ -36,7 +32,7 @@ include "arch/arm/conf/files.sa11x0"
 # SA11[01]1 companion chips
 file	arch/hpcarm/dev/sacc_hpcarm.c		sacc
 
-# platform dependent part of PCMCIA support.
+# Jornada 720 dependent part of PCMCIA support.
 file	arch/hpcarm/dev/j720pcic.c		sacpcic
 
 # XXX iPAQ Virtual bus
@@ -55,31 +51,46 @@ file	arch/hpcarm/dev/ipaq_pcic.c		ipaqpcic needs-flag
 include	"arch/hpc/conf/files.hpc"
 file	arch/hpc/hpc/disksubr.c			disk
 include	"dev/hpc/files.bicons"
+include	"dev/hpc/files.hpcapm"
 include	"dev/hpc/files.hpcfb"
 include	"dev/hpc/files.hpckbd"
 include	"dev/hpc/files.hpctp"
 
-# LCD
+# iPAQ LCD
 device	ipaqlcd: hpcfbif
 attach	ipaqlcd at ipaqbus
 file	arch/hpcarm/dev/ipaq_lcd.c		ipaqlcd
 
+# Epson SED1356 framebuffer
 device	sed: hpcfbif
 attach	sed at saip
 file	arch/hpcarm/dev/sed_saip.c		sed
 
-device	j720sspapm {}
-device	j720ssp {}: wskbddev, wsmousedev, hpctpanel, j720sspapm
+# Jornada 720 SSP port
+device	j720ssp {}
 attach	j720ssp at saip
 file	arch/hpcarm/dev/j720ssp.c		j720ssp
-file	arch/hpcarm/dev/j720kbdmap.c		j720ssp
 
-file	dev/cninit.c
+# Jornada 720 keyboard
+device j720kbd: hpckbdif
+attach j720kbd at j720ssp
+file	arch/hpcarm/dev/j720kbd.c		j720kbd
 
-# APM
-device	apm
-attach	apm at j720sspapm
-file	arch/hpcarm/dev/apm.c		apm needs-count
+# Jornada 720 touch-panel
+device	j720tp: hpctpanel, wsmousedev
+attach	j720tp at j720ssp
+file	arch/hpcarm/dev/j720tp.c		j720tp
+defflag	opt_j720tp.h		J720TP_DEBUG
+
+# Jornada 720 LCD screen
+device	j720lcd
+attach	j720lcd at j720ssp
+file	arch/hpcarm/dev/j720lcd.c		j720lcd
+
+# Jornada 720 power management
+device	j720pwr: hpcapmif
+attach	j720pwr at j720ssp
+file	arch/hpcarm/dev/j720pwr.c		j720pwr
 
 # Atmel microcontroller
 device	atmelgpioif {}
@@ -93,10 +104,13 @@ device	uda: udaif
 attach	uda at ipaqbus
 file	arch/hpcarm/dev/uda1341.c		uda
 
-# Include ATA stuff
+file	dev/cninit.c
+
+# Machine-independent ATA drivers
 include "dev/ata/files.ata"
 
-# Include SCSI/ATAPI stuff
+# Machine-independent SCSI/ATAPI drivers
 include "dev/scsipi/files.scsipi"
 
 include "arch/arm/conf/majors.arm32"
+include "arch/hpcarm/conf/majors.hpcarm"

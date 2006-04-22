@@ -1,4 +1,4 @@
-/*	$NetBSD: iavcreg.h,v 1.3 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: iavcreg.h,v 1.3.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -35,12 +35,12 @@
 //      S5933 DMA controller.
 */
 
-static inline u_int32_t AMCC_READ(iavc_softc_t *sc, int off)
+static __inline u_int32_t AMCC_READ(iavc_softc_t *sc, int off)
 {
     return bus_space_read_4(sc->sc_mem_bt, sc->sc_mem_bh, off);
 }
 
-static inline void AMCC_WRITE(iavc_softc_t *sc, int off, u_int32_t value)
+static __inline void AMCC_WRITE(iavc_softc_t *sc, int off, u_int32_t value)
 {
     bus_space_write_4(sc->sc_mem_bt, sc->sc_mem_bh, off, value);
 }
@@ -50,19 +50,19 @@ static inline void AMCC_WRITE(iavc_softc_t *sc, int off, u_int32_t value)
 //      Routines to access the DMA buffers byte- or wordwise.
 */
 
-static inline u_int8_t* amcc_put_byte(u_int8_t *buf, u_int8_t value)
+static __inline u_int8_t* amcc_put_byte(u_int8_t *buf, u_int8_t value)
 {
     *buf++ = value;
     return buf;
 }
 
-static inline u_int8_t* amcc_get_byte(u_int8_t *buf, u_int8_t *value)
+static __inline u_int8_t* amcc_get_byte(u_int8_t *buf, u_int8_t *value)
 {
     *value = *buf++;
     return buf;
 }
 
-static inline u_int8_t* amcc_put_word(u_int8_t *buf, u_int32_t value)
+static __inline u_int8_t* amcc_put_word(u_int8_t *buf, u_int32_t value)
 {
     *buf++ = (value & 0xff);
     *buf++ = (value >> 8) & 0xff;
@@ -71,7 +71,7 @@ static inline u_int8_t* amcc_put_word(u_int8_t *buf, u_int32_t value)
     return buf;
 }
 
-static inline u_int8_t* amcc_get_word(u_int8_t *buf, u_int32_t *value)
+static __inline u_int8_t* amcc_get_word(u_int8_t *buf, u_int32_t *value)
 {
     *value = *buf++;
     *value |= (*buf++ << 8);
@@ -210,20 +210,20 @@ static inline u_int8_t* amcc_get_word(u_int8_t *buf, u_int32_t *value)
 //      I/O ports.
 */
 
-static inline u_int8_t b1io_outp(iavc_softc_t *sc, int off, u_int8_t val)
+static __inline u_int8_t b1io_outp(iavc_softc_t *sc, int off, u_int8_t val)
 {
     bus_space_write_1(sc->sc_io_bt, sc->sc_io_bh, off, val);
     DELAY(1);
     return bus_space_read_1(sc->sc_io_bt, sc->sc_io_bh, B1_ANALYSE);
 }
 
-static inline int b1io_rx_full(iavc_softc_t *sc)
+static __inline int b1io_rx_full(iavc_softc_t *sc)
 {
     u_int8_t val = bus_space_read_1(sc->sc_io_bt, sc->sc_io_bh, B1_INSTAT);
     return (val & 0x01);
 }
 
-static inline int b1io_tx_empty(iavc_softc_t *sc)
+static __inline int b1io_tx_empty(iavc_softc_t *sc)
 {
     u_int8_t val = bus_space_read_1(sc->sc_io_bt, sc->sc_io_bh, B1_OUTSTAT);
     return  (val & 0x01);
@@ -239,7 +239,7 @@ static inline int b1io_tx_empty(iavc_softc_t *sc)
 //      I/O registers.
 */
 
-static inline u_int8_t b1io_get_byte(iavc_softc_t *sc)
+static __inline u_int8_t b1io_get_byte(iavc_softc_t *sc)
 {
     int spin = 0;
     while (!b1io_rx_full(sc) && spin < B1IO_WAIT_MAX) {
@@ -251,7 +251,7 @@ static inline u_int8_t b1io_get_byte(iavc_softc_t *sc)
     return 0xff;
 }
 
-static inline int b1io_put_byte(iavc_softc_t *sc, u_int8_t val)
+static __inline int b1io_put_byte(iavc_softc_t *sc, u_int8_t val)
 {
     int spin = 0;
     while (!b1io_tx_empty(sc) && spin < B1IO_WAIT_MAX) {
@@ -265,7 +265,7 @@ static inline int b1io_put_byte(iavc_softc_t *sc, u_int8_t val)
     return -1;
 }
 
-static inline int b1io_save_put_byte(iavc_softc_t *sc, u_int8_t val)
+static __inline int b1io_save_put_byte(iavc_softc_t *sc, u_int8_t val)
 {
     int spin = 0;
     while (!b1io_tx_empty(sc) && spin < B1IO_WAIT_MAX) {
@@ -279,7 +279,7 @@ static inline int b1io_save_put_byte(iavc_softc_t *sc, u_int8_t val)
     return -1;
 }
 
-static inline u_int32_t b1io_get_word(iavc_softc_t *sc)
+static __inline u_int32_t b1io_get_word(iavc_softc_t *sc)
 {
     u_int32_t val = 0;
     val |= b1io_get_byte(sc);
@@ -289,7 +289,7 @@ static inline u_int32_t b1io_get_word(iavc_softc_t *sc)
     return val;
 }
 
-static inline void b1io_put_word(iavc_softc_t *sc, u_int32_t val)
+static __inline void b1io_put_word(iavc_softc_t *sc, u_int32_t val)
 {
     b1io_put_byte(sc, (val & 0xff));
     b1io_put_byte(sc, (val >> 8) & 0xff);
@@ -297,7 +297,7 @@ static inline void b1io_put_word(iavc_softc_t *sc, u_int32_t val)
     b1io_put_byte(sc, (val >> 24) & 0xff);
 }
 
-static inline int b1io_get_slice(iavc_softc_t *sc, u_int8_t *dp)
+static __inline int b1io_get_slice(iavc_softc_t *sc, u_int8_t *dp)
 {
     int len, i;
     len = i = b1io_get_word(sc);
@@ -305,7 +305,7 @@ static inline int b1io_get_slice(iavc_softc_t *sc, u_int8_t *dp)
     return len;
 }
 
-static inline void b1io_put_slice(iavc_softc_t *sc, u_int8_t *dp, int len)
+static __inline void b1io_put_slice(iavc_softc_t *sc, u_int8_t *dp, int len)
 {
     b1io_put_word(sc, len);
     while (len--) b1io_put_byte(sc, *dp++);
@@ -317,14 +317,14 @@ static inline void b1io_put_slice(iavc_softc_t *sc, u_int8_t *dp, int len)
 //      ports.
 */
 
-static inline u_int32_t b1io_read_reg(iavc_softc_t *sc, int reg)
+static __inline u_int32_t b1io_read_reg(iavc_softc_t *sc, int reg)
 {
     b1io_put_byte(sc, READ_REGISTER);
     b1io_put_word(sc, reg);
     return b1io_get_word(sc);
 }
 
-static inline u_int32_t b1io_write_reg(iavc_softc_t *sc, int reg, u_int32_t val)
+static __inline u_int32_t b1io_write_reg(iavc_softc_t *sc, int reg, u_int32_t val)
 {
     b1io_put_byte(sc, WRITE_REGISTER);
     b1io_put_word(sc, reg);
@@ -338,27 +338,27 @@ static inline u_int32_t b1io_write_reg(iavc_softc_t *sc, int reg, u_int32_t val)
 //      to have the analysis port.
 */
 
-static inline void t1io_outp(iavc_softc_t *sc, int off, u_int8_t val)
+static __inline void t1io_outp(iavc_softc_t *sc, int off, u_int8_t val)
 {
     bus_space_write_1(sc->sc_io_bt, sc->sc_io_bh, off, val);
 }
 
-static inline u_int8_t t1io_inp(iavc_softc_t *sc, int off)
+static __inline u_int8_t t1io_inp(iavc_softc_t *sc, int off)
 {
     return bus_space_read_1(sc->sc_io_bt, sc->sc_io_bh, off);
 }
 
-static inline int t1io_isfastlink(iavc_softc_t *sc)
+static __inline int t1io_isfastlink(iavc_softc_t *sc)
 {
     return ((bus_space_read_1(sc->sc_io_bt, sc->sc_io_bh, T1_IDENT) & ~0x82) == 1);
 }
 
-static inline u_int8_t t1io_fifostatus(iavc_softc_t *sc)
+static __inline u_int8_t t1io_fifostatus(iavc_softc_t *sc)
 {
     return bus_space_read_1(sc->sc_io_bt, sc->sc_io_bh, T1_FIFOSTAT);
 }
 
-static inline int t1io_get_slice(iavc_softc_t *sc, u_int8_t *dp)
+static __inline int t1io_get_slice(iavc_softc_t *sc, u_int8_t *dp)
 {
     int len, i;
     len = i = b1io_get_word(sc);
@@ -394,7 +394,7 @@ static inline int t1io_get_slice(iavc_softc_t *sc, u_int8_t *dp)
     return len;
 }
 
-static inline void t1io_put_slice(iavc_softc_t *sc, u_int8_t *dp, int len)
+static __inline void t1io_put_slice(iavc_softc_t *sc, u_int8_t *dp, int len)
 {
     int i = len;
     b1io_put_word(sc, i);
@@ -470,13 +470,13 @@ static inline void t1io_put_slice(iavc_softc_t *sc, u_int8_t *dp, int len)
 #define iavc_get_word(sc)      b1io_get_word(sc)
 #define iavc_put_word(sc, val) b1io_put_word(sc, val)
 
-static inline u_int32_t iavc_get_slice(iavc_softc_t *sc, u_int8_t *dp)
+static __inline u_int32_t iavc_get_slice(iavc_softc_t *sc, u_int8_t *dp)
 {
     if (sc->sc_t1) return t1io_get_slice(sc, dp);
     else return b1io_get_slice(sc, dp);
 }
 
-static inline void iavc_put_slice(iavc_softc_t *sc, u_int8_t *dp, int len)
+static __inline void iavc_put_slice(iavc_softc_t *sc, u_int8_t *dp, int len)
 {
     if (sc->sc_t1) t1io_put_slice(sc, dp, len);
     else b1io_put_slice(sc, dp, len);

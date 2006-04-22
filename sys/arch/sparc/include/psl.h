@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.38 2005/12/24 20:07:32 perry Exp $ */
+/*	$NetBSD: psl.h,v 1.38.6.1 2006/04/22 11:37:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -231,7 +231,7 @@
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
  */
-static inline int
+static __inline int
 getpsr(void)
 {
 	int psr;
@@ -240,7 +240,7 @@ getpsr(void)
 	return (psr);
 }
 
-static inline int
+static __inline int
 getmid(void)
 {
 	int mid;
@@ -249,14 +249,14 @@ getmid(void)
 	return ((mid >> 20) & 0x3);
 }
 
-static inline void
+static __inline void
 setpsr(int newpsr)
 {
 	__asm volatile("wr %0,0,%%psr" : : "r" (newpsr));
 	__asm volatile("nop; nop; nop");
 }
 
-static inline void
+static __inline void
 spl0(void)
 {
 	int psr, oldipl;
@@ -283,7 +283,7 @@ spl0(void)
  * into the ipl field.)
  */
 #define	_SPLSET(name, newipl) \
-static inline void name(void) \
+static __inline void name(void) \
 { \
 	int psr, oldipl; \
 	__asm volatile("rd %%psr,%0" : "=r" (psr)); \
@@ -298,7 +298,7 @@ _SPLSET(spllowersoftclock, IPL_SOFTCLOCK)
 _SPLSET(spllowerschedclock, IPL_SCHED)
 
 /* Raise IPL and return previous value */
-static inline int
+static __inline int
 splraise(int newipl)
 {
 	int psr, oldipl;
@@ -347,7 +347,7 @@ splraise(int newipl)
 
 #define	splstatclock()	splraise(IPL_STATCLOCK)
 
-static inline int
+static __inline int
 splhigh(void)
 {
 	int psr, oldipl;
@@ -362,7 +362,7 @@ splhigh(void)
 #define	spllock()	splhigh()
 
 /* splx does not have a return value */
-static inline void
+static __inline void
 splx(int newipl)
 {
 	int psr;

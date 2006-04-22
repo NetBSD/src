@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.121 2006/01/16 19:45:00 reinoud Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.121.4.1 2006/04/22 11:40:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.121 2006/01/16 19:45:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.121.4.1 2006/04/22 11:40:05 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -439,7 +439,7 @@ genfs_getpages(void *v)
 	} */ *ap = v;
 
 	off_t newsize, diskeof, memeof;
-	off_t offset, origoffset, startoffset, endoffset, raoffset;
+	off_t offset, origoffset, startoffset, endoffset;
 	daddr_t lbn, blkno;
 	int i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
 	int fs_bshift, fs_bsize, dev_bshift;
@@ -475,13 +475,13 @@ genfs_getpages(void *v)
 	error = 0;
 	origoffset = ap->a_offset;
 	orignpages = *ap->a_count;
-	GOP_SIZE(vp, vp->v_size, &diskeof, GOP_SIZE_READ);
+	GOP_SIZE(vp, vp->v_size, &diskeof, 0);
 	if (flags & PGO_PASTEOF) {
 		newsize = MAX(vp->v_size,
 		    origoffset + (orignpages << PAGE_SHIFT));
-		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_READ|GOP_SIZE_MEM);
+		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_MEM);
 	} else {
-		GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_READ|GOP_SIZE_MEM);
+		GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_MEM);
 	}
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
 	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
@@ -600,7 +600,6 @@ genfs_getpages(void *v)
 	}
 	if (i == npages) {
 		UVMHIST_LOG(ubchist, "returning cached pages", 0,0,0,0);
-		raoffset = origoffset + (orignpages << PAGE_SHIFT);
 		npages += ridx;
 		goto out;
 	}
@@ -609,7 +608,7 @@ genfs_getpages(void *v)
 	 * if PGO_OVERWRITE is set, don't bother reading the pages.
 	 */
 
-	if (flags & PGO_OVERWRITE) {
+	if (overwrite) {
 		UVMHIST_LOG(ubchist, "PGO_OVERWRITE",0,0,0,0);
 
 		for (i = 0; i < npages; i++) {
@@ -834,7 +833,6 @@ loopdone:
 	}
 	putiobuf(mbp);
 	uvm_pagermapout(kva, npages);
-	raoffset = startoffset + totalbytes;
 
 	/*
 	 * if this we encountered a hole then we have to do a little more work.
@@ -1426,7 +1424,7 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	UVMHIST_LOG(ubchist, "vp %p pgs %p npages %d flags 0x%x",
 	    vp, pgs, npages, flags);
 
-	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_WRITE);
+	GOP_SIZE(vp, vp->v_size, &eof, 0);
 	if (vp->v_type != VBLK) {
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
 		dev_bshift = vp->v_mount->mnt_dev_bshift;
@@ -1620,10 +1618,9 @@ genfs_compat_getpages(void *v)
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = origoffset + (i << PAGE_SHIFT);
-		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
 		uio.uio_resid = PAGE_SIZE;
-		uio.uio_lwp = NULL;
+		UIO_SETUP_SYSSPACE(&uio);
 		/* XXX vn_lock */
 		error = VOP_READ(vp, &uio, 0, cred);
 		if (error) {
@@ -1674,10 +1671,9 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
 	uio.uio_offset = offset;
-	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_resid = npages << PAGE_SHIFT;
-	uio.uio_lwp = NULL;
+	UIO_SETUP_SYSSPACE(&uio);
 	/* XXX vn_lock */
 	error = VOP_WRITE(vp, &uio, 0, cred);
 

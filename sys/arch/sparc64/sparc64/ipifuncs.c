@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.3 2005/12/24 20:07:37 perry Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.3.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.3 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.3.6.1 2006/04/22 11:38:02 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,7 @@ static ipifunc_t ipifuncs[SPARC64_NIPIS] = {
  * Process cpu stop-self event.
  */
 static int
-sparc64_ipi_halt(arg)
-	void *arg;
+sparc64_ipi_halt(void *arg)
 {
 
 	printf("cpu%d: shutting down\n", cpu_number());
@@ -121,8 +120,7 @@ sparc64_ipi_halt(arg)
  * Pause cpu.
  */
 static int
-sparc64_ipi_pause(arg)
-	void *arg;
+sparc64_ipi_pause(void *arg)
 {
 	int s;
 	cpuid_t cpuid;
@@ -166,9 +164,7 @@ sparc64_ipi_init()
  * Send an IPI to all in the list but ourselves.
  */
 void
-sparc64_multicast_ipi(cpuset, ipimask)
-	cpuset_t cpuset;
-	u_long ipimask;
+sparc64_multicast_ipi(cpuset_t cpuset, u_long ipimask)
 {
 	struct cpu_info *ci;
 
@@ -188,8 +184,7 @@ sparc64_multicast_ipi(cpuset, ipimask)
  * Broadcast an IPI to all but ourselves.
  */
 void
-sparc64_broadcast_ipi(ipimask)
-	u_long ipimask;
+sparc64_broadcast_ipi(u_long ipimask)
 {
 	cpuset_t cpuset;
 
@@ -201,9 +196,7 @@ sparc64_broadcast_ipi(ipimask)
  * Send an interprocessor interrupt.
  */
 void
-sparc64_send_ipi(upaid, ipimask)
-	int upaid;
-	u_long ipimask;
+sparc64_send_ipi(int upaid, u_long ipimask)
 {
 	int i;
 	uint64_t intr_number, intr_func, intr_arg;
@@ -254,9 +247,7 @@ sparc64_send_ipi(upaid, ipimask)
  * Wait for IPI operation to complete.
  */
 int
-sparc64_ipi_wait(cpus_watchset, cpus_mask)
-	cpuset_t volatile *cpus_watchset;
-	cpuset_t cpus_mask;
+sparc64_ipi_wait(cpuset_t volatile *cpus_watchset, cpuset_t cpus_mask)
 {
 	int i;
 
@@ -331,9 +322,7 @@ sparc64_ipi_resume_cpus()
  * Flush pte on all active processors.
  */
 void
-smp_tlb_flush_pte(va, ctx)
-	vaddr_t va;
-	int ctx;
+smp_tlb_flush_pte(vaddr_t va, int ctx)
 {
 	/* Flush our own TLB */
 	sp_tlb_flush_pte(va, ctx);
@@ -351,8 +340,7 @@ smp_tlb_flush_pte(va, ctx)
  * Flush context on all active processors.
  */
 void
-smp_tlb_flush_ctx(ctx)
-	int ctx;
+smp_tlb_flush_ctx(int ctx)
 {
 	/* Flush our own TLB */
 	sp_tlb_flush_ctx(ctx);
@@ -385,9 +373,8 @@ smp_tlb_flush_all()
  * Print an error message.
  */
 void
-sparc64_ipi_error(s, cpus_succeeded, cpus_expected)
-	const char *s;
-	cpuset_t cpus_succeeded, cpus_expected;
+sparc64_ipi_error(const char *s, cpuset_t cpus_succeeded,
+	cpuset_t cpus_expected)
 {
 	int cpuid;
 

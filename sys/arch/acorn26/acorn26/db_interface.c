@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8.6.1 2006/04/22 11:37:09 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.8.6.1 2006/04/22 11:37:09 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -97,6 +97,7 @@ const struct db_variable db_regs[] = {
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 int	db_active = 0;
+db_regs_t ddb_regs;	/* register state */
 
 #ifdef __PROG32
 int db_access_und_sp(vp, valp, rw)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.109 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.109.6.1 2006/04/22 11:37:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.109 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.109.6.1 2006/04/22 11:37:42 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,14 +308,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	uva = mips_trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = mips_round_page(off + len);
-	kva = vm_map_min(phys_map);
-	if (uvm_map(phys_map, &kva, len, NULL, uva, 0,
-	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, UVM_KMF_WAITVA | UVM_FLAG_QUANTUM)))
-		panic("vmapbuf: space");
-
+	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(kva + off);
-
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
@@ -346,8 +340,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	len = mips_round_page(off + len);
 	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
 	pmap_update(pmap_kernel());
-	uvm_unmap1(phys_map, kva, kva + len,
-	    UVM_FLAG_QUANTUM | UVM_FLAG_VAONLY);
+	uvm_km_free(phys_map, kva, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

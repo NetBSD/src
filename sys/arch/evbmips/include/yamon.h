@@ -1,4 +1,4 @@
-/*	$NetBSD: yamon.h,v 1.4 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: yamon.h,v 1.4.6.1 2006/04/22 11:37:25 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -64,7 +64,7 @@ typedef void (*t_yamon_print_count)(uint32_t port, char *s, uint32_t count);
 typedef void (*t_yamon_exit)(uint32_t rc);
 #define	YAMON_EXIT(rc) ((t_yamon_exit)(YAMON_FUNC(YAMON_EXIT_OFS)))(rc)
 
-typedef void (*t_yamon_print)(uint32_t port, char *s);
+typedef void (*t_yamon_print)(uint32_t port, const char *s);
 #define	YAMON_PRINT(s) ((t_yamon_print)(YAMON_FUNC(YAMON_PRINT_OFS)))(0, s)
 
 typedef int (*t_yamon_getchar)(uint32_t port, char *ch);
@@ -87,7 +87,7 @@ typedef struct {
 #define	SYSCON_BOARD_PCI_FREQ_KHZ_ID	36		/* UINT32 */
 
 const char *yamon_getenv(const char *);
-void yamon_print(char *);
+void yamon_print(const char *);
 void yamon_exit(uint32_t);
 int yamon_setcpufreq(int);
 

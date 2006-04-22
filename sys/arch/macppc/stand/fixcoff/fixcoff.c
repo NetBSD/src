@@ -1,4 +1,4 @@
-/*	$NetBSD: fixcoff.c,v 1.9 2005/12/11 12:18:06 christos Exp $ */
+/*	$NetBSD: fixcoff.c,v 1.9.6.1 2006/04/22 11:37:41 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -49,7 +49,23 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+
+#if WORDS_BIGENDIAN
+#define	htobe16(x)	(x)
+#else
+static unsigned short
+__htobe16(unsigned short x)
+{
+	return (((x & 0xff00) >> 8) | ((x & 0x00ff) << 8));
+}
+#define	htobe16(x) __htobe16(x)
+#endif /* WORDS_BIGENDIAN */
+
+#else	/* HAVE_NBTOOL_CONFIG_H */
 #include <sys/endian.h>
+#endif	/* HAVE_NBTOOL_CONFIG_H */
 
 struct filehdr {
 #define U802WRMAGIC     0730

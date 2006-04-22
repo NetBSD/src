@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.57 2006/02/02 21:32:10 reinoud Exp $
+#	$NetBSD: GENERIC,v 1.57.2.1 2006/04/22 11:37:56 simonb Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.57 $"
+#ident		"GENERIC-$Revision: 1.57.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -198,7 +198,7 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 #options 	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS)"
 # allocate a number of virtual screens at autoconfiguration time
@@ -207,10 +207,6 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	PCDISPLAY_SOFTCURSOR
 # modify the screen type of the console; defaults to "80x25"
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 # console scrolling support.
 #options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
@@ -288,17 +284,17 @@ midi*		at opl?
 joy*		at ofisa?
 
 pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
-#pseudo-device	sl	2		# CSLIP
-#pseudo-device	ppp	2		# PPP
-#pseudo-device	tun	2		# network tunneling over tty
+pseudo-device	bpfilter		# packet filter
+#pseudo-device	sl			# CSLIP
+#pseudo-device	ppp			# PPP
+#pseudo-device	tun			# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
-pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
-#pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	strip			# STarmode Radio IP (Metricon Ricochet)
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	vnd	4		# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	fss	4		# file system snapshot device

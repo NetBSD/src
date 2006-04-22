@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.9 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.9.6.1 2006/04/22 11:37:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -47,7 +47,7 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 typedef trapframe_t db_regs_t;
 
-db_regs_t		ddb_regs;	/* register state */
+extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 #ifdef __PROG26
@@ -60,7 +60,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_ADDR(addr)	(addr)			/* breakpoint address */
 #define	BKPT_INST	(KERNEL_BREAKPOINT)	/* breakpoint instruction */
 #define	BKPT_SIZE	(INSN_SIZE)		/* size of breakpoint inst */
-#define	BKPT_SET(inst)	(BKPT_INST)
+#define	BKPT_SET(inst, addr)	(BKPT_INST)
 
 /*#define FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_pc -= BKPT_SIZE)*/
 

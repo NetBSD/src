@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.154 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.154.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.154 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.154.6.1 2006/04/22 11:39:58 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -423,7 +423,7 @@ exit1(struct lwp *l, int rv)
 				q->p_opptr = NULL;
 			} else
 				proc_reparent(q, initproc);
-			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
+			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE|P_SYSCALL);
 			killproc(q, "orphaned traced process");
 		} else {
 			proc_reparent(q, initproc);
@@ -803,7 +803,7 @@ proc_free(struct proc *p)
 			parent = initproc;
 		proc_reparent(p, parent);
 		p->p_opptr = NULL;
-		p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
+		p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE|P_SYSCALL);
 		if (p->p_exitsig != 0) {
 			exit_psignal(p, parent, &ksi);
 			kpsignal(parent, &ksi, NULL);

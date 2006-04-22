@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.18 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: if_de.c,v 1.18.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.18 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.18.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -209,7 +209,7 @@ void
 deattach(struct device *parent, struct device *self, void *aux)
 {
 	struct uba_attach_args *ua = aux;
-	struct de_softc *sc = (struct de_softc *)self;
+	struct de_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	int csr1, error;
@@ -328,14 +328,15 @@ deinit(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_RUNNING)
 		return 0;
 	if ((sc->sc_flags & DSF_MAPPED) == 0) {
-		if (if_ubaminit(&sc->sc_ifuba, (void *)sc->sc_dev.dv_parent,
+		if (if_ubaminit(&sc->sc_ifuba,
+		    (void *)device_parent(&sc->sc_dev),
 		    MCLBYTES, sc->sc_ifr, NRCV, sc->sc_ifw, NXMT)) {
 			printf("%s: can't initialize\n", sc->sc_dev.dv_xname);
 			ifp->if_flags &= ~IFF_UP;
 			return 0;
 		}
 		sc->sc_ui.ui_size = sizeof(struct de_cdata);
-		if ((error = ubmemalloc((void *)sc->sc_dev.dv_parent,
+		if ((error = ubmemalloc((void *)device_parent(&sc->sc_dev),
 		    &sc->sc_ui, 0))) {
 			printf(": unable to ubmemalloc(), error = %d\n", error);
 			return 0;

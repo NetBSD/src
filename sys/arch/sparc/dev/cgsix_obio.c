@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.17 2005/11/16 00:49:03 uwe Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.17.6.1 2006/04/22 11:37:57 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.17 2005/11/16 00:49:03 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.17.6.1 2006/04/22 11:37:57 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_depth = 8;
 
 	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);

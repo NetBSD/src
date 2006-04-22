@@ -1,4 +1,4 @@
-/* $NetBSD: bwx.h,v 1.4 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: bwx.h,v 1.4.6.1 2006/04/22 11:37:11 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  * See "Alpha Architecture Handbook, Version 3", DEC order number EC-QD2KB-TE.
  */
 
-static inline u_int8_t
+static __inline u_int8_t
 alpha_ldbu(volatile u_int8_t *a0)
 {
 	u_int8_t v0;
@@ -60,7 +60,7 @@ alpha_ldbu(volatile u_int8_t *a0)
 	return (v0);
 }
 
-static inline u_int16_t
+static __inline u_int16_t
 alpha_ldwu(volatile u_int16_t *a0)
 {
 	u_int16_t v0;
@@ -72,7 +72,7 @@ alpha_ldwu(volatile u_int16_t *a0)
 	return (v0);
 }
 
-static inline void
+static __inline void
 alpha_stb(volatile u_int8_t *a0, u_int8_t a1)
 {
 
@@ -81,7 +81,7 @@ alpha_stb(volatile u_int8_t *a0, u_int8_t a1)
 		: "r" (a1));
 }
 
-static inline void
+static __inline void
 alpha_stw(volatile u_int16_t *a0, u_int16_t a1)
 {
 
@@ -90,7 +90,7 @@ alpha_stw(volatile u_int16_t *a0, u_int16_t a1)
 		: "r" (a1));
 }
 
-static inline u_int8_t
+static __inline u_int8_t
 alpha_sextb(u_int8_t a0)
 {
 	u_int8_t v0;
@@ -102,7 +102,7 @@ alpha_sextb(u_int8_t a0)
 	return (v0);
 }
 
-static inline u_int16_t
+static __inline u_int16_t
 alpha_sextw(u_int16_t a0)
 {
 	u_int16_t v0;

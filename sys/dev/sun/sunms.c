@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.21 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: sunms.c,v 1.21.6.1 2006/04/22 11:39:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.21 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.21.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ sunms_attach(parent, self, aux)
 	void   *aux;
 
 {
-	struct ms_softc *ms = (void *) self;
+	struct ms_softc *ms = device_private(self);
 	struct kbd_ms_tty_attach_args *args = aux;
 	struct cfdata *cf;
 	struct tty *tp = args->kmta_tp;
@@ -155,8 +155,8 @@ sunms_attach(parent, self, aux)
 	struct wsmousedev_attach_args a;
 #endif
 
-	cf = ms->ms_dev.dv_cfdata;
-	ms_unit = ms->ms_dev.dv_unit;
+	cf = device_cfdata(&ms->ms_dev);
+	ms_unit = device_unit(&ms->ms_dev);
 	tp->t_sc  = ms;
 	tp->t_dev = args->kmta_dev;
 	ms->ms_cs = (struct zs_chanstate *)tp;

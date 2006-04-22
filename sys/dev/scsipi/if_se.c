@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.60 2005/12/24 20:27:52 perry Exp $	*/
+/*	$NetBSD: if_se.c,v 1.60.6.1 2006/04/22 11:39:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.60 2005/12/24 20:27:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.60.6.1 2006/04/22 11:39:29 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -314,7 +314,7 @@ seattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct se_softc *sc = (void *)self;
+	struct se_softc *sc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;

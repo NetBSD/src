@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.10 2005/12/11 12:23:22 christos Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.10.6.1 2006/04/22 11:39:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.10 2005/12/11 12:23:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.10.6.1 2006/04/22 11:39:24 simonb Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -159,6 +159,39 @@ static const keysym_t pckbd_keydesc_us[] = {
 };
 
 #ifndef WSKBD_USONLY
+static const keysym_t pckbd_keydesc_gr[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(14),  KS_Delete,		KS_BackSpace,
+    KC(16),  KS_q,		KS_Q,		KS_semicolon,	KS_colon,
+    KC(17),  KS_w,		KS_W,		KS_gr_teliko_s,	KS_gr_S,
+    KC(18),  KS_e,		KS_E,		KS_gr_e,	KS_gr_E,
+    KC(19),  KS_r,		KS_R,		KS_gr_r,	KS_gr_R,
+    KC(20),  KS_t,		KS_T,		KS_gr_t,	KS_gr_T,
+    KC(21),  KS_y,		KS_Y,		KS_gr_y,	KS_gr_Y,
+    KC(22),  KS_u,		KS_U,		KS_gr_u,	KS_gr_U,
+    KC(23),  KS_i,		KS_I,		KS_gr_i,	KS_gr_I,
+    KC(24),  KS_o,		KS_O,		KS_gr_o,	KS_gr_O,
+    KC(25),  KS_p,		KS_P,		KS_gr_p,	KS_gr_P,
+    KC(30),  KS_a,		KS_A,		KS_gr_a,	KS_gr_A,
+    KC(31),  KS_s,		KS_S,		KS_gr_s,	KS_gr_S,
+    KC(32),  KS_d,		KS_D,		KS_gr_d,	KS_gr_D,
+    KC(33),  KS_f,		KS_F,		KS_gr_f,	KS_gr_F,
+    KC(34),  KS_g,		KS_G,		KS_gr_g,	KS_gr_G,
+    KC(35),  KS_h,		KS_H,		KS_gr_h,	KS_gr_H,
+    KC(36),  KS_j,		KS_J,		KS_gr_j,	KS_gr_J,
+    KC(37),  KS_k,		KS_K,		KS_gr_k,	KS_gr_K,
+    KC(38),  KS_l,		KS_L,		KS_gr_l,	KS_gr_L,
+    KC(39),  KS_semicolon,	KS_colon,	KS_dead_semi,	KS_dead_colon,
+    KC(44),  KS_z,		KS_Z,		KS_gr_z,	KS_gr_Z,
+    KC(45),  KS_x,		KS_X,		KS_gr_x,	KS_gr_X,
+    KC(46),  KS_c,		KS_C,		KS_gr_c,	KS_gr_C,
+    KC(47),  KS_v,		KS_V,		KS_gr_v,	KS_gr_V,
+    KC(48),  KS_b,		KS_B,		KS_gr_b,	KS_gr_B,
+    KC(49),  KS_n,		KS_N,		KS_gr_n,	KS_gr_N,
+    KC(50),  KS_m,		KS_M,		KS_gr_m,	KS_gr_M,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
 static const keysym_t pckbd_keydesc_de[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(3),   KS_2,		KS_quotedbl,	KS_twosuperior,
@@ -545,6 +578,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES ,			KB_US,	pckbd_keydesc_es),
 	KBD_MAP(KB_PT,			KB_US,	pckbd_keydesc_pt),
+	KBD_MAP(KB_GR,			KB_US,	pckbd_keydesc_gr),
 #endif /* WSKBD_USONLY */
 
 	/* placeholders */

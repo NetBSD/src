@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.3.6.1 2006/04/22 11:37:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3.6.1 2006/04/22 11:37:52 simonb Exp $");
 
 #include "debug_playstation2.h"
 
@@ -141,7 +141,7 @@ microtime(struct timeval *tvp)
 
 /*
  *  Wait at least `n' usec. (max 15 sec)
- *  PS2 R5900 CPU clock is 294.912Mhz = (1 << 15) * 9 * 1000
+ *  PS2 R5900 CPU clock is 294.912 MHz = (1 << 15) * 9 * 1000
  */
 void
 delay(unsigned usec)

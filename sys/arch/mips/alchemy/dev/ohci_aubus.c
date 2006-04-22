@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.8 2005/12/20 21:06:42 tron Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.8.6.1 2006/04/22 11:37:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.8 2005/12/20 21:06:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.8.6.1 2006/04/22 11:37:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.8 2005/12/20 21:06:42 tron Exp $");
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
-
-#include <evbmips/alchemy/pb1000reg.h>
-#include <evbmips/alchemy/pb1000_obiovar.h>
+#include <mips/alchemy/dev/ohcireg.h>
 
 #include <dev/usb/usb.h>   
 #include <dev/usb/usbdi.h>

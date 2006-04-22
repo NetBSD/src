@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.38 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: mfc.c,v 1.38.6.1 2006/04/22 11:37:13 simonb Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38.6.1 2006/04/22 11:37:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ mfcattach(struct device *pdp, struct device *dp, void *auxp)
 	printf ("\n");
 
 	scc = (struct mfc_softc *)dp;
-	unit = scc->sc_dev.dv_unit;
+	unit = device_unit(&scc->sc_dev);
 	scc->sc_regs = rp = zap->va;
 	if (zap->prodid == 18)
 		scc->mfc_iii = 3;
@@ -964,7 +964,7 @@ mfcintr(void *arg)
 	istat = regs->du_isr & scc->imask;
 	if (istat == 0)
 		return (0);
-	unit = scc->sc_dev.dv_unit * 2;
+	unit = device_unit(&scc->sc_dev) * 2;
 	if (istat & 0x02) {		/* channel A receive interrupt */
 		sc = mfcs_cd.cd_devs[unit];
 		while (1) {

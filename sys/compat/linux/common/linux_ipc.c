@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.32 2005/11/10 18:33:37 christos Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.32.8.1 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.32 2005/11/10 18:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.32.8.1 2006/04/22 11:38:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -57,14 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.32 2005/11/10 18:33:37 christos Exp 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
-
-#include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_syscall.h>
-
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_msg.h>
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_sem.h>
+
+#include <compat/linux/linux_syscallargs.h>
+#include <compat/linux/linux_syscall.h>
+
 #include <compat/linux/common/linux_ipccall.h>
 
 /*

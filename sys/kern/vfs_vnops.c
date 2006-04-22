@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.104 2006/01/01 16:45:42 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.104.4.1 2006/04/22 11:40:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.104 2006/01/01 16:45:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.104.4.1 2006/04/22 11:40:00 simonb Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -351,7 +351,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 {
 	struct uio auio;
 	struct iovec aiov;
-	struct mount *mp;
+	struct mount *mp = NULL;
 	int error;
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
@@ -371,9 +371,12 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
 	aiov.iov_len = len;
 	auio.uio_resid = len;
 	auio.uio_offset = offset;
-	auio.uio_segflg = segflg;
 	auio.uio_rw = rw;
-	auio.uio_lwp = l;
+	if (segflg == UIO_SYSSPACE) {
+		UIO_SETUP_SYSSPACE(&auio);
+	} else {
+		auio.uio_vmspace = l->l_proc->p_vmspace;
+	}
 	if (rw == UIO_READ) {
 		error = VOP_READ(vp, &auio, ioflg, cred);
 	} else {
@@ -409,8 +412,12 @@ unionread:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = segflg;
-	auio.uio_lwp = l;
+	if (segflg == UIO_SYSSPACE) {
+		UIO_SETUP_SYSSPACE(&auio);
+	} else {
+		KASSERT(l == curlwp);
+		auio.uio_vmspace = l->l_proc->p_vmspace;
+	}
 	auio.uio_resid = count;
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	auio.uio_offset = fp->f_offset;
@@ -456,8 +463,9 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error, ioflag;
+	struct lwp *l = curlwp;
 
-	VOP_LEASE(vp, uio->uio_lwp, cred, LEASE_READ);
+	VOP_LEASE(vp, l, cred, LEASE_READ);
 	ioflag = IO_ADV_ENCODE(fp->f_advice);
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
@@ -466,7 +474,6 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
 	if (fp->f_flag & FALTIO)
 		ioflag |= IO_ALTSEMANTICS;
 	vn_lock(vp, LK_SHARED | LK_RETRY);
-	vn_ra_allocctx(vp);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, ioflag, cred);
@@ -486,6 +493,7 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	struct mount *mp;
 	int count, error, ioflag = IO_UNIT;
+	struct lwp *l = curlwp;
 
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
 		ioflag |= IO_APPEND;
@@ -502,7 +510,7 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
 	if (vp->v_type != VCHR &&
 	    (error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)
 		return (error);
-	VOP_LEASE(vp, uio->uio_lwp, cred, LEASE_WRITE);
+	VOP_LEASE(vp, l, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
@@ -845,10 +853,9 @@ vn_extattr_get(struct vnode *vp, int ioflg, int attrnamespace,
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = l;
 	auio.uio_offset = 0;
 	auio.uio_resid = *buflen;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	if ((ioflg & IO_NODELOCKED) == 0)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -883,10 +890,9 @@ vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = l;
 	auio.uio_offset = 0;
 	auio.uio_resid = buflen;
+	UIO_SETUP_SYSSPACE(&auio);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
 		if ((error = vn_start_write(vp, &mp, V_WAIT)) != 0)

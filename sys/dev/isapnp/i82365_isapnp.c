@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.19 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.19.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.19 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.19.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,8 @@ pcic_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcic_softc *sc = (void *) self;
-	struct pcic_isa_softc *isc = (void *) self;
+	struct pcic_softc *sc = device_private(self);
+	struct pcic_isa_softc *isc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;
 	isa_chipset_tag_t ic = ipa->ipa_ic;
 	bus_space_tag_t iot = ipa->ipa_iot;

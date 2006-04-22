@@ -103,10 +103,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7.6.1 2006/04/22 11:38:11 simonb Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
+#include "isa.h"
+#include "pci.h"
 
 #include <sys/cdefs.h>
 #include <sys/param.h> 
@@ -122,6 +124,15 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7 2005/12/11 12:19:50 christos Exp $");
 #include <machine/i8259.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
+#include <machine/evtchn.h>
+
+#ifdef XEN3
+#include "acpi.h"
+#if NACPI > 0
+/* for x86/i8259.c */
+struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0}};
+#endif
+#endif
 
 /*
  * Recalculate the interrupt from scratch for an event source.
@@ -229,8 +240,27 @@ cpu_intr_init(struct cpu_info *ci)
 	evcnt_attach_dynamic(&softxenevt_evtcnt, EVCNT_TYPE_INTR, NULL,
 	    ci->ci_dev->dv_xname, "xenevt");
 #endif /* defined(DOM0OPS) */
-
 }
+
+#if NPCI > 0 || NISA > 0
+void *
+intr_establish(int legacy_irq, struct pic *pic, int pin,
+    int type, int level, int (*handler)(void *) , void *arg)
+{
+	struct pintrhand *ih;
+
+	ih = pirq_establish(legacy_irq, bind_pirq_to_evtch(legacy_irq),
+	    handler, arg, level);
+	return ih;
+}
+
+void 
+intr_disestablish(struct intrhand *ih)
+{
+	printf("intr_disestablish irq\n");
+}
+#endif
+
 
 #ifdef INTRDEBUG
 void

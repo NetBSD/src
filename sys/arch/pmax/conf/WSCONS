@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.20 2005/12/07 12:40:47 tsutsui Exp $
+# $NetBSD: WSCONS,v 1.20.6.1 2006/04/22 11:37:52 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -33,7 +33,7 @@ options 	WSCONS
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.20 $"
+#ident		"GENERIC-$Revision: 1.20.6.1 $"
 
 maxusers	64
 
@@ -287,21 +287,21 @@ uk*	at scsibus? target ? lun ?	# unknown SCSI
 #########################################################################
 
 pseudo-device	loop		 1	# network loopback
-pseudo-device	sl		 4	# serial-line IP ports
-pseudo-device	ppp		 2	# serial-line IP ports
+pseudo-device	sl		 	# serial-line IP ports
+pseudo-device	ppp		 	# serial-line IP ports
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
-#pseudo-device	gre		 2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gre		 	# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
-pseudo-device	vnd		 4	# virtual disk ick
+pseudo-device	vnd		 	# virtual disk ick
 pseudo-device	ccd		 4	# concatenated disks
 #pseudo-device	cgd		 4	# cryptographic disk devices
 pseudo-device	raid		 8	# RAIDframe disk driver

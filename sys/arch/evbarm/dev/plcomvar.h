@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.2 2005/12/27 00:46:38 chs Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.2.6.1 2006/04/22 11:37:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -138,11 +138,6 @@ struct plcom_softc {
 #endif
 	struct simplelock	sc_lock;
 };
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 int  plcomprobe1	(bus_space_tag_t, bus_space_handle_t);
 int  plcomintr		(void *);

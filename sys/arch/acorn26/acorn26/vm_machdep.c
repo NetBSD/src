@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.9 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.9.6.1 2006/04/22 11:37:09 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.9 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.9.6.1 2006/04/22 11:37:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -170,10 +170,18 @@ cpu_exit(struct lwp *l)
 {
 	int s;
 
-	/* I think this is safe on a uniprocessor machine */
+	/*
+	 * We're still running on l's stack here.  This is a little
+	 * dangerous, since we're about to free it, but no-one's going
+	 * to get a chance to reallocate it before we call
+	 * cpu_switch().  Well, I hope they're not anyway.
+	 *
+	 * A more conventional approach would be to run on lwp0's
+	 * stack or to have a special stack for this purpose.
+	 */
 	lwp_exit2(l);
 	SCHED_LOCK(s);		/* expected by cpu_switch */
-	cpu_switch(l, NULL);
+	cpu_switch(NULL, NULL);
 }
 
 void

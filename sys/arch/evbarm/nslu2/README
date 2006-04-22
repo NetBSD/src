@@ -1,0 +1,142 @@
+$NetBSD: README,v 1.4.4.2 2006/04/22 11:37:24 simonb Exp $
+
+NetBSD for the Linksys NSLU2 (a.k.a. "Slug")
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The NSLU2 (Network Storage Link for USB 2.0 Disk Drives) is a small, cheap
+NAS device consisting of an Intel IXP420 (Xscale) CPU, a 10/100mbit Ethernet
+port, and two USB 2.0 ports. It has 32MB of SDRAM and 8MB of Flash memory,
+and runs RedBoot/Linux out of the box.
+
+It is eminently hackable.
+
+The guys over at http://www.nslu2-linux.org/ have done a good job of
+documenting just about every aspect of the hardware and original firmware.
+They also provide a custom "Unslung" Linux distribution to replace the
+original hobbled kernel/userland.
+
+Because of the amount of documentation available, and the fact that Slugs
+are available so cheaply (I paid just over UKP 50 for mine, brand new) I
+decided to buy one and port NetBSD to it.
+
+This is the result of that effort.
+
+Note: The Slug's IXP420 CPU runs in big-endian mode, so when building a
+cross toolchain you must pass "-m evbarm -a armeb" to build.sh.
+
+
+
+Current status
+==============
+
+The following bits of Slug hardware are not (yet?) supported:
+
+ - NPE Ethernet
+   Someone will have to port Intel's IXP425 access library before this can
+   be made to work. If that someone is you, the source code is available
+   online here:
+
+   http://www.intel.com/design/network/products/npfamily/ixp425.htm
+
+   Look under "Tools & Software", then select "Register/Login" to download
+   "Intel(R) IXP400 Software". Documentation is available in the
+   "Technical Documents" section.
+
+   The easiest option will be to download the non-crypto version of the
+   Access Library. The crypto-enabled version requires a lot more form
+   filling. The Slug's IXP420 has no crypto capabilities anyway.
+
+ - Flash ROM
+   You can write gzboot kernels (when support is added) to Flash using
+   RedBoot, so all is not lost.
+
+ - Buzzer
+   In the absence of a decent API to expose the onboard buzzer to userland,
+   this is not yet supported. I envisage using timer1 to generate an
+   interrupt at the required rate (1-2 kHz). The handler will toggle the
+   buzzer GPIO pin. Obviously timer1 will be configured only when necessary
+   as a 1-2 kHz interrupt rate will sap a fair bit of CPU horsepower.
+
+Everything else is fully supported, including the power/reset buttons and
+disk activity/status LEDs.
+
+Non-hardware items on the TODO list include:
+
+ - gzboot support.
+   The Slug's 8MB of Flash is split into 5 segments:
+
+    1 0x50000000-0x5003ffff: RedBoot (with some additional bits at the end).
+    2 0x50040000-0x5005ffff: Sysconf (used by the Linksys firmware).
+    3 0x50060000-0x5015ffff: Self-extracting compressed kernel image.
+    4 0x50160000-0x507dffff: Compressed ramdisk image.
+    5 0x507e0000-0x507fffff: SerComm Flash trailer.
+
+   Segments 1, 2, and 5 should be considered immutable. Segments 3 and 4
+   have a 16-byte header, the first 4 bytes of which describe the length
+   of the image contained in that segment (not including the header).
+
+   On power-up, RedBoot copies the image in segment 3 into SDRAM at 0x01d00000,
+   and the image in segment 4 into SDRAM at 0x01000000. RedBoot then jumps to
+   0x01d00000. This is just a regular ARM Linux compressed kernel bootloader.
+
+   So, we need to create a version of gzboot linked not at Flash address
+   0x50060000, but at 0x01d00000 instead. The only downside is that it looks
+   like the combined size of gzboot plus compressed kernel cannot exceed 1MB.
+
+   To support an md(4) root filesystem, we will need to modify gzboot to
+   decompress the ramdisk image from segment 4 and copy it to the correct
+   place in the decompressed kernel image.
+
+ - Move the kernel link address closer to the start of SDRAM. We waste a
+   little under 2MB with the current setup.
+
+
+
+Getting NetBSD onto the NSLU2
+=============================
+
+Thanks to the efforts of the guys over at www.nslu2-linux.org, hacking the
+Slug is a pretty easy proposition, but some soldering skills are essential.
+For a first-time install of NetBSD (at least until someone comes up with a
+nice easy binary install image) you will almost certainly require access to
+the serial console. This means firing up your trusty soldering iron and
+hooking up a MAX3232 chip to your Slug. While your soldering iron is hot,
+you should seriously consider de-restricting your Slug's CPU core clock
+speed (133MHz stock, 266MHz de-restricted) by removing a single surface-
+mount resistor. Full instructions for both the these mods are on the above
+website.
+
+Once you have console access you can interrupt RedBoot's auto-boot process
+using CTRL-C. You are now in a position to download a NetBSD kernel into
+SDRAM.
+
+You will have to configure a TFTP server on a machine hooked up to the same
+Ethernet segment as the Slug. This machine's Ethernet interface must also
+be configured to have an address in the 192.168.0.0/24 subnet since the
+Slug's Ethernet *always* defaults to 192.168.0.1 when running RedBoot.
+There seems to be no way to alter this, so the best course of action will
+probably be to set up an alias on the server's interface. 192.168.0.2 is
+a good choice.
+
+Assuming you've done all that and have dropped a suitable kernel image
+into the TFTP directory, the following commands will load and run the
+kernel.
+
+redboot> ip_address -h 192.168.0.2
+redboot> load -r -b 0x200000 netbsd.bin
+redboot> go
+
+At this point your only real option is to mount the root filesystem from
+a USB disk device as the onboard Ethernet is not (yet?) supported. However,
+there's nothing to stop you using a USB-Ethernet interface...
+
+Note that the kernel will always report the CPU core clock speed as 266MHz
+even if your Slug's CPU clock is running at a stock 133MHz.
+
+
+
+Burning a NetBSD kernel into Flash
+==================================
+
+TBD (waiting for gzboot support).
+

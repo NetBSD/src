@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.4 2005/12/13 20:55:46 abs Exp $	*/
+/*	$NetBSD: max6900.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -95,7 +95,7 @@ maxrtc_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 maxrtc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct maxrtc_softc *sc = (struct maxrtc_softc *)self;
+	struct maxrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 
 	sc->sc_tag = ia->ia_tag;

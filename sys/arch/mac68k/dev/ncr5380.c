@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.61 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.61.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.61 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.61.6.1 2006/04/22 11:37:40 simonb Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -873,7 +873,7 @@ scsi_select(SC_REQ *reqp, int code)
 
 	/*
 	 * Here we prepare to send an 'IDENTIFY' message.
-	 * Allow disconnect only when interrups are allowed.
+	 * Allow disconnect only when interrupts are allowed.
 	 */
 	tmp[0] = MSG_IDENTIFY(reqp->targ_lun,
 			(reqp->dr_flag & DRIVER_NOINT) ? 0 : 1);

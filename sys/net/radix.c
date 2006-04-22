@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.30 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.30.6.1 2006/04/22 11:40:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.30 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.30.6.1 2006/04/22 11:40:07 simonb Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -99,7 +99,7 @@ static struct radix_mask *rn_new_radix_mask(struct radix_node *,
  * node as high in the tree as we can go.
  *
  * The present version of the code makes use of normal routes in short-
- * circuiting an explict mask and compare operation when testing whether
+ * circuiting an explicit mask and compare operation when testing whether
  * a key satisfies a normal route, and also in remembering the unique leaf
  * that governs a subtree.
  */

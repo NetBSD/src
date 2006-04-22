@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs.h,v 1.13 2005/12/24 12:31:57 jmmv Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.13.6.1 2006/04/22 11:39:58 simonb Exp $	*/
 
 /*
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,9 +43,6 @@
 /* ---------------------------------------------------------------------
  * KERNEL-SPECIFIC DEFINITIONS
  * --------------------------------------------------------------------- */
-
-#if defined(_KERNEL)
-
 #include <sys/dirent.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
@@ -171,7 +168,7 @@ struct tmpfs_node {
 		/* Valid when tn_type == VBLK || tn_type == VCHR. */
 		struct {
 			dev_t			tn_rdev;
-		};
+		} tn_dev;
 
 		/* Valid when tn_type == VDIR. */
 		struct {
@@ -196,16 +193,16 @@ struct tmpfs_node {
 			 * point where readdir starts returning values. */
 			off_t			tn_readdir_lastn;
 			struct tmpfs_dirent *	tn_readdir_lastp;
-		};
+		} tn_dir;
 
 		/* Valid when tn_type == VLNK. */
-		struct {
+		struct tn_lnk {
 			/* The link's target, allocated from a string pool. */
 			char *			tn_link;
-		};
+		} tn_lnk;
 
 		/* Valid when tn_type == VREG. */
-		struct {
+		struct tn_reg {
 			/* The contents of regular files stored in a tmpfs
 			 * file system are represented by a single anonymous
 			 * memory object (aobj, for short).  The aobj provides
@@ -217,8 +214,8 @@ struct tmpfs_node {
 			 * a position within the file is accessed. */
 			struct uvm_object *	tn_aobj;
 			size_t			tn_aobj_pages;
-		};
-	};
+		} tn_reg;
+	} tn_spec;
 };
 LIST_HEAD(tmpfs_node_list, tmpfs_node);
 
@@ -289,12 +286,13 @@ struct tmpfs_mount {
 struct tmpfs_fid {
 	uint16_t		tf_len;
 	uint16_t		tf_pad;
+	uint32_t		tf_gen;
 	ino_t			tf_id;
-	unsigned long		tf_gen;
 };
 
 /* --------------------------------------------------------------------- */
 
+#ifdef _KERNEL
 /*
  * Prototypes for tmpfs_subr.c.
  */
@@ -362,8 +360,9 @@ int	tmpfs_truncate(struct vnode *, off_t);
 #define TMPFS_VALIDATE_DIR(node) \
     KASSERT((node)->tn_type == VDIR); \
     KASSERT((node)->tn_size % sizeof(struct tmpfs_dirent) == 0); \
-    KASSERT((node)->tn_readdir_lastp == NULL || \
-	TMPFS_DIRCOOKIE((node)->tn_readdir_lastp) == (node)->tn_readdir_lastn);
+    KASSERT((node)->tn_spec.tn_dir.tn_readdir_lastp == NULL || \
+        TMPFS_DIRCOOKIE((node)->tn_spec.tn_dir.tn_readdir_lastp) == \
+        (node)->tn_spec.tn_dir.tn_readdir_lastn);
 
 /* --------------------------------------------------------------------- */
 
@@ -386,7 +385,7 @@ int	tmpfs_truncate(struct vnode *, off_t);
  * the memory for a given mount point, the system will always reserve a
  * minimum of TMPFS_PAGES_RESERVED pages, which is also taken into account
  * by this macro (see above). */
-static inline size_t
+static __inline size_t
 TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 {
 	size_t freepages;
@@ -403,6 +402,8 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 /* Returns the available space for the given file system. */
 #define TMPFS_PAGES_AVAIL(tmp) (TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used)
 
+#endif
+
 /* --------------------------------------------------------------------- */
 
 /*
@@ -410,40 +411,44 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
  * specific ones.
  */
 
-static inline
+static __inline
 struct tmpfs_mount *
 VFS_TO_TMPFS(struct mount *mp)
 {
 	struct tmpfs_mount *tmp;
 
+#ifdef KASSERT
 	KASSERT((mp) != NULL && (mp)->mnt_data != NULL);
+#endif
 	tmp = (struct tmpfs_mount *)(mp)->mnt_data;
 	return tmp;
 }
 
-static inline
+static __inline
 struct tmpfs_node *
 VP_TO_TMPFS_NODE(struct vnode *vp)
 {
 	struct tmpfs_node *node;
 
+#ifdef KASSERT
 	KASSERT((vp) != NULL && (vp)->v_data != NULL);
+#endif
 	node = (struct tmpfs_node *)vp->v_data;
 	return node;
 }
 
-static inline
+static __inline
 struct tmpfs_node *
 VP_TO_TMPFS_DIR(struct vnode *vp)
 {
 	struct tmpfs_node *node;
 
 	node = VP_TO_TMPFS_NODE(vp);
+#ifdef KASSERT
 	TMPFS_VALIDATE_DIR(node);
+#endif
 	return node;
 }
-
-#endif /* _KERNEL */
 
 /* ---------------------------------------------------------------------
  * USER AND KERNEL DEFINITIONS

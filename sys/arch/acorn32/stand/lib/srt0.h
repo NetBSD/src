@@ -1,8 +1,9 @@
-/* $NetBSD: srt0.h,v 1.1 2002/12/28 23:57:39 reinoud Exp $
+/* $NetBSD: srt0.h,v 1.1.36.1 2006/04/22 11:37:10 simonb Exp $
  *
  * srt0.h
  *
  */
 
+#ifndef HIMEM
 extern void *HIMEM;
-
+#endif

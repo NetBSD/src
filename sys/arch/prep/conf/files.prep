@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.49 2005/12/11 12:18:47 christos Exp $
+#	$NetBSD: files.prep,v 1.49.6.1 2006/04/22 11:37:53 simonb Exp $
 #
 # prep-specific configuration info
 #
@@ -7,25 +7,10 @@ maxpartitions 8
 maxusers 2 8 64
 
 defflag	opt_residual.h	RESIDUAL_DATA_DUMP
+defflag opt_nvram.h	NVRAM_DUMP
 
-defflag	opt_platform.h	PLATFORM_IBM_6015
-			PLATFORM_IBM_6040
-			PLATFORM_IBM_6050
-			PLATFORM_IBM_7248
-			PLATFORM_IBM_7043_140
-			PLATFORM_MOTOROLA_ULMB60XA
-
-# IBM
+# IBM quirk functions
 file	arch/prep/prep/ibm_machdep.c
-file	arch/prep/prep/ibm_6015.c	platform_ibm_6015
-file	arch/prep/prep/ibm_6040.c	platform_ibm_6040
-file	arch/prep/prep/ibm_6050.c	platform_ibm_6050
-file	arch/prep/prep/ibm_7248.c	platform_ibm_7248
-file	arch/prep/prep/ibm_7043_140.c	platform_ibm_7043_140
-
-# Motorola
-file	arch/prep/prep/mot_machdep.c
-file	arch/prep/prep/mot_ulmb60xa.c	platform_motorola_ulmb60xa
 
 file	arch/prep/prep/platform.c
 
@@ -35,7 +20,7 @@ file	arch/prep/prep/consinit.c
 file	arch/prep/prep/disksubr.c		disk
 file	arch/prep/prep/extintr.c
 file	arch/prep/prep/machdep.c
-file	arch/prep/prep/residual.c		residual_data_dump
+file	arch/prep/prep/residual.c
 
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
@@ -101,6 +86,11 @@ device	pcib: isabus
 attach	pcib at pci
 file	arch/prep/pci/pcib.c		pcib
 
+# PCI-EISA bridges
+device	pceb: eisabus, isabus
+attach	pceb at pci
+file	arch/prep/pci/pceb.c		pceb
+
 # IBM G10 display on ThinkPad 820
 device	gten: wsemuldisplaydev, rasops8
 attach	gten at pci
@@ -151,6 +141,13 @@ device	paud { }: audiobus, isadma, ad1848, auconv
 attach	paud at isa with paud_isa
 file	arch/prep/isa/paud_isa.c	paud_isa
 
+#
+# EISA-only drivers
+#
+
+include	"dev/eisa/files.eisa"
+file	arch/prep/eisa/eisa_machdep.c	eisa
+
 # USB drivers
 include "dev/usb/files.usb"
 
@@ -168,12 +165,17 @@ file	dev/isa/i82365_isasubr.c	pcic_isa
 include "dev/pcmcia/files.pcmcia"
 
 # on-board I/O
-define obio {[port = -1], [size = 0], [iomem = -1], [iosiz = 0], [irq = -1]}
-device obio: obio
-attach obio at mainbus
-file arch/prep/dev/obio.c		obio needs-flag
+define pnpbus { [index = -1] }
+device pnpbus : pnpbus
+attach pnpbus at mainbus
+file arch/prep/pnpbus/pnpbus.c		pnpbus needs-flag
 
-attach wdc at obio with wdc_obio
-file arch/prep/dev/wdc_obio.c		wdc_obio needs-flag
+attach wdc at pnpbus with wdc_pnpbus
+file arch/prep/pnpbus/wdc_pnpbus.c	wdc_pnpbus needs-flag
+attach fdc at pnpbus with fdc_pnpbus: isadma
+file arch/prep/pnpbus/fdc_pnpbus.c	fdc_pnpbus
+device nvram
+attach nvram at pnpbus with nvram_pnpbus
+file arch/prep/pnpbus/nvram_pnpbus.c	nvram_pnpbus
 
 include "arch/prep/conf/majors.prep"

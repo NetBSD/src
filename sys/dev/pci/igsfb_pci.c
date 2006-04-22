@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.9 2005/12/11 12:22:50 christos Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.9.6.1 2006/04/22 11:39:14 simonb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.9 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.9.6.1 2006/04/22 11:39:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.9 2005/12/11 12:22:50 christos Exp $
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <dev/ic/igsfbreg.h>
 #include <dev/ic/igsfbvar.h>
@@ -79,29 +80,27 @@ CFATTACH_DECL(igsfb_pci, sizeof(struct igsfb_softc),
 
 
 static int
-igsfb_pci_match_by_id(id)
-	pcireg_t id;
+igsfb_pci_match_by_id(pcireg_t id)
 {
 
 	if (PCI_VENDOR(id) != PCI_VENDOR_INTEGRAPHICS)
-		return (0);
+		return 0;
 
 	switch (PCI_PRODUCT(id)) {
 	case PCI_PRODUCT_INTEGRAPHICS_IGA1682:		/* FALLTHROUGH */
 	case PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000:	/* FALLTHROUGH */
 	case PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010:
-		return (1);
+		return 1;
 	default:
-		return (0);
+		return 0;
 	}
 }
 
 
 int
-igsfb_pci_cnattach(iot, memt, pc, bus, device, function)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+igsfb_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
+		   pci_chipset_tag_t pc,
+		   int bus, int device, int function)
 {
 	struct igsfb_devconfig *dc;
 	pcitag_t tag;
@@ -112,53 +111,46 @@ igsfb_pci_cnattach(iot, memt, pc, bus, device, function)
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 	if (igsfb_pci_match_by_id(id) == 0)
-		return (1);
+		return 1;
 
 	dc = &igsfb_console_dc;
 	if (igsfb_pci_map_regs(dc, iot, memt, pc, tag, PCI_PRODUCT(id)) != 0)
-		return (1);
+		return 1;
 
 	ret = igsfb_enable(dc->dc_iot, dc->dc_iobase, dc->dc_ioflags);
 	if (ret)
-		return (ret);
+		return ret;
 
 	ret = igsfb_cnattach_subr(dc);
 	if (ret)
-		return (ret);
+		return ret;
 
 	igsfb_pci_console = 1;
 	igsfb_pci_constag = tag;
 
-	return (0);
+	return 0;
 }
 
 
 static int
-igsfb_pci_is_console(pc, tag)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+igsfb_pci_is_console(pci_chipset_tag_t pc, pcitag_t tag)
 {
 
-	return (igsfb_pci_is_console && (tag == igsfb_pci_constag));
+	return igsfb_pci_is_console && (tag == igsfb_pci_constag);
 }
 
 
 static int
-igsfb_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+igsfb_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	return (igsfb_pci_match_by_id(pa->pa_id));
+	return igsfb_pci_match_by_id(pa->pa_id);
 }
 
 
 static void
-igsfb_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+igsfb_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct igsfb_softc *sc = (struct igsfb_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -213,12 +205,10 @@ igsfb_pci_attach(parent, self, aux)
  * for CyberPro cards.
  */
 static int
-igsfb_pci_map_regs(dc, iot, memt, pc, tag, id)
-	struct igsfb_devconfig *dc;
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	pci_product_id_t id;
+igsfb_pci_map_regs(struct igsfb_devconfig *dc,
+		   bus_space_tag_t iot, bus_space_tag_t memt,
+		   pci_chipset_tag_t pc, pcitag_t tag,
+		   pci_product_id_t id)
 {
 
 	dc->dc_id = id;
@@ -236,7 +226,7 @@ igsfb_pci_map_regs(dc, iot, memt, pc, tag, id)
 		&dc->dc_memaddr, &dc->dc_memsz, &dc->dc_memflags) != 0)
 	{
 		printf("unable to configure memory space\n");
-		return (1);
+		return 1;
 	}
 
 	/*
@@ -264,8 +254,8 @@ igsfb_pci_map_regs(dc, iot, memt, pc, tag, id)
 			  &dc->dc_ioh) != 0)
 	{
 		printf("unable to map I/O registers\n");
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }

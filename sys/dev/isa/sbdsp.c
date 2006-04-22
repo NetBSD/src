@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.118 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.118.6.1 2006/04/22 11:39:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.118 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.118.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -150,12 +150,12 @@ struct {
  *
  *				SBPRO			SB20
  *				-----			--------
- * input ls min			4	KHz		4	KHz
- * input ls max			23	KHz		13	KHz
- * input hs max			44.1	KHz		15	KHz
- * output ls min		4	KHz		4	KHz
- * output ls max		23	KHz		23	KHz
- * output hs max		44.1	KHz		44.1	KHz
+ * input ls min			4	kHz		4	kHz
+ * input ls max			23	kHz		13	kHz
+ * input hs max			44.1	kHz		15	kHz
+ * output ls min		4	kHz		4	kHz
+ * output ls max		23	kHz		23	kHz
+ * output hs max		44.1	kHz		44.1	kHz
  */
 /* XXX Should we round the tc?
 #define SB_RATE_TO_TC(x) (((65536 - 256 * 1000000 / (x)) + 128) >> 8)
@@ -275,7 +275,7 @@ sbdsp_probe(struct sbdsp_softc *sc)
 		return 0;
 	}
 	/* if flags set, go and probe the jazz16 stuff */
-	if (sc->sc_dev.dv_cfdata->cf_flags & 1)
+	if (device_cfdata(&sc->sc_dev)->cf_flags & 1)
 		sbdsp_jazz16_probe(sc);
 	else
 		sbversion(sc);
@@ -344,8 +344,9 @@ sbdsp_jazz16_probe(struct sbdsp_softc *sc)
 	/* XXX set both 8 & 16-bit drq to same channel, it works fine. */
 	sc->sc_drq16 = sc->sc_drq8;
 	if (sbdsp_wdsp(sc, JAZZ16_SET_DMAINTR) ||
+	    (sc->sc_drq16 >= 0 &&
 	    sbdsp_wdsp(sc, (jazz16_drq_conf[sc->sc_drq16] << 4) |
-		jazz16_drq_conf[sc->sc_drq8]) ||
+		jazz16_drq_conf[sc->sc_drq8])) ||
 	    sbdsp_wdsp(sc, jazz16_irq_conf[sc->sc_irq])) {
 		DPRINTF(("sbdsp: can't write jazz16 probe stuff\n"));
 	} else {

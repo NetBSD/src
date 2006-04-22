@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.25 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.25.6.1 2006/04/22 11:38:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -30,11 +30,7 @@
 
 #include <sys/cdefs.h>
 
-#if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
-#endif
-
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.25 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.25.6.1 2006/04/22 11:38:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

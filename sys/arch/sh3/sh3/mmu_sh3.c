@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.c,v 1.10 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: mmu_sh3.c,v 1.10.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.10 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.10.6.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ sh3_mmu_start()
 void
 sh3_tlb_invalidate_addr(int asid, vaddr_t va)
 {
-	u_int32_t a, d;
+	uint32_t a, d;
 	int w;
 
 	d = (va & SH3_MMUAA_D_VPN_MASK_4K) | asid;  /* 4K page */
@@ -82,7 +82,7 @@ sh3_tlb_invalidate_addr(int asid, vaddr_t va)
 void
 sh3_tlb_invalidate_asid(int asid)
 {
-	u_int32_t aw, a;
+	uint32_t aw, a;
 	int e, w;
 
 	/* Invalidate entry attribute to ASID */
@@ -101,7 +101,7 @@ sh3_tlb_invalidate_asid(int asid)
 void
 sh3_tlb_invalidate_all()
 {
-	u_int32_t aw, a;
+	uint32_t aw, a;
 	int e, w;
 
 	/* Zero clear all TLB entry to avoid unexpected VPN match. */
@@ -116,9 +116,9 @@ sh3_tlb_invalidate_all()
 }
 
 void
-sh3_tlb_update(int asid, vaddr_t va, u_int32_t pte)
+sh3_tlb_update(int asid, vaddr_t va, uint32_t pte)
 {
-	u_int32_t oasid;
+	uint32_t oasid;
 
 	KDASSERT(asid < 0x100 && (pte & ~PGOFSET) != 0 && va != 0);
 

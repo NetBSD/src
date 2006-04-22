@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.18 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.18.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.18 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.18.6.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include "opt_inet.h"
 
@@ -684,7 +684,7 @@ cs_read_pktpg_from_eeprom(struct cs_softc *sc, int pktpg, u_int16_t *pValue)
 	int x, maxword;
 
 	/* Check that we have eeprom data */
-	if (sc->eeprom_data == NULL && (sc->eeprom_size > 2))
+	if ((sc->eeprom_data == NULL) || (sc->eeprom_size < 2))
 		return (CS_ERROR);
 
 	/*

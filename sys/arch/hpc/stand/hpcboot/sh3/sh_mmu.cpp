@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_mmu.cpp,v 1.5 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: sh_mmu.cpp,v 1.5.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 paddr_t
 MemoryManager_SHMMU::searchPage(vaddr_t vaddr)
 {
-	u_int32_t vpn, idx, s, dum, aae, dae, entry_idx, asid;
+	uint32_t vpn, idx, s, dum, aae, dae, entry_idx, asid;
 	paddr_t paddr = ~0;
 	int way, kmode;
 
@@ -100,7 +100,7 @@ MemoryManager_SHMMU::CacheDump()
 	static const char *able[] = {"dis", "en" };
 	int write_through_p0_u0_p3;
 	int write_through_p1;
-	u_int32_t r;
+	uint32_t r;
 	int kmode;
 
 	DPRINTF_SETUP();
@@ -152,7 +152,7 @@ void
 MemoryManager_SHMMU::MMUDump()
 {
 #define	ON(x, c)	((x) & (c) ? '|' : '.')
-	u_int32_t r, e, a;
+	uint32_t r, e, a;
 	int i, kmode;
 
 	DPRINTF_SETUP();

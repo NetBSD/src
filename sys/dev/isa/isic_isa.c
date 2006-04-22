@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.24 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.24.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -811,7 +811,7 @@ isic_isa_attach(parent, self, aux)
 {
 	struct isic_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	int flags = sc->sc_dev.dv_cfdata->cf_flags;
+	int flags = device_cfdata(&sc->sc_dev)->cf_flags;
 	int ret = 0, iobase, iosize, maddr, msize;
 	struct isic_attach_args args;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.32 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.32.6.1 2006/04/22 11:39:14 simonb Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1783,7 +1783,7 @@ typedef struct {
 	u_int32_t		bge_addr_lo;
 } bge_hostaddr;
 
-static inline void
+static __inline void
 bge_set_hostaddr(volatile bge_hostaddr *x, bus_addr_t y)
 {
 	x->bge_addr_lo = y & 0xffffffff;
@@ -1928,6 +1928,7 @@ struct bge_status_block {
 #define BCOM_VENDORID			0x14E4
 #define BCOM_DEVICEID_BCM5700		0x1644
 #define BCOM_DEVICEID_BCM5701		0x1645
+#define BCOM_DEVICEID_BCM5789		0x169d
 
 /*
  * Alteon AceNIC PCI vendor/device ID.

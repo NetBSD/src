@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.28 2005/12/07 12:40:47 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.28.6.1 2006/04/22 11:37:26 simonb Exp $
 #
 # INSTALL machine description file
 #
@@ -72,7 +72,7 @@ file-system	FFS		# fast filesystem
 file-system	CD9660		# CD-ROM ISO-9660 filesystem
 file-system	NFS		# Network filesystem client
 #file-system	UNION		# Union filesystem (req. for FDESC)
-file-system	KERNFS		# kernel data-structure filesystem
+#file-system	KERNFS		# kernel data-structure filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	PROCFS		# /proc filesystem
 file-system	MFS		# Memory-based filesystem
@@ -205,11 +205,11 @@ cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
 #uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sl		4	# SLIP network interfaces
-#pseudo-device	ppp		4	# PPP network interfaces
+#pseudo-device	sl			# SLIP network interfaces
+#pseudo-device	ppp			# PPP network interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	bpfilter	16	# Berkeley packet filter
-#pseudo-device	vnd		4	# vnode pseudo-disks
+pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	vnd			# vnode pseudo-disks
 #pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
@@ -224,10 +224,10 @@ pseudo-device	bpfilter	16	# Berkeley packet filter
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	loop			# loopback network interface
 #pseudo-device	ipfilter 		# IP Filter package
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	gre			# generic L3 over IP tunnel
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernel generator

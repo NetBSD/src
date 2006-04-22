@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.15 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: opm.c,v 1.15.6.1 2006/04/22 11:38:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.15 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.15.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,8 @@ opm_attach(struct device *parent, struct device *self, void *aux)
 		panic ("Cannot map IO space for OPM.");
 #endif
 
-	if (sc->sc_dev.dv_unit == 0)
+	/* XXX device_unit() abuse */
+	if (device_unit(&sc->sc_dev) == 0)
 		opm0 = sc;	/* XXX */
 
 	return;

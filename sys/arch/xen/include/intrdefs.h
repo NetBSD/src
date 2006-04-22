@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.4 2005/12/11 12:19:48 christos Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.4.6.1 2006/04/22 11:38:11 simonb Exp $	*/
 /*	NetBSD intrdefs.h,v 1.3 2003/06/16 20:01:06 thorpej Exp 	*/
 
 #ifndef _XEN_INTRDEFS_H
@@ -58,5 +58,7 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */ 
+
+#define NUM_LEGACY_IRQS	16
 
 #endif /* _XEN_INTRDEFS_H */

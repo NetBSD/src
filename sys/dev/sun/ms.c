@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.30 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: ms.c,v 1.30.6.1 2006/04/22 11:39:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.30 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.30.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ ms_input(ms, c)
 		ms->ms_byteno = -1;
 		return;
 	}
-	if ((c & ~0x0f) == 0x80) {	/* if in 0x80..0x8f */
+	if ((c & 0xb0) == 0x80) {	/* if in 0x80..0x8f of 0xc0..0xcf */
 		if (c & 8) {
 			ms->ms_byteno = 1;	/* short form (3 bytes) */
 		} else {

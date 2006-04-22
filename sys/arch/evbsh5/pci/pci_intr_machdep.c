@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.7 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.7.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.6.1 2006/04/22 11:37:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ cayman_intr_init(struct sh5_pci_chipset_tag *ct,
 
 	/*
 	 * Initialise the sh5pci_ihead structures for the PCI INT[A-D] pins.
-	 * We lazy-allocate the ihead stuctures as they are required.
+	 * We lazy-allocate the ihead structures as they are required.
 	 */
 	for (i = 0; i < PCI_INTERRUPT_PIN_MAX; i++) {
 		sc->sc_primary[i] = NULL;

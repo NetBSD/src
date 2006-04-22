@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.43 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: if_media.h,v 1.43.6.1 2006/04/22 11:40:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -231,10 +231,10 @@ u_quad_t	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_TURBO	 0x00000800	/* Operate in Turbo mode */
 
 /* operating mode for multi-mode devices */
-#define	IFM_IEEE80211_11A	0x00010000	/* 5Ghz, OFDM mode */
+#define	IFM_IEEE80211_11A	0x00010000	/* 5 GHz, OFDM mode */
 #define	IFM_IEEE80211_11B	0x00020000	/* Direct Sequence mode */
-#define	IFM_IEEE80211_11G	0x00030000	/* 2Ghz, CCK mode */
-#define	IFM_IEEE80211_FH	0x00040000	/* 2Ghz, GFSK mode */
+#define	IFM_IEEE80211_11G	0x00030000	/* 2 GHz, CCK mode */
+#define	IFM_IEEE80211_FH	0x00040000	/* 2 GHz, GFSK mode */
 
 /*
  * Shared media sub-types

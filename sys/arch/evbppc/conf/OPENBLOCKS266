@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.28 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.28.6.1 2006/04/22 11:37:25 simonb Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.28 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.28.6.1 $"
 
 maxusers	32
 
@@ -166,10 +166,8 @@ options	EMAC_EVENT_COUNTERS
 gpiic0	at opb? addr ? irq ?		# On-chip IIC controller
 iic0	at gpiic?			# I2C bus
 xrtc0	at iic? addr 0x6f		# RTC
-ppcgpio0 at opb? addr ? irq ?		# On-chip GPIO controller
-obsled0	at ppcgpio? addr 0x0c		# OBS LED connected GPIO
-obsled1	at ppcgpio? addr 0x0d		# OBS LED connected GPIO
-obsled2	at ppcgpio? addr 0x0e		# OBS LED connected GPIO
+opbgpio0 at opb? addr ? irq ?		# On-chip GPIO controller
+gpio*	at opbgpio?			# GPIO framework
 
 # PCI bus support
 pci*	at pchb?
@@ -187,8 +185,8 @@ atabus* at ata?
 wd*	at atabus? drive ?
 
 # MII/PHY support
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101/9102 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 options 	MIIVERBOSE		# verbose PHY autoconfig messages
 
 
@@ -203,7 +201,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	md		1	# memory disk device
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
@@ -219,7 +217,7 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IPv[46] pfil hooks too

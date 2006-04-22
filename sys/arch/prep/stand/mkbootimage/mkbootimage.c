@@ -1,6 +1,7 @@
-/*	$NetBSD: mkbootimage.c,v 1.12 2005/12/11 12:18:51 christos Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.12.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*-
+ * Copyright (C) 2006 Tim Rightnour
  * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@NetBSD.org)
  * Copyright (C) 1996, 1997, 1998, 1999 Cort Dougan (cort@fsmlasb.com)
  * Copyright (C) 1996, 1997, 1998, 1999 Paul Mackeras (paulus@linuxcare.com)
@@ -45,6 +46,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <zlib.h>
+#include <err.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -56,13 +59,12 @@
 #include "byteorder.h"
 #include "magic.h"
 
-#ifndef	MBR_PTYPE_PREP
-#define	MBR_PTYPE_PREP		0x41
-#endif
+/* Globals */
 
-#ifndef	MBR_PFLAG_ACTIVE
-#define	MBR_PFLAG_ACTIVE	0x80
-#endif
+int saloneflag = 0;
+Elf32_External_Ehdr hdr, khdr;
+struct stat elf_stat;
+unsigned char mbr[512];
 
 /*
  * Macros to get values from multi-byte ELF header fields.  These assume
@@ -73,101 +75,118 @@
 #define	ELFGET32(x)	(((x)[0] << 24) | ((x)[1] << 16) |		\
 			 ((x)[2] <<  8) |  (x)[3])
 
-int
-main(argc, argv)
-	int argc;
-	char **argv;
+static void usage(void);
+static int open_file(const char *, char *, Elf32_External_Ehdr *,
+    struct stat *);
+static void check_mbr(int, int, char *);
+int main(int, char **);
+
+static void
+usage(void)
 {
-	int i;
-	int elf_fd, prep_fd, kern_fd;
-	int elf_img_len = 0, kern_len = 0;
-	struct stat elf_stat, kern_stat;
-	unsigned char *elf_img = NULL, *kern_img = NULL;
-	unsigned char mbr[512];
-	unsigned long entry;
-	unsigned long length;
-	Elf32_External_Ehdr hdr;
-	Elf32_External_Phdr phdr;
-	struct mbr_partition *mbrp = (struct mbr_partition *)&mbr[MBR_PART_OFFSET];
+	fprintf(stderr, "usage: %s [-ls] [-b bootfile] [-k kernel] [-r rawdev]"
+	    " bootimage\n", getprogname());
+	exit(1);
+}
 
-	switch (argc) { 
-	case 4:
-		if ((kern_fd = open(argv[3], 0)) < 0) {
-			fprintf(stderr, "Can't open kernel '%s': %s\n",
-				argv[3], strerror(errno));
-			exit(2);
-		}
-		fstat(kern_fd, &kern_stat);
-		kern_len = kern_stat.st_size + MAGICSIZE + KERNLENSIZE;
-		/* FALL THROUGH */
-	case 3:
-		if ((elf_fd = open(argv[1], 0)) < 0) {
-			fprintf(stderr, "Can't open input '%s': %s\n",
-				argv[1], strerror(errno));
-			exit(2);
-		}
-		if ((prep_fd = creat(argv[2], 0644)) < 0) {
-			fprintf(stderr, "Can't open output '%s': %s\n",
-				argv[2], strerror(errno));
-			exit(2);
-		}
+/* verify the file is ELF and ppc, and open it up */
+static int
+open_file(const char *ftype, char *file, Elf32_External_Ehdr *hdr,
+	struct stat *f_stat)
+{
+	int fd;
 
-		break;
+	if ((fd = open(file, 0)) < 0)
+		errx(2, "Can't open %s '%s': %s", ftype, file, strerror(errno));
+	fstat(fd, f_stat);
 
-	default:
-		fprintf(stderr, "usage: %s "
-		    "<boot-prog> <boot-image> [<gzip'd kernel>]\n", argv[0]);
-		exit(1);
-		break;
+	if (read(fd, hdr, sizeof(Elf32_External_Ehdr)) !=
+	    sizeof(Elf32_External_Ehdr))
+		errx(3, "Can't read input '%s': %s", file, strerror(errno));
+
+	if (hdr->e_ident[EI_MAG0] != ELFMAG0 ||
+	    hdr->e_ident[EI_MAG1] != ELFMAG1 ||
+	    hdr->e_ident[EI_MAG2] != ELFMAG2 ||
+	    hdr->e_ident[EI_MAG3] != ELFMAG3 ||
+	    hdr->e_ident[EI_CLASS] != ELFCLASS32)
+		errx(3, "input '%s' is not ELF32 format", file);
+
+	if (hdr->e_ident[EI_DATA] != ELFDATA2MSB)
+		errx(3, "input '%s' is not big-endian", file);
+
+	if (ELFGET16(hdr->e_machine) != EM_PPC)
+		errx(3, "input '%s' is not PowerPC exec binary", file);
+
+	return(fd);
+}
+
+static void
+check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
+{
+	int raw_fd;
+	unsigned long entry, length;
+	struct mbr_partition *mbrp;
+	struct stat raw_stat;
+
+	/* If we are building a standalone image, do not write an MBR, just
+	 * set entry point and boot image size skipping over elf header
+	 */
+	if (saloneflag) {
+		entry  = sa_htole32(0x400);
+		length = sa_htole32(elf_stat.st_size - sizeof(hdr) + 0x400);
+		lseek(prep_fd, sizeof(mbr), SEEK_SET);
+		write(prep_fd, &entry, sizeof(entry));
+		write(prep_fd, &length, sizeof(length));
+		return;
 	}
 
 	/*
-	 * ELF file operation
+	 * if we have a raw device, we need to check to see if it allready
+	 * has a partition table, and if so, read it in and check for
+	 * suitability.
 	 */
-	if (read(elf_fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
-		fprintf(stderr, "Can't read input '%s': %s\n",
-			argv[1], strerror(errno));
-		exit(3);
-	}
-	if (hdr.e_ident[EI_MAG0] != ELFMAG0 ||
-	    hdr.e_ident[EI_MAG1] != ELFMAG1 ||
-	    hdr.e_ident[EI_MAG2] != ELFMAG2 ||
-	    hdr.e_ident[EI_MAG3] != ELFMAG3 ||
-	    hdr.e_ident[EI_CLASS] != ELFCLASS32) {
-		fprintf(stderr, "input '%s' is not ELF32 format\n", argv[1]);
-		exit(3);
-	}
-	if (hdr.e_ident[EI_DATA] != ELFDATA2MSB) {
-		fprintf(stderr, "input '%s' is not big-endian\n", argv[1]);
-		exit(3);
-	}
-	if (ELFGET16(hdr.e_machine) != EM_PPC) {
-		fprintf(stderr, "input '%s' is not PowerPC exec binary\n",
-			argv[1]);
-		exit(3);
+	if (rawdev != NULL) {
+		raw_fd = open(rawdev, O_RDONLY, 0);
+		if (raw_fd == -1)
+			errx(3, "couldn't open raw device %s: %s", rawdev,
+			    strerror(errno));
+
+		fstat(raw_fd, &raw_stat);
+		if (!(raw_stat.st_mode & S_IFCHR))
+			errx(3, "%s is not a raw device", rawdev);
+
+		if (read(raw_fd, mbr, 512) != 512)
+			errx(3, "MBR Read Failed: %s", strerror(errno));
+
+		mbrp = (struct mbr_partition *)&mbr[MBR_PART_OFFSET];
+		if (mbrp->mbrp_type != MBR_PTYPE_PREP)
+			errx(3, "First partition is not of type 0x%x.",
+			    MBR_PTYPE_PREP);
+		if (mbrp->mbrp_start != 0)
+			errx(3, "Use of the raw device is intended for"
+			    " upgrading of legacy installations.  Your"
+			    " install does not have a PReP boot partition"
+			    " starting at sector 0.  Use the -s option"
+			    " to build an image instead.");
+
+		/* if we got this far, we are fine, write back the partition
+		 * and write the entry points and get outta here */
+	/* Set entry point and boot image size skipping over elf header */
+		lseek(prep_fd, 0, SEEK_SET);
+		entry  = sa_htole32(0x400);
+		length = sa_htole32(elf_stat.st_size - sizeof(hdr) + 0x400);
+		write(prep_fd, mbr, sizeof(mbr));
+		write(prep_fd, &entry, sizeof(entry));
+		write(prep_fd, &length, sizeof(length));
+		close(raw_fd);
+		return;
 	}
 
-	for (i = 0; i < ELFGET16(hdr.e_phnum); i++) {
-		lseek(elf_fd, ELFGET32(hdr.e_phoff) + sizeof(phdr) * i,
-			SEEK_SET);
-		if (read(elf_fd, &phdr, sizeof(phdr)) != sizeof(phdr)) {
-			fprintf(stderr, "Can't read input '%s' phdr : %s\n",
-				argv[1], strerror(errno));
-			exit(3);
-                }
-
-		if ((ELFGET32(phdr.p_type) != PT_LOAD) ||
-		    !(ELFGET32(phdr.p_flags) & PF_X))
-			continue;
-
-		fstat(elf_fd, &elf_stat);
-		elf_img_len = elf_stat.st_size - ELFGET32(phdr.p_offset);
-		lseek(elf_fd, ELFGET32(phdr.p_offset), SEEK_SET);
-
-		break;
-	}
+	/* if we get to here, we want to build a standard floppy or netboot
+	 * image to file, so just build it */
 
 	memset(mbr, 0, sizeof(mbr));
+	mbrp = (struct mbr_partition *)&mbr[MBR_PART_OFFSET];
  
 	/* Set entry point and boot image size skipping over elf header */
 	entry  = sa_htole32(0x400);
@@ -196,7 +215,10 @@ main(argc, argv)
 	mbrp->mbrp_ssect = 2;	/* one-based			     */
 	mbrp->mbrp_scyl  = 0;	/* zero-based			     */
 	mbrp->mbrp_ehd   = 1;	/* assumes two heads		     */
-	mbrp->mbrp_esect = 18;	/* assumes 18 sectors/track	     */
+	if (lfloppyflag)
+		mbrp->mbrp_esect = 36;  /* 2.88MB floppy	     */
+	else
+		mbrp->mbrp_esect = 18;	/* assumes 18 sectors/track  */
 	mbrp->mbrp_ecyl  = 79;	/* assumes 80 cylinders/diskette     */
 
 	/*
@@ -215,53 +237,155 @@ main(argc, argv)
 	write(prep_fd, mbr, sizeof(mbr));
 	write(prep_fd, &entry, sizeof(entry));
 	write(prep_fd, &length, sizeof(length));  
+}
 
-	/* Set file position to 2nd sector where image will be written */
+int
+main(int argc, char **argv)
+{
+	unsigned char *elf_img = NULL, *kern_img = NULL;
+	int i, ch, tmp, kgzlen, err, lfloppyflag=0;
+	int elf_fd, prep_fd, kern_fd, elf_img_len = 0;
+	off_t lenpos, kstart, kend;
+	unsigned long length;
+	long flength;
+	gzFile gzf;
+	struct stat kern_stat;
+	char *kernel = NULL, *boot = NULL, *rawdev = NULL;
+	Elf32_External_Phdr phdr;
+
+	setprogname(argv[0]);
+	kern_len = 0;
+
+	while ((ch = getopt(argc, argv, "b:k:lr:s")) != -1)
+		switch (ch) {
+		case 'b':
+			boot = optarg;
+			break;
+		case 'k':
+			kernel = optarg;
+			break;
+		case 'l':
+			lfloppyflag = 1;
+			break;
+		case 'r':
+			rawdev = optarg;
+			break;
+		case 's':
+			saloneflag = 1;
+			break;
+		case '?':
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1)
+		usage();
+
+	if (kernel == NULL)
+		kernel = "/netbsd";
+
+	if (boot == NULL)
+		boot = "/usr/mdec/boot";
+
+	elf_fd = open_file("bootloader", boot, &hdr, &elf_stat);
+	kern_fd = open_file("kernel", kernel, &khdr, &kern_stat);
+	kern_len = kern_stat.st_size + MAGICSIZE + KERNLENSIZE;
+
+	for (i = 0; i < ELFGET16(hdr.e_phnum); i++) {
+		lseek(elf_fd, ELFGET32(hdr.e_phoff) + sizeof(phdr) * i,
+			SEEK_SET);
+		if (read(elf_fd, &phdr, sizeof(phdr)) != sizeof(phdr))
+			errx(3, "Can't read input '%s' phdr : %s", boot,
+			    strerror(errno));
+
+		if ((ELFGET32(phdr.p_type) != PT_LOAD) ||
+		    !(ELFGET32(phdr.p_flags) & PF_X))
+			continue;
+
+		fstat(elf_fd, &elf_stat);
+		elf_img_len = elf_stat.st_size - ELFGET32(phdr.p_offset);
+		lseek(elf_fd, ELFGET32(phdr.p_offset), SEEK_SET);
+
+		break;
+	}
+	if ((prep_fd = open(argv[0], O_RDWR|O_TRUNC, 0)) < 0) {
+		/* we couldn't open it, it must be new */
+		prep_fd = creat(argv[0], 0644);
+		if (prep_fd < 0)
+			errx(2, "Can't open output '%s': %s", argv[0],
+			    strerror(errno));
+	}
+
+	check_mbr(prep_fd, lfloppyflag, rawdev);
+
+	/* Set file pos. to 2nd sector where image will be written */
 	lseek(prep_fd, 0x400, SEEK_SET);
 
 	/* Copy boot image */
 	elf_img = (unsigned char *)malloc(elf_img_len);
-	if (!elf_img) {
-		fprintf(stderr, "Can't malloc: %s\n", strerror(errno));
-		exit(3);
-	}
-	if (read(elf_fd, elf_img, elf_img_len) != elf_img_len) {
-	    	fprintf(stderr, "Can't read file '%s' : %s\n",
-			argv[1], strerror(errno));
-		free(elf_img);
-		exit(3);
-	}
+	if (!elf_img)
+		errx(3, "Can't malloc: %s", strerror(errno));
+	if (read(elf_fd, elf_img, elf_img_len) != elf_img_len)
+		errx(3, "Can't read file '%s' : %s", boot, strerror(errno));
+
 	write(prep_fd, elf_img, elf_img_len);
 	free(elf_img);
 
-	/* Copy kernl */
-	if (kern_len) {
-		int tmp;
-		kern_img = (unsigned char *)malloc(kern_stat.st_size);
-		if (kern_img == NULL) {
-			fprintf(stderr, "Can't malloc: %s\n", strerror(errno));
-			exit(3);
-		}
-		if (read(kern_fd, (void *)kern_img, kern_stat.st_size) !=
-		    kern_stat.st_size) {
-			fprintf(stderr, "Can't read kernel '%s' : %s\n",
-				argv[3], strerror(errno));
-			exit(3);
-		}
-		write(prep_fd, (void *)magic, MAGICSIZE);
-		tmp = sa_htobe32(kern_stat.st_size);
-		write(prep_fd, (void *)&tmp, KERNLENSIZE);
-		write(prep_fd, (void *)kern_img, kern_stat.st_size);
+	/* Copy kernel */
+	kern_img = (unsigned char *)malloc(kern_stat.st_size);
 
-		length = sa_htole32(0x400 + elf_img_len + 8 +
-		    kern_stat.st_size);
-		lseek(prep_fd, sizeof(mbr) + 4, SEEK_SET);
-		write(prep_fd, &length, sizeof(length));  
+	if (kern_img == NULL)
+		errx(3, "Can't malloc: %s", strerror(errno));
 
-		free(kern_img);
-		close(kern_fd);
-	}
+	/* we need to jump back after having read the headers */
+	lseek(kern_fd, 0, SEEK_SET);
+	if (read(kern_fd, (void *)kern_img, kern_stat.st_size) !=
+	    kern_stat.st_size)
+		errx(3, "Can't read kernel '%s' : %s", kernel, strerror(errno));
 
+	gzf = gzdopen(dup(prep_fd), "a");
+	if (gzf == NULL)
+		errx(3, "Can't init compression: %s", strerror(errno));
+	if (gzsetparams(gzf, Z_BEST_COMPRESSION, Z_DEFAULT_STRATEGY) != Z_OK)
+		errx(3, "%s", gzerror(gzf, &err));
+
+	/* write a magic number and size before the kernel */
+	write(prep_fd, (void *)magic, MAGICSIZE);
+	lenpos = lseek(prep_fd, 0, SEEK_CUR);
+	tmp = sa_htobe32(0);
+	write(prep_fd, (void *)&tmp, KERNLENSIZE);
+
+	/* write in the compressed kernel */
+	kstart = lseek(prep_fd, 0, SEEK_CUR);
+	kgzlen = gzwrite(gzf, kern_img, kern_stat.st_size);
+	gzclose(gzf);
+	kend = lseek(prep_fd, 0, SEEK_CUR);
+
+	/* jump back to the length position now that we know the length */
+	lseek(prep_fd, lenpos, SEEK_SET);
+	kgzlen = kend - kstart;
+	tmp = sa_htobe32(kgzlen);
+	write(prep_fd, (void *)&tmp, KERNLENSIZE);
+
+	length = sa_htole32(0x400 + elf_img_len + 8 + kgzlen);
+	lseek(prep_fd, sizeof(mbr) + 4, SEEK_SET);
+	write(prep_fd, &length, sizeof(length));
+
+	flength = 0x400 + elf_img_len + 8 + kgzlen;
+	if (lfloppyflag)
+		flength -= (5760 * 512);
+	else
+		flength -= (2880 * 512);
+	if (flength > 0 && !saloneflag)
+		fprintf(stderr, "%s: Image %s is %d bytes larger than single"
+		    " floppy. Can only be used for netboot.\n", getprogname(),
+		    argv[0], flength);
+
+	free(kern_img);
+	close(kern_fd);
 	close(prep_fd);
 	close(elf_fd);
 

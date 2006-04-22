@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.77 2005/11/24 13:08:34 yamt Exp $	*/
+/*	$NetBSD: iommu.c,v 1.77.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.77 2005/11/24 13:08:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.77.6.1 2006/04/22 11:37:59 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,7 +72,7 @@ int iommudebug = 0x0;
 			STRBUFREG(strbuf_pgflush), (v));		\
 	} while (0)
 
-static	int iommu_strbuf_flush_done __P((struct strbuf_ctl *));
+static	int iommu_strbuf_flush_done(struct strbuf_ctl *);
 
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
@@ -82,11 +82,7 @@ static	int iommu_strbuf_flush_done __P((struct strbuf_ctl *));
  *	- create a private DVMA map.
  */
 void
-iommu_init(name, is, tsbsize, iovabase)
-	char *name;
-	struct iommu_state *is;
-	int tsbsize;
-	u_int32_t iovabase;
+iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 {
 	psize_t size;
 	vaddr_t va;
@@ -196,8 +192,7 @@ iommu_init(name, is, tsbsize, iovabase)
  * they aren't there when the STRBUF_EN bit does not remain.
  */
 void
-iommu_reset(is)
-	struct iommu_state *is;
+iommu_reset(struct iommu_state *is)
 {
 	int i;
 	struct strbuf_ctl *sb;
@@ -239,11 +234,7 @@ iommu_reset(is)
  * Here are the iommu control routines.
  */
 void
-iommu_enter(sb, va, pa, flags)
-	struct strbuf_ctl *sb;
-	vaddr_t va;
-	int64_t pa;
-	int flags;
+iommu_enter(struct strbuf_ctl *sb, vaddr_t va, int64_t pa, int flags)
 {
 	struct iommu_state *is = sb->sb_is;
 	int strbuf = (flags & BUS_DMA_STREAMING);
@@ -283,9 +274,7 @@ iommu_enter(sb, va, pa, flags)
  * Find the value of a DVMA address (debug routine).
  */
 paddr_t
-iommu_extract(is, dva)
-	struct iommu_state *is;
-	vaddr_t dva;
+iommu_extract(struct iommu_state *is, vaddr_t dva)
 {
 	int64_t tte = 0;
 
@@ -305,10 +294,7 @@ iommu_extract(is, dva)
  * XXX: this function needs better internal error checking.
  */
 void
-iommu_remove(is, va, len)
-	struct iommu_state *is;
-	vaddr_t va;
-	size_t len;
+iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 {
 
 #ifdef DIAGNOSTIC
@@ -344,8 +330,7 @@ iommu_remove(is, va, len)
 }
 
 static int
-iommu_strbuf_flush_done(sb)
-	struct strbuf_ctl *sb;
+iommu_strbuf_flush_done(struct strbuf_ctl *sb)
 {
 	struct iommu_state *is = sb->sb_is;
 	struct timeval cur, flushtimeout;
@@ -414,14 +399,8 @@ iommu_strbuf_flush_done(sb)
  * IOMMU DVMA operations, common to SBUS and PCI.
  */
 int
-iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	struct strbuf_ctl *sb;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+iommu_dvmamap_load(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
+	void *buf, bus_size_t buflen, struct proc *p, int flags)
 {
 	struct iommu_state *is = sb->sb_is;
 	int s;
@@ -589,10 +568,7 @@ iommu_dvmamap_load(t, sb, map, buf, buflen, p, flags)
 
 
 void
-iommu_dvmamap_unload(t, sb, map)
-	bus_dma_tag_t t;
-	struct strbuf_ctl *sb;
-	bus_dmamap_t map;
+iommu_dvmamap_unload(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map)
 {
 	struct iommu_state *is = sb->sb_is;
 	int error, s;
@@ -630,14 +606,8 @@ iommu_dvmamap_unload(t, sb, map)
 
 
 int
-iommu_dvmamap_load_raw(t, sb, map, segs, nsegs, flags, size)
-	bus_dma_tag_t t;
-	struct strbuf_ctl *sb;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int flags;
-	bus_size_t size;
+iommu_dvmamap_load_raw(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
+	bus_dma_segment_t *segs, int nsegs, int flags, bus_size_t size)
 {
 	struct iommu_state *is = sb->sb_is;
 	struct vm_page *pg;
@@ -949,13 +919,8 @@ iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
 }
 
 void
-iommu_dvmamap_sync(t, sb, map, offset, len, ops)
-	bus_dma_tag_t t;
-	struct strbuf_ctl *sb;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+iommu_dvmamap_sync(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_dmamap_t map,
+	bus_addr_t offset, bus_size_t len, int ops)
 {
 	bus_size_t count;
 	int i, needsflush = 0;
@@ -1000,14 +965,9 @@ iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 }
 
 int
-iommu_dvmamem_alloc(t, sb, size, alignment, boundary, segs, nsegs, rsegs, flags)
-	bus_dma_tag_t t;
-	struct strbuf_ctl *sb;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+iommu_dvmamem_alloc(bus_dma_tag_t t, struct strbuf_ctl *sb, bus_size_t size,
+	bus_size_t alignment, bus_size_t boundary, bus_dma_segment_t *segs,
+	int nsegs, int *rsegs, int flags)
 {
 
 	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_alloc: sz %llx align %llx bound %llx "
@@ -1019,11 +979,8 @@ iommu_dvmamem_alloc(t, sb, size, alignment, boundary, segs, nsegs, rsegs, flags)
 }
 
 void
-iommu_dvmamem_free(t, sb, segs, nsegs)
-	bus_dma_tag_t t;
-	struct strbuf_ctl *sb;
-	bus_dma_segment_t *segs;
-	int nsegs;
+iommu_dvmamem_free(bus_dma_tag_t t, struct strbuf_ctl *sb,
+	bus_dma_segment_t *segs, int nsegs)
 {
 
 	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_free: segp %p nsegs %d\n",
@@ -1036,14 +993,9 @@ iommu_dvmamem_free(t, sb, segs, nsegs)
  * Check the flags to see whether we're streaming or coherent.
  */
 int
-iommu_dvmamem_map(t, sb, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	struct strbuf_ctl *sb;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+iommu_dvmamem_map(bus_dma_tag_t t, struct strbuf_ctl *sb,
+	bus_dma_segment_t *segs, int nsegs, size_t size, caddr_t *kvap,
+	int flags)
 {
 	struct vm_page *pg;
 	vaddr_t va;
@@ -1100,11 +1052,8 @@ iommu_dvmamem_map(t, sb, segs, nsegs, size, kvap, flags)
  * Unmap DVMA mappings from kernel
  */
 void
-iommu_dvmamem_unmap(t, sb, kva, size)
-	bus_dma_tag_t t;
-	struct strbuf_ctl *sb;
-	caddr_t kva;
-	size_t size;
+iommu_dvmamem_unmap(bus_dma_tag_t t, struct strbuf_ctl *sb, caddr_t kva,
+	size_t size)
 {
 
 	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_unmap: kvm %p size %lx\n",

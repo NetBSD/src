@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.18.4.1 2006/02/04 14:03:58 simonb Exp $	*/
+/*	$NetBSD: icp.c,v 1.18.4.2 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.18.4.1 2006/02/04 14:03:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.18.4.2 2006/04/22 11:38:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -651,7 +651,8 @@ icp_async_event(struct icp_softc *icp, int service)
 	} else {
 		if ((icp->icp_fw_vers & 0xff) >= 0x1a) {
 			icp->icp_evt.size = 0;
-			icp->icp_evt.eu.async.ionode = icp->icp_dv.dv_unit;
+			icp->icp_evt.eu.async.ionode =
+			    device_unit(&icp->icp_dv);
 			icp->icp_evt.eu.async.status = icp->icp_status;
 			/*
 			 * Severity and event string are filled in by the
@@ -661,7 +662,8 @@ icp_async_event(struct icp_softc *icp, int service)
 			    icp->icp_evt.event_string);
 		} else {
 			icp->icp_evt.size = sizeof(icp->icp_evt.eu.async);
-			icp->icp_evt.eu.async.ionode = icp->icp_dv.dv_unit;
+			icp->icp_evt.eu.async.ionode =
+			    device_unit(&icp->icp_dv);
 			icp->icp_evt.eu.async.service = service;
 			icp->icp_evt.eu.async.status = icp->icp_status;
 			icp->icp_evt.eu.async.info = icp->icp_info;
@@ -706,7 +708,7 @@ icp_intr(void *cookie)
 		printf("%s: uninitialized or unknown service (%d/%d)\n",
 		    icp->icp_dv.dv_xname, ctx.info, ctx.info2);
 		icp->icp_evt.size = sizeof(icp->icp_evt.eu.driver);
-		icp->icp_evt.eu.driver.ionode = icp->icp_dv.dv_unit;
+		icp->icp_evt.eu.driver.ionode = device_unit(&icp->icp_dv);
 		icp_store_event(icp, GDT_ES_DRIVER, 4, &icp->icp_evt);
 		return (1);
 	}

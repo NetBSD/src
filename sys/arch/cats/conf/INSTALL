@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.56 2005/12/20 05:35:27 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.56.6.1 2006/04/22 11:37:21 simonb Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -452,16 +452,16 @@ ds1687rtc0	at isa? port 0x72	# Dallas RTC
 pseudo-device	ccd		2	# concatenated/striped disk devices
 #pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
-#pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	ppp		2	# Point-to-Point Protocol
-#pseudo-device	sl		2	# Serial Line IP
-#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	tun			# network tunneling over tty
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -475,5 +475,5 @@ pseudo-device	wsmux
 pseudo-device	wsfont
 
 # for IPv6
-#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f

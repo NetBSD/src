@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.3 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: cons.h,v 1.3.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,15 +81,15 @@ struct consdev {
 	int	address;	/* address */
 	int	speed;		/* speed(serial only) */
 	void	(*cn_probe)	/* probe hardware and fill in consdev info */
-		    __P((struct consdev *));
+		    (struct consdev *);
 	void	(*cn_init)	/* turn on as console */
-		    __P((struct consdev *));
+		    (struct consdev *);
 	int	(*cn_getc)	/* getchar interface */
-		    __P((void *));
+		    (void *);
 	void	(*cn_putc)	/* putchar interface */
-		    __P((void *, int));
+		    (void *, int);
 	int	(*cn_scan)	/* scan interface */
-		    __P((void *));
+		    (void *);
 	int	cn_pri;		/* pecking order; the higher the better */
 	void	*cn_dev;	/* device data tag */
 };

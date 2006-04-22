@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.12 2005/12/11 12:17:43 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.12.6.1 2006/04/22 11:37:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -86,6 +86,15 @@
 /* The machine-dependent ptrace(2) requests. */
 #define	PT_GETXMMREGS	(PT_FIRSTMACH + 5)
 #define	PT_SETXMMREGS	(PT_FIRSTMACH + 6)
+
+#define PT_MACHDEP_STRINGS \
+	"PT_STEP", \
+	"PT_GETREGS", \
+	"PT_SETREGS", \
+	"PT_GETFPREGS", \
+	"PT_SETFPREGS", \
+	"PT_GETXMMREGS", \
+	"PT_SETXMMREGS",
 
 #ifdef _KERNEL
 

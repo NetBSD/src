@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.31 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.31.6.1 2006/04/22 11:38:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.31 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.31.6.1 2006/04/22 11:38:12 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -385,9 +385,9 @@ unionread:
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
 	auio.uio_resid = count;
+	KASSERT(l == curlwp);
+	auio.uio_vmspace = l->l_proc->p_vmspace;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	loff = auio.uio_offset = fp->f_offset;
 #	if (BYTE_ORDER != LITTLE_ENDIAN)
@@ -400,10 +400,10 @@ unionread:
 	{
 		kuio = auio;
 		kuio.uio_iov = &kiov;
-		kuio.uio_segflg = UIO_SYSSPACE;
 		kiov.iov_len = count;
 		dirbuf = malloc(count, M_TEMP, M_WAITOK);
 		kiov.iov_base = dirbuf;
+		UIO_SETUP_SYSSPACE(&kuio);
 		error = VOP_READDIR(vp, &kuio, fp->f_cred, &eofflag,
 			    (off_t **)0, (int *)0);
 		fp->f_offset = kuio.uio_offset;

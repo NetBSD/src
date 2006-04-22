@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.22 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.22.6.1 2006/04/22 11:37:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.22 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.22.6.1 2006/04/22 11:37:45 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -190,7 +190,7 @@ static void
 zs_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *) self;
-	struct cfdata *cf = self->dv_cfdata;
+	struct cfdata *cf = device_cfdata(self);
 	struct hb_attach_args *ha = aux;
 	struct zsc_attach_args zsc_args;
 	struct zsdevice *zs;

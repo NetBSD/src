@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.2 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.2.6.1 2006/04/22 11:39:54 simonb Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -47,7 +47,7 @@ struct file;
 # endif
 #endif
 #if !defined(__SVR4) && !defined(__svr4__)
-# if defined(_KERNEL) && !defined(__sgi)
+# if defined(_KERNEL) && !defined(__sgi) && !defined(AIX)
 #  include <sys/kernel.h>
 # endif
 #else
@@ -103,10 +103,10 @@ extern struct timeout fr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.2 2005/12/11 12:24:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.2.6.1 2006/04/22 11:39:54 simonb Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77 2004/01/27 00:24:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77.2.5 2006/02/26 08:26:54 darrenr Exp";
 #endif
 #endif
 
@@ -231,6 +231,7 @@ ipfr_t *table[];
 {
 	ipfr_t *fra, frag;
 	u_int idx, off;
+	frentry_t *fr;
 	ip_t *ip;
 
 	if (ipfr_inuse >= IPFT_SIZE)
@@ -242,7 +243,7 @@ ipfr_t *table[];
 	ip = fin->fin_ip;
 
 	if (pass & FR_FRSTRICT)
-		if ((ip->ip_off & IP_OFFMASK) != 0)
+		if (fin->fin_off != 0)
 			return NULL;
 
 	frag.ipfr_p = ip->ip_p;
@@ -282,8 +283,13 @@ ipfr_t *table[];
 		return NULL;
 	}
 
-	if ((fra->ipfr_rule = fin->fin_fr) != NULL)
-		fin->fin_fr->fr_ref++;
+	fr = fin->fin_fr;
+	fra->ipfr_rule = fr;
+	if (fr != NULL) {
+		MUTEX_ENTER(&fr->fr_lock);
+		fr->fr_ref++;
+		MUTEX_EXIT(&fr->fr_lock);
+	}
 
 	/*
 	 * Insert the fragment into the fragment table, copy the struct used
@@ -751,9 +757,7 @@ void fr_fragexpire()
 {
 	ipfr_t	**fp, *fra;
 	nat_t	*nat;
-#if defined(USE_SPL) && defined(_KERNEL)
-	int	s;
-#endif
+	SPL_INT(s);
 
 	if (fr_frag_lock)
 		return;
@@ -819,7 +823,7 @@ void fr_fragexpire()
 /* expectation of this being called twice per second.                       */
 /* ------------------------------------------------------------------------ */
 #if !defined(_KERNEL) || (!SOLARIS && !defined(__hpux) && !defined(__sgi) && \
-			  !defined(__osf__))
+			  !defined(__osf__) && !defined(linux))
 # if defined(_KERNEL) && ((BSD >= 199103) || defined(__sgi))
 void fr_slowtimer __P((void *ptr))
 # else

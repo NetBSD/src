@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.3 2006/01/27 18:31:12 cdi Exp $	*/
+/*	$NetBSD: srt0.s,v 1.3.4.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -255,7 +255,7 @@ _C_LABEL(dtlb_va_to_pa):
 
 /*
  * void
- * itlb_enter(vaddr_t vpn, u_int32_t data_hi, u_int32_t data_lo)
+ * itlb_enter(vaddr_t vpn, uint32_t data_hi, uint32_t data_lo)
  *
  * Insert new mapping into iTLB. Data tag is passed in two different
  * registers so that it works even with 32-bit compilers.
@@ -276,7 +276,7 @@ _C_LABEL(itlb_enter):
 
 /*
  * void
- * dtlb_enter(vaddr_t vpn, u_int32_t data_hi, u_int32_t data_lo)
+ * dtlb_enter(vaddr_t vpn, uint32_t data_hi, uint32_t data_lo)
  *
  * Insert new mapping into dTLB. Data tag is passed in two different
  * registers so that it works even with 32-bit compilers.

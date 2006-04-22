@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.214 2005/12/11 12:23:23 christos Exp $
+$NetBSD: pcmciadevs,v 1.214.6.1 2006/04/22 11:39:25 simonb Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -81,6 +81,7 @@ vendor KINGSTON			0x0186	Kingston
 vendor DAYNA			0x0194	Dayna Corporation
 vendor RAYTHEON			0x01a6	Raytheon
 vendor IODATA			0x01bf	I-O DATA
+vendor BELKIN			0x01bf	Belkin
 vendor BAY			0x01eb  Bay Networks
 vendor FARALLON			0x0200  Farallon Communications
 vendor TELECOMDEVICE		0x021b  Telecom Device
@@ -172,6 +173,9 @@ product	BAY EMOBILITY_11B	0x080a e-Mobility 11Mb Wireless LAN
 
 /* BreezeCOM */
 product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET
+
+/* Belkin */
+product BELKIN F5D5020		0x2328 Belkin F5D5020 PCMCIA Network Card
 
 /* BUFFALO */
 product BUFFALO WLI_PCM_S11	0x0305	BUFFALO AirStation 11Mbps WLAN

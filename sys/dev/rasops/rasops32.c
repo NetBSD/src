@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.14 2005/12/11 12:23:44 christos Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.14.6.1 2006/04/22 11:39:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.14 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.14.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 #include "opt_rasops.h"
 
@@ -83,10 +83,11 @@ rasops32_putchar(cookie, row, col, uc, attr)
 {
 	int width, height, cnt, fs, fb, clr[2];
 	struct rasops_info *ri;
-	int32_t *dp, *rp;
+	int32_t *dp, *rp, *hp, *hrp;
 	u_char *fr;
 
 	ri = (struct rasops_info *)cookie;
+	hp = hrp = NULL;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -103,6 +104,9 @@ rasops32_putchar(cookie, row, col, uc, attr)
 	    return;
 
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	if (ri->ri_hwbits)
+		hrp = (int32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
+		    col*ri->ri_xscale);
 
 	height = ri->ri_font->fontheight;
 	width = ri->ri_font->fontwidth;
@@ -114,9 +118,16 @@ rasops32_putchar(cookie, row, col, uc, attr)
 		while (height--) {
 			dp = rp;
 			DELTA(rp, ri->ri_stride, int32_t *);
+			if (ri->ri_hwbits) {
+				hp = hrp;
+				DELTA(hrp, ri->ri_stride, int32_t *);
+			}
 
-			for (cnt = width; cnt; cnt--)
+			for (cnt = width; cnt; cnt--) {
 				*dp++ = clr[0];
+				if (ri->ri_hwbits)
+					*hp++ = clr[0];
+			}
 		}
 	} else {
 		uc -= ri->ri_font->firstchar;
@@ -129,9 +140,15 @@ rasops32_putchar(cookie, row, col, uc, attr)
 			    (fr[0] << 24);
 			fr += fs;
 			DELTA(rp, ri->ri_stride, int32_t *);
+			if (ri->ri_hwbits) {
+				hp = hrp;
+				DELTA(hrp, ri->ri_stride, int32_t *);
+			}
 
 			for (cnt = width; cnt; cnt--) {
 				*dp++ = clr[(fb >> 31) & 1];
+				if (ri->ri_hwbits)
+					*hp++ = clr[(fb >> 31) & 1];
 				fb <<= 1;
 			}
 		}
@@ -140,8 +157,13 @@ rasops32_putchar(cookie, row, col, uc, attr)
 	/* Do underline */
 	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
+		if (ri->ri_hwbits)
+			DELTA(hrp, -(ri->ri_stride << 1), int32_t *);
 
-		while (width--)
+		while (width--) {
 			*rp++ = clr[1];
+			if (ri->ri_hwbits)
+				*hrp++ = clr[1];
+		}
 	}
 }

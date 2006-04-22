@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.6 2002/10/23 09:10:26 jdolecek Exp $ */
+/* $NetBSD: arcpp.c,v 1.6.38.1 2006/04/22 11:37:09 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.6 2002/10/23 09:10:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.6.38.1 2006/04/22 11:37:09 simonb Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -172,7 +172,7 @@ arcpp_attach(struct device *parent, struct device *self, void *aux)
  * Wait until the printer's selected and not busy.
  */
 int
-arcppopen(dev_t dev, int flag, int mode, struct proc *p)
+arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	u_char flags = ARCPPFLAGS(dev);
 	struct arcpp_softc *sc;
@@ -227,7 +227,7 @@ arcppopen(dev_t dev, int flag, int mode, struct proc *p)
  * Close the device, and free the local line buffer.
  */
 int
-arcppclose(dev_t dev, int flag, int mode, struct proc *p)
+arcppclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct arcpp_softc *sc = device_lookup(&arcpp_cd, ARCPPUNIT(dev));
 

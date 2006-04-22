@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.94 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.94.4.1 2006/04/22 11:40:12 simonb Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.94.4.1 2006/04/22 11:40:12 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -845,6 +845,7 @@ skip_ipsec2:;
 	tlen = m->m_pkthdr.len;
 
 	dontfrag = 0;
+#ifdef notdef
 	if (dontfrag && alwaysfrag) {	/* case 4 */
 		/* conflicting request - can't transmit */
 		error = EMSGSIZE;
@@ -871,7 +872,7 @@ skip_ipsec2:;
 		error = EMSGSIZE;
 		goto bad;
 	}
-
+#endif
 	/*
 	 * transmit packet without fragmentation
 	 */
@@ -2015,8 +2016,8 @@ ip6_setmoptions(optname, im6op, m)
 		 * Everything looks good; add a new record to the multicast
 		 * address list for the given interface.
 		 */
-		imm = in6_joingroup(ifp, &mreq->ipv6mr_multiaddr, &error);
-		if (!imm)
+		imm = in6_joingroup(ifp, &mreq->ipv6mr_multiaddr, &error, 0);
+		if (imm == NULL)
 			break;
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm, i6mm_chain);
 		break;

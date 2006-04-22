@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.97 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.97.6.1 2006/04/22 11:39:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.97 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.97.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -352,7 +352,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		ATADEBUG_PRINT(("wdc_atapi_scsipi_request %s:%d:%d\n",
 		    atac->atac_dev.dv_xname, channel, drive), DEBUG_XFERS);
-		if ((atac->atac_dev.dv_flags & DVF_ACTIVE) == 0) {
+		if (!device_is_active(&atac->atac_dev)) {
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			scsipi_done(sc_xfer);
 			return;

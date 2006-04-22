@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.35 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.35.4.1 2006/04/22 11:40:12 simonb Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -228,6 +228,7 @@ extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
+extern int	ip6_mcast_pmtu;		/* enable pMTU discovery for multicast? */
 extern int	ip6_v6only;
 
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
@@ -251,6 +252,9 @@ extern int   ip6_anonportmax;		/* maximum ephemeral port */
 extern int   ip6_lowportmin;		/* minimum reserved port */
 extern int   ip6_lowportmax;		/* maximum reserved port */
 
+extern int	ip6_use_tempaddr; /* whether to use temporary addresses. */
+extern int	ip6_prefer_tempaddr; /* whether to prefer temporary addresses
+					in the source address selection */
 extern int	ip6_use_defzone; /* whether to use the default scope zone
 				    when unspecified */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.82 2006/01/02 21:43:24 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.82.4.1 2006/04/22 11:40:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.82 2006/01/02 21:43:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.82.4.1 2006/04/22 11:40:15 simonb Exp $");
 
 #include "opt_nfs.h"
 
@@ -331,9 +331,7 @@ nfs_reclaim(v)
 void
 nfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 {
-	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
-	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
-		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
+
 	*eobp = MAX(size, vp->v_size);
 }
 

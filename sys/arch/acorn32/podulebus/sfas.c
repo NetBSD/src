@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.15 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: sfas.c,v 1.15.6.1 2006/04/22 11:37:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.15 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.15.6.1 2006/04/22 11:37:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -812,7 +812,7 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 		 * If the scsi unit is not set to synch transfer and we want
 		 * that, we have to negotiate. This should realy base the
 		 * period on the clock frequence rather than just check if
-		 * >25Mhz
+		 * >25 MHz
 		 */
 
 		nexus->flags |= SFAS_NF_DO_SDTR;

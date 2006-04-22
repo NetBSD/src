@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.8 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: snapper.c,v 1.8.6.1 2006/04/22 11:37:41 simonb Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -416,12 +416,12 @@ snapper_defer(struct device *dev)
 	/*
 	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
 		if (strncmp(dv->dv_xname, "ki2c", 4) == 0 &&
-		    strncmp(dv->dv_parent->dv_xname, "obio", 4) == 0)
+		    strncmp(device_parent(dv)->dv_xname, "obio", 4) == 0)
 			sc->sc_i2c = dv;
 	*/
 	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
 		if (strncmp(dv->dv_xname, "deq", 3) == 0 &&
-		    strncmp(dv->dv_parent->dv_xname, "ki2c", 4) == 0) {
+		    strncmp(device_parent(dv)->dv_xname, "ki2c", 4) == 0) {
 		    	deq=(struct deq_softc *)dv;
 			sc->sc_i2c = deq->sc_i2c;
 			sc->sc_deqaddr=deq->sc_address;

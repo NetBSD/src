@@ -1,0 +1,6 @@
+#       $NetBSD: majors.hpcarm,v 1.1.8.2 2006/04/22 11:37:28 simonb Exp $
+#
+# Device majors for hpcarm
+#
+
+device-major	apmdev		char 103		apmdev

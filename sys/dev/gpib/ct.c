@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.6 2005/12/11 12:21:21 christos Exp $ */
+/*	$NetBSD: ct.c,v 1.6.6.1 2006/04/22 11:38:52 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.6 2005/12/11 12:21:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.6.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ ctattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ct_softc *sc = (struct ct_softc *)self;
+	struct ct_softc *sc = device_private(self);
 	struct cs80bus_attach_args *ca = aux;
 	struct cs80_description csd;
 	char name[7];
@@ -398,7 +398,7 @@ ctopen(dev, flag, type, p)
 	else
 		opt = C_SPAR;
 
-	if (cs80setoptions(sc->sc_dev.dv_parent, sc->sc_slave,
+	if (cs80setoptions(device_parent(&sc->sc_dev), sc->sc_slave,
 	    sc->sc_punit, opt))
 		return (EBUSY);
 
@@ -560,8 +560,8 @@ ctstart(sc)
 			sc->sc_blkno = 0;
 			ul.unit = CS80CMD_SUNIT(punit);
 			ul.cmd = CS80CMD_UNLOAD;
-			(void) cs80send(sc->sc_dev.dv_parent, slave, punit,
-			    CS80CMD_SCMD, &ul, sizeof(ul));
+			(void) cs80send(device_parent(&sc->sc_dev), slave,
+			    punit, CS80CMD_SCMD, &ul, sizeof(ul));
 			break;
 
 		case MTWEOF:
@@ -569,8 +569,8 @@ ctstart(sc)
 			sc->sc_flags |= CTF_WRT;
 			wfm.unit = CS80CMD_SUNIT(sc->sc_punit);
 			wfm.cmd = CS80CMD_WFM;
-			(void) cs80send(sc->sc_dev.dv_parent, slave, punit,
-			    CS80CMD_SCMD, &wfm, sizeof(wfm));
+			(void) cs80send(device_parent(&sc->sc_dev), slave,
+			    punit, CS80CMD_SCMD, &wfm, sizeof(wfm));
 			ctaddeof(sc);
 			break;
 
@@ -600,8 +600,9 @@ gotaddr:
 			sc->sc_ioc.len = htobe32(0);
 			sc->sc_ioc.nop3 = CS80CMD_NOP;
 			sc->sc_ioc.cmd = CS80CMD_READ;
-			(void) cs80send(sc->sc_dev.dv_parent, slave, punit,
-			    CS80CMD_SCMD, &sc->sc_ioc, sizeof(sc->sc_ioc));
+			(void) cs80send(device_parent(&sc->sc_dev), slave,
+			    punit, CS80CMD_SCMD, &sc->sc_ioc,
+			    sizeof(sc->sc_ioc));
 			break;
 		}
 	} else {
@@ -635,7 +636,7 @@ mustio:
 			sc->sc_ioc.cmd = CS80CMD_WRITE;
 			sc->sc_flags |= (CTF_WRT | CTF_WRTTN);
 		}
-		(void) cs80send(sc->sc_dev.dv_parent, slave, punit,
+		(void) cs80send(device_parent(&sc->sc_dev), slave, punit,
 		    CS80CMD_SCMD, &sc->sc_ioc, sizeof(sc->sc_ioc));
 	}
 	gpibawait(sc->sc_ic);

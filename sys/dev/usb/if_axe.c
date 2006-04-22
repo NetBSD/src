@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.12 2005/11/28 13:31:09 augustss Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.12.6.1 2006/04/22 11:39:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.12 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.12.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -465,6 +465,7 @@ USB_ATTACH(axe)
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->axe_dev));
+                usbd_devinfo_free(devinfop);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -476,6 +477,7 @@ USB_ATTACH(axe)
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->axe_dev));
+                usbd_devinfo_free(devinfop);
 		USB_ATTACH_ERROR_RETURN;
 	}
 

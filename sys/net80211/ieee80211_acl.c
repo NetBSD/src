@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_acl.c,v 1.4 2005/08/13 17:31:48 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.4 2005/11/18 16:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.4.6.1 2006/04/22 11:40:08 simonb Exp $");
 #endif
 
 /*
@@ -292,8 +292,7 @@ acl_getioctl(struct ieee80211com *ic, struct ieee80211req *ireq)
 			ireq->i_len = space;	/* return required space */
 			return 0;		/* NB: must not error */
 		}
-		MALLOC(ap, struct ieee80211req_maclist *, space,
-			M_TEMP, M_NOWAIT);
+		ap = malloc(space, M_TEMP, M_NOWAIT);
 		if (ap == NULL)
 			return ENOMEM;
 		i = 0;

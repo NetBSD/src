@@ -201,5 +201,5 @@ ibmnws_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	    PCI_PRODUCT(id) == PCI_PRODUCT_WEITEK_P9100)
 		return 0;
 
-	return (PCI_CONF_ALL & ~PCI_CONF_MAP_ROM);
+	return (PCI_CONF_DEFAULT);
 }

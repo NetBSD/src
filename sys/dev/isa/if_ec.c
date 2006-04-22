@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.26 2005/12/24 20:27:41 perry Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.26.6.1 2006/04/22 11:39:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.26 2005/12/24 20:27:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.26.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,8 @@ ec_attach(parent, self, aux)
 	 * we optimize for linear transfers of same-size packets.)
 	 */
 	if (esc->sc_16bitp) {
-		if (sc->sc_dev.dv_cfdata->cf_flags & DP8390_NO_MULTI_BUFFERING)
+		if (device_cfdata(&sc->sc_dev)->cf_flags &
+		    DP8390_NO_MULTI_BUFFERING)
 			sc->txb_cnt = 1;
 		else
 			sc->txb_cnt = 2;

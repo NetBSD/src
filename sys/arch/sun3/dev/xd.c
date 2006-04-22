@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.51 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: xd.c,v 1.51.6.1 2006/04/22 11:38:05 simonb Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.6.1 2006/04/22 11:38:05 simonb Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -324,7 +324,7 @@ xdgetdisklabel(struct xd_softc *xd, void *b)
 	/* Required parameter for readdisklabel() */
 	xd->sc_dk.dk_label->d_secsize = XDFM_BPS;
 
-	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
+	err = readdisklabel(MAKEDISKDEV(0, device_unit(&xd->sc_dev), RAW_PART),
 			    xddummystrat,
 			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
 	if (err) {
@@ -528,7 +528,7 @@ xdmatch(struct device *parent, struct cfdata *cf, void *aux)
 	int xd_unit;
 
 	/* Match only on the "wired-down" controller+disk. */
-	xd_unit = parent->dv_unit * 2 + xa->driveno;
+	xd_unit = device_unit(parent) * 2 + xa->driveno;
 	if (cf->cf_unit != xd_unit)
 		return (0);
 

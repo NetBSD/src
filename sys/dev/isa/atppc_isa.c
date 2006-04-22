@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.8 2005/12/11 12:22:02 christos Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.8.6.1 2006/04/22 11:39:06 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.8 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.8.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include "opt_atppc.h"
 
@@ -155,7 +155,7 @@ atppc_isa_attach(struct device *parent, struct device *self, void *aux)
 	lsc->sc_dev_ok = ATPPC_ATTACHED;
 
 	/* Assign interrupt handler */
-	if (!(self->dv_cfdata->cf_flags & ATPPC_FLAG_DISABLE_INTR)
+	if (!(device_cfdata(self)->cf_flags & ATPPC_FLAG_DISABLE_INTR)
 	   && ia->ia_irq->ir_irq != ISA_UNKNOWN_IRQ
 	   && ia->ia_nirq >= 1) {
 		sc->sc_irq = ia->ia_irq[0].ir_irq;
@@ -171,7 +171,7 @@ atppc_isa_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Configure DMA */
-	if (!(self->dv_cfdata->cf_flags & ATPPC_FLAG_DISABLE_DMA)
+	if (!(device_cfdata(self)->cf_flags & ATPPC_FLAG_DISABLE_DMA)
 	    && ia->ia_drq->ir_drq != ISA_UNKNOWN_DRQ
 	    && ia->ia_ndrq >= 1)
 		sc->sc_drq = ia->ia_drq[0].ir_drq;

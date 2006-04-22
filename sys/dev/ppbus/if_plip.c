@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.9 2005/12/24 23:00:49 perry Exp $ */
+/* $NetBSD: if_plip.c,v 1.9.6.1 2006/04/22 11:39:25 simonb Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.9 2005/12/24 23:00:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.9.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -219,7 +219,7 @@ lp_probe(struct device * parent, struct cfdata * match, void * aux)
 static void
 lp_attach(struct device * parent, struct device * self, void * aux)
 {
-	struct lp_softc * lp = (struct lp_softc *) self;
+	struct lp_softc * lp = device_private(self);
 	struct ifnet * ifp = &lp->sc_if;
 
 	lp->sc_dev_ok = 0;
@@ -227,7 +227,7 @@ lp_attach(struct device * parent, struct device * self, void * aux)
 	lp->sc_iferrs = 0;
 	lp->sc_xmit_rtry = 0;
 
-	ifp->if_softc = self;
+	ifp->if_softc = lp;
 	strncpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
 	ifp->if_xname[IFNAMSIZ - 1] = '\0';
 	ifp->if_mtu = LPMTU;
@@ -257,8 +257,8 @@ static int
 lp_detach(struct device * self, int flags)
 {
 	int error = 0;
-	struct lp_softc * lp = (struct lp_softc *) self;
-	struct device * ppbus = self->dv_parent;
+	struct lp_softc * lp = device_private(self);
+	struct device * ppbus = device_parent(self);
 
 	if(lp->sc_dev_ok) {
 		if(!(flags & DETACH_QUIET))
@@ -348,7 +348,7 @@ static int
 lpioctl (struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct device * dev = ifp->if_softc;
-	struct device * ppbus = dev->dv_parent;
+	struct device * ppbus = device_parent(dev);
 	struct lp_softc * sc = (struct lp_softc *) dev;
 	struct ifaddr * ifa = (struct ifaddr *)data;
 	struct ifreq * ifr = (struct ifreq *)data;
@@ -539,7 +539,7 @@ static void
 lp_intr (void *arg)
 {
 	struct device * dev = (struct device *)arg;
-        struct device * ppbus = dev->dv_parent;
+        struct device * ppbus = device_parent(dev);
 	struct lp_softc * sc = (struct lp_softc *)dev;
 	struct ifnet * ifp = &sc->sc_if;
 	struct mbuf *top;
@@ -710,7 +710,7 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry *rt)
 {
 	struct device * dev = ifp->if_softc;
-	struct device * ppbus = dev->dv_parent;
+	struct device * ppbus = device_parent(dev);
 	struct lp_softc * sc = (struct lp_softc *) dev;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int err;
@@ -773,7 +773,7 @@ lpstart(struct ifnet * ifp)
 {
 	struct lp_softc * lp = ifp->if_softc;
 	struct device * dev = ifp->if_softc;
-	struct device * ppbus = dev->dv_parent;
+	struct device * ppbus = device_parent(dev);
 	struct mbuf * mm;
 	struct mbuf * m;
 	u_char * cp;

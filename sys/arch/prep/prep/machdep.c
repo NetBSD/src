@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55.6.1 2006/04/22 11:37:54 simonb Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -99,6 +99,7 @@ int lcsplx(int);
 void prep_bus_space_init(void);
 
 char bootinfo[BOOTINFO_MAXSIZE];
+char bootpath[256];
 
 vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
 
@@ -144,6 +145,7 @@ initppc(startkernel, endkernel, args, btinfo)
 		} else
 			panic("No residual data.");
 	}
+	printf("got residual data\n");
 
 	/*
 	 * Set memory region
@@ -173,9 +175,6 @@ initppc(startkernel, endkernel, args, btinfo)
 		ticks_per_sec = clockinfo->ticks_per_sec;
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
-
-	/* Initialize the CPU type */
-	ident_platform();
 
 	/*
 	 * boothowto
@@ -252,7 +251,7 @@ cpu_startup()
 	/*
 	 * external interrupt handler install
 	 */
-	(*platform->init_intr)();
+	init_intr();
 
 	/*
 	 * Do common startup.
@@ -274,6 +273,11 @@ cpu_startup()
 	 * Now safe for bus space allocation to use malloc.
 	 */
 	bus_space_mallocok();
+
+	/*
+	 * Gather the pci interrupt routings.
+         */
+	setup_pciroutinginfo();
 }
 
 /*
@@ -364,7 +368,7 @@ halt_sys:
 
 	printf("rebooting...\n\n");
 
-	(*platform->reset)();
+	reset_prep();
 
 	for (;;)
 		continue;
@@ -399,6 +403,10 @@ struct powerpc_bus_space prep_isa_io_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x80000000, 0x00000000, 0x00010000,
 };
+struct powerpc_bus_space prep_eisa_io_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	0x80000000, 0x00000000, 0x0000f000,
+};
 struct powerpc_bus_space prep_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x3f000000,
@@ -406,6 +414,10 @@ struct powerpc_bus_space prep_mem_space_tag = {
 struct powerpc_bus_space prep_isa_mem_space_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0xC0000000, 0x00000000, 0x01000000,
+};
+struct powerpc_bus_space prep_eisa_mem_space_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0xC0000000, 0x00000000, 0x3f000000,
 };
 
 static char ex_storage[2][EXTENT_FIXED_STORAGE_SIZE(8)]

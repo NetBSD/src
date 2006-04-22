@@ -1,3 +1,5 @@
+/*	$NetBSD: athrate-onoe.h,v 1.1.1.1.16.1 2006/04/22 11:38:55 simonb Exp $ */
+
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.10 2005/12/11 12:18:53 christos Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.10.6.1 2006/04/22 11:37:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -164,7 +164,7 @@ struct wd33c93_softc {
 
 	/* Static hardware attributes */
 	int	sc_id;			/* SCSI ID for controller */
-	int	sc_clkfreq;		/* wd33c93 clk freq * 10Mhz */
+	int	sc_clkfreq;		/* wd33c93 clk freq * 10 MHz */
 	int	sc_chip;		/* Chip variation */
 	int	sc_rev;			/* Chip revision */
 	int	sc_cfflags;		/* Copy of config flags */

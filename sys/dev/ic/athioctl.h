@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.10 2005/11/24 09:58:39 dyoung Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.10.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -107,6 +107,8 @@ struct ath_stats {
 	u_int32_t	ast_ant_txswitch;/* tx antenna switches */
 	u_int32_t	ast_ant_rx[8];	/* rx frames with antenna */
 	u_int32_t	ast_ant_tx[8];	/* tx frames with antenna */
+	u_int32_t	ast_bmiss_phantom;/* beacon miss interrupts */
+	u_int32_t	ast_pad[32];
 };
 
 #define	SIOCGATHSTATS	_IOWR('i', 137, struct ifreq)
@@ -136,20 +138,23 @@ struct ath_diag {
 	(1 << IEEE80211_RADIOTAP_CHANNEL)	| \
 	(1 << IEEE80211_RADIOTAP_ANTENNA)	| \
 	(1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)	| \
+	(1 << IEEE80211_RADIOTAP_DB_ANTNOISE)	| \
 	0)
 
 struct ath_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
-	uint64_t	wr_tsf;
-	u_int8_t	wr_flags;		/* XXX for padding */
+	u_int64_t	wr_tsf;
+	u_int8_t	wr_flags;
 	u_int8_t	wr_rate;
 	u_int16_t	wr_chan_freq;
 	u_int16_t	wr_chan_flags;
 	u_int8_t	wr_antenna;
 	u_int8_t	wr_antsignal;
+	u_int8_t	wr_antnoise;
 };
 
 #define ATH_TX_RADIOTAP_PRESENT (		\
+	(1 << IEEE80211_RADIOTAP_TSFT)		| \
 	(1 << IEEE80211_RADIOTAP_FLAGS)		| \
 	(1 << IEEE80211_RADIOTAP_RATE)		| \
 	(1 << IEEE80211_RADIOTAP_CHANNEL)	| \
@@ -159,7 +164,8 @@ struct ath_rx_radiotap_header {
 
 struct ath_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
-	u_int8_t	wt_flags;		/* XXX for padding */
+	u_int64_t	wt_tsf;
+	u_int8_t	wt_flags;
 	u_int8_t	wt_rate;
 	u_int16_t	wt_chan_freq;
 	u_int16_t	wt_chan_flags;

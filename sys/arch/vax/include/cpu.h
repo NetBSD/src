@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.72 2005/12/11 12:19:34 christos Exp $      */
+/*      $NetBSD: cpu.h,v 1.72.6.1 2006/04/22 11:38:06 simonb Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -163,6 +163,7 @@ struct cpu_mp_softc {
 };
 #endif /* defined(MULTIPROCESSOR) */
 
+				/* XXX need to cache this in cpu_info */
 #define	ci_cpuid		ci_dev->dv_unit
 #define	curcpu()		((struct cpu_info *)mfpr(PR_SSP))
 #define	curlwp			(curcpu()->ci_curlwp)

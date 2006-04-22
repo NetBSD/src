@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_dev.h,v 1.3 2005/12/11 12:17:29 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_dev.h,v 1.3.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,14 +52,14 @@ protected:
 	};
 
 	SHdev(void);
-	virtual u_int32_t _scif_reg_read(vaddr_t) = 0;
+	virtual uint32_t _scif_reg_read(vaddr_t) = 0;
 	void scif_dump(int);
 	void icu_dump_priority(struct intr_priority *);
 
 public:
 	virtual ~SHdev(void) { /* NO-OP */ }
 
-	virtual void dump(u_int8_t);
+	virtual void dump(uint8_t);
 #define	DUMP_CPU	0x01
 #define	DUMP_DEV	0x02
 #define	DUMP_COMPANION	0x04
@@ -80,15 +80,15 @@ private:
 	void icu_control(void);
 	static struct intr_priority _ipr_table[];
 
-	virtual u_int32_t _scif_reg_read(vaddr_t va) {
-		return (u_int32_t)_reg_read_1(va);
+	virtual uint32_t _scif_reg_read(vaddr_t va) {
+		return (uint32_t)_reg_read_1(va);
 	}
 
 public:
 	SH3dev(void) { /* NO-OP */ }
 	virtual ~SH3dev(void) { /* NO-OP */ }
 
-	virtual void dump(u_int8_t);
+	virtual void dump(uint8_t);
 };
 
 class SH4dev : public SHdev {
@@ -97,15 +97,15 @@ private:
 
 	static struct intr_priority _ipr_table[];
 
-	virtual u_int32_t _scif_reg_read(vaddr_t va) {
-		return (u_int32_t)_reg_read_2(va);
+	virtual uint32_t _scif_reg_read(vaddr_t va) {
+		return (uint32_t)_reg_read_2(va);
 	}
 
 public:
 	SH4dev(void) { /* NO-OP */ }
 	virtual ~SH4dev(void) { /* NO-OP */ }
 
-	virtual void dump(u_int8_t);
+	virtual void dump(uint8_t);
 	void icu_dump(void);
 	void hd64465_dump(void);
 	void mq100_dump(void);

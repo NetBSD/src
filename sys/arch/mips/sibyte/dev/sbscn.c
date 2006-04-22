@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.15 2005/12/11 12:18:13 christos Exp $ */
+/* $NetBSD: sbscn.c,v 1.15.6.1 2006/04/22 11:37:44 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.15 2005/12/11 12:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.15.6.1 2006/04/22 11:37:44 simonb Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -363,7 +363,8 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 		/* locate the major number */
 		maj = cdevsw_lookup_major(&sbscn_cdevsw);
 
-		cn_tab->cn_dev = makedev(maj, (sc->sc_dev.dv_unit << 1) + chan);
+		cn_tab->cn_dev = makedev(maj,
+		    (device_unit(&sc->sc_dev) << 1) + chan);
 
 		printf("%s: channel %d: console\n", sc->sc_dev.dv_xname, chan);
 	}

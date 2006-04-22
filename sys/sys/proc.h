@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.211 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: proc.h,v 1.211.6.1 2006/04/22 11:40:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -86,6 +86,7 @@ struct pgrp {
 struct exec_package;
 struct ps_strings;
 struct ras;
+struct sa_emul;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -125,12 +126,15 @@ struct emul {
 #endif
 					/* Emulation specific sysctl data */
 	struct sysctlnode *e_sysctlovly;
-	int		(*e_fault)(struct proc *, vaddr_t, int, int);
+	int		(*e_fault)(struct proc *, vaddr_t, int);
 
 	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t);
 
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
+
+	/* SA-related information */
+	const struct sa_emul *e_sa;
 };
 
 /*
@@ -284,12 +288,15 @@ struct proc {
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
 #define	P_CONTROLT	0x00000002 /* Has a controlling terminal */
+#define	P_INMEM	     /* 0x00000004 */	L_INMEM
 #define	P_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
 #define	P_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	P_PROFIL	0x00000020 /* Has started profiling */
+#define	P_SELECT     /* 0x00000040 */	L_SELECT
+#define	P_SINTR	     /* 0x00000080 */	L_SINTR
 #define	P_SUGID		0x00000100 /* Had set id privileges since last exec */
 #define	P_SYSTEM	0x00000200 /* System proc: no sigs, stats or swapping */
-#define	P_SA		0x00000400 /* Using scheduler activations */
+#define	P_SA	     /* 0x00000400 */	L_SA
 #define	P_TRACED	0x00000800 /* Debugged process being traced */
 #define	P_WAITED	0x00001000 /* Debugging process has waited for child */
 #define	P_WEXIT		0x00002000 /* Working on exiting */
@@ -305,7 +312,14 @@ struct proc {
 #define	P_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	P_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	P_STOPEXIT	0x02000000 /* Will be stopped at process exit */
+#define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
+#define	P_UNUSED4    	0x08000000
+#define	P_UNUSED3	0x10000000
+#define	P_UNUSED2	0x20000000
+#define	P_UNUSED1	0x40000000
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
+
+#define	P_SHARED	(L_INMEM|L_SELECT|L_SINTR|L_SA)
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -389,7 +403,7 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 
 static struct proc *__curproc(void);
 
-static inline struct proc *
+static __inline struct proc *
 __curproc()
 {
 	struct lwp *l = curlwp;
@@ -402,6 +416,7 @@ __curproc()
 
 extern struct proc	proc0;		/* Process slot for swapper */
 extern int		nprocs, maxproc; /* Current and max number of procs */
+#define	vmspace_kernel()	(proc0.p_vmspace)
 
 /* Process list lock; see kern_proc.c for locking protocol details */
 extern struct lock	proclist_lock;
@@ -487,11 +502,13 @@ int	proclist_lock_write(void);
 void	proclist_unlock_write(int);
 void	p_sugid(struct proc *);
 
+int	proc_vmspace_getref(struct proc *, struct vmspace **);
+
 int	proclist_foreach_call(struct proclist *,
     int (*)(struct proc *, void *arg), void *);
-static inline struct proc *_proclist_skipmarker(struct proc *);
+static __inline struct proc *_proclist_skipmarker(struct proc *);
 
-static inline struct proc *
+static __inline struct proc *
 _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;

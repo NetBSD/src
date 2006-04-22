@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.4 2005/12/11 12:21:21 christos Exp $	*/
+/*	$NetBSD: ppi.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.4 2005/12/11 12:21:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ ppiattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ppi_softc *sc = (struct ppi_softc *)self;
+	struct ppi_softc *sc = device_private(self);
 	struct gpib_attach_args *ga = aux;
 
 	printf("\n");
@@ -257,7 +257,7 @@ ppistart(v)
 {
 	struct ppi_softc *sc = v;
 
-	DPRINTF(PDB_FOLLOW, ("ppistart(%x)\n", sc->sc_dev.dv_unit));
+	DPRINTF(PDB_FOLLOW, ("ppistart(%x)\n", device_unit(&sc->sc_dev)));
 
 	sc->sc_flags &= ~PPIF_DELAY;
 	wakeup(sc);
@@ -269,7 +269,7 @@ ppitimo(arg)
 {
 	struct ppi_softc *sc = arg;
 
-	DPRINTF(PDB_FOLLOW, ("ppitimo(%x)\n", sc->sc_dev.dv_unit));
+	DPRINTF(PDB_FOLLOW, ("ppitimo(%x)\n", device_unit(&sc->sc_dev)));
 
 	sc->sc_flags &= ~(PPIF_UIO|PPIF_TIMO);
 	wakeup(sc);

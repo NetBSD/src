@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.35.6.1 2006/04/22 11:37:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -78,14 +78,14 @@
 
 /*
  * HPs use the MC6840 PTM with the following arrangement:
- *	Timers 1 and 3 are externally driver from a 25Mhz source.
+ *	Timers 1 and 3 are externally driver from a 25 MHz source.
  *	Output from timer 3 is tied to the input of timer 2.
  * The latter makes it possible to use timers 3 and 2 together to get
  * a 32-bit countdown timer.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35.6.1 2006/04/22 11:37:26 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

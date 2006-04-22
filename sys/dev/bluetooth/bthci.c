@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.18 2005/12/17 13:18:28 xtraeme Exp $	*/
+/*	$NetBSD: bthci.c,v 1.18.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.18 2005/12/17 13:18:28 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthci.c,v 1.18.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include "bthcidrv.h"
 
@@ -210,7 +210,7 @@ bthci_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&bthci_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	DPRINTFN(1, ("%s: driver detached\n", __func__));
@@ -228,7 +228,7 @@ bthciopen(dev_t dev, int flag, int mode, struct lwp *l)
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (! device_is_active(&sc->sc_dev))
 		return (EIO);
 	if (sc->sc_open)
 		return (EBUSY);
@@ -300,7 +300,7 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 	if (sc == NULL)
 		return (ENXIO);
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 ||
+	if (! device_is_active(&sc->sc_dev) ||
 	    !sc->sc_open || sc->sc_dying)
 		return (EIO);
 
@@ -393,7 +393,7 @@ bthciwrite(dev_t dev, struct uio *uio, int flag)
 	if (sc == NULL)
 		return (ENXIO);
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+	if (! device_is_active(&sc->sc_dev) || !sc->sc_open)
 		return (EIO);
 
 	uiolen = uio->uio_resid;
@@ -446,7 +446,7 @@ bthciioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+	if (! device_is_active(&sc->sc_dev) || !sc->sc_open)
 		return (EIO);
 
 	switch (cmd) {
@@ -474,7 +474,7 @@ bthcipoll(dev_t dev, int events, struct lwp *l)
 	if (sc == NULL)
 		return (POLLERR);
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 ||
+	if (! device_is_active(&sc->sc_dev) ||
 	    !sc->sc_open || sc->sc_dying)
 		return (POLLHUP);
 
@@ -530,7 +530,7 @@ bthcikqfilter(dev_t dev, struct knote *kn)
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+	if (! device_is_active(&sc->sc_dev) || !sc->sc_open)
 		return (EIO);
 
 	switch (kn->kn_filter) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.24 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: par.c,v 1.24.6.1 2006/04/22 11:38:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.24 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.24.6.1 2006/04/22 11:38:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -239,7 +239,7 @@ parstart(void *arg)
 	struct par_softc *sc = arg;
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parstart(%x)\n", sc->sc_dev.dv_unit);
+		printf("parstart(%x)\n", device_unit(&sc->sc_dev));
 #endif
 	sc->sc_flags &= ~PARF_DELAY;
 	wakeup(sc);
@@ -251,7 +251,7 @@ partimo(void *arg)
 	struct par_softc *sc = arg;
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("partimo(%x)\n", sc->sc_dev.dv_unit);
+		printf("partimo(%x)\n", device_unit(&sc->sc_dev));
 #endif
 	sc->sc_flags &= ~(PARF_UIO|PARF_TIMO);
 	wakeup(sc);

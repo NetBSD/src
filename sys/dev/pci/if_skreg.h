@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.5 2005/12/11 12:22:49 christos Exp $ */
+/* $NetBSD: if_skreg.h,v 1.5.6.1 2006/04/22 11:39:14 simonb Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -357,18 +357,32 @@
 #define SK_YUKON		0xB0
 #define SK_YUKON_LITE		0xB1
 #define SK_YUKON_LP		0xB2
+#define SK_YUKON_XL		0xB3
+#define SK_YUKON_EC_U		0xB4
+#define SK_YUKON_EC		0xB6
+#define SK_YUKON_FE		0xB7
 #define SK_YUKON_FAMILY(x) ((x) & 0xB0)
 /* known revisions in SK_CONFIG */
 #define SK_YUKON_LITE_REV_A0	0x0 /* invented, see test in skc_attach */
 #define SK_YUKON_LITE_REV_A1	0x3
 #define SK_YUKON_LITE_REV_A3	0x7
 
+#define SK_YUKON_EC_REV_A1	0x0
+#define SK_YUKON_EC_REV_A2	0x1
+#define SK_YUKON_EC_REV_A3	0x2
+
 #define SK_IMCTL_STOP	0x02
 #define SK_IMCTL_START	0x04
 
-#define SK_IMTIMER_TICKS	54
-#define SK_IM_USECS(x)		((x) * SK_IMTIMER_TICKS)
+/* Number of ticks per usec for interrupt moderation */
+#define SK_IMTIMER_TICKS_GENESIS	54
+#define SK_IMTIMER_TICKS_YUKON		78
+#define SK_IMTIMER_TICKS_YUKON_EC	125
+#define SK_IM_USECS(x)		((x) * sk_imtimer_ticks)
 
+#define SK_IM_MIN	0
+#define SK_IM_DEFAULT	100
+#define SK_IM_MAX	10000
 /*
  * The SK_EPROM0 register contains a byte that describes the
  * amount of SRAM mounted on the NIC. The value also tells if

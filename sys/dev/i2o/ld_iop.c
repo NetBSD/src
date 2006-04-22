@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.18 2005/12/11 12:21:23 christos Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.18.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.18 2005/12/11 12:21:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.18.6.1 2006/04/22 11:38:54 simonb Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -146,9 +146,9 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 		} p;
 	} __attribute__ ((__packed__)) param;
 
-	sc = (struct ld_iop_softc *)self;
+	sc = device_private(self);
 	ld = &sc->sc_ld;
-	iop = (struct iop_softc *)parent;
+	iop = device_private(parent);
 	ia = (struct iop_attach_args *)aux;
 	evreg = 0;
 
@@ -297,7 +297,7 @@ ld_iop_unconfig(struct ld_iop_softc *sc, int evreg)
 	struct iop_softc *iop;
 	int s;
 
-	iop = (struct iop_softc *)sc->sc_ld.sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	if ((sc->sc_flags & LD_IOP_CLAIMED) != 0)
 		iop_util_claim(iop, &sc->sc_ii, 1,
@@ -334,8 +334,8 @@ ld_iop_detach(struct device *self, int flags)
 	struct iop_softc *iop;
 	int rv;
 
-	sc = (struct ld_iop_softc *)self;
-	iop = (struct iop_softc *)self->dv_parent;
+	sc = device_private(self);
+	iop = device_private(device_parent(self));
 
 	if ((rv = ldbegindetach(&sc->sc_ld, flags)) != 0)
 		return (rv);
@@ -369,7 +369,7 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	sc = (struct ld_iop_softc *)ld;
-	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&ld->sc_dv);
 
 	im = iop_msg_alloc(iop, 0);
 	im->im_dvcontext = bp;
@@ -429,7 +429,7 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	sc = (struct ld_iop_softc *)ld;
-	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&ld->sc_dv);
 	bcount = blkcnt * ld->sc_secsize;
 	ba = (u_int64_t)blkno * ld->sc_secsize;
 	im = iop_msg_alloc(iop, IM_POLL);
@@ -465,7 +465,7 @@ ld_iop_flush(struct ld_softc *ld)
 	int rv;
 
 	sc = (struct ld_iop_softc *)ld;
-	iop = (struct iop_softc *)ld->sc_dv.dv_parent;
+	iop = (struct iop_softc *)device_parent(&ld->sc_dv);
 	im = iop_msg_alloc(iop, IM_WAIT);
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_rbs_cache_flush);
@@ -495,14 +495,14 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 	rb = reply;
 	bp = im->im_dvcontext;
 	sc = (struct ld_iop_softc *)dv;
-	iop = (struct iop_softc *)dv->dv_parent;
+	iop = (struct iop_softc *)device_parent(dv);
 
 	err = ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0);
 
 	if (!err && rb->reqstatus != I2O_STATUS_SUCCESS) {
 		detail = le16toh(rb->detail);
 #ifdef I2OVERBOSE
-		if (detail > sizeof(ld_iop_errors) / sizeof(ld_iop_errors[0]))
+		if (detail >= __arraycount(ld_iop_errors))
 			errstr = "<unknown>";
 		else
 			errstr = ld_iop_errors[detail];
@@ -560,7 +560,7 @@ ld_iop_adjqparam(struct device *dv, int mpi)
 	 * AMI controllers seem to loose the plot if you hand off lots of
 	 * queued commands.
 	 */
-	iop = (struct iop_softc *)dv->dv_parent;
+	iop = (struct iop_softc *)device_parent(dv);
 	if (le16toh(I2O_ORG_AMI) == iop->sc_status.orgid && mpi > 64)
 		mpi = 64;
 

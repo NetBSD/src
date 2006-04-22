@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.15 2005/12/11 12:19:10 christos Exp $ */
+/*	$NetBSD: pte.h,v 1.15.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -37,11 +37,11 @@
  *	Oh, here's the sun4u TTE for reference:
  *
  *	struct sun4u_tte {
- *		u_int64	tag_g:1,	(global flag)
+ *		uint64	tag_g:1,	(global flag)
  *			tag_ctxt:15,	(context for mapping)
  *			tag_unassigned:6,
  *			tag_va:42;	(virtual address bits<64:22>)
- *		u_int64	data_v:1,	(valid bit)
+ *		uint64	data_v:1,	(valid bit)
  *			data_size:2,	(page size [8K*8**<SIZE>])
  *			data_nfo:1,	(no-fault only)
  *			data_ie:1,	(invert endianness [inefficient])
@@ -88,14 +88,14 @@
 #if 0
 /* We don't use bitfeilds anyway. */
 struct sun4u_tag_fields {
-	u_int64_t	tag_g:1,	/* global flag */
+	uint64_t	tag_g:1,	/* global flag */
 		tag_ctxt:15,	/* context for mapping */
 		tag_unassigned:6,
 		tag_va:42;	/* virtual address bits<64:22> */
 };
 union sun4u_tag { struct sun4u_tag_fields f; int64_t tag; };
 struct sun4u_data_fields {
-	u_int64_t	data_v:1,	/* valid bit */
+	uint64_t	data_v:1,	/* valid bit */
 		data_size:2,	/* page size [8K*8**<SIZE>] */
 		data_nfo:1,	/* no-fault only */
 		data_ie:1,	/* invert endianness [inefficient] */
@@ -134,14 +134,14 @@ struct ipi_tlb_args {
 };
 
 /* Assembly routines to flush TLB mappings */
-void sp_tlb_flush_pte __P((vaddr_t, int));
-void sp_tlb_flush_ctx __P((int));
-void sp_tlb_flush_all __P((void));
+void sp_tlb_flush_pte(vaddr_t, int);
+void sp_tlb_flush_ctx(int);
+void sp_tlb_flush_all(void);
 
 #if defined(MULTIPROCESSOR)
-void smp_tlb_flush_pte __P((vaddr_t, int));
-void smp_tlb_flush_ctx __P((int));
-void smp_tlb_flush_all __P((void));
+void smp_tlb_flush_pte(vaddr_t, int);
+void smp_tlb_flush_ctx(int);
+void smp_tlb_flush_all(void);
 #define	tlb_flush_pte(va,ctx)	smp_tlb_flush_pte(va, ctx)
 #define	tlb_flush_ctx(ctx)	smp_tlb_flush_ctx(ctx)
 #define	tlb_flush_all()		smp_tlb_flush_all()
@@ -161,7 +161,7 @@ void smp_tlb_flush_all __P((void));
 
 #define TSB_TAG_CTX(t)		((((int64_t)(t))>>TSB_TAG_CTX_SHIFT)&CTX_MASK)
 #define TSB_TAG_VA(t)		((((int64_t)(t))<<TSB_TAG_VA_SHIFT))
-#define TSB_TAG(g,ctx,va)	((((u_int64_t)((g)!=0))<<63)|(((u_int64_t)(ctx)&CTX_MASK)<<TSB_TAG_CTX_SHIFT)|(((u_int64_t)va)>>TSB_TAG_VA_SHIFT))
+#define TSB_TAG(g,ctx,va)	((((uint64_t)((g)!=0))<<63)|(((uint64_t)(ctx)&CTX_MASK)<<TSB_TAG_CTX_SHIFT)|(((uint64_t)va)>>TSB_TAG_VA_SHIFT))
 
 /* Page sizes */
 #define	PGSZ_8K			0
@@ -240,7 +240,7 @@ void smp_tlb_flush_all __P((void));
         "b\3E\0"        "b\2P\0"        "b\1W\0"        "b\0G\0"
 
 #define TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) \
-(((valid)?TLB_V:0LL)|TLB_SZ(sz)|(((u_int64_t)(pa))&TLB_PA_MASK)|\
+(((valid)?TLB_V:0LL)|TLB_SZ(sz)|(((uint64_t)(pa))&TLB_PA_MASK)|\
 ((cache)?((aliased)?TLB_CP:TLB_CACHE_MASK):TLB_E)|\
 ((priv)?TLB_P:0LL)|((write)?TLB_W:0LL)|((g)?TLB_G:0LL)|((ie)?TLB_IE:0LL))
 

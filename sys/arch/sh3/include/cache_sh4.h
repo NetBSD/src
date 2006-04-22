@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.h,v 1.10 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: cache_sh4.h,v 1.10.6.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 #define	SH4_CACHE_FLUSH()						\
 do {									\
-	u_int32_t __e, __a;						\
+	uint32_t __e, __a;						\
 									\
 	/* D-cache */							\
 	for (__e = 0; __e < (SH4_DCACHE_SIZE / SH4_CACHE_LINESZ); __e++) {\

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123 2006/02/02 21:32:10 reinoud Exp $
+# $NetBSD: GENERIC,v 1.123.2.1 2006/04/22 11:38:08 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123 $"
+#ident 		"GENERIC-$Revision: 1.123.2.1 $"
 
 maxusers	8
 
@@ -433,7 +433,7 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	4
+pseudo-device	vnd	
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 ## Concatenated and striped disks; with this, you can create a software-based
@@ -468,34 +468,34 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	loop
 
 ## SLIP and CSLIP interfaces, for IP over a serial line.
-pseudo-device	sl		1
+pseudo-device	sl		
 
 ## PPP, the successor to SLIP.  See pppd(8).
-pseudo-device	ppp		1
+pseudo-device	ppp		
 
 ## PPP over Ethernet (RFC 2516)
 pseudo-device	pppoe
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-#pseudo-device	tun		4
+#pseudo-device	tun		
 #pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre			# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	4
+pseudo-device	bpfilter
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
 #pseudo-device	ipfilter
 
 ## for IPv6
-pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 ## IEEE 802.1Q Virtual LAN encapsulation, see vlan(4).
 pseudo-device	vlan

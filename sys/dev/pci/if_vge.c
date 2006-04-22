@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.8 2005/12/24 20:27:42 perry Exp $ */
+/* $NetBSD: if_vge.c,v 1.8.6.1 2006/04/22 11:39:14 simonb Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.8 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.8.6.1 2006/04/22 11:39:14 simonb Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.8 2005/12/24 20:27:42 perry Exp $");
  */
 
 /*
- * The VIA Networking VT6122 is a 32bit, 33/66Mhz PCI device that
+ * The VIA Networking VT6122 is a 32bit, 33/66 MHz PCI device that
  * combines a tri-speed ethernet MAC and PHY, with the following
  * features:
  *

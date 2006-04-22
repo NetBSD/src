@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.17 2005/12/11 18:48:51 rpaulo Exp $ */
+/* $NetBSD: com_acpi.c,v 1.17.6.1 2006/04/22 11:38:46 simonb Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.17 2005/12/11 18:48:51 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.17.6.1 2006/04/22 11:38:46 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,8 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* parse resources */
 	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
@@ -113,7 +114,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		printf("%s: unable to find i/o register resource\n",
+		aprint_error("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -121,7 +122,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our IRQ */
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		printf("%s: unable to find irq resource\n",
+		aprint_error("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
 		goto out;
 	}
@@ -130,17 +131,17 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (!com_is_console(aa->aa_iot, io->ar_base, &sc->sc_ioh)) {
 		if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
 		    0, &sc->sc_ioh)) {
-			printf("%s: can't map i/o space\n",
+			aprint_error("%s: can't map i/o space\n",
 			    sc->sc_dev.dv_xname);
 			goto out;
 		}
 	}
 	sc->sc_iobase = io->ar_base;
 
-	printf("%s", sc->sc_dev.dv_xname);
+	aprint_normal("%s", sc->sc_dev.dv_xname);
 
 	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0) {
-		printf(": com probe failed\n");
+		aprint_error(": com probe failed\n");
 		goto out;
 	}
 

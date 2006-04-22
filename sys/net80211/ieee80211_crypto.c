@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.10 2005/11/18 16:40:08 skrll Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.10.6.1 2006/04/22 11:40:08 simonb Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.10 2005/11/18 16:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.10.6.1 2006/04/22 11:40:08 simonb Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -577,7 +577,6 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	struct ieee80211_key *k;
 	struct ieee80211_frame *wh;
 	const struct ieee80211_cipher *cip;
-	const u_int8_t *ivp;
 	u_int8_t keyid;
 
 	/* NB: this minimum size data frame could be bigger */
@@ -596,8 +595,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	 * the key id in the header is meaningless (typically 0).
 	 */
 	wh = mtod(m, struct ieee80211_frame *);
-	ivp = mtod(m, const u_int8_t *) + hdrlen;	/* XXX contig */
-	keyid = ivp[IEEE80211_WEP_IVLEN];
+	m_copydata(m, hdrlen + IEEE80211_WEP_IVLEN, sizeof(keyid), &keyid);
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    ni->ni_ucastkey.wk_cipher == &ieee80211_cipher_none)
 		k = &ic->ic_nw_keys[keyid >> 6];
@@ -614,7 +612,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 		    "[%s] unable to pullup %s header\n",
 		    ether_sprintf(wh->i_addr2), cip->ic_name);
 		ic->ic_stats.is_rx_wepfail++;	/* XXX */
-		return 0;
+		return NULL;
 	}
 
 	return (cip->ic_decap(k, m, hdrlen) ? k : NULL);

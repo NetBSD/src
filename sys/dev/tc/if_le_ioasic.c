@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.24 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.24.6.1 2006/04/22 11:39:37 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.24 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.24.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include "opt_inet.h"
 
@@ -85,10 +85,7 @@ static void le_ioasic_copyfrombuf_gap16(struct lance_softc *, void *,
 static void le_ioasic_zerobuf_gap16(struct lance_softc *, int, int);
 
 static int
-le_ioasic_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+le_ioasic_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
@@ -103,13 +100,12 @@ le_ioasic_match(parent, match, aux)
 #define	LE_IOASIC_MEMALIGN	(128*1024)
 
 static void
-le_ioasic_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_ioasic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct le_ioasic_softc *sc = (void *)self;
+	struct le_ioasic_softc *sc = device_private(self);
 	struct ioasicdev_attach_args *d = aux;
 	struct lance_softc *le = &sc->sc_am7990.lsc;
+	struct ioasic_softc *iosc = device_private(parent);
 	bus_space_tag_t ioasic_bst;
 	bus_space_handle_t ioasic_bsh;
 	bus_dma_tag_t dmat;
@@ -119,9 +115,9 @@ le_ioasic_attach(parent, self, aux)
 	int rseg;
 	caddr_t le_iomem;
 
-	ioasic_bst = ((struct ioasic_softc *)parent)->sc_bst;
-	ioasic_bsh = ((struct ioasic_softc *)parent)->sc_bsh;
-	dmat = sc->sc_dmat = ((struct ioasic_softc *)parent)->sc_dmat;
+	ioasic_bst = iosc->sc_bst;
+	ioasic_bsh = iosc->sc_bsh;
+	dmat = sc->sc_dmat = iosc->sc_dmat;
 	/*
 	 * Allocate a DMA area for the chip.
 	 */
@@ -168,8 +164,7 @@ le_ioasic_attach(parent, self, aux)
 	le->sc_zerobuf = le_ioasic_zerobuf_gap16;
 
 	dec_le_common_attach(&sc->sc_am7990,
-	    (u_char *)((struct ioasic_softc *)parent)->sc_base
-	        + IOASIC_SLOT_2_START);
+	    (u_char *)iosc->sc_base + IOASIC_SLOT_2_START);
 
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_NET,
 	    am7990_intr, sc);
@@ -193,11 +188,7 @@ le_ioasic_attach(parent, self, aux)
  */
 
 void
-le_ioasic_copytobuf_gap2(sc, fromv, boff, len)
-	struct lance_softc *sc;
-	void *fromv;
-	int boff;
-	int len;
+le_ioasic_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t from = fromv;
@@ -222,10 +213,7 @@ le_ioasic_copytobuf_gap2(sc, fromv, boff, len)
 }
 
 void
-le_ioasic_copyfrombuf_gap2(sc, tov, boff, len)
-	struct lance_softc *sc;
-	void *tov;
-	int boff, len;
+le_ioasic_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t to = tov;
@@ -258,11 +246,8 @@ le_ioasic_copyfrombuf_gap2(sc, tov, boff, len)
  */
 
 void
-le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
-	struct lance_softc *sc;
-	void *fromv;
-	int boff;
-	int len;
+le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
+    int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t from = fromv;
@@ -343,10 +328,8 @@ le_ioasic_copytobuf_gap16(sc, fromv, boff, len)
 }
 
 void
-le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
-	struct lance_softc *sc;
-	void *tov;
-	int boff, len;
+le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
+    int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t to = tov;
@@ -419,9 +402,7 @@ le_ioasic_copyfrombuf_gap16(sc, tov, boff, len)
 }
 
 void
-le_ioasic_zerobuf_gap16(sc, boff, len)
-	struct lance_softc *sc;
-	int boff, len;
+le_ioasic_zerobuf_gap16(struct lance_softc *sc, int boff, int len)
 {
 	volatile caddr_t buf = sc->sc_mem;
 	caddr_t bptr;

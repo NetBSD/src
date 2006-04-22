@@ -1,4 +1,4 @@
-/*	$NetBSD: arcsisabr.c,v 1.8 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: arcsisabr.c,v 1.8.6.1 2006/04/22 11:37:16 simonb Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.8 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.8.6.1 2006/04/22 11:37:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: arcsisabr.c,v 1.8 2005/12/11 12:16:39 christos Exp $
 
 #include <arc/isa/isabrvar.h>
 
+#include "ioconf.h"
+
 /* Definition of the driver for autoconfig. */
 int	arcsisabrmatch(struct device *, struct cfdata *, void *);
 void	arcsisabrattach(struct device *, struct device *, void *);
@@ -96,7 +98,6 @@ uint32_t arcsisabr_iointr(uint32_t mask, struct clockframe *cf);
 
 CFATTACH_DECL(arcsisabr, sizeof(struct isabr_softc),
     arcsisabrmatch, arcsisabrattach, NULL, NULL);
-extern struct cfdriver arcsisabr_cd;
 
 int
 arcsisabrmatch(struct device *parent, struct cfdata *match, void *aux)

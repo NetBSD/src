@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.6 2005/12/13 20:55:46 abs Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.6.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -95,7 +95,7 @@ strtc_match(struct device *parent, struct cfdata *cf, void *arg)
 static void
 strtc_attach(struct device *parent, struct device *self, void *arg)
 {
-	struct strtc_softc *sc = (struct strtc_softc *)self;
+	struct strtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 
 	aprint_naive(": Real-time Clock/NVRAM\n");

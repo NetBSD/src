@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.26 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: select.h,v 1.26.6.1 2006/04/22 11:40:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@ int	selcommon(struct lwp *, register_t *, int, fd_set *, fd_set *,
 void	selrecord(struct lwp *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
 
-static inline void
+static __inline void
 selnotify(struct selinfo *sip, long knhint)
 {
 

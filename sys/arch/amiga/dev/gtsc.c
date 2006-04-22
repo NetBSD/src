@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.35 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: gtsc.c,v 1.35.6.1 2006/04/22 11:37:12 simonb Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.35 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.35.6.1 2006/04/22 11:37:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ gtscattach(struct device *pdp, struct device *dp, void *auxp)
 
 	sc->sc_clkfreq = gtsc_clock_override ? gtsc_clock_override :
 	    ((gap->flags & GVP_14MHZ) ? 143 : 72);
-	printf("sc_clkfreg: %ld.%ldMhz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);
+	printf("sc_clkfreg: %ld.%ld MHz\n", sc->sc_clkfreq / 10, sc->sc_clkfreq % 10);
 
 	/*
 	 * Fill in the scsipi_adapter.

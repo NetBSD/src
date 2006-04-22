@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.89.6.3 2006/02/28 20:55:28 kardel Exp $	*/
+/*	$NetBSD: clock.c,v 1.89.6.4 2006/04/22 11:37:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89.6.3 2006/02/28 20:55:28 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89.6.4 2006/04/22 11:37:33 simonb Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -186,8 +186,6 @@ static int	clockintr(void *, struct intrframe);
 static void	rtcinit(void);
 static int	rtcget(mc_todregs *);
 static void	rtcput(mc_todregs *);
-static int 	bcdtobin(int);
-static int	bintobcd(int);
 
 static int cmoscheck(void);
 
@@ -562,7 +560,8 @@ sysbeepmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 sysbeepattach(struct device *parent, struct device *self, void *aux)
 {
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
 	ppi_attached = 1;
@@ -621,20 +620,6 @@ rtcput(mc_todregs *regs)
 
 	rtcinit();
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
-}
-
-int
-bcdtobin(int n)
-{
-
-	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
-}
-
-int
-bintobcd(int n)
-{
-
-	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
 
 static int timeset;

@@ -1,4 +1,4 @@
-/* $NetBSD: si4136reg.h,v 1.2 2005/12/11 12:21:28 christos Exp $ */
+/* $NetBSD: si4136reg.h,v 1.2.6.1 2006/04/22 11:38:56 simonb Exp $ */
 
 /*
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -37,44 +37,45 @@
 /*
  * Serial bus format for Silicon Laboratories Si4126/Si4136 RF synthesizer.
  */
-#define SI4126_TWI_DATA_MASK	BITS(21, 4)
-#define SI4126_TWI_ADDR_MASK	BITS(3, 0)
+#define SI4126_TWI_DATA_MASK	__BITS(21, 4)
+#define SI4126_TWI_ADDR_MASK	__BITS(3, 0)
 
 /*
  * Registers for Silicon Laboratories Si4126/Si4136 RF synthesizer.
  */
 #define SI4126_MAIN	0	/* main configuration */
-#define	SI4126_MAIN_AUXSEL_MASK	BITS(13, 12)	/* aux. output pin function */
+#define	SI4126_MAIN_AUXSEL_MASK	__BITS(13, 12)	/* aux. output pin function */
 /* reserved */
-#define	SI4126_MAIN_AUXSEL_RSVD		LSHIFT(0x0, SI4126_MAIN_AUXSEL_MASK)
+#define	SI4126_MAIN_AUXSEL_RSVD		SHIFTIN(0x0, SI4126_MAIN_AUXSEL_MASK)
 /* force low */
-#define	SI4126_MAIN_AUXSEL_FRCLOW	LSHIFT(0x1, SI4126_MAIN_AUXSEL_MASK)
+#define	SI4126_MAIN_AUXSEL_FRCLOW	SHIFTIN(0x1, SI4126_MAIN_AUXSEL_MASK)
 /* Lock Detect (LDETB) */
-#define	SI4126_MAIN_AUXSEL_LDETB	LSHIFT(0x3, SI4126_MAIN_AUXSEL_MASK)
+#define	SI4126_MAIN_AUXSEL_LDETB	SHIFTIN(0x3, SI4126_MAIN_AUXSEL_MASK)
 
-#define	SI4126_MAIN_IFDIV_MASK	BITS(11, 10)	/* IFOUT = IFVCO
+#define	SI4126_MAIN_IFDIV_MASK	__BITS(11, 10)	/* IFOUT = IFVCO
 						 * frequency / 2**IFDIV.
 						 */
 
-#define	SI4126_MAIN_XINDIV2	BIT(6)	/* 1: divide crystal input (XIN) by 2 */
-#define	SI4126_MAIN_LPWR	BIT(5)	/* 1: low-power mode */
-#define	SI4126_MAIN_AUTOPDB	BIT(3)	/* 1: equivalent to
-					 *    reg[SI4126_POWER] <-
-					 *    SI4126_POWER_PDIB |
-					 *    SI4126_POWER_PDRB.
-					 *
-					 * 0: power-down under control of
-					 *    reg[SI4126_POWER].
-					 */
+/* 1: divide crystal input (XIN) by 2 */
+#define	SI4126_MAIN_XINDIV2	__BIT(6)
+#define	SI4126_MAIN_LPWR	__BIT(5)	/* 1: low-power mode */
+#define	SI4126_MAIN_AUTOPDB	__BIT(3)	/* 1: equivalent to
+						 *    reg[SI4126_POWER] <-
+						 *    SI4126_POWER_PDIB |
+						 *    SI4126_POWER_PDRB.
+						 *
+						 * 0: power-down under control
+						 *    of reg[SI4126_POWER].
+						 */
 
 #define	SI4126_GAIN	1		/* phase detector gain */
-#define	SI4126_GAIN_KPI_MASK	BITS(5, 4)	/* IF phase detector gain */
-#define	SI4126_GAIN_KP2_MASK	BITS(3, 2)	/* RF2 phase detector gain */
-#define	SI4126_GAIN_KP1_MASK	BITS(1, 0)	/* RF1 phase detector gain */
+#define	SI4126_GAIN_KPI_MASK	__BITS(5, 4)	/* IF phase detector gain */
+#define	SI4126_GAIN_KP2_MASK	__BITS(3, 2)	/* RF2 phase detector gain */
+#define	SI4126_GAIN_KP1_MASK	__BITS(1, 0)	/* RF1 phase detector gain */
 
 #define	SI4126_POWER	2		/* powerdown */
-#define	SI4126_POWER_PDIB	BIT(1)	/* 1: IF synthesizer on */
-#define	SI4126_POWER_PDRB	BIT(0)	/* 1: RF synthesizer on */
+#define	SI4126_POWER_PDIB	__BIT(1)	/* 1: IF synthesizer on */
+#define	SI4126_POWER_PDRB	__BIT(0)	/* 1: RF synthesizer on */
 
 #define	SI4126_RF1N	3		/* RF1 N divider */
 #define	SI4126_RF2N	4		/* RF2 N divider */

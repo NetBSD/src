@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.10 2005/12/11 12:17:33 christos Exp $ */
+/*	$NetBSD: m38813c.c,v 1.10.6.1 2006/04/22 11:37:30 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.10 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.10.6.1 2006/04/22 11:37:30 simonb Exp $");
 
 #include "opt_use_poll.h"
 
@@ -113,7 +113,7 @@ m38813c_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #ifndef USE_POLL
-#error options USE_POLL requied.
+#error options USE_POLL required.
 #endif
 	if (!(sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1,
 	    IPL_TTY, m38813c_intr,

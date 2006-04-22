@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.92 2005/12/24 23:41:34 perry Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.92.6.1 2006/04/22 11:40:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.92 2005/12/24 23:41:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.92.6.1 2006/04/22 11:40:28 simonb Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -178,7 +178,7 @@ uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 	map = &p->p_vmspace->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-	error = uvm_fault_wire(map, start, end, VM_FAULT_WIRE, access_type);
+	error = uvm_fault_wire(map, start, end, access_type, 0);
 	return error;
 }
 
@@ -249,8 +249,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	if ((l2->l_flag & L_INMEM) == 0) {
 		error = uvm_fault_wire(kernel_map, (vaddr_t)up,
-		    (vaddr_t)up + USPACE, VM_FAULT_WIRE,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE, 0);
 		if (error)
 			panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
 #ifdef PMAP_UAREA
@@ -428,8 +427,8 @@ uvm_swapin(struct lwp *l)
 
 	addr = (vaddr_t)l->l_addr;
 	/* make L_INMEM true */
-	error = uvm_fault_wire(kernel_map, addr, addr + USPACE, VM_FAULT_WIRE,
-	    VM_PROT_READ | VM_PROT_WRITE);
+	error = uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	    VM_PROT_READ | VM_PROT_WRITE, 0);
 	if (error) {
 		panic("uvm_swapin: rewiring stack failed: %d", error);
 	}

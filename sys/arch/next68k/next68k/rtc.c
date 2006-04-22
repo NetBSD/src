@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.10 2005/12/11 12:18:29 christos Exp $        */
+/*      $NetBSD: rtc.c,v 1.10.6.1 2006/04/22 11:37:50 simonb Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.10 2005/12/11 12:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.10.6.1 2006/04/22 11:37:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>          /* for panic */
@@ -247,10 +247,10 @@ getsecs(void)
 	u_int secs = 0;
 	
 	if (new_clock) {
-		secs = rtc_read(RTC_CNTR3) << 24 |
-				rtc_read(RTC_CNTR2) << 16 |
-				rtc_read(RTC_CNTR1) << 8	 |
-				rtc_read(RTC_CNTR0);
+		secs = rtc_read(RTC_CNTR0) << 24 |
+				rtc_read(RTC_CNTR1) << 16 |
+				rtc_read(RTC_CNTR2) << 8	 |
+				rtc_read(RTC_CNTR3);
 	} else {
 		struct clock_ymdhms val;
 		{
@@ -301,10 +301,10 @@ setsecs(time_t secs)
 #endif
 
 	if (new_clock) {
-		rtc_write(RTC_CNTR3, (secs << 24) & 0xff);
-		rtc_write(RTC_CNTR2, (secs << 16) & 0xff);
-		rtc_write(RTC_CNTR1, (secs <<	 8) & 0xff);
-		rtc_write(RTC_CNTR0, (secs) & 0xff);
+		rtc_write(RTC_CNTR0, (secs >> 24) & 0xff);
+		rtc_write(RTC_CNTR1, (secs >> 16) & 0xff);
+		rtc_write(RTC_CNTR2, (secs >> 8) & 0xff);
+		rtc_write(RTC_CNTR3, (secs) & 0xff);
 
 	} else {
 		struct clock_ymdhms val;

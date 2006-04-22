@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39power.c,v 1.15 2005/12/24 23:24:00 perry Exp $ */
+/*	$NetBSD: tx39power.c,v 1.15.6.1 2006/04/22 11:37:30 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.15 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.15.6.1 2006/04/22 11:37:30 simonb Exp $");
 
 #include "opt_tx39power_debug.h"
-#define TX39POWERDEBUG 
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: tx39power.c,v 1.15 2005/12/24 23:24:00 perry Exp $")
 #define DUMP_REGS(x)		((void)0)
 #endif
 
-#define ISSET(x, v)		((x) & (v))
 #define ISSETPRINT(r, m)	dbg_bitmask_print(r, TX39_POWERCTRL_##m, #m)
 
 int	tx39power_match(struct device *, struct cfdata *, void *);

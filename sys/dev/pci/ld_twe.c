@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.23 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.23.6.1 2006/04/22 11:39:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.23 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.23.6.1 2006/04/22 11:39:15 simonb Exp $");
 
 #include "rnd.h"
 
@@ -189,7 +189,7 @@ ld_twe_dobio(struct ld_twe_softc *sc, void *data, int datasize, int blkno,
 	struct twe_softc *twe;
 	int s, rv, flags;
 
-	twe = (struct twe_softc *)sc->sc_ld.sc_dv.dv_parent;
+	twe = (struct twe_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	flags = (dowrite ? TWE_CCB_DATA_OUT : TWE_CCB_DATA_IN);
 	if ((ccb = twe_ccb_alloc(twe, flags)) == NULL)
@@ -256,7 +256,7 @@ ld_twe_handler(struct twe_ccb *ccb, int error)
 	tx = &ccb->ccb_tx;
 	bp = tx->tx_context;
 	sc = (struct ld_twe_softc *)tx->tx_dv;
-	twe = (struct twe_softc *)sc->sc_ld.sc_dv.dv_parent;
+	twe = (struct twe_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	twe_ccb_unmap(twe, ccb);
 	twe_ccb_free(twe, ccb);
@@ -283,7 +283,7 @@ static int
 ld_twe_flush(struct ld_softc *ld)
 {
 	struct ld_twe_softc *sc = (void *) ld;
-	struct twe_softc *twe = (void *) ld->sc_dv.dv_parent;
+	struct twe_softc *twe = (void *) device_parent(&ld->sc_dv);
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
 	int s, rv;

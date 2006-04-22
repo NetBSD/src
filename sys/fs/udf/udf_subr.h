@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.3 2006/02/02 15:52:23 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.3.2.1 2006/04/22 11:39:58 simonb Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -114,4 +114,3 @@ uint32_t udf_getaccessmode(struct udf_node *node);
 void udf_timestamp_to_timespec(struct udf_mount *ump, struct timestamp *timestamp, struct timespec *timespec);
 
 #endif	/* !_FS_UDF_UDF_SUBR_H_ */
-

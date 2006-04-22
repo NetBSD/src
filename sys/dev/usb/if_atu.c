@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.13 2005/11/28 13:31:09 augustss Exp $ */
+/*	$NetBSD: if_atu.c,v 1.13.6.1 2006/04/22 11:39:37 simonb Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.13 2005/11/28 13:31:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.13.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -1184,7 +1184,7 @@ USB_ATTACH(atu)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	sc->atu_unit = self->dv_unit;
+	sc->atu_unit = device_unit(self);
 	sc->atu_udev = dev;
 
 	/*

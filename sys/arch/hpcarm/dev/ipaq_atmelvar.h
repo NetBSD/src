@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelvar.h,v 1.1 2001/08/02 18:51:00 ichiro Exp $	*/
+/*	$NetBSD: ipaq_atmelvar.h,v 1.1.56.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -43,12 +43,12 @@ struct atmelgpio_softc {
 };
 
 struct atmel_rx {
-	u_int8_t		id;
-	u_int8_t		len;
-	u_int8_t		idx;
-	u_int8_t		data[MAX_RECVSIZE];
-	u_int8_t		checksum;
-	u_int8_t		state;
+	uint8_t			id;
+	uint8_t			len;
+	uint8_t			idx;
+	uint8_t			data[MAX_RECVSIZE];
+	uint8_t			checksum;
+	uint8_t			state;
 #define	STATE_SOF		0
 #define STATE_ID		1
 #define STATE_DATA		2

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.10 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: platform.h,v 1.10.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,15 +44,11 @@
 
 #include <dev/pci/pcivar.h>
 
-struct platform {
+struct platform_quirkdata {
 	const char	*model;
-	int		(*match)(struct platform *);
-	void		(*pci_get_chipset_tag)(pci_chipset_tag_t);
-	void		(*pci_intr_fixup)(int, int, int, int *);
-	void		(*init_intr)(void);
-	void		(*cpu_setup)(struct device *);
+	int		quirk;
+	void		(*pci_intr_fixup)(int, int, int, int, int *);
 	void		(*reset)(void);
-	const char	**obiodevs;
 };
 
 struct plattab {
@@ -60,29 +56,23 @@ struct plattab {
 	int num;
 };
 
+struct pciroutinginfo {
+	uint32_t addr;
+	uint32_t pins;
+};
+
+#define PLAT_QUIRK_INTRFIXUP	(1 << 1)
+#define PLAT_QUIRK_RESET	(1 << 2)
+
 extern struct platform *platform;
-extern const char *obiodevs_nodev[];
+extern struct pciroutinginfo *pciroutinginfo;
 
-int ident_platform(void);
-int platform_generic_match(struct platform *);
-void pci_intr_nofixup(int, int, int, int *);
+void pci_intr_nofixup(int, int, int, int, int *);
+void pci_intr_fixup_pnp(int, int, int, int, int *);
 void cpu_setup_unknown(struct device *);
-void reset_unknown(void);
-void reset_prep_generic(void);
-
-/* IBM */
-extern struct plattab plattab_ibm;
-extern struct platform platform_ibm_6015;
-extern struct platform platform_ibm_6040;
-extern struct platform platform_ibm_6050;
-extern struct platform platform_ibm_7248;
-extern struct platform platform_ibm_7043_140;
-
-void cpu_setup_ibm_generic(struct device *);
-
-/* Motorola */
-extern struct plattab plattab_mot;
-
-extern struct platform platform_mot_ulmb60xa;
+void reset_prep(void);
+void setup_pciroutinginfo(void);
+int pci_chipset_tag_type(void);
+void cpu_setup_prep_generic(struct device *);
 
 #endif /* !_PREP_PLATFORM_H_ */

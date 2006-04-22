@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.17 2005/11/16 03:00:23 uwe Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.17.6.1 2006/04/22 11:37:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.17 2005/11/16 03:00:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.17.6.1 2006/04/22 11:37:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,7 +94,6 @@ static struct intrhand level14 = { .ih_fun = statintr_msiiep  };
  */
 #define	tmr_ustolimIIep(n)	((n) * 25 + 1)
 
-
 static int
 timermatch_msiiep(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -123,12 +122,13 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	 */
 	for (timerblurb = 1; ; ++timerblurb) {
 		int t;
+		volatile uint32_t junk;
 
-		mspcic_read_4(pcic_pclr); /* clear the limit bit */
+		/* we need 'junk' to keep the read from getting eliminated */
+		junk = mspcic_read_4(pcic_pclr); /* clear the limit bit */
 		mspcic_write_4(pcic_pclr, 0); /* reset to 1, free run */
 		delay(100);
 		t = mspcic_read_4(pcic_pccr);
-
 		if (t < 0)	/* limit bit set, cannot happen */
 			panic("delay calibration");
 
@@ -180,8 +180,9 @@ timer_init_msiiep(void)
 static int
 clockintr_msiiep(void *cap)
 {
-
-	mspcic_read_4(pcic_sclr); /* clear the interrupt */
+	volatile uint32_t junk;
+	
+	junk = mspcic_read_4(pcic_sclr); /* clear the interrupt */
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
@@ -195,8 +196,9 @@ statintr_msiiep(void *cap)
 {
 	struct clockframe *frame = cap;
 	u_long newint;
-
-	mspcic_read_4(pcic_pclr); /* clear the interrupt */
+	volatile uint32_t junk;
+	
+	junk = mspcic_read_4(pcic_pclr); /* clear the interrupt */
 
 	statclock(frame);
 

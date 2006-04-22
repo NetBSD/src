@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.4 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: hash.h,v 1.4.6.1 2006/04/22 11:40:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  *	return a 32 bit hash of the binary buffer buf (size len),
  *	seeded with an initial hash value of hash (usually HASH32_BUF_INIT).
  */
-static inline uint32_t
+static __inline uint32_t
 hash32_buf(const void *bf, size_t len, uint32_t hash)
 {
 	const uint8_t *s = bf;
@@ -76,7 +76,7 @@ hash32_buf(const void *bf, size_t len, uint32_t hash)
  *	return a 32 bit hash of NUL terminated ASCII string buf,
  *	seeded with an initial hash value of hash (usually HASH32_STR_INIT).
  */
-static inline uint32_t
+static __inline uint32_t
 hash32_str(const void *bf, uint32_t hash)
 {
 	const uint8_t *s = bf;
@@ -94,7 +94,7 @@ hash32_str(const void *bf, uint32_t hash)
  *	a maximum of len bytes,
  *	seeded with an initial hash value of hash (usually HASH32_STR_INIT).
  */
-static inline uint32_t
+static __inline uint32_t
 hash32_strn(const void *bf, size_t len, uint32_t hash)
 {
 	const uint8_t	*s = bf;

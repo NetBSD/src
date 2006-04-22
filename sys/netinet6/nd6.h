@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.40 2005/12/10 23:39:56 elad Exp $	*/
+/*	$NetBSD: nd6.h,v 1.40.6.1 2006/04/22 11:40:13 simonb Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ struct	llinfo_nd6 {
 #define ND6_LLINFO_PROBE	4
 
 #define ND6_IS_LLINFO_PROBREACH(n) ((n)->ln_state > ND6_LLINFO_INCOMPLETE)
-#define ND6_LLINFO_PERMANENT(n)	((n)->ln_expire == 0)
+#define ND6_LLINFO_PERMANENT(n)	(((n)->ln_expire == 0) && ((n)->ln_state > ND6_LLINFO_INCOMPLETE))
 
 struct nd_ifinfo {
 	u_int32_t linkmtu;		/* LinkMTU */
@@ -92,6 +92,10 @@ struct nd_ifinfo {
 
 #define ND6_IFF_PERFORMNUD	0x1
 #define ND6_IFF_ACCEPT_RTADV	0x2
+#define ND6_IFF_PREFER_SOURCE	0x4 /* XXX: not related to ND. */
+#define ND6_IFF_IFDISABLED	0x8 /* IPv6 operation is disabled due to
+				     * DAD failure.  (XXX: not ND-specific)
+				     */
 
 #ifdef _KERNEL
 #define ND_IFINFO(ifp) \
@@ -228,6 +232,10 @@ struct	in6_ndifreq {
 #define RETRANS_TIMER			1000	/* msec */
 #define MIN_RANDOM_FACTOR		512	/* 1024 * 0.5 */
 #define MAX_RANDOM_FACTOR		1536	/* 1024 * 1.5 */
+#define DEF_TEMP_VALID_LIFETIME		604800	/* 1 week */
+#define DEF_TEMP_PREFERRED_LIFETIME	86400	/* 1 day */
+#define TEMPADDR_REGEN_ADVANCE		5	/* sec */
+#define MAX_TEMP_DESYNC_FACTOR		600	/* 10 min */
 #define ND_COMPUTE_RTIME(x) \
 		(((MIN_RANDOM_FACTOR * (x >> 10)) + (arc4random() & \
 		((MAX_RANDOM_FACTOR - MIN_RANDOM_FACTOR) * (x >> 10)))) /1000)
@@ -241,6 +249,19 @@ struct	nd_defrouter {
 	u_long	expire;
 	struct  ifnet *ifp;
 	int	installed;	/* is installed into kernel routing table */
+};
+
+struct nd_prefixctl {
+	struct ifnet *ndpr_ifp;
+
+	/* prefix */
+	struct sockaddr_in6 ndpr_prefix;
+	u_char	ndpr_plen;
+
+	u_int32_t ndpr_vltime;	/* advertised valid lifetime */
+	u_int32_t ndpr_pltime;	/* advertised preferred lifetime */
+
+	struct prf_ra ndpr_flags;
 };
 
 struct nd_prefix {
@@ -327,6 +348,10 @@ extern struct callout nd6_timer_ch;
 
 /* nd6_rtr.c */
 extern int nd6_defifindex;
+extern int ip6_desync_factor;	/* seconds */
+extern u_int32_t ip6_temp_preferred_lifetime; /* seconds */
+extern u_int32_t ip6_temp_valid_lifetime; /* seconds */
+extern int ip6_temp_regen_advance; /* seconds */
 
 union nd_opts {
 	struct nd_opt_hdr *nd_opt_array[8];
@@ -389,7 +414,7 @@ void nd6_ns_input __P((struct mbuf *, int, int));
 void nd6_ns_output __P((struct ifnet *, const struct in6_addr *,
 	const struct in6_addr *, struct llinfo_nd6 *, int));
 caddr_t nd6_ifptomac __P((struct ifnet *));
-void nd6_dad_start __P((struct ifaddr *, int *));
+void nd6_dad_start __P((struct ifaddr *, int));
 void nd6_dad_stop __P((struct ifaddr *));
 void nd6_dad_duplicated __P((struct ifaddr *));
 
@@ -402,19 +427,17 @@ void defrouter_reset __P((void));
 void defrouter_select __P((void));
 void defrtrlist_del __P((struct nd_defrouter *));
 void prelist_remove __P((struct nd_prefix *));
-int prelist_update __P((struct nd_prefix *, struct nd_defrouter *,
-	struct mbuf *));
-int nd6_prelist_add __P((struct nd_prefix *, struct nd_defrouter *,
+int nd6_prelist_add __P((struct nd_prefixctl *, struct nd_defrouter *,
 	struct nd_prefix **));
 int nd6_prefix_onlink __P((struct nd_prefix *));
 int nd6_prefix_offlink __P((struct nd_prefix *));
 void pfxlist_onlink_check __P((void));
 struct nd_defrouter *defrouter_lookup __P((struct in6_addr *, struct ifnet *));
-struct nd_prefix *nd6_prefix_lookup __P((struct nd_prefix *));
+struct nd_prefix *nd6_prefix_lookup __P((struct nd_prefixctl *));
 int in6_ifdel __P((struct ifnet *, struct in6_addr *));
-int in6_init_prefix_ltimes __P((struct nd_prefix *ndpr));
 void rt6_flush __P((struct in6_addr *, struct ifnet *));
 int nd6_setdefaultiface __P((int));
+int in6_tmpifadd __P((const struct in6_ifaddr *, int, int));
 
 #endif /* _KERNEL */
 

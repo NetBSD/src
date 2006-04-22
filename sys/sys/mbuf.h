@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.121 2006/01/31 17:48:27 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.121.4.1 2006/04/22 11:40:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -311,11 +311,14 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define	M_CANFASTFWD	0x0400	/* used by filters to indicate packet can
 				   be fast-forwarded */
-#define M_ANYCAST6	0x0800	/* received as IPv6 anycast */
-#define	M_LINK0		0x1000	/* link layer specific flag */
-#define	M_LINK1		0x2000	/* link layer specific flag */
-#define	M_LINK2		0x4000	/* link layer specific flag */
-#define	M_LINK3		0x8000	/* link layer specific flag */
+#define	M_ANYCAST6	0x00800	/* received as IPv6 anycast */
+#define	M_LINK0		0x01000	/* link layer specific flag */
+#define	M_LINK1		0x02000	/* link layer specific flag */
+#define	M_LINK2		0x04000	/* link layer specific flag */
+#define	M_LINK3		0x08000	/* link layer specific flag */
+#define	M_LINK4		0x10000	/* link layer specific flag */
+#define	M_LINK5		0x20000	/* link layer specific flag */
+#define	M_LINK6		0x40000	/* link layer specific flag */
 
 /* additional flags for M_EXT mbufs */
 #define	M_EXT_FLAGS	0xff000000
@@ -329,8 +332,8 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 
 #define M_FLAGS_BITS \
     "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10AUTHIPDGM" \
-    "\11BCAST\12MCASE\13CANFASTFWD\14ANYCAST6\15LINK0\16LINK1\17LINK2\20LINK3" \
-    "\30EXT_CLUSTER\31EXT_PAGES\32EXT_ROMAP\33EXT_RW"
+    "\11BCAST\12MCAST\13CANFASTFWD\14ANYCAST6\15LINK0\16LINK1\17LINK2\20LINK3" \
+    "\31EXT_CLUSTER\32EXT_PAGES\33EXT_ROMAP\34EXT_RW"
 
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP|M_AUTHIPDGM)
@@ -765,8 +768,8 @@ do {									\
  * Allow drivers and/or protocols to use the rcvif member of
  * PKTHDR mbufs to store private context information.
  */
-#define	M_GETCTX(m, t)		((t) (m)->m_pkthdr.rcvif + 0)
-#define	M_SETCTX(m, c)		((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
+#define	M_GETCTX(m, t)		((t)(m)->m_pkthdr.rcvif)
+#define	M_SETCTX(m, c)		((void)((m)->m_pkthdr.rcvif = (void *)(c)))
 
 #endif /* defined(_KERNEL) */
 
@@ -870,8 +873,8 @@ void	mbinit(void);
 void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
 
 /* Inline routines. */
-static inline u_int m_length(struct mbuf *) __unused;
-static inline void m_ext_free(struct mbuf *, boolean_t) __unused;
+static __inline u_int m_length(struct mbuf *) __unused;
+static __inline void m_ext_free(struct mbuf *, boolean_t) __unused;
 
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
@@ -914,10 +917,12 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
 #define	PACKET_TAG_INET6			26 /* IPv6 info */
 
+#define	PACKET_TAG_ECO_RETRYPARMS		27 /* Econet retry parameters */
+
 /*
  * Return the number of bytes in the mbuf chain, m.
  */
-static inline u_int
+static __inline u_int
 m_length(struct mbuf *m)
 {
 	struct mbuf *m0;
@@ -938,7 +943,7 @@ m_length(struct mbuf *m)
  * => if 'dofree', free the mbuf m itsself as well.
  * => called at splvm.
  */
-static inline void
+static __inline void
 m_ext_free(struct mbuf *m, boolean_t dofree)
 {
 

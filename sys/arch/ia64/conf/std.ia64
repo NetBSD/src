@@ -1,0 +1,8 @@
+# $NetBSD: std.ia64,v 1.1.6.2 2006/04/22 11:37:35 simonb Exp $
+#
+# Standard/required configuration info for NetBSD/ia64
+
+machine		ia64
+options 	EXEC_ELF64	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+

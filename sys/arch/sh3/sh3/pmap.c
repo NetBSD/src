@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2006/01/21 00:56:05 uwe Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52.4.1 2006/04/22 11:37:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2006/01/21 00:56:05 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52.4.1 2006/04/22 11:37:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ STATIC struct pool_allocator pmap_pv_page_allocator = {
 STATIC int __pmap_asid_alloc(void);
 STATIC void __pmap_asid_free(int);
 STATIC struct {
-	u_int32_t map[8];
+	uint32_t map[8];
 	int hint;	/* hint for next allocation */
 } __pmap_asid;
 
@@ -585,8 +585,16 @@ pmap_kremove(vaddr_t va, vsize_t len)
 boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
-	pt_entry_t *pte = __pmap_pte_lookup(pmap, va);
+	pt_entry_t *pte;
 
+	/* handle P1 and P2 specially: va == pa */
+	if (pmap == pmap_kernel() && (va >> 30) == 2) {
+		if (pap != NULL)
+			*pap = va & SH3_PHYS_MASK;
+		return (TRUE);
+	}
+
+	pte = __pmap_pte_lookup(pmap, va);
 	if (pte == NULL || *pte == 0)
 		return (FALSE);
 

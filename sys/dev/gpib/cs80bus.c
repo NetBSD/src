@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.4 2005/12/11 12:21:21 christos Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.4 2005/12/11 12:21:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.4.6.1 2006/04/22 11:38:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ cs80busattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cs80bus_softc *sc = (struct cs80bus_softc *)self;
+	struct cs80bus_softc *sc = device_private(self);
 	struct gpib_attach_args *ga = aux;
 	struct cs80bus_attach_args ca;
 	int slave;
@@ -124,7 +124,7 @@ cs80busattach(parent, self, aux)
 
 	for (slave = 0; slave < 8; slave++) {
 
-		if (gpib_isalloc((void *)sc->sc_dev.dv_parent, slave))
+		if (gpib_isalloc((void *)device_parent(&sc->sc_dev), slave))
 			continue;
 
 		if (gpibrecv(sc->sc_ic, GPIB_BROADCAST_ADDR,
@@ -226,7 +226,7 @@ cs80bus_alloc(sc, slave, punit)
 	if (slave >= CS80BUS_NSLAVES || punit >= CS80BUS_NPUNITS)
 		panic("cs80bus_alloc: device address out of range");
 
-	gpib_alloc((void *)sc->sc_dev.dv_parent, slave);
+	gpib_alloc((void *)device_parent(&sc->sc_dev), slave);
 
 	if (sc->sc_rmap[slave][punit] == 0) {
 		sc->sc_rmap[slave][punit] = 1;

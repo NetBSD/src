@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.11 2006/01/25 10:45:20 peter Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.11.4.1 2006/04/22 11:39:55 simonb Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.97 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
@@ -1666,7 +1666,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 
 
 		/* Calculate max ticks since the last timestamp */
-#define TS_MAXFREQ	1100		/* RFC max TS freq of 1Khz + 10% skew */
+#define TS_MAXFREQ	1100		/* RFC max TS freq of 1 kHz + 10% skew */
 #define TS_MICROSECS	1000000		/* microseconds per second */
 		timersub(&uptime, &src->scrub->pfss_last, &delta_ts);
 		tsval_from_last = (delta_ts.tv_sec + ts_fudge) * TS_MAXFREQ;

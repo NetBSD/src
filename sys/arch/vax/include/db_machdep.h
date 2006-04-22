@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.12 2003/04/29 17:06:07 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.12.34.1 2006/04/22 11:38:06 simonb Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,12 +46,12 @@ typedef struct trapframe db_regs_t;
 extern	db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->pc)
+#define	PC_REGS(regs)	(*(db_addr_t *)&(regs)->pc)
 
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0x03		/* breakpoint instruction */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
-#define	BKPT_SET(inst)	(BKPT_INST)
+#define	BKPT_SET(inst, addr)	(BKPT_INST)
 
 #define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->pc -= BKPT_SIZE)
 

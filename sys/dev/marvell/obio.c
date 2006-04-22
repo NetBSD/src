@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.7 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.7.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include "opt_marvell.h"
 
@@ -149,8 +149,8 @@ obio_cfmatch(struct device *parent, struct cfdata *cf, void *aux)
 void
 obio_cfattach(struct device *parent, struct device *self, void *aux)
 {
-	struct gt_softc * const gt = (struct gt_softc *)parent;
-	struct obio_softc *sc = (struct obio_softc *)self;
+	struct gt_softc * const gt = device_private(parent);
+	struct obio_softc *sc = device_private(self);
 	struct gt_attach_args *ga = aux;
 	uint32_t datal, datah;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.1 2006/01/21 00:15:37 rpaulo Exp $	*/
+/*	$NetBSD: scope6.c,v 1.1.6.1 2006/04/22 11:40:13 simonb Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -60,7 +60,7 @@ void
 scope6_init()
 {
 
-	bzero(&sid_default, sizeof(sid_default));
+	memset(&sid_default, 0, sizeof(sid_default));
 }
 
 struct scope6_id *
@@ -69,7 +69,7 @@ scope6_ifattach(struct ifnet *ifp)
 	struct scope6_id *sid;
 
 	sid = (struct scope6_id *)malloc(sizeof(*sid), M_IFADDR, M_WAITOK);
-	bzero(sid, sizeof(*sid));
+	memset(sid, 0, sizeof(*sid));
 
 	/*
 	 * XXX: IPV6_ADDR_SCOPE_xxx macros are not standard.

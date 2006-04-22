@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.3 2005/12/11 12:22:48 christos Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.3.6.1 2006/04/22 11:39:11 simonb Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.3 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.3.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include "opt_atppc.h"
 
@@ -102,8 +102,8 @@ atppc_ofisa_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 atppc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct atppc_softc *sc = (struct atppc_softc *) self;
-	struct atppc_ofisa_softc *asc = (struct atppc_ofisa_softc *)self;
+	struct atppc_softc *sc = device_private(self);
+	struct atppc_ofisa_softc *asc = device_private(self);
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg;
 	struct ofisa_intr_desc intr;

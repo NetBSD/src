@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.11 2005/12/11 12:16:51 christos Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.11.6.1 2006/04/22 11:37:17 simonb Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.11 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.11.6.1 2006/04/22 11:37:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +115,7 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 }
 
 int
-sacpcic_print(aux, name)
-	void *aux;
-	const char *name;
+sacpcic_print(void *aux, const char *name)
 {
 	return (UNCONF);
 }
@@ -208,17 +206,14 @@ sacpcic_write(struct sapcic_socket *so, int reg, int arg)
 }
 		
 void
-sacpcic_clear_intr(arg)
+sacpcic_clear_intr(int arg)
 {
 	/* sacc_intr_dispatch takes care of intr status */
 }
 
 void *
-sacpcic_intr_establish(so, level, ih_fun, ih_arg)
-	struct sapcic_socket *so;
-	int level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
+sacpcic_intr_establish(struct sapcic_socket *so, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	int irq;
 
@@ -228,9 +223,7 @@ sacpcic_intr_establish(so, level, ih_fun, ih_arg)
 }
 
 void
-sacpcic_intr_disestablish(so, ih)
-	struct sapcic_socket *so;
-	void *ih;
+sacpcic_intr_disestablish(struct sapcic_socket *so, void *ih)
 {
 	sacc_intr_disestablish((sacc_chipset_tag_t)so->pcictag_cookie, ih);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.57.6.1 2006/02/04 14:12:50 simonb Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.57.6.2 2006/04/22 11:40:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.57.6.1 2006/02/04 14:12:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.57.6.2 2006/04/22 11:40:15 simonb Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -210,6 +210,7 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 			splx(s);
 			return (error);
 		}
+		KASSERT(fh.fh_fid.fid_len <= _VFS_MAXFIDSZ);
 		lpp = NQFHHASH(fh.fh_fid.fid_data);
 		LIST_FOREACH (lp, lpp, lc_hash) {
 			if (fh.fh_fsid.__fsid_val[0] == lp->lc_fsid.__fsid_val[0] &&
@@ -517,6 +518,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred, l)
 			memset((caddr_t)fhp, 0, sizeof(nfh));
 			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 			VFS_VPTOFH(vp, &fhp->fh_fid);
+			KASSERT(fhp->fh_fid.fid_len <= _VFS_MAXFIDSZ);
 			nfsm_srvfhtom(fhp, 1);
 			m = mreq;
 			siz = 0;
@@ -728,7 +730,7 @@ nqnfsrv_getlease(nfsd, slp, lwp, mrq)
 	int error = 0;
 	char *cp2;
 	struct mbuf *mb, *mreq;
-	int flags, rdonly, cache;
+	int flags, rdonly, cache = 0;
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
@@ -1013,7 +1015,6 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 	caddr_t argp;
 	struct lwp *l;
 {
-	struct proc *p = l ? l->l_proc : NULL;
 #ifndef NFS_V2_ONLY
 	struct nfsnode *np;
 	struct vnode *vp;
@@ -1067,7 +1068,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		if (vfs_busy(nmp->nm_mountp, LK_NOWAIT, 0) != 0)
 			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 		else if (dounmount(nmp->nm_mountp, 0, l) != 0)
-			CLRSIG(p, CURSIG(l));
+			CLRSIG(l);
 		sleepreturn = 0;
 		continue;
 	    }
@@ -1170,8 +1171,6 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		free((caddr_t)nuidp, M_NFSUID);
 	}
 	free((caddr_t)nmp, M_NFSMNT);
-	if (error == EWOULDBLOCK)
-		error = 0;
 	return (error);
 }
 #endif /* NFS */

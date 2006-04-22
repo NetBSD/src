@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.48 2005/12/24 20:06:58 perry Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.48.6.1 2006/04/22 11:37:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.48 2005/12/24 20:06:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.48.6.1 2006/04/22 11:37:20 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -656,7 +656,7 @@ fdstrategy(bp)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
-		struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+		struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
@@ -678,7 +678,7 @@ void
 fdstart(fd)
 	struct fd_softc *fd;
 {
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
 	int active = fdc->sc_drives.tqh_first != 0;
 
 	/* Link into controller queue. */
@@ -695,7 +695,7 @@ fdfinish(fd, bp)
 	struct fd_softc *fd;
 	struct buf *bp;
 {
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
 
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
@@ -769,7 +769,7 @@ fd_motor_off(arg)
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	fd_set_motor((struct fdc_softc *)fd->sc_dev.dv_parent, 0);
+	fd_set_motor((struct fdc_softc *) device_parent(&fd->sc_dev), 0);
 	splx(s);
 }
 
@@ -778,7 +778,7 @@ fd_motor_on(arg)
 	void *arg;
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
+	struct fdc_softc *fdc = (void *) device_parent(&fd->sc_dev);
 	int s;
 
 	s = splbio();
@@ -896,7 +896,7 @@ fdcstatus(dv, n, s)
 	int n;
 	const char *s;
 {
-	struct fdc_softc *fdc = (void *)dv->dv_parent;
+	struct fdc_softc *fdc = (void *) device_parent(dv);
 	char bits[64];
 
 	if (n == 0) {
@@ -1050,7 +1050,7 @@ loop:
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 
-		fd->sc_dk.dk_seek++;
+		iostat_seek(fd->sc_dk.dk_stats);
 		disk_busy(&fd->sc_dk);
 
 		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);

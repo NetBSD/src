@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.9 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.9.6.1 2006/04/22 11:37:18 simonb Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,8 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.9 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.9.6.1 2006/04/22 11:37:18 simonb Exp $");
 
+#include "opt_ixp425.h"
 #include "opt_perfctrs.h"
 
 #include <sys/types.h>
@@ -67,13 +68,17 @@ static void *clock_ih;
 int	ixpclk_intr(void *);
 
 struct ixpclk_softc {
-        struct device           sc_dev;
-        bus_addr_t              sc_baseaddr;
-        bus_space_tag_t         sc_iot;
-        bus_space_handle_t      sc_ioh;
+	struct device		sc_dev;
+	bus_addr_t		sc_baseaddr;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t      sc_ioh;
 };
 
+#ifndef IXP425_CLOCK_FREQ
 #define	COUNTS_PER_SEC		66666600	/* 66MHz */
+#else
+#define	COUNTS_PER_SEC		IXP425_CLOCK_FREQ
+#endif
 #define	COUNTS_PER_USEC		((COUNTS_PER_SEC / 1000000) + 1)
 
 static struct ixpclk_softc *ixpclk_sc;
@@ -91,7 +96,7 @@ CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 static int
 ixpclk_match(struct device *parent, struct cfdata *match, void *aux)
 {
-        return 2;
+	return 2;
 }
 
 static void

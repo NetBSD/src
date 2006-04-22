@@ -1,0 +1,245 @@
+#	$NetBSD: NSLU2,v 1.2.8.2 2006/04/22 11:37:22 simonb Exp $
+#
+#	Linksys NSLU2 "Slug" NAS Device
+#
+
+include	"arch/evbarm/conf/std.nslu2"
+
+# estimated number of users
+maxusers	8
+
+# Feeling bloated? These might help...
+#options 	MALLOC_NOINLINE
+#options 	VNODE_OP_NOINLINE
+#options 	EVBARM_SPL_NOINLINE
+#makeoptions 	COPTS="-Os"
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
+
+# CPU options
+
+# For XScale systems
+options 	CPU_XSCALE_IXP425	# Support the XScale core
+makeoptions	CPUFLAGS="-mcpu=xscale -mbig-endian"
+
+# Architecture options
+options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
+#options 	HZ=512
+
+# Board Type
+makeoptions	BOARDTYPE="nslu2"
+options 	IXP425_CLOCK_FREQ=66000000
+
+# File systems
+
+file-system	FFS		# UFS
+#file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS		# Network file system
+#file-system 	ADOSFS		# AmigaDOS-compatible file system
+#file-system 	EXT2FS		# second extended file system (linux)
+#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+#file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+#file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	PORTAL		# portal filesystem (still experimental)
+#file-system	PROCFS		# /proc
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# union file system
+
+# File system options
+#options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independant support
+#options 	NFSSERVER
+#options 	SOFTDEP
+
+# Networking options
+
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	MROUTING	# IP multicast routing
+#options 	NS		# XNS
+#options 	NSIP		# XNS tunneling over IP
+#options 	ISO,TPIP	# OSI
+#options 	EON		# OSI tunneling over IP
+#options 	CCITT,LLC,HDLC	# X.25
+#options 	NETATALK	# AppleTalk networking
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+#options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
+#options 	NFS_BOOT_BOOTPARAM
+
+# Compatibility options
+
+#options 	COMPAT_43	# 4.3BSD compatibility.
+#options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	COMPAT_20	# NetBSD 2.0 compatibility.
+#options 	COMPAT_16	# NetBSD 1.5 compatibility.
+#options 	COMPAT_15	# NetBSD 1.6 compatibility.
+#options 	COMPAT_14	# NetBSD 1.4 compatibility.
+#options 	COMPAT_13	# NetBSD 1.3 compatibility.
+#options 	COMPAT_12	# NetBSD 1.2 compatibility.
+#options 	COMPAT_11	# NetBSD 1.1 compatibility.
+#options 	COMPAT_10	# NetBSD 1.0 compatibility.
+#options 	COMPAT_09	# NetBSD 0.9 compatibility.
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Shared memory options
+
+#options 	SYSVMSG		# System V-like message queues
+#options 	SYSVSEM		# System V-like semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
+#options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+# Device options
+
+#options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+
+# Console options.  The default console is speed is 115200 baud.
+options 	CONSPEED=115200		# Console speed
+options 	CONUNIT=0		# Console port number
+
+# Miscellaneous kernel options
+#options 	KTRACE		# system call tracing, a la ktrace(1)
+#options 	IRQSTATS	# manage IRQ statistics
+#options 	LKM		# loadable kernel modules
+#options 	KMEMSTATS	# kernel memory statistics
+#options 	SCSIVERBOSE	# Verbose SCSI errors
+#options 	PCIVERBOSE	# Verbose PCI descriptions
+#options 	MIIVERBOSE	# Verbose MII autoconfuration messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	DDB_KEYCODE=0x40
+#options 	USERCONF	# userconf(4) support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Development and Debugging options
+
+#options 	PERFCTRS	# performance counters
+options 	DIAGNOSTIC	# internally consistency checks
+options 	DEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	DDB		# in-kernel debugger
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#makeoptions	DEBUG="-g"	# compile full symbol table
+options 	SYMTAB_SPACE=260000
+
+config		netbsd		root on ? type ?
+
+# The main bus device
+mainbus0	at root
+
+# The boot cpu
+cpu0		at mainbus?
+
+# IXP425 slow peripheral
+ixpsip0		at mainbus?
+
+#Timer
+ixpclk*		at ixpsip? addr 0xc8005000 size 0x30
+
+# On-board device support
+com0		at ixpsip? addr 0xc8000000 size 0x1000 index 0
+options 	COM_PXA2X0
+
+# I2C bus (using bit-banged GPIO pins)
+slugiic0	at ixpsip?
+iic0		at slugiic0
+xrtc0		at iic0 addr 0x6f
+
+# Power/Reset button support (via sysmon)
+slugbutt0 	at ixpsip?
+
+# Disk activity and ready/status LED support
+slugled0 	at ixpsip?
+
+# Buzzer support (not supported yet)
+#slugbuzz0 	at ixpsip?
+
+# IXP425 fast bus
+ixpio0		at mainbus?
+
+# PCI bus
+pci0		at ixpio? bus ?
+
+# USB devices
+ehci*	at pci? dev ? function ?
+ohci*	at pci? dev ? function ?
+usb*	at ehci?
+usb*	at ohci?
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
+
+# USB Mass Storage Devices
+umass*		at uhub? port ? configuration ? interface ?
+wd* 		at umass?
+scsibus*	at umass? channel ?
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+axe*	at uhub? port ?		# ASIX AX88172 based adapters
+cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
+
+# MII/PHY support
+ukphy*	at mii? phy ?			# Generic/Unknown PHY
+
+# USB 802.11 adapters
+atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+
+# USB Generic driver
+ugen*		at uhub? port ? configuration ? interface ?
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	vnd		4	# disk-like interface to files
+
+# network pseudo-devices
+pseudo-device	bpfilter	4	# Berkeley packet filter
+#pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+#pseudo-device	ppp		2	# Point-to-Point Protocol
+#pseudo-device	kttcp			# network loopback
+#pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	vlan
+#pseudo-device	bridge
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	crypto			# opencrypto framework
+
+# data mover pseudo-devices
+#pseudo-device	swdmover		# softare dmover(9) back-end
+#pseudo-device	dmoverio		# /dev/dmover dmover(9) interface

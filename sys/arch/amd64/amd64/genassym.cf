@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2005/12/11 12:16:21 christos Exp $
+#	$NetBSD: genassym.cf,v 1.4.6.1 2006/04/22 11:37:11 simonb Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 if defined(_KERNEL_OPT)
 include "opt_compat_netbsd32.h"
+include "opt_compat_linux32.h"
 include "opt_multiprocessor.h"
 endif
 
@@ -100,6 +101,10 @@ include <machine/types.h>
 
 if defined(COMPAT_NETBSD32)
 include <machine/netbsd32_machdep.h>
+endif
+
+if defined(COMPAT_LINUX32)
+include <machine/linux32_machdep.h>
 endif
 
 if defined(_KERNEL) && !defined(_LKM)
@@ -237,6 +242,16 @@ define  IH_LEVEL		offsetof(struct intrhand, ih_level)
 ifdef COMPAT_NETBSD32
 define	SC_FS32			offsetof(struct netbsd32_sigcontext, sc_fs)
 define	SC_GS32			offsetof(struct netbsd32_sigcontext, sc_gs)
+endif
+
+ifdef COMPAT_LINUX32
+define  LINUX32_SF_HANDLER	offsetof(struct linux32_sigframe, sf_handler)
+define  LINUX32_SF_SC		offsetof(struct linux32_sigframe, sf_sc)
+define  LINUX32_RT_SF_HANDLER	offsetof(struct linux32_rt_sigframe, sf_handler)
+define  LINUX32_RT_SF_UC	offsetof(struct linux32_rt_sigframe, sf_uc)
+define  LINUX32_SYS_rt_sigreturn	LINUX32_SYS_rt_sigreturn
+define  LINUX32_SYS_sigreturn		LINUX32_SYS_sigreturn
+define  LINUX32_SYS_exit		LINUX32_SYS_exit
 endif
 
 define	IS_RECURSE	offsetof(struct intrsource, is_recurse)

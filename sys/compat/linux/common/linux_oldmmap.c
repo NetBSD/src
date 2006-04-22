@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.64 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.64.6.1 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.64 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.64.6.1 2006/04/22 11:38:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.64 2005/12/11 12:20:19 christos 
 
 #include <uvm/uvm_param.h>
 
+#ifdef __amd64__
+#include <compat/netbsd32/netbsd32.h>
+
+#include <compat/linux32/common/linux32_types.h>
+#include <compat/linux32/common/linux32_machdep.h>
+#endif
+
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_oldmmap.h>
@@ -56,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.64 2005/12/11 12:20:19 christos 
 #include <compat/linux/linux_syscallargs.h>
 
 /* Used on: arm, i386, m68k */
+/* Used for linux32 on: amd64 */
 /* Not used on: alpha, mips, pcc, sparc, sparc64 */
 
 #undef DPRINTF

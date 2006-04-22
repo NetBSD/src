@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.47 2005/12/01 13:21:05 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.47.6.1 2006/04/22 11:40:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -217,6 +217,11 @@ struct pool {
  */
 extern struct pool_allocator pool_allocator_kmem;
 extern struct pool_allocator pool_allocator_nointr;
+#ifdef POOL_SUBPAGE
+/* The above are subpage allocators in this case. */
+extern struct pool_allocator pool_allocator_kmem_fullpage;
+extern struct pool_allocator pool_allocator_nointr_fullpage;
+#endif
 
 struct link_pool_init {	/* same as args to pool_init() */
 	struct pool *pp;

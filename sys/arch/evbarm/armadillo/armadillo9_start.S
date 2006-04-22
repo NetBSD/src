@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_start.S,v 1.1 2005/11/13 06:33:05 hamajima Exp $ */
+/*	$NetBSD: armadillo9_start.S,v 1.1.10.1 2006/04/22 11:37:21 simonb Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -32,9 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 #include <machine/asm.h>
 #include <arm/armreg.h>
 #include <arm/arm32/pte.h>
+#include "epcom.h"
 
 	.section .start,"ax",%progbits
 
@@ -71,55 +73,18 @@ _C_LABEL(armadillo9_start):
 	mov	pc, r8			/* Heave-ho! */
 
 Lunmapped:
-#ifdef VERBOSE_INIT_ARM
 	/* set temporary stack pointer */
-	adr	sp, Ltable
-	ldr	sp, [sp]
+	ldr	sp, Ltable
 
-	/* initialize UART1 */
-	bl	init_UART1
-#endif
-	/* copy to virtual address */
-	adr	r0, Lsection
-	ldmia	r0, {r0, r1, r2}	/* r0: kernel(load) start address */
-					/* r1: kernel(virtual) start address */
-					/* r2: kernel(virtual) end address */
-	sub	r3, r2, r1		/* r3: kernel size */
-	add	r4, r0, r3		/* r4: kernel(load) end address */
 #ifdef VERBOSE_INIT_ARM
-#define	putc(c)	 \
-	mov	r5, c	;\
-	bl	print_char
-	putc(#'c')
-	putc(#'o')
-	putc(#'p')
-	putc(#'y')
-	putc(#' ')
-	putc(#'f')
-	putc(#'r')
-	putc(#'o')
-	putc(#'m')
-	putc(#' ')
-	bl	print_r0
-	putc(#' ')
-	putc(#'t')
-	putc(#'o')
-	putc(#' ')
-	bl	print_r1
-	putc(#' ')
-	putc(#'s')
-	putc(#'i')
-	putc(#'z')
-	putc(#'e')
-	putc(#' ')
-	bl	print_r3
-	bl	print_cr
+	/* initialize UART */
+	bl	init_UART
 #endif
-1:
-	ldr	r5, [r4], #-4
-	str	r5, [r2], #-4
-	cmp	r4, r0
-	bge	1b
+	/* copy bootparam */
+	bl	copy_bootparam
+
+	/* copy myself to virtual address */
+	bl	copy_myself
 
 	/*
 	 * We want to construct a memory map that maps us
@@ -192,9 +157,11 @@ Lunmapped:
 	mov	r2, r2			/* force it to complete */
 	mov	pc, r1			/* leap to kernel entry point! */
 
+#define BOOTPARAM_ADDRESS	0xc0000100
+#define BOOTPARAM_SIZE		0x0f00
+
 Ltable:
 	.word	armadillo9_start - L1_TABLE_SIZE
-
 Lstart:
 	.word	start
 
@@ -203,90 +170,167 @@ Lsection:
 	.word	0xc0200000
 	.word	__bss_start
 
+Lbootparam_address:
+	.word	BOOTPARAM_ADDRESS
+
+copy_myself:
+	stmfd	sp!, {r0-r5, lr}
+	adr	r0, Lsection
+	ldmia	r0, {r1, r2, r4}	/* r1: kernel(load) start address */
+					/* r2: kernel(virtual) start address */
+					/* r3: kernel size */
+	sub	r3, r4, r2		/* r4: kernel(virtual) end address */
+	add	r5, r1, r3		/* r5: kernel(load) end address */
 #ifdef VERBOSE_INIT_ARM
-init_UART1:
-	stmfd	sp!, {r4, r5, lr}
-	mov	r4, #0x80000000
-	add	r4, r4, #0x008c0000
+	adr	r0, Lmsg1	/* "copy kernel from " */
+	bl	print_str
+	bl	print_r1
+	adr	r0, Lmsg2	/* " to " */
+	bl	print_str
+	bl	print_r2
+	adr	r0, Lmsg3	/* " size " */
+	bl	print_str
+	bl	print_r3
+	bl	print_cr
+#endif
+1:
+	ldr	r0, [r5], #-4
+	str	r0, [r4], #-4
+	cmp	r5, r1
+	bge	1b
+	ldmfd	sp!, {r0-r5, pc}
+
+copy_bootparam:
+	stmfd	sp!, {r0-r3, lr}
+	mov	r1, #BOOTPARAM_SIZE
+	ldr	r2, Lbootparam_address
+	adr	r3, _C_LABEL(bootparam)
+#ifdef VERBOSE_INIT_ARM
+	adr	r0, Lmsg0	/* "copy bootparam from " */
+	bl	print_str
+	bl	print_r2
+	adr	r0, Lmsg2	/* " to " */
+	bl	print_str
+	bl	print_r3
+	adr	r0, Lmsg3	/* " size " */
+	bl	print_str
+	bl	print_r1
+	bl	print_cr
+#endif
+1:
+	ldr	r0, [r2], #4
+	str	r0, [r3], #4
+	subs	r1, r1, #4
+	bne	1b
+	ldmfd	sp!, {r0-r3, pc}
+
+#ifdef VERBOSE_INIT_ARM
+Lmsg0:
+	.asciz	"copy bootparam from "
+	.align 0
+Lmsg1:
+	.asciz	"copy kernel from "
+	.align 0
+Lmsg2:
+	.asciz	" to "
+	.align 0
+Lmsg3:
+	.asciz	" size "
+	.align 0
+
+#if NEPCOM > 0
+#define EP93XX_APB_UART1	0x808c0000
+#define EP93XX_APB_UART2	0x808d0000
+
+#ifndef CONUNIT
+#define	CONUNIT	0
+#endif
+
+Lcomaddr:
+	.word	EP93XX_APB_UART1
+	.word	EP93XX_APB_UART2
+#endif
+
+init_UART:
+	stmfd	sp!, {r4-r5, lr}
+#if NEPCOM > 0
+	ldr	r4, Lcomaddr+(CONUNIT*4)
 	ldr	r5, [r4, #0x08]
 	orr	r5, r5, #0x10
 	str	r5, [r4, #0x08]	/* enable FIFO */
 	mov	r5, #0x01
 	str	r5, [r4, #0x14]	/* disable interrupt */
-	ldmfd	sp!, {r4, r5, pc}
+#endif
+	ldmfd	sp!, {r4-r5, pc}
 
-print_char:	/* char = r5 */
-	stmfd	sp!, {r4, r6, lr}
-	mov	r4, #0x80000000
-	add	r4, r4, #0x008c0000
+print_char:	/* char = r0 */
+	stmfd	sp!, {r4-r5, lr}
+#if NEPCOM > 0
+	ldr	r4, Lcomaddr+(CONUNIT*4)
 1:
-	ldr	r6, [r4, #0x18]
-	tst	r6, #0x20	/* check TXFF */
+	ldr	r5, [r4, #0x18]
+	tst	r5, #0x20	/* check TXFF */
 	bne	1b
-	str	r5, [r4, #0x00]
-	ldmfd	sp!, {r4, r6, pc}
+	str	r0, [r4, #0x00]
+#endif
+	ldmfd	sp!, {r4-r5, pc}
 
 print_cr:
-	stmfd	sp!, {r5, lr}
-	mov	r5, #0x0d	/* cr */
+	stmfd	sp!, {r0, lr}
+#if NEPCOM > 0
+	mov	r0, #0x0d	/* cr */
 	bl	print_char
-	mov	r5, #0x0a	/* lf */
+	mov	r0, #0x0a	/* lf */
 	bl	print_char
-	ldmfd	sp!, {r5, pc}
+#endif
+	ldmfd	sp!, {r0, pc}
 
-print_r0:
-	stmfd	sp!, {r0, r4-r7, lr}
+print_str:
+	stmfd	sp!, {r0, r4, lr}
+#if NEPCOM > 0
+	mov	r4, r0
+1:
+	ldrb	r0, [r4], #1
+	cmp	r0, #0
+	beq	2f
+	bl	print_char
+	b	1b
+2:
+#endif
+	ldmfd	sp!, {r0, r4, pc}
+
+print_r3:
+	stmfd	sp!, {r0, r3-r6, lr}
+#if NEPCOM > 0
 	mov	r4, #28
-	mov	r6, #0xf
+	mov	r5, #0xf
 1:	
-	and	r7, r6, r0, ROR r4
-	cmp	r7, #10
-	addlt	r5, r7, #'0'
-	addge	r5, r7, #('a' - 0x0a)
+	and	r6, r5, r3, ROR r4
+	cmp	r6, #10
+	addlt	r0, r6, #'0'
+	addge	r0, r6, #('a' - 0x0a)
 	bl	print_char
 	subs	r4, r4, #4
 	bge	1b
-	ldmfd	sp!, {r0, r4-r7, pc}
+#endif
+	ldmfd	sp!, {r0, r3-r6, pc}
 
 #define	print_register(reg)	 \
-	stmfd	sp!, {r0, lr}	;\
-	mov	r0, reg		;\
-	bl	print_r0	;\
-	ldmfd	sp!, {r0, pc}
+	stmfd	sp!, {r3, lr}	;\
+	mov	r3, reg		;\
+	bl	print_r3	;\
+	ldmfd	sp!, {r3, pc}
+
+print_r0:
+	print_register(r0)
 
 print_r1:
 	print_register(r1)
 
 print_r2:
 	print_register(r2)
-
-print_r3:
-	print_register(r3)
-
-print_r4:
-	print_register(r4)
-
-print_r5:
-	print_register(r5)
-
-print_r6:
-	print_register(r6)
-
-print_r7:
-	print_register(r7)
-
-print_r8:
-	print_register(r8)
-
-print_r9:
-	print_register(r9)
-
-print_r10:
-	print_register(r10)
-
-print_r11:
-	print_register(r11)
-
-print_r12:
-	print_register(r12)
 #endif
+
+	.global	_C_LABEL(bootparam)
+_C_LABEL(bootparam):
+	.space	BOOTPARAM_SIZE

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.214 2005/11/16 22:10:58 uwe Exp $ */
+/*	$NetBSD: autoconf.c,v 1.214.6.1 2006/04/22 11:37:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.214 2005/11/16 22:10:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.214.6.1 2006/04/22 11:37:59 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -568,7 +568,7 @@ bootpath_build(void)
 				}
 			} else {
 				bp->val[0] = -1; /* no #'s: assume unit 0, no
-							sbus offset/adddress */
+							sbus offset/address */
 			}
 			++bp;
 			++nbootpath;
@@ -1573,16 +1573,14 @@ bus_compatible(const char *bpname)
 static int
 bus_class(struct device *dev)
 {
-	const char *name;
 	int i, class;
 
 	class = BUSCLASS_NONE;
 	if (dev == NULL)
 		return (class);
 
-	name = dev->dv_cfdata->cf_name;
 	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
-		if (strcmp(name, bus_class_tab[i].name) == 0) {
+		if (device_is_a(dev, bus_class_tab[i].name)) {
 			class = bus_class_tab[i].class;
 			break;
 		}
@@ -1617,7 +1615,7 @@ instance_match(struct device *dev, void *aux, struct bootpath *bp)
 	/*
 	 * Rank parent bus so we know which locators to check.
 	 */
-	switch (bus_class(dev->dv_parent)) {
+	switch (bus_class(device_parent(dev))) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: mainbus device, "
@@ -1687,7 +1685,7 @@ instance_match(struct device *dev, void *aux, struct bootpath *bp)
 		break;
 	}
 
-	if (bp->val[0] == -1 && bp->val[1] == dev->dv_unit)
+	if (bp->val[0] == -1 && bp->val[1] == device_unit(dev))
 		return (1);
 
 	return (0);
@@ -1719,7 +1717,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
-	const char *dvname, *bpname;
+	const char *bpname;
 
 	/*
 	 * If device name does not match current bootpath component
@@ -1732,14 +1730,14 @@ device_register(struct device *dev, void *aux)
 	 * Translate PROM name in case our drivers are named differently
 	 */
 	bpname = bus_compatible(bp->name);
-	dvname = dev->dv_cfdata->cf_name;
 
 	DPRINTF(ACDB_BOOTDEV,
 	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
-	    dev->dv_xname, dvname, dev->dv_xname, bpname, bp->name));
+	    dev->dv_xname, device_cfdata(dev)->cf_name, dev->dv_xname,
+	    bpname, bp->name));
 
 	/* First, match by name */
-	if (strcmp(dvname, bpname) != 0)
+	if (!device_is_a(dev, bpname))
 		return;
 
 	if (bus_class(dev) != BUSCLASS_NONE) {
@@ -1748,7 +1746,7 @@ device_register(struct device *dev, void *aux)
 		 * parameters and advance boot path on match.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
-			if (strcmp(dvname, "fdc") == 0) {
+			if (device_is_a(dev, "fdc")) {
 				/*
 				 * XXX - HACK ALERT
 				 * Sun PROMs don't really seem to support
@@ -1767,8 +1765,9 @@ device_register(struct device *dev, void *aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "le") == 0 || strcmp(dvname, "hme") == 0 ||
-	    strcmp(dvname, "be") == 0) {
+	} else if (device_is_a(dev, "le") ||
+		   device_is_a(dev, "hme") ||
+		   device_is_a(dev, "be")) {
 		/*
 		 * LANCE, Happy Meal, or BigMac ethernet device
 		 */
@@ -1778,7 +1777,8 @@ device_register(struct device *dev, void *aux)
 			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+	} else if (device_is_a(dev, "sd") ||
+		   device_is_a(dev, "cd")) {
 #if NSCSIBUS > 0
 		/*
 		 * A SCSI disk or cd; retrieve target/lun information
@@ -1791,12 +1791,12 @@ device_register(struct device *dev, void *aux)
 		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsipi_channel *chan = periph->periph_channel;
 		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)dev->dv_parent;
+			(struct scsibus_softc *)device_parent(dev);
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
 		/* Check the controller that this scsibus is on */
-		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+		if ((bp-1)->dev != device_parent(&sbsc->sc_dev))
 			return;
 
 		/*
@@ -1808,7 +1808,7 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 
-		if (CPU_ISSUN4 && dvname[0] == 's' &&
+		if (CPU_ISSUN4 && device_is_a(dev, "sd") &&
 		    target == 0 &&
 		    scsipi_lookup_periph(chan, target, lun) == NULL) {
 			/*
@@ -1821,7 +1821,7 @@ device_register(struct device *dev, void *aux)
 			lun = 0;
 		}
 
-		if (CPU_ISSUN4C && dvname[0] == 's')
+		if (CPU_ISSUN4C && device_is_a(dev, "sd"))
 			target = sd_crazymap(target);
 
 		if (periph->periph_target == target &&
@@ -1832,7 +1832,8 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 #endif /* NSCSIBUS */
-	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
+	} else if (device_is_a(dev, "xd") ||
+		   device_is_a(dev, "xy")) {
 
 		/* A Xylogic disk */
 		if (instance_match(dev, aux, bp) != 0) {
@@ -1842,7 +1843,7 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 
-	} else if (strcmp("fd", dvname) == 0) {
+	} else if (device_is_a(dev, "fd")) {
 		/*
 		 * Sun PROMs don't really seem to support multiple
 		 * floppy drives. So we aren't going to, either.
@@ -1863,7 +1864,6 @@ device_register(struct device *dev, void *aux)
 			return;
 		}
 	}
-
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225_slhci.c,v 1.2 2005/12/11 12:17:08 christos Exp $ */
+/*	$NetBSD: gb225_slhci.c,v 1.2.6.1 2006/04/22 11:37:23 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ slhci_opio_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct obio_attach_args *oba = aux;
 	bus_space_tag_t iot = &pxa2x0_a4x_bs_tag; /* Use special BS funcs */
 	bus_space_handle_t ioh;
-	struct obio_softc *bsc = (struct obio_softc *)parent->dv_parent;
+	struct obio_softc *bsc = (struct obio_softc *)device_parent(parent);
 	struct pxa2x0_softc *psc;
 	int type;
 	uint32_t reg;
@@ -92,7 +92,7 @@ slhci_opio_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct slhci_softc sc;
 
 	obio_peripheral_reset(bsc, 2, 0);
-	psc = (struct pxa2x0_softc *)bsc->sc_dev.dv_parent;
+	psc = (struct pxa2x0_softc *)device_parent(&bsc->sc_dev);
 
 	reg = bus_space_read_4(psc->saip.sc_iot, psc->sc_memctl_ioh,
 	    MEMCTL_MSC2);
@@ -125,8 +125,10 @@ slhci_opio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct slhci_opio_softc *sc = (struct slhci_opio_softc *)self;
 	struct obio_attach_args *oba = aux;
-	struct opio_softc *psc = (struct opio_softc *)self->dv_parent;
-	struct obio_softc *bsc = (struct obio_softc *)psc->sc_dev.dv_parent;
+	struct opio_softc *psc =
+	    (struct opio_softc *)device_parent(self);
+	struct obio_softc *bsc =
+	    (struct obio_softc *)device_parent(&psc->sc_dev);
 	bus_space_tag_t iot = oba->oba_iot;
 	bus_space_handle_t ioh;
 
@@ -196,7 +198,8 @@ slhci_opio_enable_intr(void *arg, int mode)
 	struct slhci_opio_softc *sc = arg;
 	struct obio_softc *bsc;
 
-	bsc = (struct obio_softc *)sc->sc_sc.sc_bus.bdev.dv_parent->dv_parent;
+	bsc = (struct obio_softc *)device_parent(
+	    device_parent(&sc->sc_sc.sc_bus.bdev));
 
 	if (mode == INTR_ON)
 		obio_intr_unmask(bsc, sc->sc_ih);

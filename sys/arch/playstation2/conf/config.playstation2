@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.16 2005/12/07 12:40:47 tsutsui Exp $
+# 	$NetBSD: config.playstation2,v 1.16.6.1 2006/04/22 11:37:51 simonb Exp $
 #
 
 maxusers	16
@@ -75,14 +75,15 @@ ugen*	at uhub? port ?
 pseudo-device	loop		1	# network loopback
 pseudo-device	pty			# pseudo-terminals
 
-pseudo-device	bpfilter	2	# packet filter ports
+pseudo-device	bpfilter		# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 
-pseudo-device	vnd		2	# virtual disk ick
+pseudo-device	vnd			# virtual disk ick
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 
-pseudo-device	gif		2	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	ksyms			# /dev/ksyms

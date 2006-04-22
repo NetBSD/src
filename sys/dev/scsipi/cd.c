@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.238 2006/02/02 14:48:02 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.238.2.1 2006/04/22 11:39:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.238 2006/02/02 14:48:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.238.2.1 2006/04/22 11:39:29 simonb Exp $");
 
 #include "rnd.h"
 
@@ -232,7 +232,7 @@ cdmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 cdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct cd_softc *cd = (void *)self;
+	struct cd_softc *cd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
@@ -302,7 +302,7 @@ cdactivate(struct device *self, enum devact act)
 static int
 cddetach(struct device *self, int flags)
 {
-	struct cd_softc *cd = (struct cd_softc *) self;
+	struct cd_softc *cd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
@@ -311,7 +311,7 @@ cddetach(struct device *self, int flags)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = CDMINOR(self->dv_unit, i);
+		mn = CDMINOR(device_unit(self), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
@@ -1620,8 +1620,8 @@ cdgetdisklabel(struct cd_softc *cd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKECDDEV(0, cd->sc_dev.dv_unit, RAW_PART),
-	    cdstrategy, lp, cd->sc_dk.dk_cpulabel);
+	errstring = readdisklabel(MAKECDDEV(0, device_unit(&cd->sc_dev),
+	    RAW_PART), cdstrategy, lp, cd->sc_dk.dk_cpulabel);
 
 	/* if all went OK, we are passed a NULL error string */
 	if (errstring == NULL)
@@ -2645,6 +2645,9 @@ mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
 	case 0x0023 :	/* formatting media support feature */
 		flags |= MMC_CAP_RECORDABLE;
 		flags |= MMC_CAP_FORMATTABLE;
+		break;
+	case 0x0024 :	/* hardware assised defect management feature */
+		flags |= MMC_CAP_HW_DEFECTFREE;
 		break;
 	case 0x0025 : 	/* write once */
 		flags |= MMC_CAP_RECORDABLE;

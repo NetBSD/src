@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.25.6.1 2006/04/22 11:38:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -231,11 +231,11 @@ struct vax_bus_space {
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
  */
-static inline void vax_mem_read_multi_1 __P((bus_space_tag_t,
+static __inline void vax_mem_read_multi_1 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int8_t *, size_t));
-static inline void vax_mem_read_multi_2 __P((bus_space_tag_t,
+static __inline void vax_mem_read_multi_2 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int16_t *, size_t));
-static inline void vax_mem_read_multi_4 __P((bus_space_tag_t,
+static __inline void vax_mem_read_multi_4 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int32_t *, size_t));
 
 #define	bus_space_read_multi_1(t, h, o, a, c)				\
@@ -259,7 +259,7 @@ do {									\
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
 #endif
 
-static inline void
+static __inline void
 vax_mem_read_multi_1(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -273,7 +273,7 @@ vax_mem_read_multi_1(t, h, o, a, c)
 		*a = *(volatile u_int8_t *)(addr);
 }
 
-static inline void
+static __inline void
 vax_mem_read_multi_2(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -287,7 +287,7 @@ vax_mem_read_multi_2(t, h, o, a, c)
 		*a = *(volatile u_int16_t *)(addr);
 }
 
-static inline void
+static __inline void
 vax_mem_read_multi_4(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -311,11 +311,11 @@ vax_mem_read_multi_4(t, h, o, a, c)
  * buffer provided.
  */
 
-static inline void vax_mem_read_region_1 __P((bus_space_tag_t,
+static __inline void vax_mem_read_region_1 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int8_t *, size_t));
-static inline void vax_mem_read_region_2 __P((bus_space_tag_t,
+static __inline void vax_mem_read_region_2 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int16_t *, size_t));
-static inline void vax_mem_read_region_4 __P((bus_space_tag_t,
+static __inline void vax_mem_read_region_4 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int32_t *, size_t));
 
 #define	bus_space_read_region_1(t, h, o, a, c)				\
@@ -342,7 +342,7 @@ do {									\
 			!!! bus_space_read_region_8 unimplemented !!!
 #endif
 
-static inline void
+static __inline void
 vax_mem_read_region_1(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -356,7 +356,7 @@ vax_mem_read_region_1(t, h, o, a, c)
 		*a = *(volatile u_int8_t *)(addr);
 }
 
-static inline void
+static __inline void
 vax_mem_read_region_2(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -370,7 +370,7 @@ vax_mem_read_region_2(t, h, o, a, c)
 		*a = *(volatile u_int16_t *)(addr);
 }
 
-static inline void
+static __inline void
 vax_mem_read_region_4(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -422,11 +422,11 @@ do {									\
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
  */
-static inline void vax_mem_write_multi_1 __P((bus_space_tag_t,
+static __inline void vax_mem_write_multi_1 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, const u_int8_t *, size_t));
-static inline void vax_mem_write_multi_2 __P((bus_space_tag_t,
+static __inline void vax_mem_write_multi_2 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, const u_int16_t *, size_t));
-static inline void vax_mem_write_multi_4 __P((bus_space_tag_t,
+static __inline void vax_mem_write_multi_4 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, const u_int32_t *, size_t));
 
 #define	bus_space_write_multi_1(t, h, o, a, c)				\
@@ -453,7 +453,7 @@ do {									\
 			!!! bus_space_write_multi_8 unimplemented !!!
 #endif
 
-static inline void
+static __inline void
 vax_mem_write_multi_1(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -467,7 +467,7 @@ vax_mem_write_multi_1(t, h, o, a, c)
 		*(volatile u_int8_t *)(addr) = *a;
 }
 
-static inline void
+static __inline void
 vax_mem_write_multi_2(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -481,7 +481,7 @@ vax_mem_write_multi_2(t, h, o, a, c)
 		*(volatile u_int16_t *)(addr) = *a;
 }
 
-static inline void
+static __inline void
 vax_mem_write_multi_4(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -503,11 +503,11 @@ vax_mem_write_multi_4(t, h, o, a, c)
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
  */
-static inline void vax_mem_write_region_1 __P((bus_space_tag_t,
+static __inline void vax_mem_write_region_1 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, const u_int8_t *, size_t));
-static inline void vax_mem_write_region_2 __P((bus_space_tag_t,
+static __inline void vax_mem_write_region_2 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, const u_int16_t *, size_t));
-static inline void vax_mem_write_region_4 __P((bus_space_tag_t,
+static __inline void vax_mem_write_region_4 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, const u_int32_t *, size_t));
 
 #define	bus_space_write_region_1(t, h, o, a, c)				\
@@ -532,7 +532,7 @@ do {									\
 			!!! bus_space_write_region_8 unimplemented !!!
 #endif
 
-static inline void
+static __inline void
 vax_mem_write_region_1(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -546,7 +546,7 @@ vax_mem_write_region_1(t, h, o, a, c)
 		*(volatile u_int8_t *)(addr) = *a;
 }
 
-static inline void
+static __inline void
 vax_mem_write_region_2(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -560,7 +560,7 @@ vax_mem_write_region_2(t, h, o, a, c)
 		*(volatile u_int16_t *)(addr) = *a;
 }
 
-static inline void
+static __inline void
 vax_mem_write_region_4(t, h, o, a, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -583,11 +583,11 @@ vax_mem_write_region_4(t, h, o, a, c)
  * by tag/handle/offset `count' times.
  */
 
-static inline void vax_mem_set_multi_1 __P((bus_space_tag_t,
+static __inline void vax_mem_set_multi_1 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int8_t, size_t));
-static inline void vax_mem_set_multi_2 __P((bus_space_tag_t,
+static __inline void vax_mem_set_multi_2 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int16_t, size_t));
-static inline void vax_mem_set_multi_4 __P((bus_space_tag_t,
+static __inline void vax_mem_set_multi_4 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int32_t, size_t));
 
 #define	bus_space_set_multi_1(t, h, o, v, c)				\
@@ -605,7 +605,7 @@ do {									\
 	vax_mem_set_multi_4((t), (h), (o), (v), (c));		\
 } while (0)
 
-static inline void
+static __inline void
 vax_mem_set_multi_1(t, h, o, v, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -619,7 +619,7 @@ vax_mem_set_multi_1(t, h, o, v, c)
 		*(volatile u_int8_t *)(addr) = v;
 }
 
-static inline void
+static __inline void
 vax_mem_set_multi_2(t, h, o, v, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -633,7 +633,7 @@ vax_mem_set_multi_2(t, h, o, v, c)
 		*(volatile u_int16_t *)(addr) = v;
 }
 
-static inline void
+static __inline void
 vax_mem_set_multi_4(t, h, o, v, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -660,11 +660,11 @@ vax_mem_set_multi_4(t, h, o, v, c)
  * by tag/handle starting at `offset'.
  */
 
-static inline void vax_mem_set_region_1 __P((bus_space_tag_t,
+static __inline void vax_mem_set_region_1 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int8_t, size_t));
-static inline void vax_mem_set_region_2 __P((bus_space_tag_t,
+static __inline void vax_mem_set_region_2 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int16_t, size_t));
-static inline void vax_mem_set_region_4 __P((bus_space_tag_t,
+static __inline void vax_mem_set_region_4 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, u_int32_t, size_t));
 
 #define	bus_space_set_region_1(t, h, o, v, c)				\
@@ -682,7 +682,7 @@ do {									\
 	vax_mem_set_region_4((t), (h), (o), (v), (c));		\
 } while (0)
 
-static inline void
+static __inline void
 vax_mem_set_region_1(t, h, o, v, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -696,7 +696,7 @@ vax_mem_set_region_1(t, h, o, v, c)
 		*(volatile u_int8_t *)(addr) = v;
 }
 
-static inline void
+static __inline void
 vax_mem_set_region_2(t, h, o, v, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -710,7 +710,7 @@ vax_mem_set_region_2(t, h, o, v, c)
 		*(volatile u_int16_t *)(addr) = v;
 }
 
-static inline void
+static __inline void
 vax_mem_set_region_4(t, h, o, v, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
@@ -738,13 +738,13 @@ vax_mem_set_region_4(t, h, o, v, c)
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-static inline void vax_mem_copy_region_1 __P((bus_space_tag_t,
+static __inline void vax_mem_copy_region_1 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t));
-static inline void vax_mem_copy_region_2 __P((bus_space_tag_t,
+static __inline void vax_mem_copy_region_2 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t));
-static inline void vax_mem_copy_region_4 __P((bus_space_tag_t,
+static __inline void vax_mem_copy_region_4 __P((bus_space_tag_t,
 	bus_space_handle_t, bus_size_t, bus_space_handle_t,
 	bus_size_t, size_t));
 
@@ -765,7 +765,7 @@ do {									\
 	vax_mem_copy_region_4((t), (h1), (o1), (h2), (o2), (c));	\
 } while (0)
 
-static inline void
+static __inline void
 vax_mem_copy_region_1(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
@@ -791,7 +791,7 @@ vax_mem_copy_region_1(t, h1, o1, h2, o2, c)
 	}
 }
 
-static inline void
+static __inline void
 vax_mem_copy_region_2(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;
@@ -817,7 +817,7 @@ vax_mem_copy_region_2(t, h1, o1, h2, o2, c)
 	}
 }
 
-static inline void
+static __inline void
 vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
 	bus_space_tag_t t;
 	bus_space_handle_t h1;

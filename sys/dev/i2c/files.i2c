@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.6 2005/12/11 12:21:22 christos Exp $
+#	$NetBSD: files.i2c,v 1.6.6.1 2006/04/22 11:38:52 simonb Exp $
 
 define	i2cbus { }
 define	i2cexec
@@ -58,6 +58,12 @@ device	xrtc
 attach	xrtc at iic
 file	dev/i2c/x1226.c				xrtc
 
+# Analog Devices ADT 7463 thermal monitor / fan controller
+define adt7463c {}
+device adt7463c: sysmon_envsys
+attach adt7463c at iic
+file dev/i2c/adt7463.c			adt7463c
+
 # Analog Devices ADT 7467 thermal monitor / fan controller
 define adt7467c {}
 device adt7467c: sysmon_envsys
@@ -74,3 +80,8 @@ file dev/i2c/adm1030.c			adm1030c
 device	rs5c372rtc
 attach	rs5c372rtc at iic
 file	dev/i2c/rs5c372.c		rs5c372rtc
+
+# RICOH R2025S/D Real Time Clock
+device	r2025rtc
+attach	r2025rtc at iic
+file	dev/i2c/r2025.c			r2025rtc

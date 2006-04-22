@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2005/12/27 12:38:53 he Exp $
+#	$NetBSD: Makefile,v 1.28.6.1 2006/04/22 11:37:45 simonb Exp $
 
 LIB=sa
 
@@ -11,7 +11,7 @@ SRC_net= arp.c \
 	 bootp.c bootparam.c \
 	 dev_net.c \
 	 ether.c \
-	 in_cksum.c \
+	 ip_cksum.c \
 	 net.c netif.c nfs.c \
 	 rarp.c rpc.c
 

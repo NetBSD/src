@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.18 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.18.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.18 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.18.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 ofrtc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ofrtc_softc *of = (void *)self;
+	struct ofrtc_softc *of = device_private(self);
 	struct ofbus_attach_args *oba = aux;
 	char name[32];
 	int l;

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2001/05/28 15:53:51 kleink Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2.56.1 2006/04/22 11:37:54 simonb Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -33,13 +33,12 @@
 
 #define	ispart(c)	((c) >= 'a' && (c) <= 'h')
 
-int atoi __P((char *));
-int devlookup __P((char *));
-int devparse __P((const char *, int *, int *, int *, int *, int *, char **));
+int atoi(char *);
+int devlookup(char *);
+int devparse(const char *, int *, int *, int *, int *, int *, char **);
 
 int
-atoi(cp)
-	char *cp;
+atoi(char *cp)
 {
 	int val = 0;
 
@@ -49,8 +48,7 @@ atoi(cp)
 }
 
 int
-devlookup(d)
-	char *d;
+devlookup(char *d)
 {
 	struct devsw *dp = devsw;
 	int i;
@@ -72,14 +70,8 @@ devlookup(d)
  *   dev(ctlr, unit, part)file
  */
 int
-devparse(fname, dev, adapt, ctlr, unit, part, file)
-	const char *fname;
-	int *dev;
-	int *adapt;
-	int *ctlr;
-	int *unit;
-	int *part;
-	char **file;
+devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
+	int *part, char **file)
 {
 	int argc, flag;
 	char *s, *args[3];
@@ -136,10 +128,7 @@ baddev:
 }
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	int error;
 	int dev = 0, ctlr = 0, unit = 0, part = 0;

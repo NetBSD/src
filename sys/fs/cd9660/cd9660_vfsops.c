@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.30 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.30.6.1 2006/04/22 11:39:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.30 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.30.6.1 2006/04/22 11:39:55 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -129,7 +129,7 @@ cd9660_mountroot()
 	int error;
 	struct iso_args args;
 
-	if (root_device->dv_class != DV_DISK)
+	if (device_class(root_device) != DV_DISK)
 		return (ENODEV);
 
 	if ((error = vfs_rootmountalloc(MOUNT_CD9660, "root_device", &mp))

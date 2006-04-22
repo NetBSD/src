@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.3 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: dbri.c,v 1.3.6.1 2006/04/22 11:39:28 simonb Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.3 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.3.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -70,9 +70,15 @@ __KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.3 2005/12/11 12:23:44 christos Exp $");
 #include <dev/sbus/dbrireg.h>
 #include <dev/sbus/dbrivar.h>
 
+#include "opt_sbus_dbri.h"
+
 #define DBRI_ROM_NAME_PREFIX		"SUNW,DBRI"
 
-#define DBRI_BIG_BUFFER
+#ifdef DBRI_DEBUG
+#define DPRINTF(x) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 static const char *dbri_supported[] = {
 	"e",
@@ -144,6 +150,8 @@ static int	dbri_get_port(void *, mixer_ctrl_t *);
 static int	dbri_query_devinfo(void *, mixer_devinfo_t *);
 static size_t	dbri_round_buffersize(void *, int, size_t);
 static int	dbri_get_props(void *);
+static int	dbri_open(void *, int);
+static void	dbri_close(void *);
 
 static void
 setup_ring(struct dbri_softc *, int, int, int, int, void (*)(void *), void *);
@@ -154,6 +162,9 @@ static int	dbri_trigger_output(void *, void *, void *, int,
 static void	*dbri_malloc(void *, int, size_t, struct malloc_type *, int);
 static void	dbri_free(void *, void *, struct malloc_type *);
 static paddr_t	dbri_mappage(void *, void *, off_t, int);
+static void	dbri_set_power(struct dbri_softc *, int);
+static void	dbri_bring_up(struct dbri_softc *);
+static void	dbri_powerhook(int, void *);
 
 /* stupid support routines */
 static u_int32_t	reverse_bytes(u_int32_t, int);
@@ -165,8 +176,8 @@ struct audio_device dbri_device = {
 };
 
 struct audio_hw_if dbri_hw_if = {
-	NULL,	/*dbri_open,*/
-	NULL,	/*dbri_close,*/
+	dbri_open,
+	dbri_close,
 	NULL,	/* drain */
 	dbri_query_encoding,
 	dbri_set_params,
@@ -245,19 +256,27 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = sa->sa_bustag;
 	sc->sc_dmat = sa->sa_dmatag;
+	sc->sc_powerstate = PWR_RESUME;
 	
-	pwr=prom_getpropint(sa->sa_node,"pwr-on-auxio",0);
+	pwr = prom_getpropint(sa->sa_node,"pwr-on-auxio",0);
 	if(pwr) {
-		/* we need to power up the device first */
-		uint8_t auxregval = 0;
-		printf("\n%s: waiting to power up... ",self->dv_xname);
-		auxregval = *AUXIO4M_REG;
-		*AUXIO4M_REG = auxregval | (AUXIO4M_LED|4);
-		DELAY(1000);
-		printf("done\n");	/* more delay... */
-	} else
+		/* 
+		 * we can control DBRI power via auxio and we're initially
+		 * powered down
+		 */
+		
+		sc->sc_have_powerctl = 1;
+		sc->sc_powerstate = 0;
+		printf("\n");
+		dbri_set_power(sc, 1);
+		powerhook_establish(dbri_powerhook, sc);
+	} else {
+		/* we can't control power so we're always up */
+		sc->sc_have_powerctl = 0;
+		sc->sc_powerstate = 1;
 		printf(": rev %s\n", ver);
-
+	}
+	
 	if (sa->sa_npromvaddrs)
 		ioh = (bus_space_handle_t)sa->sa_promvaddrs[0];
 	else {
@@ -328,6 +347,61 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 	return;
 }
 
+/*
+ * lowlevel routine to switch power for the DBRI chip
+ */
+static void
+dbri_set_power(struct dbri_softc *sc, int state)
+{
+	int s;
+	
+	if (sc->sc_have_powerctl == 0)
+		return;
+	if (sc->sc_powerstate == state)
+		return;
+	
+	if (state) {
+		DPRINTF(("%s: waiting to power up... ", sc->sc_dev.dv_xname));
+		s = splhigh();
+		*AUXIO4M_REG |= (AUXIO4M_MMX);
+		splx(s);
+		DELAY(1000);
+		DPRINTF(("done\n"));	/* more delay... */
+	} else {
+		DPRINTF(("%s: powering down\n", sc->sc_dev.dv_xname));
+		s = splhigh();
+		*AUXIO4M_REG &= ~AUXIO4M_MMX;
+		splx(s);
+	}
+	sc->sc_powerstate = state;
+}
+
+/*
+ * power up and re-initialize the chip
+ */
+static void
+dbri_bring_up(struct dbri_softc *sc)
+{
+
+	if (sc->sc_have_powerctl == 0)
+		return;
+	if (sc->sc_powerstate == 1)
+		return;
+	
+	/* ok, we really need to do something */
+	dbri_set_power(sc, 1);
+
+	/*
+	 * re-initialize the chip but skip all the probing, don't overwrite
+	 * any other settings either
+	 */
+	dbri_init(sc);
+	mmcodec_setgain(sc, 1);
+	mmcodec_pipe_init(sc);
+	mmcodec_init_data(sc);
+	mmcodec_setgain(sc, 0);
+}
+
 void
 dbri_config_interrupts(struct device *dev)
 {
@@ -336,7 +410,9 @@ dbri_config_interrupts(struct device *dev)
 	mmcodec_init(sc);
 	/* Attach ourselves to the high level audio interface */
 	audio_attach_mi(&dbri_hw_if, sc, &sc->sc_dev);
-
+	
+	/* power down until open() */
+	dbri_set_power(sc, 0);
 	return;
 }
 
@@ -559,24 +635,20 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		break;
 	}
 	case DBRI_INTR_FXDT:		/* fixed data change */
-#ifdef DBRI_DEBUG
-		printf("dbri_intr: Fixed data change (%d: %x)\n",channel,val);
-#endif
+		DPRINTF(("dbri_intr: Fixed data change (%d: %x)\n", channel,
+		    val));
+
 		if (sc->sc_pipe[channel].sdp & DBRI_SDP_MSB)
 			val = reverse_bytes(val, sc->sc_pipe[channel].length);
 		if (sc->sc_pipe[channel].prec)
 			*(sc->sc_pipe[channel].prec) = val;
-#ifdef DBRI_DEBUG
-		printf("%s: wakeup %p\n", sc->sc_dev.dv_xname, sc);
-#endif
+		DPRINTF(("%s: wakeup %p\n", sc->sc_dev.dv_xname, sc));
 #if 0
 		wakeup(sc);
 #endif
 		break;
 	case DBRI_INTR_SBRI:
-#ifdef DBRI_DEBUG
-		printf("dbri_intr: SBRI\n");
-#endif
+		DPRINTF(("dbri_intr: SBRI\n"));
 		break;
 	case DBRI_INTR_BRDY:
 	{
@@ -641,9 +713,8 @@ mmcodec_init(struct dbri_softc *sc)
 	u_int32_t reg2;
 
 	reg2 = bus_space_read_4(iot, ioh, DBRI_REG2);
-#ifdef DBRI_DEBUG
-	printf("mmcodec_init: PIO reads %x\n",reg2);
-#endif
+	DPRINTF(("mmcodec_init: PIO reads %x\n", reg2));
+	
 	if (reg2 & DBRI_PIO2) {
 		printf("%s: onboard CS4215 detected\n",
 		    sc->sc_dev.dv_xname);
@@ -807,6 +878,8 @@ mmcodec_setgain(struct dbri_softc *sc, int mute)
 		sc->sc_mm.data[1] = sc->sc_ratt;
 	}
 
+	if (sc->sc_powerstate == 0)
+		return;
 	pipe_transmit_fixed(sc, 20, *(u_int32_t *)__UNVOLATILE(sc->sc_mm.data));
 	
 	/* give the chip some time to execure the command */
@@ -969,9 +1042,7 @@ chi_reset(struct dbri_softc *sc, enum ms ms, int bpf)
 void
 pipe_setup(struct dbri_softc *sc, int pipe, int sdp)
 {
-#ifdef DBRI_DEBUG
-	printf("pipe setup: %d\n",pipe);
-#endif
+	DPRINTF(("pipe setup: %d\n", pipe));
 	if (pipe < 0 || pipe >= DBRI_PIPE_MAX) {
 		printf("%s: illegal pipe number %d\n", sc->sc_dev.dv_xname,
 		    pipe);
@@ -1620,11 +1691,11 @@ dbri_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 	count = (unsigned long)(((caddr_t)end - (caddr_t)start));
 	num = count / blksize;
-#ifdef DBRI_DEBUG
-	printf("trigger_output(%lx %lx) : %d %ld %ld\n",
+	
+	DPRINTF(("trigger_output(%lx %lx) : %d %ld %ld\n",
 	    (unsigned long)intr,
-	    (unsigned long)intrarg, blksize, count, num);
-#endif
+	    (unsigned long)intrarg, blksize, count, num));
+
 	sc->sc_params = *param;
 
 	mmcodec_setcontrol(sc);
@@ -1687,10 +1758,8 @@ static void
 						dd->callback = NULL;
 						dd->dmabase = 
 						 dd->dmamap->dm_segs[0].ds_addr;
-#ifdef DBRI_DEBUG
-						printf("dbri_malloc: using buffer %d\n", 		
-						    sc->sc_desc_used);
-#endif
+						DPRINTF(("dbri_malloc: using buffer %d\n", 		
+						    sc->sc_desc_used));
 						sc->sc_desc_used++;
 						return dd->buf;
 					} else
@@ -1736,4 +1805,39 @@ dbri_mappage(void *v, void *mem, off_t off, int prot)
 	return -1;
 }
 
-#endif
+static int
+dbri_open(void *cookie, int flags)
+{
+	struct dbri_softc *sc = cookie;
+	
+	dbri_bring_up(sc);
+	return 0;
+}
+
+static void
+dbri_close(void *cookie)
+{
+	struct dbri_softc *sc = cookie;
+	
+	dbri_set_power(sc, 0);
+}
+
+static void
+dbri_powerhook(int why, void *cookie)
+{
+	struct dbri_softc *sc = cookie;
+	
+	switch(why)
+	{
+		case PWR_SUSPEND:
+		case PWR_STANDBY:
+			dbri_set_power(sc, 0);
+			break;
+		case PWR_RESUME:
+			dbri_bring_up(sc);
+			break;
+	}
+}
+				
+#endif /* NAUDIO > 0 */
+

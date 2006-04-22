@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.70 2006/01/21 13:13:07 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.70.4.1 2006/04/22 11:40:27 simonb Exp $	*/
 
 /*
  *
@@ -42,9 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.70 2006/01/21 13:13:07 yamt Exp $");
-
-#undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.70.4.1 2006/04/22 11:40:27 simonb Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -55,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.70 2006/01/21 13:13:07 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/pool.h>
 
-#define UVM_AMAP_C		/* ensure disabled inlines are in */
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
 
@@ -728,15 +725,17 @@ amap_wipeout(struct vm_amap *amap)
  */
 
 void
-amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
-    boolean_t canchunk, vaddr_t startva, vaddr_t endva)
+amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
+    vaddr_t startva, vaddr_t endva)
 {
 	struct vm_amap *amap, *srcamap;
 	int slots, lcv;
 	vaddr_t chunksize;
+	const int waitf = (flags & AMAP_COPY_NOWAIT) ? M_NOWAIT : M_WAITOK;
+	const boolean_t canchunk = (flags & AMAP_COPY_NOCHUNK) == 0;
 	UVMHIST_FUNC("amap_copy"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, waitf=%d)",
-		    map, entry, waitf, 0);
+	UVMHIST_LOG(maphist, "  (map=%p, entry=%p, flags=%d)",
+		    map, entry, flags, 0);
 
 	KASSERT(map != kernel_map);	/* we use nointr pool */
 
@@ -767,7 +766,8 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 				UVM_MAP_CLIP_END(map, entry, endva, NULL);
 		}
 
-		if (uvm_mapent_trymerge(map, entry, UVM_MERGE_COPYING)) {
+		if ((flags & AMAP_COPY_NOMERGE) == 0 &&
+		    uvm_mapent_trymerge(map, entry, UVM_MERGE_COPYING)) {
 			return;
 		}
 
@@ -1035,33 +1035,35 @@ void
 amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 {
 	int leftslots;
+	struct vm_amap *amap;
 
+	KASSERT(splitref->ar_amap == origref->ar_amap);
 	AMAP_B2SLOT(leftslots, offset);
 	if (leftslots == 0)
 		panic("amap_splitref: split at zero offset");
 
-	amap_lock(origref->ar_amap);
+	amap = origref->ar_amap;
+	amap_lock(amap);
 
 	/*
 	 * now: amap is locked and we have a valid am_mapped array.
 	 */
 
-	if (origref->ar_amap->am_nslot - origref->ar_pageoff - leftslots <= 0)
+	if (amap->am_nslot - origref->ar_pageoff - leftslots <= 0)
 		panic("amap_splitref: map size check failed");
 
 #ifdef UVM_AMAP_PPREF
         /*
 	 * establish ppref before we add a duplicate reference to the amap
 	 */
-	if (origref->ar_amap->am_ppref == NULL)
-		amap_pp_establish(origref->ar_amap, origref->ar_pageoff);
+	if (amap->am_ppref == NULL)
+		amap_pp_establish(amap, origref->ar_pageoff);
 #endif
 
-	splitref->ar_amap = origref->ar_amap;
-	splitref->ar_amap->am_ref++;		/* not a share reference */
+	amap->am_ref++;		/* not a share reference */
 	splitref->ar_pageoff = origref->ar_pageoff + leftslots;
 
-	amap_unlock(origref->ar_amap);
+	amap_unlock(amap);
 }
 
 #ifdef UVM_AMAP_PPREF
@@ -1356,3 +1358,228 @@ next:
 }
 
 #endif /* defined(VMSWAP) */
+
+/*
+ * amap_lookup: look up a page in an amap
+ *
+ * => amap should be locked by caller.
+ */
+struct vm_anon *
+amap_lookup(struct vm_aref *aref, vaddr_t offset)
+{
+	int slot;
+	struct vm_amap *amap = aref->ar_amap;
+	UVMHIST_FUNC("amap_lookup"); UVMHIST_CALLED(maphist);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+
+	AMAP_B2SLOT(slot, offset);
+	slot += aref->ar_pageoff;
+
+	if (slot >= amap->am_nslot)
+		panic("amap_lookup: offset out of range");
+
+	UVMHIST_LOG(maphist, "<- done (amap=0x%x, offset=0x%x, result=0x%x)",
+	    amap, offset, amap->am_anon[slot], 0);
+	return(amap->am_anon[slot]);
+}
+
+/*
+ * amap_lookups: look up a range of pages in an amap
+ *
+ * => amap should be locked by caller.
+ * => XXXCDC: this interface is biased toward array-based amaps.  fix.
+ */
+void
+amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
+    int npages)
+{
+	int slot;
+	struct vm_amap *amap = aref->ar_amap;
+	UVMHIST_FUNC("amap_lookups"); UVMHIST_CALLED(maphist);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+
+	AMAP_B2SLOT(slot, offset);
+	slot += aref->ar_pageoff;
+
+	UVMHIST_LOG(maphist, "  slot=%d, npages=%d, nslot=%d", slot, npages,
+		amap->am_nslot, 0);
+
+	if ((slot + (npages - 1)) >= amap->am_nslot)
+		panic("amap_lookups: offset out of range");
+
+	memcpy(anons, &amap->am_anon[slot], npages * sizeof(struct vm_anon *));
+
+	UVMHIST_LOG(maphist, "<- done", 0, 0, 0, 0);
+	return;
+}
+
+/*
+ * amap_add: add (or replace) a page to an amap
+ *
+ * => caller must lock amap.
+ * => if (replace) caller must lock anon because we might have to call
+ *	pmap_page_protect on the anon's page.
+ */
+void
+amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
+    boolean_t replace)
+{
+	int slot;
+	struct vm_amap *amap = aref->ar_amap;
+	UVMHIST_FUNC("amap_add"); UVMHIST_CALLED(maphist);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+
+	AMAP_B2SLOT(slot, offset);
+	slot += aref->ar_pageoff;
+
+	if (slot >= amap->am_nslot)
+		panic("amap_add: offset out of range");
+
+	if (replace) {
+
+		if (amap->am_anon[slot] == NULL)
+			panic("amap_add: replacing null anon");
+		if (amap->am_anon[slot]->an_page != NULL &&
+		    (amap->am_flags & AMAP_SHARED) != 0) {
+			pmap_page_protect(amap->am_anon[slot]->an_page,
+			    VM_PROT_NONE);
+			/*
+			 * XXX: suppose page is supposed to be wired somewhere?
+			 */
+		}
+	} else {   /* !replace */
+		if (amap->am_anon[slot] != NULL)
+			panic("amap_add: slot in use");
+
+		amap->am_bckptr[slot] = amap->am_nused;
+		amap->am_slots[amap->am_nused] = slot;
+		amap->am_nused++;
+	}
+	amap->am_anon[slot] = anon;
+	UVMHIST_LOG(maphist,
+	    "<- done (amap=0x%x, offset=0x%x, anon=0x%x, rep=%d)",
+	    amap, offset, anon, replace);
+}
+
+/*
+ * amap_unadd: remove a page from an amap
+ *
+ * => caller must lock amap
+ */
+void
+amap_unadd(struct vm_aref *aref, vaddr_t offset)
+{
+	int ptr, slot;
+	struct vm_amap *amap = aref->ar_amap;
+	UVMHIST_FUNC("amap_unadd"); UVMHIST_CALLED(maphist);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+
+	AMAP_B2SLOT(slot, offset);
+	slot += aref->ar_pageoff;
+
+	if (slot >= amap->am_nslot)
+		panic("amap_unadd: offset out of range");
+
+	if (amap->am_anon[slot] == NULL)
+		panic("amap_unadd: nothing there");
+
+	amap->am_anon[slot] = NULL;
+	ptr = amap->am_bckptr[slot];
+
+	if (ptr != (amap->am_nused - 1)) {	/* swap to keep slots contig? */
+		amap->am_slots[ptr] = amap->am_slots[amap->am_nused - 1];
+		amap->am_bckptr[amap->am_slots[ptr]] = ptr;	/* back link */
+	}
+	amap->am_nused--;
+	UVMHIST_LOG(maphist, "<- done (amap=0x%x, slot=0x%x)", amap, slot,0, 0);
+}
+
+/*
+ * amap_ref: gain a reference to an amap
+ *
+ * => amap must not be locked (we will lock)
+ * => "offset" and "len" are in units of pages
+ * => called at fork time to gain the child's reference
+ */
+void
+amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
+{
+	UVMHIST_FUNC("amap_ref"); UVMHIST_CALLED(maphist);
+
+	amap_lock(amap);
+	if (flags & AMAP_SHARED)
+		amap->am_flags |= AMAP_SHARED;
+#ifdef UVM_AMAP_PPREF
+	if (amap->am_ppref == NULL && (flags & AMAP_REFALL) == 0 &&
+	    len != amap->am_nslot)
+		amap_pp_establish(amap, offset);
+#endif
+	amap->am_ref++;
+#ifdef UVM_AMAP_PPREF
+	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
+		if (flags & AMAP_REFALL)
+			amap_pp_adjref(amap, 0, amap->am_nslot, 1);
+		else
+			amap_pp_adjref(amap, offset, len, 1);
+	}
+#endif
+	amap_unlock(amap);
+	UVMHIST_LOG(maphist,"<- done!  amap=0x%x", amap, 0, 0, 0);
+}
+
+/*
+ * amap_unref: remove a reference to an amap
+ *
+ * => caller must remove all pmap-level references to this amap before
+ *	dropping the reference
+ * => called from uvm_unmap_detach [only]  ... note that entry is no
+ *	longer part of a map and thus has no need for locking
+ * => amap must be unlocked (we will lock it).
+ */
+void
+amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, boolean_t all)
+{
+	UVMHIST_FUNC("amap_unref"); UVMHIST_CALLED(maphist);
+
+	/*
+	 * lock it
+	 */
+	amap_lock(amap);
+	UVMHIST_LOG(maphist,"  amap=0x%x  refs=%d, nused=%d",
+	    amap, amap->am_ref, amap->am_nused, 0);
+
+	KASSERT(amap_refs(amap) > 0);
+
+	/*
+	 * if we are the last reference, free the amap and return.
+	 */
+
+	amap->am_ref--;
+
+	if (amap_refs(amap) == 0) {
+		amap_wipeout(amap);	/* drops final ref and frees */
+		UVMHIST_LOG(maphist,"<- done (was last ref)!", 0, 0, 0, 0);
+		return;			/* no need to unlock */
+	}
+
+	/*
+	 * otherwise just drop the reference count(s)
+	 */
+
+	if (amap_refs(amap) == 1 && (amap->am_flags & AMAP_SHARED) != 0)
+		amap->am_flags &= ~AMAP_SHARED;	/* clear shared flag */
+#ifdef UVM_AMAP_PPREF
+	if (amap->am_ppref == NULL && all == 0 && len != amap->am_nslot)
+		amap_pp_establish(amap, offset);
+	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
+		if (all)
+			amap_pp_adjref(amap, 0, amap->am_nslot, -1);
+		else
+			amap_pp_adjref(amap, offset, len, -1);
+	}
+#endif
+	amap_unlock(amap);
+
+	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
+}
+

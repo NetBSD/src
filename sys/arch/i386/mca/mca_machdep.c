@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.27 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.27.6.1 2006/04/22 11:37:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.27 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.27.6.1 2006/04/22 11:37:33 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -334,7 +334,7 @@ mca_busprobe(void)
 		"\020DMA32\n",
 		buf, sizeof(buf));
 
-	printf("BIOS CFG: Model-SubM-Rev: %02x-%02x-%02x, 0x%s\n",
+	aprint_normal("BIOS CFG: Model-SubM-Rev: %02x-%02x-%02x, 0x%s\n",
 		scp->model, scp->submodel, scp->bios_rev, buf);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.11.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -120,8 +120,10 @@
 #ifdef _KERNEL
 extern struct powerpc_bus_space prep_io_space_tag;
 extern struct powerpc_bus_space prep_isa_io_space_tag;
+extern struct powerpc_bus_space prep_eisa_io_space_tag;
 extern struct powerpc_bus_space prep_mem_space_tag;
 extern struct powerpc_bus_space prep_isa_mem_space_tag;
+extern struct powerpc_bus_space prep_eisa_mem_space_tag;
 #endif
 
 #include <powerpc/bus.h>

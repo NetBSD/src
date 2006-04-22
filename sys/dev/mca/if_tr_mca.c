@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.13 2005/12/11 12:22:18 christos Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.13.6.1 2006/04/22 11:39:09 simonb Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.13 2005/12/11 12:22:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.13.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ tr_mca_attach(parent, self, aux)
 	struct device  *parent, *self;
 	void           *aux;
 {
-	struct tr_softc *sc = (void *) self;
+	struct tr_softc *sc = device_private(self);
 	struct mca_attach_args *ma = aux;
 	bus_space_handle_t pioh, mmioh, sramh;
 	int iobase, irq, sram_size, sram_addr, rom_addr;

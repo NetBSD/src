@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isapnp.c,v 1.4 2005/12/11 12:22:16 christos Exp $ */
+/* $NetBSD: atppc_isapnp.c,v 1.4.6.1 2006/04/22 11:39:09 simonb Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.4 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.4.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include "opt_atppc.h"
 
@@ -100,8 +100,8 @@ atppc_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 atppc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct atppc_softc *sc = (struct atppc_softc *) self;
-	struct atppc_isapnp_softc *asc = (struct atppc_isapnp_softc *)self;
+	struct atppc_softc *sc = device_private(self);
+	struct atppc_isapnp_softc *asc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;
 
 	sc->sc_dev_ok = ATPPC_NOATTACH;

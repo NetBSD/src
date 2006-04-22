@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.48 2005/12/11 12:19:14 christos Exp $ */
+/*	$NetBSD: intr.c,v 1.48.6.1 2006/04/22 11:38:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.48 2005/12/11 12:19:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.48.6.1 2006/04/22 11:38:02 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -68,10 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.48 2005/12/11 12:19:14 christos Exp $");
  */
 struct intrhand *intrlev[MAXINTNUM];
 
-void	strayintr __P((const struct trapframe64 *, int));
-int	softintr __P((void *));
-int	softnet __P((void *));
-int	intr_list_handler __P((void *));
+void	strayintr(const struct trapframe64 *, int);
+int	softintr(void *);
+int	softnet(void *);
+int	intr_list_handler(void *);
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -81,9 +81,7 @@ int ignore_stray = 1;
 int straycnt[16];
 
 void
-strayintr(fp, vectored)
-	const struct trapframe64 *fp;
-	int vectored;
+strayintr(const struct trapframe64 *fp, int vectored)
 {
 	static int straytime, nstray;
 	int timesince;
@@ -127,11 +125,10 @@ strayintr(fp, vectored)
  *	Soft clock interrupt
  */
 int
-softintr(fp)
-	void *fp;
+softintr(void *fp)
 {
 #if NPCONS >0
-	extern void pcons_dopoll __P((void));
+	extern void pcons_dopoll(void);
 
 	pcons_dopoll();
 #endif
@@ -139,8 +136,7 @@ softintr(fp)
 }
 
 int
-softnet(fp)
-	void *fp;
+softnet(void *fp)
 {
 	int n, s;
 	
@@ -201,8 +197,7 @@ struct intrhand *intrhand[16] = {
  * a handler to hand out interrupts.
  */
 int
-intr_list_handler(arg)
-	void * arg;
+intr_list_handler(void * arg)
 {
 	int claimed = 0;
 	struct intrhand *ih = (struct intrhand *)arg;
@@ -230,9 +225,7 @@ intr_list_handler(arg)
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(level, ih)
-	int level;
-	struct intrhand *ih;
+intr_establish(int level, struct intrhand *ih)
 {
 	register struct intrhand **p, *q = NULL;
 	int s;
@@ -305,16 +298,13 @@ intr_establish(level, ih)
 }
 
 void *
-softintr_establish(level, fun, arg)
-	int level; 
-	void (*fun) __P((void *));
-	void *arg;
+softintr_establish(int level, void (*fun)(void *), void *arg)
 {
 	struct intrhand *ih;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, 0);
 	memset(ih, 0, sizeof(*ih));
-	ih->ih_fun = (int (*) __P((void *)))fun;	/* XXX */
+	ih->ih_fun = (int (*)(void *))fun;	/* XXX */
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
 	ih->ih_pending = 0;
@@ -323,15 +313,13 @@ softintr_establish(level, fun, arg)
 }
 
 void
-softintr_disestablish(cookie)
-	void *cookie;
+softintr_disestablish(void *cookie)
 {
 	free(cookie, M_DEVBUF);
 }
 
 void
-softintr_schedule(cookie)
-	void *cookie;
+softintr_schedule(void *cookie)
 {
 	struct intrhand *ih = (struct intrhand *)cookie;
 

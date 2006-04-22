@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.42 2005/11/29 15:45:28 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.42.6.1 2006/04/22 11:40:27 simonb Exp $	*/
 
 /*
  *
@@ -191,33 +191,8 @@ do {									\
 #define UVM_PAGE_OWN(PG, TAG) /* nothing */
 #endif /* UVM_PAGE_TRKOWN */
 
+#include <uvm/uvm_fault_i.h>
+
 #endif /* _KERNEL */
 
 #endif /* _UVM_UVM_H_ */
-
-/*
- * pull in inlines
- */
-
-#ifdef _KERNEL
-
-#if defined(UVM_AMAP_INLINE) || defined(UVM_AMAP_C)
-#include <uvm/uvm_amap_i.h>
-#endif
-
-#include <uvm/uvm_fault_i.h>
-
-#if defined(UVM_MAP_INLINE) || defined(UVM_MAP_C)
-#include <uvm/uvm_map_i.h>
-#endif
-
-#if defined(UVM_PAGE_INLINE) || defined(UVM_PAGE_C)
-#include <uvm/uvm_page_i.h>
-#endif
-
-#if defined(UVM_PAGER_INLINE) || defined(UVM_PAGER_C)
-#include <uvm/uvm_pager_i.h>
-#endif
-
-#endif /* _KERNEL */
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932var.h,v 1.5 2005/12/24 20:27:30 perry Exp $	*/
+/*	$NetBSD: dp83932var.h,v 1.5.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -340,7 +340,7 @@ do {									\
 	}								\
 } while (/*CONSTCOND*/0)
 
-static inline uint16_t __attribute__((__unused__))
+static __inline uint16_t __attribute__((__unused__))
 htosonic16(struct sonic_softc *sc, uint16_t val)
 {
 
@@ -349,7 +349,7 @@ htosonic16(struct sonic_softc *sc, uint16_t val)
 	return (htole16(val));
 }
 
-static inline uint16_t __attribute__((__unused__))
+static __inline uint16_t __attribute__((__unused__))
 sonic16toh(struct sonic_softc *sc, uint16_t val)
 {
 
@@ -358,7 +358,7 @@ sonic16toh(struct sonic_softc *sc, uint16_t val)
 	return (le16toh(val));
 }
 
-static inline uint32_t __attribute__((__unused__))
+static __inline uint32_t __attribute__((__unused__))
 htosonic32(struct sonic_softc *sc, uint32_t val)
 {
 
@@ -367,7 +367,7 @@ htosonic32(struct sonic_softc *sc, uint32_t val)
 	return (htole32(val));
 }
 
-static inline uint32_t __attribute__((__unused__))
+static __inline uint32_t __attribute__((__unused__))
 sonic32toh(struct sonic_softc *sc, uint32_t val)
 {
 

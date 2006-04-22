@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.10 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: if_ei.c,v 1.10.6.1 2006/04/22 11:39:25 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.10 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.10.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -114,7 +114,7 @@ static void
 ei_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
-	struct ei_softc *sc = (struct ei_softc *)self;
+	struct ei_softc *sc = device_private(self);
 	int i;
 	char descr[16];
 
@@ -295,7 +295,7 @@ ei_copyout(struct ie_softc *sc_ie, const void *src, int dest, size_t size)
 		panic("%s: unaligned copyout", sc_ie->sc_dev.dv_xname);
 #endif
 	if (!ALIGNED_POINTER(src, u_int16_t)) {
-		MALLOC(bounce, u_int16_t *, size, M_DEVBUF, M_NOWAIT);
+		bounce = (u_int16_t *) malloc(size, M_DEVBUF, M_NOWAIT);
 		if (bounce == NULL)
 			panic("%s: no memory to align copyout",
 			      sc_ie->sc_dev.dv_xname);
@@ -320,7 +320,7 @@ ei_copyout(struct ie_softc *sc_ie, const void *src, int dest, size_t size)
 		size -= cnt;
 	}
 	if (bounce != NULL)
-		FREE(bounce, M_DEVBUF);
+		free(bounce, M_DEVBUF);
 }
 
 static u_int16_t

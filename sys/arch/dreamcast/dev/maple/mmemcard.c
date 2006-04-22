@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.7 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.7.6.1 2006/04/22 11:37:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.7 2005/12/11 12:17:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.7.6.1 2006/04/22 11:37:21 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -338,8 +338,8 @@ mmemdetach(struct device *self, int flags)
 #ifdef __HAVE_OLD_DISKLABEL
  #error This code assumes DISKUNIT() is contiguous in minor number.
 #endif
-	minor_l = MMEM_DISKMINOR(self->dv_unit, 0, 0);
-	minor_h = MMEM_DISKMINOR(self->dv_unit, sc->sc_npt - 1,
+	minor_l = MMEM_DISKMINOR(device_unit(self), 0, 0);
+	minor_h = MMEM_DISKMINOR(device_unit(self), sc->sc_npt - 1,
 	    MAXPARTITIONS - 1);
 	vdevgone(bdevsw_lookup_major(&mmem_bdevsw), minor_l, minor_h, VBLK);
 	vdevgone(cdevsw_lookup_major(&mmem_cdevsw), minor_l, minor_h, VCHR);

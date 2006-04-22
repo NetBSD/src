@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.22 2006/01/25 16:21:39 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.22.4.1 2006/04/22 11:39:59 simonb Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.22 2006/01/25 16:21:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.22.4.1 2006/04/22 11:39:59 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ m_getcl(int how, int type, int flags)
 	if ((flags & M_PKTHDR) != 0)
 		MGETHDR(mp, how, type);
 	else
-		MGET(mp, how,  type);
+		MGET(mp, how, type);
 
 	if (mp == NULL)
 		return NULL;

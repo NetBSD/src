@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2005/12/24 22:50:07 perry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9.6.1 2006/04/22 11:37:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -261,7 +261,6 @@ void	identifycpu __P((struct cpu_info *));
 void cpu_probe_features __P((struct cpu_info *));
 
 /* machdep.c */
-void	delay __P((int));
 void	dumpconf __P((void));
 int	cpu_maxproc __P((void));
 void	cpu_reset __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.2 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.2.6.1 2006/04/22 11:38:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.2 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.2.6.1 2006/04/22 11:38:51 simonb Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -102,7 +102,7 @@ uhci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 uhci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct uhci_cardbus_softc *sc = (struct uhci_cardbus_softc *)self;
+	struct uhci_cardbus_softc *sc = device_private(self);
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
@@ -205,7 +205,7 @@ XXX	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
 static int
 uhci_cardbus_detach(device_ptr_t self, int flags)
 {
-	struct uhci_cardbus_softc *sc = (struct uhci_cardbus_softc *)self;
+	struct uhci_cardbus_softc *sc = device_private(self);
 	struct cardbus_devfunc *ct = sc->sc_ct;
 	int rv;
 

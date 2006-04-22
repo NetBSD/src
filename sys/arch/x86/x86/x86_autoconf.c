@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.7 2006/02/03 23:33:30 jmmv Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.7.2.1 2006/04/22 11:38:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/proc.h>
 #include <sys/md5.h>
 
-#include <x86/autoconf.h>
-
 #include <machine/bootinfo.h>
 
 #include "pci.h"
@@ -69,23 +67,22 @@ int x86_ndisks;
 static int
 is_valid_disk(struct device *dv)
 {
-	const char *name;
 
-	if (dv->dv_class != DV_DISK)
+	if (device_class(dv) != DV_DISK)
 		return (0);
 	
-	name = dv->dv_cfdata->cf_name;
-
-	return (strcmp(name, "sd") == 0 || strcmp(name, "wd") == 0 ||
-		strcmp(name, "ld") == 0 || strcmp(name, "ed") == 0);
+	return (device_is_a(dv, "sd") ||
+		device_is_a(dv, "wd") ||
+		device_is_a(dv, "ld") ||
+		device_is_a(dv, "ed"));
 }
 
 /*
  * XXX Ugly bit of code.  But, this is the only safe time that the
  * match between BIOS disks and native disks can be done.
  */
-void
-x86_matchbiosdisks(void)
+static void
+matchbiosdisks(void)
 {
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
@@ -137,25 +134,25 @@ x86_matchbiosdisks(void)
 	n = -1;
 	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 	     dv = TAILQ_NEXT(dv, dv_list)) {
-		if (dv->dv_class != DV_DISK)
+		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_name);
+		    dv->dv_xname, device_cfdata(dv)->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
 			/* XXXJRT why not just dv_xname?? */
 			snprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
 			    sizeof(x86_alldisks->dl_nativedisks[n].ni_devname),
-			    "%s%d", dv->dv_cfdata->cf_name, dv->dv_unit);
+			    "%s", dv->dv_xname);
 
 			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
 			if (bmajor == -1)
 				return;
 			
-			if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART),
-				   &tv))
+			if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv),
+				   RAW_PART), &tv))
 				panic("matchbiosdisks: can't alloc vnode");
 
 			error = VOP_OPEN(tv, FREAD, NOCRED, 0);
@@ -203,35 +200,6 @@ x86_matchbiosdisks(void)
 	}
 }
 
-const char *
-x86_findbiosdisk(int devnum)
-{
-	int i;
-
-	KASSERT(x86_alldisks != NULL);
-
-	for (i = 0; i < x86_alldisks->dl_nnativedisks; i++) {
-		int j;
-		struct nativedisk_info *ni;
-
-		ni = &x86_alldisks->dl_nativedisks[i];
-
-		for (j = 0; j < ni->ni_nmatches; j++) {
-			int k;
-			struct biosdisk_info *bi;
-
-			k = ni->ni_biosmatches[j];
-			KASSERT(k < x86_alldisks->dl_nbiosdisks);
-			bi = &x86_alldisks->dl_biosdisks[k];
-
-			if (bi->bi_dev == devnum)
-				return ni->ni_devname;
-		}
-	}
-
-	return NULL;
-}
-
 /*
  * Helper function for findroot():
  * Return non-zero if wedge device matches bootinfo.
@@ -266,7 +234,7 @@ match_bootwedge(struct device *dv, struct btinfo_bootwedge *biw)
 	 * Fake a temporary vnode for the disk, open it, and read
 	 * and hash the sectors.
 	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART), &tmpvn))
 		panic("findroot: can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
@@ -339,7 +307,7 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 	 * Fake a temporary vnode for the disk, open it, and read
 	 * the disklabel for comparison.
 	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART), &tmpvn))
 		panic("findroot: can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
@@ -425,10 +393,10 @@ findroot(void)
 			struct cfdata *cd;
 			size_t len;
 
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
-			cd = dv->dv_cfdata;
+			cd = device_cfdata(dv);
 			len = strlen(cd->cf_name);
 
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
@@ -450,7 +418,7 @@ findroot(void)
 		 */
 		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 		     dv = TAILQ_NEXT(dv, dv_list)) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
 			if (is_valid_disk(dv)) {
@@ -490,21 +458,19 @@ findroot(void)
 		 */
 		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 		     dv = TAILQ_NEXT(dv, dv_list)) {
-			if (dv->dv_class != DV_DISK)
+			if (device_class(dv) != DV_DISK)
 				continue;
 
-			if (strcmp(dv->dv_cfdata->cf_name, "fd") == 0) {
+			if (device_is_a(dv, "fd")) {
 				/*
 				 * Assume the configured unit number matches
 				 * the BIOS device number.  (This is the old
 				 * behavior.)  Needs some ideas how to handle
 				 * the BIOS's "swap floppy drive" options.
-				 *
-				 * XXXJRT This use of the unit number is
-				 * totally bogus!
 				 */
+				/* XXX device_unit() abuse */
 				if ((bid->biosdev & 0x80) != 0 ||
-				    dv->dv_unit != bid->biosdev)
+				    device_unit(dv) != bid->biosdev)
 				    	continue;
 				goto bootdisk_found;
 			}
@@ -566,10 +532,11 @@ findroot(void)
 }
 
 void
-x86_cpu_rootconf(void)
+cpu_rootconf(void)
 {
 
 	findroot();
+	matchbiosdisks();
 
 	if (booted_wedge) {
 		KASSERT(booted_device != NULL);
@@ -593,7 +560,7 @@ device_register(struct device *dev, void *aux)
 	 *
 	 * For disks, there is nothing useful available at attach time.
 	 */
-	if (dev->dv_class == DV_IFNET) {
+	if (device_class(dev) == DV_IFNET) {
 		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
 		if (bin == NULL)
 			return;
@@ -606,7 +573,7 @@ device_register(struct device *dev, void *aux)
 		 * idenfity the device.
 		 */
 		if (bin->bus == BI_BUS_ISA &&
-		    strcmp(dev->dv_parent->dv_cfdata->cf_name, "isa") == 0) {
+		    device_is_a(device_parent(dev), "isa")) {
 			struct isa_attach_args *iaa = aux;
 
 			/* Compare IO base address */
@@ -617,7 +584,7 @@ device_register(struct device *dev, void *aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci") == 0) {
+		    device_is_a(device_parent(dev), "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 

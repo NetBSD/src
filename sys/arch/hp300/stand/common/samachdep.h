@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.10 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.10.6.1 2006/04/22 11:37:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -33,6 +33,7 @@
 
 #include <sys/param.h>
 #include <machine/hp300spu.h>
+#include <m68k/frame.h>
 
 #define	NHPIB		4
 #define	NSCSI		2

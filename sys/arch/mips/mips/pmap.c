@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.166 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.166.6.1 2006/04/22 11:37:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166.6.1 2006/04/22 11:37:42 simonb Exp $");
 
 /*
  *	Manages physical address maps.
@@ -730,7 +730,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
 			pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(entry));
-			pmap_remove_pv(pmap, sva, pg);
+			if (pg)
+				pmap_remove_pv(pmap, sva, pg);
 			if (MIPS_HAS_R4K_MMU)
 				/* See above about G bit */
 				pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
@@ -789,7 +790,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
 			pg = PHYS_TO_VM_PAGE(mips_tlbpfn_to_paddr(entry));
-			pmap_remove_pv(pmap, sva, pg);
+			if (pg)
+				pmap_remove_pv(pmap, sva, pg);
 			pte->pt_entry = mips_pg_nv_bit();
 			/*
 			 * Flush the TLB for the given address.

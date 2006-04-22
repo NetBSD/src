@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.13 2006/01/29 21:42:42 dsl Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.13.4.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.13 2006/01/29 21:42:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.13.4.1 2006/04/22 11:38:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ icpsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	int rv, flags, s, soff;
 
 	sc = (void *)chan->chan_adapter->adapt_dev;
-	icp = (struct icp_softc *)sc->sc_dv.dv_parent;
+	icp = (struct icp_softc *)device_parent(&sc->sc_dv);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -285,7 +285,7 @@ icpsp_intr(struct icp_ccb *ic)
 
 	sc = (struct icpsp_softc *)ic->ic_dv;
 	xs = (struct scsipi_xfer *)ic->ic_context;
-	icp = (struct icp_softc *)ic->ic_dv->dv_parent;
+	icp = (struct icp_softc *)device_parent(ic->ic_dv);
 	soff = ICP_SCRATCH_SENSE + ic->ic_ident *
 	    sizeof(struct scsi_sense_data);
 

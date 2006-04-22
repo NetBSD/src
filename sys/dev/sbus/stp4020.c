@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.47 2005/12/24 23:41:34 perry Exp $ */
+/*	$NetBSD: stp4020.c,v 1.47.6.1 2006/04/22 11:39:28 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.47 2005/12/24 23:41:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.47.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,7 +371,7 @@ stp4020attach(parent, self, aux)
 	bus_space_handle_t bh;
 
 	/* lsb of our config flags decides which interrupt we use */
-	sbus_intno = sc->sc_dev.dv_cfdata->cf_flags & 1;
+	sbus_intno = device_cfdata(&sc->sc_dev)->cf_flags & 1;
 
 	/* Transfer bus tags */
 #ifdef SUN4U

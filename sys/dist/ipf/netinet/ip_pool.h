@@ -1,18 +1,18 @@
-/*	$NetBSD: ip_pool.h,v 1.2 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_pool.h,v 1.2.6.1 2006/04/22 11:39:55 simonb Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_pool.h,v 2.26.2.2 2004/03/23 12:44:34 darrenr Exp
+ * Id: ip_pool.h,v 2.26.2.3 2005/06/12 07:18:27 darrenr Exp
  */
 
 #ifndef	__IP_POOL_H__
 #define	__IP_POOL_H__
 
 #if defined(_KERNEL) && !defined(__osf__) && !defined(__hpux) && \
-    !defined(linux) && !defined(sun)
+    !defined(linux) && !defined(sun) && !defined(AIX)
 # include <net/radix.h>
 extern void rn_freehead __P((struct radix_node_head *));
 # define FreeS(p, z)		KFREES(p, z)

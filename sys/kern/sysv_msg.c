@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.40.6.1 2006/02/04 14:30:17 simonb Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.40.6.2 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40.6.1 2006/02/04 14:30:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.40.6.2 2006/04/22 11:39:59 simonb Exp $");
 
 #define SYSVMSG
 
@@ -401,12 +401,16 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 		syscallarg(size_t) msgsz;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int msqid = SCARG(uap, msqid);
-	const char *user_msgp = SCARG(uap, msgp);
-	size_t msgsz = SCARG(uap, msgsz);
-	int msgflg = SCARG(uap, msgflg);
-	int segs_needed, error;
+
+	return msgsnd1(l->l_proc, SCARG(uap, msqid), SCARG(uap, msgp),
+	    SCARG(uap, msgsz), SCARG(uap, msgflg), sizeof(long), copyin);
+}
+
+int
+msgsnd1(struct proc *p, int msqidr, const char *user_msgp, size_t msgsz,
+    int msgflg, size_t typesz, copyin_t fetch_type)
+{
+	int segs_needed, error, msqid;
 	struct ucred *cred = p->p_ucred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
@@ -415,7 +419,7 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
 	    (long long)msgsz, msgflg));
 
-	msqid = IPCID_TO_IX(msqid);
+	msqid = IPCID_TO_IX(msqidr);
 
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
@@ -428,7 +432,7 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 		MSG_PRINTF(("no such message queue id\n"));
 		return (EINVAL);
 	}
-	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(msqidr)) {
 		MSG_PRINTF(("wrong sequence number\n"));
 		return (EINVAL);
 	}
@@ -574,15 +578,15 @@ sys_msgsnd(struct lwp *l, void *v, register_t *retval)
 	 * Copy in the message type
 	 */
 
-	if ((error = copyin(user_msgp, &msghdr->msg_type,
-	    sizeof(msghdr->msg_type))) != 0) {
+	if ((error = (*fetch_type)(user_msgp, &msghdr->msg_type,
+	    typesz)) != 0) {
 		MSG_PRINTF(("error %d copying the message type\n", error));
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
 		wakeup(msqptr);
 		return (error);
 	}
-	user_msgp += sizeof(msghdr->msg_type);
+	user_msgp += typesz;
 
 	/*
 	 * Validate the message type
@@ -675,23 +679,27 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(long) msgtyp;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int msqid = SCARG(uap, msqid);
-	char *user_msgp = SCARG(uap, msgp);
-	size_t msgsz = SCARG(uap, msgsz);
-	long msgtyp = SCARG(uap, msgtyp);
-	int msgflg = SCARG(uap, msgflg);
+
+	return msgrcv1(l->l_proc, SCARG(uap, msqid), SCARG(uap, msgp),
+	    SCARG(uap, msgsz), SCARG(uap, msgtyp), SCARG(uap, msgflg),
+	    sizeof(long), copyout, retval);
+}
+
+int
+msgrcv1(struct proc *p, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
+    int msgflg, size_t typesz, copyout_t put_type, register_t *retval)
+{
 	size_t len;
 	struct ucred *cred = p->p_ucred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
-	int error;
+	int error, msqid;
 	short next;
 
 	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
 	    user_msgp, (long long)msgsz, msgtyp, msgflg));
 
-	msqid = IPCID_TO_IX(msqid);
+	msqid = IPCID_TO_IX(msqidr);
 
 	if (msqid < 0 || msqid >= msginfo.msgmni) {
 		MSG_PRINTF(("msqid (%d) out of range (0<=msqid<%d)\n", msqid,
@@ -704,7 +712,7 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 		MSG_PRINTF(("no such message queue id\n"));
 		return (EINVAL);
 	}
-	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+	if (msqptr->msg_perm._seq != IPCID_TO_SEQ(msqidr)) {
 		MSG_PRINTF(("wrong sequence number\n"));
 		return (EINVAL);
 	}
@@ -842,7 +850,7 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 		 */
 
 		if (msqptr->msg_qbytes == 0 ||
-		    msqptr->msg_perm._seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
+		    msqptr->msg_perm._seq != IPCID_TO_SEQ(msqidr)) {
 			MSG_PRINTF(("msqid deleted\n"));
 			return (EIDRM);
 		}
@@ -874,14 +882,14 @@ sys_msgrcv(struct lwp *l, void *v, register_t *retval)
 	 * Return the type to the user.
 	 */
 
-	error = copyout(&msghdr->msg_type, user_msgp, sizeof(msghdr->msg_type));
+	error = (*put_type)(&msghdr->msg_type, user_msgp, typesz);
 	if (error != 0) {
 		MSG_PRINTF(("error (%d) copying out message type\n", error));
 		msg_freehdr(msghdr);
 		wakeup(msqptr);
 		return (error);
 	}
-	user_msgp += sizeof(msghdr->msg_type);
+	user_msgp += typesz;
 
 	/*
 	 * Return the segments to the user

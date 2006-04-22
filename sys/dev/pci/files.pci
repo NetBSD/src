@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.241 2005/12/06 03:01:45 christos Exp $
+#	$NetBSD: files.pci,v 1.241.6.1 2006/04/22 11:39:13 simonb Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -112,6 +112,10 @@ file	dev/ic/adwmcode.c		adw_pci
 device	pcscp: scsi, ncr53c9x
 attach	pcscp at pci
 file	dev/pci/pcscp.c			pcscp
+
+# HP/Compaq Command Interface to Scsi-3
+attach ciss at pci with ciss_pci
+file	dev/pci/ciss_pci.c		ciss_pci
 
 # BusLogic BT-9xx PCI family
 # device declaration in sys/conf/files
@@ -266,6 +270,11 @@ file	dev/pci/pdcide.c		pdcide
 device	rccide: ata, pciide_common, wdc_common
 attach	rccide at pci
 file	dev/pci/rccide.c		rccide
+
+# ServerWorks SATA controllers
+device	svwsata: ata, pciide_common, wdc_common, sata
+attach	svwsata at pci
+file	dev/pci/svwsata.c		svwsata
 
 # Silicon Image SATALink controllers
 device	satalink: ata, pciide_common, wdc_common, sata
@@ -643,9 +652,11 @@ file	dev/pci/viaenv.c		viaenv			needs-flag
 
 # AMD 768MPX power management controller
 defflag	opt_amdpm.h			AMDPM_RND_COUNTERS
-device	amdpm {}
+define	amdpm {}
+device	amdpm: i2cbus, amdpm
 attach	amdpm at pci
 file	dev/pci/amdpm.c			amdpm
+file	dev/pci/amdpm_smbus.c		amdpm
 
 # Hi/fn 7751
 device	hifn: opencrypto
@@ -720,9 +731,14 @@ attach	joy at pci with joy_pci
 file	dev/pci/joy_pci.c		joy_pci
 
 # ATI Mach64 framebuffer console driver
-device	machfb: wsemuldisplaydev, rasops8
+device	machfb: wsemuldisplaydev, rasops8, vcons, videomode
 attach	machfb at pci
 file	dev/pci/machfb.c		machfb
+
+# 3Dfx Voodoo3 framebuffer console driver
+device	voodoofb: wsemuldisplaydev, rasops8, vcons, videomode
+attach	voodoofb at pci
+file	dev/pci/voodoofb.c		voodoofb
 
 # 3Com 3c990
 device	txp: ether, ifnet, arp
@@ -750,8 +766,14 @@ file	dev/pci/if_dge.c		dge
 attach	re at pci with re_pci
 file	dev/pci/if_re_pci.c		re_pci
 
+# Windows NDIS drivers (Experimental)
+device 	ndis
+attach 	ndis at pci
+file	dev/if_ndis/if_ndis.c		ndis
+file	dev/if_ndis/if_ndis_pci.c	ndis
+
 # Intel PRO/Wireless 2100
-device	ipw: ifnet, arp, wlan
+device	ipw: ifnet, arp, wlan, firmload
 attach	ipw at pci
 file	dev/pci/if_ipw.c		ipw
 
@@ -778,3 +800,8 @@ file	dev/pci/if_vge.c		vge
 # Atheros 5210/5211/5212 PCI/Mini-PCI
 attach	ath at pci with ath_pci
 file	dev/pci/if_ath_pci.c		ath_pci
+
+# NVIDIA nForce Ethernet
+device  nfe: ether, ifnet, mii, mii_phy
+attach  nfe at pci
+file    dev/pci/if_nfe.c                nfe

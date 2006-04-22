@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.70 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.70.6.1 2006/04/22 11:39:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -190,6 +190,9 @@ int	pci_mapreg_info(pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 int	pci_mapreg_map(struct pci_attach_args *, int, pcireg_t, int,
 	    bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
 	    bus_size_t *);
+
+int pci_find_rom(struct pci_attach_args *, bus_space_tag_t, bus_space_handle_t,
+	    int, bus_space_handle_t *, bus_size_t *);
 
 int pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
 

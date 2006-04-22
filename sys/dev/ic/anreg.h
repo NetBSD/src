@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.12 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: anreg.h,v 1.12.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -408,7 +408,7 @@ struct an_rid_caps {
 	u_int16_t		an_req_hw_support;	/* 0x80 */
 	/* extended capabilities */
 	u_int16_t		an_ext_softcaps;	/* 0x82 */
-	u_int16_t		an_spare[34];
+	u_int16_t		an_spare[94];
 } __attribute__((__packed__));
 
 #define	AN_REGDOMAIN_USA	0

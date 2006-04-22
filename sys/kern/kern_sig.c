@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.214.2.1 2006/02/04 14:30:17 simonb Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.214.2.2 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.214.2.1 2006/02/04 14:30:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.214.2.2 2006/04/22 11:39:59 simonb Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.214.2.1 2006/02/04 14:30:17 simonb Ex
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
-static void	child_psignal(struct proc *, int);
 static int	build_corename(struct proc *, char *, const char *, size_t);
 static void	ksiginfo_exithook(struct proc *, void *);
 static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
@@ -957,7 +956,7 @@ trapsignal(struct lwp *l, const ksiginfo_t *ksi)
 /*
  * Fill in signal information and signal the parent for a child status change.
  */
-static void
+void
 child_psignal(struct proc *p, int dolock)
 {
 	ksiginfo_t ksi;
@@ -2072,8 +2071,13 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 	    io->io_offset, segflg,
 	    IO_NODELOCKED|IO_UNIT, io->io_cred, NULL,
 	    segflg == UIO_USERSPACE ? io->io_lwp : NULL);
-	if (error)
+	if (error) {
+		printf("pid %d (%s): %s write of %zu@%p at %lld failed: %d\n",
+		    io->io_lwp->l_proc->p_pid, io->io_lwp->l_proc->p_comm,
+		    segflg == UIO_USERSPACE ? "user" : "system",
+		    len, data, (long long) io->io_offset, error);
 		return (error);
+	}
 
 	io->io_offset += len;
 	return (0);
@@ -2095,7 +2099,7 @@ coredump(struct lwp *l, const char *pattern)
 	struct mount		*mp;
 	struct coredump_iostate	io;
 	int			error, error1;
-	char			name[MAXPATHLEN];
+	char			*name = NULL;
 
 	p = l->l_proc;
 	vm = p->p_vmspace;
@@ -2106,7 +2110,7 @@ coredump(struct lwp *l, const char *pattern)
 	 * unless it was specifically requested to allow set-id coredumps.
 	 */
 	if ((p->p_flag & P_SUGID) && !security_setidcore_dump)
-		return (EPERM);
+		return EPERM;
 
 	/*
 	 * Refuse to core if the data + stack + user size is larger than
@@ -2115,7 +2119,7 @@ coredump(struct lwp *l, const char *pattern)
 	 */
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
-		return (EFBIG);		/* better error code? */
+		return EFBIG;		/* better error code? */
 
 restart:
 	/*
@@ -2125,30 +2129,34 @@ restart:
 	 */
 	vp = p->p_cwdi->cwdi_cdir;
 	if (vp->v_mount == NULL ||
-	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
-		return (EPERM);
+	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0) {
+		error = EPERM;
+		goto done;
+	}
 
-	if (p->p_flag & P_SUGID && security_setidcore_dump)
+	if ((p->p_flag & P_SUGID) && security_setidcore_dump)
 		pattern = security_setidcore_path;
 
 	if (pattern == NULL)
 		pattern = p->p_limit->pl_corename;
-	if ((error = build_corename(p, name, pattern, sizeof(name))) != 0)
-		return error;
-
+	if (name == NULL) {
+		name = PNBUF_GET();
+	}
+	if ((error = build_corename(p, name, pattern, MAXPATHLEN)) != 0)
+		goto done;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
-	error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE, S_IRUSR | S_IWUSR);
-	if (error)
-		return (error);
+	if ((error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE,
+	    S_IRUSR | S_IWUSR)) != 0)
+		goto done;
 	vp = nd.ni_vp;
 
 	if (vn_start_write(vp, &mp, V_NOWAIT) != 0) {
 		VOP_UNLOCK(vp, 0);
 		if ((error = vn_close(vp, FWRITE, cred, l)) != 0)
-			return (error);
+			goto done;
 		if ((error = vn_start_write(NULL, &mp,
 		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
-			return (error);
+			goto done;
 		goto restart;
 	}
 
@@ -2161,7 +2169,7 @@ restart:
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
 
-	if (p->p_flag & P_SUGID && security_setidcore_dump) {
+	if ((p->p_flag & P_SUGID) && security_setidcore_dump) {
 		vattr.va_uid = security_setidcore_owner;
 		vattr.va_gid = security_setidcore_group;
 		vattr.va_mode = security_setidcore_mode;
@@ -2184,7 +2192,10 @@ restart:
 	error1 = vn_close(vp, FWRITE, cred, l);
 	if (error == 0)
 		error = error1;
-	return (error);
+done:
+	if (name != NULL)
+		PNBUF_PUT(name);
+	return error;
 }
 
 /*

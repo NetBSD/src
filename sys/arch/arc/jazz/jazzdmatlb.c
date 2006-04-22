@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.13 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.13.6.1 2006/04/22 11:37:16 simonb Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.13 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzdmatlb.c,v 1.13.6.1 2006/04/22 11:37:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ jazz_dmatlb_free(bus_addr_t addr, int npte)
  *  the dma control structure.
  */
 void
-jazz_dmatlb_map_va(struct proc *p, vaddr_t va, vsize_t size,
+jazz_dmatlb_map_va(struct vmspace *vm, vaddr_t va, vsize_t size,
     jazz_dma_pte_t *dma_pte)
 {
 	paddr_t pa;
@@ -150,8 +150,8 @@ jazz_dmatlb_map_va(struct proc *p, vaddr_t va, vsize_t size,
 	size = jazz_dma_page_round(size + jazz_dma_page_offs(va));
 	va &= JAZZ_DMA_PAGE_NUM;
 	while (size > 0) {
-		if (p != NULL)
-			(void)pmap_extract(p->p_vmspace->vm_map.pmap, va, &pa);
+		if (!VMSPACE_IS_KERNEL_P(vm))
+			(void)pmap_extract(vm_map_pmap(&vm->vm_map), va, &pa);
 		else
 			pa = kvtophys(va);
 

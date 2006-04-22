@@ -1,4 +1,4 @@
-/*	$NetBSD: copypage.s,v 1.11 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: copypage.s,v 1.11.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  * copypage040(fromaddr, toaddr)
  *
  * Optimized version of bcopy for a single page-aligned PAGE_SIZE byte copy,
- * using instuctions only available on the mc68040 and later.
+ * using instructions only available on the mc68040 and later.
  */
 #if defined(M68040) || defined(M68060)
 ENTRY(copypage040)

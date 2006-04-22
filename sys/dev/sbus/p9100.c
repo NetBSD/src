@@ -1,7 +1,7 @@
-/*	$NetBSD: p9100.c,v 1.26 2005/12/14 00:35:31 christos Exp $ */
+/*	$NetBSD: p9100.c,v 1.26.6.1 2006/04/22 11:39:28 simonb Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.26 2005/12/14 00:35:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.26.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.26 2005/12/14 00:35:31 christos Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
+
+#include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include "opt_wsemul.h"
 #include "rasops_glue.h"
@@ -113,7 +115,7 @@ struct p9100_softc {
 	bus_size_t	sc_fb_psize;	/*   for device mmap() */
 	bus_space_handle_t sc_fb_memh;	/*   bus space handle */
 
-	uint32_t sc_junk;
+	volatile uint32_t sc_junk;
 	uint32_t sc_mono_width;	/* for setup_mono */
 	
 	uint32_t sc_width;
@@ -124,39 +126,15 @@ struct p9100_softc {
 
 	struct pnozz_cursor sc_cursor;
 
-#ifdef PNOZZ_SOFT_PUTCHAR
-	void (*putchar)(void *c, int row, int col, u_int uc, long attr);
-#endif
 	int sc_mode;
+	int sc_video, sc_powerstate;
 	uint32_t sc_bg;
-	void (*switchcb)(void *, int, int);
-	void *switchcbarg;
-	struct callout switch_callout;
-	LIST_HEAD(, p9100_screen) screens;
-	struct p9100_screen *active, *wanted;
-	const struct wsscreen_descr *currenttype;
-
+	volatile uint32_t sc_last_offset;
+	struct vcons_data vd;
 };
 
-struct p9100_screen {
-	struct rasops_info ri;
-	LIST_ENTRY(p9100_screen) next;
-	struct p9100_softc *sc;
-	const struct wsscreen_descr *type;
-	int active;
-	u_int16_t *chars;
-	long *attrs;
-	int dispoffset;
-	int mindispoffset;
-	int maxdispoffset;
 
-	int cursoron;
-	int cursorcol;
-	int cursorrow;
-	int cursordrawn;
-};
-
-static struct p9100_screen p9100_console_screen;
+static struct vcons_screen p9100_console_screen;
 
 extern const u_char rasops_cmap[768];
 
@@ -189,9 +167,9 @@ CFATTACH_DECL(pnozz, sizeof(struct p9100_softc),
 
 extern struct cfdriver pnozz_cd;
 
-dev_type_open(p9100open);
-dev_type_ioctl(p9100ioctl);
-dev_type_mmap(p9100mmap);
+static dev_type_open(p9100open);
+static dev_type_ioctl(p9100ioctl);
+static dev_type_mmap(p9100mmap);
 
 const struct cdevsw pnozz_cdevsw = {
 	p9100open, nullclose, noread, nowrite, p9100ioctl,
@@ -209,69 +187,77 @@ static void	p9100_set_video(struct p9100_softc *, int);
 static int	p9100_get_video(struct p9100_softc *);
 static uint32_t p9100_ctl_read_4(struct p9100_softc *, bus_size_t);
 static void	p9100_ctl_write_4(struct p9100_softc *, bus_size_t, uint32_t);
-uint8_t		p9100_ramdac_read(struct p9100_softc *, bus_size_t);
-void		p9100_ramdac_write(struct p9100_softc *, bus_size_t, uint8_t);
+static uint8_t	p9100_ramdac_read(struct p9100_softc *, bus_size_t);
+static void	p9100_ramdac_write(struct p9100_softc *, bus_size_t, uint8_t);
 
-static void	p9100_sync(struct p9100_softc *);
-void 		p9100_bitblt(struct p9100_softc *, int, int, int, int, int, int, 		    uint32_t);	/* coordinates, rasop */
-void 		p9100_rectfill(struct p9100_softc *, int, int, int, int, 
-		    uint32_t);	/* coordinates, colour */
+static uint8_t	p9100_ramdac_read_ctl(struct p9100_softc *, int);
+static void	p9100_ramdac_write_ctl(struct p9100_softc *, int, uint8_t);
+
 static void 	p9100_init_engine(struct p9100_softc *);
-void		p9100_setup_mono(struct p9100_softc *, int, int, int, int, 
+
+#if NWSDISPLAY > 0
+static void	p9100_sync(struct p9100_softc *);
+static void	p9100_bitblt(void *, int, int, int, int, int, int, uint32_t);
+static void 	p9100_rectfill(void *, int, int, int, int, uint32_t);
+static void	p9100_clearscreen(struct p9100_softc *);
+
+static void	p9100_setup_mono(struct p9100_softc *, int, int, int, int, 
 		    uint32_t, uint32_t); 
-void		p9100_feed_line(struct p9100_softc *, int, uint8_t *);
+static void	p9100_feed_line(struct p9100_softc *, int, uint8_t *);
 static void	p9100_set_color_reg(struct p9100_softc *, int, int32_t);
 
-void	p9100_cursor(void *, int, int, int);
-int	p9100_mapchar(void *, int, u_int *);
-void	p9100_putchar(void *, int, int, u_int, long);
-void	p9100_copycols(void *, int, int, int, int);
-void	p9100_erasecols(void *, int, int, int, long);
-void	p9100_copyrows(void *, int, int, int);
-void	p9100_eraserows(void *, int, int, long);
-int	p9100_allocattr(void *, int, int, int, long *);
+static void	p9100_copycols(void *, int, int, int, int);
+static void	p9100_erasecols(void *, int, int, int, long);
+static void	p9100_copyrows(void *, int, int, int);
+static void	p9100_eraserows(void *, int, int, long);
+/*static int	p9100_mapchar(void *, int, u_int *);*/
+static void	p9100_putchar(void *, int, int, u_int, long);
+static void	p9100_cursor(void *, int, int, int);
+static int	p9100_allocattr(void *, int, int, int, long *);
 
-void	p9100_scroll(void *, void *, int);
+/*static void	p9100_scroll(void *, void *, int);*/
 
-int	p9100_putcmap(struct p9100_softc *, struct wsdisplay_cmap *);
-int 	p9100_getcmap(struct p9100_softc *, struct wsdisplay_cmap *);
-int	p9100_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-paddr_t	p9100_mmap(void *, off_t, int);
-int	p9100_alloc_screen(void *, const struct wsscreen_descr *, void **, 
-	    int *, int *, long *);
-void	p9100_free_screen(void *, void *);
-int	p9100_show_screen(void *, void *, int, void (*)(void *, int, int),
-	    void *);
-void	p9100_switch_screen(struct p9100_softc *);
-void	p9100_restore_screen(struct p9100_screen *, 
-	    const struct wsscreen_descr *, u_int16_t *);
-void	p9100_clearscreen(struct p9100_softc *);
+static int	p9100_putcmap(struct p9100_softc *, struct wsdisplay_cmap *);
+static int 	p9100_getcmap(struct p9100_softc *, struct wsdisplay_cmap *);
+static int	p9100_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	p9100_mmap(void *, void *, off_t, int);
 		
-int	p9100_load_font(void *, void *, struct wsdisplay_font *);
+/*static int	p9100_load_font(void *, void *, struct wsdisplay_font *);*/
 
-void	p9100_init_screen(struct p9100_softc *, struct p9100_screen *, int, 
+static void	p9100_init_screen(void *, struct vcons_screen *, int, 
 	    long *);
-void	p9100_init_cursor(struct p9100_softc *);
-void	p9100_set_fbcursor(struct p9100_softc *);
-void	p9100_setcursorcmap(struct p9100_softc *);
-void	p9100_loadcursor(struct p9100_softc *);
+#endif
 
-int	p9100_intr(void *);
+static void	p9100_init_cursor(struct p9100_softc *);
 
+static void	p9100_set_fbcursor(struct p9100_softc *);
+static void	p9100_setcursorcmap(struct p9100_softc *);
+static void	p9100_loadcursor(struct p9100_softc *);
+
+static int	p9100_intr(void *);
+
+/* power management stuff */
+static void p9100_power_hook(int, void *);
+
+static void p9100_set_extvga(void *, int);
+
+#if NWSDISPLAY > 0
 struct wsdisplay_accessops p9100_accessops = {
 	p9100_ioctl,
 	p9100_mmap,
-	p9100_alloc_screen,
-	p9100_free_screen,
-	p9100_show_screen,
+	NULL,	/* vcons_alloc_screen */
+	NULL,	/* vcons_free_screen */
+	NULL,	/* vcons_show_screen */
 	NULL,	/* load_font */
 	NULL,	/* polls */
-	NULL,	/* getwschar */
-	NULL,	/* putwschar */
 	NULL,	/* scroll */
-	NULL,	/* getborder */
-	NULL	/* setborder */
 };
+#endif
+
+#define PNOZZ_LATCH(sc, off) if(sc->sc_last_offset == (off & 0xffffff80)) { \
+		sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, \
+		    off); \
+		sc->sc_last_offset = off & 0xffffff80; }
 
 /*
  * Match a p9100.
@@ -297,12 +283,15 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	int isconsole;
 	int node;
 	int i, j;
+	uint8_t ver;
 
 #if NWSDISPLAY > 0
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri;
 	unsigned long defattr;
 #endif
+
+	sc->sc_last_offset = 0xffffffff;
 
 	/* Remember cookies for p9100_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
@@ -320,7 +309,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 
 	fb->fb_driver = &p9100fbdriver;
 	fb->fb_device = &sc->sc_dev;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 #ifdef PNOZZ_EMUL_CG3
 	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
 #else
@@ -329,14 +318,6 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	fb->fb_pixels = NULL;
 	
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
-#ifdef PNOZZ_SOFT_PUTCHAR
-	sc->putchar = NULL;
-#endif
-
-	LIST_INIT(&sc->screens);
-	sc->active = NULL;
-	sc->currenttype = &p9100_defscreendesc;
-	callout_init(&sc->switch_callout);
 
 	node = sa->sa_node;
 	isconsole = fb_is_console(node);
@@ -401,16 +382,21 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_stride = prom_getpropint(node, "linebytes", sc->sc_width * 
 	    (fb->fb_type.fb_depth >> 3));
 
+	/* check the RAMDAC */
+	ver = p9100_ramdac_read_ctl(sc, DAC_VERSION);
+	
 	p9100_init_engine(sc);
 	
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, sc->sc_width, sc->sc_height, 
 	    node);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-
+	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,
+	    p9100_intr, sc);
+	    
 	fb->fb_type.fb_size = fb->fb_type.fb_height * fb->fb_linebytes;
-	printf(": rev %d, %dx%d, depth %d mem %x",
-	       (i & 7), fb->fb_type.fb_width, fb->fb_type.fb_height,
+	printf(": rev %d / %x, %dx%d, depth %d mem %x",
+	       (i & 7), ver, fb->fb_type.fb_width, fb->fb_type.fb_height,
 	       fb->fb_type.fb_depth, (unsigned int)sc->sc_fb_psize);
 
 	fb->fb_type.fb_cmsize = prom_getpropint(node, "cmsize", 256);
@@ -450,11 +436,17 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 		
 #if NWSDISPLAY > 0
 	wsfont_init();
+	
+	vcons_init(&sc->vd, sc, &p9100_defscreendesc, &p9100_accessops);
+	sc->vd.init_screen = p9100_init_screen;
+	
+	vcons_init_screen(&sc->vd, &p9100_console_screen, 1, &defattr);
+	p9100_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-	p9100_init_screen(sc, &p9100_console_screen, 1, &defattr);
-	p9100_console_screen.active = 1;
-	sc->active = &p9100_console_screen;
-	ri = &p9100_console_screen.ri;
+	sc->sc_bg = (defattr >> 16) & 0xff;
+	p9100_clearscreen(sc);
+	
+	ri = &p9100_console_screen.scr_ri;
 
 	p9100_defscreendesc.nrows = ri->ri_rows;
 	p9100_defscreendesc.ncols = ri->ri_cols;
@@ -465,36 +457,27 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 		wsdisplay_cnattach(&p9100_defscreendesc, ri, 0, 0, defattr);
 	}
 
-	sc->sc_bg = (defattr >> 16) & 0xff;
-
-	p9100_clearscreen(sc);
-	p9100_init_cursor(sc);
-
 	aa.console = isconsole;
 	aa.scrdata = &p9100_screenlist;
 	aa.accessops = &p9100_accessops;
-	aa.accesscookie = sc;
+	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 #endif
+	/* cursor sprite handling */
+	p9100_init_cursor(sc);
+
 	/* attach the fb */
 	fb_attach(fb, isconsole);
 
-#if 0
-	p9100_rectfill(sc, 10, 10, 200, 200, 0x01);
-	p9100_rectfill(sc, 210, 10, 200, 200, 0xff);
-	p9100_bitblt(sc, 10, 10, 110, 110, 400, 200, ROP_SRC);
-#endif
-#if 0
-	p9100_setup_mono(sc, 750, 500, 32, 1, 1, 6);
-	{
-		uint32_t ev = 0xc3000000, odd = 0x3c000000;
-		for (i = 0; i < 16; i++) { 
-			p9100_feed_line(sc, 1, (uint8_t*)&ev);
-			p9100_feed_line(sc, 1, (uint8_t*)&odd);
-		}
-	}
-	delay(4000000);
+	/* register with power management */
+	sc->sc_video = 1;
+	sc->sc_powerstate = PWR_RESUME;
+	powerhook_establish(p9100_power_hook, sc);
+	
+#if NTCTRL > 0
+	/* register callback for external monitor status change */
+	tadpole_register_callback(p9100_set_extvga, sc);
 #endif
 }
 
@@ -688,16 +671,44 @@ p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 static uint32_t
 p9100_ctl_read_4(struct p9100_softc *sc, bus_size_t off)
 {
-	sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
+
+	PNOZZ_LATCH(sc, off);
 	return bus_space_read_4(sc->sc_bustag, sc->sc_ctl_memh, off);
 }
 
 static void
 p9100_ctl_write_4(struct p9100_softc *sc, bus_size_t off, uint32_t v)
 {
-	sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
+
+	PNOZZ_LATCH(sc, off);
 	bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh, off, v);
 }
+
+/* initialize the drawing engine */
+static void
+p9100_init_engine(struct p9100_softc *sc)
+{
+	/* reset clipping rectangles */
+	uint32_t rmax = ((sc->sc_width & 0x3fff) << 16) | 
+	    (sc->sc_height & 0x3fff);
+
+	sc->sc_last_offset = 0xffffffff;
+
+	p9100_ctl_write_4(sc, WINDOW_OFFSET, 0);
+	p9100_ctl_write_4(sc, WINDOW_MIN, 0);
+	p9100_ctl_write_4(sc, WINDOW_MAX, rmax);
+	p9100_ctl_write_4(sc, BYTE_CLIP_MIN, 0);
+	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, rmax);
+	p9100_ctl_write_4(sc, DRAW_MODE, 0);
+	p9100_ctl_write_4(sc, PLANE_MASK, 0xffffffff);	
+	p9100_ctl_write_4(sc, PATTERN0, 0xffffffff);	
+	p9100_ctl_write_4(sc, PATTERN1, 0xffffffff);	
+	p9100_ctl_write_4(sc, PATTERN2, 0xffffffff);	
+	p9100_ctl_write_4(sc, PATTERN3, 0xffffffff);	
+}
+
+/* we only need these in the wsdisplay case */
+#if NWSDISPLAY > 0
 
 /* wait until the engine is idle */
 static void
@@ -727,34 +738,16 @@ p9100_set_color_reg(struct p9100_softc *sc, int reg, int32_t col)
 	p9100_ctl_write_4(sc, reg, out);
 }
 
-/* initialize the drawing engine */
-static void
-p9100_init_engine(struct p9100_softc *sc)
-{
-	/* reset clipping rectangles */
-	uint32_t rmax = ((sc->sc_width & 0x3fff) << 16) | 
-	    (sc->sc_height & 0x3fff);
-	
-	p9100_ctl_write_4(sc, WINDOW_OFFSET, 0);
-	p9100_ctl_write_4(sc, WINDOW_MIN, 0);
-	p9100_ctl_write_4(sc, WINDOW_MAX, rmax);
-	p9100_ctl_write_4(sc, BYTE_CLIP_MIN, 0);
-	p9100_ctl_write_4(sc, BYTE_CLIP_MAX, rmax);
-	p9100_ctl_write_4(sc, DRAW_MODE, 0);
-	p9100_ctl_write_4(sc, PLANE_MASK, 0xffffffff);	
-	p9100_ctl_write_4(sc, PATTERN0, 0xffffffff);	
-	p9100_ctl_write_4(sc, PATTERN1, 0xffffffff);	
-	p9100_ctl_write_4(sc, PATTERN2, 0xffffffff);	
-	p9100_ctl_write_4(sc, PATTERN3, 0xffffffff);	
-}
-
 /* screen-to-screen blit */
-void 
-p9100_bitblt(struct p9100_softc *sc, int xs, int ys, int xd, int yd, int wi,
+static void 
+p9100_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
     int he, uint32_t rop)
 {
-	uint32_t src, dst, srcw, dstw, junk;
-	
+	struct p9100_softc *sc = cookie;
+	uint32_t src, dst, srcw, dstw;
+
+	sc->sc_last_offset = 0xffffffff;
+
 	src = ((xs & 0x3fff) << 16) | (ys & 0x3fff);
 	dst = ((xd & 0x3fff) << 16) | (yd & 0x3fff);
 	srcw = (((xs + wi - 1) & 0x3fff) << 16) | ((ys + he - 1) & 0x3fff);
@@ -767,15 +760,18 @@ p9100_bitblt(struct p9100_softc *sc, int xs, int ys, int xd, int yd, int wi,
 	p9100_ctl_write_4(sc, ABS_XY1, srcw);
 	p9100_ctl_write_4(sc, ABS_XY2, dst);
 	p9100_ctl_write_4(sc, ABS_XY3, dstw);
-	junk = p9100_ctl_read_4(sc, COMMAND_BLIT);
+	sc->sc_junk = p9100_ctl_read_4(sc, COMMAND_BLIT);
 }
 
 /* solid rectangle fill */
-void 
-p9100_rectfill(struct p9100_softc *sc, int xs, int ys, int wi, int he, uint32_t col)
+static void 
+p9100_rectfill(void *cookie, int xs, int ys, int wi, int he, uint32_t col)
 {
-	uint32_t src, srcw, junk;
-	
+	struct p9100_softc *sc = cookie;
+	uint32_t src, srcw;
+
+	sc->sc_last_offset = 0xffffffff;
+
 	src = ((xs & 0x3fff) << 16) | (ys & 0x3fff);
 	srcw = (((xs + wi) & 0x3fff) << 16) | ((ys + he) & 0x3fff);
 	p9100_sync(sc);
@@ -785,14 +781,17 @@ p9100_rectfill(struct p9100_softc *sc, int xs, int ys, int wi, int he, uint32_t 
 	p9100_ctl_write_4(sc, COORD_INDEX, 0);
 	p9100_ctl_write_4(sc, RECT_RTW_XY, src);
 	p9100_ctl_write_4(sc, RECT_RTW_XY, srcw);
-	junk=p9100_ctl_read_4(sc, COMMAND_QUAD);
+	sc->sc_junk = p9100_ctl_read_4(sc, COMMAND_QUAD);
 }
 
 /* setup for mono->colour expansion */
-void 
+static void 
 p9100_setup_mono(struct p9100_softc *sc, int x, int y, int wi, int he, 
     uint32_t fg, uint32_t bg) 
 {
+
+	sc->sc_last_offset = 0xffffffff;
+
 	p9100_sync(sc);
 	/* 
 	 * this doesn't make any sense to me either, but for some reason the
@@ -812,27 +811,33 @@ p9100_setup_mono(struct p9100_softc *sc, int x, int y, int wi, int he,
 }
 
 /* write monochrome data to the screen through the blitter */
-void 
+static void 
 p9100_feed_line(struct p9100_softc *sc, int count, uint8_t *data)
 {
 	int i;
 	uint32_t latch = 0, bork;
 	int shift = 24;
 	int to_go = sc->sc_mono_width;
-	
+
+	PNOZZ_LATCH(sc, PIXEL_1);
+
 	for (i = 0; i < count; i++) {
 		bork = data[i];
 		latch |= (bork << shift);
 		if (shift == 0) {
 			/* check how many bits are significant */
 			if (to_go > 31) {
-				p9100_ctl_write_4(sc, (PIXEL_1 + 
-				    (31 << 2)), latch);
+				bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh,
+				    (PIXEL_1 + (31 << 2)), latch);
+				/*p9100_ctl_write_4(sc, (PIXEL_1 + 
+				    (31 << 2)), latch);*/
 				to_go -= 32;
 			} else
 			{
-				p9100_ctl_write_4(sc, (PIXEL_1 + 
-				    ((to_go - 1) << 2)), latch);
+				bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh,
+				    (PIXEL_1 + ((to_go - 1) << 2)), latch);
+				/*p9100_ctl_write_4(sc, (PIXEL_1 + 
+				    ((to_go - 1) << 2)), latch);*/
 				to_go = 0;
 			}
 			latch = 0;
@@ -844,28 +849,46 @@ p9100_feed_line(struct p9100_softc *sc, int count, uint8_t *data)
 		p9100_ctl_write_4(sc, (PIXEL_1 + ((to_go - 1) << 2)), latch);
 }	
 
-void
+static void
 p9100_clearscreen(struct p9100_softc *sc)
 {
+	
 	p9100_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height, sc->sc_bg);
 }
+#endif /* NWSDISPLAY > 0 */
 
-uint8_t
+static uint8_t
 p9100_ramdac_read(struct p9100_softc *sc, bus_size_t off)
 {
+
 	sc->sc_junk = p9100_ctl_read_4(sc, PWRUP_CNFG);
-	sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
 	return ((bus_space_read_4(sc->sc_bustag, 
 	    sc->sc_ctl_memh, off) >> 16) & 0xff);
 }
 
-void
+static void
 p9100_ramdac_write(struct p9100_softc *sc, bus_size_t off, uint8_t v)
 {
+
 	sc->sc_junk = p9100_ctl_read_4(sc, PWRUP_CNFG);
-	sc->sc_junk = bus_space_read_4(sc->sc_bustag, sc->sc_fb_memh, off);
 	bus_space_write_4(sc->sc_bustag, sc->sc_ctl_memh, off, 
 	    ((uint32_t)v) << 16);
+}
+
+static uint8_t
+p9100_ramdac_read_ctl(struct p9100_softc *sc, int off)
+{
+	p9100_ramdac_write(sc, DAC_INDX_LO, off & 0xff);
+	p9100_ramdac_write(sc, DAC_INDX_HI, (off & 0xff00) >> 8);
+	return p9100_ramdac_read(sc, DAC_INDX_DATA);
+}
+
+static void
+p9100_ramdac_write_ctl(struct p9100_softc *sc, int off, uint8_t val)
+{
+	p9100_ramdac_write(sc, DAC_INDX_LO, off & 0xff);
+	p9100_ramdac_write(sc, DAC_INDX_HI, (off & 0xff00) >> 8);
+	p9100_ramdac_write(sc, DAC_INDX_DATA, val);
 }
 
 /*
@@ -874,7 +897,23 @@ p9100_ramdac_write(struct p9100_softc *sc, bus_size_t off, uint8_t v)
 static void
 p9100unblank(struct device *dev)
 {
+	struct p9100_softc *sc = (struct p9100_softc *)dev;
+	
 	p9100_set_video((struct p9100_softc *)dev, 1);
+	
+	/* 
+	 * Check if we're in terminal mode. If not force the console screen
+	 * to front so we can see ddb, panic messages and so on
+	 */
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) {
+		sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+		if (sc->vd.active != &p9100_console_screen) {
+			SCREEN_INVISIBLE(sc->vd.active);
+			sc->vd.active = &p9100_console_screen;
+			SCREEN_VISIBLE(&p9100_console_screen);
+		}
+		vcons_redraw_screen(&p9100_console_screen);
+	}
 }
 
 static void
@@ -900,6 +939,29 @@ p9100_get_video(struct p9100_softc *sc)
 	return (p9100_ctl_read_4(sc, SCRN_RPNT_CTL_1) & VIDEO_ENABLED) != 0;
 }
 
+static void 
+p9100_power_hook(int why, void *cookie)
+{
+	struct p9100_softc *sc = cookie;
+	
+	if (why == sc->sc_powerstate)
+		return;
+		
+	switch(why)
+	{
+		case PWR_SUSPEND:
+		case PWR_STANDBY:
+			sc->sc_video = p9100_get_video(sc);
+			p9100_set_video(sc, 0);
+			sc->sc_powerstate = why;
+			break;
+		case PWR_RESUME:
+			p9100_set_video(sc, sc->sc_video);
+			sc->sc_powerstate = why;
+			break;
+	}
+}
+
 /*
  * Load a subset of the current (new) colormap into the IBM RAMDAC.
  */
@@ -907,6 +969,9 @@ static void
 p9100loadcmap(struct p9100_softc *sc, int start, int ncolors)
 {
 	int i;
+
+	sc->sc_last_offset = 0xffffffff;
+
 	p9100_ramdac_write(sc, DAC_CMAP_WRIDX, start);
 
 	for (i=0;i<ncolors;i++) {
@@ -923,7 +988,7 @@ p9100loadcmap(struct p9100_softc *sc, int start, int ncolors)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-paddr_t
+static paddr_t
 p9100mmap(dev_t dev, off_t off, int prot)
 {
 	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
@@ -975,289 +1040,79 @@ p9100mmap(dev_t dev, off_t off, int prot)
 }
 
 /* wscons stuff */
+#if NWSDISPLAY > 0
 
-void
-p9100_switch_screen(struct p9100_softc *sc)
-{
-	struct p9100_screen *scr, *oldscr;
-
-	scr = sc->wanted;
-	if (!scr) {
-		printf("p9100_switch_screen: disappeared\n");
-		(*sc->switchcb)(sc->switchcbarg, EIO, 0);
-		return;
-	}
-	oldscr = sc->active; /* can be NULL! */
-#ifdef DIAGNOSTIC
-	if (oldscr) {
-		if (!oldscr->active)
-			panic("p9100_switch_screen: not active");
-	}
-#endif
-	if (scr == oldscr)
-		return;
-
-#ifdef DIAGNOSTIC
-	if (scr->active)
-		panic("p9100_switch_screen: active");
-#endif
-
-	if (oldscr)
-		oldscr->active = 0;
-#ifdef notyet
-	if (sc->currenttype != type) {
-		p9100_set_screentype(sc, type);
-		sc->currenttype = type;
-	}
-#endif
-
-	/* Clear the entire screen. */		
-
-	scr->active = 1;
-	p9100_restore_screen(scr, &p9100_defscreendesc, scr->chars);
-
-	sc->active = scr;
-	
-	scr->ri.ri_ops.cursor(scr, scr->cursoron, scr->cursorrow, 
-	    scr->cursorcol);
-
-	sc->wanted = 0;
-	if (sc->switchcb)
-		(*sc->switchcb)(sc->switchcbarg, 0, 0);
-}
-
-void
-p9100_restore_screen(struct p9100_screen *scr,
-    const struct wsscreen_descr *type, u_int16_t *mem)
-{
-	int i, j, offset = 0;
-	uint16_t *charptr = scr->chars;
-	long *attrptr = scr->attrs;
-	
-	p9100_clearscreen(scr->sc);
-	for (i = 0; i < scr->ri.ri_rows; i++) {
-		for (j = 0; j < scr->ri.ri_cols; j++) {
-			p9100_putchar(scr, i, j, charptr[offset], 
-			    attrptr[offset]);
-			offset++;
-		}
-	}
-	scr->cursordrawn = 0;
-}
-
-void
+static void
 p9100_cursor(void *cookie, int on, int row, int col)
 {
 	struct rasops_info *ri = cookie;
-	struct p9100_screen *scr = ri->ri_hw;
-	struct p9100_softc *sc = scr->sc;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct p9100_softc *sc = scr->scr_cookie;
 	int x, y, wi,he;
 	
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
 	
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = scr->cursorcol * wi + ri->ri_xorigin;
-		y = scr->cursorrow * he + ri->ri_yorigin;
-		if (scr->cursordrawn) {
-			p9100_bitblt(sc, x, y, x, y, wi, he, (ROP_SRC ^ 0xff));
-			scr->cursordrawn = 0;
-		}
-		scr->cursorrow = row;
-		scr->cursorcol = col;
-		if ((scr->cursoron = on) != 0)
-		{
-			x = scr->cursorcol * wi + ri->ri_xorigin;
-			y = scr->cursorrow * he + ri->ri_yorigin;
-			p9100_bitblt(sc, x, y, x, y, wi, he, (ROP_SRC ^ 0xff));
-			scr->cursordrawn = 1;
-		}
-	} else {
-		scr->cursoron = on;
-		scr->cursorrow = row;
-		scr->cursorcol = col;
-		scr->cursordrawn = 0;
+	if (ri->ri_flg & RI_CURSOR) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		p9100_bitblt(sc, x, y, x, y, wi, he, ROP_SRC ^ 0xff);
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+	ri->ri_crow = row;
+	ri->ri_ccol = col;
+	if (on)
+	{
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		p9100_bitblt(sc, x, y, x, y, wi, he, ROP_SRC ^ 0xff);
+		ri->ri_flg |= RI_CURSOR;
 	}
 }
 
 #if 0
-int
+static int
 p9100_mapchar(void *cookie, int uni, u_int *index)
 {
 	return 0;
 }
 #endif
 
-void
+static void
 p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
-	struct p9100_screen *scr = ri->ri_hw;
-	struct p9100_softc *sc = scr->sc;
-	int pos;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct p9100_softc *sc = scr->scr_cookie;
 	
-	if ((row >= 0) && (row < ri->ri_rows) && (col >= 0) && 
-	     (col < ri->ri_cols)) {
-		pos = col + row * ri->ri_cols;
-		scr->attrs[pos] = attr;
-		scr->chars[pos] = c;
-
-#ifdef PNOZZ_SOFT_PUTCHAR
-		if ((sc->putchar != NULL) && (	scr->active) && 
-		    (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-			p9100_sync(sc);
-			sc->putchar(cookie, row, col, c, attr);
-		}
-#else
-		if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-			int fg, bg, uc, i;
-			uint8_t *data;
-			int x, y, wi,he;
+	int fg, bg, uc, i;
+	uint8_t *data;
+	int x, y, wi,he;
 			
-			wi = ri->ri_font->fontwidth;
-			he = ri->ri_font->fontheight;
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
 		
-			if (!CHAR_IN_FONT(c, ri->ri_font))
-				return;
-			bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xff];
-			fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0xff];
-			x = ri->ri_xorigin + col * wi;
-			y = ri->ri_yorigin + row * he;
-			if (c == 0x20) {
-				p9100_rectfill(sc, x, y, wi, he, bg);
-			} else {
-				uc = c-ri->ri_font->firstchar;
-				data = (uint8_t *)ri->ri_font->data + uc * 
-				    ri->ri_fontscale;
+	if (!CHAR_IN_FONT(c, ri->ri_font))
+		return;
+	bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xff];
+	fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0xff];
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+	if (c == 0x20) {
+		p9100_rectfill(sc, x, y, wi, he, bg);
+	} else {
+		uc = c-ri->ri_font->firstchar;
+		data = (uint8_t *)ri->ri_font->data + uc * 
+		    ri->ri_fontscale;
 
-				p9100_setup_mono(sc, x, y, wi, 1, fg, bg);		
-				for (i = 0; i < he; i++) {
-					p9100_feed_line(sc, ri->ri_font->stride,
-					    data);
-					data += ri->ri_font->stride;
-				}
-				/*p9100_sync(sc);*/
-			}
+		p9100_setup_mono(sc, x, y, wi, 1, fg, bg);		
+		for (i = 0; i < he; i++) {
+			p9100_feed_line(sc, ri->ri_font->stride,
+			    data);
+			data += ri->ri_font->stride;
 		}
-#endif
+		/*p9100_sync(sc);*/
 	}
-}
-
-void
-p9100_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
-{
-	struct rasops_info *ri = cookie;
-	struct p9100_screen *scr = ri->ri_hw;
-	struct p9100_softc *sc = scr->sc;
-	int32_t xs, xd, y, width, height;
-	int from = srccol + row * ri->ri_cols;
-	int to = dstcol + row * ri->ri_cols;
-	
-	memmove(&scr->attrs[to], &scr->attrs[from], ncols * sizeof(long));
-	memmove(&scr->chars[to], &scr->chars[from], ncols * sizeof(uint16_t));
-
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
-		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_font->fontwidth * ncols;
-		height = ri->ri_font->fontheight;
-		p9100_bitblt(sc, xs, y, xd, y, width, height, ROP_SRC);
-	}
-}
-
-void
-p9100_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
-{
-	struct rasops_info *ri = cookie;
-	struct p9100_screen *scr = ri->ri_hw;
-	struct p9100_softc *sc = scr->sc;
-	int32_t x, y, width, height, bg;
-	int start = startcol + row * ri->ri_cols;
-	int end = start + ncols, i;
-	
-	for (i = start; i < end; i++) {
-		scr->attrs[i] = fillattr;
-		scr->chars[i] = 0x20;
-	}
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_font->fontwidth * ncols;
-		height = ri->ri_font->fontheight;		
-		bg = (fillattr >> 16) & 0xff;	
-		p9100_rectfill(sc, x, y, width, height, bg);
-	}
-}
-
-void
-p9100_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
-{
-	struct rasops_info *ri = cookie;
-	struct p9100_screen *scr = ri->ri_hw;
-	struct p9100_softc *sc = scr->sc;
-	int32_t x, ys, yd, width, height;
-	int from, to, len;
-	
-	from = ri->ri_cols * srcrow;
-	to = ri->ri_cols * dstrow;
-	len = ri->ri_cols * nrows;
-	
-	memmove(&scr->attrs[to], &scr->attrs[from], len * sizeof(long));
-	memmove(&scr->chars[to], &scr->chars[from], len * sizeof(uint16_t));
-	
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = ri->ri_xorigin;
-		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
-		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
-		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;		
-		p9100_bitblt(sc, x, ys, x, yd, width, height, ROP_SRC);
-	}
-}
-
-void
-p9100_eraserows(void *cookie, int row, int nrows, long fillattr)
-{
-	struct rasops_info *ri = cookie;
-	struct p9100_screen *scr = ri->ri_hw;
-	struct p9100_softc *sc = scr->sc;
-	int32_t x,y,width,height,bg;
-	int start, end, i;
-	
-	start = ri->ri_cols * row;
-	end = ri->ri_cols * (row + nrows);
-	
-	for (i = start; i < end; i++) {
-		scr->attrs[i] = fillattr;
-		scr->chars[i] = 0x20;
-	}
-
-	if ((scr->active) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;		
-		bg = (fillattr >> 16) & 0xff;		   
-		p9100_rectfill(sc, x, y, width, height, bg);
-	}
-}
-
-int
-p9100_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
-{
-	if ((fg == 0) && (bg == 0))
-	{
-		fg = WS_DEFAULT_FG;
-		bg = WS_DEFAULT_BG;
-	}
-	if (flags & WSATTR_REVERSE) {
-		*attrp = (bg & 0xff) << 24 | (fg & 0xff) << 16 | 
-		    (flags & 0xff) << 8;
-	} else
-		*attrp = (fg & 0xff) << 24 | (bg & 0xff) << 16 | 
-		    (flags & 0xff) << 8;
-	return 0;
 }
 
 /*
@@ -1265,11 +1120,13 @@ p9100_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
  */
 
 int
-p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+p9100_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
-	struct p9100_softc *sc = v;
+	struct vcons_data *vd = v;
+	struct p9100_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
-	struct p9100_screen *ms = sc->active;
+	struct vcons_screen *ms = vd->active;
 
 	switch (cmd) {
 		case WSDISPLAYIO_GTYPE:
@@ -1288,9 +1145,9 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		case WSDISPLAYIO_GINFO:
 			wdf = (void *)data;
-			wdf->height = ms->ri.ri_height;
-			wdf->width = ms->ri.ri_width;
-			wdf->depth = ms->ri.ri_depth;
+			wdf->height = ms->scr_ri.ri_height;
+			wdf->width = ms->scr_ri.ri_width;
+			wdf->depth = ms->scr_ri.ri_depth;
 			wdf->cmsize = 256;
 			return 0;
 
@@ -1309,12 +1166,9 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 					if (new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
 						p9100_init_engine(sc);		
-						p9100loadcmap(sc,0,256);
-						p9100_restore_screen(ms, 
-						    ms->type, ms->chars);
-						p9100_cursor(ms, ms->cursoron, 
-						    ms->cursorrow, 
-						    ms->cursorcol);
+						p9100loadcmap(sc, 0, 256);
+						p9100_clearscreen(sc);
+						vcons_redraw_screen(ms);
 					}
 				}
 			}
@@ -1322,10 +1176,11 @@ p9100_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	return EPASSTHROUGH;
 }
 
-paddr_t
-p9100_mmap(void *v, off_t offset, int prot)
+static paddr_t
+p9100_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	struct p9100_softc *sc = v;	
+	struct vcons_data *vd = v;
+	struct p9100_softc *sc = vd->cookie;	
 	paddr_t pa;
 	
 	/* 'regular' framebuffer mmap()ing */
@@ -1352,25 +1207,18 @@ p9100_mmap(void *v, off_t offset, int prot)
 	return -1;
 }
 
-void
-p9100_init_screen(struct p9100_softc *sc, struct p9100_screen *scr,
+static void
+p9100_init_screen(void *cookie, struct vcons_screen *scr,
     int existing, long *defattr)
 {
-	struct rasops_info *ri = &scr->ri;
-	int cnt;
-
-	scr->sc = sc;
-	/*scr->type = type;*/
-	scr->dispoffset = 0;
-	scr->cursorcol = 0;
-	scr->cursorrow = 0;
-	scr->cursordrawn=0;
+	struct p9100_softc *sc = cookie;
+	struct rasops_info *ri = &scr->scr_ri;
 	   
 	ri->ri_depth = sc->sc_depth << 3;
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
 	ri->ri_bits = bus_space_vaddr(sc->sc_bustag, sc->sc_fb_memh);
 
@@ -1382,107 +1230,17 @@ p9100_init_screen(struct p9100_softc *sc, struct p9100_screen *scr,
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 
-	p9100_allocattr(ri, WS_DEFAULT_FG, WS_DEFAULT_BG, 0, defattr);
-
-	/* 
-	 * we allocate both chars and attributes in one chunk, attributes first 
-	 * because they have the (potentially) bigger alignment 
-	 */
-	cnt=ri->ri_rows * ri->ri_cols;
-	scr->attrs = (long *)malloc(cnt * (sizeof(long) + sizeof(uint16_t)),
-	    M_DEVBUF, M_WAITOK);
-	scr->chars = (uint16_t *)&scr->attrs[cnt];
-
 	/* enable acceleration */
-	ri->ri_hw = scr;
-	ri->ri_ops.copyrows = p9100_copyrows;
-	ri->ri_ops.copycols = p9100_copycols;
+	ri->ri_ops.cursor    = p9100_cursor;
+	ri->ri_ops.copyrows  = p9100_copyrows;
 	ri->ri_ops.eraserows = p9100_eraserows;
+	ri->ri_ops.copycols  = p9100_copycols;
 	ri->ri_ops.erasecols = p9100_erasecols;
-	ri->ri_ops.cursor = p9100_cursor;
+	ri->ri_ops.putchar   = p9100_putchar;
 	ri->ri_ops.allocattr = p9100_allocattr;
-#ifdef PNOZZ_SOFT_PUTCHAR
-	if (sc->putchar == NULL)
-		sc->putchar=ri->ri_ops.putchar;
-#endif
-	ri->ri_ops.putchar = p9100_putchar;
-	
-	if (existing) {
-		scr->active = 1;
-	} else {
-		scr->active = 0;
-	}
-
-	p9100_eraserows(&scr->ri, 0, ri->ri_rows, *defattr);
-
-	LIST_INSERT_HEAD(&sc->screens, scr, next);
 }
 
-int
-p9100_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *defattrp)
-{
-	struct p9100_softc *sc = v;
-	struct p9100_screen *scr;
-
-	scr = malloc(sizeof(struct p9100_screen), M_DEVBUF, M_WAITOK | M_ZERO);
-	p9100_init_screen(sc, scr, 0, defattrp);
-
-	if (sc->active == NULL) {
-		scr->active = 1;
-		sc->active = scr;
-		sc->currenttype = type;
-	}
-
-	*cookiep = scr;
-	*curxp = scr->cursorcol;
-	*curyp = scr->cursorrow;
-	return 0;
-}
-
-void
-p9100_free_screen(void *v, void *cookie)
-{
-	struct p9100_softc *sc = v;
-	struct p9100_screen *scr = cookie;
-
-	LIST_REMOVE(scr, next);
-	if (scr != &p9100_console_screen) {
-		free(scr->attrs, M_DEVBUF);
-		free(scr, M_DEVBUF);
-	} else
-		panic("p9100_free_screen: console");
-
-	if (sc->active == scr)
-		sc->active = 0;
-}
-
-int
-p9100_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	struct p9100_softc *sc = v;
-	struct p9100_screen *scr, *oldscr;
-
-	scr = cookie;
-	oldscr = sc->active;
-	if (scr == oldscr)
-		return 0;
-
-	sc->wanted = scr;
-	sc->switchcb = cb;
-	sc->switchcbarg = cbarg;
-	if (cb) {
-		callout_reset(&sc->switch_callout, 0,
-		    (void(*)(void *))p9100_switch_screen, sc);
-		return EAGAIN;
-	}
-
-	p9100_switch_screen(sc);
-	return 0;
-}
-
-int
+static int
 p9100_putcmap(struct p9100_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
@@ -1519,13 +1277,13 @@ p9100_putcmap(struct p9100_softc *sc, struct wsdisplay_cmap *cm)
 	return 0;
 }
 
-int
+static int
 p9100_getcmap(struct p9100_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
 	int error, i;
-	uint8_t red[256],green[256],blue[256];
+	uint8_t red[256], green[256], blue[256];
 
 	if (index >= 255 || count > 256 || index + count > 256)
 		return EINVAL;
@@ -1550,8 +1308,92 @@ p9100_getcmap(struct p9100_softc *sc, struct wsdisplay_cmap *cm)
 	return 0;
 }
 
+static void
+p9100_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	int32_t xs, xd, y, width, height;
+	
+	xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+	xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+	y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+	width = ri->ri_font->fontwidth * ncols;
+	height = ri->ri_font->fontheight;
+	p9100_bitblt(scr->scr_cookie, xs, y, xd, y, width, height, ROP_SRC);
+}
+
+static void
+p9100_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	int32_t x, y, width, height, bg;
+	
+	x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+	y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+	width = ri->ri_font->fontwidth * ncols;
+	height = ri->ri_font->fontheight;		
+	bg = (uint32_t)ri->ri_devcmap[(fillattr >> 16) & 0xff];
+	p9100_rectfill(scr->scr_cookie, x, y, width, height, bg);
+}
+
+static void
+p9100_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	int32_t x, ys, yd, width, height;
+
+	x = ri->ri_xorigin;
+	ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+	yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+	width = ri->ri_emuwidth;
+	height = ri->ri_font->fontheight * nrows;		
+	p9100_bitblt(scr->scr_cookie, x, ys, x, yd, width, height, ROP_SRC);
+}
+
+static void
+p9100_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	int32_t x, y, width, height, bg;
+	
+	if ((row == 0) && (nrows == ri->ri_rows)) {
+		x = y = 0;
+		width = ri->ri_width;
+		height = ri->ri_height;
+	} else {
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+	}
+	bg = (uint32_t)ri->ri_devcmap[(fillattr >> 16) & 0xff];
+	p9100_rectfill(scr->scr_cookie, x, y, width, height, bg);
+}
+
+
+static int
+p9100_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
+{
+	if ((fg == 0) && (bg == 0))
+	{
+		fg = WS_DEFAULT_FG;
+		bg = WS_DEFAULT_BG;
+	}
+	if (flags & WSATTR_REVERSE) {
+		*attrp = (bg & 0xff) << 24 | (fg & 0xff) << 16 | 
+		    (flags & 0xff) << 8;
+	} else
+		*attrp = (fg & 0xff) << 24 | (bg & 0xff) << 16 | 
+		    (flags & 0xff) << 8;
+	return 0;
+}
+
 #if 0
-int
+static int
 p9100_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 {
 
@@ -1559,7 +1401,9 @@ p9100_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 }
 #endif
 
-int
+#endif /* NWSDISPLAY > 0 */
+
+static int
 p9100_intr(void *arg)
 {
 	/*p9100_softc *sc=arg;
@@ -1567,7 +1411,7 @@ p9100_intr(void *arg)
 	return 1;
 }
 
-void
+static void
 p9100_init_cursor(struct p9100_softc *sc)
 {
 	
@@ -1577,7 +1421,7 @@ p9100_init_cursor(struct p9100_softc *sc)
 
 }
 
-void
+static void
 p9100_set_fbcursor(struct p9100_softc *sc)
 {
 #ifdef PNOZZ_PARANOID
@@ -1585,6 +1429,8 @@ p9100_set_fbcursor(struct p9100_softc *sc)
 	
 	s = splhigh();	/* just in case... */
 #endif
+	sc->sc_last_offset = 0xffffffff;
+
 	/* set position and hotspot */
 	p9100_ramdac_write(sc, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
 	p9100_ramdac_write(sc, DAC_INDX_HI, 0);
@@ -1611,7 +1457,7 @@ p9100_set_fbcursor(struct p9100_softc *sc)
 
 }
 
-void
+static void
 p9100_setcursorcmap(struct p9100_softc *sc)
 {
 	int i;
@@ -1620,6 +1466,7 @@ p9100_setcursorcmap(struct p9100_softc *sc)
 	int s;
 	s = splhigh();	/* just in case... */
 #endif
+	sc->sc_last_offset = 0xffffffff;
 	
 	/* set cursor colours */
 	p9100_ramdac_write(sc, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
@@ -1637,7 +1484,7 @@ p9100_setcursorcmap(struct p9100_softc *sc)
 #endif
 }
 
-void
+static void
 p9100_loadcursor(struct p9100_softc *sc)
 {
 	uint32_t *image, *mask;
@@ -1649,6 +1496,8 @@ p9100_loadcursor(struct p9100_softc *sc)
 	int s;
 	s = splhigh();	/* just in case... */
 #endif
+	sc->sc_last_offset = 0xffffffff;
+
 	/* set cursor shape */
 	p9100_ramdac_write(sc, DAC_INDX_CTL, DAC_INDX_AUTOINCR);
 	p9100_ramdac_write(sc, DAC_INDX_HI, 1);
@@ -1696,6 +1545,35 @@ p9100_loadcursor(struct p9100_softc *sc)
 	for (i=0;i<0x80;i+=2)
 		printf("%08x %08x\n", mask[i], mask[i+1]);
 #endif
+#ifdef PNOZZ_PARANOID
+	splx(s);
+#endif
+}
+
+static void
+p9100_set_extvga(void *cookie, int status)
+{
+	struct p9100_softc *sc = cookie;
+#ifdef PNOZZ_PARANOID
+	int s;
+
+	s = splhigh();
+#endif
+#ifdef DEBUG
+	printf("%s: external VGA %s\n", sc->sc_dev.dv_xname,
+	    status ? "on" : "off");
+#endif
+	sc->sc_last_offset = 0xffffffff;
+
+	if (status) {
+		p9100_ramdac_write_ctl(sc, DAC_POWER,
+		    p9100_ramdac_read_ctl(sc, DAC_POWER) &
+		    ~DAC_POWER_IPWR_DISABLE);
+	} else {
+		p9100_ramdac_write_ctl(sc, DAC_POWER,
+		    p9100_ramdac_read_ctl(sc, DAC_POWER) |
+		    DAC_POWER_IPWR_DISABLE);
+	}
 #ifdef PNOZZ_PARANOID
 	splx(s);
 #endif

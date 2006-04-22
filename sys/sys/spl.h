@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.3 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: spl.h,v 1.3.6.1 2006/04/22 11:40:19 simonb Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -35,7 +35,7 @@
 #endif /* !defined(_KERNEL) */
 
 #define	_SPL_DECL(x, X)	\
-	static inline int spl##x(void) { return splraiseipl(IPL_##X); }
+	static __inline int spl##x(void) { return splraiseipl(IPL_##X); }
 
 #if defined(IPL_SOFTCLOCK)
 _SPL_DECL(softclock, SOFTCLOCK)

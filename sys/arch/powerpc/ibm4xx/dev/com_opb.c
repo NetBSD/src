@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.13 2005/12/11 12:18:42 christos Exp $ */
+/* $NetBSD: com_opb.c,v 1.13.6.1 2006/04/22 11:37:53 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.13 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.13.6.1 2006/04/22 11:37:53 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,7 +119,7 @@ com_opb_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_map(sc->sc_iot, oaa->opb_addr, COM_NPORTS, 0,
 	    &sc->sc_ioh);
 
-	if (prop_get(dev_propdb, &sc->sc_dev, "frequency",
+	if (devprop_get(&sc->sc_dev, "frequency",
 		     &sc->sc_frequency, sizeof(sc->sc_frequency), NULL) == -1) {
 		printf(": unable to get frequency property\n");
 		return;
@@ -169,7 +169,7 @@ com_opb_device_register(struct device *dev, int frequency)
 	int com_freq = frequency;
 
 	/* Set the frequency of the on-chip UART. */
-	if (prop_set(dev_propdb, dev, "frequency",
+	if (devprop_set(dev, "frequency",
 		&com_freq, sizeof(com_freq), PROP_INT, 0) != 0)
 		printf("WARNING: unable to set frequency "
 			"property for %s\n", dev->dv_xname);

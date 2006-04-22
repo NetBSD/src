@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.50 2006/01/03 23:01:51 peter Exp $
+#	$NetBSD: JORNADA720,v 1.50.4.1 2006/04/22 11:37:28 simonb Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.50 $"
+#ident 		"GENERIC-$Revision: 1.50.4.1 $"
 
 # estimated number of users
 maxusers	32
@@ -47,6 +47,8 @@ file-system	NULLFS		# loopback file system
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS		# experimental - Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -121,7 +123,7 @@ options 	NFS_BOOT_DHCP
 # Development and Debugging options
 
 #options 	BOOT_DUMP	# Enable memorydump at boot
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
@@ -142,9 +144,9 @@ saip0	at mainbus?
 
 # Serial
 options 	CONSPEED=19200
-sacom*	at saip? addr 0xd000d000 size 0x24	intr 17
+sacom*	at saip? addr 0x80050000 size 0x24	intr 17
 
-#OS Timer
+# OS Timer
 saost*	at saip? addr 0x90000000 size 0x20
 
 # SA1111 companion chip
@@ -202,25 +204,9 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
-# Peripheral IO Controller
-#pioc0	at mainbus? base 0x00210000
-
-# Serial ports
-#com*	at pioc? offset 0x03f8 irq 10
-#com*	at pioc? offset 0x02f8 irq -1
-#com*	at pioc? offset 0x0338 irq -1
-#com*	at pioc? offset 0x0238 irq -1
-
-# Parallel ports
-#lpt*	at pioc? offset 0x0278 irq 0
-#lpt*	at pioc? offset 0x0378 irq -1
-#lpt*	at pioc? offset 0x03bc irq -1
-
 # wscons options
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=2
-# see arch/hpcarm/dev/j720kbdmap.c for implemented layouts
-#options	J720KBD_LAYOUT=KB_FR
 options 	FONT_VT220L8x10
 # The X server requires theses two options
 options         WSDISPLAY_COMPAT_USL
@@ -236,29 +222,47 @@ options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_KERNEL_COLATTR="(0)"
 #options 	WS_KERNEL_MONOATTR="(0)"
 
-# physical console
+# Physical console
 sed0		at saip?
 hpcfb*		at sed?
 wsdisplay*	at hpcfb?
-j720ssp0	at saip?	addr 0x80070000 size 0x100
-wskbd*		at j720ssp?	mux 1
-wsmouse*	at j720ssp?	mux 0
 
+# SSP port
+j720ssp0	at saip?	addr 0x80070000 size 0x100
+
+# Keyboard driver
+j720kbd*	at j720ssp?
+hpckbd*		at j720kbd?
+wskbd0		at hpckbd? mux 1
+
+# Touch-panel
+j720tp*		at j720ssp?		# touch-panel
+wsmouse*	at j720tp? mux 0	# - as a pointing device
+
+# LCD screen control
+j720lcd*	at j720ssp?
+
+# Power management
+j720pwr*	at j720ssp?
+hpcapm0		at j720pwr?		# power management
+apmdev0		at hpcapm0		# APM
+
+# Pseudo-devices
 pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
-pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp	2		# PPP
-pseudo-device	tun	2		# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	bpfilter 		# packet filter
+pseudo-device	sl			# CSLIP
+pseudo-device	ppp			# PPP
+pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	ipfilter 1		# ip filter
-pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
-#pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	strip			# STarmode Radio IP (Metricon Ricochet)
 
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	vnd	4		# disk-like interface to files
+#pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	cgd	2		# cryptographic disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver

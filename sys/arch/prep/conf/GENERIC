@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2006/02/02 21:32:10 reinoud Exp $
+# $NetBSD: GENERIC,v 1.109.2.1 2006/04/22 11:37:53 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,17 +24,11 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.109 $"
+#ident		"GENERIC-$Revision: 1.109.2.1 $"
 
 maxusers	32
 
 # Platform support
-options 	PLATFORM_IBM_6015		# IBM RS/6000 40P
-options 	PLATFORM_IBM_6040		# IBM ThinkPad 820
-options 	PLATFORM_IBM_6050		# IBM Personal Power Series 830
-options 	PLATFORM_IBM_7248		# IBM RS/6000 7248-100/120/133
-options 	PLATFORM_IBM_7043_140		# IBM RS/6000 43P 7043-140
-options 	PLATFORM_MOTOROLA_ULMB60XA	# Motorola ULMB60xA (?)
 
 options 	OPENPIC				# OpenPIC support (7043-140)
 
@@ -160,6 +154,8 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	RESIDUAL_DATA_DUMP	# verbosely dump residual data
+#options		NVRAM_DUMP	# verbosely dump contents of nvram.
+				# Warning: output may not be ascii!
 
 #options 	NFS_BOOT_BOOTP
 options 	NFS_BOOT_BOOTPARAM
@@ -173,7 +169,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -207,9 +203,14 @@ options 	PCI_NETBSD_CONFIGURE
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+pceb*	at pci? dev ? function ?	# PCI-EISA bridges
+
+# EISA bus support
+eisa*	at pceb?
 
 # ISA bus support
 isa*	at pcib?			# ISA on PCI-ISA bridge
+isa*	at pceb?
 
 # PCMCIA bus support
 pcmcia* at pcic? controller ? socket ?
@@ -225,8 +226,7 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 #isapnp0	at isa?
 
 # on-board I/O for IBM Personal Power Series 830 IDE controller
-obio0	at mainbus0
-
+pnpbus0	at mainbus0
 
 # Console Devices
 
@@ -246,6 +246,7 @@ isabeep0 at pcppi?			# "keyboard" beep
 mcclock0 at isa? port 0x70		# mc146818 and compatible
 mkclock0 at isa? port 0x74		# mk48t18 and compatible
 
+nvram*	at pnpbus?
 
 # Cryptographic Devices
 
@@ -303,12 +304,13 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-
 # IDE and related devices
 
-# IBM Personal Power Series 830 IDE controller
-wdc0	at obio? port 0x1f0 irq 13
-wdc1	at obio? port 0x170 irq 13
+# IDE controller found on most Power Personal machines
+wdc*	at pnpbus?
+
+#fdc0 at pnpbus?	# standard ISA floppy controller
+#fd0 at fdc0 drive ?
 
 # ISA Plug-and-Play IDE controllers
 #wdc*	at isapnp?
@@ -445,7 +447,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #udav*	at uhub? port ?		# Davicom DM9601 based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 #upl*	at uhub? port ?
 
 # Serial adapters
@@ -528,23 +530,23 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
@@ -582,4 +584,3 @@ pseudo-device	wsfont
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
-

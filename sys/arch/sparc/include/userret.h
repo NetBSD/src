@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.3 2005/12/24 20:07:32 perry Exp $ */
+/*	$NetBSD: userret.h,v 1.3.6.1 2006/04/22 11:37:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,15 +50,15 @@
 
 #include <sys/userret.h>
 
-static inline void userret(struct lwp *, int,  u_quad_t);
-static inline void share_fpu(struct lwp *, struct trapframe *);
+static __inline void userret(struct lwp *, int,  u_quad_t);
+static __inline void share_fpu(struct lwp *, struct trapframe *);
 
 
 /*
  * Define the code needed before returning to user mode, for
  * trap, mem_access_fault, and syscall.
  */
-static inline void
+static __inline void
 userret(struct lwp *l, int pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
@@ -96,7 +96,7 @@ userret(struct lwp *l, int pc, u_quad_t oticks)
  * the ktrsysret() in syscall().  Actually, it is likely that the
  * ktrsysret should occur before the call to userret.
  */
-static inline void share_fpu(struct lwp *l, struct trapframe *tf)
+static __inline void share_fpu(struct lwp *l, struct trapframe *tf)
 {
 	if ((tf->tf_psr & PSR_EF) != 0 && cpuinfo.fplwp != l)
 		tf->tf_psr &= ~PSR_EF;

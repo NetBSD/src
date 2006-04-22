@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.3 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.3.6.1 2006/04/22 11:37:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -40,7 +40,7 @@
 #define cpu_hascounter()	(1)
 #define cpu_counter()		cpu_counter32()
 
-static inline uint32_t
+static __inline uint32_t
 cpu_counter32(void)
 {
 	uint32_t rv, rtcu, scratch;
@@ -72,7 +72,7 @@ cpu_counter32(void)
 }
 
 #if 0	/* XXX MI microtime() needs frequency of CPU counter. */
-static inline uint64_t
+static __inline uint64_t
 cpu_frequency(struct cpu_info *ci)
 {
 }

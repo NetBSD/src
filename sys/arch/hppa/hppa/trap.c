@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,16 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.6.1 2006/04/22 11:37:31 simonb Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 /* #define USERTRACE */
 
 #include "opt_kgdb.h"
-#include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
-#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2005/12/24 20:07:04 perry Exp $");
 #include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #include <sys/proc.h>
 #include <sys/signalvar.h>
@@ -825,12 +820,12 @@ do_onfault:
 
 		onfault = l->l_addr->u_pcb.pcb_onfault;
 		l->l_addr->u_pcb.pcb_onfault = 0;
-		ret = uvm_fault(map, va, 0, vftype);
+		ret = uvm_fault(map, va, vftype);
 		l->l_addr->u_pcb.pcb_onfault = onfault;
 
 #ifdef TRAPDEBUG
-		printf("uvm_fault(%p, %x, %d, %d)=%d\n",
-		    map, (u_int)va, 0, vftype, ret);
+		printf("uvm_fault(%p, %x, %d)=%d\n",
+		    map, (u_int)va, vftype, ret);
 #endif
 
 		if (map != kernel_map)
@@ -868,8 +863,8 @@ do_onfault:
 				if (l->l_addr->u_pcb.pcb_onfault) {
 					goto do_onfault;
 				}
-				panic("trap: uvm_fault(%p, %lx, %d, %d): %d",
-				    map, va, 0, vftype, ret);
+				panic("trap: uvm_fault(%p, %lx, %d): %d",
+				    map, va, vftype, ret);
 			}
 		}
 		break;

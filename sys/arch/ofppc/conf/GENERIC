@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88 2006/02/02 21:32:09 reinoud Exp $
+# $NetBSD: GENERIC,v 1.88.2.1 2006/04/22 11:37:51 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.88.2.1 $"
 
 maxusers	32
 
@@ -175,7 +175,7 @@ ofcons*		at ofbus?
 # Generic OpenFirmware real-time clock support
 ofrtc*		at ofbus?
 
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
@@ -192,17 +192,17 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
-pseudo-device	bpfilter	8	# packet filter
+pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP Filter (firewall) and NAT
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
-pseudo-device	tun		4	# network tunneling over tty
+pseudo-device	sl			# Serial Line IP
+pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
-#pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

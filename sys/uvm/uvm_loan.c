@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.58 2006/01/31 14:11:25 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.58.4.1 2006/04/22 11:40:29 simonb Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.58 2006/01/31 14:11:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.58.4.1 2006/04/22 11:40:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -922,6 +922,7 @@ again:
 	pg->loan_count++;
 	uvm_pageactivate(pg);
 	uvm_unlock_pageq();
+	simple_unlock(&anon->an_lock);
 	simple_unlock(&uvm_loanzero_object.vmobjlock);
 	**output = anon;
 	(*output)++;

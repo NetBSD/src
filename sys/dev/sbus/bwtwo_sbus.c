@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.17 2005/12/11 12:23:44 christos Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.17.6.1 2006/04/22 11:39:28 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.17 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.17.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ bwtwoattach_sbus(parent, self, args)
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
 	fb->fb_type.fb_depth = 1;
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
 

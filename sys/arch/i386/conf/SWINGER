@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.77 2005/12/20 05:35:29 thorpej Exp $
+#	$NetBSD: SWINGER,v 1.77.6.1 2006/04/22 11:37:32 simonb Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.77 $"
+#ident 		"SWINGER-$Revision: 1.77.6.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -182,7 +182,7 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -641,7 +641,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters
@@ -783,19 +783,19 @@ include	"arch/i386/conf/GENERIC.local"
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	16	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	ppp		2	# Point-to-Point Protocol
-#pseudo-device	sl		2	# Serial Line IP
-#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-#pseudo-device	tun		2	# network tunneling over tty
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	sl			# Serial Line IP
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+#pseudo-device	tun			# network tunneling over tty
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith			# IPv[46] tcp relay translation i/f
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

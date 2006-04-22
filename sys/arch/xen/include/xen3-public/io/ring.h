@@ -1,3 +1,4 @@
+/* $NetBSD: ring.h,v 1.1.1.1.6.1 2006/04/22 11:38:11 simonb Exp $ */
 /******************************************************************************
  * ring.h
  * 
@@ -182,12 +183,12 @@ typedef struct __name##_back_ring __name##_back_ring_t
     (((_cons) - (_r)->rsp_prod_pvt) >= RING_SIZE(_r))
 
 #define RING_PUSH_REQUESTS(_r) do {                                     \
-    wmb(); /* back sees requests /before/ updated producer index */     \
+    x86_sfence(); /* back sees requests /before/ updated producer index */ \
     (_r)->sring->req_prod = (_r)->req_prod_pvt;                         \
 } while (0)
 
 #define RING_PUSH_RESPONSES(_r) do {                                    \
-    wmb(); /* front sees responses /before/ updated producer index */   \
+    x86_sfence(); /* front sees responses /before/ updated producer index */ \
     (_r)->sring->rsp_prod = (_r)->rsp_prod_pvt;                         \
 } while (0)
 
@@ -224,9 +225,9 @@ typedef struct __name##_back_ring __name##_back_ring_t
 #define RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(_r, _notify) do {           \
     RING_IDX __old = (_r)->sring->req_prod;                             \
     RING_IDX __new = (_r)->req_prod_pvt;                                \
-    wmb(); /* back sees requests /before/ updated producer index */     \
+    x86_lfence(); /* back sees requests /before/ updated producer index */ \
     (_r)->sring->req_prod = __new;                                      \
-    mb(); /* back sees new requests /before/ we check req_event */      \
+    x86_lfence(); /* back sees new requests /before/ we check req_event */ \
     (_notify) = ((RING_IDX)(__new - (_r)->sring->req_event) <           \
                  (RING_IDX)(__new - __old));                            \
 } while (0)
@@ -234,9 +235,9 @@ typedef struct __name##_back_ring __name##_back_ring_t
 #define RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(_r, _notify) do {          \
     RING_IDX __old = (_r)->sring->rsp_prod;                             \
     RING_IDX __new = (_r)->rsp_prod_pvt;                                \
-    wmb(); /* front sees responses /before/ updated producer index */   \
+    x86_lfence(); /* front sees responses /before/ updated producer index */ \
     (_r)->sring->rsp_prod = __new;                                      \
-    mb(); /* front sees new responses /before/ we check rsp_event */    \
+    x86_lfence(); /* front sees new responses /before/ we check rsp_event */ \
     (_notify) = ((RING_IDX)(__new - (_r)->sring->rsp_event) <           \
                  (RING_IDX)(__new - __old));                            \
 } while (0)
@@ -245,7 +246,7 @@ typedef struct __name##_back_ring __name##_back_ring_t
     (_work_to_do) = RING_HAS_UNCONSUMED_REQUESTS(_r);                   \
     if (_work_to_do) break;                                             \
     (_r)->sring->req_event = (_r)->req_cons + 1;                        \
-    mb();                                                               \
+    x86_sfence();                                                       \
     (_work_to_do) = RING_HAS_UNCONSUMED_REQUESTS(_r);                   \
 } while (0)
 
@@ -253,7 +254,7 @@ typedef struct __name##_back_ring __name##_back_ring_t
     (_work_to_do) = RING_HAS_UNCONSUMED_RESPONSES(_r);                  \
     if (_work_to_do) break;                                             \
     (_r)->sring->rsp_event = (_r)->rsp_cons + 1;                        \
-    mb();                                                               \
+    x86_sfence();                                                       \
     (_work_to_do) = RING_HAS_UNCONSUMED_RESPONSES(_r);                  \
 } while (0)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc64,v 1.12 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: std.sparc64,v 1.12.6.1 2006/04/22 11:37:59 simonb Exp $
 
 #
 # Mandatory NetBSD/sparc64 kernel options when building either 32-bit or

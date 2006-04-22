@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16.6.1 2006/04/22 11:37:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.6.1 2006/04/22 11:37:55 simonb Exp $");
+
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +91,7 @@ pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 	if (busno == 0)
 		return 5;	/* 2 on-board SCSI chips, slots 0, 1 and 2 */
 	else
-		return 0;	/* XXX */
+		return 32;	/* XXX */
 }
 
 pcitag_t
@@ -197,3 +200,13 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 	(pc->intr_disestablish)(cookie);
 }
+
+#ifdef PCI_NETBSD_CONFIGURE
+void
+pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
+    int *iline)
+{
+
+	return;
+}
+#endif

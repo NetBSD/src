@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_machdep.h,v 1.5 2005/12/24 20:07:20 perry Exp $	*/
+/*	$NetBSD: cacheops_machdep.h,v 1.5.6.1 2006/04/22 11:37:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -73,7 +73,7 @@
 
 extern void *cache_clr;
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 DCIx_md(void)
 {
 	volatile uint8_t *p = cache_clr;
@@ -86,25 +86,25 @@ DCIx_md(void)
 	return 1;
 }
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 DCIA_md(void)
 {
 	return DCIx_md();
 }
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 DCIS_md(void)
 {
 	return DCIx_md();
 }
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 DCIU_md(void)
 {
 	return DCIx_md();
 }
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 PCIA_md(void)
 {
 	volatile uint8_t *p = cache_clr;

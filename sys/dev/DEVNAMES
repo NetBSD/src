@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.191 2005/11/25 16:42:55 thorpej Exp $
+#	$NetBSD: DEVNAMES,v 1.191.6.1 2006/04/22 11:38:45 simonb Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -36,10 +36,12 @@ adb			mac68k
 adb			macppc
 adc			hpcsh
 ade			alpha
+adt7463c		MI
 adt7467c		MI
 adm1030c		MI
 adv			MI
 adw			MI
+ae			evbmips
 ae			mac68k
 aed			mac68k
 aed			macppc
@@ -80,6 +82,7 @@ an			MI
 ap			newsmips
 apecs			alpha
 apm			i386
+arbus			evbmips
 arc			MI		Attribute
 arckbd			acorn26
 arcpp			acorn26
@@ -117,8 +120,10 @@ atw			MI
 atzsc			amiga
 atzsc			amigappc
 auacer			MI
+aubus			evbmips
 aucc			amiga
 aucc			amigappc
+aucom			evbmips
 auconv			MI		Attribute
 audio			MI
 audio			MI		Attribute
@@ -126,9 +131,14 @@ audioamd		MI
 audiobell		MI		Attribute
 audiocs			MI
 aue			MI
+augpio			evbmips
 auich			MI
 auixp			MI
+aumac			evbmips
+aupci			evbmips
+aupcmcia		evbmips
 aurateconv		MI		Attribute
+aurtc			evbmips
 autri			MI
 auvia			MI
 auxio			sparc64
@@ -211,6 +221,7 @@ ch			MI
 cia			alpha
 ciphy			MI
 cir			MI
+ciss			MI
 clcd			MI
 clcs			MI
 clct			MI
@@ -858,6 +869,7 @@ neptune			x68k
 newgpbusif		hpcmips
 nextdisplay		next68k
 nextkbd			next68k
+nfe			MI
 nhpib			hp300
 ni			MI
 njs			MI
@@ -872,6 +884,7 @@ nubus			mac68k
 nvr			atari
 nvram			macppc
 oak			MI
+obio			evbmips
 obio			evbppc
 obio			iyonix
 obio			mac68k
@@ -1060,6 +1073,7 @@ rpckbd			acorn32
 rt			MI
 rtc			acorn26
 rtc			acorn32
+rtc			evbmips
 rtc			hp300
 rtc			pc532
 rtc			pmppc
@@ -1315,6 +1329,7 @@ uscanner		MI
 usscanner		MI
 ustir			MI
 ut			vax
+utoppy			MI
 uu			vax
 uvisor			MI
 uvscom			MI

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.9 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.9.6.1 2006/04/22 11:37:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -34,6 +34,8 @@
 #ifndef _NS532_PROC_H_
 #define	_NS532_PROC_H_
 
+#include <machine/frame.h>
+
 /*
  * Machine-dependent part of the lwp structure for the pc532.
  */
@@ -45,7 +47,7 @@ struct mdlwp {
  * Machine-dependent part of the proc structure for the pc532.
  */
 struct mdproc {
-	int md_dummy;
+	void (*md_syscall)(struct syscframe); /* Syscall handling function */
 };
 
 #endif /* _NS532_PROC_H_ */

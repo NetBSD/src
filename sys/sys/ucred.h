@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.26 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: ucred.h,v 1.26.6.1 2006/04/22 11:40:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -63,7 +63,7 @@ struct ucred {
 #define FSCRED ((struct ucred *)-2)	/* filesystem credential */
 
 #ifdef _KERNEL
-static inline void crhold(struct ucred *cr)
+static __inline void crhold(struct ucred *cr)
 {
 	simple_lock(&cr->cr_lock);
 	cr->cr_ref++;

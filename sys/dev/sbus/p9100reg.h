@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100reg.h,v 1.2 2005/11/12 23:25:46 macallan Exp $ */
+/*	$NetBSD: p9100reg.h,v 1.2.8.1 2006/04/22 11:39:28 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,16 @@
 #define	DAC_INDX_DATA	0x0218	/* IBM RGB528 Index Data (Indexed Registers) */
 #define	DAC_INDX_CTL	0x021c	/* IBM RGB528 Index Control */
 	#define DAC_INDX_AUTOINCR	0x01
+	
+#define DAC_VERSION	0x01
+#define DAC_POWER	0x05
+	#define DAC_POWER_SCLK_DISABLE	0x10
+	#define DAC_POWER_DDOT_DISABLE	0x08
+	#define DAC_POWER_SYNC_DISABLE	0x04
+	/* Disable internal DAC clock */
+	#define DAC_POWER_ICLK_DISABLE	0x02
+	/* Disable internal DAC power */
+	#define DAC_POWER_IPWR_DISABLE	0x01        
 
 #define DAC_CURSOR_CTL	0x30
 	#define DAC_CURSOR_OFF	0x00

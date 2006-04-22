@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.28 2005/12/07 09:10:16 tsutsui Exp $
+# 	$NetBSD: RC3230,v 1.28.6.1 2006/04/22 11:37:44 simonb Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -139,18 +139,19 @@ ch*	at scsibus? target ? lun ?	# SCSI changer devices
 
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
-#pseudo-device	sl		2	# SLIP interfaces
-#pseudo-device	ppp		2	# PPP interfaces
-pseudo-device	tun		4	# Network "tunnel" device
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	bpfilter	16	# Berkeley Packet Filter
-pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	sl			# SLIP interfaces
+#pseudo-device	ppp			# PPP interfaces
+pseudo-device	tun			# Network "tunnel" device
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	bpfilter		# Berkeley Packet Filter
+pseudo-device	vnd			# disk-like interface to files
 pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	fss		4	# file system snapshot device
-#pseudo-device	strip		1	# radio clock
+#pseudo-device	strip			# radio clock
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	clockctl		# user control of clock subsystem
 
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

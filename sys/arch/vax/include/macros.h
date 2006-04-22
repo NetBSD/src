@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.35 2005/12/24 23:24:07 perry Exp $	*/
+/*	$NetBSD: macros.h,v 1.35.6.1 2006/04/22 11:38:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -40,7 +40,7 @@ void	__blkcpy(const void *, void *, size_t);
 
 /* Here general macros are supposed to be stored */
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 ffs(int reg)
 {
 	register int val;
@@ -55,7 +55,7 @@ ffs(int reg)
 	return	val;
 }
 
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 _remque(void *p)
 {
 	__asm volatile ("remque (%0),%0;clrl 4(%0)"
@@ -64,7 +64,7 @@ _remque(void *p)
 			: "memory" );
 }
 
-static inline void  __attribute__((__unused__))
+static __inline void  __attribute__((__unused__))
 _insque(void *p, void *q)
 {
 	__asm volatile ("insque (%0),(%1)"
@@ -73,7 +73,7 @@ _insque(void *p, void *q)
 			: "memory" );
 }
 
-static inline void * __attribute__((__unused__))
+static __inline void * __attribute__((__unused__))
 memcpy(void *to, const void *from, size_t len)
 {
 	if (len > 65535) {
@@ -86,7 +86,7 @@ memcpy(void *to, const void *from, size_t len)
 	}
 	return to;
 }
-static inline void * __attribute__((__unused__))
+static __inline void * __attribute__((__unused__))
 memmove(void *to, const void *from, size_t len)
 {
 	if (len > 65535) {
@@ -101,7 +101,7 @@ memmove(void *to, const void *from, size_t len)
 }
 
 #ifdef notdef /* bcopy() is obsoleted in kernel */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 bcopy(const void *from, void *to, size_t len)
 {
 	__asm volatile ("movc3 %0,%1,%2"
@@ -111,7 +111,7 @@ bcopy(const void *from, void *to, size_t len)
 }
 #endif
 
-static inline void * __attribute__((__unused__))
+static __inline void * __attribute__((__unused__))
 memset(void *block, int c, size_t len)
 {
 	if (len > 65535) {
@@ -126,7 +126,7 @@ memset(void *block, int c, size_t len)
 }
 
 #ifdef notdef /* bzero() is obsoleted in kernel */
-static inline void __attribute__((__unused__))
+static __inline void __attribute__((__unused__))
 bzero(void *block, size_t len)
 {
 	if (len > 65535)
@@ -142,7 +142,7 @@ bzero(void *block, size_t len)
 
 #ifdef notdef 
 /* XXX - the return syntax of memcmp is wrong */
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 memcmp(const void *b1, const void *b2, size_t len)
 {
 	register int ret;
@@ -155,7 +155,7 @@ memcmp(const void *b1, const void *b2, size_t len)
 	return ret;
 }
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 bcmp(const void *b1, const void *b2, size_t len)
 {
 	register int ret;
@@ -169,7 +169,7 @@ bcmp(const void *b1, const void *b2, size_t len)
 }
 
 /* Begin nya */
-static inline size_t __attribute__((__unused__))
+static __inline size_t __attribute__((__unused__))
 strlen(const char *cp)
 {
         register size_t ret;
@@ -182,7 +182,7 @@ strlen(const char *cp)
         return  ret;
 }
 
-static inline char * __attribute__((__unused__))
+static __inline char * __attribute__((__unused__))
 strcat(char *cp, const char *c2)
 {
         __asm volatile("locc $0,$65535,(%1);"
@@ -196,7 +196,7 @@ strcat(char *cp, const char *c2)
         return  cp;
 }
 
-static inline char * __attribute__((__unused__))
+static __inline char * __attribute__((__unused__))
 strncat(char *cp, const char *c2, size_t count)
 {
         __asm volatile("locc $0,%2,(%1);"
@@ -210,7 +210,7 @@ strncat(char *cp, const char *c2, size_t count)
         return  cp;
 }
 
-static inline char * __attribute__((__unused__))
+static __inline char * __attribute__((__unused__))
 strcpy(char *cp, const char *c2)
 {
         __asm volatile("locc $0,$65535,(%1);"
@@ -223,7 +223,7 @@ strcpy(char *cp, const char *c2)
         return  cp;
 }
 
-static inline char * __attribute__((__unused__))
+static __inline char * __attribute__((__unused__))
 strncpy(char *cp, const char *c2, size_t len)
 {
         __asm volatile("movl %2,%%r2;"
@@ -239,7 +239,7 @@ strncpy(char *cp, const char *c2, size_t len)
         return  cp;
 }
 
-static inline void * __attribute__((__unused__))
+static __inline void * __attribute__((__unused__))
 memchr(const void *cp, int c, size_t len)
 {
         void *ret;
@@ -254,7 +254,7 @@ memchr(const void *cp, int c, size_t len)
         return  ret;
 }
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 strcmp(const char *cp, const char *c2)
 {
         register int ret;
@@ -277,7 +277,7 @@ strcmp(const char *cp, const char *c2)
 #endif
 
 #if 0 /* unused, but no point in deleting it since it _is_ an instruction */
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 locc(int mask, char *cp, size_t size){
 	register ret;
 
@@ -290,7 +290,7 @@ locc(int mask, char *cp, size_t size){
 }
 #endif
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 scanc(u_int size, const u_char *cp, const u_char *table, int mask)
 {
 	register int ret;
@@ -303,7 +303,7 @@ scanc(u_int size, const u_char *cp, const u_char *table, int mask)
 	return ret;
 }
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 skpc(int mask, size_t size, u_char *cp)
 {
 	register int ret;
@@ -320,7 +320,7 @@ skpc(int mask, size_t size, u_char *cp)
  * Set/clear a bit at a memory position; interlocked.
  * Return 0 if already set, 1 otherwise.
  */
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 bbssi(int bitnr, long *addr)
 {
 	register int ret;
@@ -336,7 +336,7 @@ bbssi(int bitnr, long *addr)
 	return ret;
 }
 
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 bbcci(int bitnr, long *addr)
 {
 	register int ret;
@@ -377,7 +377,7 @@ bbcci(int bitnr, long *addr)
  * Insqti() locks and inserts an element into the end of a queue.
  * Returns -1 if interlock failed, 1 if inserted OK and 0 if first in queue.
  */
-static inline int __attribute__((__unused__))
+static __inline int __attribute__((__unused__))
 insqti(void *entry, void *header) {
 	register int ret;
 
@@ -402,7 +402,7 @@ insqti(void *entry, void *header) {
  * Returns -1 if interlock failed, 0 if queue empty, address of the 
  * removed element otherwise.
  */
-static inline void * __attribute__((__unused__))
+static __inline void * __attribute__((__unused__))
 remqhi(void *header) {
 	register void *ret;
 

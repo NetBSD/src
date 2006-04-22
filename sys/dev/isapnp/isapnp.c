@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.49 2005/12/24 20:27:41 perry Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.49.6.1 2006/04/22 11:39:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.49 2005/12/24 20:27:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.49.6.1 2006/04/22 11:39:09 simonb Exp $");
 
 #include "isadma.h"
 
@@ -942,7 +942,7 @@ isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct isapnp_softc *sc = (struct isapnp_softc *) self;
+	struct isapnp_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_iot = ia->ia_iot;
@@ -977,7 +977,7 @@ void
 isapnp_callback(self)
 	struct device *self;
 {
-	struct isapnp_softc *sc = (struct isapnp_softc *)self;
+	struct isapnp_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa, *lpa;
 	int c, d;
 

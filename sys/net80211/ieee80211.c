@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.43 2005/12/13 09:28:31 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.43.6.1 2006/04/22 11:40:08 simonb Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.43 2005/12/13 09:28:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.43.6.1 2006/04/22 11:40:08 simonb Exp $");
 #endif
 
 /*
@@ -280,7 +280,7 @@ ieee80211_mhz2ieee(u_int freq, u_int flags)
 			return (freq - 2407) / 5;
 		else
 			return 15 + ((freq - 2512) / 20);
-	} else if (flags & IEEE80211_CHAN_5GHZ) {	/* 5Ghz band */
+	} else if (flags & IEEE80211_CHAN_5GHZ) {	/* 5 GHz band */
 		return (freq - 5000) / 5;
 	} else {				/* either, guess */
 		if (freq == 2484)
@@ -326,7 +326,7 @@ ieee80211_ieee2mhz(u_int chan, u_int flags)
 			return 2407 + chan*5;
 		else
 			return 2512 + ((chan-15)*20);
-	} else if (flags & IEEE80211_CHAN_5GHZ) {/* 5Ghz band */
+	} else if (flags & IEEE80211_CHAN_5GHZ) {/* 5 GHz band */
 		return 5000 + (chan*5);
 	} else {				/* either, guess */
 		if (chan == 14)
@@ -839,9 +839,11 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	modeflags = chanflags[mode];
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
+		if (c->ic_flags == 0)
+			continue;
 		if (mode == IEEE80211_MODE_AUTO) {
 			/* ignore turbo channels for autoselect */
-			if ((c->ic_flags &~ IEEE80211_CHAN_TURBO) != 0)
+			if ((c->ic_flags & IEEE80211_CHAN_TURBO) == 0)
 				break;
 		} else {
 			if ((c->ic_flags & modeflags) == modeflags)
@@ -860,9 +862,11 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	memset(ic->ic_chan_active, 0, sizeof(ic->ic_chan_active));
 	for (i = 0; i <= IEEE80211_CHAN_MAX; i++) {
 		c = &ic->ic_channels[i];
+		if (c->ic_flags == 0)
+			continue;
 		if (mode == IEEE80211_MODE_AUTO) {
 			/* take anything but pure turbo channels */
-			if ((c->ic_flags &~ IEEE80211_CHAN_TURBO) != 0)
+			if ((c->ic_flags & IEEE80211_CHAN_TURBO) == 0)
 				setbit(ic->ic_chan_active, i);
 		} else {
 			if ((c->ic_flags & modeflags) == modeflags)
@@ -937,13 +941,9 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 enum ieee80211_phymode
 ieee80211_chan2mode(struct ieee80211com *ic, struct ieee80211_channel *chan)
 {
-	if (IEEE80211_IS_CHAN_5GHZ(chan)) {
-		/*
-		 * This assumes all 11a turbo channels are also
-		 * usable withut turbo, which is currently true.
-		 */
-		if (ic->ic_curmode == IEEE80211_MODE_TURBO_A)
-			return IEEE80211_MODE_TURBO_A;
+	if (IEEE80211_IS_CHAN_T(chan)) {
+		return IEEE80211_MODE_TURBO_A;
+	} else if (IEEE80211_IS_CHAN_5GHZ(chan)) {
 		return IEEE80211_MODE_11A;
 	} else if (IEEE80211_IS_CHAN_FHSS(chan))
 		return IEEE80211_MODE_FH;

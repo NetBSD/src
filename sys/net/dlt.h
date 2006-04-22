@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.10 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: dlt.h,v 1.10.6.1 2006/04/22 11:40:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -102,9 +102,13 @@
 #define DLT_JUNIPER_ATM1        137
 #define DLT_APPLE_IP_OVER_IEEE1394	138	/* Apple IP-over-IEEE 1394 */
 
-/*
- * 139 through 142 are reserved for SS7.
- */
+/* Various SS7 encapsulations */
+#define DLT_MTP2_WITH_PHDR	139 /* pseudo-header with various info,
+				       followed by MTP2 */
+#define DLT_MTP2		140 /* MTP2, without pseudo-header */
+#define DLT_MTP3		141 /* MTP3, without pseudo-header or MTP2 */
+#define DLT_SCCP		142 /* SCCP, without pseudo-header or MTP2
+				       or MTP3 */
 
 #define DLT_DOCSIS		143	/* Reserved for DOCSIS MAC frames. */
 #define DLT_LINUX_IRDA		144	/* Linux-IrDA packets */
@@ -115,6 +119,29 @@
 
 #define DLT_IEEE802_11_RADIO_AVS	163	/* 802.11 plus AVS header */
 #define DLT_JUNIPER_MONITOR     164	/* Juniper-private data link type */
+#define DLT_BACNET_MS_TP	165
+#define DLT_PPP_PPPD		166	/* Another PPP variant (Linux? */
+
+#define DLT_JUNIPER_PPPOE	167
+#define DLT_JUNIPER_PPPOE_ATM	168
+#define DLT_JUNIPER_PIC_PEER	174
+#define DLT_JUNIPER_ETHER	178
+#define DLT_JUNIPER_PPP		179
+#define DLT_JUNIPER_FRELAY	180
+#define DLT_JUNIPER_CHDLC	181
+
+#define DLT_GPRS_LLC		169	/* GPRS LLC */
+#define DLT_GPF_T		170	/* GPF-T (ITU-T G.7041/Y.1303) */
+#define DLT_GPF_F		171	/* GPF-F (ITU-T G.7041/Y.1303) */
+
+#define DLT_GCOM_T1E1		172
+#define DLT_GCOM_SERIAL		173
+
+/* "EndaceRecordFormat" */
+#define DLT_ERF_ETH		175	/* Ethernet */
+#define DLT_ERF_POS		176	/* Packet-over-SONET */
+
+#define DLT_LINUX_LAPD		177	/* Raw LAPD for vISDN */
 
 /*
  * NetBSD-specific generic "raw" link type.  The upper 16-bits indicate

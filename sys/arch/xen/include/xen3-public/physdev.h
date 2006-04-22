@@ -1,3 +1,4 @@
+/* $NetBSD: physdev.h,v 1.1.1.1.6.1 2006/04/22 11:38:11 simonb Exp $ */
 
 #ifndef __XEN_PUBLIC_PHYSDEV_H__
 #define __XEN_PUBLIC_PHYSDEV_H__

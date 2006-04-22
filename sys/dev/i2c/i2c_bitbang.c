@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_bitbang.c,v 1.2 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: i2c_bitbang.c,v 1.2.6.1 2006/04/22 11:38:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
 
-#define	SET(x)		ops->ibo_set_bits(v, (x))
+#define	SETBITS(x)	ops->ibo_set_bits(v, (x))
 #define	DIR(x)		ops->ibo_set_dir(v, (x))
 #define	READ		ops->ibo_read_bits(v)
 
@@ -60,11 +60,11 @@ i2c_bitbang_send_start(void *v, int flags, i2c_bitbang_ops_t ops)
 
 	DIR(OUTPUT);
 
-	SET(SDA | SCL);
+	SETBITS(SDA | SCL);
 	delay(5);		/* bus free time (4.7 uS) */
-	SET(      SCL);
+	SETBITS(      SCL);
 	delay(4);		/* start hold time (4.0 uS) */
-	SET(        0);
+	SETBITS(        0);
 	delay(5);		/* clock low time (4.7 uS) */
 
 	return (0);
@@ -77,9 +77,9 @@ i2c_bitbang_send_stop(void *v, int flags, i2c_bitbang_ops_t ops)
 
 	DIR(OUTPUT);
 
-	SET(      SCL);
+	SETBITS(      SCL);
 	delay(4);		/* stop setup time (4.0 uS) */
-	SET(SDA | SCL);
+	SETBITS(SDA | SCL);
 
 	return (0);
 }
@@ -109,29 +109,29 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags,
 	uint32_t bit;
 
 	DIR(INPUT);
-	SET(SDA      );
+	SETBITS(SDA      );
 
 	for (i = 0; i < 8; i++) {
 		val <<= 1;
-		SET(SDA | SCL);
+		SETBITS(SDA | SCL);
 		delay(4);	/* clock high time (4.0 uS) */
 		if (READ & SDA)
 			val |= 1;
-		SET(SDA      );
+		SETBITS(SDA      );
 		delay(5);	/* clock low time (4.7 uS) */
 	}
 
 	bit = (flags & I2C_F_LAST) ? SDA : 0;
 	DIR(OUTPUT);
-	SET(bit      );
+	SETBITS(bit      );
 	delay(1);	/* data setup time (250 nS) */
-	SET(bit | SCL);
+	SETBITS(bit | SCL);
 	delay(4);	/* clock high time (4.0 uS) */
-	SET(bit      );
+	SETBITS(bit      );
 	delay(5);	/* clock low time (4.7 uS) */
 
 	DIR(INPUT);
-	SET(SDA      );
+	SETBITS(SDA      );
 	delay(5);
 
 	if ((flags & (I2C_F_STOP | I2C_F_LAST)) == (I2C_F_STOP | I2C_F_LAST))
@@ -153,22 +153,22 @@ i2c_bitbang_write_byte(void *v, uint8_t val, int flags,
 
 	for (mask = 0x80; mask != 0; mask >>= 1) {
 		bit = (val & mask) ? SDA : 0;
-		SET(bit      );
+		SETBITS(bit      );
 		delay(1);	/* data setup time (250 nS) */
-		SET(bit | SCL);
+		SETBITS(bit | SCL);
 		delay(4);	/* clock high time (4.0 uS) */
-		SET(bit      );
+		SETBITS(bit      );
 		delay(5);	/* clock low time (4.7 uS) */
 	}
 
 	DIR(INPUT);
 
-	SET(SDA      );
+	SETBITS(SDA      );
 	delay(5);
-	SET(SDA | SCL);
+	SETBITS(SDA | SCL);
 	delay(4);
 	error = (READ & SDA) ? EIO : 0;
-	SET(SDA      );
+	SETBITS(SDA      );
 	delay(5);
 
 	if (flags & I2C_F_STOP)

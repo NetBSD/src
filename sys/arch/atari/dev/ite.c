@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.49 2005/12/24 23:23:59 perry Exp $	*/
+/*	$NetBSD: ite.c,v 1.49.6.1 2006/04/22 11:37:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49 2005/12/24 23:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49.6.1 2006/04/22 11:37:20 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -240,7 +240,7 @@ iteattach(pdp, dp, auxp)
 	ip = (struct ite_softc *)dp;
 
 	maj = cdevsw_lookup_major(&ite_cdevsw);
-	unit = (dp != NULL) ? ip->device.dv_unit : cons_ite;
+	unit = (dp != NULL) ? device_unit(&ip->device) : cons_ite;
 	gp->g_itedev = makedev(maj, unit);
 
 	if (dp) {

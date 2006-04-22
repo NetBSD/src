@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.23 2005/12/07 09:10:13 tsutsui Exp $
+#	$NetBSD: TS7200,v 1.23.6.1 2006/04/22 11:37:22 simonb Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -426,11 +426,11 @@ audio*	at audiobus?
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 pseudo-device	kttcp			# network loopback
 
@@ -469,7 +469,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 #options 	WSDISPLAY_COMPAT_USL		# VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -479,10 +479,6 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 #options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 # console scrolling support.
 #options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console

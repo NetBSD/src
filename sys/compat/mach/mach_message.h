@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.28 2005/12/11 12:20:20 christos Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.28.6.1 2006/04/22 11:38:16 simonb Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -263,13 +263,13 @@ struct mach_message {
 #define MACH_OOL_FREE	0x1	/* Free kernel buffer after copyout */
 #define MACH_OOL_TRACE	0x2	/* ktrace OOL data */
 
-inline int mach_ool_copyin(struct lwp *, const void *, void **, size_t, int);
-inline int mach_ool_copyout(struct lwp *, const void *, void **, size_t, int);
-inline void mach_set_trailer(void *, size_t);
-inline void mach_set_header(void *, void *, size_t);
-inline void mach_add_port_desc(void *, mach_port_name_t);
-inline void mach_add_ool_ports_desc(void *, void *, int);
-inline void mach_add_ool_desc(void *, void *, size_t);
+__inline int mach_ool_copyin(struct lwp *, const void *, void **, size_t, int);
+__inline int mach_ool_copyout(struct lwp *, const void *, void **, size_t, int);
+__inline void mach_set_trailer(void *, size_t);
+__inline void mach_set_header(void *, void *, size_t);
+__inline void mach_add_port_desc(void *, mach_port_name_t);
+__inline void mach_add_ool_ports_desc(void *, void *, int);
+__inline void mach_add_ool_desc(void *, void *, size_t);
 void mach_message_init(void);
 struct mach_message *mach_message_get(mach_msg_header_t *,
     size_t, struct mach_port *, struct lwp *);

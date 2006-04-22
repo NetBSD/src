@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.115 2005/12/27 00:00:29 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.115.6.1 2006/04/22 11:39:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.115 2005/12/27 00:00:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.115.6.1 2006/04/22 11:39:59 simonb Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -155,8 +155,8 @@ static int sokvawaiters;
 #define	SOCK_LOAN_THRESH	4096
 #define	SOCK_LOAN_CHUNK		65536
 
-static size_t sodopendfree(struct socket *);
-static size_t sodopendfreel(struct socket *);
+static size_t sodopendfree(void);
+static size_t sodopendfreel(void);
 
 static vsize_t
 sokvareserve(struct socket *so, vsize_t len)
@@ -173,7 +173,7 @@ sokvareserve(struct socket *so, vsize_t len)
 		 * try to do pendfree.
 		 */
 
-		freed = sodopendfreel(so);
+		freed = sodopendfreel();
 
 		/*
 		 * if some kva was freed, try again.
@@ -292,14 +292,14 @@ sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size)
 }
 
 static size_t
-sodopendfree(struct socket *so)
+sodopendfree()
 {
 	int s;
 	size_t rv;
 
 	s = splvm();
 	simple_lock(&so_pendfree_slock);
-	rv = sodopendfreel(so);
+	rv = sodopendfreel();
 	simple_unlock(&so_pendfree_slock);
 	splx(s);
 
@@ -315,7 +315,7 @@ sodopendfree(struct socket *so)
  */
 
 static size_t
-sodopendfreel(struct socket *so)
+sodopendfreel()
 {
 	size_t rv = 0;
 
@@ -390,7 +390,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	vaddr_t lva, va;
 	int npgs, i, error;
 
-	if (uio->uio_segflg != UIO_USERSPACE)
+	if (VMSPACE_IS_KERNEL_P(uio->uio_vmspace))
 		return (0);
 
 	if (iov->iov_len < (size_t) space)
@@ -405,13 +405,12 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 
 	/* XXX KDASSERT */
 	KASSERT(npgs <= M_EXT_MAXPAGES);
-	KASSERT(uio->uio_lwp != NULL);
 
 	lva = sokvaalloc(len, so);
 	if (lva == 0)
 		return 0;
 
-	error = uvm_loan(&uio->uio_lwp->l_proc->p_vmspace->vm_map, sva, len,
+	error = uvm_loan(&uio->uio_vmspace->vm_map, sva, len,
 	    m->m_ext.ext_pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		sokvafree(lva, len);
@@ -706,7 +705,7 @@ sodisconnect(struct socket *so)
 	    (struct lwp *)0);
  bad:
 	splx(s);
-	sodopendfree(so);
+	sodopendfree();
 	return (error);
 }
 
@@ -738,7 +737,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	int		error, s, dontroute, atomic;
 
 	p = l->l_proc;
-	sodopendfree(so);
+	sodopendfree();
 
 	clen = 0;
 	atomic = sosendallatonce(so) || top;
@@ -934,7 +933,7 @@ int
 soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct mbuf **mp0, struct mbuf **controlp, int *flagsp)
 {
-	struct lwp *l;
+	struct lwp *l = curlwp;
 	struct mbuf	*m, **mp;
 	int		flags, len, error, s, offset, moff, type, orig_resid;
 	const struct protosw	*pr;
@@ -945,7 +944,6 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	mp = mp0;
 	type = 0;
 	orig_resid = uio->uio_resid;
-	l = uio->uio_lwp;
 
 	if (paddr)
 		*paddr = 0;
@@ -957,7 +955,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		flags = 0;
 
 	if ((flags & MSG_DONTWAIT) == 0)
-		sodopendfree(so);
+		sodopendfree();
 
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);

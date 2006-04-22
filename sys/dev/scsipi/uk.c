@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.46 2005/12/11 12:23:51 christos Exp $	*/
+/*	$NetBSD: uk.c,v 1.46.6.1 2006/04/22 11:39:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.46 2005/12/11 12:23:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.46.6.1 2006/04/22 11:39:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ ukmatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 ukattach(struct device *parent, struct device *self, void *aux)
 {
-	struct uk_softc *uk = (void *)self;
+	struct uk_softc *uk = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
@@ -136,14 +136,14 @@ ukactivate(struct device *self, enum devact act)
 static int
 ukdetach(struct device *self, int flags)
 {
-	/*struct uk_softc *uk = (struct uk_softc *) self;*/
+	/*struct uk_softc *uk = device_private(self);*/
 	int cmaj, mn;
 
 	/* locate the major number */
 	cmaj = cdevsw_lookup_major(&uk_cdevsw);
 
 	/* Nuke the vnodes for any open instances */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(cmaj, mn, mn, VCHR);
 
 	return (0);

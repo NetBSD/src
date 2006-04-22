@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.7 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.7.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.7 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.7.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -258,7 +258,7 @@ void
 qtattach(struct device *parent, struct device *self, void *aux)
 	{
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
-	register struct qt_softc *sc = (struct qt_softc *)self;
+	register struct qt_softc *sc = device_private(self);
 	register struct ifnet *ifp = &sc->is_if;
 	struct uba_attach_args *ua = aux;
 
@@ -360,14 +360,15 @@ qtinit(struct ifnet *ifp)
 	}
 
 	if (sc->sc_ib == NULL) {
-		if (if_ubaminit(&sc->sc_ifuba, (void *)sc->sc_dev.dv_parent,
+		if (if_ubaminit(&sc->sc_ifuba,
+		    (void *)device_parent(&sc->sc_dev),
 		    MCLBYTES, sc->sc_ifr, NRCV, sc->sc_ifw, NXMT)) {
 			printf("%s: can't initialize\n", XNAME);
 			ifp->if_flags &= ~IFF_UP;
 			return 0;
 		}
 		sc->sc_ui.ui_size = sizeof(struct qt_cdata);
-		if ((error = ubmemalloc((void *)sc->sc_dev.dv_parent,
+		if ((error = ubmemalloc((void *)device_parent(&sc->sc_dev),
 		    &sc->sc_ui, 0))) {
 			printf(": failed ubmemalloc(), error = %d\n", error);
 			return error;

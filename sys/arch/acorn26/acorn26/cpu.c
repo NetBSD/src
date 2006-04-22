@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.19 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: cpu.c,v 1.19.6.1 2006/04/22 11:37:09 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2005/12/24 20:06:46 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19.6.1 2006/04/22 11:37:09 simonb Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -113,7 +113,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("ARM3 (rev. %d)", cpu_type & CPU_ID_REVISION_MASK);
 #ifdef CPU_ARM3
 		supported = 1;
-		cpu_arm3_setup(self, self->dv_cfdata->cf_flags);
+		cpu_arm3_setup(self, device_cfdata(self)->cf_flags);
 #endif
 		break;
 	default:

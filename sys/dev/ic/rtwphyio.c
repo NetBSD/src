@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.10 2005/12/29 22:27:17 dyoung Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.10.6.1 2006/04/22 11:38:56 simonb Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.10 2005/12/29 22:27:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.10.6.1 2006/04/22 11:38:56 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,12 +64,12 @@ static int rtw_macbangbits_timeout = 100;
 uint8_t
 rtw_bbp_read(struct rtw_regs *regs, u_int addr)
 {
-	KASSERT((addr & ~PRESHIFT(RTW_BB_ADDR_MASK)) == 0);
+	KASSERT((addr & ~SHIFTOUT_MASK(RTW_BB_ADDR_MASK)) == 0);
 	RTW_WRITE(regs, RTW_BB,
-	    LSHIFT(addr, RTW_BB_ADDR_MASK) | RTW_BB_RD_MASK | RTW_BB_WR_MASK);
+	    SHIFTIN(addr, RTW_BB_ADDR_MASK) | RTW_BB_RD_MASK | RTW_BB_WR_MASK);
 	delay(10);	/* XXX */
 	RTW_WBR(regs, RTW_BB, RTW_BB);
-	return MASK_AND_RSHIFT(RTW_READ(regs, RTW_BB), RTW_BB_RD_MASK);
+	return SHIFTOUT(RTW_READ(regs, RTW_BB), RTW_BB_RD_MASK);
 }
 
 int
@@ -83,13 +83,13 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 	RTW_DPRINTF(RTW_DEBUG_PHYIO,
 	    ("%s: bbp[%u] <- %u\n", __func__, addr, val));
 
-	KASSERT((addr & ~PRESHIFT(RTW_BB_ADDR_MASK)) == 0);
-	KASSERT((val & ~PRESHIFT(RTW_BB_WR_MASK)) == 0);
+	KASSERT((addr & ~SHIFTOUT_MASK(RTW_BB_ADDR_MASK)) == 0);
+	KASSERT((val & ~SHIFTOUT_MASK(RTW_BB_WR_MASK)) == 0);
 
-	wrbbp = LSHIFT(addr, RTW_BB_ADDR_MASK) | RTW_BB_WREN |
-	    LSHIFT(val, RTW_BB_WR_MASK) | RTW_BB_RD_MASK,
+	wrbbp = SHIFTIN(addr, RTW_BB_ADDR_MASK) | RTW_BB_WREN |
+	    SHIFTIN(val, RTW_BB_WR_MASK) | RTW_BB_RD_MASK,
 
-	rdbbp = LSHIFT(addr, RTW_BB_ADDR_MASK) |
+	rdbbp = SHIFTIN(addr, RTW_BB_ADDR_MASK) |
 	    RTW_BB_WR_MASK | RTW_BB_RD_MASK;
 
 	RTW_DPRINTF(RTW_DEBUG_PHYIO,
@@ -102,7 +102,7 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 		RTW_WRITE(regs, RTW_BB, rdbbp);
 		RTW_SYNC(regs, RTW_BB, RTW_BB);
 		delay(BBP_WRITE_DELAY);	/* 1 microsecond */
-		if (MASK_AND_RSHIFT(RTW_READ(regs, RTW_BB),
+		if (SHIFTOUT(RTW_READ(regs, RTW_BB),
 		                    RTW_BB_RD_MASK) == val) {
 			RTW_DPRINTF(RTW_DEBUG_PHYIO,
 			    ("%s: finished in %dus\n", __func__,
@@ -221,7 +221,7 @@ rtw_grf5101_mac_crypt(u_int addr, uint32_t val)
 	                (caesar[(addr >> 1) & 0xf]      << 12) |
 	                ((addr & 0x1)                   << 16) |
 	                (caesar[EXTRACT_NIBBLE(val, 3)] << 24);
-	return LSHIFT(data_and_addr,
+	return SHIFTIN(data_and_addr,
 	    RTW_PHYCFG_MAC_PHILIPS_ADDR_MASK|RTW_PHYCFG_MAC_PHILIPS_DATA_MASK);
 #undef EXTRACT_NIBBLE
 }
@@ -261,29 +261,29 @@ rtw_rf_hostwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 	case RTW_RFCHIPID_MAXIM:
 		nbits = 16;
 		lo_to_hi = 0;
-		bits = LSHIFT(val, MAX2820_TWI_DATA_MASK) |
-		       LSHIFT(addr, MAX2820_TWI_ADDR_MASK);
+		bits = SHIFTIN(val, MAX2820_TWI_DATA_MASK) |
+		       SHIFTIN(addr, MAX2820_TWI_ADDR_MASK);
 		break;
 	case RTW_RFCHIPID_PHILIPS:
-		KASSERT((addr & ~PRESHIFT(SA2400_TWI_ADDR_MASK)) == 0);
-		KASSERT((val & ~PRESHIFT(SA2400_TWI_DATA_MASK)) == 0);
-		bits = LSHIFT(val, SA2400_TWI_DATA_MASK) |
-		       LSHIFT(addr, SA2400_TWI_ADDR_MASK) | SA2400_TWI_WREN;
+		KASSERT((addr & ~SHIFTOUT_MASK(SA2400_TWI_ADDR_MASK)) == 0);
+		KASSERT((val & ~SHIFTOUT_MASK(SA2400_TWI_DATA_MASK)) == 0);
+		bits = SHIFTIN(val, SA2400_TWI_DATA_MASK) |
+		       SHIFTIN(addr, SA2400_TWI_ADDR_MASK) | SA2400_TWI_WREN;
 		nbits = 32;
 		lo_to_hi = 1;
 		break;
 	case RTW_RFCHIPID_GCT:
-		KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
-		KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
+		KASSERT((addr & ~SHIFTOUT_MASK(SI4126_TWI_ADDR_MASK)) == 0);
+		KASSERT((val & ~SHIFTOUT_MASK(SI4126_TWI_DATA_MASK)) == 0);
 		bits = rtw_grf5101_host_crypt(addr, val);
 		nbits = 21;
 		lo_to_hi = 1;
 		break;
 	case RTW_RFCHIPID_RFMD:
-		KASSERT((addr & ~PRESHIFT(SI4126_TWI_ADDR_MASK)) == 0);
-		KASSERT((val & ~PRESHIFT(SI4126_TWI_DATA_MASK)) == 0);
-		bits = LSHIFT(val, SI4126_TWI_DATA_MASK) |
-		       LSHIFT(addr, SI4126_TWI_ADDR_MASK);
+		KASSERT((addr & ~SHIFTOUT_MASK(SI4126_TWI_ADDR_MASK)) == 0);
+		KASSERT((val & ~SHIFTOUT_MASK(SI4126_TWI_DATA_MASK)) == 0);
+		bits = SHIFTIN(val, SI4126_TWI_DATA_MASK) |
+		       SHIFTIN(addr, SI4126_TWI_ADDR_MASK);
 		nbits = 22;
 		lo_to_hi = 0;
 		break;
@@ -304,11 +304,11 @@ rtw_maxim_swizzle(u_int addr, uint32_t val)
 	uint32_t hidata, lodata;
 
 	KASSERT((val & ~(RTW_MAXIM_LODATA_MASK|RTW_MAXIM_HIDATA_MASK)) == 0);
-	lodata = MASK_AND_RSHIFT(val, RTW_MAXIM_LODATA_MASK);
-	hidata = MASK_AND_RSHIFT(val, RTW_MAXIM_HIDATA_MASK);
-	return LSHIFT(lodata, RTW_PHYCFG_MAC_MAXIM_LODATA_MASK) |
-	    LSHIFT(hidata, RTW_PHYCFG_MAC_MAXIM_HIDATA_MASK) |
-	    LSHIFT(addr, RTW_PHYCFG_MAC_MAXIM_ADDR_MASK);
+	lodata = SHIFTOUT(val, RTW_MAXIM_LODATA_MASK);
+	hidata = SHIFTOUT(val, RTW_MAXIM_HIDATA_MASK);
+	return SHIFTIN(lodata, RTW_PHYCFG_MAC_MAXIM_LODATA_MASK) |
+	    SHIFTIN(hidata, RTW_PHYCFG_MAC_MAXIM_HIDATA_MASK) |
+	    SHIFTIN(addr, RTW_PHYCFG_MAC_MAXIM_ADDR_MASK);
 }
 
 /* Tell the MAC what to bang over the 3-wire interface. */
@@ -331,12 +331,12 @@ rtw_rf_macwrite(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
 	default:		/* XXX */
 	case RTW_RFCHIPID_PHILIPS:
 		KASSERT(
-		    (addr & ~PRESHIFT(RTW_PHYCFG_MAC_PHILIPS_ADDR_MASK)) == 0);
+		    (addr & ~SHIFTOUT_MASK(RTW_PHYCFG_MAC_PHILIPS_ADDR_MASK)) == 0);
 		KASSERT(
-		    (val & ~PRESHIFT(RTW_PHYCFG_MAC_PHILIPS_DATA_MASK)) == 0);
+		    (val & ~SHIFTOUT_MASK(RTW_PHYCFG_MAC_PHILIPS_DATA_MASK)) == 0);
 
-		reg = LSHIFT(addr, RTW_PHYCFG_MAC_PHILIPS_ADDR_MASK) |
-		      LSHIFT(val, RTW_PHYCFG_MAC_PHILIPS_DATA_MASK);
+		reg = SHIFTIN(addr, RTW_PHYCFG_MAC_PHILIPS_ADDR_MASK) |
+		      SHIFTIN(val, RTW_PHYCFG_MAC_PHILIPS_DATA_MASK);
 	}
 
 	switch (rfchipid) {

@@ -1,10 +1,10 @@
 /*-
- * $Id: if_lmc.h,v 1.1 2005/12/06 03:01:45 christos Exp $
+ * $NetBSD: if_lmc.h,v 1.1.8.1 2006/04/22 11:39:14 simonb Exp $
  *
- * Copyright (c) 2002-2004 David Boggs. (boggs@boggs.palo-alto.ca.us)
+ * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
  *
- * BSD License:
+ * BSD LICENSE:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,47 +27,46 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * GNU General Public License:
+ * GNU GENERAL PUBLIC LICENSE:
  *
- * This program is free software; you can redistribute it and/or modify it 
- * under the terms of the GNU General Public License as published by the Free 
- * Software Foundation; either version 2 of the License, or (at your option) 
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
- * 
- * This program is distributed in the hope that it will be useful, but WITHOUT 
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for 
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 
+ * this program; if not, write to the Free Software Foundation, Inc., 59
  * Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
+
 #ifndef IF_LMC_H
 #define IF_LMC_H
 
 #define DEVICE_NAME		"lmc"
 
-/* Linux RPM-style version information */
-#define DRIVER_MAJOR_VERSION	2005	/* year */
-#define DRIVER_MINOR_VERSION	10	/* month */
-#define DRIVER_SUB_VERSION	12	/* day */
+#define VER_YEAR		2006
+#define VER_MONTH		4
+#define VER_DAY			11
 
 /* netgraph stuff */
-#define NG_LMC_NODE_TYPE	DEVICE_NAME
-#define NGM_LMC_COOKIE		1129183334	/* date -u +'%s' */
+#define NG_LMC_NODE_TYPE	"if_"DEVICE_NAME
+#define NGM_LMC_COOKIE		1144752198	/* date -u +'%s' */
 
 /* Tulip PCI configuration registers */
-#define	TLP_CFID		0x00		/*  0: CFg ID register     */
-#define	TLP_CFCS		0x04		/*  1: CFg Command/Status  */
-#define	TLP_CFRV		0x08		/*  2: CFg ReVision        */
-#define	TLP_CFLT		0x0C		/*  3: CFg Latency Timer   */
-#define	TLP_CBIO		0x10		/*  4: Cfg Base IO address */
-#define	TLP_CBMA		0x14		/*  5: Cfg Base Mem Addr   */
-#define TLP_CSID		0x2C		/* 11: Cfg Subsys ID reg   */
-#define	TLP_CFIT		0x3C		/* 15: CFg InTerrupt       */
-#define	TLP_CFDD		0x40		/* 16: CFg Driver Data     */
+#define TLP_CFID		0x00	/*  0: CFg ID register     */
+#define TLP_CFCS		0x04	/*  1: CFg Command/Status  */
+#define TLP_CFRV		0x08	/*  2: CFg ReVision        */
+#define TLP_CFLT		0x0C	/*  3: CFg Latency Timer   */
+#define TLP_CBIO		0x10	/*  4: Cfg Base IO address */
+#define TLP_CBMA		0x14	/*  5: Cfg Base Mem Addr   */
+#define TLP_CSID		0x2C	/* 11: Cfg Subsys ID reg   */
+#define TLP_CFIT		0x3C	/* 15: CFg InTerrupt       */
+#define TLP_CFDD		0x40	/* 16: CFg Driver Data     */
 
 #define TLP_CFID_TULIP		0x00091011	/* DEC 21140A Ethernet chip */
 
@@ -83,12 +82,12 @@
 #define TLP_CFLT_LATENCY	0x0000FF00
 #define TLP_CFLT_CACHE		0x000000FF
 
-#define TLP_CSID_HSSI		0x00031376	/* LMC 5200 HSSI card */
-#define TLP_CSID_T3		0x00041376	/* LMC 5245 T3   card */
-#define TLP_CSID_SSI		0x00051376	/* LMC 1000 SSI  card */
-#define TLP_CSID_T1E1		0x00061376	/* LMC 1200 T1E1 card */
-#define TLP_CSID_HSSIc		0x00071376	/* LMC 5200 HSSI cPCI */
-#define TLP_CSID_SDSL		0x00081376	/* LMC 1168 SDSL card */
+#define CSID_LMC_HSSI		0x00031376	/* LMC 5200 HSSI card */
+#define CSID_LMC_T3		0x00041376	/* LMC 5245 T3   card */
+#define CSID_LMC_SSI		0x00051376	/* LMC 1000 SSI  card */
+#define CSID_LMC_T1E1		0x00061376	/* LMC 1200 T1E1 card */
+#define CSID_LMC_HSSIc		0x00071376	/* LMC 5200 HSSI cPCI */
+#define CSID_LMC_SDSL		0x00081376	/* LMC 1168 SDSL card */
 
 #define TLP_CFIT_MAX_LAT	0xFF000000
 
@@ -96,7 +95,7 @@
 #define TLP_CFDD_SNOOZE		0x40000000
 
 /* Tulip Control and Status Registers */
-#define TLP_CSR_STRIDE		 8		/* 64 bits */
+#define TLP_CSR_STRIDE		 8	/* 64 bits */
 #define TLP_BUS_MODE		 0 * TLP_CSR_STRIDE
 #define TLP_TX_POLL		 1 * TLP_CSR_STRIDE
 #define TLP_RX_POLL		 2 * TLP_CSR_STRIDE
@@ -113,10 +112,10 @@
 #define TLP_CSR13		13 * TLP_CSR_STRIDE
 #define TLP_CSR14		14 * TLP_CSR_STRIDE
 #define TLP_WDOG		15 * TLP_CSR_STRIDE
-#define TLP_CSR_SIZE		128		/* IO bus space size */
+#define TLP_CSR_SIZE		128	/* IO bus space size */
 
 /* CSR 0 - PCI Bus Mode Register */
-#define TLP_BUS_WRITE_INVAL	0x01000000 /* DONT USE! */
+#define TLP_BUS_WRITE_INVAL	0x01000000	/* DONT USE! */
 #define TLP_BUS_READ_LINE	0x00800000
 #define TLP_BUS_READ_MULT	0x00200000
 #define TLP_BUS_DESC_BIGEND	0x00100000
@@ -220,7 +219,7 @@
 /* GPIO bits common to all cards */
 #define GPIO_INIT		0x01	/*    from Xilinx                  */
 #define GPIO_RESET		0x02	/* to      Xilinx                  */
-/* bits 2 and 3 vary with board type -- see below */
+/* bits 2 and 3 vary with card type -- see below */
 #define GPIO_MODE		0x10	/* to      Xilinx                  */
 #define GPIO_DP			0x20	/* to/from Xilinx                  */
 #define GPIO_DATA		0x40	/* serial data                     */
@@ -265,7 +264,7 @@
 #define MII16_HSSI_LED_UR	0x0400	/* RW: upper right - red           */
 #define MII16_HSSI_FIFO		0x0800	/* RW: reset fifos                 */
 #define MII16_HSSI_FORCECA	0x1000	/* RW: [cPCI] force CA on          */
-#define MII16_HSSI_CLKMUX	0x6000  /* RW: [cPCI] TX clock selection   */
+#define MII16_HSSI_CLKMUX	0x6000	/* RW: [cPCI] TX clock selection   */
 #define MII16_HSSI_LOOP		0x8000	/* RW: [cPCI] LOOP TX into RX      */
 #define MII16_HSSI_MODEM	0x003F	/* TA+CA+LA+LB+LC+TM               */
 
@@ -366,6 +365,7 @@
 
 #define CTL8_FBEC		0x80	/* F-Bit Error Count control       */
 #define CTL8_TBLU		0x20	/* Transmit Blue signal            */
+#define CTL8_OUT_DIS		0x10	/* Output Disable                  */
 
 #define STAT9_SEF		0x80	/* Severely Errored Frame          */
 #define STAT9_RBLU		0x20	/* Receive Blue signal             */
@@ -387,7 +387,7 @@
 #define FEAC_STK_FEAC		0x3F	/* FEAC stack FEAC data            */
 
 #define STAT16_XERR		0x01	/* X-bit Error                     */
-#define STAT16_SEF		0x02    /* Severely Errored Frame          */
+#define STAT16_SEF		0x02	/* Severely Errored Frame          */
 #define STAT16_RTLOC		0x04	/* Rx/Tx Loss Of Clock             */
 #define STAT16_FEAC		0x08	/* new FEAC msg                    */
 #define STAT16_RIDL		0x10	/* channel IDLe signal             */
@@ -620,7 +620,7 @@
 # define LMCIOCREAD		_IOWR('i', 243, struct ioctl)
 # define LMCIOCWRITE		 _IOW('i', 244, struct ioctl)
 # define LMCIOCTL		_IOWR('i', 245, struct ioctl)
-#elif __linux__  /* sigh */
+#elif defined(__linux__)
 # define LMCIOCGSTAT		SIOCDEVPRIVATE+0
 # define LMCIOCGCFG		SIOCDEVPRIVATE+1
 # define LMCIOCSCFG		SIOCDEVPRIVATE+2
@@ -687,7 +687,7 @@ struct t1_snmp
 #define T1PRM_SE		0x4000	/* Severely Err Framing Event >= 1 */
 #define T1PRM_LB		0x2000	/* Payload Loopback Activated      */
 #define T1PRM_G1		0x1000	/* CRC Error Event = 1             */
-#define T1PRM_R			0x0800  /* Reserved                        */
+#define T1PRM_R			0x0800	/* Reserved                        */
 #define T1PRM_G2		0x0400	/* 1 < CRC Error Event <= 5        */
 #define T1PRM_SEQ		0x0300	/* modulo 4 counter                */
 #define T1PRM_G3		0x0080	/* 5 < CRC Error Event <= 10       */
@@ -695,14 +695,14 @@ struct t1_snmp
 #define T1PRM_G4		0x0020	/* 10 < CRC Error Event <= 100     */
 #define T1PRM_U			0x0018	/* Under study for synchronization */
 #define T1PRM_G5		0x0004	/* 100 < CRC Error Event <= 319    */
-#define T1PRM_SL		0x0002  /* Slip Event >= 1                 */
+#define T1PRM_SL		0x0002	/* Slip Event >= 1                 */
 #define T1PRM_G6		0x0001	/* CRC Error Event >= 320          */
 
 /* SNMP Line Status */
 #define TLINE_NORM		0x0001	/* no alarm present                */
 #define TLINE_RX_RAI		0x0002	/* receiving RAI = Yellow alarm    */
 #define TLINE_TX_RAI		0x0004	/* sending   RAI = Yellow alarm    */
-#define TLINE_RX_AIS		0x0008  /* receiving AIS =  blue  alarm    */
+#define TLINE_RX_AIS		0x0008	/* receiving AIS =  blue  alarm    */
 #define TLINE_TX_AIS		0x0010	/* sending   AIS =  blue  alarm    */
 #define TLINE_LOF		0x0020	/* near end  LOF =   red  alarm    */
 #define TLINE_LOS		0x0040	/* near end loss of Signal         */
@@ -716,7 +716,7 @@ struct t1_snmp
 #define T3LINE_SEF		0x0200	/* near end severely errored frame */
 
 /* SNMP Loopback Status */
-#define TLOOP_NONE		0x01    /* no loopback                     */
+#define TLOOP_NONE		0x01	/* no loopback                     */
 #define TLOOP_NEAR_PAYLOAD	0x02	/* near end payload loopback       */
 #define TLOOP_NEAR_LINE		0x04	/* near end line loopback          */
 #define TLOOP_NEAR_OTHER	0x08	/* near end looped somehow         */
@@ -725,7 +725,7 @@ struct t1_snmp
 #define TLOOP_FAR_LINE		0x40	/* far  end line loopback          */
 
 /* event counters record interesting statistics */
-struct event_cntrs
+struct cntrs
   {
   struct timeval reset_time;		/* time when cntrs were reset      */
   u_int64_t ibytes;			/* Rx bytes   with good status     */
@@ -734,12 +734,13 @@ struct event_cntrs
   u_int64_t opackets;			/* Tx packets                      */
   u_int32_t ierrors;			/* Rx packets with bad status      */
   u_int32_t oerrors;			/* Tx packets with bad status      */
-  u_int32_t idrops;			/* Rx packets dropped              */
-  u_int32_t odrops;			/* Tx packets dropped              */
-  u_int32_t fifo_over;			/* Rx fifo overruns                */
-  u_int32_t fifo_under;			/* Tx fifo underruns               */
+  u_int32_t idrops;			/* Rx packets dropped by SW        */
   u_int32_t missed;			/* Rx pkts missed: no DMA descs    */
-  u_int32_t overruns;			/* Rx pkts missed: fifo overrun    */
+  u_int32_t odrops;			/* Tx packets dropped by SW        */
+  u_int32_t fifo_over;			/* Rx fifo overruns  from DMA desc */
+  u_int32_t overruns;			/* Rx fifo overruns  from CSR      */
+  u_int32_t fifo_under;			/* Tx fifo underruns from DMA desc */
+  u_int32_t underruns;			/* Rx fifo underruns from CSR      */
   u_int32_t fdl_pkts;			/* Rx T1 Facility Data Link pkts   */
   u_int32_t crc_errs;			/* Rx T1 frame CRC errors          */
   u_int32_t lcv_errs;			/* Rx T1 T3 Line Coding Violation  */
@@ -748,13 +749,14 @@ struct event_cntrs
   u_int32_t par_errs;			/* Rx T3 P-bit parity errors       */
   u_int32_t cpar_errs;			/* Rx T3 C-bit parity errors       */
   u_int32_t mfrm_errs;			/* Rx T3 Multi-frame bit errors    */
-  u_int32_t rxdma;			/* Rx out of kernel buffers        */
+  u_int32_t rxbuf;			/* Rx out of packet buffers        */
   u_int32_t txdma;			/* Tx out of DMA desciptors        */
-  u_int32_t lck_watch;			/* try_lock conflict in watchdog   */
-  u_int32_t lck_intr;			/* try_lock conflict in interrupt  */
+  u_int32_t lck_watch;			/* lock conflict in watchdog       */
+  u_int32_t lck_intr;			/* lock conflict in interrupt      */
   u_int32_t spare1;			/* debugging temp                  */
   u_int32_t spare2;			/* debugging temp                  */
   u_int32_t spare3;			/* debugging temp                  */
+  u_int32_t spare4;			/* debugging temp                  */
   };
 
 /* sc->status is the READ ONLY status of the card.                         */
@@ -763,14 +765,15 @@ struct status
   {
   struct iohdr iohdr;			/* common ioctl header             */
   u_int32_t card_type;			/* PCI device number               */
-  u_int16_t ieee[3];			/* IEEE MAC-addr from Tulip SROM   */
-  u_int16_t oper_status;		/* actual state:  up, down, test   */
+  u_int16_t link_state;			/* actual state: up, down, test    */
   u_int32_t tx_speed;			/* measured TX bits/sec            */
   u_int32_t cable_type;			/* SSI only: cable type            */
-  u_int32_t line_pkg;			/* actual line pkg in use          */
-  u_int32_t line_prot;			/* actual line proto in use        */
+  u_int32_t time_slots;			/* T1E1 only: actual TSs in use    */
+  u_int32_t stack;			/* actual line stack in use        */
+  u_int32_t proto;			/* actual line proto in use        */
+  u_int32_t keep_alive;			/* actual keep-alive status        */
   u_int32_t ticks;			/* incremented by watchdog @ 1 Hz  */
-  struct event_cntrs cntrs;		/* event counters                  */
+  struct cntrs cntrs;			/* event counters                  */
   union
     {
     struct hssi_snmp hssi;		/* data for RFC-???? HSSI MIB      */
@@ -780,34 +783,37 @@ struct status
     } snmp;
   };
 
-/* line protocol package codes                                       fnobl */
-#define PKG_RAWIP		   1	/* driver                    yyyyy */
-#define PKG_SPPP		   2	/* fbsd, nbsd, obsd          yyynn */
-#define PKG_P2P			   3	/* bsd/os                    nnnyn */
-#define PKG_NG			   4	/* fbsd                      ynnnn */
-#define PKG_GEN_HDLC		   5	/* linux                     nnnny */
+/* protocol stack codes */
+#define STACK_NONE		   0	/* not set                   fnobl */
+#define STACK_RAWIP		   1	/* driver                    yyyyy */
+#define STACK_SPPP		   2	/* fbsd, nbsd, obsd          yyynn */
+#define STACK_P2P		   3	/* bsd/os                    nnnyn */
+#define STACK_GEN_HDLC		   4	/* linux                     nnnny */
+#define STACK_SYNC_PPP		   5	/* linux                     nnnny */
+#define STACK_NETGRAPH		   6	/* fbsd                      ynnnn */
 
-/* line protocol codes                                               fnobl */
-#define PROT_PPP		   1	/* Point-to-Point Protocol   yyyyy */
-#define PROT_C_HDLC		   2	/* Cisco HDLC Protocol       yyyyy */
-#define PROT_FRM_RLY		   3	/* Frame Relay Protocol      ynnyy */
-#define PROT_X25		   4	/* X.25/LAPB Protocol        nnnny */
-#define PROT_ETH_HDLC		   5	/* raw Ether pkts in HDLC    nnnny */
-#define PROT_IP_HDLC		   6	/* raw IP4/6 pkts in HDLC    yyyyy */
+/* line protocol codes */
+#define PROTO_NONE		   0	/* not set                   fnobl */
+#define PROTO_IP_HDLC		   1	/* raw IP4/6 pkts in HDLC    yyyyy */
+#define PROTO_PPP		   2	/* Point-to-Point Protocol   yyyyy */
+#define PROTO_C_HDLC		   3	/* Cisco HDLC Protocol       yyyyy */
+#define PROTO_FRM_RLY		   4	/* Frame Relay Protocol      ynnyy */
+#define PROTO_ETH_HDLC		   5	/* raw Ether pkts in HDLC    nnnny */
+#define PROTO_X25		   6	/* X.25/LAPB Protocol        nnnny */
 
 /* oper_status codes (same as SNMP status codes) */
-#define STATUS_UP		   1	/* may/will    tx/rx pkts          */
-#define STATUS_DOWN		   2	/* can't/won't tx/rx pkts          */
-#define STATUS_TEST		   3	/* currently not used              */
+#define STATE_UP		   1	/* may/will    tx/rx pkts          */
+#define STATE_DOWN		   2	/* can't/won't tx/rx pkts          */
+#define STATE_TEST		   3	/* currently not used              */
 
 struct synth				/* programmable oscillator params  */
   {
-  unsigned n :7;			/*   numerator (3..127)            */
-  unsigned m :7;			/* denominator (3..127)            */
-  unsigned v :1;			/* mul by 1|8                      */
-  unsigned x :2;			/* div by 1|2|4|8                  */
-  unsigned r :2;			/* div by 1|2|4|8                  */
-  unsigned prescale :13;		/* log(final divisor): 2, 4 or 9   */
+  unsigned n:7;				/*   numerator (3..127)            */
+  unsigned m:7;				/* denominator (3..127)            */
+  unsigned v:1;				/* mul by 1|8                      */
+  unsigned x:2;				/* div by 1|2|4|8                  */
+  unsigned r:2;				/* div by 1|2|4|8                  */
+  unsigned prescale:13;			/* log(final divisor): 2, 4 or 9   */
   } __attribute__ ((packed));
 
 #define SYNTH_FREF	        20e6	/* reference xtal =  20 MHz        */
@@ -828,21 +834,21 @@ struct config
   u_int32_t scrambler;			/* T3: payload scrambler config    */
   u_int32_t dte_dce;			/* SSI, HSSIc: drive TXCLK         */
   struct synth synth;			/* SSI, HSSIc: synth oscil params  */
-  u_int32_t rx_gain;			/* T1: receiver gain limit 0-50 dB */
+  u_int32_t rx_gain_max;		/* T1: receiver gain limit 0-50 dB */
   u_int32_t tx_pulse;			/* T1: transmitter pulse shape     */
   u_int32_t tx_lbo;			/* T1: transmitter atten 0-22.5 dB */
   u_int32_t debug;			/* ALL: extra printout             */
-  u_int32_t line_pkg;			/* ALL:  use this line pkg         */
-  u_int32_t line_prot;			/* SPPP: use this line proto       */
+  u_int32_t stack;			/* ALL: use this line stack        */
+  u_int32_t proto;			/* ALL: use this line proto        */
   u_int32_t keep_alive;			/* SPPP: use keep-alive packets    */
   };
 
 #define CFG_CRC_0		   0	/* no CRC                          */
-#define CFG_CRC_16		   2    /* X^16+X^12+X^5+1 (default)       */
+#define CFG_CRC_16		   2	/* X^16+X^12+X^5+1 (default)       */
 #define CFG_CRC_32		   4	/* X^32+X^26+X^23+X^22+X^16+X^12+  */
 					/* X^11+X^10+X^8+X^7+X^5+X^4+X^2+X+1 */
 #define CFG_LOOP_NONE		   1	/* SNMP don't loop back anything   */
-#define CFG_LOOP_PAYLOAD	   2    /* SNMP loop outward thru framer   */
+#define CFG_LOOP_PAYLOAD	   2	/* SNMP loop outward thru framer   */
 #define CFG_LOOP_LINE		   3	/* SNMP loop outward thru LIU      */
 #define CFG_LOOP_OTHER		   4	/* SNMP loop  inward thru LIU      */
 #define CFG_LOOP_INWARD		   5	/* SNMP loop  inward thru framer   */
@@ -855,7 +861,7 @@ struct config
 #define CFG_CLKMUX_ST		   1	/* TX clk <- Send timing           */
 #define CFG_CLKMUX_INT		   2	/* TX clk <- internal source       */
 #define CFG_CLKMUX_RT		   3	/* TX clk <- Receive (loop) timing */
-#define CFG_CLKMUX_EXT		   4    /* TX clk <- ext connector         */
+#define CFG_CLKMUX_EXT		   4	/* TX clk <- ext connector         */
 
 /* values 0-31 are Bt8370 CR0 register values (LSB is zero if E1).         */
 /* values 32-99 are reserved for other T1E1 formats, (even number if E1)   */
@@ -912,7 +918,7 @@ struct config
 struct ioctl
   {
   struct iohdr iohdr;			/* common ioctl header             */
-  u_int32_t cmd;			/* command			   */
+  u_int32_t cmd;			/* command                         */
   u_int32_t address;			/* command address                 */
   u_int32_t data;			/* command data                    */
   char *ucode;				/* user-land address of ucode      */
@@ -931,7 +937,7 @@ struct ioctl
 #define IOCTL_XILINX_ROM	  17	/* load  Xilinx program from ROM   */
 #define IOCTL_XILINX_FILE	  18	/* load  Xilinx program from file  */
 
-#define IOCTL_SET_STATUS	  50	/* set mdm ctrl bits (internal use)*/
+#define IOCTL_SET_STATUS	  50	/* set mdm ctrl bits (internal)    */
 #define IOCTL_SNMP_SEND		  51	/* trunk MIB send code             */
 #define IOCTL_SNMP_LOOP		  52	/* trunk MIB loop configuration    */
 #define IOCTL_SNMP_SIGS		  53	/* RS232-like modem control sigs   */
@@ -956,40 +962,232 @@ const char *ssi_cables[] =
 /*    Declarations below here are private to the kernel device driver.     */
 /***************************************************************************/
 
-#if (_KERNEL || KERNEL || __KERNEL__)
+#ifndef KERNEL
+# define KERNEL 0
+#endif
+#ifndef _KERNEL
+# define _KERNEL 0
+#endif
+#ifndef __KERNEL__
+# define __KERNEL__ 0
+#endif
 
-#define SNDQ_MAXLEN	32	/* packets awaiting transmission */
-#define DESCS_PER_PKT	 4	/* DMA descriptors per TX pkt */
-#define	NUM_TX_DESCS	(DESCS_PER_PKT * SNDQ_MAXLEN)
+#if KERNEL || _KERNEL || __KERNEL__
+
+/* Hide the minor differences between Operating Systems */
+
+#if defined(__bsdi__)
+typedef int intr_return_t;
+# define  READ_PCI_CFG(sc, addr)        pci_inl(&(sc)->cfgbase, addr)
+# define WRITE_PCI_CFG(sc, addr, data) pci_outl(&(sc)->cfgbase, addr, data)
+# if IOREF_CSR
+#  define  READ_CSR(sc, csr)	  inl ((sc)->csr_iobase+(csr))
+#  define WRITE_CSR(sc, csr, val) outl((sc)->csr_iobase+(csr), (val))
+# else
+# error Memory refs to Tulip CSRs do not work
+#  define  READ_CSR(sc, csr)	     (0 + *((sc)->csr_membase+(csr)))
+#  define WRITE_CSR(sc, csr, val) ((void)(*((sc)->csr_membase+(csr)) = (val)))
+# endif
+# define NAME_UNIT		sc->dev.dv_xname
+# define BOOT_VERBOSE		(autoprint & AC_VERBOSE)
+static __inline int test_and_set(volatile int *ptr, int val)
+  { __asm volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr)); return val; }
+# define TOP_LOCK(sc)		({ while (test_and_set(&(sc)->top_lock.lock_data, 1)) \
+				 tsleep((sc), PCATCH|PZERO, DEVICE_NAME, 1); 0; })
+# define TOP_TRYLOCK(sc)	(test_and_set(&(sc)->top_lock.lock_data, 1)==0)
+# define TOP_UNLOCK(sc)		(sc)->top_lock.lock_data = 0
+# define BOTTOM_TRYLOCK(sc)	(test_and_set(&(sc)->bottom_lock.lock_data, 1)==0)
+# define BOTTOM_UNLOCK(sc)	(sc)->bottom_lock.lock_data = 0
+# define CHECK_CAP		suser(PCPU(curproc)->p_ucred, &PCPU(curproc)->p_acflag)
+# define DISABLE_INTR		int spl = splimp()
+# define ENABLE_INTR		splx(spl)
+# define IRQ_NONE		1	/* XXX */
+# define IRQ_HANDLED		1
+# define IFP2SC(ifp)		(ifp)->if_softc
+# define COPY_BREAK		MHLEN
+# define SLEEP(usecs)		tsleep(sc, PZERO, DEVICE_NAME, 1+(usecs/tick))
+# define DMA_SYNC(map, size, flags)	/* nothing */
+# define DMA_LOAD(map, addr, size)	0
+# define bus_dmamap_unload(tag, map)	/* nothing */
+# define memcpy(dst, src, len)  bcopy(src, dst, len)
+# define if_detach(ifp)			/* nothing */
+# if NBPFILTER
+#  define LMC_BPF_MTAP(sc, mbuf)	if ((sc)->ifp->if_bpf) bpf_mtap((sc)->ifp->if_bpf, mbuf)
+#  define LMC_BPF_ATTACH(sc, dlt, len)	bpfattach(&(sc)->ifp->if_bpf, (sc)->ifp, dlt, len)
+#  define LMC_BPF_DETACH(sc)		/* bpfdetach((sc)->ifp) */
+# endif
+
+/*  BSD/OS-4.1 doesn't have a back pointer to softc in struct ifnet, */
+/*  and it passes a unit number not a struct ifnet* to watchdog. */
+# if _BSDI_VERSION <= 199910
+extern struct cfdriver lmccd;
+#  undef  IFP2SC
+#  define UNIT2SC(unit)		((softc_t *)lmccd.cd_devs[unit])
+#  define IFP2SC(ifp)		(UNIT2SC((ifp)->if_unit))
+# endif
+#endif /* __bsdi__ */
+
+#if defined(__FreeBSD__)
+typedef void intr_return_t;
+# define  READ_PCI_CFG(sc, addr)       pci_read_config ((sc)->dev, addr, 4)
+# define WRITE_PCI_CFG(sc, addr, data) pci_write_config((sc)->dev, addr, data, 4)
+# define  READ_CSR(sc, csr)	 bus_space_read_4 ((sc)->csr_tag, (sc)->csr_handle, csr)
+# define WRITE_CSR(sc, csr, val) bus_space_write_4((sc)->csr_tag, (sc)->csr_handle, csr, val)
+# define NAME_UNIT		device_get_nameunit(sc->dev)
+# define BOOT_VERBOSE		bootverbose
+# define TOP_LOCK(sc)		({ mtx_lock(&(sc)->top_lock); 0; })
+# define TOP_TRYLOCK(sc)	mtx_trylock(&(sc)->top_lock)
+# define TOP_UNLOCK(sc)		mtx_unlock (&(sc)->top_lock)
+# define BOTTOM_TRYLOCK(sc)	atomic_cmpset_int(&(sc)->bottom_lock, 0, 1)
+# define BOTTOM_UNLOCK(sc)	(sc)->bottom_lock = 0
+# define CHECK_CAP		suser(curthread)
+# define DISABLE_INTR			/* nothing */
+# define ENABLE_INTR			/* nothing */
+# define IRQ_NONE			/* nothing */
+# define IRQ_HANDLED			/* nothing */
+# define IFP2SC(ifp)		(ifp)->if_softc
+# define COPY_BREAK		MHLEN
+# define SLEEP(usecs)		tsleep(sc, PZERO, DEVICE_NAME, 1+(usecs/tick))
+# define DMA_SYNC(map, size, flags) bus_dmamap_sync(ring->tag, map, flags)
+# define DMA_LOAD(map, addr, size)  bus_dmamap_load(ring->tag, map, addr, size, fbsd_dmamap_load, ring, 0)
+# if NBPFILTER
+#  define LMC_BPF_MTAP(sc, mbuf)	if ((sc)->ifp->if_bpf) bpf_mtap((sc)->ifp->if_bpf, mbuf)
+#  define LMC_BPF_ATTACH(sc, dlt, len)	bpfattach((sc)->ifp, dlt, len)
+#  define LMC_BPF_DETACH(sc)		bpfdetach((sc)->ifp)
+# endif
+#endif /* __FreeBSD__ */
+
+#if defined(__NetBSD__)
+typedef int intr_return_t;
+# define  READ_PCI_CFG(sc, addr)       pci_conf_read ((sc)->pa_pc, (sc)->pa_tag, addr)
+# define WRITE_PCI_CFG(sc, addr, data) pci_conf_write((sc)->pa_pc, (sc)->pa_tag, addr, data)
+# define  READ_CSR(sc, csr)	 bus_space_read_4 ((sc)->csr_tag, (sc)->csr_handle, csr)
+# define WRITE_CSR(sc, csr, val) bus_space_write_4((sc)->csr_tag, (sc)->csr_handle, csr, val)
+# define NAME_UNIT		sc->dev.dv_xname
+# define BOOT_VERBOSE		(boothowto & AB_VERBOSE)
+# define TOP_LOCK(sc)		({ while (__cpu_simple_lock_try(&(sc)->top_lock)==0) \
+				 tsleep((sc), PCATCH|PZERO, DEVICE_NAME, 1); 0; })
+# define TOP_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->top_lock)
+# define TOP_UNLOCK(sc)		__cpu_simple_unlock  (&(sc)->top_lock)
+# define BOTTOM_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->bottom_lock)
+# define BOTTOM_UNLOCK(sc)	__cpu_simple_unlock  (&(sc)->bottom_lock)
+# define CHECK_CAP		suser(curproc->p_ucred, &curproc->p_acflag)
+/* kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag) */
+# define DISABLE_INTR		int spl = splnet()
+# define ENABLE_INTR		splx(spl)
+# define IRQ_NONE		0
+# define IRQ_HANDLED		1
+# define IFP2SC(ifp)		(ifp)->if_softc
+# define COPY_BREAK		MHLEN
+# define SLEEP(usecs)		tsleep(sc, PZERO, DEVICE_NAME, 1+(usecs/tick))
+# define DMA_SYNC(map, size, flags) bus_dmamap_sync(ring->tag, map, 0, size, flags)
+# define DMA_LOAD(map, addr, size)  bus_dmamap_load(ring->tag, map, addr, size, 0, BUS_DMA_NOWAIT)
+# if NBPFILTER
+#  define LMC_BPF_MTAP(sc, mbuf)	if ((sc)->ifp->if_bpf) bpf_mtap((sc)->ifp->if_bpf, mbuf)
+#  define LMC_BPF_ATTACH(sc, dlt, len)	bpfattach((sc)->ifp, dlt, len)
+#  define LMC_BPF_DETACH(sc)		bpfdetach((sc)->ifp)
+# endif
+#endif /* __NetBSD__ */
+
+#if defined(__OpenBSD__)
+typedef int intr_return_t;
+# define  READ_PCI_CFG(sc, addr)       pci_conf_read ((sc)->pa_pc, (sc)->pa_tag, addr)
+# define WRITE_PCI_CFG(sc, addr, data) pci_conf_write((sc)->pa_pc, (sc)->pa_tag, addr, data)
+# define  READ_CSR(sc, csr)	 bus_space_read_4 ((sc)->csr_tag, (sc)->csr_handle, csr)
+# define WRITE_CSR(sc, csr, val) bus_space_write_4((sc)->csr_tag, (sc)->csr_handle, csr, val)
+# define NAME_UNIT		sc->dev.dv_xname
+# define BOOT_VERBOSE		1
+# define TOP_LOCK(sc)		({ while (__cpu_simple_lock_try(&(sc)->top_lock)==0) \
+				 tsleep((sc), PCATCH|PZERO, DEVICE_NAME, 1); 0; })
+# define TOP_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->top_lock)
+# define TOP_UNLOCK(sc)		__cpu_simple_unlock  (&(sc)->top_lock)
+# define BOTTOM_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->bottom_lock)
+# define BOTTOM_UNLOCK(sc)	__cpu_simple_unlock  (&(sc)->bottom_lock)
+# define CHECK_CAP		suser(curproc, 0)
+# define DISABLE_INTR		int spl = splnet()
+# define ENABLE_INTR		splx(spl)
+# define IRQ_NONE		0
+# define IRQ_HANDLED		1
+# define IFP2SC(ifp)		(ifp)->if_softc
+# define COPY_BREAK		MHLEN
+# define SLEEP(usecs)		tsleep(sc, PZERO, DEVICE_NAME, 1+(usecs/tick))
+# define DMA_SYNC(map, size, flags) bus_dmamap_sync(ring->tag, map, 0, size, flags)
+# define DMA_LOAD(map, addr, size)  bus_dmamap_load(ring->tag, map, addr, size, 0, BUS_DMA_NOWAIT)
+# if NBPFILTER
+#  define LMC_BPF_MTAP(sc, mbuf)	if ((sc)->ifp->if_bpf) bpf_mtap((sc)->ifp->if_bpf, mbuf)
+#  define LMC_BPF_ATTACH(sc, dlt, len)	bpfattach(&(sc)->ifp->if_bpf, (sc)->ifp, dlt, len)
+#  define LMC_BPF_DETACH(sc)		bpfdetach((sc)->ifp)
+# endif
+#endif /* __OpenBSD__ */
+
+#if defined(__linux__)
+static int debug = 0;			/* module_param */
+static int verbose = 0;			/* module_param */
+# define WRITE_PCI_CFG(sc, addr, data) pci_write_config_dword(sc->pcidev, addr, data)
+# define  READ_CSR(sc, csr)	ioread32((sc)->csr_cookie+(csr))
+# define WRITE_CSR(sc, csr, val) iowrite32((val), (sc)->csr_cookie+(csr))
+# define NAME_UNIT		sc->netdev->name
+# define BOOT_VERBOSE		verbose
+# define TOP_LOCK(sc)		down_interruptible(&(sc)->top_lock)
+# define TOP_TRYLOCK(sc)	(down_trylock(&(sc)->top_lock) ? 0:1)
+# define TOP_UNLOCK(sc)		up(&(sc)->top_lock)
+# define BOTTOM_TRYLOCK(sc)	(test_and_set_bit(0, &(sc)->bottom_lock)==0)
+# define BOTTOM_UNLOCK(sc)	(sc)->bottom_lock = 0
+# define CHECK_CAP		capable(CAP_NET_ADMIN)? 0 : -EPERM
+# define NETDEV2SC(netdev)	(netdev)->ec_ptr	/* HACK */
+# define COPY_BREAK		200
+# define SLEEP(usecs)		schedule_timeout_interruptible(1+(usecs*HZ)/1000000UL)
+# define DELAY(usecs)		udelay(usecs)
+# define printf			printk
+# define copyin(u, k, len)	copy_from_user(k, u, len)
+# define microtime(time)	do_gettimeofday(time)
+# define malloc(len, t, f)	kzalloc(len, GFP_KERNEL)
+# define free(addr, t)		kfree(addr)
+# define LITTLE_ENDIAN		4321
+# define BIG_ENDIAN		1234
+# if defined(__LITTLE_ENDIAN)
+#  define BYTE_ORDER LITTLE_ENDIAN
+# elif defined(__BIG_ENDIAN)
+#  define BYTE_ORDER BIG_ENDIAN
+# else
+#  error "byte order confusion"
+# endif
+#endif /* __linux__ */
+
+static int driver_announced = 0;	/* print driver info once only */
+
+#define SNDQ_MAXLEN	32		/* packets awaiting transmission */
+#define DESCS_PER_PKT	 4		/* DMA descriptors per TX pkt */
+#define NUM_TX_DESCS	(DESCS_PER_PKT * SNDQ_MAXLEN)
 /* Increase DESCS_PER_PKT if status.cntrs.txdma increments. */
 
 /* A Tulip DMA descriptor can point to two chunks of memory.
- * Each chunk has a max length of 2047 bytes (ask the VMS guys...).
+ * Each chunk has a max length of 2047 bytes (ask the VMS guys).
  * 2047 isn't a multiple of a cache line size (32 bytes typically).
  * So back off to 2048-32 = 2016 bytes per chunk (2 chunks per descr).
  */
-#define MAX_CHUNK_LEN	2016
+#define MAX_CHUNK_LEN	(2048-32)
 #define MAX_DESC_LEN	(2 * MAX_CHUNK_LEN)
 
 /* Tulip DMA descriptor; THIS STRUCT MUST MATCH THE HARDWARE */
 struct dma_desc
   {
-  u_int32_t status;		/* hardware->to->software */
-#if (BYTE_ORDER == LITTLE_ENDIAN) /* left-to-right packing by compiler */
-  unsigned  length1:11;		/* buffer1 length */
-  unsigned  length2:11;		/* buffer2 length */
-  unsigned  control:10;		/* software->to->hardware */
-#else /* right-to-left packing by compiler */
-  unsigned  control:10;		/* software->to->hardware */
-  unsigned  length2:11;		/* buffer2 length */
-  unsigned  length1:11;		/* buffer1 length */
+  u_int32_t status;			/* hardware->to->software */
+#if BYTE_ORDER == LITTLE_ENDIAN		/* left-to-right packing */
+  unsigned length1:11;			/* buffer1 length */
+  unsigned length2:11;			/* buffer2 length */
+  unsigned control:10;			/* software->to->hardware */
+#else					/* right-to-left packing */
+  unsigned control:10;			/* software->to->hardware */
+  unsigned length2:11;			/* buffer2 length */
+  unsigned length1:11;			/* buffer1 length */
 #endif
-  u_int32_t address1;		/* buffer1 bus address */
-  u_int32_t address2;		/* buffer2 bus address */
-#if (__FreeBSD__ || __NetBSD__ || __OpenBSD__)
-  bus_dmamap_t map;		/* bus dmamap for this descriptor */
+  u_int32_t address1;			/* buffer1 bus address */
+  u_int32_t address2;			/* buffer2 bus address */
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+  bus_dmamap_t map;			/* bus dmamap for this descriptor */
 # define TLP_BUS_DSL_VAL	(sizeof(bus_dmamap_t) & TLP_BUS_DSL)
-#else
+#else					/* BUS_DMA */
 # define TLP_BUS_DSL_VAL	0
 #endif
   } __attribute__ ((packed));
@@ -1002,7 +1200,7 @@ struct dma_desc
 #define TLP_DSTS_RX_MII_ERR	0x00000008
 #define TLP_DSTS_RX_DRIBBLE	0x00000004
 #define TLP_DSTS_TX_UNDERRUN	0x00000002
-#define TLP_DSTS_RX_OVERRUN	0x00000001  /* not documented in rev AF */
+#define TLP_DSTS_RX_OVERRUN	0x00000001	/* not documented in rev AF */
 #define TLP_DSTS_RX_BAD		(TLP_DSTS_RX_MII_ERR  | \
 				 TLP_DSTS_RX_DRIBBLE  | \
 				 TLP_DSTS_RX_DESC_ERR | \
@@ -1023,398 +1221,183 @@ struct dma_desc
  */
 struct desc_ring
   {
-  struct dma_desc *read;	/* next  descriptor to be read */
-  struct dma_desc *write;	/* next  descriptor to be written */
-  struct dma_desc *first;	/* first descriptor in ring */
-  struct dma_desc *last;	/* last  descriptor in ring */
-  struct dma_desc *temp;	/* temporary write pointer for tx */
-  u_int32_t dma_addr;		/* bus address for desc array */
-  int size_descs;		/* bus_dmamap_sync needs this */
-  int num_descs;		/* used to set rx quota */
-#if __linux__
-  struct sk_buff *head;		/* tail-queue of skbuffs */
-  struct sk_buff *tail;
-#elif BSD
-  struct mbuf *head;		/* tail-queue of mbufs */
+  struct dma_desc *read;		/* next  descriptor to be read */
+  struct dma_desc *write;		/* next  descriptor to be written */
+  struct dma_desc *first;		/* first descriptor in ring */
+  struct dma_desc *last;		/* last  descriptor in ring */
+  struct dma_desc *temp;		/* temporary write pointer for tx */
+  u_int32_t dma_addr;			/* bus addr for desc array XXX */
+  int size_descs;			/* bus_dmamap_sync needs this */
+  int num_descs;			/* used to set rx quota */
+#if IFNET || NETGRAPH
+  struct mbuf *head;			/* tail-queue of mbufs */
   struct mbuf *tail;
-# if (__FreeBSD__ || __NetBSD__ || __OpenBSD__)
-  bus_dma_tag_t tag;		/* bus_dma tag for desc array */
-  bus_dmamap_t map;		/* bus_dma map for desc array */
-  bus_dma_segment_t segs[2];	/* bus_dmamap_load() or bus_dmamem_alloc() */
-  int nsegs;			/* bus_dmamap_load() or bus_dmamem_alloc() */
-# endif
+#elif NETDEV
+  struct sk_buff *head;			/* tail-queue of skbuffs */
+  struct sk_buff *tail;
 #endif
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+  bus_dma_tag_t tag;			/* bus_dma_tag for desc array */
+  bus_dmamap_t map;			/* bus_dmamap  for desc array */
+  bus_dma_segment_t segs[2];		/* bus_dmamap_load() or bus_dmamem_alloc() */
+  int nsegs;				/* bus_dmamap_load() or bus_dmamem_alloc() */
+#endif					/* BUS_DMA */
   };
 
 /* break circular definition */
 typedef struct softc softc_t;
 
-/* card-dependent methods */
-struct card
+struct card				/* an object */
   {
-  void (* config)(softc_t *);
-  void (* ident)(softc_t *);
-  int  (* watchdog)(softc_t *);		/* must not sleep */
-  int  (* ioctl)(softc_t *, struct ioctl *); /* can sleep */
+  void (*ident) (softc_t *);
+  void (*watchdog) (softc_t *);
+  int (*ioctl) (softc_t *, struct ioctl *);
+  void (*attach) (softc_t *, struct config *);
+  void (*detach) (softc_t *);
   };
 
-/* flag bits in sc->flags */
-#define FLAG_IFNET		0x00000002  /* IFNET is attached           */
-#define FLAG_NETDEV		0x00000004  /* NETDEV is registered        */
-#define FLAG_NETGRAPH		0x00000008  /* NETGRAPH is attached        */
-
-/* Accessing Tulip CSRs:
- * There are two ways: IO instruction (default) and memory reference.
- *  IO refs are used if IOREF_CSR is defined; otherwise memory refs are used.
- *  MEMORY REFERENCES DO NOT WORK in BSD/OS: page faults happen.
- */
-#define IOREF_CSR 1  /* access Tulip CSRs with IO cycles if 1 */
+struct stack				/* an object */
+  {
+#if IFNET || NETGRAPH
+  int (*ioctl) (softc_t *, u_long, caddr_t);
+  void (*input) (softc_t *, struct mbuf *);
+  void (*output) (softc_t *);
+#elif NETDEV
+  int (*ioctl) (softc_t *, struct ifreq *, int);
+  int (*type) (softc_t *, struct sk_buff *);
+  int (*mtu) (softc_t *, int);
+#endif
+  void (*watchdog) (softc_t *);
+  int (*open) (softc_t *, struct config *);
+  int (*attach) (softc_t *, struct config *);
+  int (*detach) (softc_t *);
+  };
 
 /* This is the instance data, or "software context" for the device driver. */
 /* NetBSD, OpenBSD and BSD/OS want struct device first in the softc. */
-/* FreeBSD wants struct ifnet first in the softc. */
 struct softc
   {
-#if (__NetBSD__ || __OpenBSD__)
-  struct device	dev;		/* base device -- must be first in softc   */
-  pcitag_t	pa_tag;		/* pci_conf_read/write need this           */
-  pci_chipset_tag_t pa_pc;	/* pci_conf_read/write need this           */
-  bus_dma_tag_t	pa_dmat;	/* bus_dma needs this                      */
-  bus_space_tag_t csr_tag;	/* bus_space needs this                    */
-  bus_space_handle_t csr_handle;/* bus_space needs this                    */
-  pci_intr_handle_t intr_handle;/* interrupt handle                        */
-  void		*irq_cookie;	/* pci_intr_disestablish needs this        */
-  void		*sdh_cookie;	/* shutdownhook_disestablish needs this    */
-  struct simplelock top_lock;	/* lock card->watchdog vs core_ioctl       */
-  struct simplelock bottom_lock;/* lock for buf queues & descriptor rings  */
-  struct mbuf	*tx_mbuf;	/* hang mbuf here while building dma descs */
-#endif  /* __NetBSD__ || __OpenBSD__ */
+#if defined(__bsdi__)
+  struct device dev;			/* must be first in softc          */
+  struct isadev id;
+  struct intrhand ih;
+  struct atshutdown ats;
+  pci_devaddr_t cfgbase;
+  u_int16_t csr_iobase;
+  u_int32_t *csr_membase;
+  struct mbuf *tx_mbuf;			/* mbuf while building dma descs   */
+  struct simplelock top_lock;		/* lock card->watchdog vs ioctls   */
+  struct simplelock bottom_lock;	/* lock buf queues & desc rings    */
+#endif					/* __bsdi__ */
 
-#if __bsdi__
-  struct device	dev;		/* base device -- must be first in softc   */
-  struct isadev	id;		/* bus resource                            */
-  struct intrhand ih;		/* interrupt vectoring                     */
-  struct atshutdown ats;	/* shutdown hook                           */
-  pci_devaddr_t	cfgbase;	/* base address of PCI config regs         */
-  u_int16_t	 csr_iobase;	/*     io base address of Tulip CSRs       */
-  u_int32_t	*csr_membase;	/* kv mem base address of Tulip CSRs       */
-  struct simplelock top_lock;	/* lock card->watchdog vs core_ioctl       */
-  struct simplelock bottom_lock;/* lock for buf queues & descriptor rings  */
-  struct mbuf	*tx_mbuf;	/* hang mbuf here while building dma descs */
-#endif /* __bsdi__ */
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+  struct device dev;			/* must be first in softc          */
+  pcitag_t pa_tag;
+  pci_chipset_tag_t pa_pc;
+  bus_dma_tag_t pa_dmat;
+  bus_space_tag_t csr_tag;
+  bus_space_handle_t csr_handle;
+  pci_intr_handle_t intr_handle;
+  void *irq_cookie;
+  void *sdh_cookie;
+  struct mbuf *tx_mbuf;			/* hang mbuf here while building dma descs */
+  __cpu_simple_lock_t top_lock;		/* lock card->watchdog vs ioctls           */
+  __cpu_simple_lock_t bottom_lock;	/* lock buf queues & descriptor rings   */
+#endif					/* __NetBSD__ || __OpenBSD__ */
 
   /* State for kernel-resident Line Protocols */
 #if IFNET
-# if NSPPP
-#  if (__FreeBSD_version < 600000)
-  struct sppp spppcom;		/* must be first in sc for fbsd < 6 */
+# if SPPP
+#  if !defined(__FreeBSD__)
+  struct sppp spppcom;
 #  endif
   struct sppp *sppp;
 # elif P2P
   struct p2pcom p2pcom;
   struct p2pcom *p2p;
-# elif (__FreeBSD_version < 600000)
-  struct ifnet ifnet;		/* must be first in sc for fbsd < 6 */
+# elif !defined(__FreeBSD__)
+  struct ifnet ifnet;
 # endif
   struct ifnet *ifp;
-  struct ifmedia ifm;		/* hooks for ifconfig(8) */
-#endif
+  struct ifmedia ifm;
+#endif					/* IFNET */
+
+#if NETDEV
+# if GEN_HDLC
+  hdlc_device *hdlcdev;			/* contains struct net_device_stats */
+# else
+  struct net_device_stats netdev_stats;
+# endif
+# if SYNC_PPP
+  struct ppp_device *ppd;
+  struct ppp_device ppp_dev;		/* contains a struct sppp */
+  struct sppp *sppp;
+# endif
+  struct net_device *netdev;
+#endif					/* NETDEV */
 
 #if NETGRAPH
-  struct callout ng_callout;	/* ng_watchdog needs this                  */
-  node_p	ng_node;	/* pointer to our node struct              */
-  hook_p	ng_hook;	/* non-zero means NETGRAPH owns device     */
-# if (__FreeBSD_version >= 503000)
-  struct ifaltq	ng_sndq;
+  struct callout ng_callout;		/* ng_watchdog needs this */
+  node_p ng_node;			/* pointer to our node struct */
+  hook_p ng_hook;			/* non-zero means NETGRAPH owns device     */
+  struct ifaltq ng_sndq;
   struct ifaltq ng_fastq;
-# else
-  struct ifqueue ng_sndq;
-  struct ifqueue ng_fastq;
-# endif
+#endif					/* NETGRAPH */
+
+#if defined(__FreeBSD__)
+  struct device *dev;			/* base device pointer             */
+  bus_space_tag_t csr_tag;
+  bus_space_handle_t csr_handle;
+  void *irq_cookie;
+  struct resource *irq_res;
+  int irq_res_id;
+  struct resource *csr_res;
+  int csr_res_id;
+  int csr_res_type;
+  struct mbuf *tx_mbuf;			/* mbuf while building dma descs   */
+  struct mtx top_lock;			/* lock card->watchdog vs ioctls   */
+  int bottom_lock;			/* lock buf queues & desc rings    */
+#endif					/* __FreeBSD__ */
+
+#if defined(__linux__)
+  struct pci_dev *pcidev;
+  struct timer_list wd_timer;
+  void *csr_cookie;
+  struct sk_buff *tx_skb;		/* skb while building dma descs    */
+  struct semaphore top_lock;		/* lock card->watchdog vs ioctls   */
+  long bottom_lock;			/* lock buf queues & desc rings    */
+#endif					/* __linux__ */
+
+  /* State used by all card types; lock with top_lock.                     */
+  struct status status;			/* lmcconfig can read              */
+  struct config config;			/* lmcconfig can read/write        */
+  const char *dev_desc;			/* string describing card          */
+  struct card *card;			/* card methods                    */
+  struct stack *stack;			/* line methods                    */
+  u_int32_t gpio_dir;			/* s/w copy of GPIO direction reg  */
+  u_int16_t led_state;			/* last value written to mii16     */
+  int quota;				/* used for packet flow control    */
+
+  /* State used by card-specific watchdogs; lock with top_lock.            */
+  u_int32_t last_mii16;			/* SSI, HSSI: MII reg 16 one sec ago */
+  u_int32_t last_stat16;		/* T3:   framer reg 16 one sec ago */
+  u_int32_t last_alm1;			/* T1E1: framer reg 47 one sec ago */
+  u_int32_t last_link_state;		/* ALL: status.link_state 1 ec ago */
+  u_int32_t last_FEAC;			/* T3: last FEAC msg code received */
+  u_int32_t loop_timer;			/* T1E1, T3: secs until loop ends  */
+
+  /* State used by the interrupt code; lock with bottom_lock.              */
+  struct desc_ring txring;		/* tx descriptor ring state        */
+  struct desc_ring rxring;		/* rx descriptor ring state        */
+  };					/* end of softc */
+
+#if BSD && (NBPFILTER == 0)
+# define LMC_BPF_MTAP(sc, mbuf)		/* nothing */
+# define LMC_BPF_ATTACH(sc, dlt, len)	/* nothing */
+# define LMC_BPF_DETACH(sc)		/* nothing */
 #endif
 
-#if GEN_HDLC
-  hdlc_device	*hdlc_dev;	/* state for HDLC code                     */
-  sync_serial_settings hdlc_settings; /* state set by sethdlc program      */
-#elif __linux__
-  struct net_device_stats net_stats; /* linux_stats storage                */
-#endif
-
-#if __FreeBSD__
-  struct device	*dev;		/* base device pointer                     */
-  bus_space_tag_t csr_tag;	/* bus_space needs this                    */
-  bus_space_handle_t csr_handle;/* bus_space_needs this                    */
-  void		*irq_cookie;	/* bus_teardown_intr needs this            */
-  struct resource *irq_res;	/* bus_release_resource needs this         */
-  int		irq_res_id;	/* bus_release_resource needs this         */
-  struct resource *csr_res;	/* bus_release_resource needs this         */
-  int		csr_res_id;	/* bus_release resource needs this         */
-  int		csr_res_type;	/* bus_release resource needs this         */
-  struct mbuf	*tx_mbuf;	/* hang mbuf here while building dma descs */
-# if (__FreeBSD_version >= 500000)
-  struct mtx	top_mtx;	/* lock card->watchdog vs core_ioctl       */
-  struct mtx	bottom_mtx;	/* lock for buf queues & descriptor rings  */
-# else /* FreeBSD-4 */
-  int		top_spl;	/* lock card->watchdog vs core_ioctl       */
-  int		bottom_spl;	/* lock for buf queues & descriptor rings  */
-# endif
-#endif /* __FreeBSD__ */
-
-#if __linux__
-  struct pci_dev    *pci_dev;	/* READ/WRITE_PCI_CFG macros need this     */
-  struct net_device *net_dev;	/* NAME_UNIT macro needs this              */
-  struct timer_list wd_timer;	/* timer calls watchdog() once a second    */
-  u_int32_t	 csr_iobase;	/*     io base address of Tulip CSRs       */
-  void		*csr_membase;	/* kv mem base address of Tulip CSRs       */
-  struct sk_buff *tx_skb;	/* hang skb here while building dma descs  */
-  struct semaphore top_lock;	/* lock card->watchdog vs core_ioctl       */
-  spinlock_t	bottom_lock;	/* lock for buf queues & descriptor rings  */
-#endif  /* __linux__ */
-
-  /* Top-half state used by all card types; lock with top_lock,            */
-  int		quota;		/* used for incoming packet flow control   */
-  const char	*dev_desc;	/* string describing type of board         */
-  struct status status;		/* driver status lmcconfig can read        */
-  struct config	config;		/* driver config lmcconfig can read/write  */
-  struct card	*card;		/* card methods: config, ioctl, watchdog   */
-  u_int32_t	gpio_dir;	/* s/w copy of GPIO direction register     */
-  u_int16_t	led_state;	/* last value written to mii16             */
-  u_int32_t	flags;		/* driver-global flags                     */
-
-  /* Top-half state used by card-specific watchdogs; lock with top_lock.   */
-  u_int32_t	last_mii16;	/* SSI, HSSI: MII reg 16 one second ago    */
-  u_int32_t	last_stat16;	/* T3:     framer reg 16 one second ago    */
-  u_int32_t	last_alm1;	/* T1E1:   framer reg 47 one second ago    */
-  u_int32_t	last_FEAC;	/* last FEAC msg code received             */
-  u_int32_t	loop_timer;	/* seconds until loopback expires          */
-
-  /* Bottom-half state used by the interrupt code; lock with bottom_lock.  */
-  struct desc_ring txring;	/* tx descriptor ring state                */
-  struct desc_ring rxring;	/* rx descriptor ring state                */
-  };  /* end of softc */
-
-/* Hide the minor differences between OS versions */
-
-#if __FreeBSD__
-  typedef void intr_return_t;
-# define  READ_PCI_CFG(sc, addr)       pci_read_config ((sc)->dev, addr, 4)
-# define WRITE_PCI_CFG(sc, addr, data) pci_write_config((sc)->dev, addr, data, 4)
-# define  READ_CSR(csr)		bus_space_read_4 (sc->csr_tag, sc->csr_handle, csr)
-# define WRITE_CSR(csr, val)	bus_space_write_4(sc->csr_tag, sc->csr_handle, csr, val)
-# define NAME_UNIT		device_get_nameunit(sc->dev)
-# define DRIVER_DEBUG		((sc->config.debug) || (sc->ifp->if_flags & IFF_DEBUG))
-# if (__FreeBSD_version >= 500000)
-#  define TOP_LOCK		mtx_lock   (&sc->top_mtx)
-#  define TOP_TRYLOCK		mtx_trylock(&sc->top_mtx)
-#  define TOP_UNLOCK		mtx_unlock (&sc->top_mtx)
-#  define BOTTOM_TRYLOCK	mtx_trylock(&sc->bottom_mtx)
-#  define BOTTOM_UNLOCK		mtx_unlock (&sc->bottom_mtx)
-#  define CHECK_CAP		suser(curthread)
-# else /* FreeBSD-4 */
-#  define TOP_LOCK		(sc->top_spl = splimp())
-#  define TOP_TRYLOCK		(sc->top_spl = splimp())
-#  define TOP_UNLOCK		splx(sc->top_spl)
-#  define BOTTOM_TRYLOCK	1 /* giant_lock protects */
-#  define BOTTOM_UNLOCK		/* nothing */
-#  define CHECK_CAP		suser(curproc)
-# endif
-# define DISABLE_INTR		/* nothing */
-# define ENABLE_INTR		/* nothing */
-# define IRQ_NONE		/* nothing */
-# define IRQ_HANDLED		/* nothing */
-# define IFP2SC(ifp)		(ifp)->if_softc
-# define COPY_BREAK		MHLEN
-# define SLEEP(usecs)		tsleep(sc, PCATCH | PZERO, DEVICE_NAME, 1+(usecs/tick))
-# define DMA_SYNC(map, size, flags) bus_dmamap_sync(ring->tag, map, flags)
-# define DMA_LOAD(map, addr, size)  bus_dmamap_load(ring->tag, map, addr, size, fbsd_dmamap_load, ring, 0)
-# if (NBPFILTER != 0)
-#  if (__FreeBSD_version >= 500000)
-#   define LMC_BPF_MTAP(mbuf)	if (sc->ifp->if_bpf) bpf_mtap(sc->ifp->if_bpf, mbuf)
-#  else  /* FreeBSD-4 */
-#   define LMC_BPF_MTAP(mbuf)	if (sc->ifp->if_bpf) bpf_mtap(sc->ifp, mbuf)
-#  endif
-#  define LMC_BPF_ATTACH(dlt, len) bpfattach(sc->ifp, dlt, len)
-#  define LMC_BPF_DETACH	   bpfdetach(sc->ifp)
-# endif
-# if (__FreeBSD_version >= 500000)
-#  define IF_DROP(ifq)		_IF_DROP(ifq)
-#  define IF_QFULL(ifq)		_IF_QFULL(ifq)
-# endif
-# if (__FreeBSD_version < 500000)
-#  define INTR_MPSAFE		0
-#  define BUS_DMA_COHERENT	0
-# endif
-#endif  /* __FreeBSD__ */
-
-#if __NetBSD__
-  typedef int intr_return_t;
-# define  READ_PCI_CFG(sc, addr)       pci_conf_read ((sc)->pa_pc, (sc)->pa_tag, addr)
-# define WRITE_PCI_CFG(sc, addr, data) pci_conf_write((sc)->pa_pc, (sc)->pa_tag, addr, data)
-# define  READ_CSR(csr)		bus_space_read_4 (sc->csr_tag, sc->csr_handle, csr)
-# define WRITE_CSR(csr, val)	bus_space_write_4(sc->csr_tag, sc->csr_handle, csr, val)
-# define NAME_UNIT		sc->dev.dv_xname
-# define DRIVER_DEBUG		((sc->config.debug) || (sc->ifp->if_flags & IFF_DEBUG))
-# define TOP_LOCK		simple_lock    (&sc->top_lock)
-# define TOP_TRYLOCK		simple_lock_try(&sc->top_lock)
-# define TOP_UNLOCK		simple_unlock  (&sc->top_lock)
-# define BOTTOM_TRYLOCK		simple_lock_try(&sc->bottom_lock)
-# define BOTTOM_UNLOCK		simple_unlock  (&sc->bottom_lock)
-# define CHECK_CAP		suser(curproc->p_ucred, &curproc->p_acflag)
-# define DISABLE_INTR		int spl = splnet()
-# define ENABLE_INTR		splx(spl)
-# define IRQ_NONE		0
-# define IRQ_HANDLED		1
-# define IFP2SC(ifp)		(ifp)->if_softc
-# define COPY_BREAK		MHLEN
-# define SLEEP(usecs)		tsleep(sc, PCATCH | PZERO, DEVICE_NAME, 1+(usecs/tick))
-# define DMA_SYNC(map, size, flags) bus_dmamap_sync(ring->tag, map, 0, size, flags)
-# define DMA_LOAD(map, addr, size)  bus_dmamap_load(ring->tag, map, addr, size, 0, BUS_DMA_NOWAIT)
-# if (NBPFILTER != 0)
-#  define LMC_BPF_MTAP(mbuf)	if (sc->ifp->if_bpf) bpf_mtap(sc->ifp->if_bpf, mbuf)
-#  define LMC_BPF_ATTACH(dlt, len) bpfattach(sc->ifp, dlt, len)
-#  define LMC_BPF_DETACH	   bpfdetach(sc->ifp)
-# endif
-#endif /* __NetBSD__ */
-
-#if __OpenBSD__
-  typedef int intr_return_t;
-# define  READ_PCI_CFG(sc, addr)       pci_conf_read ((sc)->pa_pc, (sc)->pa_tag, addr)
-# define WRITE_PCI_CFG(sc, addr, data) pci_conf_write((sc)->pa_pc, (sc)->pa_tag, addr, data)
-# define  READ_CSR(csr)		bus_space_read_4 (sc->csr_tag, sc->csr_handle, csr)
-# define WRITE_CSR(csr, val)	bus_space_write_4(sc->csr_tag, sc->csr_handle, csr, val)
-# define NAME_UNIT		sc->dev.dv_xname
-# define DRIVER_DEBUG		((sc->config.debug) || (sc->ifp->if_flags & IFF_DEBUG))
-# define TOP_LOCK		simple_lock    (&sc->top_lock)
-# define TOP_TRYLOCK		simple_lock_try(&sc->top_lock)
-# define TOP_UNLOCK		simple_unlock  (&sc->top_lock)
-# define BOTTOM_TRYLOCK		simple_lock_try(&sc->bottom_lock)
-# define BOTTOM_UNLOCK		simple_unlock  (&sc->bottom_lock)
-# define CHECK_CAP		suser(curproc, 0)
-# define DISABLE_INTR		int spl = splnet()
-# define ENABLE_INTR		splx(spl)
-# define IRQ_NONE		0
-# define IRQ_HANDLED		1
-# define IFP2SC(ifp)		(ifp)->if_softc
-# define COPY_BREAK		MHLEN
-# define SLEEP(usecs)		tsleep(sc, PCATCH | PZERO, DEVICE_NAME, 1+(usecs/tick))
-# define DMA_SYNC(map, size, flags) bus_dmamap_sync(ring->tag, map, 0, size, flags)
-# define DMA_LOAD(map, addr, size)  bus_dmamap_load(ring->tag, map, addr, size, 0, BUS_DMA_NOWAIT)
-# if (NBPFILTER != 0)
-#  define LMC_BPF_MTAP(mbuf)	if (sc->ifp->if_bpf) bpf_mtap(sc->ifp->if_bpf, mbuf)
-#  define LMC_BPF_ATTACH(dlt, len) bpfattach(&sc->ifp->if_bpf, sc->ifp, dlt, len)
-#  define LMC_BPF_DETACH	   bpfdetach(sc->ifp)
-# endif
-#endif /* __OpenBSD__ */
-
-#if __bsdi__
-  typedef int intr_return_t;
-# define  READ_PCI_CFG(sc, addr)        pci_inl(&(sc)->cfgbase, addr)
-# define WRITE_PCI_CFG(sc, addr, data) pci_outl(&(sc)->cfgbase, addr, data)
-# if IOREF_CSR
-#  define  READ_CSR(csr)	 inl(sc->csr_iobase+(csr))
-#  define WRITE_CSR(csr, val)	outl(sc->csr_iobase+(csr), (val))
-# else
-# error Memory refs to Tulip CSRs cause page faults in BSD/OS
-#  define  READ_CSR(csr)	   (0 + *(sc->csr_membase+(csr)))
-#  define WRITE_CSR(csr, val)	((void)(*(sc->csr_membase+(csr)) = (val)))
-# endif
-# define NAME_UNIT		sc->dev.dv_xname
-# define DRIVER_DEBUG		((sc->config.debug) || (sc->ifp->if_flags & IFF_DEBUG))
-# define TOP_LOCK		simple_lock    (&sc->top_lock)
-# define TOP_TRYLOCK		simple_lock_try(&sc->top_lock)
-# define TOP_UNLOCK		simple_unlock  (&sc->top_lock)
-# define BOTTOM_TRYLOCK		simple_lock_try(&sc->bottom_lock)
-# define BOTTOM_UNLOCK		simple_unlock  (&sc->bottom_lock)
-# define CHECK_CAP		suser(PCPU(curproc)->p_ucred, &PCPU(curproc)->p_acflag)
-# define DISABLE_INTR		int spl = splimp()
-# define ENABLE_INTR		splx(spl)
-# define IRQ_NONE		1 /* XXX 0 */
-# define IRQ_HANDLED		1
-# define IFP2SC(ifp)		(ifp)->if_softc
-# define COPY_BREAK		MHLEN
-# define SLEEP(usecs)		tsleep(sc, PCATCH | PZERO, DEVICE_NAME, 1+(usecs/tick))
-# define DMA_SYNC(map, size, flags)   /* nothing */
-# define DMA_LOAD(map, addr, size)    0
-# define bus_dmamap_unload(tag, map)  /* nothing */
-# define bus_dmamap_destroy(tag, map) /* nothing */
-# if (NBPFILTER != 0)
-#  define LMC_BPF_MTAP(mbuf)	if (sc->ifp->if_bpf) bpf_mtap(sc->ifp->if_bpf, mbuf)
-#  define LMC_BPF_ATTACH(dlt, len) bpfattach(&sc->ifp->if_bpf, sc->ifp, dlt, len)
-#  define LMC_BPF_DETACH	/* bpfdetach(sc->ifp) */
-# endif
-# define memcpy(dst, src, len)  bcopy(src, dst, len)
-# define if_detach(ifp)		/* nothing */
-
-/*  BSD/OS-4.1 doesn't have a back pointer to softc in struct ifnet, */
-/*  and it passes a unit number not a struct ifnet* to watchdog. */
-# if (_BSDI_VERSION <= 199910)
-   extern struct cfdriver	lmccd;
-#  undef  IFP2SC
-#  define UNIT2SC(unit)		((softc_t *)lmccd.cd_devs[unit])
-#  define IFP2SC(ifp)		(UNIT2SC((ifp)->if_unit))
-# endif
-#endif /* __bsdi__ */
-
-#if __linux__
-static u_int32_t /* inline? so rare it doesn't matter */
-READ_PCI_CFG(softc_t *sc, u_int32_t addr)
-  {
-  u_int32_t data;
-  pci_read_config_dword(sc->pci_dev, addr, &data);
-  return data;
-  }
-# define WRITE_PCI_CFG(sc, addr, data) pci_write_config_dword(sc->pci_dev, addr, data)
-# if IOREF_CSR
-#  define  READ_CSR(csr)	       inl((sc->csr_iobase+(csr)))
-#  define WRITE_CSR(csr, val)	outl((val),(sc->csr_iobase+(csr)))
-# else
-#  define  READ_CSR(csr)	       readl((sc->csr_membase+(csr)))
-#  define WRITE_CSR(csr, val)	writel((val),(sc->csr_membase+(csr)))
-# endif
-# define NAME_UNIT		sc->net_dev->name
-# define DRIVER_DEBUG		((sc->config.debug) || (sc->net_dev->flags & IFF_DEBUG))
-# define TOP_LOCK		(down_interruptible(&sc->top_lock) ? 0:1)
-# define TOP_TRYLOCK		(down_trylock(&sc->top_lock) ? 0:1)
-# define TOP_UNLOCK		up(&sc->top_lock)
-# define BOTTOM_TRYLOCK		spin_trylock_bh(&sc->bottom_lock)
-# define BOTTOM_UNLOCK		spin_unlock_bh(&sc->bottom_lock)
-# define CHECK_CAP		capable(CAP_NET_ADMIN)? 0 : -EPERM
-# define DISABLE_INTR		/* nothing */
-# define ENABLE_INTR		/* nothing */
-# define COPY_BREAK		200
-# define DELAY(usecs)		udelay(usecs)
-# define SLEEP(usecs)		do { set_current_state(TASK_INTERRUPTIBLE);\
-				schedule_timeout(1+(usecs*HZ)/1000000UL); } while (0)
-# define printf			printk
-# define copyin(u, k, len)	copy_from_user(k, u, len)
-# define microtime(time)	do_gettimeofday(time)
-# define malloc(len, t, f)	kmalloc(len, GFP_KERNEL)
-# define free(addr, t)		kfree(addr)
-# define LITTLE_ENDIAN		4321
-# define BIG_ENDIAN		1234
-# if defined(__LITTLE_ENDIAN)
-#  define BYTE_ORDER LITTLE_ENDIAN
-# elif defined(__BIG_ENDIAN)
-#  define BYTE_ORDER BIG_ENDIAN
-# else
-#  error "asm/byteorder.h is wrong"
-# endif
-# if (GEN_HDLC == 0)
-#  define dev_to_hdlc(net_dev) net_dev
-#  define hdlc_set_carrier(val, net_dev) /* nothing */
-# endif
-#endif /* __linux__ */
-
-#if (NBPFILTER == 0)
-# define LMC_BPF_MTAP(mbuf)		/* nothing */
-# define LMC_BPF_ATTACH(dlt, len)	/* nothing */
-# define LMC_BPF_DETACH			/* nothing */
-#endif
-
-#if (__bsdi__ || /* unconditionally */ \
-    (__FreeBSD__ && (__FreeBSD_version < 503000)) || \
-    (__NetBSD__  && (__NetBSD_Version__ < 106000000)) || \
-    (__OpenBSD__ && (  OpenBSD < 200111)))
+#if defined(__bsdi__) /* ALTQ shims */
 # define IFQ_ENQUEUE(ifq, m, pa, err)   \
 do {					\
   if (pa==0); /* suppress warning */	\
@@ -1443,226 +1426,293 @@ do {					\
     m_freem(m);				\
     }					\
    } while (0)
-#endif
+#endif /* __bsdi__ */
 
-#define HSSI_DESC "SBE/LMC HSSI Card"
-#define T3_DESC   "SBE/LMC T3 Card"
-#define SSI_DESC  "SBE/LMC SSI Card"
-#define T1E1_DESC "SBE/LMC T1E1 Card"
+#define HSSI_DESC "LMC5200 HSSI Card"
+#define T3_DESC   "LMC5245 T3 Card"
+#define SSI_DESC  "LMC1000 SSI Card"
+#define T1E1_DESC "LMC1200 T1E1 Card"
 
 /* procedure prototypes */
 
-static void shift_srom_bits(softc_t *, u_int32_t, u_int32_t);
-static u_int16_t read_srom(softc_t *, u_int8_t);
-static void write_srom(softc_t *, u_int8_t, u_int16_t);
+static void srom_shift_bits(softc_t *, u_int32_t, u_int32_t);
+static u_int16_t srom_read(softc_t *, u_int8_t);
+static void srom_write(softc_t *, u_int8_t, u_int16_t);
 
-static u_int8_t read_bios(softc_t *, u_int32_t);
-static void write_bios_phys(softc_t *, u_int32_t, u_int8_t);
-static void write_bios(softc_t *, u_int32_t, u_int8_t);
-static void erase_bios(softc_t *);
+static u_int8_t bios_read(softc_t *, u_int32_t);
+static void bios_write_phys(softc_t *, u_int32_t, u_int8_t);
+static void bios_write(softc_t *, u_int32_t, u_int8_t);
+static void bios_erase(softc_t *);
 
-static void shift_mii_bits(softc_t *, u_int32_t, u_int32_t);
-static u_int16_t read_mii(softc_t *, u_int8_t);
-static void write_mii(softc_t *, u_int8_t, u_int16_t);
+static void mii_shift_bits(softc_t *, u_int32_t, u_int32_t);
+static u_int16_t mii_read(softc_t *, u_int8_t);
+static void mii_write(softc_t *, u_int8_t, u_int16_t);
 
-static void set_mii16_bits(softc_t *, u_int16_t);
-static void clr_mii16_bits(softc_t *, u_int16_t);
-static void set_mii17_bits(softc_t *, u_int16_t);
-static void clr_mii17_bits(softc_t *, u_int16_t);
+static void mii16_set_bits(softc_t *, u_int16_t);
+static void mii16_clr_bits(softc_t *, u_int16_t);
+static void mii17_set_bits(softc_t *, u_int16_t);
+static void mii17_clr_bits(softc_t *, u_int16_t);
 
 static void led_off(softc_t *, u_int16_t);
 static void led_on(softc_t *, u_int16_t);
 static void led_inv(softc_t *, u_int16_t);
 
-static void write_framer(softc_t *, u_int16_t, u_int8_t);
-static u_int8_t read_framer(softc_t *, u_int16_t);
+static void framer_write(softc_t *, u_int16_t, u_int8_t);
+static u_int8_t framer_read(softc_t *, u_int16_t);
 
-static void make_gpio_input(softc_t *, u_int32_t);
-static void make_gpio_output(softc_t *, u_int32_t);
-static u_int32_t read_gpio(softc_t *);
-static void set_gpio_bits(softc_t *, u_int32_t);
-static void clr_gpio_bits(softc_t *, u_int32_t);
+static void gpio_make_input(softc_t *, u_int32_t);
+static void gpio_make_output(softc_t *, u_int32_t);
+static u_int32_t gpio_read(softc_t *);
+static void gpio_set_bits(softc_t *, u_int32_t);
+static void gpio_clr_bits(softc_t *, u_int32_t);
 
-static void reset_xilinx(softc_t *);
-static void  load_xilinx_from_rom(softc_t *);
-static int   load_xilinx_from_file(softc_t *, char *, u_int32_t);
+static void xilinx_reset(softc_t *);
+static void xilinx_load_from_rom(softc_t *);
+static int xilinx_load_from_file(softc_t *, char *, u_int32_t);
 
-static void shift_synth_bits(softc_t *, u_int32_t, u_int32_t);
-static void write_synth(softc_t *, struct synth *);
+static void synth_shift_bits(softc_t *, u_int32_t, u_int32_t);
+static void synth_write(softc_t *, struct synth *);
 
-static void write_dac(softc_t *, u_int16_t);
+static void dac_write(softc_t *, u_int16_t);
 
-static void hssi_config(softc_t *);
 static void hssi_ident(softc_t *);
-static int  hssi_watchdog(softc_t *);
-static int  hssi_ioctl(softc_t *, struct ioctl *);
+static void hssi_watchdog(softc_t *);
+static int hssi_ioctl(softc_t *, struct ioctl *);
+static void hssi_attach(softc_t *, struct config *);
+static void hssi_detach(softc_t *);
 
-static void t3_config(softc_t *);
 static void t3_ident(softc_t *);
-static int  t3_watchdog(softc_t *);
+static void t3_watchdog(softc_t *);
+static int t3_ioctl(softc_t *, struct ioctl *);
 static void t3_send_dbl_feac(softc_t *, int, int);
-static int  t3_ioctl(softc_t *, struct ioctl *);
+static void t3_attach(softc_t *, struct config *);
+static void t3_detach(softc_t *);
 
-static void ssi_config(softc_t *);
 static void ssi_ident(softc_t *);
-static int  ssi_watchdog(softc_t *);
-static int  ssi_ioctl(softc_t *, struct ioctl *);
+static void ssi_watchdog(softc_t *);
+static int ssi_ioctl(softc_t *, struct ioctl *);
+static void ssi_attach(softc_t *, struct config *);
+static void ssi_detach(softc_t *);
 
-static void t1_config(softc_t *);
 static void t1_ident(softc_t *);
-static int  t1_watchdog(softc_t *);
+static void t1_watchdog(softc_t *);
+static int t1_ioctl(softc_t *, struct ioctl *);
 static void t1_send_bop(softc_t *, int);
-static int  t1_ioctl(softc_t *, struct ioctl *);
+static void t1_attach(softc_t *, struct config *);
+static void t1_detach(softc_t *);
 
-static void check_intr_status(softc_t *);
-static void core_interrupt(void *, int);
-static void user_interrupt(softc_t *, int);
+#if NETGRAPH
+static int netgraph_ioctl(softc_t *, u_long, caddr_t);
+static void netgraph_input(softc_t *, struct mbuf *);
+static void netgraph_output(softc_t *);
+static void netgraph_watchdog(softc_t *);
+static int netgraph_open(softc_t *, struct config *);
+static int netgraph_attach(softc_t *, struct config *);
+static int netgraph_detach(softc_t *);
+#endif /* NETGRAPH */
 
-static int  core_ioctl(softc_t *, u_long, caddr_t);
-static void core_watchdog(softc_t *);
+#if SYNC_PPP
+static int sync_ppp_ioctl(softc_t *, struct ifreq *, int);
+static int sync_ppp_type(softc_t *, struct sk_buff *);
+static int sync_ppp_mtu(softc_t *, int);
+static void sync_ppp_watchdog(softc_t *);
+static int sync_ppp_open(softc_t *, struct config *);
+static int sync_ppp_attach(softc_t *, struct config *);
+static int sync_ppp_detach(softc_t *);
+#endif /* SYNC_PPP */
 
-static void config_proto(softc_t *, struct config *);
-static void set_status(softc_t *, int);
+#if GEN_HDLC
+static int gen_hdlc_ioctl(softc_t *, struct ifreq *, int);
+static int gen_hdlc_type(softc_t *, struct sk_buff *);
+static int gen_hdlc_mtu(softc_t *, int);
+static void gen_hdlc_watchdog(softc_t *);
+static int gen_hdlc_open(softc_t *, struct config *);
+static int gen_hdlc_attach(softc_t *, struct config *);
+static int gen_hdlc_detach(softc_t *);
+static int gen_hdlc_card_params(struct net_device *, unsigned short,
+				unsigned short);
+#endif /* GEN_HDLC */
+
+#if P2P
+static int p2p_stack_ioctl(softc_t *, u_long, caddr_t);
+static void p2p_stack_input(softc_t *, struct mbuf *);
+static void p2p_stack_output(softc_t *);
+static void p2p_stack_watchdog(softc_t *);
+static int p2p_stack_open(softc_t *, struct config *);
+static int p2p_stack_attach(softc_t *, struct config *);
+static int p2p_stack_detach(softc_t *);
+static int p2p_getmdm(struct p2pcom *, caddr_t);
+static int p2p_mdmctl(struct p2pcom *, int);
+#endif /* P2P */
+
+#if SPPP
+static int sppp_stack_ioctl(softc_t *, u_long, caddr_t);
+static void sppp_stack_input(softc_t *, struct mbuf *);
+static void sppp_stack_output(softc_t *);
+static void sppp_stack_watchdog(softc_t *);
+static int sppp_stack_open(softc_t *, struct config *);
+static int sppp_stack_attach(softc_t *, struct config *);
+static int sppp_stack_detach(softc_t *);
+static void sppp_tls(struct sppp *);
+static void sppp_tlf(struct sppp *);
+#endif /* SPPP */
 
 #if IFNET
-static void raw_input(struct ifnet *, struct mbuf *);
-static int  raw_output(struct ifnet *, struct mbuf *,
- struct sockaddr *, struct rtentry *);
-static int  raw_ioctl(struct ifnet *, u_long, caddr_t);
+static int rawip_ioctl(softc_t *, u_long, caddr_t);
+static void rawip_input(softc_t *, struct mbuf *);
+static void rawip_output(softc_t *);
+#elif NETDEV
+static int rawip_ioctl(softc_t *, struct ifreq *, int);
+static int rawip_type(softc_t *, struct sk_buff *);
+static int rawip_mtu(softc_t *, int);
+#endif
+static void rawip_watchdog(softc_t *);
+static int rawip_open(softc_t *, struct config *);
+static int rawip_attach(softc_t *, struct config *);
+static int rawip_detach(softc_t *);
 
-static int  ifnet_ioctl(struct ifnet *, u_long, caddr_t);
+#if IFNET
+static void ifnet_input(struct ifnet *, struct mbuf *);
+static int ifnet_output(struct ifnet *, struct mbuf *,
+			struct sockaddr *, struct rtentry *);
+static int ifnet_ioctl(struct ifnet *, u_long, caddr_t);
 static void ifnet_start(struct ifnet *);
 static void ifnet_watchdog(struct ifnet *);
+
 static void ifnet_setup(struct ifnet *);
-static int  ifnet_attach(softc_t *);
+static int ifnet_attach(softc_t *);
 static void ifnet_detach(softc_t *);
 
 static void ifmedia_setup(softc_t *);
-static int  ifmedia_change(struct ifnet *);
+static int ifmedia_change(struct ifnet *);
 static void ifmedia_status(struct ifnet *, struct ifmediareq *);
-# if P2P
-static int  p2p_getmdm(struct p2pcom *, caddr_t);
-static int  p2p_mdmctl(struct p2pcom *, int);
-# endif
-# if NSPPP
-static void sppp_tls(struct sppp *);
-static void sppp_tlf(struct sppp *);
-# endif
 #endif /* IFNET */
 
+#if NETDEV
+static int netdev_open(struct net_device *);
+static int netdev_stop(struct net_device *);
+static int netdev_start(struct sk_buff *, struct net_device *);
+# if NAPI
+static int netdev_poll(struct net_device *, int *);
+# endif
+static int netdev_ioctl(struct net_device *, struct ifreq *, int);
+static int netdev_mtu(struct net_device *, int);
+static void netdev_timeout(struct net_device *);
+static struct net_device_stats *netdev_stats(struct net_device *);
+static void netdev_watchdog(unsigned long);
+
+static void netdev_setup(struct net_device *);
+static int netdev_attach(softc_t *);
+static void netdev_detach(softc_t *);
+#endif /* NETDEV */
+
 #if NETGRAPH
-# if (__FreeBSD_version >= 500000)
-static int  ng_constructor(node_p);
-# else /* FreeBSD-4 */
-static int  ng_constructor(node_p *);
-# endif
-# if (__FreeBSD_version >= 500000)
-static int  ng_rcvmsg(node_p, item_p, hook_p);
-# else /* FreeBSD-4 */
-static int  ng_rcvmsg(node_p, struct ng_mesg *,
- const char *,  struct ng_mesg **);
-# endif
-static int  ng_shutdown(node_p);
-static int  ng_newhook(node_p, hook_p, const char *);
-static int  ng_connect(hook_p);
-# if (__FreeBSD_version >= 500000)
-static int  ng_rcvdata(hook_p, item_p);
-# else /* FreeBSD-4 */
-static int  ng_rcvdata(hook_p, struct mbuf *, meta_p);
-# endif
-static int  ng_disconnect(hook_p);
-# if (IFNET == 0)
+static int ng_constructor(node_p);
+static int ng_rcvmsg(node_p, item_p, hook_p);
+static int ng_shutdown(node_p);
+static int ng_newhook(node_p, hook_p, const char *);
+static int ng_connect(hook_p);
+static int ng_rcvdata(hook_p, item_p);
+static int ng_disconnect(hook_p);
 static void ng_watchdog(void *);
-# endif
-static int  ng_attach(softc_t *);
+static int ng_attach(softc_t *);
 static void ng_detach(softc_t *);
 #endif /* NETGRAPH */
 
 #if BSD
-static int   create_ring(softc_t *, struct desc_ring *, int);
+static int create_ring(softc_t *, struct desc_ring *, int);
 static void destroy_ring(softc_t *, struct desc_ring *);
 
 static void mbuf_enqueue(struct desc_ring *, struct mbuf *);
-static struct mbuf* mbuf_dequeue(struct desc_ring *);
+static struct mbuf *mbuf_dequeue(struct desc_ring *);
 
-static int  rxintr_cleanup(softc_t *);
-static int  rxintr_setup(softc_t *);
-static int  txintr_cleanup(softc_t *);
-static int  txintr_setup_mbuf(softc_t *, struct mbuf *);
-static int  txintr_setup(softc_t *);
+static int rxintr_cleanup(softc_t *);
+static int rxintr_setup(softc_t *);
+static int txintr_cleanup(softc_t *);
+static int txintr_setup_mbuf(softc_t *, struct mbuf *);
+static int txintr_setup(softc_t *);
 
 static intr_return_t bsd_interrupt(void *);
 # if DEVICE_POLLING
 static void bsd_poll(struct ifnet *, enum poll_cmd, int);
 # endif
-# if __FreeBSD__
-static void fbsd_dmamap_load(void *, bus_dma_segment_t *, int, int);
-# endif
 #endif /* BSD */
 
-static int  startup_card(softc_t *);
-static void shutdown_card(void *);
-static int  attach_card(softc_t *, const char *);
-static void detach_card(softc_t *);
-
-#if __FreeBSD__
-static int  fbsd_probe(device_t);
-static int  fbsd_detach(device_t);
-static void fbsd_shutdown(device_t);
-static int  fbsd_attach(device_t);
-#endif /* __FreeBSD__ */
-
-#if __NetBSD__
-static int  nbsd_match(struct device *t, struct cfdata *, void *);
-static int  nbsd_detach(struct device *, int);
-static void nbsd_attach(struct device *, struct device *, void *);
-static int lkm_nbsd_match(struct pci_attach_args *);
-int if_lmc_lkmentry(struct lkm_table *, int, int);
-#endif  /* __NetBSD__ */
-
-#if __OpenBSD__
-static int  obsd_match(struct device *, void *, void *);
-static int  obsd_detach(struct device *, int);
-static void obsd_attach(struct device *, struct device *, void *);
-int if_lmc_lkmentry(struct lkm_table *, int, int);
-#endif  /* __OpenBSD__ */
-
-#if __bsdi__
-static int  bsdi_match(pci_devaddr_t *);
-static int  bsdi_probe(struct device *, struct cfdata *, void *);
-static void bsdi_attach(struct device *, struct device *, void *);
-#endif  /* __bsdi__ */
-
-#if __linux__
-static int   create_ring(softc_t *, struct desc_ring *, int);
+#if defined(__linux__)
+static int create_ring(softc_t *, struct desc_ring *, int);
 static void destroy_ring(softc_t *, struct desc_ring *);
 
 static void skbuff_enqueue(struct desc_ring *, struct sk_buff *);
-static struct sk_buff* skbuff_dequeue(struct desc_ring *);
+static struct sk_buff *skbuff_dequeue(struct desc_ring *);
 
-static int  rxintr_cleanup(softc_t *);
-static int  rxintr_setup(softc_t *);
-static int  txintr_cleanup(softc_t *sc);
-static int  txintr_setup_frag(softc_t *, char *, int);
-static int  txintr_setup_skb(softc_t *, struct sk_buff *);
-static int  txintr_setup(softc_t *);
+static int rxintr_cleanup(softc_t *);
+static int rxintr_setup(softc_t *);
+static int txintr_cleanup(softc_t *sc);
+static int txintr_setup_frag(softc_t *, char *, int);
+static int txintr_setup_skb(softc_t *, struct sk_buff *);
+static int txintr_setup(softc_t *);
 
 static irqreturn_t linux_interrupt(int, void *, struct pt_regs *);
-static int  linux_poll(struct net_device *, int *);
+#endif /* __linux__ */
 
-static int  linux_start(struct sk_buff *, struct net_device *);
-static void linux_timeout(struct net_device *);
-static int  linux_ioctl(struct net_device *, struct ifreq *, int);
-static struct net_device_stats * linux_stats(struct net_device *);
-static void linux_watchdog(unsigned long);
-static int  linux_stop(struct net_device *);
-static int  linux_open(struct net_device *);
-# if GEN_HDLC
-static int  hdlc_attach(struct net_device *, unsigned short, unsigned short);
+static int open_proto(softc_t *, struct config *);
+static int attach_stack(softc_t *, struct config *);
+
+static int lmc_ioctl(softc_t *, u_long, caddr_t);
+static void lmc_watchdog(softc_t *);
+
+static void set_ready(softc_t *, int);
+static void reset_cntrs(softc_t *);
+
+static void lmc_interrupt(void *, int, int);
+static void check_intr_status(softc_t *);
+
+static int lmc_attach(softc_t *);
+static void lmc_detach(softc_t *);
+
+static void tulip_loop(softc_t *, struct config *);
+static int tulip_attach(softc_t *);
+static void tulip_detach(void *);
+
+static void print_driver_info(void);
+
+#if defined(__FreeBSD__)
+static int fbsd_probe(device_t);
+static int fbsd_attach(device_t);
+static int fbsd_detach(device_t);
+static void fbsd_shutdown(device_t);
+static void fbsd_dmamap_load(void *, bus_dma_segment_t *, int, int);
+#endif /* __FreeBSD__ */
+
+#if defined(__NetBSD__)
+static int nbsd_match(struct device *, struct cfdata *, void *);
+static void nbsd_attach(struct device *, struct device *, void *);
+static int nbsd_detach(struct device *, int);
+# if defined(LKM)
+int if_lmc_lkmentry(struct lkm_table *, int, int);
 # endif
+#endif /* __NetBSD__ */
+
+#if defined(__OpenBSD__)
+static int obsd_match(struct device *, void *, void *);
+static void obsd_attach(struct device *, struct device *, void *);
+static int obsd_detach(struct device *, int);
+# if defined(LKM)
+int if_lmc_lkmentry(struct lkm_table *, int, int);
+# endif
+#endif /* __OpenBSD__ */
+
+#if defined(__bsdi__)
+static int bsdi_match(pci_devaddr_t *);
+static int bsdi_probe(struct device *, struct cfdata *, void *);
+static void bsdi_attach(struct device *, struct device *, void *);
+#endif /* __bsdi__ */
+
+#if defined(__linux__)
+static int __init linux_probe(struct pci_dev *, const struct pci_device_id *);
+static int __init linux_attach(struct pci_dev *);
 static void __exit linux_remove(struct pci_dev *);
-static void netdev_setup(struct net_device *);
-static int  __init linux_probe(struct pci_dev *, const struct pci_device_id *);
+static u_int32_t READ_PCI_CFG(softc_t *, u_int32_t);
 #endif /* __linux__ */
 
 #endif /* KERNEL */

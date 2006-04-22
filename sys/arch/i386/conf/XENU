@@ -1,4 +1,4 @@
-# $NetBSD: XENU,v 1.14 2005/12/07 09:10:15 tsutsui Exp $
+# $NetBSD: XENU,v 1.14.6.1 2006/04/22 11:37:32 simonb Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -162,15 +162,6 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options 	WS_KERNEL_FG=WSCOL_GREEN
-options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
-options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
-options 	WSDISPLAY_COMPAT_USL		# VT handling
-options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-options 	WSDISPLAY_DEFAULTSCREENS=4
-options 	PCDISPLAY_SOFTCURSOR
-
 config		netbsd	root on ? type ?
 #config		netbsd	root on wd0a type ffs
 #config		netbsd	root on xennet0 type nfs
@@ -210,26 +201,22 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 
-# Vinum
-# pseudo-device	vinum		8	# Vinum
-# options 	VINUMDEBUG
-
 pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	sl		2	# Serial Line IP
+pseudo-device	sl			# Serial Line IP
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	tun		2	# network tunneling over tty
-pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	tun			# network tunneling over tty
+pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

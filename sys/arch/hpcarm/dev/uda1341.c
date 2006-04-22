@@ -1,4 +1,4 @@
-/*	$NetBSD: uda1341.c,v 1.8 2005/12/11 12:17:32 christos Exp $	*/
+/*	$NetBSD: uda1341.c,v 1.8.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.8 2005/12/11 12:17:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.8.6.1 2006/04/22 11:37:28 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: uda1341.c,v 1.8 2005/12/11 12:17:32 christos Exp $")
 #include <hpcarm/dev/ipaq_saipvar.h>
 #include <hpcarm/dev/ipaq_gpioreg.h>
 #include <hpcarm/dev/uda1341.h>
-#include <hpcarm/sa11x0/sa11x0_gpioreg.h>
-#include <hpcarm/sa11x0/sa11x0_sspreg.h>
+
+#include <arm/sa11x0/sa11x0_gpioreg.h>
+#include <arm/sa11x0/sa11x0_sspreg.h>
 
 struct uda1341_softc {
 	struct device		sc_dev;
@@ -78,10 +79,10 @@ static	void	uda1341_reginit(struct uda1341_softc *);
 
 static	int	L3_getbit(struct uda1341_softc *);
 static	void	L3_sendbit(struct uda1341_softc *, int);
-static	u_int8_t L3_getbyte(struct uda1341_softc *, int);
-static	void	L3_sendbyte(struct uda1341_softc *, u_int8_t, int);
-static	int	L3_read(struct uda1341_softc *, u_int8_t, u_int8_t *, int);
-static	int	L3_write(struct uda1341_softc *, u_int8_t, u_int8_t *, int);
+static	uint8_t L3_getbyte(struct uda1341_softc *, int);
+static	void	L3_sendbyte(struct uda1341_softc *, uint8_t, int);
+static	int	L3_read(struct uda1341_softc *, uint8_t, uint8_t *, int);
+static	int	L3_write(struct uda1341_softc *, uint8_t, uint8_t *, int);
 
 CFATTACH_DECL(uda, sizeof(struct uda1341_softc),
     uda1341_match, uda1341_attach, NULL, NULL);
@@ -95,12 +96,12 @@ CFATTACH_DECL(uda, sizeof(struct uda1341_softc),
 #define L3_CLK		GPIO_H3600_L3_CLK
 
 static struct {
-	u_int8_t data0;	/* direct addressing register */
+	uint8_t data0;	/* direct addressing register */
 } DIRECT_REG = {0};
 
 static struct {
-	u_int8_t data0;	/* extended addressing register 1 */
-	u_int8_t data1;	/* extended addressing register 2 */
+	uint8_t data0;	/* extended addressing register 1 */
+	uint8_t data1;	/* extended addressing register 2 */
 } EXTEND_REG = {0, 0};
 
 /*
@@ -261,11 +262,11 @@ static void
 uda1341_reset(sc)
 	struct uda1341_softc *sc;
 {       
-	u_int8_t command;
+	uint8_t command;
 
 	command = (L3_ADDRESS_COM << 2) | L3_ADDRESS_STATUS;
 	DIRECT_REG.data0 = STATUS0_RST | STATUS0_SC_256 | STATUS0_IF_LSB16;
-	L3_write(sc, command, (u_int8_t *) &DIRECT_REG, 1);
+	L3_write(sc, command, (uint8_t *) &DIRECT_REG, 1);
 
 	sc->sc_parent->ipaq_egpio &= ~EGPIO_H3600_CODEC_RESET;
 	EGPIO_WRITE(sc);
@@ -273,66 +274,66 @@ uda1341_reset(sc)
 	EGPIO_WRITE(sc);
 
 	DIRECT_REG.data0 &= ~STATUS0_RST;
-	L3_write(sc, command, (u_int8_t *) &DIRECT_REG, 1);
+	L3_write(sc, command, (uint8_t *) &DIRECT_REG, 1);
 }
 
 static void
 uda1341_reginit(sc)
 	struct uda1341_softc *sc;
 {
-	u_int8_t command;
+	uint8_t command;
 
 	/* STATUS 0 */
 	command = (L3_ADDRESS_COM << 2) | L3_ADDRESS_STATUS;
 	DIRECT_REG.data0 = STATUS0_SC_256 | STATUS0_IF_LSB16;
-	L3_write(sc, command, (u_int8_t *) &DIRECT_REG, 1);
+	L3_write(sc, command, (uint8_t *) &DIRECT_REG, 1);
 
 	/* STATUS 1 */
 	DIRECT_REG.data0 = STATUS1_OGS | STATUS1_IGS | (1<<7);
-	L3_write(sc, command, (u_int8_t *) &DIRECT_REG, 1);
+	L3_write(sc, command, (uint8_t *) &DIRECT_REG, 1);
 
 	/* DATA 0 */
 	command = (L3_ADDRESS_COM << 2) | L3_ADDRESS_DATA0;
 	DIRECT_REG.data0 = DATA0_VC(100) | DATA0_COMMON;
-	L3_write(sc, command, (u_int8_t *) &DIRECT_REG, 1);
+	L3_write(sc, command, (uint8_t *) &DIRECT_REG, 1);
 
 	/* DATA 1 */ 
 	DIRECT_REG.data0 = DATA1_BB(0) | DATA1_TR(0) | DATA1_COMMON;
-	L3_write(sc, command, (u_int8_t *) &DIRECT_REG, 1);
+	L3_write(sc, command, (uint8_t *) &DIRECT_REG, 1);
 
 	/* DATA 2*/
 	DIRECT_REG.data0 = DATA2_PP | DATA2_COMMON;
-	L3_write(sc, command, (u_int8_t *) &DIRECT_REG, 1);
+	L3_write(sc, command, (uint8_t *) &DIRECT_REG, 1);
 
 	/* Extended DATA 0 */
 	EXTEND_REG.data0 = EXT_ADDR_COMMON | EXT_ADDR_E0;
 	EXTEND_REG.data1 = EXT_DATA_COMMN | 0x4 ;
-	L3_write(sc, command, (u_int8_t *) &EXTEND_REG, 2);
+	L3_write(sc, command, (uint8_t *) &EXTEND_REG, 2);
 
 	/* Extended DATA 1 */
 	EXTEND_REG.data0 = EXT_ADDR_COMMON | EXT_ADDR_E1;
 	EXTEND_REG.data1 = EXT_DATA_COMMN | 0x4 ;
-	L3_write(sc, command, (u_int8_t *) &EXTEND_REG, 2);
+	L3_write(sc, command, (uint8_t *) &EXTEND_REG, 2);
 
 	/* Extended DATA 2 */
 	EXTEND_REG.data0 = EXT_ADDR_COMMON | EXT_ADDR_E2;
 	EXTEND_REG.data1 = EXT_DATA_COMMN | DATA_E2_MS(30);
-	L3_write(sc, command, (u_int8_t *) &EXTEND_REG, 2);
+	L3_write(sc, command, (uint8_t *) &EXTEND_REG, 2);
 
 	/* Extended DATA 3 */
 	EXTEND_REG.data0 = EXT_ADDR_COMMON | EXT_ADDR_E3;
 	EXTEND_REG.data1 = EXT_DATA_COMMN | DATA_E3_IG_L(0);
-	L3_write(sc, command, (u_int8_t *) &EXTEND_REG, 2);
+	L3_write(sc, command, (uint8_t *) &EXTEND_REG, 2);
 
 	/* Extended DATA 4 */
 	EXTEND_REG.data0 = EXT_ADDR_COMMON | EXT_ADDR_E4;
 	EXTEND_REG.data1 = EXT_DATA_COMMN | DATA_E4_IG_H(0);
-	L3_write(sc, command, (u_int8_t *) &EXTEND_REG, 2);
+	L3_write(sc, command, (uint8_t *) &EXTEND_REG, 2);
 
 	/* Extended DATA 5 */
 	EXTEND_REG.data0 = EXT_ADDR_COMMON | EXT_ADDR_E5;
 	EXTEND_REG.data1 = EXT_DATA_COMMN;
-	L3_write(sc, command, (u_int8_t *) &EXTEND_REG, 2);
+	L3_write(sc, command, (uint8_t *) &EXTEND_REG, 2);
 }
 
 static int
@@ -370,13 +371,13 @@ L3_sendbit(sc, bit)
 	delay(L3_CLK_HIGH);
 }
 
-static u_int8_t
+static uint8_t
 L3_getbyte(sc, mode)
 	struct uda1341_softc *sc;
 	int mode;
 {
 	int i;
-	u_int8_t data;
+	uint8_t data;
 
 	switch (mode) {
 	case 0:		/* Address mode */
@@ -402,7 +403,7 @@ L3_getbyte(sc, mode)
 static void
 L3_sendbyte(sc, data, mode)
 	struct uda1341_softc *sc;
-	u_int8_t data;
+	uint8_t data;
 	int mode;
 {
 	int i;
@@ -434,7 +435,7 @@ L3_sendbyte(sc, data, mode)
 static int
 L3_read(sc, addr, data, len)
 	struct uda1341_softc *sc;
-	u_int8_t addr, *data;
+	uint8_t addr, *data;
         int len;
 {
 	int cr, mode;
@@ -457,7 +458,7 @@ L3_read(sc, addr, data, len)
 static int
 L3_write(sc, addr, data, len)
 	struct uda1341_softc *sc;
-	u_int8_t addr, *data;
+	uint8_t addr, *data;
 	int len;
 {
 	int mode = 0;

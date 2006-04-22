@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.20 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.20.6.1 2006/04/22 11:37:53 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20.6.1 2006/04/22 11:37:53 simonb Exp $");
 
 #include "opt_altivec.h"
 
@@ -201,9 +201,8 @@ ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
 		uio.uio_iovcnt = 1;
 		uio.uio_offset = 0;
 		uio.uio_resid = sizeof(struct vreg);
-		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-		uio.uio_lwp = l;
+		uio.uio_vmspace = l->l_proc->p_vmspace;
 		return process_machdep_dovecregs(l, lt, &uio);
 	}
 

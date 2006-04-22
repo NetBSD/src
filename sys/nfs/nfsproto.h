@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.12 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.12.6.1 2006/04/22 11:40:16 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -54,7 +54,7 @@
 #define NFS_VER2	2
 #define	NFS_VER3	3
 #define NFS_V2MAXDATA	8192
-#define	NFS_MAXDGRAMDATA 32768
+#define	NFS_MAXDGRAMDATA (60*1024)
 #define	NFS_MAXDATA	MAXBSIZE
 #define	NFS_MAXPATHLEN	1024
 #define	NFS_MAXNAMLEN	255

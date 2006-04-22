@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.20 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.20.6.1 2006/04/22 11:38:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.20 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.20.6.1 2006/04/22 11:38:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,11 +83,6 @@ static const int compatspcodes[] = {
 	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200,
 	1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200
 };
-
-/* Macros to clear/set/test flags. */
-#define	SET(t, f)	(t) |= (f)
-#define	CLR(t, f)	(t) &= ~(f)
-#define	ISSET(t, f)	((t) & (f))
 
 int ttcompatgetflags __P((struct tty *));
 void ttcompatsetflags __P((struct tty *, struct termios *));

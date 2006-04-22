@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.22 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: dec_6600.c,v 1.22.6.1 2006/04/22 11:37:11 simonb Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.22 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.22.6.1 2006/04/22 11:37:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,9 +185,7 @@ dec_6600_device_register(dev, aux)
 	static int found, initted, diskboot, netboot;
 	static struct device *primarydev, *pcidev, *ctrlrdev;
 	struct bootdev_data *b = bootdev_data;
-	struct device *parent = dev->dv_parent;
-	struct cfdata *cf = dev->dv_cfdata;
-	const char *name = cf->cf_name;
+	struct device *parent = device_parent(dev);
 
 	if (found)
 		return;
@@ -203,7 +201,7 @@ dec_6600_device_register(dev, aux)
 	}
 
 	if (primarydev == NULL) {
-		if (strcmp(name, "tsp"))
+		if (!device_is_a(dev, "tsp"))
 			return;
 		else {
 			struct tsp_attach_args *tsp = aux;
@@ -218,7 +216,7 @@ dec_6600_device_register(dev, aux)
 	}
 
 	if (pcidev == NULL) {
-		if (strcmp(name, "pci"))
+		if (!device_is_a(dev, "pci"))
 			return;
 		/*
 		 * Try to find primarydev anywhere in the ancestry.  This is
@@ -227,7 +225,7 @@ dec_6600_device_register(dev, aux)
 		while (parent) {
 			if (parent == primarydev)
 				break;
-			parent = parent->dv_parent;
+			parent = device_parent(parent);
 		}
 		if (!parent)
 			return;
@@ -272,12 +270,14 @@ dec_6600_device_register(dev, aux)
 	if (!diskboot)
 		return;
 
-	if (!strcmp(name, "sd") || !strcmp(name, "st") || !strcmp(name, "cd")) {
+	if (device_is_a(dev, "sd") ||
+	    device_is_a(dev, "st") ||
+	    device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 		int unit;
 
-		if (parent->dv_parent != ctrlrdev)
+		if (device_parent(parent) != ctrlrdev)
 			return;
 
 		unit = periph->periph_target * 100 + periph->periph_lun;
@@ -295,12 +295,12 @@ dec_6600_device_register(dev, aux)
 	/*
 	 * Support to boot from IDE drives.
 	 */
-	if (!strcmp(name, "wd")) {
+	if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
 
-		if (strcmp("atabus", parent->dv_cfdata->cf_name))
+		if (!device_is_a(parent, "atabus"))
 			return;
-		if (parent->dv_parent != ctrlrdev)
+		if (device_parent(parent) != ctrlrdev)
 			return;
 
 		DR_VERBOSE(printf("\nAtapi info: drive: %d, channel %d\n",

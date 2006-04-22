@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.9 2005/12/11 12:17:05 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.9.6.1 2006/04/22 11:37:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.9 2005/12/11 12:17:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.9.6.1 2006/04/22 11:37:21 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -116,7 +116,7 @@ zs_config(zsc, base)
 	struct zs_chanstate *cs;
 	int zsc_unit, channel, s;
 
-	zsc_unit = zsc->zsc_dev.dv_unit;
+	zsc_unit = device_unit(&zsc->zsc_dev);
 	printf(": Zilog 8530 SCC\n");
 
 	/*

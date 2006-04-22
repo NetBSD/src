@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.13.6.1 2006/04/22 11:37:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -149,11 +149,11 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define __NEWSMIPS_bus_space_read_multi(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_read_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -187,11 +187,11 @@ __NEWSMIPS_bus_space_read_multi(4,32)
  */
 
 #define __NEWSMIPS_bus_space_read_region(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_read_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS) *, size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -257,11 +257,11 @@ do {									\
  */
 
 #define __NEWSMIPS_bus_space_write_multi(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_write_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -295,11 +295,11 @@ __NEWSMIPS_bus_space_write_multi(4,32)
  */
 
 #define __NEWSMIPS_bus_space_write_region(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_write_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	const __PB_TYPENAME(BITS) *, size_t);				\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -335,11 +335,11 @@ __NEWSMIPS_bus_space_write_region(4,32)
  */
 
 #define __NEWSMIPS_bus_space_set_multi(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_set_multi_,BYTES)		\
+static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -373,11 +373,11 @@ __NEWSMIPS_bus_space_set_multi(4,32)
  */
 
 #define __NEWSMIPS_bus_space_set_region(BYTES,BITS)			\
-static inline void __CONCAT(bus_space_set_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
 	__PB_TYPENAME(BITS), size_t);					\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h;						\
@@ -414,13 +414,13 @@ __NEWSMIPS_bus_space_set_region(4,32)
  */
 
 #define	__NEWSMIPS_copy_region(BYTES)					\
-static inline void __CONCAT(bus_space_copy_region_,BYTES)		\
+static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
 	(bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
 	    bus_size_t count);						\
 									\
-static inline void							\
+static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
 	bus_space_tag_t t;						\
 	bus_space_handle_t h1, h2;					\
@@ -614,7 +614,7 @@ struct newsmips_bus_dmamap {
 	int		_dm_flags;	/* misc. flags */
 	int		_dm_maptbl;	/* DMA mapping table index */
 	int		_dm_maptblcnt;	/* number of DMA mapping table */
-	struct proc	*_dm_proc;	/* proc that owns the mapping */
+	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.

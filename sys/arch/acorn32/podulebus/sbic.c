@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.10 2005/12/11 12:16:05 christos Exp $ */
+/* $NetBSD: sbic.c,v 1.10.6.1 2006/04/22 11:37:10 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -114,7 +114,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.10 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.10.6.1 2006/04/22 11:37:10 simonb Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -2319,7 +2319,7 @@ sbictoscsiperiod(struct sbic_softc *dev, sbic_regmap_p regs, int a)
 	/*
 	 * cycle = DIV / (2*CLK)
 	 * DIV = FS+2
-	 * best we can do is 200ns at 20Mhz, 2 cycles
+	 * best we can do is 200ns at 20 MHz, 2 cycles
 	 */
 
 	GET_SBIC_myid(regs,fs);

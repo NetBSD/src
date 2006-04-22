@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.19 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: extintr.c,v 1.19.6.1 2006/04/22 11:37:54 simonb Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,9 +119,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.19 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.19.6.1 2006/04/22 11:37:54 simonb Exp $");
 
 #include "opt_openpic.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,16 +137,20 @@ __KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.19 2005/12/24 22:45:36 perry Exp $");
 #include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <machine/platform.h>
 
 #if defined(OPENPIC)
 #include <powerpc/openpic.h>
+
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 #endif /* OPENPIC */
 
 #include <dev/isa/isavar.h>
 
 static void intr_calculatemasks(void);
 static int fakeintr(void *);
-static void ext_intr(void);
 static void ext_intr_ivr(void);
 #if defined(OPENPIC)
 static void ext_intr_openpic(void);
@@ -166,6 +171,8 @@ fakeintr(void *arg)
 	return 0;
 }
 
+#if 0
+static void ext_intr(void);
 /*
  *  Process an interrupt from the ISA bus.
  *  When we get here remember we have "delayed" ipl mask
@@ -211,6 +218,7 @@ ext_intr(void)
 
 	splx(pcpl);	/* Process pendings. */
 }
+#endif
 
 /*
  * Same as the above, but using the board's interrupt vector register.
@@ -646,19 +654,50 @@ openpic_init(unsigned char *baseaddr)
 void
 init_intr(void)
 {
-
 #if defined(OPENPIC)
-	openpic_base = 0;
-#endif /* OPENPIC */
-	install_extint(ext_intr);
-}
+	unsigned char *baseaddr = (unsigned char *)0xC0006800;	/* XXX */
+#if NPCI > 0
+	struct prep_pci_chipset pc;
+	pcitag_t tag;
+	pcireg_t id, address;
 
-void
-init_intr_ivr(void)
-{
+	prep_pci_get_chipset_tag(&pc);
 
-#if defined(OPENPIC)
+	tag = pci_make_tag(&pc, 0, 13, 0);
+	id = pci_conf_read(&pc, tag, PCI_ID_REG);
+
+	if (PCI_VENDOR(id) == PCI_VENDOR_IBM
+	    && (PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC ||
+		PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC2)) {
+		address = pci_conf_read(&pc, tag, 0x10);
+		if ((address & PCI_MAPREG_TYPE_MASK) == PCI_MAPREG_TYPE_MEM) {
+			address &= PCI_MAPREG_MEM_ADDR_MASK;
+			/*
+			 * PReP PCI memory space is from 0xc0000000 to
+			 * 0xffffffff but machdep.c maps only 0xc0000000 to
+			 * 0xcfffffff of PCI memory space. So look if the 
+			 * address offset is bigger then 0xfffffff. If it is
+			 * we are outside the already mapped region and we need
+			 * to add an additional mapping for the OpenPIC.
+			 * The OpenPIC register window is always 256kB.
+			 */
+			if (address > 0xfffffff)
+				baseaddr = (unsigned char *) mapiodev(
+				    PREP_BUS_SPACE_MEM | address, 0x40000);
+			else
+				baseaddr = (unsigned char *)
+				    (PREP_BUS_SPACE_MEM | address);
+		} else if ((address & PCI_MAPREG_TYPE_MASK) ==
+		    PCI_MAPREG_TYPE_IO) {
+			address &= PCI_MAPREG_IO_ADDR_MASK;
+			baseaddr = (unsigned char *) mapiodev(
+			    PREP_BUS_SPACE_IO | address, 0x40000);
+		}
+		openpic_init(baseaddr);
+		return;
+	}
+#endif /* NPCI */
 	openpic_base = 0;
-#endif /* OPENPIC */
+#endif
 	install_extint(ext_intr_ivr);
 }

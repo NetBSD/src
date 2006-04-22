@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.4 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.4.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.4 2005/12/24 20:07:15 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.4.6.1 2006/04/22 11:37:40 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.4 2005/12/24 20:07:15 perry Exp
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+
+#include <net/if.h>
+#include <net/if_ether.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -118,8 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.4 2005/12/24 20:07:15 perry Exp
 #include "opt_ipkdb.h"
 #include "ksyms.h"
 
-/* Kernel text starts 2MB in from the bottom of the kernel address space. */
-#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0 /*0x00200000*/)
+#define	KERNEL_TEXT_BASE	KERNEL_BASE
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 
 /*
@@ -200,10 +202,13 @@ pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
 
 struct user *proc0paddr;
 
+char iyonix_macaddr[ETHER_ADDR_LEN];
+
 /* Prototypes */
 
 void	consinit(void);
 void	iyonix_pic_init(void);
+void	iyonix_read_machineid(void);
 
 #include "com.h"
 #if NCOM > 0
@@ -354,6 +359,14 @@ static const struct pmap_devmap iyonix_devmap[] = {
    },
 
    {
+	IYONIX_FLASH_BASE,
+	IYONIX_FLASH_BASE,
+	IYONIX_FLASH_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+   },
+
+   {
 	0,
 	0,
 	0,
@@ -361,6 +374,40 @@ static const struct pmap_devmap iyonix_devmap[] = {
 	0,
     }
 };
+
+/* Read out the Machine ID from the flash, and stash it away for later use. */
+
+void
+iyonix_read_machineid(void)
+{
+	volatile uint32_t *flashbase = (uint32_t *)IYONIX_FLASH_BASE;
+	volatile uint16_t *flashword = (uint16_t *)IYONIX_FLASH_BASE;
+	union {
+		uint32_t w[2];
+		uint8_t  b[8];
+	} machid;
+
+	/* Enter SecSi Sector Region */
+	flashword[0x555] = 0xAA;
+	flashword[0x2AA] = 0x55;
+	flashword[0x555] = 0x88;
+
+	machid.w[0] = flashbase[0];
+	machid.w[1] = flashbase[1];
+
+	iyonix_macaddr[0] = machid.b[6];
+	iyonix_macaddr[1] = machid.b[5];
+	iyonix_macaddr[2] = machid.b[4];
+	iyonix_macaddr[3] = machid.b[3];
+	iyonix_macaddr[4] = machid.b[2];
+	iyonix_macaddr[5] = machid.b[1];
+
+	/* Exit SecSi Sector Region */
+	flashword[0x555] = 0xAA;
+	flashword[0x2AA] = 0x55;
+	flashword[0x555] = 0x90;
+	flashword[0x555] = 0x00;
+}
 
 #define IYONIX_PIC_WRITE(a,v) (*((char *)IYONIX_OBIO_BASE + (a)) = (v))
 
@@ -679,6 +726,8 @@ initarm(void *arg)
 	setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
+
+	iyonix_read_machineid();
 
 	/*
 	 * Moved from cpu_startup() as data_abort_handler() references

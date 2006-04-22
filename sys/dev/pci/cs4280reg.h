@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280reg.h,v 1.6 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: cs4280reg.h,v 1.6.6.1 2006/04/22 11:39:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -100,6 +100,8 @@
 #define	 SERBCM_RDC	   0x000000001
 #define	 SERBCM_WRC	   0x000000002
 #define CS4280_SERBAD	   0x448
+#define CS4280_SERBCF	   0x44C
+#define	 SERBCF_HBP	   0x00000001
 #define CS4280_SERBWP	   0x450
 
 /*

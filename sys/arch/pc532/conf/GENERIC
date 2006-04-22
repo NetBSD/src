@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.59 2006/02/02 21:32:10 reinoud Exp $
+# $NetBSD: GENERIC,v 1.59.2.1 2006/04/22 11:37:51 simonb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.59 $"
+#ident 		"GENERIC-$Revision: 1.59.2.1 $"
 
 maxusers	8			# estimated number of users
 
@@ -116,17 +116,17 @@ uk* at scsibus? target ? lun ?		# All the things we don't know
 
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	loop		1	# loopback network
-pseudo-device	vnd		2	# vnode devices
+pseudo-device	vnd			# vnode devices
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	bpfilter	4	# packet filter
-pseudo-device	sl		1	# compressed SLIP
-pseudo-device	ppp		1	# Point-to-Point Protocol
+pseudo-device	bpfilter		# packet filter
+pseudo-device	sl			# compressed SLIP
+pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	tun		1	# network tunneling
+pseudo-device	tun			# network tunneling
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too

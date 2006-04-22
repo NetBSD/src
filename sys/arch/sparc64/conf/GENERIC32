@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.129 2006/02/03 13:59:18 tsutsui Exp $
+# 	$NetBSD: GENERIC32,v 1.129.2.1 2006/04/22 11:37:59 simonb Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129 $"
+#ident 		"GENERIC-$Revision: 1.129.2.1 $"
 
 maxusers	64
 
@@ -163,6 +163,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	PTYFS		# /dev/pts/N support
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 #file-system	TMPFS		# experimental - Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
@@ -401,7 +402,7 @@ ld*	at mlx? unit ?
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	4
+pseudo-device	vnd	
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
 ## Concatenated and striped disks; with this, you can create a software-based
@@ -462,6 +463,7 @@ qe*		at qec?
 # PCI network interfaces
 # 	UT marks untested.
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
+#ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
@@ -479,6 +481,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 # XXX cause uncorrectable DMA error
 #pcn*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# ralink wifi UT
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
@@ -491,6 +494,7 @@ wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # MII/PHY support
 # XXX: only nsphy and igphy "tested"
+acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
@@ -498,6 +502,7 @@ inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 igphy*	at mii? phy ?			# Intel IGP01E1000
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
@@ -578,8 +583,9 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# USB 802.11b adapters
+# USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
@@ -631,28 +637,28 @@ ugen*	at uhub? port ?
 pseudo-device	loop
 
 ## SLIP and CSLIP interfaces, for IP over a serial line.
-pseudo-device	sl		2
+pseudo-device	sl		
 
 ## PPP, the successor to SLIP.  See pppd(8).
-pseudo-device	ppp		2
+pseudo-device	ppp		
 
 ## PPP over Ethernet (RFC 2516)
 pseudo-device	pppoe
 
 ## Starmode Radio IP, a special hardware network device.
-pseudo-device	strip		1
+pseudo-device	strip		
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-pseudo-device	tun		4
+pseudo-device	tun		
 pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre			# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	8
+pseudo-device	bpfilter
 
 ## IEEE 802.1q encapsulation
 pseudo-device	vlan
@@ -666,9 +672,9 @@ pseudo-device	bridge
 pseudo-device	ipfilter
 
 ## for IPv6
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
-#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 
 #### CardBus and PCMCIA devices
@@ -696,12 +702,13 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # CardBus network interfaces
-#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11 UT
+#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 #atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11) UT
-#ex*	at cardbus? function ?	# 3Com 3C575TX UT
+#ex*	at cardbus? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? function ?	# Intel i8255x UT
+#ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g UT
 #rtk*	at cardbus? function ?	# Realtek 8129/8139 UT
-#tlp*	at cardbus? function ?	# DECchip 21143 UT
+#tlp*	at cardbus? function ?	# DECchip 21143
 
 # CardBus USB controllers
 #ehci*	at cardbus? function ?	# Enhanced Host Controller
@@ -738,7 +745,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet UT
 #com*	at xirc?
 #xi*	at xirc?
-#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards UT
+#mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
 #sm*	at mhzc?
 
@@ -839,4 +846,7 @@ pseudo-device	fss		4	# file system snapshot device
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+# a pseudo device needed for SMBFS
+pseudo-device   nsmb		# experimental - SMB requester
 

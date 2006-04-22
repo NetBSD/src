@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.43 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.43.6.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.43 2005/12/11 12:22:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.43.6.1 2006/04/22 11:39:11 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,8 @@ tlphymatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 tlphyattach(struct device *parent, struct device *self, void *aux)
 {
-	struct tlphy_softc *sc = (struct tlphy_softc *)self;
-	struct tl_softc *tlsc = (struct tl_softc *)self->dv_parent;
+	struct tlphy_softc *sc = device_private(self);
+	struct tl_softc *tlsc = device_private(device_parent(self));
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
@@ -204,11 +204,11 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 static int
 tlphy_service(struct mii_softc *self, struct mii_data *mii, int cmd)
 {
-	struct tlphy_softc *sc = (struct tlphy_softc *)self;
+	struct tlphy_softc *sc = (struct tlphy_softc *) self;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 
-	if ((sc->sc_mii.mii_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_mii.mii_dev))
 		return (ENXIO);
 
 	if ((sc->sc_mii.mii_flags & MIIF_DOINGAUTO) == 0 && sc->sc_need_acomp)

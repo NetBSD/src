@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.9 2005/12/11 12:17:36 christos Exp $	*/
+/*	$NetBSD: debug.c,v 1.9.6.1 2006/04/22 11:37:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: debug.c,v 1.9 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: debug.c,v 1.9.6.1 2006/04/22 11:37:31 simonb Exp $");
 
 #include "debug_hpc.h"
 
@@ -52,7 +52,7 @@ static struct intr_state_rgb16 {
 	int cnt;
 	int phase;
 	/* R:G:B = [15:11][10:5][4:0] */
-	u_int16_t color;
+	uint16_t color;
 } __intr_state_rgb16[] = {
 	{ 0, 0, RGB565_BLACK },
 	{ 0, 0, RGB565_RED },
@@ -70,9 +70,9 @@ __dbg_heart_beat(enum heart_beat cause) /* 16bpp R:G:B = 5:6:5 only */
 #define LINE_STEP	2
 	struct intr_state_rgb16 *intr_state_rgb16 = 
 	    &__intr_state_rgb16[cause & 0x7];
-	u_int16_t *fb = (u_int16_t *)bootinfo->fb_addr;
+	uint16_t *fb = (uint16_t *)bootinfo->fb_addr;
 	int hline = bootinfo->fb_width;
-	u_int16_t color = intr_state_rgb16->color;
+	uint16_t color = intr_state_rgb16->color;
 	int i;
 
 	fb += (cause & 0x7) * bootinfo->fb_line_bytes * LINE_STEP;

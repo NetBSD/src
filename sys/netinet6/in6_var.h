@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.41 2006/01/21 00:15:36 rpaulo Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.41.4.1 2006/04/22 11:40:12 simonb Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -280,6 +280,10 @@ struct	in6_aliasreq {
 /*
  * prefix related flags passed between kernel(NDP related part) and
  * user land command(ifconfig) and daemon(rtadvd).
+ * Note: We originally intended to use prf_ra{} only within in6_prflags{}, but
+ * it was (probably unintentionally) used in nd6.h as well.  Since C++ does
+ * not allow such a reference, prf_ra{} was then moved outside.  In general,
+ * however, this structure should not be used directly.
  */
 struct prf_ra {
 	u_char onlink : 1;
@@ -408,6 +412,7 @@ struct	in6_rrenumreq {
 #define OSIOCGIFINFO_IN6	_IOWR('i', 76, struct in6_ondireq)
 #endif
 #define SIOCGIFINFO_IN6		_IOWR('i', 108, struct in6_ndireq)
+#define SIOCSIFINFO_IN6		_IOWR('i', 109, struct in6_ndireq)
 #define SIOCSNDFLUSH_IN6	_IOWR('i', 77, struct in6_ifreq)
 #define SIOCGNBRINFO_IN6	_IOWR('i', 78, struct in6_nbrinfo)
 #define SIOCSPFXFLUSH_IN6	_IOWR('i', 79, struct in6_ifreq)
@@ -448,6 +453,7 @@ struct	in6_rrenumreq {
 					 * (used only at first SIOC* call)
 					 */
 #define IN6_IFF_AUTOCONF	0x40	/* autoconfigurable address. */
+#define IN6_IFF_TEMPORARY	0x80	/* temporary (anonymous) address. */
 
 /* do not input/output */
 #define IN6_IFF_NOTREADY (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED)
@@ -511,10 +517,17 @@ struct	in6_multi {
 	struct	in6_ifaddr *in6m_ia;	/* back pointer to in6_ifaddr */
 	u_int	in6m_refcount;		/* # membership claims by sockets */
 	u_int	in6m_state;		/* state of the membership */
-	u_int	in6m_timer;		/* MLD6 listener report timer */
+	int	in6m_timer;		/* delay to send the 1st report */
+	struct timeval in6m_timer_expire; /* when the timer expires */
+	struct callout *in6m_timer_ch;
 };
+ 
+#define IN6M_TIMER_UNDEF -1
+
 
 #ifdef _KERNEL
+/* flags to in6_update_ifa */
+#define IN6_IFAUPDATE_DADDELAY	0x1 /* first time to configure an address */
 
 /*
  * Structure used by macros below to remember position when stepping through
@@ -528,7 +541,7 @@ struct	in6_multistep {
 /*
  * Macros for looking up the in6_multi record for a given IP6 multicast
  * address on a given interface. If no matching record is found, "in6m"
- * returns NLL.
+ * returns NULL.
  */
 
 #define IN6_LOOKUP_MULTI(addr, ifp, in6m)			\
@@ -582,22 +595,46 @@ do {						\
 	IN6_NEXT_MULTI((step), (in6m));		\
 } while (/*CONSTCOND*/ 0)
 
+
+/*
+ * Macros for looking up the in6_multi_mship record for a given IP6 multicast
+ * address on a given interface. If no matching record is found, "imm"
+ * returns NULL.
+ */
+#define IN6_LOOKUP_MSHIP(addr, ifp, imop, imm)				\
+/* struct in6_addr addr; */						\
+/* struct ifnet *ifp; */						\
+/* struct ip6_moptions *imop */						\
+/* struct in6_multi_mship *imm; */					\
+do {									\
+	for ((imm) = (imop)->im6o_memberships.lh_first;			\
+	     (imm) != NULL; (imm) = (imm)->i6mm_chain.le_next) {	\
+		if ((imm)->i6mm_maddr->in6m_ifp != (ifp))		\
+		    	continue;					\
+		if (!IN6_ARE_ADDR_EQUAL(&(imm)->i6mm_maddr->in6m_addr,	\
+		    &(addr)))						\
+			continue;					\
+		break;							\
+	}								\
+} while (/*CONSTCOND*/ 0)
+
 struct	in6_multi *in6_addmulti __P((struct in6_addr *, struct ifnet *,
-	int *));
+	int *, int));
 void	in6_delmulti __P((struct in6_multi *));
 struct in6_multi_mship *in6_joingroup __P((struct ifnet *, struct in6_addr *,
-	int *));
+	int *, int));
 int	in6_leavegroup __P((struct in6_multi_mship *));
 int	in6_mask2len __P((struct in6_addr *, u_char *));
 int	in6_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	struct proc *));
 int	in6_update_ifa __P((struct ifnet *, struct in6_aliasreq *,
-	struct in6_ifaddr *));
+	struct in6_ifaddr *, int));
 void	in6_purgeaddr __P((struct ifaddr *));
 int	in6if_do_dad __P((struct ifnet *));
 void	in6_purgeif __P((struct ifnet *));
 void	in6_savemkludge __P((struct in6_ifaddr *));
 void	in6_setmaxmtu   __P((void));
+int	in6_if2idlen   __P((struct ifnet *));
 void	*in6_domifattach __P((struct ifnet *));
 void	in6_domifdetach __P((struct ifnet *, void *));
 void	in6_restoremkludge __P((struct in6_ifaddr *, struct ifnet *));

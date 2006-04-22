@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.6 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.6.6.1 2006/04/22 11:39:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.6 2005/12/11 12:24:01 christos Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.6.6.1 2006/04/22 11:39:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,11 +86,6 @@ int	ucycomdebug = 0;
 #define UCYCOMUNIT(x)		(minor(x) & UCYCOMUNIT_MASK)
 #define UCYCOMDIALOUT(x)	(minor(x) & UCYCOMDIALOUT_MASK)
 #define UCYCOMCALLUNIT(x)	(minor(x) & UCYCOMCALLUNIT_MASK)
-
-/* Macros to clear/set/test flags. */
-#define SET(t, f)	(t) |= (f)
-#define CLR(t, f)	(t) &= ~(f)
-#define ISSET(t, f)	((t) & (f))
 
 /* Configuration Byte */
 #define UCYCOM_RESET		0x80
@@ -253,7 +248,7 @@ ucycom_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&ucycom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 
 	DPRINTFN(2, ("ucycom_detach: maj=%d mn=%d\n", maj, mn));
 	vdevgone(maj, mn, mn, VCHR);
@@ -329,7 +324,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (ISSET(sc->sc_hdev.sc_dev.dv_flags, DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_hdev.sc_dev))
 		return (ENXIO);
 
 	tp = sc->sc_tty;

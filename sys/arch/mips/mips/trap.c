@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.198 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.198.6.1 2006/04/22 11:37:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198.6.1 2006/04/22 11:37:42 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -379,12 +379,12 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		}
 
 		if (p->p_emul->e_fault)
-			rv = (*p->p_emul->e_fault)(p, va, 0, ftype);
+			rv = (*p->p_emul->e_fault)(p, va, ftype);
 		else
-			rv = uvm_fault(map, va, 0, ftype);
+			rv = uvm_fault(map, va, ftype);
 #ifdef VMFAULT_TRACE
 		printf(
-	    "uvm_fault(%p (pmap %p), %lx (0x%x), 0, %d) -> %d at pc %p\n",
+	    "uvm_fault(%p (pmap %p), %lx (0x%x), %d) -> %d at pc %p\n",
 		    map, vm->vm_map.pmap, va, vaddr, ftype, rv, (void*)opc);
 #endif
 		/*
@@ -435,7 +435,7 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		int rv;
 
 		va = trunc_page(vaddr);
-		rv = uvm_fault(kernel_map, va, 0, ftype);
+		rv = uvm_fault(kernel_map, va, ftype);
 		if (rv == 0)
 			return; /* KERN */
 		/*FALLTHROUGH*/

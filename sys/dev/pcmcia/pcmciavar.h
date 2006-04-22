@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.31 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.31.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -45,6 +45,7 @@ struct pcmcia_io_handle {
 	bus_addr_t      addr;		/* resulting address in bus space */
 	bus_size_t      size;		/* size of i/o space */
 	int             flags;		/* misc. information */
+	void		*ihandle;	/* opaque i/o handle */
 };
 
 #define	PCMCIA_IO_ALLOCATED	0x01	/* i/o space was allocated */

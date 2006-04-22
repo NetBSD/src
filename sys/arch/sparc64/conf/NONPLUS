@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.55 2005/12/07 09:10:19 tsutsui Exp $
+# 	$NetBSD: NONPLUS,v 1.55.6.1 2006/04/22 11:37:59 simonb Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -307,7 +307,7 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	4
+pseudo-device	vnd	
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
@@ -347,21 +347,21 @@ le*		at lebuffer?				# SBus
 pseudo-device	loop
 
 ## SLIP and CSLIP interfaces, for IP over a serial line.
-#pseudo-device	sl		2
+#pseudo-device	sl		
 
 ## PPP, the successor to SLIP.  See pppd(8).
-pseudo-device	ppp		2
+pseudo-device	ppp		
 
 ## Starmode Radio IP, a special hardware network device.
-#pseudo-device	strip		1
+#pseudo-device	strip		
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-pseudo-device	tun		4
+pseudo-device	tun		
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
-pseudo-device	bpfilter	8
+pseudo-device	bpfilter
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.

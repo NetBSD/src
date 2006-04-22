@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.10 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.10.6.1 2006/04/22 11:37:51 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.10.6.1 2006/04/22 11:37:51 simonb Exp $");
 
 #define STATIC static
 
@@ -884,11 +884,11 @@ char fmt14_table[][6] = {
 #define REG_NIL		(REG_FSR+2)
 
 struct regTable {
-    char *name;
+    const char *name;
 };
 
 STATIC
-struct regTable regTable[] = {
+const struct regTable regTable[] = {
   {"r0"},			/* General Register 0 */
   {"r1"},			/* General Register 1 */
   {"r2"},			/* General Register 2 */
@@ -990,6 +990,7 @@ void db_formatOperand(operand, loc)
 	db_addr_t loc;
 {
 	int need_comma, i, mask, textlen;
+	const char *p;
 
 	switch (operand->o_mode) {
 
@@ -1094,19 +1095,15 @@ bitlist:
 		db_printf("]");
 		break;
 
-	      case AMODE_CINV:
-		{			/* print cache invalidate flags */
-			char *p;
-			int i, need_comma = 0;
-
-			for (i = 4, p = "AID"; i; i >>= 1, ++p)
-			    if (i & operand->o_disp0) {
-				    if (need_comma)
-					db_printf(",");
-				    db_printf("%c",*p);
-				    need_comma = 1;
-			    }
-		}
+	      case AMODE_CINV:	/* print cache invalidate flags */
+		need_comma = 0;
+		for (i = 4, p = "AID"; i; i >>= 1, ++p)
+			if (i & operand->o_disp0) {
+				if (need_comma)
+				    db_printf(",");
+				db_printf("%c",*p);
+				need_comma = 1;
+			}
 		break;
 
 	      case AMODE_INVALID:

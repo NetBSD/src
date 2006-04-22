@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.18 2005/12/11 12:23:44 christos Exp $ */
+/*	$NetBSD: tcx.c,v 1.18.6.1 2006/04/22 11:39:28 simonb Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.18 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.18.6.1 2006/04/22 11:39:28 simonb Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -192,7 +192,7 @@ tcxattach(parent, self, args)
 	fb->fb_driver = &tcx_fbdriver;
 	fb->fb_device = &sc->sc_dev;
 	/* Mask out invalid flags from the user. */
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
 	/*
 	 * The onboard framebuffer on the SS4 supports only 8-bit mode;
 	 * it can be distinguished from the S24 card for the SS5 by the

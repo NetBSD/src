@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.65 2006/01/04 21:46:35 xtraeme Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.65.4.1 2006/04/22 11:39:11 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.62 2006/01/04 21:42:51 xtraeme Exp
+ *	NetBSD: miidevs,v 1.65 2006/03/21 19:06:08 wiz Exp
  */
 
 /*-
@@ -65,6 +65,7 @@
 #define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
+#define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
@@ -189,6 +190,10 @@
 #define	MII_MODEL_xxDAVICOM_DM9102	0x0004
 #define	MII_STR_xxDAVICOM_DM9102	"DM9102 10/100 media interface"
 
+/* IC Plus Corp. PHYs */
+#define	MII_MODEL_ICPLUS_IP101	0x0005
+#define	MII_STR_ICPLUS_IP101	"IP101 10/100 PHY"
+
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1889	0x0001
 #define	MII_STR_ICS_1889	"ICS1889 10/100 media interface"
@@ -255,6 +260,8 @@
 #define	MII_STR_xxNATSEMI_DP83843	"DP83843 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83815	0x0002
 #define	MII_STR_xxNATSEMI_DP83815	"DP83815 10/100 media interface"
+#define	MII_MODEL_xxNATSEMI_DP83847	0x0003
+#define	MII_STR_xxNATSEMI_DP83847	"DP83847 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83891	0x0005
 #define	MII_STR_xxNATSEMI_DP83891	"DP83891 1000BASE-T media interface"
 #define	MII_MODEL_xxNATSEMI_DP83861	0x0006

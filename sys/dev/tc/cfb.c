@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.47 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: cfb.c,v 1.47.6.1 2006/04/22 11:39:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.47 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.47.6.1 2006/04/22 11:39:37 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,8 +163,8 @@ static const struct wsscreen_list cfb_screenlist = {
 	sizeof(_cfb_scrlist) / sizeof(struct wsscreen_descr *), _cfb_scrlist
 };
 
-static int	cfbioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	cfbmmap(void *, off_t, int);
+static int	cfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	cfbmmap(void *, void *, off_t, int);
 
 static int	cfb_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -235,10 +235,7 @@ static const u_int8_t shuffle[256] = {
 };
 
 static int
-cfbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cfbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -249,11 +246,9 @@ cfbmatch(parent, match, aux)
 }
 
 static void
-cfbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cfbattach(struct device *parent, struct device *self, void *aux)
 {
-	struct cfb_softc *sc = (struct cfb_softc *)self;
+	struct cfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args waa;
@@ -300,8 +295,7 @@ cfbattach(parent, self, aux)
 }
 
 static void
-cfb_cmap_init(sc)
-	struct cfb_softc *sc;
+cfb_cmap_init(struct cfb_softc *sc)
 {
 	struct hwcmap256 *cm;
 	const u_int8_t *p;
@@ -317,8 +311,7 @@ cfb_cmap_init(sc)
 }
 
 static void
-cfb_common_init(ri)
-	struct rasops_info *ri;
+cfb_common_init(struct rasops_info *ri)
 {
 	caddr_t base;
 	int cookie;
@@ -366,12 +359,7 @@ cfb_common_init(ri)
 }
 
 static int
-cfbioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+cfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct cfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -448,10 +436,7 @@ cfbioctl(v, cmd, data, flag, l)
 }
 
 paddr_t
-cfbmmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+cfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct cfb_softc *sc = v;
 
@@ -461,12 +446,8 @@ cfbmmap(v, offset, prot)
 }
 
 static int
-cfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
+cfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *attrp)
 {
 	struct cfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -485,9 +466,7 @@ cfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 }
 
 static void
-cfb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+cfb_free_screen(void *v, void *cookie)
 {
 	struct cfb_softc *sc = v;
 
@@ -498,20 +477,15 @@ cfb_free_screen(v, cookie)
 }
 
 static int
-cfb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
+cfb_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 
 	return (0);
 }
 
 /* EXPORT */ int
-cfb_cnattach(addr)
-	tc_addr_t addr;
+cfb_cnattach(tc_addr_t addr)
 {
 	struct rasops_info *ri;
 	long defattr;
@@ -526,8 +500,7 @@ cfb_cnattach(addr)
 }
 
 static int
-cfbintr(arg)
-	void *arg;
+cfbintr(void *arg)
 {
 	struct cfb_softc *sc = arg;
 	caddr_t base, vdac;
@@ -622,8 +595,7 @@ cfbintr(arg)
 }
 
 static void
-cfbhwinit(cfbbase)
-	caddr_t cfbbase;
+cfbhwinit(caddr_t cfbbase)
 {
 	caddr_t vdac = cfbbase + CX_BT459_OFFSET;
 	const u_int8_t *p;
@@ -691,9 +663,7 @@ cfbhwinit(cfbbase)
 }
 
 static int
-get_cmap(sc, p)
-	struct cfb_softc *sc;
-	struct wsdisplay_cmap *p;
+get_cmap(struct cfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
 	int error;
@@ -712,9 +682,7 @@ get_cmap(sc, p)
 }
 
 static int
-set_cmap(sc, p)
-	struct cfb_softc *sc;
-	struct wsdisplay_cmap *p;
+set_cmap(struct cfb_softc *sc, struct wsdisplay_cmap *p)
 {
 	struct hwcmap256 cmap;
 	u_int index = p->index, count = p->count;
@@ -742,9 +710,7 @@ set_cmap(sc, p)
 }
 
 static int
-set_cursor(sc, p)
-	struct cfb_softc *sc;
-	struct wsdisplay_cursor *p;
+set_cursor(struct cfb_softc *sc, struct wsdisplay_cursor *p)
 {
 #define	cc (&sc->sc_cursor)
 	u_int v, index = 0, count = 0, icount = 0;
@@ -806,17 +772,13 @@ set_cursor(sc, p)
 }
 
 static int
-get_cursor(sc, p)
-	struct cfb_softc *sc;
-	struct wsdisplay_cursor *p;
+get_cursor(struct cfb_softc *sc, struct wsdisplay_cursor *p)
 {
 	return (EPASSTHROUGH); /* XXX */
 }
 
 static void
-set_curpos(sc, curpos)
-	struct cfb_softc *sc;
-	struct wsdisplay_curpos *curpos;
+set_curpos(struct cfb_softc *sc, struct wsdisplay_curpos *curpos)
 {
 	struct rasops_info *ri = sc->sc_ri;
 	int x = curpos->x, y = curpos->y;

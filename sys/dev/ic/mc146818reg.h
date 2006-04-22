@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818reg.h,v 1.8 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mc146818reg.h,v 1.8.6.1 2006/04/22 11:38:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -141,9 +141,9 @@
 /*
  * Time base (divisor select) constants (Control register A)
  */
-#define	MC_BASE_4_MHz	0x00		/* 4MHz crystal */
-#define	MC_BASE_1_MHz	0x10		/* 1MHz crystal */
-#define	MC_BASE_32_KHz	0x20		/* 32KHz crystal */
+#define	MC_BASE_4_MHz	0x00		/* 4 MHz crystal */
+#define	MC_BASE_1_MHz	0x10		/* 1 MHz crystal */
+#define	MC_BASE_32_KHz	0x20		/* 32 kHz crystal */
 #define	MC_BASE_NONE	0x60		/* actually, both of these reset */
 #define	MC_BASE_RESET	0x70
 

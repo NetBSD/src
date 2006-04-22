@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.86 2005/12/24 20:27:29 perry Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.86.6.1 2006/04/22 11:38:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.86 2005/12/24 20:27:29 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.86.6.1 2006/04/22 11:38:54 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -521,7 +521,7 @@ aic_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 		    periph->periph_target));
 
-		if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+		if (! device_is_active(&sc->sc_dev)) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			return;
@@ -829,7 +829,7 @@ aic_sched(struct aic_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (! device_is_active(&sc->sc_dev))
 		return;
 
 	/*
@@ -1721,7 +1721,7 @@ aicintr(void *arg)
 	struct aic_tinfo *ti;
 	int n;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (! device_is_active(&sc->sc_dev))
 		return (0);
 
 	/*

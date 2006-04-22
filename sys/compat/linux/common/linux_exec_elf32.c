@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.70 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.70.6.1 2006/04/22 11:38:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.70 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.70.6.1 2006/04/22 11:38:13 simonb Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -77,17 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.70 2005/12/11 12:20:19 christ
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
 
-static int ELFNAME2(linux,signature) __P((struct lwp *, struct exec_package *,
-	Elf_Ehdr *, char *));
-#ifdef LINUX_GCC_SIGNATURE
-static int ELFNAME2(linux,gcc_signature) __P((struct lwp *l,
-	struct exec_package *, Elf_Ehdr *));
-#endif
-#ifdef LINUX_ATEXIT_SIGNATURE
-static int ELFNAME2(linux,atexit_signature) __P((struct lwp *l,
-	struct exec_package *, Elf_Ehdr *));
-#endif
-
 #ifdef DEBUG_LINUX
 #define DPRINTF(a)	uprintf a
 #else
@@ -101,7 +90,7 @@ static int ELFNAME2(linux,atexit_signature) __P((struct lwp *l,
  * binaries features a __libc_atexit ELF section. We therefore assume we
  * have a Linux binary if we find this section.
  */
-static int
+int
 ELFNAME2(linux,atexit_signature)(l, epp, eh)
 	struct lwp *l;
 	struct exec_package *epp;
@@ -177,7 +166,7 @@ out:
  * XXX we have the same gcc signature which incorrectly identifies
  * XXX NetBSD binaries as Linux.
  */
-static int
+int
 ELFNAME2(linux,gcc_signature)(l, epp, eh)
 	struct lwp *l;
 	struct exec_package *epp;
@@ -232,7 +221,7 @@ out:
 }
 #endif
 
-static int
+int
 ELFNAME2(linux,signature)(l, epp, eh, itp)
 	struct lwp *l;
 	struct exec_package *epp;

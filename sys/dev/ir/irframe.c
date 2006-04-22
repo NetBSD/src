@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.30 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: irframe.c,v 1.30.6.1 2006/04/22 11:39:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.30 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.30.6.1 2006/04/22 11:39:06 simonb Exp $");
 
 #include "irframe.h"
 
@@ -109,7 +109,7 @@ irframe_match(struct device *parent, struct cfdata *match, void *aux)
 void
 irframe_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct irframe_softc *sc = (struct irframe_softc *)self;
+	struct irframe_softc *sc = device_private(self);
 	struct ir_attach_args *ia = aux;
 	const char *delim;
 	int speeds = 0;
@@ -153,7 +153,7 @@ irframe_attach(struct device *parent, struct device *self, void *aux)
 int
 irframe_activate(struct device *self, enum devact act)
 {
-	/*struct irframe_softc *sc = (struct irframe_softc *)self;*/
+	/*struct irframe_softc *sc = device_private(self);*/
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -168,7 +168,7 @@ irframe_activate(struct device *self, enum devact act)
 int
 irframe_detach(struct device *self, int flags)
 {
-	/*struct irframe_softc *sc = (struct irframe_softc *)self;*/
+	/*struct irframe_softc *sc = device_private(self);*/
 	int maj, mn;
 
 	/* XXX needs reference count */
@@ -177,7 +177,7 @@ irframe_detach(struct device *self, int flags)
 	maj = cdevsw_lookup_major(&irframe_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
-	mn = self->dv_unit;
+	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
 	return (0);
@@ -192,7 +192,7 @@ irframeopen(dev_t dev, int flag, int mode, struct lwp *l)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (!device_is_active(&sc->sc_dev))
 		return (EIO);
 	if (sc->sc_open)
 		return (EBUSY);
@@ -234,7 +234,7 @@ irframeread(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+	if (!device_is_active(&sc->sc_dev) || !sc->sc_open)
 		return (EIO);
 	if (uio->uio_resid < sc->sc_params.maxsize) {
 #ifdef DIAGNOSTIC
@@ -254,7 +254,7 @@ irframewrite(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+	if (!device_is_active(&sc->sc_dev) || !sc->sc_open)
 		return (EIO);
 	if (uio->uio_resid > sc->sc_params.maxsize) {
 #ifdef DIAGNOSTIC
@@ -347,7 +347,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+	if (!device_is_active(&sc->sc_dev) || !sc->sc_open)
 		return (EIO);
 
 	switch (cmd) {
@@ -387,7 +387,7 @@ irframepoll(dev_t dev, int events, struct lwp *l)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (POLLHUP);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+	if (!device_is_active(&sc->sc_dev) || !sc->sc_open)
 		return (POLLHUP);
 
 	return (sc->sc_methods->im_poll(sc->sc_handle, events, l));
@@ -399,7 +399,7 @@ irframekqfilter(dev_t dev, struct knote *kn)
 	struct irframe_softc *sc;
 
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
+	if (!device_is_active(&sc->sc_dev) || !sc->sc_open)
 		return (1);
 
 	return (sc->sc_methods->im_kqfilter(sc->sc_handle, kn));
@@ -416,6 +416,11 @@ irframe_alloc(size_t size, const struct irframe_methods *m, void *h)
 	struct device *dev;
 	struct ir_attach_args ia;
 	int unit;
+
+	/*
+	 * XXXJRT This is wrong -- needs to be done using regular
+	 * XXXJRT autoconfiguration code.
+	 */
 
 	for (unit = 0; unit < cd->cd_ndevs; unit++)
 		if (cd->cd_devs[unit] == NULL)
@@ -441,6 +446,11 @@ irframe_dealloc(struct device *dev)
 {
 	struct cfdriver *cd = &irframe_cd;
 	int unit;
+
+	/*
+	 * XXXJRT This is wrong -- needs to be done using regular
+	 * XXXJRT autoconfiguration code.
+	 */
 
 	for (unit = 0; unit < cd->cd_ndevs; unit++) {
 		if (cd->cd_devs[unit] == dev) {

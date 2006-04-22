@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh4_dev.cpp,v 1.3 2005/12/11 12:17:29 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: sh4_dev.cpp,v 1.3.6.1 2006/04/22 11:37:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct SH4dev::intr_priority SH4dev::_ipr_table[] = {
 };
 
 void
-SH4dev::dump(u_int8_t bit)
+SH4dev::dump(uint8_t bit)
 {
 	int kmode;
 
@@ -105,7 +105,7 @@ SH4dev::icu_dump()
 #define	ON(x, c)	((x) & (c) ? check[1] : check[0])
 #define	_(n)		DPRINTF((TEXT("%S %S "), #n, ON(r, SH4_ICR_ ## n)))
 	static const char *check[] = { "[_]", "[x]" };
-	u_int16_t r;
+	uint16_t r;
 
 	super::icu_dump_priority(_ipr_table);
 
@@ -165,15 +165,15 @@ SH4dev::hd64465_dump()
 void
 SH4dev::mq100_dump()
 {
-	u_int32_t a, e;
+	uint32_t a, e;
 	int i;
 
 	// This is HPW650PA test. 640 * 480 linebytes 1280.
 	DPRINTF((TEXT("<<<MQ100/HD64464>>>\n")));
 	a = MQ100_FB_BASE + 0x4b000;
-	e = a + 640 * 480 * sizeof(u_int16_t);
+	e = a + 640 * 480 * sizeof(uint16_t);
 	while (a < e) {
-		for (i = 0; i < 640; i++, a += sizeof(u_int16_t))
+		for (i = 0; i < 640; i++, a += sizeof(uint16_t))
 			_reg_write_2(a, ~_reg_read_2(a) & 0xffff);
 	}
 }

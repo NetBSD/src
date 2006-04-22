@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.5 2005/12/11 12:16:26 christos Exp $	*/
+/*	$NetBSD: pchb.c,v 1.5.6.1 2006/04/22 11:37:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5 2005/12/11 12:16:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5.6.1 2006/04/22 11:37:12 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5 2005/12/11 12:16:26 christos Exp $");
 
 #include <dev/pci/pcidevs.h>
 
-#include <arch/i386/pci/pchbvar.h>
+#include <arch/x86/pci/pchbvar.h>
 
 #include "rnd.h"
 
@@ -75,17 +75,14 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.5 2005/12/11 12:16:26 christos Exp $");
 #define I82424_BCTL_PCIMEM_BURSTEN	0x01
 #define I82424_BCTL_PCI_BURSTEN		0x02
 
-int	pchbmatch __P((struct device *, struct cfdata *, void *));
-void	pchbattach __P((struct device *, struct device *, void *));
+int	pchbmatch(struct device *, struct cfdata *, void *);
+void	pchbattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, NULL, NULL);
 
 int
-pchbmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pchbmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -98,10 +95,11 @@ pchbmatch(parent, match, aux)
 }
 
 void
-pchbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pchbattach(struct device *parent, struct device *self, void *aux)
 {
+#if NRND > 0
+	struct pchb_softc *sc = (void *) self;
+#endif
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
@@ -121,4 +119,10 @@ pchbattach(parent, self, aux)
 			break;
 	}
 
+#if NRND > 0
+	/*
+	 * Attach a random number generator, if there is one.
+	 */
+	pchb_attach_rnd(sc, pa);
+#endif
 }

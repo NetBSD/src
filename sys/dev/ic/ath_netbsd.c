@@ -1,3 +1,5 @@
+/*	$NetBSD: ath_netbsd.c,v 1.5.6.1 2006/04/22 11:38:54 simonb Exp $ */
+
 /*-
  * Copyright (c) 2003, 2004 David Young
  * All rights reserved.
@@ -24,6 +26,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.5.6.1 2006/04/22 11:38:54 simonb Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -86,7 +92,7 @@ m_defrag(struct mbuf *m0, int flags)
 }
 
 /*
- * Setup sysctl(3) MIB, ath.*.
+ * Setup sysctl(3) MIB, hw.ath.*.
  *
  * TBD condition CTLFLAG_PERMANENT on being an LKM or not
  */
@@ -117,12 +123,19 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 		goto err;
 
 	/* regulatory domain */
-	if ((rc = SYSCTL_GLOBAL_INT(CTLFLAG_READONLY, "regdomain",
-	    "regulatory domain", regdomain)) != 0)
+	if ((rc = SYSCTL_GLOBAL_INT(CTLFLAG_READWRITE, "regdomain",
+	    "EEPROM regdomain code", regdomain)) != 0)
 		goto err;
 
 	if ((rc = SYSCTL_GLOBAL_INT(CTLFLAG_READWRITE, "debug",
 	    "control debugging printfs", debug)) != 0)
+		goto err;
+
+	if ((rc = SYSCTL_GLOBAL_INT(CTLFLAG_READONLY, "rxbuf",
+	    "rx buffers allocated", rxbuf)) != 0)
+		goto err;
+	if ((rc = SYSCTL_GLOBAL_INT(CTLFLAG_READONLY, "txbuf",
+	    "tx buffers allocated", txbuf)) != 0)
 		goto err;
 
 	return;
@@ -309,6 +322,97 @@ ath_sysctl_tpc(SYSCTLFN_ARGS)
 	return !ath_hal_settpc(sc->sc_ah, tpc) ? EINVAL : 0;
 }
 
+static int
+ath_sysctl_rfkill(SYSCTLFN_ARGS)
+{
+	struct ath_softc *sc;
+	struct sysctlnode node;
+	u_int rfkill;
+	int error;
+
+	node = *rnode;
+	sc = (struct ath_softc *)node.sysctl_data;
+	rfkill = ath_hal_getrfkill(sc->sc_ah);
+	node.sysctl_data = &rfkill;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	return !ath_hal_setrfkill(sc->sc_ah, rfkill) ? EINVAL : 0;
+}
+
+static int
+ath_sysctl_rfsilent(SYSCTLFN_ARGS)
+{
+	struct ath_softc *sc;
+	struct sysctlnode node;
+	u_int rfsilent;
+	int error;
+
+	node = *rnode;
+	sc = (struct ath_softc *)node.sysctl_data;
+	ath_hal_getrfsilent(sc->sc_ah, &rfsilent);
+	node.sysctl_data = &rfsilent;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	return !ath_hal_setrfsilent(sc->sc_ah, rfsilent) ? EINVAL : 0;
+}
+
+static int
+ath_sysctl_regdomain(SYSCTLFN_ARGS)
+{
+	struct ath_softc *sc;
+	struct sysctlnode node;
+	u_int32_t rd;
+	int error;
+
+	node = *rnode;
+	sc = (struct ath_softc *)node.sysctl_data;
+	if (!ath_hal_getregdomain(sc->sc_ah, &rd))
+		return EINVAL;
+	node.sysctl_data = &rd;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	return !ath_hal_setregdomain(sc->sc_ah, rd) ? EINVAL : 0;
+}
+
+static int
+ath_sysctl_tpack(SYSCTLFN_ARGS)
+{
+	struct ath_softc *sc;
+	struct sysctlnode node;
+	u_int32_t tpack;
+	int error;
+
+	node = *rnode;
+	sc = (struct ath_softc *)node.sysctl_data;
+	ath_hal_gettpack(sc->sc_ah, &tpack);
+	node.sysctl_data = &tpack;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	return !ath_hal_settpack(sc->sc_ah, tpack) ? EINVAL : 0;
+}
+
+static int
+ath_sysctl_tpcts(SYSCTLFN_ARGS)
+{
+	struct ath_softc *sc;
+	struct sysctlnode node;
+	u_int32_t tpcts;
+	int error;
+
+	node = *rnode;
+	sc = (struct ath_softc *)node.sysctl_data;
+	ath_hal_gettpcts(sc->sc_ah, &tpcts);
+	node.sysctl_data = &tpcts;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	return !ath_hal_settpcts(sc->sc_ah, tpcts) ? EINVAL : 0;
+}
+
 const struct sysctlnode *
 ath_sysctl_instance(const char *dvname, struct sysctllog **log)
 {
@@ -373,9 +477,6 @@ ath_sysctlattach(struct ath_softc *sc)
 	if ((rc = SYSCTL_INT(0, countrycode, "EEPROM country code")) != 0)
 		goto err;
 
-	if ((rc = SYSCTL_INT(0, regdomain, "EEPROM regdomain code")) != 0)
-		goto err;
-
 	if ((rc = SYSCTL_INT(CTLFLAG_READWRITE, debug,
 	    "control debugging printfs")) != 0)
 		goto err;
@@ -432,7 +533,24 @@ ath_sysctlattach(struct ath_softc *sc)
 		if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, tpc,
 		    "enable/disable per-packet TPC")) != 0)
 			goto err;
+		if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, tpack,
+		    "tx power for ack frames")) != 0)
+			goto err;
+		if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, tpcts,
+		    "tx power for cts frames")) != 0)
+			goto err;
 	}
+	if (ath_hal_hasrfsilent(sc->sc_ah)) {
+		if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, rfsilent,
+		    "h/w RF silent config")) != 0)
+			goto err;
+		if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, rfkill,
+		    "enable/disable RF kill switch")) != 0)
+			goto err;
+	}
+	if ((rc = SYSCTL_INT_SUBR(CTLFLAG_READWRITE, regdomain,
+	    "EEPROM regdomain code")) != 0)
+		goto err;
 	return;
 err:
 	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);

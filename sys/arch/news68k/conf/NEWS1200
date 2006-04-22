@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.35 2005/12/07 09:10:17 tsutsui Exp $
+# 	$NetBSD: NEWS1200,v 1.35.6.1 2006/04/22 11:37:45 simonb Exp $
 
 #	news1200 config file
 #
@@ -140,18 +140,18 @@ zstty1	at zsc0 channel 1
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md		1	# memory disk device
-pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
-pseudo-device	sl		2	# SLIP interfaces
-pseudo-device	ppp		2	# PPP interfaces
-pseudo-device	tun		4	# Network "tunnel" device
-#pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	bpfilter	16	# Berkeley Packet Filter
+pseudo-device	sl			# SLIP interfaces
+pseudo-device	ppp			# PPP interfaces
+pseudo-device	tun			# Network "tunnel" device
+#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	ipfilter		# ip filter
-#pseudo-device	strip		1	# Starmode Radio IP (Metricom)
-pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	clockctl		# user control of clock subsystem

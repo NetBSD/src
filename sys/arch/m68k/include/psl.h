@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: psl.h,v 1.12.6.1 2006/04/22 11:37:40 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,7 +73,7 @@
  * spl functions; platform-specific code must define spl0 and splx().
  */
 
-static inline int
+static __inline int
 _spl(int s)
 {
 	int sr;
@@ -84,7 +84,7 @@ _spl(int s)
 	return sr;
 }
 
-static inline int
+static __inline int
 _splraise(int level)
 {
 	int sr;

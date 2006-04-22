@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.40 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.40.6.1 2006/04/22 11:39:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.40 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.40.6.1 2006/04/22 11:39:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,17 @@ struct cis_state {
 };
 
 int	pcmcia_parse_cis_tuple(struct pcmcia_tuple *, void *);
-static int decode_funce(struct pcmcia_tuple *, struct pcmcia_function *);
 static void create_pf(struct cis_state *);
+
+static void decode_end(struct pcmcia_tuple *, struct cis_state *);
+static void decode_longlink_mfc(struct pcmcia_tuple *, struct cis_state *);
+static void decode_device(struct pcmcia_tuple *, struct cis_state *);
+static void decode_vers_1(struct pcmcia_tuple *, struct cis_state *);
+static void decode_manfid(struct pcmcia_tuple *, struct cis_state *);
+static void decode_funcid(struct pcmcia_tuple *, struct cis_state *);
+static void decode_funce(struct pcmcia_tuple *, struct cis_state *);
+static void decode_config(struct pcmcia_tuple *, struct cis_state *);
+static void decode_cftable_entry(struct pcmcia_tuple *, struct cis_state *);
 
 
 static void
@@ -446,6 +455,9 @@ pcmcia_scan_cis(dev, fct, arg)
 				    longlink_addr, PCMCIA_CIS_SIZE,
 				    &pcmh, &tuple.ptr, &window);
 
+				tuple.memt = pcmh.memt;
+				tuple.memh = pcmh.memh;
+
 				if (!longlink_common)
 					tuple.ptr /= 2;
 
@@ -698,647 +710,44 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	struct pcmcia_tuple *tuple;
 	void *arg;
 {
-	/* most of these are educated guesses */
-	static const struct pcmcia_config_entry init_cfe = {
-		-1, PCMCIA_CFE_RDYBSY_ACTIVE | PCMCIA_CFE_WP_ACTIVE |
-		PCMCIA_CFE_BVD_ACTIVE, PCMCIA_IFTYPE_MEMORY,
-	};
-
 	struct cis_state *state = arg;
 
 	switch (tuple->code) {
 	case PCMCIA_CISTPL_END:
-		/* if we've seen a LONGLINK_MFC, and this is the first
-		 * END after it, reset the function list.
-		 *
-		 * XXX This might also be the right place to start a
-		 * new function, but that assumes that a function
-		 * definition never crosses any longlink, and I'm not
-		 * sure about that.  This is probably safe for MFC
-		 * cards, but what we have now isn't broken, so I'd
-		 * rather not change it.
-		 */
-		if (state->gotmfc == 1) {
-			state->gotmfc = 2;
-			state->count = 0;
-			state->pf = NULL;
+		decode_end(tuple, state);
+		break;
 
-			pcmcia_free_pf(&state->card->pf_head);
-		}
-		break;
 	case PCMCIA_CISTPL_LONGLINK_MFC:
-		/*
-		 * this tuple's structure was dealt with in scan_cis.  here,
-		 * record the fact that the MFC tuple was seen, so that
-		 * functions declared before the MFC link can be cleaned
-		 * up.
-		 */
-		if (state->gotmfc == 0) {
-			state->gotmfc = 1;
-		} else {
-			DPRINTF(("got LONGLINK_MFC again!"));
-		}
+		decode_longlink_mfc(tuple, state);
 		break;
-#ifdef PCMCIACISDEBUG
+
 	case PCMCIA_CISTPL_DEVICE:
 	case PCMCIA_CISTPL_DEVICE_A:
-		{
-			u_int reg, dtype, dspeed;
-
-			reg = pcmcia_tuple_read_1(tuple, 0);
-			dtype = reg & PCMCIA_DTYPE_MASK;
-			dspeed = reg & PCMCIA_DSPEED_MASK;
-
-			DPRINTF(("CISTPL_DEVICE%s type=",
-			(tuple->code == PCMCIA_CISTPL_DEVICE) ? "" : "_A"));
-			switch (dtype) {
-			case PCMCIA_DTYPE_NULL:
-				DPRINTF(("null"));
-				break;
-			case PCMCIA_DTYPE_ROM:
-				DPRINTF(("rom"));
-				break;
-			case PCMCIA_DTYPE_OTPROM:
-				DPRINTF(("otprom"));
-				break;
-			case PCMCIA_DTYPE_EPROM:
-				DPRINTF(("eprom"));
-				break;
-			case PCMCIA_DTYPE_EEPROM:
-				DPRINTF(("eeprom"));
-				break;
-			case PCMCIA_DTYPE_FLASH:
-				DPRINTF(("flash"));
-				break;
-			case PCMCIA_DTYPE_SRAM:
-				DPRINTF(("sram"));
-				break;
-			case PCMCIA_DTYPE_DRAM:
-				DPRINTF(("dram"));
-				break;
-			case PCMCIA_DTYPE_FUNCSPEC:
-				DPRINTF(("funcspec"));
-				break;
-			case PCMCIA_DTYPE_EXTEND:
-				DPRINTF(("extend"));
-				break;
-			default:
-				DPRINTF(("reserved"));
-				break;
-			}
-			DPRINTF((" speed="));
-			switch (dspeed) {
-			case PCMCIA_DSPEED_NULL:
-				DPRINTF(("null"));
-				break;
-			case PCMCIA_DSPEED_250NS:
-				DPRINTF(("250ns"));
-				break;
-			case PCMCIA_DSPEED_200NS:
-				DPRINTF(("200ns"));
-				break;
-			case PCMCIA_DSPEED_150NS:
-				DPRINTF(("150ns"));
-				break;
-			case PCMCIA_DSPEED_100NS:
-				DPRINTF(("100ns"));
-				break;
-			case PCMCIA_DSPEED_EXT:
-				DPRINTF(("ext"));
-				break;
-			default:
-				DPRINTF(("reserved"));
-				break;
-			}
-		}
-		DPRINTF(("\n"));
+		decode_device(tuple, state);
 		break;
-#endif
+
 	case PCMCIA_CISTPL_VERS_1:
-		if (tuple->length < 6) {
-			DPRINTF(("CISTPL_VERS_1 too short %d\n",
-			    tuple->length));
-			break;
-		} {
-			int start, i, ch, count;
-
-			state->card->cis1_major = pcmcia_tuple_read_1(tuple, 0);
-			state->card->cis1_minor = pcmcia_tuple_read_1(tuple, 1);
-
-			for (count = 0, start = 0, i = 0;
-			    (count < 4) && ((i + 4) < 256); i++) {
-				ch = pcmcia_tuple_read_1(tuple, 2 + i);
-				if (ch == 0xff) {
-					if (i > start) {
-						state->card->cis1_info_buf[i] = 0;
-						state->card->cis1_info[count] =
-						    state->card->cis1_info_buf + start;
-					}
-					break;
-				}
-				state->card->cis1_info_buf[i] = ch;
-				if (ch == 0) {
-					state->card->cis1_info[count] =
-					    state->card->cis1_info_buf + start;
-					start = i + 1;
-					count++;
-				}
-			}
-			DPRINTF(("CISTPL_VERS_1\n"));
-		}
+		decode_vers_1(tuple, state);
 		break;
+
 	case PCMCIA_CISTPL_MANFID:
-		if (tuple->length < 4) {
-			DPRINTF(("CISTPL_MANFID too short %d\n",
-			    tuple->length));
-			break;
-		}
-		state->card->manufacturer = pcmcia_tuple_read_2(tuple, 0);
-		state->card->product = pcmcia_tuple_read_2(tuple, 2);
-		DPRINTF(("CISTPL_MANFID\n"));
+		decode_manfid(tuple, state);
 		break;
+
 	case PCMCIA_CISTPL_FUNCID:
-		if (tuple->length < 1) {
-			DPRINTF(("CISTPL_FUNCID too short %d\n",
-			    tuple->length));
-			break;
-		}
-		if (state->pf) {
-			if (state->pf->function == PCMCIA_FUNCTION_UNSPEC) {
-				/*
-				 * This looks like a opportunistic function
-				 * created by a CONFIG tuple.  Just keep it.
-				 */
-			} else {
-				/*
-				 * A function is being defined, end it.
-				 */
-				state->pf = NULL;
-			}
-		}
-		if (state->pf == NULL)
-			create_pf(state);
-		state->pf->function = pcmcia_tuple_read_1(tuple, 0);
-
-		DPRINTF(("CISTPL_FUNCID\n"));
+		decode_funcid(tuple, state);
 		break;
+
 	case PCMCIA_CISTPL_FUNCE:
-		if (state->pf == NULL || state->pf->function <= 0) {
-			DPRINTF(("CISTPL_FUNCE is not followed by "
-			    "valid CISTPL_FUNCID\n"));
-			break;
-		}
-		if (tuple->length >= 2) {
-			decode_funce(tuple, state->pf);
-		}
+		decode_funce(tuple, state);
 		break;
+
 	case PCMCIA_CISTPL_CONFIG:
-		if (tuple->length < 3) {
-			DPRINTF(("CISTPL_CONFIG too short %d\n",
-			    tuple->length));
-			break;
-		} {
-			u_int reg, rasz, rmsz, rfsz;
-			int i;
-
-			reg = pcmcia_tuple_read_1(tuple, 0);
-			rasz = 1 + ((reg & PCMCIA_TPCC_RASZ_MASK) >>
-			    PCMCIA_TPCC_RASZ_SHIFT);
-			rmsz = 1 + ((reg & PCMCIA_TPCC_RMSZ_MASK) >>
-			    PCMCIA_TPCC_RMSZ_SHIFT);
-			rfsz = ((reg & PCMCIA_TPCC_RFSZ_MASK) >>
-			    PCMCIA_TPCC_RFSZ_SHIFT);
-
-			if (tuple->length < (rasz + rmsz + rfsz)) {
-				DPRINTF(("CISTPL_CONFIG (%d,%d,%d) too "
-				    "short %d\n", rasz, rmsz, rfsz,
-				    tuple->length));
-				break;
-			}
-			if (state->pf == NULL) {
-				create_pf(state);
-				state->pf->function = PCMCIA_FUNCTION_UNSPEC;
-			}
-			state->pf->last_config_index =
-			    pcmcia_tuple_read_1(tuple, 1);
-
-			state->pf->ccr_base = 0;
-			for (i = 0; i < rasz; i++)
-				state->pf->ccr_base |=
-				    ((pcmcia_tuple_read_1(tuple, 2 + i)) <<
-				    (i * 8));
-
-			state->pf->ccr_mask = 0;
-			for (i = 0; i < rmsz; i++)
-				state->pf->ccr_mask |=
-				    ((pcmcia_tuple_read_1(tuple,
-				    2 + rasz + i)) << (i * 8));
-
-			/* skip the reserved area and subtuples */
-
-			/* reset the default cfe for each cfe list */
-			state->temp_cfe = init_cfe;
-			state->default_cfe = &state->temp_cfe;
-		}
-		DPRINTF(("CISTPL_CONFIG\n"));
+		decode_config(tuple, state);
 		break;
+
 	case PCMCIA_CISTPL_CFTABLE_ENTRY:
-		{
-			int idx, i, j;
-			u_int reg, reg2;
-			u_int intface, def, num;
-			u_int power, timing, iospace, irq, memspace, misc;
-			struct pcmcia_config_entry *cfe;
-
-			idx = 0;
-
-			reg = pcmcia_tuple_read_1(tuple, idx);
-			idx++;
-			intface = reg & PCMCIA_TPCE_INDX_INTFACE;
-			def = reg & PCMCIA_TPCE_INDX_DEFAULT;
-			num = reg & PCMCIA_TPCE_INDX_NUM_MASK;
-
-			/*
-			 * this is a little messy.  Some cards have only a
-			 * cfentry with the default bit set.  So, as we go
-			 * through the list, we add new indexes to the queue,
-			 * and keep a pointer to the last one with the
-			 * default bit set.  if we see a record with the same
-			 * index, as the default, we stash the default and
-			 * replace the queue entry. otherwise, we just add
-			 * new entries to the queue, pointing the default ptr
-			 * at them if the default bit is set.  if we get to
-			 * the end with the default pointer pointing at a
-			 * record which hasn't had a matching index, that's
-			 * ok; it just becomes a cfentry like any other.
-			 */
-
-			/*
-			 * if the index in the cis differs from the default
-			 * cis, create new entry in the queue and start it
-			 * with the current default
-			 */
-			if (state->default_cfe == NULL) {
-				DPRINTF(("CISTPL_CFTABLE_ENTRY with no "
-				    "default\n"));
-				break;
-			}
-			if (num != state->default_cfe->number) {
-				cfe = (struct pcmcia_config_entry *)
-				    malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
-
-				*cfe = *state->default_cfe;
-
-				SIMPLEQ_INSERT_TAIL(&state->pf->cfe_head,
-				    cfe, cfe_list);
-
-				cfe->number = num;
-
-				/*
-				 * if the default bit is set in the cis, then
-				 * point the new default at whatever is being
-				 * filled in
-				 */
-				if (def)
-					state->default_cfe = cfe;
-			} else {
-				/*
-				 * the cis index matches the default index,
-				 * fill in the default cfentry.  It is
-				 * assumed that the cfdefault index is in the
-				 * queue.  For it to be otherwise, the cis
-				 * index would have to be -1 (initial
-				 * condition) which is not possible, or there
-				 * would have to be a preceding cis entry
-				 * which had the same cis index and had the
-				 * default bit unset. Neither condition
-				 * should happen.  If it does, this cfentry
-				 * is lost (written into temp space), which
-				 * is an acceptable failure mode.
-				 */
-
-				cfe = state->default_cfe;
-
-				/*
-				 * if the cis entry does not have the default
-				 * bit set, copy the default out of the way
-				 * first.
-				 */
-				if (!def) {
-					state->temp_cfe = *state->default_cfe;
-					state->default_cfe = &state->temp_cfe;
-				}
-			}
-
-			if (intface) {
-				reg = pcmcia_tuple_read_1(tuple, idx);
-				idx++;
-				cfe->flags &= ~(PCMCIA_CFE_MWAIT_REQUIRED
-				    | PCMCIA_CFE_RDYBSY_ACTIVE
-				    | PCMCIA_CFE_WP_ACTIVE
-				    | PCMCIA_CFE_BVD_ACTIVE);
-				if (reg & PCMCIA_TPCE_IF_MWAIT)
-					cfe->flags |= PCMCIA_CFE_MWAIT_REQUIRED;
-				if (reg & PCMCIA_TPCE_IF_RDYBSY)
-					cfe->flags |= PCMCIA_CFE_RDYBSY_ACTIVE;
-				if (reg & PCMCIA_TPCE_IF_WP)
-					cfe->flags |= PCMCIA_CFE_WP_ACTIVE;
-				if (reg & PCMCIA_TPCE_IF_BVD)
-					cfe->flags |= PCMCIA_CFE_BVD_ACTIVE;
-				cfe->iftype = reg & PCMCIA_TPCE_IF_IFTYPE;
-			}
-			reg = pcmcia_tuple_read_1(tuple, idx);
-			idx++;
-
-			power = reg & PCMCIA_TPCE_FS_POWER_MASK;
-			timing = reg & PCMCIA_TPCE_FS_TIMING;
-			iospace = reg & PCMCIA_TPCE_FS_IOSPACE;
-			irq = reg & PCMCIA_TPCE_FS_IRQ;
-			memspace = reg & PCMCIA_TPCE_FS_MEMSPACE_MASK;
-			misc = reg & PCMCIA_TPCE_FS_MISC;
-
-			if (power) {
-				/* skip over power, don't save */
-				/* for each parameter selection byte */
-				for (i = 0; i < power; i++) {
-					reg = pcmcia_tuple_read_1(tuple, idx);
-					idx++;
-					/* for each bit */
-					for (j = 0; j < 7; j++) {
-						/* if the bit is set */
-						if ((reg >> j) & 0x01) {
-							/* skip over bytes */
-							do {
-								reg2 = pcmcia_tuple_read_1(tuple, idx);
-								idx++;
-								/*
-								 * until
-								 * non-
-								 * extension
-								 * byte
-								 */
-							} while (reg2 & 0x80);
-						}
-					}
-				}
-			}
-			if (timing) {
-				/* skip over timing, don't save */
-				reg = pcmcia_tuple_read_1(tuple, idx);
-				idx++;
-
-				if ((reg & PCMCIA_TPCE_TD_RESERVED_MASK) !=
-				    PCMCIA_TPCE_TD_RESERVED_MASK)
-					idx++;
-				if ((reg & PCMCIA_TPCE_TD_RDYBSY_MASK) !=
-				    PCMCIA_TPCE_TD_RDYBSY_MASK)
-					idx++;
-				if ((reg & PCMCIA_TPCE_TD_WAIT_MASK) !=
-				    PCMCIA_TPCE_TD_WAIT_MASK)
-					idx++;
-			}
-			if (iospace) {
-				if (tuple->length <= idx) {
-					DPRINTF(("ran out of space before TCPE_IO\n"));
-					goto abort_cfe;
-				}
-
-				reg = pcmcia_tuple_read_1(tuple, idx);
-				idx++;
-
-				cfe->flags &=
-				    ~(PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16);
-				if (reg & PCMCIA_TPCE_IO_BUSWIDTH_8BIT)
-					cfe->flags |= PCMCIA_CFE_IO8;
-				if (reg & PCMCIA_TPCE_IO_BUSWIDTH_16BIT)
-					cfe->flags |= PCMCIA_CFE_IO16;
-				cfe->iomask =
-				    reg & PCMCIA_TPCE_IO_IOADDRLINES_MASK;
-
-				if (reg & PCMCIA_TPCE_IO_HASRANGE) {
-					reg = pcmcia_tuple_read_1(tuple, idx);
-					idx++;
-
-					cfe->num_iospace = 1 + (reg &
-					    PCMCIA_TPCE_IO_RANGE_COUNT);
-
-					if (cfe->num_iospace >
-					    (sizeof(cfe->iospace) /
-					     sizeof(cfe->iospace[0]))) {
-						DPRINTF(("too many io "
-						    "spaces %d",
-						    cfe->num_iospace));
-						state->card->error++;
-						break;
-					}
-					for (i = 0; i < cfe->num_iospace; i++) {
-						switch (reg & PCMCIA_TPCE_IO_RANGE_ADDRSIZE_MASK) {
-						case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_NONE:
-							cfe->iospace[i].start =
-							    0;
-							break;
-						case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_ONE:
-							cfe->iospace[i].start =
-								pcmcia_tuple_read_1(tuple, idx);
-							idx++;
-							break;
-						case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_TWO:
-							cfe->iospace[i].start =
-								pcmcia_tuple_read_2(tuple, idx);
-							idx += 2;
-							break;
-						case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_FOUR:
-							cfe->iospace[i].start =
-								pcmcia_tuple_read_4(tuple, idx);
-							idx += 4;
-							break;
-						}
-						switch (reg &
-							PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_MASK) {
-						case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_NONE:
-							cfe->iospace[i].length =
-							    0;
-							break;
-						case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_ONE:
-							cfe->iospace[i].length =
-								pcmcia_tuple_read_1(tuple, idx);
-							idx++;
-							break;
-						case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_TWO:
-							cfe->iospace[i].length =
-								pcmcia_tuple_read_2(tuple, idx);
-							idx += 2;
-							break;
-						case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_FOUR:
-							cfe->iospace[i].length =
-								pcmcia_tuple_read_4(tuple, idx);
-							idx += 4;
-							break;
-						}
-						cfe->iospace[i].length++;
-					}
-				} else {
-					cfe->num_iospace = 1;
-					cfe->iospace[0].start = 0;
-					cfe->iospace[0].length =
-					    (1 << cfe->iomask);
-				}
-			}
-			if (irq) {
-				if (tuple->length <= idx) {
-					DPRINTF(("ran out of space before TCPE_IR\n"));
-					goto abort_cfe;
-				}
-
-				reg = pcmcia_tuple_read_1(tuple, idx);
-				idx++;
-
-				cfe->flags &= ~(PCMCIA_CFE_IRQSHARE
-				    | PCMCIA_CFE_IRQPULSE
-				    | PCMCIA_CFE_IRQLEVEL);
-				if (reg & PCMCIA_TPCE_IR_SHARE)
-					cfe->flags |= PCMCIA_CFE_IRQSHARE;
-				if (reg & PCMCIA_TPCE_IR_PULSE)
-					cfe->flags |= PCMCIA_CFE_IRQPULSE;
-				if (reg & PCMCIA_TPCE_IR_LEVEL)
-					cfe->flags |= PCMCIA_CFE_IRQLEVEL;
-
-				if (reg & PCMCIA_TPCE_IR_HASMASK) {
-					/*
-					 * it's legal to ignore the
-					 * special-interrupt bits, so I will
-					 */
-
-					cfe->irqmask =
-					    pcmcia_tuple_read_2(tuple, idx);
-					idx += 2;
-				} else {
-					cfe->irqmask =
-					    (1 << (reg & PCMCIA_TPCE_IR_IRQ));
-				}
-			}
-			if (memspace) {
-				if (tuple->length <= idx) {
-					DPRINTF(("ran out of space before TCPE_MS\n"));
-					goto abort_cfe;
-				}
-
-				if (memspace == PCMCIA_TPCE_FS_MEMSPACE_NONE) {
-					cfe->num_memspace = 0;
-				} else if (memspace == PCMCIA_TPCE_FS_MEMSPACE_LENGTH) {
-					cfe->num_memspace = 1;
-					cfe->memspace[0].length = 256 *
-					    pcmcia_tuple_read_2(tuple, idx);
-					idx += 2;
-					cfe->memspace[0].cardaddr = 0;
-					cfe->memspace[0].hostaddr = 0;
-				} else if (memspace ==
-				    PCMCIA_TPCE_FS_MEMSPACE_LENGTHADDR) {
-					cfe->num_memspace = 1;
-					cfe->memspace[0].length = 256 *
-					    pcmcia_tuple_read_2(tuple, idx);
-					idx += 2;
-					cfe->memspace[0].cardaddr = 256 *
-					    pcmcia_tuple_read_2(tuple, idx);
-					idx += 2;
-					cfe->memspace[0].hostaddr = cfe->memspace[0].cardaddr;
-				} else {
-					int lengthsize;
-					int cardaddrsize;
-					int hostaddrsize;
-
-					reg = pcmcia_tuple_read_1(tuple, idx);
-					idx++;
-
-					cfe->num_memspace = (reg &
-					    PCMCIA_TPCE_MS_COUNT) + 1;
-
-					if (cfe->num_memspace >
-					    (sizeof(cfe->memspace) /
-					     sizeof(cfe->memspace[0]))) {
-						DPRINTF(("too many mem "
-						    "spaces %d",
-						    cfe->num_memspace));
-						state->card->error++;
-						break;
-					}
-					lengthsize =
-						((reg & PCMCIA_TPCE_MS_LENGTH_SIZE_MASK) >>
-						 PCMCIA_TPCE_MS_LENGTH_SIZE_SHIFT);
-					cardaddrsize =
-						((reg & PCMCIA_TPCE_MS_CARDADDR_SIZE_MASK) >>
-						 PCMCIA_TPCE_MS_CARDADDR_SIZE_SHIFT);
-					hostaddrsize =
-						(reg & PCMCIA_TPCE_MS_HOSTADDR) ? cardaddrsize : 0;
-
-					if (lengthsize == 0) {
-						DPRINTF(("cfe memspace "
-						    "lengthsize == 0"));
-						state->card->error++;
-					}
-					for (i = 0; i < cfe->num_memspace; i++) {
-						if (lengthsize) {
-							cfe->memspace[i].length =
-								256 * pcmcia_tuple_read_n(tuple, lengthsize,
-								       idx);
-							idx += lengthsize;
-						} else {
-							cfe->memspace[i].length = 0;
-						}
-						if (cfe->memspace[i].length == 0) {
-							DPRINTF(("cfe->memspace[%d].length == 0",
-								 i));
-							state->card->error++;
-						}
-						if (cardaddrsize) {
-							cfe->memspace[i].cardaddr =
-								256 * pcmcia_tuple_read_n(tuple, cardaddrsize,
-								       idx);
-							idx += cardaddrsize;
-						} else {
-							cfe->memspace[i].cardaddr = 0;
-						}
-						if (hostaddrsize) {
-							cfe->memspace[i].hostaddr =
-								256 * pcmcia_tuple_read_n(tuple, hostaddrsize,
-								       idx);
-							idx += hostaddrsize;
-						} else {
-							cfe->memspace[i].hostaddr = 0;
-						}
-					}
-				}
-			}
-			if (misc) {
-				if (tuple->length <= idx) {
-					DPRINTF(("ran out of space before TCPE_MI\n"));
-					goto abort_cfe;
-				}
-
-				reg = pcmcia_tuple_read_1(tuple, idx);
-				idx++;
-
-				cfe->flags &= ~(PCMCIA_CFE_POWERDOWN
-				    | PCMCIA_CFE_READONLY
-				    | PCMCIA_CFE_AUDIO);
-				if (reg & PCMCIA_TPCE_MI_PWRDOWN)
-					cfe->flags |= PCMCIA_CFE_POWERDOWN;
-				if (reg & PCMCIA_TPCE_MI_READONLY)
-					cfe->flags |= PCMCIA_CFE_READONLY;
-				if (reg & PCMCIA_TPCE_MI_AUDIO)
-					cfe->flags |= PCMCIA_CFE_AUDIO;
-				cfe->maxtwins = reg & PCMCIA_TPCE_MI_MAXTWINS;
-
-				while (reg & PCMCIA_TPCE_MI_EXT) {
-					reg = pcmcia_tuple_read_1(tuple, idx);
-					idx++;
-				}
-			}
-			/* skip all the subtuples */
-		}
-
-	abort_cfe:
-		DPRINTF(("CISTPL_CFTABLE_ENTRY\n"));
+		decode_cftable_entry(tuple, state);
 		break;
 	default:
 		DPRINTF(("unhandled CISTPL %x\n", tuple->code));
@@ -1348,15 +757,208 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	return (0);
 }
 
-
-
-static int
-decode_funce(tuple, pf)
-	struct pcmcia_tuple *tuple;
-	struct pcmcia_function *pf;
+static void
+decode_end(struct pcmcia_tuple *tuple, struct cis_state *state)
 {
+	/* if we've seen a LONGLINK_MFC, and this is the first
+	 * END after it, reset the function list.
+	 *
+	 * XXX This might also be the right place to start a
+	 * new function, but that assumes that a function
+	 * definition never crosses any longlink, and I'm not
+	 * sure about that.  This is probably safe for MFC
+	 * cards, but what we have now isn't broken, so I'd
+	 * rather not change it.
+	 */
+	if (state->gotmfc == 1) {
+		state->gotmfc = 2;
+		state->count = 0;
+		state->pf = NULL;
+
+		pcmcia_free_pf(&state->card->pf_head);
+	}
+}
+
+static void
+decode_longlink_mfc(struct pcmcia_tuple *tuple, struct cis_state *state)
+{
+	/*
+	 * this tuple's structure was dealt with in scan_cis.  here,
+	 * record the fact that the MFC tuple was seen, so that
+	 * functions declared before the MFC link can be cleaned
+	 * up.
+	 */
+	if (state->gotmfc == 0) {
+		state->gotmfc = 1;
+	} else {
+		DPRINTF(("got LONGLINK_MFC again!"));
+	}
+}
+
+static void
+decode_device(struct pcmcia_tuple *tuple, struct cis_state *state)
+{
+#ifdef PCMCIACISDEBUG
+	u_int reg, dtype, dspeed;
+
+	reg = pcmcia_tuple_read_1(tuple, 0);
+	dtype = reg & PCMCIA_DTYPE_MASK;
+	dspeed = reg & PCMCIA_DSPEED_MASK;
+
+	DPRINTF(("CISTPL_DEVICE%s type=",
+	(tuple->code == PCMCIA_CISTPL_DEVICE) ? "" : "_A"));
+	switch (dtype) {
+	case PCMCIA_DTYPE_NULL:
+		DPRINTF(("null"));
+		break;
+	case PCMCIA_DTYPE_ROM:
+		DPRINTF(("rom"));
+		break;
+	case PCMCIA_DTYPE_OTPROM:
+		DPRINTF(("otprom"));
+		break;
+	case PCMCIA_DTYPE_EPROM:
+		DPRINTF(("eprom"));
+		break;
+	case PCMCIA_DTYPE_EEPROM:
+		DPRINTF(("eeprom"));
+		break;
+	case PCMCIA_DTYPE_FLASH:
+		DPRINTF(("flash"));
+		break;
+	case PCMCIA_DTYPE_SRAM:
+		DPRINTF(("sram"));
+		break;
+	case PCMCIA_DTYPE_DRAM:
+		DPRINTF(("dram"));
+		break;
+	case PCMCIA_DTYPE_FUNCSPEC:
+		DPRINTF(("funcspec"));
+		break;
+	case PCMCIA_DTYPE_EXTEND:
+		DPRINTF(("extend"));
+		break;
+	default:
+		DPRINTF(("reserved"));
+		break;
+	}
+	DPRINTF((" speed="));
+	switch (dspeed) {
+	case PCMCIA_DSPEED_NULL:
+		DPRINTF(("null"));
+		break;
+	case PCMCIA_DSPEED_250NS:
+		DPRINTF(("250ns"));
+		break;
+	case PCMCIA_DSPEED_200NS:
+		DPRINTF(("200ns"));
+		break;
+	case PCMCIA_DSPEED_150NS:
+		DPRINTF(("150ns"));
+		break;
+	case PCMCIA_DSPEED_100NS:
+		DPRINTF(("100ns"));
+		break;
+	case PCMCIA_DSPEED_EXT:
+		DPRINTF(("ext"));
+		break;
+	default:
+		DPRINTF(("reserved"));
+		break;
+	}
+	DPRINTF(("\n"));
+#endif
+}
+
+static void
+decode_vers_1(struct pcmcia_tuple *tuple, struct cis_state *state)
+{
+	int start, i, ch, count;
+
+	if (tuple->length < 6) {
+		DPRINTF(("CISTPL_VERS_1 too short %d\n",
+		    tuple->length));
+		return;
+	}
+	state->card->cis1_major = pcmcia_tuple_read_1(tuple, 0);
+	state->card->cis1_minor = pcmcia_tuple_read_1(tuple, 1);
+
+	for (count = 0, start = 0, i = 0;
+	    (count < 4) && ((i + 4) < 256); i++) {
+		ch = pcmcia_tuple_read_1(tuple, 2 + i);
+		if (ch == 0xff) {
+			if (i > start) {
+				state->card->cis1_info_buf[i] = 0;
+				state->card->cis1_info[count] =
+				    state->card->cis1_info_buf + start;
+			}
+			break;
+		}
+		state->card->cis1_info_buf[i] = ch;
+		if (ch == 0) {
+			state->card->cis1_info[count] =
+			    state->card->cis1_info_buf + start;
+			start = i + 1;
+			count++;
+		}
+	}
+	DPRINTF(("CISTPL_VERS_1\n"));
+}
+
+static void
+decode_manfid(struct pcmcia_tuple *tuple, struct cis_state *state)
+{
+	if (tuple->length < 4) {
+		DPRINTF(("CISTPL_MANFID too short %d\n",
+		    tuple->length));
+		return;
+	}
+	state->card->manufacturer = pcmcia_tuple_read_2(tuple, 0);
+	state->card->product = pcmcia_tuple_read_2(tuple, 2);
+	DPRINTF(("CISTPL_MANFID\n"));
+}
+
+static void
+decode_funcid(struct pcmcia_tuple *tuple, struct cis_state *state)
+{
+	if (tuple->length < 1) {
+		DPRINTF(("CISTPL_FUNCID too short %d\n",
+		    tuple->length));
+		return;
+	}
+	if (state->pf) {
+		if (state->pf->function == PCMCIA_FUNCTION_UNSPEC) {
+			/*
+			 * This looks like a opportunistic function
+			 * created by a CONFIG tuple.  Just keep it.
+			 */
+		} else {
+			/*
+			 * A function is being defined, end it.
+			 */
+			state->pf = NULL;
+		}
+	}
+	if (state->pf == NULL)
+		create_pf(state);
+	state->pf->function = pcmcia_tuple_read_1(tuple, 0);
+
+	DPRINTF(("CISTPL_FUNCID\n"));
+}
+
+static void
+decode_funce(struct pcmcia_tuple *tuple, struct cis_state *state)
+{
+	struct pcmcia_function *pf = state->pf;
 	int type = pcmcia_tuple_read_1(tuple, 0);
 
+	if (state->pf == NULL || state->pf->function <= 0) {
+		DPRINTF(("CISTPL_FUNCE is not followed by "
+		    "valid CISTPL_FUNCID\n"));
+		return;
+	}
+	if (tuple->length < 2)
+		return;
 	switch (pf->function) {
 	case PCMCIA_FUNCTION_DISK:
 		if (type == PCMCIA_TPLFE_TYPE_DISK_DEVICE_INTERFACE) {
@@ -1383,5 +985,472 @@ decode_funce(tuple, pf)
 		break;
 	}
 
-	return 0;
+	return;
+}
+
+static void
+decode_config(struct pcmcia_tuple *tuple, struct cis_state *state)
+{
+	u_int reg, rasz, rmsz, rfsz;
+	int i;
+	/* most of these are educated guesses */
+	static const struct pcmcia_config_entry init_cfe = {
+		-1, PCMCIA_CFE_RDYBSY_ACTIVE | PCMCIA_CFE_WP_ACTIVE |
+		PCMCIA_CFE_BVD_ACTIVE, PCMCIA_IFTYPE_MEMORY,
+	};
+
+	if (tuple->length < 3) {
+		DPRINTF(("CISTPL_CONFIG too short %d\n", tuple->length));
+		return;
+	} 
+	reg = pcmcia_tuple_read_1(tuple, 0);
+	rasz = 1 + ((reg & PCMCIA_TPCC_RASZ_MASK) >>
+	    PCMCIA_TPCC_RASZ_SHIFT);
+	rmsz = 1 + ((reg & PCMCIA_TPCC_RMSZ_MASK) >>
+	    PCMCIA_TPCC_RMSZ_SHIFT);
+	rfsz = ((reg & PCMCIA_TPCC_RFSZ_MASK) >>
+	    PCMCIA_TPCC_RFSZ_SHIFT);
+
+	if (tuple->length < (rasz + rmsz + rfsz)) {
+		DPRINTF(("CISTPL_CONFIG (%d,%d,%d) too short %d\n",
+		    rasz, rmsz, rfsz, tuple->length));
+		return;
+	}
+	if (state->pf == NULL) {
+		create_pf(state);
+		state->pf->function = PCMCIA_FUNCTION_UNSPEC;
+	}
+	state->pf->last_config_index =
+	    pcmcia_tuple_read_1(tuple, 1);
+
+	state->pf->ccr_base = 0;
+	for (i = 0; i < rasz; i++)
+		state->pf->ccr_base |= ((pcmcia_tuple_read_1(tuple, 2 + i)) <<
+		    (i * 8));
+
+	state->pf->ccr_mask = 0;
+	for (i = 0; i < rmsz; i++)
+		state->pf->ccr_mask |= ((pcmcia_tuple_read_1(tuple,
+		    2 + rasz + i)) << (i * 8));
+
+	/* skip the reserved area and subtuples */
+
+	/* reset the default cfe for each cfe list */
+	state->temp_cfe = init_cfe;
+	state->default_cfe = &state->temp_cfe;
+	DPRINTF(("CISTPL_CONFIG\n"));
+}
+
+static void
+decode_cftable_entry(struct pcmcia_tuple *tuple, struct cis_state *state)
+{
+	int idx, i, j;
+	u_int reg, reg2;
+	u_int intface, def, num;
+	u_int power, timing, iospace, irq, memspace, misc;
+	struct pcmcia_config_entry *cfe;
+
+	idx = 0;
+
+	reg = pcmcia_tuple_read_1(tuple, idx);
+	idx++;
+	intface = reg & PCMCIA_TPCE_INDX_INTFACE;
+	def = reg & PCMCIA_TPCE_INDX_DEFAULT;
+	num = reg & PCMCIA_TPCE_INDX_NUM_MASK;
+
+	/*
+	 * this is a little messy.  Some cards have only a
+	 * cfentry with the default bit set.  So, as we go
+	 * through the list, we add new indexes to the queue,
+	 * and keep a pointer to the last one with the
+	 * default bit set.  if we see a record with the same
+	 * index, as the default, we stash the default and
+	 * replace the queue entry. otherwise, we just add
+	 * new entries to the queue, pointing the default ptr
+	 * at them if the default bit is set.  if we get to
+	 * the end with the default pointer pointing at a
+	 * record which hasn't had a matching index, that's
+	 * ok; it just becomes a cfentry like any other.
+	 */
+
+	/*
+	 * if the index in the cis differs from the default
+	 * cis, create new entry in the queue and start it
+	 * with the current default
+	 */
+	if (state->default_cfe == NULL) {
+		DPRINTF(("CISTPL_CFTABLE_ENTRY with no "
+		    "default\n"));
+		return;
+	}
+	if (num != state->default_cfe->number) {
+		cfe = malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
+		if (cfe == NULL) {
+			printf("Cannot allocate cfe entry\n");
+			return;
+		}
+
+		*cfe = *state->default_cfe;
+
+		SIMPLEQ_INSERT_TAIL(&state->pf->cfe_head, cfe, cfe_list);
+
+		cfe->number = num;
+
+		/*
+		 * if the default bit is set in the cis, then
+		 * point the new default at whatever is being
+		 * filled in
+		 */
+		if (def)
+			state->default_cfe = cfe;
+	} else {
+		/*
+		 * the cis index matches the default index,
+		 * fill in the default cfentry.  It is
+		 * assumed that the cfdefault index is in the
+		 * queue.  For it to be otherwise, the cis
+		 * index would have to be -1 (initial
+		 * condition) which is not possible, or there
+		 * would have to be a preceding cis entry
+		 * which had the same cis index and had the
+		 * default bit unset. Neither condition
+		 * should happen.  If it does, this cfentry
+		 * is lost (written into temp space), which
+		 * is an acceptable failure mode.
+		 */
+
+		cfe = state->default_cfe;
+
+		/*
+		 * if the cis entry does not have the default
+		 * bit set, copy the default out of the way
+		 * first.
+		 */
+		if (!def) {
+			state->temp_cfe = *state->default_cfe;
+			state->default_cfe = &state->temp_cfe;
+		}
+	}
+
+	if (intface) {
+		reg = pcmcia_tuple_read_1(tuple, idx);
+		idx++;
+		cfe->flags &= ~(PCMCIA_CFE_MWAIT_REQUIRED
+		    | PCMCIA_CFE_RDYBSY_ACTIVE
+		    | PCMCIA_CFE_WP_ACTIVE
+		    | PCMCIA_CFE_BVD_ACTIVE);
+		if (reg & PCMCIA_TPCE_IF_MWAIT)
+			cfe->flags |= PCMCIA_CFE_MWAIT_REQUIRED;
+		if (reg & PCMCIA_TPCE_IF_RDYBSY)
+			cfe->flags |= PCMCIA_CFE_RDYBSY_ACTIVE;
+		if (reg & PCMCIA_TPCE_IF_WP)
+			cfe->flags |= PCMCIA_CFE_WP_ACTIVE;
+		if (reg & PCMCIA_TPCE_IF_BVD)
+			cfe->flags |= PCMCIA_CFE_BVD_ACTIVE;
+		cfe->iftype = reg & PCMCIA_TPCE_IF_IFTYPE;
+	}
+	reg = pcmcia_tuple_read_1(tuple, idx);
+	idx++;
+
+	power = reg & PCMCIA_TPCE_FS_POWER_MASK;
+	timing = reg & PCMCIA_TPCE_FS_TIMING;
+	iospace = reg & PCMCIA_TPCE_FS_IOSPACE;
+	irq = reg & PCMCIA_TPCE_FS_IRQ;
+	memspace = reg & PCMCIA_TPCE_FS_MEMSPACE_MASK;
+	misc = reg & PCMCIA_TPCE_FS_MISC;
+
+	if (power) {
+		/* skip over power, don't save */
+		/* for each parameter selection byte */
+		for (i = 0; i < power; i++) {
+			reg = pcmcia_tuple_read_1(tuple, idx);
+			idx++;
+			/* for each bit */
+			for (j = 0; j < 7; j++) {
+				/* if the bit is set */
+				if ((reg >> j) & 0x01) {
+					/* skip over bytes */
+					do {
+						reg2 = pcmcia_tuple_read_1(tuple, idx);
+						idx++;
+						/*
+						 * until
+						 * non-
+						 * extension
+						 * byte
+						 */
+					} while (reg2 & 0x80);
+				}
+			}
+		}
+	}
+	if (timing) {
+		/* skip over timing, don't save */
+		reg = pcmcia_tuple_read_1(tuple, idx);
+		idx++;
+
+		if ((reg & PCMCIA_TPCE_TD_RESERVED_MASK) !=
+		    PCMCIA_TPCE_TD_RESERVED_MASK)
+			idx++;
+		if ((reg & PCMCIA_TPCE_TD_RDYBSY_MASK) !=
+		    PCMCIA_TPCE_TD_RDYBSY_MASK)
+			idx++;
+		if ((reg & PCMCIA_TPCE_TD_WAIT_MASK) !=
+		    PCMCIA_TPCE_TD_WAIT_MASK)
+			idx++;
+	}
+	if (iospace) {
+		if (tuple->length <= idx) {
+			DPRINTF(("ran out of space before TCPE_IO\n"));
+			goto abort_cfe;
+		}
+
+		reg = pcmcia_tuple_read_1(tuple, idx);
+		idx++;
+
+		cfe->flags &=
+		    ~(PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16);
+		if (reg & PCMCIA_TPCE_IO_BUSWIDTH_8BIT)
+			cfe->flags |= PCMCIA_CFE_IO8;
+		if (reg & PCMCIA_TPCE_IO_BUSWIDTH_16BIT)
+			cfe->flags |= PCMCIA_CFE_IO16;
+		cfe->iomask =
+		    reg & PCMCIA_TPCE_IO_IOADDRLINES_MASK;
+
+		if (reg & PCMCIA_TPCE_IO_HASRANGE) {
+			reg = pcmcia_tuple_read_1(tuple, idx);
+			idx++;
+
+			cfe->num_iospace = 1 + (reg &
+			    PCMCIA_TPCE_IO_RANGE_COUNT);
+
+			if (cfe->num_iospace >
+			    (sizeof(cfe->iospace) /
+			     sizeof(cfe->iospace[0]))) {
+				DPRINTF(("too many io "
+				    "spaces %d",
+				    cfe->num_iospace));
+				state->card->error++;
+				return;
+			}
+			for (i = 0; i < cfe->num_iospace; i++) {
+				switch (reg & PCMCIA_TPCE_IO_RANGE_ADDRSIZE_MASK) {
+				case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_NONE:
+					cfe->iospace[i].start =
+					    0;
+					break;
+				case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_ONE:
+					cfe->iospace[i].start =
+						pcmcia_tuple_read_1(tuple, idx);
+					idx++;
+					break;
+				case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_TWO:
+					cfe->iospace[i].start =
+						pcmcia_tuple_read_2(tuple, idx);
+					idx += 2;
+					break;
+				case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_FOUR:
+					cfe->iospace[i].start =
+						pcmcia_tuple_read_4(tuple, idx);
+					idx += 4;
+					break;
+				}
+				switch (reg &
+					PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_MASK) {
+				case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_NONE:
+					cfe->iospace[i].length =
+					    0;
+					break;
+				case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_ONE:
+					cfe->iospace[i].length =
+						pcmcia_tuple_read_1(tuple, idx);
+					idx++;
+					break;
+				case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_TWO:
+					cfe->iospace[i].length =
+						pcmcia_tuple_read_2(tuple, idx);
+					idx += 2;
+					break;
+				case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_FOUR:
+					cfe->iospace[i].length =
+						pcmcia_tuple_read_4(tuple, idx);
+					idx += 4;
+					break;
+				}
+				cfe->iospace[i].length++;
+			}
+		} else {
+			cfe->num_iospace = 1;
+			cfe->iospace[0].start = 0;
+			cfe->iospace[0].length =
+			    (1 << cfe->iomask);
+		}
+	}
+	if (irq) {
+		if (tuple->length <= idx) {
+			DPRINTF(("ran out of space before TCPE_IR\n"));
+			goto abort_cfe;
+		}
+
+		reg = pcmcia_tuple_read_1(tuple, idx);
+		idx++;
+
+		cfe->flags &= ~(PCMCIA_CFE_IRQSHARE
+		    | PCMCIA_CFE_IRQPULSE
+		    | PCMCIA_CFE_IRQLEVEL);
+		if (reg & PCMCIA_TPCE_IR_SHARE)
+			cfe->flags |= PCMCIA_CFE_IRQSHARE;
+		if (reg & PCMCIA_TPCE_IR_PULSE)
+			cfe->flags |= PCMCIA_CFE_IRQPULSE;
+		if (reg & PCMCIA_TPCE_IR_LEVEL)
+			cfe->flags |= PCMCIA_CFE_IRQLEVEL;
+
+		if (reg & PCMCIA_TPCE_IR_HASMASK) {
+			/*
+			 * it's legal to ignore the
+			 * special-interrupt bits, so I will
+			 */
+
+			cfe->irqmask =
+			    pcmcia_tuple_read_2(tuple, idx);
+			idx += 2;
+		} else {
+			cfe->irqmask =
+			    (1 << (reg & PCMCIA_TPCE_IR_IRQ));
+		}
+	}
+	if (memspace) {
+		int lengthsize;
+		int cardaddrsize;
+		int hostaddrsize;
+
+		if (tuple->length <= idx) {
+			DPRINTF(("ran out of space before TCPE_MS\n"));
+			goto abort_cfe;
+		}
+
+		switch (memspace) {
+#ifdef notdef	/* This is 0 */
+		case PCMCIA_TPCE_FS_MEMSPACE_NONE:
+			cfe->num_memspace = 0;
+			break;
+#endif
+
+		case PCMCIA_TPCE_FS_MEMSPACE_LENGTH:
+			cfe->num_memspace = 1;
+			cfe->memspace[0].length = 256 *
+			    pcmcia_tuple_read_2(tuple, idx);
+			idx += 2;
+			cfe->memspace[0].cardaddr = 0;
+			cfe->memspace[0].hostaddr = 0;
+			break;
+
+		case PCMCIA_TPCE_FS_MEMSPACE_LENGTHADDR:
+			cfe->num_memspace = 1;
+			cfe->memspace[0].length = 256 *
+			    pcmcia_tuple_read_2(tuple, idx);
+			idx += 2;
+			cfe->memspace[0].cardaddr = 256 *
+			    pcmcia_tuple_read_2(tuple, idx);
+			idx += 2;
+			cfe->memspace[0].hostaddr =
+			    cfe->memspace[0].cardaddr;
+			break;
+
+		default:
+			reg = pcmcia_tuple_read_1(tuple, idx);
+			idx++;
+
+			cfe->num_memspace = (reg & PCMCIA_TPCE_MS_COUNT)
+			    + 1;
+
+			if (cfe->num_memspace >
+			    (sizeof(cfe->memspace) /
+				sizeof(cfe->memspace[0]))) {
+				DPRINTF(("too many mem spaces %d",
+				    cfe->num_memspace));
+				state->card->error++;
+				return;
+			}
+			lengthsize = 
+			    ((reg & PCMCIA_TPCE_MS_LENGTH_SIZE_MASK) >>
+				PCMCIA_TPCE_MS_LENGTH_SIZE_SHIFT);
+			cardaddrsize =
+			    ((reg &
+				PCMCIA_TPCE_MS_CARDADDR_SIZE_MASK) >>
+				  PCMCIA_TPCE_MS_CARDADDR_SIZE_SHIFT);
+			hostaddrsize =
+			    (reg & PCMCIA_TPCE_MS_HOSTADDR) ?
+			    cardaddrsize : 0;
+
+			if (lengthsize == 0) {
+				DPRINTF(("cfe memspace "
+				    "lengthsize == 0"));
+				state->card->error++;
+			}
+			for (i = 0; i < cfe->num_memspace; i++) {
+				if (lengthsize) {
+					cfe->memspace[i].length = 256 *
+					    pcmcia_tuple_read_n(tuple,
+						lengthsize, idx);
+					idx += lengthsize;
+				} else {
+					cfe->memspace[i].length = 0;
+				}
+				if (cfe->memspace[i].length == 0) {
+					DPRINTF(("cfe->memspace" 
+					    "[%d].length == 0", i));
+					state->card->error++;
+				}
+				if (cardaddrsize) {
+					cfe->memspace[i].cardaddr =
+					    256 * 
+					    pcmcia_tuple_read_n(tuple,
+						cardaddrsize, idx);
+					idx += cardaddrsize;
+				} else {
+					cfe->memspace[i].cardaddr = 0;
+				}
+				if (hostaddrsize) {
+					cfe->memspace[i].hostaddr =
+					    256 *
+					    pcmcia_tuple_read_n(tuple,
+						hostaddrsize, idx);
+					idx += hostaddrsize;
+				} else {
+					cfe->memspace[i].hostaddr = 0;
+				}
+			}
+		}
+	}
+
+	if (misc) {
+		if (tuple->length <= idx) {
+			DPRINTF(("ran out of space before TCPE_MI\n"));
+			goto abort_cfe;
+		}
+
+		reg = pcmcia_tuple_read_1(tuple, idx);
+		idx++;
+
+		cfe->flags &= ~(PCMCIA_CFE_POWERDOWN
+		    | PCMCIA_CFE_READONLY
+		    | PCMCIA_CFE_AUDIO);
+		if (reg & PCMCIA_TPCE_MI_PWRDOWN)
+			cfe->flags |= PCMCIA_CFE_POWERDOWN;
+		if (reg & PCMCIA_TPCE_MI_READONLY)
+			cfe->flags |= PCMCIA_CFE_READONLY;
+		if (reg & PCMCIA_TPCE_MI_AUDIO)
+			cfe->flags |= PCMCIA_CFE_AUDIO;
+		cfe->maxtwins = reg & PCMCIA_TPCE_MI_MAXTWINS;
+
+		while (reg & PCMCIA_TPCE_MI_EXT) {
+			reg = pcmcia_tuple_read_1(tuple, idx);
+			idx++;
+		}
+	}
+
+	/* skip all the subtuples */
+abort_cfe:
+	DPRINTF(("CISTPL_CFTABLE_ENTRY\n"));
 }

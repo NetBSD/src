@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.13 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.13.6.1 2006/04/22 11:38:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,10 +56,10 @@ time_t	clock_ymdhms_to_secs(struct clock_ymdhms *);
 void	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 
 /*
- * BCD to decimal and decimal to BCD.
+ * BCD to binary and binary to BCD.
  */
-#define	FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
-#define	TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
+#define	FROMBCD(x)	bcdtobin((x))
+#define	TOBCD(x)	bintobcd((x))
 
 /* Some handy constants. */
 #define SECDAY		(24 * 60 * 60)

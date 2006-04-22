@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.28 2006/01/14 23:49:59 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.28.4.1 2006/04/22 11:38:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.28 2006/01/14 23:49:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.28.4.1 2006/04/22 11:38:09 simonb Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -145,7 +145,7 @@ static int _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	    bus_size_t size, int flags);
 static void _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
 static int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
-	    void *buf, bus_size_t buflen, struct proc *p, int flags);
+	    void *buf, bus_size_t buflen, struct vmspace *vm, int flags);
 static inline int _bus_dmamap_load_busaddr(bus_dma_tag_t, bus_dmamap_t,
     bus_addr_t, int);
 
@@ -327,6 +327,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 {
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 	int error;
+	struct vmspace *vm;
 
 	STAT_INCR(loads);
 
@@ -340,7 +341,12 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return EINVAL;
 
-	error = _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags);
+	if (p != NULL) {
+		vm = p->p_vmspace;
+	} else {
+		vm = vmspace_kernel();
+	}
+	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		return 0;
@@ -535,7 +541,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 
 		default:
 			error = _bus_dmamap_load_buffer(t, map, m->m_data,
-			    m->m_len, NULL, flags);
+			    m->m_len, vmspace_kernel(), flags);
 		}
 	}
 	if (error == 0) {
@@ -591,7 +597,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 {
 	int i, error;
 	bus_size_t minlen, resid;
-	struct proc *p = NULL;
+	struct vmspace *vm;
 	struct iovec *iov;
 	caddr_t addr;
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
@@ -606,13 +612,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
-#ifdef DIAGNOSTIC
-		if (p == NULL)
-			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
-#endif
-	}
+	vm = uio->uio_vmspace;
 
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
@@ -624,7 +624,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		addr = (caddr_t)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    p, flags);
+		    vm, flags);
 
 		resid -= minlen;
 	}
@@ -940,13 +940,13 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 {
 	struct iovec *iov;
 	int error;
-	struct proc *p;
+	struct vmspace *vm;
 	char *cp;
 	size_t resid, cnt;
 	int i;
 
 	iov = uio->uio_iov;
-	p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
+	vm = uio->uio_vmspace;
 	cp = buf;
 	resid = n;
 
@@ -956,34 +956,18 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 			continue;
 		cnt = MIN(resid, iov->iov_len);
 
-		if (uio->uio_segflg == UIO_USERSPACE) {
-			if (curlwp != NULL &&
-			    curlwp->l_cpu->ci_schedstate.spc_flags &
-			      SPCF_SHOULDYIELD)
-				preempt(1);
-			if (p == curproc) {
-				if (direction == UIO_READ)
-					error = copyout(cp, iov->iov_base, cnt);
-				else
-					error = copyin(iov->iov_base, cp, cnt);
-			} else {
-				if (direction == UIO_READ)
-					error = copyout_proc(p, cp,
-					    iov->iov_base, cnt);
-				else
-					error = copyin_proc(p, iov->iov_base,
-					    cp, cnt);
-			}
-			if (error)
-				return (error);
-		} else {
-			if (direction == UIO_READ)
-				error = kcopy(cp, iov->iov_base, cnt);
-			else
-				error = kcopy(iov->iov_base, cp, cnt);
-			if (error)
-				return (error);
+		if (!VMSPACE_IS_KERNEL_P(vm) &&
+		    (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			preempt(1);
 		}
+		if (direction == UIO_READ) {
+			error = copyout_vmspace(vm, cp, iov->iov_base, cnt);
+		} else {
+			error = copyin_vmspace(vm, iov->iov_base, cp, cnt);
+		}
+		if (error)
+			return (error);
 		cp += cnt;
 		resid -= cnt;
 	}
@@ -1161,15 +1145,15 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  */
 static int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags)
+    bus_size_t buflen, struct vmspace *vm, int flags)
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr;
 	vaddr_t vaddr = (vaddr_t)buf;
 	pmap_t pmap;
 
-	if (p != NULL)
-		pmap = p->p_vmspace->vm_map.pmap;
+	if (vm != NULL)
+		pmap = vm_map_pmap(&vm->vm_map);
 	else
 		pmap = pmap_kernel();
 
