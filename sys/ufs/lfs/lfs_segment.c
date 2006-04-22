@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.174 2006/04/17 20:02:35 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.175 2006/04/22 00:10:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.174 2006/04/17 20:02:35 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.175 2006/04/22 00:10:54 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1704,6 +1704,16 @@ lfs_newseg(struct lfs *fs)
 	int curseg, isdirty, sn, skip_inval;
 
 	ASSERT_SEGLOCK(fs);
+
+	/* Honor LFCNWRAPSTOP */
+	simple_lock(&fs->lfs_interlock);
+	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+		wakeup(&fs->lfs_nowrap);
+		ltsleep(&fs->lfs_nowrap, PVFS, "newseg", 0,
+			&fs->lfs_interlock);
+	}
+	simple_unlock(&fs->lfs_interlock);
+
 	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_nextseg), bp);
 	DLOG((DLOG_SU, "lfs_newseg: seg %d := 0 in newseg\n",
 	      dtosn(fs, fs->lfs_nextseg)));
@@ -1724,15 +1734,6 @@ lfs_newseg(struct lfs *fs)
 	skip_inval = 1;
 	for (sn = curseg = dtosn(fs, fs->lfs_curseg) + fs->lfs_interleave;;) {
 		sn = (sn + 1) % fs->lfs_nseg;
-
-		/* Honor LFCNWRAPSTOP */
-		simple_lock(&fs->lfs_interlock);
-		if (sn == 0 && fs->lfs_nowrap) {
-			wakeup(&fs->lfs_nowrap);
-			ltsleep(&fs->lfs_nowrap, PVFS, "newseg", 0,
-				&fs->lfs_interlock);
-		}
-		simple_unlock(&fs->lfs_interlock);
 
 		if (sn == curseg) {
 			if (skip_inval)
