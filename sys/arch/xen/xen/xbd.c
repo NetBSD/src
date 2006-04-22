@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.34 2006/04/20 12:13:51 blymn Exp $ */
+/* $NetBSD: xbd.c,v 1.35 2006/04/22 23:59:50 jld Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.34 2006/04/20 12:13:51 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.35 2006/04/22 23:59:50 jld Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -1467,6 +1467,7 @@ xbd_response_handler(void *arg)
 			}
 			break;
 		case BLKIF_OP_PROBE:
+			PUT_XBDREQ(xr);
 			memcpy(&blkif_control_rsp, ring_resp,
 			    sizeof(*ring_resp));
 			blkif_control_rsp_valid = 1;
