@@ -1,3 +1,5 @@
+.\" $NetBSD: ndis.4,v 1.2 2006/04/23 17:40:08 wiz Exp $
+.\"
 .\" Copyright (c) 2003
 .\"     Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -49,7 +51,7 @@ network drivers to be used with
 The
 .Nm
 driver is provided in source code form
-.Pa ( sys/dev/if_ndis )
+.Pq Pa sys/dev/if_ndis
 and must be combined with the
 .Tn Windows\[rg]
 driver binary supplied with your network adapter.
@@ -96,9 +98,10 @@ file using the
 .Xr ndiscvt 8
 utility.
 The resulting file contains a binary image of the driver plus
-registry key data.  The
+registry key data.
+The
 .Pa ndis_driver_data.h
-is #included in several files located in
+is included in several files located in
 .Pa sys/dev/if_ndis
 so it is needed to compile an NDIS kernel.
 When the
@@ -162,7 +165,7 @@ $ cd src/sys/arch/i386/conf
 $ config NDIS
 $ cd ../compile/NDIS
 $ cp /path/to/ndis_driver_data.h .
-$ make depend && make
+$ make depend \*[Am]\*[Am] make
 $ su
 $ mv /netbsd /onetbsd
 $ cp netbsd /netbsd
@@ -179,7 +182,7 @@ The device can then be configured with
 .Xr ifconfig 8 :
 .Pp
 .Bd -literal -offset indent
-ndis0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+ndis0: flags=8843\*[Lt]UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST\*[Gt] mtu 1500
         ssid WWUwireless
         powersave on (100ms sleep)
         chan 6
@@ -219,7 +222,7 @@ before a timeout expired.
 .Xr netintro 4 ,
 .\".Xr ng_ether 4 ,
 .Xr ifconfig 8 ,
-.Xr ndiscvt 8 ,
+.Xr ndiscvt 8
 .\".Xr ndisapi 9
 .Rs
 .%T "NDIS 5.1 specification"
@@ -229,8 +232,8 @@ before a timeout expired.
 The
 .Nm
 driver wrapper first appeared in
-.Fx 5.3 ,
-and it was ported to
+.Fx 5.3
+and was ported to
 .Nx 4.0 .
 .Sh AUTHORS
 The
