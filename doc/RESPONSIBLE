@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.68 2006/04/22 16:44:16 rpaulo Exp $
+#	$NetBSD: RESPONSIBLE,v 1.69 2006/04/23 15:33:10 rpaulo Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -37,7 +37,7 @@ pax/tar		christos
 ping		christos
 ping6		itojun
 pkg_install	agc, hubertf
-postfix		perry
+postfix		perry, rpaulo
 postinstall	core
 ppp(async)	christos
 ppp(sync)	martin?
