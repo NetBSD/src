@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.14 2006/04/23 06:46:40 christos Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.13 2005/12/24 20:10:16 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.14 2006/04/23 06:46:40 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -305,21 +305,19 @@ redioctl(dev, cmd, addr, flag, l)
 		}
 
 		/* allocate and initialize red_queue_t */
-		MALLOC(rqp, red_queue_t *, sizeof(red_queue_t), M_DEVBUF, M_WAITOK);
+		rqp = malloc(sizeof(red_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 		if (rqp == NULL) {
 			error = ENOMEM;
 			break;
 		}
-		(void)memset(rqp, 0, sizeof(red_queue_t));
 
-		MALLOC(rqp->rq_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
+		rqp->rq_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (rqp->rq_q == NULL) {
-			FREE(rqp, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			error = ENOMEM;
 			break;
 		}
-		(void)memset(rqp->rq_q, 0, sizeof(class_queue_t));
 
 		rqp->rq_red = red_alloc(0, 0, 0, 0, 0, 0);
 		if (rqp->rq_red == NULL) {
@@ -519,10 +517,9 @@ red_alloc(weight, inv_pmax, th_min, th_max, flags, pkttime)
 	int	w, i;
 	int	npkts_per_sec;
 
-	MALLOC(rp, red_t *, sizeof(red_t), M_DEVBUF, M_WAITOK);
+	rp = malloc(sizeof(red_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (rp == NULL)
 		return (NULL);
-	(void)memset(rp, 0, sizeof(red_t));
 
 	rp->red_avg = 0;
 	rp->red_idle = 1;
@@ -1003,10 +1000,9 @@ wtab_alloc(weight)
 			return (w);
 		}
 
-	MALLOC(w, struct wtab *, sizeof(struct wtab), M_DEVBUF, M_WAITOK);
+	w = malloc(sizeof(struct wtab), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (w == NULL)
 		panic("wtab_alloc: malloc failed!");
-	(void)memset(w, 0, sizeof(struct wtab));
 	w->w_weight = weight;
 	w->w_refcount = 1;
 	w->w_next = wtab_list;
@@ -1268,19 +1264,16 @@ fv_alloc(rp)
 	int i, num;
 
 	num = FV_FLOWLISTSIZE;
-	MALLOC(fv, struct flowvalve *, sizeof(struct flowvalve),
-	       M_DEVBUF, M_WAITOK);
+	fv = malloc(sizeof(struct flowvalve), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (fv == NULL)
 		return (NULL);
-	(void)memset(fv, 0, sizeof(struct flowvalve));
 
-	MALLOC(fv->fv_fves, struct fve *, sizeof(struct fve) * num,
-	       M_DEVBUF, M_WAITOK);
+	fv->fv_fves = malloc(sizeof(struct fve) * num, M_DEVBUF,
+	    M_WAITOK|M_ZERO);
 	if (fv->fv_fves == NULL) {
-		FREE(fv, M_DEVBUF);
+		free(fv, M_DEVBUF);
 		return (NULL);
 	}
-	(void)memset(fv->fv_fves, 0, sizeof(struct fve) * num);
 
 	fv->fv_flows = 0;
 	TAILQ_INIT(&fv->fv_flowlist);
@@ -1294,11 +1287,10 @@ fv_alloc(rp)
 	fv->fv_pthresh = (FV_PSCALE(1) << FP_SHIFT) / rp->red_inv_pmax;
 
 	/* initialize drop rate to fraction table */
-	MALLOC(fv->fv_p2ftab, int *, sizeof(int) * BRTT_SIZE,
-	       M_DEVBUF, M_WAITOK);
+	fv->fv_p2ftab = malloc(sizeof(int) * BRTT_SIZE, M_DEVBUF, M_WAITOK);
 	if (fv->fv_p2ftab == NULL) {
-		FREE(fv->fv_fves, M_DEVBUF);
-		FREE(fv, M_DEVBUF);
+		free(fv->fv_fves, M_DEVBUF);
+		free(fv, M_DEVBUF);
 		return (NULL);
 	}
 	/*

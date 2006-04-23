@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.10 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.11 2006/04/23 06:46:40 christos Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.10 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.11 2006/04/23 06:46:40 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -280,10 +280,9 @@ cdnr_cballoc(top, type, input_func)
 		return (NULL);
 	}
 
-	MALLOC(cb, struct cdnr_block *, size, M_DEVBUF, M_WAITOK);
+	cb = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cb == NULL)
 		return (NULL);
-	(void)memset(cb, 0, size);
 
 	cb->cb_len = size;
 	cb->cb_type = type;
@@ -325,7 +324,7 @@ cdnr_cbdestroy(cblock)
 	if (cb->cb_top != cblock)
 		LIST_REMOVE(cb, cb_next);
 
-	FREE(cb, M_DEVBUF);
+	free(cb, M_DEVBUF);
 }
 
 /*
