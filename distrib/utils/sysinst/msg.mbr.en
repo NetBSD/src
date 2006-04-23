@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.12 2005/01/09 19:58:55 snj Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.13 2006/04/23 23:09:48 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,7 +117,7 @@ message Partition_OK
 {Partition OK}
 
 message ptn_type
-{      kind: %s}
+{      type: %s}
 message ptn_start
 {     start: %d %s}
 message ptn_size
