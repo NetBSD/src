@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.32 2006/01/15 16:50:05 elad Exp $	*/
+/*	$NetBSD: cksum.c,v 1.33 2006/04/23 16:40:16 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.32 2006/01/15 16:50:05 elad Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.33 2006/04/23 16:40:16 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -163,12 +163,15 @@ main(int argc, char **argv)
 	int (*cfncn) (int, u_int32_t *, off_t *);
 	void (*pfncn) (char *, u_int32_t, off_t);
 	struct hash *hash;
-	int normal, i;
+	int normal, i, check_warn;
+	char *checkfile;
 
 	cfncn = NULL;
 	pfncn = NULL;
 	dosum = pflag = nohashstdin = 0;
 	normal = 0;
+	checkfile = NULL;
+	check_warn = 0;
 
 	setlocale(LC_ALL, "");
 
@@ -196,7 +199,7 @@ main(int argc, char **argv)
 	 * are still supported in code to not break anything that might
 	 * be using them.
 	 */
-	while ((ch = getopt(argc, argv, "a:mno:ps:tx12456")) != -1)
+	while ((ch = getopt(argc, argv, "a:c:mno:ps:twx12456")) != -1)
 		switch(ch) {
 		case 'a':
 			if (hash != NULL || dosum) {
@@ -263,6 +266,9 @@ main(int argc, char **argv)
 			}
 			hash = &hashes[HASH_RMD160];
 			break;
+		case 'c':
+			checkfile = optarg;
+			break;
 		case 'n':
 			normal = 1;
 			break;
@@ -300,6 +306,9 @@ main(int argc, char **argv)
 			nohashstdin = 1;
 			hash->timetrialfunc();
 			break;
+		case 'w':
+			check_warn = 1;
+			break;
 		case 'x':
 			if (hash == NULL)
 				requirehash("-x");
@@ -313,37 +322,204 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	fd = STDIN_FILENO;
-	fn = NULL;
-	rval = 0;
-	do {
-		if (*argv) {
-			fn = *argv++;
-			if (hash != NULL) {
-				if (hash_digest_file(fn, hash, normal)) {
+	if (checkfile) {
+		/*
+		 * Verify checksums
+		 */
+		FILE *f;
+		char buf[BUFSIZ];
+		char *s, *p_filename, *p_cksum;
+		int l_filename, l_cksum;
+		char filename[BUFSIZ];
+		char cksum[BUFSIZ];
+		int ok,cnt,badcnt;
+
+		rval = 0;
+		cnt = badcnt = 0;
+		
+		f = fopen(checkfile, "r");
+		if (f == NULL)
+			err(1, "Cannot read %s", checkfile);
+		while(fgets(buf, sizeof(buf), f) != NULL) {
+			s=strrchr(buf, '\n');
+			if (s)
+				*s = '\0';
+
+			p_cksum = p_filename = NULL;
+
+			p_filename = strchr(buf, '(');
+			if (p_filename) {
+				/*
+				 * Assume 'normal' output if there's a '('
+				 */
+				p_filename += 1;
+				normal = 0;
+
+				p_cksum = strrchr(p_filename, ')');
+				if (p_cksum == NULL) {
+					if (check_warn)
+						warnx("bogus format: %s. "
+						      "Skipping...",
+						      buf);
+					rval = 1;
+					continue;
+				}
+ 				p_cksum += 4;
+
+				l_cksum = strlen(p_cksum);
+				l_filename = p_cksum - p_filename - 4;
+					
+				/* Sanity check */
+				if (strncmp(buf, hash->hashname,
+					    strlen(hash->hashname)) != 0) {
+					warnx("%.*s: %s checksum expected, "
+					      "%.*s found, skipping.",
+					      l_filename,
+					      p_filename,
+					      hash->hashname,
+					      strlen(hash->hashname),
+					      buf);
+					rval = 1;
+					continue;
+				}
+
+			} else {
+				if (hash) {
+					/*
+					 * 'normal' output, no (ck)sum
+					 */
+					normal = 1;
+					
+					p_cksum = buf;
+					p_filename = strchr(buf, ' ');
+					if (p_filename == NULL) {
+						if (check_warn)
+							warnx("no filename in %s? "
+							      "Skipping...", buf);
+						rval = 1;
+						continue;
+					}
+					p_filename++;
+					l_filename = strlen(p_filename);
+					l_cksum = p_filename - buf - 1;
+				} else {
+					/*
+					 * sum/cksum output format
+					 */
+					p_cksum = buf;
+					s=strchr(p_cksum, ' ');
+					if (s == NULL) {
+						if (check_warn)
+							warnx("bogus format: %s."
+							      " Skipping...",
+							      buf);
+						rval = 1;
+						continue;
+					}
+					l_cksum = s - p_cksum;
+
+					p_filename = strrchr(buf, ' ');
+					if (p_filename == NULL) {
+						if (check_warn)
+							warnx("no filename in %s?"
+							      " Skipping...",
+							      buf);
+						rval = 1;
+						continue;
+					}
+					p_filename++;
+					l_filename = strlen(p_filename);
+				}
+			}
+
+			strlcpy(filename, p_filename, l_filename+1);
+			strlcpy(cksum, p_cksum, l_cksum+1);
+
+			if (hash) {
+				if (access(filename, R_OK) == 0
+				    && strcmp(cksum, hash->filefunc(filename, NULL)) == 0)
+					ok = 1;
+				else
+					ok = 0;
+			} else {
+				if ((fd = open(filename, O_RDONLY, 0)) < 0) {
+					if (check_warn)
+						warn("%s", filename);
+					rval = 1;
+					ok = 0;
+				} else {
+					if (cfncn(fd, &val, &len)) 
+						ok = 0;
+					else {
+						u_int32_t should_val;
+						
+						should_val =
+						  strtoul(cksum, NULL, 10);
+						if (val == should_val)
+							ok = 1;
+						else
+							ok = 0;
+					}
+				}
+			}
+
+			if (ok)
+#ifdef LINUX_CHECK_COMPAT
+				printf("%s: OK\n", filename)
+#endif
+				;
+			else {
+				printf("%s: FAILED\n", filename);
+				badcnt++;
+			}
+			cnt++;
+
+		}
+		fclose(f);
+
+#ifdef LINUX_CHECK_COMPAT
+		if (badcnt > 0)
+			printf("%s: WARNING: %d of %d computed checksums did NOT match\n",
+			       progname, badcnt, cnt);
+#endif
+		
+	} else {
+		/*
+		 * Calculate checksums
+		 */
+
+		fd = STDIN_FILENO;
+		fn = NULL;
+		rval = 0;
+		do {
+			if (*argv) {
+				fn = *argv++;
+				if (hash != NULL) {
+					if (hash_digest_file(fn, hash, normal)) {
+						warn("%s", fn);
+						rval = 1;
+					}
+					continue;
+				}
+				if ((fd = open(fn, O_RDONLY, 0)) < 0) {
 					warn("%s", fn);
 					rval = 1;
+					continue;
 				}
-				continue;
+			} else if (hash && !nohashstdin) {
+				hash->filterfunc(pflag);
 			}
-			if ((fd = open(fn, O_RDONLY, 0)) < 0) {
-				warn("%s", fn);
-				rval = 1;
-				continue;
+			
+			if (hash == NULL) {
+				if (cfncn(fd, &val, &len)) {
+					warn("%s", fn ? fn : "stdin");
+					rval = 1;
+				} else
+					pfncn(fn, val, len);
+				(void)close(fd);
 			}
-		} else if (hash && !nohashstdin) {
-			hash->filterfunc(pflag);
-		}
-
-		if (hash == NULL) {
-			if (cfncn(fd, &val, &len)) {
-				warn("%s", fn ? fn : "stdin");
-				rval = 1;
-			} else
-				pfncn(fn, val, len);
-			(void)close(fd);
-		}
-	} while (*argv);
+		} while (*argv);
+	}
 	exit(rval);
 }
 
@@ -378,9 +554,8 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: cksum [-n] [-a algorithm] [file ...]\n");
-	(void)fprintf(stderr, "       cksum [-n] [-m | -1 | -2 | -4 | -5 | -6 | [-o 1 | 2]] [file ...]\n");
-	(void)fprintf(stderr, "       sum [file ...]\n");
+	(void)fprintf(stderr, "usage: cksum [-nw] [-a algorithm | -c file | -m | -1 | -2 | -4 | -5 | -6 \n\t\t| [-o 1 | 2]] [file ...]\n");
+	(void)fprintf(stderr, "       sum [-c] [file ...]\n");
 	(void)fprintf(stderr,
 	    "       md2 [-n] [-p | -t | -x | -s string] [file ...]\n");
 	(void)fprintf(stderr,
