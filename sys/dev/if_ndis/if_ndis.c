@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.5 2006/04/23 02:55:04 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.6 2006/04/23 19:30:19 rittera Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -1615,7 +1615,11 @@ ndis_ticktask(xsc)
 	NDIS_LOCK(sc);
 
 	if (sc->ndis_link == 0 && linkstate == nmc_connected) {
-		device_printf(sc->ndis_dev, "link up\n");
+#ifdef __FreeBSD__
+		  device_printf(sc->ndis_dev, "link up\n");
+#else /* __NetBSD__ */
+		  printf("%s : link up\n", sc->ndis_dev->dv_xname);
+#endif
 
 		sc->ndis_link = 1;
 	
@@ -1632,11 +1636,12 @@ ndis_ticktask(xsc)
 	}
 
 	if (sc->ndis_link == 1 && linkstate == nmc_disconnected) {
-#ifdef __FreeBSD__	
-		device_printf(sc->ndis_dev, "link down\n");
+#ifdef __FreeBSD__
+		  device_printf(sc->ndis_dev, "link down\n");
 #else /* __NetBSD__ */
-		printf("link down\n");
-#endif		
+		  printf("%s : link down\n", sc->ndis_dev->dv_xname);
+#endif
+
 		sc->ndis_link = 0;
 #ifdef LINK_STATE_DOWN
 		sc->arpcom.ac_if.if_link_state = LINK_STATE_DOWN;
