@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.14 2006/04/23 06:46:40 christos Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.15 2006/04/23 16:57:22 christos Exp $	*/
 /*	$KAME: altq_red.c,v 1.9 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.14 2006/04/23 06:46:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.15 2006/04/23 16:57:22 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -321,8 +321,8 @@ redioctl(dev, cmd, addr, flag, l)
 
 		rqp->rq_red = red_alloc(0, 0, 0, 0, 0, 0);
 		if (rqp->rq_red == NULL) {
-			FREE(rqp->rq_q, M_DEVBUF);
-			FREE(rqp, M_DEVBUF);
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			error = ENOMEM;
 			break;
 		}
@@ -341,8 +341,8 @@ redioctl(dev, cmd, addr, flag, l)
 				    NULL, NULL);
 		if (error) {
 			red_destroy(rqp->rq_red);
-			FREE(rqp->rq_q, M_DEVBUF);
-			FREE(rqp, M_DEVBUF);
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			break;
 		}
 
@@ -499,8 +499,8 @@ red_detach(rqp)
 	}
 
 	red_destroy(rqp->rq_red);
-	FREE(rqp->rq_q, M_DEVBUF);
-	FREE(rqp, M_DEVBUF);
+	free(rqp->rq_q, M_DEVBUF);
+	free(rqp, M_DEVBUF);
 	return (error);
 }
 
@@ -608,7 +608,7 @@ red_destroy(rp)
 		fv_destroy(rp->red_flowvalve);
 #endif
 	wtab_destroy(rp->red_wtab);
-	FREE(rp, M_DEVBUF);
+	free(rp, M_DEVBUF);
 }
 
 void
@@ -1036,7 +1036,7 @@ wtab_destroy(w)
 			break;
 		}
 
-	FREE(w, M_DEVBUF);
+	free(w, M_DEVBUF);
 	return (0);
 }
 
@@ -1310,9 +1310,9 @@ fv_alloc(rp)
 static void fv_destroy(fv)
 	struct flowvalve *fv;
 {
-	FREE(fv->fv_p2ftab, M_DEVBUF);
-	FREE(fv->fv_fves, M_DEVBUF);
-	FREE(fv, M_DEVBUF);
+	free(fv->fv_p2ftab, M_DEVBUF);
+	free(fv->fv_fves, M_DEVBUF);
+	free(fv, M_DEVBUF);
 }
 
 static inline int

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.13 2006/04/23 06:46:40 christos Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.14 2006/04/23 16:57:22 christos Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.13 2006/04/23 06:46:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.14 2006/04/23 16:57:22 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -637,8 +637,8 @@ cbq_ifattach(ifacep)
 			    cbq_enqueue, cbq_dequeue, cbq_request,
 			    &new_cbqp->cbq_classifier, acc_classify);
 	if (error) {
-		FREE(new_cbqp->cbq_class_tbl, M_DEVBUF);
-		FREE(new_cbqp, M_DEVBUF);
+		free(new_cbqp->cbq_class_tbl, M_DEVBUF);
+		free(new_cbqp, M_DEVBUF);
 		return (error);
 	}
 
@@ -689,8 +689,8 @@ cbq_ifdetach(ifacep)
 	}
 
 	/* deallocate cbq_state_t */
-	FREE(cbqp->cbq_class_tbl, M_DEVBUF);
-	FREE(cbqp, M_DEVBUF);
+	free(cbqp->cbq_class_tbl, M_DEVBUF);
+	free(cbqp, M_DEVBUF);
 
 	return (0);
 }
