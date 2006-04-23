@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.18 2005/08/22 09:19:19 yamt Exp $	*/
+/*	$NetBSD: newfs.c,v 1.19 2006/04/23 07:56:58 jld Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.18 2005/08/22 09:19:19 yamt Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.19 2006/04/23 07:56:58 jld Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,9 +134,9 @@ auto_segsize(int fd, off_t len, int version)
 	time(&start);
 	finish = start; /* structure copy */
 	for (seeks = 0; finish - start < 10; ) {
-		off = (((double)rand()) * len) / (off_t)RAND_MAX;
-		if (pread(fd, buf, dbtob(1), off) < 0)
-			break;
+		off = (((double)rand()) * (btodb(len))) / ((off_t)RAND_MAX + 1);
+		if (pread(fd, buf, dbtob(1), dbtob(off)) < 0)
+			err(1, "pread");
 		time(&finish);
 		++seeks;
 	}
