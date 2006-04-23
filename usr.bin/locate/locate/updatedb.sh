@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.10 2006/02/26 03:00:16 dyoung Exp $
+#	$NetBSD: updatedb.sh,v 1.11 2006/04/23 03:04:08 christos Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -108,7 +108,7 @@ case "$ignorefs $ignore" in
 *)		ignore="-o $ignore";;
 esac
 
-FILELIST=`mktemp -t locate.list` || exit 1
+FILELIST=$(mktemp -t locate.list) || exit 1
 trap "rm -f '$FILELIST'" EXIT
 trap "rm -f '$FILELIST'; exit 1" INT QUIT TERM
 
@@ -116,11 +116,13 @@ trap "rm -f '$FILELIST'; exit 1" INT QUIT TERM
 # Entries of each directory shall be sorted (find -s).
 
 set -f
-if ! find -s ${SRCHPATHS} $lp $ignorefs $ignore $rp -print >> "$FILELIST"; then
+(find -s ${SRCHPATHS} $lp $ignorefs $ignore $rp -print; true) | cat  >> "$FILELIST"
+if [ $? != 0 ]
+then
 	exit 1
 fi
 
-BIGRAMS=`$LIBDIR/locate.bigram <"$FILELIST"`
+BIGRAMS=$($LIBDIR/locate.bigram <"$FILELIST")
 
 # code the file list
 if [ -z "$BIGRAMS" ]; then
