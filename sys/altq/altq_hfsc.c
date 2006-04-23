@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.13 2006/04/23 06:46:40 christos Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.14 2006/04/23 16:57:22 christos Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.13 2006/04/23 06:46:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.14 2006/04/23 16:57:22 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -935,7 +935,8 @@ ellist_alloc()
 	ellist_t *head;
 
 	head = malloc(sizeof(ellist_t), M_DEVBUF, M_WAITOK);
-	TAILQ_INIT(head);
+	if (head != NULL)
+		TAILQ_INIT(head);
 	return (head);
 }
 
@@ -1046,7 +1047,8 @@ actlist_alloc()
 	actlist_t *head;
 
 	head = malloc(sizeof(actlist_t), M_DEVBUF, M_WAITOK);
-	TAILQ_INIT(head);
+	if (head != NULL)
+		TAILQ_INIT(head);
 	return (head);
 }
 

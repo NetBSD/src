@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.13 2006/04/23 06:46:39 christos Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.14 2006/04/23 16:57:22 christos Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.13 2006/04/23 06:46:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.14 2006/04/23 16:57:22 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -212,12 +212,27 @@ blueioctl(dev, cmd, addr, flag, l)
 
 		/* allocate and initialize blue_state_t */
 		rqp = malloc(sizeof(blue_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
+		if (rqp == NULL) {
+			error = ENOMEM;
+			break;
+		}
 
 		rqp->rq_q = malloc(sizeof(class_queue_t), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
+		if (rqp->rq_q == NULL) {
+			free(rqp, M_DEVBUF);
+			error = ENOMEM;
+			break;
+		}
 
 		rqp->rq_blue = malloc(sizeof(blue_t), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
+		if (rqp->rq_blue == NULL) {
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
+			error = ENOMEM;
+			break;
+		}
 
 		rqp->rq_ifq = &ifp->if_snd;
 		qtail(rqp->rq_q) = NULL;
