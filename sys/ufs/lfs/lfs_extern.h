@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.78 2006/04/08 00:26:34 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.79 2006/04/23 14:15:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -90,15 +90,6 @@ MALLOC_DECLARE(M_SEGMENT);
 #define LFS_DO_RFW	 7
 #define LFS_DEBUGLOG	 8
 #define LFS_MAXID	 9
-
-#define LFS_NAMES { \
-	{ 0, 0 }, \
-	{ "flushindir", CTLTYPE_INT }, \
-	{ "clean_vnhead", CTLTYPE_INT }, \
-	{ "dostats", CTLTYPE_INT }, \
-	{ "maxpages", CTLTYPE_INT }, \
-	{ "debug", CTLTYPE_NODE }, \
-}
 
 struct fid;
 struct mount;

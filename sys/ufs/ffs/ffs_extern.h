@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.51 2006/01/14 17:41:16 yamt Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.52 2006/04/23 14:15:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,15 +43,6 @@
 #define FFS_ASYNCFREE		4	/* asynchronous block freeing enabled */
 #define FFS_LOG_CHANGEOPT	5	/* log optimalization strategy change */
 #define FFS_MAXID		6	/* number of valid ffs ids */
-
-#define FFS_NAMES { \
-	{ 0, 0 }, \
-	{ "doclusterread", CTLTYPE_INT }, \
-	{ "doclusterwrite", CTLTYPE_INT }, \
-	{ "doreallocblks", CTLTYPE_INT }, \
-	{ "doasyncfree", CTLTYPE_INT }, \
-	{ "log_changeopt", CTLTYPE_INT }, \
-}
 
 #define	FFS_ITIMES(ip, acc, mod, cre) \
 	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
