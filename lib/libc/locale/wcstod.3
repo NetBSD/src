@@ -1,4 +1,4 @@
-.\" $NetBSD: wcstod.3,v 1.3 2006/04/23 16:43:10 wiz Exp $
+.\" $NetBSD: wcstod.3,v 1.4 2006/04/23 16:44:00 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Tim J. Robbins
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nm wcstod ,
 .Nm wcstold
 .Nd convert string to
-.Vt float , double
+.Vt float , double ,
 or
 .Vt "long double"
 .Sh LIBRARY
@@ -50,12 +50,12 @@ or
 .Sh DESCRIPTION
 The
 .Fn wcstof ,
-.Fn wcstod
+.Fn wcstod ,
 and
 .Fn wcstold
 functions are the wide-character versions of the
 .Fn strtof ,
-.Fn strtod
+.Fn strtod ,
 and
 .Fn strtold
 functions.
@@ -70,7 +70,8 @@ The
 .Fn wcstod
 function conform to
 .St -isoC-amd1 .
-.Fn wcstof ,
+The
+.Fn wcstof
 and
 .Fn wcstold
 functions conform to
