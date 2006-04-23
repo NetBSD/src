@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.6 2006/04/23 19:30:19 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.7 2006/04/23 22:53:43 rittera Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -195,9 +195,6 @@ static void ndis_setmulti	(struct ndis_softc *);
 static void ndis_map_sclist	(void *, bus_dma_segment_t *,
 	int, bus_size_t, int);
 #ifdef __NetBSD__
-extern void device_printf(device_t, const char *fmt, ...);
-#endif
-#ifdef __NetBSD__
 static int ndisdrv_loaded = 0;
 #endif /* __NetBSD__ */
 #ifdef __FreeBSD__
@@ -331,9 +328,10 @@ ndis_setmulti(sc)
 		len = sizeof(sc->ndis_filter);
 		error = ndis_set_info(sc, OID_GEN_CURRENT_PACKET_FILTER,
 		    &sc->ndis_filter, &len);
-        if (error) {     
-			device_printf (sc->ndis_dev,
-			    "set filter failed: %d\n", error);
+        if (error) {
+		aprint_error("%s : set filter failed: %d\n", 
+			     sc->ndis_dev->dv_xname,
+			     error);
         }
 		return;
 	}
@@ -393,7 +391,8 @@ ndis_setmulti(sc)
 	len = len * ETHER_ADDR_LEN;
 	error = ndis_set_info(sc, OID_802_3_MULTICAST_LIST, mclist, &len);
 	if (error) {    
-		device_printf (sc->ndis_dev, "set mclist failed: %d\n", error);
+		aprint_error("%s: set mclist failed: %d\n", 
+			     sc->ndis_dev->dv_xname, error);
 		sc->ndis_filter |= NDIS_PACKET_TYPE_ALL_MULTICAST;
 		sc->ndis_filter &= ~NDIS_PACKET_TYPE_MULTICAST;
 	}
@@ -405,7 +404,8 @@ out:
 	error = ndis_set_info(sc, OID_GEN_CURRENT_PACKET_FILTER,
 	    &sc->ndis_filter, &len);
     if (error) {
-		device_printf (sc->ndis_dev, "set filter failed: %d\n", error);
+		aprint_error("%s: set filter failed: %d\n", 
+			     sc->ndis_dev->dv_xname, error);
     }
 
 	return;
@@ -615,7 +615,7 @@ ndis_attach(dev)
 		    ndis_intr, sc, &sc->ndis_intrhand);
 
 		if (error) {
-			device_printf(dev, "couldn't set up irq\n");
+			aprint_error("%s: couldn't set up irq\n", dev->dv_xname);
 			goto fail;
 		}
 	}
@@ -633,8 +633,8 @@ ndis_attach(dev)
 	if (sc->ndis_iftype == PCMCIABus) {
 		error = ndis_alloc_amem(sc);
 		if (error) {
-			device_printf(dev, "failed to allocate "
-			    "attribute memory\n");
+			aprint_error("%s: failed to allocate attribute memory\n", 
+				     dev->dv_xname);
 			goto fail;
 		}
 	}
@@ -684,15 +684,16 @@ ndis_attach(dev)
 #endif	
 	
 	if (NdisAddDevice(drv, pdo) != STATUS_SUCCESS) {
-		device_printf(dev, "failed to create FDO!\n");
+		aprint_error("%s: failed to create FDO!\n", sc->ndis_dev->dv_xname);
 		error = ENXIO;
 		goto fail;
 	}
 
 	/* Tell the user what version of the API the driver is using. */
-	device_printf(dev, "NDIS API version: %d.%d\n",
-	    sc->ndis_chars->nmc_version_major,
-	    sc->ndis_chars->nmc_version_minor);
+	aprint_normal("%s: NDIS API version: %d.%d\n",
+		      sc->ndis_dev->dv_xname,
+		      sc->ndis_chars->nmc_version_major,
+		      sc->ndis_chars->nmc_version_minor);
 
 #ifdef __FreeBSD__
 	/* Do resource conversion. */
@@ -723,7 +724,8 @@ ndis_attach(dev)
 
 	/* Call driver's init routine. */
 	if (ndis_init_nic(sc)) {
-		device_printf (dev, "init handler failed\n");
+		aprint_error("%s: init handler failed\n", 
+			     sc->ndis_dev->dv_xname);
 		error = ENXIO;
 		goto fail;
 	}
@@ -763,7 +765,8 @@ ndis_attach(dev)
 
 	if (j != NDIS_STATUS_SUCCESS) {
 		sc->ndis_txpool = NULL;
-		device_printf(dev, "failed to allocate TX packet pool");
+		aprint_error("%s: failed to allocate TX packet pool",
+			     sc->ndis_dev->dv_xname);
 		error = ENOMEM;
 		goto fail;
 	}
@@ -884,7 +887,8 @@ nonettypes:
 		r = ndis_get_info(sc, OID_802_11_SUPPORTED_RATES,
 		    (void *)rates, &len);
 		if (r)
-			device_printf (dev, "get rates failed: 0x%x\n", r);
+			aprint_error("%s: get rates failed: 0x%x\n", 
+				     sc->ndis_dev->dv_xname, r);
 		/*
 		 * Since the supported rates only up to 8 can be supported,
 		 * if this is not 802.11b we're just going to be faking it
@@ -1274,7 +1278,7 @@ ndis_rxeof(adapter, packets, pktcnt)
 		/* Stash the softc here so ptom can use it. */
 		p->np_softc = sc;
 		if (ndis_ptom(&m0, p)) {
-			device_printf (sc->ndis_dev, "ptom failed\n");
+			aprint_error("%s: ptom failed\n", sc->ndis_dev->dv_xname);
 			if (p->np_oob.npo_status == NDIS_STATUS_SUCCESS)
 #ifdef __FreeBSD__			
 				ndis_return_packet(sc, p);
@@ -1615,18 +1619,12 @@ ndis_ticktask(xsc)
 	NDIS_LOCK(sc);
 
 	if (sc->ndis_link == 0 && linkstate == nmc_connected) {
-#ifdef __FreeBSD__
-		  device_printf(sc->ndis_dev, "link up\n");
-#else /* __NetBSD__ */
-		  printf("%s : link up\n", sc->ndis_dev->dv_xname);
-#endif
-
+		aprint_normal("%s: link up\n", sc->ndis_dev->dv_xname);
 		sc->ndis_link = 1;
 	
 		NDIS_UNLOCK(sc);	
 		if (sc->ndis_80211)
 			ndis_getstate_80211(sc);
-
 		NDIS_LOCK(sc);
 		
 #ifdef LINK_STATE_UP
@@ -1636,12 +1634,7 @@ ndis_ticktask(xsc)
 	}
 
 	if (sc->ndis_link == 1 && linkstate == nmc_disconnected) {
-#ifdef __FreeBSD__
-		  device_printf(sc->ndis_dev, "link down\n");
-#else /* __NetBSD__ */
-		  printf("%s : link down\n", sc->ndis_dev->dv_xname);
-#endif
-
+		aprint_normal("%s: link down\n", sc->ndis_dev->dv_xname);
 		sc->ndis_link = 0;
 #ifdef LINK_STATE_DOWN
 		sc->arpcom.ac_if.if_link_state = LINK_STATE_DOWN;
@@ -1934,7 +1927,9 @@ ndis_init(xsc)
 	    &sc->ndis_filter, &i);
 
 	if (error)
-		device_printf (sc->ndis_dev, "set filter failed: %d\n", error);
+		aprint_error("%s: set filter failed: %d\n", 
+			     sc->ndis_dev->dv_xname, 
+			     error);
 
 	/*
 	 * Program the multicast filter, if necessary.
@@ -2050,7 +2045,9 @@ ndis_ifmedia_sts(ifp, ifmr)
 		ifmr->ifm_active |= IFM_1000_T;
 		break;
 	default:
-		device_printf(sc->ndis_dev, "unknown speed: %d\n", media_info);
+		aprint_error("%s: unknown speed: %d\n", 
+			     sc->ndis_dev->dv_xname,
+			     media_info);
 		break;
 	}
 
@@ -2099,7 +2096,8 @@ ic = &sc->ic;
 	rval = ndis_set_info(sc, OID_802_11_INFRASTRUCTURE_MODE, &arg, &len);
 
 	if (rval)
-		device_printf (sc->ndis_dev, "set infra failed: %d\n", rval);
+		aprint_error("%s: set infra failed: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 
 	/* Set WEP */
 /* TODO: Clean up these #ifdef's */	
@@ -2135,16 +2133,17 @@ ic = &sc->ic;
 				rval = ndis_set_info(sc,
 				    OID_802_11_ADD_WEP, &wep, &len);
 				if (rval)
-					device_printf(sc->ndis_dev,
-					    "set wepkey failed: %d\n", rval);
+					aprint_error("%s: set wepkey failed: %d\n",
+						     sc->ndis_dev->dv_xname, rval);
 			}
 		}
 		arg = NDIS_80211_WEPSTAT_ENABLED;
 		len = sizeof(arg);
 		rval = ndis_set_info(sc, OID_802_11_WEP_STATUS, &arg, &len);
 		if (rval)
-			device_printf(sc->ndis_dev,
-			    "enable WEP failed: %d\n", rval);
+			aprint_error("%s: enable WEP failed: %d\n", 
+				     sc->ndis_dev->dv_xname,
+				     rval);
 #ifdef __FreeBSD__			    
 #ifndef IEEE80211_F_WEPON
 		if (ic->ic_wep_mode != IEEE80211_WEP_8021X &&
@@ -2178,7 +2177,8 @@ ic = &sc->ic;
 
 #ifdef notyet
 	if (rval)
-		device_printf (sc->ndis_dev, "set auth failed: %d\n", rval);
+		aprint_error("%s: set auth failed: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 #endif
 
 #ifdef notyet
@@ -2197,8 +2197,8 @@ ic = &sc->ic;
 		arg = NDIS_80211_NETTYPE_11OFDM24;
 		break;
 	default:
-		device_printf(sc->ndis_dev, "unknown mode: %d\n",
-		    ic->ic_curmode);
+		aprint_error("%s: unknown mode: %d\n",
+			     sc->ndis_dev->dv_xname, ic->ic_curmode);
 	}
 
 	if (arg) {
@@ -2206,8 +2206,8 @@ ic = &sc->ic;
 		rval = ndis_set_info(sc, OID_802_11_NETWORK_TYPE_IN_USE,
 		    &arg, &len);
 		if (rval)
-			device_printf (sc->ndis_dev,
-			    "set nettype failed: %d\n", rval);
+			aprint_error("%s: set nettype failed: %d\n", 
+				     sc->ndis_dev->dv_xname, rval);
 	}
 #endif
 
@@ -2245,13 +2245,16 @@ ic = &sc->ic;
 			rval = ndis_set_info(sc, OID_802_11_CONFIGURATION,
 			    &config, &len);
 			if (rval)
-				device_printf(sc->ndis_dev, "couldn't change "
-				    "DS config to %ukHz: %d\n",
-				    config.nc_dsconfig, rval);
+				aprint_error("%s: couldn't change "
+					     "DS config to %ukHz: %d\n",
+					     sc->ndis_dev->dv_xname,
+					     config.nc_dsconfig, 
+					     rval);
 		}
 	} else if (rval)
-		device_printf(sc->ndis_dev, "couldn't retrieve "
-		    "channel info: %d\n", rval);
+		aprint_error("%s: couldn't retrieve "
+			     "channel info: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 
 	/* Set SSID -- always do this last. */
 
@@ -2265,7 +2268,8 @@ ic = &sc->ic;
 	rval = ndis_set_info(sc, OID_802_11_SSID, &ssid, &len);
 
 	if (rval)
-		device_printf (sc->ndis_dev, "set ssid failed: %d\n", rval);
+		aprint_error("%s: set ssid failed: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 
 	return;
 }
@@ -2346,13 +2350,13 @@ ndis_get_assoc(sc, assoc)
 	len = sizeof(bssid);
 	error = ndis_get_info(sc, OID_802_11_BSSID, &bssid, &len);
 	if (error) {
-		device_printf(sc->ndis_dev, "failed to get bssid\n");
+		aprint_error("%s: failed to get bssid\n", sc->ndis_dev->dv_xname);
 		return(ENOENT);
 	}
 	len = 0;
 	error = ndis_get_info(sc, OID_802_11_BSSID_LIST, NULL, &len);
 	if (error != ENOSPC) {
-		device_printf(sc->ndis_dev, "bssid_list failed\n");
+		aprint_error("%s: bssid_list failed\n", sc->ndis_dev->dv_xname);
 		return (error);
 	}
 
@@ -2360,7 +2364,7 @@ ndis_get_assoc(sc, assoc)
 	error = ndis_get_info(sc, OID_802_11_BSSID_LIST, bl, &len);
 	if (error) {
 		free(bl, M_TEMP);
-		device_printf(sc->ndis_dev, "bssid_list failed\n");
+		aprint_error("%s: bssid_list failed\n", sc->ndis_dev->dv_xname);
 		return (error);
 	}
 
@@ -2428,8 +2432,8 @@ ndis_getstate_80211(sc)
 			ic->ic_curmode = IEEE80211_MODE_11G;
 			break;
 		default:
-			device_printf(sc->ndis_dev,
-			    "unknown nettype %d\n", arg);
+			aprint_error("%s: unknown nettype %d\n", 
+				     sc->ndis_dev->dv_xname, arg);
 			break;
 		}
 		free(bs, M_TEMP);
@@ -2441,15 +2445,16 @@ ndis_getstate_80211(sc)
 	rval = ndis_get_info(sc, OID_802_11_SSID, &ssid, &len);
 
 	if (rval)
-		device_printf (sc->ndis_dev, "get ssid failed: %d\n", rval);
+		aprint_error("%s: get ssid failed: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 	bcopy(ssid.ns_ssid, ic->ic_bss->ni_essid, ssid.ns_ssidlen);
 	ic->ic_bss->ni_esslen = ssid.ns_ssidlen;
 
 	len = sizeof(arg);
 	rval = ndis_get_info(sc, OID_GEN_LINK_SPEED, &arg, &len);
 	if (rval)
-		device_printf (sc->ndis_dev, "get link speed failed: %d\n",
-		    rval);
+		aprint_error("%s: get link speed failed: %d\n",
+			     sc->ndis_dev->dv_xname, rval);
 
 	if (ic->ic_modecaps & (1<<IEEE80211_MODE_11B)) {
 		ic->ic_bss->ni_rates = ic->ic_sup_rates[IEEE80211_MODE_11B];
@@ -2471,8 +2476,8 @@ ndis_getstate_80211(sc)
 	}
 
 	if (i == ic->ic_bss->ni_rates.rs_nrates)
-		device_printf(sc->ndis_dev, "no matching rate for: %d\n",
-		    arg / 5000);
+		aprint_error("%s: no matching rate for: %d\n",
+			     sc->ndis_dev->dv_xname, arg / 5000);
 	else
 		ic->ic_bss->ni_txrate = i;
 
@@ -2481,8 +2486,8 @@ ndis_getstate_80211(sc)
 		rval = ndis_get_info(sc, OID_802_11_POWER_MODE, &arg, &len);
 
 		if (rval)
-			device_printf(sc->ndis_dev,
-			    "get power mode failed: %d\n", rval);
+			aprint_error("%s: get power mode failed: %d\n", 
+				     sc->ndis_dev->dv_xname, rval);
 		if (arg == NDIS_80211_POWERMODE_CAM)
 			ic->ic_flags &= ~IEEE80211_F_PMGTON;
 		else
@@ -2500,15 +2505,17 @@ ndis_getstate_80211(sc)
 		chan = ieee80211_mhz2ieee(config.nc_dsconfig / 1000, 0);
 		if (chan < 0 || chan >= IEEE80211_CHAN_MAX) {
 			if (ifp->if_flags & IFF_DEBUG)
-				device_printf(sc->ndis_dev, "current channel "
-				    "(%uMHz) out of bounds\n", 
-				    config.nc_dsconfig / 1000);
+				aprint_error("%s: current channel "
+					     "(%uMHz) out of bounds\n", 
+					     sc->ndis_dev->dv_xname,
+					     config.nc_dsconfig / 1000);
 			ic->ic_bss->ni_chan = &ic->ic_channels[1];
 		} else
 			ic->ic_bss->ni_chan = &ic->ic_channels[chan];
 	} else
-		device_printf(sc->ndis_dev, "couldn't retrieve "
-		    "channel info: %d\n", rval);
+		aprint_error("%s: couldn't retrieve "
+			     "channel info: %d\n", 
+			     sc->ndis_dev->dv_xname, rval);
 
 /*
 	len = sizeof(arg);
@@ -2796,11 +2803,7 @@ ndis_watchdog(ifp)
 	NDIS_LOCK(sc);
 	
 	ifp->if_oerrors++;
-#ifdef __FreeBSD__	
-	device_printf(sc->ndis_dev, "watchdog timeout\n");
-#else /* __NetBSD__ */
-	printf("watchdog timeout\n");
-#endif
+	aprint_error("%s: watchdog timeout\n", sc->ndis_dev->dv_xname);
 	
 	NDIS_UNLOCK(sc);
 
