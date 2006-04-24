@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.14 2006/03/20 20:20:07 christos Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.15 2006/04/24 20:00:31 christos Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.14 2006/03/20 20:20:07 christos Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.15 2006/04/24 20:00:31 christos Exp $");
 #endif
 
 #include "sh.h"
@@ -191,7 +191,7 @@ c_pwd(wp)
 {
 	int optc;
 	int physical = Flag(FPHYSICAL);
-	char *p;
+	char *p, *freep = NULL;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "LP")) != EOF)
 		switch (optc) {
@@ -219,7 +219,7 @@ c_pwd(wp)
 	if (p && eaccess(p, R_OK) < 0)
 		p = (char *) 0;
 	if (!p) {
-		p = ksh_get_wd((char *) 0, 0);
+		freep = p = ksh_get_wd((char *) 0, 0);
 		if (!p) {
 			bi_errorf("can't get current directory - %s",
 				strerror(errno));
@@ -227,6 +227,8 @@ c_pwd(wp)
 		}
 	}
 	shprintf("%s\n", p);
+	if (freep)
+		afree(freep, ATEMP);
 	return 0;
 }
 
