@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.77 2006/04/19 21:18:50 pavel Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.78 2006/04/24 19:00:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.77 2006/04/19 21:18:50 pavel Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.78 2006/04/24 19:00:30 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -717,7 +717,7 @@ dispatch_read_finet(struct kevent *ev)
 }
 
 /*
- * given a pointer to an array of char *'s, a pointer to it's current
+ * given a pointer to an array of char *'s, a pointer to its current
  * size and current allocated max size, and a new char * to add, add
  * it, update everything as necessary, possibly allocating a new array
  */

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.43 2002/06/12 09:10:02 bouyer Exp $
+#	$NetBSD: install.sub,v 1.44 2006/04/24 19:00:30 snj Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -297,7 +297,7 @@ addhostent() {
 
 	# Create an entry in the hosts table.  If no host table
 	# exists, create one.  If the IP address already exists,
-	# replace it's entry.
+	# replace its entry.
 	if [ ! -f /tmp/hosts ]; then
 		echo "127.0.0.1 localhost" > /tmp/hosts
 	fi

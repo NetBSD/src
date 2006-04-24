@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.15 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.16 2006/04/24 19:00:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -52,7 +52,7 @@
  * 			tells ypserv to check if there is a new version of
  *			the map.
  * YPPROC_CLEAR		takes (void), returns (void).
- * 			tells ypserv to flush it's file cache, so that
+ * 			tells ypserv to flush its file cache, so that
  *			newly transferred files will get read.
  * YPPROC_ALL		takes (struct ypreq_nokey), returns (bool_t and
  *			struct ypresp_key_val).
