@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.36 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.37 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -296,7 +296,7 @@ Changes from NetBSD 0.8 to NetBSD 0.9:
 		NFS fixes, supplied by John Woods, jfw@ksr.com (cgd)
 	fix /usr/include/rpcsvc/rnusers.x - versions were reversed (brezak)
 	add /lib/rpcsvc for upcoming rusers/rup clients and daemons (brezak)
-	revert the "syncing disks" message on reboot to it's original,
+	revert the "syncing disks" message on reboot to its original,
 		more informative, form (cgd)
 	fix /usr/include/rpcsvc/klm_prot.x so it compiles. (brezak)
 	add /usr/libexec/rpc.rstatd, rpc.rusersd, rpc.rwalld. (brezak)
@@ -457,7 +457,7 @@ Changes from NetBSD 0.8 to NetBSD 0.9:
 		it was intended to be used, and it was incompatible.
 		in addition, it caused a few bugs...  replace it with
 		rmap code written by Wolfgang Solfrank.	 (cgd)
-	i386: pccons driver now malloc()'s it's "struct tty" (deraadt)
+	i386: pccons driver now malloc()'s its "struct tty" (deraadt)
 	i386, hp300: cons.c "struct tty *cn_tty" wasn't being used by anything,
 		so it goes away (deraadt)
 	fix problem of passwd local_passwd exiting instead of passing status
@@ -762,7 +762,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 	libc: fixed isascii(3) man page (cgd)
 	made biodone() work properly, from spec in daemon book and
 		from what the various other parts of the system expect (cgd)
-	fix resettodr() to be able to reset rtc even if it's time is
+	fix resettodr() to be able to reset rtc even if its time is
 		invalid. (brezak)
 	cron(8): fix crond so that it only stat()s the first 'word' of the
 		command for root's crontab (cgd)
@@ -1289,7 +1289,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 	i386: MAKEDEV no longer creates symbolic links in /dev. (deraadt)
 	i386: more if_ep.c bugs fixed (deraadt)
 	sparc: don't cache DMA memory. fix from Chris Torek (deraadt)
-	sparc: NetBSD/sparc is capable of compiling it's own kernel, so the
+	sparc: NetBSD/sparc is capable of compiling its own kernel, so the
 		support for cross-compiling the kernel goes away (deraadt)
 	sparc: proper /dev/MAKEDEV. derived from hp300. (pk & deraadt)
 	amiga: proper /dev/MAKEDEV. cleaned up from original by Markus and
@@ -1384,7 +1384,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 		from Andras Olah <olah@cs.utwente.nl>. (cgd)
 	fixes from Thomas Eberhardt to get 'swapinfo' to do the right
 		thing with blocksizes. (cgd)
-	lastcomm(1): convince lastcomm to use stdio rather than it's own
+	lastcomm(1): convince lastcomm to use stdio rather than its own
 		(broken) buffering scheme. (cgd)
 	a few routing ref-count fixes. (cgd)
 	i386: allow mmap()ing of /dev/mem and /dev/kmem, the former for
@@ -4244,7 +4244,7 @@ Changes from NetBSD 1.3 to NetBSD 1.4:
 	sparc64: Initial import of sparc64 port [eeh 19980620]
 	alpha: Added support for three new server platforms, Noritake,
 		Pintake, and Corelle. [ross 19980623]
-	NFS: move the lease check into genfs, and make it's null-op'ness
+	NFS: move the lease check into genfs, and make its null-op'ness
 		a compile-time decision for the kernel, not for file
 		system modules.	 Allows loaded file systems to export,
 		which did not previously work correctly.  [thorpej 19980625]
@@ -4712,7 +4712,7 @@ Changes from NetBSD 1.3 to NetBSD 1.4:
 		netgroup map.  [christos 19990302]
 	pkg_install: Added -O switch to pkg_delete to only remove any
 		references to the package from the pkgdb, but do not touch
-		the package or it's files otherwise. Used by the pkgsrc
+		the package or its files otherwise. Used by the pkgsrc
 		build system's "make reinstall" target. [hubertf 19990302]
 	pkg_install: For pkg_info, also show which packages the package in
 		question requires. [hubertf 19990304]
@@ -5547,7 +5547,7 @@ Changes from NetBSD 1.4 to NetBSD 1.5:
 		ported to be used with our SCSI subsystem. This adds support
 		for 789x chips. [fvdl 20000315]
 	kernel: added new VFS op routine (vfs_done) - needed for VFS LKMs,
-		to clean resources allocated in it's vfs_init routine
+		to clean resources allocated in its vfs_init routine
 		before it's unloaded [jdolecek 20000317]
 	mvme68k: Added support for NetBSD's machine independent VMEbus
 		framework on both MVME147 and MVME167 cards. [scw 20000318]
