@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.47 2004/06/14 07:22:04 dbj Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.48 2006/04/24 21:20:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.47 2004/06/14 07:22:04 dbj Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.48 2006/04/24 21:20:44 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -534,8 +534,10 @@ print_inodes(const char *name, int fd, int c, int n)
 
 	for (inum = c * afs.fs_ipg ; inum < (c+n) * afs.fs_ipg; inum += afs.fs_inopb) {
 		if (pread(fd, ino_buf, afs.fs_bsize,
-		    ino_to_fsba(&afs, inum) * afs.fs_fsize) != afs.fs_bsize)
+		    ino_to_fsba(&afs, inum) * afs.fs_fsize) != afs.fs_bsize) {
+			free(ino_buf);
 			return 1;
+		}
 		for (i = 0; i < afs.fs_inopb; i++)
 			print_inode(inum + i, i, ino_buf);
 	}
