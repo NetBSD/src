@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.12 2005/09/11 22:16:00 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.13 2006/04/24 19:58:20 christos Exp $	*/
 
 /*
  * execute command tree
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: exec.c,v 1.12 2005/09/11 22:16:00 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.13 2006/04/24 19:58:20 christos Exp $");
 #endif
 
 
@@ -1061,7 +1061,12 @@ findcom(name, flags)
 		npath = search(name, flags & FC_DEFPATH ? def_path : path,
 				X_OK, &tp->u2.errno_);
 		if (npath) {
-			tp->val.s = tp == &temp ? npath : str_save(npath, APERM);
+			if (tp == &temp) {
+			    tp->val.s = npath;
+			} else {
+			    tp->val.s = str_save(npath, APERM);
+			    afree(npath, ATEMP);
+			}
 			tp->flag |= ISSET|ALLOC;
 		} else if ((flags & FC_FUNC)
 			   && (fpath = str_val(global("FPATH"))) != null
