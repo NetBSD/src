@@ -40,7 +40,7 @@
  */
 
 #define ISCSI_VENDOR	"NetBSD"
-#define ISCSI_PRODUCT	"NetBSD/Intel iSCSI"
+#define ISCSI_PRODUCT	"NetBSD iSCSI"
 #define ISCSI_VERSION	0
 
 /*
@@ -52,7 +52,7 @@
 #define ISCSI_USE_PHASE_COLLAPSED_READ_DFLT  0
 #define ISCSI_HEADER_LEN                     48
 #define ISCSI_PORT                           3260	/* Default port */
-#define ISCSI_OPCODE(HEADER)                 (HEADER[0]&0x3f)
+#define ISCSI_OPCODE(HEADER)                 (HEADER[0] & 0x3f)
 
 #define ISCSI_FIRST_BURST                    (ISCSI_FIRST_BURST_DFLT)
 #define ISCSI_DATA_PDU_LENGTH                (ISCSI_DATA_PDU_LENGTH_DFLT)
@@ -360,13 +360,13 @@ typedef struct iscsi_scsi_cmd_args_t {
 	uint32_t        bidi_trans_len;
 	uint32_t        CmdSN;
 	uint32_t        ExpStatSN;
-	uint8_t  *cdb;
-	uint8_t  *ext_cdb;
-	uint8_t  *ahs;
+	uint8_t  	*cdb;
+	uint8_t  	*ext_cdb;
+	uint8_t  	*ahs;
 	uint8_t         ahs_len;
-	uint8_t  *send_data;
+	uint8_t  	*send_data;
 	int32_t         send_sg_len;
-	uint8_t  *recv_data;
+	uint8_t  	*recv_data;
 	int32_t         recv_sg_len;
 	uint8_t         status;
 	uint32_t        bytes_sent;
