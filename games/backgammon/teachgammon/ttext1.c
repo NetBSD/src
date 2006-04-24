@@ -1,4 +1,4 @@
-/*	$NetBSD: ttext1.c,v 1.7 2003/08/07 09:36:58 agc Exp $	*/
+/*	$NetBSD: ttext1.c,v 1.8 2006/04/24 18:00:53 snj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttext1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ttext1.c,v 1.7 2003/08/07 09:36:58 agc Exp $");
+__RCSID("$NetBSD: ttext1.c,v 1.8 2006/04/24 18:00:53 snj Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,7 +94,7 @@ const char   *const intro2[] = {
 	"\n   Although not indicated on the board, the players' homes are",
 	"located just to the right of the board.  A player's men are placed",
 	"there when they are removed from the board.  The board you just",
-	"saw was in it's initial position.  All games start with the board",
+	"saw was in its initial position.  All games start with the board",
 	"looking like this.  Notice that red's pieces are represented by the",
 	"letter 'r' and white's pieces are represented by the letter 'w'.",
 	"Also, a position may have zero or more pieces on it, e.g.  posi-",
