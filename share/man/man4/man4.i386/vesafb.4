@@ -1,4 +1,4 @@
-.\" $NetBSD: vesafb.4,v 1.1 2006/04/24 14:35:15 jmcneill Exp $
+.\" $NetBSD: vesafb.4,v 1.2 2006/04/24 21:53:48 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -47,8 +47,9 @@
 .Sh DESCRIPTION
 .Nm
 provides support for framebuffer consoles on i386 display adapters which
-implement VESA BIOS extensions (VBE) 2.0 or above. Since this interface
-is accessed via x86 BIOS calls, this driver only works on the i386 port.
+implement VESA BIOS extensions (VBE) 2.0 or above.
+Since this interface is accessed via x86 BIOS calls, this driver
+only works on the i386 port.
 .Sh HISTORY
 The
 .Nm
@@ -59,9 +60,11 @@ appeared in
 The
 .Nm
 driver attaches to the console very early in the i386 boot process; since
-consinit() is called before KVM86 is initialized, the vesafb_cnattach()
-function assumes that hardware is present. This causes the console to be
-blank until the
+.Fn consinit
+is called before KVM86 is initialized, the
+.Fn vesafb_cnattach
+function assumes that hardware is present.
+This causes the console to be blank until the
 .Nm
 driver attaches.
 .Pp
