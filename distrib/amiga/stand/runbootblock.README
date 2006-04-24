@@ -4,7 +4,7 @@ booting from a bootblock.  The first (and fatal) one is the driver is just
 plain buggy and will not work.  The second problem (if the first problem
 didn't exist) is that the Zeus memory is normally configured during the
 execution of S:Startup-Sequence using a supplied utility program.  Even if
-the Zeus would boot from a bootblock, it's memory would not get configured.
+the Zeus would boot from a bootblock, its memory would not get configured.
 Another example I've run into is the GVP GForce-40.  It will boot from a
 bootblock, but it appears to only work if there is a filesystem in the RDB
 blocks for the bootable partition.  I've gotten the GForce-40 to boot directly
