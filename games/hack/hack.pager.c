@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pager.c,v 1.9 2006/04/02 00:08:12 christos Exp $	*/
+/*	$NetBSD: hack.pager.c,v 1.10 2006/04/24 20:08:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pager.c,v 1.9 2006/04/02 00:08:12 christos Exp $");
+__RCSID("$NetBSD: hack.pager.c,v 1.10 2006/04/24 20:08:54 christos Exp $");
 #endif				/* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -114,7 +114,6 @@ dowhatis()
 						pline("More info? ");
 						if (readchar() == 'y') {
 							page_more(fp, 1);	/* does fclose() */
-							(void) fclose(fp);
 							return (0);
 						}
 					}
