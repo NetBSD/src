@@ -1,4 +1,4 @@
-.\"	$NetBSD: wordexp.3,v 1.1 2004/07/13 15:42:03 seb Exp $
+.\"	$NetBSD: wordexp.3,v 1.2 2006/04/24 20:27:34 jld Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins
 .\" All rights reserved.
@@ -186,7 +186,7 @@ and
 .Bd -literal -offset indent
 wordexp_t we;
 
-wordexp("${EDITOR:-vi} *.c /etc/motd", *[Am]we, 0);
+wordexp("${EDITOR:-vi} *.c /etc/motd", \*[Am]we, 0);
 execvp(we-\*[Gt]we_wordv[0], we-\*[Gt]we_wordv);
 .Ed
 .Sh DIAGNOSTICS
