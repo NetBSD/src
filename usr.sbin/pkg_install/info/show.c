@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.33 2005/11/05 13:11:02 wiz Exp $	*/
+/*	$NetBSD: show.c,v 1.34 2006/04/24 13:36:23 dillo Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.33 2005/11/05 13:11:02 wiz Exp $");
+__RCSID("$NetBSD: show.c,v 1.34 2006/04/24 13:36:23 dillo Exp $");
 #endif
 #endif
 
@@ -105,6 +105,8 @@ static const show_t showv[] = {
 	{PLIST_BLDDEP, "@blddep %s", "\tPackage depends exactly on: %s"},
 	{-1, NULL, NULL}
 };
+
+static int print_file_as_var(const char *, const char *);
 
 void
 show_file(char *pkg, char *title, char *fname, Boolean separator)
@@ -340,4 +342,88 @@ show_bld_depends(char *title, package_t *plist)
 	}
 
 	printf("\n");
+}
+
+
+/*
+ * Show entry for pkg_summary.txt file.
+ */
+void
+show_summary(package_t *plist, const char *binpkgfile)
+{
+	static const char *bi_vars[] = {
+		"PKGPATH",
+		"CATEGORIES",
+		"PROVIDES",
+		"REQUIRES",
+		"PKG_OPTIONS",
+		"OPSYS",
+		"OS_VERSION",
+		"MACHINE_ARCH",
+		"LICENSE",
+		"HOMEPAGE",
+		"PKGTOOLS_VERSION",
+		"BUILD_DATE",
+		NULL
+	};
+	
+	plist_t *p;
+	struct stat st;
+
+	for (p = plist->head; p; p = p->next) {
+		switch (p->type) {
+		case PLIST_NAME:
+			printf("PKGNAME=%s\n", p->name);
+			break;
+		case PLIST_PKGDEP:
+			printf("DEPENDS=%s\n", p->name);
+			break;
+		case PLIST_PKGCFL:
+			printf("CONFLICTS=%s\n", p->name);
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	print_file_as_var("COMMENT", COMMENT_FNAME);
+	print_file_as_var("SIZE_PKG", SIZE_PKG_FNAME);
+
+	var_copy_list(BUILD_INFO_FNAME, bi_vars);
+
+	if (binpkgfile != NULL && stat(binpkgfile, &st) == 0) {
+	    printf("FILE_SIZE=%" PRIu64 "\n", (uint64_t)st.st_size);
+	    /* XXX: DIGETS */
+	}
+
+	print_file_as_var("DESCRIPTION", DESC_FNAME);
+	putc('\n', stdout);
+}
+
+/*
+ * Print the contents of file fname as value of variable var to stdout.
+ */
+static int
+print_file_as_var(const char *var, const char *fname)
+{
+	FILE *fp;
+	char *line;
+	size_t len;
+
+	fp = fopen(fname, "r");
+	if (!fp) {
+		warn("unable to open %s file", fname);
+		return -1;
+	}
+
+	while ((line = fgetln(fp, &len)) != (char *) NULL) {
+		if (line[len - 1] == '\n')
+			--len;
+		printf("%s=%.*s\n", var, (int)len, line);
+	}
+	
+	fclose(fp);
+
+	return 0;
 }
