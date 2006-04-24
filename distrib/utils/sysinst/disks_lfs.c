@@ -1,4 +1,4 @@
-/*	$NetBSD: disks_lfs.c,v 1.1 2001/01/14 02:38:14 mrg Exp $	*/
+/*	$NetBSD: disks_lfs.c,v 1.2 2006/04/24 19:00:30 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-/* this gets it's own file as LFS includes interfere with other ones */
+/* this gets its own file as LFS includes interfere with other ones */
 
 #include <sys/param.h>
 #include <sys/mount.h>

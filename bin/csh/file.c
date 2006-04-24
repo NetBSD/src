@@ -1,4 +1,4 @@
-/* $NetBSD: file.c,v 1.23 2003/08/07 09:05:05 agc Exp $ */
+/* $NetBSD: file.c,v 1.24 2006/04/24 19:00:29 snj Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.23 2003/08/07 09:05:05 agc Exp $");
+__RCSID("$NetBSD: file.c,v 1.24 2006/04/24 19:00:29 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -618,7 +618,7 @@ is_prefix(Char *check, Char *template)
 
 /*
  *  Return true if the Chars in template appear at the
- *  end of check, I.e., are it's suffix.
+ *  end of check, I.e., are its suffix.
  */
 static int
 is_suffix(Char *check, Char *template)

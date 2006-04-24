@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.24 2006/02/11 10:43:18 dsl Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.25 2006/04/24 19:00:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.24 2006/02/11 10:43:18 dsl Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.25 2006/04/24 19:00:29 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ static int resub(regex_t *, regmatch_t *, char *, char *, char *, char *);
 /*
  * rep_add()
  *	parses the -s replacement string; compiles the regular expression
- *	and stores the compiled value and it's replacement string together in
+ *	and stores the compiled value and its replacement string together in
  *	replacement string list. Input to this function is of the form:
  *		/old/new/pg
  *	The first char in the string specifies the delimiter used by this
