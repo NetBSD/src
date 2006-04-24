@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.50 2005/11/03 21:16:41 dillo Exp $
+.\" $NetBSD: pkg_info.1,v 1.51 2006/04/24 13:36:22 dillo Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd November 1, 2005
+.Dd April 15, 2006
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl BbcDdFfhIikLmNnpqRrSsVv
+.Op Fl BbcDdFfhIikLmNnpqRrSsVvX
 .Op Fl e Ar package
 .Op Fl K Ar pkg_dbdir
 .Op Fl l Ar prefix
@@ -179,6 +179,13 @@ See also
 Print version number and exit.
 .It Fl v
 Turn on verbose output.
+.It Fl X
+Print summary information for each package.
+The summary format is
+described in
+.Xr pkg_summary 5 .
+Its primary use is to contain all information about the contents of a
+(remote) binary package repository needed by package managing software.
 .El
 .Sh TECHNICAL DETAILS
 Package info is either extracted from package files named on the

@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.2 2005/11/05 13:11:02 wiz Exp $ */
+/* $NetBSD: defs.h,v 1.3 2006/04/24 13:36:23 dillo Exp $ */
 
 /*
  * Copyright (c) 1999-2000 Alistair G. Crooks.  All rights reserved.
@@ -95,5 +95,25 @@
 	(void) strncpy(to, from, size);					\
 	to[(size) - 1] = 0;						\
 } while( /* CONSTCOND */ 0)
+
+/*
+ * Some systems such as OpenBSD-3.6 do not provide PRIu64.
+ * Others such as AIX-4.3.2 have a broken PRIu64 which includes
+ * a leading "%".
+ */
+#ifdef NEED_PRI_MACRO
+#  ifdef PRIu64
+#    undef PRIu64
+#  endif
+#  if SIZEOF_INT == 8
+#    define PRIu64 "u"
+#  elif SIZEOF_LONG == 8
+#    define PRIu64 "lu"
+#  elif SIZEOF_LONG_LONG == 8
+#    define PRIu64 "llu"
+#  else
+#    error "unable to find a suitable PRIu64"
+#  endif
+#endif
 
 #endif /* !DEFS_H_ */

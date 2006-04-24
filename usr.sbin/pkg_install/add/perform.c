@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.119 2006/04/06 06:45:08 reed Exp $	*/
+/*	$NetBSD: perform.c,v 1.120 2006/04/24 13:36:22 dillo Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.119 2006/04/06 06:45:08 reed Exp $");
+__RCSID("$NetBSD: perform.c,v 1.120 2006/04/24 13:36:22 dillo Exp $");
 #endif
 #endif
 
@@ -74,26 +74,6 @@ static package_t Plist;
 static char *Home;
 
 static lfile_head_t files;
-
-/*
- * Some systems such as OpenBSD-3.6 do not provide PRIu64.
- * Others such as AIX-4.3.2 have a broken PRIu64 which includes
- * a leading "%".
- */
-#ifdef NEED_PRI_MACRO
-#  ifdef PRIu64
-#    undef PRIu64
-#  endif
-#  if SIZEOF_INT == 8
-#    define PRIu64 "u"
-#  elif SIZEOF_LONG == 8
-#    define PRIu64 "lu"
-#  elif SIZEOF_LONG_LONG == 8
-#    define PRIu64 "llu"
-#  else
-#    error "unable to find a suitable PRIu64"
-#  endif
-#endif
 
 /* used in build information */
 enum {

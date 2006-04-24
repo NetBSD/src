@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.21 2005/11/03 21:16:41 dillo Exp $ */
+/* $NetBSD: info.h,v 1.22 2006/04/24 13:36:22 dillo Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -52,6 +52,7 @@
 #define SHOW_ALL_SIZE		0x10000
 #define SHOW_BLD_DEPENDS	0x20000
 #define SHOW_BI_VAR		0x40000
+#define SHOW_SUMMARY		0x80000
 
 enum which {
     WHICH_ALL,
@@ -78,5 +79,6 @@ extern void show_files(char *, package_t *);
 extern void show_depends(char *, package_t *);
 extern void show_bld_depends(char *, package_t *);
 extern void show_index(char *, char *, char *);
+extern void show_summary(package_t *, const char *);
 
 #endif				/* _INST_INFO_H_INCLUDE */
