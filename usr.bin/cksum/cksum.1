@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.36 2006/04/24 21:07:43 hubertf Exp $
+.\"	$NetBSD: cksum.1,v 1.37 2006/04/24 22:00:43 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,18 +49,18 @@
 .Op Fl nw
 .Oo
 .Fl a Ar algorithm |
-.Fl c |
+.Fl c Oo Ar file Oc |
 .Op Fl o Ar 1 | Ar 2
 .Oc
 .Op Ar
 .Nm sum
 .Op Fl w
-.Op Fl c
+.Op Fl c Op Ar file
 .Op Ar
 .Nm md2
 .Op Fl nw
 .Oo
-.Fl c |
+.Fl c Oo Ar file Oc |
 .Fl p |
 .Fl t |
 .Fl x |
@@ -70,7 +70,7 @@
 .Nm md4
 .Op Fl nw
 .Oo
-.Fl c |
+.Fl c Oo Ar file Oc |
 .Fl p |
 .Fl t |
 .Fl x |
@@ -80,7 +80,7 @@
 .Nm md5
 .Op Fl nw
 .Oo
-.Fl c |
+.Fl c Oo Ar file Oc |
 .Fl p |
 .Fl t |
 .Fl x |
@@ -90,7 +90,7 @@
 .Nm sha1
 .Op Fl nw
 .Oo
-.Fl c |
+.Fl c Oo Ar file Oc |
 .Fl p |
 .Fl t |
 .Fl x |
@@ -100,7 +100,7 @@
 .Nm rmd160
 .Op Fl nw
 .Oo
-.Fl c |
+.Fl c Oo Ar file Oc |
 .Fl p |
 .Fl t |
 .Fl x |
@@ -210,10 +210,11 @@ and
 .Fl o Ar 2 ,
 respectively.
 The default is CRC.
-.It Fl c
+.It Fl c Op Ar file
 Verify (check) files against a list of checksums.
-The list is read from a filename given on the command line, or from
-stdin if no filename is given.
+The list is read from
+.Ar file ,
+or from stdin if no filename is given.
 E.g. first run
 .Dl Ic md5 *.tgz \*[Gt] MD5
 .Dl Ic sha1 *.tgz \*[Gt] SHA1
