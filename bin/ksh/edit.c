@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.17 2005/09/11 22:23:42 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.18 2006/04/24 19:53:08 christos Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.17 2005/09/11 22:23:42 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.18 2006/04/24 19:53:08 christos Exp $");
 #endif
 
 
@@ -622,8 +622,12 @@ x_file_glob(flags, str, slen, wordsp)
 	}
 	afree(toglob, ATEMP);
 
-	*wordsp = nwords ? words : (char **) 0;
-
+	if (nwords) {
+		*wordsp = words;
+	} else {
+		x_free_words(nwords, words);
+		*wordsp = NULL;
+	}
 	return nwords;
 }
 
