@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.3 2006/03/31 00:03:57 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.4 2006/04/24 00:23:41 rittera Exp $");
 #endif
 
 /*
@@ -136,10 +136,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.3 2006/03/31 00:03:57 rittera Exp $"
 
 static char ndis_filepath[MAXPATHLEN];
 extern struct nd_head ndis_devhead;
-
-#ifdef __NetBSD__
-extern void device_printf(device_t, const char *fmt, ...);
-#endif  
 
 #ifdef __FreeBSD__
 SYSCTL_STRING(_hw, OID_AUTO, ndis_filepath, CTLFLAG_RW, ndis_filepath,
@@ -1247,25 +1243,16 @@ NdisWriteErrorLogEntry(ndis_handle adapter, ndis_error_code code,
 		str = ustr;
 	}
 
-#ifdef __FreeBSD__	
-	device_printf (dev, "NDIS ERROR: %x (%s)\n", code,
-	    str == NULL ? "unknown error" : str);
-	device_printf (dev, "NDIS NUMERRORS: %x\n", numerrors);
-#else /* __NetBSD__ */
-	printf ("NDIS ERROR: %x (%s)\n", code,
-				   str == NULL ? "unknown error" : str);
-	printf ("NDIS NUMERRORS: %x\n", numerrors);
-#endif	
+	printf ("%s: NDIS ERROR: %x (%s)\n", dev->dv_xname, code,
+		str == NULL ? "unknown error" : str);
+	printf ("%s: NDIS NUMERRORS: %x\n",  dev->dv_xname, numerrors);
 
 	va_start(ap, numerrors);
 	for (i = 0; i < numerrors; i++)
-#ifdef __FreeBSD__		
-		device_printf (dev, "argptr: %p\n",
-		    va_arg(ap, void *));
-#else /* __NetBSD__ */
-		printf ("argptr: %p\n",
-					   va_arg(ap, void *));
-#endif
+		printf ("%s: argptr: %p\n",
+			dev->dv_xname,
+			va_arg(ap, void *));
+
 	va_end(ap);
 
 	return;
