@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.68 2006/03/17 02:31:44 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.69 2006/04/24 13:36:22 dillo Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.68 2006/03/17 02:31:44 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.69 2006/04/24 13:36:22 dillo Exp $");
 #endif
 #endif
 
@@ -76,6 +76,7 @@ pkg_do(char *pkg)
 	int     code = 0;
 	lfile_t	*lfp;
 	int	result;
+	char   *binpkgfile = NULL;
 
 	if (IS_URL(pkg)) {
 		if ((cp = fileGetURL(pkg)) != NULL) {
@@ -96,6 +97,7 @@ pkg_do(char *pkg)
 			strlcpy(fname, pkg, sizeof(fname));
 		}
 		cp = fname;
+		binpkgfile = fname;
 	}
 
 	if (cp) {
@@ -108,6 +110,8 @@ pkg_do(char *pkg)
 				 * full URL by fileFindByPath. Now extract...
 				 */
 				char *cp2;
+
+				binpkgfile = NULL;
 
 				if ((cp2 = fileGetURL(cp)) != NULL) {
 					strlcpy(fname, cp2, sizeof(fname));
@@ -131,9 +135,9 @@ pkg_do(char *pkg)
 					LFILE_ADD(&files, lfp, MTREE_FNAME);
 				if (Flags & SHOW_BUILD_VERSION)
 					LFILE_ADD(&files, lfp, BUILD_VERSION_FNAME);
-				if (Flags & SHOW_BUILD_INFO)
+				if (Flags & (SHOW_BUILD_INFO|SHOW_SUMMARY))
 					LFILE_ADD(&files, lfp, BUILD_INFO_FNAME);
-				if (Flags & SHOW_PKG_SIZE)
+				if (Flags & (SHOW_PKG_SIZE|SHOW_SUMMARY))
 					LFILE_ADD(&files, lfp, SIZE_PKG_FNAME);
 				if (Flags & SHOW_ALL_SIZE)
 					LFILE_ADD(&files, lfp, SIZE_ALL_FNAME);
@@ -232,11 +236,14 @@ pkg_do(char *pkg)
 		fclose(fp);
 
 		/* Start showing the package contents */
-		if (!Quiet) {
+		if (!Quiet && !(Flags & SHOW_SUMMARY)) {
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
 			if (fexists(PRESERVE_FNAME)) {
 				printf("*** PACKAGE MAY NOT BE DELETED ***\n");
 			}
+		}
+		if (Flags & SHOW_SUMMARY) {
+			show_summary(&plist, binpkgfile);
 		}
 		if (Flags & SHOW_COMMENT) {
 			show_file(pkg, "Comment:\n", COMMENT_FNAME, TRUE);
@@ -305,7 +312,7 @@ pkg_do(char *pkg)
 			show_file(pkg, "Size in bytes including required pkgs: ",
 				  SIZE_ALL_FNAME, TRUE);
 		}
-		if (!Quiet) {
+		if (!Quiet && !(Flags & SHOW_SUMMARY)) {
 			if (fexists(PRESERVE_FNAME)) {
 				printf("*** PACKAGE MAY NOT BE DELETED ***\n\n");
 			}

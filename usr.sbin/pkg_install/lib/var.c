@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.4 2006/03/17 01:10:53 hubertf Exp $	*/
+/*	$NetBSD: var.c,v 1.5 2006/04/24 13:36:23 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.4 2006/03/17 01:10:53 hubertf Exp $");
+__RCSID("$NetBSD: var.c,v 1.5 2006/04/24 13:36:23 dillo Exp $");
 #endif
 
 #if HAVE_SYS_STAT_H
@@ -61,6 +61,44 @@ __RCSID("$NetBSD: var.c,v 1.4 2006/03/17 01:10:53 hubertf Exp $");
 static const char *var_cmp(const char *, size_t, const char *, size_t);
 static void var_print(FILE *, const char *, const char *);
 
+/*
+ * Copy the specified varibales from the file fname to stdout.
+ */
+int
+var_copy_list(const char *fname, const char **variables)
+{
+	FILE   *fp;
+	char   *line;
+	size_t  len;
+	const char *p;
+	int i;
+
+	fp = fopen(fname, "r");
+	if (!fp) {
+		if (errno != ENOENT)
+			warn("var_copy_list: can't open '%s' for reading",
+			     fname);
+		return -1;
+	}
+
+	while ((line = fgetln(fp, &len)) != (char *) NULL) {
+		if (line[len - 1] == '\n')
+			--len;
+		for (i=0; variables[i]; i++) {
+			if ((p=var_cmp(line, len, variables[i],
+				       strlen(variables[i]))) != NULL) {
+				printf("%.*s\n", (int)len, line);
+				break;
+			}
+		}
+	}
+	(void) fclose(fp);
+	return 0;
+}
+
+/*
+ * Print the value of variable from the file fname to stdout.
+ */
 char *
 var_get(const char *fname, const char *variable)
 {
@@ -108,6 +146,10 @@ var_get(const char *fname, const char *variable)
 	return value;
 }
 
+/*
+ * Add given variable with given value to file, overwriting any
+ * previous occurrence.
+ */
 int
 var_set(const char *fname, const char *variable, const char *value)
 {
@@ -213,6 +255,9 @@ var_set(const char *fname, const char *variable, const char *value)
 	return 0;
 }
 
+/*
+ * Check if line contains variable var, return pointer to its value or NULL.
+ */
 static const char *
 var_cmp(const char *line, size_t linelen, const char *var, size_t varlen)
 {
@@ -240,6 +285,9 @@ var_cmp(const char *line, size_t linelen, const char *var, size_t varlen)
 	return line;
 }
 
+/*
+ * Print given variable with value to file f.
+ */
 static void
 var_print(FILE *f, const char *variable, const char *value)
 {
