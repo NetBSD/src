@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.33 2006/04/23 16:40:16 hubertf Exp $	*/
+/*	$NetBSD: cksum.c,v 1.34 2006/04/24 19:41:41 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.33 2006/04/23 16:40:16 hubertf Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.34 2006/04/24 19:41:41 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -369,18 +369,35 @@ main(int argc, char **argv)
 				l_cksum = strlen(p_cksum);
 				l_filename = p_cksum - p_filename - 4;
 					
-				/* Sanity check */
-				if (strncmp(buf, hash->hashname,
+				/* Sanity check, and find proper hash if
+				 * it's not the same as the current program
+				 */
+				if (hash == NULL ||
+				    strncmp(buf, hash->hashname,
 					    strlen(hash->hashname)) != 0) {
-					warnx("%.*s: %s checksum expected, "
-					      "%.*s found, skipping.",
-					      l_filename,
-					      p_filename,
-					      hash->hashname,
-					      strlen(hash->hashname),
-					      buf);
-					rval = 1;
-					continue;
+					/*
+					 * Search proper hash
+					 */
+					struct hash *nhash;
+					
+					for (nhash = hashes ;
+					     nhash->hashname != NULL;
+					     nhash++)
+						if (strncmp(buf,
+							    nhash->hashname,
+							    strlen(nhash->hashname)) == 0)
+							break;
+					
+					
+					if (nhash->hashname == NULL) {
+						if (check_warn)
+							warnx("unknown hash: %s",
+							      buf);
+						rval = 1;
+						continue;
+					} else {
+						hash = nhash;
+					}
 				}
 
 			} else {
@@ -463,12 +480,9 @@ main(int argc, char **argv)
 				}
 			}
 
-			if (ok)
-#ifdef LINUX_CHECK_COMPAT
-				printf("%s: OK\n", filename)
-#endif
-				;
-			else {
+			if (! ok) {
+				if (hash)
+					printf("(%s) ", hash->hashname);
 				printf("%s: FAILED\n", filename);
 				badcnt++;
 			}
@@ -477,11 +491,8 @@ main(int argc, char **argv)
 		}
 		fclose(f);
 
-#ifdef LINUX_CHECK_COMPAT
-		if (badcnt > 0)
-			printf("%s: WARNING: %d of %d computed checksums did NOT match\n",
-			       progname, badcnt, cnt);
-#endif
+		if (badcnt > 0) 
+			rval = 1;
 		
 	} else {
 		/*
