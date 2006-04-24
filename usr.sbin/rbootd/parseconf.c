@@ -1,4 +1,4 @@
-/*	$NetBSD: parseconf.c,v 1.9 2004/10/30 15:20:36 dsl Exp $	*/
+/*	$NetBSD: parseconf.c,v 1.10 2006/04/24 19:00:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parseconf.c,v 1.9 2004/10/30 15:20:36 dsl Exp $");
+__RCSID("$NetBSD: parseconf.c,v 1.10 2006/04/24 19:00:30 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,7 +349,7 @@ ParseAddr(str)
 **
 **	Warnings:
 **		- After this routine is called, ParseConfig() must be
-**		  called to re-order it's list of boot file pointers.
+**		  called to re-order its list of boot file pointers.
 */
 int
 GetBootFiles()

@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.36 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: csh.c,v 1.37 2006/04/24 19:00:29 snj Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.36 2005/06/26 19:10:48 christos Exp $");
+__RCSID("$NetBSD: csh.c,v 1.37 2006/04/24 19:00:29 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -889,7 +889,7 @@ phup(int sig)
 	    do
 		/*
 		 * If a process is in the foreground; we try to kill
-		 * it's process group. If we succeed, then the 
+		 * its process group. If we succeed, then the 
 		 * whole job is gone. Otherwise we keep going...
 		 * But avoid sending HUP to the shell again.
 		 */

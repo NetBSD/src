@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.5 2004/08/21 11:29:51 rearnsha Exp $ */
+/* $NetBSD: __clone.S,v 1.6 2006/04/24 19:00:30 snj Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -44,7 +44,7 @@ ENTRY(__clone)
 	teqne	r1, #0x00
 	beq	.Leinval
 
-	/* place the func and it's arg onto the child's stack */
+	/* place the func and its arg onto the child's stack */
 	stmfd	r1!, {r0, r3} 
 	
 	/* syscall expects (flags, stack) */

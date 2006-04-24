@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.23 2006/03/21 16:46:44 christos Exp $ */
+/* $NetBSD: set.c,v 1.24 2006/04/24 19:00:29 snj Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.23 2006/03/21 16:46:44 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.24 2006/04/24 19:00:29 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -545,7 +545,7 @@ unsetv1(struct varent *p)
     /*
      * If p is missing one child, then we can move the other into where p is.
      * Otherwise, we find the predecessor of p, which is guaranteed to have no
-     * right child, copy it into p, and move it's left child into it.
+     * right child, copy it into p, and move its left child into it.
      */
     if (p->v_right == 0)
 	c = p->v_left;
@@ -669,7 +669,7 @@ balance(struct varent *p, int f, int d)
     int ff;
 
     /*
-     * Ok, from here on, p is the node we're operating on; pp is it's parent; f
+     * Ok, from here on, p is the node we're operating on; pp is its parent; f
      * is the branch of p from which we have come; ff is the branch of pp which
      * is p.
      */

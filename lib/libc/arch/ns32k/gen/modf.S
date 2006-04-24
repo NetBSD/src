@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.2 1997/05/08 13:38:40 matthias Exp $	*/
+/*	$NetBSD: modf.S,v 1.3 2006/04/24 19:00:30 snj Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: modf.S,v 1.2 1997/05/08 13:38:40 matthias Exp $")
+	RCSID("$NetBSD: modf.S,v 1.3 2006/04/24 19:00:30 snj Exp $")
 #endif
 
 ENTRY(modf)
@@ -41,7 +41,7 @@ ENTRY(modf)
 	movd	12(fp),r0	/* higher 32 bit of value */
 	lshd	-20,r0		/* extract exponent */
 	andd	0x7ff,r0	/* 11 lower bits */
-	cmpd	r0,1023+30	/* compare if it's int part can fit in int */
+	cmpd	r0,1023+30	/* compare if its int part can fit in int */
 	bgt	0f		/* nope else it's ok to truncld it to int */
 	truncld	f0,r0		/* get integer part */
 	movdl	r0,f2		/* convert back to float */

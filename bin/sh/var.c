@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.36 2004/10/06 10:23:43 enami Exp $	*/
+/*	$NetBSD: var.c,v 1.37 2006/04/24 19:00:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.36 2004/10/06 10:23:43 enami Exp $");
+__RCSID("$NetBSD: var.c,v 1.37 2006/04/24 19:00:30 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -618,7 +618,7 @@ localcmd(int argc, char **argv)
 
 
 /*
- * Make a variable a local variable.  When a variable is made local, it's
+ * Make a variable a local variable.  When a variable is made local, its
  * value and flags are saved in a localvar structure.  The saved values
  * will be restored when the shell function returns.  We handle the name
  * "-" as a special case.

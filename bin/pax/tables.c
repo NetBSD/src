@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.26 2006/04/16 16:20:21 christos Exp $	*/
+/*	$NetBSD: tables.c,v 1.27 2006/04/24 19:00:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.26 2006/04/16 16:20:21 christos Exp $");
+__RCSID("$NetBSD: tables.c,v 1.27 2006/04/24 19:00:29 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ chk_lnk(ARCHD *arcn)
 	indx = ((unsigned)arcn->sb.st_ino) % L_TAB_SZ;
 	if ((pt = ltab[indx]) != NULL) {
 		/*
-		 * it's hash chain in not empty, walk down looking for it
+		 * its hash chain is not empty, walk down looking for it
 		 */
 		ppt = &(ltab[indx]);
 		while (pt != NULL) {
