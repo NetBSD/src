@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.14 2006/04/17 13:59:01 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.15 2006/04/24 14:14:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.14 2006/04/17 13:59:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.15 2006/04/24 14:14:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -741,6 +741,16 @@ vesafb_getcmap(struct vesafb_softc *sc,
 	rv = copyout(&sc->sc_cmap_blue[idx], cm->blue, cnt);
 	if (rv)
 		return rv;
+
+	return 0;
+}
+
+int
+vesafb_cnattach(void)
+{
+	/* XXX i386 calls consinit too early for us to use
+	 *     kvm86; assume that we've attached
+	 */
 
 	return 0;
 }
