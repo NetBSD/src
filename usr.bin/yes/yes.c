@@ -1,4 +1,4 @@
-/*	$NetBSD: yes.c,v 1.7 2005/11/18 22:16:49 jld Exp $	*/
+/*	$NetBSD: yes.c,v 1.8 2006/04/24 05:24:03 jld Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,18 +39,21 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)yes.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: yes.c,v 1.7 2005/11/18 22:16:49 jld Exp $");
+__RCSID("$NetBSD: yes.c,v 1.8 2006/04/24 05:24:03 jld Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 int
 main(int argc, char **argv)
 {
+	const char *yes;
 
-	if (argc > 1)
-		for(;;)
-			(void)puts(argv[1]);
-	else for (;;)
-		(void)puts("y");
+	yes = (argc > 1) ? argv[1] : "y";
+
+	while(puts(yes) >= 0)
+		continue;
+
+	return EXIT_FAILURE;
 }
