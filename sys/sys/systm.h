@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.183.6.2 2006/04/22 11:40:21 simonb Exp $	*/
+/*	$NetBSD: systm.h,v 1.183.6.3 2006/04/24 05:11:24 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -292,6 +292,10 @@ extern void *pps_kc_hardpps_source;
 extern int pps_kc_hardpps_mode;
 #endif /* !__HAVE_TIMECOUNTER */
 #endif /* PPS_SYNC */
+#else
+#ifdef __HAVE_TIMECOUNTER
+void	ntp_init(void);	/* also provides adjtime() functionality */
+#endif /* __HAVE_TIMECOUNTER */
 #endif /* NTP */
 
 void	initclocks(void);
