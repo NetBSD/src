@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.3.6.1 2006/02/04 11:45:33 simonb Exp $	*/
+/*	$NetBSD: timevar.h,v 1.3.6.2 2006/04/24 08:41:24 kardel Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -152,10 +152,11 @@ void	getbintime(struct bintime *);
 void	getnanotime(struct timespec *);
 void	getmicrotime(struct timeval *);
 #else /* !__HAVE_TIMECOUNTER */
+/* timecounter compat functions */
 void	microtime(struct timeval *);
 void	nanotime(struct timespec *);
 
-/* timecounter compat functions */
+void	nanouptime(struct timespec *);
 void	getbinuptime(struct bintime *);
 void	getnanouptime(struct timespec *);
 void	getmicrouptime(struct timeval *);
