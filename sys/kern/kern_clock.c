@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.96.6.3 2006/04/22 11:39:58 simonb Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.96.6.4 2006/04/24 08:37:35 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96.6.3 2006/04/22 11:39:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.96.6.4 2006/04/24 08:37:35 kardel Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1564,6 +1564,16 @@ getbinuptime(struct bintime *bt)
 
 	microtime(&tv);
 	timeval2bintime(&tv, bt);
+}
+
+void
+nanouptime(struct timespec *tsp)
+{
+	int s;
+
+	s = splclock();
+	TIMEVAL_TO_TIMESPEC(&mono_time, tsp);
+	splx(s);
 }
 
 void
