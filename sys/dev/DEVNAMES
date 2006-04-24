@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.196 2006/04/03 08:15:50 scw Exp $
+#	$NetBSD: DEVNAMES,v 1.197 2006/04/24 14:12:21 jmcneill Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -1183,6 +1183,7 @@ spic			MI
 spif			sparc
 spif			sparc64
 spifi			newsmips
+splash			MI		Attribute
 spkr			MI
 sppp			MI		Attribute
 sqphy			MI
@@ -1335,7 +1336,10 @@ uvisor			MI
 uvscom			MI
 uyap			MI
 va			vax
+vcons			MI		Attribute
 veriexec		MI
+vesabios		i386
+vesafb			i386
 vga			MI
 vge			MI
 viaenv			MI
