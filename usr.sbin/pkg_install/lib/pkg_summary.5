@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_summary.5,v 1.1 2006/04/24 13:36:23 dillo Exp $
+.\"	$NetBSD: pkg_summary.5,v 1.2 2006/04/24 22:04:12 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation
 .\"
@@ -83,12 +83,12 @@ was compiled.
 .It Ev PKG_OPTIONS
 (optional) Any options selected to compile this package.
 If missing, the package does not support options.
-.It Ev PKGTOOLS_VERSION
-(required) The version of the package tools used to create the package.
 .It Ev PKGNAME
 (required) The name of the package.
 .It Ev PKGPATH
 (required) The path of the package directory within pkgsrc.
+.It Ev PKGTOOLS_VERSION
+(required) The version of the package tools used to create the package.
 .It Ev PROVIDES
 (optional) A list of shared libraries provided by the package,
 including major version number, one per line.
