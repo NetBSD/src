@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2006/03/28 17:38:27 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2006/04/24 18:10:57 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2006/03/28 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2006/04/24 18:10:57 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,8 +143,11 @@ device_register(struct device *dev, void *aux)
 		return;
 
 	if (device_is_a(dev, "pci")) {
-		sprintf(devpath, "%spci@%x/", dtmp,
-		    prep_io_space_tag.pbs_offset);
+		if (device_is_a(parent, "ppb"))
+			sprintf(devpath, "%s/", dtmp);
+		else
+			sprintf(devpath, "%spci@%x/", dtmp,
+			    prep_io_space_tag.pbs_offset);
 		found++;
 	}
 	if (device_is_a(parent, "pci")) {
