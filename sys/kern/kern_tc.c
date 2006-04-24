@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.1.1.1.2.7 2006/04/22 22:41:39 kardel Exp $ */
+/* $NetBSD: kern_tc.c,v 1.1.1.1.2.8 2006/04/24 19:38:21 kardel Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.7 2006/04/22 22:41:39 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.1.1.1.2.8 2006/04/24 19:38:21 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -170,7 +170,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 static int
 sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 {
-	char buf[32];
+	char buf[48];
 	char *where = oldp;
 	const char *spc;
 	struct timecounter *tc;
