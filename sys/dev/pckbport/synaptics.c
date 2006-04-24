@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.9.6.1 2006/02/04 14:03:58 simonb Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.9.6.2 2006/04/24 05:16:12 kardel Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -650,7 +650,6 @@ pms_synaptics_input(void *vsc, int data)
 	struct synaptics_softc *sc = &psc->u.synaptics;
 	struct timeval diff;
 	struct synaptics_packet sp;
-	int s;
 
 	if (!psc->sc_enabled) {
 		/* Interrupts are not expected.	 Discard the byte. */
