@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.29 2005/08/19 02:09:50 christos Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.30 2006/04/24 21:14:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.29 2005/08/19 02:09:50 christos Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.30 2006/04/24 21:14:59 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -684,7 +684,7 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 			break;
 	} while (sum_offset);
 
-	return;
+	free(sumblock);
 }
 
 static void
