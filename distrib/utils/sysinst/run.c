@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.61 2006/02/25 20:21:00 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.62 2006/04/24 19:00:30 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -367,7 +367,7 @@ show_cmd(const char *scmd, struct winsize *win)
 }
 
 /*
- * launch a program inside a subwindow, and report it's return status when done
+ * launch a program inside a subwindow, and report its return status when done
  */
 static int
 launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,

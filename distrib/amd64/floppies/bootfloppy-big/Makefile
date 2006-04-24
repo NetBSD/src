@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2003/04/26 18:55:40 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2006/04/24 19:00:30 snj Exp $
 
 # This Makefile builds a boot image on a 2.88M-sized image.
 #
-# Since NetBSD currently can't write 2.88M diskettes, it's only
+# Since NetBSD currently can't write 2.88M diskettes, its only
 # use is as a boot image for El Torito bootable CD-ROM images.
 #
 # To prepare a CD, do the following steps:

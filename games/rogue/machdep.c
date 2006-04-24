@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2005/02/15 12:56:20 jsm Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2006/04/24 19:00:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.13 2005/02/15 12:56:20 jsm Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.14 2006/04/24 19:00:30 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -396,7 +396,7 @@ md_malloc(n)
 /* md_gseed() (Get Seed)
  *
  * This function returns a seed for the random number generator (RNG).  This
- * seed causes the RNG to begin generating numbers at some point in it's
+ * seed causes the RNG to begin generating numbers at some point in its
  * sequence.  Without a random seed, the RNG will generate the same set
  * of numbers, and every game will start out exactly the same way.  A good
  * number to use is the process id, given by getpid() on most UNIX systems.

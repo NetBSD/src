@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.64 2005/09/30 18:57:55 tv Exp $	*/
+/*	$NetBSD: jobs.c,v 1.65 2006/04/24 19:00:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.64 2005/09/30 18:57:55 tv Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.65 2006/04/24 19:00:29 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -1105,7 +1105,7 @@ dowait(int block, struct job *job)
  * rather than blocking.
  *
  * System V doesn't have a non-blocking wait system call.  It does
- * have a SIGCLD signal that is sent to a process when one of it's
+ * have a SIGCLD signal that is sent to a process when one of its
  * children dies.  The obvious way to use SIGCLD would be to install
  * a handler for SIGCLD which simply bumped a counter when a SIGCLD
  * was received, and have waitproc bump another counter when it got
