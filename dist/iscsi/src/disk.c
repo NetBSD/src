@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.14 2006/04/17 16:58:31 thorpej Exp $ */
+/* $NetBSD: disk.c,v 1.15 2006/04/24 21:59:03 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -740,6 +740,7 @@ disc_get_filename(disc_de_t *de)
  * Public Interface (called by utarget and ktarket)
  */
 
+ /* set various global variables */
 void
 device_set_var(const char *var, char *arg)
 {
@@ -754,6 +755,7 @@ device_set_var(const char *var, char *arg)
 	}
 }
 
+/* allocate some space for a disk/extent, using an lseek, read and write combination */
 static int
 de_allocate(disc_de_t *de, char *filename)
 {
@@ -776,6 +778,7 @@ de_allocate(disc_de_t *de, char *filename)
 	return 1;
 }
 
+/* allocate space as desired */
 static int
 allocate_space(disc_target_t *tp)
 {
@@ -797,6 +800,36 @@ allocate_space(disc_target_t *tp)
 		break;
 	}
 	return 0;
+}
+
+/* copy src to dst, of size `n' bytes, padding any extra with `pad' */
+static void
+strpadcpy(uint8_t *dst, size_t dstlen, const char *src, const size_t srclen, char pad)
+{
+	int	i;
+
+	if (srclen < dstlen) {
+		(void) memcpy(dst, src, srclen);
+		for (i = srclen ; i < dstlen ; i++) {
+			dst[i] = pad;
+		}
+	} else {
+		(void) memcpy(dst, src, dstlen);
+	}
+}	
+
+/* handle REPORT LUNs SCSI command */
+static int
+report_luns(uint8_t *data)
+{
+	uint64_t	i;
+	int32_t		off;
+
+	for (i = 0, off = 8 ; i < 8 ; i++, off += sizeof(i)) {
+		*((uint64_t *) (void *)data + off) = ISCSI_HTONLL(i);
+	}
+	*((uint32_t *) (void *)data) = ISCSI_HTONL(off - 7);
+	return (off - 7) * sizeof(i);
 }
 
 /* initialise the device */
@@ -873,7 +906,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	uint8_t  *cdb = args->cdb;
 	uint8_t   lun = (uint8_t) (args->lun >> 32);
 	int	mode_data_len;
-	int	done;
 
 #if (CONFIG_DISK_INITIAL_CHECK_CONDITION==1)
 	static int      initialized = 0;
@@ -926,8 +958,8 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	case INQUIRY:
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "INQUIRY%s\n", (cdb[1] & INQUIRY_EVPD_BIT) ? " for Vital Product Data" : "");
 		data = args->send_data;
+		args->status = 0;
 		(void) memset(data, 0x0, (unsigned) cdb[4]);	/* Clear allocated buffer */
-		done = 0;
 		if (cdb[1] & INQUIRY_EVPD_BIT) {
 			switch(cdb[2]) {
 			case INQUIRY_DEVICE_IDENTIFICATION_VPD:
@@ -936,42 +968,48 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 				len = data[3] = cdb[4] - 7;
 				cp = &data[4];
 				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
-				cp[1] = (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
+				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
 				len = (uint8_t) snprintf((char *)&cp[4], (int)len, "%s", sess->globals->targetname) + 4;
 				cp[3] = len;
 				cp += len;
 				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
-				cp[1] = (INQUIRY_DEVICE_ASSOCIATION_TARGET_PORT << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
+				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_PORT << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
 				len = (uint8_t) snprintf((char *)&cp[4], (int)len, "%s,t,0x%x", sess->globals->targetname, lun) + 4;
 				cp[3] = len;
-				done = 1;
+				cp += len;
+				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
+				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_DEVICE_T10_VENDOR;
+				strpadcpy(&cp[4], 8, ISCSI_VENDOR, strlen(ISCSI_VENDOR), ' ');
+				cp[3] = 8;
 				break;
 			case INQUIRY_SUPPORTED_VPD_PAGES:
 				data[0] = DISK_PERIPHERAL_DEVICE;
 				data[1] = INQUIRY_SUPPORTED_VPD_PAGES;
-				data[3] = 2;
+				data[3] = 2;	/* # of supported pages */
 				data[4] = INQUIRY_SUPPORTED_VPD_PAGES;
 				data[5] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
-				done = 1;
 				break;
 			default:
 				iscsi_trace_error(__FILE__, __LINE__, "Unsupported INQUIRY VPD page %x\n", cdb[2]);
+				args->status = 0x01;
 				break;
 			}
-		}
-		if (!done) {
+		} else {
+			char	versionstr[8];
+
 			data[0] = DISK_PERIPHERAL_DEVICE;
 			data[2] = SCSI_VERSION_SPC;
 			data[4] = cdb[4] - 4;	/* Additional length  */
 			data[7] |= (WIDE_BUS_32 | WIDE_BUS_16);
-			(void) memset(data + 8, 0x0, 32);
-			(void) strlcpy((char *)&data[8], ISCSI_VENDOR, 8);	/* Vendor */
-			(void) strlcpy((char *)&data[16], ISCSI_PRODUCT, 16);	/* Product ID */
-			(void) snprintf((char *)&data[32], 8, "%d", ISCSI_VERSION);	/* Product Revision */
+			strpadcpy(&data[8], 8, ISCSI_VENDOR, strlen(ISCSI_VENDOR), ' ');
+			strpadcpy(&data[16], 16, ISCSI_PRODUCT, strlen(ISCSI_PRODUCT), ' ');
+			(void) snprintf(versionstr, sizeof(versionstr), "%d", ISCSI_VERSION);
+			strpadcpy(&data[32], 4, versionstr, strlen(versionstr), ' ');
 		}
-		args->input = 1;
-		args->length = cdb[4] + 1;
-		args->status = 0;
+		if (args->status == 0) {
+			args->input = 1;
+			args->length = cdb[4] + 1;
+		}
 		break;
 
 	case STOP_START_UNIT:
@@ -1100,11 +1138,8 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case REPORT_LUNS:
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "REPORT LUNS\n");
-		data = args->send_data;
-		data[3] = CONFIG_DISK_MAX_LUNS;
-			/* just report CONFIG_DISK_MAX_LUNS LUNs and be done with it */
+		args->length = report_luns(args->send_data);
 		args->input = 8;
-		args->length = 16;
 		args->status = 0;
 		break;
 
