@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.34 2006/04/24 19:41:41 hubertf Exp $	*/
+/*	$NetBSD: cksum.c,v 1.35 2006/04/24 21:07:43 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.34 2006/04/24 19:41:41 hubertf Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.35 2006/04/24 21:07:43 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -163,15 +163,14 @@ main(int argc, char **argv)
 	int (*cfncn) (int, u_int32_t *, off_t *);
 	void (*pfncn) (char *, u_int32_t, off_t);
 	struct hash *hash;
-	int normal, i, check_warn;
-	char *checkfile;
+	int normal, i, check_warn, do_check;
 
 	cfncn = NULL;
 	pfncn = NULL;
 	dosum = pflag = nohashstdin = 0;
 	normal = 0;
-	checkfile = NULL;
 	check_warn = 0;
+	do_check = 0;
 
 	setlocale(LC_ALL, "");
 
@@ -199,7 +198,7 @@ main(int argc, char **argv)
 	 * are still supported in code to not break anything that might
 	 * be using them.
 	 */
-	while ((ch = getopt(argc, argv, "a:c:mno:ps:twx12456")) != -1)
+	while ((ch = getopt(argc, argv, "a:cmno:ps:twx12456")) != -1)
 		switch(ch) {
 		case 'a':
 			if (hash != NULL || dosum) {
@@ -267,7 +266,7 @@ main(int argc, char **argv)
 			hash = &hashes[HASH_RMD160];
 			break;
 		case 'c':
-			checkfile = optarg;
+			do_check = 1;
 			break;
 		case 'n':
 			normal = 1;
@@ -322,7 +321,7 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (checkfile) {
+	if (do_check) {
 		/*
 		 * Verify checksums
 		 */
@@ -336,10 +335,16 @@ main(int argc, char **argv)
 
 		rval = 0;
 		cnt = badcnt = 0;
-		
-		f = fopen(checkfile, "r");
+
+		if (argc == 0) {
+			f = fdopen(STDIN_FILENO, "r");
+		} else {
+			f = fopen(argv[0], "r");
+		}
 		if (f == NULL)
-			err(1, "Cannot read %s", checkfile);
+			err(1, "Cannot read %s",
+			    argc>0?argv[0]:"stdin");
+		
 		while(fgets(buf, sizeof(buf), f) != NULL) {
 			s=strrchr(buf, '\n');
 			if (s)
