@@ -134,7 +134,6 @@ extern int ndis_suspend		(device_t);
 extern int ndis_resume		(device_t);
 
 #ifdef __NetBSD__
-extern void device_printf(device_t, const char *fmt, ...);
 extern int ndis_intr(void *);
 #endif
 
@@ -336,8 +335,8 @@ ndis_attach_pci(dev)
 				    SYS_RES_IOPORT, &sc->ndis_io_rid,
 				    0, ~0, 1, RF_ACTIVE);
 				if (sc->ndis_res_io == NULL) {
-					device_printf(dev,
-					    "couldn't map iospace\n");
+					aprint_error("%s: couldn't map iospace\n",
+						     dev->dv_xname);
 					error = ENXIO;
 					goto fail;
 				}
@@ -345,8 +344,8 @@ ndis_attach_pci(dev)
 			case SYS_RES_MEMORY:
 				if (sc->ndis_res_altmem != NULL &&
 				    sc->ndis_res_mem != NULL) {
-					device_printf(dev,
-					    "too many memory resources\n");
+					aprint_error("%s: too many memory resources\n"
+						     dev->dv_xname);
 					error = ENXIO;
 					goto fail;
 				}
@@ -358,9 +357,9 @@ ndis_attach_pci(dev)
 						&sc->ndis_altmem_rid,
 						0, ~0, 1, RF_ACTIVE);
 					if (sc->ndis_res_altmem == NULL) {
-						device_printf(dev,
-						    "couldn't map alt "
-						    "memory\n");
+						aprint_error("%s: couldn't map alt "
+							     "memory\n",
+							     dev->dv_xname);
 						error = ENXIO;
 						goto fail;
 					}
@@ -372,8 +371,8 @@ ndis_attach_pci(dev)
 						&sc->ndis_mem_rid,
 						0, ~0, 1, RF_ACTIVE);
 					if (sc->ndis_res_mem == NULL) {
-						device_printf(dev,
-						    "couldn't map memory\n");
+						aprint_error("%s: couldn't map memory\n",
+							     dev->dv_xname);
 						error = ENXIO;
 						goto fail;
 					}
@@ -385,8 +384,8 @@ ndis_attach_pci(dev)
 				    SYS_RES_IRQ, &rid, 0, ~0, 1,
 	    			    RF_SHAREABLE | RF_ACTIVE);
 				if (sc->ndis_irq == NULL) {
-					device_printf(dev,
-					    "couldn't map interrupt\n");
+					aprint_error("%s: couldn't map interrupt\n"
+						     dev->dv_xname);
 					error = ENXIO;
 					goto fail;
 				}
@@ -411,7 +410,8 @@ ndis_attach_pci(dev)
 		sc->ndis_irq = bus_alloc_resource(dev, SYS_RES_IRQ,
 		    &rid, 0, ~0, 1, RF_SHAREABLE | RF_ACTIVE);
 		if (sc->ndis_irq == NULL) {
-			device_printf(dev, "couldn't route interrupt\n");
+			aprint_error("%s: couldn't route interrupt\n",
+				     dev->dv_xname);
 			error = ENXIO;
 			goto fail;
 		}
