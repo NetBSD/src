@@ -1,4 +1,4 @@
-#	$NetBSD: TOUR,v 1.8 1996/10/16 14:24:56 christos Exp $
+#	$NetBSD: TOUR,v 1.9 2006/04/24 18:00:53 snj Exp $
 #	@(#)TOUR	8.1 (Berkeley) 5/31/93
 
 NOTE -- This is the original TOUR paper distributed with ash and
@@ -327,7 +327,7 @@ is called at appropriate points to actually handle the signal.
 When an interrupt is caught and no trap has been set for that
 signal, the routine "onint" in error.c is called.
 
-OUTPUT:  Ash uses it's own output routines.  There are three out-
+OUTPUT:  Ash uses its own output routines.  There are three out-
 put structures allocated.  "Output" represents the standard out-
 put, "errout" the standard error, and "memout" contains output
 which is to be stored in memory.  This last is used when a buil-

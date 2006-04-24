@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.16 2001/02/05 00:57:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2006/04/24 18:00:53 snj Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.16 2001/02/05 00:57:33 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2006/04/24 18:00:53 snj Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -129,7 +129,7 @@ main(argc, argv)
 			break;
 		}
 	if (j) {
-		lprcat("Sorry, Larn needs a VT100 family terminal for all it's features.\n");
+		lprcat("Sorry, Larn needs a VT100 family terminal for all its features.\n");
 		lflush();
 		exit(1);
 	}
