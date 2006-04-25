@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.76 2006/04/25 09:29:00 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.77 2006/04/25 23:53:45 snj Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1421,4 +1421,9 @@ sys/compat/osf1/osf1_misc.c			1.72-1.73
 	- In sysinfo(), force NUL termination of truncated
 	strings if the buffer was too small, as OSF1 does
 	[drochner, ticket #1287]
+
+games/sail/pl_main.c				1.17
+
+	fix buffer overflow (CVE-2006-1744), from Debian
+	[drochner, ticket #1289]
 
