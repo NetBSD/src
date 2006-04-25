@@ -1,0 +1,33 @@
+/* $NetBSD: config.h,v 1.1 2006/04/25 18:36:44 drochner Exp $ */
+
+#define HAVE_DECL_ETHER_HOSTTON 1
+#define HAVE_ETHER_HOSTTON 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_LIMITS_H 1
+#define HAVE_MEMORY_H 1
+#define HAVE_NETINET_IF_ETHER_H 1
+#define HAVE_SNPRINTF 1
+#define HAVE_SOCKADDR_SA_LEN 1
+#define HAVE_SOCKADDR_STORAGE 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRERROR 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_STRLCPY 1
+#define HAVE_SYS_IOCCOM_H 1
+#define HAVE_SYS_SOCKIO_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_VERSION_H 1
+#define HAVE_VSNPRINTF 1
+#define HAVE___ATTRIBUTE__ 1
+/* INET6 handled by  Makefile */
+#define NETINET_IF_ETHER_H_DECLARES_ETHER_HOSTTON 
+#define PACKAGE_BUGREPORT ""
+#define PACKAGE_NAME ""
+#define PACKAGE_STRING ""
+#define PACKAGE_TARNAME ""
+#define PACKAGE_VERSION ""
+#define STDC_HEADERS 1

@@ -1,39 +1,43 @@
-#	$NetBSD: Makefile,v 1.27 2005/01/10 02:58:58 lukem Exp $	
+# $NetBSD: Makefile,v 1.28 2006/04/25 18:36:44 drochner Exp $	
 
 .include <bsd.own.mk>
 
-LIB=	pcap
-MAN=	pcap.3
+SRCDIR=		${NETBSDSRCDIR}/dist/libpcap
+.PATH:		${SRCDIR}
 
-WARNS?=	1
+LIB=		pcap
+MAN=		pcap.3
 
-CPPFLAGS+=-I. -I${.CURDIR} -I${NETBSDSRCDIR}/sys/dist/pf -DYYBISON
-CPPFLAGS+=-DHAVE_MALLOC_H=1 -DHAVE_SYS_IOCCOM_H=1 -DHAVE_SYS_SOCKIO_H=1
-CPPFLAGS+=-DHAVE_NETINET_IF_ETHER_H
-CPPFLAGS+=-DHAVE_ETHER_HOSTTON=1 -DHAVE_STRERROR=1 -DHAVE_SOCKADDR_SA_LEN=1
-CPPFLAGS+=-DHAVE_IFADDRS_H=1 -DHAVE_LIMITS_H=1
-CPPFLAGS+=-DHAVE_SNPRINTF=1 -DHAVE_STRLCPY=1 -DHAVE_VSNPRINTF=1
-# used in no place
-#CPPFLAGS+=-DLBL_ALIGN=1
-LPREFIX=pcap_
-YPREFIX=pcap_
-YHEADER=1
+WARNS?=		3
+
+CPPFLAGS+=	-I${.CURDIR} -I. -I${SRCDIR}
+CPPFLAGS+=	-DYYBISON
+LPREFIX=	pcap_
+YPREFIX=	pcap_
+YHEADER=	1
+
+CPPFLAGS+=	-DHAVE_CONFIG_H
+CPPFLAGS+=	-D_U_="__attribute__((unused))"
 
 .if (${USE_INET6} != "no")
-CPPFLAGS+=-DINET6
+CPPFLAGS+=	-DINET6
 .endif
 
 SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
-inet.c grammar.y gencode.c fad-getad.c etherent.c bpf_image.c \
-bpf_dump.c 
-SRCS+=	bpf_filter.c version.c
+	inet.c grammar.y gencode.c fad-getad.c etherent.c bpf_image.c \
+	bpf_dump.c
 
 .PATH:	${NETBSDSRCDIR}/sys/net
+SRCS+=	bpf_filter.c
 
-INCS=	pcap-namedb.h pcap.h
-INCSDIR=/usr/include
+INCS=		pcap-namedb.h pcap.h
+INCSDIR=	/usr/include
 
-# XXX -dcy
-scanner.c: grammar.h
+scanner.d scanner.o: tokdefs.h
+
+tokdefs.h: grammar.h
+	cp $? $@
+
+CLEANFILES+=	tokdefs.h
 
 .include <bsd.lib.mk>
