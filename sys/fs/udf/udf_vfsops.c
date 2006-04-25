@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.3 2006/04/25 02:19:31 snj Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.3 2006/04/25 02:19:31 snj Exp $");
 #endif /* not lint */
 
 
@@ -228,7 +228,7 @@ free_udf_mountinfo(struct mount *mp)
 
 		/*
 		 * Note that the node related (e)fe descriptors pool is
-		 * destroyed allready if it was used.
+		 * destroyed already if it was used.
 		 */
 
 		free(ump, M_UDFMNT);
