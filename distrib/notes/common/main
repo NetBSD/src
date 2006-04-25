@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.308 2006/04/20 03:04:34 uwe Exp $
+.\"	$NetBSD: main,v 1.309 2006/04/25 08:38:41 liamjfoy Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1236,6 +1236,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Gavan Fantom Ta Mt gavan@NetBSD.org
 .It Ta Hubert Feyrer Ta Mt hubertf@NetBSD.org
 .It Ta Jason R. Fink Ta Mt jrf@NetBSD.org
+.It Ta Liam J. Foy Ta Mt liamjfoy@NetBSD.org
 .It Ta Matt Fredette Ta Mt fredette@NetBSD.org
 .It Ta Thorsten Frueauf Ta Mt frueauf@NetBSD.org
 .It Ta Castor Fu Ta Mt castor@NetBSD.org
