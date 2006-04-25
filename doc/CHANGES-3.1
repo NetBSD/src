@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.75 2006/04/25 07:55:25 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.76 2006/04/25 09:29:00 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1410,14 +1410,15 @@ lib/libc/stdlib/rand48.3			1.11
 	correct multiplicand in pseudorandom generation
 	[drochner, ticket #1286]
 
-sys/compat/osf1/osf1_misc.c			1.72
-sys/compat/osf1/osf1_misc.c			1.73
+sys/compat/osf1/osf1_misc.c			1.72-1.73
 
-	- -Consistently check the buffer length in getsysinfo(),
+	- Consistently check the buffer length in getsysinfo(),
  	and require one additional byte for string termination
  	in the GSI_PLATFORM_NAME case.
  	This should fix PR kern/33198 by Nicolas Joly.
-	- -Make sysinfo() behave more like the original: return
+	- Make sysinfo() behave more like the original: return
  	the length needed and copy out as much as possible.
+	- In sysinfo(), force NUL termination of truncated
+	strings if the buffer was too small, as OSF1 does
 	[drochner, ticket #1287]
 
