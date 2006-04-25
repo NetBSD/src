@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.96 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.97 2006/04/25 08:29:08 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.96 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.97 2006/04/25 08:29:08 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1439,7 +1439,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 
 #ifdef RSVP_ISI
 	if (imo && ((vifi = imo->imo_multicast_vif) < numvifs)) {
-		if (ip->ip_ttl < 255)
+		if (ip->ip_ttl < MAXTTL)
 			ip->ip_ttl++;	/* compensate for -1 in *_send routines */
 		if (rsvpdebug && ip->ip_p == IPPROTO_RSVP) {
 			struct vif *vifp = viftable + vifi;
