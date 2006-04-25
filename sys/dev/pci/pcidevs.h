@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.783 2006/04/20 01:15:19 gdamore Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.784 2006/04/25 23:57:13 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.782 2006/04/20 01:13:47 gdamore Exp
+ *	NetBSD: pcidevs,v 1.783 2006/04/25 23:55:58 wrstuden Exp
  */
 
 /*
@@ -716,7 +716,8 @@
 /* 3ware products */
 #define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade ATA RAID Controller */
 #define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* Escalade ATA RAID 7000/8000 series Controller */
-#define	PCI_PRODUCT_3WARE_ATARAID_9K	0x1002		/* ATA RAID 9000 series Controller */
+#define	PCI_PRODUCT_3WARE_9000	0x1002		/* 9000-series RAID */
+#define	PCI_PRODUCT_3WARE_9550	0x1003		/* 9550-series RAID */
 
 /* AboCom products */
 #define	PCI_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
