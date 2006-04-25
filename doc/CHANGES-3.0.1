@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.40 2006/04/21 12:30:36 tron Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.41 2006/04/25 23:52:02 snj Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -399,4 +399,9 @@ sys/arch/mvme68k/include/param.h		1.27
 	Fix a huge number of "pkgsrc" build problems in by avoiding
 	inclusion of "sys/device.h" unless we are building a kernel.
 	[oster, ticket #1284]
+
+games/sail/pl_main.c				1.17
+
+	fix buffer overflow (CVE-2006-1744), from Debian
+	[drochner, ticket #1289]
 
