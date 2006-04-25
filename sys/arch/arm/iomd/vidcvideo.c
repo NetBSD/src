@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.23 2006/04/15 17:48:23 jmmv Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.24 2006/04/25 02:19:31 snj Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.23 2006/04/15 17:48:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.24 2006/04/25 02:19:31 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ vidcvideo_attach(parent, self, aux)
 		};
 		sc->nscreens = 1;
 	} else {
-			printf(": allready attached ... can't cope with this\n");
+			printf(": already attached ... can't cope with this\n");
 			return;
 	};
 
