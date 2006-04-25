@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.782 2006/04/20 01:15:19 gdamore Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.783 2006/04/25 23:57:13 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.782 2006/04/20 01:13:47 gdamore Exp
+ *	NetBSD: pcidevs,v 1.783 2006/04/25 23:55:58 wrstuden Exp
  */
 
 /*
@@ -2632,8 +2632,12 @@ static const struct pci_product pci_products[] = {
 	    "Escalade ATA RAID 7000/8000 series Controller",
 	},
 	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ATARAID_9K,
-	    "ATA RAID 9000 series Controller",
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9000,
+	    "9000-series RAID",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9550,
+	    "9550-series RAID",
 	},
 	{
 	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
@@ -11436,4 +11440,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2268;
+const int pci_nproducts = 2269;
