@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.167 2006/02/24 22:05:09 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.168 2006/04/25 11:56:25 blymn Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -350,15 +350,30 @@ The byteorder (4,321, or 1,234).
 .It Li HW_CNMAGIC
 The console magic key sequence.
 .It Li HW_DISKNAMES
-The list of (space separated) disk device names on the system.
-.It Li HW_DISKSTATS
-Return statistical information on the disk devices on the system.
+The list of (space separated) disk device and NFS mount names on the system.
+.It Li HW_IOSTATNAMES
+A space separated list of devices that will have i/o statistics
+collected on them.
+.It Li HW_IOSTATS
+Return statistical information on the NFS mounts, disk and tape
+devices on the system.
 An array of
-.Va struct disk_sysctl
+.Va struct io_sysctl
 structures is returned,
 whose size depends on the current number of such objects in the system.
 The third level name is the size of the
-.Va struct disk_sysctl .
+.Va struct io_sysctl .
+The type of object can be determined by examining the
+.Va type
+element of 
+.Va struct io_sysctl .
+Which can be
+.Dv IOSTAT_DISK
+(disk drive),
+.Dv IOSTAT_TAPE
+(tape drive) or
+.Dv IOSTAT_NFS
+(NFS mount).
 .It Li HW_MACHINE
 The machine class.
 .It Li HW_MACHINE_ARCH
