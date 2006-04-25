@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.70.2.1 2006/04/24 20:51:29 ghen Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.70.2.2 2006/04/25 07:51:47 ghen Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.70.2.1 2006/04/24 20:51:29 ghen Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.70.2.2 2006/04/25 07:51:47 ghen Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -345,9 +345,12 @@ dont_care:
 	};
 
 	slen = strlen(string) + 1;
-	if (SCARG(uap, buf))
+	if (SCARG(uap, buf)) {
 		error = copyout(string, SCARG(uap, buf),
 				min(slen, SCARG(uap, len)));
+		if (!error && (SCARG(uap, len) > 0) && (SCARG(uap, len) < slen))
+			subyte(SCARG(uap, buf) + SCARG(uap, len) - 1, 0);
+	}
 	if (!error)
 		retval[0] = slen;
 
