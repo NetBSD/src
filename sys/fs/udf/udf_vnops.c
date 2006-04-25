@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.3 2006/04/25 02:19:31 snj Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.2 2006/02/02 15:38:35 reinoud Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.3 2006/04/25 02:19:31 snj Exp $");
 #endif /* not lint */
 
 
@@ -308,7 +308,7 @@ udf_strategy(void *v)
 	sectors = bp->b_bcount / lb_size;
 	assert(bp->b_bcount > 0);
 
-	/* NEVER assume later that this buffer is allready translated */
+	/* NEVER assume later that this buffer is already translated */
 	/* bp->b_lblkno = bp->b_blkno; */
 
 	DPRINTF(STRATEGY, ("\tread vp %p buf %p (blk no %"PRIu64")"

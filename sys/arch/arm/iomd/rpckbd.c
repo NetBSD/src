@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.12 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.13 2006/04/25 02:19:31 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.12 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.13 2006/04/25 02:19:31 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	    case WSKBDIO_SETLEDS:
 		/* same as rpckbd_set_leds */
 	
-		/* check if we're allready in this state */
+		/* check if we're already in this state */
 		new_ledstate = rpckbd_led_encode(*(int *)data);
 		if (new_ledstate == sc->sc_ledstate)
 			return 0;
@@ -333,7 +333,7 @@ rpckbd_set_leds(void *context, int leds)
 	struct rpckbd_softc *sc = (struct rpckbd_softc *) context;
 	int res, new_ledstate;
 
-	/* check if we're allready in this state */
+	/* check if we're already in this state */
 	new_ledstate = rpckbd_led_encode(leds);
 	if (new_ledstate == sc->sc_ledstate)
 		return;

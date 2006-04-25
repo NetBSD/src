@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.15 2006/04/13 18:57:24 garbled Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.16 2006/04/25 02:19:31 snj Exp $	*/
 
 /*-
  * Copyright (C) 2006 Tim Rightnour
@@ -141,7 +141,7 @@ check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
 	}
 
 	/*
-	 * if we have a raw device, we need to check to see if it allready
+	 * if we have a raw device, we need to check to see if it already
 	 * has a partition table, and if so, read it in and check for
 	 * suitability.
 	 */

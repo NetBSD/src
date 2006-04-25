@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.37 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.38 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -959,7 +959,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 	add POSIX.2's confstr(3). (jtc)
 	do the right thing when lookup()-ing for creation. (cgd)
 	change libg++ to not install "compatibility" header files ---
-		our header files are allready C++ compatible. (jtc)
+		our header files are already C++ compatible. (jtc)
 	add -m and -n options to swapinfo. (cgd)
 	patch from Ukai Fumitoshi <ukai@kmc.kyoto-u.ac.jp> to do the
 		right thing with NFS fsid's and getnewfsid(). (cgd)
