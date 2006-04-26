@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.69 2006/04/26 17:17:03 rpaulo Exp $	*/
+/*	$NetBSD: wt.c,v 1.70 2006/04/26 17:18:41 rpaulo Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.69 2006/04/26 17:17:03 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.70 2006/04/26 17:18:41 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ const struct cdevsw wt_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
-static int	wtwait(struct wt_softc *sc, int catch, char *msg);
+static int	wtwait(struct wt_softc *sc, int catch, const char *msg);
 static int	wtcmd(struct wt_softc *sc, int cmd);
 static int	wtstart(struct wt_softc *sc, int flag, void *vaddr, size_t len);
 static void	wtdma(struct wt_softc *sc);
@@ -893,7 +893,7 @@ wtcmd(struct wt_softc *sc, int cmd)
 
 /* wait for the end of i/o, seeking marker or rewind operation */
 static int
-wtwait(struct wt_softc *sc, int catch, char *msg)
+wtwait(struct wt_softc *sc, int catch, const char *msg)
 {
 	int error;
 
