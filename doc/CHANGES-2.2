@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.51 2006/04/21 21:54:11 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.52 2006/04/26 00:00:01 snj Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -688,4 +688,9 @@ sys/dev/ic/ciss.c				1.2
 
 	Repair commands with no SCSI transfer.
 	[martti, ticket #10451]
+
+games/sail/pl_main.c				1.17
+
+	fix buffer overflow (CVE-2006-1744), from Debian
+	[drochner, ticket #10504]
 
