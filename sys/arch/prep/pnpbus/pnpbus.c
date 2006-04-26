@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.2 2006/03/16 17:43:34 garbled Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.3 2006/04/26 19:48:01 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.2 2006/03/16 17:43:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.3 2006/04/26 19:48:01 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,10 @@ pnp_newirq(void *v, struct pnpresources *r, int size)
 
 	irq->mask = le16dec(&p->IRQMask[0]);
 
-	/* XXX default to level, not edge, based on the powerstack E0 */
 	if (size > 2)
 		irq->flags = p->IRQInfo;
 	else
-		irq->flags = 0x0c;
+		irq->flags = 0x1;
 
 	SIMPLEQ_INSERT_TAIL(&r->irq, irq, next);
 	r->numirq++;
