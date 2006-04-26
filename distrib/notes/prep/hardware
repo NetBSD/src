@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.2 2006/04/08 23:14:10 wiz Exp $
+.\"	$NetBSD: hardware,v 1.3 2006/04/26 20:25:14 garbled Exp $
 .
 .Pp
 The minimum configuration requires 16 MB of RAM and 60 MB of disk space.
@@ -28,7 +28,7 @@ Model 7043 (43P-140)
 .It
 Model 7024 (E20 and E30)
 .It
-Model 7025 (F30.  Others maybe, but F50 is known not to work)
+Model 7025 (F30)
 .bullet)
 .It
 Motorola
@@ -36,6 +36,8 @@ Motorola
 Motorola Ultra 603
 .It
 Motorola Ultra Plus
+.It
+Motorola Powerstack E1
 .bullet)
 .bullet)
 .
@@ -45,7 +47,7 @@ IBM
 .(bullet -compact
 Model 7043 (43P-150)
 .It
-Model 7025 (F50)
+Model 7025 (F40 & F50)
 .It
 Model 7026 (All)
 .It
@@ -56,8 +58,6 @@ Any of the newer p-Series or 64bit PPC machines
 Motorola
 .(bullet -compact
 MPC750 (In-progress)
-.It
-Powerstack E1 (In-progress, probably works without IDE)
 .It
 MVMEPPC boards (Possibly works, untested yet)
 .bullet)
