@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.15 2006/04/24 21:59:03 agc Exp $ */
+/* $NetBSD: disk.c,v 1.16 2006/04/26 20:31:43 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -820,12 +820,12 @@ strpadcpy(uint8_t *dst, size_t dstlen, const char *src, const size_t srclen, cha
 
 /* handle REPORT LUNs SCSI command */
 static int
-report_luns(uint8_t *data)
+report_luns(uint8_t *data, int64_t luns)
 {
 	uint64_t	i;
 	int32_t		off;
 
-	for (i = 0, off = 8 ; i < 8 ; i++, off += sizeof(i)) {
+	for (i = 0, off = 8 ; i < luns ; i++, off += sizeof(i)) {
 		*((uint64_t *) (void *)data + off) = ISCSI_HTONLL(i);
 	}
 	*((uint32_t *) (void *)data) = ISCSI_HTONL(off - 7);
@@ -1013,14 +1013,12 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case STOP_START_UNIT:
-
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "STOP_START_UNIT\n");
 		args->status = 0;
 		args->length = 0;
 		break;
 
 	case READ_CAPACITY:
-
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "READ_CAPACITY\n");
 		data = args->send_data;
 		*((uint32_t *) (void *)data) = (uint32_t) ISCSI_HTONL((uint32_t) disks.v[sess->d].blockc - 1);	/* Max LBA */
@@ -1031,7 +1029,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case WRITE_6:
-
 		lba = ISCSI_NTOHL(*((uint32_t *) (void *)cdb)) & 0x001fffff;
 		if ((len = cdb[4]) == 0) {
 			len = 256;
@@ -1046,7 +1043,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 
 	case READ_6:
-
 		lba = ISCSI_NTOHL(*((uint32_t *) (void *)cdb)) & 0x001fffff;
 		if ((len = cdb[4]) == 0) {
 			len = 256;
@@ -1138,7 +1134,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 
 	case REPORT_LUNS:
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "REPORT LUNS\n");
-		args->length = report_luns(args->send_data);
+		args->length = report_luns(args->send_data, disks.v[sess->d].luns);
 		args->input = 8;
 		args->status = 0;
 		break;
