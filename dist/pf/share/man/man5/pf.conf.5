@@ -1,4 +1,4 @@
-.\"	$NetBSD: pf.conf.5,v 1.6 2006/04/26 17:55:33 pavel Exp $
+.\"	$NetBSD: pf.conf.5,v 1.7 2006/04/26 18:14:19 pavel Exp $
 .\"	$OpenBSD: pf.conf.5,v 1.326 2005/03/01 18:10:44 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
@@ -1935,10 +1935,10 @@ support the following options:
 Limits the number of concurrent states the rule may create.
 When this limit is reached, further packets matching the rule that would
 create state are dropped, until existing states time out.
-.It Ar no-sync
-Prevent state changes for states created by this rule from appearing on the
-.Xr pfsync 4
-interface.
+.\" .It Ar no-sync
+.\" Prevent state changes for states created by this rule from appearing on the
+.\" .Xr pfsync 4
+.\" interface.
 .It Ar <timeout> <seconds>
 Changes the timeout values used for states created by this rule.
 For a list of all valid timeout names, see
@@ -2755,7 +2755,7 @@ tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
                  [ "0x" ] number )
 
 state-opts     = state-opt [ [ "," ] state-opts ]
-state-opt      = ( "max" number | "no-sync" | timeout |
+state-opt      = ( "max" number | timeout |
                  "source-track" [ ( "rule" | "global" ) ] |
                  "max-src-nodes" number | "max-src-states" number |
                  "max-src-conn" number |
@@ -2818,7 +2818,7 @@ Example rulesets.
 .Xr ip 4 ,
 .Xr ip6 4 ,
 .Xr pf 4 ,
-.Xr pfsync 4 ,
+.\" .Xr pfsync 4 ,
 .Xr route 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
