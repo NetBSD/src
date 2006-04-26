@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.70 2006/04/26 17:18:41 rpaulo Exp $	*/
+/*	$NetBSD: wt.c,v 1.71 2006/04/26 17:19:50 rpaulo Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.70 2006/04/26 17:18:41 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.71 2006/04/26 17:19:50 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.70 2006/04/26 17:18:41 rpaulo Exp $");
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 #include <sys/lwp.h>
 #include <sys/conf.h>
 
@@ -763,7 +764,7 @@ wtintr(void *arg)
 
 /* start the rewind operation */
 static void
-wtrewind(struct wt_sofct *sc)
+wtrewind(struct wt_softc *sc)
 {
 	int rwmode = sc->flags & (TPRO | TPWO);
 
@@ -1036,7 +1037,7 @@ wtreset(bus_space_tag_t iot, bus_space_handle_t ioh, struct wtregs *regs)
  * receive an i/o error code.
  */
 static int
-wtsense(struct wt_sofct *sc, int verbose, int ignore)
+wtsense(struct wt_softc *sc, int verbose, int ignore)
 {
 	char *msg = 0;
 	int error;
