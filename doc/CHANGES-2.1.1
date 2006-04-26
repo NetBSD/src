@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1.1,v 1.1.2.31 2006/04/02 17:51:32 riz Exp $
+#	$NetBSD: CHANGES-2.1.1,v 1.1.2.32 2006/04/26 00:02:46 snj Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.1.1
 release
@@ -320,4 +320,9 @@ sys/netinet/in.c				1.105
 	Close NULL dereference when a GIFALIAS is performed on a
 	non existant address.
 	[seanb, ticket #10411]
+
+games/sail/pl_main.c				1.17
+
+	fix buffer overflow (CVE-2006-1744), from Debian
+	[drochner, ticket #10504]
 
