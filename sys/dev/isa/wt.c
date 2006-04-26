@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.67 2006/04/26 17:13:27 rpaulo Exp $	*/
+/*	$NetBSD: wt.c,v 1.68 2006/04/26 17:15:08 rpaulo Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.67 2006/04/26 17:13:27 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.68 2006/04/26 17:15:08 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.67 2006/04/26 17:13:27 rpaulo Exp $");
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/device.h>
-#include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/conf.h>
 
 #include <machine/intr.h>
@@ -347,7 +347,7 @@ wtsize(dev_t dev)
  * Open routine, called on every device open.
  */
 static int
-wtopen(dev_t dev, int flag, int mode, struct proc *p)
+wtopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = minor(dev) & T_UNIT;
 	struct wt_softc *sc;
@@ -432,7 +432,7 @@ wtopen(dev_t dev, int flag, int mode, struct proc *p)
  * Close routine, called on last device close.
  */
 static int
-wtclose(dev_t dev, int flags, int mode, struct proc *p)
+wtclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 
@@ -481,7 +481,7 @@ done:
  * ioctl(int fd, WTQICMD, int qicop)		-- do QIC op
  */
 static int
-wtioctl(dev_t dev, unsigned long cmd, caddr_t addr, int flag, struct proc *p)
+wtioctl(dev_t dev, unsigned long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 	int error, count, op;
