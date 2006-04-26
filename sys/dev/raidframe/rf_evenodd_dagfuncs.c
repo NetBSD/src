@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.15 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.16 2006/04/26 17:08:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.15 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.16 2006/04/26 17:08:48 oster Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -124,7 +124,7 @@ rf_RegularONEFunc(node)
 	 * new data is stored in Rod buffer */
 	for (k = 0; k < EpdaIndex; k += 2) {
 		length = rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[k].p)->numSector);
-		retcode = rf_bxor(node->params[k + EpdaIndex + 3].p, node->params[k + 1].p, length, node->dagHdr->bp);
+		retcode = rf_bxor(node->params[k + EpdaIndex + 3].p, node->params[k + 1].p, length);
 	}
 	/* Start to encoding the buffer storing the difference of old data and
 	 * new data into 'E' buffer  */
@@ -142,7 +142,7 @@ rf_RegularONEFunc(node)
 	 * function in XorNode */
 	for (k = 0; k < EpdaIndex; k += 2) {
 		length = rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[k].p)->numSector);
-		retcode = rf_bxor(node->params[k + EpdaIndex + 3].p, node->params[k + 1].p, length, node->dagHdr->bp);
+		retcode = rf_bxor(node->params[k + EpdaIndex + 3].p, node->params[k + 1].p, length);
 	}
 	RF_ETIMER_STOP(timer);
 	RF_ETIMER_EVAL(timer);
@@ -173,7 +173,7 @@ rf_SimpleONEFunc(node)
 		length = rf_RaidAddressToByte(raidPtr, ((RF_PhysDiskAddr_t *) node->params[4].p)->numSector);	/* this is a pda of
 														 * writeDataNodes */
 		/* bxor to buffer of readDataNodes */
-		retcode = rf_bxor(node->params[5].p, node->params[1].p, length, node->dagHdr->bp);
+		retcode = rf_bxor(node->params[5].p, node->params[1].p, length);
 		/* find out the corresponding colume in encoding matrix for
 		 * write colume to be encoded into redundant disk 'E' */
 		scol = rf_EUCol(layoutPtr, pda->raidAddress);
@@ -181,7 +181,7 @@ rf_SimpleONEFunc(node)
 		destbuf = node->params[3].p;
 		/* Start encoding process */
 		rf_e_encToBuf(raidPtr, scol, srcbuf, RF_EO_MATRIX_DIM - 2, destbuf, pda->numSector);
-		rf_bxor(node->params[5].p, node->params[1].p, length, node->dagHdr->bp);
+		rf_bxor(node->params[5].p, node->params[1].p, length);
 		RF_ETIMER_STOP(timer);
 		RF_ETIMER_EVAL(timer);
 		tracerec->q_us += RF_ETIMER_VAL_US(timer);
@@ -956,7 +956,7 @@ rf_EOWriteDoubleRecoveryFunc(node)
 	 * into the old recovered data, then do the same things as small
 	 * write. */
 
-	rf_bxor(((RF_PhysDiskAddr_t *) node->params[numDataCol].p)->bufPtr, olddata[0], numbytes, node->dagHdr->bp);
+	rf_bxor(((RF_PhysDiskAddr_t *) node->params[numDataCol].p)->bufPtr, olddata[0], numbytes);
 	/* do new 'E' calculation  */
 	/* find out the corresponding colume in encoding matrix for write
 	 * colume to be encoded into redundant disk 'E' */
@@ -966,7 +966,7 @@ rf_EOWriteDoubleRecoveryFunc(node)
 	rf_e_encToBuf(raidPtr, scol, olddata[0], RF_EO_MATRIX_DIM - 2, epda->bufPtr, fpda->numSector);
 
 	/* do new 'P' calculation  */
-	rf_bxor(olddata[0], ppda->bufPtr, numbytes, node->dagHdr->bp);
+	rf_bxor(olddata[0], ppda->bufPtr, numbytes);
 	/* Free the allocated buffer  */
 	RF_Free(olddata[0], numbytes);
 	RF_Free(olddata[1], numbytes);
