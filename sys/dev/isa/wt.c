@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.66 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: wt.c,v 1.67 2006/04/26 17:13:27 rpaulo Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.66 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.67 2006/04/26 17:13:27 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,14 +147,14 @@ struct wt_softc {
 	struct wtregs regs;
 };
 
-dev_type_open(wtopen);
-dev_type_close(wtclose);
-dev_type_read(wtread);
-dev_type_write(wtwrite);
-dev_type_ioctl(wtioctl);
-dev_type_strategy(wtstrategy);
-dev_type_dump(wtdump);
-dev_type_size(wtsize);
+static dev_type_open(wtopen);
+static dev_type_close(wtclose);
+static dev_type_read(wtread);
+static dev_type_write(wtwrite);
+static dev_type_ioctl(wtioctl);
+static dev_type_strategy(wtstrategy);
+static dev_type_dump(wtdump);
+static dev_type_size(wtsize);
 
 const struct bdevsw wt_bdevsw = {
 	wtopen, wtclose, wtstrategy, wtioctl, wtdump, wtsize, D_TAPE
@@ -165,23 +165,23 @@ const struct cdevsw wt_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
 };
 
-int wtwait(struct wt_softc *sc, int catch, char *msg);
-int wtcmd(struct wt_softc *sc, int cmd);
-int wtstart(struct wt_softc *sc, int flag, void *vaddr, size_t len);
-void wtdma(struct wt_softc *sc);
-void wttimer(void *arg);
-void wtclock(struct wt_softc *sc);
-int wtreset(bus_space_tag_t, bus_space_handle_t, struct wtregs *);
-int wtsense(struct wt_softc *sc, int verbose, int ignore);
-int wtstatus(struct wt_softc *sc);
-void wtrewind(struct wt_softc *sc);
-int wtreadfm(struct wt_softc *sc);
-int wtwritefm(struct wt_softc *sc);
-u_char wtsoft(struct wt_softc *sc, int mask, int bits);
+static int	wtwait(struct wt_softc *sc, int catch, char *msg);
+static int	wtcmd(struct wt_softc *sc, int cmd);
+static int	wtstart(struct wt_softc *sc, int flag, void *vaddr, size_t len);
+static void	wtdma(struct wt_softc *sc);
+static void	wttimer(void *arg);
+static void	wtclock(struct wt_softc *sc);
+static int	wtreset(bus_space_tag_t, bus_space_handle_t, struct wtregs *);
+static int	wtsense(struct wt_softc *sc, int verbose, int ignore);
+static int	wtstatus(struct wt_softc *sc);
+static void	wtrewind(struct wt_softc *sc);
+static int	wtreadfm(struct wt_softc *sc);
+static int	wtwritefm(struct wt_softc *sc);
+static u_char	wtsoft(struct wt_softc *sc, int mask, int bits);
 
-int wtprobe(struct device *, struct cfdata *, void *);
-void wtattach(struct device *, struct device *, void *);
-int wtintr(void *sc);
+int	wtprobe(struct device *, struct cfdata *, void *);
+void	wtattach(struct device *, struct device *, void *);
+int	wtintr(void *sc);
 
 CFATTACH_DECL(wt, sizeof(struct wt_softc),
     wtprobe, wtattach, NULL, NULL);
@@ -192,10 +192,7 @@ extern struct cfdriver wt_cd;
  * Probe for the presence of the device.
  */
 int
-wtprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+wtprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -259,9 +256,7 @@ done:
  * Device is found, configure it.
  */
 void
-wtattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wtattach(struct device *parent, struct device *self, void *aux)
 {
 	struct wt_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -332,21 +327,16 @@ ok:
 	    IST_EDGE, IPL_BIO, wtintr, sc);
 }
 
-int
-wtdump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+static int
+wtdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not implemented. */
 	return ENXIO;
 }
 
-int
-wtsize(dev)
-	dev_t dev;
+static int
+wtsize(dev_t dev)
 {
 
 	/* Not implemented. */
@@ -356,12 +346,8 @@ wtsize(dev)
 /*
  * Open routine, called on every device open.
  */
-int
-wtopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+static int
+wtopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev) & T_UNIT;
 	struct wt_softc *sc;
@@ -445,12 +431,8 @@ wtopen(dev, flag, mode, p)
 /*
  * Close routine, called on last device close.
  */
-int
-wtclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+static int
+wtclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 
@@ -498,13 +480,8 @@ done:
  * ioctl(int fd, MTIOCTOP, struct mtop *buf)	-- do BSD-like op
  * ioctl(int fd, WTQICMD, int qicop)		-- do QIC op
  */
-int
-wtioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+static int
+wtioctl(dev_t dev, unsigned long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 	int error, count, op;
@@ -601,9 +578,8 @@ wtioctl(dev, cmd, addr, flag, p)
 /*
  * Strategy routine.
  */
-void
-wtstrategy(bp)
-	struct buf *bp;
+static void
+wtstrategy(struct buf *bp)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(bp->b_dev) & T_UNIT);
 	int s;
@@ -675,21 +651,15 @@ xit:
 	return;
 }
 
-int
-wtread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+wtread(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(wtstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
-int
-wtwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+static int
+wtwrite(dev_t dev, struct uio *uio, int flags)
 {
 
 	return (physio(wtstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -698,9 +668,8 @@ wtwrite(dev, uio, flags)
 /*
  * Interrupt routine.
  */
-int
-wtintr(arg)
-	void *arg;
+static int
+wtintr(void *arg)
 {
 	struct wt_softc *sc = arg;
 	u_char x;
@@ -793,9 +762,8 @@ wtintr(arg)
 }
 
 /* start the rewind operation */
-void
-wtrewind(sc)
-	struct wt_softc *sc;
+static void
+wtrewind(struct wt_sofct *sc)
 {
 	int rwmode = sc->flags & (TPRO | TPWO);
 
@@ -817,9 +785,8 @@ wtrewind(sc)
 /*
  * Start the `read marker' operation.
  */
-int
-wtreadfm(sc)
-	struct wt_softc *sc;
+static int
+wtreadfm(struct wt_softc *sc)
 {
 
 	sc->flags &= ~(TPRO | TPWO | TPVOL);
@@ -836,9 +803,8 @@ wtreadfm(sc)
 /*
  * Write marker to the tape.
  */
-int
-wtwritefm(sc)
-	struct wt_softc *sc;
+static int
+wtwritefm(struct wt_softc *sc)
 {
 
 	tsleep((caddr_t)wtwritefm, WTPRI, "wtwfm", hz);
@@ -855,10 +821,8 @@ wtwritefm(sc)
 /*
  * While controller status & mask == bits continue waiting.
  */
-u_char
-wtsoft(sc, mask, bits)
-	struct wt_softc *sc;
-	int mask, bits;
+static u_char
+wtsoft(struct wt_sofct *sc, int mask, int bits)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -890,10 +854,8 @@ wtsoft(sc, mask, bits)
 /*
  * Execute QIC command.
  */
-int
-wtcmd(sc, cmd)
-	struct wt_softc *sc;
-	int cmd;
+static int
+wtcmd(struct wt_softc *sc, int cmd)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -930,11 +892,8 @@ wtcmd(sc, cmd)
 }
 
 /* wait for the end of i/o, seeking marker or rewind operation */
-int
-wtwait(sc, catch, msg)
-	struct wt_softc *sc;
-	int catch;
-	char *msg;
+static int
+wtwait(struct wt_softc *sc, int catch, char *msg)
 {
 	int error;
 
@@ -946,9 +905,8 @@ wtwait(sc, catch, msg)
 }
 
 /* initialize DMA for the i/o operation */
-void
-wtdma(sc)
-	struct wt_softc *sc;
+static void
+wtdma(struct wt_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -972,12 +930,8 @@ wtdma(sc)
 }
 
 /* start i/o operation */
-int
-wtstart(sc, flag, vaddr, len)
-	struct wt_softc *sc;
-	int flag;
-	void *vaddr;
-	size_t len;
+static int
+wtstart(struct wt_softc *sc, int flag, void *vaddr, size_t len)
 {
 	u_char x;
 
@@ -1000,9 +954,8 @@ wtstart(sc, flag, vaddr, len)
 /*
  * Start timer.
  */
-void
-wtclock(sc)
-	struct wt_softc *sc;
+static void
+wtclock(struct wt_softc *sc)
 {
 
 	if (sc->flags & TPTIMER)
@@ -1021,9 +974,8 @@ wtclock(sc)
  * This is necessary in case interrupts get eaten due to
  * multiple devices on a single IRQ line.
  */
-void
-wttimer(arg)
-	void *arg;
+static void
+wttimer(void *arg)
 {
 	register struct wt_softc *sc = (struct wt_softc *)arg;
 	int s;
@@ -1051,11 +1003,8 @@ wttimer(arg)
 /*
  * Perform QIC-02 and QIC-36 compatible reset sequence.
  */
-int
-wtreset(iot, ioh, regs)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	struct wtregs *regs;
+static int
+wtreset(bus_space_tag_t iot, bus_space_handle_t ioh, struct wtregs *regs)
 {
 	u_char x;
 	int i;
@@ -1086,10 +1035,8 @@ wtreset(iot, ioh, regs)
  * Get controller status information.  Return 0 if user i/o request should
  * receive an i/o error code.
  */
-int
-wtsense(sc, verbose, ignore)
-	struct wt_softc *sc;
-	int verbose, ignore;
+static int
+wtsense(struct wt_sofct *sc, int verbose, int ignore)
 {
 	char *msg = 0;
 	int error;
@@ -1138,9 +1085,8 @@ wtsense(sc, verbose, ignore)
 /*
  * Get controller status information.
  */
-int
-wtstatus(sc)
-	struct wt_softc *sc;
+static int
+wtstatus(struct wt_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
