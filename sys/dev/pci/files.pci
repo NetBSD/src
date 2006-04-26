@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.250 2006/04/18 16:49:19 rittera Exp $
+#	$NetBSD: files.pci,v 1.251 2006/04/26 13:04:02 rpaulo Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -577,9 +577,9 @@ attach	gsip at pci
 file	dev/pci/if_gsip.c		gsip
 
 # Level One LXT-1001 Gigabit Ethernet
-device	glxt: ether, ifnet, arp, mii
-attach	glxt at pci
-file	dev/pci/if_glxt.c		glxt
+#device	glxt: ether, ifnet, arp, mii
+#attach	glxt at pci
+#file	dev/pci/if_glxt.c		glxt
 
 # Sundance Tech./Tamarack TC9021 Gigabit Ethernet
 device	stge: ether, ifnet, arp, mii, mii_bitbang
