@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.16 2003/08/07 09:37:44 agc Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.16.2.1 2006/04/26 00:01:07 snj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_main.c,v 1.16 2003/08/07 09:37:44 agc Exp $");
+__RCSID("$NetBSD: pl_main.c,v 1.16.2.1 2006/04/26 00:01:07 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ reprint:
 		printf("\nInitial broadside %s (grape, chain, round, double): ",
 			n ? "right" : "left");
 		fflush(stdout);
-		scanf("%s", buf);
+		fgets(buf, sizeof(buf), stdin);
 		switch (*buf) {
 		case 'g':
 			load = L_GRAPE;
