@@ -1,4 +1,4 @@
-.\"	$NetBSD: pf.conf.5,v 1.5 2005/08/07 00:53:13 peter Exp $
+.\"	$NetBSD: pf.conf.5,v 1.6 2006/04/26 17:55:33 pavel Exp $
 .\"	$OpenBSD: pf.conf.5,v 1.326 2005/03/01 18:10:44 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
@@ -1378,9 +1378,11 @@ pass in proto tcp from route "DTAG"
 .It Ar all
 This is equivalent to "from any to any".
 .It Ar group <group>
-Similar to
-.Ar user ,
-this rule only applies to packets of sockets owned by the specified group.
+This functionality is not supported in this version of
+.Nx .
+.\" Similar to
+.\" .Ar user ,
+.\" this rule only applies to packets of sockets owned by the specified group.
 .It Ar user <user>
 This rule only applies to packets of sockets owned by the specified user.
 For outgoing connections initiated from the firewall, this is the user
@@ -2631,7 +2633,7 @@ pf-rule        = action [ ( "in" | "out" ) ]
                  hosts [ filteropt-list ]
 
 filteropt-list = filteropt-list filteropt | filteropt
-filteropt      = user | group | flags | icmp-type | icmp6-type | tos |
+filteropt      = user | flags | icmp-type | icmp6-type | tos |
                  ( "keep" | "modulate" | "synproxy" ) "state"
                  [ "(" state-opts ")" ] |
                  "fragment" | "no-df" | "min-ttl" number |
@@ -2729,7 +2731,7 @@ port           = "port" ( unary-op | binary-op | "{" op-list "}" )
 portspec       = "port" ( number | name ) [ ":" ( "*" | number | name ) ]
 os             = "os"  ( os-name | "{" os-list "}" )
 user           = "user" ( unary-op | binary-op | "{" op-list "}" )
-group          = "group" ( unary-op | binary-op | "{" op-list "}" )
+.\" group          = "group" ( unary-op | binary-op | "{" op-list "}" )
 
 unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
                  ( name | number )
