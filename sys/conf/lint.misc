@@ -1,0 +1,56 @@
+#	$NetBSD: lint.misc,v 1.1 2006/04/26 18:36:25 rpaulo Exp $
+
+#
+# Misc. kernel options
+#
+
+options INSECURE	# disable kernel security levels - X needs this
+options RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options NTP		# NTP phase/frequency locked loop
+options NO_TSC_TIME	# Don't use TSC microtime, even if available.
+
+options KTRACE		# system call tracing via ktrace(1)
+options SYSTRACE	# system call vetting via systrace(1)
+
+options SYSVMSG		# System V-like message queues
+options SYSVSEM		# System V-like semaphores
+options SEMMNI=10	# number of semaphore identifiers
+options SEMMNS=60	# number of semaphores in system
+options SEMUME=10	# max number of undo entries per process
+options SEMMNU=30	# number of undo structures in system
+options SYSVSHM		# System V-like memory sharing
+options SHMMAXPGS=2048	# 2048 pages is the default
+options P1003_1B_SEMAPHORE	# p1003.1b semaphore support
+
+options LKM		# loadable kernel modules
+
+options USERCONF	# userconf(4) support
+options PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# bufq disciplines
+options BUFQ_READPRIO
+options BUFQ_PRIOCSCAN
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC	# expensive kernel consistency checks
+options 	DEBUG		# expensive debugging checks/support
+options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
+options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+options 	KGDB		# remote debugger
+
+# These options enable verbose messages for several subsystems.
+options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
+options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
+options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
+options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
+options 	I2OVERBOSE	# verbose I2O driver messages
+options 	MCAVERBOSE	# verbose MCA device autoconfig messages

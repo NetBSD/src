@@ -1,0 +1,64 @@
+#	$NetBSD: lint.wscons,v 1.1 2006/04/26 18:36:25 rpaulo Exp $
+
+#
+# wscons(4) options
+#
+
+# builtin terminal emulations
+options 	WSEMUL_SUN	# sun terminal emulation
+options 	WSEMUL_VT100	# VT100 / VT220 emulation
+options		WSEMUL_NO_DUMB	# no terminal emulation
+
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_DEFAULT_COLATTR="(0)"
+options 	WS_DEFAULT_MONOATTR="(0)"
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WS_KERNEL_COLATTR="2"
+options 	WS_KERNEL_MONOATTR="5"
+
+# customization of console border color
+options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
+
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
+
+# don't attach pckbd as the console if no PS/2 keyboard is found
+options 	PCKBD_CNATTACH_MAY_FAIL
+
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
+options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver 
+
+# allocate a number of virtual screens at autoconfiguration time
+options 	WSDISPLAY_DEFAULTSCREENS=8
+
+# use a large software cursor that doesn't blink
+options 	PCDISPLAY_SOFTCURSOR
+
+# modify the screen type of the console; defaults to "80x25"
+options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+# work around a hardware bug that loaded fonts don't work; found on ATI cards
+options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
+
+# console scrolling support.
+options 	WSDISPLAY_SCROLLSUPPORT
+
+# enable VGA raster mode capable of displaying multilingual text on console
+options 	VGA_RASTERCONSOLE
+
+# enable splash screen support; requires hw driver support
+options 	SPLASHSCREEN
+options 	SPLASHSCREEN_PROGRESS
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont			# dynamic font loading support

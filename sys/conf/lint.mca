@@ -1,0 +1,28 @@
+#	$NetBSD: lint.mca,v 1.1 2006/04/26 18:36:25 rpaulo Exp $
+
+#
+# MCA bus support
+#
+
+# Serial interfaces
+com*	at mca? slot ?			# 16x50s on comm boards
+
+# SCSI cards
+aha*	at mca? slot ?			# Adaptec AHA-1640
+esp*	at mca? slot ?			# NCR 53C9x
+
+# ESDI devices
+edc*	at mca? slot ?			# IBM ESDI Disk Controllers
+ed*	at edc?
+
+# Network cards
+elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
+ep*	at mca? slot ?			# 3Com EtherLink III (3c529)
+we*	at mca? slot ?			# WD/SMC Ethernet
+ate*	at mca? slot ?			# Allied Telesis AT1720
+ne*	at mca? slot ?			# Novell NE/2 and clones
+tr*	at mca? slot ?			# IBM Token Ring adapter
+tra*	at mca? slot ?			# Tiara LANCard/E and clones
+le*	at mca? slot ?			# SKNET Personal/MC2+
+
+
