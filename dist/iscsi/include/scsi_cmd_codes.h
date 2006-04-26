@@ -1,4 +1,4 @@
-/* $NetBSD: scsi_cmd_codes.h,v 1.5 2006/04/24 21:59:03 agc Exp $ */
+/* $NetBSD: scsi_cmd_codes.h,v 1.6 2006/04/26 20:29:56 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -38,8 +38,8 @@
 
 enum {
 	TEST_UNIT_READY = 0x00,
-	WRITE_6 = 0x06,
 	READ_6 = 0x08,
+	WRITE_6 = 0x0a,
 	INQUIRY = 0x12,
 	MODE_SENSE_6 = 0x1a,
 	STOP_START_UNIT = 0x1b,
