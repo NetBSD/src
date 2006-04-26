@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.68 2006/04/26 17:15:08 rpaulo Exp $	*/
+/*	$NetBSD: wt.c,v 1.69 2006/04/26 17:17:03 rpaulo Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.68 2006/04/26 17:15:08 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.69 2006/04/26 17:17:03 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -822,7 +822,7 @@ wtwritefm(struct wt_softc *sc)
  * While controller status & mask == bits continue waiting.
  */
 static u_char
-wtsoft(struct wt_sofct *sc, int mask, int bits)
+wtsoft(struct wt_softc *sc, int mask, int bits)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
