@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.168 2006/04/25 11:56:25 blymn Exp $
+.\"	$NetBSD: sysctl.3,v 1.169 2006/04/26 20:41:30 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd February 24, 2006
+.Dd April 26, 2006
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -352,7 +352,7 @@ The console magic key sequence.
 .It Li HW_DISKNAMES
 The list of (space separated) disk device and NFS mount names on the system.
 .It Li HW_IOSTATNAMES
-A space separated list of devices that will have i/o statistics
+A space separated list of devices that will have I/O statistics
 collected on them.
 .It Li HW_IOSTATS
 Return statistical information on the NFS mounts, disk and tape
@@ -365,13 +365,13 @@ The third level name is the size of the
 .Va struct io_sysctl .
 The type of object can be determined by examining the
 .Va type
-element of 
+element of
 .Va struct io_sysctl .
 Which can be
 .Dv IOSTAT_DISK
 (disk drive),
 .Dv IOSTAT_TAPE
-(tape drive) or
+(tape drive), or
 .Dv IOSTAT_NFS
 (NFS mount).
 .It Li HW_MACHINE
