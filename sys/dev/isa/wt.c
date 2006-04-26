@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.71 2006/04/26 17:19:50 rpaulo Exp $	*/
+/*	$NetBSD: wt.c,v 1.72 2006/04/26 17:21:30 rpaulo Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.71 2006/04/26 17:19:50 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.72 2006/04/26 17:21:30 rpaulo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,10 +179,10 @@ static void	wtrewind(struct wt_softc *sc);
 static int	wtreadfm(struct wt_softc *sc);
 static int	wtwritefm(struct wt_softc *sc);
 static u_char	wtsoft(struct wt_softc *sc, int mask, int bits);
+static int	wtintr(void *sc);
 
 int	wtprobe(struct device *, struct cfdata *, void *);
 void	wtattach(struct device *, struct device *, void *);
-int	wtintr(void *sc);
 
 CFATTACH_DECL(wt, sizeof(struct wt_softc),
     wtprobe, wtattach, NULL, NULL);
@@ -1039,7 +1039,7 @@ wtreset(bus_space_tag_t iot, bus_space_handle_t ioh, struct wtregs *regs)
 static int
 wtsense(struct wt_softc *sc, int verbose, int ignore)
 {
-	char *msg = 0;
+	const char *msg = 0;
 	int error;
 
 	WTDBPRINT(("wtsense() ignore=0x%x\n", ignore));
