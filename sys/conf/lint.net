@@ -1,0 +1,76 @@
+#	$NetBSD: lint.net,v 1.1 2006/04/26 18:36:25 rpaulo Exp $
+
+# Networking options
+options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
+options 	IPSEC_DEBUG	# debug for IP security
+options 	MROUTING	# IP multicast routing
+options 	PIM		# Protocol Independent Multicast
+options 	NS		# XNS
+options 	NSIP		# XNS tunneling over IP
+options 	ISO,TPIP	# OSI
+options 	EON		# OSI tunneling over IP
+options 	CCITT,LLC,HDLC	# X.25
+options 	NETATALK	# AppleTalk networking protocols
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# ALTQ framework
+options 	ALTQ		# Manipulate network interfaces' output queues
+options 	ALTQ_BLUE	# Stochastic Fair Blue
+options 	ALTQ_CBQ	# Class-Based Queueing
+options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+options 	ALTQ_FIFOQ	# First-In First-Out Queue
+options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+options 	ALTQ_LOCALQ	# Local queueing discipline
+options 	ALTQ_PRIQ	# Priority Queueing
+options 	ALTQ_RED	# Random Early Detection
+options 	ALTQ_RIO	# RED with IN/OUT
+options 	ALTQ_WFQ	# Weighted Fair Queueing
+
+# NFS booting options
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+
+
+# Network pseudo-devices
+pseudo-device	bpfilter	# Berkeley packet filter
+pseudo-device	ipfilter	# IP filter (firewall) and NAT
+pseudo-device	loop		# network loopback
+pseudo-device	sl		# Serial Line IP
+pseudo-device	strip		# Starmode Radio IP (Metricom)
+pseudo-device	irframetty	# IrDA frame line discipline
+pseudo-device	tap		# virtual Ethernet
+pseudo-device	tun		# network tunneling over tty
+pseudo-device	gre		# generic L3 over IP tunnel
+pseudo-device	gif		# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		# IPv[46] tcp relay translation i/f
+pseudo-device	stf		# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan		# IEEE 802.1q encapsulation
+pseudo-device	bridge		# simple inter-network bridging
+options 	BRIDGE_IPF	# bridge uses IP/IPv6 pfil hooks too
+
+
+# PPP support
+pseudo-device	ppp		# Point-to-Point Protocol
+pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
+
+# ISDN support
+pseudo-device	isdn
+pseudo-device	isdntrc
+pseudo-device	irip	4
+pseudo-device	ippp	4
+
+# Miscellaneous
+pseudo-device	kttcp
+pseudo-device	fwiso
+fwip*	at ieee1394if?			# IP over IEEE1394

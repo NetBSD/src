@@ -1,0 +1,50 @@
+#	$NetBSD: lint.pcmcia,v 1.1 2006/04/26 18:36:25 rpaulo Exp $
+
+#
+# PCMCIA devices
+#
+
+# Serial interfaces
+com*	at pcmcia? function ?		# Modems and serial cards
+pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards
+com*	at pcmcom? slave ?		# ...and the slave devices
+
+# SCSI devices
+aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+nca*	at pcmcia? function ?		# NCR 53c80-based SCSI
+spc*	at pcmcia? function ?		# Fujitsu MB87030-based SCSI
+
+# IDE devices
+wdc*	at pcmcia? function ?
+
+# Ethernet devices
+cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
+cs*	at pcmcia? function ?		# CS89xx Ethernet
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+sm*	at pcmcia? function ?		# Megahertz Ethernet
+tr*	at pcmcia? function ?		# TROPIC based Token-Ring
+xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+com*	at xirc?
+xi*	at xirc?
+mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
+com*	at mhzc?
+sm*	at mhzc?
+
+# 802.11 (Wi-Fi) devices
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800
+awi*	at pcmcia? function ?		# BayStack 650/660
+ray*	at pcmcia? function ?		# Raytheon Raylink
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE
+
+# ISDN devices
+isic*	at pcmcia? function?
+options ISICPCMCIA_AVM_A1
+options ISICPCMCIA_ELSA_ISDNMC
+options ISICPCMCIA_ELSA_MCALL
+options ISICPCMCIA_SBSPEEDSTAR2
+
+# Audio devices
+esl*	at pcmcia? function ?		# ESS 1688 AudioDrive
