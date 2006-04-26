@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.34 2006/03/29 23:02:31 cube Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.35 2006/04/26 11:44:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.34 2006/03/29 23:02:31 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.35 2006/04/26 11:44:39 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -217,7 +217,9 @@ lwp_suspend(struct lwp *l, struct lwp *t)
 
 	if (t == l) {
 		SCHED_LOCK(s);
+		KASSERT(l->l_stat == LSONPROC);
 		l->l_stat = LSSUSPENDED;
+		p->p_nrlwps--;
 		/* XXX NJWLWP check if this makes sense here: */
 		p->p_stats->p_ru.ru_nvcsw++;
 		mi_switch(l, NULL);
