@@ -1,0 +1,107 @@
+.\"	$NetBSD: prop_number.3,v 1.1 2006/04/27 20:11:27 thorpej Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\" 
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\" 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\" notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\" notice, this list of conditions and the following disclaimer in the
+.\" documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\" must display the following acknowledgement:
+.\" This product includes software developed by the NetBSD
+.\" Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\" contributors may be used to endorse or promote products derived
+.\" from this software without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\" 
+.Dd April 22, 2006
+.Dt PROP_NUMBER 3
+.Os
+.Sh NAME
+.Nm prop_number ,
+.Nm prop_number_create_integer ,
+.Nm prop_number_copy ,
+.Nm prop_number_size ,
+.Nm prop_number_integer_value ,
+.Nm prop_number_equals ,
+.Nm prop_number_equals_integer
+.Nd numeric value property object
+.Sh LIBRARY
+.Lb libprop
+.Sh SYNOPSIS
+.In prop/proplib.h
+.\"
+.Ft prop_number_t
+.Fn prop_number_create_integer "uintmax_t val"
+.Ft prop_number_t
+.Fn prop_numbery_copy "prop_number_t number"
+.\"
+.Ft int
+.Fn prop_number_size "prop_number_t number"
+.Ft uintmax_t
+.Fn prop_number_integer_value "prop_number_t number"
+.\"
+.Ft boolean_t
+.Fn prop_number_equals "prop_number_t num1" "prop_number_t num2"
+.Ft boolean_t
+.Fn prop_number_equals_integer "prop_number_t number" "uintmax_t val"
+.Sh DESCRIPTION
+The
+.Nm prop_number
+family of functions operate on a numeric value property object type.
+All values are unsigned and promoted to the type
+.Sq uintmax_t .
+.Bl -tag -width "xxxxx"
+.It Fn prop_number_create_integer "uintmax_t val"
+Create a numeric value object with the value
+.Fa val .
+.It Fn prop_number_copy "prop_number_t number"
+Copy a numeric value object.
+.It Fn prop_number_size "prop_number_t number"
+Returns 8, 16, 32, or 64, representing the number of bits required to
+hold the value of the object.
+.It Fn prop_number_integer_value "prop_number_t number"
+Returns the integer value of the numeric value object.
+.It Fn prop_number_equals "prop_number_t num1" "prop_number_t num2"
+Returns
+.Dv TRUE
+if the two numeric value objects are equivalent.
+.It Fn prop_number_equals_integer "prop_number_t number" "uintmax_t val"
+Returns
+.Dv TRUE
+if the object's value is equivalent to
+.Fa val .
+.El
+.Sh SEE ALSO
+.Xr prop_array 3 ,
+.Xr prop_bool 3 ,
+.Xr prop_data 3 ,
+.Xr prop_dictionary 3 ,
+.Xr prop_object 3 ,
+.Xr prop_string 3 ,
+.Xr proplib 3
+.Sh HISTORY
+The
+.Nm proplib
+property container object library first appeared in
+.Nx 4.0 .
