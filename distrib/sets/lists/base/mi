@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.617 2006/04/19 21:53:12 he Exp $
+# $NetBSD: mi,v 1.618 2006/04/27 20:41:57 thorpej Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -793,6 +793,7 @@
 ./usr/include/ntfs				base-c-usr
 ./usr/include/objc				base-objc-usr
 ./usr/include/openssl				base-c-usr
+./usr/include/prop				base-c-usr
 ./usr/include/protocols				base-c-usr
 ./usr/include/readline				base-c-usr
 ./usr/include/rpc				base-c-usr

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.872 2006/04/17 23:31:24 salo Exp $
+#	$NetBSD: mi,v 1.873 2006/04/27 20:41:58 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1197,6 +1197,14 @@
 ./usr/include/pcap.h				comp-c-include
 ./usr/include/pci.h				comp-c-include
 ./usr/include/poll.h				comp-c-include
+./usr/include/prop/prop_array.h			comp-c-include
+./usr/include/prop/prop_bool.h			comp-c-include
+./usr/include/prop/prop_data.h			comp-c-include
+./usr/include/prop/prop_dictionary.h		comp-c-include
+./usr/include/prop/prop_number.h		comp-c-include
+./usr/include/prop/prop_object.h		comp-c-include
+./usr/include/prop/prop_string.h		comp-c-include
+./usr/include/prop/proplib.h			comp-c-include
 ./usr/include/protocols/dumprestore.h		comp-c-include
 ./usr/include/protocols/routed.h		comp-c-include
 ./usr/include/protocols/rwhod.h			comp-c-include
@@ -1692,6 +1700,8 @@
 ./usr/lib/libpci_p.a				comp-c-proflib		profile
 ./usr/lib/libposix.a				comp-c-lib
 ./usr/lib/libposix_p.a				comp-c-proflib		profile
+./usr/lib/libprop.a				comp-c-lib
+./usr/lib/libprop_p.a				comp-c-proflib		profile
 ./usr/lib/libpthread.a				comp-c-lib
 ./usr/lib/libpthread_dbg.a			comp-c-lib
 ./usr/lib/libpthread_dbg_p.a			comp-c-proflib		profile
@@ -1770,6 +1780,7 @@
 ./usr/libdata/lint/llib-lpcap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpci.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lposix.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lprop.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpthread.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpthread_dbg.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lradius.ln		comp-c-lintlib		lint
@@ -4084,6 +4095,83 @@
 ./usr/share/man/cat3/prefresh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/printf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/printw.0			comp-c-catman		.cat
+./usr/share/man/cat3/prop_array.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_capacity.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_copy.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_copy_mutable.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_count.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_create.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_create_with_capacity.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_array_ensure_capacity.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_get.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_iterator.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_make_immutable.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_mutable.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_remove.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_bool.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_bool_copy.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_bool_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_bool_true.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_data.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_data_copy.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_data_create_data.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_data_create_data_nocopy.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_data_data.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_data_data_nocopy.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_data_equals.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_data_equals_data.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_data_size.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_capacity.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_copy.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_copy_mutable.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_dictionary_count.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_create.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_create_with_capacity.0 comp-c-catman .cat
+./usr/share/man/cat3/prop_dictionary_ensure_capacity.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_dictionary_externalize.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_dictionary_get.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_get_keysym.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_internalize.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_dictionary_iterator.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_keysym_cstring_nocopy.0 comp-c-catman .cat
+./usr/share/man/cat3/prop_dictionary_make_immutable.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_dictionary_mutable.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_remove.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_remove_keysym.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_dictionary_set.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_dictionary_set_keysym.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_number.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_copy.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_create_integer.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_equals.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_equals_integer.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_size.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_number_integer_value.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_object.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_object_iterator_next.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_object_iterator_release.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_object_iterator_reset.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_object_release.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_object_retain.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_object_type.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_string.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_append.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_append_cstring.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_copy.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_copy_mutable.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_create.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_create_cstring.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_create_cstring_nocopy.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_string_cstring.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_cstring_nocopy.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_equals.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_equals_cstring.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_mutable.0	comp-c-catman		.cat
+./usr/share/man/cat3/prop_string_size.0		comp-c-catman		.cat
+./usr/share/man/cat3/proplib.0			comp-c-catman		.cat
 ./usr/share/man/cat3/psignal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_atfork.0		comp-c-catman		.cat
@@ -8053,6 +8141,83 @@
 ./usr/share/man/man3/prefresh.3			comp-c-man		.man
 ./usr/share/man/man3/printf.3			comp-c-man		.man
 ./usr/share/man/man3/printw.3			comp-c-man		.man
+./usr/share/man/man3/prop_array.3		comp-c-man		.man
+./usr/share/man/man3/prop_array_add.3		comp-c-man		.man
+./usr/share/man/man3/prop_array_capacity.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_copy.3		comp-c-man		.man
+./usr/share/man/man3/prop_array_copy_mutable.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_count.3		comp-c-man		.man
+./usr/share/man/man3/prop_array_create.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_create_with_capacity.3 comp-c-man	.man
+./usr/share/man/man3/prop_array_ensure_capacity.3 comp-c-man		.man
+./usr/share/man/man3/prop_array_get.3		comp-c-man		.man
+./usr/share/man/man3/prop_array_iterator.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_make_immutable.3 comp-c-man		.man
+./usr/share/man/man3/prop_array_mutable.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_remove.3	comp-c-man		.man
+./usr/share/man/man3/prop_array_set.3		comp-c-man		.man
+./usr/share/man/man3/prop_bool.3		comp-c-man		.man
+./usr/share/man/man3/prop_bool_copy.3		comp-c-man		.man
+./usr/share/man/man3/prop_bool_create.3		comp-c-man		.man
+./usr/share/man/man3/prop_bool_true.3		comp-c-man		.man
+./usr/share/man/man3/prop_data.3		comp-c-man		.man
+./usr/share/man/man3/prop_data_copy.3		comp-c-man		.man
+./usr/share/man/man3/prop_data_create_data.3	comp-c-man		.man
+./usr/share/man/man3/prop_data_create_data_nocopy.3 comp-c-man		.man
+./usr/share/man/man3/prop_data_data.3		comp-c-man		.man
+./usr/share/man/man3/prop_data_data_nocopy.3	comp-c-man		.man
+./usr/share/man/man3/prop_data_equals.3		comp-c-man		.man
+./usr/share/man/man3/prop_data_equals_data.3	comp-c-man		.man
+./usr/share/man/man3/prop_data_size.3		comp-c-man		.man
+./usr/share/man/man3/prop_dictionary.3		comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_capacity.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_copy.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_copy_mutable.3 comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_count.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_create.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_create_with_capacity.3 comp-c-man	.man
+./usr/share/man/man3/prop_dictionary_ensure_capacity.3 comp-c-man	.man
+./usr/share/man/man3/prop_dictionary_externalize.3 comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_get.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_get_keysym.3 comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_internalize.3 comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_iterator.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_keysym_cstring_nocopy.3 comp-c-man .man
+./usr/share/man/man3/prop_dictionary_make_immutable.3 comp-c-man	.man
+./usr/share/man/man3/prop_dictionary_mutable.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_remove.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_remove_keysym.3 comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_set.3	comp-c-man		.man
+./usr/share/man/man3/prop_dictionary_set_keysym.3 comp-c-man		.man
+./usr/share/man/man3/prop_number.3		comp-c-man		.man
+./usr/share/man/man3/prop_number_copy.3		comp-c-man		.man
+./usr/share/man/man3/prop_number_create_integer.3 comp-c-man		.man
+./usr/share/man/man3/prop_number_equals.3	comp-c-man		.man
+./usr/share/man/man3/prop_number_equals_integer.3 comp-c-man		.man
+./usr/share/man/man3/prop_number_size.3		comp-c-man		.man
+./usr/share/man/man3/prop_number_integer_value.3 comp-c-man		.man
+./usr/share/man/man3/prop_object.3		comp-c-man		.man
+./usr/share/man/man3/prop_object_iterator_next.3 comp-c-man		.man
+./usr/share/man/man3/prop_object_iterator_release.3 comp-c-man		.man
+./usr/share/man/man3/prop_object_iterator_reset.3 comp-c-man		.man
+./usr/share/man/man3/prop_object_release.3	comp-c-man		.man
+./usr/share/man/man3/prop_object_retain.3	comp-c-man		.man
+./usr/share/man/man3/prop_object_type.3		comp-c-man		.man
+./usr/share/man/man3/prop_string.3		comp-c-man		.man
+./usr/share/man/man3/prop_string_append.3	comp-c-man		.man
+./usr/share/man/man3/prop_string_append_cstring.3 comp-c-man		.man
+./usr/share/man/man3/prop_string_copy.3		comp-c-man		.man
+./usr/share/man/man3/prop_string_copy_mutable.3	comp-c-man		.man
+./usr/share/man/man3/prop_string_create.3	comp-c-man		.man
+./usr/share/man/man3/prop_string_create_cstring.3 comp-c-man		.man
+./usr/share/man/man3/prop_string_create_cstring_nocopy.3 comp-c-man	.man
+./usr/share/man/man3/prop_string_cstring.3	comp-c-man		.man
+./usr/share/man/man3/prop_string_cstring_nocopy.3 comp-c-man		.man
+./usr/share/man/man3/prop_string_equals.3	comp-c-man		.man
+./usr/share/man/man3/prop_string_equals_cstring.3 comp-c-man		.man
+./usr/share/man/man3/prop_string_mutable.3	comp-c-man		.man
+./usr/share/man/man3/prop_string_size.3		comp-c-man		.man
+./usr/share/man/man3/proplib.3			comp-c-man		.man
 ./usr/share/man/man3/psignal.3			comp-c-man		.man
 ./usr/share/man/man3/pthread.3			comp-c-man		.man
 ./usr/share/man/man3/pthread_atfork.3		comp-c-man		.man
