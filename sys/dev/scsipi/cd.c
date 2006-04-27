@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.220.2.1 2005/04/06 11:56:50 tron Exp $	*/
+/*	$NetBSD: cd.c,v 1.220.2.2 2006/04/27 20:37:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.220.2.1 2005/04/06 11:56:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.220.2.2 2006/04/27 20:37:42 tron Exp $");
 
 #include "rnd.h"
 
@@ -348,6 +348,7 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	struct scsipi_adapter *adapt;
 	int unit, part;
 	int error;
+	int rawpart;
 
 	unit = CDUNIT(dev);
 	if (unit >= cd_cd.cd_ndevs)
@@ -375,20 +376,21 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		goto bad4;
 
+	rawpart = (part == RAW_PART && fmt == S_IFCHR);
 	if ((periph->periph_flags & PERIPH_OPEN) != 0) {
 		/*
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens.
 		 */
 		if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0 &&
-			(part != RAW_PART || fmt != S_IFCHR )) {
+			!rawpart) {
 			error = EIO;
 			goto bad3;
 		}
 	} else {
 		int silent;
 
-		if (part == RAW_PART && fmt == S_IFCHR)
+		if (rawpart)
 			silent = XS_CTL_SILENT;
 		else
 			silent = 0;
@@ -420,7 +422,7 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 			}
 		}
 		if (error) {
-			if (silent)
+			if (rawpart)
 				goto out;
 			goto bad3;
 		}
@@ -432,17 +434,21 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
 		SC_DEBUG(periph, SCSIPI_DB1,
 		    ("cdopen: scsipi_prevent, error=%d\n", error));
-		if (error)
+		if (error) {
+			if (rawpart)
+				goto out;
 			goto bad;
+		}
 
 		if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
-			periph->periph_flags |= PERIPH_MEDIA_LOADED;
-
 			/* Load the physical device parameters. */
 			if (cd_get_parms(cd, 0) != 0) {
+				if (rawpart)
+					goto out;
 				error = ENXIO;
-				goto bad2;
+				goto bad;
 			}
+			periph->periph_flags |= PERIPH_MEDIA_LOADED;
 			SC_DEBUG(periph, SCSIPI_DB3, ("Params loaded "));
 
 			/* Fabricate a disk label. */
@@ -475,7 +481,6 @@ out:	/* Insure only one open at a time. */
 	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
 	return (0);
 
-bad2:
 	periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 
 bad:
