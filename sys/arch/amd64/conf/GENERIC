@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2006/04/19 10:31:44 drochner Exp $
+# $NetBSD: GENERIC,v 1.94 2006/04/27 20:16:01 jonathan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.94 $"
 
 maxusers	32		# estimated number of users
 
@@ -453,6 +453,7 @@ pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # PCMCIA IDE controllers
