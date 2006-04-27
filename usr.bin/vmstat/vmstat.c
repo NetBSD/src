@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.140 2006/04/14 13:12:37 blymn Exp $ */
+/* $NetBSD: vmstat.c,v 1.141 2006/04/27 09:04:41 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.140 2006/04/14 13:12:37 blymn Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.141 2006/04/27 09:04:41 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -880,8 +880,7 @@ drvstats(void)
 	for (dn = 0; dn < ndrive; ++dn) {
 		if (!drv_select[dn])
 			continue;
-		(void)printf("%2.0f ",
-		    (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
+		(void)printf("%2.0f ", (cur.rxfer[dn] + cur.wxfer[dn]) / etime);
 	}
 }
 
