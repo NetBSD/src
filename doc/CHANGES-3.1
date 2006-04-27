@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.77 2006/04/25 23:53:45 snj Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.78 2006/04/27 20:44:23 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1424,6 +1424,18 @@ sys/compat/osf1/osf1_misc.c			1.72-1.73
 
 games/sail/pl_main.c				1.17
 
-	fix buffer overflow (CVE-2006-1744), from Debian
+	Fix buffer overflow (CVE-2006-1744).
 	[drochner, ticket #1289]
+
+sys/compat/mach/mach_vm.c			1.50
+
+	Make this compile without the KTRACE option enabled.
+	This fixes PR kern/33212.
+	[drochner, ticket #1288]
+
+sys/dev/scsipi/cd.c				1.224
+
+	Allow ejecting the media in a CD-ROM drive even if the media is bad.
+	This fixes PR kern/30288.
+	[pavel, ticket #1290]
 
