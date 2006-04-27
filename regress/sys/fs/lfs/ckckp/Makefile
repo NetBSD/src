@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/04/22 00:10:55 perseant Exp $
+#	$NetBSD: Makefile,v 1.3 2006/04/27 22:37:54 perseant Exp $
 #
 # Note: this test must be run with LFSDEV defined, e.g. "LFSDEV=wd0g".
 # It will destroy the existing contents of $LFSDEV to perform the test.
@@ -50,6 +50,6 @@ abort: go
 	umount ${TMPMP}
 
 clean:
-	rm -f ckckp cleanalot_async *~ *.core ${GFILE} ${WFILE}
+	rm -f ckckp cleanalot_async go *~ *.core ${GFILE} ${WFILE}
 
 .include <bsd.prog.mk>
