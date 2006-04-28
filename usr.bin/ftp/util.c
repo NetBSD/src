@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.133 2006/01/31 20:05:36 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.134 2006/04/28 20:07:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.133 2006/01/31 20:05:36 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.134 2006/04/28 20:07:57 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -902,10 +902,12 @@ list_vertical(StringList *sl)
 				putc('\n', ttyout);
 				break;
 			}
-			w = strlen(p);
-			while (w < width) {
-				w = (w + 8) &~ 7;
-				(void)putc('\t', ttyout);
+			if (p) {
+				w = strlen(p);
+				while (w < width) {
+					w = (w + 8) &~ 7;
+					(void)putc('\t', ttyout);
+				}
 			}
 		}
 	}
