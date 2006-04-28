@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.21 2006/04/28 13:59:59 rpaulo Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.22 2006/04/28 14:17:13 rpaulo Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.21 2006/04/28 13:59:59 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.22 2006/04/28 14:17:13 rpaulo Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -263,7 +263,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = ipw_start;
 	ifp->if_watchdog = ipw_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_DS;
@@ -2196,8 +2196,8 @@ ipw_config(struct ipw_softc *sc)
 
 			wepkey.idx = i;
 			wepkey.len = k->wk_keylen;
-			bzero(wepkey.key, sizeof wepkey.key);
-			bcopy(k->wk_key, wepkey.key, k->wk_keylen);
+			memset(wepkey.key, 0, sizeof(wepkey.key));
+			memcpy(wepkey.key, k->wk_key, k->wk_keylen);
 			DPRINTF(("Setting wep key index %u len %u\n",
 			    wepkey.idx, wepkey.len));
 			error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY, &wepkey,
@@ -2223,7 +2223,7 @@ ipw_config(struct ipw_softc *sc)
 #if 0
 	struct ipw_wpa_ie ie;
 
-	bzero(&ie, sizeof ie);
+	memset(&ie, 0 sizeof(ie));
 	ie.len = htole32(sizeof (struct ieee80211_ie_wpa));
 	DPRINTF(("Setting wpa ie\n"));
 	error = ipw_cmd(sc, IPW_CMD_SET_WPA_IE, &ie, sizeof ie);
