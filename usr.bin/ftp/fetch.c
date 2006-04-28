@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.167 2006/01/31 20:05:36 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.168 2006/04/28 19:59:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.167 2006/01/31 20:05:36 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.168 2006/04/28 19:59:44 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1801,7 +1801,6 @@ auto_put(int argc, char **argv, const char *uploadserver)
 
 			/* connect and cwd */
 	rval = auto_fetch(1, &path);
-	free(path);
 	if(rval >= 0)
 		goto cleanup_auto_put;
 
@@ -1819,6 +1818,7 @@ auto_put(int argc, char **argv, const char *uploadserver)
 	rval = 0;
 
  cleanup_auto_put:
+	free(path);
 	FREEPTR(uargv[2]);
 	return (rval);
 }
