@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.135.2.6 2006/01/21 05:48:05 snj Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.135.2.7 2006/04/28 22:33:19 riz Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.135.2.6 $"
+#ident 		"GENERIC-$Revision: 1.135.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -567,6 +567,7 @@ iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
