@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.25 2006/01/04 01:17:54 perry Exp $	*/
+/*	$NetBSD: finger.c,v 1.26 2006/04/28 19:53:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.25 2006/01/04 01:17:54 perry Exp $");
+__RCSID("$NetBSD: finger.c,v 1.26 2006/04/28 19:53:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,8 +253,7 @@ userlist(int argc, char **argv)
 			if ((pw = getpwnam(*p)) != NULL)
 				enter_person(pw);
 			else
-				(void)fprintf(stderr,
-				    "finger: %s: no such user\n", *p);
+				warnx("%s: no such user", *p);
 	} else {
 		while ((pw = getpwent()) != NULL)
 			for (p = argv, ip = used; *p; ++p, ++ip)
@@ -264,8 +263,7 @@ userlist(int argc, char **argv)
 				}
 		for (p = argv, ip = used; *p; ++p, ++ip)
 			if (!*ip)
-				(void)fprintf(stderr,
-				    "finger: %s: no such user\n", *p);
+				warnx("%s: no such user", *p);
 	}
 
 	/* Handle network requests. */
@@ -274,7 +272,7 @@ net:
 		netfinger(*p++);
 
 	if (entries == 0)
-		return;
+		goto done;
 
 	/*
 	 * Scan thru the list of users currently logged in, saving
@@ -297,4 +295,7 @@ net:
 			memmove(&tmp, data.data, sizeof tmp);
 			enter_lastlog(tmp);
 		}
+done:
+	free(nargv);
+	free(used);
 }
