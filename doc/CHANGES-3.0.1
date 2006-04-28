@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.41 2006/04/25 23:52:02 snj Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.42 2006/04/28 22:32:51 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -404,4 +404,18 @@ games/sail/pl_main.c				1.17
 
 	fix buffer overflow (CVE-2006-1744), from Debian
 	[drochner, ticket #1289]
+
+lib/libc/locale/wcstod.c			1.4-1.8
+regress/lib/libc/locale/wcstod/Makefile		1.1
+regress/lib/libc/locale/wcstod/wcstod_test.c	1.1
+
+	replaced by FreeBSD version wcstod(3) for make it work
+	with L"inf", L"nan", and hex conversion.
+	[tnozaki, ticket #1272]
+
+lib/libc/rpc/clnt_vc.c				1.14
+
+	Fix some unpaired sigblocks which possibly leave the process with all
+	signals blocked. Fixes PR#22483
+	[drochner, ticket #1293]
 
