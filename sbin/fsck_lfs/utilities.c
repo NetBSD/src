@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.23 2006/04/13 19:50:10 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.24 2006/04/28 00:07:54 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -220,6 +220,8 @@ namelookup:
 		idesc.id_parent = ino;
 		idesc.id_func = findname;
 		idesc.id_name = namebuf;
+		if (ginode(idesc.id_number) == NULL)
+			break;
 		if ((ckinode(ginode(idesc.id_number), &idesc) & FOUND) == 0)
 			break;
 		len = strlen(namebuf);
