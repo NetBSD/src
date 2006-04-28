@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.137 2006/01/31 20:05:36 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.138 2006/04/28 20:05:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.137 2006/01/31 20:05:36 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.138 2006/04/28 20:05:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -621,7 +621,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	filesize = -1;
 	oprogress = progress;
 	if (verbose && printnames) {
-		if (local && *local != '-')
+		if (*local != '-')
 			fprintf(ttyout, "local: %s ", local);
 		if (remote)
 			fprintf(ttyout, "remote: %s\n", remote);
