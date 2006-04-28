@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.11 2004/12/30 05:11:50 christos Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.11.4.1 2006/04/28 22:29:30 riz Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.11 2004/12/30 05:11:50 christos Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.11.4.1 2006/04/28 22:29:30 riz Exp $");
 #endif
 #endif
  
@@ -236,19 +236,21 @@ clnt_vc_create(fd, raddr, prog, vers, sendsz, recvsz)
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
 			mutex_unlock(&clnt_fd_lock);
+			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
 			goto fooy;
 		}
 		if (connect(fd, (struct sockaddr *)raddr->buf, raddr->len) < 0){
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
 			mutex_unlock(&clnt_fd_lock);
+			thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
 			goto fooy;
 		}
 	}
 	mutex_unlock(&clnt_fd_lock);
+	thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
 	if (!__rpc_fd2sockinfo(fd, &si))
 		goto fooy;
-	thr_sigsetmask(SIG_SETMASK, &(mask), NULL);
 
 	ct->ct_closeit = FALSE;
 
