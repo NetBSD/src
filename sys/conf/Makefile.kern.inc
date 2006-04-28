@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.76 2006/04/19 07:08:17 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.77 2006/04/28 03:40:15 thorpej Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -55,7 +55,8 @@ S!=	cd ../../../..; pwd
 ## CPPFLAGS, CFLAGS, and AFLAGS must be set in the port's Makefile
 ##
 _ISGCC295!=		${CC} --version 2>/dev/null | grep 2.95 2>/dev/null || echo 0
-INCLUDES?=	-I. ${EXTRA_INCLUDES} -I$S/arch -I$S -nostdinc
+INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
+		-I$S -nostdinc
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
