@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.34 2005/02/21 04:32:55 simonb Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.35 2006/04/28 20:35:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,28 +82,65 @@
 #include <time.h>
 #include <unistd.h>
 
-void	cvt_time(time_t, char *, size_t);
-char   *fmt_perm(u_short);
-void	ipcs_kvm(void);
-int	main(int, char **);
-void	msg_sysctl(void);
-void	sem_sysctl(void);
-void	shm_sysctl(void);
-void	show_msginfo(time_t, time_t, time_t, int, u_int64_t, mode_t, uid_t,
-	    gid_t, uid_t, gid_t, u_int64_t, u_int64_t, u_int64_t, pid_t, pid_t);
-void	show_msginfo_hdr(void);
-void	show_msgtotal(struct msginfo *);
-void	show_seminfo_hdr(void);
-void	show_seminfo(time_t, time_t, int, u_int64_t, mode_t, uid_t, gid_t,
-	    uid_t, gid_t, int16_t);
-void	show_semtotal(struct seminfo *);
-void	show_shminfo(time_t, time_t, time_t, int, u_int64_t, mode_t, uid_t,
-	    gid_t, uid_t, gid_t, u_int32_t, u_int64_t, pid_t, pid_t);
-void	show_shminfo_hdr(void);
-void	show_shmtotal(struct shminfo *);
-void	usage(void);
+#define	SHMINFO		1
+#define	SHMTOTAL	2
+#define	MSGINFO		4
+#define	MSGTOTAL	8
+#define	SEMINFO		16
+#define	SEMTOTAL	32
 
-char *
+#define BIGGEST		1
+#define CREATOR		2
+#define OUTSTANDING	4
+#define PID		8
+#define TIME		16
+
+static char	*core = NULL, *namelist = NULL;
+static int	display = 0;
+static int	option = 0;
+
+static void	cvt_time(time_t, char *, size_t);
+static char    *fmt_perm(u_short);
+static void	ipcs_kvm(void);
+static void	msg_sysctl(void);
+static void	sem_sysctl(void);
+static void	shm_sysctl(void);
+static void	show_msginfo(time_t, time_t, time_t, int, u_int64_t, mode_t,
+    uid_t, gid_t, uid_t, gid_t, u_int64_t, u_int64_t, u_int64_t, pid_t, pid_t);
+static void	show_msginfo_hdr(void);
+static void	show_msgtotal(struct msginfo *);
+static void	show_seminfo_hdr(void);
+static void	show_seminfo(time_t, time_t, int, u_int64_t, mode_t, uid_t,
+    gid_t, uid_t, gid_t, int16_t);
+static void	show_semtotal(struct seminfo *);
+static void	show_shminfo(time_t, time_t, time_t, int, u_int64_t, mode_t,
+    uid_t, gid_t, uid_t, gid_t, u_int32_t, u_int64_t, pid_t, pid_t);
+static void	show_shminfo_hdr(void);
+static void	show_shmtotal(struct shminfo *);
+static void	usage(void) __attribute__((__noreturn__));
+static void	unconfsem(void);
+static void	unconfmsg(void);
+static void	unconfshm(void);
+
+static void
+unconfsem(void)
+{
+	warnx("SVID semaphores facility not configured in the system");
+}
+
+static void
+unconfmsg(void)
+{
+	warnx("SVID messages facility not configured in the system");
+}
+
+static void
+unconfshm(void)
+{
+	warnx("SVID shared memory facility not configured in the system");
+}
+
+static char *
 fmt_perm(u_short mode)
 {
 	static char buffer[12];
@@ -123,7 +160,7 @@ fmt_perm(u_short mode)
 	return (&buffer[0]);
 }
 
-void
+static void
 cvt_time(time_t t, char *buf, size_t buflen)
 {
 	struct tm *tm;
@@ -136,23 +173,6 @@ cvt_time(time_t t, char *buf, size_t buflen)
 			tm->tm_hour, tm->tm_min, tm->tm_sec);
 	}
 }
-#define	SHMINFO		1
-#define	SHMTOTAL	2
-#define	MSGINFO		4
-#define	MSGTOTAL	8
-#define	SEMINFO		16
-#define	SEMTOTAL	32
-
-#define BIGGEST		1
-#define CREATOR		2
-#define OUTSTANDING	4
-#define PID		8
-#define TIME		16
-
-char	*core = NULL, *namelist = NULL;
-int	display = 0;
-int	option = 0;
-
 int
 main(int argc, char *argv[])
 {
@@ -213,8 +233,9 @@ main(int argc, char *argv[])
 	if (argc - optind > 0)
 		usage();
 
-	time(&now);
-	printf("IPC status from %s as of %s\n",	/* and extra \n from ctime(3) */
+	(void)time(&now);
+	(void)printf("IPC status from %s as of %s\n",
+	    /* and extra \n from ctime(3) */
 	    core == NULL ? "<running system>" : core, ctime(&now));
 
         if (display == 0)
@@ -229,225 +250,226 @@ main(int argc, char *argv[])
 			sem_sysctl();
 	} else
 		ipcs_kvm();
-	exit(0);
+	return 0;
 }
 
-void
+static void
 show_msgtotal(struct msginfo *msginfo)
 {
-	printf("msginfo:\n");
-	printf("\tmsgmax: %6d\t(max characters in a message)\n",
+	(void)printf("msginfo:\n");
+	(void)printf("\tmsgmax: %6d\t(max characters in a message)\n",
 	    msginfo->msgmax);
-	printf("\tmsgmni: %6d\t(# of message queues)\n",
+	(void)printf("\tmsgmni: %6d\t(# of message queues)\n",
 	    msginfo->msgmni);
-	printf("\tmsgmnb: %6d\t(max characters in a message queue)\n",
+	(void)printf("\tmsgmnb: %6d\t(max characters in a message queue)\n",
 	    msginfo->msgmnb);
-	printf("\tmsgtql: %6d\t(max # of messages in system)\n",
+	(void)printf("\tmsgtql: %6d\t(max # of messages in system)\n",
 	    msginfo->msgtql);
-	printf("\tmsgssz: %6d\t(size of a message segment)\n",
+	(void)printf("\tmsgssz: %6d\t(size of a message segment)\n",
 	    msginfo->msgssz);
-	printf("\tmsgseg: %6d\t(# of message segments in system)\n\n",
+	(void)printf("\tmsgseg: %6d\t(# of message segments in system)\n\n",
 	    msginfo->msgseg);
 }
 
-void
+static void
 show_shmtotal(struct shminfo *shminfo)
 {
-	printf("shminfo:\n");
-	printf("\tshmmax: %7d\t(max shared memory segment size)\n",
+	(void)printf("shminfo:\n");
+	(void)printf("\tshmmax: %7d\t(max shared memory segment size)\n",
 	    shminfo->shmmax);
-	printf("\tshmmin: %7d\t(min shared memory segment size)\n",
+	(void)printf("\tshmmin: %7d\t(min shared memory segment size)\n",
 	    shminfo->shmmin);
-	printf("\tshmmni: %7d\t(max number of shared memory identifiers)\n",
+	(void)printf("\tshmmni: %7d\t(max number of shared memory identifiers)\n",
 	    shminfo->shmmni);
-	printf("\tshmseg: %7d\t(max shared memory segments per process)\n",
+	(void)printf("\tshmseg: %7d\t(max shared memory segments per process)\n",
 	    shminfo->shmseg);
-	printf("\tshmall: %7d\t(max amount of shared memory in pages)\n\n",
+	(void)printf("\tshmall: %7d\t(max amount of shared memory in pages)\n\n",
 	    shminfo->shmall);
 }
 
-void
+static void
 show_semtotal(struct seminfo *seminfo)
 {
-	printf("seminfo:\n");
-	printf("\tsemmap: %6d\t(# of entries in semaphore map)\n",
+	(void)printf("seminfo:\n");
+	(void)printf("\tsemmap: %6d\t(# of entries in semaphore map)\n",
 	    seminfo->semmap);
-	printf("\tsemmni: %6d\t(# of semaphore identifiers)\n",
+	(void)printf("\tsemmni: %6d\t(# of semaphore identifiers)\n",
 	    seminfo->semmni);
-	printf("\tsemmns: %6d\t(# of semaphores in system)\n",
+	(void)printf("\tsemmns: %6d\t(# of semaphores in system)\n",
 	    seminfo->semmns);
-	printf("\tsemmnu: %6d\t(# of undo structures in system)\n",
+	(void)printf("\tsemmnu: %6d\t(# of undo structures in system)\n",
 	    seminfo->semmnu);
-	printf("\tsemmsl: %6d\t(max # of semaphores per id)\n",
+	(void)printf("\tsemmsl: %6d\t(max # of semaphores per id)\n",
 	    seminfo->semmsl);
-	printf("\tsemopm: %6d\t(max # of operations per semop call)\n",
+	(void)printf("\tsemopm: %6d\t(max # of operations per semop call)\n",
 	    seminfo->semopm);
-	printf("\tsemume: %6d\t(max # of undo entries per process)\n",
+	(void)printf("\tsemume: %6d\t(max # of undo entries per process)\n",
 	    seminfo->semume);
-	printf("\tsemusz: %6d\t(size in bytes of undo structure)\n",
+	(void)printf("\tsemusz: %6d\t(size in bytes of undo structure)\n",
 	    seminfo->semusz);
-	printf("\tsemvmx: %6d\t(semaphore maximum value)\n",
+	(void)printf("\tsemvmx: %6d\t(semaphore maximum value)\n",
 	    seminfo->semvmx);
-	printf("\tsemaem: %6d\t(adjust on exit max value)\n\n",
+	(void)printf("\tsemaem: %6d\t(adjust on exit max value)\n\n",
 	    seminfo->semaem);
 }
 
-void
+static void
 show_msginfo_hdr(void)
 {
-	printf("Message Queues:\n");
-	printf("T        ID     KEY        MODE       OWNER    GROUP");
+	(void)printf("Message Queues:\n");
+	(void)printf("T        ID     KEY        MODE       OWNER    GROUP");
 	if (option & CREATOR)
-		printf("  CREATOR   CGROUP");
+		(void)printf("  CREATOR   CGROUP");
 	if (option & OUTSTANDING)
-		printf(" CBYTES  QNUM");
+		(void)printf(" CBYTES  QNUM");
 	if (option & BIGGEST)
-		printf(" QBYTES");
+		(void)printf(" QBYTES");
 	if (option & PID)
-		printf(" LSPID LRPID");
+		(void)printf(" LSPID LRPID");
 	if (option & TIME)
-		printf("    STIME    RTIME    CTIME");
-	printf("\n");
+		(void)printf("    STIME    RTIME    CTIME");
+	(void)printf("\n");
 }
 
-void
-show_msginfo(time_t stime, time_t rtime, time_t ctime, int ipcid, u_int64_t key,
+static void
+show_msginfo(time_t s_time, time_t r_time, time_t c_time, int ipcid,
+    u_int64_t key,
     mode_t mode, uid_t uid, gid_t gid, uid_t cuid, gid_t cgid,
     u_int64_t cbytes, u_int64_t qnum, u_int64_t qbytes, pid_t lspid,
     pid_t lrpid)
 {
-	char stime_buf[100], rtime_buf[100], ctime_buf[100];
+	char s_time_buf[100], r_time_buf[100], c_time_buf[100];
 
 	if (option & TIME) {
-		cvt_time(stime, stime_buf, sizeof(stime_buf));
-		cvt_time(rtime, rtime_buf, sizeof(rtime_buf));
-		cvt_time(ctime, ctime_buf, sizeof(ctime_buf));
+		cvt_time(s_time, s_time_buf, sizeof(s_time_buf));
+		cvt_time(r_time, r_time_buf, sizeof(r_time_buf));
+		cvt_time(c_time, c_time_buf, sizeof(c_time_buf));
 	}
 
-	printf("q %9d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
+	(void)printf("q %9d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
 	    user_from_uid(uid, 0), group_from_gid(gid, 0));
 
 	if (option & CREATOR)
-		printf(" %8s %8s", user_from_uid(cuid, 0),
+		(void)printf(" %8s %8s", user_from_uid(cuid, 0),
 		    group_from_gid(cgid, 0));
 
 	if (option & OUTSTANDING)
-		printf(" %6lld %5lld", (long long)cbytes, (long long)qnum);
+		(void)printf(" %6lld %5lld", (long long)cbytes, (long long)qnum);
 
 	if (option & BIGGEST)
-		printf(" %6lld", (long long)qbytes);
+		(void)printf(" %6lld", (long long)qbytes);
 
 	if (option & PID)
-		printf(" %5d %5d", lspid, lrpid);
+		(void)printf(" %5d %5d", lspid, lrpid);
 
 	if (option & TIME)
-		printf(" %s %s %s", stime_buf, rtime_buf, ctime_buf);
+		(void)printf(" %s %s %s", s_time_buf, r_time_buf, c_time_buf);
 
-	printf("\n");
+	(void)printf("\n");
 }
 
-void
+static void
 show_shminfo_hdr(void)
 {
-	printf("Shared Memory:\n");
-	printf("T        ID     KEY        MODE       OWNER    GROUP");
+	(void)printf("Shared Memory:\n");
+	(void)printf("T        ID     KEY        MODE       OWNER    GROUP");
 	if (option & CREATOR)
-		printf("  CREATOR   CGROUP");
+		(void)printf("  CREATOR   CGROUP");
 	if (option & OUTSTANDING)
-		printf(" NATTCH");
+		(void)printf(" NATTCH");
 	if (option & BIGGEST)
-		printf("   SEGSZ");
+		(void)printf("   SEGSZ");
 	if (option & PID)
-		printf("  CPID  LPID");
+		(void)printf("  CPID  LPID");
 	if (option & TIME)
-		printf("    ATIME    DTIME    CTIME");
-	printf("\n");
+		(void)printf("    ATIME    DTIME    CTIME");
+	(void)printf("\n");
 }
 
-void
-show_shminfo(time_t atime, time_t dtime, time_t ctime, int ipcid, u_int64_t key,
+static void
+show_shminfo(time_t atime, time_t dtime, time_t c_time, int ipcid, u_int64_t key,
     mode_t mode, uid_t uid, gid_t gid, uid_t cuid, gid_t cgid,
     u_int32_t nattch, u_int64_t segsz, pid_t cpid, pid_t lpid)
 {
-	char atime_buf[100], dtime_buf[100], ctime_buf[100];
+	char atime_buf[100], dtime_buf[100], c_time_buf[100];
 
 	if (option & TIME) {
 		cvt_time(atime, atime_buf, sizeof(atime_buf));
 		cvt_time(dtime, dtime_buf, sizeof(dtime_buf));
-		cvt_time(ctime, ctime_buf, sizeof(ctime_buf));
+		cvt_time(c_time, c_time_buf, sizeof(c_time_buf));
 	}
 
-	printf("m %9d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
+	(void)printf("m %9d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
 	    user_from_uid(uid, 0), group_from_gid(gid, 0));
 
 	if (option & CREATOR)
-		printf(" %8s %8s", user_from_uid(cuid, 0),
+		(void)printf(" %8s %8s", user_from_uid(cuid, 0),
 		    group_from_gid(cgid, 0));
 
 	if (option & OUTSTANDING)
-		printf(" %6d", nattch);
+		(void)printf(" %6d", nattch);
 
 	if (option & BIGGEST)
-		printf(" %7llu", (long long)segsz);
+		(void)printf(" %7llu", (long long)segsz);
 
 	if (option & PID)
-		printf(" %5d %5d", cpid, lpid);
+		(void)printf(" %5d %5d", cpid, lpid);
 
 	if (option & TIME)
-		printf(" %s %s %s",
+		(void)printf(" %s %s %s",
 		    atime_buf,
 		    dtime_buf,
-		    ctime_buf);
+		    c_time_buf);
 
-	printf("\n");
+	(void)printf("\n");
 }
 
-void
+static void
 show_seminfo_hdr(void)
 {
-	printf("Semaphores:\n");
-	printf("T        ID     KEY        MODE       OWNER    GROUP");
+	(void)printf("Semaphores:\n");
+	(void)printf("T        ID     KEY        MODE       OWNER    GROUP");
 	if (option & CREATOR)
-		printf("  CREATOR   CGROUP");
+		(void)printf("  CREATOR   CGROUP");
 	if (option & BIGGEST)
-		printf(" NSEMS");
+		(void)printf(" NSEMS");
 	if (option & TIME)
-		printf("    OTIME    CTIME");
-	printf("\n");
+		(void)printf("    OTIME    CTIME");
+	(void)printf("\n");
 }
 
-void
-show_seminfo(time_t otime, time_t ctime, int ipcid, u_int64_t key, mode_t mode,
+static void
+show_seminfo(time_t otime, time_t c_time, int ipcid, u_int64_t key, mode_t mode,
     uid_t uid, gid_t gid, uid_t cuid, gid_t cgid, int16_t nsems)
 {
-	char ctime_buf[100], otime_buf[100];
+	char c_time_buf[100], otime_buf[100];
 
 	if (option & TIME) {
 		cvt_time(otime, otime_buf, sizeof(otime_buf));
-		cvt_time(ctime, ctime_buf, sizeof(ctime_buf));
+		cvt_time(c_time, c_time_buf, sizeof(c_time_buf));
 	}
 
-	printf("s %9d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
+	(void)printf("s %9d %10lld %s %8s %8s", ipcid, (long long)key, fmt_perm(mode),
 	    user_from_uid(uid, 0), group_from_gid(gid, 0));
 
 	if (option & CREATOR)
-		printf(" %8s %8s", user_from_uid(cuid, 0),
+		(void)printf(" %8s %8s", user_from_uid(cuid, 0),
 		    group_from_gid(cgid, 0));
 
 	if (option & BIGGEST)
-		printf(" %5d", nsems);
+		(void)printf(" %5d", nsems);
 
 	if (option & TIME)
-		printf(" %s %s", otime_buf, ctime_buf);
+		(void)printf(" %s %s", otime_buf, c_time_buf);
 
-	printf("\n");
+	(void)printf("\n");
 }
 
-void
+static void
 msg_sysctl(void)
 {
 	struct msg_sysctl_info *msgsi;
-	char *buf;
+	void *buf;
 	int mib[3];
 	size_t len;
 	int i, valid;
@@ -456,12 +478,11 @@ msg_sysctl(void)
 	mib[1] = KERN_SYSVMSG;
 	len = sizeof(valid);
 	if (sysctl(mib, 2, &valid, &len, NULL, 0) < 0) {
-		perror("sysctl(KERN_SYSVMSG)");
+		warn("sysctl(KERN_SYSVMSG)");
 		return;
 	}
 	if (!valid) {
-		fprintf(stderr,
-		    "SVID messages facility not configured in the system\n");
+		unconfmsg();
 		return;
 	}
 
@@ -474,7 +495,7 @@ msg_sysctl(void)
 		len = sizeof(struct msginfo);
 	} else {
 		if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0) {
-			perror("sysctl(KERN_SYSVIPC_MSG_INFO)");
+			warn("sysctl(KERN_SYSVIPC_MSG_INFO)");
 			return;
 		}
 	}
@@ -483,8 +504,8 @@ msg_sysctl(void)
 		err(1, "malloc");
 	msgsi = (struct msg_sysctl_info *)buf;
 	if (sysctl(mib, 3, msgsi, &len, NULL, 0) < 0) {
-		perror("sysctl(KERN_SYSVIPC_MSG_INFO)");
-		return;
+		warn("sysctl(KERN_SYSVIPC_MSG_INFO)");
+		goto done;
 	}
 
 	if (display & MSGTOTAL)
@@ -511,15 +532,17 @@ msg_sysctl(void)
 				    msqptr->msg_lspid,
 				    msqptr->msg_lrpid);
 		}
-		printf("\n");
+		(void)printf("\n");
 	}
+done:
+	free(buf);
 }
 
-void
+static void
 shm_sysctl(void)
 {
 	struct shm_sysctl_info *shmsi;
-	char *buf;
+	void *buf;
 	int mib[3];
 	size_t len;
 	int i /*, valid */;
@@ -529,12 +552,11 @@ shm_sysctl(void)
 	mib[1] = KERN_SYSVSHM;
 	len = sizeof(valid);
 	if (sysctl(mib, 2, &valid, &len, NULL, 0) < 0) {
-		perror("sysctl(KERN_SYSVSHM)");
+		warn("sysctl(KERN_SYSVSHM)");
 		return;
 	}
 	if (!valid) {
-		fprintf(stderr,
-		    "SVID shared memory facility not configured in the system\n");
+		unconfshm();
 		return;
 	}
 
@@ -547,7 +569,7 @@ shm_sysctl(void)
 		len = sizeof(struct shminfo);
 	} else {
 		if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0) {
-			perror("sysctl(KERN_SYSVIPC_SHM_INFO)");
+			warn("sysctl(KERN_SYSVIPC_SHM_INFO)");
 			return;
 		}
 	}
@@ -556,8 +578,8 @@ shm_sysctl(void)
 		err(1, "malloc");
 	shmsi = (struct shm_sysctl_info *)buf;
 	if (sysctl(mib, 3, shmsi, &len, NULL, 0) < 0) {
-		perror("sysctl(KERN_SYSVIPC_SHM_INFO)");
-		return;
+		warn("sysctl(KERN_SYSVIPC_SHM_INFO)");
+		goto done;
 	}
 
 	if (display & SHMTOTAL)
@@ -583,15 +605,17 @@ shm_sysctl(void)
 				    shmptr->shm_cpid,
 				    shmptr->shm_lpid);
 		}
-		printf("\n");
+		(void)printf("\n");
 	}
+done:
+	free(buf);
 }
 
-void
+static void
 sem_sysctl(void)
 {
 	struct sem_sysctl_info *semsi;
-	char *buf;
+	void *buf;
 	int mib[3];
 	size_t len;
 	int i, valid;
@@ -600,12 +624,11 @@ sem_sysctl(void)
 	mib[1] = KERN_SYSVSEM;
 	len = sizeof(valid);
 	if (sysctl(mib, 2, &valid, &len, NULL, 0) < 0) {
-		perror("sysctl(KERN_SYSVSEM)");
+		warn("sysctl(KERN_SYSVSEM)");
 		return;
 	}
 	if (!valid) {
-		fprintf(stderr,
-		    "SVID semaphores facility not configured in the system\n");
+		unconfsem();
 		return;
 	}
 
@@ -618,7 +641,7 @@ sem_sysctl(void)
 		len = sizeof(struct seminfo);
 	} else {
 		if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0) {
-			perror("sysctl(KERN_SYSVIPC_SEM_INFO)");
+			warn("sysctl(KERN_SYSVIPC_SEM_INFO)");
 			return;
 		}
 	}
@@ -627,8 +650,8 @@ sem_sysctl(void)
 		err(1, "malloc");
 	semsi = (struct sem_sysctl_info *)buf;
 	if (sysctl(mib, 3, semsi, &len, NULL, 0) < 0) {
-		perror("sysctl(KERN_SYSVIPC_SEM_INFO)");
-		return;
+		warn("sysctl(KERN_SYSVIPC_SEM_INFO)");
+		goto done;
 	}
 
 	if (display & SEMTOTAL)
@@ -650,11 +673,13 @@ sem_sysctl(void)
 				    semaptr->sem_perm.cgid,
 				    semaptr->sem_nsems);
 		}
-		printf("\n");
+		(void)printf("\n");
 	}
+done:
+	free(buf);
 }
 
-void
+static void
 ipcs_kvm(void)
 {
 	struct msginfo msginfo;
@@ -739,25 +764,24 @@ ipcs_kvm(void)
 					    msqptr->msg_rtime,
 					    msqptr->msg_ctime,
 					    IXSEQ_TO_IPCID(i, msqptr->msg_perm),
-					    msqptr->msg_perm._key,
+					    (u_int64_t)msqptr->msg_perm._key,
 					    msqptr->msg_perm.mode,
 					    msqptr->msg_perm.uid,
 					    msqptr->msg_perm.gid,
 					    msqptr->msg_perm.cuid,
 					    msqptr->msg_perm.cgid,
-					    msqptr->_msg_cbytes,
-					    msqptr->msg_qnum,
-					    msqptr->msg_qbytes,
+					    (u_int64_t)msqptr->_msg_cbytes,
+					    (u_int64_t)msqptr->msg_qnum,
+					    (u_int64_t)msqptr->msg_qbytes,
 					    msqptr->msg_lspid,
 					    msqptr->msg_lrpid);
 			}
-			printf("\n");
+			(void)printf("\n");
+			free(xmsqids);
 		}
 	} else
-		if (display & (MSGINFO | MSGTOTAL)) {
-			fprintf(stderr,
-			    "SVID messages facility not configured in the system\n");
-		}
+		if (display & (MSGINFO | MSGTOTAL))
+			unconfmsg();
 	if ((display & (SHMINFO | SHMTOTAL)) &&
 	    (kvm_read(kd, symbols[X_SHMINFO].n_value, &shminfo,
 	     sizeof(shminfo)) == sizeof(shminfo))) {
@@ -790,24 +814,23 @@ ipcs_kvm(void)
 					    shmptr->shm_dtime,
 					    shmptr->shm_ctime,
 					    IXSEQ_TO_IPCID(i, shmptr->shm_perm),
-					    shmptr->shm_perm._key,
+					    (u_int64_t)shmptr->shm_perm._key,
 					    shmptr->shm_perm.mode,
 					    shmptr->shm_perm.uid,
 					    shmptr->shm_perm.gid,
 					    shmptr->shm_perm.cuid,
 					    shmptr->shm_perm.cgid,
 					    shmptr->shm_nattch,
-					    shmptr->shm_segsz,
+					    (u_int64_t)shmptr->shm_segsz,
 					    shmptr->shm_cpid,
 					    shmptr->shm_lpid);
 			}
-			printf("\n");
+			(void)printf("\n");
+			free(xshmids);
 		}
 	} else
-		if (display & (SHMINFO | SHMTOTAL)) {
-			fprintf(stderr,
-			    "SVID shared memory facility not configured in the system\n");
-		}
+		if (display & (SHMINFO | SHMTOTAL))
+			unconfshm();
 	if ((display & (SEMINFO | SEMTOTAL)) &&
 	    (kvm_read(kd, symbols[X_SEMINFO].n_value, &seminfo,
 	     sizeof(seminfo)) == sizeof(seminfo))) {
@@ -838,7 +861,7 @@ ipcs_kvm(void)
 					show_seminfo(semaptr->sem_otime,
 					    semaptr->sem_ctime,
 					    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
-					    semaptr->sem_perm._key,
+					    (u_int64_t)semaptr->sem_perm._key,
 					    semaptr->sem_perm.mode,
 					    semaptr->sem_perm.uid,
 					    semaptr->sem_perm.gid,
@@ -847,21 +870,21 @@ ipcs_kvm(void)
 					    semaptr->sem_nsems);
 			}
 
-			printf("\n");
+			(void)printf("\n");
+			free(xsema);
 		}
 	} else
-		if (display & (SEMINFO | SEMTOTAL)) {
-			fprintf(stderr, "SVID semaphores facility not configured in the system\n");
-		}
-	kvm_close(kd);
+		if (display & (SEMINFO | SEMTOTAL)) 
+			unconfsem();
+	(void)kvm_close(kd);
 }
 
-void
+static void
 usage(void)
 {
 
-	fprintf(stderr,
-	    "usage: %s [-abcmopqstMQST] [-C corefile] [-N namelist]\n",
+	(void)fprintf(stderr,
+	    "Usage: %s [-abcmopqstMQST] [-C corefile] [-N namelist]\n",
 	    getprogname());
 	exit(1);
 }
