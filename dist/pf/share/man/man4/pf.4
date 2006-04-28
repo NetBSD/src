@@ -1,4 +1,4 @@
-.\"	$NetBSD: pf.4,v 1.2 2004/11/14 11:26:48 yamt Exp $
+.\"	$NetBSD: pf.4,v 1.2.2.1 2006/04/28 22:16:04 riz Exp $
 .\"	$OpenBSD: pf.4,v 1.52 2004/08/24 03:13:46 jaredy Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
@@ -1098,3 +1098,14 @@ The
 .Nm
 packet filtering mechanism first appeared in
 .Ox 3.0 .
+.Sh CAVEATS
+The following functionality is missing from
+.Nm
+in this version of
+.Nx :
+.Bl -bullet -offset indent
+.It
+The
+.Em group
+keyword is not supported.
+.El
