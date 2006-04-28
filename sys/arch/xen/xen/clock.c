@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 2006/04/18 21:19:01 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 2006/04/28 02:30:42 jld Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2006/04/18 21:19:01 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22 2006/04/28 02:30:42 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ resettodr()
 #else
 		op.u.settime.usecs	 = time.tv_usec;
 #endif
-		op.u.settime.system_time = shadow_system_time;
+		op.u.settime.system_time = processed_system_time;
 		HYPERVISOR_dom0_op(&op);
 
 		splx(s);
