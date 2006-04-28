@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2000/06/03 03:58:44 simonb Exp $
+#	$NetBSD: Makefile,v 1.9 2006/04/28 20:35:15 christos Exp $
 
+WARNS=4
 PROG=	ipcs
 DPADD+=	${LIBKVM}
 LDADD+=	-lkvm
