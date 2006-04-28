@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.308 2006/04/08 14:15:48 tnozaki Exp $
+#	$NetBSD: NetBSD.dist,v 1.309 2006/04/28 03:27:49 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -286,6 +286,7 @@
 ./usr/include/ntfs
 ./usr/include/objc
 ./usr/include/openssl
+./usr/include/prop
 ./usr/include/protocols
 ./usr/include/readline
 ./usr/include/rpc
