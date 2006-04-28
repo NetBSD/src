@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfcomp.c,v 1.1.1.3 2006/04/04 16:10:12 martti Exp $	*/
+/*	$NetBSD: ipfcomp.c,v 1.2 2006/04/28 19:49:13 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -493,7 +493,8 @@ u_int incount, outcount;
 	/*
 	 * Output the array of pointers to rules for this group.
 	 */
-	if (num == -2 && dir == 0 && header[0] == 0 && incount != 0) {
+	if (g != NULL && num == -2 && dir == 0 && header[0] == 0 &&
+	    incount != 0) {
 		fprintf(fp, "\nfrentry_t *ipf_rules_in_%s[%d] = {",
 			group, incount);
 		for (f = g->fg_start, i = 0; f != NULL; f = f->fr_next) {
@@ -512,7 +513,8 @@ u_int incount, outcount;
 		fprintf(fp, "\n};\n");
 	}
 
-	if (num == -2 && dir == 1 && header[1] == 0 && outcount != 0) {
+	if (g != NULL && num == -2 && dir == 1 && header[1] == 0 &&
+	    outcount != 0) {
 		fprintf(fp, "\nfrentry_t *ipf_rules_out_%s[%d] = {",
 			group, outcount);
 		for (f = g->fg_start, i = 0; f != NULL; f = f->fr_next) {
@@ -541,7 +543,7 @@ u_int incount, outcount;
 	/*
 	 * If the function header has not been printed then print it now.
 	 */
-	if (header[dir] == 0) {
+	if (g != NULL && header[dir] == 0) {
 		int pdst = 0, psrc = 0;
 
 		openfunc = 1;
