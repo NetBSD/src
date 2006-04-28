@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.200 2006/03/20 13:14:37 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.201 2006/04/28 00:58:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.200 2006/03/20 13:14:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.201 2006/04/28 00:58:19 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -598,10 +598,6 @@ netintr(void)
 
 	n = netisr;
 	netisr = 0;
-
-#ifdef SOFTNET_INTR		/* XXX TEMPORARY XXX */
-	intrcnt[SOFTNET_INTR]++;
-#endif
 
 #include <net/netisr_dispatch.h>
 
