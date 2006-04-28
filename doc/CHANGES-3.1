@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.78 2006/04/27 20:44:23 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.79 2006/04/28 22:35:40 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1438,4 +1438,41 @@ sys/dev/scsipi/cd.c				1.224
 	Allow ejecting the media in a CD-ROM drive even if the media is bad.
 	This fixes PR kern/30288.
 	[pavel, ticket #1290]
+
+lib/libc/locale/wcstod.c			1.4-1.8
+regress/lib/libc/locale/wcstod/Makefile		1.1
+regress/lib/libc/locale/wcstod/wcstod_test.c	1.1
+
+	replaced by FreeBSD version wcstod(3) for make it work
+	with L"inf", L"nan", and hex conversion.
+	[tnozaki, ticket #1272]
+
+dist/pf/share/man/man4/pf.4			1.4
+dist/pf/share/man/man5/pf.conf.5		1.6
+
+	The "group" keyword is not supported in NetBSD, so:
+	- add a CAVEATS section to pf(4) and note it
+	- in the description in pf.conf(5) say it is unsupported
+	- remove it from the grammar in pf.conf(5).
+	[pavel, ticket #1291]
+
+sys/dev/mii/brgphy.c				1.27
+sys/dev/mii/miidevs				1.66
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	Add support for BCM5780 integral copper gigabit phy.
+	[jonathan, ticket #1292]
+
+lib/libc/rpc/clnt_vc.c				1.14
+
+	Fix some unpaired sigblocks which possibly leave the process with all
+	signals blocked. Fixes PR#22483
+	[drochner, ticket #1293]
+
+sys/arch/i386/conf/GENERIC_LAPTOP		1.181
+sys/arch/i386/conf/INSTALL_LAPTOP		1.100
+
+	Add sip(4) to support the network port of an Acer Aspire 1705SCi.
+	[tron, ticket #1294]
 
