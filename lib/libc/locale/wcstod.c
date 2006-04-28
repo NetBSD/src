@@ -1,7 +1,7 @@
-/* $NetBSD: wcstod.c,v 1.4 2001/10/28 12:08:43 yamt Exp $ */
+/* $NetBSD: wcstod.c,v 1.4.8.1 2006/04/28 21:54:19 riz Exp $ */
 
 /*-
- * Copyright (c)1999, 2000, 2001 Citrus Project,
+ * Copyright (c) 2002 Tim J. Robbins
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,10 +25,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Citrus: xpg4dl/FreeBSD/lib/libc/locale/wcstod.c,v 1.2 2001/09/27 16:23:57 yamt Exp $
+ * Original version ID:
+ *   FreeBSD: /repoman/r/ncvs/src/lib/libc/locale/wcstod.c,v 1.4 2004/04/07 09:47:56 tjr Exp
  */
 
 #include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: wcstod.c,v 1.4.8.1 2006/04/28 21:54:19 riz Exp $");
+#endif /* LIBC_SCCS and not lint */
+
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -36,97 +41,84 @@
 #include <wchar.h>
 #include <wctype.h>
 
-#define _L(x) __CONCAT(L,x)
-#define _LC(x) __CONCAT(L,x)
-
+/*
+ * Convert a string to a double-precision number.
+ *
+ * This is the wide-character counterpart of strtod(). So that we do not
+ * have to duplicate the code of strtod() here, we convert the supplied
+ * wide character string to multibyte and call strtod() on the result.
+ * This assumes that the multibyte encoding is compatible with ASCII
+ * for at least the digits, radix character and letters.
+ */
 double
-wcstod(const wchar_t *nptr, wchar_t **endptr)
+wcstod(const wchar_t * __restrict nptr, wchar_t ** __restrict endptr)
 {
-	const wchar_t *src;
-	size_t size;
-	const wchar_t *start;
+	const wchar_t *src, *start;
+	double val;
+	char *buf, *end;
+	size_t bufsiz, len;
 
-	_DIAGASSERT(nptr);
+	_DIAGASSERT(nptr != NULL);
+	/* endptr may be null */
 
-	/*
-	 * we do only check length of string
-	 * and give it over strtod.
-	 */
 	src = nptr;
-
-	/* skip space first */
-	while (iswspace(*src)) {
-		src++;
-	}
-
-	/* get length of string */
-	start = src;	
-	if (wcschr(_L("+-"), *src))
-		src++;
-	size = wcsspn(src, _L("0123456789"));
-	src += size;
-	if (*src == _LC('.')) {/* XXX use localeconv */
-		src++;
-		size = wcsspn(src, _L("0123456789"));
-		src += size;
-	}
-	if (wcschr(_L("Ee"), *src)) {
-		src++;
-		if (wcschr(_L("+-"), *src))
-			src++;
-		size = wcsspn(src, _L("0123456789"));
-		src += size;
-	}
-	size = src - start;
+	while (iswspace((wint_t)*src) != 0)
+		++src;
+	if (*src == L'\0')
+		goto no_convert;
 
 	/*
-	 * convert to a char-string and pass it to strtod.
+	 * Convert the supplied numeric wide char. string to multibyte.
 	 *
-	 * since all chars used to represent a double-constant
-	 * are in the portable character set, we can assume
-	 * that they are 1-byte chars.
+	 * We could attempt to find the end of the numeric portion of the
+	 * wide char. string to avoid converting unneeded characters but
+	 * choose not to bother; optimising the uncommon case where
+	 * the input string contains a lot of text after the number
+	 * duplicates a lot of strtod()'s functionality and slows down the
+	 * most common cases.
 	 */
-	if (size)
-	{
-		mbstate_t st;
-		char *buf;
-		char *end;
-		const wchar_t *s;
-		size_t size_converted;
-		double result;
-		
-		buf = malloc(size + 1);
-		if (!buf) {
-			/* error */
-			errno = ENOMEM; /* XXX */
-			return 0;
-		}
-			
-		s = start;
-		memset(&st, 0, sizeof(st));
-		size_converted = wcsrtombs(buf, &s, size, &st);
-		if (size != size_converted) {
-			/* XXX should not happen */
-			free(buf);
-			errno = EILSEQ;
-			return 0;
-		}
+	start = src;
+	len = wcstombs(NULL, src, 0);
+	if (len == (size_t)-1)
+		/* errno = EILSEQ */
+		goto no_convert;
 
-		buf[size] = 0;
-		result = strtod(buf, &end);
+	_DIAGASSERT(len > 0);
 
+	bufsiz = len;
+	buf = (void *)malloc(bufsiz + 1);
+	if (buf == NULL)
+		/* errno = ENOMEM */
+		goto no_convert;
+
+	len = wcstombs(buf, src, bufsiz + 1);
+
+	_DIAGASSERT(len == bufsiz);
+	_DIAGASSERT(buf[len] == '\0');
+
+	/* Let strtod() do most of the work for us. */
+	val = strtod(buf, &end);
+	if (buf == end) {
 		free(buf);
-
-		if (endptr)
-			/* LINTED bad interface */
-			*endptr = (wchar_t*)start + (end - buf);
-
-		return result;
+		goto no_convert;
 	}
 
-	if (endptr)
-		/* LINTED bad interface */
-		*endptr = (wchar_t*)start;
+	/*
+	 * We only know where the number ended in the _multibyte_
+	 * representation of the string. If the caller wants to know
+	 * where it ended, count multibyte characters to find the
+	 * corresponding position in the wide char string.
+	 */
+	if (endptr != NULL)
+		/* XXX Assume each wide char is one byte. */
+		*endptr = __UNCONST(start + (size_t)(end - buf));
 
+	free(buf);
+
+	return val;
+
+no_convert:
+	if (endptr != NULL)
+		*endptr = __UNCONST(nptr);
 	return 0;
 }
