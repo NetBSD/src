@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.83 2005/03/01 02:33:51 itojun Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.83.2.1 2006/04/28 22:33:19 riz Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -436,6 +436,7 @@ iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
