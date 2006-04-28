@@ -1,5 +1,5 @@
 /*
- * $Id: inf.h,v 1.2 2006/04/18 16:49:19 rittera Exp $
+ * $NetBSD: inf.h,v 1.3 2006/04/28 07:20:39 skrll Exp $
  *
  * $FreeBSD: src/usr.sbin/ndiscvt/inf.h,v 1.1 2003/12/11 22:38:14 wpaul Exp $
  */
