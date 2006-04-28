@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.29 2006/04/28 08:15:30 martin Exp $
+.\"	$NetBSD: pppoe.4,v 1.30 2006/04/28 22:13:08 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -302,16 +302,17 @@ device appeared in
 .Sh DEVIATIONS FROM STANDARD
 The PPPoE standard,
 .Li RFC2516 ,
-requires a maximal MTU of 1492 octets. This value is the maximum conservative
+requires a maximal MTU of 1492 octets.
+This value is the maximum conservative
 value possible, based on the PPPoE header size and the minimum frame size
-ethernet interfaces are required to support.
+Ethernet interfaces are required to support.
 .Pp
-In practice most modern ethernet interfaces support bigger frames, and
+In practice most modern Ethernet interfaces support bigger frames, and
 many PPPoE services allow the use of (slightly) larger MTUs, to avoid
 the problems described above.
 .Pp
 This implementation allows MTU values as large as possible with the actual
-MTU of the used ethernet interface.
+MTU of the used Ethernet interface.
 .Sh BUGS
 It is important to specify
 .Dq Li netmask 0xffffffff
