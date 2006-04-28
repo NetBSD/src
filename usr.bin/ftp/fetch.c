@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.168 2006/04/28 19:59:44 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.169 2006/04/28 20:02:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.168 2006/04/28 19:59:44 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.169 2006/04/28 20:02:07 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1618,6 +1618,7 @@ fetch_ftp(const char *url)
 		rval = 0;
 
  cleanup_fetch_ftp:
+	FREEPTR(port);
 	FREEPTR(host);
 	FREEPTR(path);
 	FREEPTR(user);
