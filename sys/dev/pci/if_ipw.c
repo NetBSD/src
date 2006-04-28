@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.20 2006/04/18 12:49:02 rpaulo Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.21 2006/04/28 13:59:59 rpaulo Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.20 2006/04/18 12:49:02 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.21 2006/04/28 13:59:59 rpaulo Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -303,6 +303,9 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	/* check support for radio transmitter switch in EEPROM */
 	if (!(ipw_read_prom_word(sc, IPW_EEPROM_RADIO) & 8))
 		sc->flags |= IPW_FLAG_HAS_RADIO_SWITCH;
+
+	aprint_normal("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(ic->ic_myaddr));
 
 	if_attach(ifp);
 	ieee80211_ifattach(ic);
