@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.22 2006/04/28 14:17:13 rpaulo Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.23 2006/04/29 16:43:40 rpaulo Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.22 2006/04/28 14:17:13 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.23 2006/04/29 16:43:40 rpaulo Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -272,7 +272,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 
 	/* set device capabilities */
 	ic->ic_caps = IEEE80211_C_SHPREAMBLE | IEEE80211_C_TXPMGT |
-	    IEEE80211_C_PMGT | IEEE80211_C_IBSS | IEEE80211_C_MONITOR;
+	    IEEE80211_C_IBSS | IEEE80211_C_MONITOR;
 
 	/* read MAC address from EEPROM */
 	val = ipw_read_prom_word(sc, IPW_EEPROM_MAC + 0);
