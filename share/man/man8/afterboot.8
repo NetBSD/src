@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.26 2006/03/23 20:09:17 wiz Exp $
+.\"	$NetBSD: afterboot.8,v 1.27 2006/04/29 14:34:25 peter Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -524,8 +524,8 @@ to
 .Pa /etc/amd
 and customize them as needed.
 Alternatively, you can get your maps with YP.
-.Ss Clock synchronisation
-In order to make sure the system clock is synchronised
+.Ss Clock synchronization
+In order to make sure the system clock is synchronized
 to that of a publicly accessible NTP server,
 make sure that
 .Pa /etc/rc.conf
@@ -763,7 +763,7 @@ After this, you can start the server by issuing:
 .Ic /etc/rc.d/mountd start
 .Ic /etc/rc.d/nfsd start
 .Ed
-which will also start dependancies.
+which will also start dependencies.
 .Ss HP remote boot server
 Edit
 .Pa /etc/rbootd.conf
