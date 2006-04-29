@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.4 2006/01/25 16:08:49 christos Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.5 2006/04/29 21:32:29 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.4 2006/01/25 16:08:49 christos Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.5 2006/04/29 21:32:29 rpaulo Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: ieee80211.c,v 1.4 2006/01/25 16:08:49 christos Exp $");
 
 #include <net/if.h> 
 #include <net/if_ether.h>
+#include <net/if_media.h>
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
 
@@ -52,6 +53,54 @@ __RCSID("$NetBSD: ieee80211.c,v 1.4 2006/01/25 16:08:49 christos Exp $");
 
 #include "extern.h"
 #include "ieee80211.h"
+
+static void set80211(int, int, int, uint8_t *);
+
+static void
+set80211(int type, int val, int len, u_int8_t *data)
+{       
+	struct ieee80211req	ireq;   
+        
+	(void) memset(&ireq, 0, sizeof(ireq));
+	(void) strncpy(ireq.i_name, name, sizeof(ireq.i_name));
+	ireq.i_type = type;
+	ireq.i_val = val;
+	ireq.i_len = len;
+	ireq.i_data = data;
+	if (ioctl(s, SIOCS80211, &ireq) < 0)
+		err(1, "SIOCS80211");   
+}       
+
+void
+sethidessid(const char *val, int d)
+{
+	set80211(IEEE80211_IOC_HIDESSID, d, 0, NULL);
+}
+
+void                    
+setapbridge(const char *val, int d)
+{
+	set80211(IEEE80211_IOC_APBRIDGE, d, 0, NULL);
+}
+
+static enum ieee80211_opmode
+get80211opmode(void)
+{
+	struct ifmediareq ifmr;
+                
+	(void) memset(&ifmr, 0, sizeof(ifmr)); 
+	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
+	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) >= 0) {
+		if (ifmr.ifm_current & IFM_IEEE80211_ADHOC)
+			return IEEE80211_M_IBSS;        /* XXX ahdemo */
+		if (ifmr.ifm_current & IFM_IEEE80211_HOSTAP)
+			return IEEE80211_M_HOSTAP;
+		if (ifmr.ifm_current & IFM_IEEE80211_MONITOR)
+			return IEEE80211_M_MONITOR;
+	}
+
+	return IEEE80211_M_STA;  
+}
 
 void
 setifnwid(const char *val, int d)
@@ -314,8 +363,11 @@ ieee80211_status(void)
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
 	struct ieee80211_bssid bssid;
 	struct ieee80211chanreq channel;
+	struct ieee80211req ireq;
 	struct ether_addr ea;
 	static const u_int8_t zero_macaddr[IEEE80211_ADDR_LEN];
+	enum ieee80211_opmode opmode = get80211opmode();
+	extern int vflag;
 
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_data = (void *)&nwid;
@@ -328,6 +380,26 @@ ieee80211_status(void)
 	}
 	printf("\tssid ");
 	print_string(nwid.i_nwid, nwid.i_len);
+
+	if (opmode == IEEE80211_M_HOSTAP) {
+		(void)strncpy(ireq.i_name, name, sizeof(ireq.i_name));
+		ireq.i_type = IEEE80211_IOC_HIDESSID;
+		if (ioctl(s, SIOCG80211, &ireq) != -1) {
+                        if (ireq.i_val)
+                                printf(" [hidden]");
+                        else if (vflag)
+                                printf(" [shown]");
+                }
+
+		ireq.i_type = IEEE80211_IOC_APBRIDGE;
+		if (ioctl(s, SIOCG80211, &ireq) != -1) {
+			if (ireq.i_val)
+				printf(" apbridge");
+			else if (vflag)
+				printf(" -apbridge");
+		}
+        }
+
 	memset(&nwkey, 0, sizeof(nwkey));
 	(void)strncpy(nwkey.i_name, name, sizeof(nwkey.i_name));
 	/* show nwkey only when WEP is enabled */

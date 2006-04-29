@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.169 2005/08/11 20:56:05 rpaulo Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.170 2006/04/29 21:32:29 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.169 2005/08/11 20:56:05 rpaulo Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.170 2006/04/29 21:32:29 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,6 +225,10 @@ const struct cmd {
 	{ "powersave",	1,		0,		setifpowersave },
 	{ "-powersave",	0,		0,		setifpowersave },
 	{ "powersavesleep", NEXTARG,	0,		setifpowersavesleep },
+	{ "hidessid",	1,		0,		sethidessid },
+	{ "-hidessid",	0,		0,		sethidessid },
+	{ "apbridge",	1,		0,		setapbridge },
+	{ "-apbridge",	0,		0,		setapbridge },
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",	NEXTARG,	0,		setifprefixlen},
@@ -1514,6 +1518,7 @@ usage(void)
 		"\t[ up ] [ down ] [ metric n ] [ mtu n ]\n"
 		"\t[ nwid network_id ] [ nwkey network_key | -nwkey ]\n"
 		"\t[ powersave | -powersave ] [ powersavesleep duration ]\n"
+		"\t[ hidessid | -hidessid ] [ apbridge | -apbridge ]\n"
 		"\t[ [ af ] tunnel src_addr dest_addr ] [ deletetunnel ]\n"
 		"\t[ arp | -arp ]\n"
 		"\t[ media type ] [ mediaopt opts ] [ -mediaopt opts ] "

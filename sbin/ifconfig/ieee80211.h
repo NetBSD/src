@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.1 2005/03/19 23:13:42 thorpej Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.2 2006/04/29 21:32:29 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,6 +29,8 @@
  * SUCH DAMAGE.
  */
 
+void	sethidessid(const char *, int);
+void	setapbridge(const char *, int);
 void	setifnwid(const char *, int);
 void	setifnwkey(const char *, int);  
 void	setifbssid(const char *, int);
