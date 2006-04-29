@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.783 2006/04/25 23:55:58 wrstuden Exp $
+$NetBSD: pcidevs,v 1.784 2006/04/29 02:08:47 gdamore Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1463,6 +1463,7 @@ product CREATIVELABS SBLIVE	0x0002	SBLive! EMU 10000
 product CREATIVELABS AUDIGY	0x0004	SB Audigy EMU 10000
 product CREATIVELABS SBLIVE2	0x0006	SBLive! EMU 10000
 product CREATIVELABS SBAUDIGYLS	0x0007	SB Audigy LS
+product	CREATIVELABS SBAUDIGY4	0x0008	SB Audigy 4
 product CREATIVELABS SBJOY	0x7002	PCI Gameport Joystick
 product CREATIVELABS SBJOY2	0x7004	PCI Gameport Joystick
 product CREATIVELABS EV1938	0x8938	Ectiva 1938
