@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.784 2006/04/25 23:57:13 wrstuden Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.785 2006/04/29 02:10:09 gdamore Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.783 2006/04/25 23:55:58 wrstuden Exp
+ *	NetBSD: pcidevs,v 1.784 2006/04/29 02:08:47 gdamore Exp
  */
 
 /*
@@ -1470,6 +1470,7 @@
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGY	0x0004		/* SB Audigy EMU 10000 */
 #define	PCI_PRODUCT_CREATIVELABS_SBLIVE2	0x0006		/* SBLive! EMU 10000 */
 #define	PCI_PRODUCT_CREATIVELABS_SBAUDIGYLS	0x0007		/* SB Audigy LS */
+#define	PCI_PRODUCT_CREATIVELABS_SBAUDIGY4	0x0008		/* SB Audigy 4 */
 #define	PCI_PRODUCT_CREATIVELABS_SBJOY	0x7002		/* PCI Gameport Joystick */
 #define	PCI_PRODUCT_CREATIVELABS_SBJOY2	0x7004		/* PCI Gameport Joystick */
 #define	PCI_PRODUCT_CREATIVELABS_EV1938	0x8938		/* Ectiva 1938 */

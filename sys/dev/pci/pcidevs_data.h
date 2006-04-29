@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.783 2006/04/25 23:57:13 wrstuden Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.784 2006/04/29 02:10:09 gdamore Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.783 2006/04/25 23:55:58 wrstuden Exp
+ *	NetBSD: pcidevs,v 1.784 2006/04/29 02:08:47 gdamore Exp
  */
 
 /*
@@ -5146,6 +5146,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBAUDIGYLS,
 	    "SB Audigy LS",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBAUDIGY4,
+	    "SB Audigy 4",
 	},
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBJOY,
@@ -11440,4 +11444,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2269;
+const int pci_nproducts = 2270;
