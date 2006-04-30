@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.28 2005/07/22 16:01:52 christos Exp $   */
+/*      $NetBSD: whois.c,v 1.29 2006/04/30 20:23:02 liamjfoy Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.28 2005/07/22 16:01:52 christos Exp $");
+__RCSID("$NetBSD: whois.c,v 1.29 2006/04/30 20:23:02 liamjfoy Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,12 +93,12 @@ int
 main(int argc, char *argv[])
 {
 	int ch, flags, rval;
-	char *host, *name, *country, *server;
+	char *host, *name, *country;
 
 #ifdef SOCKS
 	SOCKSinit(argv[0]);
 #endif
-	country = host = server = NULL;
+	country = host = NULL;
 	flags = rval = 0;
 	while ((ch = getopt(argc, argv, "6Aac:dgh:ilmp:qQRr")) != -1)
 		switch(ch) {
