@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.570.2.3 2006/04/22 11:37:32 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.570.2.4 2006/04/30 17:44:07 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570.2.3 2006/04/22 11:37:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570.2.4 2006/04/30 17:44:07 kardel Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -132,7 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570.2.3 2006/04/22 11:37:32 simonb Exp
 
 #include <sys/sysctl.h>
 
-#include <machine/clock.h>
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -144,6 +143,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.570.2.3 2006/04/22 11:37:32 simonb Exp
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <machine/mtrr.h>
+#include <x86/x86/tsc.h>
+
 #include <machine/multiboot.h>
 
 #include <dev/isa/isareg.h>
