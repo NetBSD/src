@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.2 2006/02/19 08:49:45 xtraeme Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.3 2006/04/30 18:46:18 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.2 2006/02/19 08:49:45 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.3 2006/04/30 18:46:18 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,9 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 	sc->sc_i2c.ic_read_byte = NULL;
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = amdpm_smbus_exec;
-      
+
+	lockinit(&sc->sc_lock, PZERO, "amdpm_smbus", 0, 0);
+
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found(&sc->sc_dev, &iba, iicbus_print);      
@@ -89,12 +91,22 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 static int
 amdpm_smbus_acquire_bus(void *cookie, int flags)
 {
-	return (0);
+	struct amdpm_softc *sc = cookie;
+	int err;
+
+	err = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+
+	return err;
 }
 
 static void
 amdpm_smbus_release_bus(void *cookie, int flags)
 {
+	struct amdpm_softc *sc = cookie;
+
+	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+
+	return;
 }
 
 static int
