@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.11 2006/04/09 19:42:03 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.12 2006/04/30 23:27:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: read.c,v 1.11 2006/04/09 19:42:03 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.12 2006/04/30 23:27:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -205,5 +205,6 @@ lines(FILE *fp, __off_t off)
 		for (cnt = 0; cnt < recno; ++cnt)
 			WR(lines[cnt].l, lines[cnt].len);
 	}
+	free(lines);
 	return (0);
 }
