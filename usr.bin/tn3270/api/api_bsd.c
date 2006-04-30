@@ -1,4 +1,4 @@
-/*	$NetBSD: api_bsd.c,v 1.11 2003/08/07 11:16:24 agc Exp $	*/
+/*	$NetBSD: api_bsd.c,v 1.12 2006/04/30 23:52:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)api_bsd.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api_bsd.c,v 1.11 2003/08/07 11:16:24 agc Exp $");
+__RCSID("$NetBSD: api_bsd.c,v 1.12 2006/04/30 23:52:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,14 +130,14 @@ char	*string;		/* if non-zero, where to connect to */
     }
     if (fscanf(keyfile, "%99s\n", inkey) != 1) {
 	perror("fscanf");
-	return -1;
+	goto out;
     }
     sd.length = strlen(inkey)+1;
     if (api_exch_outtype(EXCH_TYPE_STORE_DESC, sizeof sd, (char *)&sd) == -1) {
-	return -1;
+	goto out;
     }
     if (api_exch_outtype(EXCH_TYPE_BYTES, sd.length, inkey) == -1) {
-	return -1;
+	goto out;
     }
     while ((i = api_exch_nextcommand()) != EXCH_CMD_ASSOCIATED) {
 	int passwd_length;
@@ -148,32 +148,32 @@ char	*string;		/* if non-zero, where to connect to */
 	case EXCH_CMD_REJECTED:
 	    if (api_exch_intype(EXCH_TYPE_STORE_DESC,
 					sizeof sd, (char *)&sd) == -1) {
-		return -1;
+		goto out;
 	    }
 	    if (api_exch_intype(EXCH_TYPE_BYTES, sd.length, buffer) == -1) {
-		return -1;
+		goto out;
 	    }
 	    buffer[sd.length] = 0;
 	    fprintf(stderr, "%s\n", buffer);
 	    if (api_exch_outcommand(EXCH_CMD_ASSOCIATE) == -1) {
-		return -1;
+		goto out;
 	    }
 	    break;
 	case EXCH_CMD_SEND_AUTH:
 	    if (api_exch_intype(EXCH_TYPE_STORE_DESC, sizeof sd, (char *)&sd) == -1) {
-		return -1;
+		goto out;
 	    }
 	    if (api_exch_intype(EXCH_TYPE_BYTES, sd.length, buffer) == -1) {
-		return -1;
+		goto out;
 	    }
 	    buffer[sd.length] = 0;
 	    passwd = getpass(buffer);		/* Go to terminal */
 	    passwd_length = strlen(passwd);
 	    if (api_exch_intype(EXCH_TYPE_STORE_DESC, sizeof sd, (char *)&sd) == -1) {
-		return -1;
+		goto out;
 	    }
 	    if (api_exch_intype(EXCH_TYPE_BYTES, sd.length, buffer) == -1) {
-		return -1;
+		goto out;
 	    }
 	    buffer[sd.length] = 0;
 	    if (sd.length) {
@@ -190,17 +190,17 @@ char	*string;		/* if non-zero, where to connect to */
 	    }
 	    sd.length = passwd_length;
 	    if (api_exch_outcommand(EXCH_CMD_AUTH) == -1) {
-		return -1;
+		goto out;
 	    }
 	    if (api_exch_outtype(EXCH_TYPE_STORE_DESC, sizeof sd, (char *)&sd) == -1) {
-		return -1;
+		goto out;
 	    }
 	    if (api_exch_outtype(EXCH_TYPE_BYTES, passwd_length, passwd) == -1) {
-		return -1;
+		goto out;
 	    }
 	    break;
 	case -1:
-	    return -1;
+	    goto out;
 	default:
 	    fprintf(stderr,
 		    "Waiting for connection indicator, received 0x%x.\n", i);
@@ -209,6 +209,10 @@ char	*string;		/* if non-zero, where to connect to */
     }
     /* YEAH */
     return 0;		/* Happiness! */
+    /* NOPE */
+out:
+    fclose(keyfile);
+    return -1;
 }
 
 
