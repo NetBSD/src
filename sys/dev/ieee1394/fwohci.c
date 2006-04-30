@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.97 2006/04/30 14:14:06 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.98 2006/04/30 14:18:40 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.97 2006/04/30 14:14:06 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.98 2006/04/30 14:18:40 kiyohara Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -2704,7 +2704,7 @@ fwohci_add_rx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 	int dsiz[2];
 
 	ir = &dbch->xferq;
-	if (ir->buf == NULL && (dbch->xferq.flag & FWXFERQ_EXTBUF) == 0) {
+	if (db_tr->buf == NULL && (dbch->xferq.flag & FWXFERQ_EXTBUF) == 0) {
 		db_tr->buf = fwdma_malloc_size(dbch->dmat, &db_tr->dma_map,
 			ir->psize, &dbuf[0], BUS_DMA_NOWAIT);
 		if (db_tr->buf == NULL)
@@ -2720,7 +2720,7 @@ fwohci_add_rx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 			dbuf[db_tr->dbcnt++] = dummy_dma->bus_addr;
 		}
 		dsiz[db_tr->dbcnt] = ir->psize;
-		if (ir->buf != NULL) {
+		if (db_tr->buf != NULL) {
 			db_tr->buf = fwdma_v_addr(ir->buf, poffset);
 			dbuf[db_tr->dbcnt] = fwdma_bus_addr( ir->buf, poffset);
 		}
