@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.133 2006/04/22 16:06:38 rpaulo Exp $
+# $NetBSD: mi,v 1.134 2006/04/30 13:56:35 rpaulo Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -513,6 +513,7 @@
 ./usr/share/examples/fstab/fstab.wd0.cobalt	misc-fstab-examples	share
 ./usr/share/examples/ftpd/ftpd.conf		misc-netutil-examples	share
 ./usr/share/examples/ftpd/ftpusers		misc-netutil-examples	share
+./usr/share/examples/hostapd/hostapd.conf	misc-netutil-examples	share
 ./usr/share/examples/ipf/BASIC.NAT		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/BASIC_1.FW		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/BASIC_2.FW		misc-ipf-examples	ipfilter,share
