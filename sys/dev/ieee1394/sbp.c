@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.8 2006/04/14 21:44:18 christos Exp $	*/
+/*	$NetBSD: sbp.c,v 1.9 2006/04/30 13:15:01 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -2130,10 +2130,8 @@ END_DEBUG
 				/*maxsize*/0x100000, /*nsegments*/SBP_IND_MAX,
 				/*maxsegsz*/SBP_SEG_MAX,
 				/*flags*/BUS_DMA_ALLOCNOW,
-#if defined(__FreeBSD__) && __FreeBSD_version >= 501102
 				/*lockfunc*/busdma_lock_mutex,
 				/*lockarg*/&Giant,
-#endif
 				&sbp->dmat);
 	if (error != 0) {
 		printf("sbp_attach: Could not allocate DMA tag "

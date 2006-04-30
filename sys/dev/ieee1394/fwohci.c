@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.92 2006/04/14 21:42:37 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.93 2006/04/30 13:15:01 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.92 2006/04/14 21:42:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.93 2006/04/30 13:15:01 kiyohara Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -1310,10 +1310,8 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 			/*nsegments*/ dbch->ndesc > 3 ? dbch->ndesc - 2 : 1,
 			/*maxsegsz*/ MAX_REQCOUNT,
 			/*flags*/ 0,
-#if defined(__FreeBSD__) && __FreeBSD_version >= 501102
 			/*lockfunc*/busdma_lock_mutex,
 			/*lockarg*/&Giant,
-#endif
 			&dbch->dmat))
 		return;
 
