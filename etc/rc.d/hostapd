@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: hostapd,v 1.1 2006/04/30 12:54:26 rpaulo Exp $
+# $NetBSD: hostapd,v 1.2 2006/04/30 13:00:04 rpaulo Exp $
 #
 
 # PROVIDE: hostapd
@@ -12,7 +12,6 @@ name="hostapd"
 rcvar=$name
 command="/usr/sbin/hostapd"
 required_files="/etc/hostapd.conf"
-#pidfile="/var/run/hostapd.pid"
 
 load_rc_config $name
 run_rc_command "$1"
