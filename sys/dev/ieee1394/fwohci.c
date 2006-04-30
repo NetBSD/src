@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.95 2006/04/30 13:54:18 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.96 2006/04/30 14:03:11 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.95 2006/04/30 13:54:18 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.96 2006/04/30 14:03:11 kiyohara Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -1332,10 +1332,8 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 		/* create dmamap for buffers */
 		/* XXX do we need 4bytes alignment tag? */
 		/* XXX don't alloc dma_map for AR */
-		if (bus_dmamap_create(sc->fc.dmat, dbch->xferq.psize,
-		    dbch->ndesc > 3 ? dbch->ndesc - 2 : 1, MAX_REQCOUNT,
-		    0, BUS_DMA_NOWAIT, &db_tr->dma_map) != 0) {
-			printf("bus_dmamap_create failed\n");
+		if (fw_bus_dmamap_create(dbch->dmat, 0, &db_tr->dma_map) != 0) {
+			printf("fw_bus_dmamap_create failed\n");
 			dbch->flags = FWOHCI_DBCH_INIT; /* XXX fake */
 			fwohci_db_free(dbch);
 			return;
