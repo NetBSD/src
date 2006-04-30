@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.94 2006/04/30 13:49:32 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.95 2006/04/30 13:54:18 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.94 2006/04/30 13:49:32 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.95 2006/04/30 13:54:18 kiyohara Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -1820,8 +1820,8 @@ fwohci_power(int why, void *arg)
 
 	s = splbio();
 	switch (why) {
-		case PWR_SUSPEND:
-		case PWR_STANDBY:
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		fwohci_stop(arg);
 		break;
 	case PWR_RESUME:
@@ -2684,7 +2684,7 @@ fwohci_add_tx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 	FWOHCI_DMA_WRITE(db[0].db.desc.addr, 0);
 	bzero((void *)&db[1].db.immed[0], sizeof(db[1].db.immed));
 	FWOHCI_DMA_WRITE(db[2].db.desc.addr,
-	fwdma_bus_addr(it->buf, poffset) + sizeof(uint32_t));
+	    fwdma_bus_addr(it->buf, poffset) + sizeof(uint32_t));
 
 	FWOHCI_DMA_WRITE(db[2].db.desc.cmd,
 		OHCI_OUTPUT_LAST | OHCI_UPDATE | OHCI_BRANCH_ALWAYS);
