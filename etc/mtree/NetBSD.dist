@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.309 2006/04/28 03:27:49 thorpej Exp $
+#	$NetBSD: NetBSD.dist,v 1.310 2006/04/30 13:54:16 rpaulo Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -418,6 +418,7 @@
 ./usr/share/examples/disktab
 ./usr/share/examples/fstab
 ./usr/share/examples/ftpd
+./usr/share/examples/hostapd
 ./usr/share/examples/ipf
 ./usr/share/examples/isdn
 ./usr/share/examples/kerberos
