@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.95.4.3 2006/04/22 13:42:07 simonb Exp $	*/
+/*	$NetBSD: in6.c,v 1.95.4.4 2006/04/30 18:04:55 kardel Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.95.4.3 2006/04/22 13:42:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.95.4.4 2006/04/30 18:04:55 kardel Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -564,8 +564,8 @@ in6_control(so, cmd, data, ifp, p)
 			 * XXX: adjust expiration time assuming time_t is
 			 * signed.
 			 */
-			maxexpire = (-1) &
-			    ~(1 << ((sizeof(maxexpire) * 8) - 1));
+			maxexpire = ((time_t)~0) &
+			    ~((time_t)1 << ((sizeof(maxexpire) * 8) - 1));
 			if (ia->ia6_lifetime.ia6t_vltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_expire = ia->ia6_updatetime +
@@ -582,8 +582,8 @@ in6_control(so, cmd, data, ifp, p)
 			 * XXX: adjust expiration time assuming time_t is
 			 * signed.
 			 */
-			maxexpire = (-1) &
-			    ~(1 << ((sizeof(maxexpire) * 8) - 1));
+			maxexpire = ((time_t)~0) &
+			    ~((time_t)1 << ((sizeof(maxexpire) * 8) - 1));
 			if (ia->ia6_lifetime.ia6t_pltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_preferred = ia->ia6_updatetime +
