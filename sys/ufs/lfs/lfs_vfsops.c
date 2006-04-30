@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.205 2006/04/18 23:40:47 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.206 2006/04/30 21:19:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.205 2006/04/18 23:40:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.206 2006/04/30 21:19:42 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1149,6 +1149,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	TAILQ_INIT(&fs->lfs_dchainhd);
 	/* and paging tailq */
 	TAILQ_INIT(&fs->lfs_pchainhd);
+	/* and delayed segment accounting for truncation list */
+	LIST_INIT(&fs->lfs_segdhd);
 
 	/*
 	 * We use the ifile vnode for almost every operation.  Instead of
@@ -1513,9 +1515,25 @@ lfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *l)
 	fs = VFSTOUFS(mp)->um_lfs;
 	if (fs->lfs_ronly)
 		return 0;
+
+	/* Snapshots should not hose the syncer */
+	/*
+	 * XXX Sync can block here anyway, since we don't have a very
+	 * XXX good idea of how much data is pending.  If it's more
+	 * XXX than a segment and lfs_nextseg is close to the end of
+	 * XXX the log, we'll likely block.
+	 */
+	simple_lock(&fs->lfs_interlock);
+	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+		simple_unlock(&fs->lfs_interlock);
+		return 0;
+	}
+	simple_unlock(&fs->lfs_interlock);
+
 	lfs_writer_enter(fs, "lfs_dirops");
 
 	/* All syncs must be checkpoints until roll-forward is implemented. */
+	DLOG((DLOG_FLUSH, "lfs_sync at 0x%x\n", fs->lfs_offset));
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
 	lfs_writer_leave(fs);
 #ifdef QUOTA
