@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.786 2006/04/30 17:33:46 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.787 2006/04/30 18:58:19 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.785 2006/04/30 17:33:17 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.786 2006/04/30 18:57:51 xtraeme Exp
  */
 
 /*
@@ -1959,7 +1959,7 @@
 #define	PCI_PRODUCT_INTEL_82801CA_SMB	0x2483		/* 82801CA SMBus Controller */
 #define	PCI_PRODUCT_INTEL_82801CA_USB_2	0x2484		/* 82801CA USB Controller */
 #define	PCI_PRODUCT_INTEL_82801CA_AC	0x2485		/* 82801CA AC'97 Audio Controller */
-#define	PCI_PRODUCT_INTEL_82801CA_MOD	0x2486		/* 82801CA Modem */
+#define	PCI_PRODUCT_INTEL_82801CA_MOD	0x2486		/* 82801CA AC'97 Modem Controller */
 #define	PCI_PRODUCT_INTEL_82801CA_USBC	0x2487		/* 82801CA USB Controller */
 #define	PCI_PRODUCT_INTEL_82801CA_IDE_1	0x248A		/* 82801CA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801CA_IDE_2	0x248B		/* 82801CA IDE Controller */
