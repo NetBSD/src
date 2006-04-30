@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.169 2006/04/18 21:41:20 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.170 2006/04/30 21:19:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.169 2006/04/18 21:41:20 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.170 2006/04/30 21:19:42 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -700,7 +700,7 @@ lfs_remove(void *v)
 		return error;
 	}
 	error = ufs_remove(ap);
-	SET_ENDOP_REMOVE(VTOI(dvp)->i_lfs, dvp, vp, "remove");
+	SET_ENDOP_REMOVE(VTOI(dvp)->i_lfs, dvp, ap->a_vp, "remove");
 	return (error);
 }
 
@@ -725,7 +725,7 @@ lfs_rmdir(void *v)
 		return error;
 	}
 	error = ufs_rmdir(ap);
-	SET_ENDOP_REMOVE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, vp, "rmdir");
+	SET_ENDOP_REMOVE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
 	return (error);
 }
 
@@ -1105,10 +1105,18 @@ lfs_strategy(void *v)
 				      "lfs_strategy: sleeping on ino %d lbn %"
 				      PRId64 "\n", ip->i_number, bp->b_lblkno));
 				simple_lock(&fs->lfs_interlock);
-				if (fs->lfs_seglock) {
+				if (LFS_SEGLOCK_HELD(fs) && fs->lfs_iocount) {
+					/* Cleaner can't wait for itself */
+					ltsleep(&fs->lfs_iocount,
+						(PRIBIO + 1) | PNORELOCK,
+						"clean2", 0,
+						&fs->lfs_interlock);
+					slept = 1;
+					break;
+				} else if (fs->lfs_seglock) {
 					ltsleep(&fs->lfs_seglock,
 						(PRIBIO + 1) | PNORELOCK,
-						"lfs_strategy", 0,
+						"clean1", 0,
 						&fs->lfs_interlock);
 					slept = 1;
 					break;
@@ -1216,6 +1224,7 @@ lfs_flush_dirops(struct lfs *fs)
 	simple_unlock(&fs->lfs_interlock);
 	/* We've written all the dirops there are */
 	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+	lfs_finalize_fs_seguse(fs);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
 }
@@ -1300,12 +1309,12 @@ lfs_flush_pchain(struct lfs *fs)
 		VOP_UNLOCK(vp, 0);
 		lfs_vunref(vp);
 
-		simple_lock(&fs->lfs_interlock);
-
 		if (error == EAGAIN) {
 			lfs_writeseg(fs, sp);
+			simple_lock(&fs->lfs_interlock);
 			break;
 		}
+		simple_lock(&fs->lfs_interlock);
 	}
 	simple_unlock(&fs->lfs_interlock);
 	(void) lfs_writeseg(fs, sp);
