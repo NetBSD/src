@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.251 2006/04/26 13:04:02 rpaulo Exp $
+#	$NetBSD: files.pci,v 1.252 2006/04/30 17:56:03 xtraeme Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -802,6 +802,6 @@ attach	ath at pci with ath_pci
 file	dev/pci/if_ath_pci.c		ath_pci
 
 # NVIDIA nForce Ethernet
-device  nfe: ether, ifnet, mii, mii_phy
+device  nfe: ether, ifnet, arp, mii, mii_phy
 attach  nfe at pci
 file    dev/pci/if_nfe.c                nfe
