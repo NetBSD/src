@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463.c,v 1.3 2006/03/29 06:41:24 thorpej Exp $ */
+/*	$NetBSD: adt7463.c,v 1.4 2006/04/30 18:54:20 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.3 2006/03/29 06:41:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.4 2006/04/30 18:54:20 xtraeme Exp $");
 
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
@@ -90,7 +90,9 @@ adt7463c_attach(struct device *parent, struct device *self, void *aux)
         struct adt7463c_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	int i = 0;
-	
+
+	printf("\n");
+
 	sc->sc_tag = ia->ia_tag;
         sc->sc_address = ia->ia_addr;
 
@@ -359,8 +361,10 @@ adt7463c_receive_1(struct adt7463c_softc *sc)
 	  return (error);
 
 	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ,
-			      sc->sc_address, NULL, 0, &val, 1, 0)) != 0)
-	  return (error);
+			      sc->sc_address, NULL, 0, &val, 1, 0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
+		return (error);
+	}
 	
 	iic_release_bus(sc->sc_tag, 0);
 	return (val);
@@ -374,8 +378,10 @@ adt7463c_send_1(struct adt7463c_softc *sc, u_int8_t val)
 	  return (error);
 
 	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE,
-			      sc->sc_address, NULL, 0, &val, 1, 0)) != 0)
-	  return (error);
+			      sc->sc_address, NULL, 0, &val, 1, 0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
+	  	return (error);
+	}
 	
 	iic_release_bus(sc->sc_tag, 0);
 	return (0);
@@ -389,8 +395,10 @@ adt7463c_write_1(struct adt7463c_softc *sc,  u_int8_t cmd, u_int8_t val)
 	  return (error);
 
 	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE,
-			      sc->sc_address, &cmd, 1, &val, 1, 0)) != 0)
-	  return (error);
+			      sc->sc_address, &cmd, 1, &val, 1, 0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
+	  	return (error);
+	}
 	
 	iic_release_bus(sc->sc_tag, 0);
 	return (0);
