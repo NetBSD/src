@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.24.2.2 2006/02/01 20:33:00 tron Exp $	*/
+/*	$NetBSD: viaide.c,v 1.24.2.3 2006/04/30 23:08:47 riz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -173,6 +173,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
 	  0,
 	  "VIA Technologies VT8237 SATA Controller",
+	  via_sata_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237R_SATA,
+	  0,
+	  "VIA Technologies VT8237R SATA Controller",
 	  via_sata_chip_map,
 	},
 	{ 0,
