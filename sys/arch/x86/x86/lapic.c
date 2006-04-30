@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.15.4.2 2006/02/28 20:57:57 kardel Exp $ */
+/* $NetBSD: lapic.c,v 1.15.4.3 2006/04/30 17:55:45 kardel Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15.4.2 2006/02/28 20:57:57 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15.4.3 2006/04/30 17:55:45 kardel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -51,12 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15.4.2 2006/02/28 20:57:57 kardel Exp $"
 #include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/ic/i8253reg.h>
 
 #include <machine/cpu.h>
+#include <machine/cpu_counter.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
@@ -65,7 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.15.4.2 2006/02/28 20:57:57 kardel Exp $"
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
-#include <machine/clock.h>
+#ifdef _HAVE_TIMECOUNTER
+#include <x86/x86/tsc.h>
+#endif
 
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
@@ -240,9 +244,77 @@ lapic_clockintr(void *arg, struct intrframe frame)
 #ifndef __HAVE_TIMECOUNTER
 	static int microset_iter; /* call cc_microset once/sec */
 #endif /* __HAVE_TIMECOUNTER */
+#if defined(TIMECOUNTER_DEBUG) && defined(__HAVE_TIMECOUNTER)
+	static u_int last_count[X86_MAXPROCS],
+		     last_delta[X86_MAXPROCS],
+		     last_tsc[X86_MAXPROCS],
+		     last_tscdelta[X86_MAXPROCS],
+	             last_factor[X86_MAXPROCS];
+#endif /* TIMECOUNTER_DEBUG && __HAVE_TIMECOUNTER */
 	struct cpu_info *ci = curcpu();
 
 	ci->ci_isources[LIR_TIMER]->is_evcnt.ev_count++;
+
+#if defined(TIMECOUNTER_DEBUG) && defined(__HAVE_TIMECOUNTER)
+	{
+		int cid = ci->ci_cpuid;
+		extern u_int i8254_get_timecount(struct timecounter *);
+		u_int c_count = i8254_get_timecount(NULL);
+		u_int c_tsc = cpu_counter32();
+		u_int delta, ddelta, tsc_delta, factor = 0;
+		int idelta;
+
+		if (c_count > last_count[cid])
+			delta = c_count - last_count[cid];
+		else
+			delta = 0x100000000ULL - last_count[cid] + c_count;
+
+		if (delta > last_delta[cid])
+			ddelta = delta - last_delta[cid];
+		else
+			ddelta = last_delta[cid] - delta;
+
+		if (c_tsc > last_tsc[cid])
+			tsc_delta = c_tsc - last_tsc[cid];
+		else
+			tsc_delta = 0x100000000ULL - last_tsc[cid] + c_tsc;
+
+		idelta = tsc_delta - last_tscdelta[cid];
+		if (idelta < 0)
+			idelta = -idelta;
+
+		if (delta) {
+			int fdelta = tsc_delta / delta - last_factor[cid];
+			if (fdelta < 0)
+				fdelta = -fdelta;
+
+			if (fdelta > last_factor[cid] / 10) {
+				printf("cpu%d: freq skew exceeds 10%%: delta %u, factor %u, last %u\n", cid, fdelta, tsc_delta / delta, last_factor[cid]);
+			}
+			factor = tsc_delta / delta;
+		}
+
+		if (ddelta > last_delta[cid] / 10) {
+			printf("cpu%d: tick delta exceeds 10%%: delta %u, last %u, tick %u, last %u, factor %u, last %u\n",
+			       cid, ddelta, last_delta[cid], c_count, last_count[cid], factor, last_factor[cid]);
+		}
+
+		if (last_count[cid] > c_count) {
+			printf("cpu%d: tick wrapped/lost: delta %u, tick %u, last %u\n", cid, last_count[cid] - c_count, c_count, last_count[cid]);
+		}
+
+		if (idelta > last_tscdelta[cid] / 10) {
+			printf("cpu%d: TSC delta exceeds 10%%: delta %u, last %u, tsc %u, factor %u, last %u\n", cid, idelta, last_tscdelta[cid], last_tsc[cid],
+				factor, last_factor[cid]);
+		}
+ 
+		last_factor[cid]   = factor;
+		last_delta[cid]    = delta;
+		last_count[cid]    = c_count;
+		last_tsc[cid]      = c_tsc;
+		last_tscdelta[cid] = tsc_delta;
+	}
+#endif /* TIMECOUNTER_DEBUG && __HAVE_TIMECOUNTER */
 
 #ifndef __HAVE_TIMECOUNTER
 	/*
@@ -401,7 +473,11 @@ lapic_calibrate_timer(ci)
 		 */
 		delay_func = lapic_delay;
 		initclock_func = lapic_initclocks;
+#ifdef __HAVE_TIMECOUNTER
 		initrtclock(0);
+#else
+		initrtclock();
+#endif
 	}
 }
 
