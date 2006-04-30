@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.12 2006/04/30 12:28:21 kiyohara Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.13 2006/04/30 12:47:32 kiyohara Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -380,25 +380,25 @@ typedef struct proc fw_proc;
 		return fwmem_close(dev, flags, fmt, td)
 #define FWDEV_READ_START	\
         if (DEV_FWMEM(dev))	\
-		return physio(dev, uio, ioflag);
+		return physio(dev, uio, ioflag)
 #define FWDEV_WRITE_START	\
         if (DEV_FWMEM(dev))	\
-		return physio(dev, uio, ioflag);
+		return physio(dev, uio, ioflag)
 #define FWDEV_IOCTL_START	\
 	if (DEV_FWMEM(dev))	\
 		return fwmem_ioctl(dev, cmd, data, flag, td)
 #define FWDEV_IOCTL_REDIRECT	fc->ioctl (dev, cmd, data, flag, td)
 #define FWDEV_POLL_START	\
 	if (DEV_FWMEM(dev))	\
-		return fwmem_poll(dev, events, td);
+		return fwmem_poll(dev, events, td)
 #if defined(__DragonFly__) || __FreeBSD_version < 500102
 #define FWDEV_MMAP_START	\
         if (DEV_FWMEM(dev)) 	\
-		return fwmem_mmap(dev, offset, nproto); 
+		return fwmem_mmap(dev, offset, nproto)
 #else
 #define FWDEV_MMAP_START	\
         if (DEV_FWMEM(dev)) 	\
-		return fwmem_mmap(dev, offset, paddr, nproto);
+		return fwmem_mmap(dev, offset, paddr, nproto)
 #endif
 #define FWDEV_STRATEGY_START		\
 	if (DEV_FWMEM(dev)) {		\
@@ -660,7 +660,7 @@ struct fwbus_attach_args {
 							\
 	dev = device_lookup(&ieee1394if_cd, unit);	\
 	if (dev == NULL)				\
-		return ENXIO;
+		return ENXIO
 
 /*
  * fw ioctl macro for NetBSD
@@ -1003,10 +1003,10 @@ struct fwbus_attach_args {
 #define FWDEV_IOCTL_REDIRECT	fc->ioctl (_dev, cmd, data, flag, td)
 #define FWDEV_POLL_START	\
 	if (DEV_FWMEM(_dev))	\
-		return fwmem_poll(_dev, events, td);
+		return fwmem_poll(_dev, events, td)
 #define FWDEV_MMAP_START	\
         if (DEV_FWMEM(_dev)) 	\
-		return fwmem_mmap(_dev, offset, nproto); 
+		return fwmem_mmap(_dev, offset, nproto)
 #define FWDEV_STRATEGY_START		\
 	if (DEV_FWMEM(_dev)) {		\
 		fwmem_strategy(bp);	\
