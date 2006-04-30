@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.9 2006/04/30 13:15:01 kiyohara Exp $	*/
+/*	$NetBSD: sbp.c,v 1.10 2006/04/30 13:25:04 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -964,12 +964,12 @@ SBP_DEBUG(0)
 	if (!alive)
 		printf("not alive\n");
 END_DEBUG
+	microtime(&sbp->last_busreset);
+
 	if (!alive)
 		return;
 
 	SBP_BUS_FREEZE(sbp);
-
-	microtime(&sbp->last_busreset);
 }
 
 static void
