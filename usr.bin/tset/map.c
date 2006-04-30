@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.10 2003/08/07 11:16:48 agc Exp $	*/
+/*	$NetBSD: map.c,v 1.11 2006/04/30 23:54:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: map.c,v 1.10 2003/08/07 11:16:48 agc Exp $");
+__RCSID("$NetBSD: map.c,v 1.11 2006/04/30 23:54:40 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -178,6 +178,7 @@ badmopt:		errx(1, "illegal -m option format: %s", copy);
 		(void)printf("%sLT", p);
 	(void)printf("\nspeed: %d\n", mapp->speed);
 #endif
+	free(copy);
 }
 
 /*
