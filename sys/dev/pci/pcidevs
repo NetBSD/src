@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.785 2006/04/30 17:33:17 xtraeme Exp $
+$NetBSD: pcidevs,v 1.786 2006/04/30 18:57:51 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1952,7 +1952,7 @@ product INTEL 82801CA_USB_1	0x2482	82801CA USB Controller
 product INTEL 82801CA_SMB	0x2483	82801CA SMBus Controller
 product INTEL 82801CA_USB_2	0x2484	82801CA USB Controller
 product INTEL 82801CA_AC	0x2485	82801CA AC'97 Audio Controller
-product INTEL 82801CA_MOD	0x2486	82801CA Modem
+product INTEL 82801CA_MOD	0x2486	82801CA AC'97 Modem Controller
 product INTEL 82801CA_USBC	0x2487	82801CA USB Controller
 product INTEL 82801CA_IDE_1	0x248A	82801CA IDE Controller
 product INTEL 82801CA_IDE_2	0x248B	82801CA IDE Controller
