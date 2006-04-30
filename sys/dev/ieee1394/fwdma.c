@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.4 2006/04/30 14:14:06 kiyohara Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.5 2006/04/30 14:18:41 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -186,7 +186,7 @@ fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment,
 	struct fwdma_alloc_multi *am;
 	struct fwdma_seg *seg;
 	bus_size_t ssize;
-	int nseg;
+	int nseg, size;
 
 	if (esize > PAGE_SIZE) {
 		/* round up to PAGE_SIZE */
@@ -197,12 +197,14 @@ fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment,
 		ssize = rounddown(PAGE_SIZE, esize);
 		nseg = howmany(n, ssize / esize);
 	}
-	am = (struct fwdma_alloc_multi *)malloc(sizeof(struct fwdma_alloc_multi)
-			+ sizeof(struct fwdma_seg)*nseg, M_FW, M_WAITOK);
+	size = sizeof (struct fwdma_alloc_multi) +
+	    sizeof (struct fwdma_seg) * nseg;
+	am = (struct fwdma_alloc_multi *)malloc(size, M_FW, M_WAITOK);
 	if (am == NULL) {
 		printf("fwdma_malloc_multiseg: malloc failed\n");
 		return(NULL);
 	}
+	memset(am, 0, size);
 	am->ssize = ssize;
 	am->esize = esize;
 	am->nseg = 0;
