@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.89 2006/04/22 00:12:45 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.90 2006/04/30 21:19:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.89 2006/04/22 00:12:45 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.90 2006/04/30 21:19:42 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -588,6 +588,26 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		simple_unlock(&fs->lfs_interlock);
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
+
+		/*
+		 * If this inode is not going to be written any more, any
+		 * segment accounting left over from its truncation needs
+		 * to occur at the end of the next dirops flush.  Attach
+		 * them to the fs-wide list for that purpose.
+		 */
+		if (LIST_FIRST(&ip->i_lfs_segdhd) != NULL) {
+			struct segdelta *sd;
+	
+			while((sd = LIST_FIRST(&ip->i_lfs_segdhd)) != NULL) {
+				LIST_REMOVE(sd, list);
+				LIST_INSERT_HEAD(&fs->lfs_segdhd, sd, list);
+			}
+		}
+	} else {
+		/*
+		 * If it's not a dirop, we can finalize right away.
+		 */
+		lfs_finalize_ino_seguse(fs, ip);
 	}
 
 	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);

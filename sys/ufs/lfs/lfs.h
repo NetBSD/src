@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.103 2006/04/17 20:02:34 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.104 2006/04/30 21:19:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -701,6 +701,16 @@ struct dlfs {
 typedef u_int32_t lfs_bm_t;
 
 /*
+ * Linked list of segments whose byte count needs updating following a
+ * file truncation.
+ */
+struct segdelta {
+	long segnum;
+	size_t num;
+	LIST_ENTRY(segdelta) list;
+};
+
+/*
  * In-memory super block.
  */
 struct lfs {
@@ -818,6 +828,7 @@ struct lfs {
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
 	int lfs_nowrap;			/* Suspend log wrap */
+	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 };
 
 /* NINDIR is the number of indirects in a file system block. */
@@ -972,6 +983,7 @@ struct lfs_inode_ext {
 #ifdef _KERNEL
 	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
 	int	  lfs_nbtree;		/* Size of tree */
+	LIST_HEAD(, segdelta) lfs_segdhd;
 #endif
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
@@ -983,6 +995,7 @@ struct lfs_inode_ext {
 #define i_lfs_hiblk		inode_ext.lfs->lfs_hiblk
 #define i_lfs_lbtree		inode_ext.lfs->lfs_lbtree
 #define i_lfs_nbtree		inode_ext.lfs->lfs_nbtree
+#define i_lfs_segdhd		inode_ext.lfs->lfs_segdhd
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
