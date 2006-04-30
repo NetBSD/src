@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 2006/04/30 19:50:19 rjs Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -746,7 +746,7 @@ NENTRY(switch_error3)
 #endif /* DIAGNOSTIC */
 
 /*
- * int cpu_switch(struct proc *)
+ * int cpu_switch(struct lwp *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * lwp is the same as the old one, we short-circuit the context save and
  * restore.
