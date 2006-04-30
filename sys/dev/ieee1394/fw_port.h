@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.13 2006/04/30 12:47:32 kiyohara Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.14 2006/04/30 13:15:01 kiyohara Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -481,9 +481,9 @@ typedef bus_dma_tag_t fw_bus_dma_tag_t;
 	bus_dma_tag_create((t), (a), (b), (laddr), (haddr),		     \
 	    (ffunc), (farg), (s), (ns), (mxss), (f), (lfunc), (larg), (tp))
 #else
-#define fw_bus_dma_tag_create(t, a, b,				\
-	    laddr, haddr, ffunc, farg, s, ns, mxss, f, tp)	\
-	bus_dma_tag_create((t), (a), (b), (laddr), (haddr),	\
+#define fw_bus_dma_tag_create(t, a, b,					\
+	    laddr, haddr, ffunc, farg, s, ns, mxss, f, lfunc, larg, tp)	\
+	bus_dma_tag_create((t), (a), (b), (laddr), (haddr),		\
 	    (ffunc), (farg), (s), (ns), (mxss), (f), (tp))
 #endif
 #define fw_bus_dma_tag_destroy(t) \
@@ -1133,8 +1133,15 @@ typedef void bus_dmamap_callback_t(void *, bus_dma_segment_t *, int, int);
 typedef void
     bus_dmamap_callback2_t(void *, bus_dma_segment_t *, int, bus_size_t, int);
 
+#define fw_bus_dma_tag_create(				\
+    p, a, b, la, ha, ffunc, farg, maxsz,		\
+    nseg, maxsegsz, f, lfunc, larg, dmat)		\
+							\
+    _fw_bus_dma_tag_create((p), (a), (b), (la), (ha),	\
+	(ffunc), (farg), (maxsz), (nseg), (maxsegsz), (f), (dmat))
+
 static int __inline
-fw_bus_dma_tag_create(bus_dma_tag_t parent,
+_fw_bus_dma_tag_create(bus_dma_tag_t parent,
     bus_size_t alignment, bus_size_t boundary,
     bus_addr_t lowaddr, bus_addr_t highaddr,
     void *filtfunc, void *filtfuncarg,
