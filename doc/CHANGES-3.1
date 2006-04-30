@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.79 2006/04/28 22:35:40 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.80 2006/04/30 23:34:21 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1475,4 +1475,17 @@ sys/arch/i386/conf/INSTALL_LAPTOP		1.100
 
 	Add sip(4) to support the network port of an Acer Aspire 1705SCi.
 	[tron, ticket #1294]
+
+sys/dev/pci/pcidevs				1.785
+sys/dev/pci/viaide.c				1.29
+
+	PR port-amd64/33393: viaide driver patch for VT8237R SATA.
+	[xtraeme, ticket #1295]
+
+sys/arch/sparc/include/ansi.h			1.16
+sys/arch/sparc/include/stdarg.h			1.22
+sys/arch/sparc64/include/ansi.h			1.10
+
+	For GCC3 and later, use the __builtin_va* constructs. PR#33169
+	[nakayama, ticket #1296]
 
