@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.785 2006/04/30 17:33:46 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.786 2006/04/30 18:58:19 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.785 2006/04/30 17:33:17 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.786 2006/04/30 18:57:51 xtraeme Exp
  */
 
 /*
@@ -6713,7 +6713,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_MOD,
-	    "82801CA Modem",
+	    "82801CA AC'97 Modem Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USBC,
