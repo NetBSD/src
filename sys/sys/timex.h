@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.9.6.1 2006/02/04 11:58:45 simonb Exp $	*/
+/*	$NetBSD: timex.h,v 1.9.6.2 2006/04/30 18:11:54 kardel Exp $	*/
 
 #ifdef __HAVE_TIMECOUNTER
 /*-
@@ -226,7 +226,8 @@ struct timex {
 #ifdef _KERNEL
 void	ntp_update_second(int64_t *adjustment, time_t *newsec);
 #ifdef __NetBSD__
-int	ntp_adjtime1(struct timex *, void *, register_t *);
+void	ntp_adjtime1(struct timex *, register_t *);
+void	ntp_gettime1(struct ntptimeval *, register_t *);
 #endif /* __NetBSD__ */
 #else /* !_KERNEL */
 #include <sys/cdefs.h>
@@ -545,7 +546,7 @@ __END_DECLS
 #ifdef _KERNEL
 __BEGIN_DECLS
 int   ntp_settime1(struct timex *, register_t *);
-int   ntp_adjtime1(struct timex *, void *, register_t *);
+void  ntp_adjtime1(struct timex *, register_t *);
 __END_DECLS
 #endif /* _KERNEL */
 #endif /* __NetBSD__ */
