@@ -1,10 +1,10 @@
-#	$NetBSD: AR531X,v 1.2 2006/03/28 03:43:57 gdamore Exp $
+#	$NetBSD: AR531X,v 1.3 2006/04/30 11:48:37 simonb Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AR531X-$Revision: 1.2 $"
+#ident 		"AR531X-$Revision: 1.3 $"
 
 maxusers	32
 
@@ -181,20 +181,21 @@ pseudo-device	loop				# network loopback
 #pseudo-device	sl				# Serial Line IP
 #pseudo-device	strip				# Starmode Radio IP (Metricom)
 #pseudo-device	tun				# network tunneling over tty
+#pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel
 #pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
 #pseudo-device	gif				# RFC1933 tunnel
 #pseudo-device	faith				# IPv[46] tcp relay translation
 #pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	vlan				# IEEE 802.1q encapsulation
+#pseudo-device	bridge				# simple inter-network bridging
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
-# rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd				# /dev/random & kernel generator
-#options 	RND_COM				# use "com" randomness (BROKEN)
-pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	clockctl			# user control of clock subsystem
+pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.
