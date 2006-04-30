@@ -167,8 +167,8 @@ void	iscsi_print_buffer(const char *, const size_t);
 #define __BIG_ENDIAN    _BIG_ENDIAN
 #define __LITTLE_ENDIAN _LITTLE_ENDIAN
 
-#define ISCSI_NTOHLL(x) 	BE64TOH(x)
-#define ISCSI_HTONLL(x) 	HTOBE64(x)
+#define ISCSI_NTOHLL(x)	be64toh(x)
+#define ISCSI_HTONLL(x)	htobe64(x)
 #define ISCSI_NTOHL(a)	ntohl(a)
 #define ISCSI_HTONL(a)	htonl(a)
 #define ISCSI_NTOHS(a)	ntohs(a)
