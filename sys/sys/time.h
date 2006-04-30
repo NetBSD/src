@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.52.6.2 2006/04/22 11:40:21 simonb Exp $	*/
+/*	$NetBSD: time.h,v 1.52.6.3 2006/04/30 18:09:04 kardel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,8 +42,8 @@
  * and used in other calls.
  */
 struct timeval {
-	long	tv_sec;		/* seconds */
-	long	tv_usec;	/* and microseconds */
+	long    tv_sec;		/* seconds */
+	long    tv_usec;	/* and microseconds */
 };
 
 /*
@@ -158,7 +158,7 @@ static __inline void
 bintime2timespec(const struct bintime *bt, struct timespec *ts)
 {
 
-	ts->tv_sec = bt->sec;
+	ts->tv_sec = (/* XXX NetBSD not SUS compliant - MUST FIX */time_t)bt->sec;
 	ts->tv_nsec =
 	    (long)(((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
@@ -185,7 +185,7 @@ static __inline void
 timeval2bintime(const struct timeval *tv, struct bintime *bt)
 {
 
-	bt->sec = tv->tv_sec;
+	bt->sec = (/* XXX NetBSD not SUS compliant - MUST FIX */time_t)tv->tv_sec;
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
 }
