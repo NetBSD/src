@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.42 2006/04/28 22:32:51 riz Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.43 2006/04/30 23:34:39 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -418,4 +418,11 @@ lib/libc/rpc/clnt_vc.c				1.14
 	Fix some unpaired sigblocks which possibly leave the process with all
 	signals blocked. Fixes PR#22483
 	[drochner, ticket #1293]
+
+sys/arch/sparc/include/ansi.h			1.16
+sys/arch/sparc/include/stdarg.h			1.22
+sys/arch/sparc64/include/ansi.h			1.10
+
+	For GCC3 and later, use the __builtin_va* constructs. PR#33169
+	[nakayama, ticket #1296]
 
