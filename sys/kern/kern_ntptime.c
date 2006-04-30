@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.29.6.3 2006/03/15 22:52:05 kardel Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.29.6.4 2006/04/30 18:03:13 kardel Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.3 2006/03/15 22:52:05 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.4 2006/04/30 18:03:13 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -224,53 +224,66 @@ sys_ntp_gettime(l, v, retval)
 	} */ *uap = v;
 	struct ntptimeval ntv;
 	int error = 0;
+	register_t retval1 = TIME_ERROR;
 
 	if (SCARG(uap, ntvp)) {
-		nanotime(&ntv.time);
-		ntv.maxerror = time_maxerror;
-		ntv.esterror = time_esterror;
-		ntv.tai = time_tai;
-		ntv.time_state = time_state;
+		ntp_gettime1(&ntv, &retval1);
 
 		error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, ntvp),
 		    sizeof(ntv));
 	}
+
 	if (!error) {
-
-		/*
-		 * Status word error decode. If any of these conditions occur,
-		 * an error is returned, instead of the status word. Most
-		 * applications will care only about the fact the system clock
-		 * may not be trusted, not about the details.
-		 *
-		 * Hardware or software error
-		 */
-		if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
-
-		/*
-		 * PPS signal lost when either time or frequency synchronization
-		 * requested
-		 */
-		    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
-		    !(time_status & STA_PPSSIGNAL)) ||
-
-		/*
-		 * PPS jitter exceeded when time synchronization requested
-		 */
-		    (time_status & STA_PPSTIME &&
-		    time_status & STA_PPSJITTER) ||
-
-		/*
-		 * PPS wander exceeded or calibration error when frequency
-		 * synchronization requested
-		 */
-		    (time_status & STA_PPSFREQ &&
-		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
-			ntv.time_state = TIME_ERROR;
-
-		*retval = (register_t)ntv.time_state;
+		*retval = retval1;
 	}
 	return(error);
+}
+/*
+ * ntp_gettime() - NTP user application interface
+ */
+void
+ntp_gettime1(ntv, retval)
+	struct ntptimeval *ntv;
+	register_t *retval;
+{
+	nanotime(&ntv->time);
+	ntv->maxerror = time_maxerror;
+	ntv->esterror = time_esterror;
+	ntv->tai = time_tai;
+	ntv->time_state = time_state;
+	
+	/*
+	 * Status word error decode. If any of these conditions occur,
+	 * an error is returned, instead of the status word. Most
+	 * applications will care only about the fact the system clock
+	 * may not be trusted, not about the details.
+	 *
+	 * Hardware or software error
+	 */
+	if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
+
+	    /*
+	     * PPS signal lost when either time or frequency synchronization
+	     * requested
+	     */
+	    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
+	     !(time_status & STA_PPSSIGNAL)) ||
+	    
+	    /*
+	     * PPS jitter exceeded when time synchronization requested
+	     */
+	    (time_status & STA_PPSTIME &&
+	     time_status & STA_PPSJITTER) ||
+	    
+	    /*
+	     * PPS wander exceeded or calibration error when frequency
+	     * synchronization requested
+	     */
+	    (time_status & STA_PPSFREQ &&
+	     time_status & (STA_PPSWANDER | STA_PPSERROR)))
+		ntv->time_state = TIME_ERROR;
+
+	*retval = (register_t)ntv->time_state;
 }
 
 /* ARGSUSED */
@@ -289,6 +302,7 @@ sys_ntp_adjtime(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct timex ntv;
 	int error = 0;
+	register_t retval1 = TIME_ERROR;
 
 	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
 			sizeof(ntv))) != 0)
@@ -297,22 +311,23 @@ sys_ntp_adjtime(l, v, retval)
 	if (ntv.modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	return (ntp_adjtime1(&ntv, v, retval));
+	ntp_adjtime1(&ntv, &retval1);
+
+	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
+	if (!error) {
+		*retval = retval1;
+	}
+	return error;
 }
 
-int
-ntp_adjtime1(ntv, v, retval)
+void
+ntp_adjtime1(ntv, retval)
 	struct timex *ntv;
-	void *v;
 	register_t	*retval;
 {
-	struct sys_ntp_adjtime_args /* {
-		syscallarg(struct timex *) tp;
-	} */ *uap = v;
 	long freq;
 	int modes;
 	int s;
-	int error = 0;
 
 	/*
 	 * Update selected clock variables - only the superuser can
@@ -430,25 +445,20 @@ ntp_adjtime1(ntv, v, retval)
 #endif /* PPS_SYNC */
 	splx(s);
 
-	error = copyout((caddr_t)ntv, (caddr_t)SCARG(uap, tp), sizeof(*ntv));
-	if (!error) {
-
-		/*
-		 * Status word error decode. See comments in
-		 * ntp_gettime() routine.
-		 */
-		if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
-		    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
-		    !(time_status & STA_PPSSIGNAL)) ||
-		    (time_status & STA_PPSTIME &&
-		    time_status & STA_PPSJITTER) ||
-		    (time_status & STA_PPSFREQ &&
-		    time_status & (STA_PPSWANDER | STA_PPSERROR))) {
-			*retval = TIME_ERROR;
-		} else
-			*retval = (register_t)time_state;
-	}
-	return error;
+	/*
+	 * Status word error decode. See comments in
+	 * ntp_gettime() routine.
+	 */
+	if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
+	    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
+	     !(time_status & STA_PPSSIGNAL)) ||
+	    (time_status & STA_PPSTIME &&
+	     time_status & STA_PPSJITTER) ||
+	    (time_status & STA_PPSFREQ &&
+	     time_status & (STA_PPSWANDER | STA_PPSERROR))) {
+		*retval = TIME_ERROR;
+	} else
+		*retval = (register_t)time_state;
 }
 #endif /* NTP */
 
@@ -1060,7 +1070,7 @@ sys_ntp_gettime(l, v, retval)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.3 2006/03/15 22:52:05 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.29.6.4 2006/04/30 18:03:13 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -1211,6 +1221,7 @@ sys_ntp_adjtime(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct timex ntv;
+	register_t retval1 = TIME_ERROR;
 	int error = 0;
 
 	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
@@ -1220,19 +1231,22 @@ sys_ntp_adjtime(l, v, retval)
 	if (ntv.modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	return (ntp_adjtime1(&ntv, v, retval));
+	ntp_adjtime1(&ntv, &retval1);
+
+	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
+
+	if (error == 0) {
+		*retval = retval1;
+	}
+
+	return error;
 }
 
-int
-ntp_adjtime1(ntv, v, retval)
+void
+ntp_adjtime1(ntv, retval)
 	struct timex *ntv;
-	void *v;
 	register_t	*retval;
 {
-	struct sys_ntp_adjtime_args /* {
-		syscallarg(struct timex *) tp;
-	} */ *uap = v;
-	int error = 0;
 	int modes;
 	int s;
 
@@ -1295,25 +1309,20 @@ ntp_adjtime1(ntv, v, retval)
 #endif /* PPS_SYNC */
 	(void)splx(s);
 
-	error = copyout((caddr_t)ntv, (caddr_t)SCARG(uap, tp), sizeof(*ntv));
-	if (!error) {
-
-		/*
-		 * Status word error decode. See comments in
-		 * ntp_gettime() routine.
-		 */
-		if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
-		    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
-		    !(time_status & STA_PPSSIGNAL)) ||
-		    (time_status & STA_PPSTIME &&
-		    time_status & STA_PPSJITTER) ||
-		    (time_status & STA_PPSFREQ &&
-		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
-			*retval = TIME_ERROR;
-		else
-			*retval = (register_t)time_state;
-	}
-	return error;
+	/*
+	 * Status word error decode. See comments in
+	 * ntp_gettime() routine.
+	 */
+	if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
+	    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
+	     !(time_status & STA_PPSSIGNAL)) ||
+	    (time_status & STA_PPSTIME &&
+	     time_status & STA_PPSJITTER) ||
+	    (time_status & STA_PPSFREQ &&
+	     time_status & (STA_PPSWANDER | STA_PPSERROR)))
+		*retval = TIME_ERROR;
+	else
+		*retval = (register_t)time_state;
 }
 
 /*
