@@ -1,4 +1,4 @@
-/*	$NetBSD: cc_microtime.h,v 1.2.6.1 2006/04/22 23:03:23 kardel Exp $	*/
+/*	$NetBSD: cc_microtime.h,v 1.2.6.2 2006/04/30 18:06:31 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -53,15 +53,17 @@ struct cc_microtime_state {
 #else
 /* XXX this file is not named right - rather something like tsc.h */
 void tsc_calibrate_cpu(struct cpu_info *);
-
 /*
  * Variables used by cc_microtime().
  */
 struct cc_microtime_state {
-	int64_t cc_val;		/* reference TSC value at calibration time */
-	int64_t cc_cc;		/* local TSC value at calibration time */
-	int64_t cc_delta;	/* reference TSC difference for last calibration period */
-	int64_t cc_denom;	/* local TSC difference for last calibration period */
+	volatile u_int   cc_gen;   /* generation number for this data set */
+	volatile int64_t cc_val;   /* reference TSC value at calibration time */
+	volatile int64_t cc_cc;	   /* local TSC value at calibration time */
+	volatile int64_t cc_delta; /* reference TSC difference for
+				      last calibration period */
+	volatile int64_t cc_denom; /* local TSC difference for
+				      last calibration period */
 };
 #endif /* __HAVE_TIMECOUNTER */
 
