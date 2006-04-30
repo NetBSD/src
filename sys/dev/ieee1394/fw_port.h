@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.14 2006/04/30 13:15:01 kiyohara Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.15 2006/04/30 14:14:06 kiyohara Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -1181,7 +1181,10 @@ static __inline int
 fw_bus_dmamap_load(fw_bus_dma_tag_t ft, bus_dmamap_t m,
     void *b, bus_size_t l, bus_dmamap_callback_t *func, void *a, int f)   
 {
-	int err = bus_dmamap_load(ft->tag, m, b, l, NULL, f);
+	int lf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    BUS_DMA_READ | BUS_DMA_WRITE |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
+	int err = bus_dmamap_load(ft->tag, m, b, l, NULL, lf);
 	(func)(a, m->dm_segs, m->dm_nsegs, err);
 	return err;
 }
@@ -1189,7 +1192,10 @@ static __inline int
 fw_bus_dmamap_load_mbuf(fw_bus_dma_tag_t ft, bus_dmamap_t m,
     struct mbuf *b, bus_dmamap_callback2_t *func, void *a, int f)   
 {
-	int err = bus_dmamap_load_mbuf(ft->tag, m, b, f);
+	int lf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    BUS_DMA_READ | BUS_DMA_WRITE |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
+	int err = bus_dmamap_load_mbuf(ft->tag, m, b, lf);
 	(func)(a, m->dm_segs, m->dm_nsegs, m->dm_mapsize, err);
 	return err;
 }
@@ -1202,24 +1208,35 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 {
         bus_dma_segment_t segs;
 	int nsegs, err;
+	int af, mf, cf;
 
+	af = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
 	err = bus_dmamem_alloc(ft->tag, ft->size,
-	    ft->alignment, ft->boundary, &segs, ft->nsegments, &nsegs, f);
+	    ft->alignment, ft->boundary, &segs, ft->nsegments, &nsegs, af);
 	if (err) {
 		printf("fw_bus_dmamem_alloc: failed(1)\n");
 		return err;
 	}
 
-	err = bus_dmamem_map(ft->tag, &segs, nsegs,
-	    ft->size, (caddr_t *)vp, BUS_DMA_COHERENT | BUS_DMA_NOCACHE | f);
+	mf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4 |
+	    BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
+	err = bus_dmamem_map(ft->tag,
+	    &segs, nsegs, ft->size, (caddr_t *)vp, mf);
 	if (err) {
 		printf("fw_bus_dmamem_alloc: failed(2)\n");
 		bus_dmamem_free(ft->tag, &segs, nsegs);
 		return err;
 	}
 
+	if (*mp != NULL)
+		return err;
+
+	cf = f & (BUS_DMA_WAITOK | BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW |
+	    BUS_DMA_BUS1 | BUS_DMA_BUS2 | BUS_DMA_BUS3 | BUS_DMA_BUS4);
 	err = bus_dmamap_create(ft->tag,
-	    ft->size, nsegs, ft->maxsegsz, ft->boundary, ft->flags, mp);
+	    ft->size, nsegs, ft->maxsegsz, ft->boundary, cf, mp);
 	if (err) {
 		printf("fw_bus_dmamem_alloc: failed(3)\n");
 		bus_dmamem_unmap(ft->tag, (caddr_t)*vp, ft->size);
@@ -1230,7 +1247,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 }
 #define fw_bus_dmamem_free(ft, v, m)					\
 	do {								\
-		bus_dmamem_unmap((ft)->tag, (v), (m)->dm_mapsize);	\
+		bus_dmamem_unmap((ft)->tag, (v), (ft)->size);		\
 		bus_dmamem_free((ft)->tag, (m)->dm_segs, (m)->dm_nsegs);\
 		bus_dmamap_destroy((ft)->tag, (m));			\
 	} while (/*CONSTCOND*/0)

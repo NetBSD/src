@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.96 2006/04/30 14:03:11 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.97 2006/04/30 14:14:06 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.96 2006/04/30 14:03:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.97 2006/04/30 14:14:06 kiyohara Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -1318,7 +1318,7 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 
 #define DB_SIZE(x) (sizeof(struct fwohcidb) * (x)->ndesc)
 	dbch->am = fwdma_malloc_multiseg(&sc->fc, DB_SIZE(dbch),
-		DB_SIZE(dbch), dbch->ndb, BUS_DMA_WAITOK);
+		DB_SIZE(dbch), dbch->ndb, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (dbch->am == NULL) {
 		printf("fwohci_db_init: fwdma_malloc_multiseg failed\n");
 		free(db_tr, M_FW);
