@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.3 2006/04/30 13:15:01 kiyohara Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.4 2006/04/30 14:14:06 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -128,7 +128,7 @@ fwdma_malloc(struct firewire_comm *fc, int alignment, bus_size_t size,
 	}
 
 	err = fw_bus_dmamap_load(dma->fw_dma_tag, dma->dma_map, dma->v_addr,
-		size, fwdma_map_cb, &dma->bus_addr, /*flags*/0);
+		size, fwdma_map_cb, &dma->bus_addr, flag);
 	if (err != 0) {
 		printf("fwdma_malloc: failed(3)\n");
 		fw_bus_dmamem_free(dma->fw_dma_tag, dma->v_addr, dma->dma_map);
@@ -159,7 +159,7 @@ fwdma_malloc_size(fw_bus_dma_tag_t dmat, bus_dmamap_t *dmamap,
 		return(NULL);
 	}
 	if (fw_bus_dmamap_load(dmat, *dmamap, v_addr, size,
-			fwdma_map_cb, bus_addr, /*flags*/0)) {
+			fwdma_map_cb, bus_addr, flag)) {
 		printf("fwdma_malloc_size: failed(2)\n");
 		fw_bus_dmamem_free(dmat, v_addr, *dmamap);
 		return(NULL);
