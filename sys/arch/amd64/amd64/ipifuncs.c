@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.5 2005/12/24 20:06:47 perry Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.5.6.1 2006/04/30 17:33:35 kardel Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.5 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.5.6.1 2006/04/30 17:33:35 kardel Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -81,7 +81,7 @@ void x86_64_reload_mtrr(struct cpu_info *);
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	x86_64_ipi_halt,
-	cc_microset,
+	tsc_calibrate_cpu,
 	x86_64_ipi_flush_fpu,
 	x86_64_ipi_synch_fpu,
 	pmap_do_tlb_shootdown,
