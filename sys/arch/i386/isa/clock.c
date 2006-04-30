@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.89.6.4 2006/04/22 11:37:33 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.89.6.5 2006/04/30 17:46:04 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89.6.4 2006/04/22 11:37:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89.6.5 2006/04/30 17:46:04 kardel Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -137,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89.6.4 2006/04/22 11:37:33 simonb Exp $"
 #include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/clock.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
@@ -147,6 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89.6.4 2006/04/22 11:37:33 simonb Exp $"
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
+#include <x86/x86/tsc.h>
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
 
@@ -204,7 +204,7 @@ static struct simplelock tmr_lock = SIMPLELOCK_INITIALIZER;  /* protect TC timer
 inline u_int mc146818_read(void *, u_int);
 inline void mc146818_write(void *, u_int, u_int);
 
-static u_int i8254_get_timecount(struct timecounter *);
+u_int i8254_get_timecount(struct timecounter *);
 
 static struct timecounter i8254_timecounter = {
 	i8254_get_timecount,	/* get_timecount */
@@ -407,7 +407,7 @@ clockintr(void *arg, struct intrframe frame)
 	return -1;
 }
 
-static u_int
+u_int
 i8254_get_timecount(struct timecounter *tc)
 {
 	u_int count;
