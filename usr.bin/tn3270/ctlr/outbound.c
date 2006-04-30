@@ -1,4 +1,4 @@
-/*	$NetBSD: outbound.c,v 1.5 2003/08/07 11:16:32 agc Exp $	*/
+/*	$NetBSD: outbound.c,v 1.6 2006/04/30 23:38:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)outbound.c	4.3 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: outbound.c,v 1.5 2003/08/07 11:16:32 agc Exp $");
+__RCSID("$NetBSD: outbound.c,v 1.6 2006/04/30 23:38:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,7 +542,9 @@ int	control;				/* this buffer ended block? */
 	    BufferAddress = i;
 	}
     }
+#if 0
     if (count == 0) {
+#endif
 	if (control) {
 #if	!defined(PURE3274)
 	    OutputClock++;		/* time rolls on */
@@ -567,9 +569,11 @@ int	control;				/* this buffer ended block? */
 	}
 	LastWasTerminated = control;	/* state for next time */
 	return(origCount);
+#if 0
     } else {
 	return(origCount-count);
     }
+#endif
 }
 
 /*
