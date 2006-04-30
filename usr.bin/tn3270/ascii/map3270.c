@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.c,v 1.13 2006/04/30 23:40:20 christos Exp $	*/
+/*	$NetBSD: map3270.c,v 1.14 2006/04/30 23:42:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)map3270.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: map3270.c,v 1.13 2006/04/30 23:40:20 christos Exp $");
+__RCSID("$NetBSD: map3270.c,v 1.14 2006/04/30 23:42:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -935,7 +935,7 @@ int	(*translator)(char *);	/* Translates ascii string to integer */
 	    if (environPointer) {
 		GotIt = Position(environPointer, "unknown");
 	    }
-	    if (!GotIt) {
+	    if (!GotIt && keybdPointer) {
 		GotIt = Position("/usr/share/misc/map3270", keybdPointer);
 	    }
 	}
