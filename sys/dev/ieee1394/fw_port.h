@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.11 2006/04/14 21:47:04 christos Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.12 2006/04/30 12:28:21 kiyohara Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -96,7 +96,7 @@ typedef struct proc fw_proc;
 	    ((struct __CONCAT(dname,_softc) *)device_get_softc(dev));	\
 	__attribute__((__unused__))struct fw_attach_args *fwa =		\
 	    device_get_ivars(dev)
-#define FW_ATTACH_RETURN(r)	return((r))
+#define FW_ATTACH_RETURN(r)	return (r)
 
 /*
  * fw detach macro for FreeBSD
@@ -309,7 +309,7 @@ typedef struct proc fw_proc;
 									    \
 		if (sbp->sim == NULL) {					    \
 			cam_simq_free(devq);				    \
-			return (ENXIO);					    \
+			return ENXIO;					    \
 		}							    \
 									    \
 		if (xpt_bus_register(sbp->sim, /*bus*/0) != CAM_SUCCESS)    \
@@ -619,7 +619,7 @@ struct fwbus_attach_args {
 									\
 	sc = dev = device_lookup(&ieee1394if_cd, DEV2UNIT(_dev));	\
 	if (dev == NULL)						\
-		return (ENXIO)
+		return ENXIO
 
 /*
  * fw close macro for NetBSD
@@ -632,7 +632,7 @@ struct fwbus_attach_args {
 	struct firewire_softc *dev = device_lookup(&ieee1394if_cd, unit); \
 									  \
 	if (dev == NULL)						  \
-		return (ENXIO)
+		return ENXIO
 
 /*
  * fw read macro for NetBSD
@@ -646,7 +646,7 @@ struct fwbus_attach_args {
 							\
 	dev = device_lookup(&ieee1394if_cd, unit);	\
 	if (dev == NULL)				\
-		return (ENXIO)
+		return ENXIO
 
 /*
  * fw write macro for NetBSD
@@ -660,7 +660,7 @@ struct fwbus_attach_args {
 							\
 	dev = device_lookup(&ieee1394if_cd, unit);	\
 	if (dev == NULL)				\
-		return (ENXIO);
+		return ENXIO;
 
 /*
  * fw ioctl macro for NetBSD
@@ -675,7 +675,7 @@ struct fwbus_attach_args {
 							\
 	sc = dev = device_lookup(&ieee1394if_cd, unit);	\
 	if (dev == NULL)				\
-		return (ENXIO)
+		return ENXIO
 
 /*
  * fw poll macro for NetBSD
@@ -689,7 +689,7 @@ struct fwbus_attach_args {
 							\
 	dev = device_lookup(&ieee1394if_cd, unit);	\
 	if (dev == NULL)				\
-		return (ENXIO)
+		return ENXIO
 
 /*
  * fw mmap macro for NetBSD
@@ -703,7 +703,7 @@ struct fwbus_attach_args {
 							\
 	dev = device_lookup(&ieee1394if_cd, unit);	\
 	if (dev == NULL)				\
-		return (ENXIO)
+		return ENXIO
 
 /*
  * fw strategy macro for NetBSD
@@ -1145,7 +1145,7 @@ fw_bus_dma_tag_create(bus_dma_tag_t parent,
 
 	tag = malloc(sizeof (struct fw_bus_dma_tag), M_DEVBUF, M_NOWAIT);
 	if (tag == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 /* XXXX */
 #define BUS_SPACE_MAXADDR_32BIT 0
@@ -1161,7 +1161,7 @@ fw_bus_dma_tag_create(bus_dma_tag_t parent,
 
 	*fwdmat = tag;
 
-	return (0);
+	return 0;
 }
 #define fw_bus_dma_tag_destroy(ft) \
 	free(ft, M_DEVBUF)
@@ -1176,7 +1176,7 @@ fw_bus_dmamap_load(fw_bus_dma_tag_t ft, bus_dmamap_t m,
 {
 	int err = bus_dmamap_load(ft->tag, m, b, l, NULL, f);
 	(func)(a, m->dm_segs, m->dm_nsegs, err);
-	return (err);
+	return err;
 }
 static __inline int
 fw_bus_dmamap_load_mbuf(fw_bus_dma_tag_t ft, bus_dmamap_t m,
@@ -1184,7 +1184,7 @@ fw_bus_dmamap_load_mbuf(fw_bus_dma_tag_t ft, bus_dmamap_t m,
 {
 	int err = bus_dmamap_load_mbuf(ft->tag, m, b, f);
 	(func)(a, m->dm_segs, m->dm_nsegs, m->dm_mapsize, err);
-	return (err);
+	return err;
 }
 #define fw_bus_dmamap_unload(ft, m) \
 	bus_dmamap_unload((ft)->tag, (m))
@@ -1200,7 +1200,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 	    ft->alignment, ft->boundary, &segs, ft->nsegments, &nsegs, f);
 	if (err) {
 		printf("fw_bus_dmamem_alloc: failed(1)\n");
-		return(err);
+		return err;
 	}
 
 	err = bus_dmamem_map(ft->tag, &segs, nsegs,
@@ -1208,7 +1208,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 	if (err) {
 		printf("fw_bus_dmamem_alloc: failed(2)\n");
 		bus_dmamem_free(ft->tag, &segs, nsegs);
-		return(err);
+		return err;
 	}
 
 	err = bus_dmamap_create(ft->tag,
@@ -1219,7 +1219,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 		bus_dmamem_free(ft->tag, &segs, nsegs);\
 	}
 
-	return(err);
+	return err;
 }
 #define fw_bus_dmamem_free(ft, v, m)					\
 	do {								\
