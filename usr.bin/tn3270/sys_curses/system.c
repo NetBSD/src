@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.17 2003/08/07 11:16:36 agc Exp $	*/
+/*	$NetBSD: system.c,v 1.18 2006/04/30 23:43:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.17 2003/08/07 11:16:36 agc Exp $");
+__RCSID("$NetBSD: system.c,v 1.18 2006/04/30 23:43:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,8 +205,7 @@ doassociate()
     if (api_exch_intype(EXCH_TYPE_STORE_DESC, sizeof sd, (char *)&sd) == -1) {
 	return -1;
     }
-    sd.length = sd.length;
-    if (sd.length > sizeof buffer) {
+    if (sd.length >= sizeof buffer) {
 	doreject("(internal error) Authentication key too long");
 	return -1;
     }
