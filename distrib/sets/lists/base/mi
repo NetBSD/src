@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.618 2006/04/27 20:41:57 thorpej Exp $
+# $NetBSD: mi,v 1.619 2006/04/30 20:02:35 rpaulo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1349,6 +1349,7 @@
 ./usr/share/examples/emul/ultrix/etc		base-sys-examples
 ./usr/share/examples/fstab			base-fstab-examples
 ./usr/share/examples/ftpd			base-netutil-examples
+./usr/share/examples/hostapd			base-netutil-examples
 ./usr/share/examples/ipf			base-netutil-examples
 ./usr/share/examples/isdn			base-isdn-examples
 ./usr/share/examples/kerberos			base-krb5-examples
