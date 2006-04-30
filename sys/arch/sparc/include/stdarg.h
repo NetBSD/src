@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.21 2004/12/30 16:22:27 christos Exp $ */
+/*	$NetBSD: stdarg.h,v 1.21.10.1 2006/04/30 23:31:32 riz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,26 +49,30 @@
 typedef _BSD_VA_LIST_	va_list;
 
 #ifdef __lint__
-# define va_start(ap, last) (ap) = (va_list)(void *)&(last)
+
+# define va_start(ap, last)	((ap) = *(va_list *)0)
+# define va_arg(ap, type)	(*(type *)(void *)&(ap))
+# define va_end(ap)
+# define __va_copy(dest, src)	((dest) = (src))
+
+#elif __GNUC_PREREQ__(3,0)
+
+# define va_start(ap, last)	__builtin_va_start(ap, last)
+# define va_end(ap)		__builtin_va_end(ap)
+# define va_arg(ap, type)	__builtin_va_arg(ap, type)
+# define __va_copy(dst, src)	__builtin_va_copy(dst, src)
+
 #else
+
 # define va_start(ap, last) \
 	(void)(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
-#endif
 
 
-#if !defined(_ANSI_SOURCE) &&						\
-    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
-     defined(_NETBSD_SOURCE))
-# define va_copy(dest, src) \
+# define va_end(ap)	
+# define __va_copy(dest, src) \
 	((dest) = (src))
-#endif
 
-#define va_end(ap)	
-
-#ifdef __arch64__
-# ifdef __lint__
-#  define va_arg(ap, type)	(*(type *)(void *)(ap)) 
-# else /* !__lint__ */
+# ifdef __arch64__
 /*
  * For sparcv9 code.
  */
@@ -91,14 +95,10 @@ typedef _BSD_VA_LIST_	va_list;
 	  (sizeof(type) <= 8 ? __va_arg8(ap, type) :			\
 	   (sizeof(type) <= 16 ? __va_arg16(ap, type) :			\
 	    *__va_arg8(ap, type *)))))
-# endif /* __lint__ */
-#else /* __arch64__ */
+# else /* __arch64__ */
 /* 
  * For sparcv8 code.
  */
-# ifdef __lint__
-#  define va_arg(ap, type)	(*(type *)(void *)(ap)) 
-# else /* !__lint__ */
 #  define __va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
@@ -118,9 +118,6 @@ typedef _BSD_VA_LIST_	va_list;
  * have a constructor.
  */
 
-#  if __GNUC__ < 2
-#   define __extension__	/* delete __extension__ if non-gcc or gcc1 */
-#  endif
 #  define __va_8byte(ap, type) \
 	__extension__ ({						\
 		union { char __d[sizeof(type)]; int __i[2]; } __va_u;	\
@@ -140,8 +137,14 @@ typedef _BSD_VA_LIST_	va_list;
 	(__builtin_classify_type(*(type *)0) >= __RECORD_TYPE_CLASS ?	\
 	 *__va_arg(ap, type *) : __va_size(type) == 8 ?			\
 	 __va_8byte(ap, type) : __va_arg(ap, type))
-# endif /* __lint__ */
 
-#endif /* __arch64__ */
+# endif /* __arch64__ */
+#endif /* !__GNUC_PREREQ(3, 0) */
+
+#if !defined(_ANSI_SOURCE) &&						\
+    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
+     defined(_NETBSD_SOURCE))
+# define va_copy(dst, src)	__va_copy(dst, src)
+#endif
 
 #endif /* !_SPARC_STDARG_H_ */
