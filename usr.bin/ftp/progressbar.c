@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.12 2006/05/01 23:00:33 christos Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.13 2006/05/01 23:02:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.12 2006/05/01 23:00:33 christos Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.13 2006/05/01 23:02:03 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -336,6 +336,8 @@ ptransfer(int siginfo)
 
 	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
+	if (i == sizeof(prefixes))
+		i--;
 	len += snprintf(buf + len, BUFLEFT, "(" LLF ".%02d %cB/s)",
 	    (LLT)(bytespersec / 1024),
 	    (int)((bytespersec % 1024) * 100 / 1024),
