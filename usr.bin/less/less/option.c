@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.6 2003/04/14 02:56:47 mrg Exp $	*/
+/*	$NetBSD: option.c,v 1.7 2006/05/01 22:55:50 christos Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -422,6 +422,8 @@ toggle_option(c, s, how_toggle)
 		{
 		case BOOL:
 		case TRIPLE:
+			if (*(o->ovar) < 0)
+				error("Negative option is invalid", NULL_PARG);
 			/*
 			 * Print the odesc message.
 			 */
