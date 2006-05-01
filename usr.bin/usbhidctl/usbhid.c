@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.28 2005/02/09 22:14:13 jdolecek Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.29 2006/05/01 05:04:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.28 2005/02/09 22:14:13 jdolecek Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.29 2006/05/01 05:04:02 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -734,7 +734,7 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 				NULL : repptr->buffer->ucr_data;
 
 			if (matchvar->opfunc(&hitem, matchvar, colls, collind,
-					     bufdata))
+					     bufdata) && repptr)
 				repptr->status = srs_dirty;
 		}
 	}
