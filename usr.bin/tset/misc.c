@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 2003/08/07 11:16:48 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2006/05/01 23:18:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: misc.c,v 1.7 2003/08/07 11:16:48 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 2006/05/01 23:18:37 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: misc.c,v 1.7 2003/08/07 11:16:48 agc Exp $");
 #include "extern.h"
 
 void
-cat(file)
+tset_cat(file)
 	char *file;
 {
 	register int fd, nr, nw;
