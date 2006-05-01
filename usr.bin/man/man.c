@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.33 2006/04/10 14:39:06 chuck Exp $	*/
+/*	$NetBSD: man.c,v 1.34 2006/05/01 23:22:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.33 2006/04/10 14:39:06 chuck Exp $");
+__RCSID("$NetBSD: man.c,v 1.34 2006/05/01 23:22:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -753,8 +753,11 @@ how(char *fname)
 			print = 1;
 			continue;
 		} else if (!strncmp(buf, D1, sizeof(D1) - 1) ||
-		    !strncmp(buf, D2, sizeof(D2) - 1))
+		    !strncmp(buf, D2, sizeof(D2) - 1)) {
+			if (fp)
+				(void)fclose(fp);
 			return;
+		}
 		if (!print)
 			continue;
 		if (*buf == '\n')
