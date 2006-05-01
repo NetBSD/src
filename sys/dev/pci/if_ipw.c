@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.24 2006/04/29 16:46:11 rpaulo Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.25 2006/05/01 20:43:46 rpaulo Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.24 2006/04/29 16:46:11 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.25 2006/05/01 20:43:46 rpaulo Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1236,7 +1236,7 @@ ipw_rx_intr(struct ipw_softc *sc)
 			break;
 
 		default:
-			aprint_debug("%s: unknown status code %u\n",
+			aprint_error("%s: unknown status code %u\n",
 			    sc->sc_dev.dv_xname, le16toh(status->code));
 		}
 
