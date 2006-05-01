@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2006/05/01 23:12:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2006/05/01 23:12:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,13 +205,10 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	/*
 	 * Check for inconsistent arguments.
 	 */
-	if (to == NULL && (subject != NULL || cc != NULL || bcc != NULL)) {
-		(void)fputs("You must specify direct recipients with -s, -c, or -b.\n", stderr);
-		exit(1);
-	}
+	if (to == NULL && (subject != NULL || cc != NULL || bcc != NULL))
+		errx(1, "You must specify direct recipients with -s, -c, or -b.");
 	if (ef != NULL && to != NULL) {
-		(void)fprintf(stderr, "Cannot give -f and people to send to.\n");
-		exit(1);
+		errx(1, "Cannot give -f and people to send to.");
 	}
 	tinit();
 	setscreensize();
