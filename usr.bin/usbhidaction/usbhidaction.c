@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.19 2005/07/02 04:05:09 dsainty Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.20 2006/05/01 00:03:15 christos Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.19 2005/07/02 04:05:09 dsainty Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.20 2006/05/01 00:03:15 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -275,6 +275,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				syslog(LOG_WARNING, "config file `%s', line %d"
 				       ", syntax error: %s", conf, line, buf);
 				freecommands(cmds);
+				fclose(f);
 				return (NULL);
 			} else {
 				errx(1, "config file `%s', line %d,"
@@ -300,6 +301,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 					       "bad value: %s\n",
 					       conf, line, value);
 					freecommands(cmds);
+					fclose(f);
 					return (NULL);
 				} else {
 					errx(1, "config file `%s', line %d, "
@@ -375,6 +377,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 			syslog(LOG_WARNING, "config file `%s', line %d, HID "
 			       "item not found: `%s'", conf, line, name);
 			freecommands(cmds);
+			fclose(f);
 			return (NULL);
 		} else {
 			errx(1, "config file `%s', line %d, HID item "
