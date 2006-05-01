@@ -1,4 +1,4 @@
-/*	$NetBSD: set.c,v 1.10 2004/09/01 01:46:28 chs Exp $	*/
+/*	$NetBSD: set.c,v 1.11 2006/05/01 23:18:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.2 (Berkeley) 2/28/94";
 #endif
-__RCSID("$NetBSD: set.c,v 1.10 2004/09/01 01:46:28 chs Exp $");
+__RCSID("$NetBSD: set.c,v 1.11 2006/05/01 23:18:37 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -262,7 +262,7 @@ set_init()
 		}
 		bp = buf;
 		if (tgetstr("rf", &bp) != 0 || tgetstr("if", &bp) != 0) {
-			cat(buf);
+			tset_cat(buf);
 			settle = 1;
 		}
 	}
