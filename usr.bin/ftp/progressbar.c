@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.11 2005/07/19 00:41:05 lukem Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.12 2006/05/01 23:00:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.11 2005/07/19 00:41:05 lukem Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.12 2006/05/01 23:00:33 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -226,6 +226,8 @@ progressmeter(int flag)
 	abbrevsize = cursize;
 	for (i = 0; abbrevsize >= 100000 && i < sizeof(prefixes); i++)
 		abbrevsize >>= 10;
+	if (i == sizeof(prefixes))
+		i--;
 	len += snprintf(buf + len, BUFLEFT, " " LLFP("5") " %c%c ",
 	    (LLT)abbrevsize,
 	    prefixes[i],
