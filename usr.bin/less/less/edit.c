@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.6 2003/04/14 02:56:46 mrg Exp $	*/
+/*	$NetBSD: edit.c,v 1.7 2006/05/01 22:57:16 christos Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -710,7 +710,8 @@ use_logfile(filename)
 	 */
 	filename = shell_unquote(filename);
 	exists = open(filename, OPEN_READ);
-	close(exists);
+	if (exists >= 0)
+		close(exists);
 	exists = (exists >= 0);
 
 	/*
