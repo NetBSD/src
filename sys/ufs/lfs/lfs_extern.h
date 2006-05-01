@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.80 2006/04/30 21:19:42 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.81 2006/05/01 19:47:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -240,6 +240,7 @@ int lfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
 void lfs_gop_size(struct vnode *, off_t, off_t *, int);
 int lfs_putpages_ext(void *, int);
 int lfs_gatherpages(struct vnode *);
+void lfs_flush_dirops(struct lfs *);
 void lfs_flush_pchain(struct lfs *);
 
 int lfs_bwrite	 (void *);
