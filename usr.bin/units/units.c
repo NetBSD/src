@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.14 2004/11/04 07:38:43 dsl Exp $	*/
+/*	$NetBSD: units.c,v 1.15 2006/05/01 00:00:12 christos Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -591,7 +591,7 @@ compareproducts(char **one, char **two)
 			one++;
 		else if (*two == NULLUNIT)
 			two++;
-		else if (strcmp(*one, *two))
+		else if (*one && *two && strcmp(*one, *two))
 			return 1;
 		else
 			one++, two++;
