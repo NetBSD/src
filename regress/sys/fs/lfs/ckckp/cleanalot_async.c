@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanalot_async.c,v 1.2 2006/04/27 22:37:54 perseant Exp $	*/
+/*	$NetBSD: cleanalot_async.c,v 1.3 2006/05/01 19:47:01 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -161,6 +161,9 @@ int main(int argc, char **argv)
 			sync();
                 }
                 printf("%d files of size %d\n", j * plex, bs);
+		system("df -k .");
+		printf("remove files\n");
+		system("rm -rf dir_*");
 		system("df -k .");
         }
 }
