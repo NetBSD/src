@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.9 2006/05/01 05:13:58 christos Exp $	*/
+/*	$NetBSD: regexp.c,v 1.10 2006/05/01 05:14:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,9 +40,10 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: regexp.c,v 1.9 2006/05/01 05:13:58 christos Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.10 2006/05/01 05:14:22 christos Exp $");
 #endif /* not lint */
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
