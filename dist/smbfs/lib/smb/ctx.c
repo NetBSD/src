@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.9 2004/03/21 12:30:51 jdolecek Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.10 2006/05/01 18:40:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -286,7 +286,7 @@ smb_ctx_setserver(struct smb_ctx *ctx, const char *name)
 	 * first part of the name (up to the dot) as NetBIOS name.
 	 */
 	if ((d = strchr(name, '.'))) {
-		static char nm[SMB_MAXSRVNAMELEN+1];
+		static char nm[sizeof(ctx->ct_ssn.ioc_srvname)];
 		int error;
 
 		error = smb_ctx_setsrvaddr(ctx, name);
@@ -294,14 +294,14 @@ smb_ctx_setserver(struct smb_ctx *ctx, const char *name)
 			return (error);
 		
 		/* cut name to MAXSRVNAMELEN */
-		if (strlen(name) >= SMB_MAXSRVNAMELEN) {
+		if (strlen(name) >= sizeof(ctx->ct_ssn.ioc_srvname)) {
 			snprintf(nm, sizeof(nm), "%.*s",
-				SMB_MAXSRVNAMELEN, name);
+				sizeof(ctx->ct_ssn.ioc_srvname) - 1, name);
 			name = nm;
 		}
 	}
 
-	if (strlen(name) >= SMB_MAXSRVNAMELEN) {
+	if (strlen(name) >= sizeof(ctx->ct_ssn.ioc_srvname)) {
 		smb_error("server name '%s' too long", 0, name);
 		return ENAMETOOLONG;
 	}
@@ -312,7 +312,7 @@ smb_ctx_setserver(struct smb_ctx *ctx, const char *name)
 int
 smb_ctx_setuser(struct smb_ctx *ctx, const char *name)
 {
-	if (strlen(name) >= SMB_MAXUSERNAMELEN) {
+	if (strlen(name) >= sizeof(ctx->ct_ssn.ioc_srvname)) {
 		smb_error("user name '%s' too long", 0, name);
 		return ENAMETOOLONG;
 	}
