@@ -1,4 +1,4 @@
-/*	$NetBSD: parser2.c,v 1.8 2003/08/07 11:17:28 agc Exp $	*/
+/*	$NetBSD: parser2.c,v 1.9 2006/05/02 22:33:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parser2.c,v 1.8 2003/08/07 11:17:28 agc Exp $");
+__RCSID("$NetBSD: parser2.c,v 1.9 2006/05/02 22:33:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,7 +226,7 @@ p_assign(char *name, struct value *v, int flag)
 	switch (v->v_type) {
 	case V_STR:
 	case V_NUM:
-		if (flag && var_set(name, v) == 0) {
+		if (name && flag && var_set(name, v) == 0) {
 			p_memerror();
 			val_free(*v);
 			return -1;
