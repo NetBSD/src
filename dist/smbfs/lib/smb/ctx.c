@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.10 2006/05/01 18:40:02 christos Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.11 2006/05/02 10:09:18 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -296,7 +296,7 @@ smb_ctx_setserver(struct smb_ctx *ctx, const char *name)
 		/* cut name to MAXSRVNAMELEN */
 		if (strlen(name) >= sizeof(ctx->ct_ssn.ioc_srvname)) {
 			snprintf(nm, sizeof(nm), "%.*s",
-				sizeof(ctx->ct_ssn.ioc_srvname) - 1, name);
+			    (int)(sizeof(ctx->ct_ssn.ioc_srvname) - 1), name);
 			name = nm;
 		}
 	}
