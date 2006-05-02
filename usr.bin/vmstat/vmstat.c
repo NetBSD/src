@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.142 2006/05/02 21:40:06 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.143 2006/05/02 22:13:29 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.142 2006/05/02 21:40:06 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.143 2006/05/02 22:13:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1587,14 +1587,14 @@ hist_dodump(struct uvm_history *histp)
 	do {
 		e = &histents[i];
 		if (e->fmt != NULL) {
-			if (e->fmtlen > fmtlen) {
+			if (fmt == NULL || e->fmtlen > fmtlen) {
 				if (fmt != NULL)
 					free(fmt);
 				fmtlen = e->fmtlen;
 				if ((fmt = malloc(fmtlen + 1)) == NULL)
 					err(1, "malloc printf format");
 			}
-			if (e->fnlen > fnlen) {
+			if (fn == NULL || e->fnlen > fnlen) {
 				if (fn != NULL)
 					free(fn);
 				fnlen = e->fnlen;
