@@ -1,4 +1,4 @@
-/*	$NetBSD: wwsize.c,v 1.8 2003/08/07 11:17:45 agc Exp $	*/
+/*	$NetBSD: wwsize.c,v 1.9 2006/05/02 22:24:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwsize.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwsize.c,v 1.8 2003/08/07 11:17:45 agc Exp $");
+__RCSID("$NetBSD: wwsize.c,v 1.9 2006/05/02 22:24:05 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,5 @@ bad:
 		wwfree(fmap, w->ww_w.t);
 	if (buf != 0)
 		wwfree((char **)buf, w->ww_b.t);
-	if (nvis != 0)
-		free((char *)(nvis + w->ww_w.t));
 	return -1;
 }
