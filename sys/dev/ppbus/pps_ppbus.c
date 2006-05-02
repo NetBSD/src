@@ -1,6 +1,8 @@
-/* $NetBSD: pps_ppbus.c,v 1.4.6.1 2006/04/22 11:39:25 simonb Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.4.6.2 2006/05/02 21:01:14 kardel Exp $ */
 
 /*
+ * ported to timecounters by Frank Kardel 2006
+ *
  * Copyright (c) 2004
  * 	Matthias Drochner.  All rights reserved.
  *
@@ -27,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.4.6.1 2006/04/22 11:39:25 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.4.6.2 2006/05/02 21:01:14 kardel Exp $");
 
 #include "opt_ntp.h"
 
@@ -47,11 +49,15 @@ struct pps_softc {
 	struct ppbus_device_softc pps_dev;
 	struct device *ppbus;
 	int busy;
+#ifdef __HAVE_TIMECOUNTER
+	struct pps_state pps_state;	/* pps state */
+#else /* !__HAVE_TIMECOUNTER */
 	pps_info_t ppsinfo;
 	pps_params_t ppsparam;
 #ifdef PPS_SYNC
 	int hardpps;
 #endif
+#endif /* !__HAVE_TIMECOUNTER */
 };
 
 static int pps_probe(struct device *, struct cfdata *, void *);
@@ -70,7 +76,9 @@ const struct cdevsw pps_cdevsw = {
 
 static void ppsintr(void *arg);
 
+#ifndef __HAVE_TIMECOUNTER
 static int ppscap = PPS_TSFMT_TSPEC | PPS_CAPTUREASSERT | PPS_OFFSETASSERT;
+#endif
 
 static int
 pps_probe(struct device *parent, struct cfdata *match, void *aux)
@@ -123,6 +131,12 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	ppbus_set_mode(sc->ppbus, PPBUS_PS2, 0);
 	ppbus_wctr(sc->ppbus, IRQENABLE | PCD | nINIT | SELECTIN);
 
+#ifdef __HAVE_TIMECOUNTER
+	memset((void *)&sc->pps_state, 0, sizeof(sc->pps_state));
+	sc->pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
+	pps_init(&sc->pps_state);
+#endif /* __HAVE_TIMECOUNTER */
+
 	sc->busy = 1;
 	return (0);
 }
@@ -133,11 +147,16 @@ ppsclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct pps_softc *sc = device_lookup(&pps_cd, minor(dev));
 	struct device *ppbus = sc->ppbus;
 
+#ifdef __HAVE_TIMECOUNTER
+	sc->pps_state.ppsparam.mode = 0;
+#else /* !__HAVE_TIMECOUNTER */
 	sc->ppsparam.mode = 0;
 	sc->busy = 0;
 #ifdef PPS_SYNC
 	sc->hardpps = 0;
 #endif
+#endif /* __HAVE_TIMECOUNTER */
+
 	ppbus_wdtr(ppbus, 0);
 	ppbus_wctr(ppbus, 0);
 
@@ -152,11 +171,25 @@ ppsintr(void *arg)
 {
 	struct pps_softc *sc = arg;
 	struct device *ppbus = sc->ppbus;
+#ifndef __HAVE_TIMECOUNTER
 	struct timeval tv;
+
+#else /* __HAVE_TIMECOUNTER */
+	pps_capture(&sc->pps_state);
+#endif /* __HAVE_TIMECOUNTER */
 
 	if (!(ppbus_rstr(ppbus) & nACK))
 		return;
 
+#ifdef __HAVE_TIMECOUNTER
+	if (sc->pps_state.ppsparam.mode & PPS_ECHOASSERT) 
+		ppbus_wctr(ppbus, IRQENABLE | AUTOFEED);
+
+	pps_event(&sc->pps_state, PPS_CAPTUREASSERT);
+
+	if (sc->pps_state.ppsparam.mode & PPS_ECHOASSERT) 
+		ppbus_wctr(ppbus, IRQENABLE);
+#else /* !__HAVE_TIMECOUNTER */
 	microtime(&tv);
 	TIMEVAL_TO_TIMESPEC(&tv, &sc->ppsinfo.assert_timestamp);
 	if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
@@ -170,6 +203,7 @@ ppsintr(void *arg)
 #endif
 	sc->ppsinfo.assert_sequence++;
 	sc->ppsinfo.current_mode = sc->ppsparam.mode;
+#endif /* !__HAVE_TIMECOUNTER */
 }
 
 static int
@@ -179,6 +213,19 @@ ppsioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	int error = 0;
 
 	switch (cmd) {
+#ifdef __HAVE_TIMECOUNTER
+	case PPS_IOC_CREATE:
+	case PPS_IOC_DESTROY:
+	case PPS_IOC_GETPARAMS:
+	case PPS_IOC_SETPARAMS:
+	case PPS_IOC_GETCAP:
+	case PPS_IOC_FETCH:
+#ifdef PPS_SYNC
+	case PPS_IOC_KCBIND:
+#endif
+		error = pps_ioctl(cmd, data, &sc->pps_state);
+		break;
+#else /* !__HAVE_TIMECOUNTER */
 	case PPS_IOC_CREATE:
 		break;
 
@@ -222,6 +269,7 @@ ppsioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 			sc->hardpps = 0;
 		break;
 #endif
+#endif /* !__HAVE_TIMECOUNTER */
 
 	default:
 		error = EPASSTHROUGH;
