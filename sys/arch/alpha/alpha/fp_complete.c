@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.9 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: fp_complete.c,v 1.10 2006/05/02 18:04:53 drochner Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.9 2005/12/24 20:06:46 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.10 2006/05/02 18:04:53 drochner Exp $");
 
 #include "opt_compat_osf1.h"
 
@@ -635,7 +635,7 @@ alpha_fp_complete(u_long a0, u_long a1, struct lwp *l, u_int64_t *ucode)
 	if (!(a0 & 1))
 		return sig;
 /*
- * At this point we are somwhere in the trap shadow of one or more instruc-
+ * At this point we are somewhere in the trap shadow of one or more instruc-
  * tions that have trapped with software completion specified.  We have a mask
  * of the registers written by trapping instructions.
  * 
