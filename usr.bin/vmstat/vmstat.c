@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.143 2006/05/02 22:13:29 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.144 2006/05/02 22:19:12 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.143 2006/05/02 22:13:29 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.144 2006/05/02 22:19:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1417,7 +1417,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 			    (long)curhash->offset,
 			    (unsigned long long)elemsize);
 		thissize = hashsize * elemsize;
-		if (thissize > hashbufsize) {
+		if (hashbuf == NULL || thissize > hashbufsize) {
 			if ((nhashbuf = realloc(hashbuf, thissize)) == NULL)
 				errx(1, "malloc hashbuf %llu",
 				    (unsigned long long)hashbufsize);
