@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd7.c,v 1.7 2003/08/07 11:17:23 agc Exp $	*/
+/*	$NetBSD: cmd7.c,v 1.8 2006/05/02 22:30:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd7.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd7.c,v 1.7 2003/08/07 11:17:23 agc Exp $");
+__RCSID("$NetBSD: cmd7.c,v 1.8 2006/05/02 22:30:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -264,7 +264,10 @@ yank_line(int r, int c, int cend)
 	yp->length = n = cend - c + 1;
 	if (nl)
 		yp->length++;
-	yp->line = str_alloc(yp->length + 1);
+	if ((yp->line = str_alloc(yp->length + 1)) == NULL) {
+		free(yp);
+		return;
+	}
 	for (bp += c, cp = yp->line; --n >= 0;)
 		*cp++ = bp++->c_c;
 	if (nl)
