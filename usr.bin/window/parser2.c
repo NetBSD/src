@@ -1,4 +1,4 @@
-/*	$NetBSD: parser2.c,v 1.9 2006/05/02 22:33:42 christos Exp $	*/
+/*	$NetBSD: parser2.c,v 1.10 2006/05/02 22:35:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parser2.c,v 1.9 2006/05/02 22:33:42 christos Exp $");
+__RCSID("$NetBSD: parser2.c,v 1.10 2006/05/02 22:35:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ p_function(char *name, struct value *v, int flag)
 				i = vp - av + 1;
 				lp = ap;
 			}
-			if (vp->v_type != V_ERR) {
+			if (vp && vp->v_type != V_ERR) {
 				if (*ap->arg_name)
 					p_error("%s: Argument %d (%s) duplicated.",
 						name, vp - av + 1,
