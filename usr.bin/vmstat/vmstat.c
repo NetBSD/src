@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.141 2006/04/27 09:04:41 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.142 2006/05/02 21:40:06 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.141 2006/04/27 09:04:41 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.142 2006/05/02 21:40:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1531,7 +1531,7 @@ hist_traverse(int todo, const char *histname)
 	for (histkva = LIST_FIRST(&histhead); histkva != NULL;
 	    histkva = LIST_NEXT(&hist, list)) {
 		deref_kptr(histkva, &hist, sizeof(hist), "histkva");
-		if (hist.namelen > namelen) {
+		if (name == NULL || hist.namelen > namelen) {
 			if (name != NULL)
 				free(name);
 			namelen = hist.namelen;
