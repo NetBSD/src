@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 2006/03/15 18:12:02 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.24 2006/05/02 18:51:15 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.23 2006/03/15 18:12:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.24 2006/05/02 18:51:15 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -379,6 +379,7 @@ copyfault:
 			preempt(0);
 		goto out;
 
+#if 0 /* handled by fpudna() */
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
@@ -388,6 +389,7 @@ copyfault:
 		ksi.ksi_addr = (void *)frame->tf_rip;
 		goto trapsignal;
 	}
+#endif
 
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
