@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.8 2006/03/18 09:28:50 kardel Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.9 2006/05/02 09:24:19 kardel Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -3213,7 +3213,7 @@ cert_valid(
 		return (XEVNT_OK);
 	ptr = (u_char *)cinf->cert.ptr;
 	cert = d2i_X509(NULL, &ptr, ntohl(cinf->cert.vallen));
-	if (!X509_verify(cert, pkey))
+	if (cert == NULL || !X509_verify(cert, pkey))
 		return (XEVNT_VFY);
 	cinf->flags |= CERT_SIGN;
 	X509_free(cert);
