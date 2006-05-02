@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.171 2006/05/01 19:47:29 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.172 2006/05/02 00:52:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.171 2006/05/01 19:47:29 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.172 2006/05/02 00:52:26 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1140,7 +1140,7 @@ lfs_flush_dirops(struct lfs *fs)
 	struct vnode *vp;
 	extern int lfs_dostats;
 	struct segment *sp;
-	int needunlock;
+	int waslocked;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(fs->lfs_nadirop == 0);
@@ -1202,13 +1202,7 @@ lfs_flush_dirops(struct lfs *fs)
 			simple_lock(&fs->lfs_interlock);
 			continue;
 		}
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
-			needunlock = 1;
-		} else {
-			DLOG((DLOG_VNODE, "lfs_flush_dirops: flushing locked ino %d\n",
-			       VTOI(vp)->i_number));
-			needunlock = 0;
-		}
+		waslocked = VOP_ISLOCKED(vp);
 		if (vp->v_type != VREG &&
 		    ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp))) {
 			lfs_writefile(fs, sp, vp);
@@ -1218,9 +1212,7 @@ lfs_flush_dirops(struct lfs *fs)
 			}
 		}
 		(void) lfs_writeinode(fs, sp, ip);
-		if (needunlock)
-			VOP_UNLOCK(vp, 0);
-		else
+		if (waslocked)
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		simple_lock(&fs->lfs_interlock);
 	}
@@ -1296,7 +1288,7 @@ lfs_flush_pchain(struct lfs *fs)
 			continue;
 		simple_unlock(&fs->lfs_interlock);
 
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0) {
+		if (VOP_ISLOCKED(vp)) {
 			lfs_vunref(vp);
 			simple_lock(&fs->lfs_interlock);
 			continue;
@@ -1309,7 +1301,6 @@ lfs_flush_pchain(struct lfs *fs)
 		}
 		(void) lfs_writeinode(fs, sp, ip);
 
-		VOP_UNLOCK(vp, 0);
 		lfs_vunref(vp);
 
 		if (error == EAGAIN) {
