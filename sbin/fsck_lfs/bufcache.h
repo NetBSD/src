@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.h,v 1.6 2006/04/19 15:52:58 christos Exp $	*/
+/*	$NetBSD: bufcache.h,v 1.7 2006/05/03 15:04:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -110,6 +110,10 @@ struct ubuf {
 #define	B_DONTFREE	0x00010000	/* b_data not managed by bufcache */
 
 LIST_HEAD(bufhash_struct, ubuf);
+
+#if !defined(NOCRED)
+#define	NOCRED	((void *)-1)	/* dummy; not actually used */
+#endif /* !defined(NOCRED) */
 
 void bufinit(int);
 void bufrehash(int);
