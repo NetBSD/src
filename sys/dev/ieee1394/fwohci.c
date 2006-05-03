@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.98 2006/04/30 14:18:40 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.99 2006/05/03 00:37:44 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.98 2006/04/30 14:18:40 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.99 2006/05/03 00:37:44 kiyohara Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -951,6 +951,8 @@ fwohci_start(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 		return;
 
 	s = splfw();
+	fwdma_sync_multiseg_all(dbch->am,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	db_tr = dbch->top;
 txloop:
 	xfer = STAILQ_FIRST(&dbch->xferq.q);
@@ -1082,6 +1084,9 @@ again:
 	}
 kick:
 	/* kick asy q */
+	fwdma_sync_multiseg_all(dbch->am,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	if(dbch->xferq.flag & FWXFERQ_RUNNING) {
 		OWRITE(sc, OHCI_DMACTL(off), OHCI_CNTL_DMA_WAKE);
 	} else {
@@ -1140,6 +1145,8 @@ fwohci_txd(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 	s = splfw();
 	tr = dbch->bottom;
 	packets = 0;
+	fwdma_sync_multiseg_all(dbch->am,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	while(dbch->xferq.queued > 0){
 		LAST_DB(tr, db);
 		status = FWOHCI_DMA_READ(db->db.desc.res) >> OHCI_STATUS_SHIFT;
@@ -1234,6 +1241,7 @@ fwohci_txd(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 		dbch->xferq.queued --;
 		tr->xfer = NULL;
 
+		fwdma_sync_multiseg_all(dbch->am, BUS_DMASYNC_PREREAD);
 		packets ++;
 		tr = STAILQ_NEXT(tr, link);
 		dbch->bottom = tr;
@@ -1250,6 +1258,8 @@ out:
 		dbch->flags &= ~FWOHCI_DBCH_FULL;
 		fwohci_start(sc, dbch);
 	}
+	fwdma_sync_multiseg_all(
+	    dbch->am, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	splx(s);
 }
 
@@ -1524,6 +1534,8 @@ fwohci_rx_enable(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 	FWOHCI_DMA_CLEAR(
 		dbch->bottom->db[db_tr->dbcnt - 1].db.desc.depend, 0xf);
 	dbch->buf_offset = 0;
+	fwdma_sync_multiseg_all(dbch->am,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	if(dbch->xferq.flag & FWXFERQ_STREAM){
 		return err;
 	}else{
@@ -1620,6 +1632,8 @@ fwohci_itxbuf_enable(struct firewire_comm *fc, int dmach)
 		STAILQ_INSERT_TAIL(&it->stdma, chunk, link);
 		prev = chunk;
 	}
+	fwdma_sync_multiseg_all(dbch->am,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	splx(s);
 	stat = OREAD(sc, OHCI_ITCTL(dmach));
 	if (firewire_debug && (stat & OHCI_CNTL_CYCMATCH_S))
@@ -1747,6 +1761,8 @@ fwohci_irx_enable(struct firewire_comm *fc, int dmach)
 		STAILQ_INSERT_TAIL(&ir->stdma, chunk, link);
 		prev = chunk;
 	}
+	fwdma_sync_multiseg_all(dbch->am,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	splx(s);
 	stat = OREAD(sc, OHCI_IRCTL(dmach));
 	if (stat & OHCI_CNTL_DMA_ACTIVE)
@@ -2260,6 +2276,7 @@ fwohci_tbuf_update(struct fwohci_softc *sc, int dmach)
 	it = fc->it[dmach];
 	ldesc = sc->it[dmach].ndesc - 1;
 	s = splfw(); /* unnecessary ? */
+	fwdma_sync_multiseg_all(sc->it[dmach].am, BUS_DMASYNC_POSTREAD);
 	if (firewire_debug)
 		dump_db(sc, ITX_CH + dmach);
 	while ((chunk = STAILQ_FIRST(&it->stdma)) != NULL) {
@@ -2308,6 +2325,7 @@ fwohci_rbuf_update(struct fwohci_softc *sc, int dmach)
 	dump_db(sc, dmach);
 #endif
 	s = splfw();
+	fwdma_sync_multiseg_all(sc->ir[dmach].am, BUS_DMASYNC_POSTREAD);
 	while ((chunk = STAILQ_FIRST(&ir->stdma)) != NULL) {
 		db_tr = (struct fwohcidb_tr *)chunk->end;
 		stat = FWOHCI_DMA_READ(db_tr->db[ldesc].db.desc.res)
@@ -2828,6 +2846,8 @@ fwohci_arcv_free_buf(struct fwohci_softc *sc, struct fwohci_dbch *dbch,
 	FWOHCI_DMA_CLEAR(db->db.desc.depend, 0xf);
 	FWOHCI_DMA_WRITE(db->db.desc.res, dbch->xferq.psize);
 	FWOHCI_DMA_SET(dbch->bottom->db[0].db.desc.depend, 1);
+	fwdma_sync_multiseg_all(dbch->am,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	dbch->bottom = db_tr;
 
 	if (wake)
@@ -2864,6 +2884,8 @@ fwohci_arcv(struct fwohci_softc *sc, struct fwohci_dbch *dbch, int count)
 	db_tr = dbch->top;
 	pcnt = 0;
 	/* XXX we cannot handle a packet which lies in more than two buf */
+	fwdma_sync_multiseg_all(dbch->am,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	status = FWOHCI_DMA_READ(db_tr->db[0].db.desc.res) >> OHCI_STATUS_SHIFT;
 	resCount = FWOHCI_DMA_READ(db_tr->db[0].db.desc.res) & OHCI_COUNT_MASK;
 	while (status & OHCI_CNTL_DMA_ACTIVE) {
@@ -3043,6 +3065,8 @@ out:
 				if (dbch->pdb_tr != db_tr)
 					printf("pdb_tr != db_tr\n");
 			db_tr = STAILQ_NEXT(db_tr, link);
+			fwdma_sync_multiseg_all(dbch->am,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			status = FWOHCI_DMA_READ(db_tr->db[0].db.desc.res)
 						>> OHCI_STATUS_SHIFT;
 			resCount = FWOHCI_DMA_READ(db_tr->db[0].db.desc.res)
@@ -3061,6 +3085,8 @@ out:
 	if (pcnt < 1)
 		printf("fwohci_arcv: no packets\n");
 #endif
+	fwdma_sync_multiseg_all(dbch->am,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	splx(s);
 	return;
 
@@ -3081,6 +3107,8 @@ err:
 	dbch->top = db_tr;
 	dbch->buf_offset = dbch->xferq.psize - resCount;
 	OWRITE(sc, OHCI_DMACTL(off), OHCI_CNTL_DMA_WAKE);
+	fwdma_sync_multiseg_all(
+	    dbch->am, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	fw_bus_dmamap_sync(dbch->dmat, db_tr->dma_map, BUS_DMASYNC_PREREAD);
 	splx(s);
 }
