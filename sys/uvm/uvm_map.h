@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.52 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.53 2006/05/03 14:12:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -355,6 +355,8 @@ int		uvm_mapent_reserve(struct vm_map *,
 		    struct uvm_mapent_reservation *, int, int);
 void		uvm_mapent_unreserve(struct vm_map *,
 		    struct uvm_mapent_reservation *);
+
+vsize_t		uvm_mapent_overhead(vsize_t, int);
 
 int		uvm_mapent_trymerge(struct vm_map *,
 		    struct vm_map_entry *, int);
