@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 2006/03/16 17:43:34 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 2006/05/03 17:47:06 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2006/03/16 17:43:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2006/05/03 17:47:06 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -254,6 +254,11 @@ cpu_startup()
 	init_intr();
 
 	/*
+	 * Initialize soft interrupt framework.
+	 */
+	softintr__init();
+
+	/*
 	 * Do common startup.
 	 */
 	oea_startup(res->VitalProductData.PrintableModel);
@@ -268,7 +273,6 @@ cpu_startup()
 		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
-
 	/*
 	 * Now safe for bus space allocation to use malloc.
 	 */
