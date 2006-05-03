@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.218 2006/04/21 14:03:01 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.219 2006/05/03 14:12:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.218 2006/04/21 14:03:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.219 2006/05/03 14:12:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -174,8 +174,10 @@ vaddr_t uvm_maxkaddr;
  * for the vm_map.
  */
 extern struct vm_map *pager_map; /* XXX */
+#define	VM_MAP_USE_KMAPENT_FLAGS(flags) \
+	(((flags) & VM_MAP_INTRSAFE) != 0)
 #define	VM_MAP_USE_KMAPENT(map) \
-	(((map)->flags & VM_MAP_INTRSAFE) || (map) == kernel_map)
+	(VM_MAP_USE_KMAPENT_FLAGS((map)->flags) || (map) == kernel_map)
 
 /*
  * UVM_ET_ISCOMPATIBLE: check some requirements for map entry merging
@@ -270,6 +272,8 @@ static void	_uvm_mapent_check(const struct vm_map_entry *, const char *,
 static struct vm_map_entry *
 		uvm_kmapent_alloc(struct vm_map *, int);
 static void	uvm_kmapent_free(struct vm_map_entry *);
+static vsize_t	uvm_kmapent_overhead(vsize_t);
+
 static void	uvm_map_entry_unwire(struct vm_map *, struct vm_map_entry *);
 static void	uvm_map_reference_amap(struct vm_map_entry *, int);
 static int	uvm_map_space_avail(vaddr_t *, vsize_t, voff_t, vsize_t, int,
@@ -566,6 +570,23 @@ uvm_mapent_copy(struct vm_map_entry *src, struct vm_map_entry *dst)
 
 	memcpy(dst, src, ((char *)&src->uvm_map_entry_stop_copy) -
 	    ((char *)src));
+}
+
+/*
+ * uvm_mapent_overhead: calculate maximum kva overhead necessary for
+ * map entries.
+ *
+ * => size and flags are the same as uvm_km_suballoc's ones.
+ */
+
+vsize_t
+uvm_mapent_overhead(vsize_t size, int flags)
+{
+
+	if (VM_MAP_USE_KMAPENT_FLAGS(flags)) {
+		return uvm_kmapent_overhead(size);
+	}
+	return 0;
 }
 
 #if defined(DEBUG)
@@ -4350,6 +4371,21 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	pg = PHYS_TO_VM_PAGE(pa);
 	uvm_pagefree(pg);
 	UVMMAP_EVCNT_INCR(ukh_free);
+}
+
+static vsize_t
+uvm_kmapent_overhead(vsize_t size)
+{
+
+	/*
+	 * - the max number of unmerged entries is howmany(size, PAGE_SIZE)
+	 *   as the min allocation unit is PAGE_SIZE.
+	 * - UVM_KMAPENT_CHUNK "kmapent"s are allocated from a page.
+	 *   one of them are used to map the page itself.
+	 */
+
+	return howmany(howmany(size, PAGE_SIZE), (UVM_KMAPENT_CHUNK - 1)) *
+	    PAGE_SIZE;
 }
 
 /*
