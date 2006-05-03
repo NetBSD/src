@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.82 2006/05/03 16:53:23 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.83 2006/05/03 21:50:42 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1493,4 +1493,13 @@ sys/net/if_pppoe.c				1.66
 
 	Don't allow to connect a non ethernet interface to a PPPoE interface.
 	[tron, ticket #1297]
+
+dist/pf/share/man/man4/pf.4			1.5 via patch
+dist/pf/share/man/man5/pf.conf.5		1.7 via patch
+
+	We do not support pfsync, so:
+	- remove xrefs to pfsync(4)
+	- remove the no-sync keyword from pf.conf(5)
+	- add a note to pf(4).
+	[pavel, ticket #1300]
 
