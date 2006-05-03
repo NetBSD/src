@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: defs.h,v 1.14 2006/05/03 18:08:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -320,21 +320,21 @@ extern void set_first_derives __P((void));
 extern void closure __P((short *, int));
 extern void finalize_closure __P((void));
 
-extern void fatal __P((char *));
+extern __dead void fatal __P((char *));
 
 extern void reflexive_transitive_closure __P((unsigned *, int));
-extern void done __P((int));
+extern __dead void done __P((int));
 
-extern void no_space __P((void));
-extern void open_error(char *);
-extern void unexpected_EOF __P((void));
+extern __dead void no_space __P((void));
+extern __dead void open_error(char *);
+extern __dead void unexpected_EOF __P((void));
 extern void print_pos __P((char *, char *));
 extern __dead void syntax_error __P((int, char *, char *));
-extern void unterminated_comment __P((int, char *, char *));
-extern void unterminated_string __P((int, char *, char *));
-extern void unterminated_text __P((int, char *, char *));
-extern void unterminated_union __P((int, char *, char *));
-extern void over_unionized __P((char *));
+extern __dead void unterminated_comment __P((int, char *, char *));
+extern __dead void unterminated_string __P((int, char *, char *));
+extern __dead void unterminated_text __P((int, char *, char *));
+extern __dead void unterminated_union __P((int, char *, char *));
+extern __dead void over_unionized __P((char *));
 extern void illegal_tag __P((int, char *, char *));
 extern void illegal_character __P((char *));
 extern void used_reserved __P((char *));
@@ -342,19 +342,19 @@ extern void tokenized_start __P((char *));
 extern void retyped_warning __P((char *));
 extern void reprec_warning __P((char *));
 extern void revalued_warning __P((char *));
-extern void terminal_start __P((char *));
+extern __dead void terminal_start __P((char *));
 extern void restarted_warning __P((void));
-extern void no_grammar __P((void));
-extern void terminal_lhs __P((int));
+extern __dead void no_grammar __P((void));
+extern __dead void terminal_lhs __P((int));
 extern void prec_redeclared __P((void));
-extern void unterminated_action __P((int, char *, char *));
+extern __dead void unterminated_action __P((int, char *, char *));
 extern void dollar_warning __P((int, int));
-extern void dollar_error __P((int, char *, char *));
-extern void untyped_lhs __P((void));
-extern void untyped_rhs __P((int, char *));
-extern void unknown_rhs __P((int));
+extern __dead void dollar_error __P((int, char *, char *));
+extern __dead void untyped_lhs __P((void));
+extern __dead void untyped_rhs __P((int, char *));
+extern __dead void unknown_rhs __P((int));
 extern void default_action_warning __P((void));
-extern void undefined_goal __P((char *));
+extern __dead void undefined_goal __P((char *));
 extern void undefined_symbol_warning __P((char *));
 
 extern void lalr __P((void));
