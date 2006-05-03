@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.52 2006/03/16 17:43:34 garbled Exp $
+#	$NetBSD: files.prep,v 1.53 2006/05/03 17:47:05 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -25,6 +25,7 @@ file	arch/prep/prep/residual.c
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
+file	arch/powerpc/powerpc/softintr.c
 
 # General files
 file	dev/cons.c
