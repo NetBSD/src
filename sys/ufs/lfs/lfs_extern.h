@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.75.8.2 2006/04/19 03:54:09 elad Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.75.8.3 2006/05/03 16:01:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -118,6 +118,8 @@ struct segment;
 struct ucred;
 struct block_info;
 
+#if defined(_KERNEL)
+
 extern int lfs_allclean_wakeup;
 extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 extern struct pool lfs_dinode_pool;		/* memory pool for dinodes */
@@ -156,12 +158,6 @@ void lfs_freebuf(struct lfs *, struct buf *);
 struct buf *lfs_newbuf(struct lfs *, struct vnode *, daddr_t, size_t, int);
 void lfs_countlocked(int *, long *, const char *);
 int lfs_reserve(struct lfs *, struct vnode *, struct vnode *, int);
-
-/* lfs_cksum.c */
-u_int32_t cksum(void *, size_t);
-u_int32_t lfs_cksum_part(void *, size_t, u_int32_t);
-#define lfs_cksum_fold(sum)	(sum)
-u_int32_t lfs_sb_cksum(struct dlfs *);
 
 /* lfs_debug.c */
 #ifdef DEBUG
@@ -278,11 +274,20 @@ int lfs_putpages (void *);
 SYSCTL_SETUP_PROTO(sysctl_vfs_lfs_setup);
 #endif /* SYSCTL_SETUP_PROTO */
 
-__END_DECLS
 extern int lfs_mount_type;
 extern int (**lfs_vnodeop_p)(void *);
 extern int (**lfs_specop_p)(void *);
 extern int (**lfs_fifoop_p)(void *);
 extern const struct genfs_ops lfs_genfsops;
+
+#endif /* defined(_KERNEL) */
+
+/* lfs_cksum.c */
+u_int32_t cksum(void *, size_t);
+u_int32_t lfs_cksum_part(void *, size_t, u_int32_t);
+#define lfs_cksum_fold(sum)	(sum)
+u_int32_t lfs_sb_cksum(struct dlfs *);
+
+__END_DECLS
 
 #endif /* !_UFS_LFS_LFS_EXTERN_H_ */
