@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.80 2006/04/30 23:34:21 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.81 2006/05/03 16:49:31 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1488,4 +1488,9 @@ sys/arch/sparc64/include/ansi.h			1.10
 
 	For GCC3 and later, use the __builtin_va* constructs. PR#33169
 	[nakayama, ticket #1296]
+
+sys/net/if_pppoe.c				1.66
+
+	Don't allow to connect a non ethernet interface to a PPPoE interface.
+	[1297, ticket #1297]
 
