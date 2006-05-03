@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.55 2006/03/28 00:48:10 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.56 2006/05/03 16:50:58 seanb Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.55 2006/03/28 00:48:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.56 2006/05/03 16:50:58 seanb Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -1874,7 +1874,7 @@ ieee80211_timeout_stations(struct ieee80211_node_table *nt)
 	isadhoc = (ic->ic_opmode == IEEE80211_M_IBSS ||
 		   ic->ic_opmode == IEEE80211_M_AHDEMO);
 	IEEE80211_SCAN_LOCK(nt);
-	gen = nt->nt_scangen++;
+	gen = ++nt->nt_scangen;
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_NODE,
 		"%s: %s scangen %u\n", __func__, nt->nt_name, gen);
 restart:
@@ -2018,7 +2018,7 @@ ieee80211_iterate_nodes(struct ieee80211_node_table *nt, ieee80211_iter_func *f,
 	u_int gen;
 
 	IEEE80211_SCAN_LOCK(nt);
-	gen = nt->nt_scangen++;
+	gen = ++nt->nt_scangen;
 restart:
 	IEEE80211_NODE_LOCK(nt);
 	TAILQ_FOREACH(ni, &nt->nt_node, ni_list) {
