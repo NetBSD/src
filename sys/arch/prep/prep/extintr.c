@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.20 2006/03/09 20:17:28 garbled Exp $	*/
+/*	$NetBSD: extintr.c,v 1.21 2006/05/03 17:47:06 garbled Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.20 2006/03/09 20:17:28 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.21 2006/05/03 17:47:06 garbled Exp $");
 
 #include "opt_openpic.h"
 #include "pci.h"
@@ -543,6 +543,8 @@ do_pending_int(void)
 	__asm volatile("mtmsr %0" :: "r"(dmsr));
 
 	pcpl = splhigh();		/* Turn off all */
+again:
+
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen &= ~hwpend;
 	hwpend &= ~SINT_MASK;
@@ -567,17 +569,33 @@ do_pending_int(void)
 	}
 	if ((ipending & ~pcpl) & SINT_CLOCK) {
 		ipending &= ~SINT_CLOCK;
-		softclock(NULL);
+		splsoftclock();
+		mtmsr(emsr);
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		softintr__run(IPL_SOFTCLOCK);
+		KERNEL_UNLOCK();
+		mtmsr(dmsr);
+		goto again;
 	}
 	if ((ipending & ~pcpl) & SINT_NET) {
-		int pisr = netisr;
-		netisr = 0;
 		ipending &= ~SINT_NET;
-		softnet(pisr);
+		splsoftnet();
+		mtmsr(emsr);
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		softintr__run(IPL_SOFTNET);
+		KERNEL_UNLOCK();
+		mtmsr(dmsr);
+		goto again;
 	}
 	if ((ipending & ~pcpl) & SINT_SERIAL) {
 		ipending &= ~SINT_SERIAL;
-		softserial();
+		splsoftserial();
+		mtmsr(emsr);
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		softintr__run(IPL_SOFTSERIAL);
+		KERNEL_UNLOCK();
+		mtmsr(dmsr);
+		goto again;
 	}
 
 	ipending &= pcpl;
