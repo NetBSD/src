@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.59.2.1 2006/02/01 20:43:25 tron Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.59.2.2 2006/05/03 16:47:09 ghen Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.59.2.1 2006/02/01 20:43:25 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.59.2.2 2006/05/03 16:47:09 ghen Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -861,10 +861,13 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 			return error;
 		if (parms->eth_ifname[0] != 0) {
 			sc->sc_eth_if = ifunit(parms->eth_ifname);
-			if (sc->sc_eth_if == NULL)
+			if (sc->sc_eth_if == NULL ||
+			    sc->sc_eth_if->if_dlt != DLT_EN10MB) {
+				sc->sc_eth_if = NULL;
 				return ENXIO;
+			}
 		}
-		if (parms->ac_name) {
+		if (parms->ac_name != NULL) {
 			size_t s;
 			char * p = malloc(parms->ac_name_len + 1, M_DEVBUF,
 			    M_WAITOK);
@@ -884,7 +887,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 				free(sc->sc_concentrator_name, M_DEVBUF);
 			sc->sc_concentrator_name = p;
 		}
-		if (parms->service_name) {
+		if (parms->service_name != NULL) {
 			size_t s;
 			char * p = malloc(parms->service_name_len + 1, M_DEVBUF,
 			    M_WAITOK);
