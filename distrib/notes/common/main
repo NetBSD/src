@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.309 2006/04/25 08:38:41 liamjfoy Exp $
+.\"	$NetBSD: main,v 1.310 2006/05/03 22:01:19 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1159,6 +1159,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
 .It Ta Jun-ichiro itojun Hagino Ta Mt itojun@NetBSD.org
+.It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
 .It Ta Soren Jacobsen Ta Mt snj@NetBSD.org
 .It Ta SAITOH Masanobu Ta Mt msaitoh@NetBSD.org
 .It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
