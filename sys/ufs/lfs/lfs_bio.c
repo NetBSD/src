@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.91 2006/04/13 23:46:28 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.92 2006/05/04 04:22:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.91 2006/04/13 23:46:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.92 2006/05/04 04:22:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -651,6 +651,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	       (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 		locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 		lfs_subsys_pages > LFS_MAX_PAGES ||
+		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 		lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0))
 	{
 		simple_unlock(&lfs_subsys_lock);
@@ -677,6 +678,9 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	if (lfs_dirvcount > LFS_MAX_DIROP)
 		DLOG((DLOG_FLUSH, "lfs_check: ldvc = %d, max %d\n",
 		      lfs_dirvcount, LFS_MAX_DIROP));
+	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs))
+		DLOG((DLOG_FLUSH, "lfs_check: lfdvc = %d, max %d\n",
+		      fs->lfs_dirvcount, LFS_MAX_FSDIROP(fs)));
 	if (fs->lfs_diropwait > 0)
 		DLOG((DLOG_FLUSH, "lfs_check: ldvw = %d\n",
 		      fs->lfs_diropwait));
@@ -685,6 +689,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_subsys_pages > LFS_MAX_PAGES ||
+	    fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
 		simple_unlock(&fs->lfs_interlock);
 		lfs_flush(fs, flags, 0);
@@ -702,6 +707,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	while (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS ||
 		locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES ||
 		lfs_subsys_pages > LFS_WAIT_PAGES ||
+		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 		lfs_dirvcount > LFS_MAX_DIROP) {
 
 		if (lfs_dostats)

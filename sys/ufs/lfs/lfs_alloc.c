@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.91 2006/04/30 21:59:58 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.92 2006/05/04 04:22:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.91 2006/04/30 21:59:58 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.92 2006/05/04 04:22:55 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -227,7 +227,10 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		simple_lock(&lfs_subsys_lock);
 		--lfs_dirvcount;
 		simple_unlock(&lfs_subsys_lock);
+		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
+		wakeup(&lfs_dirvcount);
+		wakeup(&fs->lfs_dirvcount);
 		simple_unlock(&fs->lfs_interlock);
 	}
 	*vpp = vp;
@@ -585,8 +588,10 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		simple_lock(&lfs_subsys_lock);
 		--lfs_dirvcount;
 		simple_unlock(&lfs_subsys_lock);
+		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 		simple_unlock(&fs->lfs_interlock);
+		wakeup(&fs->lfs_dirvcount);
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
 

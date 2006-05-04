@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.172 2006/05/02 00:52:26 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.173 2006/05/04 04:22:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.172 2006/05/02 00:52:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.173 2006/05/04 04:22:57 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,6 +512,7 @@ lfs_mark_vnode(struct vnode *vp)
 			(void)lfs_vref(vp);
 			simple_lock(&lfs_subsys_lock);
 			++lfs_dirvcount;
+			++fs->lfs_dirvcount;
 			simple_unlock(&lfs_subsys_lock);
 			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			vp->v_flag |= VDIROP;
