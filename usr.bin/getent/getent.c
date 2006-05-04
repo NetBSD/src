@@ -1,7 +1,7 @@
-/*	$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $	*/
+/*	$NetBSD: getent.c,v 1.8 2006/05/04 23:22:21 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.7 2005/08/24 14:31:02 ginsbach Exp $");
+__RCSID("$NetBSD: getent.c,v 1.8 2006/05/04 23:22:21 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -526,7 +526,7 @@ services(int argc, char *argv[])
 			if (proto != NULL)
 				*proto++ = '\0';
 			if (parsenum(argv[i], &id))
-				se = getservbyport((int)id, proto);
+				se = getservbyport((int)htons(id), proto);
 			else
 				se = getservbyname(argv[i], proto);
 			if (se != NULL)
