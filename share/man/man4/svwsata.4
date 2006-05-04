@@ -1,4 +1,4 @@
-.\"	$NetBSD: svwsata.4,v 1.2.2.2 2006/05/04 12:20:50 tron Exp $
+.\"	$NetBSD: svwsata.4,v 1.2.2.3 2006/05/04 12:25:50 tron Exp $
 .\"
 .\" Copyright (c) 2006 Manuel Bouyer.
 .\"
@@ -27,19 +27,19 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 6, 2006
+.Dd March 7, 2006
 .Dt SVWSATA 4
 .Os
 .Sh NAME
 .Nm svwsata
-.Nd Serverworks K2 Serial ATA disk controller driver
+.Nd Serverworks Serial ATA disk controller driver
 .Sh SYNOPSIS
 .Cd "svwsata* at pci? dev ? function ? flags 0x0000"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the Serverworks K2 Serial ATA and controllers,
-and provides the interface with the hardware for the
+driver supports the Serverworks K2, Frodo4, Frodo8 and HT-1000 Serial ATA
+controllers, and provides the interface with the hardware for the
 .Xr ata 4
 driver.
 .Pp
