@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.701.2.30 2006/04/30 23:08:47 riz Exp $
+$NetBSD: pcidevs,v 1.701.2.31 2006/05/04 12:12:07 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2668,6 +2668,10 @@ product SERVERWORKS OSB4_USB		0x0220	OSB4/CSB5 USB Host Controller
 product SERVERWORKS CSB6_USB		0x0221	CSB6 USB Host Controller
 product SERVERWORKS CSB5_LPC		0x0225	CSB5 ISA/LPC bridge
 product SERVERWORKS CSB6_LPC		0x0227	CSB6 ISA/LPC bridge
+product SERVERWORKS K2_SATA		0x0240	K2 SATA
+product SERVERWORKS FRODO4_SATA		0x0241	Frodo4 SATA
+product SERVERWORKS FRODO8_SATA		0x0242	Frodo8 SATA
+product SERVERWORKS HT1000_SATA		0x024a	HT-1000 SATA
 
 /* SGI products */
 product SGI IOC3	0x0003	IOC3
