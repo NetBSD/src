@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.104 2006/04/30 21:19:42 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.105 2006/05/04 04:22:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -96,7 +96,8 @@
 #define LFS_MAXNAMLEN	255		/* maximum name length in a dir */
 
 /* Adjustable filesystem parameters */
-#define MIN_FREE_SEGS	2
+#define MIN_FREE_SEGS	20
+#define MIN_RESV_SEGS	15
 #ifndef LFS_ATIME_IFILE
 # define LFS_ATIME_IFILE 0 /* Store atime info in ifile (optional in LFSv1) */
 #endif
@@ -114,6 +115,11 @@
 #define LFS_INVERSE_MAX_BYTES(n) (((n) + 10 * PAGE_SIZE) << 2)
 #define LFS_WAIT_BYTES	    ((bufmem_lowater >> 1) - (bufmem_lowater >> 3) - 10 * PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
+#define SIZEOF_DIROP(fs)	((fs)->lfs_fsize + 2 * DINODE1_SIZE)
+#define LFS_MAX_FSDIROP(fs)						\
+	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
+	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
+          (2 * SIZEOF_DIROP(fs)))
 #define LFS_MAX_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
 #define LFS_WAIT_PAGES \
@@ -121,7 +127,7 @@
 #define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
 
 /* How starved can we be before we start holding back page writes */
-#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_minfreeseg / 2 + 1)
+#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_resvseg)
 
 /*
  * Reserved blocks for lfs_malloc
@@ -680,7 +686,7 @@ struct dlfs {
 #define LFS_PF_CLEAN 0x1
 	u_int16_t dlfs_pflags;	  /* 322: file system persistent flags */
 	int32_t	  dlfs_dmeta;	  /* 324: total number of dirty summaries */
-	u_int32_t dlfs_minfreeseg; /* 328: segs reserved for cleaner */
+	u_int32_t dlfs_minfreeseg; /* 328: segments not counted in bfree */
 	u_int32_t dlfs_sumsize;	  /* 332: size of summary blocks */
 	u_int64_t dlfs_serial;	  /* 336: serial number */
 	u_int32_t dlfs_ibsize;	  /* 344: size of inode blocks */
@@ -692,7 +698,8 @@ struct dlfs {
 	u_int32_t dlfs_interleave; /* 364: segment interleave */
 	u_int32_t dlfs_ident;	  /* 368: per-fs identifier */
 	u_int32_t dlfs_fsbtodb;	  /* 372: fsbtodb abd dbtodsb shift constant */
-	int8_t	  dlfs_pad[132];  /* 376: round to 512 bytes */
+	u_int32_t dlfs_resvseg;   /* 376: segments reserved for the cleaner */
+	int8_t	  dlfs_pad[128];  /* 380: round to 512 bytes */
 /* Checksum -- last valid disk field. */
 	u_int32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
 };
@@ -775,6 +782,7 @@ struct lfs {
 #define lfs_inodefmt lfs_dlfs.dlfs_inodefmt
 #define lfs_interleave lfs_dlfs.dlfs_interleave
 #define lfs_ident lfs_dlfs.dlfs_ident
+#define lfs_resvseg lfs_dlfs.dlfs_resvseg
 
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
@@ -785,6 +793,7 @@ struct lfs {
 	u_int32_t lfs_iocount;		/* number of ios pending */
 	u_int32_t lfs_writer;		/* don't allow any dirops to start */
 	u_int32_t lfs_dirops;		/* count of active directory ops */
+	u_int32_t lfs_dirvcount;	/* count of VDIROP nodes in this fs */
 	u_int32_t lfs_doifile;		/* Write ifile blocks on next write */
 	u_int32_t lfs_nactive;		/* Number of segments since last ckp */
 	int8_t	  lfs_fmod;		/* super block modified flag */
