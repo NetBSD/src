@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.28 2006/04/30 23:09:09 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.29 2006/05/04 12:14:49 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.701.2.31 2006/05/04 12:12:07 tron Exp
  */
 
 /*
@@ -2675,6 +2675,10 @@
 #define	PCI_PRODUCT_SERVERWORKS_CSB6_USB	0x0221		/* CSB6 USB Host Controller */
 #define	PCI_PRODUCT_SERVERWORKS_CSB5_LPC	0x0225		/* CSB5 ISA/LPC bridge */
 #define	PCI_PRODUCT_SERVERWORKS_CSB6_LPC	0x0227		/* CSB6 ISA/LPC bridge */
+#define	PCI_PRODUCT_SERVERWORKS_K2_SATA	0x0240		/* K2 SATA */
+#define	PCI_PRODUCT_SERVERWORKS_FRODO4_SATA	0x0241		/* Frodo4 SATA */
+#define	PCI_PRODUCT_SERVERWORKS_FRODO8_SATA	0x0242		/* Frodo8 SATA */
+#define	PCI_PRODUCT_SERVERWORKS_HT1000_SATA	0x024a		/* HT-1000 SATA */
 
 /* SGI products */
 #define	PCI_PRODUCT_SGI_IOC3	0x0003		/* IOC3 */
