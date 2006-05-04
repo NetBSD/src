@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2006/03/04 03:39:02 uwe Exp $ */
+/*	$NetBSD: intr.h,v 1.9 2006/05/04 12:21:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,22 @@
 #define IPL_SERIAL	13	/* serial */
 #define IPL_STATCLOCK	14	/* statclock */
 #define IPL_HIGH	15	/* everything */
+#define	IPL_LOCK	IPL_HIGH
+
+/*
+ * fd hardware, ts102, and tadpole microcontoller interrupts are at level 11
+ */
+
+#define	IPL_FD		11
+#define	IPL_TS102	11
+
+/*
+ * zs hardware interrupts are at level 12
+ * su (com) hardware interrupts are at level 13
+ * IPL_SERIAL must protect them all.
+ */
+
+#define	IPL_ZS		12
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 void *
