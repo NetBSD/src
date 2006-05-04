@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700.2.28 2006/04/30 23:09:09 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.700.2.29 2006/05/04 12:14:49 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.701.2.31 2006/05/04 12:12:07 tron Exp
  */
 
 /*
@@ -8964,6 +8964,22 @@ const struct pci_product pci_products[] = {
 	    "CSB6 ISA/LPC bridge",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_K2_SATA,
+	    "K2 SATA",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_FRODO4_SATA,
+	    "Frodo4 SATA",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_FRODO8_SATA,
+	    "Frodo8 SATA",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA,
+	    "HT-1000 SATA",
+	},
+	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
 	    "IOC3",
 	},
@@ -10804,4 +10820,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2118;
+const int pci_nproducts = 2122;
