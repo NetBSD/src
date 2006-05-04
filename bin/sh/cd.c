@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.38 2005/11/26 21:44:43 dsl Exp $	*/
+/*	$NetBSD: cd.c,v 1.39 2006/05/04 11:16:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.38 2005/11/26 21:44:43 dsl Exp $");
+__RCSID("$NetBSD: cd.c,v 1.39 2006/05/04 11:16:53 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,8 +335,11 @@ pwdcmd(int argc, char **argv)
 void
 initpwd(void)
 {
-	getpwd(0);
-	setvar("PWD", curdir, VEXPORT);
+	getpwd(1);
+	if (curdir)
+		setvar("PWD", curdir, VEXPORT);
+	else
+		sh_warnx("Cannot determine current working directory");
 }
 
 #define MAXPWD 256
