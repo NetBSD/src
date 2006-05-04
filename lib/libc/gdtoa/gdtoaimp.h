@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.4 2006/05/04 18:38:56 christos Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.5 2006/05/04 18:59:23 christos Exp $ */
 
 /****************************************************************
 
@@ -170,6 +170,8 @@ THIS SOFTWARE.
 /* #define IEEE_{BIG,LITTLE}_ENDIAN in ${ARCHDIR}/gdtoa/arith.h */
 
 #include <stdint.h>
+#define Short   int16_t
+#define UShort uint16_t
 #define Long    int32_t
 #define ULong  uint32_t
 #define LLong   int64_t
