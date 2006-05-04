@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoaimp.h,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
+/* $NetBSD: gdtoaimp.h,v 1.4 2006/05/04 18:38:56 christos Exp $ */
 
 /****************************************************************
 
@@ -176,7 +176,9 @@ THIS SOFTWARE.
 #define ULLong uint64_t
 
 #define INFNAN_CHECK
+#ifdef _REENTRANT
 #define MULTIPLE_THREADS
+#endif
 #define USE_LOCALE
 
 #ifndef GDTOAIMP_H_INCLUDED
