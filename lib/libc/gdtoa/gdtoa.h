@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.h,v 1.5 2006/03/15 17:35:18 kleink Exp $ */
+/* $NetBSD: gdtoa.h,v 1.6 2006/05/04 18:59:23 christos Exp $ */
 
 /****************************************************************
 
@@ -37,13 +37,13 @@ THIS SOFTWARE.
 #include "arith.h"
 
 #ifndef Long
-#define Long long
+#define Long int32_t
 #endif
 #ifndef ULong
-typedef unsigned Long ULong;
+#define ULong uint32_t
 #endif
 #ifndef UShort
-typedef unsigned short UShort;
+#define UShort uint16_t
 #endif
 
 #ifndef ANSI
