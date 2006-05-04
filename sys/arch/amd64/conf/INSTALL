@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27.2.11 2006/04/20 14:30:29 tron Exp $
+# $NetBSD: INSTALL,v 1.27.2.12 2006/05/04 12:30:49 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.27.2.11 $"
+#ident 		"INSTALL-$Revision: 1.27.2.12 $"
 
 maxusers	32		# estimated number of users
 
@@ -347,6 +347,7 @@ pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # PCMCIA IDE controllers
