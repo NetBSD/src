@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.21 2006/02/09 19:18:57 manu Exp $	*/
+/*	$NetBSD: setemul.c,v 1.22 2006/05/04 18:06:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.21 2006/02/09 19:18:57 manu Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.22 2006/05/04 18:06:29 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -105,6 +105,9 @@ __RCSID("$NetBSD: setemul.c,v 1.21 2006/02/09 19:18:57 manu Exp $");
 #include "../../sys/compat/svr4/svr4_syscall.h"
 #include "../../sys/compat/svr4_32/svr4_32_syscall.h"
 #include "../../sys/compat/ultrix/ultrix_syscall.h"
+#ifdef __m68k__
+#include "../../sys/compat/aoutm68k/aoutm68k_syscall.h"
+#endif
 
 #define KTRACE
 #include "../../sys/kern/syscalls.c"
@@ -126,6 +129,9 @@ __RCSID("$NetBSD: setemul.c,v 1.21 2006/02/09 19:18:57 manu Exp $");
 #include "../../sys/compat/svr4/svr4_syscalls.c"
 #include "../../sys/compat/svr4_32/svr4_32_syscalls.c"
 #include "../../sys/compat/ultrix/ultrix_syscalls.c"
+#ifdef __m68k__
+#include "../../sys/compat/aoutm68k/aoutm68k_syscalls.c"
+#endif
 
 #include "../../sys/compat/hpux/hpux_errno.c"
 #include "../../sys/compat/svr4/svr4_errno.c"
@@ -233,6 +239,12 @@ const struct emulation emulations[] = {
 	{ "pecoff",	syscallnames,		SYS_MAXSYSCALL,
 	  NULL,				0,
 	  NULL,				0,	0 },
+
+#ifdef __m68k__
+	{ "aoutm68k",	aoutm68k_syscallnames,	AOUTM68K_SYS_MAXSYSCALL,
+	  NULL,				0,
+	  NULL,				0,	0 },
+#endif
 
 	{ NULL,		NULL,			0,
 	  NULL,				0,
