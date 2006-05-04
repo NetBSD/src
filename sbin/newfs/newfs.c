@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.90 2006/03/21 21:11:42 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.91 2006/05/04 19:46:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.90 2006/03/21 21:11:42 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.91 2006/05/04 19:46:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ int	maxcontig = 0;		/* max contiguous blocks to allocate */
 int	maxbpg;			/* maximum blocks per file in a cyl group */
 int	avgfilesize = AVFILESIZ;/* expected average file size */
 int	avgfpdir = AFPDIR;	/* expected number of files per directory */
-int	mntflags = MNT_ASYNC;	/* flags to be passed to mount */
+int	mntflags = 0;		/* flags to be passed to mount */
 u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
 int	needswap;		/* Filesystem not in native byte order */
@@ -404,6 +404,8 @@ main(int argc, char *argv[])
 	memset(&args, 0, sizeof args);
 	args.fspec = mountfromname;
 	if (mntflags & (MNT_GETARGS | MNT_UPDATE)) {
+		if ((mntflags & MNT_GETARGS) == 0)
+			mntflags |= MNT_ASYNC;
 		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
 			err(1, "mount `%s' failed", argv[1]);
 		if (mntflags & MNT_GETARGS)
@@ -693,7 +695,7 @@ main(int argc, char *argv[])
 
 		args.base = membase;
 		args.size = fssize * sectorsize;
-		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
+		if (mount(MOUNT_MFS, argv[1], mntflags | MNT_ASYNC, &args) < 0)
 			exit(errno); /* parent prints message */
 	}
 #endif
