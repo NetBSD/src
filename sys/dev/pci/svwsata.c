@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.3.4.2 2006/05/04 12:12:07 tron Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.3.4.3 2006/05/04 12:25:50 tron Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.3.4.2 2006/05/04 12:12:07 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.3.4.3 2006/05/04 12:25:50 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,21 @@ static const struct pciide_product_desc pciide_svwsata_products[] =  {
 	{ PCI_PRODUCT_SERVERWORKS_K2_SATA,
 	  0,
 	  "ServerWorks K2 SATA Controller",
+	  svwsata_chip_map
+	},
+	{ PCI_PRODUCT_SERVERWORKS_FRODO4_SATA,
+	  0,
+	  "ServerWorks Frodo4 SATA Controller",
+	  svwsata_chip_map
+	},
+	{ PCI_PRODUCT_SERVERWORKS_FRODO8_SATA,
+	  0,
+	  "ServerWorks Frodo8 SATA Controller",
+	  svwsata_chip_map
+	},
+	{ PCI_PRODUCT_SERVERWORKS_HT1000_SATA,
+	  0,
+	  "ServerWorks HT-1000 SATA Controller",
 	  svwsata_chip_map
 	},
 	{ 0,
@@ -89,6 +104,13 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
+	/* The 4-port version has a dummy second function. */
+	if (pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PCI_MAPREG_START + 0x14) == 0) {
+		aprint_normal("\n");
+		return;
+	}
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
 			   PCI_MAPREG_TYPE_MEM |
