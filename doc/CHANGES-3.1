@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.84 2006/05/04 05:50:47 snj Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.85 2006/05/04 12:34:19 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1507,4 +1507,25 @@ gnu/usr.bin/groff/tmac/mdoc.local		1.27-1.29
 
 	Add NetBSD 3.0.1 and 3.1 to the list of recognized operating systems.
 	[tron, ticket #1303]
+
+distrib/sets/lists/man/mi			1.862
+share/man/man4/Makefile				1.376 via patch
+share/man/man4/pciide.4				1.60
+share/man/man4/svwsata.4			1.1-1.2
+sys/arch/amd64/conf/GENERIC			1.94
+sys/arch/amd64/conf/INSTALL			1.53
+sys/arch/i386/conf/GENERIC			1.732
+sys/arch/i386/conf/INSTALL			1.281
+sys/arch/i386/conf/XEN0				1.34
+sys/dev/pci/files.pci				1.243
+sys/dev/pci/pcidevs				1.771-1.772 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pciide_svwsata_reg.h		1.1
+sys/dev/pci/pciidevar.h				1.33
+sys/dev/pci/svwsata.c				1.1-1.2
+
+	Add svwsata(4), a driver for Serverworks K2 SATA, Frodo4, Frodo8 and
+	HT-1000 controllers.
+	[jonathan, ticket #1298]
 
