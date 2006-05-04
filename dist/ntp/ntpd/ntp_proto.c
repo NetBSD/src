@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.4 2004/10/05 03:34:38 christos Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.5 2006/05/04 08:24:05 kardel Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 4 protocol machinery
@@ -811,7 +811,8 @@ receive(
 		 * Seattle. If not authentic, leave a light on and
 		 * continue.
 		 */
-		peer->flash = 0;
+		if (peer)
+			peer->flash = 0;
 		if (restrict_mask & RES_DONTTRUST) {
 			sys_restricted++;
 			if (peer->flags & FLAG_CONFIG)
