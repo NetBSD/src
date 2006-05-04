@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.661.2.11 2006/04/20 14:30:29 tron Exp $
+# $NetBSD: GENERIC,v 1.661.2.12 2006/05/04 12:12:08 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.661.2.11 $"
+#ident 		"GENERIC-$Revision: 1.661.2.12 $"
 
 maxusers	32		# estimated number of users
 
@@ -699,6 +699,7 @@ rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 

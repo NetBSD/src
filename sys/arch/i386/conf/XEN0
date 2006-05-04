@@ -1,4 +1,4 @@
-# $NetBSD: XEN0,v 1.1.2.6 2006/04/20 03:17:32 snj Exp $
+# $NetBSD: XEN0,v 1.1.2.7 2006/05/04 12:12:08 tron Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -291,6 +291,7 @@ rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 

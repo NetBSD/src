@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.262.2.2 2006/04/20 14:30:29 tron Exp $
+#	$NetBSD: INSTALL,v 1.262.2.3 2006/05/04 12:12:08 tron Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -432,6 +432,7 @@ rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 
