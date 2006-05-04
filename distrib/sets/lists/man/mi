@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.26 2006/04/20 03:11:14 snj Exp $
+# $NetBSD: mi,v 1.768.2.27 2006/05/04 12:28:43 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1241,6 +1241,7 @@
 ./usr/share/man/cat4/sun3/mem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sun3/ms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sv.0			man-sys-catman		.cat
+./usr/share/man/cat4/svwsata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/swwdog.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sysbeep.0			man-sys-catman		.cat
@@ -3467,6 +3468,7 @@
 ./usr/share/man/man4/sun3/mem.4			man-sys-man		.man
 ./usr/share/man/man4/sun3/ms.4			man-sys-man		.man
 ./usr/share/man/man4/sv.4			man-sys-man		.man
+./usr/share/man/man4/svwsata.4			man-sys-man		.man
 ./usr/share/man/man4/sw.4			man-sys-man		.man
 ./usr/share/man/man4/swwdog.4			man-sys-man		.man
 ./usr/share/man/man4/sysbeep.4			man-sys-man		.man
