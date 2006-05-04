@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 2005/12/11 12:19:56 christos Exp $
+	$NetBSD: syscalls.master,v 1.14 2006/05/04 17:22:43 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -694,7 +694,11 @@
 270	NOARGS		{ int sys___posix_rename(const char *from, \
 			    const char *to); }
 271	NOARGS		{ int sys_swapctl(int cmd, const void *arg, int misc); }
-272	NOARGS		{ int sys_getdents(int fd, char *buf, size_t count); }
+#ifdef COMPAT_30
+272	NOARGS		{ int compat_30_sys_getdents(int fd, char *buf, size_t count); }
+#else
+272	EXCL		compat_30_sys_getdents
+#endif
 273	NOARGS		{ int sys_minherit(void *addr, size_t len, \
 			    int inherit); }
 274	NOARGS		{ int sys_lchmod(const char *path, mode_t mode); }
