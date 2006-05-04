@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2005/12/11 12:19:10 christos Exp $ */
+/*	$NetBSD: intr.h,v 1.13 2006/05/04 12:18:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,15 +50,18 @@
 #define	IPL_NET		PIL_NET		/* network */
 #define	IPL_SOFTSERIAL	4		/* serial */
 #define	IPL_TTY		PIL_TTY		/* terminal */
-#define	IPL_VM		PIL_IMP		/* memory allocation */
+#define	IPL_VM		PIL_VM		/* memory allocation */
 #define	IPL_AUDIO	PIL_AUD		/* audio */
 #define	IPL_CLOCK	PIL_CLOCK	/* clock */
+#define	IPL_STATCLOCK	PIL_STATCLOCK	/* statclock */
 #define	IPL_SERIAL	PIL_SER		/* serial */
 #define	IPL_SCHED	PIL_SCHED	/* scheduler */
 #define	IPL_LOCK	PIL_LOCK	/* locks */
 #define	IPL_HIGH	PIL_HIGH	/* everything */
 #define	IPL_HALT	5		/* cpu stop-self */
 #define	IPL_PAUSE	13		/* pause cpu */
+#define	IPL_LPT		PIL_LPT
+#define	IPL_IPI		PIL_HIGH
 
 /*
  * Interprocessor interrupts. In order how we want them processed.
