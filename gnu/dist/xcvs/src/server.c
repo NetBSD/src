@@ -4218,7 +4218,6 @@ CVS server internal error: no mode in server_updated");
 	if (updated == SERVER_UPDATED)
 	{
 	    Node *node;
-	    Entnode *entnode;
 
 	    if (!(supported_response ("Created")
 		  && supported_response ("Update-existing")))
@@ -4236,9 +4235,12 @@ CVS server internal error: no mode in server_updated");
 	       in case we end up processing it again (e.g. modules3-6
 	       in the testsuite).  */
 	    node = findnode_fn (finfo->entries, finfo->file);
-	    entnode = node->data;
-	    free (entnode->timestamp);
-	    entnode->timestamp = xstrdup ("=");
+	    if (node != NULL)
+	    {
+		Entnode *entnode = node->data;
+		free (entnode->timestamp);
+		entnode->timestamp = xstrdup ("=");
+	    }
 	}
 	else if (updated == SERVER_MERGED)
 	    buf_output0 (protocol, "Merged ");

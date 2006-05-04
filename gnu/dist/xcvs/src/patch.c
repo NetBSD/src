@@ -518,7 +518,8 @@ patch_fileproc (callerdat, finfo)
      */
     if ((fp1 = cvs_temp_file (&tmpfile1)) == NULL)
     {
-	error (0, errno, "cannot create temporary file %s", tmpfile1);
+	error (0, errno, "cannot create temporary file %s",
+	       tmpfile1 ? tmpfile1 : "(null)");
 	ret = 1;
 	goto out;
     }
@@ -527,7 +528,8 @@ patch_fileproc (callerdat, finfo)
 	    error (0, errno, "warning: cannot close %s", tmpfile1);
     if ((fp2 = cvs_temp_file (&tmpfile2)) == NULL)
     {
-	error (0, errno, "cannot create temporary file %s", tmpfile2);
+	error (0, errno, "cannot create temporary file %s",
+	       tmpfile2 ? tmpfile2 : "(null)");
 	ret = 1;
 	goto out;
     }
@@ -536,7 +538,8 @@ patch_fileproc (callerdat, finfo)
 	    error (0, errno, "warning: cannot close %s", tmpfile2);
     if ((fp3 = cvs_temp_file (&tmpfile3)) == NULL)
     {
-	error (0, errno, "cannot create temporary file %s", tmpfile3);
+	error (0, errno, "cannot create temporary file %s",
+	       tmpfile3 ? tmpfile3 : "(null)");
 	ret = 1;
 	goto out;
     }
@@ -752,16 +755,28 @@ failed to read diff file header %s for %s: end of file", tmpfile3, rcs);
         free (line1);
     if (line2)
         free (line2);
-    if (CVS_UNLINK (tmpfile1) < 0)
-	error (0, errno, "cannot unlink %s", tmpfile1);
-    if (CVS_UNLINK (tmpfile2) < 0)
-	error (0, errno, "cannot unlink %s", tmpfile2);
-    if (CVS_UNLINK (tmpfile3) < 0)
-	error (0, errno, "cannot unlink %s", tmpfile3);
-    free (tmpfile1);
-    free (tmpfile2);
-    free (tmpfile3);
-    tmpfile1 = tmpfile2 = tmpfile3 = NULL;
+    if (tmpfile1 != NULL)
+    {
+	if (CVS_UNLINK (tmpfile1) < 0)
+	    error (0, errno, "cannot unlink %s", tmpfile1);
+	free (tmpfile1);
+	tmpfile1 = NULL;
+    }
+    if (tmpfile2 != NULL)
+    {
+	if (CVS_UNLINK (tmpfile2) < 0)
+	    error (0, errno, "cannot unlink %s", tmpfile2);
+	free (tmpfile2);
+	tmpfile2 = NULL;
+    }
+    if (tmpfile3 != NULL)
+    {
+	if (CVS_UNLINK (tmpfile3) < 0)
+	    error (0, errno, "cannot unlink %s", tmpfile3);
+	free (tmpfile3);
+	tmpfile3 = NULL;
+    }
+
     if (dargc)
     {
 	run_arg_free_p (dargc, dargv);

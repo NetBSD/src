@@ -1845,7 +1845,7 @@ packetizing_buffer_output (closure, data, have, wrote)
     struct packetizing_buffer *pb = (struct packetizing_buffer *) closure;
     char inbuf[BUFFER_DATA_SIZE + 2];
     char stack_outbuf[BUFFER_DATA_SIZE + PACKET_SLOP + 4];
-    struct buffer_data *outdata;
+    struct buffer_data *outdata = NULL;
     char *outbuf;
     int size, status, translated;
 
@@ -1900,6 +1900,11 @@ packetizing_buffer_output (closure, data, have, wrote)
 	buf_output (pb->buf, outbuf, translated + 2);
     else
     {
+	/* if ((have + PACKET_SLOP + 4) > BUFFER_DATA_SIZE), then
+	   outdata may be NULL. */
+	if (outdata == NULL)
+	    abort ();
+
 	outdata->size = translated + 2;
 	buf_append_data (pb->buf, outdata, outdata);
     }

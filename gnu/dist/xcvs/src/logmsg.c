@@ -441,7 +441,8 @@ do_verify (messagep, repository)
        temp file, and close the file.  */
 
     if ((fp = cvs_temp_file (&fname)) == NULL)
-	error (1, errno, "cannot create temporary file %s", fname);
+	error (1, errno, "cannot create temporary file %s",
+	       fname ? fname : "(null)");
 
     if (*messagep != NULL)
 	fputs (*messagep, fp);
@@ -547,7 +548,7 @@ do_verify (messagep, repository)
     if (unlink_file (fname) < 0)
 	error (0, errno, "cannot remove %s", fname);
     free (fname);
-    free( verifymsg_script );
+    free (verifymsg_script);
     verifymsg_script = NULL;
 }
 
