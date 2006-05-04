@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.173 2006/05/04 04:22:57 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.174 2006/05/04 16:48:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.173 2006/05/04 04:22:57 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.174 2006/05/04 16:48:16 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1369,11 +1369,9 @@ lfs_fcntl(void *v)
 		simple_lock(&fs->lfs_interlock);
 		++fs->lfs_sleepers;
 		simple_unlock(&fs->lfs_interlock);
-		VOP_UNLOCK(ap->a_vp, 0);
 
 		error = lfs_segwait(fsidp, tvp);
 
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		simple_lock(&fs->lfs_interlock);
 		if (--fs->lfs_sleepers == 0)
 			wakeup(&fs->lfs_sleepers);
@@ -1399,7 +1397,6 @@ lfs_fcntl(void *v)
 		simple_lock(&fs->lfs_interlock);
 		++fs->lfs_sleepers;
 		simple_unlock(&fs->lfs_interlock);
-		VOP_UNLOCK(ap->a_vp, 0);
 		if (ap->a_command == LFCNBMAPV)
 			error = lfs_bmapv(p, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
@@ -1407,7 +1404,6 @@ lfs_fcntl(void *v)
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		simple_lock(&fs->lfs_interlock);
 		if (--fs->lfs_sleepers == 0)
 			wakeup(&fs->lfs_sleepers);
@@ -1420,7 +1416,6 @@ lfs_fcntl(void *v)
 		 * Flush dirops and write Ifile, allowing empty segments
 		 * to be immediately reclaimed.
 		 */
-		VOP_UNLOCK(ap->a_vp, 0);
 		lfs_writer_enter(fs, "pndirop");
 		off = fs->lfs_offset;
 		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
@@ -1442,7 +1437,6 @@ lfs_fcntl(void *v)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
 #endif
 
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		return 0;
 
 	    case LFCNIFILEFH:
@@ -1481,7 +1475,6 @@ lfs_fcntl(void *v)
 		 * was written, and we can regression-test checkpoint
 		 * validity in the general case.
 		 */
-		VOP_UNLOCK(ap->a_vp, 0);
 		simple_lock(&fs->lfs_interlock);
 		fs->lfs_nowrap = 1;
 		error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER | PNORELOCK,
@@ -1490,7 +1483,6 @@ lfs_fcntl(void *v)
 			fs->lfs_nowrap = 0;
 			wakeup(&fs->lfs_nowrap);
 		}
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		return 0;
 
 	    case LFCNWRAPGO:
@@ -1498,13 +1490,11 @@ lfs_fcntl(void *v)
 		 * Having done its work, the agent wakes up the writer.
 		 * It sleeps until a new segment is selected.
 		 */
-		VOP_UNLOCK(ap->a_vp, 0);
 		simple_lock(&fs->lfs_interlock);
 		fs->lfs_nowrap = 0;
 		wakeup(&fs->lfs_nowrap);
                 ltsleep(&fs->lfs_nextseg, PCATCH | PUSER | PNORELOCK,
                         "segment", 0, &fs->lfs_interlock);
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		return 0;
 
 	    default:

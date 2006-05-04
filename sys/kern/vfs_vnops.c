@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.108 2006/03/24 17:16:10 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.109 2006/05/04 16:48:16 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.108 2006/03/24 17:16:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.109 2006/05/04 16:48:16 perseant Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -604,9 +604,7 @@ vn_fcntl(struct file *fp, u_int com, void *data, struct lwp *l)
 	struct vnode *vp = ((struct vnode *)fp->f_data);
 	int error;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FCNTL(vp, com, data, fp->f_flag, l->l_proc->p_ucred, l);
-	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 
