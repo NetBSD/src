@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.19 2006/04/23 07:56:58 jld Exp $	*/
+/*	$NetBSD: newfs.c,v 1.20 2006/05/04 04:39:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.19 2006/04/23 07:56:58 jld Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.20 2006/05/04 04:39:15 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,8 @@ int	bsize = 0;		/* block size */
 int	ibsize = 0;		/* inode block size */
 int	interleave = 0;		/* segment interleave */
 int	minfree = MINFREE;	/* free space threshold */
-int     minfreeseg = 0;         /* free segments reserved for the cleaner */
+int     minfreeseg = 0;         /* segments not counted in bfree total */
+int     resvseg = 0;            /* free segments reserved for the cleaner */
 u_int32_t roll_id = 0;		/* roll-forward id */
 u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
@@ -184,7 +185,7 @@ main(int argc, char **argv)
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
-	opstring = "AB:b:DFf:I:i:LM:m:NO:r:S:s:v:";
+	opstring = "AB:b:DFf:I:i:LM:m:NO:R:r:S:s:v:";
 
 	debug = force = segsize = start = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
@@ -214,6 +215,9 @@ main(int argc, char **argv)
 			break;
 		case 'O':
 		  	start = strsuftoi64("start", optarg, 0, INT64_MAX, NULL);
+			break;
+		case 'R':
+		  	resvseg = strsuftoi64("resvseg", optarg, 0, INT64_MAX, NULL);
 			break;
 		case 'S':
 		  	secsize = strsuftoi64("sector size", optarg, 1, INT64_MAX, NULL);
@@ -352,7 +356,7 @@ main(int argc, char **argv)
 
 	/* If we're making a LFS, we break out here */
 	r = make_lfs(fso, secsize, pp, minfree, bsize, fsize, segsize,
-		      minfreeseg, version, start, ibsize, interleave,
+		      minfreeseg, resvseg, version, start, ibsize, interleave,
                       roll_id);
 	if (debug)
 		bufstats();
@@ -513,9 +517,11 @@ usage()
 	fprintf(stderr, "\t-A (autoconfigure segment size)\n");
 	fprintf(stderr, "\t-B segment size in bytes\n");
 	fprintf(stderr, "\t-D (debug)\n");
+	fprintf(stderr, "\t-M count of segments not counted in bfree\n");
 	fprintf(stderr,
 	    "\t-N (do not create file system, just print out parameters)\n");
 	fprintf(stderr, "\t-O first segment offset in sectors\n");
+	fprintf(stderr, "\t-R count of segments reserved for the cleaner\n");
 	fprintf(stderr, "\t-b block size in bytes\n");
 	fprintf(stderr, "\t-f frag size in bytes\n");
 	fprintf(stderr, "\t-m minimum free space %%\n");
