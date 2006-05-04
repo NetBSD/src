@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.239 2006/03/27 20:20:45 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.240 2006/05/04 17:48:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.239 2006/03/27 20:20:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.240 2006/05/04 17:48:56 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1372,9 +1372,9 @@ bad:
 
 /* ARGSUSED */
 int
-sys_fhstat(struct lwp *l, void *v, register_t *retval)
+sys___fhstat30(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_fhstat_args /* {
+	struct sys___fhstat30_args /* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct stat *) sb;
 	} */ *uap = v;
