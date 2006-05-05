@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.54 2006/04/15 14:22:52 tsutsui Exp $
+ * $Id: ahc_pci.c,v 1.55 2006/05/05 18:04:42 thorpej Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.54 2006/04/15 14:22:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.55 2006/05/05 18:04:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1039,7 +1039,7 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 		/* See if someone else set us up already */
 		if ((ahc->flags & AHC_NO_BIOS_INIT) == 0
 		 && scsiseq != 0) {
-			boolean_t usetd;
+			prop_bool_t usetd;
 
 			printf("%s: Using left over BIOS settings\n",
 				ahc_name(ahc));
@@ -1051,10 +1051,15 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 			 * queuing etc.) and machine dependent device
 			 * property is set.
 			 */ 
-			if (devprop_get(&ahc->sc_dev, "use-target-defaults",
-			    &usetd, sizeof(usetd), NULL) == sizeof(usetd) &&
-			    usetd == TRUE)
-				ahc->flags |= AHC_USETARGETDEFAULTS;
+			usetd = prop_dictionary_get(
+					device_properties(&ahc->sc_dev),
+					"use-target-defaults");
+			if (usetd != NULL) {
+				KASSERT(prop_object_type(usetd) ==
+					PROP_TYPE_BOOL);
+				if (prop_bool_true(usetd))
+					ahc->flags |= AHC_USETARGETDEFAULTS;
+			}
 			ahc->flags |= AHC_BIOS_ENABLED;
 		} else {
 			/*
