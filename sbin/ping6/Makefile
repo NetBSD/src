@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2005/06/27 01:00:06 christos Exp $
+# $NetBSD: Makefile,v 1.10 2006/05/05 00:03:22 rpaulo Exp $
 
 PROG=	ping6
 MAN=	ping6.8
@@ -8,6 +8,7 @@ BINMODE=4555
 
 CPPFLAGS+=-DINET6
 CPPFLAGS+=-DIPSEC
+CPPFLAGS+=-DUSE_RFC3542
 
 LDADD+=	-lipsec -lm
 DPADD+=	${LIBIPSEC} ${LIBM}
