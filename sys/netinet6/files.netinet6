@@ -1,4 +1,6 @@
-#	$NetBSD: files.netinet6,v 1.4 2006/01/21 00:15:36 rpaulo Exp $
+#	$NetBSD: files.netinet6,v 1.5 2006/05/05 00:03:22 rpaulo Exp $
+
+defflag	opt_inet6.h	RFC2292	
 
 # NOTE: netinet/files.netinet must be included before this one!
 
