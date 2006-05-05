@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.37 2006/04/24 22:00:43 wiz Exp $
+.\"	$NetBSD: cksum.1,v 1.38 2006/05/05 22:07:22 elad Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -162,41 +162,6 @@ two programs is 160 bits in length, as opposed to 128.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl 1
-Use the SHA1 algorithm.
-.Em This flag is deprecated and should not be used as it will be removed
-.Em in the future .
-.Em Please use the
-.Fl a
-.Em flag .
-.It Fl 2
-Use the MD2 algorithm.
-.Em This flag is deprecated and should not be used as it will be removed
-.Em in the future .
-.Em Please use the
-.Fl a
-.Em flag .
-.It Fl 4
-Use the MD4 algorithm.
-.Em This flag is deprecated and should not be used as it will be removed
-.Em in the future .
-.Em Please use the
-.Fl a
-.Em flag .
-.It Fl 5 , Fl m
-Use the MD5 algorithm.
-.Em This flag is deprecated and should not be used as it will be removed
-.Em in the future .
-.Em Please use the
-.Fl a
-.Em flag .
-.It Fl 6
-Use the RMD160 algorithm.
-.Em This flag is deprecated and should not be used as it will be removed
-.Em in the future .
-.Em Please use the
-.Fl a
-.Em flag .
 .It Fl a Ar algorithm
 When invoked as
 .Nm cksum ,
