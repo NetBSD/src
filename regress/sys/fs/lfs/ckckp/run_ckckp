@@ -6,10 +6,11 @@ GFILE=$3
 WFILE=$4
 PLEX=$5
 COUNT=$6
+SIZE=$7
 UTILDIR=`pwd`
 
 $UTILDIR/ckckp $TMPMP $LFSCDEV $GFILE $WFILE &
-(cd $TMPMP; $UTILDIR/cleanalot_async -n $COUNT -p $PLEX)
+(cd $TMPMP; $UTILDIR/cleanalot_async -n $COUNT -p $PLEX -b $SIZE)
 kill %1
 
 exit 0

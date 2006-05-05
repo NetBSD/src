@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/04/27 22:37:54 perseant Exp $
+#	$NetBSD: Makefile,v 1.4 2006/05/05 19:38:30 perseant Exp $
 #
 # Note: this test must be run with LFSDEV defined, e.g. "LFSDEV=wd0g".
 # It will destroy the existing contents of $LFSDEV to perform the test.
@@ -19,6 +19,7 @@ GFILE?= "good_fs.img"		# "Good" file - will be as large as the FS
 WFILE?= "work_fs.img"		# Work file - will also be as large as the FS
 COUNT?= 20
 PLEX?=  2
+FSIZE?= 16384
 
 regress: test_ckckp
 
@@ -37,7 +38,7 @@ test_ckckp: ckckp cleanalot_async run_ckckp
 	newfs_lfs ${LFSCDEV}
 	-mkdir ${TMPMP}
 	mount ${LFSBDEV} ${TMPMP}
-	./run_ckckp ${TMPMP} ${LFSCDEV} ${GFILE} ${WFILE} ${PLEX} ${COUNT} || \
+	./run_ckckp ${TMPMP} ${LFSCDEV} ${GFILE} ${WFILE} ${PLEX} ${COUNT} ${FSIZE} || \
 		echo ${.CURDIR} FAILED | tee -a ${REGRESS_LOG}
 	umount ${TMPMP}
 	rmdir ${TMPMP}

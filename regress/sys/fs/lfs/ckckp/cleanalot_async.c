@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanalot_async.c,v 1.3 2006/05/01 19:47:01 perseant Exp $	*/
+/*	$NetBSD: cleanalot_async.c,v 1.4 2006/05/05 19:38:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,10 @@ int write_file(int gen, int n, int plex, char *buf, int size)
         fp = fopen(s, "wb");
         if (fp == NULL)
                 return 0;
+	if (size)
         r = fwrite(buf, size, 1, fp);
+	else
+		r = 1;
         fclose(fp);
 
         return r;
@@ -92,13 +95,16 @@ int write_dirs(int gen, int size, int plex)
         }
 
         /* Write files */
+	if (size) {
         buf = malloc(size);
         if (buf == NULL)
                 return 0;
+	}
         tot = 0;
         for (i = 0; ; i++) {
                 for (j = 0; j < plex; j++) {
                         if (write_file(gen, i, j, buf, size) == 0) {
+				if (size)
                                 free(buf);
                                 return tot;
                         }
@@ -116,6 +122,7 @@ int main(int argc, char **argv)
         int plex = 2;
         char cmd[1024];
 
+	bs = -1;
         while((c = getopt(argc, argv, "b:n:p:")) != -1) {
                 switch(c) {
                     case 'b':
@@ -139,9 +146,9 @@ int main(int argc, char **argv)
                 if (argv[optind] != NULL)
                         count = atoi(argv[optind]);
         }
-        if (bs == 0 && getenv("BS") != NULL)
+	if (bs < 0 && getenv("BS") != NULL)
                 bs = atoi(getenv("BS"));
-        if (bs == 0)
+	if (bs < 0)
                 bs = 16384;
         if (plex == 0)
                 plex = 2;
@@ -160,7 +167,6 @@ int main(int argc, char **argv)
                         system(cmd);
 			sync();
                 }
-                printf("%d files of size %d\n", j * plex, bs);
 		system("df -k .");
 		printf("remove files\n");
 		system("rm -rf dir_*");
