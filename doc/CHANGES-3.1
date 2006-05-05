@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.85 2006/05/04 12:34:19 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.86 2006/05/05 16:48:35 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1528,4 +1528,22 @@ sys/dev/pci/svwsata.c				1.1-1.2
 	Add svwsata(4), a driver for Serverworks K2 SATA, Frodo4, Frodo8 and
 	HT-1000 controllers.
 	[jonathan, ticket #1298]
+
+sys/arch/i386/conf/XEN0				1.18 via patch
+sys/arch/xen/conf/files.xen			1.31 via patch
+
+	Sync with i386/conf/GENERIC:
+	- add a buch of PCI storage devices
+	- add firewire devices
+	- add some missing PCI network devices
+	- add serial and parallel PCI adapters
+	- add lpt0 at isa
+	- add com1 at isa
+	  com0 not added for the benefit of serial console users (it will conflicts
+	  with the Xen kernel).
+	XXX this means that setups with serial console on com1 will now break with the
+	default kernel.
+	Use userconf(4) (add -c to kernel command line) or change your setup to
+	com0 instead (most bios allows arbitrary mappings of com ports)
+	[bouyer, ticket #1311]
 
