@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.874 2006/05/05 00:03:21 rpaulo Exp $
+#	$NetBSD: mi,v 1.875 2006/05/05 18:27:27 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1413,7 +1413,7 @@
 ./usr/include/sys/pool.h			comp-c-include
 ./usr/include/sys/power.h			comp-c-include
 ./usr/include/sys/proc.h			comp-c-include
-./usr/include/sys/properties.h			comp-c-include
+./usr/include/sys/properties.h			comp-obsolete		obsolete
 ./usr/include/sys/protosw.h			comp-c-include
 ./usr/include/sys/ptrace.h			comp-c-include
 ./usr/include/sys/queue.h			comp-c-include
@@ -5674,15 +5674,15 @@
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf_nolog.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/proc_trampoline.0		comp-sys-catman		.cat
-./usr/share/man/cat9/prop_copy.0		comp-sys-catman		.cat
-./usr/share/man/cat9/prop_delete.0		comp-sys-catman		.cat
-./usr/share/man/cat9/prop_get.0			comp-sys-catman		.cat
-./usr/share/man/cat9/prop_list.0		comp-sys-catman		.cat
-./usr/share/man/cat9/prop_objs.0		comp-sys-catman		.cat
-./usr/share/man/cat9/prop_set.0			comp-sys-catman		.cat
-./usr/share/man/cat9/propdb_create.0		comp-sys-catman		.cat
-./usr/share/man/cat9/propdb_destroy.0		comp-sys-catman		.cat
-./usr/share/man/cat9/properties.0		comp-sys-catman		.cat
+./usr/share/man/cat9/prop_copy.0		comp-obsolete		obsolete
+./usr/share/man/cat9/prop_delete.0		comp-obsolete		obsolete
+./usr/share/man/cat9/prop_get.0			comp-obsolete		obsolete
+./usr/share/man/cat9/prop_list.0		comp-obsolete		obsolete
+./usr/share/man/cat9/prop_objs.0		comp-obsolete		obsolete
+./usr/share/man/cat9/prop_set.0			comp-obsolete		obsolete
+./usr/share/man/cat9/propdb_create.0		comp-obsolete		obsolete
+./usr/share/man/cat9/propdb_destroy.0		comp-obsolete		obsolete
+./usr/share/man/cat9/properties.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/psignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/radio.0			comp-sys-catman		.cat
@@ -9728,15 +9728,15 @@
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
 ./usr/share/man/man9/printf_nolog.9		comp-sys-man		.man
 ./usr/share/man/man9/proc_trampoline.9		comp-sys-man		.man
-./usr/share/man/man9/prop_copy.9		comp-sys-man		.man
-./usr/share/man/man9/prop_delete.9		comp-sys-man		.man
-./usr/share/man/man9/prop_get.9			comp-sys-man		.man
-./usr/share/man/man9/prop_list.9		comp-sys-man		.man
-./usr/share/man/man9/prop_objs.9		comp-sys-man		.man
-./usr/share/man/man9/prop_set.9			comp-sys-man		.man
-./usr/share/man/man9/propdb_create.9		comp-sys-man		.man
-./usr/share/man/man9/propdb_destroy.9		comp-sys-man		.man
-./usr/share/man/man9/properties.9		comp-sys-man		.man
+./usr/share/man/man9/prop_copy.9		comp-obsolete		obsolete
+./usr/share/man/man9/prop_delete.9		comp-obsolete		obsolete
+./usr/share/man/man9/prop_get.9			comp-obsolete		obsolete
+./usr/share/man/man9/prop_list.9		comp-obsolete		obsolete
+./usr/share/man/man9/prop_objs.9		comp-obsolete		obsolete
+./usr/share/man/man9/prop_set.9			comp-obsolete		obsolete
+./usr/share/man/man9/propdb_create.9		comp-obsolete		obsolete
+./usr/share/man/man9/propdb_destroy.9		comp-obsolete		obsolete
+./usr/share/man/man9/properties.9		comp-obsolete		obsolete
 ./usr/share/man/man9/psignal.9			comp-sys-man		.man
 ./usr/share/man/man9/putiobuf.9			comp-sys-man		.man
 ./usr/share/man/man9/radio.9			comp-sys-man		.man
