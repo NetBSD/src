@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.8 2005/12/11 12:18:42 christos Exp $ */
+/* $NetBSD: wdog.c,v 1.9 2006/05/05 18:04:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,13 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.8 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.9 2006/05/05 18:04:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/properties.h>
 #include <sys/wdog.h>
+
+#include <prop/proplib.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
@@ -85,10 +86,11 @@ wdog_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdog_softc *sc = (void *)self;
 	unsigned int processor_freq;
+	prop_number_t freq;
 
-	if (board_info_get("processor-frequency",
-	    &processor_freq, sizeof(processor_freq)) == -1)
-		processor_freq = 200 * 1000 * 1000;	/* assume 200MHz */
+	freq = prop_dictionary_get(board_properties, "processor-frequency");
+	KASSERT(freq != NULL);
+	processor_freq = (unsigned int) prop_number_integer_value(freq);
 
 	sc->sc_wdog_period = (2LL << 29) / processor_freq;
 	printf(": %d second period\n", sc->sc_wdog_period);

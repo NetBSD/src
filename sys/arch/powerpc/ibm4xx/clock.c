@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 2006/05/05 18:04:42 thorpej Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2006/05/05 18:04:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/properties.h>
+
+#include <prop/proplib.h>
 
 #include <machine/cpu.h>
 
@@ -148,13 +149,12 @@ cpu_initclocks(void)
 void
 calc_delayconst(void)
 {
-	unsigned int processor_freq;
+	prop_number_t freq;
 
-	if (board_info_get("processor-frequency",
-		&processor_freq, sizeof(processor_freq)) == -1)
-		panic("no processor-frequency");
+	freq = prop_dictionary_get(board_properties, "processor-frequency");
+	KASSERT(freq != NULL);
 
-	ticks_per_sec = processor_freq;
+	ticks_per_sec = (u_long) prop_number_integer_value(freq);
 	ns_per_tick = 1000000000 / ticks_per_sec;
 }
 

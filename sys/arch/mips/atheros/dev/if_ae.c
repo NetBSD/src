@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $Id: if_ae.c,v 1.2 2006/05/05 18:04:41 thorpej Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.2 2006/05/05 18:04:41 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -233,7 +233,8 @@ ae_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 ae_attach(struct device *parent, struct device *self, void *aux)
 {
-	uint8_t	enaddr[ETHER_ADDR_LEN];
+	const uint8_t *enaddr;
+	prop_data_t ea;
 	struct ae_softc *sc = (void *)self;
 	struct arbus_attach_args *aa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -244,14 +245,17 @@ ae_attach(struct device *parent, struct device *self, void *aux)
 	printf(": Atheros AR531X 10/100 Ethernet\n");
 
 	/*
-	 * Try to MAC address.
+	 * Try to get MAC address.
 	 */
-	if (devprop_get(&sc->sc_dev, "mac-addr", enaddr,
-		    sizeof (enaddr), NULL) != sizeof (enaddr)) {
+	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	if (ea == NULL) {
 		printf("%s: unable to get mac-addr property\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
+	KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
+	enaddr = prop_data_data_nocopy(ea);
 
 	/* Announce ourselves. */
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,

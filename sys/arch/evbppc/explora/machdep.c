@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2005/12/31 14:09:02 hannken Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2006/05/05 18:04:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2005/12/31 14:09:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2006/05/05 18:04:41 thorpej Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -50,10 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2005/12/31 14:09:02 hannken Exp $")
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/reboot.h>
-#include <sys/properties.h>
 #include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <prop/proplib.h>
 
 #include <net/netisr.h>
 
@@ -78,16 +79,16 @@ char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
+static const unsigned int cpuspeed = 66000000;
+
 extern struct user *proc0paddr;
 
-struct propdb *board_info = NULL;
+prop_dictionary_t board_properties;
 struct vm_map *phys_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *exec_map = NULL;
 char msgbuf[MSGBUFSIZE];
 paddr_t msgbuf_paddr;
-static unsigned cpuspeed = 66000000;
-static unsigned memsize;
 
 static struct mem_region phys_mem[MEMREGIONS];
 static struct mem_region avail_mem[MEMREGIONS];
@@ -336,6 +337,7 @@ void
 cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
+	prop_number_t pn;
 	char pbuf[9];
 
 	/*
@@ -346,7 +348,6 @@ cpu_startup(void)
 	printf("%s%s", copyright, version);
 	printf("NCD Explora451\n");
 
-	memsize = ctob(physmem);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -376,15 +377,21 @@ cpu_startup(void)
 	/*
 	 * Set up the board properties database.
 	 */
-	if (!(board_info = propdb_create("board info")))
-		panic("Cannot create board info database");
+	board_properties = prop_dictionary_create();
+	KASSERT(board_properties != NULL);
 
-	if (board_info_set("processor-frequency", &cpuspeed, 
-	    sizeof(&cpuspeed), PROP_CONST, 0))
-		panic("setting processor-frequency");
-	if (board_info_set("mem-size", &memsize, 
-	    sizeof(&memsize), PROP_CONST, 0))
+	pn = prop_number_create_integer(ctob(physmem));
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == FALSE)
 		panic("setting mem-size");
+	prop_object_release(pn);
+
+	pn = prop_number_create_integer(cpuspeed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "processor-frequency",
+				pn) == FALSE)
+		panic("setting processor-frequency");
+	prop_object_release(pn);
 }
 
 int

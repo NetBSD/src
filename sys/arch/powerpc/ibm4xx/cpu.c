@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.22 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: cpu.c,v 1.23 2006/05/05 18:04:42 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,14 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2006/05/05 18:04:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/properties.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <prop/proplib.h>
 
 #include <machine/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
@@ -99,10 +100,11 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	int own, pcf, cas, pcl, aid;
 	struct cputab *cp = models;
 	unsigned int processor_freq;
+	prop_number_t freq;
 
-	if (board_info_get("processor-frequency",
-		&processor_freq, sizeof(processor_freq)) == -1)
-		panic("no processor-frequency");
+	freq = prop_dictionary_get(board_properties, "processor-frequency");
+	KASSERT(freq != NULL);
+	processor_freq = (unsigned int) prop_number_integer_value(freq);
 
 	cpufound++;
 	ncpus++;

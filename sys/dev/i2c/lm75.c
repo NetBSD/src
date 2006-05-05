@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.7 2006/04/04 19:38:38 riz Exp $	*/
+/*	$NetBSD: lm75.c,v 1.8 2006/05/05 18:04:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -93,7 +93,7 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	int ptype;
+	prop_string_t desc;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
@@ -120,10 +120,13 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[0].warnflags = ENVSYS_WARN_OK;
 
 	sc->sc_sensor[0].units = sc->sc_info[0].units = ENVSYS_STEMP;
-	if (devprop_get(&sc->sc_dev, "description",
-		     sc->sc_info[0].desc, sizeof(sc->sc_info[0].desc),
-		     &ptype) < 1 ||
-	    ptype != PROP_STRING)
+	desc = prop_dictionary_get(device_properties(&sc->sc_dev),
+				   "description");
+	if (desc != NULL &&
+	    prop_object_type(desc) == PROP_TYPE_STRING &&
+	    prop_string_size(desc) > 0)
+	    	strcpy(sc->sc_info[0].desc, prop_string_cstring_nocopy(desc));
+	else
 		strcpy(sc->sc_info[0].desc, sc->sc_dev.dv_xname);
 
 	/* Hook into system monitor. */

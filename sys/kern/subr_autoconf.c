@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.111 2006/03/29 06:25:35 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.112 2006/05/05 18:04:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.111 2006/03/29 06:25:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.112 2006/05/05 18:04:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.111 2006/03/29 06:25:35 thorpej 
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/properties.h>
 #include <machine/limits.h>
 
 #include "opt_userconf.h"
@@ -134,11 +133,6 @@ extern const struct cfattachinit cfattachinit[];
  */
 struct cftablelist allcftables;
 static struct cftable initcftable;
-
-/*
- * Database of device properties.
- */
-static propdb_t dev_propdb;
 
 #define	ROOT ((device_t)NULL)
 
@@ -242,11 +236,6 @@ configure(void)
 
 	/* Initialize data structures. */
 	config_init();
-
-	/* Initialize the device property database. */
-	dev_propdb = propdb_create("device properties");
-	if (dev_propdb == NULL)
-		panic("unable to create device property database");
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
@@ -992,6 +981,8 @@ config_attach_loc(device_t parent, cfdata_t cf,
 					  M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 		memcpy(dev->dv_locators, locs, ia->ci_loclen * sizeof(int));
 	}
+	dev->dv_properties = prop_dictionary_create();
+	KASSERT(dev->dv_properties != NULL);
 
 	if (config_do_twiddle)
 		twiddle();
@@ -1280,6 +1271,8 @@ config_detach(device_t dev, int flags)
 		aprint_normal("%s detached\n", dev->dv_xname);
 	if (dev->dv_locators)
 		free(dev->dv_locators, M_DEVBUF);
+	KASSERT(dev->dv_properties != NULL);
+	prop_object_release(dev->dv_properties);
 	free(dev, M_DEVBUF);
 
 	/*
@@ -1501,45 +1494,6 @@ config_finalize(void)
 }
 
 /*
- * Wrappers around prop_*() for handling device properties.
- */
-int
-devprop_set(device_t dev, const char *name, void *val, size_t len,
-    int type, int wait)
-{
-
-	return (prop_set(dev_propdb, dev, name, val, len, type, wait));
-}
-
-size_t
-devprop_list(device_t dev, char *names, size_t len)
-{
-
-	return (prop_list(dev_propdb, dev, names, len));
-}
-
-size_t
-devprop_get(device_t dev, const char *name, void *val, size_t len, int *typep)
-{
-
-	return (prop_get(dev_propdb, dev, name, val, len, typep));
-}
-
-int
-devprop_delete(device_t dev, const char *name)
-{
-
-	return (prop_delete(dev_propdb, dev, name));
-}
-
-int
-devprop_copy(device_t from, device_t to, int wait)
-{
-
-	return (prop_copy(dev_propdb, from, to, wait));
-}
-
-/*
  * device_lookup:
  *
  *	Look up a device instance for a given driver.
@@ -1630,6 +1584,13 @@ device_private(device_t dev)
 	 * the driver's private data.  So, we just return ourselves.
 	 */
 	return (dev);
+}
+
+prop_dictionary_t
+device_properties(device_t dev)
+{
+
+	return (dev->dv_properties);
 }
 
 /*

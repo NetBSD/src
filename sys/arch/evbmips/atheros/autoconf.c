@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $ */
+/* $NetBSD: autoconf.c,v 1.2 2006/05/05 18:04:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2006/03/21 08:15:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2006/05/05 18:04:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ device_register(struct device *dev, void *aux)
 
 	/* Fetch the MAC addresses from YAMON. */
 	if (device_is_a(dev, "ae")) {
+		prop_data_t pd;
 		uint8_t	*enet;
 
 		if (aa->aa_addr == AR531X_ENET0_BASE)
@@ -104,13 +105,18 @@ device_register(struct device *dev, void *aux)
 		else
 			return;
 
-		if (devprop_set(dev, "mac-addr", enet, 6, 0, 0) != 0) {
+		pd = prop_data_create_data(enet, ETHER_ADDR_LEN);
+		KASSERT(pd != NULL);
+		if (prop_dictionary_set(device_properties(dev),
+					"mac-addr", pd) == FALSE) {
 			printf("WARNING: unable to set mac-addr "
 			    "property for %s\n", device_xname(dev));
 		}
+		prop_object_release(pd);
 	}
 
 	if (device_is_a(dev, "ath")) {
+		prop_data_t pd;
 		uint8_t	*enet;
 
 		if (aa->aa_addr == AR531X_WLAN0_BASE)
@@ -120,9 +126,13 @@ device_register(struct device *dev, void *aux)
 		else
 			return;
 
-		if (devprop_set(dev, "mac-addr", enet, 6, 0, 0) != 0) {
+		pd = prop_data_create_data(enet, ETHER_ADDR_LEN);
+		KASSERT(pd != NULL);
+		if (prop_dictionary_set(device_properties(dev),
+					"mac-addr", pd) == FALSE) {
 			printf("WARNING: unable to set mac-addr "
 			    "property for %s\n", device_xname(dev));
 		}
+		prop_object_release(pd);
 	}
 }
