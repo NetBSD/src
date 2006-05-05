@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.25 2006/03/15 11:36:42 cube Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.26 2006/05/05 13:31:30 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.25 2006/03/15 11:36:42 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.26 2006/05/05 13:31:30 cube Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -767,6 +767,48 @@ netbsd32_sys___lstat30(l, v, retval)
 	netbsd32_from___stat30(&sb, &sb32);
 	error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
+	return (error);
+}
+
+int netbsd32_sys___fhstat30(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_sys___fhstat30_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_statp_t) sb;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct stat sb;
+	struct netbsd32_stat sb32;
+	int error;
+	fhandle_t fh;
+	struct mount *mp;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = suser(p->p_ucred, &p->p_acflag)))
+		return (error);
+
+	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
+	    sizeof(fhandle_t))) != 0)
+		return (error);
+
+	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
+		return (ESTALE);
+	if (mp->mnt_op->vfs_fhtovp == NULL)
+		return EOPNOTSUPP;
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+		return (error);
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error)
+		return (error);
+	netbsd32_from___stat30(&sb, &sb32);
+	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
 	return (error);
 }
 
