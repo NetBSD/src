@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.66 2006/05/05 00:03:22 rpaulo Exp $	*/
+/*	$NetBSD: ping6.c,v 1.67 2006/05/05 12:49:23 rpaulo Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.66 2006/05/05 00:03:22 rpaulo Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.67 2006/05/05 12:49:23 rpaulo Exp $");
 #endif
 #endif
 
@@ -1735,7 +1735,8 @@ pr_ip6opt(void *extbuf)
 	struct ip6_hbh *ext;
 	int currentlen;
 	u_int8_t type;
-	size_t extlen, len;
+	size_t extlen;
+	socklen_t len;
 	void *databuf;
 	size_t offset;
 	u_int16_t value2;
