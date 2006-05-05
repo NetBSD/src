@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.115 2006/04/17 23:29:21 salo Exp $	*/
+/*	$NetBSD: namespace.h,v 1.116 2006/05/05 00:03:21 rpaulo Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -364,6 +364,13 @@
 #define inet6_option_init	_inet6_option_init
 #define inet6_option_next	_inet6_option_next
 #define inet6_option_space	_inet6_option_space
+#define inet6_opt_init		_inet6_opt_init
+#define inet6_opt_append	_inet6_opt_append
+#define inet6_opt_finish	_inet6_opt_finish
+#define inet6_opt_set_val	_inet6_opt_set_val
+#define inet6_opt_next		_inet6_opt_next
+#define inet6_opt_find		_inet6_opt_find
+#define inet6_opt_get_val	_inet6_opt_get_val
 #define inet6_rthdr_add		_inet6_rthdr_add
 #define inet6_rthdr_getaddr	_inet6_rthdr_getaddr
 #define inet6_rthdr_getflags	_inet6_rthdr_getflags
@@ -371,6 +378,12 @@
 #define inet6_rthdr_lasthop	_inet6_rthdr_lasthop
 #define inet6_rthdr_segments	_inet6_rthdr_segments
 #define inet6_rthdr_space	_inet6_rthdr_space
+#define inet6_rth_space		_inet6_rth_space
+#define inet6_rth_init		_inet6_rth_init
+#define inet6_rth_add		_inet6_rth_add
+#define inet6_rth_reverse	_inet6_rth_reverse
+#define inet6_rth_segments	_inet6_rth_segments
+#define inet6_rth_getaddr	_inet6_rth_getaddr
 #define inet_cidr_ntop		_inet_cidr_ntop
 #define inet_cidr_pton		_inet_cidr_pton
 #define inet_lnaof		_inet_lnaof

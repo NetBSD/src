@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.873 2006/04/27 20:41:58 thorpej Exp $
+#	$NetBSD: mi,v 1.874 2006/05/05 00:03:21 rpaulo Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3445,6 +3445,19 @@
 ./usr/share/man/cat3/inet6_rthdr_reverse.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rthdr_segments.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet6_rthdr_space.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_append.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_finish.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_set_val.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_next.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_find.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_opt_get_val.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_space.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_reverse.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_segments.0	comp-c-catman		.cat
+./usr/share/man/cat3/inet6_rth_getaddr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/inet_addr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet_aton.0		comp-c-catman		.cat
 ./usr/share/man/cat3/inet_lnaof.0		comp-c-catman		.cat
@@ -7492,6 +7505,19 @@
 ./usr/share/man/man3/inet6_rthdr_reverse.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_rthdr_segments.3	comp-c-man		.man
 ./usr/share/man/man3/inet6_rthdr_space.3	comp-c-man		.man
+./usr/share/man/man3/inet6_opt_init.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_append.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_finish.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_set_val.3	comp-c-man		.man
+./usr/share/man/man3/inet6_opt_next.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_find.3		comp-c-man		.man
+./usr/share/man/man3/inet6_opt_get_val.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rth_space.3		comp-c-man		.man
+./usr/share/man/man3/inet6_rth_init.3		comp-c-man		.man
+./usr/share/man/man3/inet6_rth_add.3		comp-c-man		.man
+./usr/share/man/man3/inet6_rth_reverse.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rth_segments.3	comp-c-man		.man
+./usr/share/man/man3/inet6_rth_getaddr.3	comp-c-man		.man
 ./usr/share/man/man3/inet_addr.3		comp-c-man		.man
 ./usr/share/man/man3/inet_aton.3		comp-c-man		.man
 ./usr/share/man/man3/inet_lnaof.3		comp-c-man		.man

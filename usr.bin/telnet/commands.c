@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.64 2006/04/04 21:35:20 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.65 2006/05/05 00:03:22 rpaulo Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.64 2006/04/04 21:35:20 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.65 2006/05/05 00:03:22 rpaulo Exp $");
 #endif
 #endif /* not lint */
 
@@ -2799,6 +2799,8 @@ sourceroute(struct addrinfo *ai, char *arg, char **cpp, int *protop, int *optp)
 		break;
 #ifdef INET6
 	case AF_INET6:
+#ifdef IPV6_PKTOPTIONS
+		/* RFC2292 */
 		cmsg = inet6_rthdr_init(rhbuf, IPV6_RTHDR_TYPE_0);
 		if (*cp != '@')
 			return -1;
@@ -2806,6 +2808,10 @@ sourceroute(struct addrinfo *ai, char *arg, char **cpp, int *protop, int *optp)
 		*protop = IPPROTO_IPV6;
 		*optp = IPV6_PKTOPTIONS;
 		break;
+#else
+		/* no RFC2292 */
+		return -1;
+#endif
 #endif
 	default:
 		return -1;

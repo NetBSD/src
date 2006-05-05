@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.23 2006/01/21 00:15:37 rpaulo Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.24 2006/05/05 00:03:22 rpaulo Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.23 2006/01/21 00:15:37 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.24 2006/05/05 00:03:22 rpaulo Exp $");
 
 #include "opt_inet.h"
 
@@ -125,14 +125,14 @@ udp6_output(in6p, m, addr6, control, p)
 	int scope_ambiguous = 0;
 	u_int16_t fport;
 	int error = 0;
-	struct ip6_pktopts opt, *stickyopt = in6p->in6p_outputopts;
+	struct ip6_pktopts *optp, opt;
 	int priv;
 	int af = AF_INET6, hlen = sizeof(struct ip6_hdr);
 #ifdef INET
 	struct ip *ip;
 	struct udpiphdr *ui;
-#endif
 	int flags = 0;
+#endif
 	struct sockaddr_in6 tmp;
 
 	priv = 0;
@@ -169,10 +169,13 @@ udp6_output(in6p, m, addr6, control, p)
 	}
 
 	if (control) {
-		if ((error = ip6_setpktoptions(control, &opt, priv)) != 0)
+		if ((error = ip6_setpktopts(control, &opt,
+		    in6p->in6p_outputopts, priv, IPPROTO_UDP)) != 0)
 			goto release;
-		in6p->in6p_outputopts = &opt;
-	}
+		optp = &opt;
+	} else
+		optp = in6p->in6p_outputopts;
+
 
 	if (sin6) {
 		faddr = &sin6->sin6_addr;
@@ -232,7 +235,7 @@ udp6_output(in6p, m, addr6, control, p)
 		}
 
 		if (!IN6_IS_ADDR_V4MAPPED(faddr)) {
-			laddr = in6_selectsrc(sin6, in6p->in6p_outputopts,
+			laddr = in6_selectsrc(sin6, optp,
 			    in6p->in6p_moptions, &in6p->in6p_route,
 			    &in6p->in6p_laddr, &oifp, &error);
 			if (oifp && scope_ambiguous &&
@@ -356,12 +359,9 @@ udp6_output(in6p, m, addr6, control, p)
 		m->m_pkthdr.csum_flags = M_CSUM_UDPv6;
 		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 
-		if (in6p->in6p_flags & IN6P_MINMTU)
-			flags |= IPV6_MINMTU;
-
 		udp6stat.udp6s_opackets++;
-		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,
-		    flags, in6p->in6p_moptions, in6p->in6p_socket, NULL);
+		error = ip6_output(m, optp, &in6p->in6p_route, 0,
+		    in6p->in6p_moptions, in6p->in6p_socket, NULL);
 		break;
 	case AF_INET:
 #ifdef INET
@@ -408,7 +408,7 @@ release:
 
 releaseopt:
 	if (control) {
-		in6p->in6p_outputopts = stickyopt;
+		ip6_clearpktopts(&opt, -1);
 		m_freem(control);
 	}
 	return (error);
