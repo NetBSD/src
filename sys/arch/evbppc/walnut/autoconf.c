@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2006/02/26 05:51:52 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2006/05/05 18:04:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2006/02/26 05:51:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2006/05/05 18:04:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -97,12 +97,15 @@ device_register(struct device *dev, void *aux)
 
 	if (device_is_a(dev, "com") && device_is_a(parent, "opb")) {
 		/* Set the frequency of the on-chip UART. */
-		int freq = COM_FREQ * 6;
+		prop_number_t pn = prop_number_create_integer(COM_FREQ * 6);
+		KASSERT(pn != NULL);
 
-		if (devprop_set(dev, "frequency",
-			     &freq, sizeof(freq), PROP_INT, 0) != 0)
+		if (prop_dictionary_set(device_properties(dev),
+					"frequency", pn) == FALSE) {
 			printf("WARNING: unable to set frequency "
 			    "property for %s\n", dev->dv_xname);
+		}
+		prop_object_release(pn);
 		return;
 	}
 

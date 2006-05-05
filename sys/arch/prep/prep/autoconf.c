@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 2006/04/24 18:10:57 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 2006/05/05 18:04:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14 2006/04/24 18:10:57 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2006/05/05 18:04:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ device_register(struct device *dev, void *aux)
 {
 	struct device *parent, *d;
 	char devpath[256], dtmp[256];
-	size_t len;
+	prop_string_t str1;
 	int found = 0;
 
 	/* Certain devices will *never* be bootable.  short circuit them. */
@@ -127,20 +127,21 @@ device_register(struct device *dev, void *aux)
 	    device_is_a(dev, "mkclock") || device_is_a(dev, "lpt"))
 		return;
 
-	if (device_is_a(dev, "mainbus"))
-		parent = dev;
-	else
-		parent = device_parent(dev);
-
-	len = devprop_get(parent, "fw-path", dtmp, 255, NULL);
-
 	if (device_is_a(dev, "mainbus")) {
-		sprintf(devpath, "/");
-		len = strlen(devpath) + 1;
-		devprop_set(dev, "fw-path", devpath, len, PROP_STRING, 0);
+		str1 = prop_string_create_cstring("/");
+		KASSERT(str1 != NULL);
+		(void) prop_dictionary_set(device_properties(dev),
+					   "fw-path", str1);
+		prop_object_release(str1);
 		return;
-	} else if (len == -1)
+	}
+
+	parent = device_parent(dev);
+	str1 = prop_dictionary_get(device_properties(parent), "fw-path");
+	if (str1 == NULL)
 		return;
+	KASSERT(prop_string_size(str1) < sizeof(dtmp));
+	strcpy(dtmp, prop_string_cstring_nocopy(str1));
 
 	if (device_is_a(dev, "pci")) {
 		if (device_is_a(parent, "ppb"))
@@ -163,16 +164,17 @@ device_register(struct device *dev, void *aux)
 		 * grab it's parent device components.  We grab them from
 		 * ISA because thats the most likely attachment. 
 		 */
-		len = -1;
+		str1 = NULL;
 		TAILQ_FOREACH(d, &alldevs, dv_list) {
 			if (device_is_a(d, "isa")) {
-				len = devprop_get(d, "fw-path", dtmp,
-				    255, NULL);
+				str1 = prop_dictionary_get(
+				    device_properties(d), "fw-path");
 				break;
 			}
 		}
-		if (len != -1) {
-			strcpy(devpath, dtmp);
+		if (str1 != NULL) {
+			KASSERT(prop_string_size(str1) < sizeof(devpath));
+			strcpy(devpath, prop_string_cstring_nocopy(str1));
 			found++;
 		}
 	}
@@ -222,8 +224,10 @@ device_register(struct device *dev, void *aux)
 		sprintf(devpath, "%s%d", devpath, device_unit(dev));
 	}
 
-	len = strlen(devpath) + 1;
-	devprop_set(dev, "fw-path", devpath, len, PROP_STRING, 0);
+	str1 = prop_string_create_cstring(devpath);
+	KASSERT(str1 != NULL);
+	(void) prop_dictionary_set(device_properties(dev), "fw-path", str1);
+	prop_object_release(str1);
 #if defined(NVRAM_DUMP)
 	printf("prop %s\n", devpath);
 #endif
@@ -238,8 +242,7 @@ findroot(void)
 {
 	struct device *d;
 	char *cp;
-	char devpath[256];
-	size_t len;
+	prop_string_t str;
 
 	/* first trim the ethernet crap off the bootpath */
 	cp = strchr(bootpath, ':');
@@ -249,10 +252,11 @@ findroot(void)
 	}
 
 	TAILQ_FOREACH(d, &alldevs, dv_list) {
-		len = devprop_get(d, "fw-path", devpath, 255, NULL);
-		if (len == -1)
+		str = prop_dictionary_get(device_properties(d), "fw-path");
+		if (str == NULL)
 			continue;
-		if (strncmp(devpath, bootpath, len) == 0) {
+		if (strncmp(prop_string_cstring_nocopy(str), bootpath,
+			    prop_string_size(str)) == 0) {
 			booted_device = d;
 			booted_partition = 0; /* XXX ??? */
 			return;
