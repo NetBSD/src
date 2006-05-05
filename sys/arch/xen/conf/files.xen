@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.18.2.9 2006/04/07 12:51:25 tron Exp $
+#	$NetBSD: files.xen,v 1.18.2.10 2006/05/05 16:46:06 ghen Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -182,11 +182,9 @@ object	/athhal-elf.o	ath
 #
 include "dev/isa/files.isa"
 
-#
-# Machine-independent USB drivers
-#
-
 include "dev/usb/files.usb"
+
+include "dev/ieee1394/files.ieee1394"
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
