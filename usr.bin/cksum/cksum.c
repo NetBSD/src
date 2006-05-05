@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.35 2006/04/24 21:07:43 hubertf Exp $	*/
+/*	$NetBSD: cksum.c,v 1.36 2006/05/05 22:07:22 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.35 2006/04/24 21:07:43 hubertf Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.36 2006/05/05 22:07:22 elad Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -193,12 +193,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	/*
-	 * The -1, -2, -4, -5, -6, and -m flags should be deprecated, but
-	 * are still supported in code to not break anything that might
-	 * be using them.
-	 */
-	while ((ch = getopt(argc, argv, "a:cmno:ps:twx12456")) != -1)
+	while ((ch = getopt(argc, argv, "a:cno:ps:twx")) != -1)
 		switch(ch) {
 		case 'a':
 			if (hash != NULL || dosum) {
@@ -228,42 +223,6 @@ main(int argc, char **argv)
 					usage();
 				}
 			}
-			break;
-		case '2':
-			if (dosum) {
-				warnx("sum mutually exclusive with md2");
-				usage();
-			}
-			hash = &hashes[HASH_MD2];
-			break;
-		case '4':
-			if (dosum) {
-				warnx("sum mutually exclusive with md4");
-				usage();
-			}
-			hash = &hashes[HASH_MD4];
-			break;
-		case 'm':
-		case '5':
-			if (dosum) {
-				warnx("sum mutually exclusive with md5");
-				usage();
-			}
-			hash = &hashes[HASH_MD5];
-			break;
-		case '1':
-			if (dosum) {
-				warnx("sum mutually exclusive with sha1");
-				usage();
-			}
-			hash = &hashes[HASH_SHA1];
-			break;
-		case '6':
-			if (dosum) {
-				warnx("sum mutually exclusive with rmd160");
-				usage();
-			}
-			hash = &hashes[HASH_RMD160];
 			break;
 		case 'c':
 			do_check = 1;
@@ -570,7 +529,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: cksum [-nw] [-a algorithm | -c file | -m | -1 | -2 | -4 | -5 | -6 \n\t\t| [-o 1 | 2]] [file ...]\n");
+	(void)fprintf(stderr, "usage: cksum [-nw] [-a algorithm | -c file ]\n\t\t| [-o 1 | 2]] [file ...]\n");
 	(void)fprintf(stderr, "       sum [-c] [file ...]\n");
 	(void)fprintf(stderr,
 	    "       md2 [-n] [-p | -t | -x | -s string] [file ...]\n");
