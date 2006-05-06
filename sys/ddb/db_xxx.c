@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.37.8.1 2006/03/08 00:30:24 elad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.37.8.2 2006/05/06 23:31:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.37.8.1 2006/03/08 00:30:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.37.8.2 2006/05/06 23:31:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.37.8.1 2006/03/08 00:30:24 elad Exp $")
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #include <machine/db_machdep.h>
 

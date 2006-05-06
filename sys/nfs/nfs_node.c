@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.82.8.2 2006/04/19 05:06:37 elad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.82.8.3 2006/05/06 23:32:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.82.8.2 2006/04/19 05:06:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.82.8.3 2006/05/06 23:32:11 christos Exp $");
 
 #include "opt_nfs.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.82.8.2 2006/04/19 05:06:37 elad Exp $
 #include <sys/pool.h>
 #include <sys/lock.h>
 #include <sys/hash.h>
+#include <sys/kauth.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>

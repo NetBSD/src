@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.77.4.2 2006/03/10 14:28:51 elad Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.77.4.3 2006/05/06 23:31:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.77.4.2 2006/03/10 14:28:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.77.4.3 2006/05/06 23:31:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.77.4.2 2006/03/10 14:28:51 elad Exp
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+#include <sys/kauth.h>
 
 #include <netinet/in.h>
 #include <sys/sa.h>

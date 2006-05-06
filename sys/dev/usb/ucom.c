@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.61.4.3 2006/04/19 03:26:29 elad Exp $	*/
+/*	$NetBSD: ucom.c,v 1.61.4.4 2006/05/06 23:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.4.3 2006/04/19 03:26:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.4.4 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.4.3 2006/04/19 03:26:29 elad Exp $");
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 #if defined(__NetBSD__)
 #include "rnd.h"
 #if NRND > 0

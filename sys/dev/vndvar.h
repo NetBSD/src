@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.19.6.1 2006/03/08 01:44:48 elad Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.19.6.2 2006/05/06 23:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -143,7 +143,6 @@ struct vnd_ioctl {
 #ifdef _KERNEL
 
 struct vnode;
-struct ucred;
 
 /*
  * A vnode disk's state information.

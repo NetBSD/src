@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.153.4.2 2006/04/20 12:57:23 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.153.4.3 2006/05/06 23:32:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -515,11 +515,9 @@ struct filedesc;
 struct nameidata;
 struct proc;
 struct stat;
-struct ucred;
 struct uio;
 struct vattr;
 struct vnode;
-struct kauth_cred;
 
 /* see vnode(9) */
 int 	bdevvp(dev_t, struct vnode **);
@@ -529,7 +527,7 @@ struct vnode *
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
 	    struct vnode **);
 void	ungetnewvnode(struct vnode *);
-int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct kauth_cred *);
+int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);
 int 	vcount(struct vnode *);
 void	vdevgone(int, int, int, enum vtype);
@@ -539,8 +537,7 @@ void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
 void 	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct lwp *);
-int	vinvalbuf(struct vnode *, int, struct kauth_cred *, struct lwp *,
-    int, int);
+int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, int, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, struct simplelock *, struct lwp *);
@@ -550,14 +547,14 @@ void	vwakeup(struct buf *);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
-int 	vn_close(struct vnode *, int, struct kauth_cred *, struct lwp *);
+int 	vn_close(struct vnode *, int, kauth_cred_t, struct lwp *);
 int	vn_isunder(struct vnode *, struct vnode *, struct lwp *);
 int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *, int, int);
 int 	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t, enum uio_seg,
-    int, struct kauth_cred *, size_t *, struct lwp *);
+    int, kauth_cred_t, size_t *, struct lwp *);
 int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
     off_t **, int *);
 void	vn_restorerecurse(struct vnode *, u_int);

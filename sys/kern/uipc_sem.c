@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.13.4.2 2006/03/10 13:53:24 elad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.13.4.3 2006/05/06 23:31:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.13.4.2 2006/03/10 13:53:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.13.4.3 2006/05/06 23:31:31 christos Exp $");
 
 #include "opt_posix.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.13.4.2 2006/03/10 13:53:24 elad Exp $
 #include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 

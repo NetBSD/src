@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.55.10.3 2006/04/19 05:14:00 elad Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.55.10.4 2006/05/06 23:31:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.55.10.3 2006/04/19 05:14:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.55.10.4 2006/05/06 23:31:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.55.10.3 2006/04/19 05:14:00 elad E
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #include <sys/file.h>
+#include <sys/kauth.h>
 
 void	pffasttimo(void *);
 void	pfslowtimo(void *);

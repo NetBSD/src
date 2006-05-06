@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.64.8.3 2006/04/19 04:46:10 elad Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.64.8.4 2006/05/06 23:31:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.8.3 2006/04/19 04:46:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.8.4 2006/05/06 23:31:59 christos Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.64.8.3 2006/04/19 04:46:10 elad Exp $
 #include <sys/socket.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>

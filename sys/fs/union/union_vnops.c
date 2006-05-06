@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.14.10.2 2006/04/19 05:03:56 elad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.14.10.3 2006/05/06 23:31:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.14.10.2 2006/04/19 05:03:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.14.10.3 2006/05/06 23:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.14.10.2 2006/04/19 05:03:56 elad E
 #include <sys/buf.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#include <sys/kauth.h>
+
 #include <fs/union/union.h>
 #include <miscfs/genfs/genfs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.75.8.3 2006/05/03 16:01:08 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.75.8.4 2006/05/06 23:32:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,6 @@ struct vnode;
 struct dlfs;
 struct lfs;
 struct segment;
-struct ucred;
 struct block_info;
 
 #if defined(_KERNEL)

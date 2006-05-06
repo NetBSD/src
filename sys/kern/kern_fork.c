@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.123.10.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.123.10.2 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.123.10.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.123.10.2 2006/05/06 23:31:30 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.123.10.1 2006/03/08 00:53:40 elad Ex
 #include <sys/sched.h>
 #include <sys/signalvar.h>
 #include <sys/systrace.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>

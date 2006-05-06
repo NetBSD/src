@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.13.4.1 2006/04/19 02:34:02 elad Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.13.4.2 2006/05/06 23:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD");
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/md5.h>
+#include <sys/kauth.h>
 
 #include <machine/bootinfo.h>
 

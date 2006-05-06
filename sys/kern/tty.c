@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.180.2.1 2006/03/08 00:53:41 elad Exp $	*/
+/*	$NetBSD: tty.c,v 1.180.2.2 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.180.2.1 2006/03/08 00:53:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.180.2.2 2006/05/06 23:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.180.2.1 2006/03/08 00:53:41 elad Exp $");
 #include <sys/kprintf.h>
 #include <sys/namei.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <machine/stdarg.h>
 

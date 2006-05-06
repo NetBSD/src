@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.122.4.2 2006/04/19 04:52:46 elad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.122.4.3 2006/05/06 23:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.122.4.2 2006/04/19 04:52:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.122.4.3 2006/05/06 23:31:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.122.4.2 2006/04/19 04:52:46 elad E
 #include <sys/poll.h>
 #include <sys/mman.h>
 #include <sys/file.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>

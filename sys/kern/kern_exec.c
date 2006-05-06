@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.214.4.4 2006/04/19 05:13:59 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.214.4.5 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.4.4 2006/04/19 05:13:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.4.5 2006/05/06 23:31:30 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.4.4 2006/04/19 05:13:59 elad Exp
 #include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/savar.h>

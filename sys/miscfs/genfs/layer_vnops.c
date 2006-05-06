@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.26.10.1 2006/03/08 01:34:34 elad Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.26.10.2 2006/05/06 23:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,8 +67,8 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.26.10.1 2006/03/08 01:34:34 elad Exp $
- *	$Id: layer_vnops.c,v 1.26.10.1 2006/03/08 01:34:34 elad Exp $
+ *	$Id: layer_vnops.c,v 1.26.10.2 2006/05/06 23:31:58 christos Exp $
+ *	$Id: layer_vnops.c,v 1.26.10.2 2006/05/06 23:31:58 christos Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -233,7 +233,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.26.10.1 2006/03/08 01:34:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.26.10.2 2006/05/06 23:31:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,8 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.26.10.1 2006/03/08 01:34:34 elad E
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/kauth.h>
+
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 #include <miscfs/genfs/genfs.h>

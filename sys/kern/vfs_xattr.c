@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.5.4.2 2006/03/10 13:53:24 elad Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.5.4.3 2006/05/06 23:31:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.5.4.2 2006/03/10 13:53:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.5.4.3 2006/05/06 23:31:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.5.4.2 2006/03/10 13:53:24 elad Exp $
 #include <sys/sysctl.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 /*
  * Credential check based on process requesting service, and per-attribute

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.81.4.3 2006/04/19 04:46:10 elad Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.81.4.4 2006/05/06 23:31:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81.4.3 2006/04/19 04:46:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81.4.4 2006/05/06 23:31:59 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81.4.3 2006/04/19 04:46:10 elad Exp $")
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>

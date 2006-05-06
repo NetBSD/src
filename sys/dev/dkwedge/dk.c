@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.12.4.2 2006/04/19 03:24:34 elad Exp $	*/
+/*	$NetBSD: dk.c,v 1.12.4.3 2006/05/06 23:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.12.4.2 2006/04/19 03:24:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.12.4.3 2006/05/06 23:31:27 christos Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.12.4.2 2006/04/19 03:24:34 elad Exp $");
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 

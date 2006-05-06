@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.24.10.2 2006/04/19 04:46:19 elad Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.24.10.3 2006/05/06 23:32:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.24.10.2 2006/04/19 04:46:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.24.10.3 2006/05/06 23:32:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.24.10.2 2006/04/19 04:46:19 elad Exp 
 #include <sys/signalvar.h>
 #include <sys/mbuf.h>
 #include <sys/socketvar.h>		/* for M_SONAME */
+#include <sys/kauth.h>
 
 #include <netsmb/iconv.h>
 

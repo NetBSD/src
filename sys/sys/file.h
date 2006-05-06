@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.55.10.1 2006/03/08 01:01:13 elad Exp $	*/
+/*	$NetBSD: file.h,v 1.55.10.2 2006/05/06 23:32:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,6 @@
 #include <sys/mallocvar.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
-#include <sys/kauth.h>
 
 MALLOC_DECLARE(M_FILE);
 MALLOC_DECLARE(M_IOCTLOPS);
@@ -74,7 +73,7 @@ struct file {
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */
 	int		f_usecount;	/* number active users */
-	kauth_cred_t	f_cred;	/* creds associated with descriptor */
+	kauth_cred_t 	f_cred;		/* creds associated with descriptor */
 	const struct fileops {
 		int	(*fo_read)	(struct file *, off_t *, struct uio *,
 					    kauth_cred_t, int);

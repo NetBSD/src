@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.87.4.2 2006/04/19 05:14:00 elad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.87.4.3 2006/05/06 23:31:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.4.2 2006/04/19 05:14:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.4.3 2006/05/06 23:31:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.4.2 2006/04/19 05:14:00 elad Ex
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mbuf.h>
+#include <sys/kauth.h>
 
 /*
  * Unix communications domain.

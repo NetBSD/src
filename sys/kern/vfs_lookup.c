@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.69.4.1 2006/03/08 00:53:41 elad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.69.4.2 2006/05/06 23:31:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.69.4.1 2006/03/08 00:53:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.69.4.2 2006/05/06 23:31:31 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.69.4.1 2006/03/08 00:53:41 elad Exp
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>

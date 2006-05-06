@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.38.4.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.38.4.2 2006/05/06 23:32:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.38.4.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.38.4.2 2006/05/06 23:32:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.38.4.1 2006/03/08 01:39:12 elad Exp 
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

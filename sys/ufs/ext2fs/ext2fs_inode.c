@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.52.10.2 2006/04/19 03:54:09 elad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.52.10.3 2006/05/06 23:32:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.52.10.2 2006/04/19 03:54:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.52.10.3 2006/05/06 23:32:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.52.10.2 2006/04/19 03:54:09 elad 
 #include <sys/malloc.h>
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>

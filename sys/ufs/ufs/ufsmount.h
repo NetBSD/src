@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.26.8.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.26.8.2 2006/05/06 23:32:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,6 @@ struct buf;
 struct inode;
 struct nameidata;
 struct timeval;
-struct ucred;
 struct uio;
 struct vnode;
 
@@ -88,7 +87,7 @@ struct ufsmount {
 	struct ufs_extattr_per_mount um_extattr;
 
 	struct	vnode *um_quotas[MAXQUOTAS];	/* pointer to quota files */
-	kauth_cred_t um_cred[MAXQUOTAS];	/* quota file access cred */
+	kauth_cred_t   um_cred[MAXQUOTAS];	/* quota file access cred */
 	u_long	um_nindir;			/* indirect ptrs per block */
 	u_long	um_lognindir;			/* log2 of um_nindir */
 	u_long	um_bptrtodb;			/* indir ptr to disk block */

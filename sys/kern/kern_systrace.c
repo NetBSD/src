@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.51.4.3 2006/04/19 05:13:59 elad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.51.4.4 2006/05/06 23:31:30 christos Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.4.3 2006/04/19 05:13:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.4.4 2006/05/06 23:31:30 christos Exp $");
 
 #include "opt_systrace.h"
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.51.4.3 2006/04/19 05:13:59 elad 
 #include <sys/systrace.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/kauth.h>
 
 #include <compat/common/compat_util.h>
 

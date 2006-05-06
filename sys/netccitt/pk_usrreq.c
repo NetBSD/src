@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.27.10.2 2006/03/10 15:14:16 elad Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.27.10.3 2006/05/06 23:32:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.27.10.2 2006/03/10 15:14:16 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.27.10.3 2006/05/06 23:32:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.27.10.2 2006/03/10 15:14:16 elad Exp
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.26.10.2 2006/03/10 14:21:11 elad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.26.10.3 2006/05/06 23:32:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.26.10.2 2006/03/10 14:21:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.26.10.3 2006/05/06 23:32:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.26.10.2 2006/03/10 14:21:11 elad Ex
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 

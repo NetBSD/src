@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.55.10.1 2006/03/08 01:06:28 elad Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.55.10.2 2006/05/06 23:32:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,7 +49,7 @@
  * can be removed by nfs_inactive()
  */
 struct sillyrename {
-	kauth_cred_t s_cred;
+	kauth_cred_t	s_cred;
 	struct	vnode *s_dvp;
 	long	s_namlen;
 	char	s_name[20];

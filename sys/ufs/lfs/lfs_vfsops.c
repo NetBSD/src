@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.193.4.2 2006/04/19 03:54:13 elad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.193.4.3 2006/05/06 23:32:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.4.2 2006/04/19 03:54:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.4.3 2006/05/06 23:32:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.4.2 2006/04/19 03:54:13 elad Ex
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 

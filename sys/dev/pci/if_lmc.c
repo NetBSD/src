@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.25.4.1 2006/04/19 03:25:34 elad Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.25.4.2 2006/05/06 23:31:28 christos Exp $	*/
 
 /*-
  *
@@ -165,6 +165,7 @@
 # include <sys/device.h>
 # include <sys/reboot.h>
 # include <sys/lock.h>
+# include <sys/kauth.h>
 # include <net/if.h>
 # include <net/if_types.h>
 # include <net/if_media.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.12.10.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.12.10.2 2006/05/06 23:31:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -131,6 +131,6 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_filecore_setup);
 extern int (**filecore_vnodeop_p) __P((void *));
 
 int filecore_bbchecksum __P((void *));
-int filecore_bread __P((struct filecore_mnt *, u_int32_t, int, kauth_cred_t,
-			struct buf **));
+int filecore_bread __P((struct filecore_mnt *, u_int32_t, int,
+    kauth_cred_t, struct buf **));
 int filecore_map __P((struct filecore_mnt *, u_int32_t, daddr_t, daddr_t *));

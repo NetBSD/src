@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.8.2.3 2006/04/19 03:26:29 elad Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.8.2.4 2006/05/06 23:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.8.2.3 2006/04/19 03:26:29 elad Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.8.2.4 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: ucycom.c,v 1.8.2.3 2006/04/19 03:26:29 elad Exp $");
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>

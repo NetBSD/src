@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.51.10.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.51.10.2 2006/05/06 23:31:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.51.10.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.51.10.2 2006/05/06 23:31:30 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.51.10.1 2006/03/08 01:31:33 elad 
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 
 #include <netsmb/smb.h>

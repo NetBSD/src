@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.57.10.2 2006/03/10 14:39:01 elad Exp $	*/
+/*	$NetBSD: cons.c,v 1.57.10.3 2006/05/06 23:31:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.57.10.2 2006/03/10 14:39:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.57.10.3 2006/05/06 23:31:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.57.10.2 2006/03/10 14:39:01 elad Exp $");
 #include <sys/file.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 

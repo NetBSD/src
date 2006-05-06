@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.59.10.2 2006/03/10 15:05:22 elad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.59.10.3 2006/05/06 23:31:58 christos Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.59.10.2 2006/03/10 15:05:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.59.10.3 2006/05/06 23:31:58 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.59.10.2 2006/03/10 15:05:22 elad Exp $"
 #include <sys/queue.h>
 #if __NetBSD__
 #include <sys/systm.h>
+#include <sys/kauth.h>
 #endif
 
 #include <machine/cpu.h>

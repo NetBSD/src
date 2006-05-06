@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.113.10.2 2006/04/19 04:46:11 elad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.113.10.3 2006/05/06 23:32:11 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.10.2 2006/04/19 04:46:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.10.3 2006/05/06 23:32:11 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.10.2 2006/04/19 04:46:11 elad E
 #include <sys/proc.h>
 #include <sys/domain.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.190.4.3 2006/04/19 05:13:59 elad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.190.4.4 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.190.4.3 2006/04/19 05:13:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.190.4.4 2006/05/06 23:31:30 christos Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.190.4.3 2006/04/19 05:13:59 elad E
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 #include <machine/stdarg.h>
 
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");

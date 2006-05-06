@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.160.10.1 2006/03/08 00:53:40 elad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.160.10.2 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.160.10.1 2006/03/08 00:53:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.160.10.2 2006/05/06 23:31:30 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.160.10.1 2006/03/08 00:53:40 elad E
 #include <sys/sched.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 

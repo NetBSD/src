@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.100.4.3 2006/03/12 23:33:56 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.100.4.4 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.100.4.3 2006/03/12 23:33:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.100.4.4 2006/05/06 23:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.100.4.3 2006/03/12 23:33:56 elad
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>

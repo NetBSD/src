@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.13.10.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.13.10.2 2006/05/06 23:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -92,9 +92,8 @@ struct smbmount {
 #define VTOVFS(vp)		((vp)->v_mount)
 #define	VTOSMBFS(vp)		(VFSTOSMBFS(VTOVFS(vp)))
 
-int smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l);
-int smbfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
-	struct lwp *l, int intrflg);
+int smbfs_doio(struct buf *, kauth_cred_t, struct lwp *);
+int smbfs_vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, int);
 int smbfs_kqfilter(void *);
 #endif	/* KERNEL */
 

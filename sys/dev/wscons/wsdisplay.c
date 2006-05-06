@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.90.2.3 2006/04/19 03:26:39 elad Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.90.2.4 2006/05/06 23:31:29 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.90.2.3 2006/04/19 03:26:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.90.2.4 2006/05/06 23:31:29 christos Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.90.2.3 2006/04/19 03:26:39 elad Exp 
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wsmuxvar.h>

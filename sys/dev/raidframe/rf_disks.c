@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.59.10.1 2006/03/08 01:44:49 elad Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.59.10.2 2006/05/06 23:31:28 christos Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.59.10.1 2006/03/08 01:44:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.59.10.2 2006/05/06 23:31:28 christos Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.59.10.1 2006/03/08 01:44:49 elad Exp 
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 static int rf_AllocDiskStructures(RF_Raid_t *, RF_Config_t *);
 static void rf_print_label_status( RF_Raid_t *, int, char *,

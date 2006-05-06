@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.59.10.2 2006/04/19 03:54:09 elad Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.59.10.3 2006/05/06 23:32:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.59.10.2 2006/04/19 03:54:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.59.10.3 2006/05/06 23:32:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.59.10.2 2006/04/19 03:54:09 elad Ex
 #include <sys/resourcevar.h>
 #include <sys/tree.h>
 #include <sys/trace.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 

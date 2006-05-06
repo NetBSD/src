@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.48.8.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.48.8.2 2006/05/06 23:32:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,6 @@ struct mbuf;
 struct mount;
 struct nameidata;
 struct lwp;
-struct ucred;
 struct ufs_args;
 struct ufsmount;
 struct uio;

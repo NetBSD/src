@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.20.4.2 2006/04/19 05:03:55 elad Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.20.4.3 2006/05/06 23:31:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.20.4.2 2006/04/19 05:03:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.20.4.3 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.20.4.2 2006/04/19 05:03:55 elad E
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>

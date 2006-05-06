@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.151.4.4 2006/04/19 04:01:21 elad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.151.4.5 2006/05/06 23:31:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151.4.4 2006/04/19 04:01:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151.4.5 2006/05/06 23:31:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151.4.4 2006/04/19 04:01:21 elad Ex
 #include <sys/unistd.h>
 #include <sys/swap.h>		/* for SWAP_ON */
 #include <sys/sysctl.h>		/* for KERN_DOMAINNAME */
+#include <sys/kauth.h>
 
 #include <sys/ptrace.h>
 #include <machine/ptrace.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.73.10.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.73.10.2 2006/05/06 23:32:33 christos Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.73.10.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.73.10.2 2006/05/06 23:32:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -47,7 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.73.10.1 2006/03/08 01:39:12 elad E
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/inttypes.h>
+#include <sys/kauth.h>
+
 #include <miscfs/specfs/specdev.h>
+
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
