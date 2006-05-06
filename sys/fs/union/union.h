@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.14.10.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: union.h,v 1.14.10.2 2006/05/06 22:35:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -88,6 +88,8 @@ struct union_args {
 #define UNMNT_BITS "\177\20" \
     "b\00above\0b\01below\0b\02replace\0"
 
+#ifdef _KERNEL
+
 struct union_mount {
 	struct vnode	*um_uppervp;
 	struct vnode	*um_lowervp;
@@ -95,8 +97,6 @@ struct union_mount {
 	int		um_cmode;	/* cmask from mount process */
 	int		um_op;		/* Operation mode */
 };
-
-#ifdef _KERNEL
 
 /*
  * DEFDIRMODE is the mode bits used to create a shadow directory.
@@ -136,21 +136,21 @@ extern int union_allocvp(struct vnode **, struct mount *,
 				struct vnode *, struct vnode *,
 				struct componentname *, struct vnode *,
 				struct vnode *, int);
-extern int union_copyfile(struct vnode *, struct vnode *,
-					kauth_cred_t, struct lwp *);
+extern int union_copyfile(struct vnode *, struct vnode *, kauth_cred_t,
+    struct lwp *);
 extern int union_copyup(struct union_node *, int, kauth_cred_t,
-				struct lwp *);
+    struct lwp *);
 extern void union_diruncache(struct union_node *);
 extern int union_dowhiteout(struct union_node *, kauth_cred_t,
-					struct lwp *);
+    struct lwp *);
 extern int union_mkshadow(struct union_mount *, struct vnode *,
-				struct componentname *, struct vnode **);
+    struct componentname *, struct vnode **);
 extern int union_mkwhiteout(struct union_mount *, struct vnode *,
-				struct componentname *, char *);
+    struct componentname *, char *);
 extern int union_vn_create(struct vnode **, struct union_node *,
-				struct lwp *);
+    struct lwp *);
 extern int union_cn_close(struct vnode *, int, kauth_cred_t,
-				struct lwp *);
+    struct lwp *);
 extern void union_removed_upper(struct union_node *un);
 extern struct vnode *union_lowervp(struct vnode *);
 extern void union_newlower(struct union_node *, struct vnode *);
