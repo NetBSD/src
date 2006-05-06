@@ -99,7 +99,6 @@
 #include <sys/pool.h>
 #include <sys/power.h>
 #include <sys/proc.h>
-#include <sys/properties.h>
 #include <sys/protosw.h>
 #include <sys/ptrace.h>
 #include <sys/queue.h>
