@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.115.10.2 2006/03/10 15:05:22 elad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.115.10.3 2006/05/06 23:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.10.2 2006/03/10 15:05:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.10.3 2006/05/06 23:31:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.10.2 2006/03/10 15:05:22 elad Exp $");
 #include <sys/kernel.h>
 #include <sys/poll.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/slip.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.57.10.2 2006/04/19 05:06:37 elad Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.57.10.3 2006/05/06 23:32:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.57.10.2 2006/04/19 05:06:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.57.10.3 2006/05/06 23:32:11 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.57.10.2 2006/04/19 05:06:37 elad E
 #include <sys/stat.h>
 #include <sys/protosw.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 #include <miscfs/syncfs/syncfs.h>
 

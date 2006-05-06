@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.87.8.2 2006/03/10 15:05:22 elad Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.87.8.3 2006/05/06 23:31:59 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.87.8.2 2006/03/10 15:05:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.87.8.3 2006/05/06 23:31:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.87.8.2 2006/03/10 15:05:22 elad Ex
 #include <sys/callout.h>
 #include <sys/md5.h>
 #include <sys/inttypes.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/netisr.h>

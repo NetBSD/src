@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.112 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.112.10.1 2006/05/06 23:32:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -137,7 +137,6 @@ struct lwp;
 struct proc;
 struct exec_package;
 struct vnode;
-struct ucred;
 
 typedef int (*exec_makecmds_fcn)(struct lwp *, struct exec_package *);
 

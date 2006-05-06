@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.19.10.2 2006/04/19 04:32:08 elad Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.19.10.3 2006/05/06 23:31:25 christos Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19.10.2 2006/04/19 04:32:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19.10.3 2006/05/06 23:31:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19.10.2 2006/04/19 04:32:08 elad Ex
 #include <sys/ioctl.h>
 /* for CNV_OFLAGS below */
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <coda/coda.h>
 #include <coda/cnode.h>

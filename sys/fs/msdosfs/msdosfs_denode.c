@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.12.10.2 2006/04/19 05:03:55 elad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.12.10.3 2006/05/06 23:31:29 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.12.10.2 2006/04/19 05:03:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.12.10.3 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.12.10.2 2006/04/19 05:03:55 ela
 #include <sys/kernel.h>		/* defines "time" */
 #include <sys/dirent.h>
 #include <sys/namei.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 

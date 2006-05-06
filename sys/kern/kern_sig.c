@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.217.2.3 2006/04/19 05:13:59 elad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.217.2.4 2006/05/06 23:31:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.217.2.3 2006/04/19 05:13:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.217.2.4 2006/05/06 23:31:30 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.217.2.3 2006/04/19 05:13:59 elad Exp 
 #include <sys/savar.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

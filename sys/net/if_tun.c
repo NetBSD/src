@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.82.4.3 2006/04/19 04:46:10 elad Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.82.4.4 2006/05/06 23:31:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.4.3 2006/04/19 04:46:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.4.4 2006/05/06 23:31:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.4.3 2006/04/19 04:46:10 elad Exp $")
 #include <sys/file.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 

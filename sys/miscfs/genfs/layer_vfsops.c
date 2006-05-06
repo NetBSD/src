@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.22.10.1 2006/03/08 01:34:34 elad Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.22.10.2 2006/05/06 23:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.22.10.1 2006/03/08 01:34:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.22.10.2 2006/05/06 23:31:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.22.10.1 2006/03/08 01:34:34 elad 
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
+
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 

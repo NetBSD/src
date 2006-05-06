@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.36.8.2 2006/03/10 15:05:22 elad Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.36.8.3 2006/05/06 23:31:58 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.8.2 2006/03/10 15:05:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.8.3 2006/05/06 23:31:58 christos Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.36.8.2 2006/03/10 15:05:22 elad Exp 
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>

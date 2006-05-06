@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.86.4.3 2006/04/19 03:26:39 elad Exp $ */
+/* $NetBSD: wskbd.c,v 1.86.4.4 2006/05/06 23:31:29 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.86.4.3 2006/04/19 03:26:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.86.4.4 2006/05/06 23:31:29 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.86.4.3 2006/04/19 03:26:39 elad Exp $");
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>

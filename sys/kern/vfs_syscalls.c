@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.238.4.3 2006/04/19 05:14:00 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.238.4.4 2006/05/06 23:31:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238.4.3 2006/04/19 05:14:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238.4.4 2006/05/06 23:31:31 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.238.4.3 2006/04/19 05:14:00 elad 
 #ifdef VERIFIED_EXEC
 #include <sys/verified_exec.h>
 #endif /* VERIFIED_EXEC */
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>

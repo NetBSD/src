@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.126.4.10 2006/04/19 05:06:37 elad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.126.4.11 2006/05/06 23:32:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.10 2006/04/19 05:06:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.11 2006/05/06 23:32:11 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.126.4.10 2006/04/19 05:06:37 elad E
 #include <sys/namei.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.98.10.2 2006/03/10 13:53:24 elad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.98.10.3 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.10.2 2006/03/10 13:53:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.10.3 2006/05/06 23:31:30 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.10.2 2006/03/10 13:53:24 elad Exp
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/timevar.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

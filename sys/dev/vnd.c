@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.141.4.2 2006/04/19 03:24:24 elad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.141.4.3 2006/05/06 23:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.4.2 2006/04/19 03:24:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.4.3 2006/05/06 23:31:27 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -159,6 +159,8 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.141.4.2 2006/04/19 03:24:24 elad Exp $");
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
+
 #include <net/zlib.h>
 
 #include <miscfs/specfs/specdev.h>

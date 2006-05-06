@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.35.2.3 2006/04/19 03:25:33 elad Exp $	*/
+/*	$NetBSD: cz.c,v 1.35.2.4 2006/05/06 23:31:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.35.2.3 2006/04/19 03:25:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.35.2.4 2006/05/06 23:31:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.35.2.3 2006/04/19 03:25:33 elad Exp $");
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <sys/callout.h>
 

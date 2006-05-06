@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.163.10.2 2006/03/10 15:05:22 elad Exp $	*/
+/*	$NetBSD: if.c,v 1.163.10.3 2006/05/06 23:31:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163.10.2 2006/03/10 15:05:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163.10.3 2006/05/06 23:31:58 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163.10.2 2006/03/10 15:05:22 elad Exp $");
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

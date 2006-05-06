@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.12.10.6 2006/04/19 05:03:56 elad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.12.10.7 2006/05/06 23:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.10.6 2006/04/19 05:03:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.10.7 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.12.10.6 2006/04/19 05:03:56 elad E
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 

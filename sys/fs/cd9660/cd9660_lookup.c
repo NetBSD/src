@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.9.10.2 2006/04/19 05:03:55 elad Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.9.10.3 2006/05/06 23:31:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9.10.2 2006/04/19 05:03:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9.10.3 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9.10.2 2006/04/19 05:03:55 elad 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 
 #include <fs/cd9660/iso.h>
 #include <fs/cd9660/cd9660_extern.h>

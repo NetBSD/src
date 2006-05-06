@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.90.10.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.90.10.2 2006/05/06 23:32:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.90.10.1 2006/03/08 01:39:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.90.10.2 2006/05/06 23:32:33 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.90.10.1 2006/03/08 01:39:12 elad Exp
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <ufs/ufs/quota.h>

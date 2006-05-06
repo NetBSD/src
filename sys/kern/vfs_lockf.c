@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.48.10.1 2006/03/08 00:53:41 elad Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.48.10.2 2006/05/06 23:31:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.48.10.1 2006/03/08 00:53:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.48.10.2 2006/05/06 23:31:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.48.10.1 2006/03/08 00:53:41 elad Exp
 #include <sys/pool.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
+#include <sys/kauth.h>
 
 POOL_INIT(lockfpool, sizeof(struct lockf), 0, 0, 0, "lockfpl",
     &pool_allocator_nointr);

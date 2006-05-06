@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.9.8.5 2006/04/19 05:06:37 elad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.9.8.6 2006/05/06 23:32:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.8.5 2006/04/19 05:06:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.8.6 2006/05/06 23:32:11 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.9.8.5 2006/04/19 05:06:37 elad Exp 
 #include <sys/mbuf.h>
 #include <sys/dirent.h>
 #include <sys/socket.h>		/* XXX for AF_MAX */
+#include <sys/kauth.h>
 
 #include <net/radix.h>
 

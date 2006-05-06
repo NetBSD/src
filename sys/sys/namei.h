@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.42.4.1 2006/03/08 01:01:13 elad Exp $	*/
+/*	$NetBSD: namei.h,v 1.42.4.2 2006/05/06 23:32:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -35,7 +35,6 @@
 #define	_SYS_NAMEI_H_
 
 #include <sys/queue.h>
-#include <sys/kauth.h>
 
 /*
  * Encapsulation of namei parameters.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.25.10.2 2006/03/10 13:53:24 elad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.25.10.3 2006/05/06 23:31:30 christos Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.10.2 2006/03/10 13:53:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.10.3 2006/05/06 23:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.10.2 2006/03/10 13:53:24 elad Ex
 #include <sys/filedesc.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 static void	kqueue_wakeup(struct kqueue *kq);
 

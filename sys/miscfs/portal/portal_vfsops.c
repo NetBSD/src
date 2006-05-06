@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.54.10.1 2006/03/08 01:34:34 elad Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.54.10.2 2006/05/06 23:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.54.10.1 2006/03/08 01:34:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.54.10.2 2006/05/06 23:31:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.54.10.1 2006/03/08 01:34:34 elad
 #include <sys/domain.h>
 #include <sys/dirent.h>
 #include <sys/un.h>
+#include <sys/kauth.h>
+
 #include <miscfs/portal/portal.h>
 
 void	portal_init(void);

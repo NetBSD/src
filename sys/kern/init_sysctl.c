@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.63.4.7 2006/04/21 23:01:40 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.63.4.8 2006/05/06 23:31:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.4.7 2006/04/21 23:01:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.4.8 2006/05/06 23:31:30 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.63.4.7 2006/04/21 23:01:40 elad Ex
 #include <sys/verified_exec.h>
 #endif /* VERIFIED_EXEC */
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>

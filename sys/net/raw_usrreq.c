@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.25.10.2 2006/03/10 15:05:23 elad Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.25.10.3 2006/05/06 23:31:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.25.10.2 2006/03/10 15:05:23 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.25.10.3 2006/05/06 23:31:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.25.10.2 2006/03/10 15:05:23 elad Ex
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>

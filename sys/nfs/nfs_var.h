@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.58.8.2 2006/03/10 22:38:09 elad Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.58.8.3 2006/05/06 23:32:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@ extern struct pool nfs_srvdesc_pool;
 
 struct vnode;
 struct uio;
-struct ucred;
 struct proc;
 struct buf;
 struct nfs_diskless;
@@ -107,8 +106,7 @@ int nfs_nget1(struct mount *, nfsfh_t *, int, struct nfsnode **, int);
 
 /* nfs_vnops.c */
 int nfs_null(struct vnode *, kauth_cred_t, struct lwp *);
-int nfs_setattrrpc(struct vnode *, struct vattr *, kauth_cred_t,
-	struct lwp *);
+int nfs_setattrrpc(struct vnode *, struct vattr *, kauth_cred_t, struct lwp *);
 int nfs_readlinkrpc(struct vnode *, struct uio *, kauth_cred_t);
 int nfs_readrpc(struct vnode *, struct uio *);
 int nfs_writerpc(struct vnode *, struct uio *, int *, boolean_t, boolean_t *);

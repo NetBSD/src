@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.16.10.3 2006/03/11 16:45:25 elad Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.16.10.4 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.16.10.3 2006/03/11 16:45:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.16.10.4 2006/05/06 23:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.16.10.3 2006/03/11 16:45:25 elad Exp 
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 /*
  * Check for ipc permission

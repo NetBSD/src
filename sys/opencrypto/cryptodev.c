@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.18.2.2 2006/04/19 04:33:31 elad Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.18.2.3 2006/05/06 23:32:33 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.18.2.2 2006/04/19 04:33:31 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.18.2.3 2006/05/06 23:32:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.18.2.2 2006/04/19 04:33:31 elad Exp 
 #include <sys/sha1.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>

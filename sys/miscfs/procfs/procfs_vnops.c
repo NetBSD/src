@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.129.6.2 2006/03/10 11:53:55 elad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.129.6.3 2006/05/06 23:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.129.6.2 2006/03/10 11:53:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.129.6.3 2006/05/06 23:31:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.129.6.2 2006/03/10 11:53:55 elad 
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h> /* XXX for curtain */
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 

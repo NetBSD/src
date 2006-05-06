@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.72.10.2 2006/03/10 14:54:00 elad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.72.10.3 2006/05/06 23:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.72.10.2 2006/03/10 14:54:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.72.10.3 2006/05/06 23:31:25 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.72.10.2 2006/03/10 14:54:00 elad E
 #include <sys/buf.h>
 #include <sys/signal.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>

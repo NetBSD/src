@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.101.2.4 2006/04/19 05:14:00 elad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.101.2.5 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.101.2.4 2006/04/19 05:14:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.101.2.5 2006/05/06 23:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.101.2.4 2006/04/19 05:14:00 elad E
 #include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>

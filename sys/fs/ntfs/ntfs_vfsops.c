@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.37.4.2 2006/04/19 05:03:56 elad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.37.4.3 2006/05/06 23:31:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.4.2 2006/04/19 05:03:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.4.3 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.4.2 2006/04/19 05:03:56 elad Ex
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #if defined(__NetBSD__)
 #include <uvm/uvm_extern.h>

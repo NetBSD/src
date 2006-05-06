@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.64.10.2 2006/03/10 15:05:22 elad Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.64.10.3 2006/05/06 23:31:59 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.64.10.2 2006/03/10 15:05:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.64.10.3 2006/05/06 23:31:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.64.10.2 2006/03/10 15:05:22 elad Exp 
 #if __NetBSD__
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/kauth.h>
 #endif
 #include <sys/syslog.h>
 

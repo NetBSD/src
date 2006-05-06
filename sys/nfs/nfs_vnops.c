@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.231.4.2 2006/04/19 05:06:37 elad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.231.4.3 2006/05/06 23:32:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.231.4.2 2006/04/19 05:06:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.231.4.3 2006/05/06 23:32:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.231.4.2 2006/04/19 05:06:37 elad Exp
 #include <sys/lockf.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>

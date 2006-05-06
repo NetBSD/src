@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.26.4.3 2006/04/19 05:03:55 elad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.26.4.4 2006/05/06 23:31:29 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.26.4.3 2006/04/19 05:03:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.26.4.4 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.26.4.3 2006/04/19 05:03:55 elad 
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/lockf.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */

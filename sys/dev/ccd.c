@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.108.4.1 2006/03/08 01:44:48 elad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.108.4.2 2006/05/06 23:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.108.4.1 2006/03/08 01:44:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.108.4.2 2006/05/06 23:31:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.108.4.1 2006/03/08 01:44:48 elad Exp $");
 #include <sys/conf.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 #include <dev/ccdvar.h>
 
