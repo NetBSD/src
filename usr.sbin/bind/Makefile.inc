@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2005/10/10 13:26:28 rpaulo Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2006/05/06 17:51:46 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -6,6 +6,7 @@ BIND9_MAKEFILE_INC=yes
 WARNS?=	1
 WFORMAT?=2
 NAMED_USE_PTHREADS?=yes
+NAMED_USE_OPENSSL?=yes
 
 .include <bsd.own.mk>
 
@@ -54,6 +55,12 @@ DPADD+= ${LIBPTHREAD}
 MKPRIVATELIB=yes
 CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \
 	-DLIBREVISION=${LIBREVISION} -DLIBAGE=${LIBAGE}
+.endif
+
+.if ${NAMED_USE_OPENSSL} == "yes"
+CPPFLAGS+=-DOPENSSL
+LDADD+= -lcrypto
+DPADD+= ${LIBCRYPTO}
 .endif
 
 .if ${NAMED_USE_PTHREADS} == "yes"
