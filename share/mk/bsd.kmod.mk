@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.78 2006/03/16 18:43:34 jwise Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.79 2006/05/06 02:20:23 groo Exp $
 
 .include <bsd.init.mk>
 
@@ -20,6 +20,7 @@ KERN=		$S/kern
 
 CFLAGS+=	-ffreestanding ${COPTS}
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
+CPPFLAGS+=	-isystem ${S}/../common/include
 CPPFLAGS+=	-D_KERNEL -D_LKM
 
 _YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
