@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.1 2006/05/06 15:46:48 jmcneill Exp $ */
+/* $NetBSD: piixpcib.c,v 1.2 2006/05/06 20:44:29 jdc Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.1 2006/05/06 15:46:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.2 2006/05/06 20:44:29 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,7 +95,8 @@ piixpcibmatch(struct device *parent, struct cfdata *match, void *aux)
 
 	/* We are ISA bridge, of course */
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE ||
-	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_ISA) {
+	    (PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_ISA &&
+	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_MISC)) {
 		return 0;
 	}
 
