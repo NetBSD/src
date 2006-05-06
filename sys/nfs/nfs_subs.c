@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.158.4.8 2006/04/19 05:06:37 elad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.158.4.9 2006/05/06 23:32:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.8 2006/04/19 05:06:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.9 2006/05/06 23:32:11 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.158.4.8 2006/04/19 05:06:37 elad Exp 
 #include <sys/time.h>
 #include <sys/dirent.h>
 #include <sys/once.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 

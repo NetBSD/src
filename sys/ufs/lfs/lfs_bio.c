@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.90.2.1 2006/04/19 03:54:09 elad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.90.2.2 2006/05/06 23:32:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.90.2.1 2006/04/19 03:54:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.90.2.2 2006/05/06 23:32:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.90.2.1 2006/04/19 03:54:09 elad Exp $"
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>

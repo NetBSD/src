@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.50.4.2 2006/03/10 14:39:01 elad Exp $	*/
+/*	$NetBSD: rnd.c,v 1.50.4.3 2006/05/06 23:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.50.4.2 2006/03/10 14:39:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.50.4.3 2006/05/06 23:31:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.50.4.2 2006/03/10 14:39:01 elad Exp $");
 #include <sys/rnd.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #ifdef __HAVE_CPU_COUNTER
 #include <machine/cpu_counter.h>

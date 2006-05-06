@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.22.4.1 2006/03/08 01:31:33 elad Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.22.4.2 2006/05/06 23:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.22.4.1 2006/03/08 01:31:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.22.4.2 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.22.4.1 2006/03/08 01:31:33 elad Exp $
 #include <sys/signalvar.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
+#include <sys/kauth.h>
 
 #ifndef __NetBSD__
 #include <vm/vm.h>

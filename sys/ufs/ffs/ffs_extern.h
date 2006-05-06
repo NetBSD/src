@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.51.8.4 2006/05/03 16:00:34 yamt Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.51.8.5 2006/05/06 23:32:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,10 +34,6 @@
 #ifndef _UFS_FFS_FFS_EXTERN_H_
 #define _UFS_FFS_FFS_EXTERN_H_
 
-#if defined(_KERNEL)
-#include <sys/kauth.h>
-#endif /* defined(_KERNEL) */
-
 /*
  * Sysctl values for the fast filesystem.
  */
@@ -60,7 +56,6 @@ struct lwp;
 struct statvfs;
 struct timeval;
 struct timespec;
-struct ucred;
 struct ufsmount;
 struct uio;
 struct vnode;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.202.4.2 2006/04/19 03:26:07 elad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.202.4.3 2006/05/06 23:31:29 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.4.2 2006/04/19 03:26:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.4.3 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -168,6 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.4.2 2006/04/19 03:26:07 ela
 #include <sys/bufq.h>
 #include <sys/user.h>
 #include <sys/reboot.h>
+#include <sys/kauth.h>
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>

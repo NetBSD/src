@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.6.10.2 2006/03/10 14:28:51 elad Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.6.10.3 2006/05/06 23:31:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.6.10.2 2006/03/10 14:28:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.6.10.3 2006/05/06 23:31:26 christos Exp $");
 
 /*#ifdef COMPAT_12*/
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.6.10.2 2006/03/10 14:28:51 elad Ex
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 /* ARGSUSED */
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.14.10.3 2006/04/19 04:46:11 elad Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.14.10.4 2006/05/06 23:32:11 christos Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14.10.3 2006/04/19 04:46:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14.10.4 2006/05/06 23:32:11 christos Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14.10.3 2006/04/19 04:46:11 elad Ex
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
+#include <sys/kauth.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_ether.h>

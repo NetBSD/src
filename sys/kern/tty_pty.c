@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.87.2.2 2006/04/19 05:14:00 elad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.87.2.3 2006/05/06 23:31:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.87.2.2 2006/04/19 05:14:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.87.2.3 2006/05/06 23:31:31 christos Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.87.2.2 2006/04/19 05:14:00 elad Exp $"
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.16.4.2 2006/04/19 05:03:56 elad Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.16.4.3 2006/05/06 23:31:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.16.4.2 2006/04/19 05:03:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.16.4.3 2006/05/06 23:31:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.16.4.2 2006/04/19 05:03:56 elad Exp
 #include <sys/queue.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 

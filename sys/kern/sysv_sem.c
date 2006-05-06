@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.59.10.2 2006/04/19 05:14:00 elad Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.59.10.3 2006/05/06 23:31:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59.10.2 2006/04/19 05:14:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59.10.3 2006/05/06 23:31:30 christos Exp $");
 
 #define SYSVSEM
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.59.10.2 2006/04/19 05:14:00 elad Exp 
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 static int	semtot = 0;
 struct	semid_ds *sema;			/* semaphore id pool */

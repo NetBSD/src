@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.24.8.3 2006/04/19 03:54:09 elad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.24.8.4 2006/05/06 23:32:33 christos Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24.8.3 2006/04/19 03:54:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24.8.4 2006/05/06 23:32:33 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24.8.3 2006/04/19 03:54:09 elad E
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 

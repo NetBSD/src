@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.30.4.3 2006/04/19 04:46:11 elad Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.30.4.4 2006/05/06 23:32:11 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.30.4.3 2006/04/19 04:46:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.30.4.4 2006/05/06 23:32:11 christos Exp $");
 #endif
 
 /*
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.30.4.3 2006/04/19 04:46:11 ela
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
  
 #include <net/if.h>
 #include <net/if_arp.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.21.10.2 2006/03/10 14:28:51 elad Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.21.10.3 2006/05/06 23:31:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.21.10.2 2006/03/10 14:28:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.21.10.3 2006/05/06 23:31:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.21.10.2 2006/03/10 14:28:51 elad 
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>

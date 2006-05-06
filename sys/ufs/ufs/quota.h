@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.21.10.1 2006/03/08 01:39:12 elad Exp $	*/
+/*	$NetBSD: quota.h,v 1.21.10.2 2006/05/06 23:32:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -165,7 +165,6 @@ struct dquot;
 struct inode;
 struct mount;
 struct proc;
-struct ucred;
 struct ufsmount;
 struct vnode;
 __BEGIN_DECLS

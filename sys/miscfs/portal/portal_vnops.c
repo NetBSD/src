@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.63.4.2 2006/03/14 02:52:47 elad Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.63.4.3 2006/05/06 23:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.63.4.2 2006/03/14 02:52:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.63.4.3 2006/05/06 23:31:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.63.4.2 2006/03/14 02:52:47 elad E
 #include <sys/unpcb.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/portal/portal.h>

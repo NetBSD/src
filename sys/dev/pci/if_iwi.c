@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.45.4.3 2006/04/19 03:25:34 elad Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.45.4.4 2006/05/06 23:31:28 christos Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.45.4.3 2006/04/19 03:25:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.45.4.4 2006/05/06 23:31:28 christos Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.45.4.3 2006/04/19 03:25:34 elad Exp $")
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>

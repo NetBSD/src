@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.27.4.1 2006/03/08 00:53:41 elad Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.27.4.2 2006/05/06 23:31:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.27.4.1 2006/03/08 00:53:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.27.4.2 2006/05/06 23:31:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.27.4.1 2006/03/08 00:53:41 elad Exp $"
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.29.10.1 2006/03/08 01:48:38 elad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.29.10.2 2006/05/06 23:31:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.29.10.1 2006/03/08 01:48:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.29.10.2 2006/05/06 23:31:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.29.10.1 2006/03/08 01:48:38 elad E
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/wait.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.152.4.3 2006/04/19 05:06:37 elad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.152.4.4 2006/05/06 23:32:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.152.4.3 2006/04/19 05:06:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.152.4.4 2006/05/06 23:32:11 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.152.4.3 2006/04/19 05:06:37 elad Ex
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>

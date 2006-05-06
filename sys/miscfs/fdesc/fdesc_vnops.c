@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.90.4.2 2006/04/19 04:52:46 elad Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.90.4.3 2006/05/06 23:31:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.90.4.2 2006/04/19 04:52:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.90.4.3 2006/05/06 23:31:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.90.4.2 2006/04/19 04:52:46 elad Ex
 #include <sys/buf.h>
 #include <sys/dirent.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <miscfs/fdesc/fdesc.h>
 #include <miscfs/genfs/genfs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.28.4.2 2006/03/10 14:23:39 elad Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.28.4.3 2006/05/06 23:31:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.28.4.2 2006/03/10 14:23:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.28.4.3 2006/05/06 23:31:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.28.4.2 2006/03/10 14:23:39 elad Exp
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #if !defined(__NetBSD__)
 #include <vm/vm.h>

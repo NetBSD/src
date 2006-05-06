@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.99.2.3 2006/04/19 04:46:11 elad Exp $	*/
+/*	$NetBSD: in6.c,v 1.99.2.4 2006/05/06 23:32:11 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.99.2.3 2006/04/19 04:46:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.99.2.4 2006/05/06 23:32:11 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.99.2.3 2006/04/19 04:46:11 elad Exp $");
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

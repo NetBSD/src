@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.55.8.2 2006/03/12 00:07:42 elad Exp $	*/
+/*	$NetBSD: nfs.h,v 1.55.8.3 2006/05/06 23:32:11 christos Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -513,7 +513,7 @@ struct nfsrv_descript {
 	u_int32_t		nd_duration;	/* Lease duration */
 	struct timeval		nd_starttime;	/* Time RPC initiated */
 	fhandle_t		nd_fh;		/* File handle */
-	kauth_cred_t		nd_cr;		/* Credentials */
+	kauth_cred_t	 	nd_cr;		/* Credentials */
 };
 
 /* Bits for "nd_flag" */

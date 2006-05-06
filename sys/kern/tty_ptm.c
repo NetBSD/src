@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.7.10.2 2006/04/19 05:14:00 elad Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.7.10.3 2006/05/06 23:31:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7.10.2 2006/04/19 05:14:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7.10.3 2006/05/06 23:31:31 christos Exp $");
 
 #include "opt_ptm.h"
 
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.7.10.2 2006/04/19 05:14:00 elad Exp $"
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #ifdef DEBUG_PTM
 #define DPRINTF(a)	printf a

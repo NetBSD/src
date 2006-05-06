@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.33.4.2 2006/03/10 14:39:02 elad Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.33.4.3 2006/05/06 23:31:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.33.4.2 2006/03/10 14:39:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.33.4.3 2006/05/06 23:31:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.33.4.2 2006/03/10 14:39:02 elad Exp $")
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 
