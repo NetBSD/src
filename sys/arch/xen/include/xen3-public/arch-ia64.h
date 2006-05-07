@@ -1,4 +1,4 @@
-/* $NetBSD: arch-ia64.h,v 1.2 2006/04/04 20:30:30 bouyer Exp $ */
+/* $NetBSD: arch-ia64.h,v 1.3 2006/05/07 10:56:37 bouyer Exp $ */
 /******************************************************************************
  * arch-ia64/hypervisor-if.h
  * 
@@ -8,9 +8,31 @@
 #ifndef __HYPERVISOR_IF_IA64_H__
 #define __HYPERVISOR_IF_IA64_H__
 
+#ifdef __XEN__
+#define __DEFINE_GUEST_HANDLE(name, type) \
+    typedef struct { type *p; } __guest_handle_ ## name
+#else
+#define __DEFINE_GUEST_HANDLE(name, type) \
+    typedef type * __guest_handle_ ## name
+#endif
+
+#define DEFINE_GUEST_HANDLE(name) __DEFINE_GUEST_HANDLE(name, name)
+#define GUEST_HANDLE(name)        __guest_handle_ ## name
+
+#ifndef __ASSEMBLY__
+/* Guest handles for primitive C types. */
+__DEFINE_GUEST_HANDLE(uchar, unsigned char);
+__DEFINE_GUEST_HANDLE(uint,  unsigned int);
+__DEFINE_GUEST_HANDLE(ulong, unsigned long);
+DEFINE_GUEST_HANDLE(char);
+DEFINE_GUEST_HANDLE(int);
+DEFINE_GUEST_HANDLE(long);
+DEFINE_GUEST_HANDLE(void);
+#endif
+
 /* Maximum number of virtual CPUs in multi-processor guests. */
 /* WARNING: before changing this, check that shared_info fits on a page */
-#define MAX_VIRT_CPUS 1
+#define MAX_VIRT_CPUS 4
 
 #ifndef __ASSEMBLY__
 
@@ -39,8 +61,8 @@ typedef struct {
 
 #define INVALID_MFN       (~0UL)
 
-#define MEM_G   (1UL << 30)	
-#define MEM_M   (1UL << 20)	
+#define MEM_G   (1UL << 30)
+#define MEM_M   (1UL << 20)
 
 #define MMIO_START       (3 * MEM_G)
 #define MMIO_SIZE        (512 * MEM_M)
@@ -49,7 +71,7 @@ typedef struct {
 #define VGA_IO_SIZE      0x20000
 
 #define LEGACY_IO_START  (MMIO_START + MMIO_SIZE)
-#define LEGACY_IO_SIZE   (64*MEM_M)  
+#define LEGACY_IO_SIZE   (64*MEM_M)
 
 #define IO_PAGE_START (LEGACY_IO_START + LEGACY_IO_SIZE)
 #define IO_PAGE_SIZE  PAGE_SIZE
@@ -61,7 +83,7 @@ typedef struct {
 #define IO_SAPIC_SIZE    0x100000
 
 #define PIB_START 0xfee00000UL
-#define PIB_SIZE 0x100000 
+#define PIB_SIZE 0x100000
 
 #define GFW_START        (4*MEM_G -16*MEM_M)
 #define GFW_SIZE         (16*MEM_M)
@@ -250,7 +272,7 @@ typedef struct {
             int interrupt_delivery_enabled; // virtual psr.i
             int pending_interruption;
             int incomplete_regframe; // see SDM vol2 6.8
-            unsigned long delivery_mask[4];
+            unsigned long reserved5_1[4];
             int metaphysical_mode; // 1 = use metaphys mapping, 0 = use virtual
             int banknum; // 0 or 1, which virtual register bank is active
             unsigned long rrs[8]; // region registers
@@ -277,6 +299,12 @@ typedef struct {
     unsigned long start_info_pfn;
 } arch_shared_info_t;
 
+typedef struct {
+    unsigned long start;
+    unsigned long size;
+} arch_initrd_info_t;
+
+#define IA64_COMMAND_LINE_SIZE 512
 typedef struct vcpu_guest_context {
 #define VGCF_FPU_VALID (1<<0)
 #define VGCF_VMX_GUEST (1<<1)
@@ -290,7 +318,10 @@ typedef struct vcpu_guest_context {
     cpu_user_regs_t regs;
     arch_vcpu_info_t vcpu;
     arch_shared_info_t shared;
+    arch_initrd_info_t initrd;
+    char cmdline[IA64_COMMAND_LINE_SIZE];
 } vcpu_guest_context_t;
+DEFINE_GUEST_HANDLE(vcpu_guest_context_t);
 
 #endif /* !__ASSEMBLY__ */
 
