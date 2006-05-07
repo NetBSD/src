@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.2 2006/05/07 06:25:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -279,6 +279,7 @@ _prop_dictionary_alloc(unsigned int capacity)
 		pd->pd_array = array;
 		pd->pd_capacity = capacity;
 		pd->pd_count = 0;
+		pd->pd_flags = 0;
 
 		pd->pd_version = 0;
 	} else if (array != NULL)
