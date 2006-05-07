@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.36 2006/05/05 22:07:22 elad Exp $	*/
+/*	$NetBSD: cksum.c,v 1.37 2006/05/07 12:22:55 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,12 +81,13 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.36 2006/05/05 22:07:22 elad Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.37 2006/05/07 12:22:55 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -366,10 +367,13 @@ main(int argc, char **argv)
 
 			} else {
 				if (hash) {
+					int nspaces;
+
 					/*
 					 * 'normal' output, no (ck)sum
 					 */
 					normal = 1;
+					nspaces = 1;
 					
 					p_cksum = buf;
 					p_filename = strchr(buf, ' ');
@@ -380,9 +384,10 @@ main(int argc, char **argv)
 						rval = 1;
 						continue;
 					}
-					p_filename++;
+					while (isspace((int)*++p_filename))
+						nspaces++;
 					l_filename = strlen(p_filename);
-					l_cksum = p_filename - buf - 1;
+					l_cksum = p_filename - buf - nspaces;
 				} else {
 					/*
 					 * sum/cksum output format
