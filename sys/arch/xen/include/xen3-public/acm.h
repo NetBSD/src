@@ -1,25 +1,8 @@
-/****************************************************************
- * acm.h
- * 
- * Copyright (C) 2005 IBM Corporation
+/*
+ * acm.h: Xen access control module interface defintions
  *
- * Author:
  * Reiner Sailer <sailer@watson.ibm.com>
- *
- * Contributors:
- * Stefan Berger <stefanb@watson.ibm.com> 
- * added network byte order support for binary policies
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, version 2 of the
- * License.
- *
- * sHype general access control module header file.
- *     here are all definitions that are shared between
- *     xen-core, guest-kernels, and applications.
- *
- * todo: move from static policy choice to compile option.
+ * Copyright (c) 2005, International Business Machines Corporation.
  */
 
 #ifndef _XEN_PUBLIC_ACM_H
@@ -169,7 +152,7 @@ struct acm_ste_stats_buffer {
     uint32_t ec_eval_count;
     uint32_t gt_eval_count;
     uint32_t ec_denied_count;
-    uint32_t gt_denied_count; 
+    uint32_t gt_denied_count;
     uint32_t ec_cachehit_count;
     uint32_t gt_cachehit_count;
 };

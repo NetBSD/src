@@ -1,19 +1,8 @@
-/******************************************************************************
- * acm_ops.h
+/*
+ * acm_ops.h: Xen access control module hypervisor commands
  *
- * Copyright (C) 2005 IBM Corporation
- *
- * Author:
  * Reiner Sailer <sailer@watson.ibm.com>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation, version 2 of the
- * License.
- *
- * Process acm policy command requests from guest OS.
- * access checked by policy; not restricted to DOM0
- *
+ * Copyright (c) 2005, International Business Machines Corporation.
  */
 
 #ifndef __XEN_PUBLIC_ACM_OPS_H__
@@ -21,6 +10,7 @@
 
 #include "xen.h"
 #include "sched_ctl.h"
+#include "acm.h"
 
 /*
  * Make sure you increment the interface version whenever you modify this file!
@@ -82,7 +72,7 @@ struct acm_getdecision {
     int acm_decision;           /* out */
 };
 
-struct acm_op {
+typedef struct acm_op {
     uint32_t cmd;
     uint32_t interface_version;      /* ACM_INTERFACE_VERSION */
     union {
@@ -92,7 +82,8 @@ struct acm_op {
         struct acm_getssid getssid;
         struct acm_getdecision getdecision;
     } u;
-};
+} acm_op_t;
+DEFINE_GUEST_HANDLE(acm_op_t);
 
 #endif                          /* __XEN_PUBLIC_ACM_OPS_H__ */
 
