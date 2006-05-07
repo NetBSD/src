@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.55 2006/03/04 14:09:36 peter Exp $
+#	$NetBSD: files.hpcarm,v 1.56 2006/05/07 17:13:19 rjs Exp $
 #
 # hpcarm specific configuration info
 #
@@ -113,4 +113,3 @@ include "dev/ata/files.ata"
 include "dev/scsipi/files.scsipi"
 
 include "arch/arm/conf/majors.arm32"
-include "arch/hpcarm/conf/majors.hpcarm"
