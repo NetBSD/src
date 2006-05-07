@@ -1,4 +1,4 @@
-/* $NetBSD: grant_table.h,v 1.2 2006/04/04 20:30:30 bouyer Exp $ */
+/* $NetBSD: grant_table.h,v 1.3 2006/05/07 10:56:37 bouyer Exp $ */
 /******************************************************************************
  * grant_table.h
  * 
@@ -168,6 +168,7 @@ typedef struct gnttab_map_grant_ref {
     grant_handle_t handle;
     uint64_t dev_bus_addr;
 } gnttab_map_grant_ref_t;
+DEFINE_GUEST_HANDLE(gnttab_map_grant_ref_t);
 
 /*
  * GNTTABOP_unmap_grant_ref: Destroy one or more grant-reference mappings
@@ -189,6 +190,7 @@ typedef struct gnttab_unmap_grant_ref {
     /* OUT parameters. */
     int16_t  status;              /* GNTST_* */
 } gnttab_unmap_grant_ref_t;
+DEFINE_GUEST_HANDLE(gnttab_unmap_grant_ref_t);
 
 /*
  * GNTTABOP_setup_table: Set up a grant table for <dom> comprising at least
@@ -206,8 +208,9 @@ typedef struct gnttab_setup_table {
     uint32_t nr_frames;
     /* OUT parameters. */
     int16_t  status;              /* GNTST_* */
-    unsigned long *frame_list;
+    GUEST_HANDLE(ulong) frame_list;
 } gnttab_setup_table_t;
+DEFINE_GUEST_HANDLE(gnttab_setup_table_t);
 
 /*
  * GNTTABOP_dump_table: Dump the contents of the grant table to the
@@ -220,6 +223,7 @@ typedef struct gnttab_dump_table {
     /* OUT parameters. */
     int16_t status;               /* GNTST_* */
 } gnttab_dump_table_t;
+DEFINE_GUEST_HANDLE(gnttab_dump_table_t);
 
 /*
  * GNTTABOP_transfer_grant_ref: Transfer <frame> to a foreign domain. The
@@ -230,7 +234,7 @@ typedef struct gnttab_dump_table {
  * to the calling domain *unless* the error is GNTST_bad_page.
  */
 #define GNTTABOP_transfer                4
-typedef struct {
+typedef struct gnttab_transfer {
     /* IN parameters. */
     unsigned long mfn;
     domid_t       domid;
@@ -238,6 +242,7 @@ typedef struct {
     /* OUT parameters. */
     int16_t       status;
 } gnttab_transfer_t;
+DEFINE_GUEST_HANDLE(gnttab_transfer_t);
 
 /*
  * Bitfield values for update_pin_status.flags.
@@ -263,7 +268,7 @@ typedef struct {
   * GNTMAP_contains_pte subflag:
   *  0 => This map request contains a host virtual address.
   *  1 => This map request contains the machine addess of the PTE to update.
-  */ 
+  */
 #define _GNTMAP_contains_pte    (4)
 #define GNTMAP_contains_pte     (1<<_GNTMAP_contains_pte)
 

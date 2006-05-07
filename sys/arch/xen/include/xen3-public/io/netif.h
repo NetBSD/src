@@ -1,4 +1,4 @@
-/* $NetBSD: netif.h,v 1.2 2006/04/04 20:30:31 bouyer Exp $ */
+/* $NetBSD: netif.h,v 1.3 2006/05/07 10:56:37 bouyer Exp $ */
 /******************************************************************************
  * netif.h
  * 
@@ -21,8 +21,12 @@
  */
 
 /* Protocol checksum field is blank in the packet (hardware offload)? */
-#define _NETTXF_csum_blank (0)
-#define  NETTXF_csum_blank (1U<<_NETTXF_csum_blank)
+#define _NETTXF_csum_blank     (0)
+#define  NETTXF_csum_blank     (1U<<_NETTXF_csum_blank)
+
+/* Packet data has been validated against protocol checksum. */
+#define _NETTXF_data_validated (1)
+#define  NETTXF_data_validated (1U<<_NETTXF_data_validated)
 
 typedef struct netif_tx_request {
     grant_ref_t gref;      /* Reference to buffer page */
@@ -42,9 +46,13 @@ typedef struct {
     grant_ref_t gref;      /* Reference to incoming granted frame */
 } netif_rx_request_t;
 
-/* Protocol checksum already validated (e.g., performed by hardware)? */
-#define _NETRXF_csum_valid (0)
-#define  NETRXF_csum_valid (1U<<_NETRXF_csum_valid)
+/* Packet data has been validated against protocol checksum. */
+#define _NETRXF_data_validated (0)
+#define  NETRXF_data_validated (1U<<_NETRXF_data_validated)
+
+/* Protocol checksum field is blank in the packet (hardware offload)? */
+#define _NETRXF_csum_blank     (1)
+#define  NETRXF_csum_blank     (1U<<_NETRXF_csum_blank)
 
 typedef struct {
     uint16_t id;

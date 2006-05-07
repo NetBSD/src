@@ -1,4 +1,4 @@
-/* $NetBSD: arch-x86_64.h,v 1.2 2006/04/04 20:30:30 bouyer Exp $ */
+/* $NetBSD: arch-x86_64.h,v 1.3 2006/05/07 10:56:37 bouyer Exp $ */
 /******************************************************************************
  * arch-x86_64.h
  * 
@@ -9,6 +9,28 @@
 
 #ifndef __XEN_PUBLIC_ARCH_X86_64_H__
 #define __XEN_PUBLIC_ARCH_X86_64_H__
+
+#ifdef __XEN__
+#define __DEFINE_GUEST_HANDLE(name, type) \
+    typedef struct { type *p; } __guest_handle_ ## name
+#else
+#define __DEFINE_GUEST_HANDLE(name, type) \
+    typedef type * __guest_handle_ ## name
+#endif
+
+#define DEFINE_GUEST_HANDLE(name) __DEFINE_GUEST_HANDLE(name, name)
+#define GUEST_HANDLE(name)        __guest_handle_ ## name
+
+#ifndef __ASSEMBLY__
+/* Guest handles for primitive C types. */
+__DEFINE_GUEST_HANDLE(uchar, unsigned char);
+__DEFINE_GUEST_HANDLE(uint,  unsigned int);
+__DEFINE_GUEST_HANDLE(ulong, unsigned long);
+DEFINE_GUEST_HANDLE(char);
+DEFINE_GUEST_HANDLE(int);
+DEFINE_GUEST_HANDLE(long);
+DEFINE_GUEST_HANDLE(void);
+#endif
 
 /*
  * SEGMENT DESCRIPTOR TABLES
@@ -60,9 +82,12 @@
 /* And the trap vector is... */
 #define TRAP_INSTR "syscall"
 
+#define __HYPERVISOR_VIRT_START 0xFFFF800000000000
+#define __HYPERVISOR_VIRT_END   0xFFFF880000000000
+
 #ifndef HYPERVISOR_VIRT_START
-#define HYPERVISOR_VIRT_START (0xFFFF800000000000UL)
-#define HYPERVISOR_VIRT_END   (0xFFFF880000000000UL)
+#define HYPERVISOR_VIRT_START mk_unsigned_long(__HYPERVISOR_VIRT_START)
+#define HYPERVISOR_VIRT_END   mk_unsigned_long(__HYPERVISOR_VIRT_END)
 #endif
 
 /* Maximum number of virtual CPUs in multi-processor guests. */
@@ -86,11 +111,20 @@
 #define SEGBASE_GS_USER_SEL 3 /* Set user %gs specified in base[15:0] */
 
 /*
- * int HYPERVISOR_switch_to_user(void)
+ * int HYPERVISOR_iret(void)
  * All arguments are on the kernel stack, in the following format.
  * Never returns if successful. Current kernel context is lost.
+ * The saved CS is mapped as follows:
+ *   RING0 -> RING3 kernel mode.
+ *   RING1 -> RING3 kernel mode.
+ *   RING2 -> RING3 kernel mode.
+ *   RING3 -> RING3 user mode.
+ * However RING0 indicates that the guest kernel should return to iteself
+ * directly with
+ *      orb   $3,1*8(%rsp)
+ *      iretq
  * If flags contains VGCF_IN_SYSCALL:
- *   Restore RAX, RIP, RFLAGS, RSP. 
+ *   Restore RAX, RIP, RFLAGS, RSP.
  *   Discard R11, RCX, CS, SS.
  * Otherwise:
  *   Restore RAX, R11, RCX, CS:RIP, RFLAGS, SS:RSP.
@@ -98,10 +132,10 @@
  */
 /* Guest exited in SYSCALL context? Return to guest with SYSRET? */
 #define VGCF_IN_SYSCALL (1<<8)
-struct switch_to_user {
+struct iret_context {
     /* Top of stack (%rsp at point of hypercall). */
     uint64_t rax, r11, rcx, flags, rip, cs, rflags, rsp, ss;
-    /* Bottom of switch_to_user stack frame. */
+    /* Bottom of iret stack frame. */
 };
 
 /*
@@ -124,6 +158,7 @@ typedef struct trap_info {
     uint16_t      cs;      /* code selector                                 */
     unsigned long address; /* code offset                                   */
 } trap_info_t;
+DEFINE_GUEST_HANDLE(trap_info_t);
 
 #ifdef __GNUC__
 /* Anonymous union includes both 32- and 64-bit names (e.g., eax/rax). */
@@ -163,6 +198,7 @@ typedef struct cpu_user_regs {
     uint16_t fs, _pad5[3]; /* Non-zero => takes precedence over fs_base.     */
     uint16_t gs, _pad6[3]; /* Non-zero => takes precedence over gs_base_usr. */
 } cpu_user_regs_t;
+DEFINE_GUEST_HANDLE(cpu_user_regs_t);
 
 #undef __DECL_REG
 
@@ -176,11 +212,11 @@ typedef struct vcpu_guest_context {
     /* FPU registers come first so they can be aligned for FXSAVE/FXRSTOR. */
     struct { char x[512]; } fpu_ctxt;       /* User-level FPU registers     */
 #define VGCF_I387_VALID (1<<0)
-#define VGCF_VMX_GUEST  (1<<1)
+#define VGCF_HVM_GUEST  (1<<1)
 #define VGCF_IN_KERNEL  (1<<2)
     unsigned long flags;                    /* VGCF_* flags                 */
     cpu_user_regs_t user_regs;              /* User-level CPU registers     */
-    trap_info_t   trap_ctxt[256];           /* Virtual IDT                  */
+    struct trap_info trap_ctxt[256];        /* Virtual IDT                  */
     unsigned long ldt_base, ldt_ents;       /* LDT (linear address, # ents) */
     unsigned long gdt_frames[16], gdt_ents; /* GDT (machine frames, # ents) */
     unsigned long kernel_ss, kernel_sp;     /* Virtual TSS (only SS1/SP1)   */
@@ -195,11 +231,13 @@ typedef struct vcpu_guest_context {
     uint64_t      gs_base_kernel;
     uint64_t      gs_base_user;
 } vcpu_guest_context_t;
+DEFINE_GUEST_HANDLE(vcpu_guest_context_t);
 
 typedef struct arch_shared_info {
     unsigned long max_pfn;                  /* max pfn that appears in table */
     /* Frame containing list of mfns containing list of mfns containing p2m. */
-    unsigned long pfn_to_mfn_frame_list_list; 
+    unsigned long pfn_to_mfn_frame_list_list;
+    unsigned long nmi_reason;
 } arch_shared_info_t;
 
 typedef struct {
@@ -208,6 +246,18 @@ typedef struct {
 } arch_vcpu_info_t;
 
 #endif /* !__ASSEMBLY__ */
+
+/*
+ * Prefix forces emulation of some non-trapping instructions.
+ * Currently only CPUID.
+ */
+#ifdef __ASSEMBLY__
+#define XEN_EMULATE_PREFIX .byte 0x0f,0x0b,0x78,0x65,0x6e ;
+#define XEN_CPUID          XEN_EMULATE_PREFIX cpuid
+#else
+#define XEN_EMULATE_PREFIX ".byte 0x0f,0x0b,0x78,0x65,0x6e ; "
+#define XEN_CPUID          XEN_EMULATE_PREFIX "cpuid"
+#endif
 
 #endif
 
