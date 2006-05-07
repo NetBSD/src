@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.15 2006/05/03 20:22:34 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.16 2006/05/07 21:48:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.15 2006/05/03 20:22:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.16 2006/05/07 21:48:35 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.15 2006/05/03 20:22:34 bouyer Exp $");
 #endif
 
 static int xencons_isconsole = 0;
-static struct xencons_softc *xencons_console_device;
+static struct xencons_softc *xencons_console_device = NULL;
 
 #define	XENCONS_UNIT(x)	(minor(x))
 #define XENCONS_BURST 128
@@ -232,8 +232,6 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 #endif
 		}
 		xencons_console_device = sc;
-		cn_init_magic(&xencons_cnm_state);
-		cn_set_magic("+++++");
 	}
 	sc->polling = 0;
 }
@@ -370,11 +368,16 @@ xencons_start(struct tty *tp)
 	 */
 	cl = &tp->t_outq;
 	if (xen_start_info.flags & SIF_INITDOMAIN) {
-		int len;
+		int len, r;
 		u_char buf[XENCONS_BURST+1];
 
 		len = q_to_b(cl, buf, XENCONS_BURST);
-		(void)HYPERVISOR_console_io(CONSOLEIO_write, len, buf);
+		while (len > 0) {
+			r = HYPERVISOR_console_io(CONSOLEIO_write, len, buf);
+			if (r <= 0)
+				break;
+			len -= r;
+		}
 	} else {
 #ifdef XEN3
 		XENCONS_RING_IDX cons, prod, len;
@@ -582,6 +585,9 @@ xenconscn_attach()
 	ctrl_if_early_init();
 #endif /* XEN3 */
 
+	cn_init_magic(&xencons_cnm_state);
+	cn_set_magic("+++++");
+
 	xencons_isconsole = 1;
 }
 
@@ -596,7 +602,18 @@ xenconscn_getc(dev_t dev)
 	int ret;
 #endif
 
-#ifndef XEN3
+	if (xencons_console_device && xencons_console_device->polling == 0) {
+		printf("xenconscn_getc() but not polling\n");
+		splx(s);
+		return 0;
+	}
+	if (xen_start_info.flags & SIF_INITDOMAIN) {
+		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
+			;
+		cn_check_magic(dev, c, xencons_cnm_state);
+		splx(s);
+		return c;
+	}
 	if (xencons_console_device == NULL) {
 		printf("xenconscn_getc(): not console\n");
 		while (1)
@@ -609,14 +626,6 @@ xenconscn_getc(dev_t dev)
 		printf("xenconscn_getc() but not polling\n");
 		splx(s);
 		return 0;
-	}
-#endif
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
-		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
-			;
-		cn_check_magic(dev, c, xencons_cnm_state);
-		splx(s);
-		return c;
 	}
 
 #ifdef XEN3
