@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.3 2006/04/11 22:09:09 bouyer Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.4 2006/05/07 10:18:28 bouyer Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.3 2006/04/11 22:09:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.4 2006/05/07 10:18:28 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -58,7 +58,6 @@ static int xenbus_dev_read(void *);
 static int xenbus_dev_write(void *);
 static int xenbus_dev_open(void *);
 static int xenbus_dev_close(void *);
-static int xsd_mfn_read(void *);
 static int xsd_port_read(void *);
 
 struct xenbus_dev_transaction {
@@ -76,9 +75,6 @@ static const struct kernfs_fileop xenbus_fileops[] = {
 };
 
 #define XSD_MODE    (S_IRUSR)
-static const struct kernfs_fileop xsd_mfn_fileops[] = {
-    { .kf_fileop = KERNFS_FILEOP_READ, .kf_vop = xsd_mfn_read },
-};
 static const struct kernfs_fileop xsd_port_fileops[] = {
     { .kf_fileop = KERNFS_FILEOP_READ, .kf_vop = xsd_port_read },
 };
@@ -93,11 +89,6 @@ xenbus_kernfs_init()
 	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
 	KERNFS_INITENTRY(dkt, DT_REG, "xenbus", NULL, kfst, VREG,
 	    PRIVCMD_MODE);
-	kernfs_addentry(kernxen_pkt, dkt);
-
-	kfst = KERNFS_ALLOCTYPE(xsd_mfn_fileops);
-	KERNFS_ALLOCENTRY(dkt, M_TEMP, M_WAITOK);
-	KERNFS_INITENTRY(dkt, DT_REG, "xsd_mfn", NULL, kfst, VREG, XSD_MODE);
 	kernfs_addentry(kernxen_pkt, dkt);
 
 	kfst = KERNFS_ALLOCTYPE(xsd_port_fileops);
@@ -323,36 +314,6 @@ xenbus_dev_close(void *v)
 }
 
 #define LD_STRLEN 21 /* a 64bit integer needs 20 digits in base10 */
-static int
-xsd_mfn_read(void *v)
-{
-	struct vop_read_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		int  a_ioflag;
-		struct ucred *a_cred;
-	} */ *ap = v;
-	struct uio *uio = ap->a_uio;
-	int off, error;
-	size_t len; 
-	char strbuf[LD_STRLEN], *bf;
-
-	off = (int)uio->uio_offset;
-	if (off < 0)
-		return EINVAL;
-
-	len  = snprintf(strbuf, sizeof(strbuf), "%ld\n",
-	    xen_start_info.store_mfn);
-	if (off >= len) {
-		bf = strbuf;
-		len = 0;
-	} else {
-		bf = &strbuf[off];
-		len -= off;
-	}
-	error = uiomove(bf, len, uio);
-	return error;
-}
 
 static int
 xsd_port_read(void *v)
