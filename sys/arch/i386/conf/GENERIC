@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.749 2006/05/06 15:49:38 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.750 2006/05/07 01:38:54 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.749 $"
+#ident 		"GENERIC-$Revision: 1.750 $"
 
 maxusers	32		# estimated number of users
 
@@ -586,6 +586,10 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+# Intel PIIX4 power management controllers
+piixpm*	at pci? dev ? function ?	# PIIX4 compatible PM controller
+iic*	at piixpm?			# SMBus on PIIX4
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
