@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.4 2006/05/07 10:18:28 bouyer Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.5 2006/05/07 21:49:56 bouyer Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.4 2006/05/07 10:18:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.5 2006/05/07 21:49:56 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -136,24 +136,20 @@ xenbus_dev_read(void *v)
 		if (err)
 			goto end;
 	}
-	if (uio->uio_offset != 0) {
-		err = EINVAL;
-		goto end;
-	}
-	offset = 0;
+	offset = uio->uio_offset;
 
 	if (u->read_cons > u->read_prod) {
 		err = uiomove(&u->read_buffer[MASK_READ_IDX(u->read_cons)],
 		    0U - u->read_cons, uio);
 		if (err)
 			goto end;
-		u->read_cons += uio->uio_offset;
+		u->read_cons += (uio->uio_offset - offset);
 		offset = uio->uio_offset;
 	}
 	err = uiomove(&u->read_buffer[MASK_READ_IDX(u->read_cons)],
 	    u->read_prod - u->read_cons, uio);
 	if (err == 0)
-		u->read_cons += uio->uio_offset - offset;
+		u->read_cons += (uio->uio_offset - offset);
 
 end:
 	splx(s);
