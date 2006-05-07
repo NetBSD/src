@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.182 2006/05/06 15:49:38 jmcneill Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.183 2006/05/07 01:38:54 jmcneill Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.182 $"
+#ident 		"GENERIC-$Revision: 1.183 $"
 
 maxusers	32		# estimated number of users
 
@@ -482,6 +482,9 @@ lpt2	at isa? port 0x3bc
 #viapm*	at pci? dev ? function ?
 #viaenv* at viapm?
 
+# Intel PIIX4 power management controllers
+piixpm*	at pci? dev ? function ?	# PIIX4 compatible PM controller
+iic*	at piixpm?			# SMBus on PIIX4
 
 # SCSI Controllers and Devices
 
