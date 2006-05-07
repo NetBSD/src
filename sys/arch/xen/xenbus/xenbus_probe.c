@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.9 2006/04/11 22:09:09 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.10 2006/05/07 21:50:32 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.9 2006/04/11 22:09:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.10 2006/05/07 21:50:32 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -90,7 +90,6 @@ xenbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	aprint_normal(": Xen Virtual Bus Interface\n");
 	xenbus_sc = self;
-	xb_init_comms(self);
 	config_pending_incr();
 	kthread_create(xenbus_kthread_create, NULL);
 }
@@ -1164,6 +1163,9 @@ xenbus_probe_init(void *unused)
 		return ; /* can't get a working xenstore in this case */
 #endif /* DOM0OPS */
 	}
+
+	/* register event handler */
+	xb_init_comms((struct device *)xenbus_sc);
 
 	/* Initialize the interface to xenstore. */
 	err = xs_init(); 
