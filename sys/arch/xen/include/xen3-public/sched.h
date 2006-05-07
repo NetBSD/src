@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.2 2006/04/04 20:30:30 bouyer Exp $ */
+/* $NetBSD: sched.h,v 1.3 2006/05/07 10:56:37 bouyer Exp $ */
 /******************************************************************************
  * sched.h
  * 
@@ -10,16 +10,26 @@
 #ifndef __XEN_PUBLIC_SCHED_H__
 #define __XEN_PUBLIC_SCHED_H__
 
+#include "event_channel.h"
+
 /*
- * Prototype for this hypercall is:
- *  int sched_op(int cmd, unsigned long arg)
+ * The prototype for this hypercall is:
+ *  long sched_op(int cmd, void *arg)
  * @cmd == SCHEDOP_??? (scheduler operation).
- * @arg == Operation-specific extra argument(s).
+ * @arg == Operation-specific extra argument(s), as described below.
+ * 
+ * Versions of Xen prior to 3.0.2 provided only the following legacy version
+ * of this hypercall, supporting only the commands yield, block and shutdown:
+ *  long sched_op(int cmd, unsigned long arg)
+ * @cmd == SCHEDOP_??? (scheduler operation).
+ * @arg == 0               (SCHEDOP_yield and SCHEDOP_block)
+ *      == SHUTDOWN_* code (SCHEDOP_shutdown)
+ * This legacy version is available to new guests as sched_op_compat().
  */
 
 /*
  * Voluntarily yield the CPU.
- * @arg == 0.
+ * @arg == NULL.
  */
 #define SCHEDOP_yield       0
 
@@ -28,18 +38,35 @@
  * If called with event upcalls masked, this operation will atomically
  * reenable event delivery and check for pending events before blocking the
  * VCPU. This avoids a "wakeup waiting" race.
- * @arg == 0.
+ * @arg == NULL.
  */
 #define SCHEDOP_block       1
 
 /*
  * Halt execution of this domain (all VCPUs) and notify the system controller.
- * @arg == SHUTDOWN_??? (reason for shutdown).
+ * @arg == pointer to sched_shutdown structure.
  */
 #define SCHEDOP_shutdown    2
+typedef struct sched_shutdown {
+    unsigned int reason; /* SHUTDOWN_* */
+} sched_shutdown_t;
+DEFINE_GUEST_HANDLE(sched_shutdown_t);
 
 /*
- * Reason codes for SCHEDOP_shutdown. These may be interpreted by controller
+ * Poll a set of event-channel ports. Return when one or more are pending. An
+ * optional timeout may be specified.
+ * @arg == pointer to sched_poll structure.
+ */
+#define SCHEDOP_poll        3
+typedef struct sched_poll {
+    GUEST_HANDLE(evtchn_port_t) ports;
+    unsigned int nr_ports;
+    uint64_t timeout;
+} sched_poll_t;
+DEFINE_GUEST_HANDLE(sched_poll_t);
+
+/*
+ * Reason codes for SCHEDOP_shutdown. These may be interpreted by control
  * software to determine the appropriate action. For the most part, Xen does
  * not care about the shutdown code.
  */
