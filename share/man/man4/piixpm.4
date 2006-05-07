@@ -1,4 +1,4 @@
-.\" $NetBSD: piixpm.4,v 1.1 2006/05/07 01:34:46 jmcneill Exp $
+.\" $NetBSD: piixpm.4,v 1.2 2006/05/07 02:01:26 xtraeme Exp $
 .\"	$OpenBSD: piixpm.4,v 1.9 2006/01/18 03:06:33 brad Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -22,7 +22,7 @@
 .Nm piixpm
 .Nd Intel PIIX and compatible Power Management controller
 .Sh SYNOPSIS
-.Cd "piixpm* at pci?"
+.Cd "piixpm* at pci? dev ? function ?"
 .Cd "iic* at piixpm?"
 .Sh DESCRIPTION
 The
@@ -49,7 +49,8 @@ Intel 82371AB (PIIX4), 82440MX
 The
 .Nm
 driver first appeared in
-.Ox 3.9 .
+.Ox 3.9 and then in
+.Nx 4.0 .
 .Sh AUTHORS
 .An -nosplit
 The current
