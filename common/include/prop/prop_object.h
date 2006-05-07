@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.h,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_object.h,v 1.2 2006/05/07 12:46:01 he Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/types.h>
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 
 typedef	int	boolean_t;
 #undef TRUE
@@ -49,7 +49,7 @@ typedef	int	boolean_t;
 #undef FALSE
 #define	FALSE	0
 
-#endif /* ! _KERNEL */
+#endif /* ! _KERNEL && ! _STANDALONE */
 
 typedef void *prop_object_t;
 
