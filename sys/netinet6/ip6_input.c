@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.85 2006/05/05 00:03:22 rpaulo Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.86 2006/05/07 16:02:40 rpaulo Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.85 2006/05/05 00:03:22 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.86 2006/05/07 16:02:40 rpaulo Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1149,7 +1149,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 		 * Note that the order of the headers remains in
 		 * the chain of ancillary data.
 		 */
-		while (1) {	/* is explicit loop prevention necessary? */
+		for (;;) {	/* is explicit loop prevention necessary? */
 			struct ip6_ext *ip6e = NULL;
 			int elen;
 			struct mbuf *ext = NULL;
@@ -1479,7 +1479,7 @@ ip6_lasthdr(m, off, proto, nxtp)
 		nxt = -1;
 		nxtp = &nxt;
 	}
-	while (1) {
+	for (;;) {
 		newoff = ip6_nexthdr(m, off, proto, nxtp);
 		if (newoff < 0)
 			return off;
