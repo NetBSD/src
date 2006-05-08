@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.112 2006/05/05 18:04:43 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.113 2006/05/08 01:04:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.112 2006/05/05 18:04:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.113 2006/05/08 01:04:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1128,6 +1128,8 @@ config_attach_pseudo(cfdata_t cf)
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = ROOT;
 	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
+	dev->dv_properties = prop_dictionary_create();
+	KASSERT(dev->dv_properties != NULL);
 
 	/* put this device in the devices array */
 	config_makeroom(dev->dv_unit, cd);
