@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 2006/05/08 17:08:34 garbled Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2006/05/08 17:08:34 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -53,7 +53,6 @@ void decr_intr __P((struct clockframe *));
 u_long ticks_per_sec;
 u_long ns_per_tick;
 static long ticks_per_intr;
-static volatile u_long lasttb;
 
 struct device *clockdev;
 const struct clockfns *clockfns;
@@ -78,13 +77,14 @@ todr_attach(handle)
 void
 cpu_initclocks()
 {
+	struct cpu_info * const ci = curcpu();
 
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
 	if ((mfpvr() >> 16) == MPC601)
-		__asm volatile ("mfspr %0,%1" : "=r"(lasttb) : "n"(SPR_RTCL_R));
+		__asm volatile ("mfspr %0,%1" : "=r"(ci->ci_lasttb) : "n"(SPR_RTCL_R));
 	else
-		__asm volatile ("mftb %0" : "=r"(lasttb));
+		__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 }
 
@@ -170,12 +170,12 @@ void
 decr_intr(frame)
 	struct clockframe *frame;
 {
+	struct cpu_info * const ci = curcpu();
 	int msr;
 	int pri;
 	u_long tb;
 	long ticks;
 	int nticks;
-	extern long intrcnt[];
 
 	/*
 	 * Check whether we are initialized.
@@ -193,14 +193,14 @@ decr_intr(frame)
 	__asm volatile ("mtdec %0" :: "r"(ticks));
 
 	uvmexp.intrs++;
-	intrcnt[CNT_CLOCK]++;
+	ci->ci_ev_clock.ev_count++;
 
 	pri = splclock();
 	if (pri & SPL_CLOCK) {
-		tickspending += nticks;
+		ci->ci_tickspending += nticks;
 	} else {
-		nticks += tickspending;
-		tickspending = 0;
+		nticks += ci->ci_tickspending;
+		ci->ci_tickspending = 0;
 
 		/*
 		 * lasttb is used during microtime. Set it to the virtual
@@ -211,7 +211,7 @@ decr_intr(frame)
 		} else {
 			__asm volatile ("mftb %0" : "=r"(tb));
 		}
-		lasttb = tb + ticks - ticks_per_intr;
+		ci->ci_lasttb = tb + ticks - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
@@ -249,7 +249,7 @@ microtime(tvp)
 		__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
 	else
 		__asm volatile ("mftb %0" : "=r"(tb));
-	ticks = (tb - lasttb) * ns_per_tick;
+	ticks = (tb - curcpu()->ci_lasttb) * ns_per_tick;
 	*tvp = time;
 	__asm volatile ("mtmsr %0" :: "r"(msr));
 	ticks /= 1000;

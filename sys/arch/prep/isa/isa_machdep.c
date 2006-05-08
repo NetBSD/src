@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.9 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.10 2006/05/08 17:08:34 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2006/05/08 17:08:34 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,17 +177,17 @@ void
 init_icu(int lvlmask)
 {
 	int i;
-	extern int intrtype[];
+	struct intrsource *is;
 
-	for (i= 0; i < ICU_LEN; i++) {
+	for (i = 0, is = intrsources; i < ICU_LEN; i++, is++) {
 		switch (i) {
 		case 0:
 		case 2:
 		case 8:
-			intrtype[i] = IST_EDGE;
+			is->is_type = IST_EDGE;
 			break;
 		default:
-			intrtype[i] = (1 << i) & lvlmask ? IST_LEVEL : IST_NONE;
+			is->is_type = (1 << i) & lvlmask ? IST_LEVEL : IST_NONE;
 		}
 	}
 
@@ -239,18 +239,21 @@ isa_intr_alloc(isa_chipset_tag_t c, int mask, int type, int *irq_p)
 	int irq;
 	int maybe_irq = -1;
 	int shared_depth = 0;
+	struct intrsource *is;
+
 	mask &= 0x8b28;	/* choose from 3, 5, 8, 9, 11, 15 XXX */
-	for (irq = 0; mask != 0; mask >>= 1, irq++) {
+	for (irq = 0, is = intrsources; mask != 0; mask >>= 1, irq++, is++) {
 		if ((mask & 1) == 0)
 			continue;
-		if (intrtype[irq] == IST_NONE) {
+		if (is->is_type == IST_NONE) {
 			*irq_p = irq;
 			return 0;
 		}
 		/* Level interrupts can be shared */
-		if (type == IST_LEVEL && intrtype[irq] == IST_LEVEL) {
-			struct intrhand *ih = intrhand[irq];
+		if (type == IST_LEVEL && is->is_type == IST_LEVEL) {
+			struct intrhand *ih = is->is_hand;
 			int depth;
+
 			if (maybe_irq == -1) {
 				maybe_irq = irq;
 				continue;
