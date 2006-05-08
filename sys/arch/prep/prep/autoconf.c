@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2006/05/05 18:04:42 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2006/05/08 23:12:13 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2006/05/05 18:04:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2006/05/08 23:12:13 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,7 @@ findroot(void)
 	struct device *d;
 	char *cp;
 	prop_string_t str;
+	size_t len;
 
 	/* first trim the ethernet crap off the bootpath */
 	cp = strchr(bootpath, ':');
@@ -250,13 +251,20 @@ findroot(void)
 		cp++;
 		*cp = '\0';
 	}
-
+	len = strlen(bootpath);
+#if defined(NVRAM_DUMP)
+	printf("Modified bootpath: %s\n", bootpath);
+#endif
 	TAILQ_FOREACH(d, &alldevs, dv_list) {
 		str = prop_dictionary_get(device_properties(d), "fw-path");
 		if (str == NULL)
 			continue;
+#if defined(NVRAM_DUMP)
+		printf("dev %s: fw-path: %s\n", d->dv_xname,
+		    prop_string_cstring_nocopy(str));
+#endif
 		if (strncmp(prop_string_cstring_nocopy(str), bootpath,
-			    prop_string_size(str)) == 0) {
+		    len) == 0) {
 			booted_device = d;
 			booted_partition = 0; /* XXX ??? */
 			return;
