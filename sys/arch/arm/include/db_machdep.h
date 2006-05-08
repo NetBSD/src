@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.11 2006/04/05 00:38:51 uwe Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.12 2006/05/08 08:02:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -52,7 +52,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 
 #ifdef __PROG26
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_r15 & R15_PC)
-#define PC_ADVANCE(regs) ((regs)->tf_r15 += 4)
+#define PC_ADVANCE(regs) ((regs)->tf_r15 += BKPT_SIZE)
 #else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
 #endif
