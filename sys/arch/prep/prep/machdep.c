@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2006/05/03 17:47:06 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2006/05/08 17:08:34 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2006/05/03 17:47:06 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2006/05/08 17:08:34 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -384,15 +384,15 @@ halt_sys:
  * splx() differing in that it returns the previous priority level.
  */
 int
-lcsplx(ipl)
-	int ipl;
+lcsplx(int ipl)
 {
 	int oldcpl;
+	struct cpu_info *ci = curcpu();
 
 	__asm volatile("sync; eieio\n");	/* reorder protect */
-	oldcpl = cpl;
-	cpl = ipl;
-	if (ipending & ~ipl)
+	oldcpl = ci->ci_cpl;
+	ci->ci_cpl = ipl;
+	if (ci->ci_ipending & ~ipl)
 		do_pending_int();
 	__asm volatile("sync; eieio\n");	/* reorder protect */
 
