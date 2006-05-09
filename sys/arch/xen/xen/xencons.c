@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.4.2.5 2006/04/07 12:51:26 tron Exp $	*/
+/*	$NetBSD: xencons.c,v 1.4.2.6 2006/05/09 12:57:59 tron Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.4.2.5 2006/04/07 12:51:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.4.2.6 2006/05/09 12:57:59 tron Exp $");
 
 #include "opt_xen.h"
 
@@ -126,8 +126,7 @@ struct xencons_softc {
 #endif
 };
 #ifdef XEN3
-//volatile struct xencons_interface *xencons_interface;
-struct xencons_interface *xencons_interface;
+volatile struct xencons_interface *xencons_interface;
 #endif
 
 CFATTACH_DECL(xencons, sizeof(struct xencons_softc),
@@ -391,8 +390,8 @@ xencons_start(struct tty *tp)
 				len = sizeof(XNC_OUT) -
 				    MASK_XENCONS_IDX(prod, XNC_OUT);
 			}
-			len = q_to_b(cl,
-			    &XNC_OUT[MASK_XENCONS_IDX(prod, XNC_OUT)], len);
+			len = q_to_b(cl, __UNVOLATILE(
+			    &XNC_OUT[MASK_XENCONS_IDX(prod, XNC_OUT)]), len);
 			if (len == 0)
 				break;
 			prod = prod + len;
@@ -451,6 +450,12 @@ xencons_handler(void *arg)
 	XENCONS_RING_IDX cons, prod, len;
 	int s = spltty();
 
+	if (sc->polling) {
+		splx(s);
+		return 1;
+	}
+		
+
 #define XNC_IN (xencons_interface->in)
 
 	cons = xencons_interface->in_cons;
@@ -464,9 +469,15 @@ xencons_handler(void *arg)
 		else
 			len = sizeof(XNC_IN) - MASK_XENCONS_IDX(cons, XNC_IN);
 
-		xencons_tty_input(sc, &XNC_IN[MASK_XENCONS_IDX(cons, XNC_IN)],
-		    len);
-		cons += len;
+		xencons_tty_input(sc, __UNVOLATILE(
+		    &XNC_IN[MASK_XENCONS_IDX(cons, XNC_IN)]), len);
+		if (__predict_false(xencons_interface->in_cons != cons)) {
+			/* catch up with xenconscn_getc() */
+			cons = xencons_interface->in_cons;
+			prod = xencons_interface->in_prod;
+			x86_lfence();
+		} else
+			cons += len;
 	}
 	x86_lfence();
 	xencons_interface->in_cons = cons;
@@ -577,6 +588,7 @@ int
 xenconscn_getc(dev_t dev)
 {
 	char c;
+	int s = spltty();
 #ifdef XEN3
 	XENCONS_RING_IDX cons, prod;
 #else
@@ -588,11 +600,13 @@ xenconscn_getc(dev_t dev)
 		printf("xenconscn_getc(): not console\n");
 		while (1)
 			;  /* loop here instead of in ddb */
+		splx(s);
 		return 0;
 	}
 
 	if (xencons_console_device->polling == 0) {
 		printf("xenconscn_getc() but not polling\n");
+		splx(s);
 		return 0;
 	}
 #endif
@@ -600,6 +614,7 @@ xenconscn_getc(dev_t dev)
 		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
 			;
 		cn_check_magic(dev, c, xencons_cnm_state);
+		splx(s);
 		return c;
 	}
 
@@ -608,15 +623,16 @@ xenconscn_getc(dev_t dev)
 	prod = xencons_interface->in_prod;
 	x86_lfence();
 	while (cons == prod) {
-		cons = xencons_interface->in_cons;
+		HYPERVISOR_yield();
 		prod = xencons_interface->in_prod;
-		x86_lfence();
 	}
-
+	x86_lfence();
 	c = xencons_interface->in[MASK_XENCONS_IDX(xencons_interface->in_cons,
 	    xencons_interface->in)];
-	xencons_interface->in_cons++;
+	x86_lfence();
+	xencons_interface->in_cons = cons + 1;
 	cn_check_magic(dev, c, xencons_cnm_state);
+	splx(s);
 	return c;
 #else /* XEN3 */
 	while (xencons_console_device->buf_write ==
@@ -628,6 +644,7 @@ xenconscn_getc(dev_t dev)
 	xencons_console_device->buf_read++;
 	if (xencons_console_device->buf_read == XENCONS_BURST)
 		xencons_console_device->buf_read = 0;
+	splx(s);
 	return ret;
 #endif /* XEN3 */
 }
@@ -635,6 +652,7 @@ xenconscn_getc(dev_t dev)
 void
 xenconscn_putc(dev_t dev, int c)
 {
+	int s = spltty();
 #ifdef XEN3
 	XENCONS_RING_IDX cons, prod;
 	if (xen_start_info.flags & SIF_INITDOMAIN) {
@@ -675,6 +693,7 @@ xenconscn_putc(dev_t dev, int c)
 			ctrl_if_console_poll();
 		}
 #endif /* !XEN3 */
+	splx(s);
 	}
 }
 
