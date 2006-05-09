@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2006/05/08 23:12:13 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 2006/05/09 01:18:10 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2006/05/08 23:12:13 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2006/05/09 01:18:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ static void findroot(void);
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -91,7 +91,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 

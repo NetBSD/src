@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 2006/05/08 17:08:34 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 2006/05/09 01:18:10 garbled Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2006/05/08 17:08:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2006/05/09 01:18:10 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2006/05/08 17:08:34 garbled Exp $");
 
 #define	MINYEAR	1990
 
-void decr_intr __P((struct clockframe *));
+void decr_intr(struct clockframe *);
 
 u_long ticks_per_sec;
 u_long ns_per_tick;
@@ -60,8 +60,7 @@ const struct clockfns *clockfns;
 static todr_chip_handle_t todr_handle;
 
 void
-todr_attach(handle)
-	todr_chip_handle_t handle;
+todr_attach(todr_chip_handle_t handle)
 {
 
 	if (todr_handle)
@@ -75,7 +74,7 @@ todr_attach(handle)
  * are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	struct cpu_info * const ci = curcpu();
 
@@ -93,8 +92,7 @@ cpu_initclocks()
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int badbase, waszero;
 
@@ -143,7 +141,7 @@ inittodr(base)
  * to wrap the TODR around.
  */
 void
-resettodr()
+resettodr(void)
 {
 
 	if (time.tv_sec == 0)
@@ -159,16 +157,14 @@ resettodr()
  * but that would be a drag.
  */
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 
 	/* Nothing we can do */
 }
 
 void
-decr_intr(frame)
-	struct clockframe *frame;
+decr_intr(struct clockframe *frame)
 {
 	struct cpu_info * const ci = curcpu();
 	int msr;
@@ -236,8 +232,7 @@ decr_intr(frame)
  * Fill in *tvp with current time with microsecond resolution.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	u_long tb;
 	u_long ticks;
@@ -264,8 +259,7 @@ microtime(tvp)
  * Wait for about n microseconds (at least!).
  */
 void
-delay(n)
-	unsigned int n;
+delay(unsigned int n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;

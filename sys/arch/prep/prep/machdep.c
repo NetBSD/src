@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2006/05/08 17:08:34 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2006/05/09 01:18:10 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2006/05/08 17:08:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2006/05/09 01:18:10 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -116,10 +116,7 @@ extern void *endsym, *startsym;
 #endif
 
 void
-initppc(startkernel, endkernel, args, btinfo)
-	u_long startkernel, endkernel;
-	u_int args;
-	void *btinfo;
+initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 {
 
 	/*
@@ -227,8 +224,7 @@ initppc(startkernel, endkernel, args, btinfo)
 }
 
 void
-mem_regions(mem, avail)
-	struct mem_region **mem, **avail;
+mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
 
 	*mem = physmemr;
@@ -239,7 +235,7 @@ mem_regions(mem, avail)
  * Machine dependent startup code.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	/*
 	 * Mapping PReP interrput vector register.
@@ -289,8 +285,7 @@ cpu_startup()
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(type)
-	int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *bt;
 	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
@@ -310,7 +305,7 @@ lookup_bootinfo(type)
  * Soft tty interrupts.
  */
 void
-softserial()
+softserial(void)
 {
 
 #if (NCOM > 0)
@@ -322,8 +317,7 @@ softserial()
  * Stray interrupts.
  */
 void
-strayintr(irq)
-	int irq;
+strayintr(int irq)
 {
 
 	log(LOG_ERR, "stray interrupt %d\n", irq);
@@ -333,9 +327,7 @@ strayintr(irq)
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
 void
-cpu_reboot(howto, what)
-	int howto;
-	char *what;
+cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 
