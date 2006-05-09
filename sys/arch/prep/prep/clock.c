@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2006/05/09 01:18:10 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 2006/05/09 03:13:00 garbled Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2006/05/09 01:18:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.16 2006/05/09 03:13:00 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -246,7 +246,7 @@ microtime(struct timeval *tvp)
 		__asm volatile ("mftb %0" : "=r"(tb));
 	ticks = (tb - curcpu()->ci_lasttb) * ns_per_tick;
 	*tvp = time;
-	__asm volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {
