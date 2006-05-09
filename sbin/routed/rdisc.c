@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.16 2006/03/18 19:55:49 christos Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.17 2006/05/09 20:18:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -39,7 +39,7 @@
 #include <netinet/ip_icmp.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rdisc.c,v 1.16 2006/03/18 19:55:49 christos Exp $");
+__RCSID("$NetBSD: rdisc.c,v 1.17 2006/05/09 20:18:09 mrg Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -957,7 +957,8 @@ read_d(void)
 	static struct msg_limit  bad_name;
 #endif
 	struct sockaddr_in from;
-	int n, fromlen, cc, hlen;
+	socklen_t fromlen;
+	int n, cc, hlen;
 	struct {
 #ifdef USE_PASSIFNAME
 		char	ifname[IFNAMSIZ];

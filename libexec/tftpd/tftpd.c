@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.29 2004/11/05 22:03:26 dsl Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.30 2006/05/09 20:18:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.29 2004/11/05 22:03:26 dsl Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.30 2006/05/09 20:18:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ char	buf[MAXPKTSIZE];
 char	ackbuf[PKTSIZE];
 char	oackbuf[PKTSIZE];
 struct	sockaddr_storage from;
-int	fromlen;
+socklen_t	fromlen;
 int	debug;
 
 int	tftp_opt_tsize = 0;
@@ -155,7 +155,8 @@ main(int argc, char *argv[])
 	struct tftphdr	*tp;
 	char		*tgtuser, *tgtgroup, *ep;
 	int	n, ch, on, fd;
-	int	len, soopt;
+	int	soopt;
+	socklen_t len;
 	uid_t	curuid, tgtuid;
 	gid_t	curgid, tgtgid;
 	long	nid;
@@ -313,7 +314,8 @@ main(int argc, char *argv[])
 	 */
 	{
 		int pid;
-		int i, j;
+		int i;
+		socklen_t j;
 
 		for (i = 1; i < 20; i++) {
 		    pid = fork();
@@ -609,6 +611,7 @@ tftp(struct tftphdr *tp, int size)
 	char	*filename, *mode;
 	int	 first, ecode, alen, etftp=0, r;
 
+	ecode = 0;	/* XXX gcc */
 	first = 1;
 	mode = NULL;
 

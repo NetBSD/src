@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.22 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.23 2006/05/09 20:18:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -283,7 +283,8 @@ int
 service(void)
 {
 	struct sockaddr_storage from;
-	int x, len;
+	int x;
+	socklen_t len;
 
 	remotename = NULL;
 	len = sizeof(from);

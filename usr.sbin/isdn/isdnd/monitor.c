@@ -1,4 +1,4 @@
-/* $NetBSD: monitor.c,v 1.13 2004/03/28 20:49:22 pooka Exp $ */
+/* $NetBSD: monitor.c,v 1.14 2006/05/09 20:18:09 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -544,8 +544,9 @@ monitor_handle_connect(int sockfd, int is_local)
 #endif
 
 	struct sockaddr_un ua;
+	socklen_t s;
 	u_int8_t idata[I4B_MON_IDATA_SIZE];
-	int fd = -1, s, r_mask, t_events;
+	int fd = -1, r_mask, t_events;
 	char source[FILENAME_MAX];
 
 	/* accept the connection */
@@ -785,7 +786,7 @@ cmd_dump_mcons(int fd, int rights, u_int8_t *cmd, const char * source)
 	for (con = TAILQ_FIRST(&connections); con != NULL; con = TAILQ_NEXT(con, connections))
 	{
 #ifndef I4B_NOTCPIP_MONITOR
-		int namelen;
+		socklen_t namelen;
 		struct sockaddr_in name;
 #endif
 		u_int8_t dc[I4B_MON_DC_SIZE];
@@ -912,7 +913,7 @@ monitor_command(struct monitor_connection * con, int fd, int rights)
 		return 0;
 
 	if ((cmd_tab[code].rights & rights) == cmd_tab[code].rights)
-		cmd_tab[code].call(fd, rights, cmd, con->source);
+		cmd_tab[code].call(fd, rights, (u_char *)cmd, con->source);
 
 	return 0;
 }
