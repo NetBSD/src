@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.86 2006/05/05 16:48:35 ghen Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.87 2006/05/09 12:18:22 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1539,11 +1539,11 @@ sys/arch/xen/conf/files.xen			1.31 via patch
 	- add serial and parallel PCI adapters
 	- add lpt0 at isa
 	- add com1 at isa
-	  com0 not added for the benefit of serial console users (it will conflicts
-	  with the Xen kernel).
-	XXX this means that setups with serial console on com1 will now break with the
-	default kernel.
-	Use userconf(4) (add -c to kernel command line) or change your setup to
-	com0 instead (most bios allows arbitrary mappings of com ports)
+	  com0 not added for the benefit of serial console users
 	[bouyer, ticket #1311]
+
+usr.sbin/rtadvd/rtadvd.c			patch
+
+	Process Source Link-Layer Address (SLLA) option correctly.
+	[martti, ticket #1308]
 
