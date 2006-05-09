@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.11 2004/11/17 13:35:32 hira Exp $	*/
+/*	$NetBSD: mld6.c,v 1.12 2006/05/09 20:18:09 mrg Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ dump(int s)
 	struct mld6_hdr *mld;
 	u_char buf[1024];
 	struct sockaddr_in6 from;
-	int from_len = sizeof(from);
+	socklen_t from_len = sizeof(from);
 	char ntop_buf[256];
 
 	if ((i = recvfrom(s, buf, sizeof(buf), 0,

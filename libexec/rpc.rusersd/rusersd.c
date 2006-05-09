@@ -1,4 +1,4 @@
-/*	$NetBSD: rusersd.c,v 1.15 2005/08/01 21:08:34 christos Exp $	*/
+/*	$NetBSD: rusersd.c,v 1.16 2006/05/09 20:18:07 mrg Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusersd.c,v 1.15 2005/08/01 21:08:34 christos Exp $");
+__RCSID("$NetBSD: rusersd.c,v 1.16 2006/05/09 20:18:07 mrg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
 	struct sockaddr_storage from;
-	int fromlen;
+	socklen_t fromlen;
 
 	/*
 	 * See if inetd started us

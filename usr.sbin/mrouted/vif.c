@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.15 2003/05/17 19:19:50 itojun Exp $	*/
+/*	$NetBSD: vif.c,v 1.16 2006/05/09 20:18:09 mrg Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -699,7 +699,7 @@ accept_neighbor_request(u_int32_t src, u_int32_t dst)
     if (IN_MULTICAST(ntohl(dst))) { /* query sent to a multicast group */
 	int udp;		/* find best interface to reply on */
 	struct sockaddr_in addr;
-	int addrlen = sizeof(addr);
+	socklen_t addrlen = sizeof(addr);
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -786,7 +786,7 @@ accept_neighbor_request2(u_int32_t src, u_int32_t dst)
     if (IN_MULTICAST(ntohl(dst))) { /* query sent to a multicast group */
 	int udp;		/* find best interface to reply on */
 	struct sockaddr_in addr;
-	int addrlen = sizeof(addr);
+	socklen_t addrlen = sizeof(addr);
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -901,7 +901,7 @@ accept_info_request(u_int32_t src, u_int32_t dst, u_char *p, int datalen)
 	len = 0;
 	switch (*p) {
 	    case DVMRP_INFO_VERSION:
-		len = info_version(q,
+		len = info_version((char *)q,
 		    send_buflen - MIN_IP_HEADER_LEN - IGMP_MINLEN);
 		break;
 

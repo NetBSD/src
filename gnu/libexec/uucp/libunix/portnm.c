@@ -34,7 +34,7 @@ zsysdep_port_name (ftcp_port)
 
 #if HAVE_TCP
   {
-    int clen;
+    socklen_t clen;
     struct sockaddr s;
 
     clen = sizeof (struct sockaddr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.c,v 1.9 2003/05/16 22:59:50 dsl Exp $	*/
+/*	$NetBSD: kern.c,v 1.10 2006/05/09 20:18:09 mrg Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -214,7 +214,7 @@ int k_get_version(void)
     return -1;
 #else
     int vers;
-    int len = sizeof(vers);
+    socklen_t len = sizeof(vers);
 
     if (getsockopt(igmp_socket, IPPROTO_IP, MRT_VERSION,
 			(char *)&vers, &len) < 0)
