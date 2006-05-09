@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.87 2006/05/09 12:18:22 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.88 2006/05/09 13:03:24 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1546,4 +1546,19 @@ usr.sbin/rtadvd/rtadvd.c			patch
 
 	Process Source Link-Layer Address (SLLA) option correctly.
 	[martti, ticket #1308]
+
+sys/sys/cdefs.h					1.59
+
+	Add an __UNVOLATILE() macro. It should be used with caution, but
+	it is required to use this whenever you want to pass a pointer to
+	volatile data e.g. to memset(). This allows us to still compile
+	files doing such things with -Wcast-qual and get the rest of the
+	code checked under that option.
+	[bouyer, ticket #1304]
+
+sys/arch/xen/xen/xencons.c			1.15
+
+	Fix a race condition which seems to be triggered by recent
+	xen3 hypervisor or tools.
+	[bouyer, ticket #1305]
 
