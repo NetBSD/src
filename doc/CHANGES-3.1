@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.88 2006/05/09 13:03:24 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.89 2006/05/09 21:53:31 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1561,4 +1561,9 @@ sys/arch/xen/xen/xencons.c			1.15
 	Fix a race condition which seems to be triggered by recent
 	xen3 hypervisor or tools.
 	[bouyer, ticket #1305]
+
+sys/netatalk/aarp.c				1.17
+
+	PR kern/31051: problem finding devices on AppleTalk(Netatalk) networks.
+	[hira, ticket #1310]
 
