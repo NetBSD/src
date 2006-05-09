@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.14 2006/03/09 20:17:28 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.15 2006/05/09 03:13:00 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.14 2006/03/09 20:17:28 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.15 2006/05/09 03:13:00 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,12 +131,9 @@ cpu_setup_prep_generic(struct device *dev)
 static void
 reset_prep_generic(void)
 {
-	int msr;
 	u_char reg;
 
-	__asm volatile("mfmsr %0" : "=r"(msr));
-	msr |= PSL_IP;
-	__asm volatile("mtmsr %0" :: "r"(msr));
+	mtmsr(mfmsr() | PSL_IP);
 
 	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
 	reg &= ~1UL;
