@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2005/09/10 13:09:01 dsl Exp $
+#	$NetBSD: list,v 1.7 2006/05/09 20:57:19 garbled Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -47,7 +47,6 @@ PROG	usr/bin/ftp
 PROG	usr/bin/gzip	usr/bin/gunzip usr/bin/gzcat
 PROG	usr/bin/more	usr/bin/less
 PROG	usr/bin/sed
-PROG	usr/bin/tip
 PROG	usr/bin/tset
 
 PROG	usr/sbin/chown	usr/bin/chgrp
