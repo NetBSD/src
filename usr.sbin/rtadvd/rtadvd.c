@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.28 2003/03/14 18:43:52 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.28.6.1 2006/05/09 12:16:05 tron Exp $	*/
 /*	$KAME: rtadvd.c,v 1.74 2002/09/08 01:25:17 itojun Exp $	*/
 
 /*
@@ -1228,10 +1228,10 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		}
 
 		switch (hdr->nd_opt_type) {
-		case ND_OPT_SOURCE_LINKADDR:
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_REDIRECTED_HEADER:
 			break;	/* we don't care about these options */
+		case ND_OPT_SOURCE_LINKADDR:
 		case ND_OPT_MTU:
 			if (ndopts->nd_opt_array[hdr->nd_opt_type]) {
 				syslog(LOG_INFO,
