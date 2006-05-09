@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.28 2006/03/21 21:11:42 christos Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.29 2006/05/09 20:18:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.28 2006/03/21 21:11:42 christos Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.29 2006/05/09 20:18:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,7 +236,7 @@ main(int argc, char *argv[])
 	 */
 	for (;;) {
 		struct sockaddr_un un2;
-		int len2 = sizeof(un2);
+		socklen_t len2 = sizeof(un2);
 		int so2;
 		pid_t pid;
 		struct pollfd fdset[1];

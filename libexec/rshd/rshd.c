@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.43 2005/04/19 03:24:24 christos Exp $	*/
+/*	$NetBSD: rshd.c,v 1.44 2006/05/09 20:18:07 mrg Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.43 2005/04/19 03:24:24 christos Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.44 2006/05/09 20:18:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,8 @@ int
 main(int argc, char *argv[])
 {
 	struct linger linger;
-	int ch, on = 1, fromlen;
+	int ch, on = 1;
+	socklen_t fromlen;
 	struct sockaddr_storage from;
 	struct protoent *proto;
 
@@ -307,7 +308,8 @@ doit(struct sockaddr *fromp)
 	if (af == AF_INET) {
 
 	u_char optbuf[BUFSIZ/3];
-	int optsize = sizeof(optbuf), ipproto, i;
+	socklen_t optsize = sizeof(optbuf);
+	int ipproto, i;
 	struct protoent *ip;
 
 	if ((ip = getprotobyname("ip")) != NULL)

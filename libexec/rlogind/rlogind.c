@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.36 2004/11/16 06:04:13 itojun Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.37 2006/05/09 20:18:06 mrg Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.36 2004/11/16 06:04:13 itojun Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.37 2006/05/09 20:18:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,8 @@ doit(f, fromp)
 	if (fromp->ss_family == AF_INET) {
 		u_char optbuf[BUFSIZ/3], *cp;
 		char lbuf[BUFSIZ], *lp, *ep;
-		int optsize = sizeof(optbuf), ipproto;
+		socklen_t optsize = sizeof(optbuf);
+		int ipproto;
 		struct protoent *ip;
 
 		if ((ip = getprotobyname("ip")) != NULL)

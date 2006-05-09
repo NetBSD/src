@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.46 2006/03/23 15:37:02 dogcow Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.47 2006/05/09 20:18:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.46 2006/03/23 15:37:02 dogcow Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.47 2006/05/09 20:18:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,8 @@ main(argc, argv)
 	struct sockaddr_iso isoaddr, isopeer;
 #endif
 	struct pollfd set[4];
-	int ch, cltpflag, connect_type_cnt, i, len, maxsock, msgsock;
+	socklen_t len;
+	int ch, cltpflag, connect_type_cnt, i, maxsock, msgsock;
 	int nfsdcnt, nfssvc_flag, on = 1, reregister, sock, tcpflag, tcpsock;
 	int tcp6sock, ip6flag;
 	int tp4cnt, tp4flag, tpipcnt, tpipflag, udpflag, ecode, s;

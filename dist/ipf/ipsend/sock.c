@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.8 2006/04/04 16:17:18 martti Exp $	*/
+/*	$NetBSD: sock.c,v 1.9 2006/05/09 20:18:06 mrg Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -380,7 +380,8 @@ struct	in_addr	gwip;
 {
 	struct	sockaddr_in	rsin, lsin;
 	struct	tcpcb	*t, tcb;
-	int	fd, nfd, len;
+	int	fd, nfd;
+	socklen_t len;
 
 	printf("Dest. Port: %d\n", ti->ti_dport);
 

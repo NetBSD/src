@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2004/10/30 09:01:37 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2006/05/09 20:18:09 mrg Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.21 2004/10/30 09:01:37 dsl Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.22 2006/05/09 20:18:09 mrg Exp $");
 #endif
 
 #include <err.h>
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 {
     int recvlen;
     int omask;
-    int dummy;
+    socklen_t dummy;
     FILE *fp;
     struct timeval tv;
     u_int32_t prev_genid;
@@ -279,7 +279,6 @@ usage:	fprintf(stderr,
     /*
      * Main receive loop.
      */
-    dummy = 0;
     for(;;) {
 #ifdef SYSV
 	sigset_t block, oblock;

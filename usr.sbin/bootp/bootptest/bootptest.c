@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.14 2004/11/17 13:28:31 hira Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.15 2006/05/09 20:18:09 mrg Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.14 2004/11/17 13:28:31 hira Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.15 2006/05/09 20:18:09 mrg Exp $");
 #endif
 
 char *usage = "usage: %s [-f bootfile] [-h] [-m magic_number] server-name\n"
@@ -137,8 +137,9 @@ main(int argc, char **argv)
 	char *servername = NULL;
 	char *vendor_file = NULL;
 	char *bp_file = NULL;
+	socklen_t fromlen;
 	int s;				/* Socket file descriptor */
-	int n, fromlen, recvcnt;
+	int n, recvcnt;
 	int use_hwa = 0;
 	int32 vend_magic;
 	int32 xid;
@@ -312,7 +313,7 @@ main(int argc, char **argv)
 			printf("No interface for %s\n", servername);
 			exit(1);
 		}
-		if (getether(ifr->ifr_name, eaddr)) {
+		if (getether(ifr->ifr_name, (char *)eaddr)) {
 			printf("Can not get ether addr for %s\n", ifr->ifr_name);
 			exit(1);
 		}

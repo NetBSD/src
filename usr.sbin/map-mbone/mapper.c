@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.22 2004/10/30 08:46:12 dsl Exp $	*/
+/*	$NetBSD: mapper.c,v 1.23 2006/05/09 20:18:09 mrg Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -870,7 +870,7 @@ int main(int argc, char **argv)
     {				/* Find a good local address for us. */
 	int udp;
 	struct sockaddr_in addr;
-	int addrlen = sizeof(addr);
+	socklen_t addrlen = sizeof(addr);
 
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
@@ -905,7 +905,8 @@ int main(int argc, char **argv)
     set[0].fd = igmp_socket;
     set[0].events = POLLIN;
     for(;;) {
-	int 		count, recvlen, dummy = 0;
+	int 		count, recvlen;
+	socklen_t dummy = 0;
 
 	count = poll(set, 1, timeout * 1000);
 

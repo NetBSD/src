@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.22 2005/02/06 05:11:52 perry Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.23 2006/05/09 20:18:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fingerd.c,v 1.22 2005/02/06 05:11:52 perry Exp $");
+__RCSID("$NetBSD: fingerd.c,v 1.23 2006/05/09 20:18:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,8 @@ main(int argc, char *argv[])
 	int ch, ac = 2;
 	char *lp = NULL /* XXX gcc */;
 	struct sockaddr_storage ss;
-	int p[2], logging, no_forward, user_required, short_list, sval;
+	int p[2], logging, no_forward, user_required, short_list;
+	socklen_t sval;
 #define	ENTRIES	50
 	char **ap, *av[ENTRIES + 1], **comp, line[1024], *prog, *s;
 	char hostbuf[MAXHOSTNAMELEN];

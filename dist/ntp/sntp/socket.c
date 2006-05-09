@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.3 2003/12/04 17:17:36 drochner Exp $	*/
+/*	$NetBSD: socket.c,v 1.4 2006/05/09 20:18:06 mrg Exp $	*/
 
 /*  Copyright (C) 1996, 2000 N.M. Maclaren
     Copyright (C) 1996, 2000 The University of Cambridge
@@ -292,7 +292,7 @@ length and timeout are not fatal. */
 #else
     struct sockaddr_in scratch, *ptr;
 #endif
-    int n;
+    socklen_t n;
     int k;
 
 /* Under normal circumstances, set up a timeout. */
@@ -350,7 +350,7 @@ skipped. */
 #else
     struct sockaddr_in scratch;
 #endif
-    int n;
+    socklen_t n;
     char buffer[256];
     int flags, count = 0, total = 0, k;
 

@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.19 2003/07/14 06:08:04 itojun Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.20 2006/05/09 20:18:09 mrg Exp $");
 #endif
 
 /*
@@ -184,7 +184,8 @@ main(int argc, char **argv)
 	struct servent *servp;
 	struct hostent *hep;
 	char *stmp;
-	int n, ba_len, ra_len;
+	socklen_t ba_len, ra_len;
+	int n;
 	int nfound;
 	struct pollfd set[1];
 	int standalone;

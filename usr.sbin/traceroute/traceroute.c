@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.62 2006/02/17 21:31:18 rpaulo Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.63 2006/05/09 20:18:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.62 2006/02/17 21:31:18 rpaulo Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.63 2006/05/09 20:18:10 mrg Exp $");
 #endif
 #endif
 
@@ -1077,7 +1077,7 @@ wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 	struct pollfd set[1];
 	struct timeval now, wait;
 	int cc = 0;
-	int fromlen = sizeof(*fromp);
+	socklen_t fromlen = sizeof(*fromp);
 	int retval;
 
 	set[0].fd = sock;
@@ -1820,7 +1820,7 @@ find_local_ip(struct sockaddr_in *from, struct sockaddr_in *to)
 {
 	int sock;
 	struct sockaddr_in help;
-	int help_len;
+	socklen_t help_len;
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) return (0);

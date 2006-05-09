@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.17 2003/05/26 10:05:07 itojun Exp $	*/
+/*	$NetBSD: socket.c,v 1.18 2006/05/09 20:18:06 mrg Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.17 2003/05/26 10:05:07 itojun Exp $");
+__RCSID("$NetBSD: socket.c,v 1.18 2006/05/09 20:18:06 mrg Exp $");
 #endif
 #endif
 
@@ -82,7 +82,7 @@ struct request_info *request;
 {
     static struct sockaddr_storage client;
     static struct sockaddr_storage server;
-    int     len;
+    socklen_t     len;
     char    buf[BUFSIZ];
     int     fd = request->fd;
 
@@ -101,7 +101,7 @@ struct request_info *request;
 
     if (request->client->sin == NULL) {
         len = sizeof(client);
-        if (getpeername(fd, (struct sockaddr *) & client, &len) < 0) {
+        if (getpeername(fd, (struct sockaddr *)(void *)& client, &len) < 0) {
 	    request->sink = sock_sink;
 	    len = sizeof(client);
 	    if (recvfrom(fd, buf, sizeof(buf), MSG_PEEK,
@@ -280,7 +280,7 @@ int     fd;
 {
     char    buf[BUFSIZ];
     struct sockaddr_storage ss;
-    int     size = sizeof(ss);
+    socklen_t size = sizeof(ss);
 
     /*
      * Eat up the not-yet received datagram. Some systems insist on a

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.36 2006/03/23 23:44:15 wiz Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.37 2006/05/09 20:18:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.36 2006/03/23 23:44:15 wiz Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.37 2006/05/09 20:18:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,7 +277,7 @@ main(int argc, char *argv[])
 		warn("setsockopt DEBUG (ignored)");
     {
 	struct sockaddr_storage ss;
-	int sslen;
+	socklen_t sslen;
 	sslen = sizeof(ss);
 	if (getsockname(rem, (struct sockaddr *)&ss, &sslen) == 0
 	 && ((struct sockaddr *)&ss)->sa_family == AF_INET) {

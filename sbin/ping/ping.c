@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.77 2004/05/13 20:27:38 kleink Exp $	*/
+/*	$NetBSD: ping.c,v 1.78 2006/05/09 20:18:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.77 2004/05/13 20:27:38 kleink Exp $");
+__RCSID("$NetBSD: ping.c,v 1.78 2006/05/09 20:18:08 mrg Exp $");
 #endif
 
 #include <stdio.h>
@@ -668,7 +668,7 @@ doit(void)
 {
 	int cc;
 	struct sockaddr_in from;
-	int fromlen;
+	socklen_t fromlen;
 	double sec, last, d_last;
 	struct pollfd fdmaskp[1];
 

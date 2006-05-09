@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.16 2005/02/06 04:56:27 perry Exp $	*/
+/*	$NetBSD: cmds.c,v 1.17 2006/05/09 20:18:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.16 2005/02/06 04:56:27 perry Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.17 2006/05/09 20:18:10 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ daydiff(char *hostname)
 	struct timeval now;
 	struct pollfd set[1];
 	struct sockaddr from;
-	int fromlen;
+	socklen_t fromlen;
 	unsigned long sec;
 
 
@@ -266,7 +266,8 @@ msite(int argc, char *argv[])
 	int cc;
 	struct pollfd set[1];
 	struct sockaddr_in dest;
-	int i, length;
+	int i;
+	socklen_t length;
 	struct sockaddr from;
 	int tout;
 	struct tsp msg;
@@ -403,7 +404,7 @@ void
 tracing(int argc, char *argv[])
 {
 	int onflag;
-	int length;
+	socklen_t length;
 	int cc;
 	struct pollfd set[1];
 	struct sockaddr_in dest;

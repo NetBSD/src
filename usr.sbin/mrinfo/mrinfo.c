@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.24 2004/10/30 08:56:00 dsl Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.25 2006/05/09 20:18:09 mrg Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,7 +80,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.24 2004/10/30 08:56:00 dsl Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.25 2006/05/09 20:18:09 mrg Exp $");
 #endif
 #endif
 
@@ -390,7 +390,7 @@ main(int argc, char *argv[])
 	    {			/* Find a good local address for us. */
 		int     udp;
 		struct sockaddr_in addr;
-		int     addrlen = sizeof(addr);
+		socklen_t addrlen = sizeof(addr);
 
 		memset(&addr, 0, sizeof(addr));
 		addr.sin_family = AF_INET;
@@ -426,7 +426,8 @@ main(int argc, char *argv[])
 	    for (;;) {
 		struct pollfd set[1];
 		struct timeval tv, now;
-		int     count, recvlen, dummy = 0;
+		int     count, recvlen;
+		socklen_t dummy;
 		u_int32_t src, dst, group;
 		struct ip *ip;
 		struct igmp *igmp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.22 2004/09/07 13:20:40 jrf Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.23 2006/05/09 20:18:07 mrg Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.22 2004/09/07 13:20:40 jrf Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.23 2006/05/09 20:18:07 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
 	struct sockaddr_storage from;
-	int fromlen;
+	socklen_t fromlen;
 
 	fromlen = sizeof(from);
 	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0)

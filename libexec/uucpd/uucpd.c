@@ -1,4 +1,4 @@
-/*	$NetBSD: uucpd.c,v 1.23 2003/08/07 09:46:53 agc Exp $	*/
+/*	$NetBSD: uucpd.c,v 1.24 2006/05/09 20:18:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 The Regents of the University of California
 #if 0
 static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";
 #else
-__RCSID("$NetBSD: uucpd.c,v 1.23 2003/08/07 09:46:53 agc Exp $");
+__RCSID("$NetBSD: uucpd.c,v 1.24 2006/05/09 20:18:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: uucpd.c,v 1.23 2003/08/07 09:46:53 agc Exp $");
 #include "pathnames.h"
 
 struct	sockaddr_storage hisctladdr;
-int hisaddrlen = sizeof hisctladdr;
+socklen_t hisaddrlen = sizeof hisctladdr;
 int mypid;
 
 char Logname[64], Username[64];

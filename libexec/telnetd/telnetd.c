@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.49 2006/02/02 18:31:12 he Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.50 2006/05/09 20:18:07 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.49 2006/02/02 18:31:12 he Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.50 2006/05/09 20:18:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,8 @@ struct sockaddr_storage from;
 int
 main(int argc, char *argv[])
 {
-	int on = 1, fromlen;
+	socklen_t fromlen;
+	int on = 1;
 	int ch;
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 	int tos = -1;
@@ -357,7 +358,8 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (debug) {
-	    int s, ns, foo, error;
+	    int s, ns, error;
+	    socklen_t foo;
 	    char *service = "telnet";
 	    struct addrinfo hints, *res;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.9 2006/04/04 16:17:18 martti Exp $	*/
+/*	$NetBSD: iptests.c,v 1.10 2006/05/09 20:18:06 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -1094,7 +1094,8 @@ int	ptest;
 	struct tcpcb *tcbp, tcb;
 	struct tcpiphdr ti;
 	struct sockaddr_in sin;
-	int fd, slen;
+	int fd;
+	socklen_t slen;
 
 	bzero((char *)&sin, sizeof(sin));
 

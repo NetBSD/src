@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.12 2005/02/06 04:56:27 perry Exp $	*/
+/*	$NetBSD: measure.c,v 1.13 2006/05/09 20:18:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: measure.c,v 1.12 2005/02/06 04:56:27 perry Exp $");
+__RCSID("$NetBSD: measure.c,v 1.13 2006/05/09 20:18:10 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	struct sockaddr_in *addr,
 	int printerr)			/* print complaints on stderr */
 {
-	int length;
+	socklen_t length;
 	int measure_status;
 	int rcvcount, trials;
 	int cc, count;

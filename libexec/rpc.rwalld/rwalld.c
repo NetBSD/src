@@ -1,4 +1,4 @@
-/* $NetBSD: rwalld.c,v 1.19 2003/07/26 19:32:09 salo Exp $ */
+/* $NetBSD: rwalld.c,v 1.20 2006/05/09 20:18:07 mrg Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.19 2003/07/26 19:32:09 salo Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.20 2006/05/09 20:18:07 mrg Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
 	struct sockaddr_storage from;
-	int fromlen;
+	socklen_t fromlen;
 
 	if (geteuid() == 0) {
 		struct passwd *pep = getpwnam("nobody");

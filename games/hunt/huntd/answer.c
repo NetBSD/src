@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.7 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: answer.c,v 1.8 2006/05/09 20:18:06 mrg Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.7 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: answer.c,v 1.8 2006/05/09 20:18:06 mrg Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>
@@ -55,7 +55,7 @@ answer()
 	static char		name[NAMELEN];
 	static char		team;
 	static int		enter_status;
-	static int		socklen;
+	static socklen_t	socklen;
 	static u_long		machine;
 	static u_int32_t	uid;
 	static SOCKET		sockstruct;

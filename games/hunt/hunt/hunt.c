@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.23 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: hunt.c,v 1.24 2006/05/09 20:18:06 mrg Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.23 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.24 2006/05/09 20:18:06 mrg Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -412,7 +412,7 @@ list_drivers()
 	u_short			port_num;
 	static SOCKET		test;
 	int			test_socket;
-	int			namelen;
+	socklen_t		namelen;
 	char			local_name[MAXHOSTNAMELEN + 1];
 	static int		initial = TRUE;
 	static struct in_addr	local_address;
