@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2006/05/09 18:02:32 rjs Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 2006/05/09 18:13:57 rjs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -112,6 +112,8 @@ __start_:
 	isync
 
 /* compute end of kernel memory */
+	lis	8,_C_LABEL(end)@ha
+	addi	8,8,_C_LABEL(end)@l
 #if defined(DDB) || defined(KERNFS)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
@@ -119,11 +121,8 @@ __start_:
 	lis	7,_C_LABEL(endsym)@ha
 	addi	7,7,_C_LABEL(endsym)@l
 	stw	4,0(7)
-#else
-	lis	4,_C_LABEL(end)@ha
-	addi	4,4,_C_LABEL(end)@l
 #endif
-
+	mr	4,8
 	INIT_CPUINFO(4,1,9,0)
 	
 	lis	3,__start@ha

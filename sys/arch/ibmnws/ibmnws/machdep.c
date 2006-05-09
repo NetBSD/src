@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2006/05/09 18:02:32 rjs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2006/05/09 18:13:57 rjs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -52,6 +52,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -75,6 +76,8 @@
 #include <ddb/db_extern.h>
 #endif
 
+#include "ksyms.h"
+
 void initppc(u_long, u_long, u_int, void *);
 void dumpsys(void);
 void strayintr(int);
@@ -88,7 +91,7 @@ struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 
 paddr_t avail_end;			/* XXX temporary */
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 extern void *endsym, *startsym;
 #endif
 
@@ -177,9 +180,11 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef DDB
-	ddb_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
+#endif
 
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
