@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.22 2006/05/08 17:08:34 garbled Exp $	*/
+/*	$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.22 2006/05/08 17:08:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.23 2006/05/09 03:13:00 garbled Exp $");
 
 #include "opt_openpic.h"
 #include "pci.h"
@@ -522,9 +522,9 @@ do_pending_int(void)
 		return;
 
 	ci->ci_iactive = 1;
-	__asm volatile("mfmsr %0" : "=r"(emsr));
+	emsr = mfmsr();
 	dmsr = emsr & ~PSL_EE;
-	__asm volatile("mtmsr %0" :: "r"(dmsr));
+	mtmsr(dmsr);
 
 	pcpl = ci->ci_cpl;		/* Turn off all */
 again:
@@ -615,7 +615,7 @@ install_extint(void (*handler)(void))
 	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
-	__asm volatile ("mtmsr %0" :: "r"(omsr));
+	mtmsr(omsr);
 }
 
 #if defined(OPENPIC)
