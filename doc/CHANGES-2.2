@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.52 2006/04/26 00:00:01 snj Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.53 2006/05/09 12:09:50 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -693,4 +693,9 @@ games/sail/pl_main.c				1.17
 
 	fix buffer overflow (CVE-2006-1744), from Debian
 	[drochner, ticket #10504]
+
+usr.sbin/rtadvd/rtadvd.c			patch
+
+	Process Source Link-Layer Address (SLLA) option correctly.
+	[martti, ticket #10527]
 
