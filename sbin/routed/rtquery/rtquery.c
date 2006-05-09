@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.16 2002/11/30 04:04:24 christos Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.17 2006/05/09 20:30:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -64,7 +64,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rtquery.c,v 1.16 2002/11/30 04:04:24 christos Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.17 2006/05/09 20:30:15 mrg Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -381,7 +381,7 @@ query_loop(char *argv[], int argc)
 	fd_set bits;
 	struct timeval now, delay;
 	struct sockaddr_in from;
-	int fromlen;
+	socklen_t fromlen;
 	MD5_CTX md5_ctx;
 
 
