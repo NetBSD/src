@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.10 2006/05/08 17:08:34 garbled Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.11 2006/05/09 02:48:36 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.10 2006/05/08 17:08:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.11 2006/05/09 02:48:36 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,13 +100,8 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
  */
 void *
-isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun) __P((void *));
-	void *ih_arg;
+isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
 
 	return (void *)intr_establish(irq, type, level, ih_fun, ih_arg);
@@ -116,18 +111,15 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 
 	intr_disestablish(arg);
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self,
+    struct isabus_attach_args *iba)
 {
 
 	/* Nothing to do. */
@@ -149,8 +141,7 @@ isa_intr(void)
 }
 
 void
-isa_intr_mask(mask)
-	int mask;
+isa_intr_mask(int mask)
 {
 
 	isa_outb(IO_ICU1+1, mask);
@@ -158,8 +149,7 @@ isa_intr_mask(mask)
 }
 
 void
-isa_intr_clr(irq)
-	int irq;
+isa_intr_clr(int irq)
 {
 
 	if (irq < 8) {
@@ -212,8 +202,7 @@ init_icu(int lvlmask)
 }
 
 void
-isa_setirqstat(irq, enabled, type)
-	int irq, enabled, type;
+isa_setirqstat(int irq, int enabled, int type)
 {
 	u_int8_t elcr[2];
 	int icu, bit;
