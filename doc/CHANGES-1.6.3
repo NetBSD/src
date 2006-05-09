@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.179 2006/04/17 18:08:37 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.180 2006/05/09 12:03:53 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -2170,3 +2170,9 @@ sys/arch/i386/pci/pchb_rnd.c			patch
 	PR port-i386/33264: Fix build of kernels with the DIAGNOSTIC option
 	defined in the kernel configuration.
 	[tron, ticket #6049]
+
+usr.sbin/rtadvd/rtadvd.c			patch
+
+	Process Source Link-Layer Address (SLLA) option correctly.
+	[martti, ticket #6074]
+
