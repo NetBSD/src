@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.24 2006/01/21 09:22:10 dsl Exp $
+#	$NetBSD: list,v 1.25 2006/05/09 03:22:03 dogcow Exp $
 #
 
 SRCDIRS	usr.bin/less
@@ -60,7 +60,6 @@ PROG	usr/bin/tip
 
 PROG	usr/sbin/installboot
 
-PROG	usr/sbin/bad144
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 PROG	usr/sbin/wiconfig

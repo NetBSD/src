@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2005/09/10 14:50:08 dsl Exp $
+#	$NetBSD: list,v 1.17 2006/05/09 03:22:03 dogcow Exp $
 
 PROG	bin/cat
 PROG	bin/chio
@@ -53,7 +53,6 @@ PROG	usr/bin/tip
 # sysinst doesn't use installboot
 # PROG	usr/sbin/installboot
 
-PROG	usr/sbin/bad144
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 
