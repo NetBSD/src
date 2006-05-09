@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.10 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: driver.c,v 1.11 2006/05/09 20:18:06 mrg Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.10 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: driver.c,v 1.11 2006/05/09 20:18:06 mrg Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -90,7 +90,7 @@ main(ac, av, ep)
 # ifdef INTERNET
 	u_short	msg;
 	short	port_num, reply;
-	int	namelen;
+	socklen_t	namelen;
 	SOCKET	test;
 # endif
 	static FLAG	first = TRUE;
@@ -261,7 +261,7 @@ init()
 # ifdef	INTERNET
 	SOCKET	test_port;
 	int	msg;
-	int	len;
+	socklen_t	len;
 # endif
 
 # ifndef DEBUG
@@ -896,7 +896,7 @@ send_stats()
 	FILE	*fp;
 	int	s;
 	SOCKET	sockstruct;
-	int	socklen;
+	socklen_t	socklen;
 
 	/*
 	 * Get the output stream ready

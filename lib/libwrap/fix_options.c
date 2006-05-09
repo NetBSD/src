@@ -1,4 +1,4 @@
-/*	$NetBSD: fix_options.c,v 1.9 2002/05/24 06:05:31 itojun Exp $	*/
+/*	$NetBSD: fix_options.c,v 1.10 2006/05/09 20:18:06 mrg Exp $	*/
 
  /*
   * Routine to disable IP-level socket options. This code was taken from 4.4BSD
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) fix_options.c 1.6 97/04/08 02:29:19";
 #else
-__RCSID("$NetBSD: fix_options.c,v 1.9 2002/05/24 06:05:31 itojun Exp $");
+__RCSID("$NetBSD: fix_options.c,v 1.10 2006/05/09 20:18:06 mrg Exp $");
 #endif
 #endif
 
@@ -46,7 +46,8 @@ struct request_info *request;
 #ifdef IP_OPTIONS
     unsigned char optbuf[BUFFER_SIZE / 3], *cp;
     char    lbuf[BUFFER_SIZE], *lp;
-    int     optsize = sizeof(optbuf), ipproto;
+    int     ipproto;
+    socklen_t optsize = sizeof(optbuf);
     struct protoent *ip;
     int     fd = request->fd;
     int     len = sizeof lbuf;
@@ -54,14 +55,14 @@ struct request_info *request;
     int     optlen;
     struct in_addr dummy;
     struct sockaddr_storage ss;
-    int sslen;
+    socklen_t sslen;
 
     /*
      * check if this is AF_INET socket
      * XXX IPv6 support?
      */
     sslen = sizeof(ss);
-    if (getsockname(fd, (struct sockaddr *)&ss, &sslen) < 0) {
+    if (getsockname(fd, (struct sockaddr *)(void *)&ss, &sslen) < 0) {
 	syslog(LOG_ERR, "getsockname: %m");
 	clean_exit(request);
     }
@@ -73,7 +74,7 @@ struct request_info *request;
     else
 	ipproto = IPPROTO_IP;
 
-    if (getsockopt(fd, ipproto, IP_OPTIONS, (char *) optbuf, &optsize) == 0
+    if (getsockopt(fd, ipproto, IP_OPTIONS, optbuf, &optsize) == 0
 	&& optsize != 0) {
 
 	/*

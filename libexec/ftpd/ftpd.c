@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.175 2006/03/17 21:28:21 peter Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.176 2006/05/09 20:18:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.175 2006/03/17 21:28:21 peter Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.176 2006/05/09 20:18:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,7 +286,8 @@ void	k5destroy(void);
 int
 main(int argc, char *argv[])
 {
-	int		addrlen, ch, on = 1, tos, keepalive;
+	int		ch, on = 1, tos, keepalive;
+	socklen_t	addrlen;
 #ifdef KERBEROS5
 	krb5_error_code	kerror;
 #endif
@@ -1915,7 +1916,8 @@ dataconn(const char *name, off_t size, const char *fmode)
 		sizebuf[0] = '\0';
 	if (pdata >= 0) {
 		struct sockinet from;
-		int s, fromlen = sizeof(from.su_len);
+		int s;
+		socklen_t fromlen = sizeof(from.su_len);
 
 		(void) alarm(curclass.timeout);
 		s = accept(pdata, (struct sockaddr *)&from.si_su, &fromlen);
@@ -2932,7 +2934,7 @@ bind_pasv_addr(void)
 void
 passive(void)
 {
-	int len, recvbufsize;
+	socklen_t len, recvbufsize;
 	char *p, *a;
 
 	if (pdata >= 0)
@@ -3052,7 +3054,7 @@ af2epsvproto(int af)
 void
 long_passive(char *cmd, int pf)
 {
-	int len;
+	socklen_t len;
 	char *p, *a;
 
 	if (!logged_in) {

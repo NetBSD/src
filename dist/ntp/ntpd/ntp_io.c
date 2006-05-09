@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.13 2006/03/18 13:13:25 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.14 2006/05/09 20:18:06 mrg Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1587,7 +1587,7 @@ input_handler(
 	register int doing;
 	register SOCKET fd;
 	struct timeval tvzero;
-	int fromlen;
+	socklen_t fromlen;
 	l_fp ts;			/* Timestamp at BOselect() gob */
 	l_fp ts_e;			/* Timestamp at EOselect() gob */
 	fd_set fds;
@@ -1915,7 +1915,7 @@ findinterface(
 	SOCKET s;
 	int rtn, i;
 	struct sockaddr_storage saddr;
-	int saddrlen = SOCKLEN(addr);
+	socklen_t saddrlen = SOCKLEN(addr);
 	/*
 	 * This is considerably hoke. We open a socket, connect to it
 	 * and slap a getsockname() on it. If anything breaks, as it

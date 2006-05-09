@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.29 2002/12/01 08:19:48 agc Exp $	*/
+/*	$NetBSD: input.c,v 1.30 2006/05/09 20:18:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: input.c,v 1.29 2002/12/01 08:19:48 agc Exp $");
+__RCSID("$NetBSD: input.c,v 1.30 2006/05/09 20:18:09 mrg Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -59,7 +59,8 @@ read_rip(int sock,
 {
 	struct sockaddr_in from;
 	struct interface *aifp;
-	int fromlen, cc;
+	socklen_t fromlen;
+	int cc;
 #ifdef USE_PASSIFNAME
 	static struct msg_limit  bad_name;
 	struct {
