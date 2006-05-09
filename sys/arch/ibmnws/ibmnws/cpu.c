@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2005/12/11 12:17:50 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2006/05/09 18:02:32 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,12 @@ cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 void
 cpuattach(struct device *parent, struct device *self, void *aux)
 {
+	struct cpu_info *ci;
+
+	ci = cpu_attach_common(self, 0);
+	if (ci == NULL)
+		return;
+
 	cpu_attach_common(self, 0);
 
 	/* cpu_setup(self); */
