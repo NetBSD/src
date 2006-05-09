@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.30 2006/04/24 21:14:59 dsl Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.31 2006/05/09 22:20:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.30 2006/04/24 21:14:59 dsl Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.31 2006/05/09 22:20:38 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,26 +89,43 @@ char *special;
 #define print_suheader \
 	(void)printf("segnum\tflags\tnbytes\tninos\tnsums\tlastmod\n")
 
-#define print_suentry(i, sp, fs) 					\
-	(void)printf("%d\t%c%c%c\t%d\t%d\t%d\t%s", i, 			\
-	    (((sp)->su_flags & SEGUSE_ACTIVE) ? 'A' : ' '), 		\
-	    (((sp)->su_flags & SEGUSE_DIRTY) ? 'D' : 'C'), 		\
-	    (((sp)->su_flags & SEGUSE_SUPERBLOCK) ? 'S' : ' '), 	\
-	    (sp)->su_nbytes, (sp)->su_ninos, (sp)->su_nsums, 		\
-	    ((fs)->lfs_version == 1 ? ctime((time_t *)&(sp)->su_olastmod) : \
-	     ctime((time_t *)&(sp)->su_lastmod)))
+static inline void
+print_suentry(int i, SEGUSE *sp, struct lfs *fs)
+{
+	time_t t;
+	char flags[4] = "   ";
+
+	if (sp->su_flags & SEGUSE_ACTIVE)
+		flags[0] = 'A';
+	if (sp->su_flags & SEGUSE_DIRTY)
+		flags[1] = 'D';
+	else
+		flags[1] = 'C';
+	if (sp->su_flags & SEGUSE_SUPERBLOCK)
+		flags[2] = 'S';
+
+	t = (fs->lfs_version == 1 ? sp->su_olastmod : sp->su_lastmod);
+
+	printf("%d\t%s\t%d\t%d\t%d\t%s", i, flags,
+		sp->su_nbytes, sp->su_ninos, sp->su_nsums,
+		ctime(&t));
+}
 
 /* Ifile formats */
 #define print_iheader \
 	(void)printf("inum\tstatus\tversion\tdaddr\t\tfreeptr\n")
-#define print_ientry(i, ip) \
-	if ((ip)->if_daddr == LFS_UNUSED_DADDR) \
-		(void)printf("%d\tFREE\t%d\t \t\t%llu\n", \
-		    i, (ip)->if_version, \
-		    (unsigned long long)(ip)->if_nextfree); \
-	else \
-		(void)printf("%d\tINUSE\t%d\t%8X    \n", \
-		    i, (ip)->if_version, (ip)->if_daddr)
+
+static inline void
+print_ientry(int i, IFILE *ip)
+{
+	if (ip->if_daddr == LFS_UNUSED_DADDR)
+		printf("%d\tFREE\t%d\t \t\t%llu\n", i, ip->if_version,
+		    (unsigned long long)ip->if_nextfree);
+	else
+		printf("%d\tINUSE\t%d\t%8X    \n",
+		    i, ip->if_version, ip->if_daddr);
+}
+
 #define fsbtobyte(fs, b)	fsbtob((fs), (off_t)((b)))
 
 int datasum_check = 0;
@@ -466,6 +483,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	struct ufs1_dinode *inop;
 	size_t el_size;
 	u_int32_t datasum;
+	time_t t;
 	char *buf;
 
 	if (sp->ss_magic != SS_MAGIC || 
@@ -495,10 +513,12 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 			     (sp->ss_flags & SS_CONT)  ? 'C' : '-',
 		"sumsum   ", sp->ss_sumsum,
 		"datasum  ", sp->ss_datasum );
-	if (lfsp->lfs_version == 1)
-		(void)printf("\tcreate   %s\n", ctime((time_t *)&sp->ss_ident));
-	else {
-		(void)printf("\tcreate   %s", ctime((time_t *)&sp->ss_create));
+	if (lfsp->lfs_version == 1) {
+		t = sp->ss_ident;
+		(void)printf("\tcreate   %s\n", ctime(&t));
+	} else {
+		t = sp->ss_ident;
+		(void)printf("\tcreate   %s", ctime(&t));
 		(void)printf("    roll_id  %-8x", sp->ss_ident);
 		(void)printf("   serial   %lld\n", (long long)sp->ss_serial);
 	}
