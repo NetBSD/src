@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 2006/04/05 17:01:21 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.25 2006/05/09 20:52:33 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,13 +151,6 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-
-	/* Sector forwarding / badblocks ... */
-	if (*doessf) {
-		msg_display(MSG_dobad144);
-		return run_program(RUN_DISPLAY, "/usr/sbin/bad144 %s 0",
-		    diskdev);
-	}
 	return 0;
 }
 
