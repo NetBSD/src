@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.5 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.6 2006/05/09 02:52:39 garbled Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -56,7 +56,7 @@ struct btinfo_clock {
 };
 
 #ifdef _KERNEL
-void *lookup_bootinfo __P((int));
+void *lookup_bootinfo(int);
 #endif
 
 #define BOOTINFO_MAXSIZE	0xd0
