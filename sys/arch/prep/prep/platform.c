@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.15 2006/05/09 03:13:00 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.16 2006/05/09 03:35:37 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.15 2006/05/09 03:13:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.16 2006/05/09 03:35:37 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.15 2006/05/09 03:13:00 garbled Exp $"
 #include <machine/intr.h>
 #include <machine/platform.h>
 #include <machine/residual.h>
+#include <powerpc/pio.h>
 
 static int nrofpcidevices = 0;
 
@@ -114,33 +115,35 @@ pci_intr_fixup_pnp(int busno, int device, int pin, int swiz, int *intr)
 	}
 }
 
+/* XXX This should be conditional on finding L2 in residual */
 void
 cpu_setup_prep_generic(struct device *dev)
 {
-	u_char l2ctrl, cpuinf;
+	u_int8_t l2ctrl, cpuinf;
 
 	/* system control register */
-	l2ctrl = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c);
+	l2ctrl = inb(PREP_BUS_SPACE_IO + 0x81c);
 	/* device status register */
-	cpuinf = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x80c);
+	cpuinf = inb(PREP_BUS_SPACE_IO + 0x80c);
 
 	/* Enable L2 cache */
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c) = l2ctrl | 0xc0;
+	outb(PREP_BUS_SPACE_IO + 0x81c, l2ctrl | 0xc0);
 }
 
+/* We don't bus_space_map this because it can happen early in boot */
 static void
 reset_prep_generic(void)
 {
-	u_char reg;
+	u_int8_t reg;
 
 	mtmsr(mfmsr() | PSL_IP);
 
-	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+	reg = inb(PREP_BUS_SPACE_IO + 0x92);
 	reg &= ~1UL;
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
-	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+	outb(PREP_BUS_SPACE_IO + 0x92, reg);
+	reg = inb(PREP_BUS_SPACE_IO + 0x92);
 	reg |= 1;
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
+	outb(PREP_BUS_SPACE_IO + 0x92, reg);
 }
 
 void
