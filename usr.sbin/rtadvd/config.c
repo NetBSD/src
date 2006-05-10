@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.23 2006/03/22 09:22:28 itojun Exp $	*/
+/*	$NetBSD: config.c,v 1.24 2006/05/10 22:30:33 rpaulo Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ getconfig(intface)
 	/*
 	 * set router configuration variables.
 	 */
-	MAYHAVE(val, "maxinterval", tmp->maxinterval * 3);
+	MAYHAVE(val, "maxinterval", DEF_MAXRTRADVINTERVAL);
 	if (val < MIN_MAXINTERVAL || val > MAX_MAXINTERVAL) {
 		syslog(LOG_ERR,
 		       "<%s> maxinterval (%ld) on %s is invalid "
