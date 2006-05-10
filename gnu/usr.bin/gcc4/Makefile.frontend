@@ -1,0 +1,22 @@
+#	$NetBSD: Makefile.frontend,v 1.1 2006/05/10 22:48:11 mrg Exp $
+
+BINDIR=		/usr/bin
+
+CPPFLAGS+=	-I${GCCARCH} -I${FRONTENDOBJ} \
+		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+
+.include <bsd.own.mk>
+
+DPADD=		${FRONTENDOBJ}/libfrontend.a ${LIBIBERTYOBJ}/libiberty.a
+LDADD=		-L${FRONTENDOBJ} -lfrontend -L${LIBIBERTYOBJ} -liberty
+
+.include <bsd.prog.mk>
+
+gcc-vers.texi:
+	(echo "@set version-GCC $(BASEVER)"; \
+	if [ "$(DEVPHASE)" = "experimental" ]; then \
+		echo "@set DEVELOPMENT"; \
+	else \
+		echo "@clear DEVELOPMENT"; \
+	fi) > ${.TARGET}
+

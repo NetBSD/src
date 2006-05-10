@@ -1,0 +1,18 @@
+#	$NetBSD: Makefile.backend,v 1.1 2006/05/10 22:48:11 mrg Exp $
+
+NOMAN=		# defined
+BINDIR=		/usr/libexec
+
+CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} \
+		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
+
+.include <bsd.own.mk>
+
+DPADD=		${BACKENDOBJ}/libbackend.a ${LIBIBERTYOBJ}/libiberty.a
+LDADD=		-L${BACKENDOBJ} -lbackend -L${LIBIBERTYOBJ} -liberty
+
+.include <bsd.prog.mk>
+
+# Don't auto-frob .y or .l files.
+.l.c .y.c .y.h:
+	@true
