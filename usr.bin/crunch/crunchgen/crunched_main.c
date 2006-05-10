@@ -1,4 +1,4 @@
-/*	$NetBSD: crunched_main.c,v 1.3 2002/07/03 12:45:06 pooka Exp $	*/
+/*	$NetBSD: crunched_main.c,v 1.4 2006/05/10 21:34:20 mrg Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -34,11 +34,12 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunched_main.c,v 1.3 2002/07/03 12:45:06 pooka Exp $");
+__RCSID("$NetBSD: crunched_main.c,v 1.4 2006/05/10 21:34:20 mrg Exp $");
 #endif
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 struct stub {
     char *name;
