@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.12 2006/05/08 08:02:32 skrll Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.13 2006/05/10 06:24:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -55,6 +55,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define PC_ADVANCE(regs) ((regs)->tf_r15 += BKPT_SIZE)
 #else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
+#define PC_ADVANCE(r)   ((r)->tf_r15 += BKPT_SIZE)
 #endif
 
 #define	BKPT_ADDR(addr)	(addr)			/* breakpoint address */
