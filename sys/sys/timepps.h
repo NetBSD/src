@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.13.6.3 2006/04/22 11:40:21 simonb Exp $	*/
+/*	$NetBSD: timepps.h,v 1.13.6.4 2006/05/10 17:02:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -141,6 +141,7 @@ struct pps_kcbind_args {
 
 #ifdef _KERNEL
 
+#ifdef __HAVE_TIMECOUNTER
 struct pps_state {
 	/* Capture information. */
 	struct timehands *capth;
@@ -156,15 +157,10 @@ struct pps_state {
 	unsigned	ppscount[3];
 };
 
-void pps_capture(struct pps_state *pps);
-void pps_event(struct pps_state *pps, int event);
-void pps_init(struct pps_state *pps);
-int pps_ioctl(unsigned long cmd, caddr_t data, struct pps_state *pps);
-void hardpps(struct timespec *tsp, long nsec);
-
-#ifndef __HAVE_TIMECOUNTER
-extern  void *pps_kc_hardpps_source;
-extern  int pps_kc_hardpps_mode;
+void pps_capture(struct pps_state *);
+void pps_event(struct pps_state *, int);
+void pps_init(struct pps_state *);
+int pps_ioctl(unsigned long, caddr_t, struct pps_state *);
 #endif /* __HAVE_TIMECOUNTER */
 
 #else /* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.183.6.3 2006/04/24 05:11:24 kardel Exp $	*/
+/*	$NetBSD: systm.h,v 1.183.6.4 2006/05/10 17:02:41 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -287,7 +287,7 @@ void	hardupdate(long offset);
 #ifdef __HAVE_TIMECOUNTER
 void	hardpps(struct timespec *, long);
 #else /* !__HAVE_TIMECOUNTER */
-void	hardpps(long offset);
+void	hardpps(struct timeval *, long);
 extern void *pps_kc_hardpps_source;
 extern int pps_kc_hardpps_mode;
 #endif /* !__HAVE_TIMECOUNTER */
