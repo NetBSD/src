@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.80 2006/04/15 21:18:34 jmcneill Exp $ */
+/*      $NetBSD: ac97.c,v 1.81 2006/05/10 09:07:57 uebayasi Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.80 2006/04/15 21:18:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.81 2006/05/10 09:07:57 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,10 +449,9 @@ static const struct ac97_codecid {
 
 	/*
 	 * Datasheets:
-	 *	http://www.asahi-kasei.co.jp/akm/usa/product/ak4541/ek4541.pdf
-	 *	http://www.asahi-kasei.co.jp/akm/usa/product/ak4543/ek4543.pdf
-	 *	http://www.asahi-kasei.co.jp/akm/usa/product/ak4544a/ek4544a.pdf
-	 *	http://www.asahi-kasei.co.jp/akm/usa/product/ak4545/ek4545.pdf
+	 *	http://www.asahi-kasei.co.jp/akm/japanese/product/ak4543/ek4543.pdf
+	 *	http://www.asahi-kasei.co.jp/akm/japanese/product/ak4544a/ek4544a.pdf
+	 *	http://www.asahi-kasei.co.jp/akm/japanese/product/ak4545/ak4545_f00e.pdf
 	 */
 	{ AC97_CODEC_ID('A', 'K', 'M', 0),
 	  0xffffffff,			"Asahi Kasei AK4540"	},
