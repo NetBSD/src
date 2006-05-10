@@ -1,11 +1,13 @@
-/* $NetBSD: sigchld.c,v 1.5 2003/11/27 01:03:13 simonb Exp $ */
+/* $NetBSD: sigchld.c,v 1.6 2006/05/10 19:07:22 mrg Exp $ */
+
+#include <sys/ucontext.h>
+#include <sys/wait.h>
+#include <sys/resource.h>
 
 #include <assert.h>
 #include <signal.h>
 #include <stdio.h>
-#include <sys/ucontext.h>
-#include <sys/wait.h>
-#include <sys/resource.h>
+#include <stdlib.h>
 
 pid_t child;
 int code;

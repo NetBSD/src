@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.2 2003/07/26 19:38:45 salo Exp $	*/
+/*	$NetBSD: test.c,v 1.3 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*
  * Regression test for basename(3).
@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
 
