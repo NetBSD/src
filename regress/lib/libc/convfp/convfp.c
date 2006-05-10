@@ -1,4 +1,4 @@
-/*	$NetBSD: convfp.c,v 1.4 2004/05/01 18:00:19 martin Exp $	*/
+/*	$NetBSD: convfp.c,v 1.5 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /*
  * This value is representable as an unsigned int, but not as an int.

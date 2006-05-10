@@ -1,4 +1,4 @@
-/*	$NetBSD: except.c,v 1.9 2004/03/25 15:12:42 drochner Exp $	*/
+/*	$NetBSD: except.c,v 1.10 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <ieeefp.h>
 #include <float.h>
 #include <setjmp.h>
+#include <stdlib.h>
 
 void sigfpe(int, siginfo_t *, void *);
 volatile sig_atomic_t signal_caught;

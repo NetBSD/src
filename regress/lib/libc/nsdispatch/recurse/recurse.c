@@ -1,4 +1,4 @@
-/*	$NetBSD: recurse.c,v 1.2 2004/08/02 00:17:21 thorpej Exp $	*/
+/*	$NetBSD: recurse.c,v 1.3 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*
  * Written by Jason R. Thorpe, August 1, 2004.
@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdio.h>
 
 static const ns_src testsrc[] = {
 	{ "test",	NS_SUCCESS },

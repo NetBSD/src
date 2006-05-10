@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock_test.c,v 1.1 2004/03/23 00:00:49 lukem Exp $	*/
+/*	$NetBSD: bootblock_test.c,v 1.2 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 int
 main(int argc, char *argv[])

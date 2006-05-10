@@ -1,4 +1,4 @@
-/*	$NetBSD: xdrtest.c,v 1.4 2002/03/09 01:34:18 pk Exp $	*/
+/*	$NetBSD: xdrtest.c,v 1.5 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -32,6 +32,7 @@
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+#include <stdlib.h>
 
 #include "testbits.h"
 
