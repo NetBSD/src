@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.35 2006/04/02 01:39:48 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.36 2006/05/10 21:45:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -308,7 +308,7 @@ TREELIST *listTL;		/* list of trees to upgrade */
 
 int silent;			/* -S flag */
 #ifdef LIBWRAP
-int clog;			/* -l flag */
+int sup_clog;			/* -l flag */
 #endif
 int live;			/* -d flag */
 int dbgportsq;			/* -P flag */
@@ -417,7 +417,7 @@ main(int argc, char **argv)
 			servicekill();
 			exit(1);
 		}
-		if (clog) {
+		if (sup_clog) {
 			logallow("connection from %.500s", eval_client(&req));
 		}
 #endif
@@ -457,7 +457,7 @@ main(int argc, char **argv)
 				servicekill();
 				exit(1);
 			}
-			if (clog) {
+			if (sup_clog) {
 				logallow("connection from %.500s",
 				    eval_client(&req));
 			}
@@ -518,7 +518,7 @@ init(int argc, char **argv)
 #endif
 	live = FALSE;
 #ifdef LIBWRAP
-	clog = FALSE;
+	sup_clog = FALSE;
 #endif
 	dbgportsq = FALSE;
 	scmdebug = 0;
@@ -535,7 +535,7 @@ init(int argc, char **argv)
 			break;
 #ifdef LIBWRAP
 		case 'l':
-			clog = TRUE;
+			sup_clog = TRUE;
 			break;
 #endif
 		case 'd':
