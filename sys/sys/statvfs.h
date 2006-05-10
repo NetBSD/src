@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.9 2006/02/12 01:32:07 chs Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.10 2006/05/10 11:02:29 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -167,4 +167,10 @@ int	fhstatvfs1(const fhandle_t *, struct statvfs *, int);
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 #endif /* _KERNEL || _STANDALONE */
+
+#if defined(_KERNEL)
+#define	STATVFSBUF_GET()	malloc(sizeof(struct statvfs), M_TEMP, M_WAITOK)
+#define	STATVFSBUF_PUT(sb)	free(sb, M_TEMP);
+#endif /* defined(_KERNEL) */
+
 #endif /* !_SYS_STATVFS_H_ */
