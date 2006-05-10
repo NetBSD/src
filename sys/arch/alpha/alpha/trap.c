@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.106 2006/05/10 10:04:14 skrll Exp $ */
+/* $NetBSD: trap.c,v 1.107 2006/05/10 10:26:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 2006/05/10 10:04:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107 2006/05/10 10:26:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1240,8 +1240,7 @@ alpha_ucode_to_ksiginfo(u_long ucode)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
