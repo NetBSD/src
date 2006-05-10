@@ -1,0 +1,4 @@
+#	$NetBSD: GENERIC.local,v 1.1 2006/05/10 17:28:41 garbled Exp $
+#
+#	GENERIC.local -- local additions to the GENERIC configuration
+#

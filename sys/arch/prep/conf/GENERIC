@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.117 2006/04/19 10:31:45 drochner Exp $
+# $NetBSD: GENERIC,v 1.118 2006/05/10 17:28:41 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.117 $"
+#ident		"GENERIC-$Revision: 1.118 $"
 
 maxusers	32
 
@@ -196,8 +196,6 @@ cpu0	at mainbus0
 pci0	at mainbus0 bus ?
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
-
-options 	PCI_NETBSD_CONFIGURE
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -508,6 +506,8 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
+# Pull in optional local configuration
+include "arch/prep/conf/GENERIC.local"
 
 # Pseudo-Devices
 
