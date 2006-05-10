@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.17 2006/05/09 20:30:15 mrg Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.18 2006/05/10 21:53:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -64,7 +64,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
 	    "The Regents of the University of California."
 	    "  All rights reserved.\n");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rtquery.c,v 1.17 2006/05/09 20:30:15 mrg Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.18 2006/05/10 21:53:15 mrg Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -143,6 +143,8 @@ main(int argc,
 	int ch, bsize;
 	char *p, *options, *value, delim;
 	const char *result;
+
+	delim = 0;	/* XXX gcc */
 
 	OMSG.rip_nets[0].n_dst = RIP_DEFAULT;
 	OMSG.rip_nets[0].n_family = RIP_AF_UNSPEC;

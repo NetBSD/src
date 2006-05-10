@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.139 2006/04/28 20:06:50 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.140 2006/05/10 21:53:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.139 2006/04/28 20:06:50 christos Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.140 2006/05/10 21:53:20 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -612,6 +612,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	(void)&oldintr;
 	(void)&oldintp;
 	(void)&lmode;
+	fin = NULL;	/* XXX gcc4 */
 #endif
 
 	hashbytes = mark;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.29 2006/05/01 05:04:02 christos Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.30 2006/05/10 21:53:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.29 2006/05/01 05:04:02 christos Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.30 2006/05/10 21:53:48 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -350,6 +350,9 @@ hidmatch(u_int32_t const *collist, size_t collen, struct hid_item *item,
 	 */
 	for (colind = 0; vlactive > 0 && colind <= collen; colind++) {
 		struct usagedata cache;
+
+		cache.page_len = 0;	/* XXX gcc */
+		cache.usage_len = 0;	/* XXX gcc */
 
 		cache.isfinal = (colind == collen);
 		if (cache.isfinal)

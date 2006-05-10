@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.19 2005/07/19 23:07:10 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.20 2006/05/10 21:53:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.19 2005/07/19 23:07:10 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.20 2006/05/10 21:53:48 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ grabh(struct header *hp, int gflags)
 	(void)&extproc;
 # endif
 	(void)&saveint;
+	saveint = 0;	/* XXX gcc */
 #endif /* __GNUC__ */
 
 	savetstp = signal(SIGTSTP, SIG_DFL);

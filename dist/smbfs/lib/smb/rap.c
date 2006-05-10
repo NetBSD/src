@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rap.c,v 1.5 2004/10/29 19:18:32 dsl Exp $");
+__RCSID("$NetBSD: rap.c,v 1.6 2006/05/10 21:53:15 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -387,6 +387,7 @@ smb_rap_NetShareEnum(struct smb_ctx *ctx, int sLevel, void *pbBuffer,
 	long lval;
 	int error;
 
+	lval = -1;	/* XXX gcc */
 	error = smb_rap_create(0, "WrLeh", "B13BWz", &rap);
 	if (error)
 		return error;

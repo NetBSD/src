@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_ntop.c,v 1.2 2004/05/20 23:12:33 christos Exp $	*/
+/*	$NetBSD: inet_cidr_ntop.c,v 1.3 2006/05/10 21:53:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_cidr_ntop.c,v 1.1.2.1.8.2 2004/03/17 00:29:46 marka Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_ntop.c,v 1.2 2004/05/20 23:12:33 christos Exp $");
+__RCSID("$NetBSD: inet_cidr_ntop.c,v 1.3 2006/05/10 21:53:15 mrg Exp $");
 #endif
 #endif
 
@@ -191,6 +191,8 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size) {
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
 	cur.base = -1;
+	best.len = -1;	/* XXX gcc */
+	cur.len = -1;	/* XXX gcc */
 	for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++) {
 		if (words[i] == 0) {
 			if (cur.base == -1)

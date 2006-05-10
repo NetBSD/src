@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.85 2006/04/14 22:06:41 christos Exp $	*/
+/*	$NetBSD: db_command.c,v 1.86 2006/05/10 21:53:16 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.85 2006/04/14 22:06:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.86 2006/05/10 21:53:16 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -394,6 +394,8 @@ db_command(const struct db_command **last_cmdp,
 	db_expr_t	addr, count;
 	boolean_t	have_addr = FALSE;
 	int		result;
+
+	cmd = NULL;	/* XXX gcc */
 
 	static db_expr_t last_count = 0;
 

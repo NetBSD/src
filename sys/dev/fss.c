@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.24 2006/04/13 15:56:53 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.25 2006/05/10 21:53:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.24 2006/04/13 15:56:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.25 2006/05/10 21:53:16 mrg Exp $");
 
 #include "fss.h"
 
@@ -673,6 +673,8 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	int len, error;
 	u_int32_t csize;
 	off_t bsize;
+
+	bsize = 0;	/* XXX gcc */
 
 	/*
 	 * Open needed files.

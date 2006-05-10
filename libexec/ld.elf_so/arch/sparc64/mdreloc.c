@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.38 2005/12/24 20:59:31 perry Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.39 2006/05/10 21:53:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.38 2005/12/24 20:59:31 perry Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.39 2006/05/10 21:53:15 mrg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -456,6 +456,8 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	const Elf_Rela *rela = obj->pltrela + reloff;
 	Elf_Addr result;
 	int err;
+
+	result = 0;	/* XXX gcc */
 
 	if (ELF_R_TYPE(obj->pltrela->r_info) == R_TYPE(JMP_SLOT)) {
 		/*

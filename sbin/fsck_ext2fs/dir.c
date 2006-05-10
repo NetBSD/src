@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.18 2006/03/20 01:37:10 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.19 2006/05/10 21:53:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.18 2006/03/20 01:37:10 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.19 2006/05/10 21:53:15 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,6 +345,7 @@ mkentry(struct inodesc *idesc)
 	struct ext2fs_direct newent;
 	int newlen, oldlen;
 
+	newent.e2d_type = 0;	/* XXX gcc */
 	newent.e2d_namlen = strlen(idesc->id_name);
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (sblock.e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE))
