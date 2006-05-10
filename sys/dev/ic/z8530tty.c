@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.102.6.2 2006/04/22 11:38:56 simonb Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.102.6.3 2006/05/10 08:31:25 kardel Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.6.2 2006/04/22 11:38:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.6.3 2006/05/10 08:31:25 kardel Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -183,11 +183,13 @@ u_int zstty_rbuf_size = ZSTTY_RING_SIZE;
 u_int zstty_rbuf_hiwat = (ZSTTY_RING_SIZE * 1) / 4;
 u_int zstty_rbuf_lowat = (ZSTTY_RING_SIZE * 3) / 4;
 
+#ifndef __HAVE_TIMECOUNTER
 static int zsppscap =
 	PPS_TSFMT_TSPEC |
 	PPS_CAPTUREASSERT |
 	PPS_CAPTURECLEAR |
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
+#endif /* __HAVE_TIMECOUNTER */
 
 struct zstty_softc {
 	struct	device zst_dev;		/* required first: base device */
@@ -641,8 +643,8 @@ zsopen(dev, flags, mode, l)
 		/* Clear PPS capture state on first open. */
 		zst->zst_ppsmask = 0;
 #ifdef __HAVE_TIMECOUNTER
-		memset(&sc->sc_pps_state, 0, sizeof(sc->sc_pps_state));
-		sc->sc_pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
+		memset(&zst->zst_pps_state, 0, sizeof(zst->zst_pps_state));
+		zst->zst_pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
 		pps_init(&zst->zst_pps_state);
 #else /* !__HAVE_TIMECOUNTER */
 		zst->ppsparam.mode = 0;
@@ -873,7 +875,7 @@ zsioctl(dev, cmd, data, flag, l)
 	case PPS_IOC_KCBIND:
 #endif
 		error = pps_ioctl(cmd, data, &zst->zst_pps_state);
-		if (zst->zst_pps_state.ppsparm.mode & PPS_CAPTUREBOTH)
+		if (zst->zst_pps_state.ppsparam.mode & PPS_CAPTUREBOTH)
 			zst->zst_ppsmask = ZSRR0_DCD;
 		else
 			zst->zst_ppsmask = 0;
@@ -1003,10 +1005,10 @@ zsioctl(dev, cmd, data, flag, l)
 #ifdef __HAVE_TIMECOUNTER
 #ifndef PPS_TRAILING_EDGE
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
-		    &sc->sc_pps_state.ppsinfo.assert_timestamp);
+		    &zst->zst_pps_state.ppsinfo.assert_timestamp);
 #else
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
-		    &sc->sc_pps_state.ppsinfo.clear_timestamp);
+		    &zst->zst_pps_state.ppsinfo.clear_timestamp);
 #endif
 #else /* !__HAVE_TIMECOUNTER */
 		zst->zst_ppsmask = ZSRR0_DCD;
@@ -1692,9 +1694,9 @@ zstty_stint(cs, force)
 		 */
 		if (ISSET(delta, zst->zst_ppsmask)) {
 #ifdef __HAVE_TIMECOUNTER
-			if (zst->sc_pps_state.ppsparam.mode & PPS_CAPTUREBOTH) {
-				pps_capture(&zst->sc_pps_state);
-				pps_event(&zst->sc_pps_state,
+			if (zst->zst_pps_state.ppsparam.mode & PPS_CAPTUREBOTH) {
+				pps_capture(&zst->zst_pps_state);
+				pps_event(&zst->zst_pps_state,
 				    (ISSET(cs->cs_rr0, zst->zst_ppsmask))
 				    ? PPS_CAPTUREASSERT
 				    : PPS_CAPTURECLEAR);
