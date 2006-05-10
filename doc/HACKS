@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.56 2006/05/08 14:48:59 tsutsui Exp $
+# $NetBSD: HACKS,v 1.57 2006/05/10 21:54:58 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -26,6 +26,69 @@
 #  	  closing bracket.
 #
 # this is a comment.
+
+hack	gcc4 wrong uninitialised variable
+mdate	10 May 2006
+who	mrg
+file	bin/ksh/eval.c			: 1.6
+file	bin/sh/histedit.c		: 1.39
+file	bin/sh/parser.c			: 1.60
+file	bin/systrace/systrace.c		: 1.33
+file	crypto/dist/heimdal/kdc/524.c	: 1.10
+file	crypto/dist/ssh/sftp.c		: 1.20
+file	crypto/dist/ssh/ssh-keysign.c	: 1.11
+file	dist/ipf/lib/hostname.c		: 1.2
+file	dist/ipf/tools/ipmon.c		: 1.8
+file	dist/ntp/ntpd/refclock_shm.c	: 1.4
+file	dist/ntp/sntp/timing.c		: 1.3
+file	dist/pppd/pppstats/pppstats.c	: 1.3
+file	dist/smbfs/lib/smb/rap.c	: 1.6
+file	dist/tcpdump/print-zephyr.c	: 1.5
+file	gnu/libexec/uucp/uucico/uucico.c : 1.6
+file	lib/libc/citrus/citrus_csmapper.c : 1.6
+file	lib/libc/citrus/citrus_pivot_factory.c : 1.5
+file	lib/libc/inet/inet_cidr_ntop.c	: 1.3
+file	lib/libc/inet/inet_ntop.c	: 1.3
+file	lib/libc/stdio/vfwprintf.c	: 1.8
+file	libexec/ld.elf_so/arch/sparc64/mdreloc.c : 1.39
+file	sbin/fsck_ext2fs/dir.c		: 1.19
+file	sbin/routed/rtquery/rtquery.c	: 1.18
+file	sys/crypto/cast128/cast128.c	: 1.9
+file	sys/ddb/db_command.c		: 1.86
+file	sys/dev/fss.c			: 1.25
+file	sys/dev/ic/midway.c		: 1.71
+file	sys/dev/pci/machfb.c		: 1.45
+file	sys/dist/ipf/netinet/ip_nat.c	: 1.10
+file	sys/dist/ipf/netinet/ip_rpcb_pxy.c : 1.8
+file	sys/kern/kern_sig.c		: 1.219
+file	sys/kern/tty.c			: 1.181
+file	sys/net/bpf.c			: 1.116
+file	sys/net/zlib.c			: 1.26
+file	sys/netinet/in.c		: 1.107
+file	sys/netsmb/smb_smb.c		: 1.27
+file	sys/netsmb/smb_trantcp.c	: 1.22
+file	sys/nfs/nfs_serv.c		: 1.108
+file	sys/nfs/nfs_socket.c		: 1.129
+file	sys/nfs/nfs_syscalls.c		: 1.91
+file	sys/ufs/lfs/lfs_vfsops.c	: 1.207 [also (char *)]
+file	usr.bin/ftp/ftp.c		: 1.140
+file	usr.bin/find/function.c		: 1.54
+file	usr.bin/mail/tty.c		: 1.20
+file	usr.bin/nl/nl.c			: 1.7
+file	usr.bin/systat/keyboard.c	: 1.23
+file	usr.bin/usbhidctl/usbhid.c	: 1.29
+file	usr.bin/vi/cl/cl_read.c		: 1.5
+file	usr.bin/vi/ex/ex_cscope.c	: 1.12
+file	usr.bin/vi/ex/ex_tag.c		: 1.19
+file	usr.bin/vi/vi/v_txt.c		: 1.15
+file	usr.sbin/altq/altqstat/qdisc_rio.c : 1.4
+file	usr.sbin/cron/do_command.c	: 1.19
+file	usr.sbin/timed/timed/slave.c	: 1.15
+descr
+	GCC 4.1 gets many uninitialised variable warnings wrong.  We should
+	really audit all the old hacks like this when older compilers are
+	removed from the tree, as many are probably no longer required.
+kcah
 
 hack	netstat ieee1394 address printing.
 mdate	14 Nov 2000
