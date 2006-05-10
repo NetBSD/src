@@ -1,4 +1,4 @@
-/*	$NetBSD: unfdpass.c,v 1.7 2005/02/06 06:05:20 perry Exp $	*/
+/*	$NetBSD: unfdpass.c,v 1.8 2006/05/10 19:10:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ main(argc, argv)
 	int *files = NULL;
 	struct sockcred *sc = NULL;
 	struct sockaddr_un sun, csun;
-	int csunlen;
+	socklen_t csunlen;
 	pid_t pid;
 	int ch;
 
