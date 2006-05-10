@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.53 2006/05/03 17:47:05 garbled Exp $
+#	$NetBSD: files.prep,v 1.54 2006/05/10 02:49:53 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -17,7 +17,8 @@ file	arch/prep/prep/platform.c
 file	arch/prep/prep/autoconf.c
 file	arch/prep/prep/clock.c
 file	arch/prep/prep/consinit.c
-file	arch/prep/prep/disksubr.c		disk
+#file	arch/prep/prep/disksubr.c		disk
+file	kern/subr_disk_mbr.c			disk
 file	arch/prep/prep/extintr.c
 file	arch/prep/prep/machdep.c
 file	arch/prep/prep/residual.c
