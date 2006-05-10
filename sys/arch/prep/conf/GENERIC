@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.118 2006/05/10 17:28:41 garbled Exp $
+# $NetBSD: GENERIC,v 1.119 2006/05/10 19:25:31 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.118 $"
+#ident		"GENERIC-$Revision: 1.119 $"
 
 maxusers	32
 
@@ -518,8 +518,8 @@ include "arch/prep/conf/GENERIC.local"
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
-#pseudo-device	raid		8	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
 # options	RF_INCLUDE_EVENODD=1
 # options	RF_INCLUDE_RAID5_RS=1
