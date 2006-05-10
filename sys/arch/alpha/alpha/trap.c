@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.105 2006/03/15 18:12:02 drochner Exp $ */
+/* $NetBSD: trap.c,v 1.106 2006/05/10 10:04:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2006/03/15 18:12:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.106 2006/05/10 10:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1255,6 +1255,7 @@ startlwp(arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }
 
