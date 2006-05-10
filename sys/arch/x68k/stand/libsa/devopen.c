@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2001/09/29 03:50:13 minoura Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2006/05/10 06:24:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -77,7 +77,7 @@ devparse(const char *fname, int *dev, int *unit, int *part, char **file)
 		if (devopen_open_dir && *s == 0)
 			s--;
 	}
-	(const char*) *file = s;
+	*file = __UNCONST(s);
 
 	return 0;
 }    
