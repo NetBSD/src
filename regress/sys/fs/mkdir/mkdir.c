@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.2 2002/02/20 03:52:51 enami Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.3 2006/05/10 19:11:50 mrg Exp $	*/
 
 /*
  * Written by Jason R. Thorpe, Jan 27, 2002.
@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <err.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 static const char *testdirnames[] = {
 	/*
