@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.7 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.8 2006/05/10 21:53:14 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1425,6 +1425,8 @@ char *argv[];
 	char	buf[DEFAULT_IPFLOGSIZE], *iplfile[3], *s;
 	extern	int	optind;
 	extern	char	*optarg;
+
+	n = 0;	/* XXX gcc */
 
 	fd[0] = fd[1] = fd[2] = -1;
 	fdt[0] = fdt[1] = fdt[2] = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.207 2006/05/04 04:22:57 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.208 2006/05/10 21:53:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.207 2006/05/04 04:22:57 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.208 2006/05/10 21:53:19 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1566,6 +1566,8 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	dev_t dev;
 	int error, retries;
 	struct timespec ts;
+
+	memset(&ts, 0, sizeof ts);	/* XXX gcc */
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;

@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char uucico_rcsid[] = "$Id: uucico.c,v 1.5 2004/11/05 20:37:28 dsl Exp $";
+const char uucico_rcsid[] = "$Id: uucico.c,v 1.6 2006/05/10 21:53:15 mrg Exp $";
 #endif
 
 #include <ctype.h>
@@ -1061,6 +1061,8 @@ fconn_call (qdaemon, qport, qstat, cretry, pfcalled)
   struct sconnection sconn;
   enum tstatus_type terr;
   boolean fret;
+
+  memset(&terr, 0, sizeof terr);	/* XXX gcc */
 
   puuconf = qdaemon->puuconf;
   qsys = qdaemon->qsys;

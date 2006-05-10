@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.14 2003/08/07 11:25:47 agc Exp $	*/
+/*	$NetBSD: slave.c,v 1.15 2006/05/10 21:53:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: slave.c,v 1.14 2003/08/07 11:25:47 agc Exp $");
+__RCSID("$NetBSD: slave.c,v 1.15 2006/05/10 21:53:48 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ slave(void)
 	struct netinfo *ntp;
 	struct hosttbl *htp;
 
-
+	memset(&cadr, 0, sizeof(cadr));	/* XXX gcc */
 	old_slavenet = 0;
 	seq = 0;
 	refusetime = 0;

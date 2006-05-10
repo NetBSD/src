@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.18 2005/06/02 04:25:16 lukem Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.19 2006/05/10 21:53:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -19,7 +19,7 @@
 #if 0
 static const char sccsid[] = "@(#)ex_tag.c	10.36 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: ex_tag.c,v 1.18 2005/06/02 04:25:16 lukem Exp $");
+__RCSID("$NetBSD: ex_tag.c,v 1.19 2006/05/10 21:53:48 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1211,6 +1211,8 @@ ctag_sfile(sp, tfp, tqp, tname, slow_search)
 	size_t dlen, nlen, slen;
 	int fd, i, nf1, nf2;
 	char *back, *cname, *dname, *front, *map, *name, *p, *search, *t;
+
+	dname = NULL;	/* XXX gcc */
 
 	if ((fd = open(tfp->name, O_RDONLY, 0)) < 0) {
 		tfp->errnum = errno;

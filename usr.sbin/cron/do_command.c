@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.18 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: do_command.c,v 1.19 2006/05/10 21:53:48 mrg Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.18 2006/02/25 02:28:58 wiz Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.19 2006/05/10 21:53:48 mrg Exp $");
 #endif
 #endif
 
@@ -374,7 +374,7 @@ child_process(entry *e, user *u)
 			int		status = 0;
 
 #ifdef __GNUC__
-			(void) &mail;	/* Avoid vfork clobbering */
+			mail = NULL;	/* XXX gcc */
 #endif
 			Debug(DPROC|DEXT,
 				("[%d] got data (%x:%c) from grandchild\n",

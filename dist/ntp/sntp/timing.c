@@ -1,4 +1,4 @@
-/*	$NetBSD: timing.c,v 1.2 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: timing.c,v 1.3 2006/05/10 21:53:14 mrg Exp $	*/
 
 /*  Copyright (C) 1996 N.M. Maclaren
     Copyright (C) 1996 The University of Cambridge
@@ -66,6 +66,9 @@ an unsigned long for tv_sec. */
 
 /* Start by converting to timeval format. Note that we have to cater for
 negative, unsigned values. */
+
+    previous.tv_sec = 0;	/* XXX gcc */
+    previous.tv_usec = 0;	/* XXX gcc */
 
     if ((n = (long)difference) > difference) --n;
     adjust.tv_sec = n;

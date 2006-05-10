@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.70 2006/04/14 22:30:13 christos Exp $	*/
+/*	$NetBSD: midway.c,v 1.71 2006/05/10 21:53:16 mrg Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.70 2006/04/14 22:30:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.71 2006/05/10 21:53:16 mrg Exp $");
 
 #include "opt_natm.h"
 
@@ -2096,6 +2096,8 @@ int chan;
   int datalen = 0, dtqneed, len, ncells;
   u_int8_t *cp;
   struct ifnet *ifp;
+
+  memset(&launch, 0, sizeof launch);	/* XXX gcc */
 
 #ifdef EN_DEBUG
   printf("%s: tx%d: starting...\n", sc->sc_dev.dv_xname, chan);

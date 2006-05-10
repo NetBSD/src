@@ -1,4 +1,4 @@
-/*	$NetBSD: print-zephyr.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-zephyr.c,v 1.5 2006/05/10 21:53:15 mrg Exp $	*/
 
 /*
  * Decode and print Zephyr packets.
@@ -26,7 +26,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.6.2.2 2003/11/16 08:51:56 guy Exp";
 #else
-__RCSID("$NetBSD: print-zephyr.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-zephyr.c,v 1.5 2006/05/10 21:53:15 mrg Exp $");
 #endif
 #endif
 
@@ -144,6 +144,8 @@ zephyr_print(const u_char *cp, int length)
     int parselen = length;
     char *s;
     int lose = 0;
+
+    memset(&z, 0, sizeof(z));	/* XXX gcc */
 
 #define PARSE_STRING				\
 	s = parse_field(&parse, &parselen);	\

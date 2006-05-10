@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.19 2006/03/19 16:47:09 elad Exp $	*/
+/*	$NetBSD: sftp.c,v 1.20 2006/05/10 21:53:14 mrg Exp $	*/
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -18,7 +18,7 @@
 #include "includes.h"
 
 RCSID("$OpenBSD: sftp.c,v 1.70 2006/01/31 10:19:02 djm Exp $");
-__RCSID("$NetBSD: sftp.c,v 1.19 2006/03/19 16:47:09 elad Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.20 2006/05/10 21:53:14 mrg Exp $");
 
 #include <glob.h>
 #include <histedit.h>
@@ -1011,6 +1011,11 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 	char path_buf[MAXPATHLEN];
 	int err = 0;
 	glob_t g;
+
+	pflag = 0;	/* XXX gcc */
+	lflag = 0;	/* XXX gcc */
+	iflag = 0;	/* XXX gcc */
+	n_arg = 0;	/* XXX gcc */
 
 	path1 = path2 = NULL;
 	cmdnum = parse_args(&cmd, &pflag, &lflag, &iflag, &n_arg,

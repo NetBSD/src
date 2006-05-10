@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.90 2006/04/15 01:35:12 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.91 2006/05/10 21:53:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.90 2006/04/15 01:35:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.91 2006/05/10 21:53:19 mrg Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1264,6 +1264,8 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 	u_int32_t *nickp, *verfp;
 	struct timeval ktvin, ktvout;
 
+	memset(&ktvout, 0, sizeof ktvout);	/* XXX gcc */
+
 #ifdef DIAGNOSTIC
 	if (verf_len < (4 * NFSX_UNSIGNED))
 		panic("nfs_getnickauth verf too small");
@@ -1336,6 +1338,8 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 	u_int32_t nick;
 	char *dpos = *dposp, *cp2;
 	int deltasec, error = 0;
+
+	memset(&ktvout, 0, sizeof ktvout);	 /* XXX gcc */
 
 	if (len == (3 * NFSX_UNSIGNED)) {
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);

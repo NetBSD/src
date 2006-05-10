@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.53 2006/02/20 16:31:02 jschauma Exp $	*/
+/*	$NetBSD: function.c,v 1.54 2006/05/10 21:53:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.53 2006/02/20 16:31:02 jschauma Exp $");
+__RCSID("$NetBSD: function.c,v 1.54 2006/05/10 21:53:20 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -807,6 +807,8 @@ f_fstype(plan, entry)
 	static short val;
 	static char fstype[MFSNAMELEN];
 	char *p, save[2];
+
+	memset(&save, 0, sizeof save);	/* XXX gcc */
 
 	/* Only check when we cross mount point. */
 	if (first || curdev != entry->fts_statp->st_dev) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keysign.c,v 1.10 2006/02/04 22:32:14 christos Exp $	*/
+/*	$NetBSD: ssh-keysign.c,v 1.11 2006/05/10 21:53:14 mrg Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 #include "includes.h"
 RCSID("$OpenBSD: ssh-keysign.c,v 1.19 2005/09/13 23:40:07 djm Exp $");
-__RCSID("$NetBSD: ssh-keysign.c,v 1.10 2006/02/04 22:32:14 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.11 2006/05/10 21:53:14 mrg Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -147,6 +147,8 @@ main(int argc, char **argv)
 	char *host;
 	u_int slen, dlen;
 	u_int32_t rnd[256];
+
+	key = NULL;	/* XXX gcc */
 
 	/* Ensure that stdin and stdout are connected */
 	if ((fd = open(_PATH_DEVNULL, O_RDWR)) < 2)
