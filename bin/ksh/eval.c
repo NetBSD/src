@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: eval.c,v 1.6 2006/05/10 21:53:14 mrg Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: eval.c,v 1.6 2006/05/10 21:53:14 mrg Exp $");
 #endif
 
 
@@ -183,6 +183,8 @@ expand(cp, wp, f)
 	int make_magic;
 	size_t len;
 
+	x.split = 0;	/* XXX gcc */
+	x.str = NULL;	/* XXX gcc */
 	if (cp == NULL)
 		internal_errorf(1, "expand(NULL)");
 	/* for alias, readonly, set, typeset commands */
@@ -291,6 +293,7 @@ expand(cp, wp, f)
 				int stype;
 				int slen;
 
+				slen = -1;	/* XXX gcc */
 				sp = strchr(sp, '\0') + 1; /* skip variable */
 				type = varsub(&x, varname, sp, &stype, &slen);
 				if (type < 0) {

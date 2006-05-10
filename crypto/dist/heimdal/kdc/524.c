@@ -34,7 +34,7 @@
 #include "kdc_locl.h"
 
 __RCSID("$Heimdal: 524.c,v 1.29 2003/03/17 05:35:47 assar Exp $"
-        "$NetBSD: 524.c,v 1.10 2003/05/15 21:36:35 lha Exp $");
+        "$NetBSD: 524.c,v 1.11 2006/05/10 21:53:14 mrg Exp $");
   
 #ifndef KRB4
 #include <krb5-v4compat.h>
@@ -286,6 +286,8 @@ do_524(const Ticket *t, krb5_data *reply,
     size_t len;
     int kvno;
     
+    kvno = 0;	/* XXX gcc */
+
     if(!enable_524) {
 	ret = KRB5KDC_ERR_POLICY;
 	kdc_log(0, "Rejected ticket conversion request from %s", from);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_read.c,v 1.4 2002/04/09 01:47:30 thorpej Exp $	*/
+/*	$NetBSD: cl_read.c,v 1.5 2006/05/10 21:53:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)cl_read.c	10.15 (Berkeley) 9/24/96";
 #else
-__RCSID("$NetBSD: cl_read.c,v 1.4 2002/04/09 01:47:30 thorpej Exp $");
+__RCSID("$NetBSD: cl_read.c,v 1.5 2006/05/10 21:53:48 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ cl_event(sp, evp, flags, ms)
 	CL_PRIVATE *clp;
 	size_t lines, columns;
 	int changed, nr;
+
+	nr = 0;	/* XXX gcc */
 
 	/*
 	 * Queue signal based events.  We never clear SIGHUP or SIGTERM events,
