@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.77 2006/02/09 19:18:56 manu Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.78 2006/05/10 11:05:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.77 2006/02/09 19:18:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.78 2006/05/10 11:05:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ linux_sys_statfs64(l, v, retval)
 		syscallarg(struct linux_statfs64 *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statvfs btmp, *bsp;
+	struct statvfs *btmp, *bsp;
 	struct linux_statfs64 ltmp;
 	struct sys_statvfs1_args bsa;
 	caddr_t sg;
@@ -483,7 +483,7 @@ linux_sys_statfs64(l, v, retval)
 		return (EINVAL);
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -494,12 +494,16 @@ linux_sys_statfs64(l, v, retval)
 	if ((error = sys_statvfs1(l, &bsa, retval)))
 		return error;
 
-	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
-		return error;
-
-	bsd_to_linux_statfs64(&btmp, &ltmp);
-
-	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+	btmp = STATVFSBUF_GET();
+	error = copyin(bsp, btmp, sizeof(*btmp));
+	if (error) {
+		goto out;
+	}
+	bsd_to_linux_statfs64(btmp, &ltmp);
+	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
+out:
+	STATVFSBUF_PUT(btmp);
+	return error;
 }
 
 int
@@ -514,7 +518,7 @@ linux_sys_fstatfs64(l, v, retval)
 		syscallarg(struct linux_statfs64 *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statvfs btmp, *bsp;
+	struct statvfs *btmp, *bsp;
 	struct linux_statfs64 ltmp;
 	struct sys_fstatvfs1_args bsa;
 	caddr_t sg;
@@ -524,7 +528,7 @@ linux_sys_fstatfs64(l, v, retval)
 		return (EINVAL);
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	SCARG(&bsa, fd) = SCARG(uap, fd);
 	SCARG(&bsa, buf) = bsp;
@@ -533,12 +537,16 @@ linux_sys_fstatfs64(l, v, retval)
 	if ((error = sys_fstatvfs1(l, &bsa, retval)))
 		return error;
 
-	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
-		return error;
-
-	bsd_to_linux_statfs64(&btmp, &ltmp);
-
-	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+	btmp = STATVFSBUF_GET();
+	error = copyin(bsp, btmp, sizeof(*btmp));
+	if (error) {
+		goto out;
+	}
+	bsd_to_linux_statfs64(btmp, &ltmp);
+	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
+out:
+	STATVFSBUF_PUT(btmp);
+	return error;
 }
 #endif /* !__m68k__ */
 #endif /* !COMPAT_LINUX32 */
