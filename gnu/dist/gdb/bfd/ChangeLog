@@ -1,3 +1,8 @@
+2004-06-11  Maciej W. Rozycki  <macro@ds2.pg.gda.pl>
+
+	* coff-alpha.c (alpha_relocate_section): Set used_by_bfd directly
+	as ecoff_section_data() does not return a valid lvalue.
+
 2002-10-19  Mark Kettenis  <kettenis@gnu.org>
 
 	* elf.c (elfcore_grok_note): Fix recognition on NT_PRXFPREG notes.
