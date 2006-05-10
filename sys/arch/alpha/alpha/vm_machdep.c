@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.87 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.88 2006/05/10 06:24:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.87 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2006/05/10 06:24:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	p = bp->b_proc;
-	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
+	bp->b_saveaddr = bp->b_data;
+	faddr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY|UVM_KMF_WAITVA);

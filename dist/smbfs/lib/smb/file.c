@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: file.c,v 1.2 2003/04/04 08:05:33 jdolecek Exp $");
+__RCSID("$NetBSD: file.c,v 1.3 2006/05/10 06:24:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -75,7 +75,7 @@ smb_write(struct smb_ctx *ctx, smbfh fh, off_t offset, size_t count,
 	struct smbioc_rw rwrq;
 
 	rwrq.ioc_fh = fh;
-	(const char*)rwrq.ioc_base = src;
+	rwrq.ioc_base = __UNCONST(src);
 	rwrq.ioc_cnt = count;
 	rwrq.ioc_offset = offset;
 	if (ioctl(ctx->ct_fd, SMBIOC_WRITE, &rwrq) == -1)

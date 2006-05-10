@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.27 2006/04/30 19:24:50 liamjfoy Exp $	*/
+/*	$NetBSD: du.c,v 1.28 2006/05/10 06:24:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.27 2006/04/30 19:24:50 liamjfoy Exp $");
+__RCSID("$NetBSD: du.c,v 1.28 2006/05/10 06:24:03 skrll Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 	if (!*argv) {
 		noargv[0] = ".";
 		noargv[1] = NULL;
-		(const char *)argv = noargv;
+		argv = __UNCONST(noargv);
 	}
 
 	if (!gkmflag)
