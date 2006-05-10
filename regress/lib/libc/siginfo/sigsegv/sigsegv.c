@@ -1,9 +1,11 @@
-/* $NetBSD: sigsegv.c,v 1.4 2003/11/13 06:48:31 simonb Exp $ */
+/* $NetBSD: sigsegv.c,v 1.5 2006/05/10 19:07:22 mrg Exp $ */
+
+#include <sys/ucontext.h>
 
 #include <assert.h>
 #include <signal.h>
 #include <stdio.h>
-#include <sys/ucontext.h>
+#include <stdlib.h>
 
 void
 sigsegv(int signo, siginfo_t *info, void *ptr)

@@ -1,4 +1,4 @@
-/*	$Id: loan1.c,v 1.4 2004/03/02 10:13:13 yamt Exp $	*/
+/*	$Id: loan1.c,v 1.5 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #define	BUFSIZE	(32 * 1024)	/* enough size to trigger sosend_loan */

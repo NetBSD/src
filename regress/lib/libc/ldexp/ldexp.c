@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.c,v 1.2 2002/02/21 07:38:17 itojun Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.3 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int
 main()
