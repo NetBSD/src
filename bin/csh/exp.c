@@ -1,4 +1,4 @@
-/* $NetBSD: exp.c,v 1.14 2003/08/07 09:05:05 agc Exp $ */
+/* $NetBSD: exp.c,v 1.15 2006/05/10 21:14:48 mrg Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: exp.c,v 1.14 2003/08/07 09:05:05 agc Exp $");
+__RCSID("$NetBSD: exp.c,v 1.15 2006/05/10 21:14:48 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: exp.c,v 1.14 2003/08/07 09:05:05 agc Exp $");
 #define NOTEQMATCH 8
 
 static int exp1(Char ***, bool);
-static int exp2(Char ***, bool);
+static int csh_exp2(Char ***, bool);
 static int exp2a(Char ***, bool);
 static int exp2b(Char ***, bool);
 static int exp2c(Char ***, bool);
@@ -121,7 +121,7 @@ exp1(Char ***vp, bool ignore)
 {
     int p1;
 
-    p1 = exp2(vp, ignore);
+    p1 = csh_exp2(vp, ignore);
 #ifdef EDEBUG
     etraci("exp1 p1", p1, vp);
 #endif
@@ -139,7 +139,7 @@ exp1(Char ***vp, bool ignore)
 }
 
 static int
-exp2(Char ***vp, bool ignore)
+csh_exp2(Char ***vp, bool ignore)
 {
     int p1;
 
@@ -151,7 +151,7 @@ exp2(Char ***vp, bool ignore)
 	int p2;
 
 	(*vp)++;
-	p2 = exp2(vp, ignore);
+	p2 = csh_exp2(vp, ignore);
 #ifdef EDEBUG
 	etraci("exp3 p2", p2, vp);
 #endif
