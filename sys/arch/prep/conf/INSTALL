@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.39 2006/04/19 10:31:45 drochner Exp $
+#	$NetBSD: INSTALL,v 1.40 2006/05/10 17:28:41 garbled Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -85,8 +85,6 @@ cpu0	at mainbus0
 pci0	at mainbus0 bus ?
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
-
-options 	PCI_NETBSD_CONFIGURE
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -246,6 +244,8 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 #sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
+# Pull in optional local configuration
+include "arch/prep/conf/INSTALL.local"
 
 # Pseudo-Devices
 
