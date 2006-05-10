@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.25 2006/05/09 20:52:33 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.26 2006/05/10 18:22:28 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -292,7 +292,7 @@ md_post_extract(void)
 		    "/usr/mdec/mkbootimage -s -b %s -k /netbsd /.bootimage",
 		    bootloader);
 	run_program(RUN_DISPLAY|RUN_CHROOT, "/bin/dd if=/.bootimage of=%s "
-	    "bs=512", bootpart);
+	    "bs=512 conv=sync", bootpart);
 
 	return 0;
 }
