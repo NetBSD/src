@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.31 2006/05/09 22:20:38 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.32 2006/05/10 18:47:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.31 2006/05/09 22:20:38 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.32 2006/05/10 18:47:45 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -514,10 +514,10 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 		"sumsum   ", sp->ss_sumsum,
 		"datasum  ", sp->ss_datasum );
 	if (lfsp->lfs_version == 1) {
-		t = sp->ss_ident;
+		t = sp->ss_ocreate;
 		(void)printf("\tcreate   %s\n", ctime(&t));
 	} else {
-		t = sp->ss_ident;
+		t = sp->ss_create;
 		(void)printf("\tcreate   %s", ctime(&t));
 		(void)printf("    roll_id  %-8x", sp->ss_ident);
 		(void)printf("   serial   %lld\n", (long long)sp->ss_serial);
