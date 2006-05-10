@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.204 2006/04/19 14:10:58 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.205 2006/05/10 01:56:21 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.204 2006/04/19 14:10:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.205 2006/05/10 01:56:21 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1181,6 +1181,7 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 	rp->s.outp = rp->s.inp = rp->s.start;
 	rp->s.used = 0;
 	rp->stamp = 0;
+	rp->stamp_last = 0;
 	rp->fstamp = 0;
 	rp->drops = 0;
 	rp->pause = FALSE;
@@ -1775,7 +1776,8 @@ uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
 	int error;
 
 	this = (uio_fetcher_t *)self;
-	if (audio_stream_get_used(p) >= this->usedhigh)
+	this->last_used = audio_stream_get_used(p);
+	if (this->last_used >= this->usedhigh)
 		return 0;
 	/*
 	 * uio_fetcher ignores max_used and move the data as
@@ -1931,8 +1933,8 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 
 		s = splaudio();
 		if (sc->sc_npfilters > 0) {
-			cb->fstamp += audio_stream_get_used(sc->sc_pustream)
-				- ufetcher.last_used;
+			cb->fstamp += ufetcher.last_used
+			    - audio_stream_get_used(sc->sc_pustream);
 		}
 		cb->s.used += stream.used - used;
 		cb->s.inp = stream.inp;
@@ -2555,7 +2557,7 @@ audio_pint(void *v)
 		used = audio_stream_get_used(sc->sc_pustream);
 		cc = cb->s.end - cb->s.start;
 		fetcher->fetch_to(fetcher, &cb->s, cc);
-		cb->fstamp += audio_stream_get_used(sc->sc_pustream) - used;
+		cb->fstamp += used - audio_stream_get_used(sc->sc_pustream);
 		used = audio_stream_get_used(&cb->s);
 	}
 	if (used < blksize) {
