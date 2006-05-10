@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype1.c,v 1.4 2004/06/21 21:20:05 itojun Exp $	*/
+/*	$NetBSD: ctype1.c,v 1.5 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -31,6 +31,7 @@
 #include <err.h>
 #include <locale.h>
 #include <wchar.h>
+#include <string.h>
 
 int
 main(int ac, char **av)

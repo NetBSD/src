@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.4 2003/07/26 19:38:46 salo Exp $	*/
+/*	$NetBSD: test.c,v 1.5 2006/05/10 19:07:22 mrg Exp $	*/
 
 /*
  * Regression test for dirname(3).
@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <libgen.h>
+#include <stdlib.h>
 
 struct {
 	const char *input;
