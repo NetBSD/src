@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.32 2006/03/18 00:32:34 peter Exp $	*/
+/*	$NetBSD: systrace.c,v 1.33 2006/05/10 21:53:14 mrg Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -574,6 +574,9 @@ main(int argc, char **argv)
 	int setcredentials = 0;
 	uid_t cr_uid;
 	gid_t cr_gid;
+
+	cr_uid = 0;	/* XXX gcc */
+	cr_gid = 0;	/* XXX gcc */
 
 	tv_wait.tv_sec = 60;
 	tv_wait.tv_usec = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.22 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.23 2006/05/10 21:53:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.22 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.23 2006/05/10 21:53:48 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,6 +57,7 @@ keyboard(void)
 	static char help[] = "help";
 	static char quit[] = "quit";
 
+	ch = 0;	/* XXX gcc */
 	linesz = COLS - 2;		/* XXX does not get updated on SIGWINCH */
 	if ((line = malloc(linesz)) == NULL) {
 		error("malloc failed");

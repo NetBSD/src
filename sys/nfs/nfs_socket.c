@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.128 2006/04/15 02:46:39 dogcow Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.129 2006/05/10 21:53:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.128 2006/04/15 02:46:39 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.129 2006/05/10 21:53:19 mrg Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1503,6 +1503,8 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 			struct nfsuid *nuidp;
 			struct timeval ktvin, ktvout;
 
+			memset(&ktvout, 0, sizeof ktvout);	/* XXX gcc */
+
 			LIST_FOREACH(nuidp, NUIDHASH(slp, nd->nd_cr.cr_uid),
 			    nu_hash) {
 				if (nuidp->nu_cr.cr_uid == nd->nd_cr.cr_uid &&
@@ -1930,6 +1932,8 @@ nfs_getreq(nd, nfsd, has_header)
 	struct mbuf *mrep, *md;
 	struct nfsuid *nuidp;
 	struct timeval tvin, tvout;
+
+	memset(&tvout, 0, sizeof tvout);	/* XXX gcc */
 
 	mrep = nd->nd_mrep;
 	md = nd->nd_md;

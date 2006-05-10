@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.7 2006/02/16 23:26:19 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.8 2006/05/10 21:53:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.24 2005/04/16 22:36:51 das Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.7 2006/02/16 23:26:19 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.8 2006/05/10 21:53:15 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -649,6 +649,7 @@ __vfwprintf_unlocked(FILE *fp, const wchar_t *fmt0, va_list ap)
 		val = GETARG (int); \
 	}
 
+	ndig = -1;	/* XXX gcc */
 
 	thousands_sep = '\0';
 	grouping = NULL;

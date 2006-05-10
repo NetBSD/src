@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.21 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.22 2006/05/10 21:53:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.21 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.22 2006/05/10 21:53:19 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,6 +446,9 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 	u_int8_t rpcode;
 	int len, resid;
 	int error, rcvflg;
+
+	len = 0;	/* XXX gcc */
+	rpcode = 0;	/* XXX gcc */
 
 	if (so == NULL)
 		return ENOTCONN;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pppstats.c,v 1.2 2006/03/02 17:32:28 christos Exp $	*/
+/*	$NetBSD: pppstats.c,v 1.3 2006/05/10 21:53:14 mrg Exp $	*/
 
 /*
  * print PPP statistics:
@@ -42,7 +42,7 @@
 #if 0
 static const char rcsid[] = "Id: pppstats.c,v 1.29 2002/10/27 12:56:26 fcusack Exp";
 #else
-__RCSID("$NetBSD: pppstats.c,v 1.2 2006/03/02 17:32:28 christos Exp $");
+__RCSID("$NetBSD: pppstats.c,v 1.3 2006/05/10 21:53:14 mrg Exp $");
 #endif
 #endif
 
@@ -305,6 +305,7 @@ intpr()
     struct ppp_stats cur, old;
     struct ppp_comp_stats ccs, ocs;
 
+    memset(&ccs, 0, sizeof(ccs));	/* XXX gcc */
     memset(&old, 0, sizeof(old));
     memset(&ocs, 0, sizeof(ocs));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.59 2005/03/21 20:10:29 dsl Exp $	*/
+/*	$NetBSD: parser.c,v 1.60 2006/05/10 21:53:14 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.59 2005/03/21 20:10:29 dsl Exp $");
+__RCSID("$NetBSD: parser.c,v 1.60 2006/05/10 21:53:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -934,6 +934,7 @@ readtoken1(int firstc, char const *syntax, char *eofmark, int striptabs)
 	(void) &oldstyle;
 	(void) &prevsyntax;
 	(void) &syntax;
+	prevsyntax = NULL;	/* XXX gcc4 */
 #endif
 
 	startlinno = plinno;
