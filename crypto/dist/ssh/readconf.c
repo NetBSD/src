@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.28 2006/03/19 16:29:43 elad Exp $	*/
+/*	$NetBSD: readconf.c,v 1.29 2006/05/11 00:05:45 mrg Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: readconf.c,v 1.145 2005/12/08 18:34:11 reyk Exp $");
-__RCSID("$NetBSD: readconf.c,v 1.28 2006/03/19 16:29:43 elad Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.29 2006/05/11 00:05:45 mrg Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -324,6 +324,7 @@ process_config_line(Options *options, const char *host,
 {
 	char *s, **charptr, *endofnumber, *keyword, *arg, *arg2, fwdarg[256];
 	int opcode, *intptr, value, value2;
+	LogLevel *llptr;
 	size_t len;
 	Forward fwd;
 
@@ -688,14 +689,14 @@ parse_int:
 		break;
 
 	case oLogLevel:
-		intptr = (int *) &options->log_level;
+		llptr =  &options->log_level;
 		arg = strdelim(&s);
 		value = log_level_number(arg);
 		if (value == SYSLOG_LEVEL_NOT_SET)
 			fatal("%.200s line %d: unsupported log level '%s'",
 			    filename, linenum, arg ? arg : "<NONE>");
-		if (*activep && (LogLevel) *intptr == SYSLOG_LEVEL_NOT_SET)
-			*intptr = (LogLevel) value;
+		if (*activep && *llptr == SYSLOG_LEVEL_NOT_SET)
+			*llptr = (LogLevel) value;
 		break;
 
 	case oLocalForward:
