@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.79 2006/05/06 02:20:23 groo Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.80 2006/05/11 00:46:57 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -22,6 +22,11 @@ CFLAGS+=	-ffreestanding ${COPTS}
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
 CPPFLAGS+=	-isystem ${S}/../common/include
 CPPFLAGS+=	-D_KERNEL -D_LKM
+
+# XXX until the kernel is fixed again...
+.if ${HAVE_GCC} == 4
+CFLAGS+=	-fno-strict-aliasing
+.endif
 
 _YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 DPSRCS+=	${_YKMSRCS}
