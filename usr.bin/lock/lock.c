@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.24 2004/07/13 11:55:02 wiz Exp $	*/
+/*	$NetBSD: lock.c,v 1.25 2006/05/11 12:02:08 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.24 2004/07/13 11:55:02 wiz Exp $");
+__RCSID("$NetBSD: lock.c,v 1.25 2006/05/11 12:02:08 liamjfoy Exp $");
 #endif /* not lint */
 
 /*
@@ -121,6 +121,7 @@ main(int argc, char **argv)
 			notimeout = 1;
 			break;
 		case 't':
+			errno = 0;
 			if (((sectimeout = strtol(optarg, &ap, 0)) == LONG_MAX
 			    || sectimeout == LONG_MIN)
 			    && errno == ERANGE)
