@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.74 2006/03/25 16:41:11 xtraeme Exp $
+#  $NetBSD: Makefile,v 1.75 2006/05/11 00:37:53 mrg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -48,6 +48,12 @@ USE_SHLIBDIR=	yes
 
 # require this for the value of I387_LIBM from mk.conf, if set.
 .include <bsd.own.mk>
+
+# XXX our cabs() is different!
+.if ${HAVE_GCC} == 4
+COPTS.w_cabs.c=  -fno-builtin-cabs
+COPTS.w_cabsf.c= -fno-builtin-cabsf
+.endif
 
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
