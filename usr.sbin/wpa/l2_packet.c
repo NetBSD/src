@@ -1,4 +1,4 @@
-/*	$NetBSD: l2_packet.c,v 1.3 2006/04/12 15:29:14 rpaulo Exp $	*/
+/*	$NetBSD: l2_packet.c,v 1.4 2006/05/11 08:44:07 mrg Exp $	*/
 
 /*
  * WPA Supplicant - Layer2 packet handling
@@ -22,11 +22,6 @@
  * $FreeBSD: src/usr.sbin/wpa/l2_packet.c,v 1.3 2006/03/07 05:54:19 sam Exp $
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <pcap.h>
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -38,6 +33,12 @@
 #include <net/route.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <errno.h>
+#include <pcap.h>
 
 #include "common.h"
 #include "eloop.h"
