@@ -5994,13 +5994,13 @@ common_op_match_null_string_p (p, end, reg_info)
 
 static int
 bcmp_translate (s1, s2, len, translate)
-     unsigned char *s1, *s2;
+     const unsigned char *s1, *s2;
      register int len;
      RE_TRANSLATE_TYPE translate;
 {
-  register unsigned char *p1 = s1, *p2 = s2;
-  unsigned char *p1_end = s1 + len;
-  unsigned char *p2_end = s2 + len;
+  const unsigned char *p1 = s1, *p2 = s2;
+  const unsigned char *p1_end = s1 + len;
+  const unsigned char *p2_end = s2 + len;
 
   while (p1 != p1_end && p2 != p2_end)
     {
