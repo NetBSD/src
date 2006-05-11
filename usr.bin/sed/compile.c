@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.32 2006/04/02 03:47:26 christos Exp $	*/
+/*	$NetBSD: compile.c,v 1.33 2006/05/11 17:18:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.32 2006/04/02 03:47:26 christos Exp $");
+__RCSID("$NetBSD: compile.c,v 1.33 2006/05/11 17:18:19 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ nonsel:		/* Now parse the command */
 			break;
 		case TR:			/* y */
 			p++;
-			p = compile_tr(p, (char **)&cmd->u.y);
+			p = compile_tr(p, (char **)(void *)&cmd->u.y);
 			EATSPACE();
 			if (*p == ';') {
 				p++;
