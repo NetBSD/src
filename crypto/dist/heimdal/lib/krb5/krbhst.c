@@ -35,7 +35,7 @@
 #include <resolve.h>
 
 __RCSID("$Heimdal: krbhst.c,v 1.43.2.1 2003/04/22 15:00:38 lha Exp $"
-        "$NetBSD: krbhst.c,v 1.1.1.7 2003/05/15 20:28:48 lha Exp $");
+        "$NetBSD: krbhst.c,v 1.2 2006/05/11 00:04:07 mrg Exp $");
 
 static int
 string_to_proto(const char *string)
@@ -335,6 +335,8 @@ srv_get_hosts(krb5_context context, struct krb5_krbhst_data *kd,
     krb5_krbhst_info **res;
     int count, i;
 
+    count = -1;	/* XXX gcc */
+    res = NULL; /* XXX gcc */
     srv_find_realm(context, &res, &count, kd->realm, "SRV", proto, service,
 		   kd->port);
     for(i = 0; i < count; i++)
