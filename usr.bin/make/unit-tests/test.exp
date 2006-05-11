@@ -61,13 +61,8 @@ VAR:S,V,v,=Thevariable
 Expect: Unclosed variable specification for VAR
 VAR:S,V,v,=Thevariable
 Expect: Unclosed substitution for VAR (, missing)
-and: Syntax error: Unterminated quoted string
-make: Unclosed substitution for VAR (, missing)
-Syntax error: Unterminated quoted string
-Expect: Unclosed substitution for VAR (, missing)
 make: Unclosed substitution for VAR (, missing)
 VAR:S,V,v=
-*** Error code 2 (ignored)
 LIB=a X_LIBS:M${LIB${LIB:tu}} is "/tmp/liba.a"
 LIB=a X_LIBS:M*/lib${LIB}.a is "/tmp/liba.a"
 LIB=a X_LIBS:M*/lib${LIB}.a:tu is "/TMP/LIBA.A"
