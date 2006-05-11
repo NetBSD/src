@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.18 2006/04/30 23:43:31 christos Exp $	*/
+/*	$NetBSD: system.c,v 1.19 2006/05/11 00:25:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.18 2006/04/30 23:43:31 christos Exp $");
+__RCSID("$NetBSD: system.c,v 1.19 2006/05/11 00:25:46 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -748,7 +748,7 @@ char	*argv[];
 	    char *cmdname;
 
 	    cmdname = getenv("SHELL");
-	    execlp(cmdname, cmdname, 0);
+	    execlp(cmdname, cmdname, NULL);
 	    perror("Exec'ing new shell");
 	    _exit(1);
 	} else {
