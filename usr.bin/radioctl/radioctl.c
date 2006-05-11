@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.6 2004/01/05 23:23:36 jmmv Exp $ */
+/* $NetBSD: radioctl.c,v 1.7 2006/05/11 01:24:14 mrg Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: radioctl.c,v 1.6 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: radioctl.c,v 1.7 2006/05/11 01:24:14 mrg Exp $");
 #endif
 
 #include <sys/ioctl.h>
@@ -91,7 +91,7 @@ static void	do_ioctls(int, struct opt_t *, int);
 
 static void	print_value(int);
 static void	change_value(const struct opt_t);
-static void	update_value(int, u_long *, u_long);
+static void	update_value(int, u_int *, u_int);
 
 static void     warn_unsupported(int);
 static void	usage(void);
@@ -260,14 +260,14 @@ change_value(const struct opt_t o)
 
 	switch (o.option) {
 	case OPTION_VOLUME:
-		update_value(o.sign, (u_long *)&ri.volume, o.value);
+		update_value(o.sign, (u_int *)&ri.volume, o.value);
 		break;
 	case OPTION_FREQUENCY:
-		update_value(o.sign, (u_long *)&ri.freq, o.value);
+		update_value(o.sign, (u_int *)&ri.freq, o.value);
 		break;
 	case OPTION_REFERENCE:
 		if (ri.caps & RADIO_CAPS_REFERENCE_FREQ)
-			update_value(o.sign, (u_long *)&ri.rfreq, o.value);
+			update_value(o.sign, (u_int *)&ri.rfreq, o.value);
 		else
 			unsupported++;
 		break;
@@ -281,7 +281,7 @@ change_value(const struct opt_t o)
 		break;
 	case OPTION_SENSITIVITY:
 		if (ri.caps & RADIO_CAPS_LOCK_SENSITIVITY)
-			update_value(o.sign, (u_long *)&ri.lock, o.value);
+			update_value(o.sign, (u_int *)&ri.lock, o.value);
 		else
 			unsupported++;
 		break;
@@ -320,7 +320,7 @@ str_to_opt(const char *topt)
 }
 
 static void
-update_value(int sign, u_long *value, u_long update)
+update_value(int sign, u_int *value, u_int update)
 {
 	switch (sign) {
 	case SIGN_NONE:
