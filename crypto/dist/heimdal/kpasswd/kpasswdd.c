@@ -33,7 +33,7 @@
 
 #include "kpasswd_locl.h"
 __RCSID("$Heimdal: kpasswdd.c,v 1.54 2002/12/02 14:31:52 joda Exp $"
-        "$NetBSD: kpasswdd.c,v 1.8 2003/05/15 21:36:37 lha Exp $");
+        "$NetBSD: kpasswdd.c,v 1.9 2006/05/11 11:54:14 mrg Exp $");
 
 #include <kadm5/admin.h>
 #ifdef HAVE_SYS_UN_H
@@ -416,7 +416,7 @@ out:
  */
 static int
 get_local_addr(struct sockaddr *remote, int remlen,
-	       struct sockaddr *local, int *loclen)
+	       struct sockaddr *local, socklen_t *loclen)
 {
 	int s, ret;
 
@@ -451,7 +451,8 @@ doit (krb5_keytab keytab, int port)
     struct sockaddr *sa = (struct sockaddr *)&__ss;
 #ifdef INETD_SUPPORT
     int fdz = 0, ret2;
-    int from_inetd, fromlen, loclen;
+    int from_inetd;
+    socklen_t fromlen, loclen;
     krb5_address my_addr;
     struct sockaddr_storage __local;
     struct sockaddr *localsa = (struct sockaddr *)&__local;
@@ -491,7 +492,7 @@ doit (krb5_keytab keytab, int port)
 	 maxfd = -1;
 	 FD_ZERO(&real_fdset);
 	 for (i = 0; i < n; ++i) {
-	     int sa_size = sizeof(__ss);
+	     socklen_t sa_size = sizeof(__ss);
 	     
 	     krb5_addr2sockaddr (context, &addrs.val[i], sa, &sa_size, port);
 	     
