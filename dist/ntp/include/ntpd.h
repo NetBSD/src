@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.3 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.4 2006/05/11 00:10:54 mrg Exp $	*/
 
 /*
  * ntpd.h - Prototypes for ntpd.
@@ -228,8 +228,6 @@ extern int	config_priority;
 #endif
 
 /* ntp_control.c */
-struct ctl_trap;
-extern struct ctl_trap ctl_trap[];
 extern int	num_ctl_traps;
 extern keyid_t	ctl_auth_keyid;		/* keyid used for authenticating write requests */
 
