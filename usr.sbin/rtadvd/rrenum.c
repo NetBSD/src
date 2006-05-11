@@ -1,4 +1,4 @@
-/*	$NetBSD: rrenum.c,v 1.12 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: rrenum.c,v 1.13 2006/05/11 08:35:47 mrg Exp $	*/
 /*	$KAME: rrenum.c,v 1.14 2004/06/14 05:36:00 itojun Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ static int
 rr_command_check(int len, struct icmp6_router_renum *rr, struct in6_addr *from,
 		 struct in6_addr *dst)
 {
-	u_char ntopbuf[INET6_ADDRSTRLEN];
+	char ntopbuf[INET6_ADDRSTRLEN];
 
 	/* omit rr minimal length check. hope kernel have done it. */
 	/* rr_command length check */
@@ -418,7 +418,7 @@ void
 rr_input(int len, struct icmp6_router_renum *rr, struct in6_pktinfo *pi,
 	 struct sockaddr_in6 *from, struct in6_addr *dst)
 {
-	u_char ntopbuf[2][INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
+	char ntopbuf[2][INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 
 	syslog(LOG_DEBUG,
 	       "<%s> RR received from %s to %s on %s",

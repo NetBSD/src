@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.24 2006/05/10 22:30:33 rpaulo Exp $	*/
+/*	$NetBSD: config.c,v 1.25 2006/05/11 08:35:47 mrg Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -604,7 +604,7 @@ get_prefix(struct rainfo *rai)
 	struct prefix *pp;
 	struct in6_addr *a;
 	u_char *p, *ep, *m, *lim;
-	u_char ntopbuf[INET6_ADDRSTRLEN];
+	char ntopbuf[INET6_ADDRSTRLEN];
 
 	if (getifaddrs(&ifap) < 0) {
 		syslog(LOG_ERR,
@@ -713,7 +713,7 @@ static void
 add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
 {
 	struct prefix *prefix;
-	u_char ntopbuf[INET6_ADDRSTRLEN];
+	char ntopbuf[INET6_ADDRSTRLEN];
 
 	if ((prefix = malloc(sizeof(*prefix))) == NULL) {
 		syslog(LOG_ERR, "<%s> memory allocation failed",
@@ -754,7 +754,7 @@ add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
 void
 delete_prefix(struct prefix *prefix)
 {
-	u_char ntopbuf[INET6_ADDRSTRLEN];
+	char ntopbuf[INET6_ADDRSTRLEN];
 	struct rainfo *rai = prefix->rainfo;
 
 	remque(prefix);
@@ -771,7 +771,7 @@ delete_prefix(struct prefix *prefix)
 void
 invalidate_prefix(struct prefix *prefix)
 {
-	u_char ntopbuf[INET6_ADDRSTRLEN];
+	char ntopbuf[INET6_ADDRSTRLEN];
 	struct timeval timo;
 	struct rainfo *rai = prefix->rainfo;
 
@@ -812,7 +812,7 @@ prefix_timeout(void *arg)
 void
 update_prefix(struct prefix * prefix)
 {
-	u_char ntopbuf[INET6_ADDRSTRLEN];
+	char ntopbuf[INET6_ADDRSTRLEN];
 	struct rainfo *rai = prefix->rainfo;
 
 	if (prefix->timer == NULL) { /* sanity check */
@@ -858,7 +858,7 @@ init_prefix(struct in6_prefixreq *ipr)
 		/* omit other field initialization */
 	}
 	else if (ipr->ipr_origin < PR_ORIG_RR) {
-		u_char ntopbuf[INET6_ADDRSTRLEN];
+		char ntopbuf[INET6_ADDRSTRLEN];
 
 		syslog(LOG_WARNING, "<%s> Added prefix(%s)'s origin %d is"
 		       "lower than PR_ORIG_RR(router renumbering)."
@@ -906,7 +906,7 @@ void
 make_packet(struct rainfo *rainfo)
 {
 	size_t packlen, lladdroptlen = 0;
-	char *buf;
+	u_char *buf;
 	struct nd_router_advert *ra;
 	struct nd_opt_prefix_info *ndopt_pi;
 	struct nd_opt_mtu *ndopt_mtu;
