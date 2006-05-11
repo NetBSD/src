@@ -1,9 +1,9 @@
-/*	$NetBSD: tok.c,v 1.5 1997/10/18 20:03:54 christos Exp $	*/
+/*	$NetBSD: tok.c,v 1.6 2006/05/11 00:22:52 mrg Exp $	*/
 
 /* tok.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tok.c,v 1.5 1997/10/18 20:03:54 christos Exp $");
+__RCSID("$NetBSD: tok.c,v 1.6 2006/05/11 00:22:52 mrg Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ yylex()
 			clear();/* scrolling region, home, clear, no
 				 * attributes */
 			if ((ic = fork()) == 0) {	/* child */
-				execl("/bin/csh", 0);
+				execl("/bin/csh", "/bin/csh", NULL);
 				exit(1);
 			}
 			wait(0);
