@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.77 2006/04/28 03:40:15 thorpej Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.78 2006/05/11 17:21:38 mrg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -76,6 +76,9 @@ CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
+. if ${HAVE_GCC} > 3
+CWARNFLAGS+=	-Wno-attributes -Wno-pointer-sign
+. endif
 .endif
 
 CFLAGS+=	-ffreestanding
@@ -87,6 +90,11 @@ AFLAGS+=	${CPUFLAGS} -D_LOCORE
 CWARNFLAGS+=	-Wno-uninitialized
 .else
 CFLAGS+=	-fno-zero-initialized-in-bss
+.endif
+
+# XXX
+.if ${HAVE_GCC} > 3
+CFLAGS+=	-fno-strict-aliasing
 .endif
 
 # Use the per-source COPTS variables to add -g to just those
