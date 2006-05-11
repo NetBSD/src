@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.23 2006/04/15 04:06:03 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.24 2006/05/11 01:11:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.23 2006/04/15 04:06:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.24 2006/05/11 01:11:11 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -595,7 +595,7 @@ ntfs_attrtontvattr(
 		vap->va_compressalg = rap->a_nr.a_compressalg;
 		error = ntfs_runtovrun(&(vap->va_vruncn), &(vap->va_vruncl),
 				       &(vap->va_vruncnt),
-				       (caddr_t) rap + rap->a_nr.a_dataoff);
+				       (u_int8_t *) rap + rap->a_nr.a_dataoff);
 	} else {
 		vap->va_compressalg = 0;
 		ddprintf((", res."));
