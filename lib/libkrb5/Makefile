@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.35 2006/05/11 23:16:29 mrg Exp $
 
 NOLINT=		# defined
 
@@ -359,6 +359,13 @@ CPPFLAGS+= -I.					\
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DHAVE_IPV6
+.endif
+
+# XXX
+.if ${HAVE_GCC} == 4
+.for f in changepw crypto
+COPTS.${f}.c+=  -Wno-pointer-sign
+.endfor
 .endif
 
 CLEANFILES=	${ERR_FILES} krb5_err.h heim_err.h k524_err.h

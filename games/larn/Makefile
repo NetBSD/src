@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1999/02/13 02:54:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2006/05/11 23:16:28 mrg Exp $
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
@@ -67,10 +67,17 @@ DPADD=	${LIBTERM}
 LDADD=	-ltermcap
 HIDEGAME=hidegame
 SETGIDGAME=yes
+
 .if ${MKSHARE} != "no"
 DAT=larnmaze larnopts larn.help
 FILES=${DAT:S@^@${.CURDIR}/datfiles/@g}
 FILESDIR=/usr/share/games/larn
+.endif
+
+.if ${HAVE_GCC} == 4
+.for f in main display data io monster savelev
+COPTS.${f}.c+=  -Wno-pointer-sign
+.endfor
 .endif
 
 .include <bsd.prog.mk>

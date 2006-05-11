@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2006/03/23 20:14:17 wiz Exp $
+# $NetBSD: Makefile,v 1.19 2006/05/11 23:16:29 mrg Exp $
 
 NOLINT=		# defined
 
@@ -24,6 +24,10 @@ CPPFLAGS+= -I.					\
 	-I${DESTDIR}/usr/include/kadm5		\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
+
+.if ${HAVE_GCC} == 4
+COPTS.server.c+=	-Wno-pointer-sign
+.endif
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DHAVE_IPV6
