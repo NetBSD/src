@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.26 2006/03/19 16:48:36 elad Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.27 2006/05/11 09:27:06 mrg Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: serverloop.c,v 1.124 2005/12/13 15:03:02 reyk Exp $");
-__RCSID("$NetBSD: serverloop.c,v 1.26 2006/03/19 16:48:36 elad Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.27 2006/05/11 09:27:06 mrg Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -762,7 +762,8 @@ void
 server_loop2(Authctxt *authctxt)
 {
 	fd_set *readset = NULL, *writeset = NULL;
-	int rekeying = 0, max_fd, nalloc = 0;
+	int rekeying = 0, max_fd;
+	u_int nalloc = 0;
 
 	debug("Entering interactive session for SSH2.");
 
