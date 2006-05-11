@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.266 2006/04/09 01:52:06 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.267 2006/05/11 23:47:34 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -13,9 +13,10 @@ realinstall:	checkver libinstall
 clean:		cleanlib
 
 ##### LIB specific flags.
-COPTS+=    ${COPTS.lib${LIB}}
+COPTS+=     ${COPTS.lib${LIB}}
 CPPFLAGS+=  ${CPPFLAGS.lib${LIB}}
 CXXFLAGS+=  ${CXXFLAGS.lib${LIB}}
+OBJCOPTS+=  ${OBJCOPTS.lib${LIB}}
 LDADD+=     ${LDADD.lib${LIB}}
 LDFLAGS+=   ${LDFLAGS.lib${LIB}}
 LDSTATIC+=  ${LDSTATIC.lib${LIB}}
@@ -179,6 +180,7 @@ SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${DESTDIR}/usr/lib/crtn.o
 .endif
 
 CFLAGS+=	${COPTS}
+OBJCFLAGS+=	${OBJCOPTS}
 AFLAGS+=	${COPTS}
 FFLAGS+=	${FOPTS}
 
@@ -263,28 +265,28 @@ FFLAGS+=	${FOPTS}
 
 .m.o:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.m} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
 	${OBJCOPY} -x ${.TARGET}
 .endif
 
 .m.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} ${PROFFLAGS} -pg ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.m} ${PROFFLAGS} -pg ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
 	${OBJCOPY} -X ${.TARGET}
 .endif
 
 .m.go:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} ${DEBUGFLAGS} -g ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.m} ${DEBUGFLAGS} -g ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
 	${OBJCOPY} -X ${.TARGET}
 .endif
 
 .m.so:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.m} ${CSHLIBFLAGS} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
 	${OBJCOPY} -x ${.TARGET}
 .endif
