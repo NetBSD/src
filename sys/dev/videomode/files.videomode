@@ -1,5 +1,11 @@
-#	$NetBSD: files.videomode,v 1.2 2006/03/04 03:01:29 gdamore Exp $
+#	$NetBSD: files.videomode,v 1.3 2006/05/11 01:49:53 gdamore Exp $
 
-define videomode
+define	videomode
+define	edid
+define	vesagtf
 
-file	dev/videomode/videomode.c	videomode
+file	dev/videomode/videomode.c	videomode | edid
+
+file	dev/videomode/edid.c		edid
+
+file	dev/videomode/vesagtf.c		vesagtf | edid
