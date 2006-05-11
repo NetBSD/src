@@ -1,4 +1,4 @@
-/*	$NetBSD: isofs.c,v 1.5 2005/07/17 07:36:26 christos Exp $	*/
+/*	$NetBSD: isofs.c,v 1.6 2006/05/11 11:56:38 yamt Exp $	*/
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,47 +29,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isofs.c,v 1.5 2005/07/17 07:36:26 christos Exp $");
+__RCSID("$NetBSD: isofs.c,v 1.6 2006/05/11 11:56:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/stat.h>
 #include <sys/vnode.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/unpcb.h>
-#include <sys/sysctl.h>
-#include <sys/filedesc.h>
-#define	_KERNEL
-#include <sys/file.h>
 #include <sys/mount.h>
-#undef _KERNEL
-#define NFS
-#include <nfs/nfsproto.h>
-#include <nfs/rpcv2.h>
-#include <nfs/nfs.h>
-#include <nfs/nfsnode.h>
-#undef NFS
 
 #include <isofs/cd9660/iso.h>
 #include <isofs/cd9660/cd9660_extern.h>
 #include <isofs/cd9660/cd9660_node.h>
 
-#include <ctype.h>
-#include <errno.h>
 #include <kvm.h>
-#include <limits.h>
-#include <nlist.h>
-#include <paths.h>
-#include <pwd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <err.h>
 #include "fstat.h"
 
