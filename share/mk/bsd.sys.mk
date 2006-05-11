@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.128 2006/04/07 19:38:58 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.129 2006/05/11 23:47:34 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -18,8 +18,9 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 CFLAGS+=	-Wno-sign-compare -Wno-traditional
 .if !defined(HAVE_GCC) || (${HAVE_GCC} == 2)
 CFLAGS+=	-Wno-uninitialized
-.else
-CFLAGS+=	-Wno-packed
+.endif
+.if ${HAVE_GCC} > 3
+CFLAGS+=	-Wno-attributes #-Wno-packed
 .endif
 .endif
 .if ${WARNS} > 1
@@ -185,7 +186,7 @@ TOOL_ZIC?=		zic
 #  used for Objective C source)
 .m.o:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} ${.IMPSRC}
+	${COMPILE.m} ${OBJCOPTS} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC}
 
 # Host-compiled C objects
 # The intermediate step is necessary for Sun CC, which objects to calling
