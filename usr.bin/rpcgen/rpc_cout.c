@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_cout.c,v 1.28 2006/04/04 21:29:42 christos Exp $	*/
+/*	$NetBSD: rpc_cout.c,v 1.29 2006/05/11 17:11:57 mrg Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_cout.c 1.13 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_cout.c,v 1.28 2006/04/04 21:29:42 christos Exp $");
+__RCSID("$NetBSD: rpc_cout.c,v 1.29 2006/05/11 17:11:57 mrg Exp $");
 #endif
 #endif
 
@@ -258,7 +258,7 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 	switch (rel) {
 	case REL_POINTER:
 		print_ifopen(indent, "pointer");
-		print_ifarg("(char **)");
+		print_ifarg("(char **)(void *)");
 		f_print(fout, "%s", objname);
 		print_ifsizeof(prefix, type);
 		break;
@@ -298,7 +298,7 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 			} else {
 				print_ifopen(indent, "array");
 			}
-			print_ifarg("(char **)");
+			print_ifarg("(char **)(void *)");
 			if (*objname == '&') {
 				f_print(fout, "%s.%s_val, (u_int *)%s.%s_len",
 				    objname, name, objname, name);

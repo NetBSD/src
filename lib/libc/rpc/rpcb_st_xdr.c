@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_st_xdr.c,v 1.6 2003/09/09 03:56:40 itojun Exp $	*/
+/*	$NetBSD: rpcb_st_xdr.c,v 1.7 2006/05/11 17:11:57 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpcb_st_xdr.c,v 1.6 2003/09/09 03:56:40 itojun Exp $");
+__RCSID("$NetBSD: rpcb_st_xdr.c,v 1.7 2006/05/11 17:11:57 mrg Exp $");
 #endif
 
 #include "namespace.h"
@@ -84,7 +84,7 @@ xdr_rpcbs_addrlist(xdrs, objp)
 		return (FALSE);
 	    }
 
-	    if (!xdr_pointer(xdrs, (char **)&objp->next,
+	    if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
 			sizeof (rpcbs_addrlist),
 			(xdrproc_t)xdr_rpcbs_addrlist)) {
 		return (FALSE);
@@ -137,7 +137,7 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 	if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
 		return (FALSE);
 	}
-	if (!xdr_pointer(xdrs, (char **)&objp->next,
+	if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
 			sizeof (rpcbs_rmtcalllist),
 			(xdrproc_t)xdr_rpcbs_rmtcalllist)) {
 		return (FALSE);
@@ -175,7 +175,7 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 	if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
 		return (FALSE);
 	}
-	if (!xdr_pointer(xdrs, (char **)&objp->next,
+	if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
 			sizeof (rpcbs_rmtcalllist),
 			(xdrproc_t)xdr_rpcbs_rmtcalllist)) {
 		return (FALSE);
@@ -203,7 +203,7 @@ xdr_rpcbs_rmtcalllist(xdrs, objp)
 	if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
 		return (FALSE);
 	}
-	if (!xdr_pointer(xdrs, (char **)&objp->next,
+	if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
 			sizeof (rpcbs_rmtcalllist),
 			(xdrproc_t)xdr_rpcbs_rmtcalllist)) {
 		return (FALSE);
