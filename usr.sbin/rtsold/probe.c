@@ -1,4 +1,4 @@
-/*	$NetBSD: probe.c,v 1.9 2004/01/03 01:40:32 itojun Exp $	*/
+/*	$NetBSD: probe.c,v 1.10 2006/05/11 08:37:24 mrg Exp $	*/
 /*	$KAME: probe.c,v 1.15 2002/05/31 21:22:08 itojun Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ probe_init(void)
 void
 defrouter_probe(struct ifinfo *ifinfo)
 {
-	u_char ntopbuf[INET6_ADDRSTRLEN];
+	char ntopbuf[INET6_ADDRSTRLEN];
 	struct in6_drlist dr;
 	int s, i;
 	int ifindex = ifinfo->sdl->sdl_index;
@@ -139,7 +139,7 @@ closeandend:
 static void
 sendprobe(struct in6_addr *addr, struct ifinfo *ifinfo)
 {
-	u_char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
+	char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 	struct sockaddr_in6 sa6_probe;
 	struct in6_pktinfo *pi;
 	struct cmsghdr *cm;
