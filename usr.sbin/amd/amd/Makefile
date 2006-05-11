@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2005/04/23 18:41:43 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2006/05/11 09:08:09 mrg Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -26,6 +26,10 @@ SRCS+=	info_hesiod.c
 
 .if (${USE_YP} != "no")
 SRCS+=	info_nis.c
+.endif
+
+.if ${HAVE_GCC} == 4
+COPTS.amq_subr.c+=	-fno-strict-aliasing
 .endif
 
 # the following are not supported on NetBSD
