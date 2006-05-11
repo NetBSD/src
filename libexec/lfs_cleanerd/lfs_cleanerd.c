@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.5 2006/04/14 00:58:32 perseant Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.6 2006/05/11 12:26:38 mrg Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ reinit_fs(struct clfs *fs)
 {
 	char fsname[MNAMELEN];
 
-	strcpy(fsname, fs->lfs_fsmnt);
+	strncpy(fsname, (char *)fs->lfs_fsmnt, MNAMELEN);
 	close(fs->clfs_ifilefd);
 	close(fs->clfs_devfd);
 	fd_reclaim(fs->clfs_devvp);
@@ -245,7 +245,7 @@ init_fs(struct clfs *fs, char *fsname)
 	}
 
 	/* Assume fsname is the mounted name */
-	strncpy(fs->lfs_fsmnt, fsname, MNAMELEN);
+	strncpy((char *)fs->lfs_fsmnt, fsname, MNAMELEN);
 
 	/* Set up vnodes for Ifile and raw device */
 	fs->lfs_ivnode = fd_vget(fs->clfs_ifilefd, fs->lfs_bsize, 0, 0);
@@ -362,7 +362,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	u_int32_t ck, vers;
 	int fic, inoc, obic;
 	int i;
-	unsigned char *cp;
+	char *cp;
 
 	odaddr = daddr;
 	obic = *bic;
