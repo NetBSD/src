@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.12 2002/01/04 10:17:20 ad Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.13 2006/05/11 07:02:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.12 2002/01/04 10:17:20 ad Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.13 2006/05/11 07:02:01 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ void	getparam(int, int, void *, int);
 int	gettid(char **);
 int	main(int, char **);
 int	show(const char *, const char *, ...);
-void	i2ostrvis(const char *, int, char *, int);
+void	i2ostrvis(const u_char *, int, char *, int);
 void	usage(void);
 
 void	reconfig(char **);
@@ -428,7 +428,7 @@ showtidmap(char **argv)
 }
 
 void
-i2ostrvis(const char *src, int slen, char *dst, int dlen)
+i2ostrvis(const u_char *src, int slen, char *dst, int dlen)
 {
 	int hc, lc, i, nit;
 
