@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.74 2006/05/11 01:21:23 mrg Exp $	*/
+/*	$NetBSD: fstat.c,v 1.75 2006/05/11 11:56:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,14 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.74 2006/05/11 01:21:23 mrg Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.75 2006/05/11 11:56:38 yamt Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/socket.h>
