@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.c,v 1.2 2004/12/14 03:10:23 atatat Exp $	*/
+/*	$NetBSD: ptyfs.c,v 1.3 2006/05/11 11:56:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptyfs.c,v 1.2 2004/12/14 03:10:23 atatat Exp $");
+__RCSID("$NetBSD: ptyfs.c,v 1.3 2006/05/11 11:56:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
