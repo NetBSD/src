@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.49 2006/03/17 17:06:30 christos Exp $	*/
+/*	$NetBSD: printjob.c,v 1.50 2006/05/11 00:22:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.49 2006/03/17 17:06:30 christos Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.50 2006/05/11 00:22:53 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -581,7 +581,7 @@ print(int format, char *file)
 			for (n = 3; n < nofile; n++)
 				(void)close(n);
 			execl(_PATH_PR, "pr", width, length,
-			    "-h", *title ? title : " ", 0);
+			    "-h", *title ? title : " ", NULL);
 			syslog(LOG_ERR, "cannot execl %s", _PATH_PR);
 			exit(2);
 		}
@@ -1123,7 +1123,7 @@ sendmail(char *user, int bombed)
 			cp++;
 		else
 			cp = _PATH_SENDMAIL;
-		execl(_PATH_SENDMAIL, cp, "-t", 0);
+		execl(_PATH_SENDMAIL, cp, "-t", NULL);
 		_exit(0);
 	} else if (s > 0) {				/* parent */
 		dup2(p[1], 1);
@@ -1324,7 +1324,7 @@ setup_ofilter(int check_rflag)
 				cp = OF;
 			else
 				cp++;
-			execl(OF, cp, width, length, 0);
+			execl(OF, cp, width, length, NULL);
 			syslog(LOG_ERR, "%s: %s: %m", printer, OF);
 			exit(1);
 		}

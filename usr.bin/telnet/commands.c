@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.65 2006/05/05 00:03:22 rpaulo Exp $	*/
+/*	$NetBSD: commands.c,v 1.66 2006/05/11 00:25:46 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.65 2006/05/05 00:03:22 rpaulo Exp $");
+__RCSID("$NetBSD: commands.c,v 1.66 2006/05/11 00:25:46 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1388,9 +1388,9 @@ shell(int argc, char *argv[])
 	    else
 		shellname++;
 	    if (argc > 1)
-		execl(shellp, shellname, "-c", &saveline[1], 0);
+		execl(shellp, shellname, "-c", &saveline[1], NULL);
 	    else
-		execl(shellp, shellname, 0);
+		execl(shellp, shellname, NULL);
 	    perror("execl");
 	    _exit(1);
 	}

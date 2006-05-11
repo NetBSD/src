@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.28 2004/08/06 15:50:02 mycroft Exp $	*/
+/*	$NetBSD: server.c,v 1.29 2006/05/11 00:22:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.28 2004/08/06 15:50:02 mycroft Exp $");
+__RCSID("$NetBSD: server.c,v 1.29 2006/05/11 00:22:52 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1388,7 +1388,7 @@ dospecial(char *cmd)
 		(void) close(fd[1]);
 		setgid(groupid);
 		setuid(userid);
-		execl(_PATH_BSHELL, "sh", "-c", cmd, 0);
+		execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
 		_exit(127);
 	}
 	(void) close(fd[1]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.28 2006/04/03 16:13:34 tls Exp $	*/
+/*	$NetBSD: cmds.c,v 1.29 2006/05/11 00:22:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.28 2006/04/03 16:13:34 tls Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.29 2006/05/11 00:22:53 mrg Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -586,7 +586,7 @@ shell(char dummy)
 			cp = value(SHELL);
 		else
 			cp++;
-		execl(value(SHELL), cp, 0);
+		execl(value(SHELL), cp, NULL);
 		fprintf(stderr, "\r\n");
 		err(1, "can't execl");
 		/* NOTREACHED */
@@ -687,7 +687,7 @@ execute(char *s)
 		cp = value(SHELL);
 	else
 		cp++;
-	execl(value(SHELL), cp, "-c", s, 0);
+	execl(value(SHELL), cp, "-c", s, NULL);
 }
 
 int
@@ -875,7 +875,7 @@ expand(char name[])
 		dup(pivec[1]);
 		close(pivec[1]);
 		close(2);
-		execl(Shell, Shell, "-c", cmdbuf, 0);
+		execl(Shell, Shell, "-c", cmdbuf, NULL);
 		_exit(1);
 	}
 	if (mypid == -1) {
