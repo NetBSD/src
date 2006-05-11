@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/12/04 16:41:57 drochner Exp $
+#	$NetBSD: Makefile,v 1.10 2006/05/11 07:13:24 mrg Exp $
 
 PROG=	ntpd
 MAN=	ntpd.8
@@ -22,6 +22,8 @@ SRCS=	jupiter.h cmd_args.c map_vme.c ntp_config.c ntp_control.c \
 	refclock_zyfer.c
 
 .include <bsd.own.mk>
+
+COPTS+=	-Wno-pointer-sign -fno-strict-aliasing
 
 LIBPARSE!=	cd ${.CURDIR}/../libparse && ${PRINTOBJDIR}
 LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -lisc
