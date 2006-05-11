@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2006/03/23 21:51:14 wiz Exp $
+# $NetBSD: Makefile,v 1.13 2006/05/11 23:16:30 mrg Exp $
 
 NOLINT= # defined
 
@@ -26,6 +26,10 @@ CPPFLAGS+= -I.					\
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DHAVE_IPV6
+.endif
+
+.if ${HAVE_GCC} == 4
+COPTS.mit_dump.c+=	-Wno-pointer-sign
 .endif
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}

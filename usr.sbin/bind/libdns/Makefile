@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/11/11 00:34:05 he Exp $
+#	$NetBSD: Makefile,v 1.3 2006/05/11 23:16:30 mrg Exp $
 
 LIB=dns
 
@@ -16,6 +16,12 @@ CPPFLAGS+=-I${.CURDIR}/../include/dns -I${DIST}
 .if ${MACHINE_CPU} == "sh5"
 COPTS.rbtdb.c=		-O1
 COPTS.rbtdb64.c=	-O1
+.endif
+
+.if ${HAVE_GCC} == 4
+.for f in lookup byaddr request sdb validator
+COPTS.${f}.c+=  -Wno-pointer-sign -fno-strict-aliasing
+.endfor
 .endif
 
 DNSSEC_SRCS=	dst_api.c dst_lib.c dst_parse.c dst_result.c \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2005/06/26 19:10:49 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2006/05/11 23:16:28 mrg Exp $
 #	$OpenBSD: Makefile,v 1.4 2002/06/05 17:34:56 mickey Exp $
 
 .include <bsd.own.mk>
@@ -16,5 +16,9 @@ SRCS=	cradle.c filter.c intercept-translate.c intercept.c \
 CPPFLAGS+= -I. -I${.CURDIR} -I${NETBSDSRCDIR}/sys
 
 YHEADER=yes
+
+.if ${HAVE_GCC} == 4
+COPTS.intercept.c+=   -Wno-pointer-sign
+.endif
 
 .include <bsd.prog.mk>

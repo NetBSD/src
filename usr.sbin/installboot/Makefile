@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2006/02/18 14:54:53 dsl Exp $
+#	$NetBSD: Makefile,v 1.35 2006/05/11 23:16:30 mrg Exp $
 #
 
 .include <bsd.own.mk>
@@ -47,6 +47,12 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 # XXX
 .if ${MACHINE_ARCH} == "m68000"
 COPTS.ffs.c=	-O0
+.endif
+
+.if ${HAVE_GCC} == 4
+.for f in i386 macppc
+COPTS.${f}.c+=  -Wno-pointer-sign
+.endfor
 .endif
 
 .include <bsd.prog.mk>
