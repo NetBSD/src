@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.80 2006/05/11 00:46:57 mrg Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.81 2006/05/11 22:24:48 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -25,7 +25,7 @@ CPPFLAGS+=	-D_KERNEL -D_LKM
 
 # XXX until the kernel is fixed again...
 .if ${HAVE_GCC} == 4
-CFLAGS+=	-fno-strict-aliasing
+CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 .endif
 
 _YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
