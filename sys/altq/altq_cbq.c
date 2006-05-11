@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.12.10.2 2006/03/10 13:29:35 elad Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.12.10.3 2006/05/11 23:26:17 elad Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.12.10.2 2006/03/10 13:29:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.12.10.3 2006/05/11 23:26:17 elad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -617,19 +617,16 @@ cbq_ifattach(ifacep)
 		return (ENXIO);
 
 	/* allocate and initialize cbq_state_t */
-	MALLOC(new_cbqp, cbq_state_t *, sizeof(cbq_state_t), M_DEVBUF, M_WAITOK);
+	new_cbqp = malloc(sizeof(cbq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (new_cbqp == NULL)
 		return (ENOMEM);
-	(void)memset(new_cbqp, 0, sizeof(cbq_state_t));
  	CALLOUT_INIT(&new_cbqp->cbq_callout);
-	MALLOC(new_cbqp->cbq_class_tbl, struct rm_class **,
-	       sizeof(struct rm_class *) * CBQ_MAX_CLASSES, M_DEVBUF, M_WAITOK);
+	new_cbqp->cbq_class_tbl = malloc(sizeof(struct rm_class *) *
+	    CBQ_MAX_CLASSES, M_DEVBUF, M_WAITOK|M_ZERO);
 	if (new_cbqp->cbq_class_tbl == NULL) {
-		FREE(new_cbqp, M_DEVBUF);
+		free(new_cbqp, M_DEVBUF);
 		return (ENOMEM);
 	}
-	(void)memset(new_cbqp->cbq_class_tbl, 0,
-	    sizeof(struct rm_class *) * CBQ_MAX_CLASSES);
 	new_cbqp->cbq_qlen = 0;
 	new_cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */
 
@@ -640,8 +637,8 @@ cbq_ifattach(ifacep)
 			    cbq_enqueue, cbq_dequeue, cbq_request,
 			    &new_cbqp->cbq_classifier, acc_classify);
 	if (error) {
-		FREE(new_cbqp->cbq_class_tbl, M_DEVBUF);
-		FREE(new_cbqp, M_DEVBUF);
+		free(new_cbqp->cbq_class_tbl, M_DEVBUF);
+		free(new_cbqp, M_DEVBUF);
 		return (error);
 	}
 
@@ -692,8 +689,8 @@ cbq_ifdetach(ifacep)
 	}
 
 	/* deallocate cbq_state_t */
-	FREE(cbqp->cbq_class_tbl, M_DEVBUF);
-	FREE(cbqp, M_DEVBUF);
+	free(cbqp->cbq_class_tbl, M_DEVBUF);
+	free(cbqp, M_DEVBUF);
 
 	return (0);
 }

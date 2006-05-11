@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.193.4.3 2006/05/06 23:32:58 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.193.4.4 2006/05/11 23:32:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.4.3 2006/05/06 23:32:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.193.4.4 2006/05/11 23:32:03 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1054,6 +1054,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		fs->lfs_tstamp = fs->lfs_otstamp;
 		fs->lfs_fsbtodb = 0;
 	}
+	if (fs->lfs_resvseg == 0)
+		fs->lfs_resvseg = MIN(fs->lfs_minfreeseg - 1, \
+			MAX(MIN_RESV_SEGS, fs->lfs_minfreeseg / 2 + 1));
 
 	/*
 	 * If we aren't going to be able to write meaningfully to this
@@ -1071,8 +1074,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 
 	/* Before rolling forward, lock so vget will sleep for other procs */
-	fs->lfs_flags = LFS_NOTYET;
-	fs->lfs_rfpid = p->p_pid;
+	if (p) {
+		fs->lfs_flags = LFS_NOTYET;
+		fs->lfs_rfpid = p->p_pid;
+	}
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK | M_ZERO);
 	ump->um_lfs = fs;
@@ -1148,6 +1153,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	TAILQ_INIT(&fs->lfs_dchainhd);
 	/* and paging tailq */
 	TAILQ_INIT(&fs->lfs_pchainhd);
+	/* and delayed segment accounting for truncation list */
+	LIST_INIT(&fs->lfs_segdhd);
 
 	/*
 	 * We use the ifile vnode for almost every operation.  Instead of
@@ -1212,7 +1219,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * monotonically increasing serial number instead of a timestamp.
 	 */
 	do_rollforward = (!(fs->lfs_pflags & LFS_PF_CLEAN) &&
-			  lfs_do_rfw && fs->lfs_version > 1);
+			  lfs_do_rfw && fs->lfs_version > 1 && p != NULL);
 	if (do_rollforward) {
 		u_int64_t nextserial;
 		/*
@@ -1512,9 +1519,25 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 	fs = VFSTOUFS(mp)->um_lfs;
 	if (fs->lfs_ronly)
 		return 0;
+
+	/* Snapshots should not hose the syncer */
+	/*
+	 * XXX Sync can block here anyway, since we don't have a very
+	 * XXX good idea of how much data is pending.  If it's more
+	 * XXX than a segment and lfs_nextseg is close to the end of
+	 * XXX the log, we'll likely block.
+	 */
+	simple_lock(&fs->lfs_interlock);
+	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+		simple_unlock(&fs->lfs_interlock);
+		return 0;
+	}
+	simple_unlock(&fs->lfs_interlock);
+
 	lfs_writer_enter(fs, "lfs_dirops");
 
 	/* All syncs must be checkpoints until roll-forward is implemented. */
+	DLOG((DLOG_FLUSH, "lfs_sync at 0x%x\n", fs->lfs_offset));
 	error = lfs_segwrite(mp, SEGM_CKP | (waitfor ? SEGM_SYNC : 0));
 	lfs_writer_leave(fs);
 #ifdef QUOTA
@@ -1544,6 +1567,8 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	dev_t dev;
 	int error, retries;
 	struct timespec ts;
+
+	memset(&ts, 0, sizeof ts);	/* XXX gcc */
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;

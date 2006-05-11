@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.106.4.3 2006/05/06 23:31:31 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.106.4.4 2006/05/11 23:30:15 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.106.4.3 2006/05/06 23:31:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.106.4.4 2006/05/11 23:30:15 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -605,9 +605,7 @@ vn_fcntl(struct file *fp, u_int com, void *data, struct lwp *l)
 	struct vnode *vp = ((struct vnode *)fp->f_data);
 	int error;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FCNTL(vp, com, data, fp->f_flag, l->l_proc->p_cred, l);
-	VOP_UNLOCK(vp, 0);
 	return (error);
 }
 

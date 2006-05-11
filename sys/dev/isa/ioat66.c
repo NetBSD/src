@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.12 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.12.10.1 2006/05/11 23:28:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.12 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.12.10.1 2006/05/11 23:28:47 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ int ioat66probe(struct device *, struct cfdata *, void *);
 void ioat66attach(struct device *, struct device *, void *);
 int ioat66intr(void *);
 
-CFATTACH_DECL(ioat, sizeof(struct ioat_softc),
+CFATTACH_DECL(ioat, sizeof(struct ioat66_softc),
     ioat66probe, ioat66attach, NULL, NULL);
 
 int
@@ -82,11 +82,15 @@ ioat66probe(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	int iobase;
 	int i, rv = 1;
 
+	if (ia->ia_niomem < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
 	/*
 	 * Do the normal com probe for the first UART and assume
 	 * its presence, and the ability to map the other UARTS,
@@ -95,9 +99,13 @@ ioat66probe(parent, self, aux)
 	 */
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISA_UNKNOWN_PORT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
+		return 0;
+
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
+	iobase = ia->ia_io[0].ir_addr;
 	/* if the first port is in use as console, then it. */
 	if (com_is_console(iot, iobase, 0))
 		goto checkmappings;
@@ -126,8 +134,13 @@ checkmappings:
 	}
 
 out:
-	if (rv)
-		ia->ia_iosize = NSLAVES * COM_NPORTS;
+	if (rv) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = NSLAVES * COM_NPORTS;
+		ia->ia_nirq = 1;
+		ia->ia_niomem = 0;
+		ia->ia_ndrq = 0;
+	}
 	return (rv);
 }
 
@@ -140,12 +153,13 @@ ioat66attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
 	bus_space_tag_t iot = ia->ia_iot;
-	int i, iobase;
+	int i, iobase, irq;
 
 	printf("\n");
 
 	sc->sc_iot = ia->ia_iot;
-	sc->sc_iobase = ia->ia_iobase;
+	sc->sc_iobase = ia->ia_io[0].ir_addr;
+	irq = ia->ia_irq[0].ir_irq;
 
 	for (i = 0; i < NSLAVES; i++) {
 		iobase = ioatbases[i];
@@ -177,7 +191,7 @@ ioat66attach(parent, self, aux)
 			sc->sc_alive |= 1 << i;
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, irq, IST_EDGE,
 	    IPL_SERIAL, ioat66intr, sc);
 }
 

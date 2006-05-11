@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.12.10.2 2006/03/10 13:29:35 elad Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.12.10.3 2006/05/11 23:26:17 elad Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12.10.2 2006/03/10 13:29:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.12.10.3 2006/05/11 23:26:17 elad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -213,15 +213,28 @@ blueioctl(dev, cmd, addr, flag, l)
 		}
 
 		/* allocate and initialize blue_state_t */
-		MALLOC(rqp, blue_queue_t *, sizeof(blue_queue_t), M_DEVBUF, M_WAITOK);
-		(void)memset(rqp, 0, sizeof(blue_queue_t));
+		rqp = malloc(sizeof(blue_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
+		if (rqp == NULL) {
+			error = ENOMEM;
+			break;
+		}
 
-		MALLOC(rqp->rq_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
-		(void)memset(rqp->rq_q, 0, sizeof(class_queue_t));
+		rqp->rq_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
+		if (rqp->rq_q == NULL) {
+			free(rqp, M_DEVBUF);
+			error = ENOMEM;
+			break;
+		}
 
-		MALLOC(rqp->rq_blue, blue_t *, sizeof(blue_t), M_DEVBUF, M_WAITOK);
-		(void)memset(rqp->rq_blue, 0, sizeof(blue_t));
+		rqp->rq_blue = malloc(sizeof(blue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
+		if (rqp->rq_blue == NULL) {
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
+			error = ENOMEM;
+			break;
+		}
 
 		rqp->rq_ifq = &ifp->if_snd;
 		qtail(rqp->rq_q) = NULL;
@@ -238,9 +251,9 @@ blueioctl(dev, cmd, addr, flag, l)
 				    blue_enqueue, blue_dequeue, blue_request,
 				    NULL, NULL);
 		if (error) {
-			FREE(rqp->rq_blue, M_DEVBUF);
-			FREE(rqp->rq_q, M_DEVBUF);
-			FREE(rqp, M_DEVBUF);
+			free(rqp->rq_blue, M_DEVBUF);
+			free(rqp->rq_q, M_DEVBUF);
+			free(rqp, M_DEVBUF);
 			break;
 		}
 
@@ -346,9 +359,9 @@ static int blue_detach(rqp)
 			printf("blue_detach: no state found in blue_list!\n");
 	}
 
-	FREE(rqp->rq_q, M_DEVBUF);
-	FREE(rqp->rq_blue, M_DEVBUF);
-	FREE(rqp, M_DEVBUF);
+	free(rqp->rq_q, M_DEVBUF);
+	free(rqp->rq_blue, M_DEVBUF);
+	free(rqp, M_DEVBUF);
 	return (error);
 }
 

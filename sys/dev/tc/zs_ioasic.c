@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.29.10.1 2006/04/19 03:26:22 elad Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.29.10.2 2006/05/11 23:29:59 elad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.29.10.1 2006/04/19 03:26:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.29.10.2 2006/05/11 23:29:59 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -286,7 +286,7 @@ zs_ioasic_attach(struct device *parent, struct device *self, void *aux)
 			zflg = 0;
 		if (channel == 1)
 			zflg |= ZIP_FLAGS_DTRRTS;
-		(u_long)cs->cs_private = zflg;
+		cs->cs_private = (void *)zflg;
 
 		/*
 		 * Clear the master interrupt enable.
@@ -753,7 +753,7 @@ zs_ioasic_cninit(tc_addr_t ioasic_addr, tc_offset_t zs_offset, int channel)
 		zflg = 0;
 	if (channel == 1)
 		zflg |= ZIP_FLAGS_DTRRTS;
-	(u_long)cs->cs_private = zflg;
+	cs->cs_private = (void *)zflg;
 
 	/* Clear the master interrupt enable. */
 	zs_write_reg(cs, 9, 0);

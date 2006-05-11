@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.151.4.5 2006/05/06 23:31:26 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.151.4.6 2006/05/11 23:27:31 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151.4.5 2006/05/06 23:31:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.151.4.6 2006/05/11 23:27:31 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,14 +374,14 @@ linux_sys_statfs(l, v, retval)
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statvfs btmp, *bsp;
+	struct statvfs *btmp, *bsp;
 	struct linux_statfs ltmp;
 	struct sys_statvfs1_args bsa;
 	caddr_t sg;
 	int error;
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -392,12 +392,16 @@ linux_sys_statfs(l, v, retval)
 	if ((error = sys_statvfs1(l, &bsa, retval)))
 		return error;
 
-	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
-		return error;
-
-	bsd_to_linux_statfs(&btmp, &ltmp);
-
-	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+	btmp = STATVFSBUF_GET();
+	error = copyin(bsp, btmp, sizeof(*btmp));
+	if (error) {
+		goto out;
+	}
+	bsd_to_linux_statfs(btmp, &ltmp);
+	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
+out:
+	STATVFSBUF_PUT(btmp);
+	return error;
 }
 
 int
@@ -411,14 +415,14 @@ linux_sys_fstatfs(l, v, retval)
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statvfs btmp, *bsp;
+	struct statvfs *btmp, *bsp;
 	struct linux_statfs ltmp;
 	struct sys_fstatvfs1_args bsa;
 	caddr_t sg;
 	int error;
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	SCARG(&bsa, fd) = SCARG(uap, fd);
 	SCARG(&bsa, buf) = bsp;
@@ -427,12 +431,16 @@ linux_sys_fstatfs(l, v, retval)
 	if ((error = sys_fstatvfs1(l, &bsa, retval)))
 		return error;
 
-	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
-		return error;
-
-	bsd_to_linux_statfs(&btmp, &ltmp);
-
-	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+	btmp = STATVFSBUF_GET();
+	error = copyin(bsp, btmp, sizeof(*btmp));
+	if (error) {
+		goto out;
+	}
+	bsd_to_linux_statfs(btmp, &ltmp);
+	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
+out:
+	STATVFSBUF_PUT(btmp);
+	return error;
 }
 # endif /* !__amd64__ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.8.10.1 2006/04/19 04:33:30 elad Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.8.10.2 2006/05/11 23:30:14 elad Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1540,6 +1540,7 @@ typedef	struct ip6_hdr	ip6_t;
 
 #if defined(_KERNEL)
 # ifdef BSD
+#  include <sys/selinfo.h>
 extern struct selinfo ipfselwait[];
 # endif
 # ifdef MENTAT
@@ -1745,7 +1746,7 @@ typedef	struct	tcpiphdr	tcpiphdr_t;
 # define	IP_HL(x)	(x)->ip_hl
 #endif
 #ifndef	IP_HL_A
-# define	IP_HL_A(x,y)	(x)->ip_hl = (y)
+# define	IP_HL_A(x,y)	(x)->ip_hl = ((y) & 0xf)
 #endif
 #ifndef	TCP_X2
 # define	TCP_X2(x)	(x)->th_x2

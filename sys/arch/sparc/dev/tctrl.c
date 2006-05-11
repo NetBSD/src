@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.30.2.3 2006/04/19 02:33:44 elad Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.30.2.4 2006/05/11 23:27:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.30.2.3 2006/04/19 02:33:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.30.2.4 2006/05/11 23:27:03 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1533,18 +1533,18 @@ tctrl_event_thread(void *v)
 			tsleep(&sc->sc_events, PWAIT, "probe_disk", hz);
 	}			
 	printf("found %s\n", sd->sc_dev.dv_xname);
-	rcount = sd->sc_dk.dk_stats->rxfer;
-	wcount = sd->sc_dk.dk_stats->wxfer;
+	rcount = sd->sc_dk.dk_stats->io_rxfer;
+	wcount = sd->sc_dk.dk_stats->io_wxfer;
 
 	tctrl_read_event_status(sc);
 	
 	while (1) {
 		tsleep(&sc->sc_events, PWAIT, "tctrl_event", ticks);
 		s = splhigh();
-		if ((rcount != sd->sc_dk.dk_stats->rxfer) || 
-		    (wcount != sd->sc_dk.dk_stats->wxfer)) {
-			rcount = sd->sc_dk.dk_stats->rxfer;
-			wcount = sd->sc_dk.dk_stats->wxfer;
+		if ((rcount != sd->sc_dk.dk_stats->io_rxfer) || 
+		    (wcount != sd->sc_dk.dk_stats->io_wxfer)) {
+			rcount = sd->sc_dk.dk_stats->io_rxfer;
+			wcount = sd->sc_dk.dk_stats->io_wxfer;
 			sc->sc_lcdwanted |= TS102_LCD_DISK_ACTIVE;
 		} else
 			sc->sc_lcdwanted &= ~TS102_LCD_DISK_ACTIVE;

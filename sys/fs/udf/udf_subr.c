@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.5.4.1 2006/03/08 01:31:33 elad Exp $ */
+/* $NetBSD: udf_subr.c,v 1.5.4.2 2006/05/11 23:30:14 elad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.5.4.1 2006/03/08 01:31:33 elad Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.5.4.2 2006/05/11 23:30:14 elad Exp $");
 #endif /* not lint */
 
 
@@ -215,7 +215,7 @@ udf_validate_tag_sum(void *blob)
 
 /* --------------------------------------------------------------------- */
 
-/* assumes sector number of descriptor to be saved allready present */
+/* assumes sector number of descriptor to be saved already present */
 
 int
 udf_validate_tag_and_crc_sums(void *blob)

@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.1.4.2 2006/04/19 02:33:08 elad Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.1.4.3 2006/05/11 23:26:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD$: src/sys/boot/efi/libefi/efiboot.h,v 1.8 2003/08/02 08:22:03 marcel Exp $
  */
 
 /*

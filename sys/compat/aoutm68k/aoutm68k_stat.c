@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.13 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.13.10.1 2006/05/11 23:27:30 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.13 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.13.10.1 2006/05/11 23:27:30 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -336,7 +336,7 @@ aoutm68k_sys_fhstat(l, v, retval)
 	struct aoutm68k_sys_fhstat_args *uap = v;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct sys_fhstat_args cup;
+	struct sys___fhstat30_args cup;
 	struct aoutm68k_stat ast;
 	struct stat st;
 	int error;
@@ -344,7 +344,7 @@ aoutm68k_sys_fhstat(l, v, retval)
 	SCARG(&cup, fhp) = SCARG(uap, fhp);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
 
-	if ((error = sys_fhstat(l, &cup, retval)) != 0 ||
+	if ((error = sys___fhstat30(l, &cup, retval)) != 0 ||
 	    (error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return (error);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.19 2005/12/11 12:21:25 christos Exp $ */
+/* $NetBSD: atppc.c,v 1.19.10.1 2006/05/11 23:28:30 elad Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.19 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.19.10.1 2006/05/11 23:28:30 elad Exp $");
 
 #include "opt_atppc.h"
 
@@ -615,10 +615,6 @@ atppcintr(void *arg)
 	struct device *dev = &atppc->sc_dev;
 	int claim = 1;
 	enum { NONE, READER, WRITER } wake_up = NONE;
-	int s;
-
-	s = splatppc();
-	ATPPC_LOCK(atppc);
 
 	/* Record registers' status */
 	atppc->sc_str_intr = atppc_r_str(atppc);
@@ -719,8 +715,6 @@ atppcintr(void *arg)
 		}
 	}
 
-	ATPPC_UNLOCK(atppc);
-
 	/* Call all of the installed handlers */
 	if (claim) {
 		struct atppc_handler_node * callback;
@@ -729,8 +723,6 @@ atppcintr(void *arg)
 				(*callback->func)(callback->arg);
 		}
 	}
-
-	splx(s);
 
 	return claim;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.13 2005/12/24 20:07:37 perry Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.13.10.1 2006/05/11 23:27:04 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.13 2005/12/24 20:07:37 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.13.10.1 2006/05/11 23:27:04 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,7 +474,7 @@ OF_read(int handle, void *addr, int len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-	for (; len > 0; len -= l, (u_long)addr += l) {
+	for (; len > 0; len -= l) {
 		l = MIN(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
@@ -514,7 +514,7 @@ OF_write(int handle, const void *addr, int len)
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-	for (; len > 0; len -= l, (u_long)addr += l) {
+	for (; len > 0; len -= l) {
 		l = MIN(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)

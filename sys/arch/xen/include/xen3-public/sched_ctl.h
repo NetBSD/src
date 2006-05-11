@@ -1,4 +1,4 @@
-/* $NetBSD: sched_ctl.h,v 1.1.1.1.10.1 2006/04/19 02:34:03 elad Exp $ */
+/* $NetBSD: sched_ctl.h,v 1.1.1.1.10.2 2006/05/11 23:27:14 elad Exp $ */
 /******************************************************************************
  * Generic scheduler control interface.
  *
@@ -35,24 +35,20 @@ struct sched_adjdom_cmd {
     uint32_t direction;
     domid_t  domain;
     union {
-        struct bvt_adjdom
-        {
+        struct bvt_adjdom {
             uint32_t mcu_adv;      /* mcu advance: inverse of weight */
             uint32_t warpback;     /* warp? */
             int32_t  warpvalue;    /* warp value */
             int64_t  warpl;        /* warp limit */
             int64_t  warpu;        /* unwarp time requirement */
         } bvt;
-        
-        struct sedf_adjdom
-        {
+        struct sedf_adjdom {
             uint64_t period;
             uint64_t slice;
             uint64_t latency;
             uint32_t extratime;
             uint32_t weight;
         } sedf;
-
     } u;
 };
 

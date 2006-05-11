@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43.2.1 2006/04/19 04:01:24 elad Exp $
+	$NetBSD: syscalls.master,v 1.43.2.2 2006/05/11 23:27:31 elad Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -489,8 +489,8 @@
 297	STD		{ int netbsd32_fchroot(int fd); }
 298	STD		{ int netbsd32_fhopen(const netbsd32_fhandlep_t fhp, \
 			   int flags); }
-299	STD		{ int netbsd32_fhstat(const netbsd32_fhandlep_t fhp, \
-			    netbsd32_statp_t sb); }
+299	COMPAT_30	{ int netbsd32_fhstat(const netbsd32_fhandlep_t fhp, \
+			    netbsd32_stat13p_t sb); }
 300	COMPAT_20	{ int netbsd32_fhstatfs(netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
@@ -670,3 +670,8 @@
 			    const netbsd32_charp path, netbsd32_statp_t ub); }
 390     STD             { int netbsd32_sys___getdents30(int fd, \
 			    netbsd32_charp buf, netbsd32_size_t count); }
+391	NOARGS		{ int sys_posix_fadvise(int fd, off_t offset, \
+			    off_t len, int advice); }
+392	STD		{ int netbsd32_sys___fhstat30( \
+			    const netbsd32_fhandlep_t fhp, \
+			    netbsd32_statp_t sb); }

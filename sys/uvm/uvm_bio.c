@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.44.4.1 2006/04/19 03:58:21 elad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.44.4.2 2006/05/11 23:32:03 elad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.44.4.1 2006/04/19 03:58:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.44.4.2 2006/05/11 23:32:03 elad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -359,14 +359,20 @@ again:
 		    pg->offset < umap->writeoff ||
 		    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
 		mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
-		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
-		    prot & mask, access_type & mask);
+		error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
+		    prot & mask, PMAP_CANFAIL | (access_type & mask));
 		uvm_lock_pageq();
 		uvm_pageactivate(pg);
 		uvm_unlock_pageq();
 		pg->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		simple_unlock(&uobj->vmobjlock);
+		if (error) {
+			UVMHIST_LOG(ubchist, "pmap_enter fail %d",
+			    error, 0, 0, 0);
+			uvm_wait("ubc_pmfail");
+			/* will refault */
+		}
 	}
 	pmap_update(ufi->orig_map->pmap);
 	return 0;

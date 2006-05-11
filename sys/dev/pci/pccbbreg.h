@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.9 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.9.10.1 2006/05/11 23:28:48 elad Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -217,8 +217,8 @@
 #define CB_SOCKET_STAT_YVCARD 0x02000 /* Y.Y V Card */
 #define CB_SOCKET_STAT_5VSOCK 0x10000000 /* 5 V Socket */
 #define CB_SOCKET_STAT_3VSOCK 0x20000000 /* 3.3 V Socket */
-#define CB_SOCKET_STAT_XVSOCK 0x20000000 /* X.X V Socket */
-#define CB_SOCKET_STAT_YVSOCK 0x20000000 /* Y.Y V Socket */
+#define CB_SOCKET_STAT_XVSOCK 0x40000000 /* X.X V Socket */
+#define CB_SOCKET_STAT_YVSOCK 0x80000000 /* Y.Y V Socket */
 
 /* socket force event register (CB_SOCKET_FORCE) elements */
 #define CB_SOCKET_FORCE_BADVCC 0x0200 /* Bad Vcc Request */

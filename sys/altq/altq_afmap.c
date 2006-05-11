@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.9.10.2 2006/03/10 13:29:34 elad Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.9.10.3 2006/05/11 23:26:17 elad Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9.10.2 2006/03/10 13:29:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9.10.3 2006/05/11 23:26:17 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -80,11 +80,9 @@ afm_alloc(ifp)
 {
 	struct afm_head *head;
 
-	MALLOC(head, struct afm_head *, sizeof(struct afm_head),
-	       M_DEVBUF, M_WAITOK);
+	head = malloc(sizeof(struct afm_head), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (head == NULL)
 		panic("afm_alloc: malloc failed!");
-	(void)memset(head, 0, sizeof(struct afm_head));
 
 	/* initialize per interface afmap list */
 	LIST_INIT(&head->afh_head);
@@ -114,7 +112,7 @@ afm_dealloc(ifp)
 
 	LIST_REMOVE(head, afh_chain);
 
-	FREE(head, M_DEVBUF);
+	free(head, M_DEVBUF);
 	return 0;
 }
 
@@ -159,11 +157,9 @@ int afm_add(ifp, flowmap)
 	} else
 		return (EINVAL);
 
-	MALLOC(afm, struct afm *, sizeof(struct afm),
-	       M_DEVBUF, M_WAITOK);
+	afm = malloc(sizeof(struct afm), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (afm == NULL)
 		return (ENOMEM);
-	(void)memset(afm, 0, sizeof(struct afm));
 
 	afm->afm_vci = flowmap->af_vci;
 	afm->afm_vpi = flowmap->af_vpi;
@@ -179,7 +175,7 @@ afm_remove(afm)
 	struct afm *afm;
 {
 	LIST_REMOVE(afm, afm_list);
-	FREE(afm, M_DEVBUF);
+	free(afm, M_DEVBUF);
 	return (0);
 }
 

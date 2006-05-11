@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.163.10.3 2006/05/06 23:31:58 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.163.10.4 2006/05/11 23:31:08 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163.10.3 2006/05/06 23:31:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.163.10.4 2006/05/11 23:31:08 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -1173,8 +1173,6 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
 		rt_ifmsg(ifp);
-		log(LOG_NOTICE, "%s: link state changed to %s\n", ifp->if_xname,
-		    (link_state == LINK_STATE_UP) ? "UP" : "DOWN" );
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.91.10.1 2006/04/19 03:25:08 elad Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.91.10.2 2006/05/11 23:28:31 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.91.10.1 2006/04/19 03:25:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.91.10.2 2006/05/11 23:28:31 elad Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -1310,10 +1310,8 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 			/*nsegments*/ dbch->ndesc > 3 ? dbch->ndesc - 2 : 1,
 			/*maxsegsz*/ MAX_REQCOUNT,
 			/*flags*/ 0,
-#if defined(__FreeBSD__) && __FreeBSD_version >= 501102
 			/*lockfunc*/busdma_lock_mutex,
 			/*lockarg*/&Giant,
-#endif
 			&dbch->dmat))
 		return;
 
@@ -1330,7 +1328,7 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 
 #define DB_SIZE(x) (sizeof(struct fwohcidb) * (x)->ndesc)
 	dbch->am = fwdma_malloc_multiseg(&sc->fc, DB_SIZE(dbch),
-		DB_SIZE(dbch), dbch->ndb, BUS_DMA_WAITOK);
+		DB_SIZE(dbch), dbch->ndb, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (dbch->am == NULL) {
 		printf("fwohci_db_init: fwdma_malloc_multiseg failed\n");
 		free(db_tr, M_FW);
@@ -1344,10 +1342,8 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 		/* create dmamap for buffers */
 		/* XXX do we need 4bytes alignment tag? */
 		/* XXX don't alloc dma_map for AR */
-		if (bus_dmamap_create(sc->fc.dmat, dbch->xferq.psize,
-		    dbch->ndesc > 3 ? dbch->ndesc - 2 : 1, MAX_REQCOUNT,
-		    0, BUS_DMA_NOWAIT, &db_tr->dma_map) != 0) {
-			printf("bus_dmamap_create failed\n");
+		if (fw_bus_dmamap_create(dbch->dmat, 0, &db_tr->dma_map) != 0) {
+			printf("fw_bus_dmamap_create failed\n");
 			dbch->flags = FWOHCI_DBCH_INIT; /* XXX fake */
 			fwohci_db_free(dbch);
 			return;
@@ -1838,8 +1834,8 @@ fwohci_power(int why, void *arg)
 
 	s = splbio();
 	switch (why) {
-		case PWR_SUSPEND:
-		case PWR_STANDBY:
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		fwohci_stop(arg);
 		break;
 	case PWR_RESUME:
@@ -2704,7 +2700,7 @@ fwohci_add_tx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 	FWOHCI_DMA_WRITE(db[0].db.desc.addr, 0);
 	bzero((void *)&db[1].db.immed[0], sizeof(db[1].db.immed));
 	FWOHCI_DMA_WRITE(db[2].db.desc.addr,
-	fwdma_bus_addr(it->buf, poffset) + sizeof(uint32_t));
+	    fwdma_bus_addr(it->buf, poffset) + sizeof(uint32_t));
 
 	FWOHCI_DMA_WRITE(db[2].db.desc.cmd,
 		OHCI_OUTPUT_LAST | OHCI_UPDATE | OHCI_BRANCH_ALWAYS);
@@ -2726,7 +2722,7 @@ fwohci_add_rx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 	int dsiz[2];
 
 	ir = &dbch->xferq;
-	if (ir->buf == NULL && (dbch->xferq.flag & FWXFERQ_EXTBUF) == 0) {
+	if (db_tr->buf == NULL && (dbch->xferq.flag & FWXFERQ_EXTBUF) == 0) {
 		db_tr->buf = fwdma_malloc_size(dbch->dmat, &db_tr->dma_map,
 			ir->psize, &dbuf[0], BUS_DMA_NOWAIT);
 		if (db_tr->buf == NULL)
@@ -2742,7 +2738,7 @@ fwohci_add_rx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 			dbuf[db_tr->dbcnt++] = dummy_dma->bus_addr;
 		}
 		dsiz[db_tr->dbcnt] = ir->psize;
-		if (ir->buf != NULL) {
+		if (db_tr->buf != NULL) {
 			db_tr->buf = fwdma_v_addr(ir->buf, poffset);
 			dbuf[db_tr->dbcnt] = fwdma_bus_addr( ir->buf, poffset);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.24 2002/10/02 04:55:51 thorpej Exp $ */
+/*	$NetBSD: if_qn.c,v 1.24.42.1 2006/05/11 23:26:18 elad Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.24 2002/10/02 04:55:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.24.42.1 2006/05/11 23:26:18 elad Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -492,7 +492,7 @@ qn_put(u_short volatile *addr, struct mbuf *m)
 			if (wantbyte) {
 				savebyte[1] = *((u_char *)data);
 				*addr = *((u_short *)savebyte);
-				((u_char *)data)++;
+				data = (u_short *)((u_char *)data + 1);
 				len--;
 				wantbyte = 0;
 			}

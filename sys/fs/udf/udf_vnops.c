@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.2.8.1 2006/03/08 01:31:33 elad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.2.8.2 2006/05/11 23:30:14 elad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.2.8.1 2006/03/08 01:31:33 elad Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.2.8.2 2006/05/11 23:30:14 elad Exp $");
 #endif /* not lint */
 
 
@@ -308,7 +308,7 @@ udf_strategy(void *v)
 	sectors = bp->b_bcount / lb_size;
 	assert(bp->b_bcount > 0);
 
-	/* NEVER assume later that this buffer is allready translated */
+	/* NEVER assume later that this buffer is already translated */
 	/* bp->b_lblkno = bp->b_blkno; */
 
 	DPRINTF(STRATEGY, ("\tread vp %p buf %p (blk no %"PRIu64")"
@@ -741,8 +741,8 @@ udf_setattr(void *v)
 	/* shut up gcc for now */
 	ap = ap;
 	vp = vp;
-	uid = uid;
-	gid = gid;
+	uid = 0;	/* XXX gcc */
+	gid = 0;	/* XXX gcc */
 	udf_node = udf_node;
 
 	DPRINTF(NOTIMPL, ("udf_setattr called\n"));
@@ -833,7 +833,7 @@ udf_open(void *v)
 	} */ *ap;
 
 	DPRINTF(CALL, ("udf_open called\n"));
-	ap = ap;		/* shut up gcc */
+	ap = 0;		/* XXX gcc */
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: skiconsole.c,v 1.1.4.2 2006/04/19 02:33:08 elad Exp $	*/
+/*	$NetBSD: skiconsole.c,v 1.1.4.3 2006/05/11 23:26:58 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-
+/* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/skiconsole.c,v 1.2 2003/04/03 21:36:29 obrien Exp $"); */
 #include <lib/libsa/stand.h>
 
 #include "bootstrap.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: efifpswa.c,v 1.1.4.2 2006/04/19 02:33:08 elad Exp $	*/
+/*	$NetBSD: efifpswa.c,v 1.1.4.3 2006/05/11 23:26:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Peter Wemm <peter@FreeBSD.org>
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/efi/libefi/efifpswa.c,v 1.2 2004/01/04 23:28:16 obrien Exp $"); */
 
 #include <sys/param.h>
 #include <sys/time.h>

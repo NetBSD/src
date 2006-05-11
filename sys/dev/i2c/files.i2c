@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.8 2006/03/06 20:29:06 shige Exp $
+#	$NetBSD: files.i2c,v 1.8.2.1 2006/05/11 23:28:30 elad Exp $
 
 define	i2cbus { }
 define	i2cexec
@@ -85,3 +85,9 @@ file	dev/i2c/rs5c372.c		rs5c372rtc
 device	r2025rtc
 attach	r2025rtc at iic
 file	dev/i2c/r2025.c			r2025rtc
+
+# VESA Display Data Channel 2
+device	ddc
+define	ddc_read_edid
+attach	ddc at iic
+file	dev/i2c/ddc.c			ddc | ddc_read_edid

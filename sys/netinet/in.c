@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.106.10.3 2006/05/06 23:32:11 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.106.10.4 2006/05/11 23:31:09 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.106.10.3 2006/05/06 23:32:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.106.10.4 2006/05/11 23:31:09 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -696,6 +696,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		int cmp;
 
 		bzero(&mask, sizeof(mask));
+		bzero(&match, sizeof(match));	/* XXX gcc */
 		if (iflr->flags & IFLR_PREFIX) {
 			/* lookup a prefix rather than address. */
 			in_len2mask(&mask, iflr->prefixlen);

@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.19 2006/01/23 20:19:08 yamt Exp $      */
+/*      $NetBSD: xbdback.c,v 1.19.8.1 2006/05/11 23:27:14 elad Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -211,7 +211,9 @@ static struct xbdback_iqueue xbdback_shmq;
 static int xbdback_shmcb; /* have we already registered a callback? */
 
 struct timeval xbdback_poolsleep_intvl = { 5, 0 };
+#ifdef DEBUG
 struct timeval xbdback_fragio_intvl = { 60, 0 };
+#endif
 
 static void xbdback_ctrlif_rx(ctrl_msg_t *, unsigned long);
 static int  xbdback_evthandler(void *);
@@ -865,12 +867,14 @@ xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 				       == blkif_first_sect(this_fas)
 				   && (last_fas & ~PAGE_MASK)
 				       == (this_fas & ~PAGE_MASK)) {
+#ifdef DEBUG
 				static struct timeval gluetimer;
 				if (ratecheck(&gluetimer,
 					      &xbdback_fragio_intvl))
 					printf("xbdback: domain %d sending"
 					    " excessively fragmented I/O\n",
 					    xbdi->domid);
+#endif
 				XENPRINTF(("xbdback_io domain %d: glue same "
 				    "page", xbdi->domid));
 				xbdi->same_page = 1;

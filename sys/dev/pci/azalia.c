@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.19 2006/01/16 14:15:26 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.19.8.1 2006/05/11 23:28:47 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.19 2006/01/16 14:15:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.19.8.1 2006/05/11 23:28:47 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -303,7 +303,10 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->dmat = pa->pa_dmat;
 	aprint_normal(": Generic High Definition Audio Controller\n");
-	if (pci_mapreg_map(pa, ICH_PCI_HDBARL, PCI_MAPREG_MEM_TYPE_64BIT, 0,
+
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDBARL);
+	v &= PCI_MAPREG_TYPE_MASK | PCI_MAPREG_MEM_TYPE_MASK;
+	if (pci_mapreg_map(pa, ICH_PCI_HDBARL, v, 0,
 			   &sc->iot, &sc->ioh, NULL, &sc->map_size)) {
 		aprint_error("%s: can't map device i/o space\n", XNAME(sc));
 		return;

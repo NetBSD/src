@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.33.10.1 2006/04/19 04:36:01 elad Exp $	*/
+/*	$NetBSD: disk.h,v 1.33.10.2 2006/05/11 23:31:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -293,9 +293,9 @@ void	disk_detach(struct disk *);
 void	pseudo_disk_init(struct disk *);
 void	pseudo_disk_attach(struct disk *);
 void	pseudo_disk_detach(struct disk *);
-void    disk_busy(struct disk *);
-void    disk_unbusy(struct disk *, long, int);
-struct  disk *disk_find(char *);
+void	disk_busy(struct disk *);
+void	disk_unbusy(struct disk *, long, int);
+struct disk *disk_find(const char *);
 
 int	dkwedge_add(struct dkwedge_info *);
 int	dkwedge_del(struct dkwedge_info *);

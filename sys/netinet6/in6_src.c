@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.8.4 2006/05/06 23:32:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.8.5 2006/05/11 23:31:35 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -640,9 +640,7 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 	 * use it as the gateway.
 	 */
 	if (opts && opts->ip6po_nexthop) {
-#ifdef notyet			/* until introducing RFC3542 support */
 		struct route_in6 *ron;
-#endif
 
 		sin6_next = satosin6(opts->ip6po_nexthop);
 
@@ -656,7 +654,6 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 * If the next hop is an IPv6 address, then the node identified
 		 * by that address must be a neighbor of the sending host.
 		 */
-#ifdef notyet			/* see above */
 		ron = &opts->ip6po_nextroute;
 		if ((ron->ro_rt &&
 		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
@@ -697,7 +694,6 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 */
 		if (!clone)
 			goto done;
-#endif
 	}
 
 	/*

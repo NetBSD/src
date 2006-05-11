@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.7 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.7.10.1 2006/05/11 23:27:03 elad Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.7 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.7.10.1 2006/05/11 23:27:03 elad Exp $");
 
 #include "opt_irqstats.h"
 
@@ -97,7 +97,6 @@ u_int actual_mask;
 u_int disabled_mask;
 u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
-u_int irqblock[NIRQS];
 
 extern u_int soft_interrupts;	/* Only so we can initialise it */
 
@@ -125,7 +124,6 @@ irq_init()
 	/* Clear all the IRQ handlers and the irq block masks */
 	for (loop = 0; loop < NIRQS; ++loop) {
 		irqhandlers[loop] = NULL;
-		irqblock[loop] = 0;
 	}
 
 	/*
@@ -362,23 +360,6 @@ irq_calculatemasks()
 	 * avoid overruns, so serial > high.
 	 */
 	irqmasks[IPL_SERIAL] &= irqmasks[IPL_HIGH];
-
-	/*
-	 * We now need to update the irqblock array. This array indicates
-	 * what other interrupts should be blocked when interrupt is asserted
-	 * This basically emulates hardware interrupt priorities e.g. by
-	 * blocking all other IPL_BIO interrupts with an IPL_BIO interrupt
-	 * is asserted. For each interrupt we find the highest IPL and set
-	 * the block mask to the interrupt mask for that level.
-	 */
-
-	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < NIRQS; irq++) {
-		int irqs = 1 << irq;
-		for (ptr = irqhandlers[irq]; ptr; ptr = ptr->ih_next)
-			irqs |= ~(irqmasks[ptr->ih_level]);
-		irqblock[irq] = irqs;
-	}
 }
 
 

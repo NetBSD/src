@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_stub.c,v 1.1.4.2 2006/04/19 02:33:08 elad Exp $	*/
+/*	$NetBSD: efi_stub.c,v 1.1.4.3 2006/05/11 23:26:58 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -27,6 +27,9 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/efi_stub.c,v 1.2 2003/09/08 09:11:32 obrien Exp $"); */
+
+
 #include <sys/types.h>
 #include <sys/stdint.h>
 

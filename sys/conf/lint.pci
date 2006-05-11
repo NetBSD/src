@@ -1,0 +1,220 @@
+#	$NetBSD: lint.pci,v 1.1.2.2 2006/05/11 23:28:04 elad Exp $
+
+# 
+# PCI devices
+#
+
+# PCI bridges
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pceb*	at pci? dev ? function ?	# PCI-EISA bridges
+pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+pcmb*	at pci? dev ? function ?	# PCI-MCA bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+btvmei*	at pci? dev ? function ?	# Bit3 PCI-VME mod. 617
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
+gscpcib*  at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
+viapcib*  at pci? dev ? function ?	# VT8235 PCI-ISA w/ SMBus support
+
+
+# PCI PCMCIA controllers
+pcic*	at pci? dev? function ?		# Intel and Cirrus Logic PCMCIA
+
+# CardBus bridge support
+cbb*	at pci? dev ? function ?
+
+# Graphics / Framebuffers
+vga*	at pci? dev ? function ?	# VGA graphics driver
+tga*	at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
+machfb*	at pci? dev ? function ?	# ATI Mach64 framebuffer driver
+igsfb*	at pci? dev ? function ?	# Integraphics Systems IGA168x
+					# and CyberPro framebuffers
+voodoofb* at pci? dev ? function ?	# 3Dfx Voodoo3 framebuffer
+
+# wscons attachment
+wsdisplay* at machfb? console ?
+
+
+# Serial boards
+cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
+cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
+weasel*	at pci? dev ? function ?	# Middle Digital, Inc. PCI-Weasel
+					# serial console board control 
+com*	at puc? port ?			# 16x50s on "universal" comm boards
+
+# Parallel printer interfaces
+lpt*	at puc? port ?
+
+# SMBus/RNG/PMC
+amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
+viapm*	at pci? dev ? function ?	# VT86C686A power management
+
+# PCI I2O
+iop*	at pci? dev ? function ?
+
+# I2O devices
+iopsp*	at iop? tid ?			# SCSI/FC-AL ports
+ld*	at iop? tid ?			# block devices
+dpti*	at iop? tid 0			# DPT/Adaptec control interface
+
+# PCI SCSI
+adv*	at pci? dev ? function ?        # AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+adw*	at pci? dev ? function ?        # AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
+ahc*	at pci? dev ? function ?        # Adaptec [23]94x, aic78x0 SCSI
+ahd*	at pci? dev ? function ?        # Adaptec 29320, 39320 (aic790x) SCSI
+bha*	at pci? dev ? function ?        # BusLogic 9xx SCSI
+dpt*	at pci? dev ? function ?        # DPT SmartCache/SmartRAID
+iha*	at pci? dev ? function ?        # Initio INIC-940/950 SCSI
+isp*	at pci? dev ? function ?        # Qlogic ISP [12]0x0 SCSI/FibreChannel
+mly*	at pci? dev ? function ?        # Mylex AcceleRAID and eXtremeRAID
+mpt*	at pci? dev ? function ?        # LSI Fusion SCSI/FC
+njs*	at pci? dev ? function ?        # Workbit NinjaSCSI-32
+pcscp*	at pci? dev ? function ?        # AMD 53c974 PCscsi-PCI SCSI
+siop*	at pci? dev ? function ?        # Symbios 53c8xx SCSI
+esiop*	at pci? dev ? function ?        # Symbios 53c875 SCSI and newer
+trm*	at pci? dev ? function ?        # Tekram DC-395U/UW/F, DC-315/U SCSI
+
+# RAID controllers
+aac*	at pci? dev ? function ?        # Adaptec AAC family
+amr*	at pci? dev ? function ?        # AMI/LSI Logic MegaRAID
+cac*	at pci? dev ? function ?        # Compaq PCI array controllers
+ciss*	at pci? dev ? function ?        # HP Smart Array controllers
+icp*	at pci? dev ? function ?        # ICP-Vortex GDT & Intel RAID
+mlx*	at pci? dev ? function ?        # Mylex DAC960 & DEC SWXCR family
+twe*	at pci? dev ? function ?        # 3ware Escalade RAID controllers
+
+ld*	at aac? unit ?			# logical disk devices
+ld*	at amr? unit ?
+ld*	at cac? unit ?
+ld*	at icp? unit ?
+ld*	at twe? unit ?
+ld*	at mlx? unit ?
+
+
+# PCI IDE
+pciide*		at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide*	at pci? dev ? function ? # Acard IDE controllers
+aceride* 	at pci? dev ? function ? # Acer Lab IDE controllers
+artsata* 	at pci? dev ? function ? # Intel i31244 SATA controller
+cmdide* 	at pci? dev ? function ? # CMD tech IDE controllers
+cypide* 	at pci? dev ? function ? # Cypress IDE controllers
+geodeide* 	at pci? dev ? function ? # AMD Geode IDE controllers
+hptide* 	at pci? dev ? function ? # Triones/HighPoint IDE
+iteide* 	at pci? dev ? function ? # IT Express IDE controllers
+ixpide* 	at pci? dev ? function ? # ATI IXP IDE controllers
+optiide* 	at pci? dev ? function ? # Opti IDE controllers
+piixide* 	at pci? dev ? function ? # Intel IDE controllers
+pdcide* 	at pci? dev ? function ? # Promise IDE controllers
+pdcsata*	at pci? dev ? function ? # Promise SATA150 controllers
+rccide* 	at pci? dev ? function ? # ServerWorks IDE controllers
+satalink*	at pci? dev ? function ? # SiI SATALink controllers
+siside* 	at pci? dev ? function ? # SiS IDE controllers
+slide*  	at pci? dev ? function ? # Symphony Labs IDE controllers
+svwsata* 	at pci? dev ? function ? # ServerWorks SATA controllers
+stpcide*	at pci? dev ? function ? # STMicro STPC IDE controllers
+viaide* 	at pci? dev ? function ? # VIA/AMD/Nvidia IDE controllers
+
+# Ethernet devices
+bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
+bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
+hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
+gem*	at pci? dev ? function ?	# Sun GEM
+le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
+ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
+pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+skc*	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
+ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
+stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
+ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+txp*	at pci? dev ? function ?	# 3com 3cr990
+vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
+
+# 802.11 (Wi-Fi) devices
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
+ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
+iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0
+rtw*	at pci? dev ? function ?	# Realtek RTL8180 PCI/Mini-PCI
+wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+
+# ATM/HPPI/FDDI/Serial devices
+en*	at pci? dev ? function ?	# ENI/Adaptec ATM
+esh*	at pci? dev ? function ?	# Essential HIPPI card
+fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
+lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+
+# ISDN devices
+isic*	at pci? dev ? function ?	# ISDN ELSA QuickStep 1000pro
+iavc*	at pci? dev ? function ?	# ISDN AVM T1/B1
+ifpci*	at pci? dev ? function ?	# AVM Fritz!PCI ISDN
+ifritz*	at pci? dev ? function ?	# AVM Fritz!PCI v2 ISDN
+iwic*	at pci? dev ? function ?	# Winbond ISDN
+
+# PCI USB
+ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+ohci*	at pci?	dev ? function ?	# Open Host Controller
+uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+oboe* 	at pci? dev ? function ?
+
+# IrDA
+oboe* 	at pci? dev ? function ?
+
+# IEEE1394 (firewire)
+fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+
+# Audio devices
+auacer* at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
+auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
+auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
+autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
+auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
+azalia*	at pci? dev ? function ?	# High Definition Audio
+clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
+cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
+eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+emuxki* at pci? dev ? function ?	# Creative SBLive! and PCI512
+esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
+esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio
+					# Accelerator
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+fms*	at pci? dev ? function ?	# Forte Media FM801
+neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
+sv*	at pci? dev ? function ?	# S3 SonicVibes
+yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
+
+# Multimedia devices (FM radio / TV cards)
+gtp*	at pci? dev ? function ?	# Guillemot Maxi Radio FM 2000
+					# Radio Card
+bktr*	at pci? dev ? function ?	# Brooktree Bt848 video capture
+
+# Crypto Accelerators
+hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
+ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
+
+# Joystick
+joy*	at pci?				# Game ports (usually on audio card)
+
+# Watchdog/System controller
+geodewdog* at pci? dev ? function ?	# AMD Geode SC1100 watchdog timer
+elansc*	   at pci? dev ? function ?	# AMD Elan SC520 System Controller

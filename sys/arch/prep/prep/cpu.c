@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11.10.1 2006/04/19 02:33:39 elad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11.10.2 2006/05/11 23:27:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11.10.1 2006/04/19 02:33:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11.10.2 2006/05/11 23:27:03 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,11 @@ cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 void
 cpuattach(struct device *parent, struct device *self, void *aux)
 {
-	cpu_attach_common(self, 0);
+	struct cpu_info *ci;
+
+	ci = cpu_attach_common(self, 0);
+	if (ci == NULL)
+		return;
 
 	cpu_setup_prep_generic(self);
 }

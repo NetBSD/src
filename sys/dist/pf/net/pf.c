@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.21 2006/02/19 12:15:33 peter Exp $	*/
+/*	$NetBSD: pf.c,v 1.21.4.1 2006/05/11 23:30:14 elad Exp $	*/
 /*	$OpenBSD: pf.c,v 1.483 2005/03/15 17:38:43 dhartmei Exp $ */
 
 /*
@@ -4690,6 +4690,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 #endif /* INET6 */
 		int		ipoff2 = 0;
 		int		off2 = 0;
+
+		memset(&pd2, 0, sizeof pd2);	/* XXX gcc */
 
 		pd2.af = pd->af;
 		switch (pd->af) {

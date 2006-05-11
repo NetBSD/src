@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.59.4.1 2006/04/19 02:33:44 elad Exp $
+#	$NetBSD: GENERIC,v 1.59.4.2 2006/05/11 23:27:03 elad Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.59.4.1 $"
+#ident		"GENERIC-$Revision: 1.59.4.2 $"
 
 # estimated number of users
 maxusers	32
@@ -198,7 +198,7 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 #options 	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS)"
 # allocate a number of virtual screens at autoconfiguration time

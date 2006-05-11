@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.100.10.3 2006/05/06 23:32:58 christos Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.100.10.4 2006/05/11 23:32:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100.10.3 2006/05/06 23:32:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100.10.4 2006/05/11 23:32:03 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100.10.3 2006/05/06 23:32:58 christo
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/buf.h>
@@ -93,11 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.100.10.3 2006/05/06 23:32:58 christo
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-static int lfs_update_seguse(struct lfs *, long, size_t);
+static int lfs_update_seguse(struct lfs *, struct inode *ip, long, size_t);
 static int lfs_indirtrunc (struct inode *, daddr_t, daddr_t,
 			   daddr_t, int, long *, long *, long *, size_t *,
 			   struct lwp *);
-static int lfs_blkfree (struct lfs *, daddr_t, size_t, long *, size_t *);
+static int lfs_blkfree (struct lfs *, struct inode *, daddr_t, size_t, long *, size_t *);
 static int lfs_vtruncbuf(struct vnode *, daddr_t, int, int);
 
 /* Search a block for a specific dinode. */
@@ -426,7 +427,11 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * which we want to keep.  Lastblock is -1 when
 	 * the file is truncated to 0.
 	 */
-	lastblock = lblkno(fs, length + fs->lfs_bsize - 1) - 1;
+	/* Avoid sign overflow - XXX assumes that off_t is a quad_t. */
+	if (length > QUAD_MAX - fs->lfs_bsize)
+		lastblock = lblkno(fs, QUAD_MAX - fs->lfs_bsize);
+	else
+		lastblock = lblkno(fs, length + fs->lfs_bsize - 1) - 1;
 	lastiblock[SINGLE] = lastblock - NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - NINDIR(fs) * NINDIR(fs);
@@ -472,7 +477,8 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 					real_released += nblocks;
 				blocksreleased += nblocks;
 				oip->i_ffs1_ib[level] = 0;
-				lfs_blkfree(fs, bn, fs->lfs_bsize, &lastseg, &bc);
+				lfs_blkfree(fs, oip, bn, fs->lfs_bsize,
+					    &lastseg, &bc);
         			lfs_deregister_block(ovp, bn);
 			}
 		}
@@ -499,7 +505,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 			obsize = 0;
 		blocksreleased += btofsb(fs, bsize);
 		oip->i_ffs1_db[i] = 0;
-		lfs_blkfree(fs, bn, obsize, &lastseg, &bc);
+		lfs_blkfree(fs, oip, bn, obsize, &lastseg, &bc);
         	lfs_deregister_block(ovp, bn);
 	}
 	if (lastblock < 0)
@@ -542,7 +548,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 
 done:
 	/* Finish segment accounting corrections */
-	lfs_update_seguse(fs, lastseg, bc);
+	lfs_update_seguse(fs, oip, lastseg, bc);
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
 		if ((newblks[NDADDR + level] == 0) !=
@@ -601,8 +607,8 @@ done:
 
 /* Update segment and avail usage information when removing a block. */
 static int
-lfs_blkfree(struct lfs *fs, daddr_t daddr, size_t bsize, long *lastseg,
-	    size_t *num)
+lfs_blkfree(struct lfs *fs, struct inode *ip, daddr_t daddr,
+	    size_t bsize, long *lastseg, size_t *num)
 {
 	long seg;
 	int error = 0;
@@ -611,7 +617,7 @@ lfs_blkfree(struct lfs *fs, daddr_t daddr, size_t bsize, long *lastseg,
 	bsize = fragroundup(fs, bsize);
 	if (daddr > 0) {
 		if (*lastseg != (seg = dtosn(fs, daddr))) {
-			error = lfs_update_seguse(fs, *lastseg, *num);
+			error = lfs_update_seguse(fs, ip, *lastseg, *num);
 			*num = bsize;
 			*lastseg = seg;
 		} else
@@ -623,26 +629,68 @@ lfs_blkfree(struct lfs *fs, daddr_t daddr, size_t bsize, long *lastseg,
 
 /* Finish the accounting updates for a segment. */
 static int
-lfs_update_seguse(struct lfs *fs, long lastseg, size_t num)
+lfs_update_seguse(struct lfs *fs, struct inode *ip, long lastseg, size_t num)
 {
-	SEGUSE *sup;
-	struct buf *bp;
+	struct segdelta *sd;
+	struct vnode *vp;
 
 	ASSERT_SEGLOCK(fs);
 	if (lastseg < 0 || num == 0)
 		return 0;
 
-	LFS_SEGENTRY(sup, fs, lastseg, bp);
-	if (num > sup->su_nbytes) {
-		printf("lfs_truncate: segment %ld short by %ld\n",
-		       lastseg, (long)num - sup->su_nbytes);
-		panic("lfs_truncate: negative bytes");
-		sup->su_nbytes = num;
+	vp = ITOV(ip);
+	LIST_FOREACH(sd, &ip->i_lfs_segdhd, list)
+		if (sd->segnum == lastseg)
+			break;
+	if (sd == NULL) {
+		sd = malloc(sizeof(*sd), M_SEGMENT, M_WAITOK);
+		sd->segnum = lastseg;
+		sd->num = 0;
+		LIST_INSERT_HEAD(&ip->i_lfs_segdhd, sd, list);
 	}
-	sup->su_nbytes -= num;
-	LFS_WRITESEGENTRY(sup, fs, lastseg, bp);
+	sd->num += num;
 
 	return 0;
+}
+
+static void
+lfs_finalize_seguse(struct lfs *fs, void *v)
+{
+	SEGUSE *sup;
+	struct buf *bp;
+	struct segdelta *sd;
+	LIST_HEAD(, segdelta) *hd = v;
+
+	ASSERT_SEGLOCK(fs);
+	while((sd = LIST_FIRST(hd)) != NULL) {
+		LIST_REMOVE(sd, list);
+		LFS_SEGENTRY(sup, fs, sd->segnum, bp);
+		if (sd->num > sup->su_nbytes) {
+			printf("lfs_finalize_seguse: segment %ld short by %ld\n",
+				sd->segnum, (long)(sd->num - sup->su_nbytes));
+			panic("lfs_finalize_seguse: negative bytes");
+			sup->su_nbytes = sd->num;
+		}
+		sup->su_nbytes -= sd->num;
+		LFS_WRITESEGENTRY(sup, fs, sd->segnum, bp);
+		free(sd, M_SEGMENT);
+	}
+}
+
+/* Finish the accounting updates for a segment. */
+void
+lfs_finalize_ino_seguse(struct lfs *fs, struct inode *ip)
+{
+	ASSERT_SEGLOCK(fs);
+	lfs_finalize_seguse(fs, &ip->i_lfs_segdhd);
+}
+
+/* Finish the accounting updates for a segment. */
+void
+lfs_finalize_fs_seguse(struct lfs *fs)
+{
+	ASSERT_SEGLOCK(fs);
+	lfs_finalize_seguse(fs, &fs->lfs_segdhd);
 }
 
 /*
@@ -743,7 +791,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 			blocksreleased += blkcount;
 			real_released += rblkcount;
 		}
-		lfs_blkfree(fs, nb, fs->lfs_bsize, lastsegp, bcp);
+		lfs_blkfree(fs, ip, nb, fs->lfs_bsize, lastsegp, bcp);
 		if (bap[i] > 0)
 			real_released += nblocks;
 		blocksreleased += nblocks;

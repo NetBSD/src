@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.138.2.2 2006/04/20 02:00:28 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.138.2.3 2006/05/11 23:31:36 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -130,6 +130,7 @@ struct mount {
 #define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
 #define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
 
+#ifndef _STANDALONE
 /*
  * USE THE SAME NAMES AS MOUNT_*!
  *
@@ -313,10 +314,13 @@ int	mount(const char *, const char *, int, void *);
 int	unmount(const char *, int);
 #if defined(_NETBSD_SOURCE)
 int	fhopen(const fhandle_t *, int);
-int	fhstat(const fhandle_t *, struct stat *);
+#ifndef __LIBC12_SOURCE__
+int	fhstat(const fhandle_t *, struct stat *) __RENAME(__fhstat30);
+#endif
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 
 #endif /* _KERNEL */
+#endif /* !_STANDALONE */
 
 #endif /* !_SYS_MOUNT_H_ */

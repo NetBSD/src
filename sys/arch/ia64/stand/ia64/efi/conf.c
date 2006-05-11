@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.4.2 2006/04/19 02:33:08 elad Exp $	 */
+/*	$NetBSD: conf.c,v 1.1.4.3 2006/05/11 23:26:58 elad Exp $	 */
 
 /*
  * Copyright (c) 2004
@@ -27,6 +27,7 @@
 
 
 #include <sys/cdefs.h>
+
 #include <sys/types.h>
 
 #include <lib/libsa/stand.h>

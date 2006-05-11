@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.103.2.3 2006/04/19 03:24:41 elad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.103.2.4 2006/05/11 23:28:30 elad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.103.2.3 2006/04/19 03:24:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.103.2.4 2006/05/11 23:28:30 elad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -411,7 +411,12 @@ zstty_attach(parent, self, aux)
 	tty_attach(tp);
 
 	zst->zst_tty = tp;
-	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_WAITOK);
+	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
+	if (zst->zst_rbuf == NULL) {
+		aprint_error("%s: unable to allocate ring buffer\n",
+		    zst->zst_dev.dv_xname);
+		return;
+	}
 	zst->zst_ebuf = zst->zst_rbuf + (zstty_rbuf_size << 1);
 	/* Disable the high water mark. */
 	zst->zst_r_hiwat = 0;

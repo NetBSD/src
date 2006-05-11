@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_declusterPQ.c,v 1.12 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_declusterPQ.c,v 1.12.10.1 2006/05/11 23:29:58 elad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -35,7 +35,7 @@
  *--------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.12 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_declusterPQ.c,v 1.12.10.1 2006/05/11 23:29:58 elad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -276,7 +276,7 @@ rf_GetDefaultNumFloatingReconBuffersPQ(RF_Raid_t *raidPtr)
 
 void
 rf_MapSectorDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-			  RF_RowCol_t *row, RF_RowCol_t *col,
+			  RF_RowCol_t *col,
 			  RF_SectorNum_t *diskSector, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
@@ -292,7 +292,6 @@ rf_MapSectorDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 	FullTableID = SUID / sus_per_fulltable;	/* fulltable ID within array
 						 * (across rows) */
-	*row = FullTableID % /* raidPtr->numRow */ 1;
 	FullTableID /= /* raidPtr->numRow */ 1;	/* convert to fulltable ID on this
 					 * disk */
 	if ((raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE)) {
@@ -324,7 +323,7 @@ rf_MapSectorDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	}
 	/* remap to distributed spare space if indicated */
 	if (remap) {
-		rf_remap_to_spare_space(layoutPtr, info, *row, FullTableID, TableID, BlockID, (base_suid) ? 1 : 0, SpareRegion, col, &outSU);
+		rf_remap_to_spare_space(layoutPtr, info, FullTableID, TableID, BlockID, (base_suid) ? 1 : 0, SpareRegion, col, &outSU);
 	} else {
 
 		outSU = base_suid;
@@ -344,7 +343,7 @@ rf_MapSectorDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 void
 rf_MapParityDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-			  RF_RowCol_t *row, RF_RowCol_t *col,
+			  RF_RowCol_t *col,
 			  RF_SectorNum_t *diskSector, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
@@ -360,7 +359,6 @@ rf_MapParityDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 	/* compute row & (possibly) spare space exactly as before */
 	FullTableID = SUID / sus_per_fulltable;
-	*row = FullTableID % /* raidPtr->numRow */ 1;
 	FullTableID /= /* raidPtr->numRow */ 1;	/* convert to fulltable ID on this
 					 * disk */
 	if ((raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE)) {
@@ -396,7 +394,7 @@ rf_MapParityDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 void
 rf_MapQDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		     RF_RowCol_t *row, RF_RowCol_t *col,
+		     RF_RowCol_t *col,
 		     RF_SectorNum_t *diskSector, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
@@ -412,7 +410,6 @@ rf_MapQDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 	/* compute row & (possibly) spare space exactly as before */
 	FullTableID = SUID / sus_per_fulltable;
-	*row = FullTableID % /* raidPtr->numRow */ 1;
 	FullTableID /= /* raidPtr->numRow */ 1;	/* convert to fulltable ID on this
 					 * disk */
 	if ((raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE)) {
@@ -451,7 +448,7 @@ rf_MapQDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
  */
 void
 rf_IdentifyStripeDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
-			       RF_RowCol_t **diskids, RF_RowCol_t *outRow)
+			       RF_RowCol_t **diskids)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo;
@@ -465,7 +462,6 @@ rf_IdentifyStripeDeclusteredPQ(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 	rf_decluster_adjust_params(layoutPtr, &SUID, &sus_per_fulltable, &fulltable_depth, &base_suid);
 	FullTableID = SUID / sus_per_fulltable;	/* fulltable ID within array
 						 * (across rows) */
-	*outRow = FullTableID % /* raidPtr->numRow */ 1;
 	stripeID = rf_StripeUnitIDToStripeID(layoutPtr, SUID);	/* find stripe offset
 								 * into array */
 	tableOffset = (stripeID % info->BlocksPerTable);	/* find offset into

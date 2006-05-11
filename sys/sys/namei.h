@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.42.4.2 2006/05/06 23:32:33 christos Exp $	*/
+/*	$NetBSD: namei.h,v 1.42.4.3 2006/05/11 23:31:36 elad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -36,6 +36,7 @@
 
 #include <sys/queue.h>
 
+#ifdef _KERNEL
 /*
  * Encapsulation of namei parameters.
  */
@@ -89,7 +90,6 @@ struct nameidata {
 	} ni_cnd;
 };
 
-#ifdef _KERNEL
 /*
  * namei operations
  */

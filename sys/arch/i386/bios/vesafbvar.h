@@ -1,4 +1,4 @@
-/* $NetBSD: vesafbvar.h,v 1.2 2006/02/19 21:41:18 jmcneill Exp $ */
+/* $NetBSD: vesafbvar.h,v 1.2.6.1 2006/05/11 23:26:20 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -96,5 +96,7 @@ struct vesafb_softc {
 	uint8_t sc_pmstates;
 	void *sc_powerhook;
 };
+
+int	vesafb_cnattach(void);
 
 #endif /* !_ARCH_I386_BIOS_VESAFBVAR_H */

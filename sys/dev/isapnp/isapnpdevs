@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.58.4.1 2006/04/19 03:25:18 elad Exp $
+$NetBSD: isapnpdevs,v 1.58.4.2 2006/05/11 23:28:47 elad Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ devlogic	com	BDP3336		0	Best Data Prods. 336F
 devlogic	com	OZO8039		0	Zoom 56k flex
 devlogic	com	BRI1400		0	Boca 33.6 PnP
 devlogic	com	BRIB400		0	Boca 56k PnP
+devlogic	com	DAV0336		0	Davicom 33.6 PnP
 devlogic	com	ROK0010		0	Rockwell ?
 devlogic	com	ROK3360		0	Rockwell 33.6k PnP
 devlogic	com	USR0004		0	USR Sportster 14.4k
@@ -114,6 +115,7 @@ devlogic	com	GVC000F		0	GVC 33.6k Faxmodem
 devlogic	com	IOD0081		0	I-O DATA IFML-560
 devcompat	com	PNP0500		0	Generic 8250/16450
 devcompat	com	PNP0501		0	Generic 16550A
+
 
 /*
  * cs

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.32 2006/02/20 19:00:27 cdi Exp $ */
+/*	$NetBSD: psl.h,v 1.32.4.1 2006/05/11 23:27:04 elad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,11 +81,12 @@
 #define PIL_TTY		6
 #define PIL_LPT		6
 #define PIL_NET		6
-#define PIL_IMP		7
+#define PIL_VM		7
 #define	PIL_AUD		8
 #define PIL_CLOCK	10
 #define PIL_FD		11
 #define PIL_SER		12
+#define	PIL_STATCLOCK	14
 #define PIL_HIGH	15
 #define PIL_SCHED	PIL_CLOCK
 #define PIL_LOCK	PIL_HIGH
@@ -365,6 +366,22 @@ static __inline int name(void) \
 }
 #endif
 
+static __inline int __attribute__((__unused__))
+splraiseipl(int newpil)
+{
+	int oldpil;
+
+	/*
+	 * NetBSD/sparc64's IPL_* constants equate directly to the
+	 * corresponding PIL_* names; no need to map them here.
+	 */
+	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil));
+	if (newpil <= oldpil)
+		return (oldpil);
+	__asm __volatile("wrpr %0,0,%%pil" : : "r" (newpil));
+	return (oldpil);
+}
+
 SPL(spl0, 0)
 
 SPL(spllowersoftclock, 1)
@@ -396,7 +413,7 @@ SPLHOLD(spllpt, PIL_LPT)
 /*
  * Memory allocation (must be as high as highest network, tty, or disk device)
  */
-SPLHOLD(splvm, PIL_IMP)
+SPLHOLD(splvm, PIL_VM)
 
 SPLHOLD(splclock, PIL_CLOCK)
 
@@ -411,7 +428,7 @@ SPLHOLD(splserial, PIL_SER)
 SPLHOLD(splaudio, PIL_AUD)
 
 /* second sparc timer interrupts at level 14 */
-SPLHOLD(splstatclock, 14)
+SPLHOLD(splstatclock, PIL_STATCLOCK)
 
 SPLHOLD(splsched, PIL_SCHED)
 SPLHOLD(spllock, PIL_LOCK)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.100.4.4 2006/04/19 04:01:22 elad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.100.4.5 2006/05/11 23:27:31 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.4 2006/04/19 04:01:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.5 2006/05/11 23:27:31 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -500,7 +500,7 @@ netbsd32_accept(l, v, retval)
 
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(name, struct sockaddr);
-	NETBSD32TOP_UAP(anamelen, int);
+	NETBSD32TOP_UAP(anamelen, socklen_t);
 	return (sys_accept(l, &ua, retval));
 }
 
@@ -519,7 +519,7 @@ netbsd32_getpeername(l, v, retval)
 
 	NETBSD32TO64_UAP(fdes);
 	NETBSD32TOP_UAP(asa, struct sockaddr);
-	NETBSD32TOP_UAP(alen, int);
+	NETBSD32TOP_UAP(alen, socklen_t);
 /* NB: do the protocol specific sockaddrs need to be converted? */
 	return (sys_getpeername(l, &ua, retval));
 }
@@ -539,7 +539,7 @@ netbsd32_getsockname(l, v, retval)
 
 	NETBSD32TO64_UAP(fdes);
 	NETBSD32TOP_UAP(asa, struct sockaddr);
-	NETBSD32TOP_UAP(alen, int);
+	NETBSD32TOP_UAP(alen, socklen_t);
 	return (sys_getsockname(l, &ua, retval));
 }
 
@@ -1301,7 +1301,7 @@ netbsd32_getsockopt(l, v, retval)
 	NETBSD32TO64_UAP(level);
 	NETBSD32TO64_UAP(name);
 	NETBSD32TOP_UAP(val, void);
-	NETBSD32TOP_UAP(avalsize, int);
+	NETBSD32TOP_UAP(avalsize, socklen_t);
 	return (sys_getsockopt(l, &ua, retval));
 }
 
@@ -2247,22 +2247,6 @@ netbsd32_fhopen(l, v, retval)
 	NETBSD32TOP_UAP(fhp, fhandle_t);
 	NETBSD32TO64_UAP(flags);
 	return (sys_fhopen(l, &ua, retval));
-}
-
-int netbsd32_fhstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct netbsd32_fhstat_args /* {
-		syscallarg(const netbsd32_fhandlep_t) fhp;
-		syscallarg(struct stat *) sb;
-	} */ *uap = v;
-	struct sys_fhstat_args ua;
-
-	NETBSD32TOP_UAP(fhp, const fhandle_t);
-	NETBSD32TOP_UAP(sb, struct stat);
-	return (sys_fhstat(l, &ua, retval));
 }
 
 /* virtual memory syscalls */

@@ -89,7 +89,6 @@ struct ndis_resource;
 int     bus_release_resource(device_t dev, int type, int rid,
                              struct ndis_resource *r);
 int	device_is_attached(device_t dev);
-void device_printf(device_t, const char *fmt, ...);
 
 /* This is the same thing as NetBSD's kthread_create1(), except
  * the stack can be specified.

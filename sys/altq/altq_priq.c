@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.9.10.2 2006/03/10 13:29:35 elad Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.9.10.3 2006/05/11 23:26:17 elad Exp $	*/
 /*	$KAME: altq_priq.c,v 1.2 2001/10/26 04:56:11 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.9.10.2 2006/03/10 13:29:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.9.10.3 2006/05/11 23:26:17 elad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -108,11 +108,9 @@ priq_attach(ifq, bandwidth)
 {
 	struct priq_if *pif;
 
-	MALLOC(pif, struct priq_if *, sizeof(struct priq_if),
-	       M_DEVBUF, M_WAITOK);
+	pif = malloc(sizeof(struct priq_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (pif == NULL)
 		return (NULL);
-	(void)memset(pif, 0, sizeof(struct priq_if));
 	pif->pif_bandwidth = bandwidth;
 	pif->pif_maxpri = -1;
 	pif->pif_ifq = ifq;
@@ -144,7 +142,7 @@ priq_detach(pif)
 		ASSERT(p != NULL);
 	}
 
-	FREE(pif, M_DEVBUF);
+	free(pif, M_DEVBUF);
 	return (0);
 }
 
@@ -232,17 +230,15 @@ priq_class_create(pif, pri, qlimit, flags)
 			red_destroy(cl->cl_red);
 #endif
 	} else {
-		MALLOC(cl, struct priq_class *, sizeof(struct priq_class),
-		       M_DEVBUF, M_WAITOK);
+		cl = malloc(sizeof(struct priq_class), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl == NULL)
 			return (NULL);
-		(void)memset(cl, 0, sizeof(struct priq_class));
 
-		MALLOC(cl->cl_q, class_queue_t *, sizeof(class_queue_t),
-		       M_DEVBUF, M_WAITOK);
+		cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl->cl_q == NULL)
 			goto err_ret;
-		(void)memset(cl->cl_q, 0, sizeof(class_queue_t));
 	}
 
 	pif->pif_classes[pri] = cl;
@@ -307,8 +303,8 @@ priq_class_create(pif, pri, qlimit, flags)
 #endif
 	}
 	if (cl->cl_q != NULL)
-		FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+		free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (NULL);
 }
 
@@ -350,8 +346,8 @@ priq_class_destroy(cl)
 			red_destroy(cl->cl_red);
 #endif
 	}
-	FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+	free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (0);
 }
 

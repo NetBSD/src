@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.11.10.1 2006/04/19 02:32:21 elad Exp $	*/
+/*	$NetBSD: pcib.c,v 1.11.10.2 2006/05/11 23:26:19 elad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11.10.1 2006/04/19 02:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11.10.2 2006/05/11 23:26:19 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11.10.1 2006/04/19 02:32:21 elad Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <dev/isa/isareg.h>
+
+#define PCIB_BASE	0x10000000	/* XXX */
 
 static int	pcib_match(struct device *, struct cfdata *, void *);
 static void	pcib_attach(struct device *, struct device *, void *);
@@ -80,12 +82,10 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	 * Initialize ICU. Since we block all these interrupts with
 	 * splbio(), we can just enable all of them all the time here.
 	 */
-	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1) = 0x10;
-	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU1 +1 ) =
-	    0xff;
-	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2) = 0x10;
-	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x10000000 + IO_ICU2 + 1) =
-	    0xff;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(PCIB_BASE + IO_ICU1) = 0x10;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(PCIB_BASE + IO_ICU1 + 1) = 0xff;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(PCIB_BASE + IO_ICU2) = 0x10;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(PCIB_BASE + IO_ICU2 + 1) = 0xff;
 	wbflush();
 
 	cpu_intr_establish(4, IPL_NONE, icu_intr, NULL);
@@ -95,14 +95,20 @@ void *
 icu_intr_establish(int irq, int type, int level, int (*func)(void *),
     void *arg)
 {
+	struct cobalt_intrhand *ih;
 	int i;
 
 	for (i = 0; i < IO_ICUSIZE; i++) {
-		if (icu[i].ih_func == NULL) {
-			icu[i].cookie_type = COBALT_COOKIE_TYPE_ICU;
-			icu[i].ih_func = func;
-			icu[i].ih_arg = arg;
-			return &icu[i];
+		ih = &icu[i];
+		if (ih->ih_func == NULL) {
+			ih->ih_cookie_type = COBALT_COOKIE_TYPE_ICU;
+			ih->ih_func = func;
+			ih->ih_arg = arg;
+			snprintf(ih->ih_evname, sizeof(ih->ih_evname),
+			    "irq %d", irq);
+			evcnt_attach_dynamic(&ih->ih_evcnt, EVCNT_TYPE_INTR,
+			    NULL, "icu", ih->ih_evname);
+			return ih;
 		}
 	}
 
@@ -114,23 +120,32 @@ icu_intr_disestablish(void *cookie)
 {
 	struct cobalt_intrhand *ih = cookie;
 
-	if (ih->cookie_type == COBALT_COOKIE_TYPE_ICU) {
+	if (ih->ih_cookie_type == COBALT_COOKIE_TYPE_ICU) {
 		ih->ih_func = NULL;
 		ih->ih_arg = NULL;
+		ih->ih_cookie_type = 0;
+		evcnt_detach(&ih->ih_evcnt);
 	}
 }
 
 int
 icu_intr(void *arg)
 {
-	int i;
+	struct cobalt_intrhand *ih;
+	int i, handled;
+
+	handled = 0;
 
 	for (i = 0; i < IO_ICUSIZE; i++) {
-		if (icu[i].ih_func == NULL)
-			return 0;
+		ih = &icu[i];
+		if (ih->ih_func == NULL)
+			break;
 
-		(*icu[i].ih_func)(icu[i].ih_arg);
+		if ((*ih->ih_func)(ih->ih_arg)) {
+			ih->ih_evcnt.ev_count++;
+			handled = 1;
+		}
 	}
 
-	return 0;
+	return handled;
 }

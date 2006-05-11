@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.61.10.3 2006/04/19 03:26:39 elad Exp $	*/
+/*	$NetBSD: xy.c,v 1.61.10.4 2006/05/11 23:30:14 elad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.10.3 2006/04/19 03:26:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.10.4 2006/05/11 23:30:14 elad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -101,13 +101,14 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.10.3 2006/04/19 03:26:39 elad Exp $");
  * XYC_GO: start iopb ADDR (DVMA addr in a u_long) on XYC
  */
 #define XYC_GO(XYC, ADDR) { \
-	(XYC)->xyc_addr_lo = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_addr_hi = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_reloc_lo = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_reloc_hi = (ADDR); \
+	u_long addr = (u_long)ADDR; \
+	(XYC)->xyc_addr_lo = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_addr_hi = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_reloc_lo = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_reloc_hi = (addr); \
 	(XYC)->xyc_csr = XYC_GBSY; /* go! */ \
 }
 
@@ -1580,7 +1581,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 		panic("xyc_submit_iorq: xyc_chain failed!");
 	}
 
-	XYC_GO(xycsc->xyc, (u_long)dmaiopb);
+	XYC_GO(xycsc->xyc, dmaiopb);
 
 	/* command now running, wrap it up */
 	switch (type) {
@@ -1763,7 +1764,7 @@ xyc_xyreset(xycsc, xysc)
 	iopb->com = XYCMD_RST;
 	iopb->unit = xysc->xy_drive;
 
-	XYC_GO(xycsc->xyc, (u_long)xycsc->ciorq->dmaiopb);
+	XYC_GO(xycsc->xyc, xycsc->ciorq->dmaiopb);
 
 	del = XYC_RESETUSEC;
 	while (del > 0) {

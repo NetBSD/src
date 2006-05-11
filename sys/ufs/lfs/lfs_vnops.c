@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.157.10.4 2006/05/06 23:32:58 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.157.10.5 2006/05/11 23:32:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.10.4 2006/05/06 23:32:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.157.10.5 2006/05/11 23:32:03 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -513,6 +513,7 @@ lfs_mark_vnode(struct vnode *vp)
 			(void)lfs_vref(vp);
 			simple_lock(&lfs_subsys_lock);
 			++lfs_dirvcount;
+			++fs->lfs_dirvcount;
 			simple_unlock(&lfs_subsys_lock);
 			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			vp->v_flag |= VDIROP;
@@ -701,7 +702,7 @@ lfs_remove(void *v)
 		return error;
 	}
 	error = ufs_remove(ap);
-	SET_ENDOP_REMOVE(VTOI(dvp)->i_lfs, dvp, vp, "remove");
+	SET_ENDOP_REMOVE(VTOI(dvp)->i_lfs, dvp, ap->a_vp, "remove");
 	return (error);
 }
 
@@ -726,7 +727,7 @@ lfs_rmdir(void *v)
 		return error;
 	}
 	error = ufs_rmdir(ap);
-	SET_ENDOP_REMOVE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, vp, "rmdir");
+	SET_ENDOP_REMOVE(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
 	return (error);
 }
 
@@ -1106,10 +1107,18 @@ lfs_strategy(void *v)
 				      "lfs_strategy: sleeping on ino %d lbn %"
 				      PRId64 "\n", ip->i_number, bp->b_lblkno));
 				simple_lock(&fs->lfs_interlock);
-				if (fs->lfs_seglock) {
+				if (LFS_SEGLOCK_HELD(fs) && fs->lfs_iocount) {
+					/* Cleaner can't wait for itself */
+					ltsleep(&fs->lfs_iocount,
+						(PRIBIO + 1) | PNORELOCK,
+						"clean2", 0,
+						&fs->lfs_interlock);
+					slept = 1;
+					break;
+				} else if (fs->lfs_seglock) {
 					ltsleep(&fs->lfs_seglock,
 						(PRIBIO + 1) | PNORELOCK,
-						"lfs_strategy", 0,
+						"clean1", 0,
 						&fs->lfs_interlock);
 					slept = 1;
 					break;
@@ -1126,16 +1135,17 @@ lfs_strategy(void *v)
 	return (0);
 }
 
-static void
+void
 lfs_flush_dirops(struct lfs *fs)
 {
 	struct inode *ip, *nip;
 	struct vnode *vp;
 	extern int lfs_dostats;
 	struct segment *sp;
-	int needunlock;
+	int waslocked;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
+	KASSERT(fs->lfs_nadirop == 0);
 
 	if (fs->lfs_ronly)
 		return;
@@ -1178,6 +1188,8 @@ lfs_flush_dirops(struct lfs *fs)
 		simple_unlock(&fs->lfs_interlock);
 		vp = ITOV(ip);
 
+		KASSERT((ip->i_flag & IN_ADIROP) == 0);
+
 		/*
 		 * All writes to directories come from dirops; all
 		 * writes to files' direct blocks go through the page
@@ -1192,13 +1204,7 @@ lfs_flush_dirops(struct lfs *fs)
 			simple_lock(&fs->lfs_interlock);
 			continue;
 		}
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
-			needunlock = 1;
-		} else {
-			DLOG((DLOG_VNODE, "lfs_flush_dirops: flushing locked ino %d\n",
-			       VTOI(vp)->i_number));
-			needunlock = 0;
-		}
+		waslocked = VOP_ISLOCKED(vp);
 		if (vp->v_type != VREG &&
 		    ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp))) {
 			lfs_writefile(fs, sp, vp);
@@ -1208,15 +1214,14 @@ lfs_flush_dirops(struct lfs *fs)
 			}
 		}
 		(void) lfs_writeinode(fs, sp, ip);
-		if (needunlock)
-			VOP_UNLOCK(vp, 0);
-		else
+		if (waslocked)
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		simple_lock(&fs->lfs_interlock);
 	}
 	simple_unlock(&fs->lfs_interlock);
 	/* We've written all the dirops there are */
 	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+	lfs_finalize_fs_seguse(fs);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
 }
@@ -1268,11 +1273,10 @@ lfs_flush_pchain(struct lfs *fs)
 	 * We're very conservative about what we write; we want to be
 	 * fast and async.
 	 */
-    top:
 	simple_lock(&fs->lfs_interlock);
+    top:
 	for (ip = TAILQ_FIRST(&fs->lfs_pchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_pchain);
-		simple_unlock(&fs->lfs_interlock);
 		vp = ITOV(ip);
 
 		if (!(ip->i_flags & IN_PAGING))
@@ -1284,8 +1288,11 @@ lfs_flush_pchain(struct lfs *fs)
 			continue;
 		if (lfs_vref(vp))
 			continue;
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0) {
+		simple_unlock(&fs->lfs_interlock);
+
+		if (VOP_ISLOCKED(vp)) {
 			lfs_vunref(vp);
+			simple_lock(&fs->lfs_interlock);
 			continue;
 		}
 
@@ -1296,15 +1303,14 @@ lfs_flush_pchain(struct lfs *fs)
 		}
 		(void) lfs_writeinode(fs, sp, ip);
 
-		VOP_UNLOCK(vp, 0);
 		lfs_vunref(vp);
-
-		simple_lock(&fs->lfs_interlock);
 
 		if (error == EAGAIN) {
 			lfs_writeseg(fs, sp);
+			simple_lock(&fs->lfs_interlock);
 			break;
 		}
+		simple_lock(&fs->lfs_interlock);
 	}
 	simple_unlock(&fs->lfs_interlock);
 	(void) lfs_writeseg(fs, sp);
@@ -1364,11 +1370,9 @@ lfs_fcntl(void *v)
 		simple_lock(&fs->lfs_interlock);
 		++fs->lfs_sleepers;
 		simple_unlock(&fs->lfs_interlock);
-		VOP_UNLOCK(ap->a_vp, 0);
 
 		error = lfs_segwait(fsidp, tvp);
 
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		simple_lock(&fs->lfs_interlock);
 		if (--fs->lfs_sleepers == 0)
 			wakeup(&fs->lfs_sleepers);
@@ -1395,7 +1399,6 @@ lfs_fcntl(void *v)
 		simple_lock(&fs->lfs_interlock);
 		++fs->lfs_sleepers;
 		simple_unlock(&fs->lfs_interlock);
-		VOP_UNLOCK(ap->a_vp, 0);
 		if (ap->a_command == LFCNBMAPV)
 			error = lfs_bmapv(p, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
@@ -1403,7 +1406,6 @@ lfs_fcntl(void *v)
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		simple_lock(&fs->lfs_interlock);
 		if (--fs->lfs_sleepers == 0)
 			wakeup(&fs->lfs_sleepers);
@@ -1416,7 +1418,6 @@ lfs_fcntl(void *v)
 		 * Flush dirops and write Ifile, allowing empty segments
 		 * to be immediately reclaimed.
 		 */
-		VOP_UNLOCK(ap->a_vp, 0);
 		lfs_writer_enter(fs, "pndirop");
 		off = fs->lfs_offset;
 		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
@@ -1438,7 +1439,6 @@ lfs_fcntl(void *v)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
 #endif
 
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		return 0;
 
 	    case LFCNIFILEFH:
@@ -1479,7 +1479,6 @@ lfs_fcntl(void *v)
 		 * was written, and we can regression-test checkpoint
 		 * validity in the general case.
 		 */
-		VOP_UNLOCK(ap->a_vp, 0);
 		simple_lock(&fs->lfs_interlock);
 		fs->lfs_nowrap = 1;
 		error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER | PNORELOCK,
@@ -1488,7 +1487,6 @@ lfs_fcntl(void *v)
 			fs->lfs_nowrap = 0;
 			wakeup(&fs->lfs_nowrap);
 		}
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		return 0;
 
 	    case LFCNWRAPGO:
@@ -1496,13 +1494,11 @@ lfs_fcntl(void *v)
 		 * Having done its work, the agent wakes up the writer.
 		 * It sleeps until a new segment is selected.
 		 */
-		VOP_UNLOCK(ap->a_vp, 0);
 		simple_lock(&fs->lfs_interlock);
 		fs->lfs_nowrap = 0;
 		wakeup(&fs->lfs_nowrap);
                 ltsleep(&fs->lfs_nextseg, PCATCH | PUSER | PNORELOCK,
                         "segment", 0, &fs->lfs_interlock);
-		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
 		return 0;
 
 	    default:

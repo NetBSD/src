@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.34.10.1 2006/04/19 03:25:38 elad Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.34.10.2 2006/05/11 23:28:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.34.10.1 2006/04/19 03:25:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.34.10.2 2006/05/11 23:28:48 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,32 +255,32 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 	    BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to allocate memory for the MDL, error = %d\n",
 		    error);
-		return;
+		goto fail_0;
 	}
 	if ((error = bus_dmamem_map(esc->sc_dmat, &seg, rseg,
 	    sizeof(uint32_t) * MDL_SIZE , (caddr_t *)&esc->sc_mdladdr,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf(": unable to map the MDL memory, error = %d\n", error);
-		goto fail_0;
+		goto fail_1;
 	}
 	if ((error = bus_dmamap_create(esc->sc_dmat,
 	    sizeof(uint32_t) * MDL_SIZE, 1, sizeof(uint32_t) * MDL_SIZE,
 	    0, BUS_DMA_NOWAIT, &esc->sc_mdldmap)) != 0) {
 		printf(": unable to map_create for the MDL, error = %d\n",
 		    error);
-		goto fail_1;
+		goto fail_2;
 	}
 	if ((error = bus_dmamap_load(esc->sc_dmat, esc->sc_mdldmap,
 	     esc->sc_mdladdr, sizeof(uint32_t) * MDL_SIZE,
 	     NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf(": unable to load for the MDL, error = %d\n", error);
-		goto fail_2;
+		goto fail_3;
 	}
 
 	/* map and establish interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		goto fail_3;
+		goto fail_4;
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -291,7 +291,7 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail_3;
+		goto fail_4;
 	}
 	if (intrstr != NULL)
 		printf(": interrupting at %s\n", intrstr);
@@ -307,15 +307,17 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 
- fail_3:
+ fail_4:
 	bus_dmamap_unload(esc->sc_dmat, esc->sc_mdldmap);
- fail_2:
+ fail_3:
 	bus_dmamap_destroy(esc->sc_dmat, esc->sc_mdldmap);
- fail_1:
+ fail_2:
 	bus_dmamem_unmap(esc->sc_dmat, (caddr_t)esc->sc_mdldmap,
 	    sizeof(uint32_t) * MDL_SIZE);
- fail_0:
+ fail_1:
 	bus_dmamem_free(esc->sc_dmat, &seg, rseg);
+ fail_0:
+	bus_dmamap_destroy(esc->sc_dmat, esc->sc_xfermap);
 }
 
 CFATTACH_DECL(pcscp, sizeof(struct pcscp_softc),
