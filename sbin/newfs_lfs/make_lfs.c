@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.7 2006/05/04 04:39:15 perseant Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.8 2006/05/11 16:56:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.7 2006/05/04 04:39:15 perseant Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.8 2006/05/11 16:56:50 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_bsize */	DFL_LFSBLOCK,
 		/* dlfs_fsize */	DFL_LFSFRAG,
 		/* dlfs_frag */		DFL_LFSBLOCK/DFL_LFSFRAG,
-		/* dlfs_free */		HIGHEST_USED_INO + 1,
+		/* dlfs_freehd */	HIGHEST_USED_INO + 1,
 		/* dlfs_bfree */	0,
 		/* dlfs_nfiles */	0,
 		/* dlfs_avail */	0,
@@ -175,8 +175,8 @@ static struct lfs lfs_default =  {
 		/* dlfs_serial */	0,
 		/* dlfs_ibsize */	DFL_LFSFRAG,
 		/* dlfs_start */	0,
-		/* dlfs_inodefmt */     LFS_44INODEFMT,
 		/* dlfs_tstamp */       0,
+		/* dlfs_inodefmt */     LFS_44INODEFMT,
 		/* dlfs_interleave */   0,
 		/* dlfs_ident */        0,
 		/* dlfs_fsbtodb */      0,
@@ -423,19 +423,19 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
     tryagain:
 	/* Modify parts of superblock overridden by command line arguments */
 	if (bsize != DFL_LFSBLOCK || fsize != DFL_LFSFRAG) {
-		fs->lfs_bshift = log2(bsize);
+		fs->lfs_bshift = lfs_log2(bsize);
 		if (1 << fs->lfs_bshift != bsize)
 			fatal("%d: block size not a power of 2", bsize);
 		fs->lfs_bsize = bsize;
 		fs->lfs_fsize = fsize;
 		fs->lfs_bmask = bsize - 1;
 		fs->lfs_ffmask = fsize - 1;
-		fs->lfs_ffshift = log2(fsize);
+		fs->lfs_ffshift = lfs_log2(fsize);
 		if (1 << fs->lfs_ffshift != fsize)
 			fatal("%d: frag size not a power of 2", fsize);
 		fs->lfs_frag = numfrags(fs, bsize);
 		fs->lfs_fbmask = fs->lfs_frag - 1;
-		fs->lfs_fbshift = log2(fs->lfs_frag);
+		fs->lfs_fbshift = lfs_log2(fs->lfs_frag);
 		fs->lfs_ifpb = bsize / sizeof(IFILE);
 		/* XXX ondisk32 */
 		fs->lfs_nindir = bsize / sizeof(int32_t);
@@ -443,7 +443,7 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 
 	if (fs->lfs_version == 1) {
 		fs->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
-		fs->lfs_segshift = log2(ssize);
+		fs->lfs_segshift = lfs_log2(ssize);
 		if (1 << fs->lfs_segshift != ssize)
 			fatal("%d: segment size not power of 2", ssize);
 		fs->lfs_segmask = ssize - 1;
@@ -483,10 +483,10 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 	 * size, disk geometry and current time.
 	 */
 	db_per_blk = bsize/secsize;
-	fs->lfs_blktodb = log2(db_per_blk);
-	fs->lfs_fsbtodb = log2(fsize / secsize);
+	fs->lfs_blktodb = lfs_log2(db_per_blk);
+	fs->lfs_fsbtodb = lfs_log2(fsize / secsize);
 	if (version == 1) {
-		fs->lfs_sushift = log2(fs->lfs_sepb);
+		fs->lfs_sushift = lfs_log2(fs->lfs_sepb);
 		fs->lfs_fsbtodb = 0;
 		fs->lfs_size = partp->p_size >> fs->lfs_blktodb;
 	}
