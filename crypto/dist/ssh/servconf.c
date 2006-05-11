@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.34 2006/03/19 16:20:47 elad Exp $	*/
+/*	$NetBSD: servconf.c,v 1.35 2006/05/11 00:05:45 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: servconf.c,v 1.146 2005/12/08 18:34:11 reyk Exp $");
-__RCSID("$NetBSD: servconf.c,v 1.34 2006/03/19 16:20:47 elad Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.35 2006/05/11 00:05:45 mrg Exp $");
 
 #ifdef KRB4
 #include <krb.h>
@@ -469,6 +469,8 @@ process_server_config_line(ServerOptions *options, char *line,
 {
 	char *cp, **charptr, *arg, *p;
 	int *intptr, value, n;
+	SyslogFacility *sfptr;
+	LogLevel *llptr;
 	ServerOpCodes opcode;
 	u_short port;
 	u_int i;
@@ -814,25 +816,25 @@ parse_flag:
 		goto parse_flag;
 
 	case sLogFacility:
-		intptr = (int *) &options->log_facility;
+		sfptr = &options->log_facility;
 		arg = strdelim(&cp);
 		value = log_facility_number(arg);
 		if (value == SYSLOG_FACILITY_NOT_SET)
 			fatal("%.200s line %d: unsupported log facility '%s'",
 			    filename, linenum, arg ? arg : "<NONE>");
-		if (*intptr == -1)
-			*intptr = (SyslogFacility) value;
+		if (*sfptr == -1)
+			*sfptr = value;
 		break;
 
 	case sLogLevel:
-		intptr = (int *) &options->log_level;
+		llptr = &options->log_level;
 		arg = strdelim(&cp);
 		value = log_level_number(arg);
 		if (value == SYSLOG_LEVEL_NOT_SET)
 			fatal("%.200s line %d: unsupported log level '%s'",
 			    filename, linenum, arg ? arg : "<NONE>");
-		if (*intptr == -1)
-			*intptr = (LogLevel) value;
+		if (*llptr == -1)
+			*llptr = value;
 		break;
 
 	case sAllowTcpForwarding:
