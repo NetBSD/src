@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.31 2005/10/31 15:22:10 wiz Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.32 2006/05/11 08:38:38 mrg Exp $	*/
 /*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
@@ -453,7 +453,7 @@ make_packet(struct ifinfo *ifinfo)
 {
 	size_t packlen = sizeof(struct nd_router_solicit), lladdroptlen = 0;
 	struct nd_router_solicit *rs;
-	char *buf;
+	u_char *buf;
 
 	if ((lladdroptlen = lladdropt_length(ifinfo->sdl)) == 0) {
 		warnmsg(LOG_INFO, __func__,
