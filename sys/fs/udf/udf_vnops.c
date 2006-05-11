@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.3 2006/04/25 02:19:31 snj Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.4 2006/05/11 01:12:21 mrg Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.3 2006/04/25 02:19:31 snj Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.4 2006/05/11 01:12:21 mrg Exp $");
 #endif /* not lint */
 
 
@@ -741,8 +741,8 @@ udf_setattr(void *v)
 	/* shut up gcc for now */
 	ap = ap;
 	vp = vp;
-	uid = uid;
-	gid = gid;
+	uid = 0;	/* XXX gcc */
+	gid = 0;	/* XXX gcc */
 	udf_node = udf_node;
 
 	DPRINTF(NOTIMPL, ("udf_setattr called\n"));
@@ -833,7 +833,7 @@ udf_open(void *v)
 	} */ *ap;
 
 	DPRINTF(CALL, ("udf_open called\n"));
-	ap = ap;		/* shut up gcc */
+	ap = 0;		/* XXX gcc */
 
 	return 0;
 }
