@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.28 2005/03/17 01:34:41 christos Exp $	*/
+/*	$NetBSD: utility.c,v 1.29 2006/05/11 12:27:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.28 2005/03/17 01:34:41 christos Exp $");
+__RCSID("$NetBSD: utility.c,v 1.29 2006/05/11 12:27:21 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -517,7 +517,7 @@ printsub(
 {
     int i = 0;
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
-    char buf[512];
+    u_char buf[512];
 #endif
 
 	if (!(diagnostic & TD_OPTIONS))
