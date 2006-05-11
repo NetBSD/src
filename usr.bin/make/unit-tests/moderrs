@@ -1,4 +1,4 @@
-# $Id: moderrs,v 1.1 2006/05/11 15:37:07 sjg Exp $
+# $Id: moderrs,v 1.2 2006/05/11 18:48:33 sjg Exp $
 #
 # various modifier error tests
 
@@ -8,7 +8,7 @@ MOD_UNKN=Z
 MOD_TERM=S,V,v
 MOD_S:= ${MOD_TERM},
 
-all:	modunkn modunknV varterm vartermV modterm modtermV
+all:	modunkn modunknV varterm vartermV modtermV
 
 modunkn:
 	@echo "Expect: Unknown modifier 'Z'"
@@ -25,11 +25,6 @@ varterm:
 vartermV:
 	@echo "Expect: Unclosed variable specification for VAR"
 	@echo VAR:${MOD_TERM},=${VAR:${MOD_S}
-
-modterm:
-	@echo "Expect: Unclosed substitution for VAR (, missing)"
-	@echo "and: Syntax error: Unterminated quoted string"
-	-@echo "VAR:S,V,v=${VAR:S,V,v}"
 
 modtermV:
 	@echo "Expect: Unclosed substitution for VAR (, missing)"
