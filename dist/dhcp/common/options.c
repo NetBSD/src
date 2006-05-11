@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.5 2005/08/11 17:13:21 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.6 2006/05/11 09:29:39 mrg Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -929,7 +929,7 @@ int store_options (ocount, buffer, buflen, packet, lease, client_state,
 	    while (length) {
 		    unsigned incr = length;
 		    int *pix;
-		    char *base;
+		    u_char *base;
 
 		    /* Try to fit it in the options buffer. */
 		    if (!splitup &&
