@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.33 2005/10/02 16:49:46 christos Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.34 2006/05/11 08:40:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.33 2005/10/02 16:49:46 christos Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.34 2006/05/11 08:40:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -327,7 +327,7 @@ handleread(int s)
 		}
 	}
 #endif
-	(void)time((time_t *)&wd.wd_recvtime);
+	wd.wd_recvtime = time(NULL);
 	(void)write(whod, (char *)&wd, cc);
 	if (fstat(whod, &st) < 0 || st.st_size > cc)
 		(void)ftruncate(whod, cc);
