@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.13 2004/07/01 20:56:34 drochner Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.14 2006/05/11 01:19:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -93,7 +93,7 @@ typedef struct {
 const char *audio_enc_from_val (int);
 int	audio_enc_to_val (const char *);
 
-int	audio_sun_to_encoding (int, int *, int *);
+int	audio_sun_to_encoding (int, u_int *, u_int *);
 int	audio_encoding_to_sun (int, int, int *);
 
 /*

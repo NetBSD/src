@@ -1,4 +1,4 @@
-/*	$NetBSD: sun.c,v 1.3 2003/06/23 12:15:01 agc Exp $	*/
+/*	$NetBSD: sun.c,v 1.4 2006/05/11 01:19:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: sun.c,v 1.3 2003/06/23 12:15:01 agc Exp $");
+__RCSID("$NetBSD: sun.c,v 1.4 2006/05/11 01:19:10 mrg Exp $");
 #endif
 
 
@@ -84,8 +84,8 @@ struct {
 int
 audio_sun_to_encoding(sun_encoding, encp, precp)
 	int	sun_encoding;
-	int	*encp;
-	int	*precp;
+	u_int	*encp;
+	u_int	*precp;
 {
 	int i;
 
