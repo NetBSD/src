@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.3 2006/05/11 00:11:25 mrg Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -134,10 +134,6 @@ extern int	authnumfreekeys;
 extern keyid_t	cache_keyid;		/* key identifier */
 extern u_char *	cache_key;		/* key pointer */
 extern u_int	cache_keylen;		/* key length */
-
-/* clocktypes.c */
-struct clktype;
-extern struct clktype clktypes[];
 
 /* getopt.c */
 extern char *	ntp_optarg;		/* global argument pointer */
