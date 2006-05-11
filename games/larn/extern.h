@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2006/05/11 10:23:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -135,7 +135,7 @@ void lprintf(const char *, ...);
 void lprint(long);
 void lwrite(char *, int);
 long lgetc(void);
-long lrint(void);
+long larn_lrint(void);
 void lrfill(char *, int);
 char *lgetw(void);
 char *lgetl(void);

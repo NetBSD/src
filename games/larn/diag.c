@@ -1,9 +1,9 @@
-/*	$NetBSD: diag.c,v 1.9 2000/07/03 03:57:42 matt Exp $	*/
+/*	$NetBSD: diag.c,v 1.10 2006/05/11 10:23:24 mrg Exp $	*/
 
 /* diag.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: diag.c,v 1.9 2000/07/03 03:57:42 matt Exp $");
+__RCSID("$NetBSD: diag.c,v 1.10 2006/05/11 10:23:24 mrg Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -259,7 +259,7 @@ restoregame(fname)
 			lrfill((char *) &cell[k * MAXX * MAXY], sizeof(struct cel) * MAXY * MAXX);
 
 	lrfill((char *) &c[0], 100 * sizeof(long));
-	gltime = lrint();
+	gltime = larn_lrint();
 	level = c[CAVELEVEL] = lgetc();
 	playerx = lgetc();
 	playery = lgetc();
@@ -304,7 +304,7 @@ restoregame(fname)
 	}
 
 	time(&zzz);
-	initialtime = zzz - lrint();
+	initialtime = zzz - larn_lrint();
 	fstat(fd, &filetimes);	/* get the creation and modification time of
 				 * file	 */
 	lrfill((char *) &zzz, sizeof(long));
@@ -318,7 +318,7 @@ restoregame(fname)
 		return;
 	}			/* died a post mortem death */
 	oldx = oldy = 0;
-	i = lrint();		/* inode # */
+	i = larn_lrint();		/* inode # */
 	if (i && (filetimes.st_ino != i))
 		fsorry();
 	lrclose();

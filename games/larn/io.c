@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.15 2005/02/03 02:23:02 perry Exp $	*/
+/*	$NetBSD: io.c,v 1.16 2006/05/11 10:23:24 mrg Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -27,7 +27,7 @@
  * FILE INPUT ROUTINES
  * 
  * long lgetc()				read one character from input buffer
- * long lrint()				read one integer from input buffer
+ * long larn_lrint()			read one integer from input buffer
  * lrfill(address,number)		put input bytes into a buffer char
  * *lgetw()				get a whitespace ended word from
  * input char *lgetl()				get a \n or EOF ended line
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.15 2005/02/03 02:23:02 perry Exp $");
+__RCSID("$NetBSD: io.c,v 1.16 2006/05/11 10:23:24 mrg Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -462,7 +462,7 @@ lgetc()
  *	Returns the int read
  */
 long 
-lrint()
+larn_lrint()
 {
 	unsigned long i;
 	i = 255 & lgetc();
