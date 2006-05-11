@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2000/06/12 13:57:43 simonb Exp $
+#	$NetBSD: Makefile,v 1.4 2006/05/11 07:13:24 mrg Exp $
 
 PROG=	ntptime
 MAN=	ntptime.8
 SRCS=	ntptime.c
+
+COPTS+= -fno-strict-aliasing
 
 NTPSRCDIR=util
 
