@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.23 2006/03/20 04:03:23 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2006/05/11 01:26:03 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	ssh
 SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 	sshconnect.c sshconnect1.c sshconnect2.c
+
+COPTS.sshconnect1.c=	-fno-strict-aliasing
 
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MAN=	ssh.1 ssh_config.5
