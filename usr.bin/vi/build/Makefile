@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2004/05/25 16:47:31 aymeric Exp $
+#	$NetBSD: Makefile,v 1.26 2006/05/11 06:01:31 mrg Exp $
 #
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
@@ -6,6 +6,11 @@
 
 CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include -DGTAGS
 CWARNFLAGS+=-Wno-parentheses
+# XXXGCC4 should fix vi instead
+.if ${HAVE_GCC} == 4
+CWARNFLAGS+=-Wno-pointer-sign
+COPTS+=-fno-strict-aliasing
+.endif
 
 LDADD+=	-lcurses
 DPADD+=	${LIBCURSES}
