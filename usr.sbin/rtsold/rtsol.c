@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsol.c,v 1.11 2004/01/03 01:40:32 itojun Exp $	*/
+/*	$NetBSD: rtsol.c,v 1.12 2006/05/11 08:37:24 mrg Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ sendpacket(struct ifinfo *ifinfo)
 void
 rtsol_input(int s)
 {
-	u_char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
+	char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 	int ifindex = 0, i, *hlimp = NULL;
 	struct in6_pktinfo *pi = NULL;
 	struct ifinfo *ifi = NULL;
