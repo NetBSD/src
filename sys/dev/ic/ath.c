@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.71 2006/04/14 20:20:33 christos Exp $	*/
+/*	$NetBSD: ath.c,v 1.72 2006/05/11 22:26:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.71 2006/04/14 20:20:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.72 2006/05/11 22:26:54 mrg Exp $");
 #endif
 
 /*
@@ -4683,7 +4683,7 @@ ath_getchannels(struct ath_softc *sc, u_int cc,
 	    cc, HAL_MODE_ALL, outdoor, xchanmode)) {
 		u_int32_t rd;
 
-		ath_hal_getregdomain(ah, &rd);
+		(void)ath_hal_getregdomain(ah, &rd);
 		if_printf(ifp, "unable to collect channel list from hal; "
 			"regdomain likely %u country code %u\n", rd, cc);
 		free(chans, M_TEMP);
@@ -4802,13 +4802,13 @@ ath_update_txpow(struct ath_softc *sc)
 	if (sc->sc_curtxpow != ic->ic_txpowlimit) {
 		ath_hal_settxpowlimit(ah, ic->ic_txpowlimit);
 		/* read back in case value is clamped */
-		ath_hal_gettxpowlimit(ah, &txpow);
+		(void)ath_hal_gettxpowlimit(ah, &txpow);
 		ic->ic_txpowlimit = sc->sc_curtxpow = txpow;
 	}
 	/* 
 	 * Fetch max tx power level for status requests.
 	 */
-	ath_hal_getmaxtxpow(sc->sc_ah, &txpow);
+	(void)ath_hal_getmaxtxpow(sc->sc_ah, &txpow);
 	ic->ic_bss->ni_txpower = txpow;
 }
 
