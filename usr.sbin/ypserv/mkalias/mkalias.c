@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.13 2005/06/20 00:08:35 lukem Exp $ */
+/*	$NetBSD: mkalias.c,v 1.14 2006/05/11 08:44:56 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.13 2005/06/20 00:08:35 lukem Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.14 2006/05/11 08:44:56 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -104,7 +104,7 @@ split_address(char *address, int len, char *user, char *host)
 int
 check_host(char *address, char *host, int dflag, int uflag, int Eflag)
 {
-	char answer[PACKETSZ];
+	u_char answer[PACKETSZ];
 	int  status;
 
 	if ((dflag && strchr(address, '@')) ||
