@@ -1,4 +1,4 @@
-/*	$NetBSD: makemove.c,v 1.7 2003/08/07 09:37:17 agc Exp $	*/
+/*	$NetBSD: makemove.c,v 1.8 2006/05/11 00:17:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)makemove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: makemove.c,v 1.7 2003/08/07 09:37:17 agc Exp $");
+__RCSID("$NetBSD: makemove.c,v 1.8 2006/05/11 00:17:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,7 +224,7 @@ update_overlap(osp)
 	int i, f, r, r1, d, d1, n;
 	int a, b, bmask, bmask1;
 	struct spotstr *esp;
-	char *str;
+	u_char *str;
 
 	esp = NULL;
 	for (r = 4; --r >= 0; ) {			/* for each direction */
