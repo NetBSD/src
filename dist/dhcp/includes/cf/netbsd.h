@@ -32,8 +32,8 @@
  * ``http://www.nominum.com''.
  */
 
+#include <sys/param.h>
 #include <syslog.h>
-#include <sys/types.h>
 #include <string.h>
 #include <paths.h>
 #include <errno.h>
