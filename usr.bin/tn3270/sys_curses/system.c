@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.19 2006/05/11 00:25:46 mrg Exp $	*/
+/*	$NetBSD: system.c,v 1.20 2006/05/11 00:27:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.19 2006/05/11 00:25:46 mrg Exp $");
+__RCSID("$NetBSD: system.c,v 1.20 2006/05/11 00:27:27 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -483,7 +483,7 @@ doconnect()
 		return -1;
 	    }
 	} else {
-	    i = accept(serversock, (struct sockaddr *)0, (int *)0);
+	    i = accept(serversock, (struct sockaddr *)0, (socklen_t *)0);
 	    if (i == -1) {
 		perror("accepting API connection");
 		return -1;
@@ -630,7 +630,7 @@ shell(argc,argv)
 int	argc;
 char	*argv[];
 {
-    int length;
+    socklen_t length;
     struct sockaddr_in server;
     char sockNAME[128];
     static char **whereAPI = 0;
