@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.95 2006/04/01 20:21:30 christos Exp $
+#	$NetBSD: Makefile,v 1.96 2006/05/11 01:15:32 mrg Exp $
 
 .include <bsd.own.mk>
 
-.if ${USE_GCC4:Uno} != "no"
+.if ${HAVE_GCC} == "4"
 TOOLCHAIN_BITS= gmake .WAIT
 .endif
 .if ${TOOLCHAIN_MISSING} == "no"
