@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.9 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.10 2006/05/11 12:05:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.9 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.10 2006/05/11 12:05:37 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -65,7 +65,6 @@ u_int actual_mask;
 u_int disabled_mask;
 u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
-u_int irqblock[NIRQS];
 
 extern u_int soft_interrupts;	/* Only so we can initialise it */
 
@@ -89,7 +88,6 @@ irq_init()
 	/* Clear all the IRQ handlers and the irq block masks */
 	for (loop = 0; loop < NIRQS; ++loop) {
 		irqhandlers[loop] = NULL;
-		irqblock[loop] = 0;
 	}
 
 	/* Clear the IRQ/FIQ masks in the IOMD */
@@ -145,7 +143,6 @@ irq_claim(irq, handler)
 	irqhandler_t *handler;
 {
 	int level;
-	int loop;
 	u_int oldirqstate;
 
 #ifdef DIAGNOSTIC
@@ -249,32 +246,6 @@ irq_claim(irq, handler)
 #endif
 	}
 
-	/*
-	 * We now need to update the irqblock array. This array indicates
-	 * what other interrupts should be blocked when interrupt is asserted
-	 * This basically emulates hardware interrupt priorities e.g. by
-	 * blocking all other IPL_BIO interrupts with an IPL_BIO interrupt
-	 * is asserted. For each interrupt we find the highest IPL and set
-	 * the block mask to the interrupt mask for that level.
-	 */
-	for (loop = 0; loop < NIRQS; ++loop) {
-		irqhandler_t *ptr;
-
-		ptr = irqhandlers[loop];
-		if (ptr) {
-			/* There is at least 1 handler so scan the chain */
-			level = ptr->ih_level;
-			while (ptr) {
-				if (ptr->ih_level > level)
-					level = ptr->ih_level;
-				ptr = ptr->ih_next;
-			}
-			irqblock[loop] = ~irqmasks[level];
-		} else
-			/* No handlers for this irq so nothing to block */
-			irqblock[loop] = 0;
-	}
-
 	enable_irq(irq);
 	set_spl_masks();
 	restore_interrupts(oldirqstate);
@@ -295,7 +266,6 @@ irq_release(irq, handler)
 	irqhandler_t *handler;
 {
 	int level;
-	int loop;
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
 #ifdef IRQSTATS
@@ -377,32 +347,6 @@ irq_release(irq, handler)
 				--level;
 			}
 		}
-	}
-
-	/*
-	 * We now need to update the irqblock array. This array indicates
-	 * what other interrupts should be blocked when interrupt is asserted
-	 * This basically emulates hardware interrupt priorities e.g. by
-	 * blocking all other IPL_BIO interrupts with an IPL_BIO interrupt
-	 * is asserted. For each interrupt we find the highest IPL and set
-	 * the block mask to the interrupt mask for that level.
-	 */
-	for (loop = 0; loop < NIRQS; ++loop) {
-		irqhandler_t *ptr;
-
-		ptr = irqhandlers[loop];
-		if (ptr) {
-			/* There is at least 1 handler so scan the chain */
-			level = ptr->ih_level;
-			while (ptr) {
-				if (ptr->ih_level > level)
-					level = ptr->ih_level;
-				ptr = ptr->ih_next;
-			}
-			irqblock[loop] = ~irqmasks[level];
-		} else
-			/* No handlers for this irq so nothing to block */
-			irqblock[loop] = 0;
 	}
 
 	/*
