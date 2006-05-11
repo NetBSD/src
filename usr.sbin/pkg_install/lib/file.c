@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.77 2006/03/26 18:11:22 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.78 2006/05/11 23:50:15 mrg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -17,7 +17,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.77 2006/03/26 18:11:22 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.78 2006/05/11 23:50:15 mrg Exp $");
 #endif
 #endif
 
@@ -651,7 +651,7 @@ unpack(const char *pkg, const lfile_head_t *filesp)
 	} else
 		decompress_cmd = GZIP_CMD;
 
-	up_argv[i] = strrchr(TAR_CMD, '/');
+	up_argv[i] = (char *)strrchr(TAR_CMD, '/');
 	if (up_argv[i] == NULL)
 		up_argv[i] = TAR_CMD;
 	else
