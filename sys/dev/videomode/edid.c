@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.1 2006/05/11 01:49:53 gdamore Exp $ */
+/* $NetBSD: edid.c,v 1.2 2006/05/11 19:05:41 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.1 2006/05/11 01:49:53 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.2 2006/05/11 19:05:41 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,22 +475,17 @@ edid_block(struct edid_info *edid, uint8_t *data)
 /*
  * Gets EDID version in BCD, e.g. EDID v1.3  returned as 0x0103
  */
-struct edid_info *
-edid_parse(uint8_t *data)
+int
+edid_parse(uint8_t *data, struct edid_info *edid)
 {
 	uint16_t		manfid, estmodes;
-	struct edid_info	*edid;
 	const struct videomode	*vmp;
 	int			i;
 	const char		*name;
 
 	if (edid_is_valid(data) != 0)
-		return NULL;
+		return -1;
 
-	edid = malloc(sizeof (struct edid_info), M_DEVBUF, M_WAITOK|M_ZERO);
-	if (edid == NULL)
-		return NULL;
-	
 	/* get product identification */
 	manfid = EDID_VENDOR_ID(data);
 	edid->edid_vendor[0] = EDID_MANFID_0(manfid);
@@ -574,11 +569,6 @@ edid_parse(uint8_t *data)
 	edid_strchomp(edid->edid_serial);
 	edid_strchomp(edid->edid_comment);
 
-	return edid;
+	return 0;
 }
 
-void
-edid_free(struct edid_info *edid)
-{
-	free(edid, M_DEVBUF);
-}
