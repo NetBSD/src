@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.19 2003/09/25 01:02:03 mycroft Exp $
+# $NetBSD: Makefile.inc,v 1.20 2006/05/11 23:16:30 mrg Exp $
 
 WARNS?=	1
 
@@ -11,6 +11,10 @@ COBJDIR!=cd $(.CURDIR)/../common && ${PRINTOBJDIR}
 OMOBJDIR!=cd $(.CURDIR)/../omapip && ${PRINTOBJDIR}
 MROBJDIR!=cd $(.CURDIR)/../minires && ${PRINTOBJDIR}
 DSTOBJDIR!=cd $(.CURDIR)/../dst && ${PRINTOBJDIR}
+
+.if ${HAVE_GCC} == 4
+COPTS+=	-fno-strict-aliasing
+.endif
 
 CPPFLAGS+= -I${DIST} -I${DIST}/includes -Wno-unused
 LDADD+= ${COBJDIR}/libdhcp.a ${MROBJDIR}/libminires.a

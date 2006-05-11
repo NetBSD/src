@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2006/03/20 04:03:23 christos Exp $
+#	$NetBSD: Makefile,v 1.40 2006/05/11 23:16:30 mrg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -71,6 +71,12 @@ DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 
 LDADD+= -ldes -lcom_err -lroken
 DPADD+=	${LIBDES} ${LIBCOM_ERR} ${LIBROKEN}
+.endif
+
+.if ${HAVE_GCC} == 4
+.for f in commands telnet terminal utilities
+COPTS.${f}.c+=  -Wno-pointer-sign
+.endfor
 .endif
 
 .include <bsd.prog.mk>

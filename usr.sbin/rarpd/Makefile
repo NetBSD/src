@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/04/13 09:12:16 itojun Exp $
+#	$NetBSD: Makefile,v 1.10 2006/05/11 23:16:31 mrg Exp $
 
 PROG=	rarpd
 SRCS=	rarpd.c mkarp.c
@@ -13,3 +13,7 @@ LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
 
 .include <bsd.prog.mk>
+
+.if ${HAVE_GCC} == 4
+COPTS.mkarp.c+=	-Wno-pointer-sign
+.endif
