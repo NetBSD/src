@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_prot.c,v 1.8 2006/03/19 02:41:16 christos Exp $	*/
+/*	$NetBSD: rpcb_prot.c,v 1.9 2006/05/11 17:11:57 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_prot.c 1.9 89/04/21 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_prot.c,v 1.8 2006/03/19 02:41:16 christos Exp $");
+__RCSID("$NetBSD: rpcb_prot.c,v 1.9 2006/05/11 17:11:57 mrg Exp $");
 #endif
 #endif
 
@@ -363,7 +363,7 @@ xdr_netbuf(xdrs, objp)
 	if (!xdr_u_int32_t(xdrs, (u_int32_t *) &objp->maxlen)) {
 		return (FALSE);
 	}
-	dummy = xdr_bytes(xdrs, (char **)&(objp->buf),
+	dummy = xdr_bytes(xdrs, (char **)(void *)&(objp->buf),
 			(u_int *)&(objp->len), objp->maxlen);
 	return (dummy);
 }
