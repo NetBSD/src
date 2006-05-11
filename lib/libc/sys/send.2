@@ -1,4 +1,4 @@
-.\"	$NetBSD: send.2,v 1.25 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: send.2,v 1.26 2006/05/11 15:48:48 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)send.2	8.2 (Berkeley) 2/21/94
 .\"
-.Dd April 20, 2003
+.Dd May 11, 2006
 .Dt SEND 2
 .Os
 .Sh NAME
@@ -95,8 +95,11 @@ The
 .Fa flags
 parameter may include one or more of the following:
 .Bd -literal
-#define	MSG_OOB        0x1  /* process out-of-band data */
-#define	MSG_DONTROUTE  0x4  /* bypass routing, use direct interface */
+#define	MSG_OOB		0x0001 /* process out-of-band data */
+#define	MSG_PEEK	0x0002 /* peek at incoming message */
+#define	MSG_DONTROUTE	0x0004 /* bypass routing, use direct interface */
+#define	MSG_EOR		0x0008 /* data completes record */
+#define	MSG_NOSIGNAL	0x0400 /* do not generate SIGPIPE on EOF */
 .Ed
 .Pp
 The flag
@@ -108,6 +111,20 @@ data on sockets that support this notion (e.g.
 the underlying protocol must also support
 .Dq out-of-band
 data.
+.Dv MSG_EOR
+is used to indicate a record mark for protocols which support the
+concept.
+.\" .Dv MSG_EOF
+.\" requests that the sender side of a socket be shut down, and that an
+.\" appropriate indication be sent at the end of the specified data;
+.\" this flag is only implemented for
+.\" .Dv SOCK_STREAM
+.\" sockets in the
+.\" .Dv PF_INET
+.\" protocol family, and is used to implement Transaction
+.\" .Tn TCP
+.\" (see
+.\" .Xr ttcp 4 ) .
 .Dv MSG_DONTROUTE
 is usually used only by diagnostic or routing programs.
 .Pp
@@ -116,6 +133,11 @@ See
 for a description of the
 .Fa msghdr
 structure.
+.Dv MSG_NOSIGNAL
+is used to prevent
+.Dv SIGPIPE
+generation when writing a socket that
+may be closed.
 .Sh RETURN VALUES
 The call returns the number of characters sent, or \-1
 if an error occurred.
