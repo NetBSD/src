@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.875 2006/05/05 18:27:27 thorpej Exp $
+#	$NetBSD: mi,v 1.876 2006/05/11 21:06:41 gdamore Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5299,6 +5299,7 @@
 ./usr/share/man/cat9/ctxsw.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/curcpu.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/curproc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ddc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/delay.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/disk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/disk_attach.0		comp-sys-catman		.cat
@@ -5331,6 +5332,7 @@
 ./usr/share/man/cat9/dumpsys.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/dupfdopen.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/errno.0			comp-sys-catman		.cat
+./usr/share/man/cat9/edid.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_addmulti.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_delmulti.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_ifattach.0		comp-sys-catman		.cat
@@ -9353,6 +9355,7 @@
 ./usr/share/man/man9/ctxsw.9			comp-sys-man		.man
 ./usr/share/man/man9/curcpu.9			comp-sys-man		.man
 ./usr/share/man/man9/curproc.9			comp-sys-man		.man
+./usr/share/man/man9/ddc.9			comp-sys-man		.man
 ./usr/share/man/man9/delay.9			comp-sys-man		.man
 ./usr/share/man/man9/disk.9			comp-sys-man		.man
 ./usr/share/man/man9/disk_attach.9		comp-sys-man		.man
@@ -9384,6 +9387,7 @@
 ./usr/share/man/man9/driver.9			comp-sys-man		.man
 ./usr/share/man/man9/dumpsys.9			comp-sys-man		.man
 ./usr/share/man/man9/dupfdopen.9		comp-sys-man		.man
+./usr/share/man/man9/did.9			comp-sys-man		.man
 ./usr/share/man/man9/errno.9			comp-sys-man		.man
 ./usr/share/man/man9/ether_addmulti.9		comp-sys-man		.man
 ./usr/share/man/man9/ether_delmulti.9		comp-sys-man		.man
