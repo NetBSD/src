@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.12 2003/04/02 18:36:40 jsm Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.13 2006/05/11 00:18:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.12 2003/04/02 18:36:40 jsm Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.13 2006/05/11 00:18:31 mrg Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -76,11 +76,9 @@ __RCSID("$NetBSD: hack.termcap.c,v 1.12 2003/04/02 18:36:40 jsm Exp $");
 #include "def.flag.h"		/* for flags.nonull */
 
 static struct tinfo *info;
-static char    *HO, *CL, *CE, *UP, *CM, *ND, *XD, *BC, *SO, *SE, *TI, *TE;
+static char    *HO, *CL, *CE, *CM, *ND, *XD, *SO, *SE, *TI, *TE;
 static char    *VS, *VE;
 static int      SG;
-static char     PC = '\0';
-static char     BC_char = '\b'; /* if bc is not set use this */
 char           *CD;		/* tested in pri.c: docorner() */
 int             CO, LI;		/* used in pri.c and whatis.c */
 
@@ -88,22 +86,14 @@ void
 startup()
 {
 	char           *term;
-	char           *pc;
-
 	
+	/* UP, BC, PC already set */
  	if (!(term = getenv("TERM")))
 		error("Can't get TERM.");
 	if (!strncmp(term, "5620", 4))
 		flags.nonull = 1;	/* this should be a termcap flag */
 	if (t_getent(&info, term) < 1)
 		error("Unknown terminal type: %s.", term);
-	if ((pc = t_agetstr(info, "pc")) != NULL)
-		PC = *pc;
-	if (!(BC = t_agetstr(info, "bc"))) {
-		if (!t_getflag(info, "bs"))
-			error("Terminal must backspace.");
-		BC = &BC_char;
-	}
 	HO = t_agetstr(info, "ho");
 	CO = t_getnum(info, "co");
 	LI = t_getnum(info, "li");
@@ -115,7 +105,6 @@ startup()
 	if (t_getflag(info, "os"))
 		error("Hack can't have OS.");
 	CE = t_agetstr(info, "ce");
-	UP = t_agetstr(info, "up");
 	/*
 	 * It seems that xd is no longer supported, and we should use a
 	 * linefeed instead; unfortunately this requires resetting CRMOD, and
