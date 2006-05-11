@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.h,v 1.1 2005/03/20 01:09:16 thorpej Exp $	*/
+/*	$NetBSD: af_inet6.h,v 1.2 2006/05/11 00:46:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,6 @@
 #include <netinet/in.h>
 
 /* XXX */
-extern struct in6_ifreq    ifr6;
 extern struct in6_ifreq    in6_ridreq;
 extern struct in6_aliasreq in6_addreq;
 
