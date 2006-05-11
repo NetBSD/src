@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2005/09/19 21:18:30 explorer Exp $	
+#	$NetBSD: Makefile,v 1.41 2006/05/11 08:41:07 mrg Exp $	
 
 .include <bsd.own.mk>
 
@@ -78,6 +78,10 @@ CPPFLAGS+=-DINET6=1 -DHAVE_RES_USE_INET6=1
 CPPFLAGS+=-DHAVE_LIBCRYPTO=1 
 LDADD+=	-lcrypto -lcrypt
 DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
+.endif
+
+.if ${HAVE_GCC} == 4
+COPTS+=	-fno-strict-aliasing
 .endif
 
 CLEANFILES+=	version.c
