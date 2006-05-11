@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.2 2003/01/18 11:08:11 thorpej Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.3 2006/05/11 00:34:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.2 2003/01/18 11:08:11 thorpej Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.3 2006/05/11 00:34:44 mrg Exp $");
 #endif
 
 #include <inttypes.h>
@@ -72,9 +72,11 @@ makecontext(ucp, func, argc, va_alist)
 	gr[_REG_EIP] = (__greg_t)func;
 
 	/* LINTED uintptr_t is safe */
-	sp  = (int *)((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
+	sp  = (unsigned int *)((uintptr_t)ucp->uc_stack.ss_sp +
+	    ucp->uc_stack.ss_size);
+	/* Align on word boundary. */
 	/* LINTED uintptr_t is safe */
-	sp  = (int *)((uintptr_t)sp & ~0x3);	/* Align on word boundary. */
+	sp  = (unsigned int *)((uintptr_t)sp & ~0x3);
 	sp -= argc + 1;			/* Make room for ret and args. */
 	/* LINTED __greg_t is safe */
 	gr[_REG_UESP] = (__greg_t)sp;
