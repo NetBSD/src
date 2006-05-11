@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: ntp_refclock.h,v 1.3 2006/05/11 00:11:25 mrg Exp $	*/
 
 /*
  * ntp_refclock.h - definitions for reference clock support
@@ -67,6 +67,9 @@ struct clktype {
 	const char *clocktype;	/* long description */
 	const char *abbrev;	/* short description */
 };
+
+/* clocktypes.c */
+extern struct clktype clktypes[];
 
 /*
  * Configuration flag values
