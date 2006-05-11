@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/usr.sbin/ndiscvt/ndiscvt.c,v 1.9.2.2 2005/02/23 16:31:47 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ndiscvt.c,v 1.3 2006/04/03 16:29:57 rittera Exp $");
+__RCSID("$NetBSD: ndiscvt.c,v 1.4 2006/05/11 07:12:11 mrg Exp $");
 #endif
 
 
@@ -298,7 +298,7 @@ main(int argc, char *argv[])
 	int			i, bin = 0;
 	void			*img;
 	int			n, fsize, cnt;
-	unsigned char		*ptr;
+	char			*ptr;
 	char			*inffile = NULL, *sysfile = NULL;
 	char			*outfile = NULL, *firmfile = NULL;
 	char			*dname = NULL;
