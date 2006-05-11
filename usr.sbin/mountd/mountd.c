@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.102 2006/03/23 23:51:25 wiz Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.103 2006/05/11 07:11:08 mrg Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.102 2006/03/23 23:51:25 wiz Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.103 2006/05/11 07:11:08 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2250,7 +2250,8 @@ parsecred(namelist, cr)
 	char *names;
 	struct passwd *pw;
 	struct group *gr;
-	int ngroups, groups[NGROUPS + 1];
+	int ngroups;
+	gid_t groups[NGROUPS + 1];
 
 	/*
 	 * Set up the unprivileged user.
