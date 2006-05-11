@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.13 2006/03/22 16:35:44 christos Exp $ */
+/* $NetBSD: utils.c,v 1.14 2006/05/11 00:42:08 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.13 2006/03/22 16:35:44 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.14 2006/05/11 00:42:08 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -376,7 +376,7 @@ bits_decode(const string_t *in)
 	bits_t	*ret;
 	int	 len;
 	int	 nbits;
-	char	*tmp;
+	u_char	*tmp;
 
 	len = in->length;
 	tmp = emalloc(len);
@@ -420,7 +420,7 @@ bits_encode(const bits_t *in)
 	string_t *ret;
 	int	 len;
 	char	*out;
-	char	*tmp;
+	u_char	*tmp;
 
 	if (!in)
 		return NULL;
