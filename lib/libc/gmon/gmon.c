@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.25 2006/01/24 17:33:44 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.26 2006/05/11 17:19:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.25 2006/01/24 17:33:44 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.26 2006/05/11 17:19:15 mrg Exp $");
 #endif
 #endif
 
@@ -202,7 +202,7 @@ _m_gmon_destructor(void *arg)
 	/* XXX eww, linear list traversal. */
 	for (q = _gmoninuse, prev = &_gmoninuse;
 	     q != NULL;
-	     prev = (struct gmonparam **)&q->kcount,
+	     prev = (struct gmonparam **)(void *)&q->kcount,	/* XXX */
 		 q = (struct gmonparam *)(void *)q->kcount) {
 		if (q == p)
 			*prev = (struct gmonparam *)(void *)q->kcount;
