@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.7 2006/03/02 03:38:45 dyoung Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.8 2006/05/11 22:26:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.7 2006/03/02 03:38:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.8 2006/05/11 22:26:54 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -294,7 +294,7 @@ ath_sysctl_tpscale(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	sc = (struct ath_softc *)node.sysctl_data;
-	ath_hal_gettpscale(sc->sc_ah, &scale);
+	(void)ath_hal_gettpscale(sc->sc_ah, &scale);
 	node.sysctl_data = &scale;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -350,7 +350,7 @@ ath_sysctl_rfsilent(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	sc = (struct ath_softc *)node.sysctl_data;
-	ath_hal_getrfsilent(sc->sc_ah, &rfsilent);
+	(void)ath_hal_getrfsilent(sc->sc_ah, &rfsilent);
 	node.sysctl_data = &rfsilent;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -387,7 +387,7 @@ ath_sysctl_tpack(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	sc = (struct ath_softc *)node.sysctl_data;
-	ath_hal_gettpack(sc->sc_ah, &tpack);
+	(void)ath_hal_gettpack(sc->sc_ah, &tpack);
 	node.sysctl_data = &tpack;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -405,7 +405,7 @@ ath_sysctl_tpcts(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	sc = (struct ath_softc *)node.sysctl_data;
-	ath_hal_gettpcts(sc->sc_ah, &tpcts);
+	(void)ath_hal_gettpcts(sc->sc_ah, &tpcts);
 	node.sysctl_data = &tpcts;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
@@ -467,7 +467,7 @@ ath_sysctlattach(struct ath_softc *sc)
 	const struct sysctlnode *cnode, *rnode;
 
 	ath_hal_getcountrycode(sc->sc_ah, &sc->sc_countrycode);
-	ath_hal_getregdomain(sc->sc_ah, &sc->sc_regdomain);
+	(void)ath_hal_getregdomain(sc->sc_ah, &sc->sc_regdomain);
 	sc->sc_debug = ath_debug;
 	sc->sc_txintrperiod = ATH_TXINTR_PERIOD;
 
