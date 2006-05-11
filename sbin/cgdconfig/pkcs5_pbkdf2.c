@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.7 2005/03/30 17:10:18 christos Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.8 2006/05/11 00:40:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.7 2005/03/30 17:10:18 christos Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.8 2006/05/11 00:40:54 mrg Exp $");
 #endif
 
 #include <sys/resource.h>
@@ -96,7 +96,7 @@ prf_iterate(u_int8_t *r, const u_int8_t *P, int Plen,
 	int		 first_time = 1;
 	int		 i;
 	int		 datalen;
-	int		 tmplen;
+	u_int		 tmplen;
 	u_int8_t	*data;
 	u_int8_t	 tmp[EVP_MAX_MD_SIZE];
 
