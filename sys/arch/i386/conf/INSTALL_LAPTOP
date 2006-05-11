@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.97.4.1 2006/04/19 02:32:44 elad Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.97.4.2 2006/05/11 23:26:20 elad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -180,7 +180,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls
 #options 	WSDISPLAY_COMPAT_USL            # VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD         # can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -441,6 +441,7 @@ iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk* 	at pci? dev ? function ? 	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 

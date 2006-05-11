@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.210 2006/02/11 17:57:32 cdi Exp $	*/
+/*	$NetBSD: locore.s,v 1.210.4.1 2006/05/11 23:27:04 elad Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5687,6 +5687,7 @@ ENTRY(cpu_mp_startup)
 
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
 	sethi	%hi(CURLWP), %l7
+	sethi	%hi(CPCB), %l6
 
 	set	_C_LABEL(idle), %l1
 	jmpl	%l1, %g0

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.2.10.1 2006/05/11 23:28:31 elad Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -111,10 +111,8 @@ fwdma_malloc(struct firewire_comm *fc, int alignment, bus_size_t size,
 		/*nsegments*/ 1,
 		/*maxsegsz*/ BUS_SPACE_MAXSIZE_32BIT,
 		/*flags*/ BUS_DMA_ALLOCNOW,
-#if defined(__FreeBSD__) && __FreeBSD_version >= 501102 
 		/*lockfunc*/busdma_lock_mutex,
 		/*lockarg*/&Giant,
-#endif
 		&dma->fw_dma_tag);
 	if (err) {
 		printf("fwdma_malloc: failed(1)\n");
@@ -130,7 +128,7 @@ fwdma_malloc(struct firewire_comm *fc, int alignment, bus_size_t size,
 	}
 
 	err = fw_bus_dmamap_load(dma->fw_dma_tag, dma->dma_map, dma->v_addr,
-		size, fwdma_map_cb, &dma->bus_addr, /*flags*/0);
+		size, fwdma_map_cb, &dma->bus_addr, flag);
 	if (err != 0) {
 		printf("fwdma_malloc: failed(3)\n");
 		fw_bus_dmamem_free(dma->fw_dma_tag, dma->v_addr, dma->dma_map);
@@ -161,7 +159,7 @@ fwdma_malloc_size(fw_bus_dma_tag_t dmat, bus_dmamap_t *dmamap,
 		return(NULL);
 	}
 	if (fw_bus_dmamap_load(dmat, *dmamap, v_addr, size,
-			fwdma_map_cb, bus_addr, /*flags*/0)) {
+			fwdma_map_cb, bus_addr, flag)) {
 		printf("fwdma_malloc_size: failed(2)\n");
 		fw_bus_dmamem_free(dmat, v_addr, *dmamap);
 		return(NULL);
@@ -188,7 +186,7 @@ fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment,
 	struct fwdma_alloc_multi *am;
 	struct fwdma_seg *seg;
 	bus_size_t ssize;
-	int nseg;
+	int nseg, size;
 
 	if (esize > PAGE_SIZE) {
 		/* round up to PAGE_SIZE */
@@ -199,12 +197,14 @@ fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment,
 		ssize = rounddown(PAGE_SIZE, esize);
 		nseg = howmany(n, ssize / esize);
 	}
-	am = (struct fwdma_alloc_multi *)malloc(sizeof(struct fwdma_alloc_multi)
-			+ sizeof(struct fwdma_seg)*nseg, M_FW, M_WAITOK);
+	size = sizeof (struct fwdma_alloc_multi) +
+	    sizeof (struct fwdma_seg) * nseg;
+	am = (struct fwdma_alloc_multi *)malloc(size, M_FW, M_WAITOK);
 	if (am == NULL) {
 		printf("fwdma_malloc_multiseg: malloc failed\n");
 		return(NULL);
 	}
+	memset(am, 0, size);
 	am->ssize = ssize;
 	am->esize = esize;
 	am->nseg = 0;
@@ -219,10 +219,8 @@ fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment,
 			/*nsegments*/ 1,
 			/*maxsegsz*/ BUS_SPACE_MAXSIZE_32BIT,
 			/*flags*/ BUS_DMA_ALLOCNOW,
-#if defined(__FreeBSD__) && __FreeBSD_version >= 501102
 			/*lockfunc*/busdma_lock_mutex,
 			/*lockarg*/&Giant,
-#endif
 			&am->fw_dma_tag)) {
 		printf("fwdma_malloc_multiseg: tag_create failed\n");
 		free(am, M_FW);

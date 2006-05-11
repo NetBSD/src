@@ -1,0 +1,42 @@
+#	$NetBSD: lint.cardbus,v 1.1.2.2 2006/05/11 23:28:04 elad Exp $
+
+#
+# CardBus devices
+#
+
+# CardBus bridges
+cardslot*	at cbb?
+ppb*		at cardbus?
+
+# CardBus bus support
+cardbus*	at cardslot?
+pcmcia* 	at cardslot?
+
+# Serial interfaces
+com*	at cardbus? function ?	# Modems and serial cards
+
+# SCSI cards
+adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc*	at cardbus? function ?	# Adaptec ADP-1480
+njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
+
+# Ethernet cards
+ex*	at cardbus? function ?	# 3Com 3C575TX
+fxp*	at cardbus? function ?	# Intel i8255x
+re*	at cardbus? function ?	# Realtek 8169
+rtk*	at cardbus? function ?	# Realtek 8129/8139
+tlp*	at cardbus? function ?	# DECchip 21143
+
+# 802.11 (Wi-Fi) cards
+ath*	at cardbus? function ?	# Atheros 5210/5211/5212
+atw*	at cardbus? function ?	# ADMtek ADM8211
+ral*	at cardbus? function ?	# Ralink RT2500
+rtw*	at cardbus? function ?	# Realtek 8180L
+
+# USB controllers
+ehci*	at cardbus? function ?	# Enhanced Host Controller
+ohci*	at cardbus? function ?	# Open Host Controller
+uhci*	at cardbus? function ?	# Universal Host Controller (Intel)
+
+# IEEE1394 controllers
+fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller

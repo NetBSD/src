@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.86.10.3 2006/05/06 23:32:58 christos Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.86.10.4 2006/05/11 23:32:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.10.3 2006/05/06 23:32:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.86.10.4 2006/05/11 23:32:03 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -228,7 +228,10 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct lwp *l,
 		simple_lock(&lfs_subsys_lock);
 		--lfs_dirvcount;
 		simple_unlock(&lfs_subsys_lock);
+		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
+		wakeup(&lfs_dirvcount);
+		wakeup(&fs->lfs_dirvcount);
 		simple_unlock(&fs->lfs_interlock);
 	}
 	*vpp = vp;
@@ -291,19 +294,19 @@ extend_ifile(struct lfs *fs, kauth_cred_t cred)
 
 	if (fs->lfs_version == 1) {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < xmax; ++ifp_v1) {
+			SET_BITMAP_FREE(fs, i);
 			ifp_v1->if_version = 1;
 			ifp_v1->if_daddr = LFS_UNUSED_DADDR;
 			ifp_v1->if_nextfree = ++i;
-			SET_BITMAP_FREE(fs, i);
 		}
 		ifp_v1--;
 		ifp_v1->if_nextfree = oldlast;
 	} else {
 		for (ifp = (IFILE *)bp->b_data; i < xmax; ++ifp) {
+			SET_BITMAP_FREE(fs, i);
 			ifp->if_version = 1;
 			ifp->if_daddr = LFS_UNUSED_DADDR;
 			ifp->if_nextfree = ++i;
-			SET_BITMAP_FREE(fs, i);
 		}
 		ifp--;
 		ifp->if_nextfree = oldlast;
@@ -469,6 +472,7 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	ip->i_lfs_effnblks = 0;
 	SPLAY_INIT(&ip->i_lfs_lbtree);
 	ip->i_lfs_nbtree = 0;
+	LIST_INIT(&ip->i_lfs_segdhd);
 #ifdef QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
 		ip->i_dquot[i] = NODQUOT;
@@ -513,7 +517,7 @@ lfs_freelist_prev(struct lfs *fs, ino_t ino)
 
 	/* Search our own word first */
 	bound = ino & ~BMMASK;
-	for (tino = ino - 1; tino > bound && tino > LFS_UNUSED_INUM; tino--)
+	for (tino = ino - 1; tino >= bound && tino > LFS_UNUSED_INUM; tino--)
 		if (ISSET_BITMAP_FREE(fs, tino))
 			return tino;
 	/* If there are no lower words to search, just return */
@@ -532,7 +536,8 @@ lfs_freelist_prev(struct lfs *fs, ino_t ino)
 		return LFS_UNUSED_INUM;
 
 	/* Search the word we found */
-	for (tino = (bb << BMSHIFT) | BMMASK; tino > LFS_UNUSED_INUM; tino--)
+	for (tino = (bb << BMSHIFT) | BMMASK; tino >= (bb << BMSHIFT) &&
+	     tino > LFS_UNUSED_INUM; tino--)
 		if (ISSET_BITMAP_FREE(fs, tino))
 			break;
 
@@ -584,10 +589,32 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 		simple_lock(&lfs_subsys_lock);
 		--lfs_dirvcount;
 		simple_unlock(&lfs_subsys_lock);
+		--fs->lfs_dirvcount;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 		simple_unlock(&fs->lfs_interlock);
+		wakeup(&fs->lfs_dirvcount);
 		wakeup(&lfs_dirvcount);
 		lfs_vunref(vp);
+
+		/*
+		 * If this inode is not going to be written any more, any
+		 * segment accounting left over from its truncation needs
+		 * to occur at the end of the next dirops flush.  Attach
+		 * them to the fs-wide list for that purpose.
+		 */
+		if (LIST_FIRST(&ip->i_lfs_segdhd) != NULL) {
+			struct segdelta *sd;
+	
+			while((sd = LIST_FIRST(&ip->i_lfs_segdhd)) != NULL) {
+				LIST_REMOVE(sd, list);
+				LIST_INSERT_HEAD(&fs->lfs_segdhd, sd, list);
+			}
+		}
+	} else {
+		/*
+		 * If it's not a dirop, we can finalize right away.
+		 */
+		lfs_finalize_ino_seguse(fs, ip);
 	}
 
 	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.24.8.4 2006/05/06 23:32:33 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.24.8.5 2006/05/11 23:32:03 elad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24.8.4 2006/05/06 23:32:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.24.8.5 2006/05/11 23:32:03 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1556,8 +1556,6 @@ retry:
 		    lockmgr(vp->v_vnlock,
 		      LK_INTERLOCK | LK_EXCLUSIVE | LK_NOWAIT,
 		      VI_MTX(devvp)) != 0) {
-			if (lbn >= NDADDR)
-				brelse(ibp);
 			vn_lock(vp, LK_EXCLUSIVE | LK_SLEEPFAIL);
 			goto retry;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.18 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.18.10.1 2006/05/11 23:29:58 elad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.18 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.18.10.1 2006/05/11 23:29:58 elad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.18 2005/12/11 12:23:37 christos E
 #include "rf_general.h"
 #include "rf_kintf.h"
 #include "rf_shutdown.h"
+#include "rf_copyback.h"
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 
@@ -182,7 +183,7 @@ rf_ConfigureDeclustered(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		else
 			i = extraPUsPerDisk / info->TableDepthInPUs;
 
-		complete_FT_count = raidPtr->numRow * (numCompleteSpareRegionsPerDisk * (info->TablesPerSpareRegion / k) + i / k);
+		complete_FT_count = (numCompleteSpareRegionsPerDisk * (info->TablesPerSpareRegion / k) + i / k);
 		info->FullTableLimitSUID = complete_FT_count * info->SUsPerFullTable;
 		info->ExtraTablesPerDisk = i % k;
 
@@ -192,7 +193,7 @@ rf_ConfigureDeclustered(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		info->TotSparePUsPerDisk = totSparePUsPerDisk;
 
 		layoutPtr->stripeUnitsPerDisk =
-		    ((complete_FT_count / raidPtr->numRow) * info->FullTableDepthInPUs +	/* data & parity space */
+		    ((complete_FT_count) * info->FullTableDepthInPUs +	/* data & parity space */
 		    info->ExtraTablesPerDisk * info->TableDepthInPUs +
 		    totSparePUsPerDisk	/* spare space */
 		    ) * layoutPtr->SUsPerPU;
@@ -209,7 +210,7 @@ rf_ConfigureDeclustered(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 		/* compute the number of tables in the last fulltable, which
 		 * need not be complete */
 		complete_FT_count =
-		    ((layoutPtr->stripeUnitsPerDisk / layoutPtr->SUsPerPU) / info->FullTableDepthInPUs) * raidPtr->numRow;
+		    ((layoutPtr->stripeUnitsPerDisk / layoutPtr->SUsPerPU) / info->FullTableDepthInPUs);
 
 		info->FullTableLimitSUID = complete_FT_count * info->SUsPerFullTable;
 		info->ExtraTablesPerDisk =
@@ -220,7 +221,7 @@ rf_ConfigureDeclustered(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 
 	/* find the disk offset of the stripe unit where the last fulltable
 	 * starts */
-	numCompleteFullTablesPerDisk = complete_FT_count / raidPtr->numRow;
+	numCompleteFullTablesPerDisk = complete_FT_count;
 	diskOffsetOfLastFullTableInSUs = numCompleteFullTablesPerDisk * info->FullTableDepthInPUs * layoutPtr->SUsPerPU;
 	if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 		SpareSpaceInSUs = numCompleteSpareRegionsPerDisk * info->SpareSpaceDepthPerRegionInSUs;
@@ -272,7 +273,7 @@ rf_ConfigureDeclustered(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 
 	/* 5.  set up the remaining redundant-but-useful parameters */
 
-	raidPtr->totalSectors = (k * complete_FT_count + raidPtr->numRow * info->ExtraTablesPerDisk) *
+	raidPtr->totalSectors = (k * complete_FT_count + info->ExtraTablesPerDisk) *
 	    info->SUsPerTable * layoutPtr->sectorsPerStripeUnit;
 	layoutPtr->numStripe = (raidPtr->totalSectors / layoutPtr->sectorsPerStripeUnit) / (k - 1);
 
@@ -315,7 +316,7 @@ rf_ConfigureDeclusteredDS(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 
 void
 rf_MapSectorDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-			RF_RowCol_t *row, RF_RowCol_t *col,
+			RF_RowCol_t *col,
 			RF_SectorNum_t *diskSector, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
@@ -331,13 +332,7 @@ rf_MapSectorDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 	FullTableID = SUID / sus_per_fulltable;	/* fulltable ID within array
 						 * (across rows) */
-	if (raidPtr->numRow == 1)
-		*row = 0;	/* avoid a mod and a div in the common case */
-	else {
-		*row = FullTableID % raidPtr->numRow;
-		FullTableID /= raidPtr->numRow;	/* convert to fulltable ID on
-						 * this disk */
-	}
+
 	if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 		SpareRegion = FullTableID / info->FullTablesPerSpareRegion;
 		SpareSpace = SpareRegion * info->SpareSpaceDepthPerRegionInSUs;
@@ -355,9 +350,9 @@ rf_MapSectorDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 	/* remap to distributed spare space if indicated */
 	if (remap) {
-		RF_ASSERT(raidPtr->Disks[*row][*col].status == rf_ds_reconstructing || raidPtr->Disks[*row][*col].status == rf_ds_dist_spared ||
-		    (rf_copyback_in_progress && raidPtr->Disks[*row][*col].status == rf_ds_optimal));
-		rf_remap_to_spare_space(layoutPtr, info, *row, FullTableID, TableID, BlockID, (base_suid) ? 1 : 0, SpareRegion, col, &outSU);
+		RF_ASSERT(raidPtr->Disks[*col].status == rf_ds_reconstructing || raidPtr->Disks[*col].status == rf_ds_dist_spared ||
+		    (rf_copyback_in_progress && raidPtr->Disks[*col].status == rf_ds_optimal));
+		rf_remap_to_spare_space(layoutPtr, info, FullTableID, TableID, BlockID, (base_suid) ? 1 : 0, SpareRegion, col, &outSU);
 	} else {
 
 		outSU = base_suid;
@@ -380,7 +375,7 @@ rf_MapSectorDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 /* prototyping this inexplicably causes the compile of the layout table (rf_layout.c) to fail */
 void
 rf_MapParityDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-			RF_RowCol_t *row, RF_RowCol_t *col,
+			RF_RowCol_t *col,
 			RF_SectorNum_t *diskSector, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
@@ -396,13 +391,7 @@ rf_MapParityDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 	/* compute row & (possibly) spare space exactly as before */
 	FullTableID = SUID / sus_per_fulltable;
-	if (raidPtr->numRow == 1)
-		*row = 0;	/* avoid a mod and a div in the common case */
-	else {
-		*row = FullTableID % raidPtr->numRow;
-		FullTableID /= raidPtr->numRow;	/* convert to fulltable ID on
-						 * this disk */
-	}
+
 	if ((raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE)) {
 		SpareRegion = FullTableID / info->FullTablesPerSpareRegion;
 		SpareSpace = SpareRegion * info->SpareSpaceDepthPerRegionInSUs;
@@ -424,9 +413,9 @@ rf_MapParityDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 	*col = info->LayoutTable[BlockID][RepIndex];
 
 	if (remap) {
-		RF_ASSERT(raidPtr->Disks[*row][*col].status == rf_ds_reconstructing || raidPtr->Disks[*row][*col].status == rf_ds_dist_spared ||
-		    (rf_copyback_in_progress && raidPtr->Disks[*row][*col].status == rf_ds_optimal));
-		rf_remap_to_spare_space(layoutPtr, info, *row, FullTableID, TableID, BlockID, (base_suid) ? 1 : 0, SpareRegion, col, &outSU);
+		RF_ASSERT(raidPtr->Disks[*col].status == rf_ds_reconstructing || raidPtr->Disks[*col].status == rf_ds_dist_spared ||
+		    (rf_copyback_in_progress && raidPtr->Disks[*col].status == rf_ds_optimal));
+		rf_remap_to_spare_space(layoutPtr, info, FullTableID, TableID, BlockID, (base_suid) ? 1 : 0, SpareRegion, col, &outSU);
 	} else {
 
 		/* compute sector as before, except use RepIndex instead of
@@ -448,7 +437,7 @@ rf_MapParityDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
  */
 void
 rf_IdentifyStripeDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
-			     RF_RowCol_t **diskids, RF_RowCol_t *outRow)
+			     RF_RowCol_t **diskids)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_DeclusteredConfigInfo_t *info = (RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo;
@@ -462,7 +451,6 @@ rf_IdentifyStripeDeclustered(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 	rf_decluster_adjust_params(layoutPtr, &SUID, &sus_per_fulltable, &fulltable_depth, &base_suid);
 	FullTableID = SUID / sus_per_fulltable;	/* fulltable ID within array
 						 * (across rows) */
-	*outRow = FullTableID % raidPtr->numRow;
 	stripeID = rf_StripeUnitIDToStripeID(layoutPtr, SUID);	/* find stripe offset
 								 * into array */
 	tableOffset = (stripeID % info->BlocksPerTable);	/* find offset into
@@ -576,7 +564,6 @@ rf_MapSIDToPSIDDeclustered(RF_RaidLayout_t *layoutPtr,
 void
 rf_remap_to_spare_space(RF_RaidLayout_t *layoutPtr,
 			RF_DeclusteredConfigInfo_t *info,
-			RF_RowCol_t row,
 			RF_StripeNum_t FullTableID,
 			RF_StripeNum_t TableID,
 			RF_SectorNum_t BlockID,

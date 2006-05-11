@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.h,v 1.5 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_interdecluster.h,v 1.5.10.1 2006/05/11 23:29:58 elad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -41,13 +41,13 @@ RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitInterDecluster(RF_Raid_t * raidPtr);
 RF_ReconUnitCount_t rf_GetNumSpareRUsInterDecluster(RF_Raid_t * raidPtr);
 void
 rf_MapSectorInterDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void
 rf_MapParityInterDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void
 rf_IdentifyStripeInterDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids, RF_RowCol_t * outRow);
+    RF_RowCol_t ** diskids);
 void
 rf_MapSIDToPSIDInterDecluster(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,

@@ -1,5 +1,5 @@
 /*	
- * $NetBSD: dev_net.c,v 1.1.4.2 2006/04/19 02:33:05 elad Exp $
+ * $NetBSD: dev_net.c,v 1.1.4.3 2006/05/11 23:26:48 elad Exp $
  */
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
+/* __FBSDID("$FreeBSD: src/sys/boot/common/dev_net.c,v 1.15 2004/07/08 22:35:33 brian Exp $"); */
 
 /*-
  * This module implements a "raw device" interface suitable for

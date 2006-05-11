@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.104.4.2 2006/04/19 02:31:57 elad Exp $ */
+/* $NetBSD: trap.c,v 1.104.4.3 2006/05/11 23:26:18 elad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104.4.2 2006/04/19 02:31:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104.4.3 2006/05/11 23:26:18 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1240,8 +1240,7 @@ alpha_ucode_to_ksiginfo(u_long ucode)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
@@ -1255,6 +1254,7 @@ startlwp(arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.31.10.2 2006/03/10 14:39:01 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.31.10.3 2006/05/11 23:28:05 elad Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.31.10.2 2006/03/10 14:39:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.31.10.3 2006/05/11 23:28:05 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.31.10.2 2006/03/10 14:39:01 elad Exp $\n$NetBSD: verified_exec.c,v 1.31.10.2 2006/03/10 14:39:01 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.31.10.3 2006/05/11 23:28:05 elad Exp $\n$NetBSD: verified_exec.c,v 1.31.10.3 2006/05/11 23:28:05 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -263,8 +263,10 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 
 	/* Get attributes for device and inode. */
 	error = VOP_GETATTR(nid.ni_vp, &va, l->l_proc->p_cred, l);
-	if (error)
+	if (error) {
+		vrele(nid.ni_vp);
 		return (error);
+	}
 
 	/* Release our reference to the vnode. (namei) */
 	vrele(nid.ni_vp);

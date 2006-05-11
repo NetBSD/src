@@ -1,4 +1,6 @@
-/*	$NetBSD: efidef.h,v 1.1.4.2 2006/04/19 02:33:05 elad Exp $	*/
+/*	$NetBSD: efidef.h,v 1.1.4.3 2006/05/11 23:26:48 elad Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/efidef.h,v 1.2 2002/05/19 03:17:20 marcel Exp $ */
+
 #ifndef _EFI_DEF_H
 #define _EFI_DEF_H
 

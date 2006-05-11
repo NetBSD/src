@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.108.10.4 2006/05/06 23:32:58 christos Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.108.10.5 2006/05/11 23:32:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.108.10.4 2006/05/06 23:32:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.108.10.5 2006/05/11 23:32:03 elad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -96,8 +96,6 @@ struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 int lfs_fasthashget(dev_t, ino_t, struct vnode **);
 
 pid_t lfs_cleaner_pid = 0;
-
-#define LFS_FORCE_WRITE UNASSIGNED
 
 /*
  * sys_lfs_markv:
@@ -282,10 +280,6 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	nblkwritten = ninowritten = 0;
 	for (blkp = blkiov; cnt--; ++blkp)
 	{
-		if (blkp->bi_daddr == LFS_FORCE_WRITE)
-			DLOG((DLOG_CLEAN, "lfs_markv: warning: force-writing"
-			      " ino %d lbn %lld\n", blkp->bi_inode,
-			      (long long)blkp->bi_lbn));
 		/* Bounds-check incoming data, avoid panic for failed VGET */
 		if (blkp->bi_inode <= 0 || blkp->bi_inode >= maxino) {
 			error = EINVAL;
@@ -317,17 +311,8 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				v_daddr = ifp->if_daddr;
 				brelse(bp);
 			}
-			/* Don't force-write the ifile */
-			if (blkp->bi_inode == LFS_IFILE_INUM
-			    && blkp->bi_daddr == LFS_FORCE_WRITE)
-			{
+			if (v_daddr == LFS_UNUSED_DADDR)
 				continue;
-			}
-			if (v_daddr == LFS_UNUSED_DADDR
-			    && blkp->bi_daddr != LFS_FORCE_WRITE)
-			{
-				continue;
-			}
 
 			/* Get the vnode/inode. */
 			error = lfs_fastvget(mntp, blkp->bi_inode, v_daddr,
@@ -390,30 +375,25 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			/* XXX but only write the inode if it's the right one */
 			if (blkp->bi_inode != LFS_IFILE_INUM) {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
-				if (ifp->if_daddr == blkp->bi_daddr
-				   || blkp->bi_daddr == LFS_FORCE_WRITE)
-				{
+				if (ifp->if_daddr == blkp->bi_daddr)
 					LFS_SET_UINO(ip, IN_CLEANING);
-				}
 				brelse(bp);
 			}
 			continue;
 		}
 
 		b_daddr = 0;
-		if (blkp->bi_daddr != LFS_FORCE_WRITE) {
-			if (VOP_BMAP(vp, blkp->bi_lbn, NULL, &b_daddr, NULL) ||
-			    dbtofsb(fs, b_daddr) != blkp->bi_daddr)
+		if (VOP_BMAP(vp, blkp->bi_lbn, NULL, &b_daddr, NULL) ||
+		    dbtofsb(fs, b_daddr) != blkp->bi_daddr)
+		{
+			if (dtosn(fs, dbtofsb(fs, b_daddr)) ==
+			    dtosn(fs, blkp->bi_daddr))
 			{
-				if (dtosn(fs,dbtofsb(fs, b_daddr))
-				   == dtosn(fs,blkp->bi_daddr))
-				{
-					DLOG((DLOG_CLEAN, "lfs_markv: wrong da same seg: %llx vs %llx\n",
-					      (long long)blkp->bi_daddr, (long long)dbtofsb(fs, b_daddr)));
-				}
-				do_again++;
-				continue;
+				DLOG((DLOG_CLEAN, "lfs_markv: wrong da same seg: %llx vs %llx\n",
+				      (long long)blkp->bi_daddr, (long long)dbtofsb(fs, b_daddr)));
 			}
+			do_again++;
+			continue;
 		}
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.1.4.2 2006/04/19 02:33:08 elad Exp $	*/
+/*	$NetBSD: devicename.c,v 1.1.4.3 2006/05/11 23:26:58 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/devicename.c,v 1.2 2003/09/08 09:11:32 obrien Exp $"); */
 
 #include <lib/libsa/stand.h>
 #include <sys/disklabel.h>

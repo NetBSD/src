@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.h,v 1.1.4.2 2006/04/19 02:33:05 elad Exp $	*/
+/*	$NetBSD: dev_net.h,v 1.1.4.3 2006/05/11 23:26:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson <dfr@freebsd.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: src/sys/boot/common/dev_net.h,v 1.2 1999/08/28 00:39:46 peter Exp $
  */
 
 extern struct devsw netdev;

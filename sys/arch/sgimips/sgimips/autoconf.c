@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27.4.1 2006/04/19 02:33:43 elad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.4.2 2006/05/11 23:27:03 elad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.4.1 2006/04/19 02:33:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.4.2 2006/05/11 23:27:03 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -187,15 +187,17 @@ device_register(struct device *dev, void *aux)
 		struct pci_attach_args *pa = aux;
 
 		if (BUILTIN_AHC_P(pa)) {
-			boolean_t usetd;
+			prop_bool_t usetd = prop_bool_create(TRUE);
+			KASSERT(usetd != NULL);
 
-			usetd = TRUE;
-			if (devprop_set(dev, "use-target-defaults",
-			    &usetd, sizeof(usetd), 0, 0) != 0) {
+			if (prop_dictionary_set(device_properties(dev),
+						"use-target-defaults",
+						usetd) == FALSE) {
 				printf("WARNING: unable to set"
 				    "use-target-defaults property for %s\n",
 				    dev->dv_xname);
 			}
+			prop_object_release(usetd);
 		}
 	}
 		

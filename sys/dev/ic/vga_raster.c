@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.20.10.1 2006/04/19 03:24:41 elad Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.20.10.2 2006/05/11 23:28:30 elad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.20.10.1 2006/04/19 03:24:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.20.10.2 2006/05/11 23:28:30 elad Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -330,7 +330,7 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	long defattr;
 	const struct wsscreen_descr *scr;
 #ifdef VGA_CONSOLE_SCREENTYPE
-	const char *typestr;
+	const char *typestr = NULL;
 #endif
 
 	if (check && !vga_common_probe(iot, memt))

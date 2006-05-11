@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.9 2006/02/03 11:08:24 jmmv Exp $	*/
+/*	$NetBSD: consinit.c,v 1.9.6.1 2006/05/11 23:27:14 elad Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2006/02/03 11:08:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9.6.1 2006/05/11 23:27:14 elad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -69,6 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2006/02/03 11:08:24 jmmv Exp $");
 #endif
 #if (NPC > 0)
 #include <machine/pccons.h>
+#endif
+
+#ifdef __i386__
+#include "vesafb.h"
+#if (NVESAFB > 0)
+#include <arch/i386/bios/vesafbvar.h>
+#endif
 #endif
 
 #include "com.h"
@@ -155,10 +162,14 @@ consinit()
 #endif
 		consinfo = &default_consinfo;
 
-#if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0)
+#if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0) || (NVESAFB > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
 		int error;
 
+#if (NVESAFB > 0)
+		if (!vesafb_cnattach())
+			goto dokbd;
+#endif
 #if (NVGA > 0)
 		if (!vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
 				  -1, 1))
@@ -191,7 +202,7 @@ dokbd:
 			       error);
 		return;
 	}
-#endif /* PC | VT | VGA | PCDISPLAY */
+#endif /* PC | VT | VGA | PCDISPLAY | VESAFB */
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = X86_BUS_SPACE_IO;

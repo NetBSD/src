@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.72 2006/02/15 14:06:45 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.72.4.1 2006/05/11 23:32:03 elad Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.72 2006/02/15 14:06:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.72.4.1 2006/05/11 23:32:03 elad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1035,33 +1035,35 @@ void
 amap_splitref(struct vm_aref *origref, struct vm_aref *splitref, vaddr_t offset)
 {
 	int leftslots;
+	struct vm_amap *amap;
 
+	KASSERT(splitref->ar_amap == origref->ar_amap);
 	AMAP_B2SLOT(leftslots, offset);
 	if (leftslots == 0)
 		panic("amap_splitref: split at zero offset");
 
-	amap_lock(origref->ar_amap);
+	amap = origref->ar_amap;
+	amap_lock(amap);
 
 	/*
 	 * now: amap is locked and we have a valid am_mapped array.
 	 */
 
-	if (origref->ar_amap->am_nslot - origref->ar_pageoff - leftslots <= 0)
+	if (amap->am_nslot - origref->ar_pageoff - leftslots <= 0)
 		panic("amap_splitref: map size check failed");
 
 #ifdef UVM_AMAP_PPREF
         /*
 	 * establish ppref before we add a duplicate reference to the amap
 	 */
-	if (origref->ar_amap->am_ppref == NULL)
-		amap_pp_establish(origref->ar_amap, origref->ar_pageoff);
+	if (amap->am_ppref == NULL)
+		amap_pp_establish(amap, origref->ar_pageoff);
 #endif
 
-	splitref->ar_amap = origref->ar_amap;
-	splitref->ar_amap->am_ref++;		/* not a share reference */
+	amap->am_ref++;		/* not a share reference */
 	splitref->ar_pageoff = origref->ar_pageoff + leftslots;
 
-	amap_unlock(origref->ar_amap);
+	amap_unlock(amap);
 }
 
 #ifdef UVM_AMAP_PPREF

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.186.10.1 2006/04/19 03:26:20 elad Exp $ */
+/*	$NetBSD: st.c,v 1.186.10.2 2006/05/11 23:29:59 elad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.186.10.1 2006/04/19 03:26:20 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.186.10.2 2006/05/11 23:29:59 elad Exp $");
 
 #include "opt_scsi.h"
 
@@ -413,7 +413,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 	}
 
 	st->stats = iostat_alloc(IOSTAT_TAPE);
-	st->stats->name = st->sc_dev.dv_xname;
+	st->stats->io_name = st->sc_dev.dv_xname;
 
 #if NRND > 0
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.75.8.4 2006/05/06 23:32:58 christos Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.75.8.5 2006/05/11 23:32:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -91,15 +91,6 @@ MALLOC_DECLARE(M_SEGMENT);
 #define LFS_DEBUGLOG	 8
 #define LFS_MAXID	 9
 
-#define LFS_NAMES { \
-	{ 0, 0 }, \
-	{ "flushindir", CTLTYPE_INT }, \
-	{ "clean_vnhead", CTLTYPE_INT }, \
-	{ "dostats", CTLTYPE_INT }, \
-	{ "maxpages", CTLTYPE_INT }, \
-	{ "debug", CTLTYPE_NODE }, \
-}
-
 struct fid;
 struct mount;
 struct nameidata;
@@ -174,6 +165,8 @@ int lfs_update(struct vnode *, const struct timespec *, const struct timespec *,
     int);
 int lfs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
+void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
+void lfs_finalize_fs_seguse(struct lfs *);
 
 /* lfs_segment.c */
 void lfs_imtime(struct lfs *);
@@ -242,6 +235,7 @@ int lfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void lfs_gop_size(struct vnode *, off_t, off_t *, int);
 int lfs_putpages_ext(void *, int);
 int lfs_gatherpages(struct vnode *);
+void lfs_flush_dirops(struct lfs *);
 void lfs_flush_pchain(struct lfs *);
 
 int lfs_bwrite	 (void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_norm.c,v 1.11.8.1 2006/04/19 04:33:31 elad Exp $	*/
+/*	$NetBSD: pf_norm.c,v 1.11.8.2 2006/05/11 23:30:14 elad Exp $	*/
 /*	$OpenBSD: pf_norm.c,v 1.97 2004/09/21 16:59:12 aaron Exp $ */
 
 /*
@@ -1836,7 +1836,7 @@ pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
 
 	thoff = th->th_off << 2;
 	cnt = thoff - sizeof(struct tcphdr);
-	optp = mtod(m, caddr_t) + off + sizeof(struct tcphdr);
+	optp = mtod(m, u_char *) + off + sizeof(struct tcphdr);
 
 	for (; cnt > 0; cnt -= optlen, optp += optlen) {
 		opt = optp[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.55.10.1 2006/04/19 04:01:25 elad Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.55.10.2 2006/05/11 23:28:04 elad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.55.10.1 2006/04/19 04:01:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.55.10.2 2006/05/11 23:28:04 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -961,7 +961,7 @@ svr4_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 			struct sys_getsockname_args ap;
 			SCARG(&ap, fdes) = fd;
 			SCARG(&ap, asa) = sup;
-			SCARG(&ap, alen) = lenp;
+			SCARG(&ap, alen) = (socklen_t *)lenp;
 
 			if ((error = sys_getsockname(l, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getsockname error\n"));
@@ -976,7 +976,7 @@ svr4_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 			struct sys_getpeername_args ap;
 			SCARG(&ap, fdes) = fd;
 			SCARG(&ap, asa) = sup;
-			SCARG(&ap, alen) = lenp;
+			SCARG(&ap, alen) = (socklen_t *)lenp;
 
 			if ((error = sys_getpeername(l, &ap, retval)) != 0) {
 				DPRINTF(("ti_ioctl: getpeername error\n"));
@@ -1781,7 +1781,7 @@ svr4_sys_getmsg(l, v, retval)
 
 		SCARG(&ga, fdes) = SCARG(uap, fd);
 		SCARG(&ga, asa) = (void *) sup;
-		SCARG(&ga, alen) = flen;
+		SCARG(&ga, alen) = (socklen_t *)flen;
 
 		if ((error = sys_getpeername(l, &ga, retval)) != 0) {
 			DPRINTF(("getmsg: getpeername failed %d\n", error));
@@ -1840,7 +1840,7 @@ svr4_sys_getmsg(l, v, retval)
 		 */
 		SCARG(&aa, s) = SCARG(uap, fd);
 		SCARG(&aa, name) = (void *) sup;
-		SCARG(&aa, anamelen) = flen;
+		SCARG(&aa, anamelen) = (socklen_t *)flen;
 
 		if ((error = sys_accept(l, &aa, retval)) != 0) {
 			DPRINTF(("getmsg: accept failed %d\n", error));

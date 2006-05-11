@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.h,v 1.1.2.2 2006/04/19 04:36:01 elad Exp $	*/
+/*	$NetBSD: iostat.h,v 1.1.2.3 2006/05/11 23:31:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -81,21 +81,20 @@ struct io_sysctl {
  * together in drivelist.
  */
 
-struct io_stats
-{
-	char		*name;  /* device name */
-	void		*parent; /* pointer to what we are attached to */
-	int		type;   /* type of device the state belong to */
-	int		busy;	/* busy counter */
-	u_int64_t	rxfer;	/* total number of read transfers */
-	u_int64_t	wxfer;	/* total number of write transfers */
-	u_int64_t	seek;	/* total independent seek operations */
-	u_int64_t	rbytes;	/* total bytes read */
-	u_int64_t	wbytes;	/* total bytes written */
-	struct timeval	attachtime;	/* time disk was attached */
-	struct timeval	timestamp;	/* timestamp of last unbusy */
-	struct timeval	time;	/* total time spent busy */
-	TAILQ_ENTRY(io_stats) link;
+struct io_stats {
+	char		*io_name;  /* device name */
+	void		*io_parent; /* pointer to what we are attached to */
+	int		io_type;   /* type of device the state belong to */
+	int		io_busy;	/* busy counter */
+	u_int64_t	io_rxfer;	/* total number of read transfers */
+	u_int64_t	io_wxfer;	/* total number of write transfers */
+	u_int64_t	io_seek;	/* total independent seek operations */
+	u_int64_t	io_rbytes;	/* total bytes read */
+	u_int64_t	io_wbytes;	/* total bytes written */
+	struct timeval	io_attachtime;	/* time disk was attached */
+	struct timeval	io_timestamp;	/* timestamp of last unbusy */
+	struct timeval	io_time;	/* total time spent busy */
+	TAILQ_ENTRY(io_stats) io_link;
 };
 
 /*
@@ -106,8 +105,8 @@ TAILQ_HEAD(iostatlist_head, io_stats);	/* the iostatlist is a TAILQ */
 #ifdef _KERNEL
 void	iostat_busy(struct io_stats *);
 void	iostat_unbusy(struct io_stats *, long, int);
-struct	io_stats *iostat_find(char *);
-struct  io_stats *iostat_alloc(int32_t);
+struct io_stats *iostat_find(const char *);
+struct io_stats *iostat_alloc(int32_t);
 void	iostat_free(struct io_stats *);
 void	iostat_seek(struct io_stats *);
 #endif

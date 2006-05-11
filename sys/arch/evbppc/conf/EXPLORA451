@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.22.4.1 2006/04/19 02:32:32 elad Exp $
+#	$NetBSD: EXPLORA451,v 1.22.4.2 2006/05/11 23:26:19 elad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -140,7 +140,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 #options 	WSDISPLAY_COMPAT_USL		# VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 options 	WSDISPLAY_DEFAULTSCREENS=1
