@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.73 2006/02/10 16:01:45 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.74 2006/05/11 01:21:23 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.73 2006/02/10 16:01:45 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.74 2006/05/11 01:21:23 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,16 +130,16 @@ static int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
 int	vflg;	/* display errors in locating kernel data objects etc... */
 
 static struct file **ofiles;	/* buffer of pointers to file structures */
-static int maxfiles;
+static int fstat_maxfiles;
 #define ALLOC_OFILES(d)	\
-	if ((d) > maxfiles) { \
+	if ((d) > fstat_maxfiles) { \
 		free(ofiles); \
 		ofiles = malloc((d) * sizeof(struct file *)); \
 		if (ofiles == NULL) { \
 			err(1, "malloc(%u)", (d) *	\
 					(unsigned int)sizeof(struct file *)); \
 		} \
-		maxfiles = (d); \
+		fstat_maxfiles = (d); \
 	}
 
 kvm_t *kd;
