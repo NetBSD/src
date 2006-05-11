@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.30 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.31 2006/05/11 08:35:47 mrg Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ int rtsock = -1;
 int accept_rr = 0;
 int dflag = 0, sflag = 0;
 
-u_char *conffile = NULL;
+char *conffile = NULL;
 
 struct rainfo *ralist = NULL;
 struct nd_optlist {
@@ -331,7 +331,7 @@ rtmsg_input()
 	int n, type, ifindex = 0, plen;
 	size_t len;
 	char msg[2048], *next, *lim;
-	u_char ifname[IF_NAMESIZE];
+	char ifname[IF_NAMESIZE];
 	struct prefix *prefix;
 	struct rainfo *rai;
 	struct in6_addr *addr;
@@ -552,7 +552,7 @@ rtadvd_input()
 	int ifindex = 0;
 	struct cmsghdr *cm;
 	struct in6_pktinfo *pi = NULL;
-	u_char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
+	char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 	struct in6_addr dst = in6addr_any;
 
 	/*
@@ -731,7 +731,7 @@ static void
 rs_input(int len, struct nd_router_solicit *rs,
 	 struct in6_pktinfo *pi, struct sockaddr_in6 *from)
 {
-	u_char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
+	char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 	union nd_opts ndopts;
 	struct rainfo *ra;
 	struct soliciter *sol;
@@ -864,7 +864,7 @@ ra_input(int len, struct nd_router_advert *ra,
 	 struct in6_pktinfo *pi, struct sockaddr_in6 *from)
 {
 	struct rainfo *rai;
-	u_char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
+	char ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 	union nd_opts ndopts;
 	char *on_off[] = {"OFF", "ON"};
 	u_int32_t reachabletime, retranstimer, mtu;
@@ -1026,7 +1026,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 	u_int32_t preferred_time, valid_time;
 	struct prefix *pp;
 	int inconsistent = 0;
-	u_char ntopbuf[INET6_ADDRSTRLEN], prefixbuf[INET6_ADDRSTRLEN];
+	char ntopbuf[INET6_ADDRSTRLEN], prefixbuf[INET6_ADDRSTRLEN];
 	struct timeval now;
 
 #if 0				/* impossible */
