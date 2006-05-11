@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/10 18:11:07 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2006/05/11 08:55:10 mrg Exp $
 
 PROG	=	isdnmonitor
 SRCS	=	main.c curses.c
@@ -9,3 +9,7 @@ LDADD   +=      -lcurses
 MAN	=	isdnmonitor.8
 
 .include <bsd.prog.mk>
+
+.if ${HAVE_GCC} == 4
+COPTS.main.c+=		-Wno-pointer-sign
+.endif
