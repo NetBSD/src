@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.94 2006/04/21 16:36:05 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.95 2006/05/11 06:09:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.94 2006/04/21 16:36:05 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.95 2006/05/11 06:09:44 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -751,8 +751,8 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 {
 	ssize_t	nr, nw;
 	int	serrno;
-	char	*p;
-	char	buf[MAXBSIZE];
+	u_char	*p;
+	u_char	buf[MAXBSIZE];
 	MD5_CTX		ctxMD5;
 	RMD160_CTX	ctxRMD160;
 	SHA1_CTX	ctxSHA1;
