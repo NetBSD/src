@@ -1,4 +1,4 @@
-/*	$NetBSD: extract.c,v 1.37 2005/11/23 04:59:14 ben Exp $	*/
+/*	$NetBSD: extract.c,v 1.38 2006/05/11 23:50:15 mrg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.37 2005/11/23 04:59:14 ben Exp $");
+__RCSID("$NetBSD: extract.c,v 1.38 2006/05/11 23:50:15 mrg Exp $");
 #endif
 #endif
 
@@ -62,7 +62,7 @@ pushout(char *todir)
 	int			count;
 
 	/* set up arguments to run "pax -r -w -p e" */
-	file_args[0] = strrchr(PAX_CMD, '/');
+	file_args[0] = (char *)strrchr(PAX_CMD, '/');
 	if (file_args[0] == NULL)
 		file_args[0] = PAX_CMD;
 	else

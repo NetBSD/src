@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.72 2006/04/18 13:11:05 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.73 2006/05/11 23:50:15 mrg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.72 2006/04/18 13:11:05 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.73 2006/05/11 23:50:15 mrg Exp $");
 #endif
 
 /*-
@@ -347,7 +347,7 @@ setupCoproc(const char *base)
 	int answer_pipe[2];
 	int rc1, rc2;
 	char buf[20];
-	char *argv0 = strrchr(FTP_CMD, '/');
+	char *argv0 = (char *)strrchr(FTP_CMD, '/');
 	if (argv0 == NULL)
 		argv0 = FTP_CMD;
 	else
