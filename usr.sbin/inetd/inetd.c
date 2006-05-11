@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.100 2005/04/09 20:14:55 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.101 2006/05/11 06:59:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.100 2005/04/09 20:14:55 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.101 2006/05/11 06:59:40 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -816,7 +816,7 @@ config(void)
 		if (sep != NULL) {
 			int i;
 
-#define SWAP(type, a, b) {type c=(type)a; (type)a=(type)b; (type)b=(type)c;}
+#define SWAP(type, a, b) {type c = a; a = b; b = c;}
 
 			/*
 			 * sep->se_wait may be holding the pid of a daemon
@@ -1157,7 +1157,7 @@ static void
 register_rpc(struct servtab *sep)
 {
 #ifdef RPC
-	int n;
+	socklen_t n;
 	struct netbuf nbuf;
 	struct sockaddr_storage ss;
 	struct netconfig *nconf;
