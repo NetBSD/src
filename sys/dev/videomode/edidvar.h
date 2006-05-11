@@ -1,4 +1,4 @@
-/*	$NetBSD: edidvar.h,v 1.1 2006/05/11 01:49:53 gdamore Exp $	*/
+/*	$NetBSD: edidvar.h,v 1.2 2006/05/11 19:05:41 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -88,8 +88,7 @@ struct edid_info {
 };
 
 int edid_is_valid(uint8_t *);
-struct edid_info *edid_parse(uint8_t *);
-void edid_free(struct edid_info *);
+int edid_parse(uint8_t *, struct edid_info *);
 void edid_print(struct edid_info *);
 
 #endif /* _DEV_VIDEOMODE_EDIDVAR_H */
