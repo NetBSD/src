@@ -1,4 +1,4 @@
-/* $NetBSD: wlanctl.c,v 1.3 2005/11/20 09:41:39 dyoung Exp $ */
+/* $NetBSD: wlanctl.c,v 1.4 2006/05/11 08:43:16 mrg Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -265,7 +265,8 @@ dump_nodes(const char *ifname_arg, int hdr_type, struct cmdflags *cf)
 		print_capinfo(pns->ns_capinfo);
 
 		printf("\tbeacon-interval %d TU tsft %" PRIu64 " us\n",
-		    pns->ns_intval, le64toh(*(u_int64_t *)&pns->ns_tstamp[0]));
+		    pns->ns_intval,
+		    (u_int64_t)le64toh(*(u_int64_t *)&pns->ns_tstamp[0]));
 
 		print_rateset(&pns->ns_rates, pns->ns_txrate);
 
