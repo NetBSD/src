@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.8 2006/03/05 11:32:01 peter Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.9 2006/05/11 12:05:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.8 2006/03/05 11:32:01 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.9 2006/05/11 12:05:37 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -104,7 +104,6 @@ u_int imask[NIPL];
 u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
 #endif
-u_int irqblock[NIRQS];
 
 
 extern void set_spl_masks(void);
@@ -166,19 +165,6 @@ intr_calculatemasks(void)
 	for (level = IPL_LEVELS; level > 0; level--)
 		irqmasks[level - 1] |= irqmasks[level];
 #endif
-	/*
-	 * Calculate irqblock[], which emulates hardware interrupt levels.
-	 */
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		int irqs = 1 << irq;
-		for (q = irqhandlers[irq]; q; q = q->ih_next)
-#ifdef hpcarm
-			irqs |= ~imask[q->ih_level];
-#else
-			irqs |= ~irqmasks[q->ih_level];
-#endif
-		irqblock[irq] = irqs;
-	}
 }
 
 
