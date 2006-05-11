@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.176 2006/04/09 01:52:06 christos Exp $
+#	$NetBSD: bsd.README,v 1.177 2006/05/11 23:47:34 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -310,10 +310,12 @@ USE_YP		If "no", disables building YP (NIS) support into
 		If ${MKYP} is "no", USE_YP will also be forced to "no".
 
 COPTS.lib<lib>
+OBJCOPTS.lib<lib>
 LDADD.lib<lib>
 CPPFLAGS.lib<lib>
 CXXFLAGS.lib<lib>
 COPTS.<prog>
+OBJCCOPTS.<prog>
 LDADD.<prog>
 CPPFLAGS.<prog>
 CXXFLAGS.<prog>	These provide a way to specify additions to the associated
@@ -955,6 +957,12 @@ LDADD		Additional loader objects.  Usually used for libraries.
 LDFLAGS		Additional loader flags.
 
 LINKS		See <bsd.links.mk>
+
+OBJCOPTS	Additional flags to the compiler when creating ObjC objects.
+
+OBJCOPTS.<fn>	Additional flags to the compiler when creating the
+		ObjC objects for <fn>.
+		For <fn>.[ly], "<fn>.c" must be used.
 
 SYMLINKS	See <bsd.links.mk>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.211 2006/03/20 21:48:43 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.212 2006/05/11 23:47:34 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -19,6 +19,7 @@ clean:		cleanprog
 COPTS+=     ${COPTS.${PROG}}
 CPPFLAGS+=  ${CPPFLAGS.${PROG}}
 CXXFLAGS+=  ${CXXFLAGS.${PROG}}
+OBJCOPTS+=  ${OBJCOPTS.${PROG}}
 LDADD+=     ${LDADD.${PROG}}
 LDFLAGS+=   ${LDFLAGS.${PROG}}
 LDSTATIC+=  ${LDSTATIC.${PROG}}
@@ -27,6 +28,7 @@ LDSTATIC+=  ${LDSTATIC.${PROG}}
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
 CFLAGS+=	${COPTS}
+OBJCFLAGS+=	${OBJCOPTS}
 MKDEP_SUFFIXES?=	.o .ln
 
 # ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
