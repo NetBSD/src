@@ -36,7 +36,7 @@
 %#ifndef __lint__
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: rnusers.x,v 1.12 2004/07/01 22:52:34 kleink Exp $");
+%__RCSID("$NetBSD: rnusers.x,v 1.13 2006/05/11 17:11:57 mrg Exp $");
 %#endif /* not __lint__ */
 #endif
 
@@ -157,8 +157,9 @@
 %	struct utmparr *objp;
 %{
 %
-%	if (!xdr_array(xdrs, (char **)&objp->uta_arr, (u_int *)&objp->uta_cnt,
-%		       MAXUSERS, (u_int)sizeof(struct utmp *), xdr_utmpptr))
+%	if (!xdr_array(xdrs, (char **)(void *)&objp->uta_arr,
+%		       (u_int *)&objp->uta_cnt, MAXUSERS,
+%		       (u_int)sizeof(struct utmp *), xdr_utmpptr))
 %		return (FALSE);
 %	return (TRUE);
 %}
@@ -194,9 +195,9 @@
 %	struct utmpidlearr *objp;
 %{
 %
-%	if (!xdr_array(xdrs, (char **)&objp->uia_arr, (u_int *)&objp->uia_cnt,
-%		       MAXUSERS, (u_int)sizeof(struct utmpidle *),
-%		       xdr_utmpidleptr))
+%	if (!xdr_array(xdrs, (char **)(void *)&objp->uia_arr,
+%	 	       (u_int *)&objp->uia_cnt, MAXUSERS,
+%		       (u_int)sizeof(struct utmpidle *), xdr_utmpidleptr))
 %		return (FALSE);
 %	return (TRUE);
 %}
