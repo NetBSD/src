@@ -1,3 +1,53 @@
+2006-05-11  Mark D. Baushke  <mdb@gnu.org>
+
+	* add.c (add_directory): Protect tag from NULL dereference.
+	[Fixes NetBSD cid-1054.]
+
+	* client.c (handle_mt): Deal with missing text argument.
+	[Fixes NetBSD cid-924.]
+
+	* entries.c (Entnode_Create): Protect date, tag and ts_conflict
+	from possible NULL dereference.
+	[Fixes NetBSD coverity cid-994, cid-995, cid-1055, cid-1057.]
+
+	* entries.c (Entries_Open): Protect dirtag and dirdate from
+	possible NULL dereference.
+	[Fixes NetBSD coverity cid-996.]
+
+	* log.c (cvslog): Validate start and end args to
+	date_to_internet().
+	[Fixes NetBSD coverity cid-2427 and cid-2428.]
+
+	* logmsg.c (fmt_proc): Protect li->tag from NULL dereference.
+	[Fixes NetBSD coverity cid-997.]
+
+	* vers_ts.c (Version_TS): Protect tag and vers_ts->tag from NULL
+	dereference.
+	[Fixes NetBSD coverity cid-1053.]
+
+2006-05-04  Mark D. Baushke  <mdb@gnu.org>
+
+	* filesubr.c (cvs_temp_file): Avoid keeping pointers to free()'d
+	storage laying around.
+	* commit.c (commit): Handle possible NULL filename values
+	returned from cvs_temp_file().
+	* filesubr.c (cvs_temp_name): Ditto.
+	* import.c (import): Ditto.
+	* login.c (password_entry_operation): Ditto.
+	* logmsg.c (do_verify): Ditto.
+	* patch.c (patch_fileproc): Ditto.
+	[Fixes NetBSD coverity cid-2545.]
+
+	* buffer.c (packetizing_buffer_output): Initialize outdata.
+	[Fixes NetBSD coverity cid-2474.]
+
+	* server.c (server_updated): Fix NetBSD coverity cid-1352
+	NetBSD-sparc64 of 2006-May-02 03:02:46.
+
+2005-09-26  Conrad T. Pino  <Conrad@Pino.com>
+ 
+ 	* rcs.c: Use "#ifdef HAVE_FSYNC" just like every where else.
+
 2005-09-26  Derek Price  <derek@ximbiot.com>
 
 	[bug #14639]
