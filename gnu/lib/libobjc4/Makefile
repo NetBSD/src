@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:53:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2006/05/11 23:52:41 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -9,9 +9,8 @@ LIB=		objc
 
 .if ${MKGCC} != "no"
 
-# ?? bump this?
 SHLIB_MAJOR=	2
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 # Machine-independent definitions (include file names).
 .include "${.CURDIR}/defs.mk"
@@ -32,12 +31,16 @@ CPPFLAGS+=	-I${GCCLIBXX}
 BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH} bits
 DPSRCS+=	bits
 
-# XXX this doesn't seem to work?
 .for f in Protocol.m Object.m NXConstStr.m linking.m
-COPTS.{$f}=	-fgnu-runtime -Wno-error
+OBJCOPTS.${f}=	-fgnu-runtime -Wno-error
 .endfor
-# XXX
-NOGCCERROR=1
+
+.for f in thr.c thr-objc.c
+COPTS.${f}=	-Wno-missing-noreturn
+.endfor
+
+COPTS+=		-fno-strict-aliasing -fexceptions
+OBJCOPTS+=	-fno-strict-aliasing -fexceptions
 
 INCS=		${G_OBJC_H}
 INCSDIR=	/usr/include/objc
