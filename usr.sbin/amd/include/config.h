@@ -2028,7 +2028,7 @@
 #define PACKAGE_VERSION "6.1.3"
 
 /* Type of the 6th argument to recvfrom() */
-#define RECVFROM_FROMLEN_TYPE int
+#define RECVFROM_FROMLEN_TYPE socklen_t
 
 /* should signal handlers be reinstalled? */
 /* #undef REINSTALL_SIGNAL_HANDLER */
