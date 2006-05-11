@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.12 2003/05/16 22:59:50 dsl Exp $	*/
+/*	$NetBSD: igmp.c,v 1.13 2006/05/11 21:17:02 mrg Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -234,12 +234,12 @@ accept_igmp(int recvlen)
 		    return;
 
 		case DVMRP_INFO_REQUEST:
-		    accept_info_request(src, dst, (char *)(igmp+1),
+		    accept_info_request(src, dst, (u_char *)(igmp+1),
 				igmpdatalen);
 		    return;
 
 		case DVMRP_INFO_REPLY:
-		    accept_info_reply(src, dst, (char *)(igmp+1), igmpdatalen);
+		    accept_info_reply(src, dst, (u_char *)(igmp+1), igmpdatalen);
 		    return;
 
 		default:
