@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.17 2005/10/06 17:28:33 drochner Exp $	*/
+/*	$NetBSD: expr.c,v 1.18 2006/05/11 01:22:20 mrg Exp $	*/
 /*	$OpenBSD: expr.c,v 1.11 2000/01/11 14:00:57 espie Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: expr.c,v 1.17 2005/10/06 17:28:33 drochner Exp $");
+__RCSID("$NetBSD: expr.c,v 1.18 2006/05/11 01:22:20 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ static int nerel(int);
 static int shift(int);
 static int primary(int);
 static int term(int);
-static int exp(int);
+static int m4_exp(int);
 static int unary(int);
 static int factor(int);
 static int constant(int);
@@ -394,9 +394,9 @@ term(int mayeval)
 {
 	int c, vl, vr;
 
-	vl = exp(mayeval);
+	vl = m4_exp(mayeval);
 	while ((c = skipws()) == '*' || c == '/' || c == '%') {
-		vr = exp(mayeval);
+		vr = m4_exp(mayeval);
 
 		switch (c) {
 		case '*':
@@ -428,7 +428,7 @@ term(int mayeval)
  * exp : unary { "**" exp }
  */
 static int
-exp(int mayeval)
+m4_exp(int mayeval)
 {
 	int c, vl, vr, n;
 
