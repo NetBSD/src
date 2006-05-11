@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: rusers.c,v 1.23 2006/05/11 01:25:23 mrg Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.23 2006/05/11 01:25:23 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -167,6 +167,7 @@ rusers_reply(char *replyp, struct netbuf *raddrp, struct netconfig *nconf)
 		char	date[26], idle[8];
 		char	remote[HOSTWID + 3];		/* "(" host ")" \0 */
 		char	local[HOSTWID + LINEWID + 2];	/* host ":" line \0 */
+		time_t	uttime;
 
 		if (!longopt) {
 			printf("%.*s ", NAMEWID,
@@ -178,8 +179,9 @@ rusers_reply(char *replyp, struct netbuf *raddrp, struct netconfig *nconf)
 		    HOSTWID, host, 
 		    up->uia_arr[x]->ui_utmp.ut_line);
 
+		uttime = up->uia_arr[x]->ui_utmp.ut_time;
 		snprintf(date, sizeof(date), "%s",
-		    &(ctime((time_t *)&(up->uia_arr[x]->ui_utmp.ut_time)))[4]);
+		    &(ctime(&uttime))[4]);
 
 		minutes = up->uia_arr[x]->ui_idle;
 		if (minutes == MAX_INT)
