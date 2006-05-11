@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.25 2006/03/20 04:03:22 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2006/05/11 23:16:29 mrg Exp $
 
 MKPRIVATELIB=	yes
 
@@ -26,6 +26,12 @@ CPPFLAGS+= -I${DESTDIR}/usr/include/krb5
 .if (${USE_PAM} != "no")
 SRCS+=	sra.c pk.c
 CPPFLAGS+= -DSRA
+.endif
+
+.if ${HAVE_GCC} == 4
+.for f in auth enc_des kerberos5 pk
+COPTS.${f}.c+=  -Wno-pointer-sign
+.endfor
 .endif
 
 .include <bsd.lib.mk>

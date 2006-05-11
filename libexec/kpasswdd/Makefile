@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2005/01/10 03:11:18 lukem Exp $
+# $NetBSD: Makefile,v 1.14 2006/05/11 23:16:29 mrg Exp $
 
 NOLINT=		# defined
 
@@ -21,6 +21,10 @@ CPPFLAGS+= -I.					\
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DHAVE_IPV6
+.endif
+
+.if ${HAVE_GCC} == 4
+COPTS.kpasswdd.c+=	-fno-strict-aliasing
 .endif
 
 VERS!=		cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}

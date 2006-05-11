@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2006/03/17 21:43:16 christos Exp $
+# $NetBSD: Makefile,v 1.20 2006/05/11 23:16:28 mrg Exp $
 
 NOLINT=		# defined
 
@@ -70,6 +70,12 @@ CPPFLAGS+= -I.					\
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DHAVE_IPV6
+.endif
+
+.if ${HAVE_GCC} == 4
+.for f in mkey
+COPTS.${f}.c+=  -Wno-pointer-sign
+.endfor
 .endif
 
 ${gen_files} hdb_asn1.h: asn1_files

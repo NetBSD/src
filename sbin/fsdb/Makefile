@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2005/01/20 16:39:23 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.18 2006/05/11 23:16:29 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -19,6 +19,12 @@ CPPFLAGS+= -I${FSCK} -I${FSCK_FFS}
 LDADD+= -ledit -ltermcap
 .ifndef HOSTPROG
 DPADD+= ${LIBEDIT} ${LIBTERMCAP}
+.endif
+
+.if ${HAVE_GCC} == 4
+.for f in fsdb ffs_appleufs
+COPTS.${f}.c+=	-Wno-pointer-sign
+.endfor
 .endif
 
 .include <bsd.prog.mk>

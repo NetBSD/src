@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/07/22 11:29:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2006/05/11 23:16:31 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,5 +17,9 @@ DPADD+=	${LIBWRAP} ${LIBUTIL}
 
 CPPFLAGS.gethnamaddr.c=	-UYP -D_LIBC
 CPPFLAGS.getnetnamadr.c=-UYP -D_LIBC
+
+.if ${HAVE_GCC} == 4
+COPTS.ypserv_db.c=	-Wno-pointer-sign
+.endif
 
 .include <bsd.prog.mk>

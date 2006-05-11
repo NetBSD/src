@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.37 2006/05/11 23:16:30 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -70,6 +70,12 @@ kbd.out: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} ${MKHITS}
 CLEANFILES+=	TMPfunc.out kbd.tmp kbd.out
 
 .include <bsd.prog.mk>
+
+.if ${HAVE_GCC} == 4
+.for f in api commands system telnet terminal termout tn3270 utilities
+COPTS.${f}.c+=  -Wno-pointer-sign
+.endfor
+.endif
 
 .PATH: ${.CURDIR}/../api ${.CURDIR}/../ascii ${.CURDIR}/../ctlr
 .PATH: ${.CURDIR}/../general ${.CURDIR}/../sys_curses ${.CURDIR}/../../telnet

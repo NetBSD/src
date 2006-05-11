@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2006/03/17 21:43:16 christos Exp $
+# $NetBSD: Makefile,v 1.27 2006/05/11 23:16:28 mrg Exp $
 
 NOLINT=		# defined
 
@@ -125,6 +125,10 @@ CLEANFILES=	${BUILT_SOURCES} ${gen_files} asn1_files krb5_asn1.h krb5_asn1.hx
 
 .if ${USETOOLS} != "yes"
 SUBDIR=	asn1_compile
+.endif
+
+.if ${HAVE_GCC} == 4
+COPTS.der_get.c+=	-Wno-pointer-sign
 .endif
 
 .include <bsd.lib.mk>

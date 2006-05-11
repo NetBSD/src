@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2006/03/17 21:43:16 christos Exp $
+# $NetBSD: Makefile,v 1.16 2006/05/11 23:16:28 mrg Exp $
 
 NOLINT=		# defined
 
@@ -128,6 +128,10 @@ CPPFLAGS+= -I.					\
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DHAVE_IPV6
+.endif
+
+.if ${HAVE_GCC} == 4
+COPTS+=	-Wno-pointer-sign
 .endif
 
 .include <bsd.lib.mk>

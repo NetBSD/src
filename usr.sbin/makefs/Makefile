@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2005/08/19 01:26:59 dyoung Exp $
+#	$NetBSD: Makefile,v 1.18 2006/05/11 23:16:30 mrg Exp $
 #
 
 .include <bsd.own.mk>
@@ -29,5 +29,11 @@ CPPFLAGS+=	-I${.CURDIR} \
 		${LSSRC} ${MKNODSRC} ${MTREESRC}
 
 WARNS?=	3
+
+.if ${HAVE_GCC} == 4
+.for f in cd9660_debug cd9660_write
+COPTS.${f}.c+=  -Wno-pointer-sign
+.endfor
+.endif
 
 .include <bsd.prog.mk>

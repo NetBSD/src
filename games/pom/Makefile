@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1995/03/23 08:35:33 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 2006/05/11 23:16:28 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	pom
@@ -7,3 +7,7 @@ DPADD=	${LIBM}
 LDADD=	-lm
 
 .include <bsd.prog.mk>
+
+.if ${HAVE_GCC} == 4
+COPTS+=	-Wno-pointer-sign
+.endif

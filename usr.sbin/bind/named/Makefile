@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2004/05/18 00:10:39 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2006/05/11 23:16:30 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,14 @@ LINKS=	${BINDIR}/named ${BINDIR}/lwresd
 
 .include "${.CURDIR}/../Makefile.inc"
 
-
 DIST=${IDIST}/bin/named
 CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include
+
+.if ${HAVE_GCC} == 4
+.for f in client
+COPTS.${f}.c+=  -fno-strict-aliasing
+.endfor
+.endif
 
 .PATH: ${DIST}/unix ${DIST}
 
