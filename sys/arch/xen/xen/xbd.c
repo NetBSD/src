@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.27.10.1 2006/04/19 02:34:03 elad Exp $ */
+/* $NetBSD: xbd.c,v 1.27.10.2 2006/05/11 23:27:14 elad Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.27.10.1 2006/04/19 02:34:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.27.10.2 2006/05/11 23:27:14 elad Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -359,6 +359,30 @@ static BLKIF_RING_IDX resp_cons; /* Response consumer for comms ring. */
 static BLKIF_RING_IDX req_prod;  /* Private request producer.         */
 static BLKIF_RING_IDX last_req_prod;  /* Request producer at last trap. */
 
+/* 
+ * The "recovery ring" allows re-issuing requests that had been made but
+ * not performed when the domain was suspended.  It contains a shadow of
+ * the actual request ring, except that it stores pseudo-physical
+ * addresses (which persist across save/restore or migration) instead of
+ * machine addresses, and its elements won't necessarily be in the same
+ * order as the other ring, as the backend need not respond to requests
+ * in the same order that they were made.  Because of this latter, the
+ * recovery ring slots are dynamically allocated with a free list
+ * threaded through the "id" field of the unused entries.  And, as a
+ * result of that, the request id in the actual ring will be an index
+ * into the recovery ring so the slot can be freed when we get the
+ * response, while the "id" field in the recovery ring element contains
+ * the cast pointer to our higher-level request structure.
+ */
+static blkif_request_t *rec_ring = NULL;
+#define REC_RING_NIL (PAGE_SIZE - 1)
+#define REC_RING_ISALLOC(idx) (rec_ring[(idx)].id >= PAGE_SIZE)
+static unsigned int rec_ring_free = REC_RING_NIL;
+static int recovery = 0;
+/* There is no simplelock; this is for Xen 2, and thus uniprocessor. */
+
+static void signal_requests_to_xen(void);
+
 #define STATE_CLOSED		0
 #define STATE_DISCONNECTED	1
 #define STATE_CONNECTED		2
@@ -389,6 +413,86 @@ static struct xbd_ctrl blkctrl;
 	if (!((_xs) = getxbd_softc(bx)))		\
 		return ENXIO;				\
 } while (/*CONSTCOND*/0)
+
+static void
+rec_ring_init(void)
+{
+	int i;
+
+	KASSERT(rec_ring == NULL);
+	KASSERT(rec_ring_free == REC_RING_NIL);
+	
+	rec_ring = malloc(BLKIF_RING_SIZE * sizeof(blkif_request_t),
+	    M_DEVBUF, 0);
+	for (i = BLKIF_RING_SIZE - 1; i >= 0; --i) {
+		rec_ring[i].id = rec_ring_free;
+		rec_ring_free = i;
+	}
+}
+
+/* Given an actual request, save it on the rec_ring and change its id. */
+static void
+rec_ring_log(blkif_request_t *rreq) 
+{
+	unsigned long idx, i;
+	
+	KASSERT(rreq->id >= PAGE_SIZE);
+	if (rec_ring_free == REC_RING_NIL)
+		panic("xbd: recovery ring exhausted");
+	idx = rec_ring_free;
+	KASSERT(!REC_RING_ISALLOC(idx));
+	rec_ring_free = rec_ring[idx].id;
+	
+	rec_ring[idx].operation = rreq->operation;
+	rec_ring[idx].nr_segments = rreq->nr_segments;
+	rec_ring[idx].device = rreq->device;
+	rec_ring[idx].id = rreq->id;
+	rreq->id = idx;
+	rec_ring[idx].device = rreq->device;
+	
+	for (i = 0; i < rreq->nr_segments; ++i)
+		rec_ring[idx].frame_and_sects[i] =
+		    xpmap_mtop(rreq->frame_and_sects[i]);	
+}
+
+/* 
+ * Given a response to a request processed as above, free the rec_ring
+ * slot and return the original id.
+ */
+static unsigned long
+rec_ring_retire(blkif_response_t* resp)
+{
+	unsigned long idx, rid;
+	
+	idx = resp->id;
+	KASSERT(idx < BLKIF_RING_SIZE);
+	rid = rec_ring[idx].id;
+	
+	rec_ring[idx].id = rec_ring_free;
+	rec_ring_free = idx;
+
+	return rid;
+}
+
+/* Given the index of an allocated rec_ring slot, recover it. */
+static void
+rec_ring_recover(unsigned long idx, blkif_request_t *req)
+{
+	unsigned long i;
+
+	KASSERT(idx < BLKIF_RING_SIZE);
+	KASSERT(REC_RING_ISALLOC(idx));
+	
+	req->operation = rec_ring[idx].operation;
+	req->nr_segments = rec_ring[idx].nr_segments;
+	req->device = rec_ring[idx].device;
+	req->id = idx;
+	req->sector_number = rec_ring[idx].sector_number;
+
+	for (i = 0; i < req->nr_segments; ++i)
+		req->frame_and_sects[i] =
+		    xpmap_ptom(rec_ring[idx].frame_and_sects[i]);
+}
 
 static struct xbd_softc *
 getxbd_softc(dev_t dev)
@@ -499,7 +603,7 @@ free_interface(void)
 
 	/* Prevent new requests being issued until we fix things up. */
 	// simple_lock(&blkif_io_lock);
-	// recovery = 1;
+	recovery = 1;
 	state = STATE_DISCONNECTED;
 	// simple_unlock(&blkif_io_lock);
 
@@ -523,13 +627,15 @@ close_interface(void){
 static void
 disconnect_interface(void)
 {
-
+	
 	if (blk_ring == NULL)
 		blk_ring = (blkif_ring_t *)uvm_km_alloc(kmem_map,
 		    PAGE_SIZE, PAGE_SIZE, UVM_KMF_WIRED);
 	memset(blk_ring, 0, PAGE_SIZE);
 	blk_ring->req_prod = blk_ring->resp_prod = resp_cons = req_prod =
 		last_req_prod = 0;
+	if (rec_ring == NULL)
+		rec_ring_init();
 	state = STATE_DISCONNECTED;
 	send_interface_connect();
 }
@@ -538,9 +644,25 @@ static void
 reset_interface(void)
 {
 
-	printf("Recovering virtual block device driver\n");
+	printf("xbd: recovering virtual block device driver\n");
 	free_interface();
 	disconnect_interface();
+}
+
+static void
+recover_interface(void)
+{
+	unsigned long i;
+
+	for (i = 0; i < BLKIF_RING_SIZE; ++i)
+		if (REC_RING_ISALLOC(i)) {
+			rec_ring_recover(i,
+			    &blk_ring->ring[MASK_BLKIF_IDX(req_prod)].req);
+			++req_prod;
+		}
+	recovery = 0;
+	x86_sfence();
+	signal_requests_to_xen();
 }
 
 static void
@@ -559,28 +681,32 @@ connect_interface(blkif_fe_interface_status_t *status)
 	    "xbd");
 	hypervisor_enable_event(blkif_evtchn);
 
-	/* Transition to connected in case we need to do 
-	 *  a partition probe on a whole disk. */
-	state = STATE_CONNECTED;
+	if (recovery) {
+		recover_interface();
+		state = STATE_CONNECTED;
+	} else {
+		/* Transition to connected in case we need to do 
+		 *  a partition probe on a whole disk. */
+		state = STATE_CONNECTED;
 
-	/* Probe for discs attached to the interface. */
-	// xlvbd_init();
-	MALLOC(vbd_info, vdisk_t *, MAX_VBDS * sizeof(vdisk_t),
-	    M_DEVBUF, M_WAITOK | M_ZERO);
-	nr_vbds  = get_vbd_info(vbd_info);
-	if (nr_vbds <= 0)
-		goto out;
+		/* Probe for discs attached to the interface. */
+		// xlvbd_init();
+		MALLOC(vbd_info, vdisk_t *, MAX_VBDS * sizeof(vdisk_t),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
+		nr_vbds  = get_vbd_info(vbd_info);
+		if (nr_vbds <= 0)
+			goto out;
 
-	for (i = 0; i < nr_vbds; i++) {
-		xd = &vbd_info[i];
-		xbda = get_xbda(xd);
-		if (xbda) {
-			xbda->xa_xd = xd;
-			config_found_ia(blkctrl.xc_parent, "xendevbus", xbda,
-			    blkctrl.xc_cfprint);
+		for (i = 0; i < nr_vbds; i++) {
+			xd = &vbd_info[i];
+			xbda = get_xbda(xd);
+			if (xbda) {
+				xbda->xa_xd = xd;
+				config_found_ia(blkctrl.xc_parent, "xendevbus", xbda,
+				    blkctrl.xc_cfprint);
+			}
 		}
 	}
-
 #if 0
 	/* Kick pending requests. */
 	save_and_cli(flags);
@@ -744,7 +870,7 @@ blkif_status(blkif_fe_interface_status_t *status)
 			break;
 		case STATE_DISCONNECTED:
 		case STATE_CONNECTED:
-			unexpected(status);
+//			unexpected(status);
 			reset_interface();
 			break;
 		}
@@ -838,6 +964,7 @@ control_send(blkif_request_t *req, blkif_response_t *rsp)
 {
 	unsigned long flags;
 	struct xbdreq *xr;
+	blkif_request_t *ring_req;
 
  retry:
 	while ((req_prod - resp_cons) == BLKIF_RING_SIZE) {
@@ -854,14 +981,13 @@ control_send(blkif_request_t *req, blkif_response_t *rsp)
 		goto retry;
 	}
 
-	blk_ring->ring[MASK_BLKIF_IDX(req_prod)].req = *req;    
+	ring_req = &blk_ring->ring[MASK_BLKIF_IDX(req_prod)].req;
+	*ring_req = *req;
 
 	GET_XBDREQ(xr);
-	blk_ring->ring[MASK_BLKIF_IDX(req_prod)].req.id = (unsigned long)xr;
-	// rec_ring[id].id = (unsigned long) req;
+	ring_req->id = (unsigned long)xr;
 
-	// translate_req_to_pfn( &rec_ring[id], req );
-
+	rec_ring_log(ring_req);
 	req_prod++;
 	signal_requests_to_xen();
 
@@ -1044,7 +1170,7 @@ xbd_detach(struct device *dv, int flags)
 	xs->sc_shutdown = 1;
 
 	/* And give it some time to settle if it's busy. */
-	if (xs->sc_dksc.sc_dkdev.dk_stats->busy > 0)
+	if (xs->sc_dksc.sc_dkdev.dk_stats->io_busy > 0)
 		tsleep(&xs, PWAIT, "xbdetach", hz);
 
 	/* locate the major number */
@@ -1251,6 +1377,7 @@ fill_ring(struct xbdreq *xr)
 			break;
 	}
 	pxr->xr_data = addr;
+	rec_ring_log(ring_req);
 
 	req_prod++;
 }
@@ -1398,12 +1525,18 @@ xbd_response_handler(void *arg)
 	struct xbdreq *pxr, *xr;
 	BLKIF_RING_IDX i, rp;
 
+	if (__predict_false(recovery) ||
+	   __predict_false(state == STATE_CLOSED)) {
+		printf ("xbd: dropping event due to recovery or closedness\n");
+		return 0;
+	}
+
 	rp = blk_ring->resp_prod;
 	x86_lfence(); /* Ensure we see queued responses up to 'rp'. */
 
 	for (i = resp_cons; i != rp; i++) {
 		ring_resp = &blk_ring->ring[MASK_BLKIF_IDX(i)].resp;
-		xr = (struct xbdreq *)ring_resp->id;
+		xr = (struct xbdreq *)rec_ring_retire(ring_resp);
 
 		switch (ring_resp->operation) {
 		case BLKIF_OP_READ:
@@ -1467,6 +1600,7 @@ xbd_response_handler(void *arg)
 			}
 			break;
 		case BLKIF_OP_PROBE:
+			PUT_XBDREQ(xr);
 			memcpy(&blkif_control_rsp, ring_resp,
 			    sizeof(*ring_resp));
 			blkif_control_rsp_valid = 1;
@@ -1623,4 +1757,18 @@ xbdinit(struct xbd_softc *xs, vdisk_t *xd, struct dk_intf *dkintf)
 
 /*   out: */
 	return ret;
+}
+
+
+void
+xbd_suspend(void)
+{
+
+}
+
+void
+xbd_resume(void)
+{
+
+	send_driver_status(1);
 }

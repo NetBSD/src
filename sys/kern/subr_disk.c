@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.73.10.1 2006/04/19 05:13:59 elad Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.73.10.2 2006/05/11 23:30:15 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,9 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.73.10.1 2006/04/19 05:13:59 elad Exp $");
-
-#include "opt_compat_netbsd.h"
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.73.10.2 2006/05/11 23:30:15 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -168,16 +166,16 @@ diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
  * name provided.
  */
 struct disk *
-disk_find(char *name)
+disk_find(const char *name)
 {
 	struct io_stats *stat;
 
 	stat = iostat_find(name);
 
-	if ((stat != NULL) && (stat->type == IOSTAT_DISK))
-		return stat->parent;
+	if ((stat != NULL) && (stat->io_type == IOSTAT_DISK))
+		return stat->io_parent;
 
-        return (NULL);
+	return (NULL);
 }
 
 static void
@@ -214,9 +212,8 @@ disk_attach0(struct disk *diskp)
 	 * Set up the stats collection.
 	 */
 	diskp->dk_stats = iostat_alloc(IOSTAT_DISK);
-        diskp->dk_stats->parent = (void *) diskp;
-        diskp->dk_stats->name = diskp->dk_name;
-
+	diskp->dk_stats->io_parent = (void *) diskp;
+	diskp->dk_stats->io_name = diskp->dk_name;
 }
 
 static void
@@ -226,7 +223,7 @@ disk_detach0(struct disk *diskp)
 	/*
 	 * Remove from the drivelist.
 	 */
-        iostat_free(diskp->dk_stats);
+	iostat_free(diskp->dk_stats);
 
 	/*
 	 * Free the space used by the disklabel structures.
@@ -293,6 +290,7 @@ pseudo_disk_detach(struct disk *diskp)
 void
 disk_busy(struct disk *diskp)
 {
+
 	iostat_busy(diskp->dk_stats);
 }
 
@@ -302,6 +300,7 @@ disk_busy(struct disk *diskp)
 void
 disk_unbusy(struct disk *diskp, long bcount, int read)
 {
+
 	iostat_unbusy(diskp->dk_stats, bcount, read);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2006/01/04 12:29:21 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.8.1 2006/05/11 23:26:19 elad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -62,15 +62,16 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
+#include <sys/device.h>
 #include <mips/cpuregs.h>
 
-extern int		_splraise(int);
-extern int		_spllower(int);
-extern int		_splset(int);
-extern int		_splget(void);
-extern void		_splnone(void);
-extern void		_setsoftintr(int);
-extern void		_clrsoftintr(int);
+int  _splraise(int);
+int  _spllower(int);
+int  _splset(int);
+int  _splget(void);
+void _splnone(void);
+void _setsoftintr(int);
+void _clrsoftintr(int);
 
 #define splhigh()       _splraise(MIPS_INT_MASK)
 #define spl0()          (void)_spllower(0)
@@ -98,15 +99,16 @@ extern void		_clrsoftintr(int);
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define splsoftserial()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 
-extern unsigned int	intrcnt[];
-
 struct cobalt_intrhand {
 	LIST_ENTRY(cobalt_intrhand) ih_q;
 	int (*ih_func)(void *);
 	void *ih_arg;
-	int cookie_type;
+	int ih_cookie_type;
 #define	COBALT_COOKIE_TYPE_CPU	0x1
 #define	COBALT_COOKIE_TYPE_ICU	0x2
+
+	struct evcnt ih_evcnt;
+	char ih_evname[32];
 };
 
 #include <mips/softintr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.38.10.1 2006/04/19 03:25:35 elad Exp $	*/
+/*	$NetBSD: machfb.c,v 1.38.10.2 2006/05/11 23:28:48 elad Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.38.10.1 2006/04/19 03:25:35 elad Exp $");
+	"$NetBSD: machfb.c,v 1.38.10.2 2006/05/11 23:28:48 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,9 @@ struct mach64_softc {
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_regh;
 	bus_space_handle_t sc_memh;
+	caddr_t sc_aperture;		/* mapped aperture vaddr */
+	caddr_t sc_registers;		/* mapped registers vaddr */
+	
 	uint32_t sc_nbus, sc_ndev, sc_nfunc;
 	size_t memsize;
 	int memtype;
@@ -276,7 +279,7 @@ static void	mach64_feed_bytes(struct mach64_softc *, int, uint8_t *);
 static void	mach64_showpal(struct mach64_softc *);
 #endif
 
-static void	set_address(struct rasops_info *, bus_addr_t);
+static void	set_address(struct rasops_info *, caddr_t);
 static void	machfb_blank(struct mach64_softc *, int);
 
 #if 0
@@ -682,7 +685,7 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_height = sc->sc_my_mode->vdisplay;
 	ri->ri_stride = ri->ri_width;
 	ri->ri_flg = RI_CENTER;
-	set_address(ri, sc->sc_aperbase);
+	set_address(ri, sc->sc_aperture);
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
@@ -721,25 +724,26 @@ mach64_init(struct mach64_softc *sc)
 		BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
 		panic("%s: failed to map aperture", sc->sc_dev.dv_xname);
 	}
-	sc->sc_aperbase = (vaddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
+	sc->sc_aperture = (caddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
 
 	sc->sc_regt = sc->sc_memt;
 	bus_space_subregion(sc->sc_regt, sc->sc_memh, MACH64_REG_OFF,
 	    sc->sc_regsize, &sc->sc_regh);
-	sc->sc_regbase = sc->sc_aperbase + 0x7ffc00;
+	sc->sc_registers = sc->sc_aperture + 0x7ffc00;
 
 	/*
 	 * Test wether the aperture is byte swapped or not
 	 */
-	p32 = (uint32_t*)(u_long)sc->sc_aperbase;
+	p32 = (uint32_t*)sc->sc_aperture;
 	saved_value = *p32;
-	p = (uint8_t*)(u_long)sc->sc_aperbase;
+	p = (uint8_t*)(u_long)sc->sc_aperture;
 	*p32 = 0x12345678;
 	if (p[0] == 0x12 && p[1] == 0x34 && p[2] == 0x56 && p[3] == 0x78)
 		need_swap = 0;
 	else
 		need_swap = 1;
 	if (need_swap) {
+		sc->sc_aperture += 0x800000;
 		sc->sc_aperbase += 0x800000;
 		sc->sc_apersize -= 0x800000;
 	}
@@ -901,6 +905,8 @@ static int
 mach64_modeswitch(struct mach64_softc *sc, struct videomode *mode)
 {
 	struct mach64_crtcregs crtc;
+
+	memset(&crtc, 0, sizeof crtc);	/* XXX gcc */
 
 	if (mach64_calc_crtcregs(sc, &crtc, mode))
 		return 1;
@@ -1650,7 +1656,7 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	 * Other 64bit architectures might run into similar problems.
 	 */
 	if (offset<sc->sc_apersize) {
-		pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase+offset, 0, 
+		pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase, offset, 
 		    prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
@@ -1703,12 +1709,12 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 
 /* set ri->ri_bits according to fb, ri_xorigin and ri_yorigin */
 static void
-set_address(struct rasops_info *ri, bus_addr_t fb)
+set_address(struct rasops_info *ri, caddr_t fb)
 {
 #ifdef notdef
 	printf(" %d %d %d\n", ri->ri_xorigin, ri->ri_yorigin, ri->ri_stride);
 #endif
-	ri->ri_bits = (void *)((u_long)fb + ri->ri_stride * ri->ri_yorigin + 
+	ri->ri_bits = (void *)(fb + ri->ri_stride * ri->ri_yorigin + 
 	    ri->ri_xorigin);
 }
 
@@ -1773,7 +1779,7 @@ machfb_fbattach(struct mach64_softc *sc)
 	fb->fb_type.fb_width = sc->virt_x;
 	fb->fb_type.fb_height = sc->virt_y;
 	
-	fb->fb_pixels = (caddr_t)sc->sc_aperbase;
+	fb->fb_pixels = sc->sc_aperture;
 	fb_attach(fb, sc->sc_console);
 }
 

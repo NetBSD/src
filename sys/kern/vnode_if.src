@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.48.10.1 2006/03/08 00:53:41 elad Exp $
+#	$NetBSD: vnode_if.src,v 1.48.10.2 2006/05/11 23:30:15 elad Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -207,10 +207,10 @@ vop_ioctl {
 };
 
 #
-#% fcntl      vp      L L L
+#% fcntl      vp      U U U
 #
 vop_fcntl {
-	IN LOCKED=YES struct vnode *vp;
+	IN LOCKED=NO struct vnode *vp;
 	IN u_int command;
 	IN void *data;
 	IN int fflag;

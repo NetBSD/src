@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.61.10.1 2006/04/19 03:25:38 elad Exp $ */
+/* $NetBSD: tga.c,v 1.61.10.2 2006/05/11 23:28:48 elad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.61.10.1 2006/04/19 03:25:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.61.10.2 2006/05/11 23:28:48 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,6 +180,7 @@ tgamatch(parent, match, aux)
 		return 0;
 	}
 
+#if defined(__alpha__) || defined(arc)
 	/* short-circuit the following test, as we
 	 * already have the memory mapped and hence
 	 * cannot perform it---and we are the console
@@ -187,7 +188,7 @@ tgamatch(parent, match, aux)
 	 */
 	if (pa->pa_tag == tga_console_dc.dc_pcitag)
 		return 10;
-
+#endif
 	return tga_matchcommon(pa->pa_memt, pa->pa_pc, pa->pa_tag);
 }
 

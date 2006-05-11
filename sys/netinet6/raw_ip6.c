@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.75.8.2 2006/03/10 15:20:54 elad Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.75.8.3 2006/05/11 23:31:35 elad Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.75.8.2 2006/03/10 15:20:54 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.75.8.3 2006/05/11 23:31:35 elad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -351,10 +351,10 @@ rip6_ctlinput(cmd, sa, d)
 
 		/*
 		 * regardless of if we called icmp6_mtudisc_update(),
-		 * we need to call in6_pcbnotify(), to notify path
-		 * MTU change to the userland (2292bis-02), because
-		 * some unconnected sockets may share the same
-		 * destination and want to know the path MTU.
+		 * we need to call in6_pcbnotify(), to notify path MTU
+		 * change to the userland (RFC3542), because some
+		 * unconnected sockets may share the same destination
+		 * and want to know the path MTU.
 		 */
 	}
 
@@ -390,7 +390,6 @@ rip6_output(m, va_alist)
 	int scope_ambiguous = 0;
 	struct in6_addr *in6a;
 	va_list ap;
-	int flags;
 
 	va_start(ap, m);
 	so = va_arg(ap, struct socket *);
@@ -408,8 +407,11 @@ rip6_output(m, va_alist)
 
 	dst = &dstsock->sin6_addr;
 	if (control) {
-		if ((error = ip6_setpktoptions(control, &opt, priv)) != 0)
+		if ((error = ip6_setpktopts(control, &opt,
+		    in6p->in6p_outputopts,
+		    priv, so->so_proto->pr_protocol)) != 0) {
 			goto bad;
+		}
 		optp = &opt;
 	} else
 		optp = in6p->in6p_outputopts;
@@ -522,11 +524,7 @@ rip6_output(m, va_alist)
 		}
 	}
 
-	flags = 0;
-	if (in6p->in6p_flags & IN6P_MINMTU)
-		flags |= IPV6_MINMTU;
-
-	error = ip6_output(m, optp, &in6p->in6p_route, flags,
+	error = ip6_output(m, optp, &in6p->in6p_route, 0,
 	    in6p->in6p_moptions, so, &oifp);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 		if (oifp)
@@ -542,10 +540,10 @@ rip6_output(m, va_alist)
 		m_freem(m);
 
  freectl:
-	if (optp == &opt && optp->ip6po_rthdr && optp->ip6po_route.ro_rt)
-		RTFREE(optp->ip6po_route.ro_rt);
-	if (control)
+	if (control) {
+		ip6_clearpktopts(&opt, -1);
 		m_freem(control);
+	}
 	return (error);
 }
 

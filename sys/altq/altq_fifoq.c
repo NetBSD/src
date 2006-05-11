@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.7.10.2 2006/03/10 13:29:35 elad Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.7.10.3 2006/05/11 23:26:17 elad Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.7.10.2 2006/03/10 13:29:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.7.10.3 2006/05/11 23:26:17 elad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -176,13 +176,11 @@ fifoqioctl(dev, cmd, addr, flag, l)
 		}
 
 		/* allocate and initialize fifoq_state_t */
-		MALLOC(q, fifoq_state_t *, sizeof(fifoq_state_t),
-		       M_DEVBUF, M_WAITOK);
+		q = malloc(sizeof(fifoq_state_t), M_DEVBUF, M_WAITOK|M_ZERO);
 		if (q == NULL) {
 			error = ENOMEM;
 			break;
 		}
-		(void)memset(q, 0, sizeof(fifoq_state_t));
 
 		q->q_ifq = &ifp->if_snd;
 		q->q_head = q->q_tail = NULL;
@@ -196,7 +194,7 @@ fifoqioctl(dev, cmd, addr, flag, l)
 				    fifoq_enqueue, fifoq_dequeue, fifoq_request,
 				    NULL, NULL);
 		if (error) {
-			FREE(q, M_DEVBUF);
+			free(q, M_DEVBUF);
 			break;
 		}
 
@@ -384,7 +382,7 @@ static int fifoq_detach(q)
 			printf("fifoq_detach: no state in fifoq_list!\n");
 	}
 
-	FREE(q, M_DEVBUF);
+	free(q, M_DEVBUF);
 	return (error);
 }
 

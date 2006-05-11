@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.37 2004/02/20 17:35:01 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.37.36.1 2006/05/11 23:26:47 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ struct pcb {
 	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_cr2;		/* page fault address (CR2) */
 	union	savefpu pcb_savefpu;	/* floating point state for FPU */
-	struct	emcsts pcb_saveemc;	/* Cyrix EMC state */
+
 /*
  * Software pcb (extension)
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.115.10.3 2006/05/06 23:31:58 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.115.10.4 2006/05/11 23:31:08 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.10.3 2006/05/06 23:31:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.10.4 2006/05/11 23:31:08 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,6 +592,8 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	struct mbuf *m;
 	int error, s;
 	static struct sockaddr_storage dst;
+
+	m = NULL;	/* XXX gcc */
 
 	if (d->bd_bif == 0)
 		return (ENXIO);

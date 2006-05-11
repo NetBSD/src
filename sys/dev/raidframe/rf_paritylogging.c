@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.24 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.24.10.1 2006/05/11 23:29:58 elad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.24 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.24.10.1 2006/05/11 23:29:58 elad Exp $");
 
 #include "rf_archs.h"
 
@@ -234,13 +234,7 @@ rf_ConfigureParityLogging(
 	if (raidPtr->parityLogBufferHeap == NULL)
 		return (ENOMEM);
 	lHeapPtr = raidPtr->parityLogBufferHeap;
-	rc = rf_mutex_init(&raidPtr->parityLogPool.mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		RF_Free(raidPtr->parityLogBufferHeap, raidPtr->numParityLogs *
-			raidPtr->numSectorsPerLog * raidPtr->bytesPerSector);
-		return (ENOMEM);
-	}
+	rf_mutex_init(&raidPtr->parityLogPool.mutex);
 	for (i = 0; i < raidPtr->numParityLogs; i++) {
 		if (i == 0) {
 			RF_Malloc(raidPtr->parityLogPool.parityLogs,
@@ -299,11 +293,7 @@ rf_ConfigureParityLogging(
 	}
 	rf_ShutdownCreate(listp, rf_ShutdownParityLoggingPool, raidPtr);
 	/* build pool of region buffers */
-	rc = rf_mutex_init(&raidPtr->regionBufferPool.mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		return (ENOMEM);
-	}
+	rf_mutex_init(&raidPtr->regionBufferPool.mutex);
 	raidPtr->regionBufferPool.cond = 0;
 	raidPtr->regionBufferPool.bufferSize = raidPtr->regionLogCapacity *
 		raidPtr->bytesPerSector;
@@ -352,11 +342,7 @@ rf_ConfigureParityLogging(
 			  raidPtr);
 	/* build pool of parity buffers */
 	parityBufferCapacity = maxRegionParityRange;
-	rc = rf_mutex_init(&raidPtr->parityBufferPool.mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		return (rc);
-	}
+	rf_mutex_init(&raidPtr->parityBufferPool.mutex);
 	raidPtr->parityBufferPool.cond = 0;
 	raidPtr->parityBufferPool.bufferSize = parityBufferCapacity *
 		raidPtr->bytesPerSector;
@@ -424,26 +410,8 @@ rf_ConfigureParityLogging(
 			  rf_ShutdownParityLoggingDiskQueue,
 			  raidPtr);
 	for (i = 0; i < rf_numParityRegions; i++) {
-		rc = rf_mutex_init(&raidPtr->regionInfo[i].mutex);
-		if (rc) {
-			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-			for (j = 0; j < i; j++)
-				FreeRegionInfo(raidPtr, j);
-			RF_Free(raidPtr->regionInfo,
-				(rf_numParityRegions *
-				 sizeof(RF_RegionInfo_t)));
-			return (ENOMEM);
-		}
-		rc = rf_mutex_init(&raidPtr->regionInfo[i].reintMutex);
-		if (rc) {
-			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-			for (j = 0; j < i; j++)
-				FreeRegionInfo(raidPtr, j);
-			RF_Free(raidPtr->regionInfo,
-				(rf_numParityRegions *
-				 sizeof(RF_RegionInfo_t)));
-			return (ENOMEM);
-		}
+		rf_mutex_init(&raidPtr->regionInfo[i].mutex);
+		rf_mutex_init(&raidPtr->regionInfo[i].reintMutex);
 		raidPtr->regionInfo[i].reintInProgress = RF_FALSE;
 		raidPtr->regionInfo[i].regionStartAddr =
 			raidPtr->regionLogCapacity * i;

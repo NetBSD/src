@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.216.2.5 2006/04/20 01:37:57 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.216.2.6 2006/05/11 23:31:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -52,6 +52,11 @@
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 #include <sys/event.h>
+
+#ifndef _KERNEL
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 /*
  * One structure allocated per session.

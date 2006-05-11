@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.169.8.2 2006/05/06 23:32:58 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.169.8.3 2006/05/11 23:32:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169.8.2 2006/05/06 23:32:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.169.8.3 2006/05/11 23:32:03 elad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -371,6 +371,8 @@ lfs_vflush(struct vnode *vp)
 					 * cleaner to run; but we're
 					 * still not done with this vnode.
 					 */
+					lfs_writeinode(fs, sp, ip);
+					LFS_SET_UINO(ip, IN_MODIFIED);
 					lfs_writeseg(fs, sp);
 					lfs_segunlock(fs);
 					lfs_segunlock_relock(fs);
@@ -535,6 +537,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 						 * over after the cleaner has
 						 * had a chance to run.
 						 */
+						lfs_writeinode(fs, sp, ip);
 						lfs_writeseg(fs, sp);
 						if (!VPISEMPTY(vp) &&
 						    !WRITEINPROG(vp) &&
@@ -625,7 +628,10 @@ lfs_segwrite(struct mount *mp, int flags)
 				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
 				if (um_error == 0)
 					um_error = error;
+				/* In case writevnodes errored out */
+				lfs_flush_dirops(fs);
 				((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+				lfs_finalize_fs_seguse(fs);
 			}
 			if (do_ckp && um_error) {
 				lfs_segunlock_relock(fs);
@@ -957,6 +963,9 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	bp = sp->ibp;
 	cdp = ((struct ufs1_dinode *)bp->b_data) + (sp->ninodes % INOPB(fs));
 	*cdp = *ip->i_din.ffs1_din;
+
+	/* We can finish the segment accounting for truncations now */
+	lfs_finalize_ino_seguse(fs, ip);
 
 	/*
 	 * If we are cleaning, ensure that we don't write UNWRITTEN disk
@@ -1705,6 +1714,16 @@ lfs_newseg(struct lfs *fs)
 	int curseg, isdirty, sn, skip_inval;
 
 	ASSERT_SEGLOCK(fs);
+
+	/* Honor LFCNWRAPSTOP */
+	simple_lock(&fs->lfs_interlock);
+	if (fs->lfs_nowrap && fs->lfs_nextseg < fs->lfs_curseg) {
+		wakeup(&fs->lfs_nowrap);
+		ltsleep(&fs->lfs_nowrap, PVFS, "newseg", 0,
+			&fs->lfs_interlock);
+	}
+	simple_unlock(&fs->lfs_interlock);
+
 	LFS_SEGENTRY(sup, fs, dtosn(fs, fs->lfs_nextseg), bp);
 	DLOG((DLOG_SU, "lfs_newseg: seg %d := 0 in newseg\n",
 	      dtosn(fs, fs->lfs_nextseg)));
@@ -1725,15 +1744,6 @@ lfs_newseg(struct lfs *fs)
 	skip_inval = 1;
 	for (sn = curseg = dtosn(fs, fs->lfs_curseg) + fs->lfs_interleave;;) {
 		sn = (sn + 1) % fs->lfs_nseg;
-
-		/* Honor LFCNWRAPSTOP */
-		simple_lock(&fs->lfs_interlock);
-		if (sn == 0 && fs->lfs_nowrap) {
-			wakeup(&fs->lfs_nowrap);
-			ltsleep(&fs->lfs_nowrap, PVFS, "newseg", 0,
-				&fs->lfs_interlock);
-		}
-		simple_unlock(&fs->lfs_interlock);
 
 		if (sn == curseg) {
 			if (skip_inval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: efilib.h,v 1.1.4.2 2006/04/19 02:33:05 elad Exp $	*/
+/*	$NetBSD: efilib.h,v 1.1.4.3 2006/05/11 23:26:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD$
+ *	$FreeBSD: src/sys/boot/efi/include/efilib.h,v 1.3 2002/12/10 20:11:19 marcel Exp $
  */
 
 extern EFI_HANDLE		IH;

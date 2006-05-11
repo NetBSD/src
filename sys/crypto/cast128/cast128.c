@@ -1,4 +1,4 @@
-/*	$NetBSD: cast128.c,v 1.8 2005/12/11 12:20:52 christos Exp $	*/
+/*	$NetBSD: cast128.c,v 1.8.10.1 2006/05/11 23:28:04 elad Exp $	*/
 /*      $OpenBSD: cast.c,v 1.2 2000/06/06 06:49:47 deraadt Exp $       */
 
 /*
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.8 2005/12/11 12:20:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.8.10.1 2006/05/11 23:28:04 elad Exp $");
 
 #include <sys/types.h>
 #include <crypto/cast128/cast128.h>
@@ -135,8 +135,8 @@ u_int32_t t, l, r;
 
 void cast128_setkey(cast128_key* key, const u_int8_t* rawkey, int keybytes)
 {
-u_int32_t t[4], z[4], x[4];
-int i;
+	u_int32_t t[4], z[4], x[4];
+	int i;
 
 	/* Set number of rounds to 12 or 16, depending on key length */
 	key->rounds = (keybytes <= 10 ? 12 : 16);
@@ -144,6 +144,7 @@ int i;
 	/* Copy key to workspace x */
 	for (i = 0; i < 4; i++) {
 		x[i] = 0;
+		t[i] = z[i] = 0;	/* XXX gcc */
 		if ((i*4+0) < keybytes) x[i] = (u_int32_t)rawkey[i*4+0] << 24;
 		if ((i*4+1) < keybytes) x[i] |= (u_int32_t)rawkey[i*4+1] << 16;
 		if ((i*4+2) < keybytes) x[i] |= (u_int32_t)rawkey[i*4+2] << 8;

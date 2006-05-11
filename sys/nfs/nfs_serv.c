@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.101.4.5 2006/05/06 23:32:11 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.101.4.6 2006/05/11 23:31:35 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101.4.5 2006/05/06 23:32:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.101.4.6 2006/05/11 23:31:35 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,6 +237,8 @@ nfsrv_setattr(nfsd, slp, lwp, mrq)
 	u_quad_t frev;
 	struct timespec guard;
 	struct mount *mp = NULL;
+
+	memset(&guard, 0, sizeof guard);	/* XXX gcc */
 
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);

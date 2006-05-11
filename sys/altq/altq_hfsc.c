@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.12.10.2 2006/03/10 13:29:35 elad Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.12.10.3 2006/05/11 23:26:17 elad Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.12.10.2 2006/03/10 13:29:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.12.10.3 2006/05/11 23:26:17 elad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -165,15 +165,13 @@ hfsc_attach(ifq, bandwidth)
 	struct hfsc_if *hif;
 	struct service_curve root_sc;
 
-	MALLOC(hif, struct hfsc_if *, sizeof(struct hfsc_if),
-	       M_DEVBUF, M_WAITOK);
+	hif = malloc(sizeof(struct hfsc_if), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (hif == NULL)
 		return (NULL);
-	(void)memset(hif, 0, sizeof(struct hfsc_if));
 
 	hif->hif_eligible = ellist_alloc();
 	if (hif->hif_eligible == NULL) {
-		FREE(hif, M_DEVBUF);
+		free(hif, M_DEVBUF);
 		return NULL;
 	}
 
@@ -187,7 +185,7 @@ hfsc_attach(ifq, bandwidth)
 	root_sc.m2 = bandwidth;
 	if ((hif->hif_rootclass =
 	     hfsc_class_create(hif, &root_sc, NULL, 0, 0)) == NULL) {
-		FREE(hif, M_DEVBUF);
+		free(hif, M_DEVBUF);
 		return (NULL);
 	}
 
@@ -221,7 +219,7 @@ hfsc_detach(hif)
 
 	ellist_destroy(hif->hif_eligible);
 
-	FREE(hif, M_DEVBUF);
+	free(hif, M_DEVBUF);
 
 	return (0);
 }
@@ -303,17 +301,13 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 	}
 #endif
 
-	MALLOC(cl, struct hfsc_class *, sizeof(struct hfsc_class),
-	       M_DEVBUF, M_WAITOK);
+	cl = malloc(sizeof(struct hfsc_class), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl == NULL)
 		return (NULL);
-	(void)memset(cl, 0, sizeof(struct hfsc_class));
 
-	MALLOC(cl->cl_q, class_queue_t *, sizeof(class_queue_t),
-	       M_DEVBUF, M_WAITOK);
+	cl->cl_q = malloc(sizeof(class_queue_t), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (cl->cl_q == NULL)
 		goto err_ret;
-	(void)memset(cl->cl_q, 0, sizeof(class_queue_t));
 
 	cl->cl_actc = actlist_alloc();
 	if (cl->cl_actc == NULL)
@@ -359,20 +353,18 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 #endif /* ALTQ_RED */
 
 	if (sc != NULL && (sc->m1 != 0 || sc->m2 != 0)) {
-		MALLOC(cl->cl_rsc, struct internal_sc *,
-		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		cl->cl_rsc = malloc(sizeof(struct internal_sc), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl->cl_rsc == NULL)
 			goto err_ret;
-		(void)memset(cl->cl_rsc, 0, sizeof(struct internal_sc));
 		sc2isc(sc, cl->cl_rsc);
 		rtsc_init(&cl->cl_deadline, cl->cl_rsc, 0, 0);
 		rtsc_init(&cl->cl_eligible, cl->cl_rsc, 0, 0);
 
-		MALLOC(cl->cl_fsc, struct internal_sc *,
-		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		cl->cl_fsc = malloc(sizeof(struct internal_sc), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (cl->cl_fsc == NULL)
 			goto err_ret;
-		(void)memset(cl->cl_fsc, 0, sizeof(struct internal_sc));
 		sc2isc(sc, cl->cl_fsc);
 		rtsc_init(&cl->cl_virtual, cl->cl_fsc, 0, 0);
 	}
@@ -416,12 +408,12 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 #endif
 	}
 	if (cl->cl_fsc != NULL)
-		FREE(cl->cl_fsc, M_DEVBUF);
+		free(cl->cl_fsc, M_DEVBUF);
 	if (cl->cl_rsc != NULL)
-		FREE(cl->cl_rsc, M_DEVBUF);
+		free(cl->cl_rsc, M_DEVBUF);
 	if (cl->cl_q != NULL)
-		FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+		free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 	return (NULL);
 }
 
@@ -473,11 +465,11 @@ hfsc_class_destroy(cl)
 #endif
 	}
 	if (cl->cl_fsc != NULL)
-		FREE(cl->cl_fsc, M_DEVBUF);
+		free(cl->cl_fsc, M_DEVBUF);
 	if (cl->cl_rsc != NULL)
-		FREE(cl->cl_rsc, M_DEVBUF);
-	FREE(cl->cl_q, M_DEVBUF);
-	FREE(cl, M_DEVBUF);
+		free(cl->cl_rsc, M_DEVBUF);
+	free(cl->cl_q, M_DEVBUF);
+	free(cl, M_DEVBUF);
 
 	return (0);
 }
@@ -492,20 +484,18 @@ hfsc_class_modify(cl, rsc, fsc)
 
 	if (rsc != NULL && (rsc->m1 != 0 || rsc->m2 != 0) &&
 	    cl->cl_rsc == NULL) {
-		MALLOC(rsc_tmp, struct internal_sc *,
-		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		rsc_tmp = malloc(sizeof(struct internal_sc), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (rsc_tmp == NULL)
 			return (ENOMEM);
-		(void)memset(rsc_tmp, 0, sizeof(struct internal_sc));
 	} else
 		rsc_tmp = NULL;
 	if (fsc != NULL && (fsc->m1 != 0 || fsc->m2 != 0) &&
 	    cl->cl_fsc == NULL) {
-		MALLOC(fsc_tmp, struct internal_sc *,
-		       sizeof(struct internal_sc), M_DEVBUF, M_WAITOK);
+		fsc_tmp = malloc(sizeof(struct internal_sc), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		if (fsc_tmp == NULL)
 			return (ENOMEM);
-		(void)memset(fsc_tmp, 0, sizeof(struct internal_sc));
 	} else
 		fsc_tmp = NULL;
 
@@ -516,7 +506,7 @@ hfsc_class_modify(cl, rsc, fsc)
 	if (rsc != NULL) {
 		if (rsc->m1 == 0 && rsc->m2 == 0) {
 			if (cl->cl_rsc != NULL) {
-				FREE(cl->cl_rsc, M_DEVBUF);
+				free(cl->cl_rsc, M_DEVBUF);
 				cl->cl_rsc = NULL;
 			}
 		} else {
@@ -531,7 +521,7 @@ hfsc_class_modify(cl, rsc, fsc)
 	if (fsc != NULL) {
 		if (fsc->m1 == 0 && fsc->m2 == 0) {
 			if (cl->cl_fsc != NULL) {
-				FREE(cl->cl_fsc, M_DEVBUF);
+				free(cl->cl_fsc, M_DEVBUF);
 				cl->cl_fsc = NULL;
 			}
 		} else {
@@ -944,8 +934,9 @@ ellist_alloc()
 {
 	ellist_t *head;
 
-	MALLOC(head, ellist_t *, sizeof(ellist_t), M_DEVBUF, M_WAITOK);
-	TAILQ_INIT(head);
+	head = malloc(sizeof(ellist_t), M_DEVBUF, M_WAITOK);
+	if (head != NULL)
+		TAILQ_INIT(head);
 	return (head);
 }
 
@@ -953,7 +944,7 @@ static void
 ellist_destroy(head)
 	ellist_t *head;
 {
-	FREE(head, M_DEVBUF);
+	free(head, M_DEVBUF);
 }
 
 static void
@@ -1055,8 +1046,9 @@ actlist_alloc()
 {
 	actlist_t *head;
 
-	MALLOC(head, actlist_t *, sizeof(actlist_t), M_DEVBUF, M_WAITOK);
-	TAILQ_INIT(head);
+	head = malloc(sizeof(actlist_t), M_DEVBUF, M_WAITOK);
+	if (head != NULL)
+		TAILQ_INIT(head);
 	return (head);
 }
 
@@ -1064,7 +1056,7 @@ static void
 actlist_destroy(head)
 	actlist_t *head;
 {
-	FREE(head, M_DEVBUF);
+	free(head, M_DEVBUF);
 }
 static void
 actlist_insert(cl)

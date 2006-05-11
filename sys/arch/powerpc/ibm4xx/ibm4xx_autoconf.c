@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_autoconf.c,v 1.8.4.1 2006/04/19 02:33:32 elad Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.8.4.2 2006/05/11 23:26:59 elad Exp $	*/
 /*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.8.4.1 2006/04/19 02:33:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.8.4.2 2006/05/11 23:26:59 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,24 +57,23 @@ ibm4xx_device_register(struct device *dev, void *aux)
 		struct opb_attach_args *oaa = aux;
 
 		if (oaa->opb_instance < 10) {
-			uint8_t enaddr[ETHER_ADDR_LEN];
+			prop_data_t pd;
 			unsigned char prop_name[15];
 
 			snprintf(prop_name, sizeof(prop_name),
 				"emac%d-mac-addr", oaa->opb_instance);
 
-			if (board_info_get(prop_name,
-				enaddr, sizeof(enaddr)) == -1) {
+			pd = prop_dictionary_get(board_properties, prop_name);
+			if (pd == NULL) {
 				printf("WARNING: unable to get mac-addr "
 				    "property from board properties\n");
 				return;
 			}
-
-			if (devprop_set(dev, "mac-addr",
-				     enaddr, sizeof(enaddr),
-				     PROP_ARRAY, 0) != 0)
+			if (prop_dictionary_set(device_properties(dev),
+						"mac-addr", pd) == FALSE) {
 				printf("WARNING: unable to set mac-addr "
 				    "property for %s\n", dev->dv_xname);
+			}
 		}
 		return;
 	}

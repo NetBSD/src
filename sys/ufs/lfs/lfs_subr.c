@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.56.8.1 2006/04/19 03:54:11 elad Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.56.8.2 2006/05/11 23:32:03 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.56.8.1 2006/04/19 03:54:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.56.8.2 2006/05/11 23:32:03 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,6 +381,7 @@ lfs_unmark_dirop(struct lfs *fs)
 			simple_lock(&lfs_subsys_lock);
 			--lfs_dirvcount;
 			simple_unlock(&lfs_subsys_lock);
+			--fs->lfs_dirvcount;
 			vp->v_flag &= ~VDIROP;
 			TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			simple_unlock(&fs->lfs_interlock);

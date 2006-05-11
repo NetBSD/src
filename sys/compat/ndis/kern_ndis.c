@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.3.6.2 2006/04/19 04:01:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.3.6.3 2006/05/11 23:27:31 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -112,7 +112,6 @@ __stdcall static void ndis_intrhand(kdpc *, device_object *,
 
 #ifdef __NetBSD__
 extern int ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
-extern void device_printf(device_t, const char *fmt, ...);
 #endif
 	
 static image_patch_table kernndis_functbl[] = {
@@ -993,7 +992,8 @@ ndis_status_func(adapter, status, sbuf, slen)
 	ifp = &sc->arpcom.ec_if;
 #endif
 	if (ifp->if_flags & IFF_DEBUG)
-		device_printf (sc->ndis_dev, "status: %x\n", status);
+		printf("%s: status: %x\n", 
+		       sc->ndis_dev->dv_xname, status);
 	return;
 }
 
@@ -1018,7 +1018,8 @@ ndis_statusdone_func(adapter)
 	ifp = &sc->arpcom.ec_if;
 #endif
 	if (ifp->if_flags & IFF_DEBUG)
-		device_printf (sc->ndis_dev, "status complete\n");
+		printf("%s: status complete\n",
+		       sc->ndis_dev->dv_xname);
 	return;
 }
 
@@ -1072,7 +1073,8 @@ ndis_resetdone_func(adapter, status, addressingreset)
 #endif
 
 	if (ifp->if_flags & IFF_DEBUG)
-		device_printf (sc->ndis_dev, "reset done...\n");
+		printf("%s: reset done...\n",
+		       sc->ndis_dev->dv_xname);
 	wakeup(sc);
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.48 2006/01/25 18:27:23 christos Exp $	*/
+/*	$NetBSD: ufs.c,v 1.48.8.1 2006/05/11 23:31:08 elad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -223,7 +223,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
 	char *buf;
-	ssize_t rsize;
+	size_t rsize;
 	int rc;
 	daddr_t inode_sector;
 #ifdef LIBSA_LFS
@@ -249,7 +249,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 	    inode_sector, fs->fs_bsize, buf, &rsize);
 	if (rc)
 		return rc;
-	if (rsize != (ssize_t)fs->fs_bsize)
+	if (rsize != fs->fs_bsize)
 		return EIO;
 
 #ifdef LIBSA_LFS
@@ -285,7 +285,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 	unsigned level;
 	indp_t ind_cache;
 	indp_t ind_block_num;
-	ssize_t rsize;
+	size_t rsize;
 	int rc;
 	indp_t *buf = (void *)fp->f_buf;
 
@@ -357,7 +357,7 @@ block_map(struct open_file *f, indp_t file_block, indp_t *disk_block_p)
 			buf, &rsize);
 		if (rc)
 			return (rc);
-		if (rsize != (ssize_t)fs->fs_bsize)
+		if (rsize != fs->fs_bsize)
 			return EIO;
 		ind_block_num = buf[file_block >> level];
 		if (level == 0)

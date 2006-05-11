@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9.10.1 2006/04/19 02:32:21 elad Exp $	*/
+/*	$NetBSD: clock.c,v 1.9.10.2 2006/05/11 23:26:18 elad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.1 2006/04/19 02:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.2 2006/05/11 23:26:18 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.1 2006/04/19 02:32:21 elad Exp $");
 #include <sys/device.h>
 
 #include <dev/clock_subr.h>
+
+#include <mips/locore.h>
 
 #include <cobalt/cobalt/clockvar.h>
 
@@ -171,4 +173,30 @@ microtime(struct timeval *tvp)
 
 	lasttime = *tvp;
 	splx(s);
+}
+
+void
+delay(unsigned int n)
+{
+	uint32_t cur, last, delta, usecs;
+
+	last = mips3_cp0_count_read();
+	delta = usecs = 0;
+
+	while (n > usecs) {
+		cur = mips3_cp0_count_read();
+
+		/* Check to see if the timer has wrapped around. */
+		if (cur < last)
+			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
+		else
+			delta += (cur - last);
+
+		last = cur;
+
+		if (delta >= curcpu()->ci_divisor_delay) {
+			usecs += delta / curcpu()->ci_divisor_delay;
+			delta %= curcpu()->ci_divisor_delay;
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.1.2.2 2006/04/19 05:14:00 elad Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.1.2.3 2006/05/11 23:30:15 elad Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,20 +75,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.1.2.2 2006/04/19 05:14:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.1.2.3 2006/05/11 23:30:15 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/bufq.h>
-#include <sys/syslog.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
+#include <sys/iostat.h>
 #include <sys/sysctl.h>
-#include <lib/libkern/libkern.h>
 
 /*
  * Function prototypes for sysctl nodes
@@ -105,8 +100,8 @@ iostati_getnames(int disk_only, char *oldp, size_t *oldlenp, const void *newp,
  * A global list of all drives attached to the system.  May grow or
  * shrink over time.
  */
-struct	iostatlist_head iostatlist = TAILQ_HEAD_INITIALIZER(iostatlist);
-int	iostat_count;		/* number of drives in global drivelist */
+struct iostatlist_head iostatlist = TAILQ_HEAD_INITIALIZER(iostatlist);
+int iostat_count;		/* number of drives in global drivelist */
 struct simplelock iostatlist_slock = SIMPLELOCK_INITIALIZER;
 
 /*
@@ -114,61 +109,50 @@ struct simplelock iostatlist_slock = SIMPLELOCK_INITIALIZER;
  * name provided.
  */
 struct io_stats *
-iostat_find(char *name)
+iostat_find(const char *name)
 {
 	struct io_stats *iostatp;
 
-	if ((name == NULL) || (iostat_count <= 0))
-		return (NULL);
+	KASSERT(name != NULL);
 
 	simple_lock(&iostatlist_slock);
-	for (iostatp = TAILQ_FIRST(&iostatlist); iostatp != NULL;
-	    iostatp = TAILQ_NEXT(iostatp, link))
-		if (strcmp(iostatp->name, name) == 0) {
-			simple_unlock(&iostatlist_slock);
-			return (iostatp);
+	TAILQ_FOREACH(iostatp, &iostatlist, io_link) {
+		if (strcmp(iostatp->io_name, name) == 0) {
+			break;
 		}
+	}
 	simple_unlock(&iostatlist_slock);
 
-	return (NULL);
+	return iostatp;
 }
 
 /*
  * Allocate and initialise memory for the i/o statistics.
  */
-struct
-io_stats *iostat_alloc(int32_t type)
+struct io_stats *
+iostat_alloc(int32_t type)
 {
 	int s;
 	struct io_stats *stats;
 
-	stats = malloc(sizeof(struct io_stats), M_DEVBUF, M_NOWAIT);
-
+	stats = malloc(sizeof(struct io_stats), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (stats == NULL)
-		panic("iostat_alloc: cannot allocate memory for stats "
-		      "buffer");
+		panic("iostat_alloc: cannot allocate memory for stats buffer");
 
-	stats->type = type;
-	stats->rxfer = 0;
-	stats->rbytes = 0;
-	stats->wxfer = 0;
-	stats->wbytes = 0;
+	stats->io_type = type;
 
 	/*
 	 * Set the attached timestamp.
 	 */
 	s = splclock();
-	stats->attachtime = mono_time;
+	stats->io_attachtime = mono_time;
 	splx(s);
-
-	timerclear(&stats->time);
-	timerclear(&stats->timestamp);
 
 	/*
 	 * Link into the drivelist.
 	 */
 	simple_lock(&iostatlist_slock);
-	TAILQ_INSERT_TAIL(&iostatlist, stats, link);
+	TAILQ_INSERT_TAIL(&iostatlist, stats, io_link);
 	iostat_count++;
 	simple_unlock(&iostatlist_slock);
 
@@ -182,13 +166,13 @@ void
 iostat_free(struct io_stats *stats)
 {
 
-	  /*
-	   * Remove from the iostat list.
-	   */
+	/*
+	 * Remove from the iostat list.
+	 */
 	if (iostat_count == 0)
 		panic("iostat_free: iostat_count == 0");
 	simple_lock(&iostatlist_slock);
-	TAILQ_REMOVE(&iostatlist, stats, link);
+	TAILQ_REMOVE(&iostatlist, stats, io_link);
 	iostat_count--;
 	simple_unlock(&iostatlist_slock);
 	free(stats, M_DEVBUF);
@@ -207,9 +191,9 @@ iostat_busy(struct io_stats *stats)
 	 * XXX We'd like to use something as accurate as microtime(),
 	 * but that doesn't depend on the system TOD clock.
 	 */
-	if (stats->busy++ == 0) {
+	if (stats->io_busy++ == 0) {
 		s = splclock();
-		stats->timestamp = mono_time;
+		stats->io_timestamp = mono_time;
 		splx(s);
 	}
 }
@@ -224,8 +208,8 @@ iostat_unbusy(struct io_stats *stats, long bcount, int read)
 	int s;
 	struct timeval dv_time, diff_time;
 
-	if (stats->busy-- == 0) {
-		printf("%s: busy < 0\n", stats->name);
+	if (stats->io_busy-- == 0) {
+		printf("%s: busy < 0\n", stats->io_name);
 		panic("iostat_unbusy");
 	}
 
@@ -233,17 +217,17 @@ iostat_unbusy(struct io_stats *stats, long bcount, int read)
 	dv_time = mono_time;
 	splx(s);
 
-	timersub(&dv_time, &stats->timestamp, &diff_time);
-	timeradd(&stats->time, &diff_time, &stats->time);
+	timersub(&dv_time, &stats->io_timestamp, &diff_time);
+	timeradd(&stats->io_time, &diff_time, &stats->io_time);
 
-	stats->timestamp = dv_time;
+	stats->io_timestamp = dv_time;
 	if (bcount > 0) {
 		if (read) {
-			stats->rbytes += bcount;
-			stats->rxfer++;
+			stats->io_rbytes += bcount;
+			stats->io_rxfer++;
 		} else {
-			stats->wbytes += bcount;
-			stats->wxfer++;
+			stats->io_wbytes += bcount;
+			stats->io_wxfer++;
 		}
 	}
 }
@@ -255,18 +239,21 @@ iostat_unbusy(struct io_stats *stats, long bcount, int read)
 void
 iostat_seek(struct io_stats *stats)
 {
-	stats->seek++;
+
+	stats->io_seek++;
 }
 
 static int
 sysctl_hw_disknames(SYSCTLFN_ARGS)
 {
+
 	return iostati_getnames(1, oldp, oldlenp, newp, namelen);
 }
 
 static int
 sysctl_hw_iostatnames(SYSCTLFN_ARGS)
 {
+
 	return iostati_getnames(0, oldp, oldlenp, newp, namelen);
 }
 
@@ -292,20 +279,20 @@ iostati_getnames(int disk_only, char *oldp, size_t *oldlenp, const void *newp,
 
 	simple_lock(&iostatlist_slock);
 	for (stats = TAILQ_FIRST(&iostatlist); stats != NULL;
-	    stats = TAILQ_NEXT(stats, link)) {
-		if ((disk_only == 1) && (stats->type != IOSTAT_DISK))
+	    stats = TAILQ_NEXT(stats, io_link)) {
+		if ((disk_only == 1) && (stats->io_type != IOSTAT_DISK))
 			continue;
 
 		if (where == NULL)
-			needed += strlen(stats->name) + 1;
+			needed += strlen(stats->io_name) + 1;
 		else {
 			memset(bf, 0, sizeof(bf));
 			if (first) {
-				strncpy(bf, stats->name, sizeof(bf));
+				strncpy(bf, stats->io_name, sizeof(bf));
 				first = 0;
 			} else {
 				bf[0] = ' ';
-				strncpy(bf + 1, stats->name,
+				strncpy(bf + 1, stats->io_name,
 				    sizeof(bf) - 1);
 			}
 			bf[IOSTATNAMELEN] = '\0';
@@ -365,24 +352,24 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 	*oldlenp = 0;
 
 	simple_lock(&iostatlist_slock);
-	TAILQ_FOREACH(stats, &iostatlist, link) {
+	TAILQ_FOREACH(stats, &iostatlist, io_link) {
 		if (left < tocopy)
 			break;
-		strncpy(sdrive.name, stats->name, sizeof(sdrive.name));
-		sdrive.xfer = stats->rxfer + stats->wxfer;
-		sdrive.rxfer = stats->rxfer;
-		sdrive.wxfer = stats->wxfer;
-		sdrive.seek = stats->seek;
-		sdrive.bytes = stats->rbytes + stats->wbytes;
-		sdrive.rbytes = stats->rbytes;
-		sdrive.wbytes = stats->wbytes;
-		sdrive.attachtime_sec = stats->attachtime.tv_sec;
-		sdrive.attachtime_usec = stats->attachtime.tv_usec;
-		sdrive.timestamp_sec = stats->timestamp.tv_sec;
-		sdrive.timestamp_usec = stats->timestamp.tv_usec;
-		sdrive.time_sec = stats->time.tv_sec;
-		sdrive.time_usec = stats->time.tv_usec;
-		sdrive.busy = stats->busy;
+		strncpy(sdrive.name, stats->io_name, sizeof(sdrive.name));
+		sdrive.xfer = stats->io_rxfer + stats->io_wxfer;
+		sdrive.rxfer = stats->io_rxfer;
+		sdrive.wxfer = stats->io_wxfer;
+		sdrive.seek = stats->io_seek;
+		sdrive.bytes = stats->io_rbytes + stats->io_wbytes;
+		sdrive.rbytes = stats->io_rbytes;
+		sdrive.wbytes = stats->io_wbytes;
+		sdrive.attachtime_sec = stats->io_attachtime.tv_sec;
+		sdrive.attachtime_usec = stats->io_attachtime.tv_usec;
+		sdrive.timestamp_sec = stats->io_timestamp.tv_sec;
+		sdrive.timestamp_usec = stats->io_timestamp.tv_usec;
+		sdrive.time_sec = stats->io_time.tv_sec;
+		sdrive.time_usec = stats->io_time.tv_usec;
+		sdrive.busy = stats->io_busy;
 
 		error = copyout(&sdrive, where, min(tocopy, sizeof(sdrive)));
 		if (error)
@@ -397,6 +384,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_io_stats_setup, "sysctl i/o stats setup")
 {
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "disknames",
@@ -412,7 +400,7 @@ SYSCTL_SETUP(sysctl_io_stats_setup, "sysctl i/o stats setup")
 		       CTL_HW, HW_IOSTATNAMES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "drivestats",
+		       CTLTYPE_STRUCT, "iostats",
 		       SYSCTL_DESCR("Statistics on device I/O operations"),
 		       sysctl_hw_iostats, 0, NULL, 0,
 		       CTL_HW, HW_IOSTATS, CTL_EOL);

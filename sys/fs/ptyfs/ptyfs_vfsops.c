@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.12.10.3 2006/05/06 23:31:29 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.12.10.4 2006/05/11 23:30:14 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12.10.3 2006/05/06 23:31:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12.10.4 2006/05/11 23:30:14 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,10 +215,6 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args args;
 
-	/* Don't allow more than one mount */
-	if (ptyfs_count)
-		return EBUSY;
-
 	if (UIO_MX & (UIO_MX - 1)) {
 		log(LOG_ERR, "ptyfs: invalid directory entry size");
 		return EINVAL;
@@ -233,6 +229,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 		args.gid = pmnt->pmnt_gid;
 		return copyout(&args, data, sizeof(args));
 	}
+
+	/* Don't allow more than one mount */
+	if (ptyfs_count)
+		return EBUSY;
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
