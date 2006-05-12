@@ -755,6 +755,7 @@ extern int fixuplabelno;
 #endif
 
 /* Pass -G xxx to the compiler and set correct endian mode.  */
+#undef CC1_SPEC
 #define	CC1_SPEC "%{G*} \
 %{mlittle|mlittle-endian: %(cc1_endian_little);           \
   mbig   |mbig-endian   : %(cc1_endian_big);              \
@@ -778,7 +779,8 @@ extern int fixuplabelno;
 %{msdata: -msdata=default} \
 %{mno-sdata: -msdata=none} \
 %{!mbss-plt: %{!msecure-plt: %(cc1_secure_plt_default)}} \
-%{profile: -p}"
+%{profile: -p} \
+%(cc1_os_netbsd)"
 
 /* Don't put -Y P,<path> for cross compilers.  */
 #ifndef CROSS_COMPILE
@@ -1102,6 +1104,8 @@ ncrtn.o%s"
 #define CPP_OS_NETBSD_SPEC "\
 -D__powerpc__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__"
 
+#define CC1_OS_NETBSD_SPEC	NETBSD_CC1_AND_CC1PLUS_SPEC
+
 /* OpenBSD support.  */
 #ifndef	LIB_OPENBSD_SPEC
 #define LIB_OPENBSD_SPEC "%{!shared:%{pthread:-lpthread%{p:_p}%{!p:%{pg:_p}}}} %{!shared:-lc%{p:_p}%{!p:%{pg:_p}}}"
@@ -1218,6 +1222,7 @@ ncrtn.o%s"
   { "cc1_endian_little",	CC1_ENDIAN_LITTLE_SPEC },		\
   { "cc1_endian_default",	CC1_ENDIAN_DEFAULT_SPEC },		\
   { "cc1_secure_plt_default",	CC1_SECURE_PLT_DEFAULT_SPEC },		\
+  { "cc1_os_netbsd",		CC1_OS_NETBSD_SPEC },			\
   { "cpp_os_ads",		CPP_OS_ADS_SPEC },			\
   { "cpp_os_yellowknife",	CPP_OS_YELLOWKNIFE_SPEC },		\
   { "cpp_os_mvme",		CPP_OS_MVME_SPEC },			\

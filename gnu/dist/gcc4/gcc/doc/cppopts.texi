@@ -493,6 +493,16 @@ is applied to the standard system directories.
 @xref{System Headers}.
 @end ifset
 
+@item -cxx-isystem @var{dir}
+@opindex cxxisystem
+Search @var{dir} for C++ header files, after all directories specified by
+@option{-I} but before the standard system directories.  Mark it
+as a system directory, so that it gets the same special treatment as
+is applied to the standard system directories.
+@ifset cppmanual
+@xref{System Headers}.
+@end ifset
+
 @item -iquote @var{dir}
 @opindex iquote
 Search @var{dir} only for header files requested with

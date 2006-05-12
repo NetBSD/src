@@ -156,6 +156,7 @@ Boston, MA 02110-1301, USA.  */
   %{!m32: \
     %{p:-mcmodel=medlow} \
     %{pg:-mcmodel=medlow}}"
+  NETBSD_CC1_AND_CC1PLUS_SPEC
 
 /* Make sure we use the right output format.  Pick a default and then
    make sure -m32/-m64 switch to the right one.  */

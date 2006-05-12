@@ -1127,6 +1127,9 @@ command line.  If the same directory is named by both @option{-I} and
 @option{-isystem}, the @option{-I} option is ignored.  GCC provides an
 informative message when this occurs if @option{-v} is used.
 
+The @option{-cxx-isystem} command line option adds its argument to the
+list of C++ system headers, similar to @option{-isystem} for C headers.
+
 @findex #pragma GCC system_header
 There is also a directive, @code{@w{#pragma GCC system_header}}, which
 tells GCC to consider the rest of the current include file a system

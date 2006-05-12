@@ -427,6 +427,12 @@ ansi
 C ObjC C++ ObjC++
 A synonym for -std=c89 (for C) or -std=c++98 (for C++)
 
+; This should really just be C++/ObjC++ but we (NetBSD) use it when
+; calling C and ObjC compilers as well.
+cxx-isystem
+C ObjC C++ ObjC++ Joined Separate
+-cxx-isystem <dir>	Add <dir> to the start of the C++ system include path
+
 d
 C ObjC C++ ObjC++ Joined
 ; Documented in common.opt.  FIXME - what about -dI, -dD, -dN and -dD?
