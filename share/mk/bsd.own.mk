@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.449 2006/04/09 04:21:27 tls Exp $
+#	$NetBSD: bsd.own.mk,v 1.450 2006/05/12 02:04:55 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -48,9 +48,15 @@ TOOLCHAIN_MISSING?=	no
 #
 .if ${MACHINE_ARCH} == "vax"
 HAVE_GCC?=	2
-.else
-HAVE_GCC?=	3
 .endif
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "sparc64"
+#HAVE_GCC?=	4
+.endif
+
+# default to GCC3
+HAVE_GCC?=	3
 
 # Do we want to use tools/toolchain or not?
 .if ${HAVE_GCC} != "2"
@@ -60,10 +66,14 @@ USE_TOOLS_TOOLCHAIN?=yes
 
 CPPFLAG_ISYSTEM=	-isystem
 # GCC2 did not have -isystem-cxx
-.if ${USE_TOOLS_TOOLCHAIN} != "no"
+.if ${HAVE_GCC} == 2
 CPPFLAG_ISYSTEMXX=	-isystem
 .else
+. if ${HAVE_GCC} == 3
 CPPFLAG_ISYSTEMXX=	-isystem-cxx
+. else	# GCC 4
+CPPFLAG_ISYSTEMXX=	-cxx-isystem
+. endif
 .endif
 
 .if empty(.MAKEFLAGS:M-V*)
