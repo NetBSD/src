@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.54 2004/12/01 23:12:11 christos Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.55 2006/05/12 01:20:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.54 2004/12/01 23:12:11 christos Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.55 2006/05/12 01:20:33 mrg Exp $");
 #endif
 
 
@@ -418,13 +418,17 @@ rarp_check(u_char *p, int len)
 		rarperr(NONFATAL, "ether/arp sender address mismatch");
 		return 0;
 	}
+	{
 #ifdef __NetBSD__
-	if (memcmp(ar_sha(ap), ar_tha(ap), 6) != 0) {
+		caddr_t tha = ar_tha(ap);
+
+		if (!tha || memcmp(ar_sha(ap), tha, 6) != 0) {
 #else
-	if (memcmp((char *) &ap->arp_sha, (char *) &ap->arp_tha, 6) != 0) {
+		if (memcmp((char *) &ap->arp_sha, (char *) &ap->arp_tha, 6) != 0) {
 #endif
-		rarperr(NONFATAL, "ether/arp target address mismatch");
-		return 0;
+			rarperr(NONFATAL, "ether/arp target address mismatch");
+			return 0;
+		}
 	}
 	return 1;
 }
@@ -786,7 +790,7 @@ rarp_reply(struct if_info *ii, struct ether_header *ep, u_int32_t ipaddr,
 	int     len;
 
 #ifdef __NetBSD__
-	(void)mkarp(ar_sha(ap), ipaddr);
+	(void)mkarp((u_int8_t *)ar_sha(ap), ipaddr);
 #else
 	update_arptab((u_char *) & ap->arp_sha, ipaddr);
 #endif
