@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 2006/05/12 16:01:05 nathanw Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2006/05/12 16:01:05 nathanw Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -2044,7 +2044,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	/*
 	 * If this is a kernel pmap lookup, also check the battable
 	 * and if we get a hit, translate the VA to a PA using the
-	 * BAT entries.  Don't check for VM_MAX_KENREL_ADDRESS is
+	 * BAT entries.  Don't check for VM_MAX_KERNEL_ADDRESS is
 	 * that will wrap back to 0.
 	 */
 	if (pm == pmap_kernel() &&
