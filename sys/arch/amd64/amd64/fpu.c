@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.11.6.1 2006/05/12 15:49:16 tron Exp $	*/
+/*	$NetBSD: fpu.c,v 1.11.6.2 2006/05/12 15:49:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.11.6.1 2006/05/12 15:49:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.11.6.2 2006/05/12 15:49:25 tron Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -299,7 +299,7 @@ fpudna(struct cpu_info *ci)
 		 * fxrstor() anyway.
 		 */
 		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
-		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
+		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
 	}
 }
 
