@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.177 2006/05/11 23:47:34 mrg Exp $
+#	$NetBSD: bsd.README,v 1.178 2006/05/12 04:29:08 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -954,7 +954,7 @@ LDADD		Additional loader objects.  Usually used for libraries.
 
 			LDADD+=-lutil -lcompat
 
-LDFLAGS		Additional loader flags.
+LDFLAGS		Additional linker flags (passed to ${CC} during link).
 
 LINKS		See <bsd.links.mk>
 
@@ -1220,7 +1220,7 @@ LPREFIX		Symbol prefix for ${LEX} (see -P option in lex(1)) [yy]
 
 LD		Linker.  [ld]
 
-LDFLAGS		Options to ${LD}.  []
+LDFLAGS		Options to ${CC} during the link process.  []
 
 LINT		C program verifier.  [lint]
 
