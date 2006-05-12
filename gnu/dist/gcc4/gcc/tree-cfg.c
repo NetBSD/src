@@ -5140,11 +5140,13 @@ execute_warn_function_return (void)
 #ifdef USE_MAPPED_LOCATION
       if (location == UNKNOWN_LOCATION)
 	location = cfun->function_end_locus;
-      warning (0, "%H%<noreturn%> function does return", &location);
+      if (warn_missing_noreturn)
+        warning (0, "%H%<noreturn%> function does return", &location);
 #else
       if (!locus)
 	locus = &cfun->function_end_locus;
-      warning (0, "%H%<noreturn%> function does return", locus);
+      if (warn_missing_noreturn)
+        warning (0, "%H%<noreturn%> function does return", locus);
 #endif
     }
 
