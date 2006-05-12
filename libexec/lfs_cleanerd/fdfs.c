@@ -1,4 +1,4 @@
-/* $NetBSD: fdfs.c,v 1.2 2006/04/01 23:50:50 christos Exp $	 */
+/* $NetBSD: fdfs.c,v 1.3 2006/05/12 19:33:02 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -102,6 +102,13 @@ fd_vget(int fd, int bsize, int segsize, int nseg)
 	fs->fd_ssize = segsize;
 
 	vp = (struct uvnode *) malloc(sizeof(*vp));
+	if (vp == NULL) {
+		for (i = nseg - 1; i >= 0; i--)
+			free(fs->fd_bufp[i].buf);
+		free(fs->fd_bufp);
+		free(fs);
+		return NULL;
+	}
 	memset(vp, 0, sizeof(*vp));
 	vp->v_fd = fd;
 	vp->v_fs = fs;
@@ -163,6 +170,8 @@ fd_release_all(struct uvnode *vp)
 
 /*
  * Prepare a segment buffer which we will expect to read from.
+ * We never increment fd_bufi unless we have succeeded to allocate the space,
+ * if necessary, and have read the segment.
  */
 int
 fd_preload(struct uvnode *vp, daddr_t start)
@@ -173,19 +182,24 @@ fd_preload(struct uvnode *vp, daddr_t start)
 
 	/* We might need to allocate more buffers. */
 	if (fs->fd_bufi == fs->fd_bufc) {
-		fs->fd_bufc = fs->fd_bufi + 1;
+		++fs->fd_bufc;
 		syslog(LOG_DEBUG, "increasing number of segment buffers to %d",
 			fs->fd_bufc);
 		t = realloc(fs->fd_bufp, fs->fd_bufc * sizeof(struct fd_buf));
-		if (t == NULL)
+		if (t == NULL) {
+			syslog(LOG_NOTICE, "failed resizing table to %d\n",
+				fs->fd_bufc);
 			return -1;
+		}
 		fs->fd_bufp = t;
 		fs->fd_bufp[fs->fd_bufi].start = 0x0;
 		fs->fd_bufp[fs->fd_bufi].end = 0x0;
 		fs->fd_bufp[fs->fd_bufi].buf = (char *)malloc(fs->fd_ssize);
 		if (fs->fd_bufp[fs->fd_bufi].buf == NULL) {
+			syslog(LOG_NOTICE, "failed to allocate buffer #%d\n",
+				fs->fd_bufc);
 			--fs->fd_bufc;
-			free(fs->fd_bufp[fs->fd_bufc].buf);
+			return -1;
 		}
 	}
 
