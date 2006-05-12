@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.61 2006/05/12 03:26:54 mrg Exp $
+# $NetBSD: HACKS,v 1.62 2006/05/12 07:25:10 he Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -108,6 +108,17 @@ descr
 	is due to use of type casting in a non-standard way in the code and
 	not a compiler bug. Once a new release of KAME with a proper fix
 	applied is imported this should be backed out.
+kcah
+
+hack	gcc 3.3.3 wrong uninitialised variable
+mdate	12 May 2006
+who	he
+file	usr.bin/msgc/msg_sys.def : 1.33-1.34
+descr
+	Gcc 3.3.3 gets some -Wuninitialized warnings wrong.  This is
+	just one of many in the tree, marked with
+	/* XXX -Wuninitialized [arch] */
+	in the source.
 kcah
 
 hack	gcc4 wrong uninitialised variable
