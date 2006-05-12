@@ -1,6 +1,10 @@
 TARGET_LIBGCC2_CFLAGS = -fpic
 LIB1ASMFUNCS_CACHE = _ic_invalidate
 
+# Use sh specific libgcc-std.ver to avoid exporting some
+# lib1func routines which shoud not be called via PLT.
+SHLIB_MAPFILES =  $(srcdir)/config/sh/libgcc-std.ver
+
 LIB2FUNCS_EXTRA=
 
 EXTRA_MULTILIB_PARTS=
