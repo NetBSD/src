@@ -140,6 +140,16 @@ Boston, MA 02110-1301, USA.  */
 
 #undef LIBGCC_SPEC
 #define LIBGCC_SPEC NETBSD_LIBGCC_SPEC
+  
+/* Pass -cxx-isystem to cc1/cc1plus.  */
+#define NETBSD_CC1_AND_CC1PLUS_SPEC		\
+  "%{cxx-isystem}"
+
+#undef CC1_SPEC
+#define CC1_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
 
 /* When building shared libraries, the initialization and finalization 
    functions for the library are .init and .fini respectively.  */
