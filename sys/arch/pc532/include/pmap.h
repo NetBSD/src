@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.44 2006/05/12 06:05:23 simonb Exp $	*/
 
 /*
  *
@@ -236,7 +236,7 @@ struct pmap {
 #define	pm_lock	pm_obj.vmobjlock
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
-	u_int32_t pm_pdirpa;		/* PA of PD (read-only after create) */
+	uint32_t pm_pdirpa;		/* PA of PD (read-only after create) */
 	struct vm_page *pm_ptphint;	/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
 };
@@ -331,34 +331,32 @@ extern int nkpde;			/* current # of PDEs for kernel */
 #define	pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define	pmap_move(DP,SP,D,L,S)
 #define	pmap_phys_address(ppn)		ns532_ptob(ppn)
-#define	pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
+#define	pmap_valid_entry(E)		((E) & PG_V) /* is PDE or PTE valid? */
 
 
 /*
  * prototypes
  */
 
-void		pmap_bootstrap __P((vaddr_t));
-boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
-static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
-void		pmap_page_remove  __P((struct vm_page *));
-static void	pmap_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
-void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
-boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-static void	pmap_update_pg __P((vaddr_t));
-static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
-void		pmap_write_protect __P((struct pmap *, vaddr_t,
-				vaddr_t, vm_prot_t));
+void		pmap_bootstrap(vaddr_t);
+boolean_t	pmap_change_attrs(struct vm_page *, int, int);
+static void	pmap_page_protect(struct vm_page *, vm_prot_t);
+void		pmap_page_remove(struct vm_page *);
+static void	pmap_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
+void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
+boolean_t	pmap_test_attrs(struct vm_page *, int);
+static void	pmap_update_pg(vaddr_t);
+static void	pmap_update_2pg(vaddr_t,vaddr_t);
+void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 
-vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
+vaddr_t reserve_dumppages(vaddr_t);	/* XXX: not a pmap fn */
 
 #define	PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-boolean_t	pmap_zero_page_uncached __P((paddr_t));
+boolean_t	pmap_zero_page_uncached(paddr_t);
 #define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 /*
@@ -368,6 +366,7 @@ boolean_t	pmap_zero_page_uncached __P((paddr_t));
 static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
+
 	/* Nothing. */
 }
 
@@ -377,9 +376,9 @@ pmap_remove_all(struct pmap *pmap)
  */
 
 __inline static void
-pmap_update_pg(va)
-	vaddr_t va;
+pmap_update_pg(vaddr_t va)
 {
+
 	tlbflush_entry((u_int) va);
 }
 
@@ -388,9 +387,9 @@ pmap_update_pg(va)
  */
 
 __inline static void
-pmap_update_2pg(va, vb)
-	vaddr_t va, vb;
+pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
+
 	tlbflush_entry((u_int) va);
 	tlbflush_entry((u_int) vb);
 }
@@ -405,10 +404,9 @@ pmap_update_2pg(va, vb)
  */
 
 __inline static void
-pmap_page_protect(pg, prot)
-	struct vm_page *pg;
-	vm_prot_t prot;
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
+
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
 			(void) pmap_change_attrs(pg, PG_RO, PG_RW);
@@ -427,11 +425,9 @@ pmap_page_protect(pg, prot)
  */
 
 __inline static void
-pmap_protect(pmap, sva, eva, prot)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
+
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
 			pmap_write_protect(pmap, sva, eva, prot);
@@ -470,8 +466,8 @@ kvtopte(vaddr_t va)
 	return (PTE_BASE + ns532_btop(va));
 }
 
-paddr_t vtophys __P((vaddr_t));
-vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
+paddr_t vtophys(vaddr_t);
+vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 
 #endif /* _KERNEL */
 #endif	/* _NS532_PMAP_H_ */

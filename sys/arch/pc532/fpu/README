@@ -1,4 +1,4 @@
-#	$NetBSD: README,v 1.7 2005/12/11 12:18:31 christos Exp $
+#	$NetBSD: README,v 1.8 2006/05/12 06:05:22 simonb Exp $
 
 			 IEEE handler README
 			 -------------------
@@ -93,7 +93,7 @@ In addition there are the hardware defined flags:
 
     FPC_IF		0x00000040	/* inexact result flag */
     FPC_IEN		0x00000020	/* inexact result trap enable */
-    FPC_UF	        0x00000010	/* underflow flag      	   */
+    FPC_UF	        0x00000010	/* underflow flag */
     FPC_UEN	        0x00000008	/* underflow trap enable */
 
 If the corresponding enable flag is set when a trap occurs, then
