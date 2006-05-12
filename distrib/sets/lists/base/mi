@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.619 2006/04/30 20:02:35 rpaulo Exp $
+# $NetBSD: mi,v 1.620 2006/05/12 01:57:59 mrg Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -748,9 +748,11 @@
 ./usr/include/g++				base-cxx-usr
 ./usr/include/g++/backward			base-cxx-usr
 ./usr/include/g++/bits				base-cxx-usr
+./usr/include/g++/debug				base-cxx-usr
 ./usr/include/g++/ext				base-cxx-usr
 ./usr/include/g++/gen				base-obsolete		obsolete
 ./usr/include/g++/std				base-cxx-usr
+./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
 ./usr/include/isofs				base-c-usr
