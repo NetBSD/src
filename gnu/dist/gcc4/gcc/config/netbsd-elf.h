@@ -83,6 +83,7 @@ Boston, MA 02110-1301, USA.  */
 #define NETBSD_LINK_SPEC_ELF \
   "%{assert*} %{R*} %{rpath*} \
    %{shared:-shared} \
+   %{symbolic:-Bsymbolic} \
    %{!shared: \
      -dc -dp \
      %{!nostdlib: \
