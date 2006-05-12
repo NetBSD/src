@@ -1,4 +1,4 @@
-/*	$NetBSD: md2.c,v 1.3 2005/11/29 03:11:59 christos Exp $	*/
+/*	$NetBSD: md2.c,v 1.4 2006/05/12 02:49:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md2.c,v 1.3 2005/11/29 03:11:59 christos Exp $");
+__RCSID("$NetBSD: md2.c,v 1.4 2006/05/12 02:49:00 mrg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -103,7 +103,11 @@ static const unsigned char *pad[] = {
 	"\020\020\020\020\020\020\020\020\020\020\020\020\020\020\020\020"
 };
 
-static void MD2Transform __P((MD2_CTX *));
+/*
+ * XXX This should not be visible, but due to an accident, it is
+ * XXX so it must remain so.
+ */
+/*static*/ void MD2Transform __P((MD2_CTX *));
 
 #ifdef __weak_alias
 __weak_alias(MD2Init,_MD2Init)
@@ -170,7 +174,7 @@ MD2Final(digest, context)
 	MD2Init(context);
 }
 
-static void
+/*static*/ void
 MD2Transform(context)
 	MD2_CTX *context;
 {
