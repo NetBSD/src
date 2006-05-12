@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.4 2002/02/21 07:38:17 itojun Exp $	*/
+/*	$NetBSD: test.c,v 1.5 2006/05/12 01:56:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ regress(void)
 	while (fgets((char *)buf, sizeof(buf), stdin) != NULL) {
 		last = 0;
 
-		len = strlen(buf);
+		len = strlen((char *)buf);
 		CHOMP(buf, len, last);
 		if (mflag) {
 			MD5_CTX ctx;
@@ -102,7 +102,7 @@ regress(void)
 			MD5Update(&ctx, buf, len);
 			while (!last &&
 			    fgets((char *)buf, sizeof(buf), stdin) != NULL) {
-				len = strlen(buf);
+				len = strlen((char *)buf);
 				CHOMP(buf, len, last);
 				MD5Update(&ctx, buf, len);
 			}
@@ -115,7 +115,7 @@ regress(void)
 			SHA1Update(&ctx, buf, len);
 			while (!last &&
 			    fgets((char *)buf, sizeof(buf), stdin) != NULL) {
-				len = strlen(buf);
+				len = strlen((char *)buf);
 				CHOMP(buf, len, last);				
 				SHA1Update(&ctx, buf, len);
 			}
