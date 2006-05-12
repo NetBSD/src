@@ -28,6 +28,7 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 #include "mkdeps.h"
 #include "hashtab.h"
 #include "md5.h"
+#include "../gcc/defaults.h"
 #include <dirent.h>
 
 /* Variable length record files on VMS will have a stat size that includes
@@ -191,6 +192,9 @@ static bool check_file_against_entries (cpp_reader *, _cpp_file *, bool);
    terminal by mistake (this can't happen on sane systems, but
    paranoia is a virtue).
 
+   We do, however, use nonblocking mode if CPP_RESTRICTED, since any
+   file which can block will be tossed out after fstat().
+
    Use the three-argument form of open even though we aren't
    specifying O_CREAT, to defend against broken system headers.
 
@@ -200,20 +204,29 @@ static bool check_file_against_entries (cpp_reader *, _cpp_file *, bool);
 static bool
 open_file (_cpp_file *file)
 {
+  const char *cpp_restricted;
+
+  GET_ENVIRONMENT(cpp_restricted, "CPP_RESTRICTED");
+
   if (file->path[0] == '\0')
     {
       file->fd = 0;
       set_stdin_to_binary_mode ();
     }
   else
-    file->fd = open (file->path, O_RDONLY | O_NOCTTY | O_BINARY, 0666);
+    file->fd = open (file->path, O_RDONLY | O_NOCTTY | O_BINARY
+                     | (cpp_restricted != NULL) ? O_NONBLOCK : 0, 0666);
 
   if (file->fd != -1)
     {
       if (fstat (file->fd, &file->st) == 0)
 	{
-	  if (!S_ISDIR (file->st.st_mode))
+          if (cpp_restricted != NULL
+	      ? S_ISREG (file->st.st_mode) : !S_ISDIR (file->st.st_mode))
 	    {
+	      if (cpp_restricted)
+	        fcntl(file->fd, F_SETFL,
+		      fcntl(file->fd, F_GETFL, 0) & ~O_NONBLOCK);
 	      file->err_no = 0;
 	      return true;
 	    }
