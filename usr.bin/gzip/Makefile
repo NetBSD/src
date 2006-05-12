@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/05/21 12:16:10 agc Exp $
+#	$NetBSD: Makefile,v 1.10 2006/05/12 02:01:15 mrg Exp $
 
 PROG=		gzip
 MAN=		gzip.1 gzexe.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
@@ -24,3 +24,7 @@ LINKS+=		${BINDIR}/gzip ${BINDIR}/gunzip \
 		${BINDIR}/zgrep ${BINDIR}/zfgrep
 
 .include <bsd.prog.mk>
+
+.if ${HAVE_GCC} == 4
+COPTS.gzip.c+=	-Wno-pointer-sign
+.endif
