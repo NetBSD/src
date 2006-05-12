@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.12 2006/04/01 23:53:11 christos Exp $  */
+/*      $NetBSD: coalesce.c,v 1.13 2006/05/12 19:35:27 perseant Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	 * toss everything here. 
 	 */
 	onb = nb;
-	toss_old_blocks(fs, &bip, &nb);
+	toss_old_blocks(fs, &bip, &nb, NULL);
 	nb = i;
 
 	/*
