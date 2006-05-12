@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.53 2006/05/09 12:09:50 tron Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.54 2006/05/12 15:48:40 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -698,4 +698,12 @@ usr.sbin/rtadvd/rtadvd.c			patch
 
 	Process Source Link-Layer Address (SLLA) option correctly.
 	[martti, ticket #10527]
+
+sys/arch/amd64/amd64/fpu.c			1.14-1.15
+sys/arch/i386/isa/npx.c				1.112
+sys/arch/xen/i386/npx.c				1.8
+
+	Apply fix from FreeBSD's advisory: fxrstor on AMD FPU's does not
+	restore FIP,FDP,FOP thus leaking other process's execution history.
+	[adrianp, ticket #10553]
 
