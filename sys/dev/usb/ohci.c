@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.173 2006/04/15 01:07:51 christos Exp $	*/
+/*	$NetBSD: ohci.c,v 1.174 2006/05/12 01:25:00 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.173 2006/04/15 01:07:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.174 2006/05/12 01:25:00 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,9 +233,29 @@ Static void		ohci_dump_itds(ohci_softc_t *, ohci_soft_itd_t *);
  do { OBARR(sc); bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
 #define OWRITE4(sc, r, x) \
  do { OBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
-#define OREAD1(sc, r) (OBARR(sc), bus_space_read_1((sc)->iot, (sc)->ioh, (r)))
-#define OREAD2(sc, r) (OBARR(sc), bus_space_read_2((sc)->iot, (sc)->ioh, (r)))
-#define OREAD4(sc, r) (OBARR(sc), bus_space_read_4((sc)->iot, (sc)->ioh, (r)))
+static __inline uint8_t
+OREAD1(ohci_softc_t *sc, bus_size_t r)
+{
+
+	OBARR(sc);
+	return bus_space_read_1(sc->iot, sc->ioh, r);
+}
+
+static __inline uint16_t
+OREAD2(ohci_softc_t *sc, bus_size_t r)
+{
+
+	OBARR(sc);
+	return bus_space_read_2(sc->iot, sc->ioh, r);
+}
+
+static __inline uint32_t
+OREAD4(ohci_softc_t *sc, bus_size_t r)
+{
+
+	OBARR(sc);
+	return bus_space_read_4(sc->iot, sc->ioh, r);
+}
 
 /* Reverse the bits in a value 0 .. 31 */
 Static u_int8_t revbits[OHCI_NO_INTRS] =
