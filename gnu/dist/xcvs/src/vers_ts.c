@@ -155,8 +155,8 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
      */
     if (tag || date)
     {
-	vers_ts->tag = tag ? xstrdup (tag) : NULL;
-	vers_ts->date = date ? xstrdup (date) : NULL;
+	vers_ts->tag = xstrdup (tag);
+	vers_ts->date = xstrdup (date);
     }
     else if (!vers_ts->entdata && (sdtp && sdtp->aflag == 0))
     {
@@ -200,7 +200,7 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
 	    if (vers_ts->vn_rcs == NULL)
 		vers_ts->vn_tag = NULL;
 	    else if (simple)
-		vers_ts->vn_tag = vers_ts->tag ? xstrdup (vers_ts->tag) : NULL;
+		vers_ts->vn_tag = xstrdup (vers_ts->tag);
 	    else
 		vers_ts->vn_tag = xstrdup (vers_ts->vn_rcs);
 	}
