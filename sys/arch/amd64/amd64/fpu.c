@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.12 2004/10/31 10:39:34 yamt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.12.10.1 2006/05/12 15:41:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12 2004/10/31 10:39:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12.10.1 2006/05/12 15:41:46 tron Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -119,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12 2004/10/31 10:39:34 yamt Exp $");
 
 #define	fninit()		__asm("fninit")
 #define fwait()			__asm("fwait")
+#define fnclex()		__asm("fnclex")
+#define	fnstsw(addr)		__asm("fnstsw %0" : "=m" (*addr))
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
 #define	fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
 #define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
@@ -276,8 +278,29 @@ fpudna(struct cpu_info *ci)
 		mxcsr = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_mxcsr;
 		ldmxcsr(&mxcsr);
 		l->l_md.md_flags |= MDP_USEDFPU;
-	} else
-		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
+	} else {
+		/*
+		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
+		 * leaking other process's execution history. Clear them
+		 * manually.
+		 */
+		static const double zero = 0.0;
+		int status;
+		/*
+		 * Clear the ES bit in the x87 status word if it is currently
+		 * set, in order to avoid causing a fault in the upcoming load.
+		 */
+		fnstsw(&status);
+		if (status & 0x80)
+			fnclex();
+		/*
+		 * Load the dummy variable into the x87 stack.  This mangles
+		 * the x87 stack, but we don't care since we're about to call
+		 * fxrstor() anyway.
+		 */
+		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
+		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
+	}
 }
 
 
