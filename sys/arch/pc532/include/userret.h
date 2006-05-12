@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.1 2006/03/11 13:52:59 simonb Exp $ */
+/* $NetBSD: userret.h,v 1.2 2006/05/12 06:05:23 simonb Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,10 +83,7 @@ static inline void userret(struct lwp *, int, u_quad_t);
  * trap and syscall.
  */
 static inline void
-userret(l, pc, oticks)
-	struct lwp *l;
-	int pc;
-	u_quad_t oticks;
+userret(struct lwp *l, int pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 	int sig;
@@ -103,7 +100,7 @@ userret(l, pc, oticks)
 		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
-	
+
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */

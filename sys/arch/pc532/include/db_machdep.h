@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.19 2006/04/01 15:44:59 cherry Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.20 2006/05/12 06:05:23 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -58,7 +58,7 @@ typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
-db_regs_t  	ddb_regs;		/* register state */
+db_regs_t	ddb_regs;		/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_regs.r_pc)
@@ -101,9 +101,9 @@ typedef long kgdb_reg_t;
 
 #ifdef _KERNEL
 
-int	kdb_trap __P((int, int, db_regs_t *));
+int	kdb_trap(int, int, db_regs_t *);
 struct insn;
-int	db_dasm_ns32k __P((struct insn *insn, db_addr_t loc));
+int	db_dasm_ns32k(struct insn *insn, db_addr_t loc);
 
 #endif /* _KERNEL */
 
