@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gmakehost,v 1.1 2006/05/11 01:17:53 mrg Exp $
+#	$NetBSD: Makefile.gmakehost,v 1.2 2006/05/12 18:00:27 mrg Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 # This version runs ${TOOL_GMAKE} instead of ${MAKE}
@@ -99,12 +99,12 @@ INSTALL_TARGET?=install
 # fails.  it also uses "env -i" to entirely clear out MAKEFLAGS.
 
 .build_done: .configure_done
-	@(cd build && /usr/bin/env -i ${BUILD_ENV} ${MAKE_ARGS} ${TOOL_GMAKE} -e ${ALL_TARGET})
+	@(cd build && /usr/bin/env -i ${BUILD_ENV} ${MAKE_ARGS} ${TOOL_GMAKE} -e ${MAKE_ARGS} ${ALL_TARGET})
 	@if [ ! -f $@ ] || [ -n "$$(find build -type f -newer .build_done -print)" ]; \
 		then touch $@; fi
 
 .install_done! ${BUILD:D.build_done}
-	@(cd ${.OBJDIR}/build && /usr/bin/env -i ${BUILD_ENV} ${MAKE_ARGS} ${TOOL_GMAKE} -e ${INSTALL_TARGET})
+	@(cd ${.OBJDIR}/build && /usr/bin/env -i ${BUILD_ENV} ${MAKE_ARGS} ${TOOL_GMAKE} -e ${MAKE_ARGS} ${INSTALL_TARGET})
 	@touch $@
 
 .PHONY: .build_done .install_done
