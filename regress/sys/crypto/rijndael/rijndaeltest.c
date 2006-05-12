@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndaeltest.c,v 1.6 2005/02/06 06:05:20 perry Exp $	*/
+/*	$NetBSD: rijndaeltest.c,v 1.7 2006/05/12 01:56:39 mrg Exp $	*/
 /*	$KAME: rijndaeltest.c,v 1.7 2001/05/27 01:56:45 itojun Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ again1:
 
 		/* LINTED const cast */
 		if (rijndael_makeKey(&k, DIR_DECRYPT,
-		    strlen(dvector[i].key) * 4, key) < 0) {
+		    strlen(dvector[i].key) * 4, (char *)key) < 0) {
 			printf("makeKey failed for %s %d\n", test, i);
 			error++;
 			continue;
@@ -184,7 +184,7 @@ again2:
 
 		/* LINTED const cast */
 		if (rijndael_makeKey(&k, DIR_ENCRYPT,
-		    strlen(evector[i].key) * 4, key) < 0) {
+		    strlen(evector[i].key) * 4, (char *)key) < 0) {
 			printf("makeKey failed for %s %d\n", test, i);
 			error++;
 			continue;
