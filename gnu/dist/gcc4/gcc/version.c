@@ -8,7 +8,7 @@
    in parentheses.  You may also wish to include a number indicating
    the revision of your modified compiler.  */
 
-#define VERSUFFIX ""
+#define VERSUFFIX " (NetBSD nb1 20060510)"
 
 /* This is the location of the online document giving instructions for
    reporting bugs.  If you distribute a modified version of GCC,
@@ -17,7 +17,7 @@
    forward us bugs reported to you, if you determine that they are
    not bugs in your modifications.)  */
 
-const char bug_report_url[] = "<URL:http://gcc.gnu.org/bugs.html>";
+const char bug_report_url[] = "<URL:http://www.netbsd.org/Misc/send-pr.html>";
 
 /* The complete version string, assembled from several pieces.
    BASEVER, DATESTAMP, and DEVPHASE are defined by the Makefile.  */
