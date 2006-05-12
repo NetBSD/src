@@ -156,6 +156,7 @@ c_common_missing_argument (const char *opt, size_t code)
       error ("macro name missing after %qs", opt);
       break;
 
+    case OPT_cxx_isystem:
     case OPT_F:
     case OPT_I:
     case OPT_idirafter:
@@ -542,6 +543,10 @@ c_common_handle_option (size_t scode, const char *arg, int value)
 	set_std_c89 (false, true);
       else
 	set_std_cxx98 (true);
+      break;
+
+    case OPT_cxx_isystem:
+      add_path (xstrdup (arg), SYSTEM, 1, true);
       break;
 
     case OPT_d:
