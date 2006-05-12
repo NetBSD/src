@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.100.4.5 2006/05/11 23:27:31 elad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.100.4.6 2006/05/12 14:50:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.5 2006/05/11 23:27:31 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.6 2006/05/12 14:50:52 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.4.5 2006/05/11 23:27:31 el
 #include <sys/filedesc.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
