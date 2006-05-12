@@ -523,3 +523,19 @@
 
 /* Define as `fork' if `vfork' does not work. */
 /* #undef vfork */
+
+/*
+ * Functions defined in src/gnu/dist/xcvs/src/subr.c 
+ * and src/gnu/dist/xcvs/src/filesubr.c that might conflict
+ * with other programs
+ */
+#define xasprintf		cvs_xasprintf
+#define xmalloc 		cvs_xmalloc
+#define xrealloc		cvs_xrealloc
+#define xstrdup			cvs_xstrdup
+#define xchmod			cvs_xchmod
+#define xcmp			cvs_xcmp
+#define xgetwd	 		cvs_xgetwd
+#define xreadlink		cvs_xreadlink
+#define xrealloc_and_strcat 	cvs_xrealloc_and_strcat
+#define xresolvepath 		cvs_xresolvepath
