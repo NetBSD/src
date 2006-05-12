@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.130 2006/04/15 02:25:24 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.131 2006/05/12 01:20:33 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.130 2006/04/15 02:25:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.131 2006/05/12 01:20:33 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -285,9 +285,12 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
                 	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
-		else
-			bcopy((caddr_t)ar_tha(ah),
-				(caddr_t)edst, sizeof(edst));
+		else {
+			caddr_t tha = ar_tha(ah);
+
+			KASSERT(tha);
+			bcopy(tha, (caddr_t)edst, sizeof(edst));
+		}
 
 		ah->ar_hrd = htons(ARPHRD_ETHER);
 
