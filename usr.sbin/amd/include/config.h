@@ -18,7 +18,7 @@
 #define AMU_NFS_PROTOCOL_HEADER "./conf/nfs_prot/nfs_prot_netbsd1_4.h"
 
 /* Type of the 5rd argument to authunix_create() */
-#define AUTH_CREATE_GIDLIST_TYPE gid_t
+#define AUTH_CREATE_GIDLIST_TYPE int
 
 /* Define configuration date */
 #ifndef __NetBSD__
