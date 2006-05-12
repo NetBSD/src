@@ -113,7 +113,7 @@ Boston, MA 02110-1301, USA.  */
    + MASK_STACK_BIAS + MASK_APP_REGS + MASK_FPU + MASK_LONG_DOUBLE_128)
 
 #undef SPARC_DEFAULT_CMODEL
-#define SPARC_DEFAULT_CMODEL CM_MEDANY
+#define SPARC_DEFAULT_CMODEL CM_MEDLOW
 
 #endif
 
@@ -133,9 +133,8 @@ Boston, MA 02110-1301, USA.  */
 	    %{!mf934: \
 	      %{!mv8*: \
 	        %{!msupersparc:-mcpu=ultrasparc}}}}}}} \
-    %{!mno-vis:%{!mcpu=v9:-mvis}} \
-    %{p:-mcmodel=medlow} \
-    %{pg:-mcmodel=medlow}}"
+    %{!mno-vis:%{!mcpu=v9:-mvis}}" \
+  NETBSD_CC1_AND_CC1PLUS_SPEC
 
 #define CC1_SPEC64 \
  "%{sun4:} %{target:} \
@@ -152,10 +151,7 @@ Boston, MA 02110-1301, USA.  */
 	  %{!mf930: \
 	    %{!mf934: \
 	      %{!mv8*: \
-		%{!msupersparc:-mcpu=cypress}}}}}}}} \
-  %{!m32: \
-    %{p:-mcmodel=medlow} \
-    %{pg:-mcmodel=medlow}}"
+		%{!msupersparc:-mcpu=cypress}}}}}}}}" \
   NETBSD_CC1_AND_CC1PLUS_SPEC
 
 /* Make sure we use the right output format.  Pick a default and then
