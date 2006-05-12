@@ -1,4 +1,4 @@
-/*	$NetBSD: umprintf.c,v 1.8 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: umprintf.c,v 1.9 2006/05/12 06:05:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991 The Regents of the University of California.
@@ -33,10 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umprintf.c,v 1.8 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umprintf.c,v 1.9 2006/05/12 06:05:23 simonb Exp $");
 
 #include <machine/stdarg.h>
-static char *ksprintn __P((u_long num, int base, int *len));
+static char *ksprintn(u_long num, int base, int *len);
 
 void
 umprintf(char *fmt,...)
@@ -84,12 +84,10 @@ number:			p = ksprintn(ul, base, &tmp);
  * buffer.
  */
 static char *
-ksprintn(ul, base, lenp)
-	register u_long ul;
-	register int base, *lenp;
+ksprintn(u_long ul, int base, int *lenp)
 {					/* A long in base 8, plus NULL. */
 	static char buf[sizeof(long) * NBBY / 3 + 2];
-	register char *p;
+	char *p;
 	int d;
 
 	p = buf;
