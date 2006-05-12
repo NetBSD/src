@@ -24,7 +24,9 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 #include "cpplib.h"
 #include "internal.h"
 #include "mkdeps.h"
+#ifdef ENABLE_NLS
 #include "localedir.h"
+#endif
 
 static void init_library (void);
 static void mark_named_operators (cpp_reader *);
