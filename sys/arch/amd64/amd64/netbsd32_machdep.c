@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.20.8.3 2006/04/19 02:31:58 elad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.20.8.4 2006/05/12 14:50:52 elad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20.8.3 2006/04/19 02:31:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20.8.4 2006/05/12 14:50:52 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20.8.3 2006/04/19 02:31:58 el
 #include <sys/vnode.h>
 #include <sys/ras.h>
 #include <sys/ptrace.h>
+#include <sys/kauth.h>
 
 #include <machine/fpu.h>
 #include <machine/frame.h>
