@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.15 2003/09/06 12:45:00 itojun Exp $	*/
+/*	$NetBSD: prune.c,v 1.16 2006/05/12 01:27:27 mrg Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -32,7 +32,7 @@ extern int phys_vif;
 			case 32: \
 			case 64: \
 			case 128: \
-			case 256: y = 1; \
+			/*case 256:*/ y = 1; \
 				  break; \
 			default:  y = 0; \
 		} \
