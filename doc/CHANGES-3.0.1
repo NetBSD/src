@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.1,v 1.1.2.44 2006/05/04 05:53:54 snj Exp $
+#	$NetBSD: CHANGES-3.0.1,v 1.1.2.45 2006/05/12 15:44:43 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.0.1
 release:
@@ -430,4 +430,12 @@ gnu/usr.bin/groff/tmac/mdoc.local		1.27-1.29
 
 	Add NetBSD 3.0.1 and 3.1 to the list of recognized operating systems.
 	[tron, ticket #1303]
+
+sys/arch/amd64/amd64/fpu.c			1.14-1.15
+sys/arch/i386/isa/npx.c				1.112
+sys/arch/xen/i386/npx.c				1.8
+
+	Apply fix from FreeBSD's advisory: fxrstor on AMD FPU's does not
+	restore FIP,FDP,FOP thus leaking other process's execution history.
+	[adrianp, ticket #1321]
 
