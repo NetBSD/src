@@ -59,7 +59,7 @@ int needs_cleaning(struct clfs *, CLEANERINFO *);
 int32_t parse_pseg(struct clfs *, daddr_t, BLOCK_INFO **, int *);
 int reinit_fs(struct clfs *);
 void reload_ifile(struct clfs *);
-void toss_old_blocks(struct clfs *, BLOCK_INFO **, int *);
+void toss_old_blocks(struct clfs *, BLOCK_INFO **, int *, int *);
 
 /* cleansrv.c */
 void check_control_socket(void);

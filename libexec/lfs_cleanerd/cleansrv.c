@@ -1,4 +1,4 @@
-/* $NetBSD: cleansrv.c,v 1.1 2006/03/30 19:10:13 perseant Exp $	 */
+/* $NetBSD: cleansrv.c,v 1.2 2006/05/12 19:33:02 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@ check_control_socket(void)
 
 			fsp[nfss - 1] = (struct clfs *)malloc(sizeof(**fsp));
 			if (fsp[nfss - 1] == NULL) {
+				syslog(LOG_ERR, "%s: couldn't alloc memory: %m"
+				       cmd.data);
 				--nfsp;
 				break;
 			}

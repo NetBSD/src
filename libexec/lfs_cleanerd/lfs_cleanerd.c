@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.6 2006/05/11 12:26:38 mrg Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.7 2006/05/12 19:33:02 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -217,6 +217,10 @@ init_fs(struct clfs *fs, char *fsname)
 	if (statvfs(fsname, &sf) < 0)
 		return -1;
 	fs->clfs_dev = malloc(strlen(sf.f_mntfromname) + 2);
+	if (fs->clfs_dev == NULL) {
+		syslog(LOG_ERR, "couldn't malloc device name string: %m");
+		return -1;
+	}
 	sprintf(fs->clfs_dev, "/dev/r%s", sf.f_mntfromname + 5);
 	if ((fs->clfs_devfd = open(fs->clfs_dev, O_RDONLY)) < 0) {
 		syslog(LOG_ERR, "couldn't open device %s for reading",
@@ -257,6 +261,12 @@ init_fs(struct clfs *fs, char *fsname)
 						sizeof(*fs->clfs_segtab));
 	fs->clfs_segtabp = (struct clfs_seguse **)malloc(fs->lfs_nseg *
 						sizeof(*fs->clfs_segtabp));
+	if (fs->clfs_segtab == NULL || fs->clfs_segtabp == NULL) {
+		syslog(LOG_ERR, "%s: couldn't malloc segment table: %m",
+			fs->clfs_dev);
+		return -1;
+	}
+
 	for (i = 0; i < fs->lfs_nseg; i++) {
 		fs->clfs_segtabp[i] = &(fs->clfs_segtab[i]);
 		fs->clfs_segtab[i].flags = 0x0;
@@ -761,7 +771,7 @@ cb_comparator(const void *va, const void *vb)
 }
 
 void
-toss_old_blocks(struct clfs *fs, BLOCK_INFO **bipp, int *bic)
+toss_old_blocks(struct clfs *fs, BLOCK_INFO **bipp, int *bic, int *sizep)
 {
 	int i, r;
 	BLOCK_INFO *bip = *bipp;
@@ -796,9 +806,14 @@ toss_old_blocks(struct clfs *fs, BLOCK_INFO **bipp, int *bic)
 	heapsort(bip, *bic, sizeof(BLOCK_INFO), bi_comparator);
 
 	/* Get rid of stale blocks */
-	for (i = 0; i < *bic; i++)
+	if (sizep)
+		*sizep = 0;
+	for (i = 0; i < *bic; i++) {
 		if (bip[i].bi_segcreate != bip[i].bi_daddr)
 			break;
+		if (sizep)
+			*sizep += bip[i].bi_size;
+	}
 	*bic = i; /* XXX realloc bip? */
 	*bipp = bip;
 
@@ -825,8 +840,9 @@ invalidate_segment(struct clfs *fs, int sn)
 	bip = NULL;
 	bic = 0;
 	fs->clfs_nactive = 0;
-	load_segment(fs, sn, &bip, &bic);
-	toss_old_blocks(fs, &bip, &bic);
+	if (load_segment(fs, sn, &bip, &bic) <= 0)
+		return -1;
+	toss_old_blocks(fs, &bip, &bic, NULL);
 
 	/* Record statistics */
 	for (i = nb = 0; i < bic; i++)
@@ -957,7 +973,8 @@ check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
 int
 clean_fs(struct clfs *fs, CLEANERINFO *cip)
 {
-	int i, j, ngood, sn, bic, r;
+	int i, j, ngood, sn, bic, r, npos;
+	int bytes, totbytes;
 	struct ubuf *bp;
 	SEGUSE *sup;
 	static BLOCK_INFO *bip;
@@ -974,6 +991,7 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 	double util;
 
 	/* Read the segment table into our private structure */
+	npos = 0;
 	for (i = 0; i < fs->lfs_nseg; i+= fs->lfs_sepb) {
 		bread(fs->lfs_ivnode, fs->lfs_cleansz + i / fs->lfs_sepb,
 		      fs->lfs_bsize, NOCRED, &bp);
@@ -988,6 +1006,8 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 
 			/* Compute cost-benefit coefficient */
 			calc_cb(fs, i + j, fs->clfs_segtab + i + j);
+			if (fs->clfs_segtab[i + j].priority > 0)
+				++npos;
 		}
 		brelse(bp);
 	}
@@ -1013,12 +1033,14 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 			goal = MAX((cip->clean - 1) * fs->lfs_ssize,
 				   fs->lfs_ssize) / 2;
 
-		dlog("%s: cleaning with goal %" PRId64 " bytes (%d segs clean)",
-		       fs->lfs_fsmnt, goal, cip->clean);
-		syslog(LOG_INFO, "%s: cleaning with goal %" PRId64 " bytes (%d segs clean)",
-		       fs->lfs_fsmnt, goal, cip->clean);
-		for (i = 0; i < fs->lfs_nseg &&
-			     bic * fs->lfs_bsize < goal; i++) {
+		dlog("%s: cleaning with goal %" PRId64
+		     " bytes (%d segs clean, %d cleanable)",
+		     fs->lfs_fsmnt, goal, cip->clean, npos);
+		syslog(LOG_INFO, "%s: cleaning with goal %" PRId64
+		       " bytes (%d segs clean, %d cleanable)",
+		       fs->lfs_fsmnt, goal, cip->clean, npos);
+		totbytes = 0;
+		for (i = 0; i < fs->lfs_nseg && totbytes < goal; i++) {
 			if (fs->clfs_segtabp[i]->priority == 0)
 				break;
 			sn = (fs->clfs_segtabp[i] - fs->clfs_segtab);
@@ -1026,12 +1048,13 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 			     " containing %ld bytes",
 			     fs->lfs_fsmnt, sn, fs->clfs_segtabp[i]->priority,
 			     fs->clfs_segtabp[i]->nbytes);
-			if ((r = load_segment(fs, sn, &bip, &bic)) > 0)
+			if ((r = load_segment(fs, sn, &bip, &bic)) > 0) {
 				++ngood;
-			else
+				toss_old_blocks(fs, &bip, &bic, &bytes);
+				totbytes += bytes;
+			} else if (r == 0)
 				fd_release(fs->clfs_devvp);
-			toss_old_blocks(fs, &bip, &bic);
-			if (r < 0)
+			else
 				break;
 		}
 	} else {
@@ -1040,8 +1063,8 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 		if (goal > cip->clean - 1)
 			goal = MAX(cip->clean - 1, 1);
 
-		dlog("%s: cleaning with goal %d segments (%d clean)",
-		       fs->lfs_fsmnt, (int)goal, cip->clean);
+		dlog("%s: cleaning with goal %d segments (%d clean, %d cleanable)",
+		       fs->lfs_fsmnt, (int)goal, cip->clean, npos);
 		for (i = 0; i < fs->lfs_nseg && ngood < goal; i++) {
 			if (fs->clfs_segtabp[i]->priority == 0)
 				break;
@@ -1050,12 +1073,12 @@ clean_fs(struct clfs *fs, CLEANERINFO *cip)
 			     fs->lfs_fsmnt, sn, fs->clfs_segtabp[i]->priority);
 			if ((r = load_segment(fs, sn, &bip, &bic)) > 0)
 				++ngood;
-			else if (r < 0)
-				break;
-			else
+			else if (r == 0)
 				fd_release(fs->clfs_devvp);
+			else
+				break;
 		}
-		toss_old_blocks(fs, &bip, &bic);
+		toss_old_blocks(fs, &bip, &bic, NULL);
 	}
 
 	/* If there is nothing to do, try again later. */
@@ -1434,6 +1457,10 @@ main(int argc, char **argv)
 	 */
 	nfss = argc;
 	fsp = (struct clfs **)malloc(nfss * sizeof(*fsp));
+	if (fsp == NULL) {
+		syslog(LOG_ERR, "couldn't allocate fs table: %m");
+		exit(1);
+	}
 	for (i = 0; i < nfss; i++) {
 		fsp[i] = (struct clfs *)calloc(1, sizeof(**fsp));
 		if ((r = init_fs(fsp[i], argv[i])) < 0) {
