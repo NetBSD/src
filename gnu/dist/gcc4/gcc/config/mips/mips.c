@@ -6310,7 +6310,7 @@ compute_frame_size (HOST_WIDE_INT size)
       if (mips_save_reg_p (regno))
 	{
 	  fp_reg_size += FP_INC * UNITS_PER_FPREG;
-	  fmask |= ((1 << FP_INC) - 1) << (regno - FP_REG_FIRST);
+	  fmask |= ((1L << FP_INC) - 1) << (regno - FP_REG_FIRST);
 	}
     }
 
