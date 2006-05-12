@@ -37,7 +37,7 @@
 
 	.file	"tramp.asm"
 	.section ".text"
-	#include "ppc-asm.h"
+#include "ppc-asm.h"
 
 #ifndef __powerpc64__
 	.type	trampoline_initial,@object
