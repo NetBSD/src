@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.10 2006/02/14 17:14:21 tsarna Exp $
+# $NetBSD: postinstall,v 1.11 2006/05/12 07:16:47 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -714,8 +714,8 @@ do_rc()
 		DAEMON LOGIN NETWORKING SERVERS accounting altqd amd \
 		apmd bootparams bootconf.sh ccd cgd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces fixsb fsck \
-		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec isdnd \
-		kdc ldconfig lkm1 lkm2 lkm3 local lpd mopd motd \
+		identd ifwatchd inetd iscsi_target ipfilter ipfs ipmon ipnat \
+		ipsec isdnd kdc ldconfig lkm1 lkm2 lkm3 local lpd mopd motd \
 		mountall mountcritlocal mountcritremote mountd moused \
 		mrouted mixerctl named ndbootd network newsyslog nfsd \
 		nfslocking ntpd ntpdate pf pf_boot pflogd poffd postfix \
