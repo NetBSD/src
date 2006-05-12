@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.72 2006/04/05 16:55:01 garbled Exp $ */
+/*	$NetBSD: mbr.c,v 1.73 2006/05/12 21:22:34 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1581,7 +1581,8 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 			for (i = 0; i < MBR_PART_COUNT; i++) {
 				if (ext->mbrb.mbrbs_nametab[i][0] == 0)
 					continue;
-				if (ext->sector + pstart == mbri->bootsec)
+				if (ext->sector + mbrp->mbrp_start ==
+								mbri->bootsec)
 					mbri->mbrb.mbrbs_defkey = key;
 				key++;
 			}
