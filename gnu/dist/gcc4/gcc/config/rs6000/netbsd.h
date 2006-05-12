@@ -19,6 +19,22 @@
    along with GCC; see the file COPYING.  If not, write to the
    Free Software Foundation, 51 Franklin Street, Fifth Floor, Boston,
    MA 02110-1301, USA.  */
+  
+/* This defines which switch letters take arguments.  On NetBSD, most
+   of the normal cases (defined by gcc.c) apply, and we also have -h*
+   and -z* options (for the linker) (coming from SVR4).
+   Copied from ../netbsd-elf.h and re{undef,defined} here to
+   override the powerpc sysv4.h definition.
+   netbsd-elf.h defines the default list + 'h' + 'z' + 'R'.
+   rs6000/sysv4.h defines the default list + 'G'. */
+
+#undef SWITCH_TAKES_ARG
+#define SWITCH_TAKES_ARG(CHAR)			\
+  (DEFAULT_SWITCH_TAKES_ARG (CHAR)		\
+   || (CHAR) == 'h'				\
+   || (CHAR) == 'z'				\
+   || (CHAR) == 'R'				\
+   || (CHAR) == 'G')
 
 #undef  TARGET_OS_CPP_BUILTINS	/* FIXME: sysv4.h should not define this! */
 #define TARGET_OS_CPP_BUILTINS()		\
@@ -59,6 +75,17 @@
 #undef  PTRDIFF_TYPE
 #define PTRDIFF_TYPE "int"
 
+/* Redefine some types that where redefined by rs6000 include files.  */
+
+#undef WCHAR_TYPE
+#define WCHAR_TYPE "int"
+
+#undef WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE 32
+
+#undef WINT_TYPE
+#define WINT_TYPE "int"
+
 /* Undo the spec mess from sysv4.h, and just define the specs
    the way NetBSD systems actually expect.  */
 
@@ -77,7 +104,7 @@
 
 #undef  ENDFILE_SPEC
 #define ENDFILE_SPEC \
-  "crtsavres%O%s %(netbsd_endfile_spec)"
+  "%(netbsd_endfile_spec)"
 
 #undef  LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
@@ -88,6 +115,22 @@
   { "netbsd_entry_point",	NETBSD_ENTRY_POINT },		\
   { "netbsd_endfile_spec",	NETBSD_ENDFILE_SPEC },
 
+/*
+ * Add NetBSD specific defaults: -mpowerpc -mnew_mnemonics -mstrict-align
+ */
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_STRICT_ALIGN)
+
+/* Attempt to enable execute permissions on the stack.  */
+#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
+#ifdef L_trampoline
+#undef TRAMPOLINE_SIZE
+#define TRAMPOLINE_SIZE 48
+#endif
+
+/* Override STACK_BOUNDARY to use Altivec compliant one.  */
+#undef STACK_BOUNDARY
+#define STACK_BOUNDARY	128
 
 #undef  TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (NetBSD/powerpc ELF)");
