@@ -602,6 +602,10 @@ LIB2FUNCS_EXTRA =
 # Assembler files should have names ending in `.asm'.
 LIB2FUNCS_STATIC_EXTRA =
 
+# Are we building shared
+#
+ENABLE_SHARED = @enable_shared@
+
 # Program to convert libraries.
 LIBCONVERT =
 
@@ -2962,9 +2966,13 @@ build/gengtype-yacc.o : gengtype-yacc.c gengtype.h $(BCONFIG_H) $(SYSTEM_H) \
   coretypes.h $(GTM_H)
 
 gengtype-lex.c : gengtype-lex.l
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_gengtype-lex.c:
 	-$(FLEX) $(FLEXFLAGS) -o$@ $<
 
 gengtype-yacc.c gengtype-yacc.h: gengtype-yacc.y
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_gengtype-yacc.c:
 	-$(BISON) $(BISONFLAGS) -d -o gengtype-yacc.c $<
 
 build/genconditions$(build_exeext) : build/genconditions.o \
@@ -3168,7 +3176,7 @@ s-macro_list : $(GCC_PASSES)
 
 # Build fixed copies of system files.
 stmp-fixinc: gsyslimits.h macro_list \
-  $(build_objdir)/fixincludes/fixincl \
+  $(build_objdir)/fixincludes/fixincl$(build_exeext) \
   $(build_objdir)/fixincludes/fixinc.sh
 	@if ! $(inhibit_libc) && test ! -d ${SYSTEM_HEADER_DIR}; then \
 	  echo The directory that should contain system headers does not exist: >&2 ; \
@@ -3642,6 +3650,8 @@ install-info:: doc installdirs \
 	$(DESTDIR)$(infodir)/gccint.info
 
 $(DESTDIR)$(infodir)/%.info: doc/%.info installdirs
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_info:
 	rm -f $@
 	if [ -f $< ]; then \
 	  for f in $(<)*; do \
