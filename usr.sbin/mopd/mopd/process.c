@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.13 2002/07/19 10:05:34 mrg Exp $	*/
+/*	$NetBSD: process.c,v 1.14 2006/05/12 01:54:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.13 2002/07/19 10:05:34 mrg Exp $");
+__RCSID("$NetBSD: process.c,v 1.14 2006/05/12 01:54:32 mrg Exp $");
 #endif
 
 #include "os.h"
@@ -52,8 +52,6 @@ extern int	DebugFlag;
 extern char 	*MopdDir;
 
 struct dllist dllist[MAXDL];		/* dump/load list		*/
-extern char	dl_mcst[];		/* Dump/Load Multicast		*/
-extern char	rc_mcst[];		/* Remote Console Multicast	*/
 
 void	mopNextLoad __P((u_char *, u_char *, u_char, int));
 void	mopProcessDL __P((FILE *, struct if_info *, u_char *, int *,
