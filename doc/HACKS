@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.63 2006/05/12 13:32:50 he Exp $
+# $NetBSD: HACKS,v 1.64 2006/05/12 18:06:29 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -228,7 +228,9 @@ file	sbin/newfs/Makefile		: 1.30
 file	sbin/newfs_sysvbfs/Makefile	: 1.2
 file	sbin/restore/Makefile		: 1.23
 file	sbin/veriexecctl/Makefile	: 1.11
+file	sys/lib/libsa/Makefile		: 1.59
 file	usr.bin/awk/Makefile		: 1.9
+file	usr.bin/crontab/Makefile	: 1.24
 file	usr.bin/ctags/Makefile		: 1.8
 file	usr.bin/gzip/Makefile		: 1.10
 file	usr.bin/ssh/sftp/Makefile	: 1.10
