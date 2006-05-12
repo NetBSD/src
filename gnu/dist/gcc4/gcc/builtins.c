@@ -3681,7 +3681,7 @@ expand_builtin_strcmp (tree exp, rtx target, enum machine_mode mode)
       || cmpstrn_optab[SImode] != CODE_FOR_nothing)
     {
       rtx arg1_rtx, arg2_rtx;
-      rtx result, insn = NULL_RTX;
+      rtx result = NULL_RTX, insn = NULL_RTX;
       tree fndecl, fn;
       
       tree arg1 = TREE_VALUE (arglist);
@@ -9785,12 +9785,14 @@ fold_builtin_next_arg (tree arglist)
 	arg = TREE_OPERAND (arg, 0);
       if (arg != last_parm)
         {
+#if 0
 	  /* FIXME: Sometimes with the tree optimizers we can get the
 	     not the last argument even though the user used the last
 	     argument.  We just warn and set the arg to be the last
 	     argument so that we will get wrong-code because of
 	     it.  */
 	  warning (0, "second parameter of %<va_start%> not last named argument");
+#endif
 	}
       /* We want to verify the second parameter just once before the tree
          optimizers are run and then avoid keeping it in the tree,
