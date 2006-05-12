@@ -59,9 +59,9 @@ Entnode_Create(type, user, vn, ts, options, tag, date, ts_conflict)
     ent->version   = xstrdup (vn);
     ent->timestamp = xstrdup (ts ? ts : "");
     ent->options   = xstrdup (options ? options : "");
-    ent->tag       = tag ? xstrdup (tag) : NULL;
-    ent->date      = date ? xstrdup (date) : NULL;
-    ent->conflict  = ts_conflict ? xstrdup (ts_conflict) : NULL;
+    ent->tag       = xstrdup (tag);
+    ent->date      = xstrdup (date);
+    ent->conflict  = xstrdup (ts_conflict);
 
     return ent;
 }
@@ -491,8 +491,8 @@ Entries_Open (aflag, update_dir)
 	sdtp = (struct stickydirtag *) xmalloc (sizeof (*sdtp));
 	memset ((char *) sdtp, 0, sizeof (*sdtp));
 	sdtp->aflag = aflag;
-	sdtp->tag = dirtag ? xstrdup (dirtag) : NULL;
-	sdtp->date = dirdate ? xstrdup (dirdate) : NULL;
+	sdtp->tag = xstrdup (dirtag);
+	sdtp->date = xstrdup (dirdate);
 	sdtp->nonbranch = dirnonbranch;
 
 	/* feed it into the list-private area */

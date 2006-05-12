@@ -1,3 +1,25 @@
+2006-05-12  Mark D. Baushke  <mdb@gnu.org>
+
+	* rcs.c (RCS_isdead): Assert that the first argument is not NULL.
+	[Fixes NetBSD cid-1058.]
+
+	* commit.c (checkaddfile): Do not dereference NULL on call to
+	error().
+	[Fixes NetBSD cid-1061.]
+
+	* log.c (cvslog): Assert p->start && p->end instead of masking the
+	problem.
+	* server.c (server_updated): Assert findnode_fn results instead of
+	masking the problem.
+	
+	* add.c (add_directory): Revert previous change. The xstrdup()
+	function already deals a NULL argument.
+	* client.c (handle_mt): Ditto.
+	* entries.c (Entnode_Create): Ditto.
+	(Entries_Open): Ditto.
+	* logmsg.c (fmt_proc): Ditto.
+	* vers_ts.c (Version_TS): Ditto.
+	
 2006-05-11  Mark D. Baushke  <mdb@gnu.org>
 
 	* add.c (add_directory): Protect tag from NULL dereference.
@@ -40,7 +62,9 @@
 
 	* buffer.c (packetizing_buffer_output): Initialize outdata.
 	[Fixes NetBSD coverity cid-2474.]
-
+  
+  	* server.c (server_updated): Fix NetBSD coverity cid-1352
+  	NetBSD-sparc64 of 2006-May-02 03:02:46.
 	* server.c (server_updated): Fix NetBSD coverity cid-1352
 	NetBSD-sparc64 of 2006-May-02 03:02:46.
 
