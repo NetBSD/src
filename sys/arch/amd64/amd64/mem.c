@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5.10.2 2006/03/10 14:53:59 elad Exp $	*/
+/*	$NetBSD: mem.c,v 1.5.10.3 2006/05/12 14:50:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5.10.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5.10.3 2006/05/12 14:50:52 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.5.10.2 2006/03/10 14:53:59 elad Exp $");
 #ifdef LKM
 #include <sys/lkm.h>
 #endif
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 

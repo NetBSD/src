@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5.10.2 2006/03/10 14:53:59 elad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5.10.3 2006/05/12 14:50:52 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5.10.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5.10.3 2006/05/12 14:50:52 elad Exp $");
 
 #if 0
 #include "opt_user_ldt.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5.10.2 2006/03/10 14:53:59 elad Ex
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/uio.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/signal.h>

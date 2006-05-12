@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.24.10.1 2006/03/08 01:48:38 elad Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.24.10.2 2006/05/12 14:50:52 elad Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.24.10.1 2006/03/08 01:48:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.24.10.2 2006/05/12 14:50:52 elad Exp $");
 
 #define	ELFSIZE		32
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.24.10.1 2006/03/08 01:48:3
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
