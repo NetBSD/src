@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.211 2006/05/09 16:37:39 rjs Exp $	*/
+/*	$NetBSD: locore.s,v 1.212 2006/05/12 06:01:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7315,20 +7315,17 @@ idlemsg1:	.asciz	" %x %x %x\r\n"
 
 	
 /*
- * cpu_switch() picks a process to run and runs it, saving the current
+ * cpu_switch() picks a lwp to run and runs it, saving the current
  * one away.  On the assumption that (since most workstations are
  * single user machines) the chances are quite good that the new
- * process will turn out to be the current process, we defer saving
+ * lwp will turn out to be the current lwp, we defer saving
  * it here until we have found someone to load.  If that someone
- * is the current process we avoid both store and load.
+ * is the current lwp we avoid both store and load.
  *
  * cpu_switch() is always entered at splstatclock or splhigh.
  *
  * IT MIGHT BE WORTH SAVING BEFORE ENTERING idle TO AVOID HAVING TO
  * SAVE LATER WHEN SOMEONE ELSE IS READY ... MUST MEASURE!
- *
- * Apparently cpu_switch() is called with curlwp as the first argument,
- * but no port seems to make use of that parameter.
  */
 	.globl	_C_LABEL(time)
 ENTRY(cpu_switch)
@@ -7337,8 +7334,8 @@ ENTRY(cpu_switch)
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%l1 = tmp 0
 	 *	%l2 = %hi(_C_LABEL(whichqs))
-	 *	%l3 = p
-	 *	%l4 = lastproc
+	 *	%l3 = lwp
+	 *	%l4 = lastlwp
 	 *	%l5 = cpcb
 	 *	%l6 = %hi(CPCB)
 	 *	%l7 = %hi(CURLWP)
@@ -7382,7 +7379,7 @@ swdebug:	.word 0
 	LDPTR	[%l6 + %lo(CPCB)], %l5
 	sethi	%hi(CURLWP), %l7
 	stx	%o7, [%l5 + PCB_PC]	! cpcb->pcb_pc = pc;
-	LDPTR	[%l7 + %lo(CURLWP)], %l4	! lastproc = curlwp;
+	LDPTR	[%l7 + %lo(CURLWP)], %l4	! lastlwp = curlwp;
 	sth	%o1, [%l5 + PCB_PSTATE]	! cpcb->pcb_pstate = oldpstate;
 
 	STPTR	%g0, [%l7 + %lo(CURLWP)]	! curlwp = NULL;
@@ -7466,8 +7463,8 @@ cpu_loadproc:
 	 * PHASE TWO: NEW REGISTER USAGE:
 	 *	%l1 = newpcb
 	 *	%l2 = newpstate
-	 *	%l3 = p
-	 *	%l4 = lastproc
+	 *	%l3 = newlwp
+	 *	%l4 = lastlwp
 	 *	%l5 = cpcb
 	 *	%l6 = %hi(_cpcb)
 	 *	%l7 = %hi(_curlwp)
@@ -7489,7 +7486,7 @@ cpu_loadproc:
 	 EMPTY
 
 	/*
-	 * Committed to running process p.
+	 * Committed to running LWP l.
 	 * It may be the same as the one we were running before.
 	 */
 #if defined(MULTIPROCESSOR)
@@ -7513,7 +7510,7 @@ cpu_loadproc:
 	 */
 	call	_C_LABEL(sched_unlock_idle)
 #endif
-	 STPTR	%l4, [%l7 + %lo(CURLWP)]	! restore old proc so we can save it
+	 STPTR	%l4, [%l7 + %lo(CURLWP)]	! restore old lwp so we can save it
 
 	cmp	%l3, %l4			! new lwp == curlwp?
 #if !defined(MULTIPROCESSOR)
@@ -7523,7 +7520,7 @@ cpu_loadproc:
 	mov	1, %i0
 
 	/*
-	 * Not the old process.  Save the old process, if any;
+	 * Not the old lwp.  Save the old lwp, if any;
 	 * then load p.
 	 */
 #ifdef SCHED_DEBUG
@@ -7546,7 +7543,7 @@ cpu_loadproc:
 2:
 #endif
 	flushw				! DEBUG -- make sure we don't hold on to any garbage
-	brz,pn	%l4, Lsw_load		! if no old process, go load
+	brz,pn	%l4, Lsw_load		! if no old lwp, go load
 	 wrpr	%g0, PSTATE_KERN, %pstate
 
 	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1,%o2
@@ -7558,7 +7555,7 @@ wb1:
 	stb	%o2, [%l5 + PCB_CWP]
 
 	/*
-	 * Load the new process.  To load, we must change stacks and
+	 * Load the new lwp.  To load, we must change stacks and
 	 * alter cpcb and the window control registers, hence we must
 	 * disable interrupts.
 	 *
@@ -7574,7 +7571,7 @@ Lsw_load:
 	LOCTOGLOB
 	restore
 	.data
-1:	.asciz	"cpu_switch: loading the new process:\r\n"
+1:	.asciz	"cpu_switch: loading the new lwp:\r\n"
 	_ALIGN
 	.text
 #endif
@@ -7632,7 +7629,7 @@ Lsw_load:
 	LOCTOGLOB
 	restore
 	.data
-1:	.asciz	"cpu_switch: setup new process stack regs at %08x\r\n"
+1:	.asciz	"cpu_switch: setup new lwp stack regs at %08x\r\n"
 	_ALIGN
 	.text
 #endif
@@ -7675,7 +7672,7 @@ Lsw_load:
 	LOCTOGLOB
 	restore
 	.data
-1:	.asciz	"cpu_switch: got new ctx %d in new process\r\n"
+1:	.asciz	"cpu_switch: got new ctx %d in new lwp\r\n"
 	_ALIGN
 	.text
 #endif
@@ -7701,7 +7698,7 @@ Lsw_havectx:
 	LOCTOGLOB
 	restore
 	.data
-1:	.asciz	"cpu_switch: in new process pc=%08x ctx %d\r\n"
+1:	.asciz	"cpu_switch: in new lwp pc=%08x ctx %d\r\n"
 	_ALIGN
 	.text
 #endif
@@ -7824,8 +7821,8 @@ ENTRY(cpu_switchto)
 	/*
 	 * REGISTER USAGE AT THIS POINT:
 	 *	%l1 = tmp 0
-	 *	%l3 = p
-	 *	%l4 = lastproc
+	 *	%l3 = newlwp
+	 *	%l4 = lastlwp
 	 *	%l5 = cpcb
 	 *	%l6 = %hi(CPCB)
 	 *	%l7 = %hi(CURLWP)
