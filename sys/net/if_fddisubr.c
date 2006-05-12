@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.59 2006/04/15 02:26:17 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.60 2006/05/12 01:20:33 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.59 2006/04/15 02:26:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.60 2006/05/12 01:20:33 mrg Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -293,8 +293,12 @@ fddi_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		struct arphdr *ah = mtod(m, struct arphdr *);
 		if (m->m_flags & M_BCAST)
                 	memcpy(edst, etherbroadcastaddr, sizeof(edst));
-		else
-			memcpy(edst, ar_tha(ah), sizeof(edst));
+		else {
+			caddr_t tha = ar_tha(ah);
+
+			KASSERT(tha);
+			memcpy(edst, tha, sizeof(edst));
+		}
 
 		ah->ar_hrd = htons(ARPHRD_ETHER);
 
