@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 2006/03/11 13:52:59 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.82 2006/05/12 06:05:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -128,7 +128,7 @@ KENTRY(delay, 4)		/* bsr  2 cycles;  80 ns */
 #ifdef CPU30MHZ
 	nop; nop
 #endif
-	movd	S_ARG0,r0	/* 	2 cycles;  80 ns */
+	movd	S_ARG0,r0	/*	2 cycles;  80 ns */
 	acbd	-1,r0,1f	/*      5 cycles; 200 ns */
 				/*                ====== */
 				/*                840 ns */
@@ -141,8 +141,8 @@ KENTRY(delay, 4)		/* bsr  2 cycles;  80 ns */
 #ifdef CPU30MHZ
 	nop; nop
 #endif
-	acbd	-1,r0,1b	/* 	5 cycles; 200 ns */
-2:	ret	ARGS		/* 	4 cycles; 160 ns */
+	acbd	-1,r0,1b	/*	5 cycles; 200 ns */
+2:	ret	ARGS		/*	4 cycles; 160 ns */
 
 /****************************************************************************/
 
@@ -1080,7 +1080,7 @@ ENTRY_NOPROFILE(handle_trap)
 	 * Store the mmu status.
 	 * This is needed for abort traps.
 	 */
-	smr 	tear,tos
+	smr	tear,tos
 	smr	msr,tos
 	bsr	_C_LABEL(trap)
 	adjspd	-12			/* Pop off software part of frame. */
@@ -1194,7 +1194,7 @@ ASENTRY_NOPROFILE(interrupt)
 	 * r3 contains imask[IPL_ZERO] and IR_SOFT is
 	 * not set in imask[IPL_ZERO]. So the following
 	 * instruction just does a
-	 * 	r0 = r3 | (1 << IR_SOFT).
+	 *	r0 = r3 | (1 << IR_SOFT).
 	 */
 	addr	1 << IR_SOFT(r3),r0
 	movd	r0,_C_LABEL(Cur_pl)(pc)
@@ -1293,7 +1293,7 @@ KENTRY(ram_size, 4)
 	addr	2f(pc),4(sb)		/* tmp NMI vector */
 	cinv	ia,r0			/* Vector reads go through the icache? */
 	movd	8(fp),r0		/* r0 = start */
-	addr	PGOFSET(r0),r0 		/* round up to page */
+	addr	PGOFSET(r0),r0		/* round up to page */
 	andd	~PGOFSET,r0
 	movd	0xa5a5a5a5,r3
 	comd	r3,r4

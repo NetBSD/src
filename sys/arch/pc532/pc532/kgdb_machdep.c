@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.12 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.13 2006/05/12 06:05:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.13 2006/05/12 06:05:23 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12 2005/12/11 12:18:31 christos E
  * Determine if the memory at va..(va+len) is valid.
  */
 int
-kgdb_acc(va, len)
-	vaddr_t va;
-	size_t len;
+kgdb_acc(vaddr_t va, size_t len)
 {
 	vaddr_t last_va;
 	pt_entry_t *pte;
@@ -75,9 +73,9 @@ kgdb_acc(va, len)
  * (gdb only understands unix signal numbers).
  */
 int
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
+
 	switch (type) {
 	case T_NVI:
 	case T_NMI:
@@ -120,10 +118,9 @@ kgdb_signal(type)
  * understood by gdb.
  */
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
+
 	gdb_regs[R0_REGNUM + 0] = regs->tf_regs.r_r0;
 	gdb_regs[R0_REGNUM + 1] = regs->tf_regs.r_r1;
 	gdb_regs[R0_REGNUM + 2] = regs->tf_regs.r_r2;
@@ -143,10 +140,9 @@ kgdb_getregs(regs, gdb_regs)
  * Reverse the above.
  */
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
+
 	regs->tf_regs.r_r0  = gdb_regs[R0_REGNUM + 0];
 	regs->tf_regs.r_r1  = gdb_regs[R0_REGNUM + 1];
 	regs->tf_regs.r_r2  = gdb_regs[R0_REGNUM + 2];
@@ -168,8 +164,7 @@ kgdb_setregs(regs, gdb_regs)
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
 
 	if (kgdb_dev < 0)
@@ -191,8 +186,9 @@ kgdb_connect(verbose)
  * (This is called by panic, like Debugger())
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 {
+
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");
 		kgdb_connect(kgdb_active == 0);

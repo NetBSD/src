@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75 2006/05/12 05:42:36 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.76 2006/05/12 06:05:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2006/05/12 05:42:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2006/05/12 06:05:23 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,7 +126,7 @@ int ieee_handler_disable = 0;
 #define __CDECL__
 #endif
 
-void trap __P((struct trapframe)) __CDECL__;
+void trap(struct trapframe) __CDECL__;
 
 const char *trap_type[] = {
 	"non-vectored interrupt",		/*  0 T_NVI */
@@ -449,9 +449,9 @@ trap(struct trapframe frame)
 		break;
 	}
 
-	case T_TRC | T_USER: 	/* trace trap */
-	case T_BPT | T_USER: 	/* breakpoint instruction */
-	case T_DBG | T_USER: 	/* debug trap */
+	case T_TRC | T_USER:	/* trace trap */
+	case T_BPT | T_USER:	/* breakpoint instruction */
+	case T_DBG | T_USER:	/* debug trap */
 	trace:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
