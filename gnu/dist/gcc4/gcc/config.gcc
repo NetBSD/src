@@ -663,6 +663,9 @@ arm*-*-freebsd*|strongarm*-*-freebsd*)
 arm*-*-netbsdelf*)
 	tm_file="dbxelf.h elfos.h netbsd.h netbsd-elf.h arm/elf.h arm/aout.h arm/arm.h arm/netbsd-elf.h"
 	tmake_file="${tmake_file} arm/t-arm arm/t-netbsd"
+	case $machine in
+	armeb*) tm_defines="${tm_defines} TARGET_ENDIAN_DEFAULT=ARM_FLAG_BIG_END"
+	esac
 	;;
 arm*-*-netbsd*)
 	tm_file="arm/aout.h arm/arm.h netbsd.h netbsd-aout.h arm/netbsd.h"
@@ -852,6 +855,12 @@ hppa*-*-linux* | parisc*-*-linux*)
 	else
 	    tmake_file="$tmake_file pa/t-slibgcc-dwarf-ver"
 	fi
+	;;
+hppa*-*-netbsd* | parisc*-*-netbsd*)
+	target_cpu_default="MASK_PA_11 | MASK_NO_SPACE_REGS"
+	tm_file="${tm_file} dbxelf.h elfos.h svr4.h netbsd.h netbsd-elf.h \
+		 pa/pa-netbsd.h pa/pa32-regs.h pa/pa32-netbsd.h"
+	tmake_file="${tmake_file} pa/t-netbsd"
 	;;
 # port not yet contributed.
 #hppa*-*-openbsd*)
@@ -1291,6 +1300,12 @@ ia64*-*-elf*)
 	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o crtfastmath.o"
 	use_fixproto=yes
 	;;
+ia64*-*-netbsd*)
+	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h ia64/sysv4.h ia64/netbsd.h"
+	target_cpu_default="MASK_GNU_AS|MASK_GNU_LD"
+	tmake_file="${tmake_file} ia64/t-ia64"
+	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o crtfastmath.o"
+	;;
 ia64*-*-freebsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h ${fbsd_tm_file} ia64/sysv4.h ia64/freebsd.h"
 	target_cpu_default="MASK_GNU_AS|MASK_GNU_LD"
@@ -1401,6 +1416,7 @@ m68010-*-netbsdelf* | m68k*-*-netbsdelf*)
 	case ${target} in
 	m68010*)
 		target_cpu_default="0"
+		tmake_file=m68k/t-m68kelf
 		;;
 	*)
 		target_cpu_default="MASK_68020|MASK_68881|MASK_BITFIELD"
@@ -2186,6 +2202,7 @@ sparc64-*-netbsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h netbsd.h netbsd-elf.h sparc/netbsd-elf.h"
 	extra_options="${extra_options} sparc/long-double-switch.opt"
 	tmake_file="${tmake_file} sparc/t-netbsd64"
+	with_cpu=ultrasparc
 	;;
 strongarm-*-elf*)
 	tm_file="arm/strongarm-elf.h dbxelf.h elfos.h arm/unknown-elf.h arm/elf.h arm/aout.h arm/arm.h"
