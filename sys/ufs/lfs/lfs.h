@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.105 2006/05/04 04:22:55 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.106 2006/05/12 23:36:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
 #define LFS_INVERSE_MAX_BYTES(n) (((n) + 10 * PAGE_SIZE) << 2)
 #define LFS_WAIT_BYTES	    ((bufmem_lowater >> 1) - (bufmem_lowater >> 3) - 10 * PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
-#define SIZEOF_DIROP(fs)	((fs)->lfs_fsize + 2 * DINODE1_SIZE)
+#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + DINODE1_SIZE))
 #define LFS_MAX_FSDIROP(fs)						\
 	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
 	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
@@ -347,9 +347,9 @@ struct lfid {
 			  !((vp)->v_flag & VONWORKLST) &&		\
 			  VTOI(vp)->i_lfs_nbtree == 0)
 
-/* XXX Shouldn't we use v_numoutput instead? */
-#define WRITEINPROG(vp) (!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&		\
-		!(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
+#define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
+	(!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&				\
+	 !(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
 
 
 /*
@@ -987,6 +987,7 @@ struct lfs_inode_ext {
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
 #define LFSI_NO_GOP_WRITE 0x01
+#define LFSI_DELETED      0x02
 	u_int32_t lfs_iflags;           /* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
