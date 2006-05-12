@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2002/09/18 14:00:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.24 2006/05/12 03:29:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,3 +13,7 @@ MAN=	crontab.1 crontab.5
 .PATH: ${NETBSDSRCDIR}/usr.sbin/cron
 
 .include <bsd.prog.mk>
+
+.if ${HAVE_GCC} == 4
+COPTS.misc.c+=	-Wno-pointer-sign
+.endif
