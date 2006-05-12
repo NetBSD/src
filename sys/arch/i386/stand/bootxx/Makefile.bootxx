@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.19 2005/12/11 12:17:48 christos Exp $
+# $NetBSD: Makefile.bootxx,v 1.20 2006/05/12 01:23:51 mrg Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -57,7 +57,11 @@ LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 CPPFLAGS+= -DBOOT_ELF64
 .else
+.if ${HAVE_GCC} == 3
 CPUFLAGS=  -mcpu=i386
+.else
+CPUFLAGS=  -march=i386 -mtune=i386
+.endif
 .endif
 
 COPTS+=    -ffreestanding
