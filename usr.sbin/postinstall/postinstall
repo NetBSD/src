@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.11 2006/05/12 07:16:47 tron Exp $
+# $NetBSD: postinstall,v 1.12 2006/05/12 12:43:28 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -591,6 +591,19 @@ do_hosts()
 }
 
 #
+#	iscsi
+#
+additem iscsi "/etc/iscsi is populated"
+do_iscsi()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_iscsi  fix|check"
+
+	populate_dir ${op} true ${SRC_DIR}/etc/iscsi ${DEST_DIR}/etc/iscsi 600 auths
+	populate_dir ${op} true ${SRC_DIR}/etc/iscsi ${DEST_DIR}/etc/iscsi 644 targets
+	return $?
+}
+
+#
 #	makedev
 #
 additem makedev "/dev/MAKEDEV being up to date"
@@ -643,7 +656,6 @@ do_named()
 #
 #	pam
 #
-# disabled for now
 additem pam "/etc/pam.d is populated"
 do_pam()
 {
