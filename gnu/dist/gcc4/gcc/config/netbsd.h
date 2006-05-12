@@ -28,6 +28,11 @@ Boston, MA 02110-1301, USA.  */
       builtin_assert ("system=bsd");		\
       builtin_assert ("system=unix");		\
       builtin_assert ("system=NetBSD");		\
+      if (flag_pic)				\
+        {					\
+          builtin_define ("__PIC__");		\
+          builtin_define ("__pic__");		\
+        }					\
     }						\
   while (0)
 
@@ -47,15 +52,19 @@ Boston, MA 02110-1301, USA.  */
 #undef GPLUSPLUS_INCLUDE_DIR
 #define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
 
+#undef GPLUSPLUS_BACKWARD_INCLUDE_DIR
+#define GPLUSPLUS_BACKWARD_INCLUDE_DIR "/usr/include/g++/backward"
+
 #undef GCC_INCLUDE_DIR
 #define GCC_INCLUDE_DIR "/usr/include"
 
 #undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS			\
-  {						\
-    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
-    { GCC_INCLUDE_DIR, "GCC", 0, 0 },		\
-    { 0, 0, 0, 0 }				\
+#define INCLUDE_DEFAULTS				\
+  {							\
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },		\
+    { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1 },	\
+    { GCC_INCLUDE_DIR, "GCC", 0, 0 },			\
+    { 0, 0, 0, 0 }					\
   }
 
 /* Under NetBSD, the normal location of the compiler back ends is the
@@ -69,6 +78,15 @@ Boston, MA 02110-1301, USA.  */
 
 #undef STANDARD_STARTFILE_PREFIX
 #define STANDARD_STARTFILE_PREFIX	"/usr/lib/"
+
+#undef TOOLDIR_BASE_PREFIX
+#define TOOLDIR_BASE_PREFIX "/usr/"
+
+#undef STANDARD_BINDIR_PREFIX
+#define STANDARD_BINDIR_PREFIX "/usr/bin"
+
+#undef STANDARD_LIBEXEC_PREFIX
+#define STANDARD_LIBEXEC_PREFIX "/usr/libexec"
 
 #endif /* NETBSD_NATIVE */
 
@@ -122,25 +140,13 @@ Boston, MA 02110-1301, USA.  */
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
 
-/* Provide a LIBGCC_SPEC appropriate for NetBSD.  We also want to exclude
-   libgcc with -symbolic.  */
+/* Don't provide a LIBGCC_SPEC for NetBSD as the default
+   is correct. In the --disabled-shared case -lgcc is perfect.  */
 
-#ifdef NETBSD_NATIVE
-#define NETBSD_LIBGCC_SPEC	\
-  "%{!symbolic:			\
-     %{!shared:			\
-       %{!p:			\
-	 %{!pg: -lgcc}}}	\
-     %{shared: -lgcc_pic}	\
-     %{p: -lgcc_p}		\
-     %{pg: -lgcc_p}}"
-#else
-#define NETBSD_LIBGCC_SPEC "%{!shared:%{!symbolic: -lgcc}}"
+#if defined(NETBSD_TOOLS) || defined(NETBSD_NATIVE)
+#define	LIBGCC_PICSUFFIX	"_pic"
 #endif
 
-#undef LIBGCC_SPEC
-#define LIBGCC_SPEC NETBSD_LIBGCC_SPEC
-  
 /* Pass -cxx-isystem to cc1/cc1plus.  */
 #define NETBSD_CC1_AND_CC1PLUS_SPEC		\
   "%{cxx-isystem}"
