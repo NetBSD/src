@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.310 2006/04/30 13:54:16 rpaulo Exp $
+#	$NetBSD: NetBSD.dist,v 1.311 2006/05/12 01:57:59 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -250,6 +250,8 @@
 ./usr/include/g++/backward
 ./usr/include/g++/ext
 ./usr/include/g++/bits
+./usr/include/g++/tr1
+./usr/include/g++/debug
 ./usr/include/gssapi
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
