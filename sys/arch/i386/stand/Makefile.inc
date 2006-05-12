@@ -1,3 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/02/17 20:03:06 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2006/05/12 01:23:51 mrg Exp $
 
 BINDIR=	/usr/mdec
+
+CFLAGS+=	-Wno-pointer-sign
