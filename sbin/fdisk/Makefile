@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2006/05/11 23:16:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.36 2006/05/12 01:18:25 mrg Exp $
 
 PROG=	fdisk 
 SRCS=	fdisk.c
@@ -22,6 +22,8 @@ LDADD+=	-lutil
 .include <bsd.subdir.mk>
 .endif
 
+.if !defined(HOSTPROGNAME)
 .if ${HAVE_GCC} == 4
 COPTS.fdisk.c+=	-Wno-pointer-sign
+.endif
 .endif
