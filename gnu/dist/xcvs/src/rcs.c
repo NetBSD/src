@@ -3487,6 +3487,8 @@ RCS_isdead (rcs, tag)
     Node *p;
     RCSVers *version;
 
+    assert (rcs != NULL);
+
     if (rcs->flags & PARTIAL)
 	RCS_reparsercsfile (rcs, (FILE **) NULL, (struct rcsbuffer *) NULL);
 

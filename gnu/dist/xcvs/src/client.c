@@ -3277,7 +3277,7 @@ handle_mt (args, len)
 			cvs_output ("\n", 1);
 			free (updated_fname);
 		    }
-		    updated_fname = text ? xstrdup (text) : NULL;
+		    updated_fname = xstrdup (text);
 		}
 		/* Swallow all other tags.  Either they are extraneous
 		   or they reflect future extensions that we can
@@ -3288,11 +3288,11 @@ handle_mt (args, len)
 		if (strcmp (tag, "conflicts") == 0)
 		    importmergecmd.conflicts = text ? atoi (text) : -1;
 		else if (strcmp (tag, "mergetag1") == 0)
-		    importmergecmd.mergetag1 = text ? xstrdup (text) : NULL;
+		    importmergecmd.mergetag1 = xstrdup (text);
 		else if (strcmp (tag, "mergetag2") == 0)
-		    importmergecmd.mergetag2 = text ? xstrdup (text) : NULL;
+		    importmergecmd.mergetag2 = xstrdup (text);
 		else if (strcmp (tag, "repository") == 0)
-		    importmergecmd.repository = text ? xstrdup (text) : NULL;
+		    importmergecmd.repository = xstrdup (text);
 		/* Swallow all other tags.  Either they are text for
                    which we are going to print our own version when we
                    see -importmergecmd, or they are future extensions

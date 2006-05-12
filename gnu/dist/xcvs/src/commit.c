@@ -2127,7 +2127,7 @@ checkaddfile (file, repository, tag, options, rcsnode)
 	    rcs = RCS_parse (file, repository);
 	    if (rcs == NULL)
 	    {
-		error (0, 0, "could not read %s", rcs->path);
+		error (0, 0, "could not read %s in %s", file, repository);
 		goto out;
 	    }
 	    *rcsnode = rcs;
