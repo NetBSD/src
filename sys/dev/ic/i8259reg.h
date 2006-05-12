@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259reg.h,v 1.2 2001/06/21 18:57:04 thorpej Exp $	*/
+/*	$NetBSD: i8259reg.h,v 1.3 2006/05/12 10:58:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,9 +83,9 @@
 
 #define	PIC_OCW2	0x00	/* Operational Control Word 2 (w) */
 #define	OCW2_SELECT	(0)		/* select OCW2 */
-#define	OCW3_EOI	(1U << 5)	/* EOI */
-#define	OCW3_SL		(1U << 6)	/* specific */
-#define	OCW3_R		(1U << 7)	/* rotate */
+#define	OCW2_EOI	(1U << 5)	/* EOI */
+#define	OCW2_SL		(1U << 6)	/* specific */
+#define	OCW2_R		(1U << 7)	/* rotate */
 #define	OCW2_ILS(x)	((x) << 0)	/* interrupt level select */
 
 #define	PIC_OCW3	0x00	/* Operational Control Word 3 (r/w) */
