@@ -41,6 +41,7 @@ Boston, MA 02110-1301, USA.  */
 #define gen_rtx(args...) 1
 #define gen_rtx_MEM(args...) 1
 #define gen_rtx_REG(args...) 1
+#undef rtx
 #define rtx int
 
 #if ! defined (STRUCT_VALUE) || STRUCT_VALUE == 0
