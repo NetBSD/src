@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.24.4.5 2006/05/12 14:50:52 elad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.24.4.6 2006/05/12 23:06:36 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.24.4.5 2006/05/12 14:50:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.24.4.6 2006/05/12 23:06:36 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -791,7 +791,8 @@ int netbsd32_sys___fhstat30(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag)))
 		return (error);
 
 	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
