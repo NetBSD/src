@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.32 2005/04/09 13:12:31 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.33 2006/05/12 07:19:43 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -465,7 +465,8 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	const char *def, char *val, size_t max_chars, ...)
 {
 	va_list ap;
-	WINDOW *win, *svmsg, *sv_win;
+	WINDOW *win
+	WINDOW *svmsg = NULL, *sv_win = NULL; /* XXX -Wuninitialized [many] */
 	int maxx, maxy;
 	int msg_flags = MSG_PROMPT_ECHO | MSG_PROMPT_HIDE_DFLT;
 
