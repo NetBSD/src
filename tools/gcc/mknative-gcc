@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.15 2004/12/10 13:58:11 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.16 2006/05/12 02:12:37 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -18,12 +18,13 @@ _GNU_DIST=`cd ${_VPATH}; pwd`
 ##### gnu/lib/crtstuff #####
 
 get_crtstuff () {
-	mkdir -p $_TOP/gnu/lib/crtstuff3/arch
+	_subdir="$1"
+	mkdir -p $_TOP/gnu/lib/$_subdir/arch
 
 	getvars gcc/Makefile \
 		INCLUDES CRTSTUFF_CFLAGS CRTSTUFF_T_CFLAGS \
 		tm_defines xm_file xm_defines \
-		| write_mk gnu/lib/crtstuff3/arch/$MACHINE_ARCH.mk
+		| write_mk gnu/lib/$_subdir/arch/$MACHINE_ARCH.mk
 }
 
 ##### gnu/lib/libg2c #####
@@ -49,59 +50,90 @@ get_libg2c () {
 ##### gnu/lib/libgcc #####
 
 get_libgcc () {
-	mkdir -p $_TOP/gnu/lib/libgcc3/arch
+	_subdir="$1"
+	mkdir -p $_TOP/gnu/lib/lib$_subdir/arch
+
+	case "$_subdir" in
+	gcc3)
+		_extravars="USE_COLLECT2 LIB2FUNCS_1 LIB2FUNCS_2 xm_file"
+		_archsubdir=""
+		;;
+	gcc4)
+		_extravars="COLLECT2 UNWIND_H xm_include_list"
+		_archsubdir=""
+		;;
+	esac
 
 	# DPBIT, FPBIT only used on mn10[23]00, we don't need them.
 	# XXX we should probably grab everything Just In Case for
 	# the future.
-	getvars gcc/Makefile \
-		INCLUDES LIB2ADD LIB2ADDEH LIB2FUNCS_1 LIB2FUNCS_2 \
-		LIB1ASMFUNCS LIB1ASMSRC \
-		LIB2_DIVMOD_FUNCS LIB2FUNCS_ST \
-		LIBGCC2_CFLAGS USE_COLLECT2 \
-		SHLIB_MKMAP SHLIB_MKMAP_OPTS \
-		SHLIB_MAPFILES SHLIB_NM_FLAGS \
-		EXTRA_HEADERS \
-		tm_defines xm_file xm_defines \
-		| write_mk gnu/lib/libgcc3/arch/$MACHINE_ARCH.mk
+	{
+		getvars gcc/Makefile \
+			INCLUDES LIB2ADD LIB2ADDEH \
+			LIB1ASMFUNCS LIB1ASMSRC \
+			LIB2_DIVMOD_FUNCS LIB2FUNCS_ST \
+			LIBGCC2_CFLAGS \
+			SHLIB_MKMAP SHLIB_MKMAP_OPTS \
+			SHLIB_MAPFILES SHLIB_NM_FLAGS \
+			EXTRA_HEADERS xm_defines \
+			tm_defines ${_extravars}
+	} | write_mk gnu/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
 }
 
-##### gnu/usr.bin/gcc3/libiberty #####
+##### gnu/usr.bin/gcc[34]/libiberty #####
 
-get_gcc3_libiberty () {
-	mkdir -p $_TOP/gnu/usr.bin/gcc3/libiberty/arch/$MACHINE_ARCH
+get_gcc_libiberty () {
+	_subdir="$1"
+	mkdir -p $_TOP/gnu/usr.bin/$_subdir/libiberty/arch/$MACHINE_ARCH
 
 	getvars libiberty/Makefile \
 		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
-		| write_mk gnu/usr.bin/gcc3/libiberty/defs.mk
+		| write_mk gnu/usr.bin/$_subdir/libiberty/defs.mk
 
-	write_c gnu/usr.bin/gcc3/libiberty/arch/$MACHINE_ARCH/config.h \
+	write_c gnu/usr.bin/$_subdir/libiberty/arch/$MACHINE_ARCH/config.h \
 		<$_TMPDIR/libiberty/config.h
 }
 
 ##### gnu/lib/libobjc #####
 
 get_libobjc () {
-	mkdir -p $_TOP/gnu/lib/libobjc3
+	_subdir="$1"
+	mkdir -p $_TOP/gnu/lib/$_subdir
 
-	getvars $_PLATFORM/libobjc/Makefile \
-		ALL_CFLAGS INCLUDES OBJS OBJC_H \
-		| sed "s,$_GNU_DIST,\${GNUHOSTDIST},g" \
-		| write_mk gnu/lib/libobjc3/defs.mk
+	{
+		getvars $_PLATFORM/libobjc/Makefile \
+			ALL_CFLAGS INCLUDES OBJS OBJC_H \
+			| sed "s,$_GNU_DIST,\${GNUHOSTDIST},g"
+		getvars gcc/Makefile UNWIND_H
+	} | write_mk gnu/lib/$_subdir/defs.mk
 }
 
 ##### gnu/lib/libstdc++-v3 #####
 
 get_libstdcxx_v3 () {
-	mkdir -p $_TOP/gnu/lib/libstdc++-v3/arch/$MACHINE_ARCH
+	_subdir="$1"
+	mkdir -p $_TOP/gnu/lib/$_subdir/arch/$MACHINE_ARCH
 
 	# build files
-	for h in gthr.h gthr-single.h gthr-posix.h gthr-default.h c++config.h; do
-		write_c gnu/lib/libstdc++-v3/arch/$MACHINE_ARCH/$h \
+	for h in gthr.h gthr-single.h gthr-posix.h gthr-tpf.h gthr-default.h c++config.h c++allocator.h cxxabi_tweaks.h; do
+		write_c gnu/lib/$_subdir/arch/$MACHINE_ARCH/$h \
 			<$_TMPDIR/$_PLATFORM/libstdc++-v3/include/$_PLATFORM/bits/$h
 	done
 
-	write_c gnu/lib/libstdc++-v3/arch/$MACHINE_ARCH/config.h \
+	case ${_subdir} in
+	*4)
+		_src_CC_files="atomicity_file CCODECVT_CC CCOLLATE_CC CCTYPE_CC CMESSAGES_CC CMONEY_CC CNUMERIC_CC CTIME_CC CLOCALE_CC BASIC_FILE_CC"
+		_headers1="host_headers debug_headers tr1_headers c_compatibility_headers_extra"
+		_headers2="thread_host_headers host_headers_extra"
+		;;
+	*)
+		_src_CC_files=""
+		_headers1="target_headers"
+		_headers2="thread_target_headers target_headers_extra"
+		;;
+	esac
+
+	write_c gnu/lib/$_subdir/arch/$MACHINE_ARCH/config.h \
 		<$_TMPDIR/$_PLATFORM/libstdc++-v3/config.h
 
 	{
@@ -117,69 +149,113 @@ get_libstdcxx_v3 () {
 
 		# src
 		getvars $_PLATFORM/libstdc++-v3/src/Makefile \
-			sources SECTION_FLAGS | sed 's/^G_sources=/G_SRC_SOURCES=/'
+			sources $_src_CC_files SECTION_FLAGS | sed 's/^G_sources=/G_SRC_SOURCES=/'
 
 		# include
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
 			c_base_headers_rename std_headers_rename
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
 			bits_headers backward_headers ext_headers c_base_headers_extra \
-			target_headers | sed 's#/[^ 	][^ 	]*/##g'
+			$_headers1 | sed 's#/[^ 	][^ 	]*/##g'
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
-			thread_target_headers target_headers_extra | sed 's#\./[^ 	][^ 	]*/##g'
-	} | write_mk gnu/lib/libstdc++-v3/arch/$MACHINE_ARCH/defs.mk
+			$_headers2 | sed 's#\./[^ 	][^ 	]*/##g'
+
+		getvars gcc/Makefile UNWIND_H
+	} | write_mk gnu/lib/$_subdir/arch/$MACHINE_ARCH/defs.mk
 }
 
 ##### gnu/usr.bin/gcc3 #####
 
 get_gcc () {
-	mkdir -p $_TOP/gnu/usr.bin/gcc3/arch/$MACHINE_ARCH
+	_subdir="$1"
+	mkdir -p $_TOP/gnu/usr.bin/$_subdir/arch/$MACHINE_ARCH
+	mkdir -p $_TOP/gnu/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH
 
 	{
 		getvars gcc/Makefile \
+			BUILD_EARLY_SUPPORT BUILD_ERRORS BUILD_PRINT \
+			BUILD_RTL BUILD_SUPPORT BUILD_VARRAY | \
+		    sed -e 's#build/errors.o#build-errors.o#g' \
+			-e 's#build/print-rtl.o#build-print-rtl.o#g' \
+			-e 's#build/rtl.o#build-rtl.o#g' \
+			-e 's#build/varray.o#build-varray.o#g' \
+			-e 's#build/##g'
+		getvars gcc/Makefile \
 			ALL_CFLAGS ALL_CPPFLAGS C_AND_OBJC_OBJS C_OBJS CCCP_OBJS \
-			GCOV_OBJS PROTO_OBJS HOST_PRINT HOST_RTL HOST_RTLANAL \
-			HOST_SUPPORT HOST_EARLY_SUPPORT HOST_ERRORS HOST_VARRAY \
+			GCOV_OBJS PROTO_OBJS TM_H ALL_OPT_FILES \
 			INCLUDES md_file OBJC_OBJS OBJS out_file version \
-			BUILD_PREFIX RTL_H TREE_H HCONFIG_H BASIC_BLOCK_H GCC_H \
+			BUILD_PREFIX RTL_H TREE_H BASIC_BLOCK_H GCC_H \
 			GTFILES_SRCDIR GTFILES_FILES_FILES GTFILES_FILES_LANGS \
 			GTFILES GTFILES_LANG_DIR_NAMES \
 			tm_defines host_xm_file host_xm_defines tm_p_file \
-			target_cpu_default \
-			LIBCPP_OBJS LIBCPP_H \
-			lang_specs_files
+			target_cpu_default tm_file_list build_xm_include_list \
+			lang_specs_files tm_p_include_list
 		getvars gcc/Makefile \
 			LIB2ADDEHDEP | sed 's/unwind.inc//'
 		getvars gcc/Makefile \
 			CXX_OBJS CXX_C_OBJS | sed 's/cp\///g'
 		getvars gcc/Makefile \
 			F77_OBJS | sed 's/f\///g'
+		getvars libcpp/Makefile \
+			libcpp_a_OBJS
 		getvars gcc/Makefile \
-			ENABLE_SHARED SHLIB_LINK SHLIB_MULTILIB
-	} | write_mk gnu/usr.bin/gcc3/arch/$MACHINE_ARCH/defs.mk
+			ENABLE_SHARED
+# XXXX?  what is going on here?
+#		getvars gcc/Makefile \
+#			SHLIB_LINK SHLIB_MULTILIB
+		echo G_SHLIB_LINK="$CC -shared"
+		echo G_SHLIB_MULTILIB=.
+	} | write_mk gnu/usr.bin/$_subdir/arch/$MACHINE_ARCH/defs.mk
 
-	for f in auto-host configargs cs-hconfig gencheck hconfig gthr-default; do
-		write_c gnu/usr.bin/gcc3/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
+	case "$_subdir" in
+	gcc3)
+		hfiles='auto-host configargs cs-hconfig gencheck hconfig gthr-default'
+		;;
+	gcc4)
+		write_c gnu/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH/config.h <$_TMPDIR/libcpp/config.h
+		hfiles='auto-host configargs gencheck gthr-default tm bconfig config'
+		;;
+	esac
+	for f in $hfiles; do
+		write_c gnu/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 	done
 }
 
 ##### main #####
 
-case $1 in
-libgcc)	# .mk and .h files for libgcc bootstrap (from host build)
-	get_libgcc
-	get_crtstuff
+case "$1" in
+# .mk and .h files for libgcc bootstrap (from host build)
+libgcc)
+	get_libgcc gcc3
+	get_crtstuff crtstuff3
+	exit 0
+	;;
+
+libgcc4)
+	get_libgcc gcc4
+	get_crtstuff crtstuff4
+	exit 0
+	;;
+
+# gcc files
+gcc4)
+	get_gcc gcc4
+	get_libgcc gcc4
+	get_crtstuff crtstuff4
+	get_gcc_libiberty gcc4
+	get_libobjc libobjc4
+	get_libstdcxx_v3 libstdc++-v3_4
 	exit 0
 	;;
 
 gcc3)
-	get_gcc
+	get_gcc gcc3
 	get_libg2c
-	get_libgcc
-	get_crtstuff
-	get_gcc3_libiberty
-	get_libobjc
-	get_libstdcxx_v3
+	get_libgcc gcc4
+	get_crtstuff crtstuff3
+	get_gcc_libiberty gcc4
+	get_libobjc libobjc3
+	get_libstdcxx_v3 libstdc++-v3
 	exit 0
 	;;
 
