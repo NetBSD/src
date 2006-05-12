@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.177 2006/05/01 19:47:29 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.178 2006/05/12 23:36:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.177 2006/05/01 19:47:29 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.178 2006/05/12 23:36:11 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -290,13 +290,24 @@ lfs_vflush(struct vnode *vp)
 	lfs_seglock(fs, SEGM_SYNC);
 
 	/* If we're supposed to flush a freed inode, just toss it */
-	/* XXX - seglock, so these buffers can't be gathered, right? */
-	if (ip->i_mode == 0) {
+	if (ip->i_lfs_iflags & LFSI_DELETED) {
 		DLOG((DLOG_VNODE, "lfs_vflush: ino %d freed, not flushing\n",
 		      ip->i_number));
 		s = splbio();
+		/* Drain v_numoutput */
+		simple_lock(&global_v_numoutput_slock);
+		while (vp->v_numoutput > 0) {
+			vp->v_flag |= VBWAIT;
+			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf4", 0,
+				&global_v_numoutput_slock);
+		}
+		simple_unlock(&global_v_numoutput_slock);
+		KASSERT(vp->v_numoutput == 0);
+	
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
+
+			KASSERT((bp->b_flags & B_GATHERED) == 0);
 			if (bp->b_flags & B_DELWRI) { /* XXX always true? */
 				fs->lfs_avail += btofsb(fs, bp->b_bcount);
 				wakeup(&fs->lfs_avail);
@@ -321,6 +332,9 @@ lfs_vflush(struct vnode *vp)
 		DLOG((DLOG_VNODE, "lfs_vflush: done not flushing ino %d\n",
 		      ip->i_number));
 		lfs_segunlock(fs);
+
+		KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
+
 		return 0;
 	}
 
@@ -330,6 +344,21 @@ lfs_vflush(struct vnode *vp)
 		fs->lfs_flushvp = NULL;
 		KASSERT(fs->lfs_flushvp_fakevref == 0);
 		lfs_segunlock(fs);
+
+		/* Make sure that any pending buffers get written */
+		s = splbio();
+		simple_lock(&global_v_numoutput_slock);
+		while (vp->v_numoutput > 0) {
+			vp->v_flag |= VBWAIT;
+			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf3", 0,
+				&global_v_numoutput_slock);
+		}
+		simple_unlock(&global_v_numoutput_slock);
+		splx(s);
+	
+		KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
+		KASSERT(vp->v_numoutput == 0);
+
 		return error;
 	}
 	sp = fs->lfs_sp;
@@ -435,6 +464,9 @@ lfs_vflush(struct vnode *vp)
 	}
 	simple_unlock(&global_v_numoutput_slock);
 	splx(s);
+
+	KASSERT(LIST_FIRST(&vp->v_dirtyblkhd) == NULL);
+	KASSERT(vp->v_numoutput == 0);
 
 	fs->lfs_flushvp = NULL;
 	KASSERT(fs->lfs_flushvp_fakevref == 0);
@@ -823,7 +855,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		 * The same is true of the Ifile since checkpoints assume
 		 * that all valid Ifile blocks are written.
 		 */
-		if (IS_FLUSHING(fs,vp) || vp == fs->lfs_ivnode) {
+		if (IS_FLUSHING(fs, vp) || vp == fs->lfs_ivnode) {
 			lfs_gather(fs, sp, vp, lfs_match_data);
 			/*
 			 * Don't call VOP_PUTPAGES: if we're flushing,
