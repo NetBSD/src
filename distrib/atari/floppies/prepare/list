@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 2003/01/19 12:26:49 tsutsui Exp $
+#	$NetBSD: list,v 1.4 2006/05/12 05:50:30 jdc Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -32,6 +32,7 @@ PROG	sbin/umount
 
 PROG	usr/bin/gzip	usr/bin/gzcat usr/bin/gunzip
 PROG	usr/bin/sed
+PROG	usr/bin/sort
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
@@ -44,3 +45,5 @@ SPECIAL	umount		srcdir	distrib/utils/x_umount
 # The installation scripts
 COPY	${CURDIR}/install.md		install.md
 COPY	${CURDIR}/install.sh		install		555
+CMD	sed "/^VERSION=/s/=.*/=${DISTRIBREV}/" < ${CURDIR}/../../../miniroot/install.sub > install.sub
+MTREE	./install.sub	type=file uname=root gname=wheel mode=0444
