@@ -396,7 +396,7 @@ case "${target}" in
     ;;
   *-*-netbsd*)
     # Skip some stuff on all NetBSD configurations.
-    noconfigdirs="$noconfigdirs target-newlib target-libiberty target-libgloss"
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss"
 
     # Skip some stuff that's unsupported on some NetBSD configurations.
     case "${target}" in
