@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 2006/03/15 18:12:03 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.75 2006/05/12 05:42:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2006/03/15 18:12:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2006/05/12 05:42:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -165,8 +165,7 @@ int	trapdebug = 0;
  */
 /*ARGSUSED*/
 void
-trap(frame)
-	struct trapframe frame;
+trap(struct trapframe frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -486,8 +485,7 @@ out:
 }
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 
@@ -505,8 +503,7 @@ child_return(arg)
  * Start a new LWP.
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int error;
 	ucontext_t *uc = arg;
@@ -530,8 +527,7 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(l)
-	struct lwp *l;
+upcallret(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 
