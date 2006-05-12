@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.20.4.2 2006/03/10 14:54:50 elad Exp $	*/
+/*	$NetBSD: pcons.c,v 1.20.4.3 2006/05/12 23:06:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.20.4.2 2006/03/10 14:54:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.20.4.3 2006/05/12 23:06:36 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.20.4.2 2006/03/10 14:54:50 elad Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>

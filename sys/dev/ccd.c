@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.108.4.3 2006/05/11 23:28:05 elad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.108.4.4 2006/05/12 23:06:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.108.4.3 2006/05/11 23:28:05 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.108.4.4 2006/05/12 23:06:36 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1000,7 +1000,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (ENXIO);
 	cs = &ccd_softc[unit];
 
-	uc = (l != NULL) ? l->l_proc->p_ucred : NOCRED;
+	uc = (l != NULL) ? l->l_proc->p_cred : NOCRED;
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {

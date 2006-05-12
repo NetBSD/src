@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.95.2.5 2006/05/11 23:31:35 elad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.95.2.6 2006/05/12 23:06:36 elad Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.95.2.5 2006/05/11 23:31:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.95.2.6 2006/05/12 23:06:36 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1411,7 +1411,8 @@ ip6_ctloutput(op, so, level, optname, mp)
 
 	optlen = m ? m->m_len : 0;
 	error = optval = 0;
-	privileged = (p == 0 || suser(p->p_ucred, &p->p_acflag)) ? 0 : 1;
+	privileged = (p == 0 || kauth_authorize_generic(p->p_cred,
+	    KAUTH_GENERIC_ISSUSER, &p->p_acflag)) ? 0 : 1;
 	uproto = (int)so->so_proto->pr_protocol;
 
 	if (level == IPPROTO_IPV6) {
