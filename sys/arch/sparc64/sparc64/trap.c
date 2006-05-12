@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.129.2.3 2006/04/19 02:33:49 elad Exp $ */
+/*	$NetBSD: trap.c,v 1.129.2.4 2006/05/12 23:06:36 elad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129.2.3 2006/04/19 02:33:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129.2.4 2006/05/12 23:06:36 elad Exp $");
 
 #define NEW_FPSTATE
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129.2.3 2006/04/19 02:33:49 elad Exp $");
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 

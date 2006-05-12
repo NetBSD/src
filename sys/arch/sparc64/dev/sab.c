@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.25.4.3 2006/04/19 02:33:45 elad Exp $	*/
+/*	$NetBSD: sab.c,v 1.25.4.4 2006/05/12 23:06:36 elad Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.4.3 2006/04/19 02:33:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.4.4 2006/05/12 23:06:36 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.25.4.3 2006/04/19 02:33:45 elad Exp $");
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
