@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.884 2006/05/11 21:06:41 gdamore Exp $
+# $NetBSD: mi,v 1.885 2006/05/13 07:17:54 mrg Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -13,7 +13,6 @@
 ./usr/share/info/diff.info			man-util-info		info
 ./usr/share/info/dir				man-info-share		info
 ./usr/share/info/g++FAQ.info			man-obsolete		obsolete
-./usr/share/info/g77.info			man-fortran-info	info
 ./usr/share/info/gcc.info			man-c-info		info
 ./usr/share/info/gdb.info			man-debug-info		gdb,info
 ./usr/share/info/gdbint.info			man-debug-info		gdb,info
