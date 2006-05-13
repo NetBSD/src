@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.2 2006/03/27 22:26:28 agc Exp $ */
+/* $NetBSD: conffile.c,v 1.3 2006/05/13 22:50:24 christos Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -200,14 +200,15 @@ safe_write_ent(FILE *fp, conffile_t *sp, ent_t *ep)
 
 /* report an error and clear up */
 static int
-report_error(int fd, char *name, const char *fmt, ...)
+report_error(FILE *fp, char *name, const char *fmt, ...)
 {
 	va_list	vp;
 
 	va_start(vp, fmt);
 	(void) vfprintf(stderr, fmt, vp);
 	va_end(vp);
-	(void) close(fd);
+	if (fp)
+		(void) fclose(fp);
 	(void) unlink(name);
 	return 0;
 }
@@ -235,27 +236,27 @@ conffile_putent(conffile_t *sp, int f, char *val, char *newent)
 		}
 		if (iscomment(sp, from)) {
 			if (!safe_write(fp, e.buf, strlen(e.buf))) {
-				return report_error(fd, name, "Short write 1 to `%s' (%s)\n", name, strerror(errno));
+				return report_error(fp, name, "Short write 1 to `%s' (%s)\n", name, strerror(errno));
 			}
 		}
 		(void) split_split(sp, &e, from);
 		if (val != NULL && f < e.sv.c && strcmp(val, e.sv.v[f]) == 0) {
 			/* replace it */
 			if (!safe_write(fp, newent, strlen(newent))) {
-				return report_error(fd, name, "Short write 2 to `%s' (%s)\n", name, strerror(errno));
+				return report_error(fp, name, "Short write 2 to `%s' (%s)\n", name, strerror(errno));
 			}
 		} else {
 			if (!safe_write(fp, e.buf, strlen(e.buf))) {
-				return report_error(fd, name, "Short write 3 to `%s' (%s)\n", name, strerror(errno));
+				return report_error(fp, name, "Short write 3 to `%s' (%s)\n", name, strerror(errno));
 			}
 		}
 	}
 	if (val == NULL && !safe_write(fp, newent, strlen(newent))) {
-		return report_error(fd, name, "Short write 4 to `%s' (%s)\n", name, strerror(errno));
+		return report_error(fp, name, "Short write 4 to `%s' (%s)\n", name, strerror(errno));
 	}
-	(void) close(fd);
+	(void) fclose(fp);
 	if (rename(name, sp->name) < 0) {
-		return report_error(fd, name, "can't rename %s to %s (%s)\n", name, sp->name, strerror(errno));
+		return report_error(NULL, name, "can't rename %s to %s (%s)\n", name, sp->name, strerror(errno));
 	}
 	return 1;
 }
