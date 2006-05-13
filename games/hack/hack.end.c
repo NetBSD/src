@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.6 2003/04/02 18:36:36 jsm Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.7 2006/05/13 22:45:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.6 2003/04/02 18:36:36 jsm Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.7 2006/05/13 22:45:11 christos Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -477,6 +477,7 @@ topten()
 		if (!done_stopprint)
 			(void) outentry(0, t0, 1);
 	(void) fclose(rfile);
+	free(t0);
 unlock:
 	(void) unlink(reclock);
 }
