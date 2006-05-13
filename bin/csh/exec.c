@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.22 2005/02/17 16:07:53 xtraeme Exp $ */
+/* $NetBSD: exec.c,v 1.23 2006/05/13 21:22:32 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.22 2005/02/17 16:07:53 xtraeme Exp $");
+__RCSID("$NetBSD: exec.c,v 1.23 2006/05/13 21:22:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ texec(Char *sf, Char **st)
     Char *lastsh[2], **vp, *st0, **ost;
     char *f, **t;
     int fd;
-    unsigned char c;
+    unsigned char c = '\0';
 
     /* The order for the conversions is significant */
     t = short2blk(st);
