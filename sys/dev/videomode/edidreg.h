@@ -1,4 +1,4 @@
-/*	$NetBSD: edidreg.h,v 1.1 2006/05/11 01:49:53 gdamore Exp $	*/
+/*	$NetBSD: edidreg.h,v 1.2 2006/05/13 00:39:19 gdamore Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -126,7 +126,7 @@
 #define	EDID_CHROMA_WHITEY(ptr)	(_CHROMA(ptr, 26, 0, 34))
 
 /* relative to edid block */
-#define	EDID_EST_TIMING(ptr)		(((ptr)[35] << 8) | (ptr)[35])
+#define	EDID_EST_TIMING(ptr)		(((ptr)[35] << 8) | (ptr)[36])
 #define	EDID_EST_TIMING_720_400_70	0x8000	/* 720x400 @ 70Hz */
 #define	EDID_EST_TIMING_720_400_88	0x4000	/* 720x400 @ 88Hz */
 #define	EDID_EST_TIMING_640_480_60	0x2000	/* 640x480 @ 60Hz */
