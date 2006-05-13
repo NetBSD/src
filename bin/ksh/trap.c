@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.7 2006/05/13 21:54:13 christos Exp $	*/
 
 /*
  * signal handling
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: trap.c,v 1.6 2004/07/07 19:20:09 mycroft Exp $");
+__RCSID("$NetBSD: trap.c,v 1.7 2006/05/13 21:54:13 christos Exp $");
 #endif
 
 
@@ -316,11 +316,14 @@ settrap(p, s)
 
 	if (p->trap)
 		afree(p->trap, APERM);
-	p->trap = str_save(s, APERM); /* handles s == 0 */
-	p->flags |= TF_CHANGED;
-	f = !s ? SIG_DFL : s[0] ? trapsig : SIG_IGN;
-
-	p->flags |= TF_USER_SET;
+	p->flags |= TF_CHANGED|TF_USER_SET;
+	if (s) {
+		p->trap = str_save(s, APERM);
+		f = s[0] ? trapsig : SIG_IGN;
+	} else {
+		p->trap = NULL;
+		f = SIG_DFL;
+	}
 	if ((p->flags & (TF_DFL_INTR|TF_FATAL)) && f == SIG_DFL)
 		f = trapsig;
 	else if (p->flags & TF_SHELL_USES) {
