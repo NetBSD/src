@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2004/08/28 00:18:38 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2006/05/13 01:40:34 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,10 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/dlfcn
 CPPFLAGS+=	-DDWARF2_EH
 CPPFLAGS+=	-DJCR
 CPPFLAGS+=	-DDSO_HANDLE
+
+.if ${HAVE_GCC} > 3
+CFLAGS+=	-fno-unit-at-a-time
+.endif
 
 .PATH:		${.CURDIR}/../common_elf
 
