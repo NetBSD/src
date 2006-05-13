@@ -1,12 +1,10 @@
-#	$NetBSD: gcc.mi,v 1.13 2006/05/13 07:17:54 mrg Exp $
-./usr/bin/f77					comp-fortran-bin	gcccmds
-./usr/bin/fort77				comp-fortran-bin	gcccmds
-./usr/bin/g77					comp-fortran-bin	gcccmds
+# $NetBSD: gcc4.mi,v 1.1 2006/05/13 07:17:54 mrg Exp $
+./usr/bin/f77					comp-obsolete	obsolete
+./usr/bin/fort77				comp-obsolete	obsolete
+./usr/bin/g77					comp-obsolete	obsolete
 ./usr/bin/protoize				comp-c-bin		gcccmds
 ./usr/bin/readelf				comp-util-bin		bfd
 ./usr/bin/unprotoize				comp-c-bin		gcccmds
-./usr/lib/libg2c.a				comp-fortran-lib
-./usr/lib/libg2c_p.a				comp-fortran-proflib	profile
 ./usr/include/g++/FlexLexer.h			comp-cxx-include
 ./usr/include/g++/PlotFile.h			comp-obsolete	obsolete
 ./usr/include/g++/SFile.h			comp-obsolete	obsolete
@@ -51,6 +49,8 @@
 ./usr/include/g++/backward/tempbuf.h		comp-cxx-include
 ./usr/include/g++/backward/tree.h		comp-cxx-include
 ./usr/include/g++/backward/vector.h		comp-cxx-include
+./usr/include/g++/bits/allocator.h		comp-cxx-include
+./usr/include/g++/bits/atomic_word.h		comp-cxx-include
 ./usr/include/g++/bits/atomicity.h		comp-cxx-include
 ./usr/include/g++/bits/basic_file.h		comp-cxx-include
 ./usr/include/g++/bits/basic_ios.h		comp-cxx-include
@@ -58,20 +58,24 @@
 ./usr/include/g++/bits/basic_string.h		comp-cxx-include
 ./usr/include/g++/bits/basic_string.tcc		comp-cxx-include
 ./usr/include/g++/bits/boost_concept_check.h	comp-cxx-include
+./usr/include/g++/bits/c++allocator.h		comp-cxx-include
 ./usr/include/g++/bits/c++config.h		comp-cxx-include
 ./usr/include/g++/bits/c++io.h			comp-cxx-include
 ./usr/include/g++/bits/c++locale.h		comp-cxx-include
 ./usr/include/g++/bits/char_traits.h		comp-cxx-include
 ./usr/include/g++/bits/cmath.tcc		comp-cxx-include
 ./usr/include/g++/bits/codecvt.h		comp-cxx-include
-./usr/include/g++/bits/codecvt_specializations.h	comp-cxx-include
+./usr/include/g++/bits/codecvt_specializations.h	comp-obsolete	obsolete 
 ./usr/include/g++/bits/concept_check.h		comp-cxx-include
+./usr/include/g++/bits/concurrence.h		comp-cxx-include
 ./usr/include/g++/bits/cpp_type_traits.h	comp-cxx-include
+./usr/include/g++/bits/cpu_defines.h		comp-cxx-include
 ./usr/include/g++/bits/ctype_base.h		comp-cxx-include
 ./usr/include/g++/bits/ctype_inline.h		comp-cxx-include
 ./usr/include/g++/bits/ctype_noninline.h	comp-cxx-include
+./usr/include/g++/bits/cxxabi_tweaks.h		comp-cxx-include
 ./usr/include/g++/bits/deque.tcc		comp-cxx-include
-./usr/include/g++/bits/fpos.h			comp-cxx-include
+./usr/include/g++/bits/fpos.h			comp-obsolete	obsolete
 ./usr/include/g++/bits/fstream.tcc		comp-cxx-include
 ./usr/include/g++/bits/functexcept.h		comp-cxx-include
 ./usr/include/g++/bits/gslice.h			comp-cxx-include
@@ -79,6 +83,7 @@
 ./usr/include/g++/bits/gthr-default.h		comp-cxx-include
 ./usr/include/g++/bits/gthr-posix.h		comp-cxx-include
 ./usr/include/g++/bits/gthr-single.h		comp-cxx-include
+./usr/include/g++/bits/gthr-tpf.h		comp-cxx-include
 ./usr/include/g++/bits/gthr.h			comp-cxx-include
 ./usr/include/g++/bits/indirect_array.h		comp-cxx-include
 ./usr/include/g++/bits/ios_base.h		comp-cxx-include
@@ -92,12 +97,13 @@
 ./usr/include/g++/bits/messages_members.h	comp-cxx-include
 ./usr/include/g++/bits/os_defines.h		comp-cxx-include
 ./usr/include/g++/bits/ostream.tcc		comp-cxx-include
-./usr/include/g++/bits/pthread_allocimpl.h	comp-cxx-include
+./usr/include/g++/bits/postypes.h		comp-cxx-include
+./usr/include/g++/bits/pthread_allocimpl.h	comp-obsolete	obsolete
 ./usr/include/g++/bits/slice_array.h		comp-cxx-include
 ./usr/include/g++/bits/sstream.tcc		comp-cxx-include
 ./usr/include/g++/bits/stl_algo.h		comp-cxx-include
 ./usr/include/g++/bits/stl_algobase.h		comp-cxx-include
-./usr/include/g++/bits/stl_alloc.h		comp-cxx-include
+./usr/include/g++/bits/stl_alloc.h		comp-obsolete	obsolete
 ./usr/include/g++/bits/stl_bvector.h		comp-cxx-include
 ./usr/include/g++/bits/stl_construct.h		comp-cxx-include
 ./usr/include/g++/bits/stl_deque.h		comp-cxx-include
@@ -112,14 +118,14 @@
 ./usr/include/g++/bits/stl_multiset.h		comp-cxx-include
 ./usr/include/g++/bits/stl_numeric.h		comp-cxx-include
 ./usr/include/g++/bits/stl_pair.h		comp-cxx-include
-./usr/include/g++/bits/stl_pthread_alloc.h	comp-cxx-include
+./usr/include/g++/bits/stl_pthread_alloc.h	comp-obsolete	obsolete
 ./usr/include/g++/bits/stl_queue.h		comp-cxx-include
 ./usr/include/g++/bits/stl_raw_storage_iter.h	comp-cxx-include
 ./usr/include/g++/bits/stl_relops.h		comp-cxx-include
 ./usr/include/g++/bits/stl_set.h		comp-cxx-include
 ./usr/include/g++/bits/stl_stack.h		comp-cxx-include
 ./usr/include/g++/bits/stl_tempbuf.h		comp-cxx-include
-./usr/include/g++/bits/stl_threads.h		comp-cxx-include
+./usr/include/g++/bits/stl_threads.h		comp-obsolete	obsolete
 ./usr/include/g++/bits/stl_tree.h		comp-cxx-include
 ./usr/include/g++/bits/stl_uninitialized.h	comp-cxx-include
 ./usr/include/g++/bits/stl_vector.h		comp-cxx-include
@@ -128,10 +134,12 @@
 ./usr/include/g++/bits/streambuf_iterator.h	comp-cxx-include
 ./usr/include/g++/bits/stringfwd.h		comp-cxx-include
 ./usr/include/g++/bits/time_members.h		comp-cxx-include
-./usr/include/g++/bits/type_traits.h		comp-cxx-include
+./usr/include/g++/bits/type_traits.h		comp-obsolete	obsolete
+./usr/include/g++/bits/valarray_after.h		comp-cxx-include
 ./usr/include/g++/bits/valarray_array.h		comp-cxx-include
 ./usr/include/g++/bits/valarray_array.tcc	comp-cxx-include
-./usr/include/g++/bits/valarray_meta.h		comp-cxx-include
+./usr/include/g++/bits/valarray_before.h	comp-cxx-include
+./usr/include/g++/bits/valarray_meta.h		comp-obsolete	obsolete
 ./usr/include/g++/bits/vector.tcc		comp-cxx-include
 ./usr/include/g++/bitset			comp-cxx-include
 ./usr/include/g++/builtinbuf.h			comp-obsolete	obsolete
@@ -159,6 +167,31 @@
 ./usr/include/g++/cwchar			comp-cxx-include
 ./usr/include/g++/cwctype			comp-cxx-include
 ./usr/include/g++/cxxabi.h			comp-cxx-include
+./usr/include/g++/debug/bitset			comp-cxx-include
+./usr/include/g++/debug/debug.h			comp-cxx-include
+./usr/include/g++/debug/deque			comp-cxx-include
+./usr/include/g++/debug/formatter.h		comp-cxx-include
+./usr/include/g++/debug/functions.h		comp-cxx-include
+./usr/include/g++/debug/hash_map		comp-cxx-include
+./usr/include/g++/debug/hash_map.h		comp-cxx-include
+./usr/include/g++/debug/hash_multimap.h		comp-cxx-include
+./usr/include/g++/debug/hash_multiset.h		comp-cxx-include
+./usr/include/g++/debug/hash_set		comp-cxx-include
+./usr/include/g++/debug/hash_set.h		comp-cxx-include
+./usr/include/g++/debug/list			comp-cxx-include
+./usr/include/g++/debug/macros.h		comp-cxx-include
+./usr/include/g++/debug/map			comp-cxx-include
+./usr/include/g++/debug/map.h			comp-cxx-include
+./usr/include/g++/debug/multimap.h		comp-cxx-include
+./usr/include/g++/debug/multiset.h		comp-cxx-include
+./usr/include/g++/debug/safe_base.h		comp-cxx-include
+./usr/include/g++/debug/safe_iterator.h		comp-cxx-include
+./usr/include/g++/debug/safe_iterator.tcc	comp-cxx-include
+./usr/include/g++/debug/safe_sequence.h		comp-cxx-include
+./usr/include/g++/debug/set			comp-cxx-include
+./usr/include/g++/debug/set.h			comp-cxx-include
+./usr/include/g++/debug/string			comp-cxx-include
+./usr/include/g++/debug/vector			comp-cxx-include
 ./usr/include/g++/defalloc.h			comp-obsolete	obsolete
 ./usr/include/g++/deque				comp-cxx-include
 ./usr/include/g++/deque.h			comp-obsolete	obsolete
@@ -166,21 +199,40 @@
 ./usr/include/g++/exception			comp-cxx-include
 ./usr/include/g++/exception_defines.h		comp-cxx-include
 ./usr/include/g++/ext/algorithm			comp-cxx-include
-./usr/include/g++/ext/enc_filebuf.h		comp-cxx-include
+./usr/include/g++/ext/array_allocator.h		comp-cxx-include
+./usr/include/g++/ext/bitmap_allocator.h	comp-cxx-include
+./usr/include/g++/ext/codecvt_specializations.h	comp-cxx-include
+./usr/include/g++/ext/debug_allocator.h		comp-cxx-include
+./usr/include/g++/ext/enc_filebuf.h		comp-obsolete	obsolete
 ./usr/include/g++/ext/functional		comp-cxx-include
+./usr/include/g++/ext/hash_fun.h		comp-cxx-include
 ./usr/include/g++/ext/hash_map			comp-cxx-include
 ./usr/include/g++/ext/hash_set			comp-cxx-include
+./usr/include/g++/ext/hashtable.h		comp-cxx-include
 ./usr/include/g++/ext/iterator			comp-cxx-include
+./usr/include/g++/ext/malloc_allocator.h	comp-cxx-include
 ./usr/include/g++/ext/memory			comp-cxx-include
+./usr/include/g++/ext/mt_allocator.h		comp-cxx-include
+./usr/include/g++/ext/new_allocator.h		comp-cxx-include
 ./usr/include/g++/ext/numeric			comp-cxx-include
+./usr/include/g++/ext/pod_char_traits.h		comp-cxx-include
+./usr/include/g++/ext/pool_allocator.h		comp-cxx-include
 ./usr/include/g++/ext/rb_tree			comp-cxx-include
+./usr/include/g++/ext/rc_string_base.h		comp-cxx-include
 ./usr/include/g++/ext/rope			comp-cxx-include
 ./usr/include/g++/ext/ropeimpl.h		comp-cxx-include
 ./usr/include/g++/ext/slist			comp-cxx-include
+./usr/include/g++/ext/sso_string_base.h		comp-cxx-include
 ./usr/include/g++/ext/stdio_filebuf.h		comp-cxx-include
-./usr/include/g++/ext/stl_hash_fun.h		comp-cxx-include
-./usr/include/g++/ext/stl_hashtable.h		comp-cxx-include
-./usr/include/g++/ext/stl_rope.h		comp-cxx-include
+./usr/include/g++/ext/stdio_sync_filebuf.h	comp-cxx-include
+./usr/include/g++/ext/stl_hash_fun.h		comp-obsolete	obsolete
+./usr/include/g++/ext/stl_hashtable.h		comp-obsolete	obsolete
+./usr/include/g++/ext/stl_rope.h		comp-obsolete	obsolete
+./usr/include/g++/ext/typelist.h		comp-cxx-include
+./usr/include/g++/ext/vstring.h			comp-cxx-include
+./usr/include/g++/ext/vstring.tcc		comp-cxx-include
+./usr/include/g++/ext/vstring_fwd.h		comp-cxx-include
+./usr/include/g++/ext/vstring_util.h		comp-cxx-include
 ./usr/include/g++/faralloc.h			comp-obsolete	obsolete
 ./usr/include/g++/fdeque.h			comp-obsolete	obsolete
 ./usr/include/g++/flist.h			comp-obsolete	obsolete
@@ -309,6 +361,25 @@
 ./usr/include/g++/strstream			comp-obsolete	obsolete
 ./usr/include/g++/strstream.h			comp-obsolete	obsolete
 ./usr/include/g++/tempbuf.h			comp-obsolete	obsolete
+./usr/include/g++/tr1/array			comp-cxx-include
+./usr/include/g++/tr1/bind_iterate.h		comp-cxx-include
+./usr/include/g++/tr1/bind_repeat.h		comp-cxx-include
+./usr/include/g++/tr1/boost_shared_ptr.h	comp-cxx-include
+./usr/include/g++/tr1/functional		comp-cxx-include
+./usr/include/g++/tr1/functional_iterate.h	comp-cxx-include
+./usr/include/g++/tr1/hashtable			comp-cxx-include
+./usr/include/g++/tr1/memory			comp-cxx-include
+./usr/include/g++/tr1/mu_iterate.h		comp-cxx-include
+./usr/include/g++/tr1/ref_fwd.h			comp-cxx-include
+./usr/include/g++/tr1/ref_wrap_iterate.h	comp-cxx-include
+./usr/include/g++/tr1/repeat.h			comp-cxx-include
+./usr/include/g++/tr1/tuple			comp-cxx-include
+./usr/include/g++/tr1/tuple_iterate.h		comp-cxx-include
+./usr/include/g++/tr1/type_traits		comp-cxx-include
+./usr/include/g++/tr1/type_traits_fwd.h		comp-cxx-include
+./usr/include/g++/tr1/unordered_map		comp-cxx-include
+./usr/include/g++/tr1/unordered_set		comp-cxx-include
+./usr/include/g++/tr1/utility			comp-cxx-include
 ./usr/include/g++/tree.h			comp-obsolete	obsolete
 ./usr/include/g++/type_traits.h			comp-obsolete	obsolete
 ./usr/include/g++/typeinfo			comp-cxx-include
@@ -316,14 +387,17 @@
 ./usr/include/g++/valarray			comp-cxx-include
 ./usr/include/g++/vector			comp-cxx-include
 ./usr/include/g++/vector.h			comp-obsolete	obsolete
+./usr/include/objc/objc-decls.h			comp-cxx-include
 ./usr/include/stdbool.h				comp-c-include
-./usr/lib/libfrtbegin.a				comp-c-lib
+./usr/lib/libfrtbegin.a				comp-obsolete	obsolete
+./usr/lib/libg2c.a				comp-obsolete	obsolete
+./usr/lib/libg2c_p.a				comp-obsolete	obsolete
 ./usr/lib/libgcc_p.a				comp-c-proflib		profile
 ./usr/lib/libsupc++.a				comp-cxx-lib
-./usr/libexec/f771				comp-fortran-bin	gcccmds
-./usr/share/man/cat1/f77.0			comp-fortran-catman	.cat
-./usr/share/man/cat1/fort77.0			comp-fortran-catman	.cat
-./usr/share/man/cat1/g77.0			comp-fortran-catman	.cat
-./usr/share/man/man1/f77.1			comp-fortran-man	.man
-./usr/share/man/man1/fort77.1			comp-fortran-man	.man
-./usr/share/man/man1/g77.1			comp-fortran-man	.man
+./usr/libexec/f771				comp-obsolete	obsolete
+./usr/share/man/cat1/f77.0			comp-obsolete	obsolete
+./usr/share/man/cat1/fort77.0			comp-obsolete	obsolete
+./usr/share/man/cat1/g77.0			comp-obsolete	obsolete
+./usr/share/man/man1/f77.1			comp-obsolete	obsolete
+./usr/share/man/man1/fort77.1			comp-obsolete	obsolete
+./usr/share/man/man1/g77.1			comp-obsolete	obsolete

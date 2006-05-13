@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.877 2006/05/12 07:07:51 dogcow Exp $
+#	$NetBSD: mi,v 1.878 2006/05/13 07:17:54 mrg Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -13,14 +13,11 @@
 ./usr/bin/crunchide				comp-c-bin
 ./usr/bin/cvs					comp-cvs-bin		cvs
 ./usr/bin/cvsbug				comp-cvs-bin		cvs
-./usr/bin/f77					comp-fortran-bin	gcccmds
 ./usr/bin/fgen					comp-util-bin
 ./usr/bin/flex					comp-c-bin
 ./usr/bin/flex++				comp-cxx-bin
-./usr/bin/fort77				comp-fortran-bin	gcccmds
 ./usr/bin/fpr					comp-fortran-bin
 ./usr/bin/g++					comp-cxx-bin		gcccmds
-./usr/bin/g77					comp-fortran-bin	gcccmds
 ./usr/bin/gcc					comp-c-bin		gcccmds
 ./usr/bin/gcore					comp-debug-bin
 ./usr/bin/gcov					comp-debug-bin		gcccmds
@@ -1643,8 +1640,6 @@
 ./usr/lib/libg++.a				comp-obsolete		obsolete
 ./usr/lib/libg++_p.a				comp-obsolete		obsolete
 ./usr/lib/libg++_pic.a				comp-obsolete		obsolete
-./usr/lib/libg2c.a				comp-fortran-lib
-./usr/lib/libg2c_p.a				comp-fortran-proflib	profile
 ./usr/lib/libgcc.a				comp-c-lib
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
 ./usr/lib/libgnumalloc.a			comp-c-lib
@@ -1805,7 +1800,6 @@
 ./usr/libexec/cc1obj				comp-objc-bin		gcccmds
 ./usr/libexec/cc1plus				comp-cxx-bin		gcccmds
 ./usr/libexec/collect2				comp-obsolete		obsolete
-./usr/libexec/f771				comp-fortran-bin	gcccmds
 ./usr/libexec/lint1				comp-c-bin
 ./usr/libexec/lint2				comp-c-bin
 ./usr/sbin/config				comp-obsolete		obsolete
@@ -1970,14 +1964,11 @@
 ./usr/share/man/cat1/cvs.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat1/elf2aout.0			comp-sysutil-catman	.cat
 ./usr/share/man/cat1/elf2ecoff.0		comp-sysutil-catman	.cat
-./usr/share/man/cat1/f77.0			comp-fortran-catman	.cat
 ./usr/share/man/cat1/fgen.0			comp-util-catman	.cat
 ./usr/share/man/cat1/flex.0			comp-c-catman		.cat
 ./usr/share/man/cat1/flexdoc.0			comp-obsolete		obsolete
-./usr/share/man/cat1/fort77.0			comp-fortran-catman	.cat
 ./usr/share/man/cat1/fpr.0			comp-fortran-catman	.cat
 ./usr/share/man/cat1/g++.0			comp-cxx-catman		.cat
-./usr/share/man/cat1/g77.0			comp-fortran-catman	.cat
 ./usr/share/man/cat1/gcc.0			comp-c-catman		.cat
 ./usr/share/man/cat1/gcore.0			comp-debug-catman	.cat
 ./usr/share/man/cat1/gcov.0			comp-debug-catman	.cat
@@ -6036,13 +6027,10 @@
 ./usr/share/man/man1/cvs.1			comp-cvs-man		cvs,.man
 ./usr/share/man/man1/elf2aout.1			comp-sysutil-man	.man
 ./usr/share/man/man1/elf2ecoff.1		comp-sysutil-man	.man
-./usr/share/man/man1/f77.1			comp-fortran-man	.man
 ./usr/share/man/man1/fgen.1			comp-util-man		.man
 ./usr/share/man/man1/flex.1			comp-c-man		.man
-./usr/share/man/man1/fort77.1			comp-fortran-man	.man
 ./usr/share/man/man1/fpr.1			comp-fortran-man	.man
 ./usr/share/man/man1/g++.1			comp-cxx-man		.man
-./usr/share/man/man1/g77.1			comp-fortran-man	.man
 ./usr/share/man/man1/gcc.1			comp-c-man		.man
 ./usr/share/man/man1/gcore.1			comp-debug-man		.man
 ./usr/share/man/man1/gcov.1			comp-debug-man		.man
