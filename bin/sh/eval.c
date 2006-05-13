@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.86 2006/04/18 14:44:05 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.87 2006/05/13 19:47:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.86 2006/04/18 14:44:05 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.87 2006/05/13 19:47:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -503,7 +503,8 @@ evalpipe(union node *n)
 		pip[1] = -1;
 		if (lp->next) {
 			if (sh_pipe(pip) < 0) {
-				close(prevfd);
+				if (prevfd >= 0)
+					close(prevfd);
 				error("Pipe call failed");
 			}
 		}
