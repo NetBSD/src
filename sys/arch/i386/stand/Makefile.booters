@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.64 2006/05/13 02:33:40 lukem Exp $
+#	$NetBSD: Makefile.booters,v 1.65 2006/05/13 02:47:03 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -108,15 +108,15 @@ ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} \
 	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
 
-CLEANFILES+= ${BASE}.rom
+CLEANFILES+= ${BASE}.rom ${BASE}.rom.tmp
 ${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${_MKTARGET_LINK}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
 	    ${LIBLIST} >${BASE}.list
-	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin
-	${GENPROM} ${ROM_SIZE} < ${BASE}.bin > ${BASE}.rom || \
+	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.rom.tmp
+	${GENPROM} ${ROM_SIZE} < ${BASE}.rom.tmp > ${BASE}.rom || \
 	    rm -f ${BASE}.rom
-	rm -f ${BASE}.bin
+	rm -f ${BASE}.rom.tmp
 
 CLEANFILES+= ${BASE}.com
 ${BASE}.com: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
