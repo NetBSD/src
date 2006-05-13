@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.63 2006/05/12 01:23:51 mrg Exp $
+#	$NetBSD: Makefile.booters,v 1.64 2006/05/13 02:33:40 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -104,11 +104,13 @@ vers.c: ${VERSIONFILE} ${SOURCES}
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} \
 	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
 
 CLEANFILES+= ${BASE}.rom
 ${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
 	    ${LIBLIST} >${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin
@@ -118,12 +120,14 @@ ${BASE}.rom: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 
 CLEANFILES+= ${BASE}.com
 ${BASE}.com: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
 	    ${LIBLIST} >${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.com
 
 CLEANFILES+= ${BASE}.bin
 ${BASE}.bin: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
+	${_MKTARGET_LINK}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${STARTFILE} ${OBJS} \
 	    ${LIBLIST} > ${BASE}.list
 	${OBJCOPY} -O binary ${BASE}.sym ${BASE}.bin
