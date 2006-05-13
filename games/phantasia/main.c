@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2004/12/09 05:15:59 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2006/05/13 22:29:53 christos Exp $	*/
 
 /*
  * Phantasia 3.3.2 -- Interterminal fantasy game
@@ -719,8 +719,9 @@ titlelist()
 	    && fgets(Databuf, SZ_DATABUF, fp) != NULL) {
 		mvaddstr(19, 25, "The last character to die was:");
 		mvaddstr(20, 40 - strlen(Databuf) / 2, Databuf);
-		fclose(fp);
 	}
+	if (fp)
+		fclose(fp);
 	refresh();
 }
 
