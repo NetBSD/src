@@ -1,4 +1,4 @@
-/* $NetBSD: exp.c,v 1.15 2006/05/10 21:14:48 mrg Exp $ */
+/* $NetBSD: exp.c,v 1.16 2006/05/13 21:18:57 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: exp.c,v 1.15 2006/05/10 21:14:48 mrg Exp $");
+__RCSID("$NetBSD: exp.c,v 1.16 2006/05/13 21:18:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -428,7 +428,7 @@ exp6(Char ***vp, bool ignore)
 #ifdef EDEBUG
 	etraci("exp6 () ccode", ccode, vp);
 #endif
-	if (*vp == 0 || **vp == 0 || ***vp != ')')
+	if (**vp == 0 || ***vp != ')')
 	    stderror(ERR_NAME | ERR_EXPRESSION);
 	(*vp)++;
 	return (putn(ccode));
