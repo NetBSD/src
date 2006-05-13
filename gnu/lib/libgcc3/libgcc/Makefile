@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/04/18 04:32:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2006/05/13 01:50:51 uwe Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -19,6 +19,11 @@ SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
 .if ${MKPIC} == "no"
 SRCS+=		${LIB2_EH}
+.endif
+
+# libgcc_pic.a is required for building shared libs
+.if ${MKPIC} != "no"
+MKPICINSTALL=	yes
 .endif
 
 .include <bsd.lib.mk>
