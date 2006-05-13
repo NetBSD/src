@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.43 2006/05/10 07:13:30 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.44 2006/05/13 08:56:08 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -281,10 +281,10 @@ ENTRY(cpu_switch)
 	ldr	r7, .Lcurlwp
 	ldr	r6, .Lcurpcb
 	mov	r2, #0x00000000
-	str	r2, [r7]		/* curproc = NULL */
+	str	r2, [r7]		/* curlwp = NULL */
 	str	r2, [r6]		/* curpcb = NULL */
 
-	/* stash the old proc while we call functions */
+	/* stash the old lwp while we call functions */
 	mov	r5, r0
 
 	/* First phase : find a new lwp */
@@ -303,7 +303,7 @@ ENTRY(cpu_switch)
 	teq	r3, #0x00000000
 	beq	_ASM_LABEL(idle)
 
-	/* put old proc back in r1 */
+	/* put old lwp back in r1 */
 	mov	r1, r5
 
 	/* rem: r1 = old lwp */
