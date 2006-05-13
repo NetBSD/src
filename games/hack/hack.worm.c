@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.worm.c,v 1.5 2003/04/02 18:36:41 jsm Exp $	*/
+/*	$NetBSD: hack.worm.c,v 1.6 2006/05/13 22:43:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.worm.c,v 1.5 2003/04/02 18:36:41 jsm Exp $");
+__RCSID("$NetBSD: hack.worm.c,v 1.6 2006/05/13 22:43:02 christos Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -269,6 +269,7 @@ cutworm(mtmp, x, y, weptyp)
 			} else {
 				pline("You cut off part of the worm's tail.");
 				remseg(wtmp);
+				monfree(mtmp2);
 			}
 			mtmp->mhp /= 2;
 			return;
