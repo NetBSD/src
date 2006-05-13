@@ -1,4 +1,4 @@
-.\"	$NetBSD: pf.4,v 1.2.2.2 2006/05/03 21:45:56 tron Exp $
+.\"	$NetBSD: pf.4,v 1.2.2.3 2006/05/13 16:36:34 tron Exp $
 .\"	$OpenBSD: pf.4,v 1.52 2004/08/24 03:13:46 jaredy Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
@@ -85,11 +85,11 @@ commands, available through
 Start the packet filter.
 .It Dv DIOCSTOP
 Stop the packet filter.
-.It Dv DIOCSTARTALTQ
-Start the ALTQ bandwidth control system (see
-.Xr altq 9 ) .
-.It Dv DIOCSTOPALTQ
-Stop the ALTQ bandwidth control system.
+.\" .It Dv DIOCSTARTALTQ
+.\" Start the ALTQ bandwidth control system (see
+.\" .Xr altq 9 ) .
+.\" .It Dv DIOCSTOPALTQ
+.\" Stop the ALTQ bandwidth control system.
 .It Dv DIOCBEGINADDRS Fa "struct pfioc_pooladdr *pp"
 .Bd -literal
 struct pfioc_pooladdr {
@@ -157,16 +157,16 @@ name indicates the anchor in which to append the rule.
 and
 .Va action
 are ignored.
-.It Dv DIOCADDALTQ Fa "struct pfioc_altq *pa"
-Add an ALTQ discipline or queue.
-.Bd -literal
-struct pfioc_altq {
-	u_int32_t	action;
-	u_int32_t	ticket;
-	u_int32_t	nr;
-	struct pf_altq  altq;
-};
-.Ed
+.\" .It Dv DIOCADDALTQ Fa "struct pfioc_altq *pa"
+.\" Add an ALTQ discipline or queue.
+.\" .Bd -literal
+.\" struct pfioc_altq {
+.\" 	u_int32_t	action;
+.\" 	u_int32_t	ticket;
+.\" 	u_int32_t	nr;
+.\" 	struct pf_altq  altq;
+.\" };
+.\" .Ed
 .It Dv DIOCGETRULES Fa "struct pfioc_rule *pr"
 Get a
 .Va ticket
@@ -212,42 +212,42 @@ using the
 obtained through a preceding
 .Dv DIOCGETADDRS
 call.
-.It Dv DIOCGETALTQS Fa "struct pfioc_altq *pa"
-Get a
-.Va ticket
-for subsequent
-.Dv DIOCGETALTQ
-calls and the number
-.Va nr
-of queues in the active list.
-.It Dv DIOCGETALTQ Fa "struct pfioc_altq *pa"
-Get the queueing discipline
-.Va altq
-by its number
-.Va nr
-using the
-.Va ticket
-obtained through a preceding
-.Dv DIOCGETALTQS
-call.
-.It Dv DIOCGETQSTATS Fa "struct pfioc_qstats *pq"
-Get the statistics on a queue.
-.Bd -literal
-struct pfioc_qstats {
-	u_int32_t	 ticket;
-	u_int32_t	 nr;
-	void		*buf;
-	int		 nbytes;
-	u_int8_t	 scheduler;
-};
-.Ed
-.Pp
-This call fills in a pointer to the buffer of statistics
-.Va buf ,
-of length
-.Va nbytes ,
-for the queue specified by
-.Va nr .
+.\" .It Dv DIOCGETALTQS Fa "struct pfioc_altq *pa"
+.\" Get a
+.\" .Va ticket
+.\" for subsequent
+.\" .Dv DIOCGETALTQ
+.\" calls and the number
+.\" .Va nr
+.\" of queues in the active list.
+.\" .It Dv DIOCGETALTQ Fa "struct pfioc_altq *pa"
+.\" Get the queueing discipline
+.\" .Va altq
+.\" by its number
+.\" .Va nr
+.\" using the
+.\" .Va ticket
+.\" obtained through a preceding
+.\" .Dv DIOCGETALTQS
+.\" call.
+.\" .It Dv DIOCGETQSTATS Fa "struct pfioc_qstats *pq"
+.\" Get the statistics on a queue.
+.\" .Bd -literal
+.\" struct pfioc_qstats {
+.\" 	u_int32_t	 ticket;
+.\" 	u_int32_t	 nr;
+.\" 	void		*buf;
+.\" 	int		 nbytes;
+.\" 	u_int8_t	 scheduler;
+.\" };
+.\" .Ed
+.\" .Pp
+.\" This call fills in a pointer to the buffer of statistics
+.\" .Va buf ,
+.\" of length
+.\" .Va nbytes ,
+.\" for the queue specified by
+.\" .Va nr .
 .It Dv DIOCGETRULESETS Fa "struct pfioc_ruleset *pr"
 .Bd -literal
 struct pfioc_ruleset {
@@ -800,8 +800,8 @@ NAT (Network Address Translation) rules.
 Bidirectional NAT rules.
 .It Dv PF_RULESET_RDR
 Redirect rules.
-.It Dv PF_RULESET_ALTQ
-ALTQ disciplines.
+.\" .It Dv PF_RULESET_ALTQ
+.\" ALTQ disciplines.
 .It Dv PF_RULESET_TABLE
 Address tables.
 .El
@@ -1092,7 +1092,7 @@ main(int argc, char *argv[])
 .Xr pflog 4 ,
 .\" .Xr pfsync 4 ,
 .Xr pfctl 8 ,
-.Xr altq 9
+.\" .Xr altq 9
 .Sh HISTORY
 The
 .Nm
@@ -1104,6 +1104,26 @@ The following functionality is missing from
 in this version of
 .Nx :
 .Bl -bullet -offset indent
+.It 
+ALTQ is not integrated with
+.Nm .
+.Xr altq 9
+is an independent subsystem, controlled by
+.Xr altqd 8 .
+.Pp
+Moreover, enabling
+.Nm
+together with the
+.Cd ALTQ
+option in the kernel config file is not supported. To use both
+.Nm
+and ALTQ,
+.Nm
+should be disabled in the kernel config file and a LKM version
+(
+.Pa /usr/lkm/pf.o
+) should be loaded, see
+.Xr lkm.conf 5 .
 .It
 The pfsync protocol is not supported.
 .It
