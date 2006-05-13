@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.20 2006/05/12 01:23:51 mrg Exp $
+# $NetBSD: Makefile.bootxx,v 1.21 2006/05/13 03:19:28 lukem Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -129,6 +129,7 @@ LIBLIST= ${LIBI386} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 CLEANFILES+= ${PROG}.sym ${PROG}.map
 
 ${PROG}: ${OBJS} ${LIBLIST}
+	${_MKTARGET_LINK}
 	${LD} -o ${PROG}.sym ${LDFLAGS} -Ttext ${PRIMARY_LOAD_ADDRESS} \
 		-Map ${PROG}.map -cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
