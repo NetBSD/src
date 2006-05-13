@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.30.2.4 2006/05/11 23:27:03 elad Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.30.2.5 2006/05/13 10:26:28 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.30.2.4 2006/05/11 23:27:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.30.2.5 2006/05/13 10:26:28 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.30.2.4 2006/05/11 23:27:03 elad Exp $");
 #include <sys/device.h>
 #include <sys/envsys.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 
 #include <machine/apmvar.h>
 #include <machine/autoconf.h>

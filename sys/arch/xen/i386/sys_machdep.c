@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5.8.2 2006/03/10 14:54:51 elad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5.8.3 2006/05/13 10:27:07 elad Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5.8.2 2006/03/10 14:54:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5.8.3 2006/05/13 10:27:07 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5.8.2 2006/03/10 14:54:51 elad Exp
 #include <sys/buf.h>
 #include <sys/signal.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>

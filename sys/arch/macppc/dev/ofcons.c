@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.16.8.2 2006/03/10 14:54:01 elad Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.16.8.3 2006/05/13 10:26:27 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.16.8.2 2006/03/10 14:54:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.16.8.3 2006/05/13 10:26:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.16.8.2 2006/03/10 14:54:01 elad Exp $")
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.11.10.2 2006/03/10 14:54:50 elad Exp $	*/
+/*	$NetBSD: kd.c,v 1.11.10.3 2006/05/13 10:27:07 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.11.10.2 2006/03/10 14:54:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.11.10.3 2006/05/13 10:27:07 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.11.10.2 2006/03/10 14:54:50 elad Exp $");
 #include <sys/file.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/promlib.h>
 #include <machine/eeprom.h>

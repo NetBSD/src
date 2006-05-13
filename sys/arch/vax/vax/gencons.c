@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.42.10.2 2006/03/10 14:54:51 elad Exp $	*/
+/*	$NetBSD: gencons.c,v 1.42.10.3 2006/05/13 10:27:07 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.42.10.2 2006/03/10 14:54:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.42.10.3 2006/05/13 10:27:07 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.42.10.2 2006/03/10 14:54:51 elad Exp $
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 

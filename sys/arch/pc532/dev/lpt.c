@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.42.10.3 2006/04/19 02:33:26 elad Exp $	*/
+/*	$NetBSD: lpt.c,v 1.42.10.4 2006/05/13 10:26:28 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42.10.3 2006/04/19 02:33:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42.10.4 2006/05/13 10:26:28 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.42.10.3 2006/04/19 02:33:26 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 

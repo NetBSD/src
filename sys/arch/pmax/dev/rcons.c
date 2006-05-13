@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.63.10.2 2006/03/10 14:54:02 elad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.63.10.3 2006/05/13 10:26:28 elad Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.63.10.2 2006/03/10 14:54:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.63.10.3 2006/05/13 10:26:28 elad Exp $");
 
 #include "rasterconsole.h"
 #if NRASTERCONSOLE > 0
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.63.10.2 2006/03/10 14:54:02 elad Exp $")
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wsdisplayvar.h>

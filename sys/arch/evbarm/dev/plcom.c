@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.14.4.3 2006/04/19 02:32:21 elad Exp $	*/
+/*	$NetBSD: plcom.c,v 1.14.4.4 2006/05/13 10:26:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.4.3 2006/04/19 02:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.4.4 2006/05/13 10:26:27 elad Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.4.3 2006/04/19 02:32:21 elad Exp $");
 #include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.45.10.3 2006/04/19 02:32:15 elad Exp $	*/
+/*	$NetBSD: zs.c,v 1.45.10.4 2006/05/13 10:26:27 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.10.3 2006/04/19 02:32:15 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.10.4 2006/05/13 10:26:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45.10.3 2006/04/19 02:32:15 elad Exp $");
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #include <machine/iomap.h>

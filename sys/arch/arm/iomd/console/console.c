@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.14.10.3 2006/04/19 02:32:08 elad Exp $	*/
+/*	$NetBSD: console.c,v 1.14.10.4 2006/05/13 10:26:26 elad Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14.10.3 2006/04/19 02:32:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14.10.4 2006/05/13 10:26:26 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14.10.3 2006/04/19 02:32:08 elad Exp $
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.38.2.3 2006/03/10 14:54:51 elad Exp $	*/
+/*	$NetBSD: com.c,v 1.38.2.4 2006/05/13 10:27:07 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.38.2.3 2006/03/10 14:54:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.38.2.4 2006/05/13 10:27:07 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.38.2.3 2006/03/10 14:54:51 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #if 0

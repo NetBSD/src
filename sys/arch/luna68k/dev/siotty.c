@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.16.10.2 2006/03/10 14:54:00 elad Exp $ */
+/* $NetBSD: siotty.c,v 1.16.10.3 2006/05/13 10:26:27 elad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.16.10.2 2006/03/10 14:54:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.16.10.3 2006/05/13 10:26:27 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.16.10.2 2006/03/10 14:54:00 elad Exp $"
 #include <sys/callout.h>
 #include <sys/fcntl.h>
 #include <dev/cons.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 

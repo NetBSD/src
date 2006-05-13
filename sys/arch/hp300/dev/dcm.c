@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.68.10.3 2006/04/19 02:32:38 elad Exp $	*/
+/*	$NetBSD: dcm.c,v 1.68.10.4 2006/05/13 10:26:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.68.10.3 2006/04/19 02:32:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.68.10.4 2006/05/13 10:26:27 elad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.68.10.3 2006/04/19 02:32:38 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/time.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 

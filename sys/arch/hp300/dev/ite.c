@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.69.10.3 2006/04/19 02:32:38 elad Exp $	*/
+/*	$NetBSD: ite.c,v 1.69.10.4 2006/05/13 10:26:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.10.3 2006/04/19 02:32:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.10.4 2006/05/13 10:26:27 elad Exp $");
 
 #include "hil.h"
 
@@ -131,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.10.3 2006/04/19 02:32:38 elad Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

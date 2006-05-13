@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.18.2.2 2006/03/10 14:54:02 elad Exp $	*/
+/*	$NetBSD: scif.c,v 1.18.2.3 2006/05/13 10:26:28 elad Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.18.2.2 2006/03/10 14:54:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.18.2.3 2006/05/13 10:26:28 elad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.18.2.2 2006/03/10 14:54:02 elad Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #if 0
 #include <sys/kgdb.h>

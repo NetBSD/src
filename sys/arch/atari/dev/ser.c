@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.28.2.2 2006/03/10 14:53:59 elad Exp $	*/
+/*	$NetBSD: ser.c,v 1.28.2.3 2006/05/13 10:26:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.28.2.2 2006/03/10 14:53:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.28.2.3 2006/05/13 10:26:27 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.28.2.2 2006/03/10 14:53:59 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <m68k/asm_single.h>
 
