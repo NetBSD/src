@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.21 2006/05/13 03:19:28 lukem Exp $
+# $NetBSD: Makefile.bootxx,v 1.22 2006/05/13 03:37:47 lukem Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -31,7 +31,7 @@ BINMODE=444
 
 .PATH:	${.CURDIR}/.. ${.CURDIR}/../../lib
 
-LDFLAGS+= -N -e start
+LDFLAGS+= -nostdlib -Wl,-N -Wl,-e,start
 CPPFLAGS+= -DBOOTXX
 # CPPFLAGS+= -D__daddr_t=int32_t
 CPPFLAGS+= -I ${.CURDIR}/../../lib -I ${.OBJDIR}
@@ -50,7 +50,7 @@ COPTS=  -Os
 CPPFLAGS+= -DNO_LBA_CHECK
 
 .if ${MACHINE} == "amd64"
-LD+=  -m elf_i386
+LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
 CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
@@ -130,8 +130,8 @@ CLEANFILES+= ${PROG}.sym ${PROG}.map
 
 ${PROG}: ${OBJS} ${LIBLIST}
 	${_MKTARGET_LINK}
-	${LD} -o ${PROG}.sym ${LDFLAGS} -Ttext ${PRIMARY_LOAD_ADDRESS} \
-		-Map ${PROG}.map -cref ${OBJS} ${LIBLIST}
+	${CC} -o ${PROG}.sym ${LDFLAGS} -Ttext ${PRIMARY_LOAD_ADDRESS} \
+		-Wl,-Map,${PROG}.map -Wl,-cref ${OBJS} ${LIBLIST}
 	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 	@ sz=$$(ls -ln ${PROG}|tr -s ' '|cut -d' ' -f5); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \
