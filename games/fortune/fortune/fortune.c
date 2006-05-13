@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.48 2006/03/21 20:25:55 christos Exp $	*/
+/*	$NetBSD: fortune.c,v 1.49 2006/05/13 22:28:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.48 2006/03/21 20:25:55 christos Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.49 2006/05/13 22:28:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -552,14 +552,13 @@ over:
 		 * individual files -- if we're scanning a directory,
 		 * we'll pick up the -o file anyway.
 		 */
-		if (All_forts && offensive != NULL) {
+		if (All_forts && offensive != NULL && path != offensive) {
 			path = offensive;
 			if (tpath) {
 				free(tpath);
 				tpath = NULL;
 			}
-			offensive = NULL;
-			DPRINTF(1, (stderr, "\ttrying \"%s\"\n", path));
+			DPRINTF(1, (stderr, "\ttrying \"%s\"\n", tfile));
 			tf = off_name(tfile);
 			free(tfile);
 			tfile = tf;
@@ -569,6 +568,8 @@ over:
 			int n = add_file(percent, tfile, FORTDIR, head, tail,
 					parent);
 			free(tfile);
+			if (offensive)
+				free(offensive);
 			return n;
 		}
 		if (parent == NULL)
@@ -578,6 +579,8 @@ over:
 			tpath = NULL;
 		}
 		free(tfile);
+		if (offensive)
+			free(offensive);
 		return FALSE;
 	}
 
