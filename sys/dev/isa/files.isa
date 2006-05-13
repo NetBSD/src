@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.143 2006/04/11 17:14:44 garbled Exp $
+#	$NetBSD: files.isa,v 1.144 2006/05/13 09:02:19 xtraeme Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -463,6 +463,11 @@ file	dev/isa/attimer_isa.c		attimer_isa
 # LM78 temp/fanspeed monitor
 attach	lm at isa with lm_isa
 file	dev/isa/lm_isa.c		lm_isa
+
+# IT8705F/8712F SIS950 hardware monitor
+device	it: sysmon_envsys
+attach	it at isa with it_isa
+file	dev/isa/it.c			it_isa
 
 # ISDN devices
 attach	isic at isa with isic_isa
