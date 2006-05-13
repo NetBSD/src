@@ -1600,7 +1600,16 @@ init_gcc_specs (struct obstack *obstack, const char *shared_name,
 {
   char *buf;
 
-  buf = concat ("%{static|static-libgcc:", static_name, " ", eh_name,
+  buf = concat ("%{static",
+#ifdef LIBGCC_PICSUFFIX
+		": ", static_name, " ", eh_name, "}",
+ 		"%{static-libgcc: ",
+		"%{!shared:", static_name, " ", eh_name, "}",
+		"%{shared:", static_name, LIBGCC_PICSUFFIX, " ",
+		eh_name, LIBGCC_PICSUFFIX, "}",
+#else
+		"|static-libgcc:", static_name, " ", eh_name,
+#endif
 		"}%{!static:%{!static-libgcc:",
 #if USE_LD_AS_NEEDED
 		"%{!shared-libgcc:", static_name,
@@ -1611,9 +1620,13 @@ init_gcc_specs (struct obstack *obstack, const char *shared_name,
 		"%{!shared:%{!shared-libgcc:", static_name, " ",
 		eh_name, "}%{shared-libgcc:", shared_name, " ",
 		static_name, "}}%{shared:",
-#ifdef LINK_EH_SPEC
-		"%{shared-libgcc:", shared_name,
-		"}%{!shared-libgcc:", static_name, "}",
+/* XXX NH XXX */
+#if defined(LINK_EH_SPEC) || 1
+		"%{shared-libgcc:", shared_name, "} ",
+		static_name, 
+#ifdef LIBGCC_PICSUFFIX
+		LIBGCC_PICSUFFIX ,
+#endif
 #else
 		shared_name,
 #endif
@@ -3818,14 +3831,17 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
 	      PREFIX_PRIORITY_LAST, 2, 0);
   add_prefix (&exec_prefixes, standard_exec_prefix, "BINUTILS",
 	      PREFIX_PRIORITY_LAST, 2, 0);
+#ifndef NETBSD_NATIVE
   add_prefix (&exec_prefixes, standard_exec_prefix_1, "BINUTILS",
 	      PREFIX_PRIORITY_LAST, 2, 0);
   add_prefix (&exec_prefixes, standard_exec_prefix_2, "BINUTILS",
 	      PREFIX_PRIORITY_LAST, 2, 0);
+#endif /* NETBSD_NATIVE */
 #endif
 
   add_prefix (&startfile_prefixes, standard_exec_prefix, "BINUTILS",
 	      PREFIX_PRIORITY_LAST, 1, 0);
+#ifndef NETBSD_NATIVE
   add_prefix (&startfile_prefixes, standard_exec_prefix_2, "BINUTILS",
 	      PREFIX_PRIORITY_LAST, 1, 0);
 
@@ -3868,6 +3884,7 @@ warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"
   add_prefix (&startfile_prefixes,
 	      concat (tooldir_prefix, "lib", dir_separator_str, NULL),
 	      "BINUTILS", PREFIX_PRIORITY_LAST, 0, 1);
+#endif /* NETBSD_NATIVE */
 
 #if defined(TARGET_SYSTEM_ROOT_RELOCATABLE) && !defined(VMS)
   /* If the normal TARGET_SYSTEM_ROOT is inside of $exec_prefix,
@@ -6135,9 +6152,11 @@ main (int argc, const char **argv)
 
   /* Read specs from a file if there is one.  */
 
+#ifndef NETBSD_NATIVE
   machine_suffix = concat (spec_machine, dir_separator_str,
 			   spec_version, dir_separator_str, NULL);
   just_machine_suffix = concat (spec_machine, dir_separator_str, NULL);
+#endif /* NETBSD_NATIVE */
 
   specs_file = find_a_file (&startfile_prefixes, "specs", R_OK, 0);
   /* Read the specs file unless it is a default one.  */
@@ -6146,6 +6165,7 @@ main (int argc, const char **argv)
   else
     init_spec ();
 
+#ifndef NETBSD_NATIVE
   /* We need to check standard_exec_prefix/just_machine_suffix/specs
      for any override of as, ld and libraries.  */
   specs_file = alloca (strlen (standard_exec_prefix)
@@ -6156,6 +6176,7 @@ main (int argc, const char **argv)
   strcat (specs_file, "specs");
   if (access (specs_file, R_OK) == 0)
     read_specs (specs_file, TRUE);
+#endif /* NETBSD_NATIVE */
 
   /* Process any configure-time defaults specified for the command line
      options, via OPTION_DEFAULT_SPECS.  */
@@ -6248,6 +6269,7 @@ main (int argc, const char **argv)
 			      PREFIX_PRIORITY_LAST, 0, 1);
       else if (*cross_compile == '0')
 	{
+#ifndef NETBSD_NATIVE
 	  if (gcc_exec_prefix)
 	    add_prefix (&startfile_prefixes,
 			concat (gcc_exec_prefix, machine_suffix,
@@ -6258,8 +6280,14 @@ main (int argc, const char **argv)
 			      machine_suffix,
 			      standard_startfile_prefix, NULL),
 		      NULL, PREFIX_PRIORITY_LAST, 0, 1);
+#else
+	  add_prefix (&startfile_prefixes,
+		      standard_startfile_prefix,
+		      NULL, PREFIX_PRIORITY_LAST, 0, 1);
+#endif /* NETBSD_NATIVE */
 	}
 
+#ifndef NETBSD_NATIVE
       if (*standard_startfile_prefix_1)
  	add_sysrooted_prefix (&startfile_prefixes,
 			      standard_startfile_prefix_1, "BINUTILS",
@@ -6268,6 +6296,7 @@ main (int argc, const char **argv)
 	add_sysrooted_prefix (&startfile_prefixes,
 			      standard_startfile_prefix_2, "BINUTILS",
 			      PREFIX_PRIORITY_LAST, 0, 1);
+#endif /* NETBSD_NATIVE */
     }
 
   /* Process any user specified specs in the order given on the command
@@ -6280,9 +6309,11 @@ main (int argc, const char **argv)
     }
 
   /* If we have a GCC_EXEC_PREFIX envvar, modify it for cpp's sake.  */
+#ifndef NETBSD_NATIVE
   if (gcc_exec_prefix)
     gcc_exec_prefix = concat (gcc_exec_prefix, spec_machine, dir_separator_str,
 			      spec_version, dir_separator_str, NULL);
+#endif /* NETBSD_NATIVE */
 
   /* Now we have the specs.
      Set the `valid' bits for switches that match anything in any spec.  */
@@ -6303,7 +6334,9 @@ main (int argc, const char **argv)
 
   if (print_search_dirs)
     {
+#ifndef NETBSD_NATIVE
       printf (_("install: %s%s\n"), standard_exec_prefix, machine_suffix);
+#endif /* NETBSD_NATIVE */
       printf (_("programs: %s\n"), build_search_list (&exec_prefixes, "", 0));
       printf (_("libraries: %s\n"), build_search_list (&startfile_prefixes, "", 0));
       return (0);
