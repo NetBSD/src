@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.4.2.7 2006/01/27 22:37:06 tron Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.4.2.8 2006/05/13 16:49:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.7 2006/01/27 22:37:06 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.4.2.8 2006/05/13 16:49:10 tron Exp $");
 
 #include <sys/null.h>
 #include <sys/systm.h>
@@ -344,11 +344,10 @@ alc880_init_dacgroup(codec_t *this)
 	this->dacgroups[0] = dacs[0];
 	this->dacgroups[1] = dacs[1];
 
-	this->nadcs = 4;
-	this->adcs[0] = 0x07;
-	this->adcs[1] = 0x08;
-	this->adcs[2] = 0x09;
-	this->adcs[3] = 0x0a;	/* digital */
+	this->nadcs = 3;
+	this->adcs[0] = 0x08;
+	this->adcs[1] = 0x09;
+	this->adcs[2] = 0x0a;	/* digital */
 	return 0;
 }
 
@@ -417,7 +416,7 @@ alc882_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 }
 
 /* ----------------------------------------------------------------
- * Analog Device AD1981HD
+ * Analog Devices AD1981HD
  * ---------------------------------------------------------------- */
 
 static int
