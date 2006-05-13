@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.750 2006/05/07 01:38:54 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.751 2006/05/13 09:02:18 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.750 $"
+#ident 		"GENERIC-$Revision: 1.751 $"
 
 maxusers	32		# estimated number of users
 
@@ -591,8 +591,11 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 piixpm*	at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
+# iTE IT87xxF and compatible hardware monitors
+#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00.
+
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
+#lm0	at isa?	port 0x290		# other common: 0x280, 0x310.
 
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
