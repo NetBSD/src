@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2006/05/10 22:48:11 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2006/05/13 01:18:37 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -29,9 +29,22 @@ HOSTLIBIBERTY=		${HOSTLIBIBERTYOBJ}/libiberty/libiberty.a
 BASEVER!=		cat ${GNUHOSTDIST}/gcc/BASE-VER
 DEVPHASE!=		cat ${GNUHOSTDIST}/gcc/DEV-PHASE
 DATESTAMP!=		cat ${GNUHOSTDIST}/gcc/DATESTAMP
-VER_CPPFLAGS=		-DBASEVER=\"$(BASEVER)\" \
-			-DDATESTAMP=\"$(DATESTAMP)\" \
-			-DDEVPHASE=\"$(DEVPHASE)\"
+
+BASEVERSTR=		"\"$(BASEVER)\""
+.if !empty(DEVPHASE)
+DEVPHASESTR=		"\" $(DEVPHASE)\""
+.else
+DEVPHASESTR=		"\"\""
+.endif
+.if !empty(DEVPHASE)
+DATESTAMPSTR=		"\" $(DATESTAMP)\""
+.else
+DATESTAMPSTR=		"\"\""
+.endif
+
+VER_CPPFLAGS=		-DBASEVER=${BASEVERSTR} \
+			-DDATESTAMP=${DATESTAMPSTR} \
+			-DDEVPHASE=${DEVPHASESTR}
 CPPFLAGS.version.c=		${VER_CPPFLAGS}
 
 .include "${GCCARCH}/defs.mk"
