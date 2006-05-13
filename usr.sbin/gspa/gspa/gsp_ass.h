@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_ass.h,v 1.8 2001/06/13 10:46:06 wiz Exp $	*/
+/*	$NetBSD: gsp_ass.h,v 1.9 2006/05/13 22:34:50 christos Exp $	*/
 /*
  * GSP assembler - definitions
  *
@@ -127,7 +127,7 @@ typedef struct operand {
 /* Prototypes */
 operand abs_adr(expr);
 operand add_operand(operand, operand);
-void *alloc(size_t nbytes);
+void *emalloc(size_t nbytes);
 expr bexpr(int, expr, expr);
 void do_asg(char *, expr, int flags);
 void do_list_pc(void);
@@ -188,4 +188,4 @@ extern char line[], *lineptr;
 #endif
 #endif
 
-#define new(x)	((x) = alloc (sizeof(*(x))))
+#define new(x)	((x) = emalloc(sizeof(*(x))))

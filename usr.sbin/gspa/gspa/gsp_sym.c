@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_sym.c,v 1.6 2001/06/13 10:46:06 wiz Exp $	*/
+/*	$NetBSD: gsp_sym.c,v 1.7 2006/05/13 22:34:50 christos Exp $	*/
 /*
  * GSP assembler - symbol table
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_sym.c,v 1.6 2001/06/13 10:46:06 wiz Exp $");
+__RCSID("$NetBSD: gsp_sym.c,v 1.7 2006/05/13 22:34:50 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -64,7 +64,7 @@ lookup(char *id, bool makeit)
 			break;
 	if( !makeit )
 		return NULL;
-	ptr = (symbol) alloc (sizeof(struct symbol) + strlen(id));
+	ptr = emalloc(sizeof(struct symbol) + strlen(id));
 	ptr->ndefn = 0;
 	ptr->flags = 0;
 	ptr->value = 0;

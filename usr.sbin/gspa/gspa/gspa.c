@@ -1,4 +1,4 @@
-/*	$NetBSD: gspa.c,v 1.10 2003/07/14 08:43:19 itojun Exp $	*/
+/*	$NetBSD: gspa.c,v 1.11 2006/05/13 22:34:50 christos Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspa.c,v 1.10 2003/07/14 08:43:19 itojun Exp $");
+__RCSID("$NetBSD: gspa.c,v 1.11 2006/05/13 22:34:50 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -291,7 +291,7 @@ yyerror(char *err)
 }
 
 void *
-alloc(size_t nbytes)
+emalloc(size_t nbytes)
 {
 	void *p;
 
