@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.30 2006/04/01 23:34:43 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.31 2006/05/13 21:58:51 christos Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -10,7 +10,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: emacs.c,v 1.30 2006/04/01 23:34:43 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.31 2006/05/13 21:58:51 christos Exp $");
 #endif
 
 
@@ -1545,7 +1545,7 @@ x_init_emacs()
 	 * determine if the locale is 7-bit or not.
 	 */
 	locale = setlocale(LC_CTYPE, NULL);
-	if (locale != NULL || !strcmp(locale, "C") || !strcmp(locale, "POSIX"))
+	if (locale == NULL || !strcmp(locale, "C") || !strcmp(locale, "POSIX"))
 		Flag(FEMACSUSEMETA) = 0;
 }
 
