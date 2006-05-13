@@ -86,7 +86,7 @@ Boston, MA 02110-1301, USA.  */
 #define STANDARD_BINDIR_PREFIX "/usr/bin"
 
 #undef STANDARD_LIBEXEC_PREFIX
-#define STANDARD_LIBEXEC_PREFIX "/usr/libexec"
+#define STANDARD_LIBEXEC_PREFIX "/usr/libexec/"
 
 #endif /* NETBSD_NATIVE */
 
