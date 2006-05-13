@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.41.2.1 2005/11/01 20:01:41 jmc Exp $	*/
+/*	$NetBSD: pthread.c,v 1.41.2.2 2006/05/13 16:41:35 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.41.2.1 2005/11/01 20:01:41 jmc Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.41.2.2 2006/05/13 16:41:35 tron Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -96,6 +96,8 @@ struct pthread_queue_t pthread__idlequeue;
 struct pthread_queue_t pthread__suspqueue;
 
 int pthread__concurrency, pthread__maxconcurrency;
+
+int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
 __strong_alias(__libc_thr_self,pthread_self)
 __strong_alias(__libc_thr_create,pthread_create)
@@ -183,7 +185,7 @@ pthread_init(void)
 	pthread__initmain(&first);
 	pthread__initthread(first, first);
 	first->pt_state = PT_STATE_RUNNING;
-	sigprocmask(0, NULL, &first->pt_sigmask);
+	_sys___sigprocmask14(0, NULL, &first->pt_sigmask);
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 
 	/* Start subsystems */
