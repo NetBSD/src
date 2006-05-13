@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.26 2006/05/12 01:23:51 mrg Exp $
+# $NetBSD: Makefile.boot,v 1.27 2006/05/13 12:02:54 lukem Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -140,6 +140,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 # We link the program, find the callers (all in libi386), then
 # explicitely pull in the required objects before any other library code.
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
+	${_MKTARGET_LINK}
 	bb="$$( ${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0 -cref \
 	    ${OBJS} ${LIBLIST} | ( \
 		while read symbol file; do \
