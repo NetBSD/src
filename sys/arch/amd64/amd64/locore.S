@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 2006/04/30 19:50:19 rjs Exp $	*/
+/*	$NetBSD: locore.S,v 1.17 2006/05/13 08:56:08 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -747,7 +747,7 @@ NENTRY(switch_error3)
 
 /*
  * int cpu_switch(struct lwp *)
- * Find a runnable process and switch to it.  Wait if necessary.  If the new
+ * Find a runnable lwp and switch to it.  Wait if necessary.  If the new
  * lwp is the same as the old one, we short-circuit the context save and
  * restore.
  */
@@ -776,9 +776,9 @@ ENTRY(cpu_switch)
 	 *
 	 * Registers:
 	 *   %rax - queue head, scratch, then zero
-	 *   %r8 - queue number
+	 *   %r8  - queue number
 	 *   %ecx - cached value of whichqs
-	 *   %rdx - next process in queue
+	 *   %rdx - next lwp in queue
 	 *   %r13 - old lwp
 	 *   %r12 - new lwp
 	 */
