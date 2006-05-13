@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.15.10.2 2006/03/10 14:54:00 elad Exp $	*/
+/*	$NetBSD: pdc.c,v 1.15.10.3 2006/05/13 10:26:27 elad Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.15.10.2 2006/03/10 14:54:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.15.10.3 2006/05/13 10:26:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.15.10.2 2006/03/10 14:54:00 elad Exp $");
 #include <sys/user.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.13.2.4 2006/05/11 23:27:14 elad Exp $	*/
+/*	$NetBSD: xencons.c,v 1.13.2.5 2006/05/13 10:27:07 elad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.13.2.4 2006/05/11 23:27:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.13.2.5 2006/05/13 10:27:07 elad Exp $");
 
 #include "opt_xen.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.13.2.4 2006/05/11 23:27:14 elad Exp $"
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/stdarg.h>
 #include <machine/xen.h>

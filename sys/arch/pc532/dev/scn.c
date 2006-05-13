@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.68.10.3 2006/04/19 02:33:26 elad Exp $ */
+/*	$NetBSD: scn.c,v 1.68.10.4 2006/05/13 10:26:28 elad Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.10.3 2006/04/19 02:33:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.10.4 2006/05/13 10:26:28 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.68.10.3 2006/04/19 02:33:26 elad Exp $");
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 

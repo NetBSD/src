@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.16.4.3 2006/04/19 02:32:14 elad Exp $ */
+/*	$NetBSD: sscom.c,v 1.16.4.4 2006/05/13 10:26:26 elad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.16.4.3 2006/04/19 02:32:14 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.16.4.4 2006/05/13 10:26:26 elad Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -147,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.16.4.3 2006/04/19 02:32:14 elad Exp $");
 #include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.71.10.2 2006/03/10 14:54:02 elad Exp $	*/
+/*	$NetBSD: dtop.c,v 1.71.10.3 2006/05/13 10:26:28 elad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.71.10.2 2006/03/10 14:54:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.71.10.3 2006/05/13 10:26:28 elad Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.71.10.2 2006/03/10 14:54:02 elad Exp $");
 #include <sys/file.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 #include <dev/dec/lk201.h>

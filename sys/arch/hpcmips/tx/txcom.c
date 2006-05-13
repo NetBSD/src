@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.27.10.3 2006/04/19 02:32:40 elad Exp $ */
+/*	$NetBSD: txcom.c,v 1.27.10.4 2006/05/13 10:26:27 elad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27.10.3 2006/04/19 02:32:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27.10.4 2006/05/13 10:26:27 elad Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.27.10.3 2006/04/19 02:32:40 elad Exp $")
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/proc.h> /* tsleep/wakeup */
 

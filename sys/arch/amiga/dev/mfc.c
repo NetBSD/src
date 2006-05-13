@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.38.10.3 2006/04/19 02:31:59 elad Exp $ */
+/*	$NetBSD: mfc.c,v 1.38.10.4 2006/05/13 10:26:26 elad Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38.10.3 2006/04/19 02:31:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38.10.4 2006/05/13 10:26:26 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.38.10.3 2006/04/19 02:31:59 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>

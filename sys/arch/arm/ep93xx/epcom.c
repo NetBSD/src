@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.7.4.3 2006/04/19 02:32:07 elad Exp $ */
+/*	$NetBSD: epcom.c,v 1.7.4.4 2006/05/13 10:26:26 elad Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.7.4.3 2006/04/19 02:32:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.7.4.4 2006/05/13 10:26:26 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.7.4.3 2006/04/19 02:32:07 elad Exp $");
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

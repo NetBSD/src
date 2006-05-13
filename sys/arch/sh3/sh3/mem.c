@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19.10.3 2006/03/10 14:54:02 elad Exp $	*/
+/*	$NetBSD: mem.c,v 1.19.10.4 2006/05/13 10:26:28 elad Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19.10.3 2006/03/10 14:54:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19.10.4 2006/05/13 10:26:28 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19.10.3 2006/03/10 14:54:02 elad Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <uvm/uvm_extern.h>
 
 caddr_t zeropage;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.175.10.3 2006/04/19 02:32:50 elad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.175.10.4 2006/05/13 10:26:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175.10.3 2006/04/19 02:32:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175.10.4 2006/05/13 10:26:27 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.175.10.3 2006/04/19 02:32:50 elad Exp $
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
