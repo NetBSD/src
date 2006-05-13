@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.614 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.615 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -267,3 +267,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		bridges to the i386 port. [jmcneill 20060506]
 	piixpm(4): Import Intel PIIX4 power management controller from
 		OpenBSD. [jmcneill 20060506]
+	it(4): Driver for iTE IT87xxF/SIS 950 Hardware monitor. Adapted
+		from OpenBSD. [xtraeme 20060513]
