@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.4 2002/09/18 03:54:34 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2006/05/13 20:46:15 christos Exp $
 
+WARNS?=4
 .include <bsd.own.mk>
 
 .PATH:	${NETBSDSRCDIR}/dist/tcpdump
