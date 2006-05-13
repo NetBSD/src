@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.7.2.2 2006/04/07 12:51:26 tron Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.7.2.3 2006/05/13 16:50:46 tron Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.7.2.2 2006/04/07 12:51:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.7.2.3 2006/05/13 16:50:46 tron Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -252,7 +252,8 @@ xbd_xenbus_detach(struct device *dev, int flags)
 	if (sc->sc_shutdown == 0) {
 		sc->sc_shutdown = 1;
 		/* wait for requests to complete */
-		while (sc->sc_dksc.sc_dkdev.dk_busy > 0)
+		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
+		    sc->sc_dksc.sc_dkdev.dk_busy > 0)
 			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
 	}
 	splx(s);
@@ -267,17 +268,19 @@ xbd_xenbus_detach(struct device *dev, int flags)
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
 	}
-	/* Delete all of our wedges. */
-	dkwedge_delall(&sc->sc_dksc.sc_dkdev);
+	if (sc->sc_backend_status == BLKIF_STATE_CONNECTED) {
+		/* Delete all of our wedges. */
+		dkwedge_delall(&sc->sc_dksc.sc_dkdev);
 
-	s = splbio();
-	/* Kill off any queued buffers. */
-	bufq_drain(&sc->sc_dksc.sc_bufq);
-	bufq_free(&sc->sc_dksc.sc_bufq);
-	splx(s);
+		s = splbio();
+		/* Kill off any queued buffers. */
+		bufq_drain(&sc->sc_dksc.sc_bufq);
+		bufq_free(&sc->sc_dksc.sc_bufq);
+		splx(s);
 
-	/* detach disk */
-	disk_detach(&sc->sc_dksc.sc_dkdev);
+		/* detach disk */
+		disk_detach(&sc->sc_dksc.sc_dkdev);
+	}
 
 	event_remove_handler(sc->sc_evtchn, &xbd_handler, sc);
 	while (xengnt_status(sc->sc_ring_gntref)) {
@@ -376,14 +379,21 @@ static void xbd_backend_changed(struct device *dev, XenbusState new_state)
 		s = splbio();
 		sc->sc_shutdown = 1;
 		/* wait for requests to complete */
-		while (sc->sc_dksc.sc_dkdev.dk_busy > 0)
-			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach", hz/2);
+		while (sc->sc_backend_status == BLKIF_STATE_CONNECTED &&
+		    sc->sc_dksc.sc_dkdev.dk_busy > 0)
+			tsleep(xbd_xenbus_detach, PRIBIO, "xbddetach",
+			    hz/2);
 		splx(s);
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
 	case XenbusStateConnected:
-		xbd_connect(sc);
+		s = splbio();
+		if (sc->sc_backend_status == BLKIF_STATE_CONNECTED)
+			/* already connected */
+			return;
 		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
+		splx(s);
+		xbd_connect(sc);
 		sc->sc_shutdown = 0;
 		hypervisor_enable_event(sc->sc_evtchn);
 
