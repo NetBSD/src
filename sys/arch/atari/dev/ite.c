@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.49.10.3 2006/04/19 02:32:15 elad Exp $	*/
+/*	$NetBSD: ite.c,v 1.49.10.4 2006/05/13 10:26:27 elad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49.10.3 2006/04/19 02:32:15 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49.10.4 2006/05/13 10:26:27 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49.10.3 2006/04/19 02:32:15 elad Exp $");
 #include <sys/callout.h>
 #include <sys/proc.h>
 #include <dev/cons.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 

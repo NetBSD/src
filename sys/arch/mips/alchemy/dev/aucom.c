@@ -1,4 +1,4 @@
-/*	$NetBSD: aucom.c,v 1.18.4.3 2006/04/19 02:33:12 elad Exp $	*/
+/*	$NetBSD: aucom.c,v 1.18.4.4 2006/05/13 10:26:27 elad Exp $	*/
 /*	 NetBSD: com.c,v 1.222 2003/11/08 02:54:47 simonb Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.18.4.3 2006/04/19 02:33:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.18.4.4 2006/05/13 10:26:27 elad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.18.4.3 2006/04/19 02:33:12 elad Exp $");
 #include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

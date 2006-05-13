@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.10.10.3 2006/04/19 02:33:18 elad Exp $ */
+/* $NetBSD: sbjcn.c,v 1.10.10.4 2006/05/13 10:26:28 elad Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.10.10.3 2006/04/19 02:33:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.10.10.4 2006/05/13 10:26:28 elad Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -132,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.10.10.3 2006/04/19 02:33:18 elad Exp $")
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <sbmips/dev/sbscd/sbscdvar.h>
 #include <sbmips/dev/sbscd/sbjcnvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.51.10.3 2006/04/19 02:33:49 elad Exp $	*/
+/*	$NetBSD: xd.c,v 1.51.10.4 2006/05/13 10:27:07 elad Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.10.3 2006/04/19 02:33:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.10.4 2006/05/13 10:27:07 elad Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.10.3 2006/04/19 02:33:49 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 

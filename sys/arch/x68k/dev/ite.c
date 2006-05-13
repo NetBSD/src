@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.43.10.3 2006/04/19 02:33:57 elad Exp $	*/
+/*	$NetBSD: ite.c,v 1.43.10.4 2006/05/13 10:27:07 elad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.43.10.3 2006/04/19 02:33:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.43.10.4 2006/05/13 10:27:07 elad Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.43.10.3 2006/04/19 02:33:57 elad Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #include <machine/kbio.h>

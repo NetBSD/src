@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.24.4.2 2006/03/10 14:54:02 elad Exp $       */
+/*      $NetBSD: pccons.c,v 1.24.4.3 2006/05/13 10:26:28 elad Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.24.4.2 2006/03/10 14:54:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.24.4.3 2006/05/13 10:26:28 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -154,6 +154,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.24.4.2 2006/03/10 14:54:02 elad Exp $")
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <machine/kerndebug.h>
 
 #include <uvm/uvm_extern.h>

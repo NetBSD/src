@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.42.10.3 2006/04/19 02:32:07 elad Exp $	*/
+/*	$NetBSD: pccons.c,v 1.42.10.4 2006/05/13 10:26:26 elad Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.10.3 2006/04/19 02:32:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.10.4 2006/05/13 10:26:26 elad Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.10.3 2006/04/19 02:32:07 elad Exp $"
 #include <sys/kcore.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 

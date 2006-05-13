@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.31.10.3 2006/04/19 02:31:59 elad Exp $ */
+/*	$NetBSD: msc.c,v 1.31.10.4 2006/05/13 10:26:26 elad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.31.10.3 2006/04/19 02:31:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.31.10.4 2006/05/13 10:26:26 elad Exp $");
 
 #include "msc.h"
 
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.31.10.3 2006/04/19 02:31:59 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <amiga/amiga/device.h>
 #include <amiga/dev/zbusvar.h>
