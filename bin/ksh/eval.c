@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.6 2006/05/10 21:53:14 mrg Exp $	*/
+/*	$NetBSD: eval.c,v 1.7 2006/05/13 21:48:00 christos Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.6 2006/05/10 21:53:14 mrg Exp $");
+__RCSID("$NetBSD: eval.c,v 1.7 2006/05/13 21:48:00 christos Exp $");
 #endif
 
 
@@ -860,6 +860,7 @@ comsub(xp, cp)
 	s->start = s->str = cp;
 	sold = source;
 	t = compile(s);
+	afree(s, ATEMP);
 	source = sold;
 
 	if (t == NULL)
