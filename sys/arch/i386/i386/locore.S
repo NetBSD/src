@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38 2006/04/12 13:48:52 jmmv Exp $	*/
+/*	$NetBSD: locore.S,v 1.39 2006/05/13 08:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -773,8 +773,8 @@ NENTRY(switch_error)
 
 /*
  * void cpu_switch(struct lwp *)
- * Find a runnable process and switch to it.  Wait if necessary.  If the new
- * process is the same as the old one, we short-circuit the context save and
+ * Find a runnable lwp and switch to it.  Wait if necessary.  If the new
+ * lwp is the same as the old one, we short-circuit the context save and
  * restore.
  *
  * Note that the stack frame layout is known to "struct switchframe"

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.82 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.83 2006/05/13 08:56:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -744,7 +744,7 @@ ENTRY_NOPROFILE(idle)
 
 /*
  * int cpu_switch(struct lwp *)
- * Find a runnable process and switch to it.  Wait if necessary.
+ * Find a runnable lwp and switch to it.  Wait if necessary.
  */
 KENTRY(cpu_switch, 4)
 	enter	[r3,r4,r5,r6,r7],0
@@ -753,7 +753,7 @@ KENTRY(cpu_switch, 4)
 
 	/*
 	 * Clear curlwp so that we don't accumulate system time while idle.
-	 * This also insures that schedcpu() will move the old process to
+	 * This also insures that schedcpu() will move the old lwp to
 	 * the correct queue if it happens to get called from the spl0()
 	 * below and changes the priority.  (See corresponding comment in
 	 * userret()).
@@ -774,14 +774,14 @@ KENTRY(cpu_switch, 4)
 #endif
 
 	/*
-	 * First phase: find new process.
+	 * First phase: find new lwp.
 	 *
 	 * Registers:
 	 *   r0 - queue number
 	 *   r1 - queue head
-	 *   r2 - new process
-	 *   r3 - next process in queue
-	 *   r4 - old process
+	 *   r2 - new lwp
+	 *   r3 - next lwp in queue
+	 *   r4 - old lwp
 	 */
 	ints_off
 
@@ -789,10 +789,10 @@ KENTRY(cpu_switch, 4)
 	ffsd	_C_LABEL(sched_whichqs)(pc),r0 /* find a full q */
 	bfs	0b			/* if none, idle */
 
-sw1:	/* Get the process and unlink it from the queue. */
+sw1:	/* Get the lwp and unlink it from the queue. */
 	addr	_C_LABEL(sched_qs)(pc)[r0:q],r1 /* address of qs entry! */
 
-	movd	L_FORW(r1),r2		/* unlink from front of process q */
+	movd	L_FORW(r1),r2		/* unlink from front of lwp q */
 #ifdef	DIAGNOSTIC
 	cmpd	r2,r1			/* linked to self (i.e. nothing queued? */
 	beq	_C_LABEL(switch_error)	/* not possible */
@@ -814,7 +814,7 @@ sw1:	/* Get the process and unlink it from the queue. */
 	bne	_C_LABEL(switch_error)	/* No; shouldn't be queued. */
 #endif
 
-	/* Isolate process. XXX Is this necessary? */
+	/* Isolate lwp. XXX Is this necessary? */
 	movqd	0,L_BACK(r2)
 
 switch_resume:
@@ -822,21 +822,21 @@ switch_resume:
 
 	/* p->p_cpu initialized in fork1() for single-processor */
 
-	/* Record new process. */
+	/* Record new lwp. */
 	movb	LSONPROC,L_STAT(r2)	/* l->l_stat = LSONPROC */
 	movd	r2,_C_LABEL(curlwp)(pc)
 
 	/* It's okay to take interrupts here. */
 	ints_on
 
-	/* Skip context switch if same process. */
+	/* Skip context switch if same lwp. */
 	movqd	0,r0			/* return "didn't switch" */
 	cmpd	r2,r4
 	beq	_ASM_LABEL(switch_return)
 
 	movqd	1,r0			/* return "did switch" */
 
-	/* If old process exited, don't bother. */
+	/* If old lwp exited, don't bother. */
 	cmpqd	0,r4
 	beq	_ASM_LABEL(switch_exited)
 
@@ -844,8 +844,8 @@ switch_resume:
 	 * Second phase: save old context.
 	 *
 	 * Registers:
-	 *   r4 - old process, then old pcb
-	 *   r2 - new process
+	 *   r4 - old lwp, then old pcb
+	 *   r2 - new lwp
 	 */
 
 	movd	L_ADDR(r4),r4
@@ -860,7 +860,7 @@ ASLOCAL(switch_exited)
 	 *
 	 * Registers:
 	 *   r1 - new pcb
-	 *   r2 - new process
+	 *   r2 - new lwp
 	 */
 
 	/* No interrupts while loading new state. */
