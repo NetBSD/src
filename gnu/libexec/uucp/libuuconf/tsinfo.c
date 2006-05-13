@@ -26,7 +26,7 @@
 #include "uucnfi.h"
 
 #if USE_RCS_ID
-const char _uuconf_tsinfo_rcsid[] = "$Id: tsinfo.c,v 1.5 2003/01/20 05:29:55 simonb Exp $";
+const char _uuconf_tsinfo_rcsid[] = "$Id: tsinfo.c,v 1.6 2006/05/13 23:49:02 christos Exp $";
 #endif
 
 #include <errno.h>
@@ -497,6 +497,8 @@ iitime (pglobal, argc, argv, pvar, pinfo)
   aznew[2] = argv[1];
   if (argc > 2)
     aznew[3] = argv[2];
+  else
+    aznew[3] = NULL;
 
   return iitimegrade (pglobal, argc + 1, aznew, pvar, pinfo);
 }
