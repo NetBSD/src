@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 2006/03/06 20:32:28 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 2006/05/13 08:56:08 skrll Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -618,8 +618,8 @@ NENTRY(switch_error)
 
 /*
  * void cpu_switch(struct lwp *)
- * Find a runnable process and switch to it.  Wait if necessary.  If the new
- * process is the same as the old one, we short-circuit the context save and
+ * Find a runnable lwp and switch to it.  Wait if necessary.  If the new
+ * lwp is the same as the old one, we short-circuit the context save and
  * restore.
  *
  * Note that the stack frame layout is known to "struct switchframe"
@@ -679,7 +679,7 @@ ENTRY(cpu_switch)
 	 */
 
 	pushl	%esi
-	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldproc)
+	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldlwp)
 	addl	$4,%esp
 
 	movl	L_ADDR(%esi),%esi
@@ -843,7 +843,7 @@ switch_resume:
 	 */
 
 	pushl	%esi
-	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldproc)
+	call	_C_LABEL(pmap_deactivate2)	# pmap_deactivate(oldlwp)
 	addl	$4,%esp
 
 	movl	L_ADDR(%esi),%esi
