@@ -1,4 +1,4 @@
-/*	$NetBSD: inflate.c,v 1.2 2006/01/27 00:45:27 christos Exp $	*/
+/*	$NetBSD: inflate.c,v 1.3 2006/05/13 22:05:04 christos Exp $	*/
 
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2005 Mark Adler
@@ -687,6 +687,7 @@ int flush;
                     if (state->head != Z_NULL &&
                         state->head->extra != Z_NULL) {
                         len = state->head->extra_len - state->length;
+			Assert (next != NULL, "next is null");
                         zmemcpy(state->head->extra + len, next,
                                 len + copy > state->head->extra_max ?
                                 state->head->extra_max - len : copy);
