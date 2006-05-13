@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.2 2006/05/11 19:05:41 gdamore Exp $ */
+/* $NetBSD: edid.c,v 1.3 2006/05/13 00:39:19 gdamore Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.2 2006/05/11 19:05:41 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.3 2006/05/13 00:39:19 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,22 +49,22 @@ __KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.2 2006/05/11 19:05:41 gdamore Exp $");
 #define	DIVIDE(x,y)	(((x) + ((y) / 2)) / (y))
 
 static const char *_edid_modes[] =  {
-	"720x400x70",	/* hmm... videmode.c doesn't have this one */
-	"720x400x85",	/* should this really be "720x400x88" ? */
-	"640x480x60",
-	"640x480x67",
-	"640x480x72",
-	"640x480x75",
-	"800x600x56",
-	"800x600x60",
-	"800x600x72",
-	"800x600x75",
-	"832x768x74",	/* rounding error, 74.55 Hz aka "832x624x75" */
-	"1024x768x87i",
-	"1024x768x60",
-	"1024x768x70",
-	"1024x768x75",
 	"1280x1024x75",
+	"1024x768x75",
+	"1024x768x70",
+	"1024x768x60",
+	"1024x768x87i",
+	"832x768x74",	/* rounding error, 74.55 Hz aka "832x624x75" */
+	"800x600x75",
+	"800x600x72",
+	"800x600x60",
+	"800x600x56",
+	"640x480x75",
+	"640x480x72",
+	"640x480x67",
+	"640x480x60",
+	"720x400x85",	/* should this really be "720x400x88" ? */
+	"720x400x70",	/* hmm... videmode.c doesn't have this one */
 };
 
 #ifdef	EDIDVERBOSE
