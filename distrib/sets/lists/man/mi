@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.886 2006/05/13 09:02:18 xtraeme Exp $
+# $NetBSD: mi,v 1.887 2006/05/13 17:24:34 xtraeme Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -3313,7 +3313,7 @@
 ./usr/share/man/man4/isic.4			man-sys-man		.man
 ./usr/share/man/man4/iso.4			man-sys-man		.man
 ./usr/share/man/man4/isp.4			man-sys-man		.man
-./usr/share/man/man3/it.4			man-sys-man		.man
+./usr/share/man/man4/it.4			man-sys-man		.man
 ./usr/share/man/man4/iteide.4			man-sys-man		.man
 ./usr/share/man/man4/iwi.4			man-sys-man		.man
 ./usr/share/man/man4/iwic.4			man-sys-man		.man
