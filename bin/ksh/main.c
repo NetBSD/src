@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2005/06/26 19:09:00 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2006/05/13 21:42:45 christos Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.12 2005/06/26 19:09:00 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2006/05/13 21:42:45 christos Exp $");
 #endif
 
 
@@ -528,10 +528,13 @@ command(comm)
 	const char *comm;
 {
 	register Source *s;
+	int r;
 
 	s = pushs(SSTRING, ATEMP);
 	s->start = s->str = comm;
-	return shell(s, FALSE);
+	r = shell(s, FALSE);
+	afree(s, ATEMP);
+	return r;
 }
 
 /*
