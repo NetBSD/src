@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.2 2006/05/14 21:55:38 elad Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI
@@ -31,7 +31,7 @@
 /******************************************************************************
  *
  * Name: acpica_machdep.h - arch-specific defines, etc.
- *       $Revision: 1.1 $
+ *       $Revision: 1.2 $
  *
  *****************************************************************************/
 

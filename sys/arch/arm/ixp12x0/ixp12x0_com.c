@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.25 2006/03/26 04:41:17 thorpej Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.26 2006/05/14 21:55:10 elad Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.25 2006/03/26 04:41:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.26 2006/05/14 21:55:10 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.25 2006/03/26 04:41:17 thorpej Exp
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -507,7 +508,7 @@ ixpcomopen(dev, flag, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -748,7 +749,7 @@ ixpcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

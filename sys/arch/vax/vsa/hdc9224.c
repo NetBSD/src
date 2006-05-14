@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.36 2006/03/28 17:38:28 thorpej Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.37 2006/05/14 21:57:13 elad Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.36 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.37 2006/05/14 21:57:13 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

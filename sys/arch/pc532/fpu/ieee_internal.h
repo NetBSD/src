@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_internal.h,v 1.10 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: ieee_internal.h,v 1.11 2006/05/14 21:55:39 elad Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.

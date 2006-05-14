@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.8 2006/05/07 10:18:28 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.9 2006/05/14 21:57:13 elad Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -67,9 +67,9 @@ extern struct evcnt softxenevt_evtcnt;
 
 void		xenevtattach(int);
 static int	xenevt_fread(struct file *, off_t *, struct uio *,
-    struct ucred *, int);
+    kauth_cred_t, int);
 static int	xenevt_fwrite(struct file *, off_t *, struct uio *,
-    struct ucred *, int);
+    kauth_cred_t, int);
 static int	xenevt_fioctl(struct file *, u_long, void *, struct lwp *);
 static int	xenevt_fpoll(struct file *, int, struct lwp *);
 static int	xenevt_fclose(struct file *, struct lwp *);
@@ -337,7 +337,7 @@ xenevt_fclose(struct file *fp, struct lwp *l)
 
 static int
 xenevt_fread(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	struct xenevt_d *d = fp->f_data;
 	int error;
@@ -412,7 +412,7 @@ done:
 
 static int
 xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	struct xenevt_d *d = fp->f_data;
 	u_int16_t chans[NR_EVENT_CHANNELS];

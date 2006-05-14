@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.12 2006/04/10 03:36:03 simonb Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.13 2006/05/14 21:55:10 elad Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.12 2006/04/10 03:36:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.13 2006/05/14 21:55:10 elad Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"

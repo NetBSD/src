@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 2006/05/02 18:51:15 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 2006/05/14 21:55:09 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.24 2006/05/02 18:51:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.25 2006/05/14 21:55:09 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.24 2006/05/02 18:51:15 drochner Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/acct.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -520,8 +521,8 @@ faultcommon:
 			ksi.ksi_signo = SIGKILL;
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 		} else {
 #ifdef TRAP_SIGDEBUG
 			printf("pid %d (%s): SEGV at rip %lx addr %lx\n",

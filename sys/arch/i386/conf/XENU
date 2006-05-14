@@ -1,4 +1,4 @@
-# $NetBSD: XENU,v 1.19 2006/03/28 20:58:40 pavel Exp $
+# $NetBSD: XENU,v 1.20 2006/05/14 21:55:11 elad Exp $
 
 include 	"arch/xen/conf/std.xen"
 

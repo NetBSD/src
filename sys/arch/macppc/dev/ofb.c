@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.48 2006/04/12 19:38:23 jmmv Exp $	*/
+/*	$NetBSD: ofb.c,v 1.49 2006/05/14 21:55:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.48 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.49 2006/05/14 21:55:38 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.48 2006/04/12 19:38:23 jmmv Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -434,7 +435,7 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	 */
 	me = __curproc();
 	if (me != NULL) {
-		if (suser(me->p_ucred, NULL) != 0) {
+		if (kauth_authorize_generic(me->p_cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
 			return -1;
 		}

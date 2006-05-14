@@ -1,4 +1,4 @@
-/*	$NetBSD: obiovar.h,v 1.1 2006/04/16 02:22:33 nonaka Exp $	*/
+/*	$NetBSD: obiovar.h,v 1.2 2006/05/14 21:55:10 elad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.

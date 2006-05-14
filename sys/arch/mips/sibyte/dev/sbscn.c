@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.16 2006/03/28 17:38:25 thorpej Exp $ */
+/* $NetBSD: sbscn.c,v 1.17 2006/05/14 21:55:38 elad Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.16 2006/03/28 17:38:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.17 2006/05/14 21:55:38 elad Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.16 2006/03/28 17:38:25 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <mips/sibyte/dev/sbobiovar.h>
 #if 0
@@ -571,7 +572,7 @@ sbscnopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -785,7 +786,7 @@ sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			break;
 		ch->ch_swflags = *(int *)data;

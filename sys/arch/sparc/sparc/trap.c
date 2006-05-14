@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165 2006/03/15 18:12:03 drochner Exp $ */
+/*	$NetBSD: trap.c,v 1.166 2006/05/14 21:56:33 elad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165 2006/03/15 18:12:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.166 2006/05/14 21:56:33 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -952,8 +952,8 @@ kfault:
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = SI_NOINFO;
 		} else {
@@ -1238,8 +1238,8 @@ kfault:
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = SI_NOINFO;
 		} else {

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.751 2006/05/13 09:02:18 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.752 2006/05/14 21:55:11 elad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.751 $"
+#ident 		"GENERIC-$Revision: 1.752 $"
 
 maxusers	32		# estimated number of users
 

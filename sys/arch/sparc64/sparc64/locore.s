@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.212 2006/05/12 06:01:02 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.213 2006/05/14 21:57:13 elad Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
