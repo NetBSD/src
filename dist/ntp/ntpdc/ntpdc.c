@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.6 2006/03/18 15:22:34 kardel Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.7 2006/05/14 01:30:00 christos Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -1104,7 +1104,7 @@ docmd(
 	int ntok;
 	int i, ti;
 	int rval;
-	struct xcmd *xcmd;
+	struct xcmd *xcmd = NULL;	/* XXX: GCC */
 
 	ai_fam_templ = ai_fam_default;
 	/*
