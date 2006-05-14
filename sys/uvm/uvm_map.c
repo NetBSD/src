@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.220 2006/05/14 08:20:35 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.221 2006/05/14 08:21:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.220 2006/05/14 08:20:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.221 2006/05/14 08:21:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -216,6 +216,8 @@ extern struct vm_map *pager_map; /* XXX */
  * => map must be locked
  */
 #define uvm_map_entry_unlink(map, entry) do { \
+	KASSERT((entry) != (map)->first_free); \
+	KASSERT((entry) != (map)->hint); \
 	uvm_mapent_check(entry); \
 	(map)->nentries--; \
 	(entry)->next->prev = (entry)->prev; \
@@ -234,6 +236,21 @@ extern struct vm_map *pager_map; /* XXX */
 		(map)->hint = (value); \
 	simple_unlock(&(map)->hint_lock); \
 } while (/*CONSTCOND*/ 0)
+
+/*
+ * clear_hints: ensure that hints don't point to the entry.
+ *
+ * => map must be write-locked.
+ */
+static void
+clear_hints(struct vm_map *map, struct vm_map_entry *ent)
+{
+
+	SAVE_HINT(map, ent, ent->prev);
+	if (map->first_free == ent) {
+		map->first_free = ent->prev;
+	}
+}
 
 /*
  * VM_MAP_RANGE_CHECK: check and correct range
@@ -1039,6 +1056,8 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 	UVMHIST_LOG(maphist, "(map=0x%x, start=0x%x, size=%d, flags=0x%x)",
 	    map, start, size, flags);
 	UVMHIST_LOG(maphist, "  uobj/offset 0x%x/%d", uobj, uoffset,0,0);
+
+	KASSERT(map->hint == prev_entry); /* bimerge case assumes this */
 
 	if (flags & UVM_FLAG_QUANTUM) {
 		KASSERT(new_entry);
@@ -2275,13 +2294,8 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 			}
 		}
 	} else {
-
-		/* critical: flush stale hints out of map */
-		SAVE_HINT(map, map->hint, oldent->prev);
-		if (map->first_free == oldent)
-			map->first_free = oldent->prev;
-
 		/* NULL list of new entries: just remove the old one */
+		clear_hints(map, oldent);
 		uvm_map_entry_unlink(map, oldent);
 	}
 
@@ -4499,6 +4513,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 			}
 
 			entry->end = next->end;
+			clear_hints(map, next);
 			uvm_map_entry_unlink(map, next);
 			if (copying) {
 				entry->aref = next->aref;
@@ -4539,6 +4554,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 			}
 
 			entry->start = prev->start;
+			clear_hints(map, prev);
 			uvm_map_entry_unlink(map, prev);
 			if (copying) {
 				entry->aref = prev->aref;
