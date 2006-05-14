@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.20 2006/03/29 06:29:20 thorpej Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.21 2006/05/14 21:42:27 elad Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.20 2006/03/29 06:29:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.21 2006/05/14 21:42:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

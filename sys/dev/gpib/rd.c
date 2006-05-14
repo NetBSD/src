@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.12 2006/04/14 13:09:06 blymn Exp $ */
+/*	$NetBSD: rd.c,v 1.13 2006/05/14 21:42:27 elad Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.12 2006/04/14 13:09:06 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.13 2006/05/14 21:42:27 elad Exp $");
 
 #include "rnd.h"
 

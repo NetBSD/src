@@ -1,4 +1,4 @@
-/*	$NetBSD: ddcreg.h,v 1.1 2006/04/25 21:18:16 gdamore Exp $	*/
+/*	$NetBSD: ddcreg.h,v 1.2 2006/05/14 21:42:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.

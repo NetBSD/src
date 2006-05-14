@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.47 2006/04/11 15:42:56 rpaulo Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.48 2006/05/14 21:45:00 elad Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.47 2006/04/11 15:42:56 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.48 2006/05/14 21:45:00 elad Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.47 2006/04/11 15:42:56 rpaulo Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -1942,7 +1943,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSLOADFW:
 		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) != 0)
 			break;
 
 		error = iwi_cache_firmware(sc, ifr->ifr_data);
@@ -1950,7 +1952,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSKILLFW:
 		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) != 0)
 			break;
 
 		ifp->if_flags &= ~IFF_UP;

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.45 2006/03/29 04:16:51 thorpej Exp $ */
+/* $NetBSD: wsmouse.c,v 1.46 2006/05/14 21:47:00 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.45 2006/03/29 04:16:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.46 2006/05/14 21:47:00 elad Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"

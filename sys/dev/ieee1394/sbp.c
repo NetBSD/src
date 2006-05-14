@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.10 2006/04/30 13:25:04 kiyohara Exp $	*/
+/*	$NetBSD: sbp.c,v 1.11 2006/05/14 21:42:27 elad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa

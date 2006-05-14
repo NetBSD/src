@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.26 2006/04/14 17:58:01 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.27 2006/05/14 21:45:00 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.26 2006/04/14 17:58:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.27 2006/05/14 21:45:00 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
