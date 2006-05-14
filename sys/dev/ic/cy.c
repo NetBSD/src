@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.40 2006/03/05 17:33:33 christos Exp $	*/
+/*	$NetBSD: cy.c,v 1.41 2006/05/14 05:42:43 christos Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.40 2006/03/05 17:33:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.41 2006/05/14 05:42:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -642,7 +642,8 @@ cyparam(struct tty *tp, struct termios *t)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
-	int ibpr, obpr, i_clk_opt, o_clk_opt, s, opt;
+	int ibpr = 0, obpr = 0, i_clk_opt = 0, o_clk_opt = 0;	/* XXX: GCC */
+	int s, opt;
 
 	cy = CY_PORT(tp->t_dev);
 	sc = CY_BOARD(cy);
