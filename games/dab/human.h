@@ -1,4 +1,4 @@
-/*	$NetBSD: human.h,v 1.1.1.1 2003/12/26 17:57:03 christos Exp $	*/
+/*	$NetBSD: human.h,v 1.2 2006/05/14 06:38:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ class BOARD;
 class HUMAN : public PLAYER {
   public:
     HUMAN(const char c);
+    virtual ~HUMAN() {}
     // Return move in y, x, and dir
     void play(const BOARD& b, size_t& y, size_t& x, int& dir);
   private:
