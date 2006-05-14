@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.27 2003/07/26 19:24:50 salo Exp $	*/
+/*	$NetBSD: xdr.c,v 1.28 2006/05/14 02:15:31 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.27 2003/07/26 19:24:50 salo Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.28 2006/05/14 02:15:31 christos Exp $");
 #endif
 #endif
 
@@ -766,7 +766,7 @@ xdr_string(xdrs, cpp, maxsize)
 	u_int maxsize;
 {
 	char *sp;  		/* sp is the actual string pointer */
-	u_int size;
+	u_int size = 0;		/* XXX: GCC */
 	u_int nodesize;
 
 	_DIAGASSERT(xdrs != NULL);

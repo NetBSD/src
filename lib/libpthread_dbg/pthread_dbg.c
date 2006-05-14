@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.30 2004/10/12 22:17:56 mycroft Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.31 2006/05/14 02:16:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.30 2004/10/12 22:17:56 mycroft Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.31 2006/05/14 02:16:36 christos Exp $");
 
 #define __EXPOSE_STACK 1
 #include <sys/param.h>
@@ -1076,7 +1076,7 @@ td_thr_suspend(td_thread_t *thread)
 	int tmp, tmp1, val;
 	caddr_t addr, sp, nthreadaddr, qaddr;
 	size_t rsize, ucsize;
-	td_thread_t *nthread;
+	td_thread_t *nthread = NULL; /* XXX: GCC */
 	ucontext_t uc, *ucp;
 	struct pthread_queue_t qhead;
 
