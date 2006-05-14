@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.113 2006/05/08 01:04:09 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.114 2006/05/14 05:26:59 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.113 2006/05/08 01:04:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.114 2006/05/14 05:26:59 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -765,6 +765,7 @@ config_rootsearch(cfsubmatch_t fn, const char *rootname, void *aux)
 	m.aux = aux;
 	m.match = NULL;
 	m.pri = 0;
+	m.locs = 0;
 	/*
 	 * Look at root entries for matching name.  We do not bother
 	 * with found-state here since only one root should ever be
