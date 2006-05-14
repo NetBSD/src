@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.6 2003/12/04 16:23:38 drochner Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.7 2006/05/14 23:36:01 christos Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -1384,7 +1384,7 @@ docmd(
 	struct parse pcmd;
 	int ntok;
 	static int i;
-	struct xcmd *xcmd;
+	struct xcmd *xcmd = NULL;
 
 	/*
 	 * Tokenize the command line.  If nothing on it, return.
@@ -1995,7 +1995,7 @@ help(
 {
 	int i;
 	int n;
-	struct xcmd *xcp;
+	struct xcmd *xcp = NULL;
 	char *cmd;
 	const char *cmdsort[100];
 	int length[100];
