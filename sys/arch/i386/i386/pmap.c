@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.190 2006/03/16 10:13:55 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.191 2006/05/14 05:30:31 christos Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2006/03/16 10:13:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2006/05/14 05:30:31 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1607,7 +1607,7 @@ int
 pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
-	paddr_t pdirpa;
+	paddr_t pdirpa = 0;	/* XXX: GCC */
 
 	/*
 	 * NOTE: The `pmap_lock' is held when the PDP is allocated.

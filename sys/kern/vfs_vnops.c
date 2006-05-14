@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.109 2006/05/04 16:48:16 perseant Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.110 2006/05/14 05:30:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.109 2006/05/04 16:48:16 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.110 2006/05/14 05:30:31 christos Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -98,7 +98,7 @@ int
 vn_open(struct nameidata *ndp, int fmode, int cmode)
 {
 	struct vnode *vp;
-	struct mount *mp;
+	struct mount *mp = NULL;	/* XXX: GCC */
 	struct lwp *l = ndp->ni_cnd.cn_lwp;
 	struct ucred *cred = l->l_proc->p_ucred;
 	struct vattr va;
@@ -879,7 +879,7 @@ vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
 {
 	struct uio auio;
 	struct iovec aiov;
-	struct mount *mp;
+	struct mount *mp = NULL;	/* XXX: GCC */
 	int error;
 
 	aiov.iov_len = buflen;
@@ -912,7 +912,7 @@ int
 vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
     const char *attrname, struct lwp *l)
 {
-	struct mount *mp;
+	struct mount *mp = NULL;	/* XXX: GCC */
 	int error;
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
