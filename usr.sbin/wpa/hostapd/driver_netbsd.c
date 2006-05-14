@@ -17,6 +17,7 @@
  * $FreeBSD: src/usr.sbin/wpa/hostapd/driver_freebsd.c,v 1.3 2006/03/07 05:54:19 sam Exp $
  */
 
+#include <err.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -72,7 +73,7 @@ set80211var(struct bsd_driver_data *drv, int op, const void *arg, int arg_len)
 	ireq.i_data = (void *) arg;
 
 	if (ioctl(drv->ioctl_sock, SIOCS80211, &ireq) < 0) {
-		perror("ioctl[SIOCS80211]");
+		warn("ioctl[SIOCS80211, op %d, len %d]", op, arg_len);
 		return -1;
 	}
 	return 0;
@@ -107,7 +108,7 @@ set80211param(struct bsd_driver_data *drv, int op, int arg)
 	ireq.i_val = arg;
 
 	if (ioctl(drv->ioctl_sock, SIOCS80211, &ireq) < 0) {
-		perror("ioctl[SIOCS80211]");
+		warn("ioctl[SIOCS80211, op %d, arg %d]", op, arg);
 		return -1;
 	}
 	return 0;
