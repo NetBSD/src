@@ -1,4 +1,4 @@
-/*	$NetBSD: algor.h,v 1.2 2005/08/09 02:38:32 christos Exp $	*/
+/*	$NetBSD: algor.h,v 1.3 2006/05/14 03:21:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ class BOX;
 class ALGOR : public PLAYER {
   public:
     ALGOR(const char c);
+    virtual ~ALGOR() {}
     // Return a proposed move in (y, x, dir)
     void play(const BOARD& b, size_t& y, size_t& x, int& dir);
 
