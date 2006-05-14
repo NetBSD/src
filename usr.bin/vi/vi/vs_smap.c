@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_smap.c,v 1.4 2002/04/09 01:47:37 thorpej Exp $	*/
+/*	$NetBSD: vs_smap.c,v 1.5 2006/05/14 03:05:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)vs_smap.c	10.25 (Berkeley) 7/12/96";
 #else
-__RCSID("$NetBSD: vs_smap.c,v 1.4 2002/04/09 01:47:37 thorpej Exp $");
+__RCSID("$NetBSD: vs_smap.c,v 1.5 2006/05/14 03:05:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -588,7 +588,9 @@ vs_sm_up(sp, rp, count, scmd, smp)
 	SMAP *smp;
 {
 	int cursor_set, echanged, zset;
-	SMAP *ssmp, s1, s2;
+	SMAP *ssmp = NULL, s1, s2;		/* XXX: GCC */
+	(void)memset(&s1, 0, sizeof(s1));	/* XXX: GCC */
+	(void)memset(&s2, 0, sizeof(s2));	/* XXX: GCC */
 
 	/*
 	 * Check to see if movement is possible.
@@ -825,8 +827,10 @@ vs_sm_down(sp, rp, count, scmd, smp)
 	SMAP *smp;
 	scroll_t scmd;
 {
-	SMAP *ssmp, s1, s2;
+	SMAP *ssmp = NULL, s1, s2;
 	int cursor_set, ychanged, zset;
+	(void)memset(&s1, 0, sizeof(s1));	/* XXX: GCC */
+	(void)memset(&s2, 0, sizeof(s2));	/* XXX: GCC */
 
 	/* Check to see if movement is possible. */
 	if (HMAP->lno == 1 &&
