@@ -1,4 +1,4 @@
-/*	$NetBSD: main.cc,v 1.3 2005/07/02 15:48:03 jdc Exp $	*/
+/*	$NetBSD: main.cc,v 1.4 2006/05/14 03:21:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
  * main.C: Main dots program
  */
 #include "defs.h"
-RCSID("$NetBSD: main.cc,v 1.3 2005/07/02 15:48:03 jdc Exp $")
+RCSID("$NetBSD: main.cc,v 1.4 2006/05/14 03:21:23 christos Exp $")
 
-#include <iostream>
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,8 +62,8 @@ static void usage(char* pname)
 	p++;
     else
 	p = pname;
-    std::cerr << "Usage: " << p
-	<< " [-w] [-p <c|h><c|h>] [-n <ngames>] [<ydim> [<xdim>]]" << std::endl;
+    (void)::fprintf(stderr,
+	"Usage: %s [-w] [-p <c|h><c|h>] [-n <ngames>] [<ydim> [<xdim>]]\n", p);
 }
 
 // Play a single game
