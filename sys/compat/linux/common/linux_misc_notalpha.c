@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.78 2006/05/10 11:05:34 yamt Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.79 2006/05/14 21:24:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.78 2006/05/10 11:05:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.79 2006/05/14 21:24:50 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.78 2006/05/10 11:05:34 yam
 #include <sys/resourcevar.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -360,8 +361,9 @@ linux_sys_getresgid(l, v, retval)
 		syscallarg(gid_t *) sgid;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
+	kauth_cred_t pc = p->p_cred;
 	int error;
+	gid_t gid;
 
 	/*
 	 * Linux copies these values out to userspace like so:
@@ -370,15 +372,17 @@ linux_sys_getresgid(l, v, retval)
 	 *	2. If that succeeds, copy out egid.
 	 *	3. If both of those succeed, copy out sgid.
 	 */
-	if ((error = copyout(&pc->p_rgid, SCARG(uap, rgid),
-			     sizeof(gid_t))) != 0)
+	gid = kauth_cred_getgid(pc);
+	if ((error = copyout(&gid, SCARG(uap, rgid), sizeof(gid_t))) != 0)
 		return (error);
 
-	if ((error = copyout(&pc->pc_ucred->cr_gid, SCARG(uap, egid),
-			     sizeof(gid_t))) != 0)
+	gid = kauth_cred_getegid(pc);
+	if ((error = copyout(&gid, SCARG(uap, egid), sizeof(gid_t))) != 0)
 		return (error);
 
-	return (copyout(&pc->p_svgid, SCARG(uap, sgid), sizeof(gid_t)));
+	gid = kauth_cred_getsvgid(pc);
+
+	return (copyout(&gid, SCARG(uap, sgid), sizeof(gid_t)));
 }
 
 #ifndef __amd64__
@@ -400,7 +404,7 @@ linux_sys_stime(l, v, retval)
 	linux_time_t tt;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)

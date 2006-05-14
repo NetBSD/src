@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.25 2006/04/12 01:17:41 christos Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.26 2006/05/14 21:20:13 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.25 2006/04/12 01:17:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.26 2006/05/14 21:20:13 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.25 2006/04/12 01:17:41 christos Exp $
 #include <sys/signalvar.h>
 #include <sys/mbuf.h>
 #include <sys/socketvar.h>		/* for M_SONAME */
+#include <sys/kauth.h>
 
 #include <netsmb/iconv.h>
 
@@ -63,11 +64,11 @@ static MALLOC_DEFINE(M_SMBSTR, "smbstr", "SMB strings");
 MALLOC_DEFINE(M_SMBTEMP, "smbtemp", "Temp netsmb data");
 
 void
-smb_makescred(struct smb_cred *scred, struct lwp *l, struct ucred *cred)
+smb_makescred(struct smb_cred *scred, struct lwp *l, kauth_cred_t cred)
 {
 	if (l) {
 		scred->scr_l = l;
-		scred->scr_cred = cred ? cred : l->l_proc->p_ucred;
+		scred->scr_cred = cred ? cred : l->l_proc->p_cred;
 	} else {
 		scred->scr_l = NULL;
 		scred->scr_cred = cred ? cred : NULL;

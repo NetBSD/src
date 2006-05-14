@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.14 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.15 2006/05/14 21:24:49 elad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.14 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.15 2006/05/14 21:24:49 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -267,7 +267,7 @@ fd_truncate(l, fd, whence, start, retval)
 		break;
 
 	case SEEK_END:
-		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, l)) != 0)
+		if ((error = VOP_GETATTR(vp, &vattr, p->p_cred, l)) != 0)
 			return error;
 		SCARG(&ft, length) = vattr.va_size + start;
 		break;

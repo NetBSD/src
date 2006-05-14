@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.h,v 1.9 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_venus.h,v 1.10 2006/05/14 21:24:49 elad Exp $	*/
 
 /*
  *
@@ -33,17 +33,17 @@
 
 int
 venus_root(void *mdp,
-	struct ucred *cred, struct proc *p,
+	kauth_cred_t cred, struct proc *p,
 /*out*/	CodaFid *VFid);
 
 int
 venus_open(void *mdp, CodaFid *fid, int flag,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	dev_t *dev, ino_t *inode);
 
 int
 venus_close(void *mdp, CodaFid *fid, int flag,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 void
 venus_read(void);
@@ -54,84 +54,84 @@ venus_write(void);
 int
 venus_ioctl(void *mdp, CodaFid *fid,
 	int com, int flag, caddr_t data,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 int
 venus_getattr(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	struct vattr *vap);
 
 int
 venus_setattr(void *mdp, CodaFid *fid, struct vattr *vap,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 int
 venus_access(void *mdp, CodaFid *fid, int mode,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 int
 venus_readlink(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	char **str, int *len);
 
 int
 venus_fsync(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 int
 venus_lookup(void *mdp, CodaFid *fid,
     	const char *nm, int len,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	CodaFid *VFid, int *vtype);
 
 int
 venus_create(void *mdp, CodaFid *fid,
     	const char *nm, int len, int exclusive, int mode, struct vattr *va,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	CodaFid *VFid, struct vattr *attr);
 
 int
 venus_remove(void *mdp, CodaFid *fid,
         const char *nm, int len,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 int
 venus_link(void *mdp, CodaFid *fid, CodaFid *tfid,
         const char *nm, int len,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 int
 venus_rename(void *mdp, CodaFid *fid, CodaFid *tfid,
         const char *nm, int len, const char *tnm, int tlen,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 int
 venus_mkdir(void *mdp, CodaFid *fid,
     	const char *nm, int len, struct vattr *va,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	CodaFid *VFid, struct vattr *ova);
 
 int
 venus_rmdir(void *mdp, CodaFid *fid,
     	const char *nm, int len,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 int
 venus_symlink(void *mdp, CodaFid *fid,
         const char *lnm, int llen, const char *nm, int len, struct vattr *va,
-	struct ucred *cred, struct lwp *l);
+	kauth_cred_t cred, struct lwp *l);
 
 int
 venus_readdir(void *mdp, CodaFid *fid,
     	int count, int offset,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	char *buffer, int *len);
 
 int
-venus_statfs(void *mdp, struct ucred *cred, struct lwp *l,
+venus_statfs(void *mdp, kauth_cred_t cred, struct lwp *l,
    /*out*/   struct coda_statfs *fsp);
 
 int
 venus_fhtovp(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct proc *p,
+	kauth_cred_t cred, struct proc *p,
 /*out*/	CodaFid *VFid, int *vtype);

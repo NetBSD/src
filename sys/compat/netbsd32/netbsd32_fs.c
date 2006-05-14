@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.26 2006/05/05 13:31:30 cube Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.27 2006/05/14 21:24:50 elad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.26 2006/05/05 13:31:30 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.27 2006/05/14 21:24:50 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.26 2006/05/05 13:31:30 cube Exp $"
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -365,13 +366,13 @@ change_utimes32(vp, tptr, l)
 		netbsd32_to_timeval(&tv32[0], &tv[0]);
 		netbsd32_to_timeval(&tv32[1], &tv[1]);
 	}
-	VOP_LEASE(vp, l, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(vp, l, p->p_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vattr.va_atime.tv_sec = tv[0].tv_sec;
 	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
 	vattr.va_mtime.tv_sec = tv[1].tv_sec;
 	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-	error = VOP_SETATTR(vp, &vattr, p->p_ucred, l);
+	error = VOP_SETATTR(vp, &vattr, p->p_cred, l);
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
@@ -556,7 +557,7 @@ netbsd32_fhstatvfs1(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, fhp)), &fh,
@@ -790,7 +791,8 @@ int netbsd32_sys___fhstat30(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag)))
 		return (error);
 
 	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,

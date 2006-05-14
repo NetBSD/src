@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.32 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.33 2006/05/14 21:24:50 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.32 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.33 2006/05/14 21:24:50 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ linux_sys_getdents64(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)))
+	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);

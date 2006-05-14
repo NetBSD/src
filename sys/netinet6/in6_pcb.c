@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.70 2006/05/05 00:03:22 rpaulo Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.71 2006/05/14 21:19:34 elad Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.70 2006/05/05 00:03:22 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.71 2006/05/14 21:19:34 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.70 2006/05/05 00:03:22 rpaulo Exp $");
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -283,7 +284,8 @@ in6_pcbbind(v, nam, p)
 			 * NOTE: all operating systems use suser() for
 			 * privilege check!  do not rewrite it into SS_PRIV.
 			 */
-			priv = (p && !suser(p->p_ucred, &p->p_acflag)) ? 1 : 0;
+			priv = (p && !kauth_authorize_generic(p->p_cred,
+					KAUTH_GENERIC_ISSUSER, &p->p_acflag)) ? 1 : 0;
 			/* GROSS */
 			if (ntohs(lport) < IPV6PORT_RESERVED && !priv)
 				return (EACCES);

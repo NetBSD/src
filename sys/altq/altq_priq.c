@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.10 2006/04/23 06:46:40 christos Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.11 2006/05/14 21:24:49 elad Exp $	*/
 /*	$KAME: altq_priq.c,v 1.2 2001/10/26 04:56:11 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.10 2006/04/23 06:46:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.11 2006/05/14 21:24:49 elad Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -549,7 +549,9 @@ priqioctl(dev, cmd, addr, flag, l)
 		if ((error = suser(p)) != 0)
 			return (error);
 #else
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred,
+					       KAUTH_GENERIC_ISSUSER,
+					       &p->p_acflag)) != 0)
 			return (error);
 #endif
 		break;

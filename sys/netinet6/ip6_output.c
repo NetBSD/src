@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.97 2006/05/05 00:03:22 rpaulo Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.98 2006/05/14 21:19:34 elad Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.97 2006/05/05 00:03:22 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.98 2006/05/14 21:19:34 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.97 2006/05/05 00:03:22 rpaulo Exp $
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -1410,7 +1411,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 
 	optlen = m ? m->m_len : 0;
 	error = optval = 0;
-	privileged = (p == 0 || suser(p->p_ucred, &p->p_acflag)) ? 0 : 1;
+	privileged = (p == 0 || kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) ? 0 : 1;
 	uproto = (int)so->so_proto->pr_protocol;
 
 	if (level == IPPROTO_IPV6) {
@@ -2127,7 +2128,7 @@ ip6_pcbopts(pktopt, m, so)
 	}
 
 	/*  set options specified by user. */
-	if (p && !suser(p->p_ucred, &p->p_acflag))
+	if (p && !kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 		priv = 1;
 	if ((error = ip6_setpktopts(m, opt, NULL, priv,
 	    so->so_proto->pr_protocol)) != 0) {
@@ -2514,7 +2515,7 @@ ip6_setmoptions(optname, im6op, m)
 			 * all multicast addresses. Only super user is allowed
 			 * to do this.
 			 */
-			if (suser(p->p_ucred, &p->p_acflag))
+			if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 			{
 				error = EACCES;
 				break;

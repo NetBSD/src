@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.101 2006/03/17 23:29:20 rpaulo Exp $	*/
+/*	$NetBSD: in6.c,v 1.102 2006/05/14 21:19:34 elad Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.101 2006/03/17 23:29:20 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.102 2006/05/14 21:19:34 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.101 2006/03/17 23:29:20 rpaulo Exp $");
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -335,7 +336,7 @@ in6_control(so, cmd, data, ifp, p)
 	int error, privileged;
 
 	privileged = 0;
-	if (p && !suser(p->p_ucred, &p->p_acflag))
+	if (p && !kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 		privileged++;
 
 	switch (cmd) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.83 2006/04/15 02:14:44 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.84 2006/05/14 21:19:33 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.83 2006/04/15 02:14:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.84 2006/05/14 21:19:33 elad Exp $");
 
 #include "opt_inet.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.83 2006/04/15 02:14:44 christos Exp $")
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -260,7 +261,7 @@ route_output(struct mbuf *m, ...)
 	 * is the only operation the non-superuser is allowed.
 	 */
 	if (rtm->rtm_type != RTM_GET &&
-	    suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+	    kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag) != 0)
 		senderr(EACCES);
 
 	switch (rtm->rtm_type) {
