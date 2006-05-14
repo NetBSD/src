@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.7 2006/04/13 17:44:24 christos Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.8 2006/05/14 21:15:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.7 2006/04/13 17:44:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.8 2006/05/14 21:15:11 elad Exp $");
 
 #include "opt_ptm.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.7 2006/04/13 17:44:24 christos Exp 
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 /*
  * pts == /dev/tty[pqrs]?
@@ -146,7 +147,7 @@ pty_getvattr(struct ptm_pty *ptm, struct proc *p, struct vattr *vattr)
 {
 	VATTR_NULL(vattr);
 	/* get real uid */
-	vattr->va_uid = p->p_cred->p_ruid;
+	vattr->va_uid = kauth_cred_getuid(p->p_cred);
 	vattr->va_gid = TTY_GID;
 	vattr->va_mode = TTY_PERM;
 }
