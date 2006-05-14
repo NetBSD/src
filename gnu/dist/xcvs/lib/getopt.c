@@ -394,7 +394,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 	     exchange them so that the options come first.  */
 
 	  if (first_nonopt != last_nonopt && last_nonopt != optind)
-	    exchange ((char **) argv);
+	    exchange (__UNCONST(argv));
 	  else if (last_nonopt != optind)
 	    first_nonopt = optind;
 
@@ -417,7 +417,7 @@ _getopt_internal (argc, argv, optstring, longopts, longind, long_only)
 	  optind++;
 
 	  if (first_nonopt != last_nonopt && last_nonopt != optind)
-	    exchange ((char **) argv);
+	    exchange (__UNCONST(argv));
 	  else if (first_nonopt == last_nonopt)
 	    first_nonopt = optind;
 	  last_nonopt = argc;
