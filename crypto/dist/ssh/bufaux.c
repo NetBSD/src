@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.c,v 1.7 2006/02/04 22:32:13 christos Exp $	*/
+/*	$NetBSD: bufaux.c,v 1.8 2006/05/14 02:17:32 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +39,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: bufaux.c,v 1.37 2005/11/05 05:01:15 djm Exp $");
-__RCSID("$NetBSD: bufaux.c,v 1.7 2006/02/04 22:32:13 christos Exp $");
+__RCSID("$NetBSD: bufaux.c,v 1.8 2006/05/14 02:17:32 christos Exp $");
 
 #include <openssl/bn.h>
 #include "bufaux.h"
@@ -228,7 +228,7 @@ buffer_get_short_ret(u_short *ret, Buffer *buffer)
 u_short
 buffer_get_short(Buffer *buffer)
 {
-	u_short ret;
+	u_short ret = 0;	/* XXX: GCC */
 
 	if (buffer_get_short_ret(&ret, buffer) == -1)
 		fatal("buffer_get_short: buffer error");
@@ -250,7 +250,7 @@ buffer_get_int_ret(u_int *ret, Buffer *buffer)
 u_int
 buffer_get_int(Buffer *buffer)
 {
-	u_int ret;
+	u_int ret = 0;	/* XXX: GCC */
 
 	if (buffer_get_int_ret(&ret, buffer) == -1)
 		fatal("buffer_get_int: buffer error");
@@ -272,7 +272,7 @@ buffer_get_int64_ret(u_int64_t *ret, Buffer *buffer)
 u_int64_t
 buffer_get_int64(Buffer *buffer)
 {
-	u_int64_t ret;
+	u_int64_t ret = 0;	/* XXX: GCC */
 
 	if (buffer_get_int64_ret(&ret, buffer) == -1)
 		fatal("buffer_get_int: buffer error");
