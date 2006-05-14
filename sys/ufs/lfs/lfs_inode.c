@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.103 2006/04/30 21:19:42 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.104 2006/05/14 05:27:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.103 2006/04/30 21:19:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.104 2006/05/14 05:27:59 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -551,7 +551,7 @@ done:
 #ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
 		if ((newblks[NDADDR + level] == 0) !=
-		    (oip->i_ffs1_ib[level]) == 0) {
+		    ((oip->i_ffs1_ib[level]) == 0)) {
 			panic("lfs itrunc1");
 		}
 	for (i = 0; i < NDADDR; i++)
