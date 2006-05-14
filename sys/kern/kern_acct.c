@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.62 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.63 2006/05/14 21:15:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.62 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.63 2006/05/14 21:15:11 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.62 2005/12/11 12:24:29 christos Exp 
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -128,7 +129,7 @@ static enum {
 	ACCT_SUSPENDED
 } acct_state;				/* The current accounting state. */
 static struct vnode *acct_vp;		/* Accounting vnode pointer. */
-static struct ucred *acct_ucred;	/* Credential of accounting file
+static kauth_cred_t acct_cred;		/* Credential of accounting file
 					   owner (i.e root).  Used when
  					   accounting file i/o.  */
 static struct proc *acct_dkwatcher;	/* Free disk space checker. */
@@ -216,7 +217,7 @@ acct_stop(void)
 	int error;
 
 	if (acct_vp != NULLVP && acct_vp->v_type != VBAD) {
-		error = vn_close(acct_vp, FWRITE, acct_ucred, NULL);
+		error = vn_close(acct_vp, FWRITE, acct_cred, NULL);
 #ifdef DIAGNOSTIC
 		if (error != 0)
 			printf("acct_stop: failed to close, errno = %d\n",
@@ -224,9 +225,9 @@ acct_stop(void)
 #endif
 		acct_vp = NULLVP;
 	}
-	if (acct_ucred != NULL) {
-		crfree(acct_ucred);
-		acct_ucred = NULL;
+	if (acct_cred != NULL) {
+		kauth_cred_free(acct_cred);
+		acct_cred = NULL;
 	}
 	acct_state = ACCT_STOP;
 }
@@ -278,7 +279,7 @@ acct_init(void)
 
 	acct_state = ACCT_STOP;
 	acct_vp = NULLVP;
-	acct_ucred = NULL;
+	acct_cred = NULL;
 	lockinit(&acct_lock, PWAIT, "acctlk", 0, 0);
 }
 
@@ -297,7 +298,8 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 
 	/* Make sure that the caller is root. */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+			&p->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -316,7 +318,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 			error = EACCES;
 			goto bad;
 		}
-		if ((error = VOP_GETATTR(nd.ni_vp, &va, p->p_ucred, l)) != 0) {
+		if ((error = VOP_GETATTR(nd.ni_vp, &va, p->p_cred, l)) != 0) {
 			VOP_UNLOCK(nd.ni_vp, 0);
 			goto bad;
 		}
@@ -330,7 +332,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 #endif
 			VATTR_NULL(&va);
 			va.va_size = size;
-			error = VOP_SETATTR(nd.ni_vp, &va, p->p_ucred, l);
+			error = VOP_SETATTR(nd.ni_vp, &va, p->p_cred, l);
 			if (error != 0) {
 				VOP_UNLOCK(nd.ni_vp, 0);
 				goto bad;
@@ -356,8 +358,8 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	 */
 	acct_state = ACCT_ACTIVE;
 	acct_vp = nd.ni_vp;
-	acct_ucred = p->p_ucred;
-	crhold(acct_ucred);
+	acct_cred = p->p_cred;
+	kauth_cred_hold(acct_cred);
 
 	error = acct_chkfree();		/* Initial guess. */
 	if (error != 0) {
@@ -376,7 +378,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	ACCT_UNLOCK();
 	return (error);
  bad:
-	vn_close(nd.ni_vp, FWRITE, p->p_ucred, l);
+	vn_close(nd.ni_vp, FWRITE, p->p_cred, l);
 	return error;
 }
 
@@ -446,8 +448,8 @@ acct_process(struct lwp *l)
 	acct.ac_io = encode_comp_t(r->ru_inblock + r->ru_oublock, 0);
 
 	/* (6) The UID and GID of the process */
-	acct.ac_uid = p->p_cred->p_ruid;
-	acct.ac_gid = p->p_cred->p_rgid;
+	acct.ac_uid = kauth_cred_getuid(p->p_cred);
+	acct.ac_gid = kauth_cred_getgid(p->p_cred);
 
 	/* (7) The terminal from which the process was started */
 	if ((p->p_flag & P_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)
@@ -461,10 +463,10 @@ acct_process(struct lwp *l)
 	/*
 	 * Now, just write the accounting information to the file.
 	 */
-	VOP_LEASE(acct_vp, l, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(acct_vp, l, p->p_cred, LEASE_WRITE);
 	error = vn_rdwr(UIO_WRITE, acct_vp, (caddr_t)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
-	    acct_ucred, NULL, NULL);
+	    acct_cred, NULL, NULL);
 	if (error != 0)
 		log(LOG_ERR, "Accounting: write failed %d\n", error);
 

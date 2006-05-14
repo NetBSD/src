@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.41 2006/03/06 14:24:13 cube Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.42 2006/05/14 21:15:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.41 2006/03/06 14:24:13 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.42 2006/05/14 21:15:11 elad Exp $");
 
 #define SYSVMSG
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.41 2006/03/06 14:24:13 cube Exp $");
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #define MSG_DEBUG
 #undef MSG_DEBUG_OK
@@ -211,7 +212,7 @@ sys___msgctl13(struct lwp *l, void *v, register_t *retval)
 int
 msgctl1(struct proc *p, int msqid, int cmd, struct msqid_ds *msqbuf)
 {
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = p->p_cred;
 	struct msqid_ds *msqptr;
 	int error = 0, ix;
 
@@ -269,7 +270,7 @@ msgctl1(struct proc *p, int msqid, int cmd, struct msqid_ds *msqbuf)
 	case IPC_SET:
 		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
 			return (error);
-		if (msqbuf->msg_qbytes > msqptr->msg_qbytes && cred->cr_uid != 0)
+		if (msqbuf->msg_qbytes > msqptr->msg_qbytes && kauth_cred_geteuid(cred) != 0)
 			return (EPERM);
 		if (msqbuf->msg_qbytes > msginfo.msgmnb) {
 			MSG_PRINTF(("can't increase msg_qbytes beyond %d "
@@ -316,7 +317,7 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 	int msqid, error;
 	int key = SCARG(uap, key);
 	int msgflg = SCARG(uap, msgflg);
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = p->p_cred;
 	struct msqid_ds *msqptr = NULL;
 
 	MSG_PRINTF(("msgget(0x%x, 0%o)\n", key, msgflg));
@@ -364,10 +365,10 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 		}
 		MSG_PRINTF(("msqid %d is available\n", msqid));
 		msqptr->msg_perm._key = key;
-		msqptr->msg_perm.cuid = cred->cr_uid;
-		msqptr->msg_perm.uid = cred->cr_uid;
-		msqptr->msg_perm.cgid = cred->cr_gid;
-		msqptr->msg_perm.gid = cred->cr_gid;
+		msqptr->msg_perm.cuid = kauth_cred_geteuid(cred);
+		msqptr->msg_perm.uid = kauth_cred_geteuid(cred);
+		msqptr->msg_perm.cgid = kauth_cred_getegid(cred);
+		msqptr->msg_perm.gid = kauth_cred_getegid(cred);
 		msqptr->msg_perm.mode = (msgflg & 0777);
 		/* Make sure that the returned msqid is unique */
 		msqptr->msg_perm._seq++;
@@ -411,7 +412,7 @@ msgsnd1(struct proc *p, int msqidr, const char *user_msgp, size_t msgsz,
     int msgflg, size_t typesz, copyin_t fetch_type)
 {
 	int segs_needed, error, msqid;
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = p->p_cred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
 	short next;
@@ -690,7 +691,7 @@ msgrcv1(struct proc *p, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
     int msgflg, size_t typesz, copyout_t put_type, register_t *retval)
 {
 	size_t len;
-	struct ucred *cred = p->p_ucred;
+	kauth_cred_t cred = p->p_cred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
 	int error, msqid;

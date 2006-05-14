@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.46 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.47 2006/05/14 21:15:11 elad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.46 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.47 2006/05/14 21:15:11 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 
 	error = vn_rdwr(UIO_READ, cmd->ev_vp, (caddr_t)cmd->ev_addr,
 	    cmd->ev_len, cmd->ev_offset, UIO_USERSPACE, IO_UNIT,
-	    p->p_ucred, NULL, l);
+	    p->p_cred, NULL, l);
 	if (error)
 		return error;
 
@@ -299,7 +299,7 @@ exec_read_from(struct lwp *l, struct vnode *vp, u_long off, void *bf,
 	size_t resid;
 
 	if ((error = vn_rdwr(UIO_READ, vp, bf, size, off, UIO_SYSSPACE,
-	    0, l->l_proc->p_ucred, &resid, NULL)) != 0)
+	    0, l->l_proc->p_cred, &resid, NULL)) != 0)
 		return error;
 	/*
 	 * See if we got all of it

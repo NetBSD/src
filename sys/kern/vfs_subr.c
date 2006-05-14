@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.265 2006/02/25 07:11:31 skrll Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.266 2006/05/14 21:15:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.265 2006/02/25 07:11:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.266 2006/05/14 21:15:12 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.265 2006/02/25 07:11:31 skrll Exp $")
 #include <sys/syscallargs.h>
 #include <sys/device.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
@@ -690,7 +691,7 @@ vwakeup(struct buf *bp)
  * buffers from being queued.
  */
 int
-vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct lwp *l,
+vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
     int slpflag, int slptimeo)
 {
 	struct buf *bp, *nbp;
@@ -2097,15 +2098,16 @@ vfs_mountedon(struct vnode *vp)
  */
 int
 vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
-    mode_t acc_mode, struct ucred *cred)
+    mode_t acc_mode, kauth_cred_t cred)
 {
 	mode_t mask;
+	int error, ismember;
 
 	/*
 	 * Super-user always gets read/write access, but execute access depends
 	 * on at least one execute bit being set.
 	 */
-	if (cred->cr_uid == 0) {
+	if (kauth_cred_geteuid(cred) == 0) {
 		if ((acc_mode & VEXEC) && type != VDIR &&
 		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
 			return (EACCES);
@@ -2115,7 +2117,7 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	mask = 0;
 
 	/* Otherwise, check the owner. */
-	if (cred->cr_uid == uid) {
+	if (kauth_cred_geteuid(cred) == uid) {
 		if (acc_mode & VEXEC)
 			mask |= S_IXUSR;
 		if (acc_mode & VREAD)
@@ -2126,7 +2128,10 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	}
 
 	/* Otherwise, check the groups. */
-	if (cred->cr_gid == gid || groupmember(gid, cred)) {
+	error = kauth_cred_ismember_gid(cred, gid, &ismember);
+	if (error)
+		return (error);
+	if (kauth_cred_getegid(cred) == gid || ismember) {
 		if (acc_mode & VEXEC)
 			mask |= S_IXGRP;
 		if (acc_mode & VREAD)
@@ -2454,7 +2459,7 @@ vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
 			0, &mp->mnt_slock);
 	simple_unlock(&mp->mnt_slock);
 
-	error = VFS_SYNC(mp, MNT_WAIT, l->l_proc->p_ucred, l);
+	error = VFS_SYNC(mp, MNT_WAIT, l->l_proc->p_cred, l);
 	if (error) {
 		vfs_write_resume(mp);
 		return error;
