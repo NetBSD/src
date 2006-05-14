@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.90 2006/04/14 16:19:44 christos Exp $ */
+/* $NetBSD: wskbd.c,v 1.91 2006/05/14 10:25:16 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.90 2006/04/14 16:19:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.91 2006/05/14 10:25:16 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1328,7 +1328,7 @@ wskbd_cngetc(dev_t dev)
 				 * to deliver pure ASCII it is in a state that
 				 * it can not track press/release events
 				 * reliable - so we clear all previously
-				 * accuulated modifier state.
+				 * accumulated modifier state.
 				 */
 				wskbd_console_data.t_modifiers = 0;
 				return(data);
