@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.9 2006/01/20 02:47:30 uwe Exp $	*/
+/*	$NetBSD: kloader.c,v 1.10 2006/05/14 21:42:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.9 2006/01/20 02:47:30 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.10 2006/05/14 21:42:26 elad Exp $");
 
 #include "debug_kloader.h"
 
@@ -624,7 +624,7 @@ kloader_close()
 	struct vnode *vp = kloader.vp;
 
 	VOP_UNLOCK(vp, 0);
-	vn_close(vp, FREAD, l->l_proc->p_ucred, l);
+	vn_close(vp, FREAD, l->l_proc->p_cred, l);
 }
 
 int
@@ -636,7 +636,7 @@ kloader_read(size_t ofs, size_t size, void *buf)
 	int error;
 
 	error = vn_rdwr(UIO_READ, vp, buf, size, ofs, UIO_SYSSPACE,
-	    IO_NODELOCKED | IO_SYNC, l->l_proc->p_ucred, &resid, NULL);
+	    IO_NODELOCKED | IO_SYNC, l->l_proc->p_cred, &resid, NULL);
 
 	if (error)
 		PRINTF("read error.\n");

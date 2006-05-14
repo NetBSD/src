@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.4 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: spif.c,v 1.5 2006/05/14 21:47:00 elad Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.4 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.5 2006/05/14 21:47:00 elad Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -385,7 +385,7 @@ stty_open(dev, flags, mode, l)
 			CLR(tp->t_state, TS_CARR_ON);
 	}
 	else if (ISSET(tp->t_state, TS_XCLUDE) &&
-		 suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0) {
+		 kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0) {
 		return (EBUSY);
 	} else {
 		s = spltty();
@@ -497,7 +497,7 @@ stty_ioctl(dev, cmd, data, flags, l)
 		*((int *)data) = sp->sp_openflags;
 		break;
 	case TIOCSFLAGS:
-		if( suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) )
+		if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) )
 			error = EPERM;
 		else
 			sp->sp_openflags = *((int *)data) &

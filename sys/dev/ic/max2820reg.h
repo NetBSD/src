@@ -1,4 +1,4 @@
-/* $NetBSD: max2820reg.h,v 1.5 2006/03/08 08:26:50 dyoung Exp $ */
+/* $NetBSD: max2820reg.h,v 1.6 2006/05/14 21:42:27 elad Exp $ */
 
 /*
  * Copyright (c) 2004 David Young.  All rights reserved.

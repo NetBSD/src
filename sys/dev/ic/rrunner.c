@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.52 2006/03/28 17:38:30 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.53 2006/05/14 21:42:27 elad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.52 2006/03/28 17:38:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.53 2006/05/14 21:42:27 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.52 2006/03/28 17:38:30 thorpej Exp $")
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -3112,7 +3113,9 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 			break;
 
 		default:
-			error = suser(p->p_ucred, &p->p_acflag);
+			error = kauth_authorize_generic(p->p_cred,
+						  KAUTH_GENERIC_ISSUSER,
+						  &p->p_acflag);
 			if (error)
 				return (error);
 		}

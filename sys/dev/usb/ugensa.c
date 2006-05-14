@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.5 2006/03/25 14:15:45 gdt Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.6 2006/05/14 21:47:00 elad Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
