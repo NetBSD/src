@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.7 2006/03/30 04:19:38 jnemeth Exp $	*/
+/*	$NetBSD: move.c,v 1.8 2006/05/14 03:15:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.7 2006/03/30 04:19:38 jnemeth Exp $");
+__RCSID("$NetBSD: move.c,v 1.8 2006/05/14 03:15:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ one_move_rogue(dirch, pickup)
 	short row, col;
 	object *obj;
 	char desc[DCOLS];
-	short n, status, d;
+	short n, status, d = 0;	/* XXX: GCC */
 
 	row = rogue.row;
 	col = rogue.col;
