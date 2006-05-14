@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_ppcreg.h,v 1.3 2006/04/11 15:24:24 peter Exp $	*/
+/*      $NetBSD: sa11x0_ppcreg.h,v 1.4 2006/05/14 21:55:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootstrap.h,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: bootstrap.h,v 1.3 2006/05/14 21:55:38 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>

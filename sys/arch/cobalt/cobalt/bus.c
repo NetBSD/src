@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.29 2006/05/14 05:53:42 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.30 2006/05/14 21:55:10 elad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.29 2006/05/14 05:53:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.30 2006/05/14 21:55:10 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

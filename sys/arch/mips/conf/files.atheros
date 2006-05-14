@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.1 2006/03/21 08:15:19 gdamore Exp $
+#	$NetBSD: files.atheros,v 1.2 2006/05/14 21:55:38 elad Exp $
 
 file	arch/mips/atheros/ar531x_intr.c
 file	arch/mips/atheros/ar531x_timer.c

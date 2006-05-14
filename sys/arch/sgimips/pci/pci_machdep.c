@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.17 2006/04/17 14:01:08 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.18 2006/05/14 21:56:33 elad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17 2006/04/17 14:01:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2006/05/14 21:56:33 elad Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
