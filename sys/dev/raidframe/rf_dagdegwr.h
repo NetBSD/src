@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.h,v 1.5 2006/04/26 17:08:48 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.h,v 1.6 2006/05/14 21:45:00 elad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

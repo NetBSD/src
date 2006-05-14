@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.16 2006/03/31 17:39:33 thorpej Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.17 2006/05/14 21:47:00 elad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.16 2006/03/31 17:39:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.17 2006/05/14 21:47:00 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

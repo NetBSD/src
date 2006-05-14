@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.14 2006/04/06 17:55:43 thorpej Exp $	*/
+/*	$NetBSD: dk.c,v 1.15 2006/05/14 21:42:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.14 2006/04/06 17:55:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.15 2006/05/14 21:42:27 elad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.14 2006/04/06 17:55:43 thorpej Exp $");
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -1183,7 +1184,7 @@ dkioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		else
 			error = VOP_IOCTL(sc->sc_parent->dk_rawvp,
 					  cmd, data, flag,
-					  l != NULL ? l->l_proc->p_ucred : NOCRED, l);
+					  l != NULL ? l->l_proc->p_cred : NOCRED, l);
 		break;
 	case DIOCGWEDGEINFO:
 	    {
