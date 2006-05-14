@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.887 2006/05/13 17:24:34 xtraeme Exp $
+# $NetBSD: mi,v 1.888 2006/05/14 19:51:15 dyoung Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2330,6 +2330,7 @@
 ./usr/share/man/cat8/wizd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/wlanctl.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/wpa_cli.0			man-netutil-catman	.cat
+./usr/share/man/cat8/wpa_passphrase.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/wpa_supplicant.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/wsconscfg.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/wsconsctl.0		man-sysutil-catman	.cat
@@ -4659,6 +4660,7 @@
 ./usr/share/man/man8/wizd.8			man-sysutil-man		.man
 ./usr/share/man/man8/wlanctl.8			man-netutil-man		.man
 ./usr/share/man/man8/wpa_cli.8			man-netutil-man		.man
+./usr/share/man/man8/wpa_passphrase.8		man-netutil-man		.man
 ./usr/share/man/man8/wpa_supplicant.8		man-netutil-man		.man
 ./usr/share/man/man8/wsconscfg.8		man-sysutil-man		.man
 ./usr/share/man/man8/wsconsctl.8		man-sysutil-man		.man
