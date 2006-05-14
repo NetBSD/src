@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.19 2006/04/27 13:25:21 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.20 2006/05/14 01:09:03 christos Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.19 2006/04/27 13:25:21 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.20 2006/05/14 01:09:03 christos Exp $");
 #endif
 
 
@@ -502,6 +502,8 @@ x_print_expansions(nwords, words, is_command)
 	int use_copy = 0;
 	int prefix_len;
 	XPtrV l;
+
+	l.beg = NULL;
 
 	/* Check if all matches are in the same directory (in this
 	 * case, we want to omit the directory name)
