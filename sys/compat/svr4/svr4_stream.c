@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.57 2006/05/11 01:00:02 mrg Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.58 2006/05/14 03:40:54 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.57 2006/05/11 01:00:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.58 2006/05/14 03:40:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -449,6 +449,7 @@ si_ogetudata(fp, fd, ioc, l)
 	int error;
 	struct svr4_si_oudata ud;
 	struct svr4_si_sockparms pa;
+	(void)memset(&pa, 0, sizeof(pa));	/* XXX: GCC */
 
 	if (ioc->len != sizeof(ud) && ioc->len != sizeof(ud) - sizeof(int)) {
 		DPRINTF(("SI_OGETUDATA: Wrong size %ld != %d\n",
