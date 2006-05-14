@@ -1,4 +1,4 @@
-/*	$NetBSD: algor.cc,v 1.2 2005/08/09 02:38:32 christos Exp $	*/
+/*	$NetBSD: algor.cc,v 1.3 2006/05/14 03:20:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * algor.C: Computer algorithm
  */
 #include "defs.h"
-RCSID("$NetBSD: algor.cc,v 1.2 2005/08/09 02:38:32 christos Exp $")
+RCSID("$NetBSD: algor.cc,v 1.3 2006/05/14 03:20:42 christos Exp $")
 
 #include "algor.h"
 #include "board.h"
@@ -135,9 +135,11 @@ size_t ALGOR::count_closure(size_t& y, size_t& x, int& dir, BOARD& b)
 size_t ALGOR::find_max_closure(size_t& y, size_t& x, int& dir, const BOARD& b)
 {
     BOARD nb(b);
-    int tdir, maxdir = -1;
+    int maxdir = -1;
     size_t nbox, maxbox = 0;
-    size_t tx, ty, maxx = ~0, maxy = ~0;
+    size_t maxx = ~0, maxy = ~0;
+    size_t tx = 0, ty = 0;	/* XXX: GCC */
+    int tdir = 0;		/* XXX: GCC */
 
     while ((nbox = count_closure(ty, tx, tdir, nb)) != 0)
 	if (nbox > maxbox) {
@@ -241,10 +243,11 @@ size_t ALGOR::find_min_closure1(size_t& y, size_t& x, int& dir, const BOARD& b,
     int last)
 {
     BOARD nb(b);
-    int tdir, mindir = -1, xdir, mv;
+    int tdir, mindir = -1, mv;
     // number of boxes per closure
     size_t nbox, minbox = nb.nx() * nb.ny() + 1;
     size_t tx, ty, minx = ~0, miny = ~0;
+    int xdir = 0;	/* XXX: GCC */
 
     while (find_bad_turn(ty, tx, tdir, nb, last)) {
 
