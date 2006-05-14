@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.63 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.64 2006/05/14 21:31:53 elad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.63 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.64 2006/05/14 21:31:53 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.63 2005/12/11 12:24:51 christos 
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -110,7 +111,7 @@ int	procfs_unmount(struct mount *, int, struct lwp *);
 int	procfs_quotactl(struct mount *, int, uid_t, void *,
 			     struct lwp *);
 int	procfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	procfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int	procfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	procfs_vget(struct mount *, ino_t, struct vnode **);
 
 /*
@@ -263,7 +264,7 @@ int
 procfs_sync(mp, waitfor, uc, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *uc;
+	kauth_cred_t uc;
 	struct lwp *l;
 {
 

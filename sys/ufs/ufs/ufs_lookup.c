@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.75 2006/04/15 05:32:29 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.76 2006/05/14 21:33:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.75 2006/04/15 05:32:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.76 2006/05/14 21:33:39 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.75 2006/04/15 05:32:29 christos Exp
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
@@ -133,7 +134,7 @@ ufs_lookup(void *v)
 	int namlen, error;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	struct ucred *cred = cnp->cn_cred;
+	kauth_cred_t cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	struct ufsmount *ump = dp->i_ump;
@@ -546,9 +547,9 @@ found:
 		 * implements append-only directories.
 		 */
 		if ((dp->i_mode & ISVTX) &&
-		    cred->cr_uid != 0 &&
-		    cred->cr_uid != dp->i_uid &&
-		    VTOI(tdp)->i_uid != cred->cr_uid) {
+		    kauth_cred_geteuid(cred) != 0 &&
+		    kauth_cred_geteuid(cred) != dp->i_uid &&
+		    VTOI(tdp)->i_uid != kauth_cred_geteuid(cred)) {
 			vput(tdp);
 			return (EPERM);
 		}
@@ -757,7 +758,7 @@ int
 ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
     struct componentname *cnp, struct buf *newdirbp)
 {
-	struct ucred *cr;
+	kauth_cred_t cr;
 	struct lwp *l;
 	int newentrysize;
 	struct inode *dp;
@@ -858,7 +859,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 				return (error);
 			if (tvp != NULL)
 				VOP_UNLOCK(tvp, 0);
-			error = VOP_FSYNC(dvp, l->l_proc->p_ucred, FSYNC_WAIT, 0, 0, l);
+			error = VOP_FSYNC(dvp, l->l_proc->p_cred, FSYNC_WAIT, 0, 0, l);
 			if (tvp != 0)
 				vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
@@ -1182,7 +1183,7 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
  * NB: does not handle corrupted directories.
  */
 int
-ufs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
+ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 {
 	doff_t off;
 	struct dirtemplate dbuf;
@@ -1246,7 +1247,7 @@ ufs_dirempty(struct inode *ip, ino_t parentino, struct ucred *cred)
  * The target is always vput before returning.
  */
 int
-ufs_checkpath(struct inode *source, struct inode *target, struct ucred *cred)
+ufs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
 {
 	struct vnode *vp = ITOV(target);
 	int error, rootino, namlen;

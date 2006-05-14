@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.67 2006/03/01 12:38:33 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.68 2006/05/14 21:33:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.67 2006/03/01 12:38:33 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.68 2006/05/14 21:33:39 elad Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -65,7 +65,7 @@ READ(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct inode *ip;
@@ -192,7 +192,7 @@ WRITE(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct uio *uio;
@@ -201,7 +201,7 @@ WRITE(void *v)
 	FS *fs;
 	struct buf *bp;
 	struct lwp *l;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	daddr_t lbn;
 	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
@@ -482,7 +482,8 @@ WRITE(void *v)
 	 */
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0) {
+	if (resid > uio->uio_resid && ap->a_cred &&
+	    kauth_cred_geteuid(ap->a_cred) != 0) {
 		ip->i_mode &= ~(ISUID | ISGID);
 		DIP_ASSIGN(ip, mode, ip->i_mode);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.21 2005/12/27 04:06:46 chs Exp $	*/
+/*	$NetBSD: quota.h,v 1.22 2006/05/14 21:33:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -165,14 +165,13 @@ struct dquot;
 struct inode;
 struct mount;
 struct proc;
-struct ucred;
 struct ufsmount;
 struct vnode;
 __BEGIN_DECLS
-int	chkdq(struct inode *, int64_t, struct ucred *, int);
-int	chkdqchg(struct inode *, int64_t, struct ucred *, int);
-int	chkiq(struct inode *, int32_t, struct ucred *, int);
-int	chkiqchg(struct inode *, int32_t, struct ucred *, int);
+int	chkdq(struct inode *, int64_t, kauth_cred_t, int);
+int	chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
+int	chkiq(struct inode *, int32_t, kauth_cred_t, int);
+int	chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
 void	dqflush(struct vnode *);
 int	dqget(struct vnode *,
 	    u_long, struct ufsmount *, int, struct dquot **);

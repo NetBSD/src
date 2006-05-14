@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utresrc.c,v 1.1 2006/03/23 13:36:32 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utresrc.c,v 1.2 2006/05/14 21:38:18 elad Exp $");
 
 #define __UTRESRC_C__
 
