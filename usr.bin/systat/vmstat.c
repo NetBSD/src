@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.66 2006/05/11 12:01:33 yamt Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.67 2006/05/14 02:56:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.66 2006/05/11 12:01:33 yamt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.67 2006/05/14 02:56:27 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.66 2006/05/11 12:01:33 yamt Exp $");
  */
 
 #include <sys/param.h>
+#include <sys/uio.h>
 #include <sys/namei.h>
 #include <sys/sysctl.h>
 #include <sys/device.h>
