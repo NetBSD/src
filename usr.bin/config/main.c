@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2006/03/19 22:34:44 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2006/05/14 23:47:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1275,7 +1275,7 @@ logconfig_start(void)
 	(void)fprintf(cfg, "#if defined(%s) || defined(%s)\n\n",
 	    LOGCONFIG_LARGE, LOGCONFIG_SMALL);
 	(void)fprintf(cfg,
-	    "static const char config[] __attribute__((__unused__)) =\n\n");
+	    "static const char config[] __attribute__((__used__)) =\n\n");
 
 	(void)fprintf(cfg, "#ifdef %s\n\n", LOGCONFIG_LARGE);
 	(void)fprintf(cfg, "\"_CFG_### START CONFIG FILE \\\"%s\\\"\\n\"\n\n",
