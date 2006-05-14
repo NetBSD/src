@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.57 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_port.c,v 1.58 2006/05/14 05:28:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.57 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.58 2006/05/14 05:28:45 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -554,7 +554,7 @@ mach_port_request_notification(args)
 		    l, MACH_PORT_TYPE_SEND_ONCE, req->req_notify.name);
 		tmr->mr_notify_no_senders->mr_port->mp_datatype =
 		    MACH_MP_NOTIFY_SYNC;
-		(int)tmr->mr_notify_no_senders->mr_port->mp_data =
+		tmr->mr_notify_no_senders->mr_port->mp_data = (void *)
 		    req->req_count;
 		break;
 
