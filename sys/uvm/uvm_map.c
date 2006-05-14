@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.219 2006/05/03 14:12:01 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.220 2006/05/14 08:20:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.219 2006/05/03 14:12:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.220 2006/05/14 08:20:35 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1898,7 +1898,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 * Save the free space hint
 	 */
 
-	if (map->first_free->start >= start)
+	if (map->first_free != &map->header && map->first_free->start >= start)
 		map->first_free = entry->prev;
 
 	/*
@@ -2539,7 +2539,8 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 		/* purge possible stale hints from srcmap */
 		if (flags & UVM_EXTRACT_REMOVE) {
 			SAVE_HINT(srcmap, srcmap->hint, orig_entry->prev);
-			if (srcmap->first_free->start >= start)
+			if (srcmap->first_free != &srcmap->header &&
+			    srcmap->first_free->start >= start)
 				srcmap->first_free = orig_entry->prev;
 		}
 
