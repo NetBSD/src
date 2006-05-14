@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.2 2006/05/14 22:07:22 elad Exp $
+.\" $NetBSD: kauth.9,v 1.3 2006/05/14 22:48:58 yamt Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -288,7 +288,7 @@ Any groups remaining will be set to an invalid value.
 .Ar gmuid
 is unused for now, and to maintain interface compatibility with the Darwin
 KPI.
-.It Ft int Fn kauth_cred_getgroups "kauth_cred_t cred" "gid_t *groups"
+.It Ft int Fn kauth_cred_getgroups "kauth_cred_t cred" "gid_t *groups" \
 "size_t ngroups"
 Copy
 .Ar ngroups
