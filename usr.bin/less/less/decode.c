@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.c,v 1.6 2003/04/14 02:56:46 mrg Exp $	*/
+/*	$NetBSD: decode.c,v 1.7 2006/05/14 02:51:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1984-2002  Mark Nudelman
@@ -751,7 +751,7 @@ editchar(c, flags)
 {
 	int action;
 	int nch;
-	char *s;
+	char *s = NULL;	/* XXX: GCC */
 	char usercmd[MAX_CMDLEN+1];
 	
 	/*
