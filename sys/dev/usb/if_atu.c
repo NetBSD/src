@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.15 2006/05/08 17:12:42 rpaulo Exp $ */
+/*	$NetBSD: if_atu.c,v 1.16 2006/05/14 05:42:43 christos Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.15 2006/05/08 17:12:42 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.16 2006/05/14 05:42:43 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -705,7 +705,7 @@ int
 atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 {
 	struct atu_cmd_join		join;
-	u_int8_t			status;
+	u_int8_t			status = 0;	/* XXX: GCC */
 	usbd_status			err;
 
 	memset(&join, 0, sizeof(join));
