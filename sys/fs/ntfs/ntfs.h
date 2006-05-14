@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.13 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.14 2006/05/14 12:25:11 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -291,6 +291,7 @@ struct ntfsmount {
 
 #define	ntfs_bpbl	(daddr_t)((ntmp)->ntm_bps)
 
+#ifdef _KERNEL
 #if __FreeBSD_version >= 300000 || defined(__NetBSD__)
 MALLOC_DECLARE(M_NTFSMNT);
 MALLOC_DECLARE(M_NTFSNTNODE);
@@ -302,6 +303,7 @@ MALLOC_DECLARE(M_NTFSRDATA);
 MALLOC_DECLARE(M_NTFSDECOMP);
 MALLOC_DECLARE(M_NTFSRUN);
 #endif
+#endif /* _KERNEL */
 
 #ifdef __NetBSD__
 typedef int (vop_t)(void *);
