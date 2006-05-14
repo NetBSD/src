@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.21 2006/04/15 04:02:40 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.22 2006/05/14 21:31:52 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.21 2006/04/15 04:02:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.22 2006/05/14 21:31:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.21 2006/04/15 04:02:40 christos E
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -91,7 +92,7 @@ int	iso_shipdir(struct isoreaddir *);
 int
 cd9660_mknod(ndp, vap, cred, p)
 	struct nameidata *ndp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct vattr *vap;
 	struct proc *p;
 {
@@ -152,7 +153,7 @@ cd9660_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -185,7 +186,7 @@ cd9660_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -246,7 +247,7 @@ cd9660_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
@@ -418,7 +419,7 @@ cd9660_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -623,7 +624,7 @@ cd9660_readlink(v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	ISONODE	*ip;
 	ISODIR	*dirp;
@@ -851,7 +852,7 @@ cd9660_setattr(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vattr *vap = ap->a_vap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.220 2006/05/11 11:54:36 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.221 2006/05/14 21:38:18 elad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -92,6 +92,7 @@ struct exec_package;
 struct ps_strings;
 struct ras;
 struct sa_emul;
+struct kauth_cred;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -166,7 +167,7 @@ struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
 
 	/* Substructures: */
-	struct pcred	*p_cred;	/* Process owner's identity */
+	struct kauth_cred *p_cred;	/* Credentials */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
 	struct pstats	*p_stats;	/* Accounting/statistics (PROC ONLY) */
@@ -175,8 +176,6 @@ struct proc {
 	struct sigacts	*p_sigacts;	/* Process sigactions (state is below)*/
 
 	void		*p_ksems;	/* p1003.1b semaphores */
-
-#define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
 	int		p_exitsig;	/* signal to send to parent on exit */
@@ -480,7 +479,6 @@ void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
-int	groupmember(gid_t, const struct ucred *);
 int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);

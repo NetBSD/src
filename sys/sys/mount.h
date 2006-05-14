@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.140 2006/05/05 15:08:43 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.141 2006/05/14 21:38:18 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -180,6 +180,7 @@ struct mount {
 struct nameidata;
 struct mbuf;
 struct vnodeopv_desc;
+struct kauth_cred;
 #endif
 
 struct vfsops {
@@ -193,7 +194,7 @@ struct vfsops {
 				    struct lwp *);
 	int	(*vfs_statvfs)	(struct mount *, struct statvfs *,
 				    struct lwp *);
-	int	(*vfs_sync)	(struct mount *, int, struct ucred *,
+	int	(*vfs_sync)	(struct mount *, int, struct kauth_cred *,
 				    struct lwp *);
 	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
 	int	(*vfs_fhtovp)	(struct mount *, struct fid *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.112 2006/03/15 18:09:25 drochner Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.113 2006/05/14 21:38:17 elad Exp $	*/
 
 /*
  *
@@ -232,7 +232,6 @@ struct loadavg;
 struct mount;
 struct pglist;
 struct proc;
-struct ucred;
 struct uio;
 struct uvm_object;
 struct vm_anon;

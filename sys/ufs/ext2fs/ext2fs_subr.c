@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_subr.c,v 1.21 2006/03/18 13:54:21 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_subr.c,v 1.22 2006/05/14 21:32:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,13 +65,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.21 2006/03/18 13:54:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_subr.c,v 1.22 2006/05/14 21:32:21 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/inttypes.h>
+#include <sys/kauth.h>
+
 #include <ufs/ufs/inode.h>
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>

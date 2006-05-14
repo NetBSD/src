@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.22 2006/02/21 03:19:45 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.23 2006/05/14 21:31:52 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.22 2006/02/21 03:19:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.23 2006/05/14 21:31:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -225,9 +225,9 @@ tmpfs_lookup(void *v)
 			    (cnp->cn_nameiop == DELETE ||
 			    cnp->cn_nameiop == RENAME)) {
 				if ((dnode->tn_mode & S_ISTXT) != 0 &&
-				    cnp->cn_cred->cr_uid != 0 &&
-				    cnp->cn_cred->cr_uid != dnode->tn_uid &&
-				    cnp->cn_cred->cr_uid != tnode->tn_uid)
+				    kauth_cred_geteuid(cnp->cn_cred) != 0 &&
+				    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
+				    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid)
 					return EPERM;
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred,
 				    cnp->cn_lwp);
@@ -359,7 +359,7 @@ tmpfs_access(void *v)
 {
 	struct vnode *vp = ((struct vop_access_args *)v)->a_vp;
 	int mode = ((struct vop_access_args *)v)->a_mode;
-	struct ucred *cred = ((struct vop_access_args *)v)->a_cred;
+	kauth_cred_t cred = ((struct vop_access_args *)v)->a_cred;
 
 	int error;
 	struct tmpfs_node *node;
@@ -458,7 +458,7 @@ tmpfs_setattr(void *v)
 {
 	struct vnode *vp = ((struct vop_setattr_args *)v)->a_vp;
 	struct vattr *vap = ((struct vop_setattr_args *)v)->a_vap;
-	struct ucred *cred = ((struct vop_setattr_args *)v)->a_cred;
+	kauth_cred_t cred = ((struct vop_setattr_args *)v)->a_cred;
 	struct lwp *l = ((struct vop_setattr_args *)v)->a_l;
 
 	int error;

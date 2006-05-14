@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.58 2006/03/30 12:40:06 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.59 2006/05/14 21:33:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.58 2006/03/30 12:40:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.59 2006/05/14 21:33:39 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.58 2006/03/30 12:40:06 yamt Exp $");
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -198,7 +199,7 @@ ufs_reclaim(struct vnode *vp, struct lwp *l)
  */
 
 int
-ufs_balloc_range(struct vnode *vp, off_t off, off_t len, struct ucred *cred,
+ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
     int flags)
 {
 	off_t neweof;	/* file size after the operation */

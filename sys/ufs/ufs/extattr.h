@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.3 2005/12/23 23:20:00 rpaulo Exp $	*/
+/*	$NetBSD: extattr.h,v 1.4 2006/05/14 21:33:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -95,11 +95,10 @@ struct ufs_extattr_list_entry {
 #define	UELE_NEEDSWAP(uele)	((uele)->uele_flags & UELE_F_NEEDSWAP)
 
 struct lock;
-struct ucred;
 struct ufs_extattr_per_mount {
 	struct lock			uepm_lock;
 	struct ufs_extattr_list_head	uepm_list;
-	struct ucred			*uepm_ucred;
+	kauth_cred_t			uepm_ucred;
 	int				uepm_flags;
 };
 

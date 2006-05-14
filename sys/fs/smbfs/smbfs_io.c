@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.22 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.23 2006/05/14 21:31:52 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.22 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.23 2006/05/14 21:31:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.22 2006/03/01 12:38:21 yamt Exp $");
 #include <sys/signalvar.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
+#include <sys/kauth.h>
 
 #ifndef __NetBSD__
 #include <vm/vm.h>
@@ -84,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.22 2006/03/01 12:38:21 yamt Exp $");
 #define DE_SIZE	(sizeof(struct dirent))
 
 static int
-smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
+smbfs_readvdir(struct vnode *vp, struct uio *uio, kauth_cred_t cred)
 {
 	struct dirent de;
 	struct smb_cred scred;
@@ -187,7 +188,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 }
 
 int
-smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred)
+smbfs_readvnode(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 {
 	struct smbmount *smp = VFSTOSMBFS(vp->v_mount);
 	struct smbnode *np = VTOSMB(vp);
@@ -232,7 +233,7 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 
 int
 smbfs_writevnode(struct vnode *vp, struct uio *uiop,
-	struct ucred *cred, int ioflag)
+	kauth_cred_t cred, int ioflag)
 {
 	struct smbmount *smp = VTOSMBFS(vp);
 	struct smbnode *np = VTOSMB(vp);
@@ -299,7 +300,7 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
  * Do an I/O operation to/from a cache block.
  */
 int
-smbfs_doio(struct buf *bp, struct ucred *cr, struct lwp *l)
+smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
 {
 	struct vnode *vp = bp->b_vp;
 	struct smbmount *smp = VFSTOSMBFS(vp->v_mount);
@@ -401,7 +402,7 @@ int
 smbfs_vinvalbuf(vp, flags, cred, l, intrflg)
 	struct vnode *vp;
 	int flags;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 	int intrflg;
 {

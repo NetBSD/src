@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.4 2006/05/11 01:12:21 mrg Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.5 2006/05/14 21:31:52 elad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.4 2006/05/11 01:12:21 mrg Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.5 2006/05/14 21:31:52 elad Exp $");
 #endif /* not lint */
 
 
@@ -134,7 +134,7 @@ udf_read(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp     = ap->a_vp;
 	struct uio   *uio    = ap->a_uio;
@@ -218,7 +218,7 @@ udf_write(void *v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 
 	DPRINTF(NOTIMPL, ("udf_write called\n"));
@@ -338,7 +338,7 @@ udf_readdir(void *v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -638,7 +638,7 @@ udf_getattr(void *v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -728,7 +728,7 @@ udf_setattr(void *v)
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -828,7 +828,7 @@ udf_open(void *v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap;
 
@@ -847,7 +847,7 @@ udf_close(void *v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -874,12 +874,12 @@ udf_access(void *v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode    *vp   = ap->a_vp;
 	mode_t	         mode = ap->a_mode;
-	struct ucred    *cred = ap->a_cred;
+	kauth_cred_t    cred = ap->a_cred;
 	struct udf_node *udf_node = VTOI(vp);
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
@@ -1057,12 +1057,12 @@ udf_readlink(void *v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 #ifdef notyet
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct ucred *cred = ap->a_cred;
+	kauth_cred_t cred = ap->a_cred;
 #endif
 
 	ap = ap;	/* shut up gcc */
@@ -1167,7 +1167,7 @@ udf_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t offlo;
 		off_t offhi;

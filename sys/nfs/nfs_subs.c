@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.161 2006/05/14 05:42:43 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.162 2006/05/14 21:32:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.161 2006/05/14 05:42:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.162 2006/05/14 21:32:21 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.161 2006/05/14 05:42:43 christos Exp 
 #include <sys/time.h>
 #include <sys/dirent.h>
 #include <sys/once.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -642,7 +643,7 @@ nfsm_reqh(np, procid, hsiz, bposp)
 struct mbuf *
 nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	verf_str, mrest, mrest_len, mbp, xidp)
-	struct ucred *cr;
+	kauth_cred_t cr;
 	int nmflag;
 	int procid;
 	int auth_type;
@@ -709,12 +710,12 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 		nfsm_build(tl, u_int32_t *, auth_len);
 		*tl++ = 0;		/* stamp ?? */
 		*tl++ = 0;		/* NULL hostname */
-		*tl++ = txdr_unsigned(cr->cr_uid);
-		*tl++ = txdr_unsigned(cr->cr_gid);
+		*tl++ = txdr_unsigned(kauth_cred_geteuid(cr));
+		*tl++ = txdr_unsigned(kauth_cred_getegid(cr));
 		grpsiz = (auth_len >> 2) - 5;
 		*tl++ = txdr_unsigned(grpsiz);
 		for (i = 0; i < grpsiz; i++)
-			*tl++ = txdr_unsigned(cr->cr_groups[i]);
+			*tl++ = txdr_unsigned(kauth_cred_group(cr, i)); /* XXX elad review */
 		break;
 	case RPCAUTH_KERB4:
 		siz = auth_len;
@@ -2018,7 +2019,7 @@ nfs_cookieheuristic(vp, flagp, l, cred)
 	struct vnode *vp;
 	int *flagp;
 	struct lwp *l;
-	struct ucred *cred;
+	kauth_cred_t cred;
 {
 	struct uio auio;
 	struct iovec aiov;
@@ -2524,15 +2525,14 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	fhandle_t *fhp;
 	int lockflag;
 	struct vnode **vpp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
 	int *rdonlyp;
 	int kerbflag;
 {
 	struct mount *mp;
-	int i;
-	struct ucred *credanon;
+	kauth_cred_t credanon;
 	int error, exflags;
 	struct sockaddr_in *saddr;
 
@@ -2579,12 +2579,9 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	} else if (kerbflag) {
 		vput(*vpp);
 		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
-	} else if (cred->cr_uid == 0 || (exflags & MNT_EXPORTANON)) {
-		cred->cr_uid = credanon->cr_uid;
-		cred->cr_gid = credanon->cr_gid;
-		for (i = 0; i < credanon->cr_ngroups && i < NGROUPS; i++)
-			cred->cr_groups[i] = credanon->cr_groups[i];
-		cred->cr_ngroups = i;
+	} else if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) == 0 || (exflags & MNT_EXPORTANON)) {
+		kauth_cred_clone(credanon, cred);
 	}
 	if (exflags & MNT_EXRDONLY)
 		*rdonlyp = 1;
@@ -2954,18 +2951,22 @@ nfsrvw_sort(list, num)
  */
 void
 nfsrv_setcred(incred, outcred)
-	struct ucred *incred, *outcred;
+	kauth_cred_t incred, *outcred;
 {
-	int i;
+	/*
+	 * XXX elad: this is another case where the original code just
+	 *	     messed with the struct members, more specifically,
+	 *	     set the reference count. if we have more than one
+	 *	     reference, it means we have a user of these
+	 *	     credentials that didn't kauth_cred_hold().
+	 */
+#ifdef DIAGNOSTIC
+	if (kauth_cred_getrefcnt(*outcred) > 1)
+		panic("nfsrv_setcred: possible memory leak");
+#endif /* DIAGNOSTIC */
 
-	memset((caddr_t)outcred, 0, sizeof (struct ucred));
-	outcred->cr_ref = 1;
-	outcred->cr_uid = incred->cr_uid;
-	outcred->cr_gid = incred->cr_gid;
-	outcred->cr_ngroups = incred->cr_ngroups;
-	for (i = 0; i < incred->cr_ngroups; i++)
-		outcred->cr_groups[i] = incred->cr_groups[i];
-	nfsrvw_sort(outcred->cr_groups, outcred->cr_ngroups);
+	*outcred = kauth_cred_copy(*outcred);
+	kauth_cred_clone(incred, *outcred);
 }
 
 u_int32_t

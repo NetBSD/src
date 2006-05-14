@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.53 2006/03/17 23:29:11 christos Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.54 2006/05/14 21:32:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.53 2006/03/17 23:29:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.54 2006/05/14 21:32:21 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.53 2006/03/17 23:29:11 christos E
 #include <sys/malloc.h>
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
@@ -246,7 +247,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
  */
 int
 ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
-    struct ucred *cred, struct proc *p)
+    kauth_cred_t cred, struct proc *p)
 {
 	daddr_t lastblock;
 	struct inode *oip = VTOI(ovp);

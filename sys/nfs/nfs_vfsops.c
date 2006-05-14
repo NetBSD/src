@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.154 2006/04/20 12:13:53 blymn Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.155 2006/05/14 21:32:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.154 2006/04/20 12:13:53 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.155 2006/05/14 21:32:21 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.154 2006/04/20 12:13:53 blymn Exp $
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -151,7 +152,7 @@ nfs_statvfs(mp, sbp, l)
 	int v3 = (nmp->nm_flag & NFSMNT_NFSV3);
 #endif
 	struct mbuf *mreq, *mrep = NULL, *md, *mb;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	u_quad_t tquad;
 	struct nfsnode *np;
 
@@ -160,8 +161,7 @@ nfs_statvfs(mp, sbp, l)
 #endif
 	vp = nmp->nm_vnode;
 	np = VTONFS(vp);
-	cred = crget();
-	cred->cr_ngroups = 0;
+	cred = kauth_cred_alloc();
 #ifndef NFS_V2_ONLY
 	if (v3 && (nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
 		(void)nfs_fsinfo(nmp, vp, cred, l);
@@ -220,7 +220,7 @@ nfs_statvfs(mp, sbp, l)
 	}
 	copy_statvfs_info(sbp, mp);
 	nfsm_reqdone;
-	crfree(cred);
+	kauth_cred_free(cred);
 	return (error);
 }
 
@@ -232,7 +232,7 @@ int
 nfs_fsinfo(nmp, vp, cred, l)
 	struct nfsmount *nmp;
 	struct vnode *vp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	struct nfsv3_fsinfo *fsp;
@@ -358,7 +358,7 @@ nfs_mountroot()
 	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */
-	error = VOP_GETATTR(vp, &attr, l->l_proc->p_ucred, l);
+	error = VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l);
 	if (error)
 		panic("nfs_mountroot: getattr for root");
 	n = attr.va_atime.tv_sec;
@@ -694,7 +694,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	struct nfsnode *np;
 	int error;
 	struct vattr *attrs;
-	struct ucred *cr;
+	kauth_cred_t cr;
 
 	/*
 	 * If the number of nfs iothreads to use has never
@@ -783,14 +783,17 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		goto bad;
 	*vpp = NFSTOV(np);
 	MALLOC(attrs, struct vattr *, sizeof(struct vattr), M_TEMP, M_WAITOK);
-	VOP_GETATTR(*vpp, attrs, l->l_proc->p_ucred, l);
+	VOP_GETATTR(*vpp, attrs, l->l_proc->p_cred, l);
 	if ((nmp->nm_flag & NFSMNT_NFSV3) && ((*vpp)->v_type == VDIR)) {
-		cr = crget();
-		cr->cr_uid = attrs->va_uid;
-		cr->cr_gid = attrs->va_gid;
-		cr->cr_ngroups = 0;
+		cr = kauth_cred_alloc();
+		kauth_cred_setuid(cr, attrs->va_uid);
+		kauth_cred_seteuid(cr, attrs->va_uid);
+		kauth_cred_setsvuid(cr, attrs->va_uid);
+		kauth_cred_setgid(cr, attrs->va_gid);
+		kauth_cred_setegid(cr, attrs->va_gid);
+		kauth_cred_setsvgid(cr, attrs->va_gid);
 		nfs_cookieheuristic(*vpp, &nmp->nm_iflag, l, cr);
-		crfree(cr);
+		kauth_cred_free(cr);
 	}
 	FREE(attrs, M_TEMP);
 
@@ -943,7 +946,7 @@ int
 nfs_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	struct vnode *vp;

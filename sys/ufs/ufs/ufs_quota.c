@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.38 2006/03/01 12:38:33 yamt Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.39 2006/05/14 21:33:39 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.38 2006/03/01 12:38:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.39 2006/05/14 21:33:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.38 2006/03/01 12:38:33 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -97,7 +98,7 @@ getinoquota(struct inode *ip)
  * Update disk usage, and take corrective action.
  */
 int
-chkdq(struct inode *ip, int64_t change, struct ucred *cred, int flags)
+chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 {
 	struct dquot *dq;
 	int i;
@@ -128,7 +129,7 @@ chkdq(struct inode *ip, int64_t change, struct ucred *cred, int flags)
 		return (0);
 	}
 	if ((flags & FORCE) == 0 &&
-	    (cred != NOCRED && cred->cr_uid != 0)) {
+	    (cred != NOCRED && kauth_cred_geteuid(cred) != 0)) {
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;
@@ -154,7 +155,7 @@ chkdq(struct inode *ip, int64_t change, struct ucred *cred, int flags)
  * Issue an error message if appropriate.
  */
 int
-chkdqchg(struct inode *ip, int64_t change, struct ucred *cred, int type)
+chkdqchg(struct inode *ip, int64_t change, kauth_cred_t cred, int type)
 {
 	struct dquot *dq = ip->i_dquot[type];
 	long ncurblocks = dq->dq_curblocks + change;
@@ -164,7 +165,7 @@ chkdqchg(struct inode *ip, int64_t change, struct ucred *cred, int type)
 	 */
 	if (ncurblocks >= dq->dq_bhardlimit && dq->dq_bhardlimit) {
 		if ((dq->dq_flags & DQ_BLKS) == 0 &&
-		    ip->i_uid == cred->cr_uid) {
+		    ip->i_uid == kauth_cred_geteuid(cred)) {
 			uprintf("\n%s: write failed, %s disk limit reached\n",
 			    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 			    quotatypes[type]);
@@ -179,7 +180,7 @@ chkdqchg(struct inode *ip, int64_t change, struct ucred *cred, int type)
 	if (ncurblocks >= dq->dq_bsoftlimit && dq->dq_bsoftlimit) {
 		if (dq->dq_curblocks < dq->dq_bsoftlimit) {
 			dq->dq_btime = time.tv_sec + ip->i_ump->um_btime[type];
-			if (ip->i_uid == cred->cr_uid)
+			if (ip->i_uid == kauth_cred_geteuid(cred))
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type], "disk quota exceeded");
@@ -187,7 +188,7 @@ chkdqchg(struct inode *ip, int64_t change, struct ucred *cred, int type)
 		}
 		if (time.tv_sec > dq->dq_btime) {
 			if ((dq->dq_flags & DQ_BLKS) == 0 &&
-			    ip->i_uid == cred->cr_uid) {
+			    ip->i_uid == kauth_cred_geteuid(cred)) {
 				uprintf("\n%s: write failed, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type],
@@ -204,7 +205,7 @@ chkdqchg(struct inode *ip, int64_t change, struct ucred *cred, int type)
  * Check the inode limit, applying corrective action.
  */
 int
-chkiq(struct inode *ip, int32_t change, struct ucred *cred, int flags)
+chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 {
 	struct dquot *dq;
 	int i;
@@ -234,7 +235,7 @@ chkiq(struct inode *ip, int32_t change, struct ucred *cred, int flags)
 		}
 		return (0);
 	}
-	if ((flags & FORCE) == 0 && cred->cr_uid != 0) {
+	if ((flags & FORCE) == 0 && kauth_cred_geteuid(cred) != 0) {
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
 				continue;
@@ -260,7 +261,7 @@ chkiq(struct inode *ip, int32_t change, struct ucred *cred, int flags)
  * Issue an error message if appropriate.
  */
 int
-chkiqchg(struct inode *ip, int32_t change, struct ucred *cred, int type)
+chkiqchg(struct inode *ip, int32_t change, kauth_cred_t cred, int type)
 {
 	struct dquot *dq = ip->i_dquot[type];
 	long ncurinodes = dq->dq_curinodes + change;
@@ -270,7 +271,7 @@ chkiqchg(struct inode *ip, int32_t change, struct ucred *cred, int type)
 	 */
 	if (ncurinodes >= dq->dq_ihardlimit && dq->dq_ihardlimit) {
 		if ((dq->dq_flags & DQ_INODS) == 0 &&
-		    ip->i_uid == cred->cr_uid) {
+		    ip->i_uid == kauth_cred_geteuid(cred)) {
 			uprintf("\n%s: write failed, %s inode limit reached\n",
 			    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 			    quotatypes[type]);
@@ -285,7 +286,7 @@ chkiqchg(struct inode *ip, int32_t change, struct ucred *cred, int type)
 	if (ncurinodes >= dq->dq_isoftlimit && dq->dq_isoftlimit) {
 		if (dq->dq_curinodes < dq->dq_isoftlimit) {
 			dq->dq_itime = time.tv_sec + ip->i_ump->um_itime[type];
-			if (ip->i_uid == cred->cr_uid)
+			if (ip->i_uid == kauth_cred_geteuid(cred))
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type], "inode quota exceeded");
@@ -293,7 +294,7 @@ chkiqchg(struct inode *ip, int32_t change, struct ucred *cred, int type)
 		}
 		if (time.tv_sec > dq->dq_itime) {
 			if ((dq->dq_flags & DQ_INODS) == 0 &&
-			    ip->i_uid == cred->cr_uid) {
+			    ip->i_uid == kauth_cred_geteuid(cred)) {
 				uprintf("\n%s: write failed, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type],
@@ -355,7 +356,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, caddr_t fname)
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp, 0);
 	if (vp->v_type != VREG) {
-		(void) vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (EACCES);
 	}
 	if (*vpp != vp)
@@ -368,8 +369,8 @@ quotaon(struct lwp *l, struct mount *mp, int type, caddr_t fname)
 	 * Save the credential of the process that turned on quotas.
 	 * Set up the time limits for this quota.
 	 */
-	crhold(p->p_ucred);
-	ump->um_cred[type] = p->p_ucred;
+	kauth_cred_hold(p->p_cred);
+	ump->um_cred[type] = p->p_cred;
 	ump->um_btime[type] = MAX_DQ_TIME;
 	ump->um_itime[type] = MAX_IQ_TIME;
 	if (dqget(NULLVP, 0, ump, type, &dq) == 0) {
@@ -442,9 +443,9 @@ again:
 	}
 	dqflush(qvp);
 	qvp->v_flag &= ~VSYSTEM;
-	error = vn_close(qvp, FREAD|FWRITE, l->l_proc->p_ucred, l);
+	error = vn_close(qvp, FREAD|FWRITE, l->l_proc->p_cred, l);
 	ump->um_quotas[type] = NULLVP;
-	crfree(ump->um_cred[type]);
+	kauth_cred_free(ump->um_cred[type]);
 	ump->um_cred[type] = NOCRED;
 	ump->um_qflags[type] &= ~QTF_CLOSING;
 	for (type = 0; type < MAXQUOTAS; type++)

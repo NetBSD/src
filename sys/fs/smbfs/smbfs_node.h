@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.10 2005/12/03 17:34:44 christos Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.11 2006/05/14 21:31:52 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -84,14 +84,14 @@ struct smbfattr;
 
 int  smbfs_inactive(void *);
 int  smbfs_reclaim(void *);
-int smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
-	struct smbfattr *fap, struct vnode **vpp);
+int smbfs_nget(struct mount *, struct vnode *, const char *, int,
+    struct smbfattr *, struct vnode **);
 #define	smbfs_hash(x, y)	hash32_strn((x), (y), HASH32_STR_INIT)
 
-int  smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred);
-int  smbfs_writevnode(struct vnode *vp, struct uio *uiop, struct ucred *cred, int ioflag);
-void smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap);
-int  smbfs_attr_cachelookup(struct vnode *vp ,struct vattr *va);
+int  smbfs_readvnode(struct vnode *, struct uio *, kauth_cred_t);
+int  smbfs_writevnode(struct vnode *, struct uio *, kauth_cred_t, int);
+void smbfs_attr_cacheenter(struct vnode *, struct smbfattr *);
+int  smbfs_attr_cachelookup(struct vnode * ,struct vattr *);
 
 #define smbfs_attr_cacheremove(vp)	VTOSMB(vp)->n_attrage = 0
 

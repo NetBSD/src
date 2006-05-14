@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.6 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.7 2006/05/14 21:31:52 elad Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.6 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.7 2006/05/14 21:31:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -142,7 +142,7 @@ filecore_lookup(v)
 	const char *name;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	struct ucred *cred = cnp->cn_cred;
+	kauth_cred_t cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	int i, endsearch;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.27 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: ucred.h,v 1.28 2006/05/14 21:38:18 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,9 +59,6 @@ struct ucred {
 	gid_t		cr_groups[NGROUPS];	/* groups */
 };
 
-#define NOCRED ((struct ucred *)-1)	/* no credential available */
-#define FSCRED ((struct ucred *)-2)	/* filesystem credential */
-
 #ifdef _KERNEL
 static __inline void crhold(struct ucred *cr)
 {
@@ -83,14 +80,6 @@ static __inline void crhold(struct ucred *cr)
 
 int		do_setresuid(struct lwp *, uid_t, uid_t, uid_t, u_int);
 int		do_setresgid(struct lwp *, gid_t, gid_t, gid_t, u_int);
-
-struct ucred	*crcopy(struct ucred *);
-struct ucred	*crdup(const struct ucred *);
-void		crfree(struct ucred *);
-struct ucred	*crget(void);
-int		suser(const struct ucred *, u_short *);
-void		crcvt(struct ucred *, const struct uucred *);
-int		crcmp(const struct ucred *, const struct uucred *);
 
 /*
  * Check if we need to curtain information when a user requests information

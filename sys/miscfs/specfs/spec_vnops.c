@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.86 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.87 2006/05/14 21:32:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.86 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.87 2006/05/14 21:32:21 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.86 2006/03/01 12:38:32 yamt Exp $")
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -166,7 +167,7 @@ spec_open(v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct lwp *l = ap->a_l;
@@ -274,7 +275,7 @@ spec_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
@@ -357,7 +358,7 @@ spec_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
@@ -453,7 +454,7 @@ spec_ioctl(v)
 		u_long a_command;
 		void  *a_data;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	const struct bdevsw *bdev;
@@ -571,7 +572,7 @@ spec_fsync(v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int  a_flags;
 		off_t offlo;
 		off_t offhi;
@@ -686,7 +687,7 @@ spec_close(v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;

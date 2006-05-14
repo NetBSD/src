@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.51 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.52 2006/05/14 21:31:52 elad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.51 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.52 2006/05/14 21:31:52 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.51 2005/12/11 12:24:29 christos E
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 
 #include <netsmb/smb.h>
@@ -102,7 +103,7 @@ int smbfs_root(struct mount *, struct vnode **);
 static int smbfs_setroot(struct mount *);
 int smbfs_start(struct mount *, int, struct lwp *);
 int smbfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int smbfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int smbfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int smbfs_unmount(struct mount *, int, struct lwp *);
 void smbfs_init(void);
 void smbfs_reinit(void);
@@ -173,7 +174,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		    SMBFS_VERSION, args.version);
 		return EINVAL;
 	}
-	smb_makescred(&scred, l, l->l_proc->p_ucred);
+	smb_makescred(&scred, l, l->l_proc->p_cred);
 	error = smb_dev2share(args.dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
 		return error;
@@ -253,7 +254,7 @@ smbfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return error;
 
-	smb_makescred(&scred, l, l->l_proc->p_ucred);
+	smb_makescred(&scred, l, l->l_proc->p_cred);
 	smb_share_lock(smp->sm_share, 0);
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
@@ -278,7 +279,7 @@ smbfs_setroot(struct mount *mp)
 	struct vnode *vp;
 	struct smbfattr fattr;
 	struct lwp *l = curlwp;
-	struct ucred *cred = l->l_proc->p_ucred;
+	kauth_cred_t cred = l->l_proc->p_cred;
 	struct smb_cred scred;
 	int error;
 
@@ -408,7 +409,7 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	int error = 0;
 
 	sbp->f_iosize = SSTOVC(ssp)->vc_txmax;		/* optimal transfer block size */
-	smb_makescred(&scred, l, l->l_proc->p_ucred);
+	smb_makescred(&scred, l, l->l_proc->p_cred);
 
 	error = smbfs_smb_statvfs(ssp, sbp, &scred);
 	if (error)
@@ -424,7 +425,7 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Flush out the buffer cache
  */
 int
-smbfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *l)
+smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
 	struct vnode *vp, *nvp;
 	struct smbnode *np;

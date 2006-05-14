@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.17 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.18 2006/05/14 21:32:45 elad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.17 2005/12/11 12:25:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.18 2006/05/14 21:32:45 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -60,7 +60,7 @@ softdep_flushfiles(struct mount *oldmnt, int flags, struct lwp *l)
 
 int
 softdep_mount(struct vnode *devvp, struct mount *mp, struct fs *fs,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
 
 	return (0);
