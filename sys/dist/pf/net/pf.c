@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.22 2006/05/11 01:08:38 mrg Exp $	*/
+/*	$NetBSD: pf.c,v 1.23 2006/05/14 03:40:02 christos Exp $	*/
 /*	$OpenBSD: pf.c,v 1.483 2005/03/15 17:38:43 dhartmei Exp $ */
 
 /*
@@ -2785,8 +2785,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_int16_t		 bport, nport = 0;
 	sa_family_t		 af = pd->af;
 	int			 lookup = -1;
-	uid_t			 uid;
-	gid_t			 gid;
+	uid_t			 uid = 0;	/* XXX: GCC */
+	gid_t			 gid = 0;	/* XXX: GCC */
 	struct pf_rule		*r, *a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_src_node	*nsn = NULL;
@@ -3161,8 +3161,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_int16_t		 bport, nport = 0;
 	sa_family_t		 af = pd->af;
 	int			 lookup = -1;
-	uid_t			 uid;
-	gid_t			 gid;
+	uid_t			 uid = 0;	/* XXX: GCC */
+	gid_t			 gid = 0;	/* XXX: GCC */
 	struct pf_rule		*r, *a = NULL;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_src_node	*nsn = NULL;
