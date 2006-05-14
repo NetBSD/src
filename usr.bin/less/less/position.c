@@ -107,6 +107,7 @@ pos_clear()
 pos_init()
 {
 	struct scrpos scrpos;
+	scrpos.pos = scrpos.ln = 0;	/* XXX: GCC */
 
 	if (sc_height <= table_size)
 		return;
