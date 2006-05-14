@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.88 2006/04/20 17:03:35 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.89 2006/05/14 05:30:31 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.88 2006/04/20 17:03:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.89 2006/05/14 05:30:31 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1181,7 +1181,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 	STDDCL;
 	struct cisco_packet *h;
 #ifdef INET
-	u_int32_t me, mymask;
+	u_int32_t me, mymask = 0;	/* XXX: GCC */
 #endif
 
 	if (m->m_pkthdr.len < CISCO_PACKET_LEN) {
