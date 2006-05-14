@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.110 2006/05/14 05:30:31 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.111 2006/05/14 21:15:12 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.110 2006/05/14 05:30:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.111 2006/05/14 21:15:12 elad Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.110 2006/05/14 05:30:31 christos Exp
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -76,9 +77,9 @@ int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 #endif
 
 static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags);
+	    kauth_cred_t cred, int flags);
 static int vn_write(struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags);
+	    kauth_cred_t cred, int flags);
 static int vn_closefile(struct file *fp, struct lwp *l);
 static int vn_poll(struct file *fp, int events, struct lwp *l);
 static int vn_fcntl(struct file *fp, u_int com, void *data, struct lwp *l);
@@ -100,7 +101,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct vnode *vp;
 	struct mount *mp = NULL;	/* XXX: GCC */
 	struct lwp *l = ndp->ni_cnd.cn_lwp;
-	struct ucred *cred = l->l_proc->p_ucred;
+	kauth_cred_t cred = l->l_proc->p_cred;
 	struct vattr va;
 	int error;
 #ifdef VERIFIED_EXEC
@@ -329,7 +330,7 @@ vn_marktext(struct vnode *vp)
  * Note: takes an unlocked vnode, while VOP_CLOSE takes a locked node.
  */
 int
-vn_close(struct vnode *vp, int flags, struct ucred *cred, struct lwp *l)
+vn_close(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 
@@ -346,7 +347,7 @@ vn_close(struct vnode *vp, int flags, struct ucred *cred, struct lwp *l)
  */
 int
 vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
-    enum uio_seg segflg, int ioflg, struct ucred *cred, size_t *aresid,
+    enum uio_seg segflg, int ioflg, kauth_cred_t cred, size_t *aresid,
     struct lwp *l)
 {
 	struct uio auio;
@@ -458,7 +459,7 @@ unionread:
  * File table vnode read routine.
  */
 static int
-vn_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+vn_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
@@ -487,7 +488,7 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
  * File table vnode write routine.
  */
 static int
-vn_write(struct file *fp, off_t *offset, struct uio *uio, struct ucred *cred,
+vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
@@ -544,7 +545,7 @@ vn_stat(struct vnode *vp, struct stat *sb, struct lwp *l)
 	int error;
 	mode_t mode;
 
-	error = VOP_GETATTR(vp, &va, l->l_proc->p_ucred, l);
+	error = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l);
 	if (error)
 		return (error);
 	/*
@@ -604,7 +605,7 @@ vn_fcntl(struct file *fp, u_int com, void *data, struct lwp *l)
 	struct vnode *vp = ((struct vnode *)fp->f_data);
 	int error;
 
-	error = VOP_FCNTL(vp, com, data, fp->f_flag, l->l_proc->p_ucred, l);
+	error = VOP_FCNTL(vp, com, data, fp->f_flag, l->l_proc->p_cred, l);
 	return (error);
 }
 
@@ -624,7 +625,7 @@ vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 	case VREG:
 	case VDIR:
 		if (com == FIONREAD) {
-			error = VOP_GETATTR(vp, &vattr, l->l_proc->p_ucred, l);
+			error = VOP_GETATTR(vp, &vattr, l->l_proc->p_cred, l);
 			if (error)
 				return (error);
 			*(int *)data = vattr.va_size - fp->f_offset;
@@ -664,7 +665,7 @@ vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 	case VCHR:
 	case VBLK:
 		error = VOP_IOCTL(vp, com, data, fp->f_flag,
-		    l->l_proc->p_ucred, l);
+		    l->l_proc->p_cred, l);
 		if (error == 0 && com == TIOCSCTTY) {
 			if (p->p_session->s_ttyvp)
 				vrele(p->p_session->s_ttyvp);
