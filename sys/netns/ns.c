@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.28 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: ns.c,v 1.29 2006/05/14 21:20:13 elad Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.28 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.29 2006/05/14 21:20:13 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.28 2005/12/11 12:25:16 christos Exp $");
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -91,7 +92,9 @@ ns_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		/* FALLTHROUGH */
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
+							 KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag)))
 			return (EPERM);
 
 		if (ifp == 0)

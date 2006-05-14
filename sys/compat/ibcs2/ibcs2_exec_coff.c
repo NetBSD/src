@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.15 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.16 2006/05/14 21:24:49 elad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.15 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.16 2006/05/14 21:24:49 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,7 @@ coff_find_section(l, vp, fp, sh, s_type)
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
 		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
-		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred,
+		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_cred,
 		    &resid, NULL);
 		if (error) {
 			DPRINTF(("section hdr %d read error %d\n", i, error));
@@ -460,7 +460,7 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 
 		error = vn_rdwr(UIO_READ, epp->ep_vp, tbuf,
 				len, sh.s_scnptr,
-				UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred,
+				UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_cred,
 				&resid, NULL);
 		if (error) {
 			DPRINTF(("shlib section read error %d\n", error));
@@ -553,7 +553,7 @@ coff_load_shlib(l, path, epp)
 
 	siz = sizeof(struct coff_filehdr);
 	error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
-	    UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred, &resid, l);
+	    UIO_SYSSPACE, IO_NODELOCKED, p->p_cred, &resid, l);
 	if (error) {
 	    DPRINTF(("filehdr read error %d\n", error));
 	    vrele(nd.ni_vp);

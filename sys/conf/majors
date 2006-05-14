@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.21 2006/04/03 08:15:48 scw Exp $
+# $NetBSD: majors,v 1.22 2006/05/14 21:25:21 elad Exp $
 #
 # Device majors for Machine-Independent drivers.
 #

@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_pe.c,v 1.7.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.3 2006/03/31 00:03:57 rittera Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pe.c,v 1.4 2006/05/14 21:24:50 elad Exp $");
 #endif
 
 

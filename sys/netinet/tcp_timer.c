@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.74 2006/04/15 02:33:41 christos Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.75 2006/05/14 21:19:34 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.74 2006/04/15 02:33:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.75 2006/05/14 21:19:34 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"

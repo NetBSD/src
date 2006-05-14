@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.73 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.74 2006/05/14 21:24:49 elad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.73 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.74 2006/05/14 21:24:49 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -545,7 +545,7 @@ hpux_sys_ulimit(l, v, retval)
 	case 2:
 		SCARG(uap, newlimit) *= 512;
 		if (SCARG(uap, newlimit) > limp->rlim_max &&
-		    (error = suser(p->p_ucred, &p->p_acflag)))
+		    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			break;
 		limp->rlim_cur = limp->rlim_max = SCARG(uap, newlimit);
 		/* else fall into... */
@@ -936,7 +936,8 @@ hpux_sys_getpgrp2(lp, v, retval)
 	p = pfind(SCARG(uap, pid));
 	if (p == 0)
 		return (ESRCH);
-	if (cp->p_ucred->cr_uid && p->p_ucred->cr_uid != cp->p_ucred->cr_uid &&
+	if (kauth_cred_geteuid(cp->p_cred) &&
+	    kauth_cred_geteuid(p->p_cred) != kauth_cred_geteuid(cp->p_cred) &&
 	    !inferior(p, cp))
 		return (EPERM);
 	*retval = p->p_pgid;
@@ -1050,19 +1051,20 @@ hpux_sys_getaccess(l, v, retval)
 	struct hpux_sys_getaccess_args *uap = v;
 	int lgroups[NGROUPS];
 	int error = 0;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct vnode *vp;
 	struct nameidata nd;
+	gid_t gid;
 
 	/*
 	 * Build an appropriate credential structure
 	 */
-	cred = crdup(p->p_ucred);
+	cred = kauth_cred_dup(p->p_cred);
 	switch (SCARG(uap, uid)) {
 	case 65502:	/* UID_EUID */
 		break;
 	case 65503:	/* UID_RUID */
-		cred->cr_uid = p->p_cred->p_ruid;
+		kauth_cred_seteuid(cred, kauth_cred_getuid(p->p_cred));
 		break;
 	case 65504:	/* UID_SUID */
 		error = EINVAL;
@@ -1070,29 +1072,31 @@ hpux_sys_getaccess(l, v, retval)
 	default:
 		if (SCARG(uap, uid) > 65504)
 			error = EINVAL;
-		cred->cr_uid = SCARG(uap, uid);
+		kauth_cred_seteuid(cred, SCARG(uap, uid));
 		break;
 	}
 	switch (SCARG(uap, ngroups)) {
 	case -1:	/* NGROUPS_EGID */
-		cred->cr_ngroups = 1;
+		gid = kauth_cred_getegid(cred);
+		kauth_cred_setgroups(cred, &gid, 1, -1);
 		break;
 	case -5:	/* NGROUPS_EGID_SUPP */
 		break;
 	case -2:	/* NGROUPS_RGID */
-		cred->cr_ngroups = 1;
-		cred->cr_gid = p->p_cred->p_rgid;
+		kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
+		gid = kauth_cred_geteuid(gid);
+		kauth_cred_setgroups(cred, &gid, 1, -1);
 		break;
 	case -6:	/* NGROUPS_RGID_SUPP */
-		cred->cr_gid = p->p_cred->p_rgid;
+		kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
 		break;
 	case -3:	/* NGROUPS_SGID */
 	case -7:	/* NGROUPS_SGID_SUPP */
 		error = EINVAL;
 		break;
 	case -4:	/* NGROUPS_SUPP */
-		if (cred->cr_ngroups > 1)
-			cred->cr_gid = cred->cr_groups[1];
+		if (kauth_cred_ngroups(cred) > 1)
+			kauth_cred_setegid(cred, kauth_cred_group(cred, 1));
 		else
 			error = EINVAL;
 		break;
@@ -1104,13 +1108,8 @@ hpux_sys_getaccess(l, v, retval)
 					   sizeof(lgroups[0]));
 		else
 			error = EINVAL;
-		if (error == 0) {
-			int gid;
-
-			for (gid = 0; gid < SCARG(uap, ngroups); gid++)
-				cred->cr_groups[gid] = lgroups[gid];
-			cred->cr_ngroups = SCARG(uap, ngroups);
-		}
+		if (error == 0)
+			kauth_cred_setgroups(cred, lgroups, ngroups, -1);
 		break;
 	}
 	/*
@@ -1122,7 +1121,7 @@ hpux_sys_getaccess(l, v, retval)
 		error = namei(&nd);
 	}
 	if (error) {
-		crfree(cred);
+		kauth_cred_free(cred);
 		return (error);
 	}
 	/*
@@ -1137,7 +1136,7 @@ hpux_sys_getaccess(l, v, retval)
 	if (VOP_ACCESS(vp, VEXEC, cred, l) == 0)
 		*retval |= X_OK;
 	vput(vp);
-	crfree(cred);
+	kauth_cred_free(cred);
 	return (error);
 }
 
@@ -1203,7 +1202,7 @@ hpux_sys_stime_6x(l, v, retval)
 
 	tv.tv_sec = SCARG(uap, time);
 	tv.tv_usec = 0;
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 		return (error);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
