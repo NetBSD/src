@@ -1,4 +1,4 @@
-/*	$NetBSD: inventory.c,v 1.9 2003/08/07 09:37:38 agc Exp $	*/
+/*	$NetBSD: inventory.c,v 1.10 2006/05/14 03:15:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: inventory.c,v 1.9 2003/08/07 09:37:38 agc Exp $");
+__RCSID("$NetBSD: inventory.c,v 1.10 2006/05/14 03:15:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -394,7 +394,7 @@ pr_motion_char(ch)
 			(ch == '\016') ||
 			(ch == '\002')) {
 		char until[18], buf[DCOLS];
-		int n;
+		int n = 0;	/* XXX: GCC */
 
 		if (ch <= '\031') {
 			ch += 96;
