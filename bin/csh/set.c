@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.24 2006/04/24 19:00:29 snj Exp $ */
+/* $NetBSD: set.c,v 1.25 2006/05/14 01:05:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.24 2006/04/24 19:00:29 snj Exp $");
+__RCSID("$NetBSD: set.c,v 1.25 2006/05/14 01:05:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ void
 doset(Char **v, struct command *t)
 {
     Char op, *p, **vecp, *vp;
-    int subscr;
+    int subscr = 0;	/* XXX: GCC */
     bool hadsub;
 
     v++;
@@ -217,7 +217,7 @@ void
 dolet(Char **v, struct command *t)
 {
     Char c, op, *p, *vp;
-    int subscr;
+    int subscr = 0;	/* XXX: GCC */
     bool hadsub;
 
     v++;
