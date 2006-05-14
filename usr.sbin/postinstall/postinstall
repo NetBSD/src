@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.12 2006/05/12 12:43:28 tron Exp $
+# $NetBSD: postinstall,v 1.13 2006/05/14 15:46:40 simonb Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -723,21 +723,30 @@ do_rc()
 	failed=$(( ${failed} + $? ))
 
 	compare_dir ${op} ${SRC_DIR}/etc/rc.d ${DEST_DIR}/etc/rc.d 555 \
-		DAEMON LOGIN NETWORKING SERVERS accounting altqd amd \
-		apmd bootparams bootconf.sh ccd cgd cleartmp cron \
-		dhclient dhcpd dhcrelay dmesg downinterfaces fixsb fsck \
-		identd ifwatchd inetd iscsi_target ipfilter ipfs ipmon ipnat \
-		ipsec isdnd kdc ldconfig lkm1 lkm2 lkm3 local lpd mopd motd \
-		mountall mountcritlocal mountcritremote mountd moused \
-		mrouted mixerctl named ndbootd network newsyslog nfsd \
-		nfslocking ntpd ntpdate pf pf_boot pflogd poffd postfix \
-		powerd ppp pwcheck \
-		quota racoon rpcbind raidframe raidframeparity rarpd \
-		rbootd root route6d routed rtadvd rtclocaltime rtsold rwho \
+		DAEMON LOGIN NETWORKING SERVERS \
+		accounting altqd amd apmd \
+		bootconf.sh bootparams \
+		ccd cgd cleartmp cron \
+		dhclient dhcpd dhcrelay dmesg downinterfaces \
+		fixsb fsck ftpd \
+		hostapd \
+		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
+		irdaattach iscsi_target isdnd \
+		kdc \
+		ldconfig lkm1 lkm2 lkm3 local lpd \
+		mixerctl mopd motd mountall mountcritlocal mountcritremote \
+		mountd moused mrouted \
+		named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
+		pf pf_boot pflogd poffd postfix powerd ppp pwcheck \
+		quota \
+		racoon rpcbind raidframe raidframeparity rarpd rbootd root \
+		route6d routed rtadvd rtclocaltime rtsold rwho \
 		savecore screenblank sendmail securelevel smmsp sshd \
-		staticroute swap1 swap2 sysdb sysctl syslogd timed tpctl ttys \
+		staticroute swap1 swap2 sysctl sysdb syslogd \
+		timed tpctl ttys \
 		veriexec virecover wdogctl wscons wsmoused \
-		xdm xfs ypbind yppasswdd ypserv
+		xdm xfs \
+		ypbind yppasswdd ypserv
 	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.d files
