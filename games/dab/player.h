@@ -1,4 +1,4 @@
-/*	$NetBSD: player.h,v 1.1.1.1 2003/12/26 17:57:03 christos Exp $	*/
+/*	$NetBSD: player.h,v 1.2 2006/05/14 03:21:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ class BOARD;
 class PLAYER {
   public:
     PLAYER(char who);
+    virtual ~PLAYER() {}
     virtual void play(const BOARD& b, size_t& y, size_t& x, int& dir) = 0;
 
     // Helper functions
