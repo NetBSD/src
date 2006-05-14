@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.12 2006/04/09 18:33:43 christos Exp $	 */
+/*	$NetBSD: at_control.c,v 1.13 2006/05/14 21:19:33 elad Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.12 2006/04/09 18:33:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.13 2006/05/14 21:19:33 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.12 2006/04/09 18:33:43 christos Exp
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/kauth.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_ether.h>
@@ -127,7 +128,8 @@ at_control(cmd, data, ifp, p)
 		 * If we are not superuser, then we don't get to do these
 		 * ops.
 		 */
-		if (p && suser(p->p_ucred, &p->p_acflag))
+		if (p && kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				      &p->p_acflag))
 			return (EPERM);
 
 		sat = satosat(&ifr->ifr_addr);

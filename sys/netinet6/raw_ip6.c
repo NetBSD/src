@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.76 2006/05/05 00:03:22 rpaulo Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.77 2006/05/14 21:19:34 elad Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.76 2006/05/05 00:03:22 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.77 2006/05/14 21:19:34 elad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.76 2006/05/05 00:03:22 rpaulo Exp $");
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -399,7 +400,9 @@ rip6_output(m, va_alist)
 	in6p = sotoin6pcb(so);
 
 	priv = 0;
-	if (curproc && !suser(curproc->p_ucred, &curproc->p_acflag))
+	if (curproc && !kauth_authorize_generic(curproc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &curproc->p_acflag))
 		priv = 1;
 
 	dst = &dstsock->sin6_addr;
@@ -613,7 +616,7 @@ rip6_usrreq(so, req, m, nam, control, l)
 
 	priv = 0;
 	p = l ? l->l_proc : NULL;
-	if (p && !suser(p->p_ucred, &p->p_acflag))
+	if (p && !kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 		priv++;
 
 	if (req == PRU_CONTROL)

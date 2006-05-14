@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.17 2005/12/11 12:20:16 christos Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.18 2006/05/14 21:24:50 elad Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.17 2005/12/11 12:20:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.18 2006/05/14 21:24:50 elad Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -128,19 +128,19 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 		 * Why can't we use them too?
 		 */
 		a->a_type = LINUX_AT_EGID;
-		a->a_v = p->p_ucred->cr_gid;
+		a->a_v = kauth_cred_getegid(p->p_cred);
 		a++;
 
 		a->a_type = LINUX_AT_GID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = kauth_cred_getgid(p->p_cred);
 		a++;
 
 		a->a_type = LINUX_AT_EUID;
-		a->a_v = p->p_ucred->cr_uid;
+		a->a_v = kauth_cred_geteuid(p->p_cred);
 		a++;
 
 		a->a_type = LINUX_AT_UID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = kauth_cred_getuid(p->p_cred);
 		a++;
 #endif
 

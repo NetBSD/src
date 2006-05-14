@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.48 2006/04/12 01:05:14 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.49 2006/05/14 21:24:49 elad Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.48 2006/04/12 01:05:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.49 2006/05/14 21:24:49 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.48 2006/04/12 01:05:14 christos Exp
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/user.h>
+#include <sys/kauth.h>
+
 #include <miscfs/genfs/genfs.h>
 
 #include <coda/coda.h>
@@ -224,7 +226,7 @@ coda_open(void *v)
     struct vnode **vpp = &(ap->a_vp);
     struct cnode *cp = VTOC(*vpp);
     int flag = ap->a_mode & (~O_EXCL);
-    struct ucred *cred = ap->a_cred;
+    kauth_cred_t cred = ap->a_cred;
     struct lwp *l = ap->a_l;
 /* locals */
     int error;
@@ -301,7 +303,7 @@ coda_close(void *v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     int flag = ap->a_fflag;
-    struct ucred *cred = ap->a_cred;
+    kauth_cred_t cred = ap->a_cred;
     struct lwp *l = ap->a_l;
 /* locals */
     int error;
@@ -374,7 +376,7 @@ coda_write(void *v)
 
 int
 coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
 /* upcall decl */
   /* NOTE: container file operation!!! */
@@ -477,7 +479,7 @@ coda_ioctl(void *v)
     int com = ap->a_command;
     caddr_t data = ap->a_data;
     int flag = ap->a_fflag;
-    struct ucred *cred = ap->a_cred;
+    kauth_cred_t cred = ap->a_cred;
     struct lwp  *l = ap->a_l;
 /* locals */
     int error;
@@ -561,7 +563,7 @@ coda_getattr(void *v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct vattr *vap = ap->a_vap;
-    struct ucred *cred = ap->a_cred;
+    kauth_cred_t cred = ap->a_cred;
     struct lwp *l = ap->a_l;
 /* locals */
     int error;
@@ -613,7 +615,7 @@ coda_setattr(void *v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct vattr *vap = ap->a_vap;
-    struct ucred *cred = ap->a_cred;
+    kauth_cred_t cred = ap->a_cred;
     struct lwp *l = ap->a_l;
 /* locals */
     int error;
@@ -646,7 +648,7 @@ coda_access(void *v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     int mode = ap->a_mode;
-    struct ucred *cred = ap->a_cred;
+    kauth_cred_t cred = ap->a_cred;
     struct lwp *l = ap->a_l;
 /* locals */
     int error;
@@ -711,7 +713,7 @@ coda_readlink(void *v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct uio *uiop = ap->a_uio;
-    struct ucred *cred = ap->a_cred;
+    kauth_cred_t cred = ap->a_cred;
 /* locals */
     struct lwp *l = curlwp;
     int error;
@@ -761,7 +763,7 @@ coda_fsync(void *v)
     struct vop_fsync_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    struct ucred *cred = ap->a_cred;
+    kauth_cred_t cred = ap->a_cred;
     struct lwp *l = ap->a_l;
 /* locals */
     struct vnode *convp = cp->c_ovp;
@@ -813,7 +815,7 @@ coda_inactive(void *v)
     struct vop_inactive_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    struct ucred *cred __attribute__((unused)) = NULL;
+    kauth_cred_t cred __attribute__((unused)) = NULL;
     struct lwp *l __attribute__((unused)) = curlwp;
 /* upcall decl */
 /* locals */
@@ -893,7 +895,7 @@ coda_lookup(void *v)
      * could be wrong.
      */
     struct componentname  *cnp = ap->a_cnp;
-    struct ucred *cred = cnp->cn_cred;
+    kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = cnp->cn_lwp;
 /* locals */
     struct cnode *cp;
@@ -1055,7 +1057,7 @@ coda_create(void *v)
     int mode = ap->a_vap->va_mode;
     struct vnode **vpp = ap->a_vpp;
     struct componentname  *cnp = ap->a_cnp;
-    struct ucred *cred = cnp->cn_cred;
+    kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
@@ -1155,7 +1157,7 @@ coda_remove(void *v)
     struct vnode *dvp = ap->a_dvp;
     struct cnode *cp = VTOC(dvp);
     struct componentname  *cnp = ap->a_cnp;
-    struct ucred *cred = cnp->cn_cred;
+    kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
@@ -1230,7 +1232,7 @@ coda_link(void *v)
     struct vnode *tdvp = ap->a_dvp;
     struct cnode *tdcp = VTOC(tdvp);
     struct componentname *cnp = ap->a_cnp;
-    struct ucred *cred = cnp->cn_cred;
+    kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
@@ -1309,7 +1311,7 @@ coda_rename(void *v)
     struct vnode *ndvp = ap->a_tdvp;
     struct cnode *ndcp = VTOC(ndvp);
     struct componentname  *tcnp = ap->a_tcnp;
-    struct ucred *cred = fcnp->cn_cred;
+    kauth_cred_t cred = fcnp->cn_cred;
     struct lwp *l = fcnp->cn_lwp;
 /* true args */
     int error;
@@ -1402,7 +1404,7 @@ coda_mkdir(void *v)
     struct componentname  *cnp = ap->a_cnp;
     struct vattr *va = ap->a_vap;
     struct vnode **vpp = ap->a_vpp;
-    struct ucred *cred = cnp->cn_cred;
+    kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
@@ -1491,7 +1493,7 @@ coda_rmdir(void *v)
     struct vnode *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     struct componentname  *cnp = ap->a_cnp;
-    struct ucred *cred = cnp->cn_cred;
+    kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = cnp->cn_lwp;
 /* true args */
     int error;
@@ -1555,7 +1557,7 @@ coda_symlink(void *v)
     struct componentname *cnp = ap->a_cnp;
     struct vattr *tva = ap->a_vap;
     char *path = ap->a_target;
-    struct ucred *cred = cnp->cn_cred;
+    kauth_cred_t cred = cnp->cn_cred;
     struct lwp *l = cnp->cn_lwp;
 /* locals */
     int error;
@@ -1645,7 +1647,7 @@ coda_readdir(void *v)
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     struct uio *uiop = ap->a_uio;
-    struct ucred *cred = ap->a_cred;
+    kauth_cred_t cred = ap->a_cred;
     int *eofflag = ap->a_eofflag;
     off_t **cookies = ap->a_cookies;
     int *ncookies = ap->a_ncookies;
@@ -1911,15 +1913,18 @@ print_vattr(struct vattr *attr)
 
 /* How to print a ucred */
 void
-print_cred(struct ucred *cred)
+print_cred(kauth_cred_t cred)
 {
 
+	uint16_t ngroups;
 	int i;
 
-	myprintf(("ref %d\tuid %d\n",cred->cr_ref,cred->cr_uid));
+	myprintf(("ref %d\tuid %d\n", kauth_cred_getrefcnt(cred),
+		 kauth_cred_geteuid(cred)));
 
-	for (i=0; i < cred->cr_ngroups; i++)
-		myprintf(("\tgroup %d: (%d)\n",i,cred->cr_groups[i]));
+	ngroups = kauth_cred_ngroups(cred);
+	for (i=0; i < ngroups; i++)
+		myprintf(("\tgroup %d: (%d)\n", i, kauth_cred_group(cred, i)));
 	myprintf(("\n"));
 
 }
@@ -1976,7 +1981,7 @@ coda_getpages(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct cnode *cp = VTOC(vp);
 	struct lwp *l = curlwp;
-	struct ucred *cred = l->l_proc->p_ucred;
+	kauth_cred_t cred = l->l_proc->p_cred;
 	int error;
 
 	/* Check for control object. */
