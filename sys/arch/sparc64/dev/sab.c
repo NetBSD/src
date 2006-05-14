@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.27 2006/04/18 00:09:37 martin Exp $	*/
+/*	$NetBSD: sab.c,v 1.28 2006/05/14 21:56:33 elad Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.27 2006/04/18 00:09:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.28 2006/05/14 21:56:33 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.27 2006/04/18 00:09:37 martin Exp $");
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -684,7 +685,7 @@ sabopen(dev_t dev, int flags, int mode, struct lwp *l)
 		else
 			tp->t_state &= ~TS_CARR_ON;
 	} else if ((tp->t_state & TS_XCLUDE) &&
-	    (!suser(p->p_ucred, &p->p_acflag))) {
+	    (!kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))) {
 		return (EBUSY);
 	} else {
 		s = spltty();
@@ -832,7 +833,7 @@ sabioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		*((int *)data) = sc->sc_openflags;
 		break;
 	case TIOCSFLAGS:
-		if (suser(p->p_ucred, &p->p_acflag))
+		if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 			error = EPERM;
 		else
 			sc->sc_openflags = *((int *)data) &

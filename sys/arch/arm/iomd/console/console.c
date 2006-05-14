@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.15 2006/04/15 17:47:31 matt Exp $	*/
+/*	$NetBSD: console.c,v 1.16 2006/05/14 21:55:10 elad Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.15 2006/04/15 17:47:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.16 2006/05/14 21:55:10 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.15 2006/04/15 17:47:31 matt Exp $");
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -405,7 +406,7 @@ physconopen(dev, flag, mode, l)
 		physconparam(TP, &TP->t_termios);
 		ttsetwater(TP);
 	} else if (TP->t_state&TS_XCLUDE &&
-		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 	TP->t_state |= TS_CARR_ON;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcarm,v 1.5 2006/05/09 08:27:27 yamt Exp $
+#	$NetBSD: majors.hpcarm,v 1.6 2006/05/14 21:55:11 elad Exp $
 #
 # Device majors for hpcarm
 #

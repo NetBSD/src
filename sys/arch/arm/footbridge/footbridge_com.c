@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.18 2006/03/26 04:39:40 thorpej Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.19 2006/05/14 21:55:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.18 2006/03/26 04:39:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.19 2006/05/14 21:55:10 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.18 2006/03/26 04:39:40 thorpej 
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/termios.h>
+#include <sys/kauth.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <arm/footbridge/dc21285mem.h>
@@ -270,7 +271,8 @@ fcomopen(dev, flag, mode, l)
 
 		fcomparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
+	} else if ((tp->t_state&TS_XCLUDE) &&
+		   kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
@@ -364,7 +366,7 @@ fcomioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag); 
 		if (error)
 			return (error); 
 		sc->sc_swflags = *(int *)data;

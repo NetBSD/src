@@ -1,4 +1,4 @@
-/*	$NetBSD: efierr.h,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: efierr.h,v 1.3 2006/05/14 21:55:38 elad Exp $	*/
 /* $FreeBSD: src/sys/boot/efi/include/efierr.h,v 1.1 2001/06/09 16:49:49 dfr Exp $ */
 
 #ifndef _EFI_ERR_H

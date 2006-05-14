@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.h,v 1.2 2006/04/10 18:40:06 garbled Exp $	*/
+/*	$NetBSD: ns16550.h,v 1.3 2006/05/14 21:56:33 elad Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)

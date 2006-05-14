@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicreg.h,v 1.6 2006/03/08 23:46:22 lukem Exp $	*/
+/*	$NetBSD: sbicreg.h,v 1.7 2006/05/14 21:55:09 elad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

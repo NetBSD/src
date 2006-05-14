@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.22 2006/04/12 19:38:22 jmmv Exp $	*/
+/*	$NetBSD: pvr.c,v 1.23 2006/05/14 21:55:10 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.22 2006/04/12 19:38:22 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.23 2006/05/14 21:55:10 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
