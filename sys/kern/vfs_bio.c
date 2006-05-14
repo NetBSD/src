@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.159 2006/04/05 00:52:16 uwe Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.160 2006/05/14 21:15:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.159 2006/04/05 00:52:16 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.160 2006/05/14 21:15:12 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.159 2006/04/05 00:52:16 uwe Exp $");
 #include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
@@ -124,7 +125,7 @@ static int buf_trim(void);
 static void *bufpool_page_alloc(struct pool *, int);
 static void bufpool_page_free(struct pool *, void *);
 static inline struct buf *bio_doread(struct vnode *, daddr_t, int,
-    struct ucred *, int);
+    kauth_cred_t, int);
 static int buf_lotsfree(void);
 static int buf_canrelease(void);
 static inline u_long buf_mempoolidx(u_long);
@@ -559,7 +560,7 @@ buf_mrelease(caddr_t addr, size_t size)
  * bread()/breadn() helper.
  */
 static inline struct buf *
-bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
+bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
     int async)
 {
 	struct buf *bp;
@@ -620,7 +621,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
  * This algorithm described in Bach (p.54).
  */
 int
-bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
+bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
     struct buf **bpp)
 {
 	struct buf *bp;
@@ -638,7 +639,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
  */
 int
 breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
-    int *rasizes, int nrablks, struct ucred *cred, struct buf **bpp)
+    int *rasizes, int nrablks, kauth_cred_t cred, struct buf **bpp)
 {
 	struct buf *bp;
 	int i;
@@ -668,7 +669,7 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
  */
 int
 breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno,
-    int rabsize, struct ucred *cred, struct buf **bpp)
+    int rabsize, kauth_cred_t cred, struct buf **bpp)
 {
 
 	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.36 2005/12/26 18:45:27 perry Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.37 2006/05/14 21:15:11 elad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.36 2005/12/26 18:45:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.37 2006/05/14 21:15:11 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -327,11 +327,11 @@ exec_macho_load_file(struct lwp *l, struct exec_package *epp,
 	if (error)
 		return (error);
 
-	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, p->p_cred, l)) != 0)
 		goto badunlock;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, &attr, p->p_ucred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &attr, p->p_cred, l)) != 0)
 		goto badunlock;
 
 #ifdef notyet /* XXX cgd 960926 */

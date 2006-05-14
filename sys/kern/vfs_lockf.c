@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.48 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.49 2006/05/14 21:15:12 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.48 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.49 2006/05/14 21:15:12 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.48 2005/12/24 19:12:23 perry Exp $")
 #include <sys/pool.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
+#include <sys/kauth.h>
 
 POOL_INIT(lockfpool, sizeof(struct lockf), 0, 0, 0, "lockfpl",
     &pool_allocator_nointr);
@@ -795,7 +796,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 			/*
 			 * byte-range lock might need one more lock.
 			 */
-			sparelock = lf_alloc(p->p_ucred->cr_uid, 0);
+			sparelock = lf_alloc(kauth_cred_geteuid(p->p_cred), 0);
 			if (sparelock == NULL) {
 				error = ENOMEM;
 				goto quit;
@@ -812,7 +813,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		return EINVAL;
 	}
 
-	lock = lf_alloc(p->p_ucred->cr_uid, ap->a_op != F_UNLCK ? 1 : 2);
+	lock = lf_alloc(kauth_cred_geteuid(p->p_cred), ap->a_op != F_UNLCK ? 1 : 2);
 	if (lock == NULL) {
 		error = ENOMEM;
 		goto quit;
