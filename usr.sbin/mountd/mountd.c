@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.103 2006/05/11 07:11:08 mrg Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.104 2006/05/14 01:26:34 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.103 2006/05/11 07:11:08 mrg Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.104 2006/05/14 01:26:34 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1683,7 +1683,8 @@ do_opt(line, lineno, cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 	struct uucred *cr;
 {
 	char *cpoptarg, *cpoptend;
-	char *cp, *endcp, *cpopt, savedc, savedc2;
+	char *cp, *cpopt, savedc, savedc2;
+	char *endcp = NULL;	/* XXX: GCC */
 	int allflag, usedarg;
 
 	cpopt = *cpp;
