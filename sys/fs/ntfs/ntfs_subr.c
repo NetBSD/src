@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.24 2006/05/11 01:11:11 mrg Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.25 2006/05/14 21:31:52 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.24 2006/05/11 01:11:11 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.25 2006/05/14 21:31:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.24 2006/05/11 01:11:11 mrg Exp $");
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#include <sys/kauth.h>
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
 #endif

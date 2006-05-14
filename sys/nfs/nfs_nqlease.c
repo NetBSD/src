@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.61 2006/04/15 01:52:44 christos Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.62 2006/05/14 21:32:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.61 2006/04/15 01:52:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.62 2006/05/14 21:32:21 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.61 2006/04/15 01:52:44 christos Ex
 #include <sys/stat.h>
 #include <sys/protosw.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 #include <miscfs/syncfs/syncfs.h>
 
@@ -177,7 +178,7 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 	struct mbuf *nam;
 	int *cachablep;
 	u_quad_t *frev;
-	struct ucred *cred;
+	kauth_cred_t cred;
 {
 	struct nqlease *lp;
 	struct nqfhhashhead *lpp = NULL;
@@ -459,7 +460,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred, l)
 	struct nqlease *lp;
 	struct nfssvc_sock *slp;
 	struct mbuf *nam;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	struct nqhost *lph = &lp->lc_host;
@@ -717,7 +718,7 @@ nqnfsrv_getlease(nfsd, slp, lwp, mrq)
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
-	struct ucred *cred = &nfsd->nd_cr;
+	kauth_cred_t cred = nfsd->nd_cr;
 	struct nfs_fattr *fp;
 	struct vattr va;
 	struct vnode *vp;
@@ -849,7 +850,7 @@ int
 nqnfs_getlease(vp, rwflag, cred, l)
 	struct vnode *vp;
 	int rwflag;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	u_int32_t *tl;
@@ -893,7 +894,7 @@ nqnfs_getlease(vp, rwflag, cred, l)
 int
 nqnfs_vacated(vp, cred, l)
 	struct vnode *vp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	caddr_t cp;
@@ -1009,7 +1010,7 @@ nqnfs_callback(nmp, mrep, md, dpos, l)
 int
 nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 	struct nfsmount *nmp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct nfsd_cargs *ncd;
 	int flag;
 	caddr_t argp;

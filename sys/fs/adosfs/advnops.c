@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.18 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: advnops.c,v 1.19 2006/05/14 21:31:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.18 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.19 2006/05/14 21:31:52 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -152,7 +152,7 @@ adosfs_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *sp = v;
 	struct vattr *vap;
@@ -220,7 +220,7 @@ adosfs_read(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *sp = v;
 	struct vnode *vp = sp->a_vp;
 	struct adosfsmount *amp;
@@ -359,7 +359,7 @@ adosfs_write(v)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *sp = v;
 	advopprint(sp);
 	printf(" EOPNOTSUPP)");
@@ -610,7 +610,7 @@ adosfs_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -787,7 +787,7 @@ adosfs_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *sp = v;
 	struct anode *ap;
@@ -837,7 +837,7 @@ adosfs_readlink(v)
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *sp = v;
 	struct anode *ap;
 	int error;

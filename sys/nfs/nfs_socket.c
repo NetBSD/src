@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.129 2006/05/10 21:53:19 mrg Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.130 2006/05/14 21:32:21 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.129 2006/05/10 21:53:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.130 2006/05/14 21:32:21 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.129 2006/05/10 21:53:19 mrg Exp $")
 #include <sys/namei.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -965,7 +966,7 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 	struct mbuf *mrest;
 	int procnum;
 	struct lwp *lwp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct mbuf **mrp;
 	struct mbuf **mdp;
 	caddr_t *dposp;
@@ -986,18 +987,21 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 	u_int32_t xid;
 	char *auth_str, *verf_str;
 	NFSKERBKEY_T key;		/* save session key */
-	struct ucred acred;
+	kauth_cred_t acred;
 #ifndef NFS_V2_ONLY
 	int nqlflag, cachable;
 	u_quad_t frev;
 #endif
 	struct mbuf *mrest_backup = NULL;
-	struct ucred *origcred = NULL; /* XXX: gcc */
+	kauth_cred_t origcred = NULL; /* XXX: gcc */
 	boolean_t retry_cred = TRUE;
 	boolean_t use_opencred = (np->n_flag & NUSEOPENCRED) != 0;
 
 	if (rexmitp != NULL)
 		*rexmitp = 0;
+
+	acred = kauth_cred_alloc();
+	kauth_cred_hold(acred);	/* Just to be safe.. */
 
 tryagain_cred:
 	KASSERT(cred != NULL);
@@ -1030,6 +1034,7 @@ kerbauth:
 			if (error) {
 				free((caddr_t)rep, M_NFSREQ);
 				m_freem(mrest);
+				kauth_cred_destroy(acred);
 				return (error);
 			}
 		}
@@ -1056,17 +1061,20 @@ kerbauth:
 		case NFSPROC_COMMIT:
 			uid = np->n_vattr->va_uid;
 			gid = np->n_vattr->va_gid;
-			if (cred->cr_uid == uid && cred->cr_gid == gid) {
+			if (kauth_cred_geteuid(cred) == uid &&
+			    kauth_cred_getegid(cred) == gid) {
 				retry_cred = FALSE;
 				break;
 			}
 			if (use_opencred)
 				break;
-			acred.cr_uid = uid;
-			acred.cr_gid = gid;
-			acred.cr_ngroups = 0;
-			acred.cr_ref = 2;	/* Just to be safe.. */
-			cred = &acred;
+			kauth_cred_setuid(acred, uid);
+			kauth_cred_seteuid(acred, uid);
+			kauth_cred_setsvuid(acred, uid);
+			kauth_cred_setgid(acred, gid);
+			kauth_cred_setegid(acred, gid);
+			kauth_cred_setsvgid(acred, gid);
+			cred = acred;
 			break;
 		default:
 			retry_cred = FALSE;
@@ -1081,8 +1089,9 @@ kerbauth:
 		if (retry_cred)
 			mrest_backup = m_copym(mrest, 0, M_COPYALL, M_WAIT);
 		auth_type = RPCAUTH_UNIX;
-		auth_len = (((cred->cr_ngroups > nmp->nm_numgrps) ?
-			nmp->nm_numgrps : cred->cr_ngroups) << 2) +
+		/* XXX elad - ngroups */
+		auth_len = (((kauth_cred_ngroups(cred) > nmp->nm_numgrps) ?
+			nmp->nm_numgrps : kauth_cred_ngroups(cred)) << 2) +
 			5 * NFSX_UNSIGNED;
 	}
 	m = nfsm_rpchead(cred, nmp->nm_flag, procnum, auth_type, auth_len,
@@ -1260,9 +1269,11 @@ tryagain:
 				m_freem(rep->r_mreq);
 				FREE(rep, M_NFSREQ);
 				use_opencred = !use_opencred;
-				if (mrest_backup == NULL)
+				if (mrest_backup == NULL) {
 					/* m_copym failure */
+					kauth_cred_destroy(acred);
 					return ENOMEM;
+				}
 				mrest = mrest_backup;
 				mrest_backup = NULL;
 				cred = origcred;
@@ -1435,6 +1446,7 @@ tryagain:
 	m_freem(mrep);
 	error = EPROTONOSUPPORT;
 nfsmout:
+	kauth_cred_destroy(acred);
 	m_freem(rep->r_mreq);
 	free((caddr_t)rep, M_NFSREQ);
 	m_freem(mrest_backup);
@@ -1505,9 +1517,9 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 
 			memset(&ktvout, 0, sizeof ktvout);	/* XXX gcc */
 
-			LIST_FOREACH(nuidp, NUIDHASH(slp, nd->nd_cr.cr_uid),
+			LIST_FOREACH(nuidp, NUIDHASH(slp, kauth_cred_geteuid(nd->nd_cr)),
 			    nu_hash) {
-				if (nuidp->nu_cr.cr_uid == nd->nd_cr.cr_uid &&
+				if (kauth_cred_geteuid(nuidp->nu_cr) == kauth_cred_geteuid(nd->nd_cr) &&
 				    (!nd->nd_nam2 || netaddr_match(
 				    NU_NETFAM(nuidp), &nuidp->nu_haddr,
 				    nd->nd_nam2)))
@@ -1533,7 +1545,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 				*tl = ktvout.tv_sec;
 				nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 				*tl++ = ktvout.tv_usec;
-				*tl++ = txdr_unsigned(nuidp->nu_cr.cr_uid);
+				*tl++ = txdr_unsigned(kauth_cred_geteuid(nuidp->nu_cr));
 			} else {
 				*tl++ = 0;
 				*tl++ = 0;
@@ -1999,6 +2011,9 @@ nfs_getreq(nd, nfsd, has_header)
 	 * Handle auth_unix or auth_kerb.
 	 */
 	if (auth_type == rpc_auth_unix) {
+		uid_t uid;
+		gid_t gid, *grbuf;
+
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > NFS_MAXNAMLEN) {
 			m_freem(mrep);
@@ -2006,26 +2021,41 @@ nfs_getreq(nd, nfsd, has_header)
 		}
 		nfsm_adv(nfsm_rndup(len));
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-		memset((caddr_t)&nd->nd_cr, 0, sizeof (struct ucred));
-		nd->nd_cr.cr_ref = 1;
-		nd->nd_cr.cr_uid = fxdr_unsigned(uid_t, *tl++);
-		nd->nd_cr.cr_gid = fxdr_unsigned(gid_t, *tl++);
+
+		nd->nd_cr = kauth_cred_alloc();
+
+		uid = fxdr_unsigned(uid_t, *tl++);
+		gid = fxdr_unsigned(gid_t, *tl++);
+		kauth_cred_setuid(nd->nd_cr, uid);
+		kauth_cred_setgid(nd->nd_cr, gid);
+		kauth_cred_seteuid(nd->nd_cr, uid);
+		kauth_cred_setsvuid(nd->nd_cr, gid);
+		kauth_cred_setegid(nd->nd_cr, uid);
+		kauth_cred_setsvgid(nd->nd_cr, gid);
+
 		len = fxdr_unsigned(int, *tl);
 		if (len < 0 || len > RPCAUTH_UNIXGIDS) {
+			kauth_cred_free(nd->nd_cr);
+			nd->nd_cr = NULL;
 			m_freem(mrep);
 			return (EBADRPC);
 		}
 		nfsm_dissect(tl, u_int32_t *, (len + 2) * NFSX_UNSIGNED);
-		for (i = 0; i < len; i++)
-		    if (i < NGROUPS)
-			nd->nd_cr.cr_groups[i] = fxdr_unsigned(gid_t, *tl++);
-		    else
-			tl++;
-		nd->nd_cr.cr_ngroups = (len > NGROUPS) ? NGROUPS : len;
-		if (nd->nd_cr.cr_ngroups > 1)
-		    nfsrvw_sort(nd->nd_cr.cr_groups, nd->nd_cr.cr_ngroups);
+
+		grbuf = malloc(len * sizeof(gid_t), M_TEMP, M_WAITOK);
+		for (i = 0; i < len; i++) {
+			if (i < NGROUPS) /* XXX elad */
+				grbuf[i] = fxdr_unsigned(gid_t, *tl++);
+			else
+				tl++;
+		}
+		kauth_cred_setgroups(nd->nd_cr, grbuf, min(len, NGROUPS), -1);
+		free(grbuf, M_TEMP);
+
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
+			kauth_cred_free(nd->nd_cr);
+			kauth_cred_free(nd->nd_cr);
 			m_freem(mrep);
 			return (EBADRPC);
 		}
@@ -2093,7 +2123,7 @@ nfs_getreq(nd, nfsd, has_header)
 
 			LIST_FOREACH(nuidp, NUIDHASH(nfsd->nfsd_slp, nickuid),
 			    nu_hash) {
-				if (nuidp->nu_cr.cr_uid == nickuid &&
+				if (kauth_cred_geteuid(nuidp->nu_cr) == nickuid &&
 				    (!nd->nd_nam2 ||
 				     netaddr_match(NU_NETFAM(nuidp),
 				      &nuidp->nu_haddr, nd->nd_nam2)))
@@ -2126,7 +2156,7 @@ nfs_getreq(nd, nfsd, has_header)
 				nd->nd_procnum = NFSPROC_NOOP;
 				return (0);
 			}
-			nfsrv_setcred(&nuidp->nu_cr, &nd->nd_cr);
+			nfsrv_setcred(nuidp->nu_cr, &nd->nd_cr);
 			nd->nd_flag |= ND_KERBNICK;
 		};
 	} else {

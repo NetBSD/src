@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.106 2006/05/12 23:36:11 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.107 2006/05/14 21:32:45 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -1030,9 +1030,9 @@ struct lfs_inode_ext {
 
 /* Can credential C write BB blocks */
 #define ISSPACE(F, BB, C)						\
-	((((C) == NOCRED || (C)->cr_uid == 0) &&			\
+	((((C) == NOCRED || kauth_cred_geteuid(C) == 0) &&		\
 	  LFS_EST_BFREE(F) >= (BB)) ||					\
-	 ((C)->cr_uid != 0 && IS_FREESPACE(F, BB)))
+	 (kauth_cred_geteuid(C) != 0 && IS_FREESPACE(F, BB)))
 
 /* Can an ordinary user write BB blocks */
 #define IS_FREESPACE(F, BB)						\

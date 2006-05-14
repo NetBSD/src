@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.3 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.4 2006/05/14 21:31:52 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.3 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.4 2006/05/14 21:31:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ filecore_bread(fcmp, addr, size, cred, bp)
 	struct filecore_mnt *fcmp;
 	u_int32_t addr;
 	int size;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct buf **bp;
 {
 	int error = 0;
