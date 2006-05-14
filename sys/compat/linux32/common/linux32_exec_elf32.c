@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.2 2006/05/14 21:24:50 elad Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.1 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.2 2006/05/14 21:24:50 elad Exp $");
 
 #define	ELFSIZE		32
 
@@ -218,17 +218,17 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 
 	esd.ai[i].a_type = LINUX_AT_EGID;
 	esd.ai[i++].a_v =
-	    ((vap->va_mode & S_ISGID) ? vap->va_gid : p->p_ucred->cr_gid);
+	    ((vap->va_mode & S_ISGID) ? vap->va_gid : kauth_cred_getegid(p->p_cred));
 
 	esd.ai[i].a_type = LINUX_AT_GID;
-	esd.ai[i++].a_v = p->p_cred->p_rgid;
+	esd.ai[i++].a_v = kauth_cred_getgid(p->p_cred);
 
 	esd.ai[i].a_type = LINUX_AT_EUID;
 	esd.ai[i++].a_v = 
-	    ((vap->va_mode & S_ISUID) ? vap->va_uid : p->p_ucred->cr_uid);
+	    ((vap->va_mode & S_ISUID) ? vap->va_uid : kauth_cred_geteuid(p->p_cred));
 
 	esd.ai[i].a_type = LINUX_AT_UID;
-	esd.ai[i++].a_v = p->p_cred->p_ruid;
+	esd.ai[i++].a_v = kauth_cred_getuid(p->p_cred);
 
 	esd.ai[i].a_type = LINUX_AT_SECURE;
 	esd.ai[i++].a_v = 0;

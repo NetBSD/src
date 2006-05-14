@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.89 2006/05/14 05:30:31 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.90 2006/05/14 21:19:33 elad Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.89 2006/05/14 05:30:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.90 2006/05/14 21:19:33 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.89 2006/05/14 05:30:31 christos Ex
 #include <sys/callout.h>
 #include <sys/md5.h>
 #include <sys/inttypes.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -1147,7 +1148,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	{
 		struct proc *p = curproc;		/* XXX */
 
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 	}
 	/* FALLTHROUGH */

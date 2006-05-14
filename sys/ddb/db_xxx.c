@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.37 2006/01/22 01:08:50 uwe Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.38 2006/05/14 21:25:49 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.37 2006/01/22 01:08:50 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.38 2006/05/14 21:25:49 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.37 2006/01/22 01:08:50 uwe Exp $");
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #include <machine/db_machdep.h>
 
@@ -194,7 +195,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
 			case 'n':
 				db_printf("%8d %8d %10d %d %#7x %4d %16s %7.7s\n",
 				    pp ? pp->p_pid : -1, p->p_pgrp->pg_id,
-				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
+				    kauth_cred_getuid(p->p_cred), p->p_stat, p->p_flag,
 				    p->p_nlwps, p->p_comm,
 				    (p->p_nlwps != 1) ? "*" : (
 				    (l->l_wchan && l->l_wmesg) ?
