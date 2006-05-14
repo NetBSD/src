@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.71 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: ser.c,v 1.72 2006/05/14 21:55:09 elad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.71 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.72 2006/05/14 21:55:09 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.71 2005/12/11 12:16:28 christos Exp $");
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/serreg.h>
@@ -295,7 +296,9 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred,
+			      KAUTH_GENERIC_ISSUSER,
+			      &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -739,7 +742,9 @@ serioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		*(int *)data = serswflags;
 		break;
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &l->l_proc->p_acflag);
 		if (error != 0)
 			return(EPERM);
 

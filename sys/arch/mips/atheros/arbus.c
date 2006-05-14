@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.3 2006/05/11 06:35:55 gdamore Exp $ */
+/* $Id: arbus.c,v 1.4 2006/05/14 21:55:38 elad Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.3 2006/05/11 06:35:55 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.4 2006/05/14 21:55:38 elad Exp $");
 
 #include "locators.h"
 #include <sys/param.h>

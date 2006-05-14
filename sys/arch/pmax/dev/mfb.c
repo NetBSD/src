@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.54 2006/03/28 17:38:27 thorpej Exp $	*/
+/*	$NetBSD: mfb.c,v 1.55 2006/05/14 21:56:32 elad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.54 2006/03/28 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.55 2006/05/14 21:56:32 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

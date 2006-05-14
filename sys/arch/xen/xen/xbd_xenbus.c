@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.10 2006/05/10 21:31:49 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.11 2006/05/14 21:57:13 elad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.10 2006/05/10 21:31:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.11 2006/05/14 21:57:13 elad Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
