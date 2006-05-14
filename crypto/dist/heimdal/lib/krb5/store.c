@@ -35,7 +35,7 @@
 #include "store-int.h"
 
 __RCSID("$Heimdal: store.c,v 1.38.4.1 2004/03/09 19:32:14 lha Exp $"
-        "$NetBSD: store.c,v 1.1.1.5 2004/04/02 14:47:53 lha Exp $");
+        "$NetBSD: store.c,v 1.2 2006/05/14 02:40:03 christos Exp $");
 
 #define BYTEORDER_IS(SP, V) (((SP)->flags & KRB5_STORAGE_BYTEORDER_MASK) == (V))
 #define BYTEORDER_IS_LE(SP) BYTEORDER_IS((SP), KRB5_STORAGE_BYTEORDER_LE)
@@ -227,7 +227,7 @@ krb5_error_code
 krb5_ret_int16(krb5_storage *sp,
 	       int16_t *value)
 {
-    int32_t v;
+    int32_t v = 0;	/* XXX: GCC */
     int ret;
     ret = krb5_ret_int(sp, &v, 2);
     if(ret)
