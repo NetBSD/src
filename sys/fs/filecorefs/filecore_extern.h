@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.12 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.13 2006/05/14 21:31:52 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -114,11 +114,11 @@ int filecore_unmount __P((struct mount *, int, struct lwp *));
 int filecore_root __P((struct mount *, struct vnode **));
 int filecore_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 int filecore_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int filecore_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+int filecore_sync __P((struct mount *, int, kauth_cred_t, struct lwp *));
 int filecore_vget __P((struct mount *, ino_t, struct vnode **));
 int filecore_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int filecore_checkexp __P((struct mount *, struct mbuf *, int *,
-	    struct ucred **));
+	    kauth_cred_t *));
 int filecore_vptofh __P((struct vnode *, struct fid *));
 void filecore_init __P((void));
 void filecore_reinit __P((void));
@@ -131,6 +131,6 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_filecore_setup);
 extern int (**filecore_vnodeop_p) __P((void *));
 
 int filecore_bbchecksum __P((void *));
-int filecore_bread __P((struct filecore_mnt *, u_int32_t, int, struct ucred *,
-			struct buf **));
+int filecore_bread __P((struct filecore_mnt *, u_int32_t, int,
+    kauth_cred_t, struct buf **));
 int filecore_map __P((struct filecore_mnt *, u_int32_t, daddr_t, daddr_t *));

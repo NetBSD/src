@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.34 2006/04/14 22:00:14 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.35 2006/05/14 21:31:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.34 2006/04/14 22:00:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.35 2006/05/14 21:31:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.34 2006/04/14 22:00:14 christos E
 #include <sys/filedesc.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 #include <fs/union/union.h>
 
@@ -101,7 +102,7 @@ int union_unmount(struct mount *, int, struct lwp *);
 int union_root(struct mount *, struct vnode **);
 int union_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 int union_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int union_sync(struct mount *, int, struct ucred *, struct lwp *);
+int union_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int union_vget(struct mount *, ino_t, struct vnode **);
 
 /*
@@ -222,8 +223,8 @@ union_mount(mp, path, data, ndp, l)
 			goto bad;
 	}
 
-	um->um_cred = l->l_proc->p_ucred;
-	crhold(um->um_cred);
+	um->um_cred = l->l_proc->p_cred;
+	kauth_cred_hold(um->um_cred);
 	um->um_cmode = UN_DIRMODE &~ l->l_proc->p_cwdi->cwdi_cmask;
 
 	/*
@@ -383,7 +384,7 @@ union_unmount(mp, mntflags, l)
 	if (um->um_lowervp)
 		vrele(um->um_lowervp);
 	vrele(um->um_uppervp);
-	crfree(um->um_cred);
+	kauth_cred_free(um->um_cred);
 	/*
 	 * Finally, throw away the union_mount structure
 	 */
@@ -514,7 +515,7 @@ int
 union_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.64 2006/04/15 01:16:40 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.65 2006/05/14 21:38:18 elad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -141,7 +141,6 @@ do {									\
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
 
 struct vnode;
-struct ucred;
 
 /*
  * Machine-independent functions:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.28 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.29 2006/05/14 21:31:52 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.28 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.29 2006/05/14 21:31:52 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.28 2006/03/01 12:38:21 yamt Exp $")
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #if !defined(__NetBSD__)
 #include <vm/vm.h>
@@ -144,7 +145,7 @@ ntfs_read(ap)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
@@ -200,7 +201,7 @@ ntfs_getattr(ap)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap;
 {
@@ -409,7 +410,7 @@ ntfs_write(ap)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
@@ -450,16 +451,17 @@ ntfs_access(ap)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
-	struct ucred *cred = ap->a_cred;
+	kauth_cred_t cred = ap->a_cred;
 	mode_t mask, mode = ap->a_mode;
-	gid_t *gp;
+	gid_t grp;
 	int i;
+	uint16_t ngroups;
 
 	dprintf(("ntfs_access: %llu\n", (unsigned long long)ip->i_number));
 
@@ -480,13 +482,13 @@ ntfs_access(ap)
 	}
 
 	/* Otherwise, user id 0 always gets access. */
-	if (cred->cr_uid == 0)
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
 		return (0);
 
 	mask = 0;
 
 	/* Otherwise, check the owner. */
-	if (cred->cr_uid == ip->i_mp->ntm_uid) {
+	if (kauth_cred_geteuid(cred) == ip->i_mp->ntm_uid) {
 		if (mode & VEXEC)
 			mask |= S_IXUSR;
 		if (mode & VREAD)
@@ -497,8 +499,10 @@ ntfs_access(ap)
 	}
 
 	/* Otherwise, check the groups. */
-	for (i = 0, gp = cred->cr_groups; i < cred->cr_ngroups; i++, gp++)
-		if (ip->i_mp->ntm_gid == *gp) {
+	ngroups = kauth_cred_ngroups(cred);
+	for (i = 0; i < ngroups; i++) {
+		grp = kauth_cred_group(cred, i);
+		if (ip->i_mp->ntm_gid == grp) {
 			if (mode & VEXEC)
 				mask |= S_IXGRP;
 			if (mode & VREAD)
@@ -507,6 +511,7 @@ ntfs_access(ap)
 				mask |= S_IWGRP;
 			return ((ip->i_mp->ntm_mode&mask) == mask ? 0 : EACCES);
 		}
+	}
 
 	/* Otherwise, check everyone else. */
 	if (mode & VEXEC)
@@ -529,7 +534,7 @@ ntfs_open(ap)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap;
 {
@@ -558,7 +563,7 @@ ntfs_close(ap)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap;
 {
@@ -577,7 +582,7 @@ ntfs_readdir(ap)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_ncookies;
 		u_int **cookies;
 	} */ *ap;
@@ -739,7 +744,7 @@ ntfs_lookup(ap)
 	struct ntnode *dip = VTONT(dvp);
 	struct ntfsmount *ntmp = dip->i_mp;
 	struct componentname *cnp = ap->a_cnp;
-	struct ucred *cred = cnp->cn_cred;
+	kauth_cred_t cred = cnp->cn_cred;
 	int error;
 	int lockparent = cnp->cn_flags & LOCKPARENT;
 #ifdef NTFS_DEBUG
@@ -842,7 +847,7 @@ static int
 ntfs_fsync(ap)
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
