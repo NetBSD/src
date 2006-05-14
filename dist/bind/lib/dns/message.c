@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.1.1.4 2005/12/21 23:16:18 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.2 2006/05/14 01:18:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -1109,7 +1109,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	dns_name_t *name;
 	dns_name_t *name2;
 	dns_offsets_t *offsets;
-	dns_rdataset_t *rdataset;
+	dns_rdataset_t *rdataset = NULL;
 	dns_rdatalist_t *rdatalist;
 	isc_result_t result;
 	dns_rdatatype_t rdtype, covers;
