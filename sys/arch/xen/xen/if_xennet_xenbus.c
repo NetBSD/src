@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.7 2006/04/02 17:11:12 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.8 2006/05/14 20:44:36 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.7 2006/04/02 17:11:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.8 2006/05/14 20:44:36 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -481,16 +481,17 @@ static void xennet_backend_changed(struct device *dev, XenbusState new_state)
 	DPRINTF(("%s: new backend state %d\n", sc->sc_dev.dv_xname, new_state));
 
 	switch (new_state) {
-	case XenbusStateUnknown:
 	case XenbusStateInitialising:
 	case XenbusStateInitWait:
 	case XenbusStateInitialised:
+		break;
 	case XenbusStateClosing:
 		sc->sc_backend_status = BEST_CLOSED;
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
 	case XenbusStateConnected:
 		break;
+	case XenbusStateUnknown:
 	default:
 		panic("bad backend state %d", new_state);
 	}
