@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.221 2006/05/14 08:21:36 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.222 2006/05/14 08:22:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.221 2006/05/14 08:21:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.222 2006/05/14 08:22:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -297,7 +297,8 @@ static int	uvm_map_space_avail(vaddr_t *, vsize_t, voff_t, vsize_t, int,
 		    struct vm_map_entry *);
 static void	uvm_map_unreference_amap(struct vm_map_entry *, int);
 
-int _uvm_tree_sanity(struct vm_map *, const char *);
+int _uvm_map_sanity(struct vm_map *);
+int _uvm_tree_sanity(struct vm_map *);
 static vsize_t uvm_rb_subtree_space(const struct vm_map_entry *);
 
 static inline int
@@ -393,25 +394,73 @@ uvm_rb_remove(struct vm_map *map, struct vm_map_entry *entry)
 		uvm_rb_fixup(map, parent);
 }
 
-#ifdef DEBUG
+#if defined(DEBUG)
+int uvm_debug_check_map = 0;
 int uvm_debug_check_rbtree = 0;
-#define uvm_tree_sanity(x,y)		\
-	if (uvm_debug_check_rbtree)	\
-		_uvm_tree_sanity(x,y)
-#else
-#define uvm_tree_sanity(x,y)
-#endif
+#define uvm_map_check(map, name) \
+	_uvm_map_check((map), (name), __FILE__, __LINE__)
+static void
+_uvm_map_check(struct vm_map *map, const char *name,
+    const char *file, int line)
+{
+
+	if ((uvm_debug_check_map && _uvm_map_sanity(map)) ||
+	    (uvm_debug_check_rbtree && _uvm_tree_sanity(map))) {
+		panic("uvm_map_check failed: \"%s\" map=%p (%s:%d)",
+		    name, map, file, line);
+	}
+}
+#else /* defined(DEBUG) */
+#define uvm_map_check(map, name)	/* nothing */
+#endif /* defined(DEBUG) */
+
+#if defined(DEBUG) || defined(DDB)
+int
+_uvm_map_sanity(struct vm_map *map)
+{
+	boolean_t first_free_found = FALSE;
+	boolean_t hint_found = FALSE;
+	const struct vm_map_entry *e;
+
+	e = &map->header; 
+	for (;;) {
+		if (map->first_free == e) {
+			first_free_found = TRUE;
+		} else if (!first_free_found && e->next->start > e->end) {
+			printf("first_free %p should be %p\n",
+			    map->first_free, e);
+			return -1;
+		}
+		if (map->hint == e) {
+			hint_found = TRUE;
+		}
+
+		e = e->next;
+		if (e == &map->header) {
+			break;
+		}
+	}
+	if (!first_free_found) {
+		printf("stale first_free\n");
+		return -1;
+	}
+	if (!hint_found) {
+		printf("stale hint\n");
+		return -1;
+	}
+	return 0;
+}
 
 int
-_uvm_tree_sanity(struct vm_map *map, const char *name)
+_uvm_tree_sanity(struct vm_map *map)
 {
 	struct vm_map_entry *tmp, *trtmp;
 	int n = 0, i = 1;
 
 	RB_FOREACH(tmp, uvm_tree, &map->rbhead) {
 		if (tmp->ownspace != uvm_rb_space(map, tmp)) {
-			printf("%s: %d/%d ownspace %lx != %lx %s\n",
-			    name, n + 1, map->nentries,
+			printf("%d/%d ownspace %lx != %lx %s\n",
+			    n + 1, map->nentries,
 			    (ulong)tmp->ownspace, (ulong)uvm_rb_space(map, tmp),
 			    tmp->next == &map->header ? "(last)" : "");
 			goto error;
@@ -420,14 +469,14 @@ _uvm_tree_sanity(struct vm_map *map, const char *name)
 	trtmp = NULL;
 	RB_FOREACH(tmp, uvm_tree, &map->rbhead) {
 		if (tmp->space != uvm_rb_subtree_space(tmp)) {
-			printf("%s: space %lx != %lx\n",
-			    name, (ulong)tmp->space,
+			printf("space %lx != %lx\n",
+			    (ulong)tmp->space,
 			    (ulong)uvm_rb_subtree_space(tmp));
 			goto error;
 		}
 		if (trtmp != NULL && trtmp->start >= tmp->start) {
-			printf("%s: corrupt: 0x%lx >= 0x%lx\n",
-			    name, trtmp->start, tmp->start);
+			printf("corrupt: 0x%lx >= 0x%lx\n",
+			    trtmp->start, tmp->start);
 			goto error;
 		}
 		n++;
@@ -436,8 +485,7 @@ _uvm_tree_sanity(struct vm_map *map, const char *name)
 	}
 
 	if (n != map->nentries) {
-		printf("%s: nentries: %d vs %d\n",
-		    name, n, map->nentries);
+		printf("nentries: %d vs %d\n", n, map->nentries);
 		goto error;
 	}
 
@@ -445,8 +493,7 @@ _uvm_tree_sanity(struct vm_map *map, const char *name)
 	    tmp = tmp->next, i++) {
 		trtmp = RB_FIND(uvm_tree, &map->rbhead, tmp);
 		if (trtmp != tmp) {
-			printf("%s: lookup: %d: %p - %p: %p\n",
-			    name, i, tmp, trtmp,
+			printf("lookup: %d: %p - %p: %p\n", i, tmp, trtmp,
 			    RB_PARENT(tmp, rb_entry));
 			goto error;
 		}
@@ -454,12 +501,9 @@ _uvm_tree_sanity(struct vm_map *map, const char *name)
 
 	return (0);
  error:
-#if defined(DDB) && __GNUC__ < 4
-	/* handy breakpoint location for error case */
-	__asm(".globl treesanity_label\ntreesanity_label:");
-#endif
 	return (-1);
 }
+#endif /* defined(DEBUG) || defined(DDB) */
 
 #ifdef DIAGNOSTIC
 static struct vm_map *uvm_kmapent_map(struct vm_map_entry *);
@@ -765,7 +809,7 @@ uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
 
 	/* uvm_map_simplify_entry(map, entry); */ /* XXX */
 
-	uvm_tree_sanity(map, "clip_start entry");
+	uvm_map_check(map, "clip_start entry");
 	uvm_mapent_check(entry);
 
 	/*
@@ -778,7 +822,7 @@ uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry,
 	uvm_mapent_splitadj(new_entry, entry, start);
 	uvm_map_entry_link(map, entry->prev, new_entry);
 
-	uvm_tree_sanity(map, "clip_start leave");
+	uvm_map_check(map, "clip_start leave");
 }
 
 /*
@@ -796,7 +840,7 @@ uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end,
 {
 	struct vm_map_entry *new_entry;
 
-	uvm_tree_sanity(map, "clip_end entry");
+	uvm_map_check(map, "clip_end entry");
 	uvm_mapent_check(entry);
 
 	/*
@@ -808,7 +852,7 @@ uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t end,
 	uvm_mapent_splitadj(entry, new_entry, end);
 	uvm_map_entry_link(map, entry, new_entry);
 
-	uvm_tree_sanity(map, "clip_end leave");
+	uvm_map_check(map, "clip_end leave");
 }
 
 
@@ -921,7 +965,7 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 
 	KASSERT((~flags & (UVM_FLAG_NOWAIT | UVM_FLAG_WAITVA)) != 0);
 
-	uvm_tree_sanity(map, "map entry");
+	uvm_map_check(map, "map entry");
 
 	/*
 	 * check sanity of protection code
@@ -1128,7 +1172,7 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 		prev_entry->end += size;
 		uvm_rb_fixup(map, prev_entry);
 
-		uvm_tree_sanity(map, "map backmerged");
+		uvm_map_check(map, "map backmerged");
 
 		UVMHIST_LOG(maphist,"<- done (via backmerge)!", 0, 0, 0, 0);
 		merged++;
@@ -1257,7 +1301,7 @@ forwardmerge:
 				prev_entry->next->offset = uoffset;
 		}
 
-		uvm_tree_sanity(map, "map forwardmerged");
+		uvm_map_check(map, "map forwardmerged");
 
 		UVMHIST_LOG(maphist,"<- done forwardmerge", 0, 0, 0, 0);
 		merged++;
@@ -1421,7 +1465,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 		use_tree = TRUE;
 	}
 
-	uvm_tree_sanity(map, __func__);
+	uvm_map_check(map, __func__);
 
 	if (use_tree) {
 		struct vm_map_entry *prev = &map->header;
@@ -1561,7 +1605,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	KASSERT((align & (align - 1)) == 0);
 	KASSERT((flags & UVM_FLAG_FIXED) == 0 || align == 0);
 
-	uvm_tree_sanity(map, "map_findspace entry");
+	uvm_map_check(map, "map_findspace entry");
 
 	/*
 	 * remember the original hint.  if we are aligning, then we
@@ -1897,7 +1941,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	    map, start, end, 0);
 	VM_MAP_RANGE_CHECK(map, start, end);
 
-	uvm_tree_sanity(map, "unmap_remove entry");
+	uvm_map_check(map, "unmap_remove entry");
 
 	/*
 	 * find first entry
@@ -2080,7 +2124,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		pmap_update(vm_map_pmap(map));
 	}
 
-	uvm_tree_sanity(map, "unmap_remove leave");
+	uvm_map_check(map, "unmap_remove leave");
 
 	/*
 	 * now we've cleaned up the map and are ready for the caller to drop
@@ -2202,7 +2246,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 {
 	struct vm_map_entry *oldent, *last;
 
-	uvm_tree_sanity(map, "map_replace entry");
+	uvm_map_check(map, "map_replace entry");
 
 	/*
 	 * first find the blank map entry at the specified address
@@ -2299,7 +2343,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 		uvm_map_entry_unlink(map, oldent);
 	}
 
-	uvm_tree_sanity(map, "map_replace leave");
+	uvm_map_check(map, "map_replace leave");
 
 	/*
 	 * now we can free the old blank entry and return.
@@ -2342,8 +2386,8 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	    len,0);
 	UVMHIST_LOG(maphist," ...,dstmap=0x%x, flags=0x%x)", dstmap,flags,0,0);
 
-	uvm_tree_sanity(srcmap, "map_extract src enter");
-	uvm_tree_sanity(dstmap, "map_extract dst enter");
+	uvm_map_check(srcmap, "map_extract src enter");
+	uvm_map_check(dstmap, "map_extract dst enter");
 
 	/*
 	 * step 0: sanity check: start must be on a page boundary, length
@@ -2626,8 +2670,8 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 		}
 	}
 
-	uvm_tree_sanity(srcmap, "map_extract src leave");
-	uvm_tree_sanity(dstmap, "map_extract dst leave");
+	uvm_map_check(srcmap, "map_extract src leave");
+	uvm_map_check(dstmap, "map_extract dst leave");
 
 	return (0);
 
@@ -2641,8 +2685,8 @@ bad2:			/* src already unlocked */
 		uvm_unmap_detach(chain,
 		    (flags & UVM_EXTRACT_QREF) ? AMAP_REFALL : 0);
 
-	uvm_tree_sanity(srcmap, "map_extract src err leave");
-	uvm_tree_sanity(dstmap, "map_extract dst err leave");
+	uvm_map_check(srcmap, "map_extract src err leave");
+	uvm_map_check(dstmap, "map_extract dst err leave");
 
 	if ((flags & UVM_EXTRACT_RESERVED) == 0) {
 		uvm_unmap(dstmap, dstaddr, dstaddr+len);   /* ??? */
@@ -4519,7 +4563,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 				entry->aref = next->aref;
 				entry->etype &= ~UVM_ET_NEEDSCOPY;
 			}
-			uvm_tree_sanity(map, "trymerge forwardmerge");
+			uvm_map_check(map, "trymerge forwardmerge");
 			uvm_mapent_free_merged(map, next);
 			merged++;
 		}
@@ -4560,7 +4604,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 				entry->aref = prev->aref;
 				entry->etype &= ~UVM_ET_NEEDSCOPY;
 			}
-			uvm_tree_sanity(map, "trymerge backmerge");
+			uvm_map_check(map, "trymerge backmerge");
 			uvm_mapent_free_merged(map, prev);
 			merged++;
 		}
