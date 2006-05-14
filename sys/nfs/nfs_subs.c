@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.160 2006/04/15 01:45:15 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.161 2006/05/14 05:42:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.160 2006/04/15 01:45:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.161 2006/05/14 05:42:43 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1395,7 +1395,7 @@ nfs_enterdircache(vp, off, blkoff, en, blkno)
 	struct nfsdircache *ndp = NULL;
 	struct nfsdircache *newndp = NULL;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int hashent, gen, overwrite;
+	int hashent = 0, gen, overwrite;	/* XXX: GCC */
 
 	/*
 	 * XXX refuse entries for offset 0. amd(8) erroneously sets
