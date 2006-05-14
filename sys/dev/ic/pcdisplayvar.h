@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.17 2006/04/15 17:48:23 jmmv Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.18 2006/05/14 21:42:27 elad Exp $ */
 
 /*
  * Copyright (c) 1998

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_adaptec.c,v 1.4 2006/03/28 17:38:29 thorpej Exp $	*/
+/*	$NetBSD: ata_raid_adaptec.c,v 1.5 2006/05/14 21:42:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.4 2006/03/28 17:38:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.5 2006/05/14 21:42:26 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.4 2006/03/28 17:38:29 thorpej
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.25 2006/05/10 21:53:16 mrg Exp $	*/
+/*	$NetBSD: fss.c,v 1.26 2006/05/14 21:42:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.25 2006/05/10 21:53:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.26 2006/05/14 21:42:26 elad Exp $");
 
 #include "fss.h"
 
@@ -608,7 +608,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	}
 
 	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD,
-	    l->l_proc->p_ucred, l);
+	    l->l_proc->p_cred, l);
 	if (error) {
 		vrele(nd.ni_vp);
 		return error;
@@ -634,7 +634,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 
 	if (sc->sc_bs_vp->v_type == VREG) {
-		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_proc->p_ucred, l);
+		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_proc->p_cred, l);
 		if (error != 0)
 			return error;
 		sc->sc_bs_size = va.va_size;
@@ -658,7 +658,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * VOP_STRATEGY() clean the buffer cache to prevent
 	 * cache incoherencies.
 	 */
-	if ((error = vinvalbuf(sc->sc_bs_vp, V_SAVE, l->l_proc->p_ucred, l, 0, 0)) != 0)
+	if ((error = vinvalbuf(sc->sc_bs_vp, V_SAVE, l->l_proc->p_cred, l, 0, 0)) != 0)
 		return error;
 
 	return 0;
@@ -769,9 +769,9 @@ bad:
 	fss_softc_free(sc);
 	if (sc->sc_bs_vp != NULL) {
 		if (sc->sc_flags & FSS_PERSISTENT)
-			vn_close(sc->sc_bs_vp, FREAD, l->l_proc->p_ucred, l);
+			vn_close(sc->sc_bs_vp, FREAD, l->l_proc->p_cred, l);
 		else
-			vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_proc->p_ucred, l);
+			vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_proc->p_cred, l);
 	}
 	sc->sc_bs_vp = NULL;
 
@@ -797,9 +797,9 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 
 	fss_softc_free(sc);
 	if (sc->sc_flags & FSS_PERSISTENT)
-		vn_close(sc->sc_bs_vp, FREAD, l->l_proc->p_ucred, l);
+		vn_close(sc->sc_bs_vp, FREAD, l->l_proc->p_cred, l);
 	else
-		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_proc->p_ucred, l);
+		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_proc->p_cred, l);
 	sc->sc_bs_vp = NULL;
 	sc->sc_flags &= ~FSS_PERSISTENT;
 
@@ -951,7 +951,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 
 	error = vn_rdwr((rw == FSS_READ ? UIO_READ : UIO_WRITE), sc->sc_bs_vp,
 	    data, len, off, UIO_SYSSPACE, IO_UNIT|IO_NODELOCKED,
-	    sc->sc_bs_proc->p_ucred, NULL, NULL);
+	    sc->sc_bs_proc->p_cred, NULL, NULL);
 	if (error == 0) {
 		simple_lock(&sc->sc_bs_vp->v_interlock);
 		error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(off),

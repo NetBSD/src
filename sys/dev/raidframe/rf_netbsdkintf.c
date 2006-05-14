@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.207 2006/04/12 23:33:39 simonb Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.208 2006/05/14 21:45:00 elad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.207 2006/04/12 23:33:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.208 2006/05/14 21:45:00 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -168,6 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.207 2006/04/12 23:33:39 simonb 
 #include <sys/bufq.h>
 #include <sys/user.h>
 #include <sys/reboot.h>
+#include <sys/kauth.h>
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
@@ -2114,18 +2115,18 @@ raidlookup(char *path, struct lwp *l, struct vnode **vpp)
 	vp = nd.ni_vp;
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
 		return (EBUSY);
 	}
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
 		return (error);
 	}
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
 		return (ENOTBLK);
 	}
 	VOP_UNLOCK(vp, 0);
@@ -2455,7 +2456,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 
 		} else {
-			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+			(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
 		}
 	}
 }

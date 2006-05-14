@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.6 2006/04/15 17:48:24 jmmv Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.7 2006/05/14 21:47:00 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.6 2006/04/15 17:48:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.7 2006/05/14 21:47:00 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

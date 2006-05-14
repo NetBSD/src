@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.146 2006/03/30 15:19:45 cube Exp $	*/
+/*	$NetBSD: vnd.c,v 1.147 2006/05/14 21:42:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.146 2006/03/30 15:19:45 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.147 2006/05/14 21:42:26 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -159,6 +159,8 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.146 2006/03/30 15:19:45 cube Exp $");
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
+
 #include <net/zlib.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -196,7 +198,7 @@ struct vndxfer {
 void	vndattach(int);
 
 static void	vndclear(struct vnd_softc *, int);
-static int	vndsetcred(struct vnd_softc *, struct ucred *);
+static int	vndsetcred(struct vnd_softc *, kauth_cred_t);
 static void	vndthrottle(struct vnd_softc *, struct vnode *);
 static void	vndiodone(struct buf *);
 #if 0
@@ -782,7 +784,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	if ((vnd->sc_flags & VNF_INITED) == 0)
 		return -1;
 
-	return VOP_GETATTR(vnd->sc_vp, va, l->l_proc->p_ucred, l);
+	return VOP_GETATTR(vnd->sc_vp, va, l->l_proc->p_cred, l);
 }
 
 /* ARGSUSED */
@@ -867,7 +869,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if ((error = vn_open(&nd, fflags, 0)) != 0)
 			goto unlock_and_exit;
 		KASSERT(l);
-		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_proc->p_ucred, l);
+		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_proc->p_cred, l);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
 		if (error) {
@@ -891,7 +893,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			/* read compressed file header */
 			error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t)ch,
 			  sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
-			  IO_UNIT|IO_NODELOCKED, p->p_ucred, NULL, NULL);
+			  IO_UNIT|IO_NODELOCKED, p->p_cred, NULL, NULL);
 			if(error) {
 				free(ch, M_TEMP);
 				VOP_UNLOCK(nd.ni_vp, 0);
@@ -930,7 +932,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			  (caddr_t)vnd->sc_comp_offsets,
 			  sizeof(u_int64_t) * vnd->sc_comp_numoffs,
 			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
-			  IO_UNIT|IO_NODELOCKED, p->p_ucred, NULL, NULL);
+			  IO_UNIT|IO_NODELOCKED, p->p_cred, NULL, NULL);
 			if(error) {
 				VOP_UNLOCK(nd.ni_vp, 0);
 				goto close_and_exit;
@@ -1046,7 +1048,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			vnd->sc_flags |= VNF_READONLY;
 		}
 
-		if ((error = vndsetcred(vnd, p->p_ucred)) != 0)
+		if ((error = vndsetcred(vnd, p->p_cred)) != 0)
 			goto close_and_exit;
 
 		vndthrottle(vnd, vnd->sc_vp);
@@ -1087,7 +1089,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 close_and_exit:
-		(void) vn_close(nd.ni_vp, fflags, p->p_ucred, l);
+		(void) vn_close(nd.ni_vp, fflags, p->p_cred, l);
 unlock_and_exit:
 #ifdef VND_COMPRESSION
 		/* free any allocated memory (for compressed file) */
@@ -1292,14 +1294,14 @@ unlock_and_exit:
  * if some other uid can write directly to the mapped file (NFS).
  */
 static int
-vndsetcred(struct vnd_softc *vnd, struct ucred *cred)
+vndsetcred(struct vnd_softc *vnd, kauth_cred_t cred)
 {
 	struct uio auio;
 	struct iovec aiov;
 	char *tmpbuf;
 	int error;
 
-	vnd->sc_cred = crdup(cred);
+	vnd->sc_cred = kauth_cred_dup(cred);
 	tmpbuf = malloc(DEV_BSIZE, M_TEMP, M_WAITOK);
 
 	/* XXX: Horrible kludge to establish credentials for NFS */
@@ -1421,9 +1423,9 @@ vndclear(struct vnd_softc *vnd, int myminor)
 	if (vp == (struct vnode *)0)
 		panic("vndclear: null vp");
 	(void) vn_close(vp, fflags, vnd->sc_cred, l);
-	crfree(vnd->sc_cred);
+	kauth_cred_free(vnd->sc_cred);
 	vnd->sc_vp = (struct vnode *)0;
-	vnd->sc_cred = (struct ucred *)0;
+	vnd->sc_cred = (kauth_cred_t)0;
 	vnd->sc_size = 0;
 }
 

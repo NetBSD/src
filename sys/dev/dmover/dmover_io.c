@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.21 2006/03/01 12:38:13 yamt Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.22 2006/05/14 21:42:27 elad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.21 2006/03/01 12:38:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.22 2006/05/14 21:42:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -343,7 +343,7 @@ dmio_usrreq_fini1(struct work *wk, void *dummy)
  */
 static int
 dmio_read(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	struct dmio_usrreq_state *dus;
@@ -471,7 +471,7 @@ dmio_usrreq_done(struct dmover_request *dreq)
  */
 static int
 dmio_write(struct file *fp, off_t *offp, struct uio *uio,
-    struct ucred *cred, int flags)
+    kauth_cred_t cred, int flags)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	struct dmio_usrreq_state *dus;

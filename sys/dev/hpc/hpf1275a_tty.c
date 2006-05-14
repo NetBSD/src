@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.7 2006/03/29 06:37:35 thorpej Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.8 2006/05/14 21:42:27 elad Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.7 2006/03/29 06:37:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.8 2006/05/14 21:42:27 elad Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -307,7 +307,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 	struct hpf1275a_softc *sc;
 	int error, s;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	s = spltty();

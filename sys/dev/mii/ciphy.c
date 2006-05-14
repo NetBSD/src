@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.6 2006/03/29 07:05:24 thorpej Exp $ */
+/* $NetBSD: ciphy.c,v 1.7 2006/05/14 21:42:28 elad Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.6 2006/03/29 07:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.7 2006/05/14 21:42:28 elad Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.

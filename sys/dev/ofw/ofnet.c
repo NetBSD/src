@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.36 2006/03/29 07:10:25 thorpej Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.37 2006/05/14 21:42:28 elad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.36 2006/03/29 07:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.37 2006/05/14 21:42:28 elad Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"

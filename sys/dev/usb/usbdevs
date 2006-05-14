@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.427 2006/04/03 07:14:03 scw Exp $
+$NetBSD: usbdevs,v 1.428 2006/05/14 21:47:00 elad Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.

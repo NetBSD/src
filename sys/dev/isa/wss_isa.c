@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.20 2006/03/29 04:16:50 thorpej Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.21 2006/05/14 21:42:27 elad Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.20 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.21 2006/05/14 21:42:27 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

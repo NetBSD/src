@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_ofisa.c,v 1.10 2006/03/29 07:09:33 thorpej Exp $	*/
+/*	$NetBSD: joy_ofisa.c,v 1.11 2006/05/14 21:42:28 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.10 2006/03/29 07:09:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.11 2006/05/14 21:42:28 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

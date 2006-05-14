@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.109 2006/04/24 21:35:57 jld Exp $	*/
+/*	$NetBSD: ccd.c,v 1.110 2006/05/14 21:42:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.109 2006/04/24 21:35:57 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.110 2006/05/14 21:42:26 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.109 2006/04/24 21:35:57 jld Exp $");
 #include <sys/conf.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/kauth.h>
 
 #include <dev/ccdvar.h>
 
@@ -323,7 +324,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		/*
 		 * XXX: Cache the component's dev_t.
 		 */
-		if ((error = VOP_GETATTR(vpp[ix], &va, l->l_proc->p_ucred, l)) != 0) {
+		if ((error = VOP_GETATTR(vpp[ix], &va, l->l_proc->p_cred, l)) != 0) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 				printf("%s: %s: getattr failed %s = %d\n",
@@ -338,7 +339,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 		 * Get partition information for the component.
 		 */
 		error = VOP_IOCTL(vpp[ix], DIOCGPART, &dpart,
-		    FREAD, l->l_proc->p_ucred, l);
+		    FREAD, l->l_proc->p_cred, l);
 		if (error) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
@@ -988,7 +989,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int part, pmask;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
-	struct ucred *uc;
+	kauth_cred_t uc;
 	char **cpp;
 	struct vnode **vpp;
 #ifdef __HAVE_OLD_DISKLABEL
@@ -999,7 +1000,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (ENXIO);
 	cs = &ccd_softc[unit];
 
-	uc = (l != NULL) ? l->l_proc->p_ucred : NOCRED;
+	uc = (l != NULL) ? l->l_proc->p_cred : NOCRED;
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
@@ -1377,24 +1378,24 @@ ccdlookup(char *path, struct lwp *l, struct vnode **vpp /* result */)
 
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (EBUSY);
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
 #ifdef DEBUG
 		if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 			printf("ccdlookup: getattr error = %d\n", error);
 #endif
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (error);
 	}
 
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void)vn_close(vp, FREAD|FWRITE, p->p_ucred, l);
+		(void)vn_close(vp, FREAD|FWRITE, p->p_cred, l);
 		return (ENOTBLK);
 	}
 

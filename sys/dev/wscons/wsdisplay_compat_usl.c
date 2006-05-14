@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.31 2006/03/18 13:06:38 jmcneill Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.32 2006/05/14 21:47:00 elad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.31 2006/03/18 13:06:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.32 2006/05/14 21:47:00 elad Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.31 2006/03/18 13:06:38 jm
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -404,7 +405,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #undef d
 
 	    case KDENABIO:
-		if (suser(p->p_ucred, &p->p_acflag) || securelevel > 1)
+		if (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) || securelevel > 1)
 			return (EPERM);
 		/* FALLTHRU */
 	    case KDDISABIO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.32 2006/04/12 19:38:24 jmmv Exp $	*/
+/*	$NetBSD: stic.c,v 1.33 2006/05/14 21:47:00 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.32 2006/04/12 19:38:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.33 2006/05/14 21:47:00 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
