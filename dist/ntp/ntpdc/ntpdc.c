@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.7 2006/05/14 01:30:00 christos Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.8 2006/05/14 01:31:14 christos Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -1450,7 +1450,7 @@ help(
 {
 	int i;
 	int n;
-	struct xcmd *xcp;
+	struct xcmd *xcp = NULL;	/* XXX: GCC */
 	char *cmd;
 	const char *cmdsort[100];
 	int length[100];
