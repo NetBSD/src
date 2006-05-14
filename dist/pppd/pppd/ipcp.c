@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.c,v 1.2 2005/12/31 08:58:50 christos Exp $	*/
+/*	$NetBSD: ipcp.c,v 1.3 2006/05/14 02:10:41 christos Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: ipcp.c,v 1.69 2004/11/13 12:03:26 paulus Exp"
 #else
-__RCSID("$NetBSD: ipcp.c,v 1.2 2005/12/31 08:58:50 christos Exp $");
+__RCSID("$NetBSD: ipcp.c,v 1.3 2006/05/14 02:10:41 christos Exp $");
 #endif
 #endif
 
@@ -504,7 +504,7 @@ static int
 setnetmask(argv)
     char **argv;
 {
-    u_int32_t mask;
+    u_int32_t mask = 0;	/* XXX: GCC */
     int n;
     char *p;
 
