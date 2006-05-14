@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.11 2004/11/04 07:35:15 dsl Exp $	*/
+/*	$NetBSD: commands.c,v 1.12 2006/05/14 03:00:45 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: commands.c,v 1.11 2004/11/04 07:35:15 dsl Exp $");
+__RCSID("$NetBSD: commands.c,v 1.12 2006/05/14 03:00:45 christos Exp $");
 #endif
 
 #include "os.h"
@@ -487,7 +487,7 @@ char *str;
 
 {
     register char negate;
-    int prio;
+    int prio = 0;	/* XXX: GCC */
     int procnum;
     int uid;
 
