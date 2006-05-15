@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_sysvbfs.c,v 1.2 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: bfs_sysvbfs.c,v 1.3 2006/05/15 11:16:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,13 +38,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.2 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.3 2006/05/15 11:16:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 #include <fs/sysvbfs/bfs.h>
 
 struct bc_io_ops {
