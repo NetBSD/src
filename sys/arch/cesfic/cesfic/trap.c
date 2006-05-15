@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 2006/05/14 21:55:10 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.27 2006/05/15 09:45:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26 2006/05/14 21:55:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27 2006/05/15 09:45:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26 2006/05/14 21:55:10 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -823,7 +824,7 @@ writeback(fp, docachepush)
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
-			       p->p_pid, p->p_comm, kauth_cred_geteuid(p->p_cred));
+			    p->p_pid, p->p_comm, kauth_cred_geteuid(p->p_cred));
 	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
 		/*
 		 * MOVE16 fault.
