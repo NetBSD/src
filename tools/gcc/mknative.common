@@ -1,4 +1,4 @@
-#	$NetBSD: mknative.common,v 1.4 2006/05/12 02:07:59 mrg Exp $
+#	$NetBSD: mknative.common,v 1.5 2006/05/15 20:57:45 mrg Exp $
 #
 # from: NetBSD: mknative,v 1.12 2003/03/05 06:17:17 mrg Exp
 #
@@ -26,7 +26,7 @@ getvars()
 	*gmake)
 	env MAKEFLAGS= $MAKE -f - -f "$_TMPDIR/$_mf" _x_ <<EOF || bomb "getvars $_mf $* failed"
 define echo_var
-	@echo G_\${var}=\${\${var}} | sed -e 's,\([^\.]\)\./\([a-zA-Z0-9_-]*\.o\),\1\2,g' -e 's,$_VPATH,\$\${GNUHOSTDIST},g'
+	@echo G_\${var}=\${\${var}} | sed -e 's,\([^\.]\)\./\([a-zA-Z0-9_-]*\.o\),\1\2,g' -e 's,$_VPATH,\$\${GNUHOSTDIST},g' -e 's,$_GNU_DIST,\$\${GNUHOSTDIST},g'
 
 endef
 _x_:
@@ -37,7 +37,7 @@ EOF
 	$MAKE -f - _x_ <<EOF || bomb "getvars $_mf $* failed"
 _x_:
 .for var in $*
-	@echo G_\${var}=\${\${var}:Q} | sed -e 's,\([^\.]\)\./\([a-zA-Z0-9_-]*\.o\),\1\2,g' -e 's,$_VPATH,\$\${GNUHOSTDIST},g'
+	@echo G_\${var}=\${\${var}:Q} | sed -e 's,\([^\.]\)\./\([a-zA-Z0-9_-]*\.o\),\1\2,g' -e 's,$_VPATH,\$\${GNUHOSTDIST},g' -e 's,$_GNU_DIST,\$\${GNUHOSTDIST},g'
 .endfor
 .include "$_TMPDIR/$_mf"
 EOF
