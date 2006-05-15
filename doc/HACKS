@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.64 2006/05/12 18:06:29 mrg Exp $
+# $NetBSD: HACKS,v 1.65 2006/05/15 04:55:13 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -191,6 +191,11 @@ descr
 	GCC 4.1 gets many uninitialised variable warnings wrong.  We should
 	really audit all the old hacks like this when older compilers are
 	removed from the tree, as many are probably no longer required.
+	The problem is that it does not recognize initialization via function
+	call pointer. I.e.
+		int p;
+		foo(&p);
+	does not mark p as initialized.
 kcah
 
 hack	gcc4 pointer sign and strict aliasing problems
