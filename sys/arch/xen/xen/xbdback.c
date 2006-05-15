@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.20 2006/04/27 22:38:13 jld Exp $      */
+/*      $NetBSD: xbdback.c,v 1.21 2006/05/15 09:22:34 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -41,6 +41,7 @@
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/pmap.h>
 #include <machine/hypervisor.h>
