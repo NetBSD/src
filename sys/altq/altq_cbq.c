@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.15 2006/05/14 21:24:49 elad Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.16 2006/05/15 00:05:39 christos Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.15 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.16 2006/05/15 00:05:39 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.15 2006/05/14 21:24:49 elad Exp $");
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

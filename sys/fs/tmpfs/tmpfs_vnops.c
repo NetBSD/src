@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.23 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.24 2006/05/15 00:05:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.23 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.24 2006/05/15 00:05:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.23 2006/05/14 21:31:52 elad Exp $"
 #include <sys/unistd.h>
 #include <sys/vnode.h>
 #include <sys/lockf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
