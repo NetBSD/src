@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.2 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.3 2006/05/15 12:51:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.2 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3 2006/05/15 12:51:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.2 2006/05/14 21:31:52 elad Exp $
 #include <sys/lockf.h>
 #include <sys/unistd.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <fs/sysvbfs/sysvbfs.h>
 #include <fs/sysvbfs/bfs.h>
@@ -163,8 +164,8 @@ sysvbfs_create(void *arg)
 
 	DPRINTF("%s: %s\n", __FUNCTION__, a->a_cnp->cn_nameptr);
 	KDASSERT(a->a_vap->va_type == VREG);
-	attr.uid = cr->cr_uid;
-	attr.gid = cr->cr_gid;
+	attr.uid = kauth_cred_geteuid(cr);
+	attr.gid = kauth_cred_getegid(cr);
 	attr.mode = va->va_mode;
 
 	if ((err = bfs_file_create(bfs, a->a_cnp->cn_nameptr, 0, 0, &attr))
