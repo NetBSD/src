@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.4 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.5 2006/05/15 09:07:59 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.4 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.5 2006/05/15 09:07:59 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.4 2006/05/14 21:19:33 elad Exp $");
 #include <sys/queue.h>
 #include <sys/sockio.h>
 #include <sys/proc.h>	/* XXX for curproc */
+#include <sys/kauth.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
