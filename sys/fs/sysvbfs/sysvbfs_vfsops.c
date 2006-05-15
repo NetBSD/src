@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.3 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.4 2006/05/15 11:16:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.3 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.4 2006/05/15 11:16:16 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.3 2006/05/14 21:31:52 elad Exp 
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 /* v-node */
 #include <sys/namei.h>
