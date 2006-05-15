@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.12 2006/05/14 21:42:26 elad Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.13 2006/05/15 20:47:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.12 2006/05/14 21:42:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.13 2006/05/15 20:47:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.12 2006/05/14 21:42:26 elad Exp $"
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/termios.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -102,8 +103,8 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		setuptimeout = 1;
 	} else if (tp->t_state & TS_XCLUDE &&
-	           kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
-				     &l->l_proc->p_acflag) != 0) {
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_proc->p_acflag) != 0) {
 		splx(s);
 		return (EBUSY);
 	}
