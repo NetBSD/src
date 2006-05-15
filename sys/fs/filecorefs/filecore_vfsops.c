@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.24 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.25 2006/05/15 01:29:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.24 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.25 2006/05/15 01:29:02 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.24 2006/05/14 21:31:52 elad Ex
 #include <sys/pool.h>
 #include <sys/conf.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
