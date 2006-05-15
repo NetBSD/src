@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 2006/05/14 21:56:32 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 2006/05/15 09:21:21 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.33 2006/05/14 21:56:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2006/05/15 09:21:21 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.33 2006/05/14 21:56:32 elad Exp $");
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
