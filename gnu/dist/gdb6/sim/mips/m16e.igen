@@ -1,0 +1,105 @@
+// -*- C -*-
+
+// Simulator definition for the MIPS16e instructions.
+// Copyright (C) 2005 Free Software Foundation, Inc.
+// Contributed by Nigel Stephens (nigel@mips.com) and 
+//                David Ung (davidu@mips.com) of MIPS Technologies.
+//
+// This file is part of GDB, the GNU debugger.
+// 
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2, or (at your option)
+// any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+11101,3.RX,100,10001:RR:16::SEB
+"seb r<TRX>"
+*mips16e:
+{
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = EXTEND8 (GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+
+11101,3.RX,101,10001:RR:16::SEH
+"seh r<TRX>"
+*mips16e:
+{
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = EXTEND16 (GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+11101,3.RX,110,10001:RR:16::SEW
+"sew r<TRX>"
+*mips16e:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = EXTEND32 (GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+11101,3.RX,000,10001:RR:16::ZEB
+"zeb r<TRX>"
+*mips16e:
+{
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] =  (unsigned_word)(unsigned8)(GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+11101,3.RX,001,10001:RR:16::ZEH
+"zeh r<TRX>"
+*mips16e:
+{
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = (unsigned_word)(unsigned16)(GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+11101,3.RX,010,10001:RR:16::ZEW
+"zew r<TRX>"
+*mips16e:
+{
+  check_u64 (SD_, instruction_0);
+  TRACE_ALU_INPUT1 (GPR[TRX]);
+  GPR[TRX] = (unsigned_word)(unsigned32)(GPR[TRX]);
+  TRACE_ALU_RESULT (GPR[TRX]);
+}
+
+
+11101,3.RX,100,00000:RR:16::JRC
+"jrc r<TRX>"
+*mips16e:
+{
+  NIA = GPR[TRX];
+}
+
+
+11101,000,101,00000:RR:16::JRCRA
+"jrc ra"
+*mips16e:
+{
+  NIA = RA;
+}
+
+
+11101,3.RX,110,00000:RR:16::JALRC
+"jalrc r<TRX>"
+*mips16e:
+{
+  RA = NIA;
+  NIA = GPR[TRX];
+}
