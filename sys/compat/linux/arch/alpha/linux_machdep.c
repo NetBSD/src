@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.33 2006/05/14 21:24:49 elad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.34 2006/05/15 09:17:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.33 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34 2006/05/15 09:17:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.33 2006/05/14 21:24:49 elad Exp 
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
