@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/05/11 23:52:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2006/05/15 04:57:05 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -32,7 +32,7 @@ BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH} bits
 DPSRCS+=	bits
 
 .for f in Protocol.m Object.m NXConstStr.m linking.m
-OBJCOPTS.${f}=	-fgnu-runtime -Wno-error
+OBJCOPTS.${f}=	-fgnu-runtime
 .endfor
 
 .for f in thr.c thr-objc.c
