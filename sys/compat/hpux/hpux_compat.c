@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.76 2006/05/15 13:01:39 yamt Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.77 2006/05/15 13:06:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.76 2006/05/15 13:01:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.77 2006/05/15 13:06:40 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1085,7 +1085,7 @@ hpux_sys_getaccess(l, v, retval)
 		break;
 	case -2:	/* NGROUPS_RGID */
 		kauth_cred_setegid(cred, kauth_cred_getgid(p->p_cred));
-		gid = kauth_cred_geteuid(gid);
+		gid = kauth_cred_geteuid(p->p_cred);
 		kauth_cred_setgroups(cred, &gid, 1, -1);
 		break;
 	case -6:	/* NGROUPS_RGID_SUPP */
