@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.95 2006/05/14 14:27:14 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.96 2006/05/15 12:17:11 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.95 $"
+#ident 		"GENERIC-$Revision: 1.96 $"
 
 maxusers	32
 
@@ -56,7 +56,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-makeoptions	CPUFLAGS="-mips2 -Wa,-mips2 -Wa,-mtune=rm5230"
+makeoptions	CPUFLAGS="-mips2 -mtune=vr5000"
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
