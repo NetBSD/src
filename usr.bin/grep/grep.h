@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.h,v 1.2 2004/05/05 15:06:33 cjep Exp $	*/
+/*	$NetBSD: grep.h,v 1.3 2006/05/15 21:12:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -52,7 +52,7 @@ typedef struct {
 	size_t len;
 	int line_no;
 	int off;
-	char *file;
+	const char *file;
 	char *dat;
 } str_t;
 
@@ -77,7 +77,7 @@ extern int zgrep;
 
 extern int binbehave, dirbehave, devbehave; 
 /* extern int linkbehave; */
-extern char *stdin_label;
+extern const char *stdin_label;
 
 extern int first, matchall, patterns, tail;
 extern char **pattern;
@@ -91,7 +91,7 @@ extern regex_t *r_pattern;
 extern char re_error[RE_ERROR_BUF + 1];
 
 /* util.c */
-int procfile(char *fn);
+int procfile(const char *fn);
 int grep_tree(char **argv);
 
 void *grep_malloc(size_t size);
@@ -111,7 +111,7 @@ typedef struct mmfile {
 	char *base, *end, *ptr;
 } mmf_t;
 
-mmf_t *mmopen(char *fn, char *mode);
+mmf_t *mmopen(const char *fn, const char *mode);
 void mmclose(mmf_t *mmf);
 char *mmfgetln(mmf_t *mmf, size_t *l);
 void mmrewind(mmf_t *mmf);
@@ -120,8 +120,8 @@ void mmrewind(mmf_t *mmf);
 struct file;
 typedef struct file file_t;
 
-file_t *grep_fdopen(int fd, char *mode);
-file_t *grep_open(char *path, char *mode);
+file_t *grep_fdopen(int fd, const char *mode);
+file_t *grep_open(const char *path, const char *mode);
 
 int grep_bin_file(file_t *f);
 char *grep_fgetln(file_t *f, size_t *l);

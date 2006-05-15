@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.2 2004/05/05 14:34:55 cjep Exp $	*/
+/*	$NetBSD: grep.c,v 1.3 2006/05/15 21:12:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: grep.c,v 1.2 2004/05/05 14:34:55 cjep Exp $");
+__RCSID("$NetBSD: grep.c,v 1.3 2006/05/15 21:12:21 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -111,7 +111,7 @@ int binbehave = BIN_FILE_BIN;
 int dirbehave = GREP_READ;
 int devbehave = GREP_READ;
 /*int linkbehave = LINK_FOLLOW;*/
-char *stdin_label;
+const char *stdin_label;
 
 enum {
 	BIN_OPT = CHAR_MAX + 1,
@@ -137,7 +137,7 @@ usage(void)
 	exit(2);
 }
 
-static char *optstr = "0123456789A:B:C:D:EFGHILUVZabcd:e:f:hilm:noqrsuvwxyz";
+static const char *optstr = "0123456789A:B:C:D:EFGHILUVZabcd:e:f:hilm:noqrsuvwxyz";
 
 struct option long_options[] =
 {
@@ -256,7 +256,8 @@ check_context_arg(char const *str) {
 static int
 grep_getopt(int argc, char *const *argv) 
 {
-	int c, ptr;
+	size_t ptr;
+	int c;
 	char buffer[MAX_BUF_DIGITS];
 
 	ptr = 0;
@@ -272,7 +273,7 @@ grep_getopt(int argc, char *const *argv)
 	if (ptr >= MAX_BUF_DIGITS)
 		errx(2, "Context argument out of range");
 
-	if (ptr) {
+	if (ptr != 0) {
 		buffer[ptr] = '\0';	/* We now have a string of digits */
 		Aflag = Bflag = check_context_arg(buffer);
 	}
