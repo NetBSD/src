@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.69 2006/05/14 21:55:10 elad Exp $	*/
+/*	$NetBSD: hil.c,v 1.70 2006/05/15 12:47:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.69 2006/05/14 21:55:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.70 2006/05/15 12:47:13 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.69 2006/05/14 21:55:10 elad Exp $");
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/user.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 

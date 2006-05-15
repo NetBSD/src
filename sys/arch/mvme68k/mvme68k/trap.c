@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.82 2006/05/14 21:55:38 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.83 2006/05/15 12:42:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2006/05/14 21:55:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 2006/05/15 12:42:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2006/05/14 21:55:38 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #ifdef DEBUG
 #include <dev/cons.h>
