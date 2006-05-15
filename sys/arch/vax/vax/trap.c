@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102 2006/05/14 21:57:13 elad Exp $     */
+/*	$NetBSD: trap.c,v 1.103 2006/05/15 20:56:34 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2006/05/14 21:57:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2006/05/15 20:56:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2006/05/14 21:57:13 elad Exp $");
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
