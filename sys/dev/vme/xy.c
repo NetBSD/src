@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.64 2006/05/14 21:47:00 elad Exp $	*/
+/*	$NetBSD: xy.c,v 1.65 2006/05/15 20:40:55 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.64 2006/05/14 21:47:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.65 2006/05/15 20:40:55 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.64 2006/05/14 21:47:00 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -1033,8 +1034,7 @@ xyioctl(dev, command, addr, flag, l)
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
 		if ((error = kauth_authorize_generic(l->l_proc->p_cred,
-					       KAUTH_GENERIC_ISSUSER,
-					       &l->l_proc->p_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
 			return (error);
 		return (xyc_ioctlcmd(xy, dev, xio));
 
