@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.30 2006/05/14 21:24:49 elad Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.31 2006/05/15 22:10:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.30 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.31 2006/05/15 22:10:09 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.30 2006/05/14 21:24:49 elad Exp $")
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
