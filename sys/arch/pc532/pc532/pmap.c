@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 2006/05/15 12:47:42 dogcow Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2006/05/12 06:05:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2006/05/15 12:47:42 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,10 +369,6 @@ static void		 pmap_remove_ptes(struct pmap *,
 			    vaddr_t, vaddr_t, vaddr_t, int);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
-static vaddr_t		 pmap_tmpmap_pa(paddr_t);
-static pt_entry_t	*pmap_tmpmap_pvepte(struct pv_entry *);
-static void		 pmap_tmpunmap_pa(void);
-static void		 pmap_tmpunmap_pvepte(struct pv_entry *);
 static void		 pmap_unmap_ptes(struct pmap *);
 
 /*
@@ -395,84 +391,6 @@ pmap_is_curpmap(struct pmap *pmap)
 	if (pmap->pm_pdirpa == ptb)
 		return(1);
 	return(0);
-}
-
-/*
- * pmap_tmpmap_pa: map a page in for tmp usage
- *
- * => returns with pmap_tmpptp_lock held
- */
-
-inline static vaddr_t
-pmap_tmpmap_pa(paddr_t pa)
-{
-
-	simple_lock(&pmap_tmpptp_lock);
-#if defined(DIAGNOSTIC)
-	if (*ptp_pte)
-		panic("pmap_tmpmap_pa: ptp_pte in use?");
-#endif
-	*ptp_pte = PG_V | PG_RW | pa;		/* always a new mapping */
-	return((vaddr_t)ptpp);
-}
-
-/*
- * pmap_tmpunmap_pa: unmap a tmp use page (undoes pmap_tmpmap_pa)
- *
- * => we release pmap_tmpptp_lock
- */
-
-inline static void
-pmap_tmpunmap_pa(void)
-{
-#if defined(DIAGNOSTIC)
-	if (!pmap_valid_entry(*ptp_pte))
-		panic("pmap_tmpunmap_pa: our pte invalid?");
-#endif
-	*ptp_pte = 0;		/* zap! */
-	pmap_update_pg((vaddr_t)ptpp);
-	simple_unlock(&pmap_tmpptp_lock);
-}
-
-/*
- * pmap_tmpmap_pvepte: get a quick mapping of a PTE for a pv_entry
- *
- * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
- * => we may grab pmap_tmpptp_lock and return with it held
- */
-
-inline static pt_entry_t *
-pmap_tmpmap_pvepte(struct pv_entry *pve)
-{
-
-#ifdef DIAGNOSTIC
-	if (pve->pv_pmap == pmap_kernel())
-		panic("pmap_tmpmap_pvepte: attempt to map kernel");
-#endif
-
-	/* is it current pmap?  use direct mapping... */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return(vtopte(pve->pv_va));
-
-	return(((pt_entry_t *)pmap_tmpmap_pa(VM_PAGE_TO_PHYS(pve->pv_ptp)))
-	       + ptei((unsigned)pve->pv_va));
-}
-
-/*
- * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
- *
- * => we will release pmap_tmpptp_lock if we hold it
- */
-
-inline static void
-pmap_tmpunmap_pvepte(struct pv_entry *pve)
-{
-
-	/* was it current pmap?   if so, return */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return;
-
-	pmap_tmpunmap_pa();
 }
 
 /*
