@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2006/01/13 20:30:40 wiz Exp $	*/
+/*	$NetBSD: util.c,v 1.4 2006/05/15 21:12:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.3 2006/01/13 20:30:40 wiz Exp $");
+__RCSID("$NetBSD: util.c,v 1.4 2006/05/15 21:12:21 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -99,7 +99,7 @@ grep_tree(char **argv)
 }
 
 int
-procfile(char *fn)
+procfile(const char *fn)
 {
 	str_t ln;
 	file_t *f;
