@@ -246,8 +246,8 @@ static struct core_fns ppcnbsd_elfcore_fns =
 
 static enum return_value_convention
 ppcnbsd_return_value (struct gdbarch *gdbarch, struct type *valtype,
-		      struct regcache *regcache, void *readbuf,
-		      const void *writebuf)
+		      struct regcache *regcache, gdb_byte *readbuf,
+		      const gdb_byte *writebuf)
 {
   if ((TYPE_CODE (valtype) == TYPE_CODE_STRUCT
        || TYPE_CODE (valtype) == TYPE_CODE_UNION)
