@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 2006/05/14 21:55:10 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.82 2006/05/15 09:26:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2006/05/14 21:55:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2006/05/15 09:26:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2006/05/14 21:55:10 elad Exp $");
 #include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/userret.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
