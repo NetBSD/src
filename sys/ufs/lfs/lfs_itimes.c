@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_itimes.c,v 1.7 2006/05/15 00:45:57 christos Exp $	*/
+/*	$NetBSD: lfs_itimes.c,v 1.8 2006/05/15 03:01:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.7 2006/05/15 00:45:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.8 2006/05/15 03:01:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_itimes.c,v 1.7 2006/05/15 00:45:57 christos Exp 
 #define panic call_panic
 #else
 #include <ufs/lfs/lfs_extern.h>
+#include <sys/kauth.h>
 #endif
 
 #include <ufs/lfs/lfs.h>
