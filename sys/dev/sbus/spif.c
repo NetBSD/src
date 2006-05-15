@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.5 2006/05/14 21:47:00 elad Exp $	*/
+/*	$NetBSD: spif.c,v 1.6 2006/05/15 11:17:55 yamt Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.5 2006/05/14 21:47:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.6 2006/05/15 11:17:55 yamt Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.5 2006/05/14 21:47:00 elad Exp $");
 #include <sys/syslog.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
