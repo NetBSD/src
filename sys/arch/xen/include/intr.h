@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2006/04/09 19:28:01 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2006/05/15 20:57:53 dogcow Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -48,11 +48,6 @@
 
 #include "opt_xen.h"
 
-#ifdef XEN3
-/* for x86 compatibility */
-extern struct intrstub i8259_stubs[];
-#endif
-
 /*
  * Struct describing an event channel. 
  */
@@ -78,6 +73,11 @@ struct intrstub {
 	void *ist_recurse; 
 	void *ist_resume;
 };
+
+#ifdef XEN3
+/* for x86 compatibility */
+extern struct intrstub i8259_stubs[];
+#endif
 
 struct iplsource {
 	struct intrhand *ipl_handlers;   /* handler chain */
