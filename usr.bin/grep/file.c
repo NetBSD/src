@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $	*/
+/*	$NetBSD: file.c,v 1.2 2006/05/15 21:12:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $");
+__RCSID("$NetBSD: file.c,v 1.2 2006/05/15 21:12:21 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: file.c,v 1.1.1.2 2004/01/02 15:00:27 cjep Exp $");
 
 static char fname[MAXPATHLEN];
 static char *lnbuf;
-static int lnbuflen;
+static size_t lnbuflen;
 
 #define FILE_STDIO	0
 #define FILE_MMAP	1
@@ -122,7 +122,7 @@ gzfgetln(gzFile *f, size_t *len)
 }
 
 file_t *
-grep_fdopen(int fd, char *mode)
+grep_fdopen(int fd, const char *mode)
 {
 	file_t *f;
 
@@ -148,7 +148,7 @@ grep_fdopen(int fd, char *mode)
 }
 
 file_t *
-grep_open(char *path, char *mode)
+grep_open(const char *path, const char *mode)
 {
 	file_t *f;
 
