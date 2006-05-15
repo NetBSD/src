@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.21 2006/05/15 12:51:19 christos Exp $	*/
+/*	$NetBSD: modstat.c,v 1.22 2006/05/15 14:30:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.21 2006/05/15 12:51:19 christos Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.22 2006/05/15 14:30:38 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -54,47 +54,38 @@ __RCSID("$NetBSD: modstat.c,v 1.21 2006/05/15 12:51:19 christos Exp $");
 
 #include "pathnames.h"
 
-void	cleanup __P((void));
-int	dostat __P((int, int, char *));
-int	main __P((int, char **));
-void	usage __P((void));
+static void	cleanup(void);
+static int	dostat(int, const char *);
+static void	usage(void) __attribute__((__noreturn__));
 
-void
-usage()
-{
-
-	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "modstat [-i <module id>] [-n <module name>]\n");
-	exit(1);
-}
 
 static const char *type_names[] = {
-	"SYSCALL",
-	"VFS",
-	"DEV",
-	"STRMOD",
-	"EXEC",
-	"COMPAT",
-	"MISC",
-	"DRV"
+	MODTYPE_NAMES
 };
-static int tn_nentries = sizeof(type_names) / sizeof(char *);
+
+static size_t tn_nentries = sizeof(type_names) / sizeof(type_names[0]);
+static int devfd;
 
 #define POINTERSIZE ((int)(2 * sizeof(void*)))
 
-int
-dostat(devfd, modnum, modname)
-	int devfd;
-	int modnum;
-	char *modname;
+static void
+usage(void)
+{
+
+	(void)fprintf(stderr, "Usage: %s [-i <module id>] [-n <module name>]\n",
+		getprogname());
+	exit(1);
+}
+
+static int
+dostat(int modnum, const char *modname)
 {
 	struct lmc_stat	sbuf;
 	long offset;
 	char offset_string[32];
 
 	if (modname != NULL)
-		strncpy(sbuf.name, modname, sizeof sbuf.name);
-	sbuf.name[sizeof(sbuf.name) - 1] = '\0';
+		(void)strlcpy(sbuf.name, modname, sizeof sbuf.name);
 
 	sbuf.id = modnum;
 
@@ -125,7 +116,7 @@ dostat(devfd, modnum, modname)
 		(void) snprintf(offset_string, sizeof (offset_string), " %3ld",
 		    offset);
 
-	printf("%-7s %3d %7s %0*lx %04lx %0*lx %3ld %s\n",
+	(void)printf("%-7s %3d %7s %0*lx %04lx %0*lx %3ld %s\n",
 	    (sbuf.type < tn_nentries) ? type_names[sbuf.type] : "(UNKNOWN)", 
 	    sbuf.id,		/* module id */
 	    offset_string,	/* offset into modtype struct */
@@ -144,19 +135,15 @@ dostat(devfd, modnum, modname)
 	return 0;
 }
 
-int devfd;
-
-void
-cleanup()
+static void
+cleanup(void)
 {
 
-	close(devfd);
+	(void)close(devfd);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c;
 	int modnum = -1;
@@ -173,10 +160,8 @@ main(argc, argv)
 			modname = optarg;
 			break;	/* name */
 		case '?':
-			usage();
 		default:
-			printf("default!\n");
-			break;
+			usage();
 		}
 	}
 	argc -= optind;
@@ -194,11 +179,11 @@ main(argc, argv)
 		err(2, "%s", _PATH_LKM);
 
 	/* get rid of our privileges now */
-	setgid(getgid());
+	(void)setgid(getgid());
 
-	atexit(cleanup);
+	(void)atexit(cleanup);
 
-	printf("Type    Id   Offset %-*s Size %-*s Rev Module Name\n", 
+	(void)printf("Type    Id   Offset %-*s Size %-*s Rev Module Name\n", 
 	    POINTERSIZE, "Loadaddr", 
 	    POINTERSIZE, "Info");
 
@@ -206,16 +191,16 @@ main(argc, argv)
 	 * Oneshot?
 	 */
 	if (modnum != -1 || modname != NULL) {
-		if (dostat(devfd, modnum, modname))
-			exit(3);
-		exit(0);
+		if (dostat(modnum, modname))
+			return(3);
+		return(0);
 	}
 
 	/*
 	 * Start at 0 and work up until "EINVAL".
 	 */
- 	for (modnum = 0; dostat(devfd, modnum, NULL) < 2; modnum++)
- 		;
+ 	for (modnum = 0; dostat(modnum, NULL) < 2; modnum++)
+ 		continue;
 
-	exit(0);
+	return(0);
 }
