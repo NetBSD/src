@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.155 2006/03/16 23:27:20 yamt Exp $
+$NetBSD: acronyms,v 1.156 2006/05/15 14:11:07 christos Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -47,6 +47,7 @@ COB	close of business [day]
 COTS	commercial off-the-shelf
 CYA	see you around
 D/L	download
+DGAS	don't give a shit
 DIY	do it yourself
 DKDC	don't know, don't care
 DSTM	don't shoot the messenger
