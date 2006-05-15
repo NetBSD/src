@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.20 2006/05/14 14:27:14 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.21 2006/05/15 12:17:11 tsutsui Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,10 +10,10 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.20 $"
+#ident 		"INSTALL-$Revision: 1.21 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
-makeoptions	CPUFLAGS="-mips2 -Wa,-mips2 -Wa,-mtune=rm5230"
+makeoptions	CPUFLAGS="-mips2 -mtune=vr5000"
 
 maxusers	32
 
