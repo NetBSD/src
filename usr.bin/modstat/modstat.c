@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.20 2006/03/23 23:52:35 reed Exp $	*/
+/*	$NetBSD: modstat.c,v 1.21 2006/05/15 12:51:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.20 2006/03/23 23:52:35 reed Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.21 2006/05/15 12:51:19 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -75,7 +75,8 @@ static const char *type_names[] = {
 	"STRMOD",
 	"EXEC",
 	"COMPAT",
-	"MISC"
+	"MISC",
+	"DRV"
 };
 static int tn_nentries = sizeof(type_names) / sizeof(char *);
 
