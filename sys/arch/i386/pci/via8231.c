@@ -1,4 +1,4 @@
-/*	$NetBSD: via8231.c,v 1.1 2006/01/01 12:12:44 xtraeme Exp $	*/
+/*	$NetBSD: via8231.c,v 1.2 2006/05/15 00:36:55 christos Exp $	*/
 /*	OpenBSD: via8231.c,v 1.6 2005/10/27 16:41:06 mickey Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via8231.c,v 1.1 2006/01/01 12:12:44 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via8231.c,v 1.2 2006/05/15 00:36:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ int
 via8231_get_trigger(pciintr_icu_handle_t v, int irq, int *triggerp)
 {
 	struct via8231_handle *ph = v;
-	int reg, clink, m, pciirq;
+	int reg, clink, m, pciirq = 0;	/* XXX: GCC */
 
 	if (VIA8231_PIRQ_LEGAL(irq) == 0)
 		return (1);
