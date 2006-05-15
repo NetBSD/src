@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 2006/05/14 21:57:13 elad Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 2006/05/15 00:55:29 yamt Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2006/05/14 21:57:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.11 2006/05/15 00:55:29 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.10 2006/05/14 21:57:13 elad Exp $");
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/kauth.h>
 
 #include <sys/ucontext.h>
 #include <sys/sa.h>
