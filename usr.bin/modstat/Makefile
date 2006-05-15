@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/01/09 20:20:44 tls Exp $
+#	$NetBSD: Makefile,v 1.7 2006/05/15 14:30:38 christos Exp $
 #
 # Makefile for modstat
 #
@@ -34,9 +34,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$NetBSD: Makefile,v 1.6 1997/01/09 20:20:44 tls Exp $
+#	$NetBSD: Makefile,v 1.7 2006/05/15 14:30:38 christos Exp $
 #
 
+WARNS?=4
 PROG=	modstat
 MAN=	modstat.8
 BINGRP=	kmem
