@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.16 2006/05/12 02:12:37 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.17 2006/05/15 22:03:03 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -156,9 +156,9 @@ get_libstdcxx_v3 () {
 			c_base_headers_rename std_headers_rename
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
 			bits_headers backward_headers ext_headers c_base_headers_extra \
-			$_headers1 | sed 's#/[^ 	][^ 	]*/##g'
+			$_headers1 | sed -e 's#/[^ 	][^ 	]*/##g' -e 's/\${GNUHOSTDIST}//g'
 		getvars $_PLATFORM/libstdc++-v3/include/Makefile \
-			$_headers2 | sed 's#\./[^ 	][^ 	]*/##g'
+			$_headers2 | sed -e 's#\./[^ 	][^ 	]*/##g' -e 's/\${GNUHOSTDIST}//g'
 
 		getvars gcc/Makefile UNWIND_H
 	} | write_mk gnu/lib/$_subdir/arch/$MACHINE_ARCH/defs.mk
