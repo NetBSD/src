@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.12 2006/05/15 22:10:09 yamt Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.13 2006/05/15 22:15:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.12 2006/05/15 22:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.13 2006/05/15 22:15:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -106,6 +106,6 @@ irix_sys_getmountid(l, v, retval)
 bad:
 	vput(vp);
 out:
-	crfree(cred);
+	kauth_cred_free(cred);
 	return (error);
 }
