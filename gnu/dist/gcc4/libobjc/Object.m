@@ -121,7 +121,7 @@ extern int errno;
     return 0;
   // Ordering objects by their address is pretty useless, 
   // so subclasses should override this is some useful way.
-  else if ((void *)self > (void *)anotherObject)
+  else if ((id)self > (id)anotherObject)
     return 1;
   else 
     return -1;
