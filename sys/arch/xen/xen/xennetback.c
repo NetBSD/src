@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.20 2006/02/01 19:12:02 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.21 2006/05/15 20:16:31 dogcow Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -840,7 +840,7 @@ xennetback_ifsoftstart(void *arg)
 	vaddr_t xmit_va;
 	paddr_t xmit_pa;
 	paddr_t xmit_ma;
-	paddr_t newp_ma;
+	paddr_t newp_ma = 0; /* XXX gcc */
 	int i, j, nppitems;
 	mmu_update_t *mmup;
 	multicall_entry_t *mclp;
