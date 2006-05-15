@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.17 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.18 2006/05/15 01:29:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.17 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.18 2006/05/15 01:29:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.17 2006/05/14 21:31:52 elad Exp
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
