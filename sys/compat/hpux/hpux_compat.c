@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.75 2006/05/15 12:48:09 yamt Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.76 2006/05/15 13:01:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.75 2006/05/15 12:48:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.76 2006/05/15 13:01:39 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1103,14 +1103,13 @@ hpux_sys_getaccess(l, v, retval)
 		break;
 	default:
 		if (SCARG(uap, ngroups) > 0 && SCARG(uap, ngroups) <= NGROUPS)
-			error = copyin((caddr_t)SCARG(uap, gidset),
-				       (caddr_t)&lgroups[0],
-				       SCARG(uap, ngroups) *
-					   sizeof(lgroups[0]));
+			error = copyin(SCARG(uap, gidset), &lgroups[0],
+			    SCARG(uap, ngroups) * sizeof(lgroups[0]));
 		else
 			error = EINVAL;
 		if (error == 0)
-			kauth_cred_setgroups(cred, lgroups, ngroups, -1);
+			kauth_cred_setgroups(cred, lgroups,
+			    SCARG(uap, ngroups), -1);
 		break;
 	}
 	/*
