@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.18 2006/05/14 21:24:50 elad Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.19 2006/05/15 13:04:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.18 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.19 2006/05/15 13:04:08 yamt Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.18 2006/05/14 21:24:50 elad
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
