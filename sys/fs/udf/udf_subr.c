@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.7 2006/05/14 21:31:52 elad Exp $ */
+/* $NetBSD: udf_subr.c,v 1.8 2006/05/15 00:05:16 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.7 2006/05/14 21:31:52 elad Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.8 2006/05/15 00:05:16 christos Exp $");
 #endif /* not lint */
 
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: udf_subr.c,v 1.7 2006/05/14 21:31:52 elad Exp $");
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>

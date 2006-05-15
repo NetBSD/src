@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.19 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.20 2006/05/15 00:05:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.19 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.20 2006/05/15 00:05:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.19 2006/05/14 21:31:52 elad Exp $")
 #include <sys/systm.h>
 #include <sys/swap.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
