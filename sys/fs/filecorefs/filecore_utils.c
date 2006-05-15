@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.6 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.7 2006/05/15 01:29:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.6 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.7 2006/05/15 01:29:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.6 2005/12/11 12:24:25 christos 
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
