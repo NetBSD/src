@@ -1,0 +1,136 @@
+# Copyright 2005 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA
+
+if $tracelevel then {
+    strace $tracelevel
+}
+
+load_lib "ada.exp"
+
+set testdir "arrayidx"
+set testfile "${testdir}/p"
+set srcfile ${srcdir}/${subdir}/${testfile}.adb
+set binfile ${objdir}/${subdir}/${testfile}
+
+file mkdir ${objdir}/${subdir}/${testdir}
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" } {
+  return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+set bp_location [gdb_get_line_number "START" ${testdir}/p.adb]
+runto "p.adb:$bp_location"
+
+# First, print all the arrays without indexes
+
+gdb_test "set print array-indexes off" \
+         ""  \
+         "set print array-indexes to off"
+
+gdb_test "print one_two_three" \
+         "\\(1, 2, 3\\)" \
+         "print one_two_three, indexes off"
+
+# There is a bug somewhere that causes the debugger to think that
+# this array is indexed by an integer subrange, which it is actually
+# indexed by an enumerated type. As a consequence, indexes for this
+# array will be printed using their underlying integer value instead
+# of their names. Also, even when printing this array without indexes,
+# because the underlying value of the first enumeration is zero, the
+# debugger ends up printing this index even when "array-indexes" are
+# off, just because the index of the first element is not an enumerated
+# type, and its value is not one.
+setup_kfail "*-*-*" gdb/2018
+gdb_test "print e_one_two_three" \
+         "\\(1, 2, 3\\)" \
+         "print e_one_two_three, indexes off"
+
+# Same as when printing e_one_two_three above.
+setup_kfail "*-*-*" gdb/2018
+gdb_test "print r_two_three" \
+         "\\(two => 2, 3\\)" \
+         "print r_two_three, indexes off"
+
+gdb_test "print u_one_two_three" \
+         "\\(1, 2, 3\\)" \
+         "print u_one_two_three, indexes off"
+
+gdb_test "print p_one_two_three" \
+         "\\(0 => false, true, true\\)" \
+         "print p_one_two_three, indexes off"
+
+gdb_test "print few_reps" \
+         "\\(1, 2, 3, 3, 3, 3, 3, 4, 5\\)" \
+         "print few_reps, indexes off"
+
+gdb_test "print many_reps" \
+         "\\(1, 2, 3 <repeats 12 times>, 4, 5\\)" \
+         "print many_reps, indexes off"
+
+gdb_test "print empty" \
+         "\\(\\)" \
+         "print empty, indexes off"
+
+# Next, print all the arrays with the indexes
+
+gdb_test "set print array-indexes on" \
+         ""  \
+         "set print array-indexes to on"
+
+gdb_test "print one_two_three" \
+         "\\(1 => 1, 2 => 2, 3 => 3\\)" \
+         "print one_two_three"
+
+# Same as first attempt at printing this array, we currently fail.
+# See details above.
+setup_kfail "*-*-*" gdb/2018
+gdb_test "print e_one_two_three" \
+         "\\(one => 1, two => 2, three => 3\\)" \
+         "print e_one_two_three"
+
+# Same as first attempt at printing this array, we currently fail.
+# See details above.
+setup_kfail "*-*-*" gdb/2018
+gdb_test "print r_two_three" \
+         "\\(two => 2, three => 3\\)" \
+         "print r_two_three"
+
+gdb_test "print u_one_two_three" \
+         "\\(1 => 1, 2 => 2, 3 => 3\\)" \
+         "print u_one_two_three"
+
+gdb_test "print p_one_two_three" \
+         "\\(0 => false, 1 => true, 2 => true\\)" \
+         "print p_one_two_three"
+
+gdb_test "print few_reps" \
+         "\\(1 => 1, 2 => 2, 3 => 3, 4 => 3, 5 => 3, 6 => 3, 7 => 3, 8 => 4, 9 => 5\\)" \
+         "print few_reps"
+
+gdb_test "print many_reps" \
+         "\\(1 => 1, 2 => 2, 3 => 3 <repeats 12 times>, 15 => 4, 16 => 5\\)" \
+         "print many_reps"
+
+gdb_test "print empty" \
+         "\\(\\)" \
+         "print empty"
+
+
