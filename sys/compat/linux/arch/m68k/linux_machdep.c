@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.26 2006/05/14 21:24:50 elad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.27 2006/05/15 13:11:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.26 2006/05/14 21:24:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.27 2006/05/15 13:11:00 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.26 2006/05/14 21:24:50 elad Exp 
 #include <sys/signalvar.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
