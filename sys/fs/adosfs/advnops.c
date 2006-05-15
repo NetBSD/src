@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.19 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: advnops.c,v 1.20 2006/05/15 01:29:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.19 2006/05/14 21:31:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.20 2006/05/15 01:29:02 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.19 2006/05/14 21:31:52 elad Exp $");
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
