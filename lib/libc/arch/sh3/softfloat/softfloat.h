@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.8 2003/08/21 02:12:33 uwe Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.9 2006/05/16 20:55:51 mrg Exp $	*/
 
 /* This is a derivative work. */
 
@@ -70,7 +70,9 @@ typedef struct {
 Software IEC/IEEE floating-point underflow tininess-detection mode.
 -------------------------------------------------------------------------------
 */
+#ifndef SOFTFLOAT_FOR_GCC
 extern int8 float_detect_tininess;
+#endif
 enum {
     float_tininess_after_rounding  = 0,
     float_tininess_before_rounding = 1
