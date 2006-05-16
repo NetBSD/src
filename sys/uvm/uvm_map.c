@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.223 2006/05/14 21:38:17 elad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.224 2006/05/16 00:08:25 elad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,12 +71,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.223 2006/05/14 21:38:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.224 2006/05/16 00:08:25 elad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 #include "opt_uvm.h"
 #include "opt_sysv.h"
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.223 2006/05/14 21:38:17 elad Exp $");
 #ifdef DDB
 #include <uvm/uvm_ddb.h>
 #endif
+
+#ifdef PAX_MPROTECT
+#include <sys/pax.h>
+#endif /* PAX_MPROTECT */
 
 #if defined(UVMMAP_NOCOUNTERS)
 
@@ -2828,6 +2833,11 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 				goto out;
 			}
 		}
+
+#ifdef PAX_MPROTECT
+		pax_mprotect(curlwp, current->object.uvm_obj, &new_prot);
+#endif /* PAX_MPROTECT */
+
 		current = current->next;
 	}
 
