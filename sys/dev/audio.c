@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.205 2006/05/10 01:56:21 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.206 2006/05/16 13:46:19 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.205 2006/05/10 01:56:21 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.206 2006/05/16 13:46:19 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1315,7 +1315,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	if (((flags & FREAD) && (sc->sc_open & AUOPEN_READ)) ||
 	    ((flags & FWRITE) && (sc->sc_open & AUOPEN_WRITE)))
 		return EBUSY;
-	
+
 	if (hw->open != NULL) {
 		error = hw->open(sc->hw_hdl, flags);
 		if (error)
@@ -1907,7 +1907,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		splx(s);
 
 		/*
-		 * write to the cb as much as possible
+		 * write to the sc_pustream as much as possible
 		 *
 		 * work with a temporary audio_stream_t to narrow
 		 * splaudio() enclosure
@@ -1918,15 +1918,19 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		if (sc->sc_npfilters > 0) {
 			filter = sc->sc_pfilters[0];
 			filter->set_fetcher(filter, &ufetcher.base);
-		}
-		cc = stream.end - stream.start;
-		if (sc->sc_npfilters > 0) {
 			fetcher = &sc->sc_pfilters[sc->sc_npfilters - 1]->base;
+			cc = cb->blksize * 2;
+			error = fetcher->fetch_to(fetcher, &stream, cc);
+			if (error != 0) {
+				fetcher = &ufetcher.base;
+				cc = sc->sc_pustream->end - sc->sc_pustream->start;
+				error = fetcher->fetch_to(fetcher, sc->sc_pustream, cc);
+			}
 		} else {
 			fetcher = &ufetcher.base;
+			cc = stream.end - stream.start;
+			error = fetcher->fetch_to(fetcher, &stream, cc);
 		}
-		error = fetcher->fetch_to(fetcher, &stream, cc);
-
 		sc->sc_writing = 0;
 		if (sc->sc_waitcomp)
 			wakeup(sc);
@@ -2556,6 +2560,8 @@ audio_pint(void *v)
 						&null_fetcher);
 		used = audio_stream_get_used(sc->sc_pustream);
 		cc = cb->s.end - cb->s.start;
+		if (blksize * 2 < cc)
+			cc = blksize * 2;
 		fetcher->fetch_to(fetcher, &cb->s, cc);
 		cb->fstamp += used - audio_stream_get_used(sc->sc_pustream);
 		used = audio_stream_get_used(&cb->s);
