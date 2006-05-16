@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.221 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: proc.h,v 1.222 2006/05/16 00:08:25 elad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -317,8 +317,8 @@ struct proc {
 #define	P_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	P_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
-#define	P_UNUSED4    	0x08000000
-#define	P_UNUSED3	0x10000000
+#define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
+#define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
 #define	P_UNUSED2	0x20000000
 #define	P_UNUSED1	0x40000000
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
