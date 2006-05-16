@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.879 2006/05/14 22:11:47 elad Exp $
+#	$NetBSD: mi,v 1.880 2006/05/16 15:56:15 elad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5268,13 +5268,13 @@
 ./usr/share/man/cat9/cpu_switch.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_sysctl.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/cpu_wait.0			comp-obsolete		obsolete
-./usr/share/man/cat9/crcopy.0			comp-sys-catman		.cat
-./usr/share/man/cat9/crcvt.0			comp-sys-catman		.cat
-./usr/share/man/cat9/crdup.0			comp-sys-catman		.cat
-./usr/share/man/cat9/cred.0			comp-sys-catman		.cat
-./usr/share/man/cat9/crfree.0			comp-sys-catman		.cat
-./usr/share/man/cat9/crget.0			comp-sys-catman		.cat
-./usr/share/man/cat9/crhold.0			comp-sys-catman		.cat
+./usr/share/man/cat9/crcopy.0			comp-obsolete		.cat
+./usr/share/man/cat9/crcvt.0			comp-obsolete		.cat
+./usr/share/man/cat9/crdup.0			comp-obsolete		.cat
+./usr/share/man/cat9/cred.0			comp-obsolete		.cat
+./usr/share/man/cat9/crfree.0			comp-obsolete		.cat
+./usr/share/man/cat9/crget.0			comp-obsolete		.cat
+./usr/share/man/cat9/crhold.0			comp-obsolete		.cat
 ./usr/share/man/cat9/crypto_dispatch.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/crypto_done.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/crypto_freereq.0		comp-sys-catman		.cat
@@ -5775,7 +5775,7 @@
 ./usr/share/man/cat9/sun3/isr_add_autovect.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sun3/isr_add_custom.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sun3/isr_add_vectored.0	comp-sys-catman		.cat
-./usr/share/man/cat9/suser.0			comp-sys-catman		.cat
+./usr/share/man/cat9/suser.0			comp-obsolete		.cat
 ./usr/share/man/cat9/suspendsched.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/suswintr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/susword.0			comp-sys-catman		.cat
@@ -9322,13 +9322,13 @@
 ./usr/share/man/man9/cpu_switch.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_sysctl.9		comp-obsolete		obsolete
 ./usr/share/man/man9/cpu_wait.9			comp-obsolete		obsolete
-./usr/share/man/man9/crcopy.9			comp-sys-man		.man
-./usr/share/man/man9/crcvt.9			comp-sys-man		.man
-./usr/share/man/man9/crdup.9			comp-sys-man		.man
-./usr/share/man/man9/cred.9			comp-sys-man		.man
-./usr/share/man/man9/crfree.9			comp-sys-man		.man
-./usr/share/man/man9/crget.9			comp-sys-man		.man
-./usr/share/man/man9/crhold.9			comp-sys-man		.man
+./usr/share/man/man9/crcopy.9			comp-obsolete		.man
+./usr/share/man/man9/crcvt.9			comp-obsolete		.man
+./usr/share/man/man9/crdup.9			comp-obsolete		.man
+./usr/share/man/man9/cred.9			comp-obsolete		.man
+./usr/share/man/man9/crfree.9			comp-obsolete		.man
+./usr/share/man/man9/crget.9			comp-obsolete		.man
+./usr/share/man/man9/crhold.9			comp-obsolete		.man
 ./usr/share/man/man9/crypto_dispatch.9		comp-sys-man		.man
 ./usr/share/man/man9/crypto_done.9		comp-sys-man		.man
 ./usr/share/man/man9/crypto_freereq.9		comp-sys-man		.man
@@ -9829,7 +9829,7 @@
 ./usr/share/man/man9/sun3/isr_add_autovect.9	comp-sys-man		.man
 ./usr/share/man/man9/sun3/isr_add_custom.9	comp-sys-man		.man
 ./usr/share/man/man9/sun3/isr_add_vectored.9	comp-sys-man		.man
-./usr/share/man/man9/suser.9			comp-sys-man		.man
+./usr/share/man/man9/suser.9			comp-obsolete		.man
 ./usr/share/man/man9/suspendsched.9		comp-sys-man		.man
 ./usr/share/man/man9/suswintr.9			comp-sys-man		.man
 ./usr/share/man/man9/susword.9			comp-sys-man		.man
