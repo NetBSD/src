@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.73 2006/05/12 21:22:34 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.74 2006/05/16 00:16:59 dogcow Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -329,7 +329,7 @@ set_mbr_type(menudesc *m, void *arg)
 	char *cp;
 	int opt = mbri->opt;
 	int type;
-	int start, sz;
+	u_int start, sz;
 	int i;
 	char numbuf[4];
 
@@ -904,8 +904,8 @@ edit_mbr_bootmenu(menudesc *m, void *arg)
 		opt = 0;
 
 	msg_prompt_win(/* XXX translate? */ "bootmenu", -1, 18, 0, 0,
-		mbri->mbrb.mbrbs_nametab[opt],
-		mbri->mbrb.mbrbs_nametab[opt],
+		(char *) mbri->mbrb.mbrbs_nametab[opt],
+		(char *) mbri->mbrb.mbrbs_nametab[opt],
 		sizeof mbri->mbrb.mbrbs_nametab[opt]);
 	if (mbri->mbrb.mbrbs_nametab[opt][0] == ' ')
 		mbri->mbrb.mbrbs_nametab[opt][0] = 0;
