@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.17 2006/05/14 21:42:27 elad Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.18 2006/05/16 16:49:41 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,13 +45,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.17 2006/05/14 21:42:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.18 2006/05/16 16:49:41 he Exp $");
 
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -611,7 +612,8 @@ gtmpscopen(dev_t dev, int flag, int mode, struct lwp *l)
 	tp = sc->gtmpsc_tty;
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred,
+		 KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
