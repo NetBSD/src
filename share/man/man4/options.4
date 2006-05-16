@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.317 2006/02/25 02:28:56 wiz Exp $
+.\"	$NetBSD: options.4,v 1.318 2006/05/16 00:08:24 elad Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2178,6 +2178,23 @@ Enables support for SHA256 hashes in Veriexec.
 Enables support for SHA384 hashes in Veriexec.
 .It Cd options VERIFIED_EXEC_FP_SHA512
 Enables support for SHA512 hashes in Veriexec.
+.It Cd options PAX_MPROTECT=value
+Enables PaX MPROTECT,
+.Xr mprotect 2
+restrictions from the PaX project.
+.Pp
+The
+.Ar value
+is the default value for the
+.Em global_protection
+knob, see
+.Xr sysctl 3 .
+If 0, PaX MPROTECT will be enabled only if explicitly set on programs
+using
+.Xr paxctl 1 .
+If 1, PaX MPROTECT will be enabled to all programs, and exemption can
+be done using
+.Xr paxctl 1 .
 .El
 .Ss amiga-specific Options
 .Bl -ohang

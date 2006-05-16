@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.169 2006/04/26 20:41:30 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.170 2006/05/16 00:08:24 elad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1993,6 +1993,30 @@ and
 .Dv PF_UNIX
 PCBs), and
 .Xr w 1 .
+.It Li security.pax
+Settings for PaX -- exploit mitigation features.
+.Pp
+.Bl -tag -width "123456"
+.It Li security.pax.mprotect.enable
+Enable PaX MPROTECT restrictions.
+.Pp
+These are
+.Xr mprotect 2
+restrictions to better enforce a W^X policy. The value of this
+knob must be non-zero for PaX MPROTECT to be enabled, even if a
+process is already marked with
+.Em P_PAXMPROTECT .
+.It Li security.pax.mprotect.global_protection
+Specifies the default global policy for programs without an
+explicit enable/disable flag.
+.Pp
+When non-zero, all programs will get the PaX MPROTECT restrictions,
+except those exempted with
+.Xr paxctl 1 .
+Otherwise, all programs will not get the PaX MPROTECT restrictions,
+except those specifically marked as such with
+.Xr paxctl 1.
+.El
 .It Li security.setid_core
 Settings related to set-id processes coredumps.
 By default, set-id processes do not dump core in situations where

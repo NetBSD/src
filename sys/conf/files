@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.773 2006/05/14 21:25:21 elad Exp $
+#	$NetBSD: files,v 1.774 2006/05/16 00:08:25 elad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -76,6 +76,8 @@ defflag	opt_verified_exec.h 	VERIFIED_EXEC
 				VERIFIED_EXEC_FP_SHA512
 				VERIFIED_EXEC_FP_MD5
 				VERIFIED_EXEC_FP_RMD160
+
+defparam opt_pax.h		PAX_MPROTECT
 
 # compatibility options
 #
@@ -1230,6 +1232,7 @@ file	kern/kern_lwp.c
 file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_ntptime.c
+file	kern/kern_pax.c			pax_mprotect
 file	kern/kern_physio.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c

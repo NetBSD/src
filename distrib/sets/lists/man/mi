@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.888 2006/05/14 19:51:15 dyoung Exp $
+# $NetBSD: mi,v 1.889 2006/05/16 00:08:24 elad Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -321,6 +321,7 @@
 ./usr/share/man/cat1/pathchk.0			man-util-catman		.cat
 ./usr/share/man/cat1/pawd.0			man-amd-catman		.cat
 ./usr/share/man/cat1/pax.0			man-util-catman		.cat
+./usr/share/man/cat1/paxctl.0			man-util-catman		.cat
 ./usr/share/man/cat1/pgrep.0			man-util-catman		.cat
 ./usr/share/man/cat1/pim6stat.0			man-obsolete		obsolete
 ./usr/share/man/cat1/pkg_add.0			man-pkgutil-catman	.cat
@@ -2651,6 +2652,7 @@
 ./usr/share/man/man1/pathchk.1			man-util-man		.man
 ./usr/share/man/man1/pawd.1			man-amd-man		.man
 ./usr/share/man/man1/pax.1			man-util-man		.man
+./usr/share/man/man1/paxctl.1			man-util-man		.man
 ./usr/share/man/man1/pgrep.1			man-util-man		.man
 ./usr/share/man/man1/pim6stat.1			man-obsolete		obsolete
 ./usr/share/man/man1/pkg_add.1			man-pkgutil-man		.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.621 2006/05/14 19:51:15 dyoung Exp $
+# $NetBSD: mi,v 1.622 2006/05/16 00:08:24 elad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -554,6 +554,7 @@
 ./usr/bin/patch					base-util-bin
 ./usr/bin/pathchk				base-util-bin
 ./usr/bin/pawd					base-amd-bin
+./usr/bin/paxctl				base-util-bin
 ./usr/bin/pgrep					base-util-bin
 ./usr/bin/pkill					base-util-bin
 ./usr/bin/pmap					base-util-bin

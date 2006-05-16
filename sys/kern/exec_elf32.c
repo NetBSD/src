@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.112 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.113 2006/05/16 00:08:25 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,12 +64,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.112 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.113 2006/05/16 00:08:25 elad Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
 #define	ELFSIZE		32
 #endif
+
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -86,6 +88,10 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.112 2006/05/14 21:15:11 elad Exp $"
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#ifdef PAX_MPROTECT
+#include <sys/pax.h>
+#endif /* PAX_MPROTECT */
 
 extern const struct emul emul_netbsd;
 
@@ -523,8 +529,13 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 
 		case PT_DYNAMIC:
 		case PT_PHDR:
-		case PT_NOTE:
 			break;
+
+		case PT_NOTE:
+#ifdef PAX_MPROTECT
+			pax_mprotect_adjust(l, ph[i].p_flags);
+			break;
+#endif /* PAX_MPROTECT */
 
 		default:
 			break;
