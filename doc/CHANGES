@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.616 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.617 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -241,7 +241,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		OpenBSD. [riz 20060407]
 	owtemp(4): Driver for some 1-wire temperature sensors.  From
 		OpenBSD. [riz 20060407]
-	wpa_supplicant: Updated to version 0.4.8 [rpaulo 20060412]
+	wpa_supplicant(8): Updated to version 0.4.8 [rpaulo 20060412]
 	hostapd(8): Imported version 0.4.8 [rpaulo 20060412]
 	lfs: Better handling of the page cache, particularly in regard to
 		not writing us out of space.  New cleaner daemon.
@@ -255,6 +255,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	evbarm: Add support for the I-O DATA HDL-G.  [nonaka 20060416]
 	sgimips: Switch macepci for O2 to use MI pci_configure_bus(9) rather
 		than its own PCI fixup code. [tsutsui 20060417]
+	ipw(4): The firmload(9) API is now used. You no longer need to
+		use ipwctl(8) to load the firmware. [rpaulo 20060417]
 	init(8): Support for running multi-user in a chroot() environment.
 		Allows / file system on e.g., cgd(4), vnd(4) or ccd(4)
 		volumes. [salo 20060418]
