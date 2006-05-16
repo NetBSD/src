@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.98 2006/05/11 15:49:44 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.99 2006/05/16 21:00:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.98 2006/05/11 15:49:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.99 2006/05/16 21:00:02 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -253,10 +253,11 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	if (error) {
 		fdremove(fdp, fd);
 		ffree(fp);
+	} else {
+		FILE_SET_MATURE(fp);
 	}
 	m_freem(nam);
 	splx(s);
-	FILE_SET_MATURE(fp);
 	return (error);
 }
 
