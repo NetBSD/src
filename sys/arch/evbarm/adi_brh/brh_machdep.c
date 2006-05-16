@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.24 2006/05/16 21:35:47 mrg Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.25 2006/05/16 21:39:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.24 2006/05/16 21:35:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.25 2006/05/16 21:39:26 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -392,6 +392,7 @@ initarm(void *arg)
 	psize_t memsize;
 
 	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_va = 0;
 
 	/*
 	 * Clear out the 7-segment display.  Whee, the first visual
