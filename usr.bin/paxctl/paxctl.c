@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.1 2006/05/16 00:08:25 elad Exp $ */
+/* $NetBSD: paxctl.c,v 1.2 2006/05/16 02:37:24 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -41,6 +41,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+
+void usage(void);
+int pax_flag(char *);
+int pax_flags_sane(int);
+int pax_haveflags(int);
+void pax_printflags(int);
 
 struct paxflag {
 	char mark;
