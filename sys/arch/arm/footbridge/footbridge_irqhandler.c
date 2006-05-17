@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.14 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.15 2006/05/17 05:15:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.14 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.15 2006/05/17 05:15:26 mrg Exp $");
 
 #include "opt_irqstats.h"
 
@@ -253,7 +253,7 @@ _spllower(int ipl)
     return (footbridge_spllower(ipl));
 }
 
-inline void
+void
 footbridge_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
