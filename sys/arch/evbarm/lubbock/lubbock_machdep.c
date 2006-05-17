@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.11 2006/03/08 23:46:23 lukem Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.12 2006/05/17 04:22:46 mrg Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.11 2006/03/08 23:46:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.12 2006/05/17 04:22:46 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -674,6 +674,7 @@ initarm(void *arg)
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0
