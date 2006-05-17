@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.24 2003/08/07 16:42:47 agc Exp $
+.\"	$NetBSD: directory.3,v 1.25 2006/05/17 20:36:50 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 28, 2003
+.Dd May 16, 2006
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@
 .Ft int
 .Fn readdir_r "DIR * restrict dirp" "struct dirent * restrict entry" "struct dirent ** restrict result"
 .Ft long
-.Fn telldir "const DIR *dirp"
+.Fn telldir "DIR *dirp"
 .Ft void
 .Fn seekdir "DIR *dirp" "long  loc"
 .Ft void

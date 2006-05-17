@@ -1,4 +1,4 @@
-/*	$NetBSD: rewinddir.c,v 1.11 2006/01/24 19:33:10 christos Exp $	*/
+/*	$NetBSD: rewinddir.c,v 1.12 2006/05/17 20:36:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rewinddir.c	8.1 (Berkeley) 6/8/93";
 #else
-__RCSID("$NetBSD: rewinddir.c,v 1.11 2006/01/24 19:33:10 christos Exp $");
+__RCSID("$NetBSD: rewinddir.c,v 1.12 2006/05/17 20:36:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,25 +45,27 @@ __RCSID("$NetBSD: rewinddir.c,v 1.11 2006/01/24 19:33:10 christos Exp $");
 
 #include <dirent.h>
 
+#include "dirent_private.h"
+
 #ifdef __weak_alias
 __weak_alias(rewinddir,_rewinddir)
 #endif
 
 void
-rewinddir(dirp)
-	DIR *dirp;
+rewinddir(DIR *dirp)
 {
+	struct dirpos *dp = dirp->dd_internal;
+
+	while (dp->dp_next)
+		dp = dp->dp_next;
 
 #ifdef _REENTRANT
 	if (__isthreaded) {
 		mutex_lock((mutex_t *)dirp->dd_lock);
-		_seekdir_unlocked(dirp, dirp->dd_rewind);
-		dirp->dd_rewind = _telldir_unlocked(dirp);
+		_seekdir_unlocked(dirp, (long)(intptr_t)dp);
 		mutex_unlock((mutex_t *)dirp->dd_lock);
 		return;
 	}
 #endif
-	_seekdir_unlocked(dirp, dirp->dd_rewind);
-	dirp->dd_rewind = _telldir_unlocked(dirp);
-
+	_seekdir_unlocked(dirp, (long)(intptr_t)dp);
 }
