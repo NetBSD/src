@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.385 2006/05/13 09:02:19 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.386 2006/05/17 00:28:02 kiyohara Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
@@ -92,6 +92,9 @@ MAN+=	sc.4 si.4
 
 # machine-independent IEEE1394 devices
 MAN+=	fwohci.4 fwip.4 sbp.4
+
+# machine-independent I2C devices
+MAN+=	lmtemp.4
 
 # IPv6/IPsec
 MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 stf.4
