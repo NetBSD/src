@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.433 2006/05/12 12:49:09 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.434 2006/05/17 17:36:32 drochner Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -459,8 +459,8 @@ License:	BSD (3/4-clause)
 Notes:
 
 Package:	libpcap
-Version:	0.8.3
-Current Vers:	0.9.3
+Version:	0.9.4
+Current Vers:	0.9.4
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -770,7 +770,7 @@ original.
 
 Package:	tcpdump
 Version:	3.8.3
-Current Vers:	3.9.3
+Current Vers:	3.9.4
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
