@@ -1,4 +1,4 @@
-/* $NetBSD: flash_arbus.c,v 1.1 2006/05/17 06:42:06 gdamore Exp $ */
+/* $NetBSD: flash_arbus.c,v 1.2 2006/05/17 07:11:48 gdamore Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -78,10 +78,18 @@
 
 /*
  * Flash Memory Driver
+ *
+ * XXX This primitive flash driver does *not* support boot sectored devices,
+ * XXX and only supports a fairly limited set of devices, that we are likely to
+ * XXX to find in an AP30.
+ * XXX
+ * XXX We also are only supporting flash widths of 16 _for the moment_, and
+ * XXX we are only supporting flash devices that use the AMD command sets.
+ * XXX All this should be reviewed and improved to be much more generic.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_arbus.c,v 1.1 2006/05/17 06:42:06 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_arbus.c,v 1.2 2006/05/17 07:11:48 gdamore Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -138,15 +146,6 @@ const struct cdevsw flash_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-/*
- * This primitive flash driver does *not* support boot sectored devices,
- * and only supports a fairly limited set of devices, that we are likely to
- * to find in an AP30.
- * 
- * We also are only supporting flash widths of 16 _for the moment_, and
- * we are only supporting flash devices that use the AMD command sets.
- * All this should be reviewed and improved to be much more generic.
- */
 static struct {
 	uint16_t		vendor_id;
 	uint16_t		device_id;
