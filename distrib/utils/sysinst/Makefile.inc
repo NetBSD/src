@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43 2006/05/11 00:15:17 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.44 2006/05/17 05:24:25 mrg Exp $
 #
 # Makefile for sysinst
 
@@ -43,6 +43,9 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 CPPFLAGS+=-DINET6
 .endif
 
+.if ${HAVE_GCC} == 4
+COPTS.label.c+=	-Wno-pointer-sign
+.endif
 
 # Host to ftp from.  Default:
 #	"ftp.NetBSD.org"
