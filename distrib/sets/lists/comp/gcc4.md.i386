@@ -1,0 +1,2 @@
+# $NetBSD: gcc4.md.i386,v 1.1 2006/05/17 15:07:05 tron Exp $
+./usr/include/mm_malloc.h			comp-c-include		gcccmds
