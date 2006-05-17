@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.66 2006/05/17 16:42:59 christos Exp $
+# $NetBSD: HACKS,v 1.67 2006/05/17 17:09:43 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -286,15 +286,6 @@ descr
 	GCC 4.1 warns on pointer sign comparision/assignments and lots of
 	code does not conform.  For now we use -Wno-pointer-sign and
 	-fno-strict-aliasing.
-kcah
-
-hack	gcc4 _DYNAMIC problem
-file	lib/csu/i386_elf/crt0.c		: 1.14
-descr
-	GCC4.1 seems to be confused with the weak symbol _DYNAMIC and does
-	not produce code that references it. Static binaries fail because of
-	this since _rtld_setup gets called. For now, check for obj != NULL
-	so that statically linked binaries work.
 kcah
 
 port	vax
