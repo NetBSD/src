@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.881 2006/05/16 21:51:34 dogcow Exp $
+#	$NetBSD: mi,v 1.882 2006/05/17 19:41:34 riz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1953,11 +1953,11 @@
 ./usr/share/man/cat1/ar.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/as.0			comp-util-catman	bfd,.cat
 ./usr/share/man/cat1/asa.0			comp-fortran-catman	.cat
-./usr/share/man/cat1/c++.0			comp-cxx-catman		.cat
+./usr/share/man/cat1/c++.0			comp-cxx-catman		gcccmds,.cat
 ./usr/share/man/cat1/c++filt.0			comp-cxx-catman		bfd,.cat
 ./usr/share/man/cat1/c89.0			comp-c-catman		.cat
-./usr/share/man/cat1/cc.0			comp-c-catman		.cat
-./usr/share/man/cat1/cccp.0			comp-util-catman	.cat
+./usr/share/man/cat1/cc.0			comp-c-catman		gcccmds,.cat
+./usr/share/man/cat1/cccp.0			comp-util-catman	gcccmds,.cat
 ./usr/share/man/cat1/config.0			comp-util-catman	.cat
 ./usr/share/man/cat1/crunchgen.0		comp-c-catman		.cat
 ./usr/share/man/cat1/crunchide.0		comp-c-catman		.cat
@@ -1968,10 +1968,10 @@
 ./usr/share/man/cat1/flex.0			comp-c-catman		.cat
 ./usr/share/man/cat1/flexdoc.0			comp-obsolete		obsolete
 ./usr/share/man/cat1/fpr.0			comp-fortran-catman	.cat
-./usr/share/man/cat1/g++.0			comp-cxx-catman		.cat
-./usr/share/man/cat1/gcc.0			comp-c-catman		.cat
+./usr/share/man/cat1/g++.0			comp-cxx-catman		gcccmds,.cat
+./usr/share/man/cat1/gcc.0			comp-c-catman		gcccmds,.cat
 ./usr/share/man/cat1/gcore.0			comp-debug-catman	.cat
-./usr/share/man/cat1/gcov.0			comp-debug-catman	.cat
+./usr/share/man/cat1/gcov.0			comp-debug-catman	gcccmds,.cat
 ./usr/share/man/cat1/gdb.0			comp-debug-catman	gdb,.cat
 ./usr/share/man/cat1/genassym.0			comp-util-catman	.cat
 ./usr/share/man/cat1/gprof.0			comp-debug-catman	bfd,.cat
@@ -6017,11 +6017,11 @@
 ./usr/share/man/man1/ar.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/as.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/asa.1			comp-fortran-man	.man
-./usr/share/man/man1/c++.1			comp-cxx-man		.man
+./usr/share/man/man1/c++.1			comp-cxx-man		gcccmds,.man
 ./usr/share/man/man1/c++filt.1			comp-cxx-man		bfd,.man
 ./usr/share/man/man1/c89.1			comp-c-man		.man
-./usr/share/man/man1/cc.1			comp-c-man		.man
-./usr/share/man/man1/cccp.1			comp-util-man		.man
+./usr/share/man/man1/cc.1			comp-c-man		gcccmds,.man
+./usr/share/man/man1/cccp.1			comp-util-man		gcccmds,.man
 ./usr/share/man/man1/config.1			comp-util-man		.man
 ./usr/share/man/man1/crunchgen.1		comp-c-man		.man
 ./usr/share/man/man1/crunchide.1		comp-c-man		.man
@@ -6031,10 +6031,10 @@
 ./usr/share/man/man1/fgen.1			comp-util-man		.man
 ./usr/share/man/man1/flex.1			comp-c-man		.man
 ./usr/share/man/man1/fpr.1			comp-fortran-man	.man
-./usr/share/man/man1/g++.1			comp-cxx-man		.man
-./usr/share/man/man1/gcc.1			comp-c-man		.man
+./usr/share/man/man1/g++.1			comp-cxx-man		gcccmds,.man
+./usr/share/man/man1/gcc.1			comp-c-man		gcccmds,.man
 ./usr/share/man/man1/gcore.1			comp-debug-man		.man
-./usr/share/man/man1/gcov.1			comp-debug-man		.man
+./usr/share/man/man1/gcov.1			comp-debug-man		gcccmds,.man
 ./usr/share/man/man1/gdb.1			comp-debug-man		gdb,.man
 ./usr/share/man/man1/genassym.1			comp-util-man		.man
 ./usr/share/man/man1/gprof.1			comp-debug-man		bfd,.man

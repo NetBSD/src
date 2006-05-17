@@ -1,4 +1,4 @@
-#	$NetBSD: tc.mi,v 1.13 2006/05/13 07:17:54 mrg Exp $
+#	$NetBSD: tc.mi,v 1.14 2006/05/17 19:41:34 riz Exp $
 ./usr/bin/f77					comp-fortran-bin	gcccmds
 ./usr/bin/fort77				comp-fortran-bin	gcccmds
 ./usr/bin/g77					comp-fortran-bin	gcccmds
@@ -161,9 +161,9 @@
 ./usr/include/g++/vector.h			comp-cxx-include
 ./usr/lib/libgcc_p.a				comp-c-proflib		profile
 ./usr/libexec/f771				comp-fortran-bin	gcccmds
-./usr/share/man/cat1/f77.0			comp-fortran-catman	.cat
-./usr/share/man/cat1/fort77.0			comp-fortran-catman	.cat
-./usr/share/man/cat1/g77.0			comp-fortran-catman	.cat
-./usr/share/man/man1/f77.1			comp-fortran-man	.man
-./usr/share/man/man1/fort77.1			comp-fortran-man	.man
-./usr/share/man/man1/g77.1			comp-fortran-man	.man
+./usr/share/man/cat1/f77.0			comp-fortran-catman	gcccmds,.cat
+./usr/share/man/cat1/fort77.0			comp-fortran-catman	gcccmds,.cat
+./usr/share/man/cat1/g77.0			comp-fortran-catman	gcccmds,.cat
+./usr/share/man/man1/f77.1			comp-fortran-man	gcccmds,.man
+./usr/share/man/man1/fort77.1			comp-fortran-man	gcccmds,.man
+./usr/share/man/man1/g77.1			comp-fortran-man	gcccmds,.man
