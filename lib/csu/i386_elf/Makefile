@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2001/07/17 03:56:48 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2006/05/17 17:01:12 christos Exp $
 
 #Uncomment the next line to enable the new .init fallthru
-CPPFLAGS+=	-I- -I${.CURDIR}
+CPPFLAGS+=	-iquote -I${.CURDIR}
 
 .include "${.CURDIR}/../common_elf/Makefile.inc"
