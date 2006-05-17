@@ -1,4 +1,4 @@
-# $NetBSD: tc.mi,v 1.5 2006/05/13 07:17:54 mrg Exp $
-./usr/share/info/g77.info			man-fortran-info	info
+# $NetBSD: tc.mi,v 1.6 2006/05/17 19:41:35 riz Exp $
+./usr/share/info/g77.info			man-fortran-info	gcccmds,info
 ./usr/share/man/cat8/dbsym.0			man-sysutil-catman	bfd,.cat
 ./usr/share/man/man8/dbsym.8			man-sysutil-man		bfd,.man
