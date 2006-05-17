@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.55 2005/12/24 22:45:34 perry Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.56 2006/05/17 04:22:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.55 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.56 2006/05/17 04:22:46 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -526,6 +526,7 @@ initarm(void *arg)
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
