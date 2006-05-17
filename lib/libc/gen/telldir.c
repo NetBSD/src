@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.17 2006/01/24 19:33:10 christos Exp $	*/
+/*	$NetBSD: telldir.c,v 1.18 2006/05/17 20:36:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.17 2006/01/24 19:33:10 christos Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.18 2006/05/17 20:36:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,48 +48,24 @@ __RCSID("$NetBSD: telldir.c,v 1.17 2006/01/24 19:33:10 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "dirent_private.h"
+
 #ifdef __weak_alias
 __weak_alias(telldir,_telldir)
 #endif
 
-/*
- * The option SINGLEUSE may be defined to say that a telldir
- * cookie may be used only once before it is freed. This option
- * is used to avoid having memory usage grow without bound.
- */
-#define SINGLEUSE
-
-/*
- * One of these structures is malloced to describe the current directory
- * position each time telldir is called. It records the current magic 
- * cookie returned by getdirentries and the offset within the buffer
- * associated with that return value.
- */
-struct ddloc {
-	struct	ddloc *loc_next;/* next structure in list */
-	long	loc_index;	/* key associated with structure */
-	off_t	loc_seek;	/* magic cookie returned by getdirentries */
-	long	loc_loc;	/* offset of entry in buffer */
-};
-
-#define	NDIRHASH	32	/* Num of hash lists, must be a power of 2 */
-#define	LOCHASH(i)	(((int)i)&(NDIRHASH-1))
-
-static long	dd_loccnt;	/* Index of entry for sequential readdir's */
-static struct	ddloc *dd_hash[NDIRHASH];   /* Hash list heads for ddlocs */
-
 long
-telldir(const DIR *dirp)
+telldir(DIR *dirp)
 {
 	long rv;
 #ifdef _REENTRANT
 	if (__isthreaded) {
 		mutex_lock((mutex_t *)dirp->dd_lock);
-		rv = _telldir_unlocked(dirp);
+		rv = (intptr_t)_telldir_unlocked(dirp);
 		mutex_unlock((mutex_t *)dirp->dd_lock);
 	} else
 #endif
-		rv = _telldir_unlocked(dirp);
+		rv = (intptr_t)_telldir_unlocked(dirp);
 	return rv;
 }
 
@@ -97,20 +73,24 @@ telldir(const DIR *dirp)
  * return a pointer into a directory
  */
 long
-_telldir_unlocked(const DIR *dirp)
+_telldir_unlocked(DIR *dirp)
 {
-	long idx;
-	struct ddloc *lp;
+	struct dirpos *lp;
 
-	if ((lp = (struct ddloc *)malloc(sizeof(struct ddloc))) == NULL)
+	for (lp = dirp->dd_internal; lp; lp = lp->dp_next)
+		if (lp->dp_seek == dirp->dd_seek &&
+		    lp->dp_loc == dirp->dd_loc)
+			return (intptr_t)lp;
+
+	if ((lp = malloc(sizeof(*lp))) == NULL)
 		return (-1);
-	idx = dd_loccnt++;
-	lp->loc_index = idx;
-	lp->loc_seek = dirp->dd_seek;
-	lp->loc_loc = dirp->dd_loc;
-	lp->loc_next = dd_hash[LOCHASH(idx)];
-	dd_hash[LOCHASH(idx)] = lp;
-	return (idx);
+
+	lp->dp_seek = dirp->dd_seek;
+	lp->dp_loc = dirp->dd_loc;
+	lp->dp_next = dirp->dd_internal;
+	dirp->dd_internal = lp;
+
+	return (intptr_t)lp;
 }
 
 /*
@@ -120,35 +100,23 @@ _telldir_unlocked(const DIR *dirp)
 void
 _seekdir_unlocked(DIR *dirp, long loc)
 {
-	struct ddloc *lp;
-	struct ddloc **prevlp;
-	struct dirent *dp;
+	struct dirpos *lp;
 
 	_DIAGASSERT(dirp != NULL);
 
-	prevlp = &dd_hash[LOCHASH(loc)];
-	lp = *prevlp;
-	while (lp != NULL) {
-		if (lp->loc_index == loc)
+	for (lp = dirp->dd_internal; lp; lp = lp->dp_next)
+		if ((intptr_t)lp == loc)
 			break;
-		prevlp = &lp->loc_next;
-		lp = lp->loc_next;
-	}
+
 	if (lp == NULL)
 		return;
-	if (lp->loc_loc == dirp->dd_loc && lp->loc_seek == dirp->dd_seek)
-		goto found;
-	(void) lseek(dirp->dd_fd, (off_t)lp->loc_seek, SEEK_SET);
-	dirp->dd_seek = lp->loc_seek;
+
+	if (lp->dp_loc == dirp->dd_loc && lp->dp_seek == dirp->dd_seek)
+		return;
+
+	dirp->dd_seek = lseek(dirp->dd_fd, lp->dp_seek, SEEK_SET);
 	dirp->dd_loc = 0;
-	while (dirp->dd_loc < lp->loc_loc) {
-		dp = _readdir_unlocked(dirp);
-		if (dp == NULL)
+	while (dirp->dd_loc < lp->dp_loc)
+		if (_readdir_unlocked(dirp) == NULL)
 			break;
-	}
-found:
-#ifdef SINGLEUSE
-	*prevlp = lp->loc_next;
-	free(lp);
-#endif
 }

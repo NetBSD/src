@@ -1,4 +1,4 @@
-/*	$NetBSD: closedir.c,v 1.14 2006/01/24 19:33:10 christos Exp $	*/
+/*	$NetBSD: closedir.c,v 1.15 2006/05/17 20:36:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)closedir.c	8.1 (Berkeley) 6/10/93";
 #else
-__RCSID("$NetBSD: closedir.c,v 1.14 2006/01/24 19:33:10 christos Exp $");
+__RCSID("$NetBSD: closedir.c,v 1.15 2006/05/17 20:36:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: closedir.c,v 1.14 2006/01/24 19:33:10 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "dirent_private.h"
+
 #ifdef __weak_alias
 __weak_alias(closedir,_closedir)
 #endif
@@ -57,10 +59,10 @@ __weak_alias(closedir,_closedir)
  * close a directory.
  */
 int
-closedir(dirp)
-	DIR *dirp;
+closedir(DIR *dirp)
 {
 	int fd;
+	struct dirpos *poslist;
 
 	_DIAGASSERT(dirp != NULL);
 
@@ -68,11 +70,18 @@ closedir(dirp)
 	if (__isthreaded)
 		mutex_lock((mutex_t *)dirp->dd_lock);
 #endif
-	_seekdir_unlocked(dirp, dirp->dd_rewind);/* free seekdir storage */
 	fd = dirp->dd_fd;
 	dirp->dd_fd = -1;
 	dirp->dd_loc = 0;
-	free((void *)dirp->dd_buf);
+	free(dirp->dd_buf);
+
+	/* free seekdir/telldir storage */
+	for (poslist = dirp->dd_internal; poslist; ) {
+		struct dirpos *nextpos = poslist->dp_next;
+		free(poslist);
+		poslist = nextpos;
+	}
+
 #ifdef _REENTRANT
 	if (__isthreaded) {
 		mutex_unlock((mutex_t *)dirp->dd_lock);
