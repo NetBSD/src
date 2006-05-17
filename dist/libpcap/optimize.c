@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/optimize.c,v 1.3 2006/02/27 16:00:20 drochner Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/dist/libpcap/Attic/optimize.c,v 1.4 2006/05/17 17:48:36 drochner Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -624,7 +624,7 @@ fold_op(s, v0, v1)
 	struct stmt *s;
 	int v0, v1;
 {
-	bpf_int32 a, b;
+	bpf_u_int32 a, b;
 
 	a = vmap[v0].const_val;
 	b = vmap[v1].const_val;
