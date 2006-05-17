@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.22 2006/01/24 19:33:10 christos Exp $	*/
+/*	$NetBSD: readdir.c,v 1.23 2006/05/17 20:36:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.22 2006/01/24 19:33:10 christos Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.23 2006/05/17 20:36:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: readdir.c,v 1.22 2006/01/24 19:33:10 christos Exp $");
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "dirent_private.h"
 
 /*
  * get next entry in a directory.
