@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.h,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_array.h,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -63,6 +63,8 @@ prop_object_t	prop_array_get(prop_array_t, unsigned int);
 boolean_t	prop_array_set(prop_array_t, unsigned int, prop_object_t);
 boolean_t	prop_array_add(prop_array_t, prop_object_t);
 void		prop_array_remove(prop_array_t, unsigned int);
+
+boolean_t	prop_array_equals(prop_array_t, prop_array_t);
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_ARRAY_H_ */

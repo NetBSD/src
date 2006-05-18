@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_object.3,v 1.1 2006/04/27 20:11:27 thorpej Exp $
+.\"	$NetBSD: prop_object.3,v 1.2 2006/05/18 03:05:19 thorpej Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Nm prop_object_retain ,
 .Nm prop_object_release ,
 .Nm prop_object_type ,
+.Nm prop_object_equals ,
 .Nm prop_object_iterator_next ,
 .Nm prop_object_iterator_reset ,
 .Nm prop_object_iterator_release
@@ -58,6 +59,8 @@
 .\"
 .Ft prop_type_t
 .Fn prop_object_type "prop_object_t obj"
+.Ft boolean_t
+.Fn prop_object_equals "prop_object_t obj1" "prop_object_t obj2"
 .\"
 .Ft prop_object_t
 .Fn prop_object_iterator_next "prop_object_iterator_t iter"
@@ -101,6 +104,10 @@ Dictionary
 Dictionary key symbol
 .Pq prop_dictionary_keysym_t
 .El
+.It Fn prop_object_equals "prop_object_t obj1" "prop_object_t obj2"
+Returns
+.Dv TRUE
+if the two objects are of the same type and are equivalent.
 .It Fn prop_object_iterator_next "prop_object_iterator_t iter"
 Return the next object in the collection
 .Pq array or dictionary

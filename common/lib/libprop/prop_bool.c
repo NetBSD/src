@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,7 +46,21 @@ struct _prop_bool {
 
 _PROP_POOL_INIT(_prop_bool_pool, sizeof(struct _prop_bool), "propbool")
 
-#define	prop_object_is_bool(x)	((x)->pb_obj.po_type == PROP_TYPE_BOOL)
+static void		_prop_bool_free(void *);
+static boolean_t	_prop_bool_externalize(
+				struct _prop_object_externalize_context *,
+				void *);
+static boolean_t	_prop_bool_equals(void *, void *);
+
+static const struct _prop_object_type _prop_object_type_bool = {
+	.pot_type	=	PROP_TYPE_BOOL,
+	.pot_free	=	_prop_bool_free,
+	.pot_extern	=	_prop_bool_externalize,
+	.pot_equals	=	_prop_bool_equals,
+};
+
+#define	prop_object_is_bool(x)		\
+	((x)->pb_obj.po_type == &_prop_object_type_bool)
 
 static void
 _prop_bool_free(void *v)
@@ -65,6 +79,17 @@ _prop_bool_externalize(struct _prop_object_externalize_context *ctx,
 	    pb->pb_value ? "true" : "false"));
 }
 
+static boolean_t
+_prop_bool_equals(void *v1, void *v2)
+{
+	prop_bool_t b1 = v1;
+	prop_bool_t b2 = v2;
+
+	_PROP_ASSERT(prop_object_is_bool(b1));
+	_PROP_ASSERT(prop_object_is_bool(b2));
+	return (b1->pb_value == b2->pb_value);
+}
+
 static prop_bool_t
 _prop_bool_alloc(void)
 {
@@ -72,10 +97,7 @@ _prop_bool_alloc(void)
 
 	pb = _PROP_POOL_GET(_prop_bool_pool);
 	if (pb != NULL) {
-		_prop_object_init(&pb->pb_obj);
-		pb->pb_obj.po_type = PROP_TYPE_BOOL;
-		pb->pb_obj.po_free = _prop_bool_free;
-		pb->pb_obj.po_extern = _prop_bool_externalize;
+		_prop_object_init(&pb->pb_obj, &_prop_object_type_bool);
 	}
 
 	return (pb);
@@ -124,6 +146,17 @@ prop_bool_true(prop_bool_t pb)
 
 	_PROP_ASSERT(prop_object_is_bool(pb));
 	return (pb->pb_value);
+}
+
+/*
+ * prop_bool_equals --
+ *	Return TRUE if the boolean values are equivalent.
+ */
+boolean_t
+prop_bool_equals(prop_bool_t b1, prop_bool_t b2)
+{
+
+	return (_prop_bool_equals(b1, b2));
 }
 
 /*

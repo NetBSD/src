@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.882 2006/05/17 19:41:34 riz Exp $
+#	$NetBSD: mi,v 1.883 2006/05/18 03:05:19 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4108,6 +4108,7 @@
 ./usr/share/man/cat3/prop_array_create.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_create_with_capacity.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_array_ensure_capacity.0 comp-c-catman		.cat
+./usr/share/man/cat3/prop_array_equals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_get.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_iterator.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array_make_immutable.0 comp-c-catman		.cat
@@ -4135,12 +4136,15 @@
 ./usr/share/man/cat3/prop_dictionary_create.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_create_with_capacity.0 comp-c-catman .cat
 ./usr/share/man/cat3/prop_dictionary_ensure_capacity.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_dictionary_equals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_externalize.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_dictionary_get.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_get_keysym.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_internalize.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_dictionary_iterator.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_keysym_cstring_nocopy.0 comp-c-catman .cat
+./usr/share/man/cat3/prop_dictionary_keysym_equals.0 comp-c-catman	.cat
+./usr/share/man/cat3/prop_dictionary_make_immutable.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_dictionary_make_immutable.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_dictionary_mutable.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_dictionary_remove.0	comp-c-catman		.cat
@@ -4155,6 +4159,7 @@
 ./usr/share/man/cat3/prop_number_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_number_integer_value.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object.0		comp-c-catman		.cat
+./usr/share/man/cat3/prop_object_equals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_iterator_next.0 comp-c-catman		.cat
 ./usr/share/man/cat3/prop_object_iterator_release.0 comp-c-catman	.cat
 ./usr/share/man/cat3/prop_object_iterator_reset.0 comp-c-catman		.cat
@@ -8167,6 +8172,7 @@
 ./usr/share/man/man3/prop_array_create.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_create_with_capacity.3 comp-c-man	.man
 ./usr/share/man/man3/prop_array_ensure_capacity.3 comp-c-man		.man
+./usr/share/man/man3/prop_array_equals.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_get.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array_iterator.3	comp-c-man		.man
 ./usr/share/man/man3/prop_array_make_immutable.3 comp-c-man		.man
@@ -8194,12 +8200,14 @@
 ./usr/share/man/man3/prop_dictionary_create.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_create_with_capacity.3 comp-c-man	.man
 ./usr/share/man/man3/prop_dictionary_ensure_capacity.3 comp-c-man	.man
+./usr/share/man/man3/prop_dictionary_equals.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_externalize.3 comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_get.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_get_keysym.3 comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_internalize.3 comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_iterator.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_keysym_cstring_nocopy.3 comp-c-man .man
+./usr/share/man/man3/prop_dictionary_keysym_equals.3 comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_make_immutable.3 comp-c-man	.man
 ./usr/share/man/man3/prop_dictionary_mutable.3	comp-c-man		.man
 ./usr/share/man/man3/prop_dictionary_remove.3	comp-c-man		.man
@@ -8214,6 +8222,7 @@
 ./usr/share/man/man3/prop_number_size.3		comp-c-man		.man
 ./usr/share/man/man3/prop_number_integer_value.3 comp-c-man		.man
 ./usr/share/man/man3/prop_object.3		comp-c-man		.man
+./usr/share/man/man3/prop_object_equals.3	comp-c-man		.man
 ./usr/share/man/man3/prop_object_iterator_next.3 comp-c-man		.man
 ./usr/share/man/man3/prop_object_iterator_release.3 comp-c-man		.man
 ./usr/share/man/man3/prop_object_iterator_reset.3 comp-c-man		.man

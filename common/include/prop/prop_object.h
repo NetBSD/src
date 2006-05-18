@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.h,v 1.2 2006/05/07 12:46:01 he Exp $	*/
+/*	$NetBSD: prop_object.h,v 1.3 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ void		prop_object_retain(prop_object_t);
 void		prop_object_release(prop_object_t);
 
 prop_type_t	prop_object_type(prop_object_t);
+
+boolean_t	prop_object_equals(prop_object_t, prop_object_t);
 
 typedef struct _prop_object_iterator *prop_object_iterator_t;
 

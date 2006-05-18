@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array.3,v 1.1 2006/04/27 20:11:27 thorpej Exp $
+.\"	$NetBSD: prop_array.3,v 1.2 2006/05/18 03:05:19 thorpej Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,8 @@
 .Nm prop_array_get ,
 .Nm prop_array_set ,
 .Nm prop_array_add ,
-.Nm prop_array_remove
+.Nm prop_array_remove ,
+.Nm prop_array_equals
 .Nd array property collection object
 .Sh LIBRARY
 .Lb libprop
@@ -92,6 +93,9 @@
 .Fn prop_array_add "prop_array_t array" "prop_object_t obj"
 .Ft void
 .Fn prop_array_remove "prop_array_t array" "unsigned int index"
+.\"
+.Ft boolean_t
+.Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
 .Sh DESCRIPTION
 The
 .Nm prop_array
@@ -185,6 +189,11 @@ Remove the reference to the object stored at array index
 .Fa index .
 The object will be released and the array compacted following
 the removal.
+.It Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
+Returns
+.Dv TRUE
+if the two arrays are equivalent.
+Note: Objects contained in the array are compared by value, not by reference.
 .El
 .Sh SEE ALSO
 .Xr prop_bool 3 ,

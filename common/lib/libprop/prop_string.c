@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -58,7 +58,21 @@ _PROP_POOL_INIT(_prop_string_pool, sizeof(struct _prop_string), "propstng")
 _PROP_MALLOC_DEFINE(M_PROP_STRING, "prop string",
 		    "property string container object")
 
-#define	prop_object_is_string(x) ((x)->ps_obj.po_type == PROP_TYPE_STRING)
+static void		_prop_string_free(void *);
+static boolean_t	_prop_string_externalize(
+				struct _prop_object_externalize_context *,
+				void *);
+static boolean_t	_prop_string_equals(void *, void *);
+
+static const struct _prop_object_type _prop_object_type_string = {
+	.pot_type	=	PROP_TYPE_STRING,
+	.pot_free	=	_prop_string_free,
+	.pot_extern	=	_prop_string_externalize,
+	.pot_equals	=	_prop_string_equals,
+};
+
+#define	prop_object_is_string(x)	\
+	((x)->ps_obj.po_type == &_prop_object_type_string)
 #define	prop_string_contents(x)  ((x)->ps_immutable ? (x)->ps_immutable : "")
 
 static void
@@ -89,6 +103,22 @@ _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 	return (TRUE);
 }
 
+static boolean_t
+_prop_string_equals(void *v1, void *v2)
+{
+	prop_string_t str1 = v1;
+	prop_string_t str2 = v2;
+
+	_PROP_ASSERT(prop_object_is_string(str1));
+	_PROP_ASSERT(prop_object_is_string(str2));
+	if (str1 == str2)
+		return (TRUE);
+	if (str1->ps_size != str2->ps_size)
+		return (FALSE);
+	return (strcmp(prop_string_contents(str1),
+		       prop_string_contents(str2)) == 0);
+}
+
 static prop_string_t
 _prop_string_alloc(void)
 {
@@ -96,10 +126,7 @@ _prop_string_alloc(void)
 
 	ps = _PROP_POOL_GET(_prop_string_pool);
 	if (ps != NULL) {
-		_prop_object_init(&ps->ps_obj);
-		ps->ps_obj.po_type = PROP_TYPE_STRING;
-		ps->ps_obj.po_free = _prop_string_free;
-		ps->ps_obj.po_extern = _prop_string_externalize;
+		_prop_object_init(&ps->ps_obj, &_prop_object_type_string);
 
 		ps->ps_mutable = NULL;
 		ps->ps_size = 0;
@@ -348,14 +375,7 @@ boolean_t
 prop_string_equals(prop_string_t str1, prop_string_t str2)
 {
 
-	_PROP_ASSERT(prop_object_is_string(str1));
-	_PROP_ASSERT(prop_object_is_string(str2));
-	if (str1 == str2)
-		return (TRUE);
-	if (str1->ps_size != str2->ps_size)
-		return (FALSE);
-	return (strcmp(prop_string_contents(str1),
-		       prop_string_contents(str2)) == 0);
+	return (_prop_string_equals(str1, str2));
 }
 
 /*
