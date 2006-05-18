@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.113 2006/05/16 00:08:25 elad Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.114 2006/05/18 17:35:49 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,14 +64,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.113 2006/05/16 00:08:25 elad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.114 2006/05/18 17:35:49 elad Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
 #define	ELFSIZE		32
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_pax.h"
+#endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
 #include <sys/proc.h>
