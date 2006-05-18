@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.11 2006/05/12 13:31:56 he Exp $
+/*	$NetBSD: aout2elf.c,v 1.12 2006/05/18 18:45:48 mrg Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -141,6 +141,8 @@ handle_aout_libs(const char *dir, int op, const void *arg)
 	char *full_name;
 	const char *destdir = NULL; /* XXX -Wuninitialized [many] */
 	int n;
+
+	destdir = NULL;	/* XXX gcc */
 
 	dd = opendir(dir);
 	if (dd == NULL)
