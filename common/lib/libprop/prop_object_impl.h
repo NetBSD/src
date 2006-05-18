@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.3 2006/05/18 16:23:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ struct _prop_object_iterator {
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/systm.h>
+#include <sys/lock.h>
 
 #define	_PROP_ASSERT(x)		KASSERT(x)
 
@@ -193,6 +194,11 @@ struct _prop_object_iterator {
 
 #define	_PROP_MALLOC_DEFINE(t, s, l)					\
 		MALLOC_DEFINE(t, s, l);
+
+#define	_PROP_MUTEX_DECL(x)						\
+		static struct simplelock x = SIMPLELOCK_INITIALIZER;
+#define	_PROP_MUTEX_LOCK(x)	simple_lock(&(x))
+#define	_PROP_MUTEX_UNLOCK(x)	simple_unlock(&(x))
 
 #elif defined(_STANDALONE)
 
@@ -220,6 +226,10 @@ void *		_prop_standalone_realloc(void *, size_t);
 
 #define	_PROP_MALLOC_DEFINE(t, s, l)	/* nothing */
 
+#define	_PROP_MUTEX_DECL(x)	/* nothing */
+#define	_PROP_MUTEX_LOCK(x)	/* nothing */
+#define	_PROP_MUTEX_UNLOCK(x)	/* nothing */
+
 #else
 
 /*
@@ -244,6 +254,33 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_POOL_INIT(p, s, d)	static const size_t p = s;
 
 #define	_PROP_MALLOC_DEFINE(t, s, l)	/* nothing */
+
+#if defined(__NetBSD__) && defined(_LIBPROP)
+/*
+ * Use the same mechanism as libc; we get pthread mutexes for threaded
+ * programs and do-nothing stubs for non-threaded programs.
+ */
+#include "reentrant.h"
+#define	_PROP_MUTEX_DECL(x)	static mutex_t x = MUTEX_INITIALIZER;
+#define	_PROP_MUTEX_LOCK(x)	mutex_lock(&(x))
+#define	_PROP_MUTEX_UNLOCK(x)	mutex_unlock(&(x))
+#elif defined(HAVE_NBTOOL_CONFIG_H)
+/*
+ * None of NetBSD's build tools are multi-threaded.
+ */
+#define	_PROP_MUTEX_DECL(x)	/* nothing */
+#define	_PROP_MUTEX_LOCK(x)	/* nothing */
+#define	_PROP_MUTEX_UNLOCK(x)	/* nothing */
+#else
+/*
+ * Use pthread mutexes everywhere else.
+ */
+#include <pthread.h>
+#define	_PROP_MUTEX_DECL(x)						\
+		static pthread_mutex_t x = PTHREAD_MUTEX_INITIALIZER;
+#define	_PROP_MUTEX_LOCK(x)	pthread_mutex_lock(&(x))
+#define	_PROP_MUTEX_UNLOCK(x)	pthread_mutex_unlock(&(x))
+#endif
 
 #endif /* _KERNEL */
 
