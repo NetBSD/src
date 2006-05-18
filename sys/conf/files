@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.774 2006/05/16 00:08:25 elad Exp $
+#	$NetBSD: files,v 1.775 2006/05/18 09:05:51 liamjfoy Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1099,6 +1099,7 @@ defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo stf:		ifnet
 defpseudo tap { }:	ifnet, ether, arp, bpf_filter
+defpseudo carp:		ifnet, ether, arp, bpf_filter
 
 defpseudo sequencer
 defpseudo clockctl
@@ -1356,6 +1357,7 @@ file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
 file	netinet/in_gif.c		gif & inet
+file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
 file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_gre.c		inet & gre

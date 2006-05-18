@@ -1,4 +1,4 @@
-#	$NetBSD: protocols,v 1.14 2005/12/18 21:39:52 rpaulo Exp $
+#	$NetBSD: protocols,v 1.15 2006/05/18 09:05:49 liamjfoy Exp $
 #
 # Internet (IP) protocols
 #
@@ -117,7 +117,7 @@ ipcomp	108	IPCOMP		# IP Payload Compression Protocol
 snp	109	SNP		# Sitara Networks Protocol
 compaq-peer	110	Compaq-Peer	# Compaq Peer Protocol
 ipx-in-ip	111	IPX-in-IP	# IPX in IP
-vrrp	112	VRRP		# Virtual Router Redundancy Protocol
+carp	112	CARP	vrrp	# Virtual Router Redundancy Protocol
 pgm	113	PGM		# PGM Reliable Transport Protocol
 #	114			# any 0-hop protocol
 l2tp	115	L2TP		# Layer Two Tunneling Protocol

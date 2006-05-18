@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.37 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.38 2006/05/18 09:05:51 liamjfoy Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.37 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.38 2006/05/18 09:05:51 liamjfoy Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -130,6 +130,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.37 2006/05/14 21:19:33 elad Exp $");
 #endif
 
 #define	BRIDGE_RTHASH_MASK		(BRIDGE_RTHASH_SIZE - 1)
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/in.h>
+#include <netinet/in_var.h>
+#include <netinet/ip_carp.h>
+#endif
 
 /*
  * Maximum number of addresses to cache.
@@ -1535,7 +1542,12 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			continue;
 		/* It is destined for us. */
 		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_dhost,
-		    ETHER_ADDR_LEN) == 0) {
+		    ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,
+			eh, IFT_ETHER, 0) != NULL)
+#endif /* NCARP > 0 */
+		    ) {
 			if (bif->bif_flags & IFBIF_LEARNING)
 				(void) bridge_rtupdate(sc,
 				    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
@@ -1553,7 +1565,12 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 
 		/* We just received a packet that we sent out. */
 		if (memcmp(LLADDR(bif->bif_ifp->if_sadl), eh->ether_shost,
-		    ETHER_ADDR_LEN) == 0) {
+		    ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+		    || (bif->bif_ifp->if_carp && carp_ourether(bif->bif_ifp->if_carp,
+			eh, IFT_ETHER, 1) != NULL)
+#endif /* NCARP > 0 */
+		    ) {
 			m_freem(m);
 			return (NULL);
 		}

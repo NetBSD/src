@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2005/09/14 15:35:26 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2006/05/18 09:05:51 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.51 2005/09/14 15:35:26 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 2006/05/18 09:05:51 liamjfoy Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,6 +204,8 @@ struct nlist nl[] = {
 	{ "_hardclock_ticks" },
 #define N_PIMSTAT	68
 	{ "_pimstat" },
+#define N_CARPSTAT	69
+	{ "_carpstats" },
 	{ "" },
 };
 
@@ -231,6 +233,8 @@ struct protox {
 	  icmp_stats,	NULL,		0,	"icmp" },
 	{ -1,		N_IGMPSTAT,	1,	0,
 	  igmp_stats,	NULL,		0,	"igmp" },
+	{ -1,		N_CARPSTAT,	1,	0,
+	  carp_stats,	NULL,		0,	"carp" },
 #ifdef IPSEC
 	{ -1,		N_IPSECSTAT,	1,	0,
 	  ipsec_switch,	NULL,		0,	"ipsec" },
