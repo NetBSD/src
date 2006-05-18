@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping6.8,v 1.26 2006/05/05 00:03:22 rpaulo Exp $
+.\"	$NetBSD: ping6.8,v 1.27 2006/05/18 00:50:08 rpaulo Exp $
 .\"	$KAME: ping6.8,v 1.57 2002/05/26 13:18:25 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 17, 1998
+.Dd May 18, 2006
 .Dt PING6 8
 .Os
 .Sh NAME
@@ -359,7 +359,7 @@ Duplicates may occur in many situations and are rarely
 .Pq if ever
 a good sign, although the presence of low levels of duplicates may not
 always be cause for alarm.
-Duplicates are expected when pinging a broadcast or multicast address,
+Duplicates are expected when pinging a multicast address,
 since they are not really duplicates but replies from different hosts
 to the same request.
 .Pp
