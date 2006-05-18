@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.883 2006/05/18 03:05:19 thorpej Exp $
+#	$NetBSD: mi,v 1.884 2006/05/18 09:05:49 liamjfoy Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -965,6 +965,7 @@
 ./usr/include/netinet/ip.h			comp-c-include
 ./usr/include/netinet/ip6.h			comp-c-include
 ./usr/include/netinet/ip_auth.h			comp-ipf-include	ipfilter
+./usr/include/netinet/ip_carp.h			comp-c-include
 ./usr/include/netinet/ip_compat.h		comp-c-include
 ./usr/include/netinet/ip_ecn.h			comp-c-include
 ./usr/include/netinet/ip_encap.h		comp-c-include

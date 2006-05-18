@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.132 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.133 2006/05/18 09:05:51 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.132 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.133 2006/05/18 09:05:51 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -151,6 +151,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.132 2006/05/14 21:19:33 elad Exp 
 #include <netns/ns_if.h>
 #endif
 
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
+
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
@@ -199,7 +204,6 @@ const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
 
 static	int ether_output(struct ifnet *, struct mbuf *,
 	    struct sockaddr *, struct rtentry *);
-static	void ether_input(struct ifnet *, struct mbuf *);
 
 /*
  * Ethernet output routine.
@@ -207,7 +211,7 @@ static	void ether_input(struct ifnet *, struct mbuf *);
  * Assumes that ifp is actually pointer to ethercom structure.
  */
 static int
-ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	struct rtentry *rt0)
 {
 	u_int16_t etype = 0;
@@ -217,6 +221,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	struct ether_header *eh;
+	struct ifnet *ifp = ifp0;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 #ifdef INET
 	struct arphdr *ah;
@@ -228,6 +233,26 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);
 #endif
+
+#if NCARP > 0
+	if (ifp->if_type == IFT_CARP) {
+		struct ifaddr *ifa;
+
+		/* loop back if this is going to the carp interface */
+		if (dst != NULL && ifp0->if_link_state == LINK_STATE_UP &&
+		    (ifa = ifa_ifwithaddr(dst)) != NULL &&
+		    ifa->ifa_ifp == ifp0)
+			return (looutput(ifp0, m, dst, rt0));
+
+		ifp = ifp->if_carpdev;
+		/* ac = (struct arpcom *)ifp; */
+
+		if ((ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING))
+			senderr(ENETDOWN);
+	}
+#endif /* NCARP > 0 */
+
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 	if ((rt = rt0) != NULL) {
@@ -519,6 +544,13 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)eh->ether_shost,
 		    sizeof(eh->ether_shost));
 
+#if NCARP > 0
+	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
+	 	bcopy(LLADDR(ifp0->if_sadl), (caddr_t)eh->ether_shost,
+		    sizeof(eh->ether_shost));
+	}
+#endif /* NCARP > 0 */
+
 #ifdef PFIL_HOOKS
 	if ((error = pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
 		return (error);
@@ -533,6 +565,11 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (ifp->if_bridge)
 		return (bridge_output(ifp, m, NULL, NULL));
 #endif
+
+#if NCARP > 0
+	if (ifp != ifp0)
+		ifp0->if_obytes += m->m_pkthdr.len + ETHER_HDR_LEN;
+#endif /* NCARP > 0 */
 
 #ifdef ALTQ
 	/*
@@ -651,7 +688,7 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
  * the packet is in the mbuf chain m with
  * the ether header.
  */
-static void
+void
 ether_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ethercom *ec = (struct ethercom *) ifp;
@@ -743,6 +780,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	} else
 #endif /* NBRIDGE > 0 */
 	{
+
+#if NCARP > 0
+		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
+		    (carp_input(m, (u_int8_t *)&eh->ether_shost,
+		    (u_int8_t *)&eh->ether_dhost, eh->ether_type) == 0)) {
+			return;
+		}
+#endif /* NCARP > 0 */
 		if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
 		    (ifp->if_flags & IFF_PROMISC) != 0 &&
 		    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.68 2005/08/12 14:08:16 elad Exp $	*/
+/*	$NetBSD: inet.c,v 1.69 2006/05/18 09:05:51 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.68 2005/08/12 14:08:16 elad Exp $");
+__RCSID("$NetBSD: inet.c,v 1.69 2006/05/18 09:05:51 liamjfoy Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: inet.c,v 1.68 2005/08/12 14:08:16 elad Exp $");
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_debug.h>
 #include <netinet/udp.h>
+#include <netinet/ip_carp.h>
 #include <netinet/udp_var.h>
 
 #include <arpa/inet.h>
@@ -627,6 +628,58 @@ igmp_stats(off, name)
         p(igps_snd_reports, "\t%llu membership report%s sent\n");
 #undef p
 #undef py
+}
+
+/*
+ * Dump CARP statistics structure.
+ */
+void
+carp_stats(u_long off, char *name)
+{
+	struct carpstats carpstat;
+
+	if (use_sysctl) {
+		size_t size = sizeof(carpstat);
+
+		if (sysctlbyname("net.inet.carp.stats", &carpstat, &size,
+				 NULL, 0) == -1)
+			err(1, "net.inet.carp.stats");
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)&carpstat, sizeof(carpstat));
+	}
+
+	printf("%s:\n", name);
+
+#define p(f, m) if (carpstat.f || sflag <= 1) \
+	printf(m, carpstat.f, plural(carpstat.f))
+#define p2(f, m) if (carpstat.f || sflag <= 1) \
+	printf(m, carpstat.f)
+
+	p(carps_ipackets, "\t%llu packet%s received (IPv4)\n");
+	p(carps_ipackets6, "\t%llu packet%s received (IPv6)\n");
+	p(carps_badif,
+	    "\t\t%llu packet%s discarded for bad interface\n");
+	p(carps_badttl,
+	    "\t\t%llu packet%s discarded for wrong TTL\n");
+	p(carps_hdrops, "\t\t%llu packet%s shorter than header\n");
+	p(carps_badsum, "\t\t%llu packet%s discarded for bad checksum\n");
+	p(carps_badver,
+	    "\t\t%llu packet%s discarded with a bad version\n");
+	p2(carps_badlen,
+	    "\t\t%llu discarded because packet was too short\n");
+	p(carps_badauth,
+	    "\t\t%llu packet%s discarded for bad authentication\n");
+	p(carps_badvhid, "\t\t%llu packet%s discarded for bad vhid\n");
+	p(carps_badaddrs,
+	    "\t\t%llu packet%s discarded because of a bad address list\n");
+	p(carps_opackets, "\t%llu packet%s sent (IPv4)\n");
+	p(carps_opackets6, "\t%llu packet%s sent (IPv6)\n");
+	p2(carps_onomem,
+	    "\t\t%llu send failed due to mbuf memory error\n");
+#undef p
+#undef p2
 }
 
 /*

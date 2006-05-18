@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.165 2006/05/14 21:19:33 elad Exp $	*/
+/*	$NetBSD: if.c,v 1.166 2006/05/18 09:05:51 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.165 2006/05/14 21:19:33 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.166 2006/05/18 09:05:51 liamjfoy Exp $");
 
 #include "opt_inet.h"
 
@@ -145,6 +145,11 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.165 2006/05/14 21:19:33 elad Exp $");
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#endif
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_ULTRIX) || defined(LKM)
@@ -574,6 +579,13 @@ if_detach(struct ifnet *ifp)
 		altq_disable(&ifp->if_snd);
 	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
 		altq_detach(&ifp->if_snd);
+#endif
+
+
+#if NCARP > 0
+	/* Remove the interface from any carp group it is a part of.  */
+	if (ifp->if_carp && ifp->if_type != IFT_CARP)
+		carp_ifdetach(ifp);
 #endif
 
 #ifdef PFIL_HOOKS
@@ -1173,6 +1185,10 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
 		rt_ifmsg(ifp);
+#if NCARP > 0
+		if (ifp->if_carp)
+			carp_carpdev_state(ifp);
+#endif
 	}
 }
 
@@ -1192,6 +1208,10 @@ if_down(struct ifnet *ifp)
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
+#if NCARP > 0
+	if (ifp->if_carp)
+		carp_carpdev_state(ifp);
+#endif
 	rt_ifmsg(ifp);
 }
 
@@ -1214,6 +1234,10 @@ if_up(struct ifnet *ifp)
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
+#endif
+#if NCARP > 0
+	if (ifp->if_carp)
+		carp_carpdev_state(ifp);
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6

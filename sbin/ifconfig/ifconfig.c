@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.170 2006/04/29 21:32:29 rpaulo Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.171 2006/05/18 09:05:50 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.170 2006/04/29 21:32:29 rpaulo Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.171 2006/05/18 09:05:50 liamjfoy Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.170 2006/04/29 21:32:29 rpaulo Exp $");
 #endif /* INET6 */
 
 #include "agr.h"
+#include "carp.h"
 #include "ieee80211.h"
 #include "tunnel.h"
 #include "vlan.h"
@@ -232,6 +233,16 @@ const struct cmd {
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",	NEXTARG,	0,		setifprefixlen},
+#ifndef INET_ONLY
+	/* CARP */
+	{ "advbase",	NEXTARG,	0,		setcarp_advbase },
+	{ "advskew",	NEXTARG,	0,		setcarp_advskew },
+	{ "pass",	NEXTARG,	0,		setcarp_passwd },
+	{ "vhid",	NEXTARG,	0,		setcarp_vhid },
+	{ "state",	NEXTARG,	0,		setcarp_state },
+	{ "carpdev",	NEXTARG,	0,		setcarpdev },
+	{ "-carpdev",	1,		0,		unsetcarpdev },
+#endif
 #ifdef INET6
 	{ "anycast",	IN6_IFF_ANYCAST,	0,	setia6flags },
 	{ "-anycast",	-IN6_IFF_ANYCAST,	0,	setia6flags },
@@ -1318,6 +1329,9 @@ status(const struct sockaddr_dl *sdl)
 
 	ieee80211_status();
 	vlan_status();
+#ifndef INET_ONLY
+	carp_status();
+#endif
 	tunnel_status();
 	agr_status();
 
