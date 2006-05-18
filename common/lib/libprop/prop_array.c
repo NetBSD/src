@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -55,7 +55,21 @@ _PROP_POOL_INIT(_prop_array_pool, sizeof(struct _prop_array), "proparay")
 _PROP_MALLOC_DEFINE(M_PROP_ARRAY, "prop array",
 		    "property array container object")
 
-#define	prop_object_is_array(x) ((x)->pa_obj.po_type == PROP_TYPE_ARRAY)
+static void		_prop_array_free(void *);
+static boolean_t	_prop_array_externalize(
+				struct _prop_object_externalize_context *,
+				void *);
+static boolean_t	_prop_array_equals(void *, void *);
+
+static const struct _prop_object_type _prop_object_type_array = {
+	.pot_type	=	PROP_TYPE_ARRAY,
+	.pot_free	=	_prop_array_free,
+	.pot_extern	=	_prop_array_externalize,
+	.pot_equals	=	_prop_array_equals,
+};
+
+#define	prop_object_is_array(x) 	\
+	((x)->pa_obj.po_type == &_prop_object_type_array)
 
 #define	prop_array_is_immutable(x) (((x)->pa_flags & PA_F_IMMUTABLE) != 0)
 
@@ -114,7 +128,7 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	_PROP_ASSERT(ctx->poec_depth != 0);
 
 	while ((po = prop_object_iterator_next(pi)) != NULL) {
-		if ((*po->po_extern)(ctx, po) == FALSE) {
+		if ((*po->po_type->pot_extern)(ctx, po) == FALSE) {
 			prop_object_iterator_release(pi);
 			return (FALSE);
 		}
@@ -130,6 +144,30 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	if (_prop_object_externalize_end_tag(ctx, "array") == FALSE)
 		return (FALSE);
 	
+	return (TRUE);
+}
+
+static boolean_t
+_prop_array_equals(void *v1, void *v2)
+{
+	prop_array_t array1 = v1;
+	prop_array_t array2 = v2;
+	unsigned int idx;
+
+	_PROP_ASSERT(prop_object_is_array(array1));
+	_PROP_ASSERT(prop_object_is_array(array2));
+
+	if (array1 == array2)
+		return (TRUE);
+	if (array1->pa_count != array2->pa_count)
+		return (FALSE);
+	
+	for (idx = 0; idx < array1->pa_count; idx++) {
+		if (prop_object_equals(array1->pa_array[idx],
+				       array2->pa_array[idx]) == FALSE)
+			return (FALSE);
+	}
+
 	return (TRUE);
 }
 
@@ -150,10 +188,8 @@ _prop_array_alloc(unsigned int capacity)
 
 	pa = _PROP_POOL_GET(_prop_array_pool);
 	if (pa != NULL) {
-		_prop_object_init(&pa->pa_obj);
-		pa->pa_obj.po_type = PROP_TYPE_ARRAY;
-		pa->pa_obj.po_free = _prop_array_free;
-		pa->pa_obj.po_extern = _prop_array_externalize;
+		_prop_object_init(&pa->pa_obj, &_prop_object_type_array);
+		pa->pa_obj.po_type = &_prop_object_type_array;
 
 		pa->pa_array = array;
 		pa->pa_capacity = capacity;
@@ -480,6 +516,18 @@ prop_array_remove(prop_array_t pa, unsigned int idx)
 	pa->pa_version++;
 	
 	prop_object_release(po);
+}
+
+/*
+ * prop_array_equals --
+ *	Return TRUE if the two arrays are equivalent.  Note we do a
+ *	by-value comparison of the objects in the array.
+ */
+boolean_t
+prop_array_equals(prop_array_t array1, prop_array_t array2)
+{
+
+	return (_prop_array_equals(array1, array2));
 }
 
 /*

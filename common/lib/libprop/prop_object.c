@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -51,6 +51,20 @@ _prop_standalone_calloc(size_t size)
 
 	return (rv);
 }
+
+void *
+_prop_standalone_realloc(void *v, size_t size)
+{
+	void *rv;
+
+	rv = alloc(size);
+	if (rv != NULL) {
+		memcpy(rv, v, size);	/* XXX */
+		dealloc(v, 0);		/* XXX */
+	}
+	
+	return (rv);
+}
 #endif /* _STANDALONE */
 
 /*
@@ -59,9 +73,10 @@ _prop_standalone_calloc(size_t size)
  *	an instance.
  */
 void
-_prop_object_init(struct _prop_object *po)
+_prop_object_init(struct _prop_object *po, const struct _prop_object_type *pot)
 {
 
+	po->po_type = pot;
 	po->po_refcnt = 1;
 }
 
@@ -215,14 +230,12 @@ _prop_object_externalize_append_char(
 	_PROP_ASSERT(ctx->poec_len <= ctx->poec_capacity);
 
 	if (ctx->poec_len == ctx->poec_capacity) {
-		char *ocp = ctx->poec_buf;
-		char *cp = _PROP_MALLOC(ctx->poec_capacity + BUF_EXPAND,
-					M_TEMP);
+		char *cp = _PROP_REALLOC(ctx->poec_buf,
+					 ctx->poec_capacity + BUF_EXPAND,
+					 M_TEMP);
 		if (cp == NULL)
 			return (FALSE);
-		memcpy(cp, ocp, ctx->poec_capacity);
 		ctx->poec_capacity = ctx->poec_capacity + BUF_EXPAND;
-		_PROP_FREE(ocp, M_TEMP);
 		ctx->poec_buf = cp;
 	}
 
@@ -734,7 +747,7 @@ prop_object_release(prop_object_t obj)
 
 	_PROP_ASSERT(ocnt != 0);
 	if (ocnt == 1)
-		(*po->po_free)(po);
+		(*po->po_type->pot_free)(po);
 }
 
 /*
@@ -746,7 +759,23 @@ prop_object_type(prop_object_t obj)
 {
 	struct _prop_object *po = obj;
 
-	return (po->po_type);
+	return (po->po_type->pot_type);
+}
+
+/*
+ * prop_object_equals --
+ *	Returns TRUE if thw two objects are equivalent.
+ */
+boolean_t
+prop_object_equals(prop_object_t obj1, prop_object_t obj2)
+{
+	struct _prop_object *po1 = obj1;
+	struct _prop_object *po2 = obj2;
+
+	if (po1->po_type != po2->po_type)
+		return (FALSE);
+
+	return ((*po1->po_type->pot_equals)(obj1, obj2));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.h,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.h,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@ prop_bool_t	prop_bool_create(boolean_t);
 prop_bool_t	prop_bool_copy(prop_bool_t);
 
 boolean_t	prop_bool_true(prop_bool_t);
+
+boolean_t	prop_bool_equals(prop_bool_t, prop_bool_t);
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_BOOL_H_ */

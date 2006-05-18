@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.2 2006/05/07 06:25:49 simonb Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.3 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -95,10 +95,36 @@ _PROP_POOL_INIT(_prop_dictionary_pool, sizeof(struct _prop_dictionary),
 _PROP_MALLOC_DEFINE(M_PROP_DICT, "prop dictionary",
 		    "property dictionary container object")
 
+static void		_prop_dictionary_free(void *);
+static boolean_t	_prop_dictionary_externalize(
+				struct _prop_object_externalize_context *,
+				void *);
+static boolean_t	_prop_dictionary_equals(void *, void *);
+
+static const struct _prop_object_type _prop_object_type_dictionary = {
+	.pot_type	=	PROP_TYPE_DICTIONARY,
+	.pot_free	=	_prop_dictionary_free,
+	.pot_extern	=	_prop_dictionary_externalize,
+	.pot_equals	=	_prop_dictionary_equals,
+};
+
+static void		_prop_dict_entry_free(void *);
+static boolean_t	_prop_dict_entry_externalize(
+				struct _prop_object_externalize_context *,
+				void *);
+static boolean_t	_prop_dict_entry_equals(void *, void *);
+
+static const struct _prop_object_type _prop_object_type_dict_keysym = {
+	.pot_type	=	PROP_TYPE_DICT_KEYSYM,
+	.pot_free	=	_prop_dict_entry_free,
+	.pot_extern	=	_prop_dict_entry_externalize,
+	.pot_equals	=	_prop_dict_entry_equals,
+};
+
 #define	prop_object_is_dictionary(x)		\
-				((x)->pd_obj.po_type == PROP_TYPE_DICTIONARY)
+		((x)->pd_obj.po_type == &_prop_object_type_dictionary)
 #define	prop_object_is_dictionary_keysym(x)	\
-				((x)->pde_obj.po_type == PROP_TYPE_DICT_KEYSYM)
+		((x)->pde_obj.po_type == &_prop_object_type_dict_keysym)
 
 #define	prop_dictionary_is_immutable(x)		\
 				(((x)->pd_flags & PD_F_IMMUTABLE) != 0)
@@ -148,6 +174,19 @@ _prop_dict_entry_externalize(struct _prop_object_externalize_context *ctx,
 	return (TRUE);
 }
 
+static boolean_t
+_prop_dict_entry_equals(void *v1, void *v2)
+{
+	prop_dictionary_keysym_t pde1 = v1;
+	prop_dictionary_keysym_t pde2 = v2;
+
+	_PROP_ASSERT(prop_object_is_dictionary_keysym(pde1));
+	_PROP_ASSERT(prop_object_is_dictionary_keysym(pde2));
+	if (pde1 == pde2)
+		return (TRUE);
+	return (strcmp(pde1->pde_key, pde2->pde_key) == 0);
+}
+
 static prop_dictionary_keysym_t
 _prop_dict_entry_alloc(const char *key, prop_object_t obj)
 {
@@ -166,10 +205,8 @@ _prop_dict_entry_alloc(const char *key, prop_object_t obj)
 		return (NULL);	/* key too long */
 
 	if (pde != NULL) {
-		_prop_object_init(&pde->pde_obj);
-		pde->pde_obj.po_type = PROP_TYPE_DICT_KEYSYM;
-		pde->pde_obj.po_free = _prop_dict_entry_free;
-		pde->pde_obj.po_extern = _prop_dict_entry_externalize;
+		_prop_object_init(&pde->pde_obj,
+				  &_prop_object_type_dict_keysym);
 
 		strcpy(pde->pde_key, key);
 
@@ -235,7 +272,7 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 		    _prop_object_externalize_append_encoded_cstring(ctx,
 						   pde->pde_key) == FALSE ||
 		    _prop_object_externalize_end_tag(ctx, "key") == FALSE ||
-		    (*po->po_extern)(ctx, po) == FALSE) {
+		    (*po->po_type->pot_extern)(ctx, po) == FALSE) {
 			prop_object_iterator_release(pi);
 			return (FALSE);
 		}
@@ -251,6 +288,35 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	if (_prop_object_externalize_end_tag(ctx, "dict") == FALSE)
 		return (FALSE);
 	
+	return (TRUE);
+}
+
+static boolean_t
+_prop_dictionary_equals(void *v1, void *v2)
+{
+	prop_dictionary_t dict1 = v1;
+	prop_dictionary_t dict2 = v2;
+	prop_dictionary_keysym_t pde1, pde2;
+	unsigned int idx;
+
+	_PROP_ASSERT(prop_object_is_dictionary(dict1));
+	_PROP_ASSERT(prop_object_is_dictionary(dict2));
+	if (dict1 == dict2)
+		return (TRUE);
+	if (dict1->pd_count != dict2->pd_count)
+		return (FALSE);
+
+	for (idx = 0; idx < dict1->pd_count; idx++) {
+		pde1 = dict1->pd_array[idx];
+		pde2 = dict2->pd_array[idx];
+
+		if (prop_dictionary_keysym_equals(pde1, pde2) == FALSE)
+			return (FALSE);
+		if (prop_object_equals(pde1->pde_objref,
+				       pde2->pde_objref) == FALSE)
+			return (FALSE);
+	}
+
 	return (TRUE);
 }
 
@@ -271,10 +337,7 @@ _prop_dictionary_alloc(unsigned int capacity)
 
 	pd = _PROP_POOL_GET(_prop_dictionary_pool);
 	if (pd != NULL) {
-		_prop_object_init(&pd->pd_obj);
-		pd->pd_obj.po_type = PROP_TYPE_DICTIONARY;
-		pd->pd_obj.po_free = _prop_dictionary_free;
-		pd->pd_obj.po_extern = _prop_dictionary_externalize;
+		_prop_object_init(&pd->pd_obj, &_prop_object_type_dictionary);
 
 		pd->pd_array = array;
 		pd->pd_capacity = capacity;
@@ -709,6 +772,18 @@ prop_dictionary_remove_keysym(prop_dictionary_t pd,
 }
 
 /*
+ * prop_dictionary_equals --
+ *	Return TRUE if the two dictionaries are equivalent.  Note we do a
+ *	by-value comparison of the objects in the dictionary.
+ */
+boolean_t
+prop_dictionary_equals(prop_dictionary_t dict1, prop_dictionary_t dict2)
+{
+
+	return (_prop_dictionary_equals(dict1, dict2));
+}
+
+/*
  * prop_dictionary_keysym_cstring_nocopy --
  *	Return an immutable reference to the keysym's value.
  */
@@ -718,6 +793,19 @@ prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t pde)
 
 	_PROP_ASSERT(prop_object_is_dictionary_keysym(pde));
 	return (pde->pde_key);
+}
+
+/*
+ * prop_dictionary_keysym_equals --
+ *	Return TRUE if the two dictionary key symbols are equivalent.
+ *	Note: We do not compare the object references.
+ */
+boolean_t
+prop_dictionary_keysym_equals(prop_dictionary_keysym_t pde1,
+			      prop_dictionary_keysym_t pde2)
+{
+
+	return (_prop_dict_entry_equals(pde1, pde2));
 }
 
 /*
@@ -736,9 +824,10 @@ prop_dictionary_externalize(prop_dictionary_t pd)
 	if (ctx == NULL)
 		return (NULL);
 
-	if (_prop_object_externalize_start_tag(ctx, "plist") == FALSE ||
+	if (_prop_object_externalize_start_tag(ctx,
+					"plist version=\"1.0\"") == FALSE ||
 	    _prop_object_externalize_append_char(ctx, '\n') == FALSE ||
-	    (*pd->pd_obj.po_extern)(ctx, pd) == FALSE ||
+	    (*pd->pd_obj.po_type->pot_extern)(ctx, pd) == FALSE ||
 	    _prop_object_externalize_end_tag(ctx, "plist") == FALSE ||
 	    _prop_object_externalize_append_char(ctx, '\0') == FALSE) {
 		/* We are responsible for releasing the buffer. */
