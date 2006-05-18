@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.4 2006/05/18 16:11:33 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.5 2006/05/18 16:35:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -108,17 +108,17 @@ static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_equals	=	_prop_dictionary_equals,
 };
 
-static void		_prop_dict_entry_free(void *);
-static boolean_t	_prop_dict_entry_externalize(
+static void		_prop_dict_keysym_free(void *);
+static boolean_t	_prop_dict_keysym_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static boolean_t	_prop_dict_entry_equals(void *, void *);
+static boolean_t	_prop_dict_keysym_equals(void *, void *);
 
 static const struct _prop_object_type _prop_object_type_dict_keysym = {
 	.pot_type	=	PROP_TYPE_DICT_KEYSYM,
-	.pot_free	=	_prop_dict_entry_free,
-	.pot_extern	=	_prop_dict_entry_externalize,
-	.pot_equals	=	_prop_dict_entry_equals,
+	.pot_free	=	_prop_dict_keysym_free,
+	.pot_extern	=	_prop_dict_keysym_externalize,
+	.pot_equals	=	_prop_dict_keysym_equals,
 };
 
 #define	prop_object_is_dictionary(x)		\
@@ -135,7 +135,7 @@ struct _prop_dictionary_iterator {
 };
 
 static void
-_prop_dict_entry_free(void *v)
+_prop_dict_keysym_free(void *v)
 {
 	prop_dictionary_keysym_t pdk = v;
 	prop_object_t po;
@@ -156,7 +156,7 @@ _prop_dict_entry_free(void *v)
 }
 
 static boolean_t
-_prop_dict_entry_externalize(struct _prop_object_externalize_context *ctx,
+_prop_dict_keysym_externalize(struct _prop_object_externalize_context *ctx,
 			     void *v)
 {
 	prop_dictionary_keysym_t pdk = v;
@@ -175,7 +175,7 @@ _prop_dict_entry_externalize(struct _prop_object_externalize_context *ctx,
 }
 
 static boolean_t
-_prop_dict_entry_equals(void *v1, void *v2)
+_prop_dict_keysym_equals(void *v1, void *v2)
 {
 	prop_dictionary_keysym_t pdk1 = v1;
 	prop_dictionary_keysym_t pdk2 = v2;
@@ -188,7 +188,7 @@ _prop_dict_entry_equals(void *v1, void *v2)
 }
 
 static prop_dictionary_keysym_t
-_prop_dict_entry_alloc(const char *key, prop_object_t obj)
+_prop_dict_keysym_alloc(const char *key, prop_object_t obj)
 {
 	prop_dictionary_keysym_t pdk;
 	size_t size;
@@ -485,7 +485,7 @@ prop_dictionary_copy_mutable(prop_dictionary_t opd)
 	if (pd != NULL) {
 		for (idx = 0; idx > opd->pd_count; idx++) {
 			opdk = opd->pd_array[idx];
-			pdk = _prop_dict_entry_alloc(opdk->pdk_key,
+			pdk = _prop_dict_keysym_alloc(opdk->pdk_key,
 						     opdk->pdk_objref);
 			if (pdk == NULL) {
 				prop_object_release(pd);
@@ -627,13 +627,13 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 		return (TRUE);
 	}
 
-	pdk = _prop_dict_entry_alloc(key, po);
+	pdk = _prop_dict_keysym_alloc(key, po);
 	if (pdk == NULL)
 		return (FALSE);
 
 	if (pd->pd_count == pd->pd_capacity &&
 	    _prop_dictionary_expand(pd, EXPAND_STEP) == FALSE) {
-		_prop_dict_entry_free(pdk);
+		_prop_dict_keysym_free(pdk);
 	    	return (FALSE);
 	}
 
@@ -805,7 +805,7 @@ prop_dictionary_keysym_equals(prop_dictionary_keysym_t pdk1,
 			      prop_dictionary_keysym_t pdk2)
 {
 
-	return (_prop_dict_entry_equals(pdk1, pdk2));
+	return (_prop_dict_keysym_equals(pdk1, pdk2));
 }
 
 /*
