@@ -1,0 +1,143 @@
+.\" $NetBSD: compat_30.8,v 1.1 2006/05/18 17:08:04 chap Exp $
+.\"
+.\" Copyright (c) 2006 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from a document contributed to The NetBSD Foundation
+.\" by Chapman Flack.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 11, 2006
+.Dt COMPAT_30 8
+.Os
+.Sh NAME
+.Nm compat_30
+.Nd setup procedure for backward compatibility on post-3.0 release
+.Sh SYNOPSIS
+.Cd "options COMPAT_30"
+.Sh DESCRIPTION
+The
+.Nm
+module allows
+.Nx
+to run
+.Nx 3.0
+executables.
+.Pp
+The support is present if the kernel was built with option
+.Dv COMPAT_30 .
+It is not available as a loadable module.
+.Pp
+Static executables typically need no additional setup.
+Dynamic binaries may require shared libraries whose major version
+number changed since
+.Nx 3.0 ,
+which are listed below.
+A shadow directory under
+.Pa /emul
+is not used; the libraries can be obtained from a
+.Nx 3.0
+distribution and installed in the usual directories,
+as the major version number in the file name will prevent conflicts.
+If an upgrade installation from
+.Nx 3.0
+has been done and these libraries are still present, nothing more need
+be done.
+.Ss Libraries needed from 3.0
+.Bl -item
+.It
+.Pa /lib/libcrypto.so.2.1
+.Pa /lib/libcrypto.so.2
+.It
+.Pa /lib/libevent.so.0.2
+.Pa /lib/libevent.so.0
+.It
+.Pa /usr/lib/libkafs.so.6.0
+.Pa /usr/lib/libkafs.so.6
+.It
+.Pa /usr/lib/libkrb5.so.19.1
+.Pa /usr/lib/libkrb5.so.19
+.It
+.Pa /lib/libradius.so.0.0
+.Pa /lib/libradius.so.0
+.It
+.Pa /usr/lib/libssh.so.1.0
+.Pa /usr/lib/libssh.so.1
+.It
+.Pa /usr/lib/libssl.so.3.0
+.Pa /usr/lib/libssl.so.3
+.\" .It
+.\" .Pa libtelnet lives where?
+.It
+.Pa /lib/libz.so.0.4
+.Pa /lib/libz.so.0
+.It
+.Pa /usr/lib/libamu.so.2.1
+.Pa /usr/lib/libamu.so.2
+.El
+.Sh IMPLEMENTATION NOTES
+.Dv COMPAT_30
+enables the
+.Nx 3.0
+versions of the following system calls, whose syscall numbers and
+argument structures were changed after the 3.0 release to accommodate
+64-bit filesystems:
+.Xr fhstat 2 ,
+.Xr fstat 2 ,
+.Xr getdents 2 ,
+.Xr lstat 2 ,
+.Xr stat 2 .
+.Sh SEE ALSO
+.Xr config 1 ,
+.Xr fhstat 2 ,
+.Xr fstat 2 ,
+.Xr getdents 2 ,
+.Xr lstat 2 ,
+.Xr stat 2 ,
+.Xr options 4
+.Sh HISTORY
+.Nx
+offers back-compatibility options back to
+.Nx 0.9 ,
+but the first to be documented with a manual page is
+.Nm .
+.Sh BUGS
+The compatible
+.Xr getdents 2
+is unable to see directory entries beneath the top layer of a union,
+even though the real 3.0
+.Fn getdents
+did not have that problem.
+.Sh SECURITY CONSIDERATIONS
+Programs with security impact that receive incorrect directory contents
+from
+.Fn getdents
+may behave improperly, as when they are unable to find, or find the wrong
+versions of, important files.
