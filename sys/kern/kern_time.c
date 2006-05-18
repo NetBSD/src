@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.99 2006/05/14 21:15:11 elad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.100 2006/05/18 10:09:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.99 2006/05/14 21:15:11 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.100 2006/05/18 10:09:12 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1108,7 +1108,7 @@ timers_alloc(struct proc *p)
 	int i;
 	struct ptimers *pts;
 
-	pts = pool_get(&ptimers_pool, 0);
+	pts = pool_get(&ptimers_pool, PR_WAITOK);
 	LIST_INIT(&pts->pts_virtual);
 	LIST_INIT(&pts->pts_prof);
 	for (i = 0; i < TIMER_MAX; i++)
