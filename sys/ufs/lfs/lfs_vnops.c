@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.177 2006/05/17 19:47:09 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.178 2006/05/18 23:15:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.177 2006/05/17 19:47:09 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.178 2006/05/18 23:15:09 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1508,8 +1508,8 @@ lfs_fcntl(void *v)
 		simple_lock(&fs->lfs_interlock);
 		fs->lfs_nowrap = 0;
 		wakeup(&fs->lfs_nowrap);
-                ltsleep(&fs->lfs_nextseg, PCATCH | PUSER | PNORELOCK,
-                        "segment", 0, &fs->lfs_interlock);
+		ltsleep(&fs->lfs_nextseg, PCATCH | PUSER | PNORELOCK,
+			"segment", 0, &fs->lfs_interlock);
 		return 0;
 
 	    default:
@@ -1718,6 +1718,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
  *     they are block-aligned; if they are not, expand the range and
  *     do the right thing in case, e.g., the requested range is clean
  *     but the expanded range is dirty.
+ *
  * (2) It needs to explicitly send blocks to be written when it is done.
  *     VOP_PUTPAGES is not ever called with the seglock held, so
  *     we simply take the seglock and let lfs_segunlock wait for us.
@@ -1730,8 +1731,10 @@ check_dirty(struct lfs *fs, struct vnode *vp,
  * (1) The caller does not hold any pages in this vnode busy.  If it does,
  *     there is a danger that when we expand the page range and busy the
  *     pages we will deadlock.
+ *
  * (2) We are called with vp->v_interlock held; we must return with it
  *     released.
+ *
  * (3) We don't absolutely have to free pages right away, provided that
  *     the request does not have PGO_SYNCIO.  When the pagedaemon gives
  *     us a request with PGO_FREE, we take the pages out of the paging
@@ -1741,6 +1744,10 @@ check_dirty(struct lfs *fs, struct vnode *vp,
  *     block are either resident or not, even if those pages are higher
  *     than EOF; that means that we will be getting requests to free
  *     "unused" pages above EOF all the time, and should ignore them.
+ *
+ * (4) If we are called with PGO_LOCKED, the finfo array we are to write
+ *     into has been set up for us by lfs_writefile.  If not, we will
+ *     have to handle allocating and/or freeing an finfo entry.
  *
  * XXX note that we're (ab)using PGO_LOCKED as "seglock held".
  */
@@ -1998,14 +2005,8 @@ lfs_putpages(void *v)
 	 * (This should duplicate the setup at the top of lfs_writefile().)
 	 */
 	sp = fs->lfs_sp;
-	if (!seglocked) {
-		if (sp->seg_bytes_left < fs->lfs_bsize ||
-		    sp->sum_bytes_left < sizeof(struct finfo))
-			(void) lfs_writeseg(fs, fs->lfs_sp);
-
-		sp->sum_bytes_left -= FINFOSIZE;
-		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-	}
+	if (!seglocked)
+		lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
 
@@ -2013,10 +2014,6 @@ lfs_putpages(void *v)
 		if (vp->v_flag & VDIROP)
 			((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
 	}
-
-	sp->fip->fi_nblocks = 0;
-	sp->fip->fi_ino = ip->i_number;
-	sp->fip->fi_version = ip->i_gen;
 
 	/*
 	 * Loop through genfs_putpages until all pages are gathered.
@@ -2029,8 +2026,10 @@ again:
 	    ap->a_flags, 0) < 0) {
 		simple_unlock(&vp->v_interlock);
 		sp->vp = NULL;
-		if (!seglocked)
+		if (!seglocked) {
+			lfs_release_finfo(fs);
 			lfs_segunlock(fs);
+		}
 		if (pagedaemon)
 			return EDEADLK;
 		/* else seglocked == 0 */
@@ -2053,15 +2052,9 @@ again:
 
 			/*
 			 * Reinitialize brand new FIP and add us to it.
-			 * (This should duplicate the fixup in
-			 * lfs_gatherpages().)
 			 */
 			KASSERT(sp->vp == vp);
-			sp->fip->fi_version = ip->i_gen;
-			sp->fip->fi_ino = ip->i_number;
-			/* Add us to the new segment summary. */
-			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left -= FINFOSIZE;
+			lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 		}
 
 		/* Give the write a chance to complete */
@@ -2076,7 +2069,7 @@ again:
 
 	KASSERT(sp->vp == vp);
 	if (!seglocked) {
-		sp->vp = NULL; /* XXX lfs_gather below will set this */
+		sp->vp = NULL;
 
 		/* Write indirect blocks as well */
 		lfs_gather(fs, fs->lfs_sp, vp, lfs_match_indir);
@@ -2100,18 +2093,8 @@ again:
 		return error;
 	}
 
-	/*
-	 * Clean up FIP, since we're done writing this file.
-	 * This should duplicate cleanup at the end of lfs_writefile().
-	 */
-	if (sp->fip->fi_nblocks != 0) {
-		sp->fip = (FINFO*)((caddr_t)sp->fip + FINFOSIZE +
-			sizeof(int32_t) * sp->fip->fi_nblocks);
-		sp->start_lbp = &sp->fip->fi_blocks[0];
-	} else {
-		sp->sum_bytes_left += FINFOSIZE;
-		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
-	}
+	/* Clean up FIP and send it to disk. */
+	lfs_release_finfo(fs);
 	lfs_writeseg(fs, fs->lfs_sp);
 
 	/*

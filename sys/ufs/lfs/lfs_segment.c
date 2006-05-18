@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.179 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.180 2006/05/18 23:15:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.179 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.180 2006/05/18 23:15:09 perseant Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -823,29 +823,21 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	struct finfo *fip;
 	struct inode *ip;
 	IFILE *ifp;
-	int i, frag;
+	int i, frag, vers;
 	int error;
 
 	ASSERT_SEGLOCK(fs);
 	error = 0;
 	ip = VTOI(vp);
 
-	if (sp->seg_bytes_left < fs->lfs_bsize ||
-	    sp->sum_bytes_left < sizeof(struct finfo))
-		(void) lfs_writeseg(fs, sp);
-
-	sp->sum_bytes_left -= FINFOSIZE;
-	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	fip = sp->fip;
+	LFS_IENTRY(ifp, fs, fip->fi_ino, bp);
+	vers = ifp->if_version;
+	brelse(bp);
+	lfs_acquire_finfo(fs, ip->i_number, vers);
 
 	if (vp->v_flag & VDIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
-
-	fip = sp->fip;
-	fip->fi_nblocks = 0;
-	fip->fi_ino = ip->i_number;
-	LFS_IENTRY(ifp, fs, fip->fi_ino, bp);
-	fip->fi_version = ifp->if_version;
-	brelse(bp);
 
 	if (sp->seg_flags & SEGM_CLEAN) {
 		lfs_gather(fs, sp, vp, lfs_match_fake);
@@ -912,14 +904,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		lfs_gather(fs, sp, vp, lfs_match_tindir);
 	}
 	fip = sp->fip;
-	if (fip->fi_nblocks != 0) {
-		sp->fip = (FINFO*)((caddr_t)fip + FINFOSIZE +
-				   sizeof(int32_t) * (fip->fi_nblocks));
-		sp->start_lbp = &sp->fip->fi_blocks[0];
-	} else {
-		sp->sum_bytes_left += FINFOSIZE;
-		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
-	}
+	lfs_release_finfo(fs);
 
 	return error;
 }
@@ -1192,11 +1177,8 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 		vers = sp->fip->fi_version;
 		(void) lfs_writeseg(fs, sp);
 
-		sp->fip->fi_version = vers;
-		sp->fip->fi_ino = VTOI(sp->vp)->i_number;
 		/* Add the current file to the segment summary. */
-		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-		sp->sum_bytes_left -= FINFOSIZE;
+		lfs_acquire_finfo(fs, VTOI(sp->vp)->i_number, vers);
 
 		if (sptr)
 			*sptr = splbio();
@@ -1856,6 +1838,10 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	int32_t *daddrp;	/* XXX ondisk32 */
 	int changed;
 	u_int32_t sum;
+#ifdef DEBUG
+	FINFO *fip;
+	int findex;
+#endif
 
 	ASSERT_SEGLOCK(fs);
 	/*
@@ -1884,6 +1870,16 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	}
 
 	ssp = (SEGSUM *)sp->segsum;
+
+#ifdef DEBUG
+	/* Check for zero-length FINFO entries. */
+	fip = (struct finfo *)((caddr_t)ssp + SEGSUM_SIZE(fs));
+	for (findex = 0; findex < ssp->ss_nfinfo; findex++) {
+		KDASSERT(fip->fi_nblocks > 0);
+		fip = (FINFO *)((caddr_t)fip + FINFOSIZE +
+			sizeof(int32_t) * fip->fi_nblocks);
+	}
+#endif /* DEBUG */
 
 	ninos = (ssp->ss_ninos + INOPB(fs) - 1) / INOPB(fs);
 	DLOG((DLOG_SU, "seg %d += %d for %d inodes\n",
@@ -2669,3 +2665,42 @@ lfs_vunref_head(struct vnode *vp)
 	simple_unlock(&vp->v_interlock);
 }
 
+
+/*
+ * Set up an FINFO entry for a new file.  The fip pointer is assumed to 
+ * point at uninitialized space.
+ */
+void
+lfs_acquire_finfo(struct lfs *fs, ino_t ino, int vers)
+{
+	struct segment *sp = fs->lfs_sp;
+
+	if (sp->seg_bytes_left < fs->lfs_bsize ||
+	    sp->sum_bytes_left < sizeof(struct finfo))
+		(void) lfs_writeseg(fs, fs->lfs_sp);
+	
+	sp->sum_bytes_left -= FINFOSIZE;
+	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	sp->fip->fi_nblocks = 0;
+	sp->fip->fi_ino = ino;
+	sp->fip->fi_version = vers;
+}
+
+/*
+ * Release the FINFO entry, either clearing out an unused entry or
+ * advancing us to the next available entry.
+ */
+void
+lfs_release_finfo(struct lfs *fs)
+{
+	struct segment *sp = fs->lfs_sp;
+
+	if (sp->fip->fi_nblocks != 0) {
+		sp->fip = (FINFO*)((caddr_t)sp->fip + FINFOSIZE +
+			sizeof(int32_t) * sp->fip->fi_nblocks);
+		sp->start_lbp = &sp->fip->fi_blocks[0];
+	} else {
+		sp->sum_bytes_left += FINFOSIZE;
+		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	}
+}
