@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.3 2006/05/18 16:23:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -676,40 +676,9 @@ _prop_object_internalize_context_free(
  * could be contention, but it probably won't cost that much unless the program
  * makes heavy use of property lists.
  */
-#if defined(_KERNEL)
-#include <sys/lock.h>
-static struct simplelock _prop_refcnt_mutex = SIMPLELOCK_INITIALIZER;
-
-#define	_PROP_REFCNT_LOCK()	simple_lock(&_prop_refcnt_mutex)
-#define	_PROP_REFCNT_UNLOCK()	simple_unlock(&_prop_refcnt_mutex)
-#elif defined(_STANDALONE)
-/*
- * No locking necessary for standalone environments.
- */
-#define	_PROP_REFCNT_LOCK()	/* nothing */
-#define	_PROP_REFCNT_UNLOCK()	/* nothing */
-#elif defined(__NetBSD__) && defined(_LIBPROP)
-/*
- * Use the same mechanism as libc; we get pthread mutexes for threaded
- * programs and do-nothing stubs for non-threaded programs.
- */
-#include "reentrant.h"
-static mutex_t _prop_refcnt_mutex = MUTEX_INITIALIZER;
-
-#define	_PROP_REFCNT_LOCK()	mutex_lock(&_prop_refcnt_mutex)
-#define	_PROP_REFCNT_UNLOCK()	mutex_unlock(&_prop_refcnt_mutex)
-#elif defined(HAVE_NBTOOL_CONFIG_H)
-/* None of NetBSD's build tools are multi-threaded. */
-#define	_PROP_REFCNT_LOCK()	/* nothing */
-#define	_PROP_REFCNT_UNLOCK()	/* nothing */
-#else
-/* Use pthread mutexes everywhere else. */
-#include <pthread.h>
-static pthread_mutex_t _prop_refcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-#define	_PROP_REFCNT_LOCK()	pthread_mutex_lock(&_prop_refcnt_mutex)
-#define	_PROP_REFCNT_UNLOCK()	pthread_mutex_unlock(&_prop_refcnt_mutex)
-#endif
+_PROP_MUTEX_DECL(_prop_refcnt_mutex)
+#define	_PROP_REFCNT_LOCK()	_PROP_MUTEX_LOCK(_prop_refcnt_mutex)
+#define	_PROP_REFCNT_UNLOCK()	_PROP_MUTEX_UNLOCK(_prop_refcnt_mutex)
 
 /*
  * prop_object_retain --
