@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -69,7 +69,21 @@ _PROP_POOL_INIT(_prop_data_pool, sizeof(struct _prop_data), "propdata")
 _PROP_MALLOC_DEFINE(M_PROP_DATA, "prop data",
 		    "property data container object")
 
-#define	prop_object_is_data(x) ((x)->pd_obj.po_type == PROP_TYPE_DATA)
+static void		_prop_data_free(void *);
+static boolean_t	_prop_data_externalize(
+				struct _prop_object_externalize_context *,
+				void *);
+static boolean_t	_prop_data_equals(void *, void *);
+
+static const struct _prop_object_type _prop_object_type_data = {
+	.pot_type	=	PROP_TYPE_DATA,
+	.pot_free	=	_prop_data_free,
+	.pot_extern	=	_prop_data_externalize,
+	.pot_equals	=	_prop_data_equals,
+};
+
+#define	prop_object_is_data(x)		\
+	((x)->pd_obj.po_type == &_prop_object_type_data)
 
 static void
 _prop_data_free(void *v)
@@ -160,6 +174,27 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 	return (TRUE);
 }
 
+static boolean_t
+_prop_data_equals(void *v1, void *v2)
+{
+	prop_data_t pd1 = v1;
+	prop_data_t pd2 = v2;
+
+	_PROP_ASSERT(prop_object_is_data(pd1));
+	_PROP_ASSERT(prop_object_is_data(pd2));
+	if (pd1 == pd2)
+		return (TRUE);
+	if (pd1->pd_size != pd2->pd_size)
+		return (FALSE);
+	if (pd1->pd_size == 0) {
+		_PROP_ASSERT(pd1->pd_immutable == NULL);
+		_PROP_ASSERT(pd2->pd_immutable == NULL);
+		return (TRUE);
+	}
+	return (memcmp(pd1->pd_immutable, pd2->pd_immutable,
+		       pd1->pd_size) == 0);
+}
+
 static prop_data_t
 _prop_data_alloc(void)
 {
@@ -167,10 +202,7 @@ _prop_data_alloc(void)
 
 	pd = _PROP_POOL_GET(_prop_data_pool);
 	if (pd != NULL) {
-		_prop_object_init(&pd->pd_obj);
-		pd->pd_obj.po_type = PROP_TYPE_DATA;
-		pd->pd_obj.po_free = _prop_data_free;
-		pd->pd_obj.po_extern = _prop_data_externalize;
+		_prop_object_init(&pd->pd_obj, &_prop_object_type_data);
 
 		pd->pd_mutable = NULL;
 		pd->pd_size = 0;
@@ -317,19 +349,7 @@ boolean_t
 prop_data_equals(prop_data_t pd1, prop_data_t pd2)
 {
 
-	_PROP_ASSERT(prop_object_is_data(pd1));
-	_PROP_ASSERT(prop_object_is_data(pd2));
-	if (pd1 == pd2)
-		return (TRUE);
-	if (pd1->pd_size != pd2->pd_size)
-		return (FALSE);
-	if (pd1->pd_size == 0) {
-		_PROP_ASSERT(pd1->pd_immutable == NULL);
-		_PROP_ASSERT(pd2->pd_immutable == NULL);
-		return (TRUE);
-	}
-	return (memcmp(pd1->pd_immutable, pd2->pd_immutable,
-		       pd1->pd_size) == 0);
+	return (_prop_data_equals(pd1, pd2));
 }
 
 /*

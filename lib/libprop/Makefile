@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/04/27 23:41:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2006/05/18 03:05:19 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,7 @@ MLINKS+= prop_array.3 prop_array_count.3
 MLINKS+= prop_array.3 prop_array_create.3
 MLINKS+= prop_array.3 prop_array_create_with_capacity.3
 MLINKS+= prop_array.3 prop_array_ensure_capacity.3
+MLINKS+= prop_array.3 prop_array_equals.3
 MLINKS+= prop_array.3 prop_array_get.3
 MLINKS+= prop_array.3 prop_array_iterator.3
 MLINKS+= prop_array.3 prop_array_make_immutable.3
@@ -51,12 +52,14 @@ MLINKS+= prop_dictionary.3 prop_dictionary_count.3
 MLINKS+= prop_dictionary.3 prop_dictionary_create.3
 MLINKS+= prop_dictionary.3 prop_dictionary_create_with_capacity.3
 MLINKS+= prop_dictionary.3 prop_dictionary_ensure_capacity.3
+MLINKS+= prop_dictionary.3 prop_dictionary_equals.3
 MLINKS+= prop_dictionary.3 prop_dictionary_externalize.3
 MLINKS+= prop_dictionary.3 prop_dictionary_get.3
 MLINKS+= prop_dictionary.3 prop_dictionary_get_keysym.3
 MLINKS+= prop_dictionary.3 prop_dictionary_internalize.3
 MLINKS+= prop_dictionary.3 prop_dictionary_iterator.3
 MLINKS+= prop_dictionary.3 prop_dictionary_keysym_cstring_nocopy.3
+MLINKS+= prop_dictionary.3 prop_dictionary_keysym_equals.3
 MLINKS+= prop_dictionary.3 prop_dictionary_make_immutable.3
 MLINKS+= prop_dictionary.3 prop_dictionary_mutable.3
 MLINKS+= prop_dictionary.3 prop_dictionary_remove.3
@@ -71,6 +74,7 @@ MLINKS+= prop_number.3 prop_number_equals_integer.3
 MLINKS+= prop_number.3 prop_number_size.3
 MLINKS+= prop_number.3 prop_number_integer_value.3
 
+MLINKS+= prop_object.3 prop_object_equals.3
 MLINKS+= prop_object.3 prop_object_iterator_next.3
 MLINKS+= prop_object.3 prop_object_iterator_release.3
 MLINKS+= prop_object.3 prop_object_iterator_reset.3

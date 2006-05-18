@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -142,16 +142,23 @@ prop_object_t	_prop_number_internalize(
 prop_object_t	_prop_string_internalize(
 				struct _prop_object_internalize_context *);
 
-struct _prop_object {
-	uint32_t	po_refcnt;		/* reference count */
-	uint32_t	po_type;		/* type indicator */
-	void		(*po_free)(void *);	/* func to free object */
-	boolean_t	(*po_extern)		/* func to externalize object */
+struct _prop_object_type {
+	uint32_t	pot_type;		/* type indicator */
+	void		(*pot_free)(void *);	/* func to free object */
+	boolean_t	(*pot_extern)		/* func to externalize object */
 			    (struct _prop_object_externalize_context *,
 			     void *);
+	boolean_t	(*pot_equals)		/* func to test quality */
+			    (void *, void *);
 };
 
-void	_prop_object_init(struct _prop_object *);
+struct _prop_object {
+	const struct _prop_object_type *po_type;/* type descriptor */
+	uint32_t	po_refcnt;		/* reference count */
+};
+
+void	_prop_object_init(struct _prop_object *,
+			  const struct _prop_object_type *);
 void	_prop_object_fini(struct _prop_object *);
 
 struct _prop_object_iterator {
@@ -175,6 +182,7 @@ struct _prop_object_iterator {
 
 #define	_PROP_MALLOC(s, t)	malloc((s), (t), M_WAITOK)
 #define	_PROP_CALLOC(s, t)	malloc((s), (t), M_WAITOK | M_ZERO)
+#define	_PROP_REALLOC(v, s, t)	realloc((v), (s), (t), M_WAITOK)
 #define	_PROP_FREE(v, t)	free((v), (t))
 
 #define	_PROP_POOL_GET(p)	pool_get(&(p), PR_WAITOK)
@@ -196,11 +204,13 @@ struct _prop_object_iterator {
 #include <lib/libkern/libkern.h>
 
 void *		_prop_standalone_calloc(size_t);
+void *		_prop_standalone_realloc(void *, size_t);
 
 #define	_PROP_ASSERT(x)		/* nothing */
 
 #define	_PROP_MALLOC(s, t)	alloc((s))
 #define	_PROP_CALLOC(s, t)	_prop_standalone_calloc((s))
+#define	_PROP_REALLOC(v, s, t)	_prop_standalone_realloc((v), (s))
 #define	_PROP_FREE(v, t)	dealloc((v), 0)		/* XXX */
 
 #define	_PROP_POOL_GET(p)	alloc((p))
@@ -225,6 +235,7 @@ void *		_prop_standalone_calloc(size_t);
 
 #define	_PROP_MALLOC(s, t)	malloc((s))
 #define	_PROP_CALLOC(s, t)	calloc(1, (s))
+#define	_PROP_REALLOC(v, s, t)	realloc((v), (s))
 #define	_PROP_FREE(v, t)	free((v))
 
 #define	_PROP_POOL_GET(p)	malloc((p))
