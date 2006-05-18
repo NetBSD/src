@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -58,7 +58,21 @@ struct _prop_number {
 
 _PROP_POOL_INIT(_prop_number_pool, sizeof(struct _prop_number), "propnmbr")
 
-#define	prop_object_is_number(x) ((x)->pn_obj.po_type == PROP_TYPE_NUMBER)
+static void		_prop_number_free(void *);
+static boolean_t	_prop_number_externalize(
+				struct _prop_object_externalize_context *,
+				void *);
+static boolean_t	_prop_number_equals(void *, void *);
+
+static const struct _prop_object_type _prop_object_type_number = {
+	.pot_type	=	PROP_TYPE_NUMBER,
+	.pot_free	=	_prop_number_free,
+	.pot_extern	=	_prop_number_externalize,
+	.pot_equals	=	_prop_number_equals,
+};
+
+#define	prop_object_is_number(x)	\
+	((x)->pn_obj.po_type == &_prop_object_type_number)
 
 static void
 _prop_number_free(void *v)
@@ -84,6 +98,17 @@ _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 	return (TRUE);
 }
 
+static boolean_t
+_prop_number_equals(void *v1, void *v2)
+{
+	prop_number_t num1 = v1;
+	prop_number_t num2 = v2;
+
+	_PROP_ASSERT(prop_object_is_number(num1));
+	_PROP_ASSERT(prop_object_is_number(num2));
+	return (num1->pn_number == num2->pn_number);
+}
+
 static prop_number_t
 _prop_number_alloc(uintmax_t val)
 {
@@ -91,10 +116,7 @@ _prop_number_alloc(uintmax_t val)
 
 	pn = _PROP_POOL_GET(_prop_number_pool);
 	if (pn != NULL) {
-		_prop_object_init(&pn->pn_obj);
-		pn->pn_obj.po_type = PROP_TYPE_NUMBER;
-		pn->pn_obj.po_free = _prop_number_free;
-		pn->pn_obj.po_extern = _prop_number_externalize;
+		_prop_object_init(&pn->pn_obj, &_prop_object_type_number);
 
 		pn->pn_number = val;
 	}
@@ -166,9 +188,7 @@ boolean_t
 prop_number_equals(prop_number_t num1, prop_number_t num2)
 {
 
-	_PROP_ASSERT(prop_object_is_number(num1));
-	_PROP_ASSERT(prop_object_is_number(num2));
-	return (num1->pn_number == num2->pn_number);
+	return (_prop_number_equals(num1, num2));
 }
 
 /*

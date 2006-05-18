@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.h,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.h,v 1.2 2006/05/18 03:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -74,10 +74,15 @@ boolean_t	prop_dictionary_set_keysym(prop_dictionary_t,
 void		prop_dictionary_remove_keysym(prop_dictionary_t,
 					      prop_dictionary_keysym_t);
 
+boolean_t	prop_dictionary_equals(prop_dictionary_t, prop_dictionary_t);
+
 char *		prop_dictionary_externalize(prop_dictionary_t);
 prop_dictionary_t prop_dictionary_internalize(const char *);
 
 const char *	prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t);
+
+boolean_t	prop_dictionary_keysym_equals(prop_dictionary_keysym_t,
+					      prop_dictionary_keysym_t);
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_DICTIONARY_H_ */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.1 2006/04/27 20:11:27 thorpej Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.2 2006/05/18 03:05:19 thorpej Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,9 @@
 .Nm prop_dictionary_remove_keysym ,
 .Nm prop_dictionary_externalize ,
 .Nm prop_dictionary_internalize ,
-.Nm prop_dictionary_keysym_cstring_nocopy
+.Nm prop_dictionary_equals ,
+.Nm prop_dictionary_keysym_cstring_nocopy ,
+.Nm prop_dictionary_keysym_equals
 .Nd dictionary property collection object
 .Sh LIBRARY
 .Lb libprop
@@ -108,8 +110,15 @@
 .Fn prop_dictionary_remove_keysym "prop_dictionary_t dict" \
     "prop_dictionary_keysym_t keysym"
 .\"
+.Ft boolean_t
+.Fn prop_dictionary_equals "prop_dictionary_t dict1" "prop_dictionary_t dict2"
+.\"
 .Ft const char *
 .Fn prop_dictionary_keysym_cstring_nocopy "prop_dictionary_keysym_t sym"
+.\"
+.Ft boolean_t
+.Fn prop_dictionary_keysym_equals "prop_dictionary_keysym_t keysym1" \
+    "prop_dictionary_keysym_t keysym2"
 .\"
 .Ft char *
 .Fn prop_dictionary_externalize "prop_dictionary_t dict"
@@ -226,8 +235,20 @@ returned by a dictionary iterator.
 The results are undefined if the iterator used to obtain the key symbol
 is not associated with
 .Fa dict .
-.It Fn prop_dictionary_keysym_cstring_nocopy "prop_dictionary_keysym_t sym"
+.It Fn prop_dictionary_equals "prop_dictionary_t dict1" \
+    "prop_dictionary_t dict2"
+Returns
+.Dv TRUE
+if the two dictionaries are equivalent.
+Note: Objects contained in the dictionary are compared by value, not by
+reference.
+.It Fn prop_dictionary_keysym_cstring_nocopy "prop_dictionary_keysym_t keysym"
 Returns an immutable reference to the dictionary key symbol's string value.
+.It Fn prop_dictionary_keysym_equals "prop_dictionary_keysym_t keysym1"
+    "prop_dictionary_keysym_t keysym2"
+Returns
+.Dv TRUE
+if the two dictionary key symbols are equivalent.
 .It Fn prop_dictionary_externalize "prop_dictionary_t dict"
 Externalizes a dictionary, returning a NUL-terminated buffer containing
 the XML representation of the dictionary.
