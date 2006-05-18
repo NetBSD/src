@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.16 2006/03/19 01:40:09 christos Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.17 2006/05/18 20:42:52 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.16 2006/03/19 01:40:09 christos Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.17 2006/05/18 20:42:52 christos Exp $");
 #endif
 #endif
 
@@ -151,8 +151,10 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 	hints.ai_protocol = proto;
 	hints.ai_socktype = socktype;
 
-	if (getaddrinfo(NULL, "sunrpc", &hints, &res) != 0)
+	if (getaddrinfo(NULL, "sunrpc", &hints, &res) != 0) {
+		freeifaddrs(ifp);
 		return 0;
+	}
 
 	for (ifap = ifp; ifap != NULL; ifap = ifap->ifa_next) {
 		if (ifap->ifa_addr->sa_family != af ||
