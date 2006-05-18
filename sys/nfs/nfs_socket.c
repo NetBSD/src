@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.130 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.131 2006/05/18 12:44:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.130 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.131 2006/05/18 12:44:45 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1517,9 +1517,11 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 
 			memset(&ktvout, 0, sizeof ktvout);	/* XXX gcc */
 
-			LIST_FOREACH(nuidp, NUIDHASH(slp, kauth_cred_geteuid(nd->nd_cr)),
+			LIST_FOREACH(nuidp,
+			    NUIDHASH(slp, kauth_cred_geteuid(nd->nd_cr)),
 			    nu_hash) {
-				if (kauth_cred_geteuid(nuidp->nu_cr) == kauth_cred_geteuid(nd->nd_cr) &&
+				if (kauth_cred_geteuid(nuidp->nu_cr) ==
+				kauth_cred_geteuid(nd->nd_cr) &&
 				    (!nd->nd_nam2 || netaddr_match(
 				    NU_NETFAM(nuidp), &nuidp->nu_haddr,
 				    nd->nd_nam2)))
@@ -1545,7 +1547,8 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 				*tl = ktvout.tv_sec;
 				nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 				*tl++ = ktvout.tv_usec;
-				*tl++ = txdr_unsigned(kauth_cred_geteuid(nuidp->nu_cr));
+				*tl++ = txdr_unsigned(
+				    kauth_cred_geteuid(nuidp->nu_cr));
 			} else {
 				*tl++ = 0;
 				*tl++ = 0;
@@ -1924,7 +1927,7 @@ nfs_rcvunlock(nmp)
 /*
  * Parse an RPC request
  * - verify it
- * - fill in the cred struct.
+ * - allocate and fill in the cred.
  */
 int
 nfs_getreq(nd, nfsd, has_header)
@@ -1947,6 +1950,7 @@ nfs_getreq(nd, nfsd, has_header)
 
 	memset(&tvout, 0, sizeof tvout);	/* XXX gcc */
 
+	KASSERT(nd->nd_cr == NULL);
 	mrep = nd->nd_mrep;
 	md = nd->nd_md;
 	dpos = nd->nd_dpos;
@@ -2014,15 +2018,15 @@ nfs_getreq(nd, nfsd, has_header)
 		uid_t uid;
 		gid_t gid, *grbuf;
 
+		nd->nd_cr = kauth_cred_alloc();
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > NFS_MAXNAMLEN) {
 			m_freem(mrep);
-			return (EBADRPC);
+			error = EBADRPC;
+			goto errout;
 		}
 		nfsm_adv(nfsm_rndup(len));
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-
-		nd->nd_cr = kauth_cred_alloc();
 
 		uid = fxdr_unsigned(uid_t, *tl++);
 		gid = fxdr_unsigned(gid_t, *tl++);
@@ -2035,10 +2039,9 @@ nfs_getreq(nd, nfsd, has_header)
 
 		len = fxdr_unsigned(int, *tl);
 		if (len < 0 || len > RPCAUTH_UNIXGIDS) {
-			kauth_cred_free(nd->nd_cr);
-			nd->nd_cr = NULL;
 			m_freem(mrep);
-			return (EBADRPC);
+			error = EBADRPC;
+			goto errout;
 		}
 		nfsm_dissect(tl, u_int32_t *, (len + 2) * NFSX_UNSIGNED);
 
@@ -2054,10 +2057,9 @@ nfs_getreq(nd, nfsd, has_header)
 
 		len = fxdr_unsigned(int, *++tl);
 		if (len < 0 || len > RPCAUTH_MAXSIZ) {
-			kauth_cred_free(nd->nd_cr);
-			kauth_cred_free(nd->nd_cr);
 			m_freem(mrep);
-			return (EBADRPC);
+			error = EBADRPC;
+			goto errout;
 		}
 		if (len > 0)
 			nfsm_adv(nfsm_rndup(len));
@@ -2070,7 +2072,8 @@ nfs_getreq(nd, nfsd, has_header)
 			nfsd->nfsd_authlen = uio.uio_resid + NFSX_UNSIGNED;
 			if (uio.uio_resid > (len - 2 * NFSX_UNSIGNED)) {
 				m_freem(mrep);
-				return (EBADRPC);
+				error = EBADRPC;
+				goto errout;
 			}
 			uio.uio_offset = 0;
 			uio.uio_iov = &iov;
@@ -2156,9 +2159,10 @@ nfs_getreq(nd, nfsd, has_header)
 				nd->nd_procnum = NFSPROC_NOOP;
 				return (0);
 			}
-			nfsrv_setcred(nuidp->nu_cr, &nd->nd_cr);
+			kauth_cred_hold(nuidp->nu_cr);
+			nd->nd_cr = nuidp->nu_cr;
 			nd->nd_flag |= ND_KERBNICK;
-		};
+		}
 	} else {
 		nd->nd_repstat = (NFSERR_AUTHERR | AUTH_REJECTCRED);
 		nd->nd_procnum = NFSPROC_NOOP;
@@ -2180,8 +2184,16 @@ nfs_getreq(nd, nfsd, has_header)
 		nd->nd_duration = NQ_MINLEASE;
 	nd->nd_md = md;
 	nd->nd_dpos = dpos;
+	KASSERT((nd->nd_cr == NULL && (nfsd->nfsd_flag & NFSD_NEEDAUTH) != 0)
+	     || (nd->nd_cr != NULL && (nfsd->nfsd_flag & NFSD_NEEDAUTH) == 0));
 	return (0);
 nfsmout:
+errout:
+	KASSERT(error != 0);
+	if (nd->nd_cr != NULL) {
+		kauth_cred_free(nd->nd_cr);
+		nd->nd_cr = NULL;
+	}
 	return (error);
 }
 
@@ -2547,14 +2559,14 @@ nfsrv_dorec(slp, nfsd, ndp)
 		nam->m_next = NULL;
 	} else
 		nam = NULL;
-	nd = pool_get(&nfs_srvdesc_pool, PR_WAITOK);
+	nd = nfsdreq_alloc();
 	nd->nd_md = nd->nd_mrep = m;
 	nd->nd_nam2 = nam;
 	nd->nd_dpos = mtod(m, caddr_t);
 	error = nfs_getreq(nd, nfsd, TRUE);
 	if (error) {
 		m_freem(nam);
-		pool_put(&nfs_srvdesc_pool, nd);
+		nfsdreq_free(nd);
 		return (error);
 	}
 	*ndp = nd;
@@ -2562,6 +2574,28 @@ nfsrv_dorec(slp, nfsd, ndp)
 	return (0);
 }
 
+struct nfsrv_descript *
+nfsdreq_alloc(void)
+{
+	struct nfsrv_descript *nd;
+
+	nd = pool_get(&nfs_srvdesc_pool, PR_WAITOK);
+	nd->nd_cr = NULL;
+	return nd;
+}
+
+void
+nfsdreq_free(struct nfsrv_descript *nd)
+{
+	kauth_cred_t cr;
+
+	cr = nd->nd_cr;
+	if (cr != NULL) {
+		KASSERT(kauth_cred_getrefcnt(cr) == 1);
+		kauth_cred_free(cr);
+	}
+	pool_put(&nfs_srvdesc_pool, nd);
+}
 
 /*
  * Search for a sleeping nfsd and wake it up.
@@ -2624,7 +2658,7 @@ again:
 	if (nd->nd_nam2) {
 		m_free(nd->nd_nam2);
 	}
-	pool_put(&nfs_srvdesc_pool, nd);
+	nfsdreq_free(nd);
 
 	simple_lock(&slp->ns_lock);
 	KASSERT((slp->ns_flag & SLP_SENDING) != 0); 

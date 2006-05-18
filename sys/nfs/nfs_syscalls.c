@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.92 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.93 2006/05/18 12:44:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.92 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.93 2006/05/18 12:44:45 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -298,14 +298,16 @@ sys_nfssvc(l, v, retval)
 			 */
 			LIST_FOREACH(nuidp, NUIDHASH(slp, nsd->nsd_cr.cr_uid),
 			    nu_hash) {
-				if (kauth_cred_geteuid(nuidp->nu_cr) == nsd->nsd_cr.cr_uid &&
+				if (kauth_cred_geteuid(nuidp->nu_cr) ==
+				    nsd->nsd_cr.cr_uid &&
 				    (!nfsd->nfsd_nd->nd_nam2 ||
 				     netaddr_match(NU_NETFAM(nuidp),
 				     &nuidp->nu_haddr, nfsd->nfsd_nd->nd_nam2)))
 					break;
 			}
 			if (nuidp) {
-			    nfsrv_setcred(nuidp->nu_cr, &nfsd->nfsd_nd->nd_cr);
+			    kauth_cred_hold(nuidp->nu_cr);
+			    nfsd->nfsd_nd->nd_cr = nuidp->nu_cr;
 			    nfsd->nfsd_nd->nd_flag |= ND_KERBFULL;
 			} else {
 			    /*
@@ -332,10 +334,6 @@ sys_nfssvc(l, v, retval)
 			        }
 				nuidp->nu_flag = 0;
 				kauth_cred_uucvt(nuidp->nu_cr, &nsd->nsd_cr);
-#if 0 /* XXX elad - kernel auth makes sure this can't happen. */
-				if (nuidp->nu_cr.cr_ngroups > NGROUPS)
-				    nuidp->nu_cr.cr_ngroups = NGROUPS;
-#endif /* XXX elad */
 				nuidp->nu_timestamp = nsd->nsd_timestamp;
 				nuidp->nu_expire = time.tv_sec + nsd->nsd_ttl;
 				/*
@@ -367,8 +365,8 @@ sys_nfssvc(l, v, retval)
 					nu_lru);
 				LIST_INSERT_HEAD(NUIDHASH(slp, nsd->nsd_uid),
 					nuidp, nu_hash);
-				nfsrv_setcred(nuidp->nu_cr,
-				    &nfsd->nfsd_nd->nd_cr);
+				kauth_cred_hold(nuidp->nu_cr);
+				nfsd->nfsd_nd->nd_cr = nuidp->nu_cr;
 				nfsd->nfsd_nd->nd_flag |= ND_KERBFULL;
 			    }
 			}
@@ -628,9 +626,7 @@ nfssvc_nfsd(nsd, argp, l)
 		}
 		if (error || (slp->ns_flag & SLP_VALID) == 0) {
 			if (nd) {
-				if (nd->nd_cr != NULL)
-					kauth_cred_destroy(nd->nd_cr);
-				pool_put(&nfs_srvdesc_pool, nd);
+				nfsdreq_free(nd);
 				nd = NULL;
 			}
 			nfsd->nfsd_slp = NULL;
@@ -818,9 +814,7 @@ nfssvc_nfsd(nsd, argp, l)
 				break;
 			}
 			if (nd) {
-				if (nd->nd_cr != NULL)
-					kauth_cred_destroy(nd->nd_cr);
-				pool_put(&nfs_srvdesc_pool, nd);
+				nfsdreq_free(nd);
 				nd = NULL;
 			}
 
@@ -909,9 +903,7 @@ nfsrv_zapsock(slp)
 	for (nwp = LIST_FIRST(&slp->ns_tq); nwp; nwp = nnwp) {
 		nnwp = LIST_NEXT(nwp, nd_tq);
 		LIST_REMOVE(nwp, nd_tq);
-		if (nwp->nd_cr != NULL)
-			kauth_cred_destroy(nwp->nd_cr);
-		pool_put(&nfs_srvdesc_pool, nwp);
+		nfsdreq_free(nwp);
 	}
 	splx(s);
 }
