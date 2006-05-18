@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.11 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.12 2006/05/18 10:07:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.11 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.12 2006/05/18 10:07:34 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -147,13 +147,13 @@ static int hang_addrlist(struct mount *, struct netexport *,
     const struct export_args *);
 static int sacheck(struct sockaddr *);
 static int free_netcred(struct radix_node *, void *);
-static void clear_exports(struct netexport *);
 static int export(struct netexport *, const struct export_args *);
 static int setpublicfs(struct mount *, struct netexport *,
     const struct export_args *);
 static struct netcred *netcred_lookup(struct netexport *, struct mbuf *);
 static struct netexport *netexport_lookup(const struct mount *);
 static struct netexport *netexport_lookup_byfsid(const fsid_t *);
+static void netexport_clear(struct netexport *);
 static void netexport_insert(struct netexport *);
 static void netexport_remove(struct netexport *);
 static void netexport_wrlock(void);
@@ -196,11 +196,7 @@ nfs_export_unmount(struct mount *mp)
 
 	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
 	    mp->mnt_op->vfs_fhtovp != NULL);
-
-	if (mp->mnt_flag & MNT_EXPUBLIC) {
-		setpublicfs(NULL, NULL, NULL);
-	}
-
+	netexport_clear(ne);
 	netexport_remove(ne);
 	netexport_wrunlock();
 	free(ne, M_NFS_EXPORT);
@@ -280,12 +276,12 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	 * preprocessor conditional and enable the first one.
 	 */
 #ifdef notyet
-	clear_exports(ne);
+	netexport_clear(ne);
 	for (i = 0; error == 0 && i < mel->mel_nexports; i++)
 		error = export(ne, &mel->mel_exports[i]);
 #else
 	if (mel->mel_nexports == 0)
-		clear_exports(ne);
+		netexport_clear(ne);
 	else if (mel->mel_nexports == 1)
 		error = export(ne, &mel->mel_exports[0]);
 	else {
@@ -651,7 +647,7 @@ free_netcred(struct radix_node *rn, void *w)
  * Clears the exports list for a given file system.
  */
 static void
-clear_exports(struct netexport *ne)
+netexport_clear(struct netexport *ne)
 {
 	struct radix_node_head *rnh;
 	struct mount *mp = ne->ne_mount;
