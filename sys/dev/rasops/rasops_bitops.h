@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops_bitops.h,v 1.8 2002/05/31 19:42:12 thorpej Exp $	*/
+/* 	$NetBSD: rasops_bitops.h,v 1.9 2006/05/18 18:45:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -168,6 +168,8 @@ NAME(copycols)(cookie, row, src, dst, num)
 	int tmp, lmask, rmask, height, lnum, rnum, sb, db, cnt, full;
 	int32_t *sp, *dp, *srp, *drp;
 	struct rasops_info *ri;
+
+	sp = NULL;	/* XXX gcc */
 
 	ri = (struct rasops_info *)cookie;
 
