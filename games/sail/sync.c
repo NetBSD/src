@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.23 2004/09/07 13:20:39 jrf Exp $	*/
+/*	$NetBSD: sync.c,v 1.24 2006/05/18 18:42:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.23 2004/09/07 13:20:39 jrf Exp $");
+__RCSID("$NetBSD: sync.c,v 1.24 2006/05/18 18:42:59 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,9 +251,13 @@ Sync(void)
 		if (isstr != 0 && isstr != 1)
 			goto bad;
 		if (isstr) {
+			int c;
 			char *p;
+
 			for (p = buf;;) {
-				switch (*p++ = getc(sync_fp)) {
+				c = getc(sync_fp);
+				*p++ = (char)c;
+				switch (c) {
 				case '\n':
 					p--;
 				case EOF:
