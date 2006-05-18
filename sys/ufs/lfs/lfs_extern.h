@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.82 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.83 2006/05/18 23:15:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -192,6 +192,8 @@ void lfs_callback(struct buf *);
 int lfs_vref(struct vnode *);
 void lfs_vunref(struct vnode *);
 void lfs_vunref_head(struct vnode *);
+void lfs_acquire_finfo(struct lfs *fs, ino_t, int);
+void lfs_release_finfo(struct lfs *fs);
 
 /* lfs_subr.c */
 void lfs_setup_resblks(struct lfs *);
