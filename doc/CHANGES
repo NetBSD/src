@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.618 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.619 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -8,11 +8,6 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 
 Changes from NetBSD 3.0 to NetBSD 4.0:
-	PaX: Add mprotect(2) restrictions to enforce W^X policies. See
-	     options(4), sysctl(3), and paxctl(1). [elad 20060515]
-	kauth(9): Integrate kernel authorization, to replace kernel management
-		  of redentials and (potentially) privileged operations
-		  requests. [elad 20060515]
 	agr(4): Add pseudo-device driver for link aggregation. [yamt 20050318]
 	kernel: Limit the number of locks per user to 1024 [christos 20050320]
 	crypto: Upgrade to OpenSSL 0.9.7f [christos 20050325]
@@ -278,3 +273,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		OpenBSD. [jmcneill 20060506]
 	it(4): Driver for iTE IT87xxF/SIS 950 Hardware monitor. Adapted
 		from OpenBSD. [xtraeme 20060513]
+	kauth(9): Integrate kernel authorization, to replace kernel management
+		of redentials and (potentially) privileged operations
+		requests. [elad 20060515]
+	kernel: Add mprotect(2) restrictions to enforce W^X policies. See
+		options(4), sysctl(3), and paxctl(1). From PaX. [elad 20060515]
