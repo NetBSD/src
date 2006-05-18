@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.211 2006/05/18 00:57:13 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.212 2006/05/18 23:15:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.211 2006/05/18 00:57:13 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.212 2006/05/18 23:15:09 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -2094,21 +2094,13 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		      (int)((SEGSUM *)(sp->segsum))->ss_nfinfo,
 		      (unsigned)fs->lfs_offset));
 #endif
-		if (sp->fip->fi_nblocks == 0) {
-			/* Don't write zero-length finfos */
-			--((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left += FINFOSIZE;
-		} else
-			lfs_updatemeta(sp);
-
+		lfs_updatemeta(sp);
+		lfs_release_finfo(fs);
 		vers = sp->fip->fi_version;
+
 		(void) lfs_writeseg(fs, sp);
 
-		sp->fip->fi_version = vers;
-		sp->fip->fi_ino = ip->i_number;
-		/* Add the current file to the segment summary. */
-		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-		sp->sum_bytes_left -= FINFOSIZE;
+		lfs_acquire_finfo(fs, ip->i_number, vers);
 
 		/*
 		 * Having given up all of the pager_map we were holding,
@@ -2166,15 +2158,11 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			int vers;
 
 			lfs_updatemeta(sp);
-
 			vers = sp->fip->fi_version;
+			lfs_release_finfo(fs);
 			(void) lfs_writeseg(fs, sp);
 
-			sp->fip->fi_version = vers;
-			sp->fip->fi_ino = ip->i_number;
-			/* Add the current file to the segment summary. */
-			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left -= FINFOSIZE;
+			lfs_acquire_finfo(fs, ip->i_number, vers);
 		}
 		/* Check both for space in segment and space in segsum */
 		iobytes = MIN(iobytes, (sp->seg_bytes_left >> fs_bshift)
