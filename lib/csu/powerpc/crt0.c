@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.25 2004/08/26 21:15:05 thorpej Exp $ */
+/* $NetBSD: crt0.c,v 1.26 2006/05/18 17:54:19 christos Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -41,10 +41,8 @@
  * Small Data Area designators.  If not defined, will show up as being
  * at address zero.
  */
-extern int _SDA_BASE_[];
-__weak_extern(_SDA_BASE_);
-extern int _SDA2_BASE_[];
-__weak_extern(_SDA2_BASE_);
+extern int _SDA_BASE_[] __weak_reference(_SDA_BASE_);
+extern int _SDA2_BASE_[] __weak_reference(_SDA2_BASE_);
 
 /*
  * First 5 arguments are specified by the PowerPC SVR4 ABI.  The
@@ -103,7 +101,7 @@ _start(int argc, char **argv, char **envp,
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.25 2004/08/26 21:15:05 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.26 2006/05/18 17:54:19 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

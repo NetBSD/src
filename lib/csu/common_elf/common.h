@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.11 2006/05/17 17:08:07 christos Exp $ */
+/* $NetBSD: common.h,v 1.12 2006/05/18 17:54:19 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -81,12 +81,7 @@ void	_rtld_setup(void (*)(void), const Obj_Entry *obj);
  * if we happen to be compiling without -static but with without any
  * shared libs present, things will still work.
  */
-extern int _DYNAMIC
-#if __GNUC__ > 3
-    __attribute__((__weakref__))
-#endif
-    ;
-__weak_extern(_DYNAMIC);
+extern int _DYNAMIC __weak_reference(_DYNAMIC);
 #endif /* DYNAMIC */
 
 #ifdef MCRT0

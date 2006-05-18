@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.25 2006/03/06 21:11:56 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.26 2006/05/18 17:54:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.25 2006/03/06 21:11:56 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.26 2006/05/18 17:54:19 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -919,11 +919,11 @@ protected el_action_t
 /*ARGSUSED*/
 vi_alias(EditLine *el, int c)
 {
-#ifdef __weak_extern
+#ifdef __weak_reference
 	char alias_name[3];
 	char *alias_text;
-	extern char *get_alias_text(const char *);
-	__weak_extern(get_alias_text);
+	extern char *get_alias_text(const char *)
+	    __weak_reference(get_alias_text);
 
 	if (get_alias_text == 0) {
 		return CC_ERROR;
