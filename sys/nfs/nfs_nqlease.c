@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.62 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.63 2006/05/18 12:44:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.62 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.63 2006/05/18 12:44:45 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -942,12 +942,9 @@ nfsmout:
 /*
  * Called for client side callbacks
  */
-int
-nqnfs_callback(nmp, mrep, md, dpos, l)
-	struct nfsmount *nmp;
-	struct mbuf *mrep, *md;
-	caddr_t dpos;
-	struct lwp *l;
+static int
+nqnfs_callback1(struct nfsmount *nmp, struct mbuf *mrep, struct mbuf *md,
+    caddr_t dpos, struct lwp *l, struct nfsrv_descript *nfsd)
 {
 	struct vnode *vp;
 	u_int32_t *tl;
@@ -957,8 +954,6 @@ nqnfs_callback(nmp, mrep, md, dpos, l)
 	struct nfsnode *np;
 	struct nfsd tnfsd;
 	struct nfssvc_sock *slp;
-	struct nfsrv_descript ndesc;
-	struct nfsrv_descript *nfsd = &ndesc;
 	struct mbuf **mrq = (struct mbuf **)0, *mb, *mreq;
 	int error = 0, cache = 0;
 	char *cp2, *bpos;
@@ -995,7 +990,22 @@ nqnfs_callback(nmp, mrep, md, dpos, l)
 		}
 	}
 	vput(vp);
+	kauth_cred_free(nfsd->nd_cr);
 	nfsm_srvdone;
+}
+
+int
+nqnfs_callback(struct nfsmount *nmp, struct mbuf *mrep, struct mbuf *md,
+    caddr_t dpos, struct lwp *l)
+{
+	struct nfsrv_descript *nd;
+	int error;
+
+	nd = nfsdreq_alloc();
+	error = nqnfs_callback1(nmp, mrep, md, dpos, l, nd);
+	nfsdreq_free(nd);
+
+	return error;
 }
 #endif /* NFS && !NFS_V2_ONLY */
 

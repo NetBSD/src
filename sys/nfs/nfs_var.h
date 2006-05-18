@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.59 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.60 2006/05/18 12:44:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -232,6 +232,8 @@ int nfsdsock_lock(struct nfssvc_sock *, boolean_t);
 void nfsdsock_unlock(struct nfssvc_sock *);
 int nfsdsock_drain(struct nfssvc_sock *);
 int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
+void nfsdreq_free(struct nfsrv_descript *);
+struct nfsrv_descript *nfsdreq_alloc(void);
 
 /* nfs_srvcache.c */
 void nfsrv_initcache(void);
@@ -295,8 +297,6 @@ void nfs_add_tobecommitted_range(struct vnode *, off_t, off_t);
 void nfs_del_tobecommitted_range(struct vnode *, off_t, off_t);
 
 int nfsrv_errmap(struct nfsrv_descript *, int);
-void nfsrvw_sort(gid_t *, int);
-void nfsrv_setcred(kauth_cred_t, kauth_cred_t *);
 void nfs_cookieheuristic(struct vnode *, int *, struct lwp *, kauth_cred_t);
 
 u_int32_t nfs_getxid(void);

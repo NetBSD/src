@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.162 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.163 2006/05/18 12:44:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.162 2006/05/14 21:32:21 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.163 2006/05/18 12:44:45 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2921,52 +2921,6 @@ nfsrv_errmap(nd, err)
 	if (err <= ELAST)
 		return ((int)nfsrv_v2errmap[err - 1]);
 	return (NFSERR_IO);
-}
-
-/*
- * Sort the group list in increasing numerical order.
- * (Insertion sort by Chris Torek, who was grossed out by the bubble sort
- *  that used to be here.)
- */
-void
-nfsrvw_sort(list, num)
-        gid_t *list;
-        int num;
-{
-	int i, j;
-	gid_t v;
-
-	/* Insertion sort. */
-	for (i = 1; i < num; i++) {
-		v = list[i];
-		/* find correct slot for value v, moving others up */
-		for (j = i; --j >= 0 && v < list[j];)
-			list[j + 1] = list[j];
-		list[j + 1] = v;
-	}
-}
-
-/*
- * copy credentials making sure that the result can be compared with memcmp().
- */
-void
-nfsrv_setcred(incred, outcred)
-	kauth_cred_t incred, *outcred;
-{
-	/*
-	 * XXX elad: this is another case where the original code just
-	 *	     messed with the struct members, more specifically,
-	 *	     set the reference count. if we have more than one
-	 *	     reference, it means we have a user of these
-	 *	     credentials that didn't kauth_cred_hold().
-	 */
-#ifdef DIAGNOSTIC
-	if (kauth_cred_getrefcnt(*outcred) > 1)
-		panic("nfsrv_setcred: possible memory leak");
-#endif /* DIAGNOSTIC */
-
-	*outcred = kauth_cred_copy(*outcred);
-	kauth_cred_clone(incred, *outcred);
 }
 
 u_int32_t

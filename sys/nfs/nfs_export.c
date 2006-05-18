@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.12 2006/05/18 10:07:34 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.13 2006/05/18 12:44:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.12 2006/05/18 10:07:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.13 2006/05/18 12:44:45 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -501,9 +501,9 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		if (mp->mnt_flag & MNT_DEFEXPORTED)
 			return EPERM;
 		np = &nep->ne_defexported;
+		KASSERT(np->netc_anon == NULL);
+		np->netc_anon = kauth_cred_alloc();
 		np->netc_exflags = argp->ex_flags;
-		if (np->netc_anon == NULL) /* XXX elad */
-			np->netc_anon = kauth_cred_alloc();
 		kauth_cred_uucvt(np->netc_anon, &argp->ex_anon);
 		mp->mnt_flag |= MNT_DEFEXPORTED;
 		return 0;
@@ -514,6 +514,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 
 	i = sizeof(struct netcred) + argp->ex_addrlen + argp->ex_masklen;
 	np = malloc(i, M_NETADDR, M_WAITOK | M_ZERO);
+	np->netc_anon = kauth_cred_alloc();
 	saddr = (struct sockaddr *)(np + 1);
 	error = copyin(argp->ex_addr, saddr, argp->ex_addrlen);
 	if (error)
@@ -571,8 +572,6 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 		enp->netc_refcnt = 1;
 
 	np->netc_exflags = argp->ex_flags;
-	if (np->netc_anon == NULL) /* XXX elad */
-		np->netc_anon = kauth_cred_alloc();
 	kauth_cred_uucvt(np->netc_anon, &argp->ex_anon);
 	return 0;
 check:
@@ -582,6 +581,8 @@ check:
 	else
 		error = 0;
 out:
+	KASSERT(np->netc_anon != NULL);
+	kauth_cred_free(np->netc_anon);
 	free(np, M_NETADDR);
 	return error;
 }
@@ -638,8 +639,11 @@ free_netcred(struct radix_node *rn, void *w)
 	struct netcred *np = (struct netcred *)(void *)rn;
 
 	(*rnh->rnh_deladdr)(rn->rn_key, rn->rn_mask, rnh);
-	if (--(np->netc_refcnt) <= 0)
+	if (--(np->netc_refcnt) <= 0) {
+		KASSERT(np->netc_anon != NULL);
+		kauth_cred_free(np->netc_anon);
 		free(np, M_NETADDR);
+	}
 	return 0;
 }
 
@@ -664,6 +668,16 @@ netexport_clear(struct netexport *ne)
 			free(rnh, M_RTABLE);
 			ne->ne_rtable[i] = NULL;
 		}
+	}
+
+	if ((mp->mnt_flag & MNT_DEFEXPORTED) != 0) {
+		struct netcred *np = &ne->ne_defexported;
+
+		KASSERT(np->netc_anon != NULL);
+		kauth_cred_free(np->netc_anon);
+		np->netc_anon = NULL;
+	} else {
+		KASSERT(ne->ne_defexported.netc_anon == NULL);
 	}
 
 	mp->mnt_flag &= ~(MNT_EXPORTED | MNT_DEFEXPORTED);
