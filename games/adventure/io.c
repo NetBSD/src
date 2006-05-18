@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.19 2006/03/21 17:14:15 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.20 2006/05/18 18:42:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.19 2006/03/21 17:14:15 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.20 2006/05/18 18:42:59 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,16 +60,17 @@ getin(char **wrd1, char **wrd2)
 {
 	char   *s;
 	static char wd1buf[MAXSTR], wd2buf[MAXSTR];
-	int     first, numch;
+	int     first, numch, c;
 
 	*wrd1 = wd1buf;				/* return ptr to internal str */
 	*wrd2 = wd2buf;
 	wd2buf[0] = 0;				/* in case it isn't set here */
 	for (s = wd1buf, first = 1, numch = 0;;) {
-		if ((*s = getchar()) >= 'A' && *s <= 'Z')
+		c = getchar();
+		if ((*s = (char)c) >= 'A' && *s <= 'Z')
 			*s = *s - ('A' - 'a');
 		/* convert to upper case */
-		switch (*s) {			/* start reading from user */
+		switch (c) {			/* start reading from user */
 		case '\n':
 			*s = 0;
 			return;
