@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.27 2005/12/24 21:11:15 perry Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.28 2006/05/19 19:11:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #ifdef DWARF2_EH
 #include "dwarf2_eh.h"
 #endif
-#include "dot_init.h"
+#include <dot_init.h>
 
 static void (*__CTOR_LIST__[1])(void)
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
