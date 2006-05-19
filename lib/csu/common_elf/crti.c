@@ -1,4 +1,4 @@
-/*	$NetBSD: crti.c,v 1.2 2002/11/23 17:21:22 thorpej Exp $	*/
+/*	$NetBSD: crti.c,v 1.3 2006/05/19 19:11:12 christos Exp $	*/
 
 /*- 
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <sys/exec_elf.h>
 
 #include "sysident.h"
-#include "dot_init.h"
+#include <dot_init.h>
 
 INIT_FALLTHRU_DECL;
 FINI_FALLTHRU_DECL;

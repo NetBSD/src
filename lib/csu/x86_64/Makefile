@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/07 22:27:55 fvdl Exp $
+#	$NetBSD: Makefile,v 1.5 2006/05/19 19:11:13 christos Exp $
 
 ELFSIZE=64
-CPPFLAGS+=      -I- -I${.CURDIR} -D__EH_FRAME_CONST=const
+CPPFLAGS+=      -I${.CURDIR} -D__EH_FRAME_CONST=const
 
 .include "${.CURDIR}/../common_elf/Makefile.inc"

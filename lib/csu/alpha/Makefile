@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.22 2002/01/14 01:31:58 thorpej Exp $
+#	$NetBSD: Makefile,v 1.23 2006/05/19 19:11:12 christos Exp $
 
 ELFSIZE=	64
 
 #Uncomment the next line to enable the new .init fallthru
-CPPFLAGS+=	-I- -I${.CURDIR}
+CPPFLAGS+=	-I${.CURDIR}
 
 OBJS+=	crtfm.o
 
