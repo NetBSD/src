@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.48 2006/04/07 19:38:58 mrg Exp $
+#	$NetBSD: sets.subr,v 1.49 2006/05/19 01:49:05 dogcow Exp $
 #
 
 #
@@ -214,7 +214,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.48 2006/04/07 19:38:58 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.49 2006/05/19 01:49:05 dogcow Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -423,6 +423,9 @@ list_set_lists()
 		elif [ "${HAVE_GCC}" = "4" ]; then
 			if [ -f $setdir/gcc4.mi ]; then
 				echo $setdir/gcc4.mi
+			fi
+			if [ -f $setdir/gcc4.md.${MACHINE_CPU} ]; then
+				echo $setdir/gcc4.md.${MACHINE_CPU}
 			fi
 			if [ "$shlib" != "no" ]; then
 				if [ -f $setdir/gcc4.shl ]; then
