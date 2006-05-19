@@ -1,4 +1,0 @@
-# $NetBSD: mapper.dir.KS.src,v 1.1 2003/06/27 08:40:48 tshiozak Exp $
-
-KSC5601/UCS			mapper_std	KS/KSC5601%UCS.mps
-UCS/KSC5601			mapper_std	KS/UCS%KSC5601.mps
