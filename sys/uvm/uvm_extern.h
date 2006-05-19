@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.113 2006/05/14 21:38:17 elad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.114 2006/05/19 15:08:14 yamt Exp $	*/
 
 /*
  *
@@ -153,7 +153,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define UVM_ADVICE(X)		(((X) >> 12) & UVM_ADV_MASK)
 
 #define UVM_MAPFLAG(PROT,MAXPROT,INH,ADVICE,FLAGS) \
-	((MAXPROT << 8)|(PROT)|(INH)|((ADVICE) << 12)|(FLAGS))
+	(((MAXPROT) << 8)|(PROT)|(INH)|((ADVICE) << 12)|(FLAGS))
 
 /* magic offset value: offset not known(obj) or don't care(!obj) */
 #define UVM_UNKNOWN_OFFSET ((voff_t) -1)
