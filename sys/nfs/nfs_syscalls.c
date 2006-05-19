@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.93 2006/05/18 12:44:45 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.94 2006/05/19 13:53:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.93 2006/05/18 12:44:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.94 2006/05/19 13:53:11 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -385,7 +385,6 @@ sys_nfssvc(l, v, retval)
 #ifdef NFSSERVER
 MALLOC_DEFINE(M_NFSD, "NFS daemon", "Nfs server daemon structure");
 MALLOC_DEFINE(M_NFSSVC, "NFS srvsock", "Nfs server structure");
-struct pool nfs_srvdesc_pool;
 
 static struct nfssvc_sock *
 nfsrv_sockalloc()
