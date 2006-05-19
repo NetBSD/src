@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.319 2006/05/19 17:43:44 tsutsui Exp $
+.\"	$NetBSD: options.4,v 1.320 2006/05/19 17:53:18 tsutsui Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -330,6 +330,17 @@ which have been deprecated with the addition of the
 and
 .Xr fhstatvfs 2 
 system calls.
+.It Cd options COMPAT_30
+Enable binary compatibility with
+.Nx 3.0 .
+This allows the use of old syscalls for
+.Fn getdents ,
+.Fn stat ,
+.Fn fstat ,
+.Fn lstat
+and
+.Fn fhstat .
+The syscall numbers were changed post 3.0 to introduce 64 bit inode.
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
