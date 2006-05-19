@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.78 2006/05/19 18:19:39 chap Exp $
+#	$NetBSD: BRANCHES,v 1.79 2006/05/19 20:28:37 briggs Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -31,6 +31,15 @@
 #   Scope:	  Portion of the tree covered.
 #   Notes:	  Various other info, perhaps explanation of special tags,
 #		  who-may-commit policies, etc.
+#
+# There are four sections to this file:
+#   Release branches
+#   Individual developers' branches (Active/Dormant)
+#   Individual developers' branches (Terminated), and
+#   other
+#
+# Entries within each section should be alphabetized.
+#
 
 
 # Release branches:
@@ -184,8 +193,9 @@ Notes:		Branch contains only security/critical fixes to
 		NetBSD 2.1.  For new features, use netbsd-2 branch.
 		Commits restricted to Release Engineering.
 
-# Individual developers' branches:
-
+########################################################################
+# Individual developers' branches (Active/Dormant):
+########################################################################
 
 Branch:		bjh21-hydra
 Description:	Simtec Hydra support and ARM SMP in general
@@ -200,6 +210,198 @@ Notes:		This code is on a branch because it involves changes to
 		nathanw_sa branch difficult.  This branch is expected
 		to be merged to the trunk shortly after nathanw_sa.
 
+Branch: 	chap-midi
+Description:	Renovation of MIDI support
+Status: 	Active
+Start Date:	19 May 2006
+End Date:	
+Base Tag:	chap-midi-base
+Maintainer:	Chapman Flack <chap@NetBSD.org>
+Scope:		sys, share/man, usr.bin
+Notes:		Please leave commits to maintainer for now. The branch is
+                not expected to be compilable until further notice.
+
+Branch:		gmcgarry_ctxsw
+Description:	Separate scheduler from context-switch code
+Status:		Dormant
+Start Date:	18 December 2002
+End Date:
+Base Tag:	gmcgarry_ctxsw_base
+Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
+Scope:		kernel
+Notes:		Removing knowledge of the schedular and its run queues
+		from the machine-dependent context switch code is the
+		first step in cleaning up the scheduler.  It is necessary
+		for the newlock branch, making the scheduler SMP friendly,
+		adding real-time scheduler extensions, and reducing the
+		number of code paths for LWP and proc switching.
+
+Branch:		gmcgarry_ucred
+Description:	Integrate and encapsulate user credentials
+Status:		Dormant
+Start Date:	18 December 2002
+End Date:
+Base Tag:	gmcgarry_ucred_base
+Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
+Scope:		kernel
+Notes:		merge pcred and ucred and poolify
+
+Branch:		kame
+Description:	KAME Project
+Status:		Dormant
+Start Date:	28 Jun 1999
+End Date:
+Base Tag:
+Maintainer:	Jun-ichiro itojun Hagino <itojun@NetBSD.org>
+Scope:		kernel
+Notes:		http://www.kame.net
+		Used for "reference" purposes for early part of KAME
+		integration effort.  The branch is not actively used, as I
+		(itojun) use patch(1) and diff(1) for the KAME syncs.
+
+Branch:		kent-audio2
+Description:	In-kernel audio mixer
+Status:		Active
+Start Date:	Sun Jan 16 2005
+End Date:	
+Base Tag:	kent-audio2-base
+Maintainer:	TAMURA Kent <kent@NetBSD.org>
+Scope:		kernel (audio device drivers)
+Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
+		Please consult with the maintainer before committing
+		to this branch.
+		This branch is not expected to be compilable yet.
+
+Branch:		matt-timespec
+Description:	Convert the kernel to struct timespec as its primary time
+		storage mechanism.
+Status:		Active
+Start Date:	2005-02-19
+End Date:
+Base Tag:	
+Maintainer:	Matt Thomas <matt@NetBSD.org>
+Scope:		kernel
+Notes:	
+
+Branch:		newlock
+Description:	New locking primitives, based on Solaris's
+Status:		Dormant
+Start Date:	March 9, 2002
+End Date:
+Base Tag:	newlock-base
+Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
+Scope:		Kernel
+Notes:		The goal is to replace the existing lockmgr() and
+		simple_lock() based locking mechanisms with the
+		primitives found in Solaris: mutexes and rwlocks.
+
+Branch:		peter-altq
+Description:	New ALTQ framework:
+		- sync with KAME sources
+		- share mtag/name mapping functions
+		- separate altq + pf attachment 
+Status:		Active
+Start Date:	March 16, 2006
+End Date:
+Base Tag:	peter-altq-base
+Maintainer:	Peter Postma <peter@NetBSD.org>,
+		Martin Husemann <martin@NetBSD.org>,
+		Matthias Scheler <tron@NetBSD.org>
+Scope:		dist/pf dist/ipf distrib/sets/lists sys usr.sbin/altq
+Notes:
+
+Branch:	  	pkgviews
+Description:  	package views, enabling multiple conflicting packages to co-exist
+Status:		Active
+Start Date:	22 July 2002
+End Date:
+Base Tag:	pkgviews
+Maintainer:	Alistair Crooks <agc@NetBSD.org>
+Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
+Notes:		A more flexible infrastructure for third-party packages by
+		allowing multiple conflicting packages and versions to co-exist
+		within the same tree
+
+Branch:		rpaulo-netinet-merge-pcb
+Description:	merge in6pcb with inpcb
+Status:		Active
+Start Date:	Wed Feb 01 2006
+End Date:	
+Base Tag:	rpaulo-netinet-merge-pcb-base
+Maintainer:	Rui Paulo <rpaulo@NetBSD.org>
+Scope:		src/sys
+Notes:
+
+Branch:		rtr-xorg-branch
+Description:	xorg & static build alterations to src/x11
+Status:		Active
+Start Date:	Nov 15 2004
+End Date:	
+Base tag:	rtr-xorg-branch-base
+Maintainer:	Tyler R. Retzlaff <rtr@NetBSD.org>
+Scope:		x11
+		distrib/sets/lists
+		share/mk/bsd.x11.mk
+		share/mk/bsd.own.mk
+		etc/mtree/NetBSD.dist
+Notes:		Requires parts of xsrc/xfree (HEAD)
+		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
+		Requires xorg (XORG-6_8_1)
+
+Branch:		simonb-timecounters
+Description:	Port FreeBSD timecounters to NetBSD
+Status:		Active
+Start Date:	Sat Feb 04 2006
+End Date:
+Base Tag:	simonb-timecounters-base
+Maintainer:	Simon Burge <simonb@NetBSD.org>,
+		Frank Kardel <kardel@NetBSD.org>
+Scope:		sys, sbin/savecore, usr.bin/vmstat, usr.sbin/ntp
+Notes:
+
+Branch:		thorpej-devvp
+Description:	replace dev_t with struct vnode * in devsw entry points
+Status:		Active
+Start Date:	Sep 6 2001
+End Date:
+Base Tag:	thorpej-devvp-base
+Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
+Scope:		syssrc
+Notes:		Kernels built from this branch are not expected
+		to function correctly at this time.
+
+		Ports known to compile on this branch:
+			alpha
+			i386
+
+Branch:		yamt-lazymbuf
+Description:	implement and evaluate lazy mapping of mbuf external data pages
+Status:		Active
+Start Date:	Wed Jul  6 2005
+End Date:	
+Base Tag:	yamt-lazymbuf-base
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys
+Notes:		
+
+Branch:		yamt-pdpolicy
+Description:	play with page replacement policy
+		- separate page replacement policy from the rest of kernel
+		- implement alternative replacement policy
+		- related read-ahead adjustment?
+Status:		Active
+Start Date:	Sun Mar  5 2006
+End Date:	
+Base Tag:	yamt-pdpolicy-base4
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys
+Notes:		
+
+
+########################################################################
+# Individual developers' branches (Terminated):
+########################################################################
+
 Branch:		bouyer-scsipi
 Description:	Integration of atapi support
 Status:		Terminated
@@ -209,6 +411,16 @@ Base Tag:
 Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		kernel
 Notes:		Superseded by thorpej_scsipi
+
+Branch:		bouyer-xen2
+Description:	update xen port to xen 2.0, with support for domain0 operations
+Status:		Terminated
+Start Date:	Dec 13 2004
+End Date:	Mar 10 2005
+Base Tag:	netbsd-2-base
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
+Scope:		src/sys/arch/xen
+Notes:
 
 Branch:		chs-ubc
 Description:	Unified Buffer Cache
@@ -250,6 +462,19 @@ Maintainer:	Eduardo Horvath <eeh@NetBSD.org>
 Scope:		kernel
 Notes:		This is needed to support 32-bit kernels on sparc64.
 
+Branch:		elad-kernelauth
+Description:	Native NetBSD implementation of Apple's kernel authorization
+		based on TN2127. This is a "clean-room" implementation to
+		avoid any licensing issues.
+Status:		Terminated; merged to -current
+Start Date:	Tue Mar	 7 2006
+End Date:	Mon May 15 2006
+Base Tag:	elad-kernelauth-base
+Maintainer:	Elad Efrat <elad@NetBSD.org>
+Scope:		src/sys, src/share/man/man9/Makefile,
+		src/share/man/man9/kauth.h, src/distrib/sets/lists/comp/mi
+Notes:
+
 Branch:		fvdl-softdep
 Description:	FFS soft dependencies
 Status:		Terminated; merged to -current
@@ -272,31 +497,6 @@ Notes:		The goal is to get rid of the existing device switch tables in
 		port-dependent conf.c and to generate them dynamically by
 		config(8).
 
-Branch:		gmcgarry_ctxsw
-Description:	Separate scheduler from context-switch code
-Status:		Active
-Start Date:	18 December 2002
-End Date:
-Base Tag:	gmcgarry_ctxsw_base
-Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
-Scope:		kernel
-Notes:		Removing knowledge of the schedular and its run queues
-		from the machine-dependent context switch code is the
-		first step in cleaning up the scheduler.  It is necessary
-		for the newlock branch, making the scheduler SMP friendly,
-		adding real-time scheduler extensions, and reducing the
-		number of code paths for LWP and proc switching.
-
-Branch:		gmcgarry_ucred
-Description:	Integrate and encapsulate user credentials
-Status:		Active
-Start Date:	18 December 2002
-End Date:
-Base Tag:	gmcgarry_ucred_base
-Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
-Scope:		kernel
-Notes:		merge pcred and ucred and poolify
-
 Branch:		is-newarp
 Description:	ARP for non-Ethernet
 Status:		Terminated; merged before NetBSD 1.3
@@ -306,20 +506,6 @@ Base Tag:	is-newarp-base
 Maintainer:	Ignatios Souvatzis <is@NetBSD.org>
 Scope:		kernel
 Notes:
-
-
-Branch:		kame
-Description:	KAME Project
-Status:		Dormant
-Start Date:	28 Jun 1999
-End Date:
-Base Tag:
-Maintainer:	Jun-ichiro itojun Hagino <itojun@NetBSD.org>
-Scope:		kernel
-Notes:		http://www.kame.net
-		Used for "reference" purposes for early part of KAME
-		integration effort.  The branch is not actively used, as I
-		(itojun) use patch(1) and diff(1) for the KAME syncs.
 
 Branch:		kenh-if-detach
 Description:	Interface detach support.
@@ -342,19 +528,6 @@ Scope:		kernel (audio device drivers)
 Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
 		Please consult with the maintainer before committing
 		to this branch.
-
-Branch:		kent-audio2
-Description:	In-kernel audio mixer
-Status:		Active
-Start Date:	Sun Jan 16 2005
-End Date:	
-Base Tag:	kent-audio2-base
-Maintainer:	TAMURA Kent <kent@NetBSD.org>
-Scope:		kernel (audio device drivers)
-Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
-		Please consult with the maintainer before committing
-		to this branch.
-		This branch is not expected to be compilable yet.
 
 Branch:		kqueue
 Description:	kqueue kernel event notification mechanism (from FreeBSD)
@@ -468,18 +641,6 @@ Notes:		The idea of scheduler activations is described in the
 		"nathanw_sa_end" to indicate the ending revision of
 		the branch.
 
-Branch:		newlock
-Description:	New locking primitives, based on Solaris's
-Status:		Active
-Start Date:	March 9, 2002
-End Date:
-Base Tag:	newlock-base
-Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
-Scope:		Kernel
-Notes:		The goal is to replace the existing lockmgr() and
-		simple_lock() based locking mechanisms with the
-		primitives found in Solaris: mutexes and rwlocks.
-
 Branch:		perseant-lfsv2
 Description:	LFS incompatible on-disk data structure changes
 Status:		Terminated
@@ -490,18 +651,6 @@ Maintainer:	Konrad Schroder <perseant@NetBSD.org>
 Scope:		basesrc/{sbin/*lfs,libexec/lfs_cleanerd,usr.sbin/dumplfs}, syssrc/sys/ufs
 Notes:		This branch should be short-lived, I expect to merge as soon
 		as the data structures required for unremove are in and tested.
-
-Branch:	  	pkgviews
-Description:  	package views, enabling multiple conflicting packages to co-exist
-Status:		Active
-Start Date:	22 July 2002
-End Date:
-Base Tag:	pkgviews
-Maintainer:	Alistair Crooks <agc@NetBSD.org>
-Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
-Notes:		A more flexible infrastructure for third-party packages by
-		allowing multiple conflicting packages and versions to co-exist
-		within the same tree
 
 Branch:		sommerfeld_i386mp_1
 Description:	Multiprocessor support for i386 using Intel MP BIOS.
@@ -534,21 +683,6 @@ Notes:
 
 		See sys/arch/i386/TODO on the branch for a list of known
 		issues with the branch.
-
-Branch:		thorpej-devvp
-Description:	replace dev_t with struct vnode * in devsw entry points
-Status:		Active
-Start Date:	Sep 6 2001
-End Date:
-Base Tag:	thorpej-devvp-base
-Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
-Scope:		syssrc
-Notes:		Kernels built from this branch are not expected
-		to function correctly at this time.
-
-		Ports known to compile on this branch:
-			alpha
-			i386
 
 Branch:		thorpej-mips-cache
 Description:	overhaul MIPS cache support code
@@ -652,17 +786,6 @@ Maintainer:	Jason Thorpe <thorpej@NetBSD.org>
 Scope:		kernel
 Notes:
 
-Branch:		matt-timespec
-Description:	Convert the kernel to struct timespec as its primary time
-		storage mechanism.
-Status:		Active
-Start Date:	2005-02-19
-End Date:
-Base Tag:	
-Maintainer:	Matt Thomas <matt@NetBSD.org>
-Scope:		kernel
-Notes:	
-
 Branch:		wrstuden-devbsize
 Description:	Modify buffer cache to deal with different devices having
 		different block sizes. Also DEV_BSIZE would go away.
@@ -685,24 +808,6 @@ Notes:		No longer active due to lack of time, and introduction
 		deal.
 
 		Any other wrstuden-devbsize tag may (and should) go away.
-
-
-Branch:		rtr-xorg-branch
-Description:	xorg & static build alterations to src/x11
-Status:		Active
-Start Date:	Nov 15 2004
-End Date:	
-Base tag:	rtr-xorg-branch-base
-Maintainer:	Tyler R. Retzlaff <rtr@NetBSD.org>
-Scope:		x11
-		distrib/sets/lists
-		share/mk/bsd.x11.mk
-		share/mk/bsd.own.mk
-		etc/mtree/NetBSD.dist
-Notes:		Requires parts of xsrc/xfree (HEAD)
-		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
-		Requires xorg (XORG-6_8_1)
-
 
 Branch:		yamt-km, yamt-km-doc
 Description:	simplify/improve kernel memory management and bootstrap
@@ -802,28 +907,25 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 
 			src/sys/arch/playstation2/conf/GENERIC
 
-
-Branch:		bouyer-xen2
-Description:	update xen port to xen 2.0, with support for domain0 operations
-Status:		Terminated
-Start Date:	Dec 13 2004
-End Date:	Mar 10 2005
-Base Tag:	netbsd-2-base
-Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
-Scope:		src/sys/arch/xen
-Notes:
-
-
-Branch:		yamt-lazymbuf
-Description:	implement and evaluate lazy mapping of mbuf external data pages
-Status:		Active
-Start Date:	Wed Jul  6 2005
-End Date:	
-Base Tag:	yamt-lazymbuf-base
+Branch:		yamt-readahead
+Description:	play with file readahead
+Status:		Terminated; merged to -current
+Start Date:	Mon Nov 14 2005
+End Date:	Wed Nov 30 2005
+Base Tag:	yamt-readahead-base3
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys
 Notes:		
 
+Branch:		yamt-uio_vmspace
+Description:	uio_lwp/uio_segflg -> uio_vmspace
+Status:		Terminated; merged to -current
+Start Date:	Mon Dec 31 2005
+End Date:	Wed Mar  1 2006
+Base Tag:	yamt-uio_vmspace-base5
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys
+Notes:		
 
 Branch:		yamt-vop
 Description:	remove several VOPs
@@ -836,105 +938,9 @@ Scope:		src/sys
 Notes:		http://mail-index.NetBSD.org/tech-kern/2005/09/27/0000.html
 
 
-Branch:		yamt-readahead
-Description:	play with file readahead
-Status:		Terminated; merged to -current
-Start Date:	Mon Nov 14 2005
-End Date:	Wed Nov 30 2005
-Base Tag:	yamt-readahead-base3
-Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
-Scope:		src/sys
-Notes:		
-
-
-Branch:		yamt-uio_vmspace
-Description:	uio_lwp/uio_segflg -> uio_vmspace
-Status:		Terminated; merged to -current
-Start Date:	Mon Dec 31 2005
-End Date:	Wed Mar  1 2006
-Base Tag:	yamt-uio_vmspace-base5
-Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
-Scope:		src/sys
-Notes:		
-
-
-Branch:		rpaulo-netinet-merge-pcb
-Description:	merge in6pcb with inpcb
-Status:		Active
-Start Date:	Wed Feb 01 2006
-End Date:	
-Base Tag:	rpaulo-netinet-merge-pcb-base
-Maintainer:	Rui Paulo <rpaulo@NetBSD.org>
-Scope:		src/sys
-Notes:
-
-Branch:		simonb-timecounters
-Description:	Port FreeBSD timecounters to NetBSD
-Status:		Active
-Start Date:	Sat Feb 04 2006
-End Date:
-Base Tag:	simonb-timecounters-base
-Maintainer:	Simon Burge <simonb@NetBSD.org>,
-		Frank Kardel <kardel@NetBSD.org>
-Scope:		sys, sbin/savecore, usr.bin/vmstat, usr.sbin/ntp
-Notes:
-
-
-Branch:		yamt-pdpolicy
-Description:	play with page replacement policy
-		- separate page replacement policy from the rest of kernel
-		- implement alternative replacement policy
-		- related read-ahead adjustment?
-Status:		Active
-Start Date:	Sun Mar  5 2006
-End Date:	
-Base Tag:	yamt-pdpolicy-base4
-Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
-Scope:		src/sys
-Notes:		
-
-
-Branch:		elad-kernelauth
-Description:	Native NetBSD implementation of Apple's kernel authorization
-		based on TN2127. This is a "clean-room" implementation to
-		avoid any licensing issues.
-Status:		Merged
-Start Date:	Tue Mar	 7 2006
-End Date:	Mon May 15 2006
-Base Tag:	elad-kernelauth-base
-Maintainer:	Elad Efrat <elad@NetBSD.org>
-Scope:		src/sys, src/share/man/man9/Makefile,
-		src/share/man/man9/kauth.h, src/distrib/sets/lists/comp/mi
-Notes:
-
-
-Branch:		peter-altq
-Description:	New ALTQ framework:
-		- sync with KAME sources
-		- share mtag/name mapping functions
-		- separate altq + pf attachment 
-Status:		Active
-Start Date:	March 16, 2006
-End Date:
-Base Tag:	peter-altq-base
-Maintainer:	Peter Postma <peter@NetBSD.org>,
-		Martin Husemann <martin@NetBSD.org>,
-		Matthias Scheler <tron@NetBSD.org>
-Scope:		dist/pf dist/ipf distrib/sets/lists sys usr.sbin/altq
-Notes:
-
-Branch: 	chap-midi
-Description:	Renovation of MIDI support
-Status: 	Active
-Start Date:	19 May 2006
-End Date:	
-Base Tag:	chap-midi-base
-Maintainer:	Chapman Flack <chap@NetBSD.org>
-Scope:		sys, share/man, usr.bin
-Notes:		Please leave commits to maintainer for now. The branch is
-                not expected to be compilable until further notice.
-
+########################################################################
 # Other:
+########################################################################
 
 Branch:		magnum
 Description:	?
