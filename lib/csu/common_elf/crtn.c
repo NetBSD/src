@@ -1,4 +1,4 @@
-/*	$NetBSD: crtn.c,v 1.1 2002/11/22 06:44:59 thorpej Exp $	*/
+/*	$NetBSD: crtn.c,v 1.2 2006/05/19 19:11:12 christos Exp $	*/
 
 /*- 
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "dot_init.h"
+#include <dot_init.h>
 
 MD_INIT_SECTION_EPILOGUE;
 MD_FINI_SECTION_EPILOGUE;
