@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.108 2006/05/11 15:37:07 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.109 2006/05/19 17:27:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.108 2006/05/11 15:37:07 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.109 2006/05/19 17:27:06 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.108 2006/05/11 15:37:07 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.109 2006/05/19 17:27:06 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2058,8 +2058,11 @@ ApplyModifiers(char *nstr, const char *tstr,
 			sv_name = v->name;
 			v->name = strdup(v->name);
 		    } else if (ctxt != VAR_GLOBAL) {
-			if (VarFind(v->name, ctxt, 0) == (Var *)NIL)
+			Var *gv = VarFind(v->name, ctxt, 0);
+			if (gv == (Var *)NIL)
 			    v_ctxt = VAR_GLOBAL;
+			else
+			    VarFreeEnv(gv, TRUE);
 		    }
 			
 		    switch ((how = *tstr)) {
