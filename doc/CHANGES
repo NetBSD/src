@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.620 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.621 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -278,3 +278,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		requests. [elad 20060515]
 	kernel: Add mprotect(2) restrictions to enforce W^X policies. See
 		options(4), sysctl(3), and paxctl(1). From PaX. [elad 20060515]
+	carp(4): Import Common Address Redundancy Protocol from OpenBSD
+		[liamjfoy 20060518]
