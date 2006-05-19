@@ -1,5 +1,0 @@
-./myaddrinfo: === hostname null.porcupine.org ===
-./myaddrinfo: hostname_to_sockaddr(null.porcupine.org): No address associated with hostname
-./myaddrinfo: === host address 10.0.0.0 ===
-./myaddrinfo: 10.0.0.0 -> family=2 sock=1 proto=6 10.0.0.0
-./myaddrinfo: sockaddr_to_hostname: hostname nor servname provided, or not known

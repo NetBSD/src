@@ -1,8 +1,0 @@
-#!/bin/sh
-ORIG=$(sed -e 's/#.*$//' -e 's/[	 ]*//g' -e '/^$/d' $1 | sort | wc -l)
-NEW=$($2 | wc -l)
-if [ $ORIG != $NEW ]
-then
-	echo Exprected $ORIG entries found $NEW 1>&2
-	exit 1
-fi

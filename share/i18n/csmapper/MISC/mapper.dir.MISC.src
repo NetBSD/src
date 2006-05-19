@@ -1,6 +1,0 @@
-# $NetBSD: mapper.dir.MISC.src,v 1.5 2006/04/08 14:15:48 tnozaki Exp $
-
-Big5/UCS			mapper_std	MISC/Big5%UCS.mps
-UCS/Big5			mapper_std	MISC/UCS%Big5.mps
-PTCP154/UCS			mapper_std	MISC/PTCP154%UCS.mps
-UCS/PTCP154			mapper_std	MISC/UCS%PTCP154.mps
