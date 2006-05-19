@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.24.6.1 2006/05/19 19:42:42 chap Exp $
+.\" $NetBSD: midi.4,v 1.24.6.2 2006/05/19 19:47:34 chap Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -171,9 +171,9 @@ only when it is not already open. It may be opened in
 or
 .Dv O_RDWR
 mode, but a later
-.Xr read
+.Xr read 2
 or
-.Xr write
+.Xr write 2
 will return -1 if the device has no associated
 input or output stream, respectively.
 .Pp
@@ -181,14 +181,14 @@ Bytes written are passed as quickly as possible to the underlying driver
 as complete
 .Tn MIDI
 messages; a maximum of two bytes at the end of a
-.Xr write
+.Xr write 2
 may remain buffered if they do not complete a message, until
 completed by a following
-.Xr write .
+.Xr write 2 .
 .Pp
 .Tn MIDI
 messages received are available to
-.Xr read
+.Xr read 2
 as soon as they are complete,
 with a maximum of two received bytes remaining buffered if they do not
 complete a message.
@@ -215,7 +215,7 @@ System Exclusive message, as well as any other
 message, complete.
 .Pp
 A
-.Xr read
+.Xr read 2
 with a buffer large enough to accommodate the first complete
 message will be satisfied with as many complete messages as
 will fit. A buffer too small for the first complete
@@ -232,7 +232,7 @@ this property will not be preserved.
 The
 .Nm
 driver itself supports the
-.Xr ioctl
+.Xr ioctl 2
 operations
 .Dv FIOASYNC ,
 .Dv FIONBIO ,
@@ -243,17 +243,17 @@ The value returned for
 .Dv FIONREAD
 reflects the size in bytes of complete messages
 (or System Exclusive chunks) ready to read. If the
-.Xr ioctl
+.Xr ioctl 2
 returns
 .Va n
 and a
-.Xr read
+.Xr read 2
 of size
 .Va n
 is issued,
 .Va n
 bytes will be read, but if a
-.Xr read
+.Xr read 2
 of
 size
 .Va m
@@ -332,9 +332,9 @@ without special action in an application. For example, in
 if the input stream to
 .Pa rmidi0
 is lost, the
-.Xr cat
+.Xr cat 1
 command exits; on the
-.Xr close
+.Xr close 2
 of
 .Pa rmidi1 ,
 .Nm
@@ -573,7 +573,7 @@ It was overhauled and this manual page rewritten for
 Some
 .Tn OSS
 sequencer events and
-.Xr ioctl
+.Xr ioctl 2
 operations are unimplemented, as noted in
 .Aq Pa sys/midiio.h .
 .Pp
@@ -600,7 +600,7 @@ unimplemented.
 .Pp
 The
 .Dv SEQUENCER_TMR_TIMEBASE
-.Xr ioctl
+.Xr ioctl 2
 will report successfully setting any
 timebase up to ridiculously high resolutions, though the actual
 resolution, and therefore jitter, is constrained by
@@ -609,12 +609,12 @@ Comparable sequencer implementations typically allow a selection from available
 sources of time interrupts that may be programmable.
 .Pp
 The device number in a sequencer event is treated on
-.Xr write
+.Xr write 2
 as index into
 the array of
 .Tn MIDI
 devices the sequencer has opened, but on
-.Xr read
+.Xr read 2
 as the
 unit number of the source
 .Tn MIDI
@@ -675,7 +675,7 @@ Class-conformant
 interfaces presumably do their own compression
 and canonicalization of messages out and in. Some quirked ones may not,
 and an additional quirk allowing
-.Xr umidi
+.Xr umidi 4
 to send them compressed messages might improve their performance.
 .Pp
 I would rather have
@@ -684,11 +684,11 @@ itself return an error (by the POSIX description
 .Er ENODEV
 looks most appropriate) if a read or write mode
 is requested that is not supported by the instance, rather than letting
-.Xr open
+.Xr open 2
 succeed and
-.Xr read
+.Xr read 2
 or
-.Xr write
+.Xr write 2
 return -1, but so help me, the latter seems
 the more common
 .Ux
