@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.60 2006/05/18 12:44:45 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.61.2.2 2006/05/19 13:53:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@ MALLOC_DECLARE(M_NFSD);
 MALLOC_DECLARE(M_NFSDIROFF);
 MALLOC_DECLARE(M_NFSBIGFH);
 MALLOC_DECLARE(M_NQLEASE);
-extern struct pool nfs_srvdesc_pool;
 
 struct vnode;
 struct uio;
@@ -232,8 +231,9 @@ int nfsdsock_lock(struct nfssvc_sock *, boolean_t);
 void nfsdsock_unlock(struct nfssvc_sock *);
 int nfsdsock_drain(struct nfssvc_sock *);
 int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
-void nfsdreq_free(struct nfsrv_descript *);
+void nfsdreq_init(void);
 struct nfsrv_descript *nfsdreq_alloc(void);
+void nfsdreq_free(struct nfsrv_descript *);
 
 /* nfs_srvcache.c */
 void nfsrv_initcache(void);

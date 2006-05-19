@@ -1,3 +1,0 @@
-# $NetBSD: gcc4.mi,v 1.1 2006/05/13 07:17:54 mrg Exp $
-./usr/libexec/cpp0				base-obsolete		obsolete
-./usr/sbin/dbsym				base-sysutil-bin	bfd

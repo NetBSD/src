@@ -1,7 +1,0 @@
-# $NetBSD: esdb.dir.MISC.src,v 1.6 2006/04/08 14:15:48 tnozaki Exp $
-
-Shift_JIS			MISC/Shift_JIS.esdb
-Big5				MISC/Big5.esdb
-GB18030				MISC/GB18030.esdb
-CTEXT				MISC/CTEXT.esdb
-PTCP154				MISC/PTCP154.esdb

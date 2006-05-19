@@ -1,5 +1,0 @@
-# $NetBSD: md.prep,v 1.11 2006/04/14 06:02:44 garbled Exp $
-./usr/mdec/boot					base-sysutil-bin
-./usr/mdec/boot_com0				base-sysutil-bin
-./usr/mdec/mkbootimage				base-sysutil-bin
-./usr/mdec/installboot			base-obsolete		obsolete
