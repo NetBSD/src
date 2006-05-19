@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.77 2006/05/18 17:39:42 elad Exp $
+#	$NetBSD: BRANCHES,v 1.78 2006/05/19 18:19:39 chap Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -923,6 +923,16 @@ Maintainer:	Peter Postma <peter@NetBSD.org>,
 Scope:		dist/pf dist/ipf distrib/sets/lists sys usr.sbin/altq
 Notes:
 
+Branch: 	chap-midi
+Description:	Renovation of MIDI support
+Status: 	Active
+Start Date:	19 May 2006
+End Date:	
+Base Tag:	chap-midi-base
+Maintainer:	Chapman Flack <chap@NetBSD.org>
+Scope:		sys, share/man, usr.bin
+Notes:		Please leave commits to maintainer for now. The branch is
+                not expected to be compilable until further notice.
 
 # Other:
 
