@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.34 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.35 2006/05/19 14:50:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.34 2006/04/21 15:00:49 skrll Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.35 2006/05/19 14:50:32 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -612,6 +612,10 @@ CMDFUNCSTART(findblk)
 		}
 	}
 end:
+	if (wantedblk32)
+		free(wantedblk32);
+	if (wantedblk64)
+		free(wantedblk64);
 	curinum = ocurrent;
 	curinode = ginode(curinum);
 	return 0;
