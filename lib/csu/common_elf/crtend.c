@@ -1,7 +1,7 @@
-/*	$NetBSD: crtend.c,v 1.11 2004/08/28 00:19:22 thorpej Exp $	*/
+/*	$NetBSD: crtend.c,v 1.12 2006/05/19 19:11:12 christos Exp $	*/
 
 #include <sys/cdefs.h>
-#include "dot_init.h"
+#include <dot_init.h>
 
 /* 
  * WE SHOULD BE USING GCC-SUPPLIED crtend.o FOR GCC 3.3 AND      
