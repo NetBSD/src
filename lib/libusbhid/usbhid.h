@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.h,v 1.2 2003/07/26 19:25:09 salo Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.3 2006/05/19 14:40:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -73,7 +73,7 @@ typedef struct hid_item {
 	struct hid_item *next;
 } hid_item_t;
 
-#define HID_PAGE(u) (((u) >> 16) & 0xffff)
+#define HID_PAGE(u) (((uint32_t)(u) >> 16) & 0xffff)
 #define HID_USAGE(u) ((u) & 0xffff)
 
 /* Obtaining a report descriptor, descr.c: */
