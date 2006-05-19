@@ -1,4 +1,4 @@
-.\" $NetBSD: umidi.4,v 1.6 2004/01/19 08:39:51 wiz Exp $
+.\" $NetBSD: umidi.4,v 1.6.12.1 2006/05/19 19:42:42 chap Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,21 +43,47 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports USB MIDI devices that follow the USB MIDI standard.
-It also supports the following vendor specific devices:
-.Pp
+driver supports USB MIDI devices that conform to the
+.Em Universal Serial Bus Device Class Definition for MIDI Devices.
+Vendor-specific support is also included for the following:
+.Ss Midiman devices
 .Bl -tag -width Dv -offset indent -compact
-.It Tn Roland UM1
-.It Tn Yamaha UX256
-.It Tn Yamaha UX96
-.It Tn other Yamaha MIDI devices (hopefully)
+.It Tn MidiSport 2x4
+.El
+.Ss Roland devices
+.Bl -tag -width Dv -offset indent -compact
+.It Tn PC300
+.It Tn SC8820
+.It Tn SC8850
+.It Tn SCD70
+.It Tn SD20
+.It Tn SD80
+.It Tn SD90
+.It Tn SK500
+.It Tn U8
+.It Tn UA100
+.It Tn UA700
+.It Tn UM1
+.It Tn UM2
+.It Tn UM4
+.It Tn UM550
+.It Tn UM880N
+.It Tn XV5050
+.El
+.Ss Yamaha devices
+.Bl -tag -width Dv -offset indent -compact
+.It Tn UX256
+(product-specific support)
+.It Tn Others
+Other Yamaha MIDI devices
+will be attached and are expected to work also.
 .El
 .Pp
-The
+Devices supported by the
 .Nm
-driver is accessible through the
+driver will appear as
 .Xr midi 4
-driver.
+devices.
 .Sh SEE ALSO
 .Xr midi 4 ,
 .Xr usb 4
