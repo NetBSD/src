@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.131 2006/05/18 12:44:45 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.132 2006/05/19 13:53:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.131 2006/05/18 12:44:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.132 2006/05/19 13:53:11 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2574,29 +2574,6 @@ nfsrv_dorec(slp, nfsd, ndp)
 	return (0);
 }
 
-struct nfsrv_descript *
-nfsdreq_alloc(void)
-{
-	struct nfsrv_descript *nd;
-
-	nd = pool_get(&nfs_srvdesc_pool, PR_WAITOK);
-	nd->nd_cr = NULL;
-	return nd;
-}
-
-void
-nfsdreq_free(struct nfsrv_descript *nd)
-{
-	kauth_cred_t cr;
-
-	cr = nd->nd_cr;
-	if (cr != NULL) {
-		KASSERT(kauth_cred_getrefcnt(cr) == 1);
-		kauth_cred_free(cr);
-	}
-	pool_put(&nfs_srvdesc_pool, nd);
-}
-
 /*
  * Search for a sleeping nfsd and wake it up.
  * SIDE EFFECT: If none found, set NFSD_CHECKSLP flag, so that one of the
@@ -2674,3 +2651,38 @@ again:
 	return error;
 }
 #endif /* NFSSERVER */
+
+#if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
+static struct pool nfs_srvdesc_pool;
+
+void
+nfsdreq_init(void)
+{
+
+	pool_init(&nfs_srvdesc_pool, sizeof(struct nfsrv_descript),
+	    0, 0, 0, "nfsrvdescpl", &pool_allocator_nointr);
+}
+
+struct nfsrv_descript *
+nfsdreq_alloc(void)
+{
+	struct nfsrv_descript *nd;
+
+	nd = pool_get(&nfs_srvdesc_pool, PR_WAITOK);
+	nd->nd_cr = NULL;
+	return nd;
+}
+
+void
+nfsdreq_free(struct nfsrv_descript *nd)
+{
+	kauth_cred_t cr;
+
+	cr = nd->nd_cr;
+	if (cr != NULL) {
+		KASSERT(kauth_cred_getrefcnt(cr) == 1);
+		kauth_cred_free(cr);
+	}
+	pool_put(&nfs_srvdesc_pool, nd);
+}
+#endif /* defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY)) */
