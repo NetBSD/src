@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.15 2003/08/07 10:04:14 agc Exp $	*/
+/*	$NetBSD: itime.c,v 1.16 2006/05/19 14:52:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.15 2003/08/07 10:04:14 agc Exp $");
+__RCSID("$NetBSD: itime.c,v 1.16 2006/05/19 14:52:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,8 +108,10 @@ readdumptimes(FILE *df)
 
 	for (;;) {
 		dtwalk = (struct dumptime *)xcalloc(1, sizeof(struct dumptime));
-		if (getrecord(df, &(dtwalk->dt_value)) < 0)
+		if (getrecord(df, &(dtwalk->dt_value)) < 0) {
+			free(dtwalk);
 			break;
+		}
 		nddates++;
 		SLIST_INSERT_HEAD(&dthead, dtwalk, dt_list);
 	}
