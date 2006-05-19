@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.125 2006/04/22 18:48:46 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.126 2006/05/19 17:21:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.125 2006/04/22 18:48:46 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.126 2006/05/19 17:21:46 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.125 2006/04/22 18:48:46 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.126 2006/05/19 17:21:46 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1132,7 +1132,9 @@ ReadMakefile(ClientData p, ClientData q __unused)
 		if (!name)
 			name = Dir_FindFile(fname,
 				Lst_IsEmpty(sysIncPath) ? defIncPath : sysIncPath);
-		if (!name || !(stream = fopen(name, "r"))) {
+		if (!name || (stream = fopen(name, "r")) == NULL) {
+			if (name)
+				free(name);
 			free(path);
 			return(-1);
 		}
