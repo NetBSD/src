@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.318 2006/05/16 00:08:24 elad Exp $
+.\"	$NetBSD: options.4,v 1.319 2006/05/19 17:43:44 tsutsui Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 11, 2006
+.Dd May 19, 2006
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -318,12 +318,18 @@ with the addition of
 Enable binary compatibility with
 .Nx 2.0 .
 This allows the use of old syscalls for
-.Fn statfs
-and
+.Fn statfs ,
 .Fn fstatfs ,
-which has been deprecated with the addition of the
-.Xr statvfs 2
-family of system calls.
+.Fn getfsstat
+and
+.Fn fhstatfs ,
+which have been deprecated with the addition of the
+.Xr statvfs 2 ,
+.Xr fstatvfs 2 ,
+.Xr getvfsstat 2
+and
+.Xr fhstatvfs 2 
+system calls.
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
