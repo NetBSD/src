@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.6 2006/01/08 21:57:26 agc Exp $
+#	$NetBSD: ROADMAP,v 1.7 2006/05/19 22:47:48 liamjfoy Exp $
 
 A high-level roadmap for NetBSD
 
@@ -185,7 +185,7 @@ aq. CARP/VRRP
     Functionality is great, but there might be some concern here over
     Cisco patents.
 	Responsible: Liam Foy
-	ETA: 5.0?
+	ETA: (4.0)
 
 ar. UDF filesystem support
     OpenBSD has recently added this.
