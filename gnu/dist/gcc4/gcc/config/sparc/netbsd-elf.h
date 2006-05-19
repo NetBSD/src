@@ -133,7 +133,7 @@ Boston, MA 02110-1301, USA.  */
 	    %{!mf934: \
 	      %{!mv8*: \
 	        %{!msupersparc:-mcpu=ultrasparc}}}}}}} \
-    %{!mno-vis:%{!mcpu=v9:-mvis}}" \
+    %{!mno-vis:%{!mcpu=v9:-mvis}}}" \
   NETBSD_CC1_AND_CC1PLUS_SPEC
 
 #define CC1_SPEC64 \
