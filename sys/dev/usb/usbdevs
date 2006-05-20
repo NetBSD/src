@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.428.2.1 2006/05/20 02:15:21 chap Exp $
+$NetBSD: usbdevs,v 1.428.2.2 2006/05/20 02:59:19 chap Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1128,6 +1128,7 @@ product MICROTEK V6UL		0x80ac	ScanMaker V6UL
 
 /* Midiman products */
 product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
+product MIDIMAN MIDISPORT2X4	0x1041	Midisport 2x4
 
 /* Minds At Work LLC products */
 product MINDSATWORK DW		0x0001	Digital Wallet
