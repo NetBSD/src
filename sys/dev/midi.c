@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.4 2006/05/20 03:14:12 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.5 2006/05/20 03:15:32 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.4 2006/05/20 03:14:12 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.5 2006/05/20 03:15:32 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -58,13 +58,13 @@ __KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.4 2006/05/20 03:14:12 chap Exp $");
 #include <sys/conf.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
-#include <sys/device.h>
 
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
 
 #if NMIDI > 0
+
 
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (mididebug) printf x
@@ -90,7 +90,7 @@ int midi_wait;
 
 void	midi_in(void *, int);
 void	midi_out(void *);
-int	midi_start_output(struct midi_softc *, int);
+int	midi_start_output(struct midi_softc *, int, int);
 int	midi_sleep_timo(int *, char *, int);
 int	midi_sleep(int *, char *);
 void	midi_wakeup(int *);
@@ -162,11 +162,8 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	callout_init(&sc->sc_callout);
-
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
-	sc->dying = 0;
 	midi_attach(sc, parent);
 }
 
@@ -219,6 +216,11 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 {
 	struct midi_info mi;
 
+
+	callout_init(&sc->sc_callout);
+	callout_setfunc(&sc->sc_callout, midi_timeout, sc);
+	simple_lock_init(&sc->out_lock);
+	sc->dying = 0;
 	sc->isopen = 0;
 
 	midi_wait = MIDI_WAIT * hz / 1000000;
@@ -492,7 +494,7 @@ midi_out(void *addr)
 	if (!sc->isopen)
 		return;
 	DPRINTFN(8, ("midi_out: %p\n", sc));
-	midi_start_output(sc, 1);
+	midi_start_output(sc, 0, 1);
 }
 
 int
@@ -548,7 +550,7 @@ midiclose(dev_t dev, int flags, int ifmt, struct proc *p)
 
 	DPRINTFN(3,("midiclose %p\n", sc));
 
-	midi_start_output(sc, 0);
+	midi_start_output(sc, 1, 0);
 	error = 0;
 	s = splaudio();
 	while (sc->outbuf.used > 0 && !error) {
@@ -556,6 +558,7 @@ midiclose(dev_t dev, int flags, int ifmt, struct proc *p)
 		error = midi_sleep_timo(&sc->wchan, "mid_dr", 30*hz);
 	}
 	splx(s);
+	callout_stop(&sc->sc_callout);
 	sc->isopen = 0;
 	hw->close(sc->hw_hdl);
 #if NSEQUENCER > 0
@@ -634,64 +637,196 @@ midi_timeout(void *arg)
 	struct midi_softc *sc = arg;
 
 	DPRINTFN(8,("midi_timeout: %p\n", sc));
-	midi_start_output(sc, 1);
+	midi_start_output(sc, 0, 0);
 }
 
+/*
+ * Control can reach midi_start_output three ways:
+ * 1. as a result of user writing (user == 1)
+ * 2. by a ready interrupt from output hw (hw == 1)
+ * 3. by a callout scheduled at the end of midi_start_output.
+ *
+ * The callout is not scheduled unless we are sure the hw will not
+ * interrupt again (either because it just did and we supplied it
+ * no data, or because it lacks interrupt capability). So we do not
+ * expect a hw interrupt to occur with a callout pending.
+ *
+ * A user write may occur while the callout is pending, however, or before
+ * an interrupt-capable device has interrupted. There are two cases:
+ *
+ * 1. A device interrupt is expected, or the pending callout is a MIDI_WAIT
+ *    (the brief delay we put in if MIDI_MAX_WRITE characters have been
+ *    written without yielding; interrupt-capable hardware can avoid this
+ *    penalty by making sure not to use EINPROGRESS to consume MIDI_MAX_WRITE
+ *    or more characters at once).  In these cases, the user invocation of
+ *    start_output returns without action, leaving the output to be resumed
+ *    by the device interrupt or by the callout after the proper delay. This
+ *    case is identified by sc->pbus == 1.
+ *
+ * 2. The pending callout was scheduled to ensure an Active Sense gets
+ *    written if there is no user write in time. In this case the user
+ *    invocation (if there is something to write) cancels the pending
+ *    callout. However, it may be possible the callout timer expired before
+ *    we could cancel it, but the callout hasn't run yet. In this case
+ *    (INVOKING status on the callout) the user invocation returns without
+ *    further action so the callout can do the work. XXX handle the chance
+ *    the callout got scheduled, saw our lock, and gave up.
+ *
+ * Is it possible that fast interrupt-driven hardware could interrupt while
+ * the start_output that triggered it still holds the lock? In this case we'll
+ * see on unlock that sc->hw_interrupted == 1 and loop around again if there
+ * is more to write.
+ */
 int
-midi_start_output(struct midi_softc *sc, int intr)
+midi_start_output(struct midi_softc *sc, int user, int hw)
 {
 	struct midi_buffer *mb = &sc->outbuf;
 	u_char out;
 	int error;
 	int s;
-	int i;
+	int written;
+	int to_write;
+	u_char *from;
+	u_char *to;
 
+again:
+if ( mididebug > 9 ) return EIO;
 	error = 0;
 
 	if (sc->dying)
 		return EIO;
 
-	if (sc->pbus && !intr) {
-		DPRINTFN(8, ("midi_start_output: busy\n"));
+	s = splaudio();
+
+	if ( ! simple_lock_try(&sc->out_lock) ) {
+	        if ( hw )
+		        sc->hw_interrupted = 1;
+		splx(s);
+		DPRINTFN(8,("midi_start_output: locked out user=%d hw=%d\n",
+                           user, hw));
 		return 0;
 	}
-	sc->pbus = (mb->used > 0)?1:0;
-	for (i = 0; i < MIDI_MAX_WRITE && mb->used > 0 &&
-		   (!error || error==EINPROGRESS); i++) {
-		s = splaudio();
-		out = *mb->outp;
-		mb->outp++;
-		if (mb->outp >= mb->end)
-			mb->outp = mb->start;
-		mb->used--;
-		splx(s);
-#ifdef MIDI_SAVE
-		midisave.buf[midicnt] = out;
-		midicnt = (midicnt + 1) % MIDI_SAVE_SIZE;
-#endif
-		DPRINTFN(8, ("midi_start_output: %p i=%d, data=0x%02x\n", 
-			     sc, i, out));
-		error = sc->hw_if->output(sc->hw_hdl, out);
-		if ((sc->props & MIDI_PROP_OUT_INTR) && error!=EINPROGRESS)
-			/* If ointr is enabled, midi_start_output()
-			 * normally writes only one byte,
-			 * except hw_if->output() returns EINPROGRESS.
-			 */
+
+	to_write = mb->used;
+
+	if ( user ) {
+	        if ( sc->pbus ) {
+			simple_unlock(&sc->out_lock);
+			splx(s);
+			DPRINTFN(8, ("midi_start_output: delaying\n"));
+			return 0;
+		}
+		if ( to_write > 0 ) {
+		        callout_stop(&sc->sc_callout);
+			if (callout_invoking(&sc->sc_callout)) {
+				simple_unlock(&sc->out_lock);
+				splx(s);
+				DPRINTFN(8,("midi_start_output: "
+                                           "callout got away\n"));
+				return 0;
+			}
+		}
+	} else if ( hw )
+		sc->hw_interrupted = 0;
+	else
+	        callout_ack(&sc->sc_callout);
+	
+	splx(s);
+	/*
+	 * As long as we hold the lock, we can rely on mb->outp not changing
+	 * and mb->used not decreasing. We only need splaudio to update them.
+	 */
+	
+	from = mb->outp;
+	
+	DPRINTFN(8,("midi_start_output: user=%d hw=%d to_write %u from %p\n",
+		   user, hw, to_write, from));
+	sc->pbus = 0;
+	
+	written = 0;
+	if ( to_write == 0 && ! user && ! hw ) {
+		error = sc->hw_if->output(sc->hw_hdl, MIDI_ACK);
+		written = 1;
+	}
+	
+	do {
+	        if ( to_write > MIDI_MAX_WRITE - written )
+		        to_write = MIDI_MAX_WRITE - written;
+		if ( to_write == 0 )
 			break;
+		to = from + to_write;
+		if ( to > mb->end )
+		        to = mb->end;
+		while ( from < to ) {
+			out = *from++;
+#ifdef MIDI_SAVE
+			midisave.buf[midicnt] = out;
+			midicnt = (midicnt + 1) % MIDI_SAVE_SIZE;
+#endif
+			DPRINTFN(8, ("midi_start_output: %p data=0x%02x\n", 
+				     sc, out));
+			error = sc->hw_if->output(sc->hw_hdl, out);
+			if ( error == 0 ) {
+				if ( sc->props & MIDI_PROP_OUT_INTR )
+					break;
+			} else if ( ( sc->props & MIDI_PROP_OUT_INTR )
+			            && error == EINPROGRESS )
+				continue;
+			else {  /* really an error */
+				-- from;
+				break;
+			}
+		}
+		written += from - mb->outp;
+		s = splaudio();
+		mb->used -= from - mb->outp;
+		if ( from == mb->end )
+			from = mb->start;
+		mb->outp = from;
+		splx(s);
+		to_write = mb->used;
+	} while ( error == ( sc->props&MIDI_PROP_OUT_INTR ) ? EINPROGRESS : 0 );
+	
+	if ( written > 0 ) {
+		midi_wakeup(&sc->wchan);
+		selnotify(&sc->wsel, 0);
+		if (sc->async)
+			psignal(sc->async, SIGIO);
+        }
+
+	if ( sc->props & MIDI_PROP_OUT_INTR ) {
+		if ( written > 0 && error == 0 ) {
+			sc->pbus = 1;
+			goto unlock_exit;
+		}
+		if ( error == EINPROGRESS )
+			error = 0;
 	}
-	midi_wakeup(&sc->wchan);
-	selnotify(&sc->wsel, 0);
-	if (sc->async)
-		psignal(sc->async, SIGIO);
-	if (!(sc->props & MIDI_PROP_OUT_INTR) || error==EINPROGRESS) {
-		if (mb->used > 0)
-			callout_reset(&sc->sc_callout, midi_wait,
-				      midi_timeout, sc);
-		else
-			sc->pbus = 0;
+	
+	if ( error != 0 )
+		goto handle_error;
+	
+	if ( to_write == 0 )
+		callout_schedule(&sc->sc_callout, mstohz(285));
+	else {
+		sc->pbus = 1;
+		callout_schedule(&sc->sc_callout, midi_wait);
 	}
-	if ((sc->props & MIDI_PROP_OUT_INTR) && error==EINPROGRESS)
-		error = 0;
+	goto unlock_exit;
+
+handle_error:
+#if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
+		printf("%s: midi_start_output error %d\n",
+		      sc->dev.dv_xname, error);
+#endif
+
+unlock_exit:
+	simple_unlock(&sc->out_lock);
+	if ( sc->hw_interrupted ) {
+		user = 0;
+		hw = 1;
+		goto again;
+	}
 
 	return error;
 }
@@ -758,7 +893,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 		mb->inp = inp;
 		mb->used += cc;
 		splx(s);
-		error = midi_start_output(sc, 0);
+		error = midi_start_output(sc, 1, 0);
 	}
 	return error;
 }
@@ -800,7 +935,7 @@ midi_writebytes(int unit, u_char *buf, int cc)
 		}
 	}
 	splx(s);
-	return (midi_start_output(sc, 0));
+	return (midi_start_output(sc, 1, 0));
 }
 
 int
