@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.11.14.5 2006/05/20 03:15:32 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.6 2006/05/20 03:16:48 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,6 +59,15 @@ struct midi_buffer {
 #define MIDI_MAX_WRITE 32	/* max bytes written with busy wait */
 #define MIDI_WAIT 10000		/* microseconds to wait after busy wait */
 
+struct midi_state {
+	struct  evcnt bytesDiscarded;
+	struct  evcnt incompleteMessages;
+	int     state;
+	u_char *pos;
+	u_char *end;
+	u_char  msg[3];
+};
+
 struct midi_softc {
 	struct	device dev;
 	void	*hw_hdl;	/* Hardware driver handle */
@@ -80,8 +89,9 @@ struct midi_softc {
 
 	struct callout sc_callout;
 
-	/* MIDI input state machine */
-	int	in_state;
+	/* MIDI input state machine; states are *s of 4 to allow | CAT bits */
+	struct midi_state rcv;
+	struct midi_state xmt;
 #define MIDI_IN_START	0
 #define MIDI_IN_RUN0_1	4
 #define MIDI_IN_RUN1_1	8
@@ -91,23 +101,24 @@ struct midi_softc {
 #define MIDI_IN_COM0_1 24
 #define MIDI_IN_COM0_2 28
 #define MIDI_IN_COM1_2 32
-#define MIDI_IN_SYSEX  36
+#define MIDI_IN_SYX1_3 36
+#define MIDI_IN_SYX2_3 40
+#define MIDI_IN_SYX0_3 44
+#define MIDI_IN_RNX0_1 48
+#define MIDI_IN_RNX0_2 52
+#define MIDI_IN_RNX1_2 56
+#define MIDI_IN_RNY1_2 60 /* not needed except for accurate error counts */
 
 #define MIDI_CAT_DATA 0
 #define MIDI_CAT_STATUS1 1
 #define MIDI_CAT_STATUS2 2
 #define MIDI_CAT_COMMON 3
-	u_char	in_msg[3];
 
 #if NSEQUENCER > 0
 	/* Synthesizer emulation stuff */
 	int	seqopen;
 	struct	midi_dev *seq_md; /* structure that links us with the seq. */
 #endif
-
-        /* Statistics */
-        struct evcnt rcvBytesDiscarded;     /* other than MIDI_ACKs */
-	struct evcnt rcvIncompleteMessages; /* interrupted by a non-RT status */
 };
 
 #define MIDIUNIT(d) ((d) & 0xff)
