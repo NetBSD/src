@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.3 2006/05/20 03:02:50 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.4 2006/05/20 03:05:05 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.3 2006/05/20 03:02:50 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.4 2006/05/20 03:05:05 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,15 +360,25 @@ alloc_pipe(struct umidi_endpoint *ep)
 {
 	struct umidi_softc *sc = ep->sc;
 	usbd_status err;
+	usb_endpoint_descriptor_t *epd;
+	
+	if ( UE_DIR_OUT == UE_GET_DIR(ep->addr) )
+	        ep->buffer_size = UMIDI_PACKET_SIZE;
+        else { /* only use wMaxPacketSize on inputs (for now) */
+		epd = usbd_get_endpoint_descriptor(sc->sc_iface, ep->addr);
+		ep->buffer_size = UGETW(epd->wMaxPacketSize);
+		ep->buffer_size -= ep->buffer_size % UMIDI_PACKET_SIZE;
+	}
 
-	DPRINTF(("%s: alloc_pipe %p\n", USBDEVNAME(sc->sc_dev), ep));
+	DPRINTF(("%s: alloc_pipe %p, buffer size %u\n",
+	        USBDEVNAME(sc->sc_dev), ep, ep->buffer_size));
 	LIST_INIT(&ep->queue_head);
 	ep->xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (ep->xfer == NULL) {
 	    err = USBD_NOMEM;
 	    goto quit;
 	}
-	ep->buffer = usbd_alloc_buffer(ep->xfer, UMIDI_PACKET_SIZE);
+	ep->buffer = usbd_alloc_buffer(ep->xfer, ep->buffer_size);
 	if (ep->buffer == NULL) {
 	    usbd_free_xfer(ep->xfer);
 	    err = USBD_NOMEM;
@@ -1144,14 +1154,16 @@ static const struct {
 	int		cin;
 	packet_state_t	next;
 } packet_0xFX[16] = {
+        /* System Common Messages (CIN 0x5 for single byte) */
 	/*F0: SysEx */	{ 0x04, PS_EXCL_1 },
 	/*F1: MTC */	{ 0x02, PS_NORMAL_1OF2 },
 	/*F2: S.POS */	{ 0x03, PS_NORMAL_1OF3 },
 	/*F3: S.SEL */	{ 0x02, PS_NORMAL_1OF2 },
 	/*F4: UNDEF */	{ 0x00, PS_INITIAL },
 	/*F5: UNDEF */	{ 0x00, PS_INITIAL },
-	/*F6: Tune */	{ 0x0F, PS_END },
+	/*F6: Tune */	{ 0x05, PS_END },
 	/*F7: EofEx */	{ 0x00, PS_INITIAL },
+	/* System Real-Time Messages (CIN 0xf for single byte) */
 	/*F8: Timing */	{ 0x0F, PS_END },
 	/*F9: UNDEF */	{ 0x00, PS_INITIAL },
 	/*FA: Start */	{ 0x0F, PS_END },
@@ -1180,8 +1192,9 @@ start_input_transfer(struct umidi_endpoint *ep)
 {
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
-			ep->buffer, UMIDI_PACKET_SIZE,
-			USBD_NO_COPY, USBD_NO_TIMEOUT, in_intr);
+			ep->buffer, ep->buffer_size,
+			USBD_SHORT_XFER_OK | USBD_NO_COPY,
+                        USBD_NO_TIMEOUT, in_intr);
 	return usbd_transfer(ep->xfer);
 }
 
@@ -1209,6 +1222,28 @@ if ((unsigned char)(p)->buffer[1]!=0xFE)				\
 #define DPR_PACKET(dir, sc, p)
 #endif
 
+/*
+ * A 4-byte Midiman packet superficially resembles a 4-byte USB MIDI packet
+ * with the cable number and length in the last byte instead of the first,
+ * but there the resemblance ends. Where a USB MIDI packet is a semantic
+ * unit, a Midiman packet is just a wrapper for 1 to 3 bytes of raw MIDI
+ * with a cable nybble and a length nybble (which, unlike the CIN of a
+ * real USB MIDI packet, has no semantics at all besides the length).
+ * A packet received from a Midiman may contain part of a MIDI message,
+ * more than one MIDI message, or parts of more than one MIDI message. A
+ * three-byte MIDI message may arrive in three packets of data length 1, and
+ * running status may be used. Happily, the midi(4) driver above us will put
+ * it all back together, so the only cost is in USB bandwidth. The device
+ * has an easier time with what it receives from us, as we'll just take
+ * already formed, semantically reasonable USB MIDI packets and munge them
+ * into Midiman form.
+ *
+ * This function is deliberately call-compatible with memcpy and will
+ * Midiman-garble any number of packets while copying a region a multiple
+ * of 4 bytes long. out_build_packet should avoid building any packet with
+ * CIN of 0 or 1 until they are later defined in the spec and given real
+ * length values in packet_length.
+ */
 static void *
 midiman_garble( void *dst, const void *src, size_t len) {
 	unsigned char *cd = dst;
@@ -1279,41 +1314,63 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	int cn, len, i;
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_jack *jack;
+	unsigned char *packet;
+	unsigned char *end;
 	unsigned char *data;
+	u_int32_t count;
 
 	if (ep->sc->sc_dying || !ep->num_open)
 		return;
 
-	if ( UMQ_ISTYPE(ep->sc, UMQ_TYPE_MIDIMAN_GARBLE) ) {
-		cn = (0xf0&(ep->buffer[3]))>>4;
-		len = 0x0f&(ep->buffer[3]);
-		data = ep->buffer;
-	} else {
-		cn = GET_CN(ep->buffer[0]);
-		len = packet_length[GET_CIN(ep->buffer[0])];
-		data = ep->buffer + 1;
-	}
-	jack = ep->jacks[cn];
-	if (cn>=ep->num_jacks || !jack) {
-		DPRINTF(("%s: stray umidi packet (in): %02X %02X %02X %02X\n",
-			 USBDEVNAME(ep->sc->sc_dev),
-			 (unsigned)ep->buffer[0],
-			 (unsigned)ep->buffer[1],
-			 (unsigned)ep->buffer[2],
-			 (unsigned)ep->buffer[3]));
-		return;
-	}
-	if (!jack->binded || !jack->opened)
-		return;
-	DPRINTFN(500,("%s: midi data (in) cable %d len %d: %02X %02X %02X\n",
-		USBDEVNAME(ep->sc->sc_dev), cn, len,
-		(unsigned)data[0],
-		(unsigned)data[1],
-		(unsigned)data[2]));
-	if (jack->u.in.intr) {
-		for (i=0; i<len; i++) {
-			(*jack->u.in.intr)(jack->arg, data[i]);
+	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
+        if ( 0 == count % UMIDI_PACKET_SIZE ) {
+		DPRINTFN(100,("%s: input endpoint %p transfer length %u\n",
+			     USBDEVNAME(ep->sc->sc_dev), ep, count));
+        } else {
+                DPRINTF(("%s: input endpoint %p odd transfer length %u\n",
+                        USBDEVNAME(ep->sc->sc_dev), ep, count));
+                count -= count % UMIDI_PACKET_SIZE;
+        }
+
+	packet = ep->buffer;
+	for ( end = packet+count; packet < end; packet += UMIDI_PACKET_SIZE ) {
+	
+		if ( UMQ_ISTYPE(ep->sc, UMQ_TYPE_MIDIMAN_GARBLE) ) {
+			cn = (0xf0&(packet[3]))>>4;
+			len = 0x0f&(packet[3]);
+			data = packet;
+		} else {
+			cn = GET_CN(packet[0]);
+			len = packet_length[GET_CIN(packet[0])];
+			data = packet + 1;
 		}
+
+		if (cn>=ep->num_jacks || !(jack = ep->jacks[cn])) {
+			DPRINTF(("%s: stray input endpoint %p cable %d len %d: "
+			         "%02X %02X %02X\n",
+				 USBDEVNAME(ep->sc->sc_dev), ep, cn, len,
+				 (unsigned)data[0],
+				 (unsigned)data[1],
+				 (unsigned)data[2]));
+			return;
+		}
+
+		if (!jack->binded || !jack->opened)
+			return;
+
+		DPRINTFN(500,("%s: input endpoint %p cable %d len %d: "
+		             "%02X %02X %02X\n",
+			     USBDEVNAME(ep->sc->sc_dev), ep, cn, len,
+			     (unsigned)data[0],
+			     (unsigned)data[1],
+			     (unsigned)data[2]));
+
+		if (jack->u.in.intr) {
+			for (i=0; i<len; i++) {
+				(*jack->u.in.intr)(jack->arg, data[i]);
+			}
+		}
+
 	}
 
 	(void)start_input_transfer(ep);
@@ -1347,6 +1404,18 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 	}
 }
+
+/*
+ * TODO: allow System Real-Time Messages (of which there are only 8, all
+ * single byte) to be passed through (in immediate CIN 0xf packets) without
+ * disturbing the state machine for normal packets or being held up during
+ * SysEx messages. Will require some extra per-jack state, and pointer to
+ * jack passed by caller.
+ *
+ * Signal error when message byte (other than real-time) is encountered
+ * when expecting data. Just ignoring the error is bogus. Requires a status
+ * return to caller.
+ */
 
 static void
 out_build_packet(int cable_number, struct umidi_packet *packet, uByte in)

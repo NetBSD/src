@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.10.2.3 2006/05/20 03:02:50 chap Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.10.2.4 2006/05/20 03:05:05 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10.2.3 2006/05/20 03:02:50 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10.2.4 2006/05/20 03:05:05 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
