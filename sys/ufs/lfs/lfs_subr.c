@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.50.2.2 2006/05/20 21:50:26 riz Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.50.2.3 2006/05/20 21:59:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.50.2.2 2006/05/20 21:50:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.50.2.3 2006/05/20 21:59:47 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,18 +494,20 @@ lfs_segunlock(struct lfs *fs)
 	simple_lock(&fs->lfs_interlock);
 	LOCK_ASSERT(LFS_SEGLOCK_HELD(fs));
 	if (fs->lfs_seglock == 1) {
-		if ((sp->seg_flags & SEGM_PROT) == 0)
+		if ((sp->seg_flags & (SEGM_PROT | SEGM_CLEAN)) == 0 &&
+		    LFS_STARVED_FOR_SEGS(fs) == 0)
 			do_unmark_dirop = 1;
 		simple_unlock(&fs->lfs_interlock);
 		sync = sp->seg_flags & SEGM_SYNC;
 		ckp = sp->seg_flags & SEGM_CKP;
-		if (sp->bpp != sp->cbpp) {
-			/* Free allocated segment summary */
-			fs->lfs_offset -= btofsb(fs, fs->lfs_sumsize);
-			bp = *sp->bpp;
-			lfs_freebuf(fs, bp);
-		} else
-			DLOG((DLOG_SEG, "lfs_segunlock: unlock to 0 with no summary"));
+
+		/* We should have a segment summary, and nothing else */
+		KASSERT(sp->cbpp == sp->bpp + 1);
+
+		/* Free allocated segment summary */
+		fs->lfs_offset -= btofsb(fs, fs->lfs_sumsize);
+		bp = *sp->bpp;
+		lfs_freebuf(fs, bp);
 
 		pool_put(&fs->lfs_bpppool, sp->bpp);
 		sp->bpp = NULL;
@@ -642,4 +644,44 @@ lfs_writer_leave(struct lfs *fs)
 	simple_unlock(&fs->lfs_interlock);
 	if (dowakeup)
 		wakeup(&fs->lfs_dirops);
+}
+
+/*
+ * Unlock, wait for the cleaner, then relock to where we were before.
+ * To be used only at a fairly high level, to address a paucity of free
+ * segments propagated back from lfs_gop_write().
+ */
+void
+lfs_segunlock_relock(struct lfs *fs)
+{
+	int n = fs->lfs_seglock;
+	u_int16_t seg_flags;
+
+	if (n == 0)
+		return;
+
+	/* Write anything we've already gathered to disk */
+	lfs_writeseg(fs, fs->lfs_sp);
+
+	/* Save segment flags for later */
+	seg_flags = fs->lfs_sp->seg_flags;
+
+	fs->lfs_sp->seg_flags |= SEGM_PROT; /* Don't unmark dirop nodes */
+	while(fs->lfs_seglock)
+		lfs_segunlock(fs);
+
+	/* Wait for the cleaner */
+	wakeup(&lfs_allclean_wakeup);
+	wakeup(&fs->lfs_nextseg);
+	simple_lock(&fs->lfs_interlock);
+	while (LFS_STARVED_FOR_SEGS(fs))
+		ltsleep(&fs->lfs_avail, PRIBIO, "relock", 0,
+			&fs->lfs_interlock);
+	simple_unlock(&fs->lfs_interlock);
+
+	/* Put the segment lock back the way it was. */
+	while(n--)
+		lfs_seglock(fs, seg_flags);
+
+	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.8 2006/05/20 21:58:21 riz Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.9 2006/05/20 21:59:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.8 2006/05/20 21:58:21 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.9 2006/05/20 21:59:47 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1355,6 +1355,9 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;
 
+	/* Write everything we've got */
+	lfs_segwrite(mp, SEGM_CKP);
+
 	/* wake up the cleaner so it can die */
 	wakeup(&fs->lfs_nextseg);
 	wakeup(&lfs_allclean_wakeup);
@@ -1950,6 +1953,15 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	/* The Ifile lives in the buffer cache */
 	KASSERT(vp != fs->lfs_ivnode);
 
+        /*
+         * We don't want to fill the disk before the cleaner has a chance
+         * to make room for us.  If we're in danger of doing that, fail
+         * with EAGAIN.  The caller will have to notice this, unlock
+         * so the cleaner can run, relock and try again.
+         */
+        if (LFS_STARVED_FOR_SEGS(fs))
+                goto tryagain;
+
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,
 	 * and the pagedaemon tries to write pages---problem is
@@ -1984,6 +1996,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	error = 0;
 	pg = pgs[0];
 	startoffset = pg->offset;
+	KASSERT(eof >= 0);
 	if (startoffset >= eof) {
 		goto tryagain;
 	} else
@@ -2198,6 +2211,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		DLOG((DLOG_PAGE, "lfs_gop_write: ino %d start 0x%" PRIx64
 		      " eof 0x%" PRIx64 " npages=%d\n", VTOI(vp)->i_number,
 		      pgs[0]->offset, eof, npages));
+	else if (LFS_STARVED_FOR_SEGS(fs))
+		DLOG((DLOG_PAGE, "lfs_gop_write: avail too low\n"));
 	else
 		DLOG((DLOG_PAGE, "lfs_gop_write: seglock not held\n"));
 
@@ -2212,7 +2227,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		}
 		uvm_pageactivate(pg);
 		pg->flags &= ~(PG_CLEAN|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
-		DLOG((DLOG_PAGE, "pg[%d] = %p\n", i, pg));
+		DLOG((DLOG_PAGE, "pg[%d] = %p (vp %p off %" PRIx64 ")\n", i, pg,
+			vp, pg->offset));
 		DLOG((DLOG_PAGE, "pg[%d]->flags = %x\n", i, pg->flags));
 		DLOG((DLOG_PAGE, "pg[%d]->pqflags = %x\n", i, pg->pqflags));
 		DLOG((DLOG_PAGE, "pg[%d]->uanon = %p\n", i, pg->uanon));
