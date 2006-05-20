@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.129 2006/05/11 23:47:34 mrg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.130 2006/05/20 00:48:41 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -18,9 +18,6 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 CFLAGS+=	-Wno-sign-compare -Wno-traditional
 .if !defined(HAVE_GCC) || (${HAVE_GCC} == 2)
 CFLAGS+=	-Wno-uninitialized
-.endif
-.if ${HAVE_GCC} > 3
-CFLAGS+=	-Wno-attributes #-Wno-packed
 .endif
 .endif
 .if ${WARNS} > 1
