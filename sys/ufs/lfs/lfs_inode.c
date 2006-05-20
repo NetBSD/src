@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.90.2.3 2006/05/20 22:10:29 riz Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.90.2.4 2006/05/20 22:33:01 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.90.2.3 2006/05/20 22:10:29 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.90.2.4 2006/05/20 22:33:01 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -440,7 +440,11 @@ lfs_truncate(void *v)
 	 * which we want to keep.  Lastblock is -1 when
 	 * the file is truncated to 0.
 	 */
-	lastblock = lblkno(fs, length + fs->lfs_bsize - 1) - 1;
+	/* Avoid sign overflow - XXX assumes that off_t is a quad_t. */
+	if (length > QUAD_MAX - fs->lfs_bsize)
+		lastblock = lblkno(fs, QUAD_MAX - fs->lfs_bsize);
+	else
+		lastblock = lblkno(fs, length + fs->lfs_bsize - 1) - 1;
 	lastiblock[SINGLE] = lastblock - NDADDR;
 	lastiblock[DOUBLE] = lastiblock[SINGLE] - NINDIR(fs);
 	lastiblock[TRIPLE] = lastiblock[DOUBLE] - NINDIR(fs) * NINDIR(fs);
