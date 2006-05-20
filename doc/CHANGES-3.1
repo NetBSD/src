@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.93 2006/05/20 12:45:18 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.94 2006/05/20 23:09:47 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1663,4 +1663,38 @@ sys/arch/i386/pci/geode.c			1.2
 	Suppress false 'WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!'
 	indications by clearing the WDOVF status flag for real.
 	[riz, ticket #1333]
+
+sys/ufs/lfs/lfs.h				1.87-1.91,1.96-1.106
+sys/ufs/lfs/lfs_alloc.c				1.83-1.84,1.87-1.93
+sys/ufs/lfs/lfs_balloc.c			1.60
+sys/ufs/lfs/lfs_bio.c				1.86,1.91-1.92
+sys/ufs/lfs/lfs_debug.c				1.31-1.32
+sys/ufs/lfs/lfs_extern.h			1.68,1.76-1.78,1.80-1.81 via patch
+sys/ufs/lfs/lfs_inode.c				1.96,1.101-1.103 via patch
+sys/ufs/lfs/lfs_segment.c			1.164,1.165,1.170-1.178
+sys/ufs/lfs/lfs_subr.c				1.53,1.57-1.59
+sys/ufs/lfs/lfs_syscalls.c			1.106-1.107,1.109,1.111-1.112
+sys/ufs/lfs/lfs_vfsops.c			1.179-1.181,1.185,1.194-1.196,1.198-1.207,1.209 via patch
+sys/ufs/lfs/lfs_vnops.c				1.151-1.153,1.158-1.159,1.161-1.173,1.175,1.177 via patch
+sbin/newfs_lfs/extern.h				1.9
+sbin/newfs_lfs/make_lfs.c			1.7
+sbin/newfs_lfs/newfs.c				1.20
+sbin/newfs_lfs/newfs_lfs.8			1.21
+
+	Various fixes to LFS, including at least:
+	* Several MP locking fixes
+	* Fix a couple of deadlocks, including one between the pagedaemon,
+	  the cleaner and a writing process
+	* Make df output look rational
+	* Break out of VOP_PUTPAGES if we need the cleaner to run,
+	  without interrupting dirop writes.  Let the writer thread
+	  know to write individual vnodes rather than flush the whole
+	  filesystem.
+	* Keep the inode free list in order to minimize the cost of
+	  file creation on aged filesystems
+	* Address the case of "vinvalbuf: dirty blocks" panic when
+	  the cleaner tries to clean many small files at once
+	* Better segment use accounting when files are truncated while
+	  cleaning is occurring
+	[perseant, ticket #1327]
 
