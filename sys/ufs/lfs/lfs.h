@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.77.2.11 2006/05/20 22:10:29 riz Exp $	*/
+/*	$NetBSD: lfs.h,v 1.77.2.12 2006/05/20 22:11:58 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -505,7 +505,7 @@ struct ifile_v1 {
 	if ((_e = bread((F)->lfs_ivnode,				\
 	(IN) / (F)->lfs_ifpb + (F)->lfs_cleansz + (F)->lfs_segtabsz,	\
 	(F)->lfs_bsize, NOCRED, &(BP))) != 0)				\
-		panic("lfs: ifile read %d", _e);			\
+		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
 	if ((F)->lfs_version == 1)					\
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data +		\
 				 (IN) % (F)->lfs_ifpb);			\
@@ -730,6 +730,9 @@ struct dlfs {
 	u_int32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
 };
 
+/* Type used for the inode bitmap */
+typedef u_int32_t lfs_bm_t;
+
 /*
  * In-memory super block.
  */
@@ -845,7 +848,7 @@ struct lfs {
 	struct simplelock lfs_interlock;  /* lock for lfs_seglock */
 	int lfs_sleepers;		/* # procs sleeping this fs */
 	int lfs_pages;			/* dirty pages blaming this fs */
-	u_int8_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
+	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
 };
 
 /* NINDIR is the number of indirects in a file system block. */
