@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.2 2006/05/20 03:09:12 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.3 2006/05/20 03:13:11 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.2 2006/05/20 03:09:12 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.3 2006/05/20 03:13:11 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -205,6 +205,11 @@ mididetach(struct device *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+	
+	if ( sc->props & MIDI_PROP_CAN_INPUT ) {
+		evcnt_detach(&sc->rcvBytesDiscarded);
+		evcnt_detach(&sc->rcvIncompleteMessages);
+	}
 
 	return (0);
 }
@@ -223,13 +228,27 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	sc->sc_dev = parent;
 	sc->hw_if->getinfo(sc->hw_hdl, &mi);
 	sc->props = mi.props;
+	
+	if ( sc->props & MIDI_PROP_CAN_INPUT ) {
+		evcnt_attach_dynamic(&sc->rcvBytesDiscarded,
+			EVCNT_TYPE_MISC, NULL,
+			sc->dev.dv_xname, "rcv bytes discarded");
+		evcnt_attach_dynamic(&sc->rcvIncompleteMessages,
+			EVCNT_TYPE_MISC, NULL,
+			sc->dev.dv_xname, "rcv incomplete msgs");
+	}
+	
 	printf(": %s\n", mi.name);
 }
 
 int
 midi_unit_count(void)
 {
-	return midi_cd.cd_ndevs;
+	int i;
+	for ( i = 0; i < midi_cd.cd_ndevs; ++i )
+	        if ( NULL == midi_cd.cd_devs[i] )
+		        break;
+        return i;
 }
 
 void
@@ -305,7 +324,7 @@ midi_in(void *addr, int data)
 	        if ( data == 0xf9  ||  data == 0xfd ) {
 			DPRINTF( ("midi_in: sc=%p data=0x%02x undefined\n", 
 				  sc, data));
-			++ sc->in.bytesDiscarded;
+			sc->rcvBytesDiscarded.ev_count++;
 			return;
 		}
 		DPRINTFN(9, ("midi_in: sc=%p System Real-Time data=0x%02x\n", 
@@ -406,25 +425,30 @@ protocol_violation:
                 DPRINTF(("midi_in: unexpected %#02x in state %u\n",
 		        data, sc->in_state));
 		switch ( sc->in_state ) {
+		case MIDI_IN_RUN1_1: /* can only get here by seeing an */
+		case MIDI_IN_RUN2_2: /* INVALID System Common message */
+		        sc->in_state = MIDI_IN_START;
+			/* FALLTHROUGH */
 		case MIDI_IN_START:
-		        sc->in.bytesDiscarded++;
+			sc->rcvBytesDiscarded.ev_count++;
 			return;
 		case MIDI_IN_COM1_2:
 		case MIDI_IN_RUN1_2:
-			sc->in.bytesDiscarded++;
+			sc->rcvBytesDiscarded.ev_count++;
 			/* FALLTHROUGH */
 		case MIDI_IN_COM0_1:
 		case MIDI_IN_RUN0_1:
 		case MIDI_IN_COM0_2:
 		case MIDI_IN_RUN0_2:
-			sc->in.bytesDiscarded++;
+			sc->rcvBytesDiscarded.ev_count++;
 			/* FALLTHROUGH */
 		case MIDI_IN_SYSEX:
-		        sc->in.incompleteMessages++;
+		        sc->rcvIncompleteMessages.ev_count++;
 			break;
 #if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
 		default:
-		        printf("midi_in: mishandled protocol violation?\n");
+		        printf("midi_in: mishandled %#02x(%u) in state %u?!\n",
+			      data, MIDI_CAT(data), sc->in_state);
 #endif
 		}
 		sc->in_state = MIDI_IN_START;
@@ -445,7 +469,7 @@ deliver_raw:
 	if (mb->used + count > mb->usedhigh) {
 		DPRINTF(("midi_in: buffer full, discard data=0x%02x\n", 
 			 what[0]));
-		sc->in.bytesDiscarded += count;
+		sc->rcvBytesDiscarded.ev_count += count;
 		return;
 	}
 	for (i = 0; i < count; i++) {
@@ -492,8 +516,6 @@ midiopen(dev_t dev, int flags, int ifmt, struct proc *p)
 	if (sc->isopen)
 		return EBUSY;
 	sc->in_state = MIDI_IN_START;
-        sc->in.bytesDiscarded = 0;
-        sc->in.incompleteMessages = 0;
 	error = hw->open(sc->hw_hdl, flags, midi_in, midi_out, sc);
 	if (error)
 		return error;
@@ -524,8 +546,7 @@ midiclose(dev_t dev, int flags, int ifmt, struct proc *p)
 	struct midi_hw_if *hw = sc->hw_if;
 	int s, error;
 
-	DPRINTFN(3,("midiclose %p, bytesDiscarded %u, incompleteMessages %u\n",
-                   sc, sc->in.bytesDiscarded, sc->in.incompleteMessages));
+	DPRINTFN(3,("midiclose %p\n", sc));
 
 	midi_start_output(sc, 0);
 	error = 0;

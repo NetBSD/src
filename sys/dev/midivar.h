@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.11.14.2 2006/05/20 03:09:12 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.3 2006/05/20 03:13:11 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include "sequencer.h"
 
 #include <sys/callout.h>
+#include <sys/device.h>
 
 struct midi_buffer {
 	u_char	*inp;
@@ -102,10 +103,8 @@ struct midi_softc {
 #endif
 
         /* Statistics */
-        struct {
-		u_int   bytesDiscarded;     /* other than MIDI_ACKs */
-		u_int   incompleteMessages; /* interrupted by a non-RT status */
-        } in; /* ,out; not yet */
+        struct evcnt rcvBytesDiscarded;     /* other than MIDI_ACKs */
+	struct evcnt rcvIncompleteMessages; /* interrupted by a non-RT status */
 };
 
 #define MIDIUNIT(d) ((d) & 0xff)
