@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.30.14.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.30.14.2 2006/05/20 03:09:12 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.1 2006/05/20 02:15:21 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.2 2006/05/20 03:09:12 chap Exp $");
 
 #include "sequencer.h"
 
@@ -1178,7 +1178,7 @@ midiseq_in(md, msg, len)
 		SEQ_MK_CHN_COMMON(&ev, unit, status, chan, 0, 0, 
 				  (msg[1] & 0x7f) | ((msg[2] & 0x7f) << 7));
 		break;
-	default:
+	default: /* this is now the point where MIDI_ACKs disappear */
 		return;
 	}
 	seq_event_intr(md->seq, &ev);

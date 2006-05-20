@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.11.14.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.2 2006/05/20 03:09:12 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,19 +78,34 @@ struct midi_softc {
 
 	/* MIDI input state machine */
 	int	in_state;
-#define MIDI_IN_START 0
-#define MIDI_IN_DATA 1
-#define MIDI_IN_SYSEX 2
+#define MIDI_IN_START	0
+#define MIDI_IN_RUN0_1	4
+#define MIDI_IN_RUN1_1	8
+#define MIDI_IN_RUN0_2 12
+#define MIDI_IN_RUN1_2 16
+#define MIDI_IN_RUN2_2 20
+#define MIDI_IN_COM0_1 24
+#define MIDI_IN_COM0_2 28
+#define MIDI_IN_COM1_2 32
+#define MIDI_IN_SYSEX  36
+
+#define MIDI_CAT_DATA 0
+#define MIDI_CAT_STATUS1 1
+#define MIDI_CAT_STATUS2 2
+#define MIDI_CAT_COMMON 3
 	u_char	in_msg[3];
-	u_char	in_status;
-	u_int	in_left;
-	u_int	in_pos;
 
 #if NSEQUENCER > 0
 	/* Synthesizer emulation stuff */
 	int	seqopen;
 	struct	midi_dev *seq_md; /* structure that links us with the seq. */
 #endif
+
+        /* Statistics */
+        struct {
+		u_int   bytesDiscarded;     /* other than MIDI_ACKs */
+		u_int   incompleteMessages; /* interrupted by a non-RT status */
+        } in; /* ,out; not yet */
 };
 
 #define MIDIUNIT(d) ((d) & 0xff)
