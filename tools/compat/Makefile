@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2006/02/11 10:35:29 wiz Exp $
+#	$NetBSD: Makefile,v 1.43 2006/05/20 00:23:39 christos Exp $
 
 HOSTLIB=	nbcompat
 
@@ -44,8 +44,7 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_NBTOOL_CONFIG_H=1 \
 		${.CURDIR}/../../usr.bin/lex \
 
 DPSRCS+=	defs.mk
-CLEANFILES+=	defs.mk
-CLEANFILES+=	config.log config.status configure.lineno confdefs.h *.stamp
+CLEANFILES+=	config.log config.status configure.lineno *.stamp
 
 # Get components of Berkeley DB.
 _CURDIR:=	${.CURDIR}
@@ -71,10 +70,10 @@ include/.stamp:
 	mkdir -p include/sys include/machine include/rpc
 	@touch ${.TARGET}
 
-cleandir: compat.clean
-compat.clean:
+cleandir:
+	-rm -f nbtool_config.h confdefs.h defs.mk
 	-rm -r -f include
-	-rm -f config.cache nbtool_config.h
+	-rm -f config.cache
 
 HOST_CPPFLAGS:=	${CPPFLAGS}
 CPPFLAGS:=	# empty
