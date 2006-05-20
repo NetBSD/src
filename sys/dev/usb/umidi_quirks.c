@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.10.2.4 2006/05/20 03:05:05 chap Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.10.2.5 2006/05/20 03:31:22 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10.2.4 2006/05/20 03:05:05 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10.2.5 2006/05/20 03:31:22 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,19 @@ UMQ_DEF(ROLAND, ROLAND_UA700, 3) = {
 };
 
 /*
- * Midiman Midisport 2x4
+ * Midiman Midisport 2x4. This has 2 physical MIDI IN jacks that are read
+ * on endpoint 0x81 (descriptor index 0). It has 4 physical MIDI OUT jacks
+ * that can be written on endpoints 2 or 4 (at descriptor index 2 or 4,
+ * coincidentally) interchangeably: either endpoint will accept a Cable Number
+ * field of 0 to 3, and data for the same CN will be routed to the same
+ * physical output regardless of the endpoint used for the transfer. That's a
+ * way of getting two USB pipes' worth of bandwidth to any combination of
+ * outputs, but there isn't code for doing that, so as a crude form
+ * of load balancing we here assign two of the out jacks to each endpoint--an
+ * approach, though, that requires assigning CNs in a single global sequence
+ * rather than per endpoint--that is, the CN_SEQ_GLOBAL quirk, which at the
+ * moment is the code's default behavior but shouldn't be forever, so I will
+ * include the quirk explicitly.
  */
 UMQ_FIXED_EP_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE, 2, 1) = {
 	/* out: ep# jacks */
@@ -376,6 +388,7 @@ UMQ_FIXED_EP_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE, 2, 1) = {
 UMQ_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE) = {
 	UMQ_FIXED_EP_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
 	UMQ_TYPE(MIDIMAN_GARBLE),
+	UMQ_TYPE(CN_SEQ_GLOBAL),
 	UMQ_TERMINATOR
 };
 
@@ -446,6 +459,8 @@ static char *quirk_name[] = {
 	"Fixed Endpoint",
 	"Yamaha Specific",
 	"Midiman Packet Garbling",
+	"Cable Numbers per Endpoint",
+	"Cable Numbers Global",
 };
 
 void

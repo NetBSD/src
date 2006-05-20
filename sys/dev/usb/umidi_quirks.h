@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.h,v 1.4.14.4 2006/05/20 03:05:05 chap Exp $	*/
+/*	$NetBSD: umidi_quirks.h,v 1.4.14.5 2006/05/20 03:31:22 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@ struct umq_data {
 #define UMQ_TYPE_FIXED_EP	1
 #define UMQ_TYPE_YAMAHA		2
 #define UMQ_TYPE_MIDIMAN_GARBLE	3
+#define UMQ_TYPE_CN_SEQ_PER_EP  4 /* should be default behavior, but isn't */
+#define UMQ_TYPE_CN_SEQ_GLOBAL	5 /* shouldn't be default behavior, but is */
 	void		*data;
 };
 
@@ -75,7 +77,8 @@ static struct umq_data	umq_##v##_##p##_##i[]
 #define USB_PRODUCT_ANYPRODUCT		ANYPRODUCT
 
 /*
- * quirk - fixed port
+ * quirk - fixed port. By the way, the ep field contains not the
+ * endpoint address, but the index of the endpoint descriptor.
  */
 
 struct umq_fixed_ep_endpoint {
