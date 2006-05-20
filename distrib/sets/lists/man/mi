@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.27 2006/05/04 12:28:43 tron Exp $
+# $NetBSD: mi,v 1.768.2.28 2006/05/20 12:04:20 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -6,15 +6,15 @@
 ./usr/share/info/bfd.info			man-computil-info	bfd,info
 ./usr/share/info/binutils.info			man-computil-info	bfd,info
 ./usr/share/info/bzip2.info			man-util-info		info
-./usr/share/info/cpp.info			man-util-info		info
+./usr/share/info/cpp.info			man-util-info		gcccmds,info
 ./usr/share/info/cvs.info			man-cvs-info		cvs,info
 ./usr/share/info/cvsclient.info			man-cvs-info		cvs,info
 ./usr/share/info/dc.info			man-util-info		info
 ./usr/share/info/diff.info			man-util-info		info
 ./usr/share/info/dir				man-info-share		info
 ./usr/share/info/g++FAQ.info			man-obsolete		obsolete
-./usr/share/info/g77.info			man-fortran-info	info
-./usr/share/info/gcc.info			man-c-info		info
+./usr/share/info/g77.info			man-fortran-info	gcccmds,info
+./usr/share/info/gcc.info			man-c-info		gcccmds,info
 ./usr/share/info/gdb.info			man-debug-info		gdb,info
 ./usr/share/info/gdbint.info			man-debug-info		gdb,info
 ./usr/share/info/gettext.info			man-sys-info		info
@@ -88,7 +88,7 @@
 ./usr/share/man/cat1/compress.0			man-util-catman		.cat
 ./usr/share/man/cat1/cp.0			man-util-catman		.cat
 ./usr/share/man/cat1/cpio.0			man-util-catman		.cat
-./usr/share/man/cat1/cpp.0			man-util-catman		.cat
+./usr/share/man/cat1/cpp.0			man-util-catman		gcccmds,.cat
 ./usr/share/man/cat1/crontab.0			man-cron-catman		.cat
 ./usr/share/man/cat1/csh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ctags.0			man-c-catman		.cat
@@ -134,7 +134,7 @@
 ./usr/share/man/cat1/fstat.0			man-util-catman		.cat
 ./usr/share/man/cat1/ftp.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/g711conv.0			man-obsolete		obsolete
-./usr/share/man/cat1/gcpp.0			man-util-catman		.cat
+./usr/share/man/cat1/gcpp.0			man-util-catman		gcccmds,.cat
 ./usr/share/man/cat1/gencat.0			man-locale-catman	.cat
 ./usr/share/man/cat1/getconf.0			man-util-catman		.cat
 ./usr/share/man/cat1/getent.0			man-util-catman		.cat
@@ -2313,7 +2313,7 @@
 ./usr/share/man/man1/compress.1			man-util-man		.man
 ./usr/share/man/man1/cp.1			man-util-man		.man
 ./usr/share/man/man1/cpio.1			man-util-man		.man
-./usr/share/man/man1/cpp.1			man-util-man		.man
+./usr/share/man/man1/cpp.1			man-util-man		gcccmds,.man
 ./usr/share/man/man1/crontab.1			man-cron-man		.man
 ./usr/share/man/man1/csh.1			man-util-man		.man
 ./usr/share/man/man1/ctags.1			man-c-man		.man
@@ -2359,7 +2359,7 @@
 ./usr/share/man/man1/fstat.1			man-util-man		.man
 ./usr/share/man/man1/ftp.1			man-netutil-man		.man
 ./usr/share/man/man1/g711conv.1			man-obsolete		obsolete
-./usr/share/man/man1/gcpp.1			man-util-man		.man
+./usr/share/man/man1/gcpp.1			man-util-man		gcccmds,.man
 ./usr/share/man/man1/gencat.1			man-locale-man		.man
 ./usr/share/man/man1/getconf.1			man-util-man		.man
 ./usr/share/man/man1/getent.1			man-util-man		.man
