@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2006/05/10 22:53:50 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2006/05/20 09:56:29 mrg Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -14,7 +14,7 @@ GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${.CURDIR} -I${GCCARCHLIBGCC}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	-I${G_EXTRA_HEADERS:H:u}
-CPPFLAGS+=	-I${DIST}/gcc/cp -I${GCCARCHXX} -I.
+CPPFLAGS+=	-I${DIST}/gcc/cp -I${DIST}/gcc/config -I${GCCARCHXX} -I.
 
 # This is copied from gcc/mklibgcc.in:$lib2funcs
 LIB2FUNCS_ALL=	_muldi3 _negdi2 _lshrdi3 _ashldi3 _ashrdi3 \
