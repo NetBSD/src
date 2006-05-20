@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.10.14.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.10.14.2 2006/05/20 03:24:33 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@ struct midi_dev {
 	int	nr_voices;
 	int	instr_bank_size;
 	int	unit;
-	u_char	last_cmd;
 	struct	sequencer_softc *seq;
 	struct	midi_softc *msc;
 };
