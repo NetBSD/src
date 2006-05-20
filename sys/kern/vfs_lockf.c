@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.53 2006/05/20 12:19:30 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.54 2006/05/20 12:20:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.53 2006/05/20 12:19:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.54 2006/05/20 12:20:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,6 @@ int maxlockdepth = MAXDEPTH;
 int	lockf_debug = 0;
 #endif
 
-#define NOLOCKF (struct lockf *)0
 #define SELF	0x1
 #define OTHERS	0x2
 
@@ -234,7 +233,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 	off_t start, end;
 
 	*overlap = lf;
-	if (lf == NOLOCKF)
+	if (lf == NULL)
 		return 0;
 #ifdef LOCKF_DEBUG
 	if (lockf_debug & 2)
@@ -242,7 +241,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 #endif /* LOCKF_DEBUG */
 	start = lock->lf_start;
 	end = lock->lf_end;
-	while (lf != NOLOCKF) {
+	while (lf != NULL) {
 		if (((type == SELF) && lf->lf_id != lock->lf_id) ||
 		    ((type == OTHERS) && lf->lf_id == lock->lf_id)) {
 			*prev = &lf->lf_next;
@@ -387,7 +386,7 @@ lf_wakelock(struct lockf *listhead)
 	while ((wakelock = TAILQ_FIRST(&listhead->lf_blkhd))) {
 		KASSERT(wakelock->lf_next == listhead);
 		TAILQ_REMOVE(&listhead->lf_blkhd, wakelock, lf_block);
-		wakelock->lf_next = NOLOCKF;
+		wakelock->lf_next = NULL;
 #ifdef LOCKF_DEBUG
 		if (lockf_debug & 2)
 			lf_print("lf_wakelock: awakening", wakelock);
@@ -410,7 +409,7 @@ lf_clearlock(struct lockf *unlock, struct lockf **sparelock)
 	struct lockf *overlap, **prev;
 	int ovcase;
 
-	if (lf == NOLOCKF)
+	if (lf == NULL)
 		return 0;
 #ifdef LOCKF_DEBUG
 	if (unlock->lf_type != F_UNLCK)
@@ -489,7 +488,7 @@ lf_getblock(struct lockf *lock)
 		 */
 		lf = overlap->lf_next;
 	}
-	return NOLOCKF;
+	return NULL;
 }
 
 /*
@@ -618,11 +617,11 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		 * blocked list) and/or by another process
 		 * releasing a lock (in which case we have already
 		 * been removed from the blocked list and our
-		 * lf_next field set to NOLOCKF).
+		 * lf_next field set to NULL).
 		 */
-		if (lock->lf_next != NOLOCKF) {
+		if (lock->lf_next != NULL) {
 			TAILQ_REMOVE(&lock->lf_next->lf_blkhd, lock, lf_block);
-			lock->lf_next = NOLOCKF;
+			lock->lf_next = NULL;
 		}
 		if (error) {
 			lf_free(lock);
