@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.21 2006/05/20 22:41:58 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.22 2006/05/20 22:42:50 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.21 2006/05/20 22:41:58 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.22 2006/05/20 22:42:50 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,6 +537,7 @@ lfs_mark_vnode(struct vnode *vp)
 			(void)lfs_vref(vp);
 			simple_lock(&lfs_subsys_lock);
 			++lfs_dirvcount;
+			++fs->lfs_dirvcount;
 			simple_unlock(&lfs_subsys_lock);
 			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			vp->v_flag |= VDIROP;
