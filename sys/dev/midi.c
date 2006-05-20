@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.7 2006/05/20 03:17:43 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.8 2006/05/20 03:19:02 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.7 2006/05/20 03:17:43 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.8 2006/05/20 03:19:02 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -86,12 +86,15 @@ int	mididebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-int midi_wait;
+static	struct simplelock hwif_register_lock = SIMPLELOCK_INITIALIZER;
+static	struct midi_softc *hwif_softc = NULL;
 
 void	midi_in(void *, int);
 void	midi_out(void *);
 int     midi_poll_out(struct midi_softc *);
 int     midi_intr_out(struct midi_softc *);
+int 	midi_msg_out(struct midi_softc *,
+                 u_char **, u_char **, u_char **, u_char **);
 int	midi_start_output(struct midi_softc *);
 int	midi_sleep_timo(int *, char *, int, struct simplelock *);
 int	midi_sleep(int *, char *, struct simplelock *);
@@ -219,7 +222,7 @@ void
 midi_attach(struct midi_softc *sc, struct device *parent)
 {
 	struct midi_info mi;
-
+	int s;
 
 	callout_init(&sc->sc_callout);
 	callout_setfunc(&sc->sc_callout, midi_timeout, sc);
@@ -228,12 +231,16 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	sc->dying = 0;
 	sc->isopen = 0;
 
-	midi_wait = MIDI_WAIT * hz / 1000000;
-	if (midi_wait == 0)
-		midi_wait = 1;
-
 	sc->sc_dev = parent;
+	
+	s = splaudio();
+	simple_lock(&hwif_register_lock);
+	hwif_softc = sc;
 	sc->hw_if->getinfo(sc->hw_hdl, &mi);
+	hwif_softc = NULL;
+	simple_unlock(&hwif_register_lock);
+	splx(s);
+	
 	sc->props = mi.props;
 	
 	evcnt_attach_dynamic(&sc->xmt.bytesDiscarded,
@@ -252,6 +259,11 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	}
 	
 	printf(": %s\n", mi.name);
+}
+
+void midi_register_hw_if_ext(struct midi_hw_if_ext *exthw) {
+	if ( hwif_softc != NULL )
+		hwif_softc->hw_if_ext = exthw;
 }
 
 int
@@ -870,6 +882,71 @@ midi_timeout(void *arg)
 }
 
 /*
+ * The way this function was hacked up to plug into poll_out and intr_out
+ * after they were written won't win it any beauty contests, but it'll work
+ * (code in haste, refactor at leisure). This may be called with the lock
+ * (by intr_out) or without the lock (by poll_out) so it only does what could
+ * be safe either way.
+ */
+int midi_msg_out(struct midi_softc *sc,
+                 u_char **idx, u_char **idxl, u_char **buf, u_char **bufl) {
+	MIDI_BUF_DECLARE(idx);
+	MIDI_BUF_DECLARE(buf);
+	MIDI_BUF_EXTENT_INIT(&sc->outbuf,idx);
+	MIDI_BUF_EXTENT_INIT(&sc->outbuf,buf);
+	int length;
+	int error;
+	u_char contig[3];
+	u_char *cp = contig;
+	
+	idx_cur = *idx;
+	idx_lim = *idxl;
+	buf_cur = *buf;
+	buf_lim = *bufl;
+	
+	length = MB_IDX_LEN(*idx_cur);
+	
+	while ( length --> 0 ) {
+		*cp++ = *buf_cur++;
+		MIDI_BUF_WRAP(buf);
+	}
+	
+	switch ( MB_IDX_CAT(*idx_cur) ) {
+	case FST_CHN:
+		error = sc->hw_if_ext->channel(sc->hw_hdl,
+		                               MIDI_GET_STATUS(contig[0]),
+					       MIDI_GET_CHAN(contig[0]),
+					       contig, cp - contig);
+		break;
+	case FST_COM:
+		error = sc->hw_if_ext->common(sc->hw_hdl,
+		                              MIDI_GET_STATUS(contig[0]),
+					      contig, cp - contig);
+		break;
+	case FST_SYX:
+		error = sc->hw_if_ext->sysex(sc->hw_hdl,
+					     contig, cp - contig);
+		break;
+	case FST_RT:
+		error = sc->hw_if->output(sc->hw_hdl, **buf);
+		break;
+	default:
+		error = EIO;
+	}
+	
+	if ( !error ) {
+		++ idx_cur;
+		MIDI_BUF_WRAP(idx);
+		*idx  = idx_cur;
+		*idxl = idx_lim;
+		*buf  = buf_cur;
+		*bufl = buf_lim;
+	}
+	
+	return error;
+}
+
+/*
  * midi_poll_out is intended for the midi hw (the vast majority of MIDI UARTs
  * on sound cards, apparently) that _do not have transmit-ready interrupts_.
  * Every call to hw_if->output for one of these may busy-wait to output the
@@ -913,6 +990,14 @@ midi_poll_out(struct midi_softc *sc)
 
 	for ( ;; ) {
 		while ( idx_cur != idx_lim ) {
+			if ( sc->hw_if_ext ) {
+				error = midi_msg_out(sc, &idx_cur, &idx_lim,
+				                         &buf_cur, &buf_lim);
+				if ( error )
+					goto ioerror;
+				continue;
+			}
+			/* or, lacking hw_if_ext ... */
 			msglen = MB_IDX_LEN(*idx_cur);
 			error = sc->hw_if->output(sc->hw_hdl, *buf_cur);
 			if ( error )
@@ -982,6 +1067,14 @@ midi_intr_out(struct midi_softc *sc)
 	MIDI_BUF_CONSUMER_INIT(mb,buf);
 	
 	while ( idx_cur != idx_lim ) {
+		if ( sc->hw_if_ext ) {
+			error = midi_msg_out(sc, &idx_cur, &idx_lim,
+				                 &buf_cur, &buf_lim);
+			if ( !error ) /* no EINPROGRESS from extended hw_if */
+				armed = 1;
+			break;
+		}
+		/* or, lacking hw_if_ext ... */
 		msglen = MB_IDX_LEN(*idx_cur);
 		error = sc->hw_if->output(sc->hw_hdl, *buf_cur);
 		if ( error  &&  error != EINPROGRESS )

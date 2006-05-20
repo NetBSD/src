@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.2 2006/05/20 03:19:02 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.1 2006/05/20 02:15:21 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.2 2006/05/20 03:19:02 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -77,21 +77,27 @@ int	midisyn_open(void *, int,
 		     void (*iintr)(void *, int),
 		     void (*ointr)(void *), void *arg);
 void	midisyn_close(void *);
-int	midisyn_output(void *, int);
+int	midisyn_sysrt(void *, int);
 void	midisyn_getinfo(void *, struct midi_info *);
 int	midisyn_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 struct midi_hw_if midisyn_hw_if = {
 	midisyn_open,
 	midisyn_close,
-	midisyn_output,
+	midisyn_sysrt,
 	midisyn_getinfo,
 	midisyn_ioctl,
 };
 
-static const int midi_lengths[] = { 3,3,3,3,2,2,3,1 };
-/* Number of bytes in a MIDI command, including status */
-#define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
+int	midisyn_channelmsg(void *, int, int, u_char *, int);
+int	midisyn_commonmsg(void *, int, u_char *, int);
+int	midisyn_sysex(void *, u_char *, int);
+
+struct midi_hw_if_ext midisyn_hw_if_ext = {
+	.channel = midisyn_channelmsg,
+	.common  = midisyn_commonmsg,
+	.sysex   = midisyn_sysex,
+};
 
 int
 midisyn_open(void *addr, int flags, void (*iintr)(void *, int),
@@ -131,6 +137,8 @@ midisyn_getinfo(void *addr, struct midi_info *mi)
 
 	mi->name = ms->name;
 	mi->props = 0;
+	
+	midi_register_hw_if_ext(&midisyn_hw_if_ext);
 }
 
 int
@@ -218,86 +226,84 @@ midisyn_allocvoice(midisyn *ms, u_int32_t chan, u_int32_t note)
 }
 
 int
-midisyn_output(void *addr, int b)
+midisyn_sysrt(void *addr, int b)
+{
+	return 0;
+}
+
+int midisyn_channelmsg(void *addr, int status, int chan, u_char *buf, int len)
 {
 	midisyn *ms = addr;
-	u_int8_t status, chan;
 	int voice = 0;		/* initialize to keep gcc quiet */
 	struct midisyn_methods *fs;
 	u_int32_t note, vel;
 
-	DPRINTF(("midisyn_output: ms=%p b=0x%02x\n", ms, b));
+	DPRINTF(("midisyn_channelmsg: ms=%p status=%#02x chan=%d\n",
+	       ms, status, chan));
 	fs = ms->mets;
-	if (ms->pos < 0) {
-		/* Doing SYSEX */
-		DPRINTF(("midisyn_output: sysex 0x%02x\n", b));
-		if (fs->sysex)
-			fs->sysex(ms, b);
-		if (b == MIDI_SYSEX_END)
-			ms->pos = 0;
-		return (0);
-	}
-	if (ms->pos == 0 && !MIDI_IS_STATUS(b))
-		ms->pos++;	/* repeat last status byte */
-	ms->buf[ms->pos++] = b;
-	status = ms->buf[0];
-	if (ms->pos < MIDI_LENGTH(status))
-		return (0);
-	/* Decode the MIDI command */
-	chan = MIDI_GET_CHAN(status);
-	note = ms->buf[1];
+	note = buf[1];
 	if (ms->flags & MS_FREQXLATE)
 		note = midisyn_note_to_freq(note);
-	vel = ms->buf[2];
-	switch (MIDI_GET_STATUS(status)) {
+	vel = buf[2];
+
+	switch (status) {
 	case MIDI_NOTEOFF:
-		voice = midisyn_findvoice(ms, chan, ms->buf[1]);
+		voice = midisyn_findvoice(ms, chan, buf[1]);
 		if (voice >= 0) {
 			fs->noteoff(ms, voice, note, vel);
 			midisyn_freevoice(ms, voice);
 		}
 		break;
 	case MIDI_NOTEON:
-		voice = fs->allocv(ms, chan, ms->buf[1]);
+		voice = fs->allocv(ms, chan, buf[1]);
 		fs->noteon(ms, voice, note, vel);
 		break;
 	case MIDI_KEY_PRESSURE:
 		if (fs->keypres) {
-			voice = midisyn_findvoice(ms, voice, ms->buf[1]);
+			voice = midisyn_findvoice(ms, voice, buf[1]);
 			if (voice >= 0)
 				fs->keypres(ms, voice, note, vel);
 		}
 		break;
 	case MIDI_CTL_CHANGE:
 		if (fs->ctlchg)
-			fs->ctlchg(ms, chan, ms->buf[1], vel);
+			fs->ctlchg(ms, chan, buf[1], vel);
 		break;
 	case MIDI_PGM_CHANGE:
 		if (fs->pgmchg)
-			fs->pgmchg(ms, chan, ms->buf[1]);
+			fs->pgmchg(ms, chan, buf[1]);
 		break;
 	case MIDI_CHN_PRESSURE:
 		if (fs->chnpres) {
-			voice = midisyn_findvoice(ms, chan, ms->buf[1]);
-			if (voice >= 0)
+			voice = midisyn_findvoice(ms, chan, buf[1]);
+			if (voice >= 0) /* XXX should do all voices on chan */
 				fs->chnpres(ms, voice, note);
 		}
 		break;
 	case MIDI_PITCH_BEND:
 		if (fs->pitchb) {
-			voice = midisyn_findvoice(ms, chan, ms->buf[1]);
-			if (voice >= 0)
+			voice = midisyn_findvoice(ms, chan, buf[1]);
+			if (voice >= 0) /* XXX buf1-2 are a 14-bit bend value */
 				fs->pitchb(ms, chan, note, vel);
 		}
 		break;
-	case MIDI_SYSTEM_PREFIX:
-		if (fs->sysex)
-			fs->sysex(ms, status);
-		ms->pos = -1;
-		return (0);
 	}
-	ms->pos = 0;
-	return (0);
+	return 0;
+}
+
+int midisyn_commonmsg(void *addr, int status, u_char *buf, int len)
+{
+	return 0;
+}
+
+int midisyn_sysex(void *addr, u_char *buf, int len)
+{
+	midisyn *ms = addr;
+	if (ms->mets->sysex) {
+		while ( len --> 0 )
+			ms->mets->sysex(ms, *buf++);
+	}
+	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.17.14.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.17.14.2 2006/05/20 03:19:02 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,29 @@ struct midi_hw_if {
 	void	(*getinfo)(void *, struct midi_info *);
 	int	(*ioctl)(void *, u_long, caddr_t, int, struct proc *);
 };
+
+/*
+ * The extended hardware interface is for use by drivers that are better off
+ * getting messages whole to transmit, rather than byte-by-byte through
+ * output().  Two examples are midisyn (which interprets MIDI messages in
+ * software to drive synth chips) and umidi (which has to send messages in the
+ * packet-based USB MIDI protocol).  It is silly for them to have to reassemble
+ * messages midi had to split up to poke through the single-byte interface.
+ *
+ * To register use of the extended interface, a driver will call back midi's
+ * midi_register_hw_if_ext() function during getinfo(); thereafter midi will
+ * deliver channel messages, system common messages other than sysex, and sysex
+ * messages, respectively, through these methods, and use the original output
+ * method only for system realtime messages (all of which are single byte).
+ * Other drivers that have no reason to change from the single-byte interface
+ * simply don't call the register function, and nothing changes for them.
+ */
+struct midi_hw_if_ext {
+	int	(*channel)(void *, int, int, u_char *, int);
+	int	(*common)(void *, int, u_char *, int);
+	int	(*sysex)(void *, u_char *, int);
+};
+void midi_register_hw_if_ext(struct midi_hw_if_ext *);
 
 void	midi_attach(struct midi_softc *, struct device *);
 struct device *midi_attach_mi(struct midi_hw_if *, void *, 
