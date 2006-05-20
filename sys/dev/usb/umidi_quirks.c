@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.10.2.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.10.2.2 2006/05/20 02:59:19 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10.2.1 2006/05/20 02:15:21 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10.2.2 2006/05/20 02:59:19 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,6 +363,22 @@ UMQ_DEF(ROLAND, ROLAND_UA700, 3) = {
 	UMQ_TERMINATOR
 };
 
+/*
+ * Midiman Midisport 2x4
+ */
+UMQ_FIXED_EP_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE, 2, 1) = {
+	/* out: ep# jacks */
+	{ 2, 2 },
+	{ 4, 2 },
+	/* in: ep# jacks */
+	{ 0, 2 }
+};
+UMQ_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE) = {
+	UMQ_FIXED_EP_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
+	UMQ_TYPE(MIDIMAN_GARBLE),
+	UMQ_TERMINATOR
+};
+
 
 
 /*
@@ -388,6 +404,7 @@ struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(ROLAND, ROLAND_SD20, 0),
 	UMQ_REG(ROLAND, ROLAND_SD80, 0),
 	UMQ_REG(ROLAND, ROLAND_UA700, 3),
+	UMQ_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
 	UMQ_TERMINATOR
 };
 
@@ -428,6 +445,7 @@ static char *quirk_name[] = {
 	"NULL",
 	"Fixed Endpoint",
 	"Yamaha Specific",
+	"Midiman Packet Garbling",
 };
 
 void

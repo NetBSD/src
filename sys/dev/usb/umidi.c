@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.2 2006/05/20 02:59:19 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.1 2006/05/20 02:15:21 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.2 2006/05/20 02:59:19 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,6 +279,7 @@ umidi_open(void *addr,
 {
 	struct umidi_mididev *mididev = addr;
 	struct umidi_softc *sc = mididev->sc;
+	usbd_status err;
 
 	DPRINTF(("umidi_open: sc=%p\n", sc));
 
@@ -291,13 +292,23 @@ umidi_open(void *addr,
 
 	mididev->opened = 1;
 	mididev->flags = flags;
-	if ((mididev->flags & FWRITE) && mididev->out_jack)
-		open_out_jack(mididev->out_jack, arg, ointr);
+	if ((mididev->flags & FWRITE) && mididev->out_jack) {
+		err = open_out_jack(mididev->out_jack, arg, ointr);
+		if ( err != USBD_NORMAL_COMPLETION )
+			goto bad;
+	}
 	if ((mididev->flags & FREAD) && mididev->in_jack) {
-		open_in_jack(mididev->in_jack, arg, iintr);
+		err = open_in_jack(mididev->in_jack, arg, iintr);
+		if ( err != USBD_NORMAL_COMPLETION
+		&&   err != USBD_IN_PROGRESS )
+			goto bad;
 	}
 
 	return 0;
+bad:
+	mididev->opened = 0;
+	DPRINTF(("umidi_open: usbd_status %d\n", err));
+	return USBD_IN_USE == err ? EBUSY : EIO;
 }
 
 void
@@ -479,7 +490,8 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		sc->sc_out_num_jacks += fp->out_ep[i].num_jacks;
 		ep->num_open = 0;
 		memset(ep->jacks, 0, sizeof(ep->jacks));
-		LIST_INIT(&ep->queue_head);
+		/* other ep alloc subrs don't, and alloc_pipe does, anyway: */
+		/* LIST_INIT(&ep->queue_head); */
 		ep++;
 	}
 	ep = &sc->sc_in_ep[0];
@@ -493,13 +505,28 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 			err = USBD_INVAL;
 			goto error;
 		}
-		if (UE_GET_XFERTYPE(epd->bmAttributes)!=UE_BULK ||
-		    UE_GET_DIR(epd->bEndpointAddress)!=UE_DIR_IN) {
+		/*
+		 * MIDISPORT_2X4 inputs on an interrupt rather than a bulk
+		 * endpoint.  The existing input logic in this driver seems
+		 * to work successfully if we just stop treating an interrupt
+		 * endpoint as illegal (or the in_progress status we get on
+		 * the initial transfer).  It does not seem necessary to
+		 * actually use the interrupt flavor of alloc_pipe or make
+		 * other serious rearrangements of logic.  I like that.
+		 */
+		switch ( UE_GET_XFERTYPE(epd->bmAttributes) ) {
+		case UE_BULK:
+		case UE_INTERRUPT:
+			if ( UE_DIR_IN == UE_GET_DIR(epd->bEndpointAddress) )
+				break;
+			/*FALLTHROUGH*/
+		default:
 			printf("%s: illegal endpoint(in:%d)\n",
 			       USBDEVNAME(sc->sc_dev), fp->in_ep[i].ep);
 			err = USBD_INVAL;
 			goto error;
 		}
+
 		ep->sc = sc;
 		ep->addr = epd->bEndpointAddress;
 		ep->num_jacks = fp->in_ep[i].num_jacks;
@@ -1182,6 +1209,22 @@ if ((unsigned char)(p)->buffer[1]!=0xFE)				\
 #define DPR_PACKET(dir, sc, p)
 #endif
 
+static void *
+midiman_garble( void *dst, const void *src, size_t len) {
+	unsigned char *cd = dst;
+	unsigned char const *cs = src;
+	unsigned char *end = cd + len;
+
+	while ( cd < end ) {
+		cd[3] = (0xf0&*cs) | (packet_length[0x0f&*cs]);
+		*(cd++) = *(++cs);
+		*(cd++) = *(++cs);
+		*(cd++) = *(++cs);
+		++cd, ++cs;
+	}
+	return dst;
+}
+
 static int
 out_jack_output(struct umidi_jack *out_jack, int d)
 {
@@ -1203,7 +1246,11 @@ out_jack_output(struct umidi_jack *out_jack, int d)
 			DPR_PACKET(out, sc, &out_jack->packet);
 			s = splusb();
 			if (LIST_EMPTY(&ep->queue_head)) {
-				memcpy(ep->buffer,
+				(UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE)
+				? midiman_garble
+				: memcpy
+				)
+				(ep->buffer,
 				       out_jack->packet.buffer,
 				       UMIDI_PACKET_SIZE);
 				start_output_transfer(ep);
@@ -1232,12 +1279,20 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	int cn, len, i;
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_jack *jack;
+	char *data;
 
 	if (ep->sc->sc_dying || !ep->num_open)
 		return;
 
-	cn = GET_CN(ep->buffer[0]);
-	len = packet_length[GET_CIN(ep->buffer[0])];
+	if ( UMQ_ISTYPE(ep->sc, UMQ_TYPE_MIDIMAN_GARBLE) ) {
+		cn = 0xf0&(ep->buffer[3]);
+		len = 0x0f&(ep->buffer[3]);
+		data = ep->buffer;
+	} else {
+		cn = GET_CN(ep->buffer[0]);
+		len = packet_length[GET_CIN(ep->buffer[0])];
+		data = ep->buffer + 1;
+	}
 	jack = ep->jacks[cn];
 	if (cn>=ep->num_jacks || !jack) {
 		DPRINTF(("%s: stray umidi packet (in): %02X %02X %02X %02X\n",
@@ -1274,7 +1329,11 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (jack && jack->opened) {
 		LIST_REMOVE(jack, u.out.queue_entry);
 		if (!LIST_EMPTY(&ep->queue_head)) {
-			memcpy(ep->buffer,
+			(UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE)
+			? midiman_garble
+			: memcpy
+			)
+			(ep->buffer,
 			       LIST_FIRST(&ep->queue_head)->packet.buffer,
 			       UMIDI_PACKET_SIZE);
 			(void)start_output_transfer(ep);
