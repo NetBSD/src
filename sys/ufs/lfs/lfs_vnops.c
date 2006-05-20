@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.19 2006/05/20 22:38:57 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.20 2006/05/20 22:41:31 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.19 2006/05/20 22:38:57 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.20 2006/05/20 22:41:31 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1164,7 +1164,7 @@ lfs_strategy(void *v)
 	return (0);
 }
 
-static void
+void
 lfs_flush_dirops(struct lfs *fs)
 {
 	struct inode *ip, *nip;
@@ -1174,6 +1174,7 @@ lfs_flush_dirops(struct lfs *fs)
 	int needunlock;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
+	KASSERT(fs->lfs_nadirop == 0);
 
 	if (fs->lfs_ronly)
 		return;
@@ -1215,6 +1216,8 @@ lfs_flush_dirops(struct lfs *fs)
 		nip = TAILQ_NEXT(ip, i_lfs_dchain);
 		simple_unlock(&fs->lfs_interlock);
 		vp = ITOV(ip);
+
+		KASSERT((ip->i_flag & IN_ADIROP) == 0);
 
 		/*
 		 * All writes to directories come from dirops; all
