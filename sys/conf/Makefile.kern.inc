@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.78 2006/05/11 17:21:38 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.79 2006/05/20 00:47:27 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -77,7 +77,7 @@ CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
 . if ${HAVE_GCC} > 3
-CWARNFLAGS+=	-Wno-attributes -Wno-pointer-sign
+CWARNFLAGS+=	-Wno-pointer-sign
 . endif
 .endif
 
