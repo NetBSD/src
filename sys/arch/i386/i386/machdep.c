@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.560 2005/03/02 11:48:03 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.560.2.1 2006/05/20 12:22:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.560 2005/03/02 11:48:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.560.2.1 2006/05/20 12:22:16 tron Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2052,6 +2052,26 @@ cpu_reset()
 
 	outb(IO_RTC, NVRAM_RESET);
 	outb(IO_RTC+1, NVRAM_RESET_RST);
+
+	/*
+	 * Reset AMD Geode SC1100.
+	 *
+         * 1) Write PCI Configuration Address Register (0xcf8) to
+         *    select Function 0, Register 0x44: Bridge Configuration,
+         *    GPIO and LPC Configuration Register Space, Reset
+         *    Control Register.
+	 *
+         * 2) Write 0xf to PCI Configuration Data Register (0xcfc)
+         *    to reset IDE controller, IDE bus, and PCI bus, and
+         *    to trigger a system-wide reset.
+	 * 
+	 * See AMD Geode SC1100 Processor Data Book, Revision 2.0,
+	 * sections 6.3.1, 6.3.2, and 6.4.1.
+	 */
+	if (cpu_info_primary.ci_signature == 0x540) {
+		outl(0xcf8, 0x80009044ul);
+		outl(0xcfc, 0xf);
+        }
 
 	/*
 	 * The keyboard controller has 4 random output pins, one of which is
