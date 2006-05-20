@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.26 2003/06/27 18:07:51 wiz Exp $
+.\"	$NetBSD: ahc.4,v 1.26.6.1 2006/05/20 12:18:07 tron Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -470,9 +470,6 @@ the drive and hangs the bus.  Setting a maximum synchronous negotiation rate
 of 8MHz in the
 .Tn SCSI-Select
 utility will allow normal operation.
-.Pp
-Double Transition clocking is not yet supported for Ultra160 controllers.
-This limits these controllers to 40MHz or 80MB/s.
 .Pp
 .ie 0 \{
 Although the Ultra2 and Ultra160 products have sufficient instruction
