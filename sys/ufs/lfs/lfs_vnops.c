@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.17 2006/05/20 22:24:27 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.18 2006/05/20 22:25:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.17 2006/05/20 22:24:27 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.18 2006/05/20 22:25:28 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1298,11 +1298,10 @@ lfs_flush_pchain(struct lfs *fs)
 	 * We're very conservative about what we write; we want to be
 	 * fast and async.
 	 */
-    top:
 	simple_lock(&fs->lfs_interlock);
+    top:
 	for (ip = TAILQ_FIRST(&fs->lfs_pchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_pchain);
-		simple_unlock(&fs->lfs_interlock);
 		vp = ITOV(ip);
 
 		if (!(ip->i_flags & IN_PAGING))
@@ -1314,8 +1313,11 @@ lfs_flush_pchain(struct lfs *fs)
 			continue;
 		if (lfs_vref(vp))
 			continue;
+		simple_unlock(&fs->lfs_interlock);
+
 		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0) {
 			lfs_vunref(vp);
+			simple_lock(&fs->lfs_interlock);
 			continue;
 		}
 
