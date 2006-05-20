@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.14 2006/05/20 22:11:24 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.15 2006/05/20 22:16:00 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.14 2006/05/20 22:11:24 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.15 2006/05/20 22:16:00 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1326,12 +1326,12 @@ lfs_flush_pchain(struct lfs *fs)
 		VOP_UNLOCK(vp, 0);
 		lfs_vunref(vp);
 
+		simple_lock(&fs->lfs_interlock);
+
 		if (error == EAGAIN) {
 			lfs_writeseg(fs, sp);
 			break;
 		}
-
-		simple_lock(&fs->lfs_interlock);
 	}
 	simple_unlock(&fs->lfs_interlock);
 	(void) lfs_writeseg(fs, sp);
