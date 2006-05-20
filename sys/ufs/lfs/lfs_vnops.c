@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.16 2006/05/20 22:19:33 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.17 2006/05/20 22:24:27 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.16 2006/05/20 22:19:33 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.17 2006/05/20 22:24:27 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1495,6 +1495,40 @@ lfs_fcntl(void *v)
 	    case LFCNRESIZE:
 		/* Resize the filesystem */
 		return lfs_resize_fs(fs, *(int *)ap->a_data);
+
+	    case LFCNWRAPSTOP:
+		/*
+		 * Hold lfs_newseg at segment 0; sleep until the filesystem
+		 * wraps around.  For debugging purposes, so an external
+		 * agent can log every segment in the filesystem as it
+		 * was written, and we can regression-test checkpoint
+		 * validity in the general case.
+		 */
+		VOP_UNLOCK(ap->a_vp, 0);
+		simple_lock(&fs->lfs_interlock);
+		fs->lfs_nowrap = 1;
+		error = ltsleep(&fs->lfs_nowrap, PCATCH | PUSER | PNORELOCK,
+			"segwrap", 0, &fs->lfs_interlock);
+		if (error) {
+			fs->lfs_nowrap = 0;
+			wakeup(&fs->lfs_nowrap);
+		}
+		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
+		return 0;
+
+	    case LFCNWRAPGO:
+		/*
+		 * Having done its work, the agent wakes up the writer.
+		 * It sleeps until a new segment is selected.
+		 */
+		VOP_UNLOCK(ap->a_vp, 0);
+		simple_lock(&fs->lfs_interlock);
+		fs->lfs_nowrap = 0;
+		wakeup(&fs->lfs_nowrap);
+                ltsleep(&fs->lfs_nextseg, PCATCH | PUSER | PNORELOCK,
+                        "segment", 0, &fs->lfs_interlock);
+		VOP_LOCK(ap->a_vp, LK_EXCLUSIVE);
+		return 0;
 
 	    default:
 		return ufs_fcntl(v);

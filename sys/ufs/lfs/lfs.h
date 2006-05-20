@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.77.2.13 2006/05/20 22:19:33 riz Exp $	*/
+/*	$NetBSD: lfs.h,v 1.77.2.14 2006/05/20 22:24:27 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -850,6 +850,7 @@ struct lfs {
 	int lfs_sleepers;		/* # procs sleeping this fs */
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
+	int lfs_nowrap;			/* Suspend log wrap */
 };
 
 /* NINDIR is the number of indirects in a file system block. */
@@ -1092,6 +1093,8 @@ struct lfs_fcntl_markv {
 #define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
 #define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
 #define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)
+#define LFCNWRAPSTOP	 _FCNO_FSPRIV('L', 9)
+#define LFCNWRAPGO	 _FCNO_FSPRIV('L', 10)
 /* Compat for NetBSD 2.x bug */
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)
