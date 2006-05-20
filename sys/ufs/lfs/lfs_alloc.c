@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.76.2.10 2006/05/20 22:42:50 riz Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.76.2.11 2006/05/20 22:43:42 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.10 2006/05/20 22:42:50 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.11 2006/05/20 22:43:42 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -631,7 +631,8 @@ lfs_vfree(void *v)
 
 	LFS_CLR_UINO(ip, IN_ACCESSED|IN_CLEANING|IN_MODIFIED);
 	ip->i_flag &= ~IN_ALLMOD;
-
+	ip->i_lfs_iflags |= LFSI_DELETED;
+	
 	/*
 	 * Set the ifile's inode entry to unused, increment its version number
 	 * and link it onto the free chain.

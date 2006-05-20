@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.20 2006/05/20 22:42:50 riz Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.21 2006/05/20 22:43:42 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.20 2006/05/20 22:42:50 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.21 2006/05/20 22:43:42 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1985,14 +1985,17 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	/* The Ifile lives in the buffer cache */
 	KASSERT(vp != fs->lfs_ivnode);
 
-        /*
-         * We don't want to fill the disk before the cleaner has a chance
-         * to make room for us.  If we're in danger of doing that, fail
-         * with EAGAIN.  The caller will have to notice this, unlock
-         * so the cleaner can run, relock and try again.
-         */
-        if (LFS_STARVED_FOR_SEGS(fs))
-                goto tryagain;
+	/*
+	 * We don't want to fill the disk before the cleaner has a chance
+	 * to make room for us.  If we're in danger of doing that, fail
+	 * with EAGAIN.  The caller will have to notice this, unlock
+	 * so the cleaner can run, relock and try again.
+	 *
+	 * We must write everything, however, if our vnode is being
+	 * reclaimed.
+	 */
+	if (LFS_STARVED_FOR_SEGS(fs) && vp != fs->lfs_flushvp)
+		goto tryagain;
 
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,
