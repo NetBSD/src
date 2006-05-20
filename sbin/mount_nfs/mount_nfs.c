@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.50 2006/03/23 23:23:28 wiz Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.51 2006/05/20 08:06:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.50 2006/03/23 23:23:28 wiz Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.51 2006/05/20 08:06:48 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ mount_nfs(int argc, char *argv[])
 	struct nfsd_cargs ncd;
 	struct sockaddr_storage sa;
 	int mntflags, altflags, i, nfssvc_flag, num;
-	char name[MAXPATHLEN], *p, *spec, *ospec;
+	char name[MAXPATHLEN], *p, *spec;
 	mntoptparse_t mp;
 	retrycnt = DEF_RETRY;
 
@@ -451,28 +451,36 @@ mount_nfs(int argc, char *argv[])
 		warnx("using \"%s\" instead.", name);
 	}
 
-	if ((ospec = strdup(spec)) == NULL) {
-		err(1, "strdup");
-	}
-
+retry:
 	if ((mntflags & MNT_GETARGS) != 0) {
 		memset(&sa, 0, sizeof(sa));
 		nfsargsp->addr = (struct sockaddr *)&sa;
 		nfsargsp->addrlen = sizeof(sa);
 	} else {
-		if (!getnfsargs(spec, nfsargsp))
+		char *tspec;
+
+		if ((tspec = strdup(spec)) == NULL) {
+			err(1, "strdup");
+		}
+		if (!getnfsargs(tspec, nfsargsp)) {
 			exit(1);
+		}
+		free(tspec);
 	}
 	if ((retval = mount(MOUNT_NFS, name, mntflags, nfsargsp))) {
 		/* Did we just default to v3 on a v2-only kernel?
 		 * If so, default to v2 & try again */
-		if ((errno == EPROGMISMATCH) && !force3) {
+		if (errno == EPROGMISMATCH &&
+		    (nfsargsp->flags & NFSMNT_NFSV3) != 0 && !force3) {
+			/*
+			 * fall back to v2.  XXX lack of V3 umount.
+			 */
 			nfsargsp->flags &= ~NFSMNT_NFSV3;
-			retval = mount(MOUNT_NFS, name, mntflags, nfsargsp);
+			goto retry;
 		}
 	}
 	if (retval)
-		err(1, "%s on %s", ospec, name);
+		err(1, "%s on %s", spec, name);
 	if (mntflags & MNT_GETARGS) {
 		shownfsargs(nfsargsp);
 		return (0);
