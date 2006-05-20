@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.30.14.3 2006/05/20 03:13:11 chap Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.30.14.4 2006/05/20 03:14:12 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.3 2006/05/20 03:13:11 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.4 2006/05/20 03:14:12 chap Exp $");
 
 #include "sequencer.h"
 
@@ -410,6 +410,9 @@ sequencerread(dev, uio, ioflag)
 	struct sequencer_queue *q = &sc->inq;
 	seq_event_rec ev;
 	int error, s;
+	
+	if ( !(sc->flags & FREAD) )
+	        return EBADF;
 
 	DPRINTFN(20, ("sequencerread: %p, count=%d, ioflag=%x\n", 
 		     sc, (int) uio->uio_resid, ioflag));
@@ -450,6 +453,9 @@ sequencerwrite(dev, uio, ioflag)
 	seq_event_rec cmdbuf;
 	int size;
 
+	if ( !(sc->flags & FWRITE) )
+	        return EBADF;
+	
 	DPRINTFN(2, ("sequencerwrite: %p, count=%d\n", sc, (int) uio->uio_resid));
 
 	error = 0;
@@ -566,6 +572,8 @@ sequencerioctl(dev, cmd, addr, flag, p)
 			     *(u_char *)(addr+2), *(u_char *)(addr+3),
 			     *(u_char *)(addr+4), *(u_char *)(addr+5),
 			     *(u_char *)(addr+6), *(u_char *)(addr+7)));
+		if ( !(sc->flags & FWRITE ) )
+		        return EBADF;
 		error = seq_do_command(sc, (seq_event_rec *)addr);
 		break;
 
@@ -656,18 +664,18 @@ sequencerpoll(dev, events, p)
 	DPRINTF(("sequencerpoll: %p events=0x%x\n", sc, events));
 
 	if (events & (POLLIN | POLLRDNORM))
-		if (!SEQ_QEMPTY(&sc->inq))
+		if ((sc->flags&FREAD) && !SEQ_QEMPTY(&sc->inq))
 			revents |= events & (POLLIN | POLLRDNORM);
 
 	if (events & (POLLOUT | POLLWRNORM))
-		if (SEQ_QLEN(&sc->outq) < sc->lowat)
+		if ((sc->flags&FWRITE) && SEQ_QLEN(&sc->outq) < sc->lowat)
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
+		if ((sc->flags&FREAD) && (events & (POLLIN | POLLRDNORM)))
 			selrecord(p, &sc->rsel);
 
-		if (events & (POLLOUT | POLLWRNORM))
+		if ((sc->flags&FWRITE) && (events & (POLLOUT | POLLWRNORM)))
 			selrecord(p, &sc->wsel);
 	}
 
@@ -766,6 +774,8 @@ seq_reset(sc)
 	int i, chn;
 	struct midi_dev *md;
 
+	if ( !(sc->flags & FWRITE) )
+	        return;
 	for (i = 0; i < sc->nmidi; i++) {
 		md = sc->devs[i];
 		midiseq_reset(md);
@@ -1196,6 +1206,11 @@ midiseq_open(unit, flags)
 	struct midi_softc *sc;
 	struct midi_info mi;
 
+	midi_getinfo(makedev(0, unit), &mi);
+	if ( !(mi.props & MIDI_PROP_CAN_INPUT) )
+	        flags &= ~FREAD;
+	if ( 0 == ( flags & ( FREAD | FWRITE ) ) )
+	        return 0;
 	DPRINTFN(2, ("midiseq_open: %d %d\n", unit, flags));
 	error = (*midi_cdevsw.d_open)(makedev(0, unit), flags, 0, 0);
 	if (error)
@@ -1205,7 +1220,6 @@ midiseq_open(unit, flags)
 	md = malloc(sizeof *md, M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->seq_md = md;
 	md->msc = sc;
-	midi_getinfo(makedev(0, unit), &mi);
 	md->unit = unit;
 	md->name = mi.name;
 	md->subtype = 0;
