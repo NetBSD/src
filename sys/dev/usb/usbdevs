@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.428 2006/05/14 21:47:00 elad Exp $
+$NetBSD: usbdevs,v 1.428.2.1 2006/05/20 02:15:21 chap Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -40,11 +40,6 @@ $NetBSD: usbdevs,v 1.428 2006/05/14 21:47:00 elad Exp $
 /*
  * List of known USB vendors
  *
- * USB.org publishes a VID list of USB-IF member companies at
- * http://www.usb.org/developers/tools
- * Note that it does not show companies that have obtained a Vendor ID
- * without becoming full members.
- *
  * Please note that these IDs do not do anything. Adding an ID here and
  * regenerating the usbdevs.h and usbdevs_data.h only makes a symbolic name
  * available to the source code and does not change any functionality, nor
@@ -61,7 +56,6 @@ $NetBSD: usbdevs,v 1.428 2006/05/14 21:47:00 elad Exp $
  * make the device recognised by the appropriate device driver.
  */
 
-vendor EGALAX2		0x0123	eGalax, Inc.
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
 vendor MITSUMI		0x03ee	Mitsumi
@@ -73,13 +67,13 @@ vendor FTDI		0x0403	Future Technology Devices
 vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak
 vendor MELCO		0x0411	Melco
-vendor CREATIVE		0x041e	Creative Labs
+vendor CREATIVE		0x041e	Creative
 vendor ADI		0x0422	ADI Systems
 vendor CATC		0x0423	Computer Access Technology
 vendor SMC2		0x0424	Standard Microsystems
-vendor GRAVIS		0x0428	Advanced Gravis Computer
+vendor GRAVIS		0x0428	Advanced Gravis Computer Tech.
 vendor SUN		0x0430	Sun Microsystems
-vendor TAUGA		0x0436	Taugagreining HF
+vendor TAUGA		0x0436  Taugagreining HF
 vendor AMD		0x0438	Advanced Micro Devices
 vendor LEXMARK		0x043d	Lexmark International
 vendor NANAO		0x0440	NANAO
@@ -87,7 +81,6 @@ vendor ALPS		0x044e	Alps Electric
 vendor THRUST		0x044f	Thrustmaster
 vendor TI		0x0451	Texas Instruments
 vendor ANALOGDEVICES	0x0456	Analog Devices
-vendor SIS		0x0457  Silicon Integrated Systems
 vendor KYE		0x0458	KYE Systems
 vendor DIAMOND2		0x045a	Diamond (Supra)
 vendor MICROSOFT	0x045e	Microsoft
@@ -103,16 +96,15 @@ vendor CONNECTIX	0x0478	Connectix
 vendor KENSINGTON	0x047d	Kensington
 vendor LUCENT		0x047e	Lucent
 vendor PLANTRONICS	0x047f	Plantronics
-vendor KYOCERA		0x0482	Kyocera
 vendor STMICRO		0x0483	STMicroelectronics
 vendor YAMAHA		0x0499	YAMAHA
-vendor COMPAQ		0x049f	Compaq
+vendor COMPAQ		0x049f	Compaq Computers
 vendor HITACHI		0x04a4	Hitachi
 vendor ACERP		0x04a5	Acer Peripherals
 vendor VISIONEER	0x04a7	Visioneer
 vendor CANON		0x04a9	Canon
 vendor NIKON		0x04b0	Nikon
-vendor IBM		0x04b3	IBM
+vendor IBM		0x04b3	IBM Corporation
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson
 vendor RAINBOW		0x04b9	Rainbow Technologies
@@ -123,7 +115,7 @@ vendor METHODE		0x04c2	Methode Electronics Far East
 vendor MAXISWITCH	0x04c3	Maxi Switch
 vendor LOCKHEEDMER	0x04c4	Lockheed Martin Energy Research
 vendor FUJITSU		0x04c5	Fujitsu
-vendor TOSHIBAAM	0x04c6	Toshiba America
+vendor TOSHIBAAM	0x04c6	Toshiba America Electronic Components
 vendor MICROMACRO	0x04c7	Micro Macro Technologies
 vendor KONICA		0x04c8	Konica
 vendor LITEON		0x04ca	Lite-On Technology
@@ -132,12 +124,10 @@ vendor PHILIPSSEMI	0x04cc	Philips Semiconductors
 vendor TATUNG		0x04cd	Tatung Co. Of America
 vendor SCANLOGIC	0x04ce	ScanLogic
 vendor MYSON		0x04cf	Myson Technology
-vendor DIGI2		0x04d0	Digi
-vendor HOLTEK		0x04d9	Holtek Semiconductor
+vendor DIGI2		0x04d0	Digi International
 vendor ITTCANON		0x04d1	ITT Canon
-vendor ALTEC		0x04d2	Altec Lansing
+vendor ALTEC		0x04d2	Altec Lansing Technologies
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
-vendor SHARP		0x04dd	Sharp
 vendor IIYAMA		0x04e1	Iiyama
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor SAMSUNG		0x04e8	Samsung Electronics
@@ -146,14 +136,11 @@ vendor JVC		0x04f1	JVC
 vendor CHICONY		0x04f2	Chicony Electronics
 vendor BROTHER		0x04f9	Brother Industries
 vendor DALLAS		0x04fa	Dallas Semiconductor
-vendor AIPTEK2		0x04fc	AIPTEK International
 vendor ACER		0x0502	Acer
 vendor 3COM		0x0506	3Com
-vendor HOSIDEN		0x0507	Hosiden Corporation
 vendor AZTECH		0x0509	Aztech Systems
 vendor BELKIN		0x050d	Belkin Components
 vendor KAWATSU		0x050f	Kawatsu Semiconductor
-vendor COMPOSITE	0x0518	Composite
 vendor APC		0x051d	American Power Conversion
 vendor CONNECTEK	0x0522	Advanced Connectek USA
 vendor NETCHIP		0x0525	NetChip Technology
@@ -161,7 +148,6 @@ vendor ALTRA		0x0527	ALTRA
 vendor ATI		0x0528	ATI Technologies
 vendor AKS		0x0529	Aladdin Knowledge Systems
 vendor UNIACCESS	0x0540	Universal Access
-vendor VIEWSONIC	0x0543	ViewSonic
 vendor XIRLINK		0x0545	Xirlink
 vendor ANCHOR		0x0547	Anchor Chips
 vendor SONY		0x054c	Sony
@@ -179,11 +165,11 @@ vendor ELECOM		0x056e	Elecom
 vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
-vendor AVM		0x057c	AVM
+vendor AVM		0x057c	AVM GmbH
 vendor QUICKSHOT	0x057f	Quickshot
 vendor ROLAND		0x0582	Roland
 vendor ROCKFIRE		0x0583	Rockfire
-vendor RATOC		0x0584	RATOC Systems
+vendor RATOC		0x0584	RATOC Systems, Inc.
 vendor ZYXEL		0x0586	ZyXEL Communication
 vendor ALCOR		0x058f	Alcor Micro
 vendor IOMEGA		0x059b	Iomega
@@ -220,7 +206,6 @@ vendor BIORAD		0x0614	Bio-Rad Laboratories
 vendor MACALLY		0x0618	Macally
 vendor ACTLABS		0x061c	Act Labs
 vendor ALARIS		0x0620	Alaris
-vendor CREATIVE3	0x062a	Creative Labs
 vendor APEX		0x0624	Apex
 vendor VIVITAR		0x0636	Vivitar
 vendor AVISION		0x0638	Avision
@@ -235,10 +220,8 @@ vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
 vendor SIEMENS		0x067c	Siemens
 vendor AVANCELOGIC	0x0680	Avance Logic
-vendor SIEMENS2		0x0681	Siemens
+vendor HAGIWARA		0x0693  Hagiwara Sys-Com
 vendor MINOLTA		0x0686	Minolta
-vendor CHPRODUCTS	0x068e	CH Products
-vendor HAGIWARA		0x0693	Hagiwara Sys-Com
 vendor CTX		0x0698	Chuntex
 vendor ASKEY		0x069a	Askey Computer
 vendor SAITEK		0x06a3	Saitek
@@ -252,25 +235,22 @@ vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
 vendor ALCATELM		0x06e4	Alcatel Microelectronics
 vendor SIRIUS		0x06ea	Sirius Technologies
-vendor GUILLEMOT	0x06f8	Guillemot
 vendor BOSTON		0x06fd	Boston Acoustics
 vendor SMC		0x0707	Standard Microsystems
 vendor PUTERCOM		0x0708	Putercom
 vendor MCT		0x0711	MCT
-vendor IMATION		0x0718	Imation
-vendor SUSTEEN		0x0731	Susteen
+vendor SONYERICSSON	0x0731  Sony Ericsson
 vendor EICON		0x0734	Eicon Networks
 vendor DIGITALSTREAM	0x074e	Digital Stream
 vendor AUREAL		0x0755	Aureal Semiconductor
 vendor MIDIMAN		0x0763	Midiman
-vendor SURECOM		0x0769	Surecom Technology
 vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
-vendor SANDISK		0x0781	SanDisk
-vendor JENOPTIK		0x0784	Jenoptik
-vendor LOGITEC		0x0789	Logitec
+vendor SANDISK		0x0781	SanDisk Corp
+vendor JENOPTIK		0x0784  Jenoptik
 vendor BRIMAX		0x078e	Brimax
 vendor AXIS		0x0792	Axis Communications
+vendor LOGITEC		0x0789	Logitec
 vendor ABL		0x0794	ABL Electronics
 vendor SUNCOMM		0x079c	Sun Communications, Inc.
 vendor ALFADATA		0x079d	Alfadata Computer
@@ -285,7 +265,7 @@ vendor GENERALINSTMNTS	0x07b2	General Instruments (Motorola)
 vendor OLYMPUS		0x07b4	Olympus
 vendor ABOCOM		0x07b8	AboCom Systems
 vendor KEISOKUGIKEN	0x07c1	Keisokugiken
-vendor ONSPEC		0x07c4	OnSpec
+vendor ONSPEC		0x07c4	OnSpec Electronic, Inc.
 vendor APG		0x07c5	APG Cash Drawer
 vendor BUG		0x07c8	B.U.G.
 vendor ALLIEDTELESYN	0x07c9	Allied Telesyn International
@@ -299,16 +279,14 @@ vendor STSN		0x07ef	STSN
 vendor ZOOM		0x0803	Zoom Telephonics
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
-vendor PALM		0x0830	Palm Computing
 vendor SOURCENEXT	0x0833	SOURCENEXT
 vendor ACTIONSTAR	0x0835	Action Star Enterprise
+vendor PALM		0x0830	Palm Computing
 vendor ACCTON		0x083a	Accton Technology
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR
 vendor ACTIVEWIRE	0x0854	ActiveWire
 vendor PORTGEAR		0x085a	PortGear
-vendor NETGEAR2		0x0864	Netgear
-vendor SYSTEMTALKS	0x086e	System Talks
 vendor METRICOM		0x0870	Metricom
 vendor ADESSOKBTEK	0x087c	ADESSO/Kbtek America
 vendor JATON		0x087d	Jaton
@@ -329,9 +307,8 @@ vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor GOHUBS		0x0921	GoHubs
 vendor BIOMETRIC	0x0929	American Biometric Company
-vendor TOSHIBA		0x0930	Toshiba
+vendor TOSHIBA		0x0930	Toshiba Corporation
 vendor PLEXTOR		0x093b	Plextor
-vendor INTREPIDCS	0x093c	Intrepid
 vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
 vendor BLUEWATER	0x0956	BlueWater Systems
@@ -358,17 +335,11 @@ vendor CSR		0x0a12	Cambridge Silicon Radio
 vendor TREK		0x0a16	Trek Technology
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical
 vendor BOCASYSTEMS	0x0a43	Boca Systems
-vendor MEDIAGEAR	0x0a48	MediaGear
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
-vendor ZYDAS		0x0ace	Zydas Technology Corporation
-vendor NEODIO		0x0aec	Neodio
-vendor VODAFONE		0x0af0	Vodafone
-vendor ASUSTEK		0x0b05	ASUSTeK Computer
+vendor NEODIO		0x0aec  Neodio
 vendor TODOS		0x0b0c	Todos Data System
-vendor SIIG2		0x0b39	SIIG
-vendor TEKRAM		0x0b3b	Tekram Technology
 vendor HAL		0x0b41	HAL Corporation
 vendor EMS		0x0b43	EMS Production
 vendor NEC2		0x0b62	NEC
@@ -376,83 +347,52 @@ vendor ATI2		0x0b6f	ATI
 vendor ZEEVO		0x0b7a	Zeevo, Inc.
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
-vendor USR		0x0baf	U.S. Robotics
 vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
-vendor CHICONY2		0x0c45	Chicony Electronics
-vendor SEALEVEL		0x0c52	Sealevel System
 vendor LUWEN		0x0c76	EasyDisk
-vendor ZCOM		0x0cde	Z-Com
-vendor QUALCOMM_K	0x0c88	Qualcomm Kyocera
 vendor TANGTOP		0x0d3d	Tangtop
 vendor SMC3		0x0d5c	Standard Microsystems
 vendor PEN		0x0d7d	Pen Drive
-vendor ACDC		0x0d7e	American Computer & Digital Components
-vendor CMEDIA		0x0d8c	C-Media Electronics Inc.
-vendor MSI		0x0db0	Micro Star
-vendor HAWKING		0x0e66	Hawking
-vendor OTI		0x0ea0	Ours Technology
-vendor PILOTECH		0x0eaf	Pilotech
-vendor EGALAX		0x0eef	eGalax
-vendor AIRPRIME		0x0f3d	AirPrime, Incorporated
-vendor VTECH		0x0f88	VTech
+vendor ACDC		0x0d7e  American Computer & Digital Components
+vendor MSI		0x0db0	Micro Star International
+vendor HAWKING		0x0e66	Hawking Technologies
+vendor OTI		0x0ea0	Ours Technology Inc.
+vendor PILOTECH		0x0eaf  Pilotech
 vendor QUALCOMM		0x1004	Qualcomm
-vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor JRC		0x1145	Japan Radio Company
 vendor SERVERWORKS	0x1166	ServerWorks
-vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
-vendor TOPFIELD		0x11db	Topfield Co., Ltd
-vendor TSUNAMI		0x1241	Tsunami
-vendor TARGUS		0x1267	Targus
-vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
-vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
-vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
-vendor SILICOM		0x1485	Silicom
-vendor RALINK		0x1485	Ralink Technology
-vendor RALINK_2		0x148f  Ralink Technology
-vendor CONCEPTRONIC	0x14b2	Conceptronic
 vendor SILICONPORTALS	0x1527	Silicon Portals
-vendor OQO		0x1557	OQO
 vendor SOHOWARE		0x15e8	SOHOware
 vendor UMAX		0x1606	UMAX Data Systems
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
-vendor LINKSYS3		0x1915	Linksys
 vendor DLINK		0x2001	D-Link
 vendor ERICSSON		0x2282	Ericsson
 vendor MOTOROLA2	0x22b8	Motorola
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor HIROSE		0x2631	Hirose Electric
-vendor NHJ		0x2770	NHJ
-vendor PLANEX		0x2c02	Planex Communications
+vendor NHJ		0x2770  NHJ
 vendor VIDZMEDIA	0x3275	VidzMedia Pte Ltd
 vendor AEI		0x3334	AEI
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
-vendor HANK		0x3353	Hank Connection
-vendor MICRONET		0x3980	Micronet Communications
 vendor IODATA2		0x40bb	I-O Data
-vendor IRIVER		0x4102	iRiver
-vendor DELL		0x413c	Dell
-vendor AVERATEC		0x50c2	Averatec
 vendor ONSPEC2		0x55aa	OnSpec Electronic Inc.
-vendor ZINWELL		0x5a57	Zinwell
 vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
-vendor USRP		0xfffe	GNU Radio USRP
 
 /*
  * List of known products.  Grouped by vendor.
@@ -461,7 +401,7 @@ vendor USRP		0xfffe	GNU Radio USRP
 /* 3Com products */
 product 3COM HOMECONN		0x009d	HomeConnect USB Camera
 product 3COM 3CREB96		0x00a0	Bluetooth USB Adapter
-product 3COM 3C19250		0x03e8	3C19250 Ethernet adapter
+product 3COM 3C19250		0x03E8	3C19250 Ethernet adapter
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 product 3COM 3C460		0x11f8	HomeConnect 3C460
 product 3COM 3C460B		0x4601	HomeConnect 3C460B
@@ -486,7 +426,6 @@ product ABOCOM XX4		0x4004	XX4
 product ABOCOM XX5		0x4007	XX5
 product ABOCOM XX6		0x400b	XX6
 product ABOCOM XX7		0x400c	XX7
-product ABOCOM LCS8138TX	0x401a	LCS-8138TX
 product ABOCOM XX8		0x4102	XX8
 product ABOCOM XX9		0x4104	XX9
 product ABOCOM UFE2000		0x420a	UFE2000 USB2.0 Fast Ethernet Adapter
@@ -494,7 +433,6 @@ product ABOCOM XX10		0xabc1	XX10
 
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet Adapter
-product ACCTON 111		0x3503	T-Sinus 111 WLAN
 product ACCTON SS1001		0x5046	SpeedStream Ethernet Adapter
 
 /* Acer Peripherals, Inc. products */
@@ -503,8 +441,6 @@ product ACERP ACERSCAN_320U	0x2022	Acerscan 320U
 product ACERP ACERSCAN_640U	0x2040	Acerscan 640U
 product ACERP ACERSCAN_620U	0x2060	Acerscan 620U
 product ACERP ATAPI		0x6003	ATA/ATAPI adapter
-product ACERP AWL300		0x9000	AWL300
-product ACERP AWL400		0x9001	AWL400
 
 /* Acer Products */
 product ACERW WARPLINK		0x0204	Warplink
@@ -512,7 +448,6 @@ product ACERW WARPLINK		0x0204	Warplink
 /* Actiontec products */
 product ACTIONTEC PRISM_25	0x0408	Prism2.5 WLAN
 product ACTIONTEC PRISM_25A	0x0421	Prism2.5 WLAN A
-product ACTIONTEC FREELAN	0x6106	ROPEX FreeLan 802.11b
 product ACTIONTEC UAT1		0x7605	UAT1 Wireless Ethernet adapter
 
 /* ACTiSYS products */
@@ -522,24 +457,19 @@ product ACTISYS IR2000U		0x0011	ACT-IR2000U FIR
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board
 product ACTIVEWIRE IOBOARD_FW1	0x0101	I/O Board, rev. 1 firmware
 
-/* Adaptec products */
-product ADAPTEC AWN8020		0x0020	AWN-8020 WLAN
+/* AEI products */
+product AEI USBTOLAN		0x1701	AEI USB to Lan adapter
 
 /* Addonics products */
 product ADDONICS2 205		0xa001	Cable 205
 
 /* ADMtek products */
-product ADMTEK PEGASUS		0x0986	AN986 USB Ethernet
-product ADMTEK PEGASUSII	0x8511	AN8511 USB Ethernet
-product ADMTEK PEGASUSII_2	0x8513	AN8513 Ethernet
-product ADMTEK PEGASUSII_3      0x8515  ADM8515 USB 2.0 Ethernet
+product ADMTEK PEGASUS		0x0986	AN986 USB Ethernet adapter
+product ADMTEK PEGASUSII	0x8511	AN8511 USB Ethernet adapter
 
 /* ADS products */
-product ADS UBS10BT		0x0008	UBS-10BT Ethernet
-product ADS UBS10BTX		0x0009	UBS-10BT Ethernet
-
-/* AEI products */
-product AEI USBTOLAN		0x1701	AEI USB to Lan adapter
+product ADS UBS10BT		0x0008	UBS-10BT Ethernet adapter
+product ADS UBS10BTX		0x0009	UBS-10BT Ethernet adapter
 
 /* Agate Technologies products */
 product AGATE QDRIVE		0x0378	Q-Drive
@@ -555,15 +485,6 @@ product AGFA SNAPSCANE20	0x2091	SnapScan e20
 product AGFA SNAPSCANE25	0x2095	SnapScan e25
 product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
-
-/* AirPrime products */
-product AIRPRIME PC5220		0x0112	CDMA Wireless PC Card
-
-/* AIPTEK International products */
-product AIPTEK2 PENCAM_MEGA_1_3	0x504a	PenCam Mega 1.3
-
-/* Aincomm products */
-product AINCOMM AWU2000B	0x1001	AWU2000B
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
@@ -591,10 +512,7 @@ product ANCHOR EZLINK		0x2720	EZLINK
 product AOX USB101		0x0008	USB ethernet controller engine
 
 /* Apple Computer products */
-product APPLE EXT_KBD		0x020c	Apple Extended USB Keyboard
 product APPLE OPTMOUSE		0x0302	Optical mouse
-product APPLE MIGHTYMOUSE	0x0304	Mighty Mouse
-product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
 
 /* Asahi Optical products */
@@ -606,9 +524,6 @@ product ASANTE EA		0x1427	Ethernet Adapter
 
 /* ASIX Electronics products */
 product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
-
-/* ASUSTeK computer products */
-product ASUSTEK WL167G		0x1707	WL-167g USB2.0 WLAN Adapter
 
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
@@ -624,10 +539,6 @@ product ATMEL UHB124		0x3301	UHB124 hub
 product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
 product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
 product ATMEL BW002		0x7605	BW002 Wireless adapter
-product ATMEL BW002		0x7605	BW002
-product ATMEL WL1130		0x7613	WL-1130
-product ATMEL AT76C505A		0x7614	AT76C505A
-product ATMEL AT76C503A		0x7603	AT76C503A
 
 /* Audio-Technica products */
 product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
@@ -635,26 +546,18 @@ product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
 /* Avance Logic products */
 product AVANCELOGIC USBAUDIO	0x0100	USB Audio Speaker
 
-/* Averatec products */
-product AVERATEC USBWLAN	0x4013	WLAN
-
 /* Avision products */
 product AVISION 1200U		0x0268	1200U scanner
 
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
 product BELKIN2 F5U002		0x0002	F5U002 Parallel printer adapter
-product BELKIN F5D6050		0x0050	F5D6050 802.11b Wireless adapter
 product BELKIN F5U103		0x0103	F5U103 Serial adapter
 product BELKIN F5U109		0x0109	F5U109 Serial adapter
-product BELKIN F5U409		0x0409	F5U409 Serial
 product BELKIN SCSI		0x0115	SCSI Adaptor
 product BELKIN USB2LAN		0x0121	USB to LAN Converter
 product BELKIN F5U208		0x0208	F5U208 VideoBus II
-product BELKIN F5U237		0x0237	F5U237 USB 2.0 7-Port Hub
-product BELKIN UPS		0x0980	UPS
 product BELKIN F5U120		0x1203	F5U120-PC Hub
-product BELKIN F5D7050		0x7050	F5D7050 54g USB Network Adapter
 
 /* Billionton products */
 product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
@@ -711,28 +614,14 @@ product CHIC CYPRESS		0x0003	Cypress USB Mouse
 
 /* Chicony products */
 product CHICONY KB8933		0x0001	KB-8933 keyboard
-product CHICONY2 TWINKLECAM	0x600d	TwinkleCam USB camera
-
-/* CH Products */
-product CHPRODUCTS PROTHROTTLE	0x00f1	Pro Throttle
-product CHPRODUCTS PROPEDALS	0x00f2	Pro Pedals
-product CHPRODUCTS FIGHTERSTICK	0x00f3	Fighterstick
-product CHPRODUCTS FLIGHTYOKE	0x00ff	Flight Sim Yoke
 
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
 product COMPAQ A1500		0x0012	A1500
 product COMPAQ W100		0x0033	W100
-product COMPAQ W200		0x0076	WLAN MultiPort W200
 product COMPAQ PJB100		0x504a	Personal Jukebox PJB100
 product COMPAQ IPAQLINUX	0x505a	iPAQ Linux
 product COMPAQ HNE200		0x8511	HNE-200 USB Ethernet adapter
-
-/* Composite Corp products looks the same as "TANGTOP" */
-product COMPOSITE USBPS2	0x0001	USB to PS2 Adaptor
-
-/* Conceptronic products */
-product CONCEPTRONIC C54RU	0x3c02	C54RU WLAN
 
 /* Concord Camera products */
 product CONCORDCAMERA EYE_Q_3X	0x0100	Eye Q 3x
@@ -746,18 +635,10 @@ product COREGA FETHER_USB_TX	0x0004	FEther USB-TX
 product COREGA WLAN_USB_USB_11	0x000c	WirelessLAN USB-11
 product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 product COREGA WLANUSB		0x0012	Wireless LAN USB Stick-11
-product COREGA FETHER_USB2_TX	0x0017	FEther USB2-TX
-product COREGA WLUSB_11_KEY	0x001a	ULUSB-11 Key
 product COREGA FETHER_USB_TXC	0x9601	FEther USB-TXC
 
 /* Creative products */
 product CREATIVE NOMAD_II	0x1002	Nomad II MP3 player
-product CREATIVE NOMAD_IIMG	0x4004	Nomad II MG
-product CREATIVE NOMAD		0x4106	Nomad
-
-product CREATIVE2 VOIP_BLASTER	0x0258	Voip Blaster
-
-product	CREATIVE3 OPTICAL_MOUSE	0x0001	Notebook Optical Mouse
 
 /* Cambridge Silicon Radio products */
 product CSR BLUETOOTH		0x0001	Bluetooth USB Adapter
@@ -771,7 +652,6 @@ product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
 product CYPRESS KBDHUB		0x0101	Keyboard/Hub
 product CYPRESS FMRADIO		0x1002	FM Radio
-product CYPRESS USBRS232	0x5500	USB-RS232 Interface
 product CYPRESS HUB2		0x6560	USB2 Hub
 
 /* Daisy Technology products */
@@ -780,18 +660,6 @@ product DAISY DMC		0x6901	PhotoClip USBMediaReader
 /* Dallas Semiconductor products */
 product DALLAS J6502		0x4201	J-6502 speakers
 product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
-
-/* Dell products */
-product DELL PORT		0x0058	Port Replicator
-product DELL SK8125		0x2002	SK-8125 keyboard
-product DELL X3			0x4002	Axim X3 PDA
-product DELL X30		0x4003	Axim X30 PDA
-product DELL BC02		0x8000	BC02 Bluetooth USB Adapter
-product DELL TM1180		0x8100	TrueMobile 1180 WLAN
-product	DELL TM350		0x8103	TrueMobile 350 Bluetooth USB Adapter
-
-/* DeLorme products */
-product DELORME EARTHMATE	0x0100	Earthmate GPS
 
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500 USB
@@ -808,8 +676,6 @@ product DIGITALSTREAM PS2	0x0001	PS/2 Active Adapter
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
 product DLINK DUBE100		0x1a00	10/100 ethernet adapter
 product DLINK DSB650TX4		0x200c	10/100 ethernet adapter
-product DLINK DWL122		0x3700	Wireless DWL122
-product DLINK DWLG122		0x3c00	AirPlus G Wireless USB Adapter
 product DLINK DSB650C		0x4000	10Mbps ethernet adapter
 product DLINK DSB650TX1		0x4001	10/100 ethernet adapter
 product DLINK DSB650TX		0x4002	10/100 ethernet adapter
@@ -817,11 +683,6 @@ product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
 product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
 product DLINK DSB650		0xabc1	10/100 ethernet adapter
-
-/* eGalax Products */
-product EGALAX TPANEL		0x0001	Touch Panel
-product EGALAX TPANEL2		0x0002	Touch Panel
-product EGALAX2 TPANEL		0x0001	Touch Panel
 
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
@@ -840,7 +701,6 @@ product ELECOM LDUSBTX1		0x4002	LD-USB/TX
 product ELECOM LDUSBLTX		0x4005	LD-USBL/TX
 product ELECOM LDUSBTX2		0x400b	LD-USB/TX
 product ELECOM UCSGT		0x5003	UC-SGT serial adapter
-product ELECOM UCSGT0		0x5004	UC-SGT0 Serial
 product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
 
 /* Elsa products */
@@ -895,16 +755,11 @@ product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 product FREECOM DVD		0xfc01	Connector for DVD drive
 
 /* Future Technology Devices products */
-product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
-product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	8U100AX Serial converter
+product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FTDI LCD_MX200_USB	0xfa01	Matrix Orbital MX200 Series LCD
-product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK202-24 LCD
-product FTDI LCD_LK204_24	0xfa04	Matrix Orbital LK204-24 LCD
-product FTDI LCD_CFA_632	0xfc08  Crystalfontz CFA-632 LCD
-product FTDI LCD_CFA_634	0xfc09  Crystalfontz CFA-634 LCD
-product FTDI LCD_CFA_633	0xfc0b  Crystalfontz CFA-633 LCD
-product FTDI CFA_631		0xfc0c	Crystalfontz CFA-631 LCD
+product FTDI LCD_LK202_24_USB	0xfa03	Matrix Orbital LK202-24 USB LCD
+product FTDI CFA_631		0xfc0c	Crystalfontz CFA-631 USB LCD
 product FTDI SEMC_DSS20		0xfc82	SEMC DSS-20 SyncStation
 
 /* Fuji photo products */
@@ -917,14 +772,10 @@ product FUJITSU	AH_F401U	0x105b	AH-F401U Air H device
 product GENERALINSTMNTS SB5100	0x5100	SURFboard SB5100 Cable modem
 
 /* Genesys Logic products */
-product GENESYS GENELINK	0x05e3	GeneLink Host-Host Bridge
 product GENESYS GL650		0x0604	GL650 Hub
 product GENESYS GL641USB	0x0700	GL641USB CompactFlash Card Reader
 product GENESYS GL641USB2IDE_2	0x0701	GL641USB USB-IDE Bridge
 product GENESYS GL641USB2IDE	0x0702	GL641USB USB-IDE Bridge
-
-/* GIGABYTE products */
-product GIGABYTE GNWBKG		0x8007	GN-WBKG
 
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
@@ -939,10 +790,6 @@ product GREENHOUSE KANA21	0x0001	CF-writer with Portable MP3 Player
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
 product GRIFFIN POWERMATE	0x0410	PowerMate Assignable Controller
 
-/* Guillemot Corporation */
-product GUILLEMOT DALEADER	0xa300	DA Leader
-product GUILLEMOT HWGUSB254	0xe000	HWGUSB2-54 WLAN
-
 /* Hagiwara products */
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia Card Reader
 product HAGIWARA FGCF		0x0003  FlashGate CompactFlash Card Reader
@@ -956,9 +803,6 @@ product HANDSPRING VISOR	0x0100	Handspring Visor
 product HANDSPRING TREO		0x0200	Handspring Treo
 product HANDSPRING TREO600	0x0300	Handspring Treo 600
 
-/* Hank Connection */
-product HANK HP5187		0x3713	HP Wireless Keyboard&Mouse
-
 /* Hauppauge Computer Works */
 product HAUPPAUGE WINTV_USB_FM	0x4d12	WinTV USB FM
 
@@ -968,12 +812,6 @@ product HAWKING UF100		0x400c	10/100 USB Ethernet
 /* Hitachi, Ltd. products */
 product HITACHI DZMV100A	0x0004	DVD-CAM DZ-MV100A Camcorder
 product HITACHI DVDCAM_USB	0x001e	DVDCAM USB HS Interface
-
-/* Holtek Semiconductor products */
-product HOLTEK MOP35		0x0499	MOP-35
-
-/* Hosiden Corporation products */
-product	HOSIDEN PPP		0x0011	ParaParaParadise Controller
 
 /* HP products */
 product HP 895C			0x0004	DeskJet 895C
@@ -1004,7 +842,6 @@ product HP 2200C		0x0605	ScanJet 2200C
 product HP 5300C		0x0701	Scanjet 5300C
 product HP 4400C		0x0705	Scanjet 4400C
 product HP 816C			0x0804	DeskJet 816C
-product HP 2300D		0x0b17	Laserjet 2300d
 product HP 970CSE		0x1004	Deskjet 970Cse
 product HP 5400C		0x1005	Scanjet 5400C
 product HP 2215			0x1016  iPAQ 22xx/Jornada 548
@@ -1013,7 +850,6 @@ product HP 568J			0x1116  Jornada 568
 product HP 930C			0x1204	DeskJet 930c
 product HP P2000U		0x1801	Inkjet P-2000U
 product HP 640C			0x2004	DeskJet 640c
-product HP 4670V		0x3005	ScanJet 4670v
 product HP P1100		0x3102	Photosmart P1100
 product HP 6127			0x3504	Deskjet 6127
 product HP HN210E		0x811c	Ethernet HN210E
@@ -1022,14 +858,10 @@ product HP HN210E		0x811c	Ethernet HN210E
 product HP2 C500		0x6002	PhotoSmart C500
 
 /* IBM Corporation */
-product IBM OPTTRAVELMOUSE	0x3107	Optical
 product IBM USBCDROMDRIVE	0x4427	USB CD-ROM Drive
 
 /* Iiyama products */
 product IIYAMA HUB		0x0201	Hub
-
-/* Imation */
-product IMATION FLASHGO		0xb000	Flash Go!
 
 /* Inside Out Networks products */
 product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 RS232
@@ -1073,10 +905,6 @@ product INTEL TESTBOARD		0x9890	82930 test board
 /* Intersil products */
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
-/* Interpid Control Systems products */
-product INTREPIDCS VALUECAN	0x0601	ValueCAN
-product INTREPIDCS NEOVI	0x0701	NeoVI Blue
-
 /* I-O DATA products */
 product IODATA IU_CD2		0x0204	DVD Multi-plus unit iU-CD2
 product IODATA DVR_UEH8		0x0206	DVD Multi-plus unit DVR-UEH8
@@ -1095,11 +923,6 @@ product IOMEGA ZIP250		0x0030	Zip 250
 product IOMEGA ZIP250_2		0x0032	Zip 250
 product IOMEGA CDRW		0x0055	CDRW 9602
 
-/* iRiver products */
-product IRIVER IFP_1XX		0x1101	iFP-1xx
-product IRIVER IFP_3XX		0x1103	iFP-3xx
-product IRIVER IFP_5XX		0x1105	iFP-5xx
-
 /* Jaton products */
 product JATON EDA		0x5704	Ethernet Device Adapter
 
@@ -1111,9 +934,6 @@ product JRC AH_J3001V_J3002V	0x0001	AirH\"PHONE AH-J3001V/J3002V
 
 /* JVC products */
 product JVC GR_DX95		0x000a	GR-DX95
-
-/* JVC products */
-product JVC MP_XP7250_WL	0x3009  MP-XP7250 Builtin WLAN
 
 /* Kawasaki products */
 product KLSI DUH3E10BT		0x0008	10BT Ethernet adapter, in the DU-H3E
@@ -1184,9 +1004,6 @@ product KYE G07			0x1002	MaxFire G-07 gamepad
 product KYE FLIGHT2000		0x1004	Flight 2000 joystick
 product KYE VIVIDPRO		0x2001	ColorPage Vivid-Pro scanner
 
-/* Kyocera products */
-product KYOCERA AHK3001V	0x0203	AH-K3001V
-
 /* LaCie products */
 product LACIE HD		0xa601	Hard Disk
 product LACIE CDRW		0xa602	CD R/W
@@ -1194,7 +1011,6 @@ product LACIE PKTDRV            0x0211  PocketDrive
 
 /* Lexar products */
 product LEXAR JUMPSHOT		0x0001	jumpSHOT CompactFlash Reader
-product LEXAR 2662WAR		0xa002	2662W-AR
 product LEXAR MCR		0xb018	Multi-Card Reader
 
 /* Lexmark products */
@@ -1212,10 +1028,6 @@ product	LINKSYS	WUSB11_25	0x2212	WUSB11 Wireless USB Network Adapter (version 2.
 product LINKSYS WUSB12_11	0x2213	WUSB12 802.11b v1.1
 product LINKSYS2 USB200M	0x2226	USB 2.0 10/100 ethernet controller
 product LINKSYS USB10TX2	0x400b	USB10TX
-product LINKSYS2 WUSB11		0x2219	WUSB11
-product LINKSYS3 WUSB11V28	0x2233	WUSB11-V28
-product CISCOLINKSYS WUSB54G	0x000d	WUSB54G Wireless-G USB Network Adapter
-product CISCOLINKSYS WUSB54GP	0x0011	WUSB54GP Wireless-G USB Network Adapter
 
 /* Logitec products */
 product LOGITEC LDR_H443SU2	0x0033	DVD Multi-plus unit LDR-H443SU2
@@ -1237,18 +1049,16 @@ product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
-product LOGITECH BD58		0xc00c	BD58 mouse
-product LOGITECH USBPS2MOUSE	0xc00e	USB-PS/2 Optical Mouse
 product LOGITECH MUV55A		0xc016	M-UV55a
+product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH UN58A		0xc030	iFeel Mouse
 product LOGITECH WMRPAD		0xc20a	WingMan RumblePad
 product LOGITECH WMFFGP		0xc293	WingMan Formula Force GP (GT-Force)
-product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
-product LOGITECH WMRPAD		0xc20a	WingMan RumblePad
-product LOGITECH WMJOY		0xc281	WingMan Force joystick
 product LOGITECH BB13		0xc401	USB-PS/2 Trackball
 product LOGITECH BB18		0xc404	TrackMan Wheel
-product LOGITECH MARBLEMOUSE	0xc408	Marble Mouse
+product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
+product LOGITECH WMRPAD		0xc20a	WingMan RumblePad
+product LOGITECH WMJOY		0xc281	WingMan Force joystick 
 product LOGITECH RK53		0xc501	Cordless mouse
 product LOGITECH RB6		0xc503	Cordless keyboard
 product LOGITECH CDO		0xc504	Cordless Desktop Optical
@@ -1264,15 +1074,12 @@ product LUWEN EASYDISK		0x0005  EasyDisc
 /* Macally products */
 product MACALLY MOUSE1		0x0101	mouse
 
-/* MCT Corp. products */
+/* MCT Corp. */
 product MCT HUB0100		0x0100	Hub
 product MCT DU_H3SP_USB232	0x0200	D-Link DU-H3SP USB BAY Hub
 product MCT USB232		0x0210	USB-232 Interface
 product MCT SITECOM_USB232	0x0230	Sitecom USB-232 Products
 product MCT ML_4500		0x0302	ML-4500
-
-/* MediaGear products */
-product MEDIAGEAR READER9IN1	0x5003	USB2.0 9 in 1 Reader
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
@@ -1284,22 +1091,12 @@ product MELCO MCRSM2		0x001b	MCR-SM2 SmartMedia Card Reader/Writer
 product MELCO DUBPXXG		0x001c	USB-IDE Bridge: DUB-PxxG
 product MELCO KS11G		0x0027	WLI-USB-KS11G USB-wlan
 product MELCO LUAU2KTX		0x003d	LUA-U2-KTX Ethernet
-product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
-product MELCO KG54YB		0x005e	WLI-U2-KG54-YB WLAN
-product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
-product MELCO KG54AI		0x0067	WLI-U2-KG54-AI WLAN
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
 
 /* Micro Star International products */
 product MSI BLUETOOTH		0x1967	Bluetooth USB Adapter
-product MSI MS6861		0x6861	MS-6861
-product MSI MS6865		0x6865	MS-6865
-product MSI MS6869		0x6869	MS-6869
-
-/* Micronet Communications products */
-product MICRONET SP128AR	0x0003	SP128AR EtherFast
 
 /* Microsoft products */
 product MICROSOFT SIDEPREC	0x0008	SideWinder Precision Pro
@@ -1326,7 +1123,6 @@ product MICROTEK X6U		0x0099	ScanMaker X6 - X6U
 product MICROTEK C6		0x009a	Phantom C6 scanner
 product MICROTEK 336CX2		0x00a0	Phantom 336CX - C3 scanner
 product MICROTEK V6USL		0x00a3	ScanMaker V6USL
-product MICROTEK 6000		0x30e5	ScanMaker 6000
 product MICROTEK V6USL2		0x80a3	ScanMaker V6USL
 product MICROTEK V6UL		0x80ac	ScanMaker V6UL
 
@@ -1340,15 +1136,12 @@ product MINDSATWORK DW		0x0001	Digital Wallet
 product MINOLTA 2300		0x4001	Dimage 2300
 product MINOLTA S304		0x4007	Dimage S304
 product MINOLTA X		0x4009	Dimage X
-product MINOLTA DIMAGE7I	0x400b	Dimage 7i
 product MINOLTA 5400		0x400e	Dimage 5400
-product MINOLTA DIMAGEA1	0x401a	Dimage A1
 product MINOLTA XT		0x4015	Dimage Xt
 
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
 product MITSUMI MOUSE		0x6407	Mouse
-product MITSUMI SONY_MOUSE	0x6408	Quick Scroll Mouse
 product MITSUMI BT_DONGLE	0x641f	Bluetooth USB dongle
 product MITSUMI FDD		0x6901	FDD
 
@@ -1360,6 +1153,9 @@ product MOTOROLA MC141555	0x1555	MC141555 hub controller
 product MOTOROLA SB4100		0x4100	SB4100 USB Cable Modem
 product MOTOROLA2 T720C		0x2822	T720c
 product MOTOROLA2 A920		0x4002	A920
+
+/* Micro Star International products */
+product MSI BT_DONGLE		0x1967	Bluetooth USB dongle
 
 /* MultiTech products */
 product MULTITECH ATLAS		0xf101	MT5634ZBA-USB modem
@@ -1380,7 +1176,6 @@ product MUSTEK DV2000		0xc441	DV2000 digital camera
 /* M-Systems products */
 product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
 product MSYSTEMS DISKONKEY2	0x0011	DiskOnKey
-product MSYSTEMS DISKONKEY3	0x0012	DiskOnKey
 
 /* National Instruments */
 product NI GPIB_USB_A		0xc920	GPIB-USB-A
@@ -1390,7 +1185,6 @@ product NATIONAL BEARPAW1200	0x1000	BearPaw 1200
 product NATIONAL BEARPAW2400	0x1001	BearPaw 2400
 
 /* NEC products */
-product NEC HUB_20		0x0059	2.0 hub
 product NEC HUB			0x55aa	hub
 product NEC HUB_B		0x55ab	hub
 product NEC PICTY760		0xbef4	Picty760
@@ -1415,10 +1209,6 @@ product NETGEAR EA101X		0x1002	Ethernet adapter
 product NETGEAR FA101		0x1020	10/100 Ethernet
 product NETGEAR FA120		0x1040	USB 2.0 Fast Ethernet Adapter
 product NETGEAR MA111NA		0x4110	802.11b Adapter
-product NETGEAR XA601		0x8100	USB to PL Adapter
-
-product NETGEAR2 MA101		0x4100	MA101
-product NETGEAR2 MA101B		0x4102	MA101 Rev B
 
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
@@ -1448,12 +1238,6 @@ product ONSPEC LC1		0xa109	CF + SM Combo (LC1)
 product ONSPEC UCF100		0xa400	FlashLink UCF-100 CompactFlash Reader
 product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
 
-product ONSPEC2 8IN2		0xb012	8In2
-
-/* OQO */
-product OQO WIFI01		0x0002	model 01 WiFi interface
-product OQO ETHER01		0x8150	model 01 Ethernet interface
-
 /* Ours Technology Inc. */
 product OTI SOLID		0x6803	Solid state disk
 product OTI FLASHDISK		0x6828	Flash Disk 128M
@@ -1477,7 +1261,6 @@ product PANASONIC KXLRW32AN	0x0d09	CD-R Drive KXL-RW32AN
 product PANASONIC KXLCB20AN	0x0d0a	CD-R Drive KXL-CB20AN
 product PANASONIC KXLCB35AN	0x0d0e	DVD-ROM & CD-R/RW
 product PANASONIC SDCAAE	0x1b00	MultiMediaCard Adapter
-product PANASONIC TYTP50P6S	0x3900	TY-TP50P6-S 50in Touch Panel
 
 /* Pen Driver */
 product PEN USBDISKPRO		0x0120	USB Disk Pro
@@ -1517,9 +1300,6 @@ product PIENGINEERING XKEYS	0x0233	Xkeys Programmable Keyboard
 
 /* Pilotech Systems Co., Ltd products */
 product PILOTECH CRW600		0x0001	CRW-600 6-in-1 Reader
-
-/* Planex Communications products */
-product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
 
 /* Plantronics products */
 product PLANTRONICS HEADSET	0x0ca1	Platronics DSP-400 Headset
@@ -1568,8 +1348,6 @@ product PROLIFIC RSAQ2		0x04bb	PL2303 Serial adapter (IODATA USB-RSAQ2)
 product PROLIFIC PL2303 	0x2303  PL2303 Serial adapter (ATEN/IOGEAR UC232A)
 product PROLIFIC PL2305		0x2305	Parallel printer adapter
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
-product PROLIFIC PL2501		0x2501	PL2501 Host-Host interface
-product PROLIFIC PL2303X 	0xaaa0  PL2303 Serial adapter (Pharos GPS)
 
 /* Putercom products */
 product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
@@ -1580,22 +1358,11 @@ product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 /* Qualcomm products */
 product QUALCOMM CDMA_MSM	0x6000	CDMA Technologies MSM phone
 
-product QUALCOMM_K CDMA_MSM_K	0x17da	Qualcomm Kyocera CDMA Technologies MSM
-
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
 
 /* Rainbow Technologies products */
-product	RAINBOW IKEY2000	0x1200	i-Key 2000
-
-/* Ralink Technology products */
-product RALINK RT2570		0x1706	RT2570
-product RALINK RT2570_2		0x2570	RT2570
-product RALINK RT2570_3		0x9020	RT2570
-product RALINK_2 RT2570		0x2570  RT2570
-
-/* RATOC Systems products */
-product RATOC REXUSB60		0xb000	USB serial REX-USB60
+product	RAINBOW IKEY2000	0x1200	i-Key 2000  
 
 /* Realtek products */
 product REALTEK RTL8150L	0x8150	Realtek RTL8150L USB-Ethernet Bridge
@@ -1612,7 +1379,7 @@ product ROLAND UM1		0x0009	UM-1 MIDI I/F
 product ROLAND SK500		0x000b	SoundCanvas SK-500 MIDI Keyboard
 product ROLAND SCD70		0x000c	SC-D70 MIDI Synth.
 product ROLAND UA3		0x000f	EDIROL UA-3 USB audio I/F
-product ROLAND XV5050		0x0012	XV-5050 MIDI Synth.
+product ROLAND XV5050		0x0012	XV-5050 MIDI Synth. 
 product ROLAND UM880N		0x0014	EDIROL UM-880 MIDI I/F (native)
 product ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
 product ROLAND SD90		0x0016	EDIROL SD-90 STDIO Canvas MIDI Synth.
@@ -1621,17 +1388,8 @@ product ROLAND UM550		0x0023	UM-550 MIDI I/F
 product ROLAND SD20		0x0027	SD-20 MIDI Synth.
 product ROLAND SD80		0x0029	SD-80 MIDI Synth.
 product ROLAND UA700		0x002b	UA-700 USB Audio I/F
-product ROLAND PCRA		0x0033	EDIROL PCR MIDI keyboard (advanced)
-product ROLAND PCR		0x0034	EDIROL PCR MIDI keyboard
-product ROLAND M1000		0x0035	M-1000 audio I/F
-product ROLAND UA1000		0x0044	EDIROL UA-1000 USB audio I/F
 product ROLAND UA3FXA		0x0050	EDIROL UA-3FX USB audio I/F (advanced)
 product ROLAND UA3FX		0x0051	EDIROL UA-3FX USB audio I/F
-product ROLAND FANTOMX		0x006d	Fantom-X MIDI Synth.
-product ROLAND UA101		0x007d	EDIROL UA-101
-product ROLAND UA101F		0x008d	EDIROL UA-101 USB1
-product ROLAND UA1EX		0x0096	EDIROL UA-1EX
-product ROLAND UM3		0x009A	EDIROL UM-3
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
@@ -1644,7 +1402,6 @@ product SAITEK CYBORG_3D_GOLD	0x0006	Cyborg 3D Gold Joystick
 
 /* Samsung products */
 product SAMSUNG ML6060		0x3008	ML-6060 laser printer
-product SAMSUNG MIGHTYDRIVE     0x1623  Mighty Drive
 
 /* SanDisk products */
 product SANDISK SDDR05A		0x0001	ImageMate SDDR-05a
@@ -1665,21 +1422,11 @@ product SANYO SCP4900 		0x0701	Sanyo SCP-4900 USB Phone
 product SCANLOGIC SL11R		0x0002	SL11R-IDE
 product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
 
-/* Sealevel products */
-product SEALEVEL USBSERIAL	0x2101	USB-Serial converter
-
 /* SGI products */
 product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller
 
 /* Shark products */
 product SHARK PA		0x0400	Pocket Adapter
-
-/* Sharp products */
-product SHARP SL5500		0x8004	SL5500
-product SHARP A300		0x8005	A300
-product SHARP SL5600		0x8006	SL5600
-product SHARP C700		0x8007	C700
-product SHARP C750		0x9031	C750
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
@@ -1700,9 +1447,6 @@ product SHUTTLE SCM		0x1010	SCM Micro
 product SIEMENS SPEEDSTREAM	0x1001	SpeedStream USB
 product SIEMENS SPEEDSTREAM22	0x1022	SpeedStream USB 1022
 
-/* Siemens Info products */
-product SIEMENS2 MC75		0x0034	Wireless Modules MC75
-
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
 product SIGMATEL I_BEAD100	0x8008	i-Bead 100 MP3 Player
@@ -1713,11 +1457,6 @@ product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
 product SIIG UISDMC2S		0x0200	MULTICARDREADER
 product SIIG MULTICARDREADER	0x0201	MULTICARDREADER
 
-product SIIG2 US2308		0x0421	Serial
-
-/* Silicom products */
-product SILICOM U2E		0x0001	U2E
-
 /* Silicon Portals Inc. */
 product SILICONPORTALS YAPPH_NF	0x0200	YAP Phone (no firmware)
 product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
@@ -1726,8 +1465,7 @@ product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB
 
 /* Sitecom products */
-product SITECOM LN029		0x182d	LN029
-product SITECOM CN104		0x2068	CN104 serial
+product SITECOM SERIAL		0x2068	USB to serial cable
 
 /* SmartBridges products */
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink USB ethernet adapter
@@ -1737,7 +1475,6 @@ product SMARTBRIDGES SMARTNIC	0x0003	smartNIC 2 PnP Adapter
 product SMC 2102USB		0x0100	10Mbps ethernet adapter
 product SMC 2202USB		0x0200	10/100 ethernet adapter
 product SMC 2206USB		0x0201	EZ Connect USB Ethernet Adapter
-product SMC 2862WG		0xee13	EZ Connect g Wireless USB Adapter
 product SMC2 2020HUB            0x2020  USB Hub
 product SMC3 2662WUSB		0xa002	2662W-AR Wireless Adapter
 
@@ -1765,10 +1502,10 @@ product SONY CLIE_S360		0x0095	Sony Clie s360
 product SONY CLIE_41_MS		0x0099	Sony Clie v4.1 Memory Stick slot
 product SONY CLIE_41		0x009a	Sony Clie v4.1
 product SONY CLIE_NX60		0x00da	Sony Clie nx60
-product SONY PS2EYETOY4		0x0154	PlayStation2 EyeToy v154
-product SONY PS2EYETOY5		0x0155	PlayStation2 EyeToy v155
-product SONY CLIE_TJ25		0x0169	Sony Clie tj25
 
+/* Sony Ericsson products */
+product SONYERICSSON DCU10	0x0528	USB Cable
+  
 /* SOURCENEXT products */
 product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
 product SOURCENEXT KEIKAI8_CHG	0x012e	KeikaiDenwa 8 with charger
@@ -1788,21 +1525,11 @@ product SUNTAC PS64P1		0x0005	SUNTAC U-Cable type P1
 product SUNTAC VS10U		0x0009	SUNTAC Slipper U
 product SUNTAC IS96U		0x000a	SUNTAC Ir-Trinity
 product SUNTAC AS64LX		0x000b	SUNTAC U-Cable type A3
-product SUNTAC AS144L4		0x0011	U-Cable type A4
 
 /* Sun Microsystems products */
 product SUN KEYBOARD		0x0005	Type 6 USB keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product SUN MOUSE		0x0100	Type 6 USB mouse
-
-/* Surecom Technology products */
-product SURECOM EP9001G		0x11f3	EP-9001-g
-
-/* Susteen products */
-product SUSTEEN DCU10	0x0528	USB Cable
-
-/* System TALKS, Inc. */
-product	SYSTEMTALKS SGCX2UL	0x1920	SGC-X2UL
 
 /* Supra products */
 product DIAMOND2 SUPRAEXPRESS56K 0x07da	Supra Express 56K modem
@@ -1814,12 +1541,9 @@ product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
 
-/* Targus products */
-product TARGUS PAUM004		0x0201	PAUM004 Mouse
-
 /* Taugagreining products */
 product TAUGA CAMERAMATE	0x0005	CameraMate (DPCM_USB)
-
+ 
 /* TDK products */
 product TDK UPA9664		0x0115	USB-PDC Adapter UPA9664
 product TDK UCA1464		0x0116	USB-cdmaOne Adapter UCA1464
@@ -1829,10 +1553,6 @@ product TDK BT_DONGLE		0x0309	Bluetooth USB dongle
 
 /* TEAC products */
 product TEAC FD05PUB		0x0000	FD-05PUB floppy
-
-/* Tekram Technology products */
-product TEKRAM 0193		0x1601	ALLNET 0193 WLAN
-product TEKRAM ZYAIR_B200	0x1602	ZyXEL ZyAIR B200 WLAN
 
 /* Telex Communications products */
 product TELEX MIC1		0x0001	Enhanced USB Microphone
@@ -1848,9 +1568,6 @@ product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
 /* Todos Data System products */
 product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard Reader
 
-/* Topfield Co. Ltd products */
-product TOPFIELD TF5000PVR	0x1000	TF5000PVR Digital Video Recorder
-
 /* Toshiba Corporation products */
 product TOSHIBA POCKETPC_E740	0x0706	PocketPC e740
 
@@ -1864,9 +1581,6 @@ product TRIPPLITE U209		0x2008	U209 Serial adapter
 /* Trumpion products */
 product	TRUMPION T33521		0x1003	USB/MP3 decoder
 product	TRUMPION XXX1100	0x1100	XXX 1100
-
-/* Tsunami products */
-product TSUNAMI SM2000		0x1111	SM-2000
 
 /* Ultima products */
 product ULTIMA 1200UBPLUS	0x4002	1200 UB Plus scanner
@@ -1882,19 +1596,8 @@ product UMAX ASTRA3400		0x0060	Astra 3400 Scanner
 /* Universal Access products */
 product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 
-/* U.S. Robotics products */
-product USR USR1120		0x00eb	USR1120 WLAN
-
-/* GNU Radio USRP */
-product USRP USRPv2		0x0002	USRP Revision 2
-
 /* VidzMedia products */
 product VIDZMEDIA MONSTERTV	0x4fb1	MonsterTV P2H
-
-/* ViewSonic products */
-product VIEWSONIC G773HUB	0x00fe	G773 Monitor Hub
-product VIEWSONIC P815HUB	0x00ff	P815 Monitor Hub
-product VIEWSONIC G773CTRL	0x4153	G773 Monitor Control
 
 /* Vision products */
 product VISION VC6452V002	0x0002	CPiA Camera
@@ -1907,15 +1610,9 @@ product VISIONEER 6100		0x0231	OneTouch 6100
 product VISIONEER 6200		0x0311	OneTouch 6200
 product VISIONEER 8100		0x0321	OneTouch 8100
 product VISIONEER 8600		0x0331	OneTouch 8600
-
+								       
 /* Vivitar products */
 product VIVITAR DSC350		0x0003	DSC350 Camera
-
-/* Vodafone products */
-product VODAFONE MC3G		0x5000	Mobile Connect 3G datacard
-
-/* VTech products */
-product VTECH RT2570		0x3012	RT2570
 
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
@@ -1923,7 +1620,7 @@ product WACOM GRAPHIRE		0x0010	Graphire
 product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
 product WACOM INTUOSA5		0x0021	Intuos A5
 product WACOM GD0912U		0x0022	Intuos 9x12 Graphics Tablet
-
+ 
 /* Xirlink products */
 product XIRLINK IMAGING		0x800d	IMAGING DEVICE
 product XIRLINK PCCAM		0x8080	IBM PC Camera
@@ -1957,17 +1654,8 @@ product YANO U640MO		0x0101	U640MO-03
 /* Zeevo, Inc. products */
 product ZEEVO BLUETOOTH		0x07d0	BT-500 Bluetooth USB Adapter
 
-/* Z-Com products */
-product ZCOM 725		0x0002	725/726 Prism2.5 WLAN
-
-/* Zinwell products */
-product ZINWELL ZWXG261		0x0260	ZWX-G261
-
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
-
-/* Zydas Technology Corporation products */
-product ZYDAS ZD1211		0x1211	ZD1211 WLAN abg
 
 /* ZyXEL Communication Co. products */
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
