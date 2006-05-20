@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.77.2.9 2006/05/20 22:04:21 riz Exp $	*/
+/*	$NetBSD: lfs.h,v 1.77.2.10 2006/05/20 22:09:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -845,6 +845,7 @@ struct lfs {
 	struct simplelock lfs_interlock;  /* lock for lfs_seglock */
 	int lfs_sleepers;		/* # procs sleeping this fs */
 	int lfs_pages;			/* dirty pages blaming this fs */
+	u_int8_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
 };
 
 /* NINDIR is the number of indirects in a file system block. */

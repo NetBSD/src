@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.64.2.4 2006/05/20 21:59:47 riz Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.64.2.5 2006/05/20 22:09:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -135,6 +135,7 @@ __BEGIN_DECLS
 /* lfs_alloc.c */
 int lfs_rf_valloc(struct lfs *, ino_t, int, struct proc *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
+void lfs_order_freelist(struct lfs *);
 
 /* lfs_balloc.c */
 void lfs_register_block(struct vnode *, daddr_t);
