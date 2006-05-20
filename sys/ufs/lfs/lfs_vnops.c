@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.7 2006/05/20 21:55:43 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.8 2006/05/20 21:59:46 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.7 2006/05/20 21:55:43 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.8 2006/05/20 21:59:46 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1355,6 +1355,7 @@ lfs_fcntl(void *v)
 		oclean = cip->clean;
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
+		fs->lfs_sp->seg_flags |= SEGM_PROT;
 		lfs_segunlock(fs);
 		lfs_writer_leave(fs);
 
@@ -1507,6 +1508,22 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				}
 			}
 			KASSERT(pg != NULL);
+
+			/*
+			 * If we're holding the segment lock, we can deadlocked
+			 * against a process that has our page and is waiting
+			 * for the cleaner, while the cleaner waits for the
+			 * segment lock.  Just bail in that case.
+			 */
+			if ((pg->flags & PG_BUSY) && LFS_SEGLOCK_HELD(fs)) {
+				if (by_list) {
+					if (i > 0)
+						uvm_page_unbusy(pgs, i);
+					DLOG((DLOG_PAGE, "lfs_putpages: avoiding 3-way deadlock\n"));
+					return -1;
+				}
+			}
+
 			while (pg->flags & PG_BUSY) {
 				pg->flags |= PG_WANTED;
 				UVM_UNLOCK_AND_WAIT(pg, &vp->v_interlock, 0,
@@ -1682,7 +1699,8 @@ lfs_putpages(void *v)
 
 	/*
 	 * Ignore requests to free pages past EOF but in the same block
-	 * as EOF, unless the request is synchronous. (XXX why sync?)
+	 * as EOF, unless the request is synchronous.  (If the request is
+	 * sync, it comes from lfs_truncate.)
 	 * XXXUBC Make these pages look "active" so the pagedaemon won't
 	 * XXXUBC bother us with them again.
 	 */
@@ -1752,8 +1770,13 @@ lfs_putpages(void *v)
 		int r;
 
 		/* If no pages are dirty, we can just use genfs_putpages. */
-		if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
-				ap->a_flags, 1) != 0)
+		r = check_dirty(fs, vp, startoffset, endoffset, blkeof,
+				ap->a_flags, 1);
+		if (r < 0) {
+			simple_unlock(&vp->v_interlock);
+			return EDEADLK;
+		}
+		if (r > 0)
 			break;
 
 		/*
@@ -1890,9 +1913,15 @@ lfs_putpages(void *v)
 	 * well.
 	 */
 again:
-	check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags, 0);
+	if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
+	    ap->a_flags, 0) < 0) {
+		simple_unlock(&vp->v_interlock);
+		sp->vp = NULL;
+		return EDEADLK;
+	}
 
-	if ((error = genfs_putpages(v)) == EDEADLK) {
+	error = genfs_putpages(v);
+	if (error == EDEADLK || error == EAGAIN) {
 		DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
 		      " EDEADLK [2] ino %d off %x (seg %d)\n",
 		      ip->i_number, fs->lfs_offset,
@@ -1921,7 +1950,8 @@ again:
 
 		/* We've lost the interlock.  Start over. */
 		simple_lock(&vp->v_interlock);
-		goto again;
+		if (error == EDEADLK)
+			goto again;
 	}
 
 	KASSERT(sp->vp == vp);
