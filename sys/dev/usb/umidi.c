@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.2 2006/05/20 02:59:19 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.3 2006/05/20 03:02:50 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.2 2006/05/20 02:59:19 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.3 2006/05/20 03:02:50 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1279,13 +1279,13 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	int cn, len, i;
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_jack *jack;
-	char *data;
+	unsigned char *data;
 
 	if (ep->sc->sc_dying || !ep->num_open)
 		return;
 
 	if ( UMQ_ISTYPE(ep->sc, UMQ_TYPE_MIDIMAN_GARBLE) ) {
-		cn = 0xf0&(ep->buffer[3]);
+		cn = (0xf0&(ep->buffer[3]))>>4;
 		len = 0x0f&(ep->buffer[3]);
 		data = ep->buffer;
 	} else {
@@ -1305,10 +1305,14 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 	if (!jack->binded || !jack->opened)
 		return;
-	DPR_PACKET(in, ep->sc, &jack->packet);
+	DPRINTFN(500,("%s: midi data (in) cable %d len %d: %02X %02X %02X\n",
+		USBDEVNAME(ep->sc->sc_dev), cn, len,
+		(unsigned)data[0],
+		(unsigned)data[1],
+		(unsigned)data[2]));
 	if (jack->u.in.intr) {
 		for (i=0; i<len; i++) {
-			(*jack->u.in.intr)(jack->arg, ep->buffer[i+1]);
+			(*jack->u.in.intr)(jack->arg, data[i]);
 		}
 	}
 
