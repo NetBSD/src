@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.28 2006/05/20 12:04:20 tron Exp $
+# $NetBSD: mi,v 1.768.2.29 2006/05/20 12:27:54 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -862,6 +862,7 @@
 ./usr/share/man/cat4/i386/ed.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/elansc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/fdc.0			man-sys-catman		.cat
+./usr/share/man/cat4/i386/geodewdog.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/ie.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/io.0			man-sys-catman		.cat
@@ -3087,6 +3088,7 @@
 ./usr/share/man/man4/i386/ed.4			man-sys-man		.man
 ./usr/share/man/man4/i386/elansc.4		man-sys-man		.man
 ./usr/share/man/man4/i386/fdc.4			man-sys-man		.man
+./usr/share/man/man4/i386/geodewdog.4		man-sys-man		.man
 ./usr/share/man/man4/i386/ie.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/intro.4		man-sys-man		.man
 ./usr/share/man/man4/i386/io.4			man-sys-man		.man
