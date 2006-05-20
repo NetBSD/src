@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.158.2.5 2006/05/20 21:59:47 riz Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.158.2.6 2006/05/20 22:05:51 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.5 2006/05/20 21:59:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.6 2006/05/20 22:05:51 riz Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -516,6 +516,10 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 						 * had a chance to run.
 						 */
 						lfs_writeseg(fs, sp);
+						if (!VPISEMPTY(vp) &&
+						    !WRITEINPROG(vp) &&
+						    !(ip->i_flag & IN_ALLMOD))
+							LFS_SET_UINO(ip, IN_MODIFIED);
 						break;
 					}
 					error = 0; /* XXX not quite right */
@@ -1164,6 +1168,8 @@ lfs_gather(struct lfs *fs, struct segment *sp, struct vnode *vp,
 	int s, count = 0;
 
 	ASSERT_SEGLOCK(fs);
+	if (vp->v_type == VBLK)
+		return 0;
 	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
 	s = splbio();
@@ -1200,39 +1206,27 @@ loop:
 #endif
 			continue;
 		}
-		if (vp->v_type == VBLK) {
-			/* For block devices, just write the blocks. */
-			/* XXX Do we even need to do this? */
-			/*
-			 * Get the block before bwrite,
-			 * so we don't corrupt the free list
-			 */
-			bp->b_flags |= B_BUSY;
-			bremfree(bp);
-			bwrite(bp);
-		} else {
 #ifdef DIAGNOSTIC
 # ifdef LFS_USE_B_INVAL
-			if ((bp->b_flags & (B_CALL|B_INVAL)) == B_INVAL) {
-				DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
-				      " is B_INVAL\n", bp->b_lblkno));
-				VOP_PRINT(bp->b_vp);
-			}
+		if ((bp->b_flags & (B_CALL|B_INVAL)) == B_INVAL) {
+			DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
+			      " is B_INVAL\n", bp->b_lblkno));
+			VOP_PRINT(bp->b_vp);
+		}
 # endif /* LFS_USE_B_INVAL */
-			if (!(bp->b_flags & B_DELWRI))
-				panic("lfs_gather: bp not B_DELWRI");
-			if (!(bp->b_flags & B_LOCKED)) {
-				DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
-				      " blk %" PRId64 " not B_LOCKED\n",
-				      bp->b_lblkno,
-				      dbtofsb(fs, bp->b_blkno)));
-				VOP_PRINT(bp->b_vp);
-				panic("lfs_gather: bp not B_LOCKED");
-			}
+		if (!(bp->b_flags & B_DELWRI))
+			panic("lfs_gather: bp not B_DELWRI");
+		if (!(bp->b_flags & B_LOCKED)) {
+			DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
+			      " blk %" PRId64 " not B_LOCKED\n",
+			      bp->b_lblkno,
+			      dbtofsb(fs, bp->b_blkno)));
+			VOP_PRINT(bp->b_vp);
+			panic("lfs_gather: bp not B_LOCKED");
+		}
 #endif
-			if (lfs_gatherblock(sp, bp, &s)) {
-				goto loop;
-			}
+		if (lfs_gatherblock(sp, bp, &s)) {
+			goto loop;
 		}
 		count++;
 	}
