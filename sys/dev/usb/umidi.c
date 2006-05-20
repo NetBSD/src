@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.8 2006/05/20 03:31:22 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.9 2006/05/20 03:32:45 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.8 2006/05/20 03:31:22 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.9 2006/05/20 03:32:45 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -805,8 +805,9 @@ alloc_all_jacks(struct umidi_softc *sc)
 {
 	int i, j;
 	struct umidi_endpoint *ep;
-	struct umidi_jack *jack, **rjack;
+	struct umidi_jack *jack;
 	int cnglobal;
+	unsigned char *cn_spec;
 	
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_SEQ_PER_EP))
 		cnglobal = 0;
@@ -827,6 +828,12 @@ alloc_all_jacks(struct umidi_softc *sc)
 		 */
 		cnglobal = 1;
 	}
+	
+	if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_FIXED))
+		cn_spec = umidi_get_quirk_data_from_type(sc->sc_quirk,
+					    		 UMQ_TYPE_CN_FIXED);
+	else
+		cn_spec = NULL;
 
 	/* allocate/initialize structures */
 	sc->sc_jacks =
@@ -865,31 +872,29 @@ alloc_all_jacks(struct umidi_softc *sc)
 	jack = &sc->sc_out_jacks[0];
 	ep = &sc->sc_out_ep[0];
 	for (i=0; i<sc->sc_out_num_endpoints; i++) {
-		rjack = &ep->jacks[0];
 		for (j=0; j<ep->num_jacks; j++) {
-			*rjack = jack;
 			jack->endpoint = ep;
-			if ( !cnglobal )
+			if ( cn_spec != NULL )
+				jack->cable_number = *cn_spec++;
+			else if ( !cnglobal )
 				jack->cable_number = j;
+			ep->jacks[jack->cable_number] = jack;
 			jack++;
-			rjack++;
 		}
-		ep->cn_base = ep->num_jacks ? ep->jacks[0]->cable_number : 0;
 		ep++;
 	}
 	jack = &sc->sc_in_jacks[0];
 	ep = &sc->sc_in_ep[0];
 	for (i=0; i<sc->sc_in_num_endpoints; i++) {
-		rjack = &ep->jacks[0];
 		for (j=0; j<ep->num_jacks; j++) {
-			*rjack = jack;
 			jack->endpoint = ep;
-			if ( !cnglobal )
+			if ( cn_spec != NULL )
+				jack->cable_number = *cn_spec++;
+			else if ( !cnglobal )
 				jack->cable_number = j;
+			ep->jacks[jack->cable_number] = jack;
 			jack++;
-			rjack++;
 		}
-		ep->cn_base = ep->num_jacks ? ep->jacks[0]->cable_number : 0;
 		ep++;
 	}
 
@@ -962,6 +967,7 @@ assign_all_jacks_automatically(struct umidi_softc *sc)
 	usbd_status err;
 	int i;
 	struct umidi_jack *out, *in;
+	signed char *asg_spec;
 
 	err =
 	    alloc_all_mididevs(sc,
@@ -969,9 +975,30 @@ assign_all_jacks_automatically(struct umidi_softc *sc)
 	if (err!=USBD_NORMAL_COMPLETION)
 		return err;
 
+	if ( UMQ_ISTYPE(sc, UMQ_TYPE_MD_FIXED))
+		asg_spec = umidi_get_quirk_data_from_type(sc->sc_quirk,
+					    		  UMQ_TYPE_MD_FIXED);
+	else
+		asg_spec = NULL;
+
 	for (i=0; i<sc->sc_num_mididevs; i++) {
-		out = (i<sc->sc_out_num_jacks) ? &sc->sc_out_jacks[i]:NULL;
-		in = (i<sc->sc_in_num_jacks) ? &sc->sc_in_jacks[i]:NULL;
+		if ( asg_spec != NULL ) {
+			if ( *asg_spec == -1 )
+				out = NULL;
+			else
+				out = &sc->sc_out_jacks[*asg_spec];
+			++ asg_spec;
+			if ( *asg_spec == -1 )
+				in = NULL;
+			else
+				in = &sc->sc_in_jacks[*asg_spec];
+			++ asg_spec;
+		} else {
+			out = (i<sc->sc_out_num_jacks) ? &sc->sc_out_jacks[i]
+			                               : NULL;
+			in = (i<sc->sc_in_num_jacks) ? &sc->sc_in_jacks[i]
+						     : NULL;
+		}
 		err = bind_jacks_to_mididev(sc, out, in, &sc->sc_mididevs[i]);
 		if (err!=USBD_NORMAL_COMPLETION) {
 			free_all_mididevs(sc);
@@ -1339,7 +1366,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 static void
 in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
-	int cn, len, i, rel_cn;
+	int cn, len, i;
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_jack *jack;
 	unsigned char *packet;
@@ -1374,10 +1401,8 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			len = packet_length[GET_CIN(packet[0])];
 			data = packet + 1;
 		}
-
-		rel_cn = cn - ep->cn_base;
-		if (0 > rel_cn || rel_cn >= ep->num_jacks
-		   || !(jack = ep->jacks[rel_cn]) || cn != jack->cable_number) {
+		/* 0 <= cn <= 15 by inspection of above code */
+		if (!(jack = ep->jacks[cn]) || cn != jack->cable_number) {
 			DPRINTF(("%s: stray input endpoint %p cable %d len %d: "
 			         "%02X %02X %02X (try CN_SEQ quirk?)\n",
 				 USBDEVNAME(ep->sc->sc_dev), ep, cn, len,

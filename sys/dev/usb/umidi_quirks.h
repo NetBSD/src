@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.h,v 1.4.14.5 2006/05/20 03:31:22 chap Exp $	*/
+/*	$NetBSD: umidi_quirks.h,v 1.4.14.6 2006/05/20 03:32:45 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@ struct umq_data {
 #define UMQ_TYPE_MIDIMAN_GARBLE	3
 #define UMQ_TYPE_CN_SEQ_PER_EP  4 /* should be default behavior, but isn't */
 #define UMQ_TYPE_CN_SEQ_GLOBAL	5 /* shouldn't be default behavior, but is */
+#define UMQ_TYPE_CN_FIXED       6 /* should be a joke, but isn't funny */
+#define UMQ_TYPE_MD_FIXED       7 /* in case CN_FIXED gives a weird order */
 	void		*data;
 };
 
@@ -106,6 +108,36 @@ umq_##v##_##p##_##i##_fixed_ep_endpoints[noep+niep]
 
 #define UMQ_FIXED_EP_REG(v, p, i)					\
 { UMQ_TYPE_FIXED_EP, (void *)&umq_##v##_##p##_##i##_fixed_ep_desc }
+
+/*
+ * quirk - fixed cable numbers. Supply as many values as there are jacks,
+ * in the same jack order implied by the FIXED_EP_DEF. Each value becomes
+ * the cable number of the corresponding jack.
+ */
+#if __STDC_VERSION__ >= 199901L
+#define UMQ_CN_FIXED_REG(...)						\
+{ .type=UMQ_TYPE_CN_FIXED, .data=(unsigned char[]){__VA_ARGS__} }
+#else /* assume gcc 2.95.3 */
+#define UMQ_CN_FIXED_REG(cns...)					\
+{ .type=UMQ_TYPE_CN_FIXED, .data=(unsigned char[]){cns} }
+#endif
+
+/*
+ * quirk - fixed mididev assignment. Supply pairs of numbers out, in, as
+ * many pairs as mididevs (that is, max(num_out_jack,num_in_jack)). The
+ * pairs, in order, correspond to the mididevs that will be created; in
+ * each pair, out is the index of the out_jack to bind and in is the
+ * index of the in_jack, both in the order implied by the FIXED_EP_DEF.
+ * Either out or in can be -1 to bind no out jack or in jack, respectively,
+ * to the corresponding mididev.
+ */
+#if __STDC_VERSION__ >= 199901L
+#define UMQ_MD_FIXED_REG(...)						\
+{ .type=UMQ_TYPE_MD_FIXED, .data=(unsigned char[]){__VA_ARGS__} }
+#else /* assume gcc 2.95.3 */
+#define UMQ_MD_FIXED_REG(mds...)					\
+{ .type=UMQ_TYPE_MD_FIXED, .data=(unsigned char[]){mds} }
+#endif
 
 /*
  * generic boolean quirk, no data
