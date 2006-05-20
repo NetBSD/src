@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.661.2.12 2006/05/04 12:12:08 tron Exp $
+# $NetBSD: GENERIC,v 1.661.2.13 2006/05/20 12:25:39 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.661.2.12 $"
+#ident 		"GENERIC-$Revision: 1.661.2.13 $"
 
 maxusers	32		# estimated number of users
 
@@ -1211,6 +1211,8 @@ joy*	at eso?				# ESS Solo-1 on-board joystick
 
 
 # Miscellaneous Devices
+
+geodewdog* at pci? dev ? function ?	# AMD Geode SC1100 watchdog timer
 
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
