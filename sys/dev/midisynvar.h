@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.9.14.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.9.14.2 2006/05/20 03:19:02 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,8 +77,6 @@ struct midisyn {
 	void *data;
 
 	/* Used by midisyn driver */
-	u_int8_t buf[3];
-	int pos;
 	struct voice *voices;
 	u_int seqno;
 	u_int16_t pgms[MIDI_MAX_CHANS];
