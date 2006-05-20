@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.9 2006/05/20 03:22:31 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.10 2006/05/20 03:24:33 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.9 2006/05/20 03:22:31 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.10 2006/05/20 03:24:33 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -398,6 +398,7 @@ midi_fst(struct midi_state *s, u_char c, int compress)
 	case MIDI_IN_START  | MIDI_CAT_COMMON:
 	case MIDI_IN_RUN1_1 | MIDI_CAT_COMMON:
 	case MIDI_IN_RUN2_2 | MIDI_CAT_COMMON:
+	case MIDI_IN_RXX2_2 | MIDI_CAT_COMMON:
 	        s->msg[0] = c;
 	        switch ( c ) {
 		case 0xf0: s->state = MIDI_IN_SYX1_3; break;
@@ -416,14 +417,21 @@ midi_fst(struct midi_state *s, u_char c, int compress)
 		}
 		/* FALLTHROUGH */
 	case MIDI_IN_RUN2_2 | MIDI_CAT_STATUS1:
+	case MIDI_IN_RXX2_2 | MIDI_CAT_STATUS1:
 	case MIDI_IN_START  | MIDI_CAT_STATUS1:
 	        s->state = MIDI_IN_RUN0_1;
 	        s->msg[0] = c;
 		break;
 	
 	case MIDI_IN_RUN2_2 | MIDI_CAT_STATUS2:
+	case MIDI_IN_RXX2_2 | MIDI_CAT_STATUS2:
 		if ( c == s->msg[0] ) {
 			s->state = MIDI_IN_RNX0_2;
+			break;
+		}
+		if ( (c ^ s->msg[0]) == 0x10 && (c & 0xe0) == 0x80 ) {
+			s->state = MIDI_IN_RXX0_2;
+			s->msg[0] = c;
 			break;
 		}
 		/* FALLTHROUGH */
@@ -465,12 +473,24 @@ midi_fst(struct midi_state *s, u_char c, int compress)
 		break;
 
         case MIDI_IN_RUN1_2 | MIDI_CAT_DATA:
-		s->state = MIDI_IN_RUN2_2;
-	        s->msg[2] = c;
+		if ( !compress && c == 0 && (s->msg[0] & 0xf0) == 0x90 ) {
+			s->state = MIDI_IN_RXX2_2;
+			s->msg[0] ^= 0x10;
+			s->msg[2] = 64;
+		} else {
+			s->state = MIDI_IN_RUN2_2;
+	        	s->msg[2] = c;
+		}
 		FST_RETURN(0,3,FST_CHN);
 
         case MIDI_IN_RUN2_2 | MIDI_CAT_DATA:
 	        s->state = MIDI_IN_RNX1_2;
+	        s->msg[1] = c;
+		break;
+
+        case MIDI_IN_RXX2_2 | MIDI_CAT_DATA:
+	        s->state = MIDI_IN_RXX1_2;
+		s->msg[0] ^= 0x10;
 	        s->msg[1] = c;
 		break;
 
@@ -479,11 +499,35 @@ midi_fst(struct midi_state *s, u_char c, int compress)
 	        s->msg[1] = c;
 		break;
 
+        case MIDI_IN_RXX0_2 | MIDI_CAT_DATA:
+	        s->state = MIDI_IN_RXY1_2;
+	        s->msg[1] = c;
+		break;
+
         case MIDI_IN_RNX1_2 | MIDI_CAT_DATA:
         case MIDI_IN_RNY1_2 | MIDI_CAT_DATA:
+		if ( !compress && c == 0 && (s->msg[0]&0xf0) == 0x90 ) {
+			s->state = MIDI_IN_RXX2_2;
+			s->msg[0] ^= 0x10;
+			s->msg[2] = 64;
+			FST_RETURN(0,3,FST_CHN);
+		}
 		s->state = MIDI_IN_RUN2_2;
 	        s->msg[2] = c;
 		FST_RETURN(compress,3,FST_CHN);
+
+        case MIDI_IN_RXX1_2 | MIDI_CAT_DATA:
+        case MIDI_IN_RXY1_2 | MIDI_CAT_DATA:
+		if ( (c ==  0 && (s->msg[0]&0xf0) == 0x90)
+		  || (c == 64 && (s->msg[0]&0xf0) == 0x80 && compress) ) {
+			s->state = MIDI_IN_RXX2_2;
+			s->msg[0] ^= 0x10;
+			s->msg[2] = 64 - c;
+			FST_RETURN(compress,3,FST_CHN);
+		}
+		s->state = MIDI_IN_RUN2_2;
+	        s->msg[2] = c;
+		FST_RETURN(0,3,FST_CHN);
 
         case MIDI_IN_SYX1_3 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_SYX2_3;
@@ -521,6 +565,7 @@ protocol_violation:
 		switch ( s->state ) {
 		case MIDI_IN_RUN1_1: /* can only get here by seeing an */
 		case MIDI_IN_RUN2_2: /* INVALID System Common message */
+		case MIDI_IN_RXX2_2:
 		        s->state = MIDI_IN_START;
 			/* FALLTHROUGH */
 		case MIDI_IN_START:
@@ -530,6 +575,7 @@ protocol_violation:
 		case MIDI_IN_RUN1_2:
 		case MIDI_IN_SYX2_3:
 		case MIDI_IN_RNY1_2:
+		case MIDI_IN_RXY1_2:
 			s->bytesDiscarded.ev_count++;
 			/* FALLTHROUGH */
 		case MIDI_IN_COM0_1:
@@ -538,7 +584,9 @@ protocol_violation:
 		case MIDI_IN_COM0_2:
 		case MIDI_IN_RUN0_2:
 		case MIDI_IN_RNX0_2:
+		case MIDI_IN_RXX0_2:
 		case MIDI_IN_RNX1_2:
+		case MIDI_IN_RXX1_2:
 		case MIDI_IN_SYX1_3:
 			s->bytesDiscarded.ev_count++;
 			/* FALLTHROUGH */
@@ -997,6 +1045,8 @@ midi_poll_out(struct midi_softc *sc)
 			}
 			/* or, lacking hw_if_ext ... */
 			msglen = MB_IDX_LEN(*idx_cur);
+			DPRINTFN(7,("midi_poll_out: %p <- %#02x\n",
+				   sc->hw_hdl, *buf_cur));
 			error = sc->hw_if->output(sc->hw_hdl, *buf_cur);
 			if ( error )
 				goto ioerror;
@@ -1143,9 +1193,13 @@ real_writebytes(struct midi_softc *sc, u_char *buf, int cc)
 		return EIO;
 	
 	while ( buf < bufe ) {
-		do
-			got = midi_fst(&sc->xmt, *buf, 0);
-		while ( got == FST_HUH );
+		do {
+			/*
+			 * If the hardware uses the extended hw_if, pass it
+			 * canonicalized messages, else pass it compressed ones.
+			 */
+			got = midi_fst(&sc->xmt, *buf, !sc->hw_if_ext);
+		} while ( got == FST_HUH );
 		++ buf;
 		switch ( got ) {
 		case FST_MORE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.30.14.9 2006/05/20 03:22:31 chap Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.30.14.10 2006/05/20 03:24:33 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.9 2006/05/20 03:22:31 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.10 2006/05/20 03:24:33 chap Exp $");
 
 #include "sequencer.h"
 
@@ -410,9 +410,6 @@ sequencerread(dev, uio, ioflag)
 	struct sequencer_queue *q = &sc->inq;
 	seq_event_rec ev;
 	int error, s;
-	
-	if ( !(sc->flags & FREAD) )
-	        return EBADF;
 
 	DPRINTFN(20, ("sequencerread: %p, count=%d, ioflag=%x\n", 
 		     sc, (int) uio->uio_resid, ioflag));
@@ -452,9 +449,6 @@ sequencerwrite(dev, uio, ioflag)
 	int error;
 	seq_event_rec cmdbuf;
 	int size;
-
-	if ( !(sc->flags & FWRITE) )
-	        return EBADF;
 	
 	DPRINTFN(2, ("sequencerwrite: %p, count=%d\n", sc, (int) uio->uio_resid));
 
@@ -1167,17 +1161,12 @@ midiseq_in(md, msg, len)
 	status = MIDI_GET_STATUS(msg[0]);
 	chan = MIDI_GET_CHAN(msg[0]);
 	switch (status) {
-	case MIDI_NOTEON:
-		if (msg[2] == 0) {
-			status = MIDI_NOTEOFF;
-			msg[2] = MIDI_HALF_VEL;
-		}
-		/* fall into */
-	case MIDI_NOTEOFF:
+	case MIDI_NOTEON: /* midi(4) always canonicalizes NoteOn velocity 0 */
+	case MIDI_NOTEOFF: /* to NoteOff velocity 64. */
 	case MIDI_KEY_PRESSURE:
 		SEQ_MK_CHN_VOICE(&ev, unit, status, chan, msg[1], msg[2]);
 		break;
-	case MIDI_CTL_CHANGE:
+	case MIDI_CTL_CHANGE: /* XXX not correct for MSB */
 		SEQ_MK_CHN_COMMON(&ev, unit, status, chan, msg[1], 0, msg[2]);
 		break;
 	case MIDI_PGM_CHANGE:
@@ -1259,11 +1248,7 @@ midiseq_out(md, buf, cc, chk)
 	DPRINTFN(5, ("midiseq_out: m=%p, unit=%d, buf[0]=0x%02x, cc=%d\n",
 		     md->msc, md->unit, buf[0], cc));
 
-	/* The MIDI "status" byte does not have to be repeated. */
-	if (chk && md->last_cmd == buf[0])
-		buf++, cc--;
-	else
-		md->last_cmd = buf[0];
+	/* midi(4) does running status compression where appropriate. */
 	return midi_writebytes(md->unit, buf, cc);
 }
 
@@ -1365,7 +1350,7 @@ midiseq_ctlchange(md, chan, parm, w14)
 		return EINVAL;
 	buf[0] = MIDI_CTL_CHANGE | chan;
 	buf[1] = parm;
-	buf[2] = w14 & 0x7f;
+	buf[2] = w14 & 0x7f; /* XXX */
 	return midiseq_out(md, buf, 3, 1);
 }
 
