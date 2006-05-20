@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.19 2006/05/20 22:38:57 riz Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.20 2006/05/20 22:42:50 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.19 2006/05/20 22:38:57 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.20 2006/05/20 22:42:50 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1046,6 +1046,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		fs->lfs_tstamp = fs->lfs_otstamp;
 		fs->lfs_fsbtodb = 0;
 	}
+	if (fs->lfs_resvseg == 0)
+		fs->lfs_resvseg = MIN(fs->lfs_minfreeseg - 1, \
+			MAX(MIN_RESV_SEGS, fs->lfs_minfreeseg / 2 + 1));
 
 	/*
 	 * If we aren't going to be able to write meaningfully to this
