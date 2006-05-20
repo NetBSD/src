@@ -1,11 +1,11 @@
-/*	$NetBSD: midi.c,v 1.43.2.6 2006/05/20 03:16:48 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.7 2006/05/20 03:17:43 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@NetBSD.org) and (MIDI DFA and Active
+ * by Lennart Augustsson (augustss@NetBSD.org) and (MIDI FST and Active
  * Sense handling) Chapman Flack (nblists@anastigmatix.net).
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.6 2006/05/20 03:16:48 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.7 2006/05/20 03:17:43 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.6 2006/05/20 03:16:48 chap Exp $");
 
 #if NMIDI > 0
 
-
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (mididebug) printf x
 #define DPRINTFN(n,x)	if (mididebug >= (n)) printf x
@@ -91,9 +90,11 @@ int midi_wait;
 
 void	midi_in(void *, int);
 void	midi_out(void *);
-int	midi_start_output(struct midi_softc *, int, int);
-int	midi_sleep_timo(int *, char *, int);
-int	midi_sleep(int *, char *);
+int     midi_poll_out(struct midi_softc *);
+int     midi_intr_out(struct midi_softc *);
+int	midi_start_output(struct midi_softc *);
+int	midi_sleep_timo(int *, char *, int, struct simplelock *);
+int	midi_sleep(int *, char *, struct simplelock *);
 void	midi_wakeup(int *);
 void	midi_initbuf(struct midi_buffer *);
 void	midi_timeout(void *);
@@ -223,6 +224,7 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	callout_init(&sc->sc_callout);
 	callout_setfunc(&sc->sc_callout, midi_timeout, sc);
 	simple_lock_init(&sc->out_lock);
+	simple_lock_init(&sc->in_lock);
 	sc->dying = 0;
 	sc->isopen = 0;
 
@@ -265,14 +267,15 @@ midi_unit_count(void)
 void
 midi_initbuf(struct midi_buffer *mb)
 {
-	mb->used = 0;
-	mb->usedhigh = MIDI_BUFSIZE;
-	mb->end = mb->start + mb->usedhigh;
-	mb->inp = mb->outp = mb->start;
+	mb->idx_producerp = mb->idx_consumerp = mb->idx;
+	mb->buf_producerp = mb->buf_consumerp = mb->buf;
 }
+#define PACK_MB_IDX(cat,len) (((cat)<<4)|(len))
+#define MB_IDX_CAT(idx) ((idx)>>4)
+#define MB_IDX_LEN(idx) ((idx)&0xf)
 
 int
-midi_sleep_timo(int *chan, char *label, int timo)
+midi_sleep_timo(int *chan, char *label, int timo, struct simplelock *lk)
 {
 	int st;
 
@@ -281,7 +284,7 @@ midi_sleep_timo(int *chan, char *label, int timo)
 
 	DPRINTFN(8, ("midi_sleep_timo: %p %s %d\n", chan, label, timo));
 	*chan = 1;
-	st = tsleep(chan, PWAIT | PCATCH, label, timo);
+	st = ltsleep(chan, PWAIT | PCATCH, label, timo, lk);
 	*chan = 0;
 #ifdef MIDI_DEBUG
 	if (st != 0)
@@ -291,9 +294,9 @@ midi_sleep_timo(int *chan, char *label, int timo)
 }
 
 int
-midi_sleep(int *chan, char *label)
+midi_sleep(int *chan, char *label, struct simplelock *lk)
 {
-	return midi_sleep_timo(chan, label, 0);
+	return midi_sleep_timo(chan, label, 0, lk);
 }
 
 void
@@ -314,33 +317,33 @@ midi_wakeup(int *chan)
 */
 static char const midi_cats[] = "\0\0\0\0\0\0\0\0\2\2\2\2\1\1\2\3";
 #define MIDI_CAT(d) (midi_cats[((d)>>4)&15])
-#define DFA_RETURN(offp,endp,ret) \
+#define FST_RETURN(offp,endp,ret) \
 	return (s->pos=s->msg+(offp)), (s->end=s->msg+(endp)), (ret)
 
-enum dfa_ret { DFA_MORE, DFA_CHN, DFA_COM, DFA_SYX, DFA_RT, DFA_ERR, DFA_HUH };
+enum fst_ret { FST_CHN, FST_COM, FST_SYX, FST_RT, FST_MORE, FST_ERR, FST_HUH };
 
 /*
- * A MIDI state machine suitable for receiving or transmitting. It will
- * accept correct MIDI input that uses, doesn't use, or sometimes uses the
+ * A MIDI finite state transducer suitable for receiving or transmitting. It
+ * will accept correct MIDI input that uses, doesn't use, or sometimes uses the
  * 'running status' compression technique, and transduce it to fully expanded
  * (compress==0) or fully compressed (compress==1) form.
  *
- * Returns DFA_MORE if a complete message has not been parsed yet (SysEx
- * messages are the exception), DFA_ERR or DFA_HUH if the input does not
- * conform to the protocol, or DFA_CHN (channel messages), DFA_COM (System
- * Common messages), DFA_RT (System Real-Time messages), or DFA_SYX (System
+ * Returns FST_MORE if a complete message has not been parsed yet (SysEx
+ * messages are the exception), FST_ERR or FST_HUH if the input does not
+ * conform to the protocol, or FST_CHN (channel messages), FST_COM (System
+ * Common messages), FST_RT (System Real-Time messages), or FST_SYX (System
  * Exclusive) to broadly categorize the message parsed. s->pos and s->end
  * locate the parsed message; while (s->pos<s->end) putchar(*(s->pos++));
  * would output it.
  *
- * DFA_HUH means the character c wasn't valid in the original state, but the
+ * FST_HUH means the character c wasn't valid in the original state, but the
  * state has now been reset to START and the caller should try again passing
- * the same c. DFA_ERR means c isn't valid in the start state; the caller
+ * the same c. FST_ERR means c isn't valid in the start state; the caller
  * should kiss it goodbye and continue to try successive characters from the
- * input until something other than DFA_ERR or DFA_HUH is returned, at which
+ * input until something other than FST_ERR or FST_HUH is returned, at which
  * point things are resynchronized.
  *
- * A DFA_SYX return means that between pos and end are from 1 to 3
+ * A FST_SYX return means that between pos and end are from 1 to 3
  * bytes of a system exclusive message. A SysEx message will be delivered in
  * one or more chunks of that form, where the first begins with 0xf0 and the
  * last (which is the only one that might have length < 3) ends with 0xf7.
@@ -349,36 +352,36 @@ enum dfa_ret { DFA_MORE, DFA_CHN, DFA_COM, DFA_SYX, DFA_RT, DFA_ERR, DFA_HUH };
  * all; again SysEx is the exception, as one or more chunks of it may already
  * have been parsed.
  *
- * For DFA_CHN messages, s->msg[0] always contains the status byte even if
+ * For FST_CHN messages, s->msg[0] always contains the status byte even if
  * compression was requested (pos then points to msg[1]). That way, the
  * caller can always identify the exact message if there is a need to do so.
- * For all other message types except DFA_SYX, the status byte is at *pos
+ * For all other message types except FST_SYX, the status byte is at *pos
  * (which may not necessarily be msg[0]!). There is only one SysEx status
- * byte, so the return value DFA_SYX is sufficient to identify it.
+ * byte, so the return value FST_SYX is sufficient to identify it.
  */
-static enum dfa_ret
-midi_dfa(struct midi_state *s, u_char c, int compress)
+static enum fst_ret
+midi_fst(struct midi_state *s, u_char c, int compress)
 {
 	int syxpos = 0;
 	compress = compress ? 1 : 0;
 
 	if ( c >= 0xf8 ) { /* All realtime messages bypass state machine */
 	        if ( c == 0xf9  ||  c == 0xfd ) {
-			DPRINTF( ("midi_dfa: s=%p c=0x%02x undefined\n", 
+			DPRINTF( ("midi_fst: s=%p c=0x%02x undefined\n", 
 				  s, c));
 			s->bytesDiscarded.ev_count++;
-			return DFA_ERR;
+			return FST_ERR;
 		}
-		DPRINTFN(9, ("midi_dfa: s=%p System Real-Time data=0x%02x\n", 
+		DPRINTFN(9, ("midi_fst: s=%p System Real-Time data=0x%02x\n", 
 			     s, c));
 		s->msg[2] = c;
-		DFA_RETURN(2,3,DFA_RT);
+		FST_RETURN(2,3,FST_RT);
 	}
 
-	DPRINTFN(4, ("midi_dfa: s=%p data=0x%02x state=%d\n", 
+	DPRINTFN(4, ("midi_fst: s=%p data=0x%02x state=%d\n", 
 		     s, c, s->state));
 
-        switch ( s->state   | MIDI_CAT(c) ) { /* break ==> return DFA_MORE */
+        switch ( s->state   | MIDI_CAT(c) ) { /* break ==> return FST_MORE */
 
 	case MIDI_IN_START  | MIDI_CAT_COMMON:
 	case MIDI_IN_RUN1_1 | MIDI_CAT_COMMON:
@@ -389,7 +392,7 @@ midi_dfa(struct midi_state *s, u_char c, int compress)
 		case 0xf1: s->state = MIDI_IN_COM0_1; break;
 		case 0xf2: s->state = MIDI_IN_COM0_2; break;
 		case 0xf3: s->state = MIDI_IN_COM0_1; break;
-		case 0xf6: s->state = MIDI_IN_START;  DFA_RETURN(0,1,DFA_COM);
+		case 0xf6: s->state = MIDI_IN_START;  FST_RETURN(0,1,FST_COM);
 		default: goto protocol_violation;
 		}
 		break;
@@ -421,7 +424,7 @@ midi_dfa(struct midi_state *s, u_char c, int compress)
         case MIDI_IN_COM0_1 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_START;
 	        s->msg[1] = c;
-		DFA_RETURN(0,2,DFA_COM);
+		FST_RETURN(0,2,FST_COM);
 
         case MIDI_IN_COM0_2 | MIDI_CAT_DATA:
 	        s->state = MIDI_IN_COM1_2;
@@ -431,18 +434,18 @@ midi_dfa(struct midi_state *s, u_char c, int compress)
         case MIDI_IN_COM1_2 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_START;
 	        s->msg[2] = c;
-		DFA_RETURN(0,3,DFA_COM);
+		FST_RETURN(0,3,FST_COM);
 
         case MIDI_IN_RUN0_1 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_RUN1_1;
 	        s->msg[1] = c;
-		DFA_RETURN(0,2,DFA_CHN);
+		FST_RETURN(0,2,FST_CHN);
 
         case MIDI_IN_RUN1_1 | MIDI_CAT_DATA:
         case MIDI_IN_RNX0_1 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_RUN1_1;
 	        s->msg[1] = c;
-		DFA_RETURN(compress,2,DFA_CHN);
+		FST_RETURN(compress,2,FST_CHN);
 
         case MIDI_IN_RUN0_2 | MIDI_CAT_DATA:
 	        s->state = MIDI_IN_RUN1_2;
@@ -452,7 +455,7 @@ midi_dfa(struct midi_state *s, u_char c, int compress)
         case MIDI_IN_RUN1_2 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_RUN2_2;
 	        s->msg[2] = c;
-		DFA_RETURN(0,3,DFA_CHN);
+		FST_RETURN(0,3,FST_CHN);
 
         case MIDI_IN_RUN2_2 | MIDI_CAT_DATA:
 	        s->state = MIDI_IN_RNX1_2;
@@ -468,7 +471,7 @@ midi_dfa(struct midi_state *s, u_char c, int compress)
         case MIDI_IN_RNY1_2 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_RUN2_2;
 	        s->msg[2] = c;
-		DFA_RETURN(compress,3,DFA_CHN);
+		FST_RETURN(compress,3,FST_CHN);
 
         case MIDI_IN_SYX1_3 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_SYX2_3;
@@ -478,7 +481,7 @@ midi_dfa(struct midi_state *s, u_char c, int compress)
         case MIDI_IN_SYX2_3 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_SYX0_3;
 	        s->msg[2] = c;
-		DFA_RETURN(0,3,DFA_SYX);
+		FST_RETURN(0,3,FST_SYX);
 
         case MIDI_IN_SYX0_3 | MIDI_CAT_DATA:
 		s->state = MIDI_IN_SYX1_3;
@@ -495,13 +498,13 @@ midi_dfa(struct midi_state *s, u_char c, int compress)
 	        if ( c == 0xf7 ) {
 		        s->state = MIDI_IN_START;
 			s->msg[syxpos] = c;
-		        DFA_RETURN(0,1+syxpos,DFA_SYX);
+		        FST_RETURN(0,1+syxpos,FST_SYX);
 		}
 		/* FALLTHROUGH */
 
         default:
 protocol_violation:
-                DPRINTF(("midi_dfa: unexpected %#02x in state %u\n",
+                DPRINTF(("midi_fst: unexpected %#02x in state %u\n",
 		        c, s->state));
 		switch ( s->state ) {
 		case MIDI_IN_RUN1_1: /* can only get here by seeing an */
@@ -510,7 +513,7 @@ protocol_violation:
 			/* FALLTHROUGH */
 		case MIDI_IN_START:
 			s->bytesDiscarded.ev_count++;
-			return DFA_ERR;
+			return FST_ERR;
 		case MIDI_IN_COM1_2:
 		case MIDI_IN_RUN1_2:
 		case MIDI_IN_SYX2_3:
@@ -532,14 +535,14 @@ protocol_violation:
 			break;
 #if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
 		default:
-		        printf("midi_dfa: mishandled %#02x(%u) in state %u?!\n",
+		        printf("midi_fst: mishandled %#02x(%u) in state %u?!\n",
 			      c, MIDI_CAT(c), s->state);
 #endif
 		}
 		s->state = MIDI_IN_START;
-		return DFA_HUH;
+		return FST_HUH;
 	}
-	return DFA_MORE;
+	return FST_MORE;
 }
 
 void
@@ -549,7 +552,10 @@ midi_in(void *addr, int data)
 	struct midi_buffer *mb = &sc->inbuf;
 	int i;
 	int count;
-	enum dfa_ret got;
+	enum fst_ret got;
+	int s; /* hw may have various spls so impose our own */
+	MIDI_BUF_DECLARE(idx);
+	MIDI_BUF_DECLARE(buf);
 
 	if (!sc->isopen)
 		return;
@@ -558,16 +564,16 @@ midi_in(void *addr, int data)
 		return;		/* discard data if not reading */
 	
 	do
-		got = midi_dfa(&sc->rcv, data, 0);
-	while ( got == DFA_HUH );
+		got = midi_fst(&sc->rcv, data, 0);
+	while ( got == FST_HUH );
 	
 	switch ( got ) {
-	case DFA_MORE:
-	case DFA_ERR:
+	case FST_MORE:
+	case FST_ERR:
 		return;
-	case DFA_CHN:
-	case DFA_COM:
-	case DFA_RT:
+	case FST_CHN:
+	case FST_COM:
+	case FST_RT:
 #if NSEQUENCER > 0
 		if (sc->seqopen) {
 			extern void midiseq_in(struct midi_dev *,u_char *,int);
@@ -581,7 +587,7 @@ midi_in(void *addr, int data)
 		 * a raw reader. (Really should do something intelligent with
 		 * it then, though....)
 		 */
-		if ( got == DFA_RT && MIDI_ACK == sc->rcv.pos[0] )
+		if ( got == FST_RT && MIDI_ACK == sc->rcv.pos[0] )
 			return;
 		/* FALLTHROUGH */
 	/*
@@ -590,28 +596,36 @@ midi_in(void *addr, int data)
 	 * them yet, so offer only to raw reader. (Which means, ultimately,
 	 * discard them if the sequencer's open, as it's not doing reads!)
 	 */
-	case DFA_SYX:
+	case FST_SYX:
 		count = sc->rcv.end - sc->rcv.pos;
-		if (mb->used + count > mb->usedhigh) {
+		MIDI_IN_LOCK(sc,s);
+		MIDI_BUF_PRODUCER_INIT(mb,idx);
+		MIDI_BUF_PRODUCER_INIT(mb,buf);
+		if (count > buf_lim - buf_cur
+		     || 1 > idx_lim - idx_cur) {
+			sc->rcv.bytesDiscarded.ev_count += count;
+			MIDI_IN_UNLOCK(sc,s);
 			DPRINTF(("midi_in: buffer full, discard data=0x%02x\n", 
 				 sc->rcv.pos[0]));
-			sc->rcv.bytesDiscarded.ev_count += count;
 			return;
 		}
 		for (i = 0; i < count; i++) {
-			*mb->inp++ = sc->rcv.pos[i];
-			if (mb->inp >= mb->end)
-				mb->inp = mb->start;
-			mb->used++;
+			*buf_cur++ = sc->rcv.pos[i];
+			MIDI_BUF_WRAP(buf);
 		}
+		*idx_cur++ = PACK_MB_IDX(got,count);
+		MIDI_BUF_WRAP(idx);
+		MIDI_BUF_PRODUCER_WBACK(mb,buf);
+		MIDI_BUF_PRODUCER_WBACK(mb,idx);
 		midi_wakeup(&sc->rchan);
 		selnotify(&sc->rsel, 0);
 		if (sc->async)
 			psignal(sc->async, SIGIO);
+		MIDI_IN_UNLOCK(sc,s);
 		break;
 #if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
 	default:
-		printf("midi_in: midi_dfa returned %d?!\n", got);
+		printf("midi_in: midi_fst returned %d?!\n", got);
 #endif
 	}
 }
@@ -624,7 +638,7 @@ midi_out(void *addr)
 	if (!sc->isopen)
 		return;
 	DPRINTFN(8, ("midi_out: %p\n", sc));
-	midi_start_output(sc, 0, 1);
+	midi_intr_out(sc);
 }
 
 int
@@ -647,16 +661,23 @@ midiopen(dev_t dev, int flags, int ifmt, struct proc *p)
 		return ENXIO;
 	if (sc->isopen)
 		return EBUSY;
+
+	/* put both state machines into known states */
 	sc->rcv.state = MIDI_IN_START;
+	sc->rcv.pos = sc->rcv.msg;
+	sc->rcv.end = sc->rcv.msg;
 	sc->xmt.state = MIDI_IN_START;
 	sc->xmt.pos = sc->xmt.msg;
 	sc->xmt.end = sc->xmt.msg;
+	
+	/* and the buffers */
+	midi_initbuf(&sc->outbuf);
+	midi_initbuf(&sc->inbuf);
+
 	error = hw->open(sc->hw_hdl, flags, midi_in, midi_out, sc);
 	if (error)
 		return error;
 	sc->isopen++;
-	midi_initbuf(&sc->outbuf);
-	midi_initbuf(&sc->inbuf);
 	sc->flags = flags;
 	sc->rchan = 0;
 	sc->wchan = 0;
@@ -683,15 +704,16 @@ midiclose(dev_t dev, int flags, int ifmt, struct proc *p)
 
 	DPRINTFN(3,("midiclose %p\n", sc));
 
-	midi_start_output(sc, 1, 0);
+	/* midi_start_output(sc); anything buffered => pbus already set! */
 	error = 0;
-	s = splaudio();
-	while (sc->outbuf.used > 0 && !error) {
-		DPRINTFN(8,("midiclose sleep used=%d\n", sc->outbuf.used));
-		error = midi_sleep_timo(&sc->wchan, "mid_dr", 30*hz);
+	MIDI_OUT_LOCK(sc,s);
+	while (sc->pbus) {
+		DPRINTFN(8,("midiclose sleep ...\n"));
+		error =
+		midi_sleep_timo(&sc->wchan, "mid_dr", 30*hz, &sc->out_lock);
 	}
-	splx(s);
-	callout_stop(&sc->sc_callout);
+	MIDI_OUT_UNLOCK(sc,s);
+	callout_stop(&sc->sc_callout); /* xxx fix this - sleep? */
 	sc->isopen = 0;
 	hw->close(sc->hw_hdl);
 #if NSEQUENCER > 0
@@ -708,59 +730,108 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
 	struct midi_buffer *mb = &sc->inbuf;
 	int error;
-	u_char *outp;
-	int used, cc, n, resid;
 	int s;
+	MIDI_BUF_DECLARE(idx);
+	MIDI_BUF_DECLARE(buf);
+	int appetite;
+	int first = 1;
 
 	DPRINTFN(6,("midiread: %p, count=%lu\n", sc, 
 		 (unsigned long)uio->uio_resid));
 
 	if (sc->dying)
 		return EIO;
-        if ( !(sc->flags & FREAD) )
-	        return EBADF;
         if ( !(sc->props & MIDI_PROP_CAN_INPUT) )
 	        return ENXIO;
 
+	MIDI_IN_LOCK(sc,s);
+	MIDI_BUF_CONSUMER_INIT(mb,idx);
+	MIDI_BUF_CONSUMER_INIT(mb,buf);
+	MIDI_IN_UNLOCK(sc,s);
+	
 	error = 0;
-	resid = uio->uio_resid;
-	while (uio->uio_resid == resid && !error) {
-		s = splaudio();
-		while (mb->used <= 0) {
-			if (ioflag & IO_NDELAY) {
-				splx(s);
-				return EWOULDBLOCK;
-			}
-			error = midi_sleep(&sc->rchan, "mid rd");
-			if (error) {
-				splx(s);
-				return error;
-			}
+	for ( ;; ) {
+		/*
+		 * If the used portion of idx wraps around the end, just take
+		 * the first part on this iteration, and we'll get the rest on
+		 * the next.
+		 */
+		if ( idx_lim > idx_end )
+			idx_lim = idx_end;
+		/*
+		 * Count bytes through the last complete message that will
+		 * fit in the requested read.
+		 */
+		for (appetite = uio->uio_resid; idx_cur < idx_lim; ++idx_cur) {
+			if ( appetite < MB_IDX_LEN(*idx_cur) )
+				break;
+			appetite -= MB_IDX_LEN(*idx_cur);
 		}
-		used = mb->used;
-		outp = mb->outp;
-		splx(s);
-		if (sc->dying)
-			return EIO;
-		cc = used;	/* maximum to read */
-		n = mb->end - outp;
-		if (n < cc)
-			cc = n;	/* don't read beyond end of buffer */
-		if (uio->uio_resid < cc)
-			cc = uio->uio_resid; /* and no more than we want */
-		DPRINTFN(8, ("midiread: uiomove cc=%d\n", cc));
-		error = uiomove(outp, cc, uio);
-		if (error)
+		appetite = uio->uio_resid - appetite;
+		/*
+		 * Only if the read is too small to hold even the first
+		 * complete message will we return a partial one (updating idx
+		 * to reflect the remaining length of the message).
+		 */
+		if ( appetite == 0 && idx_cur < idx_lim ) {
+			if ( !first )
+				goto unlocked_exit; /* idx_cur not advanced */
+			appetite = uio->uio_resid;
+			*idx_cur = PACK_MB_IDX(MB_IDX_CAT(*idx_cur),
+					       MB_IDX_LEN(*idx_cur) - appetite);
+		}
+		KASSERT(buf_cur + appetite <= buf_lim);
+		
+		/* move the bytes */
+		if ( appetite > 0 ) {		
+			first = 0;  /* we know we won't return empty-handed */
+			/* do two uiomoves if data wrap around end of buf */
+			if ( buf_cur + appetite > buf_end ) {
+				DPRINTFN(8,
+					("midiread: uiomove cc=%d (prewrap)\n",
+					buf_end - buf_cur));
+				error = uiomove(buf_cur, buf_end-buf_cur, uio);
+				if ( error )
+					goto unlocked_exit;
+				appetite -= buf_end - buf_cur;
+				buf_cur = mb->buf;
+			}
+			DPRINTFN(8, ("midiread: uiomove cc=%d\n", appetite));
+			error = uiomove(buf_cur, appetite, uio);
+			if ( error )
+				goto unlocked_exit;
+			buf_cur += appetite;
+		}
+		
+		MIDI_BUF_WRAP(idx);
+		MIDI_BUF_WRAP(buf);
+
+		MIDI_IN_LOCK(sc,s);
+		MIDI_BUF_CONSUMER_WBACK(mb,idx);
+		MIDI_BUF_CONSUMER_WBACK(mb,buf);
+		if ( 0 == uio->uio_resid ) /* if read satisfied, we're done */
 			break;
-		used -= cc;
-		outp += cc;
-		if (outp >= mb->end)
-			outp = mb->start;
-		s = splaudio();
-		mb->outp = outp;
-		mb->used = used;
-		splx(s);
+		MIDI_BUF_CONSUMER_REFRESH(mb,idx);
+		if ( idx_cur == idx_lim ) { /* need to wait for data? */
+			if ( !first ) /* never block reader if */
+				break; /* any data already in hand */
+			if (ioflag & IO_NDELAY) {
+				error = EWOULDBLOCK;
+				break;
+			}
+			error = midi_sleep(&sc->rchan, "mid rd", &sc->in_lock);
+			if ( error )
+				break;
+			MIDI_BUF_CONSUMER_REFRESH(mb,idx); /* what'd we get? */
+		}
+		MIDI_BUF_CONSUMER_REFRESH(mb,buf);
+		MIDI_IN_UNLOCK(sc,s);
+		if ( sc->dying )
+			return EIO;
 	}
+	MIDI_IN_UNLOCK(sc,s);
+
+unlocked_exit:
 	return error;
 }
 
@@ -768,199 +839,280 @@ void
 midi_timeout(void *arg)
 {
 	struct midi_softc *sc = arg;
+	int s;
+	int error;
+	int armed;
 
+	MIDI_OUT_LOCK(sc,s);
+	if ( sc->pbus ) {
+		MIDI_OUT_UNLOCK(sc,s);
+		return;
+	}
+	sc->pbus = 1;
 	DPRINTFN(8,("midi_timeout: %p\n", sc));
-	midi_start_output(sc, 0, 0);
+
+	if ( sc->props & MIDI_PROP_OUT_INTR ) {
+		error = sc->hw_if->output(sc->hw_hdl, MIDI_ACK);
+		armed = (error == 0);
+	} else { /* polled output, do with interrupts unmasked */
+		MIDI_OUT_UNLOCK(sc,s);
+		error = sc->hw_if->output(sc->hw_hdl, MIDI_ACK);
+		MIDI_OUT_LOCK(sc,s);
+		armed = 0;
+	}
+
+	if ( !armed ) {
+		sc->pbus = 0;
+		callout_schedule(&sc->sc_callout, mstohz(275));
+	}
+
+	MIDI_OUT_UNLOCK(sc,s);
 }
 
 /*
- * Control can reach midi_start_output three ways:
- * 1. as a result of user writing (user == 1)
- * 2. by a ready interrupt from output hw (hw == 1)
- * 3. by a callout scheduled at the end of midi_start_output.
+ * midi_poll_out is intended for the midi hw (the vast majority of MIDI UARTs
+ * on sound cards, apparently) that _do not have transmit-ready interrupts_.
+ * Every call to hw_if->output for one of these may busy-wait to output the
+ * byte; at the standard midi data rate that'll be 320us per byte. The
+ * technique of writing only MIDI_MAX_WRITE bytes in a row and then waiting
+ * for MIDI_WAIT does not reduce the total time spent busy-waiting, and it
+ * adds arbitrary delays in transmission (and, since MIDI_WAIT is roughly the
+ * same as the time to send MIDI_MAX_WRITE bytes, it effectively halves the
+ * data rate). Here, a somewhat bolder approach is taken. Since midi traffic
+ * is bursty but time-sensitive--most of the time there will be none at all,
+ * but when there is it should go out ASAP--the strategy is to just get it
+ * over with, and empty the buffer in one go. The effect this can have on
+ * the rest of the system will be limited by the size of the buffer and the
+ * sparseness of the traffic. But some precautions are in order. Interrupts
+ * should all be unmasked when this is called, and midiwrite should not fill
+ * the buffer more than once (when MIDI_PROP_CAN_INTR is false) without a
+ * yield() so some other process can get scheduled. If the write is nonblocking,
+ * midiwrite should return a short count rather than yield.
  *
- * The callout is not scheduled unless we are sure the hw will not
- * interrupt again (either because it just did and we supplied it
- * no data, or because it lacks interrupt capability). So we do not
- * expect a hw interrupt to occur with a callout pending.
- *
- * A user write may occur while the callout is pending, however, or before
- * an interrupt-capable device has interrupted. There are two cases:
- *
- * 1. A device interrupt is expected, or the pending callout is a MIDI_WAIT
- *    (the brief delay we put in if MIDI_MAX_WRITE characters have been
- *    written without yielding; interrupt-capable hardware can avoid this
- *    penalty by making sure not to use EINPROGRESS to consume MIDI_MAX_WRITE
- *    or more characters at once).  In these cases, the user invocation of
- *    start_output returns without action, leaving the output to be resumed
- *    by the device interrupt or by the callout after the proper delay. This
- *    case is identified by sc->pbus == 1.
- *
- * 2. The pending callout was scheduled to ensure an Active Sense gets
- *    written if there is no user write in time. In this case the user
- *    invocation (if there is something to write) cancels the pending
- *    callout. However, it may be possible the callout timer expired before
- *    we could cancel it, but the callout hasn't run yet. In this case
- *    (INVOKING status on the callout) the user invocation returns without
- *    further action so the callout can do the work.
- *
- * Is it possible that fast interrupt-driven hardware could interrupt while
- * the start_output that triggered it still holds the lock? In this case we'll
- * see on unlock that sc->hw_interrupted == 1 and loop around again if there
- * is more to write.
+ * Someday when there is fine-grained MP support, this should be reworked to
+ * run in a callout so the writing process really could proceed concurrently.
+ * But obviously where performance is a concern, interrupt-driven hardware
+ * such as USB midi or (apparently) clcs will always be preferable.
  */
 int
-midi_start_output(struct midi_softc *sc, int user, int hw)
+midi_poll_out(struct midi_softc *sc)
 {
 	struct midi_buffer *mb = &sc->outbuf;
-	u_char out;
 	int error;
+	int msglen;
 	int s;
-	int written;
-	int to_write;
-	u_char *from;
-	u_char *to;
+	MIDI_BUF_DECLARE(idx);
+	MIDI_BUF_DECLARE(buf);
 
-again:
-if ( mididebug > 9 ) return EIO;
 	error = 0;
 
+	MIDI_OUT_LOCK(sc,s);
+	MIDI_BUF_CONSUMER_INIT(mb,idx);
+	MIDI_BUF_CONSUMER_INIT(mb,buf);
+	MIDI_OUT_UNLOCK(sc,s);
+
+	for ( ;; ) {
+		while ( idx_cur != idx_lim ) {
+			msglen = MB_IDX_LEN(*idx_cur);
+			error = sc->hw_if->output(sc->hw_hdl, *buf_cur);
+			if ( error )
+				goto ioerror;
+			++ buf_cur;
+			MIDI_BUF_WRAP(buf);
+			-- msglen;
+			if ( msglen )
+				*idx_cur = PACK_MB_IDX(MB_IDX_CAT(*idx_cur),
+				                       msglen);
+			else {
+				++ idx_cur;
+				MIDI_BUF_WRAP(idx);
+			}
+		}
+		KASSERT(buf_cur == buf_lim);
+		MIDI_OUT_LOCK(sc,s);
+		MIDI_BUF_CONSUMER_WBACK(mb,idx);
+		MIDI_BUF_CONSUMER_WBACK(mb,buf);
+		MIDI_BUF_CONSUMER_REFRESH(mb,idx); /* any more to transmit? */
+		MIDI_BUF_CONSUMER_REFRESH(mb,buf);
+		if ( idx_lim == idx_cur )
+			break; /* still holding lock */
+		MIDI_OUT_UNLOCK(sc,s);
+	}
+	goto disarm; /* lock held */
+
+ioerror:
+#if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
+	printf("%s: midi_poll_output error %d\n",
+	      sc->dev.dv_xname, error);
+#endif
+	MIDI_OUT_LOCK(sc,s);
+	MIDI_BUF_CONSUMER_WBACK(mb,idx);
+	MIDI_BUF_CONSUMER_WBACK(mb,buf);
+
+disarm:	
+	sc->pbus = 0;
+	callout_schedule(&sc->sc_callout, mstohz(275));
+	MIDI_OUT_UNLOCK(sc,s);
+	return error;
+}
+
+/*
+ * The interrupt flavor acquires spl and lock once and releases at the end,
+ * as it expects to write only one byte or message. The interface convention
+ * is that if hw_if->output returns 0, it has initiated transmission and the
+ * completion interrupt WILL be forthcoming; if it has not returned 0, NO
+ * interrupt will be forthcoming, and if it returns EINPROGRESS it wants
+ * another byte right away.
+ */
+int
+midi_intr_out(struct midi_softc *sc)
+{
+	struct midi_buffer *mb = &sc->outbuf;
+	int error;
+	int msglen;
+	int s;
+	MIDI_BUF_DECLARE(idx);
+	MIDI_BUF_DECLARE(buf);
+	int armed = 0;
+
+	error = 0;
+
+	MIDI_OUT_LOCK(sc,s);
+	MIDI_BUF_CONSUMER_INIT(mb,idx);
+	MIDI_BUF_CONSUMER_INIT(mb,buf);
+	
+	while ( idx_cur != idx_lim ) {
+		msglen = MB_IDX_LEN(*idx_cur);
+		error = sc->hw_if->output(sc->hw_hdl, *buf_cur);
+		if ( error  &&  error != EINPROGRESS )
+			break;
+		++ buf_cur;
+		MIDI_BUF_WRAP(buf);
+		-- msglen;
+		if ( msglen )
+			*idx_cur = PACK_MB_IDX(MB_IDX_CAT(*idx_cur),msglen);
+		else {
+			++ idx_cur;
+			MIDI_BUF_WRAP(idx);
+		}
+		if ( !error ) {
+			armed = 1;
+			break;
+		}
+	}
+	MIDI_BUF_CONSUMER_WBACK(mb,idx);
+	MIDI_BUF_CONSUMER_WBACK(mb,buf);
+	if ( !armed ) {
+		sc->pbus = 0;
+		callout_schedule(&sc->sc_callout, mstohz(275));
+	}
+	midi_wakeup(&sc->wchan);
+	selnotify(&sc->wsel, 0);
+	if ( sc->async )
+		psignal(sc->async, SIGIO);
+	MIDI_OUT_UNLOCK(sc,s);
+
+#if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
+	if ( error )
+		printf("%s: midi_intr_output error %d\n",
+	               sc->dev.dv_xname, error);
+#endif
+	return error;
+}
+
+int
+midi_start_output(struct midi_softc *sc)
+{
 	if (sc->dying)
 		return EIO;
 
-	s = splaudio();
+	if ( sc->props & MIDI_PROP_OUT_INTR )
+		return midi_intr_out(sc);
+	return midi_poll_out(sc);
+}
 
-	if ( ! simple_lock_try(&sc->out_lock) ) {
-	        if ( hw )
-		        sc->hw_interrupted = 1;
-		splx(s);
-		DPRINTFN(8,("midi_start_output: locked out user=%d hw=%d\n",
-                           user, hw));
-		return 0;
-	}
+static int
+real_writebytes(struct midi_softc *sc, u_char *buf, int cc)
+{
+	u_char *bufe = buf + cc;
+	struct midi_buffer *mb = &sc->outbuf;
+	int arming = 0;
+	int count;
+	int s;
+	int got;
+	MIDI_BUF_DECLARE(idx);
+	MIDI_BUF_DECLARE(buf);
 
-	to_write = mb->used;
+	MIDI_OUT_LOCK(sc,s);
+	MIDI_BUF_PRODUCER_INIT(mb,idx);
+	MIDI_BUF_PRODUCER_INIT(mb,buf);
+	MIDI_OUT_UNLOCK(sc,s);
 
-	if ( user ) {
-	        if ( sc->pbus ) {
-			simple_unlock(&sc->out_lock);
-			splx(s);
-			DPRINTFN(8, ("midi_start_output: delaying\n"));
-			return 0;
-		}
-		if ( to_write > 0 ) {
-		        callout_stop(&sc->sc_callout);
-			if (callout_invoking(&sc->sc_callout)) {
-				simple_unlock(&sc->out_lock);
-				splx(s);
-				DPRINTFN(8,("midi_start_output: "
-                                           "callout got away\n"));
-				return 0;
-			}
-		}
-	} else if ( hw )
-		sc->hw_interrupted = 0;
-	else
-	        callout_ack(&sc->sc_callout);
+	if (sc->dying)
+		return EIO;
 	
-	splx(s);
-	/*
-	 * As long as we hold the lock, we can rely on mb->outp not changing
-	 * and mb->used not decreasing. We only need splaudio to update them.
-	 */
-	
-	from = mb->outp;
-	
-	DPRINTFN(8,("midi_start_output: user=%d hw=%d to_write %u from %p\n",
-		   user, hw, to_write, from));
-	sc->pbus = 0;
-	
-	written = 0;
-	if ( to_write == 0 && ! user && ! hw ) {
-		error = sc->hw_if->output(sc->hw_hdl, MIDI_ACK);
-		written = 1;
-	}
-	
-	do {
-	        if ( to_write > MIDI_MAX_WRITE - written )
-		        to_write = MIDI_MAX_WRITE - written;
-		if ( to_write == 0 )
-			break;
-		to = from + to_write;
-		if ( to > mb->end )
-		        to = mb->end;
-		while ( from < to ) {
-			out = *from++;
-#ifdef MIDI_SAVE
-			midisave.buf[midicnt] = out;
-			midicnt = (midicnt + 1) % MIDI_SAVE_SIZE;
+	while ( buf < bufe ) {
+		do
+			got = midi_fst(&sc->xmt, *buf, 0);
+		while ( got == FST_HUH );
+		++ buf;
+		switch ( got ) {
+		case FST_MORE:
+			continue;
+		case FST_ERR:
+#if defined(EPROTO) /* most appropriate SUSv3 errno, but not in errno.h yet */
+			return EPROTO;
+#else
+			return EIO;
 #endif
-			DPRINTFN(8, ("midi_start_output: %p data=0x%02x\n", 
-				     sc, out));
-			error = sc->hw_if->output(sc->hw_hdl, out);
-			if ( error == 0 ) {
-				if ( sc->props & MIDI_PROP_OUT_INTR )
-					break;
-			} else if ( ( sc->props & MIDI_PROP_OUT_INTR )
-			            && error == EINPROGRESS )
-				continue;
-			else {  /* really an error */
-				-- from;
-				break;
-			}
-		}
-		written += from - mb->outp;
-		s = splaudio();
-		mb->used -= from - mb->outp;
-		if ( from == mb->end )
-			from = mb->start;
-		mb->outp = from;
-		splx(s);
-		to_write = mb->used;
-	} while ( error == ( sc->props&MIDI_PROP_OUT_INTR ) ? EINPROGRESS : 0 );
-	
-	if ( written > 0 ) {
-		midi_wakeup(&sc->wchan);
-		selnotify(&sc->wsel, 0);
-		if (sc->async)
-			psignal(sc->async, SIGIO);
-        }
-
-	if ( sc->props & MIDI_PROP_OUT_INTR ) {
-		if ( written > 0 && error == 0 ) {
-			sc->pbus = 1;
-			goto unlock_exit;
-		}
-		if ( error == EINPROGRESS )
-			error = 0;
-	}
-	
-	if ( error != 0 )
-		goto handle_error;
-	
-	if ( to_write == 0 )
-		callout_schedule(&sc->sc_callout, mstohz(285));
-	else {
-		sc->pbus = 1;
-		callout_schedule(&sc->sc_callout, midi_wait);
-	}
-	goto unlock_exit;
-
-handle_error:
+		case FST_CHN:
+		case FST_COM:
+		case FST_RT:
+		case FST_SYX:
+			break; /* go add to buffer */
 #if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
-		printf("%s: midi_start_output error %d\n",
-		      sc->dev.dv_xname, error);
+		default:
+			printf("midi_wr: midi_fst returned %d?!\n", got);
 #endif
-
-unlock_exit:
-	simple_unlock(&sc->out_lock);
-	if ( sc->hw_interrupted ) {
-		user = 0;
-		hw = 1;
-		goto again;
+		}
+		count = sc->xmt.end - sc->xmt.pos;
+		/*
+		 * return EWOULDBLOCK if the data passed will not fit in
+		 * the buffer; the caller should have taken steps to avoid that.
+		 */
+		if ( idx_cur == idx_lim || count > buf_lim - buf_cur ) {
+			MIDI_OUT_LOCK(sc,s);
+			MIDI_BUF_PRODUCER_REFRESH(mb,idx); /* get the most */
+			MIDI_BUF_PRODUCER_REFRESH(mb,buf); /*  current facts */
+			MIDI_OUT_UNLOCK(sc,s);
+			if ( idx_cur == idx_lim || count > buf_lim - buf_cur )
+				return EWOULDBLOCK; /* caller's problem */
+		}
+		*idx_cur++ = PACK_MB_IDX(got,count);
+		MIDI_BUF_WRAP(idx);
+		while ( count ) {
+			*buf_cur++ = *(sc->xmt.pos)++;
+			MIDI_BUF_WRAP(buf);
+			-- count;
+		}
 	}
-
-	return error;
+	MIDI_OUT_LOCK(sc,s);
+	MIDI_BUF_PRODUCER_WBACK(mb,buf);
+	MIDI_BUF_PRODUCER_WBACK(mb,idx);
+	/*
+	 * If the output transfer is not already busy, and there is a message
+	 * buffered, mark it busy, stop the Active Sense callout (what if we're
+	 * too late and it's expired already? No big deal, an extra Active Sense
+	 * never hurt anybody) and start the output transfer once we're out of
+	 * the critical section (pbus==1 will stop anyone else doing the same).
+	 */
+	if ( !sc->pbus && idx_cur < MIDI_BUF_PRODUCER_REFRESH(mb,idx) ) {
+		sc->pbus = 1;
+		callout_stop(&sc->sc_callout);
+		arming = 1;
+	}
+	MIDI_OUT_UNLOCK(sc,s);
+	return arming ? midi_start_output(sc) : 0;
 }
 
 int
@@ -970,63 +1122,114 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
 	struct midi_buffer *mb = &sc->outbuf;
 	int error;
-	u_char *inp;
-	int used, cc, n;
+	u_char inp[256];
 	int s;
+	MIDI_BUF_DECLARE(idx);
+	MIDI_BUF_DECLARE(buf);
+	size_t idxspace;
+	size_t bufspace;
+	size_t xfrcount;
+	int pollout = 0;
 
 	DPRINTFN(6, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit, 
 		     (unsigned long)uio->uio_resid));
 
 	if (sc->dying)
 		return EIO;
-        if ( !(sc->flags & FWRITE) )
-	        return EBADF;
 
 	error = 0;
 	while (uio->uio_resid > 0 && !error) {
-		s = splaudio();
-		if (mb->used >= mb->usedhigh) {
-			DPRINTFN(8,("midi_write: sleep used=%d hiwat=%d\n", 
-				 mb->used, mb->usedhigh));
+
+		/*
+		 * block if necessary for the minimum buffer space to guarantee
+		 * we can write something.
+		 */
+		MIDI_OUT_LOCK(sc,s);
+		MIDI_BUF_PRODUCER_INIT(mb,idx); /* init can't go above loop; */
+		MIDI_BUF_PRODUCER_INIT(mb,buf); /* real_writebytes moves cur */
+		for ( ;; ) {
+			idxspace = MIDI_BUF_PRODUCER_REFRESH(mb,idx) - idx_cur;
+			bufspace = MIDI_BUF_PRODUCER_REFRESH(mb,buf) - buf_cur;
+			if ( idxspace >= 1  &&  bufspace >= 3  && !pollout )
+				break;
+			DPRINTFN(8,("midi_write: sleep idx=%d buf=%d\n", 
+				 idxspace, bufspace));
 			if (ioflag & IO_NDELAY) {
-				splx(s);
-				return EWOULDBLOCK;
+				error = EWOULDBLOCK;
+				/*
+				 * If some amount has already been transferred,
+				 * the common syscall code will automagically
+				 * convert this to success with a short count.
+				 */
+				goto locked_exit;
 			}
-			error = midi_sleep(&sc->wchan, "mid wr");
-			if (error) {
-				splx(s);
-				return error;
-			}
-		}			
-		used = mb->used;
-		inp = mb->inp;
-		splx(s);
-		if (sc->dying)
-			return EIO;
-		cc = mb->usedhigh - used; 	/* maximum to write */
-		n = mb->end - inp;
-		if (n < cc)
-			cc = n;		/* don't write beyond end of buffer */
-		if (uio->uio_resid < cc)
-			cc = uio->uio_resid; 	/* and no more than we have */
-		error = uiomove(inp, cc, uio);
+			if ( pollout ) {
+				preempt(0); /* see midi_poll_output */
+				pollout = 0;
+			} else
+				error = midi_sleep(&sc->wchan, "mid wr",
+				                   &sc->out_lock);
+			if (error)
+				/*
+				 * Similarly, the common code will handle
+				 * EINTR and ERESTART properly here, changing to
+				 * a short count if something transferred.
+				 */
+				goto locked_exit;
+		}
+		MIDI_OUT_UNLOCK(sc,s);			
+
+		/*
+		 * The number of bytes we can safely extract from the uio
+		 * depends on the available idx and buf space. Worst case,
+		 * every byte is a message so 1 idx is required per byte.
+		 * Worst case, the first byte completes a 3-byte msg in prior
+		 * state, and every subsequent byte is a Program Change or
+		 * Channel Pressure msg with running status and expands to 2
+		 * bytes, so the buf space reqd is 3+2(n-1) or 2n+1. So limit
+		 * the transfer to the min of idxspace and (bufspace-1)>>1.
+		 */
+		xfrcount = (bufspace - 1) >> 1;
+		if ( xfrcount > idxspace )
+			xfrcount = idxspace;
+		if ( xfrcount > sizeof inp )
+			xfrcount = sizeof inp;
+		if ( xfrcount > uio->uio_resid )
+			xfrcount = uio->uio_resid;
+
+		error = uiomove(inp, xfrcount, uio);
 #ifdef MIDI_DEBUG
 		if (error)
 		        printf("midi_write:(1) uiomove failed %d; "
-			       "cc=%d inp=%p\n",
-			       error, cc, inp);
+			       "xfrcount=%d inp=%p\n",
+			       error, xfrcount, inp);
 #endif
-		if (error)
+		if ( error )
 			break;
-		inp = mb->inp + cc;
-		if (inp >= mb->end)
-			inp = mb->start;
-		s = splaudio();
-		mb->inp = inp;
-		mb->used += cc;
-		splx(s);
-		error = midi_start_output(sc, 1, 0);
+		
+		/*
+		 * The number of bytes we extracted being calculated to
+		 * definitely fit in the buffer even with canonicalization,
+		 * there is no excuse for real_writebytes to return EWOULDBLOCK.
+		 */
+		error = real_writebytes(sc, inp, xfrcount);
+		KASSERT(error != EWOULDBLOCK);
+		
+		if ( error )
+			break;
+		/*
+		 * If this is a polling device and we just sent a buffer, let's
+		 * not send another without giving some other process a chance.
+		 */
+		if ( ! (sc->props & MIDI_PROP_OUT_INTR) )
+			pollout = 1;
+		DPRINTFN(8,("midiwrite: uio_resid now %u, props=%d\n",
+                        uio->uio_resid, sc->props));
 	}
+	return error;
+
+locked_exit:
+	MIDI_OUT_UNLOCK(sc,s);
 	return error;
 }
 
@@ -1038,36 +1241,10 @@ int
 midi_writebytes(int unit, u_char *buf, int cc)
 {
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
-	struct midi_buffer *mb = &sc->outbuf;
-	int n, s;
 
 	DPRINTFN(7, ("midi_writebytes: %p, unit=%d, cc=%d %#02x %#02x %#02x\n",
                     sc, unit, cc, buf[0], buf[1], buf[2]));
-
-	if (sc->dying)
-		return EIO;
-
-	s = splaudio();
-	if (mb->used + cc >= mb->usedhigh) {
-		splx(s);
-		return (EWOULDBLOCK);
-	}
-	n = mb->end - mb->inp;
-	if (cc < n)
-		n = cc;
-	mb->used += cc;
-	memcpy(mb->inp, buf, n);
-	mb->inp += n;
-	if (mb->inp >= mb->end) {
-		mb->inp = mb->start;
-		cc -= n;
-		if (cc > 0) {
-			memcpy(mb->inp, buf + n, cc);
-			mb->inp += cc;
-		}
-	}
-	splx(s);
-	return (midi_start_output(sc, 1, 0));
+	return real_writebytes(sc, buf, cc);
 }
 
 int
@@ -1077,6 +1254,8 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
 	struct midi_hw_if *hw = sc->hw_if;
 	int error;
+	int s;
+	MIDI_BUF_DECLARE(buf);
 
 	DPRINTFN(5,("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
 
@@ -1087,6 +1266,25 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	switch (cmd) {
 	case FIONBIO:
 		/* All handled in the upper FS layer. */
+		break;
+	
+	case FIONREAD:
+		/*
+		 * This code relies on the current implementation of midi_in
+		 * always updating buf and idx together in a critical section,
+		 * so buf always ends at a message boundary. Document this
+		 * ioctl as always returning a value such that the last message
+		 * included is complete (SysEx the only exception), and then
+		 * make sure the implementation doesn't regress.  NB that
+		 * means if this ioctl returns n and the proc then issues a
+		 * read of n, n bytes will be read, but if the proc issues a
+		 * read of m < n, fewer than m bytes may be read to ensure the
+		 * read ends at a message boundary.
+		 */
+		MIDI_IN_LOCK(sc,s);
+		MIDI_BUF_CONSUMER_INIT(&sc->inbuf,buf);
+		MIDI_IN_UNLOCK(sc,s);
+		*(int *)addr = buf_lim - buf_cur;
 		break;
 
 	case FIOASYNC:
@@ -1131,6 +1329,8 @@ midipoll(dev_t dev, int events, struct proc *p)
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
 	int revents = 0;
 	int s;
+	MIDI_BUF_DECLARE(idx);
+	MIDI_BUF_DECLARE(buf);
 
 	DPRINTFN(6,("midipoll: %p events=0x%x\n", sc, events));
 
@@ -1139,20 +1339,25 @@ midipoll(dev_t dev, int events, struct proc *p)
 
 	s = splaudio();
 
-	if ((sc->flags&FREAD) && (events & (POLLIN | POLLRDNORM)))
-		if (sc->inbuf.used > 0)
+	if ((sc->flags&FREAD) && (events & (POLLIN | POLLRDNORM))) {
+		simple_lock(&sc->in_lock);
+		MIDI_BUF_CONSUMER_INIT(&sc->inbuf,idx);
+		if (idx_cur < idx_lim)
 			revents |= events & (POLLIN | POLLRDNORM);
-
-	if ((sc->flags&FWRITE) && (events & (POLLOUT | POLLWRNORM)))
-		if (sc->outbuf.used < sc->outbuf.usedhigh)
-			revents |= events & (POLLOUT | POLLWRNORM);
-
-	if (revents == 0) {
-		if ((sc->flags&FREAD) && (events & (POLLIN | POLLRDNORM)))
+		else
 			selrecord(p, &sc->rsel);
+		simple_unlock(&sc->in_lock);
+	}
 
-		if ((sc->flags&FWRITE) && (events & (POLLOUT | POLLWRNORM)))
+	if ((sc->flags&FWRITE) && (events & (POLLOUT | POLLWRNORM))) {
+		simple_lock(&sc->out_lock);
+		MIDI_BUF_PRODUCER_INIT(&sc->outbuf,idx);
+		MIDI_BUF_PRODUCER_INIT(&sc->outbuf,buf);
+		if ( idx_lim - idx_cur >= 1  &&  buf_lim - buf_cur >= 3 )
+			revents |= events & (POLLOUT | POLLWRNORM);
+		else
 			selrecord(p, &sc->wsel);
+		simple_unlock(&sc->out_lock);
 	}
 
 	splx(s);
@@ -1174,10 +1379,15 @@ static int
 filt_midiread(struct knote *kn, long hint)
 {
 	struct midi_softc *sc = kn->kn_hook;
+	int s;
+	MIDI_BUF_DECLARE(buf);
 
 	/* XXXLUKEM (thorpej): please make sure this is correct. */
 
-	kn->kn_data = sc->inbuf.used;
+	MIDI_IN_LOCK(sc,s);
+	MIDI_BUF_CONSUMER_INIT(&sc->inbuf,buf);
+	kn->kn_data = buf_lim - buf_cur;
+	MIDI_IN_UNLOCK(sc,s);
 	return (kn->kn_data > 0);
 }
 
@@ -1199,10 +1409,19 @@ static int
 filt_midiwrite(struct knote *kn, long hint)
 {
 	struct midi_softc *sc = kn->kn_hook;
+	int s;
+	MIDI_BUF_DECLARE(idx);
+	MIDI_BUF_DECLARE(buf);
 
 	/* XXXLUKEM (thorpej): please make sure this is correct. */
 
-	kn->kn_data = sc->outbuf.usedhigh - sc->outbuf.used;
+	MIDI_OUT_LOCK(sc,s);
+	MIDI_BUF_PRODUCER_INIT(&sc->outbuf,idx);
+	MIDI_BUF_PRODUCER_INIT(&sc->outbuf,buf);
+	kn->kn_data = ((buf_lim - buf_cur)-1)>>1;
+	if ( kn->kn_data > idx_lim - idx_cur )
+		kn->kn_data = idx_lim - idx_cur;
+	MIDI_OUT_UNLOCK(sc,s);
 	return (kn->kn_data > 0);
 }
 

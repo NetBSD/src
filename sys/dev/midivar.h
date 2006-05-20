@@ -1,11 +1,12 @@
-/*	$NetBSD: midivar.h,v 1.11.14.6 2006/05/20 03:16:48 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.7 2006/05/20 03:17:43 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@NetBSD.org).
+ * by Lennart Augustsson (augustss@NetBSD.org) and (midi FST refactoring and
+ * Active Sense) Chapman Flack <nblists@anastigmatix.net>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,17 +45,129 @@
 #include "sequencer.h"
 
 #include <sys/callout.h>
+#include <sys/cdefs.h>
 #include <sys/device.h>
 #include <sys/lock.h>
 
+/*
+ * In both xmt and rcv direction, the midi_fst runs at the time data are
+ * buffered (midi_writebytes for xmt, midi_in for rcv) so what's in the
+ * buffer is always in canonical form (or compressed, on xmt, if the hw
+ * wants it that way). To preserve message boundaries for the buffer
+ * consumer, but allow transfers larger than one message, the buffer is
+ * split into a buf fork and an idx fork, where each byte of idx encodes
+ * the type and length of a message. Because messages are variable length,
+ * it is a guess how to set the relative sizes of idx and buf, or how many
+ * messages can be buffered before one or the other fills.
+ *
+ * The producer adds only complete messages to a buffer (except for SysEx
+ * messages, which have unpredictable length). A consumer serving byte-at-a-
+ * time hardware may partially consume a message, in which case it updates
+ * the length count at *idx_consumerp to reflect the remaining length of the
+ * message, only incrementing idx_consumerp when the message has been entirely
+ * consumed.
+ *
+ * The buffers are structured in the simple 1 reader 1 writer bounded buffer
+ * form, considered full when 1 unused byte remains. This should allow their
+ * use with minimal locking provided single pointer reads and writes can be
+ * assured atomic ... but then I chickened out on assuming that assurance, and
+ * added the extra locks to the code.
+ *
+ * Macros for manipulating the buffers:
+ *
+ * MIDI_BUF_DECLARE(frk) where frk is either buf or idx:
+ *   declares the local variables frk_cur, frk_lim, frk_org, and frk_end.
+ *
+ * MIDI_BUF_CONSUMER_INIT(mb,frk)
+ * MIDI_BUF_PRODUCER_INIT(mb,frk)
+ *   initializes frk_org and frk_end to the base and end (that is, address just
+ *   past the last valid byte) of the buffer fork frk, frk_cur to the
+ *   consumer's or producer's current position, respectively, and frk_lim to
+ *   the current limit (for either consumer or producer, immediately following
+ *   this macro, frk_lim-frk_cur gives the number of bytes to play with). That
+ *   means frk_lim may actually point past the buffer; loops on the condition
+ *   (frk_cur < frk_lim) must contain WRAP(frk) if proceeding byte-by-byte, or
+ *   must explicitly handle wrapping around frk_end if doing anything clever.
+ *   These are expression-shaped macros that have the value frk_lim. When used
+ *   without locking--provided pointer reads and writes can be assumed atomic--
+ *   these macros give a conservative estimate of what is available to consume
+ *   or produce.
+ *
+ * MIDI_BUF_WRAP(frk)
+ *   tests whether frk_cur == frk_end and, if so, wraps both frk_cur and
+ *   frk_lim around the beginning of the buffer. Because the test is ==, it
+ *   must be applied at each byte in a loop; if the loop is proceeding in
+ *   bigger steps, the possibility of wrap must be coded for. This expression-
+ *   shaped macro has the value of frk_cur after wrapping.
+ *
+ * MIDI_BUF_CONSUMER_REFRESH(mb,frk)
+ * MIDI_BUF_PRODUCER_REFRESH(mb,frk)
+ *   refresh the local value frk_lim for a new snapshot of bytes available; an
+ *   expression-shaped macro with the new value of frk_lim. Usually used after
+ *   using up the first conservative estimate and obtaining a lock to get a
+ *   final value. Used unlocked, just gives a more recent conservative estimate.
+ *
+ * MIDI_BUF_CONSUMER_WBACK(mb,frk)
+ * MIDI_BUF_PRODUCER_WBACK(mb,frk)
+ *   write back the local copy of frk_cur to the buffer, after a barrier to
+ *   ensure prior writes go first. Under the right atomicity conditions a
+ *   producer could get away with using these unlocked, as long as the order
+ *   is buf followed by idx. A consumer should update both in a critical
+ *   section.
+ */
 struct midi_buffer {
-	u_char	*inp;
-	u_char	*outp;
-	u_char	*end;
-	int	used;
-	int	usedhigh;
-	u_char	start[MIDI_BUFSIZE];
+	u_char * __volatile idx_producerp;
+	u_char * __volatile idx_consumerp;
+	u_char * __volatile buf_producerp;
+	u_char * __volatile buf_consumerp;
+	u_char idx[MIDI_BUFSIZE/3];
+	u_char buf[MIDI_BUFSIZE-MIDI_BUFSIZE/3];
 };
+#define MIDI_BUF_DECLARE(frk) \
+u_char *__CONCAT(frk,_cur); \
+u_char *__CONCAT(frk,_lim); \
+u_char *__CONCAT(frk,_org); \
+u_char *__CONCAT(frk,_end)
+
+#define MIDI_BUF_CONSUMER_REFRESH(mb,frk) \
+((__CONCAT(frk,_lim)=(mb)->__CONCAT(frk,_producerp)), \
+__CONCAT(frk,_lim) < __CONCAT(frk,_cur) ? \
+(__CONCAT(frk,_lim) += sizeof (mb)->frk) : __CONCAT(frk,_lim))
+
+#define MIDI_BUF_PRODUCER_REFRESH(mb,frk) \
+((__CONCAT(frk,_lim)=(mb)->__CONCAT(frk,_consumerp)-1), \
+__CONCAT(frk,_lim) < __CONCAT(frk,_cur) ? \
+(__CONCAT(frk,_lim) += sizeof (mb)->frk) : __CONCAT(frk,_lim))
+
+#define MIDI_BUF_EXTENT_INIT(mb,frk) \
+((__CONCAT(frk,_org)=(mb)->frk), \
+(__CONCAT(frk,_end)=__CONCAT(frk,_org)+sizeof (mb)->frk))
+
+#define MIDI_BUF_CONSUMER_INIT(mb,frk) \
+(MIDI_BUF_EXTENT_INIT((mb),frk), \
+(__CONCAT(frk,_cur)=(mb)->__CONCAT(frk,_consumerp)), \
+MIDI_BUF_CONSUMER_REFRESH((mb),frk))
+
+#define MIDI_BUF_PRODUCER_INIT(mb,frk) \
+(MIDI_BUF_EXTENT_INIT((mb),frk), \
+(__CONCAT(frk,_cur)=(mb)->__CONCAT(frk,_producerp)), \
+MIDI_BUF_PRODUCER_REFRESH((mb),frk))
+
+#define MIDI_BUF_WRAP(frk) \
+(__predict_false(__CONCAT(frk,_cur)==__CONCAT(frk,_end)) ? (\
+(__CONCAT(frk,_lim)-=__CONCAT(frk,_end)-__CONCAT(frk,_org)), \
+(__CONCAT(frk,_cur)=__CONCAT(frk,_org))) : __CONCAT(frk,_cur))
+
+#define MIDI_BUF_CONSUMER_WBACK(mb,frk) do { \
+__insn_barrier(); \
+(mb)->__CONCAT(frk,_consumerp)=__CONCAT(frk,_cur); \
+} while (/*CONSTCOND*/0)
+
+#define MIDI_BUF_PRODUCER_WBACK(mb,frk) do { \
+__insn_barrier(); \
+(mb)->__CONCAT(frk,_producerp)=__CONCAT(frk,_cur); \
+} while (/*CONSTCOND*/0)
+
 
 #define MIDI_MAX_WRITE 32	/* max bytes written with busy wait */
 #define MIDI_WAIT 10000		/* microseconds to wait after busy wait */
@@ -81,7 +194,29 @@ struct midi_softc {
 	int	props;
 	int	rchan, wchan;
 	struct  simplelock out_lock; /* overkill or no? */
-	int     hw_interrupted;
+	struct  simplelock in_lock;
+
+#define MIDI_OUT_LOCK(sc,s) \
+	do { \
+		(s) = splaudio(); \
+		simple_lock(&(sc)->out_lock); \
+	} while (/*CONSTCOND*/0)
+#define MIDI_OUT_UNLOCK(sc,s) \
+	do { \
+		simple_unlock(&(sc)->out_lock); \
+		splx((s)); \
+	} while (/*CONSTCOND*/0)
+#define MIDI_IN_LOCK(sc,s) \
+	do { \
+		(s) = splaudio(); \
+		simple_lock(&(sc)->in_lock); \
+	} while (/*CONSTCOND*/0)
+#define MIDI_IN_UNLOCK(sc,s) \
+	do { \
+		simple_unlock(&(sc)->in_lock); \
+		splx((s)); \
+	} while (/*CONSTCOND*/0)
+
 	int	pbus;
 	struct	selinfo wsel;	/* write selector */
 	struct	selinfo rsel;	/* read selector */
