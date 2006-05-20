@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.158.2.6 2006/05/20 22:05:51 riz Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.158.2.7 2006/05/20 22:19:33 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.6 2006/05/20 22:05:51 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.7 2006/05/20 22:19:33 riz Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -190,9 +190,7 @@ lfs_imtime(struct lfs *fs)
  * explicitly marks the file system busy.  So lfs_segwrite is safe.  I think.
  */
 
-#define SET_FLUSHING(fs,vp) (fs)->lfs_flushvp = (vp)
 #define IS_FLUSHING(fs,vp)  ((fs)->lfs_flushvp == (vp))
-#define CLR_FLUSHING(fs,vp) (fs)->lfs_flushvp = NULL
 
 int
 lfs_vflush(struct vnode *vp)
@@ -250,6 +248,7 @@ lfs_vflush(struct vnode *vp)
 						wakeup(&fs->lfs_avail);
 						lfs_freebuf(fs, bp);
 						bp = NULL;
+						simple_unlock(&vp->v_interlock);
 						goto nextbp;
 					}
 				}
@@ -325,10 +324,11 @@ lfs_vflush(struct vnode *vp)
 		return 0;
 	}
 
-	SET_FLUSHING(fs,vp);
+	fs->lfs_flushvp = vp;
 	if (LFS_SHOULD_CHECKPOINT(fs, fs->lfs_sp->seg_flags)) {
 		error = lfs_segwrite(vp->v_mount, SEGM_CKP | SEGM_SYNC);
-		CLR_FLUSHING(fs,vp);
+		fs->lfs_flushvp = NULL;
+		KASSERT(fs->lfs_flushvp_fakevref == 0);
 		lfs_segunlock(fs);
 		return error;
 	}
@@ -417,7 +417,9 @@ lfs_vflush(struct vnode *vp)
 	simple_unlock(&global_v_numoutput_slock);
 	splx(s);
 
-	CLR_FLUSHING(fs,vp);
+	fs->lfs_flushvp = NULL;
+	KASSERT(fs->lfs_flushvp_fakevref == 0);
+
 	return (0);
 }
 
@@ -2492,24 +2494,30 @@ lfs_shellsort(struct buf **bp_array, int32_t *lb_array, int nmemb, int size)
 }
 
 /*
- * Check VXLOCK.  Return 1 if the vnode is locked.  Otherwise, vget it.
+ * Call vget with LK_NOWAIT.  If we are the one who holds VXLOCK/VFREEING,
+ * however, we must press on.  Just fake success in that case.
  */
 int
 lfs_vref(struct vnode *vp)
 {
-	ASSERT_MAYBE_SEGLOCK(VTOI(vp)->i_lfs);
+	int error;
+	struct lfs *fs;
+
+	fs = VTOI(vp)->i_lfs;
+
+	ASSERT_MAYBE_SEGLOCK(fs);
+
 	/*
 	 * If we return 1 here during a flush, we risk vinvalbuf() not
 	 * being able to flush all of the pages from this vnode, which
 	 * will cause it to panic.  So, return 0 if a flush is in progress.
 	 */
-	if (vp->v_flag & VXLOCK) {
-		if (IS_FLUSHING(VTOI(vp)->i_lfs, vp)) {
-			return 0;
-		}
-		return (1);
+	error = vget(vp, LK_NOWAIT);
+	if (error == EBUSY && IS_FLUSHING(VTOI(vp)->i_lfs, vp)) {
+		++fs->lfs_flushvp_fakevref;
+		return 0;
 	}
-	return (vget(vp, 0));
+	return error;
 }
 
 /*
@@ -2519,11 +2527,16 @@ lfs_vref(struct vnode *vp)
 void
 lfs_vunref(struct vnode *vp)
 {
-	ASSERT_MAYBE_SEGLOCK(VTOI(vp)->i_lfs);
+	struct lfs *fs;
+
+	fs = VTOI(vp)->i_lfs;
+	ASSERT_MAYBE_SEGLOCK(fs);
+
 	/*
 	 * Analogous to lfs_vref, if the node is flushing, fake it.
 	 */
-	if ((vp->v_flag & VXLOCK) && IS_FLUSHING(VTOI(vp)->i_lfs, vp)) {
+	if (IS_FLUSHING(fs, vp) && fs->lfs_flushvp_fakevref) {
+		--fs->lfs_flushvp_fakevref;
 		return;
 	}
 

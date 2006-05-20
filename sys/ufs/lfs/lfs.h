@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.77.2.12 2006/05/20 22:11:58 riz Exp $	*/
+/*	$NetBSD: lfs.h,v 1.77.2.13 2006/05/20 22:19:33 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -820,6 +820,7 @@ struct lfs {
 	u_int16_t lfs_activesb;		/* toggle between superblocks */
 	daddr_t	  lfs_sbactive;		/* disk address of current sb write */
 	struct vnode *lfs_flushvp;	/* vnode being flushed */
+	int lfs_flushvp_fakevref;	/* fake vref count for flushvp */
 	struct vnode *lfs_unlockvp;	/* being inactivated in lfs_segunlock */
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 	size_t lfs_devbsize;		/* Device block size */
