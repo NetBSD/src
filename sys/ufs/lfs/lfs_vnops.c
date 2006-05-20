@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.11 2006/05/20 22:03:36 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.12 2006/05/20 22:05:51 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.11 2006/05/20 22:03:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.12 2006/05/20 22:05:51 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1164,7 +1164,7 @@ lfs_flush_dirops(struct lfs *fs)
 	struct segment *sp;
 	int needunlock;
 
-	ASSERT_NO_SEGLOCK(fs);
+	ASSERT_MAYBE_SEGLOCK(fs);
 
 	if (fs->lfs_ronly)
 		return;
