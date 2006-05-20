@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.96 2006/05/14 21:38:17 elad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.97 2006/05/20 15:45:38 elad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,9 +51,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.96 2006/05/14 21:38:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.97 2006/05/20 15:45:38 elad Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.96 2006/05/14 21:38:17 elad Exp $");
 #include <sys/vnode.h>
 #include <sys/conf.h>
 #include <sys/stat.h>
+ 
+#ifdef PAX_MPROTECT
+#include <sys/pax.h>
+#endif /* PAX_MPROTECT */
 
 #include <miscfs/specfs/specdev.h>
 
@@ -499,6 +504,10 @@ sys_mmap(l, v, retval)
 			return (ENOMEM);
 		}
 	}
+
+#ifdef PAX_MPROTECT
+	pax_mprotect(l, &prot, &maxprot);
+#endif /* PAX_MPROTECT */
 
 	/*
 	 * now let kernel internal function uvm_mmap do the work.
