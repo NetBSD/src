@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.2 2006/05/20 03:09:12 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.1 2006/05/20 02:15:21 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.2 2006/05/20 03:09:12 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -70,6 +70,17 @@ __KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.1 2006/05/20 02:15:21 chap Exp $");
 #define DPRINTF(x)	if (mididebug) printf x
 #define DPRINTFN(n,x)	if (mididebug >= (n)) printf x
 int	mididebug = 0;
+/*
+ *      1: detected protocol errors and buffer overflows
+ *      2: probe, attach, detach
+ *      3: open, close
+ *      4: data received except realtime
+ *      5: ioctl
+ *      6: read, write, poll
+ *      7: data transmitted
+ *      8: uiomoves, synchronization
+ *      9: realtime data received
+ */
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -125,7 +136,7 @@ midiprobe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct audio_attach_args *sa = aux;
 
-	DPRINTFN(6,("midiprobe: type=%d sa=%p hw=%p\n", 
+	DPRINTFN(2,("midiprobe: type=%d sa=%p hw=%p\n", 
 		 sa->type, sa, sa->hwif));
 	return (sa->type == AUDIODEV_TYPE_MIDI);
 }
@@ -138,7 +149,7 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	struct midi_hw_if *hwp = sa->hwif;
 	void *hdlp = sa->hdl;
 
-	DPRINTFN(6, ("MIDI attach\n"));
+	DPRINTFN(2, ("MIDI attach\n"));
 
 #ifdef DIAGNOSTIC
 	if (hwp == 0 ||
@@ -181,7 +192,7 @@ mididetach(struct device *self, int flags)
 	struct midi_softc *sc = (struct midi_softc *)self;
 	int maj, mn;
 
-	DPRINTF(("midi_detach: sc=%p flags=%d\n", sc, flags));
+	DPRINTFN(2,("midi_detach: sc=%p flags=%d\n", sc, flags));
 
 	sc->dying = 1;
 
@@ -238,7 +249,7 @@ midi_sleep_timo(int *chan, char *label, int timo)
 	if (!label)
 		label = "midi";
 
-	DPRINTFN(5, ("midi_sleep_timo: %p %s %d\n", chan, label, timo));
+	DPRINTFN(8, ("midi_sleep_timo: %p %s %d\n", chan, label, timo));
 	*chan = 1;
 	st = tsleep(chan, PWAIT | PCATCH, label, timo);
 	*chan = 0;
@@ -259,15 +270,20 @@ void
 midi_wakeup(int *chan)
 {
 	if (*chan) {
-		DPRINTFN(5, ("midi_wakeup: %p\n", chan));
+		DPRINTFN(8, ("midi_wakeup: %p\n", chan));
 		wakeup(chan);
 		*chan = 0;
 	}
 }
 
-static int midi_lengths[] = { 2,2,2,2,1,1,2,0 };
-/* Number of bytes in a MIDI command */
-#define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
+/* in midivar.h:
+#define MIDI_CAT_DATA 0
+#define MIDI_CAT_STATUS1 1
+#define MIDI_CAT_STATUS2 2
+#define MIDI_CAT_COMMON 3
+*/
+static char const midi_cats[] = "\0\0\0\0\0\0\0\0\2\2\2\2\1\1\2\3";
+#define MIDI_CAT(d) (midi_cats[((d)>>4)&15])
 
 void
 midi_in(void *addr, int data)
@@ -275,98 +291,165 @@ midi_in(void *addr, int data)
 	struct midi_softc *sc = addr;
 	struct midi_buffer *mb = &sc->inbuf;
 	int i;
+	u_char *what = sc->in_msg;
+        u_char rtbuf;
+	int count;
 
 	if (!sc->isopen)
 		return;
-	if (data == MIDI_ACK)
-		return;
-
-	DPRINTFN(3, ("midi_in: sc=%p data=0x%02x state=%d pos=%d\n", 
-		     sc, data, sc->in_state, sc->in_pos));
 
 	if (!(sc->flags & FREAD))
 		return;		/* discard data if not reading */
-
-	switch(sc->in_state) {
-	case MIDI_IN_START:
-		if (MIDI_IS_STATUS(data)) {
-			switch(data) {
-			case 0xf0: /* Sysex */
-				sc->in_state = MIDI_IN_SYSEX;
-				sc->in_msg[0] = data;
-				sc->in_pos = 1;
-				sc->in_left = 0;
-				goto deliver_raw;
-			case 0xf1: /* MTC quarter frame */
-			case 0xf3: /* Song select */
-				sc->in_state = MIDI_IN_DATA;
-				sc->in_msg[0] = data;
-				sc->in_pos = 1;
-				sc->in_left = 1;
-				break;
-			case 0xf2: /* Song position pointer */
-				sc->in_state = MIDI_IN_DATA;
-				sc->in_msg[0] = data;
-				sc->in_pos = 1;
-				sc->in_left = 2;
-				break;
-			default:
-				if (MIDI_IS_COMMON(data)) {
-					sc->in_msg[0] = data;
-					sc->in_pos = 1;
-					goto deliver;
-				} else {
-					sc->in_state = MIDI_IN_DATA;
-					sc->in_msg[0] = sc->in_status = data;
-					sc->in_pos = 1;
-					sc->in_left = MIDI_LENGTH(data);
-				}
-				break;
-			}
-		} else {
-			if (MIDI_IS_STATUS(sc->in_status)) {
-				sc->in_state = MIDI_IN_DATA;
-				sc->in_msg[0] = sc->in_status;
-				sc->in_msg[1] = data;
-				sc->in_pos = 2;
-				sc->in_left = MIDI_LENGTH(sc->in_status) - 1;
-				if (sc->in_left == 0)
-				    goto deliver;
-			}
+	
+	if ( data >= 0xf8 ) { /* All realtime messages bypass state machine */
+	        if ( data == 0xf9  ||  data == 0xfd ) {
+			DPRINTF( ("midi_in: sc=%p data=0x%02x undefined\n", 
+				  sc, data));
+			++ sc->in.bytesDiscarded;
+			return;
 		}
-		return;
-	case MIDI_IN_DATA:
-	   	KASSERT(sc->in_left >= 1);
-	   	KASSERT(sc->in_pos < 3);
-		sc->in_msg[sc->in_pos++] = data;
-		if (--sc->in_left == 0)
-			break;	/* deliver data */
-		return;
-	case MIDI_IN_SYSEX:
-		sc->in_msg[0] = data;
-		sc->in_pos = 1;
-		sc->in_left = 0;
-		if (data == MIDI_SYSEX_END)
-			sc->in_state = MIDI_IN_START;
-		goto deliver_raw;
+		DPRINTFN(9, ("midi_in: sc=%p System Real-Time data=0x%02x\n", 
+			     sc, data));
+		rtbuf = data;
+		count = sizeof rtbuf;
+		what = &rtbuf;
+		goto deliver;	  
 	}
+
+	DPRINTFN(4, ("midi_in: sc=%p data=0x%02x state=%d\n", 
+		     sc, data, sc->in_state));
+
+retry:
+        switch ( sc->in_state | MIDI_CAT(data) ) {
+
+	case MIDI_IN_START  | MIDI_CAT_COMMON:
+	case MIDI_IN_RUN1_1 | MIDI_CAT_COMMON:
+	case MIDI_IN_RUN2_2 | MIDI_CAT_COMMON:
+	        sc->in_msg[0] = data;
+		count = 1;
+	        switch ( data ) {
+		case 0xf0: sc->in_state = MIDI_IN_SYSEX;  goto deliver_raw;
+		case 0xf1: sc->in_state = MIDI_IN_COM0_1; return;
+		case 0xf2: sc->in_state = MIDI_IN_COM0_2; return;
+		case 0xf3: sc->in_state = MIDI_IN_COM0_1; return;
+		case 0xf6: sc->in_state = MIDI_IN_START;  break;
+		default: goto protocol_violation;
+		}
+		break;
+	
+	case MIDI_IN_START  | MIDI_CAT_STATUS1:
+	case MIDI_IN_RUN1_1 | MIDI_CAT_STATUS1:
+	case MIDI_IN_RUN2_2 | MIDI_CAT_STATUS1:
+	        sc->in_state = MIDI_IN_RUN0_1;
+	        sc->in_msg[0] = data;
+		return;
+	
+	case MIDI_IN_START  | MIDI_CAT_STATUS2:
+	case MIDI_IN_RUN1_1 | MIDI_CAT_STATUS2:
+	case MIDI_IN_RUN2_2 | MIDI_CAT_STATUS2:
+	        sc->in_state = MIDI_IN_RUN0_2;
+	        sc->in_msg[0] = data;
+		return;
+
+        case MIDI_IN_COM0_1 | MIDI_CAT_DATA:
+		sc->in_state = MIDI_IN_START;
+	        sc->in_msg[1] = data;
+		count = 2;
+		break;
+
+        case MIDI_IN_COM0_2 | MIDI_CAT_DATA:
+	        sc->in_state = MIDI_IN_COM1_2;
+	        sc->in_msg[1] = data;
+		return;
+
+        case MIDI_IN_COM1_2 | MIDI_CAT_DATA:
+		sc->in_state = MIDI_IN_START;
+	        sc->in_msg[2] = data;
+		count = 3;
+		break;
+
+        case MIDI_IN_RUN0_1 | MIDI_CAT_DATA:
+        case MIDI_IN_RUN1_1 | MIDI_CAT_DATA:
+		sc->in_state = MIDI_IN_RUN1_1;
+	        sc->in_msg[1] = data;
+		count = 2;
+		break;
+
+        case MIDI_IN_RUN0_2 | MIDI_CAT_DATA:
+        case MIDI_IN_RUN2_2 | MIDI_CAT_DATA:
+	        sc->in_state = MIDI_IN_RUN1_2;
+	        sc->in_msg[1] = data;
+		return;
+
+        case MIDI_IN_RUN1_2 | MIDI_CAT_DATA:
+		sc->in_state = MIDI_IN_RUN2_2;
+	        sc->in_msg[2] = data;
+		count = 3;
+		break;
+
+        case MIDI_IN_SYSEX | MIDI_CAT_DATA:
+		sc->in_msg[0] = data;
+		count = 1;
+		goto deliver_raw;
+
+        case MIDI_IN_SYSEX | MIDI_CAT_COMMON:
+	        if ( data == 0xf7 ) {
+		        sc->in_state = MIDI_IN_START;
+			sc->in_msg[0] = data;
+		        count = 1;
+			goto deliver_raw;
+		}
+		/* FALLTHROUGH */
+
+        default:
+protocol_violation:
+                DPRINTF(("midi_in: unexpected %#02x in state %u\n",
+		        data, sc->in_state));
+		switch ( sc->in_state ) {
+		case MIDI_IN_START:
+		        sc->in.bytesDiscarded++;
+			return;
+		case MIDI_IN_COM1_2:
+		case MIDI_IN_RUN1_2:
+			sc->in.bytesDiscarded++;
+			/* FALLTHROUGH */
+		case MIDI_IN_COM0_1:
+		case MIDI_IN_RUN0_1:
+		case MIDI_IN_COM0_2:
+		case MIDI_IN_RUN0_2:
+			sc->in.bytesDiscarded++;
+			/* FALLTHROUGH */
+		case MIDI_IN_SYSEX:
+		        sc->in.incompleteMessages++;
+			break;
+#if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
+		default:
+		        printf("midi_in: mishandled protocol violation?\n");
+#endif
+		}
+		sc->in_state = MIDI_IN_START;
+		goto retry;
+	}
+
 deliver:
-	sc->in_state = MIDI_IN_START;
 #if NSEQUENCER > 0
 	if (sc->seqopen) {
 		extern void midiseq_in(struct midi_dev *,u_char *,int);
-		midiseq_in(sc->seq_md, sc->in_msg, sc->in_pos);
+		midiseq_in(sc->seq_md, what, count);
 		return;
 	}
 #endif
- deliver_raw:
-	if (mb->used + sc->in_pos > mb->usedhigh) {
+        if ( data == MIDI_ACK ) /* sequencer should see these to support API */
+	        return; /* otherwise discard (could track time last seen) */
+deliver_raw:
+	if (mb->used + count > mb->usedhigh) {
 		DPRINTF(("midi_in: buffer full, discard data=0x%02x\n", 
-			 sc->in_msg[0]));
+			 what[0]));
+		sc->in.bytesDiscarded += count;
 		return;
 	}
-	for (i = 0; i < sc->in_pos; i++) {
-		*mb->inp++ = sc->in_msg[i];
+	for (i = 0; i < count; i++) {
+		*mb->inp++ = what[i];
 		if (mb->inp >= mb->end)
 			mb->inp = mb->start;
 		mb->used++;
@@ -384,7 +467,7 @@ midi_out(void *addr)
 
 	if (!sc->isopen)
 		return;
-	DPRINTFN(3, ("midi_out: %p\n", sc));
+	DPRINTFN(8, ("midi_out: %p\n", sc));
 	midi_start_output(sc, 1);
 }
 
@@ -401,7 +484,7 @@ midiopen(dev_t dev, int flags, int ifmt, struct proc *p)
 	if (sc->dying)
 		return (EIO);
 
-	DPRINTF(("midiopen %p\n", sc));
+	DPRINTFN(3,("midiopen %p\n", sc));
 
 	hw = sc->hw_if;
 	if (!hw)
@@ -409,7 +492,8 @@ midiopen(dev_t dev, int flags, int ifmt, struct proc *p)
 	if (sc->isopen)
 		return EBUSY;
 	sc->in_state = MIDI_IN_START;
-	sc->in_status = 0;
+        sc->in.bytesDiscarded = 0;
+        sc->in.incompleteMessages = 0;
 	error = hw->open(sc->hw_hdl, flags, midi_in, midi_out, sc);
 	if (error)
 		return error;
@@ -440,13 +524,14 @@ midiclose(dev_t dev, int flags, int ifmt, struct proc *p)
 	struct midi_hw_if *hw = sc->hw_if;
 	int s, error;
 
-	DPRINTF(("midiclose %p\n", sc));
+	DPRINTFN(3,("midiclose %p, bytesDiscarded %u, incompleteMessages %u\n",
+                   sc, sc->in.bytesDiscarded, sc->in.incompleteMessages));
 
 	midi_start_output(sc, 0);
 	error = 0;
 	s = splaudio();
 	while (sc->outbuf.used > 0 && !error) {
-		DPRINTFN(2,("midiclose sleep used=%d\n", sc->outbuf.used));
+		DPRINTFN(8,("midiclose sleep used=%d\n", sc->outbuf.used));
 		error = midi_sleep_timo(&sc->wchan, "mid_dr", 30*hz);
 	}
 	splx(s);
@@ -470,7 +555,7 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 	int used, cc, n, resid;
 	int s;
 
-	DPRINTF(("midiread: %p, count=%lu\n", sc, 
+	DPRINTFN(6,("midiread: %p, count=%lu\n", sc, 
 		 (unsigned long)uio->uio_resid));
 
 	if (sc->dying)
@@ -502,7 +587,7 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 			cc = n;	/* don't read beyond end of buffer */
 		if (uio->uio_resid < cc)
 			cc = uio->uio_resid; /* and no more than we want */
-		DPRINTFN(3, ("midiread: uiomove cc=%d\n", cc));
+		DPRINTFN(8, ("midiread: uiomove cc=%d\n", cc));
 		error = uiomove(outp, cc, uio);
 		if (error)
 			break;
@@ -523,7 +608,7 @@ midi_timeout(void *arg)
 {
 	struct midi_softc *sc = arg;
 
-	DPRINTFN(3,("midi_timeout: %p\n", sc));
+	DPRINTFN(8,("midi_timeout: %p\n", sc));
 	midi_start_output(sc, 1);
 }
 
@@ -542,7 +627,7 @@ midi_start_output(struct midi_softc *sc, int intr)
 		return EIO;
 
 	if (sc->pbus && !intr) {
-		DPRINTFN(4, ("midi_start_output: busy\n"));
+		DPRINTFN(8, ("midi_start_output: busy\n"));
 		return 0;
 	}
 	sc->pbus = (mb->used > 0)?1:0;
@@ -559,7 +644,7 @@ midi_start_output(struct midi_softc *sc, int intr)
 		midisave.buf[midicnt] = out;
 		midicnt = (midicnt + 1) % MIDI_SAVE_SIZE;
 #endif
-		DPRINTFN(4, ("midi_start_output: %p i=%d, data=0x%02x\n", 
+		DPRINTFN(8, ("midi_start_output: %p i=%d, data=0x%02x\n", 
 			     sc, i, out));
 		error = sc->hw_if->output(sc->hw_hdl, out);
 		if ((sc->props & MIDI_PROP_OUT_INTR) && error!=EINPROGRESS)
@@ -597,7 +682,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	int used, cc, n;
 	int s;
 
-	DPRINTFN(2, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit, 
+	DPRINTFN(6, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit, 
 		     (unsigned long)uio->uio_resid));
 
 	if (sc->dying)
@@ -607,7 +692,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
 		if (mb->used >= mb->usedhigh) {
-			DPRINTFN(3,("midi_write: sleep used=%d hiwat=%d\n", 
+			DPRINTFN(8,("midi_write: sleep used=%d hiwat=%d\n", 
 				 mb->used, mb->usedhigh));
 			if (ioflag & IO_NDELAY) {
 				splx(s);
@@ -662,8 +747,8 @@ midi_writebytes(int unit, u_char *buf, int cc)
 	struct midi_buffer *mb = &sc->outbuf;
 	int n, s;
 
-	DPRINTFN(2, ("midi_writebytes: %p, unit=%d, cc=%d\n", sc, unit, cc));
-	DPRINTFN(3, ("midi_writebytes: %x %x %x\n",buf[0],buf[1],buf[2]));
+	DPRINTFN(7, ("midi_writebytes: %p, unit=%d, cc=%d %#02x %#02x %#02x\n",
+                    sc, unit, cc, buf[0], buf[1], buf[2]));
 
 	if (sc->dying)
 		return EIO;
@@ -699,7 +784,7 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct midi_hw_if *hw = sc->hw_if;
 	int error;
 
-	DPRINTF(("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
+	DPRINTFN(5,("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
 
 	if (sc->dying)
 		return EIO;
@@ -715,7 +800,7 @@ midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			if (sc->async)
 				return EBUSY;
 			sc->async = p;
-			DPRINTF(("midi_ioctl: FIOASYNC %p\n", p));
+			DPRINTFN(5,("midi_ioctl: FIOASYNC %p\n", p));
 		} else
 			sc->async = 0;
 		break;
@@ -753,7 +838,7 @@ midipoll(dev_t dev, int events, struct proc *p)
 	int revents = 0;
 	int s;
 
-	DPRINTF(("midipoll: %p events=0x%x\n", sc, events));
+	DPRINTFN(6,("midipoll: %p events=0x%x\n", sc, events));
 
 	if (sc->dying)
 		return EIO;
