@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.13.14.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: midiio.h,v 1.13.14.2 2006/05/20 04:32:00 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ struct synth_info {
 
 	int	nr_voices;
 	int	instr_bank_size;
-	u_int	capabilities;	
+	u_int	capabilities;
 #define SYNTH_CAP_OPL3			0x00000002
 #define SYNTH_CAP_INPUT			0x00000004
 };
@@ -255,7 +255,7 @@ struct synth_info {
 #define SEQ_PATCHKEY(id) ((id<<8)|0xfd)
 #endif
 struct sysex_info {
-	u_int16_t	key;	/* Use SYSEX_PATCH or MAUI_PATCH here */
+	uint16_t	key;	/* Use SYSEX_PATCH or MAUI_PATCH here */
 #define SEQ_SYSEX_PATCH	SEQ_PATCHKEY(0x05)
 #define SEQ_MAUI_PATCH	SEQ_PATCHKEY(0x06)
 	int16_t	device_no;	/* Synthesizer number */
@@ -266,7 +266,7 @@ struct sysex_info {
 
 typedef unsigned char sbi_instr_data[32];
 struct sbi_instrument {
-	u_int16_t key;	/* FM_PATCH or OPL3_PATCH */
+	uint16_t key;	/* FM_PATCH or OPL3_PATCH */
 #define SBI_FM_PATCH	SEQ_PATCHKEY(0x01)
 #define SBI_OPL3_PATCH	SEQ_PATCHKEY(0x03)
 	int16_t		device;

@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.9 2006/05/20 03:43:58 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.10 2006/05/20 04:31:59 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.9 2006/05/20 03:43:58 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.10 2006/05/20 04:31:59 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -73,15 +73,15 @@ int	midisyn_allocvoice(midisyn *, u_int32_t, u_int32_t);
 u_int32_t midisyn_note_to_freq(int);
 u_int32_t midisyn_finetune(u_int32_t, int, int, int);
 
-int	midisyn_open(void *, int, 
+int	midisyn_open(void *, int,
 		     void (*iintr)(void *, int),
 		     void (*ointr)(void *), void *arg);
 void	midisyn_close(void *);
 int	midisyn_sysrt(void *, int);
 void	midisyn_getinfo(void *, struct midi_info *);
-int	midisyn_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	midisyn_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
-struct midi_hw_if midisyn_hw_if = {
+const struct midi_hw_if midisyn_hw_if = {
 	midisyn_open,
 	midisyn_close,
 	midisyn_sysrt,
@@ -142,12 +142,12 @@ midisyn_getinfo(void *addr, struct midi_info *mi)
 }
 
 int
-midisyn_ioctl(void *maddr, u_long cmd, caddr_t addr, int flag, struct proc *p)
+midisyn_ioctl(void *maddr, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	midisyn *ms = maddr;
 
 	if (ms->mets->ioctl)
-		return (ms->mets->ioctl(ms, cmd, addr, flag, p));
+		return (ms->mets->ioctl(ms, cmd, addr, flag, l));
 	else
 		return (EINVAL);
 }
@@ -171,7 +171,7 @@ void
 midisyn_attach(struct midi_softc *sc, midisyn *ms)
 {
 	if (ms->flags & MS_DOALLOC) {
-		ms->voices = malloc(ms->nvoice * sizeof (struct voice), 
+		ms->voices = malloc(ms->nvoice * sizeof (struct voice),
 				    M_DEVBUF, M_WAITOK|M_ZERO);
 		ms->seqno = 1;
 		if (ms->mets->allocv == 0)
@@ -211,12 +211,12 @@ midisyn_allocvoice(midisyn *ms, u_int32_t chan, u_int32_t note)
 		}
 	}
 	DPRINTFN(10,("midisyn_allocvoice: v=%d seq=%d cn=%x inuse=%d\n",
-		     bestv, ms->voices[bestv].seqno, 
+		     bestv, ms->voices[bestv].seqno,
 		     ms->voices[bestv].chan_note,
 		     ms->voices[bestv].inuse));
 #ifdef AUDIO_DEBUG
 	if (ms->voices[bestv].inuse)
-		DPRINTFN(1,("midisyn_allocvoice: steal %x\n", 
+		DPRINTFN(1,("midisyn_allocvoice: steal %x\n",
 			    ms->voices[bestv].chan_note));
 #endif
 	ms->voices[bestv].chan_note = MS_CHANNOTE(chan, note);
@@ -336,26 +336,26 @@ midisyn_note_to_freq(int note)
 u_int32_t
 midisyn_finetune(u_int32_t base_freq, int bend, int range, int vibrato_cents)
 {
-	static const u_int16_t semitone_tuning[24] = 
+	static const u_int16_t semitone_tuning[24] =
 	{
-/*   0 */ 10000, 10595, 11225, 11892, 12599, 13348, 14142, 14983, 
-/*   8 */ 15874, 16818, 17818, 18877, 20000, 21189, 22449, 23784, 
+/*   0 */ 10000, 10595, 11225, 11892, 12599, 13348, 14142, 14983,
+/*   8 */ 15874, 16818, 17818, 18877, 20000, 21189, 22449, 23784,
 /*  16 */ 25198, 26697, 28284, 29966, 31748, 33636, 35636, 37755
 	};
 	static const u_int16_t cent_tuning[100] =
 	{
-/*   0 */ 10000, 10006, 10012, 10017, 10023, 10029, 10035, 10041, 
-/*   8 */ 10046, 10052, 10058, 10064, 10070, 10075, 10081, 10087, 
-/*  16 */ 10093, 10099, 10105, 10110, 10116, 10122, 10128, 10134, 
-/*  24 */ 10140, 10145, 10151, 10157, 10163, 10169, 10175, 10181, 
-/*  32 */ 10187, 10192, 10198, 10204, 10210, 10216, 10222, 10228, 
-/*  40 */ 10234, 10240, 10246, 10251, 10257, 10263, 10269, 10275, 
-/*  48 */ 10281, 10287, 10293, 10299, 10305, 10311, 10317, 10323, 
-/*  56 */ 10329, 10335, 10341, 10347, 10353, 10359, 10365, 10371, 
-/*  64 */ 10377, 10383, 10389, 10395, 10401, 10407, 10413, 10419, 
-/*  72 */ 10425, 10431, 10437, 10443, 10449, 10455, 10461, 10467, 
-/*  80 */ 10473, 10479, 10485, 10491, 10497, 10503, 10509, 10515, 
-/*  88 */ 10521, 10528, 10534, 10540, 10546, 10552, 10558, 10564, 
+/*   0 */ 10000, 10006, 10012, 10017, 10023, 10029, 10035, 10041,
+/*   8 */ 10046, 10052, 10058, 10064, 10070, 10075, 10081, 10087,
+/*  16 */ 10093, 10099, 10105, 10110, 10116, 10122, 10128, 10134,
+/*  24 */ 10140, 10145, 10151, 10157, 10163, 10169, 10175, 10181,
+/*  32 */ 10187, 10192, 10198, 10204, 10210, 10216, 10222, 10228,
+/*  40 */ 10234, 10240, 10246, 10251, 10257, 10263, 10269, 10275,
+/*  48 */ 10281, 10287, 10293, 10299, 10305, 10311, 10317, 10323,
+/*  56 */ 10329, 10335, 10341, 10347, 10353, 10359, 10365, 10371,
+/*  64 */ 10377, 10383, 10389, 10395, 10401, 10407, 10413, 10419,
+/*  72 */ 10425, 10431, 10437, 10443, 10449, 10455, 10461, 10467,
+/*  80 */ 10473, 10479, 10485, 10491, 10497, 10503, 10509, 10515,
+/*  88 */ 10521, 10528, 10534, 10540, 10546, 10552, 10558, 10564,
 /*  96 */ 10570, 10576, 10582, 10589
 	};
 	u_int32_t amount;
@@ -379,7 +379,7 @@ midisyn_finetune(u_int32_t base_freq, int bend, int range, int vibrato_cents)
 	if (bend < 0) {
 		bend = -bend;
 		negative = 1;
-	} else 
+	} else
 		negative = 0;
 
 	if (bend > range)
@@ -392,8 +392,6 @@ midisyn_finetune(u_int32_t base_freq, int bend, int range, int vibrato_cents)
 	}
 
 	semitones = bend / 100;
-	if (semitones > 99)
-		semitones = 99;
 	cents = bend % 100;
 
 	amount = semitone_tuning[semitones] * multiplier * cent_tuning[cents]
