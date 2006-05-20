@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.77.2.3 2006/05/20 21:50:26 riz Exp $	*/
+/*	$NetBSD: lfs.h,v 1.77.2.4 2006/05/20 21:51:54 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -108,7 +108,6 @@
 #define LFS_MAX_BUFS	    ((nbuf >> 2) - 10)
 #define LFS_WAIT_BUFS	    ((nbuf >> 1) - (nbuf >> 3) - 10)
 #define LFS_INVERSE_MAX_BUFS(n) (((n) + 10) << 2)
-extern u_long bufmem_lowater, bufmem_hiwater; /* XXX */
 #define LFS_MAX_BYTES	    ((bufmem_lowater >> 2) - 10 * PAGE_SIZE)
 #define LFS_INVERSE_MAX_BYTES(n) (((n) + 10 * PAGE_SIZE) << 2)
 #define LFS_WAIT_BYTES	    ((bufmem_lowater >> 1) - (bufmem_lowater >> 3) - 10 * PAGE_SIZE)
@@ -196,6 +195,9 @@ typedef struct lfs_res_blk {
 } while (0)
 
 #ifdef _KERNEL
+
+extern u_long bufmem_lowater, bufmem_hiwater; /* XXX */
+
 # define LFS_IS_MALLOC_BUF(bp) (((bp)->b_flags & B_CALL) &&		\
      (bp)->b_iodone == lfs_callback)
 
