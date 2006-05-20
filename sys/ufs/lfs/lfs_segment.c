@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.158.2.9 2006/05/20 22:34:06 riz Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.158.2.10 2006/05/20 22:38:57 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.9 2006/05/20 22:34:06 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.10 2006/05/20 22:38:57 riz Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -370,6 +370,8 @@ lfs_vflush(struct vnode *vp)
 					 * cleaner to run; but we're
 					 * still not done with this vnode.
 					 */
+					lfs_writeinode(fs, sp, ip);
+					LFS_SET_UINO(ip, IN_MODIFIED);
 					lfs_writeseg(fs, sp);
 					lfs_segunlock(fs);
 					lfs_segunlock_relock(fs);
@@ -534,6 +536,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 						 * over after the cleaner has
 						 * had a chance to run.
 						 */
+						lfs_writeinode(fs, sp, ip);
 						lfs_writeseg(fs, sp);
 						if (!VPISEMPTY(vp) &&
 						    !WRITEINPROG(vp) &&
@@ -625,6 +628,7 @@ lfs_segwrite(struct mount *mp, int flags)
 				if (um_error == 0)
 					um_error = error;
 				((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+				lfs_finalize_fs_seguse(fs);
 			}
 			if (do_ckp && um_error) {
 				lfs_segunlock_relock(fs);
@@ -958,6 +962,9 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	bp = sp->ibp;
 	cdp = ((struct ufs1_dinode *)bp->b_data) + (sp->ninodes % INOPB(fs));
 	*cdp = *ip->i_din.ffs1_din;
+
+	/* We can finish the segment accounting for truncations now */
+	lfs_finalize_ino_seguse(fs, ip);
 
 	/*
 	 * If we are cleaning, ensure that we don't write UNWRITTEN disk

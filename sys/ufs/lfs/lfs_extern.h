@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.64.2.6 2006/05/20 22:10:29 riz Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.64.2.7 2006/05/20 22:38:57 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -173,6 +173,8 @@ void lfs_debug_log(int, const char *, ...);
 
 /* lfs_inode.c */
 struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
+void lfs_finalize_ino_seguse(struct lfs *, struct inode *);
+void lfs_finalize_fs_seguse(struct lfs *);
 
 /* lfs_segment.c */
 void lfs_imtime(struct lfs *);
