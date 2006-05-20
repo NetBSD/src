@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.9 2006/05/20 21:59:47 riz Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.10 2006/05/20 22:01:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.9 2006/05/20 21:59:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.10 2006/05/20 22:01:26 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1355,8 +1355,9 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;
 
-	/* Write everything we've got */
-	lfs_segwrite(mp, SEGM_CKP);
+	/* Two checkpoints */
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
+	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
 
 	/* wake up the cleaner so it can die */
 	wakeup(&fs->lfs_nextseg);
