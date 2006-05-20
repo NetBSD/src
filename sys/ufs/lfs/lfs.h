@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.77.2.6 2006/05/20 21:57:12 riz Exp $	*/
+/*	$NetBSD: lfs.h,v 1.77.2.7 2006/05/20 21:58:21 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -1019,7 +1019,8 @@ struct lfs_inode_ext {
 #define LFS_EST_NONMETA(F) ((F)->lfs_dsize - (F)->lfs_dmeta - LFS_EST_CMETA(F))
 
 /* Estimate number of blocks actually available for writing */
-#define LFS_EST_BFREE(F) ((F)->lfs_bfree > LFS_EST_CMETA(F) + (F)->lfs_dmeta ? (F)->lfs_bfree - LFS_EST_CMETA(F) - (F)->lfs_dmeta : 0)
+#define LFS_EST_BFREE(F) ((F)->lfs_bfree > LFS_EST_CMETA(F) ?		     \
+			  (F)->lfs_bfree - LFS_EST_CMETA(F) : 0)
 
 /* Amount of non-meta space not available to mortal man */
 #define LFS_EST_RSVD(F) (int32_t)((LFS_EST_NONMETA(F) *			     \
