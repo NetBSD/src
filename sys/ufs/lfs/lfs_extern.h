@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.64.2.3 2006/05/20 21:50:26 riz Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.64.2.4 2006/05/20 21:59:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ struct ufs1_dinode *lfs_ifind(struct lfs *, ino_t, struct buf *);
 void lfs_imtime(struct lfs *);
 int lfs_vflush(struct vnode *);
 int lfs_segwrite(struct mount *, int);
-void lfs_writefile(struct lfs *, struct segment *, struct vnode *);
+int lfs_writefile(struct lfs *, struct segment *, struct vnode *);
 int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
 int lfs_gatherblock(struct segment *, struct buf *, int *);
 int lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *));
@@ -206,6 +206,7 @@ void *lfs_malloc(struct lfs *, size_t, int);
 void lfs_free(struct lfs *, void *, int);
 int lfs_seglock(struct lfs *, unsigned long);
 void lfs_segunlock(struct lfs *);
+void lfs_segunlock_relock(struct lfs *);
 int lfs_writer_enter(struct lfs *, const char *);
 void lfs_writer_leave(struct lfs *);
 

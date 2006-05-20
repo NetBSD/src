@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.158.2.4 2006/05/20 21:58:21 riz Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.158.2.5 2006/05/20 21:59:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.4 2006/05/20 21:58:21 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.5 2006/05/20 21:59:47 riz Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -129,6 +129,15 @@ static void lfs_cluster_callback(struct buf *);
 #define	LFS_PARTIAL_FITS(fs) \
 	((fs)->lfs_fsbpseg - ((fs)->lfs_offset - (fs)->lfs_curseg) > \
 	fragstofsb((fs), (fs)->lfs_frag))
+
+/*
+ * Figure out whether we should do a checkpoint write or go ahead with
+ * an ordinary write.
+ */
+#define LFS_SHOULD_CHECKPOINT(fs, flags) \
+	(fs->lfs_nactive > LFS_MAX_ACTIVE ||				\
+	 (flags & SEGM_CKP) ||						\
+	 fs->lfs_nclean < LFS_MAX_ACTIVE)
 
 int	 lfs_match_fake(struct lfs *, struct buf *);
 void	 lfs_newseg(struct lfs *);
@@ -194,13 +203,13 @@ lfs_vflush(struct vnode *vp)
 	struct buf *bp, *nbp, *tbp, *tnbp;
 	int error, s;
 	int flushed;
-#if 0
-	int redo;
-#endif
+	int relock;
 
 	ip = VTOI(vp);
 	fs = VFSTOUFS(vp->v_mount)->um_lfs;
+	relock = 0;
 
+    top:
 	ASSERT_NO_SEGLOCK(fs);
 	if (ip->i_flag & IN_CLEANING) {
 		ivndebug(vp,"vflush/in_cleaning");
@@ -317,8 +326,7 @@ lfs_vflush(struct vnode *vp)
 	}
 
 	SET_FLUSHING(fs,vp);
-	if (fs->lfs_nactive > LFS_MAX_ACTIVE ||
-	    (fs->lfs_sp->seg_flags & SEGM_CKP)) {
+	if (LFS_SHOULD_CHECKPOINT(fs, fs->lfs_sp->seg_flags)) {
 		error = lfs_segwrite(vp->v_mount, SEGM_CKP | SEGM_SYNC);
 		CLR_FLUSHING(fs,vp);
 		lfs_segunlock(fs);
@@ -352,28 +360,25 @@ lfs_vflush(struct vnode *vp)
 	}
 #endif
 
-#if 1
 	do {
 		do {
-			if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL)
-				lfs_writefile(fs, sp, vp);
+			if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL) {
+				relock = lfs_writefile(fs, sp, vp);
+				if (relock) {
+					/*
+					 * Might have to wait for the
+					 * cleaner to run; but we're
+					 * still not done with this vnode.
+					 */
+					lfs_writeseg(fs, sp);
+					lfs_segunlock(fs);
+					lfs_segunlock_relock(fs);
+					goto top;
+				}
+			}
 		} while (lfs_writeinode(fs, sp, ip));
 	} while (lfs_writeseg(fs, sp) && ip->i_number == LFS_IFILE_INUM);
-#else
-	if (flushed && vp != fs->lfs_ivnode)
-		lfs_writeseg(fs, sp);
-	else do {
-		simple_lock(&fs->lfs_interlock);
-		fs->lfs_flags &= ~LFS_IFDIRTY;
-		simple_unlock(&fs->lfs_interlock);
-		lfs_writefile(fs, sp, vp);
-		redo = lfs_writeinode(fs, sp, ip);
-		redo += lfs_writeseg(fs, sp);
-		simple_lock(&fs->lfs_interlock);
-		redo += (fs->lfs_flags & LFS_IFDIRTY);
-		simple_unlock(&fs->lfs_interlock);
-	} while (redo && vp == fs->lfs_ivnode);
-#endif
+
 	if (lfs_dostats) {
 		++lfs_stats.nwrites;
 		if (sp->seg_flags & SEGM_SYNC)
@@ -422,6 +427,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 	struct inode *ip;
 	struct vnode *vp, *nvp;
 	int inodes_written = 0, only_cleaning;
+	int error = 0;
 
 	ASSERT_SEGLOCK(fs);
 #ifndef LFS_NO_BACKVP_HACK
@@ -498,7 +504,24 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			    ((ip->i_flag & IN_ALLMOD) == IN_CLEANING);
 
 			if (ip->i_number != LFS_IFILE_INUM) {
-				lfs_writefile(fs, sp, vp);
+				error = lfs_writefile(fs, sp, vp);
+				if (error) {
+					lfs_vunref(vp);
+					if (error == EAGAIN) {
+						/*
+						 * This error from lfs_putpages
+						 * indicates we need to drop
+						 * the segment lock and start
+						 * over after the cleaner has
+						 * had a chance to run.
+						 */
+						lfs_writeseg(fs, sp);
+						break;
+					}
+					error = 0; /* XXX not quite right */
+					continue;
+				}
+				
 				if (!VPISEMPTY(vp)) {
 					if (WRITEINPROG(vp)) {
 						ivndebug(vp,"writevnodes/write2");
@@ -516,7 +539,7 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		else
 			lfs_vunref(vp);
 	}
-	return inodes_written;
+	return error;
 }
 
 /*
@@ -536,6 +559,7 @@ lfs_segwrite(struct mount *mp, int flags)
 	int writer_set = 0;
 	int dirty;
 	int redo;
+	int um_error;
 
 	fs = VFSTOUFS(mp)->um_lfs;
 	ASSERT_MAYBE_SEGLOCK(fs);
@@ -550,7 +574,8 @@ lfs_segwrite(struct mount *mp, int flags)
 	 * the maximum possible number of buffers which can be described in a
 	 * single summary block.
 	 */
-	do_ckp = (flags & SEGM_CKP) || fs->lfs_nactive > LFS_MAX_ACTIVE;
+	do_ckp = LFS_SHOULD_CHECKPOINT(fs, flags);
+
 	lfs_seglock(fs, flags | (do_ckp ? SEGM_CKP : 0));
 	sp = fs->lfs_sp;
 
@@ -566,22 +591,23 @@ lfs_segwrite(struct mount *mp, int flags)
 	if (sp->seg_flags & SEGM_CLEAN)
 		lfs_writevnodes(fs, mp, sp, VN_CLEAN);
 	else if (!(sp->seg_flags & SEGM_FORCE_CKP)) {
-		lfs_writevnodes(fs, mp, sp, VN_REG);
-		if (!fs->lfs_dirops || !fs->lfs_flushvp) {
-			error = lfs_writer_enter(fs, "lfs writer");
-			if (error) {
-				DLOG((DLOG_SEG, "segwrite mysterious error\n"));
-				/* XXX why not segunlock? */
-				pool_put(&fs->lfs_bpppool, sp->bpp);
-				sp->bpp = NULL;
-				pool_put(&fs->lfs_segpool, sp);
-				sp = fs->lfs_sp = NULL;
-				return (error);
+		do {
+			um_error = lfs_writevnodes(fs, mp, sp, VN_REG);
+			if (!fs->lfs_dirops || !fs->lfs_flushvp) {
+				if (!writer_set) {
+					lfs_writer_enter(fs, "lfs writer");
+					writer_set = 1;
+				}
+				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
+				if (um_error == 0)
+					um_error = error;
+				((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
 			}
-			writer_set = 1;
-			lfs_writevnodes(fs, mp, sp, VN_DIROP);
-			((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
-		}
+			if (do_ckp && um_error) {
+				lfs_segunlock_relock(fs);
+				sp = fs->lfs_sp;
+			}
+		} while (do_ckp && um_error != 0);
 	}
 
 	/*
@@ -640,8 +666,13 @@ lfs_segwrite(struct mount *mp, int flags)
 
 			ip = VTOI(vp);
 
-			if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL)
+			if (LIST_FIRST(&vp->v_dirtyblkhd) != NULL) {
+				/*
+				 * Ifile has no pages, so we don't need
+				 * to check error return here.
+				 */
 				lfs_writefile(fs, sp, vp);
+			}
 
 			if (ip->i_flag & IN_ALLMOD)
 				++did_ckp;
@@ -717,7 +748,7 @@ lfs_segwrite(struct mount *mp, int flags)
 /*
  * Write the dirty blocks associated with a vnode.
  */
-void
+int
 lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 {
 	struct buf *bp;
@@ -725,8 +756,10 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	struct inode *ip;
 	IFILE *ifp;
 	int i, frag;
+	int error;
 
 	ASSERT_SEGLOCK(fs);
+	error = 0;
 	ip = VTOI(vp);
 
 	if (sp->seg_bytes_left < fs->lfs_bsize ||
@@ -772,8 +805,8 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		 */
 		if (!IS_FLUSHING(fs, vp)) {
 			simple_lock(&vp->v_interlock);
-			VOP_PUTPAGES(vp, 0, 0,
-				     PGO_CLEANIT | PGO_ALLPAGES | PGO_LOCKED);
+			error = VOP_PUTPAGES(vp, 0, 0,
+				PGO_CLEANIT | PGO_ALLPAGES | PGO_LOCKED);
 		}
 	}
 
@@ -819,6 +852,8 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		sp->sum_bytes_left += FINFOSIZE;
 		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
 	}
+
+	return error;
 }
 
 int
