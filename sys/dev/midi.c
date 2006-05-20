@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.3 2006/05/20 03:13:11 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.4 2006/05/20 03:14:12 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.3 2006/05/20 03:13:11 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.4 2006/05/20 03:14:12 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -581,6 +581,10 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 
 	if (sc->dying)
 		return EIO;
+        if ( !(sc->flags & FREAD) )
+	        return EBADF;
+        if ( !(sc->props & MIDI_PROP_CAN_INPUT) )
+	        return ENXIO;
 
 	error = 0;
 	resid = uio->uio_resid;
@@ -708,6 +712,8 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	if (sc->dying)
 		return EIO;
+        if ( !(sc->flags & FWRITE) )
+	        return EBADF;
 
 	error = 0;
 	while (uio->uio_resid > 0 && !error) {
@@ -866,19 +872,19 @@ midipoll(dev_t dev, int events, struct proc *p)
 
 	s = splaudio();
 
-	if (events & (POLLIN | POLLRDNORM))
+	if ((sc->flags&FREAD) && (events & (POLLIN | POLLRDNORM)))
 		if (sc->inbuf.used > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 
-	if (events & (POLLOUT | POLLWRNORM))
+	if ((sc->flags&FWRITE) && (events & (POLLOUT | POLLWRNORM)))
 		if (sc->outbuf.used < sc->outbuf.usedhigh)
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
+		if ((sc->flags&FREAD) && (events & (POLLIN | POLLRDNORM)))
 			selrecord(p, &sc->rsel);
 
-		if (events & (POLLOUT | POLLWRNORM))
+		if ((sc->flags&FWRITE) && (events & (POLLOUT | POLLWRNORM)))
 			selrecord(p, &sc->wsel);
 	}
 
