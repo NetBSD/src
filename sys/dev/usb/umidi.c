@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.7 2006/05/20 03:27:32 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.8 2006/05/20 03:31:22 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.7 2006/05/20 03:27:32 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.8 2006/05/20 03:31:22 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -806,6 +806,27 @@ alloc_all_jacks(struct umidi_softc *sc)
 	int i, j;
 	struct umidi_endpoint *ep;
 	struct umidi_jack *jack, **rjack;
+	int cnglobal;
+	
+	if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_SEQ_PER_EP))
+		cnglobal = 0;
+	else if (UMQ_ISTYPE(sc, UMQ_TYPE_CN_SEQ_GLOBAL))
+		cnglobal = 1;
+	else {
+		/*
+		 * I don't think this default is correct, but it preserves
+		 * the prior behavior of the code. That's why I defined two
+		 * complementary quirks. Any device for which the default
+		 * behavior is wrong can be made to work by giving it an
+		 * explicit quirk, and if a pattern ever develops (as I suspect
+		 * it will) that a lot of otherwise standard USB MIDI devices
+		 * need the CN_SEQ_PER_EP "quirk," then this default can be
+		 * changed to 0, and the only devices that will break are those
+		 * listing neither quirk, and they'll easily be fixed by giving
+		 * them the CN_SEQ_GLOBAL quirk.
+		 */
+		cnglobal = 1;
+	}
 
 	/* allocate/initialize structures */
 	sc->sc_jacks =
@@ -825,7 +846,8 @@ alloc_all_jacks(struct umidi_softc *sc)
 		jack->binded = 0;
 		jack->arg = NULL;
 		jack->u.out.intr = NULL;
-		jack->cable_number = i;
+		if ( cnglobal )
+			jack->cable_number = i;
 		jack++;
 	}
 	jack = &sc->sc_in_jacks[0];
@@ -834,7 +856,8 @@ alloc_all_jacks(struct umidi_softc *sc)
 		jack->binded = 0;
 		jack->arg = NULL;
 		jack->u.in.intr = NULL;
-		jack->cable_number = i;
+		if ( cnglobal )
+			jack->cable_number = i;
 		jack++;
 	}
 
@@ -846,9 +869,12 @@ alloc_all_jacks(struct umidi_softc *sc)
 		for (j=0; j<ep->num_jacks; j++) {
 			*rjack = jack;
 			jack->endpoint = ep;
+			if ( !cnglobal )
+				jack->cable_number = j;
 			jack++;
 			rjack++;
 		}
+		ep->cn_base = ep->num_jacks ? ep->jacks[0]->cable_number : 0;
 		ep++;
 	}
 	jack = &sc->sc_in_jacks[0];
@@ -858,9 +884,12 @@ alloc_all_jacks(struct umidi_softc *sc)
 		for (j=0; j<ep->num_jacks; j++) {
 			*rjack = jack;
 			jack->endpoint = ep;
+			if ( !cnglobal )
+				jack->cable_number = j;
 			jack++;
 			rjack++;
 		}
+		ep->cn_base = ep->num_jacks ? ep->jacks[0]->cable_number : 0;
 		ep++;
 	}
 
@@ -1310,11 +1339,12 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 static void
 in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
-	int cn, len, i;
+	int cn, len, i, rel_cn;
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_jack *jack;
 	unsigned char *packet;
-	unsigned char *end;
+	unsigned char (*slot)[UMIDI_PACKET_SIZE];
+	unsigned char (*end)[UMIDI_PACKET_SIZE];
 	unsigned char *data;
 	u_int32_t count;
 
@@ -1328,11 +1358,12 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
         } else {
                 DPRINTF(("%s: input endpoint %p odd transfer length %u\n",
                         USBDEVNAME(ep->sc->sc_dev), ep, count));
-                count -= count % UMIDI_PACKET_SIZE;
         }
+	
+	slot = ep->buffer;
+	end = slot + count / sizeof *slot;
 
-	packet = ep->buffer;
-	for ( end = packet+count; packet < end; packet += UMIDI_PACKET_SIZE ) {
+	for ( packet = *slot; slot < end; packet = *++slot ) {
 	
 		if ( UMQ_ISTYPE(ep->sc, UMQ_TYPE_MIDIMAN_GARBLE) ) {
 			cn = (0xf0&(packet[3]))>>4;
@@ -1344,9 +1375,11 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			data = packet + 1;
 		}
 
-		if (cn>=ep->num_jacks || !(jack = ep->jacks[cn])) {
+		rel_cn = cn - ep->cn_base;
+		if (0 > rel_cn || rel_cn >= ep->num_jacks
+		   || !(jack = ep->jacks[rel_cn]) || cn != jack->cable_number) {
 			DPRINTF(("%s: stray input endpoint %p cable %d len %d: "
-			         "%02X %02X %02X\n",
+			         "%02X %02X %02X (try CN_SEQ quirk?)\n",
 				 USBDEVNAME(ep->sc->sc_dev), ep, cn, len,
 				 (unsigned)data[0],
 				 (unsigned)data[1],

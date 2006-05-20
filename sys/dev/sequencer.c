@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.30.14.11 2006/05/20 03:27:31 chap Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.30.14.12 2006/05/20 03:31:22 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.11 2006/05/20 03:27:31 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.30.14.12 2006/05/20 03:31:22 chap Exp $");
 
 #include "sequencer.h"
 
