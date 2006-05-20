@@ -1,4 +1,4 @@
-/*	$NetBSD: etherfun.c,v 1.7 2005/12/11 12:18:19 christos Exp $	*/
+/*	$NetBSD: etherfun.c,v 1.8 2006/05/20 20:37:15 mrg Exp $	*/
 
 /*
  *
@@ -100,7 +100,7 @@ void
 do_send_tftp ( int mesgtype ) 
 {
   u_long res, iptmp, lcv;
-  char *tot;
+  u_char *tot;
 
   if ( mesgtype == 0 ) {
     tot = tftp_r + (sizeof(MSG)-1);
@@ -108,7 +108,7 @@ do_send_tftp ( int mesgtype )
     if (myport < 1000) myport += 1000;
     servport = FTP_PORT; /* to start */
   } else {
-    tot = (char *)tftp_a + 4;
+    tot = (u_char *)tftp_a + 4;
   }
 
   memcpy (eh->ether_dhost, servea, sizeof(servea));
@@ -125,7 +125,7 @@ do_send_tftp ( int mesgtype )
   memcpy(iph->ip_src, myip, sizeof(myip));
   memcpy(iph->ip_dst, servip, sizeof(servip));
   iph->ip_sum = 0;
-  iph->ip_len = tot - (char *)iph;
+  iph->ip_len = tot - (u_char *)iph;
   res = oc_cksum(iph, sizeof(struct ip), 0);
   iph->ip_sum = 0xffff & ~res;
   udph->uh_sport = myport;
@@ -145,7 +145,7 @@ do_send_tftp ( int mesgtype )
     }
   }
 
-  udph->uh_ulen = tot - (char *)udph;
+  udph->uh_ulen = tot - (u_char *)udph;
 
   le_put( buf, tot - buf);
 }
