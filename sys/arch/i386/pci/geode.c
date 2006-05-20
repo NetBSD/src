@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.5.6.2 2006/05/20 12:25:40 tron Exp $	*/
+/*	$NetBSD: geode.c,v 1.5.6.3 2006/05/20 12:31:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.5.6.2 2006/05/20 12:25:40 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.5.6.3 2006/05/20 12:31:39 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,8 +261,9 @@ geode_wdog_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n",
 		    sc->sc_dev.dv_xname);
 
+	/* reset WDOVF by writing 1 to it */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SC1100_GCB_WDSTS,
-	    wdsts & ~SC1100_WDSTS_WDOVF);
+	    wdsts & SC1100_WDSTS_WDOVF);
 
 	/*
 	 * Hook up the watchdog timer.
