@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.20 2003/08/07 10:04:35 agc Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.20.6.1 2006/05/20 22:46:22 riz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,11 +96,13 @@ Create a log-structured file system (LFS).
 This is the default, and this
 option is provided for compatibility only.
 .It Fl M Ar nsegs
-Reserve this many segments for use exclusively by the cleaner, instead
-of letting
-.Nm
-do the computation.
-Do not use this option.
+Specify 
+.Em lfs_minfreeseg ,
+the number of segments left out of the amount allocated to user data.
+A higher number increases cleaner performance, while a lower number
+gives more usable space.
+The default is based on the size of the filesystem, either 5% of the
+total number of segments or 20 segments, whichever is larger.
 .It Fl m Ar free space \&%
 The percentage of space reserved from normal users; the minimum
 free space threshold.
@@ -111,6 +113,19 @@ Do not actually create the filesystem.
 Start the first segment this many sectors from the beginning of the
 partition.
 The default is zero.
+.It Fl R Ar nsegs
+Specify
+.Em lfs_resvseg ,
+the number of segments set aside for the exclusive use of the cleaner.
+A larger figure reduces the likelihood of running out of clean segments,
+but if
+.EM lfs_resvseg
+is too close to
+.Em lfs_minfreeseg ,
+the cleaner will run without ceasing when the filesystem becomes close to
+full.  The default is the larger of 15 or the quantity
+.Em lfs_minfreeseg
+/ 2 + 1 .
 .It Fl r Ar ident
 For a v2 filesystem, specify the roll-forward identifier for the
 filesystem.

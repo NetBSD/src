@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.1.2.1 2005/05/07 11:21:29 tron Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.1.2.2 2006/05/20 22:46:22 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.1.2.1 2005/05/07 11:21:29 tron Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.1.2.2 2006/05/20 22:46:22 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,6 +180,7 @@ static struct lfs lfs_default =  {
 		/* dlfs_interleave */   0,
 		/* dlfs_ident */        0,
 		/* dlfs_fsbtodb */      0,
+		/* dlfs_resvseg */      0,
 
 		/* dlfs_pad */ 		{ 0 },
 		/* dlfs_cksum */	0
@@ -319,7 +320,7 @@ make_dir(void *bufp, struct direct *protodir, int entries)
 int
 make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 	 int block_size, int frag_size, int seg_size, int minfreeseg,
-	 int version, daddr_t start, int ibsize, int interleave,
+	 int resvseg, int version, daddr_t start, int ibsize, int interleave,
 	 u_int32_t roll_id)
 {
 	struct ufs1_dinode *dip;	/* Pointer to a disk inode */
@@ -499,12 +500,20 @@ make_lfs(int devfd, uint secsize, struct partition *partp, int minfree,
 
 	fs->lfs_nclean = fs->lfs_nseg - 1;
 	fs->lfs_maxfilesize = maxfilesize(fs->lfs_bshift);
+
 	if (minfreeseg == 0)
 		fs->lfs_minfreeseg = fs->lfs_nseg / DFL_MIN_FREE_SEGS;
 	else
 		fs->lfs_minfreeseg = minfreeseg;
 	if (fs->lfs_minfreeseg < MIN_FREE_SEGS)
 		fs->lfs_minfreeseg = MIN_FREE_SEGS;
+
+	if (resvseg == 0)
+		fs->lfs_resvseg = fs->lfs_minfreeseg / 2 + 1;
+	else
+		fs->lfs_resvseg = resvseg;
+	if (fs->lfs_resvseg < MIN_RESV_SEGS)
+		fs->lfs_resvseg = MIN_RESV_SEGS;
 
 	if(fs->lfs_nseg < fs->lfs_minfreeseg + 1
 	   || fs->lfs_nseg < LFS_MIN_SBINTERVAL + 1)
