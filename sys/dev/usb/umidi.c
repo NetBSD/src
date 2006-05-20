@@ -1,10 +1,11 @@
-/*	$NetBSD: umidi.c,v 1.25.2.9 2006/05/20 03:32:45 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.10 2006/05/20 03:34:22 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Takuya SHIOZAKI (tshiozak@NetBSD.org).
+ * by Takuya SHIOZAKI (tshiozak@NetBSD.org) and (full-size transfers, extended
+ * hw_if) Chapman Flack (nblists@anastigmatix.net).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.9 2006/05/20 03:32:45 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.10 2006/05/20 03:34:22 chap Exp $");
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -51,6 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.9 2006/05/20 03:32:45 chap Exp $");
 #include <sys/vnode.h>
 #include <sys/poll.h>
 #include <sys/lock.h>
+
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#include <machine/intr.h>
+#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -67,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.9 2006/05/20 03:32:45 chap Exp $");
 #ifdef UMIDI_DEBUG
 #define DPRINTF(x)	if (umididebug) printf x
 #define DPRINTFN(n,x)	if (umididebug >= (n)) printf x
+#include <sys/time.h>
+static struct timeval umidi_tv;
 int	umididebug = 0;
 #else
 #define DPRINTF(x)
@@ -126,6 +134,7 @@ static usbd_status start_output_transfer(struct umidi_endpoint *);
 static int out_jack_output(struct umidi_jack *, u_char *, int, int);
 static void in_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void out_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void out_solicit(void *); /* struct umidi_endpoint* for softintr */
 
 
 struct midi_hw_if umidi_hw_if = {
@@ -419,17 +428,30 @@ alloc_pipe(struct umidi_endpoint *ep)
 	usbd_status err;
 	usb_endpoint_descriptor_t *epd;
 	
-	if ( UE_DIR_OUT == UE_GET_DIR(ep->addr) )
-	        ep->buffer_size = UMIDI_PACKET_SIZE;
-        else { /* only use wMaxPacketSize on inputs (for now) */
-		epd = usbd_get_endpoint_descriptor(sc->sc_iface, ep->addr);
-		ep->buffer_size = UGETW(epd->wMaxPacketSize);
-		ep->buffer_size -= ep->buffer_size % UMIDI_PACKET_SIZE;
-	}
+	epd = usbd_get_endpoint_descriptor(sc->sc_iface, ep->addr);
+	/*
+	 * For output, an improvement would be to have a buffer bigger than
+	 * wMaxPacketSize by num_jacks-1 additional packet slots; that would
+	 * allow out_solicit to fill the buffer to the full packet size in
+	 * all cases. But to use usbd_alloc_buffer to get a slightly larger
+	 * buffer would not be a good way to do that, because if the addition
+	 * would make the buffer exceed USB_MEM_SMALL then a substantially
+	 * larger block may be wastefully allocated. Some flavor of double
+	 * buffering could serve the same purpose, but would increase the
+	 * code complexity, so for now I will live with the current slight
+	 * penalty of reducing max transfer size by (num_open-num_scheduled)
+	 * packet slots.
+	 */
+	ep->buffer_size = UGETW(epd->wMaxPacketSize);
+	ep->buffer_size -= ep->buffer_size % UMIDI_PACKET_SIZE;
 
 	DPRINTF(("%s: alloc_pipe %p, buffer size %u\n",
 	        USBDEVNAME(sc->sc_dev), ep, ep->buffer_size));
-	LIST_INIT(&ep->queue_head);
+	ep->num_scheduled = 0;
+	ep->this_schedule = 0;
+	ep->next_schedule = 0;
+	ep->soliciting = 0;
+	ep->armed = 0;
 	ep->xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (ep->xfer == NULL) {
 	    err = USBD_NOMEM;
@@ -441,9 +463,13 @@ alloc_pipe(struct umidi_endpoint *ep)
 	    err = USBD_NOMEM;
 	    goto quit;
 	}
+	ep->next_slot = ep->buffer;
 	err = usbd_open_pipe(sc->sc_iface, ep->addr, 0, &ep->pipe);
 	if (err)
 	    usbd_free_xfer(ep->xfer);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	ep->solicit_cookie = softintr_establish(IPL_SOFTCLOCK,out_solicit,ep);
+#endif
 quit:
 	return err;
 }
@@ -455,6 +481,9 @@ free_pipe(struct umidi_endpoint *ep)
 	usbd_abort_pipe(ep->pipe);
 	usbd_close_pipe(ep->pipe);
 	usbd_free_xfer(ep->xfer);
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	softintr_disestablish(ep->solicit_cookie);
+#endif
 }
 
 
@@ -557,8 +586,6 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		sc->sc_out_num_jacks += fp->out_ep[i].num_jacks;
 		ep->num_open = 0;
 		memset(ep->jacks, 0, sizeof(ep->jacks));
-		/* other ep alloc subrs don't, and alloc_pipe does, anyway: */
-		/* LIST_INIT(&ep->queue_head); */
 		ep++;
 	}
 	ep = &sc->sc_in_ep[0];
@@ -1013,14 +1040,35 @@ static usbd_status
 open_out_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *))
 {
 	struct umidi_endpoint *ep = jack->endpoint;
+	umidi_packet_bufp end;
+	int s;
+	int err;
 
 	if (jack->opened)
 		return USBD_IN_USE;
 
 	jack->arg = arg;
 	jack->u.out.intr = intr;
+	end = ep->buffer + ep->buffer_size / sizeof *ep->buffer;
+	s = splusb();
 	jack->opened = 1;
 	ep->num_open++;
+	/*
+	 * out_solicit maintains an invariant that there will always be
+	 * (num_open - num_scheduled) slots free in the buffer. as we have
+	 * just incremented num_open, the buffer may be too full to satisfy
+	 * the invariant until a transfer completes, for which we must wait.
+	 */
+	while ( end - ep->next_slot < ep->num_open - ep->num_scheduled ) {
+		err = tsleep(ep, PWAIT|PCATCH, "umi op", mstohz(10));
+		if ( err ) {
+			ep->num_open--;
+			jack->opened = 0;
+			splx(s);
+			return USBD_IOERROR;
+		}
+	}
+	splx(s);
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -1051,31 +1099,25 @@ open_in_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *, int))
 static void
 close_out_jack(struct umidi_jack *jack)
 {
-	struct umidi_jack *tail;
+	struct umidi_endpoint *ep;
 	int s;
+	u_int16_t mask;
+	int err;
 
 	if (jack->opened) {
+		ep = jack->endpoint;
+		mask = 1 << (jack->cable_number);
 		s = splusb();
-		LIST_FOREACH(tail,
-			     &jack->endpoint->queue_head,
-			     u.out.queue_entry)
-			if (tail == jack) {
-				LIST_REMOVE(jack, u.out.queue_entry);
+		while ( mask & (ep->this_schedule | ep->next_schedule) ) {
+			err = tsleep(ep, PWAIT|PCATCH, "umi dr", mstohz(10));
+			if ( err )
 				break;
-			}
-		if (jack == jack->endpoint->queue_tail) {
-			/* find tail */
-			LIST_FOREACH(tail,
-				     &jack->endpoint->queue_head,
-				     u.out.queue_entry) {
-				if (!LIST_NEXT(tail, u.out.queue_entry)) {
-					jack->endpoint->queue_tail = tail;
-				}
-			}
 		}
-		splx(s);
 		jack->opened = 0;
 		jack->endpoint->num_open--;
+		ep->this_schedule &= ~mask;
+		ep->next_schedule &= ~mask;
+		splx(s);
 	}
 }
 
@@ -1282,23 +1324,27 @@ start_input_transfer(struct umidi_endpoint *ep)
 static usbd_status
 start_output_transfer(struct umidi_endpoint *ep)
 {
+	u_int32_t length;
+	length = (ep->next_slot - ep->buffer) * sizeof *ep->buffer;
+	DPRINTFN(200,("umidi out transfer: start %p end %p length %u\n",
+	    ep->buffer, ep->next_slot, length));
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
-			ep->buffer, UMIDI_PACKET_SIZE,
+			ep->buffer, length,
 			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
 	return usbd_transfer(ep->xfer);
 }
 
 #ifdef UMIDI_DEBUG
 #define DPR_PACKET(dir, sc, p)						\
-if ((unsigned char)(p)->buffer[1]!=0xFE)				\
+if ((unsigned char)(p)[1]!=0xFE)				\
 	DPRINTFN(500,							\
 		 ("%s: umidi packet(" #dir "): %02X %02X %02X %02X\n",	\
 		  USBDEVNAME(sc->sc_dev),				\
-		  (unsigned char)(p)->buffer[0],			\
-		  (unsigned char)(p)->buffer[1],			\
-		  (unsigned char)(p)->buffer[2],			\
-		  (unsigned char)(p)->buffer[3]));
+		  (unsigned char)(p)[0],			\
+		  (unsigned char)(p)[1],			\
+		  (unsigned char)(p)[2],			\
+		  (unsigned char)(p)[3]));
 #else
 #define DPR_PACKET(dir, sc, p)
 #endif
@@ -1325,8 +1371,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 {
 	struct umidi_endpoint *ep = out_jack->endpoint;
 	struct umidi_softc *sc = ep->sc;
-	struct umidi_packet *packet = &out_jack->packet;
-	int error;
+	unsigned char *packet;
 	int s;
 
 	if (sc->sc_dying)
@@ -1335,32 +1380,54 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	if (!out_jack->opened)
 		return ENODEV; /* XXX as it was, is this the right errno? */
 
-	error = 0;
-	DPRINTFN(1000, ("umidi_output: ep=%p len=%d cin=%#x\n", ep, len, cin));
+#ifdef UMIDI_DEBUG
+	if ( umididebug >= 100 )
+		microtime(&umidi_tv);
+#endif
+	DPRINTFN(100, ("umidi out: %lu.%06lus ep=%p cn=%d len=%d cin=%#x\n",
+	    umidi_tv.tv_sec%100, umidi_tv.tv_usec,
+	    ep, out_jack->cable_number, len, cin));
 	
-	memset(packet->buffer, 0, UMIDI_PACKET_SIZE);
-	if (UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE)) {
-		memcpy(packet->buffer, src, len);
-		packet->buffer[3] = MIX_CN_CIN(out_jack->cable_number, len);
-	} else {
-		packet->buffer[0] = MIX_CN_CIN(out_jack->cable_number, cin);
-		memcpy(packet->buffer+1, src, len);
-	}
-
-	DPR_PACKET(out, sc, &out_jack->packet);
 	s = splusb();
-	if (LIST_EMPTY(&ep->queue_head)) {
-		memcpy(ep->buffer, out_jack->packet.buffer, UMIDI_PACKET_SIZE);
-		start_output_transfer(ep);
+	packet = *ep->next_slot++;
+	KASSERT(ep->buffer_size >=
+	    (ep->next_slot - ep->buffer) * sizeof *ep->buffer);
+	memset(packet, 0, UMIDI_PACKET_SIZE);
+	if (UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE)) {
+		memcpy(packet, src, len);
+		packet[3] = MIX_CN_CIN(out_jack->cable_number, len);
+	} else {
+		packet[0] = MIX_CN_CIN(out_jack->cable_number, cin);
+		memcpy(packet+1, src, len);
 	}
-	if (LIST_EMPTY(&ep->queue_head))
-		LIST_INSERT_HEAD(&ep->queue_head, out_jack, u.out.queue_entry);
-	else
-		LIST_INSERT_AFTER(ep->queue_tail, out_jack, u.out.queue_entry);
-	ep->queue_tail = out_jack;
+	DPR_PACKET(out, sc, packet);
+	ep->next_schedule |= 1<<(out_jack->cable_number);
+	++ ep->num_scheduled;
+	if ( !ep->armed  &&  !ep->soliciting ) {
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+		/*
+		 * It would be bad to call out_solicit directly here (the
+		 * caller need not be reentrant) but a soft interrupt allows
+		 * solicit to run immediately the caller exits its critical
+		 * section, and if the caller has more to write we can get it
+		 * before starting the USB transfer, and send a longer one.
+		 */
+		ep->soliciting = 1;
+		softintr_schedule(ep->solicit_cookie);
+#else
+		/*
+		 * This alternative is a little less desirable, because if the
+		 * writer has several messages to go at once, the first will go
+		 * in a USB frame all to itself, and the rest in a full-size
+		 * transfer one frame later (solicited on the first frame's
+		 * completion interrupt). But it's simple.
+		 */
+		ep->armed = (USBD_IN_PROGRESS == start_output_transfer(ep));
+#endif
+	}
 	splx(s);
-
-	return error;
+	
+	return 0;
 }
 
 static void
@@ -1370,8 +1437,8 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_jack *jack;
 	unsigned char *packet;
-	unsigned char (*slot)[UMIDI_PACKET_SIZE];
-	unsigned char (*end)[UMIDI_PACKET_SIZE];
+	umidi_packet_bufp slot;
+	umidi_packet_bufp end;
 	unsigned char *data;
 	u_int32_t count;
 
@@ -1380,7 +1447,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
         if ( 0 == count % UMIDI_PACKET_SIZE ) {
-		DPRINTFN(100,("%s: input endpoint %p transfer length %u\n",
+		DPRINTFN(200,("%s: input endpoint %p transfer length %u\n",
 			     USBDEVNAME(ep->sc->sc_dev), ep, count));
         } else {
                 DPRINTF(("%s: input endpoint %p odd transfer length %u\n",
@@ -1438,22 +1505,115 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct umidi_endpoint *ep = (struct umidi_endpoint *)priv;
 	struct umidi_softc *sc = ep->sc;
-	struct umidi_jack *jack;
+	u_int32_t count;
 
-	if (sc->sc_dying || !ep->num_open)
+	if (sc->sc_dying)
 		return;
 
-	jack = LIST_FIRST(&ep->queue_head);
-	if (jack && jack->opened) {
-		LIST_REMOVE(jack, u.out.queue_entry);
-		if (!LIST_EMPTY(&ep->queue_head)) {
-			memcpy(ep->buffer,
-			       LIST_FIRST(&ep->queue_head)->packet.buffer,
-			       UMIDI_PACKET_SIZE);
-			(void)start_output_transfer(ep);
-		}
-		if (jack->u.out.intr) {
-			(*jack->u.out.intr)(jack->arg);
-		}
+#ifdef UMIDI_DEBUG
+	if ( umididebug >= 200 )
+		microtime(&umidi_tv);
+#endif
+	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
+        if ( 0 == count % UMIDI_PACKET_SIZE ) {
+		DPRINTFN(200,("%s: %lu.%06lus out ep %p xfer length %u\n",
+			     USBDEVNAME(ep->sc->sc_dev),
+			     umidi_tv.tv_sec%100, umidi_tv.tv_usec, ep, count));
+        } else {
+                DPRINTF(("%s: output endpoint %p odd transfer length %u\n",
+                        USBDEVNAME(ep->sc->sc_dev), ep, count));
+        }
+	count /= UMIDI_PACKET_SIZE;
+	
+	/*
+	 * If while the transfer was pending we buffered any new messages,
+	 * move them to the start of the buffer.
+	 */
+	ep->next_slot -= count;
+	if ( ep->buffer < ep->next_slot ) {
+		memcpy(ep->buffer, ep->buffer + count,
+		       (char *)ep->next_slot - (char *)ep->buffer);
 	}
+	wakeup(ep);
+	/*
+	 * Do not want anyone else to see armed <- 0 before soliciting <- 1.
+	 * Running at splusb so the following should happen to be safe.
+	 */
+	ep->armed = 0;
+	if ( !ep->soliciting ) {
+		ep->soliciting = 1;
+		out_solicit(ep);
+	}
+}
+
+/*
+ * A jack on which we have received a packet must be called back on its
+ * out.intr handler before it will send us another; it is considered
+ * 'scheduled'. It is nice and predictable - as long as it is scheduled,
+ * we need no extra buffer space for it.
+ *
+ * In contrast, a jack that is open but not scheduled may supply us a packet
+ * at any time, driven by the top half, and we must be able to accept it, no
+ * excuses. So we must ensure that at any point in time there are at least
+ * (num_open - num_scheduled) slots free.
+ *
+ * As long as there are more slots free than that minimum, we can loop calling
+ * scheduled jacks back on their "interrupt" handlers, soliciting more
+ * packets, starting the USB transfer only when the buffer space is down to
+ * the minimum or no jack has any more to send.
+ */
+static void
+out_solicit(void *arg)
+{
+	struct umidi_endpoint *ep = arg;
+	int s;
+	umidi_packet_bufp end;
+	u_int16_t which;
+	struct umidi_jack *jack;
+	
+	end = ep->buffer + ep->buffer_size / sizeof *ep->buffer;
+	
+	for ( ;; ) {
+		s = splusb();
+		if ( end - ep->next_slot <= ep->num_open - ep->num_scheduled )
+			break; /* at splusb */
+		if ( ep->this_schedule == 0 ) {
+			if ( ep->next_schedule == 0 )
+				break; /* at splusb */
+			ep->this_schedule = ep->next_schedule;
+			ep->next_schedule = 0;
+		}
+		/*
+		 * At least one jack is scheduled. Find and mask off the least
+		 * set bit in this_schedule and decrement num_scheduled.
+		 * Convert mask to bit index to find the corresponding jack,
+		 * and call its intr handler. If it has a message, it will call
+		 * back one of the output methods, which will set its bit in
+		 * next_schedule (not copied into this_schedule until the
+		 * latter is empty). In this way we round-robin the jacks that
+		 * have messages to send, until the buffer is as full as we
+		 * dare, and then start a transfer.
+		 */
+		which = ep->this_schedule;
+		which &= (~which)+1; /* now mask of least set bit */
+		ep->this_schedule &= ~which;
+		-- ep->num_scheduled;
+		splx(s);
+
+		-- which; /* now 1s below mask - count 1s to get index */
+		which -= ((which >> 1) & 0x5555);/* SWAR credit aggregate.org */
+		which = (((which >> 2) & 0x3333) + (which & 0x3333));
+		which = (((which >> 4) + which) & 0x0f0f);
+		which +=  (which >> 8);
+		which &= 0x1f; /* the bit index a/k/a jack number */
+		
+		jack = ep->jacks[which];
+		if (jack->u.out.intr)
+			(*jack->u.out.intr)(jack->arg);
+	}
+	/* splusb at loop exit */
+	if ( !ep->armed  &&  ep->next_slot > ep->buffer )
+		ep->armed = (USBD_IN_PROGRESS == start_output_transfer(ep));
+	ep->soliciting = 0;
+	splx(s);
 }
