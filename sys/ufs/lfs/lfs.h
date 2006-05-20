@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.77.2.10 2006/05/20 22:09:28 riz Exp $	*/
+/*	$NetBSD: lfs.h,v 1.77.2.11 2006/05/20 22:10:29 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -1006,6 +1006,7 @@ struct lfs_inode_ext {
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
 #define i_lfs_fragsize		inode_ext.lfs->lfs_fragsize
 #define i_lfs_dchain		inode_ext.lfs->lfs_dchain
+#define i_lfs_pchain		inode_ext.lfs->lfs_pchain
 #define i_lfs_iflags		inode_ext.lfs->lfs_iflags
 #define i_lfs_hiblk		inode_ext.lfs->lfs_hiblk
 #define i_lfs_lbtree		inode_ext.lfs->lfs_lbtree
