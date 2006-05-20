@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.50 2006/05/20 12:02:47 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.51 2006/05/20 12:04:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.50 2006/05/20 12:02:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.51 2006/05/20 12:04:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ struct lockf {
 /* Maximum length of sleep chains to traverse to try and detect deadlock. */
 #define MAXDEPTH 50
 
-POOL_INIT(lockfpool, sizeof(struct lockf), 0, 0, 0, "lockfpl",
+static POOL_INIT(lockfpool, sizeof(struct lockf), 0, 0, 0, "lockfpl",
     &pool_allocator_nointr);
 
 /*
