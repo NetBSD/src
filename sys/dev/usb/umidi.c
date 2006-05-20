@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25.2.4 2006/05/20 03:05:05 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.5 2006/05/20 03:22:31 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.4 2006/05/20 03:05:05 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.5 2006/05/20 03:22:31 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,10 @@ int	umididebug = 0;
 static int umidi_open(void *, int,
 		      void (*)(void *, int), void (*)(void *), void *);
 static void umidi_close(void *);
-static int umidi_output(void *, int);
+static int umidi_channelmsg(void *, int, int, u_char *, int);
+static int umidi_commonmsg(void *, int, u_char *, int);
+static int umidi_sysex(void *, u_char *, int);
+static int umidi_rtmsg(void *, int);
 static void umidi_getinfo(void *, struct midi_info *);
 
 static usbd_status alloc_pipe(struct umidi_endpoint *);
@@ -118,22 +121,25 @@ static void dump_ep(struct umidi_endpoint *);
 static void dump_jack(struct umidi_jack *);
 #endif
 
-static void init_packet(struct umidi_packet *);
-
 static usbd_status start_input_transfer(struct umidi_endpoint *);
 static usbd_status start_output_transfer(struct umidi_endpoint *);
-static int out_jack_output(struct umidi_jack *, int);
+static int out_jack_output(struct umidi_jack *, u_char *, int, int);
 static void in_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void out_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-static void out_build_packet(int, struct umidi_packet *, uByte);
 
 
 struct midi_hw_if umidi_hw_if = {
 	umidi_open,
 	umidi_close,
-	umidi_output,
+	umidi_rtmsg,
 	umidi_getinfo,
 	0,		/* ioctl */
+};
+
+struct midi_hw_if_ext umidi_hw_if_ext = {
+	.channel = umidi_channelmsg,
+	.common  = umidi_commonmsg,
+	.sysex   = umidi_sysex,
 };
 
 USB_DECLARE_DRIVER(umidi);
@@ -327,14 +333,64 @@ umidi_close(void *addr)
 }
 
 int
-umidi_output(void *addr, int d)
+umidi_channelmsg(void *addr, int status, int channel, u_char *msg, int len)
 {
 	struct umidi_mididev *mididev = addr;
 
 	if (!mididev->out_jack || !mididev->opened)
 		return EIO;
+	
+	return out_jack_output(mididev->out_jack, msg, len, (status>>4)&0xf);
+}
 
-	return out_jack_output(mididev->out_jack, d);
+int
+umidi_commonmsg(void *addr, int status, u_char *msg, int len)
+{
+	struct umidi_mididev *mididev = addr;
+	int cin;
+
+	if (!mididev->out_jack || !mididev->opened)
+		return EIO;
+
+	switch ( len ) {
+	case 1: cin = 5; break;
+	case 2: cin = 2; break;
+	case 3: cin = 3; break;
+	default: return EIO; /* or gcc warns of cin uninitialized */
+	}
+	
+	return out_jack_output(mididev->out_jack, msg, len, cin);
+}
+
+int
+umidi_sysex(void *addr, u_char *msg, int len)
+{
+	struct umidi_mididev *mididev = addr;
+	int cin;
+
+	if (!mididev->out_jack || !mididev->opened)
+		return EIO;
+
+	switch ( len ) {
+	case 1: cin = 5; break;
+	case 2: cin = 6; break;
+	case 3: cin = (msg[2] == 0xf7) ? 7 : 4; break;
+	default: return EIO; /* or gcc warns of cin uninitialized */
+	}
+	
+	return out_jack_output(mididev->out_jack, msg, len, cin);
+}
+
+int
+umidi_rtmsg(void *addr, int d)
+{
+	struct umidi_mididev *mididev = addr;
+	u_char msg = d;
+
+	if (!mididev->out_jack || !mididev->opened)
+		return EIO;
+
+	return out_jack_output(mididev->out_jack, &msg, 1, 0xf);
 }
 
 void
@@ -347,6 +403,7 @@ umidi_getinfo(void *addr, struct midi_info *mi)
 	mi->props = MIDI_PROP_OUT_INTR;
 	if (mididev->in_jack)
 		mi->props |= MIDI_PROP_CAN_INPUT;
+	midi_register_hw_if_ext(&umidi_hw_if_ext);
 }
 
 
@@ -906,7 +963,6 @@ open_out_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *))
 
 	jack->arg = arg;
 	jack->u.out.intr = intr;
-	init_packet(&jack->packet);
 	jack->opened = 1;
 	ep->num_open++;
 
@@ -1150,42 +1206,11 @@ static const int packet_length[16] = {
 	/*F*/	1,
 };
 
-static const struct {
-	int		cin;
-	packet_state_t	next;
-} packet_0xFX[16] = {
-        /* System Common Messages (CIN 0x5 for single byte) */
-	/*F0: SysEx */	{ 0x04, PS_EXCL_1 },
-	/*F1: MTC */	{ 0x02, PS_NORMAL_1OF2 },
-	/*F2: S.POS */	{ 0x03, PS_NORMAL_1OF3 },
-	/*F3: S.SEL */	{ 0x02, PS_NORMAL_1OF2 },
-	/*F4: UNDEF */	{ 0x00, PS_INITIAL },
-	/*F5: UNDEF */	{ 0x00, PS_INITIAL },
-	/*F6: Tune */	{ 0x05, PS_END },
-	/*F7: EofEx */	{ 0x00, PS_INITIAL },
-	/* System Real-Time Messages (CIN 0xf for single byte) */
-	/*F8: Timing */	{ 0x0F, PS_END },
-	/*F9: UNDEF */	{ 0x00, PS_INITIAL },
-	/*FA: Start */	{ 0x0F, PS_END },
-	/*FB: Cont */	{ 0x0F, PS_END },
-	/*FC: Stop */	{ 0x0F, PS_END },
-	/*FD: UNDEF */	{ 0x00, PS_INITIAL },
-	/*FE: ActS */	{ 0x0F, PS_END },
-	/*FF: Reset */	{ 0x0F, PS_END },
-};
-
 #define	GET_CN(p)		(((unsigned char)(p)>>4)&0x0F)
 #define GET_CIN(p)		((unsigned char)(p)&0x0F)
 #define MIX_CN_CIN(cn, cin) \
 	((unsigned char)((((unsigned char)(cn)&0x0F)<<4)| \
 			  ((unsigned char)(cin)&0x0F)))
-
-static void
-init_packet(struct umidi_packet *packet)
-{
-	memset(packet->buffer, 0, UMIDI_PACKET_SIZE);
-	packet->state = PS_INITIAL;
-}
 
 static usbd_status
 start_input_transfer(struct umidi_endpoint *ep)
@@ -1237,73 +1262,47 @@ if ((unsigned char)(p)->buffer[1]!=0xFE)				\
  * has an easier time with what it receives from us, as we'll just take
  * already formed, semantically reasonable USB MIDI packets and munge them
  * into Midiman form.
- *
- * This function is deliberately call-compatible with memcpy and will
- * Midiman-garble any number of packets while copying a region a multiple
- * of 4 bytes long. out_build_packet should avoid building any packet with
- * CIN of 0 or 1 until they are later defined in the spec and given real
- * length values in packet_length.
  */
-static void *
-midiman_garble( void *dst, const void *src, size_t len) {
-	unsigned char *cd = dst;
-	unsigned char const *cs = src;
-	unsigned char *end = cd + len;
-
-	while ( cd < end ) {
-		cd[3] = (0xf0&*cs) | (packet_length[0x0f&*cs]);
-		*(cd++) = *(++cs);
-		*(cd++) = *(++cs);
-		*(cd++) = *(++cs);
-		++cd, ++cs;
-	}
-	return dst;
-}
 
 static int
-out_jack_output(struct umidi_jack *out_jack, int d)
+out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 {
 	struct umidi_endpoint *ep = out_jack->endpoint;
 	struct umidi_softc *sc = ep->sc;
+	struct umidi_packet *packet = &out_jack->packet;
 	int error;
 	int s;
 
 	if (sc->sc_dying)
 		return EIO;
 
+	if (!out_jack->opened)
+		return ENODEV; /* XXX as it was, is this the right errno? */
+
 	error = 0;
-	if (out_jack->opened) {
-		DPRINTFN(1000, ("umidi_output: ep=%p 0x%02x\n", ep, d));
-		out_build_packet(out_jack->cable_number, &out_jack->packet, d);
-		switch (out_jack->packet.state) {
-		case PS_EXCL_0:
-		case PS_END:
-			DPR_PACKET(out, sc, &out_jack->packet);
-			s = splusb();
-			if (LIST_EMPTY(&ep->queue_head)) {
-				(UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE)
-				? midiman_garble
-				: memcpy
-				)
-				(ep->buffer,
-				       out_jack->packet.buffer,
-				       UMIDI_PACKET_SIZE);
-				start_output_transfer(ep);
-			}
-			if (LIST_EMPTY(&ep->queue_head))
-				LIST_INSERT_HEAD(&ep->queue_head,
-						 out_jack, u.out.queue_entry);
-			else
-				LIST_INSERT_AFTER(ep->queue_tail,
-						  out_jack, u.out.queue_entry);
-			ep->queue_tail = out_jack;
-			splx(s);
-			break;
-		default:
-			error = EINPROGRESS;
-		}
-	} else
-		error = ENODEV;
+	DPRINTFN(1000, ("umidi_output: ep=%p len=%d cin=%#x\n", ep, len, cin));
+	
+	memset(packet->buffer, 0, UMIDI_PACKET_SIZE);
+	if (UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE)) {
+		memcpy(packet->buffer, src, len);
+		packet->buffer[3] = MIX_CN_CIN(out_jack->cable_number, len);
+	} else {
+		packet->buffer[0] = MIX_CN_CIN(out_jack->cable_number, cin);
+		memcpy(packet->buffer+1, src, len);
+	}
+
+	DPR_PACKET(out, sc, &out_jack->packet);
+	s = splusb();
+	if (LIST_EMPTY(&ep->queue_head)) {
+		memcpy(ep->buffer, out_jack->packet.buffer, UMIDI_PACKET_SIZE);
+		start_output_transfer(ep);
+	}
+	if (LIST_EMPTY(&ep->queue_head))
+		LIST_INSERT_HEAD(&ep->queue_head, out_jack, u.out.queue_entry);
+	else
+		LIST_INSERT_AFTER(ep->queue_tail, out_jack, u.out.queue_entry);
+	ep->queue_tail = out_jack;
+	splx(s);
 
 	return error;
 }
@@ -1390,11 +1389,7 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (jack && jack->opened) {
 		LIST_REMOVE(jack, u.out.queue_entry);
 		if (!LIST_EMPTY(&ep->queue_head)) {
-			(UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE)
-			? midiman_garble
-			: memcpy
-			)
-			(ep->buffer,
+			memcpy(ep->buffer,
 			       LIST_FIRST(&ep->queue_head)->packet.buffer,
 			       UMIDI_PACKET_SIZE);
 			(void)start_output_transfer(ep);
@@ -1404,114 +1399,3 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 	}
 }
-
-/*
- * TODO: allow System Real-Time Messages (of which there are only 8, all
- * single byte) to be passed through (in immediate CIN 0xf packets) without
- * disturbing the state machine for normal packets or being held up during
- * SysEx messages. Will require some extra per-jack state, and pointer to
- * jack passed by caller.
- *
- * Signal error when message byte (other than real-time) is encountered
- * when expecting data. Just ignoring the error is bogus. Requires a status
- * return to caller.
- */
-
-static void
-out_build_packet(int cable_number, struct umidi_packet *packet, uByte in)
-{
-	int cin;
-	uByte prev;
-
-retry:
-	switch (packet->state) {
-	case PS_END:
-	case PS_INITIAL:
-		prev = packet->buffer[1];
-		memset(packet->buffer, 0, UMIDI_PACKET_SIZE);
-		if (in<0x80) {
-			if (prev>=0x80 && prev<0xf0) {
-				/* running status */
-				out_build_packet(cable_number, packet, prev);
-				goto retry;
-			}
-			/* ??? */
-			break;
-		}
-		if (in>=0xf0) {
-			cin=packet_0xFX[in&0x0F].cin;
-			packet->state=packet_0xFX[in&0x0F].next;
-		} else {
-			cin=(unsigned char)in>>4;
-			switch (packet_length[cin]) {
-			case 2:
-				packet->state = PS_NORMAL_1OF2;
-				break;
-			case 3:
-				packet->state = PS_NORMAL_1OF3;
-				break;
-			default:
-				/* ??? */
-				packet->state = PS_INITIAL;
-			}
-		}
-		packet->buffer[0] = MIX_CN_CIN(cable_number, cin);
-		packet->buffer[1] = in;
-		break;
-	case PS_NORMAL_1OF3:
-		if (in>=0x80) { /* ??? */ packet->state = PS_END; break; }
-		packet->buffer[2] = in;
-		packet->state = PS_NORMAL_2OF3;
-		break;
-	case PS_NORMAL_2OF3:
-		if (in>=0x80) { /* ??? */ packet->state = PS_END; break; }
-		packet->buffer[3] = in;
-		packet->state = PS_END;
-		break;
-	case PS_NORMAL_1OF2:
-		if (in>=0x80) { /* ??? */ packet->state = PS_END; break; }
-		packet->buffer[2] = in;
-		packet->state = PS_END;
-		break;
-	case PS_EXCL_0:
-		memset(packet->buffer, 0, UMIDI_PACKET_SIZE);
-		if (in==0xF7) {
-			packet->buffer[0] = MIX_CN_CIN(cable_number, 0x05);
-			packet->buffer[1] = 0xF7;
-			packet->state = PS_END;
-			break;
-		}
-		if (in>=0x80) { /* ??? */ packet->state = PS_END; break; }
-		packet->buffer[1] = in;
-		packet->state = PS_EXCL_1;
-		break;
-	case PS_EXCL_1:
-		if (in==0xF7) {
-			packet->buffer[0] = MIX_CN_CIN(cable_number, 0x06);
-			packet->buffer[2] = 0xF7;
-			packet->state = PS_END;
-			break;
-		}
-		if (in>=0x80) { /* ??? */ packet->state = PS_END; break; }
-		packet->buffer[2] = in;
-		packet->state = PS_EXCL_2;
-		break;
-	case PS_EXCL_2:
-		if (in==0xF7) {
-			packet->buffer[0] = MIX_CN_CIN(cable_number, 0x07);
-			packet->buffer[3] = 0xF7;
-			packet->state = PS_END;
-			break;
-		}
-		if (in>=0x80) { /* ??? */ packet->state = PS_END; break; }
-		packet->buffer[0] = MIX_CN_CIN(cable_number, 0x04);
-		packet->buffer[3] = in;
-		packet->state = PS_EXCL_0;
-		break;
-	default:
-		printf("umidi: ambiguous state.\n");
-		packet->state = PS_INITIAL;
-		goto retry;
-	}
-}
-
