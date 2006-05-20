@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.14 2006/05/20 03:41:28 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.15 2006/05/20 03:43:58 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.14 2006/05/20 03:41:28 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.15 2006/05/20 03:43:58 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -327,7 +327,8 @@ static char const midi_cats[] = "\0\0\0\0\0\0\0\0\2\2\2\2\1\1\2\3";
 #define FST_RETURN(offp,endp,ret) \
 	return (s->pos=s->msg+(offp)), (s->end=s->msg+(endp)), (ret)
 
-enum fst_ret { FST_CHN, FST_COM, FST_SYX, FST_RT, FST_MORE, FST_ERR, FST_HUH };
+enum fst_ret { FST_CHN, FST_COM, FST_SYX, FST_RT, FST_MORE, FST_ERR, FST_HUH,
+               FST_SXP };
 
 /*
  * A MIDI finite state transducer suitable for receiving or transmitting. It
@@ -365,6 +366,22 @@ enum fst_ret { FST_CHN, FST_COM, FST_SYX, FST_RT, FST_MORE, FST_ERR, FST_HUH };
  * For all other message types except FST_SYX, the status byte is at *pos
  * (which may not necessarily be msg[0]!). There is only one SysEx status
  * byte, so the return value FST_SYX is sufficient to identify it.
+ *
+ * Two obscure points in the MIDI protocol complicate things further, both to
+ * do with the EndSysEx code, 0xf7. First, this code is permitted (and
+ * meaningless) outside of a System Exclusive message, anywhere a status byte
+ * could appear. Second, it is allowed to be absent at the end of a System
+ * Exclusive message (!) - any status byte at all (non-realtime) is allowed to
+ * terminate the message. Both require accomodation in the interface to
+ * midi_fst's caller. A stray 0xf7 should be ignored BUT should count as a
+ * message received for purposes of Active Sense timeout; the case is
+ * represented by a return of FST_COM with a length of zero (pos == end). A
+ * status byte other than 0xf7 during a system exclusive message will cause an
+ * FST_SXP (sysex plus) return; the bytes from pos to end are the end of the
+ * system exclusive message, and after handling those the caller should call
+   midi_fst again with the same input byte.
+ *
+ * midi(4) will never produce either such form of rubbish.
  */
 static enum fst_ret
 midi_fst(struct midi_state *s, u_char c, int compress)
@@ -401,6 +418,7 @@ midi_fst(struct midi_state *s, u_char c, int compress)
 		case 0xf2: s->state = MIDI_IN_COM0_2; break;
 		case 0xf3: s->state = MIDI_IN_COM0_1; break;
 		case 0xf6: s->state = MIDI_IN_START;  FST_RETURN(0,1,FST_COM);
+		case 0xf7: s->state = MIDI_IN_START;  FST_RETURN(0,0,FST_COM);
 		default: goto protocol_violation;
 		}
 		break;
@@ -540,18 +558,25 @@ midi_fst(struct midi_state *s, u_char c, int compress)
 		break;
 
         case MIDI_IN_SYX2_3 | MIDI_CAT_COMMON:
+        case MIDI_IN_SYX2_3 | MIDI_CAT_STATUS1:
+        case MIDI_IN_SYX2_3 | MIDI_CAT_STATUS2:
 		++ syxpos;
 		/* FALLTHROUGH */
         case MIDI_IN_SYX1_3 | MIDI_CAT_COMMON:
+        case MIDI_IN_SYX1_3 | MIDI_CAT_STATUS1:
+        case MIDI_IN_SYX1_3 | MIDI_CAT_STATUS2:
 		++ syxpos;
 		/* FALLTHROUGH */
         case MIDI_IN_SYX0_3 | MIDI_CAT_COMMON:
+        case MIDI_IN_SYX0_3 | MIDI_CAT_STATUS1:
+        case MIDI_IN_SYX0_3 | MIDI_CAT_STATUS2:
+		s->state = MIDI_IN_START;
 	        if ( c == 0xf7 ) {
-		        s->state = MIDI_IN_START;
 			s->msg[syxpos] = c;
 		        FST_RETURN(0,1+syxpos,FST_SYX);
 		}
-		/* FALLTHROUGH */
+		s->msg[syxpos] = 0xf7;
+		FST_RETURN(0,1+syxpos,FST_SXP);
 
         default:
 protocol_violation:
@@ -568,7 +593,6 @@ protocol_violation:
 			return FST_ERR;
 		case MIDI_IN_COM1_2:
 		case MIDI_IN_RUN1_2:
-		case MIDI_IN_SYX2_3:
 		case MIDI_IN_RNY1_2:
 		case MIDI_IN_RXY1_2:
 			s->bytesDiscarded.ev_count++;
@@ -582,10 +606,7 @@ protocol_violation:
 		case MIDI_IN_RXX0_2:
 		case MIDI_IN_RNX1_2:
 		case MIDI_IN_RXX1_2:
-		case MIDI_IN_SYX1_3:
 			s->bytesDiscarded.ev_count++;
-			/* FALLTHROUGH */
-		case MIDI_IN_SYX0_3:
 		        s->incompleteMessages.ev_count++;
 			break;
 #if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
@@ -618,6 +639,7 @@ midi_in(void *addr, int data)
 	if (!(sc->flags & FREAD))
 		return;		/* discard data if not reading */
 	
+sxp_again:
 	do
 		got = midi_fst(&sc->rcv, data, 0);
 	while ( got == FST_HUH );
@@ -658,12 +680,19 @@ midi_in(void *addr, int data)
 	 * sequencer API addresses them - but maybe our sequencer can't handle
 	 * them yet, so offer only to raw reader. (Which means, ultimately,
 	 * discard them if the sequencer's open, as it's not doing reads!)
+	 * -> When SysEx support is added to the sequencer, be sure to handle
+	 *    FST_SXP there too.
 	 */
 	case FST_SYX:
+	case FST_SXP:
 		count = sc->rcv.end - sc->rcv.pos;
 		MIDI_IN_LOCK(sc,s);
 		sc->rcv_quiescent = 0;
 		sc->rcv_eof = 0;
+		if ( 0 == count ) {
+			MIDI_IN_UNLOCK(sc,s);
+			break;
+		}
 		MIDI_BUF_PRODUCER_INIT(mb,idx);
 		MIDI_BUF_PRODUCER_INIT(mb,buf);
 		if (count > buf_lim - buf_cur
@@ -691,6 +720,8 @@ midi_in(void *addr, int data)
 	default: /* don't #ifdef this away, gcc will say FST_HUH not handled */
 		printf("midi_in: midi_fst returned %d?!\n", got);
 	}
+	if ( FST_SXP == got )
+		goto sxp_again;
 }
 
 void
@@ -1011,6 +1042,7 @@ int midi_msg_out(struct midi_softc *sc,
 					      contig, cp - contig);
 		break;
 	case FST_SYX:
+	case FST_SXP:
 		error = sc->hw_if_ext->sysex(sc->hw_hdl,
 					     contig, cp - contig);
 		break;
@@ -1056,7 +1088,10 @@ int midi_msg_out(struct midi_softc *sc,
  * Someday when there is fine-grained MP support, this should be reworked to
  * run in a callout so the writing process really could proceed concurrently.
  * But obviously where performance is a concern, interrupt-driven hardware
- * such as USB midi or (apparently) clcs will always be preferable.
+ * such as USB midi or (apparently) clcs will always be preferable. And it
+ * seems (kern/32651) that many of the devices currently working in poll mode
+ * may really have tx interrupt capability and want only implementation; that
+ * ought to happen.
  */
 int
 midi_poll_out(struct midi_softc *sc)
@@ -1214,9 +1249,9 @@ midi_start_output(struct midi_softc *sc)
 }
 
 static int
-real_writebytes(struct midi_softc *sc, u_char *buf, int cc)
+real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 {
-	u_char *bufe = buf + cc;
+	u_char *iend = ibuf + cc;
 	struct midi_buffer *mb = &sc->outbuf;
 	int arming = 0;
 	int count;
@@ -1233,15 +1268,15 @@ real_writebytes(struct midi_softc *sc, u_char *buf, int cc)
 	if (sc->dying)
 		return EIO;
 	
-	while ( buf < bufe ) {
+	while ( ibuf < iend ) {
 		do {
 			/*
 			 * If the hardware uses the extended hw_if, pass it
 			 * canonicalized messages, else pass it compressed ones.
 			 */
-			got = midi_fst(&sc->xmt, *buf, !sc->hw_if_ext);
+			got = midi_fst(&sc->xmt, *ibuf, !sc->hw_if_ext);
 		} while ( got == FST_HUH );
-		++ buf;
+		++ ibuf;
 		switch ( got ) {
 		case FST_MORE:
 			continue;
@@ -1255,6 +1290,7 @@ real_writebytes(struct midi_softc *sc, u_char *buf, int cc)
 		case FST_COM:
 		case FST_RT:
 		case FST_SYX:
+		case FST_SXP:
 			break; /* go add to buffer */
 #if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
 		default:
@@ -1262,9 +1298,13 @@ real_writebytes(struct midi_softc *sc, u_char *buf, int cc)
 #endif
 		}
 		count = sc->xmt.end - sc->xmt.pos;
+		if ( 0 == count ) /* can happen with stray 0xf7; see midi_fst */
+			continue;
 		/*
 		 * return EWOULDBLOCK if the data passed will not fit in
 		 * the buffer; the caller should have taken steps to avoid that.
+		 * If got==FST_SXP we lose the new status byte, but we're losing
+		 * anyway, so c'est la vie.
 		 */
 		if ( idx_cur == idx_lim || count > buf_lim - buf_cur ) {
 			MIDI_OUT_LOCK(sc,s);
@@ -1281,6 +1321,8 @@ real_writebytes(struct midi_softc *sc, u_char *buf, int cc)
 			MIDI_BUF_WRAP(buf);
 			-- count;
 		}
+		if ( FST_SXP == got )
+			-- ibuf; /* again with same status byte */
 	}
 	MIDI_OUT_LOCK(sc,s);
 	MIDI_BUF_PRODUCER_WBACK(mb,buf);
