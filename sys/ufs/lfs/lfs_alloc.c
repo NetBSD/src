@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.76.2.5 2006/05/20 22:09:28 riz Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.76.2.6 2006/05/20 22:11:58 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.5 2006/05/20 22:09:28 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.6 2006/05/20 22:11:58 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -101,14 +101,21 @@ static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
     struct vnode **);
 
 /* Constants for inode free bitmap */
-#define BYTESHIFT 3	/* 8 = 2 ** 3 */
-#define BYTEMASK  0x7	/* 8 - 1 */
-#define SET_BITMAP_FREE(F, I) \
-	(F)->lfs_ino_bitmap[(I) >> BYTESHIFT] |= (1 << ((I) & BYTEMASK))
-#define CLR_BITMAP_FREE(F, I) \
-	(F)->lfs_ino_bitmap[(I) >> BYTESHIFT] &= ~(1 << ((I) & BYTEMASK))
+#define BMSHIFT 5	/* 2 ** 5 = 32 */
+#define BMMASK  ((1 << BMSHIFT) - 1)
+#define SET_BITMAP_FREE(F, I) do { \
+	DLOG((DLOG_ALLOC, "lfs: ino %d wrd %d bit %d set\n", (int)(I), 	\
+	     (int)((I) >> BMSHIFT), (int)((I) & BMMASK)));		\
+	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] |= (1 << ((I) & BMMASK));	\
+} while (0)
+#define CLR_BITMAP_FREE(F, I) do { \
+	DLOG((DLOG_ALLOC, "lfs: ino %d wrd %d bit %d clr\n", (int)(I), 	\
+	     (int)((I) >> BMSHIFT), (int)((I) & BMMASK)));		\
+	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] &= ~(1 << ((I) & BMMASK));	\
+} while(0)
+
 #define ISSET_BITMAP_FREE(F, I) \
-	((F)->lfs_ino_bitmap[(I) >> BYTESHIFT] & (1 << ((I) & BYTEMASK)))
+	((F)->lfs_ino_bitmap[(I) >> BMSHIFT] & (1 << ((I) & BMMASK)))
 
 /*
  * Allocate a particular inode with a particular version number, freeing
@@ -257,11 +264,12 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	ip->i_ffs1_size = ip->i_size;
 	uvm_vnp_setsize(vp, ip->i_size);
 
-	maxino = ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) -
-		  fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
-	fs->lfs_ino_bitmap = realloc(fs->lfs_ino_bitmap,
-				     (maxino + BYTEMASK) >> BYTESHIFT,
-				     M_SEGMENT, M_WAITOK);
+	maxino = ((ip->i_size >> fs->lfs_bshift) - fs->lfs_cleansz -
+		  fs->lfs_segtabsz) * fs->lfs_ifpb;
+	fs->lfs_ino_bitmap = (lfs_bm_t *)
+		realloc(fs->lfs_ino_bitmap, ((maxino + BMMASK) >> BMSHIFT) *
+			sizeof(lfs_bm_t), M_SEGMENT, M_WAITOK);
+	KASSERT(fs->lfs_ino_bitmap != NULL);
 
 	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 		fs->lfs_ifpb;
@@ -503,23 +511,36 @@ lfs_last_alloc_ino(struct lfs *fs)
 static inline ino_t
 lfs_freelist_prev(struct lfs *fs, ino_t ino)
 {
-	ino_t tino;
-	struct buf *bp;
-	IFILE *ifp;
+	ino_t tino, bound, bb, freehdbb;
 
-	for (tino = ino - 1; tino > LFS_UNUSED_INUM; tino--) {
-		if (fs->lfs_ino_bitmap) {
-			if (ISSET_BITMAP_FREE(fs, tino))
-				break;
-		} else {
-			LFS_IENTRY(ifp, fs, tino, bp);
-			if (ifp->if_daddr == LFS_UNUSED_DADDR) {
-				brelse(bp);
-				break;
-			}
-			brelse(bp);
-		}
-	}
+	if (fs->lfs_freehd == LFS_UNUSED_INUM)	 /* No free inodes at all */
+		return LFS_UNUSED_INUM;
+
+	/* Search our own word first */
+	bound = ino & ~BMMASK;
+	for (tino = ino - 1; tino > bound && tino > LFS_UNUSED_INUM; tino--)
+		if (ISSET_BITMAP_FREE(fs, tino))
+			return tino;
+	/* If there are no lower words to search, just return */
+	if (ino >> BMSHIFT == 0)
+		return LFS_UNUSED_INUM;
+
+	/*
+	 * Find a word with a free inode in it.  We have to be a bit
+	 * careful here since ino_t is unsigned.
+	 */
+	freehdbb = (fs->lfs_freehd >> BMSHIFT);
+	for (bb = (ino >> BMSHIFT) - 1; bb >= freehdbb && bb > 0; --bb)
+		if (fs->lfs_ino_bitmap[bb])
+			break;
+	if (fs->lfs_ino_bitmap[bb] == 0)
+		return LFS_UNUSED_INUM;
+
+	/* Search the word we found */
+	for (tino = (bb << BMSHIFT) | BMMASK; tino > LFS_UNUSED_INUM; tino--)
+		if (ISSET_BITMAP_FREE(fs, tino))
+			break;
+
 	if (tino <= LFS_IFILE_INUM)
 		tino = LFS_UNUSED_INUM;
 
@@ -555,6 +576,7 @@ lfs_vfree(void *v)
 	ino = ip->i_number;
 
 	ASSERT_NO_SEGLOCK(fs);
+	DLOG((DLOG_ALLOC, "lfs_vfree: free ino %lld\n", (long long)ino));
 
 	/* Drain of pending writes */
 	simple_lock(&vp->v_interlock);
@@ -608,7 +630,7 @@ lfs_vfree(void *v)
 			LFS_IENTRY(ifp, fs, ino, bp);
 			LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
 			LFS_PUT_HEADFREE(fs, cip, cbp, ino);
-			DLOG((DLOG_ALLOC, "lfs_valloc: headfree %lld -> %lld\n",
+			DLOG((DLOG_ALLOC, "lfs_vfree: headfree %lld -> %lld\n",
 			     (long long)ifp->if_nextfree, (long long)ino));
 			LFS_BWRITE_LOG(bp); /* Ifile */
 
@@ -696,8 +718,10 @@ lfs_order_freelist(struct lfs *fs)
 	
 	maxino = ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) -
 		  fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
-	fs->lfs_ino_bitmap = malloc((maxino + BYTEMASK) >> BYTESHIFT,
-				    M_SEGMENT, M_WAITOK | M_ZERO);
+	fs->lfs_ino_bitmap = (lfs_bm_t *)
+		malloc(((maxino + BMMASK) >> BMSHIFT) * sizeof(lfs_bm_t),
+		       M_SEGMENT, M_WAITOK | M_ZERO);
+	KASSERT(fs->lfs_ino_bitmap != NULL);
 
 	firstino = lastino = LFS_UNUSED_INUM;
 	for (ino = 0; ino < maxino; ino++) {
