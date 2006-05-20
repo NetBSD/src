@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.h,v 1.4.14.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: umidi_quirks.h,v 1.4.14.2 2006/05/20 02:59:19 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct umq_data {
 	int		type;
 #define UMQ_TYPE_FIXED_EP	1
 #define UMQ_TYPE_YAMAHA		2
+#define UMQ_TYPE_MIDIMAN_GARBLE	3
 	void		*data;
 };
 
@@ -103,12 +104,17 @@ umq_##v##_##p##_##i##_fixed_ep_endpoints[noep+niep]
 #define UMQ_FIXED_EP_REG(v, p, i)					\
 { UMQ_TYPE_FIXED_EP, (void *)&umq_##v##_##p##_##i##_fixed_ep_desc }
 
+/*
+ * generic boolean quirk, no data
+ */
+#define UMQ_TYPE(t)							\
+{ UMQ_TYPE_##t, NULL }
 
 /*
  * quirk - yamaha style midi I/F
  */
 #define UMQ_YAMAHA_REG(v, p, i)						\
-{ UMQ_TYPE_YAMAHA, NULL }
+UMQ_TYPE(YAMAHA)
 
 
 /* extern struct umidi_quirk umidi_quirklist[]; */
