@@ -1,4 +1,4 @@
-/*	$NetBSD: dotest.c,v 1.3 2002/02/21 07:38:19 itojun Exp $	*/
+/*	$NetBSD: dotest.c,v 1.4 2006/05/20 20:30:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void print_str(const char *s);
 void print_num(const int);
