@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.5 2006/05/20 21:18:49 riz Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.6 2006/05/20 21:50:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.5 2006/05/20 21:18:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.6 2006/05/20 21:50:26 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -507,7 +507,7 @@ fail:
  * Mark the block dirty.  Do segment and avail accounting.
  */
 static int
-update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
+update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	    daddr_t ndaddr, size_t size, struct proc *p)
 {
 	int error;
@@ -524,7 +524,7 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 
 	KASSERT(lbn >= 0);	/* no indirect blocks */
 
-	if ((error = lfs_rf_valloc(fs, ino, version, p, &vp)) != 0) {
+	if ((error = lfs_rf_valloc(fs, ino, vers, p, &vp)) != 0) {
 		DLOG((DLOG_RF, "update_meta: ino %d: lfs_rf_valloc"
 		      " returned %d\n", ino, error));
 		return error;
@@ -1738,7 +1738,8 @@ sysctl_lfs_dostats(SYSCTLFN_ARGS)
 	extern int lfs_dostats;
 	int error;
 
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	/*XXXUNCONST*/
+	error = sysctl_lookup(SYSCTLFN_CALL(__UNCONST(rnode)));
 	if (error || newp == NULL)
 		return (error);
 
@@ -1749,8 +1750,8 @@ sysctl_lfs_dostats(SYSCTLFN_ARGS)
 }
 
 struct shortlong {
-	char *sname;
-	char *lname;
+	const char *sname;
+	const char *lname;
 };
 
 SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
@@ -2026,7 +2027,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	if ((kva = uvm_pagermapin(pgs, npages, UVMPAGER_MAPIN_WRITE |
 				      (((SEGSUM *)(sp->segsum))->ss_nfinfo < 1 ?
 				       UVMPAGER_MAPIN_WAITOK : 0))) == 0x0) {
-		int version;
+		int vers;
 
 		DLOG((DLOG_PAGE, "lfs_gop_write: forcing write\n"));
 #if 0
@@ -2041,10 +2042,10 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		} else
 			lfs_updatemeta(sp);
 
-		version = sp->fip->fi_version;
+		vers = sp->fip->fi_version;
 		(void) lfs_writeseg(fs, sp);
 
-		sp->fip->fi_version = version;
+		sp->fip->fi_version = vers;
 		sp->fip->fi_ino = ip->i_number;
 		/* Add the current file to the segment summary. */
 		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
@@ -2105,14 +2106,14 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 		/* If no room in the current segment, finish it up */
 		if (sp->sum_bytes_left < sizeof(int32_t) ||
 		    sp->seg_bytes_left < (1 << fs->lfs_bshift)) {
-			int version;
+			int vers;
 
 			lfs_updatemeta(sp);
 
-			version = sp->fip->fi_version;
+			vers = sp->fip->fi_version;
 			(void) lfs_writeseg(fs, sp);
 
-			sp->fip->fi_version = version;
+			sp->fip->fi_version = vers;
 			sp->fip->fi_ino = ip->i_number;
 			/* Add the current file to the segment summary. */
 			++((SEGSUM *)(sp->segsum))->ss_nfinfo;

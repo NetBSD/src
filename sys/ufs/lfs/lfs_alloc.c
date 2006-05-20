@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.76.2.2 2005/05/07 11:21:29 tron Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.76.2.3 2006/05/20 21:50:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.2 2005/05/07 11:21:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.3 2006/05/20 21:50:26 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -110,7 +110,7 @@ static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
  * Called with the Ifile inode locked.
  */
 int
-lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
+lfs_rf_valloc(struct lfs *fs, ino_t ino, int vers, struct proc *p,
 	      struct vnode **vpp)
 {
 	IFILE *ifp;
@@ -134,16 +134,16 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 
 		*vpp = vp;
 		ip = VTOI(vp);
-		if (ip->i_gen == version)
+		if (ip->i_gen == vers)
 			return 0;
-		else if (ip->i_gen < version) {
+		else if (ip->i_gen < vers) {
 			VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
-			ip->i_gen = ip->i_ffs1_gen = version;
+			ip->i_gen = ip->i_ffs1_gen = vers;
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 			return 0;
 		} else {
 			DLOG((DLOG_RF, "ino %d: sought version %d, got %d\n",
-			       ino, version, ip->i_ffs1_gen));
+			       ino, vers, ip->i_ffs1_gen));
 			vput(vp);
 			*vpp = NULLVP;
 			return EEXIST;
@@ -162,7 +162,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 
 	LFS_IENTRY(ifp, fs, ino, bp);
 	oldnext = ifp->if_nextfree;
-	ifp->if_version = version;
+	ifp->if_version = vers;
 	brelse(bp);
 
 	LFS_GET_HEADFREE(fs, cip, cbp, &ino);
@@ -186,7 +186,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 		LFS_BWRITE_LOG(bp);
 	}
 
-	error = lfs_ialloc(fs, fs->lfs_ivnode, ino, version, &vp);
+	error = lfs_ialloc(fs, fs->lfs_ivnode, ino, vers, &vp);
 	if (error == 0) {
 		/*
 		 * Make it VREG so we can put blocks on it.  We will change
@@ -229,7 +229,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	IFILE_V1 *ifp_v1;
 	struct buf *bp, *cbp;
 	int error;
-	daddr_t i, blkno, max;
+	daddr_t i, blkno, xmax;
 	ino_t oldlast;
 	CLEANERINFO *cip;
 
@@ -254,10 +254,10 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	if (fs->lfs_freehd == LFS_UNUSED_INUM)
 		panic("inode 0 allocated [2]");
 #endif /* DIAGNOSTIC */
-	max = i + fs->lfs_ifpb;
+	xmax = i + fs->lfs_ifpb;
 
 	if (fs->lfs_version == 1) {
-		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
+		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < xmax; ++ifp_v1) {
 			ifp_v1->if_version = 1;
 			ifp_v1->if_daddr = LFS_UNUSED_DADDR;
 			ifp_v1->if_nextfree = ++i;
@@ -265,7 +265,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 		ifp_v1--;
 		ifp_v1->if_nextfree = oldlast;
 	} else {
-		for (ifp = (IFILE *)bp->b_data; i < max; ++ifp) {
+		for (ifp = (IFILE *)bp->b_data; i < xmax; ++ifp) {
 			ifp->if_version = 1;
 			ifp->if_daddr = LFS_UNUSED_DADDR;
 			ifp->if_nextfree = ++i;
@@ -273,7 +273,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 		ifp--;
 		ifp->if_nextfree = oldlast;
 	}
-	LFS_PUT_TAILFREE(fs, cip, cbp, max - 1);
+	LFS_PUT_TAILFREE(fs, cip, cbp, xmax - 1);
 
 	(void) LFS_BWRITE_LOG(bp); /* Ifile */
 

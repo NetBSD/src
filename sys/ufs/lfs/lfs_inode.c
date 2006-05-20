@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.90.2.1 2005/05/07 11:21:30 tron Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.90.2.2 2006/05/20 21:50:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.90.2.1 2005/05/07 11:21:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.90.2.2 2006/05/20 21:50:26 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -401,7 +401,7 @@ lfs_truncate(void *v)
 		 * So there is a window where another thread could see a whole
 		 * zeroed page past EOF, but that's life.
 		 */
-		daddr_t lbn;
+		daddr_t xlbn;
 		voff_t eoz;
 
 		aflags = ioflag & IO_SYNC ? B_SYNC : 0;
@@ -412,9 +412,9 @@ lfs_truncate(void *v)
 				    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 			goto errout;
 		}
-		lbn = lblkno(fs, length);
-		size = blksize(fs, oip, lbn);
-		eoz = MIN(lblktosize(fs, lbn) + size, osize);
+		xlbn = lblkno(fs, length);
+		size = blksize(fs, oip, xlbn);
+		eoz = MIN(lblktosize(fs, xlbn) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
 		if (round_page(eoz) > round_page(length)) {
 			simple_lock(&ovp->v_interlock);
