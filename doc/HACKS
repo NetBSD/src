@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.70 2006/05/20 20:34:29 christos Exp $
+# $NetBSD: HACKS,v 1.71 2006/05/20 23:41:16 dan Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -149,6 +149,7 @@ file	lib/libc/stdio/vfwprintf.c	: 1.8
 file	libexec/ld.elf_so/arch/m68k/mdreloc.c : 1.20
 file	libexec/ld.elf_so/arch/sparc/mdreloc.c : 1.39
 file	libexec/ld.elf_so/arch/sparc64/mdreloc.c : 1.39
+file	libexec/ld.elf_so/arch/x86_64/mdreloc.c	: 1.27
 file	sbin/fsck_ext2fs/dir.c		: 1.19
 file	sbin/routed/rtquery/rtquery.c	: 1.18
 file	sys/crypto/cast128/cast128.c	: 1.9
