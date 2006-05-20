@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.25 2006/04/14 22:25:42 christos Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.1 2006/05/20 02:15:21 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25 2006/04/14 22:25:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.1 2006/05/20 02:15:21 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ static void out_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void out_build_packet(int, struct umidi_packet *, uByte);
 
 
-const struct midi_hw_if umidi_hw_if = {
+struct midi_hw_if umidi_hw_if = {
 	umidi_open,
 	umidi_close,
 	umidi_output,
@@ -164,13 +164,12 @@ USB_ATTACH(umidi)
 {
 	usbd_status err;
 	USB_ATTACH_START(umidi, sc, uaa);
-	char *devinfop;
+	char devinfo[1024];
 
 	DPRINTFN(1,("umidi_attach\n"));
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
-	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
-	usbd_devinfo_free(devinfop);
+	usbd_devinfo(uaa->device, 0, devinfo);
+	printf("\n%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	sc->sc_iface = uaa->iface;
 	sc->sc_udev = uaa->device;
@@ -534,7 +533,6 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 	desc = TO_D(usbd_get_interface_descriptor(sc->sc_iface));
 	for (i=(int)TO_IFD(desc)->bNumEndpoints-1; i>=0; i--) {
 		epd = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
-		KASSERT(epd != NULL);
 		if (UE_GET_XFERTYPE(epd->bmAttributes) == UE_BULK) {
 			dir = UE_GET_DIR(epd->bEndpointAddress);
 			if (dir==UE_DIR_OUT && !out_addr)
