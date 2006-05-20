@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.8 2006/05/20 21:59:46 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.9 2006/05/20 22:00:51 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.8 2006/05/20 21:59:46 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.9 2006/05/20 22:00:51 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1459,6 +1459,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int dirty;	/* number of dirty pages in a block */
 	int tdirty;
 	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
+	int pagedaemon = (curproc == uvm.pagedaemon_proc);
 
 	ASSERT_MAYBE_SEGLOCK(fs);
   top:
@@ -1515,13 +1516,12 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			 * for the cleaner, while the cleaner waits for the
 			 * segment lock.  Just bail in that case.
 			 */
-			if ((pg->flags & PG_BUSY) && LFS_SEGLOCK_HELD(fs)) {
-				if (by_list) {
-					if (i > 0)
-						uvm_page_unbusy(pgs, i);
-					DLOG((DLOG_PAGE, "lfs_putpages: avoiding 3-way deadlock\n"));
-					return -1;
-				}
+			if ((pg->flags & PG_BUSY) &&
+			    (pagedaemon || LFS_SEGLOCK_HELD(fs))) {
+				if (by_list && i > 0)
+					uvm_page_unbusy(pgs, i);
+				DLOG((DLOG_PAGE, "lfs_putpages: avoiding 3-way or pagedaemon deadlock\n"));
+				return -1;
 			}
 
 			while (pg->flags & PG_BUSY) {
