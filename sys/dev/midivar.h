@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.11.14.4 2006/05/20 03:14:12 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.5 2006/05/20 03:15:32 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 #include <sys/callout.h>
 #include <sys/device.h>
+#include <sys/lock.h>
 
 struct midi_buffer {
 	u_char	*inp;
@@ -70,6 +71,8 @@ struct midi_softc {
 	struct	midi_buffer inbuf;
 	int	props;
 	int	rchan, wchan;
+	struct  simplelock out_lock; /* overkill or no? */
+	int     hw_interrupted;
 	int	pbus;
 	struct	selinfo wsel;	/* write selector */
 	struct	selinfo rsel;	/* read selector */
