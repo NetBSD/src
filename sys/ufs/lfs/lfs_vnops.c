@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.15 2006/05/20 22:16:00 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.16 2006/05/20 22:19:33 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.15 2006/05/20 22:16:00 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.16 2006/05/20 22:19:33 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1136,14 +1136,15 @@ lfs_strategy(void *v)
 				      "lfs_strategy: sleeping on ino %d lbn %"
 				      PRId64 "\n", ip->i_number, bp->b_lblkno));
 				simple_lock(&fs->lfs_interlock);
-				if (fs->lfs_seglock)
+				if (fs->lfs_seglock) {
 					ltsleep(&fs->lfs_seglock,
 						(PRIBIO + 1) | PNORELOCK,
 						"lfs_strategy", 0,
 						&fs->lfs_interlock);
-				/* Things may be different now; start over. */
-				slept = 1;
-				break;
+					slept = 1;
+					break;
+				}
+				simple_unlock(&fs->lfs_interlock);
 			}
 		}
 		simple_lock(&fs->lfs_interlock);
@@ -1217,8 +1218,10 @@ lfs_flush_dirops(struct lfs *fs)
 		 * make sure that we don't clear IN_MODIFIED
 		 * unnecessarily.
 		 */
-		if (vp->v_flag & VXLOCK)
+		if (vp->v_flag & VXLOCK) {
+			simple_lock(&fs->lfs_interlock);
 			continue;
+		}
 		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
 			needunlock = 1;
 		} else {
@@ -2044,9 +2047,10 @@ again:
 		preempt(1);
 
 		/* We've lost the interlock.  Start over. */
-		simple_lock(&vp->v_interlock);
-		if (error == EDEADLK)
+		if (error == EDEADLK) {
+			simple_lock(&vp->v_interlock);
 			goto again;
+		}
 	}
 
 	KASSERT(sp->vp == vp);
