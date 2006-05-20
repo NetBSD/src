@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.12 2005/12/11 12:18:19 christos Exp $ */
+/*	$NetBSD: bootxx.c,v 1.13 2006/05/20 20:38:39 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,8 @@ main(void)
 int
 copyboot(struct open_file *fp, u_long *addr)
 {
-	int	n, i, blknum;
+	int	i, blknum;
+	size_t	n;
 	char	*laddr = (char *) *addr;
 	union boothead {
 		struct exec ah;
