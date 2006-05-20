@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.24.6.3 2006/05/20 14:02:54 chap Exp $
+.\" $NetBSD: midi.4,v 1.24.6.4 2006/05/20 14:04:20 chap Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -575,15 +575,15 @@ Some
 sequencer events and
 .Xr ioctl 2
 operations are unimplemented, as
-.In sys/midiio.h
+.Aq Pa sys/midiio.h
 notes.
 .Pp The native
 .Nx
 sequencer macros in
-.In sys/midiio.h
+.Aq Pa sys/midiio.h
 should be used as the basis for fully OSS source-compatible ones to be
 defined in
-.In sys/soundcard.h
+.Aq Pa sys/soundcard.h
 so sources written for OSS can be easily compiled.
 .Pp
 The sequencer blocks (or returns
