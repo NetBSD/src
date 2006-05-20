@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.9 2006/05/20 22:00:51 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.10 2006/05/20 22:02:06 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.9 2006/05/20 22:00:51 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.10 2006/05/20 22:02:06 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,6 +298,10 @@ lfs_fsync(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error, wait;
+
+	/* If we're mounted read-only, don't try to sync. */
+	if (VTOI(vp)->i_lfs->lfs_ronly)
+		return 0;
 
 	/*
 	 * Trickle sync checks for need to do a checkpoint after possible

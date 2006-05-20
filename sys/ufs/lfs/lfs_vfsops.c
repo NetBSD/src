@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.10 2006/05/20 22:01:26 riz Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.11 2006/05/20 22:02:06 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.10 2006/05/20 22:01:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.11 2006/05/20 22:02:06 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -474,9 +474,15 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		fs = ump->um_lfs;
 		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
-			 * Changing from read-only to read/write
+			 * Changing from read-only to read/write.
+			 * Note in the superblocks that we're writing.
 			 */
 			fs->lfs_ronly = 0;
+			if (fs->lfs_pflags & LFS_PF_CLEAN) {
+				fs->lfs_pflags &= ~LFS_PF_CLEAN;
+				lfs_writesuper(fs, fs->lfs_sboffs[0]);
+				lfs_writesuper(fs, fs->lfs_sboffs[1]);
+			}
 		}
 		if (args.fspec == 0) {
 			/*
