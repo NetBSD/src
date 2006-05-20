@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.8.14.7 2006/05/20 03:32:45 chap Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.8.14.8 2006/05/20 03:34:22 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,9 +36,6 @@
  */
 
 #define UMIDI_PACKET_SIZE 4
-struct umidi_packet {
-	char		buffer[UMIDI_PACKET_SIZE];
-};
 
 /*
  * hierarchie
@@ -67,14 +64,12 @@ struct umidi_jack {
 	struct umidi_endpoint	*endpoint;
 	/* */
 	int			cable_number;
-	struct umidi_packet	packet;
 	void			*arg;
 	int			binded;
 	int			opened;
 	union {
 		struct {
 			void			(*intr)(void *);
-			LIST_ENTRY(umidi_jack)	queue_entry;
 		} out;
 		struct {
 			void			(*intr)(void *, int);
@@ -83,6 +78,7 @@ struct umidi_jack {
 };
 
 #define UMIDI_MAX_EPJACKS	16
+typedef unsigned char (*umidi_packet_bufp)[UMIDI_PACKET_SIZE];
 /* endpoint data */
 struct umidi_endpoint {
 	struct umidi_softc	*sc;
@@ -90,13 +86,20 @@ struct umidi_endpoint {
 	int			addr;
 	usbd_pipe_handle	pipe;
 	usbd_xfer_handle	xfer;
-	unsigned char		(*buffer)[UMIDI_PACKET_SIZE];
+	umidi_packet_bufp	buffer;
+	umidi_packet_bufp	next_slot;
 	u_int32_t               buffer_size;
+	int			num_scheduled;
 	int			num_open;
 	int			num_jacks;
+	int			soliciting;
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	void			*solicit_cookie;
+#endif
+	int			armed;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
-	LIST_HEAD(, umidi_jack)	queue_head;
-	struct umidi_jack	*queue_tail;
+	u_int16_t		this_schedule; /* see UMIDI_MAX_EPJACKS */
+	u_int16_t		next_schedule;
 };
 
 /* software context */
