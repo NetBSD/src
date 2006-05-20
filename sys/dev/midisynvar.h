@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.9.14.5 2006/05/20 03:27:31 chap Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.9.14.6 2006/05/20 03:31:22 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.11.14.11 2006/05/20 03:27:31 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.12 2006/05/20 03:31:22 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

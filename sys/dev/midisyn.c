@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.17.2.5 2006/05/20 03:27:31 chap Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.17.2.6 2006/05/20 03:31:22 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.5 2006/05/20 03:27:31 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.17.2.6 2006/05/20 03:31:22 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
