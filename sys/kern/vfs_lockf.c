@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.51 2006/05/20 12:04:21 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.52 2006/05/20 12:06:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.51 2006/05/20 12:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.52 2006/05/20 12:06:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ struct lockf {
 	off_t	lf_start;	 /* The byte # of the start of the lock */
 	off_t	lf_end;		 /* The byte # of the end of the lock (-1=EOF)*/
 	void	*lf_id;		 /* process or file description holding lock */
-	struct	lwp *lf_lwp;	 /* LWP waiting for lock */
 	struct	lockf **lf_head; /* Back pointer to the head of lockf list */
 	struct	lockf *lf_next;	 /* Next lock on this vnode, or blocking lock */
 	struct  locklist lf_blkhd; /* List of requests blocked on this lock */
@@ -544,22 +543,39 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			struct lwp *wlwp;
 			volatile const struct lockf *waitblock;
 			int i = 0;
+			struct proc *p;
 
-			/*
-			 * The block is waiting on something.  if_lwp will be
-			 * 0 once the lock is granted, so we terminate the
-			 * loop if we find this.
-			 */
-			wlwp = block->lf_lwp;
-			while (wlwp && (i++ < maxlockdepth)) {
+			p = (struct proc *)block->lf_id;
+			KASSERT(p != NULL);
+			while (i++ < maxlockdepth) {
+				simple_lock(&p->p_lock);
+				if (p->p_nlwps > 1) {
+					simple_unlock(&p->p_lock);
+					break;
+				}
+				wlwp = LIST_FIRST(&p->p_lwps);
+				if (wlwp->l_wmesg != lockstr) {
+					simple_unlock(&p->p_lock);
+					break;
+				}
+				simple_unlock(&p->p_lock);
 				waitblock = wlwp->l_wchan;
+				if (waitblock == NULL) {
+					/*
+					 * this lwp just got up but
+					 * not returned from ltsleep yet.
+					 */
+					break;
+				}
 				/* Get the owner of the blocking lock */
 				waitblock = waitblock->lf_next;
 				if ((waitblock->lf_flags & F_POSIX) == 0)
 					break;
-				wlwp = waitblock->lf_lwp;
-				if (wlwp == lock->lf_lwp) {
+				p = (struct proc *)waitblock->lf_id;
+				if (p == curproc) {
 					lf_free(lock);
+					printf("deadlock detected pid=%d\n",
+					    (int)curproc->p_pid);
 					return EDEADLK;
 				}
 			}
@@ -623,7 +639,6 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 	 * Skip over locks owned by other processes.
 	 * Handle any locks that overlap and are owned by ourselves.
 	 */
-	lock->lf_lwp = 0;
 	prev = head;
 	block = *head;
 	needtolink = 1;
@@ -888,7 +903,6 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		KASSERT(curproc == (struct proc *)ap->a_id);
 	}
 	lock->lf_id = (struct proc *)ap->a_id;
-	lock->lf_lwp = curlwp;
 
 	/*
 	 * Do the requested operation.
