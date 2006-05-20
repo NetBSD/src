@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.76.2.3 2006/05/20 21:50:26 riz Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.76.2.4 2006/05/20 21:55:43 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.3 2006/05/20 21:50:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.4 2006/05/20 21:55:43 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -328,7 +328,8 @@ lfs_valloc(void *v)
 	 */
 	LFS_IENTRY(ifp, fs, new_ino, bp);
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
-		panic("lfs_valloc: inuse inode %d on the free list", new_ino);
+		panic("lfs_valloc: inuse inode %llu on the free list",
+		    (unsigned long long)new_ino);
 	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
 	DLOG((DLOG_ALLOC, "lfs_valloc: headfree %d -> %d\n", new_ino,
 	      ifp->if_nextfree));

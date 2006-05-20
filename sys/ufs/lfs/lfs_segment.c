@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.158.2.2 2006/05/20 21:50:26 riz Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.158.2.3 2006/05/20 21:55:43 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.2 2006/05/20 21:50:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.3 2006/05/20 21:55:43 riz Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1333,9 +1333,9 @@ lfs_update_single(struct lfs *fs, struct segment *sp, struct vnode *vp,
 			       (int64_t)osize -
 			       (sizeof (struct ufs1_dinode) * ndupino +
 				sup->su_nbytes));
-			printf("lfs_updatemeta: ino %d, lbn %" PRId64
+			printf("lfs_updatemeta: ino %llu, lbn %" PRId64
 			       ", addr = 0x%" PRIx64 "\n",
-			       ip->i_number, lbn, daddr);
+			       (unsigned long long)ip->i_number, lbn, daddr);
 			printf("lfs_updatemeta: ndupino=%d\n", ndupino);
 			panic("lfs_updatemeta: negative bytes");
 			sup->su_nbytes = osize -
@@ -2501,7 +2501,8 @@ lfs_vunref(struct vnode *vp)
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
 	if (vp->v_usecount <= 0) {
-		printf("lfs_vunref: inum is %d\n", VTOI(vp)->i_number);
+		printf("lfs_vunref: inum is %llu\n", (unsigned long long)
+		    VTOI(vp)->i_number);
 		printf("lfs_vunref: flags are 0x%lx\n", (u_long)vp->v_flag);
 		printf("lfs_vunref: usecount = %ld\n", (long)vp->v_usecount);
 		panic("lfs_vunref: v_usecount < 0");
