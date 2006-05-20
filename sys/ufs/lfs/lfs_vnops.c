@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.23 2006/05/20 22:43:42 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.24 2006/05/20 22:44:08 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.23 2006/05/20 22:43:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.24 2006/05/20 22:44:08 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1659,7 +1659,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			KASSERT(pg != NULL);
 
 			/*
-			 * If we're holding the segment lock, we can deadlocked
+			 * If we're holding the segment lock, we can deadlock
 			 * against a process that has our page and is waiting
 			 * for the cleaner, while the cleaner waits for the
 			 * segment lock.  Just bail in that case.
@@ -2006,7 +2006,7 @@ lfs_putpages(void *v)
 	 * unless genfs_putpages returns EDEADLK; then we must flush
 	 * what we have, and correct FIP and segment header accounting.
 	 */
-
+    get_seglock:
 	seglocked = (ap->a_flags & PGO_LOCKED) != 0;
 	if (!seglocked) {
 		simple_unlock(&vp->v_interlock);
@@ -2066,7 +2066,12 @@ again:
 		sp->vp = NULL;
 		if (!seglocked)
 			lfs_segunlock(fs);
-		return EDEADLK;
+		if (pagedaemon)
+			return EDEADLK;
+		/* else seglocked == 0 */
+		preempt(1);
+		simple_lock(&vp->v_interlock);
+		goto get_seglock;
 	}
 
 	error = genfs_putpages(v);
