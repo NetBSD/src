@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs_small.c,v 1.3 2006/05/20 07:56:28 yamt Exp $	*/
+/*	$NetBSD: getnfsargs_small.c,v 1.4 2006/05/20 08:06:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getnfsargs_small.c,v 1.3 2006/05/20 07:56:28 yamt Exp $");
+__RCSID("$NetBSD: getnfsargs_small.c,v 1.4 2006/05/20 08:06:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -218,12 +218,12 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 		return 0;
 	}
 
-	if (force2) {
-		nfsvers = NFS_VER2;
-		mntvers = RPCMNT_VER1;
-	} else {
+	if ((nfsargsp->flags & NFSMNT_NFSV3) != 0) {
 		nfsvers = NFS_VER3;
 		mntvers = RPCMNT_VER3;
+	} else {
+		nfsvers = NFS_VER2;
+		mntvers = RPCMNT_VER1;
 	}
 
 	d.socket = -1;

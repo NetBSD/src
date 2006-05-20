@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.4 2006/03/23 23:23:27 wiz Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.5 2006/05/20 08:06:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.4 2006/03/23 23:23:27 wiz Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.5 2006/05/20 08:06:48 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,8 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 #endif
 	struct timeval pertry, try;
 	enum clnt_stat clnt_stat;
-	int i, nfsvers, mntvers, orgcnt;
+	int i, nfsvers, mntvers;
+	int retryleft;
 	char *hostp, *delimp;
 	static struct nfhret nfhret;
 	static char nam[MNAMELEN + 1];
@@ -188,14 +189,13 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 		}
 	}
 
-	if (force2) {
-		nfsvers = NFS_VER2;
-		mntvers = RPCMNT_VER1;
-	} else {
+	if ((nfsargsp->flags & NFSMNT_NFSV3) != 0) {
 		nfsvers = NFS_VER3;
 		mntvers = RPCMNT_VER3;
+	} else {
+		nfsvers = NFS_VER2;
+		mntvers = RPCMNT_VER1;
 	}
-	orgcnt = retrycnt;
 	nfhret.stat = EACCES;	/* Mark not yet successful */
 
     for (ai = ai_nfs; ai; ai = ai->ai_next) {
@@ -218,9 +218,9 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 	nconf = getnetconfigent(netid);
 
 tryagain:
-	retrycnt = orgcnt;
+	retryleft = retrycnt;
 
-	while (retrycnt > 0) {
+	while (retryleft > 0) {
 		nfs_nb.buf = &nfs_ss;
 		nfs_nb.maxlen = sizeof nfs_ss;
 		if (!rpcb_getaddr(RPCPROG_NFS, nfsvers, nconf, &nfs_nb, hostp)){
@@ -277,7 +277,7 @@ tryagain:
 				case RPC_SUCCESS:
 					auth_destroy(clp->cl_auth);
 					clnt_destroy(clp);
-					retrycnt = 0;
+					retryleft = 0;
 					break;
 				default:
 					/* XXX should give up on some errors */
@@ -288,7 +288,7 @@ tryagain:
 				}
 			}
 		}
-		if (--retrycnt > 0) {
+		if (--retryleft > 0) {
 			if (opflags & BGRND) {
 				opflags &= ~BGRND;
 				if ((i = fork()) != 0) {
