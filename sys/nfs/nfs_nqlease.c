@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.63 2006/05/18 12:44:45 yamt Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.64 2006/05/20 07:40:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.63 2006/05/18 12:44:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.64 2006/05/20 07:40:56 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -191,6 +191,9 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 
 	if (vp->v_type != VREG && vp->v_type != VDIR && vp->v_type != VLNK)
 		return (0);
+
+	nfs_init();
+
 	if (*duration > nqsrv_maxlease)
 		*duration = nqsrv_maxlease;
 	error = VOP_GETATTR(vp, &vattr, cred, lwp);
