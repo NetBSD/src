@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.91 2006/05/13 16:56:19 tron Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.92 2006/05/20 12:33:10 tron Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1621,4 +1621,45 @@ distrib/atari/floppies/prepare/list		1.4
 	Add usr/bin/sort and install.sub to prepare.fs.
 	This fixes PR port-atari/33455.
 	[jdc, ticket #1322]
+
+distrib/sets/lists/comp/mi			1.882 via patch
+distrib/sets/lists/man/mi			1.891 via patch
+
+	Mark specific manpages, catpages, and info files as "gcccmds", so that
+	a "distribution" build with MKGCCCMDS=no and any of MKCATPAGES, MKMAN,
+	and MKINFO set to yes can still succeed.
+	[riz, ticket #1326]
+
+share/man/man4/ahc.4				1.30 via patch
+
+	Do not warn that Ultra160 controllers are limited to 80MB/s.
+	[pavel, ticket #1329]
+
+sys/arch/i386/i386/machdep.c			1.564-1.565
+
+	Reset the AMD Geode SC1100. Previously, the Geode hung after
+	printing "resetting...".  Now it really restarts.
+	[riz, ticket #1330]
+
+sys/arch/i386/conf/GENERIC			1.701
+sys/arch/i386/conf/files.i386			1.270
+sys/arch/i386/pci/geode.c			1.1
+sys/arch/i386/pci/geodereg.h			1.1
+
+	Add a driver for the watchdog timer on the AMD Geode SC1100.
+	[riz, ticket #1331]
+
+distrib/sets/lists/man/mi			1.829
+share/man/man4/man4.i386/Makefile		1.58
+share/man/man4/man4.i386/geodewdog.4		1.1
+
+	Add the manual page for geodewdog(4), the driver for the AMD Geode
+	SC1100's integrated watchdog timer.
+	[riz, ticket #1332]
+
+sys/arch/i386/pci/geode.c			1.2
+
+	Suppress false 'WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!'
+	indications by clearing the WDOVF status flag for real.
+	[riz, ticket #1333]
 
