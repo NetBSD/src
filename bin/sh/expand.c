@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.73 2006/03/18 05:25:56 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.74 2006/05/20 13:57:27 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.73 2006/03/18 05:25:56 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.74 2006/05/20 13:57:27 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -872,8 +872,8 @@ numvar:
 		if (flag & EXP_FULL && quoted) {
 			for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
 				STRTODEST(p);
-				if (*ap)
-					STPUTC('\0', expdest);
+				/* Nul forces a parameter split inside "" */
+				STPUTC('\0', expdest);
 			}
 			break;
 		}
@@ -1034,7 +1034,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 	 * Some recent clarification of the Posix spec say that it
 	 * should only generate one....
 	 */
-	if (*start /* || (!ifsspc && start > string) */) {
+	if (*start) {
 		sp = (struct strlist *)stalloc(sizeof *sp);
 		sp->text = start;
 		*arglist->lastp = sp;
