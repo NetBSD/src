@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.76.2.4 2006/05/20 21:55:43 riz Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.76.2.5 2006/05/20 22:09:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.4 2006/05/20 21:55:43 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.5 2006/05/20 22:09:28 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76.2.4 2006/05/20 21:55:43 riz Exp $
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mount.h>
+#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/tree.h>
@@ -98,6 +99,16 @@ extern struct lock ufs_hashlock;
 static int extend_ifile(struct lfs *, struct ucred *);
 static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
     struct vnode **);
+
+/* Constants for inode free bitmap */
+#define BYTESHIFT 3	/* 8 = 2 ** 3 */
+#define BYTEMASK  0x7	/* 8 - 1 */
+#define SET_BITMAP_FREE(F, I) \
+	(F)->lfs_ino_bitmap[(I) >> BYTESHIFT] |= (1 << ((I) & BYTEMASK))
+#define CLR_BITMAP_FREE(F, I) \
+	(F)->lfs_ino_bitmap[(I) >> BYTESHIFT] &= ~(1 << ((I) & BYTEMASK))
+#define ISSET_BITMAP_FREE(F, I) \
+	((F)->lfs_ino_bitmap[(I) >> BYTESHIFT] & (1 << ((I) & BYTEMASK)))
 
 /*
  * Allocate a particular inode with a particular version number, freeing
@@ -230,7 +241,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	struct buf *bp, *cbp;
 	int error;
 	daddr_t i, blkno, xmax;
-	ino_t oldlast;
+	ino_t oldlast, maxino;
 	CLEANERINFO *cip;
 
 	ASSERT_SEGLOCK(fs);
@@ -246,8 +257,21 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	ip->i_ffs1_size = ip->i_size;
 	uvm_vnp_setsize(vp, ip->i_size);
 
+	maxino = ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) -
+		  fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
+	fs->lfs_ino_bitmap = realloc(fs->lfs_ino_bitmap,
+				     (maxino + BYTEMASK) >> BYTESHIFT,
+				     M_SEGMENT, M_WAITOK);
+
 	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 		fs->lfs_ifpb;
+
+	/*
+	 * We insert the new inodes at the head of the free list.
+	 * Under normal circumstances, the free list is empty here,
+	 * so we are also incidentally placing them at the end (which
+	 * we must do if we are to keep them in order).
+	 */
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
 	LFS_PUT_HEADFREE(fs, cip, cbp, i);
 #ifdef DIAGNOSTIC
@@ -261,6 +285,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 			ifp_v1->if_version = 1;
 			ifp_v1->if_daddr = LFS_UNUSED_DADDR;
 			ifp_v1->if_nextfree = ++i;
+			SET_BITMAP_FREE(fs, i);
 		}
 		ifp_v1--;
 		ifp_v1->if_nextfree = oldlast;
@@ -269,6 +294,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 			ifp->if_version = 1;
 			ifp->if_daddr = LFS_UNUSED_DADDR;
 			ifp->if_nextfree = ++i;
+			SET_BITMAP_FREE(fs, i);
 		}
 		ifp--;
 		ifp->if_nextfree = oldlast;
@@ -311,28 +337,23 @@ lfs_valloc(void *v)
 
 	/* Get the head of the freelist. */
 	LFS_GET_HEADFREE(fs, cip, cbp, &new_ino);
+	KASSERT(new_ino != LFS_UNUSED_INUM && new_ino != LFS_IFILE_INUM);
 
-#ifdef DIAGNOSTIC
-	if (new_ino == LFS_UNUSED_INUM) {
-#ifdef DEBUG
-		lfs_dump_super(fs);
-#endif /* DEBUG */
-		panic("inode 0 allocated [1]");
-	}
-#endif /* DIAGNOSTIC */
-	DLOG((DLOG_ALLOC, "lfs_valloc: allocate inode %d\n", new_ino));
+	DLOG((DLOG_ALLOC, "lfs_valloc: allocate inode %lld\n",
+	     (long long)new_ino));
 
 	/*
 	 * Remove the inode from the free list and write the new start
 	 * of the free list into the superblock.
 	 */
+	CLR_BITMAP_FREE(fs, new_ino);
 	LFS_IENTRY(ifp, fs, new_ino, bp);
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
 		panic("lfs_valloc: inuse inode %llu on the free list",
 		    (unsigned long long)new_ino);
 	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
-	DLOG((DLOG_ALLOC, "lfs_valloc: headfree %d -> %d\n", new_ino,
-	      ifp->if_nextfree));
+	DLOG((DLOG_ALLOC, "lfs_valloc: headfree %lld -> %lld\n",
+	     (long long)new_ino, (long long)ifp->if_nextfree));
 
 	new_gen = ifp->if_version; /* version was updated by vfree */
 	brelse(bp);
@@ -455,6 +476,56 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 #endif
 }
 
+#if 0
+/*
+ * Find the highest-numbered allocated inode.
+ * This will be used to shrink the Ifile.
+ */
+static inline ino_t
+lfs_last_alloc_ino(struct lfs *fs)
+{
+	ino_t ino, maxino;
+
+	maxino = ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) -
+		  fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
+	for (ino = maxino - 1; ino > LFS_UNUSED_INUM; --ino) {
+		if (ISSET_BITMAP_FREE(fs, ino) == 0)
+			break;
+	}
+	return ino;
+}
+#endif
+
+/*
+ * Find the previous (next lowest numbered) free inode, if any.
+ * If there is none, return LFS_UNUSED_INUM.
+ */
+static inline ino_t
+lfs_freelist_prev(struct lfs *fs, ino_t ino)
+{
+	ino_t tino;
+	struct buf *bp;
+	IFILE *ifp;
+
+	for (tino = ino - 1; tino > LFS_UNUSED_INUM; tino--) {
+		if (fs->lfs_ino_bitmap) {
+			if (ISSET_BITMAP_FREE(fs, tino))
+				break;
+		} else {
+			LFS_IENTRY(ifp, fs, tino, bp);
+			if (ifp->if_daddr == LFS_UNUSED_DADDR) {
+				brelse(bp);
+				break;
+			}
+			brelse(bp);
+		}
+	}
+	if (tino <= LFS_IFILE_INUM)
+		tino = LFS_UNUSED_INUM;
+
+	return tino;
+}
+
 /* Free an inode. */
 /* ARGUSED */
 /* VOP_BWRITE 2i times */
@@ -516,6 +587,7 @@ lfs_vfree(void *v)
 	 * Set the ifile's inode entry to unused, increment its version number
 	 * and link it onto the free chain.
 	 */
+	SET_BITMAP_FREE(fs, ino);
 	LFS_IENTRY(ifp, fs, ino, bp);
 	old_iaddr = ifp->if_daddr;
 	ifp->if_daddr = LFS_UNUSED_DADDR;
@@ -525,21 +597,56 @@ lfs_vfree(void *v)
 		LFS_PUT_HEADFREE(fs, cip, cbp, ino);
 		(void) LFS_BWRITE_LOG(bp); /* Ifile */
 	} else {
+		ino_t tino, onf;
+
 		ifp->if_nextfree = LFS_UNUSED_INUM;
-		/*
-		 * XXX Writing the freed node here means that it might not
-		 * XXX make it into the free list in the event of a crash
-		 * XXX (the ifile could be written before the rest of this
-		 * XXX completes).
-		 */
 		(void) LFS_BWRITE_LOG(bp); /* Ifile */
-		LFS_GET_TAILFREE(fs, cip, cbp, &otail);
-		LFS_IENTRY(ifp, fs, otail, bp);
-		ifp->if_nextfree = ino;
-		LFS_BWRITE_LOG(bp);
-		LFS_PUT_TAILFREE(fs, cip, cbp, ino);
-		DLOG((DLOG_ALLOC, "lfs_vfree: tailfree %d -> %d\n", otail,
-		      ino));
+
+		tino = lfs_freelist_prev(fs, ino);
+		if (tino == LFS_UNUSED_INUM) {
+			/* Nothing free below us, put us on the head */
+			LFS_IENTRY(ifp, fs, ino, bp);
+			LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
+			LFS_PUT_HEADFREE(fs, cip, cbp, ino);
+			DLOG((DLOG_ALLOC, "lfs_valloc: headfree %lld -> %lld\n",
+			     (long long)ifp->if_nextfree, (long long)ino));
+			LFS_BWRITE_LOG(bp); /* Ifile */
+
+			/* If the list was empty, set tail too */
+			LFS_GET_TAILFREE(fs, cip, cbp, &otail);
+			if (otail == LFS_UNUSED_INUM) {
+				LFS_PUT_TAILFREE(fs, cip, cbp, ino);
+				DLOG((DLOG_ALLOC, "lfs_vfree: tailfree %lld "
+				      "-> %lld\n", (long long)otail,
+				      (long long)ino));
+			}
+		} else {
+			/*
+			 * Insert this inode into the list after tino.
+			 * We hold the segment lock so we don't have to
+			 * worry about blocks being written out of order.
+			 */
+			DLOG((DLOG_ALLOC, "lfs_vfree: insert ino %lld "
+			      " after %lld\n", ino, tino));
+
+			LFS_IENTRY(ifp, fs, tino, bp);
+			onf = ifp->if_nextfree;
+			ifp->if_nextfree = ino;
+			LFS_BWRITE_LOG(bp);	/* Ifile */
+
+			LFS_IENTRY(ifp, fs, ino, bp);
+			ifp->if_nextfree = onf;
+			LFS_BWRITE_LOG(bp);	/* Ifile */
+
+			/* If we're last, put us on the tail */
+			if (onf == LFS_UNUSED_INUM) {
+				LFS_GET_TAILFREE(fs, cip, cbp, &otail);
+				LFS_PUT_TAILFREE(fs, cip, cbp, ino);
+				DLOG((DLOG_ALLOC, "lfs_vfree: tailfree %lld "
+				      "-> %lld\n", (long long)otail,
+				      (long long)ino));
+			}
+		}
 	}
 #ifdef DIAGNOSTIC
 	if (ino == LFS_UNUSED_INUM) {
@@ -573,4 +680,57 @@ lfs_vfree(void *v)
 	lfs_segunlock(fs);
 
 	return (0);
+}
+
+/*
+ * Sort the freelist and set up the free-inode bitmap.
+ * To be called by lfs_mountfs().
+ */
+void
+lfs_order_freelist(struct lfs *fs)
+{
+	CLEANERINFO *cip;
+	IFILE *ifp = NULL;
+	struct buf *bp;
+	ino_t ino, firstino, lastino, maxino;
+	
+	maxino = ((fs->lfs_ivnode->v_size >> fs->lfs_bshift) -
+		  fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
+	fs->lfs_ino_bitmap = malloc((maxino + BYTEMASK) >> BYTESHIFT,
+				    M_SEGMENT, M_WAITOK | M_ZERO);
+
+	firstino = lastino = LFS_UNUSED_INUM;
+	for (ino = 0; ino < maxino; ino++) {
+		if (ino % fs->lfs_ifpb == 0)
+			LFS_IENTRY(ifp, fs, ino, bp);
+		else
+			++ifp;
+
+		/* Don't put zero or ifile on the free list */
+		if (ino == LFS_UNUSED_INUM || ino == LFS_IFILE_INUM)
+			continue;
+
+		if (ifp->if_daddr == LFS_UNUSED_DADDR) {
+			if (firstino == LFS_UNUSED_INUM)
+				firstino = ino;
+			else {
+				brelse(bp);
+
+				LFS_IENTRY(ifp, fs, lastino, bp);
+				ifp->if_nextfree = ino;
+				LFS_BWRITE_LOG(bp);
+				
+				LFS_IENTRY(ifp, fs, ino, bp);
+			}
+			lastino = ino;
+
+			SET_BITMAP_FREE(fs, ino);
+		}
+
+		if ((ino + 1) % fs->lfs_ifpb == 0)
+			brelse(bp);
+	}
+
+	LFS_PUT_HEADFREE(fs, cip, bp, firstino);
+	LFS_PUT_TAILFREE(fs, cip, bp, lastino);
 }
