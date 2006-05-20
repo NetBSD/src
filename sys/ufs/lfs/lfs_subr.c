@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.50.2.1 2005/05/07 11:21:30 tron Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.50.2.2 2006/05/20 21:50:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.50.2.1 2005/05/07 11:21:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.50.2.2 2006/05/20 21:50:26 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ lfs_blkatoff(void *v)
 }
 
 #ifdef DEBUG
-char *lfs_res_names[LFS_NB_COUNT] = {
+const char *lfs_res_names[LFS_NB_COUNT] = {
 	"summary",
 	"superblock",
 	"file block",
