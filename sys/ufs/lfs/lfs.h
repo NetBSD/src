@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.77.2.2 2006/05/20 21:18:49 riz Exp $	*/
+/*	$NetBSD: lfs.h,v 1.77.2.3 2006/05/20 21:50:26 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -213,8 +213,8 @@ typedef struct lfs_res_blk {
 /* log for debugging writes to the Ifile */
 # ifdef DEBUG
 struct lfs_log_entry {
-	char *op;
-	char *file;
+	const char *op;
+	const char *file;
 	int pid;
 	int line;
 	daddr_t block;
