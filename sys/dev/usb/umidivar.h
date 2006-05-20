@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.8.14.1 2006/05/20 02:15:21 chap Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.8.14.2 2006/05/20 03:05:05 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -104,6 +104,7 @@ struct umidi_endpoint {
 	usbd_pipe_handle	pipe;
 	usbd_xfer_handle	xfer;
 	unsigned char		*buffer;
+	u_int32_t               buffer_size;
 	int			num_open;
 	int			num_jacks;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
