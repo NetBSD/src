@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.262 2004/09/14 16:51:57 jdolecek Exp $
+#	$NetBSD: files.i386,v 1.262.10.1 2006/05/20 12:25:39 tron Exp $
 #
 # new style config file for i386 architecture
 #
@@ -189,6 +189,11 @@ file	arch/i386/pci/pchb_rnd.c	pchb & rnd
 device	elansc: sysmon_wdog
 attach	elansc at pci
 file	arch/i386/pci/elan520.c		elansc
+
+# AMD Geode SC1100 Watchdog Timer
+device	geodewdog: sysmon_wdog
+attach	geodewdog at pci
+file	arch/i386/pci/geode.c		geodewdog
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
