@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.19 2005/03/30 15:19:10 christos Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.20 2006/05/20 20:03:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.19 2005/03/30 15:19:10 christos Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.20 2006/05/20 20:03:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: ypserv.c,v 1.19 2005/03/30 15:19:10 christos Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#include <stdarg.h>
+#include <errno.h>
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
@@ -72,25 +74,40 @@ const char *svcname;
 
 int	usedns;
 #ifdef DEBUG
-int	foreground = 1;
+static int	foreground = 1;
 #else
-int	foreground;
+static int	foreground;
 #endif
 
 #ifdef LIBWRAP
 int	lflag;
 #endif
 
-int	main(int, char *[]);
-void	usage(void);
+static struct bindsock {
+	sa_family_t family;
+	int type;
+	int proto;
+	const char *name;
+} socklist[] = {
+	{ AF_INET, SOCK_DGRAM, IPPROTO_UDP, "udp" },
+	{ AF_INET, SOCK_STREAM, IPPROTO_TCP, "tcp" },
+	{ AF_INET6, SOCK_DGRAM, IPPROTO_UDP, "udp6" },
+	{ AF_INET6, SOCK_STREAM, IPPROTO_TCP, "tcp6" },
+};
 
-static
-void _msgout(int level, const char *msg)
+static void	usage(void) __attribute__((__noreturn__));
+static int	bind_resv_port(int, sa_family_t, in_port_t);
+
+static void
+_msgout(int level, const char *msg, ...)
 {
+	va_list ap;
+	va_start(ap, msg);
 	if (foreground)
-                warnx("%s", msg);
+                vwarnx(msg, ap);
         else
-                syslog(level, "%s", msg);
+		vsyslog(level, msg, ap);
+	va_end(ap);
 }
 
 static void
@@ -108,6 +125,7 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 		struct ypreq_nokey ypproc_order_2_arg;
 		char * ypproc_maplist_2_arg;
 	} argument;
+	void *argp = &argument;
 	char *result;
 	xdrproc_t xdr_argument, xdr_result;
 	void *(*local)(void *, struct svc_req *);
@@ -121,8 +139,8 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 
 #ifdef LIBWRAP
 	caller = svc_getrpccaller(transp)->buf;
-	request_init(&req, RQ_DAEMON, getprogname(), RQ_CLIENT_SIN, caller,
-	    NULL);
+	(void)request_init(&req, RQ_DAEMON, getprogname(), RQ_CLIENT_SIN,
+	    caller, NULL);
 	sock_methods(&req);
 #endif
 
@@ -227,8 +245,8 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 	}
 #endif
 
-	(void) memset((char *)&argument, 0, sizeof (argument));
-	if (!svc_getargs(transp, xdr_argument, (caddr_t) &argument)) {
+	(void)memset(&argument, 0, sizeof (argument));
+	if (!svc_getargs(transp, xdr_argument, argp)) {
 		svcerr_decode(transp);
 		return;
 	}
@@ -236,7 +254,7 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 	if (result != NULL && !svc_sendreply(transp, xdr_result, result)) {
 		svcerr_systemerr(transp);
 	}
-	if (!svc_freeargs(transp, xdr_argument, (caddr_t) &argument)) {
+	if (!svc_freeargs(transp, xdr_argument, argp)) {
 		_msgout(LOG_ERR, "unable to free arguments");
 		exit(1);
 	}
@@ -267,18 +285,20 @@ ypprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 int
 main(int argc, char *argv[])
 {
-	SVCXPRT *udptransp, *tcptransp, *udp6transp, *tcp6transp;
-	struct netconfig *udpconf, *tcpconf, *udp6conf, *tcp6conf;
-	int udpsock, tcpsock, udp6sock, tcp6sock;
+	SVCXPRT *xprt;
+	struct netconfig *cfg = NULL;
+	int s;
 	struct sigaction sa;
+	struct bindsock *bs;
+	in_port_t port = 0;
 	int ch, xcreated = 0, one = 1;
 
 	setprogname(argv[0]);
 
 #ifdef LIBWRAP
-#define	GETOPTSTR	"dfl"
+#define	GETOPTSTR	"dflp:"
 #else
-#define	GETOPTSTR	"df"
+#define	GETOPTSTR	"dfp:"
 #endif
 	while ((ch = getopt(argc, argv, GETOPTSTR)) != -1) {
 		switch (ch) {
@@ -288,7 +308,9 @@ main(int argc, char *argv[])
 		case 'f':
 			foreground = 1;
 			break;
-
+		case 'p':
+			port = atoi(optarg);
+			break;
 #ifdef LIBWRAP
 		case 'l':
 			lflag = 1;
@@ -310,129 +332,85 @@ main(int argc, char *argv[])
 
 	openlog("ypserv", LOG_PID, LOG_DAEMON);
 	syslog(LOG_INFO, "starting");
-	pidfile(NULL);
+	(void)pidfile(NULL);
 
-	(void) rpcb_unset(YPPROG, YPVERS, NULL);
-	(void) rpcb_unset(YPPROG, YPVERS_ORIG, NULL);
+	(void) rpcb_unset((u_int)YPPROG, (u_int)YPVERS, NULL);
+	(void) rpcb_unset((u_int)YPPROG, (u_int)YPVERS_ORIG, NULL);
 
-	udpsock  = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	tcpsock  = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	udp6sock = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-	tcp6sock = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
-
-	/*
-	 * We're doing host-based access checks here, so don't allow
-	 * v4-in-v6 to confuse things.
-	 */
-	if (udp6sock != -1 && setsockopt(udp6sock, IPPROTO_IPV6,
-	    IPV6_V6ONLY, &one, sizeof(one)) < 0) {
-		_msgout(LOG_ERR, "can't disable v4-in-v6 on UDP socket");
-		exit(1);
-	}
-	if (tcp6sock != -1 && setsockopt(tcp6sock, IPPROTO_IPV6,
-	    IPV6_V6ONLY, &one, sizeof(one)) < 0) {
-		_msgout(LOG_ERR, "can't disable v4-in-v6 on TCP socket");
-		exit(1);
-	}
 
 	ypdb_init();	/* init db stuff */
 
 	sa.sa_handler = SIG_IGN;
 	sa.sa_flags = SA_NOCLDWAIT;
 	if (sigemptyset(&sa.sa_mask)) {
-		_msgout(LOG_ERR, "sigemptyset: %m");
+		_msgout(LOG_ERR, "sigemptyset: %s", strerror(errno));
 		exit(1);
 	}
 	if (sigaction(SIGCHLD, &sa, NULL)) {
-		_msgout(LOG_ERR, "sigaction: %m");
+		_msgout(LOG_ERR, "sigaction: %s", strerror(errno));
 		exit(1);
 	}
 
-	udpconf  = getnetconfigent("udp");
-	tcpconf  = getnetconfigent("tcp");
-	udp6conf = getnetconfigent("udp6");
-	tcp6conf = getnetconfigent("tcp6");
+	for (bs = socklist;
+	    bs < &socklist[sizeof(socklist) / sizeof(socklist[0])]; bs++) {
 
-	if (udpsock != -1 && udpconf != NULL) {
-		if (bindresvport(udpsock, NULL) == 0) {
-			udptransp = svc_dg_create(udpsock, 0, 0);
-			if (udptransp != NULL) {
-				if (svc_reg(udptransp, YPPROG, YPVERS_ORIG,
-					    ypprog_1, udpconf) == 0 ||
-				    svc_reg(udptransp, YPPROG, YPVERS,
-					    ypprog_2, udpconf) == 0)
-					_msgout(LOG_WARNING,
-					    "unable to register UDP service");
-				else
-					xcreated++;
-			} else
-				_msgout(LOG_WARNING,
-				    "unable to create UDP service");
-		} else
-			_msgout(LOG_ERR, "unable to bind reserved UDP port");
-		freenetconfigent(udpconf);
-	}
+		if ((s = socket(bs->family, bs->type, bs->proto)) == -1)
+			continue;
 
-	if (tcpsock != -1 && tcpconf != NULL) {
-		if (bindresvport(tcpsock, NULL) == 0) {
-			listen(tcpsock, SOMAXCONN);
-			tcptransp = svc_vc_create(tcpsock, 0, 0);
-			if (tcptransp != NULL) {
-				if (svc_reg(tcptransp, YPPROG, YPVERS_ORIG,
-					    ypprog_1, tcpconf) == 0 ||
-				    svc_reg(tcptransp, YPPROG, YPVERS,
-					    ypprog_2, tcpconf) == 0)
-					_msgout(LOG_WARNING,
-					    "unable to register TCP service");
-				else
-					xcreated++;
-			} else
-				_msgout(LOG_WARNING,
-				    "unable to create TCP service");
-		} else
-			_msgout(LOG_ERR, "unable to bind reserved TCP port");
-		freenetconfigent(tcpconf);
-	}
+		if (bs->family == AF_INET6) {
+			/*
+			 * We're doing host-based access checks here, so don't
+			 * allow v4-in-v6 to confuse things.
+			 */
+			if (setsockopt(s, IPPROTO_IPV6,
+			    IPV6_V6ONLY, &one, sizeof(one)) == -1) {
+				_msgout(LOG_ERR, 
+				    "can't disable v4-in-v6 on %s socket",
+				    bs->name);
+				exit(1);
+			}
+		}
 
-	if (udp6sock != -1 && udp6conf != NULL) {
-		if (bindresvport(udp6sock, NULL) == 0) {
-			udp6transp = svc_dg_create(udp6sock, 0, 0);
-			if (udp6transp != NULL) {
-				if (svc_reg(udp6transp, YPPROG, YPVERS_ORIG,
-					    ypprog_1, udp6conf) == 0 ||
-				    svc_reg(udp6transp, YPPROG, YPVERS,
-					    ypprog_2, udp6conf) == 0)
-					_msgout(LOG_WARNING,
-					    "unable to register UDP6 service");
-				else
-					xcreated++;
-			} else
-				_msgout(LOG_WARNING,
-				    "unable to create UDP6 service");
-		} else
-			_msgout(LOG_ERR, "unable to bind reserved UDP6 port");
-		freenetconfigent(udp6conf);
-	}
+		if ((cfg = getnetconfigent(bs->name)) == NULL) {
+			_msgout(LOG_ERR,
+			    "unable to get network configuration for %s port",
+			    bs->name);
+			goto out;
+		}
 
-	if (tcp6sock != -1 && tcp6conf != NULL) {
-		if (bindresvport(tcp6sock, NULL) == 0) {
-			listen(tcp6sock, SOMAXCONN);
-			tcp6transp = svc_vc_create(tcp6sock, 0, 0);
-			if (tcp6transp != NULL) {
-				if (svc_reg(tcp6transp, YPPROG, YPVERS_ORIG,
-					    ypprog_1, tcp6conf) == 0 ||
-				    svc_reg(tcp6transp,  YPPROG, YPVERS,
-					    ypprog_2, tcp6conf) == 0)
-					_msgout(LOG_WARNING,
-					    "unable to register TCP6 service");
-				else
-					xcreated++;
-			} else
-				_msgout(LOG_WARNING,
-				    "unable to create TCP6 service");
-		} else
-			_msgout(LOG_ERR, "unable to bind reserved TCP6 port");
-		freenetconfigent(tcp6conf);
+		if (bind_resv_port(s, bs->family, port) != 0)
+			goto out;
+
+		if (bs->type == SOCK_STREAM) {
+			(void)listen(s, SOMAXCONN);
+			xprt = svc_vc_create(s, 0, 0);
+		} else {
+			xprt = svc_dg_create(s, 0, 0);
+		}
+
+		if (xprt == NULL) {
+			_msgout(LOG_WARNING, "unable to create %s service",
+			    bs->name);
+			goto out;
+		}
+		if (svc_reg(xprt, (u_int)YPPROG, (u_int)YPVERS_ORIG, ypprog_1,
+		    cfg) == 0 ||
+		    svc_reg(xprt, (u_int)YPPROG, (u_int)YPVERS, ypprog_2,
+		    cfg) == 0) {
+			_msgout(LOG_WARNING, "unable to register %s service",
+			    bs->name);
+			goto out;
+		}
+		xcreated++;
+		freenetconfigent(cfg);
+		continue;
+out:
+		if (s != -1)
+			(void)close(s);
+		if (cfg) {
+			freenetconfigent(cfg);
+			cfg = NULL;
+		}
 	}
 
 	if (xcreated == 0) {
@@ -446,17 +424,17 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-void
+static void
 usage(void)
 {
 
 #ifdef LIBWRAP
-#define	USAGESTR	"Usage: %s [-d] [-l]\n"
+#define	USAGESTR	"Usage: %s [-d] [-l] [-p <port>]\n"
 #else
-#define	USAGESTR	"Usage: %s [-d]\n"
+#define	USAGESTR	"Usage: %s [-d] [-p <port>]\n"
 #endif
 
-	fprintf(stderr, USAGESTR, getprogname());
+	(void)fprintf(stderr, USAGESTR, getprogname());
 	exit(1);
 
 #undef USAGESTR
@@ -480,5 +458,39 @@ _yp_invalid_map(const char *map)
 	if (strchr(map, '/') != NULL)
 		return 1;
 
+	return 0;
+}
+
+static int
+bind_resv_port(int sock, sa_family_t family, in_port_t port)
+{
+	struct sockaddr *sa;
+	struct sockaddr_in sasin;
+	struct sockaddr_in6 sasin6;
+
+	switch (family) {
+	case AF_INET:
+		(void)memset(&sasin, 0, sizeof(sasin));
+		sasin.sin_len = sizeof(sasin);
+		sasin.sin_family = family;
+		sasin.sin_port = htons(port);
+		sa = (struct sockaddr *)(void *)&sasin;
+		break;
+	case AF_INET6:
+		(void)memset(&sasin6, 0, sizeof(sasin6));
+		sasin6.sin6_len = sizeof(sasin6);
+		sasin6.sin6_family = family;
+		sasin6.sin6_port = htons(port);
+		sa = (struct sockaddr *)(void *)&sasin6;
+		break;
+	default:
+		_msgout(LOG_ERR, "Unsupported address family %d", family);
+		return -1;
+	}
+	if (bindresvport_sa(sock, sa) == -1) {
+		_msgout(LOG_ERR, "Cannot bind to reserved port %d (%s)", port,
+		    strerror(errno));
+		return -1;
+	}
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.10 2002/07/06 00:42:27 wiz Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.11 2006/05/20 20:03:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_proc.c,v 1.10 2002/07/06 00:42:27 wiz Exp $");
+__RCSID("$NetBSD: ypserv_proc.c,v 1.11 2006/05/20 20:03:28 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -74,21 +74,22 @@ securecheck(struct sockaddr *caller)
 {
 	char sbuf[NI_MAXSERV];
 
-	if (getnameinfo(caller, caller->sa_len, NULL, 0, sbuf, sizeof(sbuf),
-	    NI_NUMERICSERV))
+	if (getnameinfo(caller, (socklen_t)caller->sa_len, NULL, 0, sbuf,
+	    sizeof(sbuf), NI_NUMERICSERV))
 		return (1);
 
 	return (atoi(sbuf) >= IPPORT_RESERVED);
 }
 
 void *
+/*ARGSUSED*/
 ypproc_null_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static char result;
 
 	YPLOG((allow_severity, "null_2: request from %.500s", clientstr));
 
-	memset(&result, 0, sizeof(result));
+	(void)memset(&result, 0, sizeof(result));
 	return ((void *)&result);
 }
 
@@ -104,7 +105,7 @@ ypproc_domain_2_svc(void *argp, struct svc_req *rqstp)
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
-	snprintf(domain_path, sizeof(domain_path), "%s/%s",
+	(void)snprintf(domain_path, sizeof(domain_path), "%s/%s",
 	    YP_DB_PATH, domain);
 	if ((stat(domain_path, &finfo) == 0) && S_ISDIR(finfo.st_mode))
 		result = TRUE;
@@ -130,7 +131,7 @@ ypproc_domain_nonack_2_svc(void *argp, struct svc_req *rqstp)
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
 		return (NULL);
 	}
-	snprintf(domain_path, sizeof(domain_path), "%s/%s",
+	(void)snprintf(domain_path, sizeof(domain_path), "%s/%s",
 	    YP_DB_PATH, domain);
 	if ((stat(domain_path, &finfo) == 0) && S_ISDIR(finfo.st_mode))
 		result = TRUE;
@@ -239,9 +240,8 @@ ypproc_xfr_2_svc(void *argp, struct svc_req *rqstp)
 	char tid[11], prog[11], port[11];
 	char hbuf[NI_MAXHOST];
 	char ypxfr_proc[] = YPXFR_PROC;
-	pid_t pid;
 
-	memset(&res, 0, sizeof(res));
+	(void)memset(&res, 0, sizeof(res));
 
 	YPLOG((allow_severity,
 	    "xfr_2: request from %.500s, domain %s, tid %d, prog %d, port %d, "
@@ -255,20 +255,20 @@ ypproc_xfr_2_svc(void *argp, struct svc_req *rqstp)
 		return (NULL);
 	}
 
-	switch ((pid = vfork())) {
+	switch (vfork()) {
 	case -1:
 		svcerr_systemerr(rqstp->rq_xprt);
 		return (NULL);
 
 	case 0:
-		snprintf(tid, sizeof(tid), "%d", ypx->transid);
-		snprintf(prog, sizeof(prog), "%d", ypx->proto);
-		snprintf(port, sizeof(port), "%d", ypx->port);
-		if (getnameinfo(caller, caller->sa_len, hbuf, sizeof(hbuf),
-		    NULL, 0, 0))
+		(void)snprintf(tid, sizeof(tid), "%d", ypx->transid);
+		(void)snprintf(prog, sizeof(prog), "%d", ypx->proto);
+		(void)snprintf(port, sizeof(port), "%d", ypx->port);
+		if (getnameinfo(caller, (socklen_t)caller->sa_len, hbuf,
+		    sizeof(hbuf), NULL, 0, 0))
 			_exit(1);	/* XXX report error ? */
 
-		execl(ypxfr_proc, "ypxfr", "-d", ypx->map_parms.domain,
+		(void)execl(ypxfr_proc, "ypxfr", "-d", ypx->map_parms.domain,
 		    "-C", tid, prog, hbuf, port, ypx->map_parms.map, NULL);
 		_exit(1);		/* XXX report error? */
 	}
@@ -281,6 +281,7 @@ ypproc_xfr_2_svc(void *argp, struct svc_req *rqstp)
 }
 
 void *
+/*ARGSUSED*/
 ypproc_clear_2_svc(void *argp, struct svc_req *rqstp)
 {
 	static char res;
@@ -304,7 +305,7 @@ ypproc_clear_2_svc(void *argp, struct svc_req *rqstp)
         ypdb_close_all();
 #endif
 
-	memset(&res, 0, sizeof(res));
+	(void)memset(&res, 0, sizeof(res));
 	return ((void *)&res);
 }
 
@@ -314,7 +315,6 @@ ypproc_all_2_svc(void *argp, struct svc_req *rqstp)
 	static struct ypresp_all res;
 	struct sockaddr *caller = svc_getrpccaller(rqstp->rq_xprt)->buf;
 	struct ypreq_nokey *k = argp;
-	pid_t pid;
 	int secure;
 
 	if (_yp_invalid_domain(k->domain) || _yp_invalid_map(k->map)) {
@@ -328,22 +328,21 @@ ypproc_all_2_svc(void *argp, struct svc_req *rqstp)
 	    "all_2: request from %.500s, secure %s, domain %s, map %s",
 	    clientstr, TORF(secure), k->domain, k->map));
 
-	memset(&res, 0, sizeof(res));
+	(void)memset(&res, 0, sizeof(res));
 
 	if (secure && securecheck(caller)) {
 		res.ypresp_all_u.val.status = YP_YPERR;
 		return (&res);
 	}
 	
-	switch ((pid = fork())) {
+	switch (fork()) {
 	case -1:
 		/* XXXCDC An error has occurred */
 		return (NULL);
 
 	case 0:
 		/* CHILD: send result, then exit */
-		if (!svc_sendreply(rqstp->rq_xprt, ypdb_xdr_get_all,
-		    (char *)k))
+		if (!svc_sendreply(rqstp->rq_xprt, ypdb_xdr_get_all, (void *)k))
 			svcerr_systemerr(rqstp->rq_xprt);
 
 		/* Note: no need to free args; we're exiting. */
@@ -435,7 +434,7 @@ ypproc_maplist_2_svc(void *argp, struct svc_req *rqstp)
 	DIR *dirp = NULL;
 	struct dirent *dp;
 	char *suffix;
-	int status;
+	u_int status;
 	struct ypmaplist *m;
 
 	if (_yp_invalid_domain(domain)) {
@@ -447,15 +446,15 @@ ypproc_maplist_2_svc(void *argp, struct svc_req *rqstp)
 	    "maplist_2: request from %.500s, domain %s",
 	    clientstr, domain));
 
-	memset(&res, 0, sizeof(res));
+	(void)memset(&res, 0, sizeof(res));
 
-	snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH, domain);
+	(void)snprintf(domain_path, sizeof(domain_path), "%s/%s", YP_DB_PATH,
+	    domain);
 
 	res.list = NULL;
 	status = YP_TRUE;
 
-	if ((stat(domain_path, &finfo) != 0) ||
-	    (S_ISDIR(finfo.st_mode) == 0)) {
+	if ((stat(domain_path, &finfo) != 0) || !S_ISDIR(finfo.st_mode)) {
 		status = YP_NODOM;
 		goto out;
 	}
@@ -489,9 +488,9 @@ ypproc_maplist_2_svc(void *argp, struct svc_req *rqstp)
 				goto out;
 			}
 
-			memset(m, 0, sizeof(m));
-			strncpy(m->ypml_name, dp->d_name, dp->d_namlen - 3);
-			m->ypml_name[dp->d_namlen - 3] = '\0';
+			(void)memset(m, 0, sizeof(m));
+			(void)strlcpy(m->ypml_name, dp->d_name,
+			    (size_t)(dp->d_namlen - 3));
 			m->ypml_next = res.list;
 			res.list = m;
 		}
@@ -499,7 +498,7 @@ ypproc_maplist_2_svc(void *argp, struct svc_req *rqstp)
 
  out:
 	if (dirp != NULL)
-		closedir(dirp);
+		(void)closedir(dirp);
 
 	res.status = status;
 	
