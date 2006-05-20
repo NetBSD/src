@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.50.2.3 2006/05/20 21:59:47 riz Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.50.2.4 2006/05/20 22:04:21 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.50.2.3 2006/05/20 21:59:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.50.2.4 2006/05/20 22:04:21 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,8 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_seglock) {
-		if (fs->lfs_lockpid == curproc->p_pid) {
+		if (fs->lfs_lockpid == curproc->p_pid &&
+		    fs->lfs_locklwp == curlwp->l_lid) {
 			simple_unlock(&fs->lfs_interlock);
 			++fs->lfs_seglock;
 			fs->lfs_sp->seg_flags |= flags;
@@ -351,6 +352,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
+	fs->lfs_locklwp = curlwp->l_lid;
 	simple_unlock(&fs->lfs_interlock);
 	fs->lfs_cleanind = 0;
 
@@ -545,6 +547,7 @@ lfs_segunlock(struct lfs *fs)
 			simple_lock(&fs->lfs_interlock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
+			fs->lfs_locklwp = 0;
 			simple_unlock(&fs->lfs_interlock);
 			wakeup(&fs->lfs_seglock);
 		}
@@ -588,6 +591,7 @@ lfs_segunlock(struct lfs *fs)
 			simple_lock(&fs->lfs_interlock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
+			fs->lfs_locklwp = 0;
 			simple_unlock(&fs->lfs_interlock);
 			wakeup(&fs->lfs_seglock);
 		}
