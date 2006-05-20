@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.10.14.6 2006/05/20 03:41:28 chap Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.10.14.7 2006/05/20 03:43:58 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
