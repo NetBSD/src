@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.10.2.5 2006/05/20 03:31:22 chap Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.10.2.6 2006/05/20 03:32:45 chap Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10.2.5 2006/05/20 03:31:22 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.10.2.6 2006/05/20 03:32:45 chap Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,15 +368,19 @@ UMQ_DEF(ROLAND, ROLAND_UA700, 3) = {
  * on endpoint 0x81 (descriptor index 0). It has 4 physical MIDI OUT jacks
  * that can be written on endpoints 2 or 4 (at descriptor index 2 or 4,
  * coincidentally) interchangeably: either endpoint will accept a Cable Number
- * field of 0 to 3, and data for the same CN will be routed to the same
- * physical output regardless of the endpoint used for the transfer. That's a
- * way of getting two USB pipes' worth of bandwidth to any combination of
- * outputs, but there isn't code for doing that, so as a crude form
- * of load balancing we here assign two of the out jacks to each endpoint--an
- * approach, though, that requires assigning CNs in a single global sequence
- * rather than per endpoint--that is, the CN_SEQ_GLOBAL quirk, which at the
- * moment is the code's default behavior but shouldn't be forever, so I will
- * include the quirk explicitly.
+ * field of 0 to 3, and data for a given CN will be routed to the same
+ * physical output regardless of the endpoint used for the transfer. But
+ * there's a catch: flow-control feedback only goes to endpoint 2 for
+ * CN 0 and 2, and only to endpoint 4 for CN 1 and 3. If you send output at
+ * high rates for CN 0 or 2 over endpoint 4, or for CN 1 or 3 over endpoint 2,
+ * the USB transfers complete as fast as possible, giving you an apparent data
+ * rate much higher than MIDI's 3125 cps (easy to measure using dd to blast a
+ * bunch of midi data to the rmidi device). Of course that isn't a way to make
+ * MIDI faster, just a way to overrun the device buffer and spray bits on the
+ * floor. So this device needs the fixed endpoint quirk, the fixed cable number
+ * quirk (to make sure CNs 0 and 2 are put on the first endpoint and 1 and 3
+ * on the other), and then the fixed mididev-assignment quirk (to match jacks
+ * to mididevs so the rmidi devices match the order of the blinkenlights).
  */
 UMQ_FIXED_EP_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE, 2, 1) = {
 	/* out: ep# jacks */
@@ -387,8 +391,9 @@ UMQ_FIXED_EP_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE, 2, 1) = {
 };
 UMQ_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE) = {
 	UMQ_FIXED_EP_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
+	UMQ_CN_FIXED_REG(0, 2, 1, 3, 0, 1),
+	UMQ_MD_FIXED_REG(0, 0, 2, 1, 1, -1, 3, -1),
 	UMQ_TYPE(MIDIMAN_GARBLE),
-	UMQ_TYPE(CN_SEQ_GLOBAL),
 	UMQ_TERMINATOR
 };
 
@@ -461,6 +466,8 @@ static char *quirk_name[] = {
 	"Midiman Packet Garbling",
 	"Cable Numbers per Endpoint",
 	"Cable Numbers Global",
+	"Cable Numbers Fixed",
+	"Unit Mapping Fixed",
 };
 
 void

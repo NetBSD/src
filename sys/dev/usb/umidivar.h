@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.8.14.6 2006/05/20 03:31:22 chap Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.8.14.7 2006/05/20 03:32:45 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -94,7 +94,6 @@ struct umidi_endpoint {
 	u_int32_t               buffer_size;
 	int			num_open;
 	int			num_jacks;
-	int			cn_base;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
 	LIST_HEAD(, umidi_jack)	queue_head;
 	struct umidi_jack	*queue_tail;
