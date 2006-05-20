@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.16 2004/09/07 13:20:40 jrf Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.17 2006/05/20 20:03:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.16 2004/09/07 13:20:40 jrf Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.17 2006/05/20 20:03:28 christos Exp $");
 #endif
 
 /*
@@ -103,8 +103,8 @@ int	yp_private(datum, int);
 void	ypdb_close_db(DBM *);
 void	ypdb_close_last(void);
 void	ypdb_close_map(struct opt_map *);
-DBM    *ypdb_open_db(const char *, const char *, int *, struct opt_map **);
-int	lookup_host(int, int, DBM *, char *, struct ypresp_val *);
+DBM    *ypdb_open_db(const char *, const char *, u_int *, struct opt_map **);
+u_int	lookup_host(int, int, DBM *, char *, struct ypresp_val *);
 
 /*
  * ypdb_init: init the queues and lists
@@ -223,6 +223,7 @@ ypdb_close_all(void)
  * Close Database if Open/Close Optimization isn't turned on.
  */
 void
+/*ARGSUSED*/
 ypdb_close_db(DBM *db)
 {
 
@@ -239,7 +240,7 @@ ypdb_close_db(DBM *db)
  * ypdb_open_db
  */
 DBM *
-ypdb_open_db(const char *domain, const char *map, int *status,
+ypdb_open_db(const char *domain, const char *map, u_int *status,
 	     struct opt_map **map_info)
 {
 	static char *domain_key = YP_INTERDOMAIN_KEY;
@@ -268,15 +269,15 @@ ypdb_open_db(const char *domain, const char *map, int *status,
 	/*
 	 * check for domain, file.
 	 */
-	snprintf(map_path, sizeof(map_path), "%s/%s", YP_DB_PATH, domain);
-	if (stat(map_path, &finfo) < 0 || S_ISDIR(finfo.st_mode) == 0) {
+	(void)snprintf(map_path, sizeof(map_path), "%s/%s", YP_DB_PATH, domain);
+	if (stat(map_path, &finfo) < 0 || !S_ISDIR(finfo.st_mode)) {
 #ifdef DEBUG
 		syslog(LOG_DEBUG,
 		    "ypdb_open_db: no domain %s (map=%s)", domain, map);
 #endif
 		*status = YP_NODOM;
 	} else {
-		snprintf(map_path, sizeof(map_path), "%s/%s/%s%s",
+		(void)snprintf(map_path, sizeof(map_path), "%s/%s/%s%s",
 		    YP_DB_PATH, domain, map, YPDB_SUFFIX);
 		if (stat(map_path, &finfo) < 0) {
 #ifdef DEBUG
@@ -357,7 +358,7 @@ ypdb_open_db(const char *domain, const char *map, int *status,
 	/*
 	 * open map
 	 */
-	snprintf(map_path, sizeof(map_path), "%s/%s/%s",
+	(void)snprintf(map_path, sizeof(map_path), "%s/%s/%s",
 	    YP_DB_PATH, domain, map);
 #ifdef OPTIMIZE_DB
 retryopen:
@@ -467,7 +468,8 @@ retryopen:
 /*
  * lookup host
  */
-int
+u_int
+/*ARGSUSED*/
 lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 	    struct ypresp_val *result)
 {
@@ -484,32 +486,34 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 		return (YP_NOKEY);
 
 	if ((_res.options & RES_INIT) == 0)
-		res_init();
+		(void)res_init();
 
 	if (nametable) {
 		host = gethostbyname(keystr);
 		if (host == NULL || host->h_addrtype != AF_INET)
 			return (YP_NOKEY);
 
-		addr_name = (struct in_addr *)host->h_addr_list[0];
+		addr_name = (struct in_addr *)(void *)host->h_addr_list[0];
 
 		v = val;
 
 		for (; host->h_addr_list[0] != NULL; host->h_addr_list++) {
-			addr_name = (struct in_addr *)host->h_addr_list[0];
-			snprintf(tmpbuf, sizeof(tmpbuf), "%s %s\n",
+			addr_name = (struct in_addr *)(void *)host->h_addr_list[0];
+			(void)snprintf(tmpbuf, sizeof(tmpbuf), "%s %s\n",
 			    inet_ntoa(*addr_name), host->h_name);
 			if (v - val + strlen(tmpbuf) + 1 > sizeof(val))
 				break;
-			strlcpy(v, tmpbuf, sizeof(val) - (v - val));
+			(void)strlcpy(v, tmpbuf, sizeof(val) - (v - val));
 			v = v + strlen(tmpbuf);
 		}
 		result->valdat.dptr = val;
 		result->valdat.dsize = v - val;
 		return (YP_TRUE);
 	}
-	inet_aton(keystr, &addr_addr);
-	host = gethostbyaddr((char *)&addr_addr, sizeof(addr_addr), AF_INET);
+	if (inet_aton(keystr, &addr_addr) == -1)
+		return (YP_NOKEY);
+
+	host = gethostbyaddr((void *)&addr_addr, sizeof(addr_addr), AF_INET);
 	if (host == NULL)
 		return (YP_NOKEY);
 
@@ -531,16 +535,16 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 		return (YP_NOKEY);
 	}
 
-	snprintf(val, sizeof(val), "%s %s", keystr, host->h_name);
+	(void)snprintf(val, sizeof(val), "%s %s", keystr, host->h_name);
 	l = strlen(val);
 	v = val + l;
 	while ((ptr = *(host->h_aliases)) != NULL) {
 		l = strlen(ptr);
 		if ((v - val) + l + 1 > BUFSIZ)
 			break;
-		strlcpy(v, " ", sizeof(val) - (v - val));
+		(void)strlcpy(v, " ", sizeof(val) - (v - val));
 		v += 1;
-		strlcpy(v, ptr, sizeof(val) - (v - val));
+		(void)strlcpy(v, ptr, sizeof(val) - (v - val));
 		v += l;
 		host->h_aliases++;
 	}
@@ -562,10 +566,10 @@ ypdb_get_record(const char *domain, const char *map, datum key, int ypprivate)
 
 	host_lookup = 0;	/* XXX gcc -Wuninitialized */
 
-	memset(&res, 0, sizeof(res));
+	(void)memset(&res, 0, sizeof(res));
 
 	db = ypdb_open_db(domain, map, &res.status, &map_info);
-	if (db == NULL || res.status < 0)
+	if (db == NULL || (int)res.status < 0)
 		return (res);
 
 	if (map_info)
@@ -587,8 +591,7 @@ ypdb_get_record(const char *domain, const char *map, datum key, int ypprivate)
 			return (res);
 
 		/* note: lookup_host needs null terminated string */
-		strncpy(keystr, key.dptr, key.dsize);
-		keystr[key.dsize] = '\0';
+		(void)strlcpy(keystr, key.dptr, (size_t)key.dsize);
 		res.status = lookup_host((hn == 0) ? TRUE : FALSE,
 		    host_lookup, db, keystr, &res);
 	} else {
@@ -608,11 +611,11 @@ ypdb_get_first(const char *domain, const char *map, int ypprivate)
 	DBM *db;
 	datum k, v;
 
-	memset(&res, 0, sizeof(res));
+	(void)memset(&res, 0, sizeof(res));
 
 	db = ypdb_open_db(domain, map, &res.status, NULL);
 
-	if (db != NULL && res.status >= 0) {
+	if (db != NULL && (int)res.status >= 0) {
 		k = ypdb_firstkey(db);
 
 		while (yp_private(k, ypprivate))
@@ -646,11 +649,11 @@ ypdb_get_next(const char *domain, const char *map, datum key, int ypprivate)
 	DBM *db;
 	datum k, v, n;
 
-	memset(&res, 0, sizeof(res));
+	(void)memset(&res, 0, sizeof(res));
 
 	db = ypdb_open_db(domain, map, &res.status, NULL);
 
-	if (db != NULL && res.status >= 0) {
+	if (db != NULL && (int)res.status >= 0) {
 		n.dptr = key.dptr;
 		n.dsize = key.dsize;
 		v.dptr = NULL;
@@ -699,11 +702,11 @@ ypdb_get_order(const char *domain, const char *map)
 	DBM *db;
 	datum k, v;
 
-	memset(&res, 0, sizeof(res));
+	(void)memset(&res, 0, sizeof(res));
 
 	db = ypdb_open_db(domain, map, &res.status, NULL);
 
-	if (db != NULL && res.status >= 0) {
+	if (db != NULL && (int)res.status >= 0) {
 		k.dptr = order_key;
 		k.dsize = YP_LAST_LEN;
 
@@ -711,8 +714,7 @@ ypdb_get_order(const char *domain, const char *map)
 		if (v.dptr == NULL)
 			res.status = YP_NOKEY;
 		else {
-			strncpy(order, v.dptr, v.dsize);
-			order[v.dsize] = '\0';
+			(void)strlcpy(order, v.dptr, (size_t)v.dsize);
 			res.ordernum = (u_int) atol(order);
 		}
 	}
@@ -732,11 +734,11 @@ ypdb_get_master(const char *domain, const char *map)
 	DBM *db;
 	datum k, v;
 
-	memset(&res, 0, sizeof(res));
+	(void)memset(&res, 0, sizeof(res));
 
 	db = ypdb_open_db(domain, map, &res.status, NULL);
 
-	if (db != NULL && res.status >= 0) {
+	if (db != NULL && (int)res.status >= 0) {
 		k.dptr = master_key;
 		k.dsize = YP_MASTER_LEN;
 
@@ -744,8 +746,7 @@ ypdb_get_master(const char *domain, const char *map)
 		if (v.dptr == NULL)
 			res.status = YP_NOKEY;
 		else {
-			strncpy(master, v.dptr, v.dsize);
-			master[v.dsize] = '\0';
+			(void)strlcpy(master, v.dptr, (size_t)v.dsize);
 			res.master = &master[0];
 		}
 	}
@@ -763,7 +764,7 @@ ypdb_xdr_get_all(XDR *xdrs, struct ypreq_nokey *req)
 	DBM *db;
 	datum k, v;
 
-	memset(&resp, 0, sizeof(resp));
+	(void)memset(&resp, 0, sizeof(resp));
 
 	/*
 	 * open db, and advance past any private keys we may see
@@ -771,7 +772,7 @@ ypdb_xdr_get_all(XDR *xdrs, struct ypreq_nokey *req)
 	db = ypdb_open_db(req->domain, req->map,
 	    &resp.ypresp_all_u.val.status, NULL);
 
-	if (db == NULL || resp.ypresp_all_u.val.status < 0)
+	if (db == NULL || (int)resp.ypresp_all_u.val.status < 0)
 		return (FALSE);
 
 	k = ypdb_firstkey(db);
@@ -808,7 +809,7 @@ ypdb_xdr_get_all(XDR *xdrs, struct ypreq_nokey *req)
 			k = ypdb_nextkey(db);
 	}
 
-	memset(&resp, 0, sizeof(resp));
+	(void)memset(&resp, 0, sizeof(resp));
 	resp.ypresp_all_u.val.status = YP_NOKEY;
 	resp.more = FALSE;
 
@@ -830,13 +831,14 @@ int
 ypdb_secure(const char *domain, const char *map)
 {
 	DBM *db;
-	int secure, status;
+	int secure;
+	u_int status;
 	struct opt_map *map_info = NULL;
 
 	secure = FALSE;
 
 	db = ypdb_open_db(domain, map, &status, &map_info);
-	if (db == NULL || status < 0)
+	if (db == NULL || (int)status < 0)
 		return (secure);
 	if (map_info != NULL) 
 		secure = map_info->secure;
