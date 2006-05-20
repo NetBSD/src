@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.13 2006/05/20 03:32:45 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.14 2006/05/20 03:41:28 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.13 2006/05/20 03:32:45 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.14 2006/05/20 03:41:28 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1292,7 +1292,8 @@ real_writebytes(struct midi_softc *sc, u_char *buf, int cc)
 	 * never hurt anybody) and start the output transfer once we're out of
 	 * the critical section (pbus==1 will stop anyone else doing the same).
 	 */
-	if ( !sc->pbus && idx_cur < MIDI_BUF_PRODUCER_REFRESH(mb,idx) ) {
+	MIDI_BUF_CONSUMER_INIT(mb,idx); /* check what consumer's got to read */
+	if ( !sc->pbus && idx_cur < idx_lim ) {
 		sc->pbus = 1;
 		callout_stop(&sc->xmt_asense_co);
 		arming = 1;
