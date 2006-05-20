@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.17.14.2 2006/05/20 03:19:02 chap Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.17.14.3 2006/05/20 03:22:31 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

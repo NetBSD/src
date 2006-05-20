@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.8.14.2 2006/05/20 03:05:05 chap Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.8.14.3 2006/05/20 03:22:31 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,22 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* pending MUX-MIDI packet */
-typedef enum {
-	PS_EXCL_0=-2,	/* put, and next state is PS_EXCL_0 */
-	PS_END=-1,	/* put, and next state is PS_INITIAL */
-	PS_INITIAL=0,	/* 0>= : not put, and state is keeped */
-	PS_NORMAL_1OF3=1,
-	PS_NORMAL_2OF3=2,
-	PS_NORMAL_1OF2=3,
-	PS_EXCL_1=4,
-	PS_EXCL_2=5
-} packet_state_t;
-
 #define UMIDI_PACKET_SIZE 4
 struct umidi_packet {
 	char		buffer[UMIDI_PACKET_SIZE];
-	packet_state_t	state;
 };
 
 /*
