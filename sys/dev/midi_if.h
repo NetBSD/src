@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.17.14.9 2006/05/20 03:43:58 chap Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.17.14.10 2006/05/20 04:31:59 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _SYS_DEV_MIDI_IF_H_
 
 struct midi_info {
-	char	*name;		/* Name of MIDI hardware */
+	const char *name;		/* Name of MIDI hardware */
 	int	props;
 };
 #define MIDI_PROP_OUT_INTR  1
@@ -56,7 +56,7 @@ struct midi_hw_if {
 	void	(*close)(void *);		/* close hardware */
 	int	(*output)(void *, int);	/* output a byte */
 	void	(*getinfo)(void *, struct midi_info *);
-	int	(*ioctl)(void *, u_long, caddr_t, int, struct proc *);
+	int	(*ioctl)(void *, u_long, caddr_t, int, struct lwp *);
 };
 
 /*
@@ -83,7 +83,7 @@ struct midi_hw_if_ext {
 void midi_register_hw_if_ext(struct midi_hw_if_ext *);
 
 void	midi_attach(struct midi_softc *, struct device *);
-struct device *midi_attach_mi(struct midi_hw_if *, void *, 
+struct device *midi_attach_mi(const struct midi_hw_if *, void *,
 				   struct device *);
 
 int	midi_unit_count(void);

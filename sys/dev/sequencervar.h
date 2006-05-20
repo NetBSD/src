@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.10.14.7 2006/05/20 03:43:58 chap Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.10.14.8 2006/05/20 04:32:00 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct sequencer_softc;
 
 #define MAXCHAN 16
 struct midi_dev {
-	char	*name;
+	const char *name;
 	int	subtype;
 	int	capabilities;
 	int	nr_voices;
@@ -105,7 +105,7 @@ struct sequencer_softc {
 	u_long	input_stamp;
 };
 
-void seq_event_intr __P((void *, seq_event_rec *));
+void seq_event_intr(void *, seq_event_rec *);
 
 #define SEQUENCERUNIT(d) ((d) & 0x7f)
 #define SEQ_IS_OLD(d) ((d) & 0x80)
