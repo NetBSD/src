@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.158.2.7 2006/05/20 22:19:33 riz Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.158.2.8 2006/05/20 22:24:27 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.7 2006/05/20 22:19:33 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.8 2006/05/20 22:24:27 riz Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -376,6 +376,23 @@ lfs_vflush(struct vnode *vp)
 					goto top;
 				}
 			}
+			/*
+			 * If we begin a new segment in the middle of writing
+			 * the Ifile, it creates an inconsistent checkpoint,
+			 * since the Ifile information for the new segment
+			 * is not up-to-date.  Take care of this here by
+			 * sending the Ifile through again in case there
+			 * are newly dirtied blocks.  But wait, there's more!
+			 * This second Ifile write could *also* cross a segment
+			 * boundary, if the first one was large.  The second
+			 * one is guaranteed to be no more than 8 blocks,
+			 * though (two segment blocks and supporting indirects)
+			 * so the third write *will not* cross the boundary.
+			 */
+			if (vp == fs->lfs_ivnode) {
+				lfs_writefile(fs, sp, vp);
+				lfs_writefile(fs, sp, vp);
+			}
 		} while (lfs_writeinode(fs, sp, ip));
 	} while (lfs_writeseg(fs, sp) && ip->i_number == LFS_IFILE_INUM);
 
@@ -677,6 +694,12 @@ lfs_segwrite(struct mount *mp, int flags)
 				 * Ifile has no pages, so we don't need
 				 * to check error return here.
 				 */
+				lfs_writefile(fs, sp, vp);
+				/*
+				 * Ensure the Ifile takes the current segment
+				 * into account.  See comment in lfs_vflush.
+				 */
+				lfs_writefile(fs, sp, vp);
 				lfs_writefile(fs, sp, vp);
 			}
 
@@ -1703,6 +1726,16 @@ lfs_newseg(struct lfs *fs)
 	skip_inval = 1;
 	for (sn = curseg = dtosn(fs, fs->lfs_curseg) + fs->lfs_interleave;;) {
 		sn = (sn + 1) % fs->lfs_nseg;
+
+		/* Honor LFCNWRAPSTOP */
+		simple_lock(&fs->lfs_interlock);
+		if (sn == 0 && fs->lfs_nowrap) {
+			wakeup(&fs->lfs_nowrap);
+			ltsleep(&fs->lfs_nowrap, PVFS, "newseg", 0,
+				&fs->lfs_interlock);
+		}
+		simple_unlock(&fs->lfs_interlock);
+
 		if (sn == curseg) {
 			if (skip_inval)
 				skip_inval = 0;
