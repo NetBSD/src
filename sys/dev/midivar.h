@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.11.14.9 2006/05/20 03:22:31 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.10 2006/05/20 03:24:33 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -244,6 +244,15 @@ struct midi_softc {
 #define MIDI_IN_RNX0_2 52
 #define MIDI_IN_RNX1_2 56
 #define MIDI_IN_RNY1_2 60 /* not needed except for accurate error counts */
+/*
+ * Four more states are needed to model the equivalence of NoteOff vel. 64
+ * and NoteOn vel. 0 for canonicalization or compression. In each of these 4
+ * states, we know the last message input and output was a NoteOn or a NoteOff.
+ */
+#define MIDI_IN_RXX2_2 64 /* last output == msg[0] != last input */
+#define MIDI_IN_RXX0_2 68 /* last output != msg[0] == this input */
+#define MIDI_IN_RXX1_2 72 /* " */
+#define MIDI_IN_RXY1_2 76 /* variant of RXX1_2 needed for error count only */
 
 #define MIDI_CAT_DATA 0
 #define MIDI_CAT_STATUS1 1
