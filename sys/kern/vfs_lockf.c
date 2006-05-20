@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.52 2006/05/20 12:06:20 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.53 2006/05/20 12:19:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.52 2006/05/20 12:06:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.53 2006/05/20 12:19:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -574,8 +574,6 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				p = (struct proc *)waitblock->lf_id;
 				if (p == curproc) {
 					lf_free(lock);
-					printf("deadlock detected pid=%d\n",
-					    (int)curproc->p_pid);
 					return EDEADLK;
 				}
 			}
