@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.2 2006/05/18 17:33:18 elad Exp $ */
+/* $NetBSD: kern_pax.c,v 1.3 2006/05/20 15:45:37 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -84,8 +84,7 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 void
 pax_mprotect_adjust(struct lwp *l, int f)
 {
-	if (!pax_mprotect_enabled ||
-	    (f & (PF_PAXMPROTECT|PF_PAXNOMPROTECT)))
+	if (!pax_mprotect_enabled)
 		return;
 
 	if (f & PF_PAXMPROTECT)
@@ -95,22 +94,18 @@ pax_mprotect_adjust(struct lwp *l, int f)
 }
 
 void
-pax_mprotect(struct lwp *l, struct uvm_object *obj, vm_prot_t *new_prot)
+pax_mprotect(struct lwp *l, vm_prot_t *prot, vm_prot_t *maxprot)
 {
 	if (!pax_mprotect_enabled ||
 	    (pax_mprotect_global && (l->l_proc->p_flag & P_PAXNOMPROTECT)) ||
 	    (!pax_mprotect_global && !(l->l_proc->p_flag & P_PAXMPROTECT)))
 		return;
 
-	if (obj == NULL) {
-		/* Anonymous mappings always get their execute bit stripped. */
-		*new_prot &= ~VM_PROT_EXECUTE;
+	if ((*prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) != VM_PROT_EXECUTE) {
+		*prot &= ~VM_PROT_EXECUTE;
+		*maxprot &= ~VM_PROT_EXECUTE;
 	} else {
-		/* File mappings. */
-		if ((*new_prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
-		    VM_PROT_WRITE)
-			*new_prot &= ~VM_PROT_EXECUTE;
-		else
-			*new_prot &= ~VM_PROT_WRITE;
+		*prot &= ~VM_PROT_WRITE;
+		*maxprot &= ~VM_PROT_WRITE;
 	}
 }
