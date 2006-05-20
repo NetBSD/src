@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.10 2006/05/20 03:24:33 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.11 2006/05/20 03:27:31 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.10 2006/05/20 03:24:33 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.11 2006/05/20 03:27:31 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -100,7 +100,8 @@ int	midi_sleep_timo(int *, char *, int, struct simplelock *);
 int	midi_sleep(int *, char *, struct simplelock *);
 void	midi_wakeup(int *);
 void	midi_initbuf(struct midi_buffer *);
-void	midi_timeout(void *);
+void	midi_xmt_asense(void *);
+void	midi_rcv_asense(void *);
 
 int	midiprobe(struct device *, struct cfdata *, void *);
 void	midiattach(struct device *, struct device *, void *);
@@ -123,16 +124,8 @@ const struct cdevsw midi_cdevsw = {
 CFATTACH_DECL(midi, sizeof(struct midi_softc),
     midiprobe, midiattach, mididetach, midiactivate);
 
-#ifdef MIDI_SAVE
-#define MIDI_SAVE_SIZE 100000
-int midicnt;
-struct {
-	int cnt;
-	u_char buf[MIDI_SAVE_SIZE];
-} midisave;
-#define MIDI_GETSAVE		_IOWR('m', 100, int)
-
-#endif
+#define MIDI_XMT_ASENSE_PERIOD mstohz(275)
+#define MIDI_RCV_ASENSE_PERIOD mstohz(300)
 
 extern struct cfdriver midi_cd;
 
@@ -224,8 +217,10 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	struct midi_info mi;
 	int s;
 
-	callout_init(&sc->sc_callout);
-	callout_setfunc(&sc->sc_callout, midi_timeout, sc);
+	callout_init(&sc->xmt_asense_co);
+	callout_init(&sc->rcv_asense_co);
+	callout_setfunc(&sc->xmt_asense_co, midi_xmt_asense, sc);
+	callout_setfunc(&sc->rcv_asense_co, midi_rcv_asense, sc);
 	simple_lock_init(&sc->out_lock);
 	simple_lock_init(&sc->in_lock);
 	sc->dying = 0;
@@ -647,8 +642,16 @@ midi_in(void *addr, int data)
 		 * a raw reader. (Really should do something intelligent with
 		 * it then, though....)
 		 */
-		if ( got == FST_RT && MIDI_ACK == sc->rcv.pos[0] )
+		if ( got == FST_RT && MIDI_ACK == sc->rcv.pos[0] ) {
+			if ( !sc->rcv_expect_asense ) {
+				sc->rcv_expect_asense = 1;
+				callout_schedule(&sc->rcv_asense_co,
+				                 MIDI_RCV_ASENSE_PERIOD);
+			}
+			sc->rcv_quiescent = 0;
+			sc->rcv_eof = 0;
 			return;
+		}
 		/* FALLTHROUGH */
 	/*
 	 * Ultimately SysEx msgs should be offered to the sequencer also; the
@@ -659,6 +662,8 @@ midi_in(void *addr, int data)
 	case FST_SYX:
 		count = sc->rcv.end - sc->rcv.pos;
 		MIDI_IN_LOCK(sc,s);
+		sc->rcv_quiescent = 0;
+		sc->rcv_eof = 0;
 		MIDI_BUF_PRODUCER_INIT(mb,idx);
 		MIDI_BUF_PRODUCER_INIT(mb,buf);
 		if (count > buf_lim - buf_cur
@@ -678,10 +683,10 @@ midi_in(void *addr, int data)
 		MIDI_BUF_PRODUCER_WBACK(mb,buf);
 		MIDI_BUF_PRODUCER_WBACK(mb,idx);
 		midi_wakeup(&sc->rchan);
-		selnotify(&sc->rsel, 0);
 		if (sc->async)
 			psignal(sc->async, SIGIO);
 		MIDI_IN_UNLOCK(sc,s);
+		selnotify(&sc->rsel, 0); /* filter will spin if locked */
 		break;
 	default: /* don't #ifdef this away, gcc will say FST_HUH not handled */
 		printf("midi_in: midi_fst returned %d?!\n", got);
@@ -731,6 +736,11 @@ midiopen(dev_t dev, int flags, int ifmt, struct proc *p)
 	/* and the buffers */
 	midi_initbuf(&sc->outbuf);
 	midi_initbuf(&sc->inbuf);
+	
+	/* and the receive flags */
+	sc->rcv_expect_asense = 0;
+	sc->rcv_quiescent = 0;
+	sc->rcv_eof = 0;
 
 	error = hw->open(sc->hw_hdl, flags, midi_in, midi_out, sc);
 	if (error)
@@ -770,9 +780,10 @@ midiclose(dev_t dev, int flags, int ifmt, struct proc *p)
 		error =
 		midi_sleep_timo(&sc->wchan, "mid_dr", 30*hz, &sc->out_lock);
 	}
-	MIDI_OUT_UNLOCK(sc,s);
-	callout_stop(&sc->sc_callout); /* xxx fix this - sleep? */
 	sc->isopen = 0;
+	MIDI_OUT_UNLOCK(sc,s);
+	callout_stop(&sc->xmt_asense_co); /* xxx fix this - sleep? */
+	callout_stop(&sc->rcv_asense_co);
 	hw->close(sc->hw_hdl);
 #if NSEQUENCER > 0
 	sc->seqopen = 0;
@@ -871,8 +882,8 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 			break;
 		MIDI_BUF_CONSUMER_REFRESH(mb,idx);
 		if ( idx_cur == idx_lim ) { /* need to wait for data? */
-			if ( !first ) /* never block reader if */
-				break; /* any data already in hand */
+			if ( !first || sc->rcv_eof ) /* never block reader if */
+				break;            /* any data already in hand */
 			if (ioflag & IO_NDELAY) {
 				error = EWOULDBLOCK;
 				break;
@@ -894,26 +905,56 @@ unlocked_exit:
 }
 
 void
-midi_timeout(void *arg)
+midi_rcv_asense(void *arg)
+{
+	struct midi_softc *sc = arg;
+	int s;
+	
+	if ( sc->dying || !sc->isopen )
+		return;
+
+	if ( sc->rcv_quiescent ) {
+		MIDI_IN_LOCK(sc,s);
+		sc->rcv_eof = 1;
+		sc->rcv_quiescent = 0;
+		sc->rcv_expect_asense = 0;
+		midi_wakeup(&sc->rchan);
+		if (sc->async)
+			psignal(sc->async, SIGIO);
+		MIDI_IN_UNLOCK(sc,s);
+		selnotify(&sc->rsel, 0); /* filter will spin if locked */
+		return;
+	}
+	
+	sc->rcv_quiescent = 1;
+	callout_schedule(&sc->rcv_asense_co, MIDI_RCV_ASENSE_PERIOD);
+}
+
+void
+midi_xmt_asense(void *arg)
 {
 	struct midi_softc *sc = arg;
 	int s;
 	int error;
 	int armed;
+	
+	if ( sc->dying || !sc->isopen )
+		return;
 
 	MIDI_OUT_LOCK(sc,s);
-	if ( sc->pbus ) {
+	if ( sc->pbus || sc->dying || !sc->isopen ) {
 		MIDI_OUT_UNLOCK(sc,s);
 		return;
 	}
 	sc->pbus = 1;
-	DPRINTFN(8,("midi_timeout: %p\n", sc));
+	DPRINTFN(8,("midi_xmt_asense: %p\n", sc));
 
 	if ( sc->props & MIDI_PROP_OUT_INTR ) {
 		error = sc->hw_if->output(sc->hw_hdl, MIDI_ACK);
 		armed = (error == 0);
 	} else { /* polled output, do with interrupts unmasked */
 		MIDI_OUT_UNLOCK(sc,s);
+		/* running from softclock, so top half won't sneak in here */
 		error = sc->hw_if->output(sc->hw_hdl, MIDI_ACK);
 		MIDI_OUT_LOCK(sc,s);
 		armed = 0;
@@ -921,7 +962,7 @@ midi_timeout(void *arg)
 
 	if ( !armed ) {
 		sc->pbus = 0;
-		callout_schedule(&sc->sc_callout, mstohz(275));
+		callout_schedule(&sc->xmt_asense_co, MIDI_XMT_ASENSE_PERIOD);
 	}
 
 	MIDI_OUT_UNLOCK(sc,s);
@@ -1084,7 +1125,7 @@ ioerror:
 
 disarm:	
 	sc->pbus = 0;
-	callout_schedule(&sc->sc_callout, mstohz(275));
+	callout_schedule(&sc->xmt_asense_co, MIDI_XMT_ASENSE_PERIOD);
 	MIDI_OUT_UNLOCK(sc,s);
 	return error;
 }
@@ -1145,13 +1186,13 @@ midi_intr_out(struct midi_softc *sc)
 	MIDI_BUF_CONSUMER_WBACK(mb,buf);
 	if ( !armed ) {
 		sc->pbus = 0;
-		callout_schedule(&sc->sc_callout, mstohz(275));
+		callout_schedule(&sc->xmt_asense_co, MIDI_XMT_ASENSE_PERIOD);
 	}
 	midi_wakeup(&sc->wchan);
-	selnotify(&sc->wsel, 0);
 	if ( sc->async )
 		psignal(sc->async, SIGIO);
 	MIDI_OUT_UNLOCK(sc,s);
+	selnotify(&sc->wsel, 0); /* filter will spin if locked */
 
 #if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
 	if ( error )
@@ -1253,7 +1294,7 @@ real_writebytes(struct midi_softc *sc, u_char *buf, int cc)
 	 */
 	if ( !sc->pbus && idx_cur < MIDI_BUF_PRODUCER_REFRESH(mb,idx) ) {
 		sc->pbus = 1;
-		callout_stop(&sc->sc_callout);
+		callout_stop(&sc->xmt_asense_co);
 		arming = 1;
 	}
 	MIDI_OUT_UNLOCK(sc,s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.11.14.10 2006/05/20 03:24:33 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.11 2006/05/20 03:27:31 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -219,11 +219,15 @@ struct midi_softc {
 	} while (/*CONSTCOND*/0)
 
 	int	pbus;
+	int	rcv_expect_asense;
+	int	rcv_quiescent;
+	int	rcv_eof;
 	struct	selinfo wsel;	/* write selector */
 	struct	selinfo rsel;	/* read selector */
 	struct	proc *async;	/* process who wants audio SIGIO */
 
-	struct callout sc_callout;
+	struct callout xmt_asense_co;
+	struct callout rcv_asense_co;
 
 	/* MIDI input state machine; states are *s of 4 to allow | CAT bits */
 	struct midi_state rcv;
