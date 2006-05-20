@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.22 2006/05/20 22:42:50 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.23 2006/05/20 22:43:42 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.22 2006/05/20 22:42:50 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.23 2006/05/20 22:43:42 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,6 +312,17 @@ lfs_fsync(void *v)
 		wakeup(&lfs_writer_daemon);
 		simple_unlock(&lfs_subsys_lock);
 		return 0;
+	}
+
+	/*
+	 * Don't reclaim any vnodes that are being cleaned.
+	 * This prevents the cleaner from writing files twice
+	 * in the same partial segment, causing an accounting
+	 * underflow.
+	 */
+	if (ap->a_flags & FSYNC_RECLAIM) {
+		if (VTOI(vp)->i_flags & IN_CLEANING)
+			return EAGAIN;
 	}
 
 	wait = (ap->a_flags & FSYNC_WAIT);
