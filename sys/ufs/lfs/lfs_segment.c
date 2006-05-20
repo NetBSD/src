@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.158.2.10 2006/05/20 22:38:57 riz Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.158.2.11 2006/05/20 22:41:31 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.10 2006/05/20 22:38:57 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.158.2.11 2006/05/20 22:41:31 riz Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -627,6 +627,8 @@ lfs_segwrite(struct mount *mp, int flags)
 				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
 				if (um_error == 0)
 					um_error = error;
+				/* In case writevnodes errored out */
+				lfs_flush_dirops(fs);
 				((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
 				lfs_finalize_fs_seguse(fs);
 			}
