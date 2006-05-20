@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.137.2.6 2006/05/20 21:50:26 riz Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.137.2.7 2006/05/20 21:55:43 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.6 2006/05/20 21:50:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.137.2.7 2006/05/20 21:55:43 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -635,7 +635,8 @@ lfs_mknod(void *v)
 	 */
 	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0,
 	    curproc)) != 0) {
-		panic("lfs_mknod: couldn't fsync (ino %d)", ino);
+		panic("lfs_mknod: couldn't fsync (ino %llu)",
+		    (unsigned long long)ino);
 		/* return (error); */
 	}
 	/*

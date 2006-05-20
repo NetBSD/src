@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.167.2.6 2006/05/20 21:50:26 riz Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.167.2.7 2006/05/20 21:55:43 riz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.6 2006/05/20 21:50:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.167.2.7 2006/05/20 21:55:43 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -2289,8 +2289,9 @@ inconsistent:
 # ifdef DEBUG
 		lfs_dump_dinode(ip->i_din.ffs1_din);
 # endif
-		panic("lfs_vinit: ino %d is type VNON! (ifmt=%o)\n",
-		      ip->i_number, (ip->i_mode & IFMT) >> 12);
+		panic("lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
+		      (unsigned long long)ip->i_number,
+		      (ip->i_mode & IFMT) >> 12);
 	}
 #endif /* DIAGNOSTIC */
 
