@@ -1,11 +1,12 @@
-/*	$NetBSD: midi.c,v 1.43.2.5 2006/05/20 03:15:32 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.6 2006/05/20 03:16:48 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@NetBSD.org).
+ * by Lennart Augustsson (augustss@NetBSD.org) and (MIDI DFA and Active
+ * Sense handling) Chapman Flack (nblists@anastigmatix.net).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.5 2006/05/20 03:15:32 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.6 2006/05/20 03:16:48 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -203,9 +204,11 @@ mididetach(struct device *self, int flags)
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
 	
+	evcnt_detach(&sc->xmt.bytesDiscarded);
+	evcnt_detach(&sc->xmt.incompleteMessages);
 	if ( sc->props & MIDI_PROP_CAN_INPUT ) {
-		evcnt_detach(&sc->rcvBytesDiscarded);
-		evcnt_detach(&sc->rcvIncompleteMessages);
+		evcnt_detach(&sc->rcv.bytesDiscarded);
+		evcnt_detach(&sc->rcv.incompleteMessages);
 	}
 
 	return (0);
@@ -231,11 +234,17 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	sc->hw_if->getinfo(sc->hw_hdl, &mi);
 	sc->props = mi.props;
 	
+	evcnt_attach_dynamic(&sc->xmt.bytesDiscarded,
+		EVCNT_TYPE_MISC, NULL,
+		sc->dev.dv_xname, "xmt bytes discarded");
+	evcnt_attach_dynamic(&sc->xmt.incompleteMessages,
+		EVCNT_TYPE_MISC, NULL,
+		sc->dev.dv_xname, "xmt incomplete msgs");
 	if ( sc->props & MIDI_PROP_CAN_INPUT ) {
-		evcnt_attach_dynamic(&sc->rcvBytesDiscarded,
+		evcnt_attach_dynamic(&sc->rcv.bytesDiscarded,
 			EVCNT_TYPE_MISC, NULL,
 			sc->dev.dv_xname, "rcv bytes discarded");
-		evcnt_attach_dynamic(&sc->rcvIncompleteMessages,
+		evcnt_attach_dynamic(&sc->rcv.incompleteMessages,
 			EVCNT_TYPE_MISC, NULL,
 			sc->dev.dv_xname, "rcv incomplete msgs");
 	}
@@ -305,6 +314,233 @@ midi_wakeup(int *chan)
 */
 static char const midi_cats[] = "\0\0\0\0\0\0\0\0\2\2\2\2\1\1\2\3";
 #define MIDI_CAT(d) (midi_cats[((d)>>4)&15])
+#define DFA_RETURN(offp,endp,ret) \
+	return (s->pos=s->msg+(offp)), (s->end=s->msg+(endp)), (ret)
+
+enum dfa_ret { DFA_MORE, DFA_CHN, DFA_COM, DFA_SYX, DFA_RT, DFA_ERR, DFA_HUH };
+
+/*
+ * A MIDI state machine suitable for receiving or transmitting. It will
+ * accept correct MIDI input that uses, doesn't use, or sometimes uses the
+ * 'running status' compression technique, and transduce it to fully expanded
+ * (compress==0) or fully compressed (compress==1) form.
+ *
+ * Returns DFA_MORE if a complete message has not been parsed yet (SysEx
+ * messages are the exception), DFA_ERR or DFA_HUH if the input does not
+ * conform to the protocol, or DFA_CHN (channel messages), DFA_COM (System
+ * Common messages), DFA_RT (System Real-Time messages), or DFA_SYX (System
+ * Exclusive) to broadly categorize the message parsed. s->pos and s->end
+ * locate the parsed message; while (s->pos<s->end) putchar(*(s->pos++));
+ * would output it.
+ *
+ * DFA_HUH means the character c wasn't valid in the original state, but the
+ * state has now been reset to START and the caller should try again passing
+ * the same c. DFA_ERR means c isn't valid in the start state; the caller
+ * should kiss it goodbye and continue to try successive characters from the
+ * input until something other than DFA_ERR or DFA_HUH is returned, at which
+ * point things are resynchronized.
+ *
+ * A DFA_SYX return means that between pos and end are from 1 to 3
+ * bytes of a system exclusive message. A SysEx message will be delivered in
+ * one or more chunks of that form, where the first begins with 0xf0 and the
+ * last (which is the only one that might have length < 3) ends with 0xf7.
+ *
+ * Messages corrupted by a protocol error are discarded and won't be seen at
+ * all; again SysEx is the exception, as one or more chunks of it may already
+ * have been parsed.
+ *
+ * For DFA_CHN messages, s->msg[0] always contains the status byte even if
+ * compression was requested (pos then points to msg[1]). That way, the
+ * caller can always identify the exact message if there is a need to do so.
+ * For all other message types except DFA_SYX, the status byte is at *pos
+ * (which may not necessarily be msg[0]!). There is only one SysEx status
+ * byte, so the return value DFA_SYX is sufficient to identify it.
+ */
+static enum dfa_ret
+midi_dfa(struct midi_state *s, u_char c, int compress)
+{
+	int syxpos = 0;
+	compress = compress ? 1 : 0;
+
+	if ( c >= 0xf8 ) { /* All realtime messages bypass state machine */
+	        if ( c == 0xf9  ||  c == 0xfd ) {
+			DPRINTF( ("midi_dfa: s=%p c=0x%02x undefined\n", 
+				  s, c));
+			s->bytesDiscarded.ev_count++;
+			return DFA_ERR;
+		}
+		DPRINTFN(9, ("midi_dfa: s=%p System Real-Time data=0x%02x\n", 
+			     s, c));
+		s->msg[2] = c;
+		DFA_RETURN(2,3,DFA_RT);
+	}
+
+	DPRINTFN(4, ("midi_dfa: s=%p data=0x%02x state=%d\n", 
+		     s, c, s->state));
+
+        switch ( s->state   | MIDI_CAT(c) ) { /* break ==> return DFA_MORE */
+
+	case MIDI_IN_START  | MIDI_CAT_COMMON:
+	case MIDI_IN_RUN1_1 | MIDI_CAT_COMMON:
+	case MIDI_IN_RUN2_2 | MIDI_CAT_COMMON:
+	        s->msg[0] = c;
+	        switch ( c ) {
+		case 0xf0: s->state = MIDI_IN_SYX1_3; break;
+		case 0xf1: s->state = MIDI_IN_COM0_1; break;
+		case 0xf2: s->state = MIDI_IN_COM0_2; break;
+		case 0xf3: s->state = MIDI_IN_COM0_1; break;
+		case 0xf6: s->state = MIDI_IN_START;  DFA_RETURN(0,1,DFA_COM);
+		default: goto protocol_violation;
+		}
+		break;
+	
+	case MIDI_IN_RUN1_1 | MIDI_CAT_STATUS1:
+		if ( c == s->msg[0] ) {
+			s->state = MIDI_IN_RNX0_1;
+			break;
+		}
+		/* FALLTHROUGH */
+	case MIDI_IN_RUN2_2 | MIDI_CAT_STATUS1:
+	case MIDI_IN_START  | MIDI_CAT_STATUS1:
+	        s->state = MIDI_IN_RUN0_1;
+	        s->msg[0] = c;
+		break;
+	
+	case MIDI_IN_RUN2_2 | MIDI_CAT_STATUS2:
+		if ( c == s->msg[0] ) {
+			s->state = MIDI_IN_RNX0_2;
+			break;
+		}
+		/* FALLTHROUGH */
+	case MIDI_IN_RUN1_1 | MIDI_CAT_STATUS2:
+	case MIDI_IN_START  | MIDI_CAT_STATUS2:
+	        s->state = MIDI_IN_RUN0_2;
+	        s->msg[0] = c;
+		break;
+
+        case MIDI_IN_COM0_1 | MIDI_CAT_DATA:
+		s->state = MIDI_IN_START;
+	        s->msg[1] = c;
+		DFA_RETURN(0,2,DFA_COM);
+
+        case MIDI_IN_COM0_2 | MIDI_CAT_DATA:
+	        s->state = MIDI_IN_COM1_2;
+	        s->msg[1] = c;
+		break;
+
+        case MIDI_IN_COM1_2 | MIDI_CAT_DATA:
+		s->state = MIDI_IN_START;
+	        s->msg[2] = c;
+		DFA_RETURN(0,3,DFA_COM);
+
+        case MIDI_IN_RUN0_1 | MIDI_CAT_DATA:
+		s->state = MIDI_IN_RUN1_1;
+	        s->msg[1] = c;
+		DFA_RETURN(0,2,DFA_CHN);
+
+        case MIDI_IN_RUN1_1 | MIDI_CAT_DATA:
+        case MIDI_IN_RNX0_1 | MIDI_CAT_DATA:
+		s->state = MIDI_IN_RUN1_1;
+	        s->msg[1] = c;
+		DFA_RETURN(compress,2,DFA_CHN);
+
+        case MIDI_IN_RUN0_2 | MIDI_CAT_DATA:
+	        s->state = MIDI_IN_RUN1_2;
+	        s->msg[1] = c;
+		break;
+
+        case MIDI_IN_RUN1_2 | MIDI_CAT_DATA:
+		s->state = MIDI_IN_RUN2_2;
+	        s->msg[2] = c;
+		DFA_RETURN(0,3,DFA_CHN);
+
+        case MIDI_IN_RUN2_2 | MIDI_CAT_DATA:
+	        s->state = MIDI_IN_RNX1_2;
+	        s->msg[1] = c;
+		break;
+
+        case MIDI_IN_RNX0_2 | MIDI_CAT_DATA:
+	        s->state = MIDI_IN_RNY1_2;
+	        s->msg[1] = c;
+		break;
+
+        case MIDI_IN_RNX1_2 | MIDI_CAT_DATA:
+        case MIDI_IN_RNY1_2 | MIDI_CAT_DATA:
+		s->state = MIDI_IN_RUN2_2;
+	        s->msg[2] = c;
+		DFA_RETURN(compress,3,DFA_CHN);
+
+        case MIDI_IN_SYX1_3 | MIDI_CAT_DATA:
+		s->state = MIDI_IN_SYX2_3;
+	        s->msg[1] = c;
+		break;
+
+        case MIDI_IN_SYX2_3 | MIDI_CAT_DATA:
+		s->state = MIDI_IN_SYX0_3;
+	        s->msg[2] = c;
+		DFA_RETURN(0,3,DFA_SYX);
+
+        case MIDI_IN_SYX0_3 | MIDI_CAT_DATA:
+		s->state = MIDI_IN_SYX1_3;
+	        s->msg[0] = c;
+		break;
+
+        case MIDI_IN_SYX2_3 | MIDI_CAT_COMMON:
+		++ syxpos;
+		/* FALLTHROUGH */
+        case MIDI_IN_SYX1_3 | MIDI_CAT_COMMON:
+		++ syxpos;
+		/* FALLTHROUGH */
+        case MIDI_IN_SYX0_3 | MIDI_CAT_COMMON:
+	        if ( c == 0xf7 ) {
+		        s->state = MIDI_IN_START;
+			s->msg[syxpos] = c;
+		        DFA_RETURN(0,1+syxpos,DFA_SYX);
+		}
+		/* FALLTHROUGH */
+
+        default:
+protocol_violation:
+                DPRINTF(("midi_dfa: unexpected %#02x in state %u\n",
+		        c, s->state));
+		switch ( s->state ) {
+		case MIDI_IN_RUN1_1: /* can only get here by seeing an */
+		case MIDI_IN_RUN2_2: /* INVALID System Common message */
+		        s->state = MIDI_IN_START;
+			/* FALLTHROUGH */
+		case MIDI_IN_START:
+			s->bytesDiscarded.ev_count++;
+			return DFA_ERR;
+		case MIDI_IN_COM1_2:
+		case MIDI_IN_RUN1_2:
+		case MIDI_IN_SYX2_3:
+		case MIDI_IN_RNY1_2:
+			s->bytesDiscarded.ev_count++;
+			/* FALLTHROUGH */
+		case MIDI_IN_COM0_1:
+		case MIDI_IN_RUN0_1:
+		case MIDI_IN_RNX0_1:
+		case MIDI_IN_COM0_2:
+		case MIDI_IN_RUN0_2:
+		case MIDI_IN_RNX0_2:
+		case MIDI_IN_RNX1_2:
+		case MIDI_IN_SYX1_3:
+			s->bytesDiscarded.ev_count++;
+			/* FALLTHROUGH */
+		case MIDI_IN_SYX0_3:
+		        s->incompleteMessages.ev_count++;
+			break;
+#if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
+		default:
+		        printf("midi_dfa: mishandled %#02x(%u) in state %u?!\n",
+			      c, MIDI_CAT(c), s->state);
+#endif
+		}
+		s->state = MIDI_IN_START;
+		return DFA_HUH;
+	}
+	return DFA_MORE;
+}
 
 void
 midi_in(void *addr, int data)
@@ -312,9 +548,8 @@ midi_in(void *addr, int data)
 	struct midi_softc *sc = addr;
 	struct midi_buffer *mb = &sc->inbuf;
 	int i;
-	u_char *what = sc->in_msg;
-        u_char rtbuf;
 	int count;
+	enum dfa_ret got;
 
 	if (!sc->isopen)
 		return;
@@ -322,168 +557,63 @@ midi_in(void *addr, int data)
 	if (!(sc->flags & FREAD))
 		return;		/* discard data if not reading */
 	
-	if ( data >= 0xf8 ) { /* All realtime messages bypass state machine */
-	        if ( data == 0xf9  ||  data == 0xfd ) {
-			DPRINTF( ("midi_in: sc=%p data=0x%02x undefined\n", 
-				  sc, data));
-			sc->rcvBytesDiscarded.ev_count++;
-			return;
-		}
-		DPRINTFN(9, ("midi_in: sc=%p System Real-Time data=0x%02x\n", 
-			     sc, data));
-		rtbuf = data;
-		count = sizeof rtbuf;
-		what = &rtbuf;
-		goto deliver;	  
-	}
-
-	DPRINTFN(4, ("midi_in: sc=%p data=0x%02x state=%d\n", 
-		     sc, data, sc->in_state));
-
-retry:
-        switch ( sc->in_state | MIDI_CAT(data) ) {
-
-	case MIDI_IN_START  | MIDI_CAT_COMMON:
-	case MIDI_IN_RUN1_1 | MIDI_CAT_COMMON:
-	case MIDI_IN_RUN2_2 | MIDI_CAT_COMMON:
-	        sc->in_msg[0] = data;
-		count = 1;
-	        switch ( data ) {
-		case 0xf0: sc->in_state = MIDI_IN_SYSEX;  goto deliver_raw;
-		case 0xf1: sc->in_state = MIDI_IN_COM0_1; return;
-		case 0xf2: sc->in_state = MIDI_IN_COM0_2; return;
-		case 0xf3: sc->in_state = MIDI_IN_COM0_1; return;
-		case 0xf6: sc->in_state = MIDI_IN_START;  break;
-		default: goto protocol_violation;
-		}
-		break;
+	do
+		got = midi_dfa(&sc->rcv, data, 0);
+	while ( got == DFA_HUH );
 	
-	case MIDI_IN_START  | MIDI_CAT_STATUS1:
-	case MIDI_IN_RUN1_1 | MIDI_CAT_STATUS1:
-	case MIDI_IN_RUN2_2 | MIDI_CAT_STATUS1:
-	        sc->in_state = MIDI_IN_RUN0_1;
-	        sc->in_msg[0] = data;
+	switch ( got ) {
+	case DFA_MORE:
+	case DFA_ERR:
 		return;
-	
-	case MIDI_IN_START  | MIDI_CAT_STATUS2:
-	case MIDI_IN_RUN1_1 | MIDI_CAT_STATUS2:
-	case MIDI_IN_RUN2_2 | MIDI_CAT_STATUS2:
-	        sc->in_state = MIDI_IN_RUN0_2;
-	        sc->in_msg[0] = data;
-		return;
-
-        case MIDI_IN_COM0_1 | MIDI_CAT_DATA:
-		sc->in_state = MIDI_IN_START;
-	        sc->in_msg[1] = data;
-		count = 2;
-		break;
-
-        case MIDI_IN_COM0_2 | MIDI_CAT_DATA:
-	        sc->in_state = MIDI_IN_COM1_2;
-	        sc->in_msg[1] = data;
-		return;
-
-        case MIDI_IN_COM1_2 | MIDI_CAT_DATA:
-		sc->in_state = MIDI_IN_START;
-	        sc->in_msg[2] = data;
-		count = 3;
-		break;
-
-        case MIDI_IN_RUN0_1 | MIDI_CAT_DATA:
-        case MIDI_IN_RUN1_1 | MIDI_CAT_DATA:
-		sc->in_state = MIDI_IN_RUN1_1;
-	        sc->in_msg[1] = data;
-		count = 2;
-		break;
-
-        case MIDI_IN_RUN0_2 | MIDI_CAT_DATA:
-        case MIDI_IN_RUN2_2 | MIDI_CAT_DATA:
-	        sc->in_state = MIDI_IN_RUN1_2;
-	        sc->in_msg[1] = data;
-		return;
-
-        case MIDI_IN_RUN1_2 | MIDI_CAT_DATA:
-		sc->in_state = MIDI_IN_RUN2_2;
-	        sc->in_msg[2] = data;
-		count = 3;
-		break;
-
-        case MIDI_IN_SYSEX | MIDI_CAT_DATA:
-		sc->in_msg[0] = data;
-		count = 1;
-		goto deliver_raw;
-
-        case MIDI_IN_SYSEX | MIDI_CAT_COMMON:
-	        if ( data == 0xf7 ) {
-		        sc->in_state = MIDI_IN_START;
-			sc->in_msg[0] = data;
-		        count = 1;
-			goto deliver_raw;
-		}
-		/* FALLTHROUGH */
-
-        default:
-protocol_violation:
-                DPRINTF(("midi_in: unexpected %#02x in state %u\n",
-		        data, sc->in_state));
-		switch ( sc->in_state ) {
-		case MIDI_IN_RUN1_1: /* can only get here by seeing an */
-		case MIDI_IN_RUN2_2: /* INVALID System Common message */
-		        sc->in_state = MIDI_IN_START;
-			/* FALLTHROUGH */
-		case MIDI_IN_START:
-			sc->rcvBytesDiscarded.ev_count++;
-			return;
-		case MIDI_IN_COM1_2:
-		case MIDI_IN_RUN1_2:
-			sc->rcvBytesDiscarded.ev_count++;
-			/* FALLTHROUGH */
-		case MIDI_IN_COM0_1:
-		case MIDI_IN_RUN0_1:
-		case MIDI_IN_COM0_2:
-		case MIDI_IN_RUN0_2:
-			sc->rcvBytesDiscarded.ev_count++;
-			/* FALLTHROUGH */
-		case MIDI_IN_SYSEX:
-		        sc->rcvIncompleteMessages.ev_count++;
-			break;
-#if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
-		default:
-		        printf("midi_in: mishandled %#02x(%u) in state %u?!\n",
-			      data, MIDI_CAT(data), sc->in_state);
-#endif
-		}
-		sc->in_state = MIDI_IN_START;
-		goto retry;
-	}
-
-deliver:
+	case DFA_CHN:
+	case DFA_COM:
+	case DFA_RT:
 #if NSEQUENCER > 0
-	if (sc->seqopen) {
-		extern void midiseq_in(struct midi_dev *,u_char *,int);
-		midiseq_in(sc->seq_md, what, count);
-		return;
-	}
+		if (sc->seqopen) {
+			extern void midiseq_in(struct midi_dev *,u_char *,int);
+			count = sc->rcv.end - sc->rcv.pos;
+			midiseq_in(sc->seq_md, sc->rcv.pos, count);
+			return;
+		}
 #endif
-        if ( data == MIDI_ACK ) /* sequencer should see these to support API */
-	        return; /* otherwise discard (could track time last seen) */
-deliver_raw:
-	if (mb->used + count > mb->usedhigh) {
-		DPRINTF(("midi_in: buffer full, discard data=0x%02x\n", 
-			 what[0]));
-		sc->rcvBytesDiscarded.ev_count += count;
-		return;
+        	/*
+		 * Pass Active Sense to the sequencer if it's open, but not to
+		 * a raw reader. (Really should do something intelligent with
+		 * it then, though....)
+		 */
+		if ( got == DFA_RT && MIDI_ACK == sc->rcv.pos[0] )
+			return;
+		/* FALLTHROUGH */
+	/*
+	 * Ultimately SysEx msgs should be offered to the sequencer also; the
+	 * sequencer API addresses them - but maybe our sequencer can't handle
+	 * them yet, so offer only to raw reader. (Which means, ultimately,
+	 * discard them if the sequencer's open, as it's not doing reads!)
+	 */
+	case DFA_SYX:
+		count = sc->rcv.end - sc->rcv.pos;
+		if (mb->used + count > mb->usedhigh) {
+			DPRINTF(("midi_in: buffer full, discard data=0x%02x\n", 
+				 sc->rcv.pos[0]));
+			sc->rcv.bytesDiscarded.ev_count += count;
+			return;
+		}
+		for (i = 0; i < count; i++) {
+			*mb->inp++ = sc->rcv.pos[i];
+			if (mb->inp >= mb->end)
+				mb->inp = mb->start;
+			mb->used++;
+		}
+		midi_wakeup(&sc->rchan);
+		selnotify(&sc->rsel, 0);
+		if (sc->async)
+			psignal(sc->async, SIGIO);
+		break;
+#if defined(AUDIO_DEBUG) || defined(DIAGNOSTIC)
+	default:
+		printf("midi_in: midi_dfa returned %d?!\n", got);
+#endif
 	}
-	for (i = 0; i < count; i++) {
-		*mb->inp++ = what[i];
-		if (mb->inp >= mb->end)
-			mb->inp = mb->start;
-		mb->used++;
-	}
-	midi_wakeup(&sc->rchan);
-	selnotify(&sc->rsel, 0);
-	if (sc->async)
-		psignal(sc->async, SIGIO);
 }
 
 void
@@ -517,7 +647,10 @@ midiopen(dev_t dev, int flags, int ifmt, struct proc *p)
 		return ENXIO;
 	if (sc->isopen)
 		return EBUSY;
-	sc->in_state = MIDI_IN_START;
+	sc->rcv.state = MIDI_IN_START;
+	sc->xmt.state = MIDI_IN_START;
+	sc->xmt.pos = sc->xmt.msg;
+	sc->xmt.end = sc->xmt.msg;
 	error = hw->open(sc->hw_hdl, flags, midi_in, midi_out, sc);
 	if (error)
 		return error;
@@ -669,8 +802,7 @@ midi_timeout(void *arg)
  *    callout. However, it may be possible the callout timer expired before
  *    we could cancel it, but the callout hasn't run yet. In this case
  *    (INVOKING status on the callout) the user invocation returns without
- *    further action so the callout can do the work. XXX handle the chance
- *    the callout got scheduled, saw our lock, and gave up.
+ *    further action so the callout can do the work.
  *
  * Is it possible that fast interrupt-driven hardware could interrupt while
  * the start_output that triggered it still holds the lock? In this case we'll
