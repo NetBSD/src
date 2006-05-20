@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.4 2006/05/20 19:22:36 mrg Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -2632,6 +2632,7 @@ set_clock_fudge(
 
 	memset((char *)&addr, 0, sizeof addr);
 	memset((char *)&clock_stat, 0, sizeof clock_stat);
+	memset((char *)&tmp_clock, 0, sizeof tmp_clock);
 	items = INFO_NITEMS(inpkt->err_nitems);
 	cf = (struct conf_fudge *) inpkt->data;
 
