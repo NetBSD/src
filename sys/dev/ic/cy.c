@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.42 2006/05/14 21:42:27 elad Exp $	*/
+/*	$NetBSD: cy.c,v 1.43 2006/05/21 23:56:09 christos Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.42 2006/05/14 21:42:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.43 2006/05/21 23:56:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1135,8 +1135,8 @@ cy_intr(void *arg)
 				if (cy->cy_tty == NULL ||
 				    !ISSET(cy->cy_tty->t_state, TS_ISOPEN)) {
 					while (n_chars--)
-						cd_read_reg(sc, cy->cy_chip,
-							    CD1400_RDSR);
+						(void)cd_read_reg(sc,
+						    cy->cy_chip, CD1400_RDSR);
 					goto end_rx_serv;
 				}
 
