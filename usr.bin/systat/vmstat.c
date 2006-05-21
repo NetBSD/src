@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.67 2006/05/14 02:56:27 christos Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.68 2006/05/21 20:22:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.67 2006/05/14 02:56:27 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.68 2006/05/21 20:22:34 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -449,11 +449,11 @@ show_vmstat_top(vmtotal_t *Total, uvmexp_sysctl_t *uvm, uvmexp_sysctl_t *uvm1)
 	putint(Total->t_sw, PROCSROW + 1, PROCSCOL + 12, 3);
 
 	PUTRATE(us, us1, uvmexp->swtch, GENSTATROW + 1, GENSTATCOL - 1, 7);
-	PUTRATE(us, us1, uvmexp->traps, GENSTATROW + 1, GENSTATCOL + 6, 7);
-	PUTRATE(us, us1, uvmexp->syscalls, GENSTATROW + 1, GENSTATCOL + 13, 7);
-	PUTRATE(us, us1, uvmexp->intrs, GENSTATROW + 1, GENSTATCOL + 20, 6);
-	PUTRATE(us, us1, uvmexp->softs, GENSTATROW + 1, GENSTATCOL + 26, 6);
-	PUTRATE(us, us1, uvmexp->faults, GENSTATROW + 1, GENSTATCOL + 32, 7);
+	PUTRATE(us, us1, uvmexp->traps, GENSTATROW + 1, GENSTATCOL + 7, 6);
+	PUTRATE(us, us1, uvmexp->syscalls, GENSTATROW + 1, GENSTATCOL + 14, 6);
+	PUTRATE(us, us1, uvmexp->intrs, GENSTATROW + 1, GENSTATCOL + 21, 5);
+	PUTRATE(us, us1, uvmexp->softs, GENSTATROW + 1, GENSTATCOL + 27, 5);
+	PUTRATE(us, us1, uvmexp->faults, GENSTATROW + 1, GENSTATCOL + 33, 6);
 
 	/* Last CPU state not calculated yet. */
 	for (f2 = 0.0, psiz = 0, c = 0; c < CPUSTATES; c++) {
