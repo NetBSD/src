@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.99 2006/03/18 08:36:50 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.100 2006/05/21 16:00:17 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.99 2006/03/18 08:36:50 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.100 2006/05/21 16:00:17 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1334,7 +1334,7 @@ intuit_translated_geometry(void)
 	}
 
 	if (xheads == -1)
-		return;
+		errx(1, "Cannot determine the number of heads");
 
 	/* Estimate the number of cylinders. */
 	xcylinders = disklabel.d_secperunit / xheads / xsectors;
@@ -1395,6 +1395,9 @@ get_mapping(int i, unsigned int *cylinder, unsigned int *head, unsigned int *sec
 		*absolute = le32toh(part->mbrp_start)
 		    + le32toh(part->mbrp_size) - 1;
 	}
+	/* Sanity check the data against all zeroes */
+	if ((*cylinder == 0) && (*sector == 0) && (*head == 0))
+		return -1;
 	/* Sanity check the data against max values */
 	if ((((*cylinder * MAXHEAD) + *head) * MAXSECTOR + *sector) < *absolute)
 		/* cannot be a CHS mapping */
