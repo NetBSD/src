@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.16 2006/04/26 20:31:43 agc Exp $ */
+/* $NetBSD: disk.c,v 1.17 2006/05/21 09:26:38 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -112,9 +112,14 @@
 
 #include <unistd.h>
 
+#ifdef HAVE_UUID_H
+#include <uuid.h>
+#endif
+
 #include "scsi_cmd_codes.h"
 
 #include "iscsi.h"
+#include "compat.h"
 #include "util.h"
 #include "device.h"
 #include "target.h"
@@ -157,7 +162,9 @@ typedef struct iscsi_disk_t {
 	uint64_t	 blocklen;
 	uint64_t	 luns;
 	uint64_t	 size;
-	targv_t		 *tv;
+	uuid_t		 uuid;
+	char		*uuid_string;
+	targv_t		*tv;
 } iscsi_disk_t;
 
 DEFINE_ARRAY(disks_t, iscsi_disk_t);
@@ -822,14 +829,14 @@ strpadcpy(uint8_t *dst, size_t dstlen, const char *src, const size_t srclen, cha
 static int
 report_luns(uint8_t *data, int64_t luns)
 {
-	uint64_t	i;
+	uint64_t	lun;
 	int32_t		off;
 
-	for (i = 0, off = 8 ; i < luns ; i++, off += sizeof(i)) {
-		*((uint64_t *) (void *)data + off) = ISCSI_HTONLL(i);
+	for (lun = 0, off = 8 ; lun < luns ; lun++, off += sizeof(lun)) {
+		*((uint64_t *) (void *)data + off) = ISCSI_HTONLL(lun);
 	}
 	*((uint32_t *) (void *)data) = ISCSI_HTONL(off - 7);
-	return (off - 7) * sizeof(i);
+	return (int)(luns * sizeof(lun));
 }
 
 /* initialise the device */
@@ -898,14 +905,15 @@ device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
 int 
 device_command(target_session_t * sess, target_cmd_t * cmd)
 {
-	iscsi_scsi_cmd_args_t *args = cmd->scsi_cmd;
-	uint32_t        lba;
-	uint16_t  len;
-	uint8_t	 *cp;
-	uint8_t  *data;
-	uint8_t  *cdb = args->cdb;
-	uint8_t   lun = (uint8_t) (args->lun >> 32);
-	int	mode_data_len;
+	iscsi_scsi_cmd_args_t	*args = cmd->scsi_cmd;
+	uint32_t        	status;
+	uint32_t		lba;
+	uint16_t		len;
+	uint8_t			*cp;
+	uint8_t			*data;
+	uint8_t			*cdb = args->cdb;
+	uint8_t			lun = (uint8_t) (args->lun >> 32);
+	int			mode_data_len;
 
 #if (CONFIG_DISK_INITIAL_CHECK_CONDITION==1)
 	static int      initialized = 0;
@@ -965,22 +973,48 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 			case INQUIRY_DEVICE_IDENTIFICATION_VPD:
 				data[0] = DISK_PERIPHERAL_DEVICE;
 				data[1] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
-				len = data[3] = cdb[4] - 7;
+				data[3] = 0;
 				cp = &data[4];
+				/* add target device's IQN */
 				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
 				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
-				len = (uint8_t) snprintf((char *)&cp[4], (int)len, "%s", sess->globals->targetname) + 4;
+				len = (uint8_t) snprintf((char *)&cp[4], (int)(cdb[4] - 7), "%s", sess->globals->targetname);
 				cp[3] = len;
-				cp += len;
+				data[3] += len + 4;
+				cp += len + 4;
+				/* add target port's IQN + LUN */
 				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
 				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_PORT << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
-				len = (uint8_t) snprintf((char *)&cp[4], (int)len, "%s,t,0x%x", sess->globals->targetname, lun) + 4;
+				len = (uint8_t) snprintf((char *)&cp[4], (int)(cdb[4] - 7), "%s,t,0x%x", sess->globals->targetname, lun);
 				cp[3] = len;
-				cp += len;
+				data[3] += len + 4;
+				cp += len + 4;
+				/* add target port's IQN + LUN extension */
 				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
-				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_DEVICE_T10_VENDOR;
+				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_LOGICAL_UNIT << 4) | INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME;
+				if (disks.v[sess->d].uuid_string == NULL) {
+					uuid_create(&disks.v[sess->d].uuid, &status);
+					uuid_to_string(&disks.v[sess->d].uuid, &disks.v[sess->d].uuid_string, &status);
+				}
+				len = (uint8_t) snprintf((char *)&cp[4], (int)(cdb[4] - 7), "%s,L,0x%8.8s%4.4s%4.4s",
+							sess->globals->targetname,
+							disks.v[sess->d].uuid_string,
+							&disks.v[sess->d].uuid_string[9],
+							&disks.v[sess->d].uuid_string[14]);
+				cp[3] = len;
+				data[3] += len + 4;
+				cp += len + 4;
+				/* add target's uuid as a T10 identifier */
+				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
+				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_IDENTIFIER_TYPE_T10;
 				strpadcpy(&cp[4], 8, ISCSI_VENDOR, strlen(ISCSI_VENDOR), ' ');
-				cp[3] = 8;
+				len = (uint8_t) snprintf((char *)&cp[8 + 4], (int)(cdb[8 + 4] - 7), "0x%8.8s%4.4s%4.4s",
+								disks.v[sess->d].uuid_string,
+								&disks.v[sess->d].uuid_string[9],
+								&disks.v[sess->d].uuid_string[14]);
+				cp[3] = len;
+				data[3] += len + 4;
+				args->length = data[3] + 6;
 				break;
 			case INQUIRY_SUPPORTED_VPD_PAGES:
 				data[0] = DISK_PERIPHERAL_DEVICE;
@@ -988,6 +1022,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 				data[3] = 2;	/* # of supported pages */
 				data[4] = INQUIRY_SUPPORTED_VPD_PAGES;
 				data[5] = INQUIRY_DEVICE_IDENTIFICATION_VPD;
+				args->length = cdb[4] + 1;
 				break;
 			default:
 				iscsi_trace_error(__FILE__, __LINE__, "Unsupported INQUIRY VPD page %x\n", cdb[2]);
@@ -1005,10 +1040,10 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 			strpadcpy(&data[16], 16, ISCSI_PRODUCT, strlen(ISCSI_PRODUCT), ' ');
 			(void) snprintf(versionstr, sizeof(versionstr), "%d", ISCSI_VERSION);
 			strpadcpy(&data[32], 4, versionstr, strlen(versionstr), ' ');
+			args->length = cdb[4] + 1;
 		}
 		if (args->status == 0) {
 			args->input = 1;
-			args->length = cdb[4] + 1;
 		}
 		break;
 
