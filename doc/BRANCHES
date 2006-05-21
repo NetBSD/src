@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.79 2006/05/19 20:28:37 briggs Exp $
+#	$NetBSD: BRANCHES,v 1.80 2006/05/21 20:58:27 chap Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -218,8 +218,9 @@ End Date:
 Base Tag:	chap-midi-base
 Maintainer:	Chapman Flack <chap@NetBSD.org>
 Scope:		sys, share/man, usr.bin
-Notes:		Please leave commits to maintainer for now. The branch is
-                not expected to be compilable until further notice.
+Notes:		Compiles and works on i386 (tested with a MidiSport 2x4 and
+                pcppi/midisyn). Ready for testing. Please coordinate commits
+		with maintainer.
 
 Branch:		gmcgarry_ctxsw
 Description:	Separate scheduler from context-switch code
