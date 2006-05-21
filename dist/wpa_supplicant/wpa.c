@@ -2525,12 +2525,15 @@ int wpa_sm_get_status(struct wpa_sm *sm, char *buf, size_t buflen,
 int wpa_sm_set_assoc_wpa_ie_default(struct wpa_sm *sm, u8 *wpa_ie,
 				    size_t *wpa_ie_len)
 {
+	int len;
+
 	if (sm == NULL)
 		return -1;
 
-	*wpa_ie_len = wpa_gen_wpa_ie(sm, wpa_ie, *wpa_ie_len);
-	if (*wpa_ie_len < 0)
+	len = wpa_gen_wpa_ie(sm, wpa_ie, *wpa_ie_len);
+	if (len < 0)
 		return -1;
+	*wpa_ie_len = len;
 
 	wpa_hexdump(MSG_DEBUG, "WPA: Set own WPA IE default",
 		    wpa_ie, *wpa_ie_len);
