@@ -141,6 +141,7 @@ static void * eap_peap_init(struct eap_sm *sm)
 				_methods = realloc(methods, num_methods);
 				if (_methods == NULL) {
 					free(methods);
+					free(buf);
 					eap_peap_deinit(sm, data);
 					return NULL;
 				}
@@ -723,6 +724,7 @@ static u8 * eap_peap_process(struct eap_sm *sm, void *priv,
 	}
 
 	if (res == 1) {
+		free(resp);
 		return eap_tls_build_ack(&data->ssl, respDataLen, id,
 					 EAP_TYPE_PEAP, data->peap_version);
 	}
