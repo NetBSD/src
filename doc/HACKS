@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.72 2006/05/21 00:44:53 mrg Exp $
+# $NetBSD: HACKS,v 1.73 2006/05/21 01:24:41 dan Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -153,6 +153,7 @@ file	libexec/ld.elf_so/arch/sparc64/mdreloc.c : 1.39
 file	libexec/ld.elf_so/arch/x86_64/mdreloc.c	: 1.27
 file	sbin/fsck_ext2fs/dir.c		: 1.19
 file	sbin/routed/rtquery/rtquery.c	: 1.18
+file	sys/arch/amd64/amd64/pmap.c	: 1.26
 file	sys/crypto/cast128/cast128.c	: 1.9
 file	sys/ddb/db_command.c		: 1.86
 file	sys/dev/cardbus/cardbus_map.c	: 1.21
