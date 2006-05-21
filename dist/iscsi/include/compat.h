@@ -44,17 +44,18 @@ size_t strlcpy(char *, const char *, size_t);
 
 #ifndef HTOBE64
 #  if defined(HAVE_LIBKERN_OSBYTEORDER_H)
-#    define HTOBE64(x)      (x) = OSSwapBigToHostInt64((u_int64_t)(x))
+#    define HTOBE64(x)	(x) = OSSwapBigToHostInt64((u_int64_t)(x))
 #  elif _BYTE_ORDER == _BIG_ENDIAN
-#    define HTOBE64(x)      (x)
+#    define HTOBE64(x)	(x)
+#  elif defined(HAVE___BSWAP64)
+#    define HTOBE64(x)	(x) = __bswap64((u_int64_t)(x))
 #  else   /* LITTLE_ENDIAN */
-#    define HTOBE64(x)      (x) = __bswap64((u_int64_t)(x))
-#    define bswap64(x)      __bswap64(x)
+#    define HTOBE64(x)	(((uint64_t)(ISCSI_NTOHL((uint32_t)(((x) << 32) >> 32))) << 32) | (uint32_t)ISCSI_NTOHL(((uint32_t)((x) >> 32))))
 #  endif  /* LITTLE_ENDIAN */
 #endif
 
 #ifndef BE64TOH
-#define BE64TOH(x)      HTOBE64(x)
+#  define BE64TOH(x)  HTOBE64(x)
 #endif
 
 #ifndef _DIAGASSERT
@@ -62,6 +63,30 @@ size_t strlcpy(char *, const char *, size_t);
 #  define __static_cast(x,y) (x)y
 #  endif
 #define _DIAGASSERT(e) (__static_cast(void,0))
+#endif
+
+#ifndef HAVE_UUID_H
+/* Length of a node address (an IEEE 802 address). */
+#define _UUID_NODE_LEN		6
+
+/*
+ * See also:
+ *      http://www.opengroup.org/dce/info/draft-leach-uuids-guids-01.txt
+ *      http://www.opengroup.org/onlinepubs/009629399/apdxa.htm
+ *
+ * A DCE 1.1 compatible source representation of UUIDs.
+ */
+typedef struct uuid_t {
+        uint32_t        time_low;
+        uint16_t        time_mid;
+        uint16_t        time_hi_and_version;
+        uint8_t         clock_seq_hi_and_reserved;
+        uint8_t         clock_seq_low;
+        uint8_t         node[_UUID_NODE_LEN];
+} uuid_t;
+
+void    uuid_create(uuid_t *, uint32_t *);
+void    uuid_to_string(uuid_t *, char **, uint32_t *);
 #endif
 
 #endif /* COMPAT_H_ */

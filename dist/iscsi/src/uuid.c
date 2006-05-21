@@ -1,4 +1,4 @@
-/* $NetBSD: scsi_cmd_codes.h,v 1.7 2006/05/21 09:26:37 agc Exp $ */
+/* $NetBSD: uuid.c,v 1.1 2006/05/21 09:26:38 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -31,63 +31,73 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SCSI_CMD_CODES_H_
-#define SCSI_CMD_CODES_H_
+#include "config.h"
+   
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+ 
+#include <sys/types.h>
+ 
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+  
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
-/* information taken from SPC3, T10/1416-D Revision 23, from www.t10.org */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-enum {
-	TEST_UNIT_READY = 0x00,
-	READ_6 = 0x08,
-	WRITE_6 = 0x0a,
-	INQUIRY = 0x12,
-	MODE_SENSE_6 = 0x1a,
-	STOP_START_UNIT = 0x1b,
-	READ_CAPACITY = 0x25,
-	READ_10 = 0x28,
-	WRITE_10 = 0x2a,
-	VERIFY = 0x2f,
-	SYNC_CACHE = 0x35,
-	LOG_SENSE = 0x4d,
-	MODE_SENSE_10 = 0x5a,
-	PERSISTENT_RESERVE_IN = 0x5e,
-	REPORT_LUNS = 0xa0
-};
+#ifdef HAVE_UUID_H
+#include <uuid.h>
+#endif
 
-#define SIX_BYTE_COMMAND(op)	((op) <= 0x1f)
-#define TEN_BYTE_COMMAND(op)	((op) > 0x1f && (op) <= 0x5f)
+#include "defs.h"
 
-#define ISCSI_MODE_SENSE_LEN	11
+#ifndef HAVE_UUID_CREATE
+/* just fill the struct with random values for now */
+void
+uuid_create(uuid_t *uuid, uint32_t *status)
+{
+	uint64_t	ether;
+	time_t		t;
 
-/* miscellaneous definitions */
-enum {
-	DISK_PERIPHERAL_DEVICE = 0x0,
+	(void) time(&t);
+	ether = (random() << 32) | random();
+	uuid->time_low = t;
+	uuid->time_mid = (uint16_t)(random() & 0xffff);
+	uuid->time_hi_and_version = (uint16_t)(random() & 0xffff);
+	uuid->clock_seq_low = random() & 0xff;
+	uuid->clock_seq_hi_and_reserved = random() & 0xff;
+	(void) memcpy(&uuid->node, &ether, sizeof(uuid->node));
+	*status = 0;
+}
+#endif
 
-	INQUIRY_EVPD_BIT = 0x01,
+#ifndef HAVE_UUID_TO_STRING
+/* convert the struct to a printable string */
+void
+uuid_to_string(uuid_t *uuid, char **str, uint32_t *status)
+{
+	char	s[64];
 
-	INQUIRY_DEVICE_IDENTIFICATION_VPD = 0x83,
-	INQUIRY_SUPPORTED_VPD_PAGES = 0x0,
-		INQUIRY_DEVICE_PIV = 0x1,
-
-		INQUIRY_IDENTIFIER_TYPE_T10 = 0x1,
-		INQUIRY_IDENTIFIER_TYPE_EUI64 = 0x2,
-		INQUIRY_IDENTIFIER_TYPE_NAA = 0x3,
-
-		INQUIRY_DEVICE_ASSOCIATION_LOGICAL_UNIT = 0x0,
-		INQUIRY_DEVICE_ASSOCIATION_TARGET_PORT = 0x1,
-		INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE = 0x2,
-
-		INQUIRY_DEVICE_CODESET_UTF8 = 0x3,
-		INQUIRY_DEVICE_ISCSI_PROTOCOL = 0x5,
-		INQUIRY_DEVICE_T10_VENDOR = 0x1,
-		INQUIRY_DEVICE_IDENTIFIER_SCSI_NAME = 0x8,
-
-	WIDE_BUS_16 = 0x20,
-	WIDE_BUS_32 = 0x40,
-
-	SCSI_VERSION_SPC = 0x03,
-	SCSI_VERSION_SPC2 = 0x04,
-	SCSI_VERSION_SPC3 = 0x05
-};
-
-#endif /* !SCSI_CMD_CODES_H_ */
+	(void) snprintf(s, sizeof(s), "%8.8x-%4.4x-%4.4x-%2.2x%2.2x-%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x",
+		uuid->time_low,
+		uuid->time_mid,
+		uuid->time_hi_and_version,
+		uuid->clock_seq_hi_and_reserved,
+		uuid->clock_seq_low,
+		uuid->node[0],
+		uuid->node[1],
+		uuid->node[2],
+		uuid->node[3],
+		uuid->node[4],
+		uuid->node[5]);
+	*str = strdup(s);
+	*status = 0;
+}
+#endif

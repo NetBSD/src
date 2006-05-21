@@ -144,6 +144,15 @@
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
 
+/* Define to 1 if you have the `uuid_create' function. */
+#undef HAVE_UUID_CREATE
+
+/* Define to 1 if you have the <uuid.h> header file. */
+#undef HAVE_UUID_H
+
+/* Define to 1 if you have the `uuid_to_string' function. */
+#undef HAVE_UUID_TO_STRING
+
 /* Define to 1 if you have the `vasnprintf' function. */
 #undef HAVE_VASNPRINTF
 
@@ -152,6 +161,9 @@
 
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
+
+/* Define to 1 if you have the `__bswap64' function. */
+#undef HAVE___BSWAP64
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT

@@ -31,3 +31,5 @@ raid0
 add discovery masking
 clean up IPv6
 add socklen_t awareness
+add uuid
+Solaris initiator compatibility

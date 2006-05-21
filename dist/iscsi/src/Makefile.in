@@ -45,7 +45,7 @@ $(BIN):
 #
 # User-level Targets
 #
-COMPATOBJS= strlcpy.o snprintf.o strtoll.o
+COMPATOBJS= strlcpy.o snprintf.o strtoll.o uuid.o
 
 USER_TARGET_OBJS = target.o iscsi.o util.o parameters.o netmask.o conffile.o storage.o ${COMPATOBJS}
 $(BIN)/osd: osd-target.c osd.c $(USER_TARGET_OBJS)

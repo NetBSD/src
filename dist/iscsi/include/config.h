@@ -145,6 +145,15 @@
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1
 
+/* Define to 1 if you have the `uuid_create' function. */
+#define HAVE_UUID_CREATE 1
+
+/* Define to 1 if you have the <uuid.h> header file. */
+#define HAVE_UUID_H 1
+
+/* Define to 1 if you have the `uuid_to_string' function. */
+#define HAVE_UUID_TO_STRING 1
+
 /* Define to 1 if you have the `vasnprintf' function. */
 /* #undef HAVE_VASNPRINTF */
 
@@ -154,6 +163,9 @@
 /* Define to 1 if you have the `vsnprintf' function. */
 #define HAVE_VSNPRINTF 1
 
+/* Define to 1 if you have the `__bswap64' function. */
+/* #undef HAVE___BSWAP64 */
+
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "Alistair Crooks <agc@NetBSD.org>"
 
@@ -161,13 +173,13 @@
 #define PACKAGE_NAME "netbsd-iscsi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netbsd-iscsi 20060417"
+#define PACKAGE_STRING "netbsd-iscsi 20060520"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netbsd-iscsi"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20060417"
+#define PACKAGE_VERSION "20060520"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
