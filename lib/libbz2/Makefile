@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/08/19 09:41:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2006/05/21 03:34:57 mrg Exp $
 
 NOMAN=		# defined
 
@@ -19,6 +19,12 @@ CLEANFILES+=	bzip2.texi
 # XXX huffman.c gets mis-compiled with 2.95.3
 .if ${MACHINE_ARCH} == "vax"
 COPTS+=		-O0
+.endif
+
+# XXX blocksort.c gets mis-compiled with 4.1
+.if (${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb") && \
+    ${HAVE_GCC} == 4
+COPTS.blocksort.c+=		-O0
 .endif
 
 bzip2.texi: manual.texi
