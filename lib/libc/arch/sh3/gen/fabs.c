@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.c,v 1.2 2002/05/26 11:48:03 wiz Exp $	*/
+/*	$NetBSD: fabs.c,v 1.3 2006/05/21 02:51:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,6 +34,8 @@
 /*
  * fabs(x) returns the absolute value of x.
  */
+
+double fabs(double x);
 
 double
 fabs(double x)
