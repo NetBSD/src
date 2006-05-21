@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.47 2006/04/14 20:43:11 christos Exp $	*/
+/*	$NetBSD: dpt.c,v 1.48 2006/05/21 23:56:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.47 2006/04/14 20:43:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.48 2006/05/21 23:56:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,7 +576,7 @@ dpt_readcfg(struct dpt_softc *sc)
 	/* Flush until we have read 512 bytes. */
 	i = (512 - j + 1) >> 1;
 	while (i--)
-		bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, HA_DATA);
+		(void)bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, HA_DATA);
 
 	/* Defaults for older firmware... */
 	if (p <= (u_short *)&ec->ec_hba[DPT_MAX_CHANNELS - 1])
