@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.98 2006/02/20 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.99 2006/05/21 23:56:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.98 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.99 2006/05/21 23:56:09 christos Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -229,7 +229,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	}
 	chp->ch_drive[drive].state = 0;
 
-	bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_status], 0);
+	(void)bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_status], 0);
 
 	/* Some ATAPI devices need a bit more time after software reset. */
 	delay(5000);
