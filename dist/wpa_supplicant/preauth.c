@@ -418,7 +418,7 @@ int pmksa_cache_set_current(struct wpa_sm *sm, const u8 *pmkid,
 		sm->cur_pmksa = pmksa_cache_get(sm, NULL, pmkid);
 	if (sm->cur_pmksa == NULL && bssid)
 		sm->cur_pmksa = pmksa_cache_get(sm, bssid, NULL);
-	if (sm->cur_pmksa == NULL && try_opportunistic)
+	if (sm->cur_pmksa == NULL && try_opportunistic && bssid)
 		sm->cur_pmksa = pmksa_cache_get_opportunistic(sm, ssid, bssid);
 	if (sm->cur_pmksa) {
 		wpa_hexdump(MSG_DEBUG, "RSN: PMKID",
