@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.70 2006/05/18 17:19:22 riz Exp $	*/
+/*	$NetBSD: inet.c,v 1.71 2006/05/21 21:01:55 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.70 2006/05/18 17:19:22 riz Exp $");
+__RCSID("$NetBSD: inet.c,v 1.71 2006/05/21 21:01:55 liamjfoy Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,8 @@ protopr(off, name)
 			   NULL, 0) == -1)
 			err(1, "sysctl (query)");
 
-		pcblist = malloc(size);
+		if ((pcblist = malloc(size)) == NULL)
+			err(1, "malloc");
 		memset(pcblist, 0, size);
 
 	        mib[6] = sizeof(*pcblist);
