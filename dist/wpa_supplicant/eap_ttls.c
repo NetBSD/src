@@ -127,6 +127,7 @@ static void * eap_ttls_init(struct eap_sm *sm)
 							   num_methods);
 					if (_methods == NULL) {
 						free(methods);
+						free(buf);
 						eap_ttls_deinit(sm, data);
 						return NULL;
 					}
