@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.43.2.16 2006/05/20 04:31:59 chap Exp $	*/
+/*	$NetBSD: midi.c,v 1.43.2.17 2006/05/21 17:28:47 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (augustss@NetBSD.org) and (MIDI FST and Active
- * Sense handling) Chapman Flack (nblists@anastigmatix.net).
+ * Sense handling) Chapman Flack (chap@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.16 2006/05/20 04:31:59 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.43.2.17 2006/05/21 17:28:47 chap Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1472,8 +1472,8 @@ midi_writebytes(int unit, u_char *bf, int cc)
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
 
 	DPRINTFN(7, ("midi_writebytes: %p, unit=%d, cc=%d %#02x %#02x %#02x\n",
-                    sc, unit, cc, buf[0], buf[1], buf[2]));
-	return real_writebytes(sc, buf, cc);
+                    sc, unit, cc, bf[0], bf[1], bf[2]));
+	return real_writebytes(sc, bf, cc);
 }
 
 int

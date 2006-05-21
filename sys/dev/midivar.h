@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.11.14.16 2006/05/20 04:31:59 chap Exp $	*/
+/*	$NetBSD: midivar.h,v 1.11.14.17 2006/05/21 17:28:47 chap Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (augustss@NetBSD.org) and (midi FST refactoring and
- * Active Sense) Chapman Flack <nblists@anastigmatix.net>.
+ * Active Sense) Chapman Flack (chap@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

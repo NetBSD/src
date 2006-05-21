@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.13.14.3 2006/05/20 05:00:38 chap Exp $	*/
+/*	$NetBSD: midiio.h,v 1.13.14.4 2006/05/21 17:28:48 chap Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (augustss@NetBSD.org) and (native API structures
- * and macros) Chapman Flack (nblists@anastigmatix.net).
+ * and macros) Chapman Flack (chap@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
