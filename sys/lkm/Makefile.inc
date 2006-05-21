@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2006/05/21 04:43:58 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2006/05/21 04:45:35 christos Exp $
 
 .if !defined(__SYS_LKM_MAKEFILE_INC)
 __SYS_LKM_MAKEFILE_INC=	1
@@ -11,7 +11,7 @@ NOMAN=	# defined
 CPPFLAGS+=-I${NETBSDSRCDIR}/common/include
 
 . if ${HAVE_GCC} > 3
-CWARNFLAGS+=    -Wno-pointer-sign -fno-strict-aliasi
+CWARNFLAGS+=    -Wno-pointer-sign
 CFLAGS+=	-fno-strict-aliasing
 . endif
 
