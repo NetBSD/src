@@ -1,11 +1,11 @@
-/*	$NetBSD: umidi.c,v 1.25.2.13 2006/05/20 04:32:00 chap Exp $	*/
+/*	$NetBSD: umidi.c,v 1.25.2.14 2006/05/21 17:28:48 chap Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Takuya SHIOZAKI (tshiozak@NetBSD.org) and (full-size transfers, extended
- * hw_if) Chapman Flack (nblists@anastigmatix.net).
+ * hw_if) Chapman Flack (chap@NetBSD.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.13 2006/05/20 04:32:00 chap Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.25.2.14 2006/05/21 17:28:48 chap Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
