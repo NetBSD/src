@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.19 2006/05/10 21:53:48 mrg Exp $	*/
+/*	$NetBSD: do_command.c,v 1.20 2006/05/21 19:26:43 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,13 +22,14 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.19 2006/05/10 21:53:48 mrg Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.20 2006/05/21 19:26:43 christos Exp $");
 #endif
 #endif
 
 
 #include "cron.h"
 #include <sys/signal.h>
+#include <err.h>
 #if defined(sequent)
 # include <sys/universe.h>
 #endif
@@ -267,8 +268,7 @@ child_process(entry *e, user *u)
 			}
 # endif /*DEBUGGING*/
 			execle(shell, shell, "-c", e->cmd, (char *)0, e->envp);
-			fprintf(stderr, "execl: couldn't exec `%s'\n", shell);
-			perror("execl");
+			warn("execl: couldn't exec `%s'", shell);
 			_exit(ERROR_EXIT);
 		}
 		break;
@@ -412,7 +412,7 @@ child_process(entry *e, user *u)
 				(void)snprintf(mailcmd, sizeof(mailcmd),
 				    MAILARGS, MAILCMD);
 				if (!(mail = cron_popen(mailcmd, "w"))) {
-					perror(MAILCMD);
+					warn("cannot run %s", MAILCMD);
 					(void) _exit(ERROR_EXIT);
 				}
 				fprintf(mail, "From: root (Cron Daemon)\n");

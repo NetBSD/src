@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.11 2005/03/16 02:53:55 xtraeme Exp $	*/
+/*	$NetBSD: cron.c,v 1.12 2006/05/21 19:26:43 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.11 2005/03/16 02:53:55 xtraeme Exp $");
+__RCSID("$NetBSD: cron.c,v 1.12 2006/05/21 19:26:43 christos Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ static	void	usage(void),
 
 static void
 usage(void) {
-	fprintf(stderr, "usage:  %s [-x debugflag[,...]]\n", ProgramName);
+	fprintf(stderr, "usage:  %s [-x debugflag[,...]]\n", getprogname());
 	exit(ERROR_EXIT);
 }
 
@@ -63,7 +63,7 @@ main(int argc, char **argv)
 {
 	cron_db	database;
 
-	ProgramName = argv[0];
+	setprogname(argv[0]);
 
 #if defined(BSD)
 	setlinebuf(stdout);
