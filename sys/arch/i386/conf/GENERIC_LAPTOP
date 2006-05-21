@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.186 2006/05/20 22:03:56 gdt Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.187 2006/05/21 11:39:27 cube Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.186 $"
+#ident 		"GENERIC-$Revision: 1.187 $"
 
 maxusers	32		# estimated number of users
 
@@ -762,7 +762,7 @@ ugen*	at uhub? port ?
 
 # USB generic serial port (e.g., data over cellular)
 ugensa*	at uhub? port ?
-ucom*	at ugensa*
+ucom*	at ugensa?
 
 # IrDA and Consumer Ir devices
 
