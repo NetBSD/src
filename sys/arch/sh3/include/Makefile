@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2006/02/01 20:56:18 dsl Exp $
+#	$NetBSD: Makefile,v 1.22 2006/05/21 23:14:13 uwe Exp $
 
 INCSDIR= /usr/include/sh3
 
@@ -19,7 +19,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	setjmp.h sh_opcode.h \
 	signal.h stdarg.h \
 	types.h \
-	va-sh.h varargs.h vmparam.h \
+	varargs.h vmparam.h \
 	wchar_limits.h
 
 .include <bsd.kinc.mk>
