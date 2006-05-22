@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 2006/04/09 19:28:01 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28 2006/05/22 13:44:53 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2006/04/09 19:28:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2006/05/22 13:44:53 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -398,7 +398,7 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)lwp0.l_addr + USPACE - 16;
+	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(lwp0.l_addr) + KSTACK_SIZE - 16;
 	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
 
@@ -1210,7 +1210,8 @@ struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 #ifdef I586_CPU
 union	descriptor *pentium_idt;
 #endif
-extern  struct user *proc0paddr;
+struct user *proc0paddr;
+extern vaddr_t proc0uarea;
 
 void
 setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
@@ -1492,6 +1493,7 @@ init386(paddr_t first_avail)
 	/* not on Xen... */
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR);
 
+	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;
 	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
