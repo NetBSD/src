@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr.S,v 1.7 2006/05/22 20:56:44 uwe Exp $	*/
+/*	$NetBSD: movstr.S,v 1.8 2006/05/22 21:34:08 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -87,3 +87,7 @@ loop2:
 
 	rts
 	 nop
+
+
+/* gcc4 uses movmem, older versions use movstr */
+STRONG_ALIAS(__movmem, __movstr)
