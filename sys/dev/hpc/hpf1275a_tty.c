@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.9 2006/05/15 12:39:05 yamt Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.10 2006/05/22 20:40:07 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.9 2006/05/15 12:39:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.10 2006/05/22 20:40:07 uwe Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.9 2006/05/15 12:39:05 yamt Exp $"
 #include <sys/gmon.h>
 #endif
 
+#include <dev/wscons/wsksymvar.h>
 #include <dev/pckbport/wskbdmap_mfii.h>
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #include <dev/hpc/pckbd_encode.h>
