@@ -1,4 +1,4 @@
-/*	$NetBSD: movstrSI.S,v 1.6 2006/05/22 20:56:44 uwe Exp $	*/
+/*	$NetBSD: movstrSI.S,v 1.7 2006/05/22 21:34:08 uwe Exp $	*/
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo.  All rights reserved.
@@ -78,3 +78,22 @@ ALTENTRY(__movstrSI4)
 	mov.l	@r5, r0
 	rts
 	 mov.l	r0, @r4
+
+
+/* gcc4 uses movmem, older versions use movstr */
+STRONG_ALIAS(__movmemSI4, __movstrSI4)
+STRONG_ALIAS(__movmemSI8, __movstrSI8)
+STRONG_ALIAS(__movmemSI12, __movstrSI12)
+STRONG_ALIAS(__movmemSI16, __movstrSI16)
+STRONG_ALIAS(__movmemSI20, __movstrSI20)
+STRONG_ALIAS(__movmemSI24, __movstrSI24)
+STRONG_ALIAS(__movmemSI28, __movstrSI28)
+STRONG_ALIAS(__movmemSI32, __movstrSI32)
+STRONG_ALIAS(__movmemSI36, __movstrSI36)
+STRONG_ALIAS(__movmemSI40, __movstrSI40)
+STRONG_ALIAS(__movmemSI44, __movstrSI44)
+STRONG_ALIAS(__movmemSI48, __movstrSI48)
+STRONG_ALIAS(__movmemSI52, __movstrSI52)
+STRONG_ALIAS(__movmemSI56, __movstrSI56)
+STRONG_ALIAS(__movmemSI60, __movstrSI60)
+STRONG_ALIAS(__movmemSI64, __movstrSI64)

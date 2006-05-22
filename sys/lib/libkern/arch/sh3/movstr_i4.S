@@ -1,4 +1,4 @@
-/*	$NetBSD: movstr_i4.S,v 1.4 2006/05/22 20:56:44 uwe Exp $	*/
+/*	$NetBSD: movstr_i4.S,v 1.5 2006/05/22 21:34:08 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 SHIMIZU Ryo.  All rights reserved.
@@ -67,3 +67,8 @@ even_loop:
 	mov.l	r0,@(8,r4)
 	rts
 	 mov.l	r1,@(12,r4)
+
+
+/* gcc4 uses movmem, older versions use movstr */
+STRONG_ALIAS(__movmem_i4_odd, __movstr_i4_odd)
+STRONG_ALIAS(__movmem_i4_even, __movstr_i4_even)
