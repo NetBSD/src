@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.893 2006/05/18 17:08:04 chap Exp $
+# $NetBSD: mi,v 1.894 2006/05/22 12:32:20 dan Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -93,7 +93,7 @@
 ./usr/share/man/cat1/crontab.0			man-cron-catman		.cat
 ./usr/share/man/cat1/csh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ctags.0			man-c-catman		.cat
-./usr/share/man/cat1/cu.0			man-uucp-catman		uucp,.cat
+./usr/share/man/cat1/cu.0			man-util-catman		.cat
 ./usr/share/man/cat1/cut.0			man-util-catman		.cat
 ./usr/share/man/cat1/daicctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat1/date.0			man-util-catman		.cat
@@ -2427,7 +2427,7 @@
 ./usr/share/man/man1/crontab.1			man-cron-man		.man
 ./usr/share/man/man1/csh.1			man-util-man		.man
 ./usr/share/man/man1/ctags.1			man-c-man		.man
-./usr/share/man/man1/cu.1			man-uucp-man		uucp,.man
+./usr/share/man/man1/cu.1			man-util-man		.man
 ./usr/share/man/man1/cut.1			man-util-man		.man
 ./usr/share/man/man1/daicctl.1			man-sysutil-man		.man
 ./usr/share/man/man1/date.1			man-util-man		.man
