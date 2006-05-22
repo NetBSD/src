@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/08/27 14:12:15 takemura Exp $
+#	$NetBSD: Makefile,v 1.2 2006/05/22 07:36:52 mrg Exp $
 
 .if ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh"
 PROG=	tpctl
@@ -8,3 +8,7 @@ SRCS=	main.c fb.c tp.c data.c
 MAN=	tpctl.8
 
 .include <bsd.prog.mk>
+
+.if ${HAVE_GCC} == 4
+COPTS.tp.c+=	-Wno-pointer-sign
+.endif
