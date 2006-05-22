@@ -1,4 +1,4 @@
-/*	$NetBSD: tp.c,v 1.3 2004/09/07 13:20:40 jrf Exp $	*/
+/*	$NetBSD: tp.c,v 1.4 2006/05/22 20:06:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 TAKEMRUA Shin
@@ -43,7 +43,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tp.c,v 1.3 2004/09/07 13:20:40 jrf Exp $");
+__RCSID("$NetBSD: tp.c,v 1.4 2006/05/22 20:06:54 uwe Exp $");
 #endif /* not lint */
 
 int
@@ -75,7 +75,8 @@ tp_init(struct tp *tp, int fd)
 
 	id.type = WSMOUSE_ID_TYPE_UIDSTR;
 	if (ioctl(tp->fd, WSMOUSEIO_GETID, &id) == 0) {
-		(void)strlcpy(tp->id, id.data, MIN(sizeof(tp->id), id.length));
+		(void)strlcpy(tp->id, (const char *)id.data,
+			      MIN(sizeof(tp->id), id.length));
 	} else {
 		tp->id[0] = '*';
 		tp->id[1] = '\0';
