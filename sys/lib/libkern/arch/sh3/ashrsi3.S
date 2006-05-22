@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrsi3.S,v 1.4 2006/04/22 22:48:54 uwe Exp $	*/
+/*	$NetBSD: ashrsi3.S,v 1.5 2006/05/22 20:56:44 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -28,9 +28,6 @@
 
 #include <machine/asm.h>
 
-#ifdef PIC	/* XXX: uwe */
-	.hidden __ashrsi3
-#endif
 
 NENTRY(__ashrsi3)
 	tst	r5, r5
