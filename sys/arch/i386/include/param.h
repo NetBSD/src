@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.58 2005/11/07 11:42:34 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.59 2006/05/22 13:44:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
 #ifdef NOREDZONE
 #define	UPAGES		2		/* pages of u-area */
 #else
-#define UPAGES		4
+#define UPAGES		3
 #endif
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
