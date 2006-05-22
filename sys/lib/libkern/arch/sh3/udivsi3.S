@@ -1,4 +1,4 @@
-/*	$NetBSD: udivsi3.S,v 1.6 2006/04/22 22:48:54 uwe Exp $	*/
+/*	$NetBSD: udivsi3.S,v 1.7 2006/05/22 20:56:44 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: udivsi3.S,v 1.6 2006/04/22 22:48:54 uwe Exp $")
+	RCSID("$NetBSD: udivsi3.S,v 1.7 2006/05/22 20:56:44 uwe Exp $")
 #endif
 
 /*
@@ -58,9 +58,6 @@
  * . this function cannot be called via PLT
  */
 
-#ifdef PIC	/* XXX: uwe */
-	.hidden __udivsi3
-#endif
 
 /* r0 <= r4 / r5 */
 NENTRY(__udivsi3)

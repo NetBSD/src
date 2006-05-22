@@ -1,4 +1,4 @@
-/*	$NetBSD: movstrSI.S,v 1.5 2006/04/22 22:48:54 uwe Exp $	*/
+/*	$NetBSD: movstrSI.S,v 1.6 2006/05/22 20:56:44 uwe Exp $	*/
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo.  All rights reserved.
@@ -28,24 +28,6 @@
 
 #include <machine/asm.h>
 
-#ifdef PIC	/* XXX: uwe */
-	.hidden __movstrSI4
-	.hidden __movstrSI8
-	.hidden __movstrSI12
-	.hidden __movstrSI16
-	.hidden __movstrSI20
-	.hidden __movstrSI24
-	.hidden __movstrSI28
-	.hidden __movstrSI32
-	.hidden __movstrSI36
-	.hidden __movstrSI40
-	.hidden __movstrSI44
-	.hidden __movstrSI48
-	.hidden __movstrSI52
-	.hidden __movstrSI56
-	.hidden __movstrSI60
-	.hidden __movstrSI64
-#endif /* PIC */
 
 NENTRY(__movstrSI64)
 	mov.l	@(60, r5), r0
