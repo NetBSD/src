@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.6 2003/07/24 10:12:26 skrll Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.7 2006/05/22 19:49:09 drochner Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -51,9 +51,9 @@ void xwarn(const char *, ...)
 void xwarnx(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 void xerr(int, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
+    __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
 void xerrx(int, const char *, ...)
-    __attribute__((__format__(__printf__, 2, 3)));
+    __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
 
 void     xassert(const char *, int, const char *);
 const char *xstrerror(int);
