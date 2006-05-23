@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.21 2003/08/07 11:25:13 agc Exp $	*/
+/*	$NetBSD: bad144.c,v 1.22 2006/05/23 01:18:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.21 2003/08/07 11:25:13 agc Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.22 2006/05/23 01:18:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -486,6 +486,7 @@ blkzero(int f, daddr_t sn)
 	if (nflag == 0 && write(f, zbuf, dp->d_secsize) != dp->d_secsize)
 		warn("can't write replacement sector, %lld",
 		    (long long)sn);
+	free(zbuf);
 }
 
 int
