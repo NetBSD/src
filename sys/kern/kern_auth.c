@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.2 2006/05/14 21:12:38 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.3 2006/05/23 00:43:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -100,7 +100,8 @@ static kauth_scope_t kauth_builtin_scope_process;
 
 /* Allocate new, empty kauth credentials. */
 kauth_cred_t
-kauth_cred_alloc(void) {
+kauth_cred_alloc(void)
+{
 	kauth_cred_t cred;
 
 	cred = pool_get(&kauth_cred_pool, PR_WAITOK);
@@ -132,7 +133,8 @@ kauth_cred_destroy(kauth_cred_t cred)
 
 /* Decrease reference count to cred. If reached zero, free it. */
 void
-kauth_cred_free(kauth_cred_t cred) {
+kauth_cred_free(kauth_cred_t cred)
+{
 	KASSERT(cred != NULL);
 
 	simple_lock(&cred->cr_lock);
@@ -514,7 +516,8 @@ kauth_cred_get(void)
  * Requires the scope list lock to be held by the caller.
  */
 static kauth_scope_t
-kauth_ifindscope(const char *id) {
+kauth_ifindscope(const char *id)
+{
 	kauth_scope_t scope;
 
 	/* XXX: assert lock on scope list? */
@@ -668,8 +671,8 @@ void
 kauth_unlisten_scope(kauth_listener_t listener)
 {
 	if (listener != NULL) {
-		SIMPLEQ_REMOVE(&listener->scope->listenq, listener, kauth_listener,
-			       listener_next);
+		SIMPLEQ_REMOVE(&listener->scope->listenq, listener,
+		    kauth_listener, listener_next);
 		listener->scope->nlisteners--;
 	}
 }
