@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.19 2005/04/16 14:40:36 tsutsui Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.20 2006/05/23 01:03:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.19 2005/04/16 14:40:36 tsutsui Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.20 2006/05/23 01:03:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -818,7 +818,11 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 	    bpb->bsec = ds.dss_slices[slice].ds_size;
     }
 #endif
-    if (((slice == -1 || part != -1) &&
+    if (((
+#ifdef __FreeBSD__
+slice == -1 ||
+#endif
+	 part != -1) &&
 	 ((!oflag && part != -1) || !bpb->bsec)) ||
 	!bpb->bps || !bpb->spt || !bpb->hds) {
 	lp = &dl;
