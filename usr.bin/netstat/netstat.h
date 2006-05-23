@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.33 2006/05/18 09:05:52 liamjfoy Exp $	*/
+/*	$NetBSD: netstat.h,v 1.34 2006/05/23 14:31:11 rpaulo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,6 +77,7 @@ void	icmp_stats __P((u_long, char *));
 void	igmp_stats __P((u_long, char *));
 void	pim_stats __P((u_long, char *));
 void	arp_stats __P((u_long, char *));
+void	carp_stats __P((u_long, char *));
 #ifdef IPSEC
 /* run-time selector for which  implementation (KAME, FAST_IPSEC) to show */
 void	ipsec_switch __P((u_long, char *));
@@ -102,7 +103,6 @@ void	rip6_stats __P((u_long, char *));
 void	mroute6pr __P((u_long, u_long, u_long));
 void	mrt6_stats __P((u_long, u_long));
 char	*routename6 __P((struct sockaddr_in6 *));
-void	carp_stats __P((u_long, char *));
 #endif /*INET6*/
 
 #ifdef IPSEC
