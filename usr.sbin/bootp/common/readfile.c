@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.13 2004/10/29 20:33:06 dsl Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.14 2006/05/23 01:29:31 christos Exp $");
 #endif
 
 
@@ -1276,9 +1276,7 @@ process_generic(char **src, struct shared_bindata **dest, u_int tagvalue)
 	bcopy(tmpbuf, bdata->data + oldlength, newlength + 2);
 	bdata->length = oldlength + newlength + 2;
 	bdata->linkcount = 1;
-	if (*dest) {
-		del_bindata(*dest);
-	}
+	del_bindata(*dest);
 	*dest = bdata;
 	return 0;
 }
