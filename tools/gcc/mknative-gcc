@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.17 2006/05/15 22:03:03 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.18 2006/05/23 10:55:55 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -97,10 +97,23 @@ get_gcc_libiberty () {
 ##### gnu/lib/libobjc #####
 
 get_libobjc () {
-	_subdir="$1"
+	case "$1" in
+	*4)
+		_subdir="$1/arch/$MACHINE_ARCH"
+		_options="ALL_OPT_FILES"
+		;;
+	*)
+		_subdir="$1"
+		_options=""
+		;;
+	esac
+
 	mkdir -p $_TOP/gnu/lib/$_subdir
 
 	{
+		if [ -n "$_options" ]; then
+			getvars gcc/Makefile $_options
+		fi
 		getvars $_PLATFORM/libobjc/Makefile \
 			ALL_CFLAGS INCLUDES OBJS OBJC_H \
 			| sed "s,$_GNU_DIST,\${GNUHOSTDIST},g"
