@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.15 2005/03/16 05:05:06 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.16 2006/05/23 01:36:36 christos Exp $	*/
 /*	$KAME: ftp.c,v 1.23 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
@@ -137,8 +137,8 @@ ftp_relay(int ctl6, int ctl4)
 			if (error < 0)
 				goto bad;
 			else if (error == 0) {
-				close(ctl4);
-				close(ctl6);
+				(void)close(ctl4);
+				(void)close(ctl6);
 				exit_success("terminating ftp control connection");
 				/*NOTREACHED*/
 			}
@@ -154,8 +154,8 @@ ftp_relay(int ctl6, int ctl4)
 			if (error < 0)
 				goto bad;
 			else if (error == 0) {
-				close(ctl4);
-				close(ctl6);
+				(void)close(ctl4);
+				(void)close(ctl6);
 				exit_success("terminating ftp control connection");
 				/*NOTREACHED*/
 			}
@@ -172,8 +172,10 @@ ftp_relay(int ctl6, int ctl4)
 			case -1:
 				goto bad;
 			case 0:
-				close(port4);
-				close(port6);
+				if (port4 >= 0)
+					(void)close(port4);
+				if (port6)
+					(void)close(port6);
 				port4 = port6 = -1;
 				syslog(LOG_INFO, "terminating data connection");
 				break;
@@ -193,8 +195,10 @@ ftp_relay(int ctl6, int ctl4)
 			case -1:
 				goto bad;
 			case 0:
-				close(port4);
-				close(port6);
+				if (port4 >= 0)
+					(void)close(port4);
+				if (port6 >= 0)
+					(void)close(port6);
 				port4 = port6 = -1;
 				syslog(LOG_INFO, "terminating data connection");
 				break;
@@ -242,7 +246,7 @@ ftp_activeconn()
 	if (poll(pfd, sizeof(pfd)/sizeof(pfd[0]), timeout.tv_sec * 1000) == 0 ||
 	    (port4 = accept(wport4, (struct sockaddr *)&data4, &n)) < 0)
 	{
-		close(wport4);
+		(void)close(wport4);
 		wport4 = -1;
 		syslog(LOG_INFO, "active mode data connection failed");
 		return -1;
@@ -252,17 +256,17 @@ ftp_activeconn()
 	sa = (struct sockaddr *)&data6;
 	port6 = socket(sa->sa_family, SOCK_STREAM, 0);
 	if (port6 == -1) {
-		close(port4);
-		close(wport4);
+		(void)close(port4);
+		(void)close(wport4);
 		port4 = wport4 = -1;
 		syslog(LOG_INFO, "active mode data connection failed");
 		return -1;
 	}
 	error = connect(port6, sa, sa->sa_len);
 	if (error < 0) {
-		close(port6);
-		close(port4);
-		close(wport4);
+		(void)close(port6);
+		(void)close(port4);
+		(void)close(wport4);
 		port6 = port4 = wport4 = -1;
 		syslog(LOG_INFO, "active mode data connection failed");
 		return -1;
@@ -290,7 +294,7 @@ ftp_passiveconn()
 	if (poll(pfd, sizeof(pfd)/sizeof(pfd[0]), timeout.tv_sec * 1000) == 0 ||
 	    (port6 = accept(wport6, (struct sockaddr *)&data6, &len)) < 0)
 	{
-		close(wport6);
+		(void)close(wport6);
 		wport6 = -1;
 		syslog(LOG_INFO, "passive mode data connection failed");
 		return -1;
@@ -300,17 +304,17 @@ ftp_passiveconn()
 	sa = (struct sockaddr *)&data4;
 	port4 = socket(sa->sa_family, SOCK_STREAM, 0);
 	if (port4 == -1) {
-		close(wport6);
-		close(port6);
+		(void)close(wport6);
+		(void)close(port6);
 		wport6 = port6 = -1;
 		syslog(LOG_INFO, "passive mode data connection failed");
 		return -1;
 	}
 	error = connect(port4, sa, sa->sa_len);
 	if (error < 0) {
-		close(wport6);
-		close(port4);
-		close(port6);
+		(void)close(wport6);
+		(void)close(port4);
+		(void)close(port6);
 		wport6 = port4 = port6 = -1;
 		syslog(LOG_INFO, "passive mode data connection failed");
 		return -1;
@@ -436,7 +440,7 @@ ftp_copyresult(int src, int dst, enum state state)
 				p[1] = 'P';
 			}
 		} else {
-			close(wport4);
+			(void)close(wport4);
 			wport4 = -1;
 		}
 		write(dst, rbuf, n);
@@ -449,7 +453,7 @@ ftp_copyresult(int src, int dst, enum state state)
 		 */
 		if (code != 227) {
 passivefail0:
-			close(wport6);
+			(void)close(wport6);
 			wport6 = -1;
 			write(dst, rbuf, n);
 			return n;
@@ -515,13 +519,13 @@ passivefail:
 #endif
 		error = bind(wport6, (struct sockaddr *)sin6, sin6->sin6_len);
 		if (error == -1) {
-			close(wport6);
+			(void)close(wport6);
 			wport6 = -1;
 			goto passivefail;
 		}
 		error = listen(wport6, 1);
 		if (error == -1) {
-			close(wport6);
+			(void)close(wport6);
 			wport6 = -1;
 			goto passivefail;
 		}
@@ -533,7 +537,7 @@ passivefail:
 		len = sizeof(data6);
 		error = getsockname(wport6, (struct sockaddr *)&data6, &len);
 		if (error == -1) {
-			close(wport6);
+			(void)close(wport6);
 			wport6 = -1;
 			goto passivefail;
 		}
@@ -543,7 +547,7 @@ passivefail:
 		len = sizeof(data6);
 		error = getsockname(dst, (struct sockaddr *)&data6, &len);
 		if (error == -1) {
-			close(wport6);
+			(void)close(wport6);
 			wport6 = -1;
 			goto passivefail;
 		}
@@ -661,10 +665,10 @@ ftp_copycommand(int src, int dst, enum state *state)
 		 */
 		nstate = LPRT;
 
-		close(wport4);
-		close(wport6);
-		close(port4);
-		close(port6);
+		(void)close(wport4);
+		(void)close(wport6);
+		(void)close(port4);
+		(void)close(port6);
 		wport4 = wport6 = port4 = port6 = -1;
 
 		if (epsvall) {
@@ -726,13 +730,13 @@ lprtfail:
 			goto lprtfail;
 		error = bind(wport4, (struct sockaddr *)sin, sin->sin_len);
 		if (error == -1) {
-			close(wport4);
+			(void)close(wport4);
 			wport4 = -1;
 			goto lprtfail;
 		}
 		error = listen(wport4, 1);
 		if (error == -1) {
-			close(wport4);
+			(void)close(wport4);
 			wport4 = -1;
 			goto lprtfail;
 		}
@@ -741,12 +745,12 @@ lprtfail:
 		len = sizeof(data4);
 		error = getsockname(wport4, (struct sockaddr *)&data4, &len);
 		if (error == -1) {
-			close(wport4);
+			(void)close(wport4);
 			wport4 = -1;
 			goto lprtfail;
 		}
 		if (((struct sockaddr *)&data4)->sa_family != AF_INET) {
-			close(wport4);
+			(void)close(wport4);
 			wport4 = -1;
 			goto lprtfail;
 		}
@@ -772,10 +776,10 @@ lprtfail:
 
 		nstate = EPRT;
 
-		close(wport4);
-		close(wport6);
-		close(port4);
-		close(port6);
+		(void)close(wport4);
+		(void)close(wport6);
+		(void)close(port4);
+		(void)close(port6);
 		wport4 = wport6 = port4 = port6 = -1;
 
 		if (epsvall) {
@@ -862,10 +866,10 @@ eprtparamfail:
 		 */
 		nstate = LPSV;
 
-		close(wport4);
-		close(wport6);
-		close(port4);
-		close(port6);
+		(void)close(wport4);
+		(void)close(wport6);
+		(void)close(port4);
+		(void)close(port6);
 		wport4 = wport6 = port4 = port6 = -1;
 
 		if (epsvall) {
@@ -891,10 +895,10 @@ eprtparamfail:
 		/*
 		 * EPSV -> PASV
 		 */
-		close(wport4);
-		close(wport6);
-		close(port4);
-		close(port6);
+		(void)close(wport4);
+		(void)close(wport6);
+		(void)close(port4);
+		(void)close(port6);
 		wport4 = wport6 = port4 = port6 = -1;
 
 		n = snprintf(sbuf, sizeof(sbuf), "PASV\r\n");
