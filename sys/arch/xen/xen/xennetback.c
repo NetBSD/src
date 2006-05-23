@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.21 2006/05/15 20:16:31 dogcow Exp $      */
+/*      $NetBSD: xennetback.c,v 1.22 2006/05/23 21:09:37 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -442,6 +442,7 @@ fail_1:
 		hypervisor_mask_event(xneti->xni_evtchn);
 		event_remove_handler(xneti->xni_evtchn,
 		    xennetback_evthandler, xneti);
+		softintr_disestablish(xneti->xni_softintr);
 		ring_addr = (vaddr_t)xneti->xni_rxring;
 		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
 		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE,
