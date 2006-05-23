@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.10 2006/05/07 21:50:32 bouyer Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.11 2006/05/23 21:07:56 bouyer Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.10 2006/05/07 21:50:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.11 2006/05/23 21:07:56 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -74,6 +74,8 @@ CFATTACH_DECL(xenbus, sizeof(struct device), xenbus_match, xenbus_attach,
 struct device *xenbus_sc;
 
 SLIST_HEAD(, xenbus_device) xenbus_device_list;
+SLIST_HEAD(, xenbus_backend_driver) xenbus_backend_driver_list =
+	SLIST_HEAD_INITIALIZER(xenbus_backend_driver);
 
 int
 xenbus_match(struct device *parent, struct cfdata *match, void *aux)
@@ -95,6 +97,12 @@ xenbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
+xenbus_backend_register(struct xenbus_backend_driver *xbakd)
+{
+	SLIST_INSERT_HEAD(&xenbus_backend_driver_list, xbakd, xbakd_entries);
+}
+
+void
 xenbus_kthread_create(void *unused)
 {
 	struct proc *p;
@@ -103,61 +111,6 @@ xenbus_kthread_create(void *unused)
 	if (err)
 		printf("kthread_create1(xenbus_probe): %d\n", err);
 }
-
-
-#if 0
-static char *kasprintf(const char *fmt, ...);
-
-static struct notifier_block *xenstore_chain;
-
-/* If something in array of ids matches this device, return it. */
-static const struct xenbus_device_id *
-match_device(const struct xenbus_device_id *arr, struct xenbus_device *dev)
-{
-	for (; !streq(arr->devicetype, ""); arr++) {
-		if (streq(arr->devicetype, dev->devicetype))
-			return arr;
-	}
-	return NULL;
-}
-
-static int xenbus_match_device(struct device *_dev, struct device_driver *_drv)
-{
-	struct xenbus_driver *drv = to_xenbus_driver(_drv);
-
-	if (!drv->ids)
-		return 0;
-
-	return match_device(drv->ids, to_xenbus_device(_dev)) != NULL;
-}
-#endif
-
-struct xen_bus_type
-{
-	const char *root;
-	unsigned int levels;
-};
-
-#if 0
-/* device/<type>/<id> => <type>-<id> */
-static int
-frontend_bus_id(char bus_id[BUS_ID_SIZE], const char *nodename)
-{
-	nodename = strchr(nodename, '/');
-	if (!nodename || strlen(nodename + 1) >= BUS_ID_SIZE) {
-		printk(KERN_WARNING "XENBUS: bad frontend %s\n", nodename);
-		return EINVAL;
-	}
-
-	strlcpy(bus_id, nodename + 1, BUS_ID_SIZE);
-	if (!strchr(bus_id, '/')) {
-		printk(KERN_WARNING "XENBUS: bus_id %s no slash\n", bus_id);
-		return EINVAL;
-	}
-	*strchr(bus_id, '/') = '-';
-	return 0;
-}
-#endif
 
 static int
 read_otherend_details(struct xenbus_device *xendev,
@@ -218,13 +171,11 @@ read_backend_details(struct xenbus_device *xendev)
 }
 
 
-#if 0 //#ifdef DOM0OPS
 static int
 read_frontend_details(struct xenbus_device *xendev)
 {
 	return read_otherend_details(xendev, "frontend-id", "frontend");
 }
-#endif
 
 #if unused
 static void
@@ -245,130 +196,6 @@ free_otherend_watch(struct xenbus_device *dev)
 		dev->xbusd_otherend_watch.node = NULL;
 	}
 }
-
-#if 0
-
-/* Bus type for frontend drivers. */
-static int xenbus_probe_frontend(const char *type, const char *name);
-#endif
-static struct xen_bus_type xenbus_frontend = {
-	.root = "device",
-	.levels = 2, 		/* device/type/<id> */
-};
-
-#if 0
-/* backend/<type>/<fe-uuid>/<id> => <type>-<fe-domid>-<id> */
-static int
-backend_bus_id(char bus_id[BUS_ID_SIZE], const char *nodename)
-{
-	int domid, err;
-	const char *devid, *type, *frontend;
-	unsigned int typelen;
-
-	type = strchr(nodename, '/');
-	if (!type)
-		return EINVAL;
-	type++;
-	typelen = strcspn(type, "/");
-	if (!typelen || type[typelen] != '/')
-		return EINVAL;
-
-	devid = strrchr(nodename, '/') + 1;
-
-	err = xenbus_gather(NULL, nodename, "frontend-id", "%i", &domid,
-			    "frontend", NULL, &frontend,
-			    NULL);
-	if (err)
-		return err;
-	if (strlen(frontend) == 0)
-		err = ERANGE;
-
-	if (!err && !xenbus_exists(NULL, frontend, ""))
-		err = ENOENT;
-
-	if (err) {
-		free(frontend, M_DEVBUF);
-		return err;
-	}
-
-	if (snprintf(bus_id, BUS_ID_SIZE,
-		     "%.*s-%i-%s", typelen, type, domid, devid) >= BUS_ID_SIZE)
-		return ENOSPC;
-	return 0;
-}
-
-static int
-xenbus_hotplug_backend(struct device *dev, char **envp,
-				  int num_envp, char *buffer, int buffer_size)
-{
-	struct xenbus_device *xdev;
-	struct xenbus_driver *drv = NULL;
-	int i = 0;
-	int length = 0;
-	char *basepath_end;
-	char *frontend_id;
-
-	DPRINTK("");
-
-	if (dev == NULL)
-		return ENODEV;
-
-	xdev = to_xenbus_device(dev);
-	if (xdev == NULL)
-		return ENODEV;
-
-	if (dev->driver)
-		drv = to_xenbus_driver(dev->driver);
-
-	/* stuff we want to pass to /sbin/hotplug */
-	add_hotplug_env_var(envp, num_envp, &i,
-			    buffer, buffer_size, &length,
-			    "XENBUS_TYPE=%s", xdev->devicetype);
-
-	add_hotplug_env_var(envp, num_envp, &i,
-			    buffer, buffer_size, &length,
-			    "XENBUS_PATH=%s", xdev->xbusd_path);
-
-	add_hotplug_env_var(envp, num_envp, &i,
-			    buffer, buffer_size, &length,
-			    "XENBUS_BASE_PATH=%s", xdev->xbusd_path);
-
-	basepath_end = strrchr(envp[i - 1], '/');
-	length -= strlen(basepath_end);
-	*basepath_end = '\0';
-	basepath_end = strrchr(envp[i - 1], '/');
-	length -= strlen(basepath_end);
-	*basepath_end = '\0';
-
-	basepath_end++;
-	frontend_id = kmalloc(strlen(basepath_end) + 1, GFP_KERNEL);
-	strcpy(frontend_id, basepath_end);
-	add_hotplug_env_var(envp, num_envp, &i,
-			    buffer, buffer_size, &length,
-			    "XENBUS_FRONTEND_ID=%s", frontend_id);
-	free(frontend_id, M_DEVBUF);
-
-	/* terminate, set to next free slot, shrink available space */
-	envp[i] = NULL;
-	envp = &envp[i];
-	num_envp -= i;
-	buffer = &buffer[length];
-	buffer_size -= length;
-
-	if (drv && drv->hotplug)
-		return drv->hotplug(xdev, envp, num_envp, buffer,
-				    buffer_size);
-
-	return 0;
-}
-
-static int xenbus_probe_backend(const char *type, const char *domid);
-#endif
-
-static struct xen_bus_type xenbus_backend = {
-	.root = "backend",
-	.levels = 3, 		/* backend/type/<frontend>/<id> */
-};
 
 static void
 otherend_changed(struct xenbus_watch *watch,
@@ -392,17 +219,30 @@ otherend_changed(struct xenbus_watch *watch,
 		state, xdev->xbusd_otherend_watch.node, vec[XS_WATCH_PATH]);
 	if (state == XenbusStateClosed) {
 		int error;
-		error = config_detach(xdev->xbusd_dev, DETACH_FORCE);
-		if (error) {
-			printf("could not detach %s: %d\n",
-			    xdev->xbusd_dev->dv_xname, error);
-			return;
+		if (xdev->xbusd_type == XENBUS_BACKEND_DEVICE) {
+			error = xdev->xbusd_u.b.b_detach(
+			    xdev->xbusd_u.b.b_cookie);
+			if (error) {
+				printf("could not detach %s: %d\n",
+				    xdev->xbusd_path, error);
+				return;
+			}
+		} else {
+			error = config_detach(xdev->xbusd_u.f.f_dev,
+			    DETACH_FORCE);
+			if (error) {
+				printf("could not detach %s: %d\n",
+				    xdev->xbusd_u.f.f_dev->dv_xname, error);
+				return;
+			}
 		}
 		xenbus_free_device(xdev);
 		return;
 	}
 	if (xdev->xbusd_otherend_changed)
-		xdev->xbusd_otherend_changed(xdev->xbusd_dev, state);
+		xdev->xbusd_otherend_changed(
+		    (xdev->xbusd_type == XENBUS_BACKEND_DEVICE) ?
+		    xdev->xbusd_u.b.b_cookie : xdev->xbusd_u.f.f_dev, state);
 }
 
 static int
@@ -414,363 +254,6 @@ talk_to_otherend(struct xenbus_device *dev)
 				  &dev->xbusd_otherend_watch,
 				  otherend_changed);
 }
-
-#if 0
-
-static int
-xenbus_dev_probe(struct device *_dev)
-{
-	struct xenbus_device *dev = to_xenbus_device(_dev);
-	struct xenbus_driver *drv = to_xenbus_driver(_dev->driver);
-	const struct xenbus_device_id *id;
-	int err;
-
-	DPRINTK("");
-
-	err = talk_to_otherend(dev);
-	if (err) {
-		printk(KERN_WARNING
-		       "xenbus_probe: talk_to_otherend on %s failed.\n",
-		       dev->xbusd_path);
-		return err;
-	}
-
-	if (!drv->probe) {
-		err = ENODEV;
-		goto fail;
-	}
-
-	id = match_device(drv->ids, dev);
-	if (!id) {
-		err = ENODEV;
-		goto fail;
-	}
-
-	err = drv->probe(dev, id);
-	if (err)
-		goto fail;
-
-	return 0;
-fail:
-	xenbus_dev_error(dev, err, "xenbus_dev_probe on %s", dev->xbusd_path);
-	xenbus_switch_state(dev, NULL, XenbusStateClosed);
-	return ENODEV;
-	
-}
-
-static int
-xenbus_dev_remove(struct device *_dev)
-{
-	struct xenbus_device *dev = to_xenbus_device(_dev);
-	struct xenbus_driver *drv = to_xenbus_driver(_dev->driver);
-
-	DPRINTK("");
-
-	free_otherend_watch(dev);
-	free_otherend_details(dev);
-
-	if (drv->remove)
-		drv->remove(dev);
-
-	xenbus_switch_state(dev, NULL, XenbusStateClosed);
-	return 0;
-}
-
-static int
-xenbus_register_driver_common(struct xenbus_driver *drv,
-					 struct xen_bus_type *bus)
-{
-	int ret;
-
-	drv->driver.name = drv->name;
-	drv->driver.bus = &bus->bus;
-	drv->driver.owner = drv->owner;
-	drv->driver.probe = xenbus_dev_probe;
-	drv->driver.remove = xenbus_dev_remove;
-
-	down(&xenwatch_mutex);
-	ret = driver_register(&drv->driver);
-	up(&xenwatch_mutex);
-	return ret;
-}
-
-int
-xenbus_register_frontend(struct xenbus_driver *drv)
-{
-	drv->read_otherend_details = read_backend_details;
-
-	return xenbus_register_driver_common(drv, &xenbus_frontend);
-}
-
-int
-xenbus_register_backend(struct xenbus_driver *drv)
-{
-	drv->read_otherend_details = read_frontend_details;
-
-	return xenbus_register_driver_common(drv, &xenbus_backend);
-}
-
-void
-xenbus_unregister_driver(struct xenbus_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-
-struct xb_find_info
-{
-	struct xenbus_device *dev;
-	const char *nodename;
-};
-
-static int
-cmp_dev(struct device *dev, void *data)
-{
-	struct xenbus_device *xendev = to_xenbus_device(dev);
-	struct xb_find_info *info = data;
-
-	if (streq(xendev->xbusd_path, info->nodename)) {
-		info->dev = xendev;
-		get_device(dev);
-		return 1;
-	}
-	return 0;
-}
-
-struct xenbus_device *
-xenbus_device_find(const char *nodename, struct bus_type *bus)
-{
-	struct xb_find_info info = { .dev = NULL, .nodename = nodename };
-
-	bus_for_each_dev(bus, NULL, &info, cmp_dev);
-	return info.dev;
-}
-
-static int
-cleanup_dev(struct device *dev, void *data)
-{
-	struct xenbus_device *xendev = to_xenbus_device(dev);
-	struct xb_find_info *info = data;
-	int len = strlen(info->nodename);
-
-	DPRINTK("%s", info->nodename);
-
-	if (!strncmp(xendev->xbusd_path, info->nodename, len)) {
-		info->dev = xendev;
-		get_device(dev);
-		return 1;
-	}
-	return 0;
-}
-
-static void
-xenbus_cleanup_devices(const char *path, struct bus_type *bus)
-{
-	struct xb_find_info info = { .nodename = path };
-
-	do {
-		info.dev = NULL;
-		bus_for_each_dev(bus, NULL, &info, cleanup_dev);
-		if (info.dev) {
-			device_unregister(&info.dev->dev);
-			put_device(&info.dev->dev);
-		}
-	} while (info.dev);
-}
-
-static void
-xenbus_dev_free(struct xenbus_device *xendev)
-{
-	free(xendev, M_DEVBUF);
-}
-
-static void
-xenbus_dev_release(struct device *dev)
-{
-	if (dev) {
-		xenbus_dev_free(to_xenbus_device(dev));
-	}
-}
-
-/* Simplified asprintf. */
-static char *kasprintf(const char *fmt, ...)
-{
-	va_list ap;
-	unsigned int len;
-	char *p, dummy[1];
-
-	va_start(ap, fmt);
-	/* FIXME: vsnprintf has a bug, NULL should work */
-	len = vsnprintf(dummy, 0, fmt, ap);
-	va_end(ap);
-
-	p = malloc(len + 1, M_DEVBUF, M_NOWAIT);
-	if (!p)
-		return NULL;
-	va_start(ap, fmt);
-	vsprintf(p, fmt, ap);
-	va_end(ap);
-	return p;
-}
-#endif
-
-#if 0
-static ssize_t
-xendev_show_nodename(struct device *dev, char *buf)
-{
-	return sprintf(buf, "%s\n", to_xenbus_device(dev)->nodename);
-}
-// XXX implement
-DEVICE_ATTR(nodename, S_IRUSR | S_IRGRP | S_IROTH, xendev_show_nodename, NULL);
-
-static ssize_t
-xendev_show_devtype(struct device *dev, char *buf)
-{
-	return sprintf(buf, "%s\n", to_xenbus_device(dev)->devicetype);
-}
-DEVICE_ATTR(devtype, S_IRUSR | S_IRGRP | S_IROTH, xendev_show_devtype, NULL);
-
-
-static int
-xenbus_probe_node(struct xen_bus_type *bus,
-			     const char *type,
-			     const char *nodename)
-{
-#define CHECK_FAIL				\
-	do {					\
-		if (err)			\
-			goto fail;		\
-	}					\
-	while (0)				\
-
-
-	struct xenbus_device *xendev;
-	size_t stringlen;
-	char *tmpstring;
-
-	XenbusState state = xenbus_read_driver_state(nodename);
-
-	printf("xenbus_probe_node %s %s %s %d\n", bus->root, type, nodename, state);
-	if (state != XenbusStateInitialising) {
-		/* Device is not new, so ignore it.  This can happen if a
-		   device is going away after switching to Closed.  */
-		return 0;
-	}
-
-
-	stringlen = strlen(nodename) + 1 + strlen(type) + 1;
-	xendev = malloc(sizeof(*xendev) + stringlen, M_DEVBUF, M_NOWAIT);
-	if (!xendev)
-		return ENOMEM;
-	memset(xendev, 0, sizeof(*xendev));
-
-	/* Copy the strings into the extra space. */
-
-	tmpstring = (char *)(xendev + 1);
-	strcpy(tmpstring, nodename);
-	xendev->nodename = tmpstring;
-
-	tmpstring += strlen(tmpstring) + 1;
-	strcpy(tmpstring, type);
-	xendev->devicetype = tmpstring;
-
-#if 0
-	xendev->dev.parent = &bus->dev;
-	xendev->dev.bus = &bus->bus;
-	xendev->dev.release = xenbus_dev_release;
-
-	err = bus->get_bus_id(xendev->dev.bus_id, xendev->nodename);
-	CHECK_FAIL;
-
-	/* Register with generic device framework. */
-	err = device_register(&xendev->dev);
-	CHECK_FAIL;
-
-	device_create_file(&xendev->dev, &dev_attr_nodename);
-	device_create_file(&xendev->dev, &dev_attr_devtype);
-
-#endif
-	return 0;
-
-#undef CHECK_FAIL
-#if 0
-fail:
-	xenbus_dev_free(xendev);
-	return err;
-#endif
-}
-#endif
-
-#if 0
-/* device/<typename>/<name> */
-static int
-xenbus_probe_frontend(const char *type, const char *name)
-{
-	char *nodename;
-	int err;
-
-	nodename = kasprintf("%s/%s/%s", xenbus_frontend.root, type, name);
-	if (!nodename)
-		return ENOMEM;
-	
-	DPRINTK("%s", nodename);
-
-	err = xenbus_probe_node(&xenbus_frontend, type, nodename);
-	free(nodename, M_DEVBUF);
-	return err;
-}
-
-/* backend/<typename>/<frontend-uuid>/<name> */
-static int
-xenbus_probe_backend_unit(const char *dir,
-				     const char *type,
-				     const char *name)
-{
-	char *nodename;
-	int err;
-
-	nodename = kasprintf("%s/%s", dir, name);
-	if (!nodename)
-		return ENOMEM;
-
-	DPRINTK("%s", nodename);
-
-	err = xenbus_probe_node(&xenbus_backend, type, nodename);
-	free(nodename, M_DEVBUF);
-	return err;
-}
-
-/* backend/<typename>/<frontend-domid> */
-static int
-xenbus_probe_backend(const char *type, const char *domid)
-{
-	char *nodename;
-	int err;
-	char **dir;
-	unsigned int i, dir_n = 0;
-
-	DPRINTK("");
-
-	nodename = kasprintf("%s/%s/%s", xenbus_backend.root, type, domid);
-	if (!nodename)
-		return ENOMEM;
-
-	err = xenbus_directory(NULL, nodename, "", &dir_n, &dir);
-	DPRINTK("xenbus_probe_backend err %d dir_n %d", err, dir_n);
-	if (err) {
-		free(nodename, M_DEVBUF);
-		return err;
-	}
-
-	for (i = 0; i < dir_n; i++) {
-		err = xenbus_probe_backend_unit(nodename, type, dir[i]);
-		if (err)
-			break;
-	}
-	free(dir, M_DEVBUF);
-	free(nodename, M_DEVBUF);
-	return err;
-}
-#endif
 
 static struct xenbus_device *
 xenbus_lookup_device_path(const char *path)
@@ -785,39 +268,50 @@ xenbus_lookup_device_path(const char *path)
 }
 
 static int
-xenbus_probe_device_type(struct xen_bus_type *bus, const char *type)
+xenbus_probe_device_type(const char *path, const char *type,
+    int (*create)(struct xenbus_device *))
 {
-	int err;
+	int err, i, msize;
+	unsigned long state;
 	char **dir;
 	unsigned int dir_n = 0;
-	int i;
 	struct xenbus_device *xbusd;
 	struct xenbusdev_attach_args xa;
 	char *ep;
 
-	DPRINTK("probe %s type %s", bus->root, type);
-	err = xenbus_directory(NULL, bus->root, type, &dir_n, &dir);
+	DPRINTK("probe %s type %s", path, type);
+	err = xenbus_directory(NULL, path, "", &dir_n, &dir);
 	DPRINTK("directory err %d dir_n %d", err, dir_n);
 	if (err)
 		return err;
 
 	for (i = 0; i < dir_n; i++) {
-		int msize;
 		/*
 		 * add size of path to size of xenbus_device. xenbus_device
 		 * already has room for one char in xbusd_path.
 		 */
-		msize = sizeof(*xbusd) + strlen(bus->root) + strlen(type)
-		    + strlen(dir[i]) + 2;
+		msize = sizeof(*xbusd) + strlen(path) + strlen(dir[i]) + 2;
 		xbusd = malloc(msize, M_DEVBUF, M_WAITOK | M_ZERO);
 		if (xbusd == NULL)
 			panic("can't malloc xbusd");
 			
 		snprintf(__UNCONST(xbusd->xbusd_path),
-		    msize - sizeof(*xbusd) + 1, "%s/%s/%s",
-		    bus->root, type, dir[i]);
+		    msize - sizeof(*xbusd) + 1, "%s/%s", path, dir[i]);
 		if (xenbus_lookup_device_path(xbusd->xbusd_path) != NULL) {
 			/* device already registered */
+			free(xbusd, M_DEVBUF);
+			continue;
+		}
+		err = xenbus_read_ul(NULL, xbusd->xbusd_path, "state",
+		    &state);
+		if (err) {
+			printf("xenbus: can't get state "
+			    "for %s (%d)\n", xbusd->xbusd_path, err);
+			free(xbusd, M_DEVBUF);
+			continue;
+		}
+		if (state != XenbusStateInitialising) {
+			/* device is not new */
 			free(xbusd, M_DEVBUF);
 			continue;
 		}
@@ -825,31 +319,46 @@ xenbus_probe_device_type(struct xen_bus_type *bus, const char *type)
 		xbusd->xbusd_otherend_watch.xbw_dev = xbusd;
 		DPRINTK("xenbus_probe_device_type probe %s\n",
 		    xbusd->xbusd_path);
-		xa.xa_xbusd = xbusd;
-		xa.xa_type = type;
-		xa.xa_id = strtoul(dir[i], &ep, 0);
-		if (dir[i][0] == '\0' || *ep != '\0') {
-			printf("xenbus device type %s: id %s is not a number\n",
-			    type, dir[i]);
-			err = EFTYPE;
-			free(xbusd, M_DEVBUF);
-			break;
+		if (create != NULL) {
+			xbusd->xbusd_type = XENBUS_BACKEND_DEVICE;
+			err = read_frontend_details(xbusd);
+			if (err != 0) {
+				printf("xenbus: can't get frontend details "
+				    "for %s (%d)\n", xbusd->xbusd_path, err);
+				break;
+			}
+			if (create(xbusd)) {
+				free(xbusd, M_DEVBUF);
+				continue;
+			}
+		} else {
+			xbusd->xbusd_type = XENBUS_FRONTEND_DEVICE;
+			xa.xa_xbusd = xbusd;
+			xa.xa_type = type;
+			xa.xa_id = strtoul(dir[i], &ep, 0);
+			if (dir[i][0] == '\0' || *ep != '\0') {
+				printf("xenbus device type %s: id %s is not a"
+				    " number\n", type, dir[i]);
+				err = EFTYPE;
+				free(xbusd, M_DEVBUF);
+				break;
+			}
+			err = read_backend_details(xbusd);
+			if (err != 0) {
+				printf("xenbus: can't get backend details "
+				    "for %s (%d)\n", xbusd->xbusd_path, err);
+				break;
+			}
+			xbusd->xbusd_u.f.f_dev = config_found_ia(xenbus_sc,
+			    "xenbus", &xa, xenbus_print);
+			if (xbusd->xbusd_u.f.f_dev == NULL) {
+				free(xbusd, M_DEVBUF);
+				continue;
+			}
 		}
-		err = read_backend_details(xbusd);
-		if (err != 0) {
-			printf("xenbus: can't get backend details "
-			    "for %s (%d)\n", xbusd->xbusd_path, err);
-			break;
-		}
-		xbusd->xbusd_dev = config_found_ia(xenbus_sc, "xenbus", &xa,
-		    xenbus_print);
-		if (xbusd->xbusd_dev == NULL)
-			free(xbusd, M_DEVBUF);
-		else {
-			SLIST_INSERT_HEAD(&xenbus_device_list,
-			    xbusd, xbusd_entries);
-			talk_to_otherend(xbusd);
-		}
+		SLIST_INSERT_HEAD(&xenbus_device_list,
+		    xbusd, xbusd_entries);
+		talk_to_otherend(xbusd);
 	}
 	free(dir, M_DEVBUF);
 	return err;
@@ -874,24 +383,69 @@ xenbus_print(void *aux, const char *pnp)
 }
 
 static int
-xenbus_probe_devices(struct xen_bus_type *bus)
+xenbus_probe_frontends(void)
 {
 	int err;
 	char **dir;
 	unsigned int i, dir_n;
+	char path[30];
 
-	DPRINTK("probe %s", bus->root);
-	err = xenbus_directory(NULL, bus->root, "", &dir_n, &dir);
+	DPRINTK("probe device");
+	err = xenbus_directory(NULL, "device", "", &dir_n, &dir);
 	DPRINTK("directory err %d dir_n %d", err, dir_n);
 	if (err)
 		return err;
 
 	for (i = 0; i < dir_n; i++) {
-		err = xenbus_probe_device_type(bus, dir[i]);
+		snprintf(path, sizeof(path), "device/%s", dir[i]);
+		err = xenbus_probe_device_type(path, dir[i], NULL);
 		if (err)
 			break;
 	}
 	free(dir, M_DEVBUF);
+	return err;
+}
+
+static int
+xenbus_probe_backends(void)
+{
+	int err;
+	char **dirt, **dirid;
+	unsigned int type, id, dirt_n, dirid_n;
+	char path[30];
+	struct xenbus_backend_driver *xbakd;
+
+	DPRINTK("probe backend");
+	err = xenbus_directory(NULL, "backend", "", &dirt_n, &dirt);
+	DPRINTK("directory err %d dirt_n %d", err, dirt_n);
+	if (err)
+		return err;
+
+	for (type = 0; type < dirt_n; type++) {
+		SLIST_FOREACH(xbakd, &xenbus_backend_driver_list,
+		    xbakd_entries) {
+			if (strcmp(dirt[type], xbakd->xbakd_type) == 0)
+				break;
+		}
+		if (xbakd == NULL)
+			continue;
+		err = xenbus_directory(NULL, "backend", dirt[type],
+		    &dirid_n, &dirid);
+		DPRINTK("directory backend/%s err %d dirid_n %d",
+		    dirt[type], err, dirid_n);
+		if (err)
+			return err;
+		for (id = 0; id < dirid_n; id++) {
+			snprintf(path, sizeof(path), "backend/%s/%s",
+			    dirt[type], dirid[id]);
+			err = xenbus_probe_device_type(path, dirt[type],
+			    xbakd->xbakd_create);
+			if (err)
+				break;
+		}
+		free(dirid, M_DEVBUF);
+	}
+	free(dirt, M_DEVBUF);
 	return err;
 }
 
@@ -907,88 +461,20 @@ xenbus_free_device(struct xenbus_device *xbusd)
 	return 0;
 }
 
-#if 0
-static unsigned int
-char_count(const char *str, char c)
-{
-	unsigned int i, ret = 0;
-
-	for (i = 0; str[i]; i++)
-		if (str[i] == c)
-			ret++;
-	return ret;
-}
-
-static int
-strsep_len(const char *str, char c, unsigned int len)
-{
-	unsigned int i;
-
-	for (i = 0; str[i]; i++)
-		if (str[i] == c) {
-			if (len == 0)
-				return i;
-			len--;
-		}
-	return (len == 0) ? i : -ERANGE;
-}
-
-static void
-dev_changed(const char *node, struct xen_bus_type *bus)
-{
-	int exists, rootlen;
-	struct xenbus_device *dev;
-	char type[BUS_ID_SIZE];
-	const char *p, *root;
-
-	if (char_count(node, '/') < 2)
- 		return;
-
-	exists = xenbus_exists(NULL, node, "");
-	if (!exists) {
-		xenbus_cleanup_devices(node, &bus->bus);
-		return;
-	}
-
-	/* backend/<type>/... or device/<type>/... */
-	p = strchr(node, '/') + 1;
-	snprintf(type, BUS_ID_SIZE, "%.*s", (int)strcspn(p, "/"), p);
-	type[BUS_ID_SIZE-1] = '\0';
-
-	rootlen = strsep_len(node, '/', bus->levels);
-	if (rootlen < 0)
-		return;
-	root = kasprintf("%.*s", rootlen, node);
-	if (!root)
-		return;
-
-	dev = xenbus_device_find(root, &bus->bus);
-	if (!dev)
-		xenbus_probe_node(bus, type, root);
-	else
-		put_device(&dev->dev);
-
-	free(root, M_DEVBUF);
-}
-#endif
-
 static void
 frontend_changed(struct xenbus_watch *watch,
 			     const char **vec, unsigned int len)
 {
-	DPRINTK("");
-	//printf("frontend_changed %s\n", vec[XS_WATCH_PATH]);
-	xenbus_probe_devices(&xenbus_frontend);
+	DPRINTK("frontend_changed %s\n", vec[XS_WATCH_PATH]);
+	xenbus_probe_frontends();
 }
 
 static void
 backend_changed(struct xenbus_watch *watch,
 			    const char **vec, unsigned int len)
 {
-	DPRINTK("");
-
-	printf("backend_changed %s\n", vec[XS_WATCH_PATH]);
-	//dev_changed(vec[XS_WATCH_PATH], &xenbus_backend);
+	DPRINTK("backend_changed %s\n", vec[XS_WATCH_PATH]);
+	xenbus_probe_backends();
 }
 
 
@@ -997,102 +483,8 @@ static struct xenbus_watch fe_watch;
 
 static struct xenbus_watch be_watch;
 
-#if 0
-static int suspend_dev(struct device *dev, void *data)
-{
-	int err = 0;
-	struct xenbus_driver *drv;
-	struct xenbus_device *xdev;
-
-	DPRINTK("");
-
-	if (dev->driver == NULL)
-		return 0;
-	drv = to_xenbus_driver(dev->driver);
-	xdev = container_of(dev, struct xenbus_device, dev);
-	if (drv->suspend)
-		err = drv->suspend(xdev);
-	if (err)
-		printk(KERN_WARNING
-		       "xenbus: suspend %s failed: %i\n", dev->bus_id, err);
-	return 0;
-}
-
-static int
-resume_dev(struct device *dev, void *data)
-{
-	int err;
-	struct xenbus_driver *drv;
-	struct xenbus_device *xdev;
-
-	DPRINTK("");
-
-	if (dev->driver == NULL)
-		return 0;
-	drv = to_xenbus_driver(dev->driver);
-	xdev = container_of(dev, struct xenbus_device, dev);
-
-	err = talk_to_otherend(xdev);
-	if (err) {
-		printk(KERN_WARNING
-		       "xenbus: resume (talk_to_otherend) %s failed: %i\n",
-		       dev->bus_id, err);
-		return err;
-	}
-
-	if (drv->resume)
-		err = drv->resume(xdev);
-	if (err)
-		printk(KERN_WARNING
-		       "xenbus: resume %s failed: %i\n", dev->bus_id, err);
-	return err;
-}
-
-void
-xenbus_suspend(void)
-{
-	DPRINTK("");
-
-	bus_for_each_dev(&xenbus_frontend.bus, NULL, NULL, suspend_dev);
-	bus_for_each_dev(&xenbus_backend.bus, NULL, NULL, suspend_dev);
-	xs_suspend();
-}
-
-void xenbus_resume(struct device *dev)
-{
-	xb_init_comms(dev);
-	xs_resume();
-	bus_for_each_dev(&xenbus_frontend.bus, NULL, NULL, resume_dev);
-	bus_for_each_dev(&xenbus_backend.bus, NULL, NULL, resume_dev);
-}
-#endif
-
-
 /* A flag to determine if xenstored is 'ready' (i.e. has started) */
 int xenstored_ready = 0; 
-
-
-#if 0
-int
-register_xenstore_notifier(struct notifier_block *nb)
-{
-	int ret = 0;
-
-	if (xenstored_ready > 0) 
-		ret = nb->notifier_call(nb, 0, NULL);
-	else 
-		notifier_chain_register(&xenstore_chain, nb);
-
-	return ret;
-}
-
-void unregister_xenstore_notifier(struct notifier_block *nb)
-{
-	notifier_chain_unregister(&xenstore_chain, nb);
-}
-#endif
-
-
 
 void
 xenbus_probe(void *unused)
@@ -1100,8 +492,8 @@ xenbus_probe(void *unused)
 	KASSERT((xenstored_ready > 0)); 
 
 	/* Enumerate devices in xenstore. */
-	xenbus_probe_devices(&xenbus_frontend);
-	xenbus_probe_devices(&xenbus_backend);
+	xenbus_probe_frontends();
+	xenbus_probe_backends();
 
 	/* Watch for changes. */
 	fe_watch.node = malloc(strlen("device" + 1), M_DEVBUF, M_NOWAIT);
@@ -1181,6 +573,17 @@ xenbus_probe_init(void *unused)
 
 	DPRINTK("done");
 	config_pending_decr();
+#ifdef DOM0OPS
+	if (dom0) {
+		int s;
+		s = spltty();
+		while (xenstored_ready == 0) {
+			tsleep(&xenstored_ready, PRIBIO, "xsready", 0);
+			xenbus_probe(NULL);
+		}
+		splx(s);
+	}
+#endif
 	kthread_exit(0);
 }
 
