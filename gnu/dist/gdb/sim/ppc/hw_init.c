@@ -26,6 +26,10 @@
 #include "bfd.h"
 #include "psim.h"
 
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
 
 /* DMA a file into memory */
 static int
