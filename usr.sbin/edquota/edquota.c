@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.25 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.26 2006/05/23 01:23:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -514,12 +514,12 @@ readprivs(quplist, infd)
 	       fgets(line2, sizeof (line2), fd) != NULL) {
 		if ((fsp = strtok(line1, " \t:")) == NULL) {
 			warnx("%s: bad format", line1);
-			return (0);
+			goto out;
 		}
 		if ((cp = strtok((char *)0, "\n")) == NULL) {
 			warnx("%s: %s: bad format", fsp,
 			    &fsp[strlen(fsp) + 1]);
-			return (0);
+			goto out;
 		}
 		cnt = sscanf(cp,
 		    " blocks in use: %d, limits (soft = %d, hard = %d)",
@@ -527,7 +527,7 @@ readprivs(quplist, infd)
 		    &dqblk.dqb_bhardlimit);
 		if (cnt != 3) {
 			warnx("%s:%s: bad format", fsp, cp);
-			return (0);
+			goto out;
 		}
 		dqblk.dqb_curblocks = btodb((u_quad_t)
 		    dqblk.dqb_curblocks * 1024);
@@ -537,7 +537,7 @@ readprivs(quplist, infd)
 		    dqblk.dqb_bhardlimit * 1024);
 		if ((cp = strtok(line2, "\n")) == NULL) {
 			warnx("%s: %s: bad format", fsp, line2);
-			return (0);
+			goto out;
 		}
 		cnt = sscanf(cp,
 		    "\tinodes in use: %d, limits (soft = %d, hard = %d)",
@@ -545,7 +545,8 @@ readprivs(quplist, infd)
 		    &dqblk.dqb_ihardlimit);
 		if (cnt != 3) {
 			warnx("%s: %s: bad format", fsp, line2);
-			return (0);
+out:
+			(void)fclose(fd);
 		}
 		for (qup = quplist; qup; qup = qup->next) {
 			if (strcmp(fsp, qup->fsname))
@@ -656,26 +657,29 @@ readtimes(quplist, infd)
 	while (fgets(line1, sizeof (line1), fd) != NULL) {
 		if ((fsp = strtok(line1, " \t:")) == NULL) {
 			warnx("%s: bad format", line1);
-			return (0);
+			goto bad;
 		}
 		if ((cp = strtok((char *)0, "\n")) == NULL) {
 			warnx("%s: %s: bad format", fsp,
 			    &fsp[strlen(fsp) + 1]);
-			return (0);
+			goto bad;
 		}
 		cnt = sscanf(cp,
 		    " block grace period: %ld %s file grace period: %ld %s",
 		    &lbtime, bunits, &litime, iunits);
 		if (cnt != 4) {
 			warnx("%s:%s: bad format", fsp, cp);
-			return (0);
+			goto bad;
 		}
 		itime = (time_t)litime;
 		btime = (time_t)lbtime;
 		if (cvtatos(btime, bunits, &bseconds) == 0)
+			goto bad;
+		if (cvtatos(itime, iunits, &iseconds) == 0) {
+bad:
+			(void)fclose(fd);
 			return (0);
-		if (cvtatos(itime, iunits, &iseconds) == 0)
-			return (0);
+		}
 		for (qup = quplist; qup; qup = qup->next) {
 			if (strcmp(fsp, qup->fsname))
 				continue;
@@ -685,7 +689,7 @@ readtimes(quplist, infd)
 			break;
 		}
 	}
-	fclose(fd);
+	(void)fclose(fd);
 	/*
 	 * reset default grace periods for any filesystems
 	 * that have not been found.
