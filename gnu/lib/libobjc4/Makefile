@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/05/15 04:57:05 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2006/05/23 10:59:03 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -12,8 +12,16 @@ LIB=		objc
 SHLIB_MAJOR=	2
 SHLIB_MINOR=	1
 
+# XXX just while all platforms defs.mk are updated..
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
+# Machine-dependent definitions (include file names).
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+EXTRA_FAKEHEADERS=
+.else
 # Machine-independent definitions (include file names).
 .include "${.CURDIR}/defs.mk"
+EXTRA_FAKEHEADERS=	options.h
+.endif
 
 LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc4/libgcc && ${PRINTOBJDIR}
 
@@ -59,7 +67,7 @@ runtime-info.h:
 ${OBJS} ${POBJS} ${SOBJS}: runtime-info.h
 
 # these aren't necessary but are #include'd
-FAKEHEADERS=options.h insn-flags.h insn-constants.h
+FAKEHEADERS=	${EXTRA_FAKEHEADERS} insn-flags.h insn-constants.h
 ${FAKEHEADERS}:
 	${_MKTARGET_CREATE}
 	touch ${.TARGET}
@@ -72,6 +80,17 @@ unwind.h: ${G_UNWIND_H}
 	rm -f ${.TARGET}
 	ln -s ${G_UNWIND_H} ${.TARGET}
 CLEANFILES+= unwind.h
+
+# XXX just while all platforms defs.mk are updated..
+.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
+CLEANFILES+=	options.h optionlist
+optionlist: ${G_ALL_OPT_FILES) Makefile ${DIST}/gcc/opt-gather.awk
+	${AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
+
+options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk
+	${AWK} -f ${DIST}/gcc/opt-functions.awk -f ${DIST}/gcc/opth-gen.awk \
+		< optionlist > ${.TARGET}
+.endif
 
 .else
 .include <bsd.prog.mk>	# do nothing
