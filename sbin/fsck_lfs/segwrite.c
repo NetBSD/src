@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.11 2006/03/17 15:53:46 rumble Exp $ */
+/* $NetBSD: segwrite.c,v 1.12 2006/05/23 22:35:20 jnemeth Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -317,6 +317,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		    (sp->ninodes % INOPB(fs));
 	if (gotblk) {
 		LFS_LOCK_BUF(bp);
+		assert(!(bp->b_flags & B_INVAL));
 		brelse(bp);
 	}
 	/* Increment inode count in segment summary block. */
