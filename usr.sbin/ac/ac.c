@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.21 2005/03/16 01:41:20 xtraeme Exp $ */
+/* $NetBSD: ac.c,v 1.22 2006/05/23 01:16:33 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.21 2005/03/16 01:41:20 xtraeme Exp $");
+__RCSID("$NetBSD: ac.c,v 1.22 2006/05/23 01:16:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -425,8 +425,11 @@ log_out(struct utmp_list *head, struct utmp *up)
 			 */
 			tlp = lp;
 			lp = lp->next;
-			if (tlp == head)
+			if (tlp == head) {
 				head = lp;
+				if (tlp == head)
+					head = NULL;
+			}
 			else if (lp2 != NULL)
 				lp2->next = lp;
 			free(tlp);
