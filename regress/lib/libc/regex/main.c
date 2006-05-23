@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2005/02/06 06:05:19 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2006/05/23 21:52:55 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -480,7 +480,6 @@ char *should;
 	}
 
 	len = (int)(sub.rm_eo - sub.rm_so);
-	shlen = (int)strlen(should);
 	p = str + sub.rm_so;
 
 	/* check for not supposed to match */
@@ -490,6 +489,7 @@ char *should;
 	}
 
 	/* check for wrong match */
+	shlen = (int)strlen(should);
 	if (len != shlen || strncmp(p, should, (size_t)shlen) != 0) {
 		sprintf(grump, "matched `%.*s' instead", len, p);
 		return(grump);
