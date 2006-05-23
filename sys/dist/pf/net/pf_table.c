@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.8 2006/05/21 04:30:03 christos Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.9 2006/05/23 22:24:32 peter Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.62 2004/12/07 18:02:04 mcbride Exp $	*/
 
 /*
@@ -1901,7 +1901,7 @@ pfr_create_ktable(struct pfr_table *tbl, long tzero, int attachruleset)
 {
 	struct pfr_ktable	*kt;
 	struct pf_ruleset	*rs;
-	void *h4, *h6;
+	void			*h4 = NULL, *h6 = NULL;
 
 	kt = pool_get(&pfr_ktable_pl, PR_NOWAIT);
 	if (kt == NULL)
