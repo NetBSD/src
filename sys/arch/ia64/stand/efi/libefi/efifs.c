@@ -1,4 +1,4 @@
-/*	$NetBSD: efifs.c,v 1.1.2.2 2006/04/11 11:53:42 yamt Exp $	*/
+/*	$NetBSD: efifs.c,v 1.1.2.3 2006/05/24 10:56:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: src/sys/boot/efi/libefi/efifs.c,v 1.8 2003/08/02 08:22:03 marcel Exp $
  */
 
 #include <sys/time.h>

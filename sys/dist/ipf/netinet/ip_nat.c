@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.8.8.1 2006/04/11 11:55:30 yamt Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.8.8.2 2006/05/24 10:58:32 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -2193,6 +2193,8 @@ int direction;
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6) && defined(ICK_M_CTL_MAGIC)
 	qpktinfo_t *qpi = fin->fin_qpi;
 #endif
+
+	memset(&ni, 0, sizeof ni);	/* XXX gcc */
 
 	if (nat_stats.ns_inuse >= ipf_nattable_max) {
 		nat_stats.ns_memfail++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.13 2005/12/11 12:20:19 christos Exp $ */
+/*	$NetBSD: linux_time.c,v 1.13.8.1 2006/05/24 10:57:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.13 2005/12/11 12:20:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.13.8.1 2006/05/24 10:57:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -189,7 +189,7 @@ linux_sys_clock_gettime(l, v, retval)
 	struct timespec *tp, ts;
 	struct linux_timespec lts;
 	int error;
-	clockid_t nwhich;
+	clockid_t nwhich = 0;	/* XXX: GCC */
 	struct sys_clock_gettime_args sga;
 
 	error = linux_to_native_clockid(&nwhich, SCARG(uap, which));
@@ -229,7 +229,7 @@ linux_sys_clock_settime(l, v, retval)
 	struct timespec *tp, ts;
 	struct linux_timespec lts;
 	int error;
-	clockid_t nwhich;
+	clockid_t nwhich = 0;	/* XXX: GCC */
 	struct sys_clock_settime_args sta;
 
 	error = linux_to_native_clockid(&nwhich, SCARG(uap, which));
@@ -269,7 +269,7 @@ linux_sys_clock_getres(l, v, retval)
 	struct timespec *tp, ts;
 	struct linux_timespec lts;
 	int error;
-	clockid_t nwhich;
+	clockid_t nwhich = 0;	/* XXX: GCC */
 	struct sys_clock_gettime_args sga;
 
 	error = linux_to_native_clockid(&nwhich, SCARG(uap, which));

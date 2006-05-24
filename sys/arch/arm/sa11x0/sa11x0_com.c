@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.28.2.2 2006/04/01 12:06:10 yamt Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.28.2.3 2006/05/24 10:56:35 yamt Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.28.2.2 2006/04/01 12:06:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.28.2.3 2006/05/24 10:56:35 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.28.2.2 2006/04/01 12:06:10 yamt Exp
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -521,7 +522,7 @@ sacomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -757,7 +758,7 @@ sacomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -1518,7 +1519,7 @@ sacomcninit(struct consdev *cp)
 {
 	if (cp == NULL) {
 		/* XXX cp == NULL means that MMU is disabled. */
-		sacomconsioh = SACOM3_HW_BASE;
+		sacomconsioh = SACOM3_BASE;
 		sacomconstag = &sa11x0_bs_tag;
 		cn_tab = &sacomcons;
 		return;

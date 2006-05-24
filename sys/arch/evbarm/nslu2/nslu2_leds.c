@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_leds.c,v 1.1 2006/02/28 20:40:33 scw Exp $	*/
+/*	$NetBSD: nslu2_leds.c,v 1.1.4.1 2006/05/24 10:56:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.1 2006/02/28 20:40:33 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.1.4.1 2006/05/24 10:56:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/disk.h>
+#include <sys/iostat.h>
 
 #include <arm/xscale/ixp425var.h>
 
@@ -72,10 +72,10 @@ struct slugled_softc {
 	struct device sc_dev;
 	struct callout sc_co;
 	struct {
-		char sc_dk_name[DK_DISKNAMELEN];
-		struct timeval sc_dk_time;
-		int sc_dk_flash;	/* Countdown to LED clear */
-	} sc_dk[SLUGLED_NLEDS];
+		char sc_iostat_name[IOSTATNAMELEN];
+		struct timeval sc_iostat_time;
+		int sc_iostat_flash;	/* Countdown to LED clear */
+	} sc_iostat[SLUGLED_NLEDS];
 	uint32_t sc_state;
 	int sc_count;
 };
@@ -86,40 +86,42 @@ static void
 slugled_callout(void *arg)
 {
 	struct slugled_softc *sc = arg;
-	struct timeval t;
-	struct disk *dk;
 	uint32_t reg, bit, new_state;
-	int s, i, dkbusy;
+	int s, i;
 
 	new_state = sc->sc_state;
 
 	for (i = 0; i < SLUGLED_NLEDS; i++) {
+		struct io_stats *io;
+		struct timeval t;
+		int iobusy;
+
 		bit = i ? LEDBITS_DISK1 : LEDBITS_DISK0;
 
 		s = splbio();
-		if ((dk = disk_find(sc->sc_dk[i].sc_dk_name)) == NULL) {
+		if ((io = iostat_find(sc->sc_iostat[i].sc_iostat_name)) == NULL) {
 			splx(s);
-			if (sc->sc_dk[i].sc_dk_flash > 0) {
+			if (sc->sc_iostat[i].sc_iostat_flash > 0) {
 				new_state |= bit;
-				sc->sc_dk[i].sc_dk_flash = 0;
-				sc->sc_dk[i].sc_dk_time = mono_time;
+				sc->sc_iostat[i].sc_iostat_flash = 0;
+				sc->sc_iostat[i].sc_iostat_time = mono_time;
 			}
 
 			continue;
 		}
 
-		dkbusy = dk->dk_busy;
-		t = dk->dk_timestamp;
+		iobusy = io->io_busy;
+		t = io->io_timestamp;
 		splx(s);
 
-		if (dkbusy || t.tv_sec != sc->sc_dk[i].sc_dk_time.tv_sec ||
-		    t.tv_usec != sc->sc_dk[i].sc_dk_time.tv_usec) {
-			sc->sc_dk[i].sc_dk_flash = SLUGLED_FLASH_LEN;
-			sc->sc_dk[i].sc_dk_time = t;
+		if (iobusy || t.tv_sec != sc->sc_iostat[i].sc_iostat_time.tv_sec ||
+		    t.tv_usec != sc->sc_iostat[i].sc_iostat_time.tv_usec) {
+			sc->sc_iostat[i].sc_iostat_flash = SLUGLED_FLASH_LEN;
+			sc->sc_iostat[i].sc_iostat_time = t;
 			new_state &= ~bit;
 		} else
-		if (sc->sc_dk[i].sc_dk_flash > 0 &&
-		    --(sc->sc_dk[i].sc_dk_flash) == 0)
+		if (sc->sc_iostat[i].sc_iostat_flash > 0 &&
+		    --(sc->sc_iostat[i].sc_iostat_flash) == 0)
 			new_state |= bit;
 	}
 
@@ -185,9 +187,9 @@ slugled_defer(struct device *self)
 	splx(s);
 
 	for (i = 0; i < SLUGLED_NLEDS; i++) {
-		sprintf(sc->sc_dk[i].sc_dk_name, SLUGLED_DISKNAMES, i);
-		sc->sc_dk[i].sc_dk_flash = 0;
-		sc->sc_dk[i].sc_dk_time = mono_time;
+		sprintf(sc->sc_iostat[i].sc_iostat_name, SLUGLED_DISKNAMES, i);
+		sc->sc_iostat[i].sc_iostat_flash = 0;
+		sc->sc_iostat[i].sc_iostat_time = mono_time;
 	}
 
 	sc->sc_state = LEDBITS_DISK0 | LEDBITS_DISK1 | LEDBITS_READY;

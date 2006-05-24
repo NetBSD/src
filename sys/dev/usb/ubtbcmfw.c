@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.11 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.11.8.1 2006/05/24 10:58:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.11 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.11.8.1 2006/05/24 10:58:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	for (offs = 0; ; offs += size) {
 		size = sizeof buf;
 		error = vn_rdwr(UIO_READ, vp, buf, size, offs, UIO_SYSSPACE,
-		    IO_NODELOCKED | IO_SYNC, p->p_ucred, &resid, NULL);
+		    IO_NODELOCKED | IO_SYNC, p->p_cred, &resid, NULL);
 		size -= resid;
 		if (error || size == 0)
 			break;
@@ -258,7 +258,7 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	}
 
 out:
-	vn_close(vp, FREAD, p->p_ucred, p);
+	vn_close(vp, FREAD, p->p_cred, p);
 	return error;
 }
 

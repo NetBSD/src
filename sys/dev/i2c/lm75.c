@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.4.2.2 2006/04/11 11:55:13 yamt Exp $	*/
+/*	$NetBSD: lm75.c,v 1.4.2.3 2006/05/24 10:57:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -49,12 +49,13 @@ struct lmtemp_softc {
 	struct device sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_address;
-	int sc_is_ds75;
 
 	struct envsys_tre_data sc_sensor[1];
 	struct envsys_basic_info sc_info[1];
 
 	struct sysmon_envsys sc_sysmon;
+
+	uint32_t (*sc_lmtemp_decode)(const uint8_t *);
 };
 
 static int  lmtemp_match(struct device *, struct cfdata *, void *);
@@ -76,13 +77,45 @@ static const struct envsys_range lmtemp_ranges[] = {
 static int lmtemp_config_write(struct lmtemp_softc *, uint8_t);
 static uint32_t lmtemp_decode_lm75(const uint8_t *);
 static uint32_t lmtemp_decode_ds75(const uint8_t *);
+static uint32_t lmtemp_decode_lm77(const uint8_t *);
+
+enum {
+	lmtemp_lm75 = 0,
+	lmtemp_ds75,
+	lmtemp_lm77,
+};
+static const struct {
+	int lmtemp_type;
+	const char *lmtemp_name;
+	int lmtemp_addrmask;
+	int lmtemp_addr;
+	uint32_t (*lmtemp_decode)(const uint8_t *);
+} lmtemptbl[] = {
+	{ lmtemp_lm75,	"LM75",
+	    LM75_ADDRMASK,	LM75_ADDR,	lmtemp_decode_lm75 },
+	{ lmtemp_ds75,	"DS75",
+	    LM75_ADDRMASK,	LM75_ADDR,	lmtemp_decode_ds75 },
+	{ lmtemp_lm77,	"LM77",
+	    LM77_ADDRMASK,	LM77_ADDR,	lmtemp_decode_lm77 },
+
+	{ -1,		NULL,
+	    0,			0,		NULL }
+};
 
 static int
 lmtemp_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int i;
 
-	if ((ia->ia_addr & LM75_ADDRMASK) == LM75_ADDR)
+	for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
+		if (lmtemptbl[i].lmtemp_type == cf->cf_flags)
+			break;
+	if (lmtemptbl[i].lmtemp_type == -1)
+		return (0);
+
+	if ((ia->ia_addr & lmtemptbl[i].lmtemp_addrmask) ==
+	    lmtemptbl[i].lmtemp_addr)
 		return (1);
 
 	return (0);
@@ -93,15 +126,19 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	int ptype;
+	prop_string_t desc;
+	int i;
+
+	for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
+		if (lmtemptbl[i].lmtemp_type ==
+		    device_cfdata(&sc->sc_dev)->cf_flags)
+			break;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
-	sc->sc_is_ds75 = device_cfdata(&sc->sc_dev)->cf_flags & 1;
 
 	aprint_naive(": Temperature Sensor\n");
-	aprint_normal(": %s Temperature Sensor\n",
-	    (sc->sc_is_ds75) ? "DS75" : "LM75");
+	aprint_normal(": %s Temperature Sensor\n", lmtemptbl[i].lmtemp_name);
 
 	/* Set the configuration of the LM75 to defaults. */
 	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
@@ -120,11 +157,16 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[0].warnflags = ENVSYS_WARN_OK;
 
 	sc->sc_sensor[0].units = sc->sc_info[0].units = ENVSYS_STEMP;
-	if (devprop_get(&sc->sc_dev, "description",
-		     sc->sc_info[0].desc, sizeof(sc->sc_info[0].desc),
-		     &ptype) < 1 ||
-	    ptype != PROP_STRING)
+	desc = prop_dictionary_get(device_properties(&sc->sc_dev),
+				   "description");
+	if (desc != NULL &&
+	    prop_object_type(desc) == PROP_TYPE_STRING &&
+	    prop_string_size(desc) > 0)
+	    	strcpy(sc->sc_info[0].desc, prop_string_cstring_nocopy(desc));
+	else
 		strcpy(sc->sc_info[0].desc, sc->sc_dev.dv_xname);
+
+	sc->sc_lmtemp_decode = lmtemptbl[i].lmtemp_decode;
 
 	/* Hook into system monitor. */
 	sc->sc_sysmon.sme_ranges = lmtemp_ranges;
@@ -169,11 +211,7 @@ lmtemp_temp_read(struct lmtemp_softc *sc, uint8_t which, uint32_t *valp)
 	if (error)
 		return (error);
 
-	if (sc->sc_is_ds75)
-		*valp = lmtemp_decode_ds75(buf);
-	else
-		*valp = lmtemp_decode_lm75(buf);
-
+	*valp = sc->sc_lmtemp_decode(buf);
 	return (0);
 }
 
@@ -274,5 +312,25 @@ lmtemp_decode_ds75(const uint8_t *buf)
 	 * Conversion to uK is simple.
 	 */
 	return (temp * 62500 + 273150000);
+}
+
+static uint32_t
+lmtemp_decode_lm77(const uint8_t *buf)
+{
+	int temp;
+	uint32_t val;
+
+	/*
+	 * Describe each bits of temperature registers on LM77.
+	 *   D15 - D12:	Sign
+	 *   D11 - D3 :	Bit8(MSB) - Bit0
+	 */
+	temp = (int8_t)buf[0];
+	temp = (temp << 5) | (buf[1] >> 3);
+
+	/* Temp is given in 1/2 deg. C, we convert to uK. */
+	val = temp * 500000 + 273150000;
+
+	return (val);
 }
 

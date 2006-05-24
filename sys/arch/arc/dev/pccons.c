@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.42 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: pccons.c,v 1.42.8.1 2006/05/24 10:56:34 yamt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42.8.1 2006/05/24 10:56:34 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42 2005/12/24 20:06:47 perry Exp $");
 #include <sys/kcore.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 
@@ -107,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.42 2005/12/24 20:06:47 perry Exp $");
 
 #include <arc/arc/arcbios.h>
 #include <arc/dev/pcconsvar.h>
+
+#include "ioconf.h"
 
 #define	XFREE86_BUG_COMPAT
 
@@ -172,8 +175,6 @@ void do_async_update(u_char);
 void pccnputc(dev_t, int c);
 int pccngetc(dev_t);
 void pccnpollc(dev_t, int);
-
-extern struct cfdriver pc_cd;
 
 dev_type_open(pcopen);
 dev_type_close(pcclose);
@@ -620,7 +621,7 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE &&
-		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 

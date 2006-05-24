@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.12.8.1 2006/04/11 11:53:26 yamt Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.12.8.2 2006/05/24 10:56:38 yamt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.12.8.1 2006/04/11 11:53:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.12.8.2 2006/05/24 10:56:38 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -308,7 +308,7 @@ ixp425_intr_calculate_masks(void)
 	}
 }
 
-inline void
+void
 ixp425_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;

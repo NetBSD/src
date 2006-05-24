@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.23.8.1 2006/04/01 12:07:29 yamt Exp $ */
+/* $NetBSD: sfbplus.c,v 1.23.8.2 2006/05/24 10:58:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.23.8.1 2006/04/01 12:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.23.8.2 2006/05/24 10:58:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,8 @@ static const struct wsscreen_list sfb_screenlist = {
 	sizeof(_sfb_scrlist) / sizeof(struct wsscreen_descr *), _sfb_scrlist
 };
 
-static int	sfbioctl(void *, u_long, caddr_t, int, struct proc *);
-static paddr_t	sfbmmap(void *, off_t, int);
+static int	sfbioctl(void *, void *, u_long, caddr_t, int, struct proc *);
+static paddr_t	sfbmmap(void *, void *, off_t, int);
 
 static int	sfb_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -428,7 +428,7 @@ sfbp_common_init(struct rasops_info *ri)
 }
 
 static int
-sfbioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+sfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct sfbp_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -507,7 +507,7 @@ sfbioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 paddr_t
-sfbmmap(void *v, off_t offset, int prot)
+sfbmmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct sfbp_softc *sc = v;
 

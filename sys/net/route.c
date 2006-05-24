@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.67.8.1 2006/04/11 11:55:48 yamt Exp $	*/
+/*	$NetBSD: route.c,v 1.67.8.2 2006/05/24 10:58:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.67.8.1 2006/04/11 11:55:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.67.8.2 2006/05/24 10:58:56 yamt Exp $");
 
 #include "opt_ns.h"
 
@@ -192,6 +192,7 @@ rtalloc1(const struct sockaddr *dst, int report)
 				rt->rt_refcnt++;
 				goto miss;
 			}
+			KASSERT(newrt != NULL);
 			if ((rt = newrt) && (rt->rt_flags & RTF_XRESOLVE)) {
 				msgtype = RTM_RESOLVE;
 				goto miss;

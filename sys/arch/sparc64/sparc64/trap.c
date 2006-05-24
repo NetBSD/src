@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.127.2.2 2006/04/01 12:06:30 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.127.2.3 2006/05/24 10:57:15 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127.2.2 2006/04/01 12:06:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127.2.3 2006/05/24 10:57:15 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127.2.2 2006/04/01 12:06:30 yamt Exp $");
 #include <sys/wait.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1211,8 +1212,8 @@ kfault:
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = SI_NOINFO;
 		} else {

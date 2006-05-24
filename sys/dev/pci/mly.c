@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.24 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.24.8.1 2006/05/24 10:58:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.24 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.24.8.1 2006/05/24 10:58:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -984,7 +984,8 @@ mly_ioctl(struct mly_softc *mly, struct mly_cmd_ioctl *ioctl, void **data,
  bad:
 	if (mc != NULL) {
 		/* Do we need to free a data buffer we allocated? */
-		if (rv != 0 && mc->mc_data != NULL && *data == NULL)
+		if (rv != 0 && mc->mc_data != NULL &&
+		    (data == NULL || *data == NULL))
 			free(mc->mc_data, M_DEVBUF);
 		mly_ccb_free(mly, mc);
 	}
@@ -2416,8 +2417,7 @@ mly_user_command(struct mly_softc *mly, struct mly_user_command *uc)
  		mly_ccb_unmap(mly, mc);
 	if (mc->mc_data != NULL)
 		free(mc->mc_data, M_DEVBUF);
-	if (mc != NULL)
-		mly_ccb_free(mly, mc);
+	mly_ccb_free(mly, mc);
 
 	return (rv);
 }

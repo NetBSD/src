@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.30 2005/12/24 20:27:42 perry Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.30.8.1 2006/05/24 10:58:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.30 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.30.8.1 2006/05/24 10:58:00 yamt Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -1112,6 +1112,8 @@ cmpci_allocm(void *handle, int direction, size_t size,
 	     struct malloc_type *type, int flags)
 {
 	caddr_t addr;
+
+	addr = NULL;	/* XXX gcc */
 
 	if (cmpci_alloc_dmamem(handle, size, type, flags, &addr))
 		return NULL;

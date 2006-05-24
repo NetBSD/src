@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.49.2.3 2006/04/01 12:06:41 yamt Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.49.2.4 2006/05/24 10:57:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -645,7 +645,7 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 #define NETBSD32TO64(s32uap, uap, name) \
 	    SCARG(uap, name) = SCARG(s32uap, name)
 #define NETBSD32TOP(s32uap, uap, name, type) \
-	    SCARG(uap, name) = (type *)NETBSD32PTR64(SCARG(s32uap, name))
+	    SCARG(uap, name) = (type *)(uintptr_t)NETBSD32PTR64(SCARG(s32uap, name))
 #define NETBSD32TOX(s32uap, uap, name, type) \
 	    SCARG(uap, name) = (type)SCARG(s32uap, name)
 #define NETBSD32TOX64(s32uap, uap, name, type) \

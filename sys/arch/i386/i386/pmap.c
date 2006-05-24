@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.188 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.188.8.1 2006/05/24 10:56:51 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188 2005/12/26 19:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.8.1 2006/05/24 10:56:51 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -491,10 +491,6 @@ static void		 pmap_remove_ptes(struct pmap *, struct vm_page *,
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
-static vaddr_t		 pmap_tmpmap_pa(paddr_t);
-static pt_entry_t	*pmap_tmpmap_pvepte(struct pv_entry *);
-static void		 pmap_tmpunmap_pa(void);
-static void		 pmap_tmpunmap_pvepte(struct pv_entry *);
 static void		 pmap_unmap_ptes(struct pmap *);
 
 static boolean_t	 pmap_reactivate(struct pmap *);
@@ -531,89 +527,6 @@ pmap_is_active(pmap, cpu_id)
 	    (pmap->pm_cpus & (1U << cpu_id)) != 0);
 }
 
-/*
- * pmap_tmpmap_pa: map a page in for tmp usage
- */
-
-inline static vaddr_t
-pmap_tmpmap_pa(pa)
-	paddr_t pa;
-{
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
-	caddr_t ptpva = VASLEW(ptpp, id);
-#if defined(DIAGNOSTIC)
-	if (*ptpte)
-		panic("pmap_tmpmap_pa: ptp_pte in use?");
-#endif
-	*ptpte = PG_V | PG_RW | pa;		/* always a new mapping */
-	return((vaddr_t)ptpva);
-}
-
-/*
- * pmap_tmpunmap_pa: unmap a tmp use page (undoes pmap_tmpmap_pa)
- */
-
-inline static void
-pmap_tmpunmap_pa()
-{
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *ptpte = PTESLEW(ptp_pte, id);
-	caddr_t ptpva = VASLEW(ptpp, id);
-#if defined(DIAGNOSTIC)
-	if (!pmap_valid_entry(*ptp_pte))
-		panic("pmap_tmpunmap_pa: our pte invalid?");
-#endif
-	*ptpte = 0;		/* zap! */
-	pmap_update_pg((vaddr_t)ptpva);
-#ifdef MULTIPROCESSOR
-	/*
-	 * No need for tlb shootdown here, since ptp_pte is per-CPU.
-	 */
-#endif
-}
-
-/*
- * pmap_tmpmap_pvepte: get a quick mapping of a PTE for a pv_entry
- *
- * => do NOT use this on kernel mappings [why?  because pv_ptp may be NULL]
- */
-
-inline static pt_entry_t *
-pmap_tmpmap_pvepte(pve)
-	struct pv_entry *pve;
-{
-#ifdef DIAGNOSTIC
-	if (pve->pv_pmap == pmap_kernel())
-		panic("pmap_tmpmap_pvepte: attempt to map kernel");
-#endif
-
-	/* is it current pmap?  use direct mapping... */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return(vtopte(pve->pv_va));
-
-	return(((pt_entry_t *)pmap_tmpmap_pa(VM_PAGE_TO_PHYS(pve->pv_ptp)))
-	       + ptei((unsigned)pve->pv_va));
-}
-
-/*
- * pmap_tmpunmap_pvepte: release a mapping obtained with pmap_tmpmap_pvepte
- */
-
-inline static void
-pmap_tmpunmap_pvepte(pve)
-	struct pv_entry *pve;
-{
-	/* was it current pmap?   if so, return */
-	if (pmap_is_curpmap(pve->pv_pmap))
-		return;
-
-	pmap_tmpunmap_pa();
-}
 
 inline static void
 pmap_apte_flush(struct pmap *pmap)
@@ -1607,7 +1520,7 @@ int
 pmap_pdp_ctor(void *arg, void *object, int flags)
 {
 	pd_entry_t *pdir = object;
-	paddr_t pdirpa;
+	paddr_t pdirpa = 0;	/* XXX: GCC */
 
 	/*
 	 * NOTE: The `pmap_lock' is held when the PDP is allocated.

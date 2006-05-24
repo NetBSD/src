@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.8.44.1 2006/04/11 11:53:44 yamt Exp $
+$NetBSD: version,v 1.8.44.2 2006/05/24 10:57:10 yamt Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -12,3 +12,5 @@ is taken as the current.
 1.5:		Support MPC601.
 1.6:		Remove fd.c, video.c.  Compile without DB_MONITOR. Cleanup,
 		KNF.
+1.7:		Rewrite vreset.c, make it work and allways run it. Stop using
+		cd9660 and ufs, replace with nullfs because we don't need one.

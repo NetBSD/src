@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.98 2005/12/05 00:16:34 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.98.8.1 2006/05/24 10:58:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98 2005/12/05 00:16:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98.8.1 2006/05/24 10:58:41 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.98 2005/12/05 00:16:34 christos Exp 
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/timevar.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -141,7 +142,7 @@ settime(struct proc *p, struct timespec *ts)
 		log(LOG_WARNING, "pid %d (%s) "
 		    "invoked by uid %d ppid %d (%s) "
 		    "tried to set clock forward to %ld\n",
-		    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
+		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, (long)ts->tv_sec);
 		return (EPERM);
 	}
@@ -223,7 +224,8 @@ sys_clock_settime(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)) != 0)
 		return (error);
 
 	return (clock_settime1(p, SCARG(uap, clock_id), SCARG(uap, tp)));
@@ -381,7 +383,8 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)) != 0)
 		return (error);
 
 	return settimeofday1(SCARG(uap, tv), SCARG(uap, tzp), p);
@@ -429,7 +432,8 @@ sys_adjtime(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)) != 0)
 		return (error);
 
 	return adjtime1(SCARG(uap, delta), SCARG(uap, olddelta), p);
@@ -574,7 +578,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_info.ksi_errno = 0;
 	pt->pt_info.ksi_code = 0;
 	pt->pt_info.ksi_pid = p->p_pid;
-	pt->pt_info.ksi_uid = p->p_cred->p_ruid;
+	pt->pt_info.ksi_uid = kauth_cred_getuid(p->p_cred);
 	pt->pt_info.ksi_sigval = pt->pt_ev.sigev_value;
 
 	pt->pt_type = id;
@@ -1104,7 +1108,7 @@ timers_alloc(struct proc *p)
 	int i;
 	struct ptimers *pts;
 
-	pts = pool_get(&ptimers_pool, 0);
+	pts = pool_get(&ptimers_pool, PR_WAITOK);
 	LIST_INIT(&pts->pts_virtual);
 	LIST_INIT(&pts->pts_prof);
 	for (i = 0; i < TIMER_MAX; i++)

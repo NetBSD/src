@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.74.2.3 2006/04/11 11:55:59 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.74.2.4 2006/05/24 10:59:30 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.74.2.3 2006/04/11 11:55:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.74.2.4 2006/05/24 10:59:30 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -329,6 +329,7 @@ uvm_aio_aiodone(struct buf *bp)
 				swslot = uao_find_swslot(pg->uobject,
 				    pg->offset >> PAGE_SHIFT);
 			} else {
+				KASSERT(pg->uanon != NULL);
 				swslot = pg->uanon->an_swslot;
 			}
 			KASSERT(swslot);

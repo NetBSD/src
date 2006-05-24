@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.84.8.2 2006/04/11 11:55:59 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.84.8.3 2006/05/24 10:59:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.84.8.2 2006/04/11 11:55:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.84.8.3 2006/05/24 10:59:30 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -333,6 +333,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);	/* round up to pagesize */
+	size += uvm_mapent_overhead(size, flags);
 
 	/*
 	 * first allocate a blank spot in the parent map

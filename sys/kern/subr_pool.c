@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.112.2.2 2006/04/11 11:55:47 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.112.2.3 2006/05/24 10:58:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.112.2.2 2006/04/11 11:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.112.2.3 2006/05/24 10:58:41 yamt Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -468,12 +468,26 @@ void
 pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc)
 {
-	int off, slack;
+#ifdef DEBUG
+	struct pool *pp1;
+#endif
 	size_t trysize, phsize;
-	int s;
+	int off, slack, s;
 
 	KASSERT((1UL << (CHAR_BIT * sizeof(pool_item_freelist_t))) - 2 >=
 	    PHPOOL_FREELIST_NELEM(PHPOOL_MAX - 1));
+
+#ifdef DEBUG
+	/*
+	 * Check that the pool hasn't already been initialised and
+	 * added to the list of all pools.
+	 */
+	LIST_FOREACH(pp1, &pool_head, pr_poollist) {
+		if (pp == pp1)
+			panic("pool_init: pool %s already initialised",
+			    wchan);
+	}
+#endif
 
 #ifdef POOL_DIAGNOSTIC
 	/*
@@ -1529,7 +1543,8 @@ pool_drain(void *arg)
 		drainpp = LIST_NEXT(pp, pr_poollist);
 	}
 	simple_unlock(&pool_head_slock);
-	pool_reclaim(pp);
+	if (pp)
+		pool_reclaim(pp);
 	splx(s);
 }
 

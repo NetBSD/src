@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.11.8.1 2006/04/01 12:07:06 yamt Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.11.8.2 2006/05/24 10:57:53 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.11.8.1 2006/04/01 12:07:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.11.8.2 2006/05/24 10:57:53 yamt Exp $");
 
 #include "midi.h"
 
@@ -82,6 +82,8 @@ mpu_isapnp_attach(parent, self, aux)
 
 	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	       ipa->ipa_devclass);
+
+	sc->sc_mpu.model = "Roland MPU-401 MIDI UART";
 
 	midi_attach_mi(&mpu_midi_hw_if, &sc->sc_mpu, &sc->sc_dev);
 

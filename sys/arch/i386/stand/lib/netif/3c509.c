@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.c,v 1.8 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: 3c509.c,v 1.8.8.1 2006/05/24 10:56:53 yamt Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -81,7 +81,7 @@ int EtherInit(myadr)
 	int data, j, id_port = EP_ID_PORT;
 	u_short k;
 /*	int ep_current_tag = EP_LAST_TAG + 1; */
-	short *p;
+	u_short *p;
 	struct mtabentry *m;
 
 #ifndef _STANDALONE
@@ -134,7 +134,7 @@ int EtherInit(myadr)
 	* 0x9[0-f]50
 	*/
 	GO_WINDOW(0);
-	k = ep_get_e(EEPROM_PROD_ID);
+	k = (u_int)ep_get_e(EEPROM_PROD_ID);
 	if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
 		return 0;
 

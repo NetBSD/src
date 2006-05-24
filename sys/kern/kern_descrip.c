@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.140.6.1 2006/03/13 09:07:32 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.140.6.2 2006/05/24 10:58:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140.6.1 2006/03/13 09:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140.6.2 2006/05/24 10:58:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.140.6.1 2006/03/13 09:07:32 yamt 
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 #include <sys/event.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -994,8 +995,8 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	p->p_fd->fd_ofiles[i] = fp;
 	simple_lock_init(&fp->f_slock);
 	fp->f_count = 1;
-	fp->f_cred = p->p_ucred;
-	crhold(fp->f_cred);
+	fp->f_cred = p->p_cred;
+	kauth_cred_hold(fp->f_cred);
 	if (resultfp) {
 		fp->f_usecount = 1;
 		*resultfp = fp;
@@ -1019,7 +1020,7 @@ ffree(struct file *fp)
 
 	simple_lock(&filelist_slock);
 	LIST_REMOVE(fp, f_list);
-	crfree(fp->f_cred);
+	kauth_cred_free(fp->f_cred);
 #ifdef DIAGNOSTIC
 	fp->f_count = 0; /* What's the point? */
 #endif
@@ -1774,7 +1775,7 @@ fdcheckstd(l)
 			continue;
 		snprintf(which, sizeof(which), ",%d", i);
 		strlcat(closed, which, sizeof(closed));
-		if (devnull < 0) {
+		if (devnullfp == NULL) {
 			if ((error = falloc(p, &fp, &fd)) != 0)
 				return (error);
 			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
@@ -1817,7 +1818,7 @@ restart:
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
 		    "was invoked by uid %d ppid %d (%s) "
 		    "with fd %s closed\n",
-		    p->p_pid, p->p_comm, pp->p_ucred->cr_uid,
+		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, &closed[1]);
 	}
 	return (0);

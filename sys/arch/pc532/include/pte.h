@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.7 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: pte.h,v 1.7.8.1 2006/05/24 10:57:00 yamt Exp $	*/
 
 /*
  *
@@ -125,8 +125,8 @@
  * here we define the data types for PDEs and PTEs
  */
 
-typedef u_int32_t pd_entry_t;		/* PDE */
-typedef u_int32_t pt_entry_t;		/* PTE */
+typedef uint32_t pd_entry_t;		/* PDE */
+typedef uint32_t pt_entry_t;		/* PTE */
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.99.2.3 2006/04/11 11:55:47 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.99.2.4 2006/05/24 10:58:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99.2.3 2006/04/11 11:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99.2.4 2006/05/24 10:58:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.99.2.3 2006/04/11 11:55:47 yamt Ex
 #include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -176,9 +177,10 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 *	(4) it's not owned by you, or is set-id on exec
 		 *	    (unless you're root), or...
 		 */
-		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+		if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
 			ISSET(t->p_flag, P_SUGID)) &&
-		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		    (error = kauth_authorize_generic(p->p_cred,
+				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 
 		/*
@@ -806,9 +808,10 @@ process_checkioperm(struct lwp *l, struct proc *t)
 	 *	(2) it's not owned by you, or is set-id on exec
 	 *	    (unless you're root), or...
 	 */
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
 		ISSET(t->p_flag, P_SUGID)) &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+			&p->p_acflag)) != 0)
 		return (error);
 
 	/*

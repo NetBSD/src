@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_start.S,v 1.2 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: viper_start.S,v 1.2.8.1 2006/05/24 10:56:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Antti Kantee.  All Rights Reserved.
@@ -59,6 +59,7 @@
 #ifndef SDRAM_START
 #define SDRAM_START 0xa0000000
 #endif
+#define XSCALE_DCACHE_SIZE 0x8000
 
 	.text
 
@@ -174,7 +175,7 @@ _C_LABEL(viper_start):
 	/*
 	 * Cache cleanup.  Not needed here?  Slight speedup in booting.
 	 */
-	mov	r3, #(DCACHE_SIZE)
+	mov	r3, #(XSCALE_DCACHE_SIZE)
 	subs	r3, r3, #32
 1:
 	mcr	p15, 0, r3, c7, c10, 2
@@ -223,7 +224,7 @@ _C_LABEL(viper_start):
 	 *
 	 * XXX: should this take into account the XScale cache clean bug?
 	 */
-	mov	r3, #(DCACHE_SIZE)
+	mov	r3, #(XSCALE_DCACHE_SIZE)
 	subs	r3, r3, #32
 1:
 	mcr	p15, 0, r3, c7, c10, 2

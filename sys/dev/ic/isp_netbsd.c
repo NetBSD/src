@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.67 2005/12/11 12:21:27 christos Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.67.8.1 2006/05/24 10:57:41 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.67 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.67.8.1 2006/05/24 10:57:41 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -640,7 +640,6 @@ isp_polled_cmd(struct ispsoftc *isp, XS_T *xs)
 void
 isp_done(XS_T *xs)
 {
-	XS_CMD_S_DONE(xs);
 	if (XS_CMD_WDOG_P(xs) == 0) {
 		struct ispsoftc *isp = XS_ISP(xs);
 		callout_stop(&xs->xs_callout);

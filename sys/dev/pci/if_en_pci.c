@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.23 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.23.8.1 2006/05/24 10:58:00 yamt Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.23 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en_pci.c,v 1.23.8.1 2006/05/24 10:58:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ en_pci_shutdown(
 
 #if !defined(MIDWAY_ENIONLY)
 
-#if defined(sparc) || defined(__FreeBSD__)
+#if defined(__FreeBSD__)
 #define bus_space_read_1(t, h, o) \
   		((void)t, (*(volatile u_int8_t *)((h) + (o))))
 #endif

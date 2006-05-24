@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17.8.1 2006/04/11 11:53:44 yamt Exp $
+#	$NetBSD: Makefile,v 1.17.8.2 2006/05/24 10:57:10 yamt Exp $
 
 NOMAN= # defined
 
@@ -26,13 +26,12 @@ AFLAGS= -x assembler-with-cpp -traditional-cpp
 
 CPPFLAGS= -nostdinc -I${.OBJDIR} -I${.CURDIR}/../mkbootimage -I${S}
 CPPFLAGS+= -Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CPPFLAGS+= -D_STANDALONE -DRELOC=${RELOC} -DUSE_SCAN
+CPPFLAGS+= -D_STANDALONE -DRELOC=${RELOC} -DUSE_SCAN -DVGA_RESET
 CPPFLAGS+= -D__daddr_t=int32_t
 #CPPFLAGS+= -DDBMONITOR
 
 .if (${BASE} == "boot")
 CPPFLAGS+= -DCONS_VGA
-#CPPFLAGS+= -DCONS_FB
 .elif (${BASE} == "boot_com0")
 CPPFLAGS+= -DCONS_SERIAL -DCOMSPEED=9600 -DCOMPORT=0x3f8
 .endif

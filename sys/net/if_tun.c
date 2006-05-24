@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.82.2.2 2006/04/11 11:55:48 yamt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.82.2.3 2006/05/24 10:58:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.2.2 2006/04/11 11:55:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.2.3 2006/05/24 10:58:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.82.2.2 2006/04/11 11:55:48 yamt Exp $")
 #include <sys/file.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -279,7 +280,7 @@ tunopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tun_softc *tp;
 	int	s, error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	s = splnet();
@@ -654,7 +655,7 @@ tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TUNSIFHEAD:
 		if (*(int *)data) {
 			tp->tun_flags |= TUN_IFHEAD;
-			tp->tun_flags &= TUN_PREPADDR;
+			tp->tun_flags &= ~TUN_PREPADDR;
 		} else
 			tp->tun_flags &= ~TUN_IFHEAD;
 		break;

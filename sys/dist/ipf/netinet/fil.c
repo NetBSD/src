@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.21.8.1 2006/04/11 11:55:29 yamt Exp $	*/
+/*	$NetBSD: fil.c,v 1.21.8.2 2006/05/24 10:58:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -140,7 +140,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.21.8.1 2006/04/11 11:55:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.21.8.2 2006/05/24 10:58:31 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.78 2006/03/29 11:19:54 darrenr Exp";
@@ -704,7 +704,7 @@ fr_info_t *fin;
 	int minicmpsz = sizeof(struct icmp6_hdr);
 	struct icmp6_hdr *icmp6;
 
-	if (frpr_pullup(fin, ICMP6ERR_MINPKTLEN + 8 - sizeof(ip6_t)) == -1)
+	if (frpr_pullup(fin, ICMP6ERR_MINPKTLEN - sizeof(ip6_t)) == -1)
 		return;
 
 	if (fin->fin_dlen > 1) {
@@ -6288,7 +6288,7 @@ caddr_t	data;
 	int error;
 
 	fr_getstat(&fio);
-	error = copyoutptr(&fio, data, sizeof(fio));
+	error = fr_outobj(data, &fio, IPFOBJ_IPFSTAT);
 	if (error)
 		return EFAULT;
 

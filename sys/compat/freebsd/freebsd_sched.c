@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.2 2003/01/18 07:33:16 thorpej Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.2.36.1 2006/05/24 10:57:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,13 +42,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2 2003/01/18 07:33:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.2.36.1 2006/05/24 10:57:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -91,16 +92,16 @@ freebsd_sys_sched_setparam(l, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 		if (!(l->l_proc == p ||
-		      pc->pc_ucred->cr_uid == 0 ||
-		      pc->p_ruid == p->p_cred->p_ruid ||
-		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
-		      pc->p_ruid == p->p_ucred->cr_uid ||
-		      pc->pc_ucred->cr_uid == p->p_ucred->cr_uid))
+		      kauth_cred_geteuid(pc) == 0 ||
+		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
+		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
+		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
+		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
 			return EPERM;
 	}
 
@@ -128,16 +129,16 @@ freebsd_sys_sched_getparam(l, v, retval)
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 		if (!(l->l_proc == p ||
-		      pc->pc_ucred->cr_uid == 0 ||
-		      pc->p_ruid == p->p_cred->p_ruid ||
-		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
-		      pc->p_ruid == p->p_ucred->cr_uid ||
-		      pc->pc_ucred->cr_uid == p->p_ucred->cr_uid))
+		      kauth_cred_geteuid(pc) == 0 ||
+		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
+		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
+		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
+		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
 			return EPERM;
 	}
 
@@ -171,16 +172,16 @@ freebsd_sys_sched_setscheduler(l, v, retval)
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 		if (!(l->l_proc == p ||
-		      pc->pc_ucred->cr_uid == 0 ||
-		      pc->p_ruid == p->p_cred->p_ruid ||
-		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
-		      pc->p_ruid == p->p_ucred->cr_uid ||
-		      pc->pc_ucred->cr_uid == p->p_ucred->cr_uid))
+		      kauth_cred_geteuid(pc) == 0 ||
+		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
+		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
+		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
+		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
 			return EPERM;
 	}
 
@@ -210,16 +211,16 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 	 * We only check for valid parameters and return afterwards.
 	 */
 	if (SCARG(uap, pid) != 0) {
-		struct pcred *pc = l->l_proc->p_cred;
+		kauth_cred_t pc = l->l_proc->p_cred;
 
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 		if (!(l->l_proc == p ||
-		      pc->pc_ucred->cr_uid == 0 ||
-		      pc->p_ruid == p->p_cred->p_ruid ||
-		      pc->pc_ucred->cr_uid == p->p_cred->p_ruid ||
-		      pc->p_ruid == p->p_ucred->cr_uid ||
-		      pc->pc_ucred->cr_uid == p->p_ucred->cr_uid))
+		      kauth_cred_geteuid(pc) == 0 ||
+		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
+		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
+		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
+		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
 			return EPERM;
 	}
 

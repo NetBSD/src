@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.61.8.1 2006/04/01 12:07:38 yamt Exp $	*/
+/*	$NetBSD: xy.c,v 1.61.8.2 2006/05/24 10:58:31 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.8.1 2006/04/01 12:07:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.8.2 2006/05/24 10:58:31 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.8.1 2006/04/01 12:07:38 yamt Exp $");
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -101,13 +102,14 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61.8.1 2006/04/01 12:07:38 yamt Exp $");
  * XYC_GO: start iopb ADDR (DVMA addr in a u_long) on XYC
  */
 #define XYC_GO(XYC, ADDR) { \
-	(XYC)->xyc_addr_lo = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_addr_hi = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_reloc_lo = ((ADDR) & 0xff); \
-	(ADDR) = ((ADDR) >> 8); \
-	(XYC)->xyc_reloc_hi = (ADDR); \
+	u_long addr = (u_long)ADDR; \
+	(XYC)->xyc_addr_lo = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_addr_hi = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_reloc_lo = ((addr) & 0xff); \
+	(addr) = ((addr) >> 8); \
+	(XYC)->xyc_reloc_hi = (addr); \
 	(XYC)->xyc_csr = XYC_GBSY; /* go! */ \
 }
 
@@ -1031,7 +1033,8 @@ xyioctl(dev, command, addr, flag, l)
 
 	case DIOSXDCMD:
 		xio = (struct xd_iocmd *) addr;
-		if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(l->l_proc->p_cred,
+		    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
 			return (error);
 		return (xyc_ioctlcmd(xy, dev, xio));
 
@@ -1578,7 +1581,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 		panic("xyc_submit_iorq: xyc_chain failed!");
 	}
 
-	XYC_GO(xycsc->xyc, (u_long)dmaiopb);
+	XYC_GO(xycsc->xyc, dmaiopb);
 
 	/* command now running, wrap it up */
 	switch (type) {
@@ -1761,7 +1764,7 @@ xyc_xyreset(xycsc, xysc)
 	iopb->com = XYCMD_RST;
 	iopb->unit = xysc->xy_drive;
 
-	XYC_GO(xycsc->xyc, (u_long)xycsc->ciorq->dmaiopb);
+	XYC_GO(xycsc->xyc, xycsc->ciorq->dmaiopb);
 
 	del = XYC_RESETUSEC;
 	while (del > 0) {

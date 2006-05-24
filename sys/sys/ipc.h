@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.29 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: ipc.h,v 1.29.8.1 2006/05/24 10:59:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -147,7 +147,8 @@ struct ipc_perm_sysctl {
 #define	IPCID_TO_IX(id)		((id) & 0xffff)
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
 
-int	ipcperm(struct ucred *, struct ipc_perm *, int);
+struct kauth_cred;
+int	ipcperm(struct kauth_cred *, struct ipc_perm *, int);
 
 #endif /* _KERNEL */
 

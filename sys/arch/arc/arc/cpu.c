@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2005/12/11 12:16:37 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14.8.1 2006/05/24 10:56:34 yamt Exp $	*/
 /*	$OpenBSD: cpu.c,v 1.8 1997/04/19 17:19:41 pefo Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2005/12/11 12:16:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14.8.1 2006/05/24 10:56:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2005/12/11 12:16:37 christos Exp $");
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
+#include "ioconf.h"
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, struct cfdata *, void *);
@@ -54,7 +55,6 @@ static void	cpuattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpu, sizeof(struct device),
     cpumatch, cpuattach, NULL, NULL);
-extern struct cfdriver cpu_cd;
 
 static int
 cpumatch(struct device *parent, struct cfdata *match, void *aux)

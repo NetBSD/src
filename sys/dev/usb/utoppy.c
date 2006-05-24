@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.1.2.2 2006/04/11 11:55:18 yamt Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.1.2.3 2006/05/24 10:58:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.1.2.2 2006/04/11 11:55:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.1.2.3 2006/05/24 10:58:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -720,8 +720,8 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 	}
 
 	/* The command word is part of the CRC */
-	crc = UTOPPY_CRC16(crc, h->h_cmd2 >> 8);
-	crc = UTOPPY_CRC16(0,   h->h_cmd2);
+	crc = UTOPPY_CRC16(0,   h->h_cmd2 >> 8);
+	crc = UTOPPY_CRC16(crc, h->h_cmd2);
 	crc = UTOPPY_CRC16(crc, h->h_cmd >> 8);
 	crc = UTOPPY_CRC16(crc, h->h_cmd);
 
@@ -1369,6 +1369,7 @@ utoppyopen(dev_t dev, int flag, int mode, struct lwp *l)
 		error = EIO;
 		usbd_close_pipe(sc->sc_out_pipe);
 		sc->sc_out_pipe = NULL;
+		goto done;
 	}
 
 	sc->sc_out_data = malloc(UTOPPY_BSIZE + 1, M_DEVBUF, M_WAITOK);
@@ -1432,7 +1433,8 @@ utoppyclose(dev_t dev, int flag, int mode, struct lwp *l)
 		return (0);
 	}
 
-	(void) utoppy_cancel(sc);
+	if (sc->sc_out_data)
+		(void) utoppy_cancel(sc);
 
 	if (sc->sc_out_pipe != NULL) {
 		if ((err = usbd_abort_pipe(sc->sc_out_pipe)) != 0)

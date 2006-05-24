@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.137.2.1 2006/03/13 09:07:43 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.137.2.2 2006/05/24 10:59:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -130,6 +130,7 @@ struct mount {
 #define	VFS_MAGICLINKS  4		/* expand 'magic' symlinks */
 #define	VFSGEN_MAXID	5		/* number of valid vfs.generic ids */
 
+#ifndef _STANDALONE
 /*
  * USE THE SAME NAMES AS MOUNT_*!
  *
@@ -179,6 +180,7 @@ struct mount {
 struct nameidata;
 struct mbuf;
 struct vnodeopv_desc;
+struct kauth_cred;
 #endif
 
 struct vfsops {
@@ -192,7 +194,7 @@ struct vfsops {
 				    struct lwp *);
 	int	(*vfs_statvfs)	(struct mount *, struct statvfs *,
 				    struct lwp *);
-	int	(*vfs_sync)	(struct mount *, int, struct ucred *,
+	int	(*vfs_sync)	(struct mount *, int, struct kauth_cred *,
 				    struct lwp *);
 	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
 	int	(*vfs_fhtovp)	(struct mount *, struct fid *,
@@ -312,10 +314,13 @@ int	mount(const char *, const char *, int, void *);
 int	unmount(const char *, int);
 #if defined(_NETBSD_SOURCE)
 int	fhopen(const fhandle_t *, int);
-int	fhstat(const fhandle_t *, struct stat *);
+#ifndef __LIBC12_SOURCE__
+int	fhstat(const fhandle_t *, struct stat *) __RENAME(__fhstat30);
+#endif
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 
 #endif /* _KERNEL */
+#endif /* !_STANDALONE */
 
 #endif /* !_SYS_MOUNT_H_ */

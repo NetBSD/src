@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.9 2005/12/11 12:16:03 christos Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.9.8.1 2006/05/24 10:56:32 yamt Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9.8.1 2006/05/24 10:56:32 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.9 2005/12/11 12:16:03 christos Exp 
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -80,11 +81,9 @@ afm_alloc(ifp)
 {
 	struct afm_head *head;
 
-	MALLOC(head, struct afm_head *, sizeof(struct afm_head),
-	       M_DEVBUF, M_WAITOK);
+	head = malloc(sizeof(struct afm_head), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (head == NULL)
 		panic("afm_alloc: malloc failed!");
-	(void)memset(head, 0, sizeof(struct afm_head));
 
 	/* initialize per interface afmap list */
 	LIST_INIT(&head->afh_head);
@@ -114,7 +113,7 @@ afm_dealloc(ifp)
 
 	LIST_REMOVE(head, afh_chain);
 
-	FREE(head, M_DEVBUF);
+	free(head, M_DEVBUF);
 	return 0;
 }
 
@@ -159,11 +158,9 @@ int afm_add(ifp, flowmap)
 	} else
 		return (EINVAL);
 
-	MALLOC(afm, struct afm *, sizeof(struct afm),
-	       M_DEVBUF, M_WAITOK);
+	afm = malloc(sizeof(struct afm), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (afm == NULL)
 		return (ENOMEM);
-	(void)memset(afm, 0, sizeof(struct afm));
 
 	afm->afm_vci = flowmap->af_vci;
 	afm->afm_vpi = flowmap->af_vpi;
@@ -179,7 +176,7 @@ afm_remove(afm)
 	struct afm *afm;
 {
 	LIST_REMOVE(afm, afm_list);
-	FREE(afm, M_DEVBUF);
+	free(afm, M_DEVBUF);
 	return (0);
 }
 
@@ -387,7 +384,8 @@ afmioctl(dev, cmd, addr, flag, l)
 #if (__FreeBSD_version > 400000)
 		error = suser(p);
 #else
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					  &p->p_acflag);
 #endif
 		if (error)
 			return (error);

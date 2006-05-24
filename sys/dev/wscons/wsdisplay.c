@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.89.2.3 2006/04/11 11:55:29 yamt Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.89.2.4 2006/05/24 10:58:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.89.2.3 2006/04/11 11:55:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.89.2.4 2006/05/24 10:58:31 yamt Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.89.2.3 2006/04/11 11:55:29 yamt Exp 
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wsmuxvar.h>
@@ -756,7 +757,8 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 			wsdisplayparam(tp, &tp->t_termios);
 			ttsetwater(tp);
 		} else if ((tp->t_state & TS_XCLUDE) != 0 &&
-			   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+			   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+					     &l->l_proc->p_acflag) != 0)
 			return EBUSY;
 		tp->t_state |= TS_CARR_ON;
 
@@ -1013,8 +1015,9 @@ int
 wsdisplay_param(struct device *dev, u_long cmd, struct wsdisplay_param *dp)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
-					   (caddr_t)dp, 0, NULL));
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+					   sc->sc_focus->scr_dconf->emulcookie,
+					   cmd, (caddr_t)dp, 0, NULL));
 }
 
 int
@@ -1077,8 +1080,8 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	    } else if (d == WSDISPLAYIO_MODE_EMUL)
 		    return (EINVAL);
 
-	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
-		    flag, l);
+	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+	        scr->scr_dconf->emulcookie, cmd, data, flag, l);
 
 	    return (0);
 #undef d
@@ -1133,28 +1136,6 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		return (error);
 #undef d
 
-#if defined(WSDISPLAY_CHARFUNCS)
-	case WSDISPLAYIO_GETWSCHAR:
-#define d ((struct wsdisplay_char *)data)
-		if (!sc->sc_accessops->getwschar)
-			return (EINVAL);
-		return ((*sc->sc_accessops->getwschar)
-			(scr->scr_dconf->emulcookie, d));
-#undef d
-
-	case WSDISPLAYIO_PUTWSCHAR:
-#define d ((struct wsdisplay_char *)data)
-		if (!sc->sc_accessops->putwschar)
-			return (EINVAL);
-		return ((*sc->sc_accessops->putwschar)
-			(scr->scr_dconf->emulcookie, d));
-#undef d
-#else
-	case WSDISPLAYIO_PUTWSCHAR:
-	case WSDISPLAYIO_GETWSCHAR:
-		return ENODEV;
-#endif /* WSDISPLAY_CHARFUNCS */
-
 #ifdef WSDISPLAY_CUSTOM_OUTPUT
 	case WSDISPLAYIO_GMSGATTRS:
 #define d ((struct wsdisplay_msgattrs *)data)
@@ -1183,8 +1164,8 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	}
 
 	/* check ioctls for display */
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
-	    flag, l));
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+	    scr->scr_dconf->emulcookie, cmd, data, flag, l));
 }
 
 int
@@ -1363,7 +1344,8 @@ wsdisplaymmap(dev_t dev, off_t offset, int prot)
 		return (-1);
 
 	/* pass mmap to display */
-	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie, offset, prot));
+	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie,
+	    scr->scr_dconf->emulcookie, offset, prot));
 }
 
 void

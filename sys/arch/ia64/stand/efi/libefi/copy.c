@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.c,v 1.1.2.2 2006/04/11 11:53:42 yamt Exp $	*/
+/*	$NetBSD: copy.c,v 1.1.2.3 2006/05/24 10:56:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -27,6 +27,9 @@
  */
 
 #include <sys/cdefs.h>
+
+/* __FBSDID("$FreeBSD: src/sys/boot/efi/libefi/copy.c,v 1.5 2003/04/03 21:36:29 obrien Exp $");
+ */
 
 #include <efi.h>
 #include <efilib.h>

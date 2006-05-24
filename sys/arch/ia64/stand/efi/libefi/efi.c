@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.1.2.2 2006/04/11 11:53:42 yamt Exp $	*/
+/*	$NetBSD: efi.c,v 1.1.2.3 2006/05/24 10:56:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+*/ __FBSDID("$FreeBSD: src/sys/boot/efi/libefi/libefi.c,v 1.6 2003/04/03 21:36:29 obrien Exp $"); */
 
 #include <efi.h>
 #include <efilib.h>

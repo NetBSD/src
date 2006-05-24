@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.69.8.1 2006/04/01 12:06:13 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.69.8.2 2006/05/24 10:56:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.8.1 2006/04/01 12:06:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.8.2 2006/05/24 10:56:47 yamt Exp $");
 
 #include "hil.h"
 
@@ -131,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.69.8.1 2006/04/01 12:06:13 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -399,7 +400,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	} else
 		tp = ip->tty;
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(ip, 0);

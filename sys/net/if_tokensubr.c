@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.34 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.34.8.1 2006/05/24 10:58:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.34 2005/12/11 23:05:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.34.8.1 2006/05/24 10:58:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -137,6 +137,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.34 2005/12/11 23:05:25 thorpej Ex
 
 #include <net/if_ether.h>
 #include <net/if_token.h>
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -206,7 +211,7 @@ static void	token_input(struct ifnet *, struct mbuf *);
  * XXX route info has to go into the same mbuf as the header
  */
 static int
-token_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+token_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	u_int16_t etype;
@@ -217,12 +222,32 @@ token_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct mbuf *mcopy = (struct mbuf *)0;
 	struct token_header *trh;
 #ifdef INET
-	struct arphdr *ah = (struct arphdr *)ifp;
+	struct arphdr *ah = (struct arphdr *)ifp0;
 #endif /* INET */
 	struct token_rif *rif = (struct  token_rif *)0;
 	struct token_rif bcastrif;
+	struct ifnet *ifp = ifp0;
 	size_t riflen = 0;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
+
+#if NCARP > 0
+	if (ifp->if_type == IFT_CARP) {
+		struct ifaddr *ifa;
+
+		/* loop back if this is going to the carp interface */
+		if (dst != NULL && ifp0->if_link_state == LINK_STATE_UP &&
+		    (ifa = ifa_ifwithaddr(dst)) != NULL &&
+		    ifa->ifa_ifp == ifp0)
+			return (looutput(ifp0, m, dst, rt0));
+
+		ifp = ifp->if_carpdev;
+		ah = (struct arphdr *)ifp;
+
+		if ((ifp0->if_flags & (IFF_UP|IFF_RUNNING)) !=
+		    (IFF_UP|IFF_RUNNING))
+			senderr(ENETDOWN);
+	}
+#endif /* NCARP > 0 */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -315,7 +340,10 @@ token_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 			memcpy(edst, tokenbroadcastaddr, sizeof(edst));
 		}
 		else {
-			bcopy((caddr_t)ar_tha(ah), (caddr_t)edst, sizeof(edst));
+			caddr_t tha = (caddr_t)ar_tha(ah);
+			KASSERT(tha);
+			if (tha)
+				bcopy(tha, (caddr_t)edst, sizeof(edst));
 			trh = (struct token_header *)M_TRHSTART(m);
 			trh->token_ac = TOKEN_AC;
 			trh->token_fc = TOKEN_FC;
@@ -402,8 +430,8 @@ token_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef	LLC
 /*	case AF_NSAP: */
 	case AF_CCITT: {
-		struct sockaddr_dl *sdl =
-		    (struct sockaddr_dl *) rt -> rt_gateway;
+		struct sockaddr_dl *sdl = rt ? 
+		    (struct sockaddr_dl *) rt -> rt_gateway : NULL;
 
 		if (sdl && sdl->sdl_family == AF_LINK
 		    && sdl->sdl_alen > 0) {
@@ -513,6 +541,13 @@ token_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 send:
 #endif
 
+#if NCARP > 0
+	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
+		bcopy(LLADDR(ifp0->if_sadl), (caddr_t)trh->token_shost,	    
+		    sizeof(trh->token_shost));
+	}
+#endif /* NCARP > 0 */
+
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 bad:
 	if (m)
@@ -573,6 +608,13 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 			goto dropanyway;
 		etype = ntohs(l->llc_snap.ether_type);
 		m_adj(m, LLC_SNAPFRAMELEN);
+#if NCARP > 0
+		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
+		    (carp_input(m, (u_int8_t *)&trh->token_shost,
+		    (u_int8_t *)&trh->token_dhost, l->llc_snap.ether_type) == 0))
+			return;
+#endif /* NCARP > 0 */
+
 		switch (etype) {
 #ifdef INET
 		case ETHERTYPE_IP:

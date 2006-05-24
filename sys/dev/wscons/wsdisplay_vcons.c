@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.5 2006/02/19 03:51:03 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.5.2.1 2006/05/24 10:58:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.5 2006/02/19 03:51:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.5.2.1 2006/05/24 10:58:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.5 2006/02/19 03:51:03 macallan
 static void vcons_dummy_init_screen(void *, struct vcons_screen *, int, 
 	    long *);
 
+static int  vcons_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
 static int  vcons_alloc_screen(void *, const struct wsscreen_descr *, void **, 
 	    int *, int *, long *);
 static void vcons_free_screen(void *, void *);
@@ -87,8 +88,8 @@ static void vcons_putchar(void *, int, int, u_int, long);
 static void vcons_cursor(void *, int, int, int);
 
 /* support for readin/writing text buffers. For wsmoused */
-static int  vcons_putwschar(void *, struct wsdisplay_char *);
-static int  vcons_getwschar(void *, struct wsdisplay_char *);
+static int  vcons_putwschar(struct vcons_screen *, struct wsdisplay_char *);
+static int  vcons_getwschar(struct vcons_screen *, struct wsdisplay_char *);
 
 static void vcons_lock(struct vcons_screen *);
 static void vcons_unlock(struct vcons_screen *);
@@ -107,11 +108,15 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	vd->init_screen = vcons_dummy_init_screen;
 	vd->show_screen_cb = NULL;
 
+	/* keep a copy of the accessops that we replace below with our
+	 * own wrappers */
+	vd->ioctl = ao->ioctl;
+
+	/* configure the accessops */
+	ao->ioctl = vcons_ioctl;
 	ao->alloc_screen = vcons_alloc_screen;
 	ao->free_screen = vcons_free_screen;
 	ao->show_screen = vcons_show_screen;
-	ao->getwschar = vcons_getwschar;
-	ao->putwschar = vcons_putwschar;
 
 	LIST_INIT(&vd->screens);
 	vd->active = NULL;
@@ -358,6 +363,34 @@ vcons_redraw_screen(struct vcons_screen *scr)
 		scr->scr_vd->cursor(ri, 1, ri->ri_crow, ri->ri_ccol);
 	}
 	vcons_unlock(scr);
+}
+
+static int
+vcons_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
+{
+	struct vcons_data *vd = v;
+	int error;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GETWSCHAR:
+		error = vcons_getwschar((struct vcons_screen *)vs,
+			(struct wsdisplay_char *)data);
+		break;
+
+	case WSDISPLAYIO_PUTWSCHAR:
+		error = vcons_putwschar((struct vcons_screen *)vs,
+			(struct wsdisplay_char *)data);
+		break;
+
+	default:
+		if (vd->ioctl != NULL)
+			error = (*vd->ioctl)(v, vs, cmd, data, flag, l);
+		else
+			error = EPASSTHROUGH;
+	}
+
+	return error;
 }
 
 static int
@@ -622,10 +655,14 @@ vcons_cursor(void *cookie, int on, int row, int col)
 /* methods to read/write characters via ioctl() */
 
 static int
-vcons_putwschar(void *cookie, struct wsdisplay_char *wsc)
+vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 {
-	struct rasops_info *ri = cookie;
 	long attr;
+	struct rasops_info *ri;
+
+	KASSERT(scr != NULL && wsc != NULL);
+
+	ri = &scr->scr_ri;
 	
 	ri->ri_ops.allocattr(ri, wsc->foreground, wsc->background,
 	    wsc->flags, &attr);
@@ -634,13 +671,16 @@ vcons_putwschar(void *cookie, struct wsdisplay_char *wsc)
 }
 
 static int
-vcons_getwschar(void *cookie, struct wsdisplay_char *wsc)
+vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 {
-	struct rasops_info *ri = cookie;
-	struct vcons_screen *scr = ri->ri_hw;
+	int offset;
 	long attr;
-	int offset = ri->ri_cols * wsc->row + wsc->col;
-	
+	struct rasops_info *ri;
+
+	KASSERT(scr != NULL && wsc != NULL);
+
+	ri = &scr->scr_ri;
+	offset = ri->ri_cols * wsc->row + wsc->col;
 	wsc->letter = scr->scr_chars[offset];
 	attr = scr->scr_attrs[offset];
 

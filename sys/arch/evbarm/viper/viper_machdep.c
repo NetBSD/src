@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.2.8.1 2006/03/13 09:06:53 yamt Exp $	*/
+/*	$NetBSD: viper_machdep.c,v 1.2.8.2 2006/05/24 10:56:46 yamt Exp $	*/
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.2.8.1 2006/03/13 09:06:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.2.8.2 2006/05/24 10:56:46 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -534,6 +534,7 @@ initarm(void *arg)
 
 	loop1 = 0;
 	kernel_l1pt.pv_pa = 0;
+	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.6 2005/12/11 12:19:56 christos Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.6.8.1 2006/05/24 10:57:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.6 2005/12/11 12:19:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.6.8.1 2006/05/24 10:57:27 yamt Exp $");
 
 /*#ifdef COMPAT_12*/
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.6 2005/12/11 12:19:56 christos Exp
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 /* ARGSUSED */
 int
@@ -55,7 +56,7 @@ compat_12_sys_reboot(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 	cpu_reboot(SCARG(uap, opt), NULL);
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.56 2006/02/21 08:25:49 gdamore Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.56.2.1 2006/05/24 10:56:59 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.56 2006/02/21 08:25:49 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.56.2.1 2006/05/24 10:56:59 yamt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -278,13 +278,15 @@ db_set_ddb_regs(int type, mips_reg_t *tfp)
 void
 db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
+	int *ip;
+	short *sp;
 
 	while (size >= 4)
-		*((int*)data)++ = kdbpeek(addr), addr += 4, size -= 4;
+		ip = (int*)data, *ip = kdbpeek(addr), data += 4, addr += 4, size -= 4;
 	while (size >= 2)
-		*((short*)data)++ = kdbpeek_2(addr), addr += 2, size -= 2;
+		sp = (short *)data, *sp = kdbpeek_2(addr), data += 2, addr += 2, size -= 2;
 	if (size == 1)
-		*((char*)data)++ = kdbpeek_1(addr);
+		*data = kdbpeek_1(addr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.35.2.1 2006/04/11 11:55:29 yamt Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.35.2.2 2006/05/24 10:58:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -111,9 +111,9 @@ struct wsdisplay_char;
  * with these functions, which is passed to them when they are invoked.
  */
 struct wsdisplay_accessops {
-	int	(*ioctl)(void *v, u_long cmd, caddr_t data, int flag,
+	int	(*ioctl)(void *v, void *scr, u_long cmd, caddr_t data, int flag,
 		    struct lwp *l);
-	paddr_t	(*mmap)(void *v, off_t off, int prot);
+	paddr_t	(*mmap)(void *v, void *scr, off_t off, int prot);
 	int	(*alloc_screen)(void *, const struct wsscreen_descr *,
 				     void **, int *, int *, long *);
 	void	(*free_screen)(void *, void *);
@@ -121,8 +121,6 @@ struct wsdisplay_accessops {
 				    void (*) (void *, int, int), void *);
 	int	(*load_font)(void *, void *, struct wsdisplay_font *);
 	void	(*pollc)(void *, int);
-	int	(*getwschar)(void *, struct wsdisplay_char *);
-	int	(*putwschar)(void *, struct wsdisplay_char *);
 	void	(*scroll)(void *, void *, int);
 };
 

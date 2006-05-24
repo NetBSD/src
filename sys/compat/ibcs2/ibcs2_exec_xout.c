@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.11 2005/12/11 12:20:02 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.11.8.1 2006/05/24 10:57:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.11 2005/12/11 12:20:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.11.8.1 2006/05/24 10:57:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
 	xs = (struct xseg *)malloc(segsize, M_TEMP, M_WAITOK);
 	error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)xs,
 			segsize, xep->xe_segpos,
-			UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred,
+			UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_cred,
 			&resid, NULL);
 	if (error) {
 		DPRINTF(("segment table read error %d\n", error));

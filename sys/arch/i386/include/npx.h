@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.21 2005/10/10 21:07:17 christos Exp $	*/
+/*	$NetBSD: npx.h,v 1.21.14.1 2006/05/24 10:56:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,18 +114,11 @@ struct savexmm {
 	/* 512-bytes --- end of hardware portion of save area */
 	uint32_t sv_ex_sw;		/* saved SW from last exception */
 	uint32_t sv_ex_tw;		/* saved TW from last exception */
-};
+} __aligned(16);
 
 union savefpu {
 	struct save87 sv_87;
 	struct savexmm sv_xmm;
-};
-
-/* Cyrix EMC memory - mapped coprocessor context switch information */
-struct emcsts {
-	long	em_msw;		/* memory mapped status register when swtched */
-	long	em_tar;		/* memory mapped temp A register when swtched */
-	long	em_dl;		/* memory mapped D low register when swtched */
 };
 
 /*

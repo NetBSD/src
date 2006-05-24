@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.c,v 1.1.2.2 2006/04/11 11:53:43 yamt Exp $	*/
+/*	$NetBSD: delay.c,v 1.1.2.3 2006/05/24 10:56:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/delay.c,v 1.2 2003/04/03 21:36:29 obrien Exp $"); */
 
 void
 delay(int usecs)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.15 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.15.8.1 2006/05/24 10:58:14 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.15 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.15.8.1 2006/05/24 10:58:14 yamt Exp $");
 
 #include "rf_archs.h"
 
@@ -77,8 +77,6 @@ rf_ConfigureEvenOdd(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 
 	RF_MallocAndAdd(info, sizeof(RF_EvenOddConfigInfo_t), (RF_EvenOddConfigInfo_t *), raidPtr->cleanupList);
 	layoutPtr->layoutSpecificInfo = (void *) info;
-
-	RF_ASSERT(raidPtr->numRow == 1);
 
 	info->stripeIdentifier = rf_make_2d_array(raidPtr->numCol, raidPtr->numCol, raidPtr->cleanupList);
 	startdisk = 0;
@@ -134,12 +132,11 @@ rf_GetDefaultHeadSepLimitEvenOdd(RF_Raid_t *raidPtr)
 
 void
 rf_IdentifyStripeEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
-			 RF_RowCol_t **diskids, RF_RowCol_t *outRow)
+			 RF_RowCol_t **diskids)
 {
 	RF_StripeNum_t stripeID = rf_RaidAddressToStripeID(&raidPtr->Layout, addr);
 	RF_EvenOddConfigInfo_t *info = (RF_EvenOddConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
 
-	*outRow = 0;
 	*diskids = info->stripeIdentifier[stripeID % raidPtr->numCol];
 }
 /* The layout of stripe unit on the disks are:      c0 c1 c2 c3 c4
@@ -159,13 +156,12 @@ rf_IdentifyStripeEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t addr,
 
 void
 rf_MapParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-		    RF_RowCol_t *row, RF_RowCol_t *col,
+		    RF_RowCol_t *col,
 		    RF_SectorNum_t *diskSector, int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_StripeNum_t endSUIDofthisStrip = (SUID / raidPtr->Layout.numDataCol + 1) * raidPtr->Layout.numDataCol - 1;
 
-	*row = 0;
 	*col = (endSUIDofthisStrip + 2) % raidPtr->numCol;
 	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) * raidPtr->Layout.sectorsPerStripeUnit +
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
@@ -173,13 +169,12 @@ rf_MapParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
 
 void
 rf_MapEEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidSector,
-	       RF_RowCol_t *row, RF_RowCol_t *col, RF_SectorNum_t *diskSector,
+	       RF_RowCol_t *col, RF_SectorNum_t *diskSector,
 	       int remap)
 {
 	RF_StripeNum_t SUID = raidSector / raidPtr->Layout.sectorsPerStripeUnit;
 	RF_StripeNum_t endSUIDofthisStrip = (SUID / raidPtr->Layout.numDataCol + 1) * raidPtr->Layout.numDataCol - 1;
 
-	*row = 0;
 	*col = (endSUIDofthisStrip + 1) % raidPtr->numCol;
 	*diskSector = (SUID / (raidPtr->Layout.numDataCol)) * raidPtr->Layout.sectorsPerStripeUnit +
 	    (raidSector % raidPtr->Layout.sectorsPerStripeUnit);
@@ -434,7 +429,7 @@ rf_VerifyParityEvenOdd(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 		/* the corresponding columes in EvenOdd encoding Matrix for
 		 * these p pointers which point to the databuffer in a full
 		 * stripe are sequentially from 0 to layoutPtr->numDataCol-1 */
-		rf_bxor(p, pbuf, numbytes, NULL);
+		rf_bxor(p, pbuf, numbytes);
 	}
 	RF_ASSERT(i == layoutPtr->numDataCol);
 

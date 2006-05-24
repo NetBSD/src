@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.39 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.39.8.1 2006/05/24 10:58:14 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.39 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.39.8.1 2006/05/24 10:58:14 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -694,7 +694,7 @@ rf_NumFailedDataUnitsInStripe(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 						     asmap->raidAddress);
 	for (i = 0; i < layoutPtr->numDataCol; i++) {
 		(layoutPtr->map->MapSector) (raidPtr, sosAddr + i * layoutPtr->sectorsPerStripeUnit,
-		    &trow, &tcol, &diskOffset, 0);
+		    &tcol, &diskOffset, 0);
 		if (RF_DEAD_DISK(raidPtr->Disks[tcol].status))
 			numFailures++;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.101.8.1 2006/03/13 09:07:26 yamt Exp $	*/
+/*	$NetBSD: auich.c,v 1.101.8.2 2006/05/24 10:58:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.101.8.1 2006/03/13 09:07:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.101.8.2 2006/05/24 10:58:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,7 @@ struct auich_softc {
 	struct ac97_host_if host_if;
 	int sc_codecnum;
 	int sc_codectype;
+	enum ac97_host_flags sc_codecflags;
 
 	/* DMA scatter-gather lists. */
 	bus_dmamap_t sc_cddmamap;
@@ -297,6 +298,7 @@ static int	auich_attach_codec(void *, struct ac97_codec_if *);
 static int	auich_read_codec(void *, uint8_t, uint16_t *);
 static int	auich_write_codec(void *, uint8_t, uint16_t);
 static int	auich_reset_codec(void *);
+static enum ac97_host_flags	auich_flags_codec(void *);
 
 static const struct audio_hw_if auich_hw_if = {
 	NULL,		/* open */
@@ -439,7 +441,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auich_softc *sc;
 	struct pci_attach_args *pa;
-	pcireg_t v;
+	pcireg_t v, subdev;
 	const char *intrstr;
 	const struct auich_devtype *d;
 	const struct sysctlnode *node, *node_ac97clock;
@@ -578,6 +580,23 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.read = auich_read_codec;
 	sc->host_if.write = auich_write_codec;
 	sc->host_if.reset = auich_reset_codec;
+	sc->host_if.flags = auich_flags_codec;
+
+	subdev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	switch (subdev) {
+	case 0x202f161f:	/* Gateway 7326GZ */
+	case 0x203a161f:	/* Gateway 4028GZ */
+	case 0x204c161f:	/* Kvazar-Micro Senator 3592XT */
+	case 0x8144104d:	/* Sony VAIO PCG-TR* */
+	case 0x8197104d:	/* Sony S1XP */
+	case 0x81c0104d:	/* Sony VAIO type T */
+	case 0x81c5104d:	/* Sony VAIO VGN-B1XP */
+		sc->sc_codecflags = AC97_HOST_INVERTED_EAMP;
+		break;
+	default:
+		sc->sc_codecflags = 0;
+		break;
+	}
 
 	if (ac97_attach_type(&sc->host_if, self, sc->sc_codectype) != 0)
 		return;
@@ -735,7 +754,9 @@ auich_finish_attach(struct device *self)
 
 	sc->sc_audiodev = audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
 
+#if notyet
 	auich_powerhook(PWR_SUSPEND, sc);
+#endif
 
 	return;
 }
@@ -850,7 +871,7 @@ auich_reset_codec(void *v)
 		printf("%s: auich_reset_codec: time out\n", sc->sc_dev.dv_xname);
 		return ETIMEDOUT;
 	}
-#ifdef DEBUG
+#ifdef AUICH_DEBUG
 	if (status & ICH_SCR)
 		printf("%s: The 2nd codec is ready.\n",
 		       sc->sc_dev.dv_xname);
@@ -859,6 +880,13 @@ auich_reset_codec(void *v)
 		       sc->sc_dev.dv_xname);
 #endif
 	return 0;
+}
+
+static enum ac97_host_flags
+auich_flags_codec(void *v)
+{
+	struct auich_softc *sc = v;
+	return sc->sc_codecflags;
 }
 
 static int
@@ -1393,6 +1421,7 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 static int
 auich_powerstate(void *v, int state)
 {
+#if notyet
 	struct auich_softc *sc;
 	int rv;
 
@@ -1414,6 +1443,9 @@ auich_powerstate(void *v, int state)
 	}
 
 	return rv;
+#else
+	return 0;
+#endif
 }
 
 static int

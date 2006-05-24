@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.214.2.2 2006/04/01 12:07:51 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.214.2.3 2006/05/24 10:59:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -53,6 +53,11 @@
 #include <sys/siginfo.h>
 #include <sys/event.h>
 
+#ifndef _KERNEL
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
+
 /*
  * One structure allocated per session.
  */
@@ -87,6 +92,7 @@ struct exec_package;
 struct ps_strings;
 struct ras;
 struct sa_emul;
+struct kauth_cred;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -161,7 +167,7 @@ struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
 
 	/* Substructures: */
-	struct pcred	*p_cred;	/* Process owner's identity */
+	struct kauth_cred *p_cred;	/* Credentials */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
 	struct pstats	*p_stats;	/* Accounting/statistics (PROC ONLY) */
@@ -170,8 +176,6 @@ struct proc {
 	struct sigacts	*p_sigacts;	/* Process sigactions (state is below)*/
 
 	void		*p_ksems;	/* p1003.1b semaphores */
-
-#define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
 	int		p_exitsig;	/* signal to send to parent on exit */
@@ -313,8 +317,8 @@ struct proc {
 #define	P_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	P_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
-#define	P_UNUSED4    	0x08000000
-#define	P_UNUSED3	0x10000000
+#define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
+#define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
 #define	P_UNUSED2	0x20000000
 #define	P_UNUSED1	0x40000000
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
@@ -475,7 +479,6 @@ void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
-int	groupmember(gid_t, const struct ucred *);
 int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);

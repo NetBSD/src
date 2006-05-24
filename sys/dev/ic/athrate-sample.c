@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-sample.c,v 1.8.2.1 2006/04/11 11:55:13 yamt Exp $ */
+/*	$NetBSD: athrate-sample.c,v 1.8.2.2 2006/05/24 10:57:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 John Bicket
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/sample/sample.c,v 1.9 2005/07/22 16:50:17 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.8.2.1 2006/04/11 11:55:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-sample.c,v 1.8.2.2 2006/05/24 10:57:41 yamt Exp $");
 #endif
 
 
@@ -403,38 +403,41 @@ update_stats(struct ath_softc *sc, struct ath_node *an,
 	struct sample_softc *ssc = ATH_SOFTC_SAMPLE(sc);
 	int tt = 0;
 	int tries_so_far = 0;
-	int size_bin = 0;
-	int size = 0;
-	int rate = 0;
+	int size_bin;
+	int size;
+	int rate;
+
+	if (ndx0 == -1)
+		return;
 
 	size_bin = size_to_bin(frame_size);
 	size = bin_to_size(size_bin);
 	rate = sn->rates[ndx0].rate;
 
-	tt += calc_usecs_unicast_packet(sc, size, sn->rates[ndx0].rix, 
-					short_tries-1, 
-					MIN(tries0, tries) - 1);
+	tt += calc_usecs_unicast_packet(sc, size, sn->rates[ndx0].rix,
+	    short_tries - 1, MIN(tries0, tries) - 1);
 	tries_so_far += tries0;
 	if (tries1 && tries0 < tries) {
-		tt += calc_usecs_unicast_packet(sc, size, sn->rates[ndx1].rix, 
-						short_tries-1, 
-						MIN(tries1 + tries_so_far, tries) - tries_so_far - 1);
+		tt += calc_usecs_unicast_packet(sc, size,
+		    ndx1 == -1 ? 0 : sn->rates[ndx1].rix, short_tries - 1, 
+		    MIN(tries1 + tries_so_far, tries) - tries_so_far - 1);
 	}
 	tries_so_far += tries1;
 
 	if (tries2 && tries0 + tries1 < tries) {
-		tt += calc_usecs_unicast_packet(sc, size, sn->rates[ndx2].rix, 
-					       short_tries-1, 
-						MIN(tries2 + tries_so_far, tries) - tries_so_far - 1);
+		tt += calc_usecs_unicast_packet(sc, size,
+		    ndx2 == -1 ? 0 : sn->rates[ndx2].rix, short_tries - 1, 
+		    MIN(tries2 + tries_so_far, tries) - tries_so_far - 1);
 	}
 
 	tries_so_far += tries2;
 
 	if (tries3 && tries0 + tries1 + tries2 < tries) {
-		tt += calc_usecs_unicast_packet(sc, size, sn->rates[ndx3].rix, 
-						short_tries-1, 
-						MIN(tries3 + tries_so_far, tries) - tries_so_far - 1);
+		tt += calc_usecs_unicast_packet(sc, size,
+		    ndx3 == -1 ? 0 : sn->rates[ndx3].rix, short_tries - 1, 
+		    MIN(tries3 + tries_so_far, tries) - tries_so_far - 1);
 	}
+
 	if (sn->stats[size_bin][ndx0].total_packets < (100 / (100 - ssc->ath_smoothing_rate))) {
 		/* just average the first few packets */
 		int avg_tx = sn->stats[size_bin][ndx0].average_tx_time;

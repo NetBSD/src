@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.14.2.1 2006/04/01 12:06:11 yamt Exp $	*/
+/*	$NetBSD: plcom.c,v 1.14.2.2 2006/05/24 10:56:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.2.1 2006/04/01 12:06:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.2.2 2006/05/24 10:56:45 yamt Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.14.2.1 2006/04/01 12:06:11 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/timepps.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -642,7 +643,9 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+		kauth_authorize_generic(l->l_proc->p_cred,
+				  KAUTH_GENERIC_ISSUSER,
+				  &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 
 	s = spltty();
@@ -884,7 +887,9 @@ plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &l->l_proc->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

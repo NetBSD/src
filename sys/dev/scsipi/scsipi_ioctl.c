@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.58.2.1 2006/04/01 12:07:28 yamt Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.58.2.2 2006/05/24 10:58:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.58.2.1 2006/04/01 12:07:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.58.2.2 2006/05/24 10:58:24 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -304,6 +304,9 @@ scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
 	int error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("scsipi_do_ioctl(0x%lx)\n", cmd));
+
+	if (addr == NULL)
+		return EINVAL;
 
 	/* Check for the safe-ness of this request. */
 	switch (cmd) {

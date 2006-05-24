@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.19.8.2 2006/04/11 11:53:48 yamt Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.19.8.3 2006/05/24 10:57:23 yamt Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19.8.2 2006/04/11 11:53:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19.8.3 2006/05/24 10:57:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19.8.2 2006/04/11 11:53:48 yamt Exp
 #include <sys/ioctl.h>
 /* for CNV_OFLAGS below */
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <coda/coda.h>
 #include <coda/cnode.h>
@@ -119,8 +120,8 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19.8.2 2006/04/11 11:53:48 yamt Exp
 	  KASSERT(cred != NULL); \
 	  KASSERT(cred != FSCRED); \
           if (ident != NOCRED) {                              \
-	      (in)->cred.cr_uid = ident->cr_uid;              \
-	      (in)->cred.cr_groupid = ident->cr_gid;          \
+	      (in)->cred.cr_uid = kauth_cred_geteuid(ident);              \
+	      (in)->cred.cr_groupid = kauth_cred_getegid(ident);          \
           } else {                                            \
 	      memset(&((in)->cred), 0, sizeof(struct coda_cred)); \
 	      (in)->cred.cr_uid = -1;                         \
@@ -136,7 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.19.8.2 2006/04/11 11:53:48 yamt Exp
 	  KASSERT(cred != NULL); \
 	  KASSERT(cred != FSCRED); \
           if (ident != NOCRED) {                \
-	      (in)->uid = ident->cr_uid;        \
+	      (in)->uid = kauth_cred_geteuid(ident);        \
           } else {                              \
 	      (in)->uid = -1;                   \
           }                                                   \
@@ -204,7 +205,7 @@ int coda_kernel_version = CODA_KERNEL_VERSION;
 
 int
 venus_root(void *mdp,
-	struct ucred *cred, struct proc *p,
+	kauth_cred_t cred, struct proc *p,
 /*out*/	CodaFid *VFid)
 {
     DECL_NO_IN(coda_root);		/* sets Isize & Osize */
@@ -223,7 +224,7 @@ venus_root(void *mdp,
 
 int
 venus_open(void *mdp, CodaFid *fid, int flag,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	dev_t *dev, ino_t *inode)
 {
     int cflag;
@@ -249,7 +250,7 @@ venus_open(void *mdp, CodaFid *fid, int flag,
 
 int
 venus_close(void *mdp, CodaFid *fid, int flag,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     int cflag;
     DECL_NO_OUT(coda_close);		/* sets Isize & Osize */
@@ -287,7 +288,7 @@ venus_write(void)
 int
 venus_ioctl(void *mdp, CodaFid *fid,
 	int com, int flag, caddr_t data,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     DECL(coda_ioctl);			/* sets Isize & Osize */
     struct PioctlData *iap = (struct PioctlData *)data;
@@ -307,8 +308,10 @@ venus_ioctl(void *mdp, CodaFid *fid,
     tmp = ((com >> 16) & IOCPARM_MASK) - sizeof (char *) - sizeof (int);
     inp->cmd |= (tmp & IOCPARM_MASK) <<	16;
 
-    if (iap->vi.in_size < 0 || iap->vi.in_size > VC_MAXMSGSIZE)
+    if (iap->vi.in_size < 0 || iap->vi.in_size > VC_MAXMSGSIZE) {
+	CODA_FREE(inp, coda_ioctl_size);
 	return (EINVAL);
+    }
 
     inp->rwflag = flag;
     inp->len = iap->vi.in_size;
@@ -340,7 +343,7 @@ venus_ioctl(void *mdp, CodaFid *fid,
 
 int
 venus_getattr(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	struct vattr *vap)
 {
     DECL(coda_getattr);			/* sets Isize & Osize */
@@ -361,7 +364,7 @@ venus_getattr(void *mdp, CodaFid *fid,
 
 int
 venus_setattr(void *mdp, CodaFid *fid, struct vattr *vap,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     DECL_NO_OUT(coda_setattr);		/* sets Isize & Osize */
     ALLOC_NO_OUT(coda_setattr);		/* sets inp & outp */
@@ -379,7 +382,7 @@ venus_setattr(void *mdp, CodaFid *fid, struct vattr *vap,
 
 int
 venus_access(void *mdp, CodaFid *fid, int mode,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     DECL_NO_OUT(coda_access);		/* sets Isize & Osize */
     ALLOC_NO_OUT(coda_access);		/* sets inp & outp */
@@ -397,7 +400,7 @@ venus_access(void *mdp, CodaFid *fid, int mode,
 
 int
 venus_readlink(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	char **str, int *len)
 {
     DECL(coda_readlink);			/* sets Isize & Osize */
@@ -454,7 +457,7 @@ out:
 
 int
 venus_fsync(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     DECL_NO_OUT(coda_fsync);		/* sets Isize & Osize */
     ALLOC_NO_OUT(coda_fsync);		/* sets inp & outp */
@@ -472,7 +475,7 @@ venus_fsync(void *mdp, CodaFid *fid,
 int
 venus_lookup(void *mdp, CodaFid *fid,
     	const char *nm, int len,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	CodaFid *VFid, int *vtype)
 {
     DECL(coda_lookup);			/* sets Isize & Osize */
@@ -511,7 +514,7 @@ venus_lookup(void *mdp, CodaFid *fid,
 int
 venus_create(void *mdp, CodaFid *fid,
     	const char *nm, int len, int exclusive, int mode, struct vattr *va,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	CodaFid *VFid, struct vattr *attr)
 {
     DECL(coda_create);			/* sets Isize & Osize */
@@ -542,7 +545,7 @@ venus_create(void *mdp, CodaFid *fid,
 int
 venus_remove(void *mdp, CodaFid *fid,
         const char *nm, int len,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     DECL_NO_OUT(coda_remove);		/* sets Isize & Osize */
     coda_remove_size += len + 1;
@@ -564,7 +567,7 @@ venus_remove(void *mdp, CodaFid *fid,
 int
 venus_link(void *mdp, CodaFid *fid, CodaFid *tfid,
         const char *nm, int len,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     DECL_NO_OUT(coda_link);		/* sets Isize & Osize */
     coda_link_size += len + 1;
@@ -587,7 +590,7 @@ venus_link(void *mdp, CodaFid *fid, CodaFid *tfid,
 int
 venus_rename(void *mdp, CodaFid *fid, CodaFid *tfid,
         const char *nm, int len, const char *tnm, int tlen,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     DECL_NO_OUT(coda_rename);		/* sets Isize & Osize */
     coda_rename_size += len + 1 + tlen + 1;
@@ -613,7 +616,7 @@ venus_rename(void *mdp, CodaFid *fid, CodaFid *tfid,
 int
 venus_mkdir(void *mdp, CodaFid *fid,
     	const char *nm, int len, struct vattr *va,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	CodaFid *VFid, struct vattr *ova)
 {
     DECL(coda_mkdir);			/* sets Isize & Osize */
@@ -642,7 +645,7 @@ venus_mkdir(void *mdp, CodaFid *fid,
 int
 venus_rmdir(void *mdp, CodaFid *fid,
     	const char *nm, int len,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     DECL_NO_OUT(coda_rmdir);		/* sets Isize & Osize */
     coda_rmdir_size += len + 1;
@@ -664,7 +667,7 @@ venus_rmdir(void *mdp, CodaFid *fid,
 int
 venus_symlink(void *mdp, CodaFid *fid,
         const char *lnm, int llen, const char *nm, int len, struct vattr *va,
-	struct ucred *cred, struct lwp *l)
+	kauth_cred_t cred, struct lwp *l)
 {
     DECL_NO_OUT(coda_symlink);		/* sets Isize & Osize */
     coda_symlink_size += llen + 1 + len + 1;
@@ -690,7 +693,7 @@ venus_symlink(void *mdp, CodaFid *fid,
 int
 venus_readdir(void *mdp, CodaFid *fid,
     	int count, int offset,
-	struct ucred *cred, struct lwp *l,
+	kauth_cred_t cred, struct lwp *l,
 /*out*/	char *buffer, int *len)
 {
     DECL(coda_readdir);			/* sets Isize & Osize */
@@ -716,7 +719,7 @@ venus_readdir(void *mdp, CodaFid *fid,
 }
 
 int
-venus_statfs(void *mdp, struct ucred *cred, struct lwp *l,
+venus_statfs(void *mdp, kauth_cred_t cred, struct lwp *l,
    /*out*/   struct coda_statfs *fsp)
 {
     DECL(coda_statfs);			/* sets Isize & Osize */
@@ -737,7 +740,7 @@ venus_statfs(void *mdp, struct ucred *cred, struct lwp *l,
 
 int
 venus_fhtovp(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct proc *p,
+	kauth_cred_t cred, struct proc *p,
 /*out*/	CodaFid *VFid, int *vtype)
 {
     DECL(coda_vget);			/* sets Isize & Osize */

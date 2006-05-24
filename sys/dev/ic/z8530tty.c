@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.102.8.2 2006/04/01 12:06:59 yamt Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.102.8.3 2006/05/24 10:57:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.8.2 2006/04/01 12:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.8.3 2006/05/24 10:57:42 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -155,6 +155,7 @@ __KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.102.8.2 2006/04/01 12:06:59 yamt Exp 
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -410,7 +411,12 @@ zstty_attach(parent, self, aux)
 	tty_attach(tp);
 
 	zst->zst_tty = tp;
-	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_WAITOK);
+	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
+	if (zst->zst_rbuf == NULL) {
+		aprint_error("%s: unable to allocate ring buffer\n",
+		    zst->zst_dev.dv_xname);
+		return;
+	}
 	zst->zst_ebuf = zst->zst_rbuf + (zstty_rbuf_size << 1);
 	/* Disable the high water mark. */
 	zst->zst_r_hiwat = 0;
@@ -577,7 +583,8 @@ zsopen(dev, flags, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+			      &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -821,7 +828,8 @@ zsioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					  &p->p_acflag);
 		if (error)
 			break;
 		zst->zst_swflags = *(int *)data;

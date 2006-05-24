@@ -1,4 +1,4 @@
-/*	$NetBSD: optpoint.c,v 1.3 2005/12/11 12:17:33 christos Exp $ */
+/*	$NetBSD: optpoint.c,v 1.3.8.1 2006/05/24 10:56:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.3 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optpoint.c,v 1.3.8.1 2006/05/24 10:56:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ static void optpoint_attach(struct device *, struct device *, void *);
 static int optpoint_intr(void *);
 static int optpoint_enable(void *);
 static void optpoint_disable(void *);
-static int optpoint_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int optpoint_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static int optpoint_initialize(void *);
 static void optpoint_send(struct optpoint_softc *, int);
 static int optpoint_recv(struct optpoint_softc *);
@@ -242,7 +242,7 @@ optpoint_disable(void *self)
 }
 
 int
-optpoint_ioctl(void *self, u_long cmd, caddr_t data, int flag, struct proc *p)
+optpoint_ioctl(void *self, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:

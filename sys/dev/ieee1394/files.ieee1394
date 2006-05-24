@@ -1,6 +1,6 @@
-#	$NetBSD: files.ieee1394,v 1.9 2005/12/11 12:22:02 christos Exp $
+#	$NetBSD: files.ieee1394,v 1.9.8.1 2006/05/24 10:57:50 yamt Exp $
 
-file	dev/ieee1394/fwohci.c	fwohci
+file	dev/ieee1394/fwohci.c		fwohci
 
 device	ieee1394if {[euihi = -1], [euilo = -1]}
 attach	ieee1394if at fwbus

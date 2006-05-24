@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_autoconf.c,v 1.2 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: obs266_autoconf.c,v 1.2.8.1 2006/05/24 10:56:47 yamt Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,12 +33,42 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.2 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.2.8.1 2006/05/24 10:56:47 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/obs266.h>
+
+#include <powerpc/ibm4xx/dcr405gp.h>
+
+
+/*
+ * Determine device configuration for a machine.
+ */
+void
+cpu_configure(void)
+{
+
+	intr_init();
+	calc_delayconst();
+
+	/* Make sure that timers run at CPU frequency */
+	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
+
+	if (config_rootfound("plb", NULL) == NULL)
+		panic("configure: mainbus not configured");
+
+	printf("biomask %x netmask %x ttymask %x\n", (u_short)imask[IPL_BIO],
+		(u_short)imask[IPL_NET], (u_short)imask[IPL_TTY]);
+
+	(void)spl0();
+
+	/*
+	 * Now allow hardware interrupts.
+	 */
+	__asm volatile ("wrteei 1");
+}
 
 void device_register(struct device *dev, void *aux)
 {

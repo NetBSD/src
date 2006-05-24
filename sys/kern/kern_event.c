@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.25 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.25.8.1 2006/05/24 10:58:40 yamt Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25.8.1 2006/05/24 10:58:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.25 2005/12/11 12:24:29 christos Exp
 #include <sys/filedesc.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 static void	kqueue_wakeup(struct kqueue *kq);
 
@@ -60,9 +61,9 @@ static int	kqueue_scan(struct file *, size_t, struct kevent *,
     const struct timespec *, struct lwp *, register_t *,
     const struct kevent_ops *);
 static int	kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
-		    struct ucred *cred, int flags);
+		    kauth_cred_t cred, int flags);
 static int	kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
-		    struct ucred *cred, int flags);
+		    kauth_cred_t cred, int flags);
 static int	kqueue_ioctl(struct file *fp, u_long com, void *data,
 		    struct lwp *l);
 static int	kqueue_fcntl(struct file *fp, u_int com, void *data,
@@ -100,11 +101,11 @@ static const struct filterops proc_filtops =
 	{ 0, filt_procattach, filt_procdetach, filt_proc };
 static const struct filterops file_filtops =
 	{ 1, filt_fileattach, NULL, NULL };
-static struct filterops timer_filtops =
+static const struct filterops timer_filtops =
 	{ 0, filt_timerattach, filt_timerdetach, filt_timer };
 
-POOL_INIT(kqueue_pool, sizeof(struct kqueue), 0, 0, 0, "kqueuepl", NULL);
-POOL_INIT(knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl", NULL);
+static POOL_INIT(kqueue_pool, sizeof(struct kqueue), 0, 0, 0, "kqueuepl", NULL);
+static POOL_INIT(knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl", NULL);
 static int	kq_ncallouts = 0;
 static int	kq_calloutmax = (4 * 1024);
 
@@ -367,9 +368,10 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if ((p->p_cred->p_ruid != curproc->p_cred->p_ruid ||
+	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curproc->p_cred) ||
 		(p->p_flag & P_SUGID))
-	    && suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+	    && kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+				 &curproc->p_acflag) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;
@@ -1067,7 +1069,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 /*ARGSUSED*/
 static int
 kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
-	struct ucred *cred, int flags)
+	kauth_cred_t cred, int flags)
 {
 
 	return (ENXIO);
@@ -1080,7 +1082,7 @@ kqueue_read(struct file *fp, off_t *offset, struct uio *uio,
 /*ARGSUSED*/
 static int
 kqueue_write(struct file *fp, off_t *offset, struct uio *uio,
-	struct ucred *cred, int flags)
+	kauth_cred_t cred, int flags)
 {
 
 	return (ENXIO);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.115 2005/12/26 15:45:48 rpaulo Exp $	*/
+/*	$NetBSD: bpf.c,v 1.115.8.1 2006/05/24 10:58:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115 2005/12/26 15:45:48 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115.8.1 2006/05/24 10:58:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.115 2005/12/26 15:45:48 rpaulo Exp $");
 #include <sys/kernel.h>
 #include <sys/poll.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/slip.h>
@@ -141,9 +142,9 @@ static void	reset_d(struct bpf_d *);
 static int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
 static int	bpf_setdlt(struct bpf_d *, u_int);
 
-static int	bpf_read(struct file *, off_t *, struct uio *, struct ucred *,
+static int	bpf_read(struct file *, off_t *, struct uio *, kauth_cred_t,
     int);
-static int	bpf_write(struct file *, off_t *, struct uio *, struct ucred *,
+static int	bpf_write(struct file *, off_t *, struct uio *, kauth_cred_t,
     int);
 static int	bpf_ioctl(struct file *, u_long, void *, struct lwp *);
 static int	bpf_poll(struct file *, int, struct lwp *);
@@ -455,7 +456,7 @@ bpf_close(struct file *fp, struct lwp *l)
  */
 static int
 bpf_read(struct file *fp, off_t *offp, struct uio *uio,
-	 struct ucred *cred, int flags)
+	 kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	int timed_out;
@@ -584,13 +585,15 @@ bpf_timed_out(void *arg)
 
 static int
 bpf_write(struct file *fp, off_t *offp, struct uio *uio,
-	  struct ucred *cred, int flags)
+	  kauth_cred_t cred, int flags)
 {
 	struct bpf_d *d = fp->f_data;
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int error, s;
 	static struct sockaddr_storage dst;
+
+	m = NULL;	/* XXX gcc */
 
 	if (d->bd_bif == 0)
 		return (ENXIO);
@@ -1700,7 +1703,9 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	if (namelen != 2)
 		return (EINVAL);
 
-	if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)))
+	if ((error = kauth_authorize_generic(l->l_proc->p_cred,
+				       KAUTH_GENERIC_ISSUSER,
+				       &l->l_proc->p_acflag)))
 		return (error);
 
 	len = (oldp != NULL) ? *oldlenp : 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.31.8.2 2006/04/01 12:07:05 yamt Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.31.8.3 2006/05/24 10:57:52 yamt Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31.8.2 2006/04/01 12:07:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31.8.3 2006/05/24 10:57:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.31.8.2 2006/04/01 12:07:05 yamt Ex
 #include <sys/file.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 
 #include <dev/ir/ir.h>
 #include <dev/ir/sir.h>
@@ -223,7 +224,8 @@ irframetopen(dev_t dev, struct tty *tp)
 	p = l->l_proc;
 	DPRINTF(("%s\n", __FUNCTION__));
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				       &p->p_acflag)) != 0)
 		return (error);
 
 	s = spltty();

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.118 2005/12/24 23:41:34 perry Exp $	*/
+/*	$NetBSD: if_de.c,v 1.118.8.1 2006/05/24 10:58:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.118 2005/12/24 23:41:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.118.8.1 2006/05/24 10:58:00 yamt Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -147,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.118 2005/12/24 23:41:34 perry Exp $");
 #include <machine/intr.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/ic/dc21040reg.h>
 #define	DEVAR_INCLUDE	"dev/pci/if_devar.h"
 #endif /* __NetBSD__ */
@@ -5436,6 +5437,7 @@ tulip_pci_match(
     id = pci_inl(pa, PCI_VENDOR_ID);
     if (PCI_VENDORID(id) != DEC_VENDORID)
 	return 0;
+
     id = PCI_CHIPID(id);
     if (id != CHIPID_21040 && id != CHIPID_21041
 	    && id != CHIPID_21140 && id != CHIPID_21142)
@@ -5578,6 +5580,10 @@ tulip_pci_probe(
 {
     struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
+    /* Don't match lmc cards */
+    if (PCI_VENDOR(pci_conf_read(pa->pa_pc, pa->pa_tag,
+	PCI_SUBSYS_ID_REG)) == PCI_VENDOR_LMC)
+	return 0;
     if (PCI_VENDORID(pa->pa_id) != DEC_VENDORID)
 	return 0;
     if (PCI_CHIPID(pa->pa_id) == CHIPID_21040

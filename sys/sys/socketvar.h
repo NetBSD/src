@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.85.8.1 2006/04/11 11:55:48 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.85.8.2 2006/05/24 10:59:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -273,8 +273,8 @@ struct knote;
 /*
  * File operations on sockets.
  */
-int	soo_read(struct file *, off_t *, struct uio *, struct ucred *, int);
-int	soo_write(struct file *, off_t *, struct uio *, struct ucred *, int);
+int	soo_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+int	soo_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 int	soo_fcntl(struct file *, u_int cmd, void *, struct lwp *);
 int	soo_ioctl(struct file *, u_long cmd, void *, struct lwp *);
 int	soo_poll(struct file *, int, struct lwp *);

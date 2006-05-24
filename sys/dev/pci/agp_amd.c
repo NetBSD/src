@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.14 2006/01/16 22:59:36 christos Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.14.6.1 2006/05/24 10:58:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.14 2006/01/16 22:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.14.6.1 2006/05/24 10:58:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,7 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 	if (error != 0) {
 		aprint_error(": can't map AGP registers\n");
 		agp_generic_detach(sc);
+		free(asc, M_AGP);
 		return error;
 	}
 

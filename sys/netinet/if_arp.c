@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.108 2005/12/24 20:45:09 perry Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.108.8.1 2006/05/24 10:59:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.108 2005/12/24 20:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.108.8.1 2006/05/24 10:59:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.108 2005/12/24 20:45:09 perry Exp $");
 #include <net/if_dl.h>
 #include <net/if_token.h>
 #include <net/if_types.h>
+#include <net/if_ether.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -122,6 +123,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.108 2005/12/24 20:45:09 perry Exp $");
 #include <net/if_fddi.h>
 #endif
 #include "token.h"
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
+#endif
 
 #define SIN(s) ((struct sockaddr_in *)s)
 #define SDL(s) ((struct sockaddr_dl *)s)
@@ -141,8 +146,6 @@ int	arpt_refresh = (5*60);	/* time left before refreshing */
 #define	rt_expire rt_rmx.rmx_expire
 #define	rt_pksent rt_rmx.rmx_pksent
 
-static	void arprequest(struct ifnet *,
-	    struct in_addr *, struct in_addr *, u_int8_t *);
 static	void arptfree(struct llinfo_arp *);
 static	void arptimer(void *);
 static	struct llinfo_arp *arplookup(struct mbuf *, struct in_addr *,
@@ -161,10 +164,10 @@ struct	callout arptimer_ch;
 
 
 /* revarp state */
-static struct	in_addr myip, srv_ip;
-static int	myip_initialized = 0;
-static int	revarp_in_progress = 0;
-static struct	ifnet *myip_ifp = NULL;
+struct	in_addr myip, srv_ip;
+int	myip_initialized = 0;
+int	revarp_in_progress = 0;
+struct	ifnet *myip_ifp = NULL;
 
 #ifdef DDB
 static void db_print_sa(const struct sockaddr *);
@@ -600,7 +603,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
  *	- arp header target ip address
  *	- arp header source ethernet address
  */
-static void
+void
 arprequest(struct ifnet *ifp,
     struct in_addr *sip, struct in_addr *tip, u_int8_t *enaddr)
 {
@@ -730,6 +733,10 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 				arprequest(ifp,
 				    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
 				    &SIN(dst)->sin_addr,
+#if NCARP > 0
+				    (rt->rt_ifp->if_type == IFT_CARP) ?
+				    LLADDR(rt->rt_ifp->if_sadl):
+#endif
 				    LLADDR(ifp->if_sadl));
 			else {
 				rt->rt_flags |= RTF_REJECT;
@@ -824,11 +831,15 @@ in_arpinput(struct mbuf *m)
 #if NBRIDGE > 0
 	struct in_ifaddr *bridge_ia = NULL;
 #endif
+#if NCARP > 0
+	u_int32_t count = 0, index = 0;
+#endif
 	struct sockaddr_dl *sdl;
 	struct sockaddr sa;
 	struct in_addr isaddr, itaddr, myaddr;
 	int op;
 	struct mbuf *mold;
+	caddr_t tha;
 	int s;
 
 	ah = mtod(m, struct arphdr *);
@@ -884,11 +895,23 @@ in_arpinput(struct mbuf *m)
 	 * or any address on the interface to use
 	 * as a dummy address in the rest of this function
 	 */
+	
 	INADDR_TO_IA(itaddr, ia);
 	while (ia != NULL) {
-		if (ia->ia_ifp == m->m_pkthdr.rcvif)
-			break;
-
+#if NCARP > 0
+		if (ia->ia_ifp->if_type == IFT_CARP &&
+		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
+		    (IFF_UP|IFF_RUNNING))) {
+			index++;
+			if (ia->ia_ifp == m->m_pkthdr.rcvif &&
+			    carp_iamatch(ia, ar_sha(ah),
+			    &count, index)) {
+				break;
+				}
+		} else
+#endif
+			    if (ia->ia_ifp == m->m_pkthdr.rcvif)
+				break;
 #if NBRIDGE > 0
 		/*
 		 * If the interface we received the packet on
@@ -1056,18 +1079,21 @@ reply:
 	arpstat.as_rcvrequest++;
 	if (in_hosteq(itaddr, myaddr)) {
 		/* I am the target */
-		if (ar_tha(ah))
-			bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah),
-			    ah->ar_hln);
+		tha = ar_tha(ah);
+		if (tha)
+			bcopy((caddr_t)ar_sha(ah), tha, ah->ar_hln);
 		bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_sha(ah), ah->ar_hln);
 	} else {
 		la = arplookup(m, &itaddr, 0, SIN_PROXY);
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
-		if (ar_tha(ah))
-			bcopy((caddr_t)ar_sha(ah), (caddr_t)ar_tha(ah),
-			    ah->ar_hln);
+		if (rt->rt_ifp->if_type == IFT_CARP &&
+		    m->m_pkthdr.rcvif->if_type != IFT_CARP)
+			goto out;
+		tha = ar_tha(ah);
+		if (tha)
+			bcopy((caddr_t)ar_sha(ah), tha, ah->ar_hln);
 		sdl = SDL(rt->rt_gateway);
 		bcopy(LLADDR(sdl), (caddr_t)ar_sha(ah), ah->ar_hln);
 	}
@@ -1244,6 +1270,7 @@ in_revarpinput(struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct arphdr *ah;
+	caddr_t tha;
 	int op;
 
 	ah = mtod(m, struct arphdr *);
@@ -1275,7 +1302,9 @@ in_revarpinput(struct mbuf *m)
 		goto out;
 	if (myip_initialized)
 		goto wake;
-	if (bcmp(ar_tha(ah), LLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
+	tha = ar_tha(ah);
+	KASSERT(tha);
+	if (bcmp(tha, LLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
 		goto out;
 	bcopy((caddr_t)ar_spa(ah), (caddr_t)&srv_ip, sizeof(srv_ip));
 	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&myip, sizeof(myip));
@@ -1297,6 +1326,7 @@ revarprequest(struct ifnet *ifp)
 	struct sockaddr sa;
 	struct mbuf *m;
 	struct arphdr *ah;
+	caddr_t tha;
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
@@ -1313,7 +1343,9 @@ revarprequest(struct ifnet *ifp)
 	ah->ar_op = htons(ARPOP_REVREQUEST);
 
 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_sha(ah), ah->ar_hln);
-	bcopy(LLADDR(ifp->if_sadl), (caddr_t)ar_tha(ah), ah->ar_hln);
+	tha = ar_tha(ah);
+	KASSERT(tha);
+	bcopy(LLADDR(ifp->if_sadl), tha, ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;

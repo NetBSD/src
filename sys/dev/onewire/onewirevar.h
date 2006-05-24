@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: onewirevar.h,v 1.2.2.3 2006/05/24 10:58:00 yamt Exp $ */
 /*	$OpenBSD: onewirevar.h,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*

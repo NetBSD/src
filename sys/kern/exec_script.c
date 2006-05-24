@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.45.8.1 2006/04/01 12:07:39 yamt Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.45.8.2 2006/05/24 10:58:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.45.8.1 2006/04/01 12:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.45.8.2 2006/05/24 10:58:40 yamt Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -184,7 +184,7 @@ check_shell:
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
 	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_ACCESS(epp->ep_vp, VREAD, l->l_proc->p_ucred, l);
+	error = VOP_ACCESS(epp->ep_vp, VREAD, l->l_proc->p_cred, l);
 	VOP_UNLOCK(epp->ep_vp, 0);
 	if (error == EACCES
 #ifdef SETUIDSCRIPTS
@@ -293,7 +293,7 @@ check_shell:
 		 */
 		if ((epp->ep_flags & EXEC_HASFD) == 0) {
 			vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(scriptvp, FREAD, p->p_ucred, l);
+			VOP_CLOSE(scriptvp, FREAD, p->p_cred, l);
 			vput(scriptvp);
 		}
 
@@ -332,7 +332,7 @@ fail:
                 (void) fdrelease(l, epp->ep_fd);
         } else if (scriptvp) {
 		vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
-		VOP_CLOSE(scriptvp, FREAD, p->p_ucred, l);
+		VOP_CLOSE(scriptvp, FREAD, p->p_cred, l);
 		vput(scriptvp);
 	}
 

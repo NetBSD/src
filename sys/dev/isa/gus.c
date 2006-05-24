@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.90.8.1 2006/04/01 12:07:05 yamt Exp $	*/
+/*	$NetBSD: gus.c,v 1.90.8.2 2006/05/24 10:57:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.90.8.1 2006/04/01 12:07:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.90.8.2 2006/05/24 10:57:52 yamt Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -825,7 +825,8 @@ gusattach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh1, ioh2, ioh3, ioh4;
 	int		iobase, i;
-	unsigned char	c,d,m;
+	unsigned char	c, m;
+	int d = -1;
 	const struct audio_hw_if *hwif;
 
 	sc = (void *) self;
@@ -892,12 +893,17 @@ gusattach(struct device *parent, struct device *self, void *aux)
 	c = ((unsigned char) gus_irq_map[ia->ia_irq[0].ir_irq]) |
 	    GUSMASK_BOTH_RQ;
 
-	if (sc->sc_recdrq == sc->sc_playdrq)
-		d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
-				GUSMASK_BOTH_RQ);
-	else
-		d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
-				gus_drq_map[sc->sc_recdrq] << 3);
+	if (sc->sc_playdrq != -1) {
+		if (sc->sc_recdrq == sc->sc_playdrq)
+			d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
+			    GUSMASK_BOTH_RQ);
+		else if (sc->sc_recdrq != -1)
+			d = (unsigned char) (gus_drq_map[sc->sc_playdrq] |
+			    gus_drq_map[sc->sc_recdrq] << 3);
+	}
+	if (d == -1)
+		printf("%s: WARNING: Cannot initialize drq\n",
+		    sc->sc_dev.dv_xname);
 
 	/*
 	 * Program the IRQ and DMA channels on the GUS.  Note that we hardwire

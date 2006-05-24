@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.200.2.2 2006/04/01 12:06:43 yamt Exp $	*/
+/*	$NetBSD: audio.c,v 1.200.2.3 2006/05/24 10:57:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.200.2.2 2006/04/01 12:06:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.200.2.3 2006/05/24 10:57:36 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -157,9 +157,11 @@ static void audio_destruct_rfilters(struct audio_softc *);
 static void audio_stream_dtor(audio_stream_t *);
 static int audio_stream_ctor(audio_stream_t *, const audio_params_t *, int);
 static void stream_filter_list_append
-	(stream_filter_list_t *, stream_filter_factory_t, const audio_params_t *);
+	(stream_filter_list_t *, stream_filter_factory_t,
+	 const audio_params_t *);
 static void stream_filter_list_prepend
-	(stream_filter_list_t *, stream_filter_factory_t, const audio_params_t *);
+	(stream_filter_list_t *, stream_filter_factory_t,
+	 const audio_params_t *);
 static void stream_filter_list_set
 	(stream_filter_list_t *, int, stream_filter_factory_t,
 	 const audio_params_t *);
@@ -306,6 +308,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	sc->hw_hdl = hdlp;
 	sc->sc_dev = parent;
 	sc->sc_opencnt = 0;
+	sc->sc_writing = sc->sc_waitcomp = 0;
 
 	error = audio_alloc_ring(sc, &sc->sc_pr, AUMODE_PLAY, AU_RING_SIZE);
 	if (error) {
@@ -658,6 +661,11 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 	audio_params_t *to_param;
 	int i, n;
 
+	while (sc->sc_writing) {
+		sc->sc_waitcomp = 1;
+		(void)tsleep(sc, 0, "audioch", 10*hz);
+	}
+
 	memset(pf, 0, sizeof(pf));
 	memset(ps, 0, sizeof(ps));
 	from_param = pp;
@@ -681,6 +689,7 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 				pf[i]->dtor(pf[i]);
 			audio_stream_dtor(&ps[i]);
 		}
+		sc->sc_waitcomp = 0;
 		return EINVAL;
 	}
 
@@ -710,6 +719,8 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 	}
 	audio_print_params("[HW]", &sc->sc_pr.s.param);
 #endif /* AUDIO_DEBUG */
+
+	sc->sc_waitcomp = 0;
 	return 0;
 }
 
@@ -860,10 +871,12 @@ stream_filter_list_set(stream_filter_list_t *list, int i,
 		       stream_filter_factory_t factory,
 		       const audio_params_t *param)
 {
+
 	if (i < 0 || i >= AUDIO_MAX_FILTERS) {
 		printf("%s: invalid index: %d\n", __func__, i);
 		return;
 	}
+
 	list->filters[i].factory = factory;
 	list->filters[i].param = *param;
 	if (list->req_size <= i)
@@ -1168,6 +1181,7 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 	rp->s.outp = rp->s.inp = rp->s.start;
 	rp->s.used = 0;
 	rp->stamp = 0;
+	rp->stamp_last = 0;
 	rp->fstamp = 0;
 	rp->drops = 0;
 	rp->pause = FALSE;
@@ -1301,7 +1315,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	if (((flags & FREAD) && (sc->sc_open & AUOPEN_READ)) ||
 	    ((flags & FWRITE) && (sc->sc_open & AUOPEN_WRITE)))
 		return EBUSY;
-	
+
 	if (hw->open != NULL) {
 		error = hw->open(sc->hw_hdl, flags);
 		if (error)
@@ -1762,7 +1776,8 @@ uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
 	int error;
 
 	this = (uio_fetcher_t *)self;
-	if (audio_stream_get_used(p) >= this->usedhigh)
+	this->last_used = audio_stream_get_used(p);
+	if (this->last_used >= this->usedhigh)
 		return 0;
 	/*
 	 * uio_fetcher ignores max_used and move the data as
@@ -1892,21 +1907,38 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		splx(s);
 
 		/*
-		 * write to the cb as much as possible
+		 * write to the sc_pustream as much as possible
 		 *
 		 * work with a temporary audio_stream_t to narrow
 		 * splaudio() enclosure
 		 */
+
+		sc->sc_writing = 1;
+
 		if (sc->sc_npfilters > 0) {
 			filter = sc->sc_pfilters[0];
 			filter->set_fetcher(filter, &ufetcher.base);
+			fetcher = &sc->sc_pfilters[sc->sc_npfilters - 1]->base;
+			cc = cb->blksize * 2;
+			error = fetcher->fetch_to(fetcher, &stream, cc);
+			if (error != 0) {
+				fetcher = &ufetcher.base;
+				cc = sc->sc_pustream->end - sc->sc_pustream->start;
+				error = fetcher->fetch_to(fetcher, sc->sc_pustream, cc);
+			}
+		} else {
+			fetcher = &ufetcher.base;
+			cc = stream.end - stream.start;
+			error = fetcher->fetch_to(fetcher, &stream, cc);
 		}
-		cc = stream.end - stream.start;
-		error = fetcher->fetch_to(fetcher, &stream, cc);
+		sc->sc_writing = 0;
+		if (sc->sc_waitcomp)
+			wakeup(sc);
+
 		s = splaudio();
 		if (sc->sc_npfilters > 0) {
-			cb->fstamp += audio_stream_get_used(sc->sc_pustream)
-				- ufetcher.last_used;
+			cb->fstamp += ufetcher.last_used
+			    - audio_stream_get_used(sc->sc_pustream);
 		}
 		cb->s.used += stream.used - used;
 		cb->s.inp = stream.inp;
@@ -1947,6 +1979,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			audio_fill_silence(&cb->s.param, einp, cc);
 		}
 	}
+
 	return error;
 }
 
@@ -2527,8 +2560,10 @@ audio_pint(void *v)
 						&null_fetcher);
 		used = audio_stream_get_used(sc->sc_pustream);
 		cc = cb->s.end - cb->s.start;
+		if (blksize * 2 < cc)
+			cc = blksize * 2;
 		fetcher->fetch_to(fetcher, &cb->s, cc);
-		cb->fstamp += audio_stream_get_used(sc->sc_pustream) - used;
+		cb->fstamp += used - audio_stream_get_used(sc->sc_pustream);
 		used = audio_stream_get_used(&cb->s);
 	}
 	if (used < blksize) {

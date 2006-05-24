@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47 2006/02/23 05:37:48 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.47.2.1 2006/05/24 10:57:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2006/02/23 05:37:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.2.1 2006/05/24 10:57:18 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1212,7 +1212,7 @@ loop:
 		fdc->sc_state = SEEKWAIT;
 		fdc->sc_nstat = 0;
 
-		fd->sc_dk.dk_seek++;
+		iostat_seek(fd->sc_dk.dk_stats);
 		disk_busy(&fd->sc_dk);
 
 		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);

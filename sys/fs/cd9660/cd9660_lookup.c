@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.9 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.9.8.1 2006/05/24 10:58:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9.8.1 2006/05/24 10:58:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.9 2005/12/11 12:24:25 christos E
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/systm.h>
+#include <sys/kauth.h>
 
 #include <fs/cd9660/iso.h>
 #include <fs/cd9660/cd9660_extern.h>
@@ -126,7 +127,7 @@ cd9660_lookup(v)
 	const char *name;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
-	struct ucred *cred = cnp->cn_cred;
+	kauth_cred_t cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 
@@ -218,6 +219,7 @@ searchloop:
 		/*
 		 * Get pointer to next entry.
 		 */
+		KASSERT(bp != NULL);
 		ep = (struct iso_directory_record *)
 			((char *)bp->b_data + entryoffsetinblock);
 

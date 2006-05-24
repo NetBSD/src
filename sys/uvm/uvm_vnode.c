@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.69.8.1 2006/03/12 09:38:56 yamt Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.69.8.2 2006/05/24 10:59:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.69.8.1 2006/03/12 09:38:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.69.8.2 2006/05/24 10:59:30 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -194,7 +194,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 			    (voff_t)pi.part->p_size;
 		}
 	} else {
-		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curlwp);
+		result = VOP_GETATTR(vp, &vattr, curproc->p_cred, curlwp);
 		if (result == 0)
 			used_vnode_size = vattr.va_size;
 	}

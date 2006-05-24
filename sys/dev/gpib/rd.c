@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.8.2.1 2006/04/01 12:06:55 yamt Exp $ */
+/*	$NetBSD: rd.c,v 1.8.2.2 2006/05/24 10:57:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.8.2.1 2006/04/01 12:06:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.8.2.2 2006/05/24 10:57:37 yamt Exp $");
 
 #include "rnd.h"
 
@@ -785,7 +785,7 @@ again:
 	    sizeof(sc->sc_ioc)-1) == sizeof(sc->sc_ioc)-1) {
 		/* Instrumentation. */
 		disk_busy(&sc->sc_dk);
-		sc->sc_dk.dk_seek++;
+		iostat_seek(sc->sc_dk.dk_stats);
 		gpibawait(sc->sc_ic);
 		return;
 	}

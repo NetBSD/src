@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.198.8.1 2006/04/01 12:06:21 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.198.8.2 2006/05/24 10:56:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198.8.1 2006/04/01 12:06:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198.8.2 2006/05/24 10:56:59 yamt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198.8.1 2006/04/01 12:06:21 yamt Exp $");
 #endif
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/kauth.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
@@ -412,8 +413,8 @@ trap(unsigned status, unsigned cause, unsigned vaddr, unsigned opc,
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : (uid_t) -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : (uid_t) -1);
 			ksi.ksi_signo = SIGKILL;
 			ksi.ksi_code = 0;
 		} else {
@@ -598,10 +599,6 @@ netintr(void)
 
 	n = netisr;
 	netisr = 0;
-
-#ifdef SOFTNET_INTR		/* XXX TEMPORARY XXX */
-	intrcnt[SOFTNET_INTR]++;
-#endif
 
 #include <net/netisr_dispatch.h>
 

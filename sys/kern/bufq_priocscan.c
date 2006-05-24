@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.7 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.7.8.1 2006/05/24 10:58:40 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.7 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.7.8.1 2006/05/24 10:58:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ struct cscan_queue {
 	daddr_t cq_lastrawblkno;	/* b_rawblkno of the last request */
 };
 
-static int inline cscan_empty(const struct cscan_queue *);
+static inline int cscan_empty(const struct cscan_queue *);
 static void cscan_put(struct cscan_queue *, struct buf *, int);
 static struct buf *cscan_get(struct cscan_queue *, int);
 static void cscan_init(struct cscan_queue *);

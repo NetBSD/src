@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.3.8.1 2006/04/11 11:53:44 yamt Exp $	*/
+/*	$NetBSD: cons.c,v 1.3.8.2 2006/05/24 10:57:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -180,7 +180,6 @@ void
 vgacninit(struct consdev *cp)
 {
 
-	vga_reset((u_char *)cp->address);
 	vga_init((u_char *)cp->address);
 	kbdreset();
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.280.2.2 2006/04/01 12:06:18 yamt Exp $
+#	$NetBSD: INSTALL,v 1.280.2.3 2006/05/24 10:56:51 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -183,7 +183,7 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls
 #options 	WSDISPLAY_COMPAT_USL            # VT handling
 #options 	WSDISPLAY_COMPAT_RAWKBD         # can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -398,6 +398,7 @@ aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
 cac*	at eisa? slot ?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+ciss*	at pci? dev ? function ?	# HP Smart Array controllers
 icp*	at pci? dev ? function ?	# ICP-Vortex GDT & Intel RAID
 mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 mlx*	at eisa? slot ?			# Mylex DAC960 & DEC SWXCR family

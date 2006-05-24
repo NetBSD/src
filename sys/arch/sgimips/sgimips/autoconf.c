@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27.2.1 2006/04/01 12:06:28 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.2.2 2006/05/24 10:57:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.2.1 2006/04/01 12:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.2.2 2006/05/24 10:57:11 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.2.1 2006/04/01 12:06:28 yamt Exp $
 #include <machine/sysconf.h>
 #include <machine/machtype.h>
 #include <machine/autoconf.h>
+
+#include <dev/pci/pcivar.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -166,14 +168,39 @@ cpu_rootconf()
 }
 
 /*
- * Try to determine the boot device.
+ * Try to determine the boot device and set up some device properties
+ * to handle machine depedent quirks.
  */
+
+#define BUILTIN_AHC_P(pa)	\
+    (((pa)->pa_bus == 0 && (pa)->pa_device == 1 && (pa)->pa_function == 0) || \
+     ((pa)->pa_bus == 0 && (pa)->pa_device == 2 && (pa)->pa_function == 0))
+
 void
 device_register(struct device *dev, void *aux)
 {
 	static int found, initted, scsiboot, netboot;
 	struct device *parent = device_parent(dev);
 
+	if (mach_type == MACH_SGI_IP32 &&
+	    parent != NULL && device_is_a(parent, "pci")) {
+		struct pci_attach_args *pa = aux;
+
+		if (BUILTIN_AHC_P(pa)) {
+			prop_bool_t usetd = prop_bool_create(TRUE);
+			KASSERT(usetd != NULL);
+
+			if (prop_dictionary_set(device_properties(dev),
+						"use-target-defaults",
+						usetd) == FALSE) {
+				printf("WARNING: unable to set"
+				    "use-target-defaults property for %s\n",
+				    dev->dv_xname);
+			}
+			prop_object_release(usetd);
+		}
+	}
+		
 	if (found)
 		return;
 

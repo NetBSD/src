@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.18 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.18.8.1 2006/05/24 10:58:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -105,7 +105,7 @@ int cd9660_unmount(struct mount *, int, struct lwp *);
 int cd9660_root(struct mount *, struct vnode **);
 int cd9660_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 int cd9660_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int cd9660_sync(struct mount *, int, struct ucred *, struct lwp *);
+int cd9660_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int cd9660_vget(struct mount *, ino_t, struct vnode **);
 int cd9660_fhtovp(struct mount *, struct fid *, struct vnode **);
 int cd9660_vptofh(struct vnode *, struct fid *);

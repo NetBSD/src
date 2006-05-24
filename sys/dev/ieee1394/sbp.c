@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.5.2.1 2006/04/01 12:07:05 yamt Exp $	*/
+/*	$NetBSD: sbp.c,v 1.5.2.2 2006/05/24 10:57:51 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -964,12 +964,12 @@ SBP_DEBUG(0)
 	if (!alive)
 		printf("not alive\n");
 END_DEBUG
+	microtime(&sbp->last_busreset);
+
 	if (!alive)
 		return;
 
 	SBP_BUS_FREEZE(sbp);
-
-	microtime(&sbp->last_busreset);
 }
 
 static void
@@ -2130,10 +2130,8 @@ END_DEBUG
 				/*maxsize*/0x100000, /*nsegments*/SBP_IND_MAX,
 				/*maxsegsz*/SBP_SEG_MAX,
 				/*flags*/BUS_DMA_ALLOCNOW,
-#if defined(__FreeBSD__) && __FreeBSD_version >= 501102
 				/*lockfunc*/busdma_lock_mutex,
 				/*lockarg*/&Giant,
-#endif
 				&sbp->dmat);
 	if (error != 0) {
 		printf("sbp_attach: Could not allocate DMA tag "
@@ -2332,10 +2330,18 @@ END_DEBUG
 static void
 sbp_scsipi_detach_sdev(struct sbp_dev *sdev)
 {
-	struct sbp_target *target = sdev->target;
-	struct sbp_softc *sbp = target->sbp;
+	struct sbp_target *target;
+	struct sbp_softc *sbp;
+
 	if (sdev == NULL)
 		return;
+
+	target = sdev->target;
+	if (target == NULL)
+		return;
+
+	sbp = target->sbp;
+
 	if (sdev->status == SBP_DEV_DEAD)
 		return;
 	if (sdev->status == SBP_DEV_RESET)
@@ -2506,7 +2512,7 @@ END_DEBUG
 SBP_DEBUG(1)
 			printf("%s:%d:%d:func_code 0x%04x: "
 				"Invalid target (target needed)\n",
-				device_get_nameunit(sbp->fd.dev),
+				sbp ? device_get_nameunit(sbp->fd.dev) : "???",
 				SCSI_XFER_TARGET(sxfer), SCSI_XFER_LUN(sxfer),
 				SCSI_XFER_FUNCCODE(sxfer));
 END_DEBUG

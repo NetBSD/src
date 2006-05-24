@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.32 2005/12/11 12:20:12 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.32.8.1 2006/05/24 10:57:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32.8.1 2006/05/24 10:57:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32 2005/12/11 12:20:12 christos 
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
 #include <sys/ioctl.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -185,7 +186,7 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 	sigframe.info.lsi_signo = sig;
 	sigframe.info.lsi_code = LINUX_SI_USER;
 	sigframe.info.lsi_pid = p->p_pid;
-	sigframe.info.lsi_uid = p->p_ucred->cr_uid;	/* Use real uid here? */
+	sigframe.info.lsi_uid = kauth_cred_geteuid(p->p_cred);	/* Use real uid here? */
 
 	if (copyout((caddr_t)&sigframe, (caddr_t)sfp, fsize) != 0) {
 #ifdef DEBUG

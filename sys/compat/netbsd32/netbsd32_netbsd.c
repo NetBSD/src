@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.100.2.1 2006/04/01 12:06:41 yamt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.100.2.2 2006/05/24 10:57:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.2.1 2006/04/01 12:06:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.2.2 2006/05/24 10:57:31 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.100.2.1 2006/04/01 12:06:41 ya
 #include <sys/filedesc.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -500,7 +501,7 @@ netbsd32_accept(l, v, retval)
 
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(name, struct sockaddr);
-	NETBSD32TOP_UAP(anamelen, int);
+	NETBSD32TOP_UAP(anamelen, socklen_t);
 	return (sys_accept(l, &ua, retval));
 }
 
@@ -519,7 +520,7 @@ netbsd32_getpeername(l, v, retval)
 
 	NETBSD32TO64_UAP(fdes);
 	NETBSD32TOP_UAP(asa, struct sockaddr);
-	NETBSD32TOP_UAP(alen, int);
+	NETBSD32TOP_UAP(alen, socklen_t);
 /* NB: do the protocol specific sockaddrs need to be converted? */
 	return (sys_getpeername(l, &ua, retval));
 }
@@ -539,7 +540,7 @@ netbsd32_getsockname(l, v, retval)
 
 	NETBSD32TO64_UAP(fdes);
 	NETBSD32TOP_UAP(asa, struct sockaddr);
-	NETBSD32TOP_UAP(alen, int);
+	NETBSD32TOP_UAP(alen, socklen_t);
 	return (sys_getsockname(l, &ua, retval));
 }
 
@@ -967,21 +968,25 @@ netbsd32_getgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
-	struct pcred *pc = l->l_proc->p_cred;
+	kauth_cred_t pc = l->l_proc->p_cred;
 	int ngrp;
 	int error;
+	gid_t *grbuf;
 
 	ngrp = SCARG(uap, gidsetsize);
 	if (ngrp == 0) {
-		*retval = pc->pc_ucred->cr_ngroups;
+		*retval = kauth_cred_ngroups(pc);
 		return (0);
 	}
-	if (ngrp < pc->pc_ucred->cr_ngroups)
+	if (ngrp < kauth_cred_ngroups(pc))
 		return (EINVAL);
-	ngrp = pc->pc_ucred->cr_ngroups;
+	ngrp = kauth_cred_ngroups(pc);
 	/* Should convert gid_t to netbsd32_gid_t, but they're the same */
-	error = copyout((caddr_t)pc->pc_ucred->cr_groups,
-	    (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)), ngrp * sizeof(gid_t));
+	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
+	kauth_cred_getgroups(pc, grbuf, ngrp);
+	error = copyout(grbuf, (caddr_t)NETBSD32PTR64(SCARG(uap, gidset)),
+			ngrp * sizeof(*grbuf));
+	free(grbuf, M_TEMP);
 	if (error)
 		return (error);
 	*retval = ngrp;
@@ -1297,7 +1302,7 @@ netbsd32_getsockopt(l, v, retval)
 	NETBSD32TO64_UAP(level);
 	NETBSD32TO64_UAP(name);
 	NETBSD32TOP_UAP(val, void);
-	NETBSD32TOP_UAP(avalsize, int);
+	NETBSD32TOP_UAP(avalsize, socklen_t);
 	return (sys_getsockopt(l, &ua, retval));
 }
 
@@ -2243,22 +2248,6 @@ netbsd32_fhopen(l, v, retval)
 	NETBSD32TOP_UAP(fhp, fhandle_t);
 	NETBSD32TO64_UAP(flags);
 	return (sys_fhopen(l, &ua, retval));
-}
-
-int netbsd32_fhstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct netbsd32_fhstat_args /* {
-		syscallarg(const netbsd32_fhandlep_t) fhp;
-		syscallarg(struct stat *) sb;
-	} */ *uap = v;
-	struct sys_fhstat_args ua;
-
-	NETBSD32TOP_UAP(fhp, const fhandle_t);
-	NETBSD32TOP_UAP(sb, struct stat);
-	return (sys_fhstat(l, &ua, retval));
 }
 
 /* virtual memory syscalls */

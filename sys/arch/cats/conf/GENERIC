@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102.2.1 2006/04/01 12:06:11 yamt Exp $
+# $NetBSD: GENERIC,v 1.102.2.2 2006/05/24 10:56:39 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -188,10 +188,6 @@ options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/wscons/wskbdmap_mfii.h for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 
 # Development and Debugging options
 

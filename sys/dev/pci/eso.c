@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.41 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: eso.c,v 1.41.8.1 2006/05/24 10:58:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.41 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.41.8.1 2006/05/24 10:58:00 yamt Exp $");
 
 #include "mpu.h"
 
@@ -1151,8 +1151,7 @@ eso_get_port(void *hdl, mixer_ctrl_t *cp)
 
 	case ESO_MASTER_MUTE:
 		/* Reload from mixer after hardware volume control use. */
-		if (sc->sc_gain[cp->dev][ESO_LEFT] == (uint8_t)~0)
-			eso_reload_master_vol(sc);
+		eso_reload_master_vol(sc);
 		cp->un.ord = sc->sc_mvmute;
 		break;
 

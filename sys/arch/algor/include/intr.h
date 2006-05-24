@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2001/06/15 04:01:40 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.58.1 2006/05/24 10:56:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -122,54 +122,7 @@ struct algor_intrhand {
 	const void *ih_irqmap;
 };
 
-#define	setsoft(x)							\
-do {									\
-	_setsoftintr(ipl_si_to_sr[(x) - IPL_SOFT]);			\
-} while (0)
-
-struct algor_soft_intrhand {
-	TAILQ_ENTRY(algor_soft_intrhand)
-		sih_q;
-	struct algor_soft_intr *sih_intrhead;
-	void	(*sih_fn)(void *);
-	void	*sih_arg;
-	int	sih_pending;
-};
-
-struct algor_soft_intr {
-	TAILQ_HEAD(, algor_soft_intrhand)
-		softintr_q;
-	struct evcnt softintr_evcnt;
-	struct simplelock softintr_slock;
-	unsigned long softintr_ipl;
-};
-
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_disestablish(void *);
-void	softintr_init(void);
-void	softintr_dispatch(void);
-
-#define	softintr_schedule(arg)						\
-do {									\
-	struct algor_soft_intrhand *__sih = (arg);			\
-	struct algor_soft_intr *__si = __sih->sih_intrhead;		\
-	int __s;							\
-									\
-	__s = splhigh();						\
-	simple_lock(&__si->softintr_slock);				\
-	if (__sih->sih_pending == 0) {					\
-		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
-		__sih->sih_pending = 1;					\
-		setsoft(__si->softintr_ipl);				\
-	}								\
-	simple_unlock(&__si->softintr_slock);				\
-	splx(__s);							\
-} while (0)
-
-/* XXX For legacy software interrupts. */
-extern struct algor_soft_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
+#include <mips/softintr.h>
 
 extern struct evcnt mips_int5_evcnt;
 

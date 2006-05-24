@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.14 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: varargs.h,v 1.14.8.1 2006/05/24 10:57:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,6 @@
 #define	va_dcl		long __builtin_va_alist; __va_ellipsis
 
 #undef va_start
-#define	va_start(ap) \
-	((ap) = (va_list)&__builtin_va_alist)
+#define	va_start(ap)	((ap) = (va_list)&__builtin_va_alist)
 
 #endif /* !_PC532_VARARGS_H_ */

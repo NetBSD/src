@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.55 2006/02/20 16:50:37 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.55.2.1 2006/05/24 10:58:13 yamt Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.55 2006/02/20 16:50:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.55.2.1 2006/05/24 10:58:13 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -464,18 +464,18 @@ xi_get(sc)
 	recvcount += pktlen;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
+	if (m == NULL)
 		return (recvcount);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = pktlen;
 	len = MHLEN;
-	top = 0;
+	top = NULL;
 	mp = &top;
 
 	while (pktlen > 0) {
 		if (top) {
 			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
+			if (m == NULL) {
 				m_freem(top);
 				return (recvcount);
 			}
@@ -490,7 +490,7 @@ xi_get(sc)
 			}
 			len = MCLBYTES;
 		}
-		if (!top) {
+		if (top == NULL) {
 			caddr_t newdata = (caddr_t)ALIGN(m->m_data +
 			    sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
@@ -513,6 +513,9 @@ xi_get(sc)
 
 	/* Skip Rx packet. */
 	bus_space_write_2(sc->sc_bst, sc->sc_bsh, DO0, DO_SKIP_RX_PKT);
+
+	if (top == NULL)
+		return recvcount;
 
 	/* Trim the CRC off the end of the packet. */
 	m_adj(top, -ETHER_CRC_LEN);

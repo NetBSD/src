@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_timer.c,v 1.10 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: llc_timer.c,v 1.10.8.1 2006/05/24 10:59:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_timer.c,v 1.10 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_timer.c,v 1.10.8.1 2006/05/24 10:59:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,8 +180,8 @@ llc_timer()
 				 * timers are running any more.
 				 */
 				if (llc_anytimersup(linkp) == 0) {
-					llc_dellink(linkp);
 					LLC_STOPTIMER(linkp,AGE);
+					llc_dellink(linkp);
 					goto gone;
 				} else {
 					LLC_STARTTIMER(linkp,AGE);

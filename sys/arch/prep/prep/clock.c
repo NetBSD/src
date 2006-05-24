@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.13.8.1 2006/05/24 10:57:10 yamt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.8.1 2006/05/24 10:57:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,12 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2005/12/24 22:45:36 perry Exp $");
 
 #define	MINYEAR	1990
 
-void decr_intr __P((struct clockframe *));
+void decr_intr(struct clockframe *);
 
 u_long ticks_per_sec;
 u_long ns_per_tick;
 static long ticks_per_intr;
-static volatile u_long lasttb;
 
 struct device *clockdev;
 const struct clockfns *clockfns;
@@ -61,8 +60,7 @@ const struct clockfns *clockfns;
 static todr_chip_handle_t todr_handle;
 
 void
-todr_attach(handle)
-	todr_chip_handle_t handle;
+todr_attach(todr_chip_handle_t handle)
 {
 
 	if (todr_handle)
@@ -76,15 +74,16 @@ todr_attach(handle)
  * are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
+	struct cpu_info * const ci = curcpu();
 
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
 	if ((mfpvr() >> 16) == MPC601)
-		__asm volatile ("mfspr %0,%1" : "=r"(lasttb) : "n"(SPR_RTCL_R));
+		__asm volatile ("mfspr %0,%1" : "=r"(ci->ci_lasttb) : "n"(SPR_RTCL_R));
 	else
-		__asm volatile ("mftb %0" : "=r"(lasttb));
+		__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 }
 
@@ -93,8 +92,7 @@ cpu_initclocks()
  * from a filesystem.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int badbase, waszero;
 
@@ -143,7 +141,7 @@ inittodr(base)
  * to wrap the TODR around.
  */
 void
-resettodr()
+resettodr(void)
 {
 
 	if (time.tv_sec == 0)
@@ -159,23 +157,21 @@ resettodr()
  * but that would be a drag.
  */
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 
 	/* Nothing we can do */
 }
 
 void
-decr_intr(frame)
-	struct clockframe *frame;
+decr_intr(struct clockframe *frame)
 {
+	struct cpu_info * const ci = curcpu();
 	int msr;
 	int pri;
 	u_long tb;
 	long ticks;
 	int nticks;
-	extern long intrcnt[];
 
 	/*
 	 * Check whether we are initialized.
@@ -193,14 +189,14 @@ decr_intr(frame)
 	__asm volatile ("mtdec %0" :: "r"(ticks));
 
 	uvmexp.intrs++;
-	intrcnt[CNT_CLOCK]++;
+	ci->ci_ev_clock.ev_count++;
 
 	pri = splclock();
 	if (pri & SPL_CLOCK) {
-		tickspending += nticks;
+		ci->ci_tickspending += nticks;
 	} else {
-		nticks += tickspending;
-		tickspending = 0;
+		nticks += ci->ci_tickspending;
+		ci->ci_tickspending = 0;
 
 		/*
 		 * lasttb is used during microtime. Set it to the virtual
@@ -211,7 +207,7 @@ decr_intr(frame)
 		} else {
 			__asm volatile ("mftb %0" : "=r"(tb));
 		}
-		lasttb = tb + ticks - ticks_per_intr;
+		ci->ci_lasttb = tb + ticks - ticks_per_intr;
 
 		/*
 		 * Reenable interrupts
@@ -236,8 +232,7 @@ decr_intr(frame)
  * Fill in *tvp with current time with microsecond resolution.
  */
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	u_long tb;
 	u_long ticks;
@@ -249,9 +244,9 @@ microtime(tvp)
 		__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
 	else
 		__asm volatile ("mftb %0" : "=r"(tb));
-	ticks = (tb - lasttb) * ns_per_tick;
+	ticks = (tb - curcpu()->ci_lasttb) * ns_per_tick;
 	*tvp = time;
-	__asm volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
 	while (tvp->tv_usec >= 1000000) {
@@ -264,8 +259,7 @@ microtime(tvp)
  * Wait for about n microseconds (at least!).
  */
 void
-delay(n)
-	unsigned int n;
+delay(unsigned int n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;

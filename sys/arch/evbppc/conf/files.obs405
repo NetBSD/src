@@ -1,9 +1,8 @@
-#	$NetBSD: files.obs405,v 1.14.8.1 2006/04/01 12:06:12 yamt Exp $
+#	$NetBSD: files.obs405,v 1.14.8.2 2006/05/24 10:56:47 yamt Exp $
 #
 # obs405-specific configuration info
 
 file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
-file	arch/powerpc/ibm4xx/ibm4xxgpx_autoconf.c
 file	arch/powerpc/ibm4xx/ibm40x_machdep.c
 file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
 file	arch/powerpc/ibm4xx/intr.c

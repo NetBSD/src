@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.40.2.1 2006/03/13 09:07:02 yamt Exp $ */
+/* $NetBSD: sci.c,v 1.40.2.2 2006/05/24 10:57:11 yamt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.40.2.1 2006/03/13 09:07:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.40.2.2 2006/05/24 10:57:11 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.40.2.1 2006/03/13 09:07:02 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -666,7 +667,7 @@ sciopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -842,7 +843,7 @@ sciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

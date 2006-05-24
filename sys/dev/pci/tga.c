@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.61 2005/12/11 12:22:50 christos Exp $ */
+/* $NetBSD: tga.c,v 1.61.8.1 2006/05/24 10:58:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.61 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.61.8.1 2006/05/24 10:58:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,8 @@ unsigned tga_getdotclock(struct tga_devconfig *dc);
 
 struct tga_devconfig tga_console_dc;
 
-int tga_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-paddr_t tga_mmap(void *, off_t, int);
+int tga_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+paddr_t tga_mmap(void *, void *, off_t, int);
 static void tga_copyrows(void *, int, int, int);
 static void tga_copycols(void *, int, int, int, int);
 static int tga_alloc_screen(void *, const struct wsscreen_descr *,
@@ -180,6 +180,7 @@ tgamatch(parent, match, aux)
 		return 0;
 	}
 
+#if defined(__alpha__) || defined(arc)
 	/* short-circuit the following test, as we
 	 * already have the memory mapped and hence
 	 * cannot perform it---and we are the console
@@ -187,7 +188,7 @@ tgamatch(parent, match, aux)
 	 */
 	if (pa->pa_tag == tga_console_dc.dc_pcitag)
 		return 10;
-
+#endif
 	return tga_matchcommon(pa->pa_memt, pa->pa_pc, pa->pa_tag);
 }
 
@@ -528,8 +529,9 @@ tga_config_interrupts (d)
 }
 
 int
-tga_ioctl(v, cmd, data, flag, l)
+tga_ioctl(v, vs, cmd, data, flag, l)
 	void *v;
+	void *vs;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -662,8 +664,9 @@ tga_intr(v)
 }
 
 paddr_t
-tga_mmap(v, offset, prot)
+tga_mmap(v, vs, offset, prot)
 	void *v;
+	void *vs;
 	off_t offset;
 	int prot;
 {

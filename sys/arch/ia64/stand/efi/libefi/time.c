@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.2.2 2006/04/11 11:53:42 yamt Exp $	*/
+/*	$NetBSD: time.c,v 1.1.2.3 2006/05/24 10:56:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -41,7 +41,8 @@
  */
 
 #include <sys/cdefs.h>
-
+/* __FBSDID("$FreeBSD: src/sys/boot/efi/libefi/time.c,v 1.4 2003/04/03 21:36:29 obrien Exp $");
+ */
 #include <efi.h>
 #include <efilib.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.34 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: armreg.h,v 1.34.8.1 2006/05/24 10:56:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -118,6 +118,7 @@
 #define CPU_ID_DEC		0x44000000 /* 'D' */
 #define CPU_ID_INTEL		0x69000000 /* 'i' */
 #define	CPU_ID_TI		0x54000000 /* 'T' */
+#define	CPU_ID_FARADAY		0x66000000 /* 'f' */
 
 /* How to decide what format the CPUID is in. */
 #define CPU_ID_ISOLD(x)		(((x) & 0x0000f000) == 0x00000000)
@@ -197,6 +198,7 @@
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
+#define	CPU_ID_FA526		0x66015260
 #define CPU_ID_SA1110		0x6901b110
 #define CPU_ID_IXP1200		0x6901c120
 #define CPU_ID_80200		0x69052000

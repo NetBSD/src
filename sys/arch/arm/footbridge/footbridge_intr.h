@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.7 2006/01/01 14:24:33 yamt Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.7.6.1 2006/05/24 10:56:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -106,6 +106,9 @@ footbridge_splx(int newspl)
 	extern void footbridge_do_pending(void);
 	int oldirqstate, hwpend;
 
+	/* Don't let the compiler re-order this code with preceding code */
+	__insn_barrier();
+
 	current_spl_level = newspl;
 
 	hwpend = (footbridge_ipending & ICU_INT_HWMASK) & ~newspl;
@@ -129,6 +132,9 @@ footbridge_splraise(int ipl)
 
 	old = current_spl_level;
 	current_spl_level |= footbridge_imask[ipl];
+
+	/* Don't let the compiler re-order this code with subsequent code */
+	__insn_barrier();
 
 	return (old);
 }

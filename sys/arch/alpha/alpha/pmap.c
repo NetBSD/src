@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.213.8.1 2006/04/11 11:53:25 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.213.8.2 2006/05/24 10:56:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213.8.1 2006/04/11 11:53:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213.8.2 2006/05/24 10:56:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2812,8 +2812,19 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 	if (type == ALPHA_MMCSR_FOW) {
 		if (!(*pte & (user ? PG_UWE : PG_UWE | PG_KWE)))
 			panic("pmap_emulate_reference: write but unwritable");
+#if 0
 		if (!(*pte & PG_FOW))
 			panic("pmap_emulate_reference: write but not FOW");
+#else
+		if (!(*pte & PG_FOW)) {
+			printf("pmap_emulate_reference: write but not FOW");
+			printf("va=%p, pte=%lx\n", (void *)v, (long)*pte);
+			ALPHA_TBIS(v);
+			if (didlock)
+				PMAP_UNLOCK(pmap);
+			return 0;
+		}
+#endif
 	} else {
 		if (!(*pte & (user ? PG_URE : PG_URE | PG_KRE)))
 			panic("pmap_emulate_reference: !write but unreadable");

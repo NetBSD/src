@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.6 2005/12/11 12:19:47 christos Exp $	*/
+/*	$NetBSD: i8259.c,v 1.6.8.1 2006/05/24 10:57:19 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.6 2005/12/11 12:19:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.6.8.1 2006/05/24 10:57:19 yamt Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.6 2005/12/11 12:19:47 christos Exp $");
 #include <sys/proc.h>
 
 #include <dev/isa/isareg.h>
+#include <dev/ic/i8259reg.h>
 
 #include <machine/pio.h>
 #include <machine/cpufunc.h>  
@@ -126,43 +127,64 @@ i8259_default_setup(void)
 #if NMCA > 0
 	/* level-triggered interrupts on MCA PS/2s */
 	if (MCA_system)
-		outb(IO_ICU1, 0x19);	/* reset; program device, four bytes */
+		/* reset; program device, level-triggered, four bytes */
+		outb(IO_ICU1 + PIC_ICW1, ICW1_SELECT | ICW1_LTIM | ICW1_IC4);
 	else
 #endif
-		outb(IO_ICU1, 0x11);	/* reset; program device, four bytes */
+		/* reset; program device, four bytes */
+		outb(IO_ICU1 + PIC_ICW1, ICW1_SELECT | ICW1_IC4);
 
-	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
-	outb(IO_ICU1+1, 1 << IRQ_SLAVE); /* slave on line 2 */
+	/* starting at this vector index */
+	outb(IO_ICU1 + PIC_ICW2, ICU_OFFSET);
+	/* slave on line 2 */
+	outb(IO_ICU1 + PIC_ICW3, ICW3_CASCADE(IRQ_SLAVE));
+
 #ifdef AUTO_EOI_1
-	outb(IO_ICU1+1, 2 | 1);		/* auto EOI, 8086 mode */
+	/* auto EOI, 8086 mode */
+	outb(IO_ICU1 + PIC_ICW4, ICW4_AEOI | ICW4_8086);
 #else
-	outb(IO_ICU1+1, 1);		/* 8086 mode */
+	/* 8086 mode */
+	outb(IO_ICU1 + PIC_ICW4, ICW4_8086);
 #endif
-	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x68);		/* special mask mode (if available) */
-	outb(IO_ICU1, 0x0a);		/* Read IRR by default. */
+	/* leave interrupts masked */
+	outb(IO_ICU1 + PIC_OCW1, 0xff);
+	/* special mask mode (if available) */
+	outb(IO_ICU1 + PIC_OCW3, OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
+	/* Read IRR by default. */
+	outb(IO_ICU1 + PIC_OCW3, OCW3_SELECT | OCW3_RR);
 #ifdef REORDER_IRQ
-	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
+	/* pri order 3-7, 0-2 (com2 first) */
+	outb(IO_ICU1 + PIC_OCW2, OCW2_SELECT | OCW2_R | OCW2_SL |
+	    OCW2_ILS(3 - 1));
 #endif
 
 #if NMCA > 0
 	/* level-triggered interrupts on MCA PS/2s */
 	if (MCA_system)
-		outb(IO_ICU2, 0x19);	/* reset; program device, four bytes */
+		/* reset; program device, level-triggered, four bytes */
+		outb(IO_ICU2 + PIC_ICW1, ICW1_SELECT | ICW1_LTIM | ICW1_IC4);
 	else
 #endif	
-		outb(IO_ICU2, 0x11);	/* reset; program device, four bytes */
+		/* reset; program device, four bytes */
+		outb(IO_ICU2 + PIC_ICW1, ICW1_SELECT | ICW1_IC4);
 
-	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
-	outb(IO_ICU2+1, IRQ_SLAVE);
+	/* staring at this vector index */
+	outb(IO_ICU2 + PIC_ICW2, ICU_OFFSET + 8);
+	/* slave connected to line 2 of master */
+	outb(IO_ICU2 + PIC_ICW3, ICW3_SIC(IRQ_SLAVE));
 #ifdef AUTO_EOI_2
-	outb(IO_ICU2+1, 2 | 1);		/* auto EOI, 8086 mode */
+	/* auto EOI, 8086 mode */
+	outb(IO_ICU2 + PIC_ICW4, ICW4_AEOI | ICW4_8086);
 #else
-	outb(IO_ICU2+1, 1);		/* 8086 mode */
+	/* 8086 mode */
+	outb(IO_ICU2 + PIC_ICW4, ICW4_8086);
 #endif
-	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU2, 0x68);		/* special mask mode (if available) */
-	outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
+	/* leave interrupts masked */
+	outb(IO_ICU2 + PIC_OCW1, 0xff);
+	/* special mask mode (if available) */
+	outb(IO_ICU2 + PIC_OCW3, OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
+	/* Read IRR by default. */
+	outb(IO_ICU2 + PIC_OCW3, OCW3_SELECT | OCW3_RR);
 }
 
 static void
@@ -176,10 +198,10 @@ i8259_hwmask(struct pic *pic, int pin)
 	delay(10);
 #endif
 	if (pin > 7) {
-		port = IO_ICU2 + 1;
+		port = IO_ICU2 + PIC_OCW1;
 		byte = i8259_imen >> 8;
 	} else {
-		port = IO_ICU1 + 1;
+		port = IO_ICU1 + PIC_OCW1;
 		byte = i8259_imen & 0xff;
 	}
 	outb(port, byte);
@@ -197,10 +219,10 @@ i8259_hwunmask(struct pic *pic, int pin)
 	delay(10);
 #endif
 	if (pin > 7) {
-		port = IO_ICU2 + 1;
+		port = IO_ICU2 + PIC_OCW1;
 		byte = i8259_imen >> 8;
 	} else {
-		port = IO_ICU1 + 1;
+		port = IO_ICU1 + PIC_OCW1;
 		byte = i8259_imen & 0xff;
 	}
 	outb(port, byte);
@@ -221,8 +243,8 @@ i8259_reinit_irqs(void)
 		irqs |= 1 << IRQ_SLAVE;
 	i8259_imen = ~irqs;
 
-	outb(IO_ICU1 + 1, i8259_imen);
-	outb(IO_ICU2 + 1, i8259_imen >> 8);
+	outb(IO_ICU1 + PIC_OCW1, i8259_imen);
+	outb(IO_ICU2 + PIC_OCW1, i8259_imen >> 8);
 }
 
 static void
@@ -245,7 +267,7 @@ i8259_setmask(unsigned mask)
 	unsigned old = i8259_imen;
 
 	i8259_imen = mask;
-	outb(IO_ICU1 + 1, i8259_imen);
-	outb(IO_ICU2 + 1, i8259_imen >> 8);
+	outb(IO_ICU1 + PIC_OCW1, i8259_imen);
+	outb(IO_ICU2 + PIC_OCW1, i8259_imen >> 8);
 	return old;
 }

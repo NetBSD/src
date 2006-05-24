@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.114.8.1 2006/04/01 12:07:42 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.114.8.2 2006/05/24 10:58:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -279,7 +279,12 @@ struct ifnet {				/* and the entries */
 	struct pfil_head if_pfil;	/* filtering point */
 	uint64_t if_capabilities;	/* interface capabilities */
 	uint64_t if_capenable;		/* capabilities enabled */
-
+	union {
+		caddr_t		carp_s;	/* carp structure (used by !carp ifs) */
+		struct ifnet	*carp_d;/* ptr to carpdev (used by carp ifs) */
+	} if_carp_ptr;
+#define if_carp		if_carp_ptr.carp_s
+#define if_carpdev	if_carp_ptr.carp_d
 	/*
 	 * These are pre-computed based on an interfaces enabled
 	 * capabilities, for speed elsewhere.
@@ -775,6 +780,8 @@ extern struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
 extern struct ifnet *lo0ifp;
 extern size_t if_indexlim;
+
+void    ether_input(struct ifnet *, struct mbuf *);
 
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);

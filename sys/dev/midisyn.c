@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.16 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.16.8.1 2006/05/24 10:57:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.16 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.16.8.1 2006/05/24 10:57:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -386,8 +386,6 @@ midisyn_finetune(u_int32_t base_freq, int bend, int range, int vibrato_cents)
 	}
 
 	semitones = bend / 100;
-	if (semitones > 99)
-		semitones = 99;
 	cents = bend % 100;
 
 	amount = semitone_tuning[semitones] * multiplier * cent_tuning[cents]

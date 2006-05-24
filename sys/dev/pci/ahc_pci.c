@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.53 2005/12/24 20:27:42 perry Exp $
+ * $Id: ahc_pci.c,v 1.53.8.1 2006/05/24 10:58:00 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.53 2005/12/24 20:27:42 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.53.8.1 2006/05/24 10:58:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1039,9 +1039,27 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 		/* See if someone else set us up already */
 		if ((ahc->flags & AHC_NO_BIOS_INIT) == 0
 		 && scsiseq != 0) {
+			prop_bool_t usetd;
+
 			printf("%s: Using left over BIOS settings\n",
 				ahc_name(ahc));
 			ahc->flags &= ~AHC_USEDEFAULTS;
+			/*
+			 * Ignore target device settings and use default
+			 * if BIOS initializes chip's SRAM with some
+			 * conservative settings (async, no tagged
+			 * queuing etc.) and machine dependent device
+			 * property is set.
+			 */ 
+			usetd = prop_dictionary_get(
+					device_properties(&ahc->sc_dev),
+					"use-target-defaults");
+			if (usetd != NULL) {
+				KASSERT(prop_object_type(usetd) ==
+					PROP_TYPE_BOOL);
+				if (prop_bool_true(usetd))
+					ahc->flags |= AHC_USETARGETDEFAULTS;
+			}
 			ahc->flags |= AHC_BIOS_ENABLED;
 		} else {
 			/*

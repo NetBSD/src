@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.11.8.1 2006/04/01 12:07:05 yamt Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.11.8.2 2006/05/24 10:57:52 yamt Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.11.8.1 2006/04/01 12:07:05 yamt Exp $
+ * $Id: if_ntwoc_isa.c,v 1.11.8.2 2006/05/24 10:57:52 yamt Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.11.8.1 2006/04/01 12:07:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.11.8.2 2006/05/24 10:57:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ CFATTACH_DECL(ntwoc_isa, sizeof(struct ntwoc_isa_softc),
 /*
  * Names for daughter card types.  These match the NTWOC_DB_* defines.
  */
-char *ntwoc_db_names[] = {
+const char *ntwoc_db_names[] = {
 	"V.35", "Unknown 0x01", "Test", "Unknown 0x03",
 	"RS232", "Unknown 0x05", "RS422", "None"
 };

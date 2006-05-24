@@ -1,4 +1,6 @@
-/*	$NetBSD: ldscript.ia64,v 1.2.2.2 2006/04/11 11:53:43 yamt Exp $	*/
+/*	$NetBSD: ldscript.ia64,v 1.2.2.3 2006/05/24 10:56:57 yamt Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/libefi/arch/ia64/ldscript.ia64,v 1.8 2004/07/20 07:01:02 marcel Exp $ */
+
 OUTPUT_FORMAT("elf64-ia64-little", "elf64-ia64-little", "elf64-ia64-little")
 OUTPUT_ARCH(ia64)
 ENTRY(_start_plabel)

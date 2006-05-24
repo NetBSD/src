@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.1.2.2 2006/04/11 11:53:43 yamt Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.1.2.3 2006/05/24 10:56:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -27,6 +27,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/bootinfo.c,v 1.9 2003/09/08 09:11:32 obrien Exp $"); */
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>

@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.1.4.2 2006/04/11 12:20:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.1.4.3 2006/05/24 10:58:31 yamt Exp $");
 
 #define __DSMETHOD_C__
 
@@ -373,7 +373,6 @@ AcpiDsCallControlMethod (
                         NULL, 1);
         if (ACPI_FAILURE (Status))
         {
-            AcpiDsDeleteWalkState (NextWalkState);
             goto Cleanup;
         }
 
@@ -389,8 +388,7 @@ AcpiDsCallControlMethod (
                                             NULL, ObjDesc, Thread);
     if (!NextWalkState)
     {
-        Status = AE_NO_MEMORY;
-        goto Cleanup;
+        return_ACPI_STATUS (AE_NO_MEMORY);
     }
     /*
      * The resolved arguments were put on the previous walk state's operand

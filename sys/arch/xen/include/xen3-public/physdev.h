@@ -1,4 +1,4 @@
-/* $NetBSD: physdev.h,v 1.1.1.1.8.1 2006/04/11 11:53:48 yamt Exp $ */
+/* $NetBSD: physdev.h,v 1.1.1.1.8.2 2006/05/24 10:57:23 yamt Exp $ */
 
 #ifndef __XEN_PUBLIC_PHYSDEV_H__
 #define __XEN_PUBLIC_PHYSDEV_H__
@@ -34,18 +34,18 @@ typedef struct physdevop_set_iobitmap {
 
 typedef struct physdevop_apic {
     /* IN */
-    uint32_t apic;
-    uint32_t offset;
+    unsigned long apic_physbase;
+    uint32_t reg;
     /* IN or OUT */
     uint32_t value;
-} physdevop_apic_t; 
+} physdevop_apic_t;
 
 typedef struct physdevop_irq {
     /* IN */
     uint32_t irq;
     /* OUT */
     uint32_t vector;
-} physdevop_irq_t; 
+} physdevop_irq_t;
 
 typedef struct physdev_op {
     uint32_t cmd;
@@ -57,6 +57,7 @@ typedef struct physdev_op {
         physdevop_irq_t                   irq_op;
     } u;
 } physdev_op_t;
+DEFINE_GUEST_HANDLE(physdev_op_t);
 
 #endif /* __XEN_PUBLIC_PHYSDEV_H__ */
 

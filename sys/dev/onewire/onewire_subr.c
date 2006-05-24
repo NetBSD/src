@@ -1,4 +1,4 @@
-/* $NetBSD: onewire_subr.c,v 1.2.2.2 2006/04/11 11:55:17 yamt Exp $
+/* $NetBSD: onewire_subr.c,v 1.2.2.3 2006/05/24 10:58:00 yamt Exp $ */
 /*	$OpenBSD: onewire_subr.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*

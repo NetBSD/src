@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.2 2006/03/01 12:38:11 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2.2.1 2006/05/24 10:56:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2 2006/03/01 12:38:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2.2.1 2006/05/24 10:56:47 yamt Exp $");
 
 /* #define	BUS_DMA_DEBUG */
 #include <sys/param.h>
@@ -111,6 +111,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_vmspace = NULL;
 	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -252,6 +253,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_vmspace = vm;
 
 		/*
 		 * For linear buffers, we support marking the mapping
@@ -303,6 +305,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_vmspace = vmspace_kernel();	/* always kernel */
 	}
 	return error;
 }
@@ -350,6 +353,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_vmspace = uio->uio_vmspace;
 	}
 	return error;
 }
@@ -392,11 +396,11 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
 	bus_size_t minlen;
-	bus_addr_t addr;
-	int i;
+	vaddr_t vaddr, start, end, preboundary, firstboundary, lastboundary;
+	int i, useindex;
 
 	/*
-	 * Mising PRE and POST operations is not allowed.
+	 * Mixing PRE and POST operations is not allowed.
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
@@ -409,6 +413,24 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	if (len == 0 || (offset + len) > map->dm_mapsize)
 		panic("_bus_dmamap_sync: bad length");
 #endif
+
+	/*
+	 * Since we're dealing with a virtually-indexed, write-back
+	 * cache, we need to do the following things:
+	 *
+	 *      PREREAD -- Invalidate D-cache.  Note we might have
+	 *      to also write-back here if we have to use an Index
+	 *      op, or if the buffer start/end is not cache-line aligned.
+ 	 *
+	 *      PREWRITE -- Write-back the D-cache.  If we have to use
+	 *      an Index op, we also have to invalidate.  Note that if
+	 *      we are doing PREREAD|PREWRITE, we can collapse everything
+	 *      into a single op.
+	 *
+	 *      POSTREAD -- Nothing.
+	 *
+	 *      POSTWRITE -- Nothing.
+	 */
 
 	/*
 	 * Flush the write buffer.
@@ -430,16 +452,17 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		return;
 
 	/*
-	 * Flush data cache for PREREAD.  This has the side-effect
-	 * of invalidating the cache.  Done at PREREAD since it
-	 * causes the cache line(s) to be written back to memory.
+	 * If the mapping belongs to the kernel, or it belongs
+	 * to the currently-running process (XXX actually, vmspace),
+	 * then we can use Hit ops.  Otherwise, Index ops.
 	 *
-	 * Flush data cache for PREWRITE, so that the contents of
-	 * the data buffer in memory reflect reality.
-	 *
-	 * Given the test above, we know we're doing one of these
-	 * two operations, so no additional tests are necessary.
+	 * This should be true the vast majority of the time.
 	 */
+	if (__predict_true(VMSPACE_IS_KERNEL_P(map->_dm_vmspace) ||
+		map->_dm_vmspace == curproc->p_vmspace))
+		useindex = 0;
+	else
+		useindex = 1;
 
 	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
 		/* Find the beginning segment. */
@@ -456,15 +479,55 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		minlen = len < map->dm_segs[i].ds_len - offset ?
 		    len : map->dm_segs[i].ds_len - offset;
 
-		addr = map->dm_segs[i]._ds_vaddr;
+		vaddr = map->dm_segs[i]._ds_vaddr;
 
 #ifdef BUS_DMA_DEBUG
 		printf("bus_dmamap_sync: flushing segment %d "
-		    "(0x%lx..0x%lx) ...", i, addr + offset,
-		    addr + offset + minlen - 1);
+		    "(0x%lx+%lx, 0x%lx+0x%lx) (olen = %ld)...", i,
+		    vaddr, offset, vaddr, offset + minlen - 1, len);
 #endif
-		mips_dcache_wbinv_range(addr + offset, minlen);
 
+		/*
+		 * If we are forced to use Index ops, it's always a
+		 * Write-back,Invalidate, so just do one test.
+		 */
+		if (__predict_false(useindex)) {
+			mips_dcache_wbinv_range_index(vaddr + offset, minlen);
+#ifdef BUS_DMA_DEBUG
+			printf("\n");
+#endif
+			offset = 0;
+			len -= minlen;
+			continue;
+ 		}
+
+		start = vaddr + offset;
+		switch (ops) {
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			mips_dcache_wbinv_range(start, minlen);
+			break;
+
+		case BUS_DMASYNC_PREREAD:
+			end = start + minlen;
+			preboundary = start & ~mips_dcache_align_mask;
+			firstboundary = (start + mips_dcache_align_mask)
+			    & ~mips_dcache_align_mask;
+			lastboundary = end & ~mips_dcache_align_mask;
+			if (preboundary < start && preboundary < lastboundary)
+				mips_dcache_wbinv_range(preboundary,
+				    mips_dcache_align);
+			if (firstboundary < lastboundary)
+				mips_dcache_inv_range(firstboundary,
+				    lastboundary - firstboundary);
+			if (lastboundary < end)
+				mips_dcache_wbinv_range(lastboundary,
+				    mips_dcache_align);
+			break;
+
+		case BUS_DMASYNC_PREWRITE:
+			mips_dcache_wb_range(start, minlen);
+			break;
+		}
 #ifdef BUS_DMA_DEBUG
 		printf("\n");
 #endif

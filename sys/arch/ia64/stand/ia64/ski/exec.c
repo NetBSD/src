@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.1.2.2 2006/04/11 11:53:43 yamt Exp $ */
+/* $NetBSD: exec.c,v 1.1.2.3 2006/05/24 10:56:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
  */
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: src/sys/boot/ia64/libski/elf_freebsd.c,v 1.10 2004/04/05 23:41:28 imp Exp $"); */
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.14 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: opms.c,v 1.14.8.1 2006/05/24 10:56:34 yamt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.14 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.14.8.1 2006/05/24 10:56:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.14 2005/12/24 20:06:47 perry Exp $");
 
 #include <arc/dev/pcconsvar.h>
 #include <arc/dev/opmsvar.h>
+
+#include "ioconf.h"
 
 #define	PMSUNIT(dev)	(minor(dev))
 
@@ -128,8 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.14 2005/12/24 20:06:47 perry Exp $");
 #define	PMS_BSIZE	1020	/* buffer size */
 
 #define	FLUSHQ(q) { if((q)->c_cc) ndflush(q, (q)->c_cc); }
-
-extern struct cfdriver opms_cd;
 
 dev_type_open(opmsopen);
 dev_type_close(opmsclose);

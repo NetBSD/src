@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.202.2.1 2006/04/01 12:07:26 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.202.2.2 2006/05/24 10:58:14 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.2.1 2006/04/01 12:07:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.2.2 2006/05/24 10:58:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -168,6 +168,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.202.2.1 2006/04/01 12:07:26 yam
 #include <sys/bufq.h>
 #include <sys/user.h>
 #include <sys/reboot.h>
+#include <sys/kauth.h>
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
@@ -1826,7 +1827,7 @@ rf_DispatchKernelIO(RF_DiskQueue_t *queue, RF_DiskQueueData_t *req)
 		queue->numOutstanding++;
 
 		bp->b_flags = 0;
-		bp->b_fspriv.bf_private = req;
+		bp->b_private = req;
 
 		KernelWakeupFunc(bp);
 		break;
@@ -1885,7 +1886,7 @@ KernelWakeupFunc(struct buf *bp)
 
 	s = splbio();
 	db1_printf(("recovering the request queue:\n"));
-	req = bp->b_fspriv.bf_private;
+	req = bp->b_private;
 
 	queue = (RF_DiskQueue_t *) req->queue;
 
@@ -1971,7 +1972,7 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	}
 	bp->b_proc = b_proc;
 	bp->b_iodone = cbFunc;
-	bp->b_fspriv.bf_private = cbArg;
+	bp->b_private = cbArg;
 	bp->b_vp = b_vp;
 	if ((bp->b_flags & B_READ) == 0) {
 		bp->b_vp->v_numoutput++;
@@ -2114,18 +2115,18 @@ raidlookup(char *path, struct lwp *l, struct vnode **vpp)
 	vp = nd.ni_vp;
 	if (vp->v_usecount > 1) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
 		return (EBUSY);
 	}
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)) != 0) {
+	if ((error = VOP_GETATTR(vp, &va, p->p_cred, l)) != 0) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
 		return (error);
 	}
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		VOP_UNLOCK(vp, 0);
-		(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+		(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
 		return (ENOTBLK);
 	}
 	VOP_UNLOCK(vp, 0);
@@ -2455,7 +2456,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 
 		} else {
-			(void) vn_close(vp, FREAD | FWRITE, p->p_ucred, l);
+			(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
 		}
 	}
 }

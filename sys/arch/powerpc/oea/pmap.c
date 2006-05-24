@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2005/12/24 20:07:28 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35.8.1 2006/05/24 10:57:09 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2005/12/24 20:07:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35.8.1 2006/05/24 10:57:09 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -323,6 +323,9 @@ struct evcnt pmap_evcnt_exec_synced =
 struct evcnt pmap_evcnt_exec_synced_clear_modify =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
 	    "pmap", "exec pages synced (CM)");
+struct evcnt pmap_evcnt_exec_synced_pvo_remove =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced (PR)");
 
 struct evcnt pmap_evcnt_exec_uncached_page_protect =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
@@ -336,6 +339,9 @@ struct evcnt pmap_evcnt_exec_uncached_zero_page =
 struct evcnt pmap_evcnt_exec_uncached_copy_page =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
 	    "pmap", "exec pages uncached (CP)");
+struct evcnt pmap_evcnt_exec_uncached_pvo_remove =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (PR)");
 
 struct evcnt pmap_evcnt_updates =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
@@ -426,11 +432,13 @@ EVCNT_ATTACH_STATIC(pmap_evcnt_exec_mappings);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_cached);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced_clear_modify);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced_pvo_remove);
 
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_page_protect);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_clear_modify);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_zero_page);
 EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_copy_page);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_pvo_remove);
 
 EVCNT_ATTACH_STATIC(pmap_evcnt_zeroed_pages);
 EVCNT_ATTACH_STATIC(pmap_evcnt_copied_pages);
@@ -1754,6 +1762,29 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx, struct pvo_head *pvol)
 		struct vm_page *pg = PHYS_TO_VM_PAGE(ptelo & PTE_RPGN);
 
 		if (pg != NULL) {
+			/*
+			 * If this page was changed and it is mapped exec,
+			 * invalidate it.
+			 */
+			if ((ptelo & PTE_CHG) &&
+			    (pmap_attr_fetch(pg) & PTE_EXEC)) {
+				struct pvo_head *pvoh = vm_page_to_pvoh(pg);
+				if (LIST_EMPTY(pvoh)) {
+					DPRINTFN(EXEC, ("[pmap_pvo_remove: "
+					    "%#lx: clear-exec]\n",
+					    VM_PAGE_TO_PHYS(pg)));
+					pmap_attr_clear(pg, PTE_EXEC);
+					PMAPCOUNT(exec_uncached_pvo_remove);
+				} else {
+					DPRINTFN(EXEC, ("[pmap_pvo_remove: "
+					    "%#lx: syncicache]\n",
+					    VM_PAGE_TO_PHYS(pg)));
+					pmap_syncicache(VM_PAGE_TO_PHYS(pg),
+					    PAGE_SIZE);
+					PMAPCOUNT(exec_synced_pvo_remove);
+				}
+			}
+
 			pmap_attr_save(pg, ptelo & (PTE_REF|PTE_CHG));
 		}
 		PMAPCOUNT(unmappings);
@@ -2044,7 +2075,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	/*
 	 * If this is a kernel pmap lookup, also check the battable
 	 * and if we get a hit, translate the VA to a PA using the
-	 * BAT entries.  Don't check for VM_MAX_KENREL_ADDRESS is
+	 * BAT entries.  Don't check for VM_MAX_KERNEL_ADDRESS is
 	 * that will wrap back to 0.
 	 */
 	if (pm == pmap_kernel() &&

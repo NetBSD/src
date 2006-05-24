@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.28.2.1 2006/04/11 11:55:13 yamt Exp $ */
+/*	$NetBSD: igsfb.c,v 1.28.2.2 2006/05/24 10:57:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.28.2.1 2006/04/11 11:55:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.28.2.2 2006/05/24 10:57:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,8 +81,8 @@ static const struct wsscreen_list igsfb_screenlist = {
  * wsdisplay_accessops
  */
 
-static int	igsfb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	igsfb_mmap(void *, off_t, int);
+static int	igsfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	igsfb_mmap(void *, void *, off_t, int);
 
 static struct wsdisplay_accessops igsfb_accessops = {
 	.ioctl = igsfb_ioctl,
@@ -574,7 +574,7 @@ igsfb_init_bit_table(struct igsfb_devconfig *dc)
  *   XXX: allow mmapping i/o mapped i/o regs if INSECURE???
  */
 static paddr_t
-igsfb_mmap(void *v, off_t offset, int prot)
+igsfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct igsfb_devconfig *dc = vd->cookie;
@@ -591,7 +591,8 @@ igsfb_mmap(void *v, off_t offset, int prot)
  * wsdisplay_accessops: ioctl()
  */
 static int
-igsfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+igsfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct igsfb_devconfig *dc = vd->cookie;
@@ -892,6 +893,7 @@ igsfb_set_cursor(struct igsfb_devconfig *dc, const struct wsdisplay_cursor *p)
 	cc = &dc->dc_cursor;
 	v = p->which;
 	index = count = icount = iwidth = 0;	/* XXX: gcc */
+	pos.x = pos.y = 0;			/* XXX: gcc */
 
 	/* copy in the new cursor colormap */
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.70 2005/12/24 20:27:41 perry Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.70.8.1 2006/05/24 10:57:52 yamt Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.70 2005/12/24 20:27:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.70.8.1 2006/05/24 10:57:52 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1080,8 +1080,13 @@ iyget(sc, iot, ioh, rxlen)
 		*mp = m;
 		mp = &m->m_next;
 	}
+
+	if (top == NULL)
+		return;
+
 	/* XXX receive the top here */
 	++ifp->if_ipackets;
+
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)

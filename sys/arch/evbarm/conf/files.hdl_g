@@ -1,0 +1,31 @@
+#	$NetBSD: files.hdl_g,v 1.1.8.2 2006/05/24 10:56:40 yamt Exp $
+#
+# Intel I-O DATA HDL-G configuration info
+#
+
+# Use the generic ARM soft interrupt code.
+file	arch/arm/arm/softintr.c
+
+file	arch/evbarm/hdl_g/hdlg_machdep.c
+file	arch/evbarm/hdl_g/hdlg_pci.c
+
+# HDL-G on-board devices
+device	obio {addr, [size = -1], [width = -1], [xint = -1]}: bus_space_generic
+attach	obio at mainbus
+file	arch/evbarm/hdl_g/obio.c			obio
+file	arch/evbarm/hdl_g/obio_space.c			obio
+
+# on-board TI 165C50 UART
+attach	com at obio with com_obio
+file	arch/evbarm/hdl_g/com_obio.c			com_obio
+
+# Button
+device	btn: sysmon_power, sysmon_taskq
+attach	btn at obio with btn_obio
+file	arch/evbarm/hdl_g/btn_obio.c			btn_obio
+
+# i80321 I/O Processor CPU support
+include "arch/arm/xscale/files.i80321"
+
+attach	iopxs at mainbus with iopxs_mainbus
+file	arch/evbarm/hdl_g/i80321_mainbus.c		iopxs_mainbus

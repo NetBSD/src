@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.11 2006/02/16 14:57:50 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.11.2.1 2006/05/24 10:58:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.11 2006/02/16 14:57:50 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.11.2.1 2006/05/24 10:58:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,7 +76,7 @@ static int	tmpfs_vget(struct mount *, ino_t, struct vnode **);
 static int	tmpfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 static int	tmpfs_vptofh(struct vnode *, struct fid *);
 static int	tmpfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-static int	tmpfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+static int	tmpfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 static void	tmpfs_init(void);
 static void	tmpfs_done(void);
 static int	tmpfs_snapshot(struct mount *, struct vnode *,
@@ -388,7 +388,7 @@ tmpfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 /* ARGSUSED0 */
 static int
-tmpfs_sync(struct mount *mp, int waitfor, struct ucred *uc, struct lwp *l)
+tmpfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc, struct lwp *l)
 {
 
 	return 0;

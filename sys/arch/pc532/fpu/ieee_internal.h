@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_internal.h,v 1.8.8.1 2006/03/13 09:06:58 yamt Exp $	*/
+/*	$NetBSD: ieee_internal.h,v 1.8.8.2 2006/05/24 10:57:00 yamt Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -36,7 +36,8 @@
 
 #ifdef DEBUG
 extern int ieee_handler_debug;
-#define DP(n, format, args...)  if (ieee_handler_debug >= n) printf(format, ## args)
+#define DP(n, format, args...)	\
+	if (ieee_handler_debug >= n) printf(format, ## args)
 #else
 #define DP(n, format, args...)
 #endif
@@ -65,77 +66,80 @@ enum format { fmt9, fmt11, fmt12};
 #define SFSR XOPCODE(fmt9, 6)
 
 union t_conv {
-  double d;
-  float f;
-  struct {
-    unsigned int mantissa2:32;
-    unsigned int mantissa:20;
-    unsigned int exp:11;
-    unsigned int sign :1;
-  } d_bits;
-  struct {
-    unsigned int mantissa:23;
-    unsigned int exp:8;
-    unsigned int sign :1;
-  } f_bits;
-  signed char c;
-  short s;
-  int i;
+	double d;
+	float f;
+	struct {
+		unsigned int mantissa2:32;
+		unsigned int mantissa:20;
+		unsigned int exp:11;
+		unsigned int sign :1;
+	} d_bits;
+	struct {
+		unsigned int mantissa:23;
+		unsigned int exp:8;
+		unsigned int sign :1;
+	} f_bits;
+	signed char c;
+	short s;
+	int i;
 };
 
 /* These assume "double" interpretation of the union is valid */
-#define ISNAN(data) ((data).d_bits.exp == 0x7ff && \
-		   ((data).d_bits.mantissa != 0 || (data).d_bits.mantissa2 != 0))
+#define ISNAN(data)							\
+	((data).d_bits.exp == 0x7ff &&					\
+	((data).d_bits.mantissa != 0 || (data).d_bits.mantissa2 != 0))
 
-#define ISQNAN(data) ((data).d_bits.exp == 0x7ff && \
-		    ((data).d_bits.mantissa & 0x80000) != 0)
+#define ISQNAN(data)							\
+	((data).d_bits.exp == 0x7ff &&					\
+	((data).d_bits.mantissa & 0x80000) != 0)
 
-#define ISSNAN(data) ((data).d_bits.exp == 0x7ff && \
-		    ((data).d_bits.mantissa & 0x80000) == 0 && \
-		    ((data).d_bits.mantissa != 0 || (data).d_bits.mantissa2 != 0))
+#define ISSNAN(data)							\
+	((data).d_bits.exp == 0x7ff &&					\
+	((data).d_bits.mantissa & 0x80000) == 0 &&			\
+	((data).d_bits.mantissa != 0 || (data).d_bits.mantissa2 != 0))
 
-#define ISINFTY(data) ((data).d_bits.exp == 0x7ff && (data).d_bits.mantissa == 0 && \
-		     (data).d_bits.mantissa2 == 0)
+#define ISINFTY(data)							\
+	((data).d_bits.exp == 0x7ff && (data).d_bits.mantissa == 0 &&	\
+	(data).d_bits.mantissa2 == 0)
 
-#define ISDENORM(data) ((data).d_bits.exp == 0 && ((data).d_bits.mantissa != 0 || (data).d_bits.mantissa2 != 0))
+#define ISDENORM(data)							\
+	((data).d_bits.exp == 0 && ((data).d_bits.mantissa != 0 ||	\
+	(data).d_bits.mantissa2 != 0))
 
-#define ISZERO(data) ((data).d_bits.exp == 0 && (data).d_bits.mantissa == 0 && (data).d_bits.mantissa2 == 0)
+#define ISZERO(data)							\
+	((data).d_bits.exp == 0 && (data).d_bits.mantissa == 0 &&	\
+	(data).d_bits.mantissa2 == 0)
 
 #define EXP_DBIAS 1023
-
 #define EXP_FBIAS 127
 
 enum op_type {op_type_float, op_type_int};
-
 enum op_class {op_class_read, op_class_write, op_class_rmw, op_class_addr};
-
 enum op_where_tag { op_where_register, op_where_memory, op_where_immediate };
 
 extern const union t_conv infty;
-
 extern const union t_conv snan;
-
 extern const union t_conv qnan;
 
 struct operand {
-  enum op_type type;
-  enum op_class class;
-  struct {
-    enum op_where_tag tag;
-    vaddr_t addr;
-  } where;
-  char size;
-  union t_conv data;
+	enum op_type type;
+	enum op_class class;
+	struct {
+		enum op_where_tag tag;
+		vaddr_t addr;
+	} where;
+	char size;
+	union t_conv data;
 };
 
-int ieee_undfl(struct operand *, struct operand *,
-	       struct operand *, int, state *);
-int ieee_ovfl(struct operand *, struct operand *,
-	      struct operand *, int, state *);
-int ieee_dze(struct operand *, struct operand *,
-	     struct operand *, int, state *);
-int ieee_invop(struct operand *, struct operand *,
-	       struct operand *, int, state *);
+int ieee_undfl(struct operand *, struct operand *, struct operand *, int,
+    state *);
+int ieee_ovfl(struct operand *, struct operand *, struct operand *, int,
+    state *);
+int ieee_dze(struct operand *, struct operand *, struct operand *, int,
+    state *);
+int ieee_invop(struct operand *, struct operand *, struct operand *, int,
+    state *);
 int ieee_add(double, double *);
 int ieee_mul(double, double *);
 int ieee_div(double, double *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.51.8.1 2006/04/01 12:06:56 yamt Exp $	*/
+/*	$NetBSD: iop.c,v 1.51.8.2 2006/05/24 10:57:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.51.8.1 2006/04/01 12:06:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.51.8.2 2006/05/24 10:57:40 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -1772,15 +1772,18 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 		/* Notify the initiator. */
 		if ((im->im_flags & IM_WAIT) != 0)
 			wakeup(im);
-		else if ((im->im_flags & (IM_POLL | IM_POLL_INTR)) != IM_POLL)
-			(*ii->ii_intr)(ii->ii_dv, im, rb);
+		else if ((im->im_flags & (IM_POLL | IM_POLL_INTR)) != IM_POLL) {
+			if (ii)
+				(*ii->ii_intr)(ii->ii_dv, im, rb);
+		}
 	} else {
 		/*
 		 * This initiator discards message wrappers.
 		 *
 		 * Simply pass the reply frame to the initiator.
 		 */
-		(*ii->ii_intr)(ii->ii_dv, NULL, rb);
+		if (ii)
+			(*ii->ii_intr)(ii->ii_dv, NULL, rb);
 	}
 
 	return (status);

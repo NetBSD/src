@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.84 2006/02/19 18:52:29 bjh21 Exp $	*/
+/*	$NetBSD: db_command.c,v 1.84.2.1 2006/05/24 10:57:36 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.84 2006/02/19 18:52:29 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.84.2.1 2006/05/24 10:57:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -373,10 +373,12 @@ db_cmd_list(const struct db_command *table)
 				db_putchar('\n');
 				break;
 			}
-			w = strlen(p);
-			while (w < width) {
-				w = DB_NEXT_TAB(w);
-				db_putchar('\t');
+			if (p) {
+				w = strlen(p);
+				while (w < width) {
+					w = DB_NEXT_TAB(w);
+					db_putchar('\t');
+				}
 			}
 		}
 	}
@@ -392,8 +394,9 @@ db_command(const struct db_command **last_cmdp,
 	db_expr_t	addr, count;
 	boolean_t	have_addr = FALSE;
 	int		result;
-
 	static db_expr_t last_count = 0;
+
+	cmd = NULL;	/* XXX gcc */
 
 	t = db_read_token();
 	if ((t == tEOL) || (t == tCOMMA)) {
