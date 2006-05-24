@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.3 2005/08/23 19:19:51 kiyohara Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.4 2006/05/24 22:07:42 christos Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -108,7 +108,7 @@ get_dev(int fd)
 {
 	struct fw_devlstreq *data;
 
-	data = (struct fw_devlstreq *)malloc(sizeof(struct fw_devlstreq));
+	data = malloc(sizeof(*data));
 	if (data == NULL)
 		err(1, "malloc");
 	if( ioctl(fd, FW_GDEVLST, data) < 0) {
@@ -191,7 +191,9 @@ read_write_quad(int fd, struct fw_eui64 eui, u_int32_t addr_lo, int readmode, u_
         struct fw_asyreq *asyreq;
 	u_int32_t *qld, res;
 
-        asyreq = (struct fw_asyreq *)malloc(sizeof(struct fw_asyreq_t) + 16);
+        asyreq = malloc(sizeof(*asyreq));
+	if (asyreq == NULL)
+		err(1, "malloc");
 	asyreq->req.len = 16;
 #if 0
 	asyreq->req.type = FWASREQNODE;
@@ -229,7 +231,9 @@ send_phy_config(int fd, int root_node, int gap_count)
 {
         struct fw_asyreq *asyreq;
 
-	asyreq = (struct fw_asyreq *)malloc(sizeof(struct fw_asyreq_t) + 12);
+	asyreq = malloc(sizeof(*asyreq));
+	if (asyreq == NULL)
+		err(1, "malloc");
 	asyreq->req.len = 12;
 	asyreq->req.type = FWASREQNODE;
 	asyreq->pkt.mode.ld[0] = 0;
@@ -254,7 +258,9 @@ send_link_on(int fd, int node)
 {
         struct fw_asyreq *asyreq;
 
-	asyreq = (struct fw_asyreq *)malloc(sizeof(struct fw_asyreq_t) + 12);
+	asyreq = malloc(sizeof(*asyreq));
+	if (asyreq == NULL)
+		err(1, "malloc");
 	asyreq->req.len = 12;
 	asyreq->req.type = FWASREQNODE;
 	asyreq->pkt.mode.common.tcode = FWTCODE_PHY;
@@ -271,7 +277,9 @@ reset_start(int fd, int node)
 {
         struct fw_asyreq *asyreq;
 
-	asyreq = (struct fw_asyreq *)malloc(sizeof(struct fw_asyreq_t) + 16);
+	asyreq = malloc(sizeof(*asyreq));
+	if (asyreq == NULL)
+		err(1, "malloc");
 	asyreq->req.len = 16;
 	asyreq->req.type = FWASREQNODE;
 	asyreq->pkt.mode.wreqq.dst = FWLOCALBUS | (node & 0x3f);
@@ -475,9 +483,9 @@ show_topology_map(int fd)
 	static const char *pwr_class[] = {" 0W", "15W", "30W", "45W",
 					"-1W", "-2W", "-5W", "-9W"};
 	static const char *speed[] = {"S100", "S200", "S400", "S800"};
-	tmap = malloc(sizeof(struct fw_topology_map));
+	tmap = malloc(sizeof(*tmap));
 	if (tmap == NULL)
-		return;
+		err(1, "malloc");
 	if (ioctl(fd, FW_GTPMAP, tmap) < 0) {
        		err(1, "ioctl");
 	}
