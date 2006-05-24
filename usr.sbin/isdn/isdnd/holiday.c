@@ -27,7 +27,7 @@
  *	isdnd - holiday file handling
  *      =============================
  *
- *      $Id: holiday.c,v 1.3 2003/10/06 09:43:27 itojun Exp $
+ *      $Id: holiday.c,v 1.4 2006/05/24 23:43:11 christos Exp $
  *
  * $FreeBSD$
  *
@@ -124,7 +124,7 @@ init_holidays(char *filename)
 		newh->year = year;
 		newh->next = NULL;
 		
-		if (firsth == NULL)
+		if (firsth == NULL || lasth == NULL)
 		{
 			firsth = newh;
 		}
