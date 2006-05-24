@@ -27,7 +27,7 @@
  *	q932_fac.c - decode Q.932 facilities
  *	------------------------------------
  *
- *	$Id: q932_fac.c,v 1.2 2003/10/06 09:43:28 itojun Exp $ 
+ *	$Id: q932_fac.c,v 1.3 2006/05/24 23:51:39 christos Exp $ 
  *
  * $FreeBSD$
  *
@@ -394,11 +394,14 @@ static char *uni_str(int code)
 		"TELETEX STRING",
 		"ISO646 STRING",
 		"IA5 STRING",
+		"U TIME",
+		"G TIME",
 		"GRAPHIC STRING",
+		"VISUAL STRING",
 		"GENERAL STRING"
 	};
 
-	if (code >= 1 && code <=	FAC_CODEUNI_GNSTR)
+	if (code >= 1 && code <=	sizeof(tbl) / sizeof(tbl[0]))
 		return(tbl[code-1]);
 	else
 		return("ERROR, Value out of Range!");
