@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.22 2004/05/06 21:13:28 martin Exp $ 
+ *	$Id: rc_config.c,v 1.23 2006/05/24 23:41:44 christos Exp $ 
  *
  * $FreeBSD$
  *
@@ -467,6 +467,7 @@ cfg_setval(int keyword)
 						fprintf(fp, "%d %d %d", (int)time(NULL), (int)time(NULL), 0);
 					fclose(fp);
 				}
+				fclose(fp);
 			}
 			else
 			{
