@@ -3258,6 +3258,7 @@ process_command (int argc, const char **argv)
   /* FIXME: make_relative_prefix doesn't yet work for VMS.  */
   if (!gcc_exec_prefix)
     {
+#ifndef NETBSD_NATIVE
       gcc_exec_prefix = make_relative_prefix (argv[0], standard_bindir_prefix,
 					      standard_exec_prefix);
       gcc_libexec_prefix = make_relative_prefix (argv[0],
@@ -3265,6 +3266,10 @@ process_command (int argc, const char **argv)
 						 standard_libexec_prefix);
       if (gcc_exec_prefix)
 	putenv (concat ("GCC_EXEC_PREFIX=", gcc_exec_prefix, NULL));
+#else
+      add_prefix (&exec_prefixes, standard_libexec_prefix, "GCC",
+	          PREFIX_PRIORITY_LAST, 0, 0);
+#endif /* NETBSD_NATIVE */
     }
   else
     gcc_libexec_prefix = make_relative_prefix (gcc_exec_prefix,
