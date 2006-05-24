@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.18 2006/01/28 01:23:16 uwe Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.19 2006/05/24 21:24:25 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -152,10 +152,10 @@ devclose(struct open_file *of)
 	return 0;
 }
 
-static struct devsw devsw[1] = {
+static struct devsw of_devsw[1] = {
 	{ "OpenFirmware", strategy, devopen_dummy, devclose, noioctl }
 };
-int ndevs = sizeof devsw / sizeof devsw[0];
+int ndevs = sizeof of_devsw / sizeof of_devsw[0];
 
 static struct fs_ops file_system_ufs = FS_OPS(ufs);
 static struct fs_ops file_system_hfs = FS_OPS(hfs);
@@ -329,7 +329,7 @@ devopen(struct open_file *of, const char *name, char **file)
 			ofdev.partoff = label.d_partitions[part].p_offset;
 		}
 
-		of->f_dev = devsw;
+		of->f_dev = of_devsw;
 		of->f_devdata = &ofdev;
 		file_system[0] = file_system_ufs;
 		file_system[1] = file_system_ustarfs;
@@ -340,7 +340,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	}
 	if (!strcmp(buf, "network")) {
 		ofdev.type = OFDEV_NET;
-		of->f_dev = devsw;
+		of->f_dev = of_devsw;
 		of->f_devdata = &ofdev;
 		file_system[0] = file_system_nfs;
 		nfsys = 1;
