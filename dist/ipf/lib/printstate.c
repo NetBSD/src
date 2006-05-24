@@ -1,4 +1,4 @@
-/*	$NetBSD: printstate.c,v 1.1.1.4 2005/04/03 15:01:43 martti Exp $	*/
+/*	$NetBSD: printstate.c,v 1.1.1.4.2.1 2006/05/24 15:47:46 tron Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
@@ -144,8 +144,8 @@ u_long now;
 	PRINTF("\tpkt_flags & %x(%x) = %x,\t",
 		ips.is_flags & 0xf, ips.is_flags,
 		ips.is_flags >> 4);
-	PRINTF("\tpkt_options & %x = %x\n", ips.is_optmsk,
-		ips.is_opt);
+	PRINTF("\tpkt_options & %x = %x, %x = %x \n", ips.is_optmsk[0],
+		ips.is_opt[0], ips.is_optmsk[1], ips.is_opt[1]);
 	PRINTF("\tpkt_security & %x = %x, pkt_auth & %x = %x\n",
 		ips.is_secmsk, ips.is_sec, ips.is_authmsk,
 		ips.is_auth);

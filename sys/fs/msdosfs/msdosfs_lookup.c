@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.8 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.8.12.1 2006/05/24 15:50:34 tron Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.8 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.8.12.1 2006/05/24 15:50:34 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.8 2005/12/11 12:24:25 christos 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/direntry.h>

@@ -1,7 +1,12 @@
-#	$NetBSD: tc.mi,v 1.12 2005/01/21 04:47:24 dyoung Exp $
+#	$NetBSD: tc.mi,v 1.12.6.1 2006/05/24 15:47:48 tron Exp $
+./usr/bin/f77					comp-fortran-bin	gcccmds
+./usr/bin/fort77				comp-fortran-bin	gcccmds
+./usr/bin/g77					comp-fortran-bin	gcccmds
 ./usr/bin/readelf				comp-util-bin		bfd
 ./usr/bin/protoize				comp-c-bin		gcccmds
 ./usr/bin/unprotoize				comp-c-bin		gcccmds
+./usr/lib/libg2c.a				comp-fortran-lib
+./usr/lib/libg2c_p.a				comp-fortran-proflib	profile
 ./usr/include/g++/FlexLexer.h			comp-cxx-include
 ./usr/include/g++/PlotFile.h			comp-cxx-include
 ./usr/include/g++/SFile.h			comp-cxx-include
@@ -155,3 +160,10 @@
 ./usr/include/g++/vector			comp-cxx-include
 ./usr/include/g++/vector.h			comp-cxx-include
 ./usr/lib/libgcc_p.a				comp-c-proflib		profile
+./usr/libexec/f771				comp-fortran-bin	gcccmds
+./usr/share/man/cat1/f77.0			comp-fortran-catman	gcccmds,.cat
+./usr/share/man/cat1/fort77.0			comp-fortran-catman	gcccmds,.cat
+./usr/share/man/cat1/g77.0			comp-fortran-catman	gcccmds,.cat
+./usr/share/man/man1/f77.1			comp-fortran-man	gcccmds,.man
+./usr/share/man/man1/fort77.1			comp-fortran-man	gcccmds,.man
+./usr/share/man/man1/g77.1			comp-fortran-man	gcccmds,.man

@@ -1,4 +1,4 @@
-/* $NetBSD: omsal400.c,v 1.3 2006/03/01 20:21:41 shige Exp $ */
+/* $NetBSD: omsal400.c,v 1.3.6.1 2006/05/24 15:47:55 tron Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,11 +36,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.3 2006/03/01 20:21:41 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.3.6.1 2006/05/24 15:47:55 tron Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
 #include <machine/locore.h>
+#include <mips/alchemy/dev/augpiovar.h>
+#include <mips/alchemy/dev/aupcmciavar.h>
 #include <evbmips/alchemy/obiovar.h>
 #include <evbmips/alchemy/board.h>
 #include <evbmips/alchemy/omsal400reg.h>
@@ -55,9 +57,25 @@ static int	omsal400_pci_intr_map(struct pci_attach_args *,
 					 pci_intr_handle_t *);
 static void	omsal400_poweroff(void);
 static void	omsal400_reboot(void);
+static bus_addr_t omsal400_slot_offset(int);
+static int omsal400_slot_irq(int, int);
+static void omsal400_slot_enable(int);
+static void omsal400_slot_disable(int);
+static int omsal400_slot_status(int);
+static const char *omsal400_slot_name(int);
 
 static const struct obiodev omsal400_devices[] = {
 	{ NULL },
+};
+
+static struct aupcmcia_machdep omsal400_pcmcia = {
+	1,      /* nslots */
+	omsal400_slot_offset,
+	omsal400_slot_irq,
+	omsal400_slot_enable,
+	omsal400_slot_disable,
+	omsal400_slot_status,
+	omsal400_slot_name,
 };
 
 static struct alchemy_board omsal400_info = {
@@ -67,6 +85,7 @@ static struct alchemy_board omsal400_info = {
 	omsal400_pci_intr_map,
 	omsal400_reboot,
 	omsal400_poweroff,
+	&omsal400_pcmcia,
 };
 
 const struct alchemy_board *
@@ -161,4 +180,68 @@ omsal400_poweroff(void)
 
 	printf("\n- poweroff -\n");
 	/* XXX */
+}
+
+
+int
+omsal400_slot_irq(int slot, int which)
+{
+	static const int irqmap[1/*slot*/][2/*which*/] = {
+		{ 35, 37 },		/* Slot 0: CF connector Type2 */
+	};
+
+	if ((slot >= 1) || (which >= 2))
+		return -1;
+
+	return irqmap[slot][which];
+}
+
+bus_addr_t
+omsal400_slot_offset(int slot)
+{
+
+	switch (slot) {
+	case 0:
+		return (0);	/* offset 0 */
+	}
+	return (bus_addr_t)-1;
+}
+
+void
+omsal400_slot_enable(int slot)
+{
+
+	/* nothing todo */
+}
+
+void
+omsal400_slot_disable(int slot)
+{
+
+	/* nothing todo */
+}
+
+int
+omsal400_slot_status(int slot)
+{
+	uint16_t	inserted = 0;
+
+	switch (slot) {
+	case 0:
+		inserted = !AUGPIO_READ(5);	/* pin 5 */
+		break;
+	}
+
+	return inserted;
+}
+
+const char *
+omsal400_slot_name(int slot)
+{
+	switch (slot) {
+	case 0:	
+		return "CF connector Type2 on Static BUS#3";
+	default:
+		return "???";
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.69 2005/12/20 21:06:43 tron Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.69.12.1 2006/05/24 15:48:13 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,11 +210,11 @@
 #define	MIPS3_SR_DIAG_DL	0x01000000		/* QED 52xx */
 #define	MIPS3_SR_DIAG_IL	0x00800000		/* QED 52xx */
 #define	MIPS3_SR_SR		0x00100000
-#define	MIPS3_SR_EIE		0x00100000		/* TX79/R5900 */
 #define	MIPS3_SR_NMI		0x00080000		/* MIPS32/64 */
 #define	MIPS3_SR_DIAG_CH	0x00040000
 #define	MIPS3_SR_DIAG_CE	0x00020000
 #define	MIPS3_SR_DIAG_PE	0x00010000
+#define	MIPS3_SR_EIE		0x00010000		/* TX79/R5900 */
 #define	MIPS3_SR_KX		0x00000080
 #define	MIPS3_SR_SX		0x00000040
 #define	MIPS3_SR_UX		0x00000020

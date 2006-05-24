@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.7 2006/03/07 18:18:06 he Exp $	*/
+/*	$NetBSD: sock.c,v 1.7.2.1 2006/05/24 15:47:46 tron Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -8,19 +8,19 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.1 2004/03/23 12:58:06 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.4 2006/03/21 16:10:56 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #if defined(__NetBSD__) && defined(__vax__)
-/* 
+/*
  * XXX need to declare boolean_t for _KERNEL <sys/files.h>
  * which ends up including <sys/device.h> for vax.  See PR#32907
  * for further details.
  */
-typedef int	boolean_t;
+typedef int     boolean_t;
 #endif
 #ifndef	ultrix
 #include <fcntl.h>
@@ -311,19 +311,25 @@ struct	tcpiphdr *ti;
 	    }
 #endif
 
+	o = NULL;
+	f = NULL;
+	s = NULL;
+	i = NULL;
+	t = NULL;
+
 	o = (struct file **)calloc(1, sizeof(*o) * (fd->fd_lastfile + 1));
 	if (KMCPY(o, fd->fd_ofiles, (fd->fd_lastfile + 1) * sizeof(*o)) == -1)
 	    {
 		fprintf(stderr, "read(%#lx,%#lx,%lu) - u_ofile - failed\n",
 			(u_long)fd->fd_ofiles, (u_long)o, (u_long)sizeof(*o));
-		return NULL;
+		goto finderror;
 	    }
 	f = (struct file *)calloc(1, sizeof(*f));
 	if (KMCPY(f, o[tfd], sizeof(*f)) == -1)
 	    {
 		fprintf(stderr, "read(%#lx,%#lx,%lu) - o[tfd] - failed\n",
 			(u_long)o[tfd], (u_long)f, (u_long)sizeof(*f));
-		return NULL;
+		goto finderror;
 	    }
 
 	s = (struct socket *)calloc(1, sizeof(*s));
@@ -331,7 +337,7 @@ struct	tcpiphdr *ti;
 	    {
 		fprintf(stderr, "read(%#lx,%#lx,%lu) - f_data - failed\n",
 			(u_long)f->f_data, (u_long)s, (u_long)sizeof(*s));
-		return NULL;
+		goto finderror;
 	    }
 
 	i = (struct inpcb *)calloc(1, sizeof(*i));
@@ -339,7 +345,7 @@ struct	tcpiphdr *ti;
 	    {
 		fprintf(stderr, "kvm_read(%#lx,%#lx,%lu) - so_pcb - failed\n",
 			(u_long)s->so_pcb, (u_long)i, (u_long)sizeof(*i));
-		return NULL;
+		goto finderror;
 	    }
 
 	t = (struct tcpcb *)calloc(1, sizeof(*t));
@@ -347,9 +353,22 @@ struct	tcpiphdr *ti;
 	    {
 		fprintf(stderr, "read(%#lx,%#lx,%lu) - inp_ppcb - failed\n",
 			(u_long)i->inp_ppcb, (u_long)t, (u_long)sizeof(*t));
-		return NULL;
+		goto finderror;
 	    }
 	return (struct tcpcb *)i->inp_ppcb;
+
+finderror:
+	if (o != NULL)
+		free(o);
+	if (f != NULL)
+		free(f);
+	if (s != NULL)
+		free(s);
+	if (i != NULL)
+		free(i);
+	if (t != NULL)
+		free(t);
+	return NULL;
 }
 #endif /* BSD < 199301 */
 
@@ -361,7 +380,8 @@ struct	in_addr	gwip;
 {
 	struct	sockaddr_in	rsin, lsin;
 	struct	tcpcb	*t, tcb;
-	int	fd, nfd, len;
+	int	fd, nfd;
+	socklen_t len;
 
 	printf("Dest. Port: %d\n", ti->ti_dport);
 
@@ -391,7 +411,10 @@ struct	in_addr	gwip;
 	(void) getsockname(fd, (struct sockaddr *)&lsin, &len);
 	ti->ti_sport = lsin.sin_port;
 	printf("sport %d\n", ntohs(lsin.sin_port));
+
 	nfd = initdevice(dev, 1);
+	if (nfd == -1)
+		return -1;
 
 	if (!(t = find_tcp(fd, ti)))
 		return -1;

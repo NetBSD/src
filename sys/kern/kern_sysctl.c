@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.191.2.1 2006/03/28 09:42:26 tron Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.191.2.2 2006/05/24 15:50:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,10 +75,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.191.2.1 2006/03/28 09:42:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.191.2.2 2006/05/24 15:50:41 tron Exp $");
 
 #include "opt_defcorename.h"
-#include "opt_insecure.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -91,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.191.2.1 2006/03/28 09:42:26 tron E
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+#include <sys/kauth.h>
 #include <machine/stdarg.h>
 
 MALLOC_DEFINE(M_SYSCTLNODE, "sysctlnode", "sysctl node structures");
@@ -162,12 +162,6 @@ char domainname[MAXHOSTNAMELEN];
 int domainnamelen;
 
 long hostid;
-
-#ifdef INSECURE
-int securelevel = -1;
-#else
-int securelevel = 0;
-#endif
 
 #ifndef DEFCORENAME
 #define	DEFCORENAME	"%n.core"
@@ -530,7 +524,8 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 		 * can anyone traverse this node or only root?
 		 */
 		if (l != NULL && (pnode->sysctl_flags & CTLFLAG_PRIVATE) &&
-		    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
+		    (error = kauth_authorize_generic(l->l_proc->p_cred,
+				KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag))
 		    != 0)
 			return (error);
 		/*
@@ -720,7 +715,8 @@ sysctl_create(SYSCTLFN_ARGS)
 #ifndef SYSCTL_DISALLOW_CREATE
 		if (securelevel > 0)
 			return (EPERM);
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			return (error);
 		if (!(rnode->sysctl_flags & CTLFLAG_READWRITE))
@@ -815,22 +811,25 @@ sysctl_create(SYSCTLFN_ARGS)
 	 * know what they collided with
 	 */
 	node = pnode->sysctl_child;
-	if (((flags & CTLFLAG_ANYNUMBER) && node) ||
-	    (node && node->sysctl_flags & CTLFLAG_ANYNUMBER))
-		return (EINVAL);
-	for (ni = at = 0; ni < pnode->sysctl_clen; ni++) {
-		if (nm == node[ni].sysctl_num ||
-		    strcmp(nnode.sysctl_name, node[ni].sysctl_name) == 0) {
-			/*
-			 * ignore error here, since we
-			 * are already fixed on EEXIST
-			 */
-			(void)sysctl_cvt_out(l, v, &node[ni], oldp,
-					     *oldlenp, oldlenp);
-			return (EEXIST);
+	at = 0;
+	if (node) {
+		if ((flags | node->sysctl_flags) & CTLFLAG_ANYNUMBER)
+			/* No siblings for a CTLFLAG_ANYNUMBER node */
+			return EINVAL;
+		for (ni = 0; ni < pnode->sysctl_clen; ni++) {
+			if (nm == node[ni].sysctl_num ||
+			    strcmp(nnode.sysctl_name, node[ni].sysctl_name) == 0) {
+				/*
+				 * ignore error here, since we
+				 * are already fixed on EEXIST
+				 */
+				(void)sysctl_cvt_out(l, v, &node[ni], oldp,
+						     *oldlenp, oldlenp);
+				return (EEXIST);
+			}
+			if (nm > node[ni].sysctl_num)
+				at++;
 		}
-		if (nm > node[ni].sysctl_num)
-			at++;
 	}
 
 	/*
@@ -991,6 +990,8 @@ sysctl_create(SYSCTLFN_ARGS)
 			if (flags & CTLFLAG_OWNDATA) {
 				own = malloc(sz, M_SYSCTLDATA,
 					     M_WAITOK|M_CANFAIL);
+				if (own == NULL)
+					return ENOMEM;
 				if (nnode.sysctl_data == NULL)
 					memset(own, 0, sz);
 				else {
@@ -1076,8 +1077,11 @@ sysctl_create(SYSCTLFN_ARGS)
 			error = sysctl_alloc(pnode, 1);
 		else
 			error = sysctl_alloc(pnode, 0);
-		if (error)
+		if (error) {
+			if (own != NULL)
+				free(own, M_SYSCTLDATA);
 			return (error);
+		}
 	}
 	node = pnode->sysctl_child;
 
@@ -1100,8 +1104,11 @@ sysctl_create(SYSCTLFN_ARGS)
 	 */
 	if (pnode->sysctl_clen == pnode->sysctl_csize) {
 		error = sysctl_realloc(pnode);
-		if (error)
+		if (error) {
+			if (own != NULL)
+				free(own, M_SYSCTLDATA);
 			return (error);
+		}
 		node = pnode->sysctl_child;
 	}
 
@@ -1169,6 +1176,7 @@ sysctl_create(SYSCTLFN_ARGS)
 	     pnode = pnode->sysctl_parent)
 		pnode->sysctl_ver = nm;
 
+	/* If this fails, the node is already added - the user won't know! */
 	error = sysctl_cvt_out(l, v, node, oldp, *oldlenp, oldlenp);
 
 	return (error);
@@ -1244,7 +1252,8 @@ sysctl_destroy(SYSCTLFN_ARGS)
 #ifndef SYSCTL_DISALLOW_CREATE
 		if (securelevel > 0)
 			return (EPERM);
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		error = kauth_authorize_generic(l->l_proc->p_cred,
+			    KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (error)
 			return (error);
 		if (!(rnode->sysctl_flags & CTLFLAG_READWRITE))
@@ -1410,7 +1419,8 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	 * some nodes are private, so only root can look into them.
 	 */
 	if (l != NULL && (rnode->sysctl_flags & CTLFLAG_PRIVATE) &&
-	    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+	    (error = kauth_authorize_generic(l->l_proc->p_cred,
+			KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -1421,7 +1431,8 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	 */
 	if (l != NULL && newp != NULL &&
 	    !(rnode->sysctl_flags & CTLFLAG_ANYWRITE) &&
-	    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+	    (error = kauth_authorize_generic(l->l_proc->p_cred,
+			KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -1657,7 +1668,8 @@ sysctl_describe(SYSCTLFN_ARGS)
 #ifndef SYSCTL_DISALLOW_CREATE
 				if (securelevel > 0)
 					return (EPERM);
-				error = suser(l->l_proc->p_ucred,
+				error = kauth_authorize_generic(l->l_proc->p_cred,
+					    KAUTH_GENERIC_ISSUSER,
 					      &l->l_proc->p_acflag);
 				if (error)
 					return (error);
@@ -1764,7 +1776,8 @@ sysctl_describe(SYSCTLFN_ARGS)
 		 * don't describe "private" nodes to non-suser users
 		 */
 		if ((node[i].sysctl_flags & CTLFLAG_PRIVATE) && (l != NULL) &&
-		    !(suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)))
+		    !(kauth_authorize_generic(l->l_proc->p_cred,
+			KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)))
 			continue;
 
 		/*

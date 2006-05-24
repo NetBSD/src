@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.38.6.1 2006/03/31 09:45:02 tron Exp $
+# $NetBSD: VIRTUALPC,v 1.38.6.2 2006/05/24 15:47:57 tron Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.38.6.1 $"
+#ident 		"VIRTUALPC-$Revision: 1.38.6.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -224,7 +224,7 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
@@ -234,10 +234,6 @@ options 	PCDISPLAY_SOFTCURSOR
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 #options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
-# the following enables some functions to get mouse console support.
-# if you want a really secure system, it may be better not to enable them,
-# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
-#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
 

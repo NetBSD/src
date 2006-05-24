@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.37.12.1 2006/03/28 09:47:14 tron Exp $	*/
+/*	$NetBSD: pccons.c,v 1.37.12.2 2006/05/24 15:47:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.37.12.1 2006/03/28 09:47:14 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.37.12.2 2006/05/24 15:47:52 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.37.12.1 2006/03/28 09:47:14 tron Exp $"
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -870,7 +871,7 @@ pcopen(dev, flag, mode, l)
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE &&
-		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 

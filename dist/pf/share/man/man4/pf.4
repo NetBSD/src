@@ -1,4 +1,4 @@
-.\"	$NetBSD: pf.4,v 1.3 2005/07/01 12:43:50 peter Exp $
+.\"	$NetBSD: pf.4,v 1.3.2.1 2006/05/24 15:47:45 tron Exp $
 .\"	$OpenBSD: pf.4,v 1.54 2004/12/22 17:17:55 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
@@ -1104,7 +1104,7 @@ main(int argc, char *argv[])
 .Xr ioctl 2 ,
 .Xr bridge 4 ,
 .Xr pflog 4 ,
-.Xr pfsync 4 ,
+.\" .Xr pfsync 4 ,
 .Xr pfctl 8 ,
 .Xr altq 9
 .Sh HISTORY
@@ -1112,3 +1112,16 @@ The
 .Nm
 packet filtering mechanism first appeared in
 .Ox 3.0 .
+.Sh CAVEATS
+The following functionality is missing from
+.Nm
+in this version of
+.Nx :
+.Bl -bullet -offset indent
+.It
+The pfsync protocol is not supported.
+.It
+The
+.Em group
+keyword is not supported.
+.El

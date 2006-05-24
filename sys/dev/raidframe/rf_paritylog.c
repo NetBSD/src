@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.11 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.11.12.1 2006/05/24 15:50:29 tron Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.11 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylog.c,v 1.11.12.1 2006/05/24 15:50:29 tron Exp $");
 
 #include "rf_archs.h"
 
@@ -62,7 +62,6 @@ static RF_CommonLogData_t *
 AllocParityLogCommonData(RF_Raid_t * raidPtr)
 {
 	RF_CommonLogData_t *common = NULL;
-	int     rc;
 
 	/* Return a struct for holding common parity log information from the
 	 * free list (rf_parityLogDiskQueue.freeCommonList).  If the free list
@@ -76,12 +75,7 @@ AllocParityLogCommonData(RF_Raid_t * raidPtr)
 	} else {
 		RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 		RF_Malloc(common, sizeof(RF_CommonLogData_t), (RF_CommonLogData_t *));
-		rc = rf_mutex_init(&common->mutex);
-		if (rc) {
-			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-			RF_Free(common, sizeof(RF_CommonLogData_t));
-			common = NULL;
-		}
+		rf_mutex_init(&common->mutex);
 	}
 	common->next = NULL;
 	return (common);

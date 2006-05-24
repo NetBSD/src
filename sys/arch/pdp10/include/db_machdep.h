@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3.12.1 2006/05/24 15:48:15 tron Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -50,7 +50,7 @@ extern db_regs_t	ddb_regs;
 
 #define	BKPT_INST	0041000000000		/* MUUO */
 #define	BKPT_SIZE	4			/* bytes */
-#define	BKPT_SET(inst)	(BKPT_INST)
+#define	BKPT_SET(inst, addr)	(BKPT_INST)
 #define BKPT_ADDR(addr) (addr)			/* breakpoint address */
 
 #define	IS_BREAKPOINT_TRAP(type, code)	(1) /* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.39.12.1 2006/03/31 09:45:11 tron Exp $ */
+/*	$NetBSD: hp.c,v 1.39.12.2 2006/05/24 15:48:24 tron Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.39.12.1 2006/03/31 09:45:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.39.12.2 2006/05/24 15:48:24 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ hpstart(struct	mba_device *md)
 	 * Collect statistics.
 	 */
 	disk_busy(&sc->sc_disk);
-	sc->sc_disk.dk_seek++;
+	iostat_seek(sc->sc_disk.dk_stats);
 
 	bn = bp->b_rawblkno;
 	if (bn) {

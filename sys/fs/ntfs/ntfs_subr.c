@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.21.12.1 2006/03/28 09:42:26 tron Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.21.12.2 2006/05/24 15:50:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.21.12.1 2006/03/28 09:42:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.21.12.2 2006/05/24 15:50:34 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.21.12.1 2006/03/28 09:42:26 tron Exp
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#include <sys/kauth.h>
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
 #endif
@@ -223,6 +224,7 @@ ntfs_ntvattrget(
 	nextaalp = NULL;
 
 	for(; len > 0; aalp = nextaalp) {
+		KASSERT(aalp != NULL);
 		dprintf(("ntfs_ntvattrget: "
 		    "attrlist: ino: %d, attr: 0x%x, vcn: %qu\n",
 		    aalp->al_inumber, aalp->al_type,
@@ -594,7 +596,7 @@ ntfs_attrtontvattr(
 		vap->va_compressalg = rap->a_nr.a_compressalg;
 		error = ntfs_runtovrun(&(vap->va_vruncn), &(vap->va_vruncl),
 				       &(vap->va_vruncnt),
-				       (caddr_t) rap + rap->a_nr.a_dataoff);
+				       (u_int8_t *) rap + rap->a_nr.a_dataoff);
 	} else {
 		vap->va_compressalg = 0;
 		ddprintf((", res."));

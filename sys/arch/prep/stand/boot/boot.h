@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.5 2005/12/11 12:18:48 christos Exp $	*/
+/*	$NetBSD: boot.h,v 1.5.12.1 2006/05/24 15:48:21 tron Exp $	*/
 
 #define TICKS_PER_SEC	(33000000 / 4)		/* 33MHz */
 #define NS_PER_TICK	(1000000000 / TICKS_PER_SEC)
@@ -6,79 +6,70 @@
 /*
  * srt0
  */
-void run __P((void *, void *, void *, void *, void *));
+void run(void *, void *, void *, void *, void *);
 
 /*
  * clock
  */
-void delay __P((u_int));
+void delay(u_int);
 
 /*
  * com
  */
-int comspeed __P((long));
+int comspeed(long);
 
 /*
  * console
  */
-char *cninit __P((int *, int *));
-int cngetc __P((void));
-void cnputc __P((int));
-int cnscan __P((void));
-
-/*
- * fd
- */
-int fdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int fdopen __P((struct open_file *, int, int, int));
-int fdclose __P((struct open_file *));
+char *cninit(int *, int *);
+int cngetc(void);
+void cnputc(int);
+int cnscan(void);
 
 /*
  * inkernel
  */
-void init_in __P((u_long loadaddr));
-int instrategy __P((void *, int , daddr_t, size_t, void *, size_t *));
-int inopen __P((struct open_file *));
-int inclose __P((struct open_file *));
+void init_in(u_long loadaddr);
+int instrategy(void *, int , daddr_t, size_t, void *, size_t *);
+int inopen(struct open_file *);
+int inclose(struct open_file *);
 
 /*
  * io
  */
-void outb __P((int, char));
-u_char inb __P((int));
-u_long local_to_PCI __P((u_long));
+void outb(int, char);
+inline void outw(int, u_int16_t);
+u_char inb(int);
+u_long local_to_PCI(u_long);
+void unlockVideo(int);
+int scan_PCI(int);
+int PCI_vendor(int);
 
 /*
  * kbd
  */
-int kbd __P((int));
-void kbdreset __P((void));
-int kbd_getc __P((void));
+int kbd(int);
+void kbdreset(void);
+int kbd_getc(void);
 
 /*
  * monitor
  */
-int db_monitor __P((void));
+int db_monitor(void);
 
 /*
  * tgets
  */
-int tgets __P((char *));
-
-/*
- * video
- */
-void video_init __P((u_char *));
-void video_putc __P((int));
+int tgets(char *);
 
 /*
  * vga
  */
-void vga_init __P((u_char *));
-void vga_putc __P((int));
-void vga_puts __P((char *));
+void vga_init(u_char *);
+void vga_putc(int);
+void vga_puts(char *);
 
 /*
  * vreset
  */
-void vga_reset __P((u_char *));
+void vga_reset(u_char *);

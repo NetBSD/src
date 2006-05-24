@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.4 2005/02/19 21:26:02 martti Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.1.1.4.6.1 2006/05/24 15:47:45 tron Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_irc_pxy.c,v 2.39.2.4 2005/02/04 10:22:55 darrenr Exp
+ * Id: ip_irc_pxy.c,v 2.39.2.5 2005/12/04 23:39:27 darrenr Exp
  */
 
 #define	IPF_IRC_PROXY
@@ -50,7 +50,7 @@ void ippr_irc_fini()
 }
 
 
-char *ippr_irc_dcctypes[] = {
+const char *ippr_irc_dcctypes[] = {
 	"CHAT ",	/* CHAT chat ipnumber portnumber */
 	"SEND ",	/* SEND filename ipnumber portnumber */
 	"MOVE ",

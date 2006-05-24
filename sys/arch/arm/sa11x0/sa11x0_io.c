@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.15 2006/03/04 17:22:06 peter Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.15.6.1 2006/05/24 15:47:52 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.15 2006/03/04 17:22:06 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.15.6.1 2006/05/24 15:47:52 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,14 +145,13 @@ sa11x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable,
 	u_long startpa, endpa, pa;
 	vaddr_t va;
 	pt_entry_t *pte;
+	const struct pmap_devmap *pd;
 
-#ifdef hpcarm
-	if ((u_long)bpa > (u_long)KERNEL_BASE) {
-		/* XXX This is a temporary hack to aid transition. */
-		*bshp = bpa;
-		return(0);
+	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
+                /* Device was statically mapped. */
+		*bshp = pd->pd_va + (bpa - pd->pd_pa);
+		return 0;
 	}
-#endif
 
 	startpa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
@@ -190,9 +189,20 @@ sa11x0_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 void
 sa11x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
-	/*
-	 * Temporary implementation
-	 */
+	vaddr_t va, endva;
+
+	if (pmap_devmap_find_va(bsh, size) != NULL) {
+		/* Device was statically mapped; nothing to do. */
+		return;
+	}
+
+	va = trunc_page(bsh);
+	endva = round_page(bsh + size);
+
+	pmap_kremove(va, endva - va);
+	pmap_update(pmap_kernel());
+
+	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 }
 
 void    

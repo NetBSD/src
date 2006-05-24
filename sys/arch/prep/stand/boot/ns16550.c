@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.1 2000/02/29 15:21:50 nonaka Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.1.68.1 2006/05/24 15:48:21 tron Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -40,9 +40,7 @@
 #include "ns16550.h"
 
 volatile struct NS16550 *
-NS16550_init(addr, speed)
-	int addr;
-	int speed;
+NS16550_init(int addr, int speed)
 {
 	struct NS16550 *com_port;
 
@@ -62,9 +60,7 @@ NS16550_init(addr, speed)
 }
 
 void
-NS16550_putc(com_port, c)
-	volatile struct NS16550 *com_port;
-	int c;
+NS16550_putc(volatile struct NS16550 *com_port, int c)
 {
 
 	while ((com_port->lsr & LSR_THRE) == 0)
@@ -73,8 +69,7 @@ NS16550_putc(com_port, c)
 }
 
 int
-NS16550_getc(com_port)
-	volatile struct NS16550 *com_port;
+NS16550_getc(volatile struct NS16550 *com_port)
 {
 
 	while ((com_port->lsr & LSR_DR) == 0)
@@ -83,8 +78,7 @@ NS16550_getc(com_port)
 }
 
 int
-NS16550_scankbd(com_port)
-	volatile struct NS16550 *com_port;
+NS16550_scankbd(volatile struct NS16550 *com_port)
 {
 
 	if ((com_port->lsr & LSR_DR) == 0)
@@ -93,11 +87,9 @@ NS16550_scankbd(com_port)
 }
 
 int
-NS16550_test(com_port)
-	volatile struct NS16550 *com_port;
+NS16550_test(volatile struct NS16550 *com_port)
 {
 
-	return ((com_port->lsr & LSR_DR) != 0)
-		;
+	return ((com_port->lsr & LSR_DR) != 0);
 }
 #endif /* CONS_SERIAL */

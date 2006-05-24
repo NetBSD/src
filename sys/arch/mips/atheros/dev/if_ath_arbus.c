@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.1.2.2 2006/03/28 09:47:17 tron Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.1.2.3 2006/05/24 15:48:12 tron Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.1.2.2 2006/03/28 09:47:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.1.2.3 2006/05/24 15:48:12 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.1.2.2 2006/03/28 09:47:17 tron Ex
 #include <mips/atheros/include/ar531xvar.h>
 #include <mips/atheros/include/arbusvar.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ic/athhal.h>
+#include <contrib/dev/ath/ah.h>
 
 struct ath_arbus_softc {
 	struct ath_softc	sc_ath;
@@ -99,21 +100,24 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 	struct ath_arbus_softc *asc;
 	struct ath_softc *sc;
 	struct arbus_attach_args *aa;
+#if 0
 	struct ar531x_board_info *board;
+#endif
+	const char *name;
 	void *hook;
 	int rv;
+	uint16_t devid;
+	uint32_t rev;
 
 	asc = (struct ath_arbus_softc *)self;
 	sc = &asc->sc_ath;
 	aa = (struct arbus_attach_args *)opaque;
 
-	printf(": Atheros AR531X WLAN\n");
+	rev = GETSYSREG(AR531X_SYSREG_REVISION);
+	devid = AR531X_REVISION_WMAC(rev);
+	name = ath_hal_probe(PCI_VENDOR_ATHEROS, devid);
 
-	if ((board = ar531x_board_info()) == NULL) {
-		aprint_error("%s: unable to get board identity\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}	
+	printf(": %s\n", name ? name : "Unknown AR531X WLAN");
 
 	asc->sc_iot = aa->aa_bst;
 	rv = bus_space_map(asc->sc_iot, aa->aa_addr, aa->aa_size, 0,
@@ -126,6 +130,7 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 
 	sc->sc_st = asc->sc_iot;
 	sc->sc_sh = asc->sc_ioh;
+	sc->sc_dmat = aa->aa_dmat;
 
 	sc->sc_invalid = 1;
 
@@ -136,14 +141,17 @@ ath_arbus_attach(struct device *parent, struct device *self, void *opaque)
 		return;
 	}
 
+	if (ath_attach(devid, sc) != 0) {
+		aprint_error("%s: ath_attach failed\n", sc->sc_dev.dv_xname);
+		goto err;
+	}
+
 	hook = shutdownhook_establish(ath_arbus_shutdown, asc);
 	if (hook == NULL) {
 		aprint_error("%s: couldn't establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 		goto err;
 	}
-
-	ath_attach(board->ab_pci_id, sc);
 
 	return;
 

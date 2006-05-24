@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.23 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.23.12.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.23 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.23.12.1 2006/05/24 15:50:43 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.23 2005/12/11 12:24:51 christos Exp 
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
+
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/umapfs/umap.h>
 
@@ -138,12 +140,14 @@ umap_reverse_findid(id, map, nentries)
 void
 umap_mapids(v_mount, credp)
 	struct mount *v_mount;
-	struct ucred *credp;
+	kauth_cred_t credp;
 {
 	int i, unentries, gnentries;
 	uid_t uid;
 	gid_t gid;
 	u_long (*usermap)[2], (*groupmap)[2];
+	gid_t groups[NGROUPS];
+	uint16_t ngroups;
 
 	if (credp == NOCRED)
 		return;
@@ -155,36 +159,40 @@ umap_mapids(v_mount, credp)
 
 	/* Find uid entry in map */
 
-	uid = (uid_t) umap_findid(credp->cr_uid, usermap, unentries);
+	uid = (uid_t) umap_findid(kauth_cred_geteuid(credp), usermap, unentries);
 
 	if (uid != -1)
-		credp->cr_uid = uid;
+		kauth_cred_seteuid(credp, uid);
 	else
-		credp->cr_uid = (uid_t) NOBODY;
+		kauth_cred_seteuid(credp, (uid_t)NOBODY);
 
 #if 1
 	/* cr_gid is the same as cr_groups[0] in 4BSD, but not in NetBSD */
 
 	/* Find gid entry in map */
 
-	gid = (gid_t) umap_findid(credp->cr_gid, groupmap, gnentries);
+	gid = (gid_t) umap_findid(kauth_cred_getegid(credp), groupmap, gnentries);
 
 	if (gid != -1)
-		credp->cr_gid = gid;
+		kauth_cred_setegid(credp, gid);
 	else
-		credp->cr_gid = NULLGROUP;
+		kauth_cred_setegid(credp, NULLGROUP);
 #endif
 
 	/* Now we must map each of the set of groups in the cr_groups
 		structure. */
 
-	for(i=0; i < credp->cr_ngroups; i++) {
-		gid = (gid_t) umap_findid(credp->cr_groups[i],
+	ngroups = kauth_cred_ngroups(credp);
+	for (i = 0; i < ngroups; i++) {
+		/* XXX elad: can't we just skip cases where gid == -1? */
+		groups[i] = kauth_cred_group(credp, i);
+		gid = (gid_t) umap_findid(groups[i],
 					  groupmap, gnentries);
-
 		if (gid != -1)
-			credp->cr_groups[i] = gid;
+			groups[i] = gid;
 		else
-			credp->cr_groups[i] = NULLGROUP;
+			groups[i] = NULLGROUP;
 	}
+
+	kauth_cred_setgroups(credp, groups, ngroups, -1);
 }

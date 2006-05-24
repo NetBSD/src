@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.21 2006/03/14 15:24:30 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.21.2.1 2006/05/24 15:50:24 tron Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.21 2006/03/14 15:24:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.21.2.1 2006/05/24 15:50:24 tron Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -344,7 +344,7 @@ ahc_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		int target_id, our_id, first;
 		u_int width;
 		char channel;
-		u_int ppr_options, period, offset;
+		u_int ppr_options = 0, period, offset;
 		struct ahc_syncrate *syncrate;
 		uint16_t old_autoneg;
 

@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.110.2.2 2006/03/31 09:45:30 tron Exp $
+# $NetBSD: shl.elf,v 1.110.2.3 2006/05/24 15:47:48 tron Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -16,6 +16,8 @@
 ./lib/libkvm.so.5				base-sys-shlib
 ./lib/libm.so					base-sys-shlib
 ./lib/libm.so.0					base-sys-shlib
+./lib/libprop.so				base-sys-shlib
+./lib/libprop.so.0				base-sys-shlib
 ./lib/libradius.so				base-sys-shlib
 ./lib/libradius.so.1				base-sys-shlib
 ./lib/libtermcap.so				base-sys-shlib
@@ -130,11 +132,13 @@
 ./usr/lib/libpam.so				base-sys-shlib		pam
 ./usr/lib/libpam.so.0				base-sys-shlib		pam
 ./usr/lib/libpcap.so				base-net-shlib
-./usr/lib/libpcap.so.1				base-net-shlib
+./usr/lib/libpcap.so.2				base-net-shlib
 ./usr/lib/libpci.so				base-sys-shlib
 ./usr/lib/libpci.so.1				base-sys-shlib
 ./usr/lib/libposix.so				base-sys-shlib
 ./usr/lib/libposix.so.0				base-sys-shlib
+./usr/lib/libprop.so				base-sys-shlib
+./usr/lib/libprop.so.0				base-sys-shlib
 ./usr/lib/libpthread.so				base-sys-shlib
 ./usr/lib/libpthread.so.0			base-sys-shlib
 ./usr/lib/libpthread_dbg.so			base-sys-shlib

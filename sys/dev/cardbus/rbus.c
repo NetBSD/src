@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.23 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: rbus.c,v 1.23.12.1 2006/05/24 15:50:07 tron Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.23 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.23.12.1 2006/05/24 15:50:07 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ rbus_space_free(rbt, bsh, size, addrp)
 		/* error. INVALID rbustag */
 		status = 1;
 	}
-	if (addrp != NULL) {
+	if (status == 0 && addrp != NULL) {
 		*addrp = addr;
 	}
 	return status;

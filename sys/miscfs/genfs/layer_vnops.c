@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.26 2005/12/11 12:24:50 christos Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.26.12.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,8 +67,8 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.26 2005/12/11 12:24:50 christos Exp $
- *	$Id: layer_vnops.c,v 1.26 2005/12/11 12:24:50 christos Exp $
+ *	$Id: layer_vnops.c,v 1.26.12.1 2006/05/24 15:50:43 tron Exp $
+ *	$Id: layer_vnops.c,v 1.26.12.1 2006/05/24 15:50:43 tron Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -233,7 +233,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.26 2005/12/11 12:24:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.26.12.1 2006/05/24 15:50:43 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,8 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.26 2005/12/11 12:24:50 christos Ex
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/kauth.h>
+
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 #include <miscfs/genfs/genfs.h>
@@ -493,7 +495,7 @@ layer_setattr(v)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -537,7 +539,7 @@ layer_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -557,7 +559,7 @@ layer_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -727,7 +729,7 @@ layer_fsync(v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int  a_flags;
 		off_t offlo;
 		off_t offhi;

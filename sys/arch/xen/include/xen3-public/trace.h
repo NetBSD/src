@@ -1,3 +1,4 @@
+/* $NetBSD: trace.h,v 1.1.1.1.12.1 2006/05/24 15:48:25 tron Exp $ */
 /******************************************************************************
  * include/public/trace.h
  * 
@@ -24,7 +25,6 @@
 #define TRC_VMXTIMER 0x00082000   /* VMX timer trace           */
 #define TRC_VMXINT   0x00084000   /* VMX interrupt trace       */
 #define TRC_VMXIO    0x00088000   /* VMX io emulation trace  */
-#define TRC_VMEXIT_HANDLER    0x00090000   /* VMX handler trace  */
 
 /* Trace events per class */
 
@@ -50,14 +50,11 @@
 
 /* trace events per subclass */
 #define TRC_VMX_VMEXIT          (TRC_VMXEXIT + 1)
-#define TRC_VMX_VECTOR          (TRC_VMXEXIT + 2)
+#define TRC_VMX_VMENTRY         (TRC_VMXEXIT + 2)
 
 #define TRC_VMX_TIMER_INTR      (TRC_VMXTIMER + 1)
 
 #define TRC_VMX_INT             (TRC_VMXINT + 1)
-
-#define TRC_VMEXIT              (TRC_VMEXIT_HANDLER + 1)
-#define TRC_VMENTRY             (TRC_VMEXIT_HANDLER + 2)
 
 
 /* This structure represents a single trace buffer record. */

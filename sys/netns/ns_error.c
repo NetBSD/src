@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.18 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.18.12.1 2006/05/24 15:50:46 tron Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.18 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.18.12.1 2006/05/24 15:50:46 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ ns_err_input(struct mbuf *m)
 	if (ns_errprintfs)
 		printf("ns_err_input, type %d param %d\n", type, param);
 #endif
-	if (type >= NS_ERR_TOO_BIG) {
+	if (type > NS_ERR_TOO_BIG) {
 		goto badcode;
 	}
 	ns_errstat.ns_es_outhist[ns_err_x(type)]++;

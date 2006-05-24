@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.13 2006/01/25 18:27:23 christos Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.13.10.1 2006/05/24 15:50:42 tron Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -296,6 +296,14 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 
 	for (first = 1, i = 0; i < elf->e_phnum; i++) {
 		internalize_phdr(elf->e_ident[EI_DATA], &phdr[i]);
+
+#ifndef MD_LOADSEG /* Allow processor ABI specific segment loads */
+#define MD_LOADSEG(a) /*CONSTCOND*/0
+#endif
+		if (MD_LOADSEG(&phdr[i]))
+			goto loadseg;
+
+
 		if (phdr[i].p_type != PT_LOAD ||
 		    (phdr[i].p_flags & (PF_W|PF_X)) == 0)
 			continue;
@@ -309,6 +317,7 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 		if ((IS_TEXT(phdr[i]) && (flags & LOAD_TEXT)) ||
 		    (IS_DATA(phdr[i]) && (flags & LOAD_DATA))) {
 
+		loadseg:
 			/* Read in segment. */
 			PROGRESS(("%s%lu", first ? "" : "+",
 			    (u_long)phdr[i].p_filesz));

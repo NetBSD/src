@@ -1,4 +1,4 @@
-/* $Id: arbus.c,v 1.1.2.2 2006/03/28 09:47:17 tron Exp $ */
+/* $Id: arbus.c,v 1.1.2.3 2006/05/24 15:48:12 tron Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.1.2.2 2006/03/28 09:47:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arbus.c,v 1.1.2.3 2006/05/24 15:48:12 tron Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -195,7 +195,8 @@ arbus_attach(struct device *parent, struct device *self, void *aux)
 	arbus_init();
 
 	for (i = 0; arbus_devices[i].name; i++) {
-		if ((arbus_devices[i].mask & info->ab_config) == 0) {
+		if (arbus_devices[i].mask &&
+		    ((arbus_devices[i].mask & info->ab_config) == 0)) {
 			continue;
 		}
 		aa.aa_name = arbus_devices[i].name;
@@ -251,11 +252,12 @@ arbus_print(void *aux, const char *pnp)
 	if (aa->aa_addr)
 		aprint_normal(" addr 0x%lx", aa->aa_addr);
 
-	if (ARBUS_IRQ_CPU(aa->aa_irq))
+	if (aa->aa_irq >= 0) {
 		aprint_normal(" interrupt %d", ARBUS_IRQ_CPU(aa->aa_irq));
 
-	if (ARBUS_IRQ_MISC(aa->aa_irq))
-		aprint_normal(" irq %d", ARBUS_IRQ_MISC(aa->aa_irq));
+		if (ARBUS_IRQ_MISC(aa->aa_irq))
+			aprint_normal(" irq %d", ARBUS_IRQ_MISC(aa->aa_irq));
+	}
 
 	return (UNCONF);
 }

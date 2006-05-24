@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.71 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.71.12.1 2006/05/24 15:50:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.71 2005/12/11 12:25:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.71.12.1 2006/05/24 15:50:48 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -383,7 +383,7 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
 			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
 				lockmgr(&syncer_lock, LK_RELEASE, NULL);
 			else if (dounmount(mp, 0, l) != 0)
-				CLRSIG(l->l_proc, CURSIG(l));
+				CLRSIG(l);
 			sleepreturn = 0;
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.c,v 1.3 2005/12/24 20:06:59 perry Exp $	*/
+/*	$NetBSD: ifpga_intr.c,v 1.3.12.1 2006/05/24 15:47:54 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -279,7 +279,7 @@ ifpga_intr_calculate_masks(void)
 	}
 }
 
-inline void
+void
 ifpga_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;

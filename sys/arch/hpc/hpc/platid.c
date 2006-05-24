@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.10 2006/01/17 02:50:59 uwe Exp $	*/
+/*	$NetBSD: platid.c,v 1.10.10.1 2006/05/24 15:47:56 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(_WIN32)	/* XXX: hpcboot.exe */
-__KERNEL_RCSID(0, "$NetBSD: platid.c,v 1.10 2006/01/17 02:50:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platid.c,v 1.10.10.1 2006/05/24 15:47:56 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -157,7 +157,7 @@ platid_search(platid_t *pid, void *base, int nmemb, int size)
 			match_level = res;
 			match = base;
 		}
-		(char *)base += size;
+		base = (char *)base + size;
 	}
 
 	return (match);

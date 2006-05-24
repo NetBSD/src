@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.101 2006/03/07 07:19:44 thorpej Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.101.4.1 2006/05/24 15:50:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.101 2006/03/07 07:19:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.101.4.1 2006/05/24 15:50:41 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.101 2006/03/07 07:19:44 thorpej Ex
 #include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -153,7 +154,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	case  PT_ATTACH:
-	case  PT_DUMPCORE:
 		/*
 		 * You can't attach to a process if:
 		 *	(1) it's the process that's doing the attaching,
@@ -177,9 +177,10 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 *	(4) it's not owned by you, or is set-id on exec
 		 *	    (unless you're root), or...
 		 */
-		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+		if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
 			ISSET(t->p_flag, P_SUGID)) &&
-		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		    (error = kauth_authorize_generic(p->p_cred,
+				KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			return (error);
 
 		/*
@@ -209,6 +210,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	case  PT_DETACH:
 	case  PT_LWPINFO:
 	case  PT_SYSCALL:
+	case  PT_DUMPCORE:
 #ifdef PT_STEP
 	case  PT_STEP:
 #endif
@@ -240,20 +242,27 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 *	(2) it's being traced by procfs (which has
 		 *	    different signal delivery semantics),
 		 */
-		if (ISSET(t->p_flag, P_FSTRACE))
+		if (ISSET(t->p_flag, P_FSTRACE)) {
+			uprintf("file system traced\n");
 			return (EBUSY);
+		}
 
 		/*
 		 *	(3) it's not being traced by _you_, or
 		 */
-		if (t->p_pptr != p)
+		if (t->p_pptr != p) {
+			uprintf("parent %d != %d\n", t->p_pptr->p_pid, p->p_pid);
 			return (EBUSY);
+		}
 
 		/*
 		 *	(4) it's not currently stopped.
 		 */
-		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
+		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED)) {
+			uprintf("stat %d flag %d\n", t->p_stat,
+			    !ISSET(t->p_flag, P_WAITED));
 			return (EBUSY);
+		}
 		break;
 
 	default:			/* It was not a legal request. */
@@ -799,9 +808,10 @@ process_checkioperm(struct lwp *l, struct proc *t)
 	 *	(2) it's not owned by you, or is set-id on exec
 	 *	    (unless you're root), or...
 	 */
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(p->p_cred) ||
 		ISSET(t->p_flag, P_SUGID)) &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	    (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+			&p->p_acflag)) != 0)
 		return (error);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.42 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: bus.c,v 1.42.6.1 2006/05/24 15:48:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.42 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.42.6.1 2006/05/24 15:48:21 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,22 +778,22 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		       bus_size_t len, int ops)
 {
 	bus_size_t minlen;
-	bus_addr_t addr, start, end, preboundary, firstboundary, lastboundary;
+	vaddr_t vaddr, start, end, preboundary, firstboundary, lastboundary;
 	int i, useindex;
 
 	/*
-	 * Mising PRE and POST operations is not allowed.
+	 * Mixing PRE and POST operations is not allowed.
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
-		panic("_bus_dmamap_sync: mix PRE and POST");
+		panic("_bus_dmamap_sync_mips3: mix PRE and POST");
 
 #ifdef DIAGNOSTIC
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
-		      offset, map->dm_mapsize);
+		panic("_bus_dmamap_sync_mips3: bad offset %lu "
+		    "(map size is %lu)", offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad length");
+		panic("_bus_dmamap_sync_mips3: bad length");
 #endif
 
 	/*
@@ -863,12 +863,12 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		minlen = len < map->dm_segs[i].ds_len - offset ?
 		    len : map->dm_segs[i].ds_len - offset;
 
-		addr = map->dm_segs[i]._ds_vaddr;
+		vaddr = map->dm_segs[i]._ds_vaddr;
 
 #ifdef BUS_DMA_DEBUG
-		printf("bus_dmamap_sync: flushing segment %d "
+		printf("bus_dmamap_sync_mips3: flushing segment %d "
 		    "(0x%lx+%lx, 0x%lx+0x%lx) (olen = %ld)...", i,
-		    addr, offset, addr, offset + minlen - 1, len);
+		    vaddr, offset, vaddr, offset + minlen - 1, len);
 #endif
 
 		/*
@@ -876,7 +876,7 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * Write-back,Invalidate, so just do one test.
 		 */
 		if (__predict_false(useindex)) {
-			mips_dcache_wbinv_range_index(addr + offset, minlen);
+			mips_dcache_wbinv_range_index(vaddr + offset, minlen);
 #ifdef BUS_DMA_DEBUG
 			printf("\n");
 #endif
@@ -887,7 +887,7 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 		/* The code that follows is more correct than that in
 		   mips/bus_dma.c. */
-		start = addr + offset;
+		start = vaddr + offset;
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
 			mips_dcache_wbinv_range(start, minlen);

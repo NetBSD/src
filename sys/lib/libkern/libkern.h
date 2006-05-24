@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.58.2.1 2006/03/28 09:42:27 tron Exp $	*/
+/*	$NetBSD: libkern.h,v 1.58.2.2 2006/05/24 15:50:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,6 +35,7 @@
 #define _LIB_LIBKERN_LIBKERN_H_
 
 #include <sys/types.h>
+#include <sys/inttypes.h>
 #include <sys/null.h>
 
 #ifndef LIBKERN_INLINE
@@ -203,6 +204,12 @@ tolower(int ch)
 #endif
 #endif
 
+#ifdef __COVERITY__
+#ifndef DIAGNOSTIC
+#define DIAGNOSTIC
+#endif
+#endif
+
 #ifndef DIAGNOSTIC
 #define _DIAGASSERT(a)	(void)0
 #ifdef lint
@@ -324,4 +331,5 @@ size_t	 strlcpy __P((char *, const char *, size_t));
 size_t	 strlcat __P((char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));
 u_long	 strtoul __P((const char *, char **, int));
+uintmax_t strtoumax __P((const char *, char **, int));
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

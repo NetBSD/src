@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.64 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.64.4.1 2006/05/24 15:50:45 tron Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.64 2006/03/05 23:47:08 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.64.4.1 2006/05/24 15:50:45 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -807,6 +807,8 @@ in6_ifattach(ifp, altifp)
 		 */
 		return;
 #endif
+	case IFT_CARP:
+		return;
 	default:
 		break;
 	}

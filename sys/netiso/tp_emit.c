@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.22 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.22.12.1 2006/05/24 15:50:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.22 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.22.12.1 2006/05/24 15:50:46 tron Exp $");
 
 #include "opt_iso.h"
 
@@ -204,13 +204,13 @@ tp_emit(
 	} else {
 		MGETHDR(m, M_DONTWAIT, TPMT_TPHDR);
 	}
-	m->m_data += max_hdr;
 	if (m == NULL) {
 		if (data != (struct mbuf *) 0)
 			m_freem(data);
 		error = ENOBUFS;
 		goto done;
 	}
+	m->m_data += max_hdr;
 	m->m_len = sizeof(struct tpdu);
 	m->m_nextpkt = NULL;
 

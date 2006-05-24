@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.37 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.37.12.1 2006/05/24 15:48:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37.12.1 2006/05/24 15:48:15 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2005/12/11 12:18:31 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -106,10 +107,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vaddr_t o, v;
 	int c;
@@ -196,10 +194,7 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	struct proc *p = curproc;	/* XXX */
 
@@ -214,7 +209,9 @@ mmmmap(dev, off, prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if ((u_int)off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
+	if ((u_int)off > ctob(physmem) &&
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag) != 0)
 		return (-1);
 	return (ns532_btop((u_int)off));
 }

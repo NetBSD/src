@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.12.12.1 2006/03/31 09:45:26 tron Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.12.12.2 2006/05/24 15:50:30 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.12.12.1 2006/03/31 09:45:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.12.12.2 2006/05/24 15:50:30 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ struct zskbd_internal {
 	struct lk201_state zsi_ks;
 };
 
-struct zskbd_internal zskbd_console_internal;
+static struct zskbd_internal zskbd_console_internal;
 
 struct zskbd_softc {
 	struct device zskbd_dev;	/* required first: base device */
@@ -116,7 +116,7 @@ struct zskbd_softc {
 	struct device *sc_wskbddev;
 };
 
-struct zsops zsops_zskbd;
+static struct zsops zsops_zskbd;
 
 static void	zskbd_input(struct zskbd_softc *, int);
 
@@ -130,7 +130,7 @@ static int	zskbd_enable(void *, int);
 static void	zskbd_set_leds(void *, int);
 static int	zskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
-const struct wskbd_accessops zskbd_accessops = {
+static const struct wskbd_accessops zskbd_accessops = {
 	zskbd_enable,
 	zskbd_set_leds,
 	zskbd_ioctl,
@@ -139,14 +139,14 @@ const struct wskbd_accessops zskbd_accessops = {
 static void	zskbd_cngetc(void *, u_int *, int *);
 static void	zskbd_cnpollc(void *, int);
 
-const struct wskbd_consops zskbd_consops = {
+static const struct wskbd_consops zskbd_consops = {
 	zskbd_cngetc,
 	zskbd_cnpollc,
 };
 
-static int zskbd_sendchar(void *, u_char);
+static int	zskbd_sendchar(void *, u_char);
 
-const struct wskbd_mapdata zskbd_keymapdata = {
+static const struct wskbd_mapdata zskbd_keymapdata = {
 	lkkbd_keydesctab,
 #ifdef ZSKBD_LAYOUT
 	ZSKBD_LAYOUT,
@@ -161,10 +161,7 @@ int zskbd_cnattach(struct zs_chanstate *);	/* EXPORTED */
  * kbd_match: how is this zs channel configured?
  */
 static int
-zskbd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+zskbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -180,9 +177,7 @@ zskbd_match(parent, cf, aux)
 }
 
 static void
-zskbd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+zskbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = device_private(parent);
 	struct zskbd_softc *zskbd = device_private(self);
@@ -241,8 +236,7 @@ zskbd_attach(parent, self, aux)
 }
 
 int
-zskbd_cnattach(cs)
-	struct zs_chanstate *cs;
+zskbd_cnattach(struct zs_chanstate *cs)
 {
 	(void) zs_set_speed(cs, ZSKBD_BPS);
 	zs_loadchannelregs(cs);
@@ -259,9 +253,7 @@ zskbd_cnattach(cs)
 }
 
 static int
-zskbd_enable(v, on)
-	void *v;
-	int on;
+zskbd_enable(void *v, int on)
 {
 	struct zskbd_softc *sc = v;
 
@@ -270,9 +262,7 @@ zskbd_enable(v, on)
 }
 
 static int
-zskbd_sendchar(v, c)
-	void *v;
-	u_char c;
+zskbd_sendchar(void *v, u_char c)
 {
 	struct zs_chanstate *cs = v;
 	zs_write_data(cs, c);
@@ -282,10 +272,7 @@ zskbd_sendchar(v, c)
 }
 
 static void
-zskbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+zskbd_cngetc(void *v, u_int *type, int *data)
 {
 	struct zskbd_internal *zsi = v;
 	int c;
@@ -296,9 +283,7 @@ zskbd_cngetc(v, type, data)
 }
 
 static void
-zskbd_cnpollc(v, on)
-	void *v;
-        int on;
+zskbd_cnpollc(void *v, int on)
 {
 #if 0
 	struct zskbd_internal *zsi = v;
@@ -306,9 +291,7 @@ zskbd_cnpollc(v, on)
 }
 
 static void
-zskbd_set_leds(v, leds)
-	void *v;
-	int leds;
+zskbd_set_leds(void *v, int leds)
 {
 	struct zskbd_softc *sc = (struct zskbd_softc *)v;
 
@@ -316,12 +299,7 @@ zskbd_set_leds(v, leds)
 }
 
 static int
-zskbd_ioctl(v, cmd, data, flag, l)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct lwp *l;
+zskbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct zskbd_softc *sc = (struct zskbd_softc *)v;
 
@@ -352,9 +330,7 @@ zskbd_ioctl(v, cmd, data, flag, l)
 }
 
 static void
-zskbd_input(sc, data)
-	struct zskbd_softc *sc;
-	int data;
+zskbd_input(struct zskbd_softc *sc, int data)
 {
 	u_int type;
 	int val;
@@ -376,8 +352,7 @@ static void zskbd_txint(struct zs_chanstate *);
 static void zskbd_softint(struct zs_chanstate *);
 
 static void
-zskbd_rxint(cs)
-	struct zs_chanstate *cs;
+zskbd_rxint(struct zs_chanstate *cs)
 {
 	struct zskbd_softc *zskbd;
 	int put, put_next;
@@ -417,8 +392,7 @@ zskbd_rxint(cs)
 
 
 static void
-zskbd_txint(cs)
-	struct zs_chanstate *cs;
+zskbd_txint(struct zs_chanstate *cs)
 {
 	struct zskbd_softc *zskbd;
 
@@ -431,9 +405,7 @@ zskbd_txint(cs)
 
 
 static void
-zskbd_stint(cs, force)
-	struct zs_chanstate *cs;
-	int force;
+zskbd_stint(struct zs_chanstate *cs, int force)
 {
 	struct zskbd_softc *zskbd;
 	int rr0;
@@ -460,8 +432,7 @@ zskbd_stint(cs, force)
 
 
 static void
-zskbd_softint(cs)
-	struct zs_chanstate *cs;
+zskbd_softint(struct zs_chanstate *cs)
 {
 	struct zskbd_softc *zskbd;
 	int get, c, s;
@@ -532,7 +503,7 @@ zskbd_softint(cs)
 	splx(s);
 }
 
-struct zsops zsops_zskbd = {
+static struct zsops zsops_zskbd = {
 	zskbd_rxint,	/* receive char available */
 	zskbd_stint,	/* external/status */
 	zskbd_txint,	/* xmit buffer empty */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25 2006/02/23 05:37:46 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.25.6.1 2006/05/24 15:47:51 tron Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.25 2006/02/23 05:37:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.25.6.1 2006/05/24 15:47:51 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.25 2006/02/23 05:37:46 thorpej Exp $");
 #include <arc/jazz/fdreg.h>
 #include <arc/jazz/fdcvar.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 #define FDUNIT(dev)	DISKUNIT(dev)
@@ -184,8 +185,6 @@ struct fd_softc {
 /* floppy driver configuration */
 int fdprobe(struct device *, struct cfdata *, void *);
 void fdattach(struct device *, struct device *, void *);
-
-extern struct cfdriver fd_cd;
 
 CFATTACH_DECL(fd, sizeof(struct fd_softc), fdprobe, fdattach, NULL, NULL);
 
@@ -831,7 +830,7 @@ loop:
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 
-		fd->sc_dk.dk_seek++;
+		iostat_seek(fd->sc_dk.dk_stats);
 		disk_busy(&fd->sc_dk);
 
 		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);

@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.1 2006/03/16 17:43:34 garbled Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.1.2.1 2006/05/24 15:48:20 tron Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.1 2006/03/16 17:43:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.1.2.1 2006/05/24 15:48:20 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,6 +125,7 @@ nvram_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	if (pnpbus_io_map(&pna->pna_res, 0, &sc->sc_as, &sc->sc_ash) ||
 	    pnpbus_io_map(&pna->pna_res, 1, &sc->sc_data, &sc->sc_datah)) {
 		printf("nvram: couldn't map registers\n");
+		return;
 	}
 
 	simple_lock_init(&nvram_slock);

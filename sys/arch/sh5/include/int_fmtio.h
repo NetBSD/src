@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.3 2002/12/07 21:37:35 scw Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.3.44.1 2006/05/24 15:48:22 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #else
 #define	PRIdFAST64	"lld"	/* int_fast64_t		*/
 #endif
-#define	PRIdMAX		"lld"	/* intmax_t		*/
+#define	PRIdMAX		"jd"	/* intmax_t		*/
 #define	PRIdPTR		"ld"	/* intptr_t		*/
 
 #define	PRIi8		"i"	/* int8_t		*/
@@ -96,7 +96,7 @@
 #else
 #define	PRIiFAST64	"lli"	/* int_fast64_t		*/
 #endif
-#define	PRIiMAX		"lli"	/* intmax_t		*/
+#define	PRIiMAX		"ji"	/* intmax_t		*/
 #define	PRIiPTR		"li"	/* intptr_t		*/
 
 /* fprintf macros for unsigned integers */
@@ -125,7 +125,7 @@
 #else
 #define	PRIoFAST64	"llo"	/* uint_fast64_t	*/
 #endif
-#define	PRIoMAX		"llo"	/* uintmax_t		*/
+#define	PRIoMAX		"jo"	/* uintmax_t		*/
 #define	PRIoPTR		"lo"	/* uintptr_t		*/
 
 #define	PRIu8		"u"	/* uint8_t		*/
@@ -152,7 +152,7 @@
 #else
 #define	PRIuFAST64	"llu"	/* uint_fast64_t	*/
 #endif
-#define	PRIuMAX		"llu"	/* uintmax_t		*/
+#define	PRIuMAX		"ju"	/* uintmax_t		*/
 #define	PRIuPTR		"lu"	/* uintptr_t		*/
 
 #define	PRIx8		"x"	/* uint8_t		*/
@@ -179,7 +179,7 @@
 #else
 #define	PRIxFAST64	"llx"	/* uint_fast64_t	*/
 #endif
-#define	PRIxMAX		"llx"	/* uintmax_t		*/
+#define	PRIxMAX		"jx"	/* uintmax_t		*/
 #define	PRIxPTR		"lx"	/* uintptr_t		*/
 
 #define	PRIX8		"X"	/* uint8_t		*/
@@ -206,7 +206,7 @@
 #else
 #define	PRIXFAST64	"llX"	/* uint_fast64_t	*/
 #endif
-#define	PRIXMAX		"llX"	/* uintmax_t		*/
+#define	PRIXMAX		"jX"	/* uintmax_t		*/
 #define	PRIXPTR		"lX"	/* uintptr_t		*/
 
 /* fscanf macros for signed integers */
@@ -235,7 +235,7 @@
 #else
 #define	SCNdFAST64	"lld"	/* int_fast64_t		*/
 #endif
-#define	SCNdMAX		"lld"	/* intmax_t		*/
+#define	SCNdMAX		"jd"	/* intmax_t		*/
 #define	SCNdPTR		"ld"	/* intptr_t		*/
 
 #define	SCNi8		"hhi"	/* int8_t		*/
@@ -262,7 +262,7 @@
 #else
 #define	SCNiFAST64	"lli"	/* int_fast64_t		*/
 #endif
-#define	SCNiMAX		"lli"	/* intmax_t		*/
+#define	SCNiMAX		"ji"	/* intmax_t		*/
 #define	SCNiPTR		"li"	/* intptr_t		*/
 
 /* fscanf macros for unsigned integers */
@@ -291,7 +291,7 @@
 #else
 #define	SCNoFAST64	"llo"	/* uint_fast64_t	*/
 #endif
-#define	SCNoMAX		"llo"	/* uintmax_t		*/
+#define	SCNoMAX		"jo"	/* uintmax_t		*/
 #define	SCNoPTR		"lo"	/* uintptr_t		*/
 
 #define	SCNu8		"hhu"	/* uint8_t		*/
@@ -318,7 +318,7 @@
 #else
 #define	SCNuFAST64	"llu"	/* uint_fast64_t	*/
 #endif
-#define	SCNuMAX		"llu"	/* uintmax_t		*/
+#define	SCNuMAX		"ju"	/* uintmax_t		*/
 #define	SCNuPTR		"lu"	/* uintptr_t		*/
 
 #define	SCNx8		"hhx"	/* uint8_t		*/
@@ -345,7 +345,7 @@
 #else
 #define	SCNxFAST64	"llx"	/* uint_fast64_t	*/
 #endif
-#define	SCNxMAX		"llx"	/* uintmax_t		*/
+#define	SCNxMAX		"jx"	/* uintmax_t		*/
 #define	SCNxPTR		"lx"	/* uintptr_t		*/
 
 #endif /* _SH5_INT_FMTIO_H_ */

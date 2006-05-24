@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.27 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.27.12.1 2006/05/24 15:50:27 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.27 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.27.12.1 2006/05/24 15:50:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,42 +339,45 @@ cs4281_intr(void *p)
 	/* Playback Interrupt */
 	if (intr & HISR_DMA0) {
 		handled = 1;
-		DPRINTF((" PB DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA0),
-			 (int)BA0READ4(sc, CS4281_DCC0)));
 		if (sc->sc_prun) {
+			DPRINTF((" PB DMA 0x%x(%d)",
+				(int)BA0READ4(sc, CS4281_DCA0),
+				(int)BA0READ4(sc, CS4281_DCC0)));
 			if ((sc->sc_pi%sc->sc_pcount) == 0)
 				sc->sc_pintr(sc->sc_parg);
+			/* copy buffer */
+			++sc->sc_pi;
+			empty_dma = sc->sc_pdma->addr;
+			if (sc->sc_pi&1)
+				empty_dma += sc->hw_blocksize;
+			memcpy(empty_dma, sc->sc_pn, sc->hw_blocksize);
+			sc->sc_pn += sc->hw_blocksize;
+			if (sc->sc_pn >= sc->sc_pe)
+				sc->sc_pn = sc->sc_ps;
 		} else {
-			printf("unexpected play intr\n");
+			printf("%s: unexpected play intr\n",
+			       sc->sc_dev.dv_xname);
 		}
-		/* copy buffer */
-		++sc->sc_pi;
-		empty_dma = sc->sc_pdma->addr;
-		if (sc->sc_pi&1)
-			empty_dma += sc->hw_blocksize;
-		memcpy(empty_dma, sc->sc_pn, sc->hw_blocksize);
-		sc->sc_pn += sc->hw_blocksize;
-		if (sc->sc_pn >= sc->sc_pe)
-			sc->sc_pn = sc->sc_ps;
 	}
 	if (intr & HISR_DMA1) {
 		handled = 1;
-		/* copy from DMA */
-		DPRINTF((" CP DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA1),
-			 (int)BA0READ4(sc, CS4281_DCC1)));
-		++sc->sc_ri;
-		empty_dma = sc->sc_rdma->addr;
-		if ((sc->sc_ri & 1) == 0)
-			empty_dma += sc->hw_blocksize;
-		memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
-		sc->sc_rn += sc->hw_blocksize;
-		if (sc->sc_rn >= sc->sc_re)
-			sc->sc_rn = sc->sc_rs;
 		if (sc->sc_rrun) {
+			/* copy from DMA */
+			DPRINTF((" CP DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA1),
+				(int)BA0READ4(sc, CS4281_DCC1)));
+			++sc->sc_ri;
+			empty_dma = sc->sc_rdma->addr;
+			if ((sc->sc_ri & 1) == 0)
+				empty_dma += sc->hw_blocksize;
+			memcpy(sc->sc_rn, empty_dma, sc->hw_blocksize);
+			sc->sc_rn += sc->hw_blocksize;
+			if (sc->sc_rn >= sc->sc_re)
+				sc->sc_rn = sc->sc_rs;
 			if ((sc->sc_ri % sc->sc_rcount) == 0)
 				sc->sc_rintr(sc->sc_rarg);
 		} else {
-			printf("unexpected record intr\n");
+			printf("%s: unexpected record intr\n",
+			       sc->sc_dev.dv_xname);
 		}
 	}
 	DPRINTF(("\n"));

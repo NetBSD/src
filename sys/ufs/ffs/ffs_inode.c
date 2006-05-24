@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.79.12.1 2006/03/28 09:42:29 tron Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.79.12.2 2006/05/24 15:50:47 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.79.12.1 2006/03/28 09:42:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.79.12.2 2006/05/24 15:50:47 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.79.12.1 2006/03/28 09:42:29 tron Exp
 #include <sys/malloc.h>
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -163,7 +164,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
  * disk blocks.
  */
 int
-ffs_truncate(struct vnode *ovp, off_t length, int ioflag, struct ucred *cred,
+ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
     struct lwp *l)
 {
 	struct genfs_node *gp = VTOG(ovp);

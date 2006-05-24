@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2006/03/10 17:19:46 he Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.2.1 2006/05/24 15:48:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -67,10 +67,7 @@ int mainbus_found = 0;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	if (mainbus_found)
@@ -82,10 +79,7 @@ mainbus_match(parent, match, aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	union mainbus_attach_args mba;
 	struct confargs ca;
@@ -155,9 +149,7 @@ mainbus_attach(parent, self, aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 	union mainbus_attach_args *mba = aux;
 

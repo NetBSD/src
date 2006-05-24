@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75reg.h,v 1.2 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: lm75reg.h,v 1.2.12.1 2006/05/24 15:50:08 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,6 +45,8 @@
  */
 #define	LM75_ADDRMASK		0x78
 #define	LM75_ADDR		0x48
+#define	LM77_ADDRMASK		0x7c
+#define	LM77_ADDR		0x48
 
 /*
  * Temperature on the LM75 is represented by a 9-bit two's complement
@@ -65,6 +67,11 @@
 #define	LM75_REG_THYST_SET_POINT	0x02
 #define	LM75_REG_TOS_SET_POINT		0x03
 
+#define	LM77_REG_TCRIT_SET_POINT	0x03
+#define	LM77_REG_TLOW_SET_POINT		0x04
+#define	LM77_REG_THIGH_SET_POINT	0x05
+
+
 #define	LM75_TEMP_LEN			2	/* 2 data bytes */
 
 #define	LM75_CONFIG_SHUTDOWN		0x01
@@ -74,5 +81,9 @@
 #define	LM75_CONFIG_FAULT_QUEUE_2	(1 << 3)
 #define	LM75_CONFIG_FAULT_QUEUE_4	(2 << 3)
 #define	LM75_CONFIG_FAULT_QUEUE_6	(3 << 3)
+
+#define	LM77_CONFIG_TCRITAPOLARITY	0x04
+#define	LM77_CONFIG_INTPOLARITY		0x08
+#define	LM77_CONFIG_FAULT_QUEUE		LM75_CONFIG_FAULT_QUEUE_4
 
 #endif /* _DEV_I2C_LM75REG_H_ */

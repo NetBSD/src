@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.55 2005/12/08 03:10:12 thorpej Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.55.12.1 2006/05/24 15:50:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.55 2005/12/08 03:10:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.55.12.1 2006/05/24 15:50:41 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.55 2005/12/08 03:10:12 thorpej Exp
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #include <sys/file.h>
+#include <sys/kauth.h>
 
 void	pffasttimo(void *);
 void	pfslowtimo(void *);
@@ -254,18 +255,23 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	if (namelen != 4)
 		return (EINVAL);
 
+	if (oldp != NULL) {
+		len = *oldlenp;
+		elem_size = name[2];
+		elem_count = name[3];
+		if (elem_size != sizeof(pcb))
+			return EINVAL;
+	} else {
+		len = 0;
+		elem_size = sizeof(pcb);
+		elem_count = INT_MAX;
+	}
 	error = 0;
 	dp = oldp;
-	len = (oldp != NULL) ? *oldlenp : 0;
 	op = name[0];
 	arg = name[1];
-	elem_size = name[2];
-	elem_count = name[3];
-	out_size = MIN(sizeof(pcb), elem_size);
+	out_size = elem_size;
 	needed = 0;
-
-	elem_count = INT_MAX;
-	elem_size = out_size = sizeof(pcb);
 
 	if (name - oname != 4)
 		return (EINVAL);
@@ -279,7 +285,9 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	 * to walk the file list looking for them.  :-/
 	 */
 	LIST_FOREACH(fp, &filehead, f_list) {
-		if (CURTAIN(l->l_proc->p_ucred->cr_uid, fp->f_cred->cr_uid))
+		if (kauth_authorize_process(l->l_proc->p_cred,
+		    KAUTH_PROCESS_CANSEE, l->l_proc, fp->f_cred, NULL,
+		    NULL) != 0)
 			continue;
 		if (fp->f_type != DTYPE_SOCKET)
 			continue;

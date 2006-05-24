@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.3 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.3.12.1 2006/05/24 15:50:44 tron Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.3.12.1 2006/05/24 15:50:44 tron Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
 #include <sys/queue.h>
 #include <sys/sockio.h>
 #include <sys/proc.h>	/* XXX for curproc */
+#include <sys/kauth.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -858,7 +859,8 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSETAGR:
 		splx(s);
 		p = curproc; /* XXX */
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					  &p->p_acflag);
 		if (!error) {
 			error = agrreq_copyin(ifr->ifr_data, &ar);
 		}

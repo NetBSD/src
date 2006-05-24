@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.30 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.30.12.1 2006/05/24 15:48:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30.12.1 2006/05/24 15:48:15 tron Exp $");
 
 #define DEFINE_SPLX
 #include <sys/param.h>
@@ -48,14 +48,14 @@ static int next_sir = SOFTINT;
 unsigned int imask[NIPL] = {0xffffffff, 0xffffffff};
 unsigned int Cur_pl = 0xffffffff, sirpending, astpending;
 
-static void badhard __P((void *));
-static void badsoft __P((void *));
+static void badhard(void *);
+static void badsoft(void *);
 
 /*
  * Initialize the interrupt system.
  */
 void
-intr_init()
+intr_init(void)
 {
 	int i, sir;
 	static u_char icu_table[] = {
@@ -115,11 +115,10 @@ intr_init()
  * Handle pending software interrupts.
  */
 void
-check_sir(arg)
-	void *arg;
+check_sir(void *arg)
 {
-	register unsigned int cirpending, mask;
-	register struct iv *iv;
+	unsigned int cirpending, mask;
+	struct iv *iv;
 
 #ifdef DIAGNOSTIC
 	if (Cur_pl != (imask[IPL_ZERO] | (1 << IR_SOFT)))
@@ -133,7 +132,8 @@ check_sir(arg)
 		for (iv = ivt + SOFTINT, mask = 0x10000;
 		     cirpending & -mask; mask <<= 1, iv++) {
 			if ((cirpending & mask) != 0) {
-				register int s;
+				int s;
+
 				uvmexp.softs++;
 				iv->iv_evcnt.ev_count++;
 				s = splraise(iv->iv_mask);
@@ -154,14 +154,8 @@ check_sir(arg)
  * is allocated.
  */
 int
-intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
-	int intr;
-	void (*vector) __P((void *));
-	void *arg;
-	const char *use;
-	int blevel;
-	int rlevel;
-	int mode;
+intr_establish(int intr, void (*vector)(void *), void *arg, const char *use,
+    int blevel, int rlevel, int mode)
 {
 	int i, soft;
 
@@ -250,19 +244,20 @@ intr_establish(intr, vector, arg, use, blevel, rlevel, mode)
  * Default hardware interrupt handler
  */
 static void
-badhard(arg)
-	void *arg;
+badhard(void *arg)
 {
 	struct intrframe *frame = arg;
 	static int bad_count = 0;
 	di();
 	bad_count++;
 	if (bad_count < 5)
-   		printf("Unknown hardware interrupt: vec=%ld pc=0x%08x psr=0x%04x cpl=0x%08lx\n",
-		      frame->if_vec, frame->if_regs.r_pc, frame->if_regs.r_psr, frame->if_pl);
+		printf("Unknown hardware interrupt: vec=%ld pc=0x%08x "
+		    "psr=0x%04x cpl=0x%08lx\n", frame->if_vec,
+		    frame->if_regs.r_pc, frame->if_regs.r_psr, frame->if_pl);
 
 	if (bad_count == 5)
-		printf("Too many unknown hardware interrupts, quitting reporting them.\n");
+		printf("Too many unknown hardware interrupts, quitting "
+		    "reporting them.\n");
 	ei();
 }
 
@@ -270,10 +265,10 @@ badhard(arg)
  * Default software interrupt handler
  */
 static void
-badsoft(arg)
-	void *arg;
+badsoft(void *arg)
 {
 	static int bad_count = 0;
+
 	bad_count++;
 	if (bad_count < 5)
 		printf("Unknown software interrupt: vec=%d\n", (int)arg);

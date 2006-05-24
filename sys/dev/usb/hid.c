@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.23.44.1 2006/05/24 15:50:30 tron Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.23.44.1 2006/05/24 15:50:30 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,13 +300,13 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				break;
 			case 10: /* Push */
 				hi = malloc(sizeof *hi, M_TEMP, M_WAITOK);
-				*hi = s->cur;
+				*hi = *c;
 				c->next = hi;
 				break;
 			case 11: /* Pop */
 				hi = c->next;
 				oldpos = c->loc.pos;
-				s->cur = *hi;
+				*c = *hi;
 				c->loc.pos = oldpos;
 				free(hi, M_TEMP);
 				break;

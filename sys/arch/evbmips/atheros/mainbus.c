@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.1.2.2 2006/03/28 09:47:15 tron Exp $ */
+/* $NetBSD: mainbus.c,v 1.1.2.3 2006/05/24 15:47:55 tron Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.2.2 2006/03/28 09:47:15 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.2.3 2006/05/24 15:47:55 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ struct mainbusdev {
 struct mainbusdev mainbusdevs[] = {
 	{ "cpu",	},
 	{ "arbus",	},
-	{ "rtc",	},
 	{ NULL,		}
 };
 

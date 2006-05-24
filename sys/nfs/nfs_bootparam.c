@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.26 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.26.12.1 2006/05/24 15:50:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.26 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.26.12.1 2006/05/24 15:50:46 tron Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -333,11 +333,12 @@ bp_whoami(bpsin, my_ip, gw_ip, l)
 
 	/* RPC: portmap/callit */
 	bpsin->sin_port = htons(PMAPPORT);
-	from = NULL;
 	error = krpc_call(bpsin, PMAPPROG, PMAPVERS,
 			PMAPPROC_CALLIT, &m, &from, l);
-	if (error)
+	if (error) {
+		m_freem(m);
 		return error;
+	}
 
 	/*
 	 * Parse result message.
@@ -383,8 +384,7 @@ bad:
 	error = EBADRPC;
 
 out:
-	if (from)
-		m_freem(from);
+	m_freem(from);
 	if (m)
 		m_freem(m);
 	return(error);

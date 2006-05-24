@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27.6.1 2006/05/24 15:48:22 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ void pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
+/* ARGSUSED */
 static __inline void
 pmap_remove_all(struct pmap *pmap)
 {

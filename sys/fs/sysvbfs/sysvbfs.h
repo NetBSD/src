@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.h,v 1.1 2005/12/29 14:53:45 tsutsui Exp $	*/
+/*	$NetBSD: sysvbfs.h,v 1.1.12.1 2006/05/24 15:50:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ int sysvbfs_unmount(struct mount *, int, struct lwp *);
 int sysvbfs_root(struct mount *, struct vnode **);
 int sysvbfs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 int sysvbfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int sysvbfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int sysvbfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int sysvbfs_vget(struct mount *, ino_t, struct vnode **);
 int sysvbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int sysvbfs_vptofh(struct vnode *, struct fid *);
@@ -114,7 +114,7 @@ void sysvbfs_done(void);
 extern int (**sysvbfs_vnodeop_p)(void *);
 
 /* genfs ops */
-int sysvbfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+int sysvbfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 extern const struct genfs_ops sysvbfs_genfsops;
 
 /* internal service */

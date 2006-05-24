@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.6 2005/12/11 12:18:54 christos Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.6.12.1 2006/05/24 15:48:21 tron Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.6 2005/12/11 12:18:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.6.12.1 2006/05/24 15:48:21 tron Exp $");
+
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,14 +50,23 @@ __KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.6 2005/12/11 12:18:54 christos Exp $"
 #include <machine/bus.h>
 #include <machine/machtype.h>
 
+#include <mips/cache.h>
+
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#ifdef PCI_NETBSD_CONFIGURE
+#include <sys/extent.h>
+#include <sys/malloc.h>
+#include <dev/pci/pciconf.h>
+#endif
 
 #include <sgimips/mace/macereg.h>
 #include <sgimips/mace/macevar.h>
 
 #include <sgimips/mace/pcireg_mace.h>
+#ifndef PCI_NETBSD_CONFIGURE
 #include <sgimips/pci/pci_addr_fixup.h>
 
 #define PCIBIOS_PRINTV(arg) \
@@ -69,8 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.6 2005/12/11 12:18:54 christos Exp $"
 
 #define PAGE_ALIGN(x)	(((x) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 #define MEG_ALIGN(x)	(((x) + 0x100000 - 1) & ~(0x100000 - 1))
-
-#include "pci.h"
+#endif
 
 struct macepci_softc {
 	struct device sc_dev;
@@ -84,14 +95,14 @@ pcireg_t	macepci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		macepci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 int		macepci_intr(void *);
 
+#ifndef PCI_NETBSD_CONFIGURE
 struct pciaddr pciaddr;
-
-bus_addr_t pciaddr_ioaddr(u_int32_t val);
 
 int pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag, int mapreg, void *ctx, int type, bus_addr_t *addr, bus_size_t size);
 
 unsigned int ioaddr_base = 0x1000;
 unsigned int memaddr_base = 0x80100000;
+#endif
 
 CFATTACH_DECL(macepci, sizeof(struct macepci_softc),
     macepci_match, macepci_attach, NULL, NULL);
@@ -111,8 +122,11 @@ macepci_attach(struct device *parent, struct device *self, void *aux)
 	struct mace_attach_args *maa = aux;
 	struct pcibus_attach_args pba;
 	u_int32_t control;
+	int rev;
+#ifndef PCI_NETBSD_CONFIGURE
 	pcitag_t devtag;
-	int device, rev;
+	int device;
+#endif
 
 	if (bus_space_subregion(maa->maa_st, maa->maa_sh,
 	    maa->maa_offset, 0, &pc->ioh) )
@@ -145,6 +159,7 @@ macepci_attach(struct device *parent, struct device *self, void *aux)
 	    MACE_PCI_CONTROL_TAR_INT |
 	    MACE_PCI_CONTROL_MAR_INT);
 
+#ifndef PCI_NETBSD_CONFIGURE
 	/* Must fix up all PCI devices, ahc_pci expects proper i/o mapping */
 	for (device = 1; device < 4; device++) {
 		const struct pci_quirkdata *qd;
@@ -185,6 +200,7 @@ macepci_attach(struct device *parent, struct device *self, void *aux)
 			pciaddr_resource_manage(pc, devtag, NULL, NULL);
 		}
 	}
+#endif
 
 	/*
 	 * Enable all MACE PCI interrupts. They will be masked by
@@ -195,6 +211,14 @@ macepci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(pc->iot, pc->ioh, MACEPCI_CONTROL, control);
 
 #if NPCI > 0
+#ifdef PCI_NETBSD_CONFIGURE
+	pc->pc_ioext = extent_create("macepciio", 0x00001000, 0x01ffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	pc->pc_memext = extent_create("macepcimem", 0x80100000, 0x81ffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
+	    mips_dcache_align);
+#endif
 	memset(&pba, 0, sizeof pba);
 /*XXX*/	pba.pba_iot = SGIMIPS_BUS_SPACE_IO;
 /*XXX*/	pba.pba_memt = SGIMIPS_BUS_SPACE_MEM;
@@ -333,6 +357,7 @@ macepci_intr(void *arg)
 	return 0;
 }
 
+#ifndef PCI_NETBSD_CONFIGURE
 /* PCI Address fixup routines */
 
 void
@@ -531,3 +556,4 @@ pciaddr_print_devid(pci_chipset_tag_t pc, pcitag_t tag)
 	printf("%03d:%02d:%d 0x%04x 0x%04x ", bus, device, function,
 	    PCI_VENDOR(id), PCI_PRODUCT(id));
 }
+#endif

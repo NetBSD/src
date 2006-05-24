@@ -1,4 +1,4 @@
-#	$NetBSD: VME177,v 1.25 2006/02/05 05:01:56 cube Exp $
+#	$NetBSD: VME177,v 1.25.6.1 2006/05/24 15:48:13 tron Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -26,8 +26,10 @@ file-system 	NFS
 file-system 	KERNFS
 file-system 	MFS
 file-system 	CD9660
+file-system	NULLFS
 #file-system	MSDOSFS
 #file-system	UNION
+file-system	TMPFS
 #file-system	PTYFS		# /dev/pts/N support
 
 #options 	NFSSERVER
@@ -72,6 +74,7 @@ pseudo-device	sl
 pseudo-device	ppp 
 pseudo-device	loop
 pseudo-device	bpfilter
+pseudo-device	ksyms
 pseudo-device	pty
 pseudo-device	rnd
 pseudo-device	clockctl		# user control of clock subsystem

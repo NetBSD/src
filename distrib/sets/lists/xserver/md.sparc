@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.17 2005/11/12 22:57:46 spz Exp $
+# $NetBSD: md.sparc,v 1.17.2.1 2006/05/24 15:47:49 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -70,6 +70,10 @@
 ./usr/X11R6/lib/X11/doc/VideoBoard98
 ./usr/X11R6/lib/X11/etc/xmodmap.std
 ./usr/X11R6/lib/libxf86config.a
+./usr/X11R6/lib/modules/drivers/ati_drv.o
+./usr/X11R6/lib/modules/drivers/atimisc_drv.o
+./usr/X11R6/lib/modules/drivers/r128_drv.o
+./usr/X11R6/lib/modules/drivers/radeon_drv.o
 ./usr/X11R6/lib/modules/drivers/pnozz_drv.o
 ./usr/X11R6/lib/modules/drivers/sunbw2_drv.o
 ./usr/X11R6/lib/modules/drivers/suncg14_drv.o
@@ -149,6 +153,7 @@
 ./usr/X11R6/man/cat1/xf86cfg.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xf86config.0		-unknown-		.cat
 ./usr/X11R6/man/cat4/acecad.0			-unknown-		.cat
+./usr/X11R6/man/cat4/ati.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/citron.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/dmc.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/dynapro.0			-unknown-		.cat
@@ -164,6 +169,8 @@
 ./usr/X11R6/man/cat4/palmax.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/penmount.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/pnozz.0			-unknown-		.cat
+./usr/X11R6/man/cat4/r128.0			-unknown-		.cat
+./usr/X11R6/man/cat4/radeon.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/sunbw2.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/suncg14.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/suncg3.0			-unknown-		.cat
@@ -189,6 +196,7 @@
 ./usr/X11R6/man/man1/xf86cfg.1			-unknown-		.man
 ./usr/X11R6/man/man1/xf86config.1		-unknown-		.man
 ./usr/X11R6/man/man4/acecad.4			-unknown-		.man
+./usr/X11R6/man/man4/ati.4			-unknown-		.man
 ./usr/X11R6/man/man4/citron.4			-unknown-		.man
 ./usr/X11R6/man/man4/dmc.4			-unknown-		.man
 ./usr/X11R6/man/man4/dynapro.4			-unknown-		.man
@@ -204,6 +212,8 @@
 ./usr/X11R6/man/man4/palmax.4			-unknown-		.man
 ./usr/X11R6/man/man4/penmount.4			-unknown-		.man
 ./usr/X11R6/man/man4/pnozz.4			-unknown-		.man
+./usr/X11R6/man/man4/r128.4			-unknown-		.man
+./usr/X11R6/man/man4/radeon.4			-unknown-		.man
 ./usr/X11R6/man/man4/sunbw2.4			-unknown-		.man
 ./usr/X11R6/man/man4/suncg14.4			-unknown-		.man
 ./usr/X11R6/man/man4/suncg3.4			-unknown-		.man

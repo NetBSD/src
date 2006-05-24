@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.16 2006/03/04 17:24:13 peter Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.16.6.1 2006/05/24 15:47:52 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.16 2006/03/04 17:24:13 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.16.6.1 2006/05/24 15:47:52 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,9 +226,7 @@ cpu_initclocks(void)
 	profhz = stathz;
 	saost_sc->sc_statclock_step = TIMER_FREQUENCY / stathz;
 
-#ifdef OST_DEBUG
-	printf("clock: hz=%d stathz = %d\n", hz, stathz);
-#endif
+	printf("clock: hz=%d stathz=%d\n", hz, stathz);
 
 	/* Use the channels 0 and 1 for hardclock and statclock, respectively */
 	saost_sc->sc_clock_count = TIMER_FREQUENCY / hz;

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.763.6.1 2006/03/28 09:42:03 tron Exp $
+#	$NetBSD: files,v 1.763.6.2 2006/05/24 15:48:29 tron Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -76,6 +76,8 @@ defflag	opt_verified_exec.h 	VERIFIED_EXEC
 				VERIFIED_EXEC_FP_SHA512
 				VERIFIED_EXEC_FP_MD5
 				VERIFIED_EXEC_FP_RMD160
+
+defparam opt_pax.h		PAX_MPROTECT
 
 # compatibility options
 #
@@ -232,6 +234,7 @@ define	atapi		{ }
 define	radiodev	{ }
 define	gpibdev		{[address = -1]}
 define	gpiobus		{ }
+define	onewirebus	{ }
 define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
@@ -278,6 +281,9 @@ define	rasops32
 
 # splash screen support
 include "dev/splash/files.splash"
+
+# videomode support
+include "dev/videomode/files.videomode"
 
 # net device attributes - we have generic code for arc(net), ether(net),
 # fddi, token ring, atm and eco(net).
@@ -510,14 +516,13 @@ file	dev/ic/wi.c			wi
 
 # Atheros 5210/5211/5212 multi-mode 802.11
 #
-# XXX: All the AH_ stuff should be renamed to ATHHAL_!!! 
-defflag	opt_athhal.h	AH_ASSERT AH_DEBUG AH_DEBUG_ALQ AH_REGOPS_FUNC
-
+defflag	opt_athhal.h	ATHHAL_ASSERT ATHHAL_DEBUG ATHHAL_DEBUG_ALQ
 device	ath: arp, wlan, ifnet
 file	dev/ic/ath.c					ath
 file	dev/ic/ath_netbsd.c				ath
 file	dev/ic/athrate-sample.c				ath
-file	contrib/dev/ic/athhal_osdep.c			ath
+file	contrib/dev/ath/netbsd/ah_osdep.c		ath
+object	/athhal.o					ath
 
 # ADMtek ADM8211 802.11
 #
@@ -1094,6 +1099,7 @@ defpseudo gif:		ifnet
 defpseudo faith:	ifnet
 defpseudo stf:		ifnet
 defpseudo tap { }:	ifnet, ether, arp, bpf_filter
+defpseudo carp:		ifnet, ether, arp, bpf_filter
 
 defpseudo sequencer
 defpseudo clockctl
@@ -1210,6 +1216,7 @@ file	kern/init_main.c
 file	kern/init_sysctl.c
 file	kern/init_sysent.c
 file	kern/kern_acct.c
+file	kern/kern_auth.c
 file	kern/kern_clock.c
 file	kern/kern_descrip.c
 file	kern/kern_event.c
@@ -1226,12 +1233,14 @@ file	kern/kern_lwp.c
 file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_ntptime.c
+file	kern/kern_pax.c			pax_mprotect
 file	kern/kern_physio.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_resource.c
 file	kern/kern_sa.c
+file	kern/kern_securelevel.c
 file	kern/kern_sig.c
 file	kern/kern_systrace.c		systrace
 file	kern/kern_subr.c
@@ -1247,13 +1256,13 @@ file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
+file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_extent.c
 file	kern/subr_log.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prof.c
-file	kern/subr_prop.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_userconf.c		userconf
@@ -1348,6 +1357,7 @@ file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
 file	netinet/in_gif.c		gif & inet
+file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
 file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
 file	netinet/ip_gre.c		inet & gre
@@ -1396,4 +1406,7 @@ include	"net/agr/files.agr"
 #
 # General Purpose Input/Output framework
 #
+define	onewire_bitbang
 include	"dev/gpio/files.gpio"
+
+include "dev/onewire/files.onewire"

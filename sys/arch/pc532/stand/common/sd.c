@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.6 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.6.12.1 2006/05/24 15:48:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -115,8 +115,9 @@ sdinit(int ctlr, int unit)
 {
 	struct sd_softc *ss = &sd_softc[ctlr][unit];
 
-	/* HP version does test_unit_ready
- 	 * followed by read_capacity to get blocksize
+	/*
+	 * HP version does test_unit_ready
+	 * followed by read_capacity to get blocksize
 	 */
 	ss->sc_alive = 1;
 	return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.129 2006/02/02 00:29:24 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.129.8.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.129 2006/02/02 00:29:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.129.8.1 2006/05/24 15:50:43 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.129 2006/02/02 00:29:24 christos 
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 #include <sys/sysctl.h> /* XXX for curtain */
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
@@ -271,7 +272,7 @@ procfs_open(v)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -320,7 +321,7 @@ procfs_close(v)
 	struct vop_close_args /* {
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -542,7 +543,7 @@ procfs_getattr(v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
@@ -566,8 +567,9 @@ procfs_getattr(v)
 	}
 
 	if (procp != NULL) {
-		if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid,
-			    procp->p_ucred->cr_uid))
+		if (kauth_authorize_process(curlwp->l_proc->p_cred,
+		    KAUTH_PROCESS_CANSEE, curlwp->l_proc, procp->p_cred,
+		    procp, NULL) != 0)
 			return (ENOENT);
 	}
 
@@ -626,8 +628,8 @@ procfs_getattr(v)
 	case PFSmaps:
 	case PFScmdline:
 		vap->va_nlink = 1;
-		vap->va_uid = procp->p_ucred->cr_uid;
-		vap->va_gid = procp->p_ucred->cr_gid;
+		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
+		vap->va_gid = kauth_cred_getegid(procp->p_cred);
 		break;
 	case PFSmeminfo:
 	case PFScpuinfo:
@@ -682,8 +684,8 @@ procfs_getattr(v)
 				return error;
 			FILE_USE(fp);
 			vap->va_nlink = 1;
-			vap->va_uid = fp->f_cred->cr_uid;
-			vap->va_gid = fp->f_cred->cr_gid;
+			vap->va_uid = kauth_cred_geteuid(fp->f_cred);
+			vap->va_gid = kauth_cred_getegid(fp->f_cred);
 			switch (fp->f_type) {
 			case DTYPE_VNODE:
 				vap->va_bytes = vap->va_size =
@@ -699,8 +701,8 @@ procfs_getattr(v)
 		/*FALLTHROUGH*/
 	case PFSproc:
 		vap->va_nlink = 2;
-		vap->va_uid = procp->p_ucred->cr_uid;
-		vap->va_gid = procp->p_ucred->cr_gid;
+		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
+		vap->va_gid = kauth_cred_getegid(procp->p_cred);
 		vap->va_bytes = vap->va_size = DEV_BSIZE;
 		break;
 
@@ -815,7 +817,7 @@ procfs_access(v)
 	struct vop_access_args /* {
 		struct vnode *a_vp;
 		int a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
@@ -1095,7 +1097,8 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 		return 0;
 	}
 
-	if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid, p->p_ucred->cr_uid))
+	if (CURTAIN(kauth_cred_geteuid(curlwp->l_proc->p_cred),
+		    kauth_cred_geteuid(p->p_cred)))
 		return (0);
 
 	memset(&d, 0, UIO_MX);
@@ -1140,7 +1143,7 @@ procfs_readdir(v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -1223,8 +1226,8 @@ procfs_readdir(v)
 		if (p == NULL)
 			return ESRCH;
 
-		if (CURTAIN(curlwp->l_proc->p_ucred->cr_uid,
-			    p->p_ucred->cr_uid))
+		if (CURTAIN(kauth_cred_geteuid(curlwp->l_proc->p_cred),
+			    kauth_cred_geteuid(p->p_cred)))
 			return (ESRCH);
 
 		fdp = p->p_fd;

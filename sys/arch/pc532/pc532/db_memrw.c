@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.13 2006/02/11 02:19:06 simonb Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.13.6.1 2006/05/24 15:48:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.13 2006/02/11 02:19:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.13.6.1 2006/05/24 15:48:15 tron Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.13 2006/02/11 02:19:06 simonb Exp $")
 
 #include <ddb/db_access.h>
 
-static void	set_pte __P((vaddr_t, pt_entry_t));
-static void	db_write_text __P((vaddr_t, size_t, const char *));
+static void	set_pte(vaddr_t, pt_entry_t);
+static void	db_write_text(vaddr_t, size_t, const char *);
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -69,20 +69,17 @@ static void	db_write_text __P((vaddr_t, size_t, const char *));
  * traps in DDB work correctly, "Just Do It!"
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t	addr;
-	size_t	size;
-	char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-	char	*src = (char*)addr;
+	char *src = (char *)addr;
 
 	if (size == 4) {
-		*((int*)data) = *((int*)src);
+		*((int *)data) = *((int*)src);
 		return;
 	}
 
 	if (size == 2) {
-		*((short*)data) = *((short*)src);
+		*((short *)data) = *((short*)src);
 		return;
 	}
 
@@ -93,10 +90,9 @@ db_read_bytes(addr, size, data)
 }
 
 static void
-set_pte(addr, pte)
-	vaddr_t addr;
-	pt_entry_t pte;
+set_pte(vaddr_t addr, pt_entry_t pte)
 {
+
 	*kvtopte(addr) = pte;
 	tlbflush();
 }
@@ -106,10 +102,7 @@ set_pte(addr, pte)
  * Makes text page writable temporarily.
  */
 static void
-db_write_text(addr, size, data)
-	vaddr_t	addr;
-	size_t size;
-	const char *data;
+db_write_text(vaddr_t addr, size_t size, const char *data)
 {
 	char *dst;
 	pt_entry_t oldpte, tmppte;
@@ -165,10 +158,7 @@ db_write_text(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t addr;
-	size_t size;
-	const char *data;
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
 	char *dst = (char *)addr;
 	extern char kernel_text[], etext[];
@@ -197,8 +187,9 @@ db_write_bytes(addr, size, data)
 
 #ifdef DDB
 void
-Debugger()
+Debugger(void)
 {
+
 	breakpoint();
 }
 #endif

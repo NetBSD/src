@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.24.12.1 2006/03/31 09:45:22 tron Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.24.12.2 2006/05/24 15:50:27 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24.12.1 2006/03/31 09:45:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24.12.2 2006/05/24 15:50:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.24.12.1 2006/03/31 09:45:22 tron Exp $"
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/tty.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -146,7 +147,8 @@ ofcons_open(dev, flag, mode, l)
 		ofcons_param(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state&TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &l->l_proc->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 

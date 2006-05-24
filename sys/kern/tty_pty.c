@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.87 2006/03/05 16:57:16 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.87.4.1 2006/05/24 15:50:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.87 2006/03/05 16:57:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.87.4.1 2006/05/24 15:50:41 tron Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.87 2006/03/05 16:57:16 christos Exp $"
 #include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
@@ -332,7 +333,7 @@ ptsopen(dev, flag, devtype, l)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && kauth_cred_geteuid(p->p_cred) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);
@@ -1053,7 +1054,7 @@ ptyioctl(dev, cmd, data, flag, l)
 #ifndef NO_DEV_PTM
 	/* Allow getting the name from either the master or the slave */
 	if (cmd == TIOCPTSNAME)
-		return pty_fill_ptmget(dev, -1, -1, data);
+		return pty_fill_ptmget(l, dev, -1, -1, data);
 #endif
 
 	cdev = cdevsw_lookup(dev);

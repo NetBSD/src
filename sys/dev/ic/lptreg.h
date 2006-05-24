@@ -1,4 +1,4 @@
-/*	$NetBSD: lptreg.h,v 1.9 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: lptreg.h,v 1.9.12.1 2006/05/24 15:50:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,7 +45,7 @@
  * On a standard DB25 parallel port, the bits show up as follows:
  *
  *   13   12   11   10    9    8    7    6    5    4    3    2    1
- *  ~S7   S6   S5   S4   D7   D6   D5   D4   D3   D2   D1   D0  ~C0
+ *   S4   S5  ~S7   S6   D7   D6   D5   D4   D3   D2   D1   D0  ~C0
  *
  *      G    G    G    G    G    G    G    G   ~C3   C2   S3  ~C1
  *      25   24   23   22   21   20   19   18   17   16   15   14
@@ -62,7 +62,7 @@
 #define	LPS_SELECT		0x10	/* printer selected */
 #define	LPS_NOPAPER		0x20	/* printer out of paper */
 #define	LPS_NACK		0x40	/* printer no ack of data */
-#define	LPS_NBSY		0x80	/* printer no ack of data */
+#define	LPS_NBSY		0x80	/* printer not busy */
 
 #define	lpt_control	2	/* Control printer (R/W) */
 #define	LPC_STROBE		0x01	/* strobe data to printer */

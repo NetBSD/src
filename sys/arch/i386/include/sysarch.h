@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.16 2005/12/26 19:23:59 perry Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.16.12.1 2006/05/24 15:47:58 tron Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
 #define _I386_SYSARCH_H_
@@ -96,8 +96,6 @@ __BEGIN_DECLS
 int i386_get_ldt(int, union descriptor *, int);
 int i386_set_ldt(int, union descriptor *, int);
 int i386_iopl(int);
-int i386_get_ioperm(u_long *);
-int i386_set_ioperm(u_long *);
 int i386_pmc_info(struct i386_pmc_info_args *);
 int i386_pmc_startstop(struct i386_pmc_startstop_args *);
 int i386_pmc_read(struct i386_pmc_read_args *);

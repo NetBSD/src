@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.7 2006/01/15 22:09:52 bouyer Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.7.10.1 2006/05/24 15:48:26 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -39,8 +39,6 @@
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <machine/evtchn.h>
 
 #include "locators.h"
 #include "opt_ddb.h"
@@ -91,6 +89,7 @@ pci_make_tag(pci_chipset_tag_t pcitag, int bus, int dev, int func)
 	tag.bus = bus;
 	tag.device = dev;
 	tag.function = func;
+	tag._pad = 0;
 
 	return tag;
 }
@@ -104,40 +103,9 @@ pci_decompose_tag(pci_chipset_tag_t pcitag, pcitag_t tag,
 	*funcp = tag.function;
 }
 
-#ifdef XEN3
-struct simplelock pci_conf_slock = SIMPLELOCK_INITIALIZER;
-#define PCI_CONF_LOCK(s)                                                \
-do {                                                                    \
-	(s) = splhigh();                                                \
-	simple_lock(&pci_conf_slock);                                   \
-} while (0)
-
-#define PCI_CONF_UNLOCK(s)                                              \
-do {                                                                    \
-	simple_unlock(&pci_conf_slock);                                 \
-	splx((s));                                                      \
-} while (0)
-#define PCI_MODE1_ENABLE        0x80000000UL
-#define PCI_MODE1_ADDRESS_REG   0x0cf8
-#define PCI_MODE1_DATA_REG      0x0cfc
-#endif /* XEN3 */
-
-
-
 pcireg_t
 pci_conf_read(pci_chipset_tag_t pcitag, pcitag_t dev, int reg)
 {
-#ifdef XEN3
-	pcireg_t data;
-	int s;
-	PCI_CONF_LOCK(s);
-	outl(PCI_MODE1_ADDRESS_REG, PCI_MODE1_ENABLE |
-	    (dev.bus << 16) | (dev.device << 11) | (dev.function << 8) | reg);
-	data = inl(PCI_MODE1_DATA_REG);
-	outl(PCI_MODE1_ADDRESS_REG, 0);
-	PCI_CONF_UNLOCK(s);
-	return data;
-#else /* XEN3 */
 	physdev_op_t physdev_op;
 
 	physdev_op.cmd = PHYSDEVOP_PCI_CFGREG_READ;
@@ -156,22 +124,11 @@ pci_conf_read(pci_chipset_tag_t pcitag, pcitag_t dev, int reg)
 		return 0xffffffff;
 	}
 	return physdev_op.u.pci_cfgreg_read.value;
-#endif /* XEN3 */
 }
 
 void
 pci_conf_write(pci_chipset_tag_t pcitag, pcitag_t dev, int reg, pcireg_t val)
 {
-#ifdef XEN3
-	int s;
-	PCI_CONF_LOCK(s);
-	outl(PCI_MODE1_ADDRESS_REG, PCI_MODE1_ENABLE |
-	    (dev.bus << 16) | (dev.device << 11) | (dev.function << 8) | reg);
-	outl(PCI_MODE1_DATA_REG, val);
-	outl(PCI_MODE1_ADDRESS_REG, 0);
-	PCI_CONF_UNLOCK(s);
-	return;
-#else /* XEN3 */
 	physdev_op_t physdev_op;
 
 	physdev_op.cmd = PHYSDEVOP_PCI_CFGREG_WRITE;
@@ -188,85 +145,6 @@ pci_conf_write(pci_chipset_tag_t pcitag, pcitag_t dev, int reg, pcireg_t val)
 		Debugger();
 #endif
 	}
-#endif /* XEN3 */
-}
-
-int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	pcireg_t intr;
-	int pin;
-	int line;
-
-#ifndef XEN3
-	physdev_op_t physdev_op;
-	/* initialise device, to get the real IRQ */
-	physdev_op.cmd = PHYSDEVOP_PCI_INITIALISE_DEVICE;
-	physdev_op.u.pci_initialise_device.bus = pa->pa_bus;
-	physdev_op.u.pci_initialise_device.dev = pa->pa_device;
-	physdev_op.u.pci_initialise_device.func = pa->pa_function;
-	if (HYPERVISOR_physdev_op(&physdev_op) < 0)
-		panic("HYPERVISOR_physdev_op(PHYSDEVOP_PCI_INITIALISE_DEVICE)");
-#endif /* !XEN3 */
-
-	intr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTERRUPT_REG);
-	pin = pa->pa_intrpin;
-	pa->pa_intrline = line = PCI_INTERRUPT_LINE(intr);
-#if 0 /* XXXX why is it always 0 ? */
-	if (pin == 0) {
-		/* No IRQ used */
-		goto bad;
-	}
-#endif
-	if (pin > PCI_INTERRUPT_PIN_MAX) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
-		goto bad;
-	}
-
-	if (line == 0 || line == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
-		printf("pci_intr_map: no mapping for pin %c (line=%02x)\n",
-		    '@' + pin, line);
-		goto bad;
-	}
-
-	ihp->pirq = line;
-	ihp->evtch = bind_pirq_to_evtch(ihp->pirq);
-	if (ihp->evtch == -1)
-		goto bad;
-
-	return 0;
-
-bad:
-	ihp->pirq = -1;
-	ihp->evtch = -1;
-	return 1;
-}
-const char
-*pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
-{
-	static char buf[64];
-	snprintf(buf, 64, "irq %d, event channel %d",
-	    ih.pirq, ih.evtch);
-	return buf;
-	
-}
-
-const struct evcnt*
-pci_intr_evcnt(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh)
-{
-	return NULL;
-}
-
-void *
-pci_intr_establish(pci_chipset_tag_t pcitag, pci_intr_handle_t intrh,
-    int level, int (*func)(void *), void *arg)
-{
-	return (void *)pirq_establish(intrh.pirq, intrh.evtch, func, arg, level);
-}
-
-void
-pci_intr_disestablish(pci_chipset_tag_t pcitag, void *cookie)
-{
 }
 
 /*

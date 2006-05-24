@@ -1,3 +1,4 @@
-# $NetBSD: gcc.mi,v 1.3 2004/01/11 15:09:51 lukem Exp $
+# $NetBSD: gcc.mi,v 1.3.14.1 2006/05/24 15:47:48 tron Exp $
+./usr/share/info/g77.info			man-fortran-info	gcccmds,info
 ./usr/share/man/cat8/dbsym.0			man-sysutil-catman	bfd,.cat
 ./usr/share/man/man8/dbsym.8			man-sysutil-man		bfd,.man

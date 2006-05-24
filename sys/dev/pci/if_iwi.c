@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.46 2006/03/09 16:02:55 jmcneill Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.46.2.1 2006/05/24 15:50:27 tron Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.46 2006/03/09 16:02:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.46.2.1 2006/05/24 15:50:27 tron Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.46 2006/03/09 16:02:55 jmcneill Exp $")
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/bus.h>
 #include <machine/endian.h>
@@ -473,7 +474,9 @@ iwi_detach(struct device* self, int flags)
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 
-	iwi_stop(ifp, 1);
+	if (ifp != NULL)
+		iwi_stop(ifp, 1);
+
 	iwi_free_firmware(sc);
 
 #if NBPFILTER > 0
@@ -1940,7 +1943,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSLOADFW:
 		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) != 0)
 			break;
 
 		error = iwi_cache_firmware(sc, ifr->ifr_data);
@@ -1948,7 +1952,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSKILLFW:
 		/* only super-user can do that! */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &curproc->p_acflag)) != 0)
 			break;
 
 		ifp->if_flags &= ~IFF_UP;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.97 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.97.6.1 2006/05/24 15:50:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.97 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.97.6.1 2006/05/24 15:50:41 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -253,10 +253,11 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	if (error) {
 		fdremove(fdp, fd);
 		ffree(fp);
+	} else {
+		FILE_SET_MATURE(fp);
 	}
 	m_freem(nam);
 	splx(s);
-	FILE_SET_MATURE(fp);
 	return (error);
 }
 
@@ -540,7 +541,7 @@ sendit(struct lwp *l, int s, struct msghdr *mp, int flags, register_t *retsize)
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE)
+		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0)
 			psignal(p, SIGPIPE);
 	}
 	if (error == 0)

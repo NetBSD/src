@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.55 2005/12/11 12:24:12 christos Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.55.12.1 2006/05/24 15:50:32 tron Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -274,6 +274,82 @@
 #define	KS_dead_diaeresis 	0x0308
 #define	KS_dead_abovering 	0x030a
 #define	KS_dead_cedilla 	0x0327
+#define        KS_dead_semi		0x0328
+#define        KS_dead_colon		0x0329
+
+/*
+ * Group Greek
+ */
+
+#define KS_gr_At		0xb6
+#define KS_gr_Et		0xb8
+#define KS_gr_Ht		0xb9
+#define KS_gr_It		0xba
+#define KS_gr_Ot		0xbc
+#define KS_gr_Yt		0xbe
+#define KS_gr_Vt		0xbf
+#define KS_gr_itd		0xc0
+#define KS_gr_A		0xc1
+#define KS_gr_B		0xc2
+#define KS_gr_G		0xc3
+#define KS_gr_D		0xc4
+#define KS_gr_E		0xc5
+#define KS_gr_Z		0xc6
+#define KS_gr_H		0xc7
+#define KS_gr_U		0xc8
+#define KS_gr_I		0xc9
+#define KS_gr_K		0xca
+#define KS_gr_L		0xcb
+#define KS_gr_M		0xcc
+#define KS_gr_N		0xcd
+#define KS_gr_J		0xce
+#define KS_gr_O		0xcf
+#define KS_gr_P		0xd0
+#define KS_gr_R		0xd1
+#define KS_gr_S		0xd3
+#define KS_gr_T		0xd4
+#define KS_gr_Y		0xd5
+#define KS_gr_F		0xd6
+#define KS_gr_X		0xd7
+#define KS_gr_C		0xd8
+#define KS_gr_V		0xd9
+#define KS_gr_Id		0xda
+#define KS_gr_Yd		0xdb
+#define KS_gr_at		0xdc
+#define KS_gr_et		0xdd
+#define KS_gr_ht		0xde
+#define KS_gr_it		0xdf
+#define KS_gr_ytd		0xe0
+#define KS_gr_a		0xe1
+#define KS_gr_b		0xe2
+#define KS_gr_g		0xe3
+#define KS_gr_d		0xe4
+#define KS_gr_e		0xe5
+#define KS_gr_z		0xe6
+#define KS_gr_h		0xe7
+#define KS_gr_u		0xe8
+#define KS_gr_i		0xe9
+#define KS_gr_k		0xea
+#define KS_gr_l		0xeb
+#define KS_gr_m		0xec
+#define KS_gr_n		0xed
+#define KS_gr_j		0xee
+#define KS_gr_o		0xef
+#define KS_gr_p		0xf0
+#define KS_gr_r		0xf1
+#define KS_gr_teliko_s		0xf2
+#define KS_gr_s		0xf3
+#define KS_gr_t		0xf4
+#define KS_gr_y		0xf5
+#define KS_gr_f		0xf6
+#define KS_gr_x		0xf7
+#define KS_gr_c		0xf8
+#define KS_gr_v		0xf9
+#define KS_gr_id		0xfa
+#define KS_gr_yd		0xfb
+#define KS_gr_ot		0xfc
+#define KS_gr_yt		0xfd
+#define KS_gr_vt		0xfe
 
 /*
  * Group 1 (modifiers)
@@ -511,6 +587,7 @@ action(KB_DK,	0,	0x0400,	"dk",	,	"Danish")	\
 action(KB_FI,	0,	0x0900,	"fi",	,	"Finnish")	\
 action(KB_FR,	0,	0x0600,	"fr",	,	"French")	\
 action(KB_DE, KB_NODEAD,0x0300,	"de",".nodead",	"German")	\
+action(KB_GR,	0,	0x1400,	"gr",	,	"Greek")	\
 action(KB_HU,	0,	0x0c00,	"hu",	,	"Hungarian")	\
 action(KB_IT,	0,	0x0500,	"it",	,	"Italian")	\
 action(KB_JP,	0,	0x0800,	"jp",	,	"Japanese")	\
@@ -527,7 +604,7 @@ action(KB_UA,	0,	0x1200,	"ua",	,	"Ukrainian")
 
 /* Define all the KB_xx numeric values using above table */
 #define KBF_ENUM(tag, tagf, value, cc, ccf, country) tag=value,
-enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1400 };
+enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1500 };
 
 /* Define list of KB_xxx and country codes for array initialisation */
 #define KBF_ENCTAB(tag, tagf, value, cc, ccf, country) { tag, cc },

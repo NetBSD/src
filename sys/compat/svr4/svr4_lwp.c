@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.10 2005/12/11 12:20:26 christos Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.10.12.1 2006/05/24 15:48:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.10 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.10.12.1 2006/05/24 15:48:28 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,7 +102,7 @@ svr4_sys__lwp_create(l, v, retval)
 	/* XXX At the moment, svr4_ucontext_t and ucontext_t are the same */
 	SCARG(&lc, ucp) = (ucontext_t *)SCARG(uap, uc);
 	SCARG(&lc, flags) = flags;
-	SCARG(&lc, new_lwp) = SCARG(uap, lwpid);
+	SCARG(&lc, new_lwp) = (lwpid_t *)SCARG(uap, lwpid);
 
 
 	return sys__lwp_create(l, &lc, retval);
@@ -163,7 +163,7 @@ svr4_sys__lwp_wait(l, v, retval)
 	struct sys__lwp_wait_args ap;
 
 	SCARG(&ap, wait_for) = SCARG(uap, wait_for);
-	SCARG(&ap, departed) = SCARG(uap, departed_lwp);
+	SCARG(&ap, departed) = (lwpid_t *)SCARG(uap, departed_lwp);
 
 	return sys__lwp_wait(l, &ap, retval);
 }

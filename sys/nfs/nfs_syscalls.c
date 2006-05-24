@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.88 2006/01/05 11:22:56 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.88.10.1 2006/05/24 15:50:46 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88 2006/01/05 11:22:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88.10.1 2006/05/24 15:50:46 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.88 2006/01/05 11:22:56 yamt Exp $
 #include <sys/syslog.h>
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -176,7 +177,8 @@ sys_nfssvc(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	error = suser(p->p_ucred, &p->p_acflag);
+	error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+				  &p->p_acflag);
 	if (error)
 		return (error);
 
@@ -222,7 +224,7 @@ sys_nfssvc(l, v, retval)
 			(SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
 			return (0);
 		nmp->nm_iflag |= NFSMNT_MNTD;
-		error = nqnfs_clientd(nmp, p->p_ucred, &ncd, SCARG(uap, flag),
+		error = nqnfs_clientd(nmp, p->p_cred, &ncd, SCARG(uap, flag),
 			SCARG(uap, argp), l);
 #endif /* NFS */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
@@ -294,16 +296,18 @@ sys_nfssvc(l, v, retval)
 			 * First check to see if another nfsd has already
 			 * added this credential.
 			 */
-			LIST_FOREACH(nuidp, NUIDHASH(slp,nsd->nsd_cr.cr_uid),
+			LIST_FOREACH(nuidp, NUIDHASH(slp, nsd->nsd_cr.cr_uid),
 			    nu_hash) {
-				if (nuidp->nu_cr.cr_uid == nsd->nsd_cr.cr_uid &&
+				if (kauth_cred_geteuid(nuidp->nu_cr) ==
+				    nsd->nsd_cr.cr_uid &&
 				    (!nfsd->nfsd_nd->nd_nam2 ||
 				     netaddr_match(NU_NETFAM(nuidp),
 				     &nuidp->nu_haddr, nfsd->nfsd_nd->nd_nam2)))
 					break;
 			}
 			if (nuidp) {
-			    nfsrv_setcred(&nuidp->nu_cr,&nfsd->nfsd_nd->nd_cr);
+			    kauth_cred_hold(nuidp->nu_cr);
+			    nfsd->nfsd_nd->nd_cr = nuidp->nu_cr;
 			    nfsd->nfsd_nd->nd_flag |= ND_KERBFULL;
 			} else {
 			    /*
@@ -329,10 +333,7 @@ sys_nfssvc(l, v, retval)
 					m_freem(nuidp->nu_nam);
 			        }
 				nuidp->nu_flag = 0;
-				crcvt(&nuidp->nu_cr, &nsd->nsd_cr);
-				if (nuidp->nu_cr.cr_ngroups > NGROUPS)
-				    nuidp->nu_cr.cr_ngroups = NGROUPS;
-				nuidp->nu_cr.cr_ref = 1;
+				kauth_cred_uucvt(nuidp->nu_cr, &nsd->nsd_cr);
 				nuidp->nu_timestamp = nsd->nsd_timestamp;
 				nuidp->nu_expire = time.tv_sec + nsd->nsd_ttl;
 				/*
@@ -364,8 +365,8 @@ sys_nfssvc(l, v, retval)
 					nu_lru);
 				LIST_INSERT_HEAD(NUIDHASH(slp, nsd->nsd_uid),
 					nuidp, nu_hash);
-				nfsrv_setcred(&nuidp->nu_cr,
-				    &nfsd->nfsd_nd->nd_cr);
+				kauth_cred_hold(nuidp->nu_cr);
+				nfsd->nfsd_nd->nd_cr = nuidp->nu_cr;
 				nfsd->nfsd_nd->nd_flag |= ND_KERBFULL;
 			    }
 			}
@@ -384,7 +385,6 @@ sys_nfssvc(l, v, retval)
 #ifdef NFSSERVER
 MALLOC_DEFINE(M_NFSD, "NFS daemon", "Nfs server daemon structure");
 MALLOC_DEFINE(M_NFSSVC, "NFS srvsock", "Nfs server structure");
-struct pool nfs_srvdesc_pool;
 
 static struct nfssvc_sock *
 nfsrv_sockalloc()
@@ -625,7 +625,7 @@ nfssvc_nfsd(nsd, argp, l)
 		}
 		if (error || (slp->ns_flag & SLP_VALID) == 0) {
 			if (nd) {
-				pool_put(&nfs_srvdesc_pool, nd);
+				nfsdreq_free(nd);
 				nd = NULL;
 			}
 			nfsd->nfsd_slp = NULL;
@@ -716,7 +716,8 @@ nfssvc_nfsd(nsd, argp, l)
 #endif
 				mreq = NULL;
 				netexport_rdlock();
-				if (writes_todo || (!(nd->nd_flag & ND_NFSV3) &&
+				if (writes_todo || nd == NULL ||
+				     (!(nd->nd_flag & ND_NFSV3) &&
 				     nd->nd_procnum == NFSPROC_WRITE &&
 				     nfsrvw_procrastinate > 0 && !notstarted))
 					error = nfsrv_writegather(&nd, slp,
@@ -812,7 +813,7 @@ nfssvc_nfsd(nsd, argp, l)
 				break;
 			}
 			if (nd) {
-				pool_put(&nfs_srvdesc_pool, nd);
+				nfsdreq_free(nd);
 				nd = NULL;
 			}
 
@@ -901,7 +902,7 @@ nfsrv_zapsock(slp)
 	for (nwp = LIST_FIRST(&slp->ns_tq); nwp; nwp = nnwp) {
 		nnwp = LIST_NEXT(nwp, nd_tq);
 		LIST_REMOVE(nwp, nd_tq);
-		pool_put(&nfs_srvdesc_pool, nwp);
+		nfsdreq_free(nwp);
 	}
 	splx(s);
 }
@@ -1056,7 +1057,7 @@ nfssvc_iod(l)
 	struct nfs_iod *myiod;
 	struct nfsmount *nmp;
 	int error = 0;
-	struct proc *p = l ? l->l_proc : NULL;
+	struct proc *p = l->l_proc;
 
 	/*
 	 * Assign my position or return error if too many already running
@@ -1192,7 +1193,7 @@ int
 nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	struct nfsmount *nmp;
 	struct nfsreq *rep;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	char **auth_str;
 	int *auth_len;
 	char *verf_str;
@@ -1216,7 +1217,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	nmp->nm_authlen = RPCAUTH_MAXSIZ;
 	nmp->nm_verfstr = verf_str;
 	nmp->nm_verflen = *verf_len;
-	nmp->nm_authuid = cred->cr_uid;
+	nmp->nm_authuid = kauth_cred_geteuid(cred);
 	wakeup((caddr_t)&nmp->nm_authstr);
 
 	/*
@@ -1253,7 +1254,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 int
 nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 	struct nfsmount *nmp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	char **auth_str;
 	int *auth_len;
 	char *verf_str;
@@ -1263,12 +1264,14 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 	u_int32_t *nickp, *verfp;
 	struct timeval ktvin, ktvout;
 
+	memset(&ktvout, 0, sizeof ktvout);	/* XXX gcc */
+
 #ifdef DIAGNOSTIC
 	if (verf_len < (4 * NFSX_UNSIGNED))
 		panic("nfs_getnickauth verf too small");
 #endif
-	LIST_FOREACH(nuidp, NMUIDHASH(nmp, cred->cr_uid), nu_hash) {
-		if (nuidp->nu_cr.cr_uid == cred->cr_uid)
+	LIST_FOREACH(nuidp, NMUIDHASH(nmp, kauth_cred_geteuid(cred)), nu_hash) {
+		if (kauth_cred_geteuid(nuidp->nu_cr) == kauth_cred_geteuid(cred))
 			break;
 	}
 	if (!nuidp || nuidp->nu_expire < time.tv_sec)
@@ -1320,7 +1323,7 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 int
 nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 	struct nfsmount *nmp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	int len;
 	NFSKERBKEY_T key;
 	struct mbuf **mdp;
@@ -1335,6 +1338,8 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 	u_int32_t nick;
 	char *dpos = *dposp, *cp2;
 	int deltasec, error = 0;
+
+	memset(&ktvout, 0, sizeof ktvout);	 /* XXX gcc */
 
 	if (len == (3 * NFSX_UNSIGNED)) {
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
@@ -1369,14 +1374,14 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 					nu_lru);
 			}
 			nuidp->nu_flag = 0;
-			nuidp->nu_cr.cr_uid = cred->cr_uid;
+			kauth_cred_seteuid(nuidp->nu_cr, kauth_cred_geteuid(cred));
 			nuidp->nu_expire = time.tv_sec + NFS_KERBTTL;
 			nuidp->nu_timestamp = ktvout;
 			nuidp->nu_nickname = nick;
 			memcpy(nuidp->nu_key, key, sizeof (NFSKERBKEY_T));
 			TAILQ_INSERT_TAIL(&nmp->nm_uidlruhead, nuidp,
 				nu_lru);
-			LIST_INSERT_HEAD(NMUIDHASH(nmp, cred->cr_uid),
+			LIST_INSERT_HEAD(NMUIDHASH(nmp, kauth_cred_geteuid(cred)),
 				nuidp, nu_hash);
 		}
 	} else

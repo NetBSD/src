@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.20 2006/02/02 08:17:35 skrll Exp $
+# $NetBSD: ad.sh3,v 1.20.2.1 2006/05/24 15:47:48 tron Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3				comp-c-include
 ./usr/include/sh3/ansi.h			comp-c-include
@@ -45,7 +45,7 @@
 ./usr/include/sh3/signal.h			comp-c-include
 ./usr/include/sh3/stdarg.h			comp-c-include
 ./usr/include/sh3/types.h			comp-c-include
-./usr/include/sh3/va-sh.h			comp-c-include
+./usr/include/sh3/va-sh.h			comp-obsolete	obsolete
 ./usr/include/sh3/varargs.h			comp-c-include
 ./usr/include/sh3/vmparam.h			comp-c-include
 ./usr/include/sh3/wchar_limits.h		comp-c-include

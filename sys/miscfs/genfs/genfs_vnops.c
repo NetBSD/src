@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.122.6.1 2006/03/31 09:45:28 tron Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.122.6.2 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.122.6.1 2006/03/31 09:45:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.122.6.2 2006/05/24 15:50:43 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.122.6.1 2006/03/31 09:45:28 tron E
 #include <sys/poll.h>
 #include <sys/mman.h>
 #include <sys/file.h>
+#include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -91,7 +92,7 @@ genfs_seek(void *v)
 		struct vnode *a_vp;
 		off_t a_oldoff;
 		off_t a_newoff;
-		struct ucred *a_ucred;
+		kauth_cred_t cred;
 	} */ *ap = v;
 
 	if (ap->a_newoff < 0)
@@ -121,7 +122,7 @@ genfs_fcntl(void *v)
 		u_int a_command;
 		caddr_t a_data;
 		int a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 
@@ -377,7 +378,7 @@ genfs_lease_check(void *v)
 	struct vop_lease_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flag;
 	} */ *ap = v;
 	u_int32_t duration = 0;
@@ -439,7 +440,7 @@ genfs_getpages(void *v)
 	} */ *ap = v;
 
 	off_t newsize, diskeof, memeof;
-	off_t offset, origoffset, startoffset, endoffset, raoffset;
+	off_t offset, origoffset, startoffset, endoffset;
 	daddr_t lbn, blkno;
 	int i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
 	int fs_bshift, fs_bsize, dev_bshift;
@@ -453,7 +454,7 @@ genfs_getpages(void *v)
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_PAGES];
 	int pgs_size;
-	struct ucred *cred = curproc->p_ucred;		/* XXXUBC curlwp */
+	kauth_cred_t cred = curproc->p_cred;		/* XXXUBC curlwp */
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t sawhole = FALSE;
@@ -600,7 +601,6 @@ genfs_getpages(void *v)
 	}
 	if (i == npages) {
 		UVMHIST_LOG(ubchist, "returning cached pages", 0,0,0,0);
-		raoffset = origoffset + (orignpages << PAGE_SHIFT);
 		npages += ridx;
 		goto out;
 	}
@@ -609,7 +609,7 @@ genfs_getpages(void *v)
 	 * if PGO_OVERWRITE is set, don't bother reading the pages.
 	 */
 
-	if (flags & PGO_OVERWRITE) {
+	if (overwrite) {
 		UVMHIST_LOG(ubchist, "PGO_OVERWRITE",0,0,0,0);
 
 		for (i = 0; i < npages; i++) {
@@ -834,7 +834,6 @@ loopdone:
 	}
 	putiobuf(mbp);
 	uvm_pagermapout(kva, npages);
-	raoffset = startoffset + totalbytes;
 
 	/*
 	 * if this we encountered a hole then we have to do a little more work.
@@ -1580,7 +1579,7 @@ genfs_compat_getpages(void *v)
 	int i, error, orignpages, npages;
 	struct iovec iov;
 	struct uio uio;
-	struct ucred *cred = curproc->p_ucred;
+	kauth_cred_t cred = curproc->p_cred;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 
 	error = 0;
@@ -1659,7 +1658,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	off_t offset;
 	struct iovec iov;
 	struct uio uio;
-	struct ucred *cred = curproc->p_ucred;
+	kauth_cred_t cred = curproc->p_cred;
 	struct buf *bp;
 	vaddr_t kva;
 	int s, error;

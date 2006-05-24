@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_rio.c,v 1.3.14.1 2006/03/18 12:16:52 peter Exp $	*/
+/*	$NetBSD: qdisc_rio.c,v 1.3.14.2 2006/05/24 15:50:49 tron Exp $	*/
 /*	$KAME: qdisc_rio.c,v 1.7 2004/01/22 09:31:24 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -58,6 +58,7 @@ rio_stat_loop(int fd, const char *ifname, int count, int interval)
 	int cnt = count;
 	sigset_t		omask;
 	
+	memset(&last_bytes, 0, sizeof last_bytes);	/* XXX gcc */
 	bzero(&rio_stats, sizeof(rio_stats));
 	strlcpy(rio_stats.iface.rio_ifname, ifname,
 		sizeof(rio_stats.iface.rio_ifname));

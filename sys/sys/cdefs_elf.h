@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.26 2005/12/24 23:29:06 perry Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.26.12.1 2006/05/24 15:50:47 tron Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -59,8 +59,17 @@
 #define	__weak_alias(alias,sym)						\
     __asm(".weak " _C_LABEL_STRING(#alias) "\n"			\
 	    _C_LABEL_STRING(#alias) " = " _C_LABEL_STRING(#sym));
+
+/* Do not use __weak_extern, use __weak_reference instead */
 #define	__weak_extern(sym)						\
     __asm(".weak " _C_LABEL_STRING(#sym));
+
+#if __GNUC_PREREQ__(4, 0)
+#define	__weak_reference(sym)	__attribute__((__weakref__))
+#else
+#define	__weak_reference(sym)	; __asm(".weak " _C_LABEL_STRING(#sym))
+#endif
+
 #define	__warn_references(sym,msg)					\
     __asm(".section .gnu.warning." #sym "\n\t.ascii \"" msg "\"\n\t.text");
 

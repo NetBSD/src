@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.26 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.26.12.1 2006/05/24 15:50:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.26 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.26.12.1 2006/05/24 15:50:29 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,6 +320,7 @@ match:
 		if (cfe == NULL)
 			panic("pcmcia_check_cis_quirks: malloc cfe");
 		*cfe = *quirk->cfe;
+		KASSERT(pf != NULL);
 		SIMPLEQ_INSERT_TAIL(&pf->cfe_head, cfe, cfe_list);
 
 nomatch:;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/12/11 12:17:34 christos Exp $
+#	$NetBSD: Makefile,v 1.7.12.1 2006/05/24 15:47:57 tron Exp $
 .include <bsd.own.mk>
 
 ROMICE?=	no
@@ -31,7 +31,7 @@ AFLAGS+=	-x assembler-with-cpp -traditional-cpp -mips2 -mno-abicalls
 INCLUDES=	-I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	${INCLUDES} -nostdinc -D_STANDALONE -DHEAP_LIMIT=0x8002ffff
 CFLAGS+=	-mips2 -EL -mno-abicalls -ffreestanding -mmemcpy
-.if ${HAVE_GCC3} == "no"
+.if ${HAVE_GCC} == "2"
 CFLAGS+=	-mno-half-pic
 .endif
 LD_SCRIPT=	lcboot.ldscript

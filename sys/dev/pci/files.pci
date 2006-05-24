@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.244.2.2 2006/03/31 09:45:23 tron Exp $
+#	$NetBSD: files.pci,v 1.244.2.3 2006/05/24 15:50:27 tron Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -577,9 +577,9 @@ attach	gsip at pci
 file	dev/pci/if_gsip.c		gsip
 
 # Level One LXT-1001 Gigabit Ethernet
-device	glxt: ether, ifnet, arp, mii
-attach	glxt at pci
-file	dev/pci/if_glxt.c		glxt
+#device	glxt: ether, ifnet, arp, mii
+#attach	glxt at pci
+#file	dev/pci/if_glxt.c		glxt
 
 # Sundance Tech./Tamarack TC9021 Gigabit Ethernet
 device	stge: ether, ifnet, arp, mii, mii_bitbang
@@ -649,6 +649,11 @@ file	dev/pci/viapm.c	viapm
 device	viaenv: sysmon_envsys
 attach	viaenv at viapm
 file	dev/pci/viaenv.c		viaenv			needs-flag
+
+# Intel PIIX4 power management controller
+device	piixpm: i2cbus
+attach	piixpm at pci
+file	dev/pci/piixpm.c		piixpm
 
 # AMD 768MPX power management controller
 defflag	opt_amdpm.h			AMDPM_RND_COUNTERS
@@ -731,9 +736,14 @@ attach	joy at pci with joy_pci
 file	dev/pci/joy_pci.c		joy_pci
 
 # ATI Mach64 framebuffer console driver
-device	machfb: wsemuldisplaydev, rasops8
+device	machfb: wsemuldisplaydev, rasops8, vcons, videomode
 attach	machfb at pci
 file	dev/pci/machfb.c		machfb
+
+# 3Dfx Voodoo3 framebuffer console driver
+device	voodoofb: wsemuldisplaydev, rasops8, vcons, videomode
+attach	voodoofb at pci
+file	dev/pci/voodoofb.c		voodoofb
 
 # 3Com 3c990
 device	txp: ether, ifnet, arp
@@ -762,13 +772,13 @@ attach	re at pci with re_pci
 file	dev/pci/if_re_pci.c		re_pci
 
 # Windows NDIS drivers (Experimental)
-#device 	ndis
-#attach 	ndis at pci
-#file	dev/if_ndis/if_ndis.c
-#file	dev/if_ndis/if_ndis_pci.c
+device 	ndis
+attach 	ndis at pci
+file	dev/if_ndis/if_ndis.c		ndis
+file	dev/if_ndis/if_ndis_pci.c	ndis
 
 # Intel PRO/Wireless 2100
-device	ipw: ifnet, arp, wlan
+device	ipw: ifnet, arp, wlan, firmload
 attach	ipw at pci
 file	dev/pci/if_ipw.c		ipw
 
@@ -797,6 +807,6 @@ attach	ath at pci with ath_pci
 file	dev/pci/if_ath_pci.c		ath_pci
 
 # NVIDIA nForce Ethernet
-device  nfe: ether, ifnet, mii, mii_phy
+device  nfe: ether, ifnet, arp, mii, mii_phy
 attach  nfe at pci
 file    dev/pci/if_nfe.c                nfe
