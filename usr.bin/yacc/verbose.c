@@ -1,4 +1,4 @@
-/*	$NetBSD: verbose.c,v 1.8 2003/08/07 11:17:55 agc Exp $	*/
+/*	$NetBSD: verbose.c,v 1.9 2006/05/24 18:01:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: verbose.c,v 1.8 2003/08/07 11:17:55 agc Exp $");
+__RCSID("$NetBSD: verbose.c,v 1.9 2006/05/24 18:01:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,19 +45,19 @@ __RCSID("$NetBSD: verbose.c,v 1.8 2003/08/07 11:17:55 agc Exp $");
 
 static short *null_rules;
 
-void log_unused __P((void));
-void log_conflicts __P((void));
-void print_state __P((int));
-void print_conflicts __P((int));
-void print_core __P((int));
-void print_nulls __P((int));
-void print_actions __P((int));
-void print_shifts __P((action *));
-void print_reductions __P((action *, int));
-void print_gotos __P((int));
+static void log_unused(void);
+static void log_conflicts(void);
+static void print_state(int);
+static void print_conflicts(int);
+static void print_core(int);
+static void print_nulls(int);
+static void print_actions(int);
+static void print_shifts(action *);
+static void print_reductions(action *, int);
+static void print_gotos(int);
 
 void
-verbose()
+verbose(void)
 {
     int i;
 
@@ -81,8 +81,8 @@ verbose()
 }
 
 
-void
-log_unused()
+static void
+log_unused(void)
 {
     int i;
     short *p;
@@ -101,8 +101,8 @@ log_unused()
 }
 
 
-void
-log_conflicts()
+static void
+log_conflicts(void)
 {
     int i;
 
@@ -130,9 +130,8 @@ log_conflicts()
 }
 
 
-void
-print_state(state)
-int state;
+static void
+print_state(int state)
 {
     if (state)
 	fprintf(verbose_file, "\n\n");
@@ -145,9 +144,8 @@ int state;
 }
 
 
-void
-print_conflicts(state)
-int state;
+static void
+print_conflicts(int state)
 {
     int symbol, act, number;
     action *p;
@@ -197,9 +195,8 @@ int state;
 }
 
 
-void
-print_core(state)
-int state;
+static void
+print_core(int state)
 {
     int i;
     int k;
@@ -234,9 +231,8 @@ int state;
 }
 
 
-void
-print_nulls(state)
-int state;
+static void
+print_nulls(int state)
 {
     action *p;
     int i, j, k, nnulls;
@@ -279,9 +275,8 @@ int state;
 }
 
 
-void
-print_actions(stateno)
-int stateno;
+static void
+print_actions(int stateno)
 {
     action *p;
     shifts *sp;
@@ -307,9 +302,8 @@ int stateno;
 }
 
 
-void
-print_shifts(p)
-action *p;
+static void
+print_shifts(action *p)
 {
     int count;
     action *q;
@@ -333,10 +327,8 @@ action *p;
 }
 
 
-void
-print_reductions(p, defred)
-action *p;
-int defred;
+static void
+print_reductions(action *p, int defred)
 {
     int k, anyreds;
     action *q;
@@ -372,9 +364,8 @@ int defred;
 }
 
 
-void
-print_gotos(stateno)
-int stateno;
+static void
+print_gotos(int stateno)
 {
     int i, k;
     int as;
