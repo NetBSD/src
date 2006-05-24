@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.274.2.9 2006/03/28 23:19:01 riz Exp $ */
+/*	$NetBSD: wd.c,v 1.274.2.10 2006/05/24 02:31:33 riz Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.9 2006/03/28 23:19:01 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274.2.10 2006/05/24 02:31:33 riz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -233,8 +233,10 @@ static const struct wd_quirk {
 	 * (aka LBA48_THRESHOLD) in LBA mode. The workaround is to force
 	 * LBA48
 	 */
- 	{ "ST3160023A*",
- 	  WD_QUIRK_FORCE_LBA48 },
+	{ "ST3160812A*",
+	  WD_QUIRK_FORCE_LBA48 },
+	{ "ST3160023A*",
+	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160827A*",
  	  WD_QUIRK_FORCE_LBA48 },
  	/* Attemp to catch all seagate drives larger than 200GB */
