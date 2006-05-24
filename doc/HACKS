@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.74 2006/05/21 04:19:12 mrg Exp $
+# $NetBSD: HACKS,v 1.75 2006/05/24 23:18:56 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -324,10 +324,11 @@ port	vax
 		provide a stdbool.h for vax builds locally in directories from
 		the template provided by the gettext code.
 	
-	hack	gcc 2.95/vax can't handle __used__ in mcount.c
+	hack	gcc 2.95/vax can't handle __used__
 	cdate	Fri May  6 14:30:53 CDT 2005
 	who	jmc
 	file	src/lib/libc/gmon/mcount.c 1.17
+		src/usr.bin/config/main.c 1.11
 	descr
                 Recent changes to mark this as __used__ to prevent optimization
                 away on sparc64 don't work on 2.95 vax. Ifdef'd back in the
