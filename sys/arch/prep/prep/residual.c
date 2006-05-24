@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.9 2006/03/11 20:12:49 kleink Exp $     */
+/*      $NetBSD: residual.c,v 1.10 2006/05/24 16:10:18 garbled Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.9 2006/03/11 20:12:49 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.10 2006/05/24 16:10:18 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,6 +237,15 @@ find_nth_pnp_device(const char *devid, int busid, int n)
 		}
 	}
 	return NULL;
+}
+
+int
+pnp_pci_busno(void *v)
+{
+	struct _L4_Pack *pack = v;
+	struct _L4_PPCPack *p = &pack->L4_Data.L4_PPCPack;
+
+	return(p->PPCData[16]);
 }
 
 #ifdef RESIDUAL_DATA_DUMP
