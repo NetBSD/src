@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_inst.c,v 1.4 2002/08/08 13:24:15 soren Exp $	*/
+/*	$NetBSD: gsp_inst.c,v 1.5 2006/05/24 22:30:15 christos Exp $	*/
 /*
  * TMS34010 GSP assembler - Instruction encoding
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_inst.c,v 1.4 2002/08/08 13:24:15 soren Exp $");
+__RCSID("$NetBSD: gsp_inst.c,v 1.5 2006/05/24 22:30:15 christos Exp $");
 #endif
 
 #include <string.h>
@@ -302,9 +302,14 @@ do_statement(char *opcode, operand operands)
 			perr("Inappropriate type for operand %d", nop+1);
 			return;
 		}
-		if( (req & ~OPTOPRN) == SPEC )
+		if( (req & ~OPTOPRN) == SPEC ) {
+			if (nop >= sizeof(spec) / sizeof(spec[0])) {
+				perr("Spec out of bounds");
+				return;
+			}
 			/* operand is a field/type/length specifier */
 			spec[nop] = specifier(op);
+		}
 		++nop;
 	}
 	if( nop < 4 && ip->optypes[nop] != 0
