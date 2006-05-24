@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.56.10.1 2006/03/28 09:42:30 tron Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.56.10.2 2006/05/24 15:50:48 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.56.10.1 2006/03/28 09:42:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.56.10.2 2006/05/24 15:50:48 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,8 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_seglock) {
-		if (fs->lfs_lockpid == curproc->p_pid) {
+		if (fs->lfs_lockpid == curproc->p_pid &&
+		    fs->lfs_locklwp == curlwp->l_lid) {
 			simple_unlock(&fs->lfs_interlock);
 			++fs->lfs_seglock;
 			fs->lfs_sp->seg_flags |= flags;
@@ -315,6 +316,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
+	fs->lfs_locklwp = curlwp->l_lid;
 	simple_unlock(&fs->lfs_interlock);
 	fs->lfs_cleanind = 0;
 
@@ -379,6 +381,7 @@ lfs_unmark_dirop(struct lfs *fs)
 			simple_lock(&lfs_subsys_lock);
 			--lfs_dirvcount;
 			simple_unlock(&lfs_subsys_lock);
+			--fs->lfs_dirvcount;
 			vp->v_flag &= ~VDIROP;
 			TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			simple_unlock(&fs->lfs_interlock);
@@ -509,6 +512,7 @@ lfs_segunlock(struct lfs *fs)
 			simple_lock(&fs->lfs_interlock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
+			fs->lfs_locklwp = 0;
 			simple_unlock(&fs->lfs_interlock);
 			wakeup(&fs->lfs_seglock);
 		}
@@ -552,6 +556,7 @@ lfs_segunlock(struct lfs *fs)
 			simple_lock(&fs->lfs_interlock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
+			fs->lfs_locklwp = 0;
 			simple_unlock(&fs->lfs_interlock);
 			wakeup(&fs->lfs_seglock);
 		}

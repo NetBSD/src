@@ -1,4 +1,4 @@
-# $NetBSD: KRUPS,v 1.36 2006/02/05 05:02:02 cube Exp $
+# $NetBSD: KRUPS,v 1.36.6.1 2006/05/24 15:48:22 tron Exp $
 # From: NetBSD: GENERIC,v 1.180 2005/09/10 19:20:50 jmmv Exp
 #
 # Krups (JavaStation-NC) machine description file
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.36 $"
+#ident 		"KRUPS-$Revision: 1.36.6.1 $"
 
 maxusers	32
 
@@ -95,7 +95,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 options 	FONT_GALLANT12x22		# PROM font look-alike
 
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4

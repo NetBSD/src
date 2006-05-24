@@ -1,0 +1,5 @@
+#	$NetBSD: GENERIC.local,v 1.1.10.2 2006/05/24 15:47:59 tron Exp $
+#
+#	GENERIC.local -- local additions to the GENERIC configuration
+#
+

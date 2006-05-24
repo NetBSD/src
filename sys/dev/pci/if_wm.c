@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.114 2006/02/27 04:50:47 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.114.6.1 2006/05/24 15:50:28 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.114 2006/02/27 04:50:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.114.6.1 2006/05/24 15:50:28 tron Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -716,6 +716,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	int memh_valid;
 	int i, rseg, error;
 	const struct wm_product *wmp;
+	prop_data_t ea;
+	prop_number_t pn;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin;
 	pcireg_t preg, memtype;
@@ -1099,8 +1101,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Read the Ethernet address from the EEPROM, if not first found
 	 * in device properties.
 	 */
-	if (devprop_get(&sc->sc_dev, "mac-addr",
-	    enaddr, sizeof(enaddr), NULL) != sizeof(enaddr)) {
+	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-addr");
+	if (ea != NULL) {
+		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
+		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
+		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
+	} else {
 		if (wm_read_eeprom(sc, EEPROM_OFF_MACADDR,
 		    sizeof(myea) / sizeof(myea[0]), myea)) {
 			aprint_error("%s: unable to read Ethernet address\n",
@@ -1131,25 +1137,39 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Read the config info from the EEPROM, and set up various
 	 * bits in the control registers based on their contents.
 	 */
-	if (devprop_get(&sc->sc_dev, "i82543-cfg1",
-	    &cfg1, sizeof(cfg1), NULL) != sizeof(cfg1)) {
+	pn = prop_dictionary_get(device_properties(&sc->sc_dev),
+				 "i82543-cfg1");
+	if (pn != NULL) {
+		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
+		cfg1 = (uint16_t) prop_number_integer_value(pn);
+	} else {
 		if (wm_read_eeprom(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
 			aprint_error("%s: unable to read CFG1\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
 	}
-	if (devprop_get(&sc->sc_dev, "i82543-cfg2",
-	    &cfg2, sizeof(cfg2), NULL) != sizeof(cfg2)) {
+
+	pn = prop_dictionary_get(device_properties(&sc->sc_dev),
+				 "i82543-cfg2");
+	if (pn != NULL) {
+		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
+		cfg2 = (uint16_t) prop_number_integer_value(pn);
+	} else {
 		if (wm_read_eeprom(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
 			aprint_error("%s: unable to read CFG2\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
 	}
+
 	if (sc->sc_type >= WM_T_82544) {
-		if (devprop_get(&sc->sc_dev, "i82543-swdpin",
-		    &swdpin, sizeof(swdpin), NULL) != sizeof(swdpin)) {
+		pn = prop_dictionary_get(device_properties(&sc->sc_dev),
+					 "i82543-swdpin");
+		if (pn != NULL) {
+			KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
+			swdpin = (uint16_t) prop_number_integer_value(pn);
+		} else {
 			if (wm_read_eeprom(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
 				aprint_error("%s: unable to read SWDPIN\n",
 				    sc->sc_dev.dv_xname);

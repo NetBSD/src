@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.105 2006/03/15 18:12:02 drochner Exp $ */
+/* $NetBSD: trap.c,v 1.105.2.1 2006/05/24 15:47:49 tron Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2006/03/15 18:12:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105.2.1 2006/05/24 15:47:49 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2006/03/15 18:12:02 drochner Exp $");
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/buf.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -545,10 +546,10 @@ do_fault:
 			ksi.ksi_trap = a1; /* MMCSR VALUE */
 			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
-				       "out of swap\n", l->l_proc->p_pid,
-				       l->l_proc->p_comm,
-				       l->l_proc->p_cred && l->l_proc->p_ucred ?
-				       l->l_proc->p_ucred->cr_uid : -1);
+				    "out of swap\n", l->l_proc->p_pid,
+				    l->l_proc->p_comm,
+				    l->l_proc->p_cred ?
+				    kauth_cred_geteuid(l->l_proc->p_cred) : -1);
 				ksi.ksi_signo = SIGKILL;
 			} else
 				ksi.ksi_signo = SIGSEGV;
@@ -1240,8 +1241,7 @@ alpha_ucode_to_ksiginfo(u_long ucode)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
@@ -1255,6 +1255,7 @@ startlwp(arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.8 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: userret.h,v 1.8.6.1 2006/05/24 15:47:58 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -71,15 +71,14 @@
 
 #include <sys/userret.h>
 
-static __inline void userret(register struct lwp *);
+static __inline void userret(struct lwp *);
 
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
 static __inline void
-userret(l)
-	register struct lwp *l;
+userret(struct lwp *l)
 {
 
 	/* Invoke MI userret code */

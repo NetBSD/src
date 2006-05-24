@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12.2.1 2006/03/31 09:45:08 tron Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.2.2 2006/05/24 15:48:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.1 2006/03/31 09:45:08 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.2 2006/05/24 15:48:20 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ static void findroot(void);
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -91,7 +91,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 
@@ -117,7 +117,7 @@ device_register(struct device *dev, void *aux)
 {
 	struct device *parent, *d;
 	char devpath[256], dtmp[256];
-	size_t len;
+	prop_string_t str1;
 	int found = 0;
 
 	/* Certain devices will *never* be bootable.  short circuit them. */
@@ -127,24 +127,28 @@ device_register(struct device *dev, void *aux)
 	    device_is_a(dev, "mkclock") || device_is_a(dev, "lpt"))
 		return;
 
-	if (device_is_a(dev, "mainbus"))
-		parent = dev;
-	else
-		parent = device_parent(dev);
-
-	len = devprop_get(parent, "fw-path", dtmp, 255, NULL);
-
 	if (device_is_a(dev, "mainbus")) {
-		sprintf(devpath, "/");
-		len = strlen(devpath) + 1;
-		devprop_set(dev, "fw-path", devpath, len, PROP_STRING, 0);
+		str1 = prop_string_create_cstring("/");
+		KASSERT(str1 != NULL);
+		(void) prop_dictionary_set(device_properties(dev),
+					   "fw-path", str1);
+		prop_object_release(str1);
 		return;
-	} else if (len == -1)
+	}
+
+	parent = device_parent(dev);
+	str1 = prop_dictionary_get(device_properties(parent), "fw-path");
+	if (str1 == NULL)
 		return;
+	KASSERT(prop_string_size(str1) < sizeof(dtmp));
+	strcpy(dtmp, prop_string_cstring_nocopy(str1));
 
 	if (device_is_a(dev, "pci")) {
-		sprintf(devpath, "%spci@%x/", dtmp,
-		    prep_io_space_tag.pbs_offset);
+		if (device_is_a(parent, "ppb"))
+			sprintf(devpath, "%s/", dtmp);
+		else
+			sprintf(devpath, "%spci@%x/", dtmp,
+			    prep_io_space_tag.pbs_offset);
 		found++;
 	}
 	if (device_is_a(parent, "pci")) {
@@ -160,16 +164,17 @@ device_register(struct device *dev, void *aux)
 		 * grab it's parent device components.  We grab them from
 		 * ISA because thats the most likely attachment. 
 		 */
-		len = -1;
+		str1 = NULL;
 		TAILQ_FOREACH(d, &alldevs, dv_list) {
 			if (device_is_a(d, "isa")) {
-				len = devprop_get(d, "fw-path", dtmp,
-				    255, NULL);
+				str1 = prop_dictionary_get(
+				    device_properties(d), "fw-path");
 				break;
 			}
 		}
-		if (len != -1) {
-			strcpy(devpath, dtmp);
+		if (str1 != NULL) {
+			KASSERT(prop_string_size(str1) < sizeof(devpath));
+			strcpy(devpath, prop_string_cstring_nocopy(str1));
 			found++;
 		}
 	}
@@ -219,8 +224,10 @@ device_register(struct device *dev, void *aux)
 		sprintf(devpath, "%s%d", devpath, device_unit(dev));
 	}
 
-	len = strlen(devpath) + 1;
-	devprop_set(dev, "fw-path", devpath, len, PROP_STRING, 0);
+	str1 = prop_string_create_cstring(devpath);
+	KASSERT(str1 != NULL);
+	(void) prop_dictionary_set(device_properties(dev), "fw-path", str1);
+	prop_object_release(str1);
 #if defined(NVRAM_DUMP)
 	printf("prop %s\n", devpath);
 #endif
@@ -235,7 +242,7 @@ findroot(void)
 {
 	struct device *d;
 	char *cp;
-	char devpath[256];
+	prop_string_t str;
 	size_t len;
 
 	/* first trim the ethernet crap off the bootpath */
@@ -244,12 +251,20 @@ findroot(void)
 		cp++;
 		*cp = '\0';
 	}
-
+	len = strlen(bootpath);
+#if defined(NVRAM_DUMP)
+	printf("Modified bootpath: %s\n", bootpath);
+#endif
 	TAILQ_FOREACH(d, &alldevs, dv_list) {
-		len = devprop_get(d, "fw-path", devpath, 255, NULL);
-		if (len == -1)
+		str = prop_dictionary_get(device_properties(d), "fw-path");
+		if (str == NULL)
 			continue;
-		if (strncmp(devpath, bootpath, len) == 0) {
+#if defined(NVRAM_DUMP)
+		printf("dev %s: fw-path: %s\n", d->dv_xname,
+		    prop_string_cstring_nocopy(str));
+#endif
+		if (strncmp(prop_string_cstring_nocopy(str), bootpath,
+		    len) == 0) {
 			booted_device = d;
 			booted_partition = 0; /* XXX ??? */
 			return;

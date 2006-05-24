@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.7 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.7.12.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.7 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.7.12.1 2006/05/24 15:50:43 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,11 +355,13 @@ bstp_transmit_tcn(struct bridge_softc *sc)
 {
 	struct bstp_tbpdu bpdu;
 	struct bridge_iflist *bif = sc->sc_root_port;
-	struct ifnet *ifp = bif->bif_ifp;
+	struct ifnet *ifp;
 	struct ether_header *eh;
 	struct mbuf *m;
 	int s;
 
+	KASSERT(bif != NULL);
+	ifp = bif->bif_ifp;
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc64,v 1.13 2006/03/02 10:44:33 martin Exp $
+#	$NetBSD: std.sparc64,v 1.13.6.1 2006/05/24 15:48:23 tron Exp $
 
 #
 # Mandatory NetBSD/sparc64 kernel options when building either 32-bit or
@@ -10,5 +10,3 @@ machine		sparc64		# Machine architecture; required by config(8)
 include		"conf/std"	# MI standard options
 
 options 	EXEC_SCRIPT	# execve(2) support for scripts
-
-options		AH_REGOPS_FUNC	# aht(4) HAL needs register access funcitons

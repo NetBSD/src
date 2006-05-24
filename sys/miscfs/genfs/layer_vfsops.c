@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.22 2005/12/11 12:24:50 christos Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.22.12.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.22 2005/12/11 12:24:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.22.12.1 2006/05/24 15:50:43 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.22 2005/12/11 12:24:50 christos E
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
+
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 
@@ -190,7 +192,7 @@ int
 layerfs_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 

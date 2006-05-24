@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sip.c,v 1.9 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: ixp425_sip.c,v 1.9.12.1 2006/05/24 15:47:52 tron Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.9 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_sip.c,v 1.9.12.1 2006/05/24 15:47:52 tron Exp $");
 
 /*
  * Slow peripheral bus of IXP425 Processor
@@ -114,7 +114,7 @@ ixpsip_search(struct device *parent, struct cfdata *cf,
 static int
 ixpsip_print(void *aux, const char *name)
 {
-        struct ixpsip_attach_args *sa = (struct ixpsip_attach_args*)aux;
+	struct ixpsip_attach_args *sa = (struct ixpsip_attach_args*)aux;
 
 	if (sa->sa_size)
 		aprint_normal(" addr 0x%lx", sa->sa_addr);

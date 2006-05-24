@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.58 2005/12/11 12:24:50 christos Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.58.12.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.58 2005/12/11 12:24:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.58.12.1 2006/05/24 15:50:43 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.58 2005/12/11 12:24:50 christos E
 #include <sys/dirent.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
+
 #include <miscfs/fdesc/fdesc.h>
 
 int	fdesc_mount(struct mount *, const char *, void *,
@@ -68,7 +70,7 @@ int	fdesc_unmount(struct mount *, int, struct lwp *);
 int	fdesc_quotactl(struct mount *, int, uid_t, void *,
 			    struct lwp *);
 int	fdesc_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	fdesc_sync(struct mount *, int, struct ucred *, struct lwp *);
+int	fdesc_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	fdesc_vget(struct mount *, ino_t, struct vnode **);
 
 /*
@@ -247,7 +249,7 @@ int
 fdesc_sync(mp, waitfor, uc, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *uc;
+	kauth_cred_t uc;
 	struct lwp *l;
 {
 

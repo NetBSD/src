@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.66.12.1 2006/03/28 09:47:15 tron Exp $	*/
+/*	$NetBSD: hil.c,v 1.66.12.2 2006/05/24 15:47:56 tron Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.66.12.1 2006/03/28 09:47:15 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.66.12.2 2006/05/24 15:47:56 tron Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.66.12.1 2006/03/28 09:47:15 tron Exp $");
 #include <sys/tty.h>
 #include <sys/uio.h>
 #include <sys/user.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1229,13 +1230,13 @@ hilqmap(struct hil_softc *hilp, int qnum, int device, struct proc *p)
 		return(EINVAL);
 	if ((dptr->hd_flags & HIL_QUEUEIN) == 0)
 		return(EINVAL);
-	if (dptr->hd_qmask && p->p_ucred->cr_uid &&
-	    p->p_ucred->cr_uid != dptr->hd_uid)
+	if (dptr->hd_qmask && kauth_cred_geteuid(p->p_cred) &&
+	    kauth_cred_geteuid(p->p_cred) != dptr->hd_uid)
 		return(EPERM);
 
 	hilp->hl_queue[qnum].hq_devmask |= hildevmask(device);
 	if (dptr->hd_qmask == 0)
-		dptr->hd_uid = p->p_ucred->cr_uid;
+		dptr->hd_uid = kauth_cred_geteuid(p->p_cred);
 	s = splhil();
 	dptr->hd_qmask |= hilqmask(qnum);
 	splx(s);

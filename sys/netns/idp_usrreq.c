@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.25 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.25.12.1 2006/05/24 15:50:46 tron Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.25 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.25.12.1 2006/05/24 15:50:46 tron Exp $");
 
 #include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.25 2005/12/11 12:25:16 christos Exp
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -154,7 +155,6 @@ idp_output(struct mbuf *m0, ...)
 	struct mbuf *m;
 	struct idp *idp;
 	int len = m0->m_pkthdr.len;
-	struct mbuf *mprev = NULL;
 	extern int idpcksum;
 	va_list ap;
 
@@ -167,6 +167,11 @@ idp_output(struct mbuf *m0, ...)
 	 */
 
 	if (len & 1) {
+		struct mbuf *mprev;
+
+		for (mprev = NULL, m = m0; m; m = m->m_next)
+			mprev = m;
+
 		m = mprev;
 		if ((m->m_flags & M_EXT) == 0 &&
 			(m->m_len + m->m_data < &m->m_dat[MLEN])) {
@@ -493,7 +498,8 @@ idp_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}

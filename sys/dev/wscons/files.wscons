@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.37 2006/02/23 08:01:59 macallan Exp $
+# $NetBSD: files.wscons,v 1.37.6.1 2006/05/24 15:50:32 tron Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -27,7 +27,6 @@ defparam opt_wsemul.h		WSEMUL_VT100_HILIT_FG WSEMUL_VT100_UNDERLINE_FG
 defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_USL
 				WSDISPLAY_COMPAT_RAWKBD
 				WSDISPLAY_COMPAT_PCVT WSDISPLAY_COMPAT_SYSCONS
-				WSDISPLAY_CHARFUNCS
 				WSCONS_SUPPORT_PCVTFONTS
 				WSCONS_SUPPORT_ISO7FONTS
 				WSDISPLAY_SCROLLSUPPORT

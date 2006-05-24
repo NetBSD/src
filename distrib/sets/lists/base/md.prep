@@ -1,5 +1,5 @@
-# $NetBSD: md.prep,v 1.9 2005/05/22 03:45:30 lukem Exp $
+# $NetBSD: md.prep,v 1.9.2.1 2006/05/24 15:47:48 tron Exp $
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/boot_com0				base-sysutil-bin
-./usr/mdec/installboot				base-sysutil-bin
 ./usr/mdec/mkbootimage				base-sysutil-bin
+./usr/mdec/installboot			base-obsolete		obsolete

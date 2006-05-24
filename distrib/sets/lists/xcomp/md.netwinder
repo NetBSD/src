@@ -1,0 +1,3 @@
+# $NetBSD: md.netwinder,v 1.1.2.2 2006/05/24 15:47:49 tron Exp $
+./usr/X11R6/include/xf86Optrec.h
+./usr/X11R6/include/xf86Parser.h

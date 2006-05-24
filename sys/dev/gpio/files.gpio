@@ -1,7 +1,11 @@
-# $NetBSD: files.gpio,v 1.3 2006/02/20 03:18:36 riz Exp $
+# $NetBSD: files.gpio,v 1.3.6.1 2006/05/24 15:50:07 tron Exp $
 
 define	gpio {offset, mask}
 
 device	gpio: gpio
 attach	gpio at gpiobus
 file	dev/gpio/gpio.c				gpio	needs-flag
+
+device	gpioow: onewirebus, onewire_bitbang
+attach	gpioow at gpio
+file	dev/gpio/gpioow.c			gpioow

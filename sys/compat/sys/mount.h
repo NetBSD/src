@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.2 2005/12/11 12:20:29 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.2.12.1 2006/05/24 15:48:29 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -88,6 +88,10 @@ int	statfs(const char *, struct statfs12 *);
 int	getmntinfo(struct statfs12 **, int);
 #if defined(_NETBSD_SOURCE)
 int	fhstatfs(const fhandle_t *, struct statfs12 *);
+struct stat13;
+int	fhstat(const fhandle_t *, struct stat13 *);
+struct stat;
+int	__fhstat30(const fhandle_t *, struct stat *);
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 

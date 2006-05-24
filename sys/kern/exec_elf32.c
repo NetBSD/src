@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.109.6.1 2006/03/28 09:42:26 tron Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.109.6.2 2006/05/24 15:50:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,12 +64,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.109.6.1 2006/03/28 09:42:26 tron Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.109.6.2 2006/05/24 15:50:40 tron Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
 #define	ELFSIZE		32
 #endif
+
+#ifdef _KERNEL_OPT
+#include "opt_pax.h"
+#endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -82,9 +86,14 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.109.6.1 2006/03/28 09:42:26 tron Ex
 #include <sys/signalvar.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#ifdef PAX_MPROTECT
+#include <sys/pax.h>
+#endif /* PAX_MPROTECT */
 
 extern const struct emul emul_netbsd;
 
@@ -170,22 +179,22 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 		if (vap->va_mode & S_ISUID)
 			a->a_v = vap->va_uid;
 		else
-			a->a_v = p->p_ucred->cr_uid;
+			a->a_v = kauth_cred_geteuid(p->p_cred);
 		a++;
 
 		a->a_type = AT_RUID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = kauth_cred_getuid(p->p_cred);
 		a++;
 
 		a->a_type = AT_EGID;
 		if (vap->va_mode & S_ISGID)
 			a->a_v = vap->va_gid;
 		else
-			a->a_v = p->p_ucred->cr_gid;
+			a->a_v = kauth_cred_getegid(p->p_cred);
 		a++;
 
 		a->a_type = AT_RGID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = kauth_cred_getgid(p->p_cred);
 		a++;
 
 		free(ap, M_TEMP);
@@ -366,11 +375,11 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 		error = EACCES;
 		goto badunlock;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, l->l_proc->p_ucred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, l->l_proc->p_cred, l)) != 0)
 		goto badunlock;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, &attr, l->l_proc->p_ucred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l)) != 0)
 		goto badunlock;
 
 	/*
@@ -522,8 +531,13 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 
 		case PT_DYNAMIC:
 		case PT_PHDR:
-		case PT_NOTE:
 			break;
+
+		case PT_NOTE:
+#ifdef PAX_MPROTECT
+			pax_mprotect_adjust(l, ph[i].p_flags);
+			break;
+#endif /* PAX_MPROTECT */
 
 		default:
 			break;

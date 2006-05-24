@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.214.6.2 2006/03/31 09:45:27 tron Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.214.6.3 2006/05/24 15:50:40 tron Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.6.2 2006/03/31 09:45:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.6.3 2006/05/24 15:50:40 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.214.6.2 2006/03/31 09:45:27 tron Exp
 #include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -261,11 +262,11 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag)
 		error = EACCES;
 		goto bad1;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, p->p_cred, l)) != 0)
 		goto bad1;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_ucred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, epp->ep_vap, p->p_cred, l)) != 0)
 		goto bad1;
 
 	/* Check mount point */
@@ -277,7 +278,7 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	/* try to open it */
-	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, l)) != 0)
+	if ((error = VOP_OPEN(vp, FREAD, p->p_cred, l)) != 0)
 		goto bad1;
 
 	/* unlock vp, since we need it unlocked from here on out. */
@@ -293,7 +294,7 @@ check_exec(struct lwp *l, struct exec_package *epp, int flag)
 	/* now we have the file, get the exec header */
 	uvn_attach(vp, VM_PROT_READ);
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
-			UIO_SYSSPACE, 0, p->p_ucred, &resid, NULL);
+			UIO_SYSSPACE, 0, p->p_cred, &resid, NULL);
 	if (error)
 		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
@@ -354,7 +355,7 @@ bad2:
 	 * pathname buf, and punt.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(vp, FREAD, p->p_ucred, l);
+	VOP_CLOSE(vp, FREAD, p->p_cred, l);
 	vput(vp);
 	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
@@ -408,7 +409,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	struct nameidata	nid;
 	struct vattr		attr;
 	struct proc		*p;
-	struct ucred		*cred;
+	kauth_cred_t		cred;
 	char			*argp;
 	char			*dp, *sp;
 	long			argc, envc;
@@ -442,7 +443,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 	p->p_flag |= P_INEXEC;
 
-	cred = p->p_ucred;
+	cred = p->p_cred;
 	base_vcp = NULL;
 	/*
 	 * Init the namei data to point the file user's program name.
@@ -780,10 +781,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if ((p->p_flag & P_TRACED) == 0 &&
 
 	    (((attr.va_mode & S_ISUID) != 0 &&
-	      p->p_ucred->cr_uid != attr.va_uid) ||
+	      kauth_cred_geteuid(p->p_cred) != attr.va_uid) ||
 
 	     ((attr.va_mode & S_ISGID) != 0 &&
-	      p->p_ucred->cr_gid != attr.va_gid))) {
+	      kauth_cred_getegid(p->p_cred) != attr.va_gid))) {
 		/*
 		 * Mark the process as SUGID before we do
 		 * anything that might block.
@@ -796,7 +797,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			goto exec_abort;
 		}
 
-		p->p_ucred = crcopy(cred);
+		p->p_cred = kauth_cred_copy(cred);
+		cred = p->p_cred;
 #ifdef KTRACE
 		/*
 		 * If process is being ktraced, turn off - unless
@@ -806,16 +808,16 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			ktrderef(p);
 #endif
 		if (attr.va_mode & S_ISUID)
-			p->p_ucred->cr_uid = attr.va_uid;
+			kauth_cred_seteuid(p->p_cred, attr.va_uid);
 		if (attr.va_mode & S_ISGID)
-			p->p_ucred->cr_gid = attr.va_gid;
+			kauth_cred_setegid(p->p_cred, attr.va_gid);
 	} else {
-		if (p->p_ucred->cr_uid == p->p_cred->p_ruid &&
-		    p->p_ucred->cr_gid == p->p_cred->p_rgid)
+		if (kauth_cred_geteuid(p->p_cred) == kauth_cred_getuid(p->p_cred) &&
+		    kauth_cred_getegid(p->p_cred) == kauth_cred_getgid(p->p_cred))
 			p->p_flag &= ~P_SUGID;
 	}
-	p->p_cred->p_svuid = p->p_ucred->cr_uid;
-	p->p_cred->p_svgid = p->p_ucred->cr_gid;
+	kauth_cred_setsvuid(p->p_cred, kauth_cred_geteuid(p->p_cred));
+	kauth_cred_setsvgid(p->p_cred, kauth_cred_getegid(p->p_cred));
 
 #if defined(__HAVE_RAS)
 	/*
@@ -1240,6 +1242,8 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 #ifdef DIAGNOSTIC
 		panic("execw[] entry with unknown priority %d found",
 			et->es->es_prio);
+#else
+		free(et, M_TEMP);
 #endif
 		break;
 	}

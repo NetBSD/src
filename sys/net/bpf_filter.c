@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.30 2006/02/27 11:42:58 drochner Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.30.6.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.30 2006/02/27 11:42:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.30.6.1 2006/05/24 15:50:43 tron Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -189,7 +189,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = pc->k;
 			if (k + sizeof(int32_t) > buflen) {
 #ifdef _KERNEL
-				int merr;
+				int merr = 0;	/* XXX: GCC */
 
 				if (buflen != 0)
 					return 0;
@@ -253,7 +253,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = X + pc->k;
 			if (k + sizeof(int32_t) > buflen) {
 #ifdef _KERNEL
-				int merr;
+				int merr = 0;	/* XXX: GCC */
 
 				if (buflen != 0)
 					return 0;
@@ -272,7 +272,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = X + pc->k;
 			if (k + sizeof(int16_t) > buflen) {
 #ifdef _KERNEL
-				int merr;
+				int merr = 0;	/* XXX: GCC */
 
 				if (buflen != 0)
 					return 0;

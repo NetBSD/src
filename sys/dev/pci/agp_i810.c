@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.28 2006/01/16 22:59:36 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.28.10.1 2006/05/24 15:50:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.28 2006/01/16 22:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.28.10.1 2006/05/24 15:50:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ agp_i810_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 	struct agp_i810_softc *isc = sc->as_chipc;
 
 	if (offset < 0 || offset >= (isc->gatt->ag_entries << AGP_PAGE_SHIFT)) {
-#ifdef DEBUG
+#ifdef AGP_DEBUG
 		printf("%s: failed: offset 0x%08x, shift %d, entries %d\n",
 		    sc->as_dev.dv_xname, (int)offset, AGP_PAGE_SHIFT,
 		    isc->gatt->ag_entries);
@@ -550,7 +550,7 @@ agp_i810_bind_page(struct agp_softc *sc, off_t offset, bus_addr_t physical)
 
 	if (isc->chiptype != CHIP_I830) {
 		if ((offset >> AGP_PAGE_SHIFT) < isc->stolen) {
-#ifdef DEBUG
+#ifdef AGP_DEBUG
 			printf("%s: trying to bind into stolen memory",
 			    sc->as_dev.dv_xname);
 #endif
@@ -572,7 +572,7 @@ agp_i810_unbind_page(struct agp_softc *sc, off_t offset)
 
 	if (isc->chiptype != CHIP_I810 ) {
 		if ((offset >> AGP_PAGE_SHIFT) < isc->stolen) {
-#ifdef DEBUG
+#ifdef AGP_DEBUG
 			printf("%s: trying to unbind from stolen memory",
 			    sc->as_dev.dv_xname);
 #endif
@@ -605,7 +605,7 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 	struct agp_i810_softc *isc = sc->as_chipc;
 	struct agp_memory *mem;
 
-#ifdef DEBUG
+#ifdef AGP_DEBUG
 	printf("AGP: alloc(%d, 0x%x)\n", type, (int) size);
 #endif
 

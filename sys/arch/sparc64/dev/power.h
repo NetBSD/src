@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: power.h,v 1.1.1.1.86.1 2006/05/24 15:48:23 tron Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -54,4 +54,4 @@
 volatile u_char *power_reg;
 #endif
 
-void powerdown __P((void));		/* power off function */
+void powerdown(void);		/* power off function */

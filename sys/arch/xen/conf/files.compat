@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.10 2006/01/15 22:09:51 bouyer Exp $
+#	$NetBSD: files.compat,v 1.10.10.1 2006/05/24 15:48:25 tron Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -27,7 +27,6 @@ defflag	vesabios.h		XXXVESABIOS
 defflag	bioscall.h		XXXBIOSCALL
 defflag	opt_pcibios.h		XXXOPT_PCIBIOS
 defflag	opt_pcifixup.h		XXXOPT_PCIFIXUP
-defflag	acpi.h			XXXACPI
 defflag	opt_mpacpi.h		XXXOPT_MPACPI
 defflag	opt_mpbios.h		XXXOPT_MPBIOS
 

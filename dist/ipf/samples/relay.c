@@ -1,4 +1,4 @@
-/*	$NetBSD: relay.c,v 1.1.1.2 2004/07/23 05:34:43 martti Exp $	*/
+/*	$NetBSD: relay.c,v 1.1.1.2.6.1 2006/05/24 15:47:46 tron Exp $	*/
 
 /*
  * Sample program to be used as a transparent proxy.
@@ -18,10 +18,10 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#include "ip_compat.h"
-#include "ip_fil.h"
-#include "ip_nat.h"
-#include "ipl.h"
+#include "netinet/ip_compat.h"
+#include "netinet/ip_fil.h"
+#include "netinet/ip_nat.h"
+#include "netinet/ipl.h"
 
 #define	RELAY_BUFSZ	8192
 

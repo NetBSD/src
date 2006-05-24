@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.11 2005/12/24 20:06:59 perry Exp $	*/
+/*	$NetBSD: aica.c,v 1.11.12.1 2006/05/24 15:47:53 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.11 2005/12/24 20:06:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.11.12.1 2006/05/24 15:47:53 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,7 +579,7 @@ aica_fillbuffer(struct aica_softc *sc)
 		    sc->sc_buffer, sc->sc_blksize);
 	}
 
-	(int8_t *)sc->sc_buffer += sc->sc_blksize;
+	sc->sc_buffer = (int8_t *)sc->sc_buffer + sc->sc_blksize;
 	if (sc->sc_buffer >= sc->sc_buffer_end)
 		sc->sc_buffer = sc->sc_buffer_start;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hostname.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: hostname.c,v 1.1.1.1.12.1 2006/05/24 15:47:46 tron Exp $	*/
 
 
 #include "ipf.h"
@@ -11,6 +11,8 @@ void *ip;
 	struct hostent *hp;
 	struct in_addr ipa;
 	struct netent *np;
+
+	memset(&ipa, 0, sizeof ipa);	/* XXX gcc */
 
 	if (v == 4) {
 		ipa.s_addr = *(u_32_t *)ip;

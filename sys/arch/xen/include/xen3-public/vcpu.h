@@ -1,3 +1,4 @@
+/* $NetBSD: vcpu.h,v 1.1.1.1.12.1 2006/05/24 15:48:25 tron Exp $ */
 /******************************************************************************
  * vcpu.h
  * 
@@ -50,6 +51,61 @@
 
 /* Returns 1 if the given VCPU is up. */
 #define VCPUOP_is_up                3
+
+/*
+ * Return information about the state and running time of a VCPU.
+ * @extra_arg == pointer to vcpu_runstate_info structure.
+ */
+#define VCPUOP_get_runstate_info    4
+typedef struct vcpu_runstate_info {
+    /* VCPU's current state (RUNSTATE_*). */
+    int      state;
+    /* When was current state entered (system time, ns)? */
+    uint64_t state_entry_time;
+    /*
+     * Time spent in each RUNSTATE_* (ns). The sum of these times is
+     * guaranteed not to drift from system time.
+     */
+    uint64_t time[4];
+} vcpu_runstate_info_t;
+
+/* VCPU is currently running on a physical CPU. */
+#define RUNSTATE_running  0
+
+/* VCPU is runnable, but not currently scheduled on any physical CPU. */
+#define RUNSTATE_runnable 1
+
+/* VCPU is blocked (a.k.a. idle). It is therefore not runnable. */
+#define RUNSTATE_blocked  2
+
+/*
+ * VCPU is not runnable, but it is not blocked.
+ * This is a 'catch all' state for things like hotplug and pauses by the
+ * system administrator (or for critical sections in the hypervisor).
+ * RUNSTATE_blocked dominates this state (it is the preferred state).
+ */
+#define RUNSTATE_offline  3
+
+/*
+ * Register a shared memory area from which the guest may obtain its own
+ * runstate information without needing to execute a hypercall.
+ * Notes:
+ *  1. The registered address may be virtual or physical, depending on the
+ *     platform. The virtual address should be registered on x86 systems.
+ *  2. Only one shared area may be registered per VCPU. The shared area is
+ *     updated by the hypervisor each time the VCPU is scheduled. Thus
+ *     runstate.state will always be RUNSTATE_running and
+ *     runstate.state_entry_time will indicate the system time at which the
+ *     VCPU was last scheduled to run.
+ * @extra_arg == pointer to vcpu_register_runstate_memory_area structure.
+ */
+#define VCPUOP_register_runstate_memory_area 5
+typedef struct vcpu_register_runstate_memory_area {
+    union {
+        struct vcpu_runstate_info *v;
+        uint64_t p;
+    } addr;
+} vcpu_register_runstate_memory_area_t;
 
 #endif /* __XEN_PUBLIC_VCPU_H__ */
 

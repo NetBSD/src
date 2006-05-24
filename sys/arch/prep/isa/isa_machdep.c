@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.9 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.9.12.1 2006/05/24 15:48:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9.12.1 2006/05/24 15:48:20 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,13 +100,8 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
  */
 void *
-isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun) __P((void *));
-	void *ih_arg;
+isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
 
 	return (void *)intr_establish(irq, type, level, ih_fun, ih_arg);
@@ -116,18 +111,15 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
  * Deregister an interrupt handler.
  */
 void
-isa_intr_disestablish(ic, arg)
-	isa_chipset_tag_t ic;
-	void *arg;
+isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 
 	intr_disestablish(arg);
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self,
+    struct isabus_attach_args *iba)
 {
 
 	/* Nothing to do. */
@@ -149,8 +141,7 @@ isa_intr(void)
 }
 
 void
-isa_intr_mask(mask)
-	int mask;
+isa_intr_mask(int mask)
 {
 
 	isa_outb(IO_ICU1+1, mask);
@@ -158,8 +149,7 @@ isa_intr_mask(mask)
 }
 
 void
-isa_intr_clr(irq)
-	int irq;
+isa_intr_clr(int irq)
 {
 
 	if (irq < 8) {
@@ -177,17 +167,17 @@ void
 init_icu(int lvlmask)
 {
 	int i;
-	extern int intrtype[];
+	struct intrsource *is;
 
-	for (i= 0; i < ICU_LEN; i++) {
+	for (i = 0, is = intrsources; i < ICU_LEN; i++, is++) {
 		switch (i) {
 		case 0:
 		case 2:
 		case 8:
-			intrtype[i] = IST_EDGE;
+			is->is_type = IST_EDGE;
 			break;
 		default:
-			intrtype[i] = (1 << i) & lvlmask ? IST_LEVEL : IST_NONE;
+			is->is_type = (1 << i) & lvlmask ? IST_LEVEL : IST_NONE;
 		}
 	}
 
@@ -212,8 +202,7 @@ init_icu(int lvlmask)
 }
 
 void
-isa_setirqstat(irq, enabled, type)
-	int irq, enabled, type;
+isa_setirqstat(int irq, int enabled, int type)
 {
 	u_int8_t elcr[2];
 	int icu, bit;
@@ -239,18 +228,21 @@ isa_intr_alloc(isa_chipset_tag_t c, int mask, int type, int *irq_p)
 	int irq;
 	int maybe_irq = -1;
 	int shared_depth = 0;
+	struct intrsource *is;
+
 	mask &= 0x8b28;	/* choose from 3, 5, 8, 9, 11, 15 XXX */
-	for (irq = 0; mask != 0; mask >>= 1, irq++) {
+	for (irq = 0, is = intrsources; mask != 0; mask >>= 1, irq++, is++) {
 		if ((mask & 1) == 0)
 			continue;
-		if (intrtype[irq] == IST_NONE) {
+		if (is->is_type == IST_NONE) {
 			*irq_p = irq;
 			return 0;
 		}
 		/* Level interrupts can be shared */
-		if (type == IST_LEVEL && intrtype[irq] == IST_LEVEL) {
-			struct intrhand *ih = intrhand[irq];
+		if (type == IST_LEVEL && is->is_type == IST_LEVEL) {
+			struct intrhand *ih = is->is_hand;
 			int depth;
+
 			if (maybe_irq == -1) {
 				maybe_irq = irq;
 				continue;

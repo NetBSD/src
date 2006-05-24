@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.193.2.1 2006/03/28 09:42:03 tron Exp $
+#	$NetBSD: DEVNAMES,v 1.193.2.2 2006/05/24 15:50:06 tron Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -301,6 +301,8 @@ daic			MI
 dbri			sparc
 dc			pmax
 dcm			hp300
+ddc			MI
+ddc_read_edid		MI		Attribute
 de			MI
 depca			MI
 dge			MI
@@ -347,6 +349,7 @@ ed			MI (MCA)
 ed			amiga
 ed			amigappc
 edc			MI (MCA)
+edid			MI		Attribute
 eeprom			sparc
 eeprom			sparc64
 eeprom			sun3
@@ -1183,6 +1186,7 @@ spic			MI
 spif			sparc
 spif			sparc64
 spifi			newsmips
+splash			MI		Attribute
 spkr			MI
 sppp			MI		Attribute
 sqphy			MI
@@ -1329,12 +1333,17 @@ uscanner		MI
 usscanner		MI
 ustir			MI
 ut			vax
+utoppy			MI
 uu			vax
 uvisor			MI
 uvscom			MI
 uyap			MI
 va			vax
+vcons			MI		Attribute
 veriexec		MI
+vesabios		i386
+vesafb			i386
+vesagtf			MI		Attribute
 vga			MI
 vge			MI
 viaenv			MI
@@ -1344,6 +1353,7 @@ vidc			acorn32
 vidcaudio		acorn32
 vidcconsole		acorn32
 vidcvideo		acorn32
+videomode		MI		Attribute
 vme			MI
 vme			atari
 vme			sun3

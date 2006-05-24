@@ -1,3 +1,4 @@
+/* $NetBSD: ring.h,v 1.2.4.2 2006/05/24 15:48:25 tron Exp $ */
 /******************************************************************************
  * ring.h
  * 
@@ -39,7 +40,7 @@ typedef unsigned int RING_IDX;
  *
  * These expand out to give you a set of types, as you can see below.
  * The most important of these are:
- *  
+ * 
  *     mytag_sring_t      - The shared ring.
  *     mytag_front_ring_t - The 'front' half of the ring.
  *     mytag_back_ring_t  - The 'back' half of the ring.
@@ -58,7 +59,7 @@ typedef unsigned int RING_IDX;
  *     mytag_back_ring_t back_ring;
  *     BACK_RING_INIT(&back_ring, (mytag_sring_t *)shared_page, PAGE_SIZE);
  */
-         
+
 #define DEFINE_RING_TYPES(__name, __req_t, __rsp_t)                     \
                                                                         \
 /* Shared ring entry */                                                 \
@@ -97,7 +98,7 @@ typedef struct __name##_front_ring __name##_front_ring_t;               \
 typedef struct __name##_back_ring __name##_back_ring_t
 
 /*
- * Macros for manipulating rings.  
+ * Macros for manipulating rings.
  * 
  * FRONT_RING_whatever works on the "front end" of a ring: here 
  * requests are pushed on to the ring and responses taken off it.
@@ -105,7 +106,7 @@ typedef struct __name##_back_ring __name##_back_ring_t
  * BACK_RING_whatever works on the "back end" of a ring: here 
  * requests are taken off the ring and responses put on.
  * 
- * N.B. these macros do NO INTERLOCKS OR FLOW CONTROL.  
+ * N.B. these macros do NO INTERLOCKS OR FLOW CONTROL. 
  * This is OK in 1-for-1 request-response situations where the 
  * requestor (front end) never has more than RING_SIZE()-1
  * outstanding requests.
@@ -151,7 +152,7 @@ typedef struct __name##_back_ring __name##_back_ring_t
 #define RING_SIZE(_r)                                                   \
     ((_r)->nr_ents)
 
-/* Test if there is an empty slot available on the front ring. 
+/* Test if there is an empty slot available on the front ring.
  * (This is only meaningful from the front. )
  */
 #define RING_FULL(_r)                                                   \
@@ -159,24 +160,19 @@ typedef struct __name##_back_ring __name##_back_ring_t
 
 /* Test if there are outstanding messages to be processed on a ring. */
 #define RING_HAS_UNCONSUMED_RESPONSES(_r)                               \
-   ( (_r)->rsp_cons != (_r)->sring->rsp_prod )
-   
+    ((_r)->rsp_cons != (_r)->sring->rsp_prod)
+
 #define RING_HAS_UNCONSUMED_REQUESTS(_r)                                \
-   ( ((_r)->req_cons != (_r)->sring->req_prod ) &&                      \
-     (((_r)->req_cons - (_r)->rsp_prod_pvt) !=                          \
-      RING_SIZE(_r)) )
-      
+    (((_r)->req_cons != (_r)->sring->req_prod) &&                       \
+     (((_r)->req_cons - (_r)->rsp_prod_pvt) != RING_SIZE(_r)))
+
 /* Direct access to individual ring elements, by index. */
 #define RING_GET_REQUEST(_r, _idx)                                      \
- (&((_r)->sring->ring[                                                  \
-     ((_idx) & (RING_SIZE(_r) - 1))                                     \
-     ].req))
+    (&((_r)->sring->ring[((_idx) & (RING_SIZE(_r) - 1))].req))
 
 #define RING_GET_RESPONSE(_r, _idx)                                     \
- (&((_r)->sring->ring[                                                  \
-     ((_idx) & (RING_SIZE(_r) - 1))                                     \
-     ].rsp))   
-    
+    (&((_r)->sring->ring[((_idx) & (RING_SIZE(_r) - 1))].rsp))
+
 /* Loop termination condition: Would the specified index overflow the ring? */
 #define RING_REQUEST_CONS_OVERFLOW(_r, _cons)                           \
     (((_cons) - (_r)->rsp_prod_pvt) >= RING_SIZE(_r))
@@ -212,7 +208,7 @@ typedef struct __name##_back_ring __name##_back_ring_t
  *  The second argument is a boolean return value. True indicates that there
  *  are pending messages on the ring (i.e., the connection should not be put
  *  to sleep).
- *  
+ * 
  *  These macros will set the req_event/rsp_event field to trigger a
  *  notification on the very next message that is enqueued. If you want to
  *  create batches of work (i.e., only receive a notification after several

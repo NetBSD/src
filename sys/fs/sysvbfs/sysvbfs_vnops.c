@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.1.12.1 2006/05/24 15:50:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.1.12.1 2006/05/24 15:50:40 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.1 2005/12/29 14:53:45 tsutsui Ex
 #include <sys/lockf.h>
 #include <sys/unistd.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
 
 #include <fs/sysvbfs/sysvbfs.h>
 #include <fs/sysvbfs/bfs.h>
@@ -158,13 +159,13 @@ sysvbfs_create(void *arg)
 	struct bfs_dirent *dirent;
 	struct bfs_fileattr attr;
 	struct vattr *va = a->a_vap;
-	struct ucred *cr = a->a_cnp->cn_cred;
+	kauth_cred_t cr = a->a_cnp->cn_cred;
 	int err = 0;
 
 	DPRINTF("%s: %s\n", __FUNCTION__, a->a_cnp->cn_nameptr);
 	KDASSERT(a->a_vap->va_type == VREG);
-	attr.uid = cr->cr_uid;
-	attr.gid = cr->cr_gid;
+	attr.uid = kauth_cred_geteuid(cr);
+	attr.gid = kauth_cred_getegid(cr);
 	attr.mode = va->va_mode;
 
 	if ((err = bfs_file_create(bfs, a->a_cnp->cn_nameptr, 0, 0, &attr))
@@ -198,7 +199,7 @@ sysvbfs_open(void *arg)
 	struct vop_open_args /* {
 		struct vnode *a_vp;
 		int  a_mode;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
@@ -230,7 +231,7 @@ sysvbfs_close(void *arg)
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int  a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
@@ -260,7 +261,7 @@ sysvbfs_access(void *arg)
 	struct vop_access_args /* {
 		struct vnode	*a_vp;
 		int		a_mode;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = arg;
 	struct vnode *vp = ap->a_vp;
@@ -281,7 +282,7 @@ sysvbfs_getattr(void *v)
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -322,7 +323,7 @@ sysvbfs_setattr(void *arg)
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
 		struct vattr *a_vap;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct proc *p;
 	} */ *ap = arg;
 	struct vnode *vp = ap->a_vp;
@@ -367,7 +368,7 @@ sysvbfs_read(void *arg)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
 	struct uio *uio = a->a_uio;
@@ -405,7 +406,7 @@ sysvbfs_write(void *arg)
 		struct vnode *a_vp;
 		struct uio *a_uio;
 		int  a_ioflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
 	struct uio *uio = a->a_uio;
@@ -535,7 +536,7 @@ sysvbfs_readdir(void *v)
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
 		struct uio *a_uio;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int *a_eofflag;
 		off_t **a_cookies;
 		int *a_ncookies;
@@ -768,7 +769,7 @@ sysvbfs_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		int a_flags;
 		off_t offlo;
 		off_t offhi;

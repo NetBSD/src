@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.28.12.1 2006/03/28 09:42:02 tron Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.28.12.2 2006/05/24 15:48:27 tron Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.28.12.1 2006/03/28 09:42:02 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.28.12.2 2006/05/24 15:48:27 tron Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.28.12.1 2006/03/28 09:42:02 tron Ex
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -172,7 +173,7 @@ irix_sys_prctl(l, v, retval)
 		pid_t pid = (pid_t)SCARG(uap, arg1);
 		struct irix_emuldata *ied;
 		struct proc *target;
-		struct pcred *pc;
+		kauth_cred_t pc;
 
 		if (pid == 0)
 			pid = p->p_pid;
@@ -184,11 +185,11 @@ irix_sys_prctl(l, v, retval)
 			return 0;
 
 		pc = p->p_cred;
-		if (!(pc->pc_ucred->cr_uid == 0 || \
-		    pc->p_ruid == target->p_cred->p_ruid || \
-		    pc->pc_ucred->cr_uid == target->p_cred->p_ruid || \
-		    pc->p_ruid == target->p_ucred->cr_uid || \
-		    pc->pc_ucred->cr_uid == target->p_ucred->cr_uid))
+		if (!(kauth_cred_geteuid(pc) == 0 || \
+		    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
+		    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
+		    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
+		    kauth_cred_geteuid(pc) == kauth_cred_geteuid(target->p_cred)))
 			return EPERM;
 
 		ied = (struct irix_emuldata *)(target->p_emuldata);
@@ -422,7 +423,7 @@ irix_sproc_child(isc)
 	struct proc *parent = lparent->l_proc;
 	struct frame *tf = (struct frame *)l2->l_md.md_regs;
 	struct frame *ptf = (struct frame *)lparent->l_md.md_regs;
-	struct pcred *pc;
+	kauth_cred_t pc;
 	struct plimit *pl;
 	struct irix_emuldata *ied;
 	struct irix_emuldata *parent_ied;
@@ -486,12 +487,9 @@ irix_sproc_child(isc)
 	 */
 	if (inh & IRIX_PR_SID) {
 		pc = p2->p_cred;
-		parent->p_cred->p_refcnt++;
+		kauth_cred_hold(parent->p_cred);
 		p2->p_cred = parent->p_cred;
-		if (--pc->p_refcnt == 0) {
-			crfree(pc->pc_ucred);
-			pool_put(&pcred_pool, pc);
-		}
+		kauth_cred_free(pc);
 	}
 
 	/*
@@ -572,7 +570,7 @@ irix_sys_procblk(l, v, retval)
 	struct irix_emuldata *iedp;
 	struct irix_share_group *isg;
 	struct proc *target;
-	struct pcred *pc;
+	kauth_cred_t pc;
 	int oldcount;
 	struct lwp *ied_lwp;
 	int error, last_error;
@@ -584,11 +582,11 @@ irix_sys_procblk(l, v, retval)
 
 	/* May we stop it? */
 	pc = p->p_cred;
-	if (!(pc->pc_ucred->cr_uid == 0 || \
-	    pc->p_ruid == target->p_cred->p_ruid || \
-	    pc->pc_ucred->cr_uid == target->p_cred->p_ruid || \
-	    pc->p_ruid == target->p_ucred->cr_uid || \
-	    pc->pc_ucred->cr_uid == target->p_ucred->cr_uid))
+	if (!(kauth_cred_geteuid(pc) == 0 || \
+	    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
+	    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
+	    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
+	    kauth_cred_geteuid(pc) == kauth_cred_geteuid(target->p_cred)))
 		return EPERM;
 
 	/* Is it an IRIX process? */

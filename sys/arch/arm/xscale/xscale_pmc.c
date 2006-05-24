@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.9 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.9.12.1 2006/05/24 15:47:52 tron Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.9 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.9.12.1 2006/05/24 15:47:52 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -86,15 +86,12 @@ xscale_pmnc_read(void)
 	return pmnc;
 }
 
-static inline uint32_t
+static inline void
 xscale_pmnc_write(uint32_t val)
 {
-	uint32_t pmnc;
 
 	__asm volatile("mcr p14, 0, %0, c0, c0, 0"
 		: : "r" (val));
-
-	return pmnc;
 }
 
 int

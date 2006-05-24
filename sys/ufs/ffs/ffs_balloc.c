@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.40.12.1 2006/03/28 09:42:29 tron Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.40.12.2 2006/05/24 15:50:47 tron Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.40.12.1 2006/03/28 09:42:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.40.12.2 2006/05/24 15:50:47 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.40.12.1 2006/03/28 09:42:29 tron Ex
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/kauth.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
@@ -66,9 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.40.12.1 2006/03/28 09:42:29 tron Ex
 
 #include <uvm/uvm.h>
 
-static int ffs_balloc_ufs1(struct vnode *, off_t, int, struct ucred *, int,
+static int ffs_balloc_ufs1(struct vnode *, off_t, int, kauth_cred_t, int,
     struct buf **);
-static int ffs_balloc_ufs2(struct vnode *, off_t, int, struct ucred *, int,
+static int ffs_balloc_ufs2(struct vnode *, off_t, int, kauth_cred_t, int,
     struct buf **);
 
 /*
@@ -78,7 +79,7 @@ static int ffs_balloc_ufs2(struct vnode *, off_t, int, struct ucred *, int,
  */
 
 int
-ffs_balloc(struct vnode *vp, off_t off, int size, struct ucred *cred, int flags,
+ffs_balloc(struct vnode *vp, off_t off, int size, kauth_cred_t cred, int flags,
     struct buf **bpp)
 {
 
@@ -89,7 +90,7 @@ ffs_balloc(struct vnode *vp, off_t off, int size, struct ucred *cred, int flags,
 }
 
 static int
-ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, struct ucred *cred,
+ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
     int flags, struct buf **bpp)
 {
 	daddr_t lbn, lastlbn;
@@ -147,7 +148,7 @@ ffs_balloc_ufs1(struct vnode *vp, off_t off, int size, struct ucred *cred,
 			uvm_vnp_setsize(vp, ip->i_ffs1_size);
 			ip->i_ffs1_db[nb] = ufs_rw32((u_int32_t)newb, needswap);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-			if (bpp) {
+			if (bpp && *bpp) {
 				if (flags & B_SYNC)
 					bwrite(*bpp);
 				else
@@ -526,7 +527,7 @@ fail:
 }
 
 static int
-ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, struct ucred *cred,
+ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
     int flags, struct buf **bpp)
 {
 	daddr_t lbn, lastlbn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.14 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: umap.h,v 1.14.12.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@ struct umap_node {
 };
 
 u_long umap_reverse_findid(u_long id, u_long map[][2], int nentries);
-void umap_mapids(struct mount *v_mount, struct ucred *credp);
+void umap_mapids(struct mount *v_mount, kauth_cred_t credp);
 
 #define	umap_hash	ln.layer_hash
 #define	umap_lowervp	ln.layer_lowervp

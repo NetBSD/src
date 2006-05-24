@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.3.2.1 2006/03/28 09:46:22 tron Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.3.2.2 2006/05/24 15:48:26 tron Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.3.2.1 2006/03/28 09:46:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.3.2.2 2006/05/24 15:48:26 tron Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -658,7 +658,7 @@ register_xenbus_watch(struct xenbus_watch *watch)
 void
 unregister_xenbus_watch(struct xenbus_watch *watch)
 {
-	struct xs_stored_msg *msg;
+	struct xs_stored_msg *msg, *next_msg;
 	char token[sizeof(watch) * 2 + 1];
 	int err, s;
 
@@ -681,11 +681,11 @@ unregister_xenbus_watch(struct xenbus_watch *watch)
 
 	/* Cancel pending watch events. */
 	simple_lock(&watch_events_lock);
-	while (!SIMPLEQ_EMPTY(&watch_events)) {
-		msg = SIMPLEQ_FIRST(&watch_events);
+	for (msg = SIMPLEQ_FIRST(&watch_events); msg != NULL; msg = next_msg) {
+		next_msg = SIMPLEQ_NEXT(msg, msg_next);
 		if (msg->u.watch.handle != watch)
 			continue;
-		SIMPLEQ_REMOVE_HEAD(&watch_events, msg_next);
+		SIMPLEQ_REMOVE(&watch_events, msg, xs_stored_msg, msg_next);
 		free(msg->u.watch.vec, M_DEVBUF);
 		free(msg, M_DEVBUF);
 	}

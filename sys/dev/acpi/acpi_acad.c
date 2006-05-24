@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.18 2006/02/20 12:17:49 kochi Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.18.6.1 2006/05/24 15:50:07 tron Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.18 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.18.6.1 2006/05/24 15:50:07 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,13 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 	 * but at least my IBM T21 sends it on AC adapter status
 	 * change.  --thorpej@wasabisystems.com
 	 */
+	/*
+	 * XXX My Acer TravelMate 291 sends DeviceCheck on AC
+	 * adapter status change.
+	 *  --rpaulo@NetBSD.org
+	 */
 	case ACPI_NOTIFY_BusCheck:
+	case ACPI_NOTIFY_DeviceCheck:
 	case ACPI_NOTIFY_PowerSourceStatusChanged:
 #ifdef ACPI_ACAD_DEBUG
 		printf("%s: received notify message: 0x%x\n",

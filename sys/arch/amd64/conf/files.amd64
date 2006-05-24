@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.21 2006/02/12 18:16:01 tron Exp $
+#	$NetBSD: files.amd64,v 1.21.6.1 2006/05/24 15:47:50 tron Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -197,8 +197,5 @@ include	"dev/ieee1394/files.ieee1394"
 
 include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup.c	acpi
-
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-x86_64-elf.hal.o	ath
 
 include	"arch/amd64/conf/majors.amd64"

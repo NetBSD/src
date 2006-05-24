@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.29 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.29.12.1 2006/05/24 15:48:28 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.29 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.29.12.1 2006/05/24 15:48:28 tron Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -195,11 +195,11 @@ pecoff_load_file(l, epp, path, vcset, entry, argp)
 		error = EACCES;
 		goto badunlock;
 	}
-	if ((error = VOP_ACCESS(vp, VEXEC, l->l_proc->p_ucred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VEXEC, l->l_proc->p_cred, l)) != 0)
 		goto badunlock;
 
 	/* get attributes */
-	if ((error = VOP_GETATTR(vp, &attr, l->l_proc->p_ucred, l)) != 0)
+	if ((error = VOP_GETATTR(vp, &attr, l->l_proc->p_cred, l)) != 0)
 		goto badunlock;
 
 	/*
@@ -249,7 +249,8 @@ pecoff_load_file(l, epp, path, vcset, entry, argp)
 	 */
 	for (i = 0; i < fp->f_nscns; i++) {
 		int prot = 0;
-		long addr, size;
+		long addr;
+		u_long size;
 
 		if (sh[i].s_flags & COFF_STYP_DISCARD)
 			continue;
@@ -450,7 +451,8 @@ exec_pecoff_prep_zmagic(l, epp, fp, ap, peofs)
 {
 	int error, i;
 	struct pecoff_opthdr *wp;
-	long tsize, daddr, dsize, baddr, bsize;
+	long daddr, baddr, bsize;
+	u_long tsize, dsize;
 	struct coff_scnhdr *sh;
 	struct pecoff_args *argp;
 	int scnsiz = sizeof(struct coff_scnhdr) * fp->f_nscns;
@@ -484,7 +486,7 @@ exec_pecoff_prep_zmagic(l, epp, fp, ap, peofs)
 /*			DPRINTF(("COFF text addr %lx size %ld offset %ld\n",
 				 sh[i].s_vaddr, sh[i].s_size, sh[i].s_scnptr));
 */			pecoff_load_section(&epp->ep_vmcmds, epp->ep_vp,
-					   &sh[i], &epp->ep_taddr,
+					   &sh[i], (long *)&epp->ep_taddr,
 					   &tsize, &prot);
 		} else if ((s_flags & COFF_STYP_BSS) != 0) {
 			/* set up command for bss segment */

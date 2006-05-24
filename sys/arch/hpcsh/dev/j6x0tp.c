@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.10 2005/12/11 12:17:36 christos Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.10.12.1 2006/05/24 15:47:57 tron Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.10 2005/12/11 12:17:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.10.12.1 2006/05/24 15:47:57 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -160,7 +160,7 @@ static void	j6x0tp_get_raw_xy(int *, int *);
 static int	j6x0tp_get_hard_icon(int, int);
 
 
-const struct wsmouse_accessops j6x0tp_accessops = {
+static const struct wsmouse_accessops j6x0tp_accessops = {
 	j6x0tp_wsmouse_enable,
 	j6x0tp_wsmouse_ioctl,
 	j6x0tp_wsmouse_disable
@@ -175,7 +175,7 @@ static const struct wsmouse_calibcoords j6x0tp_default_calib = {
 	 { J6X0TP_FB_RIGHT, J6X0TP_FB_BOTTOM, 639, 239 }}
 };
 
-const struct wskbd_accessops j6x0tp_wskbd_accessops = {
+static const struct wskbd_accessops j6x0tp_wskbd_accessops = {
 	j6x0tp_wskbd_enable,
 	j6x0tp_wskbd_set_leds,
 	j6x0tp_wskbd_ioctl
@@ -202,7 +202,7 @@ static const keysym_t j6x0tp_wskbd_keydesc[] = {
 	KS_KEYCODE(4), J6X0TP_SWITCH_ICON_KEYSYM
 };
 
-const struct wscons_keydesc j6x0tp_wskbd_keydesctab[] = {
+static const struct wscons_keydesc j6x0tp_wskbd_keydesctab[] = {
 	{ KB_US, 0,
 	  sizeof(j6x0tp_wskbd_keydesc)/sizeof(keysym_t),
 	  j6x0tp_wskbd_keydesc
@@ -210,7 +210,7 @@ const struct wscons_keydesc j6x0tp_wskbd_keydesctab[] = {
 	{0, 0, 0, 0}
 };
 
-const struct wskbd_mapdata j6x0tp_wskbd_keymapdata = {
+static const struct wskbd_mapdata j6x0tp_wskbd_keymapdata = {
         j6x0tp_wskbd_keydesctab, KB_US
 };
 

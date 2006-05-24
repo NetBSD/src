@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.12 2005/12/11 12:24:12 christos Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.12.12.1 2006/05/24 15:50:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.12 2005/12/11 12:24:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.12.12.1 2006/05/24 15:50:32 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
@@ -177,7 +177,25 @@ static struct compose_tab_s {
 	{ { KS_acute,			KS_u },			KS_uacute },
 	{ { KS_asciicircum,		KS_u },			KS_ucircumflex },
 	{ { KS_grave,			KS_u },			KS_ugrave },
-	{ { KS_acute,			KS_y },			KS_yacute }
+	{ { KS_acute,			KS_y },			KS_yacute },
+	{ { KS_dead_semi,		KS_gr_A },		KS_gr_At  },
+	{ { KS_dead_semi,		KS_gr_E },		KS_gr_Et  },
+	{ { KS_dead_semi,		KS_gr_H },		KS_gr_Ht  },
+	{ { KS_dead_semi,		KS_gr_I },		KS_gr_It  },
+	{ { KS_dead_semi,		KS_gr_O },		KS_gr_Ot  },
+	{ { KS_dead_semi,		KS_gr_Y },		KS_gr_Yt  },
+	{ { KS_dead_semi,		KS_gr_V },		KS_gr_Vt  },
+	{ { KS_dead_colon,		KS_gr_I },		KS_gr_Id  },
+	{ { KS_dead_colon,		KS_gr_Y },		KS_gr_Yd  },
+	{ { KS_dead_semi,		KS_gr_a },		KS_gr_at  },
+	{ { KS_dead_semi,		KS_gr_e },		KS_gr_et  },
+	{ { KS_dead_semi,		KS_gr_h },		KS_gr_ht  },
+	{ { KS_dead_semi,		KS_gr_i },		KS_gr_it  },
+	{ { KS_dead_semi,		KS_gr_o },		KS_gr_ot  },
+	{ { KS_dead_semi,		KS_gr_y },		KS_gr_yt  },
+	{ { KS_dead_semi,		KS_gr_v },		KS_gr_vt  },
+	{ { KS_dead_colon,		KS_gr_i },		KS_gr_id  },
+	{ { KS_dead_colon,		KS_gr_y },		KS_gr_yd  }
 };
 
 #define COMPOSE_SIZE	sizeof(compose_tab)/sizeof(compose_tab[0])

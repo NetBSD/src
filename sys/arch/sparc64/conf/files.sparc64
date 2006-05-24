@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.98 2006/03/02 10:44:33 martin Exp $
+#	$NetBSD: files.sparc64,v 1.98.6.1 2006/05/24 15:48:23 tron Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -200,9 +200,6 @@ file	arch/sparc64/sparc64/db_disasm.c	ddb
 #
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
-
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-sparc64-be-elf.hal.o  ath
 
 # USB Support
 include "dev/usb/files.usb"

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.71 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.71.12.1 2006/05/24 15:50:44 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.71 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.71.12.1 2006/05/24 15:50:44 tron Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -145,6 +145,11 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.71 2005/12/11 12:24:57 christos Exp $
 #include "gre.h"
 #if NGRE > 0
 #include <netinet/ip_gre.h>
+#endif
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 #include "bridge.h"
@@ -232,6 +237,13 @@ const struct protosw inetsw[] = {
   encap4_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   encap_init,		0,		0,		0,
+},
+#endif
+#if NCARP > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_CARP,	PR_ATOMIC|PR_ADDR,
+  carp_proto_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,		0,		0,		0,		NULL,
 },
 #endif
 #if NGRE > 0

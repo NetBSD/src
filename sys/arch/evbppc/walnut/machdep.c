@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2006/02/26 05:49:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.6.1 2006/05/24 15:47:55 tron Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2006/02/26 05:49:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.6.1 2006/05/24 15:47:55 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -89,12 +89,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2006/02/26 05:49:05 thorpej Exp $")
 #include <sys/kernel.h>
 #include <sys/user.h>
 #include <sys/boot_flag.h>
-#include <sys/properties.h>
 #include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>
+
+#include <prop/proplib.h>
 
 #include <machine/bus.h>
 #include <machine/powerpc.h>
@@ -356,6 +357,8 @@ void
 cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
+	prop_number_t pn;
+	prop_data_t pd;
 	char pbuf[9];
 
 	/*
@@ -406,23 +409,39 @@ cpu_startup(void)
 	printf("avail memory = %s\n", pbuf);
 
 	/*
-	 * Set up the board properties database.
+	 * Set up the board properties dictionary.
 	 */
-	if (!(board_info = propdb_create("board info")))
-		panic("Cannot create board info database");
+	board_properties = prop_dictionary_create();
+	KASSERT(board_properties != NULL);
 
-	if (board_info_set("mem-size", &board_data.mem_size, 
-		sizeof(board_data.mem_size), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_data.mem_size);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == FALSE)
 		panic("setting mem-size");
-	if (board_info_set("emac0-mac-addr", &board_data.mac_address_local,
-		sizeof(board_data.mac_address_local), PROP_CONST, 0))
+	prop_object_release(pn);
+
+	pd = prop_data_create_data_nocopy(board_data.mac_address_local,
+					  sizeof(board_data.mac_address_local));
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(board_properties, "emac0-mac-addr",
+				pd) == FALSE)
 		panic("setting emac0-mac-addr");
-	if (board_info_set("sip0-mac-addr", &board_data.mac_address_pci, 
-		sizeof(board_data.mac_address_pci), PROP_CONST, 0))
+	prop_object_release(pd);
+
+	pd = prop_data_create_data_nocopy(board_data.mac_address_pci,
+					  sizeof(board_data.mac_address_pci));
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(board_properties, "sip0-mac-addr",
+				pd) == FALSE)
 		panic("setting sip0-mac-addr");
-	if (board_info_set("processor-frequency", &board_data.processor_speed, 
-		sizeof(board_data.processor_speed), PROP_CONST, 0))
+	prop_object_release(pd);
+
+	pn = prop_number_create_integer(board_data.processor_speed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "processor-frequency",
+				pn) == FALSE)
 		panic("setting processor-frequency");
+	prop_object_release(pn);
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.

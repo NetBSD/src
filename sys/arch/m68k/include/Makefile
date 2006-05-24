@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2005/12/11 12:17:53 christos Exp $
+#	$NetBSD: Makefile,v 1.23.12.1 2006/05/24 15:48:12 tron Exp $
 
 INCSDIR= /usr/include/m68k
 
@@ -14,7 +14,8 @@ INCS=	ansi.h aout_machdep.h asm.h asm_single.h \
 	kcore.h \
 	limits.h lock.h \
 	m68k.h math.h mcontext.h \
-	param.h pmc.h pcb.h proc.h profile.h psl.h ptrace.h \
+	param.h pmap_motorola.h pmc.h pcb.h proc.h profile.h \
+	psl.h pte_motorola.h ptrace.h \
 	reg.h setjmp.h signal.h stdarg.h sync_icache.h \
 	sysctl.h \
 	trap.h types.h \

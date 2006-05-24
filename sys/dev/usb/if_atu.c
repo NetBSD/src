@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.13.12.1 2006/03/31 09:45:26 tron Exp $ */
+/*	$NetBSD: if_atu.c,v 1.13.12.2 2006/05/24 15:50:30 tron Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.13.12.1 2006/03/31 09:45:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.13.12.2 2006/05/24 15:50:30 tron Exp $");
 
 #include "bpfilter.h"
 
@@ -401,6 +401,7 @@ atu_get_mib(struct atu_softc *sc, u_int8_t type, u_int8_t size,
 int
 atu_start_ibss(struct atu_softc *sc)
 {
+	struct ieee80211com		*ic = &sc->sc_ic;
 	int				err;
 	struct atu_cmd_start_ibss	Request;
 
@@ -410,8 +411,8 @@ atu_start_ibss(struct atu_softc *sc)
 
 	memset(Request.BSSID, 0x00, sizeof(Request.BSSID));
 	memset(Request.SSID, 0x00, sizeof(Request.SSID));
-	memcpy(Request.SSID, sc->atu_ssid, sc->atu_ssidlen);
-	Request.SSIDSize = sc->atu_ssidlen;
+	memcpy(Request.SSID, ic->ic_des_ssid, ic->ic_des_ssidlen);
+	Request.SSIDSize = ic->ic_des_ssidlen;
 	if (sc->atu_desired_channel != IEEE80211_CHAN_ANY)
 		Request.Channel = (u_int8_t)sc->atu_desired_channel;
 	else
@@ -452,6 +453,7 @@ atu_start_ibss(struct atu_softc *sc)
 int
 atu_start_scan(struct atu_softc *sc)
 {
+	struct ieee80211com		*ic = &sc->sc_ic;
 	struct atu_cmd_do_scan		Scan;
 	usbd_status			err;
 	int				Cnt;
@@ -467,8 +469,8 @@ atu_start_scan(struct atu_softc *sc)
 		Scan.BSSID[Cnt] = 0xff;
 
 	memset(Scan.SSID, 0x00, sizeof(Scan.SSID));
-	memcpy(Scan.SSID, sc->atu_ssid, sc->atu_ssidlen);
-	Scan.SSID_Len = sc->atu_ssidlen;
+	memcpy(Scan.SSID, ic->ic_des_essid, ic->ic_des_esslen);
+	Scan.SSID_Len = ic->ic_des_esslen;
 
 	/* default values for scan */
 	Scan.ScanType = ATU_SCAN_ACTIVE;
@@ -476,6 +478,8 @@ atu_start_scan(struct atu_softc *sc)
 		Scan.Channel = (u_int8_t)sc->atu_desired_channel;
 	else
 		Scan.Channel = sc->atu_channel;
+
+	ic->ic_curchan = &ic->ic_channels[Scan.Channel];
 
 	/* we like scans to be quick :) */
 	/* the time we wait before sending probe's */
@@ -604,29 +608,31 @@ atu_initial_config(struct atu_softc *sc)
 
 	cmd.ExcludeUnencrypted = 0;
 
-	switch (ic->ic_nw_keys[ic->ic_def_txkey].wk_keylen) {
-	case 5:
-		cmd.EncryptionType = ATU_WEP_40BITS;
-		break;
-	case 13:
-		cmd.EncryptionType = ATU_WEP_104BITS;
-		break;
-	default:
-		cmd.EncryptionType = ATU_WEP_OFF;
-		break;
-	}
+	if (ic->ic_flags & IEEE80211_F_PRIVACY) {
+		switch (ic->ic_nw_keys[ic->ic_def_txkey].wk_keylen) {
+		case 5:
+			cmd.EncryptionType = ATU_WEP_40BITS;
+			break;
+		case 13:
+			cmd.EncryptionType = ATU_WEP_104BITS;
+			break;
+		default:
+			cmd.EncryptionType = ATU_WEP_OFF;
+			break;
+		}
 
 
-	cmd.WEP_DefaultKeyID = ic->ic_def_txkey;
-	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-		memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].wk_key, 
-		    ic->ic_nw_keys[i].wk_keylen); 
+		cmd.WEP_DefaultKeyID = ic->ic_def_txkey;
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].wk_key, 
+			    ic->ic_nw_keys[i].wk_keylen); 
+		}
 	}
 
 	/* Setting the SSID here doesn't seem to do anything */
-	memset(cmd.SSID, 0, sizeof(cmd.SSID));
-	memcpy(cmd.SSID, sc->atu_ssid, sc->atu_ssidlen);
-	cmd.SSID_Len = sc->atu_ssidlen;
+	memset(cmd.SSID, 0x00, sizeof(cmd.SSID));
+	memcpy(cmd.SSID, ic->ic_des_essid, ic->ic_des_esslen);
+	cmd.SSID_Len = ic->ic_des_esslen;
 
 	cmd.ShortPreamble = 0;
 	USETW(cmd.BeaconPeriod, 100);
@@ -703,7 +709,7 @@ int
 atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 {
 	struct atu_cmd_join		join;
-	u_int8_t			status;
+	u_int8_t			status = 0;	/* XXX: GCC */
 	usbd_status			err;
 
 	memset(&join, 0, sizeof(join));
@@ -1098,8 +1104,7 @@ atu_task(void *arg)
 		    USBDEVNAME(sc->atu_dev)));
 
 		s = splnet();
-		/* ieee80211_next_scan(ifp); */
-		ieee80211_end_scan(ic);
+		ieee80211_next_scan(ic);
 		splx(s);
 
 		DPRINTF(("%s: ----------------------======> END OF SCAN2!\n",
@@ -1334,8 +1339,6 @@ atu_complete_attach(struct atu_softc *sc)
 	sc->atu_wepkey = 0;
 
 	bzero(sc->atu_bssid, ETHER_ADDR_LEN);
-	sc->atu_ssidlen = strlen(ATU_DEFAULT_SSID);
-	memcpy(sc->atu_ssid, ATU_DEFAULT_SSID, sc->atu_ssidlen);
 	sc->atu_channel = ATU_DEFAULT_CHANNEL;
 	sc->atu_desired_channel = IEEE80211_CHAN_ANY;
 	sc->atu_mode = INFRASTRUCTURE_MODE;

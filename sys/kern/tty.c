@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.180 2006/03/05 16:57:16 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.180.4.1 2006/05/24 15:50:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.180 2006/03/05 16:57:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.180.4.1 2006/05/24 15:50:41 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.180 2006/03/05 16:57:16 christos Exp $");
 #include <sys/kprintf.h>
 #include <sys/namei.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <machine/stdarg.h>
 
@@ -922,7 +923,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			    "/dev/console", l);
 			if ((error = namei(&nd)) != 0)
 				return error;
-			error = VOP_ACCESS(nd.ni_vp, VREAD, p->p_ucred, l);
+			error = VOP_ACCESS(nd.ni_vp, VREAD, p->p_cred, l);
 			vput(nd.ni_vp);
 			if (error)
 				return error;
@@ -1111,9 +1112,9 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		splx(s);
 		break;
 	case TIOCSTI:			/* simulate terminal input */
-		if (p->p_ucred->cr_uid && (flag & FREAD) == 0)
+		if (kauth_cred_geteuid(p->p_cred) && (flag & FREAD) == 0)
 			return (EPERM);
-		if (p->p_ucred->cr_uid && !isctty(p, tp))
+		if (kauth_cred_geteuid(p->p_cred) && !isctty(p, tp))
 			return (EACCES);
 		(*tp->t_linesw->l_rint)(*(u_char *)data, tp);
 		break;
@@ -1649,6 +1650,9 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	int		c, s, first, error, has_stime, last_cc;
 	long		lflag, slp;
 	struct timeval	stime;
+
+	stime.tv_usec = 0;	/* XXX gcc */
+	stime.tv_sec = 0;	/* XXX gcc */
 
 	cc = tp->t_cc;
 	p = curproc;

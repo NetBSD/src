@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.30 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.30.12.1 2006/05/24 15:50:46 tron Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.30 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.30.12.1 2006/05/24 15:50:46 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +382,7 @@ krpc_call(sa, prog, vers, func, data, from_p, l)
 
 	/* result */
 	*data = m;
-	if (from_p) {
+	if (from_p && error == 0) {
 		*from_p = from;
 		from = NULL;
 	}

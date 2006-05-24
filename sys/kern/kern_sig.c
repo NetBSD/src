@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.218 2006/03/12 18:36:58 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.218.2.1 2006/05/24 15:50:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.218 2006/03/12 18:36:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.218.2.1 2006/05/24 15:50:41 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.218 2006/03/12 18:36:58 christos Exp 
 #include <sys/savar.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -119,17 +120,6 @@ static struct pool_allocator sigactspool_allocator = {
 POOL_INIT(siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
     &pool_allocator_nointr);
 POOL_INIT(ksiginfo_pool, sizeof(ksiginfo_t), 0, 0, 0, "ksiginfo", NULL);
-
-/*
- * Can process p, with pcred pc, send the signal signum to process q?
- */
-#define	CANSIGNAL(p, pc, q, signum) \
-	((pc)->pc_ucred->cr_uid == 0 || \
-	    (pc)->p_ruid == (q)->p_cred->p_ruid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_ruid || \
-	    (pc)->p_ruid == (q)->p_ucred->cr_uid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_ucred->cr_uid || \
-	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
 
 /*
  * Remove and return the first ksiginfo element that matches our requested
@@ -778,7 +768,7 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)	signum;
 	} */ *uap = v;
 	struct proc	*cp, *p;
-	struct pcred	*pc;
+	kauth_cred_t	pc;
 	ksiginfo_t	ksi;
 
 	cp = l->l_proc;
@@ -789,12 +779,14 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 	ksi.ksi_signo = SCARG(uap, signum);
 	ksi.ksi_code = SI_USER;
 	ksi.ksi_pid = cp->p_pid;
-	ksi.ksi_uid = cp->p_ucred->cr_uid;
+	ksi.ksi_uid = kauth_cred_geteuid(cp->p_cred);
 	if (SCARG(uap, pid) > 0) {
 		/* kill single process */
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
-		if (!CANSIGNAL(cp, pc, p, SCARG(uap, signum)))
+		if (kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL, cp,
+		    p->p_cred, p,
+		    (void *)(unsigned long)SCARG(uap, signum)) != 0)
 			return (EPERM);
 		if (SCARG(uap, signum))
 			kpsignal2(p, &ksi, 1);
@@ -819,7 +811,7 @@ int
 killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 {
 	struct proc	*p;
-	struct pcred	*pc;
+	kauth_cred_t	pc;
 	struct pgrp	*pgrp;
 	int		nfound;
 	int		signum = ksi->ksi_signo;
@@ -833,7 +825,10 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 		proclist_lock_read();
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    p == cp || !CANSIGNAL(cp, pc, p, signum))
+			    p == cp ||
+			    kauth_authorize_process(pc,
+			    KAUTH_PROCESS_CANSIGNAL, cp, p->p_cred, p,
+			    (void *)(unsigned long)signum) != 0)
 				continue;
 			nfound++;
 			if (signum)
@@ -853,7 +848,9 @@ killpg1(struct proc *cp, ksiginfo_t *ksi, int pgid, int all)
 		}
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    !CANSIGNAL(cp, pc, p, signum))
+			    kauth_authorize_process(pc,
+			    KAUTH_PROCESS_CANSIGNAL, cp, p->p_cred, p,
+			    (void *)(unsigned long)signum) != 0)
 				continue;
 			nfound++;
 			if (signum && P_ZOMBIE(p) == 0)
@@ -965,7 +962,7 @@ child_psignal(struct proc *p, int dolock)
 	ksi.ksi_signo = SIGCHLD;
 	ksi.ksi_code = p->p_xstat == SIGCONT ? CLD_CONTINUED : CLD_STOPPED;
 	ksi.ksi_pid = p->p_pid;
-	ksi.ksi_uid = p->p_ucred->cr_uid;
+	ksi.ksi_uid = kauth_cred_geteuid(p->p_cred);
 	ksi.ksi_status = p->p_xstat;
 	ksi.ksi_utime = p->p_stats->p_ru.ru_utime.tv_sec;
 	ksi.ksi_stime = p->p_stats->p_ru.ru_stime.tv_sec;
@@ -2037,8 +2034,8 @@ sigexit(struct lwp *l, int signum)
 
 		if (kern_logsigexit) {
 			/* XXX What if we ever have really large UIDs? */
-			int uid = p->p_cred && p->p_ucred ?
-				(int) p->p_ucred->cr_uid : -1;
+			int uid = p->p_cred && p->p_cred ?
+				(int) kauth_cred_geteuid(p->p_cred) : -1;
 
 			if (error)
 				log(LOG_INFO, lognocoredump, p->p_pid,
@@ -2057,7 +2054,7 @@ sigexit(struct lwp *l, int signum)
 struct coredump_iostate {
 	struct lwp *io_lwp;
 	struct vnode *io_vp;
-	struct ucred *io_cred;
+	kauth_cred_t io_cred;
 	off_t io_offset;
 };
 
@@ -2093,7 +2090,7 @@ coredump(struct lwp *l, const char *pattern)
 	struct vnode		*vp;
 	struct proc		*p;
 	struct vmspace		*vm;
-	struct ucred		*cred;
+	kauth_cred_t		cred;
 	struct nameidata	nd;
 	struct vattr		vattr;
 	struct mount		*mp;
@@ -2103,7 +2100,7 @@ coredump(struct lwp *l, const char *pattern)
 
 	p = l->l_proc;
 	vm = p->p_vmspace;
-	cred = p->p_cred->pc_ucred;
+	cred = p->p_cred;
 
 	/*
 	 * Make sure the process has not set-id, to prevent data leaks,
@@ -2375,6 +2372,8 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	struct timeval tvstart;
 	struct timespec ts;
 	ksiginfo_t *ksi;
+
+	memset(&tvstart, 0, sizeof tvstart);	 /* XXX gcc */
 
 	MALLOC(waitset, sigset_t *, sizeof(sigset_t), M_TEMP, M_WAITOK);
 

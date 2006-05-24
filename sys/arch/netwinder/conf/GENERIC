@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.78 2006/02/05 05:01:56 cube Exp $
+# $NetBSD: GENERIC,v 1.78.6.1 2006/05/24 15:48:14 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -247,10 +247,18 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 
 # WSCONS Support
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-# different kernel output - see dev/wscons/wsdisplayvar.h
+
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 options 	WS_KERNEL_COLATTR=WSATTR_HILIT
+#options 	WS_KERNEL_MONOATTR="(0)"
+
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls

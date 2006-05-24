@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.h,v 1.5 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_evenodd.h,v 1.5.12.1 2006/05/24 15:50:29 tron Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@ int     rf_GetDefaultNumFloatingReconBuffersEvenOdd(RF_Raid_t * raidPtr);
 RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitEvenOdd(RF_Raid_t * raidPtr);
 void
 rf_IdentifyStripeEvenOdd(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids, RF_RowCol_t * outrow);
+    RF_RowCol_t ** diskids);
 void
 rf_MapParityEvenOdd(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);

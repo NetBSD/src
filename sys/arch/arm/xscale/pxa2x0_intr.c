@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.8 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.8.12.1 2006/05/24 15:47:52 tron Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.8 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.8.12.1 2006/05/24 15:47:52 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ pxa2x0_do_pending(void)
 #define	DO_SOFTINT(si,ipl)						\
 	if ((softint_pending & intr_mask) & SI_TO_IRQBIT(si)) {	\
 		softint_pending &= ~SI_TO_IRQBIT(si);			\
-                __raise(ipl);                                           \
+		__raise(ipl);						\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\

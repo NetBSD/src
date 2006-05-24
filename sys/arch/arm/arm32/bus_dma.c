@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.48 2006/03/01 12:38:10 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.48.6.1 2006/05/24 15:47:51 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.48 2006/03/01 12:38:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.48.6.1 2006/05/24 15:47:51 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,8 +523,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	bus_size_t minlen, moff;
 	vaddr_t maddr;
 
-	for (moff = offset, m = m0; m != NULL && len != 0;
-	     m = m->m_next) {
+	for (moff = offset, m = m0; m != NULL && len != 0; m = m->m_next) {
 		/* Find the beginning mbuf. */
 		if (moff >= m->m_len) {
 			moff -= m->m_len;

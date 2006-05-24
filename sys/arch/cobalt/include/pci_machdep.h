@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.9 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.9.12.1 2006/05/24 15:47:53 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,7 +52,7 @@ extern struct cobalt_bus_dma_tag pci_bus_dma_tag;
  * Types provided to machine-independent PCI code
  */
 typedef struct cobalt_pci_chipset *pci_chipset_tag_t;
-typedef u_int32_t	pcitag_t;
+typedef uint32_t	pcitag_t;
 typedef int 		pci_intr_handle_t;
 
 struct cobalt_pci_chipset {

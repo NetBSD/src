@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.28 2006/03/06 18:42:58 he Exp $	*/
+/*	$NetBSD: ser.c,v 1.28.4.1 2006/05/24 15:47:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.28 2006/03/06 18:42:58 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.28.4.1 2006/05/24 15:47:52 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.28 2006/03/06 18:42:58 he Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <m68k/asm_single.h>
 
@@ -392,7 +393,7 @@ seropen(dev, flag, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -610,7 +611,7 @@ serioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag); 
 		if (error)
 			return (error); 
 		sc->sc_swflags = *(int *)data;

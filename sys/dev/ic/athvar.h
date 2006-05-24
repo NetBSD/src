@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.15 2006/03/02 03:38:45 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.15.6.1 2006/05/24 15:50:24 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -45,7 +45,7 @@
 #define _DEV_ATH_ATHVAR_H
 
 #include <dev/ic/ath_netbsd.h>
-#include <contrib/dev/ic/athhal.h>
+#include <contrib/dev/ath/ah.h>
 #include <net80211/ieee80211_radiotap.h>
 #include <dev/ic/athioctl.h>
 #include <dev/ic/athrate.h>

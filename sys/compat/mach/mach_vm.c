@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.49 2005/12/11 12:20:20 christos Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.49.12.1 2006/05/24 15:48:28 tron Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.49 2005/12/11 12:20:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.49.12.1 2006/05/24 15:48:28 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -803,7 +803,9 @@ mach_vm_write(args)
 	mach_vm_write_request_t *req = args->smsg;
 	mach_vm_write_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+#ifdef KTRACE
 	struct lwp *l = args->l;
+#endif
 	struct lwp *tl = args->tl;
 	size_t size;
 	void *addr;

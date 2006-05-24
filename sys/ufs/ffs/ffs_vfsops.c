@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.180 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.180.6.1 2006/05/24 15:50:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.180 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.180.6.1 2006/05/24 15:50:48 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.180 2006/02/21 04:32:39 thorpej Exp
 #include <sys/lock.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -254,14 +255,14 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && p->p_ucred->cr_uid != 0) {
+	if (error == 0 && kauth_cred_geteuid(p->p_cred) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -401,7 +402,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		}
 
 		if (mp->mnt_flag & MNT_RELOAD) {
-			error = ffs_reload(mp, p->p_ucred, l);
+			error = ffs_reload(mp, p->p_cred, l);
 			if (error)
 				return (error);
 		}
@@ -415,7 +416,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			fs->fs_fmod = 1;
 			if ((fs->fs_flags & FS_DOSOFTDEP)) {
 				error = softdep_mount(devvp, mp, fs,
-				    p->p_ucred);
+				    p->p_cred);
 				if (error)
 					return (error);
 			}
@@ -475,7 +476,7 @@ fail:
  *	6) re-read inode data for all active vnodes.
  */
 int
-ffs_reload(struct mount *mp, struct ucred *cred, struct lwp *l)
+ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 {
 	struct vnode *vp, *nvp, *devvp;
 	struct inode *ip;
@@ -708,12 +709,12 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	int needswap = 0;		/* keep gcc happy */
 #endif
 	int32_t *lp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	u_int32_t sbsize = 8192;	/* keep gcc happy*/
 
 	dev = devvp->v_rdev;
 	p = l ? l->l_proc : NULL;
-	cred = p ? p->p_ucred : NOCRED;
+	cred = p ? p->p_cred : NOCRED;
 
 	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -1246,7 +1247,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 	 * Flush filesystem metadata.
 	 */
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(ump->um_devvp, l->l_proc->p_ucred, FSYNC_WAIT, 0, 0, l);
+	error = VOP_FSYNC(ump->um_devvp, l->l_proc->p_cred, FSYNC_WAIT, 0, 0, l);
 	VOP_UNLOCK(ump->um_devvp, 0);
 	return (error);
 }
@@ -1290,7 +1291,7 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-ffs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct lwp *l)
+ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
 	struct vnode *vp, *nvp;
 	struct inode *ip;

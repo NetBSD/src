@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.163 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163.12.1 2006/05/24 15:48:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163.12.1 2006/05/24 15:48:15 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -172,19 +172,19 @@ extern	paddr_t avail_start, avail_end;
 extern	int nkpde;
 extern	int ieee_handler_disable;
 
-static paddr_t	alloc_pages __P((int));
-static int	cpu_dump __P((void));
-static int	cpu_dumpsize __P((void));
-static void	cpu_reset __P((void));
-static void	dumpsys __P((void));
-void		init532 __P((void));
-static void	map __P((pd_entry_t *, vaddr_t, paddr_t, int, int));
+static paddr_t	alloc_pages(int);
+static int	cpu_dump(void);
+static int	cpu_dumpsize(void);
+static void	cpu_reset(void);
+static void	dumpsys(void);
+void		init532(void);
+static void	map(pd_entry_t *, vaddr_t, paddr_t, int, int);
 
 /*
  * Machine-dependent startup code
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	char pbuf[9];
 	vaddr_t minaddr, maxaddr;
@@ -373,11 +373,8 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void
-cpu_upcall(l, type, nevents, ninterrupted, sas, ap, sp, upcall)
-	struct lwp *l;
-	int type, nevents, ninterrupted;
-	void *sas, *ap, *sp;
-	sa_upcall_t upcall;
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct saframe *sf, frame;
 	struct reg *regs;
@@ -404,10 +401,7 @@ cpu_upcall(l, type, nevents, ninterrupted, sas, ap, sp, upcall)
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	struct reg *regs = l->l_md.md_regs;
 
@@ -433,10 +427,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct reg *regs = l->l_md.md_regs;
 
@@ -477,9 +468,7 @@ int waittime = -1;
 static struct switchframe dump_sf;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	int s;
 
@@ -563,15 +552,15 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
-int 	dumpsize = 0;		/* pages */
-long	dumplo = 0; 		/* blocks */
+uint32_t dumpmag = 0x8fca0101;	/* magic number */
+int	dumpsize = 0;		/* pages */
+long	dumplo = 0;		/* blocks */
 
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 static int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -586,10 +575,10 @@ cpu_dumpsize()
  * cpu_dump: dump machine-dependent kernel core dump headers.
  */
 static int
-cpu_dump()
+cpu_dump(void)
 {
 	const struct bdevsw *bdev;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
 	cpu_kcore_hdr_t	*cpuhdrp;
@@ -598,7 +587,7 @@ cpu_dump()
 	if (bdev == NULL)
 		return (ENXIO);
 
-        dump = bdev->d_dump;
+	dump = bdev->d_dump;
 
 	segp = (kcore_seg_t *)buf;
 	cpuhdrp =
@@ -628,7 +617,7 @@ cpu_dump()
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
@@ -672,8 +661,7 @@ bad:
 static vaddr_t dumpspace;
 
 vaddr_t
-reserve_dumppages(p)
-	vaddr_t p;
+reserve_dumppages(vaddr_t p)
 {
 
 	dumpspace = p;
@@ -681,13 +669,13 @@ reserve_dumppages(p)
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	unsigned bytes, i, n;
 	int maddr, psize;
 	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 
 	if (dumpdev == NODEV)
@@ -786,10 +774,7 @@ err:
  * Clear registers on exec
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct proc *p = l->l_proc;
 	struct reg *r = l->l_md.md_regs;
@@ -813,8 +798,7 @@ setregs(l, pack, stack)
  * Allocate memory pages.
  */
 static paddr_t
-alloc_pages(pages)
-	int pages;
+alloc_pages(int pages)
 {
 	paddr_t p = avail_start;
 	avail_start += pages * PAGE_SIZE;
@@ -828,11 +812,7 @@ alloc_pages(pages)
  * are allocated for the selected virtual address range.
  */
 static void
-map(pd, virtual, physical, protection, size)
-	pd_entry_t *pd;
-	vaddr_t virtual;
-	paddr_t physical;
-	int protection, size;
+map(pd_entry_t *pd, vaddr_t virtual, paddr_t physical, int protection, int size)
 {
 	u_int ix1 = pdei(virtual);
 	u_int ix2 = ptei(virtual);
@@ -893,9 +873,9 @@ map(pd, virtual, physical, protection, size)
 #define kvpa(x) VA(ns532_round_page(x))
 
 void
-init532()
+init532(void)
 {
-	extern void main __P((void *));
+	extern void main(void *);
 	extern int inttab[];
 #if NKSYMS || defined(DDB) || defined(LKM)
 	extern char *esym;
@@ -1044,10 +1024,9 @@ init532()
  * Any takers for Sinix, Genix, SVR2/32000 or Minix?
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
+
 	return ENOEXEC;
 }
 
@@ -1057,7 +1036,7 @@ cpu_exec_aout_makecmds(l, epp)
  * to choose and initialize a console.
  */
 void
-consinit()
+consinit(void)
 {
 	cninit();
 
@@ -1071,14 +1050,15 @@ consinit()
 	ksyms_init(*(int *)end, ((int *)end) + 1, (int *)esym);
 #endif
 #if defined (DDB)
-        if(boothowto & RB_KDB)
-                Debugger();
+	if(boothowto & RB_KDB)
+		Debugger();
 #endif
 }
 
 static void
-cpu_reset()
+cpu_reset(void)
 {
+
 	/* Mask all ICU interrupts. */
 	splhigh();
 
@@ -1091,7 +1071,7 @@ cpu_reset()
 
 	/* Jump to low memory. */
 	__asm volatile(
-		"addr 	1f(pc),r0;"
+		"addr	1f(pc),r0;"
 		"andd	~%0,r0;"
 		"jump	0(r0);"
 		"1:"
@@ -1115,19 +1095,18 @@ cpu_reset()
  * Network software interrupt routine
  */
 void
-softnet(arg)
-	void *arg;
+softnet(void *arg)
 {
-	register int isr;
+	int isr;
 
 	di(); isr = netisr; netisr = 0; ei();
 	if (isr == 0) return;
 
 #define DONETISR(bit, fn)		\
-    do {				\
+do {					\
 	if (isr & (1 << bit))		\
 		fn();			\
-    } while (0)
+} while (0)
 
 #include <net/netisr_dispatch.h>
 

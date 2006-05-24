@@ -1,4 +1,4 @@
-/* $NetBSD: 3c90xb.c,v 1.11 2005/12/26 19:24:00 perry Exp $ */
+/* $NetBSD: 3c90xb.c,v 1.11.12.1 2006/05/24 15:47:59 tron Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -333,7 +333,7 @@ found:
 #endif
 
 	/* enable bus mastering in PCI command register */
-	if (pcicfgread(&mytag, 0x04, &pcicsr)
+	if (pcicfgread(&mytag, 0x04, (int *)&pcicsr)
 	    || pcicfgwrite(&mytag, 0x04, pcicsr | 4)) {
 		printf("cannot enable DMA\n");
 		return(0);

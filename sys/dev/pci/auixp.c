@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.11 2006/01/24 23:29:05 reinoud Exp $ */
+/* $NetBSD: auixp.c,v 1.11.10.1 2006/05/24 15:50:27 tron Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.11 2006/01/24 23:29:05 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.11.10.1 2006/05/24 15:50:27 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -659,6 +659,7 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 	if (error) {
 		printf("%s: can't malloc dma descriptor chain\n",
 		    sc->sc_dev.dv_xname);
+		free(dma, M_DEVBUF);
 		return ENOMEM;
 	}
 

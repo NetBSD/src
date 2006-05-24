@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.8.4.1 2006/03/31 09:45:26 tron Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.8.4.2 2006/05/24 15:50:30 tron Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.8.4.1 2006/03/31 09:45:26 tron Exp $");
+__RCSID("$NetBSD: ucycom.c,v 1.8.4.2 2006/05/24 15:50:30 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: ucycom.c,v 1.8.4.1 2006/03/31 09:45:26 tron Exp $");
 #include <sys/tty.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -333,7 +334,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -769,7 +770,7 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		err = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
+		err = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag);
 		if (err)
 			break;
 		sc->sc_swflags = *(int *)data;

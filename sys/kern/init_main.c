@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.263.4.1 2006/03/31 09:45:27 tron Exp $	*/
+/*	$NetBSD: init_main.c,v 1.263.4.2 2006/05/24 15:50:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,11 +71,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.263.4.1 2006/03/31 09:45:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.263.4.2 2006/05/24 15:50:40 tron Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_sysv.h"
-#include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
 #include "opt_pipe.h"
 #include "opt_syscall_debug.h"
@@ -142,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.263.4.1 2006/03/31 09:45:27 tron Exp
 #ifdef VERIFIED_EXEC
 #include <sys/verified_exec.h>
 #endif
+#include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
@@ -311,6 +311,9 @@ main(void)
 	/* Initialize posix semaphores */
 	ksem_init();
 #endif
+
+	/* Initialize kauth. */
+	kauth_init();
 
 #ifdef VERIFIED_EXEC
 	  /*

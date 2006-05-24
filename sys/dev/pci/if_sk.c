@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.21.6.1 2006/03/31 09:45:23 tron Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.21.6.2 2006/05/24 15:50:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -2327,38 +2327,40 @@ sk_intr(void *xsc)
 		claimed = 1;
 
 		/* Handle receive interrupts first. */
-		if (status & SK_ISR_RX1_EOF) {
+		if (sc_if0 && (status & SK_ISR_RX1_EOF)) {
 			sk_rxeof(sc_if0);
 			CSR_WRITE_4(sc, SK_BMU_RX_CSR0,
 			    SK_RXBMU_CLR_IRQ_EOF|SK_RXBMU_RX_START);
 		}
-		if (status & SK_ISR_RX2_EOF) {
+		if (sc_if1 && (status & SK_ISR_RX2_EOF)) {
 			sk_rxeof(sc_if1);
 			CSR_WRITE_4(sc, SK_BMU_RX_CSR1,
 			    SK_RXBMU_CLR_IRQ_EOF|SK_RXBMU_RX_START);
 		}
 
 		/* Then transmit interrupts. */
-		if (status & SK_ISR_TX1_S_EOF) {
+		if (sc_if0 && (status & SK_ISR_TX1_S_EOF)) {
 			sk_txeof(sc_if0);
 			CSR_WRITE_4(sc, SK_BMU_TXS_CSR0,
 			    SK_TXBMU_CLR_IRQ_EOF);
 		}
-		if (status & SK_ISR_TX2_S_EOF) {
+		if (sc_if1 && (status & SK_ISR_TX2_S_EOF)) {
 			sk_txeof(sc_if1);
 			CSR_WRITE_4(sc, SK_BMU_TXS_CSR1,
 			    SK_TXBMU_CLR_IRQ_EOF);
 		}
 
 		/* Then MAC interrupts. */
-		if (status & SK_ISR_MAC1 && (ifp0->if_flags & IFF_RUNNING)) {
+		if (sc_if0 && (status & SK_ISR_MAC1) &&
+		    (ifp0->if_flags & IFF_RUNNING)) {
 			if (sc->sk_type == SK_GENESIS)
 				sk_intr_xmac(sc_if0);
 			else
 				sk_intr_yukon(sc_if0);
 		}
 
-		if (status & SK_ISR_MAC2 && (ifp1->if_flags & IFF_RUNNING)) {
+		if (sc_if1 && (status & SK_ISR_MAC2) &&
+		    (ifp1->if_flags & IFF_RUNNING)) {
 			if (sc->sk_type == SK_GENESIS)
 				sk_intr_xmac(sc_if1);
 			else
@@ -2367,11 +2369,11 @@ sk_intr(void *xsc)
 		}
 
 		if (status & SK_ISR_EXTERNAL_REG) {
-			if (ifp0 != NULL &&
+			if (sc_if0 != NULL &&
 			    sc_if0->sk_phytype == SK_PHYTYPE_BCOM)
 				sk_intr_bcom(sc_if0);
 
-			if (ifp1 != NULL &&
+			if (sc_if1 != NULL &&
 			    sc_if1->sk_phytype == SK_PHYTYPE_BCOM)
 				sk_intr_bcom(sc_if1);
 		}

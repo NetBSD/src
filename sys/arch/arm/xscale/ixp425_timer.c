@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.10 2006/03/04 11:26:12 scw Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.10.6.1 2006/05/24 15:47:52 tron Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.10 2006/03/04 11:26:12 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.10.6.1 2006/05/24 15:47:52 tron Exp $");
 
 #include "opt_ixp425.h"
 #include "opt_perfctrs.h"
@@ -68,10 +68,10 @@ static void *clock_ih;
 int	ixpclk_intr(void *);
 
 struct ixpclk_softc {
-        struct device           sc_dev;
-        bus_addr_t              sc_baseaddr;
-        bus_space_tag_t         sc_iot;
-        bus_space_handle_t      sc_ioh;
+	struct device		sc_dev;
+	bus_addr_t		sc_baseaddr;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t      sc_ioh;
 };
 
 #ifndef IXP425_CLOCK_FREQ
@@ -96,7 +96,7 @@ CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 static int
 ixpclk_match(struct device *parent, struct cfdata *match, void *aux)
 {
-        return 2;
+	return 2;
 }
 
 static void

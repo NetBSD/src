@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.15.6.1 2006/03/28 09:47:17 tron Exp $ */
+/* $NetBSD: aureg.h,v 1.15.6.2 2006/05/24 15:48:12 tron Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -147,15 +147,15 @@
 #define	MAC1_BASE		0x10510000
 #define	MACx_SIZE		0x28
 
-#define	AU1500_MAC0_BASE	0x11500000	/* Grr, difference on Au1500 */
-#define	AU1500_MAC1_BASE	0x11510000	/* Grr, difference on Au1500 */
+#define	AU1500_MAC0_BASE	0x11500000	/* Grr, different on Au1500 */
+#define	AU1500_MAC1_BASE	0x11510000	/* Grr, different on Au1500 */
 
 #define	MAC0_ENABLE		0x10520000
 #define	MAC1_ENABLE		0x10520004
 #define	MACENx_SIZE		0x04
 
-#define	AU1500_MAC0_ENABLE	0x11520000	/* Grr, difference on Au1500 */
-#define	AU1500_MAC1_ENABLE	0x11520004	/* Grr, difference on Au1500 */
+#define	AU1500_MAC0_ENABLE	0x11520000	/* Grr, different on Au1500 */
+#define	AU1500_MAC1_ENABLE	0x11520004	/* Grr, different on Au1500 */
 
 #define	MAC0_DMA_BASE		0x14004000
 #define	MAC1_DMA_BASE		0x14004200

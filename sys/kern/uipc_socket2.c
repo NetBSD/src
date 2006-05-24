@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.70 2005/12/24 19:12:23 perry Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.70.12.1 2006/05/24 15:50:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.70 2005/12/24 19:12:23 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.70.12.1 2006/05/24 15:50:41 tron Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.70 2005/12/24 19:12:23 perry Exp 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 
 /*
  * Primitive routines for operating on sockets and socket buffers
@@ -410,7 +411,7 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	if (so) {
-		if (p && p->p_ucred->cr_uid == so->so_uidinfo->ui_uid)
+		if (p && kauth_cred_geteuid(p->p_cred) == so->so_uidinfo->ui_uid)
 			maxcc = p->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 		else
 			maxcc = RLIM_INFINITY;

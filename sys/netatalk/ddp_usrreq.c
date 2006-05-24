@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.14 2005/12/11 12:24:54 christos Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.14.12.1 2006/05/24 15:50:44 tron Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14.12.1 2006/05/24 15:50:44 tron Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.14 2005/12/11 12:24:54 christos Exp
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
+#include <sys/kauth.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_ether.h>
@@ -273,8 +274,9 @@ at_pcbsetaddr(ddp, addr, p)
 			    sat->sat_port >= ATPORT_LAST)
 				return (EINVAL);
 
-			if (sat->sat_port < ATPORT_RESERVED &&
-			    suser(p->p_ucred, &p->p_acflag))
+			if (sat->sat_port < ATPORT_RESERVED && p &&
+			    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+					      &p->p_acflag))
 				return (EACCES);
 		}
 	} else {

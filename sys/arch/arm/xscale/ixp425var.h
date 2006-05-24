@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425var.h,v 1.9 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: ixp425var.h,v 1.9.12.1 2006/05/24 15:47:52 tron Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -75,8 +75,8 @@ struct ixp425_softc {
 	/* Bus space, DMA, and PCI tags for the PCI bus */
 	struct bus_space sc_pci_iot;
 	struct bus_space sc_pci_memt;
-        struct arm32_bus_dma_tag ia_pci_dmat;
-        struct arm32_pci_chipset ia_pci_chipset;
+	struct arm32_bus_dma_tag ia_pci_dmat;
+	struct arm32_pci_chipset ia_pci_chipset;
 	vaddr_t sc_pci_va;
 
 	/* DMA window info for PCI DMA. */

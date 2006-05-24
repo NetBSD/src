@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 2005/12/11 12:19:56 christos Exp $
+	$NetBSD: syscalls.master,v 1.13.12.1 2006/05/24 15:48:26 tron Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -73,7 +73,7 @@
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 8	NOARGS		{ int compat_43_sys_creat(const char *path, \
 			    mode_t mode); } ocreat
 #else
@@ -90,13 +90,13 @@
 16	NOARGS		{ int sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
-#ifdef COMPAT_20
+#if defined(COMPAT_20) || !defined(_KERNEL)
 18	NOARGS		{ int compat_20_sys_getfsstat(struct statfs12 *buf, \
 			    long bufsize, int flags); }
 #else
 18	EXCL		compat_20_sys_getfsstat
 #endif
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
 #else
@@ -129,14 +129,14 @@
 35	NOARGS		{ int sys_fchflags(int fd, u_long flags); }
 36	NOARGS		{ void sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 38	STD		{ int aoutm68k_compat_43_sys_stat(const char *path, \
 			    struct aoutm68k_stat43 *ub); } stat43
 #else
 38	EXCL		aoutm68k_compat_43_sys_stat
 #endif
 39	NOARGS		{ pid_t sys_getppid(void); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 40	STD		{ int aoutm68k_compat_43_sys_lstat(const char *path, \
 			    struct aoutm68k_stat43 *ub); } lstat43
 #else
@@ -153,7 +153,7 @@
 #else
 45	EXCL		ktrace
 #endif
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || !defined(_KERNEL)
 46	NOARGS		{ int compat_13_sys_sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); } sigaction13
@@ -161,7 +161,7 @@
 46	EXCL		compat_13_sys_sigaction
 #endif
 47	NOARGS		{ gid_t sys_getgid(void); }
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || !defined(_KERNEL)
 48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 #else
@@ -170,7 +170,7 @@
 49	NOARGS		{ int sys___getlogin(char *namebuf, size_t namelen); }
 50	NOARGS		{ int sys___setlogin(const char *namebuf); }
 51	NOARGS		{ int sys_acct(const char *path); }
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || !defined(_KERNEL)
 52	NOARGS		{ int compat_13_sys_sigpending(void); } sigpending13
 53	NOARGS		{ int compat_13_sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
@@ -180,7 +180,7 @@
 53	EXCL		compat_13_sys_sigaltstack
 #endif
 54	NOARGS		{ int sys_ioctl(int fd, u_long com, ... void *data); }
-#ifdef COMPAT_12
+#if defined(COMPAT_12) || !defined(_KERNEL)
 55	NOARGS		{ int compat_12_sys_reboot(int opt); } oreboot
 #else
 55	EXCL		compat_12_sys_reboot
@@ -194,7 +194,7 @@
 			    char * const *argp, char * const *envp); }
 60	NOARGS		{ mode_t sys_umask(mode_t newmask); }
 61	NOARGS		{ int sys_chroot(const char *path); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 62	STD		{ int aoutm68k_compat_43_sys_fstat(int fd, \
 			    struct aoutm68k_stat43 *sb); } fstat43
 63	NOARGS		{ int compat_43_sys_getkerninfo(int op, char *where, \
@@ -205,7 +205,7 @@
 63	EXCL		compat_43_sys_getkerninfo
 64	EXCL		compat_43_sys_getpagesize
 #endif
-#ifdef COMPAT_12
+#if defined(COMPAT_12) || !defined(_KERNEL)
 65	NOARGS		{ int compat_12_sys_msync(caddr_t addr, size_t len); }
 #else
 65	EXCL		compat_12_sys_msync
@@ -216,7 +216,7 @@
 68	OBSOL		vwrite
 69	NOARGS		{ int sys_sbrk(intptr_t incr); }
 70	NOARGS		{ int sys_sstk(int incr); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 71	NOARGS		{ int compat_43_sys_mmap(caddr_t addr, size_t len, \
 			    int prot, int flags, int fd, long pos); } ommap
 #else
@@ -241,19 +241,19 @@
 83	NOARGS		{ int sys_setitimer(int which, \
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 84	NOARGS		{ int compat_43_sys_wait(void); } owait
 #else
 84	EXCL		compat_43_sys_wait
 #endif
-#ifdef COMPAT_12
+#if defined(COMPAT_12) || !defined(_KERNEL)
 85	NOARGS		{ int compat_12_sys_swapon(const char *name); } oswapon
 #else
 85	EXCL		compat_12_sys_swapon
 #endif
 86	NOARGS		{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
 			    u_int len); } ogethostname
 88	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
@@ -276,14 +276,14 @@
 97	NOARGS		{ int sys_socket(int domain, int type, int protocol); }
 98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
 			    int namelen); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 99	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
 			    int *anamelen); } oaccept
 #else
 99	EXCL		compat_43_sys_accept
 #endif
 100	NOARGS		{ int sys_getpriority(int which, int who); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
 			    int flags); } osend
 102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
@@ -292,7 +292,7 @@
 101	EXCL		compat_43_sys_send
 102	EXCL		compat_43_sys_recv
 #endif
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || !defined(_KERNEL)
 103	NOARGS		{ int compat_13_sys_sigreturn( \
 			    struct sigcontext13 *sigcntxp); } sigreturn13
 #else
@@ -304,7 +304,7 @@
 			    const void *val, int valsize); }
 106	NOARGS		{ int sys_listen(int s, int backlog); }
 107	OBSOL		vtimes
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 108	NOARGS		{ int compat_43_sys_sigvec(int signum, \
 			    struct sigvec *nsv, struct sigvec *osv); } osigvec
 109	NOARGS		{ int compat_43_sys_sigblock(int mask); } osigblock
@@ -314,12 +314,12 @@
 109	EXCL		compat_43_sys_sigblock
 110	EXCL		compat_43_sys_sigsetmask
 #endif
-#ifdef COMPAT_13
+#if defined(COMPAT_13) || !defined(_KERNEL)
 111	NOARGS		{ int compat_13_sys_sigsuspend(int mask); } sigsuspend13
 #else
 111	EXCL		compat_13_sys_sigsuspend
 #endif
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); } osigstack
 113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
@@ -346,7 +346,7 @@
 			    const struct timezone *tzp); }
 123	NOARGS		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
 			    size_t len, int flags, caddr_t from, \
 			    int *fromlenaddr); } orecvfrom
@@ -356,7 +356,7 @@
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
 128	NOARGS		{ int sys_rename(const char *from, const char *to); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 129	NOARGS		{ int compat_43_sys_truncate(const char *path, \
 			    long length); } otruncate
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); } \
@@ -380,7 +380,7 @@
 139	OBSOL		4.2 sigreturn
 140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 141	NOARGS		{ int compat_43_sys_getpeername(int fdes, caddr_t asa, \
 			    int *alen); } ogetpeername
 142	NOARGS		{ int32_t compat_43_sys_gethostid(void); } ogethostid
@@ -403,7 +403,7 @@
 147	NOARGS		{ int sys_setsid(void); }
 148	NOARGS		{ int sys_quotactl(const char *path, \
 			    int cmd, int uid, caddr_t arg); }
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 149	NOARGS		{ int compat_43_sys_quota(void); } oquota
 150	NOARGS		{ int compat_43_sys_getsockname(int fdec, caddr_t asa, \
 			    int *alen); } ogetsockname
@@ -425,19 +425,19 @@
 #else
 155	EXCL		nfssvc
 #endif
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || !defined(_KERNEL)
 156	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
 #else
 156	EXCL		compat_43_sys_getdirentries
 #endif
-#ifdef COMPAT_20
+#if defined(COMPAT_20) || !defined(_KERNEL)
 157	NOARGS		{ int compat_20_sys_statfs(const char *path, \
 			    struct statfs12 *buf); }
 #else
 157	EXCL		compat_20_sys_statfs
 #endif
-#ifdef COMPAT_20
+#if defined(COMPAT_20) || !defined(_KERNEL)
 158	NOARGS		{ int compat_20_sys_fstatfs(int fd, \
 			    struct statfs12 *buf); }
 #else
@@ -450,7 +450,7 @@
 #else
 161	EXCL		getfh
 #endif
-#ifdef COMPAT_09
+#if defined(COMPAT_09) || !defined(_KERNEL)
 162	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
 			    int len); } ogetdomainname
 163	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
@@ -522,7 +522,7 @@
 186	EXCL		lfs_segclean
 187	EXCL		lfs_segwait
 #endif
-#ifdef COMPAT_12
+#if defined(COMPAT_12) || !defined(_KERNEL)
 188	STD	{	 int aoutm68k_compat_12_sys_stat(const char *path, \
 			    struct aoutm68k_stat12 *ub); } stat12
 189	STD		{ int aoutm68k_compat_12_sys_fstat(int fd, \
@@ -541,7 +541,7 @@
 			    struct rlimit *rlp); }
 195	NOARGS		{ int sys_setrlimit(int which, \
 			    const struct rlimit *rlp); }
-#ifdef COMPAT_12
+#if defined(COMPAT_12) || !defined(_KERNEL)
 196	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 #else
@@ -595,7 +595,7 @@
 #endif	/* !LKM */
 ; System calls 220-300 are reserved for use by NetBSD
 #if defined(SYSVSEM) || !defined(_KERNEL)
-#ifdef COMPAT_14
+#if defined(COMPAT_14) || !defined(_KERNEL)
 220	NOARGS		{ int compat_14_sys___semctl(int semid, \
 			    int semnum, int cmd, union __semun *arg); }
 #else
@@ -612,7 +612,7 @@
 223	EXCL		semconfig
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-#ifdef COMPAT_14
+#if defined(COMPAT_14) || !defined(_KERNEL)
 224	NOARGS		{ int compat_14_sys_msgctl(int msqid, int cmd, \
 			    struct msqid_ds14 *buf); }
 #else
@@ -632,7 +632,7 @@
 #if defined(SYSVSHM) || !defined(_KERNEL)
 228	NOARGS		{ void *sys_shmat(int shmid, const void *shmaddr, \
 			    int shmflg); }
-#ifdef COMPAT_14
+#if defined(COMPAT_14) || !defined(_KERNEL)
 229	NOARGS		{ int compat_14_sys_shmctl(int shmid, int cmd, \
 			    struct shmid_ds14 *buf); }
 #else
@@ -694,7 +694,11 @@
 270	NOARGS		{ int sys___posix_rename(const char *from, \
 			    const char *to); }
 271	NOARGS		{ int sys_swapctl(int cmd, const void *arg, int misc); }
-272	NOARGS		{ int sys_getdents(int fd, char *buf, size_t count); }
+#if defined(COMPAT_30) || !defined(_KERNEL)
+272	NOARGS		{ int compat_30_sys_getdents(int fd, char *buf, size_t count); }
+#else
+272	EXCL		compat_30_sys_getdents
+#endif
 273	NOARGS		{ int sys_minherit(void *addr, size_t len, \
 			    int inherit); }
 274	NOARGS		{ int sys_lchmod(const char *path, mode_t mode); }
@@ -733,7 +737,7 @@
 290	NOARGS		{ ssize_t sys_pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
-#ifdef COMPAT_16
+#if defined(COMPAT_16) || !defined(_KERNEL)
 291	NOARGS		{ int compat_16_sys___sigaction14(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa); }
@@ -745,7 +749,7 @@
 			    const sigset_t *set, \
 			    sigset_t *oset); }
 294	NOARGS		{ int sys___sigsuspend14(const sigset_t *set); }
-#ifdef COMPAT_16
+#if defined(COMPAT_16) || !defined(_KERNEL)
 295	NOARGS		{ int compat_16_sys___sigreturn14(\
 			    struct sigcontext *sigcntxp); }
 #else
@@ -756,7 +760,7 @@
 298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
 299	STD		{ int aoutm68k_sys_fhstat(const fhandle_t *fhp, \
 			    struct aoutm68k_stat *sb); }
-#ifdef COMPAT_20
+#if defined(COMPAT_20) || !defined(_KERNEL)
 300	NOARGS		{ int compat_20_sys_fhstatfs(const fhandle_t *fhp, \
 			    struct statfs12 *buf); }
 #else

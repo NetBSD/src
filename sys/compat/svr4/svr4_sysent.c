@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_sysent.c,v 1.75 2005/12/11 12:20:26 christos Exp $ */
+/* $NetBSD: svr4_sysent.c,v 1.75.12.1 2006/05/24 15:48:29 tron Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sysent.c,v 1.75 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sysent.c,v 1.75.12.1 2006/05/24 15:48:29 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -30,6 +30,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_sysent.c,v 1.75 2005/12/11 12:20:26 christos Ex
 #include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_resource.h>
 #include <compat/svr4/svr4_acl.h>
+#include <compat/svr4/svr4_schedctl.h>
 
 #define	s(type)	sizeof(type)
 
@@ -461,8 +462,8 @@ struct sysent svr4_sysent[] = {
 	    sys_nosys },			/* 204 = unimplemented install_utrap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 205 = unimplemented signotify */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 206 = unimplemented schedctl */
+	{ 3, s(struct svr4_sys_schedctl_args), 0,
+	    svr4_sys_schedctl },		/* 206 = schedctl */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 207 = unimplemented pset */
 	{ 0, 0, 0,

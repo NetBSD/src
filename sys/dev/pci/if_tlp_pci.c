@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.86.6.1 2006/03/28 09:42:13 tron Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.86.6.2 2006/05/24 15:50:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.86.6.1 2006/03/28 09:42:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.86.6.2 2006/05/24 15:50:28 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,11 @@ tlp_pci_lookup(const struct pci_attach_args *pa)
 {
 	const struct tulip_pci_product *tpp;
 
+	/* Don't match lmc cards */
+	if (PCI_VENDOR(pci_conf_read(pa->pa_pc, pa->pa_tag,
+	    PCI_SUBSYS_ID_REG)) == PCI_VENDOR_LMC)
+		return NULL;
+
 	for (tpp = tlp_pci_products;
 	     tlp_chip_names[tpp->tpp_chip] != NULL;
 	     tpp++) {
@@ -341,6 +346,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid, i, j;
 	const struct tulip_pci_product *tpp;
+	prop_data_t ea;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val = 0;
 	pcireg_t reg;
@@ -637,9 +643,16 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 		 * XXX logic, and for now we can at least remove a machine-
 		 * XXX dependent wart from the PCI front-end.
 		 */
-		if (devprop_get(&sc->sc_dev, "mac-addr",
-			     enaddr, sizeof(enaddr), NULL) == sizeof(enaddr)) {
+		ea = prop_dictionary_get(device_properties(&sc->sc_dev),
+					 "mac-addr");
+		if (ea != NULL) {
 			extern int tlp_srom_debug;
+			KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
+			KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
+
+			memcpy(enaddr, prop_data_data_nocopy(ea),
+			       ETHER_ADDR_LEN);
+
 			sc->sc_srom_addrbits = 6;
 			sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF,
 			    M_NOWAIT|M_ZERO);

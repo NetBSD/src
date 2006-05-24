@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.12 2006/01/25 18:28:26 christos Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.12.10.1 2006/05/24 15:47:59 tron Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -118,6 +118,7 @@ dos_read(f, addr, size, resid)
 		while (lsize > 0) {
 			u_int           tsize;
 			size_t          tgot;
+			char		*p = addr;
 
 			tsize = lsize;
 
@@ -133,9 +134,9 @@ dos_read(f, addr, size, resid)
 #endif
 				return (dos2errno());
 			}
-			memcpy(addr, diskbufp, tgot);
+			memcpy(p, diskbufp, tgot);
 
-			(unsigned long)addr += tgot;
+			p += tgot;
 			lsize -= tgot;
 
 			if (tgot != tsize)

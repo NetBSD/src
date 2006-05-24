@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.c,v 1.9 2005/12/26 19:24:00 perry Exp $	*/
+/*	$NetBSD: pxe.c,v 1.9.12.1 2006/05/24 15:47:59 tron Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -434,7 +434,6 @@ pxe_init(void)
 void
 pxe_fini(void)
 {
-	t_PXENV_UNLOAD_STACK *unload = (void *) pxe_command_buf;
 	t_PXENV_UNDI_SHUTDOWN *shutdown = (void *) pxe_command_buf;
 
 	if (pxe_call == NULL)
@@ -445,10 +444,4 @@ pxe_fini(void)
 	if (shutdown->Status != PXENV_STATUS_SUCCESS)
 		printf("pxe_fini: PXENV_UNDI_SHUTDOWN failed: 0x%x\n",
 		    shutdown->Status);
-
-	pxe_call(PXENV_UNLOAD_STACK);
-
-	if (unload->Status != PXENV_STATUS_SUCCESS)
-		printf("pxe_fini: PXENV_UNLOAD_STACK failed: 0x%x\n",
-		    unload->Status);
 }

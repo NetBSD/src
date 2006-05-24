@@ -1,4 +1,4 @@
-/* $NetBSD: gtreg.h,v 1.2 2005/12/11 12:17:06 christos Exp $ */
+/* $NetBSD: gtreg.h,v 1.2.12.1 2006/05/24 15:47:53 tron Exp $ */
 /*
  * Copyright (c) 2003
  *     KIYOHARA Takashi.  All rights reserved.
@@ -46,6 +46,13 @@
 #define  PCI_PCLK_HIGH		0x00000002
 #define  PCI_PCLK_SYNC		0x00000004
 
+#define GT_PCI_TIMEOUT_RETRY	0xc04
+#define  PCI_TIMEOUT0		0x000000ff
+#define  PCI_TIMEOUT1		0x0000ff00
+#define  PCI_TIMEOUT1_SHIFT	8
+#define  PCI_RETRYCTR		0x00ff0000
+#define  PCI_RETRYCTR_SHIFT	16
+
 #define GT_INTR_CAUSE		0xc18
 #define  INTSUM			0x00000001
 #define  MEMOUT			0x00000002
@@ -85,5 +92,10 @@
 #define GT_PCI_MASK		0xc24
 
 #define GT_PCICFG_ADDR		0xcf8
+#define  PCICFG_REG		0x000000ff
+#define  PCICFG_FUNC		0x00000700
+#define  PCICFG_DEV		0x0000f800
+#define  PCICFG_BUS		0x00ff0000
+#define  PCICFG_ENABLE		0x80000000
 
 #define GT_PCICFG_DATA		0xcfc

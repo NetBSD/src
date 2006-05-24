@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.26.12.1 2006/03/31 09:45:26 tron Exp $ */
+/* $NetBSD: asc_tc.c,v 1.26.12.2 2006/05/24 15:50:30 tron Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.26.12.1 2006/03/31 09:45:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.26.12.2 2006/05/24 15:50:30 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,10 +119,7 @@ static struct ncr53c9x_glue asc_tc_glue = {
 #define PMAZ_DMA_ADDR(x)	((unsigned long)(x) & PMAZ_DMAR_MASK)
 
 static int
-asc_tc_match(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
+asc_tc_match(struct device *parent, struct cfdata *cfdata, void *aux)
 {
 	struct tc_attach_args *d = aux;
 
@@ -133,9 +130,7 @@ asc_tc_match(parent, cfdata, aux)
 }
 
 static void
-asc_tc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+asc_tc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 	struct asc_softc *asc = device_private(self);
@@ -202,8 +197,7 @@ asc_tc_attach(parent, self, aux)
 }
 
 static void
-asc_tc_reset(sc)
-	struct ncr53c9x_softc *sc;
+asc_tc_reset(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -211,8 +205,7 @@ asc_tc_reset(sc)
 }
 
 static int
-asc_tc_intr(sc)
-	struct ncr53c9x_softc *sc;
+asc_tc_intr(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	int trans, resid;
@@ -239,12 +232,8 @@ asc_tc_intr(sc)
 }
 
 static int
-asc_tc_setup(sc, addr, len, datain, dmasize)
-	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;
+asc_tc_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+    int datain, size_t *dmasize)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	u_int32_t tc_dmar;
@@ -284,8 +273,7 @@ asc_tc_setup(sc, addr, len, datain, dmasize)
 }
 
 static void
-asc_tc_go(sc)
-	struct ncr53c9x_softc *sc;
+asc_tc_go(struct ncr53c9x_softc *sc)
 {
 #if 0
 	struct asc_softc *asc = (struct asc_softc *)sc;
@@ -302,8 +290,7 @@ asc_tc_go(sc)
 
 /* NEVER CALLED BY MI 53C9x ENGINE INDEED */
 static void
-asc_tc_stop(sc)
-	struct ncr53c9x_softc *sc;
+asc_tc_stop(struct ncr53c9x_softc *sc)
 {
 #if 0
 	struct asc_softc *asc = (struct asc_softc *)sc;
@@ -318,9 +305,7 @@ asc_tc_stop(sc)
  * Glue functions.
  */
 static u_char
-asc_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+asc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	u_char v;
@@ -332,10 +317,7 @@ asc_read_reg(sc, reg)
 }
 
 static void
-asc_write_reg(sc, reg, val)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char val;
+asc_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -344,15 +326,13 @@ asc_write_reg(sc, reg, val)
 }
 
 static int
-asc_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+asc_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	return !!(NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT);
 }
 
 static int
-asc_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+asc_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -360,7 +340,6 @@ asc_dma_isactive(sc)
 }
 
 static void
-asc_clear_latched_intr(sc)
-	struct ncr53c9x_softc *sc;
+asc_clear_latched_intr(struct ncr53c9x_softc *sc)
 {
 }

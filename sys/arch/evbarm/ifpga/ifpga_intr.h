@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.h,v 1.5 2005/12/24 20:06:59 perry Exp $	*/
+/*	$NetBSD: ifpga_intr.h,v 1.5.12.1 2006/05/24 15:47:54 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -73,7 +73,6 @@ ifpga_splx(int new)
 	extern volatile uint32_t intr_enabled;
 	extern volatile int current_spl_level;
 	extern volatile int ifpga_ipending;
-	extern void ifpga_do_pending(void);
 	int oldirqstate, hwpend;
 
 	__insn_barrier();

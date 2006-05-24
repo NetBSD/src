@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.12 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.12.12.1 2006/05/24 15:50:34 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12.12.1 2006/05/24 15:50:34 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.12 2005/12/11 12:24:29 christos E
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/select.h>
+#include <sys/filedesc.h>
 #include <sys/tty.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -70,12 +72,13 @@ int	ptyfs_start(struct mount *, int, struct lwp *);
 int	ptyfs_unmount(struct mount *, int, struct lwp *);
 int	ptyfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int	ptyfs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
-int	ptyfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int	ptyfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	ptyfs_vget(struct mount *, ino_t, struct vnode **);
 
 static int ptyfs__allocvp(struct ptm_pty *, struct lwp *, struct vnode **,
     dev_t, char);
-static int ptyfs__makename(struct ptm_pty *, char *, size_t, dev_t, char);
+static int ptyfs__makename(struct ptm_pty *, struct lwp *, char *, size_t,
+    dev_t, char);
 static void ptyfs__getvattr(struct ptm_pty *, struct proc *, struct vattr *);
 
 /*
@@ -91,9 +94,35 @@ struct ptm_pty ptm_ptyfspty = {
 	NULL
 };
 
+static const char *
+ptyfs__getpath(struct lwp *l, const struct mount *mp)
+{
+	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
+	char buf[sizeof(mp->mnt_stat.f_mntonname) + 32];
+	size_t len;
+	char *bp;
+	int error;
+
+	if (cwdi->cwdi_rdir == NULL)
+		return mp->mnt_stat.f_mntonname;
+
+	bp = buf + sizeof(buf);
+	*--bp = '\0';
+	error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
+	    buf, sizeof(buf) / 2, 0, l);
+	if (error)	/* XXX */
+		return mp->mnt_stat.f_mntonname;
+
+	len = strlen(bp);
+	if (len >= sizeof(mp->mnt_stat.f_mntonname))	/* XXX */
+		return mp->mnt_stat.f_mntonname;
+	else
+		return &mp->mnt_stat.f_mntonname[len];
+}
+
 static int
-ptyfs__makename(struct ptm_pty *pt, char *tbuf, size_t bufsiz, dev_t dev,
-    char ms)
+ptyfs__makename(struct ptm_pty *pt, struct lwp *l, char *tbuf, size_t bufsiz,
+    dev_t dev, char ms)
 {
 	struct mount *mp = pt->arg;
 	size_t len;
@@ -104,7 +133,7 @@ ptyfs__makename(struct ptm_pty *pt, char *tbuf, size_t bufsiz, dev_t dev,
 		len = snprintf(tbuf, bufsiz, "/dev/null");
 		break;
 	case 't':
-		len = snprintf(tbuf, bufsiz, "%s/%d", mp->mnt_stat.f_mntonname,
+		len = snprintf(tbuf, bufsiz, "%s/%d", ptyfs__getpath(l, mp),
 		    minor(dev));
 		break;
 	default:
@@ -145,7 +174,7 @@ ptyfs__getvattr(struct ptm_pty *pt, struct proc *p, struct vattr *vattr)
 	struct ptyfsmount *pmnt = VFSTOPTY(mp);
 	VATTR_NULL(vattr);
 	/* get real uid */
-	vattr->va_uid = p->p_cred->p_ruid;
+	vattr->va_uid = kauth_cred_getuid(p->p_cred);
 	vattr->va_gid = pmnt->pmnt_gid;
 	vattr->va_mode = pmnt->pmnt_mode;
 }
@@ -186,10 +215,6 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 	struct ptyfsmount *pmnt;
 	struct ptyfs_args args;
 
-	/* Don't allow more than one mount */
-	if (ptyfs_count)
-		return EBUSY;
-
 	if (UIO_MX & (UIO_MX - 1)) {
 		log(LOG_ERR, "ptyfs: invalid directory entry size");
 		return EINVAL;
@@ -204,6 +229,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
 		args.gid = pmnt->pmnt_gid;
 		return copyout(&args, data, sizeof(args));
 	}
+
+	/* Don't allow more than one mount */
+	if (ptyfs_count)
+		return EBUSY;
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
@@ -315,7 +344,7 @@ ptyfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *p)
 
 /*ARGSUSED*/
 int
-ptyfs_sync(struct mount *mp, int waitfor, struct ucred *uc, struct lwp *p)
+ptyfs_sync(struct mount *mp, int waitfor, kauth_cred_t uc, struct lwp *p)
 {
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2005/12/24 23:24:02 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.12.1 2006/05/24 15:48:21 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,11 +40,11 @@
 
 u_long ns_per_tick = NS_PER_TICK;
 
-static inline u_quad_t mftb __P((void));
-static inline void mfrtc __P((u_long *, u_long *));
+static inline u_quad_t mftb(void);
+static inline void mfrtc(u_long *, u_long *);
 
 static inline u_quad_t
-mftb()
+mftb(void)
 {
 	u_long scratch;
 	u_quad_t tb;
@@ -55,9 +55,7 @@ mftb()
 }
 
 static inline void
-mfrtc(up, lp)
-	u_long *up;
-	u_long *lp;
+mfrtc(u_long *up, u_long *lp)
 {
 	u_long scratch;
 
@@ -71,8 +69,7 @@ mfrtc(up, lp)
  * Wait for about n microseconds (at least!).
  */
 void
-delay(n)
-	u_int n;
+delay(u_int n)
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;

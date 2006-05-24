@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.38 2006/03/07 16:36:41 he Exp $	*/
+/*	$NetBSD: com.c,v 1.38.4.1 2006/05/24 15:48:24 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.38 2006/03/07 16:36:41 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.38.4.1 2006/05/24 15:48:24 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.38 2006/03/07 16:36:41 he Exp $");
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 #if 0
@@ -414,7 +415,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if ((tp->t_state & TS_ISOPEN) &&
 	    (tp->t_state & TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -682,7 +683,7 @@ comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
+		error = kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag); 
 		if (error != 0)
 			return(EPERM); 
 

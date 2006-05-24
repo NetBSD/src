@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.33.14.1 2006/03/31 09:45:27 tron Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.33.14.2 2006/05/24 15:50:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33.14.1 2006/03/31 09:45:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.33.14.2 2006/05/24 15:50:40 tron Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -217,7 +217,9 @@ lwp_suspend(struct lwp *l, struct lwp *t)
 
 	if (t == l) {
 		SCHED_LOCK(s);
+		KASSERT(l->l_stat == LSONPROC);
 		l->l_stat = LSSUSPENDED;
+		p->p_nrlwps--;
 		/* XXX NJWLWP check if this makes sense here: */
 		p->p_stats->p_ru.ru_nvcsw++;
 		mi_switch(l, NULL);
@@ -505,7 +507,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	if (rnewlwpp != NULL)
 		*rnewlwpp = l2;
 
-	l2->l_addr = (struct user *)uaddr;
+	l2->l_addr = UAREA_TO_USER(uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 

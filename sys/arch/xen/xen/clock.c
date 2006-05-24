@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18.2.1 2006/03/28 09:46:22 tron Exp $	*/
+/*	$NetBSD: clock.c,v 1.18.2.2 2006/05/24 15:48:25 tron Exp $	*/
 
 /*
  *
@@ -34,13 +34,14 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18.2.1 2006/03/28 09:46:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18.2.2 2006/05/24 15:48:25 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/sysctl.h>
 
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
@@ -51,7 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18.2.1 2006/03/28 09:46:22 tron Exp $");
 
 #include "config_time.h"		/* for CONFIG_TIME */
 
-/* #define XEN_CLOCK_DEBUG */
+#if defined(DEBUG) && !defined(XEN_CLOCK_DEBUG)
+#define XEN_CLOCK_DEBUG
+#endif
 
 static int xen_timer_handler(void *, struct intrframe *);
 
@@ -66,6 +69,12 @@ volatile static struct timeval shadow_tv;
 static int timeset;
 
 static uint64_t processed_system_time;
+
+#ifdef DOM0OPS
+/* If we're dom0, send our time to Xen every minute or so. */
+int xen_timepush_ticks = 0;
+static struct callout xen_timepush_co = CALLOUT_INITIALIZER;
+#endif
 
 #define NS_PER_TICK (1000000000ULL/hz)
 
@@ -118,7 +127,7 @@ get_tsc_offset_ns(void)
 	tsc_delta = cpu_counter() - shadow_tsc_stamp;
 	offset = tsc_delta * 1000000000ULL / cpu_frequency(ci);
 #ifdef XEN_CLOCK_DEBUG
-	if (offset > 10 * NS_PER_TICK)
+	if (offset > 10000000000ULL)
 		printf("get_tsc_offset_ns: tsc_delta=%llu offset=%llu\n",
 		    tsc_delta, offset); 
 #endif
@@ -146,7 +155,7 @@ inittodr(time_t base)
 
 	time.tv_usec = shadow_tv.tv_usec;
 	time.tv_sec = shadow_tv.tv_sec + rtc_offset * 60;
-#ifdef DEBUG_CLOCK
+#ifdef XEN_CLOCK_DEBUG
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
 #endif
 	/* reset microset, so that the next call to microset() will init */
@@ -169,15 +178,15 @@ fstime:
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
-void
-resettodr()
+static void
+resettodr_i(void)
 {
 #ifdef DOM0OPS
 	dom0_op_t op;
 	int s;
 #endif
 #ifdef DEBUG_CLOCK
-	struct clock_ymdhms dt;
+	struct timeval sent_delta;
 #endif
 
 	/*
@@ -188,10 +197,19 @@ resettodr()
 		return;
 
 #ifdef DEBUG_CLOCK
-	clock_secs_to_ymdhms(time.tv_sec - rtc_offset * 60, &dt);
-
-	printf("setclock: %d/%d/%d %02d:%02d:%02d\n", dt.dt_year,
-	    dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
+        {
+		char pm;
+ 
+		if (timercmp(&time, &shadow_tv, >)) {
+			timersub(&time, &shadow_tv, &sent_delta);
+			pm = '+';
+		} else {
+			timersub(&shadow_tv, &time, &sent_delta);
+			pm = '-';
+		}
+		printf("resettodr: stepping Xen clock by %c%ld.%06ld\n",
+	    pm, sent_delta.tv_sec, sent_delta.tv_usec);
+	}
 #endif
 #ifdef DOM0OPS
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
@@ -204,12 +222,28 @@ resettodr()
 #else
 		op.u.settime.usecs	 = time.tv_usec;
 #endif
-		op.u.settime.system_time = shadow_system_time;
+		op.u.settime.system_time = processed_system_time;
 		HYPERVISOR_dom0_op(&op);
 
 		splx(s);
 	}
 #endif
+}
+
+/*
+ * When the clock is administratively set, in addition to resetting
+ * Xen's clock if possible, we should also allow xen_microtime to 
+ * step backwards without complaint.
+ */
+void
+resettodr()
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	resettodr_i();
+	for (CPU_INFO_FOREACH(cii, ci))
+		timerclear(&ci->ci_cc.cc_time);
 }
 
 void
@@ -283,19 +317,28 @@ xen_microtime(struct timeval *tv)
 	*tv = time;
 	/* Extrapolate from hardclock()'s last step. */
 	cycles = cpu_counter() - ci->ci_cc.cc_cc;
-	KDASSERT(cycles > 0);
+#ifdef XEN_CLOCK_DEBUG
+	if (cycles <= 0) {
+		printf("xen_microtime: CPU counter has decreased by %" PRId64
+		    " since last hardclock(9)\n", -cycles);
+ 	}
+#endif
 	cycles += ci->ci_cc.cc_denom * cpu_frequency(ci) / 1000000000LL;
 	tv->tv_usec += cycles * ci->ci_cc.cc_ms_delta * hz / cpu_frequency(ci);
-	KDASSERT(tv->tv_usec < 2000000);
+#ifdef XEN_CLOCK_DEBUG
+	if (tv->tv_usec >= 2000000)
+		printf("xen_microtime: unexpectedly large tv_usec %ld\n", tv->tv_usec);
+#endif
 	if (tv->tv_usec >= 1000000) {
 		tv->tv_sec++;
 		tv->tv_usec -= 1000000;
 	}
-	/* Avoid backsteps, e.g. at the beginning of a negative adjustment. */
+	/* Avoid small backsteps, e.g. at the beginning of a negative adjustment. */
 	if (timerisset(&ci->ci_cc.cc_time) &&	
 	    timercmp(tv, &ci->ci_cc.cc_time, <)) {
-		struct timeval backstep; /* XXX hook resettodr() instead of doing this. */
+		struct timeval backstep;
 
+		/* XXXjld: not sure if this check can be safely removed now */
 		timersub(&ci->ci_cc.cc_time, tv, &backstep);
 		if (backstep.tv_sec == 0) { /* if it was < 1sec */
 			*tv = ci->ci_cc.cc_time;
@@ -313,11 +356,52 @@ xen_microtime(struct timeval *tv)
 	splx(s);
 }
 
+#ifdef DOM0OPS
+/* ARGSUSED */
+static void
+xen_timepush(void *arg)
+{
+	struct callout *co = arg;
+
+	resettodr_i();
+	if (xen_timepush_ticks > 0)
+		callout_schedule(co, xen_timepush_ticks);
+}
+
+/* ARGSUSED */
+static int
+sysctl_xen_timepush(SYSCTLFN_ARGS)
+{
+	int error, new_ticks;
+	struct sysctlnode node;
+
+	new_ticks = xen_timepush_ticks;
+	node = *rnode;
+	node.sysctl_data = &new_ticks;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (new_ticks < 0)
+		return EINVAL;
+	if (new_ticks != xen_timepush_ticks) {
+		xen_timepush_ticks = new_ticks;
+		if (new_ticks > 0)
+			callout_schedule(&xen_timepush_co, new_ticks);
+		else
+			callout_stop(&xen_timepush_co);
+	}
+
+	return 0;
+}
+#endif
+
 void
 xen_initclocks()
 {
-	int evtch = bind_virq_to_evtch(VIRQ_TIMER);
+	int evtch;
 
+	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 
 	get_time_values_from_xen();
@@ -326,6 +410,19 @@ xen_initclocks()
 	event_set_handler(evtch, (int (*)(void *))xen_timer_handler,
 	    NULL, IPL_CLOCK, "clock");
 	hypervisor_enable_event(evtch);
+
+#ifdef DOM0OPS
+	xen_timepush_ticks = 53 * hz + 3; /* avoid exact # of min/sec */
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
+		    CTLTYPE_INT, "xen_timepush_ticks", SYSCTL_DESCR("How often"
+		    " to update the hypervisor's time-of-day; 0 to disable"),
+		    sysctl_xen_timepush, 0, &xen_timepush_ticks, 0, 
+		    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+		callout_reset(&xen_timepush_co, xen_timepush_ticks,
+		    &xen_timepush, &xen_timepush_co);
+	}
+#endif
 }
 
 static int
@@ -349,7 +446,12 @@ xen_timer_handler(void *arg, struct intrframe *regs)
 		
 		/* Use that tick length for the coming tick's microtimes. */
 		timersub(&time, &oldtime, &elapsed);
-		KDASSERT(elapsed.tv_sec == 0);
+#ifdef XEN_CLOCK_DEBUG
+		if (elapsed.tv_sec != 0) {
+			printf("xen_timer_handler: hardclock(9) stepped by %ld.%06lds\n",
+			    elapsed.tv_sec, elapsed.tv_usec);
+		}
+#endif
 		ci->ci_cc.cc_ms_delta = elapsed.tv_usec;
 
 		delta -= NS_PER_TICK;

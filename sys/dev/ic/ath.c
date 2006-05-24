@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.69 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: ath.c,v 1.69.2.1 2006/05/24 15:50:24 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.69 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.69.2.1 2006/05/24 15:50:24 tron Exp $");
 #endif
 
 /*
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.69 2006/03/08 23:46:24 lukem Exp $");
 
 #define	AR_DEBUG
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ic/athhal_desc.h>
-#include <contrib/dev/ic/athhal_devid.h>	/* XXX for softled */
+#include <contrib/dev/ath/ah_desc.h>
+#include <contrib/dev/ath/ah_devid.h>	/* XXX for softled */
 
 #ifdef ATH_TX99_DIAG
 #include <dev/ath/ath_tx99/ath_tx99.h>
@@ -1947,7 +1947,7 @@ ath_beaconq_setup(struct ath_hal *ah)
 	qi.tqi_cwmin = HAL_TXQ_USEDEFAULT;
 	qi.tqi_cwmax = HAL_TXQ_USEDEFAULT;
 	/* NB: for dynamic turbo, don't enable any other interrupts */
-	qi.tqi_qflags = TXQ_FLAG_TXDESCINT_ENABLE;
+	qi.tqi_qflags = HAL_TXQ_TXDESCINT_ENABLE;
 	return ath_hal_setuptxqueue(ah, HAL_TX_QUEUE_BEACON, &qi);
 }
 
@@ -3157,7 +3157,7 @@ ath_txq_setup(struct ath_softc *sc, int qtype, int subtype)
 	 * up in which case the top half of the kernel may backup
 	 * due to a lack of tx descriptors.
 	 */
-	qi.tqi_qflags = TXQ_FLAG_TXEOLINT_ENABLE | TXQ_FLAG_TXDESCINT_ENABLE;
+	qi.tqi_qflags = HAL_TXQ_TXEOLINT_ENABLE | HAL_TXQ_TXDESCINT_ENABLE;
 	qnum = ath_hal_setuptxqueue(ah, qtype, &qi);
 	if (qnum == -1) {
 		/*
@@ -3601,8 +3601,6 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			}
 			rix = sc->sc_mcastrix;
 			txrate = rt->info[rix].rateCode;
-			if (shortPreamble)
-				txrate |= rt->info[rix].shortPreamble;
 			try0 = 1;
 		} else {
 			ath_rate_findrate(sc, an, shortPreamble, pktlen,
@@ -4685,7 +4683,7 @@ ath_getchannels(struct ath_softc *sc, u_int cc,
 	    cc, HAL_MODE_ALL, outdoor, xchanmode)) {
 		u_int32_t rd;
 
-		ath_hal_getregdomain(ah, &rd);
+		(void)ath_hal_getregdomain(ah, &rd);
 		if_printf(ifp, "unable to collect channel list from hal; "
 			"regdomain likely %u country code %u\n", rd, cc);
 		free(chans, M_TEMP);
@@ -4804,13 +4802,13 @@ ath_update_txpow(struct ath_softc *sc)
 	if (sc->sc_curtxpow != ic->ic_txpowlimit) {
 		ath_hal_settxpowlimit(ah, ic->ic_txpowlimit);
 		/* read back in case value is clamped */
-		ath_hal_gettxpowlimit(ah, &txpow);
+		(void)ath_hal_gettxpowlimit(ah, &txpow);
 		ic->ic_txpowlimit = sc->sc_curtxpow = txpow;
 	}
 	/* 
 	 * Fetch max tx power level for status requests.
 	 */
-	ath_hal_getmaxtxpow(sc->sc_ah, &txpow);
+	(void)ath_hal_getmaxtxpow(sc->sc_ah, &txpow);
 	ic->ic_bss->ni_txpower = txpow;
 }
 

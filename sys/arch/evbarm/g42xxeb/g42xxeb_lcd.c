@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.4 2006/03/08 23:46:23 lukem Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.4.2.1 2006/05/24 15:47:54 tron Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -103,7 +103,7 @@ const struct wsscreen_list lcd_screen_list = {
 	lcd_scr_descr
 };
 
-int	lcd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
 
 int	lcd_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
@@ -240,7 +240,7 @@ void lcd_attach( struct device *parent, struct device *self, void *aux )
 #if NWSDISPLAY > 0
 
 int
-lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct obio_softc *osc = 
 	    (struct obio_softc *) device_parent((struct device *)v);
@@ -262,7 +262,7 @@ lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;			/* turn on/off LCD controller */
 	}
 
-	return pxa2x0_lcd_ioctl(v, cmd, data, flag, l);
+	return pxa2x0_lcd_ioctl(v, vs, cmd, data, flag, l);
 }
 
 int

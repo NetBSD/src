@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.40.2.1 2006/03/31 09:45:19 tron Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.40.2.2 2006/05/24 15:50:07 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -790,7 +790,7 @@ const uint8_t jornada7xx_jp_keytrans[] = {
 /* 58 */ UNK, UNK, 200, 125, 54 , UNK, UNK, UNK,
 /* 60 */ UNK, UNK, UNK, UNK, UNK, 56 , 123, UNK,
 /* 68 */ UNK, 203, 208, 205, UNK, UNK, UNK, UNK,
-/* 70 */ UNK, 219, 29 , UNK, 57 , UNK, UNK, 121,
+/* 70 */ UNK, 184, 29 , UNK, 57 , UNK, UNK, 121,
 /* 78 */ 53 , 14 , UNK, UNK, UNK, UNK, UNK, SPL,
 };
 
@@ -808,7 +808,7 @@ const uint8_t jornada7xx_us_keytrans[] = {
 /* 48 */  51, 52 , UNK, 40 , 28 , UNK, UNK, UNK,
 /* 50 */ UNK, 15 , UNK, 42 , UNK, UNK, UNK, UNK,
 /* 58 */ UNK, UNK, 200, UNK, 54 , UNK, UNK, UNK,
-/* 60 */ UNK, UNK, UNK, UNK, UNK, 56 , 219, UNK,
+/* 60 */ UNK, UNK, UNK, UNK, UNK, 56 , 184, UNK,
 /* 68 */ UNK, 203, 208, 205, UNK, UNK, UNK, UNK,
 /* 70 */ UNK, 221, 29 , UNK, 57 , UNK, UNK, UNK,
 /* 78 */ 53 , 14 , UNK, UNK, UNK, UNK, UNK, SPL,
@@ -831,7 +831,7 @@ const uint8_t jornada7xx_intl_keytrans[] = {
 /* 60 */ UNK, UNK, UNK, UNK, UNK, 56 , 41 , UNK,
 /* 68 */ UNK, 203, 208, 205, UNK, UNK, UNK, UNK,
 /* 70 */ UNK, 221, 29 , UNK, 57 , UNK, UNK, UNK,
-/* 78 */ 219, 211, UNK, UNK, UNK, UNK, UNK, SPL,
+/* 78 */ 184, 211, UNK, UNK, UNK, UNK, UNK, SPL,
 };
 
 const int jornada7xx_special_keymap[] = {

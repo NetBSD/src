@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscallargs.h,v 1.72 2005/12/11 12:20:26 christos Exp $ */
+/* $NetBSD: svr4_syscallargs.h,v 1.72.12.1 2006/05/24 15:48:29 tron Exp $ */
 
 /*
  * System call argument lists.
@@ -7,8 +7,8 @@
  * created from	NetBSD: syscalls.master,v 1.52 2003/01/18 08:44:27 thorpej Exp
  */
 
-#ifndef _SVR4_SYS__SYSCALLARGS_H_
-#define	_SVR4_SYS__SYSCALLARGS_H_
+#ifndef _SVR4_SYS_SYSCALLARGS_H_
+#define	_SVR4_SYS_SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg
@@ -420,6 +420,12 @@ struct svr4_sys_facl_args {
 	syscallarg(struct svr4_aclent *) buf;
 };
 
+struct svr4_sys_schedctl_args {
+	syscallarg(unsigned int) x;
+	syscallarg(int) y;
+	syscallarg(void **) z;
+};
+
 struct svr4_sys_resolvepath_args {
 	syscallarg(const char *) path;
 	syscallarg(char *) buf;
@@ -767,6 +773,8 @@ int	sys_setreuid(struct lwp *, void *, register_t *);
 
 int	sys_setregid(struct lwp *, void *, register_t *);
 
+int	svr4_sys_schedctl(struct lwp *, void *, register_t *);
+
 int	svr4_sys_resolvepath(struct lwp *, void *, register_t *);
 
 int	svr4_sys_getdents64(struct lwp *, void *, register_t *);
@@ -836,4 +844,4 @@ int	sys_ntp_adjtime(struct lwp *, void *, register_t *);
 
 #else
 #endif
-#endif /* _SVR4_SYS__SYSCALLARGS_H_ */
+#endif /* _SVR4_SYS_SYSCALLARGS_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.5.6.1 2006/03/31 09:45:19 tron Exp $ */
+/* $NetBSD: gpio.c,v 1.5.6.2 2006/05/24 15:50:07 tron Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.5.6.1 2006/03/31 09:45:19 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.5.6.2 2006/05/24 15:50:07 tron Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -171,7 +171,7 @@ gpiobus_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-  int
+int
 gpio_pin_map(void *gpio, int offset, u_int32_t mask, struct gpio_pinmap *map)
 {
 	struct gpio_softc *sc = gpio;

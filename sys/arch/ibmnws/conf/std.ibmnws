@@ -1,4 +1,4 @@
-#	$NetBSD: std.ibmnws,v 1.3 2005/12/11 12:17:50 christos Exp $
+#	$NetBSD: std.ibmnws,v 1.3.12.1 2006/05/24 15:48:09 tron Exp $
 #
 # standard, required NetBSD/ibmnws 'options'
 
@@ -14,3 +14,4 @@ makeoptions     PPCDIR="oea"    # Tell Makefile.powerpc what dir to use
 makeoptions     TEXTADDR=0x100000
 
 options         INTSTK=0x4000
+options         PCKBCNOTEST

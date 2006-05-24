@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.5 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.5.12.1 2006/05/24 15:47:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -91,7 +91,7 @@ ENTRY(xosargs_read)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	mov	r3, r2
-	swi	OS_Args
+	swi	XOS_Args
 	ldmvsdb	fp, {fp, sp, pc}
 	teq	r3, #0
 	strne	r2, [r3]
@@ -102,7 +102,7 @@ ENTRY(xosargs_set)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
-	swi	OS_Args
+	swi	XOS_Args
 	movvc	r0, #0
 	ldmdb	fp, {fp, sp, pc}
 
@@ -194,6 +194,55 @@ ENTRY(os_enter_os)
 	sub	fp, ip, #4
 	swi	OS_EnterOS
 	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(xosmodule_alloc)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r3, r0
+	mov	r0, #OSModule_Alloc
+	swi	XOS_Module
+	ldmvsdb	fp, {fp, sp, pc}
+	teq	r1, #0
+	strne	r2, [r1]
+	mov	r0, #0
+	ldmdb	fp, {fp, sp, pc}	
+
+ENTRY(xosmodule_free)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r0, r2
+	mov	r0, #OSModule_Free
+	swi	XOS_Module
+	movvc	r0, #0
+	ldmdb	fp, {fp, sp, pc}	
+
+ENTRY(xosmodule_lookup)
+	mov	ip, sp
+	stmfd	sp!, {r4-r8, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r6, r1
+	mov	r7, r2
+	mov	r8, r3
+	mov	r1, r0
+	mov	r0, #OSModule_Lookup
+	swi	XOS_Module
+	ldmvsdb	fp, {r4-r8, fp, sp, pc}
+	teq	r6, #0
+	strne	r1, [r6]
+	teq	r7, #0
+	strne	r2, [r7]
+	teq	r8, #0
+	strne	r3, [r8]
+	ldr	r8, [fp, #4]
+	teq	r8, #0
+	strne	r4, [r8]
+	ldr	r8, [fp, #8]
+	teq	r8, #0
+	strne	r5, [r8]
+	mov	r0, #0
+	ldmdb	fp, {r4-r8, fp, sp, pc}	
 
 ENTRY(xosfscontrol_shutdown)
 	mov	ip, sp
@@ -316,3 +365,92 @@ ENTRY(xcache_control)
 	strne	r0, [r2]
 	mov	r0, #0
 	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(xfilecorediscop_read_sectors)
+	mov	ip, sp
+	stmfd	sp!, {r4, r8, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r4, r3
+	mov	r3, r2
+	mov	r2, r1
+	orr	r1, r0, #FileCoreDiscOp_ReadSectors
+	ldr	r8, [fp, #4]
+	swi	XFileCore_DiscOp
+	ldmvsdb	fp, {r4, r8, fp, sp, pc}
+	ldr	r0, [fp, #8]
+	teq	r0, #0
+	strne	r2, [r0]
+	ldr	r0, [fp, #12]
+	teq	r0, #0
+	strne	r3, [r0]
+	ldr	r0, [fp, #16]
+	teq	r0, #0
+	strne	r4, [r0]
+	mov	r0, #0
+	ldmdb	fp, {r4, r8, fp, sp, pc}
+	
+ENTRY(xfilecore_drives)
+	mov	ip, sp
+	stmfd	sp!, {r4-r5, r8, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r5, r3
+	mov	r4, r2
+	mov	r3, r1
+	mov	r8, r0
+	swi	XFileCore_Drives
+	ldmvsdb	fp, {r4-r5, r8, fp, sp, pc}
+	teq	r3, #0
+	strne	r0, [r3]
+	teq	r4, #0
+	strne	r1, [r4]
+	teq	r5, #0
+	strne	r2, [r5]
+	mov	r0, #0
+	ldmdb	fp, {r4-r5, r8, fp, sp, pc}
+
+ENTRY(xfilecoresectorop_read_sectors)
+	mov	ip, sp
+	stmfd	sp!, {r4, r8, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r4, r3
+	mov	r3, r2
+	mov	r2, r1
+	orr	r1, r0, #FileCoreDiscOp_ReadSectors
+	ldr	r8, [fp, #4]
+	swi	XFileCore_SectorOp
+	ldmvsdb	fp, {r4, r8, fp, sp, pc}
+	ldr	r0, [fp, #8]
+	teq	r0, #0
+	strne	r2, [r0]
+	ldr	r0, [fp, #12]
+	teq	r0, #0
+	strne	r3, [r0]
+	ldr	r0, [fp, #16]
+	teq	r0, #0
+	strne	r4, [r0]
+	mov	r0, #0
+	ldmdb	fp, {r4, r8, fp, sp, pc}
+
+ENTRY(xfilecorediscop64_read_sectors)
+	mov	ip, sp
+	stmfd	sp!, {r4, r5, r8, fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r4, r3
+	mov	r3, r2
+	mov	r2, r1
+	orr	r1, r0, #FileCoreDiscOp_ReadSectors
+	ldr	r5, [fp, #4]
+	ldr	r8, [fp, #8]
+	swi	XFileCore_DiscOp64
+	ldmvsdb	fp, {r4, r5, r8, fp, sp, pc}
+	ldr	r0, [fp, #12]
+	teq	r0, #0
+	strne	r2, [r0]
+	ldr	r0, [fp, #16]
+	teq	r0, #0
+	strne	r3, [r0]
+	ldr	r0, [fp, #20]
+	teq	r0, #0
+	strne	r4, [r0]
+	mov	r0, #0
+	ldmdb	fp, {r4, r5, r8, fp, sp, pc}

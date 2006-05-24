@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.24 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: db_run.c,v 1.24.12.1 2006/05/24 15:50:06 tron Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.24 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.24.12.1 2006/05/24 15:50:06 tron Exp $");
 
 #include "opt_ddb.h"
 
@@ -443,7 +443,8 @@ db_set_temp_breakpoint(db_breakpoint_t bkpt, db_addr_t addr)
 	bkpt->count = 1;
 
 	bkpt->bkpt_inst = db_get_value(bkpt->address, BKPT_SIZE, FALSE);
-	db_put_value(bkpt->address, BKPT_SIZE, BKPT_SET(bkpt->bkpt_inst));
+	db_put_value(bkpt->address, BKPT_SIZE,
+		BKPT_SET(bkpt->bkpt_inst, bkpt->address));
 }
 
 void

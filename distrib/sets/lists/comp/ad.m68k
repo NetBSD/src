@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.36 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: ad.m68k,v 1.36.8.1 2006/05/24 15:47:48 tron Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/m68k				comp-c-include
 ./usr/include/m68k/ansi.h			comp-c-include
@@ -37,10 +37,12 @@
 ./usr/include/m68k/mcontext.h			comp-c-include
 ./usr/include/m68k/param.h			comp-c-include
 ./usr/include/m68k/pcb.h			comp-c-include
+./usr/include/m68k/pmap_motorola.h		comp-c-include
 ./usr/include/m68k/pmc.h			comp-c-include
 ./usr/include/m68k/proc.h			comp-c-include
 ./usr/include/m68k/profile.h			comp-c-include
 ./usr/include/m68k/psl.h			comp-c-include
+./usr/include/m68k/pte_motorola.h		comp-c-include
 ./usr/include/m68k/ptrace.h			comp-c-include
 ./usr/include/m68k/reg.h			comp-c-include
 ./usr/include/m68k/setjmp.h			comp-c-include

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.25 2006/03/15 11:36:42 cube Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.25.2.1 2006/05/24 15:48:28 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.25 2006/03/15 11:36:42 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.25.2.1 2006/05/24 15:48:28 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.25 2006/03/15 11:36:42 cube Exp $"
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
+#include <sys/kauth.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -365,13 +366,13 @@ change_utimes32(vp, tptr, l)
 		netbsd32_to_timeval(&tv32[0], &tv[0]);
 		netbsd32_to_timeval(&tv32[1], &tv[1]);
 	}
-	VOP_LEASE(vp, l, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(vp, l, p->p_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vattr.va_atime.tv_sec = tv[0].tv_sec;
 	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
 	vattr.va_mtime.tv_sec = tv[1].tv_sec;
 	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
-	error = VOP_SETATTR(vp, &vattr, p->p_ucred, l);
+	error = VOP_SETATTR(vp, &vattr, p->p_cred, l);
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
@@ -556,7 +557,7 @@ netbsd32_fhstatvfs1(l, v, retval)
 	/*
 	 * Must be super user
 	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return error;
 
 	if ((error = copyin((caddr_t)NETBSD32PTR64(SCARG(uap, fhp)), &fh,
@@ -767,6 +768,49 @@ netbsd32_sys___lstat30(l, v, retval)
 	netbsd32_from___stat30(&sb, &sb32);
 	error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
+	return (error);
+}
+
+int netbsd32_sys___fhstat30(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct netbsd32_sys___fhstat30_args /* {
+		syscallarg(const netbsd32_fhandlep_t) fhp;
+		syscallarg(netbsd32_statp_t) sb;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct stat sb;
+	struct netbsd32_stat sb32;
+	int error;
+	fhandle_t fh;
+	struct mount *mp;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag)))
+		return (error);
+
+	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
+	    sizeof(fhandle_t))) != 0)
+		return (error);
+
+	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
+		return (ESTALE);
+	if (mp->mnt_op->vfs_fhtovp == NULL)
+		return EOPNOTSUPP;
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+		return (error);
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error)
+		return (error);
+	netbsd32_from___stat30(&sb, &sb32);
+	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
 	return (error);
 }
 

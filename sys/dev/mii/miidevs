@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.64.2.1 2006/03/28 09:42:12 tron Exp $
+$NetBSD: miidevs,v 1.64.2.2 2006/05/24 15:50:27 tron Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -139,6 +139,7 @@ model BROADCOM BCM5704		0x0019 BCM5704 1000BASE-T media interface
 model BROADCOM BCM5705		0x001a BCM5705 1000BASE-T media interface
 model BROADCOM BCM5750		0x0018 BCM5750 1000BASE-T media interface
 model BROADCOM BCM5714		0x0034 BCM5714 1000BASE-T media interface
+model BROADCOM BCM5780		0x0035 BCM5780 1000BASE-T media interface
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 model CICADA CS8201		0x0001 Cicada CS8201 10/100/1000TX PHY

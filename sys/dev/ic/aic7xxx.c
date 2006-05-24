@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.119 2006/03/14 15:24:30 tsutsui Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.119.2.1 2006/05/24 15:50:24 tron Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.119 2006/03/14 15:24:30 tsutsui Exp $
+ * $Id: aic7xxx.c,v 1.119.2.1 2006/05/24 15:50:24 tron Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.119 2006/03/14 15:24:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.119.2.1 2006/05/24 15:50:24 tron Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -801,7 +801,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 							  /*init reset*/TRUE);
 				}
 			} else {
-				ahc_inb(ahc, SCSIDATL);
+				(void)ahc_inb(ahc, SCSIDATL);
 			}
 		}
 		break;
@@ -2799,7 +2799,7 @@ reswitch:
 		} else {
 			/* Ack the byte */
 			ahc_outb(ahc, CLRSINT1, CLRREQINIT);
-			ahc_inb(ahc, SCSIDATL);
+			(void)ahc_inb(ahc, SCSIDATL);
 		}
 		break;
 	}
@@ -2835,7 +2835,7 @@ reswitch:
 			ahc_outb(ahc, SCSISIGO, P_MESGOUT | BSYO);
 			ahc->msgin_index = 0;
 			/* Dummy read to REQ for first byte */
-			ahc_inb(ahc, SCSIDATL);
+			(void)ahc_inb(ahc, SCSIDATL);
 			ahc_outb(ahc, SXFRCTL0,
 				 ahc_inb(ahc, SXFRCTL0) | SPIOEN);
 			break;
@@ -4634,10 +4634,17 @@ ahc_init(struct ahc_softc *ahc)
 
 	/* Grab the disconnection disable table and invert it for our needs */
 	if ((ahc->flags & AHC_USEDEFAULTS) != 0) {
-		printf("%s: Host Adapter Bios disabled.  Using default SCSI "
-			"device parameters\n", ahc_name(ahc));
+		printf("%s: Host Adapter BIOS disabled. Using default SCSI "
+			"host and target device parameters\n", ahc_name(ahc));
 		ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B|
 			      AHC_TERM_ENB_A|AHC_TERM_ENB_B;
+		discenable = ALL_TARGETS_MASK;
+		if ((ahc->features & AHC_ULTRA) != 0)
+			ultraenb = ALL_TARGETS_MASK;
+	} else if ((ahc->flags & AHC_USETARGETDEFAULTS) != 0) {
+		printf("%s: Host Adapter has no SEEPROM. Using default SCSI"
+		    " target parameters\n", ahc_name(ahc));
+		ahc->flags |= AHC_EXTENDED_TRANS_A|AHC_EXTENDED_TRANS_B;
 		discenable = ALL_TARGETS_MASK;
 		if ((ahc->features & AHC_ULTRA) != 0)
 			ultraenb = ALL_TARGETS_MASK;
@@ -4671,7 +4678,7 @@ ahc_init(struct ahc_softc *ahc)
 					    target_id, &tstate);
 		/* Default to async narrow across the board */
 		memset(tinfo, 0, sizeof(*tinfo));
-		if (ahc->flags & AHC_USEDEFAULTS) {
+		if (ahc->flags & (AHC_USEDEFAULTS | AHC_USETARGETDEFAULTS)) {
 			if ((ahc->features & AHC_WIDE) != 0)
 				tinfo->user.width = MSG_EXT_WDTR_BUS_16_BIT;
 

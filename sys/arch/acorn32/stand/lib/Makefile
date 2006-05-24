@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.42.1 2006/03/31 09:44:55 tron Exp $
+#	$NetBSD: Makefile,v 1.1.42.2 2006/05/24 15:47:49 tron Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -13,7 +13,8 @@ CPPFLAGS= -I$S/lib/libsa ${RISCOSCPPFLAGS} ${RISCOSMISCCPPFLAGS}
 
 SRCS=	srt1.c devopen.c
 SRCS+=	rmreloc.c
-SRCS+=	riscoscalls.S riscoscons.c riscoserrors.c riscosfile.c
+SRCS+=	riscoscalls.S riscoscons.c riscosdisk.c riscoserrors.c riscosfile.c
+SRCS+=	riscospart.c
 
 .include <bsd.own.mk>
 .undef DESTDIR

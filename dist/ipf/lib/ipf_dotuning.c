@@ -1,7 +1,7 @@
-/*	$NetBSD: ipf_dotuning.c,v 1.2 2005/06/11 12:31:40 darrenr Exp $	*/
+/*	$NetBSD: ipf_dotuning.c,v 1.2.2.1 2006/05/24 15:47:46 tron Exp $	*/
 
 #include "ipf.h"
-#include "ipl.h"
+#include "netinet/ipl.h"
 #include <sys/ioctl.h>
 
 void ipf_dotuning(fd, tuneargs, iocfn)

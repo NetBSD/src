@@ -1,4 +1,4 @@
-/* $NetBSD: au1550.c,v 1.7 2006/02/24 14:34:31 shige Exp $ */
+/* $NetBSD: au1550.c,v 1.7.6.1 2006/05/24 15:48:12 tron Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au1550.c,v 1.7 2006/02/24 14:34:31 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au1550.c,v 1.7.6.1 2006/05/24 15:48:12 tron Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -176,7 +176,7 @@ static struct au_dev au1550_devices[] = {
 	{ "aucom",	{ UART0_BASE },				   {  0, -1 }},
 	{ "aucom",	{ UART1_BASE },				   {  8, -1 }},
 	{ "aucom",	{ UART3_BASE },				   {  9, -1 }},
-	{ "aurtc",	{ },					   { -1, -1 }},
+	{ "aurtc",	{ -1 },					   { -1, -1 }},
 	{ "aumac",	{ MAC0_BASE, MAC0_ENABLE, MAC0_DMA_BASE }, { 27, -1 }},
 	{ "aumac",	{ MAC1_BASE, MAC1_ENABLE, MAC1_DMA_BASE }, { 28, -1 }},
 	{ "ohci",	{ AU1550_USBH_BASE, AU1550_USBH_ENABLE, 
@@ -184,7 +184,7 @@ static struct au_dev au1550_devices[] = {
 	{ "aupci",	{ PCI_BASE },				   { -1, -1 }},
 	{ "augpio",	{ GPIO_BASE, 27 },			   { -1, -1 }},
 	{ "augpio",	{ GPIO2_BASE, 16 },			   { -1, -1 }},
-	{ "aupcmcia",	{  },					   { -1, -1 }},
+	{ "aupcmcia",	{ -1 },					   { -1, -1 }},
 	{ "aupsc",	{ PSC0_BASE },				   { 10, -1 }},
 	{ "aupsc",	{ PSC1_BASE },				   { 11, -1 }},
 	{ "aupsc",	{ PSC2_BASE },				   { 12, -1 }},

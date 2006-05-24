@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.9 2006/02/25 11:43:14 simonb Exp $
+#	$NetBSD: ALCHEMY,v 1.9.6.1 2006/05/24 15:47:55 tron Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.9 $"
+#ident 		"ALCHEMY-$Revision: 1.9.6.1 $"
 
 maxusers	32
 
@@ -48,7 +48,7 @@ options 	DEBUG		# extra kernel debugging support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=180000	# size for embedded symbol table
+options 	SYMTAB_SPACE=200000	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -252,7 +252,7 @@ pseudo-device	loop				# network loopback
 #pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel
 #pseudo-device	ipip		2		# RFC 2003 IP Encapsulation
-#pseudo-device	gif				# RFC1933  tunnel
+#pseudo-device	gif				# RFC1933 tunnel
 #pseudo-device	faith				# IPv[46] tcp relay translation 
 #pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan				# IEEE 802.1q encapsulation
@@ -261,9 +261,9 @@ pseudo-device	bridge				# simple inter-network bridging
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
 #pseudo-device	sequencer	1		# MIDI sequencer
-# rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd				# /dev/random & kernel generator
-#options 	RND_COM				# use "com" randomness (BROKEN)
+pseudo-device	clockctl			# user control of clock subsystem
+pseudo-device	ksyms				# /dev/ksyms
 
 # A pseudo device needed for Coda		# also needs CODA (above)
 #pseudo-device	vcoda		4		# coda minicache <-> venus comm.

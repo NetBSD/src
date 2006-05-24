@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.13 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: profile.h,v 1.13.6.1 2006/05/24 15:48:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 /* profiles ... */
-__inline void _mcount __P((u_long, u_long));
+__inline void _mcount(u_long, u_long);
 void mcount(void);
 
 #define	_MCOUNT_DECL __inline void _mcount
@@ -47,6 +47,7 @@ void									\
 mcount(void)								\
 {									\
 	int selfpc, frompcindex;					\
+									\
 	/*								\
 	 * find the return address for mcount,				\
 	 * and the return address for mcount's caller.			\

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.17 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.17.12.1 2006/05/24 15:48:26 tron Exp $	*/
 
 /*
  *
@@ -77,12 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.17 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.17.12.1 2006/05/24 15:48:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/select.h>
+#include <sys/kauth.h>
 
 #include <coda/coda.h>
 #include <coda/cnode.h>
@@ -121,7 +122,7 @@ int coda_nc_debug = 0;
  */
 static struct coda_cache *
 coda_nc_find(struct cnode *dcp, const char *name, int namelen,
-	struct ucred *cred, int hash);
+	kauth_cred_t cred, int hash);
 static void
 coda_nc_remove(struct coda_cache *cncp, enum dc_status dcstat);
 
@@ -172,7 +173,7 @@ coda_nc_init(void)
 
 static struct coda_cache *
 coda_nc_find(struct cnode *dcp, const char *name, int namelen,
-	struct ucred *cred, int hash)
+	kauth_cred_t cred, int hash)
 {
 	/*
 	 * hash to find the appropriate bucket, look through the chain
@@ -202,8 +203,12 @@ coda_nc_find(struct cnode *dcp, const char *name, int namelen,
 	    	printf("coda_nc_find: name %s, new cred = %p, cred = %p\n",
 			name, cred, cncp->cred);
 		printf("nref %d, nuid %d, ngid %d // oref %d, ocred %d, ogid %d\n",
-			cred->cr_ref, cred->cr_uid, cred->cr_gid,
-			cncp->cred->cr_ref, cncp->cred->cr_uid, cncp->cred->cr_gid);
+			kauth_cred_getrefcnt(cred),
+			kauth_cred_geteuid(cred),
+			kauth_cred_getegid(cred),
+			kauth_cred_getrefcnt(cncp->cred),
+			kauth_cred_geteuid(cncp->cred),
+			kauth_cred_getegid(cncp->cred));
 		print_cred(cred);
 		print_cred(cncp->cred);
 	    }
@@ -219,7 +224,7 @@ coda_nc_find(struct cnode *dcp, const char *name, int namelen,
  */
 void
 coda_nc_enter(struct cnode *dcp, const char *name, int namelen,
-	struct ucred *cred, struct cnode *cp)
+	kauth_cred_t cred, struct cnode *cp)
 {
     struct coda_cache *cncp;
     int hash;
@@ -262,7 +267,7 @@ coda_nc_enter(struct cnode *dcp, const char *name, int namelen,
 	CODA_NC_HSHREM(cncp);
 	vrele(CTOV(cncp->dcp));
 	vrele(CTOV(cncp->cp));
-	crfree(cncp->cred);
+	kauth_cred_free(cncp->cred);
     }
 
     /*
@@ -270,7 +275,7 @@ coda_nc_enter(struct cnode *dcp, const char *name, int namelen,
      */
     vref(CTOV(cp));
     vref(CTOV(dcp));
-    crhold(cred);
+    kauth_cred_hold(cred);
     cncp->dcp = dcp;
     cncp->cp = cp;
     cncp->namelen = namelen;
@@ -293,7 +298,7 @@ coda_nc_enter(struct cnode *dcp, const char *name, int namelen,
  */
 struct cnode *
 coda_nc_lookup(struct cnode *dcp, const char *name, int namelen,
-	struct ucred *cred)
+	kauth_cred_t cred)
 {
 	int hash;
 	struct coda_cache *cncp;
@@ -364,7 +369,7 @@ coda_nc_remove(struct coda_cache *cncp, enum dc_status dcstat)
 	}
 	vrele(CTOV(cncp->cp));
 
-	crfree(cncp->cred);
+	kauth_cred_free(cncp->cred);
 	memset(DATA_PART(cncp), 0, DATA_SIZE);
 
 	/* Put the null entry just after the least-recently-used entry */
@@ -451,7 +456,7 @@ coda_nc_zapfid(CodaFid *fid, enum dc_status dcstat)
  * Remove all entries which match the fid and the cred
  */
 void
-coda_nc_zapvnode(CodaFid *fid, struct ucred *cred, enum dc_status dcstat)
+coda_nc_zapvnode(CodaFid *fid, kauth_cred_t cred, enum dc_status dcstat)
 {
 	/* See comment for zapfid. I don't think that one would ever
 	   want to zap a file with a specific cred from the kernel.
@@ -533,7 +538,7 @@ coda_nc_purge_user(uid_t uid, enum dc_status dcstat)
 		ncncp = CODA_NC_LRUGET(*cncp);
 
 		if ((CODA_NC_VALID(cncp)) &&
-		   ((cncp->cred)->cr_uid == uid)) {
+		   (kauth_cred_geteuid(cncp->cred) == uid)) {
 		        /* Seems really ugly, but we have to decrement the appropriate
 			   hash bucket length here, so we have to find the hash bucket
 			   */
@@ -598,7 +603,7 @@ coda_nc_flush(enum dc_status dcstat)
 			}
 			vrele(CTOV(cncp->cp));
 
-			crfree(cncp->cred);
+			kauth_cred_free(cncp->cred);
 			memset(DATA_PART(cncp), 0, DATA_SIZE);
 		}
 	}

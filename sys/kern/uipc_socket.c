@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.116 2006/03/01 12:38:21 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.116.6.1 2006/05/24 15:50:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.116 2006/03/01 12:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.116.6.1 2006/05/24 15:50:41 tron Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.116 2006/03/01 12:38:21 yamt Exp $
 #include <sys/pool.h>
 #include <sys/event.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 
@@ -155,8 +156,8 @@ static int sokvawaiters;
 #define	SOCK_LOAN_THRESH	4096
 #define	SOCK_LOAN_CHUNK		65536
 
-static size_t sodopendfree(struct socket *);
-static size_t sodopendfreel(struct socket *);
+static size_t sodopendfree(void);
+static size_t sodopendfreel(void);
 
 static vsize_t
 sokvareserve(struct socket *so, vsize_t len)
@@ -173,7 +174,7 @@ sokvareserve(struct socket *so, vsize_t len)
 		 * try to do pendfree.
 		 */
 
-		freed = sodopendfreel(so);
+		freed = sodopendfreel();
 
 		/*
 		 * if some kva was freed, try again.
@@ -292,14 +293,14 @@ sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size)
 }
 
 static size_t
-sodopendfree(struct socket *so)
+sodopendfree()
 {
 	int s;
 	size_t rv;
 
 	s = splvm();
 	simple_lock(&so_pendfree_slock);
-	rv = sodopendfreel(so);
+	rv = sodopendfreel();
 	simple_unlock(&so_pendfree_slock);
 	splx(s);
 
@@ -315,7 +316,7 @@ sodopendfree(struct socket *so)
  */
 
 static size_t
-sodopendfreel(struct socket *so)
+sodopendfreel()
 {
 	size_t rv = 0;
 
@@ -478,7 +479,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	so->so_mowner = &prp->pr_domain->dom_mowner;
 #endif
 	if (l != NULL) {
-		uid = l->l_proc->p_ucred->cr_uid;
+		uid = kauth_cred_geteuid(l->l_proc->p_cred);
 	} else {
 		uid = 0;
 	}
@@ -705,7 +706,7 @@ sodisconnect(struct socket *so)
 	    (struct lwp *)0);
  bad:
 	splx(s);
-	sodopendfree(so);
+	sodopendfree();
 	return (error);
 }
 
@@ -737,7 +738,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	int		error, s, dontroute, atomic;
 
 	p = l->l_proc;
-	sodopendfree(so);
+	sodopendfree();
 
 	clen = 0;
 	atomic = sosendallatonce(so) || top;
@@ -955,7 +956,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		flags = 0;
 
 	if ((flags & MSG_DONTWAIT) == 0)
-		sodopendfree(so);
+		sodopendfree();
 
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);

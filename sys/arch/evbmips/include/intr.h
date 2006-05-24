@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2006/02/09 18:03:12 gdamore Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.6.1 2006/05/24 15:47:55 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _EVBMIPS_INTR_H_
-#define _EVBMIPS_INTR_H_
+#define	_EVBMIPS_INTR_H_
 
 #include <sys/device.h>
 #include <sys/lock.h>
@@ -83,8 +83,8 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-#define IST_LEVEL_HIGH	4	/* level triggered, active high */
-#define IST_LEVEL_LOW	5       /* level triggered, active low */
+#define	IST_LEVEL_HIGH	4	/* level triggered, active high */
+#define	IST_LEVEL_LOW	5       /* level triggered, active low */
 
 #ifdef	_KERNEL
 

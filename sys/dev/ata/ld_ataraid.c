@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.14.12.1 2006/03/31 09:45:18 tron Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.14.12.2 2006/05/24 15:50:07 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.14.12.1 2006/03/31 09:45:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.14.12.2 2006/05/24 15:50:07 tron Exp $");
 
 #include "rnd.h"
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.14.12.1 2006/03/31 09:45:18 tron Ex
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif

@@ -1,0 +1,195 @@
+#	$NetBSD: genassym.cf,v 1.1.10.2 2006/05/24 15:47:59 tron Exp $
+
+#
+# Copyright (c) 1998 The NetBSD Foundation, Inc.
+# All rights reserved.
+#
+# This code is derived from software contributed to The NetBSD Foundation
+# by Charles M. Hannum.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#        This product includes software developed by the NetBSD
+#        Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# Copyright (c) 1982, 1990 The Regents of the University of California.
+# All rights reserved.
+#
+# This code is derived from software contributed to Berkeley by
+# William Jolitz.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Berkeley and its contributors.
+# 4. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)genassym.c	5.11 (Berkeley) 5/10/91
+#
+
+if defined(_KERNEL_OPT)
+include "opt_compat_svr4.h"
+include "opt_compat_freebsd.h"
+include "opt_compat_linux.h"
+include "opt_multiprocessor.h"
+endif
+
+include <sys/param.h>
+include <sys/proc.h>
+include <sys/resourcevar.h>
+include <sys/device.h>
+include <sys/user.h>
+include <sys/mbuf.h>
+include <sys/exec_elf.h>
+include <sys/ucontext.h>
+
+include <netinet/in.h>
+include <netinet/in_systm.h>
+include <netinet/ip.h>
+include <netinet/ip6.h>
+include <netinet/ip_var.h>
+
+include <uvm/uvm.h>
+
+include <machine/pmap.h>
+include <machine/vmparam.h>
+include <machine/intr.h>
+include <machine/frame.h>
+include <machine/types.h>
+
+ifdef COMPAT_SVR4
+include <compat/svr4/svr4_ucontext.h>
+endif
+
+ifdef COMPAT_LINUX
+include <compat/linux/common/linux_signal.h>
+include <compat/linux/common/linux_machdep.h>
+endif
+
+ifdef COMPAT_FREEBSD
+include <machine/freebsd_machdep.h>
+endif
+
+ifdef COMPAT_IA32
+
+endif
+
+ifdef MULTIPROCESSOR
+include <machine/cpu.h>
+endif
+
+define	DT_NULL			DT_NULL
+define	DT_RELA			DT_RELA
+define	DT_RELAENT		DT_RELAENT
+define	DT_RELASZ		DT_RELASZ
+define	DT_SYMTAB		DT_SYMTAB
+define	DT_SYMENT		DT_SYMENT
+
+
+define	LSRUN			LSRUN
+define	LSONPROC		LSONPROC
+
+# offsets needed by cpu_switch() to switch mappings.
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
+
+# errno values
+define	ENAMETOOLONG		ENAMETOOLONG
+define	EFAULT			EFAULT
+
+# Important offsets into the lwp and proc structs & associated constants
+define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_BACK			offsetof(struct lwp, l_back)
+define	L_FORW			offsetof(struct lwp, l_forw)
+define	L_PRIORITY		offsetof(struct lwp, l_priority)
+define	L_STAT			offsetof(struct lwp, l_stat)
+define	L_WCHAN			offsetof(struct lwp, l_wchan)
+define	L_PROC			offsetof(struct lwp, l_proc)
+define	L_CPU			offsetof(struct lwp, l_cpu)
+define	P_FLAG			offsetof(struct proc, p_flag)
+define	P_RASLIST		offsetof(struct proc, p_raslist)
+
+define	P_SYSTEM		P_SYSTEM
+
+define	M_DATA			offsetof(struct mbuf, m_data)
+define	M_LEN			offsetof(struct mbuf, m_len)
+define	M_NEXT			offsetof(struct mbuf, m_next)
+
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)
+
+define	IP6_SRC			offsetof(struct ip6_hdr, ip6_src)
+define	IP6_DST			offsetof(struct ip6_hdr, ip6_dst)
+
+define	V_TRAP			offsetof(struct uvmexp, traps)
+define	V_INTR			offsetof(struct uvmexp, intrs)
+
+define  SIZEOF_PCB		sizeof(struct pcb)
+define  SIZEOF_TRAPFRAME	sizeof(struct trapframe)
+define	SIZEOF_SPECIAL		sizeof(struct _special)
+
+define	MC_SPECIAL		offsetof(struct __mcontext, mc_special)
+define	UC_MCONTEXT		offsetof(struct __ucontext, uc_mcontext)
+
+# general constants 
+define	VM_MAX_ADDRESS		VM_MAX_ADDRESS
+
+# Important offsets into the user struct & associated constants
+define	UPAGES			UPAGES
+
+#XXX: <hack hack hack>
+
+define 	FRAME_SYSCALL		FRAME_SYSCALL
+
+#XXX: LWP_PCB should be lwp->l_addr->u_pcb
+define	PC_CURLWP		offsetof(struct cpu_info, ci_curlwp) 
+define	LWP_PCB			offsetof(struct lwp, l_addr) 
+define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault) 
+
+

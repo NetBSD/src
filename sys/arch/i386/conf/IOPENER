@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.73 2006/02/05 05:01:55 cube Exp $
+#	$NetBSD: IOPENER,v 1.73.6.1 2006/05/24 15:47:57 tron Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.73 $"
+#ident 		"IOPENER-$Revision: 1.73.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -169,7 +169,7 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 
 # Make F1 ("Back") -> Escape, F2-F12 ("Forward" to "Home") -> F1-F11

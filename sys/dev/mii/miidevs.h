@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.67.2.1 2006/03/28 09:42:12 tron Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.67.2.2 2006/05/24 15:50:27 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.65 2006/03/21 19:06:08 wiz Exp
+ *	NetBSD: miidevs,v 1.66 2006/04/27 16:43:14 jonathan Exp
  */
 
 /*-
@@ -172,6 +172,8 @@
 #define	MII_STR_BROADCOM_BCM5750	"BCM5750 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5714	0x0034
 #define	MII_STR_BROADCOM_BCM5714	"BCM5714 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5780	0x0035
+#define	MII_STR_BROADCOM_BCM5780	"BCM5780 1000BASE-T media interface"
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 #define	MII_MODEL_CICADA_CS8201	0x0001

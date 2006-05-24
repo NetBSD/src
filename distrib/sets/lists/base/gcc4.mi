@@ -1,0 +1,3 @@
+# $NetBSD: gcc4.mi,v 1.1.2.2 2006/05/24 15:47:48 tron Exp $
+./usr/libexec/cpp0				base-obsolete		obsolete
+./usr/sbin/dbsym				base-sysutil-bin	bfd

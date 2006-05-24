@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2005/12/11 12:17:50 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.2.12.1 2006/05/24 15:48:09 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,7 +37,6 @@
 #include "fs_kernfs.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
 #include "opt_ppcparam.h"
 #include "assym.h"
 
@@ -68,23 +67,8 @@ GLOBAL(endsym)
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
 
-GLOBAL(intrnames)
-	.asciz	"clock", "irq1", "irq2", "irq3"
-	.asciz	"irq4", "irq5", "irq6", "irq7"
-	.asciz	"irq8", "irq9", "irq10", "irq11"
-	.asciz	"irq12", "irq13", "irq14", "irq15"
-	.asciz	"irq16", "irq17", "irq18", "irq19"
-	.asciz	"irq20", "irq21", "irq22", "irq23"
-	.asciz	"irq24", "irq25", "irq26", "irq27"
-	.asciz	"irq28", "softnet", "softclock", "softserial"
-GLOBAL(eintrnames)
-	.align	4
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)
-
 /*
+	
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.
  */
@@ -128,6 +112,8 @@ __start_:
 	isync
 
 /* compute end of kernel memory */
+	lis	8,_C_LABEL(end)@ha
+	addi	8,8,_C_LABEL(end)@l
 #if defined(DDB) || defined(KERNFS)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
@@ -135,11 +121,8 @@ __start_:
 	lis	7,_C_LABEL(endsym)@ha
 	addi	7,7,_C_LABEL(endsym)@l
 	stw	4,0(7)
-#else
-	lis	4,_C_LABEL(end)@ha
-	addi	4,4,_C_LABEL(end)@l
 #endif
-
+	mr	4,8
 	INIT_CPUINFO(4,1,9,0)
 	
 	lis	3,__start@ha

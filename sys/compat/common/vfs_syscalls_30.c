@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.7 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.7.6.1 2006/05/24 15:48:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.7 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.7.6.1 2006/05/24 15:48:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.7 2006/03/01 12:38:12 yamt Exp
 #include <sys/uio.h>
 #include <sys/dirent.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -144,6 +145,47 @@ compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
 	cvtstat(&osb, &sb);
 	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
 	return error;
+}
+
+/* ARGSUSED */
+int
+compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_30_sys_fhstat_args /* {
+		syscallarg(const fhandle_t *) fhp;
+		syscallarg(struct stat13 *) sb;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct stat sb;
+	struct stat13 osb;
+	int error;
+	fhandle_t fh;
+	struct mount *mp;
+	struct vnode *vp;
+
+	/*
+	 * Must be super user
+	 */
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER,
+	    &p->p_acflag)))
+		return (error);
+
+	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
+		return (error);
+
+	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
+		return (ESTALE);
+	if (mp->mnt_op->vfs_fhtovp == NULL)
+		return EOPNOTSUPP;
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
+		return (error);
+	error = vn_stat(vp, &sb, l);
+	vput(vp);
+	if (error)
+		return (error);
+	cvtstat(&osb, &sb);
+	error = copyout(&osb, SCARG(uap, sb), sizeof(sb));
+	return (error);
 }
 
 /*

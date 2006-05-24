@@ -1,0 +1,3 @@
+$NetBSD: version,v 1.1.10.2 2006/05/24 15:47:49 tron Exp $
+
+0.01:	Just about enough code to launch a kernel from it.

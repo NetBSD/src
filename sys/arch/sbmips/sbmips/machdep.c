@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.28 2005/12/11 12:18:51 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.28.12.1 2006/05/24 15:48:21 tron Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2005/12/11 12:18:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.12.1 2006/05/24 15:48:21 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -121,9 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2005/12/11 12:18:51 christos Exp $"
 /* start and end of kernel symbol table */
 void	*ksym_start, *ksym_end;
 #endif
-
-/* For sysctl_hw. */
-extern char cpu_model[];
 
 /* Our exported CPU info.  Only one for now */
 struct cpu_info cpu_info_store;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.20 2005/12/12 01:14:22 christos Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.20.12.1 2006/05/24 15:50:25 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.20 2005/12/12 01:14:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.20.12.1 2006/05/24 15:50:25 tron Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -301,8 +301,9 @@ const struct wsscreen_list vga_screenlist = {
 	_vga_scrlist_mono
 };
 
-static int	vga_raster_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	vga_raster_mmap(void *, off_t, int);
+static int	vga_raster_ioctl(void *, void *, u_long, caddr_t, int,
+		    struct lwp *);
+static paddr_t	vga_raster_mmap(void *, void *, off_t, int);
 static int	vga_raster_alloc_screen(void *, const struct wsscreen_descr *,
 		    void **, int *, int *, long *);
 static void	vga_raster_free_screen(void *, void *);
@@ -329,7 +330,7 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	long defattr;
 	const struct wsscreen_descr *scr;
 #ifdef VGA_CONSOLE_SCREENTYPE
-	const char *typestr;
+	const char *typestr = NULL;
 #endif
 
 	if (check && !vga_common_probe(iot, memt))
@@ -595,7 +596,8 @@ vga_set_video(struct vga_config *vc, int state)
 }
 
 int
-vga_raster_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vga_raster_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct vga_config *vc = v;
 	const struct vga_funcs *vf = vc->vc_funcs;
@@ -643,7 +645,7 @@ vga_raster_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-vga_raster_mmap(void *v, off_t offset, int prot)
+vga_raster_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vga_config *vc = v;
 	const struct vga_funcs *vf = vc->vc_funcs;

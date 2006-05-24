@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.38.12.1 2006/03/28 09:42:11 tron Exp $	*/
+/*	$NetBSD: mlx.c,v 1.38.12.2 2006/05/24 15:50:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.38.12.1 2006/03/28 09:42:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.38.12.2 2006/05/24 15:50:25 tron Exp $");
 
 #include "ld.h"
 
@@ -1611,11 +1611,8 @@ mlx_enquire(struct mlx_softc *mlx, int command, size_t bufsize,
 
 	/* We got an error, and we allocated a result. */
 	if (rv != 0 && result != NULL) {
-		if (handler != NULL && mc != NULL) {
-			if (mapped)
-				mlx_ccb_unmap(mlx, mc);
+		if (mc != NULL)
 			mlx_ccb_free(mlx, mc);
-		}
 		free(result, M_DEVBUF);
 		result = NULL;
 	}
@@ -1807,19 +1804,19 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 			goto out;
 		}
 		mapped = 1;
+		/*
+		 * If this is a passthrough SCSI command, the DCDB is packed at
+		 * the beginning of the data area.  Fix up the DCDB to point to
+		 * the correct physical address and override any bufptr
+		 * supplied by the caller since we know what it's meant to be.
+		 */
+		if (mc->mc_mbox[0] == MLX_CMD_DIRECT_CDB) {
+			dcdb = (struct mlx_dcdb *)kbuf;
+			dcdb->dcdb_physaddr = mc->mc_xfer_phys + sizeof(*dcdb);
+			mu->mu_bufptr = 8;
+		}
 	}
 
-	/*
-	 * If this is a passthrough SCSI command, the DCDB is packed at the
-	 * beginning of the data area.  Fix up the DCDB to point to the correct physical
-	 * address and override any bufptr supplied by the caller since we know
-	 * what it's meant to be.
-	 */
-	if (mc->mc_mbox[0] == MLX_CMD_DIRECT_CDB) {
-		dcdb = (struct mlx_dcdb *)kbuf;
-		dcdb->dcdb_physaddr = mc->mc_xfer_phys + sizeof(*dcdb);
-		mu->mu_bufptr = 8;
-	}
 
 	/*
 	 * If there's a data buffer, fix up the command's buffer pointer.
@@ -1848,13 +1845,12 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
 
  out:
 	if (mc != NULL) {
+		/* Copy out status and data */
+		mu->mu_status = mc->mc_status;
 		if (mapped)
 			mlx_ccb_unmap(mlx, mc);
 		mlx_ccb_free(mlx, mc);
 	}
-
-	/* Copy out status and data */
-	mu->mu_status = mc->mc_status;
 
 	if (kbuf != NULL) {
 		if (mu->mu_datasize > 0 && (mu->mu_bufdir & MU_XFER_IN) != 0) {

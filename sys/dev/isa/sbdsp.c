@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.119.2.1 2006/03/31 09:45:21 tron Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.119.2.2 2006/05/24 15:50:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.119.2.1 2006/03/31 09:45:21 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.119.2.2 2006/05/24 15:50:26 tron Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -344,8 +344,9 @@ sbdsp_jazz16_probe(struct sbdsp_softc *sc)
 	/* XXX set both 8 & 16-bit drq to same channel, it works fine. */
 	sc->sc_drq16 = sc->sc_drq8;
 	if (sbdsp_wdsp(sc, JAZZ16_SET_DMAINTR) ||
+	    (sc->sc_drq16 >= 0 &&
 	    sbdsp_wdsp(sc, (jazz16_drq_conf[sc->sc_drq16] << 4) |
-		jazz16_drq_conf[sc->sc_drq8]) ||
+		jazz16_drq_conf[sc->sc_drq8])) ||
 	    sbdsp_wdsp(sc, jazz16_irq_conf[sc->sc_irq])) {
 		DPRINTF(("sbdsp: can't write jazz16 probe stuff\n"));
 	} else {

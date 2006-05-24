@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.12 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: denode.h,v 1.12.12.1 2006/05/24 15:50:34 tron Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -290,9 +290,9 @@ int msdosfs_update(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
 int createde(struct denode *, struct denode *,
 		struct denode **, struct componentname *);
-int deextend(struct denode *, u_long, struct ucred *);
+int deextend(struct denode *, u_long, kauth_cred_t);
 int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
-int detrunc(struct denode *, u_long, int, struct ucred *, struct lwp *);
+int detrunc(struct denode *, u_long, int, kauth_cred_t, struct lwp *);
 int deupdat(struct denode *, int);
 int doscheckpath(struct denode *, struct denode *);
 int dosdirempty(struct denode *);
@@ -303,7 +303,7 @@ void reinsert(struct denode *);
 int removede(struct denode *, struct denode *);
 int uniqdosname(struct denode *, struct componentname *, u_char *);
 int findwin95(struct denode *);
-int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
+int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, kauth_cred_t);
 void msdosfs_gop_markupdate(struct vnode *, int);
 void msdosfs_detimes(struct denode *, const struct timespec *,
     const struct timespec *, const struct timespec *, int);

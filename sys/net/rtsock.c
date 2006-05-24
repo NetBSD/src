@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.81 2006/02/21 22:01:17 rpaulo Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.81.6.1 2006/05/24 15:50:44 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81 2006/02/21 22:01:17 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81.6.1 2006/05/24 15:50:44 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.81 2006/02/21 22:01:17 rpaulo Exp $");
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -260,7 +261,7 @@ route_output(struct mbuf *m, ...)
 	 * is the only operation the non-superuser is allowed.
 	 */
 	if (rtm->rtm_type != RTM_GET &&
-	    suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+	    kauth_authorize_generic(curproc->p_cred, KAUTH_GENERIC_ISSUSER, &curproc->p_acflag) != 0)
 		senderr(EACCES);
 
 	switch (rtm->rtm_type) {
@@ -494,7 +495,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 	}
 	/* Check for bad data length.  */
 	if (cp != cplim) {
-		if (i == RTAX_NETMASK + 1 &&
+		if (i == RTAX_NETMASK + 1 && sa &&
 		    cp - ROUNDUP(sa->sa_len) + sa->sa_len == cplim)
 			/*
 			 * The last sockaddr was netmask.
@@ -930,6 +931,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		rtm->rtm_flags = rt->rt_flags;
 		rtm->rtm_use = rt->rt_use;
 		rtm->rtm_rmx = rt->rt_rmx;
+		KASSERT(rt->rt_ifp != NULL);
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_errno = rtm->rtm_pid = rtm->rtm_seq = 0;
 		rtm->rtm_addrs = info.rti_addrs;

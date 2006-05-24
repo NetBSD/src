@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.2 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.2.6.1 2006/05/24 15:50:40 tron Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.2 2006/02/25 02:28:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.2.6.1 2006/05/24 15:50:40 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.2 2006/02/25 02:28:58 wiz Exp $
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 /* v-node */
 #include <sys/namei.h>
@@ -133,14 +134,14 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && p->p_ucred->cr_uid != 0) {
+	if (error == 0 && kauth_cred_geteuid(p->p_cred) != 0) {
 		int accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
 		    (mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, accessmode, p->p_cred, l);
 		VOP_UNLOCK(devvp, 0);
 	}
 
@@ -165,7 +166,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 int
 sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
-	struct ucred *cred = l->l_proc->p_ucred;
+	kauth_cred_t cred = l->l_proc->p_cred;
 	struct sysvbfs_mount *bmp;
 	struct partinfo dpart;
 	int error;
@@ -305,7 +306,7 @@ sysvbfs_statvfs(struct mount *mp, struct statvfs *f, struct lwp *l)
 }
 
 int
-sysvbfs_sync(struct mount *mp, int waitfor, struct ucred *cred,
+sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred,
     struct lwp *l)
 {
 	struct sysvbfs_mount *bmp = mp->mnt_data;
@@ -437,7 +438,7 @@ sysvbfs_done(void)
 
 int
 sysvbfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
-    struct ucred *cred)
+    kauth_cred_t cred)
 {
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-onoe.c,v 1.8 2006/03/02 03:38:45 dyoung Exp $ */
+/*	$NetBSD: athrate-onoe.c,v 1.8.6.1 2006/05/24 15:50:24 tron Exp $ */
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/onoe/onoe.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.8 2006/03/02 03:38:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.8.6.1 2006/05/24 15:50:24 tron Exp $");
 #endif
 
 /*
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: athrate-onoe.c,v 1.8 2006/03/02 03:38:45 dyoung Exp 
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
 #include <dev/ic/athrate-onoe.h>
-#include <contrib/dev/ic/athhal_desc.h>
+#include <contrib/dev/ath/ah_desc.h>
 
 #define	ONOE_DEBUG
 #ifdef ONOE_DEBUG

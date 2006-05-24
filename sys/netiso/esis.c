@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.35 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: esis.c,v 1.35.12.1 2006/05/24 15:50:46 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.35 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.35.12.1 2006/05/24 15:50:46 tron Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.35 2005/12/11 12:25:12 christos Exp $");
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -194,7 +195,9 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = EISCONN;
 			break;
 		}
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
+							 KAUTH_GENERIC_ISSUSER,
+							 &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.65 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.65.12.1 2006/05/24 15:48:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65.12.1 2006/05/24 15:48:15 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65 2005/12/11 12:18:31 christos Exp
 
 extern struct lwp *fpu_lwp;
 
-void	setredzone __P((u_short *, caddr_t));
+void	setredzone(u_short *, caddr_t);
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -119,12 +119,8 @@ void	setredzone __P((u_short *, caddr_t));
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct syscframe *tf;
@@ -171,10 +167,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 }
 
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func) __P((void *));
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct syscframe *tf;
@@ -200,9 +193,9 @@ cpu_setfunc(l, func, arg)
  * saved, so that it goes out with the pcb, which is in the user area.
  */
 void
-cpu_swapout(l)
-	struct lwp *l;
+cpu_swapout(struct lwp *l)
 {
+
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
@@ -229,8 +222,7 @@ cpu_lwp_free(struct lwp *l, int proc)
  * jumps into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(arg)
-	struct lwp *arg;
+cpu_exit(struct lwp *arg)
 {
 	extern struct user *proc0paddr;
 	register struct lwp *l __asm("r3");
@@ -303,18 +295,19 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
-setredzone(pte, vaddr)
-	u_short *pte;
-	caddr_t vaddr;
+setredzone(u_short *pte, caddr_t vaddr)
 {
-/* eventually do this by setting up an expand-down stack segment
-   for ss0: selector, allowing stack access down to top of u.
-   this means though that protection violations need to be handled
-   thru a double fault exception that must do an integral task
-   switch to a known good context, within which a dump can be
-   taken. a sensible scheme might be to save the initial context
-   used by sched (that has physical memory mapped 1:1 at bottom)
-   and take the dump while still in mapped mode */
+
+/*
+ * eventually do this by setting up an expand-down stack segment
+ * for ss0: selector, allowing stack access down to top of u.
+ * this means though that protection violations need to be handled
+ * thru a double fault exception that must do an integral task
+ * switch to a known good context, within which a dump can be
+ * taken. a sensible scheme might be to save the initial context
+ * used by sched (that has physical memory mapped 1:1 at bottom)
+ * and take the dump while still in mapped mode.
+ */
 }
 #endif
 
@@ -322,8 +315,7 @@ setredzone(pte, vaddr)
  * Convert kernel VA to physical address
  */
 int
-kvtop(addr)
-	register caddr_t addr;
+kvtop(caddr_t addr)
 {
 	paddr_t pa;
 
@@ -338,9 +330,7 @@ kvtop(addr)
  * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
@@ -379,9 +369,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 

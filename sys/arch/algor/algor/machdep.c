@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2006/02/16 18:20:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.6.1 2006/05/24 15:47:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2006/02/16 18:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.6.1 2006/05/24 15:47:49 tron Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -189,9 +189,6 @@ struct p5064_config p5064_configuration;
 #include <algor/algor/algor_p6032var.h>
 struct p6032_config p6032_configuration;
 #endif 
-
-/* The following are used externally (sysctl_hw). */
-extern char	cpu_model[];
 
 struct	user *proc0paddr;
 

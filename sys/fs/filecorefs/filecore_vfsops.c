@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.23 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.23.6.1 2006/05/24 15:50:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.23 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.23.6.1 2006/05/24 15:50:34 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.23 2006/02/21 04:32:39 thorpej
 #include <sys/pool.h>
 #include <sys/conf.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
@@ -236,9 +237,9 @@ filecore_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (p->p_ucred->cr_uid != 0) {
+	if (kauth_cred_geteuid(p->p_cred) != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, VREAD, p->p_cred, l);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -295,7 +296,7 @@ filecore_mountfs(devvp, mp, l, argp)
 		return error;
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return EBUSY;
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0))
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0))
 	    != 0)
 		return (error);
 
@@ -377,8 +378,8 @@ filecore_mountfs(devvp, mp, l, argp)
 	fcmp->fc_devvp = devvp;
 	fcmp->fc_mntflags = argp->flags;
 	if (argp->flags & FILECOREMNT_USEUID) {
-		fcmp->fc_uid = l->l_proc->p_cred->p_ruid;
-		fcmp->fc_gid = l->l_proc->p_cred->p_rgid;
+		fcmp->fc_uid = kauth_cred_getuid(l->l_proc->p_cred);
+		fcmp->fc_gid = kauth_cred_getgid(l->l_proc->p_cred);
 	} else {
 		fcmp->fc_uid = argp->uid;
 		fcmp->fc_gid = argp->gid;
@@ -515,7 +516,7 @@ int
 filecore_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *cred;
+	kauth_cred_t cred;
 	struct lwp *l;
 {
 	return (0);

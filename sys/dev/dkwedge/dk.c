@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.12 2006/03/01 12:38:13 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.12.6.1 2006/05/24 15:50:07 tron Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.12 2006/03/01 12:38:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.12.6.1 2006/05/24 15:50:07 tron Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.12 2006/03/01 12:38:13 yamt Exp $");
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -459,7 +460,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 {
 	struct dkwedge_softc *sc = NULL;
 	u_int unit;
-	int bmaj, cmaj, i, mn, s;
+	int bmaj, cmaj, s;
 
 	/* Find our softc. */
 	dkw->dkw_devname[sizeof(dkw->dkw_devname) - 1] = '\0';
@@ -497,11 +498,8 @@ dkwedge_del(struct dkwedge_info *dkw)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances. */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(unit, i);
-		vdevgone(bmaj, mn, mn, VBLK);
-		vdevgone(cmaj, mn, mn, VCHR);
-	}
+	vdevgone(bmaj, unit, unit, VBLK);
+	vdevgone(cmaj, unit, unit, VCHR);
 
 	/* Clean up the parent. */
 	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
@@ -886,7 +884,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	struct vnode *vp;
-	int error;
+	int error = 0;
 
 	if (sc == NULL)
 		return (ENODEV);
@@ -930,13 +928,10 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		sc->sc_dk.dk_openmask =
 		    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 	}
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
-
-	return (0);
 
  popen_fail:
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
 	return (error);
 }
 
@@ -1189,7 +1184,7 @@ dkioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		else
 			error = VOP_IOCTL(sc->sc_parent->dk_rawvp,
 					  cmd, data, flag,
-					  l != NULL ? l->l_proc->p_ucred : NOCRED, l);
+					  l != NULL ? l->l_proc->p_cred : NOCRED, l);
 		break;
 	case DIOCGWEDGEINFO:
 	    {
@@ -1222,9 +1217,32 @@ dkioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 static int
 dksize(dev_t dev)
 {
+	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	int rv = -1;
 
-	/* XXX */
-	return (-1);
+	if (sc == NULL)
+		return (-1);
+	
+	if (sc->sc_state != DKW_STATE_RUNNING)
+		return (ENXIO);
+
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
+	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
+
+	/* Our content type is static, no need to open the device. */
+
+	if (strcmp(sc->sc_ptype, DKW_PTYPE_SWAP) == 0) {
+		/* Saturate if we are larger than INT_MAX. */
+		if (sc->sc_size > INT_MAX)
+			rv = INT_MAX;
+		else
+			rv = (int) sc->sc_size;
+	}
+
+	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+
+	return (rv);
 }
 
 /*

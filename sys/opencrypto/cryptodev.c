@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.18.4.1 2006/03/28 09:42:28 tron Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.18.4.2 2006/05/24 15:50:47 tron Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.18.4.1 2006/03/28 09:42:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.18.4.2 2006/05/24 15:50:47 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.18.4.1 2006/03/28 09:42:28 tron Exp 
 #include <sys/sha1.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
@@ -99,8 +100,8 @@ static int	cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp
 static int	cryptoselect(dev_t dev, int rw, struct lwp *l);
 
 /* Declaration of cloned-device (per-ctxt) entrypoints */
-static int	cryptof_read(struct file *, off_t *, struct uio *, struct ucred *, int);
-static int	cryptof_write(struct file *, off_t *, struct uio *, struct ucred *, int);
+static int	cryptof_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+static int	cryptof_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 static int	cryptof_ioctl(struct file *, u_long, void*, struct lwp *l);
 static int	cryptof_close(struct file *, struct lwp *);
 
@@ -138,7 +139,7 @@ static int	cryptodevkey_cb(void *);
 /* ARGSUSED */
 int
 cryptof_read(struct file *fp, off_t *poff, struct uio *uio,
-	     struct ucred *cred, int flags)
+	     kauth_cred_t cred, int flags)
 {
 	return (EIO);
 }
@@ -146,7 +147,7 @@ cryptof_read(struct file *fp, off_t *poff, struct uio *uio,
 /* ARGSUSED */
 int
 cryptof_write(struct file *fp, off_t *poff, struct uio *uio,
-	      struct ucred *cred, int flags)
+	      kauth_cred_t cred, int flags)
 {
 	return (EIO);
 }
@@ -435,12 +436,14 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		bcopy(cse->tmp_iv, crde->crd_iv, cse->txform->blocksize);
 		crde->crd_flags |= CRD_F_IV_EXPLICIT | CRD_F_IV_PRESENT;
 		crde->crd_skip = 0;
-	} else if (cse->cipher == CRYPTO_ARC4) { /* XXX use flag? */
-		crde->crd_skip = 0;
 	} else if (crde) {
-		crde->crd_flags |= CRD_F_IV_PRESENT;
-		crde->crd_skip = cse->txform->blocksize;
-		crde->crd_len -= cse->txform->blocksize;
+		if (cse->cipher == CRYPTO_ARC4) { /* XXX use flag? */
+			crde->crd_skip = 0;
+		} else {
+			crde->crd_flags |= CRD_F_IV_PRESENT;
+			crde->crd_skip = cse->txform->blocksize;
+			crde->crd_len -= cse->txform->blocksize;
+		}
 	}
 
 	if (cop->mac) {

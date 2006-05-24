@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.106 2005/12/11 12:24:57 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.106.12.1 2006/05/24 15:50:44 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.106 2005/12/11 12:24:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.106.12.1 2006/05/24 15:50:44 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.106 2005/12/11 12:24:57 christos Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -320,7 +321,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 	switch (cmd) {
 	case SIOCALIFADDR:
 	case SIOCDLIFADDR:
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
+					KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			return (EPERM);
 		/*fall through*/
 	case SIOCGLIFADDR:
@@ -375,7 +377,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		    (cmd == SIOCSIFNETMASK || cmd == SIOCSIFDSTADDR))
 			return (EADDRNOTAVAIL);
 
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
+						KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			return (EPERM);
 
 		if (ia == 0) {
@@ -404,7 +407,8 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 		break;
 
 	case SIOCSIFBRDADDR:
-		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
+		if (p == 0 || (error = kauth_authorize_generic(p->p_cred,
+					KAUTH_GENERIC_ISSUSER, &p->p_acflag)))
 			return (EPERM);
 		/* FALLTHROUGH */
 
@@ -692,6 +696,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, caddr_t data,
 		int cmp;
 
 		bzero(&mask, sizeof(mask));
+		bzero(&match, sizeof(match));	/* XXX gcc */
 		if (iflr->flags & IFLR_PREFIX) {
 			/* lookup a prefix rather than address. */
 			in_len2mask(&mask, iflr->prefixlen);

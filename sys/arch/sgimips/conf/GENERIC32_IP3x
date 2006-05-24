@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.47.6.1 2006/03/31 09:45:08 tron Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.47.6.2 2006/05/24 15:48:21 tron Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.47.6.1 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.47.6.2 $"
 
 maxusers	32
 
@@ -185,6 +185,8 @@ crime0 		at mainbus0 addr 0x14000000
 mace0 		at mainbus0 addr 0x1f000000
 macepci0 	at mace0 offset 0x080000 intr 7
 pci0 		at macepci0 bus 0
+pci*		at ppb? bus ?
+options 	PCI_NETBSD_CONFIGURE
 
 # MACE devices
 mec0 		at mace0 offset 0x280000 intr 3
@@ -193,6 +195,9 @@ lpt0 		at mace0 offset 0x380000 intr 4 intrmask 0x000f0000
 com0 		at mace0 offset 0x390000 intr 4 intrmask 0x03f00000
 com1 		at mace0 offset 0x398000 intr 4 intrmask 0xfc000000
 mcclock0	at mace0 offset 0x3a0000
+
+# PCI bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # PCI cryptographic devices
 hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
@@ -208,7 +213,7 @@ esh*    at pci? dev ? function ?        # Essential HIPPI card
 ex*     at pci? dev ? function ?        # 3Com 90x[BC]
 fpa*    at pci? dev ? function ?        # DEC DEFPA FDDI
 fxp*    at pci? dev ? function ?        # Intel EtherExpress PRO 10+/100B
-#gsip*   at pci? dev ? function ?        # NS83820 Gigabit Ethernet
+gsip*   at pci? dev ? function ?        # NS83820 Gigabit Ethernet
 #hme*   at pci? dev ? function ?        # Sun Microelectronics STP2002-STQ
 le*     at pci? dev ? function ?        # PCnet-PCI Ethernet
 lmc*    at pci? dev ? function ?        # Lan Media Corp SSI/HSSI/DS3
@@ -256,6 +261,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?                   # Realtek RTL8150L internal PHYs
 
 # O2 SCSI
+adv* 		at pci? dev ? function ?
 ahc* 		at pci? dev ? function ?
 esiop*		at pci? dev ? function ?
 njs*		at pci? dev ? function ?

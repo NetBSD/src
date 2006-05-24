@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170reg.h,v 1.10 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: smc83c170reg.h,v 1.10.12.1 2006/05/24 15:50:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@
  * EPIC transmit descriptor.  Must be 4-byte aligned.
  */
 struct epic_txdesc {
-	u_int32_t	et_txstatus;	/* transmit status; see below */
-	u_int32_t	et_bufaddr;	/* buffer address */
-	u_int32_t	et_control;	/* control word; see below */
-	u_int32_t	et_nextdesc;	/* next descriptor pointer */
+	uint32_t	et_txstatus;	/* transmit status; see below */
+	uint32_t	et_bufaddr;	/* buffer address */
+	uint32_t	et_control;	/* control word; see below */
+	uint32_t	et_nextdesc;	/* next descriptor pointer */
 };
 
 /* et_txstatus */
@@ -86,10 +86,10 @@ struct epic_txdesc {
  * EPIC receive descriptor.  Must be 4-byte aligned.
  */
 struct epic_rxdesc {
-	u_int32_t	er_rxstatus;	/* receive status; see below */
-	u_int32_t	er_bufaddr;	/* buffer address */
-	u_int32_t	er_control;	/* control word; see below */
-	u_int32_t	er_nextdesc;	/* next descriptor pointer */
+	uint32_t	er_rxstatus;	/* receive status; see below */
+	uint32_t	er_bufaddr;	/* buffer address */
+	uint32_t	er_control;	/* control word; see below */
+	uint32_t	er_nextdesc;	/* next descriptor pointer */
 };
 
 /* er_rxstatus */
@@ -126,10 +126,10 @@ struct epic_rxdesc {
  * EPIC fraglist descriptor.
  */
 struct epic_fraglist {
-	u_int32_t	ef_nfrags;	/* number of frags in list */
+	uint32_t	ef_nfrags;	/* number of frags in list */
 	struct {
-		u_int32_t ef_addr;	/* address of frag */
-		u_int32_t ef_length;	/* length of frag */
+		uint32_t ef_addr;	/* address of frag */
+		uint32_t ef_length;	/* length of frag */
 	} ef_frags[EPIC_NFRAGS];
 };
 

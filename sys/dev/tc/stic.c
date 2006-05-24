@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.30 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: stic.c,v 1.30.12.1 2006/05/24 15:50:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.30 2005/12/11 12:24:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.30.12.1 2006/05/24 15:50:30 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,37 +157,37 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.30 2005/12/11 12:24:00 christos Exp $");
 	tc_wmb();				\
    } while (0)
 
-int	sticioctl(void *, u_long, caddr_t, int, struct lwp *);
-int	stic_alloc_screen(void *, const struct wsscreen_descr *, void **,
-			  int *, int *, long *);
-void	stic_free_screen(void *, void *);
-int	stic_show_screen(void *, void *, int, void (*)(void *, int, int),
-			 void *);
+static int	sticioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	stic_alloc_screen(void *, const struct wsscreen_descr *,
+				  void **, int *, int *, long *);
+static void	stic_free_screen(void *, void *);
+static int	stic_show_screen(void *, void *, int,
+				 void (*)(void *, int, int), void *);
 
-void	stic_do_switch(void *);
-void	stic_setup_backing(struct stic_info *, struct stic_screen *);
-void	stic_setup_vdac(struct stic_info *);
-void	stic_clear_screen(struct stic_info *);
+static void	stic_do_switch(void *);
+static void	stic_setup_backing(struct stic_info *, struct stic_screen *);
+static void	stic_setup_vdac(struct stic_info *);
+static void	stic_clear_screen(struct stic_info *);
 
-int	stic_get_cmap(struct stic_info *, struct wsdisplay_cmap *);
-int	stic_set_cmap(struct stic_info *, struct wsdisplay_cmap *);
-int	stic_set_cursor(struct stic_info *, struct wsdisplay_cursor *);
-int	stic_get_cursor(struct stic_info *, struct wsdisplay_cursor *);
-void	stic_set_curpos(struct stic_info *, struct wsdisplay_curpos *);
-void	stic_set_hwcurpos(struct stic_info *);
+static int	stic_get_cmap(struct stic_info *, struct wsdisplay_cmap *);
+static int	stic_set_cmap(struct stic_info *, struct wsdisplay_cmap *);
+static int	stic_set_cursor(struct stic_info *, struct wsdisplay_cursor *);
+static int	stic_get_cursor(struct stic_info *, struct wsdisplay_cursor *);
+static void	stic_set_curpos(struct stic_info *, struct wsdisplay_curpos *);
+static void	stic_set_hwcurpos(struct stic_info *);
 
-void	stic_cursor(void *, int, int, int);
-void	stic_copycols(void *, int, int, int, int);
-void	stic_copyrows(void *, int, int, int);
-void	stic_erasecols(void *, int, int, int, long);
-void	stic_eraserows(void *, int, int, long);
-int	stic_mapchar(void *, int, u_int *);
-void	stic_putchar(void *, int, int, u_int, long);
-int	stic_allocattr(void *, int, int, int, long *);
+static void	stic_cursor(void *, int, int, int);
+static void	stic_copycols(void *, int, int, int, int);
+static void	stic_copyrows(void *, int, int, int);
+static void	stic_erasecols(void *, int, int, int, long);
+static void	stic_eraserows(void *, int, int, long);
+static int	stic_mapchar(void *, int, u_int *);
+static void	stic_putchar(void *, int, int, u_int, long);
+static int	stic_allocattr(void *, int, int, int, long *);
 
-dev_type_open(sticopen);
-dev_type_close(sticclose);
-dev_type_mmap(sticmmap);
+static dev_type_open(sticopen);
+static dev_type_close(sticclose);
+static dev_type_mmap(sticmmap);
 
 const struct cdevsw stic_cdevsw = {
 	sticopen, sticclose, noread, nowrite, noioctl,
@@ -481,7 +481,7 @@ stic_cnattach(struct stic_info *si)
 	wsdisplay_cnattach(&stic_stdscreen, ss, 0, 0, defattr);
 }
 
-void
+static void
 stic_setup_vdac(struct stic_info *si)
 {
 	u_int8_t *ip, *mp;
@@ -531,7 +531,7 @@ stic_setup_vdac(struct stic_info *si)
 	splx(s);
 }
 
-void
+static void
 stic_clear_screen(struct stic_info *si)
 {
 	u_int32_t *pb;
@@ -557,8 +557,8 @@ stic_clear_screen(struct stic_info *si)
 	}
 }
 
-int
-sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+static int
+sticioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct stic_info *si;
 	int s;
@@ -643,7 +643,7 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	return (EPASSTHROUGH);
 }
 
-void
+static void
 stic_setup_backing(struct stic_info *si, struct stic_screen *ss)
 {
 	int size;
@@ -652,7 +652,7 @@ stic_setup_backing(struct stic_info *si, struct stic_screen *ss)
 	ss->ss_backing = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
 }
 
-int
+static int
 stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		  int *curxp, int *curyp, long *attrp)
 {
@@ -679,7 +679,7 @@ stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	return (0);
 }
 
-void
+static void
 stic_free_screen(void *v, void *cookie)
 {
 	struct stic_screen *ss;
@@ -697,7 +697,7 @@ stic_free_screen(void *v, void *cookie)
 	free(ss, M_DEVBUF);
 }
 
-int
+static int
 stic_show_screen(void *v, void *cookie, int waitok,
 		 void (*cb)(void *, int, int), void *cbarg)
 {
@@ -719,7 +719,7 @@ stic_show_screen(void *v, void *cookie, int waitok,
 	return (0);
 }
 
-void
+static void
 stic_do_switch(void *cookie)
 {
 	struct stic_screen *ss;
@@ -787,7 +787,7 @@ stic_do_switch(void *cookie)
 	}
 }
 
-int
+static int
 stic_allocattr(void *cookie, int fg, int bg, int flags, long *attr)
 {
 	long tmp;
@@ -808,7 +808,7 @@ stic_allocattr(void *cookie, int fg, int bg, int flags, long *attr)
 	return (0);
 }
 
-void
+static void
 stic_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct stic_info *si;
@@ -849,7 +849,7 @@ stic_erasecols(void *cookie, int row, int col, int num, long attr)
 	(*si->si_pbuf_post)(si, pb);
 }
 
-void
+static void
 stic_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct stic_info *si;
@@ -888,7 +888,7 @@ stic_eraserows(void *cookie, int row, int num, long attr)
 	(*si->si_pbuf_post)(si, pb);
 }
 
-void
+static void
 stic_copyrows(void *cookie, int src, int dst, int height)
 {
 	struct stic_info *si;
@@ -948,7 +948,7 @@ stic_copyrows(void *cookie, int src, int dst, int height)
 	}
 }
 
-void
+static void
 stic_copycols(void *cookie, int row, int src, int dst, int num)
 {
 	struct stic_info *si;
@@ -1000,7 +1000,7 @@ stic_copycols(void *cookie, int row, int src, int dst, int num)
 	(*si->si_pbuf_post)(si, pbs);
 }
 
-void
+static void
 stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 {
 	struct wsdisplay_font *font;
@@ -1120,7 +1120,7 @@ stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 	(*si->si_pbuf_post)(si, pb);
 }
 
-int
+static int
 stic_mapchar(void *cookie, int c, u_int *cp)
 {
 	struct stic_info *si;
@@ -1141,7 +1141,7 @@ stic_mapchar(void *cookie, int c, u_int *cp)
 	return (5);
 }
 
-void
+static void
 stic_cursor(void *cookie, int on, int row, int col)
 {
 	struct stic_screen *ss;
@@ -1258,7 +1258,7 @@ stic_flush(struct stic_info *si)
 	}
 }
 
-int
+static int
 stic_get_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 {
 	u_int index = p->index, count = p->count;
@@ -1277,7 +1277,7 @@ stic_get_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 	return error;
 }
 
-int
+static int
 stic_set_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 {
 	struct stic_hwcmap256 cmap;
@@ -1317,7 +1317,7 @@ stic_set_cmap(struct stic_info *si, struct wsdisplay_cmap *p)
 	return (0);
 }
 
-int
+static int
 stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 {
 #define	cc (&si->si_cursor)
@@ -1395,7 +1395,7 @@ stic_set_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 #undef cc
 }
 
-int
+static int
 stic_get_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 {
 
@@ -1403,7 +1403,7 @@ stic_get_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 	return (EPASSTHROUGH);
 }
 
-void
+static void
 stic_set_curpos(struct stic_info *si, struct wsdisplay_curpos *curpos)
 {
 	int x, y;
@@ -1425,7 +1425,7 @@ stic_set_curpos(struct stic_info *si, struct wsdisplay_curpos *curpos)
 	stic_set_hwcurpos(si);
 }
 
-void
+static void
 stic_set_hwcurpos(struct stic_info *si)
 {
 	volatile u_int32_t *vdac;
@@ -1452,7 +1452,7 @@ stic_set_hwcurpos(struct stic_info *si)
  * because access to the DMA engine means that it's possible to circumvent
  * the securelevel mechanism.
  */
-int
+static int
 sticopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct stic_info *si;
@@ -1476,7 +1476,7 @@ sticopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-int
+static int
 sticclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct stic_info *si;
@@ -1490,7 +1490,7 @@ sticclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return (0);
 }
 
-paddr_t
+static paddr_t
 sticmmap(dev_t dev, off_t offset, int prot)
 {
 	struct stic_info *si;

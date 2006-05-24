@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2006/02/28 23:02:28 kleink Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.6.1 2006/05/24 15:48:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2006/02/28 23:02:28 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.6.1 2006/05/24 15:48:10 tron Exp $");
 
 #include "opt_md.h"
 
@@ -101,12 +101,15 @@ cpu_configure(void)
 #define BUILTIN_ETHERNET_P(pa)	\
 	((pa)->pa_bus == 0 && (pa)->pa_device == 4 && (pa)->pa_function == 0)
 
-#define SETPROP(x, y, z) do {						\
-			if (devprop_set(dev, x,				\
-			    y, z, 0, 0) != 0)				\
-				printf("WARNING: unable to set " x " "	\
-				   "property for %s\n", dev->dv_xname);	\
-			} while (/*CONSTCOND*/0)
+#define SETPROP(x, y)							\
+	do {								\
+		if (prop_dictionary_set(device_properties(dev),		\
+						x, y) == FALSE) {	\
+			printf("WARNING: unable to set " x " "		\
+			   "property for %s\n", dev->dv_xname);		\
+		}							\
+		prop_object_release(y);					\
+	} while (/*CONSTCOND*/0)
 
 void
 device_register(struct device *dev, void *aux)
@@ -118,21 +121,29 @@ device_register(struct device *dev, void *aux)
 		struct pci_attach_args *pa = aux;
 
 		if (BUILTIN_ETHERNET_P(pa)) {
-			uint16_t cfg1, cfg2, swdpin;
+			prop_number_t cfg1, cfg2, swdpin;
+			prop_data_t mac;
 
 			/*
 			 * We set these configuration registers to 0,
 			 * because it's the closest we have to "leave them
 			 * alone". That and, it works.
 			 */
-			cfg1 = 0;
-			cfg2 = 0;
-			swdpin = 0;
+			cfg1 = prop_number_create_integer(0);
+			KASSERT(cfg1 != NULL);
+			cfg2 = prop_number_create_integer(0);
+			KASSERT(cfg2 != NULL);
+			swdpin = prop_number_create_integer(0);
+			KASSERT(swdpin != NULL);
 
-			SETPROP("mac-addr", iyonix_macaddr, ETHER_ADDR_LEN);
-			SETPROP("i82543-cfg1", &cfg1, sizeof(cfg1));
-			SETPROP("i82543-cfg2", &cfg2, sizeof(cfg2));
-			SETPROP("i82543-swdpin", &swdpin, sizeof(swdpin));
+			mac = prop_data_create_data_nocopy(iyonix_macaddr,
+							   ETHER_ADDR_LEN);
+			KASSERT(mac != NULL);
+
+			SETPROP("mac-addr", mac);
+			SETPROP("i82543-cfg1", cfg1);
+			SETPROP("i82543-cfg2", cfg2);
+			SETPROP("i82543-swdpin", swdpin);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_space.c,v 1.5 2005/11/24 13:08:32 yamt Exp $ */
+/*	$NetBSD: ixp425_space.c,v 1.5.12.1 2006/05/24 15:47:52 tron Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_space.c,v 1.5 2005/11/24 13:08:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_space.c,v 1.5.12.1 2006/05/24 15:47:52 tron Exp $");
 
 /*
  * bus_space I/O functions for ixp425
@@ -80,58 +80,58 @@ struct bus_space ixp425_bs_tag = {
 	ixp425_bs_barrier,
 
 	/* read (single) */
-        generic_bs_r_1,
-        generic_armv4_bs_r_2,
-        generic_bs_r_4,
-        bs_notimpl_bs_r_8,
+	generic_bs_r_1,
+	generic_armv4_bs_r_2,
+	generic_bs_r_4,
+	bs_notimpl_bs_r_8,
 
-        /* read multiple */
-        generic_bs_rm_1,
-        generic_armv4_bs_rm_2,
-        generic_bs_rm_4,
-        bs_notimpl_bs_rm_8,
+	/* read multiple */
+	generic_bs_rm_1,
+	generic_armv4_bs_rm_2,
+	generic_bs_rm_4,
+	bs_notimpl_bs_rm_8,
 
-        /* read region */
-        generic_bs_rr_1,
-        generic_armv4_bs_rr_2,
-        generic_bs_rr_4,
-        bs_notimpl_bs_rr_8,
+	/* read region */
+	generic_bs_rr_1,
+	generic_armv4_bs_rr_2,
+	generic_bs_rr_4,
+	bs_notimpl_bs_rr_8,
 
-        /* write (single) */
-        generic_bs_w_1,
-        generic_armv4_bs_w_2,
-        generic_bs_w_4,
-        bs_notimpl_bs_w_8,
+	/* write (single) */
+	generic_bs_w_1,
+	generic_armv4_bs_w_2,
+	generic_bs_w_4,
+	bs_notimpl_bs_w_8,
 
-        /* write multiple */
-        generic_bs_wm_1,
-        generic_armv4_bs_wm_2,
-        generic_bs_wm_4,
-        bs_notimpl_bs_wm_8,
+	/* write multiple */
+	generic_bs_wm_1,
+	generic_armv4_bs_wm_2,
+	generic_bs_wm_4,
+	bs_notimpl_bs_wm_8,
 
-        /* write region */
-        generic_bs_wr_1,
-        generic_armv4_bs_wr_2,
-        generic_bs_wr_4,
-        bs_notimpl_bs_wr_8,
+	/* write region */
+	generic_bs_wr_1,
+	generic_armv4_bs_wr_2,
+	generic_bs_wr_4,
+	bs_notimpl_bs_wr_8,
 
-        /* set multiple */
-        bs_notimpl_bs_sm_1,
-        bs_notimpl_bs_sm_2,
-        bs_notimpl_bs_sm_4,
-        bs_notimpl_bs_sm_8,
+	/* set multiple */
+	bs_notimpl_bs_sm_1,
+	bs_notimpl_bs_sm_2,
+	bs_notimpl_bs_sm_4,
+	bs_notimpl_bs_sm_8,
 
-        /* set region */
-        bs_notimpl_bs_sr_1,
-        generic_armv4_bs_sr_2,
-        generic_bs_sr_4,
-        bs_notimpl_bs_sr_8,
+	/* set region */
+	bs_notimpl_bs_sr_1,
+	generic_armv4_bs_sr_2,
+	generic_bs_sr_4,
+	bs_notimpl_bs_sr_8,
 
-        /* copy */
-        bs_notimpl_bs_c_1,
-        generic_armv4_bs_c_2,
-        bs_notimpl_bs_c_4,
-        bs_notimpl_bs_c_8,
+	/* copy */
+	bs_notimpl_bs_c_1,
+	generic_armv4_bs_c_2,
+	bs_notimpl_bs_c_4,
+	bs_notimpl_bs_c_8,
 };
 
 int
@@ -141,10 +141,10 @@ ixp425_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	const struct pmap_devmap	*pd;
 
 	paddr_t		startpa;
-        paddr_t		endpa;
-        paddr_t		pa;
-        paddr_t		offset;
-        vaddr_t		va;
+	paddr_t		endpa;
+	paddr_t		pa;
+	paddr_t		offset;
+	vaddr_t		va;
 
 	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
 		/* Device was statically mapped. */

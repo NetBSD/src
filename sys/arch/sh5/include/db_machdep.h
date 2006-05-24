@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.12 2005/12/11 12:19:00 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.12.12.1 2006/05/24 15:48:22 tron Exp $	*/
 
 /*
  * Mach Operating System
@@ -52,7 +52,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_ADDR(addr)	((addr) & ~3)	/* ditch the instruction type bits */
 #define	BKPT_INST	0x6ff5fff0	/* breakpoint instruction (BRK) */
 #define	BKPT_SIZE	4		/* size of breakpoint inst */
-#define	BKPT_SET(inst)	BKPT_INST
+#define	BKPT_SET(inst, addr)	BKPT_INST
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAK)
 #define	IS_WATCHPOINT_TRAP(type, code)	(0) /* XXX (msaitoh) */

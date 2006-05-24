@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.24 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umidi.c,v 1.24.12.1 2006/05/24 15:50:30 tron Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.24 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.24.12.1 2006/05/24 15:50:30 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -534,6 +534,7 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 	desc = TO_D(usbd_get_interface_descriptor(sc->sc_iface));
 	for (i=(int)TO_IFD(desc)->bNumEndpoints-1; i>=0; i--) {
 		epd = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
+		KASSERT(epd != NULL);
 		if (UE_GET_XFERTYPE(epd->bmAttributes) == UE_BULK) {
 			dir = UE_GET_DIR(epd->bEndpointAddress);
 			if (dir==UE_DIR_OUT && !out_addr)

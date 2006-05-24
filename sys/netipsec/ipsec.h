@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.14 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.14.6.1 2006/05/24 15:50:46 tron Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -219,6 +219,10 @@ struct ipsec_history {
 };
 
 extern int ipsec_debug;
+#ifdef IPSEC_DEBUG
+extern int ipsec_replay;
+extern int ipsec_integrity;
+#endif
 
 extern struct newipsecstat newipsecstat;
 extern struct secpolicy ip4_def_policy;

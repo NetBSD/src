@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.26 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: satlink.c,v 1.26.12.1 2006/05/24 15:50:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.26 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.26.12.1 2006/05/24 15:50:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,10 +255,10 @@ satlinkattach(parent, self, aux)
 }
 
 int
-satlinkopen(dev, flags, fmt, p)
+satlinkopen(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct satlink_softc *sc;
 	int error;
@@ -291,10 +291,10 @@ satlinkopen(dev, flags, fmt, p)
 }
 
 int
-satlinkclose(dev, flags, fmt, p)
+satlinkclose(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int s;
@@ -383,12 +383,12 @@ satlinkread(dev, uio, flags)
 }
 
 int
-satlinkioctl(dev, cmd, data, flags, p)
+satlinkioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 
@@ -412,10 +412,10 @@ satlinkioctl(dev, cmd, data, flags, p)
 }
 
 int
-satlinkpoll(dev, events, p)
+satlinkpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int s, revents;
@@ -431,7 +431,7 @@ satlinkpoll(dev, events, p)
 	if (sc->sc_uptr != sc->sc_sptr)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
-		selrecord(p, &sc->sc_selq);
+		selrecord(l, &sc->sc_selq);
 	splx(s);
 
 	return (revents);

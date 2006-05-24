@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.10 2005/12/15 01:44:00 briggs Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.10.12.1 2006/05/24 15:47:52 tron Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -118,7 +118,7 @@ struct i80321_softc {
 
 	/*
 	 * This is the PCI address that the Outbound I/O window maps to.
-         * The offset is to keep the actual used I/O address away from 0,
+	 * The offset is to keep the actual used I/O address away from 0,
 	 * which can be bad if, say, an i8254x gig-e chip gets mapped there.
 	 * The 0 value apparently looks like "unconfigured" to the controller
 	 * and it ignores writes to that region (it doesn't cause a bus fault,

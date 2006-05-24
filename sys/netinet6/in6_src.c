@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23 2006/01/21 00:15:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23.10.1 2006/05/24 15:50:45 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.23 2006/01/21 00:15:36 rpaulo Exp $");
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -639,9 +640,7 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 	 * use it as the gateway.
 	 */
 	if (opts && opts->ip6po_nexthop) {
-#ifdef notyet			/* until introducing RFC3542 support */
 		struct route_in6 *ron;
-#endif
 
 		sin6_next = satosin6(opts->ip6po_nexthop);
 
@@ -655,7 +654,6 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 * If the next hop is an IPv6 address, then the node identified
 		 * by that address must be a neighbor of the sending host.
 		 */
-#ifdef notyet			/* see above */
 		ron = &opts->ip6po_nextroute;
 		if ((ron->ro_rt &&
 		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
@@ -696,7 +694,6 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 */
 		if (!clone)
 			goto done;
-#endif
 	}
 
 	/*
@@ -904,7 +901,8 @@ in6_pcbsetport(laddr, in6p, p)
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
-		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
+		if (p == 0 || (kauth_authorize_generic(p->p_cred,
+					KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0))
 			return (EACCES);
 #endif
 		minport = ip6_lowportmin;
@@ -1010,7 +1008,7 @@ in6_src_sysctl(oldp, oldlenp, newp, newlen)
 	}
 	if (oldp || oldlenp) {
 		struct walkarg w;
-		size_t oldlen = (oldlenp ? *oldlenp : 0);
+		size_t oldlen = *oldlenp;
 
 		bzero(&w, sizeof(w));
 		w.w_given = oldlen;

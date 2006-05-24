@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.114.2.1 2006/03/28 09:42:10 tron Exp $  */
+/*	$NetBSD: atw.c,v 1.114.2.2 2006/05/24 15:50:24 tron Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.114.2.1 2006/03/28 09:42:10 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.114.2.2 2006/05/24 15:50:24 tron Exp $");
 
 #include "bpfilter.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.114.2.1 2006/03/28 09:42:10 tron Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/time.h>
+#include <lib/libkern/libkern.h>
 
 #include <machine/endian.h>
 
@@ -662,11 +663,11 @@ atw_attach(struct atw_softc *sc)
 	sc->sc_bbptype = SHIFTOUT(sc->sc_srom[ATW_SR_CSR20],
 	    ATW_SR_BBPTYPE_MASK);
 
-	if (sc->sc_rftype > sizeof(type_strings)/sizeof(type_strings[0])) {
+	if (sc->sc_rftype >= __arraycount(type_strings)) {
 		printf("%s: unknown RF\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	if (sc->sc_bbptype > sizeof(type_strings)/sizeof(type_strings[0])) {
+	if (sc->sc_bbptype >= __arraycount(type_strings)) {
 		printf("%s: unknown BBP\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -3413,7 +3414,7 @@ atw_start(struct ifnet *ifp)
 	struct atw_txdesc *txd;
 	int npkt, rate;
 	bus_dmamap_t dmamap;
-	int ctl, error, firsttx, nexttx, lasttx = -1, first, ofree, seg;
+	int ctl, error, firsttx, nexttx, lasttx, first, ofree, seg;
 
 	DPRINTF2(sc, ("%s: atw_start: sc_flags 0x%08x, if_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags, ifp->if_flags));
@@ -3426,7 +3427,7 @@ atw_start(struct ifnet *ifp)
 	 * the first descriptor we'll use.
 	 */
 	ofree = sc->sc_txfree;
-	firsttx = sc->sc_txnext;
+	firsttx = lasttx = sc->sc_txnext;
 
 	DPRINTF2(sc, ("%s: atw_start: txfree %d, txnext %d\n",
 	    sc->sc_dev.dv_xname, ofree, firsttx));
@@ -3717,7 +3718,6 @@ atw_start(struct ifnet *ifp)
 			lasttx = nexttx;
 		}
 
-		IASSERT(lasttx != -1, ("bad lastx"));
 		/* Set `first segment' and `last segment' appropriately. */
 		sc->sc_txdescs[sc->sc_txnext].at_flags |=
 		    htole32(ATW_TXFLAG_FS);

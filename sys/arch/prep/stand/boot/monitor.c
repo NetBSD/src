@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.4 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: monitor.c,v 1.4.12.1 2006/05/24 15:48:21 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef DBMONITOR
+
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
 #include "boot.h"
@@ -45,17 +47,17 @@
 extern int errno;
 extern char *name;
 
-void db_cmd_dump __P((int, char **));
-void db_cmd_get __P((int, char **));
-void db_cmd_mf __P((int, char **));
-void db_cmd_mt __P((int, char **));
-void db_cmd_put __P((int, char **));
-void db_cmd_help __P((int, char **));
+void db_cmd_dump(int, char **);
+void db_cmd_get(int, char **);
+void db_cmd_mf(int, char **);
+void db_cmd_mt(int, char **);
+void db_cmd_put(int, char **);
+void db_cmd_help(int, char **);
 
-unsigned int mfmsr __P((void));
-void mtmsr __P((unsigned int));
+unsigned int mfmsr((void);
+void mtmsr(unsigned int);
 
-int db_atob __P((char *));
+int db_atob(char *);
 
 struct {
 	char *name;
@@ -71,7 +73,7 @@ struct {
 };
 
 int
-db_monitor()
+db_monitor(void)
 {
 	int tmp;
 	int argc, flag;
@@ -117,8 +119,7 @@ db_monitor()
 }
 
 int
-db_atob(p)
-	char *p;
+db_atob(char *p)
 {
 	int b = 0, width, tmp, exp, x = 0;
 	
@@ -143,9 +144,7 @@ db_atob(p)
 }
 
 void
-db_cmd_dump(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_dump(int argc, char **argv)
 {
 	char *p, *r, *pp;
 	int mode, add, size, i;
@@ -217,9 +216,7 @@ out:
 }
 
 void
-db_cmd_get(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_get(int argc, char **argv)
 {
 	char *p, *r;
 	int mode, add;
@@ -272,9 +269,7 @@ out:
 }
 
 void
-db_cmd_put(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_put(int argc, char **argv)
 {
 	char *p, *r, *pp;
 	int mode, add, data;
@@ -337,8 +332,7 @@ unsigned int mf ## x() { \
 	__asm volatile (STR(mf ## x %0) : STR(=r)(tmp)); \
 	return (tmp); \
 } \
-void mt ## x(data) \
-unsigned int data; \
+void mt ## x(unsigned int data) \
 { \
 	__asm volatile (STR(mt ## x %0) :: STR(r)(data)); \
 } \
@@ -358,9 +352,7 @@ struct {
 };
 
 void
-db_cmd_mf(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_mf(int argc, char **argv)
 {
 	int i = 0;
 
@@ -382,9 +374,7 @@ db_cmd_mf(argc, argv)
 }
 
 void
-db_cmd_mt(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_mt(int argc, char **argv)
 {
 	int i = 0;
 
@@ -407,9 +397,7 @@ db_cmd_mt(argc, argv)
 }
 
 void
-db_cmd_help(argc, argv)
-	int argc;
-	char **argv;
+db_cmd_help(int argc, char **argv)
 {
 	int i = 0;
 
@@ -417,3 +405,5 @@ db_cmd_help(argc, argv)
 		printf("%s, ", db_cmd[i++].name);
 	printf("continue\n");
 }
+
+#endif /* DBMONITOR */

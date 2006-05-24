@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.12 2005/12/24 20:06:52 perry Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.12.12.1 2006/05/24 15:47:52 tron Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.12 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.12.12.1 2006/05/24 15:47:52 tron Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -308,7 +308,7 @@ ixp425_intr_calculate_masks(void)
 	}
 }
 
-inline void
+void
 ixp425_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
@@ -432,7 +432,7 @@ ixp425_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 		panic("ixp425_intr_establish: IRQ %d out of range", irq);
 #ifdef DEBUG
 	printf("ixp425_intr_establish(irq=%d, ipl=%d, func=%08x, arg=%08x)\n",
-               irq, ipl, (u_int32_t) func, (u_int32_t) arg);
+	       irq, ipl, (u_int32_t) func, (u_int32_t) arg);
 #endif
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);

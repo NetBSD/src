@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.66 2006/02/16 20:17:13 perry Exp $ */
+/* $NetBSD: pmap.h,v 1.66.6.1 2006/05/24 15:47:50 tron Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -235,8 +235,6 @@ pmap_remove_all(struct pmap *pmap)
 	(((pg)->mdpage.pvh_attrs & PGA_REFERENCED) != 0)
 #define	pmap_is_modified(pg)						\
 	(((pg)->mdpage.pvh_attrs & PGA_MODIFIED) != 0)
-
-extern	pt_entry_t *VPT;		/* Virtual Page Table */
 
 #define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
 #define	PMAP_GROWKERNEL			/* enable pmap_growkernel() */

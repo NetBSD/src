@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.44 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.44.6.1 2006/05/24 15:50:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -200,7 +200,7 @@ struct vm_page {
 #define VM_PSTRAT_BIGFIRST	3
 
 /*
- * vm_physmemseg: describes one segment of physical memory
+ * vm_physseg: describes one segment of physical memory
  */
 struct vm_physseg {
 	paddr_t	start;			/* PF# of first page in segment */

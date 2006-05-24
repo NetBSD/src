@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.92 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.92.12.1 2006/05/24 15:50:26 tron Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.92 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.92.12.1 2006/05/24 15:50:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.92 2005/12/11 12:22:03 christos Exp $");
 #include <dev/isa/mcdreg.h>
 
 #ifndef MCDDEBUG
-#define MCD_TRACE(fmt,a,b,c,d)
+#define MCD_TRACE(fmt,...)
 #else
-#define MCD_TRACE(fmt,a,b,c,d)	{if (sc->debug) {printf("%s: st=%02x: ", sc->sc_dev.dv_xname, sc->status); printf(fmt,a,b,c,d);}}
+#define MCD_TRACE(fmt,...)	{if (sc->debug) {printf("%s: st=%02x: ", sc->sc_dev.dv_xname, sc->status); printf(fmt,__VA_ARGS__);}}
 #endif
 
 #define	MCDPART(dev)	DISKPART(dev)
@@ -132,7 +132,7 @@ struct mcd_softc {
 
 	int	irq, drq;
 
-	char	*type;
+	const char	*type;
 	int	flags;
 #define	MCDF_WLABEL	0x04	/* label is writable */
 #define	MCDF_LABELLING	0x08	/* writing label */
@@ -348,10 +348,10 @@ mcdopen(dev, flag, fmt, l)
 		}
 	}
 
-	MCD_TRACE("open: partition=%d disksize=%d blksize=%d\n", part,
-	    sc->disksize, sc->blksize, 0);
-
 	part = MCDPART(dev);
+
+	MCD_TRACE("open: partition=%d disksize=%ld blksize=%d\n", part,
+	    sc->disksize, sc->blksize);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
@@ -400,8 +400,8 @@ mcdclose(dev, flag, fmt, l)
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
 	int error;
-
-	MCD_TRACE("close: partition=%d\n", part, 0, 0, 0);
+	
+	MCD_TRACE("close: partition=%d\n", part);
 
 	if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return error;
@@ -439,11 +439,11 @@ mcdstrategy(bp)
 	int s;
 
 	/* Test validity. */
-	MCD_TRACE("strategy: buf=0x%lx blkno=%ld bcount=%ld\n", bp,
-	    bp->b_blkno, bp->b_bcount, 0);
+	MCD_TRACE("strategy: buf=0x%p blkno=%d bcount=%d\n", bp,
+	    (int) bp->b_blkno, bp->b_bcount);
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % sc->blksize) != 0) {
-		printf("%s: strategy: blkno = " PRId64 " bcount = %ld\n",
+		printf("%s: strategy: blkno = %" PRId64 " bcount = %d\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
 		goto bad;
@@ -451,7 +451,7 @@ mcdstrategy(bp)
 
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((sc->flags & MCDF_LOADED) == 0) {
-		MCD_TRACE("strategy: drive not valid\n", 0, 0, 0, 0);
+		MCD_TRACE("strategy: drive not valid%s", "\n");
 		bp->b_error = EIO;
 		goto bad;
 	}
@@ -512,12 +512,12 @@ loop:
 	}
 
 	/* Block found to process. */
-	MCD_TRACE("start: found block bp=0x%x\n", bp, 0, 0, 0);
+	MCD_TRACE("start: found block bp=0x%p\n", bp);
 	splx(s);
 
 	/* Changed media? */
 	if ((sc->flags & MCDF_LOADED) == 0) {
-		MCD_TRACE("start: drive not valid\n", 0, 0, 0, 0);
+		MCD_TRACE("start: drive not valid%s", "\n");
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
@@ -579,8 +579,8 @@ mcdioctl(dev, cmd, addr, flag, l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
-
-	MCD_TRACE("ioctl: cmd=0x%x\n", cmd, 0, 0, 0);
+	
+	MCD_TRACE("ioctl: cmd=0x%lx\n", cmd);
 
 	if ((sc->flags & MCDF_LOADED) == 0)
 		return EIO;
@@ -1223,13 +1223,13 @@ mcdintr(arg)
 		if ((sc->flags & MCDF_LOADED) == 0)
 			goto changed;
 		MCD_TRACE("doread: got WAITMODE delay=%d\n",
-		    RDELAY_WAITMODE - mbx->count, 0, 0, 0);
+		    RDELAY_WAITMODE - mbx->count);
 
 		sc->lastmode = mbx->mode;
 
 	firstblock:
-		MCD_TRACE("doread: read blkno=%d for bp=0x%x\n", mbx->blkno,
-		    bp, 0, 0);
+		MCD_TRACE("doread: read blkno=%d for bp=0x%p\n", 
+		    (int) mbx->blkno, bp);
 
 		/* Build parameter block. */
 		hsg2msf(mbx->blkno, msf);
@@ -1272,7 +1272,7 @@ mcdintr(arg)
 
 	gotblock:
 		MCD_TRACE("doread: got data delay=%d\n",
-		    RDELAY_WAITREAD - mbx->count, 0, 0, 0);
+		    RDELAY_WAITREAD - mbx->count);
 
 		/* Data is ready. */
 		bus_space_write_1(iot, ioh, MCD_CTL2, 0x04);	/* XXX */

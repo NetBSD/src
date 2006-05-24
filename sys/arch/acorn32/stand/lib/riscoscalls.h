@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.4 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.4.12.1 2006/05/24 15:47:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -84,6 +84,16 @@
 
 #define Wimp_SlotSize		0x0400ec
 #define XWimp_SlotSize		0x0600ec
+
+#define FileCore_DiscOp		0x040540
+#define XFileCore_DiscOp	0x060540
+#define FileCore_Drives		0x040542
+#define XFileCore_Drives	0x060542
+#define FileCore_SectorOp	0x04054A
+#define XFileCore_SectorOp	0x06054A
+#define FileCore_DiscOp64	0x04054E
+#define XFileCore_DiscOp64	0x06054E
+
 
 #ifndef __ASSEMBLER__
 typedef struct os_error {
@@ -253,7 +263,53 @@ extern void os_int_off(void);
 extern void os_enter_os(void);
 #endif
 
-#define OSFSControl_Shutdown	23
+#define OSModule_Alloc		6
+#define OSModule_Free		7
+#define OSModule_Lookup		18
+
+#ifndef __ASSEMBLER__
+extern os_error *xosmodule_alloc(int, void **);
+extern os_error *xosmodule_free(void *);
+extern os_error *xosmodule_lookup(char const *, int *, int *, void **, void **,
+    char **);
+#endif
+
+#define OSFSControl_AddFS		12
+#define OSFSControl_RemoveFS		16
+#define OSFSControl_Shutdown		23
+
+#define fileswitch_SUPPORTS_SPECIAL		(1 << 31)
+#define fileswitch_INTERACTIVE			(1 << 30)
+#define fileswitch_SUPPORTS_EMPTY_NAMES		(1 << 29)
+#define fileswitch_NEEDS_CREATE			(1 << 28)
+#define fileswitch_NEEDS_FLUSH			(1 << 27)
+#define fileswitch_SUPPORTS_STAMP_NAMED		(1 << 26)
+#define fileswitch_SUPPORTS_FILE_INFO		(1 << 25)
+#define fileswitch_SUPPORTS_SET_CONTEXTS	(1 << 24) /* MBZ in RO3 */
+#define fileswitch_SUPPORTS_IMAGE		(1 << 23)
+#define fileswitch_NEEDS_URD_AND_LIB		(1 << 22)
+#define fileswitch_IMPLICIT_DIRECTORIES		(1 << 21)
+#define fileswitch_NO_LOAD_ENTRY		(1 << 20)
+#define fileswitch_NO_SAVE_ENTRY		(1 << 19)
+#define fileswitch_NO_FILE_ENTRIES		(1 << 18)
+#define fileswitch_HAS_EXTRA_FLAGS		(1 << 17)
+#define fileswitch_READ_ONLY			(1 << 16)
+
+#define fileswitch_SUPPORTS_DIR_CHANGE		(1 << 0)
+#define fileswitch_NEEDS_CAT			(1 << 1)
+#define fileswitch_NEEDS_EX			(1 << 2)
+
+#define fileswitch_NOT_FOUND	0
+#define fileswitch_IS_FILE	1
+#define fileswitch_IS_DIR	2
+#define fileswitch_IS_IMAGE	3
+
+#define fileswitch_ATTR_OWNER_READ	(1 << 0)
+#define fileswitch_ATTR_OWNER_WRITE	(1 << 1)
+#define fileswitch_ATTR_OWNER_LOCKED	(1 << 3)
+#define fileswitch_ATTR_WORLD_READ	(1 << 4)
+#define fileswitch_ATTR_WORLD_WRITE	(1 << 5)
+#define fileswitch_ATTR_WORLD_LOCKED	(1 << 7)
 
 #ifndef __ASSEMBLER__
 extern os_error *xosfscontrol_shutdown(void);
@@ -292,6 +348,12 @@ extern void os_read_mem_map_entries(struct os_mem_map_request *);
 
 extern os_error xcache_control(u_int, u_int, u_int *);
 
+#endif
+
+#define FileCoreDiscOp_ReadSectors		1
+
+#ifndef __ASSEMBLER__
+
 struct filecore_disc {
 	u_int8_t	log2secsize;
 	u_int8_t	secspertrack;
@@ -314,6 +376,20 @@ struct filecore_disc {
 	u_int8_t	big_flag;
 	u_int8_t	reserved[22];
 };
+
+struct filecore_daddr64 {
+	uint32_t	drive;
+	uint64_t	daddr;
+};
+
+extern os_error *xfilecorediscop_read_sectors(uint32_t, uint32_t, void *,
+    size_t, void *, uint32_t *, void **, size_t *);
+extern os_error *xfilecoresectorop_read_sectors(uint32_t, uint32_t, void *,
+    size_t, void *, uint32_t *, void **, size_t *);
+extern os_error *xfilecorediscop64_read_sectors(uint32_t,
+    struct filecore_daddr64 *, void *, size_t, struct filecore_disc const *,
+    void *, uint32_t *, void **, size_t *);
+extern os_error *xfilecore_drives(void *, int *, int *, int *);
 
 #endif
 

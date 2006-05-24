@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.104 2006/03/04 19:20:50 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.104.6.1 2006/05/24 15:50:27 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.104 2006/03/04 19:20:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.104.6.1 2006/05/24 15:50:27 tron Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2009,6 +2009,10 @@ static const struct bge_revision bge_majorrevs[] = {
 	  "unknown BCM5752 family" },
 
 
+	{ BGE_ASICREV_BCM5780,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5780" },
+
 	{ BGE_ASICREV_BCM5715,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5715" },
@@ -2129,6 +2133,10 @@ static const struct bge_product {
 	  PCI_PRODUCT_BROADCOM_BCM5714,
 	  "Broadcom BCM5714/5715 Gigabit Ethernet",
 	  },
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5789,
+	  "Broadcom BCM5789 Gigabit Ethernet",
+	  },
 
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5721,
@@ -2161,9 +2169,20 @@ static const struct bge_product {
 	  },
 
    	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5780,
+	  "Broadcom BCM5780 Gigabit Ethernet",
+	  },
+
+   	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5780S,
+	  "Broadcom BCM5780S Gigabit Ethernet",
+	  },
+
+   	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5782,
 	  "Broadcom BCM5782 Gigabit Ethernet",
 	  },
+
    	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5788,
 	  "Broadcom BCM5788 Gigabit Ethernet",

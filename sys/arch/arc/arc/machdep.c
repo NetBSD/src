@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2005/12/24 23:23:59 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94.12.1 2006/05/24 15:47:50 tron Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2005/12/24 23:23:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94.12.1 2006/05/24 15:47:50 tron Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -163,9 +163,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2005/12/24 23:23:59 perry Exp $");
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
 #endif /* NCOM */
-
-/* the following is used externally (sysctl_hw) */
-extern char cpu_model[];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;

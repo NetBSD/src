@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.14 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.14.12.1 2006/05/24 15:50:46 tron Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -72,7 +72,7 @@ void m_dumpm(struct mbuf *m);
 	 SIGISMEMBER(set, SIGHUP) || SIGISMEMBER(set, SIGKILL) ||	\
 	 SIGISMEMBER(set, SIGQUIT))
 
-#define	smb_suser(cred)	suser(cred, 0)
+#define	smb_suser(cred)	kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)
 
 /*
  * Compatibility wrappers for simple locks
@@ -95,7 +95,7 @@ typedef	smb_unichar	*smb_uniptr;
 struct smb_cred {
 	/* struct thread *	scr_td; */
 	struct lwp *	scr_l;
-	struct ucred *	scr_cred;
+	kauth_cred_t	scr_cred;
 };
 
 extern const smb_unichar smb_unieol;
@@ -104,7 +104,8 @@ struct mbchain;
 struct smb_vc;
 struct smb_rq;
 
-void smb_makescred(struct smb_cred *scred, struct lwp *l, struct ucred *cred);
+void smb_makescred(struct smb_cred *scred, struct lwp *l,
+    kauth_cred_t cred);
 int  smb_proc_intr(struct lwp *);
 char *smb_strdup(const char *s);
 char *smb_strdupin(char *s, int maxlen);

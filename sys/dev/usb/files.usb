@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.65 2005/12/11 12:24:00 christos Exp $
+#	$NetBSD: files.usb,v 1.65.12.1 2006/05/24 15:50:30 tron Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -262,3 +262,8 @@ file	dev/usb/if_atu.c		atu
 # Ralink Technology RT2500USB
 attach	ral at uhub with ural
 file	dev/usb/if_ural.c		ural
+
+# Topfield digital PVRs
+device	utoppy
+attach	utoppy at uhub
+file	dev/usb/utoppy.c		utoppy

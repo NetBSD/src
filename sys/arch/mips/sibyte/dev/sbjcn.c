@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.10.12.1 2006/03/31 09:45:05 tron Exp $ */
+/* $NetBSD: sbjcn.c,v 1.10.12.2 2006/05/24 15:48:13 tron Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.10.12.1 2006/03/31 09:45:05 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.10.12.2 2006/05/24 15:48:13 tron Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -132,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.10.12.1 2006/03/31 09:45:05 tron Exp $")
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/kauth.h>
 
 #include <sbmips/dev/sbscd/sbscdvar.h>
 #include <sbmips/dev/sbscd/sbjcnvar.h>
@@ -520,7 +521,7 @@ sbjcnopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -719,7 +720,7 @@ sbjcnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error)
 			break;
 		ch->ch_swflags = *(int *)data;

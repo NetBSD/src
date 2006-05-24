@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.19 2005/12/11 12:18:03 christos Exp $
+#	$NetBSD: std.macppc,v 1.19.12.1 2006/05/24 15:48:12 tron Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
@@ -17,5 +17,3 @@ options 	EXEC_SCRIPT	# shell script support
 options 	INTSTK=0x2000
 
 options 	OPENPIC		# OpenPIC (really only on CHRP-ish systems)
-
-options		AH_REGOPS_FUNC	# Use ath_hal_reg_{read,write}
