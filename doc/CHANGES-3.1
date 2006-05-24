@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1,v 1.1.2.94 2006/05/20 23:09:47 riz Exp $
+#	$NetBSD: CHANGES-3.1,v 1.1.2.95 2006/05/24 02:24:17 riz Exp $
 
 A complete list of changes from the NetBSD 3.0 release to the NetBSD 3.1
 release:
@@ -1697,4 +1697,15 @@ sbin/newfs_lfs/newfs_lfs.8			1.21
 	* Better segment use accounting when files are truncated while
 	  cleaning is occurring
 	[perseant, ticket #1327]
+
+sys/dev/ata/wd.c				1.324
+
+	Add yet another broken 160Gb seagate drive.
+	[bouyer, ticket #1337]
+
+sys/netinet6/ip6_input.c			1.87 via patch
+
+	In ip6_savecontrol(), ignore IPv4 packets.
+	From JINMEI Tatuya (KAME). PR#33269.
+	[rpaulo, ticket #1338]
 
