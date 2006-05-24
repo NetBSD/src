@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.4 2006/05/24 22:07:42 christos Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.5 2006/05/24 22:08:53 christos Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -471,6 +471,7 @@ load_crom(char *filename, u_int32_t *p)
 			p, p+1, p+2, p+3, p+4, p+5, p+6, p+7);
 		p += 8;
 	}
+	(void)fclose(file);
 }
 
 static void
