@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.13 2005/04/17 17:16:37 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.14 2006/05/24 18:01:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: output.c,v 1.13 2005/04/17 17:16:37 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.14 2006/05/24 18:01:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,36 +59,36 @@ static short *check;
 static int lowzero;
 static int high;
 
-void output_prefix __P((void));
-void output_rule_data __P((void));
-void output_yydefred __P((void));
-void output_actions __P((void));
-void token_actions __P((void));
-void goto_actions __P((void));
-int default_goto __P((int));
-void save_column __P((int, int));
-void sort_actions __P((void));
-void pack_table __P((void));
-int matching_vector __P((int));
-int pack_vector __P((int));
-void output_base __P((void));
-void output_table __P((void));
-void output_check __P((void));
-int is_C_identifier __P((char *));
-void output_defines __P((void));
-void output_stored_text __P((void));
-void output_debug __P((void));
-void output_stype __P((void));
-void output_trailing_text __P((void));
-void output_semantic_actions __P((void));
-void free_itemsets __P((void));
-void free_shifts __P((void));
-void free_reductions __P((void));
+static void output_prefix(void);
+static void output_rule_data(void);
+static void output_yydefred(void);
+static void output_actions(void);
+static void token_actions(void);
+static void goto_actions(void);
+static int default_goto(int);
+static void save_column(int, int);
+static void sort_actions(void);
+static void pack_table(void);
+static int matching_vector(int);
+static int pack_vector(int);
+static void output_base(void);
+static void output_table(void);
+static void output_check(void);
+static int is_C_identifier(char *);
+static void output_defines(void);
+static void output_stored_text(void);
+static void output_debug(void);
+static void output_stype(void);
+static void output_trailing_text(void);
+static void output_semantic_actions(void);
+static void free_itemsets(void);
+static void free_shifts(void);
+static void free_reductions(void);
 
 static const char line_format[] = "#line %d \"%s\"\n";
 
 void
-output()
+output(void)
 {
     free_itemsets();
     free_shifts();
@@ -110,8 +110,8 @@ output()
     write_section(trailer);
 }
 
-void
-output_prefix()
+static void
+output_prefix(void)
 {
     if (symbol_prefix == NULL)
 	symbol_prefix = "yy";
@@ -174,8 +174,8 @@ output_prefix()
     fprintf(code_file, "#define YYPREFIX \"%s\"\n", symbol_prefix);
 }
 
-void
-output_rule_data()
+static void
+output_rule_data(void)
 {
     int i;
     int j;
@@ -221,8 +221,8 @@ output_rule_data()
     fprintf(output_file, "\n};\n");
 }
 
-void
-output_yydefred()
+static void
+output_yydefred(void)
 {
     int i, j;
 
@@ -248,8 +248,8 @@ output_yydefred()
     fprintf(output_file, "\n};\n");
 }
 
-void
-output_actions()
+static void
+output_actions(void)
 {
     nvectors = 2*nstates + nvars;
 
@@ -276,8 +276,8 @@ output_actions()
     output_check();
 }
 
-void
-token_actions()
+static void
+token_actions(void)
 {
     int i, j;
     int shiftcount, reducecount;
@@ -361,8 +361,8 @@ token_actions()
     FREE(actionrow);
 }
 
-void
-goto_actions()
+static void
+goto_actions(void)
 {
     int i, j, k;
 
@@ -394,9 +394,8 @@ goto_actions()
     FREE(state_count);
 }
 
-int
-default_goto(symbol)
-int symbol;
+static int
+default_goto(int symbol)
 {
     int i;
     int m;
@@ -430,10 +429,8 @@ int symbol;
 }
 
 
-void
-save_column(symbol, default_state)
-int symbol;
-int default_state;
+static void
+save_column(int symbol, int default_state)
 {
     int i;
     int m;
@@ -473,8 +470,8 @@ int default_state;
     width[symno] = sp1[-1] - sp[0] + 1;
 }
 
-void
-sort_actions()
+static void
+sort_actions(void)
 {
   int i;
   int j;
@@ -509,8 +506,8 @@ sort_actions()
 }
 
 
-void
-pack_table()
+static void
+pack_table(void)
 {
     int i;
     int place;
@@ -572,9 +569,8 @@ pack_table()
 /*  faster.  Also, it depends on the vectors being in a specific	*/
 /*  order.								*/
 
-int
-matching_vector(vector)
-int vector;
+static int
+matching_vector(int vector)
 {
     int i;
     int j;
@@ -613,9 +609,8 @@ int vector;
 
 
 
-int
-pack_vector(vector)
-int vector;
+static int
+pack_vector(int vector)
 {
     int i, j, k, l;
     int t;
@@ -690,8 +685,8 @@ int vector;
 }
 
 
-void
-output_base()
+static void
+output_base(void)
 {
     int i, j;
 
@@ -757,8 +752,8 @@ output_base()
 }
 
 
-void
-output_table()
+static void
+output_table(void)
 {
     int i;
     int j;
@@ -789,8 +784,8 @@ output_table()
 }
 
 
-void
-output_check()
+static void
+output_check(void)
 {
     int i;
     int j;
@@ -819,9 +814,8 @@ output_check()
 }
 
 
-int
-is_C_identifier(name)
-char *name;
+static int
+is_C_identifier(char *name)
 {
     char *s;
     unsigned char c;
@@ -852,8 +846,8 @@ char *name;
 }
 
 
-void
-output_defines()
+static void
+output_defines(void)
 {
     int c, i;
     char *s;
@@ -905,8 +899,8 @@ output_defines()
 }
 
 
-void
-output_stored_text()
+static void
+output_stored_text(void)
 {
     int c;
     FILE *in, *out;
@@ -933,8 +927,8 @@ output_stored_text()
 }
 
 
-void
-output_debug()
+static void
+output_debug(void)
 {
     int i, j, k, max;
     char **symnam, *s;
@@ -1149,8 +1143,8 @@ output_debug()
 }
 
 
-void
-output_stype()
+static void
+output_stype(void)
 {
     if (!unionized && ntags == 0)
     {
@@ -1160,8 +1154,8 @@ output_stype()
 }
 
 
-void
-output_trailing_text()
+static void
+output_trailing_text(void)
 {
     int c, last;
     FILE *in, *out;
@@ -1218,8 +1212,8 @@ output_trailing_text()
 }
 
 
-void
-output_semantic_actions()
+static void
+output_semantic_actions(void)
 {
     int c, last;
     FILE *out;
@@ -1256,8 +1250,8 @@ output_semantic_actions()
 }
 
 
-void
-free_itemsets()
+static void
+free_itemsets(void)
 {
     core *cp, *next;
 
@@ -1270,8 +1264,8 @@ free_itemsets()
 }
 
 
-void
-free_shifts()
+static void
+free_shifts(void)
 {
     shifts *sp, *next;
 
@@ -1284,8 +1278,8 @@ free_shifts()
 }
 
 
-void
-free_reductions()
+static void
+free_reductions(void)
 {
     reductions *rp, *next;
 
