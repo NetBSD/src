@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4.12.1 2006/05/24 15:48:15 tron Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -37,7 +37,7 @@
 #include <pc532/stand/common/samachdep.h>
 
 static int	atoi(const char *);
-static void 	usage(void);
+static void	usage(void);
 static int	devlookup(const char *, int);
 static int	devparse(const char *, int *, int *, int *, int *, int *,
 		    char **);
@@ -188,7 +188,8 @@ devopen(struct open_file *f, const char *fname, char **file)
 	unit  = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
 
-	if ((error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file)) != 0)
+	if ((error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
+	    != 0)
 		return(error);
 
 	dp = &devsw[dev];

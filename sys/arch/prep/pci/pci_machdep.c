@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.24 2006/03/09 20:17:27 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.24.2.1 2006/05/24 15:48:20 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24 2006/03/09 20:17:27 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24.2.1 2006/05/24 15:48:20 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -223,7 +223,7 @@ prep_pci_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	    PCI_PRODUCT(id) == PCI_PRODUCT_WEITEK_P9100)
 		return 0;
 
-	/* We have allready mapped the MPIC2 if we have one, so leave it
+	/* We have already mapped the MPIC2 if we have one, so leave it
 	   alone */
 	if (PCI_VENDOR(id) == PCI_VENDOR_IBM &&
 	    PCI_PRODUCT(id) == PCI_PRODUCT_IBM_MPIC2)

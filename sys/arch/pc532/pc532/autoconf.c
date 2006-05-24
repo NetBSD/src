@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 2006/02/28 23:08:20 kleink Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43.6.1 2006/05/24 15:48:14 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2006/02/28 23:08:20 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43.6.1 2006/05/24 15:48:14 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -68,7 +68,7 @@ u_long bootdev = 0;		/* should be dev_t, but not until 32 bits */
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	extern int safepri;
 	int i;
@@ -91,7 +91,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	booted_partition = B_PARTITION(bootdev);
 
@@ -102,9 +102,7 @@ cpu_rootconf()
 }
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	static int found;
 	static struct device *booted_controller;

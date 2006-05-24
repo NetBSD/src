@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.9 2005/12/11 12:19:16 christos Exp $	*/
+/*	$NetBSD: pcons.c,v 1.9.12.1 2006/05/24 15:48:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.9 2005/12/11 12:19:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.9.12.1 2006/05/24 15:48:23 tron Exp $");
 
 #include "opt_ddb.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.9 2005/12/11 12:19:16 christos Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <machine/autoconf.h>
 #include <machine/promlib.h>
@@ -143,7 +144,7 @@ pconsopen(dev_t dev, int flag, int mode, struct lwp *l)
 		pconsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state&TS_XCLUDE) &&
-	    suser(l->l_proc->p_ucred, &l->l_proc->p_acflag))
+	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	

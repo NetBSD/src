@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.1.2.2 2006/03/28 09:42:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbinstal.c,v 1.1.2.3 2006/05/24 15:50:32 tron Exp $");
 
 #define __TBINSTAL_C__
 
@@ -367,6 +367,7 @@ AcpiTbInitTableDescriptor (
     Status = AcpiUtAllocateOwnerId (&TableDesc->OwnerId);
     if (ACPI_FAILURE (Status))
     {
+        ACPI_MEM_FREE (TableDesc);
         return_ACPI_STATUS (Status);
     }
 

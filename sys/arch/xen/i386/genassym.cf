@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 2006/03/06 20:32:28 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.7.4.1 2006/05/24 15:48:25 tron Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -136,6 +136,7 @@ define	LSONPROC		LSONPROC
 define	PTE_BASE		PTE_BASE
 define	UPAGES			UPAGES
 define	USPACE			USPACE
+define	KSTACK_SIZE		KSTACK_SIZE
 define	KERNBASE		KERNBASE
 define	KERNTEXTOFF		KERNTEXTOFF
 

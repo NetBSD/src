@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.113 2005/12/11 12:24:58 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.113.12.1 2006/05/24 15:50:45 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113 2005/12/11 12:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113.12.1 2006/05/24 15:50:45 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.113 2005/12/11 12:24:58 christos Ex
 #include <sys/proc.h>
 #include <sys/domain.h>
 #include <sys/sysctl.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -918,7 +919,8 @@ tcp_usrclosed(struct tcpcb *tp)
 #endif
 		else
 			so = NULL;
-		soisdisconnected(so);
+		if (so)
+			soisdisconnected(so);
 		/*
 		 * If we are in FIN_WAIT_2, we arrived here because the
 		 * application did a shutdown of the send side.  Like the
@@ -1216,18 +1218,23 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	if (namelen != 4)
 		return (EINVAL);
 
+	if (oldp != NULL) {
+		    len = *oldlenp;
+		    elem_size = name[2];
+		    elem_count = name[3];
+		    if (elem_size != sizeof(pcb))
+			    return EINVAL;
+	} else {
+		    len = 0;
+		    elem_count = INT_MAX;
+		    elem_size = sizeof(pcb);
+	}
 	error = 0;
 	dp = oldp;
-	len = (oldp != NULL) ? *oldlenp : 0;
 	op = name[0];
 	arg = name[1];
-	elem_size = name[2];
-	elem_count = name[3];
-	out_size = MIN(sizeof(pcb), elem_size);
+	out_size = elem_size;
 	needed = 0;
-
-	elem_count = INT_MAX;
-	elem_size = out_size = sizeof(pcb);
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -1237,7 +1244,7 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 
 	pf = oname[1];
 	proto = oname[2];
-	pf2 = (oldp == NULL) ? 0 : pf;
+	pf2 = (oldp != NULL) ? pf : 0;
 
 	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
 #ifdef INET
@@ -1250,8 +1257,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 		if (inph->inph_af != pf)
 			continue;
 
-		if (CURTAIN(l->l_proc->p_ucred->cr_uid,
-			    inph->inph_socket->so_uidinfo->ui_uid))
+		if (CURTAIN(kauth_cred_getuid(l->l_proc->p_cred),
+			    inph->inph_socket->so_uidinfo->ui_uid)) /* XXX elad */
 			continue;
 
 		memset(&pcb, 0, sizeof(pcb));

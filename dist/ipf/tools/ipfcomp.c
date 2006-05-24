@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfcomp.c,v 1.1.1.2 2004/07/23 05:34:47 martti Exp $	*/
+/*	$NetBSD: ipfcomp.c,v 1.1.1.2.6.1 2006/05/24 15:47:47 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.24.2.2 2004/04/28 10:34:44 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfcomp.c,v 1.24.2.3 2006/03/17 22:31:57 darrenr Exp";
 #endif
 
 #include "ipf.h"
@@ -493,7 +493,8 @@ u_int incount, outcount;
 	/*
 	 * Output the array of pointers to rules for this group.
 	 */
-	if (num == -2 && dir == 0 && header[0] == 0 && incount != 0) {
+	if (g != NULL && num == -2 && dir == 0 && header[0] == 0 &&
+	    incount != 0) {
 		fprintf(fp, "\nfrentry_t *ipf_rules_in_%s[%d] = {",
 			group, incount);
 		for (f = g->fg_start, i = 0; f != NULL; f = f->fr_next) {
@@ -512,7 +513,8 @@ u_int incount, outcount;
 		fprintf(fp, "\n};\n");
 	}
 
-	if (num == -2 && dir == 1 && header[1] == 0 && outcount != 0) {
+	if (g != NULL && num == -2 && dir == 1 && header[1] == 0 &&
+	    outcount != 0) {
 		fprintf(fp, "\nfrentry_t *ipf_rules_out_%s[%d] = {",
 			group, outcount);
 		for (f = g->fg_start, i = 0; f != NULL; f = f->fr_next) {
@@ -541,7 +543,7 @@ u_int incount, outcount;
 	/*
 	 * If the function header has not been printed then print it now.
 	 */
-	if (header[dir] == 0) {
+	if (g != NULL && header[dir] == 0) {
 		int pdst = 0, psrc = 0;
 
 		openfunc = 1;
@@ -1224,7 +1226,7 @@ frgroup_t *grp;
 	char *instr;
 
 	group = grp->fg_name;
-	dogrp = 0;
+	dogrp = *group ? 1 : 0;
 
 	if (in && out) {
 		fprintf(stderr,

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.423.2.1 2006/03/28 09:42:16 tron Exp $
+$NetBSD: usbdevs,v 1.423.2.2 2006/05/24 15:50:30 tron Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -408,6 +408,7 @@ vendor JRC		0x1145	Japan Radio Company
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
+vendor TOPFIELD		0x11db	Topfield Co., Ltd
 vendor TSUNAMI		0x1241	Tsunami
 vendor TARGUS		0x1267	Targus
 vendor CREATIVE2	0x1292	Creative Labs
@@ -787,6 +788,7 @@ product DELL X3			0x4002	Axim X3 PDA
 product DELL X30		0x4003	Axim X30 PDA
 product DELL BC02		0x8000	BC02 Bluetooth USB Adapter
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
+product	DELL TM350		0x8103	TrueMobile 350 Bluetooth USB Adapter
 
 /* DeLorme products */
 product DELORME EARTHMATE	0x0100	Earthmate GPS
@@ -1845,6 +1847,9 @@ product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
 
 /* Todos Data System products */
 product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard Reader
+
+/* Topfield Co. Ltd products */
+product TOPFIELD TF5000PVR	0x1000	TF5000PVR Digital Video Recorder
 
 /* Toshiba Corporation products */
 product TOSHIBA POCKETPC_E740	0x0706	PocketPC e740

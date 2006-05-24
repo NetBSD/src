@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.34 2006/01/04 17:16:35 xtraeme Exp $ */
+/* $NetBSD: cgd.c,v 1.34.10.1 2006/05/24 15:50:07 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.34 2006/01/04 17:16:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.34.10.1 2006/05/24 15:50:07 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -570,7 +570,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	return 0;
 
 bail:
-	(void)vn_close(vp, FREAD|FWRITE, l->l_proc->p_ucred, l);
+	(void)vn_close(vp, FREAD|FWRITE, l->l_proc->p_cred, l);
 	return ret;
 }
 
@@ -589,7 +589,7 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 	splx(s);
 	bufq_free(cs->sc_dksc.sc_bufq);
 
-	(void)vn_close(cs->sc_tvn, FREAD|FWRITE, l->l_proc->p_ucred, l);
+	(void)vn_close(cs->sc_tvn, FREAD|FWRITE, l->l_proc->p_cred, l);
 	cs->sc_cfuncs->cf_destroy(cs->sc_cdata.cf_priv);
 	free(cs->sc_tpath, M_DEVBUF);
 	free(cs->sc_data, M_DEVBUF);
@@ -622,12 +622,12 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	cs->sc_tpath = malloc(cs->sc_tpathlen, M_DEVBUF, M_WAITOK);
 	memcpy(cs->sc_tpath, tmppath, cs->sc_tpathlen);
 
-	if ((ret = VOP_GETATTR(vp, &va, l->l_proc->p_ucred, l)) != 0)
+	if ((ret = VOP_GETATTR(vp, &va, l->l_proc->p_cred, l)) != 0)
 		goto bail;
 
 	cs->sc_tdev = va.va_rdev;
 
-	ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_proc->p_ucred, l);
+	ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_proc->p_cred, l);
 	if (ret)
 		goto bail;
 

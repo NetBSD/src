@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.70 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.70.12.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.70 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.70.12.1 2006/05/24 15:50:43 tron Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.70 2005/12/11 12:24:51 christos 
 #include <sys/dirent.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
@@ -75,7 +76,7 @@ int	kernfs_unmount(struct mount *, int, struct lwp *);
 int	kernfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 int	kernfs_quotactl(struct mount *, int, uid_t, void *,
 			     struct lwp *);
-int	kernfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int	kernfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	kernfs_vget(struct mount *, ino_t, struct vnode **);
 
 void
@@ -251,7 +252,7 @@ int
 kernfs_sync(mp, waitfor, uc, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *uc;
+	kauth_cred_t uc;
 	struct lwp *l;
 {
 

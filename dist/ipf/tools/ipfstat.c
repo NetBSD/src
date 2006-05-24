@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.11 2005/06/02 09:53:00 lukem Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.11.2.1 2006/05/24 15:47:47 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -70,7 +70,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.11 2005/03/30 14:09:57 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.14 2006/03/21 16:09:58 darrenr Exp";
 #endif
 
 #ifdef __hpux
@@ -925,8 +925,6 @@ ips_stat_t *ipsp;
 			ipsp->iss_tcp, ipsp->iss_udp, ipsp->iss_icmp);
 		PRINTF("\t%lu hits\n\t%lu misses\n", ipsp->iss_hits,
 			ipsp->iss_miss);
-		PRINTF("\t%lu maximum\n\t%lu no memory\n\t%lu max bucket\n",
-			ipsp->iss_max, ipsp->iss_nomem, ipsp->iss_bucketfull);
 		PRINTF("\t%lu maximum\n\t%lu no memory\n\t%lu bkts in use\n",
 			ipsp->iss_max, ipsp->iss_nomem, ipsp->iss_inuse);
 		PRINTF("\t%lu active\n\t%lu expired\n\t%lu closed\n",
@@ -1008,11 +1006,11 @@ int topclosed;
 {
 	char str1[STSTRSIZE], str2[STSTRSIZE], str3[STSTRSIZE], str4[STSTRSIZE];
 	int maxtsentries = 0, reverse = 0, sorting = STSORT_DEFAULT;
-	int i, j, winy, tsentry, maxx, maxy, redraw = 0;
-	int len, srclen, dstlen, forward = 1, c = 0, ret = 0;
-	const char *errstr = NULL;
+	int i, j, winy, tsentry, maxx, maxy, redraw = 0, ret = 0;
+	int len, srclen, dstlen, forward = 1, c = 0;
 	ips_stat_t ipsst, *ipsstp = &ipsst;
 	statetop_t *tstable = NULL, *tp;
+	const char *errstr = "";
 	ipstate_t ips;
 	ipfobj_t ipfo;
 	struct timeval selecttimeout;
@@ -1421,14 +1419,12 @@ int topclosed;
 out:
 	printw("\n");
 	curs_set(1);
-	nocbreak();
+	/* nocbreak(); XXX - endwin() should make this redundant */
 	endwin();
 
 	free(tstable);
-	if (ret != 0) {
+	if (ret != 0)
 		perror(errstr);
-		exit(ret);
-	}
 }
 #endif
 

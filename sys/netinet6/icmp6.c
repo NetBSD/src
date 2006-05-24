@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.115 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.115.4.1 2006/05/24 15:50:45 tron Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.115 2006/03/05 23:47:08 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.115.4.1 2006/05/24 15:50:45 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -162,6 +162,7 @@ static int icmp6_notify_error __P((struct mbuf *, int, int, int));
 static struct rtentry *icmp6_mtudisc_clone __P((struct sockaddr *));
 static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 static void icmp6_redirect_timeout __P((struct rtentry *, struct rttimer *));
+
 
 void
 icmp6_init()
@@ -454,6 +455,8 @@ icmp6_input(mp, offp, proto)
 	int icmp6len = m->m_pkthdr.len - *offp;
 	int code, sum, noff;
 
+#define ICMP6_MAXLEN (sizeof(*nip6) + sizeof(*nicmp6) + 4)
+	KASSERT(ICMP6_MAXLEN < MCLBYTES);
 	icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_msg);
 
 	/*
@@ -605,19 +608,13 @@ icmp6_input(mp, offp, proto)
 		if ((n->m_flags & M_EXT) != 0 ||
 		    n->m_len < off + sizeof(struct icmp6_hdr)) {
 			struct mbuf *n0 = n;
-			const int maxlen = sizeof(*nip6) + sizeof(*nicmp6);
 
 			/*
 			 * Prepare an internal mbuf.  m_pullup() doesn't
 			 * always copy the length we specified.
 			 */
-			if (maxlen >= MCLBYTES) {
-				/* Give up remote */
-				m_freem(n0);
-				break;
-			}
 			MGETHDR(n, M_DONTWAIT, n0->m_type);
-			if (n && maxlen >= MHLEN) {
+			if (n && ICMP6_MAXLEN >= MHLEN) {
 				MCLGET(n, M_DONTWAIT);
 				if ((n->m_flags & M_EXT) == 0) {
 					m_free(n);
@@ -725,20 +722,15 @@ icmp6_input(mp, offp, proto)
 			noff = sizeof(struct ip6_hdr);
 		} else {
 			u_char *p;
-			int maxlen, maxhlen;
+			int maxhlen;
 
 			if ((icmp6_nodeinfo & 5) != 5)
 				break;
 
 			if (code != 0)
 				goto badcode;
-			maxlen = sizeof(*nip6) + sizeof(*nicmp6) + 4;
-			if (maxlen >= MCLBYTES) {
-				/* Give up remote */
-				break;
-			}
 			MGETHDR(n, M_DONTWAIT, m->m_type);
-			if (n && maxlen > MHLEN) {
+			if (n && ICMP6_MAXLEN > MHLEN) {
 				MCLGET(n, M_DONTWAIT);
 				if ((n->m_flags & M_EXT) == 0) {
 					m_free(n);
@@ -751,7 +743,7 @@ icmp6_input(mp, offp, proto)
 			}
 			n->m_pkthdr.rcvif = NULL;
 			n->m_len = 0;
-			maxhlen = M_TRAILINGSPACE(n) - maxlen;
+			maxhlen = M_TRAILINGSPACE(n) - ICMP6_MAXLEN;
 			if (maxhlen > hostnamelen)
 				maxhlen = hostnamelen;
 			/*

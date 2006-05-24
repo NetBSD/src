@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.10 2006/02/27 13:41:40 jmcneill Exp $ */
+/* $NetBSD: vesafb.c,v 1.10.8.1 2006/05/24 15:47:57 tron Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.10 2006/02/27 13:41:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.10.8.1 2006/05/24 15:47:57 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.10 2006/02/27 13:41:40 jmcneill Exp $")
 #include <machine/frame.h>
 #include <machine/kvm86.h>
 #include <machine/bus.h>
+
+#if notyet
+#include <machine/bioscall.h>
+#endif
 
 #include "opt_vesafb.h"
 
@@ -66,8 +70,9 @@ struct wsscreen_descr vesafb_stdscreen = {
 	8, 16,
 };
 
-static int	vesafb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	vesafb_mmap(void *, off_t, int);
+static int	vesafb_ioctl(void *, void *, u_long, caddr_t, int,
+		    struct lwp *);
+static paddr_t	vesafb_mmap(void *, void *, off_t, int);
 
 static void	vesafb_init_screen(void *, struct vcons_screen *,
 					int, long *);
@@ -169,7 +174,7 @@ vesafb_attach(parent, dev, aux)
 		tf.tf_edi = 0x2000; /* buf ptr */
 
 		res = kvm86_bioscall(0x10, &tf);
-		if (res || tf.tf_eax != 0x004f) {
+		if (res || (tf.tf_eax & 0xff) != 0x4f) {
 			aprint_error("%s: vbecall: res=%d, ax=%x\n",
 			    sc->sc_dev.dv_xname, res, tf.tf_eax);
 			goto out;
@@ -199,7 +204,7 @@ vesafb_attach(parent, dev, aux)
 	tf.tf_edi = 0x2000; /* buf ptr */
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || tf.tf_eax != 0x004f)
+	if (res || (tf.tf_eax & 0xff) != 0x4f)
 		sc->sc_pm = 0; /* power management not supported */
 	else {
 		sc->sc_pm = 1; /* power management is supported */
@@ -255,6 +260,9 @@ vesafb_attach(parent, dev, aux)
 
 	vesafb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 	vcons_init_screen(&sc->sc_vd, &vesafb_console_screen, 1, &defattr);
+#ifndef SPLASHSCREEN
+	vcons_redraw_screen(&vesafb_console_screen);
+#endif
 
 	vesafb_stdscreen.ncols = ri->ri_cols;
 	vesafb_stdscreen.nrows = ri->ri_rows;
@@ -308,7 +316,8 @@ out:
 }
 
 static int
-vesafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vesafb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct vcons_data *vd;
 	struct vesafb_softc *sc;
@@ -392,7 +401,7 @@ vesafb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-vesafb_mmap(void *v, off_t offset, int prot)
+vesafb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd;
 	struct vesafb_softc *sc;
@@ -435,6 +444,12 @@ vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	ri->ri_bits = sc->sc_bits;
 #endif /* !VESAFB_SHADOW_FB */
 	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_rnum = mi->RedMaskSize;
+	ri->ri_gnum = mi->GreenMaskSize;
+	ri->ri_bnum = mi->BlueMaskSize;
+	ri->ri_rpos = mi->RedFieldPosition;
+	ri->ri_gpos = mi->GreenFieldPosition;
+	ri->ri_bpos = mi->BlueFieldPosition;
 
 	rasops_init(ri, mi->YResolution / 16, mi->XResolution / 8);
 
@@ -448,6 +463,9 @@ static void
 vesafb_init(struct vesafb_softc *sc)
 {
 	struct trapframe tf;
+#if notyet
+	struct bioscallregs regs;
+#endif
 	struct modeinfoblock *mi;
 	struct paletteentry pe;
 	int res;
@@ -456,25 +474,36 @@ vesafb_init(struct vesafb_softc *sc)
 	mi = &sc->sc_mi;
 
 	/* set mode */
+#if 1
 	memset(&tf, 0, sizeof(struct trapframe));
 	tf.tf_eax = 0x4f02; /* function code */
 	tf.tf_ebx = sc->sc_mode | 0x4000; /* flat */
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xffff) != 0x004f) {
+	if (res || (tf.tf_eax & 0xff) != 0x4f) {
 		aprint_error("%s: vbecall: res=%d, ax=%x\n",
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 		return;
 	}
+#else
+	regs.EAX = 0x4f02;
+	regs.EBX = sc->sc_mode | 0x4000;
+	bioscall(0x10, &regs);
+	if ((regs.EAX & 0xff) != 0x4f) {
+		aprint_error("%s: bioscall failed\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+#endif
 
 	/* setup palette, not required in direct colour mode */
 	if (mi->BitsPerPixel == 8) {
 		memset(&tf, 0, sizeof(struct trapframe));
 		tf.tf_eax = 0x4f08; /* function code */
-		tf.tf_ebx = 0x0800; /* we want an 8-bit palette */
+		tf.tf_ebx = 0x0600; /* we want a 6-bit palette */
 
 		res = kvm86_bioscall(0x10, &tf);
-		if (res || (tf.tf_eax & 0xffff) != 0x004f) {
+		if (res || (tf.tf_eax & 0xff) != 0x4f) {
 			aprint_error("%s: vbecall: res=%d, ax=%x\n",
 			    sc->sc_dev.dv_xname, res, tf.tf_eax);
 			return;
@@ -549,19 +578,28 @@ vesafb_set_palette(struct vesafb_softc *sc, int reg,
 	char *buf;
 
 	buf = sc->sc_buf;
+
+	/*
+	 * this function takes 8 bit per palette as input, but we're
+	 * working in 6 bit mode here
+	 */
+	pe.Red >>= 2;
+	pe.Green >>= 2;
+	pe.Blue >>= 2;
+
 	memcpy(buf, &pe, sizeof(struct paletteentry));
 
 	/* set palette */
 	memset(&tf, 0, sizeof(struct trapframe));
 	tf.tf_eax = 0x4f09; /* function code */
-	tf.tf_ebx = 0x00;
+	tf.tf_ebx = 0x0600; /* 6 bit per primary, set format */
 	tf.tf_ecx = 1;
 	tf.tf_edx = reg;
 	tf.tf_vm86_es = 0;
 	tf.tf_edi = 0x2000;
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xffff) != 0x004f)
+	if (res || (tf.tf_eax & 0xff) != 0x4f)
 		aprint_error("%s: vbecall: res=%d, ax=%x\n",
 		    sc->sc_dev.dv_xname, res, tf.tf_eax);
 
@@ -586,7 +624,7 @@ vesafb_svideo(struct vesafb_softc *sc, u_int *on)
 	tf.tf_ebx = (bh << 8) | 1;
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xffff) != 0x004f) {
+	if (res || (tf.tf_eax & 0xff) != 0x4f) {
 		aprint_error("%s: unable to set power state (0x%04x)\n",
 		    sc->sc_dev.dv_xname, (tf.tf_eax & 0xffff));
 		return ENODEV;
@@ -611,7 +649,7 @@ vesafb_gvideo(struct vesafb_softc *sc, u_int *on)
 	tf.tf_ebx = 2;
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xffff) != 0x004f) {
+	if (res || (tf.tf_eax & 0xff) != 0x4f) {
 		aprint_error("%s: unable to get power state (0x%04x)\n",
 		    sc->sc_dev.dv_xname, (tf.tf_eax & 0xffff));
 		return ENODEV;
@@ -703,6 +741,16 @@ vesafb_getcmap(struct vesafb_softc *sc,
 	rv = copyout(&sc->sc_cmap_blue[idx], cm->blue, cnt);
 	if (rv)
 		return rv;
+
+	return 0;
+}
+
+int
+vesafb_cnattach(void)
+{
+	/* XXX i386 calls consinit too early for us to use
+	 *     kvm86; assume that we've attached
+	 */
 
 	return 0;
 }

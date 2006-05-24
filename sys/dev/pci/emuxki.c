@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.43 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.43.12.1 2006/05/24 15:50:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.43 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.43.12.1 2006/05/24 15:50:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1380,7 +1380,7 @@ emuxki_voice_channel_create(struct emuxki_voice *voice)
 
 	channel = voice->sc->channel;
 	stereo = voice->stereo;
-	for (i = 0; i < EMU_NUMCHAN; i += stereo + 1) {
+	for (i = 0; i < EMU_NUMCHAN - stereo; i += stereo + 1) {
 		if ((stereo && (channel[i + 1] != NULL)) ||
 		    (channel[i] != NULL))	/* Looking for free channels */
 			continue;
@@ -1894,16 +1894,26 @@ emuxki_voice_start(struct emuxki_voice *voice,
 			break;
 		case EMU_RECSRC_NOTSET:
 		default:
+			printf("Bad dataloc.source %d\n",
+			    voice->dataloc.source);
 			break;
 		}
 #if 0
-		/* DMA completion interrupt is useless; use timer */
-		int s;
-		s = splaudio();
-		val = emu_rd(sc, INTE, 4);
-		val |= emuxki_recsrc_intrmasks[voice->dataloc.source];
-		emu_wr(sc, INTE, val, 4);
-		splx(s);
+		switch (voice->dataloc.source) {
+		case EMU_RECSRC_ADC:
+		case EMU_RECSRC_FX:
+		case EMU_RECSRC_MIC:
+			/* DMA completion interrupt is useless; use timer */
+			int s;
+			s = splaudio();
+			val = emu_rd(sc, INTE, 4);
+			val |= emuxki_recsrc_intrmasks[voice->dataloc.source];
+			emu_wr(sc, INTE, val, 4);
+			splx(s);
+			break;
+		default:
+			break;
+		}
 #endif
 	}
 	voice->state |= EMU_VOICE_STATE_STARTED;
@@ -1927,21 +1937,33 @@ emuxki_voice_halt(struct emuxki_voice *voice)
 		case EMU_RECSRC_MIC:
 			printf("unimplemented\n");
 			break;
+		default:
 		case EMU_RECSRC_NOTSET:
-			printf("Bad dataloc.source\n");
+			printf("Bad dataloc.source %d\n",
+			    voice->dataloc.source);
+			break;
 		}
-		/* This should reset buffer pointer */
-		emuxki_write(voice->sc, 0,
-		    emuxki_recsrc_szreg[voice->dataloc.source],
-		    EMU_RECBS_BUFSIZE_NONE);
+
+		switch (voice->dataloc.source) {
+		case EMU_RECSRC_ADC:
+		case EMU_RECSRC_FX:
+		case EMU_RECSRC_MIC:
+			/* This should reset buffer pointer */
+			emuxki_write(voice->sc, 0,
+			    emuxki_recsrc_szreg[voice->dataloc.source],
+			    EMU_RECBS_BUFSIZE_NONE);
 #if 0
-		int s;
-		s = splaudio();
-		val = emu_rd(sc, INTE, 4);
-		val &= ~emuxki_recsrc_intrmasks[voice->dataloc.source];
-		emu_wr(sc, INTE, val, 4);
-		splx(s);
+			int s;
+			s = splaudio();
+			val = emu_rd(sc, INTE, 4);
+			val &= ~emuxki_recsrc_intrmasks[voice->dataloc.source];
+			emu_wr(sc, INTE, val, 4);
+			splx(s);
 #endif
+			break;
+		default:
+			break;
+		}
 	}
 	voice->state &= ~EMU_VOICE_STATE_STARTED;
 	emuxki_resched_timer(voice->sc);

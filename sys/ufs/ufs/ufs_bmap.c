@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.39 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.39.12.1 2006/05/24 15:50:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.39 2005/12/11 12:25:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.39.12.1 2006/05/24 15:50:48 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		}
 #ifdef DIAGNOSTIC
 		else if (!daddr)
-			panic("ufs_bmaparry: indirect block not in cache");
+			panic("ufs_bmaparray: indirect block not in cache");
 #endif
 		else {
 			trace(TR_BREADMISS, pack(vp, size), metalbn);

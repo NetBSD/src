@@ -1,4 +1,4 @@
-# $NetBSD: md.pc532,v 1.44 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.pc532,v 1.44.8.1 2006/05/24 15:47:48 tron Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pc532				comp-c-include
 ./usr/include/pc532/_G_config.h			comp-c-include
@@ -34,7 +34,7 @@
 ./usr/include/pc532/lock.h			comp-c-include
 ./usr/include/pc532/math.h			comp-c-include
 ./usr/include/pc532/mcontext.h			comp-c-include
-./usr/include/pc532/mtpr.h			comp-c-include
+./usr/include/pc532/mtpr.h			comp-obsolete		obsolete
 ./usr/include/pc532/param.h			comp-c-include
 ./usr/include/pc532/pcb.h			comp-c-include
 ./usr/include/pc532/pmap.h			comp-c-include

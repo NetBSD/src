@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.49 2006/02/23 05:37:46 thorpej Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.49.6.1 2006/05/24 15:47:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.49 2006/02/23 05:37:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.49.6.1 2006/05/24 15:47:52 tron Exp $");
 
 #include "opt_ddb.h"
 
@@ -1050,7 +1050,7 @@ loop:
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
 
-		fd->sc_dk.dk_seek++;
+		iostat_seek(fd->sc_dk.dk_stats);
 		disk_busy(&fd->sc_dk);
 
 		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);

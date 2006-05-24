@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.37 2006/02/13 21:47:12 cdi Exp $	*/
+/*	$NetBSD: kd.c,v 1.37.6.1 2006/05/24 15:48:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.37 2006/02/13 21:47:12 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.37.6.1 2006/05/24 15:48:23 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.37 2006/02/13 21:47:12 cdi Exp $");
 #include <sys/file.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/kauth.h>
 
 #include <machine/openfirm.h>
 #include <machine/eeprom.h>
@@ -179,7 +180,7 @@ static	int firstopen = 1;
 	/* It's simpler to do this up here. */
 	if (((tp->t_state & (TS_ISOPEN | TS_XCLUDE))
 	     ==             (TS_ISOPEN | TS_XCLUDE))
-	    && (suser(p->p_ucred, &p->p_acflag) != 0) )
+	    && (kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0) )
 	{
 		return (EBUSY);
 	}

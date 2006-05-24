@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2006/02/25 17:37:14 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.6.1 2006/05/24 15:47:53 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2006/02/25 17:37:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.6.1 2006/05/24 15:47:53 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,20 +36,22 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2006/02/25 17:37:14 thorpej Exp $"
 
 #include <machine/cpu.h>
 
+#include <cobalt/cobalt/clockvar.h>
+
 extern char	bootstring[];
 extern int	netboot;
 extern int	bootunit;
 extern int	bootpart;
 
-int		cpuspeed = 100;		/* Until we know more precisely. */
-
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	softintr_init();
 
 	(void)splhigh();
+
+	evcnt_attach_static(&hardclock_ev);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
@@ -58,10 +60,11 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
+
 	printf("boot device: %s\n",
-		booted_device ? booted_device->dv_xname : "<unknown>");
+	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
@@ -69,10 +72,9 @@ cpu_rootconf()
 static int hd_iterate = -1;
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
+
 	if (booted_device)
 		return;
 
@@ -88,9 +90,9 @@ device_register(dev, aux)
 			}
 		}
 		/*
-		 * XXX Match up MBR boot specification with BSD disklabel for root?
+		 * XXX Match up MBR boot specification with BSD disklabel
+		 *     for root?
 		 */
 		booted_partition = 0;
 	}
 }
-

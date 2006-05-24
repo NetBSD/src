@@ -1,4 +1,4 @@
-/*	$NetBSD: scnvar.h,v 1.5 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: scnvar.h,v 1.5.12.1 2006/05/24 15:48:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -45,7 +45,7 @@
 
 #define SCN_SIZE	         0x8	/* address space for port */
 
-#define SCN_CONSOLE 		   0	/* minor number of console */
+#define SCN_CONSOLE		   0	/* minor number of console */
 #define SCN_CONSDUART		   0
 #define SCN_CONSCHAN		   0
 
@@ -53,8 +53,8 @@
 #define SCN_CON_MAP_DATA  0xFFC80003	/* Mapped .... */
 #define SCN_CON_MAP_ISR	  0xFFC80005
 
-#define SCN_CON_STAT 	  0x28000001	/* raw addresses for console */
-#define SCN_CON_DATA  	  0x28000003	/* Unmapped .... */
+#define SCN_CON_STAT	  0x28000001	/* raw addresses for console */
+#define SCN_CON_DATA	  0x28000003	/* Unmapped .... */
 #define SCN_CON_ISR	  0x28000005
 
 /* output port bits */
@@ -108,8 +108,8 @@ struct duart {
 		u_char new_mr2;		/* held changes */
 	} chan[2];
 	enum scntype { SCNUNK, SCN2681, SCN2692, SC26C92 } type;
-	u_int16_t counter;		/* C/T generated bps, or zero */
-	u_int16_t ocounter;		/* last C/T generated bps, or zero */
+	uint16_t counter;		/* C/T generated bps, or zero */
+	uint16_t ocounter;		/* last C/T generated bps, or zero */
 	u_char	mode;			/* ACR[7] + MR0[2:0] */
 	u_char	acr;			/* ACR[6:0]*/
 	u_char	imr;			/* IMR bits */

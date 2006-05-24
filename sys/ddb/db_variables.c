@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.34 2005/11/27 13:05:28 yamt Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.34.12.1 2006/05/24 15:50:06 tron Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.34 2005/11/27 13:05:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_variables.c,v 1.34.12.1 2006/05/24 15:50:06 tron Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -256,7 +256,7 @@ db_set_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	db_expr_t	value;
 	db_expr_t	old_value;
-	const struct db_variable *vp;
+	const struct db_variable *vp = NULL;	/* XXX: GCC */
 	int	t;
 
 	t = db_read_token();

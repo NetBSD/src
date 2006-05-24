@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.130 2006/03/16 17:38:46 jwise Exp $
+# $NetBSD: mi,v 1.130.2.1 2006/05/24 15:47:48 tron Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/american			misc-reference-share	share
@@ -135,9 +135,10 @@
 ./usr/share/doc/html/postfix/BACKSCATTER_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/BASIC_CONFIGURATION_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/BUILTIN_FILTER_README.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/CONNECTION_CACHE_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/CONTENT_INSPECTION_README.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/CDB_README.html		misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/CYRUS_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/CDB_README.html		misc-obsolete	obsolete
+./usr/share/doc/html/postfix/CYRUS_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/DATABASE_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/DB_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/DEBUG_README.html		misc-postfix-htmldoc	postfix,doc
@@ -145,14 +146,14 @@
 ./usr/share/doc/html/postfix/FILTER_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/IPV6_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/LDAP_README.html		misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/LINUX_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/LINUX_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/LMTP_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/LOCAL_RECIPIENT_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MAILDROP_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/MYSQL_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/NFS_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/OVERVIEW.html		misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/PACKAGE_README.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/PACKAGE_README.html	misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/PCRE_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/PGSQL_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/QMQP_README.html		misc-postfix-htmldoc	postfix,doc
@@ -166,7 +167,7 @@
 ./usr/share/doc/html/postfix/STANDARD_CONFIGURATION_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/TLS_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/TUNING_README.html		misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/ULTRIX_README.html		misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/ULTRIX_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/UUCP_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/VERP_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/VIRTUAL_README.html	misc-postfix-htmldoc	postfix,doc
@@ -228,6 +229,8 @@
 ./usr/share/doc/html/postfix/postsuper.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/proxymap.8.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/qmgr.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/qmgr.8.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/qmqpd.8.html	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/qshape.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/queuing.html	misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/rate.html		misc-obsolete		obsolete
@@ -510,6 +513,7 @@
 ./usr/share/examples/fstab/fstab.wd0.cobalt	misc-fstab-examples	share
 ./usr/share/examples/ftpd/ftpd.conf		misc-netutil-examples	share
 ./usr/share/examples/ftpd/ftpusers		misc-netutil-examples	share
+./usr/share/examples/hostapd/hostapd.conf	misc-netutil-examples	share
 ./usr/share/examples/ipf/BASIC.NAT		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/BASIC_1.FW		misc-ipf-examples	ipfilter,share
 ./usr/share/examples/ipf/BASIC_2.FW		misc-ipf-examples	ipfilter,share
@@ -573,6 +577,7 @@
 ./usr/share/examples/pf/queue3			misc-pf-examples	pf,share
 ./usr/share/examples/pf/queue4			misc-pf-examples	pf,share
 ./usr/share/examples/pf/spamd			misc-obsolete		obsolete
+./usr/share/examples/postfix/AAAREADME		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ADDRESS_CLASS_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ADDRESS_REWRITING_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ADDRESS_VERIFICATION_README	misc-postfix-examples	postfix,doc
@@ -582,6 +587,7 @@
 ./usr/share/examples/postfix/CONNECTION_CACHE_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/CONTENT_INSPECTION_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/DATABASE_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/DB_README		misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/DEBUG_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/ETRN_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/FILTER_README	misc-postfix-examples	postfix,doc

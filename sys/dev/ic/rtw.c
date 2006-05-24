@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.69.2.1 2006/03/28 09:42:11 tron Exp $ */
+/* $NetBSD: rtw.c,v 1.69.2.2 2006/05/24 15:50:25 tron Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.69.2.1 2006/03/28 09:42:11 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.69.2.2 2006/05/24 15:50:25 tron Exp $");
 
 #include "bpfilter.h"
 
@@ -3231,11 +3231,11 @@ rtw_start(struct ifnet *ifp)
 	struct ieee80211com	*ic;
 	struct ieee80211_duration *d0;
 	struct ieee80211_frame_min	*wh;
-	struct ieee80211_node	*ni;
+	struct ieee80211_node	*ni = NULL;	/* XXX: GCC */
 	struct mbuf		*m0;
 	struct rtw_softc	*sc;
-	struct rtw_txsoft_blk	*tsb;
-	struct rtw_txdesc_blk	*tdb;
+	struct rtw_txsoft_blk	*tsb = NULL;	/* XXX: GCC */
+	struct rtw_txdesc_blk	*tdb = NULL;	/* XXX: GCC */
 	struct rtw_txsoft	*ts;
 	struct rtw_txdesc	*td;
 	struct ieee80211_key	*k;

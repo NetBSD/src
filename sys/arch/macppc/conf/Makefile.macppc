@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.25 2006/03/02 05:12:25 dyoung Exp $
+#	$NetBSD: Makefile.macppc,v 1.25.6.1 2006/05/24 15:48:12 tron Exp $
 #
 # Makefile for NetBSD
 #
@@ -113,21 +113,8 @@ setfault.o: assym.h
 
 %RULES
 
-# XXX - Ugly, but make doesn't easily handle .o.uue (assumes it's a suffix)
-# XXX - Also, config has no simple was to just add foo.o to the Makefile. 
-#       It needs a pathname of some sort for "object"        
-.if !empty(OBJS:M\/athhal-powerpc-be-elf.hal.o)
-OBJS:=${OBJS:C/\/athhal-powerpc-be-elf.hal.o/athhal-powerpc-be-elf.hal.o/}
- 
-.PATH: $S/contrib/arch/powerpc/dev
-ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
-		${_MKSHECHO}\
-		${UUDECODE} -p $> \> ${.TARGET}; \
-		rm -f ${.TARGET}; \
-		${UUDECODE} -p $> > ${.TARGET}
-athhal-powerpc-be-elf.hal.o: athhal-powerpc-be-elf.hal.o.uue
-	${ATH_UUDEC}
-.endif
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

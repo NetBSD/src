@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.51 2006/03/14 15:30:03 tsutsui Exp $
+ * $Id: aic7xxxvar.h,v 1.51.2.1 2006/05/24 15:50:24 tron Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -415,8 +415,7 @@ typedef enum {
 	AHC_USEDEFAULTS	      = 0x004,  /*
 					 * For cards without an seeprom
 					 * or a BIOS to initialize the chip's
-					 * SRAM, we use the default target
-					 * settings.
+					 * SRAM, we use the default settings.
 					 */
 	AHC_SEQUENCER_DEBUG   = 0x008,
 	AHC_SHARED_SRAM	      = 0x010,
@@ -455,7 +454,14 @@ typedef enum {
 	AHC_LSCBS_ENABLED     = 0x2000000, /* 64Byte SCBs enabled */
 	AHC_SCB_CONFIG_USED   = 0x4000000, /* No SEEPROM but SCB2 had info. */
 	AHC_NO_BIOS_INIT      = 0x8000000, /* No BIOS left over settings. */
-	AHC_DISABLE_PCI_PERR  = 0x10000000
+	AHC_DISABLE_PCI_PERR  = 0x10000000,
+	AHC_USETARGETDEFAULTS = 0x20000000 /* 
+					    * For cards without an seeprom but
+					    * with BIOS which initializes chip's
+					    * SRAM with some conservative target
+					    * settings, we use the default
+					    * SCSI target settings.
+					    */
 } ahc_flag;
 
 /************************* Hardware  SCB Definition ***************************/
@@ -1232,8 +1238,6 @@ struct ahc_pci_identity {
 	const char		*name;
 	ahc_device_setup_t	*setup;
 };
-extern struct ahc_pci_identity ahc_pci_ident_table [];
-extern const u_int ahc_num_pci_devs;
 
 /***************************** VL/EISA Declarations ***************************/
 struct aic7770_identity {

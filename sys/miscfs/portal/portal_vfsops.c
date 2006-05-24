@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.54 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.54.12.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.54 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.54.12.1 2006/05/24 15:50:43 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.54 2005/12/11 12:24:51 christos 
 #include <sys/domain.h>
 #include <sys/dirent.h>
 #include <sys/un.h>
+#include <sys/kauth.h>
+
 #include <miscfs/portal/portal.h>
 
 void	portal_init(void);
@@ -76,7 +78,7 @@ int	portal_root(struct mount *, struct vnode **);
 int	portal_quotactl(struct mount *, int, uid_t, void *,
 			     struct lwp *);
 int	portal_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	portal_sync(struct mount *, int, struct ucred *, struct lwp *);
+int	portal_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	portal_vget(struct mount *, ino_t, struct vnode **);
 
 void
@@ -285,7 +287,7 @@ int
 portal_sync(mp, waitfor, uc, l)
 	struct mount *mp;
 	int waitfor;
-	struct ucred *uc;
+	kauth_cred_t uc;
 	struct lwp *l;
 {
 

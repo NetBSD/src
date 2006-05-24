@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.54 2005/12/11 12:24:50 christos Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.54.12.1 2006/05/24 15:50:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.54 2005/12/11 12:24:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.54.12.1 2006/05/24 15:50:43 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ fifo_open(void *v)
 	struct vop_open_args /* {
 		struct vnode	*a_vp;
 		int		a_mode;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
@@ -244,7 +244,7 @@ fifo_read(void *v)
 		struct vnode	*a_vp;
 		struct uio	*a_uio;
 		int		a_ioflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct uio	*uio;
 	struct socket	*rso;
@@ -291,7 +291,7 @@ fifo_write(void *v)
 		struct vnode	*a_vp;
 		struct uio	*a_uio;
 		int		a_ioflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 	} */ *ap = v;
 	struct socket	*wso;
 	int		error;
@@ -324,7 +324,7 @@ fifo_ioctl(void *v)
 		u_long		a_command;
 		void		*a_data;
 		int		a_fflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct file	filetmp;
@@ -419,7 +419,7 @@ fifo_close(void *v)
 	struct vop_close_args /* {
 		struct vnode	*a_vp;
 		int		a_fflag;
-		struct ucred	*a_cred;
+		kauth_cred_t	a_cred;
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;

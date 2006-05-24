@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.2 2004/07/23 05:34:51 martti Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.1.1.2.6.1 2006/05/24 15:47:47 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -51,7 +51,7 @@
 # include <nlist.h>
 #endif
 #include "ipf.h"
-#include "ipl.h"
+#include "netinet/ipl.h"
 #include "kmem.h"
 
 #ifdef	__hpux
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24.2.1 2004/04/28 17:56:22 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24.2.2 2005/05/10 21:19:30 darrenr Exp";
 #endif
 
 

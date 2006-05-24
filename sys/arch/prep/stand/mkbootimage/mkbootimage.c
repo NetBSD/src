@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.12.12.1 2006/03/28 09:47:18 tron Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.12.12.2 2006/05/24 15:48:21 tron Exp $	*/
 
 /*-
  * Copyright (C) 2006 Tim Rightnour
@@ -141,7 +141,7 @@ check_mbr(int prep_fd, int lfloppyflag, char *rawdev)
 	}
 
 	/*
-	 * if we have a raw device, we need to check to see if it allready
+	 * if we have a raw device, we need to check to see if it already
 	 * has a partition table, and if so, read it in and check for
 	 * suitability.
 	 */
@@ -247,6 +247,7 @@ main(int argc, char **argv)
 	int elf_fd, prep_fd, kern_fd, elf_img_len = 0;
 	off_t lenpos, kstart, kend;
 	unsigned long length;
+	long flength;
 	gzFile gzf;
 	struct stat kern_stat;
 	char *kernel = NULL, *boot = NULL, *rawdev = NULL;
@@ -373,15 +374,15 @@ main(int argc, char **argv)
 	lseek(prep_fd, sizeof(mbr) + 4, SEEK_SET);
 	write(prep_fd, &length, sizeof(length));
 
-	length = 0x400 + elf_img_len + 8 + kgzlen;
+	flength = 0x400 + elf_img_len + 8 + kgzlen;
 	if (lfloppyflag)
-		length -= (5760 * 512);
+		flength -= (5760 * 512);
 	else
-		length -= (2880 * 512);
-	if (length > 0)
+		flength -= (2880 * 512);
+	if (flength > 0 && !saloneflag)
 		fprintf(stderr, "%s: Image %s is %d bytes larger than single"
 		    " floppy. Can only be used for netboot.\n", getprogname(),
-		    argv[0], length);
+		    argv[0], flength);
 
 	free(kern_img);
 	close(kern_fd);

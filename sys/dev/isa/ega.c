@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.19 2005/12/11 12:22:02 christos Exp $ */
+/* $NetBSD: ega.c,v 1.19.12.1 2006/05/24 15:50:26 tron Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.19 2005/12/11 12:22:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.19.12.1 2006/05/24 15:50:26 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,8 +210,8 @@ const struct wsscreen_list ega_screenlist = {
 	_ega_scrlist_mono
 };
 
-static int ega_ioctl(void *, u_long, caddr_t, int, struct proc *);
-static paddr_t ega_mmap(void *, off_t, int);
+static int ega_ioctl(void *, void *, u_long, caddr_t, int, struct proc *);
+static paddr_t ega_mmap(void *, void *, off_t, int);
 static int ega_alloc_screen(void *, const struct wsscreen_descr *,
 			    void **, int *, int *, long *);
 static void ega_free_screen(void *, void *);
@@ -585,8 +585,9 @@ ega_is_console(iot)
 }
 
 static int
-ega_ioctl(v, cmd, data, flag, p)
+ega_ioctl(v, vs, cmd, data, flag, p)
 	void *v;
+	void *vs;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -599,8 +600,9 @@ ega_ioctl(v, cmd, data, flag, p)
 }
 
 static paddr_t
-ega_mmap(v, offset, prot)
+ega_mmap(v, vs, offset, prot)
 	void *v;
+	void *vs;
 	off_t offset;
 	int prot;
 {

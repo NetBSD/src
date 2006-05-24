@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.7 2005/12/10 07:05:10 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.7.12.1 2006/05/24 15:48:21 tron Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.7 2005/12/10 07:05:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.7.12.1 2006/05/24 15:48:21 tron Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -762,6 +762,7 @@ mec_reset(struct mec_softc *sc)
 
 	/* reset chip */
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, MEC_MAC_CORE_RESET);
+	delay(1000);
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, 0);
 	delay(1000);
 

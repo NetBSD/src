@@ -1,4 +1,4 @@
-#	$NetBSD: DBAU1550,v 1.6.6.1 2006/03/28 09:47:15 tron Exp $
+#	$NetBSD: DBAU1550,v 1.6.6.2 2006/05/24 15:47:55 tron Exp $
 #
 # Kernel config for the AMD Alchemy DBAu1550 evaluation board.
 
@@ -36,6 +36,7 @@ an*		at pcmcia? function ?		# Aironet (802.11b)
 # Note that this is just fairly random selection of PCI devices.
 
 # Ethernet cards
+ath*		at pci? dev ? function ?	# Atheros WLAN 
 bge*		at pci? dev ? function ?	# Broadcom GigE
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ral*		at pci?	dev ? function ?	# Ralink WLAN

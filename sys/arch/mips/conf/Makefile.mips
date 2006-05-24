@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.40 2005/11/11 06:22:04 simonb Exp $
+#	$NetBSD: Makefile.mips,v 1.40.14.1 2006/05/24 15:48:13 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -120,6 +120,9 @@ mips32_subr.o mips3_subr.o mips5900_subr.o mips64_subr.o mipsX_subr.o: assym.h
 %LOAD
 
 %RULES
+
+## Include rules for Atheros WLAN
+.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

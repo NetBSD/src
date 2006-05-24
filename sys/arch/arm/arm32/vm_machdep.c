@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34.12.1 2006/05/24 15:47:51 tron Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34.12.1 2006/05/24 15:47:51 tron Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -330,7 +330,8 @@ vmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
-	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
+	bp->b_saveaddr = bp->b_data;
+	faddr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);

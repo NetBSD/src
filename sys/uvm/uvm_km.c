@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.84.12.1 2006/03/28 09:42:31 tron Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.84.12.2 2006/05/24 15:50:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.84.12.1 2006/03/28 09:42:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.84.12.2 2006/05/24 15:50:48 tron Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -333,6 +333,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 	size = round_page(size);	/* round up to pagesize */
+	size += uvm_mapent_overhead(size, flags);
 
 	/*
 	 * first allocate a blank spot in the parent map
@@ -393,7 +394,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 
 	KASSERT(VM_MIN_KERNEL_ADDRESS <= startva);
 	KASSERT(startva < endva);
-	KASSERT(endva < VM_MAX_KERNEL_ADDRESS);
+	KASSERT(endva <= VM_MAX_KERNEL_ADDRESS);
 
 	simple_lock(&uobj->vmobjlock);
 
@@ -454,7 +455,7 @@ uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 
 	KASSERT(VM_MIN_KERNEL_ADDRESS <= start);
 	KASSERT(start < end);
-	KASSERT(end < VM_MAX_KERNEL_ADDRESS);
+	KASSERT(end <= VM_MAX_KERNEL_ADDRESS);
 
 	for (; start < end; start += PAGE_SIZE) {
 		if (!pmap_extract(pmap_kernel(), start, &pa)) {

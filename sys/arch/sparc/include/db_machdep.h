@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.21 2006/03/04 03:39:02 uwe Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.21.6.1 2006/05/24 15:48:22 tron Exp $ */
 
 /*
  * Mach Operating System
@@ -68,7 +68,7 @@ extern db_regs_t	*ddb_regp;
 #define	BKPT_ADDR(addr)	(addr)		/* breakpoint address */
 #define	BKPT_INST	0x91d02001	/* breakpoint instruction */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
-#define	BKPT_SET(inst)	(BKPT_INST)
+#define	BKPT_SET(inst, addr)	(BKPT_INST)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	\
 	((type) == T_BREAKPOINT || (type) == T_KGDB_EXEC)

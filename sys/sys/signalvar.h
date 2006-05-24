@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.63 2006/03/05 07:21:38 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.63.6.1 2006/05/24 15:50:47 tron Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -111,9 +111,14 @@ do {									\
 #define	CURSIG(l)	(l->l_proc->p_sigctx.ps_sigcheck ? issignal(l) : 0)
 
 /*
- * Clear a pending signal from a process.
+ * Clear all pending signal from a process.
  */
-#define	CLRSIG(p, sig)	sigdelset(&p->p_sigctx.ps_siglist, sig)
+#define CLRSIG(l) \
+	do { \
+		int _sg; \
+		while ((_sg = CURSIG(l)) != 0) \
+			sigdelset(&(l)->l_proc->p_sigctx.ps_siglist, _sg); \
+	} while (/*CONSTCOND*/0)
 
 /*
  * Signal properties and actions.
@@ -136,7 +141,6 @@ do {									\
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
 
 struct vnode;
-struct ucred;
 
 /*
  * Machine-independent functions:

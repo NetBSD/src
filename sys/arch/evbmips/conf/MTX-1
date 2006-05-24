@@ -1,4 +1,4 @@
-#	$NetBSD: MTX-1,v 1.2 2006/02/25 11:45:24 simonb Exp $
+#	$NetBSD: MTX-1,v 1.2.8.1 2006/05/24 15:47:55 tron Exp $
 #
 # Kernel config for the 4G Systems MTX-1 board (e.g. meshcube/accesscube).
 
@@ -35,6 +35,7 @@ aupci*	at aubus? addr ?
 pci*	at aupci?
 
 # Note that this is just fairly random selection of PCI devices.
+ath*		at pci? dev ? function ?	# Atheros WLAN 
 bge*		at pci? dev ? function ?	# Broadcom GigE
 ral*		at pci?	dev ? function ?	# Ralink WLAN
 re*		at pci? dev ? function ?	# Realtek 8169 GigE

@@ -1,7 +1,7 @@
-/* $NetBSD: vesabios.c,v 1.18 2006/02/20 00:50:10 jmcneill Exp $ */
+/* $NetBSD: vesabios.c,v 1.18.6.1 2006/05/24 15:47:57 tron Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.18 2006/02/20 00:50:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.18.6.1 2006/05/24 15:47:57 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ vbegetinfo(vip)
 	tf.tf_edi = 0x2000; /* buf ptr */
 
 	res = kvm86_bioscall(0x10, &tf);
-	if (res || tf.tf_eax != 0x004f) {
+	if (res || (tf.tf_eax & 0xff) != 0x4f) {
 		printf("vbecall: res=%d, ax=%x\n", res, tf.tf_eax);
 		error = ENXIO;
 		goto out;
@@ -211,7 +211,7 @@ vesabios_attach(parent, dev, aux)
 		tf.tf_edi = 0x2000; /* buf ptr */
 
 		res = kvm86_bioscall(0x10, &tf);
-		if (res || tf.tf_eax != 0x004f) {
+		if (res || (tf.tf_eax & 0xff) != 0x4f) {
 			aprint_error("%s: vbecall: res=%d, ax=%x\n",
 			    dev->dv_xname, res, tf.tf_eax);
 			aprint_error("%s: error getting info for mode %04x\n",

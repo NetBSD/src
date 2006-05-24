@@ -1,0 +1,25 @@
+#	$NetBSD: std.hdl_g,v 1.1.10.2 2006/05/24 15:47:54 tron Exp $
+#
+# standard NetBSD/evbarm for I-O DATA HDL-G options
+
+machine		evbarm arm
+include		"conf/std"	# MI standard options
+
+# Pull in IQ80321 config definitions.
+include		"arch/evbarm/conf/files.hdl_g"
+
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+
+#options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
+
+makeoptions	BOARDTYPE="hdlg"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.hdl_g"
+
+options 	ARM_INTR_IMPL="<arch/arm/xscale/i80321_intr.h>"
+
+# We need to configure the PCI bus.
+options 	PCI_NETBSD_CONFIGURE

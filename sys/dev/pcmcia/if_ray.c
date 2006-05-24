@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.59 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.59.12.1 2006/05/24 15:50:28 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.59 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.59.12.1 2006/05/24 15:50:28 tron Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -835,7 +835,7 @@ ray_stop(sc)
 		wakeup(ray_report_params);
 	}
 	if (sc->sc_updreq) {
-		sc->sc_repreq->r_failcause = RAY_FAILCAUSE_EDEVSTOP;
+		sc->sc_updreq->r_failcause = RAY_FAILCAUSE_EDEVSTOP;
 		wakeup(ray_update_params);
 	}
 

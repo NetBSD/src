@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.111 2006/02/19 14:59:22 thorpej Exp $	*/
+/*	$NetBSD: npx.c,v 1.111.6.1 2006/05/24 15:47:58 tron Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.111 2006/02/19 14:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.111.6.1 2006/05/24 15:47:58 tron Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -564,6 +564,26 @@ npxdna_xmm(struct cpu_info *ci)
 		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_cw);
 		l->l_md.md_flags |= MDL_USEDFPU;
 	} else {
+		/*
+		 * AMD FPU's do not restore FIP, FDP, and FOP on fxrstor,
+		 * leaking other process's execution history. Clear them
+		 * manually.
+		 */
+		static const double zero = 0.0;
+		int status;
+		/*
+		 * Clear the ES bit in the x87 status word if it is currently
+		 * set, in order to avoid causing a fault in the upcoming load.
+		 */
+		fnstsw(&status);
+		if (status & 0x80)
+			fnclex();
+		/*
+		 * Load the dummy variable into the x87 stack.  This mangles
+		 * the x87 stack, but we don't care since we're about to call
+		 * fxrstor() anyway.
+		 */
+		__asm __volatile("ffree %%st(7)\n\tfld %0" : : "m" (zero));
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
 	}
 

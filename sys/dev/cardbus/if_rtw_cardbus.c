@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.9.12.1 2006/03/31 09:45:18 tron Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.9.12.2 2006/05/24 15:50:07 tron Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.9.12.1 2006/03/31 09:45:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.9.12.2 2006/05/24 15:50:07 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -186,8 +186,7 @@ const struct rtw_cardbus_product {
 };
 
 const struct rtw_cardbus_product *
-rtw_cardbus_lookup(ca)
-	const struct cardbus_attach_args *ca;
+rtw_cardbus_lookup(const struct cardbus_attach_args *ca)
 {
 	const struct rtw_cardbus_product *rcp;
 
@@ -202,10 +201,7 @@ rtw_cardbus_lookup(ca)
 }
 
 int
-rtw_cardbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+rtw_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -236,9 +232,7 @@ rtw_cardbus_funcregen(struct rtw_regs *regs, int enable)
 }
 
 void
-rtw_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rtw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;
@@ -344,9 +338,7 @@ rtw_cardbus_attach(parent, self, aux)
 }
 
 int
-rtw_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+rtw_cardbus_detach(struct device *self, int flags)
 {
 	struct rtw_cardbus_softc *csc = device_private(self);
 	struct rtw_softc *sc = &csc->sc_rtw;
@@ -382,8 +374,7 @@ rtw_cardbus_detach(self, flags)
 }
 
 int
-rtw_cardbus_enable(sc)
-	struct rtw_softc *sc;
+rtw_cardbus_enable(struct rtw_softc *sc)
 {
 	struct rtw_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -421,8 +412,7 @@ rtw_cardbus_enable(sc)
 }
 
 void
-rtw_cardbus_disable(sc)
-	struct rtw_softc *sc;
+rtw_cardbus_disable(struct rtw_softc *sc)
 {
 	struct rtw_cardbus_softc *csc = (void *) sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
@@ -443,9 +433,7 @@ rtw_cardbus_disable(sc)
 }
 
 void
-rtw_cardbus_power(sc, why)
-	struct rtw_softc *sc;
-	int why;
+rtw_cardbus_power(struct rtw_softc *sc, int why)
 {
 	struct rtw_cardbus_softc *csc = (void *) sc;
 
@@ -466,8 +454,7 @@ rtw_cardbus_power(sc, why)
 }
 
 void
-rtw_cardbus_setup(csc)
-	struct rtw_cardbus_softc *csc;
+rtw_cardbus_setup(struct rtw_cardbus_softc *csc)
 {
 	struct rtw_softc *sc = &csc->sc_rtw;
 	cardbus_devfunc_t ct = csc->sc_ct;

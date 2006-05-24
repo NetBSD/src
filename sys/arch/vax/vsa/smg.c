@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.40 2005/12/11 12:19:37 christos Exp $ */
+/*	$NetBSD: smg.c,v 1.40.12.1 2006/05/24 15:48:24 tron Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.40 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.40.12.1 2006/05/24 15:48:24 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -164,8 +164,8 @@ static  u_char *qf;
 	sm_addr[col + (row * SM_CHEIGHT * SM_COLS) + line * SM_COLS]
 
 
-static int	smg_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-static paddr_t	smg_mmap(void *, off_t, int);
+static int	smg_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static paddr_t	smg_mmap(void *, void *, off_t, int);
 static int	smg_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
 static void	smg_free_screen(void *, void *);
@@ -465,7 +465,7 @@ setcursor(struct wsdisplay_cursor *v)
 }
 
 int
-smg_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+smg_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct wsdisplay_fbinfo *fb = (void *)data;
 	static short curc;
@@ -526,7 +526,7 @@ smg_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 static paddr_t
-smg_mmap(void *v, off_t offset, int prot)
+smg_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	if (offset >= SMSIZE || offset < 0)
 		return -1;

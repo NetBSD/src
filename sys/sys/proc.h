@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.216.4.2 2006/03/31 09:45:29 tron Exp $	*/
+/*	$NetBSD: proc.h,v 1.216.4.3 2006/05/24 15:50:47 tron Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -53,6 +53,11 @@
 #include <sys/siginfo.h>
 #include <sys/event.h>
 
+#ifndef _KERNEL
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
+
 /*
  * One structure allocated per session.
  */
@@ -87,6 +92,7 @@ struct exec_package;
 struct ps_strings;
 struct ras;
 struct sa_emul;
+struct kauth_cred;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -161,7 +167,7 @@ struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
 
 	/* Substructures: */
-	struct pcred	*p_cred;	/* Process owner's identity */
+	struct kauth_cred *p_cred;	/* Credentials */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
 	struct pstats	*p_stats;	/* Accounting/statistics (PROC ONLY) */
@@ -170,8 +176,6 @@ struct proc {
 	struct sigacts	*p_sigacts;	/* Process sigactions (state is below)*/
 
 	void		*p_ksems;	/* p1003.1b semaphores */
-
-#define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
 	int		p_exitsig;	/* signal to send to parent on exit */
@@ -288,13 +292,15 @@ struct proc {
 /* These flags are kept in p_flag. */
 #define	P_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
 #define	P_CONTROLT	0x00000002 /* Has a controlling terminal */
-#define	P_SYSCALL	0x00000004 /* process has PT_SYSCALL enabled */
+#define	P_INMEM	     /* 0x00000004 */	L_INMEM
 #define	P_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
 #define	P_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
 #define	P_PROFIL	0x00000020 /* Has started profiling */
+#define	P_SELECT     /* 0x00000040 */	L_SELECT
+#define	P_SINTR	     /* 0x00000080 */	L_SINTR
 #define	P_SUGID		0x00000100 /* Had set id privileges since last exec */
 #define	P_SYSTEM	0x00000200 /* System proc: no sigs, stats or swapping */
-#define	P_SA		0x00000400 /* Using scheduler activations */
+#define	P_SA	     /* 0x00000400 */	L_SA
 #define	P_TRACED	0x00000800 /* Debugged process being traced */
 #define	P_WAITED	0x00001000 /* Debugging process has waited for child */
 #define	P_WEXIT		0x00002000 /* Working on exiting */
@@ -310,7 +316,14 @@ struct proc {
 #define	P_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	P_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	P_STOPEXIT	0x02000000 /* Will be stopped at process exit */
+#define	P_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
+#define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
+#define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
+#define	P_UNUSED2	0x20000000
+#define	P_UNUSED1	0x40000000
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */
+
+#define	P_SHARED	(L_INMEM|L_SELECT|L_SINTR|L_SA)
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -466,7 +479,6 @@ void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
-int	groupmember(gid_t, const struct ucred *);
 int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);

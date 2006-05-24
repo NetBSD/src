@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.21.4.1 2006/03/28 09:46:22 tron Exp $ */
+/* $NetBSD: hypervisor.c,v 1.21.4.2 2006/05/24 15:48:25 tron Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.21.4.1 2006/03/28 09:46:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.21.4.2 2006/05/24 15:48:25 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.21.4.1 2006/03/28 09:46:22 tron Exp
 #include "npx.h"
 #include "isa.h"
 #include "pci.h"
+#include "acpi.h"
 
 #include "opt_xen.h"
 
@@ -88,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.21.4.1 2006/03/28 09:46:22 tron Exp
 #include <machine/ctrl_if.h>
 #endif
 
-#ifdef DOM0OPS
+#if defined(DOM0OPS) || defined(XEN3)
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/tree.h>
@@ -97,9 +98,26 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.21.4.1 2006/03/28 09:46:22 tron Exp
 #include <miscfs/kernfs/kernfs.h>
 #include <machine/kernfs_machdep.h>
 #include <dev/isa/isavar.h>
+#endif /* DOM0OPS || XEN3 */
+#ifdef XEN3
+#include <machine/granttables.h>
 #endif
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
+#if NACPI > 0
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_madt.h>       
+#endif
+#ifdef PCI_BUS_FIXUP
+#include <arch/i386/pci/pci_bus_fixup.h>
+#ifdef PCI_ADDR_FIXUP
+#include <arch/i386/pci/pci_addr_fixup.h>
+#endif  
+#endif
+#endif /* NPCI */
+
+#if NXENBUS > 0
+#include <machine/xenbus.h>
 #endif
 #ifdef XEN3
 #include <machine/granttables.h>
@@ -148,6 +166,15 @@ union hypervisor_attach_cookie {
 #if NNPX > 0
 	struct xen_npx_attach_args hac_xennpx;
 #endif
+#if NPCI > 0
+	struct pcibus_attach_args hac_pba;
+#if defined(DOM0OPS) && NISA > 0
+	struct isabus_attach_args hac_iba;
+#endif
+#if NACPI > 0
+        struct acpibus_attach_args hac_acpi;
+#endif
+#endif /* NPCI */
 };
 
 /* 
@@ -198,16 +225,18 @@ hypervisor_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#if NPCI > 0
-	struct pcibus_attach_args pba;
-#if defined(DOM0OPS) && NISA > 0
-	struct isabus_attach_args iba;
-#endif
+#if NPCI >0
 #ifndef XEN3
 	physdev_op_t physdev_op;
 	int i, j, busnum;
 #endif
+#if NACPI > 0
+	int acpi_present = 0;
 #endif
+#ifdef PCI_BUS_FIXUP
+	int pci_maxbus = 0;
+#endif
+#endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
 	printf("\n");
@@ -221,7 +250,6 @@ hypervisor_attach(parent, self, aux)
 	hac.hac_xenbus.xa_device = "xenbus";
 	config_found_ia(self, "xendevbus", &hac.hac_xenbus, hypervisor_print);
 #endif
-
 #if NXENCONS > 0
 	hac.hac_xencons.xa_device = "xencons";
 	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
@@ -240,14 +268,39 @@ hypervisor_attach(parent, self, aux)
 #endif
 #if NPCI > 0
 #ifdef XEN3
-	pba.pba_iot = X86_BUS_SPACE_IO;
-	pba.pba_memt = X86_BUS_SPACE_MEM;
-	pba.pba_dmat = &pci_bus_dma_tag;
-	pba.pba_dmat64 = 0;
-	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
-	pba.pba_bridgetag = NULL;
-	pba.pba_bus = 0;
-	config_found_ia(self, "pcibus", &pba, pcibusprint);
+	pci_mode = pci_mode_detect();
+#ifdef PCI_BUS_FIXUP
+	pci_maxbus = pci_bus_fixup(NULL, 0);
+	aprint_debug("PCI bus max, after pci_bus_fixup: %i\n", pci_maxbus);
+#ifdef PCI_ADDR_FIXUP
+	pciaddr.extent_port = NULL;
+	pciaddr.extent_mem = NULL;
+	pci_addr_fixup(NULL, pci_maxbus);
+#endif
+#endif
+
+#if NACPI > 0
+	acpi_present = acpi_probe();
+	if (acpi_present) {
+		hac.hac_acpi.aa_iot = X86_BUS_SPACE_IO;
+		hac.hac_acpi.aa_memt = X86_BUS_SPACE_MEM;
+		hac.hac_acpi.aa_pc = NULL;
+		hac.hac_acpi.aa_pciflags =
+			PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+			PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
+			PCI_FLAGS_MWI_OKAY;
+		hac.hac_acpi.aa_ic = &x86_isa_chipset;
+		config_found_ia(self, "acpibus", &hac.hac_acpi, 0);
+	}
+#endif /* NACPI */
+	hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
+	hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
+	hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
+	hac.hac_pba.pba_dmat64 = 0;
+	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
+	hac.hac_pba.pba_bridgetag = NULL;
+	hac.hac_pba.pba_bus = 0;
+	config_found_ia(self, "pcibus", &hac.hac_pba, pcibusprint);
 #else
 	physdev_op.cmd = PHYSDEVOP_PCI_PROBE_ROOT_BUSES;
 	if ((i = HYPERVISOR_physdev_op(&physdev_op)) < 0) {
@@ -271,15 +324,15 @@ hypervisor_attach(parent, self, aux)
 					    busnum);
 					continue;
 				}
-				pba.pba_iot = X86_BUS_SPACE_IO;
-				pba.pba_memt = X86_BUS_SPACE_MEM;
-				pba.pba_dmat = &pci_bus_dma_tag;
-				pba.pba_dmat64 = 0;
-				pba.pba_flags = PCI_FLAGS_MEM_ENABLED |
+				hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
+				hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
+				hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
+				hac.hac_pba.pba_dmat64 = 0;
+				hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED |
 						PCI_FLAGS_IO_ENABLED;
-				pba.pba_bridgetag = NULL;
-				pba.pba_bus = busnum;
-				config_found_ia(self, "pcibus", &pba,
+				hac.hac_pba.pba_bridgetag = NULL;
+				hac.hac_pba.pba_bus = busnum;
+				config_found_ia(self, "pcibus", &hac.hac_pba,
 				    pcibusprint);
 			}
 		} 
@@ -287,12 +340,12 @@ hypervisor_attach(parent, self, aux)
 #endif /* XEN3 */
 #if defined(DOM0OPS) && NISA > 0
 	if (isa_has_been_seen == 0) {
-		iba._iba_busname = "isa";
-		iba.iba_iot = X86_BUS_SPACE_IO;
-		iba.iba_memt = X86_BUS_SPACE_MEM;
-		iba.iba_dmat = &isa_bus_dma_tag;
-		iba.iba_ic = NULL; /* No isa DMA yet */
-		config_found_ia(self, "isabus", &iba, isabusprint);
+		hac.hac_iba._iba_busname = "isa";
+		hac.hac_iba.iba_iot = X86_BUS_SPACE_IO;
+		hac.hac_iba.iba_memt = X86_BUS_SPACE_MEM;
+		hac.hac_iba.iba_dmat = &isa_bus_dma_tag;
+		hac.hac_iba.iba_ic = NULL; /* No isa DMA yet */
+		config_found_ia(self, "isabus", &hac.hac_iba, isabusprint);
 	}
 #endif
 #endif /* NPCI */
@@ -331,7 +384,7 @@ hypervisor_print(aux, parent)
 	return (UNCONF);
 }
 
-#ifdef DOM0OPS
+#if defined(DOM0OPS) || defined(XEN3)
 
 #define DIR_MODE	(S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 
@@ -347,7 +400,7 @@ xenkernfs_init()
 	kernfs_addentry(NULL, dkt);
 	kernxen_pkt = KERNFS_ENTOPARENTDIR(dkt);
 }
-#endif
+#endif /* DOM0OPS || XEN3 */
 
 #ifndef XEN3
 /* handler for the shutdown messages */

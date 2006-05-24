@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 2006/03/15 18:12:03 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.74.2.1 2006/05/24 15:48:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2006/03/15 18:12:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74.2.1 2006/05/24 15:48:15 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2006/03/15 18:12:03 drochner Exp $");
 #include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/kauth.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -126,7 +127,7 @@ int ieee_handler_disable = 0;
 #define __CDECL__
 #endif
 
-void trap __P((struct trapframe)) __CDECL__;
+void trap(struct trapframe) __CDECL__;
 
 const char *trap_type[] = {
 	"non-vectored interrupt",		/*  0 T_NVI */
@@ -165,8 +166,7 @@ int	trapdebug = 0;
  */
 /*ARGSUSED*/
 void
-trap(frame)
-	struct trapframe frame;
+trap(struct trapframe frame)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -434,8 +434,8 @@ trap(frame)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_cred ?
+			       kauth_cred_geteuid(p->p_cred) : -1);
 			sig = SIGKILL;
 		} else {
 			sig = SIGSEGV;
@@ -450,9 +450,9 @@ trap(frame)
 		break;
 	}
 
-	case T_TRC | T_USER: 	/* trace trap */
-	case T_BPT | T_USER: 	/* breakpoint instruction */
-	case T_DBG | T_USER: 	/* debug trap */
+	case T_TRC | T_USER:	/* trace trap */
+	case T_BPT | T_USER:	/* breakpoint instruction */
+	case T_DBG | T_USER:	/* debug trap */
 	trace:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGTRAP;
@@ -486,8 +486,7 @@ out:
 }
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 
@@ -505,8 +504,7 @@ child_return(arg)
  * Start a new LWP.
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int error;
 	ucontext_t *uc = arg;
@@ -530,8 +528,7 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(l)
-	struct lwp *l;
+upcallret(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.87 2006/03/12 10:32:47 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.87.2.1 2006/05/24 15:50:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,9 +69,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.87 2006/03/12 10:32:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.87.2.1 2006/05/24 15:50:41 tron Exp $");
 
 #include "opt_kstack.h"
+#include "opt_maxuprc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.87 2006/03/12 10:32:47 yamt Exp $");
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -163,7 +165,7 @@ struct session session0;
 struct pgrp pgrp0;
 struct proc proc0;
 struct lwp lwp0;
-struct pcred cred0;
+kauth_cred_t cred0;
 struct filedesc0 filedesc0;
 struct cwdinfo cwdi0;
 struct plimit limit0;
@@ -186,8 +188,6 @@ POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
 POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
     &pool_allocator_nointr);
 POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-    &pool_allocator_nointr);
-POOL_INIT(pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
     &pool_allocator_nointr);
 POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
     &pool_allocator_nointr);
@@ -329,10 +329,8 @@ proc0_init(void)
 	callout_init(&l->l_tsleep_ch);
 
 	/* Create credentials. */
-	cred0.p_refcnt = 1;
-	p->p_cred = &cred0;
-	p->p_ucred = crget();
-	p->p_ucred->cr_ngroups = 1;	/* group 0 */
+	cred0 = kauth_cred_alloc();
+	p->p_cred = cred0;
 
 	/* Create the CWD info. */
 	p->p_cwdi = &cwdi0;

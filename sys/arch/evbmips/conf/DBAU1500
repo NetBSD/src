@@ -1,4 +1,4 @@
-#	$NetBSD: DBAU1500,v 1.7 2006/02/25 11:47:41 simonb Exp $
+#	$NetBSD: DBAU1500,v 1.7.6.1 2006/05/24 15:47:55 tron Exp $
 #
 # Kernel config for the AMD Alchemy DBAu1500 evaluation board.
 
@@ -37,6 +37,7 @@ pci*	at aupci?
 # Note that this is just fairly random selection of PCI devices.
 
 # Ethernet cards
+ath*		at pci? dev ? function ?	# Atheros WLAN 
 bge*		at pci? dev ? function ?	# Broadcom GigE
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ral*		at pci?	dev ? function ?	# Ralink WLAN

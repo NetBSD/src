@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.18 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.18.12.1 2006/05/24 15:47:50 tron Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.18 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.18.12.1 2006/05/24 15:47:50 tron Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -143,8 +143,8 @@ int  amidisplaycc_allocattr(void *, int, int, int, long *);
 
 
 /* accessops for wscons */
-int amidisplaycc_ioctl(void *, u_long, caddr_t, int, struct lwp *);
-paddr_t amidisplaycc_mmap(void *, off_t, int);
+int amidisplaycc_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+paddr_t amidisplaycc_mmap(void *, void *, off_t, int);
 int amidisplaycc_alloc_screen(void *, const struct wsscreen_descr *, void **,
 			      int *, int *, long *);
 void amidisplaycc_free_screen( void *, void *);
@@ -1021,7 +1021,8 @@ amidisplaycc_allocattr(void *screen, int fg, int bg, int flags, long *attrp)
 }
 
 int
-amidisplaycc_ioctl(void *dp, u_long cmd, caddr_t data, int flag, struct lwp *l)
+amidisplaycc_ioctl(void *dp, void *vs, u_long cmd, caddr_t data, int flag,
+	struct lwp *l)
 {
 	struct amidisplaycc_softc *adp;
 
@@ -1158,7 +1159,7 @@ amidisplaycc_gfxscreen(struct amidisplaycc_softc *adp, int on)
  * by switching to mapped mode by using an ioctl.
  */
 paddr_t
-amidisplaycc_mmap(void *dp, off_t off, int prot)
+amidisplaycc_mmap(void *dp, void *vs, off_t off, int prot)
 {
 	struct amidisplaycc_softc  * adp;
 	bmap_t                     * bm;

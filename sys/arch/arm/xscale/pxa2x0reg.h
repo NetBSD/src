@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.8 2006/03/08 23:46:23 lukem Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.8.2.1 2006/05/24 15:47:52 tron Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -466,8 +466,8 @@ struct pxa2x0_dma_desc {
 #define LCDC_LCCR3	0x00c	/* Controller Control Register 2 */
 #define  LCCR3_BPP_SHIFT 24		/* Bits per pixel */
 #define  LCCR3_BPP	(0x07<<LCCR3_BPP_SHIFT)
-#define LCDC_LCCR4	0x010	/* Controller Control Register 3 */
-#define LCDC_LCCR5	0x014	/* Controller Control Register 3 */
+#define LCDC_LCCR4	0x010	/* Controller Control Register 4 */
+#define LCDC_LCCR5	0x014	/* Controller Control Register 5 */
 #define LCDC_FBR0	0x020	/* DMA ch0 frame branch register */
 #define LCDC_FBR1	0x024	/* DMA ch1 frame branch register */
 #define LCDC_FBR2	0x028	/* DMA ch2 frame branch register */

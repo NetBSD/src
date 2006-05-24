@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.8 2002/03/26 00:11:54 kleink Exp $
+$NetBSD: version,v 1.8.48.1 2006/05/24 15:48:21 tron Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -10,3 +10,7 @@ is taken as the current.
 1.4:		loadfile() update to avoid backwards seeks for ELF Program
 		Headers.
 1.5:		Support MPC601.
+1.6:		Remove fd.c, video.c.  Compile without DB_MONITOR. Cleanup,
+		KNF.
+1.7:		Rewrite vreset.c, make it work and allways run it. Stop using
+		cd9660 and ufs, replace with nullfs because we don't need one.

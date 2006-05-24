@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA820,v 1.4 2006/02/05 05:01:50 cube Exp $
+#	$NetBSD: JORNADA820,v 1.4.6.1 2006/05/24 15:47:56 tron Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.4.6.1 $"
 
 # estimated number of users
 maxusers	32
@@ -140,9 +140,8 @@ cpu0 at mainbus?
 saip0	at mainbus?
 
 # Serial
-# ??? virtual address?????
 options 	CONSPEED=19200
-sacom*	at saip? addr 0xd000d000 size 0x24	intr 17
+sacom*	at saip? addr 0x80050000 size 0x24	intr 17
 
 
 #OS Timer

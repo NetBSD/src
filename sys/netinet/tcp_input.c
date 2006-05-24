@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.239 2006/02/18 17:34:49 rpaulo Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.239.6.1 2006/05/24 15:50:45 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.239 2006/02/18 17:34:49 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.239.6.1 2006/05/24 15:50:45 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1293,6 +1293,7 @@ findpcb:
 			m_freem(in6p->in6p_options);
 			in6p->in6p_options = 0;
 		}
+		KASSERT(ip6 != NULL);
 		ip6_savecontrol(in6p, &in6p->in6p_options, ip6, m);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.79 2005/12/11 12:21:25 christos Exp $ */
+/*      $NetBSD: ac97.c,v 1.79.12.1 2006/05/24 15:50:24 tron Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.79 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.79.12.1 2006/05/24 15:50:24 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,6 +378,7 @@ struct ac97_softc {
 	unsigned int ac97_clock; /* usually 48000 */
 #define AC97_STANDARD_CLOCK	48000U
 	uint16_t power_all;
+	uint16_t power_reg;	/* -> AC97_REG_POWER */
 	uint16_t caps;		/* -> AC97_REG_RESET */
 	uint16_t ext_id;	/* -> AC97_REG_EXT_AUDIO_ID */
 	uint16_t ext_mid;	/* -> AC97_REG_EXT_MODEM_ID */
@@ -448,10 +449,9 @@ static const struct ac97_codecid {
 
 	/*
 	 * Datasheets:
-	 *	http://www.asahi-kasei.co.jp/akm/usa/product/ak4541/ek4541.pdf
-	 *	http://www.asahi-kasei.co.jp/akm/usa/product/ak4543/ek4543.pdf
-	 *	http://www.asahi-kasei.co.jp/akm/usa/product/ak4544a/ek4544a.pdf
-	 *	http://www.asahi-kasei.co.jp/akm/usa/product/ak4545/ek4545.pdf
+	 *	http://www.asahi-kasei.co.jp/akm/japanese/product/ak4543/ek4543.pdf
+	 *	http://www.asahi-kasei.co.jp/akm/japanese/product/ak4544a/ek4544a.pdf
+	 *	http://www.asahi-kasei.co.jp/akm/japanese/product/ak4545/ak4545_f00e.pdf
 	 */
 	{ AC97_CODEC_ID('A', 'K', 'M', 0),
 	  0xffffffff,			"Asahi Kasei AK4540"	},
@@ -780,6 +780,16 @@ static const char *ac97_register_names[0x80 / 2] = {
 };
 #endif
 
+/*
+ * XXX Some cards have an inverted AC97_POWER_EAMP bit.
+ * These cards will produce no sound unless AC97_HOST_INVERTED_EAMP is set.
+ */
+
+#define POWER_EAMP_ON(as)  ((as->host_flags & AC97_HOST_INVERTED_EAMP) \
+			    ? AC97_POWER_EAMP : 0)
+#define POWER_EAMP_OFF(as) ((as->host_flags & AC97_HOST_INVERTED_EAMP) \
+			    ? 0 : AC97_POWER_EAMP)
+
 static void
 ac97_read(struct ac97_softc *as, uint8_t reg, uint16_t *val)
 {
@@ -845,6 +855,8 @@ ac97_restore_shadow(struct ac97_codec_if *self)
 	as = (struct ac97_softc *) self;
 
 	if (as->type == AC97_CODEC_TYPE_AUDIO) {
+		/* restore AC97_REG_POWER */
+		ac97_write(as, AC97_REG_POWER, as->power_reg);
 		/* make sure chip is fully operational */
 		for (idx = 50000; idx >= 0; idx--) {
 			ac97_read(as, AC97_REG_POWER, &val);
@@ -1040,7 +1052,7 @@ ac97_setup_source_info(struct ac97_softc *as)
 	}
 }
 
-/* backwords compatibility */
+/* backward compatibility */
 int
 ac97_attach(struct ac97_host_if *host_if, struct device *sc_dev)
 {
@@ -1076,9 +1088,11 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 		return error;
 	}
 
-	if ((error = host_if->reset(host_if->arg))) {
-		free(as, M_DEVBUF);
-		return error;
+	if (host_if->reset != NULL) {
+		if ((error = host_if->reset(host_if->arg))) {
+			free(as, M_DEVBUF);
+			return error;
+		}
 	}
 
 	if (host_if->flags)
@@ -1104,7 +1118,7 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 			/* Codec doesn't support analogue mixer power-down */
 			as->power_all &= ~AC97_POWER_ANL;
 		}
-		host_if->write(host_if->arg, AC97_REG_POWER, 0);
+		host_if->write(host_if->arg, AC97_REG_POWER, POWER_EAMP_ON(as));
 
 		for (i = 500000; i >= 0; i--) {
 			ac97_read(as, AC97_REG_POWER, &val);
@@ -1112,6 +1126,9 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 			       break;
 			DELAY(1);
 		}
+
+		/* save AC97_REG_POWER so that we can restore it later */
+		ac97_read(as, AC97_REG_POWER, &as->power_reg);
 	} else if (as->type == AC97_CODEC_TYPE_MODEM) {
 		host_if->write(host_if->arg, AC97_REG_EXT_MODEM_ID, 0);
 	}
@@ -1187,6 +1204,11 @@ ac97_attach_type(struct ac97_host_if *host_if, struct device *sc_dev, int type)
 					aprint_normal("10&11, 3&4, 7&8.\n");
 					break;
 				}
+			}
+			if (as->host_flags & AC97_HOST_INVERTED_EAMP) {
+				aprint_normal("%s: ac97: using inverted "
+					      "AC97_POWER_EAMP bit\n",
+					      sc_dev->dv_xname);
 			}
 
 			/* Enable and disable features */
@@ -1404,6 +1426,11 @@ sysctl_err:
 
 	if (initfunc != NULL)
 		initfunc(as);
+
+	/* restore AC97_REG_POWER */
+	if (as->type == AC97_CODEC_TYPE_AUDIO)
+		ac97_write(as, AC97_REG_POWER, as->power_reg);
+
 	return 0;
 }
 
@@ -1416,7 +1443,7 @@ ac97_detach(struct ac97_codec_if *codec_if)
 	ac97_write(as, AC97_REG_POWER, AC97_POWER_IN | AC97_POWER_OUT
 		   | AC97_POWER_MIXER | AC97_POWER_MIXER_VREF
 		   | AC97_POWER_ACLINK | AC97_POWER_CLK | AC97_POWER_AUX
-		   | AC97_POWER_EAMP);
+		   | POWER_EAMP_OFF(as));
 	free(as, M_DEVBUF);
 }
 

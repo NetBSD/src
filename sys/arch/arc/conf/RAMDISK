@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.68 2006/02/05 05:01:49 cube Exp $
+#	$NetBSD: RAMDISK,v 1.68.6.1 2006/05/24 15:47:51 tron Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.68 $"
+#ident		"GENERIC-$Revision: 1.68.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -269,6 +269,10 @@ we1		at isa? port 0x300 iomem 0xcc000 irq 10
 # PLATFORM_NEC_RD94
 necpb*		at mainbus0	# NEC RISCstation PCI host bridge.
 pci*		at necpb?
+pci*		at ppb? bus ?
+options 	PCI_NETBSD_CONFIGURE
+
+ppb*		at pci? dev ? function ?
 
 #vga*	 	at pci? dev ? function ?
 tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
@@ -309,6 +313,7 @@ tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
 #### MII/PHY support
 
+bmtphy*		at mii? phy ?		# Broadcom BCM5201 and BCM5202 PHYs
 exphy*		at mii? phy ?		# 3Com internal PHYs
 icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 inphy*		at mii? phy ?		# Intel 82555 PHYs

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.10 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.10.12.1 2006/05/24 15:50:27 tron Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.10 2005/12/11 12:22:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.10.12.1 2006/05/24 15:50:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ cs428x_read_codec(void *addr, uint8_t ac97_addr, uint16_t *ac97_data)
 
 	DPRINTFN(5,("read_codec: add=0x%02x ", ac97_addr));
 	/*
-	 * Make sure that there is not data sitting around from a preivous
+	 * Make sure that there is not data sitting around from a previous
 	 * uncompleted access.
 	 */
 	BA0READ4(sc, CS428X_ACSDA);

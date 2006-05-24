@@ -1,11 +1,11 @@
-/*	$NetBSD: ipt.h,v 1.5 2004/03/28 09:00:54 martti Exp $	*/
+/*	$NetBSD: ipt.h,v 1.5.12.1 2006/05/24 15:47:45 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipt.h,v 2.6 2003/02/16 02:33:09 darrenr Exp
+ * Id: ipt.h,v 2.6.4.2 2006/03/26 23:42:04 darrenr Exp
  */
 
 #ifndef	__IPT_H__

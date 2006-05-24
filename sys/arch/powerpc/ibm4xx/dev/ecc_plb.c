@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.10 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.10.12.1 2006/05/24 15:48:19 tron Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,14 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.10 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.10.12.1 2006/05/24 15:48:19 tron Exp $");
 
 #include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/properties.h>
+
+#include <prop/proplib.h>
 
 #include <machine/cpu.h>
 #include <powerpc/ibm4xx/dcr405gp.h>
@@ -92,15 +93,17 @@ ecc_plbattach(struct device *parent, struct device *self, void *aux)
 	struct plb_attach_args *paa = aux;
 	unsigned int processor_freq;
 	unsigned int memsiz;
+	prop_number_t pn;
 
 	ecc_plb_found++;
 
-	if (board_info_get("processor-frequency",
-		&processor_freq, sizeof(processor_freq)) == -1)
-		panic("no processor-frequency");
+	pn = prop_dictionary_get(board_properties, "processor-frequency");
+	KASSERT(pn != NULL);
+	processor_freq = (unsigned int) prop_number_integer_value(pn);
 
-	if (board_info_get("mem-size", &memsiz, sizeof(memsiz)) == -1)
-		panic("no mem-size");
+	pn = prop_dictionary_get(board_properties, "mem-size");
+	KASSERT(pn != NULL);
+	memsiz = (unsigned int) prop_number_integer_value(pn);
 
 	printf(": ECC controller\n");
 

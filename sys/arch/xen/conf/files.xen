@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.37.4.1 2006/03/28 09:46:22 tron Exp $
+#	$NetBSD: files.xen,v 1.37.4.2 2006/05/24 15:48:25 tron Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -21,6 +21,12 @@ defflag			NOREDZONE
 defflag opt_beep.h		BEEP_ONHALT
 defparam opt_beep.h		BEEP_ONHALT_COUNT
 defparam opt_beep.h		BEEP_ONHALT_PITCH BEEP_ONHALT_PERIOD
+
+# PCI fixup options
+defflag opt_pcifixup.h  PCI_ADDR_FIXUP PCI_BUS_FIXUP
+			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
+
+defparam                PCI_CONF_MODE
 
 file	arch/xen/i386/autoconf.c
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
@@ -116,7 +122,7 @@ attach	mainbus at root
 file	arch/xen/i386/mainbus.c		mainbus
 
 # Xen hypervisor
-device	hypervisor { }: isabus, pcibus, sysmon_power, xendevbus
+device	hypervisor { }: isabus, pcibus, sysmon_power, xendevbus, acpibus
 attach hypervisor at hypervisorbus
 file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
@@ -143,6 +149,7 @@ file	arch/xen/xen/xencons.c		xencons needs-flag
 
 # Xen event peudo-device
 defpseudo xenevt
+defpseudo xvif
 
 # Xen Network driver
 device	xennet: arp, ether, ifnet
@@ -176,9 +183,6 @@ include "dev/pci/files.agp"
 file 	arch/i386/pci/agp_machdep.c	agp
 file	arch/xen/xen/pciide_machdep.c	pciide_common
 
-# Atheros 5210/5211/5212 Hardware Abstraction Layer (HAL)
-object	/athhal-i386-elf.hal.o	ath
-
 #
 # Machine-independent ISA devices
 #
@@ -187,6 +191,16 @@ include "dev/isa/files.isa"
 include "dev/usb/files.usb"
 
 include "dev/ieee1394/files.ieee1394"
+
+device  fdc {drive = -1} #XXX
+
+include "dev/acpi/files.acpi"
+file	arch/xen/xen/xen_acpi_machdep.c	acpi
+file	arch/x86/x86/acpi_machdep.c	acpi
+file	arch/x86/x86/i8259.c		acpi
+
+file    arch/i386/pci/pci_bus_fixup.c   pci_bus_fixup
+file    arch/i386/pci/pci_addr_fixup.c  pci_addr_fixup
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
@@ -281,8 +295,11 @@ file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/i386/xen_shm_machdep.c	dom0ops
 file	arch/xen/xen/xbdback.c		dom0ops & !xen3
 file	arch/xen/xen/xennetback.c	dom0ops & !xen3
-file	arch/xen/xen/pci_machdep.c	hypervisor & pci
+file	arch/xen/xen/pci_machdep.c	hypervisor & pci & !xen3
+file	arch/x86/pci/pci_machdep.c	hypervisor & pci & xen3
+file	arch/xen/xen/pci_intr_machdep.c	hypervisor & pci
 file	arch/xen/xen/isa_machdep.c	hypervisor & dom0ops
 file	arch/xen/xen/xenevt.c		xenevt & dom0ops
+file	arch/xen/xen/xennetback_xenbus.c xvif & xen3
 
 include "arch/i386/conf/majors.i386"

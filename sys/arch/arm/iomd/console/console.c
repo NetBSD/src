@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.14 2005/12/11 12:16:50 christos Exp $	*/
+/*	$NetBSD: console.c,v 1.14.12.1 2006/05/24 15:47:52 tron Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14 2005/12/11 12:16:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14.12.1 2006/05/24 15:47:52 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.14 2005/12/11 12:16:50 christos Exp $"
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
 
@@ -290,8 +291,8 @@ vconsole_spawn(dev, vc)
 	new->SPAWN ( new );
 	new->vtty = 1;
 
-	MALLOC (new->charmap, int *, sizeof(int)*((new->xchars)*(new->ychars)), 
-	    M_DEVBUF, M_NOWAIT );
+	new->charmap = (int *)malloc(sizeof(int)*((new->xchars)*(new->ychars)), 
+	    M_DEVBUF, M_NOWAIT);
 /*	printf("spawn:charmap=%08x\n", new->charmap);*/
 
 	if (new->charmap==0)
@@ -312,8 +313,8 @@ vconsole_addcharmap(vc)
 {
 	int counter=0;
 
-	MALLOC (vc->charmap, int *, sizeof(int)*((vc->xchars)*(vc->ychars)),
-	    M_DEVBUF, M_NOWAIT );
+	vc->charmap = (int *)malloc(sizeof(int)*((vc->xchars)*(vc->ychars)),
+	    M_DEVBUF, M_NOWAIT);
 /*	printf("vc=%08x charmap=%08x\n", vc, vc->charmap);*/
 	for ( counter=0; counter<((vc->xchars)*(vc->ychars)); counter++ )
 		(vc->charmap)[counter]=' ';
@@ -405,7 +406,7 @@ physconopen(dev, flag, mode, l)
 		physconparam(TP, &TP->t_termios);
 		ttsetwater(TP);
 	} else if (TP->t_state&TS_XCLUDE &&
-		   suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+		   kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return EBUSY;
 	TP->t_state |= TS_CARR_ON;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.85 2005/12/13 19:27:56 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.85.12.1 2006/05/24 15:50:47 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -162,7 +162,7 @@ do {									\
 					 * hint from sosend to lower layer;
 					 * more data coming
 					 */
-#define 	SS_ISAPIPE 		0x800 /* socket is implementing a pipe */
+#define	SS_ISAPIPE 		0x800	/* socket is implementing a pipe */
 
 
 /*
@@ -273,8 +273,8 @@ struct knote;
 /*
  * File operations on sockets.
  */
-int	soo_read(struct file *, off_t *, struct uio *, struct ucred *, int);
-int	soo_write(struct file *, off_t *, struct uio *, struct ucred *, int);
+int	soo_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+int	soo_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 int	soo_fcntl(struct file *, u_int cmd, void *, struct lwp *);
 int	soo_ioctl(struct file *, u_long cmd, void *, struct lwp *);
 int	soo_poll(struct file *, int, struct lwp *);

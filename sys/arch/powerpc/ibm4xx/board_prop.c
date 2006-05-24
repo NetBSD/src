@@ -1,4 +1,4 @@
-/*	$NetBSD: board_prop.c,v 1.2 2005/12/11 12:18:42 christos Exp $	*/
+/*	$NetBSD: board_prop.c,v 1.2.12.1 2006/05/24 15:48:19 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,25 +31,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: board_prop.c,v 1.2 2005/12/11 12:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: board_prop.c,v 1.2.12.1 2006/05/24 15:48:19 tron Exp $");
 
 #include <sys/param.h>
-#include <sys/properties.h>
 #include <sys/systm.h>
+
+#include <prop/proplib.h>
 
 #include <machine/cpu.h>
 
-struct propdb *board_info = NULL;
+prop_dictionary_t board_properties;
 
 void
 board_info_init(void)
 {
 
 	/*
-	 * Set up the board properties database.
+	 * Set up the board properties dictionary.
 	 */
-	if (board_info != NULL)
+	if (board_properties != NULL)
 		return;
-	if (!(board_info = propdb_create("board properties")))
-		panic("Cannot create board properties database");
+	board_properties = prop_dictionary_create();
+	KASSERT(board_properties != NULL);
 }

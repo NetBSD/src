@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2006/03/15 18:12:03 drochner Exp $     */
+/*	$NetBSD: trap.c,v 1.101.2.1 2006/05/24 15:48:24 tron Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2006/03/15 18:12:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101.2.1 2006/05/24 15:48:24 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 2006/03/15 18:12:03 drochner Exp $");
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/pool.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -235,8 +236,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
 				       p->p_pid, p->p_comm,
-				       p->p_cred && p->p_ucred ?
-				       p->p_ucred->cr_uid : -1);
+				       p->p_cred ?
+				       kauth_cred_geteuid(p->p_cred) : -1);
 				sig = SIGKILL;
 			} else {
 				sig = SIGSEGV;

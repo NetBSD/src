@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11 2006/02/11 02:19:31 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.11.6.1 2006/05/24 15:48:14 tron Exp $	*/
 
 /*
  * Mach Operating System
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11 2006/02/11 02:19:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11.6.1 2006/05/24 15:48:14 tron Exp $");
 
 #define STATIC static
 
@@ -521,22 +521,22 @@ unsigned char fmttab[128] = {
 
 STATIC
 char fmt1_table[16][8] = {
-    "bsr",	/* branch to subroutine */
-    "ret",	/* return from subroutine */
-    "cxp",	/* call external procedure */
-    "rxp",	/* return from external procedure */
-    "rett",	/* return from trap */
-    "reti",	/* return from interrupt */
-    "save",	/* save general purpose registers */
-    "restore",	/* restore general purpose registers */
-    "enter",	/* enter new procedure context */
-    "exit",	/* exit procedure context */
-    "nop",	/* no operation */
-    "wait",	/* wait fro interrupt */
-    "dia",	/* diagnose */
-    "flag",	/* flag trap */
-    "svc",	/* supervisor call trap */
-    "bpt"	/* breakpoint trap */
+	"bsr",		/* branch to subroutine */
+	"ret",		/* return from subroutine */
+	"cxp",		/* call external procedure */
+	"rxp",		/* return from external procedure */
+	"rett",		/* return from trap */
+	"reti",		/* return from interrupt */
+	"save",		/* save general purpose registers */
+	"restore",	/* restore general purpose registers */
+	"enter",	/* enter new procedure context */
+	"exit",		/* exit procedure context */
+	"nop",		/* no operation */
+	"wait",		/* wait fro interrupt */
+	"dia",		/* diagnose */
+	"flag",		/* flag trap */
+	"svc",		/* supervisor call trap */
+	"bpt"		/* breakpoint trap */
 };
 
 #define FMT1_BSR    0x0 /* branch to subroutine */
@@ -558,13 +558,13 @@ char fmt1_table[16][8] = {
 
 STATIC
 char fmt2_table[7][5] = {
-    "addq",	/* add quick */
-    "cmpq",	/* compare quick */
-    "spr",	/* save processor register */
-    "s",	/* save condition as boolean */
-    "acb",	/* add, compare and branch */
-    "movq",	/* move quick */
-    "lpr"	/* load processor register */
+	"addq",		/* add quick */
+	"cmpq",		/* compare quick */
+	"spr",		/* save processor register */
+	"s",		/* save condition as boolean */
+	"acb",		/* add, compare and branch */
+	"movq",		/* move quick */
+	"lpr"		/* load processor register */
 };
 
 #define FMT2_ADDQ   0x0 /* add quick */
@@ -577,14 +577,14 @@ char fmt2_table[7][5] = {
 
 STATIC
 char fmt3_table[8][7] = {
-    "cxpd",	/* call external procedure with descriptor */
-    "bicpsr",	/* bit clear in PSR */
-    "jump",	/* jump */
-    "bispsr",	/* bit set in PSR */
-    "?3?",	/* UNDEFINED */
-    "adjsp",	/* adjust stack pointer */
-    "jsr",	/* jump to subroutine */
-    "case"	/* case branch */
+	"cxpd",		/* call external procedure with descriptor */
+	"bicpsr",	/* bit clear in PSR */
+	"jump",		/* jump */
+	"bispsr",	/* bit set in PSR */
+	"?3?",		/* UNDEFINED */
+	"adjsp",	/* adjust stack pointer */
+	"jsr",		/* jump to subroutine */
+	"case"		/* case branch */
 };
 
 #define FMT3_CXPD   0x0 /* call external procedure with descriptor */
@@ -598,22 +598,22 @@ char fmt3_table[8][7] = {
 
 STATIC
 char fmt4_table[16][5] = {
-    "add",	/* add */
-    "cmp",	/* compare */
-    "bic",	/* bit clear */
-    "?4?",	/* UNDEFINED */
-    "addc",	/* add with carry */
-    "mov",	/* move */
-    "or",	/* or */
-    "?4?",	/* UNDEFINED */
-    "sub",	/* subtract */
-    "addr",	/* compute effective address */
-    "and",	/* and */
-    "?4?",	/* UNDEFINED */
-    "subc",	/* subtract with carry */
-    "tbit",	/* test bit */
-    "xor",	/* exclusive or */
-    "?4?"	/* UNDEFINED */
+	"add",		/* add */
+	"cmp",		/* compare */
+	"bic",		/* bit clear */
+	"?4?",		/* UNDEFINED */
+	"addc",		/* add with carry */
+	"mov",		/* move */
+	"or",		/* or */
+	"?4?",		/* UNDEFINED */
+	"sub",		/* subtract */
+	"addr",		/* compute effective address */
+	"and",		/* and */
+	"?4?",		/* UNDEFINED */
+	"subc",		/* subtract with carry */
+	"tbit",		/* test bit */
+	"xor",		/* exclusive or */
+	"?4?"		/* UNDEFINED */
 };
 
 #define FMT4_ADD    0x0 /* add */
@@ -631,10 +631,10 @@ char fmt4_table[16][5] = {
 
 STATIC
 char fmt5_table[4][7] = {
-    "movs",	/* move string */
-    "cmps",	/* compare string */
-    "setcfg",	/* set configuration register */
-    "skps"	/* skip string */
+	"movs",		/* move string */
+	"cmps",		/* compare string */
+	"setcfg",	/* set configuration register */
+	"skps"		/* skip string */
 };
 
 #define FMT5_MOVS   0x0 /* move string */
@@ -644,22 +644,22 @@ char fmt5_table[4][7] = {
 
 STATIC
 char fmt6_table[16][6] = {
-    "rot",	/* rotate */
-    "ash",	/* arithmetic shift */
-    "cbit",	/* clear bit */
-    "cbiti",	/* clear bit interlocked */
-    "?6?",	/* undefined */
-    "lsh",	/* logical shift */
-    "sbit",	/* set bit */
-    "sbiti",	/* set bit interlocked */
-    "neg",	/* negate */
-    "not",	/* not */
-    "?6?",	/* undefined */
-    "subp",	/* subtract packed decimal */
-    "abs",	/* absolute value */
-    "com",	/* complement */
-    "ibit",	/* invert bit */
-    "addp"	/* add packed decimal */
+	"rot",		/* rotate */
+	"ash",		/* arithmetic shift */
+	"cbit",		/* clear bit */
+	"cbiti",	/* clear bit interlocked */
+	"?6?",		/* undefined */
+	"lsh",		/* logical shift */
+	"sbit",		/* set bit */
+	"sbiti",	/* set bit interlocked */
+	"neg",		/* negate */
+	"not",		/* not */
+	"?6?",		/* undefined */
+	"subp",		/* subtract packed decimal */
+	"abs",		/* absolute value */
+	"com",		/* complement */
+	"ibit",		/* invert bit */
+	"addp"		/* add packed decimal */
 };
 
 #define FMT6_ROT    0x0 /* rotate */
@@ -681,22 +681,22 @@ char fmt6_table[16][6] = {
 
 STATIC
 char fmt7_table[16][7] = {
-    "movm",	/* move multiple */
-    "cmpm",	/* compare multiple */
-    "inss",	/* insert field short */
-    "exts",	/* extract field short */
-    "movxb",	    /* move with sign-extension byte to word */
-    "movzb",	    /* move with zero-extension byte to word */
-    "movz",	    /* move with zero extension i to double */
-    "movx",	    /* move with sign-extension i to double */
-    "mul",	/* multiply */
-    "mei",	/* multiply extended integer */
-    "?7?",	/* undefined */
-    "dei",	/* divide extended integer */
-    "quo",	/* quotient */
-    "rem",	/* remainder */
-    "mod",	/* modulus */
-    "div"	/* divide */
+	"movm",		/* move multiple */
+	"cmpm",		/* compare multiple */
+	"inss",		/* insert field short */
+	"exts",		/* extract field short */
+	"movxb",	/* move with sign-extension byte to word */
+	"movzb",	/* move with zero-extension byte to word */
+	"movz",		/* move with zero extension i to double */
+	"movx",		/* move with sign-extension i to double */
+	"mul",		/* multiply */
+	"mei",		/* multiply extended integer */
+	"?7?",		/* undefined */
+	"dei",		/* divide extended integer */
+	"quo",		/* quotient */
+	"rem",		/* remainder */
+	"mod",		/* modulus */
+	"div"		/* divide */
 };
 
 #define FMT7_MOVM   0x0 /* move multiple */
@@ -718,14 +718,14 @@ char fmt7_table[16][7] = {
 
 STATIC
 char fmt8_table[8][6] = {
-    "ext",	/* extract field */
-    "cvtp",	/* convert to bit pointer */
-    "ins",	/* insert field */
-    "check",	/* bounds check */
-    "index",	/* calculate index */
-    "ffs",	/* find first set bit */
-    "mov",	/* move supervisor to/from user space */
-    "?8?"	/* undefined */
+	"ext",		/* extract field */
+	"cvtp",		/* convert to bit pointer */
+	"ins",		/* insert field */
+	"check",	/* bounds check */
+	"index",	/* calculate index */
+	"ffs",		/* find first set bit */
+	"mov",		/* move supervisor to/from user space */
+	"?8?"		/* undefined */
 };
 
 #define FMT8_EXT    0x0 /* extract field */
@@ -739,14 +739,14 @@ char fmt8_table[8][6] = {
 
 STATIC
 char fmt9_table[8][6] = {
-    "mov",	/* move converting integer to floating point */
-    "lfsr",	/* load floating-point status register */
-    "movlf",	/* move long floating to floating */
-    "movfl",	/* move floating to long floating */
-    "round",	/* round floating to integer */
-    "trunc",	/* truncate floating to integer */
-    "sfsr",	/* store floating-point status register */
-    "floor"	/* floor floating to integer */
+	"mov",		/* move converting integer to floating point */
+	"lfsr",		/* load floating-point status register */
+	"movlf",	/* move long floating to floating */
+	"movfl",	/* move floating to long floating */
+	"round",	/* round floating to integer */
+	"trunc",	/* truncate floating to integer */
+	"sfsr",		/* store floating-point status register */
+	"floor"		/* floor floating to integer */
 };
 
 #define FMT9_MOV    0x0 /* move converting integer to floating point */
@@ -762,42 +762,42 @@ char fmt9_table[8][6] = {
 
 STATIC
 char fmt11_table[16][4] = {
-    "add",	/* add floating */
-    "mov",	/* move floating */
-    "cmp",	/* compare floating */
-    "?f?",	/* undefined */
-    "sub",	/* subtract floating */
-    "neg",	/* negate floating */
-    "?f?",	/* undefined */
-    "?f?",	/* undefined */
-    "div",	/* divide floating */
-    "?f?",	/* undefined */
-    "?f?",	/* undefined */
-    "?f?",	/* undefined */
-    "mul",	/* multiply floating */
-    "abs",	/* absolute value floating */
-    "?f?",	/* undefined */
-    "?f?"	/* undefined */
+	"add",		/* add floating */
+	"mov",		/* move floating */
+	"cmp",		/* compare floating */
+	"?f?",		/* undefined */
+	"sub",		/* subtract floating */
+	"neg",		/* negate floating */
+	"?f?",		/* undefined */
+	"?f?",		/* undefined */
+	"div",		/* divide floating */
+	"?f?",		/* undefined */
+	"?f?",		/* undefined */
+	"?f?",		/* undefined */
+	"mul",		/* multiply floating */
+	"abs",		/* absolute value floating */
+	"?f?",		/* undefined */
+	"?f?"		/* undefined */
 };
 
 STATIC
 char fmt12_table[16][6] = {
-    "?f?",	/* 0 undefined */
-    "?f?",	/* 1 undefined */
-    "poly",	/* 2 */
-    "dot",	/* 3 */
-    "scalb",	/* 4 */
-    "logb",	/* 5 */
-    "?f?",	/* 6 undefined */
-    "?f?",	/* 7 undefined */
-    "?f?",	/* 8 undefined */
-    "?f?",	/* 9 undefined */
-    "?f?",	/* 10 undefined */
-    "?f?",	/* 11 undefined */
-    "?f?",	/* 12 undefined */
-    "?f?",	/* 13 undefined */
-    "?f?",	/* 14 undefined */
-    "?f?",	/* 15 undefined */
+	"?f?",		/* 0 undefined */
+	"?f?",		/* 1 undefined */
+	"poly",		/* 2 */
+	"dot",		/* 3 */
+	"scalb",	/* 4 */
+	"logb",		/* 5 */
+	"?f?",		/* 6 undefined */
+	"?f?",		/* 7 undefined */
+	"?f?",		/* 8 undefined */
+	"?f?",		/* 9 undefined */
+	"?f?",		/* 10 undefined */
+	"?f?",		/* 11 undefined */
+	"?f?",		/* 12 undefined */
+	"?f?",		/* 13 undefined */
+	"?f?",		/* 14 undefined */
+	"?f?",		/* 15 undefined */
 };
 
 #define FMT11_ADD   0x0 /* add floating */
@@ -824,16 +824,16 @@ char fmt12_table[16][6] = {
 
 STATIC
 char fmt14_table[][6] = {
-    "rdval",	/* validate address for reading */
-    "wrval",	/* validate address for writing */
-    "lmr",	/* load memory managemnet register */
-    "smr",	/* store memory management register */
-    "?14?",
-    "?14?",
-    "?14?",
-    "?14?",
-    "?14?",
-    "cinv",
+	"rdval",	/* validate address for reading */
+	"wrval",	/* validate address for writing */
+	"lmr",		/* load memory managemnet register */
+	"smr",		/* store memory management register */
+	"?14?",
+	"?14?",
+	"?14?",
+	"?14?",
+	"?14?",
+	"cinv",
 };
 
 #define FMT14_RDVAL 0x0 /* validate address for reading */
@@ -884,67 +884,67 @@ char fmt14_table[][6] = {
 #define REG_NIL		(REG_FSR+2)
 
 struct regTable {
-    const char *name;
+	const char *name;
 };
 
 STATIC
 const struct regTable regTable[] = {
-  {"r0"},			/* General Register 0 */
-  {"r1"},			/* General Register 1 */
-  {"r2"},			/* General Register 2 */
-  {"r3"},			/* General Register 3 */
-  {"r4"},			/* General Register 4 */
-  {"r5"},			/* General Register 5 */
-  {"r6"},			/* General Register 6 */
-  {"r7"},			/* General Register 7 */
-  {"f0"},			/* Floating Point  0 */
-  {"f1"},			/* Floating Point  1 */
-  {"f2"},			/* Floating Point  2 */
-  {"f3"},			/* Floating Point  3 */
-  {"f4"},			/* Floating Point  4 */
-  {"f5"},			/* Floating Point  5 */
-  {"f6"},			/* Floating Point  6 */
-  {"f7"},			/* Floating Point  7 */
-  {"l1l"},			/* Floating Point L1 */
-  {"l1h"},			/* Floating Point L1 */
-  {"l3l"},			/* Floating Point L3 */
-  {"l3h"},			/* Floating Point L3 */
-  {"l5l"},			/* Floating Point L5 */
-  {"l5h"},			/* Floating Point L5 */
-  {"l7l"},			/* Floating Point L7 */
-  {"l7h"},			/* Floating Point L7 */
-  {"l0"},
-  {"l1"},
-  {"l2"},
-  {"l3"},
-  {"l4"},
-  {"l5"},
-  {"l6"},
-  {"l7"},
-  {"pc"},			/* Program counter */
-  {"usp"},			/* 532 */
-  {"isp"},			/* 532 */
-  {"fp"},			/* Frame Pointer */
-  {"sb"},			/* Static Base */
-  {"intbase"},			/* Interrupt Base */
-  {"mod"},			/* Module Register */
-  {"psr"},			/* Processor Status */
-  {"upsr"},			/* Processor Status */
-  {"dcr"},			/* 532 */
-  {"dsr"},			/* 532 */
-  {"car"},			/* 532 */
-  {"bpc"},			/* 532 */
-  {"cfg"},			/* 532 */
-  {"ptb0"},			/* Page Table Base 0 */
-  {"ptb1"},			/* Page Table Base 1 */
-  {"ivar0"},			/* 532 */
-  {"ivar1"},			/* 532 */
-  {"tear"},			/* 532 */
-  {"mcr"},			/* 532 */
-  {"msr"},			/* Memory Management Status */
-  {"fsr"},			/* Floating Point Status */
-  {"sp"},			/* x(x(sp)) adr mode */
-  {"???"},			/* unknown reg */
+	{"r0"},			/* General Register 0 */
+	{"r1"},			/* General Register 1 */
+	{"r2"},			/* General Register 2 */
+	{"r3"},			/* General Register 3 */
+	{"r4"},			/* General Register 4 */
+	{"r5"},			/* General Register 5 */
+	{"r6"},			/* General Register 6 */
+	{"r7"},			/* General Register 7 */
+	{"f0"},			/* Floating Point  0 */
+	{"f1"},			/* Floating Point  1 */
+	{"f2"},			/* Floating Point  2 */
+	{"f3"},			/* Floating Point  3 */
+	{"f4"},			/* Floating Point  4 */
+	{"f5"},			/* Floating Point  5 */
+	{"f6"},			/* Floating Point  6 */
+	{"f7"},			/* Floating Point  7 */
+	{"l1l"},		/* Floating Point L1 */
+	{"l1h"},		/* Floating Point L1 */
+	{"l3l"},		/* Floating Point L3 */
+	{"l3h"},		/* Floating Point L3 */
+	{"l5l"},		/* Floating Point L5 */
+	{"l5h"},		/* Floating Point L5 */
+	{"l7l"},		/* Floating Point L7 */
+	{"l7h"},		/* Floating Point L7 */
+	{"l0"},
+	{"l1"},
+	{"l2"},
+	{"l3"},
+	{"l4"},
+	{"l5"},
+	{"l6"},
+	{"l7"},
+	{"pc"},			/* Program counter */
+	{"usp"},		/* 532 */
+	{"isp"},		/* 532 */
+	{"fp"},			/* Frame Pointer */
+	{"sb"},			/* Static Base */
+	{"intbase"},		/* Interrupt Base */
+	{"mod"},		/* Module Register */
+	{"psr"},		/* Processor Status */
+	{"upsr"},		/* Processor Status */
+	{"dcr"},		/* 532 */
+	{"dsr"},		/* 532 */
+	{"car"},		/* 532 */
+	{"bpc"},		/* 532 */
+	{"cfg"},		/* 532 */
+	{"ptb0"},		/* Page Table Base 0 */
+	{"ptb1"},		/* Page Table Base 1 */
+	{"ivar0"},		/* 532 */
+	{"ivar1"},		/* 532 */
+	{"tear"},		/* 532 */
+	{"mcr"},		/* 532 */
+	{"msr"},		/* Memory Management Status */
+	{"fsr"},		/* Floating Point Status */
+	{"sp"},			/* x(x(sp)) adr mode */
+	{"???"},		/* unknown reg */
 };
 
 #define REGTABLESZ ((sizeof regTable) / (sizeof (struct regTable)))
@@ -958,36 +958,34 @@ const struct regTable regTable[] = {
 	     (gen) = (((input) & 0xf8) >> 3))
 
 STATIC unsigned char cpuRegTable [] = {
-    REG_UPSR,  REG_DCR,	REG_BPC,     REG_DSR,
-    REG_CAR,   REG_NIL,	REG_NIL,     REG_NIL,
-    REG_FP,    REG_SP,	REG_SB,	     REG_USP,
-    REG_CFG,   REG_PSR,	REG_INTBASE, REG_MOD,
+	REG_UPSR,  REG_DCR,	REG_BPC,     REG_DSR,
+	REG_CAR,   REG_NIL,	REG_NIL,     REG_NIL,
+	REG_FP,    REG_SP,	REG_SB,	     REG_USP,
+	REG_CFG,   REG_PSR,	REG_INTBASE, REG_MOD,
 };
 
 STATIC unsigned char mmuRegTable [] = {
-    REG_NIL,   REG_NIL,	REG_NIL,     REG_NIL,
-    REG_NIL,   REG_NIL,	REG_NIL,     REG_NIL,
-    REG_NIL,   REG_MCR,	REG_MSR,     REG_TEAR,
-    REG_PTB0,  REG_PTB1,REG_IVAR0,   REG_IVAR1,
+	REG_NIL,   REG_NIL,	REG_NIL,     REG_NIL,
+	REG_NIL,   REG_NIL,	REG_NIL,     REG_NIL,
+	REG_NIL,   REG_MCR,	REG_MSR,     REG_TEAR,
+	REG_PTB0,  REG_PTB1,	REG_IVAR0,   REG_IVAR1,
 };
 
-void	db_reverseBits __P((int *));
-void	db_formatOperand __P((struct operand *, db_addr_t));
-void	db_formatAsm __P((struct insn *, db_addr_t, boolean_t));
-void	db_initInsn __P((struct insn *));
-int	db_disp __P((db_addr_t, long *));
-int	db_decode_operand __P((db_addr_t,  unsigned char byte,
-				struct operand *, unsigned char));
-int	db_gen __P(( struct insn *, db_addr_t, int,
-				unsigned char, unsigned char));
-int	db_dasm_ns32k __P((struct insn *, db_addr_t));
-void	db_reverseBits __P((int *));
+void	db_reverseBits(int *);
+void	db_formatOperand(struct operand *, db_addr_t);
+void	db_formatAsm(struct insn *, db_addr_t, boolean_t);
+void	db_initInsn(struct insn *);
+int	db_disp(db_addr_t, long *);
+int	db_decode_operand(db_addr_t,  unsigned char byte, struct operand *,
+	    unsigned char);
+int	db_gen( struct insn *, db_addr_t, int, unsigned char, unsigned char);
+int	db_dasm_ns32k(struct insn *, db_addr_t);
+void	db_reverseBits(int *);
 
 #define get_byte(l) ((unsigned char) db_get_value(l, 1, FALSE))
 
-void db_formatOperand(operand, loc)
-	struct operand *operand;
-	db_addr_t loc;
+void
+db_formatOperand(struct operand *operand, db_addr_t loc)
 {
 	int need_comma, i, mask, textlen;
 	const char *p;
@@ -1116,10 +1114,8 @@ bitlist:
 	}
 }
 
-void db_formatAsm(insn, loc, altfmt)
-	struct insn *insn;
-	db_addr_t loc;
-	boolean_t altfmt;
+void
+db_formatAsm(struct insn *insn, db_addr_t loc, boolean_t altfmt)
 {
 	int i, j;
 
@@ -1135,7 +1131,7 @@ void db_formatAsm(insn, loc, altfmt)
 	for (i = 0; i < 4 && insn->i_opr[i].o_mode != AMODE_NONE; i++) {
 		if (insn->i_opr[i].o_mode == AMODE_MSPC ||
 		    insn->i_opr[i].o_mode == AMODE_RREL) {
-			register const struct db_variable *regp;
+			const struct db_variable *regp;
 			db_expr_t	value;
 
 			if (strcmp(db_regs->name, "pc") == 0) {
@@ -1170,9 +1166,10 @@ void db_formatAsm(insn, loc, altfmt)
 	}
 }
 
-void db_initInsn (insn)
-	struct insn *insn;
+void
+db_initInsn(struct insn *insn)
 {
+
 	insn->i_opr[0].o_mode = AMODE_NONE;
 	insn->i_opr[0].o_iscale = 0;
 	insn->i_opr[1].o_mode = AMODE_NONE;
@@ -1183,9 +1180,8 @@ void db_initInsn (insn)
 	insn->i_opr[3].o_iscale = 0;
 }
 
-int db_disp(loc, result)
-	db_addr_t loc;
-	long *result;
+int
+db_disp(db_addr_t loc, long *result)
 {
 	unsigned int b;
 
@@ -1213,13 +1209,11 @@ int db_disp(loc, result)
 	}
 }
 
-int db_decode_operand(loc, byte, operand, iol)
-	db_addr_t loc;
-	unsigned char byte;
-	struct operand *operand;
-	unsigned char iol;
+int
+db_decode_operand(db_addr_t loc, unsigned char byte, struct operand *operand,
+    unsigned char iol)
 {
-	register int i, consumed = 0;
+	int i, consumed = 0;
 	unsigned long value;
 
 	switch (byte) {
@@ -1322,11 +1316,10 @@ one_disp:
 	return(consumed);
 }
 
-int db_gen(insn, loc, mask, byte0, byte1)
-	struct insn *insn;
-	db_addr_t loc;
-	int mask;		/* 1 to get gen1, 2 to get gen2 */
-	unsigned char byte0, byte1;
+/* mask == 1 to get gen1, mask == 2 to get gen2 */
+int
+db_gen(struct insn *insn, db_addr_t loc, int mask, unsigned char byte0,
+    unsigned char byte1)
 {
 	int opr = 0, opr2, consumed = 0;
 	unsigned char gen0, gen1;
@@ -1366,9 +1359,8 @@ int db_gen(insn, loc, mask, byte0, byte1)
 	return(consumed);
 }
 
-int db_dasm_ns32k(insn, loc)
-	struct insn *insn;
-	db_addr_t loc;			/* start addr of this insn */
+int
+db_dasm_ns32k(struct insn *insn, db_addr_t loc)
 {
 	unsigned char byte0, byte1, byte2;
 	int i, j;
@@ -1865,8 +1857,8 @@ int db_dasm_ns32k(insn, loc)
 /*
  * Reverse the order of the bits in the LS byte of *ip.
  */
-void db_reverseBits (ip)
-	int *ip;
+void
+db_reverseBits(int *ip)
 {
 	int i, src, dst;
 
@@ -1885,9 +1877,7 @@ void db_reverseBits (ip)
  * next instruction.
  */
 db_addr_t
-db_disasm(loc, altfmt)
-	db_addr_t	loc;
-	boolean_t	altfmt;
+db_disasm(db_addr_t loc, boolean_t altfmt)
 {
 	int ate;
 	struct insn insn;

@@ -1,6 +1,6 @@
-#	$NetBSD: files.ufs,v 1.13 2005/12/11 12:25:25 christos Exp $
+#	$NetBSD: files.ufs,v 1.13.12.1 2006/05/24 15:50:47 tron Exp $
 
-deffs					FFS
+deffs	fs_ffs.h			FFS
 deffs					EXT2FS
 deffs	fs_mfs.h			MFS		# XXX
 deffs	fs_lfs.h			LFS		# XXX

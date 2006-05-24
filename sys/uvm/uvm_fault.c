@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.110 2006/03/15 18:09:25 drochner Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.110.2.1 2006/05/24 15:50:48 tron Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.110 2006/03/15 18:09:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.110.2.1 2006/05/24 15:50:48 tron Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -895,6 +895,7 @@ ReFault:
 	}
 
 	/* locked: maps(read), amap(if there) */
+	LOCK_ASSERT(amap == NULL || simple_lock_held(&amap->am_l));
 
 	/*
 	 * for MADV_SEQUENTIAL mappings we want to deactivate the back pages
@@ -926,6 +927,7 @@ ReFault:
 	}
 
 	/* locked: maps(read), amap(if there) */
+	LOCK_ASSERT(amap == NULL || simple_lock_held(&amap->am_l));
 
 	/*
 	 * map in the backpages and frontpages we found in the amap in hopes
@@ -995,6 +997,7 @@ ReFault:
 	}
 
 	/* locked: maps(read), amap(if there) */
+	LOCK_ASSERT(amap == NULL || simple_lock_held(&amap->am_l));
 	/* (shadowed == TRUE) if there is an anon at the faulting address */
 	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed,
 	    (uobj && shadowed == FALSE),0,0);
@@ -1133,6 +1136,8 @@ ReFault:
 				 * because we've held the lock the whole time
 				 * we've had the handle.
 				 */
+				KASSERT((curpg->flags & PG_WANTED) == 0);
+				KASSERT((curpg->flags & PG_RELEASED) == 0);
 
 				curpg->flags &= ~(PG_BUSY);
 				UVM_PAGE_OWN(curpg, NULL);
@@ -1146,6 +1151,13 @@ ReFault:
 	/* locked (shadowed): maps(read), amap */
 	/* locked (!shadowed): maps(read), amap(if there),
 		 uobj(if !null), uobjpage(if !null) */
+	if (shadowed) {
+		LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	} else {
+		LOCK_ASSERT(amap == NULL || simple_lock_held(&amap->am_l));
+		LOCK_ASSERT(uobj == NULL || simple_lock_held(&uobj->vmobjlock));
+		KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
+	}
 
 	/*
 	 * note that at this point we are done with any front or back pages.
@@ -1180,6 +1192,8 @@ ReFault:
 	simple_lock(&anon->an_lock);
 
 	/* locked: maps(read), amap, anon */
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
 
 	/*
 	 * no matter if we have case 1A or case 1B we are going to need to
@@ -1218,6 +1232,9 @@ ReFault:
 	uobj = anon->an_page->uobject;	/* locked by anonget if !NULL */
 
 	/* locked: maps(read), amap, anon, uobj(if one) */
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
+	LOCK_ASSERT(uobj == NULL || simple_lock_held(&uobj->vmobjlock));
 
 	/*
 	 * special handling for loaned pages
@@ -1363,6 +1380,9 @@ ReFault:
 	}
 
 	/* locked: maps(read), amap, oanon, anon (if different from oanon) */
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
+	LOCK_ASSERT(simple_lock_held(&oanon->an_lock));
 
 	/*
 	 * now map the page in.
@@ -1439,6 +1459,9 @@ Case2:
 	 * locked:
 	 * maps(read), amap(if there), uobj(if !null), uobjpage(if !null)
 	 */
+	LOCK_ASSERT(amap == NULL || simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(uobj == NULL || simple_lock_held(&uobj->vmobjlock));
+	LOCK_ASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * note that uobjpage can not be PGO_DONTCARE at this point.  we now
@@ -1484,6 +1507,7 @@ Case2:
 		    0, access_type & MASK(ufi.entry), ufi.entry->advice,
 		    PGO_SYNCIO);
 		/* locked: uobjpage(if no error) */
+		LOCK_ASSERT(error != 0 || (uobjpage->flags & PG_BUSY) != 0);
 
 		/*
 		 * recover from I/O
@@ -1571,6 +1595,9 @@ Case2:
 	 * locked:
 	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj)
 	 */
+	LOCK_ASSERT(amap == NULL || simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(uobj == NULL || simple_lock_held(&uobj->vmobjlock));
+	LOCK_ASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * notes:
@@ -1603,7 +1630,7 @@ Case2:
 			enter_prot &= ~VM_PROT_WRITE;
 		pg = uobjpage;		/* map in the actual object */
 
-		/* assert(uobjpage != PGO_DONTCARE) */
+		KASSERT(uobjpage != PGO_DONTCARE);
 
 		/*
 		 * we are faulting directly on the page.   be careful
@@ -1723,6 +1750,11 @@ Case2:
 	 *
 	 * note: pg is either the uobjpage or the new page in the new anon
 	 */
+	LOCK_ASSERT(amap == NULL || simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(uobj == NULL || simple_lock_held(&uobj->vmobjlock));
+	LOCK_ASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
+	LOCK_ASSERT(anon == NULL || simple_lock_held(&anon->an_lock));
+	LOCK_ASSERT((pg->flags & PG_BUSY) != 0);
 
 	/*
 	 * all resources are present.   we can now map it in and free our
@@ -1753,6 +1785,7 @@ Case2:
 		 * note that pg can't be PG_RELEASED since we did not drop
 		 * the object lock since the last time we checked.
 		 */
+		KASSERT((pg->flags & PG_RELEASED) == 0);
 
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
@@ -1795,6 +1828,7 @@ Case2:
 	 * note that pg can't be PG_RELEASED since we did not drop the object
 	 * lock since the last time we checked.
 	 */
+	KASSERT((pg->flags & PG_RELEASED) == 0);
 
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);

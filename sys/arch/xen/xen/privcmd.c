@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.12 2006/01/23 20:19:08 yamt Exp $ */
+/* $NetBSD: privcmd.c,v 1.12.10.1 2006/05/24 15:48:26 tron Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.12 2006/01/23 20:19:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.12.10.1 2006/05/24 15:48:26 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -61,7 +61,7 @@ privcmd_ioctl(void *v)
 		u_long a_command;
 		void *a_data;
 		int a_fflag;
-		struct ucred *a_cred;
+		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	int error = 0;

@@ -1,4 +1,4 @@
-#	$NetBSD: OMSAL400,v 1.2.8.1 2006/03/31 09:44:58 tron Exp $
+#	$NetBSD: OMSAL400,v 1.2.8.2 2006/05/24 15:47:55 tron Exp $
 #
 # Kernel config for the Open Micro Server AL400.
 
@@ -44,3 +44,15 @@ igphy*		at mii? phy ?			# Intel IGP01E1000
 # USB
 usb*		at ohci?
 usb*		at ehci?
+
+# Alchemy On-chip PCMCIA
+aupcmcia* at aubus? addr ?
+pcmcia*	at aupcmcia?
+
+# PCMCIA IDE controllers
+wdc*		at pcmcia? function ?
+
+# ATA (IDE) bus support
+atabus*		at ata?
+
+wd*		at atabus? drive ? flags 0x0000

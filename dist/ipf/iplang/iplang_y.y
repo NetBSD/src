@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.8 2005/09/27 12:22:27 martti Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.8.2.1 2006/05/24 15:47:45 tron Exp $	*/
 
 %{
 /*
@@ -6,7 +6,7 @@
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: iplang_y.y,v 2.9.2.2 2004/12/09 19:41:10 darrenr Exp
+ * Id: iplang_y.y,v 2.9.2.4 2006/03/17 12:11:29 darrenr Exp
  */
 
 #include <stdio.h>
@@ -1291,8 +1291,9 @@ void prep_packet()
 		ifp->if_fd = initdevice(ifp->if_name, 5);
 	gwip = sending.snd_gw;
 	if (!gwip.s_addr) {
-		if (!aniphead) {
-			fprintf(stderr, "no destination address defined for sending!\n");
+		if (aniphead == NULL) {
+			fprintf(stderr,
+				"no destination address defined for sending\n");
 			return;
 		}
 		gwip = aniphead->ah_ip->ip_dst;
@@ -1647,7 +1648,7 @@ void *ptr;
 	for (sto = toipopts; sto->sto_st; sto++)
 		if (sto->sto_st == state)
 			break;
-	if (!sto || !sto->sto_st) {
+	if (!sto->sto_st) {
 		fprintf(stderr, "No mapping for state %d to IP option\n",
 			state);
 		return;

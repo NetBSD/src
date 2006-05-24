@@ -1,4 +1,4 @@
-/*	$NetBSD: openbios.c,v 1.2 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: openbios.c,v 1.2.12.1 2006/05/24 15:48:20 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openbios.c,v 1.2 2005/12/11 12:18:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openbios.c,v 1.2.12.1 2006/05/24 15:48:20 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,50 +79,67 @@ openbios_board_memsize_get(void)
 void
 openbios_board_info_set(void)
 {
-
+	prop_number_t pn;
+	prop_string_t ps;
+	prop_data_t pd;
 
 	/* Initialize board properties database */
 	board_info_init();
 
-	if (board_info_set("user-config-version",
-		&board_bios.usr_config_ver, 
-		sizeof(board_bios.usr_config_ver), PROP_CONST, 0))
+	ps = prop_string_create_cstring_nocopy(board_bios.usr_config_ver);
+	KASSERT(ps != NULL);
+	if (prop_dictionary_set(board_properties, "user-config-version",
+				ps) == FALSE)
 		panic("setting user-config-version");
+	prop_object_release(ps);
 
-	if (board_info_set("rom-software-version",
-		&board_bios.rom_sw_ver, 
-		sizeof(board_bios.rom_sw_ver), PROP_CONST, 0))
+	ps = prop_string_create_cstring_nocopy(board_bios.rom_sw_ver);
+	KASSERT(ps != NULL);
+	if (prop_dictionary_set(board_properties, "rom-software-version",
+				ps) == FALSE)
 		panic("setting rom-software-version");
+	prop_object_release(ps);
 
-	if (board_info_set("mem-size",
-		&board_bios.mem_size, 
-		sizeof(board_bios.mem_size), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_bios.mem_size);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == FALSE)
 		panic("setting mem-size");
+	prop_object_release(pn);
 
-	if (board_info_set("emac0-mac-addr",
-		&board_bios.mac_address_local, 
-		sizeof(board_bios.mac_address_local), PROP_CONST, 0))
+	pd = prop_data_create_data_nocopy(board_bios.mac_address_local,
+					  sizeof(board_bios.mac_address_local));
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(board_properties, "emac0-mac-addr",
+				pd) == FALSE)
 		panic("setting emac0-mac-addr");
+	prop_object_release(pd);
 
-	if (board_info_set("sip0-mac-addr",
-		&board_bios.mac_address_pci, 
-		sizeof(board_bios.mac_address_pci), PROP_CONST, 0))
+	pd = prop_data_create_data_nocopy(board_bios.mac_address_pci,
+					  sizeof(board_bios.mac_address_pci));
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(board_properties, "sip0-mac-addr",
+				pd) == FALSE)
 		panic("setting sip0-mac-addr");
+	prop_object_release(pd);
 
-	if (board_info_set("processor-frequency",
-		&board_bios.processor_speed, 
-		sizeof(board_bios.processor_speed), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_bios.processor_speed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "processor-frequency",
+				pn) == FALSE)
 		panic("setting processor-frequency");
+	prop_object_release(pn);
 
-	if (board_info_set("plb-frequency",
-		&board_bios.plb_speed, 
-		sizeof(board_bios.plb_speed), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_bios.plb_speed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "plb-frequency", pn) == FALSE)
 		panic("setting plb-frequency");
+	prop_object_release(pn);
 
-	if (board_info_set("pci-frequency",
-		&board_bios.pci_speed, 
-		sizeof(board_bios.pci_speed), PROP_CONST, 0))
+	pn = prop_number_create_integer(board_bios.pci_speed);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "pci-frequency", pn) == FALSE)
 		panic("setting pci-frequency");
+	prop_object_release(pn);
 }
 
 

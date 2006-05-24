@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.11 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.11.12.1 2006/05/24 15:47:52 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.11 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.11.12.1 2006/05/24 15:47:52 tron Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -298,7 +298,7 @@ i80321_intr_calculate_masks(void)
 	}
 }
 
-inline void
+void
 i80321_do_pending(void)
 {
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;

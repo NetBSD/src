@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.h,v 1.2 2005/12/11 12:24:21 christos Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.2.12.1 2006/05/24 15:50:32 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * Id: ip_frag.h,v 2.23.2.1 2004/03/29 16:21:56 darrenr Exp
+ * Id: ip_frag.h,v 2.23.2.2 2005/06/10 18:02:37 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FRAG_H_
@@ -80,7 +80,11 @@ extern	void	fr_slowtimer __P((void));
 extern	void	fr_slowtimer __P((void *));
 # endif
 #else
+# if defined(linux) && defined(_KERNEL)
+extern	void	fr_slowtimer __P((long));
+# else
 extern	int	fr_slowtimer __P((void));
+# endif
 #endif
 
 #endif /* _NETINET_IP_FRAG_H_ */

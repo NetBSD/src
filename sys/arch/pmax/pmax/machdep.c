@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.212 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.212.12.1 2006/05/24 15:48:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2005/12/11 12:18:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212.12.1 2006/05/24 15:48:15 tron Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -121,9 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212 2005/12/11 12:18:39 christos Exp $
 #include "opt_dec_maxine.h"
 #include "opt_dec_3maxplus.h"
 #include "ksyms.h"
-
-/* the following is used externally (sysctl_hw) */
-extern char	cpu_model[];
 
 unsigned ssir;				/* simulated interrupt register */
 
@@ -243,6 +240,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	/* XXX: Backwards compatibility with old bootblocks - this should
 	 * go soon...
 	 */
+#ifdef EXEC_AOUT
 	/* Exec header and symbols? */
 	else if (aout->a_midmag == 0x07018b00 && (i = aout->a_syms) != 0) {
 		ssym = end;
@@ -251,6 +249,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 		kernend = (caddr_t)mips_round_page(esym);
 		memset(edata, 0, end - edata);
 	} else
+#endif
 #endif
 	{
 		kernend = (caddr_t)mips_round_page(end);

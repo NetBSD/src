@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.17 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.17.12.1 2006/05/24 15:47:49 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.17 2005/12/11 12:16:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.17.12.1 2006/05/24 15:47:49 tron Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -393,13 +393,13 @@ pcib_intr(void *v)
 		/* Send a specific EOI to the 8259. */
 		if (irq > 7) {
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu2,
-			    PIC_OCW2, OCW2_SELECT | OCW3_EOI | OCW3_SL |
+			    PIC_OCW2, OCW2_SELECT | OCW2_EOI | OCW2_SL |
 			    OCW2_ILS(irq & 7));
 			irq = 2;
 		}
 
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh_icu1, PIC_OCW2,
-		    OCW2_SELECT | OCW3_EOI | OCW3_SL | OCW2_ILS(irq));
+		    OCW2_SELECT | OCW2_EOI | OCW2_SL | OCW2_ILS(irq));
 	}
 }
 

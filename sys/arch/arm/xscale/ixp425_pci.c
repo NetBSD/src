@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci.c,v 1.4 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: ixp425_pci.c,v 1.4.12.1 2006/05/24 15:47:52 tron Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.4 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.4.12.1 2006/05/24 15:47:52 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ ixp425_pci_conf_setup(void *v, struct ixp425_softc *sc, pcitag_t tag, int offset
 
 	ixp425_pci_decompose_tag(v, tag, &bus, &device, &function);
 
-        if (bus == 0) { 
+	if (bus == 0) { 
 		if (device == 0 && function == 0) {
 			PCI_CSR_WRITE_4(sc, PCI_NP_AD, (offset & ~3));
 		} else {
@@ -196,7 +196,7 @@ ixp425_pci_conf_read(void *v, pcitag_t tag, int offset)
 
 #ifdef PCI_DEBUG
 	printf("ixp425_pci_conf_read: tag=%lx,offset=%x\n",
-                tag, offset);
+		tag, offset);
 #endif
 
 #ifdef PCI_NP_HAVE_BUG
@@ -235,7 +235,7 @@ ixp425_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	ixp425_pci_conf_setup(v, sc, tag, offset);
 #ifdef PCI_DEBUG
 	printf("ixp425_pci_conf_write: tag=%lx offset=%x <- val=%x\n",
-                tag, offset, val);
+		tag, offset, val);
 #endif
 	PCI_CSR_WRITE_4(sc, PCI_NP_CBE, COMMAND_NP_CONF_WRITE);
 	PCI_CSR_WRITE_4(sc, PCI_NP_WDATA, val);
@@ -245,7 +245,7 @@ ixp425_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	if (data & ISR_PFE)
 		PCI_CSR_WRITE_4(sc, PCI_ISR, ISR_PFE);
 
-        PCI_CONF_UNLOCK(s);
+	PCI_CONF_UNLOCK(s);
 }
 
 /* read/write pci configuration data */

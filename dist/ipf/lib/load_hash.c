@@ -1,11 +1,11 @@
-/*	$NetBSD: load_hash.c,v 1.1.1.2 2005/02/19 21:26:47 martti Exp $	*/
+/*	$NetBSD: load_hash.c,v 1.1.1.2.6.1 2006/05/24 15:47:46 tron Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_hash.c,v 1.11.2.2 2005/02/01 02:44:05 darrenr Exp
+ * Id: load_hash.c,v 1.11.2.3 2005/11/13 15:41:12 darrenr Exp
  */
 
 #include <fcntl.h>
@@ -72,8 +72,8 @@ ioctlfunc_t iocfunc;
 			}
 	}
 
-	strncpy(op.iplo_name, iph.iph_name, sizeof(op.iplo_name));
-	strncpy(iphp->iph_name, iph.iph_name, sizeof(op.iplo_name));
+	strncpy(iph.iph_name, op.iplo_name, sizeof(op.iplo_name));
+	strncpy(iphp->iph_name, op.iplo_name, sizeof(op.iplo_name));
 
 	if (opts & OPT_VERBOSE) {
 		for (a = list; a != NULL; a = a->ipe_next) {
