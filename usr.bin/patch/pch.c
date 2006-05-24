@@ -1,4 +1,4 @@
-/*	$NetBSD: pch.c,v 1.20 2006/04/09 19:03:32 christos Exp $	*/
+/*	$NetBSD: pch.c,v 1.21 2006/05/24 16:43:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.20 2006/04/09 19:03:32 christos Exp $");
+__RCSID("$NetBSD: pch.c,v 1.21 2006/05/24 16:43:35 christos Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -381,8 +381,11 @@ intuit_diff_type(void)
 			oldname = fetchname(oldtmp, strippath, TRUE);
 			old_file_is_dev_null = filename_is_dev_null;
 		}
-		if (newtmp != NULL)
+		if (newtmp != NULL) {
+			if (newname)
+				free(newname);
 			newname = fetchname(newtmp, strippath, TRUE);
+		}
 		if (oldname && newname) {
 			if (strlen(oldname) < strlen(newname))
 				bestguess = xstrdup(oldname);
