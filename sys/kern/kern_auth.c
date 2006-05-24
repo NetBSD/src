@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.3 2006/05/23 00:43:30 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.4 2006/05/24 23:00:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -457,13 +457,13 @@ kauth_cred_uucmp(kauth_cred_t cred, const struct uucred *uuc)
 			ismember = 0;
 			if (kauth_cred_ismember_gid(cred, uuc->cr_groups[i],
 			    &ismember) != 0 || !ismember)
-				return (0);
+				return (1);
 		}
 
-		return (1);
+		return (0);
 	}
 
-	return (0);
+	return (1);
 }
 
 /*
