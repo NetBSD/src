@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_inst.c,v 1.5 2006/05/24 22:30:15 christos Exp $	*/
+/*	$NetBSD: gsp_inst.c,v 1.6 2006/05/24 23:34:59 christos Exp $	*/
 /*
  * TMS34010 GSP assembler - Instruction encoding
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_inst.c,v 1.5 2006/05/24 22:30:15 christos Exp $");
+__RCSID("$NetBSD: gsp_inst.c,v 1.6 2006/05/24 23:34:59 christos Exp $");
 #endif
 
 #include <string.h>
@@ -460,7 +460,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 		op1 = NULL;
 	class = ip->class & CLASS;
 	flags = ip->class & ~CLASS;
-	if( class == MOVE && op1->type == REG ){
+	if( class == MOVE && && op0 && op1 && op1->type == REG ){
 		if (op0->type == REG ){
 			class = DYADIC;
 			if( (op0->reg_no & op1->reg_no & REGFILE) == 0 ){
@@ -491,7 +491,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 		   && spec[2] != 0 && op1->next->next == NULL )
 			perr("Extra operands ignored");
 	} else if( class == KREG ){
-		if( op0->type == REG ){
+		if( op0 && op0->type == REG ){
 			class = TWOREG;
 			if( opc < 0x2000 )
 				opc = 0x4A00;	/* BTST */
@@ -557,7 +557,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 		opc |= (rs & 0x1F) << 5;
 		break;
 	case CALL:			/* reg or address */
-		if( op0->type == REG ){
+		if( op0 && op0->type == REG ){
 			opc |= rs & 0x1F;
 			break;
 		}
@@ -580,7 +580,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 		}
 		break;
 	case JUMP:
-		if( op0->type == REG ){
+		if( op0 && op0->type == REG ){
 			opc |= rs & 0x1F;
 			break;
 		}
@@ -708,7 +708,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 	case PIXT:
 	case MOVB:
 	case MOVE:
-		ms = op0->type == REG? M_REG: op0->mode;
+		ms = op0 && op0->type == REG? M_REG: op0->mode;
 		md = op1->type == REG? M_REG: op1->mode;
 		opc = class == MOVE? move_opc[md][ms]:
 		      class == MOVB? movb_opc[md][ms]: pixt_opc[md][ms];
