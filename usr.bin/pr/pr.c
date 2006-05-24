@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.15 2006/05/01 23:31:10 christos Exp $	*/
+/*	$NetBSD: pr.c,v 1.16 2006/05/24 15:59:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.15 2006/05/01 23:31:10 christos Exp $");
+__RCSID("$NetBSD: pr.c,v 1.16 2006/05/24 15:59:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -536,7 +536,7 @@ vertcol(argc, argv)
 							cnt = fullcol;
 						if (otln(vc[tvc].pt, cnt, &ips,
 								&ops, 1))
-							return(1);
+							goto out;
 						tvc += pln;
 						if (tvc >= cvc)
 							break;
