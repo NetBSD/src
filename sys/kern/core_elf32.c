@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.22.8.1 2006/03/13 09:07:32 yamt Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.22.8.2 2006/05/24 10:58:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.22.8.1 2006/03/13 09:07:32 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.22.8.2 2006/05/24 10:58:40 yamt Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -55,6 +55,7 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.22.8.1 2006/03/13 09:07:32 yamt Exp
 #include <sys/exec_elf.h>
 #include <sys/ptrace.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 
 #include <machine/reg.h>
 
@@ -341,16 +342,17 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 		cpi.cpi_pgrp = p->p_pgid;
 		cpi.cpi_sid = p->p_session->s_sid;
 
-		cpi.cpi_ruid = p->p_cred->p_ruid;
-		cpi.cpi_euid = p->p_ucred->cr_uid;
-		cpi.cpi_svuid = p->p_cred->p_svuid;
+		cpi.cpi_ruid = kauth_cred_getuid(p->p_cred);
+		cpi.cpi_euid = kauth_cred_geteuid(p->p_cred);
+		cpi.cpi_svuid = kauth_cred_getsvuid(p->p_cred);
 
-		cpi.cpi_rgid = p->p_cred->p_rgid;
-		cpi.cpi_egid = p->p_ucred->cr_gid;
-		cpi.cpi_svgid = p->p_cred->p_svgid;
+		cpi.cpi_rgid = kauth_cred_getgid(p->p_cred);
+		cpi.cpi_egid = kauth_cred_getegid(p->p_cred);
+		cpi.cpi_svgid = kauth_cred_getsvgid(p->p_cred);
 
 		cpi.cpi_nlwps = p->p_nlwps;
-		strlcpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
+		(void)strncpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
+		cpi.cpi_name[sizeof(cpi.cpi_name) - 1] = '\0';
 
 		nhdr.n_namesz = sizeof(ELF_NOTE_NETBSD_CORE_NAME);
 		nhdr.n_descsz = sizeof(cpi);

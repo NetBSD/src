@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.93 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: i82365.c,v 1.93.8.1 2006/05/24 10:57:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.93 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.93.8.1 2006/05/24 10:57:41 yamt Exp $");
 
 #define	PCICDEBUG
 
@@ -241,7 +241,7 @@ pcic_attach(sc)
 	lockinit(&sc->sc_pcic_lock, PWAIT, "pciclk", 0, 0);
 
 	/* find and configure for the available sockets */
-	for (i = 0; i < PCIC_NSLOTS; i++) {
+	for (i = 0; i < __arraycount(sc->handle); i++) {
 		h = &sc->handle[i];
 		chip = i / 2;
 		socket = i % 2;
@@ -259,8 +259,11 @@ pcic_attach(sc)
 		h->flags = 0;
 
 		/* need to read vendor -- for cirrus to report no xtra chip */
-		if (socket == 0)
-			h->vendor = (h+1)->vendor = pcic_vendor(h);
+		if (socket == 0) {
+			h->vendor = pcic_vendor(h);
+			if (i < __arraycount(sc->handle) - 1)
+				(h+1)->vendor = h->vendor;
+		}
 
 		switch (h->vendor) {
 		case PCIC_VENDOR_NONE:
@@ -289,7 +292,7 @@ pcic_attach(sc)
 		}
 	}
 
-	for (i = 0; i < PCIC_NSLOTS; i++) {
+	for (i = 0; i < __arraycount(sc->handle); i++) {
 		h = &sc->handle[i];
 
 		if (h->flags & PCIC_FLAG_SOCKETP) {
@@ -310,7 +313,7 @@ pcic_attach(sc)
 	}
 
 	/* print detected info */
-	for (i = 0; i < PCIC_NSLOTS; i += 2) {
+	for (i = 0; i < __arraycount(sc->handle) - 1; i += 2) {
 		h = &sc->handle[i];
 		chip = i / 2;
 
@@ -341,7 +344,7 @@ pcic_attach_sockets(sc)
 {
 	int i;
 
-	for (i = 0; i < PCIC_NSLOTS; i++)
+	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			pcic_attach_socket(&sc->handle[i]);
 }
@@ -442,7 +445,7 @@ pcic_attach_sockets_finish(sc)
 {
 	int i;
 
-	for (i = 0; i < PCIC_NSLOTS; i++)
+	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			pcic_attach_socket_finish(&sc->handle[i]);
 }
@@ -663,7 +666,7 @@ pcic_poll_intr(arg)
 
 	s = spltty();
 	sc = arg;
-	for (i = 0; i < PCIC_NSLOTS; i++)
+	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			(void)pcic_intr_socket(&sc->handle[i]);
 	callout_reset(&sc->poll_ch, hz / 2, pcic_poll_intr, sc);
@@ -679,7 +682,7 @@ pcic_intr(arg)
 
 	DPRINTF(("%s: intr\n", sc->dev.dv_xname));
 
-	for (i = 0; i < PCIC_NSLOTS; i++)
+	for (i = 0; i < __arraycount(sc->handle); i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			ret += pcic_intr_socket(&sc->handle[i]);
 

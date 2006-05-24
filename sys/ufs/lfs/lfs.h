@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.95.8.3 2006/04/11 11:55:58 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.95.8.4 2006/05/24 10:59:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -96,7 +96,8 @@
 #define LFS_MAXNAMLEN	255		/* maximum name length in a dir */
 
 /* Adjustable filesystem parameters */
-#define MIN_FREE_SEGS	2
+#define MIN_FREE_SEGS	20
+#define MIN_RESV_SEGS	15
 #ifndef LFS_ATIME_IFILE
 # define LFS_ATIME_IFILE 0 /* Store atime info in ifile (optional in LFSv1) */
 #endif
@@ -117,6 +118,11 @@
 #define LFS_INVERSE_MAX_BYTES(n) LFS_INVERSE_MAX_RESOURCE(n, PAGE_SIZE)
 #define LFS_WAIT_BYTES	    LFS_WAIT_RESOURCE(bufmem_lowater, PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
+#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + DINODE1_SIZE))
+#define LFS_MAX_FSDIROP(fs)						\
+	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
+	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
+          (2 * SIZEOF_DIROP(fs)))
 #define LFS_MAX_PAGES	lfs_max_pages()
 #define LFS_WAIT_PAGES	lfs_wait_pages()
 #define LFS_BUFWAIT	    2	/* How long to wait if over *_WAIT_* */
@@ -127,7 +133,7 @@ int lfs_max_pages(void);
 #endif /* _KERNEL */
 
 /* How starved can we be before we start holding back page writes */
-#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_minfreeseg / 2 + 1)
+#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_resvseg)
 
 /*
  * Reserved blocks for lfs_malloc
@@ -347,9 +353,9 @@ struct lfid {
 			  !((vp)->v_flag & VONWORKLST) &&		\
 			  VTOI(vp)->i_lfs_nbtree == 0)
 
-/* XXX Shouldn't we use v_numoutput instead? */
-#define WRITEINPROG(vp) (!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&		\
-		!(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING)))
+#define WRITEINPROG(vp) ((vp)->v_numoutput > 0 ||			\
+	(!LIST_EMPTY(&(vp)->v_dirtyblkhd) &&				\
+	 !(VTOI(vp)->i_flag & (IN_MODIFIED | IN_ACCESSED | IN_CLEANING))))
 
 
 /*
@@ -686,7 +692,7 @@ struct dlfs {
 #define LFS_PF_CLEAN 0x1
 	u_int16_t dlfs_pflags;	  /* 322: file system persistent flags */
 	int32_t	  dlfs_dmeta;	  /* 324: total number of dirty summaries */
-	u_int32_t dlfs_minfreeseg; /* 328: segs reserved for cleaner */
+	u_int32_t dlfs_minfreeseg; /* 328: segments not counted in bfree */
 	u_int32_t dlfs_sumsize;	  /* 332: size of summary blocks */
 	u_int64_t dlfs_serial;	  /* 336: serial number */
 	u_int32_t dlfs_ibsize;	  /* 344: size of inode blocks */
@@ -698,13 +704,24 @@ struct dlfs {
 	u_int32_t dlfs_interleave; /* 364: segment interleave */
 	u_int32_t dlfs_ident;	  /* 368: per-fs identifier */
 	u_int32_t dlfs_fsbtodb;	  /* 372: fsbtodb abd dbtodsb shift constant */
-	int8_t	  dlfs_pad[132];  /* 376: round to 512 bytes */
+	u_int32_t dlfs_resvseg;   /* 376: segments reserved for the cleaner */
+	int8_t	  dlfs_pad[128];  /* 380: round to 512 bytes */
 /* Checksum -- last valid disk field. */
 	u_int32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
 };
 
 /* Type used for the inode bitmap */
 typedef u_int32_t lfs_bm_t;
+
+/*
+ * Linked list of segments whose byte count needs updating following a
+ * file truncation.
+ */
+struct segdelta {
+	long segnum;
+	size_t num;
+	LIST_ENTRY(segdelta) list;
+};
 
 /*
  * In-memory super block.
@@ -771,6 +788,7 @@ struct lfs {
 #define lfs_inodefmt lfs_dlfs.dlfs_inodefmt
 #define lfs_interleave lfs_dlfs.dlfs_interleave
 #define lfs_ident lfs_dlfs.dlfs_ident
+#define lfs_resvseg lfs_dlfs.dlfs_resvseg
 
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
@@ -781,6 +799,7 @@ struct lfs {
 	u_int32_t lfs_iocount;		/* number of ios pending */
 	u_int32_t lfs_writer;		/* don't allow any dirops to start */
 	u_int32_t lfs_dirops;		/* count of active directory ops */
+	u_int32_t lfs_dirvcount;	/* count of VDIROP nodes in this fs */
 	u_int32_t lfs_doifile;		/* Write ifile blocks on next write */
 	u_int32_t lfs_nactive;		/* Number of segments since last ckp */
 	int8_t	  lfs_fmod;		/* super block modified flag */
@@ -793,6 +812,7 @@ struct lfs {
 	u_int16_t lfs_activesb;		/* toggle between superblocks */
 	daddr_t	  lfs_sbactive;		/* disk address of current sb write */
 	struct vnode *lfs_flushvp;	/* vnode being flushed */
+	int lfs_flushvp_fakevref;	/* fake vref count for flushvp */
 	struct vnode *lfs_unlockvp;	/* being inactivated in lfs_segunlock */
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 	size_t lfs_devbsize;		/* Device block size */
@@ -822,6 +842,8 @@ struct lfs {
 	int lfs_sleepers;		/* # procs sleeping this fs */
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
+	int lfs_nowrap;			/* Suspend log wrap */
+	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 };
 
 /* NINDIR is the number of indirects in a file system block. */
@@ -971,11 +993,13 @@ struct lfs_inode_ext {
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
 #define LFSI_NO_GOP_WRITE 0x01
+#define LFSI_DELETED      0x02
 	u_int32_t lfs_iflags;           /* Inode flags */
 	daddr_t   lfs_hiblk;		/* Highest lbn held by inode */
 #ifdef _KERNEL
 	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
 	int	  lfs_nbtree;		/* Size of tree */
+	LIST_HEAD(, segdelta) lfs_segdhd;
 #endif
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
@@ -987,6 +1011,7 @@ struct lfs_inode_ext {
 #define i_lfs_hiblk		inode_ext.lfs->lfs_hiblk
 #define i_lfs_lbtree		inode_ext.lfs->lfs_lbtree
 #define i_lfs_nbtree		inode_ext.lfs->lfs_nbtree
+#define i_lfs_segdhd		inode_ext.lfs->lfs_segdhd
 
 /*
  * Macros for determining free space on the disk, with the variable metadata
@@ -1011,9 +1036,9 @@ struct lfs_inode_ext {
 
 /* Can credential C write BB blocks */
 #define ISSPACE(F, BB, C)						\
-	((((C) == NOCRED || (C)->cr_uid == 0) &&			\
+	((((C) == NOCRED || kauth_cred_geteuid(C) == 0) &&		\
 	  LFS_EST_BFREE(F) >= (BB)) ||					\
-	 ((C)->cr_uid != 0 && IS_FREESPACE(F, BB)))
+	 (kauth_cred_geteuid(C) != 0 && IS_FREESPACE(F, BB)))
 
 /* Can an ordinary user write BB blocks */
 #define IS_FREESPACE(F, BB)						\
@@ -1064,6 +1089,8 @@ struct lfs_fcntl_markv {
 #define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
 #define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
 #define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)
+#define LFCNWRAPSTOP	 _FCNO_FSPRIV('L', 9)
+#define LFCNWRAPGO	 _FCNO_FSPRIV('L', 10)
 /* Compat for NetBSD 2.x bug */
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval)

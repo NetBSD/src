@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.100.8.1 2006/03/13 09:07:32 yamt Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.100.8.2 2006/05/24 10:58:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.100.8.1 2006/03/13 09:07:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.100.8.2 2006/05/24 10:58:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1594,11 +1594,13 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	if (offs > size)
 		return USBD_INVAL;
 
+#ifdef UAUDIO_MULTIPLE_ENDPOINTS
 	if (sync && id->bNumEndpoints <= 1) {
 		printf("%s: a sync-pipe endpoint but no other endpoint\n",
 		       USBDEVNAME(sc->sc_dev));
 		return USBD_INVAL;
 	}
+#endif
 	if (!sync && id->bNumEndpoints > 1) {
 		printf("%s: non sync-pipe endpoint but multiple endpoints\n",
 		       USBDEVNAME(sc->sc_dev));
@@ -1704,6 +1706,8 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 	ai.edesc1 = epdesc1;
 	ai.asf1desc = asf1d;
 	ai.sc_busy = 0;
+	ai.aformat = NULL;
+	ai.ifaceh = NULL;
 	uaudio_add_alt(sc, &ai);
 #ifdef UAUDIO_DEBUG
 	if (ai.attributes & UA_SED_FREQ_CONTROL)

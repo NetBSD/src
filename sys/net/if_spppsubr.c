@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.87 2006/01/21 00:15:35 rpaulo Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.87.6.1 2006/05/24 10:58:56 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.87 2006/01/21 00:15:35 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.87.6.1 2006/05/24 10:58:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.87 2006/01/21 00:15:35 rpaulo Exp 
 #include <sys/callout.h>
 #include <sys/md5.h>
 #include <sys/inttypes.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -457,6 +458,13 @@ static const struct cp *cps[IDX_COUNT] = {
 	&chap,			/* IDX_CHAP */
 };
 
+
+void spppattach(int);
+void
+/*ARGSUSED*/
+spppattach(int count)
+{
+}
 
 /*
  * Exported functions, comprising our interface to the lower layer.
@@ -1140,7 +1148,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	{
 		struct proc *p = curproc;		/* XXX */
 
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 			break;
 	}
 	/* FALLTHROUGH */
@@ -1174,7 +1182,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 	STDDCL;
 	struct cisco_packet *h;
 #ifdef INET
-	u_int32_t me, mymask;
+	u_int32_t me, mymask = 0;	/* XXX: GCC */
 #endif
 
 	if (m->m_pkthdr.len < CISCO_PACKET_LEN) {
@@ -1839,8 +1847,8 @@ sppp_open_event(const struct cp *cp, struct sppp *sp)
 
 	switch (sp->state[cp->protoidx]) {
 	case STATE_INITIAL:
-		(cp->tls)(sp);
 		sppp_cp_change_state(cp, sp, STATE_STARTING);
+		(cp->tls)(sp);
 		break;
 	case STATE_STARTING:
 		break;
@@ -1879,8 +1887,8 @@ sppp_close_event(const struct cp *cp, struct sppp *sp)
 	case STATE_CLOSING:
 		break;
 	case STATE_STARTING:
-		(cp->tlf)(sp);
 		sppp_cp_change_state(cp, sp, STATE_INITIAL);
+		(cp->tlf)(sp);
 		break;
 	case STATE_STOPPED:
 		sppp_cp_change_state(cp, sp, STATE_CLOSED);
@@ -4692,7 +4700,8 @@ sppp_keepalive(void *dummy)
 
 				/* Close connection imediatly, completition of this
 				 * will summon the magic needed to reestablish it. */
-				sp->pp_tlf(sp);
+				if (sp->pp_tlf)
+					sp->pp_tlf(sp);
 				continue;
 			}
 		}

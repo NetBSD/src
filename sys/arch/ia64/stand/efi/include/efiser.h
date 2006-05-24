@@ -1,4 +1,6 @@
-/*	$NetBSD: efiser.h,v 1.1.2.2 2006/04/11 11:53:40 yamt Exp $	*/
+/*	$NetBSD: efiser.h,v 1.1.2.3 2006/05/24 10:56:53 yamt Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/efiser.h,v 1.2 2002/05/19 03:17:21 marcel Exp $ */
+
 #ifndef _EFI_SER_H
 #define _EFI_SER_H
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.49.8.1 2006/04/01 12:06:11 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.49.8.2 2006/05/24 10:56:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49.8.1 2006/04/01 12:06:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49.8.2 2006/05/24 10:56:39 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.49.8.1 2006/04/01 12:06:11 yamt Exp $");
 #include <sys/callout.h>
 #include <sys/proc.h>
 #include <dev/cons.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -442,7 +443,7 @@ iteopen(dev, mode, devtype, l)
 	else tp = ip->tp;
 
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		ite_on(dev, 0);

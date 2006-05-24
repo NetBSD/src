@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.74 2006/02/23 03:59:59 simonb Exp $	*/
+/*	$NetBSD: twe.c,v 1.74.2.1 2006/05/24 10:58:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.74 2006/02/23 03:59:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.74.2.1 2006/05/24 10:58:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,12 +337,6 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": RAID controller\n");
 	aprint_normal(": 3ware Escalade\n");
 
-	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
-	if (ccb == NULL) {
-		aprint_error("%s: unable to allocate memory for ccbs\n",
-		    sc->sc_dv.dv_xname);
-		return;
-	}
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
@@ -406,6 +400,13 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: unable to load command DMA map, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
+		return;
+	}
+
+	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
+	if (ccb == NULL) {
+		aprint_error("%s: unable to allocate memory for ccbs\n",
+		    sc->sc_dv.dv_xname);
 		return;
 	}
 

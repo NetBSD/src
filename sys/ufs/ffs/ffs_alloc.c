@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.90 2005/12/23 15:31:40 yamt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.90.8.1 2006/05/24 10:59:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.90 2005/12/23 15:31:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.90.8.1 2006/05/24 10:59:25 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.90 2005/12/23 15:31:40 yamt Exp $");
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <ufs/ufs/quota.h>
@@ -114,7 +115,7 @@ extern const u_char * const fragtbl[];
  */
 int
 ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
-    struct ucred *cred, daddr_t *bnp)
+    kauth_cred_t cred, daddr_t *bnp)
 {
 	struct fs *fs;
 	daddr_t bno;
@@ -157,7 +158,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 #endif /* DIAGNOSTIC */
 	if (size == fs->fs_bsize && fs->fs_cstotal.cs_nbfree == 0)
 		goto nospace;
-	if (cred->cr_uid != 0 && freespace(fs, fs->fs_minfree) <= 0)
+	if (kauth_cred_geteuid(cred) != 0 && freespace(fs, fs->fs_minfree) <= 0)
 		goto nospace;
 #ifdef QUOTA
 	if ((error = chkdq(ip, btodb(size), cred, 0)) != 0)
@@ -183,7 +184,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 	(void) chkdq(ip, -btodb(size), cred, FORCE);
 #endif
 nospace:
-	ffs_fserr(fs, cred->cr_uid, "file system full");
+	ffs_fserr(fs, kauth_cred_geteuid(cred), "file system full");
 	uprintf("\n%s: write failed, file system is full\n", fs->fs_fsmnt);
 	return (ENOSPC);
 }
@@ -198,7 +199,7 @@ nospace:
  */
 int
 ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
-    int nsize, struct ucred *cred, struct buf **bpp, daddr_t *blknop)
+    int nsize, kauth_cred_t cred, struct buf **bpp, daddr_t *blknop)
 {
 	struct fs *fs;
 	struct buf *bp;
@@ -236,7 +237,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	if (cred == NOCRED)
 		panic("ffs_realloccg: missing credential");
 #endif /* DIAGNOSTIC */
-	if (cred->cr_uid != 0 && freespace(fs, fs->fs_minfree) <= 0)
+	if (kauth_cred_geteuid(cred) != 0 && freespace(fs, fs->fs_minfree) <= 0)
 		goto nospace;
 	if (fs->fs_magic == FS_UFS2_MAGIC)
 		bprev = ufs_rw64(ip->i_ffs2_db[lbprev], UFS_FSNEEDSWAP(fs));
@@ -379,7 +380,7 @@ nospace:
 	/*
 	 * no space available
 	 */
-	ffs_fserr(fs, cred->cr_uid, "file system full");
+	ffs_fserr(fs, kauth_cred_geteuid(cred), "file system full");
 	uprintf("\n%s: write failed, file system is full\n", fs->fs_fsmnt);
 	return (ENOSPC);
 }
@@ -642,7 +643,7 @@ fail:
  *      available inode is located.
  */
 int
-ffs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
+ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
     struct vnode **vpp)
 {
 	struct inode *pip;
@@ -726,7 +727,7 @@ ffs_valloc(struct vnode *pvp, int mode, struct ucred *cred,
 	}
 	return (0);
 noinodes:
-	ffs_fserr(fs, cred->cr_uid, "out of inodes");
+	ffs_fserr(fs, kauth_cred_geteuid(cred), "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->fs_fsmnt);
 	return (ENOSPC);
 }

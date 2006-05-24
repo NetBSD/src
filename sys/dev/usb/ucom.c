@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.61.2.1 2006/04/01 12:07:29 yamt Exp $	*/
+/*	$NetBSD: ucom.c,v 1.61.2.2 2006/05/24 10:58:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.2.1 2006/04/01 12:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.2.2 2006/05/24 10:58:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.61.2.1 2006/04/01 12:07:29 yamt Exp $");
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 #if defined(__NetBSD__)
 #include "rnd.h"
 #if NRND > 0
@@ -328,7 +329,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    suser(p->p_ucred, &p->p_acflag) != 0)
+	    kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag) != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -657,7 +658,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

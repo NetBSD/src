@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.31.8.1 2006/05/24 10:57:36 yamt Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.31.8.1 2006/05/24 10:57:36 yamt Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $\n$NetBSD: verified_exec.c,v 1.31 2005/12/12 21:47:58 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.31.8.1 2006/05/24 10:57:36 yamt Exp $\n$NetBSD: verified_exec.c,v 1.31.8.1 2006/05/24 10:57:36 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -126,10 +126,12 @@ veriexecopen(dev_t dev __unused, int flags __unused,
 	if (veriexec_verbose >= 2) {
 		printf("Veriexec: veriexecopen: Veriexec load device "
 		       "open attempt by uid=%u, pid=%u. (dev=%u)\n",
-		       l->l_proc->p_ucred->cr_uid, l->l_proc->p_pid, dev);
+		       kauth_cred_geteuid(l->l_proc->p_cred),
+		       l->l_proc->p_pid, dev);
 	}
 
-	if (suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	if (kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER,
+			      &l->l_proc->p_acflag) != 0)
 		return (EPERM);
 
 	if (veriexec_dev_usage > 0) {
@@ -260,9 +262,11 @@ veriexec_load(struct veriexec_params *params, struct lwp *l)
 	}
 
 	/* Get attributes for device and inode. */
-	error = VOP_GETATTR(nid.ni_vp, &va, l->l_proc->p_ucred, l);
-	if (error)
+	error = VOP_GETATTR(nid.ni_vp, &va, l->l_proc->p_cred, l);
+	if (error) {
+		vrele(nid.ni_vp);
 		return (error);
+	}
 
 	/* Release our reference to the vnode. (namei) */
 	vrele(nid.ni_vp);

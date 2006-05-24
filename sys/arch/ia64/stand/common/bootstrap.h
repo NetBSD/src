@@ -1,4 +1,4 @@
-/*	$NetBSD: bootstrap.h,v 1.1.2.2 2006/04/11 11:53:40 yamt Exp $	*/
+/*	$NetBSD: bootstrap.h,v 1.1.2.3 2006/05/24 10:56:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: src/sys/boot/common/bootstrap.h,v 1.38.6.1 2004/09/03 19:25:40 iedowse Exp $
  */
 
 #ifndef _BOOTSTRAP_H_

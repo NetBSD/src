@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.7 2005/12/11 12:16:08 christos Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.7.8.1 2006/05/24 10:56:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.7 2005/12/11 12:16:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.7.8.1 2006/05/24 10:56:32 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -167,6 +167,18 @@ struct p6032_intrhead {
 struct p6032_intrhead p6032_intrtab[NIRQMAPS];
 
 #define	NINTRS			2	/* MIPS INT0 - INT1 */
+
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given software interrupt priority level.
+ * Hardware ipls are port/board specific.
+ */
+const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTNET */
+	MIPS_SOFT_INT_MASK_1,			/* IPL_SOFTSERIAL */
+};
 
 struct p6032_cpuintr {
 	LIST_HEAD(, algor_intrhand) cintr_list;

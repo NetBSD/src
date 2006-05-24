@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.29.8.1 2006/05/24 10:57:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29.8.1 2006/05/24 10:57:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -60,30 +60,27 @@ static u_char rtc_magic[8] = {
 	0xc5, 0x3a, 0xa3, 0x5c, 0xc5, 0x3a, 0xa3, 0x5c
 };
 
-static long	clk_get_secs __P((void));
-static void	clk_set_secs __P((long));
-static u_char	bcd2bin __P((u_char));
-static u_char	bin2bcd __P((u_char));
-static void	rw_rtc __P((struct clock_ymdhms *, int));
-static void	write_rtc __P((u_char *));
+static long	clk_get_secs(void);
+static void	clk_set_secs(long);
+static u_char	bcd2bin(u_char);
+static u_char	bin2bcd(u_char);
+static void	rw_rtc(struct clock_ymdhms *, int);
+static void	write_rtc(u_char *);
 
-static int  clock_match __P((struct device *, struct cfdata *, void *args));
-static void clock_attach __P((struct device *, struct device *, void *));
+static int  clock_match(struct device *, struct cfdata *, void *args);
+static void clock_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(clock, sizeof(struct device),
     clock_match, clock_attach, NULL, NULL);
 
-static int  rtc_match __P((struct device *, struct cfdata *, void *args));
-static void rtc_attach __P((struct device *, struct device *, void *));
+static int  rtc_match(struct device *, struct cfdata *, void *args);
+static void rtc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(rtc, sizeof(struct device),
     rtc_match, rtc_attach, NULL, NULL);
 
 static int
-clock_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -102,10 +99,7 @@ clock_match(parent, cf, aux)
 }
 
 static void
-clock_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+clock_attach(struct device *parent, struct device *self, void *aux)
 {
 	static u_char icu_table[] = {
 		CICTL,	0,		/* Disable clock interrupt for now. */
@@ -133,23 +127,22 @@ clock_attach(parent, self, aux)
 }
 
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
+
 	/* Enable the clock interrupt. */
 	ICUB(CICTL) = 0x30;
 }
 
 void
-setstatclockrate(arg)
-	int arg;
+setstatclockrate(int arg)
 {
 
 	/* Nothing */
 }
 
 void
-microtime(tvp)
-	register struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	u_short count, delta, ipend;
 
@@ -190,10 +183,7 @@ microtime(tvp)
  */
 
 static int
-rtc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+rtc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int rom_val, rom_cnt, i;
@@ -224,11 +214,9 @@ rtc_match(parent, cf, aux)
 }
 
 static void
-rtc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+rtc_attach(struct device *parent, struct device *self, void *aux)
 {
+
 	printf("\n");
 	rtc_attached = 1;
 }
@@ -238,8 +226,7 @@ rtc_attach(parent, self, aux)
  * which is, e.g. from a filesystem.
  */
 void
-inittodr(fs_time)
-	time_t fs_time;
+inittodr(time_t fs_time)
 {
 	long diff, clk_time;
 	long long_ago = (5 * SECYR);
@@ -291,7 +278,7 @@ inittodr(fs_time)
  * Resettodr restores the time of day hardware after a time change.
  */
 void
-resettodr()
+resettodr(void)
 {
 	/*
 	 * We might have been called by boot() due to a crash early
@@ -316,22 +303,21 @@ resettodr()
  */
 
 static u_char
-bcd2bin(n)
-	u_char n;
+bcd2bin(u_char n)
 {
+
 	return(((n >> 4) & 0x0f) * 10 + (n & 0x0f));
 }
 
 static u_char
-bin2bcd(n)
-	u_char n;
+bin2bcd(u_char n)
 {
+
 	return((char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
 
 static void
-write_rtc(p)
-	u_char *p;
+write_rtc(u_char *p)
 {
 	u_char *q;
 	int i;
@@ -343,9 +329,7 @@ write_rtc(p)
 }
 
 static void
-rw_rtc(dt, rw)
-	struct clock_ymdhms *dt;
-	int rw;
+rw_rtc(struct clock_ymdhms *dt, int rw)
 {
 	struct {
 		u_char rtc_csec;
@@ -411,7 +395,7 @@ rw_rtc(dt, rw)
 }
 
 static long
-clk_get_secs()
+clk_get_secs(void)
 {
 	struct clock_ymdhms dt;
 	long secs;
@@ -437,8 +421,7 @@ clk_get_secs()
 }
 
 static void
-clk_set_secs(secs)
-	long secs;
+clk_set_secs(long secs)
 {
 	struct clock_ymdhms dt;
 

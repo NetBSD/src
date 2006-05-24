@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.33 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: disk.h,v 1.33.8.1 2006/05/24 10:59:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
+#include <sys/iostat.h>
 
 struct buf;
 struct disk;
@@ -209,15 +210,7 @@ struct disk {
 	 * Metrics data; note that some metrics may have no meaning
 	 * on certain types of disks.
 	 */
-	int		dk_busy;	/* busy counter */
-	uint64_t	dk_rxfer;	/* total number of read transfers */
-	uint64_t	dk_wxfer;	/* total number of write transfers */
-	uint64_t	dk_seek;	/* total independent seek operations */
-	uint64_t	dk_rbytes;	/* total bytes read */
-	uint64_t	dk_wbytes;	/* total bytes written */
-	struct timeval	dk_attachtime;	/* time disk was attached */
-	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
-	struct timeval	dk_time;	/* total time spent busy */
+	struct io_stats	*dk_stats;
 
 	struct	dkdriver *dk_driver;	/* pointer to driver */
 
@@ -243,29 +236,6 @@ struct disk {
 	struct cpu_disklabel *dk_cpulabel;
 };
 
-#define	DK_DISKNAMELEN	16
-
-/* The following structure is 64-bit alignment safe */
-struct disk_sysctl {
-	char		dk_name[DK_DISKNAMELEN];
-	int32_t		dk_busy;
-	int32_t		pad;
-	uint64_t	dk_xfer;
-	uint64_t	dk_seek;
-	uint64_t	dk_bytes;
-	uint32_t	dk_attachtime_sec;
-	uint32_t	dk_attachtime_usec;
-	uint32_t	dk_timestamp_sec;
-	uint32_t	dk_timestamp_usec;
-	uint32_t	dk_time_sec;
-	uint32_t	dk_time_usec;
-	/* New separate read/write stats */
-	uint64_t	dk_rxfer;
-	uint64_t	dk_rbytes;
-	uint64_t	dk_wxfer;
-	uint64_t	dk_wbytes;
-};
-
 struct dkdriver {
 	void	(*d_strategy)(struct buf *);
 	void	(*d_minphys)(struct buf *);
@@ -286,11 +256,6 @@ struct dkdriver {
 #define	DK_RDLABEL	3		/* label being read */
 #define	DK_OPEN		4		/* label read, drive open */
 #define	DK_OPENRAW	5		/* open without label */
-
-/*
- * disklist_head is defined here so that user-land has access to it.
- */
-TAILQ_HEAD(disklist_head, disk);	/* the disklist is a TAILQ */
 
 /*
  * Bad sector lists per fixed disk
@@ -330,8 +295,7 @@ void	pseudo_disk_attach(struct disk *);
 void	pseudo_disk_detach(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
-void	disk_resetstat(struct disk *);
-struct	disk *disk_find(char *);
+struct disk *disk_find(const char *);
 
 int	dkwedge_add(struct dkwedge_info *);
 int	dkwedge_del(struct dkwedge_info *);

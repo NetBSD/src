@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.42 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.42.8.1 2006/05/24 10:56:35 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -281,10 +281,10 @@ ENTRY(cpu_switch)
 	ldr	r7, .Lcurlwp
 	ldr	r6, .Lcurpcb
 	mov	r2, #0x00000000
-	str	r2, [r7]		/* curproc = NULL */
+	str	r2, [r7]		/* curlwp = NULL */
 	str	r2, [r6]		/* curpcb = NULL */
 
-	/* stash the old proc while we call functions */
+	/* stash the old lwp while we call functions */
 	mov	r5, r0
 
 	/* First phase : find a new lwp */
@@ -303,7 +303,7 @@ ENTRY(cpu_switch)
 	teq	r3, #0x00000000
 	beq	_ASM_LABEL(idle)
 
-	/* put old proc back in r1 */
+	/* put old lwp back in r1 */
 	mov	r1, r5
 
 	/* rem: r1 = old lwp */
@@ -414,7 +414,7 @@ ENTRY(cpu_switch)
 .Lswitch_resume:
 	/* rem: r1 = old lwp */
 	/* rem: r4 = return value [not used if came from cpu_switchto()] */
-	/* rem: r6 = new process */
+	/* rem: r6 = new lwp */
 	/* rem: interrupts are disabled */
 
 #ifdef MULTIPROCESSOR
@@ -443,15 +443,15 @@ ENTRY(cpu_switch)
 
 	/* rem: r1 = old lwp */
 	/* rem: r4 = return value */
-	/* rem: r6 = new process */
+	/* rem: r6 = new lwp */
 	/* rem: interrupts are enabled */
 
 	/*
-	 * If the new process is the same as the process that called
+	 * If the new lwp is the same as the lwp that called
 	 * cpu_switch() then we do not need to save and restore any
 	 * contexts. This means we can make a quick exit.
 	 * The test is simple if curlwp on entry (now in r1) is the
-	 * same as the proc removed from the queue we can jump to the exit.
+	 * same as the lwp removed from the queue we can jump to the exit.
 	 */
 	teq	r1, r6
 	moveq	r4, #0x00000000		/* default to "didn't switch" */
@@ -477,7 +477,7 @@ ENTRY(cpu_switch)
 
 	/* rem: r0 = old lwp */
 	/* rem: r4 = return value */
-	/* rem: r6 = new process */
+	/* rem: r6 = new lwp */
 	/* rem: interrupts are enabled */
 
 	/* Stage two : Save old context */
@@ -523,7 +523,7 @@ ENTRY(cpu_switch)
 
 	/* rem: r0 = old lwp */
 	/* rem: r4 = return value */
-	/* rem: r6 = new process */
+	/* rem: r6 = new lwp */
 	/* rem: r8 = old PCB */
 	/* rem: r9 = new PCB */
 	/* rem: interrupts are enabled */
@@ -790,7 +790,7 @@ ENTRY(cpu_switch)
 	/*
 	 * We skip the cache purge because switch_exit() already did it.
 	 * Load up registers the way .Lcs_cache_purge_skipped expects.
-	 * Userpsace access already blocked by switch_exit().
+	 * Userspace access already blocked by switch_exit().
 	 */
 	ldr	r9, [r6, #(L_ADDR)]		/* r9 = new PCB */
 	ldr	r3, .Lblock_userspace_access

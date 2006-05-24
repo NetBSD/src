@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.169.8.1 2006/04/01 12:07:29 yamt Exp $	*/
+/*	$NetBSD: ohci.c,v 1.169.8.2 2006/05/24 10:58:24 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.169.8.1 2006/04/01 12:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.169.8.2 2006/05/24 10:58:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,9 +233,29 @@ Static void		ohci_dump_itds(ohci_softc_t *, ohci_soft_itd_t *);
  do { OBARR(sc); bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
 #define OWRITE4(sc, r, x) \
  do { OBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); } while (0)
-#define OREAD1(sc, r) (OBARR(sc), bus_space_read_1((sc)->iot, (sc)->ioh, (r)))
-#define OREAD2(sc, r) (OBARR(sc), bus_space_read_2((sc)->iot, (sc)->ioh, (r)))
-#define OREAD4(sc, r) (OBARR(sc), bus_space_read_4((sc)->iot, (sc)->ioh, (r)))
+static __inline uint8_t
+OREAD1(ohci_softc_t *sc, bus_size_t r)
+{
+
+	OBARR(sc);
+	return bus_space_read_1(sc->iot, sc->ioh, r);
+}
+
+static __inline uint16_t
+OREAD2(ohci_softc_t *sc, bus_size_t r)
+{
+
+	OBARR(sc);
+	return bus_space_read_2(sc->iot, sc->ioh, r);
+}
+
+static __inline uint32_t
+OREAD4(ohci_softc_t *sc, bus_size_t r)
+{
+
+	OBARR(sc);
+	return bus_space_read_4(sc->iot, sc->ioh, r);
+}
 
 /* Reverse the bits in a value 0 .. 31 */
 Static u_int8_t revbits[OHCI_NO_INTRS] =
@@ -2421,6 +2441,8 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		DPRINTFN(8,("ohci_root_ctrl_control wValue=0x%04x\n", value));
+		if (len == 0)
+			break;
 		switch(value >> 8) {
 		case UDESC_DEVICE:
 			if ((value & 0xff) != 0) {
@@ -2450,8 +2472,6 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &ohci_endpd, l);
 			break;
 		case UDESC_STRING:
-			if (len == 0)
-				break;
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
@@ -2572,6 +2592,8 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
+		if (len == 0)
+			break;
 		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;
@@ -3090,7 +3112,7 @@ ohci_device_intr_close(usbd_pipe_handle pipe)
 		usb_delay_ms(&sc->sc_bus, 2);
 
 	for (p = sc->sc_eds[pos]; p && p->next != sed; p = p->next)
-		;
+		continue;
 #ifdef DIAGNOSTIC
 	if (p == NULL)
 		panic("ohci_device_intr_close: ED not found");

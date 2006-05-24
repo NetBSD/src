@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.33 2006/02/16 20:17:19 perry Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.33.2.1 2006/05/24 10:58:00 yamt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1928,6 +1928,7 @@ struct bge_status_block {
 #define BCOM_VENDORID			0x14E4
 #define BCOM_DEVICEID_BCM5700		0x1644
 #define BCOM_DEVICEID_BCM5701		0x1645
+#define BCOM_DEVICEID_BCM5789		0x169d
 
 /*
  * Alteon AceNIC PCI vendor/device ID.

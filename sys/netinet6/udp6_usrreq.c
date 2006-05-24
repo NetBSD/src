@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.73 2006/01/21 00:15:37 rpaulo Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.73.6.1 2006/05/24 10:59:09 yamt Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.73 2006/01/21 00:15:37 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.73.6.1 2006/05/24 10:59:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -236,10 +236,11 @@ udp6_ctlinput(cmd, sa, d)
 			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 
 			/*
-			 * regardless of if we called icmp6_mtudisc_update(),
-			 * we need to call in6_pcbnotify(), to notify path
-			 * MTU change to the userland (2292bis-02), because
-			 * some unconnected sockets may share the same
+			 * regardless of if we called
+			 * icmp6_mtudisc_update(), we need to call
+			 * in6_pcbnotify(), to notify path MTU change
+			 * to the userland (RFC3542), because some
+			 * unconnected sockets may share the same
 			 * destination and want to know the path MTU.
 			 */
 		}

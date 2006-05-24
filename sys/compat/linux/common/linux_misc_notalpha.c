@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.77 2006/02/09 19:18:56 manu Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.77.2.1 2006/05/24 10:57:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.77 2006/02/09 19:18:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.77.2.1 2006/05/24 10:57:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.77 2006/02/09 19:18:56 man
 #include <sys/resourcevar.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <sys/kauth.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
@@ -360,8 +361,9 @@ linux_sys_getresgid(l, v, retval)
 		syscallarg(gid_t *) sgid;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
+	kauth_cred_t pc = p->p_cred;
 	int error;
+	gid_t gid;
 
 	/*
 	 * Linux copies these values out to userspace like so:
@@ -370,15 +372,17 @@ linux_sys_getresgid(l, v, retval)
 	 *	2. If that succeeds, copy out egid.
 	 *	3. If both of those succeed, copy out sgid.
 	 */
-	if ((error = copyout(&pc->p_rgid, SCARG(uap, rgid),
-			     sizeof(gid_t))) != 0)
+	gid = kauth_cred_getgid(pc);
+	if ((error = copyout(&gid, SCARG(uap, rgid), sizeof(gid_t))) != 0)
 		return (error);
 
-	if ((error = copyout(&pc->pc_ucred->cr_gid, SCARG(uap, egid),
-			     sizeof(gid_t))) != 0)
+	gid = kauth_cred_getegid(pc);
+	if ((error = copyout(&gid, SCARG(uap, egid), sizeof(gid_t))) != 0)
 		return (error);
 
-	return (copyout(&pc->p_svgid, SCARG(uap, sgid), sizeof(gid_t)));
+	gid = kauth_cred_getsvgid(pc);
+
+	return (copyout(&gid, SCARG(uap, sgid), sizeof(gid_t)));
 }
 
 #ifndef __amd64__
@@ -400,7 +404,7 @@ linux_sys_stime(l, v, retval)
 	linux_time_t tt;
 	int error;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = kauth_authorize_generic(p->p_cred, KAUTH_GENERIC_ISSUSER, &p->p_acflag)) != 0)
 		return (error);
 
 	if ((error = copyin(&tt, SCARG(uap, t), sizeof tt)) != 0)
@@ -473,7 +477,7 @@ linux_sys_statfs64(l, v, retval)
 		syscallarg(struct linux_statfs64 *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statvfs btmp, *bsp;
+	struct statvfs *btmp, *bsp;
 	struct linux_statfs64 ltmp;
 	struct sys_statvfs1_args bsa;
 	caddr_t sg;
@@ -483,7 +487,7 @@ linux_sys_statfs64(l, v, retval)
 		return (EINVAL);
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -494,12 +498,16 @@ linux_sys_statfs64(l, v, retval)
 	if ((error = sys_statvfs1(l, &bsa, retval)))
 		return error;
 
-	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
-		return error;
-
-	bsd_to_linux_statfs64(&btmp, &ltmp);
-
-	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+	btmp = STATVFSBUF_GET();
+	error = copyin(bsp, btmp, sizeof(*btmp));
+	if (error) {
+		goto out;
+	}
+	bsd_to_linux_statfs64(btmp, &ltmp);
+	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
+out:
+	STATVFSBUF_PUT(btmp);
+	return error;
 }
 
 int
@@ -514,7 +522,7 @@ linux_sys_fstatfs64(l, v, retval)
 		syscallarg(struct linux_statfs64 *) sp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct statvfs btmp, *bsp;
+	struct statvfs *btmp, *bsp;
 	struct linux_statfs64 ltmp;
 	struct sys_fstatvfs1_args bsa;
 	caddr_t sg;
@@ -524,7 +532,7 @@ linux_sys_fstatfs64(l, v, retval)
 		return (EINVAL);
 
 	sg = stackgap_init(p, 0);
-	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
+	bsp = stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
 	SCARG(&bsa, fd) = SCARG(uap, fd);
 	SCARG(&bsa, buf) = bsp;
@@ -533,12 +541,16 @@ linux_sys_fstatfs64(l, v, retval)
 	if ((error = sys_fstatvfs1(l, &bsa, retval)))
 		return error;
 
-	if ((error = copyin((caddr_t) bsp, (caddr_t) &btmp, sizeof btmp)))
-		return error;
-
-	bsd_to_linux_statfs64(&btmp, &ltmp);
-
-	return copyout((caddr_t) &ltmp, (caddr_t) SCARG(uap, sp), sizeof ltmp);
+	btmp = STATVFSBUF_GET();
+	error = copyin(bsp, btmp, sizeof(*btmp));
+	if (error) {
+		goto out;
+	}
+	bsd_to_linux_statfs64(btmp, &ltmp);
+	error = copyout(&ltmp, SCARG(uap, sp), sizeof ltmp);
+out:
+	STATVFSBUF_PUT(btmp);
+	return error;
 }
 #endif /* !__m68k__ */
 #endif /* !COMPAT_LINUX32 */

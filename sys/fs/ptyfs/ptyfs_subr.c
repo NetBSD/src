@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.5 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.5.8.1 2006/05/24 10:58:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.5 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.5.8.1 2006/05/24 10:58:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.5 2005/12/11 12:24:29 christos Exp 
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/pty.h>
+#include <sys/kauth.h>
 
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -129,14 +130,14 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		int error;
 		struct nameidata nd;
 		char ttyname[64];
-		struct ucred *cred;
+		kauth_cred_t cred;
 		struct vattr va;
 		/*
 		 * We support traditional ptys, so we copy the info
 		 * from the inode
 		 */
 		if ((error = (*ptyfs_save_ptm->makename)(
-			ptyfs_save_ptm, ttyname, sizeof(ttyname),
+			ptyfs_save_ptm, l, ttyname, sizeof(ttyname),
 			ptyfs->ptyfs_pty, ptyfs->ptyfs_type == PTYFSpts ? 't'
 			: 'p')) != 0)
 				goto out;
@@ -144,9 +145,9 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		     l);
 		if ((error = namei(&nd)) != 0)
 			goto out;
-		cred = crget();
+		cred = kauth_cred_alloc();
 		error = VOP_GETATTR(nd.ni_vp, &va, cred, l);
-		crfree(cred);
+		kauth_cred_free(cred);
 		VOP_UNLOCK(nd.ni_vp, 0);
 		vrele(nd.ni_vp);
 		if (error)

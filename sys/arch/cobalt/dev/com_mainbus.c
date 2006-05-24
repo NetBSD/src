@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.10.8.1 2006/04/11 11:53:26 yamt Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.10.8.2 2006/05/24 10:56:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.10.8.1 2006/04/11 11:53:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.10.8.2 2006/05/24 10:56:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,14 @@ int
 com_mainbus_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 
-	return console_present != 0;
+	switch (cobalt_id) {
+	case COBALT_ID_RAQ:
+	case COBALT_ID_QUBE2:
+	case COBALT_ID_RAQ2:
+		return 1;
+	}
+
+	return 0;
 }
 
 void
@@ -111,7 +118,7 @@ com_mainbus_cnprobe(struct consdev *cn)
 	 */
 	if ((bi_flags = lookup_bootinfo(BTINFO_FLAGS)) == NULL) {
 		/* No boot information, probe console now */
-		console_present = *(volatile u_int32_t *)
+		console_present = *(volatile uint32_t *)
 					MIPS_PHYS_TO_KSEG1(0x0020001c);
 	} else {
 		/* Get the value determined by the boot loader. */

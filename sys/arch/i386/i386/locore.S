@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.37 2006/02/03 11:08:24 jmmv Exp $	*/
+/*	$NetBSD: locore.S,v 1.37.4.1 2006/05/24 10:56:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -95,7 +95,6 @@
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
-#include <machine/bootinfo.h>
 
 #if NLAPIC > 0
 #include <machine/i82489reg.h>
@@ -158,13 +157,9 @@
 	.data
 
 	.globl	_C_LABEL(cpu)
-	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
-	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
-#ifdef COMPAT_OLDBOOT
-	.globl	_C_LABEL(bootdev)
-#endif
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
-	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
+	.globl	_C_LABEL(esym)
+	.globl	_C_LABEL(atdevbase)
+	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(gdt)
 #ifdef I586_CPU
 	.globl	_C_LABEL(idt)
@@ -197,20 +192,9 @@ _C_LABEL(lapic_tpr):
 
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
-_C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(proc0paddr):	.long	0
+_C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
-#ifndef REALBASEMEM
-_C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
-#else
-_C_LABEL(biosbasemem):	.long	REALBASEMEM
-#endif
-#ifndef REALEXTMEM
-_C_LABEL(biosextmem):	.long	0	# extended memory reported by BIOS
-#else
-_C_LABEL(biosextmem):	.long	REALEXTMEM
-#endif
 
 	.space 512
 tmpstk:
@@ -256,71 +240,21 @@ _C_LABEL(Multiboot_Header):
 	pushl	%ebx		# Address of Multiboot information
 	call	_C_LABEL(multiboot_pre_reloc)
 	addl	$4,%esp
-	jmp	3f
+	jmp	2f
 #endif
 
 1:
 	/*
-	 * Load parameters from stack
-	 * (howto, [bootdev], bootinfo, esym, basemem, extmem).
+	 * At this point, we know that a NetBSD-specific boot loader
+	 * booted this kernel.  The stack carries the following parameters:
+	 * (boothowto, [bootdev], bootinfo, esym, biosbasemem, biosextmem),
+	 * 4 bytes each.
 	 */
-	movl	4(%esp),%eax
-	movl	%eax,RELOC(boothowto)
-#ifdef COMPAT_OLDBOOT
-	movl	8(%esp),%eax
-	movl	%eax,RELOC(bootdev)
-#endif
-	movl	12(%esp),%eax
+	addl	$4,%esp		# Discard return address to boot loader
+	call	_C_LABEL(native_loader)
+	addl	$24,%esp
 
-	testl	%eax, %eax
-	jz	1f
-	movl	(%eax), %ebx		/* number of entries */
-	movl	$RELOC(bootinfo), %edi
-	movl	%ebx, (%edi)
-	addl	$4, %edi
 2:
-	testl	%ebx, %ebx
-	jz	1f
-	addl	$4, %eax
-	movl	(%eax), %ecx		/* address of entry */
-	pushl	%eax
-	pushl	(%ecx)			/* len */
-	pushl	%ecx
-	pushl	%edi
-	addl	(%ecx), %edi		/* update dest pointer */
-	cmpl	$_RELOC(_C_LABEL(bootinfo) + BOOTINFO_MAXSIZE), %edi
-	jg	2f
-	call	_C_LABEL(memcpy)
-	addl	$12, %esp
-	popl	%eax
-	subl	$1, %ebx
-	jmp	2b
-2:	/* cleanup for overflow case */
-	addl	$16, %esp
-	movl	$RELOC(bootinfo), %edi
-	subl	%ebx, (%edi)		/* correct number of entries */
-1:
-
- 	movl	16(%esp),%eax
-	testl	%eax,%eax
-	jz	1f
-	addl	$KERNBASE,%eax
-1: 	movl	%eax,RELOC(esym)
-
-	movl	RELOC(biosextmem),%eax
-	testl	%eax,%eax
-	jnz	1f
-	movl	20(%esp),%eax
-	movl	%eax,RELOC(biosextmem)
-1:
-	movl	RELOC(biosbasemem),%eax
-	testl	%eax,%eax
-	jnz	1f
-	movl	24(%esp),%eax
-	movl	%eax,RELOC(biosbasemem)
-1:
-
-3:
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
@@ -665,9 +599,9 @@ begin:
 
 	/* Set up bootstrap stack. */
 	leal	(PROC0STACK+KERNBASE)(%esi),%eax
-	movl	%eax,_C_LABEL(proc0paddr)
-	leal	(USPACE-FRAMESIZE)(%eax),%esp
-	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
+	movl	%eax,_C_LABEL(proc0uarea)
+	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
+	movl	%esi,(KSTACK_SIZE+PCB_CR3)(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 
 #if defined(MULTIBOOT)
@@ -839,8 +773,8 @@ NENTRY(switch_error)
 
 /*
  * void cpu_switch(struct lwp *)
- * Find a runnable process and switch to it.  Wait if necessary.  If the new
- * process is the same as the old one, we short-circuit the context save and
+ * Find a runnable lwp and switch to it.  Wait if necessary.  If the new
+ * lwp is the same as the old one, we short-circuit the context save and
  * restore.
  *
  * Note that the stack frame layout is known to "struct switchframe"

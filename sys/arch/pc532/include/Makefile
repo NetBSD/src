@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2005/12/11 12:18:31 christos Exp $
+#	$NetBSD: Makefile,v 1.21.8.1 2006/05/24 10:57:00 yamt Exp $
 
 INCSDIR= /usr/include/pc532
 
@@ -13,7 +13,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	jmpbuf.h \
 	kcore.h \
 	limits.h lock.h \
-	math.h mcontext.h mtpr.h \
+	math.h mcontext.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \

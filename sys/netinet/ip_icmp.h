@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.22 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.22.8.1 2006/05/24 10:59:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -94,7 +94,7 @@ struct icmp {
 		struct id_ip  {
 			  struct ip idi_ip;
 			  /* options and then 64 bits of data */
-		} id_ip __attribute__((__packed__));
+		} id_ip /* XXX: __attribute__((__packed__)) ??? */;
 		struct icmp_ra_addr id_radv;
 		u_int32_t id_mask;
 		int8_t	  id_data[1];

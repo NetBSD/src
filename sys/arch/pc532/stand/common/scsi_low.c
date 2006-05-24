@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_low.c,v 1.5 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: scsi_low.c,v 1.5.8.1 2006/05/24 10:57:08 yamt Exp $	*/
 
 /****************************************************************************
  * NS32K Monitor SCSI low-level driver
@@ -19,7 +19,7 @@
 
 #include <pc532/stand/common/so.h>
 
-#define	OK 		0
+#define	OK		0
 #define	NOT_OK		OK+1
 #define	PRIVATE
 #define	PUBLIC
@@ -446,6 +446,7 @@ sc_receive(void)
 void
 scCtlrSelect(int ctlr)
 {
+
 	RD_ADR(ICU_IO) &= ~ICU_SCSI_BIT;	/* i/o, not port */
 	RD_ADR(ICU_DIR) &= ~ICU_SCSI_BIT;	/* output */
 	if (ctlr == DP8490)

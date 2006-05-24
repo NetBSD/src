@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.87 2006/03/01 02:06:11 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.87.2.1 2006/05/24 10:58:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87 2006/03/01 02:06:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87.2.1 2006/05/24 10:58:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.87 2006/03/01 02:06:11 christos Ex
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mbuf.h>
+#include <sys/kauth.h>
 
 /*
  * Unix communications domain.
@@ -229,6 +230,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_BIND:
+		KASSERT(l != NULL);
 		error = unp_bind(unp, nam, l);
 		break;
 
@@ -238,6 +240,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_CONNECT:
+		KASSERT(l != NULL);
 		error = unp_connect(so, nam, l);
 		break;
 
@@ -306,8 +309,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * has the side-effect of preventing a caller from
 		 * forging SCM_CREDS.
 		 */
-		if (control && (error = unp_internalize(control, l))) {
-			goto die;
+		if (control) {
+			KASSERT(l != NULL);
+			if ((error = unp_internalize(control, l)) != 0)
+				goto die;
 		}
 		switch (so->so_type) {
 
@@ -317,6 +322,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					error = EISCONN;
 					goto die;
 				}
+				KASSERT(l != NULL);
 				error = unp_connect(so, nam, l);
 				if (error) {
 				die:
@@ -330,6 +336,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 					goto die;
 				}
 			}
+			KASSERT(p != NULL);
 			error = unp_output(m, control, unp, p);
 			if (nam)
 				unp_disconnect(unp);
@@ -383,6 +390,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_ABORT:
 		unp_drop(unp, ECONNABORTED);
 
+		KASSERT(so->so_head == NULL);
 #ifdef DIAGNOSTIC
 		if (so->so_pcb == 0)
 			panic("uipc 5: drop killed pcb");
@@ -643,7 +651,7 @@ restart:
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
-	VOP_LEASE(nd.ni_dvp, l, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, l, p->p_cred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	vn_finished_write(mp, 0);
 	if (error)
@@ -692,7 +700,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		error = ENOTSOCK;
 		goto bad;
 	}
-	if ((error = VOP_ACCESS(vp, VWRITE, l->l_proc->p_ucred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VWRITE, l->l_proc->p_cred, l)) != 0)
 		goto bad;
 	so2 = vp->v_socket;
 	if (so2 == 0) {
@@ -1041,8 +1049,8 @@ unp_addsockcred(struct proc *p, struct mbuf *control)
 	struct mbuf *m, *n;
 	int len, space, i;
 
-	len = CMSG_LEN(SOCKCREDSIZE(p->p_ucred->cr_ngroups));
-	space = CMSG_SPACE(SOCKCREDSIZE(p->p_ucred->cr_ngroups));
+	len = CMSG_LEN(SOCKCREDSIZE(kauth_cred_ngroups(p->p_cred)));
+	space = CMSG_SPACE(SOCKCREDSIZE(kauth_cred_ngroups(p->p_cred)));
 
 	m = m_get(M_WAIT, MT_CONTROL);
 	if (space > MLEN) {
@@ -1063,13 +1071,13 @@ unp_addsockcred(struct proc *p, struct mbuf *control)
 	cmp->cmsg_len = len;
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_CREDS;
-	sc->sc_uid = p->p_cred->p_ruid;
-	sc->sc_euid = p->p_ucred->cr_uid;
-	sc->sc_gid = p->p_cred->p_rgid;
-	sc->sc_egid = p->p_ucred->cr_gid;
-	sc->sc_ngroups = p->p_ucred->cr_ngroups;
+	sc->sc_uid = kauth_cred_getuid(p->p_cred);
+	sc->sc_euid = kauth_cred_geteuid(p->p_cred);
+	sc->sc_gid = kauth_cred_getgid(p->p_cred);
+	sc->sc_egid = kauth_cred_getegid(p->p_cred);
+	sc->sc_ngroups = kauth_cred_ngroups(p->p_cred);
 	for (i = 0; i < sc->sc_ngroups; i++)
-		sc->sc_groups[i] = p->p_ucred->cr_groups[i];
+		sc->sc_groups[i] = kauth_cred_group(p->p_cred, i);
 
 	/*
 	 * If a control message already exists, append us to the end.

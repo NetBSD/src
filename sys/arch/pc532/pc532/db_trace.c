@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.15 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.15.8.1 2006/05/24 10:57:01 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15 2005/12/11 12:18:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15.8.1 2006/05/24 10:57:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,31 +52,31 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15 2005/12/11 12:18:31 christos Exp $
 #include <ddb/db_interface.h>
 
 struct ns532_frame;
-static void	db_nextframe __P((struct ns532_frame **, db_addr_t *,
-    int *, int, void (*)(const char *, ...)));
-static int	db_numargs __P((struct ns532_frame *));
-static int	db_spec_regs __P((const struct db_variable *, db_expr_t *, int));
+static void	db_nextframe(struct ns532_frame **, db_addr_t *, int *, int,
+		    void (*)(const char *, ...));
+static int	db_numargs(struct ns532_frame *);
+static int	db_spec_regs(const struct db_variable *, db_expr_t *, int);
 
 /*
  * Machine register set.
  */
 const struct db_variable db_regs[] = {
-	{ "r0", 	(long *)&ddb_regs.tf_regs.r_r0, FCN_NULL },
-	{ "r1", 	(long *)&ddb_regs.tf_regs.r_r1, FCN_NULL },
-	{ "r2", 	(long *)&ddb_regs.tf_regs.r_r2, FCN_NULL },
-	{ "r3", 	(long *)&ddb_regs.tf_regs.r_r3, FCN_NULL },
-	{ "r4", 	(long *)&ddb_regs.tf_regs.r_r4, FCN_NULL },
-	{ "r5", 	(long *)&ddb_regs.tf_regs.r_r5, FCN_NULL },
-	{ "r6", 	(long *)&ddb_regs.tf_regs.r_r6, FCN_NULL },
-	{ "r7", 	(long *)&ddb_regs.tf_regs.r_r7, FCN_NULL },
-	{ "sp", 	(long *)&ddb_regs.tf_regs.r_sp, FCN_NULL },
-	{ "fp", 	(long *)&ddb_regs.tf_regs.r_fp, FCN_NULL },
-	{ "sb", 	(long *)&ddb_regs.tf_regs.r_sb, FCN_NULL },
-	{ "pc", 	(long *)&ddb_regs.tf_regs.r_pc, FCN_NULL },
+	{ "r0",		(long *)&ddb_regs.tf_regs.r_r0, FCN_NULL },
+	{ "r1",		(long *)&ddb_regs.tf_regs.r_r1, FCN_NULL },
+	{ "r2",		(long *)&ddb_regs.tf_regs.r_r2, FCN_NULL },
+	{ "r3",		(long *)&ddb_regs.tf_regs.r_r3, FCN_NULL },
+	{ "r4",		(long *)&ddb_regs.tf_regs.r_r4, FCN_NULL },
+	{ "r5",		(long *)&ddb_regs.tf_regs.r_r5, FCN_NULL },
+	{ "r6",		(long *)&ddb_regs.tf_regs.r_r6, FCN_NULL },
+	{ "r7",		(long *)&ddb_regs.tf_regs.r_r7, FCN_NULL },
+	{ "sp",		(long *)&ddb_regs.tf_regs.r_sp, FCN_NULL },
+	{ "fp",		(long *)&ddb_regs.tf_regs.r_fp, FCN_NULL },
+	{ "sb",		(long *)&ddb_regs.tf_regs.r_sb, FCN_NULL },
+	{ "pc",		(long *)&ddb_regs.tf_regs.r_pc, FCN_NULL },
 	{ "psr",	(long *)&ddb_regs.tf_regs.r_psr,FCN_NULL },
 	{ "tear",	(long *)&ddb_regs.tf_tear,	FCN_NULL },
 	{ "msr",	(long *)&ddb_regs.tf_msr,	FCN_NULL },
-	{ "ipl",	(long *)&db_active_ipl, 	FCN_NULL },
+	{ "ipl",	(long *)&db_active_ipl,		FCN_NULL },
 
 	{ "intbase",	(long *) 0, db_spec_regs },
 	{ "ptb",	(long *) 0, db_spec_regs },
@@ -116,8 +116,7 @@ boolean_t	db_trace_symbols_found = FALSE;
 int db_numargs_default = 5;
 
 int
-db_numargs(fp)
-	struct ns532_frame *fp;
+db_numargs(struct ns532_frame *fp)
 {
 	db_addr_t	argp;
 	int		inst;
@@ -133,7 +132,7 @@ db_numargs(fp)
 		/*
 		 * After a bsr gcc may emit the following instructions
 		 * to remove the arguments from the stack:
-		 *   cmpqd 0,tos 	- to remove 4 bytes from the stack
+		 *   cmpqd 0,tos	- to remove 4 bytes from the stack
 		 *   cmpd tos,tos	- to remove 8 bytes from the stack
 		 *   adjsp[bwd] -n	- to remove n bytes from the stack
 		 * Gcc sometimes delays emitting these instructions and
@@ -197,12 +196,8 @@ db_numargs(fp)
  *   of the function that faulted, but that could get hairy.
  */
 static void
-db_nextframe(fp, ip, argp, is_trap, pr)
-	struct ns532_frame	**fp;		/* in/out */
-	db_addr_t		*ip;		/* out */
-	int			*argp;		/* in */
-	int			is_trap;	/* in */
-	void			(*pr) __P((const char *, ...));
+db_nextframe(struct ns532_frame **fp, db_addr_t *ip, int *argp, int is_trap,
+    void (*pr)(const char *, ...))
 {
 	struct trapframe *tf;
 	struct syscframe *sf;
@@ -235,12 +230,8 @@ db_nextframe(fp, ip, argp, is_trap, pr)
 }
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	boolean_t	have_addr;
-	db_expr_t	count;
-	char		*modif;
-	void		(*pr) __P((const char *, ...));
+db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+    char *modif, void (*pr)(const char *, ...))
 {
 	struct ns532_frame *frame, *lastframe;
 	int		*argp;
@@ -378,18 +369,14 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	}
 }
 
-/**********************************************
-
-  Get/Set value of special registers.
-
-  *********************************************/
+/*
+ * Get/Set value of special registers.
+ */
 
 static int
-db_spec_regs(vp, valp, what)
-	const struct db_variable *vp;
-	db_expr_t *valp;
-	int what;
+db_spec_regs(const struct db_variable *vp, db_expr_t *valp, int what)
 {
+
 	if (strcmp(vp->name, "intbase") == 0) {
 		if (what == DB_VAR_GET)
 			sprd(intbase, *valp);

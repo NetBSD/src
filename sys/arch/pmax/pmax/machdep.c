@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.212.8.1 2006/04/11 11:53:44 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.212.8.2 2006/05/24 10:57:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212.8.1 2006/04/11 11:53:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.212.8.2 2006/05/24 10:57:09 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -240,6 +240,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	/* XXX: Backwards compatibility with old bootblocks - this should
 	 * go soon...
 	 */
+#ifdef EXEC_AOUT
 	/* Exec header and symbols? */
 	else if (aout->a_midmag == 0x07018b00 && (i = aout->a_syms) != 0) {
 		ssym = end;
@@ -248,6 +249,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 		kernend = (caddr_t)mips_round_page(esym);
 		memset(edata, 0, end - edata);
 	} else
+#endif
 #endif
 	{
 		kernend = (caddr_t)mips_round_page(end);

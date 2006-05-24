@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_sysvbfs.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $	*/
+/*	$NetBSD: bfs_sysvbfs.c,v 1.1.8.1 2006/05/24 10:58:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,19 +38,20 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.1 2005/12/29 14:53:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.1.8.1 2006/05/24 10:58:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/kauth.h>
 #include <fs/sysvbfs/bfs.h>
 
 struct bc_io_ops {
 	struct sector_io_ops io;
 	struct vnode *vp;
-	struct ucred *cred;
+	kauth_cred_t cred;
 };
 
 #define	STATIC

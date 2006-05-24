@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.26 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.26.8.1 2006/05/24 10:58:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.26 2005/12/11 12:24:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.26.8.1 2006/05/24 10:58:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.26 2005/12/11 12:24:51 christos 
 #include <sys/tty.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth.h>
+
 #include <miscfs/procfs/procfs.h>
 
 int
@@ -95,13 +97,14 @@ procfs_dostatus(curl, l, pfs, uio)
 {
 	struct session *sess;
 	struct tty *tp;
-	struct ucred *cr;
+	kauth_cred_t cr;
 	struct proc *p = l->l_proc;
 	char *ps;
 	const char *sep;
 	int pid, ppid, pgid, sid;
 	u_int i;
 	char psbuf[256+MAXHOSTNAMELEN];		/* XXX - conservative */
+	uint16_t ngroups;
 
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
@@ -158,13 +161,16 @@ procfs_dostatus(curl, l, pfs, uio)
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %s",
 	    (l->l_wchan && l->l_wmesg) ? l->l_wmesg : "nochan");
 
-	cr = p->p_ucred;
+	cr = p->p_cred;
 
-	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %d", cr->cr_uid);
-	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %d", cr->cr_gid);
-	for (i = 0; i < cr->cr_ngroups; i++)
+	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %d",
+		       kauth_cred_geteuid(cr));
+	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %d",
+		       kauth_cred_getegid(cr));
+	ngroups = kauth_cred_ngroups(cr);
+	for (i = 0; i < ngroups; i++)
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), ",%d",
-		    cr->cr_groups[i]);
+		    kauth_cred_group(cr, i));
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "\n");
 
 	return (uiomove_frombuf(psbuf, ps - psbuf, uio));

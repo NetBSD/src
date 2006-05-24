@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30.8.2 2006/04/01 12:06:18 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.8.3 2006/05/24 10:56:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.8.2 2006/04/01 12:06:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.8.3 2006/05/24 10:56:50 yamt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -208,7 +208,7 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (l->l_flag & P_PROFIL) {
+	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
 		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);

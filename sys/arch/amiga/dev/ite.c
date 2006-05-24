@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.72 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: ite.c,v 1.72.8.1 2006/05/24 10:56:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.72 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.72.8.1 2006/05/24 10:56:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.72 2005/12/11 12:16:28 christos Exp $");
 #include <sys/callout.h>
 #include <sys/proc.h>
 #include <dev/cons.h>
+#include <sys/kauth.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/custom.h>	/* DEBUG */
@@ -464,7 +465,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	} else
 		tp = ip->tp;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
-	    && suser(l->l_proc->p_ucred, &l->l_proc->p_acflag) != 0)
+	    && kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		ite_on(dev, 0);

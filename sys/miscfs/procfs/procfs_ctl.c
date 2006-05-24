@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.30.8.1 2006/03/13 09:07:39 yamt Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.30.8.2 2006/05/24 10:58:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.30.8.1 2006/03/13 09:07:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.30.8.2 2006/05/24 10:58:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.30.8.1 2006/03/13 09:07:39 yamt Exp
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
+
 #include <miscfs/procfs/procfs.h>
 
 #define PROCFS_CTL_ATTACH	1
@@ -165,9 +167,10 @@ procfs_control(curl, l, op, sig)
 		 *      (3) it's not owned by you, or is set-id on exec
 		 *          (unless you're root), or...
 		 */
-		if ((p->p_cred->p_ruid != curp->p_cred->p_ruid ||
+		if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curp->p_cred) ||
 			ISSET(p->p_flag, P_SUGID)) &&
-		    (error = suser(curp->p_ucred, &curp->p_acflag)) != 0)
+		    (error = kauth_authorize_generic(curp->p_cred, KAUTH_GENERIC_ISSUSER,
+					       &curp->p_acflag)) != 0)
 			return (error);
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.21 2005/11/15 15:07:37 tsutsui Exp $	*/
+/*	$NetBSD: necpb.c,v 1.21.8.1 2006/05/24 10:56:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.21 2005/11/15 15:07:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.21.8.1 2006/05/24 10:56:34 yamt Exp $");
+
+#include "opt_pci.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,11 +92,19 @@ __KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.21 2005/11/15 15:07:37 tsutsui Exp $");
 #include <machine/cpu.h>
 #include <machine/platform.h>
 
+#include <mips/cache.h>
+
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+#ifdef PCI_NETBSD_CONFIGURE
+#include <dev/pci/pciconf.h>
+#endif
 
 #include <arc/jazz/rd94.h>
 #include <arc/pci/necpbvar.h>
+
+#include "ioconf.h"
 
 int	necpbmatch(struct device *, struct cfdata *, void *);
 void	necpbattach(struct device *, struct device *, void *);
@@ -112,14 +122,17 @@ const char *	necpb_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void *		necpb_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*func)(void *), void *);
 void		necpb_intr_disestablish(pci_chipset_tag_t, void *);
+#ifdef PCI_NETBSD_CONFIGURE
+void		necpb_conf_interrupt(pci_chipset_tag_t, int, int, int, int,
+		    int *);
+int		necpb_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
+#endif
 
 uint32_t	necpb_intr(uint32_t, struct clockframe *);
 
 
 CFATTACH_DECL(necpb, sizeof(struct necpb_softc),
     necpbmatch, necpbattach, NULL, NULL);
-
-extern struct cfdriver necpb_cd;
 
 static struct necpb_intrhand	*necpb_inttbl[4];
 
@@ -149,8 +162,12 @@ necpbmatch(struct device *parent, struct cfdata *match, void *aux)
 void
 necpb_init(struct necpb_context *ncp)
 {
+	pci_chipset_tag_t pc;
+#ifndef PCI_NETBSD_CONFIGURE
 	pcitag_t tag;
-	pcireg_t csr;
+	pcireg_t id, class, csr;
+	u_int dev;
+#endif
 
 	if (ncp->nc_initialized)
 		return;
@@ -167,43 +184,47 @@ necpb_init(struct necpb_context *ncp)
 
 	jazz_bus_dma_tag_init(&ncp->nc_dmat);
 
-	ncp->nc_pc.pc_attach_hook = necpb_attach_hook;
-	ncp->nc_pc.pc_bus_maxdevs = necpb_bus_maxdevs;
-	ncp->nc_pc.pc_make_tag = necpb_make_tag;
-	ncp->nc_pc.pc_decompose_tag = necpb_decompose_tag;
-	ncp->nc_pc.pc_conf_read = necpb_conf_read;
-	ncp->nc_pc.pc_conf_write = necpb_conf_write;
-	ncp->nc_pc.pc_intr_map = necpb_intr_map;
-	ncp->nc_pc.pc_intr_string = necpb_intr_string;
-	ncp->nc_pc.pc_intr_establish = necpb_intr_establish;
-	ncp->nc_pc.pc_intr_disestablish = necpb_intr_disestablish;
+	pc = &ncp->nc_pc;
+	pc->pc_attach_hook = necpb_attach_hook;
+	pc->pc_bus_maxdevs = necpb_bus_maxdevs;
+	pc->pc_make_tag = necpb_make_tag;
+	pc->pc_decompose_tag = necpb_decompose_tag;
+	pc->pc_conf_read = necpb_conf_read;
+	pc->pc_conf_write = necpb_conf_write;
+	pc->pc_intr_map = necpb_intr_map;
+	pc->pc_intr_string = necpb_intr_string;
+	pc->pc_intr_establish = necpb_intr_establish;
+	pc->pc_intr_disestablish = necpb_intr_disestablish;
+#ifdef PCI_NETBSD_CONFIGURE
+	pc->pc_conf_interrupt = necpb_conf_interrupt;
+	pc->pc_conf_hook = necpb_conf_hook;
+#endif
 
+#ifndef PCI_NETBSD_CONFIGURE
 	/*
 	 * XXX:
 	 *  NEC's firmware does not configure PCI devices completely.
 	 *  We need to disable expansion ROM and enable mem/io/busmaster
 	 *  bits here.
 	 */
-	tag = necpb_make_tag(&ncp->nc_pc, 0, 3, 0);
-	csr = necpb_conf_read(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	necpb_conf_write(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
-	necpb_conf_write(&ncp->nc_pc, tag, PCI_MAPREG_ROM, 0);
+	for (dev = 3; dev <= 5; dev++) {
+		tag = necpb_make_tag(pc, 0, dev, 0);
+		id = necpb_conf_read(pc, tag, PCI_ID_REG);
 
-	tag = necpb_make_tag(&ncp->nc_pc, 0, 4, 0);
-	csr = necpb_conf_read(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	necpb_conf_write(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
-	necpb_conf_write(&ncp->nc_pc, tag, PCI_MAPREG_ROM, 0);
+		if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
+			continue;
 
-	tag = necpb_make_tag(&ncp->nc_pc, 0, 5, 0);
-	csr = necpb_conf_read(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	necpb_conf_write(&ncp->nc_pc, tag, PCI_COMMAND_STATUS_REG, csr);
-	necpb_conf_write(&ncp->nc_pc, tag, PCI_MAPREG_ROM, 0);
+		class = necpb_conf_read(pc, tag, PCI_CLASS_REG);
+		csr = necpb_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
+		    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_PCI) {
+			csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
+			necpb_conf_write(pc, tag, PCI_MAPREG_ROM, 0);
+		}
+		csr |= PCI_COMMAND_MASTER_ENABLE;
+		necpb_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+	}
+#endif
 
 	ncp->nc_initialized = 1;
 }
@@ -213,6 +234,7 @@ necpbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct necpb_softc *sc = (struct necpb_softc *)self;
 	struct pcibus_attach_args pba;
+	pci_chipset_tag_t pc;
 	int i;
 
 	necpbfound = 1;
@@ -221,6 +243,16 @@ necpbattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ncp = &necpb_main_context;
 	necpb_init(sc->sc_ncp);
+
+	pc = &sc->sc_ncp->nc_pc;
+#ifdef PCI_NETBSD_CONFIGURE
+	pc->pc_ioext = extent_create("necpbio", 0x00100000, 0x01ffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	pc->pc_memext = extent_create("necpbmem", 0x08000000, 0x3fffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
+	    mips_dcache_align);
+#endif
 
 	out32(RD94_SYS_PCI_INTMASK, 0xf);
 
@@ -233,7 +265,7 @@ necpbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = &sc->sc_ncp->nc_memt;
 	pba.pba_dmat = &sc->sc_ncp->nc_dmat;
 	pba.pba_dmat64 = NULL;
-	pba.pba_pc = &sc->sc_ncp->nc_pc;
+	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
@@ -312,6 +344,7 @@ necpb_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t intrtag = pa->pa_intrtag;
 	int pin = pa->pa_intrpin;
+	int swiz = pa->pa_intrswiz % 4;
 	int bus, dev;
 
 	if (pin == 0) {
@@ -328,19 +361,20 @@ necpb_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	necpb_decompose_tag(pc, intrtag, &bus, &dev, NULL);
 	if (bus != 0) {
+		printf("necpb_intr_map: unknown bus %d\n", bus);
 		*ihp = -1;
 		return 1;
 	}
 
 	switch (dev) {
 	case 3:
-		*ihp = (pin+2) % 4;
+		*ihp = (pin - swiz + 2) % 4;
 		break;
 	case 4:
-		*ihp = (pin+1) % 4;
+		*ihp = (pin - swiz + 1) % 4;
 		break;
 	case 5:
-		*ihp = (pin) % 4;
+		*ihp = (pin - swiz + 0) % 4;
 		break;
 	default:
 		*ihp = -1;
@@ -366,7 +400,7 @@ necpb_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
 	struct necpb_intrhand *n, *p;
-	uint32_t	mask;
+	uint32_t mask;
 
 	if (ih >= 4)
 		panic("necpb_intr_establish: bogus handle");
@@ -402,7 +436,7 @@ void
 necpb_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 	struct necpb_intrhand *n, *p, *q;
-	uint32_t	mask;
+	uint32_t mask;
 
 	n = cookie;
 
@@ -438,22 +472,25 @@ necpb_intr(uint32_t mask, struct clockframe *cf)
 {
 	uint32_t vector, stat;
 	struct necpb_intrhand *p;
-	int a;
+	int i, handled;
 
+	handled = 0;
 	vector = in32(RD94_SYS_INTSTAT2) & 0xffff;
 
 	if (vector == 0x4000) {
 		stat = in32(RD94_SYS_PCI_INTSTAT);
 		stat &= in32(RD94_SYS_PCI_INTMASK);
-		for (a=0; a<4; a++) {
-			if (stat & (1 << a)) {
+		for (i = 0; i < 4; i++) {
+			if (stat & (1 << i)) {
 #if 0
-				printf("pint %d\n", a);
+				printf("pint %d\n", i);
 #endif
-				p = necpb_inttbl[a];
+				p = necpb_inttbl[i];
 				while (p != NULL) {
-					(*p->ih_func)(p->ih_arg);
-					p->ih_evcnt.ev_count++;
+					if ((*p->ih_func)(p->ih_arg)) {
+						p->ih_evcnt.ev_count++;
+						handled |= 1;
+					}
 					p = p->ih_next;
 				}
 			}
@@ -463,9 +500,37 @@ necpb_intr(uint32_t mask, struct clockframe *cf)
 	} else {
 		printf("eint %d\n", vector & 0xff);
 #if 0
-		eisa_intr(vector & 0xff);
+		if (eisa_intr(vector & 0xff)) {
+			handled |= 1;
+		}
 #endif
 	}
 
-	return ~MIPS_INT_MASK_2;
+	return handled ? ~MIPS_INT_MASK_2 : ~0;
 }
+
+#ifdef PCI_NETBSD_CONFIGURE
+void
+necpb_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func,
+    int swiz, int *iline)
+{
+
+	return;
+}
+
+int
+necpb_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func,
+    pcireg_t id)
+{
+
+	/* ignore bogus IDs */
+	if (id == 0)
+		return 0;
+
+	/* don't configure bridges */
+	if (bus == 0 && (dev == 1 || dev == 2))
+		return 0;
+
+	return PCI_CONF_DEFAULT;
+}
+#endif

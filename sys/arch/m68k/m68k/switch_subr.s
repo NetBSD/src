@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.13 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.13.8.1 2006/05/24 10:56:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -114,8 +114,8 @@ ASBSS(nullpcb,SIZEOF_PCB)
 /*
  * void switch_lwp_exit(struct lwp *);
  *
- * At exit of a process, do a switch for the last time.
- * Switch to a safe stack and PCB, and select a new process to run.  The
+ * At exit of a lwp, do a switch for the last time.
+ * Switch to a safe stack and PCB, and select a new lwp to run.  The
  * old stack and u-area will be freed by the reaper.
  *
  * MUST BE CALLED AT SPLHIGH!
@@ -166,7 +166,7 @@ Lcpu_switch_badsw:
 	/*NOTREACHED*/
 
 /*
- * int cpu_switch(struct lwp *p)
+ * int cpu_switch(struct lwp *l)
  *
  * NOTE: With the new VM layout we now no longer know if an inactive
  * user's PTEs have been changed (formerly denoted by the SPTECHG p_flag

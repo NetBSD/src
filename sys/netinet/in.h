@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.75 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: in.h,v 1.75.2.1 2006/05/24 10:59:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -102,7 +102,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_PIM		103		/* Protocol indep. multicast */
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_VRRP		112		/* VRRP RFC 2338 */
-
+#define	IPPROTO_CARP		112		/* Common Address Resolution Protocol */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
 
@@ -213,6 +213,7 @@ struct in_addr {
 #define	INADDR_UNSPEC_GROUP	__IPADDR(0xe0000000)	/* 224.0.0.0 */
 #define	INADDR_ALLHOSTS_GROUP	__IPADDR(0xe0000001)	/* 224.0.0.1 */
 #define	INADDR_ALLRTRS_GROUP	__IPADDR(0xe0000002)	/* 224.0.0.2 */
+#define	INADDR_CARP_GROUP	__IPADDR(0xe0000012)	/* 224.0.0.18 */
 #define	INADDR_MAX_LOCAL_GROUP	__IPADDR(0xe00000ff)	/* 224.0.0.255 */
 
 #define	IN_LOOPBACKNET		127			/* official! */

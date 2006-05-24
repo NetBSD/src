@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.21 2005/12/11 12:16:47 christos Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.21.8.1 2006/05/24 10:56:35 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.21 2005/12/11 12:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.21.8.1 2006/05/24 10:56:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,8 +165,9 @@ static const struct wsscreen_list vidcvideo_screenlist = {
 	sizeof(_vidcvideo_scrlist) / sizeof(struct wsscreen_descr *), _vidcvideo_scrlist
 };
 
-static int	vidcvideoioctl __P((void *, u_long, caddr_t, int, struct lwp *));
-static paddr_t	vidcvideommap __P((void *, off_t, int));
+static int	vidcvideoioctl __P((void *, void *, u_long, caddr_t, int,
+		    struct lwp *));
+static paddr_t	vidcvideommap __P((void *, void *, off_t, int));
 
 static int	vidcvideo_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
@@ -181,9 +182,7 @@ static const struct wsdisplay_accessops vidcvideo_accessops = {
 	vidcvideo_free_screen,
 	vidcvideo_show_screen,
 	NULL, /* load_font	*/
-	NULL, /* pollc		*/
-	NULL, /* getwschar	*/
-	NULL  /* putwschar	*/
+	NULL  /* pollc		*/
 };
 
 
@@ -364,7 +363,7 @@ vidcvideo_attach(parent, self, aux)
 		};
 		sc->nscreens = 1;
 	} else {
-			printf(": allready attached ... can't cope with this\n");
+			printf(": already attached ... can't cope with this\n");
 			return;
 	};
 
@@ -409,8 +408,9 @@ vidcvideo_attach(parent, self, aux)
 
 
 static int
-vidcvideoioctl(v, cmd, data, flag, l)
+vidcvideoioctl(v, vs, cmd, data, flag, l)
 	void *v;
+	void *vs;
 	u_long cmd;
 	caddr_t data;
 	int flag;
@@ -489,8 +489,9 @@ vidcvideoioctl(v, cmd, data, flag, l)
 
 
 paddr_t
-vidcvideommap(v, offset, prot)
+vidcvideommap(v, vs, offset, prot)
 	void *v;
+	void *vs;
 	off_t offset;
 	int prot;
 {

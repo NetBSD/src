@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11.8.1 2006/04/11 11:53:44 yamt Exp $	*/
+/*	$NetBSD: boot.c,v 1.11.8.2 2006/05/24 10:57:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,6 +81,9 @@ boot(void *resp, u_long loadaddr)
 	 * console init
 	 */
 	cnname = cninit(&addr, &speed);
+#ifdef VGA_RESET
+	vga_reset((u_char *)0xc0000000);
+#endif
 
 	/* make bootinfo */
 	/*

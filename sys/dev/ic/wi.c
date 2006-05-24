@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.212.2.1 2006/03/13 09:07:21 yamt Exp $	*/
+/*	$NetBSD: wi.c,v 1.212.2.2 2006/05/24 10:57:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.212.2.1 2006/03/13 09:07:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.212.2.2 2006/05/24 10:57:42 yamt Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.212.2.1 2006/03/13 09:07:21 yamt Exp $");
 #include <sys/ioctl.h>
 #include <sys/kernel.h>		/* for hz */
 #include <sys/proc.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1405,7 +1406,9 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = wi_get_cfg(ifp, cmd, data);
 		break;
 	case SIOCSIFGENERIC:
-		error = suser(curproc->p_ucred, &curproc->p_acflag);
+		error = kauth_authorize_generic(curproc->p_cred,
+					  KAUTH_GENERIC_ISSUSER,
+					  &curproc->p_acflag);
 		if (error)
 			break;
 		error = wi_set_cfg(ifp, cmd, data);

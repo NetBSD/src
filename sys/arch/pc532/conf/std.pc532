@@ -1,15 +1,15 @@
-#	$NetBSD: std.pc532,v 1.18 2005/12/11 12:18:31 christos Exp $
+#	$NetBSD: std.pc532,v 1.18.8.1 2006/05/24 10:57:00 yamt Exp $
 #
 # Standard configuration info for NetBSD/pc532.
 
 machine pc532
 include		"conf/std"	# MI standard options
 
-mainbus0 	at root
-clock0 		at mainbus0		# system timer
+mainbus0	at root
+clock0		at mainbus0		# system timer
 rtc0		at mainbus0		# realtime clock
 ncr0		at mainbus0		# ncr SCSI driver
-scsibus0	at ncr? 		# ncr SCSI bus
+scsibus0	at ncr?			# ncr SCSI bus
 #aic*		at mainbus0		# aic SCSI driver
 #scsibus1	at aic?			# aic SCSI bus
 #XXX Wildcards don't work with holes at the moment,

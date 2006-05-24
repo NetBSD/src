@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.37 2006/02/21 04:32:39 thorpej Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.37.2.1 2006/05/24 10:58:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37 2006/02/21 04:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37.2.1 2006/05/24 10:58:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.37 2006/02/21 04:32:39 thorpej Exp
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #if defined(__NetBSD__)
 #include <uvm/uvm_extern.h>
@@ -78,7 +79,7 @@ static int	ntfs_root(struct mount *, struct vnode **);
 static int	ntfs_start(struct mount *, int, struct lwp *);
 static int	ntfs_statvfs(struct mount *, struct statvfs *,
 				 struct lwp *);
-static int	ntfs_sync(struct mount *, int, struct ucred *,
+static int	ntfs_sync(struct mount *, int, kauth_cred_t,
 			       struct lwp *);
 static int	ntfs_unmount(struct mount *, int, struct lwp *);
 static int	ntfs_vget(struct mount *mp, ino_t ino,
@@ -103,7 +104,7 @@ static int	ntfs_mountroot(void);
 static int	ntfs_init(void);
 static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct mbuf *, struct vnode **,
-				 int *, struct ucred **);
+				 int *, kauth_cred_t *);
 #endif
 
 static const struct genfs_ops ntfs_genfsops = {
@@ -409,11 +410,13 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	int error, ronly, i;
 	struct vnode *vp;
 
+	ntmp = NULL;
+
 	/*
 	 * Flush out any old buffers remaining from a previous use.
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_cred, l, 0, 0);
 	VOP_UNLOCK(devvp, 0);
 	if (error)
 		return (error);
@@ -572,6 +575,14 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
+
+	if (error) {
+		if (ntmp) {
+			if (ntmp->ntm_ad)
+				free(ntmp->ntm_ad, M_NTFSMNT);
+			free(ntmp, M_NTFSMNT);
+		}
+	}
 
 	return (error);
 }
@@ -754,7 +765,7 @@ static int
 ntfs_sync (
 	struct mount *mp,
 	int waitfor,
-	struct ucred *cred,
+	kauth_cred_t cred,
 	struct lwp *l)
 {
 	/*dprintf(("ntfs_sync():\n"));*/

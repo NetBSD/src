@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.92.2.1 2006/04/11 11:53:26 yamt Exp $
+# $NetBSD: GENERIC,v 1.92.2.2 2006/05/24 10:56:39 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.92.2.1 $"
+#ident 		"GENERIC-$Revision: 1.92.2.2 $"
 
 maxusers	32
 
@@ -56,6 +56,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	CPUFLAGS="-mips2 -mtune=vr5000"
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -146,7 +147,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 options 	NFS_BOOT_DHCP
 
@@ -155,6 +156,8 @@ config		netbsd	root on ? type ?
 mainbus0 	at root
 
 cpu0 		at mainbus?
+
+mcclock0	at mainbus? addr 0x10000070
 
 com0		at mainbus? addr 0x1c800000 level 3
 options 	COM_16650
@@ -262,6 +265,7 @@ wd* 		at atabus? drive ? flags 0x0000
 #le*		at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*		at pci? dev ? function ?	# NE2000-compatible Ethernet
 #ntwoc*		at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
+ral*		at pci? dev ? function ?	# ralink wifi
 #sip*		at pci? dev ? function ?	# SiS 900 Ethernet
 #tl*		at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
@@ -327,7 +331,7 @@ pseudo-device	bpfilter			# Berkeley packet filter
 pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
-#pseudo-device	pppoe				# PPP over Ethernet (RFC 2516)
+pseudo-device	pppoe				# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl				# Serial Line IP
 #pseudo-device	strip				# Starmode Radio IP (Metricom)
 #pseudo-device	tun				# network tunneling over tty

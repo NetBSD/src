@@ -1,4 +1,6 @@
-/*	$NetBSD: efi_nii.h,v 1.1.2.2 2006/04/11 11:53:40 yamt Exp $	*/
+/*	$NetBSD: efi_nii.h,v 1.1.2.3 2006/05/24 10:56:53 yamt Exp $	*/
+/* $FreeBSD: src/sys/boot/efi/include/efi_nii.h,v 1.2 2002/05/19 03:17:20 marcel Exp $ */
+
 #ifndef _EFI_NII_H
 #define _EFI_NII_H
 

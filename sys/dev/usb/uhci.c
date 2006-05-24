@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.192.8.2 2006/04/01 12:07:30 yamt Exp $	*/
+/*	$NetBSD: uhci.c,v 1.192.8.3 2006/05/24 10:58:24 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.192.8.2 2006/04/01 12:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.192.8.3 2006/05/24 10:58:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,9 +286,29 @@ void			uhci_dump(void);
 #define UWRITE4(sc, r, x) \
  do { UBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); \
  } while (/*CONSTCOND*/0)
-#define UREAD1(sc, r) (UBARR(sc), bus_space_read_1((sc)->iot, (sc)->ioh, (r)))
-#define UREAD2(sc, r) (UBARR(sc), bus_space_read_2((sc)->iot, (sc)->ioh, (r)))
-#define UREAD4(sc, r) (UBARR(sc), bus_space_read_4((sc)->iot, (sc)->ioh, (r)))
+static __inline uint8_t
+UREAD1(uhci_softc_t *sc, bus_size_t r)
+{
+
+	UBARR(sc);
+	return bus_space_read_1(sc->iot, sc->ioh, r);
+}
+
+static __inline uint16_t
+UREAD2(uhci_softc_t *sc, bus_size_t r)
+{
+
+	UBARR(sc);
+	return bus_space_read_2(sc->iot, sc->ioh, r);
+}
+
+static __inline uint32_t
+UREAD4(uhci_softc_t *sc, bus_size_t r)
+{
+
+	UBARR(sc);
+	return bus_space_read_4(sc->iot, sc->ioh, r);
+}
 
 #define UHCICMD(sc, cmd) UWRITE2(sc, UHCI_CMD, cmd)
 #define UHCISTS(sc) UREAD2(sc, UHCI_STS)
@@ -3215,6 +3235,8 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		DPRINTFN(2,("uhci_root_ctrl_control wValue=0x%04x\n", value));
+		if (len == 0)
+			break;
 		switch(value >> 8) {
 		case UDESC_DEVICE:
 			if ((value & 0xff) != 0) {
@@ -3244,8 +3266,6 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &uhci_endpd, l);
 			break;
 		case UDESC_STRING:
-			if (len == 0)
-				break;
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
@@ -3380,6 +3400,8 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
+		if (len == 0)
+			break;
 		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;

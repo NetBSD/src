@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.2.4.2 2006/04/11 12:20:52 yamt Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.2.4.3 2006/05/24 10:57:36 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.2.4.2 2006/04/11 12:20:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.2.4.3 2006/05/24 10:57:36 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -94,6 +94,12 @@ int acpi_indebugger;
 ACPI_STATUS
 AcpiOsSignal(UINT32 Function, const void *Info)
 {
+	/*
+	 * the upper layer might call with Info = NULL,
+	 * which makes little sense.
+	 */
+	if (Info == NULL)
+		return AE_NO_MEMORY;
 
 	switch (Function) {
 	case ACPI_SIGNAL_FATAL:

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.320.2.1 2006/04/01 12:06:54 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.320.2.2 2006/05/24 10:57:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.320.2.1 2006/04/01 12:06:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.320.2.2 2006/05/24 10:57:36 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -239,6 +239,8 @@ static const struct wd_quirk {
 	 * setups using LBA48 drives on non-LBA48-capable controllers
 	 * (and it's hard to get a list of such controllers)
 	 */
+	{ "ST3160812A*",
+	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160023A*",
 	  WD_QUIRK_FORCE_LBA48 },
 	{ "ST3160827A*",

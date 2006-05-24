@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.14.8.1 2006/04/11 11:53:26 yamt Exp $	*/
+/*	$NetBSD: gt.c,v 1.14.8.2 2006/05/24 10:56:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.14.8.1 2006/04/11 11:53:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.14.8.2 2006/05/24 10:56:39 yamt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.14.8.1 2006/04/11 11:53:26 yamt Exp $");
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#include <mips/cache.h>
 
 #include <dev/pci/pcivar.h>
 #ifdef PCI_NETBSD_CONFIGURE
@@ -119,11 +121,12 @@ gt_attach(struct device *parent, struct device *self, void *aux)
 	pc->pc_bsh = sc->sc_bsh;
 
 #ifdef PCI_NETBSD_CONFIGURE
-	pc->pc_ioext = extent_create("pciio", 0x10100000, 0x11ffffff,
+	pc->pc_ioext = extent_create("pciio", 0x10001000, 0x11ffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	pc->pc_memext = extent_create("pcimem", 0x12000000, 0x13ffffff,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
-	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0, 0);
+	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
+	    mips_dcache_align);
 #endif
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
@@ -152,6 +155,9 @@ gt_timer_init(struct gt_softc *sc)
 	/* stop timer0 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL) & ~ENTC0);
+	/* mask timer0 interrupt */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK,
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK) & ~T0EXP);
 
 	timer_start = gt_timer0_init;
 	timer_read  = gt_timer0_read;
@@ -170,6 +176,9 @@ gt_timer0_init(void *cookie)
 	/* start timer0 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_TIMER_CTRL) | ENTC0);
+	/* unmask timer0 interrupt */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK,
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, GT_MASTER_MASK) | T0EXP);
 }
 
 static long

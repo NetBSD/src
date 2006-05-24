@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1.2.2 2006/03/13 09:06:58 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1.2.3 2006/05/24 10:57:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.2 2006/03/13 09:06:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.3 2006/05/24 10:57:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -96,12 +96,11 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.2.2 2006/03/13 09:06:58 yamt Exp $")
 #define __CDECL__
 #endif
 
-static void syscall_fancy __P((struct syscframe)) __CDECL__;
-static void syscall_plain __P((struct syscframe)) __CDECL__;
+static void syscall_fancy(struct syscframe) __CDECL__;
+static void syscall_plain(struct syscframe) __CDECL__;
 
 void
-syscall_intern(p)
-	struct proc *p;
+syscall_intern(struct proc *p)
 {
 
 	if (trace_is_enabled(p))
@@ -118,8 +117,7 @@ syscall_intern(p)
  */
 /*ARGSUSED*/
 void
-syscall_plain(frame)
-	struct syscframe frame;
+syscall_plain(struct syscframe frame)
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -221,8 +219,7 @@ syscall_plain(frame)
  */
 /*ARGSUSED*/
 void
-syscall_fancy(frame)
-	struct syscframe frame;
+syscall_fancy(struct syscframe frame)
 {
 	caddr_t params;
 	const struct sysent *callp;

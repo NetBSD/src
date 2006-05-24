@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.38 2005/11/25 20:13:54 thorpej Exp $	*/
+/*	$NetBSD: lkm.h,v 1.38.8.1 2006/05/24 10:59:21 yamt Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -53,8 +53,18 @@ typedef enum loadmod {
 	LM_EXEC,
 	LM_COMPAT,
 	LM_MISC,
-	LM_DRV,
+	LM_DRV
 } MODTYPE;
+
+#define MODTYPE_NAMES \
+	"SYSCALL", \
+	"VFS", \
+	"DEV", \
+	"STRMOD", \
+	"EXEC", \
+	"COMPAT", \
+	"MISC", \
+	"DRV"
 
 /*
  * Version of module interface. Bump if kernel structures or API affecting
@@ -424,7 +434,7 @@ struct lmc_stat {
 };
 
 #define	LKM_MAKEMAJOR(b, c)	((((b) & 0xffff) << 16) | ((c) & 0xffff))
-#define	LKM_BLOCK_MAJOR(v)	(int)((int16_t)(((v) >> 16) & 0xffff))
+#define	LKM_BLOCK_MAJOR(v)	(int)((int16_t)(((uint32_t)(v) >> 16) & 0xffff))
 #define	LKM_CHAR_MAJOR(v)	(int)((int16_t)((v) & 0xffff))
 
 #endif	/* !_SYS_LKM_H_ */

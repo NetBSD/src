@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.5 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.5.8.1 2006/05/24 10:57:00 yamt Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 28, 1995
@@ -16,10 +16,10 @@ typedef int fp_except;
 #define	FP_X_UFL	0x8000	/* underflow exception */
 
 typedef enum {
-    FP_RN=0,			/* round to nearest representable number */
-    FP_RZ=1,			/* round to zero (truncate) */
-    FP_RP=2,			/* round toward positive infinity */
-    FP_RM=3			/* round toward negative infinity */
+	FP_RN=0,		/* round to nearest representable number */
+	FP_RZ=1,		/* round to zero (truncate) */
+	FP_RP=2,		/* round toward positive infinity */
+	FP_RM=3			/* round toward negative infinity */
 } fp_rnd;
 
 #endif /* _PC532_IEEEFP_H_ */

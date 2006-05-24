@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.43 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.43.8.1 2006/05/24 10:59:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.43 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.43.8.1 2006/05/24 10:59:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1033,15 +1033,17 @@ send:
 		 * must make a copy of this packet for
 		 * idp_output to monkey with
 		 */
-		m = m_copy(m, 0, (int)M_COPYALL);
-		if (m == NULL) {
-			return (ENOBUFS);
+		if (m) {
+			m = m_copy(m, 0, (int)M_COPYALL);
+			if (m == NULL) {
+				return (ENOBUFS);
+			}
+			si = mtod(m, struct spidp *);
+			if (SSEQ_LT(si->si_seq, cb->s_smax))
+				sppstat.spps_sndrexmitpack++;
+			else
+				sppstat.spps_sndpack++;
 		}
-		si = mtod(m, struct spidp *);
-		if (SSEQ_LT(si->si_seq, cb->s_smax))
-			sppstat.spps_sndrexmitpack++;
-		else
-			sppstat.spps_sndpack++;
 	} else if (cb->s_force || cb->s_flags & SF_ACKNOW) {
 		/*
 		 * Must send an acknowledgement or a probe
@@ -1125,6 +1127,8 @@ send:
 		si->si_alo = htons(alo);
 		si->si_ack = htons(cb->s_ack);
 
+		if (m == NULL)
+			return EINVAL;
 		if (idpcksum) {
 			si->si_sum = 0;
 			len = ntohs(si->si_len);

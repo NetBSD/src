@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.10 2006/01/27 18:31:12 cdi Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.10.6.1 2006/05/24 10:57:14 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -188,14 +188,14 @@ devclose(of)
 	op->handle = -1;
 }
 
-static struct devsw devsw[1] = {
+static struct devsw ofdevsw[1] = {
 	"OpenFirmware",
 	strategy,
 	(int (*)__P((struct open_file *, ...)))nodev,
 	devclose,
 	noioctl
 };
-int ndevs = sizeof devsw / sizeof devsw[0];
+int ndevs = sizeof ofdevsw / sizeof ofdevsw[0];
 
 #ifdef SPARC_BOOT_UFS
 static struct fs_ops file_system_ufs = FS_OPS(ufs);
@@ -504,7 +504,7 @@ devopen(of, name, file)
 			}
 		}
 
-		of->f_dev = devsw;
+		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
 #ifdef SPARC_BOOT_UFS
 		bcopy(&file_system_ufs, &file_system[nfsys++], sizeof file_system[0]);
@@ -521,7 +521,7 @@ devopen(of, name, file)
 #ifdef NETBOOT
 	if (!strcmp(buf, "network")) {
 		ofdev.type = OFDEV_NET;
-		of->f_dev = devsw;
+		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
 		bcopy(&file_system_nfs, file_system, sizeof file_system[0]);
 		nfsys = 1;

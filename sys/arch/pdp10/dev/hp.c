@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.4.8.1 2006/04/01 12:06:24 yamt Exp $ */
+/*	$NetBSD: hp.c,v 1.4.8.2 2006/05/24 10:57:08 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -265,7 +265,7 @@ hpstart(struct	rh_device *md)
 	 * Collect statistics.
 	 */
 	disk_busy(&sc->sc_disk);
-	sc->sc_disk.dk_seek++;
+	iostat_seek(sc->sc_disk.dk_stats);
 
 	bn = bp->b_rawblkno;
 	if (bn) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.42.4.2 2006/04/01 12:06:36 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.42.4.3 2006/05/24 10:57:23 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.42.4.2 2006/04/01 12:06:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.42.4.3 2006/05/24 10:57:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -324,7 +324,7 @@ find_device(int handle)
 	struct device *dv;
 	struct xennet_softc *xs = NULL;
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (!device_is_a(dv, "xennet"))
 			continue;
 		xs = (struct xennet_softc *)dv;
@@ -383,7 +383,7 @@ xennet_driver_count_connected(void)
 	struct xennet_softc *xs = NULL;
 
 	netctrl.xc_interfaces = netctrl.xc_connected = 0;
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (!device_is_a(dv, "xennet"))
 			continue;
 		xs = (struct xennet_softc *)dv;

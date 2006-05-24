@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.2.2 2006/04/11 11:53:43 yamt Exp $	 */
+/*	$NetBSD: conf.c,v 1.1.2.3 2006/05/24 10:56:57 yamt Exp $	 */
 
 /*
  * Copyright (c) 2004
@@ -27,6 +27,7 @@
 
 
 #include <sys/cdefs.h>
+
 #include <sys/types.h>
 
 #include <lib/libsa/stand.h>

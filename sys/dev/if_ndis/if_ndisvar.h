@@ -81,9 +81,11 @@ TAILQ_HEAD(nch, ndis_cfglist);
 	(x)->ndis_txidx = ((x)->ndis_txidx + 1) % (x)->ndis_maxpkts
 	
 #ifdef __NetBSD__
-/* linked list of resources */
+/* 
+ * A linked list of resources 
+ */
 struct resource {
-	SLIST_ENTRY(resource) link;
+	SLIST_ENTRY(resource)    link;
 	cm_partial_resource_desc win_res;
 };
 SLIST_HEAD(resource_list, resource);
@@ -108,11 +110,12 @@ int ndis_in_isr;
 
 struct ndis_softc {
 #ifdef __NetBSD__
-/* TODO: It seems like in the attach function the ndis "struct device" object
- * TODO: and the softc are the same thing, so I added a "struct device" to the 
- * TODO: front of the softc, to make sure the arpcom field wasn't getting
- * TODO: messed up.  However, I'm not sure if the arpcom field is supposed
- * TODO: to be first for some other reason.
+/* 
+ * TODO: It seems like in the attach function the ndis "struct device" object
+ * and the softc are the same thing, so I added a "struct device" to the 
+ * front of the softc, to make sure the arpcom field wasn't getting
+ * messed up.  However, I'm not sure if the arpcom field is supposed
+ * to be first for some other reason.
  */
         struct device           dev;
 	struct ethercom		arpcom;
@@ -159,20 +162,20 @@ struct ndis_softc {
 	int			 ndis_mem_rid;  /* not actuially used, just for bus_release_resource() */
 
 	/* pci specific */
-	pci_chipset_tag_t   ndis_res_pc; /* pci chipset */
+	pci_chipset_tag_t   ndis_res_pc;	/* pci chipset */
 	pcitag_t          	ndis_res_pctag; /* pci tag */
-	pci_intr_handle_t	pci_ih;	/* interrupt handle */
+	pci_intr_handle_t	pci_ih;		/* interrupt handle */
 	
 	/* pcmcia specific */
-	struct pcmcia_io_handle ndis_res_pcioh; /* specific i/o for pcmcia */
-	struct pcmcia_mem_handle ndis_res_pcmem; /* specific mem for pcmcia */
-	int sc_io_windows;                      /* i/o window */
+	struct pcmcia_io_handle ndis_res_pcioh;	  /* specific i/o for pcmcia */
+	struct pcmcia_mem_handle ndis_res_pcmem;  /* specific mem for pcmcia */
+	int sc_io_windows;			  /* i/o window */
 	struct pcmcia_function * ndis_res_pcfunc; /* pcmcia function */
 	
 	/* cardbus specific */
-	cardbus_devfunc_t    ndis_res_ct;  /* cardbus devfuncs */
-	cardbustag_t         ndis_res_ctag; /* carbus tag */
-	bus_size_t           ndis_res_mapsize; /* size of mapped bus space region */
+	cardbus_devfunc_t    ndis_res_ct;	/* cardbus devfuncs */
+	cardbustag_t         ndis_res_ctag;	/* carbus tag */
+	bus_size_t           ndis_res_mapsize;	/* size of mapped bus space region */
 #endif /* end __NetBSD__ section */
 	int			ndis_rescnt;
 #ifdef __FreeBSD__	
@@ -198,9 +201,7 @@ struct ndis_softc {
 	ndis_packet		**ndis_txarray;
 	ndis_handle		ndis_txpool;
 	int			ndis_sc;
-//#ifdef __FreeBSD__	
 	ndis_cfg		*ndis_regvals;
-//#endif
 	struct nch		ndis_cfglist_head;
 	int			ndis_80211;
 	int			ndis_link;
@@ -227,27 +228,19 @@ struct ndis_softc {
 };
 
 #ifdef __FreeBSD__
+
 #define NDIS_LOCK(_sc)		mtx_lock(&(_sc)->ndis_mtx)
 #define NDIS_UNLOCK(_sc)	mtx_unlock(&(_sc)->ndis_mtx)
+
 #else /* __NetBSD__ */
-/*
-int ndis_spl;
-#define NDIS_LOCK(_sc)		ndis_spl = splnet(); \
-				simple_lock(&(_sc)->ndis_mtx)
-#define NDIS_UNLOCK(_sc)	simple_unlock(&(_sc)->ndis_mtx); \
-				splx(ndis_spl)
-*/
-//#define NDIS_LOCK(_sc)		lockmgr(&(_sc)->ndis_mtx, LK_EXCLUSIVE, NULL);
-//#define NDIS_UNLOCK(_sc)	lockmgr(&(_sc)->ndis_mtx, LK_RELEASE, NULL);
+
 #define NDIS_LOCK(_sc)		do {s = spl_sc(); simple_lock(&(_sc)->ndis_mtx);} while(0)
 #define NDIS_UNLOCK(_sc)	do {simple_unlock(&(_sc)->ndis_mtx); splx(s);} while(0)
 #define spl_sc() splnet()
+
 #endif
 
-/*static*/ __stdcall void ndis_txeof	(ndis_handle,
-										 ndis_packet *, ndis_status);
-/*static*/ __stdcall void ndis_rxeof	(ndis_handle,
-										 ndis_packet **, uint32_t);
-/*static*/ __stdcall void ndis_linksts	(ndis_handle,
-										 ndis_status, void *, uint32_t);
-/*static*/ __stdcall void ndis_linksts_done	(ndis_handle);
+/*static*/ __stdcall void ndis_txeof	    (ndis_handle, ndis_packet *, ndis_status);
+/*static*/ __stdcall void ndis_rxeof	    (ndis_handle, ndis_packet **, uint32_t);
+/*static*/ __stdcall void ndis_linksts	    (ndis_handle, ndis_status, void *, uint32_t);
+/*static*/ __stdcall void ndis_linksts_done (ndis_handle);

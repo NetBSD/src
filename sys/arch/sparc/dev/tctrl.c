@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.29.8.1 2006/03/13 09:07:02 yamt Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.29.8.2 2006/05/24 10:57:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29.8.1 2006/03/13 09:07:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29.8.2 2006/05/24 10:57:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.29.8.1 2006/03/13 09:07:02 yamt Exp $");
 #include <sys/device.h>
 #include <sys/envsys.h>
 #include <sys/poll.h>
+#include <sys/kauth.h>
 
 #include <machine/apmvar.h>
 #include <machine/autoconf.h>
@@ -1173,7 +1174,8 @@ tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	/* this ioctl assumes the caller knows exactly what he is doing */
 	case TCTRL_CMD_REQ:
 		reqn = (struct tctrl_req *)data;
-		if ((i = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0 &&
+		if ((i = kauth_authorize_generic(l->l_proc->p_cred,
+					   KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag)) != 0 &&
 		    (reqn->cmdbuf[0] == TS102_OP_CTL_BITPORT ||
 		    (reqn->cmdbuf[0] >= TS102_OP_CTL_WATCHDOG &&
 		    reqn->cmdbuf[0] <= TS102_OP_CTL_SECURITY_KEY) ||
@@ -1532,18 +1534,18 @@ tctrl_event_thread(void *v)
 			tsleep(&sc->sc_events, PWAIT, "probe_disk", hz);
 	}			
 	printf("found %s\n", sd->sc_dev.dv_xname);
-	rcount = sd->sc_dk.dk_rxfer;
-	wcount = sd->sc_dk.dk_wxfer;
+	rcount = sd->sc_dk.dk_stats->io_rxfer;
+	wcount = sd->sc_dk.dk_stats->io_wxfer;
 
 	tctrl_read_event_status(sc);
 	
 	while (1) {
 		tsleep(&sc->sc_events, PWAIT, "tctrl_event", ticks);
 		s = splhigh();
-		if ((rcount != sd->sc_dk.dk_rxfer) || 
-		    (wcount != sd->sc_dk.dk_wxfer)) {
-			rcount = sd->sc_dk.dk_rxfer;
-			wcount = sd->sc_dk.dk_wxfer;
+		if ((rcount != sd->sc_dk.dk_stats->io_rxfer) || 
+		    (wcount != sd->sc_dk.dk_stats->io_wxfer)) {
+			rcount = sd->sc_dk.dk_stats->io_rxfer;
+			wcount = sd->sc_dk.dk_stats->io_wxfer;
 			sc->sc_lcdwanted |= TS102_LCD_DISK_ACTIVE;
 		} else
 			sc->sc_lcdwanted &= ~TS102_LCD_DISK_ACTIVE;
