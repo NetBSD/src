@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.16 2006/05/23 01:36:36 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.17 2006/05/24 21:47:25 christos Exp $	*/
 /*	$KAME: ftp.c,v 1.23 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
@@ -172,11 +172,14 @@ ftp_relay(int ctl6, int ctl4)
 			case -1:
 				goto bad;
 			case 0:
-				if (port4 >= 0)
-					(void)close(port4);
-				if (port6)
-					(void)close(port6);
-				port4 = port6 = -1;
+				if (port4 >= 0) {
+					close(port4);
+					port4 = -1;
+				}
+				if (port6 >= 0) {
+					close(port6);
+					port6 = -1;
+				}
 				syslog(LOG_INFO, "terminating data connection");
 				break;
 			default:
@@ -195,11 +198,14 @@ ftp_relay(int ctl6, int ctl4)
 			case -1:
 				goto bad;
 			case 0:
-				if (port4 >= 0)
-					(void)close(port4);
-				if (port6 >= 0)
-					(void)close(port6);
-				port4 = port6 = -1;
+				if (port4 >= 0) {
+					close(port4);
+					port4 = -1;
+				}
+				if (port6 >= 0) {
+					close(port6);
+					port6 = -1;
+				}
 				syslog(LOG_INFO, "terminating data connection");
 				break;
 			default:
